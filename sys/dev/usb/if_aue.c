@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.48.2.6 2001/02/11 19:16:22 bouyer Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.48.2.7 2001/03/27 15:32:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -396,6 +396,7 @@ aue_miibus_readreg(device_ptr_t dev, int phy, int reg)
 	int			i;
 	u_int16_t		val;
 
+#if 0
 	/*
 	 * The Am79C901 HomePNA PHY actually contains
 	 * two transceivers: a 1Mbps HomePNA PHY and a
@@ -411,6 +412,7 @@ aue_miibus_readreg(device_ptr_t dev, int phy, int reg)
 		if (phy == 3)
 			return (0);
 	}
+#endif
 
 	aue_csr_write_1(sc, AUE_PHY_ADDR, phy);
 	aue_csr_write_1(sc, AUE_PHY_CTL, reg | AUE_PHYCTL_READ);

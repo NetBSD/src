@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.22.2.3 2001/02/11 19:09:04 bouyer Exp $ */
+/* $NetBSD: if_eb.c,v 1.22.2.4 2001/03/27 15:30:30 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -95,7 +95,7 @@
 
 #include <arm32/podulebus/if_ebreg.h>
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 #ifndef EB_TIMEOUT
 #define EB_TIMEOUT	60
@@ -331,10 +331,10 @@ ebattach(parent, self, aux)
 	/* Print out some information for the user. */
 
 	if ((id & 0xf0) == 0xa0)
-		printf(" SEEQ80C04 rev %x address %s", id & 0x0f,
+		printf(": SEEQ80C04 rev %x address %s", id & 0x0f,
 		    ether_sprintf(myaddr));
 	else
-		printf(" SEEQ???? rev %02x address %s", id,
+		printf(": SEEQ???? rev %02x address %s", id,
 		    ether_sprintf(myaddr));
 
 	sc->sc_irqclaimed = 0;

@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.c,v 1.11.2.6 2001/03/12 13:31:53 bouyer Exp $	*/
-/*	$KAME: icmp6.c,v 1.203 2001/03/08 00:17:54 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.11.2.7 2001/03/27 15:32:36 bouyer Exp $	*/
+/*	$KAME: icmp6.c,v 1.204 2001/03/20 02:44:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2861,9 +2861,8 @@ icmp6_mtudisc_timeout(rt, r)
 		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 	} else {
-		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
-			rt->rt_rmx.rmx_mtu = 0;
-		}
+		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
+			rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu;
 	}
 }
 

@@ -27,7 +27,7 @@
  *	i4b_bchan.c - B channel handling L1 procedures
  *	----------------------------------------------
  *
- *	$Id: isic_bchan.c,v 1.1.4.2 2001/03/12 13:30:25 bouyer Exp $
+ *	$Id: isic_bchan.c,v 1.1.4.3 2001/03/27 15:31:54 bouyer Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
@@ -73,23 +73,18 @@
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
 
-static void isic_bchannel_start __P((int unit, int h_chan));
-static void isic_bchannel_stat __P((int unit, int h_chan, bchan_statistics_t *bsp));
-
-static void isic_set_linktab(int unit, int channel, drvr_link_t *dlt);
-static isdn_link_t *isic_ret_linktab(int unit, int channel);
+static void isic_bchannel_start(isdn_layer1token, int h_chan);
+static void isic_bchannel_stat(isdn_layer1token, int h_chan, bchan_statistics_t *bsp);
+static void isic_set_linktab(isdn_layer1token, int channel, drvr_link_t *dlt);
+static isdn_link_t *isic_ret_linktab(isdn_layer1token, int channel);
 
 /*---------------------------------------------------------------------------*
  *	initialize one B channels rx/tx data structures and init/deinit HSCX
  *---------------------------------------------------------------------------*/
 void
-isic_bchannel_setup(int unit, int h_chan, int bprot, int activate)
+isic_bchannel_setup(isdn_layer1token t, int h_chan, int bprot, int activate)
 {
-#ifdef __FreeBSD__
-	struct l1_softc *sc = &l1_sc[unit];
-#else
-	struct l1_softc *sc = isic_find_sc(unit);
-#endif
+	struct l1_softc *sc = (struct l1_softc*)t;
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 
 	int s = splnet();
@@ -106,7 +101,7 @@ isic_bchannel_setup(int unit, int h_chan, int bprot, int activate)
 	/* general part */
 
 	chan->unit = sc->sc_unit;	/* unit number */
-	chan->channel = h_chan;	/* B channel */
+	chan->channel = h_chan;		/* B channel */
 	chan->bprot = bprot;		/* B channel protocol */
 	chan->state = HSCX_IDLE;	/* B channel state */
 
@@ -152,13 +147,9 @@ isic_bchannel_setup(int unit, int h_chan, int bprot, int activate)
  *	start transmission on a b channel
  *---------------------------------------------------------------------------*/
 static void
-isic_bchannel_start(int unit, int h_chan)
+isic_bchannel_start(isdn_layer1token t, int h_chan)
 {
-#ifdef __FreeBSD__
-	struct l1_softc *sc = &l1_sc[unit];
-#else
-	struct l1_softc *sc = isic_find_sc(unit);
-#endif
+	struct l1_softc *sc = (struct l1_softc*)t;
 
 	register l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 	register int next_len;
@@ -195,7 +186,8 @@ isic_bchannel_start(int unit, int h_chan)
 
 	if(chan->bprot == BPROT_NONE)
 	{
-		if(!(isic_hscx_silence(chan->out_mbuf_cur->m_data, chan->out_mbuf_cur->m_len)))
+		if(!(isic_hscx_silence(chan->out_mbuf_cur->m_data,
+		    chan->out_mbuf_cur->m_len)))
 			activity = ACT_TX;
 	}
 	else
@@ -203,17 +195,16 @@ isic_bchannel_start(int unit, int h_chan)
 		activity = ACT_TX;
 	}
 
-	chan->state |= HSCX_TX_ACTIVE;		/* we start transmitting */
+	chan->state |= HSCX_TX_ACTIVE;	/* we start transmitting */
 	
 	if(sc->sc_trace & TRACE_B_TX)	/* if trace, send mbuf to trace dev */
 	{
-		i4b_trace_hdr_t hdr;
-		hdr.unit = unit;
+		i4b_trace_hdr hdr;
 		hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 		hdr.dir = FROM_TE;
 		hdr.count = ++sc->sc_trace_bcount;
-		MICROTIME(hdr.time);
-		MPH_Trace_Ind(&hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+		isdn_layer2_trace_ind(sc->sc_l2, &hdr,
+			chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 	}			
 
 	len = 0;	/* # of chars put into HSCX tx fifo this time */
@@ -277,13 +268,14 @@ isic_bchannel_start(int unit, int h_chan)
 
 			if(sc->sc_trace & TRACE_B_TX)
 			{
-				i4b_trace_hdr_t hdr;
-				hdr.unit = unit;
-				hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
+				i4b_trace_hdr hdr;
+				hdr.type = (h_chan == HSCX_CH_A ?
+					TRC_CH_B1 : TRC_CH_B2);
 				hdr.dir = FROM_TE;
 				hdr.count = ++sc->sc_trace_bcount;
-				MICROTIME(hdr.time);
-				MPH_Trace_Ind(&hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+				isdn_layer2_trace_ind(sc->sc_l2, &hdr,
+					chan->out_mbuf_cur->m_len,
+					chan->out_mbuf_cur->m_data);
 			}			
 		}
 	}
@@ -327,7 +319,8 @@ isic_bchannel_start(int unit, int h_chan)
 	/* call timeout handling routine */
 	
 	if(activity == ACT_RX || activity == ACT_TX)
-		(*chan->drvr_linktab->bch_activity)(chan->drvr_linktab->unit, activity);
+		(*chan->drvr_linktab->bch_activity)(chan->drvr_linktab->unit,
+			activity);
 
 	if(cmd)
 		isic_hscx_cmd(sc, h_chan, cmd);
@@ -339,13 +332,9 @@ isic_bchannel_start(int unit, int h_chan)
  *	fill statistics struct
  *---------------------------------------------------------------------------*/
 static void
-isic_bchannel_stat(int unit, int h_chan, bchan_statistics_t *bsp)
+isic_bchannel_stat(isdn_layer1token t, int h_chan, bchan_statistics_t *bsp)
 {
-#ifdef __FreeBSD__
-	struct l1_softc *sc = &l1_sc[unit];
-#else
-	struct l1_softc *sc = isic_find_sc(unit);
-#endif
+	struct l1_softc *sc = (struct l1_softc*)t;
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 	int s;
 
@@ -364,13 +353,9 @@ isic_bchannel_stat(int unit, int h_chan, bchan_statistics_t *bsp)
  *	return the address of isic drivers linktab	
  *---------------------------------------------------------------------------*/
 static isdn_link_t *
-isic_ret_linktab(int unit, int channel)
+isic_ret_linktab(isdn_layer1token t, int channel)
 {
-#ifdef __FreeBSD__
-	struct l1_softc *sc = &l1_sc[unit];
-#else
-	struct l1_softc *sc = isic_find_sc(unit);
-#endif
+	struct l1_softc *sc = (struct l1_softc*)t;
 	l1_bchan_state_t *chan = &sc->sc_chan[channel];
 
 	return(&chan->isdn_linktab);
@@ -380,13 +365,9 @@ isic_ret_linktab(int unit, int channel)
  *	set the driver linktab in the b channel softc
  *---------------------------------------------------------------------------*/
 static void
-isic_set_linktab(int unit, int channel, drvr_link_t *dlt)
+isic_set_linktab(isdn_layer1token t, int channel, drvr_link_t *dlt)
 {
-#ifdef __FreeBSD__
-	struct l1_softc *sc = &l1_sc[unit];
-#else
-	struct l1_softc *sc = isic_find_sc(unit);
-#endif
+	struct l1_softc *sc = (struct l1_softc*)t;
 	l1_bchan_state_t *chan = &sc->sc_chan[channel];
 
 	chan->drvr_linktab = dlt;
@@ -406,7 +387,7 @@ isic_init_linktab(struct l1_softc *sc)
 	ctrl_types[CTRL_PASSIVE].get_linktab = isic_ret_linktab;
 
 	/* local setup */
-	lt->unit = sc->sc_unit;
+	lt->l1token = sc;
 	lt->channel = HSCX_CH_A;
 	lt->bch_config = isic_bchannel_setup;
 	lt->bch_tx_start = isic_bchannel_start;
@@ -422,7 +403,7 @@ isic_init_linktab(struct l1_softc *sc)
 	chan = &sc->sc_chan[HSCX_CH_B];
 	lt = &chan->isdn_linktab;
 
-	lt->unit = sc->sc_unit;
+	lt->l1token = sc;
 	lt->channel = HSCX_CH_B;
 	lt->bch_config = isic_bchannel_setup;
 	lt->bch_tx_start = isic_bchannel_start;

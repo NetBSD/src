@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.1.1.2.4 2001/02/11 19:10:31 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.1.1.2.5 2001/03/27 15:30:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.1.1.2.4 2001/02/11 19:10:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.1.1.2.5 2001/03/27 15:30:56 bouyer Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.1.1.2.4 2001/02/11 19:10:31 bouyer E
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/device.h>
 #include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
@@ -128,6 +129,7 @@ extern int (*mountroot) __P((void));
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[128];	
+char	booted_kernel[128];
 
 char	cpu_name[40];			/* set cpu depend xx_init() */
 
@@ -229,14 +231,27 @@ mach_init(argc, argv, bi)
 
 	/* clear the BSS segment */
 #ifdef DDB
-	if (memcmp(((Elf_Ehdr *)end)->e_ident, ELFMAG, SELFMAG) == 0 &&
-	    ((Elf_Ehdr *)end)->e_ident[EI_CLASS] == ELFCLASS) {
+	size_t symbolsz = 0;
+	Elf_Ehdr *eh = (void *)end;
+	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) == 0 &&
+	    eh->e_ident[EI_CLASS] == ELFCLASS) {
 		esym = end;
-		esym += ((Elf_Ehdr *)end)->e_entry;
+		if (eh->e_entry != 0) {
+			/* pbsdboot */
+			symbolsz = eh->e_entry;
+		} else {
+			/* hpcboot */
+			Elf_Shdr *sh = (void *)(end + eh->e_shoff);
+			for(i = 0; i < eh->e_shnum; i++, sh++)
+				if (sh->sh_offset > 0 &&
+				    (sh->sh_offset + sh->sh_size) > symbolsz)
+					symbolsz = sh->sh_offset + sh->sh_size;
+		}
+		esym += symbolsz;
 		kernend = (caddr_t)mips_round_page(esym);
 		bzero(edata, end - edata);
 	} else
-#endif
+#endif /* DDB */
 	{
 		kernend = (caddr_t)mips_round_page(end);
 		memset(edata, 0, kernend - edata);
@@ -318,6 +333,8 @@ mach_init(argc, argv, bi)
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
+	strncpy(booted_kernel, argv[0], sizeof(booted_kernel));
+	booted_kernel[sizeof(booted_kernel)-1] = 0;
 	for (i = 1; i < argc; i++) {
 		for (cp = argv[i]; *cp; cp++) {
 			switch (*cp) {
@@ -355,7 +372,7 @@ mach_init(argc, argv, bi)
 #ifdef DDB
 	/* init symbols if present */
 	if (esym)
-		ddb_init(1000, &end, (int*)esym);
+		ddb_init(symbolsz, &end, esym);
 #endif
 	/*
 	 * Alloc u pages for proc0 stealing KSEG0 memory.
@@ -487,7 +504,7 @@ cpu_startup()
 	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+				UVM_ADV_NORMAL, 0)) != 0)
 		panic("cpu_startup: cannot allocate VM for buffers");
 
 	minaddr = (vaddr_t)buffers;
@@ -584,6 +601,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_CONSDEV:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
 		    sizeof cn_tab->cn_dev));
+	case CPU_ROOT_DEVICE:
+		return (sysctl_rdstring(oldp, oldlenp, newp, 
+		    root_device->dv_xname));
+	case CPU_BOOTED_KERNEL:
+		return (sysctl_rdstring(oldp, oldlenp, newp, 
+		    booted_kernel));
 	default:
 		return (EOPNOTSUPP);
 	}

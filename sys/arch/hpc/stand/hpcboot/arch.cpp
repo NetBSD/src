@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arch.cpp,v 1.1.2.2 2001/02/11 19:09:48 bouyer Exp $	 */
+/* -*-C++-*-	$NetBSD: arch.cpp,v 1.1.2.3 2001/03/27 15:30:46 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -71,26 +71,29 @@ Architecture::allocateMemory(size_t sz)
 }
 
 paddr_t
-Architecture::setupBootInfo(Loader & loader)
+Architecture::setupBootInfo(Loader &loader)
 {
 	HpcMenuInterface &menu = HpcMenuInterface::Instance();
 	vaddr_t v;
 	paddr_t p;
 
 	_mem->getPage(v, p);
+	_boot_arg = reinterpret_cast <struct BootArgs *>(v);
 
-	struct BootArgs *karg = reinterpret_cast < struct BootArgs *>(v);
-
-	karg->argc = menu.setup_kernel_args(v + sizeof(struct BootArgs),
+	_boot_arg->argc = menu.setup_kernel_args(v + sizeof(struct BootArgs),
 					    p + sizeof(struct BootArgs));
-	karg->argv = ptokv(p + sizeof(struct BootArgs));
-	menu.setup_bootinfo(karg->bi);
-	karg->bootinfo = ptokv(p + offsetof(struct BootArgs, bi));
-	karg->kernel_entry = loader.jumpAddr();
+	_boot_arg->argv = ptokv(p + sizeof(struct BootArgs));
+	menu.setup_bootinfo(_boot_arg->bi);
+	_boot_arg->bi.bi_cnuse = _cons->getBootConsole();
 
-	DPRINTF((TEXT("frame buffer: %dx%d type=%d linebytes=%d addr=0x%08x\n"),
-		 karg->bi.fb_width, karg->bi.fb_height, karg->bi.fb_type,
-		 karg->bi.fb_line_bytes, karg->bi.fb_addr));
+	_boot_arg->bootinfo = ptokv(p + offsetof(struct BootArgs, bi));
+	_boot_arg->kernel_entry = loader.jumpAddr();
+
+	struct bootinfo &bi = _boot_arg->bi;
+	DPRINTF((TEXT("framebuffer: %dx%d type=%d linebytes=%d addr=0x%08x\n"),
+		 bi.fb_width, bi.fb_height, bi.fb_type, bi.fb_line_bytes,
+		 bi.fb_addr));
+	DPRINTF((TEXT("console = %d\n"), bi.bi_cnuse));
 
 	return p;
 }

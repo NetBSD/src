@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.1.2.2 2001/01/05 17:35:01 bouyer Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.1.2.3 2001/03/27 15:31:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ sh3_startup()
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+				UVM_ADV_NORMAL, 0)) != 0)
 		panic("cpu_startup: cannot allocate VM for buffers");
 	minaddr = (vaddr_t)buffers;
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {

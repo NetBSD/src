@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3.2.2 2001/03/12 13:28:53 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3.2.3 2001/03/27 15:30:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,14 +32,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
+#undef LOAD_ALL_MEMORY
 #include "opt_ddb.h"
 #include "opt_syscall_debug.h"
 #include "fs_mfs.h"
 #include "fs_nfs.h"
 #include "biconsdev.h"
-#include "hpcfb.h"
-#include "pfckbd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,37 +46,37 @@
 #include <sys/reboot.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
-
 #include <sys/kcore.h>
-
 #include <sys/msgbuf.h>
+#include <sys/boot_flag.h>
 
-#include <dev/cons.h>
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
-#include <sys/boot_flag.h>
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#ifndef DB_ELFSIZE
+#error Must define DB_ELFSIZE!
+#endif
+#define ELFSIZE		DB_ELFSIZE
+#include <sys/exec_elf.h>
+#endif
+
+#include <dev/cons.h> /* consdev */
+
 #include <machine/bootinfo.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 #include <machine/autoconf.h>		/* makebootdev() */
 
 #include <sh3/intcreg.h>
+#include <sh3/tmureg.h>
 
 #if NBICONSDEV > 0
-#include <dev/hpc/biconsvar.h>
-#include <dev/hpc/bicons.h>
 #define DPRINTF(arg) printf arg
 #else
 #define DPRINTF(arg)
-#endif
-
-#if NHPCFB > 0
-#include <dev/wscons/wsdisplayvar.h>
-#include <dev/rasops/rasops.h>
-#include <dev/hpc/hpcfbvar.h>
-#endif
-#if NPFCKBD > 0
-#include <hpcsh/dev/pfckbdvar.h>
 #endif
 
 /* 
@@ -160,10 +158,7 @@ phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
 int		physmem;	/* in hpcsh port, page unit */
 
 /* Console */
-#include <sys/conf.h> /* cdev_decl */
-#include <dev/cons.h> /* consdev */
-#define scicnpollc	nullcnpollc
-#define scifcnpollc	nullcnpollc
+extern void consinit(void);
 
 void main(void);
 void machine_startup(int, char *[], struct bootinfo *);
@@ -180,6 +175,18 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	pt_entry_t *pagetab, pte;
 	int i;
 	char *p;
+	size_t symbolsize;
+
+	/* symbol table size */
+	symbolsize = 0;
+	if (!memcmp(&end, "\177ELF", 4)) {
+		Elf_Ehdr *eh = (void *)end;
+		Elf_Shdr *sh = (void *)(end + eh->e_shoff);
+		for(i = 0; i < eh->e_shnum; i++, sh++)
+			if (sh->sh_offset > 0 &&
+			    (sh->sh_offset + sh->sh_size) > symbolsize)
+				symbolsize = sh->sh_offset + sh->sh_size;
+	}
 
 	/* clear BSS */
 	memset(edata, 0, end - edata);
@@ -190,9 +197,13 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	SHREG_IPRC = 0;
 	SHREG_IPRD = 0;
 	SHREG_IPRE = 0;
-	
+	/* initialize TMU */
+	SHREG_TCR0 = 0;
+	SHREG_TCR1 = 0;
+	SHREG_TCR2 = 0;
+
 	/* start to determine heap area */
-	kernend = (vaddr_t)sh3_round_page(end);
+	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
 
 	/* setup bootinfo */
 	bootinfo = &__bootinfo;
@@ -201,12 +212,9 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	/* setup bootstrap options */
 	makebootdev("wd0"); /* default boot device */
 	boothowto = 0;
-	for (i = 1; i < argc; i++) { // skip 1st arg (kernel name).
+	for (i = 1; i < argc; i++) { /* skip 1st arg (kernel name). */
 		char *cp = argv[i];
 		switch (*cp) {
-		case 'h':
-			bootinfo->bi_cnuse |= BI_CNUSE_SERIAL;
-			break;
 		case 'b':
 			/* boot device: -b=sd0 etc. */
 			p = cp + 2;
@@ -224,6 +232,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 			break;
 		}
 	}
+
 #ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
@@ -238,15 +247,14 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		kernend += fssz;
 	}
 #endif
-	/* console requires platform information */
+
+	/* start console */
 	if (bootinfo->magic == BOOTINFO_MAGIC) {
 		platid.dw.dw0 = bootinfo->platid_cpu;
 		platid.dw.dw1 = bootinfo->platid_machine;
 	}
-
-	/* start console */
 	consinit();
-	
+
 	/* print kernel option */
 	for (i = 0; i < argc; i++)
 		DPRINTF(("option [%d]: %s\n", i, argv[i]));
@@ -322,6 +330,16 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	/* enable exception */
 	splraise(-1);
 	enable_intr();
+
+#ifdef DDB
+	/* initialize debugger */
+	if (symbolsize) {
+		ddb_init(symbolsize, &end, end + symbolsize);
+		DPRINTF(("symbol size = %d byte\n", symbolsize));
+		if (boothowto & RB_KDB)
+			Debugger();
+	}
+#endif	
 
 	/* setup proc0 stack */
 	proc0_sp = (vaddr_t)p + NBPG + USPACE - 16 - sizeof(struct trapframe);
@@ -440,7 +458,7 @@ haltsys:
 	doshutdownhooks();
 
 	/* Finally, halt/reboot the system. */
-	DPRINTF(("%s\n\n", howto & RB_HALT ? "halted." : "rebooting..."));
+	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
 
 	goto *(u_int32_t *)0xa0000000;
 	while (1)
@@ -482,7 +500,7 @@ mem_cluster_init(paddr_t addr)
 	
 	/* search CS3 */
 	__find_dram_shadow(addr, DRAM_BANK0_END);
-#if notyet //XXX bank 0 only
+#ifdef LOAD_ALL_MEMORY /* notyet */
 	__find_dram_shadow(DRAM_BANK1_START, DRAM_BANK1_END);
 #endif
 	DPRINTF(("mem_cluster_cnt = %d\n", mem_cluster_cnt));
@@ -515,7 +533,7 @@ mem_cluster_load()
 {
 	paddr_t start, end;
 	psize_t size;
-#if notyet
+#ifdef LOAD_ALL_MEMORY /*  notyet */
 	int i;
 
 	/* Cluster 0 is always the kernel, which doesn't get loaded. */
@@ -624,27 +642,4 @@ __find_dram_shadow(paddr_t start, paddr_t end)
 		mem_clusters[1].size -= mem_clusters[0].size;
 	
 	mem_cluster_cnt++;
-}
-
-void
-consinit()
-{
-	static int initted;
-
-	if (initted)
-		return;
-	initted = 1;
-#if NBICONSDEV > 0
-	if (!(bootinfo->bi_cnuse & BI_CNUSE_SERIAL))
-		bicons_set_priority(CN_REMOTE + 1); /* set highest */
-#endif
-	cninit();
-	if (!(bootinfo->bi_cnuse & BI_CNUSE_SERIAL)) {
-#if NPFCKBD > 0
-		pfckbd_cnattach();
-#endif
-#if NHPCFB > 0
-		hpcfb_cnattach(0);
-#endif
-	}
 }

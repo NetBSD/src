@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.11.2.3 2001/03/12 13:29:20 bouyer Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.11.2.4 2001/03/27 15:31:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ struct ieob {
 
 
 static void ie_obreset __P((struct ie_softc *, int));
-static void ie_obattend __P((struct ie_softc *));
+static void ie_obattend __P((struct ie_softc *, int));
 static void ie_obrun __P((struct ie_softc *));
 
 int ie_obio_match __P((struct device *, struct cfdata *, void *));
@@ -156,8 +156,9 @@ ie_obreset(sc, what)
 	ieo->obctrl = IEOB_NORSET;
 }
 void
-ie_obattend(sc)
+ie_obattend(sc, why)
 	struct ie_softc *sc;
+	int why;
 {
 	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
 

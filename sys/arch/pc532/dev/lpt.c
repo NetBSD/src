@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.30.2.2 2000/11/22 16:01:22 bouyer Exp $	*/
+/*	$NetBSD: lpt.c,v 1.30.2.3 2001/03/27 15:31:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -930,7 +930,7 @@ pliptransmit:
 ");
 #else
 static int
-pliptransmit(i8255. buf, len)
+pliptransmit(i8255, buf, len)
 	volatile struct i8255 *i8255;
 	u_char *buf;
 	int len;

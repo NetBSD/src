@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2.2.1 2000/11/20 20:32:36 bouyer Exp $ */
+/*	$NetBSD: devopen.c,v 1.2.2.2 2001/03/27 15:31:42 bouyer Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -122,8 +122,10 @@ devopen(f, fname, file)
 		c = (char *)fname;
 	}
 
-	if (!dp->dv_open)
+	if (!dp->dv_open) {
+		printf("Can't open device type %d\n", dev);
 		return(ENODEV);
+	}
 	f->f_dev = dp;
 	bootrpb.unit = unit;
 	bootrpb.devtyp = dev;

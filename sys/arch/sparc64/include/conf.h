@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.5.2.1 2000/11/20 20:26:47 bouyer Exp $	*/
+/*	$NetBSD: conf.h,v 1.5.2.2 2001/03/27 15:31:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,13 +40,6 @@
 #define mmwrite mmrw
 cdev_decl(mm);
 
-/* open, close, ioctl */
-#define	cdev_openprom_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev }
-
 cdev_decl(openprom);
 
 cdev_decl(cn);
@@ -57,12 +50,6 @@ bdev_decl(fd);
 cdev_decl(fd);
 
 cdev_decl(fb);
-
-/* open, close, read, write, ioctl, poll */
-#define	cdev_gen_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
 cdev_decl(ms);
 

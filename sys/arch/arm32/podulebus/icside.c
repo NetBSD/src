@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.11 1998/12/03 18:24:30 bouyer Exp $	*/
+/*	$NetBSD: icside.c,v 1.11.10.1 2001/03/27 15:30:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -50,11 +50,11 @@
 #include <machine/io.h>
 #include <machine/bus.h>
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/icsidereg.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
+#include <dev/podulebus/podules.h>
 
 /*
  * ICS IDE podule device.
@@ -78,7 +78,10 @@ struct icside_softc {
 	struct podule_attach_args *sc_pa;		/* podule info */
 	struct icside_channel {
 		struct channel_softc	wdc_channel;	/* generic part */
-		irqhandler_t		ic_ih;		/* interrupt handler */
+		void			*ic_ih;		/* interrupt handler */
+		struct evcnt		ic_intrcnt;	/* interrupt count */
+		u_int			ic_irqaddr;	/* interrupt flag */
+		u_int			ic_irqmask;	/*  location */
 		bus_space_tag_t		ic_irqiot;	/* Bus space tag */
 		bus_space_handle_t	ic_irqioh;	/* handle for IRQ */
 	} *icside_channels;
@@ -168,7 +171,6 @@ icside_attach(parent, self, aux)
 	struct podule_attach_args *pa = (void *)aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	irqhandler_t *ihp;
 	struct ide_version *ide = NULL;
 	u_int iobase;
 	int channel;
@@ -208,10 +210,10 @@ icside_attach(parent, self, aux)
 
 	/* Report the version and name */
 	if (ide == NULL || ide->name == NULL) {
-		printf(" rev %d is unsupported\n", id);
+		printf(": rev %d is unsupported\n", id);
 		return;
 	} else
-		printf(" %s\n", ide->name);
+		printf(": %s\n", ide->name);
 
 	/*
 	 * Ok we need our own bus tag as the register spacing
@@ -288,14 +290,13 @@ icside_attach(parent, self, aux)
 		(void)bus_space_read_1(iot, icp->ic_irqioh, 0);
 		pa->pa_podule->irq_addr = iobase + ide->irqstatregs[channel];
 		pa->pa_podule->irq_mask = IRQ_STATUS_REGISTER_MASK;
-		ihp = &icp->ic_ih;
-		ihp->ih_func = icside_intr;
-		ihp->ih_arg = icp;
-		ihp->ih_level = IPL_BIO;
-		ihp->ih_name = "icside";
-		ihp->ih_maskaddr = pa->pa_podule->irq_addr;
-		ihp->ih_maskbits = pa->pa_podule->irq_mask;
-		if (irq_claim(pa->pa_podule->interrupt, ihp)) {
+		icp->ic_irqaddr = pa->pa_podule->irq_addr;
+		icp->ic_irqmask = pa->pa_podule->irq_mask;
+		evcnt_attach_dynamic(&icp->ic_intrcnt, EVCNT_TYPE_INTR, NULL,
+		    self->dv_xname, "intr");
+		icp->ic_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
+		    icside_intr, icp, &icp->ic_intrcnt);
+		if (icp->ic_ih == NULL) {
 			printf("%s: Cannot claim interrupt %d\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname,
 			    pa->pa_podule->interrupt);
@@ -316,11 +317,10 @@ icside_intr(arg)
 	void *arg;
 {
 	struct icside_channel *icp = arg;
-	irqhandler_t *ihp = &icp->ic_ih;
-	volatile u_char *intraddr = (volatile u_char *)ihp->ih_maskaddr;
+	volatile u_char *intraddr = (volatile u_char *)icp->ic_irqaddr;
 
 	/* XXX - not bus space yet - should really be handled by podulebus */
-	if ((*intraddr) & ihp->ih_maskbits)
+	if ((*intraddr) & icp->ic_irqmask)
 		wdcintr(&icp->wdc_channel);
 	return(0);
 }

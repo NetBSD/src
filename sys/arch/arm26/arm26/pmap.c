@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.7.2.5 2001/03/12 13:27:28 bouyer Exp $ */
+/* $NetBSD: pmap.c,v 1.7.2.6 2001/03/27 15:30:21 bouyer Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.2.5 2001/03/12 13:27:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.2.6 2001/03/27 15:30:21 bouyer Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -640,7 +640,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (pmap->pm_flags & PM_ACTIVE)
 		MEMC_WRITE(pv->pv_activate);
 
-	return KERN_SUCCESS;
+	return 0;
 }
 
 /* Remove a range of virtual mappings from a pmap */

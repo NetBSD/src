@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.33.2.2 2001/03/12 13:31:49 bouyer Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.33.2.3 2001/03/27 15:32:29 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -165,7 +165,7 @@ struct protosw inetsw[] = {
   udp_usrreq,
   udp_init,	0,		0,		0,		udp_sysctl
 },
-{ SOCK_STREAM,	&inetdomain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN,
+{ SOCK_STREAM,	&inetdomain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS,
   tcp_input,	0,		tcp_ctlinput,	tcp_ctloutput,
   tcp_usrreq,
   tcp_init,	tcp_fasttimo,	tcp_slowtimo,	tcp_drain,	tcp_sysctl
@@ -229,7 +229,7 @@ struct protosw inetsw[] = {
   igmp_init,	igmp_fasttimo,	igmp_slowtimo,	0,
 },
 #ifdef TPIP
-{ SOCK_SEQPACKET,&inetdomain,	IPPROTO_TP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_LASTHDR,
+{ SOCK_SEQPACKET,&inetdomain,	IPPROTO_TP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_LASTHDR|PR_ABRTACPTDIS,
   tpip_input,	0,		tpip_ctlinput,	tp_ctloutput,
   tp_usrreq,
   tp_init,	0,		tp_slowtimo,	tp_drain,

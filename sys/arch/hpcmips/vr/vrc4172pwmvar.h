@@ -1,4 +1,4 @@
-/*	$Id: vrc4172pwmvar.h,v 1.2.2.4 2001/03/12 13:28:49 bouyer Exp $	*/
+/*	$Id: vrc4172pwmvar.h,v 1.2.2.5 2001/03/27 15:30:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi.  All rights reserved.
@@ -32,11 +32,11 @@
 
 
 struct vrc4172pwm_param {
-	int brokenprobe;
-	int n_brightness;
-	int bvalues[VRC2_PWM_N_BRIGHTNESS];
-	int n_contrast;
-	int cvalues[VRC2_PWM_N_CONTRAST];
+	int8_t brokenprobe;
+	int8_t n_brightness;
+	int8_t bvalues[VRC2_PWM_N_BRIGHTNESS];
+	int8_t n_contrast;
+	int8_t cvalues[VRC2_PWM_N_CONTRAST];
 };
 
 struct vrc4172pwm_softc {

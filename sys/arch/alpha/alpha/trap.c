@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.49.2.6 2001/01/05 17:33:42 bouyer Exp $ */
+/* $NetBSD: trap.c,v 1.49.2.7 2001/03/27 15:30:08 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.2.6 2001/01/05 17:33:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.2.7 2001/03/27 15:30:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,17 +487,17 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			if (map != kernel_map &&
 			    (caddr_t)va >= vm->vm_maxsaddr &&
 			    va < USRSTACK) {
-				if (rv == KERN_SUCCESS) {
+				if (rv == 0) {
 					unsigned nss;
 	
 					nss = btoc(USRSTACK -
 					    (unsigned long)va);
 					if (nss > vm->vm_ssize)
 						vm->vm_ssize = nss;
-				} else if (rv == KERN_PROTECTION_FAILURE)
-					rv = KERN_INVALID_ADDRESS;
+				} else if (rv == EACCES)
+					rv = EFAULT;
 			}
-			if (rv == KERN_SUCCESS) {
+			if (rv == 0) {
 				if (user)
 					KERNEL_PROC_UNLOCK(p);
 				else
@@ -519,7 +519,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 				goto dopanic;
 			}
 			ucode = a0;
-			if (rv == KERN_RESOURCE_SHORTAGE) {
+			if (rv == ENOMEM) {
 				printf("UVM: pid %d (%s), uid %d killed: "
 				       "out of swap\n", p->p_pid, p->p_comm,
 				       p->p_cred && p->p_ucred ?

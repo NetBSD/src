@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_console.h,v 1.1.2.2 2001/02/11 19:10:13 bouyer Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.h,v 1.1.2.3 2001/03/27 15:30:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,27 +45,32 @@
 #include <sh3/sh3.h>
 
 class SHConsole : public SerialConsole {
+public:
+	typedef void (*print_func_t)(const char *);
+	struct console_info {
+		u_int32_t cpu, machine;
+		print_func_t print;
+		int16_t boot_console;
+	};
+	static struct console_info _console_info[];
+	static void SCIPrint(const char *);
+	static void SCIFPrint(const char *);
+	static void HD64461COMPrint(const char *);
+
 private:
 	static SHConsole *_instance;
 	int _kmode;
+	print_func_t _print;
+	int16_t _boot_console;
 
-	SHConsole(void) { /* NO-OP */ }
+	SHConsole(void);
+
 public:
-	virtual ~SHConsole() {
-		SetKMode(_kmode);
-	}
+	virtual ~SHConsole();
+	static SHConsole *Instance(void);
 
-	static SHConsole *Instance(void) {
-		if (!_instance)
-			_instance = new SHConsole();
-		return _instance;
-	}
-
-	virtual BOOL init(void) {
-		_kmode = SetKMode(1);
-		return openCOM1();
-	}
-
+	virtual BOOL init(void);
 	virtual void print(const TCHAR *fmt, ...);
+	virtual int16_t getBootConsole(void) { return _boot_console; }
 };
 #endif //_HPCBOOT_SH_CONSOLE_H_

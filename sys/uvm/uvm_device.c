@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.16.2.3 2001/03/12 13:32:10 bouyer Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.16.2.4 2001/03/27 15:32:48 bouyer Exp $	*/
 
 /*
  *
@@ -448,7 +448,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%lx, at=%d",
 		    ufi->orig_map->pmap, curr_va, paddr, mapprot);
 		if (pmap_enter(ufi->orig_map->pmap, curr_va, paddr,
-		    mapprot, PMAP_CANFAIL | mapprot) != KERN_SUCCESS) {
+		    mapprot, PMAP_CANFAIL | mapprot) != 0) {
 			/*
 			 * pmap_enter() didn't have the resource to
 			 * enter this mapping.  Unlock everything,

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.66.2.4 2001/03/12 13:27:55 bouyer Exp $
+#	$NetBSD: files.atari,v 1.66.2.5 2001/03/27 15:30:37 bouyer Exp $
 
 maxpartitions 16
 
@@ -156,6 +156,15 @@ attach	isabus at mainbus
 include "dev/isa/files.isa"
 include "dev/ata/files.ata"
 
+# Milan floppy driver - uses 'generic' isa version of fd.c
+device  fdcisa  {drive = -1}: isadma
+file    arch/atari/isa/fdcisa.c
+attach  fdcisa at isa
+device  fdisa: disk
+attach  fdisa at fdcisa
+file    dev/isa/fd.c
+major   {fdisa = 2}
+
 attach	wdc at mainbus with wdc_mb
 file	arch/atari/dev/wdc_mb.c		wdc_mb
 major	{wd = 14}
@@ -170,7 +179,7 @@ major   {cd = 6}
 # ncr 5380 controller
 device	ncrscsi: scsi
 attach	ncrscsi at mainbus
-file	arch/atari/dev/atari5380.c	ncrscsi
+file	arch/atari/dev/atari5380.c	ncrscsi needs-flag
 
 # list of standard files...
 file	dev/cons.c				ite | ser

@@ -1,4 +1,4 @@
-# 	$NetBSD: EVERGLADES32,v 1.3.2.6 2001/03/12 13:29:27 bouyer Exp $
+# 	$NetBSD: EVERGLADES32,v 1.3.2.7 2001/03/27 15:31:34 bouyer Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -6,7 +6,7 @@
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.3.2.6 $"
+#ident 		"GENERIC-$Revision: 1.3.2.7 $"
 
 maxusers	64
 
@@ -163,7 +163,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 
 ## File system options.
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
-options 	QUOTA		# FFS quotas
+#options 	QUOTA		# FFS quotas
 options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP         # FFS soft updates support.
 

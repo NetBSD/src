@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.1.2.3 2001/03/12 13:28:17 bouyer Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.1.2.4 2001/03/27 15:30:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@ protected:
 	void hd64461_dump(platid_t &);
 	void bsc_dump(void);
 	void pfc_dump(void);
+	void tmu_dump(void);
+	void tmu_channel_dump(int, paddr_t, paddr_t, paddr_t);
 	void icu_dump(void);
 	void icu_priority(void);
 	void icu_control(void);
@@ -98,6 +100,8 @@ protected:
 public:
 	BOOL init(void);
 	BOOL setupLoader(void);
+	paddr_t setupBootInfo(Loader &);
+
 	void systemInfo(void);
 	void jump(kaddr_t info, kaddr_t pvce);
 

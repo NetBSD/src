@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.5.14.2 2001/03/12 13:27:43 bouyer Exp $	*/
+/*	$NetBSD: iomd.c,v 1.5.14.3 2001/03/27 15:30:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -39,6 +39,7 @@
  * Probing and configuration for the IOMD
  *
  * Created      : 10/10/95
+ * Updated	: 18/03/01 for rpckbd as part of the wscons project
  */
 
 #include <sys/param.h>
@@ -254,12 +255,17 @@ iomdattach(parent, self, aux)
 	ia.ia_clk.ca_ioh = ioh;
 	config_found(self, &ia, iomdprint);
 
-	/* Attach kbd device */
-
+	/* Attach kbd device when configured */
 	if (bus_space_subregion(iot, ioh, IOMD_KBDDAT, 8, &ia.ia_kbd.ka_ioh))
 		panic("%s: Cannot map kbd registers\n", self->dv_xname);
 	ia.ia_kbd.ka_name = "kbd";
 	ia.ia_kbd.ka_iot = iot;
+	ia.ia_kbd.ka_rxirq = IRQ_KBDRX;
+	ia.ia_kbd.ka_txirq = IRQ_KBDTX;
+	config_found(self, &ia, iomdprint);
+
+	/* Attach rpckbc device when configured */
+	ia.ia_kbd.ka_name = "rpckbd";
 	ia.ia_kbd.ka_rxirq = IRQ_KBDRX;
 	ia.ia_kbd.ka_txirq = IRQ_KBDTX;
 	config_found(self, &ia, iomdprint);

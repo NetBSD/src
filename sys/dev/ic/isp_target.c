@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.c,v 1.9.2.3 2001/01/05 17:35:41 bouyer Exp $ */
+/* $NetBSD: isp_target.c,v 1.9.2.4 2001/03/27 15:31:58 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -30,7 +30,7 @@
 /*
  * Machine and OS Independent Target Mode Code for the Qlogic SCSI/FC adapters.
  *
- * Copyright (c) 1999 by Matthew Jacob
+ * Copyright (c) 1999, 2000, 2001 by Matthew Jacob
  * All rights reserved.
  * mjacob@feral.com
  *
@@ -40,10 +40,7 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice immediately at the beginning of the file, without modification,
  *    this list of conditions, and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
+ * 2. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -118,7 +115,7 @@ static void isp_handle_ctio2(struct ispsoftc *, ct2_entry_t *);
  * The third group that can show up in the response queue are Immediate
  * Notification events. These include things like notifications of SCSI bus
  * resets, or Bus Device Reset messages or other messages received. This
- * a classic oddbins area. It can get  a little wierd because you then turn
+ * a classic oddbins area. It can get  a little weird because you then turn
  * around and acknowledge the Immediate Notify by writing an entry onto the
  * request queue and then the f/w turns around and gives you an acknowledgement
  * to *your* acknowledgement on the response queue (the idea being to let
@@ -137,10 +134,7 @@ static void isp_handle_ctio2(struct ispsoftc *, ct2_entry_t *);
  */
 
 int
-isp_target_notify(isp, vptr, optrp)
-	struct ispsoftc *isp;
-	void *vptr;
-	u_int16_t *optrp;
+isp_target_notify(struct ispsoftc *isp, void *vptr, u_int16_t *optrp)
 {
 	u_int16_t status, seqid;
 	union {
@@ -299,13 +293,8 @@ isp_target_notify(isp, vptr, optrp)
  * response entry. The caller is responsible for synchronizing this.
  */
 int
-isp_lun_cmd(isp, cmd, bus, tgt, lun, opaque)
-	struct ispsoftc *isp;
-	int cmd;
-	int bus;
-	int tgt;
-	int lun;
-	u_int32_t opaque;
+isp_lun_cmd(struct ispsoftc *isp, int cmd, int bus, int tgt,
+    int lun, u_int32_t opaque)
 {
 	lun_entry_t el;
 	u_int16_t iptr, optr;
@@ -357,9 +346,7 @@ isp_lun_cmd(isp, cmd, bus, tgt, lun, opaque)
 
 
 int
-isp_target_put_entry(isp, ap)
-	struct ispsoftc *isp;
-	void *ap;
+isp_target_put_entry(struct ispsoftc *isp, void *ap)
 {
 	void *outp;
 	u_int16_t iptr, optr;
@@ -396,13 +383,8 @@ isp_target_put_entry(isp, ap)
 }
 
 int
-isp_target_put_atio(isp, iid, tgt, lun, ttype, tval)
-	struct ispsoftc *isp;
-	int iid;
-	int tgt;
-	int lun;
-	int ttype;
-	int tval;
+isp_target_put_atio(struct ispsoftc *isp, int iid, int tgt, int lun, int ttype,
+    int tval)
 {
 	union {
 		at_entry_t _atio;
@@ -451,7 +433,7 @@ isp_target_put_atio(isp, iid, tgt, lun, ttype, tval)
  */
 
 int
-isp_endcmd(struct ispsoftc *isp, void *arg, u_int32_t code, u_int32_t hdl)
+isp_endcmd(struct ispsoftc *isp, void *arg, u_int32_t code, u_int16_t hdl)
 {
 	int sts;
 	union {
@@ -491,13 +473,14 @@ isp_endcmd(struct ispsoftc *isp, void *arg, u_int32_t code, u_int32_t hdl)
 			cto->rsp.m1.ct_senselen = 16;
 			cto->ct_flags |= CT2_SNSLEN_VALID;
 		}
-		cto->ct_reserved = hdl;
+		cto->ct_syshandle = hdl;
 	} else {
 		at_entry_t *aep = arg;
 		ct_entry_t *cto = &un._ctio;
 
 		cto->ct_header.rqs_entry_type = RQSTYPE_CTIO;
 		cto->ct_header.rqs_entry_count = 1;
+		cto->ct_fwhandle = aep->at_handle;
 		cto->ct_iid = aep->at_iid;
 		cto->ct_tgt = aep->at_tgt;
 		cto->ct_lun = aep->at_lun;
@@ -508,16 +491,13 @@ isp_endcmd(struct ispsoftc *isp, void *arg, u_int32_t code, u_int32_t hdl)
 			cto->ct_flags |= CT_CCINCR;
 		}
 		cto->ct_scsi_status = sts;
-		cto->ct_reserved = hdl;
+		cto->ct_syshandle = hdl;
 	}
 	return (isp_target_put_entry(isp, &un));
 }
 
 void
-isp_target_async(isp, bus, event)
-	struct ispsoftc *isp;
-	int bus;
-	int event;
+isp_target_async(struct ispsoftc *isp, int bus, int event)
 {
 	tmd_event_t evt;
 	tmd_msg_t msg;
@@ -580,10 +560,7 @@ isp_target_async(isp, bus, event)
  */
 
 static void
-isp_got_msg(isp, bus, inp)
-	struct ispsoftc *isp;
-	int bus;
-	in_entry_t *inp;
+isp_got_msg(struct ispsoftc *isp, int bus, in_entry_t *inp)
 {
 	u_int8_t status = inp->in_status & ~QLTM_SVALID;
 
@@ -609,10 +586,7 @@ isp_got_msg(isp, bus, inp)
  * Synthesize a message from the task management flags in a FCP_CMND_IU.
  */
 static void
-isp_got_msg_fc(isp, bus, inp)
-	struct ispsoftc *isp;
-	int bus;
-	in_fcentry_t *inp;
+isp_got_msg_fc(struct ispsoftc *isp, int bus, in_fcentry_t *inp)
 {
 	static char *f1 = "%s from iid %d lun %d seq 0x%x";
 	static char *f2 = 
@@ -668,9 +642,7 @@ isp_got_msg_fc(isp, bus, inp)
 }
 
 static void
-isp_notify_ack(isp, arg)
-	struct ispsoftc *isp;
-	void *arg;
+isp_notify_ack(struct ispsoftc *isp, void *arg)
 {
 	char storage[QENTRY_LEN];
 	u_int16_t iptr, optr;
@@ -731,9 +703,7 @@ isp_notify_ack(isp, arg)
 }
 
 static void
-isp_handle_atio(isp, aep)
-	struct ispsoftc *isp;
-	at_entry_t *aep;
+isp_handle_atio(struct ispsoftc *isp, at_entry_t *aep)
 {
 	int lun;
 	lun = aep->at_lun;
@@ -813,9 +783,7 @@ isp_handle_atio(isp, aep)
 }
 
 static void
-isp_handle_atio2(isp, aep)
-	struct ispsoftc *isp;
-	at2_entry_t *aep;
+isp_handle_atio2(struct ispsoftc *isp, at2_entry_t *aep)
 {
 	int lun;
 
@@ -898,16 +866,14 @@ isp_handle_atio2(isp, aep)
 }
 
 static void
-isp_handle_ctio(isp, ct)
-	struct ispsoftc *isp;
-	ct_entry_t *ct;
+isp_handle_ctio(struct ispsoftc *isp, ct_entry_t *ct)
 {
-	XS_T *xs;
+	void *xs;
 	int pl = ISP_LOGTDEBUG2;
 	char *fmsg = NULL;
 
-	if (ct->ct_reserved) {
-		xs = isp_find_xs(isp, ct->ct_reserved);
+	if (ct->ct_syshandle) {
+		xs = isp_find_xs(isp, ct->ct_syshandle);
 		if (xs == NULL)
 			pl = ISP_LOGALL;
 	} else {
@@ -1035,7 +1001,7 @@ isp_handle_ctio(isp, ct)
 		 * The assumption is that they'll all be returned in the
 		 * order we got them.
 		 */
-		if (ct->ct_reserved == 0) {
+		if (ct->ct_syshandle == 0) {
 			if ((ct->ct_flags & CT_SENDSTATUS) == 0) {
 				isp_prt(isp, pl,
 				    "intermediate CTIO completed ok");
@@ -1046,7 +1012,7 @@ isp_handle_ctio(isp, ct)
 		} else {
 			isp_prt(isp, pl,
 			    "NO xs for CTIO (handle 0x%x) status 0x%x",
-			    ct->ct_reserved, ct->ct_status & ~QLTM_SVALID);
+			    ct->ct_syshandle, ct->ct_status & ~QLTM_SVALID);
 		}
 	} else {
 		if (ct->ct_flags & CT_SENDSTATUS) {
@@ -1065,7 +1031,7 @@ isp_handle_ctio(isp, ct)
 			 * notify platform dependent layers.
 			 */
 			isp_prt(isp, pl, "data CTIO complete");
-			ISP_DMAFREE(isp, xs, ct->ct_reserved);
+			ISP_DMAFREE(isp, xs, ct->ct_syshandle);
 		}
 		(void) isp_async(isp, ISPASYNC_TARGET_ACTION, ct);
 		/*
@@ -1075,16 +1041,14 @@ isp_handle_ctio(isp, ct)
 }
 
 static void
-isp_handle_ctio2(isp, ct)
-	struct ispsoftc *isp;
-	ct2_entry_t *ct;
+isp_handle_ctio2(struct ispsoftc *isp, ct2_entry_t *ct)
 {
 	XS_T *xs;
 	int pl = ISP_LOGTDEBUG2;
 	char *fmsg = NULL;
 
-	if (ct->ct_reserved) {
-		xs = isp_find_xs(isp, ct->ct_reserved);
+	if (ct->ct_syshandle) {
+		xs = isp_find_xs(isp, ct->ct_syshandle);
 		if (xs == NULL)
 			pl = ISP_LOGALL;
 	} else {
@@ -1215,7 +1179,7 @@ isp_handle_ctio2(isp, ct)
 		 * The assumption is that they'll all be returned in the
 		 * order we got them.
 		 */
-		if (ct->ct_reserved == 0) {
+		if (ct->ct_syshandle == 0) {
 			if ((ct->ct_flags & CT_SENDSTATUS) == 0) {
 				isp_prt(isp, pl,
 				    "intermediate CTIO completed ok");
@@ -1226,7 +1190,7 @@ isp_handle_ctio2(isp, ct)
 		} else {
 			isp_prt(isp, pl,
 			    "NO xs for CTIO (handle 0x%x) status 0x%x",
-			    ct->ct_reserved, ct->ct_status & ~QLTM_SVALID);
+			    ct->ct_syshandle, ct->ct_status & ~QLTM_SVALID);
 		}
 	} else {
 		if (ct->ct_flags & CT_SENDSTATUS) {
@@ -1245,7 +1209,7 @@ isp_handle_ctio2(isp, ct)
 			 * notify platform dependent layers.
 			 */
 			isp_prt(isp, pl, "data CTIO complete");
-			ISP_DMAFREE(isp, xs, ct->ct_reserved);
+			ISP_DMAFREE(isp, xs, ct->ct_syshandle);
 		}
 		(void) isp_async(isp, ISPASYNC_TARGET_ACTION, ct);
 		/*

@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.1.2.4 2001/03/12 13:30:01 bouyer Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.1.2.5 2001/03/27 15:31:50 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.16 2001/03/08 04:24:41 thorpej Exp 
+ *	NetBSD: cardbusdevs,v 1.17 2001/03/14 01:41:09 christos Exp 
  */
 
 /*
@@ -106,6 +106,7 @@
 
 /* AboCom products */
 #define	CARDBUS_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 Ethernet */
+#define	CARDBUS_PRODUCT_ABOCOM_PCM200	0xab03		/* FE2500 10/100 Ethernet */
 
 /* Intel products */
 #define	CARDBUS_PRODUCT_INTEL_82557	0x1229		/* 82557 Fast Ethernet LAN Controller */

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: resource.h,v 1.1.2.2 2001/02/11 19:10:10 bouyer Exp $	*/
+/* -*-C++-*-	$NetBSD: resource.h,v 1.1.2.3 2001/03/27 15:30:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
 #define IDC_MAIN_OPTION_S	151
 #define IDC_MAIN_OPTION_V	152
 #define IDC_MAIN_OPTION_H	153
+#define IDC_MAIN_OPTION_H_SPEED 154
 
 #define IDC_MAIN_DIR		1001
 #define IDC_MAIN_PLATFORM	1002
@@ -107,6 +108,8 @@
 #define IDC_CONS_BTN2		312
 #define IDC_CONS_BTN3		313
 #define IDC_CONS_EDIT		320
+#define IDC_CONS_FILESAVE	321
+#define IDC_CONS_FILENAME	322
 
 // String table.
 #define IDS_APP_TITLE			10000

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.29.2.3 2001/02/11 19:17:49 bouyer Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.29.2.4 2001/03/27 15:32:49 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -220,15 +220,13 @@ uvm_vslock(p, addr, len, access_type)
 {
 	vm_map_t map;
 	vaddr_t start, end;
-	int rv;
+	int error;
 
 	map = &p->p_vmspace->vm_map;
 	start = trunc_page((vaddr_t)addr);
 	end = round_page((vaddr_t)addr + len);
-
-	rv = uvm_fault_wire(map, start, end, access_type);
-
-	return (rv);
+	error = uvm_fault_wire(map, start, end, access_type);
+	return error;
 }
 
 /*
@@ -273,7 +271,7 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	void *arg;
 {
 	struct user *up = p2->p_addr;
-	int rv;
+	int error;
 
 	if (shared == TRUE) {
 		p2->p_vmspace = NULL;
@@ -290,10 +288,10 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	 * Note the kernel stack gets read/write accesses right off
 	 * the bat.
 	 */
-	rv = uvm_fault_wire(kernel_map, (vaddr_t)up,
+	error = uvm_fault_wire(kernel_map, (vaddr_t)up,
 	    (vaddr_t)up + USPACE, VM_PROT_READ | VM_PROT_WRITE);
-	if (rv != KERN_SUCCESS)
-		panic("uvm_fork: uvm_fault_wire failed: %d", rv);
+	if (error)
+		panic("uvm_fork: uvm_fault_wire failed: %d", error);
 
 	/*
 	 * p_stats currently points at a field in the user struct.  Copy

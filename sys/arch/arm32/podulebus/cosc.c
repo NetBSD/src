@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.11 1999/09/30 22:59:53 thorpej Exp $	*/
+/*	$NetBSD: cosc.c,v 1.11.2.1 2001/03/27 15:30:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -57,7 +57,7 @@
 #include <arm32/podulebus/escvar.h>
 #include <arm32/podulebus/coscreg.h>
 #include <arm32/podulebus/coscvar.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 void coscattach	__P((struct device *, struct device *, void *));
 int coscmatch	__P((struct device *, struct cfdata *, void *));
@@ -132,6 +132,8 @@ coscattach(pdp, dp, auxp)
 	sc->sc_podule_number = pa->pa_podule_number;
 	sc->sc_podule = pa->pa_podule;
 	podules[sc->sc_podule_number].attached = 1;
+
+	printf(":");
 
 	if (pa->pa_podule->manufacturer == MANUFACTURER_ACORN
 	    && pa->pa_podule->product == PODULE_ACORN_SCSI)
@@ -278,9 +280,16 @@ coscattach(pdp, dp, auxp)
 #if COSC_POLL > 0
 	if (!cosc_poll)
 #endif
-	if (irq_claim(sc->sc_podule->interrupt, &sc->sc_softc.sc_ih))
-		panic("%s: Cannot install IRQ handler\n", dp->dv_xname);
-	
+	{
+		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		    dp->dv_xname, "intr");
+		sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
+		    cosc_intr, sc, &sc->sc_intrcnt);
+		if (sc->sc_ih == NULL)
+			panic("%s: Cannot install IRQ handler\n",
+			    dp->dv_xname);
+	}
+
 	printf("\n");
 
 	/* attach all scsi units on us */

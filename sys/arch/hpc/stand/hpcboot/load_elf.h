@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: load_elf.h,v 1.1.2.2 2001/02/11 19:09:56 bouyer Exp $	*/
+/* -*-C++-*-	$NetBSD: load_elf.h,v 1.1.2.3 2001/03/27 15:30:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@ class ElfLoader : public Loader {
 private:
 	Elf_Ehdr _eh;
 	Elf_Phdr _ph[16];
+	Elf_Shdr _sh[16];
 
 	BOOL is_elf_file(void) {
 		return

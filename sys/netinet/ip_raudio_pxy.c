@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_raudio_pxy.c,v 1.5.6.2 2000/11/20 18:10:33 bouyer Exp $	*/
+/*	$NetBSD: ip_raudio_pxy.c,v 1.5.6.3 2001/03/27 15:32:33 bouyer Exp $	*/
 
 /*
- * Id: ip_raudio_pxy.c,v 1.7.2.1 2000/05/06 11:19:33 darrenr Exp
+ * Id: ip_raudio_pxy.c,v 1.7.2.3 2000/10/27 22:54:04 darrenr Exp
  */
 #if SOLARIS && defined(_KERNEL)
 extern	kmutex_t	ipf_rw;
@@ -173,8 +173,8 @@ nat_t *nat;
 	tcphdr_t *tcp, tcph, *tcp2 = &tcph;
 	raudio_t *rap = aps->aps_data;
 	struct in_addr swa, swb;
-	u_int a1, a2, a3, a4;
 	int off, dlen, slen;
+	int a1, a2, a3, a4;
 	u_short sp, dp;
 	fr_info_t fi;
 	tcp_seq seq;
@@ -267,6 +267,7 @@ nat_t *nat;
 	tcp2->th_off = 5;
 	fi.fin_dp = (char *)tcp2;
 	fi.fin_fr = &raudiofr;
+	fi.fin_dlen = sizeof(*tcp2);
 	tcp2->th_win = htons(8192);
 	slen = ip->ip_len;
 	ip->ip_len = fin->fin_hlen + sizeof(*tcp);

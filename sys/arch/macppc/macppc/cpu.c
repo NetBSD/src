@@ -1,7 +1,8 @@
-/*	$NetBSD: cpu.c,v 1.4.2.3 2001/03/12 13:29:01 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4.2.4 2001/03/27 15:31:10 bouyer Exp $	*/
 
 /*-
- * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
+ * Copyright (c) 2001 Tsubai Masanari.
+ * Copyright (c) 1998, 1999, 2001 Internet Research Institute, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +42,7 @@
 #include <uvm/uvm_extern.h>
 #include <dev/ofw/openfirm.h>
 #include <powerpc/hid.h>
+#include <powerpc/openpic.h>
 
 #include <machine/autoconf.h>
 #include <machine/bat.h>
@@ -65,6 +67,7 @@ struct cfattach cpu_ca = {
 int ncpus;
 
 #ifdef MULTIPROCESSOR
+int cpuintr(void *);
 struct cpu_info cpu_info[2];
 #else
 struct cpu_info cpu_info_store;
@@ -73,9 +76,10 @@ struct cpu_info cpu_info_store;
 extern struct cfdriver cpu_cd;
 extern int powersave;
 
-#define HAMMERHEAD	0xf8000000
-#define HH_ARBCONF	(HAMMERHEAD + 0x90)
-#define HH_INTR		(HAMMERHEAD + 0xc0)
+#define HH_ARBCONF		0xf8000090
+#define HH_INTR_SECONDARY	0xf80000c0
+#define HH_INTR_PRIMARY		0xf3019000
+#define GC_IPI_IRQ		30
 
 int
 cpumatch(parent, cf, aux)
@@ -85,34 +89,32 @@ cpumatch(parent, cf, aux)
 {
 	struct confargs *ca = aux;
 	int *reg = ca->ca_reg;
-	int q;
+	int node;
 
-	if (strcmp(ca->ca_name, cpu_cd.cd_name))
+	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
 		return 0;
 
-	q = OF_finddevice("/cpus");
-	if (q != -1 && q != 0) {
-		for (q = OF_child(q); q != 0; q = OF_peer(q)) {
+	node = OF_finddevice("/cpus");
+	if (node != -1) {
+		for (node = OF_child(node); node != 0; node = OF_peer(node)) {
 			uint32_t cpunum;
 			int l;
-			l = OF_getprop(q, "reg", &cpunum, sizeof(cpunum));
+			l = OF_getprop(node, "reg", &cpunum, sizeof(cpunum));
 			if (l == 4 && reg[0] == cpunum)
 				return 1;
 		}
 	}
 	switch (reg[0]) {
-	case 0:	/* master CPU */
+	case 0:	/* primary CPU */
 		return 1;
 	case 1:	/* secondary CPU */
-		q = OF_finddevice("/hammerhead");
-		if (q != -1) {
+		if (OF_finddevice("/hammerhead") != -1)
 			if (in32rb(HH_ARBCONF) & 0x02)
 				return 1;
-			return 0;
-		}
-	default: /* impossible CPU */
-		return 0;
+		break;
 	}
+
+	return 0;
 }
 
 #define MPC601		1
@@ -125,7 +127,6 @@ cpumatch(parent, cf, aux)
 #define MPC620		20
 #define MPC750		8
 #define MPC7400		12
-#define MPC7400_2	0x800c
 
 void
 cpuattach(parent, self, aux)
@@ -140,10 +141,11 @@ cpuattach(parent, self, aux)
 	ncpus++;
 #ifdef MULTIPROCESSOR
 	cpu_info[id].ci_cpuid = id;
+	cpu_info[id].ci_intrdepth = -1;
 #endif
 
 	asm volatile ("mfpvr %0" : "=r"(pvr));
-	vers = pvr >> 16;
+	vers = (pvr >> 16) & 0x0fff;
 
 	switch (id) {
 	case 0:
@@ -152,7 +154,6 @@ cpuattach(parent, self, aux)
 		case MPC604:
 		case MPC604ev:
 		case MPC7400:
-		case MPC7400_2:
 			asm volatile ("mtspr 1023,%0" :: "r"(id));
 		}
 		identifycpu(model);
@@ -181,7 +182,6 @@ cpuattach(parent, self, aux)
 	case MPC603ev:
 	case MPC750:
 	case MPC7400:
-	case MPC7400_2:
 		/* Select DOZE mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
@@ -196,7 +196,6 @@ cpuattach(parent, self, aux)
 	switch (vers) {
 	case MPC750:
 	case MPC7400:
-	case MPC7400_2:
 		/* Select NAP mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_NAP;
@@ -210,7 +209,6 @@ cpuattach(parent, self, aux)
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
 		break;
 	case MPC7400:
-	case MPC7400_2:
 		hid0 &= ~HID0_SPD;
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
 		hid0 |= HID0_EIEC;
@@ -230,7 +228,7 @@ cpuattach(parent, self, aux)
 	/*
 	 * Display cache configuration.
 	 */
-	if (vers == MPC750 || vers == MPC7400 || vers == MPC7400_2) {
+	if (vers == MPC750 || vers == MPC7400) {
 		printf("%s", self->dv_xname);
 		config_l2cr();
 	} else if (OF_finddevice("/bandit/ohare") != -1) {
@@ -254,7 +252,6 @@ static struct cputab models[] = {
 	{ MPC620,     "620" },
 	{ MPC750,     "750" },
 	{ MPC7400,   "7400" },
-	{ MPC7400_2, "7400" },
 	{ 0,	       NULL }
 };
 
@@ -270,7 +267,7 @@ identifycpu(cpu_model)
 	rev = pvr & 0xffff;
 
 	while (cp->name) {
-		if (cp->version == vers)
+		if (cp->version == (vers & 0x0fff))
 			break;
 		cp++;
 	}
@@ -424,7 +421,7 @@ struct cpu_hatch_data {
 };
 
 volatile struct cpu_hatch_data *cpu_hatch_data;
-volatile int cpu_hatchstack;
+volatile int cpu_hatch_stack;
 
 int
 cpu_spinup()
@@ -434,20 +431,35 @@ cpu_spinup()
 	struct pcb *pcb;
 	struct pglist mlist;
 	int error;
+	int size = 0;
+	char *cp;
 
 	/*
-	 * Allocate UPAGES contiguous pages for the idle PCB and stack
+	 * Allocate some contiguous pages for the idle PCB and stack
 	 * from the lowest 256MB (because bat0 always maps it va == pa).
 	 */
 	TAILQ_INIT(&mlist);
-	error = uvm_pglistalloc(USPACE, 0x0, 0x10000000, 0, 0, &mlist, 1, 1);
+	size += USPACE;
+	size += 8192;	/* INTSTK */
+	size += 4096;	/* SPILLSTK */
+
+	error = uvm_pglistalloc(size, 0x0, 0x10000000, 0, 0, &mlist, 1, 1);
 	if (error) {
 		printf(": unable to allocate idle stack\n");
 		return -1;
 	}
 
-	pcb = (void *)VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
-	bzero(pcb, USPACE);
+	cp = (void *)VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
+	bzero(cp, size);
+
+	pcb = (struct pcb *)cp;
+	cp += USPACE;
+	cpu_info[1].ci_idle_pcb = pcb;
+
+	cpu_info[1].ci_intstk = cp + 8192;
+	cp += 8192;
+	cpu_info[1].ci_spillstk = cp + 4096;
+	cp += 4096;
 
 	/*
 	 * Initialize the idle stack pointer, reserving space for an
@@ -458,7 +470,8 @@ cpu_spinup()
 	cpu_hatch_data = h;
 	h->running = 0;
 	h->pir = 1;
-	cpu_hatchstack = pcb->pcb_sp;
+	cpu_hatch_stack = pcb->pcb_sp;
+	cpu_info[1].ci_lasttb = cpu_info[0].ci_lasttb;
 
 	/* copy special registers */
 	asm volatile ("mfspr %0,1008" : "=r"(h->hid0));
@@ -468,26 +481,32 @@ cpu_spinup()
 
 	asm volatile ("sync; isync");
 
-	/* Start secondary cpu and stop timebase. */
-	out32(0xf2800000, (int)cpu_spinup_trampoline);
-	out32(HH_INTR, ~0);
-	out32(HH_INTR, 0);
+	if (openpic_base) {
+		/* XXX */
+		panic("cpu_spinup");
+	} else {
+		/* Start secondary cpu and stop timebase. */
+		out32(0xf2800000, (int)cpu_spinup_trampoline);
+		out32(HH_INTR_SECONDARY, ~0);
+		out32(HH_INTR_SECONDARY, 0);
 
-	/* sync timebase (XXX shouldn't be zero'ed) */
-	asm volatile ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
+		/* sync timebase (XXX shouldn't be zero'ed) */
+		asm volatile ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
 
-	/*
-	 * wait for secondary spin up (1.5ms @ 604/200MHz)
-	 * XXX we cannot use delay() here because timebase is not running.
-	 */
-	for (i = 0; i < 100000; i++)
-		if (h->running)
-			break;
+		/*
+		 * wait for secondary spin up (1.5ms @ 604/200MHz)
+		 * XXX we cannot use delay() here because timebase is not
+		 * running.
+		 */
+		for (i = 0; i < 100000; i++)
+			if (h->running)
+				break;
 
-	/* Start timebase. */
-	out32(0xf2800000, 0x100);
-	out32(HH_INTR, ~0);
-	out32(HH_INTR, 0);
+		/* Start timebase. */
+		out32(0xf2800000, 0x100);
+		out32(HH_INTR_SECONDARY, ~0);
+		out32(HH_INTR_SECONDARY, 0);
+	}
 
 	delay(100000);		/* wait for secondary printf */
 
@@ -496,8 +515,16 @@ cpu_spinup()
 		return -1;
 	}
 
+	if (!openpic_base) {
+		/* Register IPI. */
+		intr_establish(GC_IPI_IRQ, IST_LEVEL, IPL_HIGH, cpuintr, NULL);
+	}
+
 	return 0;
 }
+
+volatile static int start_secondary_cpu;
+extern long ticks_per_intr;
 
 void
 cpu_hatch()
@@ -512,6 +539,7 @@ cpu_hatch()
 
 	/* Set PIR (Processor Identification Register).  i.e. whoami */
 	asm volatile ("mtspr 1023,%0" :: "r"(h->pir));
+	asm volatile ("mtsprg 0,%0" :: "r"(&cpu_info[h->pir]));
 
 	/* Initialize MMU. */
 	asm ("mtibatu 0,%0" :: "r"(0));
@@ -551,21 +579,79 @@ cpu_hatch()
 	identifycpu(model);
 	printf(": %s, ID %d\n", model, cpu_number());
 
-	/* XXX Enter power-saving mode and never return. */
-	asm volatile ("
-	    1:
-		sync
-		mtmsr %0
-		isync
-		b 1b
-	" :: "r"(PSL_POW));
+	while (start_secondary_cpu == 0);
 
-	for (;;);
+	printf("secondary CPU started\n");
+	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
+
+	if (!openpic_base)
+		out32(HH_INTR_SECONDARY, ~0);	/* Reset interrupt. */
+
+	curcpu()->ci_ipending = 0;
+	curcpu()->ci_cpl = 0;
 }
 
 void
 cpu_boot_secondary_processors()
 {
-	/* currently noop */
+	start_secondary_cpu = 1;
+}
+
+/*static*/ volatile int IPI[2];
+
+void
+macppc_send_ipi(ci, mesg)
+	volatile struct cpu_info *ci;
+	int mesg;
+{
+	int cpu_id = ci->ci_cpuid;
+
+	/* printf("send_ipi(%d,%d)\n", cpu_id, mesg); */
+	IPI[cpu_id] |= mesg;
+
+	if (openpic_base) {
+		/* XXX */
+	} else {
+		switch (cpu_id) {
+		case 0:
+			in32(HH_INTR_PRIMARY);
+			break;
+		case 1:
+			out32(HH_INTR_SECONDARY, ~0);
+			out32(HH_INTR_SECONDARY, 0);
+			break;
+		}
+	}
+}
+
+int
+cpuintr(v)
+	void *v;
+{
+	int cpu_id = cpu_number();
+	int msr;
+
+	/* printf("cpuintr{%d}\n", cpu_id); */
+
+	if (IPI[cpu_id] & MACPPC_IPI_FLUSH_FPU) {
+		if (curcpu()->ci_fpuproc) {
+			save_fpu(curcpu()->ci_fpuproc);
+			if (curcpu()->ci_fpuproc)
+				panic("cpuintr");
+		}
+	}
+	if (IPI[cpu_id] & MACPPC_IPI_HALT) {
+		printf("halt{%d}\n", cpu_id);
+		asm volatile ("mfmsr %0" : "=r"(msr));
+		msr &= ~PSL_EE;
+		msr |= PSL_POW;
+		for (;;) {
+			asm volatile ("sync; isync");
+			asm volatile ("mtmsr %0" :: "r"(msr));
+		}
+	}
+	IPI[cpu_id] = 0;
+
+	return 1;
 }
 #endif /* MULTIPROCESSOR */

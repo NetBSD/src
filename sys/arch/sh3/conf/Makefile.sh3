@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.1.2.3 2001/02/11 19:12:11 bouyer Exp $
+#	$NetBSD: Makefile.sh3,v 1.1.2.4 2001/03/27 15:31:26 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -55,7 +55,7 @@ CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS?=	-e start -T ../../conf/${LDSCRIPTBASE}
+LINKFLAGS?=	-e start -T ${THISSH3}/conf/${LDSCRIPTBASE}
 STRIPFLAGS=	--strip-debug
 
 .if exists(${THISSH3}/conf/Makefile.${TARGET_MACHINE}.inc)

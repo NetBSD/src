@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.52.2.3 2001/02/11 19:17:18 bouyer Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.52.2.4 2001/03/27 15:32:35 bouyer Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -43,7 +43,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  */
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -668,7 +668,7 @@ send:
  
  		/* Form timestamp option as shown in appendix A of RFC 1323. */
  		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
- 		*lp++ = htonl(tcp_now);
+ 		*lp++ = htonl(TCP_TIMESTAMP(tp));
  		*lp   = htonl(tp->ts_recent);
  		optlen += TCPOLEN_TSTAMP_APPA;
  	}

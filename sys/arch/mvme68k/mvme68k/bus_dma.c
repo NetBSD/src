@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.8.2.3 2001/01/05 17:34:49 bouyer Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.8.2.4 2001/03/27 15:31:13 bouyer Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8.2.3 2001/01/05 17:34:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8.2.4 2001/03/27 15:31:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -597,7 +597,7 @@ _bus_dmamem_alloc_common(t, low, high, size, alignment, boundary,
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr > high) {
-			printf("vm_page_alloc_memory returned non-sensical"
+			printf("uvm_pglistalloc returned non-sensical"
 			    " address 0x%lx\n", curaddr);
 			panic("_bus_dmamem_alloc_common");
 		}

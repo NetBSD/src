@@ -27,7 +27,7 @@
  *	i4b_sframe.c - s frame handling routines
  *	----------------------------------------
  *
- *	$Id: i4b_sframe.c,v 1.1.1.1.2.2 2001/01/08 14:57:59 bouyer Exp $ 
+ *	$Id: i4b_sframe.c,v 1.1.1.1.2.3 2001/03/27 15:32:42 bouyer Exp $ 
  *
  * $FreeBSD$
  *
@@ -62,7 +62,6 @@
 #endif
 
 #include <netisdn/i4b_l1l2.h>
-#include <netisdn/i4b_l2l3.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
 
@@ -73,9 +72,8 @@
  *	process s frame
  *---------------------------------------------------------------------------*/
 void
-i4b_rxd_s_frame(int unit, struct mbuf *m)
+i4b_rxd_s_frame(l2_softc_t *l2sc, struct mbuf *m)
 {
-	l2_softc_t *l2sc = &l2_softc[unit];
 	u_char *ptr = m->m_data;
 	
 	if(!((l2sc->tei_valid == TEI_VALID) &&
@@ -128,11 +126,11 @@ i4b_tx_rr_command(l2_softc_t *l2sc, pbit_t pbit)
 {
 	struct mbuf *m;
 
-	NDBGL2(L2_S_MSG, "tx RR, unit = %d", l2sc->unit);
+	NDBGL2(L2_S_MSG, "tx RR, bri = %d", l2sc->bri);
 
 	m = i4b_build_s_frame(l2sc, CR_CMD_TO_NT, pbit, RR);
 
-	PH_Data_Req(l2sc->unit, m, MBUF_FREE);
+	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 
 	l2sc->stat.tx_rr++; /* update statistics */
 }
@@ -145,11 +143,11 @@ i4b_tx_rr_response(l2_softc_t *l2sc, fbit_t fbit)
 {
 	struct mbuf *m;
 
-	NDBGL2(L2_S_MSG, "tx RR, unit = %d", l2sc->unit);
+	NDBGL2(L2_S_MSG, "tx RR, bri = %d", l2sc->bri);
 
 	m = i4b_build_s_frame(l2sc, CR_RSP_TO_NT, fbit, RR);	
 
-	PH_Data_Req(l2sc->unit, m, MBUF_FREE);
+	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 
 	l2sc->stat.tx_rr++; /* update statistics */
 }
@@ -162,11 +160,11 @@ i4b_tx_rnr_command(l2_softc_t *l2sc, pbit_t pbit)
 {
 	struct mbuf *m;
 
-	NDBGL2(L2_S_MSG, "tx RNR, unit = %d", l2sc->unit);
+	NDBGL2(L2_S_MSG, "tx RNR, bri = %d", l2sc->bri);
 
 	m = i4b_build_s_frame(l2sc, CR_CMD_TO_NT, pbit, RNR);	
 
-	PH_Data_Req(l2sc->unit, m, MBUF_FREE);
+	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 
 	l2sc->stat.tx_rnr++; /* update statistics */
 }
@@ -179,11 +177,11 @@ i4b_tx_rnr_response(l2_softc_t *l2sc, fbit_t fbit)
 {
 	struct mbuf *m;
 
-	NDBGL2(L2_S_MSG, "tx RNR, unit = %d", l2sc->unit);
+	NDBGL2(L2_S_MSG, "tx RNR, bri = %d", l2sc->bri);
 
 	m = i4b_build_s_frame(l2sc, CR_RSP_TO_NT, fbit, RNR);
 
-	PH_Data_Req(l2sc->unit, m, MBUF_FREE);
+	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 
 	l2sc->stat.tx_rnr++; /* update statistics */
 }
@@ -196,11 +194,11 @@ i4b_tx_rej_response(l2_softc_t *l2sc, fbit_t fbit)
 {
 	struct mbuf *m;
 
-	NDBGL2(L2_S_MSG, "tx REJ, unit = %d", l2sc->unit);
+	NDBGL2(L2_S_MSG, "tx REJ, bri = %d", l2sc->bri);
 
 	m = i4b_build_s_frame(l2sc, CR_RSP_TO_NT, fbit, REJ);
 
-	PH_Data_Req(l2sc->unit, m, MBUF_FREE);
+	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 
 	l2sc->stat.tx_rej++; /* update statistics */	
 }

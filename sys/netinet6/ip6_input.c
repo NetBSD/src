@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.8.2.5 2001/03/12 13:31:55 bouyer Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.8.2.6 2001/03/27 15:32:37 bouyer Exp $	*/
 /*	$KAME: ip6_input.c,v 1.183 2001/03/01 15:15:23 itojun Exp $	*/
 
 /*
@@ -303,12 +303,23 @@ ip6_input(m)
 	 * Note that filters must _never_ set this flag, as another filter
 	 * in the list may have previously cleared it.
 	 */
-	if (pfil_run_hooks(&inet6_pfil_hook, &m, m->m_pkthdr.rcvif,
-			   PFIL_IN) != 0)
-		return;
-	if (m == NULL)
-		return;
-	ip6 = mtod(m, struct ip6_hdr *);
+	/*
+	 * let ipfilter look at packet on the wire,
+	 * not the decapsulated packet.
+	 */
+#ifdef IPSEC
+	if (!ipsec_gethist(m, NULL))
+#else
+	if (1)
+#endif
+	{
+		if (pfil_run_hooks(&inet6_pfil_hook, &m, m->m_pkthdr.rcvif,
+				   PFIL_IN) != 0)
+			return;
+		if (m == NULL)
+			return;
+		ip6 = mtod(m, struct ip6_hdr *);
+	}
 #endif /* PFIL_HOOKS */
 
 
@@ -378,6 +389,20 @@ ip6_input(m)
 		}
 	}
 
+	/* drop packets if interface ID portion is already filled */
+	if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
+		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src) &&
+		    ip6->ip6_src.s6_addr16[1]) {
+			ip6stat.ip6s_badscope++;
+			goto bad;
+		}
+		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst) &&
+		    ip6->ip6_dst.s6_addr16[1]) {
+			ip6stat.ip6s_badscope++;
+			goto bad;
+		}
+	}
+  
 #ifndef FAKE_LOOPBACK_IF
 	if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0)
 #else

@@ -27,7 +27,7 @@
  *	i4b_l2fsm.c - layer 2 FSM
  *	-------------------------
  *
- *	$Id: i4b_l2fsm.c,v 1.1.1.1.2.2 2001/01/08 14:57:49 bouyer Exp $ 
+ *	$Id: i4b_l2fsm.c,v 1.1.1.1.2.3 2001/03/27 15:32:40 bouyer Exp $ 
  *
  * $FreeBSD$
  *
@@ -63,14 +63,12 @@
 
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_l1l2.h>
-#include <netisdn/i4b_l2l3.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
 
 #include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l2fsm.h>
 
-l2_softc_t l2_softc[MAXL1UNITS];
 
 #if DO_I4B_DEBUG
 static char *l2state_text[N_STATES] = {
@@ -377,8 +375,8 @@ static void
 F_TE04(l2_softc_t *l2sc)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TE04 executing");
-	l2sc->postfsmarg = l2sc->unit;
-	l2sc->postfsmfunc = DL_Rel_Ind_A;
+	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmfunc = i4b_dl_release_ind;
 }
 
 /*---------------------------------------------------------------------------*
@@ -388,8 +386,8 @@ static void
 F_TE05(l2_softc_t *l2sc)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TE05 executing");
-	l2sc->postfsmarg = l2sc->unit;
-	l2sc->postfsmfunc = DL_Rel_Ind_A;
+	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmfunc = i4b_dl_release_ind;
 }
 
 /*---------------------------------------------------------------------------*
@@ -442,7 +440,7 @@ F_T07(l2_softc_t *l2sc)
 
 	i4b_clear_exception_conditions(l2sc);
 
-	MDL_Status_Ind(l2sc->unit, STI_L2STAT, LAYER_ACTIVE);
+	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_ACTIVE);
 	
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 
@@ -450,8 +448,8 @@ F_T07(l2_softc_t *l2sc)
 	l2sc->va = 0;
 	l2sc->vr = 0;	
 
-	l2sc->postfsmarg = l2sc->unit;
-	l2sc->postfsmfunc = DL_Est_Ind_A;
+	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmfunc = i4b_dl_establish_ind;
 
 	i4b_T203_start(l2sc);	
 
@@ -465,7 +463,7 @@ static void
 F_T08(l2_softc_t *l2sc)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_T08 executing");
-	MDL_Status_Ind(l2sc->unit, STI_L2STAT, LAYER_IDLE);
+	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_IDLE);
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 }
 
@@ -516,8 +514,8 @@ static void
 F_T13(l2_softc_t *l2sc)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_T13 executing");
-	l2sc->postfsmarg = l2sc->unit;
-	l2sc->postfsmfunc = DL_Rel_Cnf_A;
+	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmfunc = i4b_dl_release_cnf;
 }
 
 /*---------------------------------------------------------------------------*
@@ -543,8 +541,8 @@ F_AE05(l2_softc_t *l2sc)
 
 	i4b_Dcleanifq(&l2sc->i_queue);	
 
-	l2sc->postfsmarg = l2sc->unit;
-	l2sc->postfsmfunc = DL_Rel_Ind_A;
+	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmfunc = i4b_dl_release_ind;
 
 	i4b_T200_stop(l2sc);
 }
@@ -559,8 +557,8 @@ F_AE06(l2_softc_t *l2sc)
 
 	i4b_Dcleanifq(&l2sc->i_queue);	
 
-	l2sc->postfsmarg = l2sc->unit;
-	l2sc->postfsmfunc = DL_Rel_Ind_A;
+	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmfunc = i4b_dl_release_ind;
 
 	i4b_T200_stop(l2sc);
 
@@ -574,7 +572,7 @@ static void
 F_AE07(l2_softc_t *l2sc)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AE07 executing");
-	MDL_Status_Ind(l2sc->unit, STI_L2STAT, LAYER_ACTIVE);
+	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_ACTIVE);
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 }
 
@@ -607,20 +605,20 @@ F_AE09(l2_softc_t *l2sc)
 		{
 			l2sc->l3initiated = 0;
 			l2sc->vr = 0;
-			l2sc->postfsmarg = l2sc->unit;
-			l2sc->postfsmfunc = DL_Est_Cnf_A;
+			l2sc->postfsmarg = l2sc->bri;
+			l2sc->postfsmfunc = i4b_dl_establish_cnf;
 		}
 		else
 		{
 			if(l2sc->vs != l2sc->va)
 			{
 				i4b_Dcleanifq(&l2sc->i_queue);
-				l2sc->postfsmarg = l2sc->unit;
-				l2sc->postfsmfunc = DL_Est_Ind_A;
+				l2sc->postfsmarg = l2sc->bri;
+				l2sc->postfsmfunc = i4b_dl_establish_ind;
 			}
 		}
 
-		MDL_Status_Ind(l2sc->unit, STI_L2STAT, LAYER_ACTIVE);
+		i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_ACTIVE);
 		
 		i4b_T200_stop(l2sc);
 		i4b_T203_start(l2sc);
@@ -648,8 +646,8 @@ F_AE10(l2_softc_t *l2sc)
 	{
 		i4b_Dcleanifq(&l2sc->i_queue);
 
-		l2sc->postfsmarg = l2sc->unit;
-		l2sc->postfsmfunc = DL_Rel_Ind_A;
+		l2sc->postfsmarg = l2sc->bri;
+		l2sc->postfsmfunc = i4b_dl_release_ind;
 
 		i4b_T200_stop(l2sc);
 
@@ -671,8 +669,8 @@ F_AE11(l2_softc_t *l2sc)
 
 		i4b_mdl_error_ind(l2sc, "F_AE11", MDL_ERR_G);
 
-		l2sc->postfsmarg = l2sc->unit;
-		l2sc->postfsmfunc = DL_Rel_Ind_A;
+		l2sc->postfsmarg = l2sc->bri;
+		l2sc->postfsmfunc = i4b_dl_release_ind;
 
 		l2sc->Q921_state = ST_TEI_ASGD;
 	}
@@ -710,8 +708,8 @@ F_AR05(l2_softc_t *l2sc)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AR05 executing");
 
-	l2sc->postfsmarg = l2sc->unit;
-	l2sc->postfsmfunc = DL_Rel_Cnf_A;
+	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmfunc = i4b_dl_release_cnf;
 
 	i4b_T200_stop(l2sc);
 }
@@ -724,8 +722,8 @@ F_AR06(l2_softc_t *l2sc)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AR06 executing");
 
-	l2sc->postfsmarg = l2sc->unit;
-	l2sc->postfsmfunc = DL_Rel_Cnf_A;
+	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmfunc = i4b_dl_release_cnf;
 
 	i4b_T200_stop(l2sc);
 
@@ -749,7 +747,7 @@ static void
 F_AR08(l2_softc_t *l2sc)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AR08 executing");
-	MDL_Status_Ind(l2sc->unit, STI_L2STAT, LAYER_IDLE);
+	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_IDLE);
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);	
 }
 
@@ -763,8 +761,8 @@ F_AR09(l2_softc_t *l2sc)
 
 	if(l2sc->rxd_PF)
 	{
-		l2sc->postfsmarg = l2sc->unit;
-		l2sc->postfsmfunc = DL_Rel_Cnf_A;
+		l2sc->postfsmarg = l2sc->bri;
+		l2sc->postfsmfunc = i4b_dl_release_cnf;
 
 		i4b_T200_stop(l2sc);
 
@@ -788,8 +786,8 @@ F_AR10(l2_softc_t *l2sc)
 
 	if(l2sc->rxd_PF)
 	{
-		l2sc->postfsmarg = l2sc->unit;
-		l2sc->postfsmfunc = DL_Rel_Cnf_A;
+		l2sc->postfsmarg = l2sc->bri;
+		l2sc->postfsmfunc = i4b_dl_release_cnf;
 
 		i4b_T200_stop(l2sc);
 
@@ -813,8 +811,8 @@ F_AR11(l2_softc_t *l2sc)
 	{
 		i4b_mdl_error_ind(l2sc, "F_AR11", MDL_ERR_H);
 
-		l2sc->postfsmarg = l2sc->unit;
-		l2sc->postfsmfunc = DL_Rel_Cnf_A;
+		l2sc->postfsmarg = l2sc->bri;
+		l2sc->postfsmfunc = i4b_dl_release_cnf;
 
 		l2sc->Q921_state = ST_TEI_ASGD;
 	}
@@ -855,8 +853,8 @@ F_MF05(l2_softc_t *l2sc)
 
 	i4b_Dcleanifq(&l2sc->i_queue);
 	
-	l2sc->postfsmarg = l2sc->unit;
-	l2sc->postfsmfunc = DL_Rel_Ind_A;
+	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmfunc = i4b_dl_release_ind;
 	
 	i4b_T200_stop(l2sc);
 	i4b_T203_stop(l2sc);
@@ -872,8 +870,8 @@ F_MF06(l2_softc_t *l2sc)
 
 	i4b_Dcleanifq(&l2sc->i_queue);
 	
-	l2sc->postfsmarg = l2sc->unit;
-	l2sc->postfsmfunc = DL_Rel_Ind_A;
+	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmfunc = i4b_dl_release_ind;
 	
 	i4b_T200_stop(l2sc);
 	i4b_T203_stop(l2sc);
@@ -891,7 +889,7 @@ F_MF07(l2_softc_t *l2sc)
 
 	i4b_clear_exception_conditions(l2sc);
 
-	MDL_Status_Ind(l2sc->unit, STI_L2STAT, LAYER_ACTIVE);	
+	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_ACTIVE);	
 
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 
@@ -901,8 +899,8 @@ F_MF07(l2_softc_t *l2sc)
 	{
 		i4b_Dcleanifq(&l2sc->i_queue);
 	
-		l2sc->postfsmarg = l2sc->unit;
-		l2sc->postfsmfunc = DL_Est_Ind_A;
+		l2sc->postfsmarg = l2sc->bri;
+		l2sc->postfsmfunc = i4b_dl_establish_ind;
 	}
 
 	i4b_T200_stop(l2sc);
@@ -922,11 +920,11 @@ F_MF08(l2_softc_t *l2sc)
 	NDBGL2(L2_F_MSG, "FSM function F_MF08 executing");
 
 	i4b_Dcleanifq(&l2sc->i_queue);
-	MDL_Status_Ind(l2sc->unit, STI_L2STAT, LAYER_IDLE);
+	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_IDLE);
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 	
-	l2sc->postfsmarg = l2sc->unit;
-	l2sc->postfsmfunc = DL_Rel_Ind_A;
+	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmfunc = i4b_dl_release_ind;
 
 	i4b_T200_stop(l2sc);
 	i4b_T203_stop(l2sc);
@@ -1230,8 +1228,8 @@ F_TR05(l2_softc_t *l2sc)
 
 	i4b_Dcleanifq(&l2sc->i_queue);	
 
-	l2sc->postfsmarg = l2sc->unit;
-	l2sc->postfsmfunc = DL_Rel_Ind_A;
+	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmfunc = i4b_dl_release_ind;
 
 	i4b_T200_stop(l2sc);
 }
@@ -1246,8 +1244,8 @@ F_TR06(l2_softc_t *l2sc)
 
 	i4b_Dcleanifq(&l2sc->i_queue);
 
-	l2sc->postfsmarg = l2sc->unit;
-	l2sc->postfsmfunc = DL_Rel_Ind_A;
+	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmfunc = i4b_dl_release_ind;
 
 	i4b_T200_stop(l2sc);
 
@@ -1264,7 +1262,7 @@ F_TR07(l2_softc_t *l2sc)
 
 	i4b_clear_exception_conditions(l2sc);
 
-	MDL_Status_Ind(l2sc->unit, STI_L2STAT, LAYER_ACTIVE);
+	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_ACTIVE);
 	
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 
@@ -1274,8 +1272,8 @@ F_TR07(l2_softc_t *l2sc)
 	{
 		i4b_Dcleanifq(&l2sc->i_queue);		
 
-		l2sc->postfsmarg = l2sc->unit;
-		l2sc->postfsmfunc = DL_Est_Ind_A;
+		l2sc->postfsmarg = l2sc->bri;
+		l2sc->postfsmfunc = i4b_dl_establish_ind;
 	}
 
 	i4b_T200_stop(l2sc);
@@ -1295,11 +1293,11 @@ F_TR08(l2_softc_t *l2sc)
 	NDBGL2(L2_F_MSG, "FSM function F_TR08 executing");
 
 	i4b_Dcleanifq(&l2sc->i_queue);		
-	MDL_Status_Ind(l2sc->unit, STI_L2STAT, LAYER_IDLE);
+	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_IDLE);
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 
-	l2sc->postfsmarg = l2sc->unit;
-	l2sc->postfsmfunc = DL_Rel_Ind_A;
+	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmfunc = i4b_dl_release_ind;
 
 	i4b_T200_stop(l2sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.61.2.3 2001/03/12 13:29:22 bouyer Exp $ */
+/*	$NetBSD: conf.c,v 1.61.2.4 2001/03/27 15:31:29 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,41 +102,6 @@ cdev_decl(ses);
 
 #include "vcoda.h"
 cdev_decl(vc_nb_);
-
-/* open, close, ioctl */
-#define cdev_i4bctl_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
-
-/* open, close, read, write, poll */
-#define	cdev_i4brbch_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
-
-/* open, close, read, write, poll */
-#define	cdev_i4btel_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
-	(dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, D_TTY }
-
-/* open, close, read, ioctl */
-#define cdev_i4btrc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev }
-
-/* open, close, read, ioctl, poll */
-#define cdev_i4b_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }	
 
 #include "i4b.h"
 #include "i4bctl.h"
@@ -251,7 +216,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 66 */
 	cdev_fb_init(NCGSIX,cgsix),	/* 67: /dev/cgsix */
 	cdev_notdef(),			/* 68 */
-	cdev_gen_init(NAUDIO,audio),	/* 69: /dev/audio */
+	cdev__ocrwip_init(NAUDIO,audio),	/* 69: /dev/audio */
 	cdev_openprom_init(1,openprom),	/* 70: /dev/openprom */
 	cdev_tctrl_init(NTCTRL,tctrl),	/* 71: /dev/tctrl */
 	cdev_i4b_init(NI4B, i4b),		/* 72: i4b main device */
@@ -283,13 +248,13 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 98 */
 	cdev_fb_init(NCGFOURTEEN,cgfourteen), /* 99: /dev/cgfourteen */
 	cdev_tty_init(NMTTY,mtty),	/* 100 */
-	cdev_gen_init(NMBPP,mbpp),	/* 101 */
+	cdev__ocrwip_init(NMBPP,mbpp),	/* 101 */
 	cdev_notdef(),			/* 102 */
 	cdev_notdef(),			/* 103 */
 	cdev_notdef(),			/* 104 */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 105: packet filter */
 	cdev_notdef(),			/* 106 */
-	cdev_gen_init(NBPP,bpp),	/* 107: on-board parallel port */
+	cdev__ocrwip_init(NBPP,bpp),	/* 107: on-board parallel port */
 	cdev_notdef(),			/* 108 */
 	cdev_fb_init(NTCX,tcx),		/* 109: /dev/tcx */
 	cdev_disk_init(NVND,vnd),	/* 110: vnode disk driver */

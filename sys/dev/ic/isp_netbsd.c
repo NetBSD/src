@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.18.2.12 2001/03/27 13:08:12 bouyer Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.18.2.13 2001/03/27 15:31:58 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -80,21 +80,20 @@
  */
 #define	_XT(xs)	((((xs)->timeout/1000) * hz) + (3 * hz))
 
-static void ispminphys __P((struct buf *));
-static void isprequest __P((struct scsipi_channel *,
-	scsipi_adapter_req_t, void *));
+static void ispminphys(struct buf *);
+static void isprequest (struct scsipi_channel *,
+	scsipi_adapter_req_t, void *);
 static int
-ispioctl __P((struct scsipi_channel *, u_long, caddr_t, int, struct proc *));
+ispioctl(struct scsipi_channel *, u_long, caddr_t, int, struct proc *);
 
-static void isp_polled_cmd __P((struct ispsoftc *, XS_T *));
-static void isp_dog __P((void *));
+static void isp_polled_cmd(struct ispsoftc *, XS_T *);
+static void isp_dog(void *);
 
 /*
  * Complete attachment of hardware, include subdevices.
  */
 void
-isp_attach(isp)
-	struct ispsoftc *isp;
+isp_attach(struct ispsoftc *isp)
 {
 	isp->isp_state = ISP_RUNSTATE;
 
@@ -193,8 +192,7 @@ isp_attach(isp)
  */
 
 static void
-ispminphys(bp)
-	struct buf *bp;
+ispminphys(struct buf *bp)
 {
 	/*
 	 * XX: Only the 1020 has a 24 bit limit.
@@ -206,12 +204,8 @@ ispminphys(bp)
 }
 
 static int      
-ispioctl(chan, cmd, addr, flag, p)
-	struct scsipi_channel *chan;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr, int flag,
+	struct proc *p)
 {
 	struct ispsoftc *isp = (void *)chan->chan_adapter->adapt_dev;
 	int s, retval = ENOTTY;
@@ -233,10 +227,7 @@ ispioctl(chan, cmd, addr, flag, p)
 
 
 static void
-isprequest(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+isprequest(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
 	struct scsipi_periph *periph;
 	struct ispsoftc *isp = (void *)chan->chan_adapter->adapt_dev;
@@ -335,9 +326,7 @@ isprequest(chan, req, arg)
 }
 
 static void
-isp_polled_cmd(isp, xs)
-	struct ispsoftc *isp;
-	XS_T *xs;
+isp_polled_cmd( struct ispsoftc *isp, XS_T *xs)
 {
 	int result;
 	int infinite = 0, mswait;
@@ -391,8 +380,7 @@ isp_polled_cmd(isp, xs)
 }
 
 void
-isp_done(xs)
-	XS_T *xs;
+isp_done(XS_T *xs)
 {
 	XS_CMD_S_DONE(xs);
 	if (XS_CMD_WDOG_P(xs) == 0) {
@@ -408,12 +396,11 @@ isp_done(xs)
 }
 
 static void
-isp_dog(arg)
-	void *arg;
+isp_dog(void *arg)
 {
 	XS_T *xs = arg;
 	struct ispsoftc *isp = XS_ISP(xs);
-	u_int32_t handle;
+	u_int16_t handle;
 
 	ISP_ILOCK(isp);
 	/*
@@ -506,8 +493,7 @@ isp_dog(arg)
  * Locks are held before coming here.
  */
 void
-isp_uninit(isp)
-	struct ispsoftc *isp;
+isp_uninit(struct ispsoftc *isp)
 {
 	isp_lock(isp);
 	/*
@@ -518,10 +504,7 @@ isp_uninit(isp)
 }
 
 int
-isp_async(isp, cmd, arg)
-	struct ispsoftc *isp;
-	ispasync_t cmd;
-	void *arg;
+isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 {
 	int bus, tgt;
 	int s = splbio();
@@ -734,14 +717,7 @@ isp_async(isp, cmd, arg)
 
 #include <machine/stdarg.h>
 void
-#ifdef	__STDC__
 isp_prt(struct ispsoftc *isp, int level, const char *fmt, ...)
-#else
-isp_prt(isp, fmt, va_alist)
-	struct ispsoftc *isp;
-	char *fmt;
-	va_dcl;
-#endif
 {
 	va_list ap;
 	if (level != ISP_LOGALL && (level & isp->isp_dblev) == 0) {

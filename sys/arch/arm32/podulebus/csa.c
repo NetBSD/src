@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.4.10.1 2000/11/20 20:04:04 bouyer Exp $	*/
+/*	$NetBSD: csa.c,v 1.4.10.2 2001/03/27 15:30:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 #include <machine/bootconfig.h>
 
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 #define CSA_NCR5380_OFFSET	0x2100
 #define CSA_CTRL_OFFSET		0x2000 - 2308
@@ -86,6 +86,7 @@ int  csa_match  __P((struct device *, struct cfdata *, void *));
 struct csa_softc {
 	struct ncr5380_softc	sc_ncr5380;
 	void			*sc_ih;
+	struct evcnt		sc_intrcnt;
 	int			sc_podule_number;
 	podule_t		*sc_podule;
 	volatile u_char		*sc_irqstatus;
@@ -186,14 +187,16 @@ csa_attach(parent, self, aux)
 	    BOOTOPT_TYPE_INT, &sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
 	sc->sc_ncr5380.sc_adapter.scsipi_minphys = minphys;
 
-	printf(" host=%d, using 8 bit PIO",
+	printf(": host=%d, using 8 bit PIO",
 	    sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
 
 	sc->sc_irqstatus = (u_char *)pa->pa_podule->slow_base + CSA_INTR_OFFSET;
 	sc->sc_irqmask = CSA_INTR_MASK;
 
-	sc->sc_ih = intr_claim(pa->pa_podule->interrupt, IPL_BIO, "csa",
-	    csa_intr, sc);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    self->dv_xname, "intr");
+	sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO, csa_intr, sc,
+	    &sc->sc_intrcnt);
 	if (sc->sc_ih == NULL)
 		sc->sc_ncr5380.sc_flags |= NCR5380_FORCE_POLLING;
 

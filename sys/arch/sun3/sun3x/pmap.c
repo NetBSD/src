@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50.2.6 2001/03/12 13:29:43 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50.2.7 2001/03/27 15:31:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1695,10 +1695,10 @@ pmap_enter(pmap, va, pa, prot, flags)
 	enum {NONE, NEWA, NEWB, NEWC} llevel; /* used at end   */
 
 	if (pmap == NULL)
-		return (KERN_SUCCESS);
+		return 0;
 	if (pmap == pmap_kernel()) {
 		pmap_enter_kernel(va, pa, prot);
-		return (KERN_SUCCESS);
+		return 0;
 	}
 
 	/*
@@ -2057,7 +2057,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			break;
 	}
 
-	return (KERN_SUCCESS);
+	return 0;
 }
 
 /* pmap_enter_kernel			INTERNAL

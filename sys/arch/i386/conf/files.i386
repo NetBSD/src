@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.139.2.7 2001/03/12 13:28:54 bouyer Exp $
+#	$NetBSD: files.i386,v 1.139.2.8 2001/03/27 15:31:00 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -169,6 +169,11 @@ file	arch/i386/pci/pceb.c		pceb
 device	pcib: isabus
 attach	pcib at pci
 file	arch/i386/pci/pcib.c		pcib
+
+# PCI-MCA bridges
+device	pcmb: mcabus
+attach	pcmb at pci
+file	arch/i386/pci/pcmb.c		pcmb
 
 # Game adapter (joystick)
 device	joy

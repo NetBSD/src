@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3.4.5 2001/03/12 13:29:28 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3.4.6 2001/03/27 15:31:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -149,7 +149,7 @@ pci_attach_hook(parent, self, pba)
 		if (getprop(node, "interrupts", sizeof(int), &n, (void **)&ip))
 			continue;
 		DPRINTF(SPDB_INTFIX, (" got interrupts"));
-		
+
 		/* and if there isn't an "assigned-addresses" we can't find b/d/f */
 		if (getprop(node, "assigned-addresses", sizeof(int), &n,
 		    (void **)&ap))
@@ -171,6 +171,17 @@ pci_attach_hook(parent, self, pba)
 		tag = pci_make_tag(pc, bus, dev, fn);
 
 		DPRINTF(SPDB_INTFIX, ("; tag %08x\n\t; reg: hi %x mid %x lo %x intr %x", tag, pr->phys_hi, pr->phys_mid, pr->phys_lo, *ip));
+		
+		/*
+		 * if there is no interrupt-map property in the parent, we must
+		 * assume our "interrupts" property is valid.
+		 */
+		if (pp->pp_nintmap == 0) {
+			intr = *ip;
+			DPRINTF((SPDB_INTFIX|SPDB_INTMAP), ("\n\t    ; no interrupt-map, using intr %x", *ip));
+			goto bingo;
+		}
+
 		DPRINTF(SPDB_INTFIX, ("\n\t; intmapmask: hi %x mid %x lo %x intr %x", pp->pp_intmapmask.phys_hi, pp->pp_intmapmask.phys_mid,
 										      pp->pp_intmapmask.phys_lo, pp->pp_intmapmask.intr));
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.25.2.2 2000/11/22 16:00:02 bouyer Exp $ */
+/* $NetBSD: if_ie.c,v 1.25.2.3 2001/03/27 15:30:30 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -69,7 +69,7 @@
 #include <machine/irqhandler.h>
 #include <machine/katelib.h>
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 /* Include for interface to the net and ethernet subsystems */
 
@@ -464,7 +464,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 	/* "Hmm," said nuts, "what if the attach fails" */
     
 	/* Write some pretty things on the annoucement line */
-	printf ( " %s using %dk card ram",
+	printf ( ": %s using %dk card ram",
 	    ether_sprintf(hwaddr),
 	    ((NRXBUF*IE_RXBUF_SIZE)+(NTXBUF*IE_TXBUF_SIZE))/1024 );
 
@@ -1341,14 +1341,14 @@ ierint(sc)
     int times_thru = 1024;
     struct ie_sys_ctl_block scb;
     int status;
-    int saftey_catch = 0;
+    int safety_catch = 0;
 
     i = sc->rfhead;
     for (;;) {
 
-	if ( (saftey_catch++)>100 )
+	if ( (safety_catch++)>100 )
 	{
-	    printf ( "ie: ierint saftey catch tripped\n" );
+	    printf ( "ie: ierint safety catch tripped\n" );
 	    iereset(sc);
 	    return;
 	}
@@ -1395,8 +1395,8 @@ ieintr(arg)
 {
     struct ie_softc *sc = arg;
     u_short status;
-    int saftey_catch = 0;
-    static int saftey_net = 0;
+    int safety_catch = 0;
+    static int safety_net = 0;
 
     if (in_intr == 1)
 	panic ( "ie: INTERRUPT REENTERED\n" );
@@ -1444,14 +1444,14 @@ loop:
     }
 
     /* This is prehaps a little over cautious */
-    if ( saftey_catch++ > 10 )
+    if ( safety_catch++ > 10 )
     {
 	printf ( "ie: Interrupt couldn't be cleared\n" );
 	delay ( 1000 );
 	ie_cli(sc);
-	if ( saftey_net++ > 50 )
+	if ( safety_net++ > 50 )
 	{
-/*	    printf ( "ie: saftey net catches driver, shutting down\n" );
+/*	    printf ( "ie: safety net catches driver, shutting down\n" );
 	    disable_irq ( IRQ_PODULE );*/
 	}
 	in_intr = 0;
@@ -1506,15 +1506,15 @@ iestart(ifp)
 	u_char *buffer;
 	u_short len;
 	char txbuf[IE_TXBUF_SIZE];
-	int saftey_catch = 0;
+	int safety_catch = 0;
 
 	if ((ifp->if_flags & IFF_OACTIVE) != 0)
 		return;
 
 	for (;;) {
-		if ( (saftey_catch++)>100 )
+		if ( (safety_catch++)>100 )
 		{
-		    printf ( "ie: iestart saftey catch tripped\n" );
+		    printf ( "ie: iestart safety catch tripped\n" );
 		    iereset(sc);
 		    return;
 		}

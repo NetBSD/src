@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.78.2.4 2001/03/12 13:27:37 bouyer Exp $
+#	$NetBSD: files.arm32,v 1.78.2.5 2001/03/27 15:30:27 bouyer Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -31,6 +31,11 @@ define todservice {}
 # ISA and mixed ISA+EISA or ISA+PCI drivers
 #
 include "dev/isa/files.isa"
+
+# Include WSCONS stuff
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 
 #
 # Machine-independent ATA drivers
@@ -156,6 +161,14 @@ file	arch/arm32/dev/kbd.c			kbd needs-flag
 attach	kbd at iomd with kbd_iomd
 file	arch/arm32/iomd/kbd_iomd.c		kbd_iomd
 
+# RPC wscons keyboard driver
+device rpckbd : wskbddev
+file   arch/arm32/dev/rpckbd.c			rpckbd  needs-flag
+file   arch/arm32/dev/wskbdmap_mfii.c		rpckbd
+
+attach rpckbd at iomd with rpckbd_iomd
+file   arch/arm32/iomd/rpckbd_iomd.c		rpckbd_iomd
+
 # IIC device
 device	iic { addr = -1 }
 file	arch/arm32/dev/iic.c			iic	needs-flag
@@ -179,6 +192,12 @@ device	vidc { [base = -1], [dack = -1], [irq = -1] }
 attach	vidc at mainbus
 file	arch/arm32/vidc/vidc20.c		vidc needs-count
 
+# VIDC video wscons device
+device vidcvideo: rasops4, rasops8, rasops16, rasops32, wsemuldisplaydev
+attach vidcvideo at vidc
+file	arch/arm32/vidc/vidc20config.c		vidcvideo needs-flag
+file	arch/arm32/vidc/vidcvideo.c		vidcvideo needs-flag
+
 # Audio devices
 device	beep
 attach	beep at vidc
@@ -200,19 +219,13 @@ file	arch/arm32/podulebus/podulebus.c	podulebus needs-flag
 file	arch/arm32/podulebus/podulebus_io.c	podulebus
 file	arch/arm32/podulebus/podulebus_io_asm.S	podulebus
 
+include "dev/podulebus/files.podulebus"
+
 # Ethernet devices
 
 # Novell NE1000 and NE2000 clones (EtherM, EtherH)
 attach	ne at podulebus with ne_pbus
 file	arch/arm32/podulebus/if_ne_pbus.c	ne_pbus
-
-device	ea: ether, ifnet, arp
-attach	ea at podulebus
-file	arch/arm32/podulebus/if_ea.c		ea
-
-device	eb: ether, ifnet, arp
-attach	eb at podulebus
-file	arch/arm32/podulebus/if_eb.c		eb
 
 device	ie: ether, ifnet, arp
 attach	ie at podulebus
@@ -346,6 +359,10 @@ file	arch/arm32/kshell/kshell_disassem.c	kshell
 file	arch/arm32/kshell/kshell_dumphex.c	kshell
 file	arch/arm32/kshell/kshell_debug.c	kshell
 
+file	arch/arm/arm/disksubr.c			disk
+file	arch/arm/arm/disksubr_acorn.c		disk
+file	arch/arm/arm/disksubr_mbr.c		disk
+
 file	dev/cninit.c				!footbridge
 
 # ARM FPE
@@ -471,8 +488,5 @@ file	arch/arm32/pci/pciide_machdep.c	pciide
 
 # Include USB stuff
 include "dev/usb/files.usb"
-
-# Include WSCONS stuff
-include "dev/wscons/files.wscons"
 
 include "dev/pckbc/files.pckbc"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.31.8.2 2000/11/22 16:06:09 bouyer Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.31.8.3 2001/03/27 15:32:30 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.29.2.3 2000/06/05 13:12:42 darrenr Exp
+ * Id: ip_fil.h,v 2.29.2.4 2000/11/12 11:54:53 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FIL_H_
@@ -337,6 +337,7 @@ typedef	struct	filterstats {
 	u_long	fr_tcpbad;	/* TCP checksum check failures */
 	u_long	fr_pull[2];	/* good and bad pullup attempts */
 	u_long	fr_badsrc;	/* source received doesn't match route */
+	u_long	fr_badttl;	/* TTL in packet doesn't reach minimum */
 #if SOLARIS
 	u_long	fr_notdata;	/* PROTO/PCPROTO that have no data */
 	u_long	fr_nodata;	/* mblks that have no data */
@@ -624,6 +625,8 @@ extern	int	fr_pass;
 extern	int	fr_flags;
 extern	int	fr_active;
 extern	int	fr_chksrc;
+extern	int	fr_minttl;
+extern	int	fr_minttllog;
 extern	fr_info_t	frcache[2];
 extern	char	ipfilter_version[];
 extern	iplog_t	**iplh[IPL_LOGMAX+1], *iplt[IPL_LOGMAX+1];

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.31.2.2 2001/03/12 13:27:46 bouyer Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.31.2.3 2001/03/27 15:30:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -51,6 +51,9 @@
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
 #include "opt_compat_old_bootloader.h"
+#include "vidcvideo.h"
+#include "rpckbd.h"
+#include "pckbc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +83,16 @@
 #include <machine/vconsole.h>
 #include <machine/undefined.h>
 #include <machine/rtc.h>
+#include <machine/bus.h>
+
 #include <arm32/iomd/iomdreg.h>
 #include <arm32/iomd/iomdvar.h>
+
+#include <arm32/vidc/vidcvideo.h>
+
+#include <sys/device.h>
+#include <arm32/dev/rpckbdvar.h>
+#include <dev/ic/pckbcvar.h>
 
 #include "opt_ipkdb.h"
 
@@ -93,7 +104,7 @@
 
 #define VERBOSE_INIT_ARM
 
-u_int cpu_reset_address = 0x3800000; /* XXX for rev0 RiscPC600 */
+u_int cpu_reset_address = 0x0; /* XXX 0x3800000 too for rev0 RiscPC 600 */
 
 #define MAX_BOOT_STRING 0xff
 
@@ -108,12 +119,13 @@ u_int cpu_reset_address = 0x3800000; /* XXX for rev0 RiscPC600 */
 
 BootConfig bootconfig;		/* Boot config storage */
 videomemory_t videomemory;	/* Video memory descriptor */
-/* 	static char bootargs[MAX_BOOT_STRING + 1]; */
+
 char *boot_args = NULL;
 char *boot_file = NULL;
 
 extern int       *vidc_base;
 extern u_int32_t  iomd_base;
+extern struct bus_space iomd_bs_tag;
 
 vm_offset_t physical_start;
 vm_offset_t physical_freestart;
@@ -168,7 +180,6 @@ static vaddr_t sa110_cc_base;
 #endif	/* CPU_SA110 */
 
 /* Prototypes */
-
 void physcon_display_base	__P((u_int addr));
 extern void consinit		__P((void));
 
@@ -192,9 +203,9 @@ static void process_kernel_args	__P((void));
 
 extern void dump_spl_masks	__P((void));
 extern void db_machine_init	__P((void));
-extern void console_flush	__P((void));
 extern void vidcrender_reinit	__P((void));
 extern int vidcrender_blank	__P((struct vconsole *vc, int type));
+
 void rpc_sa110_cc_setup		__P((void));
 
 extern void parse_mi_bootargs	__P((char *args));
@@ -202,6 +213,19 @@ void parse_rpc_bootargs		__P((char *args));
 
 extern void dumpsys		__P((void));
 
+
+#if NVIDCVIDEO > 0
+#	define console_flush()		/* empty */;
+#else
+	extern void console_flush	__P((void));
+#endif
+
+
+#define panic2(a) { \
+	memset((void *) (videomemory.vidm_vbase), 0x55, 50*1024); \
+	consinit(); \
+	panic a; \
+	}
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
@@ -402,7 +426,7 @@ initarm(bootconf)
 }
 
 #else
-#	define initarm(a) initarm_new_bootloader(a)
+#	define initarm_new_bootloader(a) initarm(a)
 #endif
 
 /*
@@ -433,6 +457,12 @@ initarm_new_bootloader(bootconf)
 	/* Copy the boot configuration structure */
 	bootconfig = *bootconf;
 
+	/* if the wscons interface is used, switch off VERBOSE booting :( */
+#if NVIDCVIDEO>0
+#	undef VERBOSE_INIT_ARM
+#	undef PMAP_DEBUG
+#endif
+
 	/*
 	 * Initialise the video memory descriptor
 	 *
@@ -456,8 +486,11 @@ initarm_new_bootloader(bootconf)
 	 * Initialise the physical console
 	 * This is done in main() but for the moment we do it here so that
 	 * we can use printf in initarm() before main() has been called.
+	 * only for `vidcconsole!' ... not wscons
 	 */
+#if NVIDCVIDEO == 0
 	consinit();
+#endif
 
 	/*
 	 * Initialise the diagnostic serial console
@@ -467,20 +500,6 @@ initarm_new_bootloader(bootconf)
 	 */
 /*      fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode);*/
 	/* XXX snif .... i am still not able to this */
-
-
-	/* Talk to the user */
-	printf("NetBSD/arm32 booting ... \n");
-
-	/* Tell the user if his boot loader is too old */
-	if (bootconfig.magic > BOOTCONFIG_MAGIC) {
-		printf("\nDETECTED AN OLD BOOTLOADER. PLEASE UPGRADE IT\n\n");
-		delay(5000000);
-	}
-
-	printf("Kernel loaded from file %s\n", bootconfig.kernelname);
-	printf("Kernel arg string (@%p) %s\n", (void *) bootconfig.argvirtualbase, (char *)bootconfig.argvirtualbase);
-	printf("\nBoot configuration structure reports the following memory\n");
 
 	/*
 	 * We have the following memory map (derived from EBSA)
@@ -501,26 +520,6 @@ initarm_new_bootloader(bootconf)
 	 * by pmap etc. 
 	 */
 
-	printf("  DRAM block 0a at %08x size %08x  DRAM block 0b at %08x size %08x\n\r",
-	    bootconfig.dram[0].address,
-	    bootconfig.dram[0].pages * bootconfig.pagesize,
-	    bootconfig.dram[1].address,
-	    bootconfig.dram[1].pages * bootconfig.pagesize);
-	printf("  DRAM block 1a at %08x size %08x  DRAM block 1b at %08x size %08x\n\r",
-	    bootconfig.dram[2].address,
-	    bootconfig.dram[2].pages * bootconfig.pagesize,
-	    bootconfig.dram[3].address,
-	    bootconfig.dram[3].pages * bootconfig.pagesize);
-	printf("  VRAM block 0  at %08x size %08x\n\r",
-	    bootconfig.vram[0].address,
-	    bootconfig.vram[0].pages * bootconfig.pagesize);
-
-/*	printf("  videomem: VA=%08x PA=%08x\n", videomemory.vidm_vbase, videomemory.vidm_pbase);*/
-
-	/* Check to make sure the page size is correct */
-	if (NBPG != bootconfig.pagesize)
-		panic("Page size is not %d bytes\n", NBPG);
-
 /** START OF REAL NEW STUFF */
 
 	/* Check if we are having the right kernel */
@@ -529,15 +528,19 @@ initarm_new_bootloader(bootconf)
 	switch (id) {
 	case ARM7500_IOC_ID:
 #ifndef CPU_ARM7500
-		panic("Encountered ARM7500 IOMD but no ARM7500 kernel support");
+		panic2(("Encountered ARM7500 IOMD but no ARM7500 kernel support"));
 #endif	/* CPU_ARM7500 */
 		break;
 	case RPC600_IOMD_ID:
 #ifdef CPU_ARM7500
-		panic("Encountered ARM6/7 IOMD and ARM7500 kernel support");
+		panic2(("Encountered ARM6/7 IOMD and ARM7500 kernel support"));
 #endif	/* CPU_ARM7500 */
 		break;
 	}
+
+	/* Check to make sure the page size is correct */
+	if (NBPG != bootconfig.pagesize)
+		panic2(("Page size is %d bytes in stead of %d !! (huh?)\n", bootconfig.pagesize, NBPG));
 
 	/* process arguments */
 	process_kernel_args();
@@ -607,7 +610,7 @@ initarm_new_bootloader(bootconf)
 #ifdef DIAGNOSTIC
 	/* This should never be able to happen but better confirm that. */
 	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (PD_SIZE-1)) != 0)
-		panic("initarm: Failed to align the kernel page directory\n");
+		panic2(("initarm: Failed to align the kernel page directory\n"));
 #endif
 
 	/*
@@ -627,10 +630,12 @@ initarm_new_bootloader(bootconf)
 	valloc_pages(kernelstack, UPAGES);
 
 #ifdef VERBOSE_INIT_ARM
+	printf("Setting up stacks :\n");
 	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa, irqstack.pv_va); 
 	printf("ABT stack: p0x%08lx v0x%08lx\n", abtstack.pv_pa, abtstack.pv_va); 
 	printf("UND stack: p0x%08lx v0x%08lx\n", undstack.pv_pa, undstack.pv_va); 
 	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa, kernelstack.pv_va); 
+	printf("\n");
 #endif
 
 	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / NBPG);
@@ -818,7 +823,6 @@ initarm_new_bootloader(bootconf)
 	/* if there is support for a serial console ...we should now reattach it */
 	/*      fcomcndetach();*/
 
-
 	/*
 	 * Reflect videomemory relocation in the videomemory structure
 	 * and reinit console
@@ -831,20 +835,25 @@ initarm_new_bootloader(bootconf)
 	};
 	vidc_base = (int *) VIDC_BASE;
 	iomd_base =         IOMD_BASE;
+
+#if NVIDCVIDEO == 0
 	physcon_display_base(VMEM_VBASE);
 	vidcrender_reinit();
-
+#endif
 
 #ifdef VERBOSE_INIT_ARM
 	printf("running on the new L1 page table!\n");
-#endif
 	printf("done.\n");
-
+#endif
 	/* Right set up the vectors at the bottom of page 0 */
 	memcpy((char *)0x00000000, page0, page0_end - page0);
 
 	/* We have modified a text page so sync the icache */
 	cpu_cache_syncI_rng(0, page0_end - page0);
+
+#ifdef VERBOSE_INIT_ARM
+	printf("\n");
+#endif
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the
@@ -854,8 +863,10 @@ initarm_new_bootloader(bootconf)
 	 * Since the ARM stacks use STMFD etc. we must set r13 to the top end
 	 * of the stack memory.
 	 */
+#ifdef VERBOSE_INIT_ARM
 	printf("init subsystems: stacks ");
 	console_flush();
+#endif
 
 	set_stackptr(PSR_IRQ32_MODE, irqstack.pv_va + IRQ_STACK_SIZE * NBPG);
 	set_stackptr(PSR_ABT32_MODE, abtstack.pv_va + ABT_STACK_SIZE * NBPG);
@@ -874,7 +885,9 @@ initarm_new_bootloader(bootconf)
 	 * Initialisation of the vectors will just panic on a data abort.
 	 * This just fills in a slighly better one.
 	 */
+#ifdef VERBOSE_INIT_ARM
 	printf("vectors ");
+#endif
 	data_abort_handler_address = (u_int)data_abort_handler;
 	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;
 	undefined_handler_address = (u_int)undefinedinstruction_bounce;
@@ -896,20 +909,60 @@ initarm_new_bootloader(bootconf)
 	 */
 
 	/* Initialise the undefined instruction handlers */
+#ifdef VERBOSE_INIT_ARM
 	printf("undefined ");
+#endif
 	undefined_init();
 	console_flush();
 
 	/* Boot strap pmap telling it where the kernel page table is */
+#ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
+#endif
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
 	console_flush();
 
 	/* Setup the IRQ system */
+#ifdef VERBOSE_INIT_ARM
 	printf("irq ");
+#endif
 	console_flush();
 	irq_init();
-	printf("done.\n");
+#ifdef VERBOSE_INIT_ARM
+	printf("done.\n\n");
+#endif
+
+#if NVIDCVIDEO>0
+	consinit();		/* necessary ? */
+#endif
+
+	/* Talk to the user */
+	printf("NetBSD/arm32 booting ... \n");
+
+	/* Tell the user if his boot loader is too old */
+	if (bootconfig.magic > BOOTCONFIG_MAGIC) {
+		printf("\nDETECTED AN OLD BOOTLOADER. PLEASE UPGRADE IT\n\n");
+		delay(5000000);
+	}
+
+	printf("Kernel loaded from file %s\n", bootconfig.kernelname);
+	printf("Kernel arg string (@%p) %s\n", (void *) bootconfig.argvirtualbase, (char *)bootconfig.argvirtualbase);
+	printf("\nBoot configuration structure reports the following memory\n");
+
+	printf("  DRAM block 0a at %08x size %08x  DRAM block 0b at %08x size %08x\n\r",
+	    bootconfig.dram[0].address,
+	    bootconfig.dram[0].pages * bootconfig.pagesize,
+	    bootconfig.dram[1].address,
+	    bootconfig.dram[1].pages * bootconfig.pagesize);
+	printf("  DRAM block 1a at %08x size %08x  DRAM block 1b at %08x size %08x\n\r",
+	    bootconfig.dram[2].address,
+	    bootconfig.dram[2].pages * bootconfig.pagesize,
+	    bootconfig.dram[3].address,
+	    bootconfig.dram[3].pages * bootconfig.pagesize);
+	printf("  VRAM block 0  at %08x size %08x\n\r",
+	    bootconfig.vram[0].address,
+	    bootconfig.vram[0].pages * bootconfig.pagesize);
+
 
 	if (cmos_read(RTC_ADDR_REBOOTCNT) > 0)
 		printf("Warning: REBOOTCNT = %d\n",
@@ -944,6 +997,7 @@ initarm_new_bootloader(bootconf)
 	/* We return the new stack pointer address */
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
+
 
 static void
 process_kernel_args(void)
@@ -988,162 +1042,6 @@ parse_rpc_bootargs(args)
 }
 
 
-#if 0
-/* XXXX I think this code can be deleted .... */
-/*
- * Ok these are some development functions. They map blocks of memory
- * into the video ram virtual memory.
- * The idea is to follow this with a call to the vidc device to
- * reinitialise the vidc20 for the new video ram.
- * Only meaning full if was support VRAM.
- */
-
-/* Map DRAM into the video memory */
-
-int
-vmem_mapdram()
-{
-	u_int l2pagetable;
-	u_int logical;
-
-	if (videodram_start == 0 || videodram_size == 0)
-		return(ENOMEM);
-
-	/* flush existing video data */
-	cpu_cache_purgeD();
-
-	/* Get the level 2 pagetable for the video memory */
-	l2pagetable = (u_int)pmap_pte(kernel_pmap,
-	    (vm_offset_t)videomemory.vidm_vbase);
-
-	/* Map a block of DRAM into the video memory area */
-	for (logical = 0; logical < 0x200000; logical += NBPG) {
-		map_entry(l2pagetable, logical, videodram_start
-		    + logical);
-		map_entry(l2pagetable, logical + 0x200000,
-		    videodram_start + logical);
-	}
-
-	/* Flush the TLB so we pick up the new mappings */
-	cpu_tlb_flushD();
-
-	/* Rebuild the video memory descriptor */
-	videomemory.vidm_vbase = VMEM_VBASE;
-	videomemory.vidm_pbase = videodram_start;
-	videomemory.vidm_type = VIDEOMEM_TYPE_DRAM;
-	videomemory.vidm_size = videodram_size;
-
-	/* Reinitialise the video system */
-/*	video_reinit();*/
-	return(0);
-}
-
-
-/* Map VRAM into the video memory */
-
-int
-vmem_mapvram()
-{
-	u_int l2pagetable;
-	u_int logical;
-
-	if (bootconfig.vram[0].address == 0 || bootconfig.vram[0].pages == 0)
-		return(ENOMEM);
-
-	/* flush existing video data */
-	cpu_cache_purgeD();
-
-	/* Get the level 2 pagetable for the video memory */
-	l2pagetable = (u_int)pmap_pte(kernel_pmap,
-	    (vm_offset_t)videomemory.vidm_vbase);
-
-	/* Map the VRAM into the video memory area */
-	for (logical = 0; logical < 0x200000; logical += NBPG) {
-		map_entry(l2pagetable, logical, bootconfig.vram[0].address
-		    + logical);
-		map_entry(l2pagetable, logical + 0x200000,
-		    bootconfig.vram[0].address + logical);
-	}
-
-	/* Flush the TLB so we pick up the new mappings */
-	cpu_tlb_flushD();
-
-	/* Rebuild the video memory descriptor */
-	videomemory.vidm_vbase = VMEM_VBASE;
-	videomemory.vidm_pbase = VRAM_BASE;
-	videomemory.vidm_type = VIDEOMEM_TYPE_VRAM;
-	videomemory.vidm_size = bootconfig.vram[0].pages * NBPG;
-
-	/* Reinitialise the video system */
-/*	video_reinit();*/
-	return(0);
-}
-
-
-/* Set the cache behaviour for the video memory */
-
-int
-vmem_cachectl(flag)
-	int flag;
-{
-	u_int l2pagetable;
-	u_int logical;
-	u_int pa;
-
-	if (bootconfig.vram[0].address == 0 || bootconfig.vram[0].pages == 0)
-		return(ENOMEM);
-
-	/* Get the level 2 pagetable for the video memory */
-	l2pagetable = (u_int)pmap_pte(kernel_pmap,
-	    (vm_offset_t)videomemory.vidm_vbase);
-
-	/* Map the VRAM into the video memory area */
-	if (flag == 0) {
-		printf("Disabling caching and buffering of VRAM\n");
-		for (logical = 0; logical < 0x200000; logical += NBPG) {
-			map_entry_nc(l2pagetable, logical,
-			    bootconfig.vram[0].address + logical);
-			map_entry_nc(l2pagetable, logical + 0x200000,
-			    bootconfig.vram[0].address + logical);
-		}
-	} else if (flag == 1) {
-		printf("Disabling caching of VRAM\n");
-		for (logical = 0; logical < 0x200000; logical += NBPG) {
-			pa = bootconfig.vram[0].address + logical;
-			WriteWord(l2pagetable + ((logical >> 10) & 0x00000ffc),
-			    L2_PTE_NC((pa & PG_FRAME), AP_KRW));
-			WriteWord(l2pagetable + (((logical+0x200000) >> 10) & 0x00000ffc),
-			    L2_PTE_NC((pa & PG_FRAME), AP_KRW));
-		}
-	} else if (flag == 2) {
-		printf("Disabling buffering of VRAM\n");
-		for (logical = 0; logical < 0x200000; logical += NBPG) {
-			pa = bootconfig.vram[0].address + logical;
-			WriteWord(l2pagetable + ((logical >> 10) & 0x00000ffc),
-			    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW)|PT_C);
-			WriteWord(l2pagetable + (((logical+0x200000) >> 10) & 0x00000ffc),
-			    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW)|PT_C);
-		}
-	} else {
-		printf("Enabling caching and buffering of VRAM\n");
-		for (logical = 0; logical < 0x200000; logical += NBPG) {
-			map_entry(l2pagetable, logical,
-			    bootconfig.vram[0].address + logical);
-			map_entry(l2pagetable, logical + 0x200000,
-			    bootconfig.vram[0].address + logical);
-		}
-	}
-
-	/* clean out any existing cached video data */
-	cpu_cache_purgeD();
-
-	/* Flush the TLB so we pick up the new mappings */
-	cpu_tlb_flushD();
-
-	return(0);
-}
-#endif
-
 #ifdef CPU_SA110
 
 /*
@@ -1174,8 +1072,6 @@ rpc_sa110_cc_setup(void)
 }
 #endif	/* CPU_SA110 */
 
-/* End of machdep.c */
-
 
 /*******************************************************************************
  *******************************************************************************
@@ -1184,6 +1080,12 @@ rpc_sa110_cc_setup(void)
  *******************************************************************************
  *******************************************************************************
  *******************************************************************************/
+
+#ifdef COMPAT_OLD_BOOTLOADER
+#	if NVIDCVIDEO>0
+#	error "Option COMPAT_OLD_BOOTLOADER is not compatible with WSCONS"
+#	endif
+#endif
 
 #ifdef COMPAT_OLD_BOOTLOADER
 /*
@@ -1999,3 +1901,4 @@ initarm_old_bootloader(bootconf)
 #endif
 
 /* End of machdep.c */
+

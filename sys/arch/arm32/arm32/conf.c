@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.40.2.4 2001/03/12 13:27:31 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.40.2.5 2001/03/27 15:30:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -146,41 +146,6 @@ struct bdevsw bdevsw[] = {
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-/* open, close, ioctl */
-#define cdev_i4bctl_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
-
-/* open, close, read, write, poll */
-#define	cdev_i4brbch_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
-
-/* open, close, read, write, poll */
-#define	cdev_i4btel_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
-	(dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, D_TTY }
-
-/* open, close, read, ioctl */
-#define cdev_i4btrc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev }
-
-/* open, close, read, ioctl, poll */
-#define cdev_i4b_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }	
-
 #include "i4b.h"
 #include "i4bctl.h"
 #include "i4btrc.h"
@@ -192,7 +157,8 @@ cdev_decl(i4btrc);
 cdev_decl(i4brbch);
 cdev_decl(i4btel);
 
-#include "vt.h"                                 
+#include "vt.h"
+#include "vidcconsole.h"                                 
 #include "pty.h"
 #define ptstty          ptytty
 #define ptsioctl        ptyioctl
@@ -248,7 +214,7 @@ struct cdevsw cdevsw[] = {
 	cdev_swap_init(1, sw),          /*  1: /dev/drum (swap pseudo-device) */
 	cdev_cn_init(1, cn),            /*  2: virtual console */
 	cdev_ctty_init(1,ctty),         /*  3: controlling terminal */
-#if	(defined(RISCPC) || defined(RC7500))
+#if	(defined(RISCPC) || defined(RC7500)) && (NVIDCCONSOLE>0)
 	cdev_physcon_init(NVT, physcon),/*  4: RPC console */
 #elif	defined(SHARK) && (NPC > 0)
 	cdev_pc_init(1,pc),		/*  4: PC console */

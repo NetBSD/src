@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1.2.3 2001/03/12 13:28:52 bouyer Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.1.2.4 2001/03/27 15:30:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -43,137 +44,254 @@
 #include <machine/bus.h>
 
 #ifdef BUS_SPACE_DEBUG
-#define	DPRINTF(arg) printf arg
+int	bus_space_debug = 0;
+#define	DPRINTF(fmt, args...)						\
+	if (bus_space_debug)						\
+		printf("%s: " fmt, __FUNCTION__ , ##args) 
+#define	DPRINTFN(n, arg)						\
+	if (bus_space_debug > (n))					\
+		printf("%s: " fmt, __FUNCTION__ , ##args) 
 #else
-#define	DPRINTF(arg)
+#define	DPRINTF(arg...)		((void)0)
+#define DPRINTFN(n, arg...)	((void)0)
 #endif
 
-#define BUS_SPACE_TAG_MAX		16
+#define _BUS_SPACE_ACCESS_HOOK()	((void)0)
+_BUS_SPACE_READ(_bus_space, 1, 8)
+_BUS_SPACE_READ(_bus_space, 2, 16)
+_BUS_SPACE_READ(_bus_space, 4, 32)
+_BUS_SPACE_READ(_bus_space, 8, 64)
+_BUS_SPACE_READ_MULTI(_bus_space, 1, 8)
+_BUS_SPACE_READ_MULTI(_bus_space, 2, 16)
+_BUS_SPACE_READ_MULTI(_bus_space, 4, 32)
+_BUS_SPACE_READ_MULTI(_bus_space, 8, 64)
+_BUS_SPACE_READ_REGION(_bus_space, 1, 8)
+_BUS_SPACE_READ_REGION(_bus_space, 2, 16)
+_BUS_SPACE_READ_REGION(_bus_space, 4, 32)
+_BUS_SPACE_READ_REGION(_bus_space, 8, 64)
+_BUS_SPACE_WRITE(_bus_space, 1, 8)
+_BUS_SPACE_WRITE(_bus_space, 2, 16)
+_BUS_SPACE_WRITE(_bus_space, 4, 32)
+_BUS_SPACE_WRITE(_bus_space, 8, 64)
+_BUS_SPACE_WRITE_MULTI(_bus_space, 1, 8)
+_BUS_SPACE_WRITE_MULTI(_bus_space, 2, 16)
+_BUS_SPACE_WRITE_MULTI(_bus_space, 4, 32)
+_BUS_SPACE_WRITE_MULTI(_bus_space, 8, 64)
+_BUS_SPACE_WRITE_REGION(_bus_space, 1, 8)
+_BUS_SPACE_WRITE_REGION(_bus_space, 2, 16)
+_BUS_SPACE_WRITE_REGION(_bus_space, 4, 32)
+_BUS_SPACE_WRITE_REGION(_bus_space, 8, 64)
+_BUS_SPACE_SET_MULTI(_bus_space, 1, 8)
+_BUS_SPACE_SET_MULTI(_bus_space, 2, 16)
+_BUS_SPACE_SET_MULTI(_bus_space, 4, 32)
+_BUS_SPACE_SET_MULTI(_bus_space, 8, 64)
+_BUS_SPACE_COPY_REGION(_bus_space, 1, 8)
+_BUS_SPACE_COPY_REGION(_bus_space, 2, 16)
+_BUS_SPACE_COPY_REGION(_bus_space, 4, 32)
+_BUS_SPACE_COPY_REGION(_bus_space, 8, 64)
+#undef _BUS_SPACE_ACCESS_HOOK
 
-static struct bus_space {
-	vaddr_t t_base;		/* extent base */
-	vsize_t t_size;		/* extent size */	
-	struct extent *t_extent;
-} bus_space[BUS_SPACE_TAG_MAX];
-static int bus_space_cnt;
+static int _bus_space_map(void *, bus_addr_t, bus_size_t, int,
+			  bus_space_handle_t *);
+static void _bus_space_unmap(void *, bus_space_handle_t, bus_size_t);
+static int _bus_space_subregion(void *, bus_space_handle_t, bus_size_t,
+				bus_size_t, bus_space_handle_t *);
+static int _bus_space_alloc(void *, bus_addr_t, bus_addr_t, bus_size_t,
+			    bus_size_t, bus_size_t, int,
+			    bus_addr_t *, bus_space_handle_t *);
+static void _bus_space_free(void *, bus_space_handle_t, bus_size_t);
+static void *_bus_space_vaddr(void *, bus_space_handle_t);
 
-#define CONTEXT_REF(x, t)	struct bus_space *x = (struct bus_space *)(t)
-#define ANONYMOUS(x)		(x == BUS_SPACE_TAG_ANONYMOUS)
+static struct hpcsh_bus_space __default_bus_space = {
+	hbs_extent	: 0,
+	hbs_map		: _bus_space_map,
+	hbs_unmap	: _bus_space_unmap,
+	hbs_subregion	: _bus_space_subregion,
+	hbs_alloc	: _bus_space_alloc,
+	hbs_free	: _bus_space_free,
+	hbs_vaddr	: _bus_space_vaddr,
+	hbs_r_1		: _bus_space_read_1,
+	hbs_r_2		: _bus_space_read_2,
+	hbs_r_4		: _bus_space_read_4,
+	hbs_r_8		: _bus_space_read_8,
+	hbs_rm_1	: _bus_space_read_multi_1,
+	hbs_rm_2	: _bus_space_read_multi_2,
+	hbs_rm_4	: _bus_space_read_multi_4,
+	hbs_rm_8	: _bus_space_read_multi_8,
+	hbs_rr_1	: _bus_space_read_region_1,
+	hbs_rr_2	: _bus_space_read_region_2,
+	hbs_rr_4	: _bus_space_read_region_4,
+	hbs_rr_8	: _bus_space_read_region_8,
+	hbs_w_1		: _bus_space_write_1,
+	hbs_w_2		: _bus_space_write_2,
+	hbs_w_4		: _bus_space_write_4,
+	hbs_w_8		: _bus_space_write_8,
+	hbs_wm_1	: _bus_space_write_multi_1,
+	hbs_wm_2	: _bus_space_write_multi_2,
+	hbs_wm_4	: _bus_space_write_multi_4,
+	hbs_wm_8	: _bus_space_write_multi_8,
+	hbs_wr_1	: _bus_space_write_region_1,
+	hbs_wr_2	: _bus_space_write_region_2,
+	hbs_wr_4	: _bus_space_write_region_4,
+	hbs_wr_8	: _bus_space_write_region_8,
+	hbs_sm_1	: _bus_space_set_multi_1,
+	hbs_sm_2	: _bus_space_set_multi_2,
+	hbs_sm_4	: _bus_space_set_multi_4,
+	hbs_sm_8	: _bus_space_set_multi_8,
+	hbs_c_1		: _bus_space_copy_region_1,
+	hbs_c_2		: _bus_space_copy_region_2,
+	hbs_c_4		: _bus_space_copy_region_4,
+	hbs_c_8		: _bus_space_copy_region_8
+};
 
+/* create default bus_space_tag */
 bus_space_tag_t
-bus_space_create(const char *name, bus_addr_t addr, bus_size_t size)
+bus_space_create(struct hpcsh_bus_space *hbs, const char *name,
+		 bus_addr_t addr, bus_size_t size)
 {
-	struct bus_space *t;
+	if (hbs == 0)
+		hbs = malloc(sizeof(*hbs), M_DEVBUF, M_NOWAIT);
+	KASSERT(hbs);
 
-	KASSERT(bus_space_cnt < BUS_SPACE_TAG_MAX);
+	memset(hbs, 0, sizeof(*hbs));
 
-	t = &bus_space[bus_space_cnt++];
-	t->t_base = addr;
-	t->t_size = size;
-	t->t_extent = extent_create(name, t->t_base, t->t_base + t->t_size,
-				    M_DEVBUF, 0, 0, EX_NOWAIT);
+	/* set default method */
+	*hbs = __default_bus_space;
+	hbs->hbs_cookie = hbs;
 
-	if (!t->t_extent) {
-		panic("bus_space_create: unable to create bus_space for"
-		      " 0x%08x-%#x\n", (unsigned)addr, (unsigned)size);
+	/* set access region */
+	if (size == 0) {
+		hbs->hbs_base_addr = addr; /* no extent */
+	} else {
+		hbs->hbs_extent = extent_create(name, addr, addr + size - 1,
+						M_DEVBUF, 0, 0, EX_NOWAIT);
+		if (hbs->hbs_extent == 0) {
+			panic("%s:: unable to create bus_space for "
+			      "0x%08lx-%#lx\n", __FUNCTION__, addr, size);
+		}
 	}
 
-	return (bus_space_tag_t)t;
+	return hbs;
 }
 
-int
-bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
-	      bus_space_handle_t *bshp)
+void
+bus_space_destroy(bus_space_tag_t t)
 {
-	int error;
-	CONTEXT_REF(_t, t);
+	struct hpcsh_bus_space *hbs = t;
+	struct extent *ex = hbs->hbs_extent;
 
-	if (ANONYMOUS(_t)) {
-		*bshp = (bus_space_handle_t)bpa;
+	if (ex != 0)
+		extent_destroy(ex);
+
+	free(t, M_DEVBUF);
+}
+
+/* default bus_space tag */
+static int
+_bus_space_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
+	       bus_space_handle_t *bshp)
+{
+	struct hpcsh_bus_space *hbs = t;
+	struct extent *ex = hbs->hbs_extent;
+	int error;
+
+	if (ex == 0) {
+		*bshp = (bus_space_handle_t)(bpa + hbs->hbs_base_addr);
 		return (0);
 	}
 
-	bpa += _t->t_base;
-	error = extent_alloc_region(_t->t_extent, bpa, size,
-				    EX_NOWAIT | EX_MALLOCOK);
-	if (error)
+	bpa += ex->ex_start;
+	error = extent_alloc_region(ex, bpa, size, EX_NOWAIT | EX_MALLOCOK);
+
+	if (error) {
+		DPRINTF("failed.\n");
 		return (error);
+	}
 
 	*bshp = (bus_space_handle_t)bpa;
 
-	DPRINTF(("\tbus_space_map:%#x(%#x)+%#x\n", bpa,
-		 bpa - t->t_base, size));
+	DPRINTF("success.\n");
 
 	return (0);
 }
 
-int
-bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
-		   bus_size_t offset, bus_size_t size,
-		   bus_space_handle_t *nbshp)
+static int
+_bus_space_subregion(void *t, bus_space_handle_t bsh,
+		     bus_size_t offset, bus_size_t size,
+		     bus_space_handle_t *nbshp)
 {
 	*nbshp = bsh + offset;
 
 	return (0);
 }
 
-int
-bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
-	       bus_size_t size, bus_size_t alignment, bus_size_t boundary,
-	       int flags, bus_addr_t *bpap, bus_space_handle_t *bshp)
+static int
+_bus_space_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
+		 bus_size_t size, bus_size_t alignment, bus_size_t boundary,
+		 int flags, bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
-	u_long bpa;
+	struct hpcsh_bus_space *hbs = t;
+	struct extent *ex = hbs->hbs_extent;
+	u_long bpa, base;
 	int error;
-	CONTEXT_REF(_t, t);
 
-	if (ANONYMOUS(_t)) {
-		*bshp = *bpap = rstart;
+	if (ex == 0) {
+		*bshp = *bpap = rstart + hbs->hbs_base_addr;
 		return (0);
 	}
 
-	rstart += _t->t_base;
-	rend += _t->t_base;
-	error = extent_alloc_subregion(_t->t_extent, rstart, rend, size,
+	base = ex->ex_start;
+
+	error = extent_alloc_subregion(ex, rstart + base, rend + base, size,
 				       alignment, boundary, 
 				       EX_FAST | EX_NOWAIT | EX_MALLOCOK,
 				       &bpa);
-	if (error)
+
+	if (error) {
+		DPRINTF("failed.\n");
 		return (error);
+	}
 
 	*bshp = (bus_space_handle_t)bpa;
 
 	if (bpap)
 		*bpap = bpa;
 
-	DPRINTF(("\tbus_space_alloc:%#x(%#x)+%#x\n", (unsigned)bpa,
-		 (unsigned)(bpa - t->t_base), size));
+	DPRINTF("success.\n");
 
 	return (0);
 }
 
-void
-bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
+static void
+_bus_space_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
-	CONTEXT_REF(_t, t);
+	struct hpcsh_bus_space *hbs = t;
+	struct extent *ex = hbs->hbs_extent;
 	
-	if (!ANONYMOUS(_t)) {
-		bus_space_unmap(t, bsh, size);
+	if (ex != 0)
+		_bus_space_unmap(t, bsh, size);
+}
+
+static void
+_bus_space_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
+{
+	struct hpcsh_bus_space *hbs = t;
+	struct extent *ex = hbs->hbs_extent;
+	int error;
+
+	if (ex == 0)
+		return;
+
+	error = extent_free(ex, bsh, size, EX_NOWAIT);
+
+	if (error) {
+		DPRINTF("%#lx-%#lx of %s space lost\n", bsh, bsh + size,
+			ex->ex_name);
 	}
 }
 
-void
-bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
+void *
+_bus_space_vaddr(void *t, bus_space_handle_t h)
 {
-	int error;
-	CONTEXT_REF(_t, t);
-
-	if (ANONYMOUS(_t))
-		return;
-
-	error = extent_free(_t->t_extent, bsh, size, EX_NOWAIT);
-
-	if (error) {
-		DPRINTF(("warning: %#x-%#x of %s space lost\n",
-			 bsh, bsh+size, t->t_name));
-	}
+	return (void *)h;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.20.10.2 2000/12/08 09:19:20 bouyer Exp $	*/
+/*	$NetBSD: nfs.h,v 1.20.10.3 2001/03/27 15:32:44 bouyer Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -61,8 +61,12 @@
 #ifndef NFS_MAXATTRTIMO
 #define	NFS_MAXATTRTIMO 60
 #endif
+#ifndef NFS_WSIZE
 #define	NFS_WSIZE	32768		/* Def. write data size */
+#endif
+#ifndef NFS_RSIZE
 #define	NFS_RSIZE	32768		/* Def. read data size */
+#endif
 #define NFS_READDIRSIZE	8192		/* Def. readdir size */
 #define	NFS_DEFRAHEAD	2		/* Def. read ahead # blocks */
 #define	NFS_MAXRAHEAD	4		/* Max. read ahead # blocks */

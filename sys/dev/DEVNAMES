@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.20.2.8 2001/02/11 19:15:14 bouyer Exp $
+#	$NetBSD: DEVNAMES,v 1.20.2.9 2001/03/27 15:31:49 bouyer Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -245,10 +245,9 @@ dtop			pmax
 dvbox			hp300
 dwlpx			alpha
 dz			MI		
-ea			arm26
-ea			arm32
+ea			MI
 eap			MI		
-eb			arm32
+eb			MI
 ebus			sparc64
 ec			MI		
 eccmemctl		sparc
@@ -261,11 +260,12 @@ ef			MI
 eg			MI		
 ega			MI		
 eh			arm26
-ei			arm26
+ei			MI
 eisa			MI		
 eisabus			MI		Attribute
 el			MI		
 elink			MI		Attribute
+elmc			MI (MCA)
 empsc			amiga
 empsc			amigappc
 en			MI		
@@ -764,6 +764,7 @@ pckbcport		i386		Attribute
 pckbcport		prep		Attribute
 pckbd			MI		
 pckbd			hpcmips
+pcmb			i386
 pcmcia			MI		
 pcmcia			arc		Attribute
 pcmciabus		MI		Attribute

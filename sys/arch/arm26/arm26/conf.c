@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.3.2.2 2000/11/20 20:02:23 bouyer Exp $ */
+/* $NetBSD: conf.c,v 1.3.2.3 2001/03/27 15:30:20 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: conf.c,v 1.3.2.2 2000/11/20 20:02:23 bouyer Exp $");
+__RCSID("$NetBSD: conf.c,v 1.3.2.3 2001/03/27 15:30:20 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -87,12 +87,6 @@ struct bdevsw bdevsw[] = {
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
-
-/* open, close, write, ioctl */
-#define	cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
 
 struct cdevsw cdevsw[] = {
 	/* First seven are standard across most ports */

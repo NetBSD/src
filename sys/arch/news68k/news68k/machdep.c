@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12.2.5 2001/03/12 13:29:09 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12.2.6 2001/03/27 15:31:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -250,7 +250,7 @@ cpu_startup()
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+				UVM_ADV_NORMAL, 0)) != 0)
 		panic("startup: cannot allocate VM for buffers");
 	minaddr = (vaddr_t)buffers;
 	base = bufpages / nbuf;
@@ -317,7 +317,7 @@ cpu_startup()
 	 * XXX VM_MIN_KERNEL_ADDRESS, but not right now.
 	 */
 	if (uvm_map_protect(kernel_map, 0, m68k_round_page(&kernel_text),
-	    UVM_PROT_NONE, TRUE) != KERN_SUCCESS)
+	    UVM_PROT_NONE, TRUE) != 0)
 		panic("can't mark pre-text pages off-limits");
 
 	/*
@@ -326,8 +326,7 @@ cpu_startup()
 	 *
 	 */
 	if (uvm_map_protect(kernel_map, m68k_trunc_page(&kernel_text),
-	    m68k_round_page(&etext), UVM_PROT_READ|UVM_PROT_EXEC, TRUE)
-	    != KERN_SUCCESS)
+	    m68k_round_page(&etext), UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != 0)
 		panic("can't protect kernel text");
 
 	/*

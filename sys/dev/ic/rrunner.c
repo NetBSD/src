@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.13.2.3 2001/01/05 17:35:46 bouyer Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.13.2.4 2001/03/27 15:31:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1005,7 +1005,6 @@ esh_fpread(dev, uio, ioflag)
 	struct esh_fp_ring_ctl *ring;
 	struct esh_dmainfo *di;
 	int ulp = ESHULP(dev);
-	int flags = B_READ;
 	int error;
 	int i;
 	int s;
@@ -1028,17 +1027,8 @@ esh_fpread(dev, uio, ioflag)
 	}
 
 	/* Check for validity */
-
 	for (i = 0; i < uio->uio_iovcnt; i++) {
-		/* XXXCDC: map not locked, rethink */
-		if (!uvm_useracc(uio->uio_iov[i].iov_base,
-				 uio->uio_iov[i].iov_len,
-				 (flags == B_READ) ? B_WRITE : B_READ)) {
-			error = EFAULT;
-			goto fpread_done;
-		}
 		/* Check for valid offsets and sizes */
-
 		if (((u_long) uio->uio_iov[i].iov_base & 3) != 0 || 
 		    (i < uio->uio_iovcnt - 1 && 
 		     (uio->uio_iov[i].iov_len & 3) != 0)) {
@@ -1050,18 +1040,17 @@ esh_fpread(dev, uio, ioflag)
 	PHOLD(p);	/* Lock process info into memory */
 
 	/* Lock down the pages */
-
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		if (uvm_vslock(p, iovp->iov_base, iovp->iov_len,
-		    VM_PROT_READ | VM_PROT_WRITE) != KERN_SUCCESS) {
+		error = uvm_vslock(p, iovp->iov_base, iovp->iov_len,
+		    VM_PROT_READ | VM_PROT_WRITE);
+		if (error) {
 			/* Unlock what we've locked so far. */
 			for (--i; i >= 0; i--) {
 				iovp = &uio->uio_iov[i];
 				uvm_vsunlock(p, iovp->iov_base,
 				    iovp->iov_len);
 			}
-			error = EFAULT;
 			goto fpread_done;
 		}
 	}
@@ -1176,7 +1165,6 @@ esh_fpwrite(dev, uio, ioflag)
 	struct esh_send_ring_ctl *ring;
 	struct esh_dmainfo *di;
 	int ulp = ESHULP(dev);
-	int flags = B_WRITE;
 	int error;
 	int len;
 	int i;
@@ -1200,16 +1188,7 @@ esh_fpwrite(dev, uio, ioflag)
 	}
 
 	/* Check for validity */
-
 	for (i = 0; i < uio->uio_iovcnt; i++) {
-		/* XXXCDC: map not locked, rethink */
-		if (!uvm_useracc(uio->uio_iov[i].iov_base,
-				 uio->uio_iov[i].iov_len,
-				 (flags == B_READ) ? B_WRITE : B_READ)) {
-			error = EFAULT;
-			goto fpwrite_done;
-		}
-
 		if (((u_long) uio->uio_iov[i].iov_base & 3) != 0 || 
 		    (i < uio->uio_iovcnt - 1 && 
 		     (uio->uio_iov[i].iov_len & 3) != 0)) {
@@ -1221,18 +1200,17 @@ esh_fpwrite(dev, uio, ioflag)
 	PHOLD(p);	/* Lock process info into memory */
 
 	/* Lock down the pages */
-
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
-		if (uvm_vslock(p, iovp->iov_base, iovp->iov_len,
-		    VM_PROT_READ) != KERN_SUCCESS) {
+		error = uvm_vslock(p, iovp->iov_base, iovp->iov_len,
+		    VM_PROT_READ);
+		if (error) {
 			/* Unlock what we've locked so far. */
 			for (--i; i >= 0; i--) {
 				iovp = &uio->uio_iov[i];
 				uvm_vsunlock(p, iovp->iov_base,
 				    iovp->iov_len);
 			}
-			error = EFAULT;
 			goto fpwrite_done;
 		}
 	}

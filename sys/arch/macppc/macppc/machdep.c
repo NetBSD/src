@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57.2.4 2001/03/12 13:29:02 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57.2.5 2001/03/27 15:31:10 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -139,6 +139,13 @@ initppc(startkernel, endkernel, args)
 	struct mem_region *allmem, *availmem, *mp;
 	struct ofw_translations *ofmap;
 	int ofmaplen;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = &cpu_info[0];
+#else
+	struct cpu_info *ci = &cpu_info_store;
+#endif
+
+	asm volatile ("mtsprg 0,%0" :: "r"(ci));
 
 	/*
 	 * Initialize BAT registers to unmapped to not generate
@@ -212,6 +219,7 @@ initppc(startkernel, endkernel, args)
 	ofmap = alloca(ofmaplen);
 	save_ofmap(ofmap, ofmaplen);
 
+	proc0.p_cpu = ci;
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
 
@@ -458,7 +466,7 @@ cpu_startup()
 	if (uvm_map(kernel_map, (vaddr_t *)&minaddr, round_page(sz),
 		NULL, UVM_UNKNOWN_OFFSET, 0,
 		UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-			    UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+			    UVM_ADV_NORMAL, 0)) != 0)
 		panic("startup: cannot allocate VM for buffers");
 	buffers = (char *)minaddr;
 	base = bufpages / nbuf;
@@ -612,6 +620,12 @@ cpu_reboot(howto, what)
 		resettodr();		/* set wall clock */
 	}
 
+#ifdef MULTIPROCESSOR
+	/* Halt other CPU.  XXX for now... */
+	macppc_send_ipi(&cpu_info[1 - cpu_number()], MACPPC_IPI_HALT);
+	delay(100000);	/* XXX */
+#endif
+
 	splhigh();
 
 	if (!cold && (howto & RB_DUMP))
@@ -661,7 +675,7 @@ cpu_reboot(howto, what)
 #if NADB > 0
 	adb_restart();	/* not return */
 #endif
-	ppc_boot(str);
+	ppc_exit();
 }
 
 /*
@@ -932,3 +946,45 @@ ofkbd_cngetc(dev)
 
 	return c;
 }
+
+#ifdef MULTIPROCESSOR
+void
+save_fpu_proc(p)
+	struct proc *p;
+{
+	volatile struct cpu_info *fpcpu;
+	int i;
+	extern volatile int IPI[];	/* XXX */
+
+	fpcpu = p->p_addr->u_pcb.pcb_fpcpu;
+	if (fpcpu == curcpu()) {
+		save_fpu(p);
+		return;
+	}
+
+#if 0
+	printf("save_fpu_proc{%d} pid = %d, fpcpu->ci_cpuid = %d\n",
+	    cpu_number(), p->p_pid, fpcpu->ci_cpuid);
+#endif
+
+	macppc_send_ipi(fpcpu, MACPPC_IPI_FLUSH_FPU);
+
+	/* Wait for flush. */
+#if 0
+	while (fpcpu->ci_fpuproc);
+#else
+	for (i = 0; i < 0x3fffffff; i++) {
+		if (fpcpu->ci_fpuproc == NULL)
+			goto done;
+	}
+	printf("save_fpu_proc{%d} pid = %d, fpcpu->ci_cpuid = %d\n",
+	    cpu_number(), p->p_pid, fpcpu->ci_cpuid);
+	printf("IPI[0] = 0x%x, IPI[1] = 0x%x\n", IPI[0], IPI[1]);
+	printf("cpl 0x%x 0x%x\n", cpu_info[0].ci_cpl, cpu_info[1].ci_cpl);
+	printf("ipending 0x%x 0x%x\n", cpu_info[0].ci_ipending, cpu_info[1].ci_ipending);
+	panic("save_fpu_proc");
+done:;
+
+#endif
+}
+#endif /* MULTIPROCESSOR */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.19.2.3 2001/03/12 13:32:11 bouyer Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.19.2.4 2001/03/27 15:32:49 bouyer Exp $	*/
 
 /*
  *
@@ -219,21 +219,15 @@ uvm_loan(map, start, len, result, flags)
 {
 	struct uvm_faultinfo ufi;
 	void **output;
-	int rv;
-
-#ifdef DIAGNOSTIC
-	if (map->flags & VM_MAP_INTRSAFE)
-		panic("uvm_loan: intrsafe map");
-#endif
+	int rv, error;
 
 	/*
 	 * ensure that one and only one of the flags is set
 	 */
 
-	if ((flags & (UVM_LOAN_TOANON|UVM_LOAN_TOPAGE)) == 
-	    (UVM_LOAN_TOANON|UVM_LOAN_TOPAGE) ||
-	    (flags & (UVM_LOAN_TOANON|UVM_LOAN_TOPAGE)) == 0)
-		return(KERN_FAILURE);
+	KASSERT(((flags & UVM_LOAN_TOANON) == 0) ^
+		((flags & UVM_LOAN_TOPAGE) == 0));
+	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 
 	/*
 	 * "output" is a pointer to the current place to put the loaned
@@ -261,15 +255,19 @@ uvm_loan(map, start, len, result, flags)
 		 * an unmapped region (an error)
 		 */
 
-		if (!uvmfault_lookup(&ufi, FALSE)) 
+		if (!uvmfault_lookup(&ufi, FALSE)) {
+			error = ENOENT;
 			goto fail;
+		}
 
 		/*
 		 * now do the loanout
 		 */
 		rv = uvm_loanentry(&ufi, &output, flags);
-		if (rv < 0) 
+		if (rv < 0) {
+			error = EINVAL;
 			goto fail;
+		}
 
 		/*
 		 * done!   advance pointers and unlock.
@@ -284,7 +282,7 @@ uvm_loan(map, start, len, result, flags)
 	 * got it!   return success.
 	 */
 
-	return(KERN_SUCCESS);
+	return 0;
 
 fail:
 	/*
@@ -298,7 +296,7 @@ fail:
 			uvm_unloanpage((struct vm_page **)result,
 			    output - result);
 	}
-	return(KERN_FAILURE);
+	return error;
 }
 
 /*

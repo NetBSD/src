@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.6.2.2 2001/03/12 13:28:31 bouyer Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.6.2.3 2001/03/27 15:30:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -67,6 +67,7 @@
 #include <arm/mainbus/mainbus.h>
 #include <hpcarm/sa11x0/sa11x0_reg.h>
 #include <hpcarm/sa11x0/sa11x0_var.h>
+#include <hpcarm/sa11x0/sa11x0_dmacreg.h>
 #include <hpcarm/sa11x0/sa11x0_gpioreg.h>
 
 #include "locators.h"
@@ -162,6 +163,11 @@ sa11x0_attach(parent, self, aux)
 			  0, &sc->sc_gpioh))
 		panic("%s: unable to map GPIO registers\n", self->dv_xname);
 
+	/* Map the DMA controller registers */
+	if (bus_space_map(sc->sc_iot, SADMAC_BASE, SADMAC_NPORTS,
+			  0, &sc->sc_dmach))
+		panic("%s: unable to map DMAC registers\n", self->dv_xname);
+
 	printf("\n");
 
 	/*
@@ -175,6 +181,14 @@ sa11x0_attach(parent, self, aux)
 
 	/* Clear idle mask */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAIPIC_CR, 0);
+
+	/* diable all DMAC channels */
+	bus_space_write_4(sc->sc_iot, sc->sc_dmach, SADMAC_DCR0_CLR, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_dmach, SADMAC_DCR1_CLR, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_dmach, SADMAC_DCR2_CLR, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_dmach, SADMAC_DCR3_CLR, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_dmach, SADMAC_DCR4_CLR, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_dmach, SADMAC_DCR5_CLR, 1);
 
 #ifdef DEBUG  /* XXX */
 	sa11x0_intr_establish(0, 30, 1, IPL_HIGH, hoge, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.5.2.2 2001/03/12 13:28:20 bouyer Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.5.2.3 2001/03/27 15:30:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -62,9 +62,16 @@
 
 #include <dev/cons.h>
 
+#ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#ifndef DB_ELFSIZE
+#error Must define DB_ELFSIZE!
+#endif
+#define ELFSIZE		DB_ELFSIZE
+#include <sys/exec_elf.h>
+#endif
 
 #include <uvm/uvm.h>
 
@@ -107,6 +114,7 @@ u_int cpu_reset_address = 0;
 
 BootConfig bootconfig;		/* Boot config storage */
 struct bootinfo *bootinfo, bootinfo_storage;
+char booted_kernel[80];
 
 vm_offset_t physical_start;
 vm_offset_t physical_freestart;
@@ -151,7 +159,7 @@ extern int pmap_debug_level;
 #define	KERNEL_PT_IO		3	/* Page table for mapping IO */
 #define	KERNEL_PT_VMDATA	4	/* Page tables for mapping kernel VM */
 #define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
-#define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
+#define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM + 1)
 
 pt_entry_t kernel_pt_table[NUM_KERNEL_PTS];
 
@@ -289,18 +297,22 @@ cpu_reboot(howto, bootstr)
  */
 
 u_int
-initarm(bi)
+initarm(argc, argv, bi)
+	int argc;
+	char **argv;
 	struct bootinfo *bi;
 {
 	int loop;
-	u_int kerneldatasize;
+	u_int kerneldatasize, symbolsize;
 	u_int l1pagetable;
 	u_int l2pagetable;
-	u_int stackptr;
 	vm_offset_t freemempos;
 	extern char page0[], page0_end[];
 	pv_addr_t kernel_l1pt;
 	pv_addr_t kernel_ptpt;
+#ifdef DDB
+	Elf_Shdr *sh;
+#endif
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
@@ -330,13 +342,39 @@ initarm(bi)
 	bootconfig.dram[0].pages = 8192;
 	bootconfig.dramblocks = 1;
 	kerneldatasize = (u_int32_t)&end - (u_int32_t)KERNEL_TEXT_BASE;
-	/* XXX round up kernel size.  shouldn't be necessary. not confirmed. */
-	kerneldatasize = ((kerneldatasize - 1) & ~(NBPG * 4 - 1))
-	    + NBPG * 4 + NBPG * 64;
-	printf("kernsize=0x%x\n", kerneldatasize);
 
+	symbolsize = 0;
+#ifdef DDB
+	if (! memcmp(&end, "\177ELF", 4)) {
+		sh = (Elf_Shdr *)((char *)&end + ((Elf_Ehdr *)&end)->e_shoff);
+		loop = ((Elf_Ehdr *)&end)->e_shnum;
+		for(; loop; loop--, sh++)
+			if (sh->sh_offset > 0 &&
+			    (sh->sh_offset + sh->sh_size) > symbolsize)
+				symbolsize = sh->sh_offset + sh->sh_size;
+	}
+#endif
+
+	printf("kernsize=0x%x\n", kerneldatasize);
+	kerneldatasize += symbolsize;
+	kerneldatasize = ((kerneldatasize - 1) & ~(NBPG * 4 - 1)) + NBPG * 8;
+
+	/* parse kernel args */
+	strncpy(booted_kernel, *argv, sizeof(booted_kernel));
+	for(argc--, argv++; argc; argc--, argv++)
+		switch(**argv) {
+		case 'a':
+			boothowto |= RB_ASKNAME;
+			break;
+		case 's':
+			boothowto |= RB_SINGLE;
+			break;
+		default:
+			break;
+		}
+		
 	/* copy bootinfo into known kernel space */
-	bootinfo_storage = *(struct bootinfo *)bi;
+	bootinfo_storage = *bi;
 	bootinfo = &bootinfo_storage;
 
 	bootinfo->fb_addr = (void *)FRAMEBUF_BASE;
@@ -631,17 +669,6 @@ initarm(bi)
 	printf("undefined ");
 	undefined_init();
 
-	/* Relocate the stack pointer */
-	stackptr = get_stackptr(PSR_SVC32_MODE);
-	printf("sp: %08x -> ", stackptr);
-	memcpy((char *)(kernelstack.pv_va + NBPG * (UPAGES - 1)),
-	    (char *)(stackptr & ~(NBPG - 1)), NBPG);
-	stackptr = kernelstack.pv_va + NBPG * (UPAGES - 1)
-	    + (stackptr & (NBPG - 1));
-/*	set_stackptr(PSR_SVC32_MODE, stackptr);*/
-	asm("mov sp, %0" : : "r" (stackptr));
-	printf("%08x\n", stackptr);
-
 	/* Set the page table address. */
 	setttb(kernel_l1pt.pv_pa);
 
@@ -653,9 +680,6 @@ initarm(bi)
 	/* Enable MMU, I-cache, D-cache, write buffer. */
 	cpufunc_control(0x337f, 0x107d);
 
-#ifndef FRAMEBUF_HW_BASE
-	bootinfo->bi_cnuse = BI_CNUSE_SERIAL;
-#endif
 	if (bootinfo->bi_cnuse == BI_CNUSE_SERIAL)
 		consinit();
 	else {
@@ -691,25 +715,19 @@ initarm(bi)
 #endif
 
 #ifdef DDB
-	printf("ddb: ");
-#if 0
-	db_machine_init();
 	{
-		extern int *esym;
+		static struct undefined_handler uh;
 
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+		uh.uh_handler = db_trapper;
+		install_coproc_handler_static(0, &uh);
 	}
-#else
-	install_coproc_handler(0, db_trapper);
+	ddb_init(symbolsize, ((int *)&end), ((char *)&end) + symbolsize);
 #endif
 
 	printf("kernsize=0x%x", kerneldatasize);
-#if 0
-	printf(" syms=0x%x", symsize);
-#endif
-	printf(" %d", (u_int32_t)&end - (u_int32_t)KERNEL_TEXT_BASE);
-	printf("\n");
+	printf(" (including 0x%x symbols)\n", symbolsize);
 
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif	/* DDB */

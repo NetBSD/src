@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.5.2.2 2000/11/20 20:12:16 bouyer Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.5.2.3 2001/03/27 15:31:06 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -395,9 +395,6 @@ grfunmap(dev, sc, addr, p)
 		return (-1);
 
 	size = m68k_round_page(sc->sc_dc->dc_offset + sc->sc_dc->dc_size);
-
-	rv = uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)addr,
-	    (vaddr_t)addr + size);
-
-	return (rv == KERN_SUCCESS ? 0 : EINVAL);
+	uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)addr, (vaddr_t)addr + size);
+	return 0;
 }

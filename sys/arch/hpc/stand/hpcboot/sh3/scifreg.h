@@ -1,4 +1,4 @@
-/* $NetBSD: scifreg.h,v 1.1.2.2 2001/02/11 19:10:11 bouyer Exp $ */
+/* $NetBSD: scifreg.h,v 1.1.2.3 2001/03/27 15:30:49 bouyer Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -45,12 +45,6 @@
 #define SHREG_SCFRDR2 (*(volatile unsigned char *)	0xa400015A)
 #define SHREG_SCFCR2  (*(volatile unsigned char *)	0xa400015C)
 #define SHREG_SCFDR2  (*(volatile unsigned short *)	0xa400015E)
-
-#define SCSMR2_CHR	0x40	/* Character length */
-#define SCSMR2_PE	0x20	/* Parity enable */
-#define SCSMR2_OE	0x10	/* Parity mode */
-#define SCSMR2_STOP	0x08	/* Stop bit length */
-#define SCSMR2_CKS	0x03	/* Clock select */
 
 #define SCSCR2_TIE	0x80	/* Transmit Interrupt Enable */
 #define SCSCR2_RIE	0x40	/* Recieve Interrupt Enable */
@@ -147,5 +141,11 @@
 #define SCFDR2_RECVCNT	0x00ff	/* Rx CouNT */
 #define SCFDR2_TXF_FULL	0x1000	/* Tx FULL */
 #define SCFDR2_RXF_EPTY	0x0000	/* Rx EMPTY */
+
+#define SCSMR2_CHR	0x40	/* Character length */
+#define SCSMR2_PE	0x20	/* Parity enable */
+#define SCSMR2_OE	0x10	/* Parity mode */
+#define SCSMR2_STOP	0x08	/* Stop bit length */
+#define SCSMR2_CKS	0x03	/* Clock select */
 
 #endif /* !_SH3_SCIFREG_ */

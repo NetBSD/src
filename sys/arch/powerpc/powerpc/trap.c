@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22.2.6 2001/03/12 13:29:14 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.22.2.7 2001/03/27 15:31:22 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 #include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -119,7 +120,7 @@ trap(frame)
 				ftype = VM_PROT_READ;
 			rv = uvm_fault(map, trunc_page(va), 0, ftype);
 			KERNEL_UNLOCK();
-			if (rv == KERN_SUCCESS)
+			if (rv == 0)
 				return;
 			if ((fb = p->p_addr->u_pcb.pcb_onfault) != NULL) {
 				frame->srr0 = (*fb)[0];
@@ -139,13 +140,13 @@ trap(frame)
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
-		if ((rv = uvm_fault(&p->p_vmspace->vm_map,
-				    trunc_page(frame->dar), 0, ftype))
-		    == KERN_SUCCESS) {
+		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
+		    0, ftype);
+		if (rv == 0) {
 			KERNEL_PROC_UNLOCK(p);
 			break;
 		}
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: "
 			       "out of swap\n",
 			       p->p_pid, p->p_comm,
@@ -160,9 +161,9 @@ trap(frame)
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(p);
 		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
-		if (uvm_fault(&p->p_vmspace->vm_map,
-			     trunc_page(frame->srr0), 0, ftype)
-		    == KERN_SUCCESS) {
+		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
+		    0, ftype);
+		if (rv == 0) {
 			KERNEL_PROC_UNLOCK(p);
 			break;
 		}
@@ -263,7 +264,12 @@ syscall_bad:
 	case EXC_FPU|EXC_USER:
 		if (fpuproc)
 			save_fpu(fpuproc);
+#if defined(MULTIPROCESSOR)
+		if (p->p_addr->u_pcb.pcb_fpcpu)
+			save_fpu_proc(p);
+#endif
 		fpuproc = p;
+		p->p_addr->u_pcb.pcb_fpcpu = curcpu();
 		enable_fpu(p);
 		break;
 
@@ -351,7 +357,7 @@ brain_damage:
 	 * If someone stole the fp or vector unit while we were away,
 	 * disable it
 	 */
-	if (p != fpuproc)
+	if (p != fpuproc || p->p_addr->u_pcb.pcb_fpcpu != curcpu())
 		frame->srr1 &= ~PSL_FP;
 #ifdef ALTIVEC
 	if (p != vecproc)
@@ -373,7 +379,9 @@ child_return(arg)
 	tf->fixreg[FIRSTARG] = 0;
 	tf->fixreg[FIRSTARG + 1] = 1;
 	tf->cr &= ~0x10000000;
-	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't be them */
+	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't
+					   be them. */
+	p->p_addr->u_pcb.pcb_fpcpu = NULL;
 #ifdef	KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(p);

@@ -27,7 +27,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.1.1.1.2.3 2001/02/11 19:17:32 bouyer Exp $ 
+ *	$Id: i4b_l4mgmt.c,v 1.1.1.1.2.4 2001/03/27 15:32:42 bouyer Exp $ 
  *
  * $FreeBSD$
  *
@@ -66,12 +66,13 @@
 #include <netisdn/i4b_ioctl.h>
 #endif
 
-#include <netisdn/i4b_l2l3.h>
 #include <netisdn/i4b_l3l4.h>
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_global.h>
 
+#include <netisdn/i4b_l1l2.h>	/* XXX ! */
+#include <netisdn/i4b_l2.h>	/* XXX ! */
 #include <netisdn/i4b_l4.h>
 
 call_desc_t call_desc[N_CALL_DESC];	/* call descriptor array */
@@ -241,11 +242,8 @@ cd_by_unitcr(int unit, int cr, int crf)
 
 	for(i=0; i < N_CALL_DESC; i++)
 	{
-	  if((call_desc[i].cdid != CDID_UNUSED)                                       &&
-	     (ctrl_desc[call_desc[i].controller].ctrl_type == CTRL_PASSIVE) &&
-	     (ctrl_desc[call_desc[i].controller].unit == unit)              &&
-	     (call_desc[i].cr == cr)                                        &&
-	     (call_desc[i].crflag == crf) )
+	  if (call_desc[i].cdid != CDID_UNUSED && call_desc[i].bri == unit  &&
+	     call_desc[i].cr == cr && call_desc[i].crflag == crf)
 	  {
 	    NDBGL4(L4_MSG, "found cd, index=%d cdid=%u cr=%d",
 			i, call_desc[i].cdid, call_desc[i].cr);
@@ -353,14 +351,9 @@ i4b_l4_daemon_attached(void)
 	int i;
 
 	int x = splnet();
-	
 	for(i=0; i < nctrl; i++)
 	{
-/*XXX*/		if(ctrl_desc[i].ctrl_type == CTRL_PASSIVE)
-		{
-			NDBGL4(L4_MSG, "CMR_DOPEN sent to unit %d", ctrl_desc[i].unit);
-			(*ctrl_desc[i].N_MGMT_COMMAND)(ctrl_desc[i].unit, CMR_DOPEN, 0);
-		}
+		ctrl_desc[i].N_MGMT_COMMAND(ctrl_desc[i].bri, CMR_DOPEN, 0);
 	}
 	splx(x);
 }
@@ -374,14 +367,9 @@ i4b_l4_daemon_detached(void)
 	int i;
 
 	int x = splnet();
-
 	for(i=0; i < nctrl; i++)
 	{
-/*XXX*/		if(ctrl_desc[i].ctrl_type == CTRL_PASSIVE)
-		{
-			NDBGL4(L4_MSG, "CMR_DCLOSE sent to unit %d", ctrl_desc[i].unit);
-			(*ctrl_desc[i].N_MGMT_COMMAND)(ctrl_desc[i].unit, CMR_DCLOSE, 0);
-		}
+		ctrl_desc[i].N_MGMT_COMMAND(ctrl_desc[i].bri, CMR_DCLOSE, 0);
 	}
 	splx(x);
 }

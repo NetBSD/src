@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.1.6.2 2000/11/20 20:02:54 bouyer Exp $ */
+/* $NetBSD: dtide.c,v 1.1.6.3 2001/03/27 15:30:24 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: dtide.c,v 1.1.6.2 2000/11/20 20:02:54 bouyer Exp $");
+__RCSID("$NetBSD: dtide.c,v 1.1.6.3 2001/03/27 15:30:24 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __RCSID("$NetBSD: dtide.c,v 1.1.6.2 2000/11/20 20:02:54 bouyer Exp $");
 #include <machine/irq.h>
 
 #include <arch/arm26/podulebus/podulebus.h>
-#include <arch/arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 #include <arch/arm26/podulebus/dtidereg.h>
 
 #include <dev/ata/atavar.h>
@@ -51,7 +51,7 @@ struct dtide_softc {
 	struct wdc_softc sc_wdc;
 	struct channel_softc *sc_chp[2]; /* pointers to the following */
 	struct channel_softc sc_chan[2];
-	struct irq_handler *sc_ih[2];
+	void			*sc_ih[2];
 	bus_space_tag_t		sc_magict;
 	bus_space_handle_t	sc_magich;
 };
@@ -107,12 +107,10 @@ dtide_attach(struct device *parent, struct device *self, void *aux)
 			    &sc->sc_chan[1].cmd_ioh);
 	bus_space_subregion(bst, bsh, DTIDE_CTLBASE1 >> 5, 0x100,
 			    &sc->sc_chan[1].ctl_ioh);
-	sc->sc_ih[0] =
-	    podulebus_irq_establish(self->dv_parent, pa->pa_slotnum,
-				    IPL_BIO, wdcintr, &sc->sc_chan[0]);
-	sc->sc_ih[1] =
-	    podulebus_irq_establish(self->dv_parent, pa->pa_slotnum,
-				    IPL_BIO, wdcintr, &sc->sc_chan[1]);
+	sc->sc_ih[0] = podulebus_irq_establish(pa->pa_ih, IPL_BIO, wdcintr,
+	    &sc->sc_chan[0]);
+	sc->sc_ih[1] = podulebus_irq_establish(pa->pa_ih, IPL_BIO, wdcintr,
+	    &sc->sc_chan[1]);
 	printf(": interrupting at %s\n", irq_string(sc->sc_ih[0]));
 	wdcattach(&sc->sc_chan[0]);
 	irq_enable(sc->sc_ih[0]);

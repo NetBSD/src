@@ -1,4 +1,4 @@
-/* $NetBSD: isp_inline.h,v 1.1.2.3 2001/03/12 13:30:28 bouyer Exp $ */
+/* $NetBSD: isp_inline.h,v 1.1.2.4 2001/03/27 15:31:58 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -67,29 +67,15 @@
  * will be a seed for the last handled allocated.
  */
 
-static INLINE int
-isp_save_xs __P((struct ispsoftc *, XS_T *, u_int32_t *));
-
-static INLINE XS_T *
-isp_find_xs __P((struct ispsoftc *, u_int32_t));
-
-static INLINE u_int32_t
-isp_find_handle __P((struct ispsoftc *, XS_T *));
+static INLINE int isp_save_xs(struct ispsoftc *, XS_T *, u_int16_t *);
+static INLINE XS_T *isp_find_xs(struct ispsoftc *, u_int16_t);
+static INLINE u_int16_t isp_find_handle(struct ispsoftc *, XS_T *);
+static INLINE int isp_handle_index(u_int16_t);
+static INLINE void isp_destroy_handle(struct ispsoftc *, u_int16_t);
+static INLINE void isp_remove_handle(struct ispsoftc *, XS_T *);
 
 static INLINE int
-isp_handle_index __P((u_int32_t));
-
-static INLINE void
-isp_destroy_handle __P((struct ispsoftc *, u_int32_t));
-
-static INLINE void
-isp_remove_handle __P((struct ispsoftc *, XS_T *));
-
-static INLINE int
-isp_save_xs(isp, xs, handlep)
-	struct ispsoftc *isp;
-	XS_T *xs;
-	u_int32_t *handlep;
+isp_save_xs(struct ispsoftc *isp, XS_T *xs, u_int16_t *handlep)
 {
 	int i, j;
 
@@ -113,27 +99,23 @@ isp_save_xs(isp, xs, handlep)
 }
 
 static INLINE XS_T *
-isp_find_xs(isp, handle)
-	struct ispsoftc *isp;
-	u_int32_t handle;
+isp_find_xs(struct ispsoftc *isp, u_int16_t handle)
 {
-	if (handle < 1 || handle > (u_int32_t) isp->isp_maxcmds) {
+	if (handle < 1 || handle > (u_int16_t) isp->isp_maxcmds) {
 		return (NULL);
 	} else {
 		return (isp->isp_xflist[handle - 1]);
 	}
 }
 
-static INLINE u_int32_t
-isp_find_handle(isp, xs)
-	struct ispsoftc *isp;
-	XS_T *xs;
+static INLINE u_int16_t
+isp_find_handle(struct ispsoftc *isp, XS_T *xs)
 {
 	int i;
 	if (xs != NULL) {
 		for (i = 0; i < isp->isp_maxcmds; i++) {
 			if (isp->isp_xflist[i] == xs) {
-				return ((u_int32_t) i+1);
+				return ((u_int16_t) i+1);
 			}
 		}
 	}
@@ -141,39 +123,31 @@ isp_find_handle(isp, xs)
 }
 
 static INLINE int
-isp_handle_index(handle)
-	u_int32_t handle;
+isp_handle_index(u_int16_t handle)
 {
 	return (handle-1);
 }
 
 static INLINE void
-isp_destroy_handle(isp, handle)
-	struct ispsoftc *isp;
-	u_int32_t handle;
+isp_destroy_handle(struct ispsoftc *isp, u_int16_t handle)
 {
-	if (handle > 0 && handle <= (u_int32_t) isp->isp_maxcmds) {
+	if (handle > 0 && handle <= (u_int16_t) isp->isp_maxcmds) {
 		isp->isp_xflist[isp_handle_index(handle)] = NULL;
 	}
 }
 
 static INLINE void
-isp_remove_handle(isp, xs)
-	struct ispsoftc *isp;
-	XS_T *xs;
+isp_remove_handle(struct ispsoftc *isp, XS_T *xs)
 {
 	isp_destroy_handle(isp, isp_find_handle(isp, xs));
 }
 
 static INLINE int
-isp_getrqentry __P((struct ispsoftc *, u_int16_t *, u_int16_t *, void **));
+isp_getrqentry(struct ispsoftc *, u_int16_t *, u_int16_t *, void **);
 
 static INLINE int
-isp_getrqentry(isp, iptrp, optrp, resultp)
-	struct ispsoftc *isp;
-	u_int16_t *iptrp;
-	u_int16_t *optrp;
-	void **resultp;
+isp_getrqentry(struct ispsoftc *isp, u_int16_t *iptrp,
+    u_int16_t *optrp, void **resultp)
 {
 	volatile u_int16_t iptr, optr;
 
@@ -191,17 +165,12 @@ isp_getrqentry(isp, iptrp, optrp, resultp)
 	return (0);
 }
 
-static INLINE void
-isp_print_qentry __P((struct ispsoftc *, char *, int, void *));
+static INLINE void isp_print_qentry (struct ispsoftc *, char *, int, void *);
 
 
 #define	TBA	(4 * (((QENTRY_LEN >> 2) * 3) + 1) + 1)
 static INLINE void
-isp_print_qentry(isp, msg, idx, arg)
-	struct ispsoftc *isp;
-	char *msg;
-	int idx;
-	void *arg;
+isp_print_qentry(struct ispsoftc *isp, char *msg, int idx, void *arg)
 {
 	char buf[TBA];
 	int amt, i, j;
@@ -218,15 +187,10 @@ isp_print_qentry(isp, msg, idx, arg)
 	}
 }
 
-static INLINE void
-isp_print_bytes __P((struct ispsoftc *, char *, int, void *));
+static INLINE void isp_print_bytes(struct ispsoftc *, char *, int, void *);
 
 static INLINE void
-isp_print_bytes(isp, msg, amt, arg)
-	struct ispsoftc *isp;
-	char *msg;
-	int amt;
-	void *arg;
+isp_print_bytes(struct ispsoftc *isp, char *msg, int amt, void *arg)
 {
 	char buf[128];
 	u_int8_t *ptr = arg;
@@ -265,12 +229,10 @@ isp_print_bytes(isp, msg, amt, arg)
  * We assume we enter here with any locks held.
  */
 
-static INLINE int isp_fc_runstate __P((struct ispsoftc *, int));
+static INLINE int isp_fc_runstate(struct ispsoftc *, int);
 
 static INLINE int
-isp_fc_runstate(isp, tval)
-	struct ispsoftc *isp;
-	int tval;
+isp_fc_runstate(struct ispsoftc *isp, int tval)
 {
 	fcparam *fcp;
 	int *tptr;

@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.1.1.1.2.4 2001/02/15 13:36:12 bouyer Exp $
+ *	$Id: i4b_ipr.c,v 1.1.1.1.2.5 2001/03/27 15:32:40 bouyer Exp $
  *
  * $FreeBSD$
  *
@@ -721,7 +721,7 @@ iprwatchdog(struct ifnet *ifp)
 	/* get # of bytes in and out from the HSCX driver */ 
 	
 	(*isdn_linktab[unit]->bch_stat)
-		(isdn_linktab[unit]->unit, isdn_linktab[unit]->channel, &bs);
+		(isdn_linktab[unit]->l1token, isdn_linktab[unit]->channel, &bs);
 
 	sc->sc_ioutb += bs.outbytes;
 	sc->sc_iinb += bs.inbytes;
@@ -1189,7 +1189,7 @@ ipr_tx_queue_empty(int unit)
 	}
 
 	if(x)
-		(*isdn_linktab[unit]->bch_tx_start)(isdn_linktab[unit]->unit, isdn_linktab[unit]->channel);
+		(*isdn_linktab[unit]->bch_tx_start)(isdn_linktab[unit]->l1token, isdn_linktab[unit]->channel);
 }
 
 /*---------------------------------------------------------------------------*

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.c,v 1.2.2.3 2001/03/12 13:28:10 bouyer Exp $	*/
+/*	$NetBSD: platid_mask.c,v 1.2.2.4 2001/03/27 15:30:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -272,11 +272,11 @@ platid_t platid_mask_MACH_EVEREX_FREESTYLE_A20 = {{
 	PLATID_MACH_EVEREX_FREESTYLE_A20
 }};
 #endif /* hpcmips */
-#ifdef hpcmips
 platid_t platid_mask_MACH_CASIO = {{
 	PLATID_WILD,
 	PLATID_MACH_CASIO
 }};
+#ifdef hpcmips
 platid_t platid_mask_MACH_CASIO_CASSIOPEIAE = {{
 	PLATID_WILD,
 	PLATID_MACH_CASIO_CASSIOPEIAE
@@ -338,6 +338,20 @@ platid_t platid_mask_MACH_CASIO_POCKETPOSTPET_POCKETPOSTPET = {{
 	PLATID_MACH_CASIO_POCKETPOSTPET_POCKETPOSTPET
 }};
 #endif /* hpcmips */
+#ifdef hpcsh
+platid_t platid_mask_MACH_CASIO_CASSIOPEIAA = {{
+	PLATID_WILD,
+	PLATID_MACH_CASIO_CASSIOPEIAA
+}};
+platid_t platid_mask_MACH_CASIO_CASSIOPEIAA_AXX = {{
+	PLATID_WILD,
+	PLATID_MACH_CASIO_CASSIOPEIAA_AXX
+}};
+platid_t platid_mask_MACH_CASIO_CASSIOPEIAA_A55V = {{
+	PLATID_CPU_SH_3_7709,
+	PLATID_MACH_CASIO_CASSIOPEIAA_A55V
+}};
+#endif /* hpcsh */
 #ifdef hpcmips
 platid_t platid_mask_MACH_SHARP = {{
 	PLATID_WILD,
@@ -605,6 +619,14 @@ platid_t platid_mask_MACH_HP_JORNADA_680JP = {{
 	PLATID_CPU_SH_3_7709A,
 	PLATID_MACH_HP_JORNADA_680JP
 }};
+platid_t platid_mask_MACH_HP_JORNADA_680HU = {{
+	PLATID_CPU_SH_3_7709A,
+	PLATID_MACH_HP_JORNADA_680HU
+}};
+platid_t platid_mask_MACH_HP_JORNADA_680DE = {{
+	PLATID_CPU_SH_3_7709A,
+	PLATID_MACH_HP_JORNADA_680DE
+}};
 platid_t platid_mask_MACH_HP_JORNADA_690 = {{
 	PLATID_CPU_SH_3_7709A,
 	PLATID_MACH_HP_JORNADA_690
@@ -612,6 +634,14 @@ platid_t platid_mask_MACH_HP_JORNADA_690 = {{
 platid_t platid_mask_MACH_HP_JORNADA_690JP = {{
 	PLATID_CPU_SH_3_7709A,
 	PLATID_MACH_HP_JORNADA_690JP
+}};
+platid_t platid_mask_MACH_HP_JORNADA_690HU = {{
+	PLATID_CPU_SH_3_7709A,
+	PLATID_MACH_HP_JORNADA_690HU
+}};
+platid_t platid_mask_MACH_HP_JORNADA_690DE = {{
+	PLATID_CPU_SH_3_7709A,
+	PLATID_MACH_HP_JORNADA_690DE
 }};
 #endif /* hpcsh */
 #ifdef hpcarm
@@ -652,6 +682,14 @@ platid_t platid_mask_MACH_HITACHI_PERSONA = {{
 platid_t platid_mask_MACH_HITACHI_PERSONA_HPW230JC = {{
 	PLATID_CPU_SH_3_7709,
 	PLATID_MACH_HITACHI_PERSONA_HPW230JC
+}};
+platid_t platid_mask_MACH_HITACHI_PERSONA_HPW50PAD = {{
+	PLATID_CPU_SH_3_7709,
+	PLATID_MACH_HITACHI_PERSONA_HPW50PAD
+}};
+platid_t platid_mask_MACH_HITACHI_PERSONA_HPW650PA = {{
+	PLATID_CPU_SH_4_7750,
+	PLATID_MACH_HITACHI_PERSONA_HPW650PA
 }};
 #endif /* hpcsh */
 #ifdef hpcsh

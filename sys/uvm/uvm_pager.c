@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.23.2.5 2001/03/12 13:32:14 bouyer Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.23.2.6 2001/03/27 15:32:51 bouyer Exp $	*/
 
 /*
  *
@@ -149,7 +149,7 @@ ReStart:
 	kva = 0;			/* let system choose VA */
 
 	if (uvm_map(pager_map, &kva, size, NULL, 
-	      UVM_UNKNOWN_OFFSET, 0, UVM_FLAG_NOMERGE) != KERN_SUCCESS) {
+	      UVM_UNKNOWN_OFFSET, 0, UVM_FLAG_NOMERGE) != 0) {
 		if (curproc == uvm.pagedaemon_proc) {
 			simple_lock(&pager_map_wanted_lock);
 			if (emerginuse) {
@@ -223,7 +223,7 @@ uvm_pagermapout(kva, npages)
 	}
 
 	vm_map_lock(pager_map);
-	(void) uvm_unmap_remove(pager_map, kva, kva + size, &entries);
+	uvm_unmap_remove(pager_map, kva, kva + size, &entries);
 	simple_lock(&pager_map_wanted_lock);
 	if (pager_map_wanted) {
 		pager_map_wanted = FALSE;
@@ -231,11 +231,11 @@ uvm_pagermapout(kva, npages)
 	}
 	simple_unlock(&pager_map_wanted_lock);
 	vm_map_unlock(pager_map);
+
 remove:
 	pmap_remove(pmap_kernel(), kva, kva + (npages << PAGE_SHIFT));
 	if (entries)
 		uvm_unmap_detach(entries, 0);
-
 	UVMHIST_LOG(maphist,"<- done",0,0,0,0);
 }
 

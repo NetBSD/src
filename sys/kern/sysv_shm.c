@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.52.2.2 2000/11/22 16:05:25 bouyer Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.52.2.3 2001/03/27 15:32:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ struct shmmap_state {
 
 static int shm_find_segment_by_key __P((key_t));
 static void shm_deallocate_segment __P((struct shmid_ds *));
-static int shm_delete_mapping __P((struct vmspace *, struct shmmap_state *));
+static void shm_delete_mapping __P((struct vmspace *, struct shmmap_state *));
 static int shmget_existing __P((struct proc *, struct sys_shmget_args *,
 				int, int, register_t *));
 static int shmget_allocate_segment __P((struct proc *, struct sys_shmget_args *,
@@ -169,21 +169,19 @@ shm_deallocate_segment(shmseg)
 	shm_nused--;
 }
 
-static int
+static void
 shm_delete_mapping(vm, shmmap_s)
 	struct vmspace *vm;
 	struct shmmap_state *shmmap_s;
 {
 	struct shmid_ds *shmseg;
-	int segnum, result;
+	int segnum;
 	size_t size;
 	
 	segnum = IPCID_TO_IX(shmmap_s->shmid);
 	shmseg = &shmsegs[segnum];
 	size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
-	result = uvm_deallocate(&vm->vm_map, shmmap_s->va, size);
-	if (result != KERN_SUCCESS)
-		return EINVAL;
+	uvm_deallocate(&vm->vm_map, shmmap_s->va, size);
 	shmmap_s->shmid = -1;
 	shmseg->shm_dtime = time.tv_sec;
 	if ((--shmseg->shm_nattch <= 0) &&
@@ -191,7 +189,6 @@ shm_delete_mapping(vm, shmmap_s)
 		shm_deallocate_segment(shmseg);
 		shm_last_free = segnum;
 	}
-	return 0;
 }
 
 int
@@ -216,7 +213,8 @@ sys_shmdt(p, v, retval)
 			break;
 	if (i == shminfo.shmseg)
 		return EINVAL;
-	return shm_delete_mapping(p->p_vmspace, shmmap_s);
+	shm_delete_mapping(p->p_vmspace, shmmap_s);
+	return 0;
 }
 
 int
@@ -238,7 +236,6 @@ sys_shmat(p, v, retval)
 	vaddr_t attach_va;
 	vm_prot_t prot;
 	vsize_t size;
-	int rv;
 
 	shmmap_s = (struct shmmap_state *)p->p_vmspace->vm_shm;
 	if (shmmap_s == NULL) {
@@ -284,14 +281,12 @@ sys_shmat(p, v, retval)
 	}
 	shm_handle = shmseg->_shm_internal;
 	uao_reference(shm_handle->shm_object);
-	rv = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
-		     shm_handle->shm_object, 0, 0,
-		     UVM_MAPFLAG(prot, prot, UVM_INH_SHARE,
-				 UVM_ADV_RANDOM, 0));
-	if (rv != KERN_SUCCESS) {
-	    return ENOMEM;
+	error = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
+	    shm_handle->shm_object, 0, 0,
+	    UVM_MAPFLAG(prot, prot, UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
+	if (error) {
+		return error;
 	}
-
 	shmmap_s->va = attach_va;
 	shmmap_s->shmid = SCARG(uap, shmid);
 	shmseg->shm_lpid = p->p_pid;

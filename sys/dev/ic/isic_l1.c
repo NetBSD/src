@@ -1,3 +1,5 @@
+/* $NetBSD: isic_l1.c,v 1.1.4.3 2001/03/27 15:31:54 bouyer Exp $ */
+
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
  *
@@ -22,54 +24,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *---------------------------------------------------------------------------
- *
- *	i4b_l1.c - isdn4bsd layer 1 handler
- *	-----------------------------------
- *
- *	$Id: isic_l1.c,v 1.1.4.2 2001/03/12 13:30:25 bouyer Exp $ 
- *
- *      last edit-date: [Fri Jan  5 11:36:11 2001]
- *
- *---------------------------------------------------------------------------*/
+ */
 
 #include <sys/param.h>
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 300001
-#include <sys/ioccom.h>
-#else
 #include <sys/ioctl.h>
-#endif
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <machine/stdarg.h>
 
-#ifdef __FreeBSD__
-#include <machine/clock.h>
-#include <i386/isa/isa_device.h>
-#else
-#ifndef __bsdi__
 #include <machine/bus.h>
-#endif
 #include <sys/device.h>
-#endif
 
 #include <sys/socket.h>
 #include <net/if.h>
 
-#if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 #include <sys/callout.h>
-#endif
 
-#ifdef __FreeBSD__
-#include <machine/i4b_debug.h>
-#include <machine/i4b_ioctl.h>
-#include <machine/i4b_trace.h>
-#else
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_trace.h>
-#endif
 
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
@@ -81,44 +54,20 @@
 
 unsigned int i4b_l1_debug = L1_DEBUG_DEFAULT;
 
-static int ph_data_req(int, struct mbuf *, int);
-static int ph_activate_req(int);
+static int isic_std_enable(isdn_layer1token, int);
+static int isic_std_ph_data_req(isdn_layer1token, struct mbuf *, int);
+static int isic_std_ph_activate_req(isdn_layer1token);
+static int isic_std_mph_command_req(isdn_layer1token, int, void*);
+
+const struct isdn_layer1_bri_driver isic_std_driver = {
+	isic_std_enable,
+	isic_std_ph_data_req,
+	isic_std_ph_activate_req,
+	isic_std_mph_command_req
+};
 
 /* from i4btrc driver i4b_trace.c */
 extern int get_trace_data_from_l1(int unit, int what, int len, char *buf);
-
-/* from layer 2 */
-extern int i4b_ph_data_ind(int unit, struct mbuf *m);
-extern int i4b_ph_activate_ind(int unit);
-extern int i4b_ph_deactivate_ind(int unit);
-extern int i4b_mph_status_ind(int, int, int);
-
-/* layer 1 lme */
-static int i4b_mph_command_req(int, int, void*);
-
-/* jump table */
-struct i4b_l1l2_func i4b_l1l2_func = {
-
-	/* Layer 1 --> Layer 2 */
-	
-	(int (*)(int, struct mbuf *))		i4b_ph_data_ind,
-	(int (*)(int)) 				i4b_ph_activate_ind,
-	(int (*)(int))				i4b_ph_deactivate_ind,
-
-	/* Layer 2 --> Layer 1 */
-
-	(int (*)(int, struct mbuf *, int))	ph_data_req,
-	(int (*)(int))				ph_activate_req,
-
-	/* Layer 1 --> upstream, ISDN trace data */
-
-	(int (*)(i4b_trace_hdr_t *, int, u_char *))	get_trace_data_from_l1,
-
-	/* Driver control and status information */
-
-	(int (*)(int, int, int))		i4b_mph_status_ind,
-	(int (*)(int, int, void*))		i4b_mph_command_req,
-};
  
 /*---------------------------------------------------------------------------*
  *
@@ -126,7 +75,7 @@ struct i4b_l1l2_func i4b_l1l2_func = {
  *	=========================
  *
  *	parms:
- *		unit		physical interface unit number
+ *		token		softc of physical driver
  *		m		mbuf containing L2 frame to be sent out
  *		freeflag	MBUF_FREE: free mbuf here after having sent
  *						it out
@@ -137,22 +86,13 @@ struct i4b_l1l2_func i4b_l1l2_func = {
  *
  *---------------------------------------------------------------------------*/
 static int
-ph_data_req(int unit, struct mbuf *m, int freeflag)
+isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 {
+	struct l1_softc *sc = (struct l1_softc*)token;
 	u_char cmd;
 	int s;
-	
-#ifdef __FreeBSD__
-	struct l1_softc *sc = &l1_sc[unit];
-#else
-	struct l1_softc *sc = isic_find_sc(unit);
-#endif
 
-#ifdef NOTDEF
-	NDBGL1(L1_PRIM, "PH-DATA-REQUEST, unit %d, freeflag=%d", unit, freeflag);
-#endif
-
-	if(m == NULL)			/* failsafe */
+	if (m == NULL)			/* failsafe */
 		return (0);
 
 	s = splnet();
@@ -160,7 +100,7 @@ ph_data_req(int unit, struct mbuf *m, int freeflag)
 	if(sc->sc_I430state == ST_F3)	/* layer 1 not running ? */
 	{
 		NDBGL1(L1_I_ERR, "still in state F3!");
-		ph_activate_req(unit);
+		isic_std_ph_activate_req(token);
 	}
 
 	if(sc->sc_state & ISAC_TX_ACTIVE)
@@ -178,13 +118,11 @@ ph_data_req(int unit, struct mbuf *m, int freeflag)
 
 			if(sc->sc_trace & TRACE_D_TX)
 			{
-				i4b_trace_hdr_t hdr;
-				hdr.unit = unit;
+				i4b_trace_hdr hdr;
 				hdr.type = TRC_CH_D;
 				hdr.dir = FROM_TE;
 				hdr.count = ++sc->sc_trace_dcount;
-				MICROTIME(hdr.time);
-				MPH_Trace_Ind(&hdr, m->m_len, m->m_data);
+				isdn_layer2_trace_ind(sc->sc_l2, &hdr, m->m_len, m->m_data);
 			}
 			splx(s);
 			return(1);
@@ -201,13 +139,11 @@ ph_data_req(int unit, struct mbuf *m, int freeflag)
 
 	if(sc->sc_trace & TRACE_D_TX)
 	{
-		i4b_trace_hdr_t hdr;
-		hdr.unit = unit;
+		i4b_trace_hdr hdr;
 		hdr.type = TRC_CH_D;
 		hdr.dir = FROM_TE;
 		hdr.count = ++sc->sc_trace_dcount;
-		MICROTIME(hdr.time);
-		MPH_Trace_Ind(&hdr, m->m_len, m->m_data);
+		isdn_layer2_trace_ind(sc->sc_l2, &hdr, m->m_len, m->m_data);
 	}
 	
 	sc->sc_state |= ISAC_TX_ACTIVE;	/* set transmitter busy flag */
@@ -255,7 +191,7 @@ ph_data_req(int unit, struct mbuf *m, int freeflag)
  *	=============================
  *
  *	parms:
- *		unit	physical interface unit number
+ *		token		softc of physical interface
  *
  *	returns:
  *		==0	
@@ -263,16 +199,11 @@ ph_data_req(int unit, struct mbuf *m, int freeflag)
  *
  *---------------------------------------------------------------------------*/
 static int
-ph_activate_req(int unit)
+isic_std_ph_activate_req(isdn_layer1token token)
 {
+	struct l1_softc *sc = (struct l1_softc*)token;
 
-#ifdef __FreeBSD__
-	struct l1_softc *sc = &l1_sc[unit];
-#else
-	struct l1_softc *sc = isic_find_sc(unit);
-#endif
-
-	NDBGL1(L1_PRIM, "unit %d", unit);
+	NDBGL1(L1_PRIM, " %s ", sc->sc_dev.dv_xname);
 	isic_next_state(sc, EV_PHAR);
 	return(0);
 }
@@ -281,35 +212,40 @@ ph_activate_req(int unit)
  *	command from the upper layers
  *---------------------------------------------------------------------------*/
 static int
-i4b_mph_command_req(int unit, int command, void *parm)
+isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 {
-#ifdef __FreeBSD__
-	struct l1_softc *sc = &l1_sc[unit];
-#else
-	struct l1_softc *sc = isic_find_sc(unit);
-#endif
+	struct l1_softc *sc = (struct l1_softc*)token;
 	
 	switch(command)
 	{
 		case CMR_DOPEN:		/* daemon running */
-			NDBGL1(L1_PRIM, "unit %d, command = CMR_DOPEN", unit);
+			NDBGL1(L1_PRIM, "%s, command = CMR_DOPEN", sc->sc_dev.dv_xname);
 			sc->sc_enabled = 1;			
 			break;
 			
 		case CMR_DCLOSE:	/* daemon not running */
-			NDBGL1(L1_PRIM, "unit %d, command = CMR_DCLOSE", unit);
+			NDBGL1(L1_PRIM, "%s, command = CMR_DCLOSE", sc->sc_dev.dv_xname);
 			sc->sc_enabled = 0;
 			break;
 
 		case CMR_SETTRACE:
-			NDBGL1(L1_PRIM, "unit %d, command = CMR_SETTRACE, parm = %p", unit, parm);
+			NDBGL1(L1_PRIM, "%s, command = CMR_SETTRACE, parm = %p", sc->sc_dev.dv_xname, parm);
 			sc->sc_trace = (int)(unsigned long)parm;
 			break;
 
 		default:
-			NDBGL1(L1_ERROR, "ERROR, unknown command = %d, unit = %d, parm = %p", command, unit, parm);
+			NDBGL1(L1_ERROR, "ERROR, unknown command = %d, %s, parm = %p", command, sc->sc_dev.dv_xname, parm);
 			break;
 	}
 
 	return(0);
 }
+
+static int
+isic_std_enable(isdn_layer1token token, int enable)
+{
+	struct l1_softc * sc = (struct l1_softc*)token;
+	printf("%s: enable = %d\n", sc->sc_dev.dv_xname, enable);
+	return 0;
+}
+

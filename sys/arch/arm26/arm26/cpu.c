@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.6.7 2001/03/12 13:27:26 bouyer Exp $ */
+/* $NetBSD: cpu.c,v 1.1.6.8 2001/03/27 15:30:20 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,13 +33,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.6.7 2001/03/12 13:27:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.6.8 2001/03/27 15:30:20 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/user.h>
+#include <uvm/uvm_extern.h>
 #include <arm/armreg.h>
 #include <arm/undefined.h>
 #include <machine/machdep.h>
@@ -53,6 +54,10 @@ static int cpu_match(struct device *, struct cfdata *, void *);
 static void cpu_attach(struct device *, struct device *, void *);
 static int cpu_search(struct device *, struct cfdata *, void *);
 static register_t cpu_identify(void);
+#ifdef CPU_ARM2
+static int arm2_undef_handler(u_int, u_int, struct trapframe *, int);
+static int swp_handler(u_int, u_int, struct trapframe *, int);
+#endif
 #ifdef CPU_ARM3
 static void cpu_arm3_setup(struct device *, int);
 #endif
@@ -96,6 +101,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("ARM2");
 #ifdef CPU_ARM2
 		supported = 1;
+		install_coproc_handler(0, arm2_undef_handler);
 #endif
 		break;
 	case CPU_ID_ARM250:
@@ -163,6 +169,78 @@ cpu_identify()
 	remove_coproc_handler(cp15);
 	return id;
 }
+
+#ifdef CPU_ARM2
+static int
+arm2_undef_handler(u_int addr, u_int insn, struct trapframe *frame,
+    int fault_code)
+{
+
+	if ((insn & 0x0fb00ff0) == 0x01000090)
+		/* It's a SWP */
+		return swp_handler(addr, insn, frame, fault_code);
+	/*
+	 * Check if the aborted instruction was a SWI (ARM2 bug --
+	 * ARM3 data sheet p87) and call SWI handler if so.
+	 */
+	if ((insn & 0x0f000000) == 0x0f000000) {
+		swi_handler(frame);
+		return 0;
+	}
+	return 1;
+}
+
+/*
+ * In order for the following macro to work, any function using it
+ * must ensure that tf->r15 is copied into getreg(15).  This is safe
+ * with the current trapframe layout on arm26, but be careful.
+ */
+#define getreg(r) (((register_t *)&tf->tf_r0)[r])
+
+static int
+swp_handler(u_int addr, u_int insn, struct trapframe *tf, int fault_code)
+{
+	struct proc *p;
+	int rd, rm, rn, byte;
+	register_t temp;
+	caddr_t uaddr;
+	int err;
+	
+	KASSERT(fault_code & FAULT_USER);
+	rd = (insn & 0x0000f000) >> 12;
+	rm = (insn & 0x0000000f);
+	rn = (insn & 0x000f0000) >> 16;
+	byte = insn & 0x00400000;
+
+	if (rd == 15 || rm == 15 || rn == 15)
+		/* UNPREDICTABLE.  Arbitrarily do nothing. */
+		return 0;
+	uaddr = (caddr_t)getreg(rn);
+	/* We want the page wired so we won't sleep */
+	/* XXX only wire one byte due to wierdness with unaligned words */
+	err = uvm_vslock(curproc, uaddr, 1, VM_PROT_READ | VM_PROT_WRITE);
+	if (err != 0) {
+		trapsignal(p, SIGSEGV, (u_int)uaddr);
+		return 0;
+	}
+	/* I believe the uvm_vslock() guarantees the fetch/store won't fail. */
+	if (byte) {
+		temp = fubyte(uaddr);
+		subyte(uaddr, getreg(rm));
+		getreg(rd) = temp;
+	} else {
+		/*
+		 * XXX Unaligned addresses happen to be handled
+		 * appropriately by [fs]uword at present.
+		 */
+		temp = fuword(uaddr);
+		suword(uaddr, getreg(rm));
+		getreg(rd) = temp;
+	}
+	uvm_vsunlock(curproc, uaddr, 1);
+	return 0;
+}
+#endif
 
 #ifdef CPU_ARM3
 

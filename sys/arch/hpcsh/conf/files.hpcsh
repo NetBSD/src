@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.6.2.2 2001/03/12 13:28:50 bouyer Exp $
+#	$NetBSD: files.hpcsh,v 1.6.2.3 2001/03/27 15:30:57 bouyer Exp $
 #
 maxpartitions 8
 
@@ -6,12 +6,13 @@ maxusers 2 16 64
 
 file	arch/hpcsh/hpcsh/conf.c
 file	arch/hpcsh/hpcsh/machdep.c
+file	arch/hpcsh/hpcsh/console.c
 file	arch/hpcsh/hpcsh/autoconf.c
 file	arch/hpcsh/hpcsh/bus_space.c
 file	arch/hpcsh/hpcsh/procfs_machdep.c	procfs
 file	arch/hpcsh/hpcsh/debug.c
 
-define mainbus { }
+device mainbus { [id = -1] }
 
 #
 # H/PC Platform common files.
@@ -43,8 +44,6 @@ major	{md = 6}
 #
 # System bus types
 #
-
-device	mainbus:  mainbus
 attach	mainbus at root
 file	arch/hpcsh/hpcsh/mainbus.c		mainbus
 
@@ -63,11 +62,14 @@ file	arch/hpcsh/dev/pfckbd.c			pfckbd	needs-flag
 define	hd64461if {}
 device	hd64461if: hd64461if
 attach	hd64461if at shb
-file	arch/hpcsh/dev/hd64461/hd64461.c	hd64461if
+file	arch/hpcsh/dev/hd64461/hd64461.c	hd64461if needs-flag
 
 device	hd64461pcmcia: pcmciabus
 attach	hd64461pcmcia at hd64461if
 file	arch/hpcsh/dev/hd64461/hd64461pcmcia.c	hd64461pcmcia
+
+attach	com at hd64461if with hd64461uart
+file	arch/hpcsh/dev/hd64461/hd64461uart.c	hd64461uart
 
 # network devices MII bus
 include	"dev/mii/files.mii"

@@ -1,3 +1,5 @@
+/* $NetBSD: i4b_l2.h,v 1.1.1.1.2.3 2001/03/27 15:32:40 bouyer Exp $ */
+
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
  *
@@ -27,7 +29,7 @@
  *	i4b_l2.h - ISDN layer 2 (Q.921) definitions
  *	---------------------------------------------
  *
- *	$Id: i4b_l2.h,v 1.1.1.1.2.2 2001/01/08 14:57:48 bouyer Exp $ 
+ *	$Id: i4b_l2.h,v 1.1.1.1.2.3 2001/03/27 15:32:40 bouyer Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,8 +40,11 @@
 #ifndef _I4B_L2_H_
 #define _I4B_L2_H_
 
-typedef struct {
-	int	unit;		/* unit number this entry is for */
+typedef struct l2_softc {
+	SIMPLEQ_ENTRY(l2_softc) briq;
+	const struct isdn_layer1_bri_driver * driver;
+	void*	l1_token;
+	int	bri;
 
 	int	Q921_state;	/* state according to Q.921 */
 
@@ -62,19 +67,10 @@ typedef struct {
 	int	N202;		/* TEI ID Req tx counter */
 	void(*T202func)(void *);/* function to be called when T202 expires */
 	int	T203;		/* max line idle time */
-
-#if defined(__FreeBSD__)
-	struct	callout_handle T200_callout;
-	struct	callout_handle T202_callout;
-	struct	callout_handle T203_callout;
-	struct	callout_handle IFQU_callout;	
-#endif
-#if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 	struct	callout T200_callout;
 	struct	callout T202_callout;
 	struct	callout T203_callout;
 	struct	callout IFQU_callout;	
-#endif
 
 /*
  * i4b_iframe.c, i4b_i_frame_queued_up(): value of IFQU_DLY
@@ -93,6 +89,8 @@ typedef struct {
 	int	peer_busy;	/* peer receiver busy */
 	int	own_busy;	/* own receiver busy */
 	int	l3initiated;	/* layer 3 initiated */
+
+	int	bchan_state[2];
 
 	struct ifqueue i_queue;	/* queue of outgoing i frames */
 #define IQUEUE_MAXLEN	20
@@ -117,8 +115,6 @@ typedef struct {
 	lapdstat_t	stat;	/* lapd protocol statistics */
 
 } l2_softc_t;
-
-extern l2_softc_t l2_softc[];
 
 /* Q.912 system parameters (Q.921 03/93 pp 43) */
 
@@ -307,10 +303,10 @@ extern void i4b_acknowledge_pending ( l2_softc_t *l2sc );
 extern struct mbuf * i4b_build_s_frame ( l2_softc_t *l2sc, crbit_to_nt_t crbit, pbit_t pbit, u_char type );
 extern struct mbuf * i4b_build_u_frame ( l2_softc_t *l2sc, crbit_to_nt_t crbit, pbit_t pbit, u_char type );
 extern void i4b_clear_exception_conditions ( l2_softc_t *l2sc );
-extern int i4b_dl_data_req ( int unit, struct mbuf *m );
-extern int i4b_dl_establish_req ( int unit );
-extern int i4b_dl_release_req ( int unit );
-extern int i4b_dl_unit_data_req ( int unit, struct mbuf *m );
+extern int i4b_dl_data_req ( l2_softc_t*, struct mbuf *m );
+extern int i4b_dl_establish_req ( l2_softc_t* );
+extern int i4b_dl_release_req ( l2_softc_t* );
+extern int i4b_dl_unit_data_req ( l2_softc_t*, struct mbuf *m );
 extern void i4b_enquiry_response ( l2_softc_t *l2sc );
 extern void i4b_establish_data_link ( l2_softc_t *l2sc );
 extern void i4b_invoke_retransmission ( l2_softc_t *l2sc, int nr );
@@ -320,19 +316,17 @@ extern int i4b_l2_nr_ok ( int nr, int va, int vs );
 extern void i4b_make_rand_ri ( l2_softc_t *l2sc );
 extern void i4b_mdl_assign_ind ( l2_softc_t *l2sc );
 extern void i4b_mdl_error_ind ( l2_softc_t *l2sc, char *where, int errorcode );
-extern int i4b_mph_status_ind ( int unit, int status, int parm );
 extern void i4b_next_l2state ( l2_softc_t *l2sc, int event );
 extern void i4b_nr_error_recovery ( l2_softc_t *l2sc );
-extern int i4b_ph_activate_ind ( int unit );
-extern int i4b_ph_deactivate_ind ( int unit );
-extern int i4b_ph_data_ind ( int unit, struct mbuf *m );
+extern int i4b_ph_activate_ind ( l2_softc_t* );
+extern int i4b_ph_deactivate_ind ( l2_softc_t* );
 extern void i4b_print_frame ( int len, u_char *buf );
 extern char *i4b_print_l2state ( l2_softc_t *l2sc );
 extern void i4b_print_l2var ( l2_softc_t *l2sc );
 extern void i4b_rxd_ack(l2_softc_t *l2sc, int nr);
-extern void i4b_rxd_i_frame ( int unit, struct mbuf *m );
-extern void i4b_rxd_s_frame ( int unit, struct mbuf *m );
-extern void i4b_rxd_u_frame ( int unit, struct mbuf *m );
+extern void i4b_rxd_i_frame ( l2_softc_t *, struct mbuf *m );
+extern void i4b_rxd_s_frame ( l2_softc_t *, struct mbuf *m );
+extern void i4b_rxd_u_frame ( l2_softc_t *, struct mbuf *m );
 extern void i4b_T200_restart ( l2_softc_t *l2sc );
 extern void i4b_T200_start ( l2_softc_t *l2sc );
 extern void i4b_T200_stop ( l2_softc_t *l2sc );
@@ -343,7 +337,7 @@ extern void i4b_T203_start ( l2_softc_t *l2sc );
 extern void i4b_T203_stop ( l2_softc_t *l2sc );
 extern void i4b_tei_assign ( l2_softc_t *l2sc );
 extern void i4b_tei_chkresp ( l2_softc_t *l2sc );
-extern void i4b_tei_rxframe ( int unit, struct mbuf *m );
+extern void i4b_tei_rxframe ( l2_softc_t *, struct mbuf *m );
 extern void i4b_tei_verify ( l2_softc_t *l2sc );
 extern void i4b_transmit_enquire ( l2_softc_t *l2sc );
 extern void i4b_tx_disc ( l2_softc_t *l2sc, pbit_t pbit );
@@ -356,5 +350,16 @@ extern void i4b_tx_rr_command ( l2_softc_t *l2sc, pbit_t pbit );
 extern void i4b_tx_rr_response ( l2_softc_t *l2sc, fbit_t fbit );
 extern void i4b_tx_sabme ( l2_softc_t *l2sc, pbit_t pbit );
 extern void i4b_tx_ua ( l2_softc_t *l2sc, fbit_t fbit );
+
+extern int i4b_l2_channel_get_state(int bri, int b_chanid);
+extern void i4b_l2_channel_set_state(int bri, int b_chanid, int state);
+extern int i4b_mdl_status_ind ( int bri, int status, int parm);
+extern int i4b_dl_release_ind ( int bri );
+extern int i4b_dl_establish_ind ( int bri );
+extern int i4b_dl_release_cnf ( int bri );
+extern int i4b_dl_establish_cnf ( int bri );
+extern int i4b_dl_unit_data_ind ( int bri, struct mbuf *m );
+extern int i4b_dl_data_ind ( int bri, struct mbuf *m );
+int i4b_mdl_command_req(int bri, int, void *);
 
 #endif /* _I4B_L2_H_ */

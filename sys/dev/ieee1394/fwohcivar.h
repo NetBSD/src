@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.5.2.4 2000/12/13 15:50:08 bouyer Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.5.2.5 2001/03/27 15:32:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -161,7 +161,9 @@ int fwohci_print (void *, const char *);
 
 /* Macros to read and write the OHCI registers
  */
-#define	OHCI_CSR_WRITE(sc, reg, val)	bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, reg, val)
-#define	OHCI_CSR_READ(sc, reg)	bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, reg)
+#define	OHCI_CSR_WRITE(sc, reg, val) \
+	bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, reg, htole32(val))
+#define	OHCI_CSR_READ(sc, reg) \
+	le32toh(bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, reg))
 
 #endif	/* _DEV_IEEE1394_FWOHCIVAR_H_ */

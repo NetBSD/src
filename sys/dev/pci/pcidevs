@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.159.2.7 2001/03/12 13:31:11 bouyer Exp $
+$NetBSD: pcidevs,v 1.159.2.8 2001/03/27 15:32:09 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -224,7 +224,7 @@ vendor DATABOOK		0x10b3	Databook
 vendor STB		0x10b4	STB Systems
 vendor PLX		0x10b5	PLX Technology
 vendor MADGE		0x10b6	Madge Networks
-vendor 3COM		0x10B7	3Com
+vendor 3COM		0x10b7	3Com
 vendor SMC		0x10b8	Standard Microsystems
 vendor ALI		0x10b9	Acer Labs
 vendor MITSUBISHIELEC	0x10ba	Mitsubishi Electronics
@@ -528,6 +528,7 @@ vendor ASKEY		0x144f	Askey Computer Corp.
 vendor AVERMEDIA	0x1461	Avermedia Technologies
 vendor AIRONET		0x14b9	Aironet Wireless Communications
 vendor COMPAL		0x14c0	COMPAL Electronics, Inc.
+vendor TITAN		0x14d2  Titan Electronics, Inc.
 vendor INVERTEX		0x14e1	Invertex
 vendor CONEXANT		0x14f1	Conexant Systems
 vendor DELTA		0x1500	Delta Electronics
@@ -718,8 +719,8 @@ product AMD SC751_SC	0x7006	AMD751 System Controller
 product AMD SC751_PPB	0x7007	AMD751 PCI-to-PCI Bridge
 product AMD PBC756_ISA	0x7408	AMD756 PCI-to-ISA Bridge
 product AMD PBC756_IDE	0x7409	AMD756 IDE controller
-product AMD PBC756_PMC	0x740B	AMD756 Power Management Controller
-product AMD PBC756_USB	0x740C	AMD756 USB Host Controller
+product AMD PBC756_PMC	0x740b	AMD756 Power Management Controller
+product AMD PBC756_USB	0x740c	AMD756 USB Host Controller
 
 /* American Megatrends products */
 product AMI MEGARAID	0x9010	MegaRAID
@@ -1125,8 +1126,8 @@ product INTEL PCMC		0x04a3	82434LX/NX PCI, Cache and Memory Controller (PCMC)
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
 product INTEL 82452		0x1000	PRO/1000 Gigabit Ethernet (i82452)
-product INTEL LIVENGOOD		0x1001	PRO/1000 Gigabit Ethernet (LIVENGOOD)
-product INTEL 82452_SC		0x1003	PRO/1000 Gigabit Ethernet (i82452-SC)
+product INTEL 82453		0x1001	PRO/1000 Gigabit Ethernet (i82453)
+product INTEL 82453_SC		0x1003	PRO/1000 Gigabit Ethernet (i82453-SC)
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
 product INTEL 82815_DC100_GRAPH	0x1102	82815 Graphics
@@ -1189,8 +1190,8 @@ product INTEL 82801BA_ACA	0x2445	82801BA AC-97 Audio Controller
 product INTEL 82801BA_ACM	0x2446	82801BA AC-97 PCI Modem
 product INTEL 82801BA_LAN	0x2449	82801BA LAN Controller
 product	INTEL 82801BAM_IDE	0x244a	82801BAM IDE Controller
-product INTEL 82801BA_IDE	0x244B	82801BA IDE Controller
-product INTEL 82801BA_HPB	0x244E	82801BA Hub-to-PCI Bridge
+product INTEL 82801BA_IDE	0x244b	82801BA IDE Controller
+product INTEL 82801BA_HPB	0x244e	82801BA Hub-to-PCI Bridge
 product INTEL 82820_MCH		0x2501	82820 MCH (Camino)
 product INTEL 82820_AGP		0x250f	82820 AGP
 product INTEL 82371SB_ISA	0x7000	82371SB PCI-to-ISA Bridge (PIIX3)
@@ -1269,11 +1270,11 @@ product LUCENT LTMODEM_0446	0x0446	LTMODEM
 product LUCENT LTMODEM_0447	0x0447	LTMODEM
 product LUCENT LTMODEM_0448	0x0448	LTMODEM
 product LUCENT LTMODEM_0449	0x0449	LTMODEM
-product LUCENT LTMODEM_044A	0x044A	LTMODEM
-product LUCENT LTMODEM_044B	0x044B	LTMODEM
-product LUCENT LTMODEM_044C	0x044C	LTMODEM
-product LUCENT LTMODEM_044D	0x044D	LTMODEM
-product LUCENT LTMODEM_044E	0x044E	LTMODEM
+product LUCENT LTMODEM_044a	0x044a	LTMODEM
+product LUCENT LTMODEM_044b	0x044b	LTMODEM
+product LUCENT LTMODEM_044c	0x044c	LTMODEM
+product LUCENT LTMODEM_044d	0x044d	LTMODEM
+product LUCENT LTMODEM_044e	0x044e	LTMODEM
 product LUCENT LTMODEM_0450	0x0450	LTMODEM
 product LUCENT LTMODEM_0451	0x0451	LTMODEM
 product LUCENT LTMODEM_0452	0x0452	LTMODEM
@@ -1284,7 +1285,7 @@ product LUCENT LTMODEM_0456	0x0456	LTMODEM
 product LUCENT LTMODEM_0457	0x0457	LTMODEM
 product LUCENT LTMODEM_0458	0x0458	LTMODEM
 product LUCENT LTMODEM_0459	0x0459	LTMODEM
-product LUCENT LTMODEM_045A	0x045A	LTMODEM
+product LUCENT LTMODEM_045a	0x045a	LTMODEM
 product LUCENT USBHC		0x5801	USB Host Controller
 
 /* Macronix */
@@ -1398,7 +1399,7 @@ product NETSEC 7751		0x7751	7751
 product NEXGEN NX82C501	0x4e78	NX82C501 Host-PCI Bridge
 
 /* NKK products */
-product NKK NDR4600	0xA001	NDR4600 Host-PCI Bridge
+product NKK NDR4600	0xa001	NDR4600 Host-PCI Bridge
 
 /* Number Nine products */
 product NUMBER9 I128	0x2309	Imagine-128
@@ -1408,9 +1409,9 @@ product NUMBER9 I128_2	0x2339	Imagine-128 II
 product NVIDIA	RIVATNT		0x0020	RIVA TNT
 product NVIDIA	RIVATNT2	0x0028	RIVA TNT2
 product NVIDIA	RIVATNT2U	0x0029	RIVA TNT2 Ultra
-product NVIDIA	VANTA		0x002C	Vanta
-product NVIDIA	RIVATNT2M64	0x002D	RIVA TNT2 Model 64
-product NVIDIA	ALADDINTNT2	0x00A0	Aladdin TNT2
+product NVIDIA	VANTA		0x002c	Vanta
+product NVIDIA	RIVATNT2M64	0x002d	RIVA TNT2 Model 64
+product NVIDIA	ALADDINTNT2	0x00a0	Aladdin TNT2
 product NVIDIA	GEFORCE256	0x0100	GeForce 256
 product NVIDIA	GEFORCEDDR	0x0101	GeForce DDR
 product NVIDIA	QUADRO		0x0103	Quadro
@@ -1492,6 +1493,7 @@ product RNS FDDI	0x2200	2200 FDDI
 product S3 VIRGE	0x5631	ViRGE
 product S3 TRIO32	0x8810	Trio32
 product S3 TRIO64	0x8811	Trio32/64
+product TRIDENT	CYBERBLADE	0x9910	CyberBlade
 product S3 AURORA64P	0x8812	Aurora64V+
 product S3 TRIO64UVP	0x8814	Trio64UV+
 product S3 VIRGE_VX	0x883d	ViRGE/VX
@@ -1598,6 +1600,10 @@ product SONY	MEMSTICK	0x808a	Memory Stick I/F Controller
 /* Sun Microsystems products */
 product SUN EBUS	0x1000	PCIO Ebus2
 product SUN HMENETWORK	0x1001	PCIO Happy Meal Ethernet
+product SUN EBUSIII	0x1100	PCIO Ebus2 (US III)
+product SUN ERINETWORK	0x1101	ERI Ethernet
+product SUN FIREWIRE	0x1102	FireWire controller
+product SUN USB		0x1103	USB controller
 product SUN SIMBA	0x5000	Simba PCI bridge
 product SUN PSYCHO	0x8000	psycho PCI controller
 product SUN MS_IIep	0x9000	microSPARC IIep PCI
@@ -1654,6 +1660,9 @@ product TI	PCI4451YENTA	0xac42	PCI4451 PCI-CardBus Bridge w/ OCHI IEEE 1394 Cont
 product TI	PCI1410		0xac50	PCI1410 PCI-CardBus Bridge
 product TI	PCI1420		0xac51	PCI1420 PCI-CardBus Bridge
 product TI	PCI1451		0xac52	PCI1451 PCI-CardBus Bridge
+
+/* Titan Electronics products */
+product TITAN PCI800H		0xa003	PCI-800H
 
 /* Toshiba America products */
 product TOSHIBA R4X00		0x0009	R4x00 Host-PCI Bridge
@@ -1726,7 +1735,7 @@ product USR 3CP5609	0x1008	3CP5609 PCI 16550 Modem
 /* V3 Semiconductor products */
 product V3 V292PBC	0x0292	V292PBC AMD290x0 Host-PCI Bridge
 product V3 V960PBC	0x0960	V960PBC	i960 Host-PCI Bridge
-product V3 V96DPC	0xC960	V96DPC	i960 (Dual) Host-PCI Bridge
+product V3 V96DPC	0xc960	V96DPC	i960 (Dual) Host-PCI Bridge
 
 /* VIA Technologies products, from http://www.via.com.tw/ */
 product VIATECH VT8363_HB	0x0305	VT8363 KT133 System Controller
@@ -1802,15 +1811,15 @@ product VORTEX GDT_6x21RD	0x0115	GDT6121RD/GDT6521RD
 /* GDT_MPR, RD series, wide/ultra2 SCSI */
 product VORTEX GDT_6x18RD	0x0118	GDT6118RD/GDT6518RD/GDT6618RD
 product VORTEX GDT_6x28RD	0x0119	GDT6128RD/GDT6528RD/GDT6628RD
-product VORTEX GDT_6x38RD	0x011A	GDT6538RD/GDT6638RD
-product VORTEX GDT_6x58RD	0x011B	GDT6558RD/GDT6658RD
+product VORTEX GDT_6x38RD	0x011a	GDT6538RD/GDT6638RD
+product VORTEX GDT_6x58RD	0x011b	GDT6558RD/GDT6658RD
 /* GDT_MPR, RS series, wide/ultra2 SCSI */
 product VORTEX GDT_6518RS	0x0138	GDT6518RS
 /* GDT_MPR, RN series (64-bit PCI), wide/ultra2 SCSI */
 product VORTEX GDT_7x18RN	0x0168	GDT7118RN/GDT7518RN/GDT7618RN
 product VORTEX GDT_7x28RN	0x0169	GDT7128RN/GDT7528RN/GDT7628RN
-product VORTEX GDT_7x38RN	0x016A	GDT7538RN/GDT7638RN
-product VORTEX GDT_7x58RN	0x016B	GDT7558RN/GDT7658RN
+product VORTEX GDT_7x38RN	0x016a	GDT7538RN/GDT7638RN
+product VORTEX GDT_7x58RN	0x016b	GDT7558RN/GDT7658RN
 /* GDT_MPR, RD series, Fibre Channel */
 product VORTEX GDT_6x19RD	0x0210	GDT6519RD/GDT6619RD
 product VORTEX GDT_6x29RD	0x0211	GDT6529RD/GDT6629RD
@@ -1844,7 +1853,7 @@ product WD WD7193	0x3193	WD7193
 product WD WD7197	0x3197	WD7197
 product WD WD33C296A	0x3296	WD33C296A
 product WD WD34C296	0x4296	WD34C296
-product WD 90C		0xC24A	90C
+product WD 90C		0xc24a	90C
 
 /* Winbond Electronics products */
 product WINBOND W83769F	0x0001	W83769F
@@ -1864,9 +1873,9 @@ product XIRCOM WINGLOBAL	0x000c	WinGlobal Modem
 
 /* Yamaha products */
 product YAMAHA YMF724	0x0004	724 Audio
-product YAMAHA YMF740	0x000A  740 Audio
-product YAMAHA YMF740C	0x000C  740C (DS-1) Audio
-product YAMAHA YMF724F	0x000D  724F (DS-1) Audio
+product YAMAHA YMF740	0x000a  740 Audio
+product YAMAHA YMF740C	0x000c  740C (DS-1) Audio
+product YAMAHA YMF724F	0x000d  724F (DS-1) Audio
 product YAMAHA YMF744B	0x0010	744 (DS-1S) Audio
 product YAMAHA YMF754	0x0012	754 (DS-1E) Audio
 

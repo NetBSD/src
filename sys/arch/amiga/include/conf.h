@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.7 1998/10/10 02:00:49 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.7.12.1 2001/03/27 15:30:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Bernd Ernesti.  All rights reserved.
@@ -38,31 +38,8 @@ cdev_decl(ctty);
 bdev_decl(fd);
 cdev_decl(fd);
 
-/* open, close, ioctl, poll, mmap -- XXX should be a map device */
-#define	cdev_grf_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	dev_init(c,n,mmap) }
-
-/* open, close, ioctl, poll, mmap -- XXX should be a map device */
-#define	cdev_view_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	dev_init(c,n,mmap) }
-
 /* open, close, read, write, ioctl -- XXX should be a generic device */
-#define	cdev_par_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
-
-/* open, close, write, ioctl -- XXX should be a generic device */
-#define	cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
+#define	cdev_par_init(c,n)	cdev__ocrwi_init(c,n)
 
 cdev_decl(ms);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16.2.6 2001/03/12 13:29:02 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.16.2.7 2001/03/27 15:31:10 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,7 +54,7 @@
 /*
  * Get varios per-cpu values.
  */
-#ifdef notyet
+#if 1
 #define GET_CPUINFO(r)	\
 	mfsprg	r,0
 #else
@@ -351,20 +351,13 @@ _C_LABEL(cpu_spinup_trampoline):
 	mtmsr	0
 	isync
 
-	lis	3,cpu_hatchstack@ha
-	lwz	1,cpu_hatchstack@l(3)
+	lis	3,_C_LABEL(cpu_hatch_stack)@ha
+	lwz	1,_C_LABEL(cpu_hatch_stack)@l(3)
 
 	bl	_C_LABEL(cpu_hatch)
-
-/* Loop forever. */
-1:
-	sync
-	mfmsr	3
-	oris	3,3,PSL_POW@h
-	mtmsr	3
-	isync
-	b	1b
-
+	bl      _C_LABEL(sched_lock_idle)
+	li      30,0
+	b       _ASM_LABEL(Idle)
 #endif
 
 /*

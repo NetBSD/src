@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34.2.2 2001/02/11 19:12:18 bouyer Exp $ */
+/*	$NetBSD: cpu.h,v 1.34.2.3 2001/03/27 15:31:28 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -197,6 +197,9 @@ void	intr_establish __P((int level, struct intrhand *));
  * trap window).  Such functions must be written in assembly.
  */
 void	intr_fasttrap __P((int level, void (*vec)(void)));
+
+void	intr_lock_kernel __P((void));
+void	intr_unlock_kernel __P((void));
 
 /* disksubr.c */
 struct dkbad;

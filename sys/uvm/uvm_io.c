@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.8.8.1 2000/11/20 18:12:01 bouyer Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.8.8.2 2001/03/27 15:32:49 bouyer Exp $	*/
 
 /*
  *
@@ -139,17 +139,10 @@ uvm_io(map, uio)
 		 */
 
 		vm_map_lock(kernel_map);
-		(void)uvm_unmap_remove(kernel_map, kva, kva+chunksz,
-		    &dead_entries);
+		uvm_unmap_remove(kernel_map, kva, kva + chunksz, &dead_entries);
 		vm_map_unlock(kernel_map);
-
 		if (dead_entries != NULL)
 			uvm_unmap_detach(dead_entries, AMAP_REFALL);
 	}
-
-	/*
-	 * done
-	 */
-
 	return (error);
 }

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.52.2.7 2001/03/12 13:31:22 bouyer Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.52.2.8 2001/03/27 15:32:15 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.120 2001/02/13 02:07:53 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.122 2001/03/18 21:11:30 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -310,6 +310,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "I-O DATA",
 	    "I-O DATA PCLA/TE"	},
+	},
+	{
+	    PCMCIA_VENDOR_IODATA2, PCMCIA_PRODUCT_IODATA2_WNB11PCM,
+	    PCMCIA_CIS_IODATA2_WNB11PCM,
+	    0,
+	    "I-O DATA",
+	    "I-O DATA WN-B11/PCM"	},
 	},
 	{
 	    PCMCIA_VENDOR_FARALLON, PCMCIA_PRODUCT_FARALLON_SKYLINE,
@@ -1233,6 +1240,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Samsung",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_IODATA2, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "I-O DATA",
 	    NULL,
 	},
 	{

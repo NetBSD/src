@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.6.2.1 2000/11/20 20:04:04 bouyer Exp $	*/
+/*	$NetBSD: csc.c,v 1.6.2.2 2001/03/27 15:30:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 #include <arm32/podulebus/sfasvar.h>
 #include <arm32/podulebus/cscreg.h>
 #include <arm32/podulebus/cscvar.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 void cscattach   __P((struct device *, struct device *, void *));
 int  cscmatch    __P((struct device *, struct cfdata *, void *));
@@ -179,14 +179,7 @@ cscattach(pdp, dp, auxp)
 	(void)get_bootconf_option(boot_args, "csc.hostid",
 	    BOOTOPT_TYPE_INT, &sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
 
-	printf(" host=%d", sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
-
-	sc->sc_softc.sc_ih.ih_func = csc_intr;
-	sc->sc_softc.sc_ih.ih_arg  = &sc->sc_softc;
-	sc->sc_softc.sc_ih.ih_level = IPL_BIO;
-	sc->sc_softc.sc_ih.ih_name = "scsi: csc";
-	sc->sc_softc.sc_ih.ih_maskaddr = sc->sc_specific.sc_podule->irq_addr;
-	sc->sc_softc.sc_ih.ih_maskbits = sc->sc_specific.sc_podule->irq_mask;
+	printf(": host=%d", sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
 
 	/* initialise the alatch */
 	sc->sc_specific.sc_alatch_defs = (CSC_POLL?0:CSC_ALATCH_DEFS_INTEN);
@@ -197,7 +190,11 @@ cscattach(pdp, dp, auxp)
 	}
 
 #if CSC_POLL == 0
-	if (irq_claim(IRQ_PODULE, &sc->sc_softc.sc_ih))
+	evcnt_attach_dynamic(&sc->sc_softc.sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    dp->dv_xname, "intr");
+	sc->sc_softc.sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
+	    csc_intr, &sc->sc_softc, &sc->sc_softc.sc_intrcnt);
+	if (sc->sc_softc.sc_ih == NULL)
 	    panic("%s: Cannot install IRQ handler\n", dp->dv_xname);
 #else
 	printf(" polling");

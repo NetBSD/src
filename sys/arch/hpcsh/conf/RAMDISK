@@ -1,10 +1,10 @@
 #
 # kernel config file for memory(RAM) disk
 #
-# 	$NetBSD: RAMDISK,v 1.2.4.2 2001/03/12 13:28:50 bouyer Exp $
+# 	$NetBSD: RAMDISK,v 1.2.4.3 2001/03/27 15:30:57 bouyer Exp $
 #
 
-include "arch/hpcsh/conf/JORNADA690"
+include "arch/hpcsh/conf/GENERIC"
 
 # disk/mass storage pseudo-devices
 pseudo-device	md		1	# memory disk device (ramdisk)

@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.16.10.1 2000/11/20 20:04:05 bouyer Exp $	*/
+/*	$NetBSD: oak.c,v 1.16.10.2 2001/03/27 15:30:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 #include <machine/bootconfig.h>
 
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 void oak_attach __P((struct device *, struct device *, void *));
 int  oak_match  __P((struct device *, struct cfdata *, void *));
@@ -159,7 +159,7 @@ oak_attach(parent, self, aux)
 	    BOOTOPT_TYPE_INT, &sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
 	sc->sc_ncr5380.sc_adapter.scsipi_minphys = minphys;
 
-	printf(" host=%d, using 8 bit PIO\n",
+	printf(": host=%d, using 8 bit PIO\n",
 	    sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
 
 	ncr5380_attach(&sc->sc_ncr5380);

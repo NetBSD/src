@@ -1,4 +1,4 @@
-/*	$NetBSD: blockio.S,v 1.8.8.1 2000/11/20 20:03:50 bouyer Exp $	*/
+/*	$NetBSD: blockio.S,v 1.8.8.2 2001/03/27 15:30:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,6 +41,8 @@
  * optimised block read/write from/to IO routines.
  *
  * Created      : 08/10/94
+ * Modified	: 22/01/99  -- R.Earnshaw
+ *			       Faster, and small tweaks for StrongARM 	
  */
 
 #include <machine/asm.h>
@@ -68,10 +70,10 @@ ENTRY(insw)
 
 inswloop:
 	ldr	r3, [r0]
+	subs	r2, r2, #0x00000001	/* Loop test in load delay slot */
 	strb	r3, [r1], #0x0001
 	mov	r3, r3, lsr #8
 	strb	r3, [r1], #0x0001
-	subs	r2, r2, #0x00000001
 	bgt	inswloop
 
 	mov	pc, lr
@@ -79,19 +81,16 @@ inswloop:
 /* Word aligned insw */
 
 fastinsw:
-	stmfd	sp!, {r4}
 
 fastinswloop:
 	ldr	r3, [r0, #0x0002]	/* take advantage of nonaligned
 					 * word accesses */
-	ldr	r4, [r0]
+	ldr	ip, [r0]
 	mov	r3, r3, lsr #16		/* Put the two shorts together */
-	orr	r3, r3, r4, lsl #16
+	orr	r3, r3, ip, lsl #16
 	str	r3, [r1], #0x0004	/* Store */
 	subs	r2, r2, #0x00000002	/* Next */
 	bgt	fastinswloop
-
-	ldmfd	sp!, {r4}
 
 	mov	pc, lr
 
@@ -117,41 +116,42 @@ ENTRY(outsw)
 
 /* Non aligned outsw */
 
-	stmfd	sp!, {r4}
-
 outswloop:
 	ldrb	r3, [r1], #0x0001
-	ldrb	r4, [r1], #0x0001
-	orr	r3, r3, r4, lsl #8
+	ldrb	ip, [r1], #0x0001
+	subs	r2, r2, #0x00000001	/* Loop test in load delay slot */
+	orr	r3, r3, ip, lsl #8
 	orr	r3, r3, r3, lsl #16
 	str	r3, [r0]
-	subs	r2, r2, #0x00000001
 	bgt	outswloop
-
-	ldmfd	sp!, {r4}
 
 	mov	pc, lr
 
 /* Word aligned outsw */
 
 fastoutsw:
-	stmfd	sp!, {r4}
 
 fastoutswloop:
-	ldr	r3, [r1], #0x0004
+	ldr	r3, [r1], #0x0004	/* r3 = (H)(L) */
+	subs	r2, r2, #0x00000002	/* Loop test in load delay slot */
 
-	mov	r4, r3, lsl #16
-	orr	r4, r4, r4, lsr #16
-	str	r4, [r0]
+	eor	ip, r3, r3, lsr #16	/* ip = (H)(H^L) */
+	eor	r3, r3, ip, lsl #16	/* r3 = (H^H^L)(L) = (L)(L) */
+	eor	ip, ip, r3, lsr #16	/* ip = (H)(H^L^L) = (H)(H) */
 
-	mov	r4, r3, lsr #16
-	orr	r4, r4, r4, lsl #16
-	str	r4, [r0]
+	str	r3, [r0]
+	str	ip, [r0]
+	
+/*	mov	ip, r3, lsl #16
+ *	orr	ip, ip, ip, lsr #16
+ *	str	ip, [r0]
+ *
+ *	mov	ip, r3, lsr #16
+ *	orr	ip, ip, ip, lsl #16
+ *	str	ip, [r0]
+ */
 
-	subs	r2, r2, #0x00000002
 	bgt	fastoutswloop
-
-	ldmfd	sp!, {r4}
 
 	mov	pc, lr
 
@@ -170,7 +170,8 @@ ENTRY(insw16)
 	cmp	r2, #0x00000000
 	movle	pc, lr
 
-/* If the destination address is word aligned and the size suitably aligned, do it fast */
+/* If the destination address is word aligned and the size suitably
+   aligned, do it fast */
 
 	tst	r2, #0x00000007
 	tsteq	r1, #0x00000003
@@ -179,40 +180,38 @@ ENTRY(insw16)
 
 /* Word aligned insw */
 
-	stmfd	sp!, {r4-r7}
+	stmfd	sp!, {r4,r5,lr}
 
 insw16loop:
 	ldr	r3, [r0, #0x0002]	/* take advantage of nonaligned
 					 * word accesses */
-	ldr	r7, [r0]
+	ldr	lr, [r0]
 	mov	r3, r3, lsr #16		/* Put the two shorts together */
-	orr	r3, r3, r7, lsl #16
+	orr	r3, r3, lr, lsl #16
 
 	ldr	r4, [r0, #0x0002]	/* take advantage of nonaligned
 					 * word accesses */
-	ldr	r7, [r0]
+	ldr	lr, [r0]
 	mov	r4, r4, lsr #16		/* Put the two shorts together */
-	orr	r4, r4, r7, lsl #16
+	orr	r4, r4, lr, lsl #16
 
 	ldr	r5, [r0, #0x0002]	/* take advantage of nonaligned
 					 * word accesses */
-	ldr	r7, [r0]
+	ldr	lr, [r0]
 	mov	r5, r5, lsr #16		/* Put the two shorts together */
-	orr	r5, r5, r7, lsl #16
+	orr	r5, r5, lr, lsl #16
 
-	ldr	r6, [r0, #0x0002]	/* take advantage of nonaligned
+	ldr	ip, [r0, #0x0002]	/* take advantage of nonaligned
 					 * word accesses */
-	ldr	r7, [r0]
-	mov	r6, r6, lsr #16		/* Put the two shorts together */
-	orr	r6, r6, r7, lsl #16
+	ldr	lr, [r0]
+	mov	ip, ip, lsr #16		/* Put the two shorts together */
+	orr	ip, ip, lr, lsl #16
 
-	stmia	r1!, {r3-r6}
+	stmia	r1!, {r3-r5,ip}
 	subs	r2, r2, #0x00000008	/* Next */
 	bgt	insw16loop
 
-	ldmfd	sp!, {r4-r7}
-
-	mov	pc, lr
+	ldmfd	sp!, {r4,r5,pc}		/* Restore regs and go home */
 
 
 /*
@@ -228,7 +227,8 @@ ENTRY(outsw16)
 	cmp	r2, #0x00000000
 	movle	pc, lr
 
-/* If the destination address is word aligned and the size suitably aligned, do it fast */
+/* If the destination address is word aligned and the size suitably
+   aligned, do it fast */
 
 	tst	r2, #0x00000007
 	tsteq	r1, #0x00000003
@@ -237,49 +237,48 @@ ENTRY(outsw16)
 
 /* Word aligned outsw */
 
-	stmfd	sp!, {r4-r7}
+	stmfd	sp!, {r4,r5,lr}
 
 outsw16loop:
-	ldmia	r1!, {r4-r7}
+	ldmia	r1!, {r4,r5,ip,lr}
 
-	mov	r3, r4, lsl #16
-	orr	r3, r3, r3, lsr #16
+	eor	r3, r4, r4, lsl #16	/* r3 = (A^B)(B) */
+	eor	r4, r4, r3, lsr #16	/* r4 = (A)(B^A^B) = (A)(A) */
+	eor	r3, r3, r4, lsl #16	/* r3 = (A^B^A)(B) = (B)(B) */
 	str	r3, [r0]
+	str	r4, [r0]
+	
+/*	mov	r3, r4, lsl #16
+ *	orr	r3, r3, r3, lsr #16
+ *	str	r3, [r0]
+ *
+ *	mov	r3, r4, lsr #16
+ *	orr	r3, r3, r3, lsl #16
+ *	str	r3, [r0]
+ */
 
-	mov	r3, r4, lsr #16
-	orr	r3, r3, r3, lsl #16
+	eor	r3, r5, r5, lsl #16	/* r3 = (A^B)(B) */
+	eor	r5, r5, r3, lsr #16	/* r4 = (A)(B^A^B) = (A)(A) */
+	eor	r3, r3, r5, lsl #16	/* r3 = (A^B^A)(B) = (B)(B) */
 	str	r3, [r0]
+	str	r5, [r0]
 
-	mov	r3, r5, lsl #16
-	orr	r3, r3, r3, lsr #16
+	eor	r3, ip, ip, lsl #16	/* r3 = (A^B)(B) */
+	eor	ip, ip, r3, lsr #16	/* r4 = (A)(B^A^B) = (A)(A) */
+	eor	r3, r3, ip, lsl #16	/* r3 = (A^B^A)(B) = (B)(B) */
 	str	r3, [r0]
+	str	ip, [r0]
 
-	mov	r3, r5, lsr #16
-	orr	r3, r3, r3, lsl #16
+	eor	r3, lr, lr, lsl #16	/* r3 = (A^B)(B) */
+	eor	lr, lr, r3, lsr #16	/* r4 = (A)(B^A^B) = (A)(A) */
+	eor	r3, r3, lr, lsl #16	/* r3 = (A^B^A)(B) = (B)(B) */
 	str	r3, [r0]
-
-	mov	r3, r6, lsl #16
-	orr	r3, r3, r3, lsr #16
-	str	r3, [r0]
-
-	mov	r3, r6, lsr #16
-	orr	r3, r3, r3, lsl #16
-	str	r3, [r0]
-
-	mov	r3, r7, lsl #16
-	orr	r3, r3, r3, lsr #16
-	str	r3, [r0]
-
-	mov	r3, r7, lsr #16
-	orr	r3, r3, r3, lsl #16
-	str	r3, [r0]
+	str	lr, [r0]
 
 	subs	r2, r2, #0x00000008
 	bgt	outsw16loop
 
-	ldmfd	sp!, {r4-r7}
-
-	mov	pc, lr
+	ldmfd	sp!, {r4,r5,pc}		/* and go home */
 
 /*
  * reads short ints (16 bits) from an I/O address into a block of memory
@@ -297,7 +296,8 @@ ENTRY(inswm8)
 	cmp	r2, #0x00000000
 	movle	pc, lr
 
-/* If the destination address is word aligned and the size suitably aligned, do it fast */
+/* If the destination address is word aligned and the size suitably
+   aligned, do it fast */
 
 	tst	r1, #0x00000003
 
@@ -305,25 +305,25 @@ ENTRY(inswm8)
 
 /* Word aligned insw */
 
-	stmfd	sp!, {r4-r11}
+	stmfd	sp!, {r4-r9,lr}
 
-	mov	r11, #0xff000000
-	orr	r11, r11, #0x00ff0000
+	mov	lr, #0xff000000
+	orr	lr, lr, #0x00ff0000
 
 inswm8_loop8:
 	cmp	r2, #8
 	bcc	inswm8_l8
 
-	ldmia	r0, {r3-r10}
+	ldmia	r0, {r3-r9,ip}
 
-	bic	r3, r3, r11
+	bic	r3, r3, lr
 	orr	r3, r3, r4, lsl #16
-	bic	r5, r5, r11
+	bic	r5, r5, lr
 	orr	r4, r5, r6, lsl #16
-	bic	r7, r7, r11
+	bic	r7, r7, lr
 	orr	r5, r7, r8, lsl #16
-	bic	r9, r9, r11
-	orr	r6, r9, r10, lsl #16
+	bic	r9, r9, lr
+	orr	r6, r9, ip, lsl #16
 
 	stmia	r1!, {r3-r6}
 
@@ -337,9 +337,9 @@ inswm8_l8:
 
 	ldmia	r0, {r3-r6}
 
-	bic	r3, r3, r11
+	bic	r3, r3, lr
 	orr	r3, r3, r4, lsl #16
-	bic	r5, r5, r11
+	bic	r5, r5, lr
 	orr	r4, r5, r6, lsl #16
 
 	stmia	r1!, {r3-r4}
@@ -353,7 +353,7 @@ inswm8_l4:
 
 	ldmia	r0, {r3-r4}
 
-	bic	r3, r3, r11
+	bic	r3, r3, lr
 	orr	r3, r3, r4, lsl #16
 	str	r3, [r1], #0x0004
 
@@ -365,17 +365,16 @@ inswm8_l2:
 	bcc	inswm8_l1
 
 	ldr	r3, [r0]
+	subs	r2, r2, #0x00000001	/* Test in load delay slot */
+					/* XXX, why don't we use result?  */
 
 	strb	r3, [r1], #0x0001
 	mov	r3, r3, lsr #8
 	strb	r3, [r1], #0x0001
 
-	subs	r2, r2, #0x00000001
 
 inswm8_l1:
-	ldmfd	sp!, {r4-r11}
-
-	mov	pc, lr
+	ldmfd	sp!, {r4-r9,pc}		/* And go home */
 
 /*
  * write short ints (16 bits) to an I/O address from a block of memory
@@ -393,7 +392,8 @@ ENTRY(outswm8)
 	cmp	r2, #0x00000000
 	movle	pc, lr
 
-/* If the destination address is word aligned and the size suitably aligned, do it fast */
+/* If the destination address is word aligned and the size suitably
+   aligned, do it fast */
 
 	tst	r1, #0x00000003
 
@@ -401,32 +401,31 @@ ENTRY(outswm8)
 
 /* Word aligned outsw */
 
-	stmfd	sp!, {r4-r10}
+	stmfd	sp!, {r4-r8,lr}
 
 outswm8_loop8:
 	cmp	r2, #8
 	bcc	outswm8_l8
 
-	ldmia	r1!, {r3,r5,r7,r9}
+	ldmia	r1!, {r3,r5,r7,ip}
 
-	mov	r4, r3, lsr #16
-	orr	r4, r4, r4, lsl #16
-	mov	r3, r3, lsl #16
-	orr	r3, r3, r3, lsr #16
-	mov	r6, r5, lsr #16
-	orr	r6, r6, r6, lsl #16
-	mov	r5, r5, lsl #16
-	orr	r5, r5, r5, lsr #16
-	mov	r8, r7, lsr #16
-	orr	r8, r8, r8, lsl #16
-	mov	r7, r7, lsl #16
-	orr	r7, r7, r7, lsr #16
-	mov	r10, r9, lsr #16
-	orr	r10, r10, r10, lsl #16
-	mov	r9, r9, lsl #16
-	orr	r9, r9, r9, lsr #16
+	eor	r4, r3, r3, lsr #16	/* r4 = (A)(A^B) */
+	eor	r3, r3, r4, lsl #16	/* r3 = (A^A^B)(B) = (B)(B) */
+	eor	r4, r4, r3, lsr #16	/* r4 = (A)(B^A^B) = (A)(A) */
 
-	stmia	r0, {r3-r10}
+	eor	r6, r5, r5, lsr #16	/* r6 = (A)(A^B) */
+	eor	r5, r5, r6, lsl #16	/* r5 = (A^A^B)(B) = (B)(B) */
+	eor	r6, r6, r5, lsr #16	/* r6 = (A)(B^A^B) = (A)(A) */
+
+	eor	r8, r7, r7, lsr #16	/* r8 = (A)(A^B) */
+	eor	r7, r7, r8, lsl #16	/* r7 = (A^A^B)(B) = (B)(B) */
+	eor	r8, r8, r7, lsr #16	/* r8 = (A)(B^A^B) = (A)(A) */
+
+	eor	lr, ip, ip, lsr #16	/* lr = (A)(A^B) */
+	eor	ip, ip, lr, lsl #16	/* ip = (A^A^B)(B) = (B)(B) */
+	eor	lr, lr, ip, lsr #16	/* lr = (A)(B^A^B) = (A)(A) */
+
+	stmia	r0, {r3-r8,ip,lr}
 
 	subs	r2, r2, #0x00000008	/* Next */
 	bne	outswm8_loop8
@@ -438,14 +437,13 @@ outswm8_l8:
 
 	ldmia	r1!, {r3-r4}
 
-	mov	r5, r3, lsl #16
-	orr	r5, r5, r5, lsr #16
-	mov	r6, r3, lsr #16
-	orr	r6, r6, r6, lsl #16
-	mov	r7, r4, lsl #16
-	orr	r7, r7, r7, lsr #16
-	mov	r8, r4, lsr #16
-	orr	r8, r8, r8, lsl #16
+	eor	r6, r3, r3, lsr #16	/* r6 = (A)(A^B) */
+	eor	r5, r3, r6, lsl #16	/* r5 = (A^A^B)(B) = (B)(B) */
+	eor	r6, r6, r5, lsr #16	/* r6 = (A)(B^A^B) = (A)(A) */
+
+	eor	r8, r4, r4, lsr #16	/* r8 = (A)(A^B) */
+	eor	r7, r4, r8, lsl #16	/* r7 = (A^A^B)(B) = (B)(B) */
+	eor	r8, r8, r7, lsr #16	/* r8 = (A)(B^A^B) = (A)(A) */
 
 	stmia	r0, {r5-r8}
 
@@ -456,16 +454,15 @@ outswm8_l4:
 	cmp	r2, #2
 	bcc	outswm8_l2
 
-	ldr	r3, [r1], #0x0004
+	ldr	r3, [r1], #0x0004	/* r3 = (A)(B) */
+	subs	r2, r2, #0x00000002	/* Done test in Load delay slot */
 
-	mov	r4, r3, lsl #16
-	orr	r4, r4, r4, lsr #16
-	mov	r5, r3, lsr #16
-	orr	r5, r5, r5, lsl #16
+	eor	r5, r3, r3, lsr #16	/* r5 = (A)(A^B)*/
+	eor	r4, r3, r5, lsl #16	/* r4 = (A^A^B)(B) = (B)(B) */
+	eor	r5, r5, r4, lsr #16	/* r5 = (A)(B^A^B) = (A)(A) */
 
 	stmia	r0, {r4, r5}
 
-	subs	r2, r2, #0x00000002
 	beq	outswm8_l1
 
 outswm8_l2:
@@ -474,14 +471,11 @@ outswm8_l2:
 
 	ldrb	r3, [r1], #0x0001
 	ldrb	r4, [r1], #0x0001
+	subs	r2, r2, #0x00000001	/* Done test in load delay slot */
+					/* XXX This test isn't used?  */
 	orr	r3, r3, r4, lsl #8
 	orr	r3, r3, r3, lsl #16
 	str	r3, [r0]
 
-	subs	r2, r2, #0x00000001
-
 outswm8_l1:
-	ldmfd	sp!, {r4-r10}
-
-	mov	pc, lr
-
+	ldmfd	sp!, {r4-r8,pc}		/* And go home */

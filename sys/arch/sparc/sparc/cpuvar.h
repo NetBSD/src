@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.22.2.2 2001/02/11 19:12:22 bouyer Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.22.2.3 2001/03/27 15:31:29 bouyer Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -381,6 +381,9 @@ struct cpu_info {
 #define CPUFLG_SUN4CACHEBUG	0x8	/* trap page can't be cached */
 #define CPUFLG_CACHE_MANDATORY	0x10	/* if cache is on, don't use
 					   uncached access */
+
+#define CPU_INFO_ITERATOR		int
+#define CPU_INFO_FOREACH(cii, ci)	cii = 0; ci = cpus[cii], cii < ncpu; cii++
 
 /*
  * Related function prototypes

@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.12.10.1 2001/03/12 13:27:46 bouyer Exp $	*/
+/*	$NetBSD: rapide.c,v 1.12.10.2 2001/03/27 15:30:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -80,11 +80,11 @@
 #include <arm32/iomd/iomdreg.h>
 #include <arm32/iomd/iomdvar.h>
 #include <arm32/podulebus/podulebus.h>
-#include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/rapidereg.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
+#include <dev/podulebus/podules.h>
 
 
 /*
@@ -229,7 +229,7 @@ rapide_attach(parent, self, aux)
 	sc->sc_version = bus_space_read_1(iot, ctlioh, VERSION_REGISTER_OFFSET) & VERSION_REGISTER_MASK;
 /*	bus_space_unmap(iot, ctl_ioh, CONTROL_REGISTER_SPACE);*/
 
-	printf(" Issue %d\n", sc->sc_version + 1);
+	printf(": Issue %d\n", sc->sc_version + 1);
 	if (sc->sc_version != VERSION_2_ID)
 		return;
 

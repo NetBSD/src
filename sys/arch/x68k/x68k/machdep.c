@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72.2.4 2001/03/12 13:29:49 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72.2.5 2001/03/27 15:31:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,6 +74,10 @@
 #include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+
+#if defined(DDB) && defined(__ELF__)
+#include <sys/exec_elf.h>
+#endif
 
 #include <net/netisr.h>
 #undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
@@ -189,7 +193,12 @@ consinit()
 	zs_kgdb_init();			/* XXX */
 #endif
 #ifdef DDB
+#ifndef __ELF__
 	ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+#else
+	ddb_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		 (void *)&end, esym);
+#endif
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -269,7 +278,7 @@ cpu_startup()
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+				UVM_ADV_NORMAL, 0)) != 0)
 		panic("startup: cannot allocate VM for buffers");
 	minaddr = (vaddr_t)buffers;
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.23.2.1 2000/11/20 20:04:05 bouyer Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.23.2.2 2001/03/27 15:30:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -62,7 +62,7 @@
 #include <arm32/podulebus/sfasvar.h>
 #include <arm32/podulebus/ptscreg.h>
 #include <arm32/podulebus/ptscvar.h>
-#include <arm32/podulebus/podules.h>
+#include <dev/podulebus/podules.h>
 
 void ptscattach __P((struct device *, struct device *, void *));
 int  ptscmatch  __P((struct device *, struct cfdata *, void *));
@@ -186,14 +186,7 @@ ptscattach(pdp, dp, auxp)
 	(void)get_bootconf_option(boot_args, "ptsc.hostid",
 	    BOOTOPT_TYPE_INT, &sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
 
-	printf(" host=%d", sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
-
-	sc->sc_softc.sc_ih.ih_func = ptsc_intr;
-	sc->sc_softc.sc_ih.ih_arg  = &sc->sc_softc;
-	sc->sc_softc.sc_ih.ih_level = IPL_BIO;
-	sc->sc_softc.sc_ih.ih_name = "scsi: ptsc";
-	sc->sc_softc.sc_ih.ih_maskaddr = sc->sc_specific.sc_podule->irq_addr;
-	sc->sc_softc.sc_ih.ih_maskbits = sc->sc_specific.sc_podule->irq_mask;
+	printf(": host=%d", sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
 
 	/* initialise the card */
 /*	*rp->term = 0;*/
@@ -201,8 +194,11 @@ ptscattach(pdp, dp, auxp)
 	*rp->led = 0;
 
 #if PTSC_POLL == 0
-	if (irq_claim(IRQ_PODULE /*IRQ_EXPCARD0 + sc->sc_specific.sc_podule_number */,
-		      &sc->sc_softc.sc_ih))
+	evcnt_attach_dynamic(&sc->sc_softc.sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    dp->dv_xname, "intr");
+	sc->sc_softc.sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
+	    ptsc_intr, &sc->sc_softc, &sc->sc_softc.sc_intrcnt);
+	if (sc->sc_softc.sc_ih == NULL)
 	    panic("%s: Cannot install IRQ handler\n", dp->dv_xname);
 #else
 	printf(" polling");

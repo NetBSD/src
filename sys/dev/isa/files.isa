@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.90.2.4 2001/03/12 13:30:36 bouyer Exp $
+#	$NetBSD: files.isa,v 1.90.2.5 2001/03/27 15:32:04 bouyer Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -161,9 +161,9 @@ file	dev/isa/wt.c			wt			needs-flag
 # WD/SMC 80x3 family, SMC Elite Ultra [8216], SMC EtherEZ
 # MUST be first: probe is non invasive, and registers are clobbered
 # by other drivers's probe
-device	we: ether, ifnet, arp, dp8390nic
-attach	we at isa
-file	dev/isa/if_we.c			we
+# device declaration in sys/conf/files
+attach	we at isa with we_isa
+file	dev/isa/if_we_isa.c		we_isa
 
 # 3Com common probe code
 define	elink

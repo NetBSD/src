@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30.2.5 2001/02/11 19:12:42 bouyer Exp $ */
+/*	$NetBSD: trap.c,v 1.30.2.6 2001/03/27 15:31:37 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1094,7 +1094,8 @@ data_access_fault(type, addr, pc, tf)
 			goto kfault;
 		if (!(addr&TLB_TAG_ACCESS_CTX)) {
 			/* CTXT == NUCLEUS */
-			if ((rv=uvm_fault(kernel_map, va, 0, access_type)) == KERN_SUCCESS) {
+			rv = uvm_fault(kernel_map, va, 0, access_type);
+			if (rv == 0) {
 #ifdef DEBUG
 				if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 					printf("data_access_fault: kernel uvm_fault(%p, %lx, %x, 0) sez %x -- success\n",
@@ -1129,14 +1130,14 @@ data_access_fault(type, addr, pc, tf)
 	 * error.
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			segsz_t nss = btoc(p->p_vmspace->vm_minsaddr - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == KERN_PROTECTION_FAILURE)
-			rv = KERN_INVALID_ADDRESS;
+		} else if (rv == EACCES)
+			rv = EFAULT;
 	}
-	if (rv != KERN_SUCCESS) {
+	if (rv != 0) {
 		/*
 		 * Pagein failed.  If doing copyin/out, return to onfault
 		 * address.  Any other page fault in kernel, die; if user
@@ -1174,7 +1175,7 @@ kfault:
 			Debugger();
 		}
 #endif
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
@@ -1372,7 +1373,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 			goto kfault;
 		if (SFSR_CTXT_IS_PRIM(sfsr) || SFSR_CTXT_IS_NUCLEUS(sfsr)) {
 			/* NUCLEUS context */
-			if (uvm_fault(kernel_map, va, 0, access_type) == KERN_SUCCESS)
+			if (uvm_fault(kernel_map, va, 0, access_type) == 0)
 				return;
 			if (SFSR_CTXT_IS_NUCLEUS(sfsr))
 				goto kfault;
@@ -1396,14 +1397,14 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	 * error.
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			segsz_t nss = btoc(p->p_vmspace->vm_minsaddr - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == KERN_PROTECTION_FAILURE)
-			rv = KERN_INVALID_ADDRESS;
+		} else if (rv == EACCES)
+			rv = EFAULT;
 	}
-	if (rv != KERN_SUCCESS) {
+	if (rv != 0) {
 		/*
 		 * Pagein failed.  If doing copyin/out, return to onfault
 		 * address.  Any other page fault in kernel, die; if user
@@ -1547,14 +1548,14 @@ text_access_fault(type, pc, tf)
 	 * error.
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			segsz_t nss = btoc(p->p_vmspace->vm_minsaddr - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == KERN_PROTECTION_FAILURE)
-			rv = KERN_INVALID_ADDRESS;
+		} else if (rv == EACCES)
+			rv = EFAULT;
 	}
-	if (rv != KERN_SUCCESS) {
+	if (rv != 0) {
 		/*
 		 * Pagein failed. Any other page fault in kernel, die; if user
 		 * fault, deliver SIGSEGV.
@@ -1721,14 +1722,14 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 	 * error.
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			segsz_t nss = btoc(p->p_vmspace->vm_minsaddr - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == KERN_PROTECTION_FAILURE)
-			rv = KERN_INVALID_ADDRESS;
+		} else if (rv == EACCES)
+			rv = EFAULT;
 	}
-	if (rv != KERN_SUCCESS) {
+	if (rv != 0) {
 		/*
 		 * Pagein failed.  If doing copyin/out, return to onfault
 		 * address.  Any other page fault in kernel, die; if user
