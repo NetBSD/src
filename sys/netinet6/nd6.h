@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.31 2002/06/08 21:22:34 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.32 2002/06/08 21:32:55 itojun Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -367,15 +367,15 @@ void nd6_timer __P((void *));
 void nd6_purge __P((struct ifnet *));
 void nd6_nud_hint __P((struct rtentry *, struct in6_addr *, int));
 int nd6_resolve __P((struct ifnet *, struct rtentry *,
-		     struct mbuf *, struct sockaddr *, u_char *));
+	struct mbuf *, struct sockaddr *, u_char *));
 void nd6_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 int nd6_ioctl __P((u_long, caddr_t, struct ifnet *));
 struct rtentry *nd6_cache_lladdr __P((struct ifnet *, struct in6_addr *,
 	char *, int, int, int));
 int nd6_output __P((struct ifnet *, struct ifnet *, struct mbuf *,
-		    struct sockaddr_in6 *, struct rtentry *));
+	struct sockaddr_in6 *, struct rtentry *));
 int nd6_storelladdr __P((struct ifnet *, struct rtentry *, struct mbuf *,
-			 struct sockaddr *, u_char *));
+	struct sockaddr *, u_char *));
 int nd6_sysctl __P((int, void *, size_t *, void *, size_t));
 int nd6_need_cache __P((struct ifnet *));
 
