@@ -1,3 +1,5 @@
+/*	$NetBSD: sequoia.h,v 1.3 1998/05/01 21:18:41 cgd Exp $	*/
+
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -52,7 +54,6 @@
 **	27-Jan-1997	Maddy		Added additional initial values.	
 **
 **	24-Jan-1997	Maddy		Initial Entry.
-**  $Id: sequoia.h,v 1.2 1998/05/01 21:14:48 cgd Exp $
 */
 
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: openfirm.c,v 1.3 1998/05/01 21:18:44 cgd Exp $	*/
+
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.

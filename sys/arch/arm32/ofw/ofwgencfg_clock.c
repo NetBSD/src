@@ -1,3 +1,5 @@
+/*	$NetBSD: ofwgencfg_clock.c,v 1.2 1998/05/01 21:18:43 cgd Exp $	*/
+
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.

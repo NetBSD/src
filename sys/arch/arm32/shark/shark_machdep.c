@@ -1,3 +1,5 @@
+/*	$NetBSD: shark_machdep.c,v 1.3 1998/05/01 21:18:41 cgd Exp $	*/
+
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
