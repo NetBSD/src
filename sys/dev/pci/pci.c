@@ -1,7 +1,7 @@
-/*	$NetBSD: pci.c,v 1.36 1998/05/18 17:28:07 cgd Exp $	*/
+/*	$NetBSD: pci.c,v 1.37 1998/05/31 06:05:28 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996, 1997
+ * Copyright (c) 1995, 1996, 1997, 1998
  *     Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
  *
@@ -123,6 +123,7 @@ pci_probe_bus(self)
 	struct pci_softc *sc = (struct pci_softc *)self;
 	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
+	const struct pci_quirkdata *qd;
 	int bus, device, maxndevs, function, nfunctions;
 
 	iot = sc->sc_iot;
@@ -150,8 +151,15 @@ pci_probe_bus(self)
 		if (PCI_VENDOR(id) == 0)
 			continue;
 
+		qd = pci_lookup_quirkdata(PCI_VENDOR(id), PCI_PRODUCT(id));
+
 		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-		nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
+		if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
+		    (qd != NULL &&
+		      (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+			nfunctions = 8;
+		else
+			nfunctions = 1;
 
 		for (function = 0; function < nfunctions; function++) {
 			tag = pci_make_tag(pc, bus, device, function);
@@ -266,6 +274,9 @@ pciprint(aux, pnp)
 {
 	register struct pci_attach_args *pa = aux;
 	char devinfo[256];
+#if 0
+	const struct pci_quirkdata *qd;
+#endif
 
 	if (pnp) {
 		pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
@@ -278,14 +289,29 @@ pciprint(aux, pnp)
 	if (!pnp)
 		pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
 	printf("%s at %s", devinfo, pnp ? pnp : "?");
-	printf(" dev %d function %d", pa->pa_device, pa->pa_function);
+	printf(" dev %d function %d (", pa->pa_device, pa->pa_function);
+#ifdef __i386__
+	printf("tag %#lx, intrtag %#lx, intrswiz %#lx, intrpin %#lx",
+	    *(long *)&pa->pa_tag, *(long *)&pa->pa_intrtag,
+	    (long)pa->pa_intrswiz, (long)pa->pa_intrpin);
+#else
+	printf("tag %#lx, intrtag %#lx, intrswiz %#lx, intrpin %#lx",
+	    (long)pa->pa_tag, (long)pa->pa_intrtag, (long)pa->pa_intrswiz,
+	    (long)pa->pa_intrpin);
 #endif
-#if 0
-	printf(" (%si/o, %smem,",
-	    pa->pa_flags & PCI_FLAGS_IO_ENABLED ? "" : "no ",
-	    pa->pa_flags & PCI_FLAGS_MEM_ENABLED ? "" : "no ");
-	printf(" tag %x intrtag %x intrswiz %x intrpin %x)", pa->pa_tag,
-	    pa->pa_intrtag, pa->pa_intrswiz, pa->pa_intrpin);
+	printf(", i/o %s, mem %s,",
+	    pa->pa_flags & PCI_FLAGS_IO_ENABLED ? "on" : "off",
+	    pa->pa_flags & PCI_FLAGS_MEM_ENABLED ? "on" : "off");
+	qd = pci_lookup_quirkdata(PCI_VENDOR(pa->pa_id),
+	    PCI_PRODUCT(pa->pa_id));
+	if (qd == NULL) {
+		printf(" no quirks");
+	} else {
+		bitmask_snprintf(qd->quirks,
+		    "\20\1multifn", devinfo, sizeof (devinfo));
+		printf(" quirks %s", devinfo);
+	}
+	printf(")");
 #endif
 	return (UNCONF);
 }
