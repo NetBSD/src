@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.2 2001/12/17 22:07:49 nathanw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.3 2003/01/14 21:25:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,6 +54,8 @@
 	stq	sp, (UC_GREGS + _REG_SP * 8)(reg)	; \
 	stq	ra, (UC_GREGS + _REG_RA * 8)(reg)	; \
 	stq	ra, (UC_GREGS + _REG_PC * 8)(reg)	; \
+	call_pal PAL_rdunique				; \
+	stq	v0, (UC_GREGS + _REG_UNIQUE * 8)(reg)	; \
 	stt	$f2, (UC_FPREGS + 2 * 8)(reg)		; \
 	stt	$f3, (UC_FPREGS + 3 * 8)(reg)		; \
 	stt	$f4, (UC_FPREGS + 4 * 8)(reg)		; \
@@ -66,7 +68,7 @@
 	stq	t0, (UC_GREGS + _REG_PS * 8)(reg)	; \
 	ldiq	t0, 1					; \
 	sll	t0, _UC_USER_BIT, t0			; \
-	bis	t0, (_UC_CPU|_UC_FPU), t0		; \
+	bis	t0, (_UC_CPU|_UC_FPU|_UC_UNIQUE), t0	; \
 	stl	t0, (UC_FLAGS)(reg)
 
 #define SETC(reg)					; \
@@ -76,6 +78,9 @@
 	and	t0, t1, t0				; \
 	beq	t0, 1f					; \
 							; \
+	/* _UC_USER implies _UC_UNIQUE */		; \
+	ldq	a0, (UC_GREGS + _REG_UNIQUE * 8)(reg)	; \
+	call_pal PAL_wrunique				; \
 	ldq	s0, (UC_GREGS + _REG_S0 * 8)(reg)	; \
 	ldq	s1, (UC_GREGS + _REG_S1 * 8)(reg)	; \
 	ldq	s2, (UC_GREGS + _REG_S2 * 8)(reg)	; \
@@ -110,7 +115,8 @@ LEAF(_getcontext_u,1)
 
 NESTED(_setcontext_u,1,0,ra,0,0)
 	LDGP(pv)
-	SETC(a0)
+	mov	a0, a1
+	SETC(a1)
 	END(_setcontext_u)
 
 NESTED(_swapcontext_u,2,0,ra,0,0)
