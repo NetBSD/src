@@ -650,7 +650,7 @@ i386_ioconf()
 	fprintf(stderr, "remapped irq 2 to irq 9, please update your config file\n");
 	dp->d_irq = 9;
       }
-      if (dp->d_irq != -1)
+      if (dp->d_irq != -1 && dp->d_irq != -2)
 	fprintf(fp, " extern %s();", shandler(dp));
       fprintf(fp, "\n");
     }
