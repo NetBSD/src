@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ns_ip.c	7.6 (Berkeley) 6/28/90
- *	$Id: ns_ip.c,v 1.2.4.1 1993/10/16 10:51:55 mycroft Exp $
+ *	$Id: ns_ip.c,v 1.2.4.2 1993/10/22 02:29:34 mycroft Exp $
  */
 
 /*
@@ -258,7 +258,7 @@ nsipoutput(ifn, m, dst)
 	/* following clause not necessary on vax */
 	if (3 & (int)m->m_data) {
 		/* force longword alignment of ip hdr */
-		struct mbuf *m0 = m_gethdr(MT_HEADER, M_DONTWAIT);
+		struct mbuf *m0 = m_gethdr(M_DONTWAIT, MT_HEADER);
 		if (m0 == 0) {
 			m_freem(m);
 			return (ENOBUFS);

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pk_subr.c	7.16 (Berkeley) 6/6/91
- *	$Id: pk_subr.c,v 1.3 1993/09/06 17:41:45 mycroft Exp $
+ *	$Id: pk_subr.c,v 1.3.2.1 1993/10/22 02:29:15 mycroft Exp $
  */
 
 #include "param.h"
@@ -350,7 +350,7 @@ int (*callee) ();
 	int error = ENOBUFS;
 
 	if (lcp) {
-		if (nam = m_getclr (MT_SONAME, M_DONTWAIT)) {
+		if (nam = m_getclr (M_DONTWAIT, MT_SONAME)) {
 			sa = mtod (nam, struct sockaddr_x25 *);
 			sa -> x25_family = AF_CCITT;
 			sa -> x25_len = nam -> m_len = sizeof (*sa);
