@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.1 2001/05/09 15:58:08 matt Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.2 2001/06/05 05:18:00 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -116,8 +116,8 @@
 #define  LED_BILED_RED      3
 
     
-#define LED_TIMEOUT    HZ / 20                       /* 20 times a second */
-#define LED_NET_ACTIVE (1000000/HZ) * LED_TIMEOUT   /* delay in us for net activity */
+#define LED_TIMEOUT    hz / 20                       /* 20 times a second */
+#define LED_NET_ACTIVE (1000000/hz) * LED_TIMEOUT   /* delay in us for net activity */
       
     
     

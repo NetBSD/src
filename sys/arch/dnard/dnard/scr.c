@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.1 2001/05/09 15:58:07 matt Exp $	*/
+/*	$NetBSD: scr.c,v 1.2 2001/06/05 05:18:00 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -1341,7 +1341,7 @@ struct proc  *p;
                 while (1)
                 {
                     // check that we have not looped too many times 
-                    if(masterDoneRetries >= MAX_FIQ_TIME * HZ)  
+                    if(masterDoneRetries >= MAX_FIQ_TIME * hz)  
                     {
 //printf("MAX_FIQ_TIME reached \n");
                         // big problems, so reset bottom 
@@ -1489,7 +1489,7 @@ struct proc  *p;
                while (1)
                {
                      // check that we have not looped too many times 
-                     if(masterDoneRetries >= MAX_FIQ_TIME * HZ)  
+                     if(masterDoneRetries >= MAX_FIQ_TIME * hz)  
                      {
 //printf("MAX_FIQ_TIME reached \n");
                         // big problems, so reset bottom 
