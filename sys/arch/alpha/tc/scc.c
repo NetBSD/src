@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.32 1997/04/07 23:40:55 cgd Exp $ */
+/* $NetBSD: scc.c,v 1.33 1997/05/15 02:15:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.32 1997/04/07 23:40:55 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.33 1997/05/15 02:15:55 thorpej Exp $");
 
 #include "scc.h"
 #if NSCC > 0
@@ -344,8 +344,12 @@ sccmatch(parent, cf, aux)
 	    (strncmp(d->iada_modname, "scc", TC_ROM_LLEN)!= 0))
 		return (0);
 
-	/* XXX MATCH CFLOC */
-	if (cf->cf_unit >= NSCC)
+	/*
+	 * Check user-specified offset against the ioasic offset.
+	 * Allow it to be wildcarded.
+	 */
+	if (cf->cf_loc[0] != -1 &&
+	    cf->cf_loc[0] != d->iada_offset)
 		return (0);
 
 	/* Get the address, and check it for validity. */
