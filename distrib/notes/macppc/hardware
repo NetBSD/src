@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.24.2.4 2002/07/09 07:59:27 lukem Exp $
+.\"$NetBSD: hardware,v 1.24.2.5 2002/07/09 14:32:17 lukem Exp $
 .
 Currently,
 .Nx*M
@@ -31,7 +31,7 @@ The single hardest step of installing
 is to set up Open Firmware properly.
 Open Firmware versions 1.0.5 and 2.0.x act similarly
 and the same set of instructions applies to them
-. Open Firmware version 2.4 is slightly different with regards to booting.
+Open Firmware version 2.4 is slightly different with regards to booting.
 Open Firmware version 3 is altogether different.
 .Pp
 At present,
