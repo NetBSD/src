@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.15 1996/04/08 20:11:46 jonathan Exp $	*/
+/*	$NetBSD: am7990.c,v 1.16 1996/04/09 15:21:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -510,8 +510,12 @@ lerint(sc)
 
 #ifdef LEDEBUG
 		if (sc->sc_debug)
-			printf("sc->sc_last_rd = %x, rmd = %x\n",
-			    sc->sc_last_rd, rmd);
+			printf("sc->sc_last_rd = %x, rmd: "
+			       "ladr %04x, hadr %02x, flags %02x, "
+			       "bcnt %04x, mcnt %04x\n",
+				sc->sc_last_rd,
+				rmd.rmd0, rmd.rmd1_hadr, rmd.rmd1_bits,
+				rmd.rmd2, rmd.rmd3);
 #endif
 
 		if (++bix == sc->sc_nrbuf)
@@ -536,7 +540,11 @@ letint(sc)
 
 #ifdef LEDEBUG
 		if (sc->sc_debug)
-			printf("trans tmd = %x\n", tmd);
+			printf("trans tmd: "
+			       "ladr %04x, hadr %02x, flags %02x, "
+			       "bcnt %04x, mcnt %04x\n",
+				tmd.tmd0, tmd.tmd1_hadr, tmd.tmd1_bits,
+				tmd.tmd2, tmd.tmd3);
 #endif
 
 		(*sc->sc_copyfromdesc)(sc, &tmd, LE_TMDADDR(sc, bix),
@@ -884,9 +892,10 @@ recv_print(sc, no)
 	    rmd.rmd0, rmd.rmd1_hadr, rmd.rmd1_bits, rmd.rmd2, rmd.rmd3);
 	if (len >= sizeof(eh)) {
 		(*sc->sc_copyfrombuf)(sc, &eh, LE_RBUFADDR(sc, no), sizeof(eh));
-		printf("%s: dst %s", ether_sprintf(eh.ether_dhost));
+		printf("%s: dst %s", sc->sc_dev.dv_xname,
+			ether_sprintf(eh.ether_dhost));
 		printf(" src %s type %04x\n", ether_sprintf(eh.ether_shost),
-		    ntohs(eh.ether_type));
+			ntohs(eh.ether_type));
 	}
 }
 
@@ -909,7 +918,8 @@ xmit_print(sc, no)
 	    tmd.tmd0, tmd.tmd1_hadr, tmd.tmd1_bits, tmd.tmd2, tmd.tmd3);
 	if (len >= sizeof(eh)) {
 		(*sc->sc_copyfrombuf)(sc, &eh, LE_TBUFADDR(sc, no), sizeof(eh));
-		printf("%s: dst %s", ether_sprintf(eh.ether_dhost));
+		printf("%s: dst %s", sc->sc_dev.dv_xname,
+			ether_sprintf(eh.ether_dhost));
 		printf(" src %s type %04x\n", ether_sprintf(eh.ether_shost),
 		    ntohs(eh.ether_type));
 	}
