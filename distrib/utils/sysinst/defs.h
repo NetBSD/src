@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.78 2003/05/21 10:05:20 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.79 2003/05/29 17:54:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -167,8 +167,6 @@ EXTERN int editpart;
 EXTERN int ptstart, ptsize;	
 
 EXTERN int minfsdmb;
-EXTERN int partstart;
-EXTERN int partsize;
 
 /* Actual values for current disk - set by md_get_info() */
 EXTERN int dlcyl, dlhead, dlsec, dlsize, dlcylsize;
