@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.9 1997/03/11 00:44:03 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.10 1997/03/20 21:16:20 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -173,12 +173,23 @@ void	srmmu_vcache_flush_page __P((int va));	/* flush page in cur ctx */
 void	srmmu_cache_flush __P((caddr_t, u_int));/* flush region */
 
 void	ms1_cache_flush __P((caddr_t, u_int));
+void	viking_pcache_flush_line __P((int, int));
 
-void	noop_vcache_flush_context __P((void));	/* flush current context */
-void	noop_vcache_flush_region __P((int));	/* flush region in cur ctx */
-void	noop_vcache_flush_segment __P((int, int));/* flush seg in cur ctx */
-void	noop_vcache_flush_page __P((int va));	/* flush page in cur ctx */
-void	noop_cache_flush __P((caddr_t, u_int));/* flush region */
+extern void sparc_noop __P((void));
+
+#define noop_vcache_flush_context \
+	(void (*)__P((void))) sparc_noop
+#define noop_vcache_flush_region \
+	(void (*)__P((int))) sparc_noop
+#define noop_vcache_flush_segment \
+	(void (*)__P((int,int))) sparc_noop
+#define noop_vcache_flush_page \
+	(void (*)__P((int))) sparc_noop
+#define noop_cache_flush \
+	(void (*)__P((caddr_t, u_int))) sparc_noop
+#define noop_pcache_flush_line \
+	(void (*)__P((int, int))) sparc_noop
+
 
 #define cache_flush_page(va)		cpuinfo.vcache_flush_page(va)
 #define cache_flush_segment(vr,vs)	cpuinfo.vcache_flush_segment(vr,vs)
