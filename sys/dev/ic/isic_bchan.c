@@ -27,14 +27,14 @@
  *	i4b_bchan.c - B channel handling L1 procedures
  *	----------------------------------------------
  *
- *	$Id: isic_bchan.c,v 1.5 2002/03/17 09:45:59 martin Exp $
+ *	$Id: isic_bchan.c,v 1.6 2002/03/17 20:54:04 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_bchan.c,v 1.5 2002/03/17 09:45:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_bchan.c,v 1.6 2002/03/17 20:54:04 martin Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_bchan.c,v 1.5 2002/03/17 09:45:59 martin Exp $"
 
 static void isic_bchannel_start(isdn_layer1token, int h_chan);
 static void isic_bchannel_stat(isdn_layer1token, int h_chan, bchan_statistics_t *bsp);
-static void isic_set_linktab(isdn_layer1token, int channel, drvr_link_t *dlt);
+static void isic_set_link(isdn_layer1token, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
 static isdn_link_t *isic_ret_linktab(isdn_layer1token, int channel);
 
 /*---------------------------------------------------------------------------*
@@ -322,8 +322,8 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 	/* call timeout handling routine */
 	
 	if(activity == ACT_RX || activity == ACT_TX)
-		(*chan->drvr_linktab->l4_driver->bch_activity)(
-		    chan->drvr_linktab->l4_driver_softc, activity);
+		(*chan->l4_driver->bch_activity)(
+		    chan->l4_driver_softc, activity);
 
 	if(cmd)
 		isic_hscx_cmd(sc, h_chan, cmd);
@@ -368,12 +368,13 @@ isic_ret_linktab(isdn_layer1token t, int channel)
  *	set the driver linktab in the b channel softc
  *---------------------------------------------------------------------------*/
 static void
-isic_set_linktab(isdn_layer1token t, int channel, drvr_link_t *dlt)
+isic_set_link(isdn_layer1token t, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc)
 {
 	struct l1_softc *sc = (struct l1_softc*)t;
 	l1_bchan_state_t *chan = &sc->sc_chan[channel];
 
-	chan->drvr_linktab = dlt;
+	chan->l4_driver = l4_driver;
+	chan->l4_driver_softc = l4_driver_softc;
 }
 
 static const struct isdn_l4_bchannel_functions
@@ -393,7 +394,7 @@ isic_init_linktab(struct l1_softc *sc)
 	isdn_link_t *lt = &chan->isdn_linktab;
 
 	/* make sure the hardware driver is known to layer 4 */
-	ctrl_types[CTRL_PASSIVE].set_linktab = isic_set_linktab;
+	ctrl_types[CTRL_PASSIVE].set_l4_driver = isic_set_link;
 	ctrl_types[CTRL_PASSIVE].get_linktab = isic_ret_linktab;
 
 	/* local setup */

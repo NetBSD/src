@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.11 2002/03/17 11:08:31 martin Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.12 2002/03/17 20:54:05 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,11 +36,9 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.11 2002/03/17 11:08:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.12 2002/03/17 20:54:05 martin Exp $");
 
 #include "isdn.h"
-#include "irip.h"
-#include "isdntel.h"
 
 #if NISDN > 0
 
@@ -63,10 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.11 2002/03/17 11:08:31 martin Exp $
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <net/if.h>
-
-#if defined(__FreeBSD__)
-#include "i4bing.h"
-#endif
 
 #ifdef __FreeBSD__
 
@@ -538,46 +532,17 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		
 		case I4B_DIALOUT_RESP:
 		{
-			drvr_link_t *dlt = NULL;
+			const struct isdn_l4_driver_functions *drv;
 			msg_dialout_resp_t *mdrsp;
+			void * l4_softc;
 			
 			mdrsp = (msg_dialout_resp_t *)data;
+			drv = isdn_l4_get_driver(mdrsp->driver, mdrsp->driver_unit);
 
-			switch(mdrsp->driver)
-			{
-#if NIRIP > 0
-				case BDRV_IPR:
-					dlt = ipr_ret_linktab(mdrsp->driver_unit);
-					break;
-#endif					
-
-#if NIPPP > 0
-				case BDRV_ISPPP:
-					dlt = i4bisppp_ret_linktab(mdrsp->driver_unit);
-					break;
-#endif
-
-#if NISDNTEL > 0
-				case BDRV_TEL:
-					dlt = tel_ret_linktab(mdrsp->driver_unit);
-					break;
-#endif
-
-#if NISDNBCHAN > 0
-				case BDRV_IBC:
-					dlt = ibc_ret_linktab(mdrsp->driver_unit);
-					break;
-#endif
-
-#if NI4BING > 0
-				case BDRV_ING:
-					dlt = ing_ret_linktab(mdrsp->driver_unit);
-					break;
-#endif					
+			if(drv != NULL)	{
+				l4_softc = (*drv->get_softc)(mdrsp->driver_unit);
+				(*drv->dial_response)(l4_softc, mdrsp->stat, mdrsp->cause);
 			}
-
-			if(dlt != NULL)		
-				(*dlt->l4_driver->dial_response)(dlt->l4_driver_softc, mdrsp->stat, mdrsp->cause);
 			break;
 		}
 		
@@ -662,17 +627,17 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case I4B_UPDOWN_IND:
 		{
 			msg_updown_ind_t *mui;
-			
-			mui = (msg_updown_ind_t *)data;
+			const struct isdn_l4_driver_functions *drv;
+			void * l4_softc;
 
-#if NIRIP > 0
-			if(mui->driver == BDRV_IPR)
+			mui = (msg_updown_ind_t *)data;
+			drv = isdn_l4_get_driver(mui->driver, mui->driver_unit);
+
+			if (drv)
 			{
-				drvr_link_t *dlt;
-				dlt = ipr_ret_linktab(mui->driver_unit);
-				(*dlt->l4_driver->updown_ind)(dlt->l4_driver_softc, mui->updown);
+				l4_softc = drv->get_softc(mui->driver_unit);
+				(*drv->updown_ind)(l4_softc, mui->updown);
 			}
-#endif
 			break;
 		}
 		
@@ -722,6 +687,14 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 			ctrl_desc[mpi->controller].protocol = mpi->protocol;
 			
+			break;
+		}
+
+		case I4B_L4DRIVER_LOOKUP:
+		{
+			msg_l4driver_lookup_t *lookup = (msg_l4driver_lookup_t*)data;
+			lookup->name[L4DRIVER_NAME_SIZ-1] = 0;
+			lookup->driver_id = isdn_l4_find_driverid(lookup->name);
 			break;
 		}
 		

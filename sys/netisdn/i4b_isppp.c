@@ -34,7 +34,7 @@
  *	the "cx" driver for Cronyx's HDLC-in-hardware device).  This driver
  *	is only the glue between sppp and i4b.
  *
- *	$Id: i4b_isppp.c,v 1.14 2002/03/17 11:08:32 martin Exp $
+ *	$Id: i4b_isppp.c,v 1.15 2002/03/17 20:54:05 martin Exp $
  *
  * $FreeBSD$
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.14 2002/03/17 11:08:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.15 2002/03/17 20:54:05 martin Exp $");
 
 #ifndef __NetBSD__
 #define USE_ISPPP
@@ -119,7 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.14 2002/03/17 11:08:32 martin Exp $"
 #define ISPPP_FMT	"ippp%d: "
 #define	ISPPP_ARG(sc)	((sc)->sc_if.if_unit)
 #define	PDEVSTATIC	static
-#define IFP2UNIT(ifp)	(ifp)->if_unit
 		
 # if __FreeBSD_version >= 300001
 #  define CALLOUT_INIT(chan)		callout_handle_init(chan)
@@ -138,7 +137,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.14 2002/03/17 11:08:32 martin Exp $"
 #define	ISPPP_ARG(sc)	((sc)->sc_sp.pp_if.if_xname)
 #define	PDEVSTATIC	/* not static */
 #define IOCTL_CMD_T	u_long
-#define IFP2UNIT(ifp)	((struct i4bisppp_softc *)ifp->if_softc)->sc_unit
 #else
 # error "What system are you using?"
 #endif
@@ -166,6 +164,7 @@ struct i4bisppp_softc {
 #endif
 
 	call_desc_t *sc_cdp;	/* ptr to call descriptor	*/
+	isdn_link_t *sc_ilt;	/* B channel driver and state	*/
 
 #ifdef I4BISPPPACCT
 	int sc_iinb;		/* isdn driver # of inbytes	*/
@@ -183,7 +182,6 @@ struct i4bisppp_softc {
 
 } i4bisppp_softc[NIPPP];
 
-static void	i4bisppp_init_linktab(int unit);
 static int	i4bisppp_ioctl(struct ifnet *ifp, IOCTL_CMD_T cmd, caddr_t data);
 
 #if 0
@@ -202,11 +200,33 @@ static void	i4bisppp_state_changed(struct sppp *sp, int new_state);
 static void	i4bisppp_negotiation_complete(struct sppp *sp);
 static void	i4bisppp_watchdog(struct ifnet *ifp);
 time_t   	i4bisppp_idletime(void *softc);
+static void	i4bisppp_rx_data_rdy(void *softc);
+static void	i4bisppp_tx_queue_empty(void *softc);
+static void	i4bisppp_activity(void *softc, int rxtx);
+static void	i4bisppp_connect(void *softc, void *cdp);
+static void	i4bisppp_disconnect(void *softc, void *cdp);
+static void	i4bisppp_dialresponse(void *softc, int status, cause_t cause);
+static void	i4bisppp_updown(void *softc, int updown);
+static void*	i4bisppp_ret_softc(int unit);
+static void	i4bisppp_set_linktab(void *softc, isdn_link_t *ilt);
 
-/* initialized by L4 */
+static const struct isdn_l4_driver_functions
+ippp_l4_functions = {
+	/* L4<->B-channel functions */
+	i4bisppp_rx_data_rdy,
+	i4bisppp_tx_queue_empty,
+	i4bisppp_activity,
+	i4bisppp_connect,
+	i4bisppp_disconnect,
+	i4bisppp_dialresponse,
+	i4bisppp_updown,
+	/* Management functions */
+	i4bisppp_ret_softc,
+	i4bisppp_set_linktab,
+	i4bisppp_idletime
+};
 
-static drvr_link_t i4bisppp_drvr_linktab[NIPPP];
-static isdn_link_t *isdn_linktab[NIPPP];
+static int ippp_drvr_id = -1;
 
 enum i4bisppp_states {
 	ST_IDLE,			/* initialized, ready, idle	*/
@@ -231,10 +251,11 @@ ipppattach()
 	struct i4bisppp_softc *sc = i4bisppp_softc;
 	int i;
 
-	for(i = 0; i < NIPPP; sc++, i++) {
-		i4bisppp_init_linktab(i);
-		
+	ippp_drvr_id = isdn_l4_driver_attach("ippp", NIPPP, &ippp_l4_functions);
+
+	for(i = 0; i < NIPPP; sc++, i++) {		
 		sc->sc_sp.pp_if.if_softc = sc;
+		sc->sc_ilt = NULL;
 
 #ifdef __FreeBSD__		
 		sc->sc_sp.pp_if.if_name = "ippp";
@@ -364,8 +385,6 @@ i4bisppp_start(struct ifnet *ifp)
 {
 	struct i4bisppp_softc *sc = ifp->if_softc;
 	struct mbuf *m;
-	/* int s; */
-	int unit = IFP2UNIT(ifp);
 
 #ifndef USE_ISPPP
 	if (sppp_isempty(ifp))
@@ -402,14 +421,14 @@ i4bisppp_start(struct ifnet *ifp)
 #endif
 #endif /* NBPFILTER > 0 || NBPF > 0 */
 
-		if(IF_QFULL(isdn_linktab[unit]->tx_queue))
+		if(IF_QFULL(sc->sc_ilt->tx_queue))
 		{
-			NDBGL4(L4_ISPDBG, "ippp%d, tx queue full!", unit);
+			NDBGL4(L4_ISPDBG, "%s, tx queue full!", sc->sc_sp.pp_if.if_xname);
 			m_freem(m);
 		}
 		else
 		{
-			IF_ENQUEUE(isdn_linktab[unit]->tx_queue, m);
+			IF_ENQUEUE(sc->sc_ilt->tx_queue, m);
 #if 0
 			sc->sc_sp.pp_if.if_obytes += m->m_pkthdr.len;
 #endif
@@ -417,9 +436,8 @@ i4bisppp_start(struct ifnet *ifp)
 			sc->sc_sp.pp_if.if_opackets++;
 		}
 	}
-	isdn_linktab[unit]->bchannel_driver->
-	    bch_tx_start(isdn_linktab[unit]->l1token, 
-	    isdn_linktab[unit]->channel);
+	sc->sc_ilt->bchannel_driver->bch_tx_start(sc->sc_ilt->l1token, 
+	    sc->sc_ilt->channel);
 }
 
 #ifdef I4BISPPPACCT
@@ -430,11 +448,10 @@ static void
 i4bisppp_watchdog(struct ifnet *ifp)
 {
 	struct i4bisppp_softc *sc = ifp->if_softc;
-	int unit = IFP2UNIT(ifp);
 	bchan_statistics_t bs;
 	
-	(*isdn_linktab[unit]->bchannel_driver->bch_stat)
-		(isdn_linktab[unit]->l1token, isdn_linktab[unit]->channel, &bs);
+	(*sc->sc_ilt->bchannel_driver->bch_stat)
+		(sc->sc_ilt->l1token, sc->sc_ilt->channel, &bs);
 
 	sc->sc_ioutb += bs.outbytes;
 	sc->sc_iinb += bs.inbytes;
@@ -479,12 +496,11 @@ static void
 i4bisppp_tls(struct sppp *sp)
 {
 	struct i4bisppp_softc *sc = sp->pp_if.if_softc;
-	struct ifnet *ifp = &sc->sc_sp.pp_if;
 
 	if(sc->sc_state == ST_CONNECTED)
 		return;
 
-	i4b_l4_dialout(BDRV_ISPPP, IFP2UNIT(ifp));
+	i4b_l4_dialout(ippp_drvr_id, sc->sc_unit);
 }
 
 /*---------------------------------------------------------------------------*
@@ -495,12 +511,11 @@ static void
 i4bisppp_tlf(struct sppp *sp)
 {
 	struct i4bisppp_softc *sc = sp->pp_if.if_softc;
-        struct ifnet *ifp = &sp->pp_if;
 
 	if(sc->sc_state != ST_CONNECTED)
 		return;
 
-	i4b_l4_drvrdisc(BDRV_ISPPP, IFP2UNIT(ifp));
+	i4b_l4_drvrdisc(sc->sc_cdp->cdid);
 }
 /*---------------------------------------------------------------------------*
  *	PPP interface phase change
@@ -658,9 +673,9 @@ i4bisppp_rx_data_rdy(void *softc)
 {
 	struct i4bisppp_softc *sc = softc;
 	struct mbuf *m;
-	int s, unit = sc->sc_unit;
+	int s;
 	
-	if((m = *isdn_linktab[unit]->rx_mbuf) == NULL)
+	if((m = *sc->sc_ilt->rx_mbuf) == NULL)
 		return;
 
 	m->m_pkthdr.rcvif = &sc->sc_sp.pp_if;
@@ -726,12 +741,7 @@ i4bisppp_idletime(void *softc)
 {
 	struct sppp *sp = &((struct i4bisppp_softc *)softc)->sc_sp;
 
-#ifdef __NetBSD__
-       return sp->pp_last_activity;
-#else
-	return((sp->pp_last_recv < sp->pp_last_sent) ?
-			sp->pp_last_sent : sp->pp_last_recv);
-#endif
+	return sp->pp_last_activity;
 }
 
 /*---------------------------------------------------------------------------*
@@ -749,40 +759,20 @@ i4bisppp_activity(void *softc, int rxtx)
 /*---------------------------------------------------------------------------*
  *	return this drivers linktab address
  *---------------------------------------------------------------------------*/
-drvr_link_t *
-i4bisppp_ret_linktab(int unit)
+static void *
+i4bisppp_ret_softc(int unit)
 {
-	return(&i4bisppp_drvr_linktab[unit]);
+	return &i4bisppp_softc[unit];
 }
 
 /*---------------------------------------------------------------------------*
  *	setup the isdn_linktab for this driver
  *---------------------------------------------------------------------------*/
-void
-i4bisppp_set_linktab(int unit, isdn_link_t *ilt)
-{
-	isdn_linktab[unit] = ilt;
-}
-
-static const struct isdn_l4_driver_functions
-ippp_l4_functions = {
-	i4bisppp_rx_data_rdy,
-	i4bisppp_tx_queue_empty,
-	i4bisppp_activity,
-	i4bisppp_connect,
-	i4bisppp_disconnect,
-	i4bisppp_dialresponse,
-	i4bisppp_updown
-};
-
-/*---------------------------------------------------------------------------*
- *	initialize this drivers linktab
- *---------------------------------------------------------------------------*/
 static void
-i4bisppp_init_linktab(int unit)
+i4bisppp_set_linktab(void *softc, isdn_link_t *ilt)
 {
-	i4bisppp_drvr_linktab[unit].l4_driver_softc = &i4bisppp_softc[unit];
-	i4bisppp_drvr_linktab[unit].l4_driver = &ippp_l4_functions;
+	struct i4bisppp_softc *sc = softc;
+	sc->sc_ilt = ilt;
 }
 
 /*===========================================================================*/

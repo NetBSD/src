@@ -27,7 +27,7 @@
  *	i4b_l4.h - kernel interface to userland header file
  *	---------------------------------------------------
  *
- *	$Id: i4b_l4.h,v 1.2 2002/03/17 11:08:32 martin Exp $ 
+ *	$Id: i4b_l4.h,v 1.3 2002/03/17 20:54:05 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -50,7 +50,7 @@ extern void i4b_l4_daemon_detached(void);
 extern void i4b_l4_dialout( int driver, int driver_unit );
 extern void i4b_l4_dialoutnumber(int driver, int driver_unit, int cmdlen, char *cmd);
 extern void i4b_l4_disconnect_ind ( call_desc_t *cd );
-extern void i4b_l4_drvrdisc (int driver, int driver_unit );
+extern void i4b_l4_drvrdisc (int cdid);
 extern void i4b_l4_negcomplete( call_desc_t *cd );
 extern void i4b_l4_ifstate_changed( call_desc_t *cd, int new_state );
 extern void i4b_l4_idle_timeout_ind( call_desc_t *cd );

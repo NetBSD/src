@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.2 2001/03/24 12:40:29 martin Exp $ */
+/* $NetBSD: isic_l1.h,v 1.3 2002/03/17 20:54:04 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -129,8 +129,10 @@ typedef struct
 	
 	/* link between b channel and driver */
 	
-	isdn_link_t	isdn_linktab;	/* b channel addresses	*/
-	drvr_link_t	*drvr_linktab;	/* ptr to driver linktab*/
+	isdn_link_t	isdn_linktab;		/* b channel driver data	*/
+	const struct isdn_l4_driver_functions 
+			*l4_driver;		/* layer 4 driver		*/
+	void		*l4_driver_softc;	/* layer 4 driver instance	*/
 
 	/* statistics */
 
