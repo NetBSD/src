@@ -28,6 +28,14 @@
 #include <machine/frame.h>
 #include "inferior.h"
 
+#define R15_PSR		0xfc000003
+#define R15_PC		0x03fffffc
+
+#define PSR_MODE_32	0x00000010
+
+/* From arm-tdep.c */
+extern int arm_apcs_32;
+
 void
 fetch_inferior_registers (regno)
      int regno;
@@ -36,6 +44,13 @@ fetch_inferior_registers (regno)
   struct fpreg inferior_fpregisters;
 
   ptrace (PT_GETREGS, inferior_pid, (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+  if (inferior_registers.r_cpsr == 0)
+    {
+      /* 26-bit target: split PC and PSR out of R15.  */
+      inferior_registers.r_cpsr = inferior_registers.r_pc & R15_PSR;
+      inferior_registers.r_pc = inferior_registers.r_pc & R15_PC;
+    }
+  arm_apcs_32 = (inferior_registers.r_cpsr & PSR_MODE_32) != 0;
   memcpy (&registers[REGISTER_BYTE (0)], &inferior_registers,
 	  16 * sizeof (unsigned int));
   memcpy (&registers[REGISTER_BYTE (PS_REGNUM)], &inferior_registers.r_cpsr,
@@ -59,6 +74,12 @@ store_inferior_registers (regno)
 	  16 * sizeof (unsigned int));
   memcpy (&inferior_registers.r_cpsr, &registers[REGISTER_BYTE (PS_REGNUM)],
 	  sizeof (unsigned int));
+  if ((inferior_registers.r_cpsr & PSR_MODE_32) == 0)
+    {
+      /* Target is in 26-bit mode.  Merge PSR into R15.  */
+      inferior_registers.r_pc &= R15_PC;
+      inferior_registers.r_pc |= inferior_registers.r_cpsr & R15_PSR;
+    }
   ptrace (PT_SETREGS, inferior_pid, (PTRACE_ARG3_TYPE) &inferior_registers, 0);
 
   /* XXX Set FP regs. */
@@ -79,6 +100,13 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
 {
   struct md_core *core_reg = (struct md_core *) core_reg_sect;
 
+  if (core_reg->intreg.r_cpsr == 0)
+    {
+      /* 26-bit target: split PC and PSR out of R15.  */
+      core_reg->intreg.r_cpsr = core_reg->intreg.r_pc & R15_PSR;
+      core_reg->intreg.r_pc = core_reg->intreg.r_pc & R15_PC;
+    }
+  arm_apcs_32 = (core_reg->intreg.r_cpsr & PSR_MODE_32) != 0;
   /* integer registers */
   memcpy (&registers[REGISTER_BYTE (0)], &core_reg->intreg,
 	  sizeof (struct reg));
@@ -94,26 +122,4 @@ int
 get_longjmp_target (CORE_ADDR *addr)
 {
   return 0;
-}
-
-extern int arm_apcs_32;
-
-void
-_initialize_armnbsd_nat (void)
-{
-  int mib[2];
-  char machine[16];
-  size_t len;
-
-  /* XXX Grotty hack to guess whether this is a 26-bit system.  This
-     should really be determined on the fly, to allow debugging a
-     32-bit core on a 26-bit machine, or a 26-bit process on a 32-bit
-     machine.  For now, users will just have to use "set apcs32" as
-     appropriate. */
-  mib[0] = CTL_HW;
-  mib[1] = HW_MACHINE;
-  len = sizeof (machine);
-  if (sysctl (mib, 2, machine, &len, NULL, 0) == 0 &&
-      strcmp (machine, "arm26") == 0)
-    arm_apcs_32 = 0;
 }
