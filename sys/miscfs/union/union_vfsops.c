@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.22 1999/05/02 00:18:31 thorpej Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.23 1999/07/31 23:56:15 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -294,14 +294,10 @@ union_unmount(mp, mntflags, p)
 	struct vnode *um_rootvp;
 	int error;
 	int freeing;
-	int flags = 0;
 
 #ifdef UNION_DIAGNOSTIC
 	printf("union_unmount(mp = %p)\n", mp);
 #endif
-
-	if (mntflags & MNT_FORCE)
-		flags |= FORCECLOSE;
 
 	if ((error = union_root(mp, &um_rootvp)) != 0)
 		return (error);
@@ -315,7 +311,7 @@ union_unmount(mp, mntflags, p)
 	 * (d) times, where (d) is the maximum tree depth
 	 * in the filesystem.
 	 */
-	for (freeing = 0; vflush(mp, um_rootvp, flags) != 0;) {
+	for (freeing = 0; vflush(mp, um_rootvp, 0) != 0;) {
 		struct vnode *vp;
 		int n;
 
@@ -332,6 +328,14 @@ union_unmount(mp, mntflags, p)
 		/* otherwise try once more time */
 		freeing = n;
 	}
+
+	/*
+	 * Ok, now that we've tried doing it gently, get out the hammer.
+	 */
+
+	if (mntflags & MNT_FORCE)
+		vflush(mp, um_rootvp, FORCECLOSE);
+	
 
 	/* At this point the root vnode should have a single reference */
 	if (um_rootvp->v_usecount > 1) {
