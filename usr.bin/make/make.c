@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.51 2003/08/07 11:14:54 agc Exp $	*/
+/*	$NetBSD: make.c,v 1.52 2003/11/14 22:32:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.51 2003/08/07 11:14:54 agc Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.52 2003/11/14 22:32:44 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.51 2003/08/07 11:14:54 agc Exp $");
+__RCSID("$NetBSD: make.c,v 1.52 2003/11/14 22:32:44 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -264,7 +264,7 @@ Make_OODate(GNode *gn)
 	if (DEBUG(MAKE)) {
 	    printf("source %smade...", gn->flags & CHILDMADE ? "" : "not ");
 	}
-	oodate = (gn->flags & CHILDMADE) ? 1 : 0;
+	oodate = (gn->flags & CHILDMADE) ? TRUE : FALSE;
     } else if (gn->type & (OP_FORCE|OP_EXEC|OP_PHONY)) {
 	/*
 	 * A node which is the object of the force (!) operator or which has
@@ -280,16 +280,17 @@ Make_OODate(GNode *gn)
 	    }
 	}
 	oodate = TRUE;
-    } else if ((gn->mtime < gn->cmtime) ||
-	       ((gn->cmtime == 0) &&
-		((gn->mtime==0) || (gn->type & OP_DOUBLEDEP))))
+    } else if (gn->mtime < gn->cmtime ||
+	       (gn->cmtime == 0 &&
+		((gn->mtime == 0 && !(gn->type & OP_OPTIONAL))
+		  || gn->type & OP_DOUBLEDEP)))
     {
 	/*
 	 * A node whose modification time is less than that of its
 	 * youngest child or that has no children (cmtime == 0) and
-	 * either doesn't exist (mtime == 0) or was the object of a
-	 * :: operator is out-of-date. Why? Because that's the way Make does
-	 * it.
+	 * either doesn't exist (mtime == 0) and it isn't optional
+	 * or was the object of a * :: operator is out-of-date.
+	 * Why? Because that's the way Make does it.
 	 */
 	if (DEBUG(MAKE)) {
 	    if (gn->mtime < gn->cmtime) {
@@ -313,7 +314,7 @@ Make_OODate(GNode *gn)
 	    if (gn->flags & FORCE)
 		printf("non existing child...");
 	}
-	oodate = (gn->flags & FORCE) ? 1 : 0;
+	oodate = (gn->flags & FORCE) ? TRUE : FALSE;
     }
 
     /*
