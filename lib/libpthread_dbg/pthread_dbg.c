@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.1.2.3 2002/08/06 20:05:36 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.1.2.4 2002/10/01 20:43:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -289,12 +289,8 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 	case PT_STATE_RUNNING:
 		/* The register state of the thread is live in the
 		 * inferior process's register state.
-		 * XXX we don't have a thread->LWP mapping, and the
-		 * XXX layer we're calling doesn't have a way to feed
-		 * XXX a LWP ID to ptrace.... fortunately, it's a moot
-		 * XXX issue on a uniprocessor box.
 		 */
-		val = GETREGS(thread->proc, regset, -1, buf);
+		val = GETREGS(thread->proc, regset, thread->lwp, buf);
 		if (val != 0)
 			return val;
 		break;
@@ -351,12 +347,8 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 	case PT_STATE_RUNNING:
 		/* The register state of the thread is live in the
 		 * inferior process's register state.  
-		 * XXX we don't have a thread->LWP mapping, and the
-		 * XXX layer we're calling doesn't have a way to feed
-		 * XXX a LWP ID to ptrace.... fortunately, it's a moot
-		 * XXX issue on a uniprocessor box. 
 		 */
-		val = SETREGS(thread->proc, regset, -1, buf);
+		val = SETREGS(thread->proc, regset, thread->lwp, buf);
 		if (val != 0)
 			return val;
 		break;
@@ -702,6 +694,8 @@ td_map_lwp2thr(td_proc_t *proc, int lwp, td_thread_t **threadp)
 	if (val != 0)
 		return val;
 
+	(*threadp)->lwp = lwp;
+
 	return 0;
 }
 
@@ -784,6 +778,7 @@ td__getthread(td_proc_t *proc, caddr_t addr, td_thread_t **threadp)
 			return TD_ERR_NOMEM;
 		thread->proc = proc;
 		thread->addr = addr;
+		thread->lwp  = 0;
 		PTQ_INSERT_HEAD(&proc->threads, thread, list);
 	}
 
