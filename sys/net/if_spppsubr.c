@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.79 2004/12/06 02:59:23 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.80 2004/12/22 05:11:24 itojun Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.79 2004/12/06 02:59:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.80 2004/12/22 05:11:24 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1208,20 +1208,20 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 		    "%s: cisco input: %d bytes "
 		    "<0x%x 0x%x 0x%x 0x%x 0x%x-0x%x>\n",
 		    ifp->if_xname, m->m_pkthdr.len,
-		    ntohl (h->type), h->par1, h->par2, (u_int)h->rel,
+		    ntohl(h->type), h->par1, h->par2, (u_int)h->rel,
 		    (u_int)h->time0, (u_int)h->time1);
-	switch (ntohl (h->type)) {
+	switch (ntohl(h->type)) {
 	default:
 		if (debug)
 			addlog("%s: cisco unknown packet type: 0x%x\n",
-			       ifp->if_xname, ntohl (h->type));
+			       ifp->if_xname, ntohl(h->type));
 		break;
 	case CISCO_ADDR_REPLY:
 		/* Reply on address request, ignore */
 		break;
 	case CISCO_KEEPALIVE_REQ:
 		sp->pp_alivecnt = 0;
-		sp->pp_rseq[IDX_LCP] = ntohl (h->par1);
+		sp->pp_rseq[IDX_LCP] = ntohl(h->par1);
 		if (sp->pp_seq[IDX_LCP] == sp->pp_rseq[IDX_LCP]) {
 			/* Local and remote sequence numbers are equal.
 			 * Probably, the line is in loopback mode. */
@@ -1291,7 +1291,7 @@ sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2)
 	if (debug)
 		log(LOG_DEBUG,
 		    "%s: cisco output: <0x%x 0x%x 0x%x 0x%x 0x%x-0x%x>\n",
-			ifp->if_xname, ntohl (ch->type), ch->par1,
+			ifp->if_xname, ntohl(ch->type), ch->par1,
 			ch->par2, (u_int)ch->rel, (u_int)ch->time0,
 			(u_int)ch->time1);
 
