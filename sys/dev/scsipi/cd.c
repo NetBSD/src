@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.169 2002/11/01 11:31:59 mrg Exp $	*/
+/*	$NetBSD: cd.c,v 1.170 2002/11/09 18:58:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.169 2002/11/01 11:31:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.170 2002/11/09 18:58:26 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -1247,7 +1247,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		struct ioc_read_subchannel *args =
 		    (struct ioc_read_subchannel *)addr;
 		struct cd_sub_channel_info data;
-		int len = args->data_len;
+		u_int len = args->data_len;
 
 		if (len > sizeof(data) ||
 		    len < sizeof(struct cd_sub_channel_header))
@@ -1280,7 +1280,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		    (struct ioc_read_toc_entry *)addr;
 		struct ioc_toc_header *th;
 		struct cd_toc_entry *cte;
-		int len = te->data_len;
+		u_int len = te->data_len;
 		int ntracks;
 
 		th = &toc.header;
