@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.19 1998/03/18 15:57:27 bouyer Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.20 1998/03/19 03:42:35 ross Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1517,9 +1517,9 @@ ffs_mapsearch(needswap, fs, cgp, bpref, allocsiz)
 		if (loc == 0) {
 			printf("start = %d, len = %d, fs = %s\n",
 			    ostart, olen, fs->fs_fsmnt);
-			printf("offset=%d %d\n",
+			printf("offset=%d %ld\n",
 				ufs_rw32(cgp->cg_freeoff, needswap),
-				(u_int32_t)cg_blksfree(cgp, needswap) - (u_int32_t)cgp);
+				(long)cg_blksfree(cgp, needswap) - (long)cgp);
 			panic("ffs_alloccg: map corrupted");
 			/* NOTREACHED */
 		}
