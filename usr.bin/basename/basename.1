@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1993, 1994
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,10 +32,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)basename.1	6.7 (Berkeley) 6/27/91
-.\"	$Id: basename.1,v 1.6 1994/01/11 02:19:21 jtc Exp $
+.\"     from: @(#)basename.1	8.2 (Berkeley) 4/18/94
+.\"	$Id: basename.1,v 1.7 1994/09/26 01:57:08 glass Exp $
 .\"
-.Dd June 27, 1991
+.Dd April 18, 1994
 .Dt BASENAME 1
 .Os
 .Sh NAME
@@ -57,6 +57,14 @@ and a
 .Ar suffix ,
 if given.
 The resulting filename is written to the standard output.
+If
+.Ar string
+ends in the slash character
+.Ql /
+or is the same as the
+.Ar suffix
+argument,
+a newline is output.
 A non-existent suffix is ignored.
 .Pp
 .Nm Dirname

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1991, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)basename.c	5.1 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$Id: basename.c,v 1.5 1993/11/19 19:58:46 jtc Exp $";
+/*static char sccsid[] = "from: @(#)basename.c	8.3 (Berkeley) 4/2/94";*/
+static char rcsid[] = "$Id: basename.c,v 1.6 1994/09/26 01:57:09 glass Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -47,14 +47,14 @@ static char rcsid[] = "$Id: basename.c,v 1.5 1993/11/19 19:58:46 jtc Exp $";
 #include <string.h>
 #include <locale.h>
 
-static void usage __P((void));
+void usage __P((void));
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register char *p;
+	char *p;
 	int ch;
 
 	setlocale(LC_ALL, "");
@@ -95,10 +95,8 @@ main(argc, argv)
 	 * (3) If there are any trailing slash characters in string, they
 	 *     shall be removed.
 	 */
-	for (; *p; ++p)
-		;
-	while (*--p == '/')
-		;
+	for (; *p; ++p);
+	while (*--p == '/');
 	*++p = '\0';
 
 	/*
@@ -133,9 +131,10 @@ main(argc, argv)
 	exit(0);
 }
 
-static void
+void
 usage()
 {
+
 	(void)fprintf(stderr, "usage: basename string [suffix]\n");
 	exit(1);
 }
