@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.10 2004/09/04 13:43:11 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.11 2004/12/11 03:32:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.10 2004/09/04 13:43:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.11 2004/12/11 03:32:27 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -77,8 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.10 2004/09/04 13:43:11 tsutsui Exp $");
  * The real stuff is in dev/ic/am7990reg.h
  */
 struct lereg1 {
-	volatile u_int16_t	ler1_rdp;	/* data port */
-	volatile u_int16_t	ler1_rap;	/* register select port */
+	volatile uint16_t	ler1_rdp;	/* data port */
+	volatile uint16_t	ler1_rap;	/* register select port */
 };
 
 /*
@@ -111,12 +111,12 @@ extern volatile u_char *lance_mem, *idrom_addr;
 #define hide		static
 #endif
 
-hide void lewrcsr(struct lance_softc *, u_int16_t, u_int16_t);
-hide u_int16_t lerdcsr(struct lance_softc *, u_int16_t);
+hide void lewrcsr(struct lance_softc *, uint16_t, uint16_t);
+hide uint16_t lerdcsr(struct lance_softc *, uint16_t);
 int leintr(int);
 
 hide void
-lewrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
+lewrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
@@ -124,11 +124,11 @@ lewrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
 	ler1->ler1_rdp = val;
 }
 
-hide u_int16_t
-lerdcsr(struct lance_softc *sc, u_int16_t port)
+hide uint16_t
+lerdcsr(struct lance_softc *sc, uint16_t port)
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
-	u_int16_t val;
+	uint16_t val;
 
 	ler1->ler1_rap = port;
 	val = ler1->ler1_rdp;
