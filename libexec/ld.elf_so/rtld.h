@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.25 2000/04/15 05:41:46 erh Exp $	 */
+/*	$NetBSD: rtld.h,v 1.26 2000/07/06 03:16:51 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -195,13 +195,13 @@ typedef struct Struct_Obj_Entry {
 	int             (*dlclose) __P((void *));
 	int             (*dladdr) __P((const void *, Dl_info *));
 
-	int             mainprog:1;	/* True if this is the main program */
-	int             rtld:1;		/* True if this is the dynamic linker */
-	int             textrel:1;	/* True if there are relocations to
+	u_int32_t	mainprog:1,	/* True if this is the main program */
+	        	rtld:1,		/* True if this is the dynamic linker */
+			textrel:1,	/* True if there are relocations to
 					 * text seg */
-	int             symbolic:1;	/* True if generated with
+			symbolic:1,	/* True if generated with
 					 * "-Bsymbolic" */
-	int             printed:1;	/* True if ldd has printed it */
+			printed:1;	/* True if ldd has printed it */
 
 	struct link_map linkmap;	/* for GDB */
 
