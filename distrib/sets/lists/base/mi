@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.180 2000/08/07 05:40:21 enami Exp $
+# $NetBSD: mi,v 1.181 2000/09/10 20:02:46 joda Exp $
 .
 ./altroot
 ./bin
@@ -841,6 +841,7 @@
 ./usr/share/examples/emul/ultrix/etc
 ./usr/share/examples/ftpd
 ./usr/share/examples/ipf
+./usr/share/examples/kerberos
 ./usr/share/examples/mount_portal
 ./usr/share/examples/named
 ./usr/share/examples/openssl
