@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/12/12 01:49:41 tv Exp $
+#	$NetBSD: Makefile,v 1.14 2002/03/15 21:02:29 heinz Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -59,7 +59,7 @@ vers.c: version
 realall: ${BOOTPROG}
 
 ${BOOTPROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -o ${BOOTPROG} -s -N -T ld.script -Ttext ${RELOC} ${OBJS} \
+	${LD} -o ${BOOTPROG} -s -N -T ${.CURDIR}/ld.script -Ttext ${RELOC} ${OBJS} \
 		${LIBSA} ${LIBZ} ${LIBKERN} vers.o
 
 remake: cleanobjs all
