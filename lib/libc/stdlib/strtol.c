@@ -1,4 +1,4 @@
-/*	$NetBSD: strtol.c,v 1.8 1996/07/11 01:47:41 jtc Exp $	*/
+/*	$NetBSD: strtol.c,v 1.9 1996/07/20 01:00:55 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char *sccsid = "from: @(#)strtol.c	5.4 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: strtol.c,v 1.8 1996/07/11 01:47:41 jtc Exp $";
+static char *rcsid = "$NetBSD: strtol.c,v 1.9 1996/07/20 01:00:55 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@ strtol(nptr, endptr, base)
 {
 	register const char *s;
 	register long acc, cutoff;
-	register unsigned int c;
+	register int c;
 	register int neg, any, cutlim;
 
 	/*
@@ -71,7 +71,7 @@ strtol(nptr, endptr, base)
 	 */
 	s = nptr;
 	do {
-		c = *s++;
+		c = (unsigned char) *s++;
 	} while (isspace(c));
 	if (c == '-') {
 		neg = 1;
@@ -117,7 +117,7 @@ strtol(nptr, endptr, base)
 		}
 		cutlim = -cutlim;
 	}
-	for (acc = 0, any = 0;; c = *s++) {
+	for (acc = 0, any = 0;; c = (unsigned char) *s++) {
 		if (isdigit(c))
 			c -= '0';
 		else if (isalpha(c))
