@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.16 1993/10/18 09:30:37 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.17 1993/10/22 19:11:36 mycroft Exp $
  */
 
 /*
@@ -46,9 +46,7 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
@@ -68,10 +66,10 @@ static int isasubmatch __P((struct device *, struct cfdata *, void *));
 struct cfdriver isacd =
     { NULL, "isa", isaprobe, isaattach, DV_DULL, sizeof(struct isa_softc) };
 
-static void isa_defaultirq __P((void));
 static int isaprint __P((void *, char *));
-static void isa_flushintrs __P((void));
-static void isa_intrmaskwickedness __P((void));
+void isa_defaultirq __P((void));
+void isa_flushintrs __P((void));
+void isa_intrmaskwickedness __P((void));
 
 /*
  * We think there might be an ISA bus here.  Check it out.
@@ -232,190 +230,6 @@ void isa_portalloc __P((u_int, u_int));
 void isa_memalloc __P((u_int, u_int));
 */
 
-int	intrmask[NIRQ];
-struct	intrhand *intrhand[NIRQ];
-
-/*
- * Register an interrupt handler.
- */
-void
-intr_establish(intr, ih, class)
-	int intr;
-	struct intrhand *ih;
-	enum devclass class;
-{
-	int irqnum = ffs(intr) - 1;
-	register struct intrhand **p, *q;
-
-#ifdef DIAGNOSTIC
-	if (intr == IRQUNK || intr == IRQNONE ||
-	    (intr &~ (1 << irqnum)) != IRQNONE)
-		panic("intr_establish: weird irq");
-#endif
-
-	switch (class) {
-	    case DV_DULL:
-		break;
-	    case DV_DISK:
-	    case DV_TAPE:
-		biomask |= intr;
-		break;
-	    case DV_IFNET:
-		netmask |= intr;
-		break;
-	    case DV_TTY:
-		ttymask |= intr;
-		break;
-	    case DV_CPU:
-	    default:
-		panic("intrhand: weird devclass");
-	}
-
-	ih->ih_count = 0;
-	ih->ih_next = NULL;
-
-	/*
-	 * This is O(N^2), but we want to preserve the order, and N is
-	 * always small.
-	 */
-	for (p = &intrhand[intr]; (q = *p) != NULL; p = &q->ih_next)
-		;
-	*p = ih;
-
-	intr_enable(intr);
-}
-
-/*
- * Set up the masks for each interrupt handler based on the information
- * recorded by intr_establish().
- */
-static void
-isa_intrmaskwickedness()
-{
-	int irq, mask;
-
-	for (irq = 0; irq < NIRQ; irq++) {
-		mask = (1 << irq) | astmask;
-		if (biomask & (1 << irq))
-			mask |= biomask;
-		if (ttymask & (1 << irq))
-			mask |= ttymask;
-		if (netmask & (1 << irq))
-			mask |= netmask;
-		intrmask[irq] = mask;
-	}
-
-	impmask = netmask | ttymask;
-	printf("biomask %x ttymask %x netmask %x impmask %x astmask %s\n",
-	       biomask, ttymask, netmask, impmask, astmask);
-}
-
-#define	IDTVEC(name)	__CONCAT(X,name)
-/* default interrupt vector table entries */
-extern	*IDTVEC(intr)[NIRQ];
-/* out of range default interrupt vector gate entry */
-extern	IDTVEC(stray);
-
-/*
- * Fill in default interrupt table, and mask all interrupts.
- */
-static void
-isa_defaultirq()
-{
-	int i;
-
-	/* icu vectors */
-	for (i = ICU_OFFSET; i < ICU_OFFSET + ICU_LEN ; i++)
-		setidt(i, IDTVEC(intr)[i],  SDT_SYS386IGT, SEL_KPL);
-  
-	/* out of range vectors */
-	for (; i < NIDT; i++)
-		setidt(i, &IDTVEC(stray), SDT_SYS386IGT, SEL_KPL);
-
-	/* initialize 8259's */
-	outb(IO_ICU1, 0x11);		/* reset; program device, four bytes */
-	outb(IO_ICU1+1, ICU_OFFSET);	/* starting at this vector index */
-	outb(IO_ICU1+1, IRQ_SLAVE);
-#ifdef AUTO_EOI_1
-	outb(IO_ICU1+1, 2 | 1);		/* auto EOI, 8086 mode */
-#else
-	outb(IO_ICU1+1, 1);		/* 8086 mode */
-#endif
-	outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU1, 0x0a);		/* default to IRR on read */ 
-#ifdef REORDER_IRQ
-	outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
-#endif
-
-	outb(IO_ICU2, 0x11);		/* reset; program device, four bytes */
-	outb(IO_ICU2+1, ICU_OFFSET+8);	/* staring at this vector index */
-	outb(IO_ICU2+1, ffs(IRQ_SLAVE)-1);
-#ifdef AUTO_EOI_2
-	outb(IO_ICU2+1, 2 | 1);		/* auto EOI, 8086 mode */
-#else
-	outb(IO_ICU2+1, 1);		/* 8086 mode */
-#endif
-	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU2, 0x0a);		/* default to IRR on read */
-}
-
-/*
- * Flush any pending interrupts.
- */
-static void
-isa_flushintrs()
-{
-	register int i;
-
-	/* clear any pending interrupts */
-	for (i = 0; i < 8; i++) {
-		outb(IO_ICU1, ICU_EOI);
-		outb(IO_ICU2, ICU_EOI);
-	}
-}
-
-/*
- * Determine what IRQ a device is using by trying to force it to generate an
- * interrupt and seeing which IRQ line goes high.  It is not safe to call
- * this function after autoconfig.
- */
-u_short
-isa_discoverintr(force, aux)
-	void (*force)();
-{
-	int time = TIMER_FREQ * 1;	/* wait up to 1 second */
-	u_int last, now;
-	u_short iobase = IO_TIMER1;
-
-	isa_flushintrs();
-	/* attempt to force interrupt */
-	force(aux);
-	/* set timer 2 to a known state */
-	outb(iobase + TIMER_MODE, TIMER_SEL2|TIMER_RATEGEN|TIMER_16BIT);
-	outb(iobase + TIMER_CNTR2, 0xff);
-	outb(iobase + TIMER_CNTR2, 0xff);
-	last = 0xffff;
-	while (time > 0) {
-		register u_char irr, lo, hi;
-		irr = inb(IO_ICU1) & ~IRQ_SLAVE;
-		if (irr)
-			return 1 << (ffs(irr) - 1);
-		irr = inb(IO_ICU2);
-		if (irr)
-			return 1 << (ffs(irr) + 7);
-		outb(iobase + TIMER_MODE, TIMER_SEL2|TIMER_LATCH);
-		lo = inb(iobase + TIMER_CNTR2);
-		hi = inb(iobase + TIMER_CNTR2);
-		now = (hi << 8) | lo;
-		if (now <= last)
-			time -= (last - now);
-		else
-			time -= 0x10000 - (now - last);
-		last = now;
-	}
-	return IRQNONE;
-}
-
 /*
  * Handle a NMI, possibly a machine check.
  * return true to panic system, false to ignore.
@@ -428,34 +242,6 @@ isa_nmi()
 
 	log(LOG_CRIT, "NMI port 61 %x, port 70 %x\n", inb(0x61), inb(0x70));
 	return 0;
-}
-
-/*
- * Caught a stray interrupt, notify
- */
-void
-isa_strayintr(d)
-	int d;
-{
-	extern u_long intrcnt_stray;
-
-	/*
-	 * Stray level 7 interrupts occur when someone raises an interrupt
-	 * and then drops it before the CPU acknowledges it.  This means
-	 * either the device is screwed or something is cli'ing too long
-	 * and it's timing out.
-	 *
-	 * -1 is passed by the generic handler for out of range exceptions,
-	 * since we don't really want 208 little vectors.  (It wouldn't be
-	 * all that much code, but why bother?)
-	 */
-	if (intrcnt_stray++ < 5)
-		if (d == -1)
-			log(LOG_ERR, "wild interrupt\n");
-		else
-			log(LOG_ERR, "stray interrupt %d\n", d);
-	if (intrcnt_stray == 5)
-		log(LOG_ERR, "too many stray interrupts; stopped logging\n");
 }
 
 static int beeping;
