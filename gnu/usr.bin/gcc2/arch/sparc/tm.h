@@ -1,5 +1,5 @@
 /* Configuration for NetBSD Sparc */
-/* $Id: tm.h,v 1.6 1994/02/10 20:36:31 pk Exp $ */
+/* $Id: tm.h,v 1.7 1994/12/21 11:25:51 cgd Exp $ */
 
 #include "sparc/sparc.h"
 
@@ -7,7 +7,7 @@
 #define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dsparc -D__NetBSD__ -Dunix -D__GCC_NEW_VARARGS__"
+#define CPP_PREDEFINES "-Dsparc -Dunix -D__NetBSD__ -D__sparc__ -D__GCC_NEW_VARARGS__"
 /* Provide required defaults for linker -e and -d switches.  */
 
 #define LINK_SPEC \
