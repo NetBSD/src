@@ -1,4 +1,4 @@
-/*	$NetBSD: optimize.c,v 1.12 2000/11/19 13:18:03 itojun Exp $	*/
+/*	$NetBSD: optimize.c,v 1.13 2001/01/06 02:11:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: optimize.c,v 1.60 96/09/26 23:28:14 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: optimize.c,v 1.12 2000/11/19 13:18:03 itojun Exp $");
+__RCSID("$NetBSD: optimize.c,v 1.13 2001/01/06 02:11:18 christos Exp $");
 #endif
 #endif
 
@@ -122,9 +122,6 @@ static void opt_peep(struct block *);
 static void opt_stmt(struct stmt *, int[], int);
 static void deadstmt(struct stmt *, struct stmt *[]);
 static void opt_deadstores(struct block *);
-static void opt_blk(struct block *, int);
-static int use_conflict(struct block *, struct block *);
-static void opt_j(struct edge *);
 static struct block *fold_edge(struct block *, struct edge *);
 static inline int eq_blk(struct block *, struct block *);
 static int slength(struct slist *);

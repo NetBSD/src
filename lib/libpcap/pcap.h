@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.h,v 1.8 2000/10/06 16:39:24 thorpej Exp $	*/
+/*	$NetBSD: pcap.h,v 1.9 2001/01/06 02:11:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -136,7 +136,9 @@ pcap_dumper_t *pcap_dump_open(pcap_t *, char *);
 void	pcap_dump_close(pcap_dumper_t *);
 void	pcap_dump(u_char *, const struct pcap_pkthdr *, const u_char *);
 
+#ifdef notdef
 /* XXX this guy lives in the bpf tree */
 u_int	bpf_filter(struct bpf_insn *, u_char *, u_int, u_int);
+#endif
 char	*bpf_image(struct bpf_insn *, int);
 #endif
