@@ -29,52 +29,64 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: catman.c,v 1.3 1994/01/29 01:43:13 jtc Exp $";
+static char rcsid[] = "$Id: catman.c,v 1.4 1994/04/26 20:15:51 chopps Exp $";
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <limits.h>
 #include <errno.h>
 #include <err.h>
 
-int             no_whatis = 0;
-int             just_print = 0;
-int             just_whatis = 0;
 
-char            manpath[] = "/usr/share/man";
-char            sections[] = "12345678lnop";
-char           *mp = manpath;
-char	       *sp = sections;
+int f_nowhatis;
+int f_noaction;
+int f_noformat;
+int f_ignerr;
+int f_noprint;
 
-void            catman();
-void            makewhatis();
-void            usage();
+int dowhatis;
+
+char manpath[] = "/usr/share/man";
+char sections[] = "12345678lnop";
+char *mp = manpath;
+char *sp = sections;
+
+void usage __P((void));
+void catman __P((const char *, char *));
+void makewhatis __P((const char *));
+void dosystem __P((const char *));
 
 int
 main(argc, argv)
-	int             argc;
-	char          **argv;
+	int argc;
+	char **argv;
 {
-	int             c;
+	int c;
 
-	while ((c = getopt(argc, argv, "npwM:")) != EOF) {
+	while ((c = getopt(argc, argv, "knpwM:")) != EOF) {
 		switch (c) {
+		case 'k':
+			f_ignerr = 1;
+			break;
 		case 'n':
-			no_whatis = 1;
+			f_nowhatis = 1;
 			break;
 		case 'p':
-			just_print = 1;
+			f_noaction = 1;
+			break;
+		case 's':
+			f_noprint = 1;
 			break;
 		case 'w':
-			just_whatis = 1;
+			f_noformat = 1;
 			break;
-
 		case 'M':
 			mp = optarg;
 			break;
@@ -88,12 +100,17 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 1) 
-		usage ();
-	if (argc == 0)
-		sp = *argv;
+	if (f_noprint && f_noaction)
+		f_noprint = 0;
 
-	catman(mp, sp);
+	if (argc == 0)
+		usage ();
+	sp = *argv;
+
+	if (f_noformat == 0)
+		catman(mp, sp);
+	if (f_nowhatis == 0 && dowhatis)
+		makewhatis(mp);
 
 	exit(0);
 }
@@ -101,114 +118,141 @@ main(argc, argv)
 
 void
 catman(path, section)
-	char           *path;
-	char           *section;
+	const char *path;
+	char *section;
 {
-	DIR            *dirp;
-	struct dirent  *dp;
-	struct stat     manstat;
-	struct stat	catstat;
-	char            mandir[PATH_MAX];
-	char            catdir[PATH_MAX];
-	char            manpage[PATH_MAX];
-	char            catpage[PATH_MAX];
-	char            sysbuf[1024];
-	char           *s;
-	int             formatted = 0;
+	char mandir[PATH_MAX];
+	char catdir[PATH_MAX];
+	char manpage[PATH_MAX];
+	char catpage[PATH_MAX];
+	char sysbuf[1024];
+	struct stat manstat;
+	struct stat catstat;
+	struct dirent *dp;
+	DIR *dirp;
+	char *s, *tmp;
+	int sectlen;
 
-	if (!just_whatis) {
-		for (s = section; *s; s++) {
-			sprintf(mandir, "%s/man%c", path, *s);
-			sprintf(catdir, "%s/cat%c", path, *s);
+	for (s = section; *s; s += sectlen) {
+		tmp = s;
+		sectlen = 0;
+		if (isdigit(*tmp)) {
+			sectlen++;
+			tmp++;
+			while (*tmp && isdigit(*tmp) == 0) {
+				sectlen++;
+				tmp++;
+			}
+		}
+		if (sectlen == 0)
+			errx(1, "malformed section string");
 
-			if ((dirp = opendir(mandir)) == 0) {
-				warn("can't open %s", mandir);
+		sprintf(mandir, "%s/man%.*s", path, sectlen, s);
+		sprintf(catdir, "%s/cat%.*s", path, sectlen, s);
+
+		if ((dirp = opendir(mandir)) == 0) {
+			warn("can't open %s", mandir);
+			continue;
+		}
+
+		if (stat(catdir, &catstat) < 0) {
+			if (errno != ENOENT) {
+				warn("can't stat %s", catdir);
+				closedir(dirp);
+				continue;
+			}
+			if (f_noprint == 0)
+				printf("mkdir %s\n", catdir);
+			if (f_noaction == 0 && mkdir(catdir, 0755) < 0) {
+				warn("can't create %s", catdir);
+				closedir(dirp);
+				return;
+			}
+
+		}
+
+		while ((dp = readdir(dirp)) != NULL) {
+			if (strcmp(dp->d_name, ".") == 0 ||
+			    strcmp(dp->d_name, "..") == 0)
+				continue;
+
+			sprintf(manpage, "%s/%s", mandir, dp->d_name);
+			sprintf(catpage, "%s/%s", catdir, dp->d_name);
+			if ((tmp = strrchr(catpage, '.')) != NULL)
+				strcpy(tmp, ".0");
+			else
+				continue;
+
+			if (stat(manpage, &manstat) < 0) {
+				warn("can't stat %s", manpage);
 				continue;
 			}
 
-			if (stat(catdir, &catstat) < 0) {
-				if (errno != ENOENT) {
-					warn("can't stat %s", catdir);
-					closedir(dirp);
-					continue;
-				}
-				if (just_print) {
-					printf("mkdir %s\n", catdir);
-				} else if (mkdir(catdir, 0755) < 0) {
-					warn("can't create %s", catdir);
-					closedir(dirp);
-					return;
-				}
+			if (!S_ISREG(manstat.st_mode)) {
+				warnx("not a regular file %s", manpage);
+				continue;
+			}
+			if (stat(catpage, &catstat) < 0 && errno != ENOENT) {
+				warn("can't stat %s", catpage);
+				continue;
 			}
 
-			while ((dp = readdir(dirp)) != NULL) {
-				if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
-					continue;
-
-				sprintf(manpage, "%s/%s", mandir, dp->d_name);
-				sprintf(catpage, "%s/%s", catdir, dp->d_name);
-				if ((s = strrchr(catpage, '.')) != NULL)
-					strcpy(s, ".0");
-
-				if (stat(manpage, &manstat) < 0) {
-					warn("can't stat %s", manpage);
-					continue;
-				}
-
-				if (!S_ISREG(manstat.st_mode)) {
-					warnx("not a regular file %s", manpage);
-					continue;
-				}
-
-				if (stat(catpage, &catstat) < 0 && errno != ENOENT) {
-					warn("can't stat %s", catpage);
-					continue;
-				}
-
-				if (errno == ENOENT || manstat.st_mtime >= catstat.st_mtime) {
-					/*
-					 * manpage is out of date,
-					 * reformat
-					 */
-					sprintf(sysbuf, "nroff -mandoc %s > %s", manpage, catpage);
-
-					if (just_print) {
-						printf("%s\n", sysbuf);
-					} else {
-						if (system(sysbuf) != 0) {
-						}
-					}
-					formatted = 1;
-				}
+			if (errno == ENOENT || 
+			    manstat.st_mtime >= catstat.st_mtime) {
+				/*
+				 * manpage is out of date,
+				 * reformat
+				 */
+				sprintf(sysbuf, "nroff -mandoc %s > %s",
+				    manpage, catpage);
+				if (f_noprint == 0)
+					printf("%s\n", sysbuf);
+				if (f_noaction == 0)
+					dosystem(sysbuf);
+				dowhatis = 1;
 			}
-
-			closedir(dirp);
 		}
-	}
-
-	if (!no_whatis && formatted) {
-		makewhatis(path);
+		closedir(dirp);
 	}
 }
 
 void
 makewhatis(path)
+	const char *path;
 {
-	char            sysbuf[1024];
+	char sysbuf[1024];
 
 	sprintf(sysbuf, "/usr/libexec/makewhatis %s", path);
-	if (just_print) {
+	if (f_noprint == 0)
 		printf("%s\n", sysbuf);
-	} else {
-		if (system(sysbuf) != 0) {
-		}
-	}
+	if (f_noaction == 0)
+		dosystem(sysbuf);
 }
 
+void
+dosystem(cmd)
+	const char *cmd;
+{
+	int status;
+
+	if ((status = system(cmd)) == 0)
+		return;
+
+	if (status == -1)
+		err(1, "cannot execute action");
+	if (WIFSIGNALED(status))
+		errx(1, "child was signaled to quit. aborting");
+	if (WIFSTOPPED(status))
+		errx(1, "child was stopped. aborting");
+	if (f_ignerr == 0)
+		errx(1,"*** Exited %d");
+	warnx("*** Exited %d (continuing)");
+}
 
 void
 usage()
 {
-	(void) fprintf(stderr, "usage: catman [-npw] [-M manpath] [sections]\n");
+	(void)fprintf(stderr, "usage: catman [-knpw] [-M manpath]"
+	    " [sections]\n");
 	exit(1);
 }
