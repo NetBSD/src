@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.8 2000/02/22 03:39:47 oster Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.9 2000/02/23 00:37:11 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ typedef struct RF_ComponentLabel_s {
 				 0 == no, 1 == yes*/
 	int last_unit;        /* last unit number (e.g. 0 for /dev/raid0) 
 				 of this component.  Used for autoconfigure
-				 only.  (Not currently used) */
+				 only. */
 	int config_order;     /* 0 .. n.  The order in which the component
 				 should be auto-configured.  E.g. 0 is will 
 				 done first, (and would become raid0).
