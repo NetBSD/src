@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.13 1999/03/23 21:46:47 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.14 1999/10/27 17:59:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -136,6 +136,10 @@ void	ifmedia_set __P((struct ifmedia *ifm, int mword));
 /* Common ioctl function for getting/setting media, called by driver. */
 int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 	    struct ifmedia *ifm, u_long cmd));
+
+/* Look up a media entry. */
+struct ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm, int flags,
+	    int mask));
 
 #endif /*_KERNEL */
 
