@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.118 2000/09/19 23:53:51 bjh21 Exp $
+.\"	$NetBSD: options.4,v 1.119 2000/09/19 23:56:50 bjh21 Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -641,6 +641,10 @@ interface cards or boot proms. Once booted, the read and write request
 sizes can be increased by remounting the filesystem. See
 .Xr mount_nfs 8
 for details.
+.It Cd options NFS_V2_ONLY
+Reduce the size of the NFS client code by omitting code that's only required
+for NFSv3 and NQNFS support, leaving only that code required to use NFSv2
+servers.
 .El
 .Ss Miscellaneous Options
 .Bl -ohang
