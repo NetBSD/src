@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.168 2002/04/07 04:20:17 lukem Exp $
+.\"	$NetBSD: options.4,v 1.168.2.1 2002/06/10 17:12:31 tv Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1048,6 +1048,17 @@ not any included files.
 Use slower, but smaller socketpair(2)-based pipe implementation instead
 of default faster, but bigger one. Primarily useful for installation
 kernels.
+.It Cd options USERCONF
+Compiles in the in-kernel device configuration manager.  See
+.Xr userconf 4
+for details.
+.It Cd options PERFCTRS
+Compiles in kernel support for CPU performance-monitoring counters.
+See
+.Xr pmc 1
+for details.
+.Em NOTE :
+not available on all architectures.
 .El
 .Ss Networking Options
 .Bl -ohang
@@ -1865,6 +1876,7 @@ bolded
 .Xr gdb 1 ,
 .Xr ktrace 1 ,
 .Xr quota 1 ,
+.Xr pmc 1 ,
 .Xr gettimeofday 2 ,
 .Xr i386_iopl 2 ,
 .Xr msgctl 2 ,
@@ -1890,6 +1902,7 @@ bolded
 .Xr ns 4 ,
 .Xr pcibios 4 ,
 .Xr pcmcia 4 ,
+.Xr userconf 4 ,
 .Xr config 8 ,
 .Xr edquota 8 ,
 .Xr init 8 ,
