@@ -1,4 +1,4 @@
-.\"	$NetBSD: mktemp.3,v 1.6 1997/03/24 09:22:15 lukem Exp $
+.\"	$NetBSD: mktemp.3,v 1.7 1997/03/24 11:39:10 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)mktemp.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd March 24, 1997
 .Dt MKTEMP 3
 .Os
 .Sh NAME
@@ -143,5 +143,6 @@ should generally be avoided, as a hostile process can exploit a race
 condition in the time between the generation of a temporary filename by
 .Fn mktemp
 and the invoker's use of the temporary name.
+A link-time warning will be issued to advise the use of
 .Fn mkstemp
-should be used instead.
+instead.
