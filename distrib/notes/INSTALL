@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.55 1998/04/22 22:08:06 thorpej Exp $
+	$NetBSD: INSTALL,v 1.56 1998/04/27 02:51:26 thorpej Exp $
 
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
@@ -610,7 +610,7 @@ Perry Metzger		<perry@NetBSD.ORG>
 Jason Thorpe		<thorpej@NetBSD.ORG>
 
 Supporting cast:
-Steve Allen		<wormey@eskimo.com>
+Steve Allen		<wormey@NetBSD.ORG>
 Lennart Augustsson	<augustss@NetBSD.ORG>
 Christoph Badura	<bad@NetBSD.ORG>
 John Birrell		<jb@NetBSD.ORG>
