@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 1997/02/08 09:34:09 matthias Exp $	*/
+/*	$NetBSD: trap.c,v 1.23 1997/03/20 12:00:59 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -55,6 +55,9 @@
 #include <sys/ktrace.h>
 #endif
 #include <sys/syscall.h>
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
 
 #include <vm/vm_param.h>
 #include <vm/pmap.h>
@@ -238,9 +241,9 @@ trap(frame)
 		if (frame.tf_trapno < trap_types)
 			printf("fatal %s", trap_type[frame.tf_trapno]);
 		else
-			printf("unknown trap %d", frame.tf_trapno);
+			printf("unknown trap %ld", frame.tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type=%d, pc=0x%x, tear=0x%x, msr=0x%x\n",
+		printf("trap type=%d, pc=0x%x, tear=0x%lx, msr=0x%lx\n",
 			type, frame.tf_regs.r_pc, frame.tf_tear, frame.tf_msr);
 
 		panic("trap");
