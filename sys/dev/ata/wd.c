@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.105 1994/11/04 23:18:06 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.106 1994/11/04 23:30:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.
@@ -164,7 +164,7 @@ static int wdcommand __P((struct wd_softc *, int, int, int, int, int));
 static int wdcommandshort __P((struct wdc_softc *, int, int));
 static int wdcontrol __P((struct wd_softc *));
 static int wdsetctlr __P((struct wd_softc *));
-static int wdgetctlr __P((struct wd_softc *));
+static void wdgetctlr __P((struct wd_softc *));
 static void bad144intern __P((struct wd_softc *));
 static int wdcreset __P((struct wdc_softc *));
 static void wdcrestart __P((void *arg));
@@ -287,7 +287,11 @@ wdattach(parent, self, aux)
 	void *aux;
 {
 	struct wd_softc *wd = (void *)self;
+	struct wdc_attach_args *wa = aux;
 	int i, blank;
+
+	wd->sc_drive = wa->wa_drive;
+	wdgetctlr(wd);
 
 	if (wd->sc_params.wdp_heads == 0)
 		printf(": (unknown size) <");
@@ -1064,7 +1068,7 @@ wdsetctlr(wd)
 /*
  * Issue READP to drive to ask it what it is.
  */
-static int
+static void
 wdgetctlr(wd)
 	struct wd_softc *wd;
 {
@@ -1124,8 +1128,6 @@ wdgetctlr(wd)
     
 	/* XXX sometimes possibly needed */
 	(void) inb(wdc->sc_iobase+wd_status);
-
-	return 0;
 }
 
 int
