@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.6.2.4 1998/10/23 12:29:52 nisimura Exp $ */
+/*	$NetBSD: dec_3100.c,v 1.6.2.5 1999/03/15 08:40:29 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -72,7 +72,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.4 1998/10/23 12:29:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.5 1999/03/15 08:40:29 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.4 1998/10/23 12:29:52 nisimura Ex
 
 #include <pmax/pmax/kn01.h>		/* common definitions */
 
-#include <dev/tc/tcvar.h>		/* !!! */
 #include <pmax/ibus/ibusvar.h>
 
 #include "wsdisplay.h"
@@ -147,12 +146,16 @@ dec_3100_os_init()
 	 */
 	mips_hardware_intr = dec_3100_intr;
 
+#ifdef NEWSPL
+	__spl = &spl_3100;
+#else
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL_0_1;
 	splvec.spltty = MIPS_SPL_0_1_2;
 	splvec.splimp = MIPS_SPLHIGH;				/* ??? */
 	splvec.splclock = MIPS_SPL_0_1_2_3;
 	splvec.splstatclock = MIPS_SPL_0_1_2_3;
+#endif
 
 	mcclock_addr = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
@@ -175,7 +178,7 @@ dec_3100_bus_reset()
 #include <sys/termios.h>
 
 extern void prom_findcons __P((int *, int *, int *));
-extern int pm_cnattach __P((tc_addr_t));
+extern int pm_cnattach __P((u_int32_t));
 extern int dc_cnattach __P((paddr_t, int, int, int));
 extern void dckbd_cnattach __P((paddr_t));
 
@@ -189,12 +192,12 @@ dec_3100_cons_init()
 
 	if (screen > 0) {
 #if NWSDISPLAY > 0
-		pm_cnattach(0x0fc00000 + MIPS_KSEG1_START);
 		dckbd_cnattach(KN01_SYS_DZ);
+		pm_cnattach(0x0fc00000 + MIPS_KSEG1_START);
 		return;
 #else
-		printf("No framebuffer device configured\n");
-		printf("Using serial console\n");
+		printf("No framebuffer device configured: ");
+		printf("using serial console\n");
 #endif
 	}
 	/*

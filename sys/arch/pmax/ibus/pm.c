@@ -1,4 +1,4 @@
-/* $NetBSD: pm.c,v 1.1.2.7 1999/03/02 01:32:02 nisimura Exp $ */
+/* $NetBSD: pm.c,v 1.1.2.8 1999/03/15 08:40:32 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.7 1999/03/02 01:32:02 nisimura Exp $");
+__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.8 1999/03/15 08:40:32 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,9 +166,9 @@ struct cfattach pm_ca = {
 	sizeof(struct pm_softc), pmmatch, pmattach,
 };
 
-void pm_getdevconfig __P((tc_addr_t, struct fb_devconfig *));
+void pm_getdevconfig __P((u_int32_t, struct fb_devconfig *));
 struct fb_devconfig pm_console_dc;
-tc_addr_t pm_consaddr;
+caddr_t pm_consaddr;
 
 struct wsdisplay_emulops pm_emulops = {
 	rcons_cursor,
@@ -214,7 +214,7 @@ struct wsdisplay_accessops pm_accessops = {
 	0 /* load_font */
 };
 
-int  pm_cnattach __P((tc_addr_t));
+int  pm_cnattach __P((u_int32_t));
 void pminit __P((struct fb_devconfig *));
 void pm_screenblank __P((struct pm_softc *));
 
@@ -252,7 +252,7 @@ pmmatch(parent, match, aux)
 
 void
 pm_getdevconfig(dense_addr, dc)
-	tc_addr_t dense_addr;
+	u_int32_t dense_addr;
 	struct fb_devconfig *dc;
 {
 	struct raster *rap;
@@ -309,7 +309,7 @@ pmattach(parent, self, aux)
 	struct hwcmap *cm;
 	int console, i;
 
-	console = (ia->ia_addr == pm_consaddr);
+	console = ((caddr_t)ia->ia_addr == pm_consaddr);
 	if (console) {
 		sc->sc_dc = &pm_console_dc;
 		sc->nscreens = 1;
@@ -473,7 +473,7 @@ pm_show_screen(v, cookie)
 
 int
 pm_cnattach(addr)
-	tc_addr_t addr;
+	u_int32_t addr;
 {
         struct fb_devconfig *dcp = &pm_console_dc;
         long defattr;
@@ -484,7 +484,7 @@ pm_cnattach(addr)
 
         wsdisplay_cnattach(&pm_stdscreen, &dcp->dc_rcons,
                            0, 0, defattr);
-        pm_consaddr = addr;
+        pm_consaddr = (caddr_t)addr;
         return (0);
 }
 
