@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_ipkdb.c,v 1.7 1997/08/21 11:26:42 ws Exp $	*/
+/*	$NetBSD: ipkdb_ipkdb.c,v 1.8 1999/05/04 23:30:21 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-1996 Wolfgang Solfrank.
@@ -402,7 +402,7 @@ assemble(ifp, buf)
 			for (i = 0; i < ((len >> 3)&7); *cp |= 1 << i++);
 		}
 	}
-	ipkdbcopy(buf + ip->ip_hl * 4,
+	ipkdbcopy((caddr_t)buf + ip->ip_hl * 4,
 		  ifp->ass + sizeof *ip + (off << 3),
 		  len - (off << 3));
 	for (cp = ifp->assbit; cp < ifp->assbit + sizeof ifp->assbit;)
