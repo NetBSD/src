@@ -1,4 +1,4 @@
-/*	$NetBSD: eapreg.h,v 1.1 2000/03/19 17:11:50 soren Exp $	*/
+/*	$NetBSD: eapreg.h,v 1.2 2000/04/30 21:59:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
 #define  EAP_ADC_STOP		0x80000000
 
 #define EAP_ICSS		0x04	/* interrupt / chip select status */
+					/* on the 5880 control / status */
 #define  EAP_I_ADC		0x00000001
 #define  EAP_I_DAC2		0x00000002
 #define  EAP_I_DAC1		0x00000004
@@ -77,6 +78,7 @@
 #define  EAP_CWRIP		0x00000100
 #define  EAP_CBUSY		0x00000200
 #define  EAP_CSTAT		0x00000400
+#define  EAP_CT5880_AC97_RESET	0x20000000
 #define  EAP_INTR		0x80000000
 
 #define EAP_UART_DATA		0x08
@@ -102,6 +104,7 @@
 #define  E1371_CODEC_WIP	0x40000000
 #define  E1371_CODEC_READ       0x00800000
 #define  E1371_SET_CODEC(a,d)	(((a)<<16) | (d))
+
 #define E1371_SRC		0x10
 #define  E1371_SRC_RAMWE	0x01000000
 #define  E1371_SRC_RBUSY	0x00800000
@@ -112,6 +115,11 @@
 #define  E1371_SRC_ADDR(a)	((a)<<25)
 #define  E1371_SRC_DATA(d)	(d)
 #define  E1371_SRC_DATAMASK	0x0000ffff
+#define  E1371_SRC_CTLMASK	(E1371_SRC_DISABLE | E1371_SRC_DISP1 | \
+				 E1371_SRC_DISP2 | E1371_SRC_DISREC)
+#define  E1371_SRC_STATE_MASK   0x00870000
+#define  E1371_SRC_STATE_OK     0x00010000
+
 #define E1371_LEGACY		0x18
 
 /*
@@ -180,8 +188,8 @@
 #define EAP_ADC_SIZE		0x34
 #define  EAP_SET_SIZE(c,s)	(((c)<<16) | (s))
 
-#define EAP_READ_TIMEOUT	5000000
-#define EAP_WRITE_TIMEOUT	5000000
+#define EAP_READ_TIMEOUT	5000
+#define EAP_WRITE_TIMEOUT	5000
 
 
 #define EAP_XTAL_FREQ		1411200		/* 22.5792 / 16 MHz */
@@ -263,3 +271,10 @@
 
 #define MIDI_BUSY_WAIT		100
 #define MIDI_BUSY_DELAY		100	/* Delay when UART is busy */
+
+#define EAP_EV1938_A  0x00
+#define EAP_CT5880_C  0x02
+#define EAP_ES1373_A  0x04
+#define EAP_ES1373_B  0x06
+#define EAP_CT5880_A  0x07
+#define EAP_ES1371_B  0x09
