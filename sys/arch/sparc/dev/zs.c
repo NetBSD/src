@@ -42,7 +42,7 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.2 1993/10/11 02:36:44 deraadt Exp $
+ * $Id: zs.c,v 1.3 1993/10/13 02:36:44 deraadt Exp $
  */
 
 /*
@@ -131,7 +131,7 @@ struct zs_chanstate *zslist;
 static void	zsiopen(struct tty *);
 static void	zsiclose(struct tty *);
 static void	zsstart(struct tty *);
-static void	zsstop(struct tty *, int);
+void		zsstop(struct tty *, int);
 static int	zsparam(struct tty *, struct termios *);
 
 /* Routines purely local to this driver. */
@@ -345,10 +345,11 @@ zs_reset(zc, inten, speed)
  * direct it to /dev/console if appropriate).
  */
 void
-zsconsole(tp, unit, out)
+zsconsole(tp, unit, out, fnstop)
 	register struct tty *tp;
 	register int unit;
 	int out;
+	void (**fnstop) __P((struct tty *, int));
 {
 	extern int (*v_putc)();
 	int zs;
@@ -366,6 +367,8 @@ zsconsole(tp, unit, out)
 		v_putc = zscnputc;
 	} else
 		zs_consin = unit;
+	if(fnstop)
+		*fnstop = &zsstop;
 	zs_ctty = tp;
 }
 
@@ -1050,7 +1053,7 @@ out:
 /*
  * Stop output, e.g., for ^S or output flush.
  */
-static void
+void
 zsstop(register struct tty *tp, int flag)
 {
 	register struct zs_chanstate *cs;
