@@ -19,6 +19,7 @@ int main(int argc, char *argv[]){
 	char *line;
 	char *progname;
 	char *bootnam, *devnam;
+	char *dline;
 	int bootfd, devfd;
 	int rc;	/* read,  write */
 	int c;	/* getopt */
@@ -89,7 +90,12 @@ int main(int argc, char *argv[]){
 	
 
 	if (line) {
-		(void)strncpy((char *)(&block[CMDLN_LOC/4]), line, CMDLN_LEN-1);
+		dline = (char *)&(block[CMDLN_LOC/4]);
+		/* XXX keep the default default line in sync with bbstart.s */
+		if (strcmp(dline, "netbsd -ASn2") != 0) {
+			errx(1, "Old bootblock version? Can't change command line.");
+		}
+		(void)strncpy(dline, line, CMDLN_LEN-1);
 
 		block[1] = 0;
 		block[1] = 0xffffffff - chksum(block, sumlen);
