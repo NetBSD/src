@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.27 2003/10/31 03:28:13 simonb Exp $	*/
+/*	$NetBSD: syscall.c,v 1.28 2004/04/20 12:00:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.27 2003/10/31 03:28:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.28 2004/04/20 12:00:02 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -152,6 +152,8 @@ syscall_plain(frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
+	KASSERT(l->l_holdcnt == 0);
+
 	if (callp->sy_flags & SYCALL_MPSAFE) {
 		error = (*callp->sy_call)(l, args, rval);
 	} else {
@@ -159,6 +161,8 @@ syscall_plain(frame)
 		error = (*callp->sy_call)(l, args, rval);
 		KERNEL_PROC_UNLOCK(l);
 	}
+
+	KASSERT(l->l_holdcnt == 0);
 
 	switch (error) {
 	case 0:
@@ -247,6 +251,9 @@ syscall_fancy(frame)
 
 	rval[0] = 0;
 	rval[1] = 0;
+
+	KASSERT(l->l_holdcnt == 0);
+
 	if (callp->sy_flags & SYCALL_MPSAFE) {
 		KERNEL_PROC_UNLOCK(l);
 		error = (*callp->sy_call)(l, args, rval);
@@ -254,6 +261,9 @@ syscall_fancy(frame)
 		error = (*callp->sy_call)(l, args, rval);
 		KERNEL_PROC_UNLOCK(l);
 	}
+
+	KASSERT(l->l_holdcnt == 0);
+
 	switch (error) {
 	case 0:
 		frame->tf_eax = rval[0];
