@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.15.4.1 1999/12/20 21:07:16 he Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.15.4.2 2001/04/14 21:15:14 he Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -175,6 +175,7 @@ typedef	struct	natstat	{
 #define	IPN_AUTOPORTMAP	0x10
 #define	IPN_RANGE	0x20
 #define	IPN_USERFLAGS	(IPN_TCPUDP|IPN_AUTOPORTMAP|IPN_RANGE)
+#define IPN_FRAG	0x200000
 
 
 typedef	struct	natlog {
