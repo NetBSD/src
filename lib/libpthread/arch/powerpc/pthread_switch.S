@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.5 2001/11/21 05:56:32 briggs Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.6 2001/11/26 17:19:38 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@ ENTRY(pthread__switch)
 	stw	r0, (RND_CTXSIZE + 20)(r1)	/* Save return address */
 	
 	/* Save pointer to saved space on stack in self->pt_uc */
-	la	r5, 8(r1)
+	la	r5, 16(r1)
 	stw	r5, PT_UC(r3)
 
 	mr	r3, r5				/* self->pt_uc */
@@ -239,8 +239,7 @@ ENTRY(pthread__locked_switch)
 	 * that was overwritten when we were preempted and continued,
 	 * so we need to put it somewhere.
 	 */
-	stw	r1, PT_SLEEPUC(r3)
-	addi	r1, r1, -STACKSPACE	/* Convert to stack */
+	stw	r31, PT_SLEEPUC(r3)
 
 	mr	r3, r4
 	mr	r4, r8
