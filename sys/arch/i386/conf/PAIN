@@ -1,4 +1,4 @@
-#	$NetBSD: PAIN,v 1.59 1996/03/05 01:32:24 thorpej Exp $
+#	$NetBSD: PAIN,v 1.60 1996/03/07 00:48:40 jtk Exp $
 #
 #	PAIN -- mail server and test machine
 #
@@ -161,7 +161,7 @@ ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 #le0	at isa? port 0x200 iomem 0xd0000 iosiz 49152 irq 5	# IsoLan, NE2100, and DEPCA
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
-#spkr0	at isa? ...
+#spkr0	at isa? port 0x61
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter

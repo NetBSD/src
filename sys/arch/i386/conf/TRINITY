@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.63 1996/03/05 01:32:33 thorpej Exp $
+#	$NetBSD: TRINITY,v 1.64 1996/03/07 00:48:46 jtk Exp $
 #
 #	TRINITY -- Mycroft's 386 box
 #
@@ -160,7 +160,7 @@ ed0	at isa? port 0x300 iomem 0xc8000 iosiz 8192 irq 9	# WD/SMC, 3C503, and NE[12
 le0	at isa? port 0x200 iomem 0xd0000 iosiz 32768 irq 5	# IsoLan, NE2100, and DEPCA
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
-#spkr0	at isa? ...
+#spkr0	at isa? port 0x61
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter
