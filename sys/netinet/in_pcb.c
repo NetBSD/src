@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.50 1998/02/15 18:24:25 tls Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.51 1998/07/23 08:24:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ in_pcballoc(so, v)
 	register struct inpcb *inp;
 	int s;
 
-	MALLOC(inp, struct inpcb *, sizeof(*inp), M_PCB, M_WAITOK);
+	MALLOC(inp, struct inpcb *, sizeof(*inp), M_PCB, M_NOWAIT);
 	if (inp == NULL)
 		return (ENOBUFS);
 	bzero((caddr_t)inp, sizeof(*inp));
