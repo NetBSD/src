@@ -1,4 +1,4 @@
-#	$NetBSD: SULACO,v 1.4 2000/02/19 09:46:48 nisimura Exp $
+#	$NetBSD: SULACO,v 1.5 2000/05/28 06:02:13 gmcgarry Exp $
 #
 # sulaco.nas.nasa.gov - thorpej's DECstation 5000/200
 #
@@ -126,7 +126,8 @@ ioasic0	at	tc?
 mcclock* at	ioasic? offset ?	# DS1287 RTC
 le*	at	ioasic? offset ?	# LANCE
 scc*	at	ioasic? offset ?	# Z85C30
-#isdn	at	ioasic? offset ?	# MAXINE ISDN/audio (not supported)
+#bba*	at	ioasic?	offset ?	# MAXINE baseboard audio
+#audio*	at	bba?
 dtop*	at	ioasic? offset ?	# MAXINE kbd and mouse
 #fdc	at	ioasic? offset ?	# MAXINE floppy disk (not supported)
 asc*	at	ioasic? offset ?	# NCR53C94 SCSI with IOASIC

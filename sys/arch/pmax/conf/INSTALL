@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.31 2000/02/19 09:46:49 nisimura Exp $
+# 	$NetBSD: INSTALL,v 1.32 2000/05/28 06:02:12 gmcgarry Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -89,7 +89,8 @@ ioasic0	at	tc?
 mcclock* at	ioasic? offset ?	# DS1287 RTC
 le*	at	ioasic? offset ?	# LANCE
 scc*	at	ioasic? offset ?	# Z85C30
-#isdn	at	ioasic? offset ?	# MAXINE ISDN/audio (not supported)
+#bba*	at	ioasic? offset ?	# MAXINE baseboard audio
+#audio*	at	bba?
 dtop*	at	ioasic? offset ?	# MAXINE kbd and mouse
 #fdc	at	ioasic? offset ?	# MAXINE floppy disk (not supported)
 asc*	at	ioasic? offset ?	# NCR53C94 SCSI with IOASIC
