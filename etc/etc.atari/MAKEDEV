@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.25 1997/11/26 03:09:35 tv Exp $
+#	$NetBSD: MAKEDEV,v 1.26 1998/04/14 09:16:42 leo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -67,9 +67,9 @@
 #	lpt0	centronics printer
 #
 # Terminal ports:
-#	ser02	serial2 port (channel A on 8530)
-#	mdm01	UART on first 68901
-#	mdm02	modem2 port (channel B on 8530)
+#	tty00   8530 Channel A (formerly ser02)
+#	tty01	8530 Channel B (formerly mdm02)
+#	tty02	UART on first 68901 (formerly mdm01)
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -89,6 +89,12 @@
 #	ipl	IP Filter devices
 #	random	Random number generator
 
+#
+# Separate dialin/dialout devices.
+#
+dialin=0
+dialout=524288	# high bit of the minor number
+
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 77
 for i
@@ -102,7 +108,7 @@ all)
 	sh $0 vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3 ipl
 	sh $0 ccd0 ccd1 ccd2 ccd3
 	sh $0 ss0 ch0 uk0 uk1 wd0 wd1
-	sh $0 tun0 tun1 lkm ser02 mdm01 mdm02 lpt0 local
+	sh $0 tun0 tun1 lkm tty00 tty01 tty02 lpt0 local
 	;;
 
 floppy)
@@ -141,22 +147,25 @@ fd)
 	chmod 666 fd/*
 	;;
 
-ser02)
-	rm -f ser02
-	mknod ser02 c 7 0
-	chown uucp:wheel ser02
+tty00)	# formerly ser02
+	rm -f tty00 dty00
+	mknod tty00 c 7 $(( 0 + $dialin ))
+	mknod dty00 c 7 $(( 0 + $dialout))
+	chown uucp:wheel tty00 dty00
 	;;
 
-mdm01)
-	rm -f mdm01
-	mknod mdm01 c 35 0
-	chown uucp:wheel mdm01
+tty01)	# formerly mdm02
+	rm -f tty01 dty01
+	mknod tty01 c 7 $((16 + $dialin ))
+	mknod dty01 c 7 $((16 + $dialout))
+	chown uucp:wheel tty01 dty01
 	;;
 
-mdm02)
-	rm -f mdm02
-	mknod mdm02 c 7 16
-	chown uucp:wheel mdm02
+tty02)	# formerly mdm01
+	rm -f tty02 dty02
+	mknod tty02 c 35 $((0 + $dialin ))
+	mknod dty02 c 35 $((0 + $dialout))
+	chown uucp:wheel tty02 dty02
 	;;
 
 st*)
