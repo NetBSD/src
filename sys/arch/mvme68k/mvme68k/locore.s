@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.4 1996/02/02 02:37:06 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.5 1996/04/18 18:06:30 chuck Exp $	*/
 
 #undef	STACKCHECK	/* doesn't work any more */
 
@@ -1663,6 +1663,31 @@ ENTRY(_remque)
 	movl	a0,a1@(4)		| e->next->prev = e->prev
 	movl	a1,a0@			| e->prev->next = e->next
 	movw	d0,sr
+	rts
+
+/*
+ * delay(int usecs)
+ * Delay for "usec" microseconds.  Minimum delay is about 5 uS.
+ *
+ * This routine assumes a 25MHz clock speed, a'la MVME147SA-1
+ * This should be determined at run time...
+ *
+ * XXXCDC: this is wrong and needs to be fixed.   we will work with
+ *	jason and fix this the same time the hp300 port is fixed
+ * XXXCDC
+ */
+	.globl  _delay
+_delay:
+	| d0 = (25 * usecs)
+	moveq	#25,d0
+	mulsl	sp@(4),d0
+	| subtract some overhead
+	moveq	#80,d1
+	subl	d1,d0
+| This loop takes 8 clocks per cycle.
+Ldelay:
+	subql	#8,d0
+	jgt	Ldelay
 	rts
 
 #ifdef FPCOPROC
