@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.31 1998/03/07 04:20:45 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.32 1998/03/09 20:17:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31 1998/03/07 04:20:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.32 1998/03/09 20:17:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,42 +325,36 @@ cpu_swapout(p)
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to have valid page table pages
  * and size must be a multiple of CLSIZE.
+ *
+ * Note that since all kernel page table pages are pre-allocated
+ * and mapped in, we can use the Virtual Page Table.
  */
 void
 pagemove(from, to, size)
 	register caddr_t from, to;
 	size_t size;
 {
-	register pt_entry_t *fpte, *tpte;
+	long fidx, tidx;
 	ssize_t todo;
 
 	if (size % CLBYTES)
-		goto die;
+		panic("pagemove");
 
 	todo = size;			/* if testing > 0, need sign... */
 	while (todo > 0) {
+		fidx = VPT_INDEX(from);
+		tidx = VPT_INDEX(to);
+
+		VPT[tidx] = VPT[fidx];
+		VPT[fidx] = 0;
+
 		ALPHA_TBIS((vm_offset_t)from);
-		fpte = pmap_l3pte(pmap_kernel(), (vm_offset_t)from);
-		tpte = pmap_l3pte(pmap_kernel(), (vm_offset_t)to);
-#ifdef DIAGNOSTIC
-		if (fpte == NULL) {
-			printf("pagemove: no PT page for %p (from)\n", from);
-			goto die;
-		}
-		if (tpte == NULL) {
-			printf("pagemove: no PT page for %p (to)\n", to);
-			goto die;
-		}
-#endif
-		*tpte = *fpte;
-		*fpte = 0;
+		ALPHA_TBIS((vm_offset_t)to);
+
 		todo -= NBPG;
 		from += NBPG;
 		to += NBPG;
 	}
-	return;
- die:
-	panic("pagemove");
 }
 
 extern vm_map_t phys_map;
