@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.1 2002/03/30 19:48:55 uwe Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.2 2002/07/21 02:56:35 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,8 @@
  */
 
 /*
- * Integraphics Systems IGA 1682 and (untested) CyberPro 2k.
+ * Integraphics Systems IGA 168x and CyberPro series.
+ * Only tested on IGA 1682 in Krups JavaStation-NC.
  */
 #ifndef _DEV_IC_IGSFBVAR_H_
 #define _DEV_IC_IGSFBVAR_H_
@@ -63,18 +64,23 @@ struct igs_bittab {
 	u_int16_t mexpand[256];	/* mask:  0 -> 00, 1 -> 11 */
 };
 
+
 struct igsfb_softc {
 	struct device sc_dev;
 
 	/* io registers */
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_space_handle_t sc_crtch;
 
 	/* linear memory */
 	bus_space_tag_t sc_memt;
-	bus_addr_t sc_memaddr;		/* memory phys addr */
-	bus_size_t sc_memsz;		/* size of linear address space */
+	bus_addr_t sc_memaddr;
+	bus_size_t sc_memsz; /* size of linear address space including mmio */
 	int sc_memflags;
+
+	/* video memory size */
+	bus_size_t sc_vmemsz;
 
 	/* fb part actually mapped for wsdisplay */
 	bus_space_handle_t sc_fbh;
@@ -84,8 +90,8 @@ struct igsfb_softc {
 	bus_space_handle_t sc_crh;
 
 	/* 
-	 * graphic coprocessor can be accessed either via i/o space or
-	 * via memory-mapped i/o access through memory space.
+	 * graphic coprocessor can be accessed either via i/o space
+	 * or via memory-mapped i/o access through memory space
 	 */
 	bus_space_tag_t sc_copt;
 	bus_space_handle_t sc_coph;
@@ -95,6 +101,7 @@ struct igsfb_softc {
 
 	/* flags that control driver operation */
 	int sc_hwflags;
+#define IGSFB_HW_BSWAP		0x1	/* endianness mismatch */
 
 	struct rasops_info *sc_ri;
 
@@ -110,13 +117,45 @@ struct igsfb_softc {
 	int sc_curenb;			/* cursor sprite enabled */
 };
 
-/* sc_hwflags */
-#define IGSFB_HW_BSWAP	1	/* endianness mismatch */
+
+/*
+ * Access sugar for indexed registers
+ */
+
+static __inline__ u_int8_t
+igs_idx_read(bus_space_tag_t, bus_space_handle_t, u_int, u_int8_t);
+static __inline__ void
+igs_idx_write(bus_space_tag_t, bus_space_handle_t, u_int, u_int8_t, u_int8_t);
+
+static __inline__ u_int8_t
+igs_idx_read(t, h, idxport, idx)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	u_int idxport;
+	u_int8_t idx;
+{
+	bus_space_write_1(t, h, idxport, idx);
+	return (bus_space_read_1(t, h, idxport + 1));
+}
+
+static __inline__ void
+igs_idx_write(t, h, idxport, idx, val)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	u_int idxport;
+	u_int8_t idx, val;
+{
+	bus_space_write_1(t, h, idxport, idx);
+	bus_space_write_1(t, h, idxport + 1, val);
+}
+
+/* more sugar for extended registers */
+#define igs_ext_read(t,h,x)	(igs_idx_read((t),(h),IGS_EXT_IDX,(x)))
+#define igs_ext_write(t,h,x,v)	(igs_idx_write((t),(h),IGS_EXT_IDX,(x),(v)))
 
 
-/* methods for bus attachment glue */
-int	igsfb_io_enable(bus_space_tag_t, bus_addr_t);
-void	igsfb_mem_enable(struct igsfb_softc *);
+/* methods for bus attachment glue to call */
+int	igsfb_enable(bus_space_tag_t);
 void	igsfb_common_attach(struct igsfb_softc *, int);
 
 #endif /* _DEV_IC_IGSFBVAR_H_ */
