@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.4 2003/11/11 20:25:26 jonathan Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.5 2004/01/16 09:50:40 scw Exp $	*/
 
 #ifndef NETIPSEC_OSDEP_H
 #define NETIPSEC_OSDEP_H
@@ -118,6 +118,10 @@ m_getcl(int how, short type, int flags)
 		return NULL;
 
 	MCLGET(mp, how);
+	if ((mp->m_flags & M_EXT) == 0) {
+		m_free(mp);
+		mp = NULL;
+	}
 	return mp;
 }
 #endif /* __NetBSD__ */
