@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.37 1997/11/17 01:57:39 lukem Exp $
+#	$NetBSD: GENERIC,v 1.38 1997/11/20 08:11:15 fair Exp $
 #
 # Generic atari
 #
@@ -124,6 +124,8 @@ pseudo-device	tun		2	# network tunnel
 pseudo-device	ccd		4	# concatenating disk driver
 pseudo-device	md		2	# Boot memory disk
 pseudo-device	ipfilter		# IP filtering device
+# rnd is EXPERIMENTAL
+#pseudo-device	rnd			# /dev/random and in-kernel generator
 
 #
 # The following sections describe various hardware options.
