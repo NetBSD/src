@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.3 2002/11/25 19:18:45 wiz Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.4 2002/12/08 08:42:52 lukem Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .\" NOTE: After changing this file, run "make build-docs" to generate the
 .\" proper plaintext versions, and check in all BUILDING.* files!
 .\"
-.Dd October 21, 2002
+.Dd December 8, 2002
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -517,7 +517,7 @@ pass) at the start of a build.
 Now obsolete.  Use the 
 .Xr make 1
 option
-.Sy -j ,
+.Fl j ,
 instead (see below)
 .DFLTu
 .
@@ -579,9 +579,9 @@ builds are listed here.
 .
 .Bl -tag -width "var=value"
 .
-.It Sy -j Em njob
+.It Fl j Ar njob
 Run up to
-.Em njob
+.Ar njob
 .Xr make 1 
 subjobs in parallel.
 Makefiles should use .WAIT or have explicit dependancies 
@@ -589,7 +589,7 @@ as necessary to enforce build ordering.
 If you see build failures with -j, please save complete build logs 
 so the failures can be analyzed.
 .
-.It Sy -m Em dir
+.It Fl m Ar dir
 Specify the default directory for searching for system Makefile
 segments, mainly the
 .Aq bsd.*.mk
@@ -600,15 +600,15 @@ source tree, this should be set to the
 directory in the source tree.  (This is set automatically when building
 from the top level.)
 .
-.It Sy -n
+.It Fl n
 Display the commands that would have been executed, but do not
 actually execute them.  This will still cause recursion to take place.
 .
-.It Sy -v Em var
+.It Fl v Ar var
 Print
 .Xr make 1 Ns 's
 idea of the value of
-.Em var .
+.Ar var .
 Does not build any targets.
 .
 .It Em var=value
@@ -778,30 +778,36 @@ The following are available command line options that may be supplied to
 .
 .Bl -tag -width "-T tools"
 .
-.It Sy -a Em arch
+.It Fl a Ar arch
 Set the value of
 .Sy MACHINE_ARCH
 to
-.Em arch .
+.Ar arch .
 .
-.It Sy -B Em buildid
+.It Fl B Ar buildid
 Set the value of
 .Sy BUILDID
 to
-.Em buildid .
+.Ar buildid .
 This will also append the build idenfitier to the name of the
 .Dq make
 wrapper script so that the resulting name is of the form
 .Dq Sy nbmake-MACHINE-BUILDID .
 .
-.It Sy -b
+.It Fl b
 Bootstrap
 .Dq make
 and create a
 .Sy nbmake-MACHINE
 script (see below).
 .
-.It Sy -d
+.It Fl D Ar dest
+Set the value of
+.Sy DESTDIR
+to
+.Ar dest .
+.
+.It Fl d
 Build a full distribution.
 This differs from a default build in that files will also be installed to
 .Pa /dev ,
@@ -812,11 +818,11 @@ and
 Note this does not build a
 .Dq release ;
 no release sets are placed in ${RELEASEDIR}.
-.Sy -d
+.Fl d
 is implied by
-.Sy -R .
+.Fl R .
 .
-.It Sy -j Em njob
+.It Fl j Ar njob
 Passed through to 
 .Xr make 1 .
 Makefiles should use .WAIT or have explicit dependancies 
@@ -824,15 +830,15 @@ as necessary to enforce build ordering.
 If you see build failures with -j, please save complete build logs 
 so the failures can be analyzed.
 .
-.It Sy -k Em kernel
+.It Fl k Em kernel
 Build a new kernel.
 The
-.Em kernel
+.Ar kernel
 argument is the name of a configuration file suitable
 for use by
 .Xr config 8 .
 If
-.Em kernel
+.Ar kernel
 does not contain any
 .Sq /
 characters, the configuration file is expected to be found in the
@@ -846,47 +852,76 @@ which is typically
 or an associated object directory.
 In order to ensure that the kernel is built using up-to-date tools,
 it is strongly recommended that the tools be rebuilt (using the
-.Sy -t 
+.Fl t 
 option) in a separate invocation of
 .Nm build.sh
 prior to using the
-.Sy -k
+.Fl k
 option, or that the
-.Sy -t
+.Fl t
 and
-.Sy -k
+.Fl k
 options be used together in a single invocation of
 .Nm build.sh .
 .
-.It Sy -m Em mach
+.It Fl M Ar obj
+Set
+.Sy MAKEOBJDIRPREFIX
+to
+.Ar obj .
+.
+.It Fl m Ar mach
 Set the value of
 .Sy MACHINE
 to
-.Em mach .
+.Ar mach .
 This will also override any value of
 .Sy MACHINE_ARCH
 in the process environment with a value deduced from
-.Em mach ,
+.Ar mach ,
 unless
-.Sy -a
+.Fl a
 is specified.  All cross builds require
-.Sy -m ,
+.Fl m ,
 but if unset on a NetBSD host, the host's value of MACHINE will be
 detected and used automatically.
 .
-.It Sy -n
+.It Fl n
 Show the commands that would be executed by
 .Sy build.sh ,
 but do not make any changes.  This is similar in concept to
 .Dq make -n .
 .
-.It Sy -o
+.It Fl O Ar obj
+Create an appropriate transform macro for
+.Sy MAKEOBJDIR
+that will place the built object files under
+.Ar obj .
+For instance, a setting of
+.Sy /usr/obj
+will place build-time files under
+.Sy /usr/obj/bin , /usr/obj/lib ,
+and so forth.
+.
+.It Fl o
 Set the value of
 .Sy MKOBJDIRS
 to
 .Dq no .
 .
-.It Sy -r
+.It Fl R Ar rel
+Set the value of
+.Sy RELEASEDIR
+to
+.Ar rel .
+Setting this option will cause
+.Sy build.sh
+to run
+.Dq make release
+instead of
+.Dq make build .
+.
+.It Fl r
 Remove the contents of
 .Sy DESTDIR
 and
@@ -895,77 +930,42 @@ before building (provides a clean starting point).  This will skip deleting
 .Sy DESTDIR
 if building on a native system to the root directory.
 .
-.It Sy -t
-Build and install the host tools from
-.Sy src/tools
-only.  This option implies
-.Sy -b .
-.
-.It Sy -u
-Set the
-.Sy UPDATE
-variable.
-.
-.It Sy -w Em wrapper
-Create the nbmake wrapper script (see below) in a custom location,
-specified by
-.Em wrapper .
-This allows, for instance, to place the wrapper in
-.Sy PATH
-automatically.  Note that
-.Em wrapper
-is the full name of the file, not just a directory name.
-.
-.It Sy -D Em dest
-Set the value of
-.Sy DESTDIR
-to
-.Em dest .
-.
-.It Sy -M Em obj
-Set
-.Sy MAKEOBJDIRPREFIX
-to
-.Em obj .
-.
-.It Sy -O Em obj
-Create an appropriate transform macro for
-.Sy MAKEOBJDIR
-that will place the built object files under
-.Em obj .
-For instance, a setting of
-.Sy /usr/obj
-will place build-time files under
-.Sy /usr/obj/bin , /usr/obj/lib ,
-and so forth.
-.
-.It Sy -R Em rel
-Set the value of
-.Sy RELEASEDIR
-to
-.Em rel .
-Setting this option will cause
-.Sy build.sh
-to run
-.Dq make release
-instead of
-.Dq make build .
-.
-.It Sy -T Em tools
+.It Fl T Ar tools
 Set the value of
 .Sy TOOLDIR
 to
-.Em tools .
+.Ar tools .
 If set, the bootstrap
 .Dq make
 will only be rebuilt as needed (when the source files for
 .Xr make 1
 change).
 .
-.It Sy -U
+.It Fl t
+Build and install the host tools from
+.Sy src/tools
+only.  This option implies
+.Fl b .
+.
+.It Fl U
 Set the
 .Sy UNPRIVED
 variable.
+.
+.It Fl u
+Set the
+.Sy UPDATE
+variable.
+.
+.It Fl w Ar wrapper
+Create the nbmake wrapper script (see below) in a custom location,
+specified by
+.Ar wrapper .
+This allows, for instance, to place the wrapper in
+.Sy PATH
+automatically.  Note that
+.Ar wrapper
+is the full name of the file, not just a directory name.
 .
 .El
 .
@@ -1027,7 +1027,7 @@ build a complete release in the specified release directory.
 Use the 
 .Xr make 1
 option
-.Sy -j ,
+.Fl j ,
 instead.
 .
 .It Sy USE_NEW_TOOLCHAIN

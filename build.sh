@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.72 2002/11/17 12:59:37 lukem Exp $
+#  $NetBSD: build.sh,v 1.73 2002/12/08 08:42:51 lukem Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -145,7 +145,7 @@ do_removedirs=false
 makeenv=
 makewrapper=
 opt_a=no
-opts='a:B:bdhj:k:m:nortuw:D:M:O:R:T:U'
+opts='a:B:bD:dhj:k:M:m:nO:oR:rT:tUuw:'
 runcmd=
 
 if type getopts >/dev/null 2>&1; then
@@ -174,6 +174,10 @@ while eval $getoptcmd; do case $opt in
 
 	-b)	do_buildsystem=false;;
 
+	-D)	eval $optargcmd; resolvepath
+		DESTDIR="$OPTARG"; export DESTDIR
+		makeenv="$makeenv DESTDIR";;
+
 	-d)	buildtarget=distribution;;
 
 	-j)	eval $optargcmd
@@ -183,15 +187,33 @@ while eval $getoptcmd; do case $opt in
 		eval $optargcmd
 		kernconfname=$OPTARG;;
 
+	-M)	eval $optargcmd; resolvepath
+		MAKEOBJDIRPREFIX="$OPTARG"; export MAKEOBJDIRPREFIX
+		makeobjdir=$OPTARG
+		makeenv="$makeenv MAKEOBJDIRPREFIX";;
+
 	# -m overrides MACHINE_ARCH unless "-a" is specified
 	-m)	eval $optargcmd
 		MACHINE=$OPTARG; [ "$opt_a" != "yes" ] && getarch;;
 
 	-n)	runcmd=echo;;
 
+	-O)	eval $optargcmd; resolvepath
+		MAKEOBJDIR="\${.CURDIR:C,^$TOP,$OPTARG,}"; export MAKEOBJDIR
+		makeobjdir=$OPTARG
+		makeenv="$makeenv MAKEOBJDIR";;
+
 	-o)	MKOBJDIRS=no;;
 
+	-R)	eval $optargcmd; resolvepath
+		RELEASEDIR=$OPTARG; export RELEASEDIR
+		makeenv="$makeenv RELEASEDIR"
+		buildtarget=release;;
+
 	-r)	do_removedirs=true; do_rebuildmake=true;;
+
+	-T)	eval $optargcmd; resolvepath
+		TOOLDIR="$OPTARG"; export TOOLDIR;;
 
 	-t)	do_buildtools=true; do_buildsystem=false;;
 
@@ -203,28 +225,6 @@ while eval $getoptcmd; do case $opt in
 
 	-w)	eval $optargcmd; resolvepath
 		makewrapper="$OPTARG";;
-
-	-D)	eval $optargcmd; resolvepath
-		DESTDIR="$OPTARG"; export DESTDIR
-		makeenv="$makeenv DESTDIR";;
-
-	-M)	eval $optargcmd; resolvepath
-		MAKEOBJDIRPREFIX="$OPTARG"; export MAKEOBJDIRPREFIX
-		makeobjdir=$OPTARG
-		makeenv="$makeenv MAKEOBJDIRPREFIX";;
-
-	-O)	eval $optargcmd; resolvepath
-		MAKEOBJDIR="\${.CURDIR:C,^$TOP,$OPTARG,}"; export MAKEOBJDIR
-		makeobjdir=$OPTARG
-		makeenv="$makeenv MAKEOBJDIR";;
-
-	-R)	eval $optargcmd; resolvepath
-		RELEASEDIR=$OPTARG; export RELEASEDIR
-		makeenv="$makeenv RELEASEDIR"
-		buildtarget=release;;
-
-	-T)	eval $optargcmd; resolvepath
-		TOOLDIR="$OPTARG"; export TOOLDIR;;
 
 	--)		break;;
 	-'?'|-h)	usage;;
@@ -356,12 +356,12 @@ fi
 removedirs="$TOOLDIR"
 
 if [ -z "$DESTDIR" ] || [ "$DESTDIR" = "/" ]; then
-	if $do_buildsystem && \
-	   ([ "$buildtarget" != "build" ] || \
-	    [ "`uname -s 2>/dev/null`" != "NetBSD" ] || \
-	    [ "`uname -m`" != "$MACHINE" ]); then
-		bomb "DESTDIR must be set to a non-root path for cross builds or -d or -R."
-	elif $do_buildsystem; then
+	if $do_buildsystem; then
+		if [ "$buildtarget" != "build" ] || \
+		   [ "`uname -s 2>/dev/null`" != "NetBSD" ] || \
+		   [ "`uname -m`" != "$MACHINE" ]; then
+			bomb "DESTDIR must be set to a non-root path for cross builds or -d or -R."
+		fi
 		$runcmd echo "===> WARNING: Building to /."
 		$runcmd echo "===> If your kernel is not up to date, this may cause the system to break!"
 	fi
@@ -409,7 +409,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.72 2002/11/17 12:59:37 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.73 2002/12/08 08:42:51 lukem Exp $
 #
 
 EOF
