@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.31 2001/04/25 17:53:07 bouyer Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.32 2002/01/26 13:40:58 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -51,11 +51,11 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-void mgnscattach __P((struct device *, struct device *, void *));
-int mgnscmatch __P((struct device *, struct cfdata *, void *));
-int mgnsc_dmaintr __P((void *));
+void mgnscattach(struct device *, struct device *, void *);
+int mgnscmatch(struct device *, struct cfdata *, void *);
+int mgnsc_dmaintr(void *);
 #ifdef DEBUG
-void mgnsc_dump __P((void));
+void mgnsc_dump(void);
 #endif
 
 
@@ -70,10 +70,7 @@ struct cfattach mgnsc_ca = {
  * if we are a CSA Magnum 40 SCSI
  */
 int
-mgnscmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+mgnscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct zbus_args *zap;
 
@@ -84,9 +81,7 @@ mgnscmatch(pdp, cfp, auxp)
 }
 
 void
-mgnscattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+mgnscattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	struct siop_softc *sc = (struct siop_softc *)dp;
 	struct zbus_args *zap;
@@ -152,8 +147,7 @@ mgnscattach(pdp, dp, auxp)
  */
 
 int
-mgnsc_dmaintr(arg)
-	void *arg;
+mgnsc_dmaintr(void *arg)
 {
 	struct siop_softc *sc = arg;
 	siop_regmap_p rp;
@@ -185,7 +179,7 @@ mgnsc_dmaintr(arg)
 
 #ifdef DEBUG
 void
-mgnsc_dump()
+mgnsc_dump(void)
 {
 	extern struct cfdriver mgnsc_cd;
 	int i;

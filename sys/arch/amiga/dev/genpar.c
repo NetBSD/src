@@ -1,4 +1,4 @@
-/* $NetBSD: genpar.c,v 1.7 2001/08/17 19:56:51 is Exp $ */
+/*	$NetBSD: genpar.c,v 1.8 2002/01/26 13:40:54 aymeric Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -41,7 +41,7 @@ main(void)
 {
 	int i;
 	unsigned char par;
-  
+
 	printf("u_char even_parity[] = {\n\t");
 	for (i = 0; i < 0x80; i++) {
 		par = BSET(i,0) + BSET(i,1) + BSET(i,2) + BSET(i,3) +
