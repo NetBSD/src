@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.112 1998/01/07 00:41:43 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.113 1998/01/08 11:36:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -187,6 +187,9 @@ main(framep)
 
 	vm_mem_init();
 	kmeminit();
+#if defined(MACHINE_NEW_NONCONTIG)
+	vm_page_physrehash();
+#endif
 	disk_init();		/* must come before autoconfiguration */
 	tty_init();		/* initialise tty list */
 #if NRND > 0
