@@ -1,3 +1,3 @@
-/*	$Id: version.h,v 1.2 1993/08/02 17:55:26 mycroft Exp $ */
+/*	$NetBSD: version.h,v 1.3 1996/09/19 06:27:18 thorpej Exp $	*/
 
 void version();
