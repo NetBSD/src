@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.10 2002/10/02 03:10:49 thorpej Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.11 2002/10/04 03:40:29 soren Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.10 2002/10/02 03:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.11 2002/10/04 03:40:29 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,9 @@ pckbc_isa_match(parent, match, aux)
 		}
 		res = pckbc_poll_data1(&t, PCKBC_KBD_SLOT, 0);
 		if (res != 0x55) {
+#ifdef DEBUG
 			printf("kbc selftest: %x\n", res);
+#endif
 			ok = 0;
 		}
  out:
