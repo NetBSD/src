@@ -1,4 +1,41 @@
-/*	$NetBSD: elink3.c,v 1.40 1998/07/05 06:49:11 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.41 1998/08/12 18:51:53 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -38,6 +75,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -76,6 +114,9 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
+
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
 
@@ -88,71 +129,63 @@ int epdebug = 0;
 #endif
 
 /*
- * Structure to map  media-present bits in boards to 
- * ifmedia codes and printable media names. Used for table-driven
- * ifmedia initialization.
+ * Structure to map media-present bits in boards to ifmedia codes and
+ * printable media names. Used for table-driven ifmedia initialization.
  */
 struct ep_media {
-	int	epm_eeprom_data;	/* bitmask for eeprom config */
-	int	epm_conn;		/* sc->ep_connectors code for medium */
-	char*	epm_name;		/* name of medium */
+	int	epm_mpbit;		/* media present bit */
+	const char *epm_name;		/* name of medium */
 	int	epm_ifmedia;		/* ifmedia word for medium */
-	int	epm_ifdata;
+	int	epm_epmedia;		/* EPMEDIA_* constant */
 };
 
 /*
- * ep_media table for Vortex/Demon/Boomerang:
- * map from media-present bits in register RESET_OPTIONS+2 
- * to  ifmedia "media words" and printable names.
+ * Media table for the Demon/Vortex/Boomerang chipsets.
  *
- * XXX indexed directly by INTERNAL_CONFIG default_media field,
- * (i.e., EPMEDIA_ constants)  forcing order of entries. 
- *  Note that 3 is reserved.
+ * Note that MII on the Demon and Vortex (3c59x) indicates an external
+ * MII connector (for connecting an external PHY) ... I think.  Treat
+ * it as `manual' on these chips.
+ *
+ * Any Boomerang (3c90x) chips with MII really do have an internal
+ * MII and real PHYs attached; no `native' media.
  */
-struct ep_media ep_vortex_media[8] = {
-  { EP_PCI_UTP,        EPC_UTP, "utp",	    IFM_ETHER|IFM_10_T,
-       EPMEDIA_10BASE_T },
-  { EP_PCI_AUI,        EPC_AUI, "aui",	    IFM_ETHER|IFM_10_5,
-       EPMEDIA_AUI },
-  { 0,                 0,  	"reserved", IFM_NONE,  EPMEDIA_RESV1 },
-  { EP_PCI_BNC,        EPC_BNC, "bnc",	    IFM_ETHER|IFM_10_2,
-       EPMEDIA_10BASE_2 },
-  { EP_PCI_100BASE_TX, EPC_100TX, "100-TX", IFM_ETHER|IFM_100_TX,
-       EPMEDIA_100BASE_TX },
-  { EP_PCI_100BASE_FX, EPC_100FX, "100-FX", IFM_ETHER|IFM_100_FX,
-       EPMEDIA_100BASE_FX },
-  { EP_PCI_100BASE_MII,EPC_MII,   "mii",    IFM_ETHER|IFM_100_TX,
-       EPMEDIA_MII },
-  { EP_PCI_100BASE_T4, EPC_100T4, "100-T4", IFM_ETHER|IFM_100_T4,
-       EPMEDIA_100BASE_T4 }
+struct ep_media ep_vortex_media[] = {
+	{ EP_PCI_10BASE_T,	"10baseT",	IFM_ETHER|IFM_10_T,
+	  EPMEDIA_10BASE_T },
+	{ EP_PCI_AUI,		"10base5/AUI",	IFM_ETHER|IFM_10_5,
+	  EPMEDIA_AUI },
+	{ EP_PCI_BNC,		"10base2/BNC",	IFM_ETHER|IFM_10_2,
+	  EPMEDIA_10BASE_2 },
+	{ EP_PCI_100BASE_TX,	"100baseTX",	IFM_ETHER|IFM_100_TX,
+	  EPMEDIA_100BASE_TX },
+	{ EP_PCI_100BASE_FX,	"100baseFX",	IFM_ETHER|IFM_100_FX,
+	  EPMEDIA_100BASE_FX },
+	{ EP_PCI_100BASE_MII,	"manual",	IFM_ETHER|IFM_MANUAL,
+	  EPMEDIA_MII },
+	{ EP_PCI_100BASE_T4,	"100baseT4",	IFM_ETHER|IFM_100_T4,
+	  EPMEDIA_100BASE_T4 },
+	{ 0,			NULL,		0,
+	  0 },
 };
 
 /*
- * ep_media table for 3c509/3c509b/3c579/3c589:
- * map from media-present bits in register CNFG_CNTRL
- * (window 0, offset ?) to  ifmedia "media words" and printable names.
+ * Media table for the older 3Com Etherlink III chipset, used
+ * in the 3c509, 3c579, and 3c589.
  */
-struct ep_media ep_isa_media[3] = {
-  { EP_W0_CC_UTP,  EPC_UTP, "utp",   IFM_ETHER|IFM_10_T, EPMEDIA_10BASE_T },
-  { EP_W0_CC_AUI,  EPC_AUI, "aui",   IFM_ETHER|IFM_10_5, EPMEDIA_AUI },
-  { EP_W0_CC_BNC,  EPC_BNC, "bnc",   IFM_ETHER|IFM_10_2, EPMEDIA_10BASE_2 },
-};
-
-/* Map vortex reset_options bits to if_media codes. */
-const u_int ep_default_to_media[8] = {
-	IFM_ETHER | IFM_10_T,
-	IFM_ETHER | IFM_10_5,
-	0, 			/* reserved by 3Com */
-	IFM_ETHER | IFM_10_2,
-	IFM_ETHER | IFM_100_TX,
-	IFM_ETHER | IFM_100_FX,
-	IFM_ETHER | IFM_100_TX,	/* XXX really MII: need to talk to PHY */
-	IFM_ETHER | IFM_100_T4,
+struct ep_media ep_509_media[] = {
+	{ EP_W0_CC_UTP,		"10baseT",	IFM_ETHER|IFM_10_T,
+	  EPMEDIA_10BASE_T },
+	{ EP_W0_CC_AUI,		"10base5/AUI",	IFM_ETHER|IFM_10_5,
+	  EPMEDIA_AUI },
+	{ EP_W0_CC_BNC,		"10base2/BNC",	IFM_ETHER|IFM_10_2,
+	  EPMEDIA_10BASE_2 },
+	{ 0,			NULL,		0,
+	  0 },
 };
 
 void	ep_internalconfig __P((struct ep_softc *sc));
 void	ep_vortex_probemedia __P((struct ep_softc *sc));
-void	ep_isa_probemedia __P((struct ep_softc *sc));
+void	ep_509_probemedia __P((struct ep_softc *sc));
 
 static void eptxstat __P((struct ep_softc *));
 static int epstatus __P((struct ep_softc *));
@@ -167,7 +200,7 @@ struct mbuf *epget __P((struct ep_softc *, int));
 void	epmbuffill __P((void *));
 void	epmbufempty __P((struct ep_softc *));
 void	epsetfilter __P((struct ep_softc *));
-void	epsetmedia __P((struct ep_softc *, int epmedium));
+void	epsetmedia __P((struct ep_softc *));
 
 int	epenable __P((struct ep_softc *));
 void	epdisable __P((struct ep_softc *));
@@ -175,6 +208,19 @@ void	epdisable __P((struct ep_softc *));
 /* ifmedia callbacks */
 int	ep_media_change __P((struct ifnet *ifp));
 void	ep_media_status __P((struct ifnet *ifp, struct ifmediareq *req));
+
+/* MII callbacks */
+int	ep_mii_readreg __P((struct device *, int, int));
+void	ep_mii_writereg __P((struct device *, int, int, int));
+void	ep_statchg __P((struct device *));
+
+void	ep_tick __P((void *));
+
+void	ep_mii_setbit __P((struct ep_softc *, u_int16_t));
+void	ep_mii_clrbit __P((struct ep_softc *, u_int16_t));
+u_int16_t ep_mii_readbit __P((struct ep_softc *, u_int16_t));
+void	ep_mii_sync __P((struct ep_softc *));
+void	ep_mii_sendbits __P((struct ep_softc *, u_int32_t, int));
 
 static int epbusyeeprom __P((struct ep_softc *));
 static inline void ep_complete_cmd __P((struct ep_softc *sc, 
@@ -251,11 +297,8 @@ epconfig(sc, chipset, enaddr)
 		enaddr = myla;
 	}
 
-	printf("%s: MAC address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(enaddr));
-
 	/*
-	 * Vortex-based (3c59x pci,eisa) and Boomerang (3c900,3c515?) cards
+	 * Vortex-based (3c59x pci,eisa) and Boomerang (3c900) cards
 	 * allow FDDI-sized (4500) byte packets.  Commands only take an
 	 * 11-bit parameter, and  11 bits isn't enough to hold a full-size
 	 * packet length.
@@ -279,7 +322,6 @@ epconfig(sc, chipset, enaddr)
 
 	case (EP_LARGEWIN_PROBE << 2):
 		sc->ep_pktlenshift = 2;
-		/* XXX does the 3c515 support Vortex-style RESET_OPTIONS? */
 		break;
 
 	default:
@@ -314,40 +356,56 @@ epconfig(sc, chipset, enaddr)
 	 * show board details, set media.
 	 */
 
-	/* print RAM size */
+	/*
+	 * Print RAM size.  We also print the Ethernet address in here.
+	 * It's extracted from the ifp, so we have to make sure it's
+	 * been attached first.
+	 */
 	ep_internalconfig(sc);
 	GO_WINDOW(0);
 
-	ifmedia_init(&sc->sc_media, 0, ep_media_change, ep_media_status);
-
-	/* 
-	 * If we've got an indirect (ISA) board, the chipset is
-	 * unknown.  If the board has large-packet support, it's a
-	 * Vortex/Boomerang, otherwise it's a 3c509.  XXX use eeprom
-	 * capability word instead?
+	/*
+	 * Initialize our media structures and MII info.  We'll
+	 * probe the MII if we discover that we have one.
 	 */
-
-	if (sc->ep_chipset == EP_CHIPSET_UNKNOWN && sc->ep_pktlenshift)  {
-		printf("warning: unknown chipset, possibly 3c515?\n");
-#ifdef notyet
-		sc->sc_chipset = EP_CHIPSET_VORTEX;
-#endif	/* notyet */
-	}
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = ep_mii_readreg;
+	sc->sc_mii.mii_writereg = ep_mii_writereg;
+	sc->sc_mii.mii_statchg = ep_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, ep_media_change,
+	    ep_media_status);
 
 	/*
-	 * Ascertain which media types are present and inform ifmedia.
+	 * Now, determine which media we have.
 	 */
 	switch (sc->ep_chipset) {
-	/* on a direct bus, the attach routine can tell, but check anyway. */
+	case EP_CHIPSET_BOOMERANG:
+		/*
+		 * If the device has MII, probe it.  We won't be using
+		 * any `native' media in this case, only PHYs.  If
+		 * we don't, just treat the Boomerang like the Vortex.
+		 */
+		if (sc->ep_flags & EP_FLAGS_MII) {
+			mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+			if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+				ifmedia_add(&sc->sc_mii.mii_media,
+				    IFM_ETHER|IFM_NONE, 0, NULL);
+				ifmedia_set(&sc->sc_mii.mii_media,
+				    IFM_ETHER|IFM_NONE);
+			} else {
+				ifmedia_set(&sc->sc_mii.mii_media,
+				    IFM_ETHER|IFM_AUTO);
+			}
+			break;
+		}
+		/* FALLTHROUGH */
+
 	case EP_CHIPSET_VORTEX:
-	case EP_CHIPSET_BOOMERANG2:
 		ep_vortex_probemedia(sc);
 		break;
 
-	/* on ISA we can't yet tell 3c509 from 3c515. Assume the former. */
-	case EP_CHIPSET_3C509:
 	default:
-		ep_isa_probemedia(sc);
+		ep_509_probemedia(sc);
 		break;
 	}
 
@@ -406,8 +464,9 @@ ep_internalconfig(sc)
 
 	ram_split  = (config1 & CONFIG_RAMSPLIT) >> CONFIG_RAMSPLIT_SHIFT;
 
-	printf("%s: %dKB %s-wide FIFO, %s Rx:Tx split, ",
+	printf("%s: address %s, %dKB %s-wide FIFO, %s Rx:Tx split\n",
 	       sc->sc_dev.dv_xname,
+	       ether_sprintf(LLADDR(sc->sc_ethercom.ec_if.if_sadl)),
 	       8 << ram_size,
 	       (ram_width) ? "word" : "byte",
 	       onboard_ram_config[ram_split]);
@@ -421,61 +480,73 @@ ep_internalconfig(sc)
  * Used on original, 10Mbit ISA (3c509), 3c509B, and pre-Demon EISA cards
  * that implement  CONFIG_CTRL.  We don't have a good way to set the
  * default active mediuim; punt to ifconfig  instead.
- *
- * XXX what about 3c515, pcmcia 10/100?
  */
 void
-ep_isa_probemedia(sc)
+ep_509_probemedia(sc)
 	struct ep_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct ifmedia *ifm = &sc->sc_media;
-	int	conn, i;
+	struct ifmedia *ifm = &sc->sc_mii.mii_media;
 	u_int16_t ep_w0_config, port;
+	struct ep_media *epm;
+	const char *sep = "", *defmedianame = NULL;
+	int defmedia = 0;
 
-	conn = 0;
 	GO_WINDOW(0);
 	ep_w0_config = bus_space_read_2(iot, ioh, EP_W0_CONFIG_CTRL);
-	for (i = 0; i < 3; i++) {
-		struct ep_media * epm = ep_isa_media + i;
 
-		if ((ep_w0_config & epm->epm_eeprom_data) != 0) {
+	printf("%s: ", sc->sc_dev.dv_xname);
 
-			ifmedia_add(ifm, epm->epm_ifmedia, epm->epm_ifdata, 0);
-			if (conn)
-				printf("/");
-			printf(epm->epm_name);
-			conn |= epm->epm_conn;
-		}
+	/* Sanity check that there are any media! */
+	if ((ep_w0_config & EP_W0_CC_MEDIAMASK) == 0) {
+		printf("no media present!\n");
+		ifmedia_add(ifm, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(ifm, IFM_ETHER|IFM_NONE);
+		return;
 	}
-	sc->ep_connectors = conn;
 
-	/* get default medium from EEPROM */
+	/*
+	 * Get the default media from the EEPROM.
+	 */
 	if (epbusyeeprom(sc))
 		return;		/* XXX why is eeprom busy? */
 	bus_space_write_2(iot, ioh, EP_W0_EEPROM_COMMAND,
 	    READ_EEPROM | EEPROM_ADDR_CFG);
 	if (epbusyeeprom(sc))
 		return;		/* XXX why is  eeprom busy? */
-	port = bus_space_read_2(iot, ioh, EP_W0_EEPROM_DATA);
-	port = port >> 14;
+	port = bus_space_read_2(iot, ioh, EP_W0_EEPROM_DATA) >> 14;
 
-	printf(" (default %s)\n", ep_vortex_media[port].epm_name);
-	/* tell ifconfig what currently-active media is. */
-	ifmedia_set(ifm, ep_default_to_media[port]);
+#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
 
-	/* XXX autoselect not yet implemented */
+	for (epm = ep_509_media; epm->epm_name != NULL; epm++) {
+		if (ep_w0_config & epm->epm_mpbit) {
+			if (epm->epm_epmedia == port || defmedia == 0) {
+				defmedia = epm->epm_ifmedia;
+				defmedianame = epm->epm_name;
+			}
+			ifmedia_add(ifm, epm->epm_ifmedia, epm->epm_epmedia,
+			    NULL);
+			PRINT(epm->epm_name);
+		}
+	}
+
+#undef PRINT
+
+#ifdef DIAGNOSTIC
+	if (defmedia == 0)
+		panic("ep_509_probemedia: impossible");
+#endif
+
+	printf(" (default %s)\n", defmedianame);
+	ifmedia_set(ifm, defmedia);
 }
-
 
 /*
  * Find media present on large-packet-capable elink3 devices.
  * Show onboard configuration of large-packet-capable elink3 devices
  * (Demon, Vortex, Boomerang), which do not implement CONFIG_CTRL in window 0.
  * Use media and card-version info in window 3 instead.
- *
- * XXX how much of this works with 3c515, pcmcia 10/100?
  */
 void
 ep_vortex_probemedia(sc)
@@ -483,58 +554,78 @@ ep_vortex_probemedia(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct ifmedia *ifm = &sc->sc_media;
-	u_int config1, conn;
+	struct ifmedia *ifm = &sc->sc_mii.mii_media;
+	struct ep_media *epm;
+	u_int config1;
 	int reset_options;
 	int default_media;	/* 3-bit encoding of default (EEPROM) media */
-	int autoselect;		/* boolean: should default to autoselect */
-	const char *medium_name;
-	register int i;
+	int defmedia = 0;
+	const char *sep = "", *defmedianame = NULL;
 
 	GO_WINDOW(3);
 	config1 = (u_int)bus_space_read_2(iot, ioh, EP_W3_INTERNAL_CONFIG + 2);
-	reset_options  = (int)bus_space_read_1(iot, ioh, EP_W3_RESET_OPTIONS);
+	reset_options = (int)bus_space_read_1(iot, ioh, EP_W3_RESET_OPTIONS);
 	GO_WINDOW(0);
 
 	default_media = (config1 & CONFIG_MEDIAMASK) >> CONFIG_MEDIAMASK_SHIFT;
-        autoselect = (config1 & CONFIG_AUTOSELECT) >> CONFIG_AUTOSELECT_SHIFT;
 
-	/* set available media options */
-	conn = 0;
-	for (i = 0; i < 8; i++) {
-		struct ep_media * epm = ep_vortex_media + i;
+	printf("%s: ", sc->sc_dev.dv_xname);
 
-		if ((reset_options & epm->epm_eeprom_data) != 0) {
-			if (conn) printf("/");
-			printf(epm->epm_name);
-			conn |= epm->epm_conn;
-			ifmedia_add(ifm, epm->epm_ifmedia, epm->epm_ifdata, 0);
+	/* Sanity check that there are any media! */
+	if ((reset_options & EP_PCI_MEDIAMASK) == 0) {
+		printf("no media present!\n");
+		ifmedia_add(ifm, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(ifm, IFM_ETHER|IFM_NONE);
+		return;
+	}
+
+#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+
+	for (epm = ep_vortex_media; epm->epm_name != NULL; epm++) {
+		if (reset_options & epm->epm_mpbit) {
+			if (epm->epm_epmedia == default_media ||
+			    defmedia == 0) {
+				defmedia = epm->epm_ifmedia;
+				defmedianame = epm->epm_name;
+			}
+			ifmedia_add(ifm, epm->epm_ifmedia, epm->epm_epmedia,
+			    NULL);
+			PRINT(epm->epm_name);
 		}
 	}
 
-	sc->ep_connectors = conn;
+#undef PRINT
 
-	/* Show  eeprom's idea of default media.  */
-	medium_name = (default_media > 8)
-		? "(unknown/impossible media)"
-		: ep_vortex_media[default_media].epm_name;
-	printf(" default %s%s\n",
-	       medium_name,  (autoselect)? ", autoselect" : "" );
+#ifdef DIAGNOSTIC
+	if (defmedia == 0)
+		panic("ep_vortex_probemedia: impossible");
+#endif
 
-#ifdef notyet	
-	/*
-	 * Set default: either the active interface the card
-	 * reads  from the EEPROM, or if autoselect is true,
-	 * whatever we find is actually connected. 
-	 *
-	 * XXX autoselect not yet implemented.
-	 */
-#endif	/* notyet */
-
-	/* tell ifconfig what currently-active media is. */
-	ifmedia_set(ifm, ep_default_to_media[default_media]);
+	printf(" (default %s)\n", defmedianame);
+	ifmedia_set(ifm, defmedia);
 }
 
+/*
+ * One second timer, used to tick the MII.
+ */
+void
+ep_tick(arg)
+	void *arg;
+{
+	struct ep_softc *sc = arg;
+	int s;
+
+#ifdef DIAGNOSTIC
+	if ((sc->ep_flags & EP_FLAGS_MII) == 0)
+		panic("ep_tick");
+#endif
+
+	s = splnet();
+	mii_tick(&sc->sc_mii);
+	splx(s);
+
+	timeout(ep_tick, sc, hz);
+}
 
 /*
  * Bring device up.
@@ -571,7 +662,7 @@ epinit(sc)
 
 	/*
 	 * Reset the station-address receive filter.
-	 * A bug workaround for busmastering  (Vortex, Demon) cards.
+	 * A bug workaround for busmastering (Vortex, Demon) cards.
 	 */
 	for (i = 0; i < 6; i++)
 		bus_space_write_1(iot, ioh, EP_W2_RECVMASK_0 + i, 0);
@@ -602,7 +693,7 @@ epinit(sc)
 	bus_space_write_2(iot, ioh, EP_COMMAND, ACK_INTR | 0xff);
 
 	epsetfilter(sc);
-	epsetmedia(sc, sc->sc_media.ifm_cur->ifm_data);
+	epsetmedia(sc);
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, RX_ENABLE);
 	bus_space_write_2(iot, ioh, EP_COMMAND, TX_ENABLE);
@@ -612,6 +703,11 @@ epinit(sc)
 	/* Interface is now `running', with no output active. */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+	if (sc->ep_flags & EP_FLAGS_MII) {
+		/* Start the one second clock. */
+		timeout(ep_tick, sc, hz);
+	}
 
 	/* Attempt to start output, if any. */
 	epstart(ifp);
@@ -636,100 +732,41 @@ epsetfilter(sc)
 	    ((ifp->if_flags & IFF_PROMISC) ? FIL_PROMISC : 0 ));
 }
 
-
 int
 ep_media_change(ifp)
 	struct ifnet *ifp;
 {
 	register struct ep_softc *sc = ifp->if_softc;
 
-	/*
-	 * If the interface is not currently powered on, just return.
-	 * When it is enabled later, epinit() will properly set up the
-	 * media for us.
-	 */
-	if (sc->enabled == 0)
-		return (0);
+	if (sc->enabled && (ifp->if_flags & IFF_UP) != 0)
+		epreset(sc);
 
-	epsetmedia(sc, sc->sc_media.ifm_cur->ifm_data);
 	return (0);
 }
 
 /*
- * Set active media to a specific given EPMEDIA_<> value.
- * For vortex/demon/boomerang cards, update media field in w3_internal_config,
- *       and power on selected transceiver.
- * For 3c509-generation cards (3c509/3c579/3c589/3c509B),
- *	update media field in w0_address_config, and power on selected xcvr.
+ * Set the card to use the specified media.
  */
 void
-epsetmedia(sc, medium)
-	register struct ep_softc *sc;
-	int medium;
+epsetmedia(sc)
+	struct ep_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int w4_media;
 
-	/*
-	 * First, change the media-control bits in EP_W4_MEDIA_TYPE.
-	 */
-
-	 /* Turn everything off.  First turn off linkbeat and UTP. */
+	/* Turn everything off.  First turn off linkbeat and UTP. */
 	GO_WINDOW(4);
-	w4_media = bus_space_read_2(iot, ioh, EP_W4_MEDIA_TYPE);
-	w4_media =  w4_media & ~(ENABLE_UTP|SQE_ENABLE);
-	bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE, w4_media);
+	bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE, 0x0);
 
 	/* Turn off coax */
 	bus_space_write_2(iot, ioh, EP_COMMAND, STOP_TRANSCEIVER);
 	delay(1000);
 
 	/*
-	 * Now turn on the selected media/transceiver.
+	 * If the device has MII, select it, and then tell the
+	 * PHY which media to use.
 	 */
-	GO_WINDOW(4);
-	switch  (medium) {
-	case EPMEDIA_10BASE_T:
-		bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE,
-		    w4_media | ENABLE_UTP);
-		break;
-
-	case EPMEDIA_10BASE_2:
-		bus_space_write_2(iot, ioh, EP_COMMAND, START_TRANSCEIVER);
-		DELAY(1000);	/* 50ms not enmough? */
-		break;
-
-	/* XXX following only for new-generation cards */
-	case EPMEDIA_100BASE_TX:
-	case EPMEDIA_100BASE_FX:
-	case EPMEDIA_100BASE_T4:	/* XXX check documentation */
-		bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE,
-		    w4_media | LINKBEAT_ENABLE);
-		DELAY(1000);	/* not strictly necessary? */
-		break;
-
-	case EPMEDIA_AUI:
-		bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE,
-		    w4_media | SQE_ENABLE);
-		DELAY(1000);	/*  not strictly necessary? */
-		break;
-	case EPMEDIA_MII:
-		/* XXX talk to phy? */
-	  	break;
-	default:
-#if defined(DEBUG)
-		printf("%s unknown media 0x%x\n", sc->sc_dev.dv_xname, medium);
-#endif
-		break;
-		
-	}
-
-	/*
-	 * Tell the chip which PHY [sic] to use.
-	 */
-	if  (sc->ep_chipset==EP_CHIPSET_VORTEX	||
-	     sc->ep_chipset==EP_CHIPSET_BOOMERANG2) {
+	if (sc->ep_flags & EP_FLAGS_MII) {
 		int config0, config1;
 
 		GO_WINDOW(3);
@@ -738,33 +775,96 @@ epsetmedia(sc, medium)
 		config1 = (u_int)bus_space_read_2(iot, ioh,
 		    EP_W3_INTERNAL_CONFIG + 2);
 
-#if defined(DEBUG)
-		if (epdebug) {
-			printf("%s:  read 0x%x, 0x%x from EP_W3_CONFIG register\n",
-			    sc->sc_dev.dv_xname, config0, config1);
-		}
-#endif
 		config1 = config1 & ~CONFIG_MEDIAMASK;
-		config1 |= (medium << CONFIG_MEDIAMASK_SHIFT);
-		
-#if defined(DEBUG)
-		if (epdebug) {
-			printf("epsetmedia: %s: medium 0x%x, 0x%x to EP_W3_CONFIG\n",
-			    sc->sc_dev.dv_xname, medium, config1);
-		}
-#endif
+		config1 |= (EPMEDIA_MII << CONFIG_MEDIAMASK_SHIFT);
+
 		bus_space_write_2(iot, ioh, EP_W3_INTERNAL_CONFIG, config0);
 		bus_space_write_2(iot, ioh, EP_W3_INTERNAL_CONFIG + 2, config1);
+		GO_WINDOW(1);	/* back to operating window */
+
+		mii_mediachg(&sc->sc_mii);
+		return;
 	}
-	else if (sc->ep_chipset == EP_CHIPSET_3C509) {
-		register int w0_addr_cfg;
+
+	/*
+	 * Now turn on the selected media/transceiver.
+	 */
+	GO_WINDOW(4);
+	switch (IFM_SUBTYPE(sc->sc_mii.mii_media.ifm_cur->ifm_media)) {
+	case IFM_10_T:
+		bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE,
+		    JABBER_GUARD_ENABLE|LINKBEAT_ENABLE);
+		break;
+
+	case IFM_10_2:
+		bus_space_write_2(iot, ioh, EP_COMMAND, START_TRANSCEIVER);
+		DELAY(1000);	/* 50ms not enmough? */
+		break;
+
+	case IFM_100_TX:
+	case IFM_100_FX:
+	case IFM_100_T4:		/* XXX check documentation */
+		bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE,
+		    LINKBEAT_ENABLE);
+		DELAY(1000);	/* not strictly necessary? */
+		break;
+
+	case IFM_10_5:
+		bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE,
+		    SQE_ENABLE);
+		DELAY(1000);	/* not strictly necessary? */
+		break;
+
+	case IFM_MANUAL:
+		/*
+		 * Nothing to do here; we are actually enabling the
+		 * external PHY on the MII port.
+		 */
+		break;
+
+	case IFM_NONE:
+		printf("%s: interface disabled\n", sc->sc_dev.dv_xname);
+		return;
+
+	default:
+		panic("epsetmedia: impossible");
+	}
+
+	/*
+	 * Tell the chip which port to use.
+	 */
+	switch (sc->ep_chipset) {
+	case EP_CHIPSET_VORTEX:
+	case EP_CHIPSET_BOOMERANG:
+	    {
+		int config0, config1;
+
+		GO_WINDOW(3);
+		config0 = (u_int)bus_space_read_2(iot, ioh,
+		    EP_W3_INTERNAL_CONFIG);
+		config1 = (u_int)bus_space_read_2(iot, ioh,
+		    EP_W3_INTERNAL_CONFIG + 2);
+
+		config1 = config1 & ~CONFIG_MEDIAMASK;
+		config1 |= (sc->sc_mii.mii_media.ifm_cur->ifm_data <<
+		    CONFIG_MEDIAMASK_SHIFT);
+
+		bus_space_write_2(iot, ioh, EP_W3_INTERNAL_CONFIG, config0);
+		bus_space_write_2(iot, ioh, EP_W3_INTERNAL_CONFIG + 2, config1);
+		break;
+	    }
+	default:
+	    {
+		int w0_addr_cfg;
 
 		GO_WINDOW(0);
 		w0_addr_cfg = bus_space_read_2(iot, ioh, EP_W0_ADDRESS_CFG);
 		w0_addr_cfg &= 0x3fff;
-		bus_space_write_2(iot, ioh, EP_W0_ADDRESS_CFG,
-		    w0_addr_cfg | (medium << 14));
+		bus_space_write_2(iot, ioh, EP_W0_ADDRESS_CFG, w0_addr_cfg |
+		    (sc->sc_mii.mii_media.ifm_cur->ifm_data << 14));
 		DELAY(1000);
+		break;
+	    }
 	}
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
@@ -782,8 +882,6 @@ ep_media_status(ifp, req)
 	register struct ep_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int config1;
-	u_int ep_mediastatus;
 
 	if (sc->enabled == 0) {
 		req->ifm_active = IFM_ETHER|IFM_NONE;
@@ -791,46 +889,35 @@ ep_media_status(ifp, req)
 		return;
 	}
 
-	/* XXX read from softc when we start autosensing media */
-	req->ifm_active = sc->sc_media.ifm_cur->ifm_media;
-	
+	/*
+	 * If we have MII, go ask the PHY what's going on.
+	 */
+	if (sc->ep_flags & EP_FLAGS_MII) {
+		mii_pollstat(&sc->sc_mii);
+		req->ifm_active = sc->sc_mii.mii_media_active;
+		req->ifm_status = sc->sc_mii.mii_media_status;
+		return;
+	}
+
+	/*
+	 * Ok, at this point we claim that our active media is
+	 * the currently selected media.  We'll update our status
+	 * if our chipset allows us to detect link.
+	 */
+	req->ifm_active = sc->sc_mii.mii_media.ifm_cur->ifm_media;
+	req->ifm_status = 0;
+
 	switch (sc->ep_chipset) {
 	case EP_CHIPSET_VORTEX:
 	case EP_CHIPSET_BOOMERANG:
-		GO_WINDOW(3);
-		delay(5000);
-
-		config1 = bus_space_read_2(iot, ioh, EP_W3_INTERNAL_CONFIG + 2);
-		GO_WINDOW(1);
-
-		config1 = 
-		    (config1 & CONFIG_MEDIAMASK) >> CONFIG_MEDIAMASK_SHIFT;
-		req->ifm_active = ep_default_to_media[config1];
-
-		/* XXX check full-duplex bits? */
-
 		GO_WINDOW(4);
-		req->ifm_status = IFM_AVALID;	/* XXX */
-		ep_mediastatus = bus_space_read_2(iot, ioh, EP_W4_MEDIA_TYPE);
-		if (ep_mediastatus & LINKBEAT_DETECT)
-			req->ifm_status |= IFM_ACTIVE; 	/* XXX  automedia */
-
-		break;
-
-	case EP_CHIPSET_UNKNOWN:
-	case EP_CHIPSET_3C509:
-		req->ifm_status = 0;	/* XXX */
-		break;
-
-	default:
-		printf("%s: media_status on unknown chipset 0x%x\n",
-		       ifp->if_xname, sc->ep_chipset);
+		req->ifm_status = IFM_AVALID;
+		if (bus_space_read_2(iot, ioh, EP_W4_MEDIA_TYPE) &
+		    LINKBEAT_DETECT)
+			req->ifm_status |= IFM_ACTIVE;
+		GO_WINDOW(1);	/* back to operating window */
 		break;
 	}
-
-	/* XXX look for softc heartbeat for other chips or media */
-
-	GO_WINDOW(1);
 }
 
 
@@ -985,12 +1072,6 @@ readcheck:
 			epread(sc);
 		} else {
 			/* Got an interrupt, return so that it gets serviced. */
-#if 0
-			printf("%s: S_INTR_LATCH %04x mask=%04x ipending=%04x (%04x)\n",
-			       sc->sc_dev.dv_xname, status,
-			       cpl, ipending, imask[IPL_NET]);
-#endif
-
 			return;
 		}
 	} else {
@@ -1503,7 +1584,7 @@ epioctl(ifp, cmd, data)
 
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 
 	case SIOCSIFFLAGS:
@@ -1594,6 +1675,11 @@ epstop(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+
+	if (sc->ep_flags & EP_FLAGS_MII) {
+		/* Stop the one second clock. */
+		untimeout(ep_tick, sc);
+	}
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, RX_DISABLE);
 	bus_space_write_2(iot, ioh, EP_COMMAND, RX_DISCARD_TOP_PACK);
@@ -1762,4 +1848,159 @@ epdisable(sc)
 		(*sc->disable)(sc);
 		sc->enabled = 0;
 	}
+}
+
+void
+ep_mii_setbit(sc, bit)
+	struct ep_softc *sc;
+	u_int16_t bit;
+{
+	u_int16_t val;
+
+	/* We assume we're already in Window 4 */
+	val = bus_space_read_2(sc->sc_iot, sc->sc_ioh, EP_W4_BOOM_PHYSMGMT);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, EP_W4_BOOM_PHYSMGMT,
+	    val | bit);
+}
+
+void
+ep_mii_clrbit(sc, bit)
+	struct ep_softc *sc;
+	u_int16_t bit;
+{
+	u_int16_t val;
+
+	/* We assume we're already in Window 4 */
+	val = bus_space_read_2(sc->sc_iot, sc->sc_ioh, EP_W4_BOOM_PHYSMGMT);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, EP_W4_BOOM_PHYSMGMT,
+	    val & ~bit);
+}
+
+u_int16_t
+ep_mii_readbit(sc, bit)
+	struct ep_softc *sc;
+	u_int16_t bit;
+{
+
+	/* We assume we're already in Window 4 */
+	return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, EP_W4_BOOM_PHYSMGMT) &
+	    bit);
+}
+
+void
+ep_mii_sync(sc)
+	struct ep_softc *sc;
+{
+	int i;
+
+	/* We assume we're already in Window 4 */
+	ep_mii_clrbit(sc, PHYSMGMT_DIR);
+	for (i = 0; i < 32; i++) {
+		ep_mii_clrbit(sc, PHYSMGMT_CLK);
+		ep_mii_setbit(sc, PHYSMGMT_CLK);
+	}
+}
+
+void
+ep_mii_sendbits(sc, data, nbits)
+	struct ep_softc *sc;
+	u_int32_t data;
+	int nbits;
+{
+	int i;
+
+	/* We assume we're already in Window 4 */
+	ep_mii_setbit(sc, PHYSMGMT_DIR);
+	for (i = 1 << (nbits - 1); i; i = i >> 1) {
+		ep_mii_clrbit(sc, PHYSMGMT_CLK);
+		ep_mii_readbit(sc, PHYSMGMT_CLK);
+		if (data & i)
+			ep_mii_setbit(sc, PHYSMGMT_DATA);
+		else
+			ep_mii_clrbit(sc, PHYSMGMT_DATA);
+		ep_mii_setbit(sc, PHYSMGMT_CLK);
+		ep_mii_readbit(sc, PHYSMGMT_CLK);
+	}
+}
+
+int
+ep_mii_readreg(self, phy, reg)
+	struct device *self;
+	int phy, reg;
+{
+	struct ep_softc *sc = (struct ep_softc *)self;
+	int val = 0, i, err;
+
+	/*
+	 * Read the PHY register by manually driving the MII control lines.
+	 */
+
+	GO_WINDOW(4);
+
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, EP_W4_BOOM_PHYSMGMT, 0);
+
+	ep_mii_sync(sc);
+	ep_mii_sendbits(sc, MII_COMMAND_START, 2);
+	ep_mii_sendbits(sc, MII_COMMAND_READ, 2);
+	ep_mii_sendbits(sc, phy, 5);
+	ep_mii_sendbits(sc, reg, 5);
+
+	ep_mii_clrbit(sc, PHYSMGMT_DIR);
+	ep_mii_clrbit(sc, PHYSMGMT_CLK);
+	ep_mii_setbit(sc, PHYSMGMT_CLK);
+	ep_mii_clrbit(sc, PHYSMGMT_CLK);
+
+	err = ep_mii_readbit(sc, PHYSMGMT_DATA);
+	ep_mii_setbit(sc, PHYSMGMT_CLK);
+
+	/* Even if an error occurs, must still clock out the cycle. */
+	for (i = 0; i < 16; i++) {
+		val <<= 1;
+		ep_mii_clrbit(sc, PHYSMGMT_CLK);
+		if (err == 0 && ep_mii_readbit(sc, PHYSMGMT_DATA))
+			val |= 1;
+		ep_mii_setbit(sc, PHYSMGMT_CLK);
+	}
+	ep_mii_clrbit(sc, PHYSMGMT_CLK);
+	ep_mii_setbit(sc, PHYSMGMT_CLK);
+
+	GO_WINDOW(1);	/* back to operating window */
+
+	return (err ? 0 : val);
+}
+
+void
+ep_mii_writereg(self, phy, reg, val)
+	struct device *self;
+	int phy, reg, val;
+{
+	struct ep_softc *sc = (struct ep_softc *)self;
+
+	/*
+	 * Write the PHY register by manually driving the MII control lines.
+	 */
+
+	GO_WINDOW(4);
+
+	ep_mii_sync(sc);
+	ep_mii_sendbits(sc, MII_COMMAND_START, 2);
+	ep_mii_sendbits(sc, MII_COMMAND_WRITE, 2);
+	ep_mii_sendbits(sc, phy, 5);
+	ep_mii_sendbits(sc, reg, 5);
+	ep_mii_sendbits(sc, MII_COMMAND_ACK, 2);
+	ep_mii_sendbits(sc, val, 16);
+
+	ep_mii_clrbit(sc, PHYSMGMT_CLK);
+	ep_mii_setbit(sc, PHYSMGMT_CLK);
+
+	GO_WINDOW(1);	/* back to operating window */
+}
+
+void
+ep_statchg(self)
+	struct device *self;
+{
+
+	/* XXX Update ifp->if_baudrate */
+	/* XXX Full-duplex control in MAC? */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.15 1998/07/23 19:30:45 christos Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.16 1998/08/12 18:51:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -76,6 +76,8 @@
 #include <dev/isapnp/isapnpvar.h>
 #include <dev/isapnp/isapnpdevs.h>
 
+#include <dev/mii/miivar.h>
+
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
 
@@ -124,13 +126,7 @@ ep_isapnp_attach(parent, self, aux)
 	sc->disable = NULL;
 	sc->enabled = 1;
 
-	if (strcmp(ipa->ipa_devlogic, "TCM5090") &&
-	    strcmp(ipa->ipa_devlogic, "TCM5091") &&
-	    strcmp(ipa->ipa_devlogic, "TCM5094") &&
-	    strcmp(ipa->ipa_devlogic, "TCM5095") &&
-	    strcmp(ipa->ipa_devlogic, "TCM5098")) {
-		epconfig(sc, EP_CHIPSET_UNKNOWN, NULL);	/* XXX: 3c515 ? */
-	} else {
-		epconfig(sc, EP_CHIPSET_3C509, NULL);
-	}
+	/* XXX 3c515 */
+
+	epconfig(sc, EP_CHIPSET_3C509, NULL);
 }
