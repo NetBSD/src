@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.38 2001/09/15 16:12:59 chs Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.39 2001/11/10 13:33:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -39,6 +39,9 @@
  *
  *	@(#)procfs_subr.c	8.6 (Berkeley) 5/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.39 2001/11/10 13:33:44 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

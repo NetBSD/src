@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.14 2001/11/06 07:20:37 simonb Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.15 2001/11/10 13:33:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,6 +40,9 @@
  *
  *	$FreeBSD: procfs_map.c,v 1.18 1998/12/04 22:54:51 archie Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.15 2001/11/10 13:33:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

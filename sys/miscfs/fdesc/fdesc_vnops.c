@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.64 2001/06/16 08:28:39 jdolecek Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.65 2001/11/10 13:33:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
 /*
  * /dev/fd Filesystem
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.65 2001/11/10 13:33:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

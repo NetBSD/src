@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.41 2001/09/15 16:12:58 chs Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.42 2001/11/10 13:33:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,6 +41,9 @@
 /*
  * Kernel params Filesystem
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.42 2001/11/10 13:33:42 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"

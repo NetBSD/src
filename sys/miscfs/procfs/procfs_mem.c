@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.28 2001/11/06 07:20:08 simonb Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.29 2001/11/10 13:33:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,6 +44,9 @@
  * This is a lightly hacked and merged version
  * of sef's pread/pwrite functions
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: procfs_mem.c,v 1.29 2001/11/10 13:33:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
