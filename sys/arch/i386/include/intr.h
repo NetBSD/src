@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20 2001/04/30 01:17:30 lukem Exp $	*/
+/*	$NetBSD: intr.h,v 1.21 2001/05/21 04:47:35 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 volatile int cpl, ipending, astpending;
 int imask[NIPL];
 
-extern void Xspllower __P((void));
+void Xspllower __P((void));
 
 static __inline int splraise __P((int));
 static __inline void spllower __P((int));
