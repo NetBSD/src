@@ -1,4 +1,4 @@
-.\"     $NetBSD: newbtconf.8,v 1.6 2001/08/20 12:00:49 wiz Exp $
+.\"     $NetBSD: newbtconf.8,v 1.7 2001/11/16 12:03:54 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Darren Reed.  All rights reserved.
 .\"
@@ -46,7 +46,6 @@ selection of environments in which to boot the system up into.
 The most obvious application being for laptops to provide a network
 and non-network environment after a successful boot into multi-user mode.
 .Ss Background
-.Pp
 In order to accomplish this task, the files usually associated with
 establishing the current system's running configuration are replaced with
 symbolic links which are adjusted with each boot to point to the appropriate
@@ -77,8 +76,9 @@ with every boot),
 .Pa /etc/etc.default
 is not automatically updated.
 .Ss Getting Started
-.Pp
-By default, NetBSD only has one boot-up configuration - that set in the
+By default,
+.Nx
+only has one boot-up configuration - that set in the
 file
 .Pa /etc/rc.conf .
 In order to initialize the system for operating in a
@@ -112,7 +112,7 @@ that directory and symbolic links put in their place, in /etc, pointing to
 .Ed
 .Pp
 To test that this has been performed correctly, reboot your system into
-NetBSD.
+.Nx .
 After the kernel has autoconfigured and tty flags have been set,
 a prompt should appear, preceded by the following like, looking like this:
 .Bd -literal
@@ -126,7 +126,6 @@ If there were other configurations available at this stage, you would
 have 30 seconds to enter that name and press
 .Sy RETURN .
 .Ss Multiple Configurations
-.Pp
 Once an initial configuration has been setup, we can proceed to setup further
 run time environments.
 This is done by invoking
@@ -171,7 +170,9 @@ Which configuration [nonet] ?
 .Ed
 .Ss No Network
 Assuming that we performed the above command successfully, in order to
-successfully configure NetBSD to not configure interfaces (or generate no
+successfully configure
+.Nx
+to not configure interfaces (or generate no
 errors from attempting to do so), the following settings (at least) should
 be used in
 .Pa /etc/etc.nonet/rc.conf :
@@ -219,8 +220,11 @@ The
 .Nm
 program first appeared in
 .Nx 1.5 .
+.Sh AUTHORS
+This shell script was written by Darren Reed <darrenr@netbsd.org> with
+initial input from Matthew Green <mrg@netbsd.org> on how to approach this
+problem.
 .Sh BUGS
-.Pp
 It presently does not display a count down timer whilst waiting for input
 to select which configuration and nor does it abort said timer when a key
 is first pressed.
@@ -229,7 +233,3 @@ The management of the overall collection of multiple configurations is much
 more manual than it ought to be.
 A general system configuration tool needs to be written to ease their
 management.
-.Sh AUTHORS
-This shell script was written by Darren Reed <darrenr@netbsd.org> with
-initial input from Matthew Green <mrg@netbsd.org> on how to approach this
-problem.
