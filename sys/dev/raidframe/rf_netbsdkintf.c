@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.130 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.131 2002/09/19 17:55:22 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.130 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.131 2002/09/19 17:55:22 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -3304,8 +3304,6 @@ rf_auto_config_set(cset,unit)
 	}
 
 	memset(config, 0, sizeof(RF_Config_t));
-
-	/* XXX raidID needs to be set correctly.. */
 
 	/* 
 	   2. Figure out what RAID ID this one is supposed to live at 
