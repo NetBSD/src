@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.51 1999/10/06 02:00:42 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.52 1999/10/09 19:15:24 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -637,3 +637,13 @@ sys/nfs/nfs_boot.c				1.51-1.52
 libexec/ftpd/ftpcmd.y				1.39
 
   Don't use an undefined C expression, fixing PR#8534.
+
+gnu/dist/bfd/targets.c				1.10
+
+  Fix calculation of size of bfd_target_vector, which was incorrect and
+  would cause some bfd-using programs (e.g. ar) to crash.  Fixes PR#8200
+  and PR#8573.
+
+usr.bin/rwho/rwho.c				1.12
+
+  Use full hostnames when sorting rwho database entries.  Fixes PR#8401.
