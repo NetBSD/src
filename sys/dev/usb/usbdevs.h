@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.13 1998/12/30 03:55:49 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.14 1999/01/03 01:15:01 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.14 1998/12/30 03:52:30 augustss Exp 
+ *	NetBSD: usbdevs,v 1.15 1999/01/03 01:12:41 augustss Exp 
  */
 
 /*
@@ -96,7 +96,7 @@
 #define	USB_PRODUCT_NANAO_MONITOR	0x0001		/* monitor */
 
 /* Unixtar products */
-#define	USB_PRODUCT_UNIXTAR_UTUSB41	0x1446		/* UT-USB41 */
+#define	USB_PRODUCT_UNIXTAR_UTUSB41	0x1446		/* UT-USB41 hub */
 
 /* Genius products */
 #define	USB_PRODUCT_GENIUS_NICHE	0x0001		/* Niche mouse */
@@ -162,7 +162,7 @@
 #define	USB_PRODUCT_PLX_TESTBOARD	0x9060		/* test board */
 
 /* Inside Out Networks products */
-#define	USB_PRODUCT_INSIDEOUT_EDGEPORT4	0x0001		/* EdgePort/4 */
+#define	USB_PRODUCT_INSIDEOUT_EDGEPORT4	0x0001		/* EdgePort/4 serial ports */
 
 /* Intel products */
 #define	USB_PRODUCT_INTEL_TESTBOARD	0x9890		/* 82930 test board */

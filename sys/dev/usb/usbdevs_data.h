@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.13 1998/12/30 03:55:49 augustss Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.14 1999/01/03 01:15:01 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.14 1998/12/30 03:52:30 augustss Exp 
+ *	NetBSD: usbdevs,v 1.15 1999/01/03 01:12:41 augustss Exp 
  */
 
 /*
@@ -85,7 +85,7 @@ struct usb_knowndev usb_knowndevs[] = {
 	    USB_VENDOR_UNIXTAR, USB_PRODUCT_UNIXTAR_UTUSB41,
 	    0,
 	    "Unixtar",
-	    "UT-USB41",
+	    "UT-USB41 hub",
 	},
 	{
 	    USB_VENDOR_GENIUS, USB_PRODUCT_GENIUS_NICHE,
@@ -241,7 +241,7 @@ struct usb_knowndev usb_knowndevs[] = {
 	    USB_VENDOR_INSIDEOUT, USB_PRODUCT_INSIDEOUT_EDGEPORT4,
 	    0,
 	    "Inside Out Networks",
-	    "EdgePort/4",
+	    "EdgePort/4 serial ports",
 	},
 	{
 	    USB_VENDOR_INTEL, USB_PRODUCT_INTEL_TESTBOARD,
