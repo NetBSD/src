@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1997/03/14 04:59:39 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 1997/04/13 18:44:40 perry Exp $
 
 S?=	${.CURDIR}/../../../../
 
@@ -16,7 +16,7 @@ CPPFLAGS= -I$S/lib/libsa ${I386CPPFLAGS} ${I386MISCCPPFLAGS}
 #CPPFLAGS+= -DSAVE_MEMORY
 
 SRCS= pcio.c conio.S comio.S
-SRCS+= getsecs.c biosgetrtc.S biosdelay.S biosmem.S gatea20.c
+SRCS+= getsecs.c biosgetrtc.S biosdelay.S biosmem.S biosreboot.S gatea20.c
 SRCS+= pread.c
 SRCS+= exec.c startprog.S netbsd_opts.c panic.c
 .if (${I386_INCLUDE_DISK} == "yes")
