@@ -1,4 +1,4 @@
-/*	$NetBSD: setfault.S,v 1.1 2003/02/02 20:43:24 matt Exp $	*/
+/*	$NetBSD: setfault.S,v 1.2 2003/03/14 05:36:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -69,7 +69,11 @@
 #include "assym.h"
 #include <machine/asm.h>
 
-/* LINTSTUB: Func: int setfault(faultbuf_t *); */
+/* LINTSTUB: include <sys/param.h> */
+/* LINTSTUB: include <sys/types.h> */
+/* LINTSTUB: include <machine/reg.h> */
+/* LINTSTUB: include <machine/pcb.h> */
+/* LINTSTUB: Func: int setfault(struct faultbuf *fb); */
 
 /*
  * int setfault(faultbuf_t *)
