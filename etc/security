@@ -15,16 +15,14 @@ umask 027
 echo "checking setuid files and devices:"
 
 # don't have ncheck, but this does the equivalent of the commented out block.
-# note that one of the original problem, the possibility of overrunning
-# the args to ls, is still here...
 
 MP=`mount -t ufs | sed 's;/dev/;&r;' | awk '{ print $3 }'`
 set $MP
-ls -lgT `while test $# -ge 1; do
+(while test $# -ge 1; do
 	mount=$1
 	shift
 	find $mount -xdev -perm -u+s -or -perm -g+s | sort
-done` > $TMP
+done) | xargs ls -lgT > $TMP
 
 #MP=`mount -t ufs | sed 's;/dev/;&r;' | awk '{ print $1 " " $3 }'`
 #set $MP
