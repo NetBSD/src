@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.h,v 1.21 1997/09/07 20:39:23 pk Exp $	*/
+/*	$NetBSD: vm_object.h,v 1.21.4.1 1998/02/08 06:49:02 mellon Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -149,7 +149,7 @@ vm_object_t	kmem_object;
 	do {								\
 		(object)->flags |= OBJ_WAITING;				\
 		thread_sleep_msg((event), &(object)->Lock,		\
-		    (interruptible), (where));				\
+		    (interruptible), (where), 0);			\
 	} while (0)
 
 #define	vm_object_wakeup(object) \
@@ -189,11 +189,11 @@ vm_object_t	kmem_object;
 			vm_object_wakeup((object));			\
 	} while (0)
 
-#define	vm_object_paging_wait(object) \
+#define	vm_object_paging_wait(object,msg) \
 	do {								\
 		while (vm_object_paging((object))) {			\
 			vm_object_sleep((object), (object), FALSE,	\
-			    "vospgw");					\
+			    (msg));					\
 			vm_object_lock((object));			\
 		}							\
 	} while (0)
