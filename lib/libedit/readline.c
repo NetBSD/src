@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.5 1998/12/12 19:54:16 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.6 1999/06/12 18:58:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.5 1998/12/12 19:54:16 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.6 1999/06/12 18:58:05 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1169,10 +1169,10 @@ filename_completion_function(text, state)
 		/* otherwise, get first entry where first */
 		/* filename_len characters are equal	  */
 		if (entry->d_name[0] == filename[0]
-#ifndef __SVR4
-		    && entry->d_namlen >= filename_len
-#else
+#if defined(__SVR4) || defined(__linux__)
 		    && strlen(entry->d_name) >= filename_len
+#else
+		    && entry->d_namlen >= filename_len
 #endif
 		    && strncmp(entry->d_name, filename,
 			       filename_len) == 0)
@@ -1182,10 +1182,10 @@ filename_completion_function(text, state)
 	if (entry) {		/* match found */
 
 		struct stat     stbuf;
-#ifndef __SVR4
-		len = entry->d_namlen +
-#else
+#if defined(__SVR4) || defined(__linux__)
 		len = strlen(entry->d_name) +
+#else
+		len = entry->d_namlen +
 #endif
 			((dirname) ? strlen(dirname) : 0) + 1 + 1;
 		temp = malloc(len);
