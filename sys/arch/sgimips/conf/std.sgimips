@@ -1,4 +1,4 @@
-#	$NetBSD: std.sgimips,v 1.7 2001/05/11 05:02:30 thorpej Exp $
+#	$NetBSD: std.sgimips,v 1.8 2001/10/23 20:40:03 thorpej Exp $
 
 machine sgimips mips
 
@@ -14,4 +14,4 @@ options TLP_MATCH_21140
 options TLP_MATCH_21142
 
 makeoptions	DEFTEXTADDR="0x80002000"
-makeoptions	ENDIAN="-EB"
+makeoptions	MACHINE_ARCH="mipseb"

@@ -1,4 +1,4 @@
-#	$NetBSD: std.pmax,v 1.13 2000/12/03 07:39:34 simonb Exp $
+#	$NetBSD: std.pmax,v 1.14 2001/10/23 20:40:02 thorpej Exp $
 # standard, required pmax info
 
 machine pmax mips
@@ -8,4 +8,4 @@ options 	EXEC_ELF32	# 32-bit ELF support (native format)
 options 	EXEC_SCRIPT	# exec of #! scripts
 
 makeoptions	DEFTEXTADDR="0x80030000"
-makeoptions	ENDIAN="-EL"
+makeoptions	MACHINE_ARCH="mipsel"

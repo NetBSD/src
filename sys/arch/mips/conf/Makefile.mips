@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.21 2001/10/23 18:57:32 thorpej Exp $
+#	$NetBSD: Makefile.mips,v 1.22 2001/10/23 20:40:02 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -13,6 +13,16 @@
 # after which config should be rerun for all machines of that type.
 
 .include <bsd.own.mk>
+
+.if ${MACHINE_ARCH} == "mipsel"
+ENDIAN="-EL"
+.elif ${MACHINE_ARCH} == "mipseb"
+ENDIAN="-EB"
+.else
+.BEGIN:
+	@echo "MACHINE_ARCH ${MACHINE_ARCH} is invalid"
+	@false
+.endif
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.

@@ -1,4 +1,4 @@
-#	$NetBSD: std.mipsco,v 1.4 2000/12/03 07:05:23 matt Exp $
+#	$NetBSD: std.mipsco,v 1.5 2001/10/23 20:40:02 thorpej Exp $
 
 machine mipsco mips
 
@@ -7,4 +7,4 @@ options	EXEC_SCRIPT	# exec #! scripts
 
 makeoptions	DEFTEXTADDR="0x80021000"
 makeoptions	LINKFLAGS="-N"
-makeoptions	ENDIAN="-EB"
+makeoptions	MACHINE_ARCH="mipseb"
