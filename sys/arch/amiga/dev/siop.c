@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siop.c	7.5 (Berkeley) 5/4/91
- *	$Id: siop.c,v 1.8 1994/05/12 05:57:23 chopps Exp $
+ *	$Id: siop.c,v 1.9 1994/05/12 06:43:12 chopps Exp $
  */
 
 /*
@@ -450,8 +450,12 @@ siopgetsense(dev, xs)
 	
 	rqs.op_code = REQUEST_SENSE;
 	rqs.byte2 = slp->lun << 5;
+#ifdef not_yet
 	rqs.length = xs->req_sense_length ? xs->req_sense_length : 
 	    sizeof(xs->sense);
+#else
+	rqs.length = sizeof(xs->sense);
+#endif
 	if (rqs.length > sizeof (xs->sense))
 		rqs.length = sizeof (xs->sense);
 	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;

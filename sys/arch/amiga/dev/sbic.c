@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
- *	$Id: sbic.c,v 1.1 1994/05/08 05:53:36 chopps Exp $
+ *	$Id: sbic.c,v 1.2 1994/05/12 06:43:09 chopps Exp $
  */
 
 /*
@@ -314,8 +314,13 @@ sbicgetsense(dev, xs)
 	
 	rqs.op_code = REQUEST_SENSE;
 	rqs.byte2 = slp->lun << 5;
+#ifdef not_yet
 	rqs.length = xs->req_sense_length ? xs->req_sense_length : 
 	    sizeof(xs->sense);
+#else
+	rqs.length = sizeof(xs->sense);
+#endif
+	    
 	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
 	
 	return(sbicicmd(dev, slp->target, &rqs, sizeof(rqs), &xs->sense,
