@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/gnu/usr.bin/gzip-1.0.7/Attic/Makefile,v 1.2 1993/04/10 16:09:37 cgd Exp $
+# $Header: /cvsroot/src/gnu/usr.bin/gzip-1.0.7/Attic/Makefile,v 1.3 1993/04/10 16:16:18 cgd Exp $
 
 PROG=	gzip
 CFLAGS+=-DASMV -DHAVE_UNISTD_H=1 -DDIRENT=1
@@ -8,7 +8,8 @@ RANDOMPROGS= zdiff zmore znew zforce gzexe
 CLEANFILES+= _match.s ${RANDOMPROGS}
 MAN1=	gzexe.0 gzip.0 zdiff.0 zforce.0 zmore.0 znew.0
 
-LINKS=	gzip gunzip gzip gzcat
+LINKS+=	${DESTDIR}${BINDIR}/gzip ${DESTDIR}${BINDIR}/gunzip
+LINKS+=	${DESTDIR}${BINDIR}/gzip ${DESTDIR}${BINDIR}/gzcat
 
 _match.s: ${.CURDIR}/match.S
 	${CPP} ${.CURDIR}/match.S > $@
