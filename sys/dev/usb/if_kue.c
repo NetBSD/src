@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.21 2000/03/24 22:03:30 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.22 2000/03/25 17:59:34 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -198,6 +198,7 @@ static void kue_reset		__P((struct kue_softc *));
 static usbd_status kue_ctl	__P((struct kue_softc *, int, u_int8_t,
 				    u_int16_t, void *, u_int32_t));
 static usbd_status kue_setword	__P((struct kue_softc *, u_int8_t, u_int16_t));
+static int kue_is_warm		__P((struct kue_softc *));
 static int kue_load_fw		__P((struct kue_softc *));
 
 #if defined(__FreeBSD__)
@@ -295,6 +296,25 @@ kue_ctl(sc, rw, breq, val, data, len)
 }
 
 static int
+kue_is_warm(sc)
+	struct kue_softc	*sc;
+{
+	usbd_status		err;
+	usb_device_request_t	req;
+
+	/* Just issue some random command. */
+	req.bmRequestType = UT_READ_VENDOR_DEVICE;
+	req.bRequest = KUE_CMD_GET_ETHER_DESCRIPTOR;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, sizeof(sc->kue_desc));
+
+	err = usbd_do_request(sc->kue_udev, &req, &sc->kue_desc);
+
+	return (!err);
+}
+
+static int
 kue_load_fw(sc)
 	struct kue_softc	*sc;
 {
@@ -314,9 +334,7 @@ kue_load_fw(sc)
 	 * We can test this quickly by issuing a request that
 	 * is only valid after firmware download.
 	 */
-	err = kue_ctl(sc, KUE_CTL_READ, KUE_CMD_GET_ETHER_DESCRIPTOR,
-	    0, &sc->kue_desc, sizeof(sc->kue_desc));
-	if (!err) {
+	if (kue_is_warm(sc)) {
 		printf("%s: warm boot, no firmware download\n",
 		       USBDEVNAME(sc->kue_dev));
 		return (0);
