@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.1.2.2.2.10 1997/05/11 13:29:45 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.1.2.2.2.11 1997/05/12 01:47:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -158,9 +158,6 @@ main(argc, argv)
 	argv += optind;
 	if (!*argv && !Aflag && !lflag && !sflag)
 		usage();
-	/* SWAP_OFF_WORKS */
-	if (pflag && !cflag && !aflag && !Aflag /* && !dflag */)
-		usage();
 	if (cflag && !pflag)
 		usage();
 
@@ -188,7 +185,7 @@ list_swap(dolong)
 	struct	swapent *sep;
 	long	blocksize;
 	char	*header;
-	int	hlen, totalsize, size, totalinuse, inuse;
+	int	hlen, totalsize, size, totalinuse, inuse, ncounted;
 	int	rnswap, nswap = swapon(SWAP_NSWAP, 0, 0);
 
 	if (nswap < 1) {
@@ -216,8 +213,11 @@ list_swap(dolong)
 		    "Device", hlen, header,
 		    "Used", "Avail", "Capacity", "Priority");
 	}
-	totalsize = totalinuse = 0;
+	totalsize = totalinuse = ncounted = 0;
 	for (; rnswap-- > 0; sep++) {
+		if (pflag && sep->se_priority != pri)
+			continue;
+		ncounted++;
 		size = sep->se_nblks;
 		inuse = sep->se_inuse;
 		totalsize += size;
@@ -241,7 +241,7 @@ list_swap(dolong)
 		    dbtob(totalsize) / 1024,
 		    dbtob(totalinuse) / 1024,
 		    dbtob(totalsize - totalinuse) / 1024);
-	else if (nswap > 1)
+	else if (ncounted > 1)
 		(void)printf("%-11s %*d %8d %8d %5.0f%%\n", "Total", hlen,
 		    dbtob(totalsize) / blocksize,
 		    dbtob(totalinuse) / blocksize,
