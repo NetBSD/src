@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.h,v 1.6 1999/09/05 01:46:35 oster Exp $	*/
+/*	$NetBSD: rf_debugMem.h,v 1.7 1999/09/05 01:58:11 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,45 +37,40 @@
 #ifndef _RF__RF_DEBUGMEM_H_
 #define _RF__RF_DEBUGMEM_H_
 
-#include "rf_archs.h"
 #include "rf_alloclist.h"
-#include "rf_options.h"
 
 #ifdef _KERNEL
 #include <sys/types.h>
-typedef u_int32_t U32;
 #include <sys/malloc.h>
 
-
-
 #define RF_Malloc(_p_, _size_, _cast_)                                      \
-  {                                                                      \
-     _p_ = _cast_ malloc((u_long)_size_, M_RAIDFRAME, M_WAITOK); \
-     bzero((char *)_p_, _size_); \
-     if (rf_memDebug) rf_record_malloc(_p_, _size_, __LINE__, __FILE__);       \
+  {                                                                         \
+     _p_ = _cast_ malloc((u_long)_size_, M_RAIDFRAME, M_WAITOK);            \
+     bzero((char *)_p_, _size_);                                            \
+     if (rf_memDebug) rf_record_malloc(_p_, _size_, __LINE__, __FILE__);    \
   }
 
 #define RF_MallocAndAdd(__p_, __size_, __cast_, __alist_)                   \
-  {                                                                      \
+  {                                                                         \
      RF_Malloc(__p_, __size_, __cast_);                                     \
      if (__alist_) rf_AddToAllocList(__alist_, __p_, __size_);              \
   }
 
 #define RF_Calloc(_p_, _nel_, _elsz_, _cast_)                               \
-  {                                                                      \
+  {                                                                         \
      RF_Malloc( _p_, (_nel_) * (_elsz_), _cast_);                           \
   }
 
-#define RF_CallocAndAdd(__p,__nel,__elsz,__cast,__alist)                     \
-  {                                                                       \
-     RF_Calloc(__p, __nel, __elsz, __cast);                                  \
-     if (__alist) rf_AddToAllocList(__alist, __p, (__nel)*(__elsz));         \
+#define RF_CallocAndAdd(__p,__nel,__elsz,__cast,__alist)                    \
+  {                                                                         \
+     RF_Calloc(__p, __nel, __elsz, __cast);                                 \
+     if (__alist) rf_AddToAllocList(__alist, __p, (__nel)*(__elsz));        \
   }
 
-#define RF_Free(_p_, _sz_)                                                   \
-  {                                                                       \
-	free((void *)(_p_), M_RAIDFRAME);                                      \
-    if (rf_memDebug) rf_unrecord_malloc(_p_, (U32) (_sz_));                     \
+#define RF_Free(_p_, _sz_)                                                  \
+  {                                                                         \
+     free((void *)(_p_), M_RAIDFRAME);                                      \
+     if (rf_memDebug) rf_unrecord_malloc(_p_, (u_int32_t) (_sz_));          \
   }
 
 #endif				/* _KERNEL */
