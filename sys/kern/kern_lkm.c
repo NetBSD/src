@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.42 1998/02/10 14:09:32 mrg Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.43 1998/02/18 07:11:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -643,7 +643,6 @@ _lkm_vfs(lkmtp, cmd)
 	int cmd;
 {
 	struct lkm_vfs *args = lkmtp->private.lkm_vfs;
-	int i;
 	int error = 0;
 
 	switch(cmd) {
@@ -652,43 +651,17 @@ _lkm_vfs(lkmtp, cmd)
 		if (lkmexists(lkmtp))
 			return (EEXIST);
 
-		/* make sure there's no VFS in the table with this name */
-		if (vfs_getopsbyname(args->lkm_vfsops->vfs_name) != NULL)
-			return (EEXIST);
-
-		/* pick the last available empty slot */
-		for (i = nvfssw - 1; i >= 0; i--)
-			if (vfssw[i] == (struct vfsops *)0)
-				break;
-		if (i == -1) {		/* or if none, punt */
-			error = EINVAL;
-			break;
-		}
-
-		/*
-		 * Set up file system
-		 */
-		vfssw[i] = args->lkm_vfsops;
-		vfssw[i]->vfs_refcount = 0;
-
-		/*
-		 * Call init function for this VFS...
-		 */
-	 	(*(vfssw[i]->vfs_init))();
+		/* Establish the file system. */
+		if ((error = vfs_attach(args->lkm_vfsops)) != 0)
+			return (error);
 
 		/* done! */
-		args->lkm_offset = i;	/* slot in vfssw[] */
 		break;
 
 	case LKM_E_UNLOAD:
-		/* current slot... */
-		i = args->lkm_offset;
-
-		if (vfssw[i]->vfs_refcount != 0)
-			return (EBUSY);
-
-		/* replace current slot contents with old contents */
-		vfssw[i] = (struct vfsops *)0;
+		/* Disestablish the file system. */
+		if ((error = vfs_detach(args->lkm_vfsops)) != 0)
+			return (error);
 		break;
 
 	case LKM_E_STAT:	/* no special handling... */
