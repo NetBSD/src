@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.h,v 1.3 1997/02/22 04:01:04 jeremy Exp $	*/
+/*	$NetBSD: iommu.h,v 1.4 1997/10/10 09:50:03 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,31 +43,37 @@
 #define _SUN3X_IOMMU_H
 
 /* The I/O Mapper is a special type of MMU in the sun3x architecture
- * (and supposedly in the sun4m as well) that translates an addresses
- * access by a DMA device during a DMA access, into a physical destination
- * address; it is an MMU that stands between DMA devices and physical memory.
+ * (and supposedly in the sun4m as well) that translates an address used by a
+ * device during a DMA transfer into an address on the internal system bus.
+ * In other words, it is an MMU that stands between devices wishing to do DMA
+ * transfers and main memory.  In this description, the address issued by a
+ * DMA device is called a ``DVMA address'', while the address as it is
+ * translated and output from the I/O mapper is called a ``system bus address''
+ * (sometimes known as a ``physical address'').
  *
- * The input address space managed by the I/O mapper is 24 bits wide and broken
- * into pages of 8K-byte size.  The output address space is a full 32 bits
- * wide.  The mapping of each input page is described by a page entry
- * descriptor.  There are exactly 2048 such descriptors in the I/O mapper, the
- * first entry of which is located at physical address 0x60000000 in sun3x
- * machines.
+ * The DVMA address space in the sun3x architecture is 24 bits wide, in
+ * contrast with the system bus address space, which is 32.  The mapping of a
+ * DVMA address to a system bus address is accomplished by dividing the DVMA
+ * address space into 2048 8K pages.  Each DVMA page is then mapped to a
+ * system bus address using a mapping described by a page descriptor entry
+ * within the I/O Mapper.  This 2048 entry, page descriptor table is located
+ * at physical address 0x60000000 in the sun3x architecture and can be
+ * manipulated by the CPU with normal read and write cycles.
  * 
- * Since not every device transfers to a full 24 bit address space, each
- * device is wired so that its address space is always flush against the
- * high end of the I/O mapper.  That is, a device with a 16 bit address space
- * can only access 64k of memory.  This 64k is wired to the top 64k in the
- * I/O mapper's input address space.
+ * In addition to describing an address mapping, a page descriptor entry also
+ * indicates whether the DVMA page is read-only, should be inhibited from
+ * caching by system caches, and whether or not DMA write transfers to it will
+ * be completed in 16 byte aligned blocks.  (This last item is used for cache
+ * optimization in sun3x systems with special DMA caches.)
  * 
- * In addition to describing address mappings, a page entry also indicates
- * whether the page is read-only, inhibits system caches from caching data
- * addresses to or from it, and whether or not DMA transfers must be completed
- * in 16 byte blocks.  (This is used for cache optimization in sun3x systems
- * with special DMA caches.)
+ * Since not every DMA device is capable of addressing all 24 bits of the
+ * DVMA address space, each is wired so that the end of its address space is
+ * always flush against the end of the DVMA address space.  That is, a device
+ * with a 16 bit address space (and hence an address space size of 64k) is
+ * wired such that it accesses the top 64k of DVMA space.
  */
 
-/** I/O MAPPER Page Entry Descriptor
+/** I/O MAPPER Page Descriptor Entry
  *  31                                                             16
  *  +---.---.---.---.---.---.---.---.---.---.---.---.---.---.---.---+
  *  |              PAGE PHYSICAL ADDRESS BITS (31..13)              |
@@ -78,8 +84,11 @@
  *
  * <CI> CACHE INHIBIT   - When set, prevents instructions and data from the
  *                        page from being cached in any system cache.
- * <BX> FULL BLOCK XFER - When set, requires that all devices must transfer
- *                        data in multiples of 16 bytes in size.
+ * <BX> FULL BLOCK XFER - When set, acts as an indicator to the caching system
+ *                        that all DMA transfers to this DVMA page will fill
+ *                        complete I/O cache blocks, eliminating the need for
+ *                        the cache block to be filled from main memory first
+ *                        before the DMA write can proceed to it.
  * <M>  MODIFIED        - Set when the cpu has modified (written to) the
  *                        physical page.
  * <U>  USED            - Set when the cpu has accessed the physical page.
