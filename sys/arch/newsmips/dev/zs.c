@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.5 1999/02/03 20:25:06 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.6 1999/02/11 15:28:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ int zs_major = 1;
  * The news3400 provides a 4.9152 MHz clock to the ZS chips.
  */
 #define PCLK1	(9600 * 512)	/* PCLK pin input clock rate */
-#define PCLK2	(7200 * 512)
+#define PCLK2	(9600 * 384)
 
 /*
  * Define interrupt levels.
@@ -130,8 +130,8 @@ static u_char zs_init_reg[16] = {
 	ZSWR9_MASTER_IE,
 	0,	/*10: Misc. TX/RX control bits */
 	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
-	14,	/*12: BAUDLO (default=9600) */
-	0,	/*13: BAUDHI (default=9600) */
+	((PCLK1/32)/9600)-2,	/*12: BAUDLO (default=9600) */
+	0,			/*13: BAUDHI (default=9600) */
 	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
 	ZSWR15_BREAK_IE,
 };
