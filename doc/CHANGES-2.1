@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.49 2005/04/06 12:22:14 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.50 2005/04/06 13:53:44 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1128,4 +1128,11 @@ usr.bin/window/wwiomux.c			1.11
 	. fix a variable reuse bug
 	It has been broken since the conversion from select() to poll().
 	[aymeric, ticket #1400]
+
+sys/netinet/tcp_input.c                         patch
+
+	If an echoed RFC 1323 time stamp appears to be later than the current
+	time, ignore it and fall back to old-style RTT calculation. This
+	prevents ending up with a negative RTT and panicking later.
+	[christos, ticket #1401]
 
