@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.3 2001/02/19 22:40:52 cgd Exp $	*/
+/*	$NetBSD: gzip.c,v 1.4 2003/08/06 14:38:02 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Matthew R. Green
@@ -279,7 +279,8 @@ file_compress(file)
 
 	if (cflag == 0) {
 		(void)strncpy(outfile, file, MAXPATHLEN - suffix_len);
-		(void)strcat(outfile, Sflag);
+		outfile[MAXPATHLEN - suffix_len] = '\0';
+		(void)strlcat(outfile, Sflag, sizeof(outfile));
 
 		if (fflag == 0) {
 			if (stat(outfile, &sb) == 0) {
