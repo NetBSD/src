@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,84 +30,24 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_xxx.c	7.17 (Berkeley) 4/20/91
+ *	@(#)kern_xxx.c	8.2 (Berkeley) 11/14/93
  */
 
-#include "param.h"
-#include "systm.h"
-#include "kernel.h"
-#include "proc.h"
-#include "reboot.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <vm/vm.h>
+#include <sys/sysctl.h>
 
-/* ARGSUSED */
-gethostid(p, uap, retval)
-	struct proc *p;
-	void *uap;
-	long *retval;
-{
-
-	*retval = hostid;
-	return (0);
-}
-
-/* ARGSUSED */
-sethostid(p, uap, retval)
-	struct proc *p;
-	struct args {
-		long	hostid;
-	} *uap;
-	int *retval;
-{
-	int error;
-
-	if (error = suser(p->p_ucred, &p->p_acflag))
-		return (error);
-	hostid = uap->hostid;
-	return (0);
-}
-
-/* ARGSUSED */
-gethostname(p, uap, retval)
-	struct proc *p;
-	struct args {
-		char	*hostname;
-		u_int	len;
-	} *uap;
-	int *retval;
-{
-
-	if (uap->len > hostnamelen + 1)
-		uap->len = hostnamelen + 1;
-	return (copyout((caddr_t)hostname, (caddr_t)uap->hostname, uap->len));
-}
-
-/* ARGSUSED */
-sethostname(p, uap, retval)
-	struct proc *p;
-	register struct args {
-		char	*hostname;
-		u_int	len;
-	} *uap;
-	int *retval;
-{
-	int error;
-
-	if (error = suser(p->p_ucred, &p->p_acflag))
-		return (error);
-	if (uap->len > sizeof (hostname) - 1)
-		return (EINVAL);
-	hostnamelen = uap->len;
-	error = copyin((caddr_t)uap->hostname, hostname, uap->len);
-	hostname[hostnamelen] = 0;
-	return (error);
-}
-
+struct reboot_args {
+	int	opt;
+};
 /* ARGSUSED */
 reboot(p, uap, retval)
 	struct proc *p;
-	struct args {
-		int	opt;
-	} *uap;
+	struct reboot_args *uap;
 	int *retval;
 {
 	int error;
@@ -118,10 +58,81 @@ reboot(p, uap, retval)
 	return (0);
 }
 
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
+
+struct gethostname_args {
+	char	*hostname;
+	u_int	len;
+};
+/* ARGSUSED */
+ogethostname(p, uap, retval)
+	struct proc *p;
+	struct gethostname_args *uap;
+	int *retval;
+{
+	int name;
+
+	name = KERN_HOSTNAME;
+	return (kern_sysctl(&name, 1, uap->hostname, &uap->len, 0, 0));
+}
+
+struct sethostname_args {
+	char	*hostname;
+	u_int	len;
+};
+/* ARGSUSED */
+osethostname(p, uap, retval)
+	struct proc *p;
+	register struct sethostname_args *uap;
+	int *retval;
+{
+	int name;
+	int error;
+
+	if (error = suser(p->p_ucred, &p->p_acflag))
+		return (error);
+	name = KERN_HOSTNAME;
+	return (kern_sysctl(&name, 1, 0, 0, uap->hostname, uap->len));
+}
+
+extern long hostid;
+
+struct gethostid_args {
+	int	dummy;
+};
+/* ARGSUSED */
+ogethostid(p, uap, retval)
+	struct proc *p;
+	struct gethostid_args *uap;
+	int *retval;
+{
+
+	*(long *)retval = hostid;
+	return (0);
+}
+#endif /* COMPAT_43 || COMPAT_SUNOS */
+
 #ifdef COMPAT_43
+struct sethostid_args {
+	long	hostid;
+};
+/* ARGSUSED */
+osethostid(p, uap, retval)
+	struct proc *p;
+	struct sethostid_args *uap;
+	int *retval;
+{
+	int error;
+
+	if (error = suser(p->p_ucred, &p->p_acflag))
+		return (error);
+	hostid = uap->hostid;
+	return (0);
+}
+
 oquota()
 {
 
 	return (ENOSYS);
 }
-#endif
+#endif /* COMPAT_43 */

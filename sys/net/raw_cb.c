@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,24 +30,22 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)raw_cb.c	7.11 (Berkeley) 6/28/90
+ *	@(#)raw_cb.c	8.1 (Berkeley) 6/10/93
  */
 
-#include "param.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "domain.h"
-#include "protosw.h"
-#include "errno.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
+#include <sys/errno.h>
 
-#include "if.h"
-#include "route.h"
-#include "raw_cb.h"
-#include "../netinet/in.h"
-
-#include "machine/mtpr.h"
+#include <net/if.h>
+#include <net/route.h>
+#include <net/raw_cb.h>
+#include <netinet/in.h>
 
 /*
  * Routines to manage the raw protocol control blocks. 
@@ -65,6 +63,7 @@ u_long	raw_recvspace = RAWRCVQ;
  * Allocate a control block and a nominal amount
  * of buffer space for the socket.
  */
+int
 raw_attach(so, proto)
 	register struct socket *so;
 	int proto;
@@ -92,6 +91,7 @@ raw_attach(so, proto)
  * Detach the raw connection block and discard
  * socket resources.
  */
+void
 raw_detach(rp)
 	register struct rawcb *rp;
 {
@@ -111,6 +111,7 @@ raw_detach(rp)
 /*
  * Disconnect and possibly release resources.
  */
+void
 raw_disconnect(rp)
 	struct rawcb *rp;
 {
@@ -125,6 +126,7 @@ raw_disconnect(rp)
 }
 
 #ifdef notdef
+int
 raw_bind(so, nam)
 	register struct socket *so;
 	struct mbuf *nam;

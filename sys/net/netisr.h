@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)netisr.h	7.8 (Berkeley) 5/7/91
+ *	@(#)netisr.h	8.1 (Berkeley) 6/10/93
  */
 
 /*
@@ -57,6 +57,7 @@
 #define	NETISR_NS	6		/* same as AF_NS */
 #define	NETISR_ISO	7		/* same as AF_ISO */
 #define	NETISR_CCITT	10		/* same as AF_CCITT */
+#define	NETISR_ARP	18		/* same as AF_LINK */
 
 #define	schednetisr(anisr)	{ netisr |= 1<<(anisr); setsoftnet(); }
 

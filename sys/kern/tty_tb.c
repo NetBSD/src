@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tty_tb.c	7.7 (Berkeley) 5/9/91
+ *	@(#)tty_tb.c	8.1 (Berkeley) 6/10/93
  */
 
 #include "tb.h"
@@ -40,9 +40,9 @@
  * Line discipline for RS232 tablets;
  * supplies binary coordinate data.
  */
-#include "param.h"
-#include "tablet.h"
-#include "tty.h"
+#include <sys/param.h>
+#include <sys/tablet.h>
+#include <sys/tty.h>
 
 /*
  * Tablet configuration table.

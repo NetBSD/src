@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)slcompress.c	7.7 (Berkeley) 5/7/91
+ *	@(#)slcompress.c	8.2 (Berkeley) 4/16/94
  */
 
 /*
@@ -41,17 +41,18 @@
  *	- Initial distribution.
  *
  * static char rcsid[] =
- * "$Header: /cvsroot/src/sys/net/slcompress.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+ * "$Header: /cvsroot/src/sys/net/slcompress.c,v 1.1.1.2 1998/03/01 02:10:08 fvdl Exp $";
  */
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
+
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 
-#include "slcompress.h"
+#include <net/slcompress.h>
 
 #ifndef SL_NO_STATS
 #define INCR(counter) ++comp->counter;
@@ -64,7 +65,6 @@
 #ifndef KERNEL
 #define ovbcopy bcopy
 #endif
-
 
 void
 sl_compress_init(comp)
@@ -83,6 +83,7 @@ sl_compress_init(comp)
 	comp->last_cs = &tstate[0];
 	comp->last_recv = 255;
 	comp->last_xmit = 255;
+	comp->flags = SLF_TOSS;
 }
 
 
@@ -138,8 +139,7 @@ sl_compress_init(comp)
 	} \
 }
 
-
-u_char
+u_int
 sl_compress_tcp(m, ip, comp, compress_cid)
 	struct mbuf *m;
 	register struct ip *ip;

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mtio.h	7.6 (Berkeley) 2/5/91
+ *	@(#)mtio.h	8.1 (Berkeley) 6/2/93
  */
 
 /*
@@ -91,6 +91,9 @@ struct mtget {
 #define MT_ISVIPER1	0x0e		/* Archive Viper-150 */
 #define MT_ISPYTHON	0x0f		/* Archive Python (DAT) */
 #define MT_ISHPDAT	0x10		/* HP 35450A DAT drive */
+#define MT_ISMFOUR	0x11		/* M4 Data 1/2 9track drive */
+#define MT_ISTK50	0x12		/* DEC SCSI TK50 */
+#define MT_ISMT02	0x13		/* Emulex MT02 SCSI tape controller */
 
 /* mag tape io control commands */
 #define	MTIOCTOP	_IOW('m', 1, struct mtop)	/* do a mag tape op */

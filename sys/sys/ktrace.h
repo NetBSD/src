@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ktrace.h	7.4 (Berkeley) 5/7/91
+ *	@(#)ktrace.h	8.1 (Berkeley) 6/2/93
  */
 
 /*
@@ -60,7 +60,8 @@ struct ktr_header {
 /*
  * Test for kernel trace point
  */
-#define KTRPOINT(p, type)	((p)->p_traceflag & (1<<(type)))
+#define KTRPOINT(p, type)	\
+	(((p)->p_traceflag & ((1<<(type))|KTRFAC_ACTIVE)) == (1<<(type)))
 
 /*
  * ktrace record types
@@ -119,6 +120,15 @@ struct ktr_psig {
 };
 
 /*
+ * KTR_CSW - trace context switches
+ */
+#define KTR_CSW		6
+struct ktr_csw {
+	int	out;	/* 1 if switch out, 0 if switch in */
+	int	user;	/* 1 if usermode (ivcsw), 0 if kernel (vcsw) */
+};
+
+/*
  * kernel trace points (in p_traceflag)
  */
 #define KTRFAC_MASK	0x00ffffff
@@ -127,11 +137,13 @@ struct ktr_psig {
 #define KTRFAC_NAMEI	(1<<KTR_NAMEI)
 #define KTRFAC_GENIO	(1<<KTR_GENIO)
 #define	KTRFAC_PSIG	(1<<KTR_PSIG)
+#define KTRFAC_CSW	(1<<KTR_CSW)
 /*
  * trace flags (also in p_traceflags)
  */
 #define KTRFAC_ROOT	0x80000000	/* root set this trace */
 #define KTRFAC_INHERIT	0x40000000	/* pass trace flags to children */
+#define KTRFAC_ACTIVE	0x20000000	/* ktrace logging in progress, ignore */
 
 #ifndef	KERNEL
 

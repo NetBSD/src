@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)socketvar.h	7.17 (Berkeley) 5/5/91
+ *	@(#)socketvar.h	8.1 (Berkeley) 6/2/93
  */
+
+#include <sys/select.h>			/* for struct selinfo */
 
 /*
  * Kernel structure per socket.
@@ -77,21 +79,22 @@ struct socket {
 		u_long	sb_mbmax;	/* max chars of mbufs to use */
 		long	sb_lowat;	/* low water mark */
 		struct	mbuf *sb_mb;	/* the mbuf chain */
-		struct	proc *sb_sel;	/* process selecting read/write */
+		struct	selinfo sb_sel;	/* process selecting read/write */
 		short	sb_flags;	/* flags, see below */
 		short	sb_timeo;	/* timeout for read/write */
 	} so_rcv, so_snd;
-#define	SB_MAX		(64*1024)	/* default for max chars in sockbuf */
+#define	SB_MAX		(256*1024)	/* default for max chars in sockbuf */
 #define	SB_LOCK		0x01		/* lock on data queue */
 #define	SB_WANT		0x02		/* someone is waiting to lock */
 #define	SB_WAIT		0x04		/* someone is waiting for data/space */
 #define	SB_SEL		0x08		/* someone is selecting */
 #define	SB_ASYNC	0x10		/* ASYNC I/O, need signals */
 #define	SB_NOTIFY	(SB_WAIT|SB_SEL|SB_ASYNC)
-#define	SB_COLL		0x20		/* collision selecting */
 #define	SB_NOINTR	0x40		/* operations not interruptible */
 
 	caddr_t	so_tpcb;		/* Wisc. protocol control block XXX */
+	void	(*so_upcall) __P((struct socket *so, caddr_t arg, int waitf));
+	caddr_t	so_upcallarg;		/* Arg for above */
 };
 
 /*
@@ -164,8 +167,9 @@ struct socket {
  * Unless SB_NOINTR is set on sockbuf, sleep is interruptible.
  * Returns error without lock if sleep is interrupted.
  */
-#define sblock(sb) ((sb)->sb_flags & SB_LOCK ? sb_lock(sb) : \
-		((sb)->sb_flags |= SB_LOCK, 0))
+#define sblock(sb, wf) ((sb)->sb_flags & SB_LOCK ? \
+		(((wf) == M_WAITOK) ? sb_lock(sb) : EWOULDBLOCK) : \
+		((sb)->sb_flags |= SB_LOCK), 0)
 
 /* release lock on sockbuf sb */
 #define	sbunlock(sb) { \
@@ -176,7 +180,11 @@ struct socket {
 	} \
 }
 
-#define	sorwakeup(so)	sowakeup((so), &(so)->so_rcv)
+#define	sorwakeup(so)	{ sowakeup((so), &(so)->so_rcv); \
+			  if ((so)->so_upcall) \
+			    (*((so)->so_upcall))((so), (so)->so_upcallarg, M_DONTWAIT); \
+			}
+
 #define	sowwakeup(so)	sowakeup((so), &(so)->so_snd)
 
 #ifdef KERNEL

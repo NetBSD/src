@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,11 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)signalvar.h	7.1 (Berkeley) 5/9/91
+ *	@(#)signalvar.h	8.3 (Berkeley) 1/4/94
  */
 
-#ifndef	_SIGNALVAR_H_		/* tmp for user.h */
-#define	_SIGNALVAR_H_
+#ifndef	_SYS_SIGNALVAR_H_		/* tmp for user.h */
+#define	_SYS_SIGNALVAR_H_
 
 /*
  * Kernel signal definitions and data structures,
@@ -52,16 +52,16 @@ struct	sigacts {
 	sigset_t ps_sigintr;		/* signals that interrupt syscalls */
 	sigset_t ps_oldmask;		/* saved mask from before sigpause */
 	int	ps_flags;		/* signal flags, below */
-	struct	sigstack ps_sigstack;	/* sp & on stack state variable */
+	struct	sigaltstack ps_sigstk;	/* sp & on stack state variable */
 	int	ps_sig;			/* for core dump/debugger XXX */
 	int	ps_code;		/* for core dump/debugger XXX */
+	int	ps_addr;		/* for core dump/debugger XXX */
+	sigset_t ps_usertramp;		/* SunOS compat; libc sigtramp XXX */
 };
 
-#define	ps_onstack	ps_sigstack.ss_onstack
-#define	ps_sigsp	ps_sigstack.ss_sp
-
 /* signal flags */
-#define	SA_OLDMASK	0x01		/* need to restore mask before pause */
+#define	SAS_OLDMASK	0x01		/* need to restore mask before pause */
+#define	SAS_ALTSTACK	0x02		/* have alternate signal stack */
 
 /* additional signal action values, used only temporarily/internally */
 #define	SIG_CATCH	(void (*)())2
@@ -73,19 +73,20 @@ struct	sigacts {
 #define SIGACTION(p, sig)	(p->p_sigacts->ps_sigact[(sig)])
 
 /*
- * Determine signal that should be delivered to process p, the current process,
- * 0 if none.  If there is a pending stop signal with default action,
- * the process stops in issig().
+ * Determine signal that should be delivered to process p, the current
+ * process, 0 if none.  If there is a pending stop signal with default
+ * action, the process stops in issig().
  */
-#define	CURSIG(p) \
-	(((p)->p_sig == 0 || \
-	    ((p)->p_flag&STRC) == 0 && ((p)->p_sig &~ (p)->p_sigmask) == 0) ? \
-	    0 : issig(p))
+#define	CURSIG(p)							\
+	(((p)->p_siglist == 0 ||					\
+	    ((p)->p_flag & P_TRACED) == 0 &&				\
+	    ((p)->p_siglist & ~(p)->p_sigmask) == 0) ?			\
+	    0 : issignal(p))
 
 /*
  * Clear a pending signal from a process.
  */
-#define	CLRSIG(p, sig)	{ (p)->p_sig &= ~sigmask(sig); }
+#define	CLRSIG(p, sig)	{ (p)->p_siglist &= ~sigmask(sig); }
 
 /*
  * Signal properties and actions.
@@ -95,7 +96,7 @@ struct	sigacts {
 #define	SA_KILL		0x01		/* terminates process by default */
 #define	SA_CORE		0x02		/* ditto and coredumps */
 #define	SA_STOP		0x04		/* suspend process */
-#define	SA_TTYSTOP	(0x08|SA_STOP)	/* ditto, from tty */
+#define	SA_TTYSTOP	0x08		/* ditto, from tty */
 #define	SA_IGNORE	0x10		/* ignore by default */
 #define	SA_CONT		0x20		/* continue if suspended */
 #define	SA_CANTMASK	0x40		/* non-maskable, catchable */
@@ -120,11 +121,11 @@ int sigprop[NSIG + 1] = {
 	SA_KILL,		/* SIGTERM */
 	SA_IGNORE,		/* SIGURG */
 	SA_STOP,		/* SIGSTOP */
-	SA_TTYSTOP,		/* SIGTSTP */
+	SA_STOP|SA_TTYSTOP,	/* SIGTSTP */
 	SA_IGNORE|SA_CONT,	/* SIGCONT */
 	SA_IGNORE,		/* SIGCHLD */
-	SA_TTYSTOP,		/* SIGTTIN */
-	SA_TTYSTOP,		/* SIGTTOU */
+	SA_STOP|SA_TTYSTOP,	/* SIGTTIN */
+	SA_STOP|SA_TTYSTOP,	/* SIGTTOU */
 	SA_IGNORE,		/* SIGIO */
 	SA_KILL,		/* SIGXCPU */
 	SA_KILL,		/* SIGXFSZ */
@@ -136,31 +137,31 @@ int sigprop[NSIG + 1] = {
 	SA_KILL,		/* SIGUSR2 */
 };
 
-#define	stopsigmask	(sigmask(SIGSTOP)|sigmask(SIGTSTP)|\
-			 sigmask(SIGTTIN)|sigmask(SIGTTOU))
 #define	contsigmask	(sigmask(SIGCONT))
+#define	stopsigmask	(sigmask(SIGSTOP) | sigmask(SIGTSTP) | \
+			    sigmask(SIGTTIN) | sigmask(SIGTTOU))
 
 #endif /* SIGPROP */
 
-#define	sigcantmask	(sigmask(SIGKILL)|sigmask(SIGSTOP))
+#define	sigcantmask	(sigmask(SIGKILL) | sigmask(SIGSTOP))
 
 #ifdef KERNEL
 /*
  * Machine-independent functions:
  */
-void	siginit __P((struct proc *p));
+int	coredump __P((struct proc *p));
 void	execsigs __P((struct proc *p));
 void	gsignal __P((int pgid, int sig));
-void	pgsignal __P((struct pgrp *pgrp, int sig, int checkctty));
-void	trapsignal __P((struct proc *p, int sig, unsigned code));
-void	psignal __P((struct proc *p, int sig));
 int	issig __P((struct proc *p));
-void	psig __P((int sig));
-int	coredump __P((struct proc *p));
+void	pgsignal __P((struct pgrp *pgrp, int sig, int checkctty));
+void	postsig __P((int sig));
+void	psignal __P((struct proc *p, int sig));
+void	siginit __P((struct proc *p));
+void	trapsignal __P((struct proc *p, int sig, unsigned code));
 
 /*
  * Machine-dependent functions:
  */
 void	sendsig __P((sig_t action, int sig, int returnmask, unsigned code));
 #endif	/* KERNEL */
-#endif	/* !_SIGNALVAR_H_ */
+#endif	/* !_SYS_SIGNALVAR_H_ */

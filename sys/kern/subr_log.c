@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,19 +30,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)subr_log.c	7.11 (Berkeley) 3/17/91
+ *	@(#)subr_log.c	8.1 (Berkeley) 6/10/93
  */
 
 /*
  * Error log buffer for kernel printf's.
  */
 
-#include "param.h"
-#include "proc.h"
-#include "vnode.h"
-#include "ioctl.h"
-#include "msgbuf.h"
-#include "file.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
+#include <sys/ioctl.h>
+#include <sys/msgbuf.h>
+#include <sys/file.h>
 
 #define LOG_RDPRI	(PZERO + 1)
 
@@ -51,7 +52,7 @@
 
 struct logsoftc {
 	int	sc_state;		/* see above for possibilities */
-	struct	proc *sc_selp;		/* process waiting on select call */
+	struct	selinfo sc_selp;	/* process waiting on select call */
 	int	sc_pgid;		/* process/group for async I/O */
 } logsoftc;
 
@@ -86,12 +87,15 @@ logopen(dev, flags, mode, p)
 }
 
 /*ARGSUSED*/
-logclose(dev, flag)
+logclose(dev, flag, mode, p)
 	dev_t dev;
+	int flag, mode;
+	struct proc *p;
 {
+
 	log_open = 0;
 	logsoftc.sc_state = 0;
-	logsoftc.sc_selp = 0;
+	return (0);
 }
 
 /*ARGSUSED*/
@@ -125,7 +129,7 @@ logread(dev, uio, flag)
 		l = mbp->msg_bufx - mbp->msg_bufr;
 		if (l < 0)
 			l = MSG_BSIZE - mbp->msg_bufr;
-		l = MIN(l, uio->uio_resid);
+		l = min(l, uio->uio_resid);
 		if (l == 0)
 			break;
 		error = uiomove((caddr_t)&mbp->msg_bufc[mbp->msg_bufr],
@@ -154,7 +158,7 @@ logselect(dev, rw, p)
 			splx(s);
 			return (1);
 		}
-		logsoftc.sc_selp = p;
+		selrecord(p, &logsoftc.sc_selp);
 		break;
 	}
 	splx(s);
@@ -167,10 +171,7 @@ logwakeup()
 
 	if (!log_open)
 		return;
-	if (logsoftc.sc_selp) {
-		selwakeup(logsoftc.sc_selp, 0);
-		logsoftc.sc_selp = 0;
-	}
+	selwakeup(&logsoftc.sc_selp);
 	if (logsoftc.sc_state & LOG_ASYNC) {
 		if (logsoftc.sc_pgid < 0)
 			gsignal(-logsoftc.sc_pgid, SIGIO); 
@@ -184,8 +185,12 @@ logwakeup()
 }
 
 /*ARGSUSED*/
-logioctl(dev, com, data, flag)
+logioctl(dev, com, data, flag, p)
+	dev_t dev;
+	int com;
 	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	long l;
 	int s;
@@ -199,7 +204,7 @@ logioctl(dev, com, data, flag)
 		splx(s);
 		if (l < 0)
 			l += MSG_BSIZE;
-		*(off_t *)data = l;
+		*(int *)data = l;
 		break;
 
 	case FIONBIO:

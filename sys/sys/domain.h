@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,20 +30,33 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)domain.h	7.4 (Berkeley) 6/28/90
+ *	@(#)domain.h	8.1 (Berkeley) 6/2/93
  */
 
 /*
  * Structure per communications domain.
  */
+
+/*
+ * Forward structure declarations for function prototypes [sic].
+ */
+struct	mbuf;
+
 struct	domain {
 	int	dom_family;		/* AF_xxx */
 	char	*dom_name;
-	int	(*dom_init)();		/* initialize domain data structures */
-	int	(*dom_externalize)();	/* externalize access rights */
-	int	(*dom_dispose)();	/* dispose of internalized rights */
+	void	(*dom_init)		/* initialize domain data structures */
+		__P((void));
+	int	(*dom_externalize)	/* externalize access rights */
+		__P((struct mbuf *));
+	int	(*dom_dispose)		/* dispose of internalized rights */
+		__P((struct mbuf *));
 	struct	protosw *dom_protosw, *dom_protoswNPROTOSW;
 	struct	domain *dom_next;
+	int	(*dom_rtattach)		/* initialize routing table */
+		__P((void **, int));
+	int	dom_rtoffset;		/* an arg to rtattach, in bits */
+	int	dom_maxrtkey;		/* for routing layer */
 };
 
 #ifdef KERNEL

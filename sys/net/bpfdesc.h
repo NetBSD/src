@@ -1,10 +1,11 @@
-/*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1990, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from the Stanford/CMU enet packet filter,
  * (net/enet.c) distributed as part of 4.3BSD, and code contributed
- * to Berkeley by Steven McCanne of Lawrence Berkeley Laboratory.
+ * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence
+ * Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)bpfdesc.h	7.1 (Berkeley) 5/7/91
+ *      @(#)bpfdesc.h	8.1 (Berkeley) 6/10/93
  *
- * @(#) $Header: /cvsroot/src/sys/net/bpfdesc.h,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/sys/net/bpfdesc.h,v 1.1.1.2 1998/03/01 02:10:06 fvdl Exp $ (LBL)
  */
 
 /*
@@ -66,12 +67,18 @@ struct bpf_d {
 	struct bpf_insn *bd_filter; 	/* filter code */
 	u_long		bd_rcount;	/* number of packets received */
 	u_long		bd_dcount;	/* number of packets dropped */
-	struct proc *	bd_selproc;	/* process that last selected us */
 
 	u_char		bd_promisc;	/* true if listening promiscuously */
 	u_char		bd_state;	/* idle, waiting, or timed out */
-	u_char		bd_selcoll;	/* true if selects collide */
 	u_char		bd_immediate;	/* true to return on packet arrival */
+#if BSD < 199103
+	u_char		bd_selcoll;	/* true if selects collide */
+	int		bd_timedout;
+	struct proc *	bd_selproc;	/* process that last selected us */
+#else
+	u_char		bd_pad;		/* explicit alignment */
+	struct selinfo	bd_sel;		/* bsd select info */
+#endif
 };
 
 /*
@@ -85,3 +92,7 @@ struct bpf_if {
 	u_int bif_hdrlen;		/* length of header (with padding) */
 	struct ifnet *bif_ifp;		/* correspoding interface */
 };
+
+#ifdef KERNEL
+int	 bpf_setf __P((struct bpf_d *, struct bpf_program *));
+#endif

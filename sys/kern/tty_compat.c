@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,46 +30,45 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tty_compat.c	7.10 (Berkeley) 5/9/91
+ *	@(#)tty_compat.c	8.1 (Berkeley) 6/10/93
  */
 
 /* 
  * mapping routines for old line discipline (yuck)
  */
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 
-#include "param.h"
-#include "systm.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "termios.h"
-#include "proc.h"
-#include "file.h"
-#include "conf.h"
-#include "dkstat.h"
-#include "kernel.h"
-#include "syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/tty.h>
+#include <sys/termios.h>
+#include <sys/file.h>
+#include <sys/conf.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
 
 int ttydebug = 0;
 
 static struct speedtab compatspeeds[] = {
-	38400,	15,
-	19200,	14,
-	9600,	13,
-	4800,	12,
-	2400,	11,
-	1800,	10,
-	1200,	9,
-	600,	8,
-	300,	7,
-	200,	6,
-	150,	5,
-	134,	4,
-	110,	3,
-	75,	2,
-	50,	1,
-	0,	0,
-	-1,	-1,
+	{ 38400, 15 },
+	{ 19200, 14 },
+	{ 9600,	13 },
+	{ 4800,	12 },
+	{ 2400,	11 },
+	{ 1800,	10 },
+	{ 1200,	9 },
+	{ 600,	8 },
+	{ 300,	7 },
+	{ 200,	6 },
+	{ 150,	5 },
+	{ 134,	4 },
+	{ 110,	3 },
+	{ 75,	2 },
+	{ 50,	1 },
+	{ 0,	0 },
+	{ -1,	-1 },
 };
 static int compatspcodes[16] = { 
 	0, 50, 75, 110, 134, 150, 200, 300, 600, 1200,
@@ -79,7 +78,9 @@ static int compatspcodes[16] = {
 /*ARGSUSED*/
 ttcompat(tp, com, data, flag)
 	register struct tty *tp;
+	int com;
 	caddr_t data;
+	int flag;
 {
 
 	switch (com) {
@@ -256,6 +257,10 @@ ttcompatgetflags(tp)
 		else
 			flags |= RAW;
 	}
+	if (cflag&MDMBUF)
+		flags |= MDMBUF;
+	if ((cflag&HUPCL) == 0)
+		flags |= NOHANG;
 	if (oflag&OXTABS)
 		flags |= XTABS;
 	if (lflag&ECHOE)
@@ -268,7 +273,7 @@ ttcompatgetflags(tp)
 		flags |= CTLECH;
 	if ((iflag&IXANY) == 0)
 		flags |= DECCTQ;
-	flags |= lflag&(ECHO|MDMBUF|TOSTOP|FLUSHO|NOHANG|PENDIN|NOFLSH);
+	flags |= lflag&(ECHO|TOSTOP|FLUSHO|PENDIN|NOFLSH);
 if (ttydebug)
 	printf("getflags: %x\n", flags);
 	return (flags);
@@ -372,11 +377,19 @@ ttcompatsetlflags(tp, t)
 	else
 		lflag &= ~ECHOCTL;
 	if ((flags&DECCTQ) == 0)
-		lflag |= IXANY;
+		iflag |= IXANY;
 	else
-		lflag &= ~IXANY;
-	lflag &= ~(MDMBUF|TOSTOP|FLUSHO|NOHANG|PENDIN|NOFLSH);
-	lflag |= flags&(MDMBUF|TOSTOP|FLUSHO|NOHANG|PENDIN|NOFLSH);
+		iflag &= ~IXANY;
+	if (flags & MDMBUF)
+		cflag |= MDMBUF;
+	else
+		cflag &= ~MDMBUF;
+	if (flags&NOHANG)
+		cflag &= ~HUPCL;
+	else
+		cflag |= HUPCL;
+	lflag &= ~(TOSTOP|FLUSHO|PENDIN|NOFLSH);
+	lflag |= flags&(TOSTOP|FLUSHO|PENDIN|NOFLSH);
 	if (flags&(LITOUT|PASS8)) {
 		iflag &= ~ISTRIP;
 		cflag &= ~(CSIZE|PARENB);
@@ -395,4 +408,4 @@ ttcompatsetlflags(tp, t)
 	t->c_lflag = lflag;
 	t->c_cflag = cflag;
 }
-#endif	/* COMPAT_43 */
+#endif	/* COMPAT_43 || COMPAT_SUNOS */

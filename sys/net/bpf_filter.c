@@ -1,10 +1,11 @@
-/*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1990, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from the Stanford/CMU enet packet filter,
  * (net/enet.c) distributed as part of 4.3BSD, and code contributed
- * to Berkeley by Steven McCanne of Lawrence Berkeley Laboratory.
+ * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence
+ * Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,38 +35,37 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)bpf_filter.c	7.2 (Berkeley) 5/14/91
+ *      @(#)bpf_filter.c	8.1 (Berkeley) 6/10/93
  *
  * static char rcsid[] =
- * "@(#) $Header: /cvsroot/src/sys/net/bpf_filter.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $ (LBL)";
+ * "$Header: /cvsroot/src/sys/net/bpf_filter.c,v 1.1.1.2 1998/03/01 02:10:06 fvdl Exp $";
  */
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <net/bpf.h>
 
 #ifdef sun
 #include <netinet/in.h>
 #endif
 
-#if defined(sparc) || defined(mips)
-#define ALIGN
+#if defined(sparc) || defined(mips) || defined(ibm032)
+#define BPF_ALIGN
 #endif
 
-#ifndef ALIGN
-#define EXTRACT_SHORT(p)	(ntohs(*(u_short *)p))
+#ifndef BPF_ALIGN
+#define EXTRACT_SHORT(p)	((u_short)ntohs(*(u_short *)p))
 #define EXTRACT_LONG(p)		(ntohl(*(u_long *)p))
 #else
 #define EXTRACT_SHORT(p)\
 	((u_short)\
-		(*((u_char *)(p)+0)<<8|\
-		 *((u_char *)(p)+1)<<0))
+		((u_short)*((u_char *)p+0)<<8|\
+		 (u_short)*((u_char *)p+1)<<0))
 #define EXTRACT_LONG(p)\
-		(*((u_char *)(p)+0)<<24|\
-		 *((u_char *)(p)+1)<<16|\
-		 *((u_char *)(p)+2)<<8|\
-		 *((u_char *)(p)+3)<<0)
+		((u_long)*((u_char *)p+0)<<24|\
+		 (u_long)*((u_char *)p+1)<<16|\
+		 (u_long)*((u_char *)p+2)<<8|\
+		 (u_long)*((u_char *)p+3)<<0)
 #endif
 
 #ifdef KERNEL
@@ -134,7 +134,7 @@ m_xhalf(m, k, err)
 	register int k, *err;
 {
 	register int len;
-	register u_char *cp, *np;
+	register u_char *cp;
 	register struct mbuf *m0;
 
 	len = m->m_len;
@@ -159,10 +159,9 @@ m_xhalf(m, k, err)
 	*err = 1;
 	return 0;
 }
-
-
 #endif
 
+#include <net/bpf.h>
 /*
  * Execute the filter program starting at pc on the packet p
  * wirelen is the length of the original packet
@@ -175,7 +174,7 @@ bpf_filter(pc, p, wirelen, buflen)
 	u_int wirelen;
 	register u_int buflen;
 {
-	register long A, X;
+	register u_long A, X;
 	register int k;
 	long mem[BPF_MEMWORDS];
 
@@ -221,12 +220,12 @@ bpf_filter(pc, p, wirelen, buflen)
 				return 0;
 #endif
 			}
-#ifdef ALIGN
+#ifdef BPF_ALIGN
 			if (((int)(p + k) & 3) != 0)
 				A = EXTRACT_LONG(&p[k]);
 			else
 #endif
-				A = *(long *)(p + k);
+				A = ntohl(*(long *)(p + k));
 			continue;
 
 		case BPF_LD|BPF_H|BPF_ABS:
@@ -289,12 +288,12 @@ bpf_filter(pc, p, wirelen, buflen)
 				return 0;
 #endif
 			}
-#ifdef ALIGN
+#ifdef BPF_ALIGN
 			if (((int)(p + k) & 3) != 0)
 				A = EXTRACT_LONG(&p[k]);
 			else
 #endif
-				A = *(long *)(p + k);
+				A = ntohl(*(long *)(p + k));
 			continue;
 
 		case BPF_LD|BPF_H|BPF_IND:
@@ -541,8 +540,8 @@ bpf_validate(f, len)
 		/*
 		 * Check for constant division by 0.
 		 */
-		if (p->code == BPF_ALU|BPF_DIV|BPF_K && p->k == 0)
-			return;
+		if (p->code == (BPF_ALU|BPF_DIV|BPF_K) && p->k == 0)
+			return 0;
 	}
 	return BPF_CLASS(f[len - 1].code) == BPF_RET;
 }

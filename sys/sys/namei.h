@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1985, 1989, 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1985, 1989, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,56 +30,63 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)namei.h	7.15 (Berkeley) 5/15/91
+ *	@(#)namei.h	8.2 (Berkeley) 1/4/94
  */
 
-#ifndef _NAMEI_H_
-#define	_NAMEI_H_
+#ifndef _SYS_NAMEI_H_
+#define	_SYS_NAMEI_H_
 
 /*
  * Encapsulation of namei parameters.
  */
 struct nameidata {
 	/*
-	 * Arguments to namei.
+	 * Arguments to namei/lookup.
 	 */
 	caddr_t	ni_dirp;		/* pathname pointer */
 	enum	uio_seg ni_segflg;	/* location of pathname */
-	u_long	ni_nameiop;		/* see below */
+     /* u_long	ni_nameiop;		   namei operation */
+     /* u_long	ni_flags;		   flags to namei */
+     /* struct	proc *ni_proc;		   process requesting lookup */
 	/*
 	 * Arguments to lookup.
 	 */
-	struct	ucred *ni_cred;		/* credentials */
+     /* struct	ucred *ni_cred;		   credentials */
 	struct	vnode *ni_startdir;	/* starting directory */
 	struct	vnode *ni_rootdir;	/* logical root directory */
 	/*
-	 * Results
+	 * Results: returned from/manipulated by lookup
 	 */
 	struct	vnode *ni_vp;		/* vnode of result */
 	struct	vnode *ni_dvp;		/* vnode of intermediate directory */
 	/*
-	 * Shared between namei, lookup routines, and commit routines.
+	 * Shared between namei and lookup/commit routines.
 	 */
-	char	*ni_pnbuf;		/* pathname buffer */
 	long	ni_pathlen;		/* remaining chars in path */
-	char	*ni_ptr;		/* current location in pathname */
-	long	ni_namelen;		/* length of current component */
 	char	*ni_next;		/* next location in pathname */
-	u_long	ni_hash;		/* hash value of current component */
-	u_char	ni_loopcnt;		/* count of symlinks encountered */
-	u_char	ni_makeentry;		/* 1 => add entry to name cache */
-	u_char	ni_isdotdot;		/* 1 => current component name is .. */
-	u_char	ni_more;		/* 1 => symlink needs interpretation */
+	u_long	ni_loopcnt;		/* count of symlinks encountered */
 	/*
-	 * Side effects.
+	 * Lookup parameters: this structure describes the subset of
+	 * information from the nameidata structure that is passed
+	 * through the VOP interface.
 	 */
-	struct ufs_specific {		/* saved info for new dir entry */
-		off_t	ufs_endoff;	/* end of useful directory contents */
-		long	ufs_offset;	/* offset of free space in directory */
-		long	ufs_count;	/* size of free slot in directory */
-		ino_t	ufs_ino;	/* inode number of found directory */
-		u_long	ufs_reclen;	/* size of found directory entry */
-	} ni_ufs;
+	struct componentname {
+		/*
+		 * Arguments to lookup.
+		 */
+		u_long	cn_nameiop;	/* namei operation */
+		u_long	cn_flags;	/* flags to namei */
+		struct	proc *cn_proc;	/* process requesting lookup */
+		struct	ucred *cn_cred;	/* credentials */
+		/*
+		 * Shared between lookup and commit routines.
+		 */
+		char	*cn_pnbuf;	/* pathname buffer */
+		char	*cn_nameptr;	/* pointer to looked up name */
+		long	cn_namelen;	/* length of looked up component */
+		u_long	cn_hash;	/* hash value of looked up name */
+		long	cn_consume;	/* chars to consume in lookup() */
+	} ni_cnd;
 };
 
 #ifdef KERNEL
@@ -92,7 +99,7 @@ struct nameidata {
 #define	RENAME		3	/* setup for file renaming */
 #define	OPMASK		3	/* mask for operation */
 /*
- * namei operational modifiers
+ * namei operational modifier flags, stored in ni_cnd.flags
  */
 #define	LOCKLEAF	0x0004	/* lock inode on return */
 #define	LOCKPARENT	0x0008	/* want parent vnode returned locked */
@@ -115,12 +122,26 @@ struct nameidata {
  * name being sought. The caller is responsible for releasing the
  * buffer and for vrele'ing ni_startdir.
  */
-#define	NOCROSSMOUNT	0x0100	/* do not cross mount points */
-#define	REMOTE		0x0200	/* lookup for remote filesystem servers */
-#define	HASBUF		0x0400	/* has allocated pathname buffer */
-#define	SAVENAME	0x0800	/* save pathanme buffer */
-#define	SAVESTART	0x1000	/* save starting directory */
-#define PARAMASK	0xff00	/* mask of parameter descriptors */
+#define	NOCROSSMOUNT	0x00100	/* do not cross mount points */
+#define	RDONLY		0x00200	/* lookup with read-only semantics */
+#define	HASBUF		0x00400	/* has allocated pathname buffer */
+#define	SAVENAME	0x00800	/* save pathanme buffer */
+#define	SAVESTART	0x01000	/* save starting directory */
+#define ISDOTDOT	0x02000	/* current component name is .. */
+#define MAKEENTRY	0x04000	/* entry is to be added to name cache */
+#define ISLASTCN	0x08000	/* this is last component of pathname */
+#define ISSYMLINK	0x10000	/* symlink needs interpretation */
+#define PARAMASK	0xfff00	/* mask of parameter descriptors */
+/*
+ * Initialization of an nameidata structure.
+ */
+#define NDINIT(ndp, op, flags, segflg, namep, p) { \
+	(ndp)->ni_cnd.cn_nameiop = op; \
+	(ndp)->ni_cnd.cn_flags = flags; \
+	(ndp)->ni_segflg = segflg; \
+	(ndp)->ni_dirp = namep; \
+	(ndp)->ni_cnd.cn_proc = p; \
+}
 #endif
 
 /*
@@ -133,8 +154,8 @@ struct nameidata {
 #define	NCHNAMLEN	31	/* maximum name segment length we bother with */
 
 struct	namecache {
-	struct	namecache *nc_forw;	/* hash chain, MUST BE FIRST */
-	struct	namecache *nc_back;	/* hash chain, MUST BE FIRST */
+	struct	namecache *nc_forw;	/* hash chain */
+	struct	namecache **nc_back;	/* hash chain */
 	struct	namecache *nc_nxt;	/* LRU chain */
 	struct	namecache **nc_prev;	/* LRU chain */
 	struct	vnode *nc_dvp;		/* vnode of parent of name */
@@ -147,8 +168,8 @@ struct	namecache {
 
 #ifdef KERNEL
 u_long	nextvnodeid;
-int	namei __P((struct nameidata *ndp, struct proc *p));
-int	lookup __P((struct nameidata *ndp, struct proc *p));
+int	namei __P((struct nameidata *ndp));
+int	lookup __P((struct nameidata *ndp));
 #endif
 
 /*
@@ -164,4 +185,4 @@ struct	nchstats {
 	long	ncs_pass2;		/* names found with passes == 2 */
 	long	ncs_2passes;		/* number of times we attempt it */
 };
-#endif /* !_NAMEI_H_ */
+#endif /* !_SYS_NAMEI_H_ */
