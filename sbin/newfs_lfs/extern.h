@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 2000/10/10 20:24:52 is Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 2000/12/05 19:51:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,6 @@ u_int	log2 __P((u_int));
 int	make_lfs
 	    __P((int, struct disklabel *, struct partition *, int,
 		int, int, int, int));
-int	mkfs __P((struct partition *, char *, int, int));
 
 extern char	*progname;
 extern char	*special;
