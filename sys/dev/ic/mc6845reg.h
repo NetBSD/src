@@ -1,4 +1,4 @@
-/* $NetBSD: vgareg.h,v 1.2 1998/05/28 16:48:41 drochner Exp $ */
+/* $NetBSD: mc6845reg.h,v 1.1 1998/05/28 16:48:40 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,25 +32,14 @@
  *
  */
 
-struct reg_vgaattr { /* indexed via port 0x3c0 */
-	char palette[16];
-	char mode, overscan, colplen, horpixpan;
-	char colreset, misc;
+struct reg_mc6845 { /* indexed via port 0x3d4 (mono 0x3b4) */
+	char htotal, hdisple, hblanks, hblanke;
+	char hsyncs, hsynce, vtotal, overfll;
+	char irowaddr, maxrow, curstart, curend;
+	char startadrh, startadrl, cursorh, cursorl;
+	char vsyncs, vsynce, vde, offset;
+	char uloc, vbstart, vbend, mode;
+	char splitl;
 };
-#define VGA_ATC_INDEX 0
-#define VGA_ATC_DATAW 0
-#define VGA_ATC_DATAR 1
-
-struct reg_vgats { /* indexed via port 0x3c4 */
-	char syncreset, mode, wrplmask, fontsel, memmode;
-};
-#define VGA_TS_INDEX 4
-#define VGA_TS_DATA 5
-
-struct reg_vgagdc { /* indexed via port 0x3ce */
-	char setres, ensetres, colorcomp, rotfunc;
-	char rdplanesel, mode, misc, colorcare;
-	char bitmask;
-};
-#define VGA_GDC_INDEX 0xe
-#define VGA_GDC_DATA 0xf
+#define MC6845_INDEX 4
+#define MC6845_DATA 5
