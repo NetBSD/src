@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.89 2003/07/10 10:34:37 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.90 2003/07/14 00:41:17 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -101,7 +101,7 @@ TOOL_INSTALL_INFO?=	install-info
 TOOL_M4?=		m4
 TOOL_MAKEFS?=		makefs
 TOOL_MAKEINFO?=		makeinfo
-TOOL_MAKEWHATIS?=	makewhatis
+TOOL_MAKEWHATIS?=	/usr/libexec/makewhatis
 TOOL_MDSETIMAGE?=	mdsetimage
 TOOL_MENUC?=		menuc
 TOOL_MKCSMAPPER?=	mkcsmapper
