@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.119 2001/02/13 02:09:37 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.120 2001/02/19 21:32:37 aymeric Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -498,6 +498,7 @@
 #define	PCMCIA_VENDOR_BILLIONTON	-1	/* Billionton Systems Inc. */
 #define	PCMCIA_VENDOR_AMD	-1	/* AMD */
 #define	PCMCIA_VENDOR_INTERSIL	-1	/* Intersil */
+#define	PCMCIA_VENDOR_SYNERGY21	-1	/* Synergy 21 */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
@@ -624,3 +625,6 @@
 #define	PCMCIA_CIS_NTT_ME_WLAN	{ "NTT-ME", "11Mbps Wireless LAN PC Card", NULL, NULL }
 #define	PCMCIA_PRODUCT_NTT_ME_WLAN	-1
 #define	PCMCIA_STR_NTT_ME_WLAN	"NTT-ME 11Mbps Wireless LAN PC Card"
+#define	PCMCIA_CIS_SYNERGY21_S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" }
+#define	PCMCIA_PRODUCT_SYNERGY21_S21810	-1
+#define	PCMCIA_STR_SYNERGY21_S21810	"Synergy 21 S21810+ NE2000 Compatible Card"

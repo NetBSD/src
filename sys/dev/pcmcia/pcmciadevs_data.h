@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.119 2001/02/13 02:09:37 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.120 2001/02/19 21:32:38 aymeric Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -998,6 +998,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "NTT-ME 11Mbps Wireless LAN PC Card"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SYNERGY21_S21810,
+	    PCMCIA_CIS_SYNERGY21_S21810,
+	    0,
+	    "Synergy 21",
+	    "Synergy 21 S21810+ NE2000 Compatible Card"	},
+	},
+	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1443,6 +1450,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Intersil",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SYNERGY21, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Synergy 21",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }
