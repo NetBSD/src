@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.4 1999/01/06 12:01:09 drochner Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.5 1999/01/09 16:21:10 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -335,6 +335,12 @@ static const keysym_t pckbd_keydesc_us_declk[] = {
     KC(207),	KS_Select, /* replace end */
 };
 
+static const keysym_t pckbd_keydesc_swapctrlcaps[] = {
+/*  pos      command		normal		shifted */
+    KC(29), 			KS_Caps_Lock,
+    KC(58),  KS_Cmd1,		KS_Control_L,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -348,6 +354,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_IT,			KB_US,	pckbd_keydesc_it),
 	KBD_MAP(KB_UK,			KB_US,	pckbd_keydesc_uk),
 	KBD_MAP(KB_US | KB_DECLK,	KB_US,	pckbd_keydesc_us_declk),
+	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	pckbd_keydesc_swapctrlcaps),
 	{0, 0, 0, 0}
 };
 
