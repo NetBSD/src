@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.37.2.11 2002/06/20 03:43:04 nathanw Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.37.2.12 2002/09/17 21:19:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.37.2.11 2002/06/20 03:43:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.37.2.12 2002/09/17 21:19:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,6 +300,7 @@ linux_sys_fcntl(l, v, retval)
 	struct file *fp;
 	struct vnode *vp;
 	struct vattr va;
+	const struct cdevsw *cdev;
 	long pgid;
 	struct pgrp *pgrp;
 	struct tty *tp, *(*d_tty) __P((dev_t));
@@ -422,7 +423,7 @@ linux_sys_fcntl(l, v, retval)
 			return EBADF;
 		/* FILE_USE() not needed here */
 		if (fp->f_type != DTYPE_VNODE) {
-	    notty:
+	    not_tty:
 			/* Not a tty, proceed with common fcntl() */
 			cmd = cmd == LINUX_F_SETOWN ? F_SETOWN : F_GETOWN;
 			break;
@@ -431,12 +432,15 @@ linux_sys_fcntl(l, v, retval)
 		/* check that the vnode is a tty */
 		vp = (struct vnode *)fp->f_data;
 		if (vp->v_type != VCHR)
-			goto notty;
+			goto not_tty;
 		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
 			return error;
-		d_tty = cdevsw[major(va.va_rdev)].d_tty;
+		cdev = cdevsw_lookup(va.va_rdev);
+		if (cdev == NULL)
+			return (ENXIO);
+		d_tty = cdev->d_tty;
 		if (!d_tty || (!(tp = (*d_tty)(va.va_rdev))))
-			goto notty;
+			goto not_tty;
 
 		/* set tty pg_id appropriately */
 		if (cmd == LINUX_F_GETOWN) {

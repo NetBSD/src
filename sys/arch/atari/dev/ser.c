@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.14.8.3 2002/06/20 03:38:18 nathanw Exp $	*/
+/*	$NetBSD: ser.c,v 1.14.8.4 2002/09/17 21:13:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
+#include "opt_serconsole.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,8 +221,6 @@ struct ser_softc {
  */
 #define	SER_HW_CONSOLE	0x01
 
-cdev_decl(ser);
-
 void	ser_break __P((struct ser_softc *, int));
 void	ser_hwiflow __P((struct ser_softc *, int));
 void	ser_iflush __P((struct ser_softc *));
@@ -252,7 +251,6 @@ static void sersoft __P((void *));
 static void sertxint __P((struct ser_softc *, struct tty*));
 
 static volatile int ser_softintr_scheduled = 0;
-static int	sermajor;
 
 /*
  * Autoconfig stuff
@@ -265,6 +263,20 @@ struct cfattach ser_ca = {
 };
 
 extern struct cfdriver ser_cd;
+
+dev_type_open(seropen);
+dev_type_close(serclose);
+dev_type_read(serread);
+dev_type_write(serwrite);
+dev_type_ioctl(serioctl);
+dev_type_stop(serstop);
+dev_type_tty(sertty);
+dev_type_poll(serpoll);
+
+const struct cdevsw ser_cdevsw = {
+	seropen, serclose, serread, serwrite, serioctl,
+	serstop, sertty, serpoll, nommap, D_TTY
+};
 
 /*ARGSUSED*/
 static	int
@@ -320,13 +332,13 @@ void	*auxp;
 
 	callout_init(&sc->sc_diag_ch);
 
-#ifdef SERCONSOLE
+#if SERCONSOLE > 0
 	/*
 	 * Activate serial console when DCD present...
 	 */
 	if (!(MFP->mf_gpip & MCR_DCD))
 		SET(sc->sc_hwflags, SER_HW_CONSOLE);
-#endif /* SERCONSOLE */
+#endif /* SERCONSOLE > 0 */
 
 	printf("\n");
 	if (ISSET(sc->sc_hwflags, SER_HW_CONSOLE)) {
@@ -1422,17 +1434,15 @@ sercnprobe(cp)
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
-	for (sermajor = 0; sermajor < nchrdev; sermajor++)
-		if (cdevsw[sermajor].d_open == seropen)
-			break;
 
 	/* initialize required fields */
-	cp->cn_dev = makedev(sermajor, 0); /* XXX: LWP What unit? */
-#ifdef SERCONSOLE
+	/* XXX: LWP What unit? */
+	cp->cn_dev = makedev(cdevsw_lookup_major(&ser_cdevsw), 0);
+#if SERCONSOLE > 0
 	cp->cn_pri = CN_REMOTE;	/* Force a serial port console */
 #else
 	cp->cn_pri = CN_NORMAL;
-#endif
+#endif /* SERCONSOLE > 0 */
 }
 
 void

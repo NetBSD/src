@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.2.4.2 2002/02/28 04:13:27 nathanw Exp $	*/
+/*	$NetBSD: joy.c,v 1.2.4.3 2002/09/17 21:19:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -32,20 +32,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.2.4.2 2002/02/28 04:13:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.2.4.3 2002/09/17 21:19:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/conf.h>
 
 #include <machine/bus.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/joystick.h>
-#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
@@ -77,10 +77,17 @@ __KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.2.4.2 2002/02/28 04:13:27 nathanw Exp $");
 #define JOY_TIMEOUT   2000	/* 2 milliseconds */
 #endif
 
-int		joyopen __P((dev_t, int, int, struct proc *));
-int		joyclose __P((dev_t, int, int, struct proc *));
-
 extern struct cfdriver joy_cd;
+
+dev_type_open(joyopen);
+dev_type_close(joyclose);
+dev_type_read(joyread);
+dev_type_ioctl(joyioctl);
+
+const struct cdevsw joy_cdevsw = {
+	joyopen, joyclose, joyread, nowrite, joyioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 void
 joyattach(sc)

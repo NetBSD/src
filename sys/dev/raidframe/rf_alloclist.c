@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.4.14.4 2002/01/08 00:31:33 nathanw Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.4.14.5 2002/09/17 21:20:44 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.4.14.4 2002/01/08 00:31:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.4.14.5 2002/09/17 21:20:44 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -87,16 +87,14 @@ rf_ConfigureAllocList(listp)
 
 	rc = rf_mutex_init(&alist_mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex( __FILE__, __LINE__, rc);
 		return (rc);
 	}
 	al_free_list = NULL;
 	fl_hit_count = fl_miss_count = al_free_list_count = 0;
 	rc = rf_ShutdownCreate(listp, rf_ShutdownAllocList, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-		    __FILE__, __LINE__, rc);
+		rf_print_unable_to_add_shutdown( __FILE__, __LINE__, rc);
 		rf_mutex_destroy(&alist_mutex);
 		return (rc);
 	}

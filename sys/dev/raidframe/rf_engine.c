@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.10.2.3 2002/08/01 02:45:36 nathanw Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.10.2.4 2002/09/17 21:20:49 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.10.2.3 2002/08/01 02:45:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.10.2.4 2002/09/17 21:20:49 nathanw Exp $");
 
 #include "rf_threadstuff.h"
 
@@ -163,8 +163,7 @@ rf_ConfigureEngine(
 	}
 	rc = rf_ShutdownCreate(listp, rf_ShutdownEngine, raidPtr);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownEngine(NULL);
 	}
 	return (rc);
@@ -803,8 +802,12 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 
 			DO_LOCK(raidPtr);
 		}
-		while (!raidPtr->shutdown_engine && raidPtr->node_queue == NULL)
+		while (!raidPtr->shutdown_engine && 
+		       raidPtr->node_queue == NULL) {
+			DO_UNLOCK(raidPtr);
 			DO_WAIT(raidPtr);
+			DO_LOCK(raidPtr);
+		}
 	}
 	DO_UNLOCK(raidPtr);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.12.6.2 2002/08/01 02:41:29 nathanw Exp $	*/
+/*	$NetBSD: pvr.c,v 1.12.6.3 2002/09/17 21:14:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.12.6.2 2002/08/01 02:41:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.12.6.3 2002/09/17 21:14:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -613,17 +613,15 @@ pvrcnprobe(struct consdev *cndev)
 {
 #if NWSDISPLAY > 0
 	int maj, unit;
+	extern const struct cdevsw wsdisplay_cdevsw;
 #endif
 	cndev->cn_dev = NODEV;
 	cndev->cn_pri = CN_NORMAL;
 
 #if NWSDISPLAY > 0
 	unit = 0;
-	for (maj = 0; maj < nchrdev; maj++) {
-		if (cdevsw[maj].d_open == wsdisplayopen)
-			break;
-	}
-	if (maj != nchrdev) {
+	maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
+	if (maj != -1) {
 		cndev->cn_pri = CN_INTERNAL;
 		cndev->cn_dev = makedev(maj, unit);
 	}

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.14.4.3 2001/09/21 22:35:08 nathanw Exp $
+#	$NetBSD: Makefile,v 1.14.4.4 2002/09/17 21:15:10 nathanw Exp $
 
 KDIR=	/sys/arch/i386/include
 INCSDIR= /usr/include/i386
 
 INCS=	ansi.h aout_machdep.h apmvar.h asm.h \
 	bioscall.h bootinfo.h bswap.h byte_swap.h bus.h \
-	cdefs.h conf.h cpu.h cpufunc.h cputypes.h \
+	cdefs.h cpu.h cpufunc.h cputypes.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h freebsd_machdep.h \

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5.4.8 2002/08/01 02:41:13 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.5.4.9 2002/09/17 21:13:20 nathanw Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -69,10 +69,12 @@ define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_STAT			offsetof(struct lwp, l_stat)
+define	P_NRAS			offsetof(struct proc, p_nras)
 
 # Process status constants
 define	LSONPROC		LSONPROC
 
+define	PCB_TF			offsetof(struct pcb, pcb_tf)
 define	PCB_PAGEDIR		offsetof(struct pcb, pcb_pagedir)
 define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
 define	PCB_R8			offsetof(struct pcb, pcb_un.un_32.pcb32_r8)

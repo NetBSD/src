@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm.s,v 1.2.26.1 2002/01/08 00:26:08 nathanw Exp $	*/
+/*	$NetBSD: iwm.s,v 1.2.26.2 2002/09/17 21:15:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996-99 Hauke Fath.  All rights reserved.
@@ -1409,7 +1409,7 @@ driveCmd:
  */
 readSectHdr:	
 	moveq	#3,%d4			| Read 3 chars from IWM for sync
-	movew	#600,%d3		| Retries to sync to disk
+	movew	#1800,%d3		| Retries to sync to disk
 	moveq	#0,%d2			| Clear scratch regs
 	moveq	#0,%d1
 	moveq	#0,%d0

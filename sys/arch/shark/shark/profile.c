@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.1.2.3 2002/06/24 22:07:25 nathanw Exp $	*/
+/*	$NetBSD: profile.c,v 1.1.2.4 2002/09/17 21:17:35 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -110,6 +110,15 @@ void profStart(struct profStartInfo *);
 static void profEnter(struct profHashTable * , unsigned int);
 void displayTable(struct profHashTable * );
 
+dev_type_open(profopen);
+dev_type_close(profclose);
+dev_type_read(profread);
+dev_type_ioctl(profioctl);
+
+const struct cdevsw prof_cdevsw = {
+	profopen, profclose, profread, nowrite, profioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 void 
 profilerattach(n)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.21 2002/08/20 15:21:29 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.22 2002/09/17 21:13:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -141,17 +141,17 @@ ENTRY(setrunqueue)
 .Lsetrunqueue_erg:
 	mov	r2, r1
 	mov	r1, r0
-	add	r0, pc, #Ltext1 - . - 8
+	add	r0, pc, #.Ltext1 - . - 8
 	bl	_C_LABEL(printf)
 
 	ldr	r2, .Lqs
 	ldr	r1, [r2]
-	add	r0, pc, #Ltext2 - . - 8
+	add	r0, pc, #.Ltext2 - . - 8
 	b	_C_LABEL(panic)	
 
-Ltext1:
+.Ltext1:
 	.asciz	"setrunqueue : %08x %08x\n"
-Ltext2:
+.Ltext2:
 	.asciz	"setrunqueue : [qs]=%08x qs=%08x\n"
 	.align	0
 #endif
@@ -633,25 +633,37 @@ ENTRY(cpu_switch)
 
         msr	cpsr_c, r3		/* Restore the old mode */
 
+	/* Restore all the save registers */
+	add	r7, r1, #PCB_R8
+	ldmia	r7, {r8-r13}
+
+	mov	r7, r1			/* preserve PCB pointer */
+
 #ifdef ARMFPE
 	add	r0, r9, #(USER_SIZE) & 0x00ff
 	add	r0, r0, #(USER_SIZE) & 0xff00 
 	bl	_C_LABEL(arm_fpe_core_changecontext)
 #endif
 
-	/* Restore all the save registers */
-	add	r7, r9, #PCB_R8
-	ldmia	r7, {r8-r13}
-
+	/* We can enable interrupts again */
+	IRQenable
 	/*
 	 * NOTE: We can now no longer use r8-r13.
 	 */
 
 	/* rem: r4 = return value */
 	/* rem: r6 = new lwp */
+	/* rem: r7 = new PCB */
 
-	/* We can enable interrupts again */
-	IRQenable
+	/* 
+	 * Check for restartable atomic sequences (RAS).
+	 */
+
+	ldr	r2, [r6, #(L_PROC)]
+	ldr	r2, [r2, #(P_NRAS)]
+	ldr	r4, [r7, #(PCB_TF)]	/* r4 = trapframe (used below) */
+	teq	r2, #0			/* p->p_nras == 0? */
+	bne	.Lswitch_do_ras		/* no, check for one */
 
 .Lswitch_return:
 
@@ -667,6 +679,14 @@ ENTRY(cpu_switch)
 	 * cpu_switch() was called and return.
 	 */
 	ldmfd	sp!, {r4-r7, pc}
+
+.Lswitch_do_ras:
+	ldr	r1, [r4, #(TF_PC)]	/* second ras_lookup() arg */
+	mov	r0, r6			/* first ras_lookup() arg */
+	bl	_C_LABEL(ras_lookup)
+	cmn	r0, #1			/* -1 means "not in a RAS" */
+	strne	r0, [r4, #(TF_PC)]
+	b	.Lswitch_return
 
 .Lswitch_exited:
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.169.2.9 2002/08/01 02:45:45 nathanw Exp $	*/
+/*	$NetBSD: sd.c,v 1.169.2.10 2002/09/17 21:21:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.9 2002/08/01 02:45:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.10 2002/09/17 21:21:17 nathanw Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -108,6 +108,24 @@ int	sd_reassign_blocks __P((struct sd_softc *, u_long));
 int	sd_interpret_sense __P((struct scsipi_xfer *));
 
 extern struct cfdriver sd_cd;
+
+dev_type_open(sdopen);
+dev_type_close(sdclose);
+dev_type_read(sdread);
+dev_type_write(sdwrite);
+dev_type_ioctl(sdioctl);
+dev_type_strategy(sdstrategy);
+dev_type_dump(sddump);
+dev_type_size(sdsize);
+
+const struct bdevsw sd_bdevsw = {
+	sdopen, sdclose, sdstrategy, sdioctl, sddump, sdsize, D_DISK
+};
+
+const struct cdevsw sd_cdevsw = {
+	sdopen, sdclose, sdread, sdwrite, sdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
 
 struct dkdriver sddkdriver = { sdstrategy };
 
@@ -259,12 +277,8 @@ sddetach(self, flags)
 	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
-	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
-		if (bdevsw[bmaj].d_open == sdopen)
-			break;
-	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == sdopen)
-			break;
+	bmaj = bdevsw_lookup_major(&sd_bdevsw);
+	cmaj = cdevsw_lookup_major(&sd_cdevsw);
 
 	s = splbio();
 
@@ -787,15 +801,11 @@ sdstart(periph)
 		/*
 		 * Figure out what flags to use.
 		 */
-		flags = XS_CTL_NOSLEEP|XS_CTL_ASYNC;
+		flags = XS_CTL_NOSLEEP|XS_CTL_ASYNC|XS_CTL_SIMPLE_TAG;
 		if (bp->b_flags & B_READ)
 			flags |= XS_CTL_DATA_IN;
 		else
 			flags |= XS_CTL_DATA_OUT;
-		if (bp->b_flags & B_ORDERED)
-			flags |= XS_CTL_ORDERED_TAG;
-		else
-			flags |= XS_CTL_SIMPLE_TAG;
 
 		/*
 		 * Call the routine that chats with the adapter.

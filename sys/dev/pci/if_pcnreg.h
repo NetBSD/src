@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcnreg.h,v 1.1.6.3 2002/01/08 00:31:04 nathanw Exp $	*/
+/*	$NetBSD: if_pcnreg.h,v 1.1.6.4 2002/09/17 21:20:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -52,6 +52,7 @@
  */
 
 #define	PCN_PCI_CBIO	(PCI_MAPREG_START + 0x00)
+#define	PCN_PCI_CBMEM	(PCI_MAPREG_START + 0x04)
 
 /*
  * I/O map in Word I/O mode.

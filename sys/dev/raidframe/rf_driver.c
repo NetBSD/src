@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.39.2.8 2002/08/13 02:19:51 nathanw Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.39.2.9 2002/09/17 21:20:48 nathanw Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.39.2.8 2002/08/13 02:19:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.39.2.9 2002/09/17 21:20:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.39.2.8 2002/08/13 02:19:51 nathanw E
 #include "rf_engine.h"
 #include "rf_mcpair.h"
 #include "rf_nwayxor.h"
-#include "rf_debugprint.h"
 #include "rf_copyback.h"
 #include "rf_driver.h"
 #include "rf_options.h"
@@ -174,8 +173,7 @@ rf_BootRaidframe()
 
 	rc = rf_lkmgr_mutex_init(&configureMutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex( __FILE__, __LINE__, rc);
 		RF_PANIC();
 	}
 	configureCount = 0;
@@ -318,8 +316,7 @@ rf_Shutdown(raidPtr)
 #define DO_RAID_MUTEX(_m_) { \
 	rc = rf_create_managed_mutex(&raidPtr->shutdownList, (_m_)); \
 	if (rc) { \
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", \
-			__FILE__, __LINE__, rc); \
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc); \
 		DO_RAID_FAIL(); \
 		return(rc); \
 	} \
@@ -328,8 +325,7 @@ rf_Shutdown(raidPtr)
 #define DO_RAID_COND(_c_) { \
 	rc = rf_create_managed_cond(&raidPtr->shutdownList, (_c_)); \
 	if (rc) { \
-		RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n", \
-			__FILE__, __LINE__, rc); \
+		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc); \
 		DO_RAID_FAIL(); \
 		return(rc); \
 	} \
@@ -349,8 +345,7 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	if (isconfigged == 0) {
 		rc = rf_create_managed_mutex(&globalShutdown, &rf_printf_mutex);
 		if (rc) {
-			RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-			    __LINE__, rc);
+			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 			rf_ShutdownList(&globalShutdown);
 			return (rc);
 		}
@@ -394,8 +389,7 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	    (void (*) (void *)) rf_FreeAllocList,
 	    raidPtr->cleanupList);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-		    __FILE__, __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		DO_RAID_FAIL();
 		return (rc);
 	}
@@ -517,14 +511,12 @@ init_rad(desc)
 
 	rc = rf_mutex_init(&desc->mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (rc);
 	}
 	rc = rf_cond_init(&desc->cond);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
 		rf_mutex_destroy(&desc->mutex);
 		return (rc);
 	}
@@ -559,8 +551,7 @@ rf_ConfigureRDFreeList(listp)
 	}
 	rc = rf_ShutdownCreate(listp, rf_ShutdownRDFreeList, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownRDFreeList(NULL);
 		return (rc);
 	}
@@ -613,7 +604,6 @@ rf_AllocRaidAccDesc(
 	desc->callbackArg = NULL;
 	desc->next = NULL;
 	desc->head = desc;
-	desc->numPending = 0;
 	desc->cleanupList = NULL;
 	rf_MakeAllocList(desc->cleanupList);
 	return (desc);
@@ -737,6 +727,19 @@ rf_FailDisk(
 	raidPtr->status[frow] = rf_rs_degraded;
 	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
+
+	/* Close the component, so that it's not "locked" if someone 
+	   else want's to use it! */
+
+	rf_close_component(raidPtr, raidPtr->raid_cinfo[frow][fcol].ci_vp,
+			   raidPtr->Disks[frow][fcol].auto_configured);
+	raidPtr->raid_cinfo[frow][fcol].ci_vp = NULL;
+
+	/* Need to mark the component as not being auto_configured 
+	   (in case it was previously). */
+
+	raidPtr->Disks[frow][fcol].auto_configured = 0;
+
 	if (initRecon)
 		rf_ReconstructFailedDisk(raidPtr, frow, fcol);
 	return (0);
@@ -880,8 +883,7 @@ rf_InitThroughputStats(
 	/* these used by user-level raidframe only */
 	rc = rf_create_managed_mutex(listp, &raidPtr->throughputstats.mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (rc);
 	}
 	raidPtr->throughputstats.sum_io_us = 0;
@@ -1004,4 +1006,34 @@ rf_print_assert_panic_message(line,file,condition)
 	sprintf(rf_panicbuf,
 		"raidframe error at line %d file %s (failed asserting %s)\n",
 		line, file, condition);
+}
+
+void
+rf_print_unable_to_init_mutex(file,line,rc)
+	char *file;
+	int line;
+	int rc;
+{
+	RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n",
+		     file, line, rc);
+}
+
+void
+rf_print_unable_to_init_cond(file,line,rc)
+	char *file;
+	int line;
+	int rc;
+{
+	RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n",
+		     file, line, rc);
+}
+
+void
+rf_print_unable_to_add_shutdown(file,line,rc)
+	char *file;
+	int line;
+	int rc;
+{
+	RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
+		     file, line, rc);
 }

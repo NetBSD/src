@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.1.4.5 2002/04/01 07:47:08 nathanw Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.1.4.6 2002/09/17 21:21:03 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.1.4.5 2002/04/01 07:47:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.1.4.6 2002/09/17 21:21:03 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.1.4.5 2002/04/01 07:47:08 nathanw E
 
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
-#include <machine/conf.h>
 
 #include <dev/sbus/sbusvar.h>
 

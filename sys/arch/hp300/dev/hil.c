@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.42.8.5 2002/08/01 02:41:38 nathanw Exp $	*/
+/*	$NetBSD: hil.c,v 1.42.8.6 2002/09/17 21:14:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.42.8.5 2002/08/01 02:41:38 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.42.8.6 2002/09/17 21:14:32 nathanw Exp $");
 
 #include "opt_compat_hpux.h"
 #include "rnd.h"
@@ -105,8 +105,18 @@ extern struct kbdmap kbd_map[];
 /* symbolic sleep message strings */
 char hilin[] = "hilin";
 
-cdev_decl(hil);
 extern struct cfdriver hil_cd;
+
+dev_type_open(hilopen);
+dev_type_close(hilclose);
+dev_type_read(hilread);
+dev_type_ioctl(hilioctl);
+dev_type_poll(hilpoll);
+
+const struct cdevsw hil_cdevsw = {
+	hilopen, hilclose, hilread, nullwrite, hilioctl,
+	nostop, notty, hilpoll, nommap,
+};
 
 void	hilattach_deferred __P((struct device *));
 
@@ -756,16 +766,6 @@ hpuxhilioctl(dev, cmd, data, flag)
 	return(0);
 }
 #endif
-
-/* ARGSUSED */
-paddr_t
-hilmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
-{
-	return (-1);
-}
 
 /*ARGSUSED*/
 int

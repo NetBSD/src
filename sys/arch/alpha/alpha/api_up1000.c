@@ -1,4 +1,4 @@
-/* $NetBSD: api_up1000.c,v 1.8.4.2 2002/01/08 00:22:50 nathanw Exp $ */
+/* $NetBSD: api_up1000.c,v 1.8.4.3 2002/09/17 21:12:34 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,18 +34,19 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.8.4.2 2002/01/08 00:22:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.8.4.3 2002/09/17 21:12:34 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/conf.h>
 #include <dev/cons.h>
 
 #include <machine/alpha.h>
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
+#include <machine/cpuconf.h>
 #include <machine/bus.h>
 
 #include <dev/ic/comreg.h>

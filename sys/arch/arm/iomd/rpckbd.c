@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.1.4.3 2002/04/01 07:39:11 nathanw Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.1.4.4 2002/09/17 21:13:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@
 #include <sys/errno.h>
 
 #include <machine/bus.h>
-#include <machine/conf.h>
 
 #include "opt_pckbd_layout.h"
 #include "opt_wsdisplay_compat.h"

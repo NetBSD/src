@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.52.2.11 2002/08/01 02:46:17 nathanw Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.52.2.12 2002/09/17 21:21:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.52.2.11 2002/08/01 02:46:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.52.2.12 2002/09/17 21:21:53 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.52.2.11 2002/08/01 02:46:17 nath
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/stat.h>
+#include <sys/conf.h>
 
 #include <isofs/cd9660/iso.h>
 #include <isofs/cd9660/cd9660_extern.h>
@@ -207,7 +208,7 @@ cd9660_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return ENOTBLK;
 	}
-	if (major(devvp->v_rdev) >= nblkdev) {
+	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
 		vrele(devvp);
 		return ENXIO;
 	}

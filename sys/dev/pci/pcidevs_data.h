@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.310.2.19 2002/08/27 23:46:51 nathanw Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.310.2.20 2002/09/17 21:20:23 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -356,6 +356,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Acard",
 	    "ATP860-A UDMA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP865,
+	    0,
+	    "Acard",
+	    "ATP865 UDMA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP865A,
+	    0,
+	    "Acard",
+	    "ATP865-A UDMA IDE Controller",
 	},
 	{
 	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6710,
@@ -3242,6 +3254,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Integraphics Systems",
 	    "IGA 1682",
+	},
+	{
+	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2000,
+	    0,
+	    "Integraphics Systems",
+	    "CyberPro 2000",
+	},
+	{
+	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2010,
+	    0,
+	    "Integraphics Systems",
+	    "CyberPro 2010",
 	},
 	{
 	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8849,

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.2.2.9 2002/08/27 23:46:24 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.2.2.10 2002/09/17 21:19:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.2.2.9 2002/08/27 23:46:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.2.2.10 2002/09/17 21:19:05 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -357,7 +357,7 @@ netbsd32_execve2(l, uap, retval)
 		}
 #ifdef PMAP_NEED_PROCWR
 		/* This is code. Let the pmap do what is needed. */
-		pmap_procwr(p, (vaddr_t)p->p_sigacts->ps_sigcode, szsigcode);
+		pmap_procwr(p, (vaddr_t)p->p_sigctx.ps_sigcode, szsigcode);
 #endif
 	}
 

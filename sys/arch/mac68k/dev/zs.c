@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.34.8.2 2002/04/01 07:40:49 nathanw Exp $	*/
+/*	$NetBSD: zs.c,v 1.34.8.3 2002/09/17 21:15:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -91,7 +91,6 @@
  * Some warts needed by z8530tty.c -
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /*
  * abort detection on console will now timeout after iterating on a loop
@@ -877,7 +876,6 @@ void  zs_write_data(cs, val)
 cons_decl(zs);
 
 static void	zscnsetup __P((void));
-extern int	zsopen __P(( dev_t dev, int flags, int mode, struct proc *p));
 
 /*
  * Console functions.
@@ -943,13 +941,10 @@ zscnprobe(struct consdev * cp)
 {
 	extern u_long   IOBase;
 	int     maj, unit, i;
+	extern const struct cdevsw zstty_cdevsw;
 
-	for (maj = 0; maj < nchrdev; maj++) {
-		if (cdevsw[maj].d_open == zsopen) {
-			break;
-		}
-	}
-	if (maj != nchrdev) {
+	maj = cdevsw_lookup_major(&zstty_cdevsw);
+	if (maj != -1) {
 		cp->cn_pri = CN_NORMAL;		 /* Lower than CN_INTERNAL */
 		if (mac68k_machine.serial_console != 0) {
 			cp->cn_pri = CN_REMOTE;	 /* Higher than CN_INTERNAL */

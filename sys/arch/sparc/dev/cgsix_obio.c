@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.8.8.1 2002/04/01 07:42:39 nathanw Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.8.8.2 2002/09/17 21:17:41 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,6 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
-#include <machine/conf.h>
 
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>

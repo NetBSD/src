@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.3.2.7 2002/08/13 02:19:16 nathanw Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.3.2.8 2002/09/17 21:19:09 nathanw Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -111,7 +111,7 @@ LIBCOMPAT?=	${COMPATLIB_PROF}
 ## Each port should have a corresponding section with settings for
 ## MD_CFILES, MD_SFILES, and MD_OBJS, along with build rules for same.
 ##
-MI_CFILES=ioconf.c param.c
+MI_CFILES=devsw.c ioconf.c param.c
 # the need for a MI_SFILES variable is dubitable at best
 MI_OBJS=${MI_CFILES:S/.c/.o/}
 
@@ -140,7 +140,7 @@ ${_cfile:T:R}.o: ${_cfile}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${LIBCOMPAT} ${LIBKERN}
-SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ}
+SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ} .gdbinit
 SYSTEM_LD_HEAD?=	@rm -f $@
 SYSTEM_LD?=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
@@ -314,6 +314,21 @@ ID: Makefile depend
 	`sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' .depend | tr ' ' '\n' \
 	| sort -u`
 
+.endif
+
+.include "${S}/gdbscripts/Makefile.inc"
+
+EXTRA_CLEAN+= .gdbinit
+.gdbinit: Makefile ${S}/gdbscripts/Makefile.inc
+	@echo building GDB initialization file
+	rm -f .gdbinit
+.for __gdbinit in ${SYS_GDBINIT}
+	echo "source ${S}/gdbscripts/${__gdbinit}" >> .gdbinit
+.endfor
+.if defined(GDBINIT) && !empty(GDBINIT)
+.for __gdbinit in ${GDBINIT}
+	echo "source ${__gdbinit}" >> .gdbinit
+.endfor
 .endif
 
 ##

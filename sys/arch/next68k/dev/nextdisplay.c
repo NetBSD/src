@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.6.8.3 2002/08/01 02:42:49 nathanw Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.6.8.4 2002/09/17 21:16:28 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -38,17 +38,20 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/cpu.h>
 
 #include <next68k/next68k/nextrom.h>
 
+#include <next68k/dev/intiovar.h>
 #include <next68k/dev/nextdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
 
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wscons_raster.h>
 #include <dev/wscons/wsdisplayvar.h>
+
+extern int turbo;
 
 int nextdisplay_match __P((struct device *, struct cfdata *, void *));
 void nextdisplay_attach __P((struct device *, struct device *, void *));
@@ -143,6 +146,7 @@ nextdisplay_match(parent, match, aux)
 	if ((rom_machine_type == NeXT_WARP9)
 	    || (rom_machine_type == NeXT_X15)
 	    || (rom_machine_type == NeXT_WARP9C)
+	    || (rom_machine_type == NeXT_TURBO_MONO)
 	    || (rom_machine_type == NeXT_TURBO_COLOR))
 		return (1);
 	else 
@@ -170,10 +174,10 @@ nextdisplay_init(dc, color)
 	dc->dc_paddr = color ? COLORP(addr) : MONOP(addr);
 	dc->dc_size = color ? NEXT_P_C16_VIDEOSIZE : NEXT_P_VIDEOSIZE;
 
-	dc->dc_wid = color ? 1152 : 1152; 
-	dc->dc_ht = color ? 832 : 832;
+	dc->dc_wid = 1120;
+	dc->dc_ht = 832;
 	dc->dc_depth = color ? 16 : 2; 
-	dc->dc_rowbytes = dc->dc_wid * dc->dc_depth / 8;
+	dc->dc_rowbytes = (turbo ? 1120 : 1152) * dc->dc_depth / 8;
 
 	dc->dc_videobase = dc->dc_vaddr;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.51.2.4 2002/02/28 04:13:48 nathanw Exp $	*/
+/*	$NetBSD: wt.c,v 1.51.2.5 2002/09/17 21:20:03 nathanw Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.51.2.4 2002/02/28 04:13:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.51.2.5 2002/09/17 21:20:03 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,9 +147,23 @@ struct wt_softc {
 	struct wtregs regs;
 };
 
-/* XXX: These don't belong here really */
-cdev_decl(wt);
-bdev_decl(wt);
+dev_type_open(wtopen);
+dev_type_close(wtclose);
+dev_type_read(wtread);
+dev_type_write(wtwrite);
+dev_type_ioctl(wtioctl);
+dev_type_strategy(wtstrategy);
+dev_type_dump(wtdump);
+dev_type_size(wtsize);
+
+const struct bdevsw wt_bdevsw = {
+	wtopen, wtclose, wtstrategy, wtioctl, wtdump, wtsize, D_TAPE
+};
+
+const struct cdevsw wt_cdevsw = {
+	wtopen, wtclose, wtread, wtwrite, wtioctl,
+	nostop, notty, nopoll, nommap, D_TAPE
+};
 
 int wtwait __P((struct wt_softc *sc, int catch, char *msg));
 int wtcmd __P((struct wt_softc *sc, int cmd));

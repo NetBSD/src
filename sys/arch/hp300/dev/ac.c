@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.12.12.2 2002/04/01 07:39:49 nathanw Exp $	*/
+/*	$NetBSD: ac.c,v 1.12.12.3 2002/09/17 21:14:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac.c,v 1.12.12.2 2002/04/01 07:39:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac.c,v 1.12.12.3 2002/09/17 21:14:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,17 +98,12 @@ __KERNEL_RCSID(0, "$NetBSD: ac.c,v 1.12.12.2 2002/04/01 07:39:49 nathanw Exp $")
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
 
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
 #include <hp300/dev/acioctl.h>
 #include <hp300/dev/acvar.h>
-
-/* cdev_decl(ac); */
-/* XXX we should use macros to do these... */
-int	acopen __P((dev_t, int, int, struct proc *));
-int	acclose __P((dev_t, int, int, struct proc *));
-int	acioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 
 static int	acmatch __P((struct device *, struct cfdata *, void *));
 static void	acattach __P((struct device *, struct device *, void *));
@@ -118,6 +113,15 @@ struct cfattach ac_ca = {
 };
 
 extern struct cfdriver ac_cd;
+
+dev_type_open(acopen);
+dev_type_close(acclose);
+dev_type_ioctl(acioctl);
+
+const struct cdevsw ac_cdevsw = {
+	acopen, acclose, noread, nowrite, acioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 void	acstart __P((void *));
 void	acgo __P((void *));

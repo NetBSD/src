@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.20 2002/08/27 23:47:23 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.21 2002/09/17 21:22:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.20 2002/08/27 23:47:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.21 2002/09/17 21:22:02 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.20 2002/08/27 23:47:23 nathanw 
 #include <sys/ptrace.h>
 #include <sys/acct.h>
 #include <sys/filedesc.h>
+#include <sys/ras.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
 #include <sys/sa.h>
@@ -201,6 +202,10 @@ exit1(struct lwp *l, int rv)
 	if (p->p_nlwps > 1)
 		exit_lwps(l);
 
+#if defined(__HAVE_RAS)
+	ras_purgeall(p);
+#endif
+
 	/*
 	 * Close open files and release open-file table.
 	 * This may block!
@@ -284,11 +289,11 @@ exit1(struct lwp *l, int rv)
 	/*
 	 * Give orphaned children to init(8).
 	 */
-	q = p->p_children.lh_first;
+	q = LIST_FIRST(&p->p_children);
 	if (q)		/* only need this if any child is S_ZOMB */
 		wakeup((caddr_t)initproc);
 	for (; q != 0; q = nq) {
-		nq = q->p_sibling.le_next;
+		nq = LIST_NEXT(q, p_sibling);
 		proc_reparent(q, initproc);
 		/*
 		 * Traced processes are killed
@@ -354,7 +359,7 @@ exit1(struct lwp *l, int rv)
 		 * parent, so in case he was wait(2)ing, he will
 		 * continue.
 		 */
-		if (pp->p_children.lh_first == NULL)
+		if (LIST_FIRST(&pp->p_children) == NULL)
 			wakeup((caddr_t)pp);
 	}
 
@@ -597,7 +602,7 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 	q = l->l_proc;
  loop:
 	nfound = 0;
-	for (p = q->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
+	LIST_FOREACH(p, &q->p_children, p_sibling) {
 		if (SCARG(uap, pid) != WAIT_ANY &&
 		    p->p_pid != SCARG(uap, pid) &&
 		    p->p_pgid != -SCARG(uap, pid))

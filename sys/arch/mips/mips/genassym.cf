@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25.2.6 2002/04/01 07:41:03 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.25.2.7 2002/09/17 21:15:44 nathanw Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -70,6 +70,8 @@ define	LSONPROC		LSONPROC
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_UPTE_0		offsetof(struct lwp, l_md.md_upte[0])
 define	L_MD_UPTE_1		offsetof(struct lwp, l_md.md_upte[1])
+
+define	P_NRAS			offsetof(struct proc, p_nras)
 define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.5.2.6 2002/07/12 01:40:11 nathanw Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.5.2.7 2002/09/17 21:21:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.5.2.6 2002/07/12 01:40:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.5.2.7 2002/09/17 21:21:27 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ struct cfattach kbd_ca = {
 };
 
 struct  linesw sunkbd_disc =
-	{ "sunkbd", 7, ttylopen, ttylclose, ttyerrio, ttyerrio, nullioctl,
+	{ "sunkbd", 7, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
 	  sunkbdinput, sunkbdstart, nullmodem, ttpoll }; /* 7- SUNKBDDISC */
 
 /*
@@ -220,14 +220,16 @@ sunkbdiopen(dev, flags)
 	struct tty *tp = (struct tty *)k->k_priv;
 	struct proc *p = curproc ? curproc : &proc0;
 	struct termios t;
-	int maj;
+	const struct cdevsw *cdev;
 	int error;
 
-	maj = major(tp->t_dev);
+	cdev = cdevsw_lookup(tp->t_dev);
+	if (cdev == NULL)
+		return (ENXIO);
 
 	/* Open the lower device */
-	if ((error = (*cdevsw[maj].d_open)(tp->t_dev, O_NONBLOCK|flags,
-					   0/* ignored? */, p)) != 0)
+	if ((error = (*cdev->d_open)(tp->t_dev, O_NONBLOCK|flags,
+				     0/* ignored? */, p)) != 0)
 		return (error);
 
 	/* Now configure it for the console. */

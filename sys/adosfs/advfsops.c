@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.44.2.8 2002/08/01 02:40:53 nathanw Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.44.2.9 2002/09/17 21:12:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.44.2.8 2002/08/01 02:40:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.44.2.9 2002/09/17 21:12:18 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.44.2.8 2002/08/01 02:40:53 nathanw Ex
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/buf.h>
+#include <sys/conf.h>
 #include <adosfs/adosfs.h>
 
 void adosfs_init __P((void));
@@ -134,7 +135,7 @@ adosfs_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return (ENOTBLK);
 	}
-	if (major(devvp->v_rdev) >= nblkdev) {
+	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
 		vrele(devvp);
 		return (ENXIO);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.35.6.2 2002/08/13 02:18:52 nathanw Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.35.6.3 2002/09/17 21:17:41 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,7 +70,6 @@
 #include <dev/vme/vmevar.h>
 
 #include <machine/eeprom.h>
-#include <machine/conf.h>
 #include <machine/cgtworeg.h>
 
 
@@ -95,18 +94,24 @@ static void	cgtwounblank __P((struct device *));
 int		cgtwogetcmap __P((struct cgtwo_softc *, struct fbcmap *));
 int		cgtwoputcmap __P((struct cgtwo_softc *, struct fbcmap *));
 
-/* cdevsw prototypes */
-cdev_decl(cgtwo);
-
 struct cfattach cgtwo_ca = {
 	sizeof(struct cgtwo_softc), cgtwomatch, cgtwoattach
 };
 
 extern struct cfdriver cgtwo_cd;
 
+dev_type_open(cgtwoopen);
+dev_type_ioctl(cgtwoioctl);
+dev_type_mmap(cgtwommap);
+
+const struct cdevsw cgtwo_cdevsw = {
+	cgtwoopen, nullclose, noread, nowrite, cgtwoioctl,
+	nostop, notty, nopoll, cgtwommap,
+};
+
 /* frame buffer generic driver */
 static struct fbdriver cgtwofbdriver = {
-	cgtwounblank, cgtwoopen, cgtwoclose, cgtwoioctl, cgtwopoll, cgtwommap
+	cgtwounblank, cgtwoopen, nullclose, cgtwoioctl, nopoll, cgtwommap
 };
 
 /*
@@ -234,16 +239,6 @@ cgtwoopen(dev, flags, mode, p)
 }
 
 int
-cgtwoclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-int
 cgtwoioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
@@ -290,16 +285,6 @@ cgtwoioctl(dev, cmd, data, flags, p)
 		return (ENOTTY);
 	}
 	return (0);
-}
-
-int
-cgtwopoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
 }
 
 /*

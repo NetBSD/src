@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.6.14.2 2001/11/14 19:15:52 nathanw Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.6.14.3 2002/09/17 21:20:57 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.6.14.2 2001/11/14 19:15:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.6.14.3 2002/09/17 21:20:57 nathanw Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -107,8 +107,7 @@ rf_MakeReconMap(raidPtr, ru_sectors, disk_sectors, spareUnitsPerDisk)
 
 	rc = rf_mutex_init(&p->mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		RF_Free(p->status, num_rus * sizeof(RF_ReconMapListElem_t *));
 		RF_Free(p, sizeof(RF_ReconMap_t));
 		return (NULL);

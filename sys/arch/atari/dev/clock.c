@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.27.6.4 2002/07/12 01:39:26 nathanw Exp $	*/
+/*	$NetBSD: clock.c,v 1.27.6.5 2002/09/17 21:13:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,7 +89,6 @@ struct clock_softc {
  */
 #define	RTC_OPEN	1
 
-/* {b,c}devsw[] function prototypes for rtc functions */
 dev_type_open(rtcopen);
 dev_type_close(rtcclose);
 dev_type_read(rtcread);
@@ -103,6 +102,11 @@ struct cfattach clock_ca = {
 };
 
 extern struct cfdriver clock_cd;
+
+const struct cdevsw rtc_cdevsw = {
+	rtcopen, rtcclose, rtcread, rtcwrite, noioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 void statintr __P((struct clockframe));
 

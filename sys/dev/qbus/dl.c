@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.15.2.4 2002/04/01 07:47:01 nathanw Exp $	*/
+/*	$NetBSD: dl.c,v 1.15.2.5 2002/09/17 21:20:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.15.2.4 2002/04/01 07:47:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.15.2.5 2002/09/17 21:20:41 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,12 +121,23 @@ static	void	dlxint (void *);
 static	void	dlstart (struct tty *);
 static	int	dlparam (struct tty *, struct termios *);
 static	void	dlbrk (struct dl_softc *, int);
-struct	tty *	dltty (dev_t);
-
-cdev_decl(dl);
 
 struct cfattach dl_ca = {
 	sizeof(struct dl_softc), dl_match, dl_attach
+};
+
+dev_type_open(dlopen);
+dev_type_close(dlclose);
+dev_type_read(dlread);
+dev_type_write(dlwrite);
+dev_type_ioctl(dlioctl);
+dev_type_stop(dlstop);
+dev_type_tty(dltty);
+dev_type_poll(dlpoll);
+
+const struct cdevsw dl_cdevsw = {
+	dlopen, dlclose, dlread, dlwrite, dlioctl,
+	dlstop, dltty, dlpoll, nommap, D_TTY
 };
 
 #define	DL_READ_WORD(reg) \

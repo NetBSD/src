@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.5.4.1 2001/10/22 20:41:40 nathanw Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.5.4.2 2002/09/17 21:20:58 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -59,8 +59,6 @@ struct RF_ReconBuffer_s {
 	RF_StripeCount_t count;	/* counts the # of SUs installed so far */
 	int     priority;	/* used to force hi priority recon */
 	RF_RbufType_t type;	/* FORCED or FLOATING */
-	char   *arrived;	/* [x] = 1/0 if SU from disk x has/hasn't
-				 * arrived */
 	RF_ReconBuffer_t *next;	/* used for buffer management */
 	void   *arg;		/* generic field for general use */
 	RF_RowCol_t spRow, spCol;	/* spare disk to which this buf should

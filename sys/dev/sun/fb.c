@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.2.4.4 2002/04/01 07:47:23 nathanw Exp $ */
+/*	$NetBSD: fb.c,v 1.2.4.5 2002/09/17 21:21:25 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.2.4.4 2002/04/01 07:47:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.2.4.5 2002/09/17 21:21:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.2.4.4 2002/04/01 07:47:23 nathanw Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/kbd.h>
-#include <machine/conf.h>
 #include <machine/eeprom.h>
 #include <sparc/dev/cons.h>
 
@@ -71,6 +70,17 @@ __KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.2.4.4 2002/04/01 07:47:23 nathanw Exp $");
 #include "pfour.h"
 
 static struct fbdevice *devfb;
+
+dev_type_open(fbopen);
+dev_type_close(fbclose);
+dev_type_ioctl(fbioctl);
+dev_type_poll(fbpoll);
+dev_type_mmap(fbmmap);
+
+const struct cdevsw fb_cdevsw = {
+	fbopen, fbclose, noread, nowrite, fbioctl,
+	nostop, notty, fbpoll, fbmmap,
+};
 
 void
 fb_unblank()

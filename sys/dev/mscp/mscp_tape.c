@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.15.6.1 2001/11/14 19:15:04 nathanw Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.15.6.2 2002/09/17 21:20:09 nathanw Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.15.6.1 2001/11/14 19:15:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.15.6.2 2002/09/17 21:20:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.15.6.1 2001/11/14 19:15:04 nathanw E
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -87,13 +88,6 @@ int	mtonline __P((struct device *, struct mscp *));
 int	mtgotstatus __P((struct device *, struct mscp *));
 int	mtioerror __P((struct device *, struct mscp *, struct buf *));
 void	mtfillin __P((struct buf *, struct mscp *));
-int	mtopen __P((dev_t, int, int, struct proc *));
-int	mtclose __P((dev_t, int, int, struct proc *));
-void	mtstrategy __P((struct buf *));
-int	mtread __P((dev_t, struct uio *));
-int	mtwrite __P((dev_t, struct uio *));
-int	mtioctl __P((dev_t, int, caddr_t, int, struct proc *));
-int	mtdump __P((dev_t, daddr_t, caddr_t, size_t));
 int	mtcmd __P((struct mt_softc *, int, int, int));
 void	mtcmddone __P((struct device *, struct mscp *));
 int	mt_putonline __P((struct mt_softc *));
@@ -120,6 +114,23 @@ struct	cfattach mt_ca = {
 };
 
 extern struct cfdriver mt_cd;
+
+dev_type_open(mtopen);
+dev_type_close(mtclose);
+dev_type_read(mtread);
+dev_type_write(mtwrite);
+dev_type_ioctl(mtioctl);
+dev_type_strategy(mtstrategy);
+dev_type_dump(mtdump);
+
+const struct bdevsw mt_bdevsw = {
+	mtopen, mtclose, mtstrategy, mtioctl, mtdump, nosize, D_TAPE
+};
+
+const struct cdevsw mt_cdevsw = {
+	mtopen, mtclose, mtread, mtwrite, mtioctl,
+	nostop, notty, nopoll, nommap, D_TAPE
+};
 
 /*
  * More driver definitions, for generic MSCP code.
@@ -278,18 +289,20 @@ bad:
 }
 
 int
-mtread(dev, uio)
+mtread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 
 	return (physio(mtstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-mtwrite(dev, uio)
+mtwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 
 	return (physio(mtstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -423,7 +436,7 @@ mtioerror(usc, mp, bp)
 int
 mtioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;

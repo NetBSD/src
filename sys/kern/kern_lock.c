@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.51.2.10 2002/07/12 01:40:16 nathanw Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.51.2.11 2002/09/17 21:22:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.51.2.10 2002/07/12 01:40:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.51.2.11 2002/09/17 21:22:05 nathanw Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -158,6 +158,21 @@ do {									\
 		splx(s);						\
 } while (0)
 
+#ifdef DDB /* { */
+#ifdef MULTIPROCESSOR
+int simple_lock_debugger = 1;	/* more serious on MP */
+#else
+int simple_lock_debugger = 0;
+#endif
+#define	SLOCK_DEBUGGER()	if (simple_lock_debugger) Debugger()
+#define	SLOCK_TRACE()							\
+	db_stack_trace_print((db_expr_t)__builtin_frame_address(0),	\
+	    TRUE, 65535, "", printf);
+#else
+#define	SLOCK_DEBUGGER()	/* nothing */
+#define	SLOCK_TRACE()		/* nothing */
+#endif /* } */
+
 #if defined(LOCKDEBUG)
 #if defined(DDB)
 #define	SPINLOCK_SPINCHECK_DEBUGGER	Debugger()
@@ -183,6 +198,7 @@ do {									\
 		if (lkp->lk_unlock_file)				\
 			printf("last unlocked at %s:%d\n",		\
 			    lkp->lk_unlock_file, lkp->lk_unlock_line);	\
+		SLOCK_TRACE();						\
 		SPINLOCK_SPINCHECK_DEBUGGER;				\
 	}								\
 } while (0)
@@ -970,21 +986,6 @@ u_long simple_locks;
 
 #define	SLOCK_COUNT(x)		simple_locks += (x)
 #endif /* MULTIPROCESSOR */ /* } */
-
-#ifdef DDB /* { */
-#ifdef MULTIPROCESSOR
-int simple_lock_debugger = 1;	/* more serious on MP */
-#else
-int simple_lock_debugger = 0;
-#endif
-#define	SLOCK_DEBUGGER()	if (simple_lock_debugger) Debugger()
-#define	SLOCK_TRACE()							\
-	db_stack_trace_print((db_expr_t)__builtin_frame_address(0),	\
-	    TRUE, 65535, "", printf);
-#else
-#define	SLOCK_DEBUGGER()	/* nothing */
-#define	SLOCK_TRACE()		/* nothing */
-#endif /* } */
 
 #ifdef MULTIPROCESSOR
 #define SLOCK_MP()		lock_printf("on cpu %ld\n", 		\

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.2.4.3 2002/04/01 07:39:14 nathanw Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.2.4.4 2002/09/17 21:13:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -94,7 +94,6 @@
 #define PRETTYCURSOR
 #endif
 
-extern int physcon_major;
 extern struct vconsole *vconsole_default;
 
 extern videomemory_t videomemory;

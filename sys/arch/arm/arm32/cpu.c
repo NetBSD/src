@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9.2.7 2002/08/01 02:41:12 nathanw Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9.2.8 2002/09/17 21:13:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,14 +45,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.2.7 2002/08/01 02:41:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.2.8 2002/09/17 21:13:19 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 #include <uvm/uvm_extern.h>
-#include <machine/conf.h>
 #include <machine/cpu.h>
 
 #include <arm/cpuconf.h>

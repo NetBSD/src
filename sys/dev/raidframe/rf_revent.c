@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.9.2.1 2001/11/14 19:15:53 nathanw Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.9.2.2 2002/09/17 21:20:59 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.9.2.1 2001/11/14 19:15:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.9.2.2 2002/09/17 21:20:59 nathanw Exp $");
 
 #include <sys/errno.h>
 
@@ -83,8 +83,7 @@ rf_ConfigureReconEvent(listp)
 		return (ENOMEM);
 	rc = rf_ShutdownCreate(listp, rf_ShutdownReconEvent, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownReconEvent(NULL);
 		return (rc);
 	}

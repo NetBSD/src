@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.1.2.9 2002/08/01 02:44:38 nathanw Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.1.2.10 2002/09/17 21:19:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.1.2.9 2002/08/01 02:44:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.1.2.10 2002/09/17 21:19:33 nathanw Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.1.2.9 2002/08/01 02:44:38 nathanw Exp $";
+    "$NetBSD: hpcfb.c,v 1.1.2.10 2002/09/17 21:19:33 nathanw Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,6 +603,8 @@ hpcfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
 	case WSDISPLAYIO_GETPARAM:
 	case WSDISPLAYIO_SETPARAM:
 	case HPCFBIO_GCONF:

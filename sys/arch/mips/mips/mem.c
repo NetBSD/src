@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.23.8.1 2002/02/28 04:10:45 nathanw Exp $	*/
+/*	$NetBSD: mem.c,v 1.23.8.2 2002/09/17 21:15:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,27 +59,20 @@
 extern paddr_t avail_end;
 void *zeropage;
 
-/*ARGSUSED*/
-int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
 
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, nommap,
+};
 
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
+#if defined(pmax)
+const struct cdevsw mem_ultrix_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, nommap,
+};
+#endif /* defined(pmax) */
 
 /*ARGSUSED*/
 int
@@ -159,14 +152,4 @@ mmrw(dev, uio, flags)
 		uio->uio_resid -= c;
 	}
 	return (error);
-}
-
-paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
-{
-
-	return (-1);
 }

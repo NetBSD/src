@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.8.4.3 2002/08/01 02:43:35 nathanw Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.8.4.4 2002/09/17 21:17:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -52,8 +52,6 @@
 
 #include "kbd.h"
 #include "ms.h"
-
-cdev_decl(com); /* XXX this belongs elsewhere */
 
 int	com_ebus_match __P((struct device *, struct cfdata *, void *));
 void	com_ebus_attach __P((struct device *, struct device *, void *));
@@ -109,6 +107,7 @@ com_ebus_attach(parent, self, aux)
 	struct kbd_ms_tty_attach_args kma;
 #if (NKBD > 0) || (NMS > 0)
 	int maj;
+	extern const struct cdevsw com_cdevsw;
 #endif
 	int i;
 	int com_is_input;
@@ -184,9 +183,7 @@ com_ebus_attach(parent, self, aux)
 /* If we figure out we're the console we should point this to our consdev */
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == comopen)
-			break;
+	maj = cdevsw_lookup_major(&com_cdevsw);
 
 	kma.kmta_dev = makedev(maj, sc->sc_dev.dv_unit);
 

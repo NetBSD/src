@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.41.4.2 2002/01/08 00:22:51 nathanw Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.41.4.3 2002/09/17 21:12:38 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,19 +34,20 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.41.4.2 2002/01/08 00:22:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.41.4.3 2002/09/17 21:12:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/conf.h>
 #include <dev/cons.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
+#include <machine/cpuconf.h>
 #include <machine/bus.h>
 
 #include <dev/ic/comreg.h>

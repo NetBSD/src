@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.h,v 1.3.20.1 2001/10/22 20:41:40 nathanw Exp $	*/
+/*	$NetBSD: rf_revent.h,v 1.3.20.2 2002/09/17 21:20:59 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,15 +37,16 @@
 
 #include <dev/raidframe/raidframevar.h>
 
-int     rf_ConfigureReconEvent(RF_ShutdownList_t ** listp);
+int rf_ConfigureReconEvent(RF_ShutdownList_t ** listp);
 
-RF_ReconEvent_t *
-rf_GetNextReconEvent(RF_RaidReconDesc_t * reconDesc,
-    RF_RowCol_t row, void (*continueFunc) (void *), void *continueArg);
+RF_ReconEvent_t *rf_GetNextReconEvent(RF_RaidReconDesc_t * reconDesc,
+				      RF_RowCol_t row, 
+				      void (*continueFunc) (void *), 
+				      void *continueArg);
 
-	void    rf_CauseReconEvent(RF_Raid_t * raidPtr, RF_RowCol_t row, RF_RowCol_t col,
-            void *arg, RF_Revent_t type);
+void rf_CauseReconEvent(RF_Raid_t * raidPtr, RF_RowCol_t row, RF_RowCol_t col,
+			void *arg, RF_Revent_t type);
 
-	void    rf_FreeReconEventDesc(RF_ReconEvent_t * event);
+void rf_FreeReconEventDesc(RF_ReconEvent_t * event);
 
 #endif				/* !_RF__RF_REVENT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.7.2.7 2002/08/01 02:44:58 nathanw Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.7.2.8 2002/09/17 21:20:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.7.2.7 2002/08/01 02:44:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.7.2.8 2002/09/17 21:20:06 nathanw Exp $");
 
 #include "rnd.h"
 #include "locators.h"
@@ -82,10 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.7.2.7 2002/08/01 02:44:58 nathanw Exp $
 
 #define	EDLABELDEV(dev) (MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART))
 
-/* XXX: these should go elsewhere */
-cdev_decl(edmca);
-bdev_decl(edmca);
-
 static int     ed_mca_probe   __P((struct device *, struct cfdata *, void *));
 static void    ed_mca_attach  __P((struct device *, struct device *, void *));
 
@@ -100,6 +96,25 @@ static int	ed_lock	__P((struct ed_softc *));
 static void	ed_unlock	__P((struct ed_softc *));
 static void	edgetdisklabel	__P((dev_t, struct ed_softc *));
 static void	edgetdefaultlabel __P((struct ed_softc *, struct disklabel *));
+
+dev_type_open(edmcaopen);
+dev_type_close(edmcaclose);
+dev_type_read(edmcaread);
+dev_type_write(edmcawrite);
+dev_type_ioctl(edmcaioctl);
+dev_type_strategy(edmcastrategy);
+dev_type_dump(edmcadump);
+dev_type_size(edmcasize);
+
+const struct bdevsw ed_bdevsw = {
+	edmcaopen, edmcaclose, edmcastrategy, edmcaioctl,
+	edmcadump, edmcasize, D_DISK
+};
+
+const struct cdevsw ed_cdevsw = {
+	edmcaopen, edmcaclose, edmcaread, edmcawrite, edmcaioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
 
 static struct dkdriver eddkdriver = { edmcastrategy };
 

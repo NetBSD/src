@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.53.2.5 2002/06/20 03:46:56 nathanw Exp $	*/
+/*	$NetBSD: usb.c,v 1.53.2.6 2002/09/17 21:21:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.53.2.5 2002/06/20 03:46:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.53.2.6 2002/09/17 21:21:36 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,16 @@ struct usb_softc {
 
 TAILQ_HEAD(, usb_task) usb_all_tasks;
 
-cdev_decl(usb);
+dev_type_open(usbopen);
+dev_type_close(usbclose);
+dev_type_read(usbread);
+dev_type_ioctl(usbioctl);
+dev_type_poll(usbpoll);
+
+const struct cdevsw usb_cdevsw = {
+	usbopen, usbclose, usbread, nowrite, usbioctl,
+	nostop, notty, usbpoll, nommap,
+};
 
 Static void	usb_discover(void *);
 Static void	usb_create_event_thread(void *);

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.1.8.4 2002/08/01 02:41:18 nathanw Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.1.8.5 2002/09/17 21:13:36 nathanw Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -111,7 +111,19 @@
 
 #include "sacom.h"
 
-cdev_decl(sacom);
+dev_type_open(sacomopen);
+dev_type_close(sacomclose);
+dev_type_read(sacomread);
+dev_type_write(sacomwrite);
+dev_type_ioctl(sacomioctl);
+dev_type_stop(sacomstop);
+dev_type_tty(sacomtty);
+dev_type_poll(sacompoll);
+
+const struct cdevsw sacom_cdevsw = {
+	sacomopen, sacomclose, sacomread, sacomwrite, sacomioctl,
+	sacomstop, sacomtty, sacompoll, nommap, D_TTY
+};
 
 static	int	sacom_match(struct device *, struct cfdata *, void *);
 static	void	sacom_attach(struct device *, struct device *, void *);
@@ -125,7 +137,6 @@ void		sacom_shutdown(struct sacom_softc *);
 static	u_int	cflag2cr0(tcflag_t);
 int		sacomparam(struct tty *, struct termios *);
 void		sacomstart(struct tty *);
-void		sacomstop(struct tty *, int);
 int		sacomhwiflow(struct tty *, int);
 
 void		sacom_loadchannelregs(struct sacom_softc *);
@@ -325,9 +336,7 @@ sacom_attach_subr(sc)
 		int maj;
 
 		/* locate the major number */
-		for (maj = 0; maj < nchrdev; maj++)
-			if (cdevsw[maj].d_open == sacomopen)
-				break;
+		maj = cdevsw_lookup_major(&sacom_cdevsw);
 
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 
@@ -366,9 +375,7 @@ sacom_detach(self, flags)
 	int maj, mn;
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == sacomopen)
-			break;
+	maj = cdevsw_lookup_major(&sacom_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
 	mn = self->dv_unit;
@@ -1175,7 +1182,7 @@ sacom_filltx(sc)
 	int c, n;
 
 	n = 0;
-	while(bus_space_read_4(sacomconstag, sacomconsioh, SACOM_SR1)
+	while(bus_space_read_4(iot, ioh, SACOM_SR1)
 	      & SR1_TNF) {
 		if (n == SACOM_TXFIFOLEN || n == sc->sc_tbc)
 			break;

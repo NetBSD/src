@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.6.8.1 2002/02/28 04:06:45 nathanw Exp $ */
+/*	$NetBSD: gvpio.c,v 1.6.8.2 2002/09/17 21:13:02 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.6.8.1 2002/02/28 04:06:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.6.8.2 2002/09/17 21:13:02 nathanw Exp $");
 
 /*
  * GVP I/O Extender
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.6.8.1 2002/02/28 04:06:45 nathanw Exp $"
 #include <sys/param.h>
 
 #include <machine/bus.h>
-#include <machine/conf.h>
 #include <machine/intr.h>
 
 #include <amiga/include/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.57.2.1 2001/11/14 19:14:28 nathanw Exp $	*/
+/*	$NetBSD: lpt.c,v 1.57.2.2 2002/09/17 21:19:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.57.2.1 2001/11/14 19:14:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.57.2.2 2002/09/17 21:19:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,10 +89,17 @@ __KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.57.2.1 2001/11/14 19:14:28 nathanw Exp $")
 int lptdebug = 0;
 #endif
 
-/* XXX does not belong here */
-cdev_decl(lpt);
-
 extern struct cfdriver lpt_cd;
+
+dev_type_open(lptopen);
+dev_type_close(lptclose);
+dev_type_write(lptwrite);
+dev_type_ioctl(lptioctl);
+
+const struct cdevsw lpt_cdevsw = {
+	lptopen, lptclose, noread, lptwrite, lptioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 #define	LPTUNIT(s)	(minor(s) & 0x1f)
 #define	LPTFLAGS(s)	(minor(s) & 0xe0)

@@ -1,3 +1,5 @@
+/*	$NetBSD: akbdvar.h,v 1.4.26.3 2002/09/17 21:15:36 nathanw Exp $	*/
+
 /*	$OpenBSD: akbdvar.h,v 1.3 2002/03/27 21:48:12 drahn Exp $	*/
 
 /*

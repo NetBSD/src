@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.27.8.4 2002/08/01 02:44:03 nathanw Exp $ */
+/*	$NetBSD: smg.c,v 1.27.8.5 2002/09/17 21:18:39 nathanw Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -564,7 +564,6 @@ smg_show_screen(void *v, void *cookie, int waitok,
 }
 
 cons_decl(smg);
-cdev_decl(wsdisplay);
 
 void
 smgcninit(cndev)
@@ -596,6 +595,7 @@ smgcnprobe(cndev)
 	struct  consdev *cndev;
 {
 	extern vaddr_t virtual_avail;
+	extern const struct cdevsw wsdisplay_cdevsw;
 
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
@@ -608,7 +608,8 @@ smgcnprobe(cndev)
 		virtual_avail += SMSIZE;
 		ioaccess((vaddr_t)sm_addr, SMADDR, (SMSIZE/VAX_NBPG));
 		cndev->cn_pri = CN_INTERNAL;
-		cndev->cn_dev = makedev(getmajor(wsdisplayopen), 0);
+		cndev->cn_dev = makedev(cdevsw_lookup_major(&wsdisplay_cdevsw),
+					0);
 		break;
 
 	default:

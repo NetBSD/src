@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.c,v 1.6.6.4 2002/08/01 02:45:38 nathanw Exp $	*/
+/*	$NetBSD: rf_shutdown.c,v 1.6.6.5 2002/09/17 21:21:00 nathanw Exp $	*/
 /*
  * rf_shutdown.c
  */
@@ -34,13 +34,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.6.6.4 2002/08/01 02:45:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.6.6.5 2002/09/17 21:21:00 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
 #include "rf_archs.h"
 #include "rf_shutdown.h"
 #include "rf_freelist.h"
+
+
+#ifndef RF_DEBUG_SHUTDOWN
+#define RF_DEBUG_SHUTDOWN 0
+#endif
 
 static void 
 rf_FreeShutdownEnt(RF_ShutdownList_t * ent)
@@ -89,14 +94,17 @@ rf_ShutdownList(RF_ShutdownList_t ** list)
 		file = r->file;
 		line = r->line;
 
+#if RF_DEBUG_SHUTDOWN
 		if (rf_shutdownDebug) {
 			printf("call shutdown, created %s:%d\n", file, line);
 		}
+#endif
 		r->cleanup(r->arg);
-
+#if RF_DEBUG_SHUTDOWN
 		if (rf_shutdownDebug) {
 			printf("completed shutdown, created %s:%d\n", file, line);
 		}
+#endif
 		rf_FreeShutdownEnt(r);
 	}
 	*list = NULL;

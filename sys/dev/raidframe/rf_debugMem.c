@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.c,v 1.7.6.2 2001/11/14 19:15:47 nathanw Exp $	*/
+/*	$NetBSD: rf_debugMem.c,v 1.7.6.3 2002/09/17 21:20:47 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.7.6.2 2001/11/14 19:15:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.7.6.3 2002/09/17 21:20:47 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -129,8 +129,7 @@ rf_ConfigureDebugMem(listp)
 
 	rc = rf_create_managed_mutex(listp, &rf_debug_mem_mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex( __FILE__, __LINE__, rc);
 		return (rc);
 	}
 	if (rf_memDebug) {

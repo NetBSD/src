@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.44.2.9 2002/08/01 02:46:20 nathanw Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.44.2.10 2002/09/17 21:22:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.2.9 2002/08/01 02:46:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.2.10 2002/09/17 21:22:07 nathanw Exp $");
 
 #include "opt_kstack.h"
 
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.2.9 2002/08/01 02:46:20 nathanw E
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
+#include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 
@@ -157,6 +158,7 @@ struct pool plimit_pool;
 struct pool pstats_pool;
 struct pool pgrp_pool;
 struct pool rusage_pool;
+struct pool ras_pool;
 struct pool sadata_pool;
 struct pool saupcall_pool;
 struct pool ptimer_pool;
@@ -219,6 +221,8 @@ procinit()
 	pool_init(&pstats_pool, sizeof(struct pstats), 0, 0, 0, "pstatspl",
 	    &pool_allocator_nointr);
 	pool_init(&rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
+	    &pool_allocator_nointr);
+	pool_init(&ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
 	    &pool_allocator_nointr);
 	pool_init(&sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
 	    &pool_allocator_nointr);
@@ -296,9 +300,11 @@ chgproccnt(uid, diff)
 	struct uihashhead *uipp;
 
 	uipp = UIHASH(uid);
-	for (uip = uipp->lh_first; uip != 0; uip = uip->ui_hash.le_next)
+
+	LIST_FOREACH(uip, uipp, ui_hash)
 		if (uip->ui_uid == uid)
 			break;
+
 	if (uip) {
 		uip->ui_proccnt += diff;
 		if (uip->ui_proccnt > 0)
@@ -346,7 +352,7 @@ pfind(pid)
 	struct proc *p;
 
 	proclist_lock_read();
-	for (p = PIDHASH(pid)->lh_first; p != 0; p = p->p_hash.le_next)
+	LIST_FOREACH(p, PIDHASH(pid), p_hash)
 		if (p->p_pid == pid)
 			goto out;
  out:
@@ -363,8 +369,7 @@ pgfind(pgid)
 {
 	struct pgrp *pgrp;
 
-	for (pgrp = PGRPHASH(pgid)->lh_first; pgrp != NULL;
-	    pgrp = pgrp->pg_hash.le_next)
+	LIST_FOREACH(pgrp, PGRPHASH(pgid), pg_hash)
 		if (pgrp->pg_id == pgid)
 			return (pgrp);
 	return (NULL);
@@ -448,7 +453,7 @@ enterpgrp(p, pgid, mksess)
 	fixjobc(p, p->p_pgrp, 0);
 
 	LIST_REMOVE(p, p_pglist);
-	if (p->p_pgrp->pg_members.lh_first == 0)
+	if (LIST_EMPTY(&p->p_pgrp->pg_members))
 		pgdelete(p->p_pgrp);
 	p->p_pgrp = pgrp;
 	LIST_INSERT_HEAD(&pgrp->pg_members, p, p_pglist);
@@ -464,7 +469,7 @@ leavepgrp(p)
 {
 
 	LIST_REMOVE(p, p_pglist);
-	if (p->p_pgrp->pg_members.lh_first == 0)
+	if (LIST_EMPTY(&p->p_pgrp->pg_members))
 		pgdelete(p->p_pgrp);
 	p->p_pgrp = 0;
 	return (0);
@@ -523,7 +528,7 @@ fixjobc(p, pgrp, entering)
 	 * their process groups; if so, adjust counts for children's
 	 * process groups.
 	 */
-	for (p = p->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
+	LIST_FOREACH(p, &p->p_children, p_sibling) {
 		if ((hispgrp = p->p_pgrp) != pgrp &&
 		    hispgrp->pg_session == mysession &&
 		    P_ZOMBIE(p) == 0) {
@@ -546,10 +551,9 @@ orphanpg(pg)
 {
 	struct proc *p;
 
-	for (p = pg->pg_members.lh_first; p != 0; p = p->p_pglist.le_next) {
+	LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 		if (p->p_stat == SSTOP) {
-			for (p = pg->pg_members.lh_first; p != 0;
-			    p = p->p_pglist.le_next) {
+			LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 				psignal(p, SIGHUP);
 				psignal(p, SIGCONT);
 			}
@@ -588,16 +592,15 @@ pgrpdump()
 	int i;
 
 	for (i = 0; i <= pgrphash; i++) {
-		if ((pgrp = pgrphashtbl[i].lh_first) != NULL) {
+		if ((pgrp = LIST_FIRST(&pgrphashtbl[i])) != NULL) {
 			printf("\tindx %d\n", i);
 			for (; pgrp != 0; pgrp = pgrp->pg_hash.le_next) {
 				printf("\tpgrp %p, pgid %d, sess %p, "
 				    "sesscnt %d, mem %p\n",
 				    pgrp, pgrp->pg_id, pgrp->pg_session,
 				    pgrp->pg_session->s_count,
-				    pgrp->pg_members.lh_first);
-				for (p = pgrp->pg_members.lh_first; p != 0;
-				    p = p->p_pglist.le_next) {
+				    LIST_FIRST(&pgrp->pg_members));
+				LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
 					printf("\t\tpid %d addr %p pgrp %p\n", 
 					    p->p_pid, p, p->p_pgrp);
 				}
