@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.3 1999/08/07 15:04:35 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.4 1999/08/14 11:40:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -435,7 +435,7 @@ wsmux_detach_sc(sc, dsc)
         struct device *dsc;
 {
 	struct wsplink *m;
-	int error;
+	int error = 0;
 
 	DPRINTF(("wsmux_detach_sc: %s: dsc=%p\n", sc->sc_dv.dv_xname, dsc));
 #ifdef DIAGNOSTIC
