@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.84 2001/11/13 06:24:56 lukem Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.85 2001/11/15 15:15:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.84 2001/11/13 06:24:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.85 2001/11/15 15:15:59 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -625,12 +625,11 @@ usbd_interface_count(usbd_device_handle dev, u_int8_t *count)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-usbd_status 
+void
 usbd_interface2device_handle(usbd_interface_handle iface,
 			     usbd_device_handle *dev)
 {
 	*dev = iface->device;
-	return (USBD_NORMAL_COMPLETION);
 }
 
 usbd_status 

@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.72 2001/11/13 06:24:55 lukem Exp $        */
+/*      $NetBSD: ukbd.c,v 1.73 2001/11/15 15:15:58 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.72 2001/11/13 06:24:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.73 2001/11/15 15:15:58 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -822,7 +822,7 @@ ukbd_cnpollc(void *v, int on)
 
 	DPRINTFN(2,("ukbd_cnpollc: sc=%p on=%d\n", v, on));
 
-	(void)usbd_interface2device_handle(sc->sc_iface,&dev);
+	usbd_interface2device_handle(sc->sc_iface,&dev);
 	if (on) pollenter++; else pollenter--;
 	usbd_set_polling(dev, on);
 }
