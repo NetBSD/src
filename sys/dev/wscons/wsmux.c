@@ -3,7 +3,7 @@
   use method to get sc of muxee, common code for add&rem
  */
 
-/*	$NetBSD: wsmux.c,v 1.14 2001/10/24 14:07:33 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.15 2001/10/25 13:19:41 shin Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -215,7 +215,9 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	evar = wsevent_alloc();
 	evar->io = p;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
 	sc->sc_rawkbd = 0;
+#endif
 
 	wsmux_do_open(sc, evar);
 
