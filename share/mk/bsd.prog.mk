@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.194 2003/11/16 14:09:00 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.195 2004/01/23 05:09:58 simonb Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -136,9 +136,6 @@ _PROGLDOPTS=
 .if ${SHLINKDIR} != "/usr/libexec"	# XXX: change or remove if ld.so moves
 .if ${OBJECT_FMT} == "ELF"
 _PROGLDOPTS+=	-Wl,-dynamic-linker=${_SHLINKER}
-.endif
-.if ${OBJECT_FMT} == "a.out"
-LIBCRT0=	${DESTDIR}/lib/crt0.o
 .endif
 .endif
 .if ${SHLIBDIR} != "/usr/lib"
