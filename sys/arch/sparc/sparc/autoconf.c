@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.69 1997/03/26 22:39:17 gwr Exp $ */
+/*	$NetBSD: autoconf.c,v 1.70 1997/03/31 17:21:00 mycroft Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1130,7 +1130,7 @@ mainbus_attach(parent, dev, aux)
 #endif
 
 	if (CPU_ISSUN4)
-		printf("SUN-4/%d series\n", cpuinfo.classlvl);
+		printf(": SUN-4/%d series\n", cpuinfo.classlvl);
 	else
 		printf(": %s\n", getpropstring(ca->ca_ra.ra_node, "name"));
 
