@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_var.h,v 1.12 2003/08/07 16:33:44 agc Exp $	*/
+/*	$NetBSD: idp_var.h,v 1.13 2004/04/19 00:10:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -48,13 +48,13 @@ struct mbuf;
 struct socket;
 extern struct idpstat	idpstat;
 
-void idp_input __P((struct mbuf *, ...));
-void idp_abort __P((struct nspcb *));
-void idp_drop __P((struct nspcb *, int));
-int idp_output __P((struct mbuf *, ...));
-int idp_ctloutput __P((int, struct socket *, int , int, struct mbuf **));
-int idp_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		    struct mbuf *, struct proc *));
-int idp_raw_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-			struct mbuf *, struct proc *));
+void idp_input (struct mbuf *, ...);
+void idp_abort (struct nspcb *);
+void idp_drop (struct nspcb *, int);
+int idp_output (struct mbuf *, ...);
+int idp_ctloutput (int, struct socket *, int , int, struct mbuf **);
+int idp_usrreq (struct socket *, int, struct mbuf *, struct mbuf *,
+		    struct mbuf *, struct proc *);
+int idp_raw_usrreq (struct socket *, int, struct mbuf *, struct mbuf *,
+			struct mbuf *, struct proc *);
 #endif
