@@ -1,0 +1,110 @@
+Most of the work on SCO port of BIND 4.9.3 has been done by Michael A Meiszl.
+
+The following represents my experience from building various BETA versions
+on SCO 3.2v4.2.
+
+The following procedure is known to build and install BIND 4.9.3 (as of
+BETA11 patch 3) on SCO 3.2v4.2, using gcc 2.5.8.
+
+	0) Backup old named and zone files. cd to named distribution's
+           root directory.
+        1) make links
+	2) cd native.b
+           mkdir include/sys
+	   cat >include/sys/param.h <<EOF
+	   #include <sys/types.h>
+	   #include "/usr/include/sys/param.h"
+	   EOF
+	3) Edit Makefile, search for string SCO and uncomment SCO specific
+           lines. Based on my personal experience (building perl on SCO
+           system after the BIND's compat library and include files have
+           been installed), I *strongly* suggest to leave the INSTALL_COMPAT
+           line commented out.
+	4) make 
+	5) su
+	6) kill -9 `cat /etc/named.pid`
+	7) If you are secondary server, I suggest to always remove all
+	   secondary zone files.
+	8) make install
+           You need the scoinst (BSD style install emulation) script. There
+           are various such scripts on the net.
+	9) /etc/named
+       10) Be your CMOS battery with you.
+
+You also probably need to update /usr/lib/libsocket.a with the new
+resolver routines. This task is a bit difficult and I am currently
+(7-Nov-94) trying to write shell script to automate this job.
+Alternatively, you can stay with separate libresolv.a and change each
+occurence of -lsocket in Makefiles to -lresolv -lsocket. Anyway, you
+must relink your applications to take the advantage of new resolver
+routines (if nothing else, sendmail is good candidate). Personally,
+I am preferring libsocket.a update.
+
+Eduard Vopicka, <eda@vse.cz>
+
+On Dec 8,  2:38am, Paul A Vixie wrote:
+} Subject: Re: b11p3 on SCO - problems and fixes
+} thanks, this will all be in b11p4
+}-- End of excerpt from Paul A Vixie
+
+Thanks!
+
+And another SCO specific one: SCO's kill executable requires *numeric*
+specification of signal (!!!). This causes the ndc shell script to fail
+miserably - things like `kill -HUP 12345' on SCO simply do nothing w/o
+any error message. Maybe this results to kill(0,pid)???. So it would be
+essential to have the following patch included in conf/Info.SCO.
+
+Brgds,
+
+Ed
+
+*** named/ndc~	Thu Dec  8 11:29:10 1994
+--- named/ndc	Thu Dec  8 11:31:27 1994
+***************
+*** 26,37 ****
+  	echo $ARG
+  	case $ARG in
+  	status)	echo "$PS";;
+! 	dumpdb)	kill -INT $PID && echo Dumping Database;;
+! 	reload)	kill -HUP $PID && echo Reloading Database;;
+! 	stats)	kill -IOT $PID && echo Dumping Statistics;;
+! 	trace)	kill -USR1 $PID && echo Trace Level Incremented;;
+! 	notrace) kill -USR2 $PID && echo Tracing Cleared;;
+! 	querylog|qrylog) kill -WINCH $PID && echo Query Logging Toggled;;
+  	start)
+  		[ $RUNNING -eq 1 ] && {
+  			echo "$0: start: named (pid $PID) already running"
+--- 26,37 ----
+  	echo $ARG
+  	case $ARG in
+  	status)	echo "$PS";;
+! 	dumpdb)	kill -2 $PID && echo Dumping Database;;
+! 	reload)	kill -1 $PID && echo Reloading Database;;
+! 	stats)	kill -6 $PID && echo Dumping Statistics;;
+! 	trace)	kill -16 $PID && echo Trace Level Incremented;;
+! 	notrace) kill -17 $PID && echo Tracing Cleared;;
+! 	querylog|qrylog) kill -20 $PID && echo Query Logging Toggled;;
+  	start)
+  		[ $RUNNING -eq 1 ] && {
+  			echo "$0: start: named (pid $PID) already running"
+
+-- 
+"Eduard Vopicka, Computing Centre, Prague University of Economics,
+W. Churchill Square 4, CZ 130 67 Prague 3" <Eduard.Vopicka@vse.cz>
+
+Also from Eduard Vopicka <Eduard.Vopicka@vse.cz>, Fri, 7 Jun 1996 15:01:39 +0200:
+
+The build procedure for SCO OSE 5 is basically the same as for 3.2v4.2
+(described at the top of this document), except for that the hack in
+step 2) is a bit different for SCO OSE5:
+
+cd native.b
+[ -d include/sys ] || mkdir include/sys
+cat >include/sys/param.h <<EOF
+#ifndef _SYS_PARAM_H
+#  include <sys/types.h>
+#  include <sys/sys.param.h>
+#endif
+EOF
+ln -sf /usr/include/sys/param.h include/sys/sys.param.h

@@ -1,0 +1,99 @@
+Delivery-Date: Mon, 19 Jun 1995 18:58:27 -0700
+Return-Path: bind-workers-request@vix.com
+Received: by gw.home.vix.com id AA22025; Mon, 19 Jun 95 18:54:03 -0700
+Received: by gw.home.vix.com id AA22021; Mon, 19 Jun 95 18:54:03 -0700
+Received:  from oracle.us.oracle.com by inet-smtp-gw-1.us.oracle.com with ESMTP (8.6.12/37.7)
+	id SAA24186; Mon, 19 Jun 1995 18:54:02 -0700
+Received:  from borogove.us.oracle.com by oracle.us.oracle.com with SMTP (8.6.9/37.7)
+	id SAA24364; Mon, 19 Jun 1995 18:53:58 -0700
+Received: by borogove.us.oracle.com (5.0/SMI-SVR4)
+	id AA12459; Mon, 19 Jun 1995 18:53:53 -0700
+Date: Mon, 19 Jun 1995 18:53:53 -0700
+From: jhanley@us.oracle.com (John Hanley)
+Message-Id: <9506200153.AA12459@borogove.us.oracle.com>
+To: bind-workers@vix.com
+Phone: +1 415 506 2360
+Subject: BIND on ptx V4.0.2 (svr4)
+Content-Length: 3248
+
+This is not so much a cry for help as a comment on what I've seen, in case
+it is useful to anyone.  Otherwise, just ignore it, as Sequent will eventually
+support 4.9.3 so the libraries will agree on the the size of _res.  I only
+have ptx 2.x primary nameservers putting protocol violations out on the wire,
+and ptx 4.x hasn't become widely enough deployed to be a support issue for me.
+
+The length mismatch caused by adding new fields to _res produces the
+following on ptx 4.x:
+
+  ld: libinet.so: fatal error: attempt to override defined size of symbol `_res`
+  from file ../res/libresolv.a(res_init.o) with size of tentative definition
+
+To get around this, make sure that the shared library reference, "-linet",
+precedes the resolver library.  For example, compile a vanilla 4.9.3b17
+with "-DSVR4" and use a link command like:
+
+  cc -g -o nslookup main.o getinfo.o debug.o send.o skip.o list.o subr.o commands.o -linet ../../res/libresolv.a ../../compat/lib/lib44bsd.a -ll -lsocket -lnsl -lseq
+
+This links cleanly against /usr/lib/libinet.so and friends.
+
+Unfortunately, we easily core dump:
+
+% debug ./nslookup
+New program nslookup (process p1) created
+debug> run       
+Default Server:  dcsun2.us.oracle.com
+Address:  139.185.20.52
+
+> dcsun1.us.oracle.com.
+Server:  dcsun2.us.oracle.com
+Address:  139.185.20.52
+
+Name:    dcsun1.us.oracle.com
+Address:  139.185.20.51
+
+> dcsun1.us.oracle.com
+Server:  dcsun2.us.oracle.com
+Address:  139.185.20.52
+
+SIGNALED 11 (segv) in p1 [_doprnt()]
+        0xbffd6a78 (_doprnt+13368:)      movb   (%ecx),%al
+debug>     
+debug> stack
+Stack Trace for p1, Program nslookup
+[8] _doprnt(0x8055b65,0x80469cc,0x8046994)      [0xbffd6a78]
+[7] sprintf(0x80469d2,0x8055b5c,0x100,0x8047460,0x100,0x61726f2e)       [0xbffe7510]
+[6] GetHostDomain(nsAddrPtr=0x805c54c,queryClass=1,queryType=1,name="dcsun1.us.oracle.com",domain=Read at address 0x61726f2e failed
+,hostPtr=0x805b4f8,isServer=0)  [getinfo.c@676]
+[5] GetHostInfoByName(nsAddrPtr=0x805c54c,queryClass=1,queryType=1,name="dcsun1.us.oracle.com",hostPtr=0x805b4f8,isServer=0)    [getinfo.c@610]
+[4] DoLookup(host="dcsun1.us.oracle.com",servPtr=0x805c48c,serverName="dcsun2.us.oracle.com")   [main.c@594]
+[3] LookupHost(string="dcsun1.us.oracle.com",putToFile=0)       [main.c@688]
+[2] yylex()     [commands.c@0x8050d7f]
+[1] main(argc=0,argv=0x80475c0,0x80475c4)       [main.c@349]
+[0] _start()    [0x8049315]
+debug>  
+
+
+The problem, as has been noted on this list before, is that dnsrch[]
+and defdname[] were inadvertently swapped.  This is Bad Karma for
+shared libs.  Applying the following yields a robust ``nslookup''.
+
+
+--- include/resolv.h~	Wed Dec 14 22:24:07 1994
++++ include/resolv.h	Mon Jun 19 18:38:52 1995
+@@ -111,8 +111,8 @@
+ 		nsaddr_list[MAXNS];	/* address of name server */
+ #define	nsaddr	nsaddr_list[0]		/* for backward compatibility */
+ 	u_short	id;			/* current packet id */
+-	char	*dnsrch[MAXDNSRCH+1];	/* components of domain to search */
+ 	char	defdname[MAXDNAME];	/* default domain */
++	char	*dnsrch[MAXDNSRCH+1];	/* components of domain to search */
+ 	u_long	pfcode;			/* RES_PRF_ flags - see below. */
+ 	unsigned ndots:4;		/* threshold for initial abs. query */
+ 	unsigned nsort:4;		/* number of elements in sort_list[] */
+
+
+
+
+		Cheers,
+		JH
+

@@ -1,0 +1,50 @@
+Delivery-Date: Fri, 24 Feb 1995 09:15:19 -0800
+Received: by gw.home.vix.com id AA05776; Fri, 24 Feb 95 09:15:11 -0800
+Received: (from auclair@localhost) by jade.jouy.inra.fr (8.6.9/8.6.9) id RAA13441; Fri, 24 Feb 1995 17:45:43 +0100
+Date: Fri, 24 Feb 1995 17:45:43 +0100
+From: Philippe Auclair <auclair@jade.jouy.inra.fr>
+Message-Id: <199502241645.RAA13441@jade.jouy.inra.fr>
+To: Paul A Vixie <paul@vix.com>
+Subject: Remarks on bind-4.9.3-BETA17 on Solaris 2.4
+
+
+Hi,
+
+Just a few remarks on some slght difficulties I have had with Solaris 2.4.
+
+BIND-4.9.3 on Solaris 2.4
+
+mkdep :
+set PATH to use the right compiler
+/opt/SUNWspro/bin/cc requires -xM argument, not -M
+
+I would recommend :
+PIDDIR = /etc		as for SunOS instead of /var/run
+DESTHELP = /usr/lib	as for SunOS instead of /usr/share/misc
+
+Sun's nslookup is in /usr/sbin, not /usr/bin.
+
+The Makefile says : "under solaris2.x, use 'make install' at your own risk."
+I would say : "under solaris2.x, DON'T use 'make install'."
+
+Syntax of command "install" :
+   -c dir		destination dir
+   -u user		not -o user
+You can't rename the file.
+
+-> needs a specific install procedure.
+
+Otherwise, it seems fine...
+
+Yours,
+Philippe Auclair
+
+**************************************************************
+*       Institut National de la Recherche Agronomique        *
+*                                                            *
+* Philippe Auclair             Philippe.Auclair@jouy.inra.fr *
+* Unite Informatique de Jouy   tel +33 1-34-65-26-95         *
+* Domaine de Vilvert           fax +33 1-39-56-49-67         *
+* 78352 Jouy-en-Josas Cedex                                  *
+**************************************************************
+

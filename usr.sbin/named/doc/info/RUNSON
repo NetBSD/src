@@ -1,0 +1,44 @@
+ Op. Sys.	CPU	Compilers	Reported	Other
+Name	Rev	Arch	  Used		   By		Notes
+=======	=======	=======	===============	===============	===============
+A/UX	3.1.1	m68k	gcc2.6.3	phillip porch	"compiles and runs"
+AIX	3.2.3e	power	bsdcc		c. wolfhugel	production secondary
+AIX	3.2.5	rs6000	bsdcc		craig metz	"compiles and runs"
+BSD	4.4	hp300	gcc2.5.8	mark davies	compiles and runs
+BSD/386	1.0	i386	gcc1.41,2.5.8	paul vixie	production primary
+BSD/386	1.1	i386	gcc1.41,2.5.8	paul vixie	production secondary
+CnvxOS	10.2	c38	gcc2.6.3	jukka ukkonen	production secondary
+DomainO	10.3.5	m68k	cc 6.8		don lewis	production secondary
+DomainO	10.4.0	m68k	cc		todd martin	production secondary
+HP-UX	7.0	hp300	cc		alan barrett	needs "struct linger"
+HP-UX	9.00	hp800	cc,gcc2.5.8	m. corrigan	"compiles and works"
+HP-UX	A09.01	hp700	cc		don lewis	"compiles and runs"
+HP-UX	A09.01	hp700	gcc2.5.7	piete brooks	production secondary
+HP-UX	B09.00	hp300	gcc2.5.7	piete brooks	production primary
+HP-UX	A09.04	hp800	cc		todd martin	production secondary
+IRIX	5	mips	mips cc		paul vixie	courtesy of SGI
+NEXTSTEP3.0	m68k	gcc1.39		artur romao	"compiles and runs"
+NEXTSTEP3.2	m68k	cc		scott mcintyre	"compiles and runs"
+NEXTSTEP3.3	hppa	cc		allan nathanson "compiles and runs"
+NEXTSTEP3.3	i486	cc		allan nathanson "compiles and runs"
+NEXTSTEP3.3	m68k	cc		allan nathanson	"compiles and runs"
+NetBSD	1.0	i386	gcc2.4.5	alan barrett	production primary
+OSF/1	V1.3	axp	gcc2.5.7	piete brooks	production secondary
+OSF/1	V2.0	axp	cc		c. wolfhugel	production secondary
+OSF/1	V3.0	axp	cc		c. wolfhugel	production secondary
+RISC/os	4.52	mips	mips cc		r. perini	production primary
+SCO	ODT3.0	i386	gcc2.5.8	m. meiszl	"compiles and runs"
+Solaris	2.2	sparc	gcc2.5.8	artur romao	production primary
+Solaris	2.3	sparc	gcc2.5.8	ian dickinson	production secondary
+Solaris 2.4	sparc	gcc2.6.3	ian dickinson	production secondary
+Solbrne	4.1A.1	sparc	gcc2.5.8	ian dickinson	"compiles and runs"
+SunOS	4.1	m68k	gcc2.5.8	ian dickinson	production secondary
+SunOS	4.1.1	m68k	gcc2.4.5	piete brooks	"compiles and clients"
+SunOS	4.1.1	sparc	cc		alan barrett	"compiles and works"
+SunOS	4.1.3	sparc	gcc2.5.8	ian dickinson	production primary
+SunOS	4.1.3	sparc	sun c 2.0.1	tom limoncelli	"works w/ jumbo patch"
+SunOS	4.1.3U1	sparc	cc		alan barrett	production primary
+SunOS	4.1.3U1	sparc	gcc2.4.5	craig leres	"compiles and works"
+SunOS	4.1.3U1	sparc	gcc2.6.2	don lewis	production primary
+ULTRIX	4.2A	mips	mips cc		paul vixie	production secondary
+ULTRIX	4.3	vax	vax pcc		paul vixie	void* isn't anonymous

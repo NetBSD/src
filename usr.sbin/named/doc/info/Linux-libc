@@ -1,0 +1,417 @@
+>>> 4.9.5:1
+
+Date:    Mon, 28 Oct 1996 06:59:15 EST
+To:      Paul Vixie <paul@vix.com> (BIND), "H.J. Lu" <hjl@gnu.ai.mit.edu> (libc
+     ***)
+cc:      Craig Metz <cmetz@inner.net> (netdev), bind-workers@vix.com (BIND)
+From:    Bradley Ward Allen <ulmo@Q.Net>
+Subject: BIND shres/linux/README addition + Is&Qs
+
+Paul,
+
+Herein please find a patch that I'd like to make sure you somehow
+incorporate into the latest BIND version before its final release.
+It's all documentation, no code changes.
+
+diff -Nru bind-4.9.5b6/Makefile bind-4.9.5b6.new/Makefile
+--- bind-4.9.5b6/Makefile	Tue Oct  8 00:50:58 1996
++++ bind-4.9.5b6.new/Makefile	Mon Oct 28 05:29:16 1996
+@@ -125,9 +125,10 @@
+ #CATEXT = $$$$N
+ #PS = ps -p
+ #IOT = IOT
+-#uncomment next line to build a shared library version of libresolv
++# You probably don't want shared libresolv, read shres/linux/README to decide!
+!
++# uncomment next line to build a shared library version of libresolv
+ #SHRES = shres/linux
+-#uncomment next line to build tools and named with shared libresolv
++# uncomment next line to build tools and named with shared libresolv
+ #RES = $(SHRES)/libresolv.so
+ # ... and then (for shared) uncomment these lines too:
+ #SHCC = gcc $(CPPFLAGS) -fomit-frame-pointer -pipe
+diff -Nru bind-4.9.5b6/shres/linux/README bind-4.9.5b6.new/shres/linux/README
+--- bind-4.9.5b6/shres/linux/README	Wed Dec 31 19:00:00 1969
++++ bind-4.9.5b6.new/shres/linux/README	Mon Oct 28 06:04:21 1996
+@@ -0,0 +1,37 @@
++This is BIND's shres/linux/README file, specific to Linux.
++
++According to someone who put a copyright on his email so I don't want
++to copy it verbatim (therefore I have to make the information original
++and I get to claim credit; don't you love how backwards copyright laws
++make things sometimes?) in Linux it's better to build an updated
++version of libc with the latest resolver rather than to use
++libresolv.so (shared libresolv), since if you do the latter you will
++have two versions of the resolver functions being used (one for apps
++not linked with -lresolv and one for those linked with -lresolv),
++which affects both memory usage (more) and application behavior (it
++was indicated that this is bad; I can see how it may be in an
++unpredictable way, which is enough to worry about!)  In addition,
++there might be some (minor but relevant) compatibility porting that
++gets done when integrating the resolver into libc.
++
++One approach for the future that I brought up could be to have the
++libc.so ELF library require the libresolv.so library (something my
++source said would require some "stupid libdl tricks"), thus
++eliminating duplicates and making upgrading components easier (as well
++as easier to set up incompatible combinations with unforeseen bad
++interactions).  Since I'm an armchair OS theorist, take this paragraph
++as conjecture.  My priority was getting this README out quickly to
++warn people of some of the issues (see next paragraph), not in making
++it perfect (in this case).
++
++I just wanted to make this README before I opened a whole can of worms
++with everybody using different concepts of how to link resolver
++routines into their programs.  So: for now (or until further notice)
++use libc unless you know what you're doing, especially package and OS
++distributors.
++
++Someone make this README better.
++For now, by Bradley Allen <Ulmo@Q.Net>
++"my source" in above is Craig Metz <cmetz@inner.net>, in a thread
++about a test suite of IPv6 applications for Linux he put together I
++was trying.
+
+Is&Qs means Ideas and Questions.
+
+All,
+
+  I've always been annoyed that libc's resolver is always ages behind
+that of BIND's resolver, before Linus even took an OS class (although
+back then I didn't know libc was called libc), and the fact that there
+can be bad interactions between named and resolvers not upgraded, and
+other problems with not upgrading the resolvers (bugs, etc.)  Lately,
+I've wanted to use a newer resolver with upcoming IPv6 features
+integrated into it, mostly for testing, etc.
+
+  In the Linux ELF environment (where source is generally available
+for all components), is it good or bad to have libc require libresolv
+and then move all libc resolver support functionality into libresolv?
+How hard would this be?  Would this work transparently without having
+to link (or for that matter, relink) programs with -lresolv?  Would it
+also work (the same) with programs linked with -lresolv?  Would this
+be of benefit in other OSs where the (libc) source is not available?
+
+  Would this require wrapper functions from libc to libresolv to
+handle porting issues?  Would such wrapper functions be possible?
+Would they endanger those programs linked with -lresolv since those
+programs will be using a different version of the functions than those
+linked without -lresolv?  If possible, how hard would it be to
+eliminate the need for something like wrapper functions?
+
+
+  Also, according to Craig's comments on his work in progress (which
+looks like a good approach to DNS), using his current getaddrinfo code
+with BIND's inet_ntop will result in a core dump.  Perhaps inet_ntop
+could be made more robust (I don't have details; Craig?)
+
+  In addition, in response to my posting gangly shell scripts to do
+conversions between base 85 (RFC1924) and the other IPv6 notations
+(mostly out of intrigue, not of dire function), Craig asserted his
+opinion that base 85 is evil.  I have no big opinion, only very small
+ones: it's pretty looking giberish ([e108:724e:f104:e104:8:800:400C:417A]
+becomes [%o%rjMA$@*TrQv?=(jE<]), and easier to format in debugging and
+logging outputs. :) Other than that, I tend to agree with Craig that
+it's kinda hard to make standard now as well as of questionable value,
+but thought I'd give it more air.
+
+Bradley <u@q.net>
+
+P.S. spam helped the proliferation of PGP more than anything else I've
+seen.  Now, it's become so familiar to use I use it for more mundane
+things.  Here though I keep it away from the patch.
+-----BEGIN PGP SIGNED MESSAGE-----
+
+md5sum of body above pgp signed text: 3d1e3de216241adcf93fa8650e2cbf02
+
+-----BEGIN PGP SIGNATURE-----
+Version: 2.6.2
+Comment: Processed by Mailcrypt 3.4, an Emacs/PGP interface
+
+iQEVAwUBMnSfYJxWhFYc6x9VAQFjlwgAllFApf7jamAtFpLFVUob3lt9meCp+/uq
+V2FZNENGg1q+hXmX6N9452FpD1fAYMJ3zyTGy9Lei+Kr3G9vYRQ5KxuEBXRT/Yrj
+XjojarPxaOb6V9PYlT5tUVUgcuSRgKb9d3Pwe8oE6dsMUGF5iepllGXyliQA00Tp
+7ouoiFWYvMNVZKWYZKjYgvzBmx2VQFzq5tZwsoI8TYBxGIsqOySJ7Lk2qh6IKozx
+lTRyP7hxXNcgLEff2/Uv+LKobOXfhj6Cz8kKQRXqMIo0wVdxEUIO1Wyi0xcTHqp8
+EadZoZYCfNKOaE0piERTJiNTCre0aQQB6g1IdEA59JJScM2RYVVHqg==
+=ML1B
+-----END PGP SIGNATURE-----
+
+
+
+
+>>> 4.9.5:2
+
+Date:    Tue, 05 Nov 1996 17:40:14 +0100
+To:      ulmo@q.net
+cc:      paul@vix.com, hjl@gnu.ai.mit.edu, cmetz@inner.net, bind-workers@vix.co
+     ***m
+From:    Ulrich Drepper <drepper@myware.rz.uni-karlsruhe.de>
+Subject: Re: BIND shres/linux/README addition + Is&Qs
+
+From: Bradley Ward Allen <ulmo@Q.Net>
+Subject: BIND shres/linux/README addition + Is&Qs
+Date: Mon, 28 Oct 1996 06:59:15 -0500
+
+>   I've always been annoyed that libc's resolver is always ages behind
+> that of BIND's resolver,
+
+This is not true.  At most a few days after a new resolver version is
+out I upgrade GNU libc.  And the GNU libc the upcoming libc for Linux.
+
+
+>   In the Linux ELF environment (where source is generally available
+> for all components), is it good or bad to have libc require libresolv
+> and then move all libc resolver support functionality into libresolv?
+
+I don't know whether you missed a thread in the mailing
+lists/newsgroups I recently participated.  I explained why it is not
+possible to use the resolver code directly.
+
+As the code comes in BIND it is not usable (sorry, Paul).  The code
+suffers from it's heritage.  There is no separation between the
+different ways to access name information.  In the original code using
+the file database and using DNS is happily mixed.  In the Linux libc's
+code there is yet another service (NIS) available.  This all is only a
+hack.
+
+For the GNU library I implemented a scheme similar to Solaris' NSS.
+For this I needed clean separations.  The file lookup, DNS, NIS, etc
+are all in separate parts of the library (in fact, all are separate
+shared objects).  Beside this all functions in the GNU libc NSS
+modules are reentrant.
+
+
+Once I have a few more time available I want to make a proposal to
+change the official BIND resolver library.  The result could be used
+with some additional glue code with the same interface as it is now
+but systems which do not want to/can use the current code because it
+is too restrictive will profit from the change.
+
+
+> How hard would this be?  Would this work transparently without having
+> to link (or for that matter, relink) programs with -lresolv?  Would it
+> also work (the same) with programs linked with -lresolv?  Would this
+> be of benefit in other OSs where the (libc) source is not available?
+
+This is not possible even for the Linux libc.  You would loose the NIS
+code.
+
+-- Uli
+--------------.       drepper@cygnus.com  ,-.   Rubensstrasse 5
+Ulrich Drepper \    ,--------------------'   \  76149 Karlsruhe/Germany
+Cygnus Support  `--'  drepper@gnu.ai.mit.edu  `------------------------
+
+
+
+
+>>> 4.9.5:3
+
+Date:    Wed, 06 Nov 1996 04:28:04 EST
+To:      drepper@ipd.info.uni-karlsruhe.de (Ulrich Drepper)
+cc:      paul@vix.com, hjl@gnu.ai.mit.edu, cmetz@inner.net, bind-workers@vix.co
+     ***m,
+	 Matthias Urlichs <smurf@smurf.noris.de>,
+	 ULMO@Q.Net
+From:    Bradley Ward Allen <ulmo@Q.Net>
+Subject: Re: BIND shres/linux/README addition + Is&Qs 
+
+--==_Exmh_2051252028P
+Content-Type: text/plain
+
+Matthias Urlichs <smurf@smurf.noris.de>
+> The alternative to shared libresolv is static libresolv which is even
+> worse.
+> 
+> We have three choices...
+> - Link statically. Ugly.
+> - Link with our -lresolv. Workable.
+> - Assume that the standard libc and include files already are up-to-date.
+> 
+> The third option, IMHO, is the most preferable. All we need is a version
+> number, for verification.
+
+Yes, now that I understand this situation better, I see that #2 and #3
+should be the BIND choices.  This should go to the BIND README and
+Makefile as well.  Plus it should be obvious what one is selecting
+while in the Makefile, and why.  Mentioning both glibc and the HJL
+libc and where they stand would be important.
+
+> The way the GNU libc (which works very well under Linux) does this is to
+> delegate all the lookup functions to a sub-library which is
+> dynamically-linked into the running program when needed, and which in turn
+> uses -lresov. Problem solved (but it is NOT easy to make this work).
+
+Not easy for who?  For the glibc programmers who supposedly already
+finished the hard part, or is there more hard stuff to do or hard for
+the administrators?
+
+> >[...]
+> You can always port the GNU libc...
+
+It's about time I find out where GNU libc is.  I'll pull the one from
+rice-chex (er, what's it called now? ftp.gnu.ai.mit.edu).  Is it ready
+for public consumption (e.g., I read comp.os.linux.announce and it
+doesn't regular there)?
+
+
+
+Ulrich Drepper <drepper@ipd.info.uni-karlsruhe.de>
+>>   I've always been annoyed that libc's resolver is always ages behind
+>> that of BIND's resolver,
+>
+>This is not true.  At most a few days after a new resolver version is
+>out I upgrade GNU libc.  And the GNU libc the upcoming libc for Linux.
+
+Ahhh, on linux-kernel and in distributions the other libc is the one
+being talked about.  <confused look>
+
+>For the GNU library I implemented a scheme similar to Solaris' NSS.
+>For this I needed clean separations.  The file lookup, DNS, NIS, etc
+>are all in separate parts of the library (in fact, all are separate
+>shared objects).  Beside this all functions in the GNU libc NSS
+>modules are reentrant.
+
+That's great.  (File + NIS as well as DNS is useful for those who need
+it, and the intent is supporting the possible combinations out there
+that might happen, therefore File + NIS + DNS is useful.  While one
+can argue that File is unnecessary since one can just run DNS + named
+(even without Internet connectivity), there are currently security
+issues solved by using only File or File First (which I just learned
+about); when and how is DNS security being implemented?  As a part of
+IPv[46] security or seperately?  Also, NIS is useful for those stuck
+with it or if its security is better.  I'm babling now ...)
+
+>Once I have a few more time available I want to make a proposal to
+>change the official BIND resolver library.  The result could be used
+>with some additional glue code with the same interface as it is now
+>but systems which do not want to/can use the current code because it
+>is too restrictive will profit from the change.
+
+Also threaded DNS lookups ...
+
+Alright, I'm sorry, I feel like I'm watching a whole lotta worms
+squiggle around right now in front of me, but on the other hand
+they're earth worms so I'm not afraid.
+
+--==_Exmh_2051252028P
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP MESSAGE-----
+Version: 2.6.2
+
+iQEVAwUBMoBaHpxWhFYc6x9VAQFKywf7BNyd7JfKjg/a8FszJJ4I669pCCV1I41D
+iArTy5AVys8FYOXQZhZj5V/jpbwRBgdZiyz2GW/T80xRgscZxbqJiDxLcsx6slPT
+QPpTFrSP6OFJyfWdG7jRziMhDMkVhIEruZwuUIoEUbC6iZbvLkqwnaJf7pcNpwqy
+gJ5AtnarWU7pYfWgZxqoikq6G+rAqVyoVb7me/T1jEJ+Oa67+06dFDFLaWyybAi4
+15me6WIgzBZFM0iRxKnooc1VjcOiAI1hb0+/iLH3/YyzSexrXi3JgfW3ILpujfEm
+Aw3qTy1nI0AmRexsKpKZQ4uiGUCXdQXBJAMwTsklWUhtkZfbGW10pw==
+=aqKJ
+-----END PGP MESSAGE-----
+
+--==_Exmh_2051252028P--
+
+
+
+>>> 4.9.5:4
+
+Date:    Wed, 06 Nov 1996 11:55:05 +0100
+To:      ulmo@Q.Net (Bradley Ward Allen)
+cc:      drepper@ipd.info.uni-karlsruhe.de, paul@vix.com, hjl@gnu.ai.mit.edu,
+	 cmetz@inner.net, bind-workers@vix.com, smurf@smurf.noris.de,
+	 ULMO@Q.Net
+From:    Matthias Urlichs <smurf@smurf.noris.de>
+Subject: Re: BIND shres/linux/README addition + Is&Qs
+
+Hi,
+
+Bradley Ward Allen wrote:
+>
+>> The way the GNU libc (which works very well under Linux) does this is to
+>> delegate all the lookup functions to a sub-library which is
+>> dynamically-linked into the running program when needed, and which in turn
+>> uses -lresov. Problem solved (but it is NOT easy to make this work).
+>
+>Not easy for who?  For the glibc programmers who supposedly already
+>finished the hard part, or is there more hard stuff to do or hard for
+>the administrators?
+>
+The former. I should have said "it _was_ not easy", but I only see the
+results...
+
+>> You can always port the GNU libc...
+>
+>It's about time I find out where GNU libc is.  I'll pull the one from
+>rice-chex (er, what's it called now? ftp.gnu.ai.mit.edu).  Is it ready
+>for public consumption (e.g., I read comp.os.linux.announce and it
+>doesn't regular there)?
+>
+alpha.gnu.ai.mit.edu:/gnu/glibc. People who actually work on ports of glibc
+(other than to Linux and The Hurd) don't seem to exist at the moment. If
+you want to help change this sad fact, DO IT!
+
+>Ahhh, on linux-kernel and in distributions the other libc is the one
+>being talked about.  <confused look>
+>
+Right. Linux libc once was a glibc clone, but cooperation between the
+people involved didn't work very well...
+
+>Also threaded DNS lookups ...
+>
+(A) Find a sensible threading library. Surprise, linux-glibc already has
+   one. ;-)
+(B) Replace all assignments to errno and h_errno with per-thread setter
+   functions (this is the only difference between the resolver library in
+   BIND and the one in glibc, as far as I can tell, ignoring for the moment
+   all code that's in one but not in the other).
+(C) Now, if you want to do a DNS lookup in parallel, just spawn off a
+   thread and do it. Simplicity itself.  ;-)
+
+-- 
+If some people didn't tell you,
+you'd never know they'd been away on vacation.
+-- 
+Matthias Urlichs         \  noris network GmbH  /  Xlink-POP Nürnberg 
+Schleiermacherstraße 12   \   Linux+Internet   /   EMail: urlichs@noris.de
+90491 Nürnberg (Germany)   \    Consulting+Programming+Networking+etc'ing
+   PGP: 1024/4F578875   1B 89 E2 1C 43 EA 80 44  15 D2 29 CF C6 C7 E0 DE
+       Click <A HREF="http://info.noris.de/~smurf/finger">here</A>.    42
+
+
+
+>>> 4.9.5:5
+
+Date:    Wed, 06 Nov 1996 12:18:13 +0100
+To:      smurf@smurf.noris.de
+cc:      ulmo@q.net, paul@vix.com, hjl@gnu.ai.mit.edu, cmetz@inner.net,
+	 bind-workers@vix.com
+From:    Ulrich Drepper <drepper@myware.rz.uni-karlsruhe.de>
+Subject: Re: BIND shres/linux/README addition + Is&Qs
+
+From: Matthias Urlichs <smurf@smurf.noris.de>
+Subject: Re: BIND shres/linux/README addition + Is&Qs
+Date: Wed, 6 Nov 1996 11:55:05 +0100 (MET)
+
+> (B) Replace all assignments to errno and h_errno with per-thread setter
+>    functions (this is the only difference between the resolver library in
+>    BIND and the one in glibc, as far as I can tell, ignoring for the moment
+>    all code that's in one but not in the other).
+> (C) Now, if you want to do a DNS lookup in parallel, just spawn off a
+>    thread and do it. Simplicity itself.  ;-)
+
+It's not that easy.  While many of the original resolver files are
+still available in the libresolv.so object they are *not* used.  All
+the DNS lookup functions are written new (based on the original
+version) and are now in the libnss_dns.so objects.  Substantial
+changes had to be done since the original resolver code uses static
+variables.
+
+The libresolv.so lib which comes which glibc is not really what it is
+one other systems.  It includes some helper functions which are not
+used inthe libc itself and it includes the hostname lookup functions
+but the names are changed.
+
+-- Uli
+--------------.       drepper@cygnus.com  ,-.   Rubensstrasse 5
+Ulrich Drepper \    ,--------------------'   \  76149 Karlsruhe/Germany
+Cygnus Support  `--'  drepper@gnu.ai.mit.edu  `------------------------
