@@ -1,4 +1,4 @@
-/*	$NetBSD: loader.h,v 1.2 1995/03/28 06:26:52 leo Exp $	*/
+/*	$NetBSD: loader.h,v 1.3 1995/04/16 14:48:00 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -48,8 +48,11 @@
  * System var's used in low-memory
  */
 #define	ADDR_RAMTOP	((long*)0x5a4)	/* End of TT-ram (unofficial)	*/
+#define	ADDR_CHKRAMTOP	((long*)0x5a8)	/*   above is valid (unofficial)*/
 #define	ADDR_PHYSTOP	((long*)0x42e)	/* End of ST-ram		*/
 #define	ADDR_P_COOKIE	((long**)0x5a0)	/* Pointer to cookie jar	*/
+
+#define	RAM_TOP_MAGIC	(0x1357bd13)	/* Magic nr. for ADDR_CHKRAMTOP	*/
 
 /*
  * These should match with the values NetBSD uses!

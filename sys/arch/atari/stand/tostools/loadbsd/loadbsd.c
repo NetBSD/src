@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.3 1995/04/08 21:01:39 leo Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.4 1995/04/16 14:47:58 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -46,7 +46,7 @@ int	t_flag = 0;		/* Just test, do not execute	*/
 int	d_flag = 0;		/* Output debugging output?	*/
 int	s_flag = 0;		/* St-ram only			*/
 
-char version[] = "$VER: LoadBSD 1.0 (08/04/95)";
+char version[] = "$Revision: 1.4 $";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -188,6 +188,14 @@ char	**argv;
 		kparam.esym_loc = (long)((char *)p-(char *)kparam.kp +stringsz);
 	}
 
+	if(d_flag) {
+	    fprintf(stderr, "\r\nKernel info:\r\n");
+	    fprintf(stderr, "Kernel loadaddr\t: 0x%08x\r\n", kparam.kp);
+	    fprintf(stderr, "Kernel size\t: %10d bytes\r\n", kparam.ksize);
+	    fprintf(stderr, "Kernel entry\t: 0x%08x\r\n", kparam.entry);
+	    fprintf(stderr, "Kernel esym\t: 0x%08x\r\n", kparam.esym_loc);
+	}
+
 	if(!t_flag)
 		start_kernel();
 		/* NOT REACHED */
@@ -211,9 +219,14 @@ void get_sys_info()
 	if(kparam.stmem_size <= 0)
 		kparam.stmem_size  = *ADDR_PHYSTOP;
 
-	kparam.ttmem_start = TTRAM_BASE;
-	if(!s_flag)
-		kparam.ttmem_size = *ADDR_RAMTOP - TTRAM_BASE;
+	if(!s_flag && (*ADDR_CHKRAMTOP == RAM_TOP_MAGIC)) {
+		kparam.ttmem_size  = *ADDR_RAMTOP;
+		if(kparam.ttmem_size > TTRAM_BASE) {
+			kparam.ttmem_size  -= TTRAM_BASE;
+			kparam.ttmem_start  = TTRAM_BASE;
+		}
+		else kparam.ttmem_size = 0;
+	}
 
 	/*
 	 * Scan cookiejar for cpu/fpu types
@@ -322,7 +335,7 @@ void usage()
 void do_exit(code)
 int	code;
 {
-	fprintf(stderr, "\r\nHit any key to continue...");
+	fprintf(stderr, "\r\nHit <return> to continue...");
 	(void)getchar();
 	fprintf(stderr, "\r\n");
 	exit(code);
@@ -352,6 +365,7 @@ _startit:
 	| d2:  cputype
 	| d3:  boothowto
 	| d4:  length of loaded kernel
+	| d5:  start of fastram
 	| a0:  start of loaded kernel
 	| a1:  end of symbols (esym)
 	| All other registers zeroed for possible future requirements.
@@ -413,6 +427,5 @@ nott:
 nullrp:	.long	0x80000202
 zero:	.long	0
 svsp:	.long   0
-
 
 ");
