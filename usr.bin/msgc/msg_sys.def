@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.19 2003/06/04 19:00:26 dsl Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.20 2003/06/10 17:24:17 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,24 +56,35 @@ _msg_beep(void)
 	fprintf(stderr, "\a");
 }
 
-int msg_window(WINDOW *window)
+WINDOW *
+msg_window(WINDOW *window)
 {
 	size_t ncbuffersize;
 	char *ncbuffer;
+	WINDOW *old;
 
+	old = msg_win;
+	if (!window)
+		return old;
 	msg_win = window;
 
 	ncbuffersize = getmaxx(window) * getmaxy(window) + 1;
-	if (ncbuffersize > cbuffersize) {
+	while (ncbuffersize > cbuffersize) {
 		ncbuffer = malloc(ncbuffersize);
-		if (ncbuffer == NULL)
-			return 1;
+		if (ncbuffer == NULL) {
+			/* we might get truncated messages... */
+			ncbuffersize <<= 1;
+			continue;
+		}
 		if (cbuffer != NULL)
 			free(cbuffer);
 		cbuffer = ncbuffer;
 		cbuffersize = ncbuffersize;
+		break;
 	}
-	return 0;
+	last_o_was_punct = 0;
+	last_o_was_space = 1;
+	return old;
 }
 
 const char *msg_string (msg msg_no)
@@ -346,29 +357,63 @@ msg_prompt(msg msg_no, const char *def, char *val, size_t max_chars, ...)
 }
 
 void
-msg_prompt_win(msg msg_no, WINDOW *win,
+msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 	const char *def, char *val, size_t max_chars, ...)
 {
 	va_list ap;
-	WINDOW *sv_win;
+	WINDOW *win, *svwin;
+	int maxx, maxy;
 
-	sv_win = msg_win;
-
-	msg_window(win);
-
-	msg_clear();
-
-	if (getmaxy(win) >= 3) {
-		box(win, 0, 0);
-		wmove(win, 1, 1);
+	maxx = getmaxx(stdscr);
+	maxy = getmaxy(stdscr);
+	if (w == 0) {
+		va_start(ap, max_chars);
+		w = vsnprintf(NULL, 0, msg_string(msg_no), ap);
+		va_end(ap);
+		if (def != NULL && *def != 0)
+			w += 2 + strlen(def);
+		w += 1 + 2 + max_chars + 1;
+		if (w > maxx)
+			w = maxx;
 	}
 
-	va_start (ap, max_chars);
-	_msg_vprompt(msg_string(msg_no), 1, def, val, max_chars, ap);
-	va_end (ap);
+	if (x == -1)
+		x = (maxx - w) / 2;
+	if (h < 3)
+		h = 3;
+	if (y < 3)
+		y = (maxy - h) / 2;
+	if (y + h > maxy)
+		y = maxy - h;
 
-	msg_clear();
-	msg_window(sv_win);
+	win = newwin(h, w, y, x);
+	if (win == NULL)
+		wprintw(msg_win, "msg_prompt_win: "
+			"newwin(%d, %d, %d, %d) failed\n",
+			h, w, y, x);
+	else {
+		wbkgd(win, getbkgd(msg_win));
+		wattrset(win, getattrs(msg_win));
+		box(win, 0, 0);
+		wrefresh(win);
+
+		svwin = msg_window(derwin(win, -1, -1, 1, 1));
+		wbkgd(msg_win, getbkgd(win));
+		wattrset(msg_win, getattrs(win));
+
+		msg_clear();
+	}
+
+	va_start(ap, max_chars);
+	_msg_vprompt(msg_string(msg_no), 1, def, val, max_chars, ap);
+	va_end(ap);
+
+	if (win != NULL) {
+		wclear(win);
+		wrefresh(win);
+		delwin(msg_window(svwin));
+		delwin(win);
+	}
 }
 
 void
