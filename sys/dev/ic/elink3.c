@@ -1,6 +1,7 @@
-/*	$NetBSD: elink3.c,v 1.18 1996/12/31 21:36:30 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.19 1997/02/16 04:09:18 jonathan Exp $	*/
 
 /*
+ * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
  * All rights reserved.
  *
@@ -99,6 +100,37 @@ void epsetfilter __P((struct ep_softc *));
 void epsetlink __P((struct ep_softc *));
 
 static int epbusyeeprom __P((struct ep_softc *));
+static inline void ep_complete_cmd __P((struct ep_softc *sc, 
+					u_int cmd, u_int arg));
+
+
+/*
+ * Issue a (reset) command, and be sure it has completed.
+ * Used for commands that reset part or all of the  board.
+ * On newer hardware we could poll SC_COMMAND_IN_PROGRESS,
+ * but older hardware doesn't implement it and we must delay.
+ * It's easiest to just delay always.
+ */
+static inline void
+ep_complete_cmd(sc, cmd, arg)
+	struct ep_softc *sc;
+	u_int cmd, arg;
+{
+	register bus_space_tag_t iot = sc->sc_iot;
+	register bus_space_handle_t ioh = sc->sc_ioh;
+
+	bus_space_write_2(iot, ioh, cmd, arg);
+
+#ifdef notyet
+	/* if this adapter family has S_COMMAND_IN_PROGRESS, use it */
+	while (bus_space_read_2(iot, ioh, EP_STATUS) & S_COMMAND_IN_PROGRESS)
+		;
+	else
+#else
+	DELAY(100000);	/* need at least 1 ms, but be generous. */
+#endif
+}
+
 
 
 void
@@ -248,16 +280,15 @@ epconfig(sc, conn)
 	/*  Establish callback to reset card when we reboot. */
 	shutdownhook_establish(epshutdown, sc);
 
-#if 0
+#if 1
 	/* XXX */
-	bus_space_write_2(iot, ioh, EP_COMMAND, RX_RESET);
-	bus_space_write_2(iot, ioh, EP_COMMAND, TX_RESET);
+	ep_complete_cmd(sc, EP_COMMAND, RX_RESET);
+	ep_complete_cmd(sc, EP_COMMAND, TX_RESET);
 #else
-	
 	epinit(sc);		/*XXX fix up after probe */	
-	DELAY(20000);
+	DELAY(5000);
 	epstop(sc);		/*XXX reset after probe, stop interface. */
-	DELAY(20000);
+	DELAY(5000);
 #endif
 }
 
@@ -395,10 +426,8 @@ epinit(sc)
 	for (i = 0; i < 6; i++)
 		bus_space_write_1(iot, ioh, EP_W2_RECVMASK_0 + i, 0);
 
-	bus_space_write_2(iot, ioh, EP_COMMAND, RX_RESET);
-	DELAY(100000);	/* need at least 1 ms, but be generous. */
-	bus_space_write_2(iot, ioh, EP_COMMAND, TX_RESET);
-	DELAY(100000);	/* need at least 1 ms, but be generous. */
+	ep_complete_cmd(sc, EP_COMMAND, RX_RESET);
+	ep_complete_cmd(sc, EP_COMMAND, TX_RESET);
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
 	for (i = 0; i < 31; i++)
@@ -1205,11 +1234,8 @@ epstop(sc)
 	bus_space_write_2(iot, ioh, EP_COMMAND, TX_DISABLE);
 	bus_space_write_2(iot, ioh, EP_COMMAND, STOP_TRANSCEIVER);
 
-	bus_space_write_2(iot, ioh, EP_COMMAND, RX_RESET);
-	DELAY(100000);	/* need at least 1 ms, but be generous. */
-
-	bus_space_write_2(iot, ioh, EP_COMMAND, TX_RESET);
-	DELAY(100000);	/* need at least 1 ms, but be generous. */
+	ep_complete_cmd(sc, EP_COMMAND, RX_RESET);
+	ep_complete_cmd(sc, EP_COMMAND, TX_RESET);
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, C_INTR_LATCH);
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_RD_0_MASK);
@@ -1228,16 +1254,9 @@ epshutdown(arg)
 	void *arg;
 {
 	register struct ep_softc *sc = arg;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
 
 	epstop(sc);
-	bus_space_write_2(iot, ioh, EP_COMMAND, GLOBAL_RESET);
-	/*
-	 * should loop waiting for CMD_COMPLETE but some earlier cards
-	 * may not support that properly.
-	 */
-	DELAY(20000);	/* need at least 1 ms, but be generous. */
+	ep_complete_cmd(sc, EP_COMMAND, GLOBAL_RESET);
 }
 
 
