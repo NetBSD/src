@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.52 1995/01/13 10:51:18 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.53 1995/01/16 21:40:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -811,11 +811,14 @@ sd_get_parms(sd, flags)
 		    _3btol(&scsi_sense.pages.rigid_geometry.ncyl_2);
 		dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
 
-		if (!dp->heads || !dp->cyls || !dp->blksize) {
+		if (dp->heads == 0 || dp->cyls == 0) {
 			printf("%s: mode sense (4) returned nonsense",
 			    sd->sc_dev.dv_xname);
 			goto fake_it;
 		}
+
+		if (dp->blksize == 0)
+			dp->blksize = 512;
 
 		sectors = sd_size(sd, flags);
 		dp->disksize = sectors;
