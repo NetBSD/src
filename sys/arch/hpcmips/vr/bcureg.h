@@ -1,4 +1,4 @@
-/*	$NetBSD: bcureg.h,v 1.1.1.1 1999/09/16 12:23:31 takemura Exp $	*/
+/*	$NetBSD: bcureg.h,v 1.2 1999/12/13 03:11:36 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -180,15 +180,15 @@
 #define		BCUCLKSPEED_CLKSPMASK	(0xf)		/* calculate for Clock */
 #define		BCUCLKSPEED_CLKSPSHFT	(0)		
 
-#define	BCUCNT3_REG_W		0x016	/* BCU Control Register 3 */
+#define	BCUCNT3_REG_W		0x016	/* BCU Control Register 3 (>= vr4111) */
 
 #define		BCUCNT3_EXTROMMASK	(1<<15)		/* ROM SIZE */
-#define		BCUCNT3_EXTROM64M	(1<<15)		/* ROM SIZE 64Mbit*/
-#define		BCUCNT3_EXTROM32M	(0<<15)		/* ROM SIZE 32Mbit*/
+#define		BCUCNT3_EXTROM64M	(1<<15)		/* 64Mbit DRAM */
+#define		BCUCNT3_EXTROM32M	(0<<15)		/* 32Mbit DRAM */
 
-#define		BCUCNT3_EXTDRAMMASK	(1<<14)		/* ROM SIZE */
-#define		BCUCNT3_EXTDRAM64M	(1<<14)		/* ROM SIZE 64Mbit*/
-#define		BCUCNT3_EXTDRAM16M	(0<<14)		/* ROM SIZE 16Mbit*/
+#define		BCUCNT3_EXTDRAMMASK	(1<<14)		/* DRAM SIZE */
+#define		BCUCNT3_EXTDRAM64M	(1<<14)		/* 64Mbit DRAM */
+#define		BCUCNT3_EXTDRAM16M	(0<<14)		/* 16Mbit DRAM */
 
 #define		BCUCNT3_EXTROMCS	(0x3<<12)	/* Bank3,2 */
 #define		BCUCNT3_ROMROM		(0x3<<12)	/* Bank3 ROM ,2 ROM  */
