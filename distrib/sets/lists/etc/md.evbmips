@@ -1,2 +1,1 @@
-# $NetBSD: md.evbmips,v 1.1 2002/04/10 14:11:15 simonb Exp $
-./etc/fstab.md		etc-sys-etc
+# $NetBSD: md.evbmips,v 1.2 2002/06/05 14:39:26 itojun Exp $
