@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.34 1999/12/08 23:40:35 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.35 2000/01/20 17:16:25 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.34 1999/12/08 23:40:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35 2000/01/20 17:16:25 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	size_t mapsize;
 
 	/*
-	 * Allcoate and initialize the DMA map.  The end of the map
+	 * Allocate and initialize the DMA map.  The end of the map
 	 * is a variable-sized array of segments, so we allocate enough
 	 * room for them in one shot.
 	 *
