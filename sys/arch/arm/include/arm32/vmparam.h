@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 2003/05/03 18:25:29 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.17 2003/05/04 01:54:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -82,7 +82,6 @@
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
-#ifndef ARM32_NEW_VM_LAYOUT
 #ifdef ARM32_PMAP_NEW
 /*
  * Mach derived constants
@@ -90,6 +89,7 @@
 #define	VM_MIN_ADDRESS		((vaddr_t) 0x00001000)
 #define	VM_MAXUSER_ADDRESS	((vaddr_t) KERNEL_BASE)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
+
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
 #else /* ! ARM32_PMAP_NEW */
@@ -113,18 +113,6 @@
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
 #endif /* ARM32_PMAP_NEW */
-
-#else /* ARM32_NEW_VM_LAYOUT */
-/*
- * New VM layout
- */
-#define	VM_MIN_ADDRESS		((vaddr_t) 0x00001000)
-#define	VM_MAXUSER_ADDRESS	((vaddr_t) KERNEL_BASE)
-#define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
-
-#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
-#endif	/* ARM32_NEW_VM_LAYOUT */
 
 /*
  * pmap-specific data store in the vm_page structure.
