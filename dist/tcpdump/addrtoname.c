@@ -1,4 +1,4 @@
-/*	$NetBSD: addrtoname.c,v 1.3 2001/06/27 21:08:41 itojun Exp $	*/
+/*	$NetBSD: addrtoname.c,v 1.4 2001/11/05 02:12:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/addrtoname.c,v 1.78 2001/06/24 21:49:25 itojun Exp (LBL)";
 #else
-__RCSID("$NetBSD: addrtoname.c,v 1.3 2001/06/27 21:08:41 itojun Exp $");
+__RCSID("$NetBSD: addrtoname.c,v 1.4 2001/11/05 02:12:47 itojun Exp $");
 #endif
 #endif
 
@@ -69,9 +69,6 @@ struct rtentry;
 #include "addrtoname.h"
 #include "llc.h"
 #include "setsignal.h"
-
-/* Forwards */
-static RETSIGTYPE nohostname(int);
 
 /*
  * hash tables for whatever-to-name translations
@@ -163,20 +160,6 @@ static u_int32_t f_localnet;
 static u_int32_t netmask;
 
 /*
- * "getname" is written in this atrocious way to make sure we don't
- * wait forever while trying to get hostnames from yp.
- */
-#include <setjmp.h>
-
-jmp_buf getname_env;
-
-static RETSIGTYPE
-nohostname(int signo)
-{
-	longjmp(getname_env, 1);
-}
-
-/*
  * Return a name for the IP address pointed to by ap.  This address
  * is assumed to be in network byte order.
  */
@@ -209,23 +192,18 @@ getname(const u_char *ap)
 	    (addr & f_netmask) == f_localnet &&
 	    (aflag ||
 	    !((addr & ~netmask) == 0 || (addr | netmask) == 0xffffffff))) {
-		if (!setjmp(getname_env)) {
-			(void)setsignal(SIGALRM, nohostname);
-			(void)alarm(20);
-			hp = gethostbyaddr((char *)&addr, 4, AF_INET);
-			(void)alarm(0);
-			if (hp) {
-				char *dotp;
+		hp = gethostbyaddr((char *)&addr, 4, AF_INET);
+		if (hp) {
+			char *dotp;
 
-				p->name = strdup(hp->h_name);
-				if (Nflag) {
-					/* Remove domain qualifications */
-					dotp = strchr(p->name, '.');
-					if (dotp)
-						*dotp = '\0';
-				}
-				return (p->name);
+			p->name = strdup(hp->h_name);
+			if (Nflag) {
+				/* Remove domain qualifications */
+				dotp = strchr(p->name, '.');
+				if (dotp)
+					*dotp = '\0';
 			}
+			return (p->name);
 		}
 	}
 	p->name = strdup(intoa(addr));
@@ -272,23 +250,18 @@ getname6(const u_char *ap)
 	    !((addr & ~netmask) == 0 || (addr | netmask) == 0xffffffff))
 #endif
 	    ) {
-		if (!setjmp(getname_env)) {
-			(void)setsignal(SIGALRM, nohostname);
-			(void)alarm(20);
-			hp = gethostbyaddr((char *)&addr, sizeof(addr), AF_INET6);
-			(void)alarm(0);
-			if (hp) {
-				char *dotp;
+		hp = gethostbyaddr((char *)&addr, sizeof(addr), AF_INET6);
+		if (hp) {
+			char *dotp;
 
-				p->name = strdup(hp->h_name);
-				if (Nflag) {
-					/* Remove domain qualifications */
-					dotp = strchr(p->name, '.');
-					if (dotp)
-						*dotp = '\0';
-				}
-				return (p->name);
+			p->name = strdup(hp->h_name);
+			if (Nflag) {
+				/* Remove domain qualifications */
+				dotp = strchr(p->name, '.');
+				if (dotp)
+					*dotp = '\0';
 			}
+			return (p->name);
 		}
 	}
 	cp = (char *)inet_ntop(AF_INET6, &addr, ntop_buf, sizeof(ntop_buf));
