@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.h,v 1.7 2000/05/19 10:39:44 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.h,v 1.7.4.1 2003/08/05 12:52:10 msaitoh Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.9 2000/04/12 07:28:20 jinmei Exp $	*/
 
 /*
@@ -271,6 +271,7 @@ struct rtdetq {		/* XXX: rtdetq is also defined in ip_mroute.h */
 int	ip6_mrouter_set __P((int, struct socket *, struct mbuf *));
 int	ip6_mrouter_get __P((int, struct socket *, struct mbuf **));
 int	ip6_mrouter_done __P((void));
+void	ip6_mrouter_detach __P((struct ifnet *));
 int	mrt6_ioctl __P((int, caddr_t));
 #endif /* _KERNEL */
 
