@@ -1,5 +1,5 @@
-/* $NetBSD: isp.c,v 1.23 1998/07/15 19:50:16 mjacob Exp $ */
-/* $Id: isp.c,v 1.23 1998/07/15 19:50:16 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.24 1998/07/18 21:10:16 mjacob Exp $ */
+/* $Id: isp.c,v 1.24 1998/07/18 21:10:16 mjacob Exp $ */
 /*
  * Machine Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -76,6 +76,7 @@ static void isp_mboxcmd __P((struct ispsoftc *, mbreg_t *));
 
 /*
  * Reset Hardware.
+ * Locking done elsewhere.
  */
 void
 isp_reset(isp)
@@ -84,7 +85,6 @@ isp_reset(isp)
 	mbreg_t mbs;
 	int loops, i, dodnld = 1;
 	char *revname;
-	ISP_LOCKVAL_DECL;
 
 	isp->isp_state = ISP_NILSTATE;
 
@@ -126,7 +126,6 @@ isp_reset(isp)
 	/*
 	 * Do MD specific pre initialization
 	 */
-	ISP_LOCK(isp);
 	ISP_RESET0(isp);
 	isp_setdparm(isp);	/*
 				 * XXX- need to get rid of thie call
@@ -135,6 +134,7 @@ isp_reset(isp)
 				 * XXX- and read the clock settings.
 				 * XXX- typically for SBus only.
 				 */
+
 	/*
 	 * Hit the chip over the head with hammer,
 	 * and give the ISP a chance to recover.
@@ -183,7 +183,6 @@ isp_reset(isp)
 		SYS_DELAY(100);
 		if (--loops < 0) {
 			isp_dumpregs(isp, "chip reset timed out");
-			ISP_UNLOCK(isp);
 			return;
 		}
 	}
@@ -226,7 +225,6 @@ isp_reset(isp)
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 		isp_dumpregs(isp, "NOP test failed");
-		ISP_UNLOCK(isp);
 		return;
 	}
 
@@ -241,14 +239,12 @@ isp_reset(isp)
 		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 			isp_dumpregs(isp,
 				"Mailbox Register test didn't complete");
-			ISP_UNLOCK(isp);
 			return;
 		}
 		if (mbs.param[1] != 0xdead || mbs.param[2] != 0xbeef ||
 		    mbs.param[3] != 0xffff || mbs.param[4] != 0x1111 ||
 		    mbs.param[5] != 0xa5a5) {
 			isp_dumpregs(isp, "Register Test Failed");
-			ISP_UNLOCK(isp);
 			return;
 		}
 
@@ -276,7 +272,6 @@ isp_reset(isp)
 			isp_mboxcmd(isp, &mbs);
 			if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 				isp_dumpregs(isp, "f/w download failed");
-				ISP_UNLOCK(isp);
 				return;
 			}
 		}
@@ -290,7 +285,6 @@ isp_reset(isp)
 			isp_mboxcmd(isp, &mbs);
 			if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 				isp_dumpregs(isp, "ram checksum failure");
-				ISP_UNLOCK(isp);
 				return;
 			}
 		}
@@ -319,7 +313,6 @@ isp_reset(isp)
 			isp_mboxcmd(isp, &mbs);
 			if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 				isp_dumpregs(isp, "failed to set CLOCKRATE");
-				ISP_UNLOCK(isp);
 				return;
 			}
 		}
@@ -328,7 +321,6 @@ isp_reset(isp)
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 		isp_dumpregs(isp, "ABOUT FIRMWARE command failed");
-		ISP_UNLOCK(isp);
 		return;
 	}
 	PRINTF("%s: Board Revision %s, %s F/W Revision %d.%d\n",
@@ -336,12 +328,14 @@ isp_reset(isp)
 		mbs.param[1], mbs.param[2]);
 	isp_fw_state(isp);
 	isp->isp_state = ISP_RESETSTATE;
-	ISP_UNLOCK(isp);
 }
 
 /*
  * Initialize Hardware to known state
+ *
+ * Locks are held before coming here.
  */
+
 void
 isp_init(isp)
 	struct ispsoftc *isp;
@@ -349,7 +343,6 @@ isp_init(isp)
 	sdparam *sdp;
 	mbreg_t mbs;
 	int i, l;
-	ISP_LOCKVAL_DECL;
 
 	if (isp->isp_type & ISP_HA_FC) {
 		isp_fibre_init(isp);
@@ -365,7 +358,6 @@ isp_init(isp)
 	 * This, by the way, is likely broken in that it should be
 	 * getting this info from NVRAM settings too.
 	 */
-	ISP_LOCK(isp);
 	ISP_WRITE(isp, HCCR, HCCR_CMD_PAUSE);
 	if (ISP_READ(isp, SXP_PINS_DIFF) & SXP_PINS_DIFF_SENSE) {
 		sdp->isp_diffmode = 1;
@@ -383,7 +375,6 @@ isp_init(isp)
 	mbs.param[0] = MBOX_GET_INIT_SCSI_ID;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-		ISP_UNLOCK(isp);
 		isp_dumpregs(isp, "failed to get initiator id");
 		return;
 	}
@@ -394,7 +385,6 @@ isp_init(isp)
 		mbs.param[1] = sdp->isp_initiator_id;
 		isp_mboxcmd(isp, &mbs);
 		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-			ISP_UNLOCK(isp);
 			isp_dumpregs(isp, "failed to set initiator id");
 			return;
 		}
@@ -408,7 +398,6 @@ isp_init(isp)
 	mbs.param[2] = sdp->isp_retry_delay;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-		ISP_UNLOCK(isp);
 		isp_dumpregs(isp, "failed to set retry count and delay");
 		return;
 	}
@@ -417,7 +406,6 @@ isp_init(isp)
 	mbs.param[1] = sdp->isp_async_data_setup;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-		ISP_UNLOCK(isp);
 		isp_dumpregs(isp, "failed to set async data setup time");
 		return;
 	}
@@ -427,7 +415,6 @@ isp_init(isp)
 			(sdp->isp_data_line_active_neg << 5);
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-		ISP_UNLOCK(isp);
 		isp_dumpregs(isp, "failed to set active neg state");
 		return;
 	}
@@ -436,7 +423,6 @@ isp_init(isp)
 	mbs.param[1] = sdp->isp_tag_aging;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-		ISP_UNLOCK(isp);
 		isp_dumpregs(isp, "failed to set tag age limit");
 		return;
 	}
@@ -445,7 +431,6 @@ isp_init(isp)
 	mbs.param[1] = sdp->isp_selection_timeout;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-		ISP_UNLOCK(isp);
 		isp_dumpregs(isp, "failed to set selection timeout");
 		return;
 	}
@@ -529,7 +514,6 @@ isp_init(isp)
 			mbs.param[3] = ISP_10M_SYNCPARMS;
 			isp_mboxcmd(isp, &mbs);
 			if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-				ISP_UNLOCK(isp);
 				PRINTF("%s: failed even to set defaults\n",
 					isp->isp_name);
 				return;
@@ -542,7 +526,6 @@ isp_init(isp)
 			mbs.param[3] = sdp->isp_devparam[i].exc_throttle;
 			isp_mboxcmd(isp, &mbs);
 			if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-				ISP_UNLOCK(isp);
 				isp_dumpregs(isp, "failed to set device queue "
 				       "parameters");
 				return;
@@ -554,7 +537,6 @@ isp_init(isp)
 	 * Set up DMA for the request and result mailboxes.
 	 */
 	if (ISP_MBOXDMASETUP(isp)) {
-		ISP_UNLOCK(isp);
 		PRINTF("%s: can't setup dma mailboxes\n", isp->isp_name);
 		return;
 	}
@@ -567,7 +549,6 @@ isp_init(isp)
 	mbs.param[5] = 0;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-		ISP_UNLOCK(isp);
 		isp_dumpregs(isp, "set of response queue failed");
 		return;
 	}
@@ -581,7 +562,6 @@ isp_init(isp)
 	mbs.param[5] = 0;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-		ISP_UNLOCK(isp);
 		isp_dumpregs(isp, "set of request queue failed");
 		return;
 	}
@@ -600,17 +580,20 @@ isp_init(isp)
 	mbs.param[1] = 2;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-		ISP_UNLOCK(isp);
 		isp_dumpregs(isp, "SCSI bus reset failed");
 	}
 	/*
 	 * This is really important to have set after a bus reset.
 	 */
 	isp->isp_sendmarker = 1;
-	ISP_UNLOCK(isp);
 	isp->isp_state = ISP_INITSTATE;
 }
 
+/*
+ * Fibre Channel specific initialization.
+ *
+ * Locks are held before coming here.
+ */
 static void
 isp_fibre_init(isp)
 	struct ispsoftc *isp;
@@ -620,26 +603,22 @@ isp_fibre_init(isp)
 	mbreg_t mbs;
 	int count;
 	u_int8_t lwfs;
-	ISP_LOCKVAL_DECL;
 
 	fcp = isp->isp_param;
 
 	fcp->isp_retry_count = 0;
 	fcp->isp_retry_delay = 1;
 
-	ISP_LOCK(isp);
 	mbs.param[0] = MBOX_SET_RETRY_COUNT;
 	mbs.param[1] = fcp->isp_retry_count;
 	mbs.param[2] = fcp->isp_retry_delay;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-		ISP_UNLOCK(isp);
 		isp_dumpregs(isp, "failed to set retry count and delay");
 		return;
 	}
 
 	if (ISP_MBOXDMASETUP(isp)) {
-		ISP_UNLOCK(isp);
 		PRINTF("%s: can't setup DMA for mailboxes\n", isp->isp_name);
 		return;
 	}
@@ -680,7 +659,6 @@ isp_fibre_init(isp)
 	mbs.param[7] = 0;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-		ISP_UNLOCK(isp);
 		isp_dumpregs(isp, "INIT FIRMWARE failed");
 		return;
 	}
@@ -723,7 +701,6 @@ isp_fibre_init(isp)
 		isp_mboxcmd(isp, &mbs);
 		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 			isp_dumpregs(isp, "GET LOOP ID failed");
-			ISP_UNLOCK(isp);
 			return;
 		}
 		fcp->isp_loopid = mbs.param[1];
@@ -736,7 +713,6 @@ isp_fibre_init(isp)
 		PRINTF("%s: failed to go to FW READY state- will not attach\n",
 		    isp->isp_name);
 	}
-	ISP_UNLOCK(isp);
 }
 
 /*
@@ -783,6 +759,12 @@ ispscsicmd(xs)
 
 	XS_INITERR(xs);
 	isp = XS_ISP(xs);
+
+	if (isp->isp_state != ISP_RUNSTATE) {
+		PRINTF("%s: adapter not ready\n", isp->isp_name);
+		XS_SETERR(xs, HBA_BOTCH);
+		return (CMD_COMPLETE);
+	}
 
 	if (isp->isp_type & ISP_HA_FC) {
 		if (XS_CDBLEN(xs) > 12) {
@@ -1053,7 +1035,6 @@ isp_intr(arg)
 		}
 	}
 
-	optr = isp->isp_residx;
 	if (ISP_READ(isp, BIU_SEMA) & 1) {
 		u_int16_t mbox = ISP_READ(isp, OUTMAILBOX0);
 		switch (mbox) {
@@ -1063,9 +1044,11 @@ isp_intr(arg)
 			break;
 		case ASYNC_SYSTEM_ERROR:
 			mbox = ISP_READ(isp, OUTMAILBOX1);
-			PRINTF("%s: Internal System Error RISC Addr %x\n",
+			PRINTF("%s: Internal FW Error @ RISC Addr 0x%x\n",
 			    isp->isp_name, mbox);
-			break;
+			isp_restart(isp);
+			/* no point continuing after this */
+			return (1);
 		case ASYNC_RQS_XFER_ERR:
 			PRINTF("%s: Request Queue Transfer Error\n",
 			    isp->isp_name);
@@ -1103,7 +1086,9 @@ isp_intr(arg)
 	}
 
 	ISP_WRITE(isp, HCCR, HCCR_CMD_CLEAR_RISC_INT);
+	optr = isp->isp_residx;
 	iptr = ISP_READ(isp, OUTMAILBOX5);
+
 	if (optr == iptr) {
 		IDPRINTF(4, ("why intr? isr %x iptr %x optr %x\n",
 			isr, optr, iptr));
@@ -1461,7 +1446,7 @@ isp_mboxcmd(isp, mbp)
 	mbreg_t *mbp;
 {
 	int outparam, inparam;
-	int loops;
+	int loops, dld = 0;
 	u_int8_t opcode;
 
 	if (mbp->param[0] == ISP2100_SET_PCI_PARAM) {
@@ -1486,6 +1471,7 @@ isp_mboxcmd(isp, mbp)
 
 
 command_known:
+
 	/*
 	 * Make sure we can send some words..
 	 */
@@ -1495,7 +1481,47 @@ command_known:
 		SYS_DELAY(100);
 		if (--loops < 0) {
 			PRINTF("%s: isp_mboxcmd timeout #1\n", isp->isp_name);
-			return;
+			if (dld++) {
+				return;
+			}
+			PRINTF("%s: but we'll try again, isr=%x\n",
+			    isp->isp_name, ISP_READ(isp, BIU_ISR));
+			if (ISP_READ(isp, BIU_SEMA) & 1) {
+				u_int16_t mbox = ISP_READ(isp, OUTMAILBOX0);
+
+				switch (mbox) {
+				case ASYNC_BUS_RESET:
+					isp->isp_sendmarker = 1;
+					break;
+				case ASYNC_SYSTEM_ERROR:
+					break;
+				case ASYNC_RQS_XFER_ERR:
+					break;
+				case ASYNC_RSP_XFER_ERR:
+					break;
+				case ASYNC_QWAKEUP:
+					/* don't need to be chatty */
+					mbox = ISP_READ(isp, OUTMAILBOX4);
+					break;
+				case ASYNC_TIMEOUT_RESET:
+					isp->isp_sendmarker = 1;
+					break;
+				case ASYNC_LIP_OCCURRED:
+					break;
+				case ASYNC_LOOP_UP:
+					break;
+				case ASYNC_LOOP_DOWN:
+					break;
+				case ASYNC_LOOP_RESET:
+					break;
+				default:
+					break;
+				}
+				PRINTF("%s: async 0x%x\n", isp->isp_name, mbox);
+				ISP_WRITE(isp, BIU_SEMA, 0);
+			}
+			ISP_WRITE(isp, HCCR, HCCR_CMD_CLEAR_RISC_INT);
+			goto command_known;
 		}
 	}
 
@@ -1755,7 +1781,10 @@ isp_setdparm(struct ispsoftc *isp)
 	mbreg_t mbs;
 	sdparam *sdp;
 
-	isp->isp_fwrev = 0;
+	if (isp->isp_fwrev) {
+		IDPRINTF(3, ("%s: already have dparms\n", isp->isp_name));
+		return;
+	}
 	if (isp->isp_type & ISP_HA_FC) {
 		/*
 		 * ROM in 2100 doesn't appear to support ABOUT_FIRMWARE
@@ -1855,8 +1884,15 @@ isp_setdparm(struct ispsoftc *isp)
 	}
 }
 
-static void
-isp_phoenix(struct ispsoftc *isp)
+/* 
+ * Re-initialize the ISP and complete all orphaned commands
+ * with a 'botched' notice.
+ *
+ * Locks held prior to coming here.
+ */
+
+void
+isp_restart(struct ispsoftc *isp)
 {
 	ISP_SCSI_XFER_T *tlist[RQUEST_QUEUE_LEN], *xs;
 	int i;
@@ -1865,8 +1901,15 @@ isp_phoenix(struct ispsoftc *isp)
 		tlist[i] = (ISP_SCSI_XFER_T *) isp->isp_xflist[i];
 	}
 	isp_reset(isp);
-	isp_init(isp);
-	isp->isp_state = ISP_RUNSTATE;
+	if (isp->isp_state == ISP_RESETSTATE) {
+		isp_init(isp);
+		if (isp->isp_state == ISP_INITSTATE) {
+			isp->isp_state = ISP_RUNSTATE;
+		}
+	}
+	if (isp->isp_state != ISP_RUNSTATE) {
+		PRINTF("%s: isp_restart cannot restart ISP\n", isp->isp_name);
+	}
 
 	for (i = 0; i < RQUEST_QUEUE_LEN; i++) {
 		xs = tlist[i];
@@ -1915,7 +1958,7 @@ isp_watch(void *arg)
 		if (isp_control(isp, ISPCTL_ABORT_CMD, xs)) {
 			PRINTF("%s: isp_watch failed to abort command\n",
 			    isp->isp_name);
-			isp_phoenix(isp);
+			isp_restart(isp);
 			break;
 		}
 	}
