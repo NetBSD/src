@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.12 2004/04/25 22:25:03 jonathan Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.13 2004/05/07 00:55:14 jonathan Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.12 2004/04/25 22:25:03 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.13 2004/05/07 00:55:14 jonathan Exp $");
 
 /*
  * IPsec controller part.
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.12 2004/04/25 22:25:03 jonathan Exp $");
 #endif
 
 #include <netipsec/ipsec.h>
+#include <netipsec/ipsec_var.h>
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
@@ -246,6 +247,14 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 	default:
 		return NULL;
 	}
+#ifdef DIAGNOSTIC
+	if (pcbsp == NULL) {
+		printf("ipsec_checkpcbcache: NULL pcbsp\n");
+		/* XXX panic? */
+		return NULL;
+	}
+#endif
+
 #ifdef DIAGNOSTIC
 	if (dir >= sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]))
 		panic("dir too big in ipsec_checkpcbcache");
@@ -490,6 +499,7 @@ ipsec_getpolicybysock(m, dir, inp, error)
 		("ipsec_getpolicybysock: unexpected protocol family %u", af));
 
 #ifdef __NetBSD__
+	IPSEC_ASSERT(inp->inph_sp != NULL, ("null PCB policy cache"));
 	/* If we have a cached entry, and if it is still valid, use it. */
 	ipsecstat.ips_spdcache_lookup++;
 	currsp = ipsec_checkpcbcache(m, /*inpcb_hdr*/inp->inph_sp, dir);
