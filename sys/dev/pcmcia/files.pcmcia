@@ -1,3 +1,5 @@
+#	$NetBSD: files.pcmcia,v 1.4 1997/10/18 03:17:09 mikel Exp $
+#
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
 
