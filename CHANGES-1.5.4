@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.137 2004/04/07 22:48:45 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.138 2004/04/07 23:07:03 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2538,3 +2538,9 @@ usr.bin/rpcgen/rpc_main.c			1.24
 	Remove special case handling for $CPP and use execvp() instead.
 	PR#22311
 	[martin, ticket #124]
+
+sbin/routed/rdisc.c				patch
+sbin/routed/main.c				patch
+
+	Fix invalid cast wrt router discovery.
+	[ws, ticket #131]
