@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.30 1994/03/24 21:50:35 mycroft Exp $
+ *	$Id: trap.c,v 1.31 1994/04/02 03:51:37 mycroft Exp $
  */
 
 /*
@@ -475,12 +475,15 @@ syscall(frame)
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 	opc = frame.tf_eip;
 
-	if (code == 0) {			/* indir */
+	if (code == SYS_syscall) {		/* syscall() */
 		code = fuword(params);
 		params += sizeof(int);
+	} else if (code == SYS___syscall) {	/* __syscall() */
+		code = fuword(params);
+		params += sizeof(quad_t);
 	}
-	if (code <= 0 || code >= nsysent)
-		callp = &sysent[0];		/* indir (illegal) */
+	if (code < 0 || code >= nsysent)
+		callp = &sysent[0];		/* illegal */
 	else
 		callp = &sysent[code];
 	if ((i = callp->sy_narg * sizeof(int)) &&
