@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.26 1998/12/15 19:50:16 itohy Exp $
+#	$NetBSD: VME147,v 1.27 1999/02/20 00:13:43 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -43,6 +43,8 @@ options 	COMPAT_SUNOS
 #config	netbsd		root on ? type nfs
 ## "generic" boot (put root on boot device)
 config netbsd		root on ? type ?
+
+options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
 
 
 pseudo-device	sl
