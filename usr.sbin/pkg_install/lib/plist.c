@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.43 2004/05/10 19:59:59 kleink Exp $	*/
+/*	$NetBSD: plist.c,v 1.44 2004/06/01 16:15:31 minskim Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.43 2004/05/10 19:59:59 kleink Exp $");
+__RCSID("$NetBSD: plist.c,v 1.44 2004/06/01 16:15:31 minskim Exp $");
 #endif
 #endif
 
@@ -397,11 +397,23 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 						}
 						buf[SymlinkHeaderLen + cc] = 0x0;
 						if (strcmp(buf, p->next->name) != 0) {
-							printf("symlink %s is not same as recorded value, %s: %s\n",
-							    buf, Force ? "deleting anyway" : "not deleting", tmp);
-							if (!Force) {
-								fail = FAIL;
-								continue;
+							if ((cc = readlink(&buf[SymlinkHeaderLen], &buf[SymlinkHeaderLen],
+								  sizeof(buf) - SymlinkHeaderLen)) < 0) {
+								printf("symlink %s is not same as recorded value, %s: %s\n",
+								    buf, Force ? "deleting anyway" : "not deleting", tmp);
+								if (!Force) {
+									fail = FAIL;
+									continue;
+								}
+							}
+							buf[SymlinkHeaderLen + cc] = 0x0;
+							if (strcmp(buf, p->next->name) != 0) {
+								printf("symlink %s is not same as recorded value, %s: %s\n",
+								    buf, Force ? "deleting anyway" : "not deleting", tmp);
+								if (!Force) {
+									fail = FAIL;
+									continue;
+								}
 							}
 						}
 					}
