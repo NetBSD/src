@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.46 1994/09/28 00:41:17 deraadt Exp $	*/
+/*	$NetBSD: exec.h,v 1.47 1994/10/20 04:27:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -72,16 +72,8 @@ struct ps_strings {
 #else
 #define	STACKGAPLEN	0
 #endif
-#define STACKGAPBASE ((caddr_t)ALIGN((caddr_t)PS_STRINGS - szsigcode - STACKGAPLEN))
-
-/*
- * Arguments to the exec system call.
- */
-struct execve_args {
-	char	*path;
-	char	**argp;
-	char	**envp;
-};
+#define	STACKGAPBASE \
+    ((caddr_t)ALIGN((caddr_t)PS_STRINGS - szsigcode - STACKGAPLEN))
 
 /*
  * the following structures allow execve() to put together processes
