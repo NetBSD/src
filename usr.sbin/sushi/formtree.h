@@ -1,4 +1,4 @@
-/*      $NetBSD: formtree.h,v 1.6 2003/11/12 13:31:08 grant Exp $       */
+/*      $NetBSD: formtree.h,v 1.7 2005/01/11 23:11:05 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -87,11 +87,11 @@ extern struct cqForm *cqFormHeadp;
 #define COMMAND (EDIT+1)
 #define FASTBAIL (COMMAND+1)
 
-int handle_preform __P((char *, char *));
-int handle_form __P((char *, char *, char **));
-int form_entries __P((struct cqForm *));
-FTREE_ENTRY *form_getentry __P((struct cqForm *, int));
-void form_printtree __P((struct cqForm *));
-int process_form __P((FORM *, char *));
+int handle_preform(char *, char *);
+int handle_form(char *, char *, char **);
+int form_entries(struct cqForm *);
+FTREE_ENTRY *form_getentry(struct cqForm *, int);
+void form_printtree(struct cqForm *);
+int process_form(FORM *, char *);
 
 #endif	/* _FORMTREE_H_ */
