@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.12 1998/10/31 00:27:41 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.13 1998/10/31 00:45:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
 #include <dev/ic/ne2000var.h>
 
 #include <dev/ic/rtl80x9reg.h>
+#include <dev/ic/rtl80x9var.h>
 
 struct ne_pci_softc {
 	struct ne2000_softc sc_ne2000;		/* real "ne2000" softc */
@@ -85,16 +86,6 @@ struct cfattach ne_pci_ca = {
 	sizeof(struct ne_pci_softc), ne_pci_match, ne_pci_attach
 };
 
-/*
- * RealTek 8029 media support
- */
-int	ne_pci_rtl8029_mediachange __P((struct dp8390_softc *));
-void	ne_pci_rtl8029_mediastatus __P((struct dp8390_softc *,
-	    struct ifmediareq *));
-void	ne_pci_rtl8029_init_card __P((struct dp8390_softc *));
-void	ne_pci_rtl8029_init_media __P((struct ne_pci_softc *, int **,
-	    int *, int *));
-
 const struct ne_pci_product {
 	pci_vendor_id_t npp_vendor;
 	pci_product_id_t npp_product;
@@ -102,13 +93,13 @@ const struct ne_pci_product {
 	void (*npp_mediastatus) __P((struct dp8390_softc *,
 	    struct ifmediareq *));
 	void (*npp_init_card) __P((struct dp8390_softc *));
-	void (*npp_init_media) __P((struct ne_pci_softc *, int **,
+	void (*npp_init_media) __P((struct dp8390_softc *, int **,
 	    int *, int *));
 	const char *npp_name;
 } ne_pci_products[] = {
 	{ PCI_VENDOR_REALTEK,		PCI_PRODUCT_REALTEK_RT8029,
-	  ne_pci_rtl8029_mediachange,	ne_pci_rtl8029_mediastatus,
-	  ne_pci_rtl8029_init_card,	ne_pci_rtl8029_init_media,
+	  rtl80x9_mediachange,		rtl80x9_mediastatus,
+	  rtl80x9_init_card,		rtl80x9_init_media,
 	  "RealTek 8029" },
 
 	{ PCI_VENDOR_WINBOND,		PCI_PRODUCT_WINBOND_W89C940F,
@@ -246,7 +237,7 @@ ne_pci_attach(parent, self, aux)
 	dsc->sc_enabled = 1;
 
 	if (npp->npp_init_media != NULL) {
-		(*npp->npp_init_media)(psc, &media, &nmedia, &defmedia);
+		(*npp->npp_init_media)(dsc, &media, &nmedia, &defmedia);
 		dsc->sc_mediachange = npp->npp_mediachange;
 		dsc->sc_mediastatus = npp->npp_mediastatus;
 	} else {
@@ -281,116 +272,4 @@ ne_pci_attach(parent, self, aux)
 		return;
 	}
 	printf("%s: interrupting at %s\n", dsc->sc_dev.dv_xname, intrstr);
-}
-
-/*
- * RealTek 8029 media support
- */
-
-int
-ne_pci_rtl8029_mediachange(dsc)
-	struct dp8390_softc *dsc;
-{
-
-	/*
-	 * Current media is already set up.  Just reset the interface
-	 * to let the new value take hold.  The new media will be
-	 * set up in ne_pci_rtl8029_init_card() called via dp8390_init().
-	 */
-	dp8390_reset(dsc);
-	return (0);
-}
-
-void
-ne_pci_rtl8029_mediastatus(sc, ifmr)
-	struct dp8390_softc *sc;
-	struct ifmediareq *ifmr;
-{
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	u_int8_t cr_proto = sc->cr_proto |
-	    ((ifp->if_flags & IFF_RUNNING) ? ED_CR_STA : ED_CR_STP);
-
-	/*
-	 * Sigh, can detect which media is being used, but can't
-	 * detect if we have link or not.
-	 */
-
-	/* Set NIC to page 3 registers. */
-	NIC_PUT(sc->sc_regt, sc->sc_regh, ED_P0_CR, cr_proto | ED_CR_PAGE_3);
-
-	if (NIC_GET(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG0) &
-	    RTL3_CONFIG0_BNC)
-		ifmr->ifm_active = IFM_ETHER|IFM_10_2;
-	else {
-		ifmr->ifm_active = IFM_ETHER|IFM_10_T;
-		if (NIC_GET(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG3) &
-		    RTL3_CONFIG3_FUDUP)
-			ifmr->ifm_active |= IFM_FDX;
-	}
-
-	/* Set NIC to page 0 registers. */
-	NIC_PUT(sc->sc_regt, sc->sc_regh, ED_P0_CR, cr_proto | ED_CR_PAGE_0);
-}
-
-void
-ne_pci_rtl8029_init_card(sc)
-	struct dp8390_softc *sc;
-{
-	struct ifmedia *ifm = &sc->sc_media;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	u_int8_t cr_proto = sc->cr_proto |
-	    ((ifp->if_flags & IFF_RUNNING) ? ED_CR_STA : ED_CR_STP);
-	u_int8_t reg;
-
-	/* Set NIC to page 3 registers. */
-	NIC_PUT(sc->sc_regt, sc->sc_regh, ED_P0_CR, cr_proto | ED_CR_PAGE_3);
-
-	/* First, set basic media type. */
-	reg = NIC_GET(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG2);
-	reg &= ~(RTL3_CONFIG2_PL1|RTL3_CONFIG2_PL0);
-	switch (IFM_SUBTYPE(ifm->ifm_cur->ifm_media)) {
-	case IFM_AUTO:
-		/* Nothing to do; both bits clear == auto-detect. */
-		break;
-
-	case IFM_10_T:
-		reg |= RTL3_CONFIG2_PL0;
-		break;
-
-	case IFM_10_2:
-		reg |= RTL3_CONFIG2_PL1|RTL3_CONFIG2_PL0;
-		break;
-	}
-	NIC_PUT(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG2, reg);
-
-	/* Now, set duplex mode. */
-	reg = NIC_GET(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG3);
-	if (ifm->ifm_cur->ifm_media & IFM_FDX)
-		reg |= RTL3_CONFIG3_FUDUP;
-	else
-		reg &= ~RTL3_CONFIG3_FUDUP;
-	NIC_PUT(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG3, reg);
-
-	/* Set NIC to page 0 registers. */
-	NIC_PUT(sc->sc_regt, sc->sc_regh, ED_P0_CR, cr_proto | ED_CR_PAGE_0);
-}
-
-void
-ne_pci_rtl8029_init_media(psc, mediap, nmediap, defmediap)
-	struct ne_pci_softc *psc;
-	int **mediap, *nmediap, *defmediap;
-{
-	static int rtl8029_media[] = {
-		IFM_ETHER|IFM_AUTO,
-		IFM_ETHER|IFM_10_T,
-		IFM_ETHER|IFM_10_T|IFM_FDX,
-		IFM_ETHER|IFM_10_2,
-	};
-
-	printf("%s: 10base2, 10baseT, 10baseT-FDX, auto, default auto\n",
-	    psc->sc_ne2000.sc_dp8390.sc_dev.dv_xname);
-
-	*mediap = rtl8029_media;
-	*nmediap = sizeof(rtl8029_media) / sizeof(rtl8029_media[0]);
-	*defmediap = IFM_ETHER|IFM_AUTO;
 }
