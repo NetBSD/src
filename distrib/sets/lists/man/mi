@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.638 2003/12/29 03:13:28 lukem Exp $
+# $NetBSD: mi,v 1.639 2003/12/31 15:09:39 bjh21 Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -507,6 +507,7 @@
 ./usr/share/man/cat4/acorn32/podulebus.0	man-sys-catman
 ./usr/share/man/cat4/acorn32/ptsc.0		man-sys-catman
 ./usr/share/man/cat4/acorn32/qms.0		man-sys-catman
+./usr/share/man/cat4/acorn32/vidcaudio.0	man-sys-catman
 ./usr/share/man/cat4/acorn32/wsqms.0		man-sys-catman
 ./usr/share/man/cat4/acphy.0			man-sys-catman
 ./usr/share/man/cat4/acpi.0			man-sys-catman
@@ -2553,6 +2554,7 @@
 ./usr/share/man/man4/acorn32/podulebus.4	man-sys-man
 ./usr/share/man/man4/acorn32/ptsc.4		man-sys-man
 ./usr/share/man/man4/acorn32/qms.4		man-sys-man
+./usr/share/man/man4/acorn32/vidcaudio.4	man-sys-man
 ./usr/share/man/man4/acorn32/wsqms.4		man-sys-man
 ./usr/share/man/man4/acphy.4			man-sys-man
 ./usr/share/man/man4/acpi.4			man-sys-man
