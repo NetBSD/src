@@ -1,4 +1,4 @@
-.\"	$NetBSD: fgetln.3,v 1.12 2004/04/21 00:01:57 christos Exp $
+.\"	$NetBSD: fgetstr.3,v 1.1 2004/04/21 00:01:57 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,36 +29,41 @@
 .\"
 .\"     @(#)fgetln.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd April 19, 1994
-.Dt FGETLN 3
+.Dd April 19, 2004
+.Dt FGETSTR 3
 .Os
 .Sh NAME
-.Nm fgetln
-.Nd get a line from a stream
+.Nm fgetstr
+.Nd get a delimited string from a stream.
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
 .In stdio.h
 .Ft char *
-.Fn fgetln "FILE * restrict stream" "size_t * restrict len"
+.Fn fgetstr "FILE * restrict stream" "size_t * restrict len" "int delim"
 .Sh DESCRIPTION
 The
-.Fn fgetln
+.Fn fgetstr
 function
-returns a pointer to the next line from the stream referenced by
-.Fa stream .
-This line is
+returns a pointer to the next string from the stream referenced by
+.Fa stream 
+ending in
+.Fa delim .
+This string is
 .Em not
 a C string as it does not end with a terminating
 .Dv NUL
 character.
-The length of the line, including the final newline,
+The length of the line, including the 
+.Fa delim
 is stored in the memory location to which
 .Fa len
 points.
-(Note, however, that if the line is the last
-in a file that does not end in a newline,
-the returned text will not contain a newline.)
+(Note, however, that if the string is the last
+in a file that does not end in
+.Fa delim ,
+the returned text will not contain 
+.Fa delim . )
 .Sh RETURN VALUES
 Upon successful completion a pointer is returned;
 this pointer becomes invalid after the next
@@ -71,7 +76,7 @@ Otherwise,
 .Dv NULL
 is returned.
 The
-.Fn fgetln
+.Fn fgetstr
 function
 does not distinguish between end-of-file and error; the routines
 .Xr feof 3
@@ -101,7 +106,7 @@ is not a stream open for reading.
 .El
 .Pp
 The
-.Fn fgetln
+.Fn fgetstr
 function
 may also fail and set
 .Va errno
@@ -114,19 +119,48 @@ or
 .Xr realloc 3 .
 .Sh SEE ALSO
 .Xr ferror 3 ,
+.Xr fgetln 3 ,
 .Xr fgets 3 ,
-.Xr fgetstr 3 ,
 .Xr fopen 3 ,
 .Xr putc 3
 .Sh HISTORY
 The
-.Fn fgetln
-function first appeared in
-.Bx 4.4 .
-.Sh NOTES
-The
-.Fn fgetln
-function is equivalent to
 .Fn fgetstr
-with a \en
-.Fa delim .
+function first appeared in
+.Nx 2.1 .
+.Sh CAVEATS
+Since the returned buffer is not a C string (it is not null terminated), a
+common practice is to replace the
+.Fa delim
+character with
+.Sq \e0 .
+However, if the last line in a file does not contain 
+.Fa delim ,
+the returned text won't contain 
+.Fa delim
+either.
+The following code demonstrates how to deal with this problem by allocating a
+temporary buffer:
+.Bd -literal
+	char *buf, *lbuf;
+	size_t len;
+
+	lbuf = NULL;
+	while ((buf = fgetstr(fp, &len, '\et'))) {
+		if (buf[len - 1] == '\et')
+			buf[len - 1] = '\e0';
+		else {
+			if ((lbuf = (char *)malloc(len + 1)) == NULL)
+				err(1, NULL);
+			memcpy(lbuf, buf, len);
+			lbuf[len] = '\e0';
+			buf = lbuf;
+		}
+		printf("%s\en", buf);
+
+		if (lbuf != NULL) {
+			free(lbuf);
+			lbuf = NULL;
+		}
+	}
+.Ed
