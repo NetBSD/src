@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.48 2001/07/20 08:31:55 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.49 2001/10/24 16:05:06 atatat Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.48 2001/07/20 08:31:55 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.49 2001/10/24 16:05:06 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -340,10 +340,11 @@ bad:			usage(*argv);
 			print_rtmsg(rtm, rlen);
 		else {
 			struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
-			(void) printf("%-20.20s ", rtm->rtm_flags & RTF_HOST ?
-			    routename(sa) : netname(sa));
+			(void) printf("%-20.20s ",
+			    routename(sa, NULL, rtm->rtm_flags));
 			sa = (struct sockaddr *)(ROUNDUP(sa->sa_len) + (char *)sa);
-			(void) printf("%-20.20s ", routename(sa));
+			(void) printf("%-20.20s ",
+			    routename(sa, NULL, RTF_HOST));
 			(void) printf("done\n");
 		}
 	}
@@ -375,9 +376,102 @@ any_ntoa(sa)
 }
 
 
+int
+netmask_length(nm, af)
+	struct sockaddr *nm;
+	int af;
+{
+	static int
+	    /* number of bits in a nibble */
+	    _t[] = { 0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4 },
+	    /* good nibbles are 1111, 1110, 1100, 1000, 0000 */
+	    _g[] = { 1,0,0,0,0,0,0,0,1,0,0,0,1,0,1,1 };
+	int mask, good, zeroes, maskbytes, bit, i;
+	unsigned char *maskdata;
+
+	if (nm == NULL)
+		return 0;
+
+	mask = 0;
+	good = 1;
+	zeroes = 0;
+
+	switch (af) {
+	case AF_INET: {
+		struct sockaddr_in *sin = (struct sockaddr_in *)nm;
+		maskdata = (unsigned char *) &sin->sin_addr;
+		maskbytes = sin->sin_len -
+		    ((caddr_t)&sin->sin_addr - (caddr_t)sin);
+		break;
+	}
+	case AF_INET6: {
+		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)nm;
+		maskdata = (unsigned char *) &sin6->sin6_addr;
+		maskbytes = sin6->sin6_len -
+		    ((caddr_t)&sin6->sin6_addr - (caddr_t)sin6);
+		break;
+	}
+	default:
+		return 0;
+	}
+
+	/*
+	 * Count the bits in the nibbles of the mask, and marking the
+	 * netmask as not good (or at best, non-standard and very
+	 * discouraged, in the case of AF_INET) if we find either of
+	 * a nibble with non-contiguous bits, or a non-zero nibble
+	 * after we've found a zero nibble.
+	 */
+	for (i = 0; i < maskbytes; i++) {
+		/* high nibble */
+		mask += bit = _t[maskdata[i] >> 4];
+		good &= _g[maskdata[i] >> 4];
+		if (zeroes && bit)
+			good = 0;
+		if (bit == 0)
+			zeroes = 1;
+		/* low nibble */
+		mask += bit = _t[maskdata[i] & 0xf];
+		good &= _g[maskdata[i] & 0xf];
+		if (zeroes && bit)
+			good = 0;
+		if (bit == 0)
+			zeroes = 1;
+	}
+
+	/*
+	 * Always return the number of bits found, but as a negative
+	 * if the mask wasn't one we like.
+	 */
+	return good ? mask : -mask;
+}
+
 char *
-routename(sa)
-	struct sockaddr *sa;
+netmask_string(mask, len)
+	struct sockaddr *mask;
+	int len;
+{
+	static char smask[16];
+
+	if (len >= 0)
+		snprintf(smask, sizeof(smask), "%d", len);
+	else {
+		/* XXX AF_INET only?! */
+		struct sockaddr_in sin;
+	
+		memset(&sin, 0, sizeof(sin));
+		memcpy(&sin, mask, mask->sa_len);
+		snprintf(smask, sizeof(smask), "%s", inet_ntoa(sin.sin_addr));
+	}
+
+	return smask;
+}
+
+
+char *
+routename(sa, nm, flags)
+	struct sockaddr *sa, *nm;
+	int flags;
 {
 	char *cp;
 	static char line[50];
@@ -385,6 +479,10 @@ routename(sa)
 	static char domain[MAXHOSTNAMELEN + 1];
 	static int first = 1;
 	struct in_addr in;
+	int nml;
+
+	if ((flags & RTF_HOST) == 0)
+		return netname(sa, nm);
 
 	if (first) {
 		first = 0;
@@ -403,10 +501,20 @@ routename(sa)
 
 	case AF_INET:
 		in = ((struct sockaddr_in *)sa)->sin_addr;
+		nml = netmask_length(nm, AF_INET);
 
 		cp = 0;
-		if (in.s_addr == INADDR_ANY || sa->sa_len < 4)
-			cp = "default";
+		if (in.s_addr == INADDR_ANY || sa->sa_len < 4) {
+			if (nml == 0)
+				cp = "default";
+			else {
+				static char notdefault[sizeof(NOTDEFSTRING)];
+
+				snprintf(notdefault, sizeof(notdefault),
+				    "0.0.0.0/%s", netmask_string(nm, nml));
+				cp = notdefault;
+			}
+		}
 		if (cp == 0 && !nflag) {
 			hp = gethostbyaddr((char *)&in, sizeof (struct in_addr),
 				AF_INET);
@@ -456,7 +564,18 @@ routename(sa)
 			sin6.sin6_addr.s6_addr[3] = 0;
 		}
 #endif
-		if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
+		nml = netmask_length(nm, AF_INET6);
+		if (IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr)) {
+			if (nml == 0) {
+				strncpy(line, "::", sizeof(line) - 1);
+				line[sizeof(line) - 1] = '\0';
+			}
+			else
+				/* noncontiguous never happens in ipv6 */
+				snprintf(line, sizeof(line), "::/%d", nml);
+		}
+
+		else if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
 		    line, sizeof(line), NULL, 0, niflags) != 0)
 			strncpy(line, "invalid", sizeof(line));
 		break;
@@ -492,15 +611,15 @@ routename(sa)
  * The address is assumed to be that of a net or subnet, not a host.
  */
 char *
-netname(sa)
-	struct sockaddr *sa;
+netname(sa, nm)
+	struct sockaddr *sa, *nm;
 {
 	char *cp = 0;
 	static char line[50];
 	struct netent *np = 0;
 	u_int32_t net, mask;
 	u_int32_t i;
-	int subnetshift;
+	int subnetshift, nml;
 	struct in_addr in;
 
 	switch (sa->sa_family) {
@@ -508,8 +627,18 @@ netname(sa)
 	case AF_INET:
 		in = ((struct sockaddr_in *)sa)->sin_addr;
 		i = ntohl(in.s_addr);
-		if (i == 0)
-			cp = "default";
+		nml = netmask_length(nm, AF_INET);
+		if (i == 0) {
+			if (nml == 0)
+				cp = "default";
+			else {
+				static char notdefault[sizeof(NOTDEFSTRING)];
+
+				snprintf(notdefault, sizeof(notdefault),
+				    "0.0.0.0/%s", netmask_string(nm, nml));
+				cp = notdefault;
+			}
+		}
 		else if (!nflag) {
 			if (IN_CLASSA(i)) {
 				mask = IN_CLASSA_NET;
@@ -593,7 +722,18 @@ netname(sa)
 			sin6.sin6_addr.s6_addr[3] = 0;
 		}
 #endif
-		if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
+		nml = netmask_length(nm, AF_INET6);
+		if (IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr)) {
+			if (nml == 0) {
+				strncpy(line, "::", sizeof(line) - 1);
+				line[sizeof(line) - 1] = '\0';
+			}
+			else
+				/* noncontiguous never happens in ipv6 */
+				snprintf(line, sizeof(line), "::/%d", nml);
+		}
+
+		else if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
 		    line, sizeof(line), NULL, 0, niflags) != 0)
 			strncpy(line, "invalid", sizeof(line));
 		break;
@@ -1557,7 +1697,7 @@ print_getmsg(rtm, msglen)
 	int i;
 
 	(void) printf("   route to: %s\n",
-	    routename((struct sockaddr *) &so_dst));
+	    routename((struct sockaddr *) &so_dst, NULL, RTF_HOST));
 	if (rtm->rtm_version != RTM_VERSION) {
 		warnx("routing message version %d not understood",
 		    rtm->rtm_version);
@@ -1600,18 +1740,22 @@ print_getmsg(rtm, msglen)
 	if (dst && mask)
 		mask->sa_family = dst->sa_family;	/* XXX */
 	if (dst)
-		(void)printf("destination: %s\n", routename(dst));
+		(void)printf("destination: %s\n",
+		    routename(dst, mask, RTF_HOST));
 	if (mask) {
 		int savenflag = nflag;
 
 		nflag = 1;
-		(void)printf("       mask: %s\n", routename(mask));
+		(void)printf("       mask: %s\n",
+		    routename(mask, NULL, RTF_HOST));
 		nflag = savenflag;
 	}
 	if (gate && rtm->rtm_flags & RTF_GATEWAY)
-		(void)printf("    gateway: %s\n", routename(gate));
+		(void)printf("    gateway: %s\n",
+		    routename(gate, NULL, RTF_HOST));
 	if (ifa)
-		(void)printf(" local addr: %s\n", routename(ifa));
+		(void)printf(" local addr: %s\n",
+		    routename(ifa, NULL, RTF_HOST));
 	if (ifp)
 		(void)printf("  interface: %.*s\n",
 		    ifp->sdl_nlen, ifp->sdl_data);
@@ -1673,7 +1817,8 @@ pmsg_addrs(cp, addrs)
 		for (i = 1; i; i <<= 1)
 			if (i & addrs) {
 				sa = (struct sockaddr *)cp;
-				(void) printf(" %s", routename(sa));
+				(void) printf(" %s",
+				    routename(sa, NULL, RTF_HOST));
 				ADVANCE(cp, sa);
 			}
 	}
