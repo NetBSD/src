@@ -356,6 +356,8 @@ struct speedtab {
 	38400,	EXTB,
 	38,	EXTB,
 	7200,	EXTB,		/* alternative */
+	57600,	B57600,
+	115200,	B115200,
 	0
 };
 

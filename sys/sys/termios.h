@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)termios.h	7.22 (Berkeley) 5/7/91
- *	$Id: termios.h,v 1.4 1993/05/20 16:23:19 cgd Exp $
+ *	$Id: termios.h,v 1.5 1993/06/05 22:40:40 cgd Exp $
  */
 
 #ifndef _SYS_TERMIOS_H_
@@ -223,6 +223,8 @@ struct termios {
 #define EXTA	19200
 #define EXTB	38400
 #endif  /*_POSIX_SOURCE */
+#define B57600	57600
+#define B115200	115200
 
 #ifndef KERNEL
 
