@@ -2,7 +2,7 @@
  *
  * Module Name: dbfileio - Debugger file I/O commands.  These can't usually
  *              be used when running the debugger in Ring 0 (Kernel mode)
- *              $Revision: 1.1.1.4 $
+ *              xRevision: 72 $
  *
  ******************************************************************************/
 
@@ -115,6 +115,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dbfileio.c,v 1.1.1.5 2003/03/04 16:42:58 kochi Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsmem24 - Memory resource descriptors
- *              $Revision: 1.1.1.3 $
+ *              xRevision: 22 $
  *
  ******************************************************************************/
 
@@ -113,6 +113,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rsmemory.c,v 1.1.1.4 2003/03/04 16:43:54 kochi Exp $");
 
 #define __RSMEMORY_C__
 
@@ -352,7 +355,7 @@ AcpiRsMemory32RangeResource (
     /*
      *  Point to the place in the output buffer where the data portion will
      *  begin.
-     *  1. Set the RESOURCE_DATA * Data to point to it's own address, then
+     *  1. Set the RESOURCE_DATA * Data to point to its own address, then
      *  2. Set the pointer to the next address.
      *
      *  NOTE: OutputStruct->Data is cast to UINT8, otherwise, this addition adds

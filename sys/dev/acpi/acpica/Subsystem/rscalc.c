@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rscalc - Calculate stream and list lengths
- *              $Revision: 1.1.1.4 $
+ *              xRevision: 47 $
  *
  ******************************************************************************/
 
@@ -113,6 +113,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rscalc.c,v 1.1.1.5 2003/03/04 16:43:51 kochi Exp $");
 
 #define __RSCALC_C__
 

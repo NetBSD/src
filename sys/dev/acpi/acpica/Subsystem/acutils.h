@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acutils.h -- prototypes for the common (subsystem-wide) procedures
- *       $Revision: 1.1.1.4 $
+ *       xRevision: 154 $
  *
  *****************************************************************************/
 
@@ -537,6 +537,8 @@ AcpiUtDeleteInternalObjectList (
 #define METHOD_NAME__SEG        "_SEG"
 #define METHOD_NAME__BBN        "_BBN"
 #define METHOD_NAME__PRT        "_PRT"
+#define METHOD_NAME__CRS        "_CRS"
+#define METHOD_NAME__PRS        "_PRS"
 
 
 ACPI_STATUS

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exmisc - ACPI AML (p-code) execution - specific opcodes
- *              $Revision: 1.1.1.4 $
+ *              xRevision: 115 $
  *
  *****************************************************************************/
 
@@ -115,6 +115,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exmisc.c,v 1.1.1.5 2003/03/04 16:43:23 kochi Exp $");
 
 #define __EXMISC_C__
 

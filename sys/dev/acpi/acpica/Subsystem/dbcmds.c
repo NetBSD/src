@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbcmds - debug commands and output routines
- *              $Revision: 1.1.1.4 $
+ *              xRevision: 97 $
  *
  ******************************************************************************/
 
@@ -114,6 +114,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dbcmds.c,v 1.1.1.5 2003/03/04 16:42:56 kochi Exp $");
 
 #include "acpi.h"
 #include "acdispat.h"
@@ -1263,6 +1265,44 @@ AcpiDbCheckIntegrity (void)
                     AcpiDbIntegrityWalk, (void *) &Info, NULL);
 
     AcpiOsPrintf ("Verified %d namespace nodes with %d Objects\n", Info.Nodes, Info.Objects);
+
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDbGenerateGpe
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Generate a GPE
+ *
+ ******************************************************************************/
+
+void
+AcpiDbGenerateGpe (
+    char                    *GpeArg,
+    char                    *BlockArg)
+{
+    UINT32                  BlockNumber;
+    UINT32                  GpeNumber;
+    ACPI_GPE_EVENT_INFO     *GpeEventInfo;
+
+
+    GpeNumber   = ACPI_STRTOUL (GpeArg, NULL, 10);
+    BlockNumber = ACPI_STRTOUL (BlockArg, NULL, 10);
+
+
+    GpeEventInfo = AcpiEvGetGpeEventInfo (GpeNumber);
+    if (!GpeEventInfo)
+    {
+        AcpiOsPrintf ("Invalid GPE\n");
+        return;
+    }
+
+    AcpiEvGpeDispatch (GpeEventInfo);
 
 }
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsmisc - Miscellaneous resource descriptors
- *              $Revision: 1.1.1.3 $
+ *              xRevision: 25 $
  *
  ******************************************************************************/
 
@@ -113,6 +113,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rsmisc.c,v 1.1.1.4 2003/03/04 16:43:55 kochi Exp $");
 
 #define __RSMISC_C__
 

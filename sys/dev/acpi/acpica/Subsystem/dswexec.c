@@ -2,7 +2,7 @@
  *
  * Module Name: dswexec - Dispatcher method execution callbacks;
  *                        dispatch to interpreter.
- *              $Revision: 1.1.1.4 $
+ *              xRevision: 98 $
  *
  *****************************************************************************/
 
@@ -114,6 +114,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dswexec.c,v 1.1.1.5 2003/03/04 16:43:11 kochi Exp $");
 
 #define __DSWEXEC_C__
 

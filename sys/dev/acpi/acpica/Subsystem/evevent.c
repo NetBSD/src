@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evevent - Fixed Event handling and dispatch
- *              $Revision: 1.1.1.4 $
+ *              xRevision: 108 $
  *
  *****************************************************************************/
 
@@ -114,6 +114,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: evevent.c,v 1.1.1.5 2003/03/04 16:43:13 kochi Exp $");
+
 #include "acpi.h"
 #include "acevents.h"
 
@@ -153,7 +156,7 @@ AcpiEvInitialize (
 
     /*
      * Initialize the Fixed and General Purpose AcpiEvents prior.  This is
-     * done prior to enabling SCIs to prevent interrupts from occuring
+     * done prior to enabling SCIs to prevent interrupts from occurring
      * before handers are installed.
      */
     Status = AcpiEvFixedEventInitialize ();
@@ -186,7 +189,7 @@ AcpiEvInitialize (
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Install handlers for the SCI, Global Lock, and GPEs.
+ * DESCRIPTION: Install interrupt handlers for the SCI and Global Lock
  *
  ******************************************************************************/
 
@@ -207,17 +210,6 @@ AcpiEvHandlerInitialize (
     {
         ACPI_REPORT_ERROR ((
                 "Unable to install System Control Interrupt Handler, %s\n",
-                AcpiFormatException (Status)));
-        return_ACPI_STATUS (Status);
-    }
-
-    /* Install handlers for control method GPE handlers (_Lxx, _Exx) */
-
-    Status = AcpiEvInitGpeControlMethods ();
-    if (ACPI_FAILURE (Status))
-    {
-        ACPI_REPORT_ERROR ((
-                "Unable to initialize GPE control methods, %s\n",
                 AcpiFormatException (Status)));
         return_ACPI_STATUS (Status);
     }

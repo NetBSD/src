@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acglobal.h - Declarations for global variables
- *       $Revision: 1.1.1.4 $
+ *       xRevision: 137 $
  *
  *****************************************************************************/
 
@@ -307,22 +307,7 @@ ACPI_EXTERN UINT8                       AcpiGbl_SleepTypeB;
 
 extern      ACPI_FIXED_EVENT_INFO       AcpiGbl_FixedEventInfo[ACPI_NUM_FIXED_EVENTS];
 ACPI_EXTERN ACPI_FIXED_EVENT_HANDLER    AcpiGbl_FixedEventHandlers[ACPI_NUM_FIXED_EVENTS];
-
-ACPI_EXTERN ACPI_HANDLE                 AcpiGbl_GpeObjHandle;
-ACPI_EXTERN UINT32                      AcpiGbl_GpeRegisterCount;
-ACPI_EXTERN UINT32                      AcpiGbl_GpeNumberMax;
-ACPI_EXTERN ACPI_GPE_REGISTER_INFO     *AcpiGbl_GpeRegisterInfo;
-ACPI_EXTERN ACPI_GPE_NUMBER_INFO       *AcpiGbl_GpeNumberInfo;
-ACPI_EXTERN ACPI_GPE_BLOCK_INFO         AcpiGbl_GpeBlockInfo[ACPI_MAX_GPE_BLOCKS];
-
-/*
- * GPE translation table
- * Indexed by the GPE number, returns a valid index into the global GPE tables.
- *
- * This table is needed because the GPE numbers supported by block 1 do not
- * have to be contiguous with the GPE numbers supported by block 0.
- */
-ACPI_EXTERN ACPI_GPE_INDEX_INFO        *AcpiGbl_GpeNumberToIndex;
+ACPI_EXTERN ACPI_GPE_BLOCK_INFO         *AcpiGbl_GpeBlockListHead;
 
 
 /*****************************************************************************

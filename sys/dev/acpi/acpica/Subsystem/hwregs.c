@@ -3,7 +3,7 @@
  *
  * Module Name: hwregs - Read/write access functions for the various ACPI
  *                       control and status registers.
- *              $Revision: 1.1.1.4 $
+ *              xRevision: 142 $
  *
  ******************************************************************************/
 
@@ -116,6 +116,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.1.1.5 2003/03/04 16:43:33 kochi Exp $");
+
 #define __HWREGS_C__
 
 #include "acpi.h"
@@ -141,8 +144,8 @@ ACPI_STATUS
 AcpiHwClearAcpiStatus (void)
 {
     ACPI_NATIVE_UINT        i;
-    ACPI_NATIVE_UINT        GpeBlock;
     ACPI_STATUS             Status;
+    ACPI_GPE_BLOCK_INFO     *GpeBlock;
 
 
     ACPI_FUNCTION_TRACE ("HwClearAcpiStatus");
@@ -178,19 +181,22 @@ AcpiHwClearAcpiStatus (void)
         }
     }
 
-    /* Clear the GPE Bits */
+    /* Clear the GPE Bits in all GPE registers in all GPE blocks */
 
-    for (GpeBlock = 0; GpeBlock < ACPI_MAX_GPE_BLOCKS; GpeBlock++)
+    GpeBlock = AcpiGbl_GpeBlockListHead;
+    while (GpeBlock)
     {
-        for (i = 0; i < AcpiGbl_GpeBlockInfo[GpeBlock].RegisterCount; i++)
+        for (i = 0; i < GpeBlock->RegisterCount; i++)
         {
             Status = AcpiHwLowLevelWrite (8, 0xFF,
-                        AcpiGbl_GpeBlockInfo[GpeBlock].BlockAddress, (UINT32) i);
+                        &GpeBlock->RegisterInfo[i].StatusAddress, (UINT32) i);
             if (ACPI_FAILURE (Status))
             {
                 goto UnlockAndExit;
             }
         }
+
+        GpeBlock = GpeBlock->Next;
     }
 
 UnlockAndExit:
@@ -470,7 +476,7 @@ AcpiSetRegister (
 
         /*
          * Status Registers are different from the rest.  Clear by
-         * writing 1, writing 0 has no effect.  So, the only relevent
+         * writing 1, writing 0 has no effect.  So, the only relevant
          * information is the single bit we're interested in, all others should
          * be written as 0 so they will be left unchanged
          */

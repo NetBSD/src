@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utalloc - local cache and memory allocation routines
- *              $Revision: 1.1.1.4 $
+ *              xRevision: 131 $
  *
  *****************************************************************************/
 
@@ -113,6 +113,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: utalloc.c,v 1.1.1.5 2003/03/04 16:44:01 kochi Exp $");
 
 #define __UTALLOC_C__
 

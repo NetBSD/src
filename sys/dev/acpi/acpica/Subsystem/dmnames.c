@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmnames - AML disassembler, names, namestrings, pathnames
- *              $Revision: 1.1.1.2 $
+ *              xRevision: 6 $
  *
  ******************************************************************************/
 
@@ -114,6 +114,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dmnames.c,v 1.1.1.3 2003/03/04 16:43:02 kochi Exp $");
 
 #include "acpi.h"
 #include "acparser.h"

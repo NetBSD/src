@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acresrc.h - Resource Manager function prototypes
- *       $Revision: 1.1.1.4 $
+ *       xRevision: 37 $
  *
  *****************************************************************************/
 
@@ -137,6 +137,12 @@ AcpiRsGetCrsMethodData (
 ACPI_STATUS
 AcpiRsGetPrsMethodData (
     ACPI_HANDLE             Handle,
+    ACPI_BUFFER             *RetBuffer);
+
+ACPI_STATUS
+AcpiRsGetMethodData (
+    ACPI_HANDLE             Handle,
+    char                    *Path,
     ACPI_BUFFER             *RetBuffer);
 
 ACPI_STATUS

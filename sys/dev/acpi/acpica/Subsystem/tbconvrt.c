@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbconvrt - ACPI Table conversion utilities
- *              $Revision: 1.1.1.4 $
+ *              xRevision: 47 $
  *
  *****************************************************************************/
 
@@ -113,6 +113,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tbconvrt.c,v 1.1.1.5 2003/03/04 16:43:57 kochi Exp $");
 
 #define __TBCONVRT_C__
 
@@ -318,9 +321,8 @@ AcpiTbConvertFadt1 (
     ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1bCntBlk, LocalFadt->Pm1CntLen,  LocalFadt->V1_Pm1bCntBlk);
     ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm2CntBlk,  LocalFadt->Pm2CntLen,  LocalFadt->V1_Pm2CntBlk);
     ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPmTmrBlk,   LocalFadt->PmTmLen,    LocalFadt->V1_PmTmrBlk);
-    ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XGpe0Blk,    LocalFadt->Gpe0BlkLen, LocalFadt->V1_Gpe0Blk);
-    ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XGpe1Blk,    LocalFadt->Gpe1BlkLen, LocalFadt->V1_Gpe1Blk);
-
+    ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XGpe0Blk,    0,                     LocalFadt->V1_Gpe0Blk);
+    ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XGpe1Blk,    0,                     LocalFadt->V1_Gpe1Blk);
 }
 
 
@@ -402,15 +404,16 @@ AcpiTbConvertFadt2 (
     if (!(ACPI_GET_ADDRESS (LocalFadt->XGpe0Blk.Address)))
     {
         ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XGpe0Blk,
-            LocalFadt->Gpe0BlkLen, LocalFadt->V1_Gpe0Blk);
+            0, LocalFadt->V1_Gpe0Blk);
     }
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XGpe1Blk.Address)))
     {
         ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XGpe1Blk,
-            LocalFadt->Gpe1BlkLen, LocalFadt->V1_Gpe1Blk);
+            0, LocalFadt->V1_Gpe1Blk);
     }
 }
+
 
 /*******************************************************************************
  *

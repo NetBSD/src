@@ -2,7 +2,7 @@
  *
  * Module Name: dsopcode - Dispatcher Op Region support and handling of
  *                         "control" opcodes
- *              $Revision: 1.1.1.4 $
+ *              xRevision: 85 $
  *
  *****************************************************************************/
 
@@ -114,6 +114,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dsopcode.c,v 1.1.1.5 2003/03/04 16:43:09 kochi Exp $");
 
 #define __DSOPCODE_C__
 

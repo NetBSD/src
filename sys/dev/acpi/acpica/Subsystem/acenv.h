@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acenv.h - Generation environment specific items
- *       $Revision: 1.1.1.4 $
+ *       xRevision: 104 $
  *
  *****************************************************************************/
 
@@ -189,7 +189,7 @@
 
 /*! [Begin] no source code translation */
 
-#if defined(_LINUX)
+#if defined(__linux__)
 #include "aclinux.h"
 
 #elif defined(_AED_EFI)

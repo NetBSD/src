@@ -2,7 +2,7 @@
  *
  * Module Name: nsobject - Utilities for objects attached to namespace
  *                         table entries
- *              $Revision: 1.1.1.4 $
+ *              xRevision: 87 $
  *
  ******************************************************************************/
 
@@ -115,6 +115,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsobject.c,v 1.1.1.5 2003/03/04 16:43:40 kochi Exp $");
 
 #define __NSOBJECT_C__
 

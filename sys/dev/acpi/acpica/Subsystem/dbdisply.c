@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbdisply - debug display commands
- *              $Revision: 1.1.1.4 $
+ *              xRevision: 89 $
  *
  ******************************************************************************/
 
@@ -114,6 +114,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dbdisply.c,v 1.1.1.5 2003/03/04 16:42:57 kochi Exp $");
 
 #include "acpi.h"
 #include "amlcode.h"
@@ -1015,6 +1017,42 @@ AcpiDbDisplayArgumentObject (
     AcpiOsPrintf ("ArgObj:    ");
     AcpiDbDisplayInternalObject (ObjDesc, WalkState);
 }
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDbDisplayGpes
+ *
+ * PARAMETERS:
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Display the GPE structures
+ *
+ ******************************************************************************/
+
+void
+AcpiDbDisplayGpes (void)
+{
+    ACPI_GPE_BLOCK_INFO     *GpeBlock;
+    UINT32                  i = 0;
+
+
+    GpeBlock = AcpiGbl_GpeBlockListHead;
+    while (GpeBlock)
+    {
+        AcpiOsPrintf ("Block %d - %p\n", i, GpeBlock);
+        AcpiOsPrintf ("    Registers:    %d\n", GpeBlock->RegisterCount);
+        AcpiOsPrintf ("    GPE range:    %d to %d\n", GpeBlock->BlockBaseNumber,
+                        GpeBlock->BlockBaseNumber + (GpeBlock->RegisterCount * 8) -1);
+        AcpiOsPrintf ("    RegisterInfo: %p\n", GpeBlock->RegisterInfo);
+        AcpiOsPrintf ("    EventInfo:    %p\n", GpeBlock->EventInfo);
+        i++;
+
+        GpeBlock = GpeBlock->Next;
+    }
+}
+
 
 #endif /* ACPI_DEBUGGER */
 

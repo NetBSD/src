@@ -2,7 +2,7 @@
  *
  * Module Name: nsxfeval - Public interfaces to the ACPI subsystem
  *                         ACPI Object evaluation interfaces
- *              $Revision: 1.1.1.2 $
+ *              xRevision: 7 $
  *
  ******************************************************************************/
 
@@ -115,6 +115,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsxfeval.c,v 1.1.1.3 2003/03/04 16:43:43 kochi Exp $");
 
 #define __NSXFEVAL_C__
 

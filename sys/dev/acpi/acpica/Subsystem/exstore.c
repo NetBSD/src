@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exstore - AML Interpreter object store support
- *              $Revision: 1.1.1.4 $
+ *              xRevision: 175 $
  *
  *****************************************************************************/
 
@@ -114,6 +114,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exstore.c,v 1.1.1.5 2003/03/04 16:43:30 kochi Exp $");
 
 #define __EXSTORE_C__
 

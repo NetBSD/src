@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exstorob - AML Interpreter object store support, store to object
- *              $Revision: 1.1.1.4 $
+ *              xRevision: 50 $
  *
  *****************************************************************************/
 
@@ -114,6 +114,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exstorob.c,v 1.1.1.5 2003/03/04 16:43:31 kochi Exp $");
 
 #define __EXSTOROB_C__
 

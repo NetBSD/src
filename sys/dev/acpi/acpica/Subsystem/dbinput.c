@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbinput - user front-end to the AML debugger
- *              $Revision: 1.1.1.4 $
+ *              xRevision: 96 $
  *
  ******************************************************************************/
 
@@ -114,6 +114,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.1.1.5 2003/03/04 16:42:59 kochi Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -148,6 +150,8 @@ enum AcpiExDebuggerCommands
     CMD_EXIT,
     CMD_FIND,
     CMD_GO,
+    CMD_GPE,
+    CMD_GPES,
     CMD_HELP,
     CMD_HELP2,
     CMD_HISTORY,
@@ -203,6 +207,8 @@ static const COMMAND_INFO       AcpiGbl_DbCommands[] =
     {"EXIT",         0},
     {"FIND",         1},
     {"GO",           0},
+    {"GPE",          2},
+    {"GPES",         0},
     {"HELP",         0},
     {"?",            0},
     {"HISTORY",      0},
@@ -621,6 +627,14 @@ AcpiDbCommandDispatch (
     case CMD_GO:
         AcpiGbl_CmSingleStep = FALSE;
         return (AE_OK);
+
+    case CMD_GPE:
+        AcpiDbGenerateGpe (AcpiGbl_DbArgs[1], AcpiGbl_DbArgs[2]);
+        break;
+
+    case CMD_GPES:
+        AcpiDbDisplayGpes ();
+        break;
 
     case CMD_HELP:
     case CMD_HELP2:

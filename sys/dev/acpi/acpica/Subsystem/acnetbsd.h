@@ -1,8 +1,7 @@
-
 /******************************************************************************
  *
- * Module Name: exoparg3 - AML execution - opcodes with 3 arguments
- *              xRevision: 17 $
+ * Name: acfreebsd.h - OS specific defines, etc.
+ *       xRevision: 11 $
  *
  *****************************************************************************/
 
@@ -85,7 +84,6 @@
  * HERE.  ANY SOFTWARE ORIGINATING FROM INTEL OR DERIVED FROM INTEL SOFTWARE
  * IS PROVIDED "AS IS," AND INTEL WILL NOT PROVIDE ANY SUPPORT,  ASSISTANCE,
  * INSTALLATION, TRAINING OR OTHER SERVICES.  INTEL WILL NOT PROVIDE ANY
-
  * UPDATES, ENHANCEMENTS OR EXTENSIONS.  INTEL SPECIFICALLY DISCLAIMS ANY
  * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
  * PARTICULAR PURPOSE.
@@ -116,225 +114,87 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg3.c,v 1.1.1.4 2003/03/04 16:43:26 kochi Exp $");
+#ifndef __ACNETBSD_H__
+#define __ACNETBSD_H__
 
-#define __EXOPARG3_C__
+/*
+ * XXX this is technically correct, but will cause problems with some ASL
+ *     which only works if the string names a Microsoft operating system.
+ */
+#define ACPI_OS_NAME                "NetBSD"
 
-#include "acpi.h"
-#include "acinterp.h"
-#include "acparser.h"
-#include "amlcode.h"
+/* NetBSD uses GCC */
 
+#include "acgcc.h"
+#include <machine/acpica_machdep.h>
 
-#define _COMPONENT          ACPI_EXECUTER
-        ACPI_MODULE_NAME    ("exoparg3")
+#ifdef _KERNEL
+#include <sys/ctype.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/libkern.h>
+#include <machine/stdarg.h>
 
+#define asm         __asm
+#define __cli()     disable_intr()
+#define __sti()     enable_intr()
 
-/*!
- * Naming convention for AML interpreter execution routines.
- *
- * The routines that begin execution of AML opcodes are named with a common
- * convention based upon the number of arguments, the number of target operands,
- * and whether or not a value is returned:
- *
- *      AcpiExOpcode_xA_yT_zR
- *
- * Where:
- *
- * xA - ARGUMENTS:    The number of arguments (input operands) that are
- *                    required for this opcode type (1 through 6 args).
- * yT - TARGETS:      The number of targets (output operands) that are required
- *                    for this opcode type (0, 1, or 2 targets).
- * zR - RETURN VALUE: Indicates whether this opcode type returns a value
- *                    as the function return (0 or 1).
- *
- * The AcpiExOpcode* functions are called via the Dispatcher component with
- * fully resolved operands.
-!*/
+#ifdef ACPI_DEBUG_OUTPUT
+#ifdef DEBUGGER_THREADING
+#undef DEBUGGER_THREADING
+#endif /* DEBUGGER_THREADING */
+#define DEBUGGER_THREADING 0    /* integrated with DDB */
+#include "opt_ddb.h"
+#ifdef DDB
+#define ACPI_DEBUGGER
+#endif /* DDB */
+#endif /* ACPI_DEBUG_OUTPUT */
 
+#else /* _KERNEL */
 
-/*******************************************************************************
- *
- * FUNCTION:    AcpiExOpcode_3A_0T_0R
- *
- * PARAMETERS:  WalkState           - Current walk state
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Execute Triadic operator (3 operands)
- *
- ******************************************************************************/
+/* Not building kernel code, so use libc */
+#define ACPI_USE_STANDARD_HEADERS
 
-ACPI_STATUS
-AcpiExOpcode_3A_0T_0R (
-    ACPI_WALK_STATE         *WalkState)
+#define __cli()
+#define __sti()
+
+#endif /* _KERNEL */
+
+/* Always use NetBSD code over our local versions */
+#define ACPI_USE_SYSTEM_CLIBRARY
+
+/* NetBSD doesn't have strupr, should be fixed. (move to libkern) */
+static __inline char *
+strupr(char *str)
 {
-    ACPI_OPERAND_OBJECT     **Operand = &WalkState->Operands[0];
-    ACPI_SIGNAL_FATAL_INFO  *Fatal;
-    ACPI_STATUS             Status = AE_OK;
-
-
-    ACPI_FUNCTION_TRACE_STR ("ExOpcode_3A_0T_0R", AcpiPsGetOpcodeName (WalkState->Opcode));
-
-
-    switch (WalkState->Opcode)
-    {
-
-    case AML_FATAL_OP:          /* Fatal (FatalType  FatalCode  FatalArg)    */
-
-        ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-            "FatalOp: Type %X Code %X Arg %X <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n",
-            (UINT32) Operand[0]->Integer.Value, (UINT32) Operand[1]->Integer.Value,
-            (UINT32) Operand[2]->Integer.Value));
-
-
-        Fatal = ACPI_MEM_ALLOCATE (sizeof (ACPI_SIGNAL_FATAL_INFO));
-        if (Fatal)
-        {
-            Fatal->Type     = (UINT32) Operand[0]->Integer.Value;
-            Fatal->Code     = (UINT32) Operand[1]->Integer.Value;
-            Fatal->Argument = (UINT32) Operand[2]->Integer.Value;
-        }
-
-        /*
-         * Always signal the OS!
-         */
-        Status = AcpiOsSignal (ACPI_SIGNAL_FATAL, Fatal);
-
-        /* Might return while OS is shutting down, just continue */
-
-        ACPI_MEM_FREE (Fatal);
-        break;
-
-
-    default:
-
-        ACPI_REPORT_ERROR (("AcpiExOpcode_3A_0T_0R: Unknown opcode %X\n",
-                WalkState->Opcode));
-        Status = AE_AML_BAD_OPCODE;
-        goto Cleanup;
+    char *c = str;
+    while(*c) {
+    *c = toupper(*c);
+    c++;
     }
-
-
-Cleanup:
-
-    return_ACPI_STATUS (Status);
+    return(str);
 }
 
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiExOpcode_3A_1T_1R
- *
- * PARAMETERS:  WalkState           - Current walk state
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Execute Triadic operator (3 operands)
- *
- ******************************************************************************/
-
-ACPI_STATUS
-AcpiExOpcode_3A_1T_1R (
-    ACPI_WALK_STATE         *WalkState)
+#ifdef _KERNEL
+/* Or strstr (used in debugging mode, also move to libkern) */
+static __inline char *
+strstr(char *s, char *find)
 {
-    ACPI_OPERAND_OBJECT     **Operand = &WalkState->Operands[0];
-    ACPI_OPERAND_OBJECT     *ReturnDesc = NULL;
-    char                    *Buffer;
-    ACPI_STATUS             Status = AE_OK;
-    ACPI_NATIVE_UINT        Index;
-    ACPI_SIZE               Length;
+    char c, sc;
+    size_t len;
 
-
-    ACPI_FUNCTION_TRACE_STR ("ExOpcode_3A_1T_1R", AcpiPsGetOpcodeName (WalkState->Opcode));
-
-
-    switch (WalkState->Opcode)
-    {
-    case AML_MID_OP:        /* Mid  (Source[0], Index[1], Length[2], Result[3]) */
-
-        /*
-         * Create the return object.  The Source operand is guaranteed to be
-         * either a String or a Buffer, so just use its type.
-         */
-        ReturnDesc = AcpiUtCreateInternalObject (ACPI_GET_OBJECT_TYPE (Operand[0]));
-        if (!ReturnDesc)
-        {
-            Status = AE_NO_MEMORY;
-            goto Cleanup;
-        }
-
-        /* Get the Integer values from the objects */
-
-        Index = (ACPI_NATIVE_UINT) Operand[1]->Integer.Value;
-        Length = (ACPI_SIZE) Operand[2]->Integer.Value;
-
-        /*
-         * If the index is beyond the length of the String/Buffer, or if the
-         * requested length is zero, return a zero-length String/Buffer
-         */
-        if ((Index < Operand[0]->String.Length) &&
-            (Length > 0))
-        {
-            /* Truncate request if larger than the actual String/Buffer */
-
-            if ((Index + Length) >
-                Operand[0]->String.Length)
-            {
-                Length = (ACPI_SIZE) Operand[0]->String.Length - Index;
-            }
-
-            /* Allocate a new buffer for the String/Buffer */
-
-            Buffer = ACPI_MEM_CALLOCATE ((ACPI_SIZE) Length + 1);
-            if (!Buffer)
-            {
-                Status = AE_NO_MEMORY;
-                goto Cleanup;
-            }
-
-            /* Copy the portion requested */
-
-            ACPI_MEMCPY (Buffer, Operand[0]->String.Pointer + Index,
-                         Length);
-
-            /* Set the length of the new String/Buffer */
-
-            ReturnDesc->String.Pointer = Buffer;
-            ReturnDesc->String.Length = (UINT32) Length;
-        }
-        break;
-
-
-    default:
-
-        ACPI_REPORT_ERROR (("AcpiExOpcode_3A_0T_0R: Unknown opcode %X\n",
-                WalkState->Opcode));
-        Status = AE_AML_BAD_OPCODE;
-        goto Cleanup;
+    if ((c = *find++) != 0) {
+    len = strlen(find);
+    do {
+        do {
+        if ((sc = *s++) == 0)
+            return (NULL);
+        } while (sc != c);
+    } while (strncmp(s, find, len) != 0);
+    s--;
     }
-
-    /* Store the result in the target */
-
-    Status = AcpiExStore (ReturnDesc, Operand[3], WalkState);
-
-Cleanup:
-
-    /* Delete return object on error */
-
-    if (ACPI_FAILURE (Status))
-    {
-        AcpiUtRemoveReference (ReturnDesc);
-    }
-
-    /* Set the return object and exit */
-
-    if (!WalkState->ResultObj)
-    {
-        WalkState->ResultObj = ReturnDesc;
-    }
-    return_ACPI_STATUS (Status);
+    return ((char *)s);
 }
+#endif /* _KERNEL */
 
-
+#endif /* __ACNETBSD_H__ */
