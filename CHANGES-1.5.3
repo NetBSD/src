@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.9 2001/11/13 23:10:23 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.10 2001/11/15 23:29:57 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -448,3 +448,46 @@ usr.sbin/rpc.lockd/lockd_lock.c			1.8
 usr.bin/rs/rs.c					1.7
 
   Avoid segmentation fault if ``-z'' option is used.  Fixes PR#14338.
+
+sys/nfs/nfs_subs.c				1.98
+
+  Always initialize ni_rootdir in nfs_namei().  This fixes a problem
+  where use of ``..'' would instead use the information for ``.'',
+  when using NetBSD/alpha NFS servers, and fixes PR#11618 ands
+  PR#12953.
+
+sys/arch/mips/mips/pmap.c			1.135 via patch
+
+  Fix problems on MIPS machines without secondary cache.
+  Manifestations are random /bin/sh core dumps and log messages like
+  ``pmap_unwire: wiring for pmap 0x... va 0x... didn't change''.
+  Caused by virtual alias problem in pmap_copy_page().  Fixes PR#13587.
+
+gnu/usr.bin/send-pr/send-pr.sh			1.19-1.20
+
+  Pick up information for the "Release" field from running ``uname'',
+  or by falling back to /bin/arch and /bin/machine if they exist.
+  Fixes PR#14217, PR#13938, PR$14104 and PR10614.
+
+share/man/man9/hz.9				1.1-1.2 (new)
+share/man/man9/hardclock.9			1.1 (new)
+share/man/man9/Makefile				1.90-1.91 via patch
+distrib/sets/lists/comp/mi			1.365,1.367 via patch
+
+  Add manual pages hz(9) and hardclock(9), already referenced from
+  microtime(9).
+
+sys/uvm/uvm_vnode.c				patch
+
+  Make sure to initialize uio_procp in uvn_io().  Fixes kernel
+  crash problem, reported in PR#14185.
+
+sys/dev/ic/elinkxl.c				1.39
+
+  Set correct bit for LED polarity.  Affects CardBus cards, such
+  as 3c575[BC].
+
+usr.bin/vmstat/vmstat.c				1.82
+
+  Change memory display to prevent results from running into
+  each other.
