@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.108 1998/10/28 22:41:25 is Exp $
+#	$NetBSD: GENERIC,v 1.109 1998/11/11 22:26:27 veego Exp $
 
 #
 # GENERIC AMIGA
@@ -245,7 +245,8 @@ audio*		at melody?
 
 # Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
-ed0		at zbus0		# Hydra
+ne*		at zbus0		# AriadneII
+ed0		at zbus0		# Hydra, ASDG LanRover
 es0		at zbus0		# CEI A4066 EthernetPLUS
 qn0		at zbus0		# Quicknet
 
