@@ -27,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: sprayd.c,v 1.1 1994/06/23 08:11:37 deraadt Exp $
+ *	$Id: sprayd.c,v 1.2 1994/06/24 08:17:42 deraadt Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sprayd.c,v 1.1 1994/06/23 08:11:37 deraadt Exp $";
+static char rcsid[] = "$Id: sprayd.c,v 1.2 1994/06/24 08:17:42 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,43 +50,43 @@ static int from_inetd = 1;
 static void
 cleanup()
 {
-        (void) pmap_unset(SPRAYPROG, SPRAYVERS);
-        exit(0);
+	(void) pmap_unset(SPRAYPROG, SPRAYVERS);
+	exit(0);
 }
 
 
 int
 main(argc, argv)
-        int argc;
-        char *argv[];
+	int argc;
+	char *argv[];
 {
 	SVCXPRT *transp;
-        int sock = 0;
-        int proto = 0;
+	int sock = 0;
+	int proto = 0;
 	struct sockaddr_in from;
 	int fromlen;
-        
-        /*
-         * See if inetd started us
-         */
-        if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
-                from_inetd = 0;
-                sock = RPC_ANYSOCK;
-                proto = IPPROTO_UDP;
-        }
-        
-        if (!from_inetd) {
-                daemon(0, 0);
+	
+	/*
+	 * See if inetd started us
+	 */
+	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
+		from_inetd = 0;
+		sock = RPC_ANYSOCK;
+		proto = IPPROTO_UDP;
+	}
+	
+	if (!from_inetd) {
+		daemon(0, 0);
 
-                (void) pmap_unset(SPRAYPROG, SPRAYVERS);
+		(void) pmap_unset(SPRAYPROG, SPRAYVERS);
 
 		(void) signal(SIGINT, cleanup);
 		(void) signal(SIGTERM, cleanup);
 		(void) signal(SIGHUP, cleanup);
-        }
+	}
 
-        openlog("rpc.sprayd", LOG_CONS|LOG_PID, LOG_DAEMON);
-        
+	openlog("rpc.sprayd", LOG_CONS|LOG_PID, LOG_DAEMON);
+	
 	transp = svcudp_create(sock);
 	if (transp == NULL) {
 		syslog(LOG_ERR, "cannot create udp service.");
@@ -94,13 +94,13 @@ main(argc, argv)
 	}
 	if (!svc_register(transp, SPRAYPROG, SPRAYVERS, spray_service, proto)) {
 		syslog(LOG_ERR,
-		       "unable to register (SPRAYPROG, SPRAYVERS, %s).",
-		       proto ? "udp" : "(inetd)");
+		    "unable to register (SPRAYPROG, SPRAYVERS, %s).",
+		    proto ? "udp" : "(inetd)");
 		return 1;
 	}
 
 	alarm(TIMEOUT);
-        svc_run();
+	svc_run();
 	syslog(LOG_ERR, "svc_run returned");
 	return 1;
 }
