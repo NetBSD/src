@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.79 2004/02/09 22:29:26 hpeyerl Exp $	*/
+/*	$NetBSD: i82557.c,v 1.80 2004/02/19 13:34:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.79 2004/02/09 22:29:26 hpeyerl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.80 2004/02/19 13:34:51 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -190,7 +190,7 @@ void	fxp_stop(struct ifnet *, int);
 void	fxp_txintr(struct fxp_softc *);
 void	fxp_rxintr(struct fxp_softc *);
 
-void	fxp_rx_hwcksum(struct mbuf *, const struct fxp_rfa *);
+int	fxp_rx_hwcksum(struct mbuf *, const struct fxp_rfa *);
 
 void	fxp_rxdrain(struct fxp_softc *);
 int	fxp_add_rfabuf(struct fxp_softc *, bus_dmamap_t, int);
@@ -1210,7 +1210,11 @@ fxp_txintr(struct fxp_softc *sc)
 		ifp->if_timer = 0;
 }
 
-void
+/*
+ * fxp_rx_hwcksum: check status of H/W offloading for received packets.
+ */
+
+int
 fxp_rx_hwcksum(struct mbuf *m, const struct fxp_rfa *rfa)
 {
 	u_int16_t rxparsestat;
@@ -1218,10 +1222,28 @@ fxp_rx_hwcksum(struct mbuf *m, const struct fxp_rfa *rfa)
 	u_int32_t csum_data;
 	int csum_flags;
 
-	rxparsestat = le16toh(rfa->rx_parse_stat);
+	/*
+	 * check VLAN tag stripping.
+	 */
+
+	if (rfa->rfa_status & htole16(FXP_RFA_STATUS_VLAN)) {
+		struct m_tag *vtag;
+
+		vtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int), M_NOWAIT);
+		if (vtag == NULL)
+			return ENOMEM;
+		*(u_int *)(vtag + 1) = be16toh(rfa->vlan_id);
+		m_tag_prepend(m, vtag);
+	}
+
+	/*
+	 * check H/W Checksumming.
+	 */
+
 	csum_stat = le16toh(rfa->cksum_stat);
+	rxparsestat = le16toh(rfa->rx_parse_stat);
 	if (!(rfa->rfa_status & htole16(FXP_RFA_STATUS_PARSE)))
-		return;
+		return 0;
 
 	csum_flags = 0;
 	csum_data = 0;
@@ -1240,6 +1262,8 @@ fxp_rx_hwcksum(struct mbuf *m, const struct fxp_rfa *rfa)
 
 	m->m_pkthdr.csum_flags = csum_flags;
 	m->m_pkthdr.csum_data = csum_data;
+
+	return 0;
 }
 
 /*
@@ -1307,7 +1331,8 @@ fxp_rxintr(struct fxp_softc *sc)
 		/* Do checksum checking. */
 		m->m_pkthdr.csum_flags = 0;
 		if (sc->sc_flags & FXPF_EXT_RFA)
-			fxp_rx_hwcksum(m, rfa);
+			if (fxp_rx_hwcksum(m, rfa))
+				goto dropit;
 
 		/*
 		 * If the packet is small enough to fit in a
@@ -1566,7 +1591,7 @@ fxp_init(struct ifnet *ifp)
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_txdesc *txd;
 	bus_dmamap_t rxmap;
-	int i, prm, save_bf, lrxen, allm, error = 0;
+	int i, prm, save_bf, lrxen, vlan_drop, allm, error = 0;
 
 	if ((error = fxp_enable(sc)) != 0)
 		goto out;
@@ -1614,11 +1639,14 @@ fxp_init(struct ifnet *ifp)
 	 */
 	save_bf = 0;
 	lrxen = 0;
+	vlan_drop = 0;
 	if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) {
 		if (sc->sc_rev < FXP_REV_82558_A4)
 			save_bf = 1;
 		else
 			lrxen = 1;
+		if (sc->sc_rev >= FXP_REV_82550)
+			vlan_drop = 1;
 	}
 
 	/*
@@ -1708,6 +1736,7 @@ fxp_init(struct ifnet *ifp)
 	cbp->multi_ia =		0;	/* (don't) accept multiple IAs */
 	cbp->mc_all =		allm;	/* accept all multicasts */
 	cbp->ext_rx_mode =	(sc->sc_flags & FXPF_EXT_RFA) ? 1 : 0;
+	cbp->vlan_drop_en =	vlan_drop;
 
 	if (sc->sc_rev < FXP_REV_82558_A4) {
 		/*
