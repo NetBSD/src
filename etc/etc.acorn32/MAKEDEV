@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.34 2003/09/19 11:11:37 pooka Exp $
+#	$NetBSD: MAKEDEV,v 1.35 2003/10/03 14:35:36 dsl Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -188,7 +188,7 @@ isdns)
 	;;
 
 std)
-	rm -f console drum mem kmem null zero klog kbd
+	rm -f console constty drum mem kmem null zero klog kbd
 	rm -f kbdctl vidcconsole0 iic rtc0 ksyms
 	mknod mem		c 0 0	; chmod 640 mem	; chgrp kmem mem
 	mknod kmem		c 0 1	; chmod 640 kmem ; chgrp kmem kmem
@@ -196,6 +196,7 @@ std)
 	mknod zero		c 0 3	; chmod 666 zero
 	mknod drum		c 1 0	; chmod 640 drum ; chgrp kmem drum
 	mknod console		c 2 0
+	mknod constty		c 2 1
 	mknod klog		c 5 0	; chmod 600 klog
 	mknod kbd		c 11 0	; chmod 666 kbd
 	mknod kbdctl		c 11 1	; chmod 666 kbdctl

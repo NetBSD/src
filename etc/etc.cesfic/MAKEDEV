@@ -1,6 +1,6 @@
 #!/bin/sh -
 
-# $NetBSD: MAKEDEV,v 1.10 2003/09/05 17:02:55 dsl Exp $
+# $NetBSD: MAKEDEV,v 1.11 2003/10/03 14:35:37 dsl Exp $
 #
 ###########################################################################
 #
@@ -68,8 +68,9 @@ init|all)
 	;;
 
 std)
-	rm -f console drum mem kmem null zero klog
+	rm -f console constty drum mem kmem null zero klog
 	mknod console		c 0 0
+	mknod constty		c 0 1
 	mknod drum		c 3 0	; chmod 640 drum ; chgrp kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
 	mknod mem		c 2 0	; chmod 640 mem	; chgrp kmem mem
