@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.45 2004/07/15 06:32:42 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.46 2004/07/15 06:33:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.45 2004/07/15 06:32:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.46 2004/07/15 06:33:43 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2972,7 +2972,7 @@ atw_rxintr(struct atw_softc *sc)
 		if (sc->sc_opmode & ATW_NAR_PR)
 			m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = m->m_len = len;
+		m->m_pkthdr.len = m->m_len = MIN(m->m_ext.ext_size, len);
 
 		if (rate0 >= sizeof(rate_tbl) / sizeof(rate_tbl[0]))
 			rate = 0;
