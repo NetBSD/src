@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtld.1,v 1.3 1997/05/26 00:40:39 cjs Exp $
+.\"	$NetBSD: rtld.1,v 1.4 1997/06/03 04:24:25 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
 .\" All rights reserved.
@@ -70,7 +70,7 @@ uses the special symbol
 to determine whether a program is in fact dynamically linked or not. Whenever
 the linker
 .Xr ld 1
-has relocated this symbol to a location other then 0,
+has relocated this symbol to a location other than 0,
 .Em crt0
 assumes the services of
 .Nm
@@ -176,8 +176,8 @@ non-standard filesystem layout.
 /var/run/ld.so.hints
 .Pp
 .Sh SEE ALSO
-.Xr ld 1
+.Xr ld 1 ,
+.Xr link 5 ,
 .Xr ldconfig 8
-.Xr link 5
 .Sh HISTORY
-The shared library model employed first appeared in SunOS 4.0
+The shared library model employed first appeared in SunOS 4.0.
