@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2001/06/14 12:57:12 fredette Exp $
+#	$NetBSD: Makefile,v 1.2 2002/04/22 21:15:40 fredette Exp $
 
-SUBDIR= installboot libsa bootxx bootyy ufsboot netboot tapeboot
+SUBDIR= libsa bootxx bootyy ufsboot netboot tapeboot
 
 .include <bsd.subdir.mk>
