@@ -1,4 +1,6 @@
-/*	$NetBSD: shutdown.c,v 1.22 1998/01/20 23:24:47 mycroft Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.23 1998/01/21 00:32:53 mycroft Exp $	*/
+
+#define	DEBUG
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.22 1998/01/20 23:24:47 mycroft Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.23 1998/01/21 00:32:53 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -378,7 +380,7 @@ die_you_gravy_sucking_pig_dog()
 	finish(0);
 }
 
-#define	ATOI2(p)	(p[0] - '0') * 10 + (p[1] - '0'); p += 2;
+#define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
 
 void
 getoffset(timearg)
@@ -422,22 +424,19 @@ getoffset(timearg)
 	yearset = 0;
 	switch (strlen(timearg)) {
 	case 12:
-		lt->tm_year = ATOI2(timearg);
-		lt->tm_year *= 100;
+		lt->tm_year = ATOI2(timearg) * 100 - TM_YEAR_BASE;
 		yearset = 1;
 		/* FALLTHROUGH */
 	case 10:
 		if (yearset) {
-			yearset = ATOI2(timearg);
-			lt->tm_year += yearset;
+			lt->tm_year += ATOI2(timearg);
 		} else {
 			yearset = ATOI2(timearg);
 			if (yearset < 69)
-				lt->tm_year = yearset + 2000;
+				lt->tm_year = yearset + 2000 - TM_YEAR_BASE;
 			else
-				lt->tm_year = yearset + 1900;
+				lt->tm_year = yearset + 1900 - TM_YEAR_BASE;
 		}
-		lt->tm_year -= TM_YEAR_BASE;
 		/* FALLTHROUGH */
 	case 8:
 		lt->tm_mon = ATOI2(timearg);
