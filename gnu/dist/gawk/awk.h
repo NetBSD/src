@@ -425,7 +425,7 @@ typedef struct exp_node {
 #define param	sub.nodep.l.param_name
 
 #define subnode	lnode
-#define proc	sub.nodep.r.pptr
+#define awkproc	sub.nodep.r.pptr
 
 #define re_reg	sub.nodep.r.preg
 #define re_flags sub.nodep.reflags
