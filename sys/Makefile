@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.14 1997/04/02 21:14:29 christos Exp $
+#	$NetBSD: Makefile,v 1.15 1997/04/19 07:41:45 thorpej Exp $
 
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
 
 SUBDIR+= arch/${MACHINE}
 
-.if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips")
+.if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips" &&
+     ${MACHINE_ARCH} != "powerpc")
 SUBDIR+= lkm
 .endif
 
