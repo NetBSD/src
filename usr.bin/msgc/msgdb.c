@@ -1,4 +1,4 @@
-/*	$NetBSD: msgdb.c,v 1.14 2003/06/04 19:00:26 dsl Exp $	*/
+/*	$NetBSD: msgdb.c,v 1.15 2003/06/10 17:24:17 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,7 +46,7 @@
 #include "pathnames.h"
 
 static struct id_rec *head = NULL, *tail = NULL;
-static int msg_no = 0;
+static int msg_no = 1;
 
 void define_msg (char *name, char *value)
 {
@@ -146,7 +146,7 @@ write_msg_file ()
 		"typedef const char *msg;\n"
 		"\n"
 		"/* Prototypes */\n"
-		"int  msg_window(WINDOW *window);\n"
+		"WINDOW *msg_window(WINDOW *window);\n"
 		"const char *msg_string (msg msg_no);\n"
 		"void msg_clear(void);\n"
 		"void msg_standout(void);\n"
@@ -159,7 +159,7 @@ write_msg_file ()
 			" char *val, size_t max_chars, ...);\n"
 		"void msg_prompt_noecho (msg msg_no, const char *def,"
 			" char *val, size_t max_chars, ...);\n"
-		"void msg_prompt_win (msg, WINDOW *,"
+		"void msg_prompt_win (msg, int, int, int, int,"
 			" const char *, char *, size_t, ...);\n"
 		"void msg_table_add(msg msg_no,...);\n"
 		"\n"
@@ -186,7 +186,7 @@ write_msg_file ()
 	(void)fprintf (out_file, "#include \"%s\"\n", hname);
 
 	/* msg_list */
-	(void)fprintf (out_file, "const char *msg_list[] = {\n");
+	(void)fprintf (out_file, "const char *msg_list[] = {\nNULL,\n");
 	for (t=head ; t != NULL; t = t->next) 
 		write_str (out_file, t->msg);
 	(void)fprintf (out_file, "NULL};\n");
