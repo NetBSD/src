@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.13 1997/05/29 21:16:59 gwr Exp $	*/
+/*	$NetBSD: psl.h,v 1.14 1998/11/24 17:07:54 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,8 +58,12 @@ extern int _splraise __P((int new));
  * (See the GCC extensions info document.)
  */
 
+static __inline int _getsr __P((void));
+static __inline int _spl __P((int));
+static __inline int _splraise __P((int));
+
 /* Get current sr value. */
-extern __inline__ int
+static __inline int
 _getsr(void)
 {
 	register int rv;
@@ -69,7 +73,7 @@ _getsr(void)
 }
 
 /* Set the current sr and return the old value. */
-extern __inline__ int
+static __inline int
 _spl(int new)
 {
 	register int old;
@@ -87,7 +91,7 @@ _spl(int new)
  * The comparison includes the "S" bit (always on)
  * because that generates more efficient code.
  */
-extern __inline__ int
+static __inline int
 _splraise(int new)
 {
 	register int old;
