@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_syscall.c,v 1.1 2000/12/02 16:03:24 jdolecek Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.2 2000/12/09 06:34:07 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -122,18 +122,9 @@ userret(p, pc, oticks)
 {
 	int sig;
 
-	/* take pending signals */
+	/* Take pending signals. */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
 
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
@@ -144,7 +135,7 @@ userret(p, pc, oticks)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}                   
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
 
 /*
@@ -157,24 +148,18 @@ void
 linux_syscall(frame)
 	struct trapframe *frame;
 {
-	register caddr_t params;
 	register const struct sysent *callp;
 	register struct proc *p;
-	int error, opc, nsys;
+	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 	u_quad_t sticks;
 
 	p = curproc;
 	sticks = p->p_sticks;
-	p->p_md.md_regs = frame;
-	opc = frame->tf_eip;
 	code = frame->tf_eax;
 
-	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
-
-	params = (caddr_t)frame->tf_esp + sizeof(int);
 
 #ifdef VM86
 	/*
@@ -187,7 +172,7 @@ linux_syscall(frame)
 	else
 #endif /* VM86 */
 
-	if (code < 0 || code >= nsys)
+	if ((u_int)code >= (u_int)p->p_emul->e_nsysent)
 		callp += p->p_emul->e_nosys;		/* illegal */
 	else
 		callp += code;
@@ -223,15 +208,10 @@ linux_syscall(frame)
 		ktrsyscall(p, code, argsize, args);
 #endif /* KTRACE */
 	rval[0] = 0;
-	rval[1] = frame->tf_edx;
+	rval[1] = 0;
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
-		/*
-		 * Reinitialize proc pointer `p' as it may be different
-		 * if this is a child returning from fork syscall.
-		 */
-		p = curproc;
 		frame->tf_eax = rval[0];
 		frame->tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
@@ -241,7 +221,7 @@ linux_syscall(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame->tf_eip = opc - frame->tf_err;
+		frame->tf_eip -= frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
