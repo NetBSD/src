@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.11 2000/02/26 08:39:20 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.12 2000/03/01 12:49:48 itojun Exp $	*/
 /*	$KAME: mld6.c,v 1.16 2000/02/22 14:04:27 itojun Exp $	*/
 
 /*
@@ -70,7 +70,6 @@
  */
 
 #include "opt_inet.h"
-#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -406,9 +405,6 @@ mld6_sendpkt(in6m, type, dst)
 	}
 	mh->m_next = md;
 
-#ifdef IPSEC
-	mh->m_pkthdr.rcvif = NULL;
-#endif 
 	mh->m_pkthdr.len = sizeof(struct ip6_hdr) + sizeof(struct mld6_hdr);
 	mh->m_len = sizeof(struct ip6_hdr);
 	MH_ALIGN(mh, sizeof(struct ip6_hdr));

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.12 2000/02/07 06:15:17 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.13 2000/03/01 12:49:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -34,7 +34,6 @@
  */
 
 #include "opt_inet.h"
-#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,9 +200,6 @@ in6_gif_output(ifp, family, m, rt)
 #endif
 	}
 	
-#ifdef IPSEC
-	m->m_pkthdr.rcvif = NULL;
-#endif /*IPSEC*/
 	return(ip6_output(m, 0, &sc->gif_ro6, 0, 0, NULL));
 }
 
