@@ -1,4 +1,4 @@
-/*	$NetBSD: if_em.c,v 1.1 1997/10/15 00:29:25 mark Exp $	*/
+/*	$NetBSD: if_em.c,v 1.2 1997/10/18 04:39:12 mark Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -62,10 +62,10 @@
 #include <dev/ic/dp8390reg.h>
 /*#include <dev/ic/dp8390var.h>*/	/* Temporary till we merge */
 #include <arch/arm32/dev/dp8390var.h>
+#include <arch/arm32/dev/dp8390_pio.h>
 #include <arch/arm32/podulebus/podulebus.h>
 #include <arch/arm32/podulebus/podules.h>
 #include <arch/arm32/podulebus/if_emreg.h>
-#include <arch/arm32/dev/dp8390_pio.h>
 
 /*
  * em_softc: per line info and status
@@ -78,8 +78,6 @@ struct em_softc {
 	bus_space_handle_t	sc_ioh;
 	struct bus_space	sc_tag;
 };
-
-#define CARDNAME "EtherM"
 
 #ifdef DP8390_DEBUG
 #define	DPRINTF(x)	printf x
@@ -167,14 +165,6 @@ emattach(parent, self, aux)
 	sc->sc_flags = self->dv_cfdata->cf_flags;
 	sc->sc_flags |= DP8390_FORCE_PIO | DP8390_FORCE_16BIT_MODE;
 
-	/* Set up the vendor, type and name */
-	sc->vendor = DP8390_VENDOR_ANT;
-	sc->type = 0;
-	if ((sc->type_str = malloc((u_long)(sizeof(CARDNAME) + 1), M_DEVBUF, M_NOWAIT))) {
-		strncpy(sc->type_str, CARDNAME, sizeof(CARDNAME));
-		sc->type_str[sizeof(CARDNAME)] = '\0';
-	}
-
 	/* Set up various softc defaults */
 	sc->is790 = 0;
 
@@ -220,13 +210,15 @@ emattach(parent, self, aux)
 	sc->ring_copy = dp8390_pio_ring_copy;
 	sc->read_hdr= dp8390_pio_read_hdr;
 
+	printf("\n");
+
 	if (dp8390_config(sc)) {
 		bus_space_unmap(emsc->sc_iot, emsc->sc_ioh, EM_IO_SIZE);
 		return;
 	}
 
 	/* Report packet buffer memory size */
-	printf("%dKB buffer memory", sc->mem_size / 1024);
+	printf("%s: %dKB buffer memory", self->dv_xname, sc->mem_size / 1024);
 
 	/* Get the Diagnostic Status Register */
 	dsr = bus_space_read_1(emsc->sc_iot, emsc->sc_ioh, EM_DSR_REG);
@@ -251,7 +243,7 @@ emattach(parent, self, aux)
 	printf("\n");
 
 	/* Install an interrupt handler */
-	sc->sc_ih = intr_claim(IRQ_NETSLOT, IPL_NET, "net: em", dp8390_pio_intr, sc);
+	sc->sc_ih = intr_claim(IRQ_NETSLOT, IPL_NET, "net: em", dp8390_intr, sc);
 	if (sc->sc_ih == NULL)
 		panic("%s: Cannot install IRQ handler", self->dv_xname);
 }
