@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.6 1996/05/06 00:41:32 mark Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.7 1996/06/03 21:46:15 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -80,6 +80,9 @@ typedef struct {
 extern pv_addr_t systempage;
 
 extern int pmap_debug_level;
+
+int process_read_regs	__P((struct proc *p, struct reg *regs));
+int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
 
 void	switch_exit	__P((struct proc */*p*/, struct proc */*proc0*/));
 int	savectx		__P((struct pcb *pcb));
@@ -268,8 +271,6 @@ void
 cpu_exit(p)
 	register struct proc *p;
 {
-	struct vmspace *vm;
-	
 #ifdef ARMFPE
 /* Abort any active FP operation and deactivate the context */
 	arm_fpe_core_abort(FP_CONTEXT(p), NULL, NULL);
@@ -294,15 +295,6 @@ cpu_exit(p)
 
 /*    printf("cpu_exit: proc=%08x pid=%d comm=%s\n", p, p->p_pid, p->p_comm);*/
 
-#if 0
-	/*
-	 * This has been done in exit1().
-	 * This was originally borrowed from the i386 port.
-	 */
-	vm = p->p_vmspace;
-	if (vm->vm_refcnt == 1) /* What does this do and is it needed ? */
-		vm_map_remove(&vm->vm_map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
-#endif
 	cnt.v_swtch++;
 
 	switch_exit(p, &proc0);
