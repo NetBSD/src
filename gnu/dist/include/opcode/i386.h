@@ -873,6 +873,9 @@ static const template i386_optab[] = {
 {"punpckldq", 2, 0x0f62, _, Modrm, { RegMMX|WordMem, RegMMX, 0 } },
 {"pxor",      2, 0x0fef, _, Modrm, { RegMMX|WordMem, RegMMX, 0 } },
 
+{"ldmxcsr",   1, 0x0fae, 2, Modrm, { WordMem, 0, 0 } },
+{"stmxcsr",   1, 0x0fae, 3, Modrm, { WordMem, 0, 0 } },
+
 {"", 0, 0, 0, 0, { 0, 0, 0} }	/* sentinel */
 };
 #undef _
