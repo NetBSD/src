@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.8 2000/10/16 21:48:15 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.9 2001/01/08 18:00:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.8 2000/10/16 21:48:15 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.9 2001/01/08 18:00:31 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -78,6 +78,11 @@ struct coldesc clist[(ND+1)*2];
 int ncols = 0;
 extern struct coldesc clist[(ND+1)*2];
 extern int ncols;
+
+/*
+ * Default to stable sort.
+ */
+int stable_sort = 1;
 
 char devstdin[] = _PATH_STDIN;
 char toutpath[_POSIX_PATH_MAX];
@@ -111,7 +116,7 @@ main(argc, argv)
 	d_mask['\t'] = d_mask[' '] = BLANK | FLD_D;
 	ftpos = fldtab;
 	fixit(&argc, argv);
-	while ((ch = getopt(argc, argv, "bcdfik:mHno:rt:T:ux")) != EOF) {
+	while ((ch = getopt(argc, argv, "bcdfik:mHno:rsSt:T:ux")) != EOF) {
 	if ((outfile = getenv("TMPDIR")))
 		tmpdir = outfile;
 	switch (ch) {
@@ -135,6 +140,13 @@ main(argc, argv)
 			break;
 		case 'k':
 			 setfield(optarg, ++ftpos, fldtab->flags);
+			break;
+		case 's':
+			/* for GNU sort compatibility (this is our default) */
+			stable_sort = 1;
+			break;
+		case 'S':
+			stable_sort = 0;
 			break;
 		case 't':
 			if (SEP_FLAG)
