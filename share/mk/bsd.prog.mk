@@ -136,6 +136,7 @@ beforeinstall:
 afterinstall:
 .endif
 
+.if !target(realinstall)
 realinstall: _PROGSUBDIR
 .if defined(PROG)
 	install ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
@@ -156,6 +157,7 @@ realinstall: _PROGSUBDIR
 		rm -f $$t; \
 		ln $$l $$t; \
 	done; true
+.endif
 .endif
 
 install: maninstall
