@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.75.2.12 2002/08/01 02:46:21 nathanw Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.75.2.13 2002/08/01 03:24:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.12 2002/08/01 02:46:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.13 2002/08/01 03:24:47 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -149,9 +149,7 @@ uiomove(buf, n, uio)
 	u_int cnt;
 	int error = 0;
 	char *cp = buf;
-#ifdef DIAGNOSTIC
 	struct proc *p = uio->uio_procp;
-#endif
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
