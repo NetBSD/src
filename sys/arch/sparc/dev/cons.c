@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.16 1996/02/13 22:49:48 pk Exp $ */
+/*	$NetBSD: cons.c,v 1.17 1996/02/25 21:45:53 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
 
 #include <machine/bsd_openprom.h>
 #include <machine/psl.h>
-#ifdef SUN4
+#if defined(SUN4)
 #include <machine/oldmon.h>
 #endif
 
@@ -597,22 +597,22 @@ cngetc()
 		splx(s);
 		c = c0;
 	} else {
-#ifdef SUN4
+#if defined(SUN4)
 		/* SUN4 PROM: must turn off echo to avoid double char echo */
 		extern struct om_vector *oldpvec;
 		int saveecho;
 #endif
 
 		s = splhigh();
-#ifdef SUN4
-		if (cputyp == CPU_SUN4) {
+#if defined(SUN4)
+		if (CPU_ISSUN4) {
 			saveecho = *(oldpvec->echo);
 			*(oldpvec->echo) = 0;
 		}
 #endif
 		c = (*promvec->pv_getchar)();
-#ifdef SUN4
-		if (cputyp == CPU_SUN4) 
+#if defined(SUN4)
+		if (CPU_ISSUN4) 
 			*(oldpvec->echo) = saveecho;
 #endif
 		splx(s);
