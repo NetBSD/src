@@ -1,4 +1,4 @@
-/*	$NetBSD: post.c,v 1.6 2000/05/05 11:28:56 blymn Exp $	*/
+/*	$NetBSD: post.c,v 1.7 2000/08/06 13:32:59 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -121,8 +121,10 @@ unpost_menu(MENU *menu)
 	menu->posted = 0;
 	werase(menu->menu_subwin);
 	wrefresh(menu->menu_subwin);
-	delwin(menu->menu_subwin);
-	if (menu->we_created == 1) menu->menu_subwin = NULL;
+	if (menu->we_created == 1) {
+		delwin(menu->menu_subwin);
+		menu->menu_subwin = NULL;
+	}
 	wrefresh(menu->menu_win);
 	return E_OK;
 }
