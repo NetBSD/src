@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.57 2001/03/09 12:49:05 itojun Exp $	*/
+/*	$NetBSD: var.c,v 1.58 2001/03/10 00:41:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.57 2001/03/09 12:49:05 itojun Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.58 2001/03/10 00:41:48 itojun Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.57 2001/03/09 12:49:05 itojun Exp $");
+__RCSID("$NetBSD: var.c,v 1.58 2001/03/10 00:41:48 itojun Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2575,7 +2575,8 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	     */
 	    *freePtr = TRUE;
 	}
-	Buf_Destroy(v->val, destroy);
+	if (str != (char *)Buf_GetAll(v->val, (int *)NULL))
+	    Buf_Destroy(v->val, destroy);
 	free((Address)v->name);
 	free((Address)v);
     } else if (v->flags & VAR_JUNK) {
@@ -2584,7 +2585,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	 * doesn't try to free a static pointer.
 	 * If VAR_KEEP is also set then we want to keep str as is.
 	 */
-	if ((v->flags & VAR_KEEP) != 0) {
+	if (!(v->flags & VAR_KEEP)) {
 	    if (*freePtr) {
 		free(str);
 	    }
@@ -2598,7 +2599,8 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		str = var_Error;
 	    }
 	}
-	Buf_Destroy(v->val, TRUE);
+	if (str != (char *)Buf_GetAll(v->val, (int *)NULL))
+	    Buf_Destroy(v->val, TRUE);
 	free((Address)v->name);
 	free((Address)v);
     }
