@@ -1,9 +1,9 @@
-#	$NetBSD: GENERIC,v 1.1 2001/05/22 20:59:26 chris Exp $
+#	$NetBSD: GENERIC,v 1.2 2001/06/08 22:22:59 chris Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
 
-include	"arch/arm32/conf/std.arm32"
+include	"arch/cats/conf/std.cats"
 
 # estimated number of users
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.3 2001/05/29 23:03:20 bjh21 Exp $
+#	$NetBSD: files.cats,v 1.4 2001/06/08 22:22:59 chris Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -37,6 +37,13 @@ include "arch/arm/conf/files.footbridge"
 include "dev/ata/files.ata"
 major	{wd = 16}
 
+#
+# time of day clock
+#
+device	todclock
+attach	todclock at todservice
+file	arch/arm32/dev/todclock.c		todclock	needs-count
+
 # ISA DMA glue
 file	arch/arm32/isa/isadma_machdep.c		isadma
 
@@ -49,7 +56,7 @@ attach	joy at isapnp with joy_isapnp
 file	arch/arm32/isa/joy_isapnp.c		joy_isapnp
 
 # Memory disk driver
-file	dev/md_root.c				md & memory_disk_hooks
+file	arch/arm32/dev/md_hooks.c				md & memory_disk_hooks
 major   {md = 18}
 
 # RAIDframe
@@ -64,6 +71,7 @@ major   {sd = 24}
 major   {cd = 26}
 
 # Generic MD files
+file	arch/arm32/arm32/autoconf.c
 file	arch/arm32/arm32/bus_dma.c
 file	arch/arm32/arm32/conf.c
 file	arch/arm32/arm32/cpuswitch.S
@@ -95,6 +103,10 @@ file	arch/arm32/fpe-arm/armfpe.s		armfpe
 
 # ISA Plug 'n Play autoconfiguration glue.
 file	arch/arm32/isa/isapnp_machdep.c		isapnp
+
+# ISA support.
+file	arch/arm32/isa/isa_io.c				isa
+file	arch/arm32/isa/isa_io_asm.S			isa
 
 # CATS boards have an EBSA285 based core with an ISA bus
 file	arch/cats/isa/isa_machdep.c			isa & ebsa285
@@ -135,8 +147,6 @@ file	arch/arm32/pci/pciide_machdep.c	pciide
 
 # Include USB stuff
 include "dev/usb/files.usb"
-
-include "dev/pckbc/files.pckbc"
 
 # Include WSCONS stuff
 include "dev/wscons/files.wscons"

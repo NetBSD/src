@@ -1,9 +1,9 @@
-#	$NetBSD: INSTALL,v 1.1 2001/05/22 21:36:45 chris Exp $
+#	$NetBSD: INSTALL,v 1.2 2001/06/08 22:22:59 chris Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
 
-include	"arch/arm32/conf/std.arm32"
+include	"arch/cats/conf/std.cats"
 
 # estimated number of users
 
