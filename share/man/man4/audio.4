@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.12 1997/08/26 19:03:55 augustss Exp $
+.\"	$NetBSD: audio.4,v 1.13 1997/10/06 16:00:55 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -215,7 +215,7 @@ the device admits full duplex operation.
 the device can be used with
 .Xr mmap 2 .
 .It Dv AUDIO_PROP_INDEPENDENT
-the device can set the playing and recording encoding paramaters
+the device can set the playing and recording encoding parameters
 independently.
 .El
 .It Dv AUDIO_GETIOFFS (audio_offset_t)
@@ -554,6 +554,7 @@ because they use a name from one of the AudioC* string values.
 .br
 For ports using the ISA bus:
 .Xr gus 4 ,
+.Xr guspnp 4 ,
 .Xr pas 4 ,
 .Xr pss 4 ,
 .Xr sb 4 ,
