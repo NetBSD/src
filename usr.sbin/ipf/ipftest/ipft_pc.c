@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_pc.c,v 1.1.1.2 1997/03/29 02:49:50 darrenr Exp $	*/
+/*	$NetBSD: ipft_pc.c,v 1.1.1.3 1997/05/25 11:46:02 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -27,12 +27,13 @@
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
 #include <net/if.h>
+#include <netinet/ip_compat.h>
 #include "ipf.h"
 #include "ipt.h"
 #include "pcap.h"
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "$Id: ipft_pc.c,v 1.1.1.2 1997/03/29 02:49:50 darrenr Exp $";
+static	char	rcsid[] = "$Id: ipft_pc.c,v 1.1.1.3 1997/05/25 11:46:02 darrenr Exp $";
 #endif
 
 struct	llc	{

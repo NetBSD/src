@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_tx.c,v 1.1.1.2 1997/03/29 02:49:51 darrenr Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.1.1.3 1997/05/25 11:46:03 darrenr Exp $	*/
 
 /*
  * (C)opyright 1995 by Darren Reed.
@@ -18,6 +18,7 @@
 #endif
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stddef.h>
@@ -42,7 +43,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_tx.c,v 1.1.1.2 1997/03/29 02:49:51 darrenr Exp $";
+static	char	rcsid[] = "$Id: ipft_tx.c,v 1.1.1.3 1997/05/25 11:46:03 darrenr Exp $";
 #endif
 
 extern	int	opts;
