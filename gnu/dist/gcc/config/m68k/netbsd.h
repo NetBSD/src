@@ -4,7 +4,7 @@
 
 #include <netbsd.h>
 
-#define TARGET_DEFAULT (MASK_BITFIELD|MASK_68881|MASK_68020)
+#define TARGET_DEFAULT (MASK_BITFIELD|MASK_68881|MASK_68020|MASK_ALIGN_INT)
 
 /* Define __HAVE_68881__ in preprocessor, unless -msoft-float is specified.
    This will control the use of inline 68881 insns in certain macros.  */
