@@ -1,8 +1,9 @@
 
-/*	$NetBSD: locore.s,v 1.172 1997/10/17 18:05:56 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.172.2.1 1997/11/13 07:56:11 mellon Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995, 1997
+ *	Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -163,7 +164,10 @@
 	.globl	_cold,_esym,_boothowto,_bootinfo,_atdevbase
 	.globl	_bootdev
 	.globl	_proc0paddr,_curpcb,_PTDpaddr,_biosbasemem
-	.globl	_biosextmem,_dynamic_gdt
+	.globl	_biosextmem,_gdt
+#ifdef I586_CPU
+	.globl	_idt
+#endif
 _cpu:		.long	0	# are we 386, 386sx, or 486, or Pentium, or..
 _cpu_id:	.long	0	# saved from `cpuid' instruction
 _cpu_feature:	.long	0	# feature flags from 'cpuid' instruction
@@ -1806,7 +1810,7 @@ switch_exited:
 #endif
 
 	/* Load TSS info. */
-	movl	_dynamic_gdt,%eax
+	movl	_gdt,%eax
 	movl	PCB_TSS_SEL(%esi),%edx
 
 	/* Switch address space. */
@@ -1881,7 +1885,7 @@ ENTRY(switch_exit)
 	movl	PCB_EBP(%esi),%ebp
 
 	/* Load TSS info. */
-	movl	_dynamic_gdt,%eax
+	movl	_gdt,%eax
 	movl	PCB_TSS_SEL(%esi),%edx
 
 	/* Switch address space. */
@@ -1963,26 +1967,31 @@ ENTRY(savectx)
 
 #define	TRAP(a)		pushl $(a) ; jmp _alltraps
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
-#define	BPTTRAP(a)	testb $(PSL_I>>8),13(%esp) ; jz 1f ; sti ; 1: ; \
-			TRAP(a)
 
 	.text
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
 IDTVEC(trap01)
-	subl	$4,%esp
-	pushl	%eax
+	pushl	$0
+	pushl	$T_TRCTRAP
+	INTRENTRY
+#ifdef I586_CPU
+trap01_fixup:
+#endif
 	movl	%dr6,%eax
-	movl	%eax,4(%esp)
+	movl	%eax,TF_ERR(%esp)
 	andb	$~0xf,%al
 	movl	%eax,%dr6
-	popl	%eax
-	BPTTRAP(T_TRCTRAP)
+	jmp	calltrap
 IDTVEC(trap02)
 	ZTRAP(T_NMI)
 IDTVEC(trap03)
-	pushl	$0
-	BPTTRAP(T_BPTFLT)
+	ZTRAP(T_BPTFLT)
+#ifdef I586_CPU
+trap03_fixup:
+	incl	TF_EIP(%esp)
+	jmp	calltrap
+#endif
 IDTVEC(trap04)
 	ZTRAP(T_OFLOW)
 IDTVEC(trap05)
@@ -2017,6 +2026,32 @@ IDTVEC(trap0d)
 	TRAP(T_PROTFLT)
 IDTVEC(trap0e)
 	TRAP(T_PAGEFLT)
+#ifdef I586_CPU
+IDTVEC(trap0e_pentium)
+	pushl	$T_PAGEFLT
+	INTRENTRY
+	testb	$PGEX_U,TF_ERR(%esp)
+	jnz	calltrap
+	movl	%cr2,%eax
+	subl	_idt,%eax
+	jc	calltrap
+	cmpl	$(7*8),%eax
+	jnc	calltrap
+	andl	$0x38,%eax
+	movl	trap0e_table+0(%eax),%ecx
+	movl	trap0e_table+4(%eax),%edx
+	movl	%ecx,TF_TRAPNO(%esp)
+	jmp	%edx
+	ALIGN_TEXT
+trap0e_table:
+	.long	T_DIVIDE,    calltrap
+	.long	T_TRCTRAP,   trap01_fixup
+	.long	T_NMI,       calltrap
+	.long	T_BPTFLT,    trap03_fixup
+	.long	T_OFLOW,     calltrap
+	.long	T_BOUND,     calltrap
+	.long	T_PRIVINFLT, calltrap
+#endif
 IDTVEC(trap0f)
 	/*
 	 * The Pentium Pro local APIC may erroneously call this vector for a
