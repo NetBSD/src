@@ -1,4 +1,4 @@
-.\" $NetBSD: ym.4,v 1.10 1999/12/15 22:07:35 abs Exp $
+.\" $NetBSD: ym.4,v 1.11 1999/12/27 03:23:41 itohy Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -94,21 +94,22 @@ The hardware volume changes the
 .Sq Dv outputs.master
 value.
 .Pp
-If the device is in global power down or power save mode,
-the output is automatically muted
-and none of the input source can be heard.
-To hear the external inputs while the parts are unused, use the
-.Sq Dv nosave
-mode of the driver.
-See
-.Sx POWER MANAGEMENT
-section below for the details of power management.
+If an external input source is unmuted by setting corresponding
+.Sq Dv inputs.*.mute
+variable to
+.Sq Dv off ,
+the device is never put in global power down or power save mode.
+This is because if the device is in global power down or power save mode,
+the output is automatically muted.
+.Pp
+All the external input sources (CD playback, line input, and speaker)
+are muted by default.
 .Sh POWER MANAGEMENT
 The
 .Nm
 driver is capable of power management on the OPL3-SA3 devices.
 The following modes can be selected by setting
-.Sq Dv power.power
+.Sq Dv power.save
 variable of
 .Xr mixerctl 1
 to
@@ -122,11 +123,12 @@ respectively.
 .It Global power-down mode
 When a subpart of the device is unused, the part is power-down after
 a timeout period (specified by
-.Sq Dv power.power.timeout
+.Sq Dv power.save.timeout
 variable of
 .Xr mixerctl 1
 in seconds).
-When all the subpart of the devices are unused,
+When all the subparts of the device are unused,
+and all the external input sources are muted,
 the driver puts the device in
 .Sq Global Power Down
 mode.
@@ -142,11 +144,12 @@ or your ears or the systems may be damaged.
 .It Power save mode
 When a subpart of the device is unused, the part is powered-down after
 a timeout period (specified by
-.Sq Dv power.power.timeout
+.Sq Dv power.save.timeout
 variable of
 .Xr mixerctl 1
 in seconds).
 When all the subparts of the device are unused,
+and all the external input sources are muted,
 the driver put the device in
 .Sq Power Save
 mode.
