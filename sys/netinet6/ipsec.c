@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.9 1999/07/31 18:41:16 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.10 1999/08/25 12:56:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1953,7 +1953,7 @@ ipsec4_logpacketstr(ip, spi)
 	s = (u_int8_t *)(&ip->ip_src);
 	d = (u_int8_t *)(&ip->ip_dst);
 
-	snprintf(buf, sizeof(buf), "packet(SPI=%u ", ntohl(spi));
+	snprintf(buf, sizeof(buf), "packet(SPI=%u ", (u_int32_t)ntohl(spi));
 	for (p = buf; p && *p; p++)
 		;
 	snprintf(p, sizeof(buf) - (p - buf), "src=%d.%d.%d.%d",
@@ -1978,7 +1978,7 @@ ipsec6_logpacketstr(ip6, spi)
 	static char buf[256];
 	char *p;
 
-	snprintf(buf, sizeof(buf), "packet(SPI=%u ", ntohl(spi));
+	snprintf(buf, sizeof(buf), "packet(SPI=%u ", (u_int32_t)ntohl(spi));
 	for (p = buf; p && *p; p++)
 		;
 	snprintf(p, sizeof(buf) - (p - buf), "src=%s",
@@ -2003,7 +2003,7 @@ ipsec_logsastr(sa)
 	char *p;
 	struct secindex *idx = &sa->saidx->idx;
 
-	snprintf(buf, sizeof(buf), "SA(SPI=%u ", ntohl(sa->spi));
+	snprintf(buf, sizeof(buf), "SA(SPI=%u ", (u_int32_t)ntohl(sa->spi));
 	for (p = buf; p && *p; p++)
 		;
 	if (idx->family == AF_INET) {
@@ -2574,12 +2574,15 @@ ipsec6_output_tunnel(state, sp, flags)
 				error = EHOSTUNREACH;
 				goto bad;
 			}
-
+#if 0	/* XXX Is the following need ? */
 			if (state->ro->ro_rt->rt_flags & RTF_GATEWAY) {
 				state->dst = (struct sockaddr *)state->ro->ro_rt->rt_gateway;
 				dst6 = (struct sockaddr_in6 *)state->dst;
 			}
-			ia6 = in6_selectsrc(dst6, NULL, NULL, (struct route_in6 *)state->ro, &error);
+#endif
+			ia6 = in6_selectsrc(dst6, NULL, NULL,
+					    (struct route_in6 *)state->ro,
+					    &error);
 			if (ia6 == NULL)
 				goto bad;
 			ip6->ip6_src = *ia6;
