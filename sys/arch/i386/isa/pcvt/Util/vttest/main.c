@@ -880,9 +880,16 @@ TAB*    qQ   wW   eE   rR   tT   yY   uU   iI   oO   pP   [{   ]}      DEL
   }
   cup(22,1);
 #ifdef UNIX
-  sgttyNew.sg_flags &= ~CRMOD;
-  sgttyNew.sg_flags &= ~ECHO;
-  stty(0, &sgttyNew);
+# ifndef BSD4_4
+  ttyNew.sg_flag &= ~CRMOD;
+  ttyNew.sg_flag &= ~ECHO;
+  stty(0, &ttyNew);
+# else
+  ttyNew.c_lflag &= ~(ECHO|ECHOK|ECHOE|ECHOKE|ECHONL|ECHOPRT|ECHOCTL);
+  ttyNew.c_iflag &= ~INLCR;
+  ttyNew.c_oflag &= ~OCRNL;
+  tcsetattr(0, TCSADRAIN, &ttyNew);
+# endif
 #endif
   inflush();
   printf("Press each key, both shifted and unshifted. Finish with RETURN:");
@@ -982,8 +989,14 @@ TAB*    qQ   wW   eE   rR   tT   yY   uU   iI   oO   pP   [{   ]}      DEL
   }
 
 #ifdef UNIX
-  sgttyNew.sg_flags |= CRMOD;
-  stty(0, &sgttyNew);
+# ifndef BSD4_4
+  ttyNew.sg_flag |= CRMOD;
+  stty(0, &ttyNew);
+# else
+  ttyNew.c_iflag |= INLCR;
+  ttyNew.c_oflag |= OCRNL;
+  tcsetattr(0, TCSADRAIN, &ttyNew);
+# endif
 #endif
   ed(2);
   cup(5,1);
@@ -999,8 +1012,14 @@ TAB*    qQ   wW   eE   rR   tT   yY   uU   iI   oO   pP   [{   ]}      DEL
   println("Finish with a single RETURN.");
 
 #ifdef UNIX
-  sgttyNew.sg_flags &= ~CRMOD;
-  stty(0, &sgttyNew);
+# ifndef BSD4_4
+  ttyNew.sg_flag &= ~CRMOD;
+  stty(0, &ttyNew);
+# else
+  ttyNew.c_iflag &= ~INLCR;
+  ttyNew.c_oflag &= ~OCRNL;
+  tcsetattr(0, TCSADRAIN, &ttyNew);
+# endif
 #endif
   do {
     cup(17,1);
@@ -1020,8 +1039,14 @@ TAB*    qQ   wW   eE   rR   tT   yY   uU   iI   oO   pP   [{   ]}      DEL
   }
   cup(19,1);
 #ifdef UNIX
-  sgttyNew.sg_flags |= CRMOD;
-  stty(0, &sgttyNew);
+# ifndef BSD4_4
+  ttyNew.sg_flag |= CRMOD;
+  stty(0, &ttyNew);
+# else
+  ttyNew.c_iflag |= INLCR;
+  ttyNew.c_oflag |= OCRNL;
+  tcsetattr(0, TCSADRAIN, &ttyNew);
+# endif
 #endif
   println(
   "Push each CTRL-key TWICE. Note that you should be able to send *all*");
@@ -1030,12 +1055,19 @@ TAB*    qQ   wW   eE   rR   tT   yY   uU   iI   oO   pP   [{   ]}      DEL
   println(
   "Finish with DEL (also called DELETE or RUB OUT), or wait 1 minute.");
 #ifdef UNIX
-#ifdef SIII
-  sgttyNew.sg_flags &= ~CBREAK;
-  stty(0, &sgttyNew);
-#endif
-  sgttyNew.sg_flags |= RAW;
-  stty(0, &sgttyNew);
+# ifndef BSD4_4
+#  ifdef SIII
+  ttyNew.sg_flag &= ~CBREAK;
+  stty(0, &ttyNew);
+#  endif
+  ttyNew.sg_flag |= RAW;
+  stty(0, &ttyNew);
+# else
+  ttyNew.c_lflag &= ~(ICANON|ISIG);
+  ttyNew.c_cc[VMIN] = 1;
+  ttyNew.c_cc[VTIME] = 0;
+  tcsetattr(0, TCSADRAIN, &ttyNew);
+# endif
 #endif
   ttybin(1);
 #ifdef SARG20
@@ -1058,13 +1090,19 @@ TAB*    qQ   wW   eE   rR   tT   yY   uU   iI   oO   pP   [{   ]}      DEL
     }
   } while (kbdc != '\177');
 #ifdef UNIX
-  sgttyNew.sg_flags &= ~RAW;
-  sgttyNew.sg_flags |= ECHO;
-  stty(0, &sgttyNew);
-#ifdef SIII
-  sgttyNew.sg_flags |= CBREAK;
-  stty(0, &sgttyNew);
-#endif
+# ifndef BSD4_4
+  ttyNew.sg_flag &= ~RAW;
+  ttyNew.sg_flag |= ECHO;
+  stty(0, &ttyNew);
+#  ifdef SIII
+  ttyNew.sg_flag |= CBREAK;
+  stty(0, &ttyNew);
+#  endif
+# else
+  ttyNew.c_lflag |= (ECHO|ECHOK|ECHOE|ECHOKE|ECHOPRT|ECHOCTL)|ISIG;
+  ttyNew.c_lflag &= ~ICANON;
+  tcsetattr(0, TCSADRAIN, &ttyNew);
+# endif
 #endif
   ttybin(0);
 #ifdef SARG20
@@ -1089,7 +1127,7 @@ tst_reports() {
        DECREQTPARM (Request Terminal Parameters)
   */
 
-  int parity, nbits, xspeed, rspeed, clkmul, flags;
+  int parity, nbits, xspeed, rspeed, clkmul, flag;
   int i, reportpos;
   char *report, *report2;
   static char *attributes[][2] = {
@@ -1118,8 +1156,13 @@ tst_reports() {
   };
 
 #ifdef UNIX
-  sgttyNew.sg_flags &= ~ECHO;
-  stty(0, &sgttyNew);
+# ifndef BSD4_4
+  ttyNew.sg_flag &= ~ECHO;
+  stty(0, &ttyNew);
+# else
+  ttyNew.c_lflag &= ~(ECHO|ECHOK|ECHOE|ECHOKE|ECHONL|ECHOPRT|ECHOCTL);
+  tcsetattr(0, TCSADRAIN, &ttyNew);
+# endif
 #endif
   cup(5,1);
   println("This is a test of the ANSWERBACK MESSAGE. (To load the A.B.M.");
@@ -1141,8 +1184,14 @@ tst_reports() {
   cup(3,1);
   sm("20");
 #ifdef UNIX
-  sgttyNew.sg_flags &= ~CRMOD;
-  stty(0, &sgttyNew);
+# ifndef BSD4_4
+  ttyNew.sg_flag &= ~CRMOD;
+  stty(0, &ttyNew);
+# else
+  ttyNew.c_iflag &= ~INLCR;
+  ttyNew.c_oflag &= ~OCRNL;
+  tcsetattr(0, TCSADRAIN, &ttyNew);
+# endif
 #endif
   printf("NewLine mode set. Push the RETURN key: ");
   report = instr();
@@ -1162,8 +1211,14 @@ tst_reports() {
   else                         printf(" -- Not expected");
   cup(9,1);
 #ifdef UNIX
-  sgttyNew.sg_flags |= CRMOD;
-  stty(0, &sgttyNew);
+# ifndef BSD4_4
+  ttyNew.sg_flag |= CRMOD;
+  stty(0, &ttyNew);
+# else
+  ttyNew.c_iflag |= INLCR;
+  ttyNew.c_oflag |= OCRNL;
+  tcsetattr(0, TCSADRAIN, &ttyNew);
+# endif
 #endif
   holdit();
 
@@ -1240,7 +1295,7 @@ tst_reports() {
     xspeed = scanto(report, &reportpos, ';');
     rspeed = scanto(report, &reportpos, ';');
     clkmul = scanto(report, &reportpos, ';');
-    flags  = scanto(report, &reportpos, 'x');
+    flag  = scanto(report, &reportpos, 'x');
     if (parity == 0 || nbits == 0 || clkmul == 0) println(" -- Bad format");
     else                                          println(" -- OK");
     printf(
@@ -1249,7 +1304,7 @@ tst_reports() {
     lookup(nbitstable, nbits),
     lookup(speedtable, xspeed),
     lookup(speedtable, rspeed));
-    printf("(CLoCk MULtiplier = %d, STP option flags = %d)\n", clkmul, flags);
+    printf("(CLoCk MULtiplier = %d, STP option flag = %d)\n", clkmul, flag);
   }
 
   cup(19,1);
@@ -1272,8 +1327,13 @@ tst_reports() {
   cup(24,1);
   holdit();
 #ifdef UNIX
-  sgttyNew.sg_flags |= ECHO;
-  stty(0, &sgttyNew);
+# ifndef BSD4_4
+  ttyNew.sg_flag |= ECHO;
+  stty(0, &ttyNew);
+# else
+  ttyNew.c_lflag |= (ECHO|ECHOK|ECHOE|ECHOKE|ECHOPRT|ECHOCTL);
+  tcsetattr(0, TCSADRAIN, &ttyNew);
+# endif
 #endif
 }
 
@@ -1833,17 +1893,35 @@ initterminal(pn) int pn; {
 #ifdef UNIX
   if (pn==0) {
     fflush(stdout);
-    gtty(0,&sgttyOrg);
-    gtty(0,&sgttyNew);
-    sgttyNew.sg_flags |= CBREAK;
+# ifndef BSD4_4
+    gtty(0,&ttyOrg);
+    gtty(0,&ttyNew);
+    ttyNew.sg_flag |= CBREAK;
+# else
+    tcgetattr(0, &ttyOrg);
+    tcgetattr(0, &ttyNew);
+    ttyNew.c_lflag &= ~ICANON;
+    ttyNew.c_cc[VMIN] = 1;
+    ttyNew.c_cc[VTIME] = 0;
+# endif
     }
   else  {
     fflush(stdout);
     inflush();
     sleep(2);
-    sgttyNew.sg_flags = sgttyOrg.sg_flags | CBREAK;
+# ifndef BSD4_4
+    ttyNew.sg_flag = ttyOrg.sg_flag | CBREAK;
+# else
+    ttyNew.c_lflag &= ~ICANON;
+    ttyNew.c_cc[VMIN] = 1;
+    ttyNew.c_cc[VTIME] = 0;
+# endif
     }
-  stty(0,&sgttyNew);
+# ifndef BSD4_4
+  stty(0,&ttyNew);
+# else
+  tcsetattr(0, TCSADRAIN, &ttyNew);
+# endif
 #ifdef SIII
   close(2);
   open("/dev/tty",O_RDWR|O_NDELAY);
@@ -1905,7 +1983,11 @@ bye () {
   ttybin(0);	/* reset line to normal mode */
 #endif
 #ifdef UNIX
-  stty(0,&sgttyOrg);
+# ifndef BSD4_4
+  stty(0,&ttyOrg);
+# else
+  tcsetattr(0, TCSADRAIN, &ttyOrg);
+# endif
 #endif
   exit();
 }
