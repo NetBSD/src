@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmoused.conf.5,v 1.6 2004/01/05 10:59:19 jmmv Exp $
+.\" $NetBSD: wsmoused.conf.5,v 1.7 2004/01/05 12:16:25 jmmv Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -132,6 +132,12 @@ Virtual console number which holds the X server (if any).
 The argument specifies the console number (the same found in
 .Pa /dev/ttyE? ) .
 Unset by default.
+.It xconsole_delay = integer;
+Number of seconds to wait before reactivating the mouse when returning
+from the X console (specified by the
+.Sq xconsole
+property).
+Defaults to 5.
 .El
 .Ss Properties specific to the action mode
 The following properties are only useful when running in the

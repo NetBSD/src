@@ -1,7 +1,7 @@
-/* $NetBSD: config_lex.l,v 1.4 2003/08/06 22:11:49 jmmv Exp $ */
+/* $NetBSD: config_lex.l,v 1.5 2004/01/05 12:16:25 jmmv Exp $ */
 
 /*
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: config_lex.l,v 1.4 2003/08/06 22:11:49 jmmv Exp $");
+__RCSID("$NetBSD: config_lex.l,v 1.5 2004/01/05 12:16:25 jmmv Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -56,7 +56,7 @@ int yylex(void);
 
 STRING		[\$A-Za-z\.\/_\-0-9]*
 SP_STRING	[\$A-Za-z\.\/_\-0-9 ]*
-MODE_PROPS	button_[0-9]+_down|button_[0-9]+_up|device|fifo|lefthanded|modes|nodaemon|pidfile|slowdown_x|slowdown_y|ttystat|xconsole
+MODE_PROPS	button_[0-9]+_down|button_[0-9]+_up|device|fifo|lefthanded|modes|nodaemon|pidfile|slowdown_x|slowdown_y|ttystat|xconsole|xconsole_delay
 
 %%
 
