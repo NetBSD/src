@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 1999/03/23 14:22:59 bouyer Exp $
+#	$NetBSD: Makefile,v 1.22.4.1 1999/12/27 18:30:22 wrstuden Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	dump.h			header file
@@ -9,16 +9,18 @@
 #	tape.c			handles the mag tape and opening/closing
 #	traverse.c		traverses the file system
 #	unctime.c		undo ctime
+#	ffs_inode.c		FFS-specific filestore routines
+#	ffs_bswap.c		FFS byte-swapping
 #
 #	DEBUG			use local directory to find ddate and dumpdates
 #	TDEBUG			trace out the process forking
 
 PROG=	dump
 LINKS=	${BINDIR}/dump ${BINDIR}/rdump
-CPPFLAGS+=-DRDUMP
+CPPFLAGS+=-DRDUMP -I${.CURDIR}
 # CPPFLAGS+= -DDEBUG -DTDEBUG -DFDEBUG -DWRITEDEBUG -DSTATS -DDIAGNOSTICS
 SRCS=	itime.c main.c optr.c dumprmt.c rcache.c tape.c traverse.c unctime.c \
-	ffs_bswap.c
+	ffs_inode.c ffs_bswap.c
 BINGRP=	tty
 BINMODE=2555
 MAN=	dump.8

@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.S,v 1.2 1998/05/01 21:18:39 cgd Exp $	*/
+/*	$NetBSD: fiq.S,v 1.2.18.1 1999/12/27 18:31:46 wrstuden Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,6 +41,7 @@
  * Created      : 19/05/97
  */
 
+#include <machine/asm.h>
 #include <machine/cpu.h>
 #include <arm32/shark/fiq.h>
 #include <arm32/shark/sequoia.h>
@@ -54,19 +55,19 @@ pc	.req	r15
 /* this variable is used to detect when it is necessary to unwedge the
    sequoia SMI/PMI edge detect logic.  *sigh* */
 Lfiqs_happened:
-	.word	_fiqs_happened
+	.word	_C_LABEL(fiqs_happened)
 Lsequoia_index_cache:
-	.word	_sequoia_index_cache
+	.word	_C_LABEL(sequoia_index_cache)
 
 	.data
-	.global	_fiqs_happened
-_fiqs_happened:
+	.global	_C_LABEL(fiqs_happened)
+_C_LABEL(fiqs_happened):
 	.word	0
 
 	.text
 
-	.global	_shark_fiq
-	.global	_shark_fiq_end
+	.global	_C_LABEL(shark_fiq)
+	.global	_C_LABEL(shark_fiq_end)
 
 /*
  *	r8  - VAM_IO_DATA = address of IO space in virtual memory
@@ -77,7 +78,7 @@ _fiqs_happened:
  *	r13 - stack for C routine call
  */
 
-_shark_fiq:
+_C_LABEL(shark_fiq):
 	/* clear the FIQ immediately */
 	/* do the FIQ/SMI clear here to avoid synchronization problems!
 	   both the chip enable (caused by the ISA register read) and
@@ -145,6 +146,6 @@ _shark_fiq:
 	mov	pc, r9
 	ldmfd	sp!, {r0-r3, lr}       /* restore user registers */
 	subs	pc, lr, #4             /* return from trap */
-_shark_fiq_end:
+_C_LABEL(shark_fiq_end):
 
 /* End of fiq.S */

@@ -1,5 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.17 1999/09/30 23:06:19 thorpej Exp $ */
-/* release_6_5_99 */
+/* $NetBSD: isp_netbsd.h,v 1.17.2.1 1999/12/27 18:34:49 wrstuden Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -60,7 +59,7 @@
 #include "opt_isp.h"
 
 #define	ISP_PLATFORM_VERSION_MAJOR	0
-#define	ISP_PLATFORM_VERSION_MINOR	996
+#define	ISP_PLATFORM_VERSION_MINOR	997
 
 #define	ISP_SCSI_XFER_T		struct scsipi_xfer
 struct isposinfo {
@@ -68,10 +67,16 @@ struct isposinfo {
 	struct scsipi_link	_link;
 	struct scsipi_link	_link_b;
 	struct scsipi_adapter   _adapter;
-	int			seed;
 	int			blocked;
+	union {
+		int		_seed;
+		u_int16_t	_discovered[2];
+	} un;
+#define	seed		un._seed
+#define	discovered	un._discovered
 	TAILQ_HEAD(, scsipi_xfer) waitq; 
 };
+
 #define	MAXISPREQUEST	256
 #ifdef	ISP2100_FABRIC
 #define	ISP2100_SCRLEN		0x400
@@ -83,8 +88,8 @@ struct isposinfo {
 #include <dev/ic/ispvar.h>
 #include <dev/ic/ispmbox.h>
 
-#define	PRINTF			printf
 #define	IDPRINTF(lev, x)	if (isp->isp_dblev >= lev) printf x
+#define	PRINTF			printf
 
 #define	MEMZERO			bzero
 #define	MEMCPY(dst, src, count)	bcopy((src), (dst), (count))
@@ -99,12 +104,16 @@ struct isposinfo {
 
 #if	defined(SCSIDEBUG)
 #define	DFLT_DBLEVEL		3
-#else
-#if	defined(DEBUG)
+#define	CFGPRINTF		printf
+#elif	defined(DEBUG)
 #define	DFLT_DBLEVEL		2
-#else
+#define	CFGPRINTF		printf
+#elif	defined(DIAGNOSTIC)
 #define	DFLT_DBLEVEL		1
-#endif
+#define	CFGPRINTF		printf
+#else
+#define	DFLT_DBLEVEL		0
+#define	CFGPRINTF		if (0) printf
 #endif
 
 #define	ISP_LOCKVAL_DECL	int isp_spl_save
@@ -120,8 +129,8 @@ struct isposinfo {
 #define	XS_LUN(xs)		((int) (xs)->sc_link->scsipi_scsi.lun)
 #define	XS_TGT(xs)		((int) (xs)->sc_link->scsipi_scsi.target)
 #define	XS_CHANNEL(xs)		\
-    (((xs)->sc_link == &(((struct ispsoftc *)XS_ISP(xs))->isp_osinfo._link_b))?\
-    1 : 0)
+	(((int) (xs)->sc_link->scsipi_scsi.channel == SCSI_CHANNEL_ONLY_ONE) ? \
+	    0 : (xs)->sc_link->scsipi_scsi.channel)
 #define	XS_RESID(xs)		(xs)->resid
 #define	XS_XFRLEN(xs)		(xs)->datalen
 #define	XS_CDBLEN(xs)		(xs)->cmdlen
@@ -168,17 +177,19 @@ struct isposinfo {
 #define	XS_KINDOF_TAG(xs)	\
 	(((xs)->xs_control & XS_CTL_URGENT) ? REQFLAG_HTAG : REQFLAG_OTAG)
 
-#define	CMD_COMPLETE		COMPLETE
-#define	CMD_EAGAIN		TRY_AGAIN_LATER
-#define	CMD_QUEUED		SUCCESSFULLY_QUEUED
-
+/*
+ * These get turned into NetBSD midlayer codes
+ */
+#define	CMD_COMPLETE		100
+#define	CMD_EAGAIN		101
+#define	CMD_QUEUED		102
+#define	CMD_RQLATER		103
 
 
 #define	isp_name	isp_osinfo._dev.dv_xname
 #define	isp_unit	isp_osinfo._dev.dv_unit
 
 #define	SCSI_QFULL	0x28
-
 
 #define	SYS_DELAY(x)	delay(x)
 
@@ -191,82 +202,26 @@ struct isposinfo {
 extern void isp_attach __P((struct ispsoftc *));
 extern void isp_uninit __P((struct ispsoftc *));
 
-static inline void isp_prtstst(ispstatusreq_t *sp)
-{
-	char buf[128];
-	sprintf(buf, "states->");
-	if (sp->req_state_flags & RQSF_GOT_BUS)
-		sprintf(buf, "%s%s", buf, "GOT_BUS ");
-	if (sp->req_state_flags & RQSF_GOT_TARGET)
-		sprintf(buf, "%s%s", buf, "GOT_TGT ");
-	if (sp->req_state_flags & RQSF_SENT_CDB)
-		sprintf(buf, "%s%s", buf, "SENT_CDB ");
-	if (sp->req_state_flags & RQSF_XFRD_DATA)
-		sprintf(buf, "%s%s", buf, "XFRD_DATA ");
-	if (sp->req_state_flags & RQSF_GOT_STATUS)
-		sprintf(buf, "%s%s", buf, "GOT_STS ");
-	if (sp->req_state_flags & RQSF_GOT_SENSE)
-		sprintf(buf, "%s%s", buf, "GOT_SNS ");
-	if (sp->req_state_flags & RQSF_XFER_COMPLETE)
-		sprintf(buf, "%s%s", buf, "XFR_CMPLT ");
-	sprintf(buf, "%s%s", buf, "\n");
-	sprintf(buf, "%s%s", buf, "status->");
-	if (sp->req_status_flags & RQSTF_DISCONNECT)
-		sprintf(buf, "%s%s", buf, "Disconnect ");
-	if (sp->req_status_flags & RQSTF_SYNCHRONOUS)
-		sprintf(buf, "%s%s", buf, "Sync_xfr ");
-	if (sp->req_status_flags & RQSTF_PARITY_ERROR)
-		sprintf(buf, "%s%s", buf, "Parity ");
-	if (sp->req_status_flags & RQSTF_BUS_RESET)
-		sprintf(buf, "%s%s", buf, "Bus_Reset ");
-	if (sp->req_status_flags & RQSTF_DEVICE_RESET)
-		sprintf(buf, "%s%s", buf, "Device_Reset ");
-	if (sp->req_status_flags & RQSTF_ABORTED)
-		sprintf(buf, "%s%s", buf, "Aborted ");
-	if (sp->req_status_flags & RQSTF_TIMEOUT)
-		sprintf(buf, "%s%s", buf, "Timeout ");
-	if (sp->req_status_flags & RQSTF_NEGOTIATION)
-		sprintf(buf, "%s%s", buf, "Negotiation ");
-	printf("%s\n", buf);
-}
+#define ISP_UNSWIZZLE_AND_COPY_PDBP(isp, dest, src)	\
+        bcopy(src, dest, sizeof (isp_pdb_t))
+#define ISP_SWIZZLE_ICB(a, b)
+#ifdef	__sparc__
+#define ISP_SWIZZLE_REQUEST(a, b)			\
+	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header);	\
+        ISP_SBUSIFY_ISPREQ(a, b)
+#define ISP_UNSWIZZLE_RESPONSE(a, b)			\
+	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header)
+#else
+#define ISP_SWIZZLE_REQUEST(a, b)
+#define ISP_UNSWIZZLE_RESPONSE(a, b)
+#endif
+#define	ISP_SWIZZLE_SNS_REQ(a, b)
+#define	ISP_UNSWIZZLE_SNS_RSP(a, b, c)
 
-static inline const char *isp2100_fw_statename(int state)
-{
-	static char buf[16];
-	switch(state) {
-	case FW_CONFIG_WAIT:	return "Config Wait";
-	case FW_WAIT_AL_PA:	return "Waiting for AL_PA";
-	case FW_WAIT_LOGIN:	return "Wait Login";
-	case FW_READY:		return "Ready";
-	case FW_LOSS_OF_SYNC:	return "Loss Of Sync";
-	case FW_ERROR:		return "Error";
-	case FW_REINIT:		return "Re-Init";
-	case FW_NON_PART:	return "Nonparticipating";
-	default:
-		sprintf(buf, "0x%x", state);
-		return buf;
-    }
-}
+#define	INLINE	inline
+#include <dev/ic/isp_inline.h>
 
-static inline const char *isp2100_pdb_statename(int pdb_state)
-{
-	static char buf[16];
-	switch(pdb_state) {
-	case PDB_STATE_DISCOVERY:	return "Port Discovery";
-	case PDB_STATE_WDISC_ACK:	return "Waiting Port Discovery ACK";
-	case PDB_STATE_PLOGI:		return "Port Login";
-	case PDB_STATE_PLOGI_ACK:	return "Wait Port Login ACK";
-	case PDB_STATE_PRLI:		return "Process Login";
-	case PDB_STATE_PRLI_ACK:	return "Wait Process Login ACK";
-	case PDB_STATE_LOGGED_IN:	return "Logged In";
-	case PDB_STATE_PORT_UNAVAIL:	return "Port Unavailable";
-	case PDB_STATE_PRLO:		return "Process Logout";
-	case PDB_STATE_PRLO_ACK:	return "Wait Process Logout ACK";
-	case PDB_STATE_PLOGO:		return "Port Logout";
-	case PDB_STATE_PLOG_ACK:	return "Wait Port Logout ACK";
-	default:
-		sprintf(buf, "0x%x", pdb_state);
-		return buf;
-	}
-}
+#if	!defined(ISP_DISABLE_FW) && !defined(ISP_COMPILE_FW)
+#define	ISP_COMPILE_FW	1
+#endif
 #endif	/* _ISP_NETBSD_H */

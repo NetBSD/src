@@ -1,4 +1,4 @@
-/* $NetBSD: blkdev.c,v 1.1 1999/04/02 03:17:29 cgd Exp $ */
+/* $NetBSD: blkdev.c,v 1.1.14.1 1999/12/27 18:31:29 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

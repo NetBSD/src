@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.3 1999/12/06 11:52:36 simonb Exp $ */
+/* $NetBSD: ioasic.c,v 1.3.2.1 1999/12/27 18:33:36 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

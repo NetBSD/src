@@ -1,4 +1,4 @@
-/*	$NetBSD: Xcoffxtra.c,v 1.1 1999/11/23 01:35:37 wrstuden Exp $	*/
+/*	$NetBSD: Xcoffxtra.c,v 1.1.2.1 1999/12/27 18:32:44 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

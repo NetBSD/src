@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: NULLCONF,v 1.2 1999/09/25 00:03:22 shin Exp $
+# 	$NetBSD: NULLCONF,v 1.2.8.1 1999/12/27 18:32:00 wrstuden Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 maxusers	8
@@ -32,5 +32,9 @@ vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
 vrisab2 at vrgiu?
 isa2	at vrisab2
 
-pseudo-device	biconsdev	1	# build-in console device
+# Workstation Console attachments
+fb*		at	mainbus0
+wsdisplay*	at	fb?
+wskbd*		at	vrkiu? mux 1
 
+pseudo-device	biconsdev	1	# build-in console device

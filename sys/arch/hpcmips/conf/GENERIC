@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.2.2.1 1999/12/21 23:15:59 wrstuden Exp $
+# 	$NetBSD: GENERIC,v 1.2.2.2 1999/12/27 18:32:00 wrstuden Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -12,9 +12,9 @@ options 	MIPS3			# R4000/R4400/R4600 CPUs
 
 # Support for specific models of H/PC MIPS
 options 	VR41X1			# NEC VR41x1 series
-options		MIPS3_4100		# VR4100 core
-options		SOFTFLOAT		# No FPU
-options		MIPS3_L2CACHE_ABSENT
+options 	MIPS3_4100		# VR4100 core
+options 	SOFTFLOAT		# No FPU
+options 	MIPS3_L2CACHE_ABSENT
 
 # Standard system options
 options 	DDB			# in-kernel debugger
@@ -22,26 +22,26 @@ options 	DDB			# in-kernel debugger
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
-options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
+options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 
-options 	SCSIVERBOSE	# human readable SCSI error messages
-options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+options 	SCSIVERBOSE		# human readable SCSI error messages
+options 	PCMCIAVERBOSE		# verbose PCMCIA configuration messages
 
-options		RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options	"RTC_OFFSET=-540"	# JST-9
-#options	RTC_OFFSET=480	# PST8
+#options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	RTC_OFFSET=-540		# JST-9
+#options 	RTC_OFFSET=480		# PST8
 options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
 #options	NON_PO2_BLOCKS	# non-2**n block size support
 
-#options		WINCE_DEFAULT_SETTING # Debugging use
-#options		DUMP_GIU_LEVEL2_INTR  # Debugging use
-#options		DEBUG_FIND_PCIC       # Debugging use XXX harmful don't define until read source.
+#options 	WINCE_DEFAULT_SETTING	# Debugging use
+#options 	DUMP_GIU_LEVEL2_INTR	# Debugging use
+#options 	DEBUG_FIND_PCIC		# Debugging use XXX harmful don't define until read source.
 
-#options		SYSCALL_DEBUG		# for debug
-#options		HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
-#options		HPCMIPS_FLUSHCACHE_XXX	# for debug
-#options		MIPS_16K_PAGE		# page size is 16KB
+#options 	SYSCALL_DEBUG		# for debug
+#options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
+#options 	HPCMIPS_FLUSHCACHE_XXX	# for debug
+#options 	MIPS_16K_PAGE		# page size is 16KB
 
 # Filesystem options
 file-system 	FFS             # fast filesystem with user and group quotas
@@ -57,15 +57,29 @@ file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION
 
-options 	FIFO		# POSIX fifo support (in all filesystems)
 #options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
+#options 	SOFTDEP         # FFS soft updates support.
 options 	QUOTA		# UFS quotas
 
+# Pull in config fragments for kernel crypto.  Use only one of these,
+# and adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
+
 # Networking options
-options 	INET		# Internet protocols
-#options 	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
 #options 	GATEWAY		# IP packet forwarding
-options 	MULTICAST	# Multicast support
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	MROUTING	# Multicast routing support
 #options 	ISO		# OSI networking
 #options 	TPIP		# TPIP
@@ -76,7 +90,7 @@ options 	MULTICAST	# Multicast support
 options 	COMPAT_43, COMPAT_13, COMPAT_14
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
-options		NFS_BOOT_DHCP
+options 	NFS_BOOT_DHCP
 
 config		netbsd		root on ? type ?
 config		sdnetbsd	root on sd0a type ffs
@@ -84,12 +98,14 @@ config		nfsnetbsd	root on ? type nfs
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
-options		WSDISPLAY_DEFAULTSCREENS=4
+options 	WSDISPLAY_DEFAULTSCREENS=4
+#options 	FONT_VT220L8x8
+options 	FONT_VT220L8x10
 
 # Workstation Console attachments
-fb*	at mainbus0
+fb*		at	mainbus0
 wsdisplay*	at	fb?
-#wskbd*		at	pckbd? mux 1
+wskbd*		at	vrkiu? mux 1
 #wsmouse*	at	pms? mux 0
 
 
@@ -99,10 +115,11 @@ vrbcu*	at vrip? addr 0x0b000000 size 0x20
 vrrtc*	at vrip? addr 0x0b0000c0 size 0x20 intr 2
 
 vrkiu*  at vrip? addr 0x0b000180 size 0x20 intr 7
-options __NO_SOFT_SERIAL_INTERRUPT
+options 	__NO_SOFT_SERIAL_INTERRUPT
 com*	at vrip? addr 0x0c000000 size 0x20 intr 9
 vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
 vrpmu*	at vrip? addr 0x0b0000a0 size 0x20 intr 1 # power switch
+vrdsu*	at vrip? addr 0x0b0000e0 size 0x08
 
 #
 # MC-R300
@@ -114,10 +131,11 @@ vrpmu*	at vrip? addr 0x0b0000a0 size 0x20 intr 1 # power switch
 gpbus0 at vrgiu? platform NEC_MCR_3XX comctrl 14 button1 4 button2 6
 gpbus0 at vrgiu? platform NEC_MCR_5XX comctrl 14 button1 4 button2 6
 gpbus0 at vrgiu? platform NEC_MCR_7XX comctrl 46
-gpbus0 at vrgiu? platform NEC_MCCS
+gpbus0 at vrgiu? platform NEC_MCCS comctrl 14
 
 vrisab0 at vrgiu? platform NEC_MCR
 vrisab0 at vrgiu? platform NEC_MCCS
+vrisab0 at vrgiu? platform IBM_WORKPAD isaportoffset 0x1000000
 isa0	at vrisab0
 pcic0	at isa0 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00090003
 #
@@ -129,9 +147,9 @@ pcic0	at isa0 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00090003
 #    |         |
 #20 +|   LCD   |+ 4
 #    |         | + 6
-# 8 +|	       |+ 5
+# 8 +|         |+ 5
 #    |         |
-#    |         |+----Power On/Off (not connected to GPIO?)
+#    |         |+----Power On/Off (connected to PMU)
 #    +---------+
 #          +9
 #        +12 +10
@@ -142,12 +160,19 @@ vrisab1 at vrgiu? platform EVEREX_FREESTYLE isaportoffset 0x1000000
 isa1	at vrisab1
 pcic0	at isa1 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00170003
 
-options PCIC_ISA_INTR_ALLOC_MASK=0x0008 # IRQ 3 only (MCR/Freestyle)
+options 	PCIC_ISA_INTR_ALLOC_MASK=0x0008 # IRQ 3 only (MCR/Freestyle)
+#
+# Fujitsu INTERTOP CX300
+#
+gpbus2 at vrgiu? platform FUJITSU_INTERTOP comctrl 15
+vrisab2 at vrgiu? platform FUJITSU_INTERTOP isaportoffset 0x1000000
+isa2    at vrisab2
+pcic0   at isa2 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00060003
 #
 # Unknown machines
 #
-vrisab2 at vrgiu?
-isa2	at vrisab2
+vrisab3 at vrgiu?
+isa3	at vrisab3
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
@@ -172,12 +197,16 @@ scsibus* at aic?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
 pseudo-device	loop		1	# network loopback
-pseudo-device   ppp              2      # serial-line IP ports
+pseudo-device	ppp		2	# serial-line IP ports
 pseudo-device	pty		64	# pseudo ptys
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd		4	# virtual disk ick
-pseudo-device   ccd             4       # concatenated disks
+pseudo-device	ccd		4	# concatenated disks
 
 pseudo-device	biconsdev	1	# build-in console device
+
+# for IPv6
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f

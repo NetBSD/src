@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.8 1999/06/28 07:52:38 explorer Exp $ */
+/*	$NetBSD: if_gre.c,v 1.8.6.1 1999/12/27 18:36:09 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #if NGRE > 0
 
 #include "opt_inet.h"
+#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

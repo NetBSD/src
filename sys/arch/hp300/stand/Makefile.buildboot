@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.5 1999/02/13 02:54:43 lukem Exp $
+#	$NetBSD: Makefile.buildboot,v 1.5.14.1 1999/12/27 18:31:58 wrstuden Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -11,10 +11,25 @@ MKMAN=		no
 STRIPFLAG=
 BINMODE=	444
 
+.PHONY: machine-links
+beforedepend: machine-links
+# ${MACHINE} then ${MACHINE_ARCH}
+machine-links:
+	-rm -f machine && \
+		ln -s $S/arch/hp300/include machine
+	-rm -f hp300 && \
+		ln -s $S/arch/hp300/include hp300
+CLEANFILES+=machine hp300
+
+all: machine-links ${PROG}
+
 CLEANFILES+=	${PROGAOUT} vers.c vers.o
 
-CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
-CFLAGS=		-O3 -msoft-float
+CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..  -I${.OBJDIR}
+CFLAGS=		-Os -msoft-float
+
+CPPFLAGS+=	-DBOOT_AOUT
+#CPPFLAGS+=	-DBOOT_ELF
 
 ${PROG}: ${PROGAOUT} ${MKBOOT_PROG}
 	${MKBOOT_PROG} ${PROGAOUT} ${PROG}
@@ -33,7 +48,8 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
-SAMISCMAKEFLAGS= SA_USE_CREAD=yes
+SAMISCMAKEFLAGS+="SA_USE_CREAD=yes"
+SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 

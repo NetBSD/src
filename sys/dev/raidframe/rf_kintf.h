@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_kintf.h,v 1.4 1999/03/09 03:52:41 oster Exp $	*/
+/*	$NetBSD: rf_kintf.h,v 1.4.14.1 1999/12/27 18:35:28 wrstuden Exp $	*/
 /*
  * rf_kintf.h
  *
@@ -39,8 +39,7 @@
 void    rf_ReconKernelThread(void);
 int     rf_GetSpareTableFromDaemon(RF_SparetWait_t * req);
 
-int rf_DoAccessKernel(RF_Raid_t * raidPtr, struct buf * bp,
-    RF_RaidAccessFlags_t flags, void (*cbFunc) (struct buf *), void *cbArg);
+void    raidstart(RF_Raid_t * raidPtr);
 int     rf_DispatchKernelIO(RF_DiskQueue_t * queue, RF_DiskQueueData_t * req);
 
 #endif				/* _RF__RF_KINTF_H_ */

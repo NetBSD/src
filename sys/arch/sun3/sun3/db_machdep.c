@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.13 1998/06/08 20:47:45 gwr Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.13.18.1 1999/12/27 18:34:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,8 +62,8 @@ static void db_mach_pagemap __P((db_expr_t, int, db_expr_t, char *));
 struct db_command db_machine_cmds[] = {
 	{ "abort",	db_mach_abort,	0,	0 },
 	{ "halt",	db_mach_halt,	0,	0 },
-	{ "reboot",	db_mach_reboot,	0,	0 },
 	{ "pgmap",	db_mach_pagemap, 	CS_SET_DOT, 0 },
+	{ "reboot",	db_mach_reboot,	0,	0 },
 	{ (char *)0, }
 };
 

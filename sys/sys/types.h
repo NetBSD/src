@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.39.8.1 1999/12/21 23:20:05 wrstuden Exp $	*/
+/*	$NetBSD: types.h,v 1.39.8.2 1999/12/27 18:36:35 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -100,7 +100,7 @@ union __semun {
 	struct semid_ds	*buf;		/* buffer for IPC_STAT & IPC_SET */
 	unsigned short	*array;		/* array for GETALL & SETALL */
 };
-#endif /* _KERNEL || __LIBC12_SOURCE__ */
+#endif /* _KERNEL || _LIBC */
 
 /*
  * These belong in unistd.h, but are placed here too to ensure that

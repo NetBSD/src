@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.25 1999/03/31 01:50:25 cgd Exp $	*/
+/*	$NetBSD: nfs.c,v 1.25.14.1 1999/12/27 18:36:02 wrstuden Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -403,8 +403,9 @@ nfs_open(path, f)
 	struct open_file *f;
 {
 	struct nfs_iodesc *newfd, *currfd;
+	register char *cp;
 #ifndef NFS_NOSYMLINK
-	register char *cp, *ncp;
+	register char *ncp;
 	register int c;
 	char namebuf[NFS_MAXPATHLEN + 1];
 	char linkbuf[NFS_MAXPATHLEN + 1];
@@ -520,12 +521,21 @@ nfs_open(path, f)
 
 out:
 #else
-        /* allocate file system specific data structure */
-        currfd = alloc(sizeof(*currfd));
-        currfd->iodesc = nfs_root_node.iodesc;
-        currfd->off = 0;
+	/* allocate file system specific data structure */
+	currfd = alloc(sizeof(*currfd));
+	currfd->iodesc = nfs_root_node.iodesc;
+	currfd->off = 0;
 
-        error = nfs_lookupfh(&nfs_root_node, path, currfd);
+	cp = path;
+	/*
+	 * Remove extra separators
+	 */
+	while (*cp == '/')
+		cp++;
+
+	/* XXX: Check for empty path here? */
+
+	error = nfs_lookupfh(&nfs_root_node, cp, currfd);
 #endif
 	if (!error) {
 		f->f_fsdata = (void *)currfd;

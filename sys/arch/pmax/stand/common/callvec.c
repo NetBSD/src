@@ -1,4 +1,4 @@
-/*	$NetBSD: callvec.c,v 1.13 1999/11/27 06:44:00 simonb Exp $	*/
+/*	$NetBSD: callvec.c,v 1.13.2.1 1999/12/27 18:33:32 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

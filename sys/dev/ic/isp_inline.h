@@ -1,4 +1,4 @@
-/* $NetBSD: isp_inline.h,v 1.3 1999/12/08 11:01:44 mjacob Exp $ */
+/* $NetBSD: isp_inline.h,v 1.3.2.1 1999/12/27 18:34:49 wrstuden Exp $ */
 /*
  * Copyright (C) 1999 National Aeronautics & Space Administration
  * All rights reserved.

@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.2 1999/08/30 00:53:57 mrg Exp $
+# $NetBSD: md.newsmips,v 1.2.4.1 1999/12/27 18:28:34 wrstuden Exp $
 ./usr/include/newsmips
 ./usr/include/newsmips/_G_config.h
 ./usr/include/newsmips/adrsmap.h
@@ -13,7 +13,6 @@
 ./usr/include/newsmips/db_machdep.h
 ./usr/include/newsmips/disklabel.h
 ./usr/include/newsmips/ecoff_machdep.h
-./usr/include/newsmips/elf.h
 ./usr/include/newsmips/elf_machdep.h
 ./usr/include/newsmips/endian.h
 ./usr/include/newsmips/float.h

@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.5 1999/11/06 16:43:54 sommerfeld Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.5.6.1 1999/12/27 18:35:25 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

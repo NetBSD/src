@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.4 1999/08/24 07:57:06 tron Exp $	*/
+/*	$NetBSD: options.h,v 1.4.2.1 1999/12/27 18:27:09 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -112,5 +112,5 @@
 
 #define	BDEXTR	(AF|BF|LF|TF|WF|XF|CBF|CHF|CLF|CPF|CXF)
 #define	BDARCH	(CF|KF|LF|NF|PF|RF|CDF|CEF|CYF|CZF)
-#define	BDCOPY	(AF|BF|FF|OF|XF|CBF|CEF)
+#define	BDCOPY	(AF|BF|FF|OF|XF|CAF|CBF|CEF)
 #define	BDLIST (AF|BF|IF|KF|LF|OF|PF|RF|TF|UF|WF|XF|CBF|CDF|CHF|CLF|CPF|CXF|CYF|CZF)

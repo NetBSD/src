@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_chksum.c,v 1.11 1998/07/05 04:37:43 jonathan Exp $	*/
+/*	$NetBSD: iso_chksum.c,v 1.11.20.1 1999/12/27 18:36:29 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -207,7 +207,7 @@ iso_gen_csum(m, n, l)
 #endif
 
 	while (i < l) {
-		len = min(m->m_len, CLBYTES);
+		len = min(m->m_len, NBPG);
 		/* RAH: don't cksum more than l bytes */
 		len = min(len, l - i);
 

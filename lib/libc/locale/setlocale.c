@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.16 1998/11/13 15:49:04 christos Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.16.4.1 1999/12/27 18:29:41 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.16 1998/11/13 15:49:04 christos Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.16.4.1 1999/12/27 18:29:41 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -183,8 +183,7 @@ setlocale(category, locale)
 		return (loadlocale(category));
 
 	for (i = 1; i < _LC_LAST; ++i)
-		if (loadlocale(i) == NULL)
-			return (NULL);
+		(void) loadlocale(i);
 
 	return (currentlocale());
 }

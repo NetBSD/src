@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.84.8.1 1999/12/21 23:20:03 wrstuden Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.84.8.2 1999/12/27 18:36:31 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -850,7 +850,8 @@ loop:
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		if (VOP_ISLOCKED(vp) || vp->v_dirtyblkhd.lh_first == NULL)
+		if (VOP_ISLOCKED(vp) || vp->v_dirtyblkhd.lh_first == NULL ||
+		    waitfor == MNT_LAZY)
 			continue;
 		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;

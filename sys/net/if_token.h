@@ -1,4 +1,4 @@
-/*	$NetBSD: if_token.h,v 1.5 1999/05/30 00:39:07 bad Exp $	*/
+/*	$NetBSD: if_token.h,v 1.5.8.1 1999/12/27 18:36:11 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,7 +46,7 @@ struct token_header {
 	u_int8_t  token_fc;			/* frame control field */
 	u_int8_t  token_dhost[ISO88025_ADDR_LEN];	/* dest. address */
 	u_int8_t  token_shost[ISO88025_ADDR_LEN];	/* source address */
-};
+} __attribute__((__packed__));
 
 #define TOKEN_MAX_BRIDGE 8
 
@@ -54,7 +54,7 @@ struct token_header {
 struct token_rif {
 	u_int16_t tr_rcf;			/* route control field */
 	u_int16_t tr_rdf[TOKEN_MAX_BRIDGE];	/* route-designator fields */
-};
+} __attribute__((__packed__));
 
 /* standard values for adress control and frame control field */
 #define TOKEN_AC		0x10

@@ -1,4 +1,4 @@
-/*	$NetBSD: start_rom.S,v 1.5 1999/08/23 08:24:38 kleink Exp $	*/
+/*	$NetBSD: start_rom.S,v 1.5.6.1 1999/12/27 18:32:29 wrstuden Exp $	*/
 	
 /*
  * ROM startup
@@ -160,16 +160,17 @@ START - Where all the fun begins....
 
 ENTRY(start)
 	cli
-	cld
-
-#ifdef ROMDEBUG
 	movl	%cs, %ax
 	movl	%ax, %ds
+
+#ifdef ROMDEBUG
 	data32
 	movl $(cmesg-textstart), %esi
 	data32
 	call message
 #endif
+
+	cld
 
 	/* copy to reloc and jump to copy */
         xorl	%esi, %esi
@@ -202,7 +203,9 @@ ENTRY(start)
 
 	/* clear bss */
 	xorl %eax, %eax
+	data32
 	movl $_C_LABEL(edata), %edi
+	data32
 	movl $_C_LABEL(end), %ecx
 	subl %edi, %ecx
 	cld
@@ -211,7 +214,7 @@ ENTRY(start)
 
 #ifdef ROMDEBUG
 	data32
-	movl $rmesg, %esi
+	movl $(rmesg-textstart), %esi
 	data32
 	call message
 #endif
@@ -226,7 +229,7 @@ _C_LABEL(exit):
 
 #ifdef ROMDEBUG
 	data32
-	movl $emesg, %esi
+	movl $(emesg-textstart), %esi
 	data32
 	call message
 #endif
@@ -276,7 +279,7 @@ bootdataseg = . - gdt
 	/* 16 bit real mode */
 bootrealseg = . - gdt
 	.word	0xffff, 0
-	.byte	0, 0x9b, 0x0f, 0
+	.byte	0, 0x9f, 0x0f, 0
 gdtlen = . - gdt
 
 #ifdef __ELF__

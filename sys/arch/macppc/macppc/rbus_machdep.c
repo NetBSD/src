@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.3 1999/12/18 01:37:00 thorpej Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.3.2.1 1999/12/27 18:32:43 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999

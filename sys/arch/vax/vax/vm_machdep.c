@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.54 1999/08/01 12:07:31 ragge Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.54.6.1 1999/12/27 18:34:13 wrstuden Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -260,66 +260,6 @@ cpu_swapin(p)
 {
 	kvtopte((vaddr_t)p->p_addr + REDZONEADDR)->pg_v = 0;
 }
-
-#if VAX410 || VAX43
-/*
- * Map a user I/O request into kernel virtual address space.
- * Note: the pages are already locked by uvm_vslock(), so we
- * do not need to pass an access_type to pmap_enter().   
- *
- * vmapbuf()/vunmapbuf() only used on some vaxstations without
- * any busadapter with MMU.
- * XXX - This must be reworked to be effective.
- */
-void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vm_size_t len;
-{
-	vm_offset_t faddr, taddr, off, pa;
-	pmap_t fmap, tmap;
-
-	if ((vax_boardtype != VAX_BTYP_43) && (vax_boardtype != VAX_BTYP_410))
-		return;
-	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vm_offset_t)bp->b_data - faddr;
-	len = round_page(off + len);
-	taddr = uvm_km_valloc_wait(phys_map, len);
-	bp->b_data = (caddr_t)(taddr + off);
-	fmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
-	tmap = vm_map_pmap(phys_map);
-	len = len >> VAX_PGSHIFT;
-	while (len--) {
-		if (pmap_extract(fmap, faddr, &pa) == FALSE)
-			panic("vmapbuf: null page frame for %x", (u_int)faddr);
-
-		pmap_enter(tmap, taddr, pa & ~(VAX_NBPG - 1),
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
-		faddr += VAX_NBPG;
-		taddr += VAX_NBPG;
-	}
-}
-
-/*
- * Unmap a previously-mapped user I/O request.
- */
-void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vm_size_t len;
-{
-	vm_offset_t addr, off;
-
-	if ((vax_boardtype != VAX_BTYP_43) && (vax_boardtype != VAX_BTYP_410))
-		return;
-	addr = trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - addr;
-	len = round_page(off + len);
-	uvm_km_free_wakeup(phys_map, addr, len);
-	bp->b_data = bp->b_saveaddr;
-	bp->b_saveaddr = 0;
-}
-#endif
 
 /*
  * Map in a bunch of pages read/writeable for the kernel.

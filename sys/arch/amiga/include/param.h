@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.37 1997/09/20 12:06:37 leo Exp $	*/
+/*	$NetBSD: param.h,v 1.37.22.1 1999/12/27 18:31:36 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,10 +68,10 @@
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 /*
- * Size of kernel malloc arena in CLBYTES-sized logical pages
+ * Size of kernel malloc arena in NBPG-sized logical pages
  */
 #ifndef NKMEMCLUSTERS
-# define	NKMEMCLUSTERS	(3072 * 1024 / CLBYTES)
+# define	NKMEMCLUSTERS	(3072 * 1024 / NBPG)
 #endif
 
 /*

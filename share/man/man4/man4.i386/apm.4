@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"   
-.\"   $NetBSD: apm.4,v 1.6 1999/09/09 03:52:22 itohy Exp $
+.\"   $NetBSD: apm.4,v 1.6.4.1 1999/12/27 18:30:51 wrstuden Exp $
 .\"
 .Dd May 18, 1996
 .Dt APM 4 i386
@@ -42,15 +42,8 @@ The
 .Nm apm
 driver provides support for the Advanced Power Managment features of
 some i386 system BIOSes.  The driver supports the Advanced Power
-Management (APM) BIOS Interface Specification (revision 1.1), published
+Management (APM) BIOS Interface Specification (revision 1.2), published
 jointly by the Intel Corporation and the Microsoft Corporation.
-.Pp
-The boot loader connects to the APM bios while the system is still
-operating in i386 real mode, and places the APM bios into 32-bit
-protected mode operation.  The
-.Nx
-kernel start-up routines establish the 32-bit protected mode connection
-to the APM BIOS.
 .Pp
 The APM driver's behavior may be adjusted by specifying any of the
 following kernel configuration options:
@@ -63,6 +56,11 @@ floppy diskette drives, without this option)
 Use only the APM revision 1.0 specification calls.  (Some systems do not
 implement APM v1.1 very well, and generate weird events instead of the
 expected events when the system suspend key is pressed.)
+.It Dv APM_NO_V12
+Don't attach to the BIOS as APM v1.2 compliant device.
+(In case there are problems with v1.2 support.)
+.It Dv APM_NO_STANDBY
+Do not attempt to put the system into standby mode.
 .It Dv APM_NO_POWEROFF
 Do not attempt to turn off power when halting the system.
 .It Dv APM_FORCE_64KSEG
@@ -76,6 +74,13 @@ Do not print power state on console at
 .Dv APM_POWER_CHANGE
 events.  (Some systems generate the events too frequently,
 and printing the status may disturb single-user operations.)
+.It Dv APM_DISABLE_INTERRUPTS
+Set this to zero if you don't want the kernel to disable interrupts
+before calling the BIOS. This is required for most IBM ThinkPads, and
+some other newer laptops. A good indication that you need this is that
+the machine hangs just after resuming from suspended state. It's
+unclear if doing this has negative effects on older BIOS, therefore it
+defaults to one (i.e interrupts are disabled).
 .El
 .Pp
 If no processes are holding open file descriptors to the APM device, the

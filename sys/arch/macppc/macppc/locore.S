@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.15 1999/04/30 04:35:35 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.15.2.1 1999/12/27 18:32:43 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -182,6 +182,12 @@ ENTRY(openfirmware)
 	lis	4,openfirmware_entry@ha	/* get firmware entry point */
 	lwz	4,openfirmware_entry@l(4)
 	mtlr	4
+
+	li	0,0			/* clear battable translations */
+	mtdbatu	2,0
+	mtdbatu	3,0
+	mtibatu	2,0
+	mtibatu	3,0
 
 	lis	4,ofmsr@ha		/* Open Firmware msr */
 	lwz	4,ofmsr@l(4)
@@ -1201,7 +1207,7 @@ intr_exit:
 /* Returning to user mode? */
 	mtcr	6			/* saved SRR1 */
 	bc	4,17,1f			/* branch if PSL_PR is false */
-	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real addess */
+	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real address */
 	lwz	3,_C_LABEL(curpm)@l(3)
 	lwz	3,PM_KERNELSR(3)
 	mtsr	KERNEL_SR,3		/* Restore kernel SR */
@@ -1432,21 +1438,3 @@ _C_LABEL(setfault):
 	stmw	12,12(3)
 	xor	3,3,3
 	blr
-
-/*
- * The following code gets copied to the top of the user stack on process
- * execution.  It does signal trampolining on signal delivery.
- *
- * On entry r1 points to a struct sigframe at bottom of current stack.
- * All other registers are unchanged.
- */
-	.globl	_C_LABEL(sigcode),_C_LABEL(esigcode)
-_C_LABEL(sigcode):
-	addi	1,1,-16			/* reserved space for callee */
-	blrl
-	addi	3,1,16+8		/* compute &sf_sc */
-	li	0,SYS___sigreturn14
-	sc				/* sigreturn(scp) */
-	li	0,SYS_exit
-	sc				/* exit(errno) */
-_C_LABEL(esigcode):

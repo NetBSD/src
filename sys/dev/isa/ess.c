@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.46 1999/06/18 20:25:23 augustss Exp $	*/
+/*	$NetBSD: ess.c,v 1.46.6.1 1999/12/27 18:34:55 wrstuden Exp $	*/
 
 /*
  * Copyright 1997
@@ -1026,6 +1026,7 @@ ess_open(addr, flags)
 	int flags;
 {
 	struct ess_softc *sc = addr;
+	int i;
 
 	DPRINTF(("ess_open: sc=%p\n", sc));
     
@@ -1033,6 +1034,10 @@ ess_open(addr, flags)
 		return ENXIO;
 
 	ess_setup(sc);		/* because we did a reset */
+
+	/* Set all mixer controls again since some change at reset. */
+	for (i = 0; i < ESS_MAX_NDEVS; i++)
+		ess_set_gain(sc, i, 1);
 
 	sc->sc_open = 1;
 
@@ -1237,14 +1242,14 @@ ess_set_params(addr, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = mulaw_to_ulinear16;
+				p->sw_code = mulaw_to_ulinear16_le;
 			} else
 				p->sw_code = ulinear8_to_mulaw;
 			break;
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = alaw_to_ulinear16;
+				p->sw_code = alaw_to_ulinear16_le;
 			} else
 				p->sw_code = ulinear8_to_alaw;
 			break;
@@ -2231,7 +2236,7 @@ ess_reset(sc)
 	sc->sc_audio2.active = 0;
 
 	EWRITE1(iot, ioh, ESS_DSP_RESET, ESS_RESET_EXT);
-	delay(10000);
+	delay(10000);		/* XXX shouldn't delay so long */
 	EWRITE1(iot, ioh, ESS_DSP_RESET, 0);
 	if (ess_rdsp(sc) != ESS_MAGIC)
 		return (1);

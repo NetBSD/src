@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.26 1999/06/20 00:53:58 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.26.6.1 1999/12/27 18:34:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,11 +93,6 @@
 #endif
 
 /*
- * Size of User Raw I/O map
- */
-#define USRIOSIZE	300
-
-/*
  * The time for a process to be blocked before being very swappable.
  * This is a number of seconds which the system takes as being a non-trivial
  * amount of real time.	 You probably shouldn't change this;
@@ -156,7 +151,6 @@ struct pmap_physseg {
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)(0xC0000000))
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
-#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+#define VM_KMEM_SIZE		(NKMEMCLUSTERS * NBPG)
 
 #endif

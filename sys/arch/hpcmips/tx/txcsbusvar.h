@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbusvar.h,v 1.1 1999/11/20 19:56:40 uch Exp $ */
+/*	$NetBSD: txcsbusvar.h,v 1.1.2.1 1999/12/27 18:32:14 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

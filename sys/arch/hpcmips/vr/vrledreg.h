@@ -1,4 +1,4 @@
-/*	$NetBSD: vrledreg.h,v 1.1 1999/12/08 01:43:58 sato Exp $	*/
+/*	$NetBSD: vrledreg.h,v 1.1.2.1 1999/12/27 18:32:16 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.

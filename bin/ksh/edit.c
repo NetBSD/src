@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.4 1998/11/04 18:27:21 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.4.4.1 1999/12/27 18:27:01 wrstuden Exp $	*/
 
 /*
  * Command line editing - common code
@@ -43,9 +43,9 @@ static char vdisable_c;
 void
 x_init()
 {
-	/* set to -1 to force initial binding */
+	/* set to -2 to force initial binding */
 	edchars.erase = edchars.kill = edchars.intr = edchars.quit
-		= edchars.eof = -1;
+		= edchars.eof = -2;
 	/* default value for deficient systems */
 	edchars.werase = 027;	/* ^W */
 
@@ -288,14 +288,33 @@ x_mode(onoff)
 
 		set_tty(tty_fd, &cb, TF_WAIT);
 
+#ifdef __CYGWIN__
+		if (edchars.eof == '\0')
+			edchars.eof = '\4';
+#endif /* __CYGWIN__ */
+
+		/* Convert unset values to internal `unset' value */
+		if (edchars.erase == vdisable_c)
+			edchars.erase = -1;
+		if (edchars.kill == vdisable_c)
+			edchars.kill = -1;
+		if (edchars.intr == vdisable_c)
+			edchars.intr = -1;
+		if (edchars.quit == vdisable_c)
+			edchars.quit = -1;
+		if (edchars.eof == vdisable_c)
+			edchars.eof = -1;
+		if (edchars.werase == vdisable_c)
+			edchars.werase = -1;
 		if (memcmp(&edchars, &oldchars, sizeof(edchars)) != 0) {
 #ifdef EMACS
 			x_emacs_keys(&edchars);
 #endif
 		}
-	} else
+	} else {
 		/* TF_WAIT doesn't seem to be necessary when leaving xmode */
 		set_tty(tty_fd, &tty_state, TF_NONE);
+	}
 
 	return prev;
 }
@@ -537,7 +556,7 @@ x_file_glob(flags, str, slen, wordsp)
 {
 	char *toglob;
 	char **words;
-	int nwords;
+	int nwords, i, idx, escaping;
 	XPtrV w;
 	struct source *s, *sold;
 
@@ -545,6 +564,20 @@ x_file_glob(flags, str, slen, wordsp)
 		return 0;
 
 	toglob = add_glob(str, slen);
+
+	/* remove all escaping backward slashes */
+	escaping = 0;
+	for(i = 0, idx = 0; toglob[i]; i++) {
+		if (toglob[i] == '\\' && !escaping) {
+			escaping = 1;
+			continue;
+		}
+
+		toglob[idx] = toglob[i];
+		idx++;
+		if (escaping) escaping = 0;
+	}
+	toglob[idx] = '\0';
 
 	/*
 	 * Convert "foo*" (toglob) to an array of strings (words)
@@ -707,7 +740,7 @@ x_command_glob(flags, str, slen, wordsp)
 	return nwords;
 }
 
-#define IS_WORDC(c)	!isspace((unsigned char)c)
+#define IS_WORDC(c)	!(ctype(c, C_LEX1) || (c) == '\'' || (c) == '"')
 
 static int
 x_locate_word(buf, buflen, pos, startp, is_commandp)
@@ -726,25 +759,20 @@ x_locate_word(buf, buflen, pos, startp, is_commandp)
 		*is_commandp = 0;
 		return 0;
 	}
-
-	if (pos == buflen) {
-		if (pos == 0) { /* empty buffer? */
-			*startp = pos;
-			*is_commandp = 1;
-			return 0;
-		}
-		pos--;
-	}
+	/* The case where pos == buflen happens to take care of itself... */
 
 	start = pos;
 	/* Keep going backwards to start of word (has effect of allowing
 	 * one blank after the end of a word)
 	 */
-	for (; start > 0 && IS_WORDC(buf[start - 1]); start--)
+	for (; (start > 0 && IS_WORDC(buf[start - 1]))
+		|| (start > 1 && buf[start-2] == '\\'); start--)
 		;
 	/* Go forwards to end of word */
-	for (end = start; end < buflen && IS_WORDC(buf[end]); end++)
-		;
+	for (end = start; end < buflen && IS_WORDC(buf[end]); end++) {
+		if (buf[end] == '\\' && (end+1) < buflen && buf[end+1] == ' ')
+			end++;
+	}
 
 	if (is_commandp) {
 		int iscmd;
@@ -1011,4 +1039,40 @@ glob_path(flags, pat, wp, path)
 	Xfree(xs, xp);
 }
 
+/*
+ * if argument string contains any special characters, they will
+ * be escaped and the result will be put into edit buffer by
+ * keybinding-specific function
+ */
+int
+x_escape(s, len, putbuf_func)
+	const char *s;
+	size_t len;
+	int putbuf_func ARGS((const char *s, size_t len));
+{
+	size_t add, wlen;
+	const char *ifs = str_val(local("IFS", 0));
+	int rval=0;
+
+	for (add = 0, wlen = len; wlen - add > 0; add++) {
+		if (strchr("\\$(){}*&;|<>\"'", s[add]) || strchr(ifs, s[add])) {
+			if (putbuf_func(s, add) != 0) {
+				rval = -1;
+				break;
+			}
+
+			putbuf_func("\\", 1);
+			putbuf_func(&s[add], 1);
+
+			add++;
+			wlen -= add;
+			s += add;
+			add = -1; /* after the increment it will go to 0 */
+		}
+	}
+	if (wlen > 0 && rval == 0)
+		rval = putbuf_func(s, wlen);
+
+	return (rval);
+}
 #endif /* EDIT */

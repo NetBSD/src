@@ -1,4 +1,4 @@
-.\" $NetBSD: xfer,v 1.4 1999/05/07 00:15:17 ragge Exp $	
+.\" $NetBSD: xfer,v 1.4.4.1 1999/12/27 18:28:29 wrstuden Exp $	
 .
 Installation is supported from several media types, including:
 .Bl -bullet -compact -offset indent
@@ -35,7 +35,11 @@ Under Ultrix this is done like this:
 .D1 Ic "dd if=miniroot of=/dev/rmt0h
 .D1 Ic "mt -f /dev/rmt0h rewoffl
 .Pp
-Under NetBSD this is done the same way, except for the tape name:
+Under NetBSD this is done the same way, except for the tape name. 
+The example below corresponds to TMSCP tapes on vaxen, for SCSI tapes
+use nrst0 instead. Note that other architectures than vax can have 
+other names for the tape device, use the correct device name
+for your system.
 .D1 Ic "gunzip miniroot.gz
 .D1 Ic "mt -f /dev/rmt8 rewind
 .D1 Ic "dd if=miniroot of=/dev/rmt8

@@ -1,4 +1,4 @@
-#	$NetBSD: list.m4,v 1.2 1999/06/05 20:17:43 bouyer Exp $
+#	$NetBSD: list.m4,v 1.2.2.1 1999/12/27 18:28:41 wrstuden Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -115,4 +115,4 @@ COPY dist/xserver_obsolete dist/xserver_obsolete
 COPY	${OBJDIR}/dot.profile			.profile
 
 #the lists of obsolete files used by sysinst  
-SPECIAL sh ${CURDIR}/../../../../distrib/sets/makeobsolete -b -s ${CURDIR}/../../../distrib/sets -t ./dist
+SPECIAL sh ${CURDIR}/../../sets/makeobsolete -b -s ${CURDIR}/../../sets -t ./dist

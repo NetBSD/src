@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.3 1999/11/06 06:20:53 soren Exp $	*/
+/*	$NetBSD: rbus.c,v 1.3.4.1 1999/12/27 18:34:40 wrstuden Exp $	*/
 /*
  * Copyright (c) 1999
  *     HAYAKAWA Koichi.  All rights reserved.

@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.5 1999/06/27 12:56:00 mrg Exp $
+#	$NetBSD: dot.profile,v 1.5.4.1 1999/12/27 18:28:41 wrstuden Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -52,9 +52,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# mount a /tmp on mfs, to avoid filling the md
 	mount -t mfs swap /tmp
-
-	# run update, so that installed software is written as it goes.
-	update
 
 	# Installing or upgrading?
 	_forceloop=""

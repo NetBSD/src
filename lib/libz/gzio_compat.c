@@ -1,4 +1,4 @@
-/* $NetBSD: gzio_compat.c,v 1.2 1999/10/26 22:16:48 itojun Exp $ */
+/* $NetBSD: gzio_compat.c,v 1.2.4.1 1999/12/27 18:30:10 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

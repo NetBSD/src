@@ -1,4 +1,4 @@
-/*	$NetBSD: rthdr.c,v 1.4 1999/09/20 04:39:18 lukem Exp $	*/
+/*	$NetBSD: rthdr.c,v 1.4.4.1 1999/12/27 18:29:43 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -77,7 +77,7 @@ inet6_rthdr_init(bp, type)
     switch(type) {
      case IPV6_RTHDR_TYPE_0:
 	 ch->cmsg_len = CMSG_LEN(sizeof(struct ip6_rthdr0) - sizeof(struct in6_addr));
-	 bzero(rthdr, sizeof(struct ip6_rthdr0));
+	 (void)memset(rthdr, 0, sizeof(struct ip6_rthdr0));
 	 rthdr->ip6r_type = IPV6_RTHDR_TYPE_0;
 	 return(ch);
      default:
@@ -124,7 +124,7 @@ inet6_rthdr_add(cmsg, addr, flags)
 	     rt0->ip6r0_slmap[c] |= (1 << (7 - b));
 	 }
 	 rt0->ip6r0_segleft++;
-	 bcopy(addr, (caddr_t)rt0 + ((rt0->ip6r0_len + 1) << 3),
+	 (void)memcpy((caddr_t)rt0 + ((rt0->ip6r0_len + 1) << 3), addr,
 	       sizeof(struct in6_addr));
 	 rt0->ip6r0_len += sizeof(struct in6_addr) >> 3;
 	 cmsg->cmsg_len = CMSG_LEN((rt0->ip6r0_len + 1) << 3);

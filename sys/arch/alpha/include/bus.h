@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.29 1999/06/18 04:49:24 cgd Exp $ */
+/* $NetBSD: bus.h,v 1.29.8.1 1999/12/27 18:31:25 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -611,6 +611,11 @@ struct alpha_bus_dmamap {
 	bus_size_t	_dm_sgvalen;	/* svga length */
 
 	/*
+	 * Private cookie to be used by the DMA back-end.
+	 */
+	void		*_dm_cookie;
+
+	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
@@ -639,6 +644,10 @@ void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
+int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
+	    bus_size_t alignment, bus_size_t boundary,
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
+	    paddr_t low, paddr_t high));
 void	_bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs));
 int	_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,

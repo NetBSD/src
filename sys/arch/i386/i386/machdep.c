@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.365.2.1 1999/12/21 23:16:01 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.365.2.2 1999/12/27 18:32:20 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/syscallargs.h>
 #include <sys/core.h>
@@ -116,9 +115,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
 
@@ -135,15 +131,11 @@
 #include <machine/bootinfo.h>
 
 #include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
+#include <machine/isa_machdep.h>
 #include <dev/ic/i8042reg.h>
-#include <dev/ic/mc146818reg.h>
-#include <i386/isa/nvram.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
-#include <ddb/db_access.h>
-#include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #endif
 
@@ -169,42 +161,6 @@
 extern struct proc *npxproc;
 #endif
 
-#include "vga.h"
-#include "pcdisplay.h"
-#if (NVGA > 0) || (NPCDISPLAY > 0)
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/pcdisplayvar.h>
-#if (NVGA > 0)
-#include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
-#endif
-#if (NPCDISPLAY > 0)
-#include <dev/isa/pcdisplayvar.h>
-#endif
-#endif
-
-#include "pckbc.h"
-#if (NPCKBC > 0)
-#include <dev/isa/pckbcvar.h>
-#endif
-
-#include "pc.h"
-#if (NPC > 0)
-#include <machine/pccons.h>
-#endif
-
-#include "vt.h"
-#if (NVT > 0)
-#include <i386/isa/pcvt/pcvt_cons.h>
-#endif
-
-#include "com.h"
-#if (NCOM > 0)
-#include <sys/termios.h>
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-#endif
-
 /* the following is used externally (sysctl_hw) */
 char machine[] = "i386";		/* cpu "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
@@ -226,6 +182,7 @@ int	dumpmem_low;
 int	dumpmem_high;
 int	boothowto;
 int	cpu_class;
+int	i386_fpu_present = 0;
 
 vaddr_t	msgbuf_vaddr;
 paddr_t msgbuf_paddr;
@@ -275,54 +232,6 @@ u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
 void	identifycpu __P((void));
 void	init386 __P((paddr_t));
-
-#ifndef CONSDEVNAME
-#define CONSDEVNAME "pc"
-#endif
-#if (NCOM > 0)
-#ifndef CONADDR
-#define CONADDR 0x3f8
-#endif
-#ifndef CONSPEED
-#define CONSPEED TTYDEF_SPEED
-#endif
-#ifndef CONMODE
-#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-#endif
-int comcnmode = CONMODE;
-#endif /* NCOM */
-struct btinfo_console default_consinfo = {
-	{0, 0},
-	CONSDEVNAME,
-#if (NCOM > 0)
-	CONADDR, CONSPEED
-#else
-	0, 0
-#endif
-};
-void	consinit __P((void));
-
-#ifdef KGDB
-#ifndef KGDB_DEVNAME
-#define KGDB_DEVNAME "com"
-#endif
-char kgdb_devname[] = KGDB_DEVNAME;
-#if (NCOM > 0)
-#ifndef KGDBADDR
-#define KGDBADDR 0x3f8
-#endif
-int comkgdbaddr = KGDBADDR;
-#ifndef KGDBRATE
-#define KGDBRATE TTYDEF_SPEED
-#endif
-int comkgdbrate = KGDBRATE;
-#ifndef KGDBMODE
-#define KGDBMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-#endif
-int comkgdbmode = KGDBMODE;
-#endif /* NCOM */
-void kgdb_port_init __P((void));
-#endif /* KGDB */
 
 #ifdef COMPAT_NOMID
 static int exec_nomid	__P((struct proc *, struct exec_package *));
@@ -461,7 +370,7 @@ cpu_startup()
 	 */
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free - bufpages));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 #if NBIOSCALL > 0
@@ -538,7 +447,7 @@ i386_bufinit()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			/*
@@ -716,7 +625,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"6x86MX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"6x86MX"		/* Default */
 			},
-			NULL
+			cyrix6x86_cpu_setup
 		} }
 	},
 	{
@@ -960,6 +869,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	case CPU_NKPDE:
 		return (sysctl_rdint(oldp, oldlenp, newp, nkpde));
+
+	case CPU_FPU_PRESENT:
+		return (sysctl_rdint(oldp, oldlenp, newp, i386_fpu_present));
 
 	case CPU_BOOTED_KERNEL:
 	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
@@ -1330,7 +1242,7 @@ cpu_dump()
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first CLBYTES of disk space
+ * Dumps always skip the first NBPG of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -1706,16 +1618,16 @@ init386(first_avail)
 #if NBIOSCALL > 0
 	/* install page 2 (reserved above) as PT page for first 4M */
 	pmap_enter(pmap_kernel(), (u_long)vtopte(0), 2*NBPG,
-	    VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
+	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
 	memset(vtopte(0), 0, NBPG);  /* make sure it is clean before using */
 #endif
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
-	    VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
+	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
 	idt = (union descriptor *)idt_vaddr;
 #ifdef I586_CPU
 	pmap_enter(pmap_kernel(), pentium_idt_vaddr, idt_paddr,
-	    VM_PROT_READ, TRUE, VM_PROT_READ);
+	    VM_PROT_READ, PMAP_WIRED|VM_PROT_READ);
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 #endif
 	gdt = idt + NIDT;
@@ -1967,97 +1879,6 @@ int type;
 	}
 	return(0);
 }
-
-/*
- * consinit:
- * initialize the system console.
- * XXX - shouldn't deal with this initted thing, but then,
- * it shouldn't be called from init386 either.
- */
-void
-consinit()
-{
-	struct btinfo_console *consinfo;
-	static int initted;
-
-	if (initted)
-		return;
-	initted = 1;
-
-#ifndef CONS_OVERRIDE
-	consinfo = lookup_bootinfo(BTINFO_CONSOLE);
-	if (!consinfo)
-#endif
-		consinfo = &default_consinfo;
-
-#if (NPC > 0) || (NVT > 0) || (NVGA > 0) || (NPCDISPLAY > 0)
-	if (!strcmp(consinfo->devname, "pc")) {
-#if (NVGA > 0)
-		if (!vga_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM,
-				  -1, 1))
-			goto dokbd;
-#endif
-#if (NPCDISPLAY > 0)
-		if (!pcdisplay_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM))
-			goto dokbd;
-#endif
-#if (NPC > 0) || (NVT > 0)
-		pccnattach();
-#endif
-		if (0) goto dokbd; /* XXX stupid gcc */
-dokbd:
-#if (NPCKBC > 0)
-		pckbc_cnattach(I386_BUS_SPACE_IO, PCKBC_KBD_SLOT);
-#endif
-		return;
-	}
-#endif /* PC | VT | VGA | PCDISPLAY */
-#if (NCOM > 0)
-	if (!strcmp(consinfo->devname, "com")) {
-		bus_space_tag_t tag = I386_BUS_SPACE_IO;
-
-		if (comcnattach(tag, consinfo->addr, consinfo->speed,
-				COM_FREQ, comcnmode))
-			panic("can't init serial console @%x", consinfo->addr);
-
-		return;
-	}
-#endif
-	panic("invalid console device %s", consinfo->devname);
-}
-
-#if (NPCKBC > 0) && (NPCKBD == 0)
-/*
- * glue code to support old console code with the
- * mi keyboard controller driver
- */
-int
-pckbc_machdep_cnattach(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
-{
-#if (NPC > 0) && (NPCCONSKBD > 0)
-	return (pcconskbd_cnattach(kbctag, kbcslot));
-#else
-	return (ENXIO);
-#endif
-}
-#endif
-
-#ifdef KGDB
-void
-kgdb_port_init()
-{
-#if (NCOM > 0)
-	if(!strcmp(kgdb_devname, "com")) {
-		bus_space_tag_t tag = I386_BUS_SPACE_IO;
-
-		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, COM_FREQ, 
-		    comkgdbmode);
-	}
-#endif
-}
-#endif
 
 void
 cpu_reset()
@@ -2709,8 +2530,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
 

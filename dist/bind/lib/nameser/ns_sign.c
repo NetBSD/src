@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_sign.c,v 1.1.1.1 1999/11/20 18:54:12 veego Exp $	*/
+/*	$NetBSD: ns_sign.c,v 1.1.1.1.4.1 1999/12/27 18:27:47 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 by Internet Software Consortium, Inc.

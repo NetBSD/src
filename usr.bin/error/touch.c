@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.8 1998/03/30 02:19:45 mrg Exp $	*/
+/*	$NetBSD: touch.c,v 1.8.6.1 1999/12/27 18:36:50 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,10 +38,10 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.8 1998/03/30 02:19:45 mrg Exp $");
+__RCSID("$NetBSD: touch.c,v 1.8.6.1 1999/12/27 18:36:50 wrstuden Exp $");
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <ctype.h>
 #include <signal.h>
@@ -539,8 +539,7 @@ execvarg(n_pissed_on, r_argc, r_argv)
 FILE	*o_touchedfile;	/* the old file */
 FILE	*n_touchedfile;	/* the new file */
 char	*o_name;
-char	n_name[64];
-char	*canon_name = _PATH_TMP;
+char	n_name[MAXPATHLEN];
 int	o_lineno;
 int	n_lineno;
 boolean	tempfileopen = FALSE;
@@ -553,6 +552,7 @@ edit(name)
 	char	*name;
 {
 	int fd;
+	const char *tmpdir;
 
 	o_name = name;
 	if ( (o_touchedfile = fopen(name, "r")) == NULL){
@@ -560,7 +560,9 @@ edit(name)
 			processname, name);
 		return(TRUE);
 	}
-	(void)strcpy(n_name, canon_name);
+	if ((tmpdir = getenv("TMPDIR")) == NULL)
+		tmpdir = _PATH_TMP;
+	(void)snprintf(n_name, sizeof (n_name), "%s/%s", tmpdir, TMPFILE);
 	fd = -1;
 	if ((fd = mkstemp(n_name)) == -1 ||
 	    (n_touchedfile = fdopen(fd, "w")) == NULL) {

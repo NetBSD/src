@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 1999/03/27 00:30:08 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.15.14.1 1999/12/27 18:34:20 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -135,7 +135,7 @@ mmrw(dev, uio, flags)
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(v), prot, TRUE, prot);
+			    trunc_page(v), prot, prot|PMAP_WIRED);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
@@ -173,16 +173,10 @@ mmrw(dev, uio, flags)
 			 * is a global zeroed page, the null segment table.
 			 */
 			if (devzeropage == NULL) {
-#if CLBYTES == NBPG
 				extern caddr_t Segtabzero;
 				devzeropage = Segtabzero;
-#else
-				devzeropage = (caddr_t)
-				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(devzeropage, CLBYTES);
-#endif
 			}
-			c = min(iov->iov_len, CLBYTES);
+			c = min(iov->iov_len, NBPG);
 			error = uiomove(devzeropage, c, uio);
 			continue;
 

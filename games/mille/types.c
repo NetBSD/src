@@ -1,4 +1,4 @@
-/*	$NetBSD: types.c,v 1.6 1997/10/12 00:54:40 lukem Exp $	*/
+/*	$NetBSD: types.c,v 1.6.6.1 1999/12/27 18:29:03 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)types.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: types.c,v 1.6 1997/10/12 00:54:40 lukem Exp $");
+__RCSID("$NetBSD: types.c,v 1.6.6.1 1999/12/27 18:29:03 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: types.c,v 1.6 1997/10/12 00:54:40 lukem Exp $");
  */
 
 int
-isrepair(card)
+is_repair(card)
 	CARD	card; 
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: syncfs.h,v 1.2 1999/11/15 18:49:11 fvdl Exp $	*/
+/*	$NetBSD: syncfs.h,v 1.2.2.1 1999/12/27 18:36:05 wrstuden Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.

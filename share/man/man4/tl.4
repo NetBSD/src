@@ -1,4 +1,4 @@
-.\"	$NetBSD: tl.4,v 1.6 1999/04/06 20:24:52 pk Exp $
+.\"	$NetBSD: tl.4,v 1.6.2.1 1999/12/27 18:30:46 wrstuden Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer
 .\" All rights reserved.
@@ -43,15 +43,16 @@ The
 .Nm tl
 device driver supports network adapters based on
 the Texas Instruments ThunderLAN chip on i386 CPUs.
+.Sh HARDWARE
 Supported cards include:
 .Pp
 .Bl -tag -width xxxxxx -offset indent
 .It Compaq Netelligent 
-in baseboard and PCI variants (10bT-only and dual-port variants untested).
+in baseboard and PCI variants (10bT-only variant untested).
 .It Compaq NetFlex 3/P
 in baseboard variant only (the PCI variant doesn't use the same chip !).
-.It Baseboard Compaq Deskpro 4000 5233MMX ethernet (untested).
-.It TI TravelMate 5000 series laptop docking station's ethernet board.
+.It Baseboard Compaq Deskpro 4000 5233MMX Ethernet (untested).
+.It TI TravelMate 5000 series laptop docking station's Ethernet board.
 .El
 .Sh MEDIA SELECTION
 The different models of the supported boards come with some subset of RJ-45,

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1999/06/27 12:56:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 1999/12/27 18:28:40 wrstuden Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -50,7 +50,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	crunchgen -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}.conf: ${LISTS}
-	awk -f ${MINIROOT}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
+	awk -f ${MINIROOT}/makeconf.awk CBIN=${CBIN} ${.CURDIR}/${LISTS} > ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
@@ -64,7 +64,18 @@ HACKSRC=${TOP}/../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
 clean cleandir distclean:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
+	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
+	${CBIN}.conf *.o *.cro *.c
+
+.ifndef RELEASEDIR
+release:
+	@echo setenv RELEASEDIR first
+	@false
+.else
+release: $(IMAGE)
+	gzip -c -9 < $(.OBJDIR)/ramdisk-${REV}.fs \
+		> $(RELEASEDIR)/installation/bootfs/ramdisk-${REV}.fs.gz
+.endif	# RELEASEDIR check
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.12 1999/07/04 01:27:20 itojun Exp $
+.\" $NetBSD: doc2html,v 1.12.4.1 1999/12/27 18:31:15 wrstuden Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -572,6 +572,7 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .if "\\$1"libipsec" \&IPsec Policy Control Library (libipsec, -lipsec)
 .if "\\$1"libkvm" \&Kernel Data Access Library (libkvm, -lkvm)
 .if "\\$1"libm" \&Math Library (libm, -lm)
+.if "\\$1"libmenu" \&Curses Menu Library (libmenu, -lmenu)
 .if "\\$1"libossaudio" \&OSS Audio Emulation Library (libossaudio, -lossaudio)
 .if "\\$1"libposix" \&POSIX Compatibility Library (libposix, -lposix)
 .if "\\$1"libresolv" \&DNS Resolver Library (libresolv, -lresolv)

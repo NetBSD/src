@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.15 1998/08/21 14:09:59 pk Exp $ */
+/*	$NetBSD: types.h,v 1.15.18.1 1999/12/27 18:33:49 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,20 +47,16 @@
 #ifndef	_MACHTYPES_H_
 #define	_MACHTYPES_H_
 
+#ifdef sun
+#undef sun
+#endif
+
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL)
 typedef struct label_t {
 	int val[2];
 } label_t;
-#endif
-
-/* NB: This should probably be if defined(_KERNEL) */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-typedef unsigned long	paddr_t;
-typedef unsigned long	psize_t;
-typedef unsigned long	vaddr_t;
-typedef unsigned long	vsize_t;
 #endif
 
 /*
@@ -74,11 +70,36 @@ typedef	short			  int16_t;
 typedef	unsigned short		u_int16_t;
 typedef	int			  int32_t;
 typedef	unsigned int		u_int32_t;
+
+#ifdef __arch64__
+/* 64-bit compiler */
+typedef	long			  int64_t;
+typedef unsigned long		u_int64_t;
+#else
+/* 32-bit compiler */
 /* LONGLONG */
 typedef	long long		  int64_t;
 /* LONGLONG */
 typedef	unsigned long long	u_int64_t;
+#endif
 
-typedef int32_t			register_t;
+/* The following are unsigned to prevent annoying sign extended pointers. */
+typedef unsigned long		register_t;
+typedef u_int32_t		register32_t;
+typedef u_int64_t		register64_t;
+
+/*
+ * This should be defined(_KERNEL) ... but things break.
+ */
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+typedef unsigned long		vaddr_t;
+typedef vaddr_t			vsize_t;
+#ifdef SUN4U
+typedef u_int64_t		paddr_t;
+#else
+typedef unsigned long		paddr_t;
+#endif
+typedef paddr_t			psize_t;
+#endif
 
 #endif	/* _MACHTYPES_H_ */

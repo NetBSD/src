@@ -1,4 +1,4 @@
-.\"	$NetBSD: tr.4,v 1.2 1999/04/29 21:47:09 bad Exp $
+.\"	$NetBSD: tr.4,v 1.2.6.1 1999/12/27 18:30:46 wrstuden Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Os
 .Sh NAME
 .Nm tr
-.Nd device driver for TROPIC based shared memory Token-Ring cards
+.Nd TROPIC based shared memory Token-Ring cards device driver
 .Sh SYNOPSIS
 .Cd "tr0 at isa? port 0xa20 iomem 0xd800 irq ?"
 .Cd "tr* at isa? port ? irq ?"
@@ -48,6 +48,7 @@
 The
 .Nm
 device driver supports TROPIC I based shared-memory Token-Ring cards.
+.Sh HARDWARE
 Supported cards include the  following IBM and 3COM models:
 .pP
 .Bl -tag -width xxxx -offset indent

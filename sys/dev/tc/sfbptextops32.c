@@ -1,7 +1,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfbptextops32.c,v 1.1 1999/12/03 09:50:54 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbptextops32.c,v 1.1.2.1 1999/12/27 18:35:39 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

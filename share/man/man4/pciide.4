@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.10 1999/08/30 13:12:51 bouyer Exp $
+.\"	$NetBSD: pciide.4,v 1.10.2.1 1999/12/27 18:30:45 wrstuden Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -36,9 +36,10 @@
 .Os
 .Sh NAME
 .Nm pciide
-.Nd PCI IDE controllers driver
+.Nd PCI IDE disk controllers driver
 .Sh SYNOPSIS
-.Cd "pciide* at pci ? dev ? function ? flags 0x0000"
+.Cd "pciide* at pci? dev ? function ? flags 0x0000"
+.Cd "pciide* at pnpbios? index ?"
 .Cd "options PCIIDE_CMD064x_DISABLE"
 .Sh DESCRIPTION
 The
@@ -70,9 +71,9 @@ Silicon Integrated System 5597/5598 IDE controller
 .It
 VIA Technologies VT82C586 and VT82C586A IDE Controllers
 .El 
-Some of these contollers are only available in multifunction PCI chips.
+Some of these controllers are only available in multifunction PCI chips.
 .Pp
-The 0x0001 flag force the
+The 0x0001 flag forces the
 .Nm 
 driver to use DMA when there is no explicit DMA mode setting support for
 the controller but DMA is present. If the BIOS didn't set up the controller
@@ -92,6 +93,8 @@ work properly on overclocked systems.
 
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr wd 4 ,
+.Xr pci 4 ,
+.Xr pnpbios 4 ,
 .Xr scsi 4 ,
+.Xr wd 4 ,
 .Xr wdc 4

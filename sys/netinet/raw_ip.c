@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.46 1999/09/13 12:15:55 itojun Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.46.8.1 1999/12/27 18:36:19 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -207,7 +207,8 @@ rip_input(m, va_alist)
 			sorwakeup(last->inp_socket);
 	} else {
 		if (inetsw[ip_protox[ip->ip_p]].pr_input == rip_input) {
-			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL,0,0);
+			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL,
+			    0, 0);
 			ipstat.ips_noproto++;
 			ipstat.ips_delivered--;
 		} else
@@ -463,8 +464,11 @@ rip_usrreq(so, req, m, nam, control, p)
 		inp = sotoinpcb(so);
 		inp->inp_ip.ip_p = (long)nam;
 #ifdef IPSEC
-		if ((error = ipsec_init_policy(&inp->inp_sp)) != 0)
+		error = ipsec_init_policy(&inp->inp_sp);
+		if (error != 0) {
 			in_pcbdetach(inp);
+			break;
+		}
 #endif /*IPSEC*/
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.36 1999/08/16 08:29:06 abs Exp $	*/
+/*	$NetBSD: md.c,v 1.36.4.1 1999/12/27 18:28:44 wrstuden Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -152,8 +152,9 @@ md_post_newfs(void)
 	}
 
 	printf(msg_string(MSG_dobootblks), diskdev);
-	run_prog(0, 1, NULL, "/sbin/disklabel -B %s /dev/r%sc",
-			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
+	cp_to_target("/usr/mdec/boot.pmax", "/boot.pmax");
+	run_prog(0, 1, "Warning: disk is probably not bootable",
+	    "/usr/mdec/installboot /dev/r%sc /usr/mdec/bootxx_ffs", diskdev);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 1999/04/24 08:10:38 simonb Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15.8.1 1999/12/27 18:32:46 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -107,7 +107,7 @@
  * by the page replacement algorithm.  Basically this says that if you are
  * swapped in you deserve some resources.  We protect the last SAFERSS
  * pages against paging and will just swap you out rather than paging you.
- * Note that each process has at least UPAGES+CLSIZE pages which are not
+ * Note that each process has at least UPAGES pages which are not
  * paged anyways (this is currently 8+2=10 pages or 5k bytes), so this
  * number just means a swapped in process is given around 25k bytes.
  * Just for fun: current memory prices are 4600$ a megabyte on VAX (4/22/81),
@@ -134,11 +134,15 @@
 #define VM_MAXUSER_ADDRESS	((vaddr_t)0x80000000)
 #define VM_MAX_ADDRESS		((vaddr_t)0x80000000)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xC0000000)
+#ifdef ENABLE_MIPS_TX3900
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFF000000)
+#else
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFFFFC000)
+#endif
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
-#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+#define VM_KMEM_SIZE		(NKMEMCLUSTERS*NBPG)
+#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
 
 /* VM_PHYSSEG_MAX defined by platform-dependent code. */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/07/06 16:22:58 minoura Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 1999/12/27 18:28:47 wrstuden Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -8,6 +8,6 @@ IMAGE=		boot.fs
 KERNCNF=	${.CURDIR}/../../../../sys/arch/x68k/conf/INSTALL
 KERNDIR=	${.CURDIR}/../../../../sys/arch/x68k/compile/INSTALL
 KERN=		${KERNDIR}/netbsd
-KERNNAME=	netbsd.INSTALL
+KERNNAME=	netbsd
 
 .include "${TOP}/bootfloppy-common/Makefile.inc"

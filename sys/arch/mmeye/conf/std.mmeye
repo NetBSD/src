@@ -1,7 +1,11 @@
-# $NetBSD: std.mmeye,v 1.2 1999/09/14 11:20:52 tsubai Exp $
+# $NetBSD: std.mmeye,v 1.2.8.1 1999/12/27 18:32:50 wrstuden Exp $
 #
 # standard, required NetBSD/mmeye 'options'
 
 machine mmeye sh3
+
+prefix ../gnu/sys
+cinclude "conf/files.softdep"
+prefix
 
 options EXEC_SCRIPT	# exec #! scripts

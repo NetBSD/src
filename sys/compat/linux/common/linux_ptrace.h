@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.h,v 1.2 1999/12/16 15:09:49 tron Exp $	*/
+/*	$NetBSD: linux_ptrace.h,v 1.2.2.1 1999/12/27 18:34:27 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

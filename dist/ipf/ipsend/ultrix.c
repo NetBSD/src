@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix.c,v 1.1.1.1 1999/12/11 22:24:10 veego Exp $	*/
+/*	$NetBSD: ultrix.c,v 1.1.1.1.4.1 1999/12/27 18:28:01 wrstuden Exp $	*/
 
 /*
  * (C)opyright 1998 Darren Reed. (from tcplog)

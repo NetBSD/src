@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/03/26 04:29:26 eeh Exp $
+#	$NetBSD: Makefile,v 1.4.14.1 1999/12/27 18:34:02 wrstuden Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -40,7 +40,7 @@ assym.fth.h: ./genassym.sh genfth.cf machine
 
 bootblk.text: bootblk.fth assym.fth.h
 	awk '/fload/ { print "#include \"" $$2 "\"" }; !/fload/' bootblk.fth | \
-	/usr/bin/cpp -P >bootblk.text
+	${CC} -E -Wc,-P >bootblk.text
 
 bootblk: bootblk.fth assym.fth.h
 	fgen -o bootblk bootblk.fth

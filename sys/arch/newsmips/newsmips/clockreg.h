@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.2 1999/02/15 04:36:35 hubertf Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.2.14.1 1999/12/27 18:33:09 wrstuden Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -41,14 +41,6 @@
  *
  *	@(#)clockreg.h	8.1 (Berkeley) 6/11/93
  */
-
-#define	SECMIN	((unsigned)60)			/* seconds per minute */
-#define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
-#define	SECDAY	((unsigned)(24*SECHOUR))	/* seconds per day */
-#define	SECYR	((unsigned)(365*SECDAY))	/* seconds per common year */
-
-#define	YRREF		1970
-#define	LEAPYEAR(year)	(((year) % 4) == 0)
 
 #define MK48T02
 

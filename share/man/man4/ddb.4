@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.35 1999/05/31 07:05:56 ross Exp $
+.\"	$NetBSD: ddb.4,v 1.35.2.1 1999/12/27 18:30:41 wrstuden Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd November 17, 1997
+.Dd October 28, 1999
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -570,6 +570,8 @@ Reboot, using the optionally supplied boot
 .Pp
 Note: Limitations of the command line interface preclude
 specification of a boot string.
+.It Ic sync
+Force a crash dump, and then reboot.
 .It Xo
 .Sm off
 .Ic "show\ all\ procs"

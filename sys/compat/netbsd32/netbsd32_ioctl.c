@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.3 1999/03/25 16:58:40 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.3.8.1 1999/12/27 18:34:29 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -356,12 +356,12 @@ netbsd32_from_sioc_sg_req(p, s32p)
  * on the ioctl command before and afterwards.
  */
 int
-compat_netbsd32_ioctl(p, v, retval)
+netbsd32_ioctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_ioctl_args /* {
+	struct netbsd32_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_u_long) com;
 		syscallarg(netbsd32_voidp) data;

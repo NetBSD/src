@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39powerreg.h,v 1.1 1999/11/20 19:56:36 uch Exp $ */
+/*	$NetBSD: tx39powerreg.h,v 1.1.2.1 1999/12/27 18:32:12 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

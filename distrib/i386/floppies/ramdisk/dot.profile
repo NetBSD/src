@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.6 1999/06/26 06:12:57 cgd Exp $
+#	$NetBSD: dot.profile,v 1.6.2.1 1999/12/27 18:28:21 wrstuden Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -54,9 +54,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
 	echo ''
 
-	# run update, so that installed software is written as it goes.
-	update
-
 	# mount the ramdisk read write
 	mount -u $ROOTDEV /
 
@@ -66,6 +63,8 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# pull in the functions that people will use from the shell prompt.
 	# . /.commonutils
 	# . /.instutils
+	dmesg() cat /kern/msgbuf
+	grep() sed -n "/$1/p"
 
 	# run the installation or upgrade script.
 	sysinst

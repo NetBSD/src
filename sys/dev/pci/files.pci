@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.63 1999/09/27 23:44:28 ad Exp $
+#	$NetBSD: files.pci,v 1.63.2.1 1999/12/27 18:35:16 wrstuden Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -110,7 +110,7 @@ attach	ne at pci with ne_pci: rtl80x9
 file	dev/pci/if_ne_pci.c		ne_pci
 
 # Texas Instruments ThunderLAN Chip.
-device  tl: ether, ifnet, arp, i2c, i2c_eeprom, mii
+device  tl: ether, ifnet, arp, i2c, i2c_eeprom, mii, mii_bitbang
 attach  tl at pci
 file    dev/pci/if_tl.c     		tl
 
@@ -144,8 +144,24 @@ file	dev/pci/tga_conf.c		tga
 file	dev/pci/tga_bt463.c		tga
 file	dev/pci/tga_bt485.c		tga
 
+# Cirrus Logic CrystalClear PCI Audio CS4280
+device clcs: audio, auconv, mulaw, ac97, midibus
+attach  clcs at pci
+file dev/pci/cs4280.c			clcs
+
+# Forte Media FM801
+device  fms { }: audio, auconv, mulaw, ac97, midibus
+attach  fms at pci
+file    dev/pci/fms.c                   fms
+
+attach	opl at fms with opl_fms
+file	dev/pci/opl_fms.c		opl_fms
+
+attach	mpu at fms with mpu_fms
+file	dev/pci/mpu_fms.c		mpu_fms
+
 # Ensoniq AudioPCI S5016
-device	eap: audio, auconv, mulaw
+device	eap: audio, auconv, mulaw, ac97, midibus
 attach	eap at pci
 file	dev/pci/eap.c			eap
 
@@ -192,14 +208,14 @@ file	dev/pci/com_puc.c		com_puc
 
 # UHCI USB controller
 attach	uhci at pci with uhci_pci
-file	dev/pci/uhci_pci.c		uhci
+file	dev/pci/uhci_pci.c		uhci_pci
 
 # OHCI USB controller
 attach	ohci at pci with ohci_pci
-file	dev/pci/ohci_pci.c		ohci
+file	dev/pci/ohci_pci.c		ohci_pci
 
 # VIA Rhine/Rhine II Fast Ethernet controllers
-device	vr: ether, ifnet, arp, mii
+device	vr: ether, ifnet, arp, mii, mii_bitbang
 attach	vr at pci
 file	dev/pci/if_vr.c			vr
 
@@ -228,3 +244,13 @@ file	dev/pci/btvmei.c		btvmei
 device	ti: ether, ifnet, arp
 attach	ti at pci
 file	dev/pci/if_ti.c			ti
+
+# Adaptec AIC-6915 Ethernet interface
+attach	sf at pci with sf_pci
+file	dev/pci/if_sf_pci.c		sf_pci
+
+# YENTA PCI-Cardbus bridge 
+#device  cbb: cbbus, pcmciabus
+device  cbb: pcmciaslot
+attach	cbb at pci with cbb_pci
+file	dev/pci/pccbb.c			cbb

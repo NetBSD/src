@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.h,v 1.3 1995/03/21 09:07:47 cgd Exp $	*/
+/*	$NetBSD: tables.h,v 1.3.10.1 1999/12/27 18:27:10 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -170,5 +170,6 @@ typedef struct dirdata {
 	mode_t mode;	/* file mode to restore */
 	time_t mtime;	/* mtime to set */
 	time_t atime;	/* atime to set */
+	long fflags;	/* file flags to set */
 	int frc_mode;	/* do we force mode settings? */
 } DIRDATA;

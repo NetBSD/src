@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.7 1999/06/12 12:49:24 pk Exp $
+#	$NetBSD: Makefile.buildboot,v 1.7.8.1 1999/12/27 18:33:53 wrstuden Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -42,5 +42,9 @@ SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
+.if !make(obj)
 .BEGIN:
 	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
+.endif
+
+CLEANFILES+=	machine

@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.14 1999/09/01 21:03:02 fvdl Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.14.2.1 1999/12/27 18:34:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,21 +81,14 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-
-#if BYTE_ORDER == BIG_ENDIAN
-#include <machine/bswap.h>
-#define	htopci(x)	bswap32(x)
-#define	pcitoh(x)	bswap32(x)
-#else
-#define	htopci(x)	(x)
-#define	pcitoh(x)	(x)
-#endif
+#include <machine/endian.h>
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
 
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii.h>
+#include <dev/mii/mii_bitbang.h>
 
 #include <dev/ic/elink3reg.h>
 /* #include <dev/ic/elink3var.h> */
@@ -131,11 +124,7 @@ static void ex_shutdown __P((void *));
 static void ex_start __P((struct ifnet *));
 static void ex_txstat __P((struct ex_softc *));
 static u_int16_t ex_mchash __P((u_char *));
-static void ex_mii_writebits __P((struct ex_softc *, u_int, int));
 
-void ex_mii_setbit __P((void *, u_int16_t));
-void ex_mii_clrbit __P((void *, u_int16_t));
-u_int16_t ex_mii_readbit __P((void *, u_int16_t));
 int ex_mii_readreg __P((struct device *, int, int));
 void ex_mii_writereg __P((struct device *, int, int, int));
 void ex_mii_statchg __P((struct device *));
@@ -181,6 +170,24 @@ struct ex_media ex_native_media[] = {
 };
 
 /*
+ * MII bit-bang glue.
+ */
+u_int32_t ex_mii_bitbang_read __P((struct device *));
+void ex_mii_bitbang_write __P((struct device *, u_int32_t));
+
+const struct mii_bitbang_ops ex_mii_bitbang_ops = {
+	ex_mii_bitbang_read,
+	ex_mii_bitbang_write,
+	{
+		ELINK_PHY_DATA,		/* MII_BIT_MDO */
+		ELINK_PHY_DATA,		/* MII_BIT_MDI */
+		ELINK_PHY_CLK,		/* MII_BIT_MDC */
+		ELINK_PHY_DIR,		/* MII_BIT_DIR_HOST_PHY */
+		0,			/* MII_BIT_DIR_PHY_HOST */
+	}
+};
+
+/*
  * Back-end attach and configure.
  */
 void
@@ -209,6 +216,11 @@ ex_config(sc)
 
 	printf("%s: MAC address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(macaddr));
+
+	if (sc->intr_ack) { /* 3C575BTX specific */
+	    GO_WINDOW(2);
+	    bus_space_write_2(sc->sc_iot, ioh, 12, 0x10|bus_space_read_2(sc->sc_iot, ioh, 12));
+	}
 
 	attach_stage = 0;
 
@@ -343,7 +355,7 @@ ex_config(sc)
 		sc->sc_rxdescs[i].rx_dmamap = sc->sc_rx_dmamaps[i];
 		sc->sc_rxdescs[i].rx_upd = &sc->sc_upd[i];
 		sc->sc_upd[i].upd_frags[0].fr_len =
-		    htopci((MCLBYTES - 2) | EX_FR_LAST);
+		    htole32((MCLBYTES - 2) | EX_FR_LAST);
 		if (ex_add_rxbuf(sc, &sc->sc_rxdescs[i]) != 0) {
 			printf("%s: can't allocate or map rx buffers\n",
 			    sc->sc_dev.dv_xname);
@@ -397,7 +409,8 @@ ex_config(sc)
 				<< (CONFIG_XCVR_SEL_SHIFT + 16);
 		bus_space_write_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG, icfg);
 
-		mii_phy_probe(&sc->sc_dev, &sc->ex_mii, 0xffffffff);
+		mii_phy_probe(&sc->sc_dev, &sc->ex_mii, 0xffffffff,
+		    MII_PHY_ANY, MII_OFFSET_ANY);
 		if (LIST_FIRST(&sc->ex_mii.mii_phys) == NULL) {
 			ifmedia_add(&sc->ex_mii.mii_media, IFM_ETHER|IFM_NONE,
 			    0, NULL);
@@ -630,7 +643,8 @@ ex_init(sc)
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_INTR_MASK | S_MASK);
 
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, ACK_INTR | 0xff);
-
+	if (sc->intr_ack)
+	    (* sc->intr_ack)(sc);
 	ex_set_media(sc);
 	ex_set_mc(sc);
 
@@ -1002,12 +1016,12 @@ ex_start(ifp)
 		fr = &txp->tx_dpd->dpd_frags[0];
 		totlen = 0;
 		for (segment = 0; segment < dmamap->dm_nsegs; segment++, fr++) {
-			fr->fr_addr = htopci(dmamap->dm_segs[segment].ds_addr);
-			fr->fr_len = htopci(dmamap->dm_segs[segment].ds_len);
+			fr->fr_addr = htole32(dmamap->dm_segs[segment].ds_addr);
+			fr->fr_len = htole32(dmamap->dm_segs[segment].ds_len);
 			totlen += dmamap->dm_segs[segment].ds_len;
 		}
 		fr--;
-		fr->fr_len |= htopci(EX_FR_LAST);
+		fr->fr_len |= htole32(EX_FR_LAST);
 		txp->tx_mbhead = mb_head;
 
 		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
@@ -1015,7 +1029,7 @@ ex_start(ifp)
 
 		dpd = txp->tx_dpd;
 		dpd->dpd_nextptr = 0;
-		dpd->dpd_fsh = htopci(totlen);
+		dpd->dpd_fsh = htole32(totlen);
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 		    ((caddr_t)dpd - (caddr_t)sc->sc_dpd),
@@ -1035,7 +1049,7 @@ ex_start(ifp)
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 			    offset, sizeof (struct ex_dpd),
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-			prevdpd->dpd_nextptr = htopci(DPD_DMADDR(sc, txp));
+			prevdpd->dpd_nextptr = htole32(DPD_DMADDR(sc, txp));
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 			    offset, sizeof (struct ex_dpd),
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); 
@@ -1055,7 +1069,7 @@ ex_start(ifp)
 	}
  out:
 	if (sc->tx_head) {
-		sc->tx_tail->tx_dpd->dpd_fsh |= htopci(EX_DPD_DNIND);
+		sc->tx_tail->tx_dpd->dpd_fsh |= htole32(EX_DPD_DNIND);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 		    ((caddr_t)sc->tx_tail->tx_dpd - (caddr_t)sc->sc_dpd),
 		    sizeof (struct ex_dpd),
@@ -1082,6 +1096,9 @@ ex_intr(arg)
 	int ret = 0;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
+	if (sc->enabled == 0) {
+	  return ret;
+	}
 	for (;;) {
 		stat = bus_space_read_2(iot, ioh, ELINK_STATUS);
 		if (!(stat & S_MASK))
@@ -1091,6 +1108,8 @@ ex_intr(arg)
 		 */
 		bus_space_write_2(iot, ioh, ELINK_COMMAND, ACK_INTR |
 				      (stat & S_MASK));
+		if (sc->intr_ack)
+		    (*sc->intr_ack)(sc);
 		ret = 1;
 		if (stat & S_HOST_ERROR) {
 			printf("%s: adapter failure (%x)\n",
@@ -1158,7 +1177,7 @@ ex_intr(arg)
 			rxmap = rxd->rx_dmamap;
 			m = rxd->rx_mbhead;
 			upd = rxd->rx_upd;
-			pktstat = pcitoh(upd->upd_pktstatus);
+			pktstat = le32toh(upd->upd_pktstatus);
 
 			bus_dmamap_sync(sc->sc_dmat, rxmap, 0,
 			    rxmap->dm_mapsize,
@@ -1399,9 +1418,13 @@ ex_printstats(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	ex_getstats(sc);
-	printf("in %ld out %ld ierror %ld oerror %ld ibytes %ld obytes %ld\n",
-	    ifp->if_ipackets, ifp->if_opackets, ifp->if_ierrors,
-	    ifp->if_oerrors, ifp->if_ibytes, ifp->if_obytes);
+	printf("in %llu out %llu ierror %llu oerror %llu ibytes %llu obytes "
+	    "%llu\n", (unsigned long long)ifp->if_ipackets,
+	    (unsigned long long)ifp->if_opackets,
+	    (unsigned long long)ifp->if_ierrors,
+	    (unsigned long long)ifp->if_oerrors,
+	    (unsigned long long)ifp->if_ibytes,
+	    (unsigned long long)ifp->if_obytes);
 }
 
 void
@@ -1490,6 +1513,8 @@ ex_stop(sc)
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, C_INTR_LATCH);
 
 	untimeout(ex_tick, sc);
+	if (sc->ex_conf & EX_CONF_MII)
+		mii_down(&sc->ex_mii);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
@@ -1632,9 +1657,9 @@ ex_add_rxbuf(sc, rxd)
 	m->m_data += 2;
 
 	rxd->rx_mbhead = m;
-	rxd->rx_upd->upd_pktstatus = htopci(MCLBYTES - 2);
+	rxd->rx_upd->upd_pktstatus = htole32(MCLBYTES - 2);
 	rxd->rx_upd->upd_frags[0].fr_addr =
-	    htopci(rxmap->dm_segs[0].ds_addr + 2);
+	    htole32(rxmap->dm_segs[0].ds_addr + 2);
 	rxd->rx_upd->upd_nextptr = 0;
 
 	/*
@@ -1642,7 +1667,7 @@ ex_add_rxbuf(sc, rxd)
 	 */
 	if (sc->rx_head != NULL) {
 		sc->rx_tail->rx_next = rxd;
-		sc->rx_tail->rx_upd->upd_nextptr = htopci(sc->sc_upddma +
+		sc->rx_tail->rx_upd->upd_nextptr = htole32(sc->sc_upddma +
 		    ((caddr_t)rxd->rx_upd - (caddr_t)sc->sc_upd));
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_upd_dmamap,
 		    (caddr_t)sc->rx_tail->rx_upd - (caddr_t)sc->sc_upd,
@@ -1661,137 +1686,45 @@ ex_add_rxbuf(sc, rxd)
 	return (rval);
 }
 
-void
-ex_mii_setbit(v, bit)
-	void *v;
-	u_int16_t bit;
+u_int32_t
+ex_mii_bitbang_read(self)
+	struct device *self;
 {
-	struct ex_softc *sc = v;
-	u_int16_t val;
+	struct ex_softc *sc = (void *) self;
 
-	val = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT);
-	val |= bit;
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT, val);
+	/* We're already in Window 4. */
+	return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT));
 }
 
 void
-ex_mii_clrbit(v, bit)
-	void *v;
-	u_int16_t bit;
+ex_mii_bitbang_write(self, val)
+	struct device *self;
+	u_int32_t val;
 {
-	struct ex_softc *sc = v;
-	u_int16_t val;
+	struct ex_softc *sc = (void *) self;
 
-	val = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT);
-	val &= ~bit;
+	/* We're already in Window 4. */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT, val);
 }
-
-u_int16_t
-ex_mii_readbit(v, bit)
-	void *v;
-	u_int16_t bit;
-{
-	struct ex_softc *sc = v;
-	u_int16_t val;
-
-	val = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT);
-	return (val & bit);
-}
-
-/*
- * The reason why all this stuff below is here, is that we need a special
- * readreg function. It needs to check if we're accessing the internal
- * PHY on 905B-TX boards, or not. If so, the read must fail immediately,
- * because 905B-TX boards seem to return garbage from the MII if you
- * try to access non-existing PHYs.
- */
 
 int
 ex_mii_readreg(v, phy, reg)
 	struct device *v;
-	int phy;
-	int reg;
+	int phy, reg;
 {
 	struct ex_softc *sc = (struct ex_softc *)v;
-	int val = 0;
-	int err =0;
-	int i;
+	int val;
 
 	if ((sc->ex_conf & EX_CONF_INTPHY) && phy != ELINK_INTPHY_ID)
 		return 0;
 
 	GO_WINDOW(4);
 
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT, 0);
-
-	ex_mii_setbit(sc, ELINK_PHY_DIR);
-	delay(1);
-	ex_mii_setbit(sc, ELINK_PHY_DIR|ELINK_PHY_DATA);
-	delay(1);
-
-        for (i = 0; i < 32; i++) {
-                ex_mii_setbit(sc, ELINK_PHY_CLK);
-		delay(1);
-                ex_mii_clrbit(sc, ELINK_PHY_CLK);
-		delay(1);
-        }
-	ex_mii_writebits(sc, MII_COMMAND_START, 2);
-	ex_mii_writebits(sc, MII_COMMAND_READ, 2);
-	ex_mii_writebits(sc, phy, 5);
-	ex_mii_writebits(sc, reg, 5);
-
-	ex_mii_clrbit(sc, ELINK_PHY_DATA|ELINK_PHY_CLK);
-	delay(1);
-	ex_mii_setbit(sc, ELINK_PHY_CLK);
-	delay(1);
-	ex_mii_clrbit(sc, ELINK_PHY_DIR|ELINK_PHY_CLK);
-	delay(1);
-	ex_mii_setbit(sc, ELINK_PHY_CLK);
-	delay(1);
-
-	err = ex_mii_readbit(sc, ELINK_PHY_DATA);
-
-	for (i = 0; i < 16; i++) {
-		val <<= 1;
-		ex_mii_clrbit(sc, ELINK_PHY_CLK);
-		delay(1);
-		if (err == 0 && ex_mii_readbit(sc, ELINK_PHY_DATA))
-				val |= 1;
-		ex_mii_setbit(sc, ELINK_PHY_CLK);
-		delay(1);
-	}
-	ex_mii_clrbit(sc, ELINK_PHY_CLK);
-	delay(1);
-	ex_mii_setbit(sc, ELINK_PHY_CLK);
-	delay(1);
+	val = mii_bitbang_readreg(v, &ex_mii_bitbang_ops, phy, reg);
 
 	GO_WINDOW(1);
 
-	return (err ? 0 : val);
-}
-
-static void
-ex_mii_writebits(sc, data, nbits)
-	struct ex_softc *sc;
-	unsigned int data;
-	int nbits;
-{
-	int i;
-
-	ex_mii_setbit(sc, ELINK_PHY_DIR);
-	ex_mii_clrbit(sc, ELINK_PHY_CLK);
-
-	for (i = 1 << (nbits -1); i; i = i >>  1) {
-		if (data & i)
-			ex_mii_setbit(sc, ELINK_PHY_DATA);
-		else
-			ex_mii_clrbit(sc, ELINK_PHY_DATA);
-		delay(1);
-		ex_mii_clrbit(sc, ELINK_PHY_CLK);
-		delay(1);
-		ex_mii_setbit(sc, ELINK_PHY_CLK);
-	}
+	return (val);
 }
 
 void
@@ -1802,32 +1735,10 @@ ex_mii_writereg(v, phy, reg, data)
         int data;
 {
 	struct ex_softc *sc = (struct ex_softc *)v;
-	int i;
 
 	GO_WINDOW(4);
 
-	ex_mii_setbit(sc, ELINK_PHY_DIR);
-	delay(1);
-	ex_mii_setbit(sc, ELINK_PHY_DIR|ELINK_PHY_DATA);
-	delay(1);
-	for (i = 0; i < 32; i++) {
-                ex_mii_setbit(sc, ELINK_PHY_CLK);
-		delay(1);
-                ex_mii_clrbit(sc, ELINK_PHY_CLK);
-		delay(1);
-	}
-	ex_mii_writebits(sc, MII_COMMAND_START, 2);
-	ex_mii_writebits(sc, MII_COMMAND_WRITE, 2);
-	ex_mii_writebits(sc, phy, 5);
-	ex_mii_writebits(sc, reg, 5);
-	ex_mii_writebits(sc, MII_COMMAND_ACK, 2);
-	ex_mii_writebits(sc, data, 16);
-
-	ex_mii_setbit(sc, ELINK_PHY_CLK);
-	delay(1);
-	ex_mii_clrbit(sc, ELINK_PHY_CLK);
-	delay(1);
-	ex_mii_clrbit(sc, ELINK_PHY_DIR);
+	mii_bitbang_writereg(v, &ex_mii_bitbang_ops, phy, reg, data);
 
 	GO_WINDOW(1);
 }

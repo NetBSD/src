@@ -1,4 +1,4 @@
-.\"	$NetBSD: sm.4,v 1.4 1999/03/16 01:19:18 garbled Exp $
+.\"	$NetBSD: sm.4,v 1.4.6.1 1999/12/27 18:30:45 wrstuden Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,9 +40,10 @@
 .Os
 .Sh NAME
 .Nm sm
-.Nd device driver for SMC91C9x-based Ethernet interfaces
+.Nd SMC91C9x-based Ethernet interfaces device driver
 .Sh SYNOPSIS
 .Cd "sm0 at isa? port 0x300 irq 10"
+.Cd "sm* at mhzc?"
 .Cd "sm* at pcmcia? function ?"
 .Sh DESCRIPTION
 The
@@ -55,6 +56,10 @@ driver supports any SMC91C9x-based Ethernet interface on the ISA
 bus, including the EFA Info*Express SVC VLB interface, and the
 on-board SMC91C9x Ethernet found in many embedded PCs and laptop
 docking stations.
+.Pp
+The mhzc attachment of the
+.Nm
+driver supports the Megahertz combo Ethernet and modem card.
 .Pp
 The PCMCIA attachment of the
 .Nm
@@ -86,4 +91,5 @@ corrupted.
 .Xr ifconfig 8 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
+.Xr mhzc 4 ,
 .Xr pcmcia 4

@@ -1,8 +1,8 @@
 /*
- * $NetBSD: main.c,v 1.10 1998/11/13 22:12:35 is Exp $
+ * $NetBSD: main.c,v 1.10.16.1 1999/12/27 18:31:36 wrstuden Exp $
  *
  *
- * Copyright (c) 1996 Ignatios Souvatzis
+ * Copyright (c) 1996,1999 Ignatios Souvatzis
  * Copyright (c) 1994 Michael L. Hitch
  * All rights reserved.
  *
@@ -62,8 +62,13 @@
 
 void startit __P((void *, u_long, u_long, void *, u_long, u_long, int, void *,
 	int, int, u_long, u_long, u_long, int));
-void startit_end __P((void));
 int get_cpuid __P((u_int32_t *));
+#ifdef PPCBOOTER
+u_int16_t kickstart[];
+size_t kicksize;
+#else
+void startit_end __P((void));
+#endif
 
 /*
  * Kernel startup interface version
@@ -78,7 +83,7 @@ int get_cpuid __P((u_int32_t *));
 
 static long get_number(char **);
 
-#define VERSION "2.1"
+#define VERSION "2.2"
 
 char default_command[] = "netbsd -ASn2";
 
@@ -108,7 +113,7 @@ pain(aio)
 	/* int	skip_chipmem = 0; */
 
 	void (*start_it)(void *, u_long, u_long, void *, u_long, u_long, int,
-	    void *, int, int, u_long, u_long, u_long, int) = startit;
+	    void *, int, int, u_long, u_long, u_long, int);
 
 	caddr_t kp;
 	u_int16_t *kvers;
@@ -145,8 +150,13 @@ pain(aio)
 		goto out;
 	}
 
+#ifdef PPCBOOTER
+	printf("\2337mNetBSD/AmigaPPC bootblock " VERSION "\2330m\n%s :- ",
+		kernel_name);
+#else
 	printf("\2337mNetBSD/Amiga bootblock " VERSION "\2330m\n%s :- ",
 		kernel_name);
+#endif
 
 	timelimit = 3;
 	gets(linebuf);
@@ -332,10 +342,14 @@ pain(aio)
 		goto err;
 	}
 
+#ifdef PPCBOOTER
+	/* XXX to be done */
+#else
 	if ((N_GETMAGIC(ehs) != NMAGIC) || (N_GETMID(ehs) != MID_M68K)) {
 		errno = ENOEXEC;
 		goto err;
 	}
+#endif
 		
 	textsz = (ehs.a_text + __LDPGSZ - 1) & (-__LDPGSZ);
 	esym = 0;
@@ -352,23 +366,28 @@ pain(aio)
 			goto err;
 		ksize += ehs.a_syms + 4 + ((stringsz + 3) & ~3);
 	}
-
+#ifdef PPCBOOTER
+	kp = alloc(ksize);
+#else
 	kp = alloc(ksize + 256 + ((u_char *)startit_end - (u_char *)startit));
+#endif
 	if (kp == 0) {
 		errno = ENOMEM;
 		goto err;
 	}
 
 	printf("%ld", ehs.a_text);
-	if (read(io, kp, ehs.a_text) != ehs.a_text)
+	if (ehs.a_text && (read(io, kp, ehs.a_text) != ehs.a_text))
 		goto err;
 
 	printf("+%ld", ehs.a_data);
-	if (read(io, kp + textsz, ehs.a_data) != ehs.a_data)
+	if (ehs.a_data && (read(io, kp + textsz, ehs.a_data) != ehs.a_data))
 		goto err;
 
 	printf("+%ld", ehs.a_bss);
 
+        nkcd = (int *)(kp + textsz + ehs.a_data + ehs.a_bss);
+#ifndef PPCBOOTER
 	kvers = (u_short *)(kp + ehs.a_entry - 2);
 
 	if (*kvers > KERNEL_STARTUP_VERSION_MAX && *kvers != 0x4e73) {
@@ -384,7 +403,6 @@ pain(aio)
 		printf("\nKernel V%ld newer than bootblock V%ld\n",
 		    (long)*kvers, (long)KERNEL_STARTUP_VERSION);
 #endif
-        nkcd = (int *)(kp + textsz + ehs.a_data + ehs.a_bss);
         if (*kvers != 0x4e73 && *kvers > 1 && S_flag && ehs.a_syms) {
                 *nkcd++ = ehs.a_syms;
 		printf("+[%ld", ehs.a_syms);
@@ -398,6 +416,7 @@ pain(aio)
                 esym = (char *)(textsz + ehs.a_data + ehs.a_bss
                     + ehs.a_syms + 4 + ((stringsz + 3) & ~3));
         }
+#endif
 	putchar('\n');
 
 	*nkcd = ncd;
@@ -405,10 +424,12 @@ pain(aio)
 
 	while ((cd = FindConfigDev(cd, -1, -1))) {
 		*kcd = *cd;
+#ifndef PPCBOOTER
 		if (((cpuid >> 24) == 0x7D) &&
 		    ((u_long)kcd->addr < 0x1000000)) {
 			kcd->addr += 0x3000000;
 		}
+#endif
 		++kcd;
 	}
 
@@ -420,6 +441,12 @@ pain(aio)
 	while (nseg-- > 0)
 		*kmemseg++ = *memseg++;
 
+#ifdef PPCBOOTER
+	/*
+	 * we use the ppc starter...
+	 */
+	start_it = startit;
+#else
 	/*
 	 * Copy startup code to end of kernel image and set start_it.
 	 */
@@ -427,6 +454,7 @@ pain(aio)
 	    (char *)startit_end - (char *)startit);
 	CacheClearU();
 	(caddr_t)start_it = kp + ksize + 256;
+#endif
 	printf("*** Loading from %08lx to Fastmem %08lx ***\n",
 	    (u_long)kp, (u_long)fmem);
 	/* sleep(2); */
@@ -448,7 +476,12 @@ pain(aio)
 #endif
 	(void)getchar();
 
-	start_it(kp, ksize, ehs.a_entry, (void *)fmem, fmemsz, cmemsz,
+#ifdef PPCBOOTER
+	startit
+#else
+	start_it
+#endif
+		(kp, ksize, ehs.a_entry, (void *)fmem, fmemsz, cmemsz,
 	    boothowto, esym, cpuid, eclock, amiga_flags, I_flag,
 	    aio_base >> 9, 1);
 	/*NOTREACHED*/

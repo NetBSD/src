@@ -1,4 +1,4 @@
-/*	$NetBSD: ioat66.c,v 1.1 1999/11/15 21:13:38 mcr Exp $	*/
+/*	$NetBSD: ioat66.c,v 1.1.2.1 1999/12/27 18:34:55 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.

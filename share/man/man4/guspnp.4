@@ -1,4 +1,4 @@
-.\"	$NetBSD: guspnp.4,v 1.5 1999/04/13 20:25:29 augustss Exp $
+.\"	$NetBSD: guspnp.4,v 1.5.4.1 1999/12/27 18:30:42 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -37,7 +37,8 @@
 .Dd October 5, 1997
 .Dt guspnp 4 "Am78C201 device driver" "Version 1.0"
 .Sh NAME
-guspnp \- Am78C201 device driver
+.Nm guspnp
+.Nd Am78C201 audio device driver
 .Sh SYNOPSIS
 .Cd "guspnp* at isapnp?"
 .Cd "audio*  at guspnp?"
@@ -66,6 +67,16 @@ logical devices are ATAPI CD-ROM device, PnP Joystick device, Legacy
 soundcard emulation device (Soundblaster) and MIDI serial device. Support
 for atleast ATAPI CD-ROM and Joystick is being worked on.
 This version of the driver will use 1 IRQ and 2 DRQs.
+.Sh HARDWARE
+Cards supported by the 
+.Nm
+driver include:
+.Pp
+.Bl -item -offset indent
+.It
+.Tn Gravis
+Ultrasound PNP, and compatibles
+.El
 .Sh BUGS
 Sometimes you can cause a hiss on either left or right channel, or both.
 You can usually make it disappear by playing random data, however this

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumicureg.h,v 1.2 1999/12/07 17:53:04 uch Exp $ */
+/*	$NetBSD: plumicureg.h,v 1.2.2.1 1999/12/27 18:32:02 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

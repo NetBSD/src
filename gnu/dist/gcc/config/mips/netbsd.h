@@ -23,6 +23,11 @@ Boston, MA 02111-1307, USA.  */
 #define TARGET_ENDIAN_DEFAULT 0
 #define TARGET_DEFAULT MASK_GAS
 
+#ifdef hpcmips /* XXX should use distinct target name -uch */
+#define NOUSE_GOFAST
+#define SOFT_FLOAT
+#endif
+
 /* Get generic mips ELF definitions. */
 
 #include <mips/elf.h>
@@ -252,7 +257,11 @@ do {									 \
    GO_IF_LEGITIMATE_ADDRESS ever accepting such addresses. */
 
 #undef TARGET_DEFAULT
+#ifdef SOFT_FLOAT
+#define TARGET_DEFAULT (MASK_GAS|MASK_DEBUG_A|MASK_SOFT_FLOAT)
+#else
 #define TARGET_DEFAULT (MASK_GAS|MASK_DEBUG_A)
+#endif
 
 /* Since gas and gld are standard on NetBSD, we don't need these */
 #undef ASM_FINAL_SPEC

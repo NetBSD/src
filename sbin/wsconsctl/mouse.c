@@ -1,4 +1,4 @@
-/*	$NetBSD: mouse.c,v 1.1 1998/12/28 14:01:17 hannken Exp $ */
+/*	$NetBSD: mouse.c,v 1.1.6.1 1999/12/27 18:30:35 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,8 +43,12 @@
 #include "wsconsctl.h"
 
 static int mstype;
+static int resolution;
+static int samplerate;
 
 struct field mouse_field_tab[] = {
+    { "resolution",		&resolution,	FMT_UINT,	FLG_WRONLY },
+    { "samplerate",		&samplerate,	FMT_UINT,	FLG_WRONLY },
     { "type",			&mstype,	FMT_MSTYPE,	FLG_RDONLY },
 };
 
@@ -64,4 +68,18 @@ void
 mouse_put_values(fd)
 	int fd;
 {
+	int tmp;
+
+	if (field_by_value(&resolution)->flags & FLG_SET) {
+		tmp = resolution;
+		if (ioctl(fd, WSMOUSEIO_SRES, &tmp) < 0)
+			err(1, "WSMOUSEIO_SRES");
+		pr_field(field_by_value(&resolution), " -> ");
+	}
+	if (field_by_value(&samplerate)->flags & FLG_SET) {
+		tmp = samplerate;
+		if (ioctl(fd, WSMOUSEIO_SRATE, &tmp) < 0)
+			err(1, "WSMOUSEIO_SRES");
+		pr_field(field_by_value(&tmp), " -> ");
+	}
 }

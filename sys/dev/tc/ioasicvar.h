@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.10 1999/10/01 09:19:42 nisimura Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.10.8.1 1999/12/27 18:35:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -76,8 +76,8 @@ extern tc_addr_t ioasic_base;
 /*
  * Interrupt establishment/disestablishment functions
  */
-void    ioasic_intr_establish __P((struct device *, void *, tc_intrlevel_t,
-	    int (*)(void *), void *));
+void    ioasic_intr_establish __P((struct device *, void *,
+	    int, int (*)(void *), void *));
 void    ioasic_intr_disestablish __P((struct device *, void *));
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrdsu.c,v 1.2 1999/12/14 04:21:10 sato Exp $	*/
+/*	$NetBSD: vrdsu.c,v 1.2.2.1 1999/12/27 18:32:15 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.

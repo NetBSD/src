@@ -27,22 +27,23 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: eb.4,v 1.6 1999/04/06 20:24:46 pk Exp $
+.\"	$NetBSD: eb.4,v 1.6.4.1 1999/12/27 18:30:49 wrstuden Exp $
 .\"
 .Dd
 .Dt EB 4 arm32
 .Os
 .Sh NAME
 .Nm eb
-.Nd Ethernet driver for SEQ8005 based network slot ethernet interfaces.
+.Nd Ethernet driver for SEQ8005 based network slot Ethernet interfaces.
 .Sh SYNOPSIS
 .Cd "eb0 at podulebus?"
 .Sh DESCRIPTION
 The
 .Nm
 interface provides access to a 10 Mb/s Ethernet network via the
-SEEQ 8005 Ethernet chip.  The ethernet cards supported
-by the
+SEEQ 8005 Ethernet chip.
+.Sh HARDWARE
+The Ethernet cards supported by the
 .Nm
 interface are:
 .Pp

@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.49 1999/09/17 20:04:48 thorpej Exp $	*/
+/*	$NetBSD: dc.c,v 1.49.8.1 1999/12/27 18:33:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.49 1999/09/17 20:04:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.49.8.1 1999/12/27 18:33:22 wrstuden Exp $");
 
 /*
  * devDC7085.c --
@@ -138,8 +138,10 @@ void dcPollc	__P((dev_t, int));
 void dc_consinit __P((dev_t dev, dcregs *dcaddr));
 
 void dc_tty_init __P((struct dc_softc *sc, dev_t dev));
+#if NRASTERCONSOLE > 0
 void dc_kbd_init  __P((struct dc_softc *sc, dev_t dev));
 void dc_mouse_init __P((struct dc_softc *sc, dev_t dev));
+#endif
 
 
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */
@@ -300,7 +302,19 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	sc->dc_19200 = speed;
 	sc->dc_modem = dtr_mask;
 	sc->dc_rtscts = rtscts_mask;
+	sc->dc_flags = 0;
 
+	switch (systype) {
+	  case DS_PMAX:
+	  case DS_3MAX:
+		sc->dc_flags |= DC_KBDMOUSE;
+		break;
+	  case DS_MIPSMATE:
+		break;
+	  default:
+		/* XXX error?? */
+		break;
+	}
 
 	/*
 	 * Special handling for consoles.
@@ -311,10 +325,12 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 			dc_tty_init(sc, cn_tab->cn_dev);
 		}
 
+#if NRASTERCONSOLE > 0
 		if (major(cn_tab->cn_dev) == RCONSDEV) {
 			dc_kbd_init(sc, makedev(DCDEV, DCKBD_PORT));
 			dc_mouse_init(sc, makedev(DCDEV, DCMOUSE_PORT));
 		}
+#endif
 	}
 	return (1);
 }
@@ -365,6 +381,7 @@ dc_tty_init(sc, dev)
 	splx(s);
 }
 
+#if NRASTERCONSOLE > 0
 void
 dc_kbd_init(sc, dev)
 	struct dc_softc *sc;
@@ -404,20 +421,18 @@ dc_mouse_init(sc, dev)
 	(void) cold_dcparam(&ctty, &cterm, sc);
 
 
-#if	NRASTERCONSOLE > 0
 	/*
 	 * This is a hack.  As Ted Lemon observed, we want bstreams,
 	 * or failing that, a line discipline to do the inkernel DEC
 	 * mouse tracking required by Xservers.
 	 */
-
 	DELAY(10000);
 	MouseInit(ctty.t_dev, dcPutc, dcGetc);
 	DELAY(10000);
-#endif	/* NRASTERCONSOLE */
 
 	splx(s);
 }
+#endif	/* NRASTERCONSOLE */
 
 /*
  * open tty
@@ -750,7 +765,10 @@ dcrint(sc)
 	int c, cc;
 	int overrun = 0;
 	struct tty **dc_tty;
+#if NRASTERCONSOLE > 0
 	char *cp;
+	int cl;
+#endif
 
 	dc_tty = ((struct dc_softc*)dc_cd.cd_devs[0])->dc_tty;	/* XXX */
 
@@ -765,35 +783,37 @@ dcrint(sc)
 				(c >> 8) & 03);
 			overrun = 1;
 		}
-		/* the keyboard requires special translation */
-		if (tp == dc_tty[DCKBD_PORT]) {
-			if (cc == LK_DO) {
+		if (sc->dc_flags & DC_KBDMOUSE) {
+			/* the keyboard requires special translation */
+			if (tp == dc_tty[DCKBD_PORT]) {
+				if (cc == LK_DO) {
 #ifdef DDB
-				spl0();
-				Debugger();
-				return;
+					spl0();
+					Debugger();
+					return;
 #endif
-			}
+				}
 
 #ifdef DEBUG
-			debugChar = cc;
+				debugChar = cc;
 #endif
-			if (dcDivertXInput) {
-				(*dcDivertXInput)(cc);
+				if (dcDivertXInput) {
+					(*dcDivertXInput)(cc);
+					return;
+				}
+#if NRASTERCONSOLE > 0
+				if ((cp = kbdMapChar(cc, &cl)) == NULL)
+					return;
+				while (cl--)
+					rcons_input(0, *cp++);
+#endif
+				return;
+			} else if (tp == dc_tty[DCMOUSE_PORT] && dcMouseButtons) {
+#if NRASTERCONSOLE > 0
+				mouseInput(cc);
+#endif
 				return;
 			}
-#if NRASTERCONSOLE > 0
-			if ((cp = kbdMapChar(cc)) == NULL)
-				return;
-			while (*cp)
-				rcons_input(0, *cp++);
-#endif
-			return;
-		} else if (tp == dc_tty[DCMOUSE_PORT] && dcMouseButtons) {
-#if NRASTERCONSOLE > 0
-			mouseInput(cc);
-#endif
-			return;
 		}
 		if (!(tp->t_state & TS_ISOPEN)) {
 			wakeup((caddr_t)&tp->t_rawq);
@@ -804,7 +824,7 @@ dcrint(sc)
 		}
 #ifdef DDB
 		if (c & RBUF_FERR && tp->t_dev == cn_tab->cn_dev) {
-			Debugger();
+			console_debugger();
 			continue;
 		}
 #endif

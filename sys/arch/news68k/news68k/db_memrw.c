@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1 1999/12/09 14:53:16 tsutsui Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.1.2.1 1999/12/27 18:33:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

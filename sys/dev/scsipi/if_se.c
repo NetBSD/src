@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.25 1999/09/30 22:57:53 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.25.8.1 1999/12/27 18:35:34 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -471,7 +471,7 @@ se_ifstart(ifp)
 	error = se_scsipi_cmd(sc->sc_link,
 	    (struct scsipi_generic *)&send_cmd, sizeof(send_cmd),
 	    sc->sc_tbuf, len, SERETRIES,
-	    SETIMEOUT, NULL, XS_CTL_NOSLEEP|XS_CTL_DATA_OUT);
+	    SETIMEOUT, NULL, XS_CTL_NOSLEEP|XS_CTL_ASYNC|XS_CTL_DATA_OUT);
 	if (error) {
 		printf("%s: not queued, error %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -567,7 +567,7 @@ se_recv(v)
 	error = se_scsipi_cmd(sc->sc_link,
 	    (struct scsipi_generic *)&recv_cmd, sizeof(recv_cmd),
 	    sc->sc_rbuf, RBUF_LEN, SERETRIES, SETIMEOUT, NULL,
-	    XS_CTL_NOSLEEP|XS_CTL_DATA_IN);
+	    XS_CTL_NOSLEEP|XS_CTL_ASYNC|XS_CTL_DATA_IN);
 	if (error)
 		timeout(se_recv, (void *)sc, se_poll);
 }

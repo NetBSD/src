@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_func.h,v 1.2 1999/11/21 10:40:10 veego Exp $	*/
+/*	$NetBSD: ns_func.h,v 1.2.4.1 1999/12/27 18:27:19 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1985, 1990

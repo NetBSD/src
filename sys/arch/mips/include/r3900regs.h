@@ -1,4 +1,4 @@
-/*	$NetBSD: r3900regs.h,v 1.1 1999/11/29 11:13:11 uch Exp $ */
+/*	$NetBSD: r3900regs.h,v 1.1.2.1 1999/12/27 18:32:46 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ulimit.c,v 1.3 1998/02/03 07:48:32 mycroft Exp $	*/
+/*	$NetBSD: c_ulimit.c,v 1.3.4.1 1999/12/27 18:27:01 wrstuden Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -33,6 +33,12 @@ extern	long ulimit();
 
 #define SOFT	0x1
 #define HARD	0x2
+
+#ifdef RLIM_INFINITY
+# define KSH_RLIM_INFINITY RLIM_INFINITY
+#else
+# define KSH_RLIM_INFINITY ((rlim_t) 1 << (sizeof(rlim_t) * 8 - 1) - 1)
+#endif /* RLIM_INFINITY */
 
 int
 c_ulimit(wp)
@@ -161,22 +167,28 @@ c_ulimit(wp)
 	wp += builtin_opt.optind;
 	set = *wp ? 1 : 0;
 	if (set) {
-		char *p = *wp;
-
 		if (all || wp[1]) {
 			bi_errorf("too many arguments");
 			return 1;
 		}
-#ifdef RLIM_INFINITY
-		if (strcmp(p, "unlimited") == 0)
-			val = RLIM_INFINITY;
-		else
-#endif /* RLIM_INFINITY */
-		{
+		if (strcmp(wp[0], "unlimited") == 0)
+			val = KSH_RLIM_INFINITY;
+		else {
 			long rval;
 
-			if (!evaluate(p, &rval, TRUE))
+			if (!evaluate(wp[0], &rval, KSH_RETURN_ERROR))
 				return 1;
+			/* Avoid problems caused by typos that
+			 * evaluate misses due to evaluating unset
+			 * parameters to 0...
+			 * If this causes problems, will have to
+			 * add parameter to evaluate() to control
+			 * if unset params are 0 or an error.
+			 */
+			if (!rval && !digit(wp[0][0])) {
+			    bi_errorf("invalid limit: %s", wp[0]);
+			    return 1;
+			}
 			val = rval * l->factor;
 		}
 	}
@@ -220,7 +232,11 @@ c_ulimit(wp)
 			if (how & HARD)
 				limit.rlim_max = val;
 			if (setrlimit(l->scmd, &limit) < 0) {
-				bi_errorf("bad limit: %s", strerror(errno));
+				if (errno == EPERM)
+					bi_errorf("exceeds allowable limit");
+				else
+					bi_errorf("bad limit: %s",
+						strerror(errno));
 				return 1;
 			}
 		} else {

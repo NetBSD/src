@@ -1,4 +1,4 @@
-/*	$NetBSD: romcalls.S,v 1.2 1999/12/17 07:33:20 tsubai Exp $	*/
+/*	$NetBSD: romcalls.S,v 1.2.2.1 1999/12/27 18:33:11 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.

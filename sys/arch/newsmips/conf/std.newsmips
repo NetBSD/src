@@ -1,6 +1,10 @@
-#	$NetBSD: std.newsmips,v 1.5 1999/03/24 06:06:10 mrg Exp $
+#	$NetBSD: std.newsmips,v 1.5.14.1 1999/12/27 18:33:06 wrstuden Exp $
 
 machine newsmips mips
+
+prefix ../gnu/sys
+cinclude "conf/files.softdep"
+prefix
 
 options	EXEC_ELF32	# exec ELF32 binaries
 options	EXEC_SCRIPT	# exec #! scripts

@@ -1,4 +1,4 @@
-/*	$NetBSD: div64.S,v 1.1 1999/12/09 09:08:00 itohy Exp $	*/
+/*	$NetBSD: div64.S,v 1.1.2.1 1999/12/27 18:30:19 wrstuden Exp $	*/
 
 #include <m68k/asm.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfdreg.h,v 1.2 1996/12/14 13:47:14 leo Exp $	*/
+/*	$NetBSD: hdfdreg.h,v 1.2.32.1 1999/12/27 18:31:49 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -53,27 +53,29 @@
 #define NE7CMD_CONFIGURE	0x13
 #define NE7CMD_LOCK		0x94
 
+#define	FD_IOBASE		0xfff00080
+#define	FD_IOSIZE		0x80
+
 /* registers */
-#define	fdout	0xc0	/* Digital Output Register (W) */
+#define	fdout	0x40	/* Digital Output Register (W) */
 #define	FDO_FDSEL	0x03	/*  floppy device select */
 #define	FDO_FRST	0x04	/*  floppy controller reset */
 #define	FDO_FDMAEN	0x08	/*  enable floppy DMA and Interrupt */
 #define	FDO_MOEN(n)	((1 << n) * 0x10)	/* motor enable */
 
-#define	fdsts	0x80	/* NEC 765 Main Status Register (R) */
-#define	fddata	0x82	/* NEC 765 Data Register (R/W) */
+#define	fdsts	0x00	/* NEC 765 Main Status Register (R) */
+#define	fddata	0x02	/* NEC 765 Data Register (R/W) */
 
-#define	fdctl	0xe0	/* Control Register (W) */
+#define	fdctl	0x60	/* Control Register (W) */
 #define	FDC_500KBPS	0x00	/* 500KBPS MFM drive transfer rate */
 #define	FDC_300KBPS	0x01	/* 300KBPS MFM drive transfer rate */
 #define	FDC_250KBPS	0x02	/* 250KBPS MFM drive transfer rate */
 #define	FDC_125KBPS	0x03	/* 125KBPS FM drive transfer rate */
 
-#define	fdin	0xe0	/* Digital Input Register (R) */
+#define	fdin	0x60	/* Digital Input Register (R) */
 #define	FDI_DCHG	0x80	/* diskette has been changed */
 
 #define	FDC_BSIZE	512
-#define	FDC_NPORT	8
 #define	FDC_MAXIOSIZE	NBPG	/* XXX should be MAXBSIZE */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.13 1999/03/23 21:46:47 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.13.12.1 1999/12/27 18:36:10 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ typedef	void (*ifm_stat_cb_t) __P((struct ifnet *ifp, struct ifmediareq *req));
  * In-kernel representation of a single supported media type.
  */
 struct ifmedia_entry {
-	LIST_ENTRY(ifmedia_entry) ifm_list;
+	TAILQ_ENTRY(ifmedia_entry) ifm_list;
 	int	ifm_media;	/* description of this media attachment */
 	int	ifm_data;	/* for driver-specific use */
 	void	*ifm_aux;	/* for driver-specific use */
@@ -114,7 +114,7 @@ struct ifmedia {
 	int	ifm_mask;	/* mask of changes we don't care about */
 	int	ifm_media;	/* current user-set media word */
 	struct ifmedia_entry *ifm_cur;	/* currently selected media */
-	LIST_HEAD(, ifmedia_entry) ifm_list; /* list of all supported media */
+	TAILQ_HEAD(, ifmedia_entry) ifm_list; /* list of all supported media */
 	ifm_change_cb_t	ifm_change;	/* media change driver callback */
 	ifm_stat_cb_t	ifm_status;	/* media status driver callback */
 };
@@ -136,6 +136,10 @@ void	ifmedia_set __P((struct ifmedia *ifm, int mword));
 /* Common ioctl function for getting/setting media, called by driver. */
 int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 	    struct ifmedia *ifm, u_long cmd));
+
+/* Look up a media entry. */
+struct ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm, int flags,
+	    int mask));
 
 #endif /*_KERNEL */
 

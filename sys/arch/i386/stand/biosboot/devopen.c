@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.8 1999/04/14 11:45:39 drochner Exp $	 */
+/*	$NetBSD: devopen.c,v 1.8.6.1 1999/12/27 18:32:28 wrstuden Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -88,9 +88,6 @@ dev2bios(devname, unit, biosdev)
 		}
 	if (i == NUMBIOSDEVS)
 		return (ENXIO);
-
-	if (unit >= 4)		/* ??? */
-		return (EUNIT);
 
 	return (0);
 }

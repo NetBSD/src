@@ -1,4 +1,4 @@
-/* $NetBSD: 3c90xb.c,v 1.4 1999/07/15 18:00:27 drochner Exp $ */
+/* $NetBSD: 3c90xb.c,v 1.4.8.1 1999/12/27 18:32:29 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -97,6 +97,7 @@ static struct {
 } excards[] = {
 	{0x9005, 0}, /* 3c900b Combo */
 	{0x9055, 1}, /* 3c905b TP */
+	{0x9058, 0}, /* 3c905b Combo */
 	{-1}
 }, *excard;
 
@@ -109,6 +110,7 @@ static struct mtabentry {
 	{ELINKMEDIA_10BASE_T, ELINK_PCI_10BASE_T, "UTP"},
 	{ELINKMEDIA_AUI, ELINK_PCI_AUI, "AUI"},
 	{ELINKMEDIA_MII, ELINK_PCI_100BASE_MII, "MII"},
+	{ELINKMEDIA_100BASE_TX, ELINK_PCI_100BASE_TX, "100TX"},
 };
 
 #if defined(_STANDALONE) && !defined(SUPPORT_NO_NETBSD)
@@ -240,6 +242,9 @@ ex_set_media()
 	case ETHERMEDIUM_AUI:
 		CSR_WRITE_2(ELINK_W4_MEDIA_TYPE, SQE_ENABLE);
 		delay(800);
+		break;
+	case ETHERMEDIUM_100TX:
+		CSR_WRITE_2(ELINK_W4_MEDIA_TYPE, LINKBEAT_ENABLE);
 		break;
 	}
 

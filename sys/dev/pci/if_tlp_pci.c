@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.20 1999/09/30 17:48:25 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.20.6.1 1999/12/27 18:35:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+
+#include <machine/endian.h>
  
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -79,6 +81,7 @@
 #include <machine/intr.h>
 
 #include <dev/mii/miivar.h>
+#include <dev/mii/mii_bitbang.h>
 
 #include <dev/ic/tulipreg.h>
 #include <dev/ic/tulipvar.h>
@@ -95,6 +98,7 @@
 #define	TULIP_PCI_CFDA		0x40	/* configuration driver area */
 
 #define	CFDA_SLEEP		0x80000000	/* sleep mode */
+#define	CFDA_SNOOZE		0x40000000	/* snooze mode */
 
 struct tulip_pci_softc {
 	struct tulip_softc sc_tulip;	/* real Tulip softc */
@@ -147,7 +151,7 @@ const struct tulip_pci_product {
 #endif
 #ifdef TLP_MATCH_21142
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21142,
-	  TULIP_CHIP_21142,		0 },
+	  TULIP_CHIP_21142,		0xe0 },
 #endif
 
 	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_82C168,
@@ -229,6 +233,12 @@ const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
 	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
 	{ tlp_pci_dec_quirks,		{ 0x00, 0x00, 0xf8 } },
 	{ tlp_pci_asante_21140_quirks,	{ 0x00, 0x00, 0x94 } },
+	{ NULL,				{ 0, 0, 0 } }
+};
+
+const struct tlp_pci_quirks tlp_pci_21142_quirks[] = {
+	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
+	{ tlp_pci_dec_quirks,		{ 0x00, 0x00, 0xf8 } },
 	{ NULL,				{ 0, 0, 0 } }
 };
 
@@ -438,6 +448,8 @@ tlp_pci_attach(parent, self, aux)
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21140:
 	case TULIP_CHIP_21140A:
+	case TULIP_CHIP_21142:
+	case TULIP_CHIP_21143:
 	case TULIP_CHIP_MX98713A:
 	case TULIP_CHIP_MX98715:
 	case TULIP_CHIP_MX98715A:
@@ -446,9 +458,9 @@ tlp_pci_attach(parent, self, aux)
 		 * Clear the "sleep mode" bit in the CFDA register.
 		 */
 		reg = pci_conf_read(pc, pa->pa_tag, TULIP_PCI_CFDA);
-		if (reg & CFDA_SLEEP)
+		if (reg & (CFDA_SLEEP|CFDA_SNOOZE))
 			pci_conf_write(pc, pa->pa_tag, TULIP_PCI_CFDA,
-			    reg & ~CFDA_SLEEP);
+			    reg & ~(CFDA_SLEEP|CFDA_SNOOZE));
 		break;
 
 	default:
@@ -515,13 +527,27 @@ tlp_pci_attach(parent, self, aux)
 	    PCI_BHLC_REG));
 
 	/*
-	 * Read the contents of the Ethernet Address ROM/SROM.
+	 * Get PCI data moving command info.
 	 */
+	if (pa->pa_flags & PCI_FLAGS_MRL_OKAY)
+		sc->sc_flags |= TULIPF_MRL;
+	if (pa->pa_flags & PCI_FLAGS_MRM_OKAY)
+		sc->sc_flags |= TULIPF_MRM;
+	if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
+		sc->sc_flags |= TULIPF_MWI;
+
+	/*
+	 * Read the contents of the Ethernet Address ROM/SROM.  Some
+	 * chips have a 128 byte SROM (6 address bits), and some
+	 * have a 512 byte SROM (8 address bits).
+	 */
+	sc->sc_srom_addrbits = 6;
+ try_again:
 	memset(sc->sc_srom, 0, sizeof(sc->sc_srom));
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21040:
 		TULIP_WRITE(sc, CSR_MIIROM, MIIROM_SROMCS);
-		for (i = 0; i < sizeof(sc->sc_srom); i++) {
+		for (i = 0; i < TULIP_ROM_SIZE(sc->sc_srom_addrbits); i++) {
 			for (j = 0; j < 10000; j++) {
 				val = TULIP_READ(sc, CSR_MIIROM);
 				if ((val & MIIROM_DN) == 0)
@@ -561,10 +587,11 @@ tlp_pci_attach(parent, self, aux)
 	    }
 
 	default:
-		tlp_read_srom(sc, 0, sizeof(sc->sc_srom) >> 1, sc->sc_srom);
+		tlp_read_srom(sc, 0, TULIP_ROM_SIZE(sc->sc_srom_addrbits) >> 1,
+		    sc->sc_srom);
 #if 0
 		printf("SROM CONTENTS:");
-		for (i = 0; i < sizeof(sc->sc_srom); i++) {
+		for (i = 0; i < TULIP_ROM_SIZE(sc->sc_srom_addrbits); i++) {
 			if ((i % 8) == 0)
 				printf("\n\t");
 			printf("0x%02x ", sc->sc_srom[i]);
@@ -682,6 +709,35 @@ tlp_pci_attach(parent, self, aux)
 			goto cant_cope;
 		break;
 
+	case TULIP_CHIP_21142:
+	case TULIP_CHIP_21143:
+		/* Check for new format SROM. */
+		if (tlp_isv_srom_enaddr(sc, enaddr) == 0) {
+			/*
+			 * Not an ISV SROM; can't cope, for now.
+			 */
+			goto cant_cope;
+		} else {
+			/*
+			 * We start out with the 2114x ISV media switch.
+			 * When we search for quirks, we may change to
+			 * a different switch.
+			 */
+			sc->sc_mediasw = &tlp_2114x_isv_mediasw;
+		}
+
+		/*
+		 * Deal with any quirks this board might have.
+		 */
+		tlp_pci_get_quirks(psc, enaddr, tlp_pci_21142_quirks);
+
+		/*
+		 * Bail out now if we can't deal with this board.
+		 */
+		if (sc->sc_mediasw == NULL)
+			goto cant_cope;
+		break;
+
 	case TULIP_CHIP_82C168:
 	case TULIP_CHIP_82C169:
 		/*
@@ -773,6 +829,22 @@ tlp_pci_attach(parent, self, aux)
 
 	default:
  cant_cope:
+		switch (sc->sc_chip) {
+		case TULIP_CHIP_21143:
+			/*
+			 * Try reading it again, with larger SROM
+			 * size, if we haven't already.
+			 */
+			if (sc->sc_srom_addrbits != 8) {
+				sc->sc_srom_addrbits = 8;
+				goto try_again;
+			}
+			break;
+
+		default:
+			/* Nothing. */
+		}
+
 		printf("%s: sorry, unable to handle your board\n",
 		    sc->sc_dev.dv_xname);
 		return;

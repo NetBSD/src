@@ -1,4 +1,4 @@
-/*	$NetBSD: dinode.h,v 1.11.8.1 1999/12/21 23:20:11 wrstuden Exp $	*/
+/*	$NetBSD: dinode.h,v 1.11.8.2 1999/12/27 18:36:41 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -64,6 +64,8 @@
  */
 
 typedef int32_t ufs_daddr_t;
+typedef long ufs_lbn_t;
+
 #define	NDADDR	12			/* Direct addresses in inode. */
 #define	NIADDR	3			/* Indirect addresses in inode. */
 

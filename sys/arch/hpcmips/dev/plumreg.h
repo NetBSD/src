@@ -1,4 +1,4 @@
-/*	$NetBSD: plumreg.h,v 1.1 1999/11/21 06:50:26 uch Exp $ */
+/*	$NetBSD: plumreg.h,v 1.1.2.1 1999/12/27 18:32:03 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

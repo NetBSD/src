@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.238 1999/09/17 20:04:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.238.8.1 1999/12/27 18:32:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -119,7 +119,7 @@
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 #include <net/netisr.h>
 
-#define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
+#define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
@@ -280,7 +280,7 @@ mac68k_init()
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
 		    high[numranges - 1] + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
-		    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 }
 
@@ -414,7 +414,7 @@ cpu_startup(void)
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -423,7 +423,7 @@ cpu_startup(void)
 				    "buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -456,7 +456,7 @@ cpu_startup(void)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -624,7 +624,7 @@ cpu_reboot(howto, bootstr)
 
 	/* Map the last physical page VA = PA for doboot() */
 	pmap_enter(pmap_kernel(), (vaddr_t)maxaddr, (vaddr_t)maxaddr,
-	    VM_PROT_ALL, TRUE, VM_PROT_ALL);
+	    VM_PROT_ALL, VM_PROT_ALL|PMAP_WIRED);
 
 	printf("rebooting...\n");
 	DELAY(1000000);
@@ -745,7 +745,7 @@ long	dumplo = 0;		/* blocks */
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first CLBYTES of disk space in
+ * Dumps always skip the first NBPG of disk space in
  * case there might be a disk label stored there.  If there
  * is extra space, put dump at the end to reduce the chance
  * that swapping trashes it.
@@ -777,7 +777,7 @@ cpu_dumpconf()
 
 	/*
 	 * Check to see if we will fit.  Note we always skip the
-	 * first CLBYTES in case there is a disk label there.
+	 * first NBPG in case there is a disk label there.
 	 */
 	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
 		dumpsize = 0;
@@ -854,7 +854,7 @@ dumpsys()
 			maddr = m->ram_segs[seg].start;
 		}
 		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
-		    VM_PROT_READ, TRUE, VM_PROT_READ);
+		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
  bad:

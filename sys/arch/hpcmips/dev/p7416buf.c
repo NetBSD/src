@@ -1,4 +1,4 @@
-/*	$NetBSD: p7416buf.c,v 1.2 1999/12/08 16:22:10 uch Exp $ */
+/*	$NetBSD: p7416buf.c,v 1.2.2.1 1999/12/27 18:32:02 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

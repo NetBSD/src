@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.7 1999/08/23 08:45:11 kleink Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.7.2.1 1999/12/27 18:29:27 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigreturn.S,v 1.7 1999/08/23 08:45:11 kleink Exp $")
+	RCSID("$NetBSD: sigreturn.S,v 1.7.2.1 1999/12/27 18:29:27 wrstuden Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -50,9 +50,14 @@
  */
 #ifdef GPROF
 #undef ENTRY
+#ifdef __ELF__
+#define MCOUNT_SYMBOL	__mcount
+#else
+#define MCOUNT_SYMBOL	mcount
+#endif
 #define	ENTRY(x) \
 	.globl _/**/x; _ALIGN_TEXT; _/**/x:  pusha ; \
-	.data; 1:; .long 0; .text; movl $1b,%eax; call mcount; popa ; nop
+	.data; 1:; .long 0; .text; movl $1b,%eax; call MCOUNT_SYMBOL; popa ; nop
 #endif /* GPROF */
 
 WARN_REFERENCES(sigreturn, \

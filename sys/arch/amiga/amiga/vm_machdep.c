@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.50 1999/09/25 21:47:05 is Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.50.8.1 1999/12/27 18:31:32 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -161,7 +161,6 @@ cpu_exit(p)
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
  */
 void
 pagemove(from, to, size)
@@ -172,7 +171,7 @@ pagemove(from, to, size)
 	boolean_t rv;
 
 #ifdef DEBUG
-	if (size & CLOFSET)
+	if (size & PGOFSET)
 		panic("pagemove");
 #endif
 	while (size > 0) {
@@ -186,8 +185,8 @@ pagemove(from, to, size)
 		pmap_remove(pmap_kernel(),
 			    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-			   (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1,
-			   VM_PROT_READ|VM_PROT_WRITE);
+			   (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE,
+			   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -374,7 +373,8 @@ vmapbuf(bp, len)
 	do {
 		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
-		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE,
+		    PMAP_WIRED);
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;

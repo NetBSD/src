@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.6 1999/11/09 09:20:30 haya Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.6.2.1 1999/12/27 18:34:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999

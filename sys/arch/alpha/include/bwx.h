@@ -1,4 +1,4 @@
-/* $NetBSD: bwx.h,v 1.1 1999/12/02 19:41:40 thorpej Exp $ */
+/* $NetBSD: bwx.h,v 1.1.2.1 1999/12/27 18:31:25 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

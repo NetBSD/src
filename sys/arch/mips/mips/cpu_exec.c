@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.20 1999/04/24 08:10:38 simonb Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.20.6.1 1999/12/27 18:32:46 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,9 +58,7 @@
 #include <machine/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
 
-#include <machine/elf.h>
-/*XXX*/
-int	exec_elf_mips32_makecmds __P((struct proc *, struct exec_package *));
+int	mips_elf_makecmds __P((struct proc *, struct exec_package *));
 
 
 /*
@@ -81,10 +79,10 @@ cpu_exec_aout_makecmds(p, epp)
 	/* If COMPAT_09 is defined, allow loading of old-style 4.4bsd a.out
 	   executables. */
 #ifdef COMPAT_09
-	struct bsd_aouthdr *hdr = (struct bsd_aouthdr *)epp -> ep_hdr;
+	struct bsd_aouthdr *hdr = (struct bsd_aouthdr *)epp->ep_hdr;
 
 	/* Only handle paged files (laziness). */
-	if (hdr -> a_magic != BSD_ZMAGIC)
+	if (hdr->a_magic != BSD_ZMAGIC)
 #endif
 	{
 		/* If that failed, try old NetBSD-1.1 elf format */
@@ -95,18 +93,18 @@ cpu_exec_aout_makecmds(p, epp)
 
 
 #ifdef COMPAT_09
-	epp -> ep_taddr = 0x1000;
-	epp -> ep_entry = hdr -> a_entry;
-	epp -> ep_tsize = hdr -> a_text;
-	epp -> ep_daddr = epp -> ep_taddr + hdr -> a_text;
-	epp -> ep_dsize = hdr -> a_data + hdr -> a_bss;
+	epp->ep_taddr = 0x1000;
+	epp->ep_entry = hdr->a_entry;
+	epp->ep_tsize = hdr->a_text;
+	epp->ep_daddr = epp->ep_taddr + hdr->a_text;
+	epp->ep_dsize = hdr->a_data + hdr->a_bss;
 
 	/*
 	 * check if vnode is in open for writing, because we want to
 	 * demand-page out of it.  if it is, don't do it, for various
 	 * reasons
 	 */
-	if ((hdr -> a_text != 0 || hdr -> a_data != 0)
+	if ((hdr->a_text != 0 || hdr->a_data != 0)
 	    && epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
@@ -117,17 +115,17 @@ cpu_exec_aout_makecmds(p, epp)
 	epp->ep_vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, hdr -> a_text,
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, hdr->a_text,
 	    epp->ep_taddr, epp->ep_vp, 0, VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, hdr -> a_data,
-	    epp->ep_daddr, epp->ep_vp, hdr -> a_text,
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, hdr->a_data,
+	    epp->ep_daddr, epp->ep_vp, hdr->a_text,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, hdr -> a_bss,
-	    epp->ep_daddr + hdr -> a_data, NULLVP, 0,
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, hdr->a_bss,
+	    epp->ep_daddr + hdr->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return exec_aout_setup_stack(p, epp);
@@ -180,34 +178,37 @@ mips_elf_makecmds (p, epp)
         struct proc *p;
         struct exec_package *epp;
 {
-	struct ehdr *ex = (struct ehdr *)epp -> ep_hdr;
-	struct phdr ph;
+	Elf32_Ehdr *ex = (Elf32_Ehdr *)epp->ep_hdr;
+	Elf32_Phdr ph;
 	int i, error;
 	size_t resid;
 
 	/* Make sure we got enough data to check magic numbers... */
-	if (epp -> ep_hdrvalid < sizeof (struct ehdr)) {
+	if (epp->ep_hdrvalid < sizeof (Elf32_Ehdr)) {
 #ifdef DIAGNOSTIC
-	    if (epp -> ep_hdrlen < sizeof (struct ehdr))
-		printf ("mips_elf_makecmds: execsw hdrsize too short!\n");
+		if (epp->ep_hdrlen < sizeof (Elf32_Ehdr))
+			printf ("mips_elf_makecmds: execsw hdrsize too short!\n");
 #endif
 	    return ENOEXEC;
 	}
 
 	/* See if it's got the basic elf magic number leadin... */
-	if (ex -> elf_magic [0] != 127
-	    || bcmp ("ELF", &ex -> elf_magic [1], 3)) {
+	if (bcmp(ex->e_ident, ELFMAG, SELFMAG) != 0) {
 		return ENOEXEC;
 	}
-		/* XXX: Check other magic numbers here. */
+
+	/* XXX: Check other magic numbers here. */
+	if (ex->e_ident[EI_CLASS] != ELFCLASS32) {
+		return ENOEXEC;
+	}
 
 		/* See if we got any program header information... */
-	if (!ex -> phoff || !ex -> phcount) {
+	if (!ex->e_phoff || !ex->e_phnum) {
 		return ENOEXEC;
 	}
 
 	/* Set the entry point... */
-	epp -> ep_entry = ex -> entry;
+	epp->ep_entry = ex->e_entry;
 
 	/*
 	 * Check if vnode is open for writing, because we want to
@@ -227,12 +228,12 @@ mips_elf_makecmds (p, epp)
 	epp->ep_daddr = 0;
 	epp->ep_dsize = 0;
 
-	for (i = 0; i < ex -> phcount; i++) {
+	for (i = 0; i < ex->e_phnum; i++) {
 #ifdef DEBUG
 		/*printf("obsolete elf: mapping %x %x %x\n", resid);*/
 #endif
-		if ((error = vn_rdwr(UIO_READ, epp -> ep_vp, (caddr_t)&ph,
-				    sizeof ph, ex -> phoff + i * sizeof ph,
+		if ((error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t)&ph,
+				    sizeof ph, ex->e_phoff + i * sizeof ph,
 				    UIO_SYSSPACE, IO_NODELOCKED,
 				    p->p_ucred, &resid, p))
 		    != 0)
@@ -243,21 +244,21 @@ mips_elf_makecmds (p, epp)
 		}
 
 		/* We only care about loadable sections... */
-		if (ph.type == PT_LOAD) {
+		if (ph.p_type == PT_LOAD) {
 			int prot = VM_PROT_READ | VM_PROT_EXECUTE;
 			int residue;
 			unsigned vaddr, offset, length;
 
-			vaddr = ph.vaddr;
-			offset = ph.offset;
-			length = ph.filesz;
-			residue = ph.memsz - ph.filesz;
+			vaddr = ph.p_vaddr;
+			offset = ph.p_offset;
+			length = ph.p_filesz;
+			residue = ph.p_memsz - ph.p_filesz;
 
-			if (ph.flags & PF_W) {
+			if (ph.p_flags & PF_W) {
 				prot |= VM_PROT_WRITE;
-				if (!epp->ep_daddr || vaddr < epp -> ep_daddr)
+				if (!epp->ep_daddr || vaddr < epp->ep_daddr)
 					epp->ep_daddr = vaddr;
-				epp->ep_dsize += ph.memsz;
+				epp->ep_dsize += ph.p_memsz;
 				/* Read the data from the file... */
 				NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
 					  length, vaddr,
@@ -271,21 +272,21 @@ mips_elf_makecmds (p, epp)
 				if (residue) {
 					vaddr &= ~(NBPG - 1);
 					offset &= ~(NBPG - 1);
-					length = roundup (length + ph.vaddr
+					length = roundup (length + ph.p_vaddr
 							  - vaddr, NBPG);
-					residue = (ph.vaddr + ph.memsz)
+					residue = (ph.p_vaddr + ph.p_memsz)
 						  - (vaddr + length);
 				}
 			} else {
 				vaddr &= ~(NBPG - 1);
 				offset &= ~(NBPG - 1);
-				length = roundup (length + ph.vaddr - vaddr,
+				length = roundup (length + ph.p_vaddr - vaddr,
 						  NBPG);
-				residue = (ph.vaddr + ph.memsz)
+				residue = (ph.p_vaddr + ph.p_memsz)
 					  - (vaddr + length);
-				if (!epp->ep_taddr || vaddr < epp -> ep_taddr)
+				if (!epp->ep_taddr || vaddr < epp->ep_taddr)
 					epp->ep_taddr = vaddr;
-				epp->ep_tsize += ph.memsz;
+				epp->ep_tsize += ph.p_memsz;
 				/* Map the data from the file... */
 				NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn,
 					  length, vaddr,

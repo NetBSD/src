@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.13 1999/05/26 04:23:58 nisimura Exp $ */
+/*	$NetBSD: autoconf.h,v 1.13.8.1 1999/12/27 18:33:26 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,13 +31,11 @@
  * Machine-dependent structures of autoconfiguration
  */
 
-struct confargs {
-	const char	*ca_name;		/* device name */
-	int		ca_slot;		/* CPU "slot" number */
+struct mainbus_attach_args {
+	const char *ma_name;		/* device name */
+	int	    ma_slot;		/* CPU "slot" number; only meaningful
+					   when attaching CPUs */
 };
-
-typedef void	*intr_arg_t;		/* pointer to some softc */
-typedef int	(*intr_handler_t) __P((intr_arg_t));
 
 int	badaddr	__P((void *, u_int));
 void	makebootdev __P((char *));

@@ -1,4 +1,4 @@
-.\"	$NetBSD: bah.4,v 1.8 1999/03/16 01:19:19 garbled Exp $
+.\"	$NetBSD: bah.4,v 1.8.4.1 1999/12/27 18:30:48 wrstuden Exp $
 .\"
 .\" Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Dt BAH 4 amiga
 .Sh NAME
 .Nm bah
-.Nd ARCnet driver for SMC COM90C26 based boards
+.Nd ARCnet network driver for SMC COM90C26 based boards
 .Sh SYNOPSIS
 .Cd "bah* at zbus0"
 .Sh DESCRIPTION
@@ -55,6 +55,12 @@ Each of the host's network addresses
 is specified at boot time with an
 .Dv SIOCSIFADDR
 .Xr ioctl .
+The interface MTU is 507 for protocols that do not use link level fragmentation
+and 60480 bytes for the others. The routing layer may specify additional
+limits.
+.br
+Currently supported protocols are IPv4(+ARP), and IPv6.
+.Sh IP version 4 considerations
 When the NOARP flag is set on the 
 .Nm 
 interface, 
@@ -102,6 +108,8 @@ Ameristar's ARCnet card, manufacturer\ 1053, product\ 9
 .Xr RFC1051 
 ,
 .Xr RFC1201
+,
+.Xr RFC2497
 .br
 ARCnet Packet Header Definition Standard, Novell Inc., 1989
 .Sh STANDARDS

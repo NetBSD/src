@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.7 1999/01/31 09:21:19 mrg Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.7.14.1 1999/12/27 18:33:57 wrstuden Exp $ */
 
 /*
  * Mach Operating System
@@ -47,7 +47,7 @@ typedef	long		db_expr_t;	/* expression - signed */
 
 #if 1
 typedef struct {
-	struct trapframe ddb_tf;
+	struct trapframe64 ddb_tf;
 	struct frame64	 ddb_fr;
 } db_regs_t;
 #else
@@ -112,7 +112,7 @@ db_regs_t		ddb_regs;	/* register state */
 #define DB_MACHINE_COMMANDS
 
 void db_machine_init __P((void));
-int kdb_trap __P((int, struct trapframe *));
+int kdb_trap __P((int, struct trapframe64 *));
 
 /*
  * We will use elf symbols in DDB when they work.

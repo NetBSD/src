@@ -1,4 +1,5 @@
-/*	$NetBSD: uhcireg.h,v 1.7 1999/08/22 23:19:57 augustss Exp $	*/
+/*	$NetBSD: uhcireg.h,v 1.7.8.1 1999/12/27 18:35:43 wrstuden Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/uhcireg.h,v 1.12 1999/11/17 22:33:42 n_hibma Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +47,7 @@
 #define  PCI_USBREV_MASK	0xff
 #define  PCI_USBREV_PRE_1_0	0x00
 #define  PCI_USBREV_1_0		0x10
+#define  PCI_USBREV_1_1		0x11
 
 #define PCI_LEGSUP		0xc0	/* Legacy Support register */
 #define  PCI_LEGSUP_USBPIRQDEN	0x2000	/* USB PIRQ D Enable */

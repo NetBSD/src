@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigpending.2,v 1.4 1997/07/14 23:20:18 kleink Exp $
+.\"	$NetBSD: sigpending.2,v 1.4.6.1 1999/12/27 18:29:52 wrstuden Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,6 +42,8 @@
 .Sh NAME
 .Nm sigpending
 .Nd get pending signals
+.Sh LIBRARY
+.Lb libc
 .Sh SYNOPSIS
 .Fd #include <signal.h>
 .Ft int
@@ -66,7 +68,8 @@ The
 function does not currently detect any errors.
 .Sh SEE ALSO
 .Xr sigaction 2 ,
-.Xr sigprocmask 2
+.Xr sigprocmask 2 ,
+.Xr signal 7
 .Sh STANDARDS
 The
 .Nm sigpending

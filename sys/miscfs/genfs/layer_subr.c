@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.3 1999/07/15 21:30:32 wrstuden Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.3.8.1 1999/12/27 18:36:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -190,6 +190,7 @@ layer_node_alloc(mp, lowervp, vpp)
 	if (vp->v_type == VBLK || vp->v_type == VCHR) {
 		MALLOC(vp->v_specinfo, struct specinfo *,
 		    sizeof(struct specinfo), M_VNODE, M_WAITOK);
+		vp->v_hashchain = NULL;
 		vp->v_rdev = lowervp->v_rdev;
 	}
 

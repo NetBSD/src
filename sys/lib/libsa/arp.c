@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.18 1997/07/07 15:52:49 drochner Exp $	*/
+/*	$NetBSD: arp.c,v 1.18.26.1 1999/12/27 18:36:00 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.

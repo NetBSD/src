@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.40 1999/08/27 20:02:05 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.40.6.1 1999/12/27 18:34:13 wrstuden Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,10 +33,10 @@
 		
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/user.h>
 
 #include <vm/vm.h>
 
@@ -223,6 +223,9 @@ start()
         avail_end = TRUNC_PAGE(avail_end); /* be sure */
 
 	proc0.p_addr = (void *)proc0paddr; /* XXX */
+
+	/* Clear the used parts of the uarea except for the pcb */
+	bzero(&proc0.p_addr->u_stats, sizeof(struct user) - sizeof(struct pcb));
 
 	pmap_bootstrap();
 

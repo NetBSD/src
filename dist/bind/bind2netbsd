@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.9 1999/11/20 18:21:56 veego Exp $
+#	$NetBSD: bind2netbsd,v 1.9.4.1 1999/12/27 18:27:14 wrstuden Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.

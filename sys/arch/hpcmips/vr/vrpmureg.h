@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmureg.h,v 1.1.1.1 1999/09/16 12:23:33 takemura Exp $	*/
+/*	$NetBSD: vrpmureg.h,v 1.1.1.1.8.1 1999/12/27 18:32:16 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -55,6 +55,13 @@
 #define		PMUINT_BATTINTR		(1<<1)		/* Low batt during normal operation */
 #define		PMUINT_POWERSW		(1)		/* Power Switch */
 
+#define		PMUINT_ALL		(PMUINT_GPIO3|PMUINT_GPIO2|\
+					 PMUINT_GPIO1|PMUINT_GPIO0|\
+					 PMUINT_DCDST|PMUINT_RTC|\
+					 PMUINT_BATT|PMUINT_TIMOUTRST|\
+					 PMUINT_RTCRST|PMUINT_RSTSWRST|\
+					 PMUINT_DMSWRST|PMUINT_BATTINTR|\
+					 PMUINT_POWERSW)
 
 #define	PMUCNT_REG_W	0x002	/* PMU Control Register */
 
@@ -91,6 +98,7 @@
 #define		PMUCNT_GPIO0U		(0<<8)		/* GPIO0 Raise */
 
 #define		PMUCNT_HALTIMERRST	(1<<2)		/* HAL Timer Reset */ 
+#define		PMUCNT_ONE		(1<<1)		/* ALWAYS write 1 */
 
 
 #define	PMUINT2_REG_W	0x004	/* PMU interrupt/Status Register 2 */
@@ -100,6 +108,8 @@
 #define		PMUINT_GPIO10		(1<<13)		/* GPIO10 */
 #define		PMUINT_GPIO9		(1<<12)		/* GPIO9 */
 
+#define		PMUINT2_ALL		(PMUINT_GPIO12|PMUINT_GPIO11|\
+					 PMUINT_GPIO10|PMUINT_GPIO9)
 
 #define	PMUCNT2_REG_W	0x006	/* PMU Control Register 2 */
 #define		PMUCNT_GPIO12MASK	(1<<15)		/* GPIO12 MASK */
@@ -135,6 +145,9 @@
 #define		PMUCNT_GPIO9U		(0<<8)		/* GPIO9 Raise */
 
 
-#define	PMUWAIT_REG_W	0x008	/* PMU Wait Control Register */
+#define	PMUWAIT_REG_W	0x008	/* PMU Wait Control Register (>= vr4111) */
+#define		PMUWAIT_DEFAULT		0x2c00		/* 343.75ms */
+
+#define	PMUDIV_REG_W	0x00C	/* PMU Div Mode Register (>= vr4121) */ 
 
 /* END vrpmureg.h */

@@ -1,8 +1,6 @@
-# $NetBSD: md.sparc,v 1.43 1999/05/18 23:18:18 tron Exp $
+# $NetBSD: md.sparc,v 1.43.2.1 1999/12/27 18:28:32 wrstuden Exp $
 ./sbin/edlabel
-./sbin/ldconfig
 ./usr/bin/fdformat
-./usr/libexec/ld.so
 ./usr/lkm/adosfs.o
 ./usr/lkm/cd9660.o
 ./usr/lkm/coda.o
@@ -23,3 +21,5 @@
 ./usr/mdec/bootxx
 ./usr/mdec/installboot
 ./usr/sbin/eeprom
+./usr/sbin/apmd
+./usr/sbin/tadepolectl

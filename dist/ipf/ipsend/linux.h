@@ -1,4 +1,4 @@
-/*	$NetBSD: linux.h,v 1.1.1.1 1999/12/11 22:24:10 veego Exp $	*/
+/*	$NetBSD: linux.h,v 1.1.1.1.4.1 1999/12/27 18:28:00 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.

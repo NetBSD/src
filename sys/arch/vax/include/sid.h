@@ -1,4 +1,4 @@
-/*	$NetBSD: sid.h,v 1.11 1999/06/28 13:13:53 ragge Exp $	*/
+/*	$NetBSD: sid.h,v 1.11.8.1 1999/12/27 18:34:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -103,6 +103,7 @@
 #define VAX_BTYP_9CC	0x0A000002	/* VAX 6000 model 210/310 */
 #define VAX_BTYP_60	0x0A000003	/* VAXstation 3520, 3540 */
 #define VAX_BTYP_420	0x0A000004	/* VAXstation 3100 models 10 - 48 */
+#define	VAX_BTYP_IS1	0x0A000006	/* Infoserver 1000 */
 #define VAX_BTYP_510	0x0A000007	/* VAXft model 110 */
      /* VAX_BTYP_520	0x0A000007	   VAXft model 310 */
 

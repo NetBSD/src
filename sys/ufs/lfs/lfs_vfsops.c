@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.38.2.1 1999/12/21 23:20:10 wrstuden Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.38.2.2 1999/12/27 18:36:40 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -406,7 +406,6 @@ lfs_mountfs(devvp, mp, p)
 
 	/* Set up the I/O information */
 	fs->lfs_iocount = 0;
-	fs->lfs_dirvcount = 0;
 	fs->lfs_diropwait = 0;
 	fs->lfs_activesb = 0;
 #ifdef LFS_CANNOT_ROLLFW
@@ -444,7 +443,7 @@ lfs_mountfs(devvp, mp, p)
 	ump->um_nindir = fs->lfs_nindir;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
-	devvp->v_specflags |= SI_MOUNTEDON;
+	devvp->v_specmountpoint = mp;
 
 	/*
 	 * We use the ifile vnode for almost every operation.  Instead of
@@ -472,7 +471,9 @@ out:
 		brelse(bp);
 	if (abp)
 		brelse(abp);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
+	VOP_UNLOCK(devvp, 0);
 	if (ump) {
 		free(ump->um_lfs, M_UFSMNT);
 		free(ump, M_UFSMNT);
@@ -529,10 +530,12 @@ lfs_unmount(mp, mntflags, p)
 	vgone(fs->lfs_ivnode);
 
 	ronly = !fs->lfs_ronly;
-	ump->um_devvp->v_specflags &= ~SI_MOUNTEDON;
+	if (ump->um_devvp->v_type != VBAD)
+		ump->um_devvp->v_specmountpoint = NULL;
+	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp,
 	    ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	vrele(ump->um_devvp);
+	vput(ump->um_devvp);
 
 	/* XXX KS - wake up the cleaner so it can die */
 	wakeup(&fs->lfs_nextseg);
@@ -627,9 +630,7 @@ lfs_sync(mp, waitfor, cred, p)
 	return (error);
 }
 
-#ifdef USE_UFS_HASHLOCK
 extern struct lock ufs_hashlock;
-#endif
 
 /*
  * Look up an LFS dinode number to find its incore vnode.  If not already
@@ -658,14 +659,10 @@ lfs_vget(mp, ino, vpp)
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
 
-#ifdef USE_UFS_HASHLOCK
 	do {
-#endif
-		if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
+		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 			return (0);
-#ifdef USE_UFS_HASHLOCK
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
-#endif
 
 	/* Translate the inode number to a disk address. */
 	fs = ump->um_lfs;
@@ -679,9 +676,7 @@ lfs_vget(mp, ino, vpp)
 #endif
 		brelse(bp);
 		if (daddr == LFS_UNUSED_DADDR) {
-#ifdef USE_UFS_HASHLOCK
 			lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-#endif
 			return (ENOENT);
 		}
 	}
@@ -689,9 +684,7 @@ lfs_vget(mp, ino, vpp)
 	/* Allocate new vnode/inode. */
 	if ((error = lfs_vcreate(mp, ino, &vp)) != 0) {
 		*vpp = NULL;
-#ifdef USE_UFS_HASHLOCK
 		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-#endif
 		return (error);
 	}
 
@@ -703,9 +696,7 @@ lfs_vget(mp, ino, vpp)
 	 */
 	ip = VTOI(vp);
 	ufs_ihashins(ip);
-#ifdef USE_UFS_HASHLOCK
 	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-#endif
 
 	/*
 	 * XXX
@@ -730,6 +721,7 @@ lfs_vget(mp, ino, vpp)
 		return (error);
 	}
 	ip->i_din.ffs_din = *lfs_ifind(fs, ino, (struct dinode *)bp->b_data);
+	ip->i_ffs_effnlink = ip->i_ffs_nlink;
 #ifdef LFS_ATIME_IFILE
 	ip->i_ffs_atime = ts.tv_sec;
 	ip->i_ffs_atimensec = ts.tv_nsec;

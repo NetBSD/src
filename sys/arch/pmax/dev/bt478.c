@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.11 1999/09/05 11:34:29 simonb Exp $	*/
+/*	$NetBSD: bt478.c,v 1.11.8.1 1999/12/27 18:33:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -257,7 +257,7 @@ bt478InitColorMap (fi)
 int
 bt478LoadColorMap(fi, bits, index, count)
 	struct fbinfo *fi;
-	caddr_t bits;
+	const u_char *bits;
 	int index, count;
 {
 	VDACRegs *vdac = (VDACRegs *)(fi -> fi_vdac);
@@ -294,7 +294,7 @@ bt478LoadColorMap(fi, bits, index, count)
 int
 bt478GetColorMap(fi, bits, index, count)
 	struct fbinfo *fi;
-	caddr_t bits;
+	u_char *bits;
 	int index, count;
 {
 	u_char *cmap_bits;

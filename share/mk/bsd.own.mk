@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.128 1999/09/14 01:31:11 perry Exp $
+#	$NetBSD: bsd.own.mk,v 1.128.2.1 1999/12/27 18:31:11 wrstuden Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -127,6 +127,7 @@ GNU_ARCH.mipseb=mipseb
 GNU_ARCH.mipsel=mipsel
 GNU_ARCH.ns32k=ns32k
 GNU_ARCH.powerpc=powerpc
+GNU_ARCH.sh3=sh
 GNU_ARCH.sparc=sparc
 GNU_ARCH.sparc64=sparc
 GNU_ARCH.vax=vax
@@ -211,10 +212,16 @@ MKNLS=no
 MKNLS?=yes
 .endif
 
+#
+# MKOBJDIRS controls whether object dirs are created during "make build".
+# MKOBJ controls whether the "make obj" rule does anything.
+#
 .if defined(NOOBJ)
 MKOBJ=no
+MKOBJDIRS=no
 .else
 MKOBJ?=yes
+MKOBJDIRS?=no
 .endif
 
 .if defined(NOPIC)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bereg.h,v 1.2 1999/01/17 20:47:50 pk Exp $	*/
+/*	$NetBSD: bereg.h,v 1.2.14.1 1999/12/27 18:35:32 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -290,8 +290,10 @@ struct be_tregs {
 #define MGMT_PAL_OENAB		0x00000002	/* output enable */
 #define MGMT_PAL_MDIO		0x00000004	/* MDIO data/attached */
 #define MGMT_PAL_EXT_MDIO	MGMT_PAL_MDIO	/* external mdio */
+#define MGMT_PAL_EXT_MDIO_SHIFT	2		/* position of ext mdio bit */
 #define MGMT_PAL_TIMEO		0x00000008	/* tx enable timeout error */
 #define MGMT_PAL_INT_MDIO	MGMT_PAL_TIMEO	/* internal mdio */
+#define MGMT_PAL_INT_MDIO_SHIFT	3		/* position of int mdio bit */
 #define MGMT_PAL_BITS		"\177\020"				\
 				"b\0DLCLOCK\0b\1OENAB\0b\2EXT_MDIO\0"	\
 				"b\3INT_MDIO\0\0"

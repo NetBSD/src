@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.7 1999/10/05 03:35:12 itohy Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.7.2.1 1999/12/27 18:34:42 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -915,18 +915,18 @@ ad1848_set_params(addr, setmode, usemode, p, r)
 	case AUDIO_ENCODING_ULINEAR_LE:
 		if (p->precision == 16) {
 			enc = AUDIO_ENCODING_SLINEAR_LE;
-			pswcode = rswcode = change_sign16;
+			pswcode = rswcode = change_sign16_le;
 		}
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
 		if (p->precision == 16) {
 			if (sc->mode == 1) {
 				enc = AUDIO_ENCODING_SLINEAR_LE;
-				pswcode = swap_bytes_change_sign16;
-				rswcode = change_sign16_swap_bytes;
+				pswcode = swap_bytes_change_sign16_le;
+				rswcode = change_sign16_swap_bytes_le;
 			} else {
 				enc = AUDIO_ENCODING_SLINEAR_BE;
-				pswcode = rswcode = change_sign16;
+				pswcode = rswcode = change_sign16_be;
 			}
 		}
 		break;
@@ -1140,8 +1140,10 @@ ad1848_commit_settings(addr)
 	 * Write to I8 starts resyncronization. Wait until it completes.
 	 */
 	timeout = 100000;
-	while (timeout > 0 && ADREAD(sc, AD1848_IADDR) == SP_IN_INIT)
+	while (timeout > 0 && ADREAD(sc, AD1848_IADDR) == SP_IN_INIT) {
+		delay(10);
 		timeout--;
+	}
 
 	if (ADREAD(sc, AD1848_IADDR) == SP_IN_INIT)
 		printf("ad1848_commit: Auto calibration timed out\n");

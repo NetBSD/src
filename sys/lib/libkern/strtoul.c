@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoul.c,v 1.4 1999/11/29 22:51:19 simonb Exp $	*/
+/*	$NetBSD: strtoul.c,v 1.4.2.1 1999/12/27 18:35:56 wrstuden Exp $	*/
 
 #include <sys/param.h>
 #include <lib/libkern/libkern.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.1 1999/12/07 19:36:37 thorpej Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.1.2.1 1999/12/27 18:35:13 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.

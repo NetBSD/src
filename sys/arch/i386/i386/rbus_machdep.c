@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.2.8.1 1999/12/27 18:32:21 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $ */
+/* $Id: rbus_machdep.c,v 1.2.8.1 1999/12/27 18:32:21 wrstuden Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>

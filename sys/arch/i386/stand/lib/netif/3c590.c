@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c590.c,v 1.9 1999/02/19 19:30:46 drochner Exp $	*/
+/*	$NetBSD: 3c590.c,v 1.9.12.1 1999/12/27 18:32:29 wrstuden Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -94,10 +94,11 @@ int EtherInit(myadr)
 	}
 
 	if (pcifinddev(0x10b7, 0x5900, &hdl) &&
+	    pcifinddev(0x10b7, 0x5950, &hdl) &&
 	    pcifinddev(0x10b7, 0x9000, &hdl) &&
 	    pcifinddev(0x10b7, 0x9001, &hdl) &&
 	    pcifinddev(0x10b7, 0x9050, &hdl)) {
-		printf("cannot find 3c590 / 3c900\n");
+		printf("cannot find 3c59x / 3c90x\n");
 		return(0);
 	}
 

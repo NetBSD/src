@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.25 1999/10/01 09:19:44 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.25.6.1 1999/12/27 18:31:30 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.25 1999/10/01 09:19:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.25.6.1 1999/12/27 18:31:30 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -163,8 +163,10 @@ ioasicattach(parent, self, aux)
 {
 	struct ioasic_softc *sc = (struct ioasic_softc *)self;
 	struct tc_attach_args *ta = aux;
-	struct ioasicdev_attach_args ioasicdev;
-	u_long i, ssr, imsk;
+#ifdef DEC_3000_300
+	u_long ssr;
+#endif
+	u_long i, imsk;
 
 	ioasicfound = 1;
 
@@ -207,20 +209,10 @@ ioasicattach(parent, self, aux)
 	}
 	tc_intr_establish(parent, sc->sc_cookie, TC_IPL_NONE, ioasic_intr, sc);
 
-        /*
+	/*
 	 * Try to configure each device.
 	 */
-        for (i = 0; i < ioasic_ndevs; i++) {
-		strncpy(ioasicdev.iada_modname, ioasic_devs[i].iad_modname,
-			TC_ROM_LLEN);
-		ioasicdev.iada_modname[TC_ROM_LLEN] = '\0';
-		ioasicdev.iada_offset = ioasic_devs[i].iad_offset;
-		ioasicdev.iada_addr = sc->sc_base + ioasic_devs[i].iad_offset;
-		ioasicdev.iada_cookie = ioasic_devs[i].iad_cookie;
-
-                /* Tell the autoconfig machinery we've found the hardware. */
-                config_found(self, &ioasicdev, ioasicprint);
-        }
+	ioasic_attach_devs(sc, ioasic_devs, ioasic_ndevs);
 }
 
 void
@@ -297,8 +289,7 @@ ioasic_intrnull(val)
 }
 
 /*
- * asic_intr --
- *	ASIC interrupt handler.
+ * ASIC interrupt handler.
  */
 int
 ioasic_intr(val)

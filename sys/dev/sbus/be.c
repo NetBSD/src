@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.6 1999/05/18 23:52:58 thorpej Exp $	*/
+/*	$NetBSD: be.c,v 1.6.8.1 1999/12/27 18:35:31 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@ struct be_softc {
 	/*struct	ifmedia sc_ifmedia;	-* interface media */
 	struct mii_data	sc_mii;		/* MII media control */
 #define sc_media	sc_mii.mii_media/* shorthand */
+	int		sc_phys[2];	/* MII instance -> phy */
 
 	struct	qec_softc *sc_qec;	/* QEC parent */
 
@@ -172,7 +173,7 @@ static void	be_read __P((struct be_softc *, int, int));
 static int	be_put __P((struct be_softc *, int, struct mbuf *));
 static struct mbuf *be_get __P((struct be_softc *, int, int));
 
-void	be_tcvr_init __P((struct be_softc *));
+void	be_pal_gate __P((struct be_softc *, int));
 
 /* ifmedia callbacks */
 void	be_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
@@ -183,7 +184,7 @@ void	be_mcreset __P((struct be_softc *));
 /* MII methods & callbacks */
 static int	be_mii_readreg __P((struct device *, int, int));
 static void	be_mii_writereg __P((struct device *, int, int, int));
-static void	be_statchg __P((struct device *));
+static void	be_mii_statchg __P((struct device *));
 
 /* MII helpers */
 static void	be_mii_sync __P((struct be_softc *));
@@ -221,10 +222,13 @@ beattach(parent, self, aux)
 	struct be_softc *sc = (struct be_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
+	struct mii_softc *child;
+	int instance;
 	int node = sa->sa_node;
 	bus_dma_segment_t seg;
 	bus_size_t size;
 	int rseg, error;
+	u_int32_t v;
 	extern void myetheraddr __P((u_char *));
 
 	if (sa->sa_nreg < 3) {
@@ -279,7 +283,10 @@ beattach(parent, self, aux)
 	/* Clamp at parent's burst sizes */
 	sc->sc_burst &= qec->sc_burst;
 
-	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0, beintr, sc);
+	/* Establish interrupt handler */
+	if (sa->sa_nintr)
+		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri,
+					 0, beintr, sc);
 
 	myetheraddr(sc->sc_enaddr);
 	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
@@ -315,55 +322,75 @@ beattach(parent, self, aux)
 	}
 
 	/*
-	 * Initialize transceiver and determine which PHY connection to use.
-	 */
-	be_tcvr_init(sc);
-
-	/*
 	 * Initialize our media structures and MII info.
 	 */
 	mii->mii_ifp = ifp;
 	mii->mii_readreg = be_mii_readreg;
 	mii->mii_writereg = be_mii_writereg;
-	mii->mii_statchg = be_statchg;
+	mii->mii_statchg = be_mii_statchg;
 
 	ifmedia_init(&mii->mii_media, 0, be_ifmedia_upd, be_ifmedia_sts);
 
-	if ((sc->sc_conf & BE_CONF_MII) != 0) {
-#if 1
-		mii_phy_probe(&sc->sc_dev, mii, 0xffffffff);
-#else
-		/* TEST */
-		extern int mii_print __P((void *, const char *));
-		struct mii_attach_args ma;
-		struct mii_softc *child;
+	/*
+	 * Initialize transceiver and determine which PHY connection to use.
+	 */
+	be_mii_sync(sc);
+	v = bus_space_read_4(sc->sc_bustag, sc->sc_tr, BE_TRI_MGMTPAL);
 
-		bzero(&ma, sizeof(ma));
-		ma.mii_phyno = BE_PHY_INTERNAL;
-		ma.mii_data = mii;
-		ma.mii_capmask = 0xffffffff;
-		if ((child = (struct mii_softc *)
-			config_found(&sc->sc_dev, &ma, mii_print)) != NULL) {
-			/*
-			 * Link it up in the parent's MII data.
-			 */
-			LIST_INSERT_HEAD(&mii->mii_phys, child, mii_list);
-			mii->mii_instance++;
-		}
-#endif
+	instance = 0;
 
-		if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+	if ((v & MGMT_PAL_EXT_MDIO) != 0) {
+
+		mii_phy_probe(&sc->sc_dev, mii, 0xffffffff, BE_PHY_EXTERNAL,
+		    MII_OFFSET_ANY);
+
+		child = LIST_FIRST(&mii->mii_phys);
+		if (child == NULL) {
 			/* No PHY attached */
-			ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_NONE, 0, NULL);
-			ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_NONE);
+			ifmedia_add(&sc->sc_media,
+				    IFM_MAKEWORD(IFM_ETHER,IFM_NONE,0,instance),
+				    0, NULL);
+			ifmedia_set(&sc->sc_media,
+				   IFM_MAKEWORD(IFM_ETHER,IFM_NONE,0,instance));
 		} else {
+			/*
+			 * Note: we support just one PHY on the external
+			 * MII connector.
+			 */
+#ifdef DIAGNOSTIC
+			if (LIST_NEXT(child, mii_list) != NULL) {
+				printf("%s: spurious MII device %s attached\n",
+				       sc->sc_dev.dv_xname,
+				       child->mii_dev.dv_xname);
+			}
+#endif
+			if (child->mii_phy != BE_PHY_EXTERNAL ||
+			    child->mii_inst > 0) {
+				printf("%s: cannot accomodate MII device %s"
+				       " at phy %d, instance %d\n",
+				       sc->sc_dev.dv_xname,
+				       child->mii_dev.dv_xname,
+				       child->mii_phy, child->mii_inst);
+			} else {
+				sc->sc_phys[instance] = child->mii_phy;
+			}
+
 			/*
 			 * XXX - we can really do the following ONLY if the
 			 * phy indeed has the auto negotiation capability!!
 			 */
-			ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
+			ifmedia_set(&sc->sc_media,
+				   IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance));
+
+			/* Mark our current media setting */
+			be_pal_gate(sc, BE_PHY_EXTERNAL);
+			sc->sc_conf |= BE_CONF_MII;
+			instance++;
 		}
-	} else {
+
+	}
+
+	if ((v & MGMT_PAL_INT_MDIO) != 0) {
 		/*
 		 * The be internal phy looks vaguely like MII hardware,
 		 * but not enough to be able to use the MII device
@@ -371,23 +398,35 @@ beattach(parent, self, aux)
 		 * ourselves.
 		 */
 
+		sc->sc_phys[instance] = BE_PHY_INTERNAL;
+
 		/* Use `ifm_data' to store BMCR bits */
 		ifmedia_add(&sc->sc_media,
-			    IFM_MAKEWORD(IFM_ETHER,IFM_10_T,0,0),
+			    IFM_MAKEWORD(IFM_ETHER,IFM_10_T,0,instance),
 			    0, NULL);
 		ifmedia_add(&sc->sc_media,
-			    IFM_MAKEWORD(IFM_ETHER,IFM_10_T,IFM_FDX,0),
+			    IFM_MAKEWORD(IFM_ETHER,IFM_10_T,IFM_FDX,instance),
 			    BMCR_FDX, NULL);
 		ifmedia_add(&sc->sc_media,
-			    IFM_MAKEWORD(IFM_ETHER,IFM_100_TX,0,0),
+			    IFM_MAKEWORD(IFM_ETHER,IFM_100_TX,0,instance),
 			    BMCR_S100, NULL);
 		ifmedia_add(&sc->sc_media,
-			    IFM_MAKEWORD(IFM_ETHER,IFM_100_TX,IFM_FDX,0),
+			    IFM_MAKEWORD(IFM_ETHER,IFM_100_TX,IFM_FDX,instance),
 			    BMCR_S100|BMCR_FDX, NULL);
 		ifmedia_add(&sc->sc_media,
-			    IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,0),
+			    IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance),
 			    0, NULL);
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
+
+		/* Only set default medium here if there's no external PHY */
+		if (instance == 0) {
+			be_pal_gate(sc, BE_PHY_INTERNAL);
+			ifmedia_set(&sc->sc_media,
+				   IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance));
+		} else {
+			/* Isolate internal transceiver */
+			be_mii_writereg((struct device *)sc,
+					BE_PHY_INTERNAL, MII_BMCR, BMCR_ISO);
+		}
 	}
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -403,8 +442,7 @@ beattach(parent, self, aux)
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 #if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 }
 
@@ -610,6 +648,11 @@ bestop(sc)
 	bus_space_handle_t br = sc->sc_br;
 
 	untimeout(be_tick, sc);
+
+	if (sc->sc_conf & BE_CONF_MII) {
+		/* Down the MII. */
+		mii_down(&sc->sc_mii);
+	}
 
 	/* Stop the transmitter */
 	bus_space_write_4(t, br, BE_BRI_TXCFG, 0);
@@ -1020,9 +1063,8 @@ beinit(sc)
 	s = splimp();
 
 	qec_meminit(&sc->sc_rb, BE_PKT_BUF_SZ);
-	be_tcvr_init(sc);
 
-	be_ifmedia_upd(ifp);
+	be_mii_sync(sc);
 
 	bestop(sc);
 
@@ -1190,7 +1232,7 @@ be_mii_sync(sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t tr = sc->sc_tr;
-	int n = 20;
+	int n = 32;
 
 	while (n--) {
 		bus_space_write_4(t, tr, BE_TRI_MGMTPAL,
@@ -1204,10 +1246,31 @@ be_mii_sync(sc)
 	}
 }
 
+void
+be_pal_gate(sc, phy)
+	struct be_softc *sc;
+	int phy;
+{
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t tr = sc->sc_tr;
+	u_int32_t v;
+
+	be_mii_sync(sc);
+
+	v = ~(TCVR_PAL_EXTLBACK | TCVR_PAL_MSENSE | TCVR_PAL_LTENABLE);
+	if (phy == BE_PHY_INTERNAL)
+		v &= ~TCVR_PAL_SERIAL;
+
+	bus_space_write_4(t, tr, BE_TRI_TCVRPAL, v);
+	(void)bus_space_read_4(t, tr, BE_TRI_TCVRPAL);
+}
+
+#if 0
 /*
  * Initialize the transceiver and figure out whether we're using the
  * external or internal one.
  */
+void be_tcvr_init(struct be_softc *);
 void
 be_tcvr_init(sc)
 	struct be_softc *sc;
@@ -1243,24 +1306,14 @@ be_tcvr_init(sc)
 		       bitmask_snprintf(v, MGMT_PAL_BITS, bits, sizeof(bits)));
 	}
 #endif
-{
-	char bits[64];
-	printf("be_tcvr_init: MGMTPAL=%s\n",
-	       bitmask_snprintf(v, MGMT_PAL_BITS, bits, sizeof(bits)));
-	if ((v & MGMT_PAL_EXT_MDIO) != 0) {
-		printf("EXTERNAL\n");
-	}
-}
+
 	if ((v & MGMT_PAL_EXT_MDIO) != 0) {
 		sc->sc_conf |= BE_CONF_MII;
-		/*sc->sc_tcvr_type = BE_TCVR_EXTERNAL;*/
 		bus_space_write_4(t, tr, BE_TRI_TCVRPAL,
 				  ~(TCVR_PAL_EXTLBACK | TCVR_PAL_MSENSE |
 				    TCVR_PAL_LTENABLE));
-
 		(void)bus_space_read_4(t, tr, BE_TRI_TCVRPAL);
 	} else if ((v & MGMT_PAL_INT_MDIO) != 0) {
-		/*sc->sc_tcvr_type = BE_TCVR_INTERNAL;*/
 		bus_space_write_4(t, tr, BE_TRI_TCVRPAL,
 				  ~(TCVR_PAL_EXTLBACK | TCVR_PAL_MSENSE |
 				    TCVR_PAL_LTENABLE | TCVR_PAL_SERIAL));
@@ -1270,9 +1323,9 @@ be_tcvr_init(sc)
 			sc->sc_dev.dv_xname);
 	}
 }
+#endif
 
-
-static __inline__ int
+static int
 be_tcvr_read_bit(sc, phy)
 	struct be_softc *sc;
 	int phy;
@@ -1287,15 +1340,13 @@ be_tcvr_read_bit(sc, phy)
 		bus_space_write_4(t, tr, BE_TRI_MGMTPAL,
 				  MGMT_PAL_EXT_MDIO | MGMT_PAL_DCLOCK);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-		DELAY(20);
 		ret = (bus_space_read_4(t, tr, BE_TRI_MGMTPAL) &
-			MGMT_PAL_INT_MDIO) >> 3;
+			MGMT_PAL_INT_MDIO) >> MGMT_PAL_INT_MDIO_SHIFT;
 	} else {
 		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, MGMT_PAL_INT_MDIO);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-		DELAY(20);
 		ret = (bus_space_read_4(t, tr, BE_TRI_MGMTPAL) &
-			MGMT_PAL_EXT_MDIO) >> 2;
+			MGMT_PAL_EXT_MDIO) >> MGMT_PAL_EXT_MDIO_SHIFT;
 		bus_space_write_4(t, tr, BE_TRI_MGMTPAL,
 				  MGMT_PAL_INT_MDIO | MGMT_PAL_DCLOCK);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
@@ -1304,7 +1355,7 @@ be_tcvr_read_bit(sc, phy)
 	return (ret);
 }
 
-static __inline__ void
+static void
 be_tcvr_write_bit(sc, phy, bit)
 	struct be_softc *sc;
 	int phy;
@@ -1312,24 +1363,27 @@ be_tcvr_write_bit(sc, phy, bit)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t tr = sc->sc_tr;
+	u_int32_t v;
 
 	if (phy == BE_PHY_INTERNAL) {
-		bit = ((bit & 1) << 3) | MGMT_PAL_OENAB | MGMT_PAL_EXT_MDIO;
-		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, bit);
+		v = ((bit & 1) << MGMT_PAL_INT_MDIO_SHIFT) |
+			MGMT_PAL_OENAB | MGMT_PAL_EXT_MDIO;
+		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, v);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
 
 		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, bit | MGMT_PAL_DCLOCK);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
 	} else {
-		bit = ((bit & 1) << 2) | MGMT_PAL_OENAB | MGMT_PAL_INT_MDIO;
-		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, bit);
+		v = ((bit & 1) << MGMT_PAL_EXT_MDIO_SHIFT)
+			| MGMT_PAL_OENAB | MGMT_PAL_INT_MDIO;
+		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, v);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, bit | MGMT_PAL_DCLOCK);
+		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, v | MGMT_PAL_DCLOCK);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
 	}
 }
 
-static __inline__ void
+static void
 be_mii_sendbits(sc, phy, data, nbits)
 	struct be_softc *sc;
 	int phy;
@@ -1350,10 +1404,6 @@ be_mii_readreg(self, phy, reg)
 {
 	struct be_softc *sc = (struct be_softc *)self;
 	int val = 0, i;
-
-	/* The `be' internal PHY is not treated as an MII device */
-	if (phy == BE_PHY_INTERNAL)
-		return (0);
 
 	/*
 	 * Read the PHY register by manually driving the MII control lines.
@@ -1426,12 +1476,31 @@ be_mii_reset(sc, phy)
 }
 
 void
-be_statchg(self)
+be_mii_statchg(self)
 	struct device *self;
 {
 	struct be_softc *sc = (struct be_softc *)self;
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t br = sc->sc_br;
+	u_int instance;
+	u_int32_t v;
 
-	printf("be_statchg: media_active=%x\n", sc->sc_mii.mii_media_active);
+	instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
+#ifdef DIAGNOSTIC
+	if (instance > 1)
+		panic("be_mii_statchg: instance %d out of range", instance);
+#endif
+
+	/* Update duplex mode in TX configuration */
+	v = bus_space_read_4(t, br, BE_BRI_TXCFG);
+	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0)
+		v |= BE_BR_TXCFG_FULLDPLX;
+	else
+		v &= ~BE_BR_TXCFG_FULLDPLX;
+	bus_space_write_4(t, br, BE_BRI_TXCFG, v);
+
+	/* Change to appropriate gate in transceiver PAL */
+	be_pal_gate(sc, sc->sc_phys[instance]);
 }
 
 void
@@ -1456,6 +1525,7 @@ be_internal_phy_auto(sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int bmcr, bmsr;
+	int bmcr_s100_bit;
 
 	/*
 	 * Check link status; if we don't have a link, try another
@@ -1480,9 +1550,16 @@ be_internal_phy_auto(sc)
 		return;
 	}
 
+	/* Note current fast speed bit */
+	bmcr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR);
+	bmcr_s100_bit = bmcr & BMCR_S100;
+
+	if (be_mii_reset(sc, BE_PHY_INTERNAL) != 0)
+		return;
+
 	bmcr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR);
 	/* Just flip the fast speed bit */
-	bmcr ^= BMCR_S100;
+	bmcr ^= bmcr_s100_bit;
 	be_mii_writereg((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR, bmcr);
 }
 
@@ -1495,6 +1572,7 @@ be_ifmedia_sts(ifp, ifmr)
 	struct ifmediareq *ifmr;
 {
 	struct be_softc *sc = ifp->if_softc;
+	int media_active, media_status;
 	int bmcr, bmsr;
 
 	if ((sc->sc_conf & BE_CONF_MII) != 0) {
@@ -1504,6 +1582,9 @@ be_ifmedia_sts(ifp, ifmr)
 		return;
 	}
 
+	media_status = IFM_AVALID;
+	media_active = 0;
+
 	/*
 	 * Internal transceiver; do the work here.
 	 */
@@ -1511,16 +1592,16 @@ be_ifmedia_sts(ifp, ifmr)
 
 	switch (bmcr & (BMCR_S100 | BMCR_FDX)) {
 	case (BMCR_S100 | BMCR_FDX):
-		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_FDX;
+		media_active = IFM_ETHER | IFM_100_TX | IFM_FDX;
 		break;
 	case BMCR_S100:
-		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_HDX;
+		media_active = IFM_ETHER | IFM_100_TX | IFM_HDX;
 		break;
 	case BMCR_FDX:
-		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_FDX;
+		media_active = IFM_ETHER | IFM_10_T | IFM_FDX;
 		break;
 	case 0:
-		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_HDX;
+		media_active = IFM_ETHER | IFM_10_T | IFM_HDX;
 		break;
 	}
 
@@ -1528,11 +1609,10 @@ be_ifmedia_sts(ifp, ifmr)
 	bmsr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR)|
 	       be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR);
 	if (bmsr & BMSR_LINK)
-		ifmr->ifm_status |=  IFM_AVALID | IFM_ACTIVE;
-	else {
-		ifmr->ifm_status |=  IFM_AVALID;
-		ifmr->ifm_status &= ~IFM_ACTIVE;
-	}
+		media_status |=  IFM_ACTIVE;
+
+	ifmr->ifm_status = media_status;
+	ifmr->ifm_active = media_active;
 }
 
 /*
@@ -1545,36 +1625,49 @@ be_ifmedia_upd(ifp)
 	struct be_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_media;
 	int newmedia = ifm->ifm_media;
-	int n, error, phy, bmcr;
+	int n, error, bmcr;
 	char *speed, *mode;
+	bus_space_tag_t t;
+	bus_space_handle_t br;
 	u_int32_t v;
-	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t br = sc->sc_br;
+	u_int instance, phy;
+
+	instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
+
+#ifdef DIAGNOSTIC
+	if (instance > 1)
+		panic("be_mii_statchg: instance %d out of range", instance);
+#endif
+
+	phy = sc->sc_phys[instance];
 
 	if (IFM_TYPE(newmedia) != IFM_ETHER)
 		return (EINVAL);
 
-	if ((sc->sc_conf & BE_CONF_MII) != 0) {
-		int error;
+	if ((error = mii_mediachg(&sc->sc_mii)) != 0)
+		return (error);
 
-		if ((error = mii_mediachg(&sc->sc_mii)) != 0)
-			return (error);
-
-		v = bus_space_read_4(t, br, BE_BRI_TXCFG);
-		if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0)
-			v |= BE_BR_TXCFG_FULLDPLX;
-		else
-			v &= ~BE_BR_TXCFG_FULLDPLX;
-		bus_space_write_4(t, br, BE_BRI_TXCFG, v);
-
+	if (phy == BE_PHY_EXTERNAL) {
+		/* Isolate the internal transceiver */
+		be_mii_writereg((struct device *)sc,
+				BE_PHY_INTERNAL, MII_BMCR, BMCR_ISO);
+		sc->sc_conf |= BE_CONF_MII;
 		return (0);
 	}
+
 
 	/*
 	 * The rest of this routine is devoted to the
 	 * not-quite-a-phy internal transceiver case.
 	 */
-	phy = BE_PHY_INTERNAL;
+	t = sc->sc_bustag;
+	br = sc->sc_br;
+
+	/* Mark out current configuration */
+	sc->sc_conf &= ~BE_CONF_MII;
+
+	/* Change to appropriate gate in transceiver PAL */
+	be_pal_gate(sc, phy);
 
 	/* Why must we reset the device? */
 	if ((error = be_mii_reset(sc, phy)) != 0)

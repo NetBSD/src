@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.42 1999/07/02 08:46:47 itojun Exp $	*/
+/*	$NetBSD: in.h,v 1.42.8.1 1999/12/27 18:36:14 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -119,7 +119,7 @@
  */
 struct in_addr {
 	u_int32_t s_addr;
-};
+} __attribute__((__packed__));
 
 /*
  * Definitions of bits in internet address integers.
@@ -376,6 +376,7 @@ extern	struct in_addr zeroin_addr;
 int	in_broadcast __P((struct in_addr, struct ifnet *));
 int	in_canforward __P((struct in_addr));
 int	in_cksum __P((struct mbuf *, int));
+int	in4_cksum __P((struct mbuf *, u_int8_t, int, int));
 int	in_localaddr __P((struct in_addr));
 void	in_socktrim __P((struct sockaddr_in *));
 

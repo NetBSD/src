@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 1999/09/08 21:45:30 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.11.2.1 1999/12/27 18:29:05 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -314,7 +314,7 @@ int next __P((void));
 void thinkofgrapples __P((void));
 void checkup __P((void));
 void prizecheck __P((void));
-int strend __P((const char *));
+int str_end __P((const char *));
 void closeon __P((struct ship *, struct ship *, char[], int, int, int));
 int score __P((char[], struct ship *, struct ship *, int));
 void move_ship __P((const char *, struct ship *, unsigned char *, short *, short *, char *));
@@ -325,11 +325,11 @@ void rmend __P((char *));
 /* dr_3.c */
 void moveall __P((void));
 int stillmoving __P((int));
-int isolated __P((struct ship *));
+int is_isolated __P((struct ship *));
 int push __P((struct ship *, struct ship *));
 void step __P((int, struct ship *, char *));
 void sendbp __P((struct ship *, struct ship *, int, int));
-int toughmelee __P((struct ship *, struct ship *, int, int));
+int is_toughmelee __P((struct ship *, struct ship *, int, int));
 void reload __P((void));
 void checksails __P((void));
 

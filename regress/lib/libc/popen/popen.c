@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.1.1.1 1999/09/30 09:23:23 tron Exp $	*/
+/*	$NetBSD: popen.c,v 1.1.1.1.4.1 1999/12/27 18:30:19 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: popen.c,v 1.1.1.1 1999/09/30 09:23:23 tron Exp $");
+__RCSID("$NetBSD: popen.c,v 1.1.1.1.4.1 1999/12/27 18:30:19 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

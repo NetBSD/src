@@ -1,4 +1,4 @@
-#	$NetBSD: ramdiskbin.m4,v 1.1 1999/04/30 05:09:44 abs Exp $
+#	$NetBSD: ramdiskbin.m4,v 1.1.4.1 1999/12/27 18:28:41 wrstuden Exp $
 #
 # ramdiskbin.conf - unified binary for the install ramdisk
 #
@@ -24,6 +24,7 @@ special ftp srcdir distrib/utils/x_ftp
 special ifconfig srcdir distrib/utils/x_ifconfig
 special route srcdir distrib/utils/x_route
 special sh srcdir distrib/utils/x_sh
+special ping srcdir distrib/utils/x_ping
 
 # "special" gzip is actually larger assuming nothing else uses -lz..
 #special gzip srcdir distrib/utils/x_gzip
@@ -43,4 +44,4 @@ ln reboot halt
 ln restore rrestore
 
 # libhack.o is built by Makefile & included Makefile.inc
-libs libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm
+libs libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -lbz2 -lcrypt -ll -lm

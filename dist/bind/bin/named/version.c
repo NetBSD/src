@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.1.1.1 1999/11/20 18:54:00 veego Exp $	*/
+/*	$NetBSD: version.c,v 1.1.1.1.4.1 1999/12/27 18:27:22 wrstuden Exp $	*/
 
 /*
  *	@(#)Version.c	4.9 (Berkeley) 7/21/90

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.4 1999/09/16 21:39:24 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.4.8.1 1999/12/27 18:31:53 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -342,8 +342,9 @@ start_in_RAM:
 	mov.l	XLinitSH3, r0
 	jsr	@r0		/* call initSH3() */
 	nop
-1:
 
+	.align	2
+1:
 #if 1
 	mov.l	XLKernelStack, r3
 	mov.l	r15, @r3
@@ -554,7 +555,9 @@ switch_error:
 	jsr	@r0
 	nop
 
-1:	.asciz	"cpu_swicth"
+	.align	2
+1:
+	.asciz	"cpu_swicth"
 	.align	2
 XL_panic:	.long	_panic
 #endif
@@ -775,20 +778,22 @@ sw1:	mov	#1, r1
 	mov.l	r14, @r0
 /* #define sh3_debug */
 #ifdef sh3_debug
-	mova	XL_fmt, r0
+	mova	1f, r0
 	mov	r0, r4
 	mov	r14, r6
 	mov	r13, r5
-	mov.l	XL_printf, r0
+	mov.l	2f, r0
 	jsr	@r0
 	nop
 	bra	3f
 	nop
 
-XL_fmt:	.asciz	"switch[i=%d,whichqs=0x%0x]\n"
 	.align	2
-XL_printf:
-	.long	_printf
+1:
+	.asciz	"switch[i=%d,whichqs=0x%0x]\n"
+	.align	2
+2:
+	.long	_C_LABEL(printf)
 #endif
 
 3:
@@ -1424,7 +1429,7 @@ XL_restart:	.long	Xrestart
 
 ENTRY(cpu_printR15)
 	sts.l	pr, @-r15
-	mova	XL_fmt, r0
+	mova	1f, r0
 	mov	r0, r4
 	mov	r15, r5
 	mov.l	XL_printf, r0
@@ -1434,10 +1439,12 @@ ENTRY(cpu_printR15)
 	rts
 	nop
 
-XL_fmt:	.asciz	"sp=0x%x\n"
 	.align	2
-XL_printf:
-	.long	_printf
+1:
+	.asciz	"sp=0x%x\n"
+	.align	2
+2:
+	.long	_C_LABEL(printf)
 
 load_and_reset:
 	mov.l	XL_start_address, r0

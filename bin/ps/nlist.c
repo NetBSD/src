@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.14 1998/03/27 22:45:47 is Exp $	*/
+/*	$NetBSD: nlist.c,v 1.14.6.1 1999/12/27 18:27:11 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.14 1998/03/27 22:45:47 is Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.14.6.1 1999/12/27 18:27:11 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,8 +71,6 @@ fixpt_t	ccpu;				/* kernel _ccpu variable */
 int	nlistread;			/* if nlist already read. */
 int	mempages;			/* number of pages of phys. memory */
 int	fscale;				/* kernel _fscale variable */
-
-extern kvm_t *kd;
 
 #define kread(x, v) \
 	kvm_read(kd, psnl[x].n_value, (char *)&v, sizeof v) != sizeof(v)

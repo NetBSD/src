@@ -10,12 +10,14 @@ port-arm32
 port-atari
 port-bebox
 port-hp300
+port-hpcmips
 port-i386
 port-m68k
 port-mac68k
 port-macppc
 port-mips
 port-mvme68k
+port-news68k
 port-newsmips
 port-next68k
 port-ofppc
@@ -23,6 +25,7 @@ port-pc532
 port-pica
 port-pmax
 port-powerpc
+port-sh3
 port-sparc
 port-sun3
 port-vax

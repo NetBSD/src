@@ -1,4 +1,4 @@
-/*	$NetBSD: names.h,v 1.8 1998/09/20 15:27:16 christos Exp $	*/
+/*	$NetBSD: names.h,v 1.8.4.1 1999/12/27 18:36:51 wrstuden Exp $	*/
 
 /*
  * Names.h - names and types used by ascmagic in file(1).
@@ -12,7 +12,7 @@
  *
  * See LEGAL.NOTICE
  *
- * Id: names.h,v 1.15 1998/09/12 13:17:52 christos Exp 
+ * Id: names.h,v 1.16 1999/01/13 15:44:08 christos Exp 
  */
 
 /* these types are used to index the table 'types': keep em in sync! */
@@ -106,7 +106,6 @@ static struct names {
 	{"double",	L_C},
 	{"extern",	L_C},
 	{"float",	L_C},
-	{"real",	L_C},
 	{"struct",	L_C},
 	{"union",	L_C},
 	{"CFLAGS",	L_MAKE},

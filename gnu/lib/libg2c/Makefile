@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 1999/02/24 17:18:26 drochner Exp $
+#	$NetBSD: Makefile,v 1.6.6.1 1999/12/27 18:29:14 wrstuden Exp $
+
+.include <bsd.own.mk>
 
 LIB=		g2c
 
@@ -57,8 +59,12 @@ LIBF77SRCS=	${F77SRCS:.c=_F.c} ${I77SRCS:.c=_I.c} ${U77SRCS:.c=_U.c}
 
 SRCS+=		${LIBF77SRCS}
 OBJS+=		${E77OBJS}
+.if ${MKPIC} != "no"
 SOBJS+=		${E77OBJS:.o=.so}
+.endif
+.if ${MKPROFILE} != "no"
 POBJS+=		${E77OBJS:.o=.po}
+.endif
 CLEANFILES+=	${LIBF77SRCS}
 DPSRCS+=	g2c.h
 
@@ -115,11 +121,15 @@ ${file:.c=_U.c}: ${DIST}/libf2c/libU77/${file}
 ${E77OBJS}: f2cext.c
 	${COMPILE.c} -DL$* -o $@ ${.ALLSRC:M*.c}
 
+.if ${MKPIC} != "no"
 ${E77OBJS:.o=.so}: f2cext.c
 	${COMPILE.c} ${CPICFLAGS} -DL$* -o $@ ${.ALLSRC:M*.c}
+.endif
 
+.if ${MKPROFILE} != "no"
 ${E77OBJS:.o=.po}: f2cext.c
 	${COMPILE.c} -pg -DL$* -o $@ ${.ALLSRC:M*.c}
+.endif
 
 .include <bsd.lib.mk>
 

@@ -1,4 +1,4 @@
-/* 	$NetBSD: vt220l8x8.h,v 1.2 1999/12/04 13:40:22 ad Exp $	*/
+/* 	$NetBSD: vt220l8x8.h,v 1.2.2.1 1999/12/27 18:35:49 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch

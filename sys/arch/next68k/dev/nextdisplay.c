@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.2 1999/03/24 23:15:52 dbj Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.2.14.1 1999/12/27 18:33:12 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -107,7 +107,8 @@ static int	nextdisplay_mmap __P((void *, off_t, int));
 static int	nextdisplay_alloc_screen __P((void *, const struct wsscreen_descr *,
 		void **, int *, int *, long *));
 static void	nextdisplay_free_screen __P((void *, void *));
-static void	nextdisplay_show_screen __P((void *, void *));
+static int	nextdisplay_show_screen __P((void *, void *, int,
+					     void (*) (void *, int, int), void *));
 static int	nextdisplay_load_font __P((void *, void *, struct wsdisplay_font *));
 
 const struct wsdisplay_accessops nextdisplay_accessops = {
@@ -359,11 +360,16 @@ nextdisplay_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-void
-nextdisplay_show_screen(v, cookie)
+int
+nextdisplay_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
+	int waitok;
+	void (*cb) __P((void *, int, int));
+	void *cbarg;
 {
+
+	return (0);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.7 1998/11/24 13:02:59 mrg Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.7.14.1 1999/12/27 18:34:01 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -500,7 +500,13 @@ OF_write(handle, addr, len)
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(handle);
 	args.addr = ADR2CELL(addr);
-if (len>1024) { prom_printf("OF_write() > 1024\n"); Debugger(); }
+if (len>1024) { prom_printf("OF_write() > 1024\n");
+#ifdef DDB
+Debugger();
+#else
+panic("OF_write");
+#endif
+}
 	for (; len > 0; len -= l, addr += l) {
 		l = min(NBPG, len);
 		args.len = l;

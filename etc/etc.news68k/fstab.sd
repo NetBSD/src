@@ -1,4 +1,4 @@
-#	$NetBSD: fstab.sd,v 1.1 1999/12/09 15:10:37 tsutsui Exp $
+#	$NetBSD: fstab.sd,v 1.1.2.1 1999/12/27 18:28:54 wrstuden Exp $
 #
 /dev/sd0a / ffs rw 1 1
 /dev/sd0b none swap sw 0 0

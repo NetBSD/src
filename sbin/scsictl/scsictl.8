@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsictl.8,v 1.3 1999/07/30 02:29:04 hubertf Exp $
+.\"	$NetBSD: scsictl.8,v 1.3.2.1 1999/12/27 18:30:33 wrstuden Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -116,8 +116,10 @@ connected or powered on when the system was booted.  The
 and
 .Ar lun
 arguments specify which SCSI target and lun on the bus is to be scanned.
-Either may be wildcarded by specifying
-.Dq any .
+Either may be wildcarded by specifying the keyword
+.Dq any
+or
+.Dq all .
 .Sh FILES
 /dev/scsibus* - for commands operating on SCSI busses
 .Sh SEE ALSO

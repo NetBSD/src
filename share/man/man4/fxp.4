@@ -1,4 +1,4 @@
-.\"	$NetBSD: fxp.4,v 1.2 1999/03/16 01:19:16 garbled Exp $
+.\"	$NetBSD: fxp.4,v 1.2.6.1 1999/12/27 18:30:42 wrstuden Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,8 +40,9 @@
 .Os
 .Sh NAME
 .Nm fxp
-.Nd device driver for Intel i82557 and i82558 Ethernet interfaces
+.Nd Intel i82557, i82558, and i82559 Ethernet interfaces device driver
 .Sh SYNOPSIS
+.Cd "fxp* at cardbus? dev ? function ?"
 .Cd "fxp* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
@@ -49,9 +50,21 @@ The
 device driver supports Ethernet interfaces based on the Intel i82557
 and i82558 PCI Ethernet chips.  The i82557 uses an external media
 interface, whereas the i82558 includes a built-in Intel i82555 PHY.
+The i82559 is an enhanced i82558.
 .Pp
-Supported cards include the Intel EtherExpress Pro 10+, EtherExpress
-Pro 100B, and EtherExpress Pro 100+.
+.Sh HARDWARE
+Cards supported by the 
+.Nm
+driver include:
+.Pp
+.Bl -item -compact
+.It
+Intel EtherExpress Pro 10+
+.It
+Intel EtherExpress Pro 100B
+.It
+Intel EtherExpress Pro 100+
+.El
 .Sh MEDIA SELECTION
 Media selection is supported via MII.  See
 .Xr ifmedia 4
@@ -93,6 +106,7 @@ The MDIO failed to become ready during an MII read operation.
 The MDIO failed to become ready during an MII write operation.
 .El
 .Sh SEE ALSO
+.Xr cardbus 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr mii 4 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.4 1999/12/11 20:30:30 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.4.2.1 1999/12/27 18:30:17 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.4 1999/12/11 20:30:30 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.4.2.1 1999/12/27 18:30:17 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>

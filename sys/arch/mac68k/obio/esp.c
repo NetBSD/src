@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.23 1999/06/27 23:43:37 briggs Exp $	*/
+/*	$NetBSD: esp.c,v 1.23.6.1 1999/12/27 18:32:40 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -307,13 +307,6 @@ espattach(parent, self, aux)
 	sc->sc_maxxfer = 8 * 1024; /*64 * 1024; XXX */
 
 	/*
-	 * Now try to attach all the sub-devices
-	 */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys; 
-	ncr53c9x_attach(sc, &esp_dev);
-
-	/*
 	 * Configure interrupts.
 	 */
 	if (esc->irq_mask) {
@@ -321,6 +314,13 @@ espattach(parent, self, aux)
 		via2_reg(vIFR) = esc->irq_mask;
 		via2_reg(vIER) = 0x80 | esc->irq_mask;
 	}
+
+	/*
+	 * Now try to attach all the sub-devices
+	 */
+	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = minphys; 
+	ncr53c9x_attach(sc, &esp_dev);
 }
 
 /*

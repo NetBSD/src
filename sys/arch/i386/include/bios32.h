@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.h,v 1.1 1999/11/17 00:55:51 thorpej Exp $	*/
+/*	$NetBSD: bios32.h,v 1.1.2.1 1999/12/27 18:32:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

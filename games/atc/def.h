@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.4 1998/09/11 12:53:28 hubertf Exp $	*/
+/*	$NetBSD: def.h,v 1.4.4.1 1999/12/27 18:28:58 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -74,6 +74,11 @@
 #define T_EXIT		2
 #define T_AIRPORT	3
 
+#undef S_NONE
+#undef S_GONE
+#undef S_MARKED
+#undef S_UNMARKED
+#undef S_IGNORED
 #define S_NONE		0
 #define S_GONE		1
 #define S_MARKED	2
