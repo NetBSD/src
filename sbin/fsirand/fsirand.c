@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.10 1998/10/23 01:27:51 thorpej Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.10.10.1 2001/11/25 19:27:27 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.10 1998/10/23 01:27:51 thorpej Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.10.10.1 2001/11/25 19:27:27 he Exp $");
 #endif /* lint */
 
 #include <stdio.h>
@@ -108,7 +108,7 @@ getsblock(fd, name, lab, fs)
 	if (fs->fs_magic != FS_MAGIC)  {
 		if(fs->fs_magic == bswap32(FS_MAGIC)) {
 			needswap = 1;
-			ffs_sb_swap(fs, fs, 0);
+			ffs_sb_swap(fs, fs);
 		} else
 			errx(1, "Bad superblock magic number");
 	}
