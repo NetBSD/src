@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.102 1998/11/16 07:23:28 marc Exp $
+#	$NetBSD: INSTALL,v 1.103 1998/11/19 11:43:57 he Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -15,7 +15,7 @@ include "arch/i386/conf/std.i386"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=3074	# size of memory disk, in blocks
+options 	MINIROOTSIZE=3174	# size of memory disk, in blocks
 #options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
 
 maxusers	32		# estimated number of users
