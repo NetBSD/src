@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap_i.h,v 1.9 1998/10/18 23:49:59 chs Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.10 1999/01/24 23:53:15 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -68,7 +68,7 @@ amap_lookup(aref, offset)
 	UVMHIST_FUNC("amap_lookup"); UVMHIST_CALLED(maphist);
 
 	AMAP_B2SLOT(slot, offset);
-	slot += aref->ar_slotoff;
+	slot += aref->ar_pageoff;
 
 	if (slot >= amap->am_nslot)
 		panic("amap_lookup: offset out of range");
@@ -95,7 +95,7 @@ amap_lookups(aref, offset, anons, npages)
 	UVMHIST_FUNC("amap_lookups"); UVMHIST_CALLED(maphist);
 
 	AMAP_B2SLOT(slot, offset);
-	slot += aref->ar_slotoff;
+	slot += aref->ar_pageoff;
 
 	UVMHIST_LOG(maphist, "  slot=%d, npages=%d, nslot=%d", slot, npages,
 		amap->am_nslot, 0);
@@ -129,7 +129,7 @@ amap_add(aref, offset, anon, replace)
 	UVMHIST_FUNC("amap_add"); UVMHIST_CALLED(maphist);
 
 	AMAP_B2SLOT(slot, offset);
-	slot += aref->ar_slotoff;
+	slot += aref->ar_pageoff;
 
 	if (slot >= amap->am_nslot)
 		panic("amap_add: offset out of range");
@@ -207,7 +207,7 @@ amap_ref(entry, flags)
 	struct vm_amap *amap = entry->aref.ar_amap;
 	UVMHIST_FUNC("amap_ref"); UVMHIST_CALLED(maphist);
 
-	simple_lock(&amap->am_l);
+	amap_lock(amap);
 	amap->am_ref++;
 	if (flags & AMAP_SHARED)
 		amap->am_flags |= AMAP_SHARED;
@@ -219,11 +219,11 @@ amap_ref(entry, flags)
 		if (flags & AMAP_REFALL)
 			amap_pp_adjref(amap, 0, amap->am_nslot << PAGE_SHIFT, 1);
 		else
-			amap_pp_adjref(amap, entry->aref.ar_slotoff, 
+			amap_pp_adjref(amap, entry->aref.ar_pageoff, 
 			 	entry->end - entry->start, 1);
 	}
 #endif
-	simple_unlock(&amap->am_l);
+	amap_unlock(amap);
 	UVMHIST_LOG(maphist,"<- done!  amap=0x%x", amap, 0, 0, 0);
 }
 
@@ -246,7 +246,7 @@ amap_unref(entry, all)
 	/*
 	 * lock it
 	 */
-	simple_lock(&amap->am_l);
+	amap_lock(amap);
 
 	UVMHIST_LOG(maphist,"(entry=0x%x)  amap=0x%x  refs=%d, nused=%d",
 	    entry, amap, amap->am_ref, amap->am_nused);
@@ -276,11 +276,11 @@ amap_unref(entry, all)
 		if (all)
 			amap_pp_adjref(amap, 0, amap->am_nslot << PAGE_SHIFT, -1);
 		else
-			amap_pp_adjref(amap, entry->aref.ar_slotoff, 
+			amap_pp_adjref(amap, entry->aref.ar_pageoff, 
 			    entry->end - entry->start, -1);
 	}
 #endif
-	simple_unlock(&amap->am_l);
+	amap_unlock(amap);
 
 	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
 }

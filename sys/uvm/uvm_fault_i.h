@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.6 1998/10/11 23:07:42 chuck Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.7 1999/01/24 23:53:15 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -81,7 +81,7 @@ uvmfault_unlockall(ufi, amap, uobj, anon)
 	if (uobj)
 		simple_unlock(&uobj->vmobjlock);
 	if (amap)
-		simple_unlock(&amap->am_l);
+		amap_unlock(amap);
 	uvmfault_unlockmaps(ufi, FALSE);
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.267 1999/01/23 07:56:34 mycroft Exp $
+#	$NetBSD: files,v 1.268 1999/01/24 23:53:14 chuck Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -816,6 +816,7 @@ file vm/vm_unix.c			!uvm
 file vm/vm_user.c			!uvm
 file vm/vnode_pager.c			!uvm & vnodepager
 file uvm/uvm_amap.c			uvm
+file uvm/uvm_anon.c			uvm
 file uvm/uvm_aobj.c			uvm
 file uvm/uvm_device.c			uvm
 file uvm/uvm_fault.c			uvm

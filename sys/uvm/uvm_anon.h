@@ -1,9 +1,5 @@
-/*	$NetBSD: uvm_anon.h,v 1.8 1998/11/20 19:37:06 chuck Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.9 1999/01/24 23:53:15 chuck Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
- *	   >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /*
  *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -34,8 +30,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * from: Id: uvm_anon.h,v 1.1.2.4 1998/01/04 22:43:39 chuck Exp
  */
 
 #ifndef _UVM_UVM_ANON_H_
@@ -79,56 +73,8 @@ struct vm_anon {
  */
 
 /*
- * anonymous virtual memory pages (vm_anon's) live in anonymous memory
- * maps.   anonymous memory maps can be shared between processes.   
- * different subsets of an anonymous memory map can be referenced by
- * processes (see below).    an anonymous map is described by the following
- * data structure:
- */
-
-#define VM_AMAP_PPREF		/* use a per-page reference count for split
-				   vm_map_entry_t's. */
-
-struct vm_amap {
-	simple_lock_data_t am_l; /* simple lock [locks all vm_amap fields] */
-	int am_ref;		/* reference count */
-	int am_flags;		/* flags */
-	int am_maxslot;		/* max # of slots allocated */
-	int am_nslot;		/* # of slots currently in map ( <= maxslot) */
-	int am_nused;		/* # of slots currently in use */
-	int *am_slots;		/* contig array of active slots */
-	int *am_bckptr;		/* back pointer array to am_slots */
-	struct vm_anon **am_anon; /* array of anonymous pages */
-#ifdef VM_AMAP_PPREF
-	int *am_ppref;		/* per page reference count (if !NULL) */
-#endif
-};
-
-#define AMAP_SHARED	0x1	/* am_flags: shared amap */
-#define AMAP_REFALL	0x2	/* flag to amap_ref() */
-
-/*
- * note that am_slots, am_bckptr, and am_anon are arrays.   this allows
- * fast lookup of pages based on their virual address at the expense of
- * some extra memory.    [XXX: for memory starved systems provide alternate
- * functions?]
- *
- * 4 slot/page example, with slots 1 and 3 in use:
- * ("D/C" == don't care what the value is)
- *
- *            0     1      2     3
- * am_anon:   NULL, anon0, NULL, anon1		(actual pointers to anons)
- * am_bckptr: D/C,  1,     D/C,  0		(points to am_slots entry)
- *
- * am_slots:  3, 1, D/C, D/C    		(says slots 3 and 1 are in use)
- * 
- * note that am_bckptr is D/C if the slot in am_anon is set to NULL.
- * to find the entry in am_slots for an anon, look at am_bckptr[slot],
- * thus the entry for slot 3 in am_slots[] is at am_slots[am_bckptr[3]].
- * in general, if am_anon[X] is non-NULL, then the following must be
- * true: am_slots[am_bckptr[X]] == X
- *
- * note that am_slots is always contig-packed.
+ * anons are grouped together in anonymous memory maps, or amaps.
+ * amaps are defined in uvm_amap.h.
  */
 
 /*
@@ -137,7 +83,7 @@ struct vm_amap {
  */
 
 struct vm_aref {
-	int ar_slotoff;			/* slot offset into amap we start */
+	int ar_pageoff;			/* page offset into amap we start */
 	struct vm_amap *ar_amap;	/* pointer to amap */
 };
 
@@ -146,5 +92,14 @@ struct vm_aref {
  * locked by vm_map lock.
  */
 
+/*
+ * prototypes
+ */
+
+struct vm_anon *uvm_analloc __P((void));
+void uvm_anfree __P((struct vm_anon *));
+void uvm_anon_init __P((void));
+void uvm_anon_add __P((int));
+struct vm_page *uvm_anon_lockloanpg __P((struct vm_anon *));
 
 #endif /* _UVM_UVM_ANON_H_ */
