@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.3 2001/12/04 00:53:19 darrenr Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.4 2002/08/23 01:08:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -179,6 +179,37 @@ struct v2bootargs {
 };
 
 /*
+ * The format used by the PROM to describe a physical address.  These
+ * are typically found in a "reg" property.
+ */
+struct openprom_addr {
+	int	oa_space;		/* address space (may be relative) */
+	u_int	oa_base;		/* address within space */
+	u_int	oa_size;		/* extent (number of bytes) */
+};
+
+/*
+ * The format used by the PROM to describe an address space window.  These
+ * are typically found in a "range" property.
+ */
+struct openprom_range {
+	int	or_child_space;		/* address space of child */
+	u_int	or_child_base;		/* offset in child's view of bus */
+	int	or_parent_space;	/* address space of parent */
+	u_int	or_parent_base;		/* offset in parent's view of bus */
+	u_int	or_size;		/* extent (number of bytes) */
+};
+
+/*
+ * The format used by the PROM to describe an interrupt.  These are
+ * typically found in an "intr" property.
+ */
+struct openprom_intr {
+	int	oi_pri;			/* interrupt priority */
+	int	oi_vec;			/* interrupt vector */
+};
+
+/*
  * The following structure defines the primary PROM vector interface.
  * The Boot PROM hands the kernel a pointer to this structure in %o0.
  * There are numerous substructures defined below.
@@ -298,11 +329,6 @@ struct promvec {
  * are not in the openprom vectors but rather found by indirection from
  * there.  So the taste balances out.
  */
-struct openprom_addr {
-	int	oa_space;		/* address space (may be relative) */
-	u_int	oa_base;		/* address within space */
-	u_int	oa_size;		/* extent (number of bytes) */
-};
 
 struct nodeops {
 	/*
