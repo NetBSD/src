@@ -1,6 +1,7 @@
-/*	$NetBSD: frame.h,v 1.12 2003/11/23 23:13:11 uwe Exp $	*/
+/*	$NetBSD: frame.h,v 1.13 2004/03/24 15:38:41 wiz Exp $	*/
 
 /*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -35,7 +36,6 @@
  */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
