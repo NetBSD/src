@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.182 1999/12/15 11:55:35 kleink Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.183 1999/12/17 01:03:45 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.175 1999/12/15 11:52:55 kleink Exp 
+ *	NetBSD: pcidevs,v 1.176 1999/12/17 01:02:03 soren Exp 
  */
 
 /*
@@ -43,10 +43,9 @@
  *
  *	http://members.hyperlink.net.au/~chart/pci.htm
  *
- * which replaces the database previously found at
+ * which replaces the database found at
  *
- *	http://www.halcyon.com/scripts/jboemler/pci/pcicode
- *   or http://www.yourvote.com/pci/
+ *	http://www.yourvote.com/pci/
  *
  * (but it doesn't always seem to match vendor documentation)
  */
@@ -934,6 +933,13 @@
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI155PA	0x0002		/* 155P-MF1 ATM (ASIC) */
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI25P	0x0003		/* SpeedStream ENI-25p */
 #define	PCI_PRODUCT_EFFICIENTNETS_SS3000	0x0005		/* SpeedStream 3000 */
+
+/* Galileo Technology */
+#define	PCI_PRODUCT_GALILEO_0x0146	GT-64010A		/* System Controller */
+#define	PCI_PRODUCT_GALILEO_0x4111	GT-64115		/* System Controller */
+#define	PCI_PRODUCT_GALILEO_0x4146	GT-64011/GT-64111		/* System Controller */
+#define	PCI_PRODUCT_GALILEO_0x4620	GT-64120		/* System Controller */
+#define	PCI_PRODUCT_GALILEO_0x6320	GT-64130		/* System Controller */
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_J2585A	0x1030		/* J2585A */

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.180 1999/12/15 11:55:36 kleink Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.181 1999/12/17 01:03:46 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.175 1999/12/15 11:52:55 kleink Exp 
+ *	NetBSD: pcidevs,v 1.176 1999/12/17 01:02:03 soren Exp 
  */
 
 /*
@@ -1562,6 +1562,36 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Efficent Networks",
 	    "SpeedStream 3000",
+	},
+	{
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_0x0146,
+	    0,
+	    "Galileo Technology",
+	    "System Controller",
+	},
+	{
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_0x4111,
+	    0,
+	    "Galileo Technology",
+	    "System Controller",
+	},
+	{
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_0x4146,
+	    0,
+	    "Galileo Technology",
+	    "System Controller",
+	},
+	{
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_0x4620,
+	    0,
+	    "Galileo Technology",
+	    "System Controller",
+	},
+	{
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_0x6320,
+	    0,
+	    "Galileo Technology",
+	    "System Controller",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,
