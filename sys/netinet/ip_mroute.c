@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.16 1995/06/01 21:36:32 mycroft Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.17 1995/06/02 04:23:05 mycroft Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -113,10 +113,12 @@ static	int priority __P((struct vif *, struct ip *));
  * can't be sent this way.  They only exist as a placeholder for
  * multicast source verification.
  */
+#if 0
 struct ifnet multicast_decap_if[MAXVIFS];
+#endif
 
-#define ENCAP_TTL 64
-#define ENCAP_PROTO IPPROTO_IPIP	/* 4 */
+#define	ENCAP_TTL	64
+#define	ENCAP_PROTO	IPPROTO_IPIP	/* 4 */
 
 /* prototype IP hdr for encapsulated packets */
 struct ip multicast_encap_iphdr = {
@@ -212,6 +214,7 @@ static int get_version __P((struct mbuf *));
 static int set_assert __P((struct mbuf *));
 static int get_assert __P((struct mbuf *));
 static int add_vif __P((struct mbuf *));
+static void reset_vif __P((struct vif *));
 static int del_vif __P((struct mbuf *));
 static void update_mfc __P((struct mfcctl *, struct mfc *));
 static void expire_mfc __P((struct mfc *));
@@ -420,29 +423,19 @@ ip_mrouter_done()
 {
 	vifi_t vifi;
 	register struct vif *vifp;
-	struct ifnet *ifp;
-	struct ifreq ifr;
 	int i;
 	int s;
 	
 	s = splnet();
 
-	/*
-	 * For each phyint in use, disable promiscuous reception of all IP
-	 * multicasts.
-	 */
+	/* Clear out all the vifs currently in use. */
 	for (vifi = 0; vifi < numvifs; vifi++) {
 		vifp = &viftable[vifi];
-		if (vifp->v_lcl_addr.s_addr != 0 &&
-		    !(vifp->v_flags & VIFF_TUNNEL)) {
-			satosin(&ifr.ifr_addr)->sin_family = AF_INET;
-			satosin(&ifr.ifr_addr)->sin_addr.s_addr = INADDR_ANY;
-			ifp = vifp->v_ifp;
-			(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
-		}
+		if (vifp->v_lcl_addr.s_addr != 0)
+			reset_vif(vifp);
 	}
+
 	bzero((caddr_t)qtable, sizeof(qtable));
-	bzero((caddr_t)viftable, sizeof(viftable));
 	numvifs = 0;
 	pim_assert = 0;
 	
@@ -462,11 +455,7 @@ ip_mrouter_done()
 	}
 	free(mfchashtbl, M_MRTABLE);
 	
-	/*
-	 * Reset de-encapsulation cache
-	 */
-	last_encap_src = NULL;
-	last_encap_vif = NULL;
+	/* Reset de-encapsulation cache. */
 	have_encap_tunnel = 0;
 	
 	ip_mrouter = NULL;
@@ -553,31 +542,28 @@ add_vif(m)
 	ifa = ifa_ifwithaddr((struct sockaddr *)&sin);
 	if (ifa == 0)
 		return (EADDRNOTAVAIL);
-	ifp = ifa->ifa_ifp;
 	
 	if (vifcp->vifc_flags & VIFF_TUNNEL) {
-		if ((vifcp->vifc_flags & VIFF_SRCRT) == 0) {
-			/*
-			 * An encapsulating tunnel is wanted.  Tell
-			 * ipip_input() to start paying attention to
-			 * encapsulated packets.
-			 */
-			have_encap_tunnel = 1;
-			/*
-			 * Set interface to fake encapsulator interface.
-			 */
-			ifp = &multicast_decap_if[vifcp->vifc_vifi];
-			ifp->if_name = "mdecap";
-			ifp->if_unit = vifcp->vifc_vifi;
-			/*
-			 * Prepare cached route entry.
-			 */
-			bzero(&vifp->v_route, sizeof(vifp->v_route));
-		} else {
+		if (vifcp->vifc_flags & VIFF_SRCRT) {
 			log(LOG_ERR, "Source routed tunnels not supported.");
 			return (EOPNOTSUPP);
 		}
+
+		/* Create a fake encapsulation interface. */
+		ifp = (struct ifnet *)malloc(sizeof(*ifp), M_MRTABLE, M_WAITOK);
+		bzero(ifp, sizeof(*ifp));
+		ifp->if_name = "mdecap";
+		ifp->if_unit = vifcp->vifc_vifi;
+
+		/* Prepare cached route entry. */
+		bzero(&vifp->v_route, sizeof(vifp->v_route));
+
+		/* Tell ipip_input() to start looking at encapsulated packets. */
+		have_encap_tunnel = 1;
 	} else {
+		/* Use the physical interface associated with the address. */
+		ifp = ifa->ifa_ifp;
+
 		/* Make sure the interface supports multicast. */
 		if ((ifp->if_flags & IFF_MULTICAST) == 0)
 			return (EOPNOTSUPP);
@@ -585,9 +571,7 @@ add_vif(m)
 		/* Enable promiscuous reception of all IP multicasts. */
 		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
 		satosin(&ifr.ifr_addr)->sin_addr.s_addr = INADDR_ANY;
-		s = splnet();
 		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
-		splx(s);
 		if (error)
 			return (error);
 	}
@@ -631,6 +615,28 @@ add_vif(m)
 	return (0);
 }
 
+void
+reset_vif(vifp)
+	register struct vif *vifp;
+{
+	struct ifnet *ifp;
+	struct ifreq ifr;
+
+	if (vifp->v_flags & VIFF_TUNNEL) {
+		free(vifp->v_ifp, M_MRTABLE);
+		if (vifp == last_encap_vif) {
+			last_encap_vif = 0;
+			last_encap_src = 0;
+		}
+	} else {
+		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
+		satosin(&ifr.ifr_addr)->sin_addr.s_addr = INADDR_ANY;
+		ifp = vifp->v_ifp;
+		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
+	}
+	bzero((caddr_t)vifp, sizeof(*vifp));
+}
+
 /*
  * Delete a vif from the vif table
  */
@@ -641,8 +647,6 @@ del_vif(m)
 	vifi_t *vifip;
 	register struct vif *vifp;
 	register vifi_t vifi;
-	struct ifnet *ifp;
-	struct ifreq ifr;
 	int s;
 	
 	if (m == 0 || m->m_len < sizeof(vifi_t))
@@ -658,21 +662,9 @@ del_vif(m)
 	
 	s = splnet();
 	
-	if (!(vifp->v_flags & VIFF_TUNNEL)) {
-		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
-		satosin(&ifr.ifr_addr)->sin_addr.s_addr = INADDR_ANY;
-		ifp = vifp->v_ifp;
-		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
-	}
-	
-	if (vifp == last_encap_vif) {
-		last_encap_vif = 0;
-		last_encap_src = 0;
-	}
+	reset_vif(vifp);
 	
 	bzero((caddr_t)qtable[*vifip], sizeof(qtable[*vifip]));
-	bzero((caddr_t)&vifp->v_tbf, sizeof(vifp->v_tbf));
-	bzero((caddr_t)vifp, sizeof(*vifp));
 	
 	/* Adjust numvifs down */
 	for (vifi = numvifs; vifi > 0; vifi--)
