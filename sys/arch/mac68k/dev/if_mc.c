@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.13 1999/05/18 23:52:53 thorpej Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.14 1999/10/14 20:58:18 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -510,7 +510,9 @@ struct mc_softc *sc = arg;
 	}
 
 	if (ir & CERR) {
+#ifdef MCDEBUG
 		printf("%s: collision error\n", sc->sc_dev.dv_xname);
+#endif
 		sc->sc_if.if_collisions++;
 	}
 
@@ -557,6 +559,7 @@ mc_tint(sc)
 	else if (xmtfs & ONE)
 		sc->sc_if.if_collisions++;
 	else if (xmtfs & RTRY) {
+		printf("%s: excessive collisions\n", sc->sc_dev.dv_xname);
 		sc->sc_if.if_collisions += 16;
 		sc->sc_if.if_oerrors++;
 	}
