@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_var.h,v 1.20 2001/12/12 15:29:14 sakane Exp $	*/
+/*	$KAME: isakmp_var.h,v 1.21 2003/05/29 08:59:51 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -54,7 +54,8 @@ struct isakmp_pl_ke;	/* XXX */
 struct isakmp_pl_nonce;	/* XXX */
 
 extern int isakmp_handler __P((int));
-extern int isakmp_ph1begin_i __P((struct remoteconf *, struct sockaddr *));
+extern int isakmp_ph1begin_i __P((struct remoteconf *, struct sockaddr *,
+	struct sockaddr *));
 
 extern vchar_t *isakmp_parsewoh __P((int, struct isakmp_gen *, int));
 extern vchar_t *isakmp_parse __P((vchar_t *));

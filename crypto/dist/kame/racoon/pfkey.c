@@ -1,4 +1,4 @@
-/*	$KAME: pfkey.c,v 1.134 2002/06/04 05:20:27 itojun Exp $	*/
+/*	$KAME: pfkey.c,v 1.138 2003/06/30 11:01:18 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -765,13 +765,30 @@ int
 pk_sendgetspi(iph2)
 	struct ph2handle *iph2;
 {
+	struct sockaddr *src = NULL, *dst = NULL;
 	u_int satype, mode;
 	struct saprop *pp;
 	struct saproto *pr;
+	int proxy = 0;
 
-	pp = iph2->side == INITIATOR
-			? iph2->proposal
-			: iph2->approval;
+	if (iph2->side == INITIATOR) {
+		pp = iph2->proposal;
+		proxy = iph2->ph1->rmconf->support_proxy;
+	} else {
+		pp = iph2->approval;
+		if (iph2->sainfo && iph2->sainfo->id_i)
+			proxy = 1;
+	}
+
+	/* for mobile IPv6 */
+	if (proxy && iph2->src_id && iph2->dst_id &&
+	    ipsecdoi_transportmode(pp)) {
+		src = iph2->src_id;
+		dst = iph2->dst_id;
+	} else {
+		src = iph2->src;
+		dst = iph2->dst;
+	}
 
 	for (pr = pp->head; pr != NULL; pr = pr->next) {
 
@@ -794,8 +811,8 @@ pk_sendgetspi(iph2)
 				lcconf->sock_pfkey,
 				satype,
 				mode,
-				iph2->dst,		/* src of SA */
-				iph2->src,		/* dst of SA */
+				dst,			/* src of SA */
+				src,			/* dst of SA */
 				0, 0, pr->reqid_in, iph2->seq) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"ipseclib failed send getspi (%s)\n",
@@ -804,7 +821,7 @@ pk_sendgetspi(iph2)
 		}
 		plog(LLV_DEBUG, LOCATION, NULL,
 			"pfkey GETSPI sent: %s\n",
-			sadbsecas2str(iph2->dst, iph2->src, satype, 0, mode));
+			sadbsecas2str(dst, src, satype, 0, mode));
 	}
 
 	return 0;
@@ -920,6 +937,7 @@ pk_sendupdate(iph2)
 	int e_type, e_keylen, a_type, a_keylen, flags;
 	u_int satype, mode;
 	u_int64_t lifebyte = 0;
+	int proxy = 0;
 
 	/* sanity check */
 	if (iph2->approval == NULL) {
@@ -927,8 +945,14 @@ pk_sendupdate(iph2)
 			"no approvaled SAs found.\n");
 	}
 
+	if (iph2->side == INITIATOR)
+		proxy = iph2->ph1->rmconf->support_proxy;
+	else if (iph2->sainfo && iph2->sainfo->id_i)
+		proxy = 1;
+
 	/* for mobile IPv6 */
-	if (iph2->ph1->rmconf->support_mip6 && iph2->src_id && iph2->dst_id) {
+	if (proxy && iph2->src_id && iph2->dst_id &&
+	    ipsecdoi_transportmode(iph2->approval)) {
 		src = iph2->src_id;
 		dst = iph2->dst_id;
 	} else {
@@ -977,8 +1001,8 @@ pk_sendupdate(iph2)
 				lcconf->sock_pfkey,
 				satype,
 				mode,
-				iph2->dst,
-				iph2->src,
+				dst,
+				src,
 				pr->spi,
 				pr->reqid_in,
 				4,	/* XXX static size of window */
@@ -1001,7 +1025,7 @@ pk_sendupdate(iph2)
 		 * But it is impossible because there is not key in the
 		 * information from the kernel.
 		 */
-		if (backupsa_to_file(satype, mode, iph2->dst, iph2->src,
+		if (backupsa_to_file(satype, mode, dst, src,
 				pr->spi, pr->reqid_in, 4,
 				pr->keymat->v,
 				e_type, e_keylen, a_type, a_keylen, flags,
@@ -1010,12 +1034,12 @@ pk_sendupdate(iph2)
 				iph2->seq) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"backuped SA failed: %s\n",
-				sadbsecas2str(iph2->dst, iph2->src,
+				sadbsecas2str(dst, src,
 				satype, pr->spi, mode));
 		}
 		plog(LLV_DEBUG, LOCATION, NULL,
 			"backuped SA: %s\n",
-			sadbsecas2str(iph2->dst, iph2->src,
+			sadbsecas2str(dst, src,
 			satype, pr->spi, mode));
 	}
 
@@ -1136,6 +1160,10 @@ pk_recvupdate(mhp)
 	/* count up */
 	iph2->ph1->ph2cnt++;
 
+	/* turn off schedule */
+	if (iph2->scr)
+		SCHED_KILL(iph2->scr);
+
 	/*
 	 * since we are going to reuse the phase2 handler, we need to
 	 * remain it and refresh all the references between ph1 and ph2 to use.
@@ -1161,6 +1189,7 @@ pk_sendadd(iph2)
 	int e_type, e_keylen, a_type, a_keylen, flags;
 	u_int satype, mode;
 	u_int64_t lifebyte = 0;
+	int proxy = 0;
 
 	/* sanity check */
 	if (iph2->approval == NULL) {
@@ -1168,8 +1197,14 @@ pk_sendadd(iph2)
 			"no approvaled SAs found.\n");
 	}
 
+	if (iph2->side == INITIATOR)
+		proxy = iph2->ph1->rmconf->support_proxy;
+	else if (iph2->sainfo && iph2->sainfo->id_i)
+		proxy = 1;
+
 	/* for mobile IPv6 */
-	if (iph2->ph1->rmconf->support_mip6 && iph2->src_id && iph2->dst_id) {
+	if (proxy && iph2->src_id && iph2->dst_id &&
+	    ipsecdoi_transportmode(iph2->approval)) {
 		src = iph2->src_id;
 		dst = iph2->dst_id;
 	} else {
@@ -1218,8 +1253,8 @@ pk_sendadd(iph2)
 				lcconf->sock_pfkey,
 				satype,
 				mode,
-				iph2->src,
-				iph2->dst,
+				src,
+				dst,
 				pr->spi_p,
 				pr->reqid_out,
 				4,	/* XXX static size of window */
@@ -1242,7 +1277,7 @@ pk_sendadd(iph2)
 		 * But it is impossible because there is not key in the
 		 * information from the kernel.
 		 */
-		if (backupsa_to_file(satype, mode, iph2->src, iph2->dst,
+		if (backupsa_to_file(satype, mode, src, dst,
 				pr->spi_p, pr->reqid_out, 4,
 				pr->keymat_p->v,
 				e_type, e_keylen, a_type, a_keylen, flags,
@@ -1251,12 +1286,12 @@ pk_sendadd(iph2)
 				iph2->seq) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"backuped SA failed: %s\n",
-				sadbsecas2str(iph2->src, iph2->dst,
+				sadbsecas2str(src, dst,
 				satype, pr->spi_p, mode));
 		}
 		plog(LLV_DEBUG, LOCATION, NULL,
 			"backuped SA: %s\n",
-			sadbsecas2str(iph2->src, iph2->dst,
+			sadbsecas2str(src, dst,
 			satype, pr->spi_p, mode));
 	}
 
@@ -1468,7 +1503,7 @@ pk_recvacquire(mhp)
 	/* ignore if type is not IPSEC_POLICY_IPSEC */
 	if (xpl->sadb_x_policy_type != IPSEC_POLICY_IPSEC) {
 		plog(LLV_DEBUG, LOCATION, NULL,
-			"ignore SPDGET message. type is not IPsec.\n");
+			"ignore ACQUIRE message. type is not IPsec.\n");
 		return 0;
 	}
 
@@ -1600,7 +1635,7 @@ pk_recvacquire(mhp)
 		delph2(iph2[n]);
 		return -1;
 	}
-	iph2[n]->sainfo = getsainfo(idsrc, iddst);
+	iph2[n]->sainfo = getsainfo(idsrc, iddst, NULL);
 	vfree(idsrc);
 	vfree(iddst);
 	if (iph2[n]->sainfo == NULL) {
@@ -1880,12 +1915,44 @@ static int
 pk_recvspdupdate(mhp)
 	caddr_t *mhp;
 {
+	struct sadb_address *saddr, *daddr;
+	struct sadb_x_policy *xpl;
+	struct policyindex spidx;
+	struct secpolicy *sp;
+
 	/* sanity check */
-	if (mhp[0] == NULL) {
+	if (mhp[0] == NULL
+	 || mhp[SADB_EXT_ADDRESS_SRC] == NULL
+	 || mhp[SADB_EXT_ADDRESS_DST] == NULL
+	 || mhp[SADB_X_EXT_POLICY] == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"inappropriate sadb spdupdate message passed.\n");
 		return -1;
 	}
+	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
+	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
+	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+
+	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
+			saddr + 1,
+			daddr + 1,
+			saddr->sadb_address_prefixlen,
+			daddr->sadb_address_prefixlen,
+			saddr->sadb_address_proto,
+			&spidx);
+
+	sp = getsp(&spidx);
+	if (sp == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"such policy does not already exist: %s\n",
+			spidx2str(&spidx));
+	} else {
+		remsp(sp);
+		delsp(sp);
+	}
+
+	if (addnewsp(mhp) < 0)
+		return -1;
 
 	return 0;
 }
