@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.3 1994/06/29 06:47:34 cgd Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.3.2.1 1994/10/19 04:29:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -612,6 +612,9 @@ ufs_seek(ap)
 		struct ucred *a_cred;
 	} */ *ap;
 {
+
+	if (length < 0 || length > 0xffffffffLL)
+		return (EINVAL);
 
 	return (0);
 }
