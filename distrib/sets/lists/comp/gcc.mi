@@ -1,4 +1,4 @@
-#	$NetBSD: gcc.mi,v 1.8 2004/01/13 06:27:16 lukem Exp $
+#	$NetBSD: gcc.mi,v 1.9 2004/09/03 11:26:22 he Exp $
 ./usr/bin/protoize				comp-c-bin
 ./usr/bin/readelf				comp-util-bin		bfd
 ./usr/bin/unprotoize				comp-c-bin
@@ -312,6 +312,7 @@
 ./usr/include/g++/vector			comp-cxx-include
 ./usr/include/g++/vector.h			comp-cxx-include	obsolete
 ./usr/include/stdbool.h				comp-c-include
+./usr/lib/crtbeginT.o				comp-c-lib
 ./usr/lib/libfrtbegin.a				comp-c-lib
 ./usr/lib/libgcc_p.a				comp-c-proflib		profile
 ./usr/lib/libsupc++.a				comp-cxx-lib
