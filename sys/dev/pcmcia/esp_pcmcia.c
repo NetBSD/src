@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.7 2000/06/05 15:19:44 tsutsui Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.8 2000/06/05 15:36:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ void	esp_pcmcia_init __P((struct esp_pcmcia_softc *));
 int	esp_pcmcia_detach __P((struct device *, int));
 int	esp_pcmcia_enable __P((void *, int));
 
-static struct scsipi_adapter esp_pci_adapter = {
+static struct scsipi_adapter esp_pcmcia_adapter = {
 	0,			/* adapter refcnt */
 	ncr53c9x_scsi_cmd,	/* cmd */
 	minphys,		/* minphys */
@@ -209,7 +209,7 @@ esp_pcmcia_attach(parent, self, aux)
 	 *  Initialize nca board itself.
 	 */
 	esc->sc_flags |= ESP_PCMCIA_ATTACHING;
-	ncr53c9x_attach(sc, &esp_pci_adapter, NULL);
+	ncr53c9x_attach(sc, &esp_pcmcia_adapter, NULL);
 	esc->sc_flags &= ~ESP_PCMCIA_ATTACHING;
 	esc->sc_flags |= ESP_PCMCIA_ATTACHED;
 	return;
