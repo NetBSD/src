@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)psignal.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: psignal.c,v 1.4 1993/12/06 21:47:38 mycroft Exp $";
+static char *rcsid = "$Id: psignal.c,v 1.5 1994/06/26 16:13:06 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -56,8 +56,8 @@ psignal(sig, s)
 		c = sys_siglist[sig];
 	else
 		c = "Unknown signal";
-	n = strlen(s);
-	if (n) {
+	if (s && *s) {
+		n = strlen(s);
 		(void)write(STDERR_FILENO, s, n);
 		(void)write(STDERR_FILENO, ": ", 2);
 	}
