@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: lorder.sh,v 1.7 1998/04/09 05:28:07 fair Exp $
+#	$NetBSD: lorder.sh,v 1.8 1998/11/09 04:52:44 mycroft Exp $
 #
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -63,11 +63,12 @@ case $# in
 esac
 
 # temporary files
+N=/tmp/_nm_$$
 R=/tmp/_reference_$$
 S=/tmp/_symbol_$$
 
 # remove temporary files on HUP, INT, QUIT, PIPE, TERM
-trap "rm -f $R $S; exit 1" 1 2 3 13 15
+trap "rm -f $N $R $S; exit 1" 1 2 3 13 15
 
 # if the line ends in a colon, assume it's the first occurrence of a new
 # object file.  Echo it twice, just to make sure it gets into the output.
@@ -77,28 +78,14 @@ trap "rm -f $R $S; exit 1" 1 2 3 13 15
 #
 # if the line has " U " it's a globally undefined symbol, put it into
 # the reference file.
-(for file in $* ; do echo $file":" ; done ; $NM -go $*) | sed "
-	/:$/ {
-		s/://
-		s/.*/& &/
-		p
-		d
-	}
-	/ [TDGR] / {
-		s/:.* [TDGR] / /
-		w $S
-		d
-	}
-	/ U / {
-		s/:.* U / /
-		w $R
-	}
-	d
-"
+(for file in $* ; do echo $file":" ; done ; $NM -go $*) >$N
+sed -ne '/:$/{s/://;s/.*/& &/;p;}' <$N
+sed -ne 's/:.* [TDGR] / /p' <$N >$S
+sed -ne 's/:.* U / /p' <$N >$R
 
 # sort symbols and references on the first field (the symbol)
 # join on that field, and print out the file names.
 sort +1 $R -o $R
 sort +1 $S -o $S
 join -j 2 -o 1.1 2.1 $R $S
-rm -f $R $S
+rm -f $N $R $S
