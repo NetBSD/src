@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.24 2002/02/17 20:55:58 uch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.25 2002/02/19 17:22:34 uch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -94,6 +94,7 @@ void
 cpu_fork(struct proc *p1, struct proc *p2, void *stack,
     size_t stacksize, void (*func)(void *), void *arg)
 {
+	extern void proc_trampoline(void);
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
@@ -162,6 +163,8 @@ cpu_swapout(struct proc *p)
 void
 cpu_exit(struct proc *p)
 {
+	extern void switch_exit(struct proc *);
+
 	uvmexp.swtch++;
 	switch_exit(p);
 }

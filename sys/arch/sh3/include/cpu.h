@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2002/02/17 20:55:52 uch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 2002/02/19 17:22:34 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -124,7 +124,6 @@ int	want_resched;		/* resched() was called */
  * We need a machine-independent name for this.
  */
 #define	DELAY(x)		delay(x)
-void	delay(int);
 
 /*
  * Logical address space of SH3 CPU.
@@ -174,45 +173,13 @@ do {									\
 #include <machine/cputypes.h>
 
 #ifdef _KERNEL
-/* autoconf.c */
-void	configure(void);
-
-/* sh3_machdep.c */
 void sh_cpu_init(int, int);
 void sh3_startup(void);
-
-/* machdep.c */
-void	delay(int);
-void	dumpconf(void);
-void	cpu_reset(void);
-
-/* locore.s */
-struct region_descriptor;
-void	lgdt(struct region_descriptor *);
-void	fillw(short, void *, size_t);
-void	bcopyb (caddr_t, caddr_t, size_t);
-void	bcopyw(caddr_t, caddr_t, size_t);
-
+void delay(int);
 struct pcb;
-void	savectx(struct pcb *);
-void	switch_exit(struct proc *);
-void	proc_trampoline(void);
+void savectx(struct pcb *);
 
-/* clock.c */
-void	startrtclock(void);
-
-/* npx.c */
-void	npxdrop(void);
-void	npxsave(void);
-
-/* vm_machdep.c */
-int kvtop(caddr_t);
-
-#ifdef MATH_EMULATE
-/* math_emulate.c */
-int	math_emulate(struct trapframe *);
-#endif
-
+void startrtclock(void);
 #endif /* _KERNEL */
 
 /*

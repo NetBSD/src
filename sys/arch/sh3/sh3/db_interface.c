@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.8 2002/02/17 20:58:35 uch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.9 2002/02/19 17:22:34 uch Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -137,7 +137,7 @@ void
 cpu_Debugger()
 {
 
-	breakpoint();
+	__asm__ __volatile__("trapa #0xc3");
 }
 
 #define M_BSR	0xf000
