@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.21 2005/03/03 16:01:37 martin Exp $ */
+/*	$NetBSD: cgsix.c,v 1.22 2005/03/14 11:50:17 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.21 2005/03/03 16:01:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.22 2005/03/14 11:50:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,13 +156,13 @@ struct wsscreen_descr cgsix_defaultscreen = {
 	WSSCREEN_REVERSE	/* capabilities */
 };
 
-static int cgsix_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static paddr_t cgsix_mmap __P((void *, off_t, int));
-static int cgsix_alloc_screen __P((void *, const struct wsscreen_descr *,
-				void **, int *, int *, long *));
-static void cgsix_free_screen __P((void *, void *));
-static int cgsix_show_screen __P((void *, void *, int,
-				void (*) (void *, int, int), void *));
+static int cgsix_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static paddr_t cgsix_mmap(void *, off_t, int);
+static int cgsix_alloc_screen(void *, const struct wsscreen_descr *,
+				void **, int *, int *, long *);
+static void cgsix_free_screen(void *, void *);
+static int cgsix_show_screen(void *, void *, int,
+				void (*) (void *, int, int), void *);
 int cgsix_putcmap(struct cgsix_softc *, struct wsdisplay_cmap *);
 int cgsix_getcmap(struct cgsix_softc *, struct wsdisplay_cmap *);
 
@@ -525,10 +525,7 @@ cg6_ras_do_cursor(struct rasops_info *ri)
 #endif
 
 void
-cg6attach(sc, name, isconsole)
-	struct cgsix_softc *sc;
-	char *name;
-	int isconsole;
+cg6attach(struct cgsix_softc *sc, char *name, int isconsole)
 {
 	struct fbdevice *fb = &sc->sc_fb;
 #if NWSDISPLAY
@@ -638,23 +635,17 @@ cg6attach(sc, name, isconsole)
 
 
 int
-cgsixopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+cgsixopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 
 	if (unit >= cgsix_cd.cd_ndevs || cgsix_cd.cd_devs[unit] == NULL)
-		return (ENXIO);
-	return (0);
+		return ENXIO;
+	return 0;
 }
 
 int
-cgsixclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+cgsixclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
 
@@ -664,16 +655,11 @@ cgsixclose(dev, flags, mode, p)
 	bt_initcmap(&sc->sc_cmap, 256);
 	cg6_loadcmap(sc, 0, 256);
 
-	return (0);
+	return 0;
 }
 
 int
-cgsixioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+cgsixioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
 	union cursor_cmap tcm;
@@ -712,7 +698,7 @@ cgsixioctl(dev, cmd, data, flags, p)
 		/* copy to software map */
 		error = bt_putcmap(p, &sc->sc_cmap, 256, 1);
 		if (error)
-			return (error);
+			return error;
 		/* now blast them into the chip */
 		/* XXX should use retrace interrupt */
 		cg6_loadcmap(sc, p->index, p->count);
@@ -749,16 +735,16 @@ cgsixioctl(dev, cmd, data, flags, p)
 			count = cc->cc_size.y * 32 / NBBY;
 			error = copyout(cc->cc_bits[1], p->image, count);
 			if (error)
-				return (error);
+				return error;
 			error = copyout(cc->cc_bits[0], p->mask, count);
 			if (error)
-				return (error);
+				return error;
 		}
 		if (p->cmap.red != NULL) {
 			error = bt_getcmap(&p->cmap,
 			    (union bt_cmap *)&cc->cc_color, 2, 1);
 			if (error)
-				return (error);
+				return error;
 		} else {
 			p->cmap.index = 0;
 			p->cmap.count = 2;
@@ -782,11 +768,11 @@ cgsixioctl(dev, cmd, data, flags, p)
 			tcm = cc->cc_color;
 			error = bt_putcmap(&p->cmap, (union bt_cmap *)&tcm, 2, 1);
 			if (error)
-				return (error);
+				return error;
 		}
 		if (v & FB_CUR_SETSHAPE) {
 			if ((u_int)p->size.x > 32 || (u_int)p->size.y > 32)
-				return (EINVAL);
+				return EINVAL;
 			count = p->size.y * 32 / NBBY;
 			error = copyin(p->image, image, count);
 			if (error)
@@ -843,17 +829,16 @@ cgsixioctl(dev, cmd, data, flags, p)
 		log(LOG_NOTICE, "cgsixioctl(0x%lx) (%s[%d])\n", cmd,
 		    p->p_comm, p->p_pid);
 #endif
-		return (ENOTTY);
+		return ENOTTY;
 	}
-	return (0);
+	return 0;
 }
 
 /*
  * Clean up hardware state (e.g., after bootup or after X crashes).
  */
 static void
-cg6_reset(sc)
-	struct cgsix_softc *sc;
+cg6_reset(struct cgsix_softc *sc)
 {
 	volatile struct cg6_tec_xxx *tec;
 	int fhc;
@@ -889,8 +874,7 @@ cg6_reset(sc)
 }
 
 static void
-cg6_setcursor(sc)
-	struct cgsix_softc *sc;
+cg6_setcursor(struct cgsix_softc *sc)
 {
 
 	/* we need to subtract the hot-spot value here */
@@ -902,8 +886,7 @@ cg6_setcursor(sc)
 }
 
 static void
-cg6_loadcursor(sc)
-	struct cgsix_softc *sc;
+cg6_loadcursor(struct cgsix_softc *sc)
 {
 	volatile struct cg6_thc *thc;
 	u_int edgemask, m;
@@ -932,9 +915,7 @@ cg6_loadcursor(sc)
  * Load a subset of the current (new) colormap into the color DAC.
  */
 static void
-cg6_loadcmap(sc, start, ncolors)
-	struct cgsix_softc *sc;
-	int start, ncolors;
+cg6_loadcmap(struct cgsix_softc *sc, int start, int ncolors)
 {
 	volatile struct bt_regs *bt;
 	u_int *ip, i;
@@ -958,8 +939,7 @@ cg6_loadcmap(sc, start, ncolors)
  * Load the cursor (overlay `foreground' and `background') colors.
  */
 static void
-cg6_loadomap(sc)
-	struct cgsix_softc *sc;
+cg6_loadomap(struct cgsix_softc *sc)
 {
 	volatile struct bt_regs *bt;
 	u_int i;
@@ -979,8 +959,7 @@ cg6_loadomap(sc)
 }
 
 static void
-cg6_unblank(dev)
-	struct device *dev;
+cg6_unblank(struct device *dev)
 {
 	struct cgsix_softc *sc = (struct cgsix_softc *)dev;
 
@@ -1019,10 +998,7 @@ struct mmo {
  * XXX	needs testing against `demanding' applications (e.g., aviator)
  */
 paddr_t
-cgsixmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+cgsixmmap(dev_t dev, off_t off, int prot)
 {
 	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
 	struct mmo *mo;
@@ -1070,43 +1046,34 @@ cgsixmmap(dev, off, prot)
 		(long long)off, p->p_comm, p->p_pid);
 	}
 #endif
-	return (-1);	/* not a user-map offset */
+	return -1;	/* not a user-map offset */
 }
 
 /* dummies for multiple screen handling */
 int
-cgsix_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+cgsix_alloc_screen(void *v, const struct wsscreen_descr *type,
+		   void **cookiep, int *curxp, int *curyp,long *attrp)
 {
 	/*struct cg6_softc *sc = v;
 	struct rasops_info *ri = &sc->sc_dc->dc_ri;
 	long defattr;*/
 
-	return (ENOMEM);
+	return ENOMEM;
 }
 
 void
-cgsix_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+cgsix_free_screen(void *v, void *cookie)
 {
 	/*struct cg6_softc *sc = v;*/
 }
 
 int
-cgsix_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb) __P((void *, int, int));
-	void *cbarg;
+cgsix_show_screen(void *v, void *cookie, int waitok,
+		  void (*cb)(void *, int, int),
+		  void *cbarg)
 {
 
-	return (0);
+	return 0;
 }
 
 int
@@ -1132,9 +1099,11 @@ cgsix_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			return 0;
 
 		case WSDISPLAYIO_GETCMAP:
-			return cgsix_getcmap(sc, (struct wsdisplay_cmap *)data);
+			return cgsix_getcmap(sc, 
+			    (struct wsdisplay_cmap *)data);
 		case WSDISPLAYIO_PUTCMAP:
-			return cgsix_putcmap(sc, (struct wsdisplay_cmap *)data);
+			return cgsix_putcmap(sc, 
+			    (struct wsdisplay_cmap *)data);
 
 #ifdef notyet
 		case WSDISPLAYIO_SMODE:
@@ -1145,9 +1114,15 @@ cgsix_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 					sc->sc_mode=new_mode;
 					if(new_mode==WSDISPLAYIO_MODE_EMUL)
 					{
-						/* we'll probably want to reset the console into a known state here
-						   just in case the Xserver crashed or didn't properly clean up after
-						   itself for whetever reason */
+						/*
+						 * We'll probably want to
+						 * reset the console into a
+						 * known state here just in
+						 * case the Xserver crashed
+						 * or didn't properly clean
+						 * up after itself for
+						 * whetever reason
+						 */
 					}
 				}
 			}
@@ -1163,7 +1138,8 @@ cgsix_mmap(void *v, off_t offset, int prot)
 	/* how do I get the real RAM size? */
 	int ramsize=sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes;
 	if(offset<ramsize) {
-		return bus_space_mmap(sc->sc_bustag,sc->sc_paddr,CGSIX_RAM_OFFSET+offset,prot,BUS_SPACE_MAP_LINEAR);
+		return bus_space_mmap(sc->sc_bustag,sc->sc_paddr,
+		    CGSIX_RAM_OFFSET+offset,prot, BUS_SPACE_MAP_LINEAR);
 	}
 	/* I'm not at all sure this is the right thing to do */
 	return cgsixmmap(0,offset,prot); /* assume we're minor dev 0 for now */
@@ -1181,13 +1157,17 @@ cgsix_putcmap(struct cgsix_softc *sc, struct wsdisplay_cmap *cm)
 
 	for(i=0;i<count;i++)
 	{
-		error = copyin(&cm->red[i], &sc->sc_cmap.cm_map[index+i][0], 1);
+		error = copyin(&cm->red[i],
+		    &sc->sc_cmap.cm_map[index+i][0], 1);
 		if (error)
 			return error;
-		error = copyin(&cm->green[i], &sc->sc_cmap.cm_map[index+i][1], 1);
+		error = copyin(&cm->green[i],
+		    &sc->sc_cmap.cm_map[index+i][1],
+		    1);
 		if (error)
 			return error;
-		error = copyin(&cm->blue[i], &sc->sc_cmap.cm_map[index+i][2], 1);
+		error = copyin(&cm->blue[i],
+		    &sc->sc_cmap.cm_map[index+i][2], 1);
 		if (error)
 			return error;
 	}
@@ -1196,7 +1176,8 @@ cgsix_putcmap(struct cgsix_softc *sc, struct wsdisplay_cmap *cm)
 	return 0;
 }
 
-int cgsix_getcmap(struct cgsix_softc *sc, struct wsdisplay_cmap *cm)
+int
+cgsix_getcmap(struct cgsix_softc *sc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
@@ -1207,13 +1188,16 @@ int cgsix_getcmap(struct cgsix_softc *sc, struct wsdisplay_cmap *cm)
 
 	for(i=0;i<count;i++)
 	{
-		error = copyout(&sc->sc_cmap.cm_map[index+i][0],   &cm->red[i],1);
+		error = copyout(&sc->sc_cmap.cm_map[index+i][0],
+		    &cm->red[i],1);
 		if (error)
 			return error;
-		error = copyout(&sc->sc_cmap.cm_map[index+i][1],   &cm->green[i],1);
+		error = copyout(&sc->sc_cmap.cm_map[index+i][1],
+		    &cm->green[i],1);
 		if (error)
 			return error;
-		error = copyout(&sc->sc_cmap.cm_map[index+i][2],   &cm->blue[i],1);
+		error = copyout(&sc->sc_cmap.cm_map[index+i][2],
+		    &cm->blue[i],1);
 		if (error)
 			return error;
 	}
