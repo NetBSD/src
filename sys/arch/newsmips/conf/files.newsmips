@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.20 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: files.newsmips,v 1.21 2002/10/26 13:50:38 jdolecek Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -89,7 +89,6 @@ file arch/newsmips/apbus/if_tlp_ap.c		tlp_ap
 
 file arch/newsmips/newsmips/autoconf.c
 file arch/newsmips/newsmips/bus.c
-file arch/newsmips/newsmips/conf.c
 file arch/newsmips/newsmips/machdep.c
 file arch/newsmips/newsmips/news3400.c		hb
 file arch/newsmips/newsmips/news5000.c		ap

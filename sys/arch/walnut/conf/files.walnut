@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.10 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: files.walnut,v 1.11 2002/10/26 13:50:49 jdolecek Exp $
 #
 # walnut-specific configuration info
 
@@ -12,7 +12,6 @@ include "arch/powerpc/conf/files.ibm4xx"
 file	arch/walnut/walnut/autoconf.c
 file	arch/walnut/walnut/bus_dma.c
 file	arch/walnut/walnut/consinit.c
-file	arch/walnut/walnut/conf.c
 file	arch/walnut/walnut/disksubr.c		disk
 file	arch/walnut/walnut/machdep.c
 file	arch/walnut/dev/ibm405gp.c

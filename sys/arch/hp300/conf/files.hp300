@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.57 2002/10/20 02:37:25 chs Exp $
+#	$NetBSD: files.hp300,v 1.58 2002/10/26 13:50:27 jdolecek Exp $
 #
 # hp300-specific configuration info
 
@@ -190,7 +190,6 @@ file	dev/md_root.c			memory_disk_hooks
 file	arch/hp300/hp300/autoconf.c
 file	arch/hp300/hp300/bus_space.c
 file	arch/hp300/hp300/clock.c
-file	arch/hp300/hp300/conf.c
 file	arch/hp300/hp300/db_memrw.c		ddb | kgdb
 file	arch/hp300/hp300/dkbad.c
 file	arch/hp300/hp300/kgdb_machdep.c		kgdb

@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.17 2002/10/20 02:37:30 chs Exp $
+#	$NetBSD: files.news68k,v 1.18 2002/10/26 13:50:37 jdolecek Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -14,7 +14,6 @@ attach mainbus at root
 
 file	arch/news68k/news68k/autoconf.c
 file	arch/news68k/news68k/bus_space.c
-file	arch/news68k/news68k/conf.c
 #file	arch/news68k/news68k/cons_machdep.c
 file	arch/news68k/news68k/clock.c
 file	arch/news68k/news68k/db_memrw.c		ddb | kgdb

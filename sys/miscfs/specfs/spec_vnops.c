@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.65 2002/10/23 09:14:38 jdolecek Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.66 2002/10/26 13:50:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.65 2002/10/23 09:14:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.66 2002/10/26 13:50:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -147,6 +147,19 @@ spec_lookup(v)
 
 	*ap->a_vpp = NULL;
 	return (ENOTDIR);
+}
+
+/*
+ * Returns true if dev is /dev/mem or /dev/kmem.
+ */
+static int
+iskmemdev(dev_t dev)
+{
+	/* mem_no is emitted by config(8) to generated devsw.c */
+	extern const int mem_no;
+
+	/* minor 14 is /dev/io on i386 with COMPAT_10 */
+	return (major(dev) == mem_no && (minor(dev) < 2 || minor(dev) == 14));
 }
 
 /*

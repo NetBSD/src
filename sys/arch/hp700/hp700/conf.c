@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2002/10/26 13:50:28 jdolecek Exp $	*/
 
 /*	$OpenBSD: conf.c,v 1.15 2001/09/28 02:53:13 mickey Exp $	*/
 
@@ -39,17 +39,6 @@
 
 #include <sys/param.h>
 #include <sys/conf.h>
-
-/*
- * Returns true if dev is /dev/mem or /dev/kmem.
- */
-int
-iskmemdev(dev)
-	dev_t dev;
-{
-	return (major(dev) == mem_no && minor(dev) < 2);
-}
-
 #include <dev/cons.h>
 
 cons_decl(pdc);

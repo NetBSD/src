@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.39 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: files.arc,v 1.40 2002/10/26 13:50:22 jdolecek Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -60,7 +60,6 @@ file	arch/arc/arc/platform.c
 ##
 
 file	arch/arc/arc/autoconf.c
-file	arch/arc/arc/conf.c
 file	arch/arc/arc/disksubr.c
 file	arch/arc/arc/machdep.c
 #file	arch/arc/arc/minidebug.c

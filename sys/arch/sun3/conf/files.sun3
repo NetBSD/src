@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.65 2002/10/20 02:37:34 chs Exp $
+#	$NetBSD: files.sun3,v 1.66 2002/10/26 13:50:47 jdolecek Exp $
 
 #
 # sun3-specific configuration info
@@ -32,7 +32,6 @@ file arch/sun3/sun3x/pmap.c			_sun3x_
 
 # Standard stuff (common to Sun3 and Sun3X)
 file arch/sun3/sun3/autoconf.c
-file arch/sun3/sun3/conf.c
 file arch/sun3/sun3/db_machdep.c		ddb
 file arch/sun3/sun3/db_memrw.c			ddb | kgdb
 file arch/sun3/sun3/disksubr.c

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.219 2002/10/11 01:52:06 thorpej Exp $
+#	$NetBSD: files.i386,v 1.220 2002/10/26 13:50:30 jdolecek Exp $
 #
 # new style config file for i386 architecture
 #
@@ -66,7 +66,6 @@ defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/bus_machdep.c
-file	arch/i386/i386/conf.c
 file	arch/i386/i386/consinit.c
 file	arch/i386/i386/db_dbgreg.s	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb

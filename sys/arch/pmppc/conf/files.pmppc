@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmppc,v 1.4 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: files.pmppc,v 1.5 2002/10/26 13:50:41 jdolecek Exp $
 #
 #
 maxpartitions 16
@@ -8,7 +8,6 @@ maxusers 2 8 64
 file	arch/pmppc/pmppc/autoconf.c
 file	arch/pmppc/pmppc/bus_space.c
 file	arch/pmppc/pmppc/clock.c
-file	arch/pmppc/pmppc/conf.c
 file	arch/pmppc/pmppc/disksubr.c		disk
 file	arch/pmppc/pmppc/extintr.c
 file	arch/pmppc/pmppc/machdep.c
