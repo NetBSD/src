@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.222 2004/09/06 20:38:14 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.223 2004/09/09 19:35:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.222 2004/09/06 20:38:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.223 2004/09/09 19:35:32 bouyer Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.222 2004/09/06 20:38:14 bouyer Exp $");
 #include <dev/scsipi/scsipi_disk.h>
 #include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/scsipi_base.h>
 #include <dev/scsipi/sdvar.h>
 
 #define	SDUNIT(dev)			DISKUNIT(dev)
@@ -795,6 +796,7 @@ sdstart(struct scsipi_periph *periph)
 	struct scsipi_rw_big cmd_big;
 	struct scsi_rw cmd_small;
 	struct scsipi_generic *cmdp;
+	struct scsipi_xfer *xs;
 	int nblks, cmdlen, error, flags;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdstart "));
@@ -899,15 +901,10 @@ sdstart(struct scsipi_periph *periph)
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		error = scsipi_command(periph, cmdp, cmdlen,
+		xs = scsipi_make_xs(periph, cmdp, cmdlen,
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    SDRETRIES, SD_IO_TIMEOUT, bp, flags);
-		if (__predict_false(error)) {
-			disk_unbusy(&sd->sc_dk, 0, 0);
-			printf("%s: not queued, error %d\n",
-			    sd->sc_dev.dv_xname, error);
-		}
-		if (__predict_false(error == ENOMEM)) {
+		if (__predict_false(xs == NULL)) {
 			/*
 			 * out of memory. Keep this buffer in the queue, and
 			 * retry later.
@@ -916,13 +913,22 @@ sdstart(struct scsipi_periph *periph)
 			    periph);
 			return;
 		}
+		/*
+		 * need to dequeue the buffer before queuing the command,
+		 * because cdstart may be called recursively from the
+		 * HBA driver
+		 */
 #ifdef DIAGNOSTIC
 		if (BUFQ_GET(&sd->buf_queue) != bp)
 			panic("sdstart(): dequeued wrong buf");
 #else
 		BUFQ_GET(&sd->buf_queue);
 #endif
-
+		error = scsipi_command(periph, xs, cmdp, cmdlen,
+		    (u_char *)bp->b_data, bp->b_bcount,
+		    SDRETRIES, SD_IO_TIMEOUT, bp, flags);
+		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
+		KASSERT(error == 0);
 	}
 }
 
@@ -1665,8 +1671,9 @@ sd_get_capacity(struct sd_softc *sd, struct disk_parms *dp, int flags)
 		cmd.opcode = READ_FORMAT_CAPACITIES;
 		_lto2b(sizeof(data), cmd.length);
 
-		error = scsipi_command(sd->sc_periph, (void *)&cmd, sizeof(cmd),
-		    (void *)&data, sizeof(data), SDRETRIES, 20000, NULL,
+		error = scsipi_command(sd->sc_periph, NULL,
+		    (void *)&cmd, sizeof(cmd), (void *)&data, sizeof(data),
+		    SDRETRIES, 20000, NULL,
 		    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 		if (error == EFTYPE) {
 			/* Medium Format Corrupted, handle as not formatted */
@@ -1953,7 +1960,7 @@ sd_flush(struct sd_softc *sd, int flags)
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = SCSI_SYNCHRONIZE_CACHE;
 
-	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	return (scsipi_command(periph, NULL, (void *)&cmd, sizeof(cmd), 0, 0,
 	    SDRETRIES, 100000, NULL, flags | XS_CTL_IGNORE_ILLEGAL_REQUEST));
 }
 

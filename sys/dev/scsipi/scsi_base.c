@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.80 2004/08/27 20:37:28 bouyer Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.81 2004/09/09 19:35:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.80 2004/08/27 20:37:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.81 2004/09/09 19:35:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ scsi_change_def(struct scsipi_periph *periph, int flags)
 	scsipi_cmd.opcode = SCSI_CHANGE_DEFINITION;
 	scsipi_cmd.how = SC_SCSI_2;
 
-	return (scsipi_command(periph,
+	return (scsipi_command(periph, NULL,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, SCSIPIRETRIES, 100000, NULL, flags));
 }
@@ -79,11 +79,10 @@ scsi_change_def(struct scsipi_periph *periph, int flags)
  * to associate with the transfer, we need that too.
  */
 int
-scsi_scsipi_cmd(struct scsipi_periph *periph, struct scsipi_generic *scsipi_cmd,
-    int cmdlen, void *data, size_t datalen, int retries, int timeout,
-    struct buf *bp, int flags)
+scsi_scsipi_cmd(struct scsipi_periph *periph, struct scsipi_xfer *xs,
+    struct scsipi_generic *scsipi_cmd, int cmdlen, void *data, size_t datalen,
+    int retries, int timeout, struct buf *bp, int flags)
 {
-	struct scsipi_xfer *xs;
 	int error;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("scsi_scsipi_cmd\n"));
@@ -93,10 +92,12 @@ scsi_scsipi_cmd(struct scsipi_periph *periph, struct scsipi_generic *scsipi_cmd,
 		panic("scsi_scsipi_cmd: buffer without async");
 #endif
 
-	if ((xs = scsipi_make_xs(periph, scsipi_cmd, cmdlen, data,
-	    datalen, retries, timeout, bp, flags)) == NULL) {
-		/* let the caller deal with this */
-		return (ENOMEM);
+	if (xs == NULL) {
+		if ((xs = scsipi_make_xs(periph, scsipi_cmd, cmdlen, data,
+		    datalen, retries, timeout, bp, flags)) == NULL) {
+			/* let the caller deal with this */
+			return (ENOMEM);
+		}
 	}
 
 	/*
