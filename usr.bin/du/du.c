@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.10 1995/09/28 06:19:56 perry Exp $	*/
+/*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: du.c,v 1.10 1995/09/28 06:19:56 perry Exp $";
+static char rcsid[] = "$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,15 +72,16 @@ main(argc, argv)
 {
 	FTS *fts;
 	FTSENT *p;
-	long blocksize;
+	long blocksize, totalblocks;
 	int ftsoptions, listdirs, listfiles;
-	int Hflag, Lflag, Pflag, aflag, ch, kflag, notused, rval, sflag;
+	int Hflag, Lflag, Pflag, aflag, ch, cflag, kflag, notused, rval, sflag;
 	char **save;
 
 	save = argv;
-	Hflag = Lflag = Pflag = aflag = kflag = sflag = 0;
+	Hflag = Lflag = Pflag = aflag = cflag = kflag = sflag = 0;
+	totalblocks = 0;
 	ftsoptions = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "HLPaksx")) != EOF)
+	while ((ch = getopt(argc, argv, "HLPacksx")) != EOF)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -96,6 +97,9 @@ main(argc, argv)
 			break;
 		case 'a':
 			aflag = 1;
+			break;
+		case 'c':
+			cflag = 1;
 			break;
 		case 'k':
 			blocksize = 1024;
@@ -164,6 +168,8 @@ main(argc, argv)
 		case FTS_DP:
 			p->fts_parent->fts_number += 
 			    p->fts_number += p->fts_statp->st_blocks;
+			if (cflag)
+				totalblocks += p->fts_statp->st_blocks;
 			/*
 			 * If listing each directory, or not listing files
 			 * or directories and this is post-order of the
@@ -194,9 +200,14 @@ main(argc, argv)
 				    howmany(p->fts_statp->st_blocks, blocksize),
 				    p->fts_path);
 			p->fts_parent->fts_number += p->fts_statp->st_blocks;
+			if (cflag)
+				totalblocks += p->fts_statp->st_blocks;
 		}
 	if (errno)
 		err(1, "fts_read");
+	if (cflag)
+		(void)printf("%ld\ttotal\n",
+		    howmany(totalblocks, blocksize));
 	exit(0);
 }
 
@@ -236,6 +247,6 @@ usage()
 {
 
 	(void)fprintf(stderr,
-		"usage: du [-H | -L | -P] [-a | -s] [-kx] [file ...]\n");
+		"usage: du [-H | -L | -P] [-a | -s] [-ckx] [file ...]\n");
 	exit(1);
 }
