@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.29 2000/05/27 17:06:34 matt Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.30 2000/06/01 18:17:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <link.h>
+#include <paths.h>
 
 #include "shlib.h"
 
@@ -219,6 +220,10 @@ dodir(dir, silent, update_dir_list)
 	int		dewey[MAXDEWEY], ndewey;
 
 	if ((dd = opendir(dir)) == NULL) {
+		/* /emul/aout directories are allowed to not exist.
+		 */
+		if (!strncmp(dir, _PATH_EMUL_AOUT, sizeof(_PATH_EMUL_AOUT)-1))
+			return 0;
 		if (!silent || errno != ENOENT)
 			warn("%s", dir);
 		return (-1);
