@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.5 2002/09/19 11:31:21 lukem Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.6 2003/04/13 05:04:00 christos Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
-ioctl.c: mkioctls ${DESTDIR}/usr/include/sys/ioctl.h ${DESTDIR}/usr/include/sys/ioctl_compat.h
+DEPFILES != grep -l '_IO.*(' ${DESTDIR}/usr/include/sys/*.h
+
+ioctl.c: mkioctls ${DEPFILES}
 	CC="${CC}" DESTDIR=${DESTDIR} \
 	    /bin/sh ${NETBSDSRCDIR}/usr.bin/kdump/mkioctls \
 	    ${DESTDIR}/usr/include/sys/ioctl.h \
 	    ${DESTDIR}/usr/include/sys/ioctl_compat.h > ioctl.c
 
-${DESTDIR}/usr/include/sys/ioctl.h ${DESTDIR}/usr/include/sys/ioctl_compat.h: .PRECIOUS
+${DEPFILES}: .PRECIOUS
