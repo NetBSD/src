@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.55 1998/07/30 22:42:05 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.56 1998/08/28 20:14:36 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -47,8 +47,6 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-
-#include <sparc/sparc/cpuvar.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -642,10 +640,6 @@ espdmaintr(arg)
 		(nsc->sc_cfg2 & NCRCFG2_FE)
 			? NCR_READ_REG(nsc, NCR_TCH) : 0,
 		trans, resid));
-
-	if (csr & D_WRITE)
-		/*XXX - flush in dmamap_load() */
-		cpuinfo.cache_flush(*sc->sc_dmaaddr, trans);
 
 	if (sc->sc_dmamap->dm_nsegs > 0) {
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
