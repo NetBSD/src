@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_args.c,v 1.4 2000/07/10 22:48:25 jdolecek Exp $	*/
+/*	$NetBSD: parse_args.c,v 1.5 2000/07/24 09:25:53 scw Exp $	*/
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -34,6 +34,7 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/disklabel.h>
 #include <machine/prom.h>
 
 #include "stand.h"
@@ -55,14 +56,13 @@ struct flags {
 };
 
 void
-parse_args(filep, flagp)
-
+parse_args(filep, flagp, partp)
 char **filep;
 int *flagp;
-
+int *partp;
 {
 	char *name = KERNEL_NAME, *ptr;
-	int i, howto = 0;
+	int i, howto = 0, part = 0;
 	char c;
 
 	if (bugargs.arg_start != bugargs.arg_end) {
@@ -73,9 +73,13 @@ int *flagp;
 			if (c == '\0')
 				return;
 			if (c != '-') {
-				if ( ptr[1] == ':' ) {
-					howto |= RB_ASKNAME;
-					if ( ptr[2] == ' ' || ptr[2] == '\0' ) {
+				if (ptr[1] == ':') {
+					part = (int) (*ptr - 'A');
+					if (part >= MAXPARTITIONS)
+						part -= 0x20;
+					if (part < 0 || part >= MAXPARTITIONS)
+						part = 0;
+					if (ptr[2] == ' ' || ptr[2] == '\0') {
 						ptr += 2;
 						continue;
 					}
@@ -98,4 +102,5 @@ int *flagp;
 	}
 	*flagp = howto;
 	*filep = name;
+	*partp = part;
 }
