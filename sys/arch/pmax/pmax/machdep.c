@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.162 2000/01/19 20:05:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.163 2000/02/03 04:09:05 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 2000/01/19 20:05:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163 2000/02/03 04:09:05 nisimura Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -390,6 +390,13 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * Initialize the virtual memory system.
 	 */
 	pmap_bootstrap();
+}
+
+void
+consinit()
+{
+
+	(*platform.cons_init)();
 }
 
 /*

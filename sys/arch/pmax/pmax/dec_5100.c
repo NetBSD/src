@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.18 2000/01/14 13:45:25 simonb Exp $ */
+/* $NetBSD: dec_5100.c,v 1.19 2000/02/03 04:09:04 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -45,8 +45,11 @@
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn01.h>		/* common definitions */
 #include <pmax/pmax/kn230.h>
+#include <pmax/dev/dcvar.h>
 
 #include <pmax/ibus/ibusvar.h>
+
+#include "rasterconsole.h"
 
 
 /*
@@ -112,7 +115,14 @@ dec_5100_bus_reset()
 static void
 dec_5100_cons_init()
 {
-	/* notyet */
+	/*
+	 * Delay to allow PROM putchars to complete.
+	 * FIFO depth * character time,
+	 * character time = (1000000 / (defaultrate / 10))
+	 */
+	DELAY(160000000 / 9600);	/* XXX */
+
+	dc_cnattach(KN230_SYS_DZ0, 0);
 }
 
 

@@ -1,4 +1,4 @@
- /*	$NetBSD: xcfb.c,v 1.33 2000/01/10 03:24:34 simonb Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.34 2000/02/03 04:09:18 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,11 +80,7 @@
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
  */
 
-#include "fb.h"
-
-#include "xcfb.h"
 #include "dtop.h"
-#if NXCFB > 0
 #if NDTOP == 0
 xcfb needs dtop device
 #else
@@ -98,6 +94,7 @@ xcfb needs dtop device
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 
+#include <pmax/pmax/maxine.h>
 #include <pmax/dev/dtopreg.h>
 #include <pmax/dev/fbreg.h>
 #include <pmax/dev/ims332.h>
@@ -116,15 +113,10 @@ xcfb needs dtop device
  * These need to be mapped into user space.
  */
 static struct fbuaccess xcfbu;
-
-
-/*
- * rcons methods and globals.
- */
 static struct pmax_fbtty xcfbfb;
+static struct fbinfo *xcfb_fi;
 
 #define XCFB_FB_SIZE 0x100000	/* size of raster (mapped into userspace) */
-
 
 struct fbdriver xcfb_driver = {
 	ims332_video_on,
@@ -145,10 +137,25 @@ struct fbdriver xcfb_driver = {
 
 static int	xcfbmatch __P((struct device *, struct cfdata *, void *));
 static void	xcfbattach __P((struct device *, struct device *, void *));
+static int	xcfbinit __P((struct fbinfo *, caddr_t, int, int));
 
 struct cfattach xcfb_ca = {
 	sizeof(struct device), xcfbmatch, xcfbattach
 };
+
+int
+xcfb_cnattach()
+{
+	struct fbinfo *fi;
+	caddr_t base;
+
+	base = (caddr_t)MIPS_PHYS_TO_KSEG1(XINE_PHYS_CFB_START);
+	fbcnalloc(&fi);
+	if (xcfbinit(fi, base, 0, 1) < 0)
+		return (0);
+	xcfb_fi = fi;
+	return (1);
+}
 
 static int
 xcfbmatch(parent, match, aux)
@@ -168,35 +175,36 @@ xcfbmatch(parent, match, aux)
 
 static void
 xcfbattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+struct device *parent;
+struct device *self;
+void *aux;
 {
-	struct tc_attach_args *ta;
+	struct tc_attach_args *ta = aux;
+	caddr_t base = (caddr_t)ta->ta_addr;
+	int unit = self->dv_unit;
 	struct fbinfo *fi;
-	caddr_t base;
 
-	ta = aux;
-	base = (caddr_t)ta->ta_addr;
+	if (xcfb_fi)
+		fi = xcfb_fi;
+	else {
+		if (fballoc(&fi) < 0 || xcfbinit(fi, base, unit, 1) < 0)
+		return; /* failed */
+	}
+	((struct fbsoftc *)self)->sc_fi = fi;
 
-	/* Allocate a struct fbinfo and point the softc at it */
-	if (fballoc(base, &fi) == 0 && !xcfbinit(fi, base, self->dv_unit, 0))
-			return;
+	printf(": %dx%dx%d%s",
+		fi->fi_type.fb_width,
+		fi->fi_type.fb_height,
+		fi->fi_type.fb_depth,
+		(xcfb_fi) ? " console" : "");
 
-	if ((((struct fbsoftc *)self)->sc_fi = fi) == NULL)
-		return;
-
-
-	/*BUS_INTR_ESTABLISH(ca, xcfbintr, self->dv_unit);*/
-	fbconnect("PMAG-DV", fi, 0);
 	printf("\n");
 }
-
 
 /*
  * Initialization
  */
-int
+static int
 xcfbinit(fi, base, unit, silent)
 	struct fbinfo *fi;
 	caddr_t base;
@@ -262,23 +270,13 @@ xcfbinit(fi, base, unit, silent)
 	/* Initialize the RAMDAC. */
 	ims332init (fi);
 
-
 	/* Connect serial device(s) */
 	if (tb_kbdmouseconfig(fi)) {
-		printf(" (mouse/keyboard config failed)");
-		return (0);
+		return (-1);
 	}
 
-	/*
-	 * Connect to the raster-console pseudo-driver
-	 */
-	fbconnect("PMAG-DV", fi, silent);
-
-#ifdef	fpinitialized
-	fp->initialized = 1;
-#endif
-	return (1);
+	fbconnect(fi);
+	return (0);
 }
 
 #endif /* NDTOP */
-#endif /* NXCFB */

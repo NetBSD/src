@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.34 2000/01/14 13:45:24 simonb Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.35 2000/02/03 04:09:02 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,10 +73,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.34 2000/01/14 13:45:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.35 2000/02/03 04:09:02 nisimura Exp $");
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <machine/cpu.h>
 #include <machine/sysconf.h>
@@ -84,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.34 2000/01/14 13:45:24 simonb Exp
 #include <mips/mips/mips_mcclock.h>	/* mclock CPUspeed estimation */
 
 /* all these to get ioasic_base */
-#include <sys/device.h>			/* struct cfdata for.. */
 #include <dev/tc/tcvar.h>		/* tc type definitions for.. */
 #include <dev/tc/ioasicreg.h>		/* ioasic interrrupt masks */
 #include <dev/tc/ioasicvar.h>		/* ioasic_base */
@@ -92,6 +92,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.34 2000/01/14 13:45:24 simonb Exp
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/memc.h>
+#include <pmax/tc/sccvar.h>
+
+#include "rasterconsole.h"
 
 /*
  * Forward declarations
@@ -203,7 +206,30 @@ dec_3maxplus_bus_reset()
 static void
 dec_3maxplus_cons_init()
 {
-	/* notyet */
+	int kbd, crt, screen;
+	extern int tcfb_cnattach __P((int));		/* XXX */
+
+	kbd = crt = screen = 0;
+	prom_findcons(&kbd, &crt, &screen);
+
+	if (screen > 0) {
+#if NRASTERCONSOLE > 0
+		if (tcfb_cnattach(crt) > 0) {
+			scc_lk201_cnattach(ioasic_base, 0x180000);
+			return;
+		}
+#endif
+		printf("No framebuffer device configured for slot %d: ", crt);
+		printf("using serial console\n");
+	}
+	/*
+	 * Delay to allow PROM putchars to complete.
+	 * FIFO depth * character time,
+	 * character time = (1000000 / (defaultrate / 10))
+	 */
+	DELAY(160000000 / 9600);	/* XXX */
+
+	scc_cnattach(ioasic_base, 0x180000);
 }
 
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.23 2000/01/14 13:45:24 simonb Exp $ */
+/* $NetBSD: dec_3max.c,v 1.24 2000/02/03 04:09:01 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,10 +73,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.23 2000/01/14 13:45:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.24 2000/02/03 04:09:01 nisimura Exp $");
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -88,6 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.23 2000/01/14 13:45:24 simonb Exp $")
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/memc.h>
+#include <pmax/dev/dcvar.h>
+
+#include "rasterconsole.h"
 
 /*
  * forward declarations
@@ -169,7 +173,31 @@ dec_3max_bus_reset()
 static void
 dec_3max_cons_init()
 {
-	/* notyet */
+ 	int kbd, crt, screen;
+ 	extern int tcfb_cnattach __P((int));		/* XXX */
+ 
+ 	kbd = crt = screen = 0;
+ 	prom_findcons(&kbd, &crt, &screen);
+ 
+ 	if (screen > 0) {
+#if NRASTERCONSOLE > 0
+ 		if (kbd == 7 && tcfb_cnattach(crt) > 0) {
+ 			dckbd_cnattach(KN02_SYS_DZ);
+ 			return;
+ 		}
+#else
+ 		printf("No framebuffer device configured for slot %d: ", crt);
+ 		printf("using serial console\n");
+#endif
+ 	}
+ 	/*
+ 	 * Delay to allow PROM putchars to complete.
+ 	 * FIFO depth * character time,
+ 	 * character time = (1000000 / (defaultrate / 10))
+ 	 */
+ 	DELAY(160000000 / 9600);	/* XXX */
+ 
+ 	dc_cnattach(KN02_SYS_DZ, kbd);
 }
 
 static void
