@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.53 2004/08/27 20:37:29 bouyer Exp $	*/
+/*	$NetBSD: ss.c,v 1.54 2004/09/17 23:10:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.53 2004/08/27 20:37:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.54 2004/09/17 23:10:52 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,13 +90,17 @@ const struct cdevsw ss_cdevsw = {
 
 static void	ssstrategy(struct buf *);
 static void	ssstart(struct scsipi_periph *);
+#if 0
+static void	ssrestart(void *));
+#endif
+static void	ssdone(struct scsipi_xfer *, int);
 static void	ssminphys(struct buf *);
 
 static const struct scsipi_periphsw ss_switch = {
 	NULL,
 	ssstart,
 	NULL,
-	NULL,
+	ssdone,
 };
 
 static const struct scsipi_inquiry_pattern ss_patterns[] = {
@@ -512,12 +516,28 @@ ssstart(struct scsipi_periph *periph)
 	}
 }
 
-void
+#if 0
+static void
 ssrestart(void *v)
 {
 	int s = splbio();
 	ssstart((struct scsipi_periph *)v);
 	splx(s);
+}
+#endif
+
+static void
+ssdone(struct scsipi_xfer *xs, int error)
+{
+	struct buf *bp = xs->bp;
+
+	if (bp) {
+		bp->b_error = error;
+		bp->b_resid = xs->resid;
+		if (error)
+			bp->b_flags |= B_ERROR;
+		biodone(bp);
+	}
 }
 
 

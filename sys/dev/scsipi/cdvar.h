@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.21 2004/08/27 20:37:28 bouyer Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.22 2004/09/17 23:10:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -34,10 +34,9 @@
 struct cd_softc {
 	struct device sc_dev;
 	struct disk sc_dk;
+	struct lock sc_lock;
 
 	int flags;
-#define	CDF_LOCKED	0x01
-#define	CDF_WANTED	0x02
 #define	CDF_WLABEL	0x04		/* label is writable */
 #define	CDF_LABELLING	0x08		/* writing label */
 #define	CDF_ANCIENT	0x10		/* disk is ancient; for minphys */

@@ -1,7 +1,7 @@
-/*	$NetBSD: scsipi_base.c,v 1.112 2004/09/09 19:35:31 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.113 2004/09/17 23:10:50 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.112 2004/09/09 19:35:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.113 2004/09/17 23:10:50 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -1444,7 +1444,6 @@ scsipi_complete(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_channel *chan = periph->periph_channel;
-	struct buf *bp;
 	int error, s;
 
 #ifdef DIAGNOSTIC
@@ -1638,26 +1637,8 @@ scsipi_complete(struct scsipi_xfer *xs)
 	if (xs->error != XS_NOERROR)
 		scsipi_periph_thaw(periph, 1);
 
-	/*
-	 * Set buffer fields in case the periph
-	 * switch done func uses them
-	 */
-	if ((bp = xs->bp) != NULL) {
-		if (error) {
-			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-		} else {
-			bp->b_error = 0;
-			bp->b_resid = xs->resid;
-		}
-	}
-
 	if (periph->periph_switch->psw_done)
-		periph->periph_switch->psw_done(xs);
-
-	if (bp)
-		biodone(bp);
+		periph->periph_switch->psw_done(xs, error);
 
 	if (xs->xs_control & XS_CTL_ASYNC)
 		scsipi_put_xs(xs);

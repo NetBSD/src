@@ -1,7 +1,7 @@
-/*	$NetBSD: st.c,v 1.166 2004/09/09 19:35:33 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.167 2004/09/17 23:10:53 mycroft Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.166 2004/09/09 19:35:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.167 2004/09/17 23:10:53 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -323,7 +323,7 @@ static void	st_unmount(struct st_softc *, boolean);
 static int	st_decide_mode(struct st_softc *, boolean);
 static void	ststart(struct scsipi_periph *);
 static void	strestart(void *);
-static void	stdone(struct scsipi_xfer *);
+static void	stdone(struct scsipi_xfer *, int);
 static int	st_read(struct st_softc *, char *, int, int);
 static int	st_space(struct st_softc *, int, u_int, int);
 static int	st_write_filemarks(struct st_softc *, int, int);
@@ -1326,32 +1326,38 @@ strestart(void *v)
 
 
 static void
-stdone(struct scsipi_xfer *xs)
+stdone(struct scsipi_xfer *xs, int error)
 {
 	struct st_softc *st = (void *)xs->xs_periph->periph_dev;
+	struct buf *bp = xs->bp;
 
-	if (xs->bp != NULL) {
-		if ((xs->bp->b_flags & B_READ) == B_WRITE) {
+	if (bp) {
+		bp->b_error = error;
+		bp->b_resid = xs->resid;
+		if (error)
+			bp->b_flags |= B_ERROR;
+
+		if ((bp->b_flags & B_READ) == B_WRITE)
 			st->flags |= ST_WRITTEN;
-		} else {
+		else
 			st->flags &= ~ST_WRITTEN;
-		}
 #if NRND > 0
-		rnd_add_uint32(&st->rnd_source, xs->bp->b_blkno);
+		rnd_add_uint32(&st->rnd_source, bp->b_blkno);
 #endif
 
 		if ((st->flags & ST_POSUPDATED) == 0) {
-			if (xs->bp->b_flags & B_ERROR) {
+			if (error) {
 				st->fileno = st->blkno = -1;
 			} else if (st->blkno != -1) {
-				if (st->flags & ST_FIXEDBLOCKS) {
+				if (st->flags & ST_FIXEDBLOCKS)
 					st->blkno +=
-					    (xs->bp->b_bcount / st->blksize);
-				} else {
+					    (bp->b_bcount / st->blksize);
+				else
 					st->blkno++;
-				}
 			}
 		}
+
+		biodone(bp);
 	}
 }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: cd.c,v 1.205 2004/09/09 19:35:30 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.206 2004/09/17 23:10:50 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.205 2004/09/09 19:35:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.206 2004/09/17 23:10:50 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -107,14 +107,12 @@ struct cd_toc {
 						 /* leadout */
 };
 
-static int	cdlock(struct cd_softc *);
-static void	cdunlock(struct cd_softc *);
 static void	cdstart(struct scsipi_periph *);
 static void	cdrestart(void *);
 static void	cdminphys(struct buf *);
 static void	cdgetdefaultlabel(struct cd_softc *, struct disklabel *);
 static void	cdgetdisklabel(struct cd_softc *);
-static void	cddone(struct scsipi_xfer *);
+static void	cddone(struct scsipi_xfer *, int);
 static void	cdbounce(struct buf *);
 static int	cd_interpret_sense(struct scsipi_xfer *);
 static u_long	cd_size(struct cd_softc *, int);
@@ -225,6 +223,8 @@ cdattach(struct device *parent, struct device *self, void *aux)
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("cdattach: "));
 
+	lockinit(&cd->sc_lock, PRIBIO | PCATCH, "cdlock", 0, 0);
+
 	if (scsipi_periph_bustype(sa->sa_periph) == SCSIPI_BUSTYPE_SCSI &&
 	    periph->periph_version == 0)
 		cd->flags |= CDF_ANCIENT;
@@ -295,6 +295,13 @@ cddetach(struct device *self, int flags)
 	bmaj = bdevsw_lookup_major(&cd_bdevsw);
 	cmaj = cdevsw_lookup_major(&cd_cdevsw);
 
+	/* Nuke the vnodes for any open instances */
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		mn = CDMINOR(self->dv_unit, i);
+		vdevgone(bmaj, mn, mn, VBLK);
+		vdevgone(cmaj, mn, mn, VCHR);
+	}
+
 	/* kill any pending restart */
 	callout_stop(&cd->sc_callout);
 
@@ -315,12 +322,7 @@ cddetach(struct device *self, int flags)
 
 	splx(s);
 
-	/* Nuke the vnodes for any open instances */
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = CDMINOR(self->dv_unit, i);
-		vdevgone(bmaj, mn, mn, VBLK);
-		vdevgone(cmaj, mn, mn, VCHR);
-	}
+	lockmgr(&cd->sc_lock, LK_DRAIN, 0);
 
 	/* Detach from the disk list. */
 	disk_detach(&cd->sc_dk);
@@ -337,40 +339,6 @@ cddetach(struct device *self, int flags)
 #endif
 
 	return (0);
-}
-
-/*
- * Wait interruptibly for an exclusive lock.
- *
- * XXX
- * Several drivers do this; it should be abstracted and made MP-safe.
- */
-static int
-cdlock(struct cd_softc *cd)
-{
-	int error;
-
-	while ((cd->flags & CDF_LOCKED) != 0) {
-		cd->flags |= CDF_WANTED;
-		if ((error = tsleep(cd, PRIBIO | PCATCH, "cdlck", 0)) != 0)
-			return (error);
-	}
-	cd->flags |= CDF_LOCKED;
-	return (0);
-}
-
-/*
- * Unlock and wake up any waiters.
- */
-static void
-cdunlock(struct cd_softc *cd)
-{
-
-	cd->flags &= ~CDF_LOCKED;
-	if ((cd->flags & CDF_WANTED) != 0) {
-		cd->flags &= ~CDF_WANTED;
-		wakeup(cd);
-	}
 }
 
 /*
@@ -408,7 +376,7 @@ cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	    (error = scsipi_adapter_addref(adapt)) != 0)
 		return (error);
 
-	if ((error = cdlock(cd)) != 0)
+	if ((error = lockmgr(&cd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		goto bad4;
 
 	if ((periph->periph_flags & PERIPH_OPEN) != 0) {
@@ -508,7 +476,7 @@ out:	/* Insure only one open at a time. */
 	    cd->sc_dk.dk_copenmask | cd->sc_dk.dk_bopenmask;
 
 	SC_DEBUG(periph, SCSIPI_DB3, ("open complete\n"));
-	cdunlock(cd);
+	lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
 	return (0);
 
 bad2:
@@ -522,7 +490,7 @@ bad:
 	}
 
 bad3:
-	cdunlock(cd);
+	lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
 bad4:
 	if (cd->sc_dk.dk_openmask == 0)
 		scsipi_adapter_delref(adapt);
@@ -542,7 +510,7 @@ cdclose(dev_t dev, int flag, int fmt, struct proc *p)
 	int part = CDPART(dev);
 	int error;
 
-	if ((error = cdlock(cd)) != 0)
+	if ((error = lockmgr(&cd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		return (error);
 
 	switch (fmt) {
@@ -569,7 +537,7 @@ cdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		scsipi_adapter_delref(adapt);
 	}
 
-	cdunlock(cd);
+	lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
 	return (0);
 }
 
@@ -908,16 +876,24 @@ cdrestart(void *v)
 }
 
 static void
-cddone(struct scsipi_xfer *xs)
+cddone(struct scsipi_xfer *xs, int error)
 {
 	struct cd_softc *cd = (void *)xs->xs_periph->periph_dev;
+	struct buf *bp = xs->bp;
 
-	if (xs->bp != NULL) {
-		disk_unbusy(&cd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid,
-		    (xs->bp->b_flags & B_READ));
+	if (bp) {
+		bp->b_error = error;
+		bp->b_resid = xs->resid;
+		if (error)
+			bp->b_flags |= B_ERROR;
+
+		disk_unbusy(&cd->sc_dk, bp->b_bcount - bp->b_resid,
+		    (bp->b_flags & B_READ));
 #if NRND > 0
-		rnd_add_uint32(&cd->rnd_source, xs->bp->b_rawblkno);
+		rnd_add_uint32(&cd->rnd_source, bp->b_rawblkno);
 #endif
+
+		biodone(bp);
 	}
 }
 
@@ -1253,7 +1229,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 #endif
 		lp = (struct disklabel *)addr;
 
-		if ((error = cdlock(cd)) != 0)
+		if ((error = lockmgr(&cd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 			goto bad;
 		cd->flags |= CDF_LABELLING;
 
@@ -1265,7 +1241,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		}
 
 		cd->flags &= ~CDF_LABELLING;
-		cdunlock(cd);
+		lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
 bad:
 #ifdef __HAVE_OLD_DISKLABEL
 		if (newlabel != NULL)
