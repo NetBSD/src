@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_auto.c,v 1.1.1.5 2002/11/29 22:58:10 christos Exp $	*/
+/*	$NetBSD: amfs_auto.c,v 1.2 2002/11/29 23:08:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2002 Erez Zadok
@@ -71,6 +71,8 @@
 static int amfs_auto_bgmount(struct continuation *cp, int mpe);
 static int amfs_auto_mount(am_node *mp, mntfs *mf);
 static int amfs_auto_readdir_browsable(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, int count, int fully_browsable);
+static mntfs **amfs_auto_lookup_mntfs(am_node *new_mp, int *error_return);
+static am_node *amfs_auto_lookup_node(am_node *mp, char *fname, int *error_return);
 
 
 /****************************************************************************
@@ -901,7 +903,7 @@ amfs_parse_defaults(am_node *mp, mntfs *mf, char *def_opts)
 
 
 
-am_node *
+static am_node *
 amfs_auto_lookup_node(am_node *mp, char *fname, int *error_return)
 {
   am_node *new_mp;
@@ -1136,7 +1138,7 @@ amfs_auto_lookup_one_mntfs(am_node *new_mp, mntfs *mf, char *ivec,
 }
 
 
-mntfs **
+static mntfs **
 amfs_auto_lookup_mntfs(am_node *new_mp, int *error_return)
 {
   am_node *mp;
