@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.5 2002/10/02 02:23:50 thorpej Exp $	*/
+/*	$NetBSD: hydra.c,v 1.6 2002/10/05 13:46:57 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.5 2002/10/02 02:23:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.6 2002/10/05 13:46:57 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -268,3 +268,28 @@ hydra_reset(struct hydra_softc *sc)
 	bus_space_write_1(iot, ioh, HYDRA_MMU_MSN, 0);
 	bus_space_write_1(iot, ioh, HYDRA_MMU_CLR, 0xf);
 }
+
+#ifdef MULTIPROCESSOR
+void
+cpu_boot_secondary_processors(void)
+{
+
+	/* Do nothing for now. */
+}
+
+cpuid_t
+cpu_number(void)
+{
+
+	return 0;
+}
+
+extern struct cpu_info cpu_info_store;
+
+struct cpu_info *
+curcpu(void)
+{
+
+	return &cpu_info_store;
+}
+#endif

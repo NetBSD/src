@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29 2002/08/16 15:25:54 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.30 2002/10/05 13:47:00 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -208,11 +208,16 @@ struct cpu_info {
 	u_int32_t ci_cpurev;		/* CPU revision */
 	u_int32_t ci_ctrl;		/* The CPU control register */
 	struct evcnt ci_arm700bugcount;
+#ifdef MULTIPROCESSOR
+	MP_CPU_INFO_MEMBERS
+#endif
 };
 
+#ifndef MULTIPROCESSOR
 extern struct cpu_info cpu_info_store;
 #define	curcpu()	(&cpu_info_store)
 #define cpu_number()	0
+#endif
 
 
 /*
