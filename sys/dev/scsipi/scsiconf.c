@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.156.2.12 2002/06/24 22:10:15 nathanw Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.156.2.13 2002/07/12 01:40:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,12 +55,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.12 2002/06/24 22:10:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.13 2002/07/12 01:40:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/malloc.h>

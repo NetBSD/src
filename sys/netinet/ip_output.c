@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.83.2.11 2002/06/24 22:11:47 nathanw Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.83.2.12 2002/07/12 01:40:32 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.83.2.11 2002/06/24 22:11:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.83.2.12 2002/07/12 01:40:32 nathanw Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -116,7 +116,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.83.2.11 2002/06/24 22:11:47 nathanw 
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <net/if.h>

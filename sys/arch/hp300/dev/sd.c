@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.46.8.6 2002/06/24 22:04:31 nathanw Exp $	*/
+/*	$NetBSD: sd.c,v 1.46.8.7 2002/07/12 01:39:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.8.6 2002/06/24 22:04:31 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.8.7 2002/07/12 01:39:27 nathanw Exp $");                                                  
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.8.6 2002/06/24 22:04:31 nathanw Exp $");
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 

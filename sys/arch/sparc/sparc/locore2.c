@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.9.12.1 2001/11/20 16:31:56 pk Exp $ */
+/*	$NetBSD: locore2.c,v 1.9.12.2 2002/07/12 01:39:47 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/lwp.h>
 #include <sys/sched.h>
 #include <sys/resourcevar.h>
 

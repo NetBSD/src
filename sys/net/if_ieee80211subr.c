@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.3.2.6 2002/06/24 22:11:31 nathanw Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.3.2.7 2002/07/12 01:40:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.3.2.6 2002/06/24 22:11:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.3.2.7 2002/07/12 01:40:29 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.3.2.6 2002/06/24 22:11:31 nat
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <machine/endian.h>

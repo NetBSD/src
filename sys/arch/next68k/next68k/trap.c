@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35.4.7 2002/06/24 22:06:45 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.35.4.8 2002/07/12 01:39:42 nathanw Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -57,7 +57,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>

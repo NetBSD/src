@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.19.6.2 2001/11/17 13:07:53 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.19.6.3 2002/07/12 01:39:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -55,7 +55,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/vnode.h>

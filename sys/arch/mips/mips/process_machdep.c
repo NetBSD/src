@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.20.8.2 2002/06/24 22:06:03 nathanw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.20.8.3 2002/07/12 01:39:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20.8.2 2002/06/24 22:06:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20.8.3 2002/07/12 01:39:38 nathanw Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20.8.2 2002/06/24 22:06:03 nat
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/lwp.h>
 #include <sys/user.h>
 #include <sys/ptrace.h>
 #include <mips/reg.h>

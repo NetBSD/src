@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.17.2.4 2002/07/03 23:10:04 nathanw Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.17.2.5 2002/07/12 01:39:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.17.2.4 2002/07/03 23:10:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.17.2.5 2002/07/12 01:39:59 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.17.2.4 2002/07/03 23:10:04 nathanw Ex
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/file.h>

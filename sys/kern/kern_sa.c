@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.24 2002/06/24 22:10:49 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.25 2002/07/12 01:40:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/pool.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/types.h>
 #include <sys/ucontext.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.24.8.2 2002/05/29 21:31:39 nathanw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.24.8.3 2002/07/12 01:39:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -40,7 +40,6 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/time.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>

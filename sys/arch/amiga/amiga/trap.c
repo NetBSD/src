@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.85.8.6 2002/06/24 22:03:32 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.85.8.7 2002/07/12 01:39:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,11 +47,10 @@
 #include "opt_compat_sunos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85.8.6 2002/06/24 22:03:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85.8.7 2002/07/12 01:39:24 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.54.4.7 2002/06/24 22:03:22 nathanw Exp $ */
+/* $NetBSD: scc.c,v 1.54.4.8 2002/07/12 01:39:22 nathanw Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.54.4.7 2002/06/24 22:03:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.54.4.8 2002/07/12 01:39:22 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dec_3000_300.h"
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.54.4.7 2002/06/24 22:03:22 nathanw Exp $")
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/map.h>
 #include <sys/buf.h>

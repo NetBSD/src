@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5.4.6 2002/06/24 22:08:27 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5.4.7 2002/07/12 01:39:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -45,7 +45,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>

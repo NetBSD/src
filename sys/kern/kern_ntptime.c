@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.13.2.7 2002/06/20 03:47:15 nathanw Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.13.2.8 2002/07/12 01:40:17 nathanw Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.13.2.7 2002/06/20 03:47:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.13.2.8 2002/07/12 01:40:17 nathanw Exp $");
 
 #include "opt_ntp.h"
 
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.13.2.7 2002/06/20 03:47:15 nathan
 #include <sys/resourcevar.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/timex.h>

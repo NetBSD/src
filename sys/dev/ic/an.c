@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.10.2.9 2002/07/10 17:22:25 nathanw Exp $	*/
+/*	$NetBSD: an.c,v 1.10.2.10 2002/07/12 01:40:07 nathanw Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.10.2.9 2002/07/10 17:22:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.10.2.10 2002/07/12 01:40:07 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -113,7 +113,6 @@ __KERNEL_RCSID(0, "$NetBSD: an.c,v 1.10.2.9 2002/07/10 17:22:25 nathanw Exp $");
 #include <sys/ucred.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/md4.h>
 #ifdef ANCACHE

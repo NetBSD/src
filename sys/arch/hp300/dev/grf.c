@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.39.8.7 2002/06/24 22:04:30 nathanw Exp $	*/
+/*	$NetBSD: grf.c,v 1.39.8.8 2002/07/12 01:39:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.8.7 2002/06/24 22:04:30 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.8.8 2002/07/12 01:39:27 nathanw Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.8.7 2002/06/24 22:04:30 nathanw Exp $")
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/poll.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/resourcevar.h>

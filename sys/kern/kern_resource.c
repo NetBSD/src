@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.60.2.4 2002/05/29 21:33:12 nathanw Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.60.2.5 2002/07/12 01:40:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.60.2.4 2002/05/29 21:33:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.60.2.5 2002/07/12 01:40:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.60.2.4 2002/05/29 21:33:12 natha
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <sys/mount.h>

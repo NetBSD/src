@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.3.2.4 2002/05/08 19:46:51 nathanw Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.3.2.5 2002/07/12 01:40:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.3.2.4 2002/05/08 19:46:51 nathanw Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.3.2.5 2002/07/12 01:40:12 nathanw Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -49,7 +49,6 @@ __KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.3.2.4 2002/05/08 19:46:51 nathanw E
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/exec_elf.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.15.2.5 2002/06/24 22:10:32 nathanw Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.15.2.6 2002/07/12 01:40:12 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.15.2.5 2002/06/24 22:10:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.15.2.6 2002/07/12 01:40:12 nathanw Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.15.2.5 2002/06/24 22:10:3
 #include <sys/callout.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/malloc.h>

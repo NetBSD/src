@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.23.2.4 2002/06/24 22:12:21 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.23.2.5 2002/07/12 01:40:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,12 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.23.2.4 2002/06/24 22:12:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.23.2.5 2002/07/12 01:40:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.13 2002/06/24 22:10:41 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.14 2002/07/12 01:40:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.13 2002/06/24 22:10:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.14 2002/07/12 01:40:15 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.13 2002/06/24 22:10:41 nathanw 
 #include <sys/systm.h>
 #include <sys/map.h>
 #include <sys/ioctl.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/time.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.93.2.12 2002/06/24 22:12:52 nathanw Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.93.2.13 2002/07/12 01:40:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.12 2002/06/24 22:12:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.13 2002/07/12 01:40:43 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.12 2002/06/24 22:12:52 nathanw Ex
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mman.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>

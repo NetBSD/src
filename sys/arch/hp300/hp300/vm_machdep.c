@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.61.4.9 2002/06/24 22:04:40 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.61.4.10 2002/07/12 01:39:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,11 +43,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61.4.9 2002/06/24 22:04:40 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61.4.10 2002/07/12 01:39:29 nathanw Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.11.2.4 2002/06/24 22:10:44 nathanw Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.11.2.5 2002/07/12 01:40:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,13 +38,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.11.2.4 2002/06/24 22:10:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.11.2.5 2002/07/12 01:40:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/wait.h>
 #include <sys/malloc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118.2.8 2002/06/24 22:05:02 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118.2.9 2002/07/12 01:39:31 nathanw Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.2.8 2002/06/24 22:05:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.2.9 2002/07/12 01:39:31 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.2.8 2002/06/24 22:05:02 nathanw Exp $
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>

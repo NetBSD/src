@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.8.2.6 2002/06/24 22:09:29 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.8.2.7 2002/07/12 01:40:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.8.2.6 2002/06/24 22:09:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.8.2.7 2002/07/12 01:40:00 nathanw Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.8.2.6 2002/06/24 22:09:29 nathan
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/lwp.h>
 #include <sys/exec.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.19.6.5 2002/06/24 22:11:46 nathanw Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.19.6.6 2002/07/12 01:40:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.19.6.5 2002/06/24 22:11:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.19.6.6 2002/07/12 01:40:32 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.19.6.5 2002/06/24 22:11:46 nathanw E
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <net/if.h>

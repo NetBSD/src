@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.17 2002/06/24 22:10:50 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.18 2002/07/12 01:40:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.17 2002/06/24 22:10:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.18 2002/07/12 01:40:18 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.17 2002/06/24 22:10:50 nathanw 
 #include <sys/resourcevar.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/timeb.h>

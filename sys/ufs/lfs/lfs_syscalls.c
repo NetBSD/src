@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.56.2.8 2002/06/20 03:50:33 nathanw Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.56.2.9 2002/07/12 01:40:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,13 +71,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.56.2.8 2002/06/20 03:50:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.56.2.9 2002/07/12 01:40:41 nathanw Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/mount.h>

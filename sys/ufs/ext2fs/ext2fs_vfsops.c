@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.42.2.6 2002/06/24 22:12:22 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.42.2.7 2002/07/12 01:40:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.42.2.6 2002/06/24 22:12:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.42.2.7 2002/07/12 01:40:39 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.42.2.6 2002/06/24 22:12:22 natha
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.19.4.6 2002/06/24 22:05:18 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.19.4.7 2002/07/12 01:39:34 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.4.6 2002/06/24 22:05:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.4.7 2002/07/12 01:39:34 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.4.6 2002/06/24 22:05:18 nathanw Exp
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/map.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>

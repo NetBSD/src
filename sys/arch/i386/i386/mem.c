@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.47.4.6 2002/06/24 22:05:01 nathanw Exp $	*/
+/*	$NetBSD: mem.c,v 1.47.4.7 2002/07/12 01:39:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.47.4.6 2002/06/24 22:05:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.47.4.7 2002/07/12 01:39:31 nathanw Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.47.4.6 2002/06/24 22:05:01 nathanw Exp $")
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/fcntl.h>
 

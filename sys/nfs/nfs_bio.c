@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.63.2.14 2002/06/24 22:12:03 nathanw Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.63.2.15 2002/07/12 01:40:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.14 2002/06/24 22:12:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.15 2002/07/12 01:40:35 nathanw Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.14 2002/06/24 22:12:03 nathanw Ex
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>

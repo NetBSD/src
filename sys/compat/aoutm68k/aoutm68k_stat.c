@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.2.4.7 2002/05/29 21:32:10 nathanw Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.2.4.8 2002/07/12 01:39:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.2.4.7 2002/05/29 21:32:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.2.4.8 2002/07/12 01:39:56 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.2.4.7 2002/05/29 21:32:10 nathan
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 

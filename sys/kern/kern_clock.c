@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.74.2.7 2002/06/24 22:10:39 nathanw Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.74.2.8 2002/07/12 01:40:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.74.2.7 2002/06/24 22:10:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.74.2.8 2002/07/12 01:40:13 nathanw Exp $");
 
 #include "opt_callout.h"
 #include "opt_ntp.h"
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.74.2.7 2002/06/24 22:10:39 nathanw 
 #include <sys/dkstat.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>

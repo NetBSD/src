@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.80.2.10 2002/06/24 22:12:29 nathanw Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.80.2.11 2002/07/12 01:40:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.80.2.10 2002/06/24 22:12:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.80.2.11 2002/07/12 01:40:40 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.80.2.10 2002/06/24 22:12:29 nathanw
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>

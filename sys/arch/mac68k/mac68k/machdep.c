@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.265.4.9 2002/06/24 22:05:31 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.265.4.10 2002/07/12 01:39:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -100,7 +100,6 @@
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
 #include <sys/pool.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/reboot.h>

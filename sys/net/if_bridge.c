@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.2.2.7 2002/06/24 22:11:28 nathanw Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.2.2.8 2002/07/12 01:40:28 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.2.2.7 2002/06/24 22:11:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.2.2.8 2002/07/12 01:40:28 nathanw Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -94,7 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.2.2.7 2002/06/24 22:11:28 nathanw Ex
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h> 
 #include <sys/pool.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.7.2.3 2002/01/08 00:23:07 nathanw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.7.2.4 2002/07/12 01:39:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -70,13 +70,12 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.7.2.3 2002/01/08 00:23:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.7.2.4 2002/07/12 01:39:24 nathanw Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-#include <sys/lwp.h>
 
 #include <machine/frame.h>
 #include <machine/pcb.h>

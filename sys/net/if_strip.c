@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.35.2.7 2002/06/24 22:11:39 nathanw Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.35.2.8 2002/07/12 01:40:31 nathanw Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.35.2.7 2002/06/24 22:11:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.35.2.8 2002/07/12 01:40:31 nathanw Exp $");
 
 #include "strip.h"
 
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.35.2.7 2002/06/24 22:11:39 nathanw Ex
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/buf.h>

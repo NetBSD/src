@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.74.2.7 2002/06/24 22:11:06 nathanw Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.74.2.8 2002/07/12 01:40:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,11 +51,10 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.74.2.7 2002/06/24 22:11:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.74.2.8 2002/07/12 01:40:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>

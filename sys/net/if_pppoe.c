@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.3.2.12 2002/06/24 22:11:34 nathanw Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.3.2.13 2002/07/12 01:40:29 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.3.2.12 2002/06/24 22:11:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.3.2.13 2002/07/12 01:40:29 nathanw Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.3.2.12 2002/06/24 22:11:34 nathanw Ex
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <net/if.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37.4.5 2002/06/24 22:06:43 nathanw Exp $        */
+/*	$NetBSD: pmap.c,v 1.37.4.6 2002/07/12 01:39:41 nathanw Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -142,7 +142,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/user.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.31.2.10 2002/06/24 22:11:52 nathanw Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.31.2.11 2002/07/12 01:40:33 nathanw Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.31.2.10 2002/06/24 22:11:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.31.2.11 2002/07/12 01:40:33 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.31.2.10 2002/06/24 22:11:52 nathanw
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <net/if.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.74.2.12 2002/06/24 22:05:11 nathanw Exp $	*/
+/*	$NetBSD: npx.c,v 1.74.2.13 2002/07/12 01:39:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.74.2.12 2002/06/24 22:05:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.74.2.13 2002/07/12 01:39:33 nathanw Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.74.2.12 2002/06/24 22:05:11 nathanw Exp $"
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ioctl.h>

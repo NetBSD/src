@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.53.2.9 2002/06/24 22:11:17 nathanw Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.53.2.10 2002/07/12 01:40:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,10 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.53.2.9 2002/06/24 22:11:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.53.2.10 2002/07/12 01:40:27 nathanw Exp $");
 
 #include <sys/param.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

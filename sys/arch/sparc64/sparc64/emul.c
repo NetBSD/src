@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.8.8.4 2002/06/20 03:41:29 nathanw Exp $	*/
+/*	$NetBSD: emul.c,v 1.8.8.5 2002/07/12 01:39:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <machine/reg.h>
 #include <machine/instr.h>

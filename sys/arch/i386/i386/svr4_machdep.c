@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.50.4.14 2002/06/24 22:05:05 nathanw Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.50.4.15 2002/07/12 01:39:32 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.50.4.14 2002/06/24 22:05:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.50.4.15 2002/07/12 01:39:32 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.50.4.14 2002/06/24 22:05:05 natha
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/user.h>

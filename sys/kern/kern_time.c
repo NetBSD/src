@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.13 2002/04/12 04:52:53 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.14 2002/07/12 01:40:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.13 2002/04/12 04:52:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.14 2002/07/12 01:40:20 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.13 2002/04/12 04:52:53 nathanw 
 #include <sys/resourcevar.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/sa.h>

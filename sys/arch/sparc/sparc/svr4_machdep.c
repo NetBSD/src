@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.43.8.7 2002/06/24 22:07:46 nathanw Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.43.8.8 2002/07/12 01:39:48 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
-#include <sys/lwp.h>
 #include <sys/exec.h>
 #include <sys/user.h>
 #include <sys/filedesc.h>

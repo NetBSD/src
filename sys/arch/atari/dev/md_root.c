@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.15.8.3 2002/06/24 22:04:11 nathanw Exp $	*/
+/*	$NetBSD: md_root.c,v 1.15.8.4 2002/07/12 01:39:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -35,7 +35,6 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.9.4.9 2002/07/03 20:31:06 nathanw Exp $	*/
+/*	$NetBSD: undefined.c,v 1.9.4.10 2002/07/12 01:39:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -50,14 +50,13 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9.4.9 2002/07/03 20:31:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9.4.10 2002/07/12 01:39:24 nathanw Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/signal.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/lwp.h>
 #include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/vmmeter.h>

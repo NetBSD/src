@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.75.2.10 2002/06/24 22:10:52 nathanw Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.75.2.11 2002/07/12 01:40:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.10 2002/06/24 22:10:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.11 2002/07/12 01:40:18 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.10 2002/06/24 22:10:52 nathanw 
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>

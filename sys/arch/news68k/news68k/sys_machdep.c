@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4.8.2 2002/05/29 21:31:52 nathanw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.4.8.3 2002/07/12 01:39:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -42,7 +42,6 @@
 #include <sys/time.h>
 #include <sys/uio.h>
 #include <sys/mount.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>

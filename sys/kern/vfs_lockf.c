@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.17.2.3 2002/06/24 22:11:07 nathanw Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.17.2.4 2002/07/12 01:40:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,13 +39,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.17.2.3 2002/06/24 22:11:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.17.2.4 2002/07/12 01:40:24 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/file.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>

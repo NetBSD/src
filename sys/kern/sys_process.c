@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.15 2002/06/20 23:04:23 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.16 2002/07/12 01:40:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993 Jan-Simon Pendry.
@@ -57,11 +57,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.15 2002/06/20 23:04:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.16 2002/07/12 01:40:21 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/ptrace.h>

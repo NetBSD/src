@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.54.2.7 2002/05/29 21:33:14 nathanw Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.54.2.8 2002/07/12 01:40:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.54.2.7 2002/05/29 21:33:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.54.2.8 2002/07/12 01:40:21 nathanw Exp $");
 
 #include "opt_ktrace.h"
 
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.54.2.7 2002/05/29 21:33:14 nathanw
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.97.2.8 2002/07/02 21:04:35 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.97.2.9 2002/07/12 01:39:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.2.8 2002/07/02 21:04:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.2.9 2002/07/12 01:39:33 nathanw Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.2.8 2002/07/02 21:04:35 nathanw 
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15.4.5 2002/06/24 22:08:24 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15.4.6 2002/07/12 01:39:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>

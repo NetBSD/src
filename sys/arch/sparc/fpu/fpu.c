@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.13.4.5 2002/06/24 22:07:28 nathanw Exp $ */
+/*	$NetBSD: fpu.c,v 1.13.4.6 2002/07/12 01:39:47 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,6 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/lwp.h>
 #include <sys/signal.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>

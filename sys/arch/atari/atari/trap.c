@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.62.4.6 2002/06/24 22:04:08 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.62.4.7 2002/07/12 01:39:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>

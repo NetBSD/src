@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.56.2.3 2002/06/24 22:12:05 nathanw Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.56.2.4 2002/07/12 01:40:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.56.2.3 2002/06/24 22:12:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.56.2.4 2002/07/12 01:40:35 nathanw Exp $");
 
 #include "opt_nfs.h"
 #include "opt_nfs_boot.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.56.2.3 2002/06/24 22:12:05 nathanw Ex
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
-#include <sys/lwp.h>
 #include <sys/mount.h>
 #include <sys/mbuf.h>
 #include <sys/reboot.h>

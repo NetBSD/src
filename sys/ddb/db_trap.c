@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trap.c,v 1.17.2.5 2002/06/24 22:09:42 nathanw Exp $	*/
+/*	$NetBSD: db_trap.c,v 1.17.2.6 2002/07/12 01:40:06 nathanw Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.17.2.5 2002/06/24 22:09:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.17.2.6 2002/07/12 01:40:06 nathanw Exp $");
 
 #include <sys/param.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <machine/db_machdep.h>

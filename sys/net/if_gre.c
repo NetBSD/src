@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.17.2.7 2002/06/24 22:11:30 nathanw Exp $ */
+/*	$NetBSD: if_gre.c,v 1.17.2.8 2002/07/12 01:40:28 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.17.2.7 2002/06/24 22:11:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.17.2.8 2002/07/12 01:40:28 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.17.2.7 2002/06/24 22:11:30 nathanw Exp 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.5.6.3 2002/06/24 22:12:21 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.5.6.4 2002/07/12 01:40:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -43,12 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.5.6.3 2002/06/24 22:12:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.5.6.4 2002/07/12 01:40:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
