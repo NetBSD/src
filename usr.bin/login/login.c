@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.79 2004/11/14 18:01:21 christos Exp $       */
+/*     $NetBSD: login.c,v 1.80 2005/01/12 05:34:23 xtraeme Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.79 2004/11/14 18:01:21 christos Exp $");
+__RCSID("$NetBSD: login.c,v 1.80 2005/01/12 05:34:23 xtraeme Exp $");
 #endif /* not lint */
 
 /*
@@ -99,40 +99,40 @@ int login_krb5_forwardable_tgt = 0;
 int login_krb5_retain_ccache = 0;
 #endif
 
-void	 badlogin __P((char *));
-void	 checknologin __P((char *));
+void	 badlogin (char *);
+void	 checknologin (char *);
 #ifdef SUPPORT_UTMP
-static void	 doutmp __P((void));
-static void	 dolastlog __P((int));
+static void	 doutmp (void);
+static void	 dolastlog (int);
 #endif
 #ifdef SUPPORT_UTMPX
-static void	 doutmpx __P((void));
-static void	 dolastlogx __P((int));
+static void	 doutmpx (void);
+static void	 dolastlogx (int);
 #endif
-static void	 update_db __P((int));
-void	 getloginname __P((void));
-int	 main __P((int, char *[]));
-void	 motd __P((char *));
-int	 rootterm __P((char *));
-void	 sigint __P((int));
-void	 sleepexit __P((int));
-const	 char *stypeof __P((const char *));
-void	 timedout __P((int));
+static void	 update_db (int);
+void	 getloginname (void);
+int	 main (int, char *[]);
+void	 motd (char *);
+int	 rootterm (char *);
+void	 sigint (int);
+void	 sleepexit (int);
+const	 char *stypeof (const char *);
+void	 timedout (int);
 #if defined(KERBEROS)
-int	 klogin __P((struct passwd *, char *, char *, char *));
-void	 kdestroy __P((void));
+int	 klogin (struct passwd *, char *, char *, char *);
+void	 kdestroy (void);
 #endif
 #ifdef KERBEROS5
-int	 k5login __P((struct passwd *, char *, char *, char *));
-void	 k5destroy __P((void));
-int	 k5_read_creds __P((char*));
-int	 k5_write_creds __P((void));
+int	 k5login (struct passwd *, char *, char *, char *);
+void	 k5destroy (void);
+int	 k5_read_creds (char*);
+int	 k5_write_creds (void);
 #endif
 #if defined(KERBEROS) || defined(KERBEROS5)
-void	 dofork __P((void));
+void	 dofork (void);
 #endif
-void	 decode_ss __P((const char *));
-void	 usage __P((void));
+void	 decode_ss (const char *);
+void	 usage (void);
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
 
@@ -178,9 +178,7 @@ struct sockaddr_storage ss;
 extern const char copyrightstr[];
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	extern char **environ;
 	struct group *gr;
@@ -797,7 +795,7 @@ main(argc, argv)
  */
 #include <sys/wait.h>
 void
-dofork()
+dofork(void)
 {
 	int child;
 
@@ -830,7 +828,7 @@ dofork()
 #endif
 
 void
-getloginname()
+getloginname(void)
 {
 	int ch;
 	char *p;
@@ -860,8 +858,7 @@ getloginname()
 }
 
 int
-rootterm(ttyn)
-	char *ttyn;
+rootterm(char *ttyn)
 {
 	struct ttyent *t;
 
@@ -871,8 +868,7 @@ rootterm(ttyn)
 jmp_buf motdinterrupt;
 
 void
-motd(fname)
-	char *fname;
+motd(char *fname)
 {
 	int fd, nchars;
 	sig_t oldint;
@@ -890,8 +886,7 @@ motd(fname)
 
 /* ARGSUSED */
 void
-sigint(signo)
-	int signo;
+sigint(int signo)
 {
 
 	longjmp(motdinterrupt, 1);
@@ -899,8 +894,7 @@ sigint(signo)
 
 /* ARGSUSED */
 void
-timedout(signo)
-	int signo;
+timedout(int signo)
 {
 
 	(void)fprintf(stderr, "Login timed out after %d seconds\n", timeout);
@@ -908,8 +902,7 @@ timedout(signo)
 }
 
 void
-checknologin(fname)
-	char *fname;
+checknologin(char *fname)
 {
 	int fd, nchars;
 	char tbuf[8192];
@@ -952,7 +945,7 @@ update_db(int quietlog)
 
 #ifdef SUPPORT_UTMPX
 static void
-doutmpx()
+doutmpx(void)
 {
 	struct utmpx utmpx;
 	char *t;
@@ -982,8 +975,7 @@ doutmpx()
 }
 
 static void
-dolastlogx(quiet)
-	int quiet;
+dolastlogx(int quiet)
 {
 	struct lastlogx ll;
 	if (getlastlogx(_PATH_LASTLOGX, pwd->pw_uid, &ll) != NULL) {
@@ -1010,7 +1002,7 @@ dolastlogx(quiet)
 
 #ifdef SUPPORT_UTMP
 static void
-doutmp()
+doutmp(void)
 {
 	struct utmp utmp;
 
@@ -1024,8 +1016,7 @@ doutmp()
 }
 
 static void
-dolastlog(quiet)
-	int quiet;
+dolastlog(int quiet)
 {
 	struct lastlog ll;
 	int fd;
@@ -1059,8 +1050,7 @@ dolastlog(quiet)
 #endif
 
 void
-badlogin(name)
-	char *name;
+badlogin(char *name)
 {
 
 	if (failures == 0)
@@ -1081,8 +1071,7 @@ badlogin(name)
 }
 
 const char *
-stypeof(ttyid)
-	const char *ttyid;
+stypeof(const char *ttyid)
 {
 	struct ttyent *t;
 
@@ -1090,8 +1079,7 @@ stypeof(ttyid)
 }
 
 void
-sleepexit(eval)
-	int eval;
+sleepexit(int eval)
 {
 
 	(void)sleep(5);
@@ -1099,8 +1087,7 @@ sleepexit(eval)
 }
 
 void
-decode_ss(arg)
-	const char *arg;
+decode_ss(const char *arg)
 {
 	struct sockaddr_storage *ssp;
 	size_t len = strlen(arg);
@@ -1119,7 +1106,7 @@ decode_ss(arg)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "Usage: %s [-Ffps] [-a address] [-h hostname] [username]\n",
