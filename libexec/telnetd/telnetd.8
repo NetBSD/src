@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnetd.8,v 1.21 2001/08/25 16:50:18 wiz Exp $
+.\"	$NetBSD: telnetd.8,v 1.22 2001/09/02 18:33:39 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -275,6 +275,17 @@ validated logins are allowed, and is
 usually useful for controlling remote logins
 from outside of a firewall.
 .It Fl S Ar tos
+This option sets the IP Type-of Service (TOS) option
+on the connection to the value tos, which may be a
+numeric TOS value or a symbolic TOS name found in the
+.Pa /etc/iptos
+file.
+The option has no effect on systems that do not
+support
+.Xr parsetos 3
+routine and the
+.Pa /etc/iptos
+file.
 .It Fl u Ar len
 This option is used to specify the size of the field
 in the
@@ -525,8 +536,6 @@ to execute site-specific commands.
 .Sh FILES
 .Pa /etc/services
 .br
-.Pa /etc/inittab
-(UNICOS systems only)
 .br
 .Pa /etc/iptos
 (if supported)
