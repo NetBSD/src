@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.250 2004/10/04 19:12:52 rumble Exp $
+.\"	$NetBSD: options.4,v 1.251 2004/10/25 06:13:47 dan Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 14, 2004
+.Dd October 25, 2004
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -941,11 +941,41 @@ servers.
 .Bl -ohang
 .It Cd options NEW_BUFQ_STRATEGY
 Enable experimental buffer queue strategy for disk I/O.
-It gives higher priority to read requests over write requests, and thereby
-improves the overall system responsiveness considerably under heavy disk
-I/O load.
+In the default strategy, outstanding disk requests are ordered by
+sector number and sent to the disk, regardless of whether the
+operation is a read or write; this option gives priority to issuing
+read requests over write requests.
+Although requests may therefore be issued out of sector-order, causing
+more seeks and thus lower overall throughput, interactive system
+responsiveness under heavy disk I/O load may be improved, as processes
+blocking on disk reads are serviced sooner (file writes typically
+don't cause applications to block).
+The performance effect varies greatly depending on the hardware, drive
+firmware, filesystem configuration, workload, and desired performance
+trade-off.
+Systems using drive write-cache (most modern IDE disks, by default)
+are unlikely to benefit and may well suffer; such disks acknowledge
+writes very quickly, and optimise them internally according to
+physical layout.
+Giving these disks as many requests to work with as possible (the
+standard strategy) will typically produce the best results, especially
+if the drive has a large cache; the drive will silently complete
+writes from cache as it seeks for reads.
+Disks that support a large number of concurrent tagged requests (SCSI
+disks and many hardware RAID controllers) expose this internal
+scheduling with tagged responses, and don't block for reads; such
+disks may not see a noticable difference with either strategy.
+However, if IDE disks are run with write-cache disabled for safety,
+writes are not acknowledged until actually completed, and only one
+request can be outstanding; a large number of small writes in one
+locality can keep the disk busy, starving reads elsewhere on the disk.
+Such systems are likely to see the most benefit from this option.
+Finally, the performance interaction of this option with ffs soft
+dependencies can be subtle, as that mechanism can drastically alter
+the workload for filesystem metadata writes.
 .Em NOTE :
-It's not yet proven to be stable, so use it at your own risk.
+NEW_BUFQ_STRATEGY is not yet proven to be stable, so use it at your
+own risk.
 .It Cd options LKM
 Enable loadable kernel modules.
 See
