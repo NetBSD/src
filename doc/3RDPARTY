@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.18 2002/11/17 14:05:38 itojun Exp $
+#	$NetBSD: 3RDPARTY,v 1.19 2002/11/21 12:38:36 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -253,7 +253,7 @@ See also nawk entry below.
 
 Package:	gcc
 Version:	2.95.3
-Current Vers:	3.2
+Current Vers:	3.2.1
 Maintainer:	cygnus
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Mailing List:	gcc-bugs@gnu.org
@@ -525,6 +525,18 @@ crypto/dist/openssl/openssl-unifdef.pl strips off most of #if in headers
 (should be done after the import - for some of the past imports done before
 import by mistake).
 
+Package:	pdisk
+Version:	0.8a2
+Current Vers:	0.8a2
+Maintainer:	Eryk Vershen <eryk@cfcl.com>
+Archive Site:	http://cantaforda.com/cfcl/eryk/linux/pdisk/index.html
+Mailing List:
+Responsible:	dbj
+Notes:
+This is the disk partition utility used by Apple's mkLinux and osX
+It is imported into dist/pdisk, with a reachover makefile in
+src/sbin/pdisk builds for macppc and mac68k.
+
 Package:	pdksh
 Version:	5.2.14p2
 Current Vers:	5.2.14p2
@@ -768,15 +780,3 @@ The Makefile is completely new (*BSD style, of course).  Lastly,
 the file gzio.c was changed to allow -DNO_DEFLATE to eliminate
 all references to deflate.c and friends, which permits building
 a really small zcat implementation.  (src/distrib/utils/zcat)
-
-Package:	pdisk
-Version:	0.8a2
-Current Vers:	0.8a2
-Maintainer:	Eryk Vershen <eryk@cfcl.com>
-Archive Site:	http://cantaforda.com/cfcl/eryk/linux/pdisk/index.html
-Mailing List:
-Responsible:	dbj
-Notes:
-This is the disk partition utility used by Apple's mkLinux and osX
-It is imported into dist/pdisk, with a reachover makefile in
-src/sbin/pdisk builds for macppc and mac68k.
