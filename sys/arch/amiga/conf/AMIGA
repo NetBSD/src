@@ -1,9 +1,9 @@
-# $NetBSD: AMIGA,v 1.43 2002/01/27 13:18:24 is Exp $
+# $NetBSD: AMIGA,v 1.44 2002/01/27 13:36:58 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.171 2002/01/27 13:01:46 is Exp $
+# Created from: #NetBSD: GENERIC,v 1.173 2002/01/27 13:27:51 is Exp $
 
 #GENERIC machine description file
 
@@ -24,7 +24,7 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.43 $"
+#ident  		"GENERIC-$Revision: 1.44 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -142,6 +142,7 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
 options 	NTP		# NTP phase/frequency locked loop
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #Misc. debugging options
 
@@ -290,6 +291,7 @@ fdc0		at mainbus0		# Amiga FDC
 fd*		at fdc0 unit ?		# floppy disks on the later
 a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 a2kbbc0 	at mainbus0		# A2000 battery backed clock
+
 aucc*		at mainbus0		# Amiga CC audio
 audio*		at aucc?
 
