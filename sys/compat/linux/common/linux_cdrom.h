@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.h,v 1.1 1998/01/15 14:52:12 christos Exp $ */
+/*	$NetBSD: linux_cdrom.h,v 1.2 1998/10/01 02:30:37 erh Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _COMMON_LINUX_CDROM_H
+#define _COMMON_LINUX_CDROM_H
 
 #define LINUX_CDROMPAUSE	0x5301
 #define LINUX_CDROMRESUME	0x5302
@@ -112,3 +115,5 @@ struct linux_cdrom_volctrl {
 	u_char	channel2;
 	u_char	channel3;
 };
+
+#endif /* !_COMMON_LINUX_CDROM_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.1 1998/01/15 14:52:12 christos Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.2 1998/10/01 02:30:37 erh Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/cdio.h>
+
+#include <sys/syscallargs.h>
 
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_ioctl.h>
