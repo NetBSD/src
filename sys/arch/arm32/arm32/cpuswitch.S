@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.10 1996/10/11 00:06:33 christos Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.11 1996/10/13 16:52:01 christos Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -169,7 +169,7 @@ Lsetrunqueue_erg:
 	mov	r2, r1
 	mov	r1, r0
 	add	r0, pc, #Ltext1 - . - 8
-	bl	_kprintf
+	bl	_printf
 
 	ldr	r2, Lqs
 	ldr	r1, [r2]

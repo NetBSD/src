@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsysasm.s,v 1.3 1996/10/11 00:24:39 christos Exp $	*/
+/*	$NetBSD: adbsysasm.s,v 1.4 1996/10/13 16:54:24 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -59,7 +59,7 @@ _adb_jadbproc:
 #if defined(MRG_DEBUG) && 0
 	moveml	#0xc0c0, sp@-	| save scratch regs
 	movl	_adb_jadbprochello, sp@-
-	jbsr	_kprintf
+	jbsr	_printf
 	addl	#4, sp		/* pop params */
 	moveml	sp@+, #0x0303	| restore scratch regs
 #endif

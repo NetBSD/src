@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_ds.c,v 1.1 1996/10/12 23:33:18 jonathan Exp $	*/
+/*	$NetBSD: pm_ds.c,v 1.2 1996/10/13 16:59:14 christos Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -122,7 +122,7 @@ pm_ds_attach(parent, self, aux)
 
 	/* no interrupts for PM */
 	/*BUS_INTR_ESTABLISH(ca, sccintr, self->dv_unit);*/
-	kprintf("\n");
+	printf("\n");
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.c,v 1.12 1996/10/13 02:03:08 christos Exp $	*/
+/*	$NetBSD: tcp_debug.c,v 1.13 1996/10/13 17:31:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -138,7 +138,7 @@ tcp_trace(act, ostate, tp, ti, req)
 #define pf(f) { if (ti->ti_flags&TH_/**/f) { printf("%s%s", cp, "f"); cp = ","; } }
 			pf(SYN); pf(ACK); pf(FIN); pf(RST); pf(PUSH); pf(URG);
 #endif
-			kprintf(">");
+			printf(">");
 		}
 		break;
 

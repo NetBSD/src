@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.s,v 1.5 1996/10/11 00:26:39 christos Exp $	*/
+/*	$NetBSD: in_cksum.s,v 1.6 1996/10/13 16:53:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -279,7 +279,7 @@ return:
 
 out_of_mbufs:
 	pushl	$1f
-	call	_kprintf
+	call	_printf
 	leal	4(%esp), %esp
 	jmp	return
 1:

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.11 1996/10/11 00:06:47 christos Exp $ */
+/* $NetBSD: locore.S,v 1.12 1996/10/13 16:52:02 christos Exp $ */
 
 /*
  * Copyright (C) 1994 Mark Brinicombe
@@ -98,7 +98,7 @@ L1:
 
 /*	mov	r1, sp
 	add	r0, pc, #(Ltext9 - . - 8)
-	bl	_kprintf
+	bl	_printf
 */
 
 /* Setup an initial trap frame for start_init to use */
@@ -116,7 +116,7 @@ stmfd r13!, {r0-r3}
 	ldr	r2, [r1]
 /*	mov	r1, r0*/
 	add	r0, pc, #(Ltext7 - . - 8)
-	bl	_kprintf
+	bl	_printf
 ldmfd r13!, {r0-r3}
 #endif
 
@@ -281,7 +281,7 @@ addrexc:
 	.word	0xe14f2000
 	mov	r3, lr
 	add	r0, pc, #addrexcmsg - . - 8
-	bl	_kprintf
+	bl	_printf
 	b	data_abort_entry
 
 addrexcmsg:
@@ -353,12 +353,12 @@ tbloop:
 	ldr	r2, [r4, #-12]
 	ldr	r3, [r4, #-8]
 	add	r0, pc, #Ltb1 - .  - 8
-	bl	_kprintf
+	bl	_printf
 
 /*	ldr	r1, [r4, #-4]
 	ldr	r2, [r4]
 	add	r0, pc, #Ltb2 - .  - 8
-	bl	_kprintf*/
+	bl	_printf*/
 	ldr	r0, [r4, #-4]
 	ldr	r1, [r4]
 	bl	_traceback_sym
@@ -406,7 +406,7 @@ stbloop:
 /*	ldr	r1, [r4, #-4]
 	ldr	r2, [r4]
 	add	r0, pc, #Ltb2 - .  - 8
-	bl	_kprintf*/
+	bl	_printf*/
 	ldr	r0, [r4, #-4]
 	ldr	r1, [r4]
 	bl	_traceback_sym
@@ -442,12 +442,12 @@ itbloop:
 	ldr	r2, [r4, #-12]
 	ldr	r3, [r4, #-8]
 	add	r0, pc, #Ltb1 - .  - 8
-	bl	_kprintf
+	bl	_printf
 
 /*	ldr	r1, [r4, #-4]
 	ldr	r2, [r4]
 	add	r0, pc, #Ltb2 - .  - 8
-	bl	_kprintf*/
+	bl	_printf*/
 	ldr	r0, [r4, #-4]
 	ldr	r1, [r4]
 	bl	_traceback_sym
@@ -481,12 +481,12 @@ usertbloop:
 	ldr	r2, [r4, #-12]
 	ldr	r3, [r4, #-8]
 	add	r0, pc, #Lusertb1 - .  - 8
-	bl	_kprintf
+	bl	_printf
 
 	ldr	r1, [r4, #-4]
 	ldr	r2, [r4]
 	add	r0, pc, #Lusertb2 - .  - 8
-	bl	_kprintf
+	bl	_printf
 
 	mov	r3, r4
 	ldr	r4, [r4, #-12]
