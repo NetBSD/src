@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.10 1995/02/12 19:19:20 chopps Exp $	*/
+/*	$NetBSD: sbic.c,v 1.11 1995/03/02 02:24:06 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -1371,13 +1371,6 @@ sbicintr(dev)
 		 * device driver look at what happened.
 		 */
 		sbicxfdone(dev, regs, dev->sc_xs->sc_link->target);
-		if (dev->sc_flags & SBICF_BBUF) {
-			bcopy(dev->sc_dmabuffer, dev->sc_dmausrbuf,
-			    dev->sc_dmausrlen);
-			if (dev->sc_dmausrbuf >= (u_char *)0xff000000)
-				printf("%s: WARNING - dmausrbuf = %x\n",
-				    dev->sc_dev.dv_xname, dev->sc_dmausrbuf);
-			}
 		/*
 		 * check for overlapping cache line, flush if so
 		 */
@@ -1389,8 +1382,15 @@ sbicintr(dev)
 			DCFL(dl->dc_addr + (dl->dc_count >> 1));
 		}
 #endif
-		dev->sc_flags &= ~(SBICF_INDMA | SBICF_BBUF | SBICF_DCFLUSH);
 		dev->sc_dmafree(dev);
+		if (dev->sc_flags & SBICF_BBUF) {
+			bcopy(dev->sc_dmabuffer, dev->sc_dmausrbuf,
+			    dev->sc_dmausrlen);
+			if (dev->sc_dmausrbuf >= (u_char *)0xff000000)
+				printf("%s: WARNING - dmausrbuf = %x\n",
+				    dev->sc_dev.dv_xname, dev->sc_dmausrbuf);
+			}
+		dev->sc_flags &= ~(SBICF_INDMA | SBICF_BBUF | SBICF_DCFLUSH);
 		sbic_scsidone(dev, dev->sc_stat[0]);
 	} else if (csr == (SBIC_CSR_XFERRED|DATA_OUT_PHASE)
 	    || csr == (SBIC_CSR_XFERRED|DATA_IN_PHASE)
