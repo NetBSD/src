@@ -1,4 +1,4 @@
-/*	$NetBSD: ttext2.c,v 1.3 1995/03/21 15:06:22 cgd Exp $	*/
+/*	$NetBSD: ttext2.c,v 1.4 1995/04/29 00:44:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ttext2.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: ttext2.c,v 1.3 1995/03/21 15:06:22 cgd Exp $";
+static char rcsid[] = "$NetBSD: ttext2.c,v 1.4 1995/04/29 00:44:20 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ char	**txt;
 	char	*c;
 	int	i;
 
-	fixtty (noech);
+	fixtty (&noech);
 	begin = txt;
 	while (*txt)  {
 		a = *(txt++);
@@ -149,7 +149,7 @@ char	**txt;
 			writel (a);
 			writec ('\n');
 		} else  {
-			fixtty (raw);
+			fixtty (&raw);
 			writel (prompt);
 			for (;;)  {
 				if ((b = readc()) == '?')  {
@@ -188,12 +188,12 @@ char	**txt;
 				writec ('\n');
 			if (i)
 				return(i);
-			fixtty (noech);
+			fixtty (&noech);
 			if (tflag)
 				curmove (curr,0);
 			begin = txt;
 		}
 	}
-	fixtty (raw);
+	fixtty (&raw);
 	return (0);
 }

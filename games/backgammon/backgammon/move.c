@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.4 1995/03/21 15:05:10 cgd Exp $	*/
+/*	$NetBSD: move.c,v 1.5 1995/04/29 00:44:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: move.c,v 1.4 1995/03/21 15:05:10 cgd Exp $";
+static char rcsid[] = "$NetBSD: move.c,v 1.5 1995/04/29 00:44:05 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -131,14 +131,14 @@ int	okay;					/* zero if first move */
 						 * while thinking */
 	if (tflag)
 		cline();
-	fixtty (noech);
+	fixtty (&noech);
 
 						/* find out how many moves */
 	mvlim = movallow();
 	if (mvlim == 0)  {
 		writel (" but cannot use it.\n");
 		nexturn();
-		fixtty (raw);
+		fixtty (&raw);
 		return;
 	}
 
@@ -176,7 +176,7 @@ int	okay;					/* zero if first move */
 		buflush();
 		sleep (3);
 	}
-	fixtty (raw);				/* no more tty interrupt */
+	fixtty (&raw);				/* no more tty interrupt */
 }
 
 trymove (mvnum,swapped)

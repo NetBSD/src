@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.3 1995/03/21 15:05:44 cgd Exp $	*/
+/*	$NetBSD: init.c,v 1.4 1995/04/29 00:44:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,11 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.3 1995/03/21 15:05:44 cgd Exp $";
+static char rcsid[] = "$NetBSD: init.c,v 1.4 1995/04/29 00:44:12 mycroft Exp $";
 #endif
 #endif /* not lint */
 
-#include <sgtty.h>
+#include <termios.h>
 
 /*
  * variable initialization.
