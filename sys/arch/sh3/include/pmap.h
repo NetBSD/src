@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 2001/09/10 21:19:23 chris Exp $	*/
+/*	$NetBSD: pmap.h,v 1.15 2002/02/11 18:05:17 uch Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -38,6 +38,7 @@
 #ifndef _SH3_PMAP_H_
 #define _SH3_PMAP_H_
 
+#include <sh3/cache.h>
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
 #include <uvm/uvm_object.h>
@@ -221,12 +222,6 @@
 #define ptp_o2i(O)	((O) / NBPG)	/* offset => index */
 #define ptp_i2v(I)	((I) * NBPD)	/* index => VA */
 #define ptp_v2i(V)	((V) / NBPD)	/* VA => index (same as pdei) */
-
-/*
- * PG_AVAIL usage: we make use of the ignored bits of the PTE
- */
-
-#define PG_PVLIST	PG_AVAIL1	/* mapping has entry on pvlist */
 
 #ifdef _KERNEL
 /*
