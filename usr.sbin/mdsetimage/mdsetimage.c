@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.10 2000/06/14 17:26:18 cgd Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.11 2001/01/05 03:27:27 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -42,7 +42,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mdsetimage.c,v 1.10 2000/06/14 17:26:18 cgd Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.11 2001/01/05 03:27:27 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -149,7 +149,7 @@ main(argc, argv)
 	if (fssb.st_size > SIZE_T_MAX)
 		errx(1, "fs image is too big");
 	if (fssb.st_size > md_root_size)
-		errx(1, "fs image (%qd bytes) too big for buffer (%ld bytes)",
+		errx(1, "fs image (%lld bytes) too big for buffer (%lu bytes)",
 		     (long long)fssb.st_size, (unsigned long)md_root_size);
 
 	if (verbose)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.56 2000/12/13 05:50:33 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.57 2001/01/05 03:27:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.56 2000/12/13 05:50:33 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.57 2001/01/05 03:27:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -489,7 +489,7 @@ ufs_print(vp)
 		else
 			(void)printf(" %7s", name);
 	else
-		(void)printf(" %7qd", (long long)ip->i_ffs_size);
+		(void)printf(" %7lld", (long long)ip->i_ffs_size);
 	return (0);
 }
 
@@ -579,7 +579,7 @@ nfs_print(vp)
 			(void)printf(" %7s", name);
 		break;
 	default:
-		(void)printf(" %7qd", (long long)np->n_size);
+		(void)printf(" %7lld", (long long)np->n_size);
 		break;
 	}
 	return (0);
@@ -887,9 +887,9 @@ filemode()
 		(void)printf("  %3d", fp->f_msgcount);
 		(void)printf("  %8.1lx", (long)fp->f_data);
 		if (fp->f_offset < 0)
-			(void)printf("  %qx\n", (long long)fp->f_offset);
+			(void)printf("  %llx\n", (long long)fp->f_offset);
 		else
-			(void)printf("  %qd\n", (long long)fp->f_offset);
+			(void)printf("  %lld\n", (long long)fp->f_offset);
 	}
 	free(buf);
 }
