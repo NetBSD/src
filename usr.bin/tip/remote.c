@@ -1,4 +1,4 @@
-/*	$NetBSD: remote.c,v 1.10 2004/04/23 22:11:44 christos Exp $	*/
+/*	$NetBSD: remote.c,v 1.11 2004/04/23 22:24:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: remote.c,v 1.10 2004/04/23 22:11:44 christos Exp $");
+__RCSID("$NetBSD: remote.c,v 1.11 2004/04/23 22:24:34 christos Exp $");
 #endif /* not lint */
 
 #include "pathnames.h"
@@ -65,6 +65,9 @@ static const char	*db_array[3] = { _PATH_REMOTE, 0, 0 };
 #define cgetflag(f)	(cgetcap(bp, f, ':') != NULL)
 
 static	void	getremcap __P((char *));
+
+static char tiprecord[] = "tip.record";
+static char wspace[] = "\t\n\b\f";
 
 static void
 getremcap(host)
@@ -175,9 +178,9 @@ getremcap(host)
 	if (cgetflag("dc"))
 		DC = 1;
 	if (RE == NULL)
-		RE = strdup("tip.record");
+		RE = tiprecord;
 	if (EX == NULL)
-		EX = strdup("\t\n\b\f");
+		EX = wspace;
 	if (ES != NULL)
 		vstring("es", ES);
 	if (FO != NULL)
