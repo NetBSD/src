@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 1996/07/11 03:52:44 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 1996/07/14 20:00:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1996 Carnegie Mellon University
@@ -101,7 +101,7 @@
 #define	vm_page_fictitious_addr 0
 #define	aligned_block_copy(src, dest, size) bcopy((void *)src, (void *)dest, size)
 #define	db_printf	printf
-#define	tbia		TBIA
+#define	tbia		ALPHA_TBIA
 #define	alphacache_Iflush alpha_pal_imb
 #define assert(e) \
 	    ((e) ? (void)0 : panic("assertion \"%s\" failed at %s:%d", \
@@ -2859,7 +2859,7 @@ pmap_unmap_prom()
 	/* Mark all mappings before VM_MIN_KERNEL_ADDRESS as invalid. */
 	bzero(root_kpdes, pdenum(VM_MIN_KERNEL_ADDRESS) * sizeof root_kpdes[0]);
 	prom_mapped = 0;
-	TBIA();
+	ALPHA_TBIA();
 }
 
 vm_page_t

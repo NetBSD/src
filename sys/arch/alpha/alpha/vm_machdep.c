@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.13 1996/07/11 23:02:19 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.14 1996/07/14 20:00:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -348,7 +348,7 @@ pagemove(from, to, size)
 #endif
 	todo = size;			/* if testing > 0, need sign... */
 	while (todo > 0) {
-		TBIS((vm_offset_t)from);
+		ALPHA_TBIS((vm_offset_t)from);
 		*tpte++ = *fpte;
 		*fpte = 0;
 		fpte++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 1996/07/14 04:21:33 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 1996/07/14 20:00:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -210,7 +210,7 @@ alpha_init(pfn, ptb)
 	 */
 	(void)splhigh();
 	alpha_pal_wrfen(0);
-	TBIA();
+	ALPHA_TBIA();
 	alpha_pal_imb();
 
 	/*

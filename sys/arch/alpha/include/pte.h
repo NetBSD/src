@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.5 1996/07/09 00:39:30 cgd Exp $	*/
+/*	$NetBSD: pte.h,v 1.6 1996/07/14 20:00:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -107,7 +107,7 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 
 #define loadustp(stpte) {					\
 	Lev1map[kvtol1pte(VM_MIN_ADDRESS)] = stpte;		\
-	TBIAP();						\
+	ALPHA_TBIAP();						\
 }
 
 extern	pt_entry_t *Lev1map;		/* Alpha Level One page table */

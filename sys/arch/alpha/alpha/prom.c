@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.8 1996/07/09 00:54:13 cgd Exp $	*/
+/*	$NetBSD: prom.c,v 1.9 1996/07/14 20:00:30 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -93,7 +93,7 @@ promcnputc(dev, c)
 	if (!prom_mapped) {					/* XXX */
 		saved_pte = *rom_ptep;				/* XXX */
 		*rom_ptep = rom_pte;				/* XXX */
-		TBIA();						/* XXX */
+		ALPHA_TBIA();					/* XXX */
 	}							/* XXX */
 	*to = c;
 
@@ -103,7 +103,7 @@ promcnputc(dev, c)
 
 	if (!prom_mapped) {					/* XXX */
 		*rom_ptep = saved_pte;				/* XXX */
-		TBIA();						/* XXX */
+		ALPHA_TBIA();					/* XXX */
 	}							/* XXX */
 	splx(s);
 }
@@ -130,12 +130,12 @@ promcngetc(dev)
 		if (!prom_mapped) {				/* XXX */
 			saved_pte = *rom_ptep;			/* XXX */
 			*rom_ptep = rom_pte;			/* XXX */
-			TBIA();					/* XXX */
+			ALPHA_TBIA();				/* XXX */
 		}						/* XXX */
                 ret.bits = prom_dispatch(PROM_R_GETC, alpha_console);
 		if (!prom_mapped) {				/* XXX */
 			*rom_ptep = saved_pte;			/* XXX */
-			TBIA();					/* XXX */
+			ALPHA_TBIA();				/* XXX */
 		}						/* XXX */
 		splx(s);
                 if (ret.u.status == 0 || ret.u.status == 1)
@@ -165,12 +165,12 @@ promcnlookc(dev, cp)
 	if (!prom_mapped) {					/* XXX */
 		saved_pte = *rom_ptep;				/* XXX */
 		*rom_ptep = rom_pte;				/* XXX */
-		TBIA();						/* XXX */
+		ALPHA_TBIA();					/* XXX */
 	}							/* XXX */
 	ret.bits = prom_dispatch(PROM_R_GETC, alpha_console);
 	if (!prom_mapped) {					/* XXX */
 		*rom_ptep = saved_pte;				/* XXX */
-		TBIA();						/* XXX */
+		ALPHA_TBIA();					/* XXX */
 	}
 	splx(s);
 	if (ret.u.status == 0 || ret.u.status == 1) {
@@ -198,13 +198,13 @@ prom_getenv(id, buf, len)
 	if (!prom_mapped) {					/* XXX */
 		saved_pte = *rom_ptep;				/* XXX */
 		*rom_ptep = rom_pte;				/* XXX */
-		TBIA();						/* XXX */
+		ALPHA_TBIA();					/* XXX */
 	}							/* XXX */
 	ret.bits = prom_dispatch(PROM_R_GETENV, id, to, len);
 	bcopy(to, buf, len);
 	if (!prom_mapped) {					/* XXX */
 		*rom_ptep = saved_pte;				/* XXX */
-		TBIA();						/* XXX */
+		ALPHA_TBIA();					/* XXX */
 	}							/* XXX */
 	splx(s);
 
