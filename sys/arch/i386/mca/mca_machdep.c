@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.7 2001/05/02 13:18:34 jdolecek Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.8 2001/05/04 07:22:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -266,7 +266,7 @@ mca_busprobe()
 	scp = (struct bios_config *)ISA_HOLE_VADDR(paddr);
 
 #if 1 /* MCAVERBOSE */
-	printf("BIOS CFG: Model %#x, Submodel %#x, Revision %#x\n",
+	printf("BIOS CFG: Model-Submodel-Revision: %02x-%02x-%02x\n",
 		scp->model, scp->submodel, scp->bios_rev);
 
 	bitmask_snprintf(scp->feature1,
