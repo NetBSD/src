@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.44 2001/10/02 01:21:27 lukem Exp $
+#	$NetBSD: special,v 1.45 2001/10/02 03:02:10 lukem Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -34,6 +34,13 @@ daily		type=file mode=0644 uname=root gname=wheel
 daily.conf	type=file mode=0644 uname=root gname=wheel
 daily.local	type=file mode=0644 uname=root gname=wheel optional
 defaultdomain	type=file mode=0644 uname=root gname=wheel optional
+defaults	type=dir mode=0755 uname=root gname=wheel
+daily.conf	type=file mode=0444 uname=root gname=wheel
+monthly.conf	type=file mode=0444 uname=root gname=wheel
+rc.conf		type=file mode=0444 uname=root gname=wheel
+security.conf	type=file mode=0444 uname=root gname=wheel
+weekly.conf	type=file mode=0444 uname=root gname=wheel
+..	#etc/defaults
 dhclient-enter-hooks	type=file mode=0644 uname=root gname=wheel optional
 dhclient-exit-hooks	type=file mode=0644 uname=root gname=wheel optional
 dhclient.conf	type=file mode=0644 uname=root gname=wheel optional
