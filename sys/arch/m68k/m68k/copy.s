@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/m68k/m68k/copy.s,v 1.3 1993/08/28 15:37:25 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/m68k/m68k/copy.s,v 1.4 1993/10/12 05:25:41 glass Exp $
  */
 
 .text
@@ -44,6 +44,8 @@ ENTRY(copyinstr)
 	movl	#Lcisflt1,a0@(PCB_ONFAULT) | set up to catch faults
 	movl	sp@(4),a0		| a0 = fromaddr
 	movl	sp@(8),a1		| a1 = toaddr
+	moveq	#FC_USERD, d1
+	movec	d1, sfc
 	moveq	#0,d0
 	movw	sp@(14),d0		| d0 = maxlength
 	jlt	Lcisflt1		| negative count, error
@@ -56,6 +58,8 @@ Lcisloop:
 	jne	Lcisflt2		| ran out of room, error
 	moveq	#0,d0			| got a null, all done
 Lcisdone:
+	moveq   #FC_CONTROL, d1
+	movec	d1, sfc
 	tstl	sp@(16)			| return length desired?
 	jeq	Lcisret			| no, just return
 	subl	sp@(4),a0		| determine how much was copied
@@ -84,6 +88,8 @@ ENTRY(copyoutstr)
 	movl	#Lcosflt1,a0@(PCB_ONFAULT) | set up to catch faults
 	movl	sp@(4),a0		| a0 = fromaddr
 	movl	sp@(8),a1		| a1 = toaddr
+	moveq	#FC_USERD, d1
+	movec	d1, dfc
 	moveq	#0,d0
 	movw	sp@(14),d0		| d0 = maxlength
 	jlt	Lcosflt1		| negative count, error
@@ -96,6 +102,8 @@ Lcosloop:
 	jne	Lcosflt2		| ran out of room, error
 	moveq	#0,d0			| got a null, all done
 Lcosdone:
+	moveq   #FC_CONTROL, d1
+	movec	d1, dfc
 	tstl	sp@(16)			| return length desired?
 	jeq	Lcosret			| no, just return
 	subl	sp@(4),a0		| determine how much was copied
@@ -157,6 +165,8 @@ ENTRY(copyin)
 	movl	d2,sp@-			| scratch register
 	movl	_curpcb,a0		| current pcb
 	movl	#Lciflt,a0@(PCB_ONFAULT) | set up to catch faults
+	moveq	#FC_USERD, d1
+	movec	d1, sfc
 	movl	sp@(16),d2		| check count
 	jlt	Lciflt			| negative, error
 	jeq	Lcidone			| zero, done
@@ -192,6 +202,8 @@ Lcibloop:
 Lcidone:
 	moveq	#0,d0			| success
 Lciexit:
+	moveq	#FC_CONTROL, d1
+	movec	d1, sfc
 	movl	_curpcb,a0		| current pcb
 	clrl	a0@(PCB_ONFAULT) 	| clear fault catcher
 	movl	sp@+,d2			| restore scratch reg
@@ -210,6 +222,8 @@ ENTRY(copyout)
 	movl	d2,sp@-			| scratch register
 	movl	_curpcb,a0		| current pcb
 	movl	#Lcoflt,a0@(PCB_ONFAULT) | catch faults
+	moveq	#FC_USERD, d1
+	movec	d1, dfc
 	movl	sp@(16),d2		| check count
 	jlt	Lcoflt			| negative, error
 	jeq	Lcodone			| zero, done
@@ -245,6 +259,8 @@ Lcobloop:
 Lcodone:
 	moveq	#0,d0			| success
 Lcoexit:
+	moveq	#FC_CONTROL, d1
+	movec	d1, dfc
 	movl	_curpcb,a0		| current pcb
 	clrl	a0@(PCB_ONFAULT) 	| clear fault catcher
 	movl	sp@+,d2			| restore scratch reg
@@ -257,6 +273,8 @@ Lcoflt:
  * {fu,su},{byte,sword,word}
  */
 TWOENTRY(fuword,fuiword)
+	moveq	#FC_USERD, d1
+	movec	d1, sfc
 	movl	sp@(4),a0		| address to read
 	movl	_curpcb,a1		| current pcb
 	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
@@ -264,6 +282,8 @@ TWOENTRY(fuword,fuiword)
 	jra	Lfsdone
 
 ENTRY(fusword)
+	moveq	#FC_USERD, d1
+	movec	d1, sfc
 	movl	sp@(4),a0
 	movl	_curpcb,a1		| current pcb
 	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
@@ -272,6 +292,8 @@ ENTRY(fusword)
 	jra	Lfsdone
 
 TWOENTRY(fubyte,fuibyte)
+	moveq	#FC_USERD, d1
+	movec	d1, sfc
 	movl	sp@(4),a0		| address to read
 	movl	_curpcb,a1		| current pcb
 	movl	#Lfserr,a1@(PCB_ONFAULT) | where to return to on a fault
@@ -282,10 +304,14 @@ TWOENTRY(fubyte,fuibyte)
 Lfserr:
 	moveq	#-1,d0			| error indicator
 Lfsdone:
+	moveq	#FC_CONTROL, d1
+	movec	d1, sfc
 	clrl	a1@(PCB_ONFAULT) 	| clear fault address
 	rts
 
 TWOENTRY(suword,suiword)
+	moveq	#FC_USERD, d1
+	movec	d1, dfc
 	movl	sp@(4),a0		| address to write
 	movl	sp@(8),d0		| value to put there
 	movl	_curpcb,a1		| current pcb
@@ -295,6 +321,8 @@ TWOENTRY(suword,suiword)
 	jra	Lfsdone
 
 ENTRY(susword)
+	moveq	#FC_USERD, d1
+	movec	d1, dfc
 	movl	sp@(4),a0		| address to write
 	movw	sp@(10),d0		| value to put there
 	movl	_curpcb,a1		| current pcb
@@ -304,6 +332,8 @@ ENTRY(susword)
 	jra	Lfsdone
 
 TWOENTRY(subyte,suibyte)
+	moveq	#FC_USERD, d1
+	movec	d1, dfc
 	movl	sp@(4),a0		| address to write
 	movb	sp@(11),d0		| value to put there
 	movl	_curpcb,a1		| current pcb
@@ -311,3 +341,5 @@ TWOENTRY(subyte,suibyte)
 	movsb	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
 	jra	Lfsdone
+
+

@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/pmap.c,v 1.13 1993/08/28 15:38:05 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/pmap.c,v 1.14 1993/10/12 05:27:12 glass Exp $
  */
 #include "systm.h"
 #include "param.h"
@@ -795,7 +795,6 @@ void pv_init()
 {
     int i;
 
-    mon_printf("kernel_map: %x\n", kernel_map);
     pv_head_table = (pv_entry_t) kmem_alloc(kernel_map,
 					    PA_PGNUM(avail_end) *
 					    sizeof(struct pv_entry));
@@ -876,14 +875,7 @@ void pmap_bootstrap()
     /* pmeg_init(); done in sun3_vm_init() */
     context_init();
     
-
-    mon_printf("kernel virtual address begin:\t %x\n", virtual_avail);
-    mon_printf("kernel virtual address end:\t %x\n", virtual_end);
-    mon_printf("physical memory begin:\t %x\n", avail_start);    
-    mon_printf("physical memory end:\t %x\n", avail_end);
-
     pmeg_clean_free();
-    mon_printf("free pmegs cleaned\n");
 }
 /*
  *	Initialize the pmap module.
@@ -1223,7 +1215,7 @@ void pmap_enter_kernel(va, pa, prot, wired, pte_proto, mem_type)
      * (e) change/add pte
      */
     if (va < VM_MIN_KERNEL_ADDRESS)
-	printf("pmap: kernel trying to allocate virtual space below itself\n");
+	panic("pmap: kernel trying to allocate virtual space below itself\n");
     PMAP_LOCK();
     sme = get_segmap(va);
     /* XXXX -- lots of non-defined routines, need to see if pmap has a
@@ -1296,9 +1288,9 @@ void pmap_enter_user(pmap, va, pa, prot, wired, pte_proto, mem_type)
     if (mem_type)
 	panic("pmap: attempt to map non main memory page into user space");
     if (va < VM_MIN_ADDRESS)
-	printf("pmap: user trying to allocate virtual space below itself\n");
-    if ((va+NBPG) >= VM_MAXUSER_ADDRESS)
-	printf("pmap: user trying to allocate virtual space above itself\n");
+	panic("pmap: user trying to allocate virtual space below itself\n");
+    if ((va+NBPG) > VM_MAXUSER_ADDRESS)
+	panic("pmap: user trying to allocate virtual space above itself\n");
     if (wired)
 	printf("pmap_enter_user: attempt to wire user page, ignored\n");
     pte_proto |= MAKE_PGTYPE(PG_MMEM); /* unnecessary */
@@ -1440,7 +1432,6 @@ void pmap_activate(pmap, pcbp)
     int s;
 
     PMAP_LOCK();
-    printf("pmap_activate called\n");
     if (pmap->pm_context) {
 	set_context(pmap->pm_context->context_num);
 	PMAP_UNLOCK();

@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/sun3_startup.c,v 1.12 1993/08/28 15:38:24 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/sun3_startup.c,v 1.13 1993/10/12 05:27:33 glass Exp $
  */
 
 #include "systm.h"
@@ -46,6 +46,7 @@
 #include "machine/pte.h"
 #include "machine/pmap.h"
 #include "machine/idprom.h"
+#include "machine/obio.h"
 
 #include "vector.h"
 #include "interreg.h"
@@ -79,13 +80,10 @@ static void initialize_vector_table()
     old_vector_table = getvbr();
     for (i = 0; i < NVECTORS; i++) {
 	if (vector_table[i] == COPY_ENTRY)
-	    vector_table[i] = old_vector_table[i];
+	    set_vector_entry(i, old_vector_table[i]);
     }
     setvbr(vector_table);
     orig_nmi_vector = get_vector_entry(VEC_LEVEL_7_INT);
-    mon_printf("orig_nmi_vector: %x\n", orig_nmi_vector);
-    mon_printf("initializing vector table (ended)\n");
-    mon_printf("old vector table at %x\n", old_vector_table);
 }
 
 vm_offset_t high_segment_alloc(npages)
@@ -171,30 +169,24 @@ void u_area_bootstrap(u_va, u_pa)
 void sun3_vm_init()
 {
     unsigned int monitor_memory = 0;
-    vm_offset_t va, eva, sva, pte, temp_seg;
+    vm_offset_t va, eva, sva, pte, temp_seg, clock_va;
     extern char start[], etext[], end[];
     unsigned char sme;
     int valid;
 
-    mon_printf("starting pmeg_init\n");
+
     pmeg_init();
-    mon_printf("ending pmeg_init\n");
 
     va = (vm_offset_t) start;
     while (va < (vm_offset_t) end) {
 	sme = get_segmap(va);
-	mon_printf("stealing pmeg %x\n", (int) sme);
 	if (sme == SEGINV)
 	    mon_panic("stealing pages for kernel text/data/etc\n");
-	mon_printf("starting pmeg_steal\n");
 	pmeg_steal(sme);
-	mon_printf("ending pmeg_steal\n");
 	va = sun3_round_up_seg(va);
     }
 
     virtual_avail = sun3_round_seg(end); /* start a new segment */
-    mon_printf("literal kernel_end %x\nvirtual_avail_after %x\n",
-	       end, virtual_avail);
     virtual_end = VM_MAX_KERNEL_ADDRESS;
 
     if (romp->romvecVersion >=1)
@@ -205,7 +197,6 @@ void sun3_vm_init()
     avail_start = sun3_round_page(end) - KERNBASE; /* XXX */
     avail_end = sun3_trunc_page(*romp->memoryAvail);
 
-    mon_printf("kernel pmegs stolen\n");
 
     /*
      * preserve/protect monitor: 
@@ -214,7 +205,6 @@ void sun3_vm_init()
      *   free up any pmegs in this range which are 
      *   deal with the awful MONSHORTSEG/MONSHORTPAGE
      */
-    mon_printf("protecting monitor (start)\n");
     va = MONSTART; 
     while (va < MONEND) {
 	sme = get_segmap(va);
@@ -237,13 +227,11 @@ void sun3_vm_init()
 	if (valid) 
 	    pmeg_steal(sme);
 	else {
-	    mon_printf("freed pmeg for monitor segment %x\n",
-		   sun3_trunc_seg(sva));
 	    set_segmap(sva, SEGINV);
 	}
 	va = eva;
     }
-    mon_printf("protecting monitor (end)\n");
+    mon_printf("monitor protected\n");
     /*
      * MONSHORTSEG contains MONSHORTPAGE which is some stupid page
      * allocated by the monitor.  One page, in an otherwise empty segment.
@@ -285,7 +273,6 @@ void sun3_vm_init()
 	       temp_seg - virtual_avail); 
     set_segmap(temp_seg, SEGINV);
     virtual_avail = temp_seg + NBSG;
-    mon_printf("temp_seg: starts at %x ends at %x\n", temp_seg, virtual_avail);
 
     /* allocating page for msgbuf */
     sme = get_segmap(virtual_avail); 
@@ -358,14 +345,19 @@ void sun3_vm_init()
     bzero(proc0paddr, UPAGES*NBPG);
     save_u_area(&proc0paddr->u_pcb, proc0paddr);
     load_u_area(&proc0paddr->u_pcb);
-    pte = get_pte(proc0paddr);
-    mon_printf(" proc0paddr: \n");
-    pte_print(pte);
-    pte = get_pte(u_area_va);
-    mon_printf(" u_area_va: \n");
-    pte_print(pte);
     curpcb = &proc0paddr->u_pcb;
-    mon_printf("curpcb == %x\nproc0paddr == %x\n", curpcb, proc0paddr);
+
+    clock_va = obio_alloc((caddr_t) OBIO_CLOCK,
+			  OBIO_CLOCK_SIZE, OBIO_WRITE);
+    if (clock_va != CLOCK_VA)
+	mon_printf("clock is not at CLOCK_VA, %x vs. %x\n", clock_va,
+		   CLOCK_VA);
+
+    interrupt_reg = obio_alloc((caddr_t) OBIO_INTERREG,
+			       OBIO_INTERREG_SIZE, OBIO_WRITE);
+    if (interrupt_reg != INTERREG_VA)
+	mon_printf("interrupt_reg is not at INTERREG_VA, %x vs. %x\n",
+		   interrupt_reg, INTERREG_VA);
     sun3_context_equiv();
 }
 
@@ -565,6 +557,7 @@ void pte_print(pte)
 	}
 	mon_printf(" PA: %x\n", PG_PA(pte));
     }
+    else mon_printf("INVALID\n");
 }
 
 void set_interrupt_reg(value)
@@ -575,9 +568,6 @@ void set_interrupt_reg(value)
 unsigned int get_interrupt_reg()
 {
     vm_offset_t pte;
-    pte = get_pte(interrupt_reg);
-    mon_printf("interrupt reg %x ", pte);
-    pte_print(pte);
     return (unsigned int) *interrupt_reg;
 }
 
@@ -600,15 +590,16 @@ void sun3_bootstrap()
 
     initialize_vector_table();	/* point interrupts/exceptions to our table */
 
-    mon_printf("starting sun3 vm init\n");
     sun3_vm_init();		/* handle kernel mapping problems, etc */
-    mon_printf("ending sun3 vm init\n");
+    printf("sun3 vm initialization complete\n");
 
     sun3_monitor_hooks();
 
     pmap_bootstrap();		/*  */
+    printf("pmap module bootstrapped\n");
 
     internal_configure();	/* stuff that can't wait for configure() */
     
     astpending =0;
+    printf("calling main()\n");
 }
