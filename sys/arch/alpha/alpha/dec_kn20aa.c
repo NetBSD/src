@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn20aa.c,v 1.30 1997/09/02 20:43:12 thorpej Exp $ */
+/* $NetBSD: dec_kn20aa.c,v 1.31 1997/09/13 10:09:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.30 1997/09/02 20:43:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn20aa.c,v 1.31 1997/09/13 10:09:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ dec_kn20aa_model_name()
 
 	switch (hwrpb->rpb_variation & SV_ST_MASK) {
 	case 0:
-		return "AlphaStation 600 5/266 (KN20AA)";
+		return "AlphaStation 500 or 600 (KN20AA)";
 		
 	default:
 		printf("unknown system variation %lx\n",
