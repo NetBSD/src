@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.27 1995/07/04 07:21:59 mycroft Exp $	*/
+/*	$NetBSD: conf.h,v 1.28 1995/08/14 05:05:55 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -97,7 +97,11 @@ struct bdevsw {
 extern struct bdevsw bdevsw[];
 
 /* bdevsw-specific types */
-#define	dev_type_dump(n)	int n()
+#ifndef __BDEVSW_DUMP_OLD_TYPE
+#define	dev_type_dump(n)	int n __P((dev_t, daddr_t, caddr_t, size_t))
+#else /* not __BDEVSW_DUMP_OLD_TYPE */
+#define	dev_type_dump(n)	int n()	/* parameters vary by architecture */
+#endif /* __BDEVSW_DUMP_OLD_TYPE */
 #define	dev_type_size(n)	int n __P((dev_t))
 
 /* bdevsw-specific initializations */
@@ -150,7 +154,7 @@ struct cdevsw {
 	struct tty *
 		(*d_tty)	__P((dev_t dev));
 	int	(*d_select)	__P((dev_t dev, int which, struct proc *p));
-	int	(*d_mmap)	__P(());
+	int	(*d_mmap)	__P((dev_t, int, int));
 	int	d_type;
 };
 
@@ -164,7 +168,7 @@ extern struct cdevsw cdevsw[];
 #define	dev_type_stop(n)	int n __P((struct tty *, int))
 #define	dev_type_tty(n)		struct tty *n __P((dev_t))
 #define	dev_type_select(n)	int n __P((dev_t, int, struct proc *))
-#define	dev_type_mmap(n)	int n __P(())
+#define	dev_type_mmap(n)	int n __P((dev_t, int, int))
 
 #define	cdev_decl(n) \
 	dev_decl(n,open); dev_decl(n,close); dev_decl(n,read); \
