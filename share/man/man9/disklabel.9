@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.9,v 1.11 2002/12/21 13:00:57 wiz Exp $
+.\"	$NetBSD: disklabel.9,v 1.12 2004/09/25 19:11:02 chris Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,7 +69,7 @@ using the device strategy routine passed in
 Note that a buffer structure is required to pass to the strategy routine;
 it needs to be acquired and parameterized for the intended I/O operation,
 and disposed of when the operation has completed.
-Some fields in the in the disklabel passed in
+Some fields in the disklabel passed in
 .Fa lp
 may be pre-initialized by the caller in order to meet device driver
 requirements for the I/O operation initiated to get to the disklabel data
