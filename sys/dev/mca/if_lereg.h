@@ -1,12 +1,11 @@
-/*	$NetBSD: mca_subr.c,v 1.4 2001/04/27 18:03:41 jdolecek Exp $	*/
+/*	$NetBSD: if_lereg.h,v 1.1 2001/04/27 18:03:41 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
- * Copyright (c) 1996-1999 Scott D. Telford.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Scott Telford <s.telford@ed.ac.uk>.
+ * by Jaromir Dolecek.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,63 +36,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * MCA Bus subroutines
- */
+#define LE_MCA_MEMSIZE	0x4000
+#define LE_PROMOFF	0x3fc0		/* Offset of PROM within the memory */
+#define LE_MCA_RAMSIZE	LE_PROMOFF	/* Size of RAM memory */
+#define LE_LANCEREG	0x3ff0		/* Offset of LANCE register (2bytes) */
+#define LE_PORT		0x3ff2		/* Offset of port register */
+#define LE_REGIO	0x3ff3		/* Offset of regio register */
 
-#include "opt_mcaverbose.h"
+/* Bits in Status / Control */
+#define	REGREQ		0x20	/* I/O command pending */
+#define	IRQ		0x10	/* IRQ pending */
+#define RESET		0x08	/* Reset board */
+#define REGRW		0x02	/* Read/Write Register */
+#define REGADDR		0x01	/* Register address */
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
+#define REGREAD		REGRW	/* Read Register */
+#define REGWRITE	0	/* Write Register */
+#define RAP		REGADDR	/* Address RAP */
+#define RDATA		0	/* Address Data */
 
-#include <dev/mca/mcavar.h>
-#include <dev/mca/mcadevs.h>
-
-#ifdef MCAVERBOSE
-/*
- * Descriptions of of known MCA devices
- */
-struct mca_knowndev {
-	int		 id;		/* MCA ID */
-	const char	*name;		/* text description */
-};
-
-#include <dev/mca/mcadevs_data.h>
-
-#endif /* MCAVERBOSE */
-
-void
-mca_devinfo(id, cp)
-	int id;
-	char *cp;
-{
-#ifdef MCAVERBOSE
-	const struct mca_knowndev *kdp;
-	
-	kdp = mca_knowndevs;
-        for (; kdp->name != NULL && kdp->id != id; kdp++);
-
-	if (kdp->name != NULL)
-		sprintf(cp, "%s (0x%04x)", kdp->name, id);
-	else
-#endif /* MCAVERBOSE */
-		sprintf(cp, "product 0x%04x", id);
-}
-
-/*
- * Returns true if the device should be attempted to be matched
- * even through it's disabled. Apparently, some devices were
- * designed this way.
- */
-int
-mca_match_disabled(id)
-	int id;
-{
-	switch (id) {
-	case MCA_PRODUCT_SKNETG:
-		return (1);
-	}
-
-	return (0);
-}
+/* Bits in REGIO */
+#define	REGDO		0x80	/* Do transfer */

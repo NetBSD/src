@@ -1,4 +1,4 @@
-$NetBSD: mcadevs,v 1.14 2001/04/23 06:10:09 jdolecek Exp $
+$NetBSD: mcadevs,v 1.15 2001/04/27 18:03:41 jdolecek Exp $
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -208,7 +208,7 @@ product 0x6AB5 "Mayze Syncro 48PS V.27ter Modem"			[7]
 product 0x6ABF "RM Ethernet MC Adapter"					[5]
 product 0x6AE7 "Dacom Unity Gold+/2 Modem"				[7]
 product 0x6AFB "Miracom Keycard/PS Modem"				[7]
-product 0x6AFD "SKNET Ethernet Adapter/G"				[10]
+product 0x6AFD SKNETG "SKNET MC2+ Ethernet Adapter/G"			[10]
 product 0x6B76 "Network Designers Garnet 2 Adapter"			[7]
 product 0x6B80 "DataFlex Chameleo Modem"				[7]
 product 0x6B95 "CORE ESDI Fixed Disk Adapter"				[6]
@@ -220,7 +220,7 @@ product 0x6BBB "Barr Synchronous Communications Adapter"		[6]
 product 0x6BBC "Apricot Synchronous Communications Adapter"		[7]
 product 0x6BCB "CONNECT ARCnet Adapter"					[6]
 product 0x6BE7 "Symicron dtsx12 Token Ring Adapter"			[7]
-product 0x6BE9 SKNET "SKNET Ethernet Adapter"				[10]
+product 0x6BE9 SKNETPER "SKNET Personal Ethernet Adapter"		[10]
 product 0x6BFF "Torus Ethernet Adapter/MC"				[6]
 product 0x6C0F "Roland MIDI Processing Unit MPU-IMC"			[5]
 product 0x6DAC "Logitech ScanMan Adapter"				[5]
