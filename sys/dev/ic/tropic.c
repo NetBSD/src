@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.4 1999/05/18 23:52:56 thorpej Exp $	*/
+/*	$NetBSD: tropic.c,v 1.5 1999/05/29 22:44:11 bad Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -1474,11 +1474,6 @@ struct ifnet *ifp;
 			len = MCLBYTES;
 		}
 
-#if 0
-		/*
-		 * XXX this is what the ethernet drivers do,
-		 * but enabling it produces "xmit return code = 0x44"!
-		 */
 		/*
 		 * Make sure data after the MAC header is aligned.
 		 */
@@ -1489,7 +1484,6 @@ struct ifnet *ifp;
 			len -= newdata - m->m_data;
 			m->m_data = newdata;
 		}
-#endif
 		m->m_len = len = min(totlen, len);
 		tr_bcopy(sc, mtod(m, char *), len);
 		totlen -= len;
