@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.46 2001/04/25 22:37:02 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.47 2001/05/06 10:43:23 ichiro Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -231,6 +231,7 @@
 /usr/include/dev/pci/vga_pcivar.h
 /usr/include/dev/pckbc/pckbdvar.h
 /usr/include/dev/pckbc/psmreg.h
+/usr/include/dev/pcmcia/if_wi_ieee.h
 /usr/include/dev/pcmcia/pcmciachip.h
 /usr/include/dev/pcmcia/pcmciareg.h
 /usr/include/dev/pcmcia/pcmciavar.h
