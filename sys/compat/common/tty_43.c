@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.6 1996/10/10 17:51:52 christos Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.7 1996/10/13 00:46:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -221,7 +221,7 @@ ttcompat(tp, com, data, flag, p)
 	case TIOCLGET:
 		*(int *)data = ttcompatgetflags(tp)>>16;
 		if (ttydebug)
-			kprintf("CLGET: returning %x\n", *(int *)data);
+			printf("CLGET: returning %x\n", *(int *)data);
 		break;
 
 	case OTIOCGETD:
@@ -320,7 +320,7 @@ ttcompatgetflags(tp)
 		SET(flags, DECCTQ);
 	SET(flags, ISSET(lflag, ECHO|TOSTOP|FLUSHO|PENDIN|NOFLSH));
 	if (ttydebug)
-		kprintf("getflags: %x\n", flags);
+		printf("getflags: %x\n", flags);
 	return (flags);
 }
 
