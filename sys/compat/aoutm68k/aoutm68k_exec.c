@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_exec.c,v 1.3 2000/12/09 12:38:24 jdolecek Exp $	*/
+/*	$NetBSD: aoutm68k_exec.c,v 1.4 2000/12/11 05:29:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,8 +59,8 @@ void syscall __P((void));
 struct emul emul_netbsd_aoutm68k = {
 	"aoutm68k",
 	"/emul/aout",
+	EMUL_HAS_SYS___syscall,
 	NULL,
-	sendsig,
 	AOUTM68K_SYS_syscall,
 	AOUTM68K_SYS_MAXSYSCALL,
 	aoutm68k_sysent,
@@ -69,11 +69,11 @@ struct emul emul_netbsd_aoutm68k = {
 #else
 	NULL,
 #endif
+	sendsig,
 	sigcode,
 	esigcode,
 	NULL,
 	NULL,
 	NULL,
-	EMUL_HAS_SYS___syscall,
 	syscall
 };

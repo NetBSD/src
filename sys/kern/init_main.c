@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.186 2000/12/08 22:07:36 jdolecek Exp $	*/
+/*	$NetBSD: init_main.c,v 1.187 2000/12/11 05:29:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -246,6 +246,9 @@ main(void)
 	p->p_stat = SONPROC;
 	p->p_nice = NZERO;
 	p->p_emul = &emul_netbsd;
+#ifdef __HAVE_SYSCALL_INTERN
+	(*p->p_emul->e_syscall_intern)(p);
+#endif
 	strncpy(p->p_comm, "swapper", MAXCOMLEN);
 
 	callout_init(&p->p_realit_ch);

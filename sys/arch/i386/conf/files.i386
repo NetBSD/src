@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.177 2000/12/09 06:30:54 mycroft Exp $
+#	$NetBSD: files.i386,v 1.178 2000/12/11 05:28:59 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -72,6 +72,7 @@ file	netns/ns_cksum.c		ns
 file	arch/i386/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/sys_machdep.c
+file	arch/i386/i386/syscall.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
 file	dev/cons.c
