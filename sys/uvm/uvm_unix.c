@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.6 1998/08/13 02:11:03 eeh Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.7 1998/10/11 23:18:21 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -197,30 +197,14 @@ uvm_coredump(p, vp, cred, chdr)
 	off_t offset;
 	int flag, error = 0;
 
-	if (!map->is_main_map) {
-#ifdef DEBUG
-		uprintf("uvm_coredump: %s map 0x%lx: pmap=0x%lx,ref=%d,"
-		    "nentries=%d,version=%d\n",
-		    (map->is_main_map ? "Task" : "Share"),
-		    (long)map, (long)(map->pmap),
-		    map->ref_count, map->nentries,
-		    map->timestamp);
-#endif
-		return (EIO);
-	}
-
 	offset = chdr->c_hdrsize + chdr->c_seghdrsize + chdr->c_cpusize;
 
 	for (entry = map->header.next; entry != &map->header;
 	    entry = entry->next) {
 
-		if (UVM_ET_ISMAP(entry)) {
-#ifdef DEBUG
-			uprintf("uvm_coredump: entry: share=0x%lx, "
-			    "offset=0x%lx\n", (long) entry->object.share_map,
-			    (long) entry->offset);
-#endif
-			continue;
+		/* should never happen for a user process */
+		if (UVM_ET_ISSUBMAP(entry)) {
+			panic("uvm_coredump: user process with submap?");
 		}
 
 		if (!(entry->protection & VM_PROT_WRITE))
