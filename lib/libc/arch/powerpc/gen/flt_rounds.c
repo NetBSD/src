@@ -1,4 +1,6 @@
-/*	$NetBSD: flt_rounds.c,v 1.1 1997/03/29 20:55:55 thorpej Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.2 1998/02/03 01:30:43 mycroft Exp $	*/
+
+#include <float.h>
 
 static const int map[] = {
 	1,	/* round to nearest */
