@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.10 1998/10/25 19:15:04 phil Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.11 1999/01/23 06:11:51 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -87,8 +87,9 @@ get_fdisk_info()
 	textsize = collect(T_OUTPUT, &textbuf,
 	    "/sbin/fdisk -S /dev/r%sd 2>/dev/null", diskdev);
 	if (textsize < 0) {
-		endwin();
 		(void)fprintf(stderr, "Could not run fdisk.");
+		if (logging)
+			(void)fprintf(log, "Aborting: Could not run fdisk.\n");
 		exit (1);
 	}
 	walk(textbuf, textsize, fdiskbuf, numfdiskbuf);
@@ -128,14 +129,14 @@ set_fdisk_info()
 
 	for (i = 0; i < 4; i++)
 		if (part[i][SET])
-                        run_prog("/sbin/fdisk -u -f -%d -b %d/%d/%d "
+                        run_prog(0, 1, "/sbin/fdisk -u -f -%d -b %d/%d/%d "
 			    "-s %d/%d/%d /dev/r%sd",
 			    i, bcyl, bhead, bsec,
 			    part[i][ID], part[i][START],
 			    part[i][SIZE],  diskdev);
 
 	if (activepart >= 0)
-		run_prog("/sbin/fdisk -a -%d -f /dev/r%s",
+		run_prog(0, 1, "/sbin/fdisk -a -%d -f /dev/r%s",
 		    activepart, diskdev);
 
 }
