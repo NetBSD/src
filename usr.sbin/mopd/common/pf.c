@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.8 2003/04/20 00:17:22 christos Exp $	*/
+/*	$NetBSD: pf.c,v 1.9 2004/04/10 17:53:05 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pf.c,v 1.8 2003/04/20 00:17:22 christos Exp $");
+__RCSID("$NetBSD: pf.c,v 1.9 2004/04/10 17:53:05 darrenr Exp $");
 #endif
 
 #include "os.h"
@@ -82,6 +82,7 @@ pfInit(interface, mode, protocol, typ)
 	struct ifreq ifr;
 	u_int	dlt;
 	int	immediate;
+	u_int	bufsize;
 
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD | BPF_H | BPF_ABS, 12),
@@ -114,6 +115,10 @@ pfInit(interface, mode, protocol, typ)
 	if (ioctl(fd, BIOCIMMEDIATE, &immediate) < 0) {
       		mopLogWarn("pfInit: BIOCIMMEDIATE");
 		return(-1);
+	}
+	bufsize = 32768;
+	if (ioctl(fd, BIOCSBLEN, &bufsize) < 0) {
+      		mopLogWarn("pfInit: BIOCSBLEN(%d)", bufsize);
 	}
 	(void) strncpy(ifr.ifr_name, interface, sizeof ifr.ifr_name);
 	if (ioctl(fd, BIOCSETIF, (caddr_t) & ifr) < 0) {
