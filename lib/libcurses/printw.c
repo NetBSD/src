@@ -1,4 +1,4 @@
-/*	$NetBSD: printw.c,v 1.13 2000/04/13 07:07:33 jdc Exp $	*/
+/*	$NetBSD: printw.c,v 1.14 2000/04/14 02:53:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: printw.c,v 1.13 2000/04/13 07:07:33 jdc Exp $");
+__RCSID("$NetBSD: printw.c,v 1.14 2000/04/14 02:53:54 simonb Exp $");
 #endif
 #endif				/* not lint */
 
@@ -143,8 +143,7 @@ va_dcl
 
 int
 #ifdef __STDC__
-mvwprintw(WINDOW * win, int y, int x,
-    const char *fmt,...)
+mvwprintw(WINDOW * win, int y, int x, const char *fmt,...)
 #else
 mvwprintw(win, y, x, fmt, va_alist)
 	WINDOW *win;
