@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.26 1999/09/19 22:58:31 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.27 1999/12/23 18:14:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -653,20 +653,40 @@ pdq_process_unsolicited_events(
     pdq_unsolicited_info_t *ui = &pdq->pdq_unsolicited_info;
     volatile const pdq_consumer_block_t *cbp = pdq->pdq_cbp;
     pdq_descriptor_block_t *dbp = pdq->pdq_dbp;
-    const pdq_unsolicited_event_t *event;
-    pdq_rxdesc_t *rxd;
 
     /*
      * Process each unsolicited event (if any).
      */
 
     while (cbp->pdqcb_unsolicited_event != ui->ui_completion) {
-	rxd = &dbp->pdqdb_unsolicited_events[ui->ui_completion];
+	const pdq_unsolicited_event_t *event;
 	event = &ui->ui_events[ui->ui_completion & (PDQ_NUM_UNSOLICITED_EVENTS-1)];
 	PDQ_OS_UNSOL_EVENT_POSTSYNC(pdq, event);
 
 	switch (event->event_type) {
 	    case PDQ_UNSOLICITED_EVENT: {
+		int bad_event = 0;
+		switch (event->event_entity) {
+		    case PDQ_ENTITY_STATION: {
+			bad_event = event->event_code.value >= PDQ_STATION_EVENT_MAX;
+			break;
+		    }
+		    case PDQ_ENTITY_LINK: {
+			bad_event = event->event_code.value >= PDQ_LINK_EVENT_MAX;
+			break;
+		    }
+		    case PDQ_ENTITY_PHY_PORT: {
+			bad_event = event->event_code.value >= PDQ_PHY_EVENT_MAX;
+			break;
+		    }
+		    default: {
+			bad_event = 1;
+			break;
+		    }
+		}
+		if (bad_event) {
+		    break;
+		}
 		printf(PDQ_OS_PREFIX "Unsolicited Event: %s: %s",
 		       PDQ_OS_PREFIX_ARGS,
 		       pdq_entities[event->event_entity],
