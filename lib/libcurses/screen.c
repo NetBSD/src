@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.2 2001/12/27 10:48:15 blymn Exp $	*/
+/*	$NetBSD: screen.c,v 1.3 2001/12/30 13:20:35 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.2 2001/12/27 10:48:15 blymn Exp $");
+__RCSID("$NetBSD: screen.c,v 1.3 2001/12/30 13:20:35 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -183,7 +183,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	   * bleh - it seems that apps expect the first newterm to set
 	   * up the curses screen.... emulate this.
 	   */
-	if (_cursesi_screen == NULL) {
+	if (_cursesi_screen == NULL || _cursesi_screen->endwin) {
 		__echoit = new_screen->echoit;
 		__pfast = new_screen->pfast;
 		__rawmode = new_screen->rawmode;
