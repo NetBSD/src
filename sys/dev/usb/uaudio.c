@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.52 2002/03/15 17:20:14 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.53 2002/03/17 16:14:22 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.52 2002/03/15 17:20:14 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.53 2002/03/17 16:14:22 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,6 +272,8 @@ Static void		uaudio_get_minmax_rates(int, const struct as_info *,
 Static int		uaudio_match_alt_sub(int, const struct as_info *,
 					     const struct audio_params *,
 					     int, u_long);
+Static int		uaudio_match_alt_chan(int, const struct as_info *,
+					      struct audio_params *, int);
 Static int		uaudio_match_alt(int, const struct as_info *,
 					 struct audio_params *, int);
 Static int		uaudio_set_params(void *, int, int, 
@@ -2223,7 +2225,7 @@ uaudio_match_alt_sub(int nalts, const struct as_info *alts,
 	int i, j;
 	struct usb_audio_streaming_type1_descriptor *a1d;
 
-	DPRINTF(("uaudio_match_alt_sub: Check for %luHz %dCh\n",
+	DPRINTF(("uaudio_match_alt_sub: search for %luHz %dch\n",
 		 rate, p->hw_channels));
 	for (i = 0; i < nalts; i++) {
 		a1d = alts[i].asf1desc;
@@ -2256,63 +2258,23 @@ uaudio_match_alt_sub(int nalts, const struct as_info *alts,
 }
 
 int
-uaudio_match_alt(int nalts, const struct as_info *alts,
-		 struct audio_params *p, int mode)
+uaudio_match_alt_chan(int nalts, const struct as_info *alts,
+		      struct audio_params *p, int mode)
 {
 	int i, n;
 	u_long min, max;
 	u_long rate;
 
-	mode = mode == AUMODE_PLAY ? UE_DIR_OUT : UE_DIR_IN;
 	/* Exact match */
-	DPRINTF(("uaudio_match_alt: search for %ldHz.\n", p->sample_rate));
+	DPRINTF(("uaudio_match_alt_chan: examine %ldHz %dch %dbit.\n",
+		 p->sample_rate, p->hw_channels, p->hw_precision));
 	i = uaudio_match_alt_sub(nalts, alts, p, mode, p->sample_rate);
 	if (i >= 0)
 		return i;
 
-	DPRINTF(("uaudio_match_alt: gets min-max rates.\n"));
+	DPRINTF(("uaudio_match_alt_chan: get min-max rates.\n"));
 	uaudio_get_minmax_rates(nalts, alts, p, mode, &min, &max);
-	DPRINTF(("uaudio_match_alt: min=%lu max=%lu\n", min, max));
-	if (max > 0) {
-		/* Search for biggers */
-		n = 2;
-		while ((rate = p->sample_rate * n++) <= max) {
-			i = uaudio_match_alt_sub(nalts, alts, p, mode, rate);
-			if (i >= 0) {
-				p->hw_sample_rate = rate;
-				return i;
-			}
-		}
-		if (p->sample_rate >= min) {
-			i = uaudio_match_alt_sub(nalts, alts, p, mode, max);
-			if (i >= 0) {
-				p->hw_sample_rate = max;
-				return i;
-			}
-		} else {
-			i = uaudio_match_alt_sub(nalts, alts, p, mode, min);
-			if (i >= 0) {
-				p->hw_sample_rate = min;
-				return i;
-			}
-		}
-	}
-
-	if (p->channels > 2)
-		return -1;
-	if (p->channels == 2)
-		p->hw_channels = 1; /* stereo -> mono */
-	else
-		p->hw_channels = 2; /* mono -> stereo */
-	/* Exact match */
-	DPRINTF(("uaudio_match_alt: search for %ldHz.\n", p->sample_rate));
-	i = uaudio_match_alt_sub(nalts, alts, p, mode, p->sample_rate);
-	if (i >= 0)
-		return i;
-
-	DPRINTF(("uaudio_match_alt: gets min-max rates.\n"));
-	uaudio_get_minmax_rates(nalts, alts, p, mode, &min, &max);
-	DPRINTF(("uaudio_match_alt: min=%lu max=%lu\n", min, max));
+	DPRINTF(("uaudio_match_alt_chan: min=%lu max=%lu\n", min, max));
 	if (max <= 0)
 		return -1;
 	/* Search for biggers */
@@ -2337,8 +2299,31 @@ uaudio_match_alt(int nalts, const struct as_info *alts,
 			return i;
 		}
 	}
-
 	return -1;
+}
+
+int
+uaudio_match_alt(int nalts, const struct as_info *alts,
+		 struct audio_params *p, int mode)
+{
+	int i, n;
+
+	mode = mode == AUMODE_PLAY ? UE_DIR_OUT : UE_DIR_IN;
+	i = uaudio_match_alt_chan(nalts, alts, p, mode);
+	if (i >= 0)
+		return i;
+
+	for (n = p->channels + 1; n <= AUDIO_MAX_CHANNELS; n++) {
+		p->hw_channels = n;
+		i = uaudio_match_alt_chan(nalts, alts, p, mode);
+		if (i >= 0)
+			return i;
+	}
+
+	if (p->channels != 2)
+		return -1;
+	p->hw_channels = 1;
+	return uaudio_match_alt_chan(nalts, alts, p, mode);
 }
 
 int
