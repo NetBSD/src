@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 1998/08/27 04:00:54 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 1998/08/28 02:46:51 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -563,6 +563,11 @@ pmap_map_in_l1(pmap, va, l2pa)
 	/* Calculate the index into the L1 page table */
 	ptva = (va >> PDSHIFT) & ~3;
 
+	/*
+	 * XXX, rather than clearing the botton two bits of ptva test
+	 * for zero and panic if not as this should always be the case
+	 */
+
 	PDEBUG(0, printf("wiring %08lx in to pd%p pte0x%lx va0x%lx\n", l2pa,
 	    pmap->pm_pdir, L1_PTE(l2pa), ptva));
 
@@ -623,12 +628,13 @@ extern vm_offset_t physical_freeend;
 void
 pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	pd_entry_t *kernel_l1pt;
-	pt_entry_t kernel_ptpt;
+	pv_addr_t kernel_ptpt;
 {
 	kernel_pmap = &kernel_pmap_store;
 
 	kernel_pmap->pm_pdir = kernel_l1pt;
-	kernel_pmap->pm_pptpt = kernel_ptpt;
+	kernel_pmap->pm_pptpt = kernel_ptpt.physical;
+	kernel_pmap->pm_vptpt = kernel_ptpt.virtual;
 	simple_lock_init(&kernel_pmap->pm_lock);
 	kernel_pmap->pm_count = 1;
 
@@ -1088,6 +1094,7 @@ pmap_allocpagedir(pmap)
 	vm_offset_t pa;
 	struct l1pt *pt;
 	pt_entry_t *pte;
+	int loop;
 
 	PDEBUG(0, printf("pmap_allocpagedir(%p)\n", pmap));
 
@@ -1160,7 +1167,6 @@ pmap_allocpagedir(pmap)
 	 * into the page table used to map the
 	 * pmap's page tables
 	 */
-
 	bcopy((void *)(PROCESS_PAGE_TBLS_BASE
 	    + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT - 2))
 	    + ((PD_SIZE - KERNEL_PD_SIZE) >> 2)),
@@ -1190,19 +1196,11 @@ pmap_allocpagedir(pmap)
 
 	/* XXX Must really clean this up - mark */
 
-	*((pt_entry_t *)(pmap->pm_vptpt + 0xf50)) =
-	    L2_PTE_NC_NB(pa + 0x0000, AP_KRW);
-	*((pt_entry_t *)(pmap->pm_vptpt + 0xf54)) =
-	    L2_PTE_NC_NB(pa + 0x1000, AP_KRW);
-	*((pt_entry_t *)(pmap->pm_vptpt + 0xf58)) =
-	    L2_PTE_NC_NB(pa + 0x2000, AP_KRW);
-	*((pt_entry_t *)(pmap->pm_vptpt + 0xf5c)) =
-	    L2_PTE_NC_NB(pa + 0x3000, AP_KRW);
-
-	/* XXX - the pmap is not in use thus should not need cleaning */
-	/* Also the page tables are not mapped */
-/*	cpu_cache_purgeID();
-	cpu_tlb_flushID();*/
+	for (loop = 0; loop < 4; ++loop) {
+		*((pt_entry_t *)(pmap->pm_vptpt +
+		    (CURRENT_PAGEDIR_HOLE >> PDSHIFT) + (loop * 4))) =
+		    L2_PTE_NC_NB(pa + (loop * 0x1000), AP_KRW);
+	}
 
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
