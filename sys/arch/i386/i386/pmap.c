@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101 2000/09/06 22:09:58 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.102 2000/09/07 06:06:52 thorpej Exp $	*/
 
 /*
  *
@@ -612,7 +612,10 @@ pmap_kenter_pa(va, pa, prot)
 {
 	pt_entry_t *pte, opte;
 
-	pte = kvtopte(va);
+	if (va < VM_MIN_KERNEL_ADDRESS)
+		pte = vtopte(va);
+	else
+		pte = kvtopte(va);
 	opte = *pte;
 	*pte = pa | ((prot & VM_PROT_WRITE)? PG_RW : PG_RO) |
 		PG_V | pmap_pg_g;	/* zap! */
@@ -640,7 +643,10 @@ pmap_kremove(va, len)
 
 	len >>= PAGE_SHIFT;
 	for ( /* null */ ; len ; len--, va += NBPG) {
-		pte = kvtopte(va);
+		if (va < VM_MIN_KERNEL_ADDRESS)
+			pte = vtopte(va);
+		else
+			pte = kvtopte(va);
 #ifdef DIAGNOSTIC
 		if (*pte & PG_PVLIST)
 			panic("pmap_kremove: PG_PVLIST mapping for 0x%lx\n",
@@ -677,7 +683,10 @@ pmap_kenter_pgs(va, pgs, npgs)
 
 	for (lcv = 0 ; lcv < npgs ; lcv++) {
 		tva = va + lcv * NBPG;
-		pte = kvtopte(tva);
+		if (va < VM_MIN_KERNEL_ADDRESS)
+			pte = vtopte(tva);
+		else
+			pte = kvtopte(tva);
 		opte = *pte;
 		*pte = VM_PAGE_TO_PHYS(pgs[lcv]) | PG_RW | PG_V | pmap_pg_g;
 #if defined(I386_CPU)
