@@ -1,4 +1,4 @@
-#	$Id: files.amiga.old,v 1.13 1994/02/28 06:06:01 chopps Exp $
+#	$Id: files.amiga.old,v 1.14 1994/03/27 06:29:20 chopps Exp $
 
 arch/amiga/amiga/amiga_init.c	standard
 arch/amiga/amiga/autoconf.c	standard
@@ -15,7 +15,6 @@ arch/amiga/amiga/sys_machdep.c	standard
 arch/amiga/amiga/trap.c		standard
 arch/amiga/amiga/vm_machdep.c	standard
 arch/amiga/amiga/cc.c		standard
-arch/amiga/amiga/dlists.c	standard
 arch/amiga/dev/view.c		optional view device-driver
 arch/amiga/dev/a3000dma.c	optional a3000scsi device-driver
 arch/amiga/dev/a2091dma.c	optional a2091scsi device-driver
