@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.26 2000/05/01 10:35:19 lukem Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.27 2000/07/18 06:47:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.26 2000/05/01 10:35:19 lukem Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.27 2000/07/18 06:47:02 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ ruserpass(const char *host, const char **aname, const char **apass,
 	myname[sizeof(myname) - 1] = '\0';
 	if ((mydomain = strchr(myname, '.')) == NULL)
 		mydomain = "";
-next:
+ next:
 	while ((t = token())) switch(t) {
 
 	case DEFAULT:
@@ -255,10 +255,10 @@ next:
 		}
 		goto done;
 	}
-done:
+ done:
 	(void)fclose(cfile);
 	return (0);
-bad:
+ bad:
 	(void)fclose(cfile);
 	return (-1);
 }
