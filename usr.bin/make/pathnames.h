@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.13 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.13.2.1 2004/05/10 15:43:54 tron Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -31,7 +31,7 @@
  *	from: @(#)pathnames.h	5.2 (Berkeley) 6/1/90
  */
 
-#ifdef MAKE_BOOTSTRAP
+#ifndef MAKE_NATIVE
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
