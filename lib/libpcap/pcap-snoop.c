@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993, 1994
+ * Copyright (c) 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,23 +20,18 @@
  */
 #ifndef lint
 static  char rcsid[] =
-    "@(#)Header: pcap-snoop.c,v 1.6 94/01/31 05:26:09 leres Exp (LBL)";
+    "@(#)$Header: /cvsroot/src/lib/libpcap/Attic/pcap-snoop.c,v 1.1.1.2 1996/12/11 08:15:45 mikel Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
-#include <stdio.h>
-#include <netdb.h>
-#include <ctype.h>
-#include <signal.h>
-#include <errno.h>
-#include <sys/time.h>
-#include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/time.h>
 
 #include <net/raw.h>
-
 #include <net/if.h>
+
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -46,11 +41,19 @@ static  char rcsid[] =
 #include <netinet/udp_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
-#include <net/bpf.h>
+
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "pcap-int.h"
 
-static int hdrpad;					/* XXX */
+#include "gnuc.h"
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
+#endif
 
 int
 pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
@@ -60,10 +63,16 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 	register int datalen;
 	register int caplen;
 	register u_char *cp;
- again:
+
+again:
 	cc = read(p->fd, (char *)p->buffer, p->bufsize);
 	if (cc < 0) {
+		/* Don't choke when we get ptraced */
 		switch (errno) {
+
+		case EINTR:
+				goto again;
+
 		case EWOULDBLOCK:
 			return (0);			/* XXX */
 		}
@@ -73,7 +82,7 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 	sh = (struct snoopheader *)p->buffer;
 	datalen = sh->snoop_packetlen;
 	caplen = (datalen < p->snapshot) ? datalen : p->snapshot;
-	cp = (u_char *)(sh + 1) + hdrpad;		/* XXX */
+	cp = (u_char *)(sh + 1) + p->offset;		/* XXX */
 
 	if (p->fcode.bf_insns == NULL ||
 	    bpf_filter(p->fcode.bf_insns, cp, datalen, caplen)) {
@@ -113,32 +122,26 @@ pcap_stats(pcap_t *p, struct pcap_stat *ps)
 pcap_t *
 pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 {
-	pcap_t *p;
-	struct sockaddr_raw sr;
 	int fd;
-	int v;
+	struct sockaddr_raw sr;
 	struct snoopfilter sf;
+	u_int v;
+	pcap_t *p;
 
 	p = (pcap_t *)malloc(sizeof(*p));
 	if (p == NULL) {
-		strcpy(ebuf, "no swap");
-		return (0);
+		sprintf(ebuf, "malloc: %s", pcap_strerror(errno));
+		return (NULL);
 	}
-	bzero(p, sizeof(*p));
-	p->fd = -1;
-	p->bufsize = 4096;				/* XXX */
-	p->buffer = (u_char *)malloc(p->bufsize);
-	if (p->buffer == NULL) {
-		strcpy(ebuf, "no swap");
-		goto bad;
-	}
-	fd = p->fd = socket(PF_RAW, SOCK_RAW, RAWPROTO_SNOOP);
+	bzero((char *)p, sizeof(*p));
+	fd = socket(PF_RAW, SOCK_RAW, RAWPROTO_SNOOP);
 	if (fd < 0) {
 		sprintf(ebuf, "snoop socket: %s", pcap_strerror(errno));
 		goto bad;
 	}
+	p->fd = fd;
+	bzero((char *)&sr, sizeof(sr));
 	sr.sr_family = AF_RAW;
-	sr.sr_port = 0;
 	(void)strncpy(sr.sr_ifname, device, sizeof(sr.sr_ifname));
 	if (bind(fd, (struct sockaddr *)&sr, sizeof(sr))) {
 		sprintf(ebuf, "snoop bind: %s", pcap_strerror(errno));
@@ -162,28 +165,35 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 		goto bad;
 	}
 	/*
-	 * XXX hack - map device name to link later type
+	 * XXX hack - map device name to link layer type
 	 */
 	if (strncmp("et", device, 2) == 0 ||
 	    strncmp("ec", device, 2) == 0) {
 		p->linktype = DLT_EN10MB;
-		hdrpad = RAW_HDRPAD(sizeof(struct ether_header));
+		p->offset = RAW_HDRPAD(sizeof(struct ether_header));
 	} else if (strncmp("ipg", device, 3) == 0 ||
 		   strncmp("xpi", device, 3) == 0) {
 		p->linktype = DLT_FDDI;
-		hdrpad = 3;				/* XXX yeah? */
+		p->offset = 3;				/* XXX yeah? */
+	} else if (strncmp("lo", device, 2) == 0) {
+		p->linktype = DLT_NULL;
 	} else {
 		sprintf(ebuf, "snoop: unknown physical layer type");
 		goto bad;
 	}
+
+	p->bufsize = 4096;				/* XXX */
+	p->buffer = (u_char *)malloc(p->bufsize);
+	if (p->buffer == NULL) {
+		sprintf(ebuf, "malloc: %s", pcap_strerror(errno));
+		goto bad;
+	}
+
 	return (p);
  bad:
-	if (fd >= 0)
-		close(fd);
-	if (p->buffer != NULL)
-		free(p->buffer);
+	(void)close(fd);
 	free(p);
-	return (0);
+	return (NULL);
 }
 
 int

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1990, 1991, 1992, 1993, 1994
+ * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,7 +20,7 @@
  */
 #ifndef lint
 static  char rcsid[] =
-    "@(#)Header: pcap-nit.c,v 1.24 94/02/10 23:02:37 leres Exp (LBL)";
+    "@(#)$Header: /cvsroot/src/lib/libpcap/Attic/pcap-nit.c,v 1.1.1.2 1996/12/11 08:15:41 mikel Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -30,7 +30,6 @@ static  char rcsid[] =
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include <net/bpf.h>
 #include <net/if.h>
 #include <net/nit.h>
 
@@ -49,6 +48,11 @@ static  char rcsid[] =
 #include <stdio.h>
 
 #include "pcap-int.h"
+
+#include "gnuc.h"
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
+#endif
 
 /*
  * The chunk size for NIT.  This is the amount of buffering

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1990, 1991, 1992, 1993, 1994
+ * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,11 +20,11 @@
  */
 #ifndef lint
 static  char rcsid[] =
-    "@(#)Header: pcap-snit.c,v 1.33 94/06/23 13:51:17 leres Exp (LBL)";
+    "@(#)$Header: /cvsroot/src/lib/libpcap/Attic/pcap-snit.c,v 1.1.1.2 1996/12/11 08:15:45 mikel Exp $ (LBL)";
 #endif
 
 /*
- * Modifications made to accomodate the new SunOS4.0 NIT facility by
+ * Modifications made to accommodate the new SunOS4.0 NIT facility by
  * Micky Liu, micky@cunixc.cc.columbia.edu, Columbia University in May, 1989.
  * This module now handles the STREAMS based NIT.
  */
@@ -39,7 +39,6 @@ static  char rcsid[] =
 #include <sys/socket.h>
 #include <sys/stropts.h>
 
-#include <net/bpf.h>
 #include <net/if.h>
 #include <net/nit.h>
 #include <net/nit_if.h>
@@ -58,10 +57,19 @@ static  char rcsid[] =
 
 #include <ctype.h>
 #include <errno.h>
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "pcap-int.h"
+
+#include "gnuc.h"
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
+#endif
 
 /*
  * The chunk size for NIT.  This is the amount of buffering
@@ -163,7 +171,7 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 static int
 nit_setflags(int fd, int promisc, int to_ms, char *ebuf)
 {
-	u_long flags;
+	bpf_u_int32 flags;
 	struct strioctl si;
 	struct timeval timeout;
 

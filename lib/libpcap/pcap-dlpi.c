@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993, 1994
+ * Copyright (c) 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
  */
 #ifndef lint
 static  char rcsid[] =
-    "@(#)Header: pcap-dlpi.c,v 1.22x 94/10/12 20:08:15 leres Exp (LBL)";
+    "@(#)$Header: /cvsroot/src/lib/libpcap/Attic/pcap-dlpi.c,v 1.1.1.2 1996/12/11 08:15:39 mikel Exp $ (LBL)";
 #endif
 
 /*
@@ -42,18 +42,35 @@ static  char rcsid[] =
 
 #include <sys/types.h>
 #include <sys/time.h>
+#ifdef HAVE_SYS_BUFMOD_H
 #include <sys/bufmod.h>
+#endif
 #include <sys/dlpi.h>
+#ifdef HAVE_SYS_DLPI_EXT_H
+#include <sys/dlpi_ext.h>
+#endif
+#ifdef HAVE_HPUX9
+#include <sys/socket.h>
+#endif
+#ifdef DL_HP_PPA_ACK_OBS
+#include <sys/stat.h>
+#endif
 #include <sys/stream.h>
+#if defined(HAVE_SOLARIS) && defined(HAVE_SYS_BUFMOD_H)
 #include <sys/systeminfo.h>
+#endif
 
-#include <net/bpf.h>
+#ifdef HAVE_HPUX9
+#include <net/if.h>
+#endif
 
 #include <ctype.h>
+#ifdef HAVE_HPUX9
+#include <nlist.h>
+#endif
 #include <errno.h>
 #include <fcntl.h>
 #include <memory.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,18 +79,38 @@ static  char rcsid[] =
 
 #include "pcap-int.h"
 
+#include "gnuc.h"
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
+#endif
+
+#ifndef PCAP_DEV_PREFIX
+#define PCAP_DEV_PREFIX "/dev"
+#endif
+
 #define	MAXDLBUF	8192
 
 /* Forwards */
-static int send_request(int, char *, int, char *, char *);
-static int dlattachreq(int, u_long, char *);
+static int dlattachreq(int, bpf_u_int32, char *);
+static int dlbindack(int, char *, char *);
+static int dlbindreq(int, bpf_u_int32, char *);
 static int dlinfoack(int, char *, char *);
 static int dlinforeq(int, char *);
-static int dlpromisconreq(int, u_long, char *);
-static int dlokack(int, char *, char *);
+static int dlokack(int, const char *, char *, char *);
+static int recv_ack(int, int, const char *, char *, char *);
+static int dlpromisconreq(int, bpf_u_int32, char *);
+#if defined(HAVE_SOLARIS) && defined(HAVE_SYS_BUFMOD_H)
+static char *get_release(bpf_u_int32 *, bpf_u_int32 *, bpf_u_int32 *);
+#endif
+static int send_request(int, char *, int, char *, char *);
+#ifdef HAVE_SYS_BUFMOD_H
 static int strioctl(int, int, int, char *);
-#ifdef SOLARIS
-static char *getrelease(long *, long *, long *);
+#endif
+#ifdef HAVE_HPUX9
+static int dlpi_kread(int, off_t, void *, u_int, char *);
+#endif
+#ifdef HAVE_DEV_DLPI
+static int get_dlpi_ppa(int, const char *, int, char *);
 #endif
 
 int
@@ -84,13 +121,26 @@ pcap_stats(pcap_t *p, struct pcap_stat *ps)
 	return (0);
 }
 
+/* XXX Needed by HP-UX (at least) */
+static bpf_u_int32 ctlbuf[MAXDLBUF];
+static struct strbuf ctl = {
+	MAXDLBUF,
+	0,
+	(char *)ctlbuf
+};
+
 int
 pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 {
-	register int cc, n;
+	register int cc, n, caplen, origlen;
 	register u_char *bp, *ep, *pk;
 	register struct bpf_insn *fcode;
+#ifdef HAVE_SYS_BUFMOD_H
 	register struct sb_hdr *sbp;
+#ifdef LBL_ALIGN
+	struct sb_hdr sbhdr;
+#endif
+#endif
 	int flags;
 	struct strbuf data;
 	struct pcap_pkthdr pkthdr;
@@ -98,11 +148,11 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 	flags = 0;
 	cc = p->cc;
 	if (cc == 0) {
-		data.buf = (char *)p->buffer;
+		data.buf = (char *)p->buffer + p->offset;
 		data.maxlen = MAXDLBUF;
 		data.len = 0;
 		do {
-			if (getmsg(p->fd, NULL, &data, &flags) < 0) {
+			if (getmsg(p->fd, &ctl, &data, &flags) < 0) {
 				/* Don't choke when we get ptraced */
 				if (errno == EINTR) {
 					cc = 0;
@@ -113,7 +163,7 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 			}
 			cc = data.len;
 		} while (cc == 0);
-		bp = p->buffer;
+		bp = p->buffer + p->offset;
 	} else
 		bp = p->bp;
 
@@ -121,16 +171,38 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 	fcode = p->fcode.bf_insns;
 	ep = bp + cc;
 	n = 0;
+#ifdef HAVE_SYS_BUFMOD_H
 	while (bp < ep) {
-		sbp = (struct sb_hdr *)bp;
+#ifdef LBL_ALIGN
+		if ((long)bp & 3) {
+			sbp = &sbhdr;
+			memcpy(sbp, bp, sizeof(*sbp));
+		} else
+#endif
+			sbp = (struct sb_hdr *)bp;
 		p->md.stat.ps_drop += sbp->sbh_drops;
-		++p->md.stat.ps_recv;
 		pk = bp + sizeof(*sbp);
 		bp += sbp->sbh_totlen;
-		if (bpf_filter(fcode, pk, sbp->sbh_origlen, sbp->sbh_msglen)) {
+		origlen = sbp->sbh_origlen;
+		caplen = sbp->sbh_msglen;
+#else
+		origlen = cc;
+		caplen = min(p->snapshot, cc);
+		pk = bp;
+		bp += caplen;
+#endif
+		++p->md.stat.ps_recv;
+		if (bpf_filter(fcode, pk, origlen, caplen)) {
+#ifdef HAVE_SYS_BUFMOD_H
 			pkthdr.ts = sbp->sbh_timestamp;
-			pkthdr.len = sbp->sbh_origlen;
-			pkthdr.caplen = sbp->sbh_msglen;
+#else
+			(void)gettimeofday(&pkthdr.ts, NULL);
+#endif
+			pkthdr.len = origlen;
+			pkthdr.caplen = caplen;
+			/* Insure caplen does not exceed snapshot */
+			if (pkthdr.caplen > p->snapshot)
+				pkthdr.caplen = p->snapshot;
 			(*callback)(user, &pkthdr, pk);
 			if (++n >= cnt && cnt >= 0) {
 				p->cc = ep - bp;
@@ -138,7 +210,9 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 				return (n);
 			}
 		}
+#ifdef HAVE_SYS_BUFMOD_H
 	}
+#endif
 	p->cc = 0;
 	return (n);
 }
@@ -146,17 +220,23 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 pcap_t *
 pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 {
+	register char *cp;
+	char *eos;
 	register pcap_t *p;
-	long	buf[MAXDLBUF];
-	int ppa;
-	int cppa;
+	register int ppa;
 	register dl_info_ack_t *infop;
-	u_long ss, flag;
-#ifdef SOLARIS
-	char *release;
-	long osmajor, osminor, osmicro;
+#ifdef HAVE_SYS_BUFMOD_H
+	bpf_u_int32 ss, flag;
+#ifdef HAVE_SOLARIS
+	register char *release;
+	bpf_u_int32 osmajor, osminor, osmicro;
 #endif
+#endif
+	bpf_u_int32 buf[MAXDLBUF];
 	char dname[100];
+#ifndef HAVE_DEV_DLPI
+	char dname2[100];
+#endif
 
 	p = (pcap_t *)malloc(sizeof(*p));
 	if (p == NULL) {
@@ -166,65 +246,119 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 	memset(p, 0, sizeof(*p));
 
 	/*
-	** 1) In order to get the ppa take the last character of the device
-	** name if it is a number then fail the open.
-	**
-	** 2) If the name starts with a '/' then this is an absolute pathname,
-	** otherwise prepend '/dev/'.
-	**
-	** 3) Remove the trailing digit and try and open the device
-	** not staggeringly intuitive but it should work.
-	**
-	** If there are more than 9 devices this code will fail.
+	** Determine device and ppa
 	*/
-
-	cppa = device[strlen(device) - 1];
-	if (!isdigit(cppa)) {
-		sprintf(ebuf, "%c is not a digit, therefore not a valid ppa",
-		    cppa);
+	cp = strpbrk(device, "0123456789");
+	if (cp == NULL) {
+		sprintf(ebuf, "%s missing unit number", device);
+		goto bad;
+	}
+	ppa = strtol(cp, &eos, 10);
+	if (*eos != '\0') {
+		sprintf(ebuf, "%s bad unit number", device);
 		goto bad;
 	}
 
-	dname[0] = '\0';
-	if (device[0] != '/')
-		strcpy(dname, "/dev/");
-
-	strcat(dname, device);
-	dname[strlen(dname) - 1] = '\0';
-
+	if (*device == '/')
+		strcpy(dname, device);
+	else
+		sprintf(dname, "%s/%s", PCAP_DEV_PREFIX, device);
+#ifdef HAVE_DEV_DLPI
+	/* Map network device to /dev/dlpi unit */
+	cp = "/dev/dlpi";
+	if ((p->fd = open(cp, O_RDWR)) < 0) {
+		sprintf(ebuf, "%s: %s", cp, pcap_strerror(errno));
+		goto bad;
+	}
+	/* Map network interface to /dev/dlpi unit */
+	ppa = get_dlpi_ppa(p->fd, dname, ppa, ebuf);
+	if (ppa < 0)
+		goto bad;
+#else
+	/* Try device without unit number */
+	strcpy(dname2, dname);
+	cp = strchr(dname, *cp);
+	*cp = '\0';
 	if ((p->fd = open(dname, O_RDWR)) < 0) {
-		sprintf(ebuf, "%s: %s", dname, pcap_strerror(errno));
-		goto bad;
+		if (errno != ENOENT) {
+			sprintf(ebuf, "%s: %s", dname, pcap_strerror(errno));
+			goto bad;
+		}
+
+		/* Try again with unit number */
+		if ((p->fd = open(dname2, O_RDWR)) < 0) {
+			sprintf(ebuf, "%s: %s", dname2, pcap_strerror(errno));
+			goto bad;
+		}
+		/* XXX Assume unit zero */
+		ppa = 0;
 	}
+#endif
+
 	p->snapshot = snaplen;
 
-	ppa = cppa - '0';
 	/*
-	** Attach.
+	** Attach if "style 2" provider
 	*/
-	if (dlattachreq(p->fd, ppa, ebuf) < 0 ||
-	    dlokack(p->fd, (char *)buf, ebuf) < 0)
+	if (dlinforeq(p->fd, ebuf) < 0 ||
+	    dlinfoack(p->fd, (char *)buf, ebuf) < 0)
 		goto bad;
+	infop = &((union DL_primitives *)buf)->info_ack;
+	if (infop->dl_provider_style == DL_STYLE2 &&
+	    (dlattachreq(p->fd, ppa, ebuf) < 0 ||
+	    dlokack(p->fd, "attach", (char *)buf, ebuf) < 0))
+		goto bad;
+	/*
+	** Bind (defer if using HP-UX 9, totally skip if using SINIX)
+	*/
+#if !defined(HAVE_HPUX9) && !defined(sinix)
+	if (dlbindreq(p->fd, 0, ebuf) < 0 ||
+	    dlbindack(p->fd, (char *)buf, ebuf) < 0)
+		goto bad;
+#endif
 
 	if (promisc) {
 		/*
-		** enable promiscuous.
+		** Enable promiscuous
 		*/
 		if (dlpromisconreq(p->fd, DL_PROMISC_PHYS, ebuf) < 0 ||
-		    dlokack(p->fd, (char *)buf, ebuf) < 0)
-			goto bad;
-		if (dlpromisconreq(p->fd, DL_PROMISC_SAP, ebuf) < 0 ||
-		    dlokack(p->fd, (char *)buf, ebuf) < 0)
+		    dlokack(p->fd, "promisc_phys", (char *)buf, ebuf) < 0)
 			goto bad;
 
 		/*
-		** enable multicast, you would have thought promiscuous
-		** would be sufficient.
+		** Try to enable multicast (you would have thought
+		** promiscuous would be sufficient). Skip if SINIX.
 		*/
+#ifndef sinix
 		if (dlpromisconreq(p->fd, DL_PROMISC_MULTI, ebuf) < 0 ||
-		    dlokack(p->fd, (char *)buf, ebuf) < 0)
+		    dlokack(p->fd, "promisc_multi", (char *)buf, ebuf) < 0)
+			fprintf(stderr,
+			    "WARNING: DL_PROMISC_MULTI failed (%s)\n", ebuf);
+#endif
+	}
+	/*
+	** Always try to enable sap (except if SINIX)
+	*/
+#ifndef sinix
+	if (dlpromisconreq(p->fd, DL_PROMISC_SAP, ebuf) < 0 ||
+	    dlokack(p->fd, "promisc_sap", (char *)buf, ebuf) < 0) {
+		/* Not fatal if promisc since the DL_PROMISC_PHYS worked */
+		if (promisc)
+			fprintf(stderr,
+			    "WARNING: DL_PROMISC_SAP failed (%s)\n", ebuf);
+		else
 			goto bad;
 	}
+#endif
+
+	/*
+	** Bind (HP-UX 9 must bind after setting promiscuous options)
+	*/
+#ifdef HAVE_HPUX9
+	if (dlbindreq(p->fd, 0, ebuf) < 0 ||
+	    dlbindack(p->fd, (char *)buf, ebuf) < 0)
+		goto bad;
+#endif
 
 	/*
 	** Determine link type
@@ -236,8 +370,10 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 	infop = &((union DL_primitives *)buf)->info_ack;
 	switch (infop->dl_mac_type) {
 
+	case DL_CSMACD:
 	case DL_ETHER:
 		p->linktype = DLT_EN10MB;
+		p->offset = 2;
 		break;
 
 	case DL_FDDI:
@@ -259,6 +395,7 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 	}
 #endif
 
+#ifdef HAVE_SYS_BUFMOD_H
 	/*
 	** Another non standard call to get the data nicely buffered
 	*/
@@ -278,8 +415,8 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 	** patch available. Ask for bugid 1149065.
 	*/
 	ss = snaplen;
-#ifdef SOLARIS
-	release = getrelease(&osmajor, &osminor, &osmicro);
+#ifdef HAVE_SOLARIS
+	release = get_release(&osmajor, &osminor, &osmicro);
 	if (osmajor == 5 && (osminor <= 2 || (osminor == 3 && osmicro < 2)) &&
 	    getenv("BUFMOD_FIXED") == NULL) {
 		fprintf(stderr,
@@ -289,7 +426,7 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 	}
 #endif
 	if (ss > 0 &&
-	    strioctl(p->fd, SBIOCSSNAP, sizeof(u_long), (char *)&ss) != 0) {
+	    strioctl(p->fd, SBIOCSSNAP, sizeof(ss), (char *)&ss) != 0) {
 		sprintf(ebuf, "SBIOCSSNAP: %s", pcap_strerror(errno));
 		goto bad;
 	}
@@ -297,12 +434,12 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 	/*
 	** Set up the bufmod flags
 	*/
-	if (strioctl(p->fd, SBIOCGFLAGS, sizeof(u_long), (char *)&flag) < 0) {
+	if (strioctl(p->fd, SBIOCGFLAGS, sizeof(flag), (char *)&flag) < 0) {
 		sprintf(ebuf, "SBIOCGFLAGS: %s", pcap_strerror(errno));
 		goto bad;
 	}
 	flag |= SB_NO_DROPS;
-	if (strioctl(p->fd, SBIOCSFLAGS, sizeof(u_long), (char *)&flag) != 0) {
+	if (strioctl(p->fd, SBIOCSFLAGS, sizeof(flag), (char *)&flag) != 0) {
 		sprintf(ebuf, "SBIOCSFLAGS: %s", pcap_strerror(errno));
 		goto bad;
 	}
@@ -319,6 +456,7 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 			goto bad;
 		}
 	}
+#endif
 
 	/*
 	** As the last operation flush the read side.
@@ -328,8 +466,9 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 		goto bad;
 	}
 	/* Allocate data buffer */
-	p->bufsize = MAXDLBUF * sizeof(long);
-	p->buffer = (u_char *)malloc(p->bufsize);
+	p->bufsize = MAXDLBUF * sizeof(bpf_u_int32);
+	p->buffer = (u_char *)malloc(p->bufsize + p->offset);
+
 	return (p);
 bad:
 	free(p);
@@ -356,7 +495,7 @@ send_request(int fd, char *ptr, int len, char *what, char *ebuf)
 
 	flags = 0;
 	if (putmsg(fd, &ctl, (struct strbuf *) NULL, flags) < 0) {
-		sprintf(ebuf, "putmsg \"%s\"failed: %s",
+		sprintf(ebuf, "send_request: putmsg \"%s\": %s",
 		    what, pcap_strerror(errno));
 		return (-1);
 	}
@@ -364,29 +503,7 @@ send_request(int fd, char *ptr, int len, char *what, char *ebuf)
 }
 
 static int
-dlattachreq(int fd, u_long ppa, char *ebuf)
-{
-	dl_attach_req_t	req;
-
-	req.dl_primitive = DL_ATTACH_REQ;
-	req.dl_ppa = ppa;
-
-	return (send_request(fd, (char *)&req, sizeof(req), "attach", ebuf));
-}
-
-static int
-dlpromisconreq(int fd, u_long level, char *ebuf)
-{
-	dl_promiscon_req_t req;
-
-	req.dl_primitive = DL_PROMISCON_REQ;
-	req.dl_level = level;
-
-	return (send_request(fd, (char *)&req, sizeof(req), "promiscon", ebuf));
-}
-
-static int
-dlokack(int fd, char *bufp, char *ebuf)
+recv_ack(int fd, int size, const char *what, char *bufp, char *ebuf)
 {
 	union	DL_primitives	*dlp;
 	struct	strbuf	ctl;
@@ -398,23 +515,112 @@ dlokack(int fd, char *bufp, char *ebuf)
 
 	flags = 0;
 	if (getmsg(fd, &ctl, (struct strbuf*)NULL, &flags) < 0) {
-		sprintf(ebuf, "getmsg: %s", pcap_strerror(errno));
+		sprintf(ebuf, "recv_ack: %s getmsg: %s",
+		    what, pcap_strerror(errno));
 		return (-1);
 	}
 
 	dlp = (union DL_primitives *) ctl.buf;
+	switch (dlp->dl_primitive) {
 
-	if (dlp->dl_primitive != DL_OK_ACK) {
-		sprintf(ebuf, "dlokack unexpected primitive %d",
-			dlp->dl_primitive);
+	case DL_INFO_ACK:
+	case DL_BIND_ACK:
+	case DL_OK_ACK:
+#ifdef DL_HP_PPA_ACK
+	case DL_HP_PPA_ACK:
+#endif
+
+		/* These are OK */
+		break;
+
+	case DL_ERROR_ACK:
+		switch (dlp->error_ack.dl_errno) {
+
+		case DL_BADPPA:
+			sprintf(ebuf, "recv_ack: %s bad ppa (device unit)",
+			    what);
+			break;
+
+		case DL_SYSERR:
+			sprintf(ebuf, "recv_ack: %s: %s",
+			    what, pcap_strerror(dlp->error_ack.dl_unix_errno));
+			break;
+
+		default:
+			sprintf(ebuf, "recv_ack: %s error 0x%x",
+			    what, (bpf_u_int32)dlp->error_ack.dl_errno);
+			break;
+		}
+		return (-1);
+
+	default:
+		sprintf(ebuf, "recv_ack: %s unexpected primitive ack 0x%x ",
+		    what, (bpf_u_int32)dlp->dl_primitive);
 		return (-1);
 	}
 
-	if (ctl.len != sizeof(dl_ok_ack_t)) {
-		sprintf(ebuf, "dlokack incorrect size returned");
+	if (ctl.len < size) {
+		sprintf(ebuf, "recv_ack: %s ack too small (%d < %d)",
+		    what, ctl.len, size);
 		return (-1);
 	}
-	return (0);
+	return (ctl.len);
+}
+
+static int
+dlattachreq(int fd, bpf_u_int32 ppa, char *ebuf)
+{
+	dl_attach_req_t	req;
+
+	req.dl_primitive = DL_ATTACH_REQ;
+	req.dl_ppa = ppa;
+
+	return (send_request(fd, (char *)&req, sizeof(req), "attach", ebuf));
+}
+
+static int
+dlbindreq(int fd, bpf_u_int32 sap, char *ebuf)
+{
+
+	dl_bind_req_t	req;
+
+	memset((char *)&req, 0, sizeof(req));
+	req.dl_primitive = DL_BIND_REQ;
+#ifdef DL_HP_RAWDLS
+	req.dl_max_conind = 1;			/* XXX magic number */
+	/* 22 is INSAP as per the HP-UX DLPI Programmer's Guide */
+	req.dl_sap = 22;
+	req.dl_service_mode = DL_HP_RAWDLS;
+#else
+	req.dl_sap = sap;
+#endif
+
+	return (send_request(fd, (char *)&req, sizeof(req), "bind", ebuf));
+}
+
+static int
+dlbindack(int fd, char *bufp, char *ebuf)
+{
+
+	return (recv_ack(fd, DL_BIND_ACK_SIZE, "bind", bufp, ebuf));
+}
+
+static int
+dlpromisconreq(int fd, bpf_u_int32 level, char *ebuf)
+{
+	dl_promiscon_req_t req;
+
+	req.dl_primitive = DL_PROMISCON_REQ;
+	req.dl_level = level;
+
+	return (send_request(fd, (char *)&req, sizeof(req), "promiscon", ebuf));
+}
+
+static int
+dlokack(int fd, const char *what, char *bufp, char *ebuf)
+{
+
+	return (recv_ack(fd, DL_OK_ACK_SIZE, what, bufp, ebuf));
 }
 
 
@@ -431,36 +637,11 @@ dlinforeq(int fd, char *ebuf)
 static int
 dlinfoack(int fd, char *bufp, char *ebuf)
 {
-	union	DL_primitives	*dlp;
-	struct	strbuf	ctl;
-	int	flags;
 
-	ctl.maxlen = MAXDLBUF;
-	ctl.len = 0;
-	ctl.buf = bufp;
-
-	flags = 0;
-	if (getmsg(fd, &ctl, (struct strbuf *)NULL, &flags) < 0) {
-		sprintf(ebuf, "dlinfoack: getmsg: %s", pcap_strerror(errno));
-		return (-1);
-	}
-
-	dlp = (union DL_primitives *) ctl.buf;
-
-	if (dlp->dl_primitive != DL_INFO_ACK) {
-		sprintf(ebuf, "dlinfoack: unexpected primitive %ld",
-			dlp->dl_primitive);
-		return (-1);
-	}
-
-	/* Extra stuff like the broadcast address can be returned */
-	if (ctl.len < DL_INFO_ACK_SIZE) {
-		sprintf(ebuf, "dlinfoack: incorrect size returned");
-		return (-1);
-	}
-	return (0);
+	return (recv_ack(fd, DL_INFO_ACK_SIZE, "info", bufp, ebuf));
 }
 
+#ifdef HAVE_SYS_BUFMOD_H
 static int
 strioctl(int fd, int cmd, int len, char *dp)
 {
@@ -478,10 +659,11 @@ strioctl(int fd, int cmd, int len, char *dp)
 	else
 		return (str.ic_len);
 }
+#endif
 
-#ifdef SOLARIS
+#if defined(HAVE_SOLARIS) && defined(HAVE_SYS_BUFMOD_H)
 static char *
-getrelease(long *majorp, long *minorp, long *microp)
+get_release(bpf_u_int32 *majorp, bpf_u_int32 *minorp, bpf_u_int32 *microp)
 {
 	char *cp;
 	static char buf[32];
@@ -502,5 +684,145 @@ getrelease(long *majorp, long *minorp, long *microp)
 		return (buf);
 	*microp =  strtol(cp, &cp, 10);
 	return (buf);
+}
+#endif
+
+#ifdef DL_HP_PPA_ACK_OBS
+/*
+ * Under HP-UX 10, we can ask for the ppa
+ */
+
+
+/* Determine ppa number that specifies ifname */
+static int
+get_dlpi_ppa(register int fd, register const char *device, register int unit,
+    register char *ebuf)
+{
+	register dl_hp_ppa_ack_t *ap;
+	register dl_hp_ppa_info_t *ip;
+	register int i;
+	register u_long majdev;
+	dl_hp_ppa_req_t	req;
+	struct stat statbuf;
+	bpf_u_int32 buf[MAXDLBUF];
+
+	if (stat(device, &statbuf) < 0) {
+		sprintf(ebuf, "stat: %s: %s", device, pcap_strerror(errno));
+		return (-1);
+	}
+	majdev = major(statbuf.st_rdev);
+
+	memset((char *)&req, 0, sizeof(req));
+	req.dl_primitive = DL_HP_PPA_REQ;
+
+	memset((char *)buf, 0, sizeof(buf));
+	if (send_request(fd, (char *)&req, sizeof(req), "hpppa", ebuf) < 0 ||
+	    recv_ack(fd, DL_HP_PPA_ACK_SIZE, "hpppa", (char *)buf, ebuf) < 0)
+		return (-1);
+
+	ap = (dl_hp_ppa_ack_t *)buf;
+	ip = (dl_hp_ppa_info_t *)((u_char *)ap + ap->dl_offset);
+
+        for(i = 0; i < ap->dl_count; i++) {
+                if (ip->dl_mjr_num == majdev && ip->dl_instance_num == unit)
+                        break;
+
+                ip = (dl_hp_ppa_info_t *)((u_char *)ip + ip->dl_next_offset);
+        }
+        if (i == ap->dl_count) {
+                sprintf(ebuf, "can't find PPA for %s", device);
+		return (-1);
+        }
+        if (ip->dl_hdw_state == HDW_DEAD) {
+                sprintf(ebuf, "%s: hardware state: DOWN\n", device);
+		return (-1);
+        }
+        return ((int)ip->dl_ppa);
+}
+#endif
+
+#ifdef HAVE_HPUX9
+/*
+ * Under HP-UX 9, there is no good way to determine the ppa.
+ * So punt and read it from /dev/kmem.
+ */
+static struct nlist nl[] = {
+#define NL_IFNET 0
+	{ "ifnet" },
+	{ "" }
+};
+
+static char path_vmunix[] = "/hp-ux";
+
+/* Determine ppa number that specifies ifname */
+static int
+get_dlpi_ppa(register int fd, register const char *ifname, register int unit,
+    register char *ebuf)
+{
+	register const char *cp;
+	register int kd;
+	void *addr;
+	struct ifnet ifnet;
+	char if_name[sizeof(ifnet.if_name)], tifname[32];
+
+	cp = strrchr(ifname, '/');
+	if (cp != NULL)
+		ifname = cp + 1;
+	if (nlist(path_vmunix, &nl) < 0) {
+		sprintf(ebuf, "nlist %s failed", path_vmunix);
+		return (-1);
+	}
+	if (nl[NL_IFNET].n_value == 0) {
+		sprintf(ebuf, "could't find %s kernel symbol",
+		    nl[NL_IFNET].n_name);
+		return (-1);
+	}
+	kd = open("/dev/kmem", O_RDONLY);
+	if (kd < 0) {
+		sprintf(ebuf, "kmem open: %s", pcap_strerror(errno));
+		return (-1);
+	}
+	if (dlpi_kread(kd, nl[NL_IFNET].n_value,
+	    &addr, sizeof(addr), ebuf) < 0) {
+		close(kd);
+		return (-1);
+	}
+	for (; addr != NULL; addr = ifnet.if_next) {
+		if (dlpi_kread(kd, (off_t)addr,
+		    &ifnet, sizeof(ifnet), ebuf) < 0 ||
+		    dlpi_kread(kd, (off_t)ifnet.if_name,
+		    if_name, sizeof(if_name), ebuf) < 0) {
+			(void)close(kd);
+			return (-1);
+		}
+		sprintf(tifname, "%.*s%d",
+		    (int)sizeof(if_name), if_name, ifnet.if_unit);
+		if (strcmp(tifname, ifname) == 0)
+			return (ifnet.if_index);
+	}
+
+	sprintf(ebuf, "Can't find %s", ifname);
+	return (-1);
+}
+
+static int
+dlpi_kread(register int fd, register off_t addr,
+    register void *buf, register u_int len, register char *ebuf)
+{
+	register int cc;
+
+	if (lseek(fd, addr, L_SET) < 0) {
+		sprintf(ebuf, "lseek: %s", pcap_strerror(errno));
+		return (-1);
+	}
+	cc = read(fd, buf, len);
+	if (cc < 0) {
+		sprintf(ebuf, "read: %s", pcap_strerror(errno));
+		return (-1);
+	} else if (cc != len) {
+		sprintf(ebuf, "short read (%d != %d)", cc, len);
+		return (-1);
+	}
+	return (cc);
 }
 #endif

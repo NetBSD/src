@@ -1,4 +1,4 @@
-.\" Copyright (c) 1994
+.\" Copyright (c) 1994, 1996
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.TH PCAP 3  "14 Jun 1994"
+.TH PCAP 3  "18 July 1996"
 .SH NAME
 pcap \- Packet Capture library
 .SH SYNOPSIS
@@ -52,10 +52,6 @@ pcap_handler callback, u_char *user)
 void pcap_dump(u_char *user, struct pcap_pkthdr *h,
 .ti +8
 u_char *sp)
-.ft
-.LP
-.ft B
-int pcap_immediate(pcap_t *p)
 .ft
 .LP
 .ft B
@@ -129,7 +125,7 @@ fails and returns
 .B pcap_dump_open()
 is called to open a ``savefile'' for writing. The name "-" in a synonym
 for
-.BR stdin .
+.BR stdout .
 .B NULL
 is returned on failure.
 .I p
@@ -207,17 +203,6 @@ outputs a packet to the ``savefile'' opened with
 .BR pcap_dump_open() .
 Note that its calling arguments are suitable for use with
 .BR pcap_dispatch() .
-.ft B
-(??? this guy is kind of weird.)
-.ft
-.PP
-.B pcap_immediate()
-sets ``immediate'' mode.
-If this isn't supported by the under lying packet capture, -1 is
-returned and the error text can be obtained with
-.B pcap_perror()
-or
-.BR pcap_geterr() .
 .PP
 .B pcap_compile()
 is used to compile the string
@@ -285,7 +270,8 @@ returns the name of the ``savefile.''
 .B int pcap_stats()
 returns 0 and fills in a
 .B pcap_stat
-struct with packet statistics. If there is an error or the under lying
+struct. The values represent packet statistics from the start of the
+run to the time of the call. If there is an error or the under lying
 packet capture doesn't support packet statistics, -1 is returned and
 the error text can be obtained with
 .B pcap_perror()

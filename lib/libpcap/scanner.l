@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,21 +22,24 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: scanner.l,v 1.40 94/06/10 17:21:44 mccanne Exp (LBL)";
+    "@(#) Header: scanner.l,v 1.53 96/07/17 00:11:34 leres Exp (LBL)";
 #endif
 
 #include <sys/types.h>
 #include <sys/time.h>
 
 #include <ctype.h>
-#include <pcap.h>
-#include <pcap-namedb.h>
+#include <unistd.h>
+
+#include "pcap-int.h"
 
 #include "gencode.h"
+#include <pcap-namedb.h>
 #include "tokdefs.h"
 
-#ifndef __GNUC__
-#define inline
+#include "gnuc.h"
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
 #endif
 
 static int stoi(char *);
@@ -87,14 +90,19 @@ ip		return IP;
 tcp		return TCP;
 udp		return UDP;
 icmp		return ICMP;
+igmp		return IGMP;
+igrp		return IGRP;
 
+atalk		return ATALK;
 decnet		return DECNET;
 lat		return LAT;
+sca		return SCA;
 moprc		return MOPRC;
 mopdl		return MOPDL;
 
 host		return HOST;
 net		return NET;
+mask		return MASK;
 port		return PORT;
 proto		return PROTO;
 
