@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.155 1999/09/15 18:10:34 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.156 1999/09/17 20:11:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -129,6 +129,7 @@ extern	struct user *proc0paddr;
 
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
+int	cold = 1;			/* still working on startup */
 struct	timeval boottime;
 struct	timeval runtime;
 
@@ -209,12 +210,14 @@ main()
 	/* Initialize sockets. */
 	soinit();
 
-	disk_init();		/* must come before autoconfiguration */
-	tty_init();		/* initialise tty list */
+	/*
+	 * The following 3 things must be done before autoconfiguration.
+	 */
+	disk_init();		/* initialize disk list */
+	tty_init();		/* initialize tty list */
 #if NRND > 0
-	rnd_init();
+	rnd_init();		/* initialize RNG */
 #endif
-	configure();		/* configure the hardware */
 
 	/*
 	 * Initialize process and pgrp structures.
@@ -318,8 +321,8 @@ main()
 #endif
 	vfsinit();
 
-	/* Start real time and statistics clocks. */
-	initclocks();
+	/* Configure the system hardware.  This will enable interrupts. */
+	configure();
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */

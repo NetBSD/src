@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.42 1999/09/15 19:37:08 thorpej Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.43 1999/09/17 20:11:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +50,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/errno.h>
 #include <machine/limits.h>
 
@@ -95,13 +96,6 @@ struct devicelist alldevs;		/* list of all devices */
 struct evcntlist allevents;		/* list of all event counters */
 
 /*
- * This variable indicates, from the configuration machinery's point of
- * view, if interrupts are enabled.  They start disabled, and are
- * considered enabled once cpu_configure() returns.
- */
-int	config_interrupts_enabled;
-
-/*
  * Configure the system's hardware.
  */
 void
@@ -120,7 +114,14 @@ configure()
 	 * to be enabled.
 	 */
 	cpu_configure();
-	config_interrupts_enabled = 1;
+
+	/*
+	 * Now that we've found all the hardware, start the real time
+	 * and statistics clocks.
+	 */
+	initclocks();
+
+	cold = 0;	/* clocks are running, we're warm now! */
 
 	/*
 	 * Now callback to finish configuration for devices which want
@@ -323,7 +324,8 @@ config_attach(parent, cf, aux, print)
 		panic("config_attach: device name too long");
 
 	/* get memory for all device vars */
-	dev = (struct device *)malloc(ca->ca_devsize, M_DEVBUF, M_NOWAIT);
+	dev = (struct device *)malloc(ca->ca_devsize, M_DEVBUF,
+	    cold ? M_NOWAIT : M_WAITOK);
 	if (!dev)
 	    panic("config_attach: memory allocation for device softc failed");
 	memset(dev, 0, ca->ca_devsize);
@@ -359,7 +361,8 @@ config_attach(parent, cf, aux, print)
 		while (new <= dev->dv_unit)
 			new *= 2;
 		cd->cd_ndevs = new;
-		nsp = malloc(new * sizeof(void *), M_DEVBUF, M_NOWAIT);	
+		nsp = malloc(new * sizeof(void *), M_DEVBUF,
+		    cold ? M_NOWAIT : M_WAITOK);	
 		if (nsp == 0)
 			panic("config_attach: %sing dev array",
 			    old != 0 ? "expand" : "creat");
@@ -578,7 +581,9 @@ config_defer(dev, func)
 	}
 #endif
 
-	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK);
+	dc = malloc(sizeof(*dc), M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	if (dc == NULL)
+		panic("config_defer: unable to allocate callback");
 
 	dc->dc_dev = dev;
 	dc->dc_func = func;
@@ -599,7 +604,7 @@ config_interrupts(dev, func)
 	/*
 	 * If interrupts are enabled, callback now.
 	 */
-	if (config_interrupts_enabled) {
+	if (cold == 0) {
 		(*func)(dev);
 		return;
 	}
@@ -612,7 +617,9 @@ config_interrupts(dev, func)
 	}
 #endif
 
-	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK);
+	dc = malloc(sizeof(*dc), M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	if (dc == NULL)
+		panic("config_interrupts: unable to allocate callback");
 
 	dc->dc_dev = dev;
 	dc->dc_func = func;
