@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.41.4.2 2000/07/03 18:33:56 fvdl Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.41.4.3 2000/07/13 20:19:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -860,6 +860,10 @@ sys_lfs_segwait(p, v, retval)
 			return (error);
 		if (itimerfix(&atv))
 			return (EINVAL);
+		/*
+		 * XXX THIS COULD SLEEP FOREVER IF TIMEOUT IS {0,0}!
+		 * XXX IS THAT WHAT IS INTENDED?
+		 */
 		s = splclock();
 		timeradd(&atv, &time, &atv);
 		timeout = hzto(&atv);
