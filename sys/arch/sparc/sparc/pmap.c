@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.142 1999/04/25 10:30:02 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.143 1999/05/16 16:37:45 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -520,14 +520,20 @@ void 		(*pmap_rmu_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
  */
 
 #if defined(SUN4M)
+/*
+ * Macros which implement SRMMU TLB flushing/invalidation
+ */
+#define tlb_flush_page(va)    \
+	sta(((va) & ~0xfff) | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0)
 
-/* Macros which implement SRMMU TLB flushing/invalidation */
+#define tlb_flush_segment(vr, vs) \
+	sta(((vr)<<RGSHIFT) | ((vs)<<SGSHIFT) | ASI_SRMMUFP_L2, ASI_SRMMUFP,0)
 
-#define tlb_flush_page(va)    sta((va & ~0xfff) | ASI_SRMMUFP_L3, ASI_SRMMUFP,0)
-#define tlb_flush_segment(vreg, vseg) sta((vreg << RGSHIFT) | (vseg << SGSHIFT)\
-					  | ASI_SRMMUFP_L2, ASI_SRMMUFP,0)
-#define tlb_flush_context()   sta(ASI_SRMMUFP_L1, ASI_SRMMUFP, 0)
-#define tlb_flush_all()	      sta(ASI_SRMMUFP_LN, ASI_SRMMUFP, 0)
+#define tlb_flush_region(vr) \
+	sta(((vr) << RGSHIFT) | ASI_SRMMUFP_L1, ASI_SRMMUFP, 0)
+
+#define tlb_flush_context()	sta(ASI_SRMMUFP_L0, ASI_SRMMUFP, 0)
+#define tlb_flush_all()		sta(ASI_SRMMUFP_LN, ASI_SRMMUFP, 0)
 
 static u_int	VA2PA __P((caddr_t));
 static u_long	srmmu_bypass_read __P((u_long));
@@ -551,7 +557,8 @@ VA2PA(addr)
 	/* Try each level in turn until we find a valid pte. Otherwise panic */
 
 	pte = lda(((u_int)addr & ~0xfff) | ASI_SRMMUFP_L3, ASI_SRMMUFP);
-(void)lda(SRMMU_SFSR, ASI_SRMMU);
+	/* Unlock fault status; required on Hypersparc modules */
+	(void)lda(SRMMU_SFSR, ASI_SRMMU);
 	if ((pte & SRMMU_TETYPE) == SRMMU_TEPTE)
 	    return (((pte & SRMMU_PPNMASK) << SRMMU_PPNPASHIFT) |
 		    ((u_int)addr & 0xfff));
@@ -2883,7 +2890,8 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 
 #if defined(SUN4_MMU3L)
 	/* Reserve one region for temporary mappings */
-	tregion = --nregion;
+	if (HASSUN4_MMU3L)
+		tregion = --nregion;
 #endif
 
 	/*
@@ -4507,7 +4515,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 
 		if (--rp->rg_nsegmap == 0) {
 			if (pm->pm_ctx)
-				tlb_flush_context(); 	/* Paranoia? */
+				tlb_flush_region(vr); 	/* Paranoia? */
 			setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
 			free(rp->rg_segmap, M_VMPMAP);
 			rp->rg_segmap = NULL;
@@ -4515,7 +4523,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 		}
 	}
 }
-#endif /* sun4m */
+#endif /* SUN4M */
 
 /*
  * Lower (make more strict) the protection on the specified
@@ -5027,7 +5035,7 @@ pmap_page_protect4m(pa, prot)
 
 			if (--rp->rg_nsegmap == 0) {
 				if (pm->pm_ctx)
-					tlb_flush_context();
+					tlb_flush_region(vr);
 				setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
 				free(rp->rg_segmap, M_VMPMAP);
 				rp->rg_segmap = NULL;
@@ -5834,7 +5842,10 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 		/*
 		 * Might be a change: fetch old pte
 		 */
-		tlb_flush_page(va);
+		if (pm->pm_ctx) {
+			setcontext4m(pm->pm_ctxnum);
+			tlb_flush_page(va);
+		}
 		tpte = pte[VA_SUN4M_VPG(va)];
 
 		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE) {
@@ -5860,8 +5871,8 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			 */
 #ifdef DEBUG
 if (pmapdebug & PDB_SWITCHMAP)
-printf("%s[%d]: pmap_enu: changing existing va(0x%x)=>pa(pte=0x%x) entry\n",
-	curproc->p_comm, curproc->p_pid, (int)va, (int)pte);
+printf("%s[%d]: pmap_enu: changing existing va 0x%x: pte 0x%x=>0x%x\n",
+	curproc->p_comm, curproc->p_pid, (int)va, tpte, pteproto);
 #endif
 			if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
 				addr = ptoa( (tpte & SRMMU_PPNMASK) >>
@@ -6465,12 +6476,12 @@ pmap_copy_page4m(src, dst)
 	setpgt4m(vpage_pte[1], dpte);
 	qcopy(sva, dva, NBPG);	/* loads cache, so we must ... */
 	cache_flush_page((int)sva);
-	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
-	setpgt4m(vpage_pte[1], SRMMU_TEINVALID);
 	tlb_flush_page((int)sva);
+	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
 	tlb_flush_page((int)dva);
+	setpgt4m(vpage_pte[1], SRMMU_TEINVALID);
 }
-#endif /* Sun4M */
+#endif /* SUN4M */
 
 /*
  * Turn a cdevsw d_mmap value into a byte address for pmap_enter.
@@ -6511,7 +6522,9 @@ kvm_uncache(va, npages)
 
 			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
 				cache_flush_page((int)va);
+
 			pa = ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
+
 			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM &&
 			    managed(pa)) {
 				pv_changepte4m(pvhead(pa), 0, SRMMU_PG_C);
