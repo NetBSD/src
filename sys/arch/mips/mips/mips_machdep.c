@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.94 2000/07/10 23:21:16 jeffs Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.95 2000/07/20 18:33:42 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.94 2000/07/10 23:21:16 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.95 2000/07/20 18:33:42 jeffs Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -224,6 +224,7 @@ mips3_ConfigCache()
 	    MIPS3_CONFIG_DB);
 
 	mips_CacheAliasMask = (mips_L1DCacheSize - 1) & ~(NBPG - 1);
+	mips_CachePreferMask = max(mips_L1DCacheSize,mips_L1ICacheSize) - 1;
 
 	/*
 	 * Clear out the I and D caches.
@@ -582,6 +583,7 @@ cpu_identify()
 			/* One less alias bit with 2 way cache. */
 			mips_CacheAliasMask =
 				((mips_L1DCacheSize/2) - 1) & ~(NBPG - 1);
+			mips_CachePreferMask >>= 1;
 		}
 		else
 			printf(", direct mapped");
