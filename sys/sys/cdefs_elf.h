@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.3 1999/05/02 18:23:57 kleink Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.4 1999/08/19 03:04:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #define	_C_LABEL(x)	x
 
-#define	__DO_NOT_DO_WEAK__		/* NO WEAK SYMS IN LIBC YET */
+#undef	__DO_NOT_DO_WEAK__		/* NO WEAK SYMS IN LIBC YET */
 
 #ifndef __DO_NOT_DO_WEAK__
 #define	__indr_reference(sym,alias)	/* nada, since we do weak refs */
