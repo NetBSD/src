@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2002/02/09 09:24:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.33 2002/03/05 21:29:56 thorpej Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 .include <bsd.own.mk>
@@ -27,7 +27,7 @@ FILES=help hh data
 FILESDIR=/var/games/hackdir
 
 hack.onames.h: makedefs def.objects.h
-	${.OBJDIR}/makedefs ${.CURDIR}/def.objects.h > hack.onames.h
+	./makedefs ${.CURDIR}/def.objects.h > hack.onames.h
 
 makedefs: makedefs.c
 	${HOST_LINK.c} -o makedefs ${.CURDIR}/makedefs.c
