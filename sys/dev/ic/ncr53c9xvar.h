@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.22 2000/03/19 21:25:49 mycroft Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.23 2000/03/29 03:03:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -403,5 +403,3 @@ int	ncr53c9x_intr __P((void *));
 void	ncr53c9x_init __P((struct ncr53c9x_softc *, int));
 
 extern	int ncr53c9x_dmaselect;
-
-extern int ncr53c9x_dmaselect;
