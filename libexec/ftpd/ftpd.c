@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.111 2000/11/16 13:15:14 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.112 2000/11/24 12:56:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.111 2000/11/16 13:15:14 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.112 2000/11/24 12:56:45 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1480,11 +1480,12 @@ dataconn(const char *name, off_t size, const char *mode)
 	file = getdatasock(mode);
 	if (file == NULL) {
 		char hbuf[NI_MAXHOST];
-		char pbuf[10];
+		char pbuf[NI_MAXSERV];
 
-		getnameinfo((struct sockaddr *)&data_source.si_su,
+		if (getnameinfo((struct sockaddr *)&data_source.si_su,
 		    data_source.su_len, hbuf, sizeof(hbuf), pbuf, sizeof(pbuf),
-		    NI_NUMERICHOST | NI_NUMERICSERV);
+		    NI_NUMERICHOST | NI_NUMERICSERV))
+			strlcpy(hbuf, "?", sizeof(hbuf));
 		reply(425, "Can't create data socket (%s,%s): %s.",
 		      hbuf, pbuf, strerror(errno));
 		return (NULL);
@@ -1839,7 +1840,7 @@ void
 statcmd(void)
 {
 	struct sockinet *su = NULL;
-	static char ntop_buf[NI_MAXHOST];
+	static char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
   	u_char *a, *p;
 	int ispassive, af;
 	off_t otbi, otbo, otb;
@@ -1848,11 +1849,11 @@ statcmd(void)
 
 	reply(-211, "%s FTP server status:", hostname);
 	reply(0, "Version: %s", EMPTYSTR(version) ? "<suppressed>" : version);
-	ntop_buf[0] = '\0';
+	hbuf[0] = '\0';
 	if (!getnameinfo((struct sockaddr *)&his_addr.si_su, his_addr.su_len,
-			ntop_buf, sizeof(ntop_buf), NULL, 0, NI_NUMERICHOST)
-	    && strcmp(remotehost, ntop_buf) != 0)
-		reply(0, "Connected to %s (%s)", remotehost, ntop_buf);
+			hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST)
+	    && strcmp(remotehost, hbuf) != 0)
+		reply(0, "Connected to %s (%s)", remotehost, hbuf);
 	else
 		reply(0, "Connected to %s", remotehost);
 
@@ -1935,7 +1936,8 @@ statcmd(void)
 			    ispassive ? "LPSV" : "LPRT", af, alen);
 			for (i = 0; i < alen; i++)
 				cprintf(stdout, ",%d", UC(a[i]));
-			cprintf(stdout, ",%d,%d,%d)", 2, UC(p[0]), UC(p[1]));
+			cprintf(stdout, ",%d,%d,%d)\r\n",
+			    2, UC(p[0]), UC(p[1]));
 #undef UC
 		}
 	    }
@@ -1943,14 +1945,19 @@ statcmd(void)
 		/* EPRT/EPSV */
  epsvonly:
 		af = af2epsvproto(su->su_family);
-		ntop_buf[0] = '\0';
+		hbuf[0] = '\0';
 		if (af > 0) {
-			if (getnameinfo((struct sockaddr *)&su->si_su,
-			    su->su_len, ntop_buf, sizeof(ntop_buf), NULL, 0,
-			    NI_NUMERICHOST) == 0)
-				reply(0, "%s (|%d|%s|%d|)",
+			struct sockinet tmp;
+
+			tmp = *su;
+			if (tmp.su_family == AF_INET6)
+				tmp.su_scope_id = 0;
+			if (getnameinfo((struct sockaddr *)&tmp.si_su,
+			    tmp.su_len, hbuf, sizeof(hbuf), sbuf, sizeof(sbuf),
+			    NI_NUMERICHOST | NI_NUMERICSERV) == 0)
+				reply(0, "%s (|%d|%s|%s|)",
 				    ispassive ? "EPSV" : "EPRT",
-				    af, ntop_buf, ntohs(su->su_port));
+				    af, hbuf, sbuf);
 		}
 	} else
 		reply(0, "No data connection");
@@ -2097,8 +2104,9 @@ static void
 dolog(struct sockaddr *who)
 {
 
-	(void)getnameinfo(who, who->sa_len, remotehost, sizeof(remotehost),
-	    NULL, 0, 0);
+	if (getnameinfo(who, who->sa_len, remotehost, sizeof(remotehost),
+	    NULL, 0, 0))
+		strlcpy(remotehost, "?", sizeof(remotehost));
 
 #ifdef HASSETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
