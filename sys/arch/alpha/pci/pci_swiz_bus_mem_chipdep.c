@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.30 1999/12/08 00:35:43 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.31 1999/12/08 01:48:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -377,8 +377,10 @@ __C(CHIP,_xlate_addr_to_dense_handle)(v, memaddr, memhp)
 #ifdef CHIP_D_MEM_W1_BUS_START
 	if (memaddr >= CHIP_D_MEM_W1_BUS_START(v) &&
 	    memaddr <= CHIP_D_MEM_W1_BUS_END(v)) {
-		*memhp = ALPHA_PHYS_TO_K0SEG(CHIP_D_MEM_W1_SYS_START(v)) +
-		    (memaddr - CHIP_D_MEM_W1_BUS_START(v));
+		if (memhp != NULL)
+			*memhp =
+			    ALPHA_PHYS_TO_K0SEG(CHIP_D_MEM_W1_SYS_START(v)) +
+			    (memaddr - CHIP_D_MEM_W1_BUS_START(v));
 		return (1);
 	} else
 #endif
@@ -416,30 +418,33 @@ __C(CHIP,_xlate_addr_to_sparse_handle)(v, memaddr, memhp)
 #ifdef CHIP_S_MEM_W1_BUS_START
 	if (memaddr >= CHIP_S_MEM_W1_BUS_START(v) &&
 	    memaddr <= CHIP_S_MEM_W1_BUS_END(v)) {
-		*memhp =
-		    (ALPHA_PHYS_TO_K0SEG(CHIP_S_MEM_W1_SYS_START(v)) >>
-		     CHIP_ADDR_SHIFT) +
-		    (memaddr - CHIP_S_MEM_W1_BUS_START(v));
+		if (memhp != NULL)
+			*memhp =
+			    (ALPHA_PHYS_TO_K0SEG(CHIP_S_MEM_W1_SYS_START(v)) >>
+			     CHIP_ADDR_SHIFT) +
+			    (memaddr - CHIP_S_MEM_W1_BUS_START(v));
 		return (1);
 	} else
 #endif
 #ifdef CHIP_S_MEM_W2_BUS_START
 	if (memaddr >= CHIP_S_MEM_W2_BUS_START(v) &&
 	    memaddr <= CHIP_S_MEM_W2_BUS_END(v)) {
-		*memhp =
-		    (ALPHA_PHYS_TO_K0SEG(CHIP_S_MEM_W2_SYS_START(v)) >>
-		     CHIP_ADDR_SHIFT) +
-		    (memaddr - CHIP_S_MEM_W2_BUS_START(v));
+		if (memhp != NULL)
+			*memhp =
+			    (ALPHA_PHYS_TO_K0SEG(CHIP_S_MEM_W2_SYS_START(v)) >>
+			     CHIP_ADDR_SHIFT) +
+			    (memaddr - CHIP_S_MEM_W2_BUS_START(v));
 		return (1);
 	} else
 #endif
 #ifdef CHIP_S_MEM_W3_BUS_START
 	if (memaddr >= CHIP_S_MEM_W3_BUS_START(v) &&
 	    memaddr <= CHIP_S_MEM_W3_BUS_END(v)) {
-		*memhp =
-		    (ALPHA_PHYS_TO_K0SEG(CHIP_S_MEM_W3_SYS_START(v)) >>
-		     CHIP_ADDR_SHIFT) +
-		    (memaddr - CHIP_S_MEM_W3_BUS_START(v));
+		if (memhp != NULL)
+			*memhp =
+			    (ALPHA_PHYS_TO_K0SEG(CHIP_S_MEM_W3_SYS_START(v)) >>
+			     CHIP_ADDR_SHIFT) +
+			    (memaddr - CHIP_S_MEM_W3_BUS_START(v));
 		return (1);
 	} else
 #endif
@@ -496,15 +501,6 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
 
-#ifndef CHIP_D_MEM_W1_SYS_START
-	/* No cacheable space without dense. */
-	cacheable = 0;
-#endif /* ! CHIP_D_MEM_W1_SYS_START */
-
-	/* Requests for linear uncacheable space can't be satisfied. */
-	if (linear && !cacheable)
-		return (EOPNOTSUPP);
-
 	/*
 	 * XXX Too hairy to not do accounting in this space.  Nothing
 	 * XXX much uses this anyhow (only ISA PnP does, and only via
@@ -515,10 +511,46 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 
 #ifdef CHIP_D_MEM_W1_SYS_START
 	mustd = 1;
+	if (!__C(CHIP,_xlate_addr_to_dense_handle)(v, memaddr, NULL)) {
+		/*
+		 * This address isn't mapped into dense space; don't
+		 * require it.
+		 */
+		mustd = 0;
+	}
 #else
 	mustd = 0;
 #endif
+
+	/* No cacheable space without dense. */
+	if (mustd == 0)
+		cacheable = 0;
+
+	/*
+	 * We must have dense space to map memory linearly.
+	 */
+	if (linear && !cacheable)
+		return (EOPNOTSUPP);
+
 	musts = (cacheable == 0);
+	if (!__C(CHIP,_xlate_addr_to_sparse_handle)(v, memaddr, NULL)) {
+		/*
+		 * This address isn't mapped into sparse space; don't
+		 * require it.
+		 */
+		musts = 0;
+	}
+
+	/*
+	 * If this address isn't mapped into dense or sparse, we lose.
+	 */
+	if (mustd == 0 && musts == 0) {
+#ifdef EXTENT_DEBUG
+		printf("mem: address 0x%lx not in dense or sparse space\n",
+		    memaddr);
+#endif
+		return (EINVAL);
+	}
 
 #ifdef EXTENT_DEBUG
 	printf("mem: allocating 0x%lx to 0x%lx\n", memaddr,
