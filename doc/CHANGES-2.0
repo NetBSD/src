@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.447 2004/09/16 03:23:54 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.448 2004/09/16 03:25:04 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7342,3 +7342,10 @@ sys/kern/kern_clock.c				1.92
 	Add 50Hz support -- this will allow 'options NTP' to work on the Xen
 	port, once the Xen port's timer interrupts are made somewhat more sane.
 	[tls, ticket #847]
+
+libexec/ld.elf_so/arch/sh3/rtld_start.S			1.4
+
+	Preserve r2 in _rtld_bind_start - in r2 functions that return
+	aggregate types are passed the address of the memory area to store the
+	returned result to. PR#26949
+	[uwe, ticket #848]
