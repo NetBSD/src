@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOTX,v 1.6 1996/10/16 12:50:31 leo Exp $
+#	$NetBSD: BOOTX,v 1.7 1996/11/08 14:12:27 leo Exp $
 #
 # BOOTX
 #
@@ -106,6 +106,8 @@ pseudo-device	rd	1	# Boot ramdisk
 #
 #The following sections describe various hardware options.
 #
+fd0	at fdc0 unit 0		# builtin floppy drive
+fd1	at fdc0 unit 1		# external floppy drive
 zs0	at mainbus0		# Serial support through 8530
 grf1	at grfbus0		# second graphics driver
 ite*	at grfcc1		# second tty
