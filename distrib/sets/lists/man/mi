@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.356 2001/05/27 21:21:39 wiz Exp $
+# $NetBSD: mi,v 1.357 2001/05/31 20:49:42 thorpej Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -572,6 +572,7 @@
 ./usr/share/man/cat4/fxp.0			man-sys-catman
 ./usr/share/man/cat4/gif.0			man-sys-catman
 ./usr/share/man/cat4/gre.0			man-sys-catman
+./usr/share/man/cat4/gphyter.0			man-sys-catman
 ./usr/share/man/cat4/gsip.0			man-sys-catman
 ./usr/share/man/cat4/gus.0			man-sys-catman
 ./usr/share/man/cat4/guspnp.0			man-sys-catman
@@ -713,6 +714,7 @@
 ./usr/share/man/cat4/ns.0			man-sys-catman
 ./usr/share/man/cat4/nsip.0			man-sys-catman
 ./usr/share/man/cat4/nsphy.0			man-sys-catman
+./usr/share/man/cat4/nsphyter.0			man-sys-catman
 ./usr/share/man/cat4/ntwo.0			man-sys-catman
 ./usr/share/man/cat4/ntwoc.0			man-sys-catman
 ./usr/share/man/cat4/null.0			man-sys-catman
@@ -2084,6 +2086,7 @@
 ./usr/share/man/man4/fxp.4			man-sys-man
 ./usr/share/man/man4/gif.4			man-sys-man
 ./usr/share/man/man4/gre.4			man-sys-man
+./usr/share/man/man4/gphyter.4			man-sys-man
 ./usr/share/man/man4/gsip.4			man-sys-man
 ./usr/share/man/man4/gus.4			man-sys-man
 ./usr/share/man/man4/guspnp.4			man-sys-man
@@ -2225,6 +2228,7 @@
 ./usr/share/man/man4/ns.4			man-sys-man
 ./usr/share/man/man4/nsip.4			man-sys-man
 ./usr/share/man/man4/nsphy.4			man-sys-man
+./usr/share/man/man4/nsphyter.4			man-sys-man
 ./usr/share/man/man4/ntwo.4			man-sys-man
 ./usr/share/man/man4/ntwoc.4			man-sys-man
 ./usr/share/man/man4/null.4			man-sys-man
