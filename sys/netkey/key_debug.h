@@ -1,5 +1,5 @@
-/*	$NetBSD: key_debug.h,v 1.6 2000/06/12 10:40:48 itojun Exp $	*/
-/*	$KAME: key_debug.h,v 1.6 2000/03/27 05:11:05 sumikawa Exp $	*/
+/*	$NetBSD: key_debug.h,v 1.7 2000/07/04 04:41:54 itojun Exp $	*/
+/*	$KAME: key_debug.h,v 1.7 2000/07/04 04:08:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -83,14 +83,13 @@ extern void kdebug_mbuf __P((struct mbuf *));
 struct sockaddr;
 extern void kdebug_sockaddr __P((struct sockaddr *));
 
+extern void ipsec_hexdump __P((caddr_t, int));
+extern void ipsec_bindump __P((caddr_t, int));
+
 #else
 
 #define KEYDEBUG(lev,arg)
 
 #endif /*!defined(_KERNEL) || (defined(_KERNEL) && defined(IPSEC_DEBUG))*/
 
-extern void ipsec_hexdump __P((caddr_t, int));
-extern void ipsec_bindump __P((caddr_t, int));
-
 #endif /* _NETKEY_KEY_DEBUG_H_ */
-
