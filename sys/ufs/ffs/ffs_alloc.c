@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.23 1998/07/28 17:30:01 drochner Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.24 1998/08/09 20:15:39 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -226,7 +226,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		allocbuf(bp, nsize);
 		bp->b_flags |= B_DONE;
-		bzero((char *)bp->b_data + osize, (u_int)nsize - osize);
+		memset((char *)bp->b_data + osize, 0, (u_int)nsize - osize);
 		*bpp = bp;
 		return (0);
 	}
@@ -295,7 +295,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		allocbuf(bp, nsize);
 		bp->b_flags |= B_DONE;
-		bzero((char *)bp->b_data + osize, (u_int)nsize - osize);
+		memset((char *)bp->b_data + osize, 0, (u_int)nsize - osize);
 		*bpp = bp;
 		return (0);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.6 1998/07/28 20:39:10 mjacob Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.7 1998/08/09 20:15:38 perry Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -93,7 +93,7 @@ ext2fs_dirconv2ffs( e2dir, ffsdir)
 	struct ext2fs_direct	*e2dir;
 	struct dirent 		*ffsdir;
 {
-	bzero(ffsdir, sizeof(struct dirent));
+	memset(ffsdir, 0, sizeof(struct dirent));
 	ffsdir->d_fileno = fs2h32(e2dir->e2d_ino);
 	ffsdir->d_namlen = fs2h16(e2dir->e2d_namlen);
 
@@ -176,7 +176,7 @@ ext2fs_readdir(v)
 		    M_WAITOK);
 		*ap->a_cookies = cookies;
 	}
-	bzero(dirbuf, e2fs_count);
+	memset(dirbuf, 0, e2fs_count);
 	aiov.iov_base = dirbuf;
 
 	error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
@@ -478,7 +478,7 @@ searchloop:
 		if (ep->e2d_ino) {
 			namlen = fs2h16(ep->e2d_namlen);
 			if (namlen == cnp->cn_namelen &&
-				!bcmp(cnp->cn_nameptr, ep->e2d_name,
+				!memcmp(cnp->cn_nameptr, ep->e2d_name,
 				(unsigned)namlen)) {
 				/*
 				 * Save directory entry's inode number and
@@ -792,7 +792,7 @@ ext2fs_direnter(ip, dvp, cnp)
 	dp = VTOI(dvp);
 	newdir.e2d_ino = h2fs32(ip->i_number);
 	newdir.e2d_namlen = h2fs16(cnp->cn_namelen);
-	bcopy(cnp->cn_nameptr, newdir.e2d_name, (unsigned)cnp->cn_namelen + 1);
+	memcpy(newdir.e2d_name, cnp->cn_nameptr, (unsigned)cnp->cn_namelen + 1);
 	newentrysize = EXT2FS_DIRSIZ(cnp->cn_namelen);
 	if (dp->i_count == 0) {
 		/*
@@ -862,7 +862,7 @@ ext2fs_direnter(ip, dvp, cnp)
 		dsize = EXT2FS_DIRSIZ(fs2h16(nep->e2d_namlen));
 		spacefree += fs2h16(nep->e2d_reclen) - dsize;
 		loc += fs2h16(nep->e2d_reclen);
-		bcopy((caddr_t)nep, (caddr_t)ep, dsize);
+		memcpy((caddr_t)ep, (caddr_t)nep, dsize);
 	}
 	/*
 	 * Update the pointer fields in the previous entry (if any),
@@ -886,7 +886,7 @@ ext2fs_direnter(ip, dvp, cnp)
 		ep->e2d_reclen = h2fs16(dsize);
 		ep = (struct ext2fs_direct *)((char *)ep + dsize);
 	}
-	bcopy((caddr_t)&newdir, (caddr_t)ep, (u_int)newentrysize);
+	memcpy((caddr_t)ep, (caddr_t)&newdir, (u_int)newentrysize);
 	error = VOP_BWRITE(bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (!error && dp->i_endoff && dp->i_endoff < dp->i_e2fs_size)

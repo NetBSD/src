@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.3 1998/03/01 02:23:45 fvdl Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.4 1998/08/09 20:15:38 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -190,10 +190,10 @@ struct ext2_gd {
 #	define h2fs32(x) (x)
 #	define fs2h16(x) (x)
 #	define fs2h32(x) (x)
-#	define e2fs_sbload(old, new) bcopy((old), (new), SBSIZE);
-#	define e2fs_cgload(old, new, size) bcopy((old), (new), (size));
-#	define e2fs_sbsave(old, new) bcopy((old), (new), SBSIZE);
-#	define e2fs_cgsave(old, new, size) bcopy((old), (new), (size));
+#	define e2fs_sbload(old, new) memcpy((new), (old), SBSIZE);
+#	define e2fs_cgload(old, new, size) memcpy((new), (old), (size));
+#	define e2fs_sbsave(old, new) memcpy((new), (old), SBSIZE);
+#	define e2fs_cgsave(old, new, size) memcpy((new), (old), (size));
 #else
 void e2fs_sb_bswap __P((struct ext2fs *, struct ext2fs *));
 void e2fs_cg_bswap __P((struct ext2_gd *, struct ext2_gd *, int));

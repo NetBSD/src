@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.29 1998/07/05 08:49:44 jonathan Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.30 1998/08/09 20:20:11 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -149,10 +149,10 @@ adosfs_mount(mp, path, data, ndp, p)
 	amp->gid = args.gid;
 	amp->mask = args.mask;
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
-	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
+	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
-	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
 	return (0);
 }
 
@@ -196,7 +196,7 @@ adosfs_mountfs(devvp, mp, p)
 
 	parp = &dl.d_partitions[part];
 	amp = malloc(sizeof(struct adosfsmount), M_ADOSFSMNT, M_WAITOK);
-	bzero((char *)amp, (u_long)sizeof(struct adosfsmount));
+	memset((char *)amp, 0, (u_long)sizeof(struct adosfsmount));
 	amp->mp = mp;
 	if (dl.d_type == DTYPE_FLOPPY) {
 		amp->bsize = dl.d_secsize;
@@ -341,8 +341,8 @@ adosfs_statfs(mp, sbp, p)
 	sbp->f_files = 0;		/* who knows */
 	sbp->f_ffree = 0;		/* " " */
 	if (sbp != &mp->mnt_stat) {
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
+		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	return (0);
@@ -383,7 +383,7 @@ adosfs_vget(mp, an, vpp)
 	 * setup, insert in hash, and lock before io.
 	 */
 	vp->v_data = ap = malloc(sizeof(struct anode), M_ANODE, M_WAITOK);
-	bzero(ap, sizeof(struct anode));
+	memset(ap, 0, sizeof(struct anode));
 	ap->vp = vp;
 	ap->amp = amp;
 	ap->block = an;
@@ -432,15 +432,15 @@ adosfs_vget(mp, an, vpp)
 			tmp++;
 		if (*tmp == 0) {
 			ap->slinkto = malloc(namlen + 1, M_ANODE, M_WAITOK);
-			bcopy(nam, ap->slinkto, namlen);
+			memcpy(ap->slinkto, nam, namlen);
 		} else if (*nam == ':') {
 			ap->slinkto = malloc(namlen + 1, M_ANODE, M_WAITOK);
-			bcopy(nam, ap->slinkto, namlen);
+			memcpy(ap->slinkto, nam, namlen);
 			ap->slinkto[0] = '/';
 		} else {
 			ap->slinkto = malloc(namlen + 2, M_ANODE, M_WAITOK);
 			ap->slinkto[0] = '/';
-			bcopy(nam, &ap->slinkto[1], namlen);
+			memcpy(&ap->slinkto[1], nam, namlen);
 			ap->slinkto[tmp - nam + 1] = '/';
 			namlen++;
 		}
@@ -471,7 +471,7 @@ adosfs_vget(mp, an, vpp)
 		vput(vp);
 		return (EINVAL);
 	}
-	bcopy(nam, ap->name, namlen);
+	memcpy(ap->name, nam, namlen);
 	ap->name[namlen] = 0;
 
 	/* 
@@ -483,7 +483,7 @@ adosfs_vget(mp, an, vpp)
 		ap->tab = malloc(ANODETABSZ(ap) * 2, M_ANODE, M_WAITOK);
 		ap->ntabent = ANODETABENT(ap);
 		ap->tabi = (int *)&ap->tab[ap->ntabent];
-		bzero(ap->tabi, ANODETABSZ(ap));
+		memset(ap->tabi, 0, ANODETABSZ(ap));
 		for (i = 0; i < ap->ntabent; i++)
 			ap->tab[i] = adoswordn(bp, i + 6);
 	}

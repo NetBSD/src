@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.3 1998/03/01 02:23:45 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.4 1998/08/09 20:15:38 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -183,7 +183,7 @@ ext2fs_valloc(v)
 		panic("ext2fs_valloc: dup alloc");
 	}
 
-	bzero(&(ip->i_din.e2fs_din), sizeof(struct ext2fs_dinode));
+	memset(&(ip->i_din.e2fs_din), 0, sizeof(struct ext2fs_dinode));
 
 	/*
 	 * Set up a new generation number for this inode.

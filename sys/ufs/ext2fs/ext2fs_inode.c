@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.7 1998/06/09 06:33:22 mikel Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.8 1998/08/09 20:15:38 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -212,7 +212,7 @@ ext2fs_truncate(v)
 		if (length != 0)
 			panic("ext2fs_truncate: partial truncate of symlink");
 #endif
-		bzero((char *)&oip->i_din.e2fs_din.e2di_shortlink,
+		memset((char *)&oip->i_din.e2fs_din.e2di_shortlink, 0,
 			(u_int)oip->i_e2fs_size);
 		oip->i_e2fs_size = 0;
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -283,7 +283,7 @@ ext2fs_truncate(v)
 #else
 		(void) vnode_pager_uncache(ovp);
 #endif
-		bzero((char *)bp->b_data + offset, (u_int)(size - offset));
+		memset((char *)bp->b_data + offset, 0,  (u_int)(size - offset));
 		allocbuf(bp, size);
 		if (aflags & B_SYNC)
 			bwrite(bp);
@@ -312,7 +312,7 @@ ext2fs_truncate(v)
 	 * will be returned to the free list.  lastiblock values are also
 	 * normalized to -1 for calls to ext2fs_indirtrunc below.
 	 */
-	bcopy((caddr_t)&oip->i_e2fs_blocks[0], (caddr_t)oldblks, sizeof oldblks);
+	memcpy((caddr_t)oldblks, (caddr_t)&oip->i_e2fs_blocks[0], sizeof oldblks);
 	for (level = TRIPLE; level >= SINGLE; level--)
 		if (lastiblock[level] < 0) {
 			oip->i_e2fs_blocks[NDADDR + level] = 0;
@@ -329,8 +329,8 @@ ext2fs_truncate(v)
 	 * Note that we save the new block configuration so we can check it
 	 * when we are done.
 	 */
-	bcopy((caddr_t)&oip->i_e2fs_blocks[0], (caddr_t)newblks, sizeof newblks);
-	bcopy((caddr_t)oldblks, (caddr_t)&oip->i_e2fs_blocks[0], sizeof oldblks);
+	memcpy((caddr_t)newblks, (caddr_t)&oip->i_e2fs_blocks[0], sizeof newblks);
+	memcpy((caddr_t)&oip->i_e2fs_blocks[0], (caddr_t)oldblks, sizeof oldblks);
 	oip->i_e2fs_size = osize;
 	vflags = ((length > 0) ? V_SAVE : 0) | V_SAVEMETA;
 	allerror = vinvalbuf(ovp, vflags, ap->a_cred, ap->a_p, 0, 0);
@@ -468,8 +468,8 @@ ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	bap = (ufs_daddr_t *)bp->b_data;
 	if (lastbn != -1) {
 		MALLOC(copy, ufs_daddr_t *, fs->e2fs_bsize, M_TEMP, M_WAITOK);
-		bcopy((caddr_t)bap, (caddr_t)copy, (u_int)fs->e2fs_bsize);
-		bzero((caddr_t)&bap[last + 1],
+		memcpy((caddr_t)copy, (caddr_t)bap, (u_int)fs->e2fs_bsize);
+		memset((caddr_t)&bap[last + 1], 0,
 			(u_int)(NINDIR(fs) - (last + 1)) * sizeof (u_int32_t));
 		error = bwrite(bp);
 		if (error)

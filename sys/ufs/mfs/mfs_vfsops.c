@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.17 1998/07/05 08:49:49 jonathan Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.18 1998/08/09 20:15:40 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -253,11 +253,11 @@ mfs_mount(mp, path, data, ndp, p)
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	(void) copyinstr(path, fs->fs_fsmnt, sizeof(fs->fs_fsmnt) - 1, &size);
-	bzero(fs->fs_fsmnt + size, sizeof(fs->fs_fsmnt) - size);
-	bcopy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
+	memset(fs->fs_fsmnt + size, 0, sizeof(fs->fs_fsmnt) - size);
+	memcpy(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN);
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
-	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
 	return (0);
 }
 

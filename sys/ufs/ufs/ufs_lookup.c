@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.17 1998/07/28 18:37:48 thorpej Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.18 1998/08/09 20:15:40 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -338,7 +338,7 @@ searchloop:
 				namlen = ep->d_namlen;
 #endif
 			if (namlen == cnp->cn_namelen &&
-			    !bcmp(cnp->cn_nameptr, ep->d_name,
+			    !memcmp(cnp->cn_nameptr, ep->d_name,
 				(unsigned)namlen)) {
 				/*
 				 * Save directory entry's inode number and
@@ -719,7 +719,7 @@ ufs_direnter(ip, dvp, cnp)
 	dp = VTOI(dvp);
 	newdir.d_ino = ip->i_number;
 	newdir.d_namlen = cnp->cn_namelen;
-	bcopy(cnp->cn_nameptr, newdir.d_name, (unsigned)cnp->cn_namelen + 1);
+	memcpy(newdir.d_name, cnp->cn_nameptr, (unsigned)cnp->cn_namelen + 1);
 	if (dvp->v_mount->mnt_maxsymlinklen > 0)
 		newdir.d_type = IFTODT(ip->i_ffs_mode);
 	else
@@ -846,7 +846,7 @@ ufs_direnter2(dvp, dirp, cr, p)
 		dsize = DIRSIZ(FSFMT(dvp), nep, needswap);
 		spacefree += ufs_rw16(nep->d_reclen, needswap) - dsize;
 		loc += ufs_rw16(nep->d_reclen, needswap);
-		bcopy((caddr_t)nep, (caddr_t)ep, dsize);
+		memcpy((caddr_t)ep, (caddr_t)nep, dsize);
 	}
 	/*
 	 * Update the pointer fields in the previous entry (if any),
@@ -854,7 +854,7 @@ ufs_direnter2(dvp, dirp, cr, p)
 	 */
 	if (ep->d_ino == 0 ||
 	    (ufs_rw32(ep->d_ino, needswap) == WINO &&
-	     bcmp(ep->d_name, dirp->d_name, dirp->d_namlen) == 0)) {
+	     memcmp(ep->d_name, dirp->d_name, dirp->d_namlen) == 0)) {
 		if (spacefree + dsize < newentrysize)
 			panic("ufs_direnter2: compact1");
 		dirp->d_reclen = spacefree + dsize;
@@ -877,7 +877,7 @@ ufs_direnter2(dvp, dirp, cr, p)
 			dirp->d_namlen = dirp->d_type;
 			dirp->d_type = tmp;
 		}
-	bcopy((caddr_t)dirp, (caddr_t)ep, (u_int)newentrysize);
+	memcpy((caddr_t)ep, (caddr_t)dirp, (u_int)newentrysize);
 	error = VOP_BWRITE(bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (!error && dp->i_endoff && dp->i_endoff < dp->i_ffs_size)

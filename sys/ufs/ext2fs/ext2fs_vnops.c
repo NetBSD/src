@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.12 1998/07/28 20:37:33 mjacob Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.13 1998/08/09 20:15:39 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -1045,7 +1045,7 @@ ext2fs_mkdir(v)
 		goto bad;
 
 	/* Initialize directory with "." and ".." from static template. */
-	bzero(&dirtemplate, sizeof(dirtemplate));
+	memset(&dirtemplate, 0, sizeof(dirtemplate));
 	dirtemplate.dot_ino = h2fs32(ip->i_number);
 	dirtemplate.dot_reclen = h2fs16(12);
 	dirtemplate.dot_namlen = h2fs16(1);
@@ -1200,7 +1200,7 @@ ext2fs_symlink(v)
 	len = strlen(ap->a_target);
 	if (len < vp->v_mount->mnt_maxsymlinklen) {
 		ip = VTOI(vp);
-		bcopy(ap->a_target, (char *)ip->i_din.e2fs_din.e2di_shortlink, len);
+		memcpy((char *)ip->i_din.e2fs_din.e2di_shortlink, ap->a_target, len);
 		ip->i_e2fs_size = len;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.21 1998/07/10 20:14:59 mhitch Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.22 1998/08/09 20:20:11 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -41,7 +41,7 @@
 
 #ifdef ADOSFS_EXACTMATCH
 #define strmatch(s1, l1, s2, l2, i) \
-    ((l1) == (l2) && bcmp((s1), (s2), (l1)) == 0)
+    ((l1) == (l2) && memcmp((s1), (s2), (l1)) == 0)
 #else
 #define strmatch(s1, l1, s2, l2, i) \
     ((l1) == (l2) && adoscaseequ((s1), (s2), (l1), (i)))
