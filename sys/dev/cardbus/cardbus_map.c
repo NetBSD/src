@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.11 2000/10/12 12:42:52 wiz Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.12 2001/04/30 02:46:20 jmc Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -306,7 +306,7 @@ cardbus_mapreg_map(sc, func, reg, type, busflags, tagp, handlep, basep, sizep)
 	}
 	cardbus_conf_write(cc, cf, tag, reg, base);
 
-	DPRINTF(("cardbus_mapreg_map: physaddr %lx\n", base));
+	DPRINTF(("cardbus_mapreg_map: physaddr %lx\n", (unsigned long)base));
 
 	if (tagp != 0) {
 		*tagp = bustag;
