@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.12 1999/12/10 05:45:07 itojun Exp $	*/
+/*	$NetBSD: interface.h,v 1.12.4.1 2000/07/26 23:14:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -132,7 +132,7 @@ extern int packettype;		/* as specified by -T */
  * XXX This is a really ugly hack, but the preprocessor simply doesn't
  * know whether it's running on a 32- or 64-bit machine.
  */
-#ifdef __alpha__
+#if defined(__alpha__) || defined(__sparc_v9__)
 #define   INT64_FORMAT   "%ld"
 #define U_INT64_FORMAT   "%lu"
 #define HEX_INT64_FORMAT "%lx"
