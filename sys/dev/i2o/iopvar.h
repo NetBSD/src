@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.10 2001/09/27 18:43:38 ad Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.11 2002/11/08 05:47:36 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -112,6 +112,8 @@ struct iop_softc {
 	bus_space_handle_t sc_ioh;	/* Bus space handle */
 	bus_space_tag_t	sc_iot;		/* Bus space tag */
 	bus_dma_tag_t	sc_dmat;	/* Bus DMA tag */
+	bus_space_handle_t sc_rep_ioh;	/* Bus space handle */
+	bus_space_tag_t	sc_rep_iot;	/* Bus space tag */
 	void	 	*sc_ih;		/* Interrupt handler cookie */
 
 	struct iop_msg	*sc_ims;	/* Message wrappers */
