@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.41 1999/05/05 20:01:02 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.42 2000/01/10 03:16:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -175,12 +175,17 @@ ibcs2_sys_waitsys(p, v, retval)
 
 	sg = stackgap_init(p->p_emul);
 
-#define WAITPID_EFLAGS	0x8c4	/* OF, SF, ZF, PF */
 	
 	SCARG(&w4, rusage) = NULL;
 	SCARG(&w4, status) = stackgap_alloc(&sg, sizeof(int));
 
+#if defined(__i386__)
+#define WAITPID_EFLAGS	0x8c4	/* OF, SF, ZF, PF */
 	if ((p->p_md.md_regs->tf_eflags & WAITPID_EFLAGS) == WAITPID_EFLAGS) {
+#endif
+#if defined(__vax__)
+	if (p != NULL) {	/* XXX */
+#endif
 		/* waitpid */
 		SCARG(&w4, pid) = SCARG(uap, a1);
 		SCARG(&w4, options) = SCARG(uap, a3);
@@ -1437,48 +1442,6 @@ ibcs2_sys_readlink(p, v, retval)
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_readlink(p, uap, retval);
-}
-
-int
-ibcs2_sys_sysi86(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct ibcs2_sys_sysi86_args /* {
-		syscallarg(int) cmd;
-		syscallarg(int) arg;
-	} */ *uap = v;
-	int val, error;
-
-	switch (SCARG(uap, cmd)) {
-	case IBCS2_SI86FPHW:
-		val = IBCS2_FP_NO;
-#ifdef MATH_EMULATE
-		val = IBCS2_FP_SW;
-#else
-		val = IBCS2_FP_387;		/* a real coprocessor */
-#endif
-		if ((error = copyout((caddr_t)&val, (caddr_t)SCARG(uap, arg),
-				     sizeof(val))))
-			return error;
-		break;
-
-	case IBCS2_SI86STIME:		/* XXX - not used much, if at all */
-	case IBCS2_SI86SETNAME:
-		return EINVAL;
-
-	case IBCS2_SI86PHYSMEM:
-                *retval = ctob(physmem);
-		break;
-
-	case IBCS2_SI86GETFEATURES:	/* XXX structure def? */
-		break;
-
-	default:
-		return EINVAL;
-	}
-	return 0;
 }
 
 
