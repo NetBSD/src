@@ -72,10 +72,6 @@ Sources of NetBSD:
 
 #include "mirrors"
 
-If you wish to become a distribution site for NetBSD, contact Chris
-Demetriou <cgd@NetBSD.ORG>.
-
-
 NetBSD 1.0 Release Contents:
 ------ --- ------- --------
 
