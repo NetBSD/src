@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2002/03/28 03:18:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 2002/04/03 06:38:26 lukem Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -13,11 +13,11 @@ RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
 IMAGE=		diskimage
 IMAGESIZE=	4096b
+# MAKEFS_FLAGS=	-o density=32k			# XXXDISTRIB
 
 LISTS=		${.CURDIR}/list
 IMAGEENDIAN=	le
 IMAGEDEPENDS=	netbsd.gz ${DESTDIR}/usr/mdec/boot.pmax
-# MAKEFS_FLAGS=	-o density=32k			# XXXDISTRIB
 
 CLEANFILES+=	netbsd netbsd.gz netbsd.ecoff netbsd.ecoff.gz \
 		${IMAGE} ${IMAGE}.gz
@@ -33,8 +33,7 @@ netbsd.gz: ${KERN} ${RAMDISK}
 	gzip -9 netbsd
 
 ${IMAGE}.gz:	${IMAGE}
-	${DESTDIR}/usr/mdec/installboot ${IMAGE} ${DESTDIR}/usr/mdec/bootxx_ffs
-						# XXXDISTRIB
+	${INSTALLBOOT} -m ${MACHINE} ${IMAGE} ${DESTDIR}/usr/mdec/bootxx_ffs
 	rm -f ${IMAGE}.gz
 	gzip -9 ${IMAGE}
 
