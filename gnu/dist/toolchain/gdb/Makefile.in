@@ -688,9 +688,9 @@ install-only: $(CONFIG_INSTALL)
 		else \
 		  true ; \
 		fi ; \
-		$(srcdir)/../mkinstalldirs $(bindir) ; \
+		$(SHELL) $(srcdir)/../mkinstalldirs $(bindir) ; \
 		$(INSTALL_PROGRAM) gdb$(EXEEXT) $(bindir)/$$transformed_name$(EXEEXT) ; \
-		$(srcdir)/../mkinstalldirs $(man1dir) ; \
+		$(SHELL) $(srcdir)/../mkinstalldirs $(man1dir) ; \
 		$(INSTALL_DATA) $(srcdir)/gdb.1 $(man1dir)/$$transformed_name.1
 	@$(MAKE) DO=install "DODIRS=$(SUBDIRS)" $(FLAGS_TO_PASS) subdir_do 
 
