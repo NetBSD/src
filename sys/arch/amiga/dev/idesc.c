@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.17 1996/03/17 05:58:43 mhitch Exp $	*/
+/*	$NetBSD: idesc.c,v 1.18 1996/03/24 04:12:27 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -926,12 +926,8 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 			mdsnbuf->blk_desc.blklen[1] = 512 >> 8;
 			mdsnbuf->pages.rigid_geometry.pg_code = 4;
 			mdsnbuf->pages.rigid_geometry.pg_length = 16;
-			mdsnbuf->pages.rigid_geometry.ncyl_2 =
-			    ide->sc_params.idep_fixedcyl >> 16;
-			mdsnbuf->pages.rigid_geometry.ncyl_1 =
-			    ide->sc_params.idep_fixedcyl >> 8;
-			mdsnbuf->pages.rigid_geometry.ncyl_0 =
-			    ide->sc_params.idep_fixedcyl;
+			_lto3b(ide->sc_params.idep_fixedcyl,
+			    mdsnbuf->pages.rigid_geometry.ncyl);
 			mdsnbuf->pages.rigid_geometry.nheads =
 			    ide->sc_params.idep_heads;
 			dev->sc_stat[0] = 0;
