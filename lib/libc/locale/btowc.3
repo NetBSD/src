@@ -1,4 +1,4 @@
-.\" $NetBSD: btowc.3,v 1.1 2003/03/03 08:24:58 tshiozak Exp $
+.\" $NetBSD: btowc.3,v 1.2 2003/03/17 08:29:44 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -50,17 +50,21 @@ wide character.
 .Pp
 The behaviour of the
 .Fn btowc
-is affected by LC_CTYPE category of the current locale.
+is affected by the
+.Dv LC_CTYPE
+category of the current locale.
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
 The
 .Fn btowc
 returns:
 .Bl -tag -width 012345678901
-.It WEOF
+.It Dv WEOF
 if
 .Fa c
-is EOF or if (unsigned char)
+is
+.Dv EOF
+or if (unsigned char)
 .Fa c
 does not correspond to a valid single byte character representation.
 .It (otherwise)
@@ -72,9 +76,9 @@ a wide character corresponding to
 No errors are defined.
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO
-.Xr wctob 3 ,
 .Xr mbrtowc 3 ,
-.Xr setlocale 3
+.Xr setlocale 3 ,
+.Xr wctob 3
 .\" ----------------------------------------------------------------------
 .Sh STANDARDS
 The
