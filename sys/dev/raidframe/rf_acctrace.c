@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.c,v 1.9 2002/09/14 18:07:31 oster Exp $	*/
+/*	$NetBSD: rf_acctrace.c,v 1.10 2002/09/14 18:17:52 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.9 2002/09/14 18:07:31 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.10 2002/09/14 18:17:52 oster Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -52,15 +52,13 @@ __KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.9 2002/09/14 18:07:31 oster Exp $"
 static long numTracesSoFar;
 static int accessTraceBufCount = 0;
 static RF_AccTraceEntry_t *access_tracebuf;
-static long traceCount;
 
 int     rf_stopCollectingTraces;
 RF_DECLARE_MUTEX(rf_tracing_mutex)
-	int     rf_trace_fd;
 
-	static void rf_ShutdownAccessTrace(void *);
+static void rf_ShutdownAccessTrace(void *);
 
-	static void rf_ShutdownAccessTrace(ignored)
+static void rf_ShutdownAccessTrace(ignored)
 	void   *ignored;
 {
 	if (rf_accessTraceBufSize) {
@@ -77,12 +75,11 @@ rf_ConfigureAccessTrace(listp)
 {
 	int     rc;
 
-	numTracesSoFar = accessTraceBufCount = rf_stopCollectingTraces = 0;
+	accessTraceBufCount = rf_stopCollectingTraces = 0;
 	if (rf_accessTraceBufSize) {
 		RF_Malloc(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
 		accessTraceBufCount = 0;
 	}
-	traceCount = 0;
 	numTracesSoFar = 0;
 	rc = rf_mutex_init(&rf_tracing_mutex);
 	if (rc) {
