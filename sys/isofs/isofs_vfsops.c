@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vfsops.c,v 1.3 1993/05/20 03:30:54 cgd Exp $
+ *	$Id: isofs_vfsops.c,v 1.4 1993/06/07 18:12:52 cgd Exp $
  */
 
 #include "param.h"
@@ -269,7 +269,7 @@ iso_mountfs(devvp, mp, p)
 
 	rootp = (struct iso_directory_record *)pri->root_directory_record;
 
-	isomp = (struct iso_mnt *)malloc(sizeof *isomp,M_UFSMNT,M_WAITOK);
+	isomp = (struct iso_mnt *)malloc(sizeof *isomp,M_ISOFSMNT,M_WAITOK);
 	isomp->logical_block_size = logical_block_size;
 	isomp->volume_space_size = isonum_733 (pri->volume_space_size);
 	bcopy (rootp, isomp->root, sizeof isomp->root);
@@ -307,7 +307,7 @@ out:
 	if (needclose)
 		(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
 	if (isomp) {
-		free((caddr_t)isomp, M_UFSMNT);
+		free((caddr_t)isomp, M_ISOFSMNT);
 		mp->mnt_data = (qaddr_t)0;
 	}
 	return (error);
@@ -355,7 +355,7 @@ isofs_unmount(mp, mntflags, p)
 	error = VOP_CLOSE(isomp->im_devvp, ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
 	vrele(isomp->im_devvp);
-	free((caddr_t)isomp, M_UFSMNT);
+	free((caddr_t)isomp, M_ISOFSMNT);
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
