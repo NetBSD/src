@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_card.c,v 1.1.1.1 2000/05/07 00:16:18 wiz Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.2 2000/05/07 00:24:33 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.9 2000/02/12 08:49:21 peter Exp */
 
@@ -58,26 +58,30 @@
 #ifdef __FreeBSD__
 #include <machine/clock.h>      /* for DELAY */
 #include <pci/pcivar.h>
-#endif
 
 #if (__FreeBSD_version >=300000)
 #include <machine/bus_memio.h>	/* for bus space */
 #include <machine/bus.h>
 #include <sys/bus.h>
 #endif
+#endif
 
 #ifdef __NetBSD__
-#include <dev/ic/ioctl_meteor.h>	/* NetBSD location for .h files */
-#include <dev/ic/ioctl_bt848.h>
+#include <dev/ic/bt8xx.h>	/* NetBSD location for .h files */
+#include <dev/pci/bktr/bktr_reg.h>
+#include <dev/pci/bktr/bktr_core.h>
+#include <dev/pci/bktr/bktr_tuner.h>
+#include <dev/pci/bktr/bktr_card.h>
+#include <dev/pci/bktr/bktr_audio.h>
 #else
 #include <machine/ioctl_meteor.h>	/* Traditional location for .h files */
 #include <machine/ioctl_bt848.h>        /* extensions to ioctl_meteor.h */
-#endif
 #include <dev/bktr/bktr_reg.h>
 #include <dev/bktr/bktr_core.h>
 #include <dev/bktr/bktr_tuner.h>
 #include <dev/bktr/bktr_card.h>
 #include <dev/bktr/bktr_audio.h>
+#endif
 
 #ifdef __NetBSD__
 static int bootverbose = 1;
@@ -112,7 +116,7 @@ static int bootverbose = 1;
 #define PFC8582_WADDR           0xa0
 #define PFC8582_RADDR		0xa1
 
-#if BROOKTREE_SYSTEM_DEFAULT == BROOKTREE_PAL
+#if BKTR_SYSTEM_DEFAULT == BROOKTREE_PAL
 #define DEFAULT_TUNER   PHILIPS_PALI
 #else
 #define DEFAULT_TUNER   PHILIPS_NTSC
@@ -476,9 +480,9 @@ static int locate_eeprom_address( bktr_ptr_t bktr) {
 
 /*
  * determine the card brand/model
- * OVERRIDE_CARD, OVERRIDE_TUNER, OVERRIDE_DBX and OVERRIDE_MSP
- * can be used to select a specific device, regardless of the
- * autodetection and i2c device checks.
+ * BKTR_OVERRIDE_CARD, BKTR_OVERRIDE_TUNER, BKTR_OVERRIDE_DBX and
+ * BKTR_OVERRIDE_MSP can be used to select a specific device,
+ * regardless of the autodetection and i2c device checks.
  *
  * The scheme used for probing cards faces these problems:
  *  It is impossible to work out which type of tuner is actually fitted,
@@ -564,8 +568,8 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 
 
 	/* Check for a user specified override on the card selection */
-#if defined( OVERRIDE_CARD )
-	bktr->card = cards[ (card = OVERRIDE_CARD) ];
+#if defined( BKTR_OVERRIDE_CARD )
+	bktr->card = cards[ (card = BKTR_OVERRIDE_CARD) ];
 	goto checkEEPROM;
 #endif
 	if (bktr->bt848_card != -1 ) {
@@ -785,8 +789,8 @@ checkTuner:
 		goto checkDBX;
 	}
 
-#if defined( OVERRIDE_TUNER )
-	select_tuner( bktr, OVERRIDE_TUNER );
+#if defined( BKTR_OVERRIDE_TUNER )
+	select_tuner( bktr, BKTR_OVERRIDE_TUNER );
 	goto checkDBX;
 #endif
 	if (bktr->bt848_tuner != -1 ) {
@@ -1002,7 +1006,7 @@ checkTuner:
 	    break;
 
 	case CARD_LEADTEK:
-#if BROOKTREE_SYSTEM_DEFAULT == BROOKTREE_PAL
+#if BKTR_SYSTEM_DEFAULT == BROOKTREE_PAL
 	    select_tuner( bktr, PHILIPS_FR1216_PAL );
 #else
 	    select_tuner( bktr, PHILIPS_FR1236_NTSC );
@@ -1037,8 +1041,8 @@ checkTuner:
 
 
 checkDBX:
-#if defined( OVERRIDE_DBX )
-	bktr->card.dbx = OVERRIDE_DBX;
+#if defined( BKTR_OVERRIDE_DBX )
+	bktr->card.dbx = BKTR_OVERRIDE_DBX;
 	goto checkMSP;
 #endif
    /* Check for i2c devices */
@@ -1075,8 +1079,8 @@ checkMSP:
         }
 #endif
 
-#if defined( OVERRIDE_MSP )
-	bktr->card.msp3400c = OVERRIDE_MSP;
+#if defined( BKTR_OVERRIDE_MSP )
+	bktr->card.msp3400c = BKTR_OVERRIDE_MSP;
 	goto checkMSPEnd;
 #endif
 
