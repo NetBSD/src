@@ -1,4 +1,4 @@
-.\" $NetBSD: mca.4,v 1.10 2001/04/20 16:08:46 jdolecek Exp $
+.\" $NetBSD: mca.4,v 1.11 2001/04/27 18:05:22 jdolecek Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,10 +86,10 @@ NS8250-, NS16450-, and NS16550-based serial cards.
 TROPIC based token ring interfaces
 .It ate
 Allied-Telesis 1720 ethernet interface cards
-.Pq Em recommended
 .It we
 WD/SMC WD80x3x ethernet interface cards and clones
-.Pq Em recommended
+.It le
+SKNET Personal and MC+ ethernet interface cards
 .It elmc
 3Com EtherLink/MC (3c523) ethernet interface
 .It ep
@@ -103,6 +103,7 @@ WD/SMC WD80x3x ethernet interface cards and clones
 .Xr edc 4 ,
 .Xr elmc 4 ,
 .Xr ep 4 ,
+.Xr le 4 ,
 .Xr tr 4 ,
 .Xr we 4
 .\"
