@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.45.2.1 1999/08/28 22:06:36 he Exp $
+#	$NetBSD: bsd.man.mk,v 1.45.2.2 1999/09/10 23:00:22 he Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -79,7 +79,7 @@ catpages:: ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}
 .	if !defined(UPDATE)
 .PHONY: ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}
 .	endif
-.	if !defined(BUILD)
+.	if !defined(BUILD) && !make(all) && !make(${P})
 ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}: .MADE
 .	endif
 
