@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.16 2004/02/13 11:36:08 wiz Exp $
+.\" $NetBSD: ksh.Man,v 1.17 2004/04/17 15:40:12 christos Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -2591,8 +2591,8 @@ Exported functions are not implemented yet.
 T}
 .TE
 .\"}}}
-.\"{{{  ulimit [-acdfHlmnpsStvw] [value]
-.IP "\fBulimit\fP [\fB\-acdfHlmnpsStvw\fP] [\fIvalue\fP]"
+.\"{{{  ulimit [-abcdfHlmnpsStvw] [value]
+.IP "\fBulimit\fP [\fB\-abcdfHlmnpsStvw\fP] [\fIvalue\fP]"
 Display or set process limits.
 If no options are used, the file size limit (\fB\-f\fP) is assumed.
 \fBvalue\fP, if specified, may be either be an arithmetic expression or the
@@ -2610,6 +2610,8 @@ Displays all limits; unless \fB\-H\fP is used, soft limits are displayed.
 Set the hard limit only (default is to set both hard and soft limits).
 .IP \fB\-S\fP
 Set the soft limit only (default is to set both hard and soft limits).
+.IP \fB\-b\fP
+Impose a size limit of \fIn\fP bytes on the size of socket buffers.
 .IP \fB\-c\fP
 Impose a size limit of \fIn\fP blocks on the size of core dumps.
 .IP \fB\-d\fP
