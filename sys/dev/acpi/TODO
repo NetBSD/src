@@ -1,11 +1,5 @@
 Important things to make ACPI useful on more machines:
 
-* Split the Region initialization into two passes -- one that fills in
-  AddressSpace pointers, and one that calls _REG methods.  Right now we
-  can lose due to a _REG method for one Region calling a method that
-  accesses another Region that hasn't been fixed up yet.  (Affects
-  Sverre Froyen's HP Omnibook 6000.)
-
 * Fix problems with ACPI_PCI_FIXUP.  CardBus slots do not work in some
   machines currently.  (Affects many machines.)
 
