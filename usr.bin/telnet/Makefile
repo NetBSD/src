@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1999/06/07 00:53:10 thorpej Exp $
+#	$NetBSD: Makefile,v 1.17 1999/07/02 15:09:10 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -48,9 +48,8 @@ PROG=	telnet
 CPPFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO -Dunix
 CPPFLAGS+=-DENV_HACK
 CPPFLAGS+=-I${.CURDIR}/../../lib
-LDADD+=	-ltermcap -ltelnet
+LDADD+= -ltermcap -ltelnet
 DPADD=	${LIBTERMCAP} ${LIBTELNET}
-
 
 SRCS=	authenc.c commands.c main.c network.c ring.c sys_bsd.c telnet.c \
 	terminal.c tn3270.c utilities.c
@@ -69,6 +68,11 @@ MAN=	telnet.1
 .include <bsd.man.mk>
 
 .endif	# EXPORTABLE_SYSTEM
+
+CPPFLAGS+=-DIPSEC
+LDADD+=	-lipsec
+DPADD+=	${LIBIPSEC}
+CPPFLAGS+=-DINET6
 
 nocrypt:
 	@echo "Encryption code already removed."
