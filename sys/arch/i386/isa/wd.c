@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.53 1994/03/02 23:27:13 mycroft Exp $
+ *	$Id: wd.c,v 1.54 1994/03/03 01:58:21 mycroft Exp $
  */
 
 #define	QUIETWORKS	/* define this to make wdopen() set DKFL_QUIET */
@@ -164,7 +164,7 @@ static int wdtimeout(caddr_t);
 void wddisksort(struct buf *dp, struct buf *bp);
 int wdc_wait(struct disk *, int);
 #define	wait_for_drq(d)		wdc_wait(d, WDCS_DRQ)
-#define	wait_for_ready(d)	wdc_wait(d, WDCS_READY)
+#define	wait_for_ready(d)	wdc_wait(d, WDCS_READY | WDCS_SEEKCMPLT)
 #define	wait_for_unbusy(d)	wdc_wait(d, 0)
 
 /*
@@ -403,11 +403,10 @@ wdstart(int ctrlr)
 	register struct buf *bp;
 	struct disklabel *lp;
 	struct buf *dp;
-	long	blknum, cylin, head, sector;
-	long	secpertrk, secpercyl, addr;
-	int	lunit, wdc;
+	long blknum, cylin, head, sector;
+	long secpertrk, secpercyl, addr;
+	int lunit, wdc;
 	int xfrblknum;
-	unsigned char status;
     
 loop:
 	/* is there a drive for the controller to do a transfer with? */
@@ -615,8 +614,6 @@ retry:
 		wdreset(du, 1);
 		goto retry;
 	}
-	/* clear interrupt from command upload */
-	(void) inb(wdc+wd_status);
 	/* then send it! */
 	outsw(wdc+wd_data, addr + du->dk_skip * DEV_BSIZE,
 	    DEV_BSIZE / sizeof(short));
@@ -638,12 +635,6 @@ wdintr(int ctrlr)
 	register struct	disk *du;
 	register struct buf *bp, *dp;
 	int stat, wdc;
-
-	/* clear the pending interrupt */
-	stat = inb(wdcontroller[ctrlr].dkc_port+wd_status);
-#ifdef WDDEBUG
-	printf("i%02x ", stat);
-#endif
 
 	if (!wdtab[ctrlr].b_active) {
 		printf("wdc%d: extra interrupt\n", ctrlr);
@@ -810,8 +801,8 @@ done:
 int
 wdopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
-	register unsigned int lunit;
-	register struct disk *du;
+	int lunit;
+	struct disk *du;
 	int part = WDPART(dev), mask = 1 << part;
 	struct partition *pp;
 	char *msg;
@@ -928,9 +919,9 @@ wdopen(dev_t dev, int flags, int fmt, struct proc *p)
 static int
 wdcontrol(register struct buf *bp)
 {
-	register struct disk *du;
-	register unit, lunit;
-	unsigned char  stat;
+	struct disk *du;
+	int unit, lunit;
+	int stat;
 	int s, ctrlr;
 	int wdc;
     
@@ -1013,9 +1004,8 @@ badopen:
 static int
 wdcommand(struct disk *du, int cmd)
 {
-	int timeout, stat, wdc;
+	int stat, wdc;
     
-	/*DELAY(2000);*/
 	wdc = du->dk_port;
 
 	/* controller ready for command? */
@@ -1030,13 +1020,14 @@ wdcommand(struct disk *du, int cmd)
 #if 0
 	case WDCC_FORMAT:
 	case WDCC_RESTORE | WD_STEP:
-	case WDCC_IDC:
-	case WDCC_DIAGNOSE:
 #endif
 		return wait_for_unbusy(du);
 	case WDCC_READ:
 	case WDCC_WRITE:
 		return 0;
+	case WDCC_IDC:
+	case WDCC_DIAGNOSE:
+		return wdc_wait(du, WDCS_READY);
 	case WDCC_READP:
 		return wait_for_drq(du);
 	}
@@ -1048,7 +1039,7 @@ wdcommand(struct disk *du, int cmd)
 static int
 wdsetctlr(dev_t dev, struct disk *du)
 {
-	int stat, x, wdc;
+	int stat, s, wdc;
     
 #ifdef WDDEBUG
 	printf("wd(%d,%d) C%dH%dS%d\n", du->dk_ctrlr, du->dk_unit,
@@ -1057,7 +1048,7 @@ wdsetctlr(dev_t dev, struct disk *du)
     
 	wdc = du->dk_port;
 
-	x = splbio();
+	s = splbio();
 	if (wait_for_unbusy(du) < 0)
 		return -1;
 	outb(wdc+wd_cyl_lo, du->dk_dd.d_ncylinders);	/* TIH: was ...ders+1 */
@@ -1071,7 +1062,7 @@ wdsetctlr(dev_t dev, struct disk *du)
 	if (stat < 0 || stat & WDCS_ERR)
 		printf("wdsetctlr: stat %b error %b\n", stat, WDCS_BITS,
 		    inb(wdc+wd_error), WDERR_BITS);
-	splx(x);
+	splx(s);
 	return stat;
 }
 
@@ -1081,26 +1072,26 @@ wdsetctlr(dev_t dev, struct disk *du)
 static int
 wdgetctlr(int u, struct disk *du)
 {
-	int stat, x, i, wdc;
+	int stat, s, i, wdc;
 	char tb[DEV_BSIZE];
 	struct wdparams *wp;
     
-	x = splbio();		/* not called from intr level ... */
+	s = splbio();		/* not called from intr level ... */
 	wdc = du->dk_port;
 	if (wait_for_unbusy(du) < 0) {
-		splx(x);
+		splx(s);
 		return -1;
 	}
 
 	outb(wdc+wd_sdh, WDSD_IBM | (u << 4));
 	if (wait_for_ready(du) < 0) {
-		splx(x);
+		splx(s);
 		return -1;
 	}
 
 	stat = wdcommand(du, WDCC_READP);
 	if (stat < 0) {
-		splx(x);
+		splx(s);
 		return -1;
 	}
 
@@ -1140,7 +1131,7 @@ wdgetctlr(int u, struct disk *du)
 		 */
 		stat = wdcommand(du, WDCC_RESTORE | WD_STEP);
 		if (stat < 0 || stat & WDCS_ERR) {
-			splx(x);
+			splx(s);
 			return inb(wdc+wd_error);
 		}
 
@@ -1162,7 +1153,7 @@ wdgetctlr(int u, struct disk *du)
     
 	/* XXX sometimes possibly needed */
 	(void) inb(wdc+wd_status);
-	splx(x);
+	splx(s);
 	return 0;
 }
 
@@ -1171,7 +1162,7 @@ wdgetctlr(int u, struct disk *du)
 int
 wdclose(dev_t dev, int flags, int fmt)
 {
-	register struct disk *du;
+	struct disk *du;
 	int part = WDPART(dev), mask = 1 << part;
     
 	du = wddrives[WDUNIT(dev)];
@@ -1193,63 +1184,56 @@ int
 wdioctl(dev_t dev, int cmd, caddr_t addr, int flag, struct proc *p)
 {
 	int lunit = WDUNIT(dev);
-	register struct disk *du;
-	int error = 0;
-	struct uio auio;
-	struct iovec aiov;
-    
-	du = wddrives[lunit];
+	struct disk *du = wddrives[lunit];
+	int error;
     
 	switch (cmd) {
 	case DIOCSBAD:
 		if ((flag & FWRITE) == 0)
-			error = EBADF;
-		else {
-			du->dk_cpd.bad = *(struct dkbad *)addr;
-			bad144intern(du);
-		}
-		break;
+			return EBADF;
+		du->dk_cpd.bad = *(struct dkbad *)addr;
+		bad144intern(du);
+		return 0;
 
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = du->dk_dd;
-		break;
+		return 0;
 	
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = &du->dk_dd;
 		((struct partinfo *)addr)->part =
 		    &du->dk_dd.d_partitions[WDPART(dev)];
-		break;
+		return 0;
 	
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
-			error = EBADF;
-		else {
-			error = setdisklabel(&du->dk_dd,						    (struct disklabel *)addr,
-			    /*(du->dk_flags & DKFL_BSDLABEL) ? du->dk_openpart : */0,
-			    &du->dk_cpd);
-		}
+			return EBADF;
+		error = setdisklabel(&du->dk_dd,
+		    (struct disklabel *)addr,
+		    /*(du->dk_flags & DKFL_BSDLABEL) ? du->dk_openpart : */0,
+		    &du->dk_cpd);
 		if (error == 0) {
 			du->dk_flags |= DKFL_BSDLABEL;
 			wdsetctlr(dev, du);
 		}
-		break;
+		return error;
 	
 	case DIOCWLABEL:
 		du->dk_flags &= ~DKFL_WRITEPROT;
 		if ((flag & FWRITE) == 0)
-			error = EBADF;
-		else
-			du->dk_wlabel = *(int *)addr;
-		break;
+			return EBADF;
+		du->dk_wlabel = *(int *)addr;
+		return 0;
 	
 	case DIOCWDINFO:
 		du->dk_flags &= ~DKFL_WRITEPROT;
 		if ((flag & FWRITE) == 0)
-			error = EBADF;
-		else if ((error = setdisklabel(&du->dk_dd,
+			return EBADF;
+		error = setdisklabel(&du->dk_dd,
 		    (struct disklabel *)addr,
 		    /*(du->dk_flags & DKFL_BSDLABEL) ? du->dk_openpart :*/0,
-		    &du->dk_cpd)) == 0) {
+		    &du->dk_cpd);
+		if (error == 0) {
 			int wlab;
 	    
 			du->dk_flags |= DKFL_BSDLABEL;
@@ -1263,42 +1247,46 @@ wdioctl(dev_t dev, int cmd, caddr_t addr, int flag, struct proc *p)
 			du->dk_openpart = du->dk_copenpart | du->dk_bopenpart;
 			du->dk_wlabel = wlab;
 		}
-		break;
+		return error;
 	
 #ifdef notyet
 	case DIOCGDINFOP:
 		*(struct disklabel **)addr = &du->dk_dd;
-		break;
+		return 0;
 	
 	case DIOCWFORMAT:
 		if ((flag & FWRITE) == 0)
-			error = EBADF;
-		else {
-			register struct format_op *fop;
+			return EBADF;
+	{
+		register struct format_op *fop;
+		struct iovec aiov;
+		struct uio auio;
 	    
-			fop = (struct format_op *)addr;
-			aiov.iov_base = fop->df_buf;
-			aiov.iov_len = fop->df_count;
-			auio.uio_iov = &aiov;
-			auio.uio_iovcnt = 1;
-			auio.uio_resid = fop->df_count;
-			auio.uio_segflg = 0;
-			auio.uio_offset =
-			    fop->df_startblk * du->dk_dd.d_secsize;
-			error = physio(wdformat, &rwdbuf[lunit], dev, B_WRITE,
-			    minphys, &auio);
-			fop->df_count -= auio.uio_resid;
-			fop->df_reg[0] = du->dk_status;
-			fop->df_reg[1] = du->dk_error;
-		}
-		break;
+		fop = (struct format_op *)addr;
+		aiov.iov_base = fop->df_buf;
+		aiov.iov_len = fop->df_count;
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		auio.uio_resid = fop->df_count;
+		auio.uio_segflg = 0;
+		auio.uio_offset =
+		    fop->df_startblk * du->dk_dd.d_secsize;
+		error = physio(wdformat, &rwdbuf[lunit], dev, B_WRITE,
+		    minphys, &auio);
+		fop->df_count -= auio.uio_resid;
+		fop->df_reg[0] = du->dk_status;
+		fop->df_reg[1] = du->dk_error;
+		return error;
+	}
 #endif
 	
 	default:
-		error = ENOTTY;
-		break;
+		return ENOTTY;
 	}
-	return error;
+
+#ifdef DIAGNOSTIC
+	panic("wdioctl: impossible");
+#endif
 }
 
 #ifdef B_FORMAT
@@ -1551,10 +1539,8 @@ wdc_wait(du, mask)
 
 	for (;;) {
 		stat = inb(wdc+wd_altsts);
-		if ((stat & WDCS_BUSY) == 0)
-			/* XXXX Yuck.  Need to redo this junk. */
-			if (mask == 0 || (stat & mask) != 0)
-				break;
+		if ((stat & WDCS_BUSY) == 0 && (stat & mask) == mask)
+			break;
 		DELAY(WDCDELAY);
 		if (++timeout > WDCNDELAY)
 			return -1;
