@@ -1,4 +1,4 @@
-/*	$NetBSD: esoreg.h,v 1.5 1999/12/10 19:13:00 kleink Exp $	*/
+/*	$NetBSD: esoreg.h,v 1.5.30.1 2004/05/29 14:22:49 tron Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -181,11 +181,12 @@
 #define  ESO_MIXREG_A2C2_IRQ	0x80	 /* IRQ latch */
 #define ESO_MIXREG_PVR_A2	0x7c	/* Playback mixer: Audio 2 */
 #define ESO_MIXREG_MPM		0x7d	/* Microphone Preamp, Mono In/Out */
-#define  ESO_MIXREG_MPM_MOMASK  0x03	 /* MONO_OUT value mask */
-#define  ESO_MIXREG_MPM_MOMUTE  0x00	 /* MONO_OUT mute */
-#define  ESO_MIXREG_MPM_MOCINR  0x01	 /* MONO_OUT source CIN_R */
-#define  ESO_MIXREG_MPM_MOA2R	0x02	 /* MONO_OUT source Audio 2 Right */
-#define  ESO_MIXREG_MPM_MOREC	0x03	 /* MONO_OUT source record stage */
+#define  ESO_MIXREG_MPM_MIBYPASS 0x01	 /* MONO_IN mixer bypass */
+#define  ESO_MIXREG_MPM_MOMASK  0x06	 /* MONO_OUT value mask */
+#define  ESO_MIXREG_MPM_MOMUTE  0x00	  /* MONO_OUT mute */
+#define  ESO_MIXREG_MPM_MOCINR  0x02	  /* MONO_OUT source CIN_R */
+#define  ESO_MIXREG_MPM_MOA2R	0x04	  /* MONO_OUT source Audio 2 Right */
+#define  ESO_MIXREG_MPM_MOREC	0x06	  /* MONO_OUT source record stage */
 #define  ESO_MIXREG_MPM_PREAMP	0x08	 /* Preamp enable */
 #define  ESO_MIXREG_MPM_RESV0	0xf0	 /* Reserved, always write 0 */
 
