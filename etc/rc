@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.101 1998/02/23 05:20:52 lukem Exp $
+#	$NetBSD: rc,v 1.102 1998/02/24 00:24:45 lukem Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -186,7 +186,7 @@ if checkyesno ntpdate; then
 	fi
 	if [ -n "$ntpdate_hosts"  ]; then
 		echo 'Setting date via ntp.'
-		ntpdate -b $ntpdate_hosts
+		ntpdate -b -s $ntpdate_hosts
 	fi
 fi
 
