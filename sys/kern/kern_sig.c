@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.114.2.2 2001/08/03 04:13:41 lukem Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.114.2.3 2001/09/07 22:01:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -83,7 +83,7 @@ static int	filt_sigattach(struct knote *kn);
 static void	filt_sigdetach(struct knote *kn);
 static int	filt_signal(struct knote *kn, long hint);
 
-struct filterops sig_filtops = {
+const struct filterops sig_filtops = {
 	0, filt_sigattach, filt_sigdetach, filt_signal
 };
 
