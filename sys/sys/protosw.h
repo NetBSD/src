@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.17 1998/06/02 20:55:53 thorpej Exp $	*/
+/*	$NetBSD: protosw.h,v 1.18 1999/07/01 05:56:53 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -115,6 +115,7 @@ struct protosw {
 #define	PR_CONNREQUIRED	0x04		/* connection required by protocol */
 #define	PR_WANTRCVD	0x08		/* want PRU_RCVD calls */
 #define	PR_RIGHTS	0x10		/* passes capabilities */
+#define	PR_LISTEN	0x20		/* supports listen(2) and accept(2) */
 
 /*
  * The arguments to usrreq are:
