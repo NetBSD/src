@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.16 2004/01/09 16:22:12 rtr Exp $
+# $NetBSD: md.i386,v 1.17 2004/01/11 15:12:46 lukem Exp $
 ./usr/X11R6/bin/gtf
 ./usr/X11R6/bin/inb
 ./usr/X11R6/bin/inl
@@ -37,9 +37,3 @@
 ./usr/X11R6/lib/libXxf86dga.so
 ./usr/X11R6/lib/libXxf86dga.so.1
 ./usr/X11R6/lib/libXxf86dga.so.1.0
-./usr/X11R6/man/cat1/XFree86.0
-./usr/X11R6/man/cat1/gtf.0
-./usr/X11R6/man/cat1/kbd_mode.0
-./usr/X11R6/man/cat1/pcitweak.0
-./usr/X11R6/man/cat1/scanpci.0
-./usr/X11R6/man/cat1/xf86config.0

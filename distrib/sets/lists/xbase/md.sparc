@@ -1,7 +1,7 @@
-# $NetBSD: md.sparc,v 1.10 2004/01/08 06:34:48 rtr Exp $
+# $NetBSD: md.sparc,v 1.11 2004/01/11 15:12:46 lukem Exp $
 ./usr/X11R6/bin/constype
 ./usr/X11R6/bin/kbd_mode
-./usr/X11R6/man/cat1/constype.0
-./usr/X11R6/man/cat1/kbd_mode.0
-./usr/X11R6/man/man1/constype.1
-./usr/X11R6/man/man1/kbd_mode.1
+./usr/X11R6/man/cat1/constype.0			-unknown-		.cat
+./usr/X11R6/man/cat1/kbd_mode.0			-unknown-		.cat
+./usr/X11R6/man/man1/constype.1			-unknown-		.man
+./usr/X11R6/man/man1/kbd_mode.1			-unknown-		.man

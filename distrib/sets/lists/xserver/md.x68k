@@ -1,6 +1,6 @@
-# $NetBSD: md.x68k,v 1.9 2004/01/10 13:43:56 rtr Exp $
+# $NetBSD: md.x68k,v 1.10 2004/01/11 15:12:46 lukem Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/X68k
 ./usr/X11R6/lib/X11/X68kConfig
-./usr/X11R6/man/cat1/X68k.0
-./usr/X11R6/man/man1/X68k.1
+./usr/X11R6/man/cat1/X68k.0			-unknown-		.cat
+./usr/X11R6/man/man1/X68k.1			-unknown-		.man

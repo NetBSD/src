@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.9 2004/01/09 16:22:12 rtr Exp $
+# $NetBSD: md.macppc,v 1.10 2004/01/11 15:12:46 lukem Exp $
 ./usr/X11R6/bin/dga
 ./usr/X11R6/bin/gtf
 ./usr/X11R6/bin/kbd_mode
@@ -34,28 +34,27 @@
 ./usr/X11R6/lib/libXxf86dga.so
 ./usr/X11R6/lib/libXxf86dga.so.1
 ./usr/X11R6/lib/libXxf86dga.so.1.0
-./usr/X11R6/man/cat1/XFree86.0
-./usr/X11R6/man/cat1/dga.0
-./usr/X11R6/man/cat1/gtf.0
-./usr/X11R6/man/cat1/kbd_mode.0
-./usr/X11R6/man/cat1/pcitweak.0
-./usr/X11R6/man/cat1/scanpci.0
-./usr/X11R6/man/cat1/xf86config.0
-./usr/X11R6/man/cat4/js_x.0
-./usr/X11R6/man/cat4/kbd.0
-./usr/X11R6/man/cat4/palmax.0
-./usr/X11R6/man/cat4/radeon.0
-./usr/X11R6/man/cat4/tek4957.0
-./usr/X11R6/man/cat5
-./usr/X11R6/man/man1/XFree86.1
-./usr/X11R6/man/man1/dga.1
-./usr/X11R6/man/man1/gtf.1
-./usr/X11R6/man/man1/kbd_mode.1
-./usr/X11R6/man/man1/pcitweak.1
-./usr/X11R6/man/man1/scanpci.1
-./usr/X11R6/man/man1/xf86config.1
-./usr/X11R6/man/man4/js_x.4
-./usr/X11R6/man/man4/kbd.4
-./usr/X11R6/man/man4/palmax.4
-./usr/X11R6/man/man4/radeon.4
-./usr/X11R6/man/man4/tek4957.4
+./usr/X11R6/man/cat1/XFree86.0			-unknown-		.cat
+./usr/X11R6/man/cat1/dga.0			-unknown-		.cat
+./usr/X11R6/man/cat1/gtf.0			-unknown-		.cat
+./usr/X11R6/man/cat1/kbd_mode.0			-unknown-		.cat
+./usr/X11R6/man/cat1/pcitweak.0			-unknown-		.cat
+./usr/X11R6/man/cat1/scanpci.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xf86config.0		-unknown-		.cat
+./usr/X11R6/man/cat4/js_x.0			-unknown-		.cat
+./usr/X11R6/man/cat4/kbd.0			-unknown-		.cat
+./usr/X11R6/man/cat4/palmax.0			-unknown-		.cat
+./usr/X11R6/man/cat4/radeon.0			-unknown-		.cat
+./usr/X11R6/man/cat4/tek4957.0			-unknown-		.cat
+./usr/X11R6/man/man1/XFree86.1			-unknown-		.man
+./usr/X11R6/man/man1/dga.1			-unknown-		.man
+./usr/X11R6/man/man1/gtf.1			-unknown-		.man
+./usr/X11R6/man/man1/kbd_mode.1			-unknown-		.man
+./usr/X11R6/man/man1/pcitweak.1			-unknown-		.man
+./usr/X11R6/man/man1/scanpci.1			-unknown-		.man
+./usr/X11R6/man/man1/xf86config.1		-unknown-		.man
+./usr/X11R6/man/man4/js_x.4			-unknown-		.man
+./usr/X11R6/man/man4/kbd.4			-unknown-		.man
+./usr/X11R6/man/man4/palmax.4			-unknown-		.man
+./usr/X11R6/man/man4/radeon.4			-unknown-		.man
+./usr/X11R6/man/man4/tek4957.4			-unknown-		.man
