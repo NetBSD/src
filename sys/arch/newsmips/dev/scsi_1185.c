@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.10 2003/04/02 04:17:52 thorpej Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.11 2003/04/19 14:56:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -699,7 +699,7 @@ scsi_hardreset()
 
 /*
  * I/O port (sc_ioptr) bit assign
- *	
+ *
  *	Rf_PRT3		-	<reserved>
  *	Rf_PRT2		-	<reserved>
  *	Rf_PRT1		out	Floppy Disk Density control
@@ -884,7 +884,7 @@ sc_resel(sc)
 		GET_INTR(&sc->int_stat1, &sc->int_stat2);
 	}
 	sc->int_stat2 &= ~R3_FNC;
-	
+
 	sc->sel_stat[chan] = SEL_SUCCESS;
 
 	sc->wrc--;
@@ -917,7 +917,7 @@ sc_discon(sc)
 	 *
 	 *	But, CXD1185Q reset INIT bit of sc_statr.
 	 *	So, can't issue Transfer Information command.
-	 *	
+	 *
 	 *	What shall we do ?  Bus reset ?
 	 */
 	if ((sc->int_stat2 & R3_DCNT) && ((sc_intok2 & Rb_DCNT) == 0))

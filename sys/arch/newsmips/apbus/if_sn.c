@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.12 2003/04/02 04:17:50 thorpej Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.13 2003/04/19 14:56:05 tsutsui Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -555,7 +555,7 @@ sonicput(sc, m0, mtd_next)
 	mtdp = &sc->mtda[sc->mtd_free];
 
 	buff = mtdp->mtd_buf;
-	
+
 	/* this packet goes to mtdnext fill in the TDA */
 	mtdp->mtd_mbuf = m0;
 	txp = mtdp->mtd_txp;
@@ -964,7 +964,7 @@ sonictxint(sc)
 			ifp->if_oerrors++;
 			printf("%s: Tx packet status=0x%x\n",
 			    sc->sc_dev.dv_xname, txp_status);
-			
+
 			/* XXX - DG This looks bogus */
 			if (mtd_hw != sc->mtd_free) {
 				printf("resubmitting remaining packets\n");
