@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ffs_vfsops.c	8.8 (Berkeley) 4/18/94
- *	$Id: ffs_vfsops.c,v 1.1 1994/06/08 11:42:09 mycroft Exp $
+ *	$Id: ffs_vfsops.c,v 1.2 1994/06/22 03:01:40 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -268,7 +268,7 @@ ffs_reload(mountp, cred, p)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
-	if (error = bread(devvp, SBOFF / size, SBSIZE, NOCRED, &bp))
+	if (error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp))
 		return (error);
 	fs = (struct fs *)bp->b_data;
 	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE ||
@@ -379,7 +379,7 @@ ffs_mountfs(devvp, mp, p)
 
 	bp = NULL;
 	ump = NULL;
-	if (error = bread(devvp, SBOFF / size, SBSIZE, NOCRED, &bp))
+	if (error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp))
 		goto out;
 	fs = (struct fs *)bp->b_data;
 	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE ||
