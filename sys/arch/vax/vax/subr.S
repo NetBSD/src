@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.2 2002/02/24 01:04:27 matt Exp $	   */
+/*	$NetBSD: subr.S,v 1.3 2002/03/31 00:11:13 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -109,12 +109,12 @@ ASENTRY(start, 0)
 	pushl	$to				# Address to jump to
 	rei					# change to kernel stack
 to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
-	cmpb	(%ap),$4				# symbols info present?
+	cmpb	(%ap),$3			# symbols info present?
 	blssu	3f				# nope, skip
 	bisl3	$0x80000000,8(%ap),_C_LABEL(symtab_start)
 						#   save start of symtab
 	movl	12(%ap),_C_LABEL(symtab_nsyms)	#   save number of symtab
-	bisl3	$0x80000000,16(%ap),_C_LABEL(symtab_end)
+	bisl3	$0x80000000,%r9,_C_LABEL(symtab_end)
 						#   save end of symtab
 3:	addl3	_C_LABEL(esym),$0x3ff,%r0	# Round symbol table end
 	bicl3	$0x3ff,%r0,_C_LABEL(proc0paddr)	# save proc0 uarea pointer
