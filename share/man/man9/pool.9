@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.28 2003/05/01 08:42:08 uebayasi Exp $
+.\"	$NetBSD: pool.9,v 1.29 2003/12/21 07:35:37 simonb Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@
 .Fa "size_t size"
 .Fa "u_int align"
 .Fa "u_int align_offset"
-.Fa "int nitems"
+.Fa "int flags"
 .Fa "char *wchan"
 .Fa "struct pool_allocator *palloc"
 .Fc
@@ -100,13 +100,8 @@ the alignment defaults to an architecture-specific natural alignment.
 The offset within an item to which the
 .Fa align
 parameter applies.
-.It Fa nitems
-Specifies the number of memory items that are allocated to
-the pool at creation time.
-This number may be zero,
-in which case
-.Fn pool_prime
-can be used at a later time to add permanent items to the pool.
+.It Fa flags
+Should be set to zero.
 .It Fa wchan
 The
 .Sq wait channel
