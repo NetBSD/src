@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.43 2004/02/13 11:36:16 wiz Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.44 2005/01/02 22:36:34 mhitch Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.43 2004/02/13 11:36:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.44 2005/01/02 22:36:34 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ dec_maxine_cons_init()
 	DELAY(160000000 / 9600);        /* XXX */
 
 #ifdef WSCONS
-	zs_ioasic_cnattach(ioasic_base, 0x100000, 0);
+	zs_ioasic_cnattach(ioasic_base, 0x100000, 1);
 #else
 	scc_cnattach(ioasic_base, 0x100000);
 #endif
