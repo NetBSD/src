@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldconfig.8,v 1.12 2000/10/08 09:53:00 bjh21 Exp $
+.\"	$NetBSD: ldconfig.8,v 1.13 2001/11/16 11:37:40 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,7 +83,7 @@ directories (or the order thereof) from the cache or to specify additional
 directories where shared libraries might be found.
 .Ev LD_LIBRARY_PATH
 is a
-.Sq \:
+.Sq \&:
 separated list of directory paths that are searched by
 .Nm ld.so
 when it needs to load a shared library.  It can be viewed as the run-time
@@ -124,7 +124,21 @@ are still scanned.)
 .It Fl v
 Switch on verbose mode.
 .El
-.Sh SECURITY
+.Sh FILES
+.Pa /var/run/ld.so.hints ,
+.Pa /etc/ld.so.conf
+.Sh SEE ALSO
+.Xr ld 1 ,
+.Xr ld.so 1 ,
+.Xr ld.so.conf 5 ,
+.Xr link 5
+.Sh HISTORY
+A
+.Nm
+utility first appeared in SunOS 4.0, it appeared in its current form
+in
+.Nx 0.9a .
+.Sh SECURITY CONSIDERATIONS
 Special care must be taken when loading shared libraries into the address
 space of
 .Em set-user-ID
@@ -148,17 +162,3 @@ further assists set-user-ID programs by erasing the
 and
 .Ev LD_PRELOAD
 from the environment.
-.Sh FILES
-.Pa /var/run/ld.so.hints ,
-.Pa /etc/ld.so.conf
-.Sh SEE ALSO
-.Xr ld 1 ,
-.Xr ld.so 1 ,
-.Xr ld.so.conf 5 ,
-.Xr link 5
-.Sh HISTORY
-A
-.Nm
-utility first appeared in SunOS 4.0, it appeared in its current form
-in
-.Nx 0.9a .
