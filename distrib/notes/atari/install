@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.8 1999/01/13 07:30:03 ross Exp $	
+.\"	$NetBSD: install,v 1.9 1999/04/28 19:03:44 leo Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,7 +82,7 @@ or upgrade your system. Since you are reading the 'install'
 section, 'i' would be the proper response here...
 .It
 Entering the installer
-The installer starts with a nice welcome messages. Read this
+The installer starts with a nice welcome message. Read this
 message carefully, it also informs you of the risks involved
 in continuing! If you still want to go on, type 'y'. The
 installer now continues by trying to figure out your disk
