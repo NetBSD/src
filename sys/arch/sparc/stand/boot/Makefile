@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.8 1997/11/15 14:29:36 pk Exp $
+#	$NetBSD: Makefile,v 1.9 1997/12/18 21:03:58 pk Exp $
 
 PROG=		boot
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c
 NEWVERSWHAT=	"Secondary Boot"
+CLEANFILES+=	vers.c vers.o
 
 INCLUDE_LIBZ=	yes
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes
