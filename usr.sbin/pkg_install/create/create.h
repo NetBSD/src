@@ -1,4 +1,4 @@
-/* $NetBSD: create.h,v 1.4.2.1 1998/08/29 03:32:45 mellon Exp $ */
+/* $NetBSD: create.h,v 1.4.2.2 1998/11/06 20:40:41 cgd Exp $ */
 
 /* from FreeBSD Id: create.h,v 1.13 1997/10/08 07:46:19 charnier Exp */
 
@@ -38,12 +38,17 @@ extern char	*ExcludeFrom;
 extern char	*Mtree;
 extern char	*Pkgdeps;
 extern char	*Pkgcfl;
+extern char	*BuildVersion;
+extern char	*BuildInfo;
 extern char	PlayPen[];
+extern size_t	PlayPenSize;
 extern int	Dereference;
 extern int	PlistOnly;
+extern int	RelativeLinks;
+extern int	ReorderDirs;
 
-void		check_list(char *, Package *);
+void		check_list(char *, package_t *);
 int		pkg_perform(char **);
-void		copy_plist(char *, Package *);
+void		copy_plist(char *, package_t *);
 
 #endif	/* _INST_CREATE_H_INCLUDE */
