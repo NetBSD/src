@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.8 1995/06/26 01:39:55 chopps Exp $	*/
+/*	$NetBSD: grfabs_cc.c,v 1.9 1995/09/29 13:51:53 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -36,6 +36,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/cdefs.h>
 #include <sys/queue.h>
