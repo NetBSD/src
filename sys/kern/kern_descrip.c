@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.45 1997/10/15 17:27:46 mycroft Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.46 1997/10/19 01:50:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -428,8 +428,7 @@ sys_fstat(p, v, retval)
 		/*NOTREACHED*/
 	}
 	if (error == 0)
-		error = copyout((caddr_t)&ub, (caddr_t)SCARG(uap, sb),
-		    sizeof (ub));
+		error = copyout(&ub, SCARG(uap, sb), sizeof (ub));
 	return (error);
 }
 
