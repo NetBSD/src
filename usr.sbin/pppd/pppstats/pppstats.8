@@ -1,4 +1,4 @@
-.\"	@(#) $Header: /cvsroot/src/usr.sbin/pppd/pppstats/Attic/pppstats.8,v 1.2 1994/11/15 07:28:02 glass Exp $ (LBL)
+.\"	@(#) $Header: /cvsroot/src/usr.sbin/pppd/pppstats/Attic/pppstats.8,v 1.3 1995/03/11 21:05:17 glass Exp $ (LBL)
 .Dd November 15, 1994
 .Dt PPPSTATS/SLSTATS 8
 .Sh NAME
@@ -58,10 +58,10 @@ The options are as follows:
 Repeat the display
 .Ar count
 times. The first display is for the time since a reboot and each
-subsequent report is for the time period since the last display.  If
-no
-.Ar wait
-interval is specified, the default is 5 seconds.
+subsequent report is for the time period since the last display. If no
+repeat
+.Ar count
+is specified, the default is infinity.
 .It Fl v
 Display additional statistics demonstrating the efficacy of VJ header
 compression and providing more explicit information on failure
@@ -69,9 +69,9 @@ distribution.
 .It Fl w Ar wait
 Pause
 .Ar wait
-seconds between each display.  If no repeat
-.Ar count
-is specified, the default is infinity.
+seconds between each display. If no
+.Ar wait
+interval is specified, the default is 5 seconds.
 .It Fl M Ar core
 Extract values associated with the name list from the specified core
 instead of the default
