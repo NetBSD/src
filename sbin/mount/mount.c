@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.19 1995/06/22 11:16:44 cgd Exp $	*/
+/*	$NetBSD: mount.c,v 1.20 1995/07/04 23:41:33 ghudson Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: mount.c,v 1.19 1995/06/22 11:16:44 cgd Exp $";
+static char rcsid[] = "$NetBSD: mount.c,v 1.20 1995/07/04 23:41:33 ghudson Exp $";
 #endif
 #endif /* not lint */
 
@@ -288,7 +288,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts)
 	char *optbuf, execname[MAXPATHLEN + 1], mntpath[MAXPATHLEN];
 
 	if (realpath(name, mntpath) == NULL) {
-		warn("realpath %s", mntpath);
+		warn("realpath %s", name);
 		return (1);
 	}
 
