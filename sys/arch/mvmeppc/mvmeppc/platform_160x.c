@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_160x.c,v 1.2 2003/07/15 02:43:52 lukem Exp $	*/
+/*	$NetBSD: platform_160x.c,v 1.3 2003/07/28 14:55:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.2 2003/07/15 02:43:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.3 2003/07/28 14:55:46 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -85,7 +85,7 @@ static char	p160x_model[64];
 
 static u_int32_t p160x_dram_size[] = {
 	0x08000000, 0x02000000, 0x00800000, 0x00000000,
-	0x08000000, 0x02000000, 0x00800000, 0x00000000
+	0x10000000, 0x04000000, 0x01000000, 0x00000000
 };
 
 static int
