@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.440 2001/05/03 16:55:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.441 2001/05/04 03:19:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -255,6 +255,7 @@ static int exec_nomid	__P((struct proc *, struct exec_package *));
 
 void cyrix6x86_cpu_setup __P((void));
 void winchip_cpu_setup __P((void));
+void amd_family5_setup __P((void));
 
 void intel_cpuid_cpu_cacheinfo __P((struct cpu_info *));
 void amd_cpuid_cpu_cacheinfo __P((struct cpu_info *));
@@ -718,7 +719,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"K6-2+/III+", 0, 0,
 				"K5 or K6"		/* Default */
 			},
-			NULL,
+			amd_family5_setup,
 			amd_cpuid_cpu_cacheinfo,
 		},
 		/* Family 6 */
@@ -912,6 +913,29 @@ winchip_cpu_setup()
 		printf("WARNING: WinChip C6: broken TSC disabled\n");
 	}
 #endif
+}
+
+void
+amd_family5_setup(void)
+{
+	extern int cpu_id;
+
+	switch (CPUID2MODEL(cpu_id)) {
+	case 0:		/* AMD-K5 Model 0 */
+		/*
+		 * According to the AMD Processor Recognition App Note,
+		 * the AMD-K5 Model 0 uses the wrong bit to indicate
+		 * support for global PTEs, instead using bit 9 (APIC)
+		 * rather than bit 13 (i.e. "0x200" vs. 0x2000".  Oops!).
+		 */
+		if (cpu_feature & CPUID_APIC)
+			cpu_feature = (cpu_feature & ~CPUID_APIC) | CPUID_PGE;
+		/*
+		 * XXX But pmap_pg_g is already initialized -- need to kick
+		 * XXX the pmap somehow.  How does the MP branch do this?
+		 */
+		break;
+	}
 }
 
 static const struct i386_cache_info *
