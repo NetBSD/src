@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.13 2002/03/14 01:38:40 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.14 2002/03/24 22:23:38 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,7 +85,7 @@ are:
 Standard devices
 .It Ar local
 Configuration specific devices
-.It Ar isdn
+.It Ar isdns
 Make ISDN devices
 .El
 .Pp
@@ -150,16 +150,21 @@ First 16 ptys, to save inodes on install media
 . El
 .It ISDN devices :
 . Bl -tag -width 0123456789 -compact
-. It Ar i4b
-Communication between userland isdnd and kernel
-. It Ar i4bctl
-Control device
-. It Ar i4brbch#
-Raw b-channel access
-. It Ar i4btel#
-Telephony device
-. It Ar i4btrc#
-Trace device
+. It Ar isdn
+Communication between userland isdnd and kernel, see
+.Xr \&isdn 4
+. It Ar isdnctl
+Control device, see
+.Xr \&isdnctl 4
+. It Ar isdnbchan#
+Raw b-channel access, see
+.Xr \&isdnbchan 4
+. It Ar isdntel#
+Telephony device, see
+.Xr \&isdntel 4
+. It Ar isdntrc#
+Trace device, see
+.Xr \&isdntrc 4
 . El
 .It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
