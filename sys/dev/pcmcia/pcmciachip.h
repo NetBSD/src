@@ -48,6 +48,10 @@ struct pcmcia_chip_functions {
     				 struct pcmcia_function *, int,
 				 int (*)(void *), void *));
     void (*intr_disestablish) __P((pcmcia_chipset_handle_t, void *));
+
+    /* card enable/disable */
+    void (*socket_enable) __P((pcmcia_chipset_handle_t));
+    void (*socket_disable) __P((pcmcia_chipset_handle_t));
 };
 
 #define pcmcia_chip_mem_alloc(tag, handle, size, pcmhp) \
@@ -76,6 +80,11 @@ struct pcmcia_chip_functions {
 	((*(tag)->intr_establish)((handle), (pf), (ipl), (fct), (arg)))
 #define pcmcia_chip_intr_disestablish(tag, handle, ih) \
 	((*(tag)->intr_disestablish)((handle), (ih)))
+
+#define	pcmcia_chip_socket_enable(tag, handle) \
+	((*(tag)->socket_enable)((handle)))
+#define	pcmcia_chip_socket_disable(tag, handle) \
+	((*(tag)->socket_disable)((handle)))
 
 struct pcmciabus_attach_args {
     pcmcia_chipset_tag_t pct;
