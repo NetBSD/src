@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.576 2003/09/26 07:47:14 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.577 2003/10/08 21:17:27 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.580 2003/09/26 07:45:15 matt Exp 
+ *	NetBSD: pcidevs,v 1.581 2003/10/08 21:15:33 jonathan Exp 
  */
 
 /*
@@ -3578,6 +3578,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Hifn",
 	    "7951",
+	},
+	{
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7955,
+	    0,
+	    "Hifn",
+	    "7954/7955",
+	},
+	{
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7956,
+	    0,
+	    "Hifn",
+	    "7956",
 	},
 	{
 	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_78XX,
