@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.10 2003/08/07 16:28:59 agc Exp $	*/
+/*	$NetBSD: frame.h,v 1.11 2003/11/06 00:41:20 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -108,5 +108,12 @@ struct saframe {
 	int		sa_interrupted;
 	void*		sa_arg;
 };
+
+#ifdef _KERNEL
+void *getframe(struct lwp *, int, int *);
+#ifdef COMPAT_16
+void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
+#endif
+#endif
 
 #endif /* _NS532_FRAME_H_ */
