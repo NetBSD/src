@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.2 1999/03/17 13:31:43 simonb Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.2.2.1 1999/04/27 00:21:31 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,10 +40,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)htons.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: byte_swap_2.S,v 1.2 1999/03/17 13:31:43 simonb Exp $")
+	ASMSTR("$NetBSD: byte_swap_2.S,v 1.2.2.1 1999/04/27 00:21:31 perry Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#if defined(ABICALLS) && !defined(NO_ABICALLS)
+#if 0 && defined(ABICALLS)
 	.abicalls
 #endif
 
