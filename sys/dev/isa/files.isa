@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.55 1998/03/22 15:25:15 drochner Exp $
+#	$NetBSD: files.isa,v 1.56 1998/04/03 04:44:39 enami Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -166,12 +166,6 @@ file	dev/isa/if_el.c			el
 # device declaration in sys/conf/files
 attach	ep at isa with ep_isa: elink
 file	dev/isa/if_ep_isa.c		ep_isa
-
-# Fujitsu MB8696[05]-based boards
-# (Allied Telesis AT1700)
-device	fe: ether, ifnet, arp
-attach	fe at isa
-file	dev/isa/if_fe.c			fe
 
 # Allied Telesis MB8695-based boards
 # (Allied Telesis AT1700)
