@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.6 1997/06/15 17:58:56 mhitch Exp $	*/
+/*	$NetBSD: bt459.c,v 1.7 1997/06/16 02:53:23 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,16 +86,17 @@
 #include <sys/device.h>
 #include <sys/select.h>
 
+#include <machine/bus.h>			/*  wbflush() */
+
 #include <machine/pmioctl.h>
 
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
-
 #include <pmax/dev/fbreg.h>
 
-#include <pmax/dev/bt459.h>
+#include <pmax/dev/bt459.h>			/* chipset definitions */
 
-#include <machine/locore.h>	/* XXX wbflush() */
+
 
 /*
  * Forward references.
