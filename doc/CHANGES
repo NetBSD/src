@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.120 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.121 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -327,3 +327,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		Bump version to 1.6Q.  [dsl 20030319]
 	pciide: Add support for the Intel i31244 and Silicon Image 3112
 		Serial ATA controllers.  [thorpej 20030319]
+	sparc64: Add support for PCI-CardBus bridge.  [nakayama 20030322]
