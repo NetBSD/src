@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.29 1998/09/05 15:15:19 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.30 1998/10/15 18:46:37 drochner Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -18,7 +18,7 @@
 
 # Default values:
 KERNDST?=	${.OBJDIR}/lib/kern
-KERN_AS?=	obj
+KERN_AS?=	library
 
 KERNDIR=	$S/lib/libkern
 .if (${KERN_AS} == "obj")
