@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.13 1994/12/01 17:24:56 chopps Exp $	*/
+/*	$NetBSD: fd.c,v 1.14 1994/12/13 21:17:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -378,7 +378,7 @@ Fdopen(dev, flags, devtype, p)
 
 	s = splbio();
 	/*
-	 * if we are sleeping in fdclose(); waiting for a chance to
+	 * if we are sleeping in Fdclose(); waiting for a chance to
 	 * shut the motor off, do a sleep here also.
 	 */
 	while (sc->flags & FDF_WMOTOROFF)
@@ -434,7 +434,7 @@ done:
 
 /*ARGSUSED*/
 int
-fdclose(dev, flags, devtype, p)
+Fdclose(dev, flags, devtype, p)
 	dev_t dev;
 	int flags, devtype;
 	struct proc *p;
@@ -443,13 +443,13 @@ fdclose(dev, flags, devtype, p)
 	int s;
 
 #ifdef FDDEBUG
-	printf("fdclose()\n");
+	printf("Fdclose()\n");
 #endif
 	sc = getsoftc(fdcd, FDUNIT(dev));
 	s = splbio();
 	if (sc->flags & FDF_MOTORON) {
 		sc->flags |= FDF_WMOTOROFF;
-		tsleep(fdmotoroff, PRIBIO, "fdclose", 0);
+		tsleep(fdmotoroff, PRIBIO, "Fdclose", 0);
 		sc->flags &= ~FDF_WMOTOROFF;
 		wakeup(fdmotoroff);
 	}
