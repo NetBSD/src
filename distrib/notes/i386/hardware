@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.113 2004/02/13 10:00:54 wiz Exp $
+.\"	$NetBSD: hardware,v 1.113.2.1 2004/11/12 06:27:27 jmc Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
@@ -569,6 +569,17 @@ Compaq Smart Array 431, RAID LC2 [b]
 Compaq SMART 2, 2/E (EISA)
 .It
 Compaq SMART 2/E, 2/P, 2DH, 2SL (PCI) [b]
+.It
+DELL RAID controllers
+.(bullet -compact
+PERC 2/SC
+.It
+PERC 2/DC
+.It
+PERC 4/SC
+.It
+PERC 4e/Si
+.bullet)
 .It
 DPT SCSI RAID boards (ISA [*], EISA and PCI)
 .(bullet -compact
