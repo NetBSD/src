@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.30 2000/07/11 12:06:32 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.31 2000/07/13 11:28:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.30 2000/07/11 12:06:32 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.31 2000/07/13 11:28:50 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,6 +77,7 @@ __RCSID("$NetBSD: newsyslog.c,v 1.30 2000/07/11 12:06:32 ad Exp $");
 #include <errno.h>
 #include <err.h>
 #include <util.h>
+#include <paths.h>
 
 #include "pathnames.h"
 
@@ -223,7 +224,7 @@ parse(struct conf_entry *log, FILE *fd, size_t *_lineno)
 	ap = argv;
 	strlcpy(log->logfile, *ap++, sizeof(log->logfile));
 
-	if (strchr(*ap, ':') != NULL) {
+	if (strchr(*ap, ':') != NULL || strchr(*ap, '.') != NULL) {
 		if (parseuserspec(*ap++, &pw, &gr)) {
 			warnx("config line %d: unknown user/group", lineno);
 			return (-1);
