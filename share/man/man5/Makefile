@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1997/09/11 07:42:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 1997/10/11 08:22:31 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # missing: dump.5 plot.5 
@@ -14,4 +14,5 @@ MLINKS+=passwd.5 master.passwd.5
 
 SUBDIR=	man5.i386
 
-.include <bsd.prog.mk>
+.include <bsd.man.mk>
+.include <bsd.subdir.mk>

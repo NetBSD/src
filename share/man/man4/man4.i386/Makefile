@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 1997/10/07 17:44:22 drochner Exp $
+#	$NetBSD: Makefile,v 1.32 1997/10/11 08:22:37 mycroft Exp $
 #	from: @(#)Makefile	5.1 (Berkeley) 2/12/91
 
 MAN=	apm.4 autoconf.4 busmouse.4 com.4 console.4 ed.4 fdc.4	\
@@ -7,4 +7,4 @@ MAN=	apm.4 autoconf.4 busmouse.4 com.4 console.4 ed.4 fdc.4	\
 MLINKS=	mem.4 kmem.4
 MANSUBDIR=/i386
 
-.include <bsd.prog.mk>
+.include <bsd.man.mk>
