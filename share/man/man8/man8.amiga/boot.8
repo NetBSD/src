@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.1 1998/10/22 21:57:14 is Exp $
+.\"	$NetBSD: boot.8,v 1.2 1998/12/11 22:46:26 is Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -59,17 +59,15 @@ to shut the system down is with the
 command.
 .Pp
 If the system crashes, it will enter the kernel debugger,
-.Xr ddb 8
-,if it is configured in the kernel.  If the debugger is not present,
+.Xr ddb 8 ,
+if it is configured in the kernel.  If the debugger is not present,
 or the debugger is exited, the system will attempt a dump to the
 configured dump device (which will be automatically recovered with
 .Xr savecore 8
 during the next boot cycle).  After the dump is complete (successful
 or not), the system will attempt a reboot.
 .Pp
-.Sy Booting
-.Nx NetBSD
-using the bootloader
+.Sy Booting NetBSD using the bootloader
 .Pp
 When a bootable
 .Nx
@@ -145,10 +143,10 @@ Load the  kernel symbols
 .El
 
 .Pp
-.Sy Booting using the loadbsd program
+.Sy Booting NetBSD using the loadbsd program
 .Pp
 When you want (or have to) start
-.Nx NetBSD
+.Nx
 from AmigaOS, you have to use the
 .Xr loadbsd
 program that is supplied in the utils directory of the distribution.
