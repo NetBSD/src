@@ -718,6 +718,8 @@ lang_output_section_statement_lookup (name)
       lookup->subsection_alignment = -1;
       lookup->section_alignment = -1;
       lookup->load_base = (union etree_union *) NULL;
+      lookup->size_adj = (union etree_union *) NULL;
+      lookup->last_orphan = (lang_output_section_statement_type *) NULL;
       lookup->phdrs = NULL;
 
       lang_statement_append (&lang_output_section_statement,

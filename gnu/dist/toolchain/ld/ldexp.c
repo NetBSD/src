@@ -452,6 +452,7 @@ fold_name (tree, current_section, allocation_done, dot)
       break;
 
     case SIZEOF:
+    case SIZEOF_UNADJ:	/* not actually allowed in grammar  */
       if (allocation_done != lang_first_phase_enum)
 	{
 	  int opb = bfd_octets_per_byte (output_bfd);
@@ -460,6 +461,13 @@ fold_name (tree, current_section, allocation_done, dot)
 	  os = lang_output_section_find (tree->name.name);
 	  check (os, tree->name.name, "SIZEOF");
 	  result = new_abs (os->bfd_section->_raw_size / opb);
+
+	  /* If the output section has a size adjustment, and we've
+	     not been asked for the unadjusted size, apply it.  */
+	  if (os->size_adj && tree->type.node_code != SIZEOF_UNADJ)
+	    result = exp_fold_tree_no_dot
+	      (exp_binop ('+', exp_intop (result.value), os->size_adj),
+	       abs_output_section, allocation_done);
 	}
       else
 	result = invalid ();
