@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.37 2004/01/15 03:35:20 grant Exp $
+$NetBSD: acronyms.comp,v 1.38 2004/03/03 04:20:26 jschauma Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -58,6 +58,7 @@ EPROM	erasable programmable read only memory
 ESDRAM	enhanced synchronous dynamic random access memory
 FAT	file allocation table
 FBRAM	frame buffer random access memory
+FDDI	fiber-distributed data interface
 FFS	fast file system
 FLOPS	floating [point] operations per second
 FPM	fast page mode
@@ -126,6 +127,7 @@ NIS	network information service
 NUMA	non uniform memory access
 OEM	original equipment manufacturer
 OSF	open software foundation
+OSI	open standards interconnection
 OTP	one time password
 PAM	pluggable authentication modules
 PAX	portable archive exchange
