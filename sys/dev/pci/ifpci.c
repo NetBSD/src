@@ -35,14 +35,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.14 2003/10/03 16:38:44 pooka Exp $
+ *	$Id: ifpci.c,v 1.15 2003/10/28 17:01:19 pooka Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.14 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.15 2003/10/28 17:01:19 pooka Exp $");
 
 
 #include <sys/param.h>
@@ -1271,6 +1271,7 @@ isic_hscx_fifo(l1_bchan_state_t *chan, struct isic_softc *sc)
 	u_char scrbuf[HSCX_FIFO_LEN];
 
 	len = 0;
+	cmd = 0;
 
 	/*
 	 * fill the HSCX tx fifo with data from the current mbuf. if
