@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.9 1997/01/15 01:29:15 perry Exp $
+#	$NetBSD: ALL,v 1.10 1997/01/31 02:14:19 thorpej Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -22,7 +22,6 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 maxusers	32
 
 # standard options
-options 	GENERIC			# historical
 options 	SWAPPAGER		# swap pager (anonymous and swap space)
 options 	VNODEPAGER		# vnode pager (mapped files)
 options 	DEVPAGER		# device pager (mapped devices)
@@ -49,23 +48,24 @@ options 	COMPAT_M68K4K		# NetBSD/m68k4k binaries
 options 	TCP_COMPAT_42		# compatibility with 4.2BSD TCP/IP
 
 # file system options
+file-system 	FFS			# Berkeley fast file system
+file-system 	MFS			# memory file system; uses RAM and swap
+file-system 	NFS			# Network File System client
+file-system 	CD9660			# ISO 9660 CD-ROM file system, with RR
+file-system 	MSDOSFS			# MS-DOS FAT file system
+file-system 	FDESC			# /dev/fd
+file-system 	KERNFS			# kernel file system; recommended
+file-system 	PROCFS			# /proc
+file-system 	NULLFS			# Loop-back filesystem
+file-system 	PORTAL			# portal filesystem (still experimental)
+file-system 	ADOSFS			# AmigaDOS filesystem
+file-system 	LFS			# Log-based filesystem (still experimental)
+file-system 	UMAPFS			# uid/gid remapping filesystem
+file-system 	UNION			# union mount
+
 options 	QUOTA			# file system quotas
-options 	FFS			# Berkeley fast file system
 options 	FASTLINKS		# fast symbolic links in FFS
-options 	MFS			# memory file system; uses RAM and swap
 options 	NFSSERVER		# Network File System server
-options 	NFSCLIENT		# Network File System client
-options 	CD9660			# ISO 9660 CD-ROM file system, with RR
-options 	MSDOSFS			# MS-DOS FAT file system
-options 	FDESC			# /dev/fd
-options 	KERNFS			# kernel file system; recommended
-options 	PROCFS			# /proc
-options 	NULLFS			# Loop-back filesystem
-options 	PORTAL			# portal filesystem (still experimental)
-options 	ADOSFS			# AmigaDOS filesystem
-options 	LFS			# Log-based filesystem (still experimental)
-options 	UMAPFS			# uid/gid remapping filesystem
-options 	UNION			# union mount
 
 # networking options
 options 	INET			# Internet protocols
@@ -95,8 +95,8 @@ options 	EIOMAPSIZE=0		# do not map PCI address space
 #options 	KGDBRATE=19200		# kernel gdb port rate (default 9600)
 #options 	KGDBDEV=15*256+2	# device for kernel gdb
 
-#config		netbsd root on sd6a swap on sd6b
-config		netbsd swap generic
+#config		netbsd root on sd6a type ffs swap on sd6b
+config		netbsd root on ? type ?
 
 mainbus0	at root
 
