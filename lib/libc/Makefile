@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 3/5/91
-#	$Id: Makefile,v 1.25 1994/05/29 22:09:13 jtc Exp $
+#	$Id: Makefile,v 1.26 1994/06/30 06:44:54 deraadt Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -53,16 +53,16 @@ copy-to-libkern-machind: ${KSRCS}
 
 copy-to-libkern-machdep: ${KMSRCS}
 .if defined(KMSRCS) && !empty(KMSRCS)
-	cp -p ${.ALLSRC} ${LIBKERN}/${MACHINE_ARCH}
+	cp -p ${.ALLSRC} ${LIBKERN}/arch/${MACHINE_ARCH}
 .endif
 .if defined(KMINCLUDES) && !empty(KMINCLUDES)
-	(cd ${.CURDIR} ; cp -p ${KMINCLUDES} ${LIBKERN}/${MACHINE_ARCH})
+	(cd ${.CURDIR} ; cp -p ${KMINCLUDES} ${LIBKERN}/arch/${MACHINE_ARCH})
 .endif
 
 rm-from-libkern:
 	for i in ${KSRCS}; do rm -f ${LIBKERN}/$$i; done
 .if defined(KMSRCS) && !empty(KMSRCS)
-	for i in ${KMSRCS}; do rm -f ${LIBKERN}/${MACHINE_ARCH}/$$i; done
+	for i in ${KMSRCS}; do rm -f ${LIBKERN}/arch/${MACHINE_ARCH}/$$i; done
 .endif
 	
 .include <bsd.lib.mk>
