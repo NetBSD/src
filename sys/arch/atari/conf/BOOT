@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOT,v 1.10 1996/08/26 23:39:48 mrg Exp $
+#	$NetBSD: BOOT,v 1.11 1996/09/16 06:14:22 leo Exp $
 #
 # BOOT
 #
@@ -20,13 +20,17 @@ maxusers	16
 # processors this kernel should support
 #
 options		"M68030"	# support for 030
+# options	"M68040"	# support for 040
 
-options		TIMEZONE=300	# Set the timezone that the kernel will use
+options		TIMEZONE=0	# Set the timezone that the kernel will use
 options		DST=1		# Set the timezone that the kernel will use
 options		HZ=64		# Set the clock-rate (48/64/96)
 
+#
+# Floating-point options
+#
 options		FPU_EMULATE	# Support for MC68881/MC68882 emulator
-#options	FPSP
+# options	FPSP			# 68040 Floatingpoint support
 
 #
 # Networking options
@@ -60,7 +64,6 @@ options		DDB		# Kernel debugger
 options		COMPAT_43	# 4.3 BSD compatible system calls (required)
 options		COMPAT_10	# Compatibility to NetBSD1.0
 options		COMPAT_11	# Compatibility to NetBSD1.1
-options 	COMPAT_12
 
 #
 # Support for various kernel options
