@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.97 2001/01/24 18:06:51 garbled Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.98 2001/02/04 20:05:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.97 2001/01/24 18:06:51 garbled Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.98 2001/02/04 20:05:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -380,6 +380,8 @@ struct afswtch {
 struct afswtch *afp;	/*the address family being set or asked about*/
 
 struct afswtch *lookup_af __P((const char *));
+
+extern const char *__progname;
 
 int
 main(argc, argv)
@@ -2896,7 +2898,6 @@ adjust_nsellength()
 void
 usage()
 {
-	extern const char *__progname;
 
 	fprintf(stderr,
 	    "usage: %s [ -m ] [ -A ] "
