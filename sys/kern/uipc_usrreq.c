@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.37 1998/12/21 23:03:02 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.38 1998/12/21 23:12:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -850,6 +850,18 @@ unp_internalize(control, p)
 	register int i, fd, *fdp;
 	int nfds;
 	u_int neededspace;
+
+	/*
+	 * A VERY IMPORTANT NOTE ON THE USE OF sizeof(*cm) AS IT RELATES
+	 * TO SCM_RIGHTS MESSAGES!
+	 *
+	 * SCM_RIGHTS messages are an array of ints, which have 4-byte
+	 * alignment.  A cmsghdr is a 12-byte long structure, so the
+	 * ints can be packed directly after the cmsghdr.  When they
+	 * are converted to file *s, however, we must ALIGN() the
+	 * size of the cmsghdr, since pointers may be larger than ints,
+	 * and thus have more strict alignment requirements.
+	 */
 
 	/* Sanity check the control message header */
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
