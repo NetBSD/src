@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2002/10/17 06:38:24 lukem Exp $
+#	$NetBSD: list,v 1.14 2003/12/25 11:14:36 martin Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -57,7 +57,7 @@ SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 
-LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -lbz2 -lcrypt -ll -lm
+LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -lbz2 -lcrypt -ll -lm -lz
 
 # we need the boot in /, and boot blocks in /usr/mdec
 COPY	${DESTDIR}/boot			boot
