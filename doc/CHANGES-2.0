@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.345 2004/07/23 07:37:44 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.346 2004/07/23 08:09:07 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5900,4 +5900,37 @@ sys/dev/arcbios/arcbiosvar.h			1.4
 
 	Add Indigo IP12 support.
 	[rumble, ticket #682]
+
+doc/CHANGES					patch
+gnu/dist/cvs/doc/ChangeLog			patch
+gnu/dist/cvs/doc/cvs.1				patch
+gnu/dist/cvs/doc/cvs.texinfo			patch
+gnu/dist/cvs/doc/stamp-1			patch
+gnu/dist/cvs/doc/stamp-vti			patch
+gnu/dist/cvs/doc/version-client.texi		patch
+gnu/dist/cvs/doc/version.texi			patch
+gnu/dist/cvs/lib/ChangeLog			patch
+gnu/dist/cvs/lib/Makefile.am			patch
+gnu/dist/cvs/lib/Makefile.in			patch
+gnu/dist/cvs/lib/xsize.h			patch
+gnu/dist/cvs/src/ChangeLog			patch
+gnu/dist/cvs/src/commit.c			patch
+gnu/dist/cvs/src/cvs.h				patch
+gnu/dist/cvs/src/filesubr.c			patch
+gnu/dist/cvs/src/history.c			patch
+gnu/dist/cvs/src/sanity.sh			patch
+gnu/dist/cvs/src/server.c			patch
+gnu/dist/cvs/src/subr.c				patch
+gnu/dist/cvs/src/wrapper.c			patch
+gnu/dist/cvs/ChangeLog				patch
+gnu/dist/cvs/NEWS				patch
+gnu/dist/cvs/acinclude.m4			patch
+gnu/dist/cvs/aclocal.m4				patch
+gnu/dist/cvs/config.h.in			patch
+gnu/dist/cvs/configure.in			patch
+gnu/dist/cvs/configure				patch
+gnu/usr.bin/cvs/include/config.h		patch
+
+	Update cvs to version 1.1.17.
+	[taca, ticket #681]
 
