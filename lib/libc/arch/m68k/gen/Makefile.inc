@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2002/02/19 13:08:20 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2003/01/18 11:09:36 thorpej Exp $
 
 SRCS+=	alloca.S fabs.S
 
@@ -10,6 +10,7 @@ SRCS+=	ashlsi3.S ashrsi3.S \
 	lshlsi3.S lshrsi3.S \
 	negdf2.S negsf2.S
 SRCS+=	bswap16.S bswap32.S bswap64.S
+SRCS+=	_lwp.c
 
 # 68000-based machines build with a libgcc that includes
 # much of the (soft)float and integer support that would 
@@ -32,6 +33,8 @@ SRCS+=	setjmp.S __setjmp14.S
 SRCS+=	_setjmp.S
 SRCS+=	sigsetjmp.S __sigsetjmp14.S
 
+SRCS+=	makecontext.c resumecontext.S swapcontext.S
+
 .ifdef M68040
 SRCS+=	ieee754_ldexp.c			# generic ieee754 version
 .elifdef M68060
@@ -43,3 +46,6 @@ SRCS+=	ldexp_881.c
 .endif
 LSRCS+= Lint_bswap16.c Lint_bswap32.c Lint_bswap64.c
 DPSRCS+= Lint_bswap16.c Lint_bswap32.c Lint_bswap64.c
+
+LSRCS+=	Lint_resumecontext.c Lint_swapcontext.c
+DPSRCS+= Lint_resumecontext.c Lint_swapcontext.c

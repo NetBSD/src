@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.8 2002/11/11 22:17:21 thorpej Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.9 2003/01/18 11:29:06 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -325,7 +325,7 @@ svc_dg_ops(xprt)
 {
 	static struct xp_ops ops;
 	static struct xp_ops2 ops2;
-#ifdef __REENT
+#ifdef _REENTRANT
 	extern mutex_t ops_lock;
 #endif
 
@@ -415,7 +415,7 @@ struct cl_cache {
 	(xid % (SPARSENESS * ((struct cl_cache *) \
 		su_data(transp)->su_cache)->uc_size))
 
-#ifdef __REENT
+#ifdef _REENTRANT
 extern mutex_t	dupreq_lock;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_clnt.c,v 1.17 2002/11/08 00:13:07 fvdl Exp $	*/
+/*	$NetBSD: pmap_clnt.c,v 1.18 2003/01/18 11:29:05 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_clnt.c 1.37 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_clnt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_clnt.c,v 1.17 2002/11/08 00:13:07 fvdl Exp $");
+__RCSID("$NetBSD: pmap_clnt.c,v 1.18 2003/01/18 11:29:05 thorpej Exp $");
 #endif
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetpath.c,v 1.6 2002/04/16 19:19:33 groo Exp $	*/
+/*	$NetBSD: getnetpath.c,v 1.7 2003/01/18 11:29:04 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for

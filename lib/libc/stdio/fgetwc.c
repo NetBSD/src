@@ -1,4 +1,4 @@
-/* $NetBSD: fgetwc.c,v 1.1 2001/12/07 11:47:41 yamt Exp $ */
+/* $NetBSD: fgetwc.c,v 1.2 2003/01/18 11:29:51 thorpej Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -32,8 +32,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <wchar.h>
-#include "local.h"
 #include "reentrant.h"
+#include "local.h"
 
 wint_t
 fgetwc(FILE *fp)
