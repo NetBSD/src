@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.606 2003/04/10 22:06:51 christos Exp $
+#	$NetBSD: files,v 1.607 2003/04/11 14:45:27 drochner Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -964,6 +964,7 @@ defpseudo isdn:		isdndev, tty
 
 # ISDN network interfaces
 defpseudo irip:		isdndev, ifnet
+defflag opt_irip.h	IRIP_VJ
 defpseudo ippp:		isdndev, sppp, ifnet
 
 # KTTCP network throughput testing pseudo-device
@@ -1178,7 +1179,7 @@ file	net/raw_cb.c
 file	net/raw_usrreq.c
 file	net/route.c
 file	net/rtsock.c
-file	net/slcompress.c		sl | ppp | strip | irip
+file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm
