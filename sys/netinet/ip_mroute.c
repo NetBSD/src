@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.50.4.3 2003/11/30 19:01:06 he Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.50.4.4 2004/02/08 14:23:47 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -537,7 +537,7 @@ ip_mrouter_detach(ifp)
 			reset_vif(vifp);
 	}
 	for (i = 0; i < MFCTBLSIZ; i++) {
-		if (nexpire[i]) == 0)
+		if (nexpire[i] == 0)
 			continue;
 		for (rt = mfchashtbl[i].lh_first; rt; rt = rt->mfc_hash.le_next) {
 			for (rte = rt->mfc_stall; rte; rte = rte->next) {
