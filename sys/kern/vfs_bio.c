@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.36 1995/06/20 10:42:33 cgd Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.37 1995/07/12 07:39:00 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -269,6 +269,13 @@ bwrite(bp)
 
 	/* Remember buffer type, to switch on it later. */
 	sync = !ISSET(bp->b_flags, B_ASYNC);
+#if 0
+	if (sync && bp->b_vp && bp->b_vp->v_mount &&
+	    ISSET(bp->b_vp->v_mount->mnt_flag, MNT_ASYNC)) {
+		bdwrite(bp);
+		return (0);
+	}
+#endif
 	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
 	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
 
@@ -498,7 +505,23 @@ getblk(vp, blkno, size, slpflag, slptimeo)
 
 start:
 	s = splbio();
-	if (bp = incore(vp, blkno)) {	/* XXX NFS VOP_BWRITE foolishness */
+
+	/*
+	 * XXX
+	 * The following is an inlined version of 'incore()', but with
+	 * the 'invalid' test moved to after the 'busy' test.  It's
+	 * necessary because there are some cases in which the NFS
+	 * code sets B_INVAL prior to writing data to the server, but 
+	 * in which the buffers actually contain valid data.  In this
+	 * case, we can't allow the system to allocate a new buffer for
+	 * the block until the write is finished.
+	 */
+loop:
+        bp = BUFHASH(vp, blkno)->lh_first;
+        for (; bp != NULL; bp = bp->b_hash.le_next) {
+                if (bp->b_lblkno != blkno || bp->b_vp != vp)
+			continue;
+
 		if (ISSET(bp->b_flags, B_BUSY)) {
 			SET(bp->b_flags, B_WANTED);
 			err = tsleep(bp, slpflag | (PRIBIO + 1), "getblk",
@@ -508,6 +531,12 @@ start:
 				return (NULL);
 			goto start;
 		}
+
+		if (!ISSET(bp->b_flags, B_INVAL))
+			break;
+        }
+
+	if (bp) {
 		SET(bp->b_flags, (B_BUSY | B_CACHE));
 		bremfree(bp);
 		splx(s);
