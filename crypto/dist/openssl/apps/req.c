@@ -1011,18 +1011,18 @@ start:		for (;;)
 				}
 			/* If OBJ not recognised ignore it */
 			if ((nid=OBJ_txt2nid(type)) == NID_undef) goto start;
-			sprintf(buf,"%s_default",v->name);
+			snprintf(buf, sizeof(buf), "%s_default", v->name);
 			if ((def=CONF_get_string(req_conf,dn_sect,buf)) == NULL)
 				def="";
 				
-			sprintf(buf,"%s_value",v->name);
+			snprintf(buf, sizeof(buf), "%s_value", v->name);
 			if ((value=CONF_get_string(req_conf,dn_sect,buf)) == NULL)
 				value=NULL;
 
-			sprintf(buf,"%s_min",v->name);
+			snprintf(buf, sizeof(buf), "%s_min", v->name);
 			min=(int)CONF_get_number(req_conf,dn_sect,buf);
 
-			sprintf(buf,"%s_max",v->name);
+			snprintf(buf, sizeof(buf), "%s_max", v->name);
 			max=(int)CONF_get_number(req_conf,dn_sect,buf);
 
 			if (!add_DN_object(subj,v->value,def,value,nid,
@@ -1056,20 +1056,20 @@ start2:			for (;;)
 				if ((nid=OBJ_txt2nid(type)) == NID_undef)
 					goto start2;
 
-				sprintf(buf,"%s_default",type);
+				snprintf(buf, sizeof(buf), "%s_default", type);
 				if ((def=CONF_get_string(req_conf,attr_sect,buf))
 					== NULL)
 					def="";
 				
-				sprintf(buf,"%s_value",type);
+				snprintf(buf, sizeof(buf), "%s_value", type);
 				if ((value=CONF_get_string(req_conf,attr_sect,buf))
 					== NULL)
 					value=NULL;
 
-				sprintf(buf,"%s_min",type);
+				snprintf(buf, sizeof(buf), "%s_min", type);
 				min=(int)CONF_get_number(req_conf,attr_sect,buf);
 
-				sprintf(buf,"%s_max",type);
+				snprintf(buf, sizeof(buf), "%s_max", type);
 				max=(int)CONF_get_number(req_conf,attr_sect,buf);
 
 				if (!add_attribute_object(req,

@@ -128,7 +128,8 @@ static int dl_load(DSO *dso, const char *filename)
 			(len + 3 < DSO_MAX_TRANSLATED_SIZE) &&
 			(strstr(filename, "/") == NULL))
 		{
-		sprintf(translated, "lib%s%s", filename, extension);
+		snprintf(translated, sizeof(translated), "lib%s%s", filename,
+		    extension);
 		ptr = shl_load(translated, BIND_IMMEDIATE, NULL);
 		}
 	else

@@ -909,7 +909,7 @@ void thread_setup(void)
 	int i;
 	char filename[20];
 
-	strcpy(filename,"/tmp/mttest.XXXXXX");
+	strlcpy(filename, sizeof(filename), "/tmp/mttest.XXXXXX");
 	mktemp(filename);
 
 	usconfig(CONF_STHREADIOOFF);
@@ -938,7 +938,7 @@ void thread_cleanup(void)
 		{
 		char buf[10];
 
-		sprintf(buf,"%2d:",i);
+		snprintf(buf, sizeof(buf), "%2d:", i);
 		usdumpsema(lock_cs[i],stdout,buf);
 		usfreesema(lock_cs[i],arena);
 		}
