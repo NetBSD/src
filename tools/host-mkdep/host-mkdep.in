@@ -1,6 +1,6 @@
 #!@BSHELL@ -
 #
-#	$NetBSD: host-mkdep.in,v 1.13 2003/12/07 20:19:15 dsl Exp $
+#	$NetBSD: host-mkdep.in,v 1.14 2004/03/27 18:36:23 dsl Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -60,7 +60,7 @@ set_objlist()
 		set -- $NEWEXT
 		IFS="$oifs"
 		objlist=
-		for suf in $*; do
+		for suf in "$@"; do
 			objlist="$objlist${objlist:+ }$file$suf"
 		done
 	else
@@ -181,7 +181,7 @@ if $MERGE; then
 			IFS=
 			t1="${target#* }"
 			file="${target%.o}"
-			if [ "$t" = "$target" -a "$file" != "$target" ]; then
+			if [ "$t1" = "$target" -a "$file" != "$target" ]; then
 				set_objlist $file
 				target="$objlist"
 			fi
