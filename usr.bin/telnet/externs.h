@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.13 1998/12/20 14:48:33 christos Exp $	*/
+/*	$NetBSD: externs.h,v 1.13.2.1 2000/01/23 12:02:43 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -63,9 +63,7 @@
 #else
 #include <sys/filio.h>
 #endif
-#ifdef CRAY
-# include <errno.h>
-#endif /* CRAY */
+#include <errno.h>
 #ifdef	USE_TERMIO
 # ifndef	VINTR
 #  ifdef SYSV_TERMIO
@@ -106,10 +104,6 @@ typedef unsigned char cc_t;
 #endif
 
 #define	SUBBUFSIZE	256
-
-#ifndef CRAY
-extern int errno;		/* outside this world */
-#endif /* !CRAY */
 
 #include <sys/cdefs.h>
 #define P __P
