@@ -1,2 +1,3 @@
-# $NetBSD: obsolete.prep,v 1.2 2002/11/17 02:48:07 lukem Exp $
+# $NetBSD: obsolete.prep,v 1.3 2003/05/15 18:51:19 wiz Exp $
 ./usr/include/prep/conf.h
+./usr/include/prep/mouse.h
