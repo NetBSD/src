@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.36 1997/05/30 05:44:11 lukem Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.37 1997/07/14 12:54:27 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,7 +75,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.36 1997/05/30 05:44:11 lukem Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.37 1997/07/14 12:54:27 is Exp $";
 #endif
 #endif /* not lint */
 
@@ -453,7 +453,7 @@ getinfo(ifr)
 	if (ioctl(s, SIOCGIFMTU, (caddr_t)ifr) < 0)
 		mtu = 0;
 	else
-		mtu = ifr->ifr_metric;
+		mtu = ifr->ifr_mtu;
 	return (0);
 }
 
@@ -642,7 +642,7 @@ setifmtu(val, d)
 	int d;
 {
 	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	ifr.ifr_metric = atoi(val);
+	ifr.ifr_mtu = atoi(val);
 	if (ioctl(s, SIOCSIFMTU, (caddr_t)&ifr) < 0)
 		warn("SIOCSIFMTU");
 }
