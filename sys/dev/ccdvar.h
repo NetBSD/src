@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.6 1995/08/23 01:08:10 thorpej Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.7 1995/10/09 00:46:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -192,6 +192,8 @@ struct ccd_softc {
 #define CCDF_INITED	0x01	/* unit has been initialized */
 #define CCDF_WLABEL	0x02	/* label area is writable */
 #define CCDF_LABELLING	0x04	/* unit is currently being labelled */
+#define CCDF_WANTED	0x40	/* someone is waiting to obtain a lock */
+#define CCDF_LOCKED	0x80	/* unit is locked */
 
 /*
  * Before you can use a unit, it must be configured with CCDIOCSET.
