@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.10 1993/10/15 09:43:38 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.11 1993/10/18 09:05:20 mycroft Exp $
  */
 
 /*
@@ -139,7 +139,9 @@ INTRLOCAL(none_to_unpend):
 	addl	$8,%esp
 	iret
 
-#include "../net/netisr.h"
+
+	.globl	_netisr
+	.globl	_sir
 
 #define DONET(s, c, event) ; \
 	.globl  c ; \
@@ -156,8 +158,8 @@ INTRLOCAL(none_to_unpend):
  * don't loop, fresh bits will not be processed until the next doreti or
  * splnone)
  */
-	testl   $~((1 << NETISR_SCLK) | (1 << NETISR_AST)),%eax
-	jz	test_ASTs	# no net stuff, just temporary AST's
+	btrl	$SIR_NET,_sir
+	jnc	test_clock
 	FASTSPL_VARMASK(_netmask)
 	DONET(NETISR_RAW, _rawintr, 5)
 #ifdef INET
@@ -173,19 +175,19 @@ INTRLOCAL(none_to_unpend):
 	DONET(NETISR_ISO, _clnlintr, 25)
 #endif
 	FASTSPL($0)
-test_ASTs:
-	btrl	$NETISR_SCLK,_netisr
-	jnc	test_resched
+test_clock:
+	btrl	$SIR_CLOCK,_sir
+	jnc	test_ast
 	COUNT_EVENT(_intrcnt_spl, 9)
 	FASTSPL($ASTMASK)
 	call	_softclock
 	FASTSPL($0)
-test_resched:
-	btrl	$NETISR_AST,_netisr
+test_ast:
+	btrl	$SIR_GENERIC,_sir	# signal handling, rescheduling, ...
 	jnc	2f
 	testb   $SEL_RPL_MASK,TRAPF_CS_OFF(%esp)
 					# to non-kernel (i.e., user)?
-	jz	2f	# nope, leave
+	jz	2f			# nope, leave
 	COUNT_EVENT(_intrcnt_spl, 10)
 	call	_trap
 2:
@@ -210,8 +212,8 @@ _splnone:
 in_splnone:
 	movl	_cpl,%eax
 	pushl	%eax
-	testl   $~((1 << NETISR_SCLK) | (1 << NETISR_AST)),_netisr
-	jz	INTRLOCAL(over_net_stuff_for_splnone)
+	btrl	$SIR_NET,_sir
+	jnc	INTRLOCAL(over_net_stuff_for_splnone)
 	FASTSPL_VARMASK(_netmask)
 	DONET(NETISR_RAW, _rawintr, 20)
 #ifdef INET
