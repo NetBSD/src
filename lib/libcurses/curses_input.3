@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_input.3,v 1.12 2003/06/20 06:56:30 jdc Exp $
+.\"	$NetBSD: curses_input.3,v 1.13 2003/10/18 09:06:49 wiz Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -79,9 +79,9 @@
 .Ft int
 .Fn wgetstr "WINDOW *win" "char *str"
 .Ft int
-.Fn mvgetstr "int y" "int x" "char *str" "int limit"
+.Fn mvgetstr "int y" "int x" "char *str"
 .Ft int
-.Fn mvwgetstr "WINDOW *win" "int y" "int x" "char *str" "int limit"
+.Fn mvwgetstr "WINDOW *win" "int y" "int x" "char *str"
 .Ft int
 .Fn keypad "WINDOW *win" "boolf flag"
 .Ft int
