@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.68 2003/06/29 22:32:15 fvdl Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.69 2003/07/30 12:25:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.68 2003/06/29 22:32:15 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.69 2003/07/30 12:25:39 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -232,6 +232,7 @@ nfs_inactive(v)
 	struct proc *p = ap->a_p;
 	struct vnode *vp = ap->a_vp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+	boolean_t removed;
 
 	np = VTONFS(vp);
 	if (prtactive && vp->v_usecount != 0)
@@ -243,6 +244,7 @@ nfs_inactive(v)
 		sp = NULL;
 	if (sp != NULL)
 		nfs_vinvalbuf(vp, 0, sp->s_cred, p, 1);
+	removed = (np->n_flag & NREMOVED) != 0;
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
 		NQNFSNONCACHE | NQNFSWRITE);
 	VOP_UNLOCK(vp, 0);
@@ -265,6 +267,9 @@ nfs_inactive(v)
 
 	if (vp->v_type == VDIR && np->n_dircache)
 		nfs_invaldircache(vp, 1);
+
+	if (removed)
+		vrecycle(vp, NULL, p);
 
 	return (0);
 }
