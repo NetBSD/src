@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.5 2001/01/14 02:00:38 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.6 2001/01/14 23:50:30 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -110,7 +110,6 @@ extern void setsoftclock(void);
 extern void setsoftnet(void);
 
 /* New-fangled generic soft interrupts */
-#define __GENERIC_SOFT_INTERRUPTS
 extern void *softintr_establish(int, void (*)(void *), void *);
 extern void softintr_disestablish(void *);
 extern void softintr_schedule(void *);

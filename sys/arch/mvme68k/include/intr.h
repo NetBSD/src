@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2001/01/14 02:00:40 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -130,7 +130,6 @@ spl0(void)
 
 #define setsoft(x)		x = 0
 
-#define __GENERIC_SOFT_INTERRUPTS
 struct mvme68k_soft_intrhand {
 	LIST_ENTRY(mvme68k_soft_intrhand) sih_q;
 	struct mvme68k_soft_intr *sih_intrhead;

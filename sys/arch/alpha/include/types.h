@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.18 2001/01/03 10:08:56 takemura Exp $ */
+/* $NetBSD: types.h,v 1.19 2001/01/14 23:50:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -72,6 +72,7 @@ typedef	__uint64_t		u_int64_t;
 typedef int64_t			register_t;
 
 #define __HAVE_DEVICE_REGISTER
+#define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define __HAVE_NWSCONS
 #define	__HAVE_ATOMIC_OPERATIONS
 #define	__HAVE_CPU_COUNTER
