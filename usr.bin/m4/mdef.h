@@ -1,8 +1,6 @@
 /*  Header : mdef.h
     Author : Ozan Yigit
     Updated: 4 May 1992
-
-	$Id: mdef.h,v 1.3 1993/08/02 17:54:44 mycroft Exp $
 */
 #ifndef	MACRTYPE
 

@@ -16,10 +16,6 @@
     unsigned is what you generally want.
 */
 
-#ifndef lint
-static char rcsid[] = "$Id: int2str.c,v 1.2 1993/08/02 17:54:41 mycroft Exp $";
-#endif /* not lint */
-
 static char dig_vec[] =
     "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
