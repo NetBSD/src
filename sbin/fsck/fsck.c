@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.15 1997/10/31 09:11:53 mycroft Exp $	*/
+/*	$NetBSD: fsck.c,v 1.16 1997/10/31 09:48:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.15 1997/10/31 09:11:53 mycroft Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.16 1997/10/31 09:48:04 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@ static void addoption __P((char *));
 static const char *getoptions __P((const char *));
 static void addentry __P((struct fstypelist *, const char *, const char *));
 static void maketypelist __P((char *));
-static char *catopt __P((char *, const char *, int));
+static void catopt __P((char **, const char *));
 static void mangle __P((char *, int *, const char ***, int *));
 static char *getfslab __P((const char *));
 static void usage __P((void));
@@ -126,7 +126,7 @@ main(argc, argv)
 		case 'f':
 		case 'y':
 			globopt[1] = i;
-			options = catopt(options, globopt, 1);
+			catopt(&options, globopt);
 			break;
 
 		case 'l':
@@ -232,17 +232,11 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 	if (!strcmp(vfstype, "ufs"))
 		vfstype = MOUNT_UFS;
 
-	if (options) {
-		if (extra)
-			optbuf = catopt(options, extra, 0);
-		else
-			optbuf = estrdup(options);
-	} else {
-		if (extra)
-			optbuf = estrdup(extra);
-		else
-			optbuf = NULL;
-	}
+	optbuf = NULL;
+	if (options)
+		catopt(&optbuf, options);
+	if (extra)
+		catopt(&optbuf, extra);
 
 	maxargc = 64;
 	argv = emalloc(sizeof(char *) * maxargc);
@@ -366,7 +360,7 @@ addoption(optstr)
 
 	for (e = opthead.tqh_first; e != NULL; e = e->entries.tqe_next)
 		if (!strncmp(e->type, optstr, MFSNAMELEN)) {
-			e->options = catopt(e->options, newoptions, 1);
+			catopt(&e->options, newoptions);
 			return;
 		}
 	addentry(&opthead, optstr, newoptions);
@@ -410,25 +404,23 @@ maketypelist(fslist)
 }
 
 
-static char *
-catopt(s0, s1, fr)
-	char *s0;
-	const char *s1;
-	int fr;
+static void
+catopt(sp, o)
+	char **sp;
+	const char *o;
 {
-	size_t i;
-	char *cp;
+	char *s;
+	size_t i, j;
 
-	if (s0 && *s0) {
-		i = strlen(s0) + strlen(s1) + 1 + 1;
-		cp = emalloc(i);
-		(void)snprintf(cp, i, "%s,%s", s0, s1);
+	s = *sp;
+	if (s) {
+		i = strlen(s);
+		j = i + 1 + strlen(o) + 1;
+		s = erealloc(s, j);
+		(void)snprintf(s + i, j, ",%s", o);
 	} else
-		cp = estrdup(s1);
-
-	if (s0 && fr)
-		free(s0);
-	return (cp);
+		s = estrdup(o);
+	*sp = s;
 }
 
 
