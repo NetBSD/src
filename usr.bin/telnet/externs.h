@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.30 2003/08/07 11:16:09 agc Exp $	*/
+/*	$NetBSD: externs.h,v 1.31 2004/03/20 23:26:05 heas Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -190,7 +190,6 @@ extern char
     NetTraceFile[];	/* Name of file where debugging output goes */
 
 extern jmp_buf
-    peerdied,
     toplevel;		/* For error conditions. */
 
 
