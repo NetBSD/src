@@ -1,4 +1,4 @@
-/*	$NetBSD: skeylogin.c,v 1.7 1997/01/23 14:03:09 mrg Exp $	*/
+/*	$NetBSD: skeylogin.c,v 1.8 1997/06/18 19:18:30 christos Exp $	*/
 
 /* S/KEY v1.1b (skeylogin.c)
  *
@@ -112,7 +112,7 @@ skeylookup(mp,name)
 {
 	int found;
 	int len;
-	long recstart;
+	long recstart = 0;
 	char *cp;
 	struct stat statbuf;
 
@@ -271,7 +271,6 @@ int
 skey_haskey (username)
 	char *username;
 {
-	int i;
 	struct skey skey;
  
 	return (skeylookup (&skey, username));
