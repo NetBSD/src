@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdchk.c,v 1.5 1999/01/18 18:01:26 christos Exp $	*/
+/*	$NetBSD: tcpdchk.c,v 1.6 1999/05/09 16:05:35 christos Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -21,7 +21,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.7 96/02/11 17:01:34";
 #else
-__RCSID("$NetBSD: tcpdchk.c,v 1.5 1999/01/18 18:01:26 christos Exp $");
+__RCSID("$NetBSD: tcpdchk.c,v 1.6 1999/05/09 16:05:35 christos Exp $");
 #endif
 #endif
 
@@ -421,6 +421,7 @@ char   *pat;
 {
     char   *mask;
     int     addr_count = 1;
+    struct in_addr dummy;
 
     if (pat[0] == '@') {			/* @netgroup */
 #ifdef NO_NETGRENT
@@ -440,8 +441,8 @@ char   *pat;
 #endif
 #endif
     } else if ((mask = split_at(pat, '/')) != NULL) {	/* network/netmask */
-	if (dot_quad_addr(pat) == INADDR_NONE
-	    || dot_quad_addr(mask) == INADDR_NONE)
+	if (dot_quad_addr(pat, &dummy) != 0
+	    || dot_quad_addr(mask, &dummy) != 0)
 	    tcpd_warn("%s/%s: bad net/mask pattern", pat, mask);
     } else if (STR_EQ(pat, "FAIL")) {		/* obsolete */
 	tcpd_warn("FAIL is no longer recognized");
