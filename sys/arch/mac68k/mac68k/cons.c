@@ -39,7 +39,7 @@
  * from: Utah $Hdr: cons.c 1.1 90/07/09$
  *
  *	from: @(#)cons.c	7.6 (Berkeley) 5/4/91
- *	$Id: cons.c,v 1.2 1993/11/29 00:40:42 briggs Exp $
+ *	$Id: cons.c,v 1.3 1994/07/08 07:57:51 lkestel Exp $
  */
 
 #include "sys/param.h"
@@ -53,11 +53,11 @@
 
 #include "cons.h"
 
-int	macprobe(), macinit(), macgetchar(), macputchar();
+int	itecnprobe(), itecninit(), itecngetc(), itecnputc();
 int	sercnprobe(), sercninit(), sercngetc(), sercnputc();
 
 struct	consdev constab[] = {
-	{ macprobe,	macinit,	macgetchar,	macputchar },
+	{ itecnprobe,	itecninit,	itecngetc,	itecnputc },
 	/* { sercnprobe,	sercninit,	sercngetc,	sercnputc }, */
 	{ 0 },
 };
