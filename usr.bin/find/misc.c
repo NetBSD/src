@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)misc.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: misc.c,v 1.3 1993/12/30 21:15:28 jtc Exp $";
+static char rcsid[] = "$Id: misc.c,v 1.4 1996/06/23 11:16:39 mrg Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,7 +53,8 @@ static char rcsid[] = "$Id: misc.c,v 1.3 1993/12/30 21:15:28 jtc Exp $";
  
 /*
  * brace_subst --
- *	Replace occurrences of {} in s1 with s2 and return the result string.
+ *	Replace occurrences of {} in orig with path, and place it in a malloced
+ *      area of memory set in store.
  */
 void
 brace_subst(orig, store, path, len)
