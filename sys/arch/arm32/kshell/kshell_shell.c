@@ -1,4 +1,4 @@
-/* $NetBSD: kshell_shell.c,v 1.4 1996/03/13 21:45:54 mark Exp $ */
+/* $NetBSD: kshell_shell.c,v 1.5 1996/04/19 20:15:36 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -623,6 +623,8 @@ shell()
 			shell_pextract(args, argv);
 		else if (strcmp(argv[0], "vnode") == 0)
 			shell_vnode(args, argv);
+		else if (strcmp(argv[0], "ascdump") == 0)
+			asc_dump();
 		else if (strcmp(argv[0], "help") == 0
 		    || strcmp(argv[0], "?") == 0) {
 			printf("peekb <hexaddr>\r\n");
@@ -645,12 +647,12 @@ shell()
 			printf("pmap <pmap addr>\r\n");
 			printf("pdstat\r\n");
 			printf("flush\r\n");
-			printf("write <filename>\r\n");
 			printf("exit\r\n");
 			printf("forceboot\r\n");
 			printf("dumppvs\r\n");
 			printf("pextract <phys addr>\r\n");
 			printf("vnode <vp>\r\n");
+			printf("ascdump\r\n");
 		}
 	} while (!quit);
 
