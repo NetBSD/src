@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.129 2003/11/22 18:01:46 jschauma Exp $
+$NetBSD: acronyms,v 1.130 2003/12/19 18:54:40 tsarna Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -98,6 +98,7 @@ ISTM	it seems to me
 ISTR	I seem to recall
 ITYM	I think you mean
 IYSS	if you say so
+IWBNI	it would be nice if
 J/K	just kidding
 JIC	just in case
 JK	just kidding
