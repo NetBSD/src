@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.61 2004/11/21 04:30:33 yamt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.62 2004/11/30 04:25:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.61 2004/11/21 04:30:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.62 2004/11/30 04:25:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,15 +135,13 @@ static int pipe_write(struct file *fp, off_t *offset, struct uio *uio,
 		struct ucred *cred, int flags);
 static int pipe_close(struct file *fp, struct proc *p);
 static int pipe_poll(struct file *fp, int events, struct proc *p);
-static int pipe_fcntl(struct file *fp, u_int com, void *data,
-		struct proc *p);
 static int pipe_kqfilter(struct file *fp, struct knote *kn);
 static int pipe_stat(struct file *fp, struct stat *sb, struct proc *p);
 static int pipe_ioctl(struct file *fp, u_long cmd, void *data,
 		struct proc *p);
 
-static struct fileops pipeops = {
-	pipe_read, pipe_write, pipe_ioctl, pipe_fcntl, pipe_poll,
+static const struct fileops pipeops = {
+	pipe_read, pipe_write, pipe_ioctl, fnullop_fcntl, pipe_poll,
 	pipe_stat, pipe_close, pipe_kqfilter
 };
 
@@ -1482,19 +1480,6 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 	SLIST_INSERT_HEAD(&pipe->pipe_sel.sel_klist, kn, kn_selnext);
 	PIPE_UNLOCK(pipe);
 	return (0);
-}
-
-static int
-pipe_fcntl(fp, cmd, data, p)
-	struct file *fp;
-	u_int cmd;
-	void *data;
-	struct proc *p;
-{
-	if (cmd == F_SETFL)
-		return (0);
-	else
-		return (EOPNOTSUPP);
 }
 
 /*

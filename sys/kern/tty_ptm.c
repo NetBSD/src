@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.3 2004/11/24 22:19:27 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.4 2004/11/30 04:25:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.3 2004/11/24 22:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.4 2004/11/30 04:25:44 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -340,7 +340,7 @@ ptmopen(dev_t dev, int flag, int mode, struct proc *p)
 		if ((error = pty_alloc_master(p, &fd, &dev)) != 0)
 			return error;
 		curlwp->l_dupfd = fd;
-		return ENXIO;
+		return EMOVEFD;
 	case 1:		/* /dev/ptm */
 		return 0;
 	default:
