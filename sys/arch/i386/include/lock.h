@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.1.2.3 2000/08/31 00:34:35 sommerfeld Exp $	*/
+/*	$NetBSD: lock.h,v 1.1.2.4 2001/01/07 18:21:55 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,6 +61,8 @@ extern void __cpu_simple_unlock __P((__cpu_simple_lock_t *));
 
 #else
 
+#include <machine/atomic.h>
+
 static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
@@ -71,41 +73,32 @@ static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 
 static __inline void
-__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
+__cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
 {
-
-	*alp = __SIMPLELOCK_UNLOCKED;
+	*lockp = __SIMPLELOCK_UNLOCKED;
 }
 
 static __inline void
-__cpu_simple_lock(__cpu_simple_lock_t *alp)
+__cpu_simple_lock(__cpu_simple_lock_t *lockp)
 {
-	int __val = __SIMPLELOCK_LOCKED;
-
-	do {
-		__asm __volatile("xchgl %0, %2"
-			: "=r" (__val)
-			: "0" (__val), "m" (*alp));
-	} while (__val != __SIMPLELOCK_UNLOCKED);
+	while (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
+	    == __SIMPLELOCK_LOCKED) {
+		continue;	/* spin */
+	}
 }
 
 static __inline int
-__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
+__cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
 {
-	int __val = __SIMPLELOCK_LOCKED;
-
-	__asm __volatile("xchgl %0, %2"
-		: "=r" (__val)
-		: "0" (__val), "m" (*alp));
-
-	return ((__val == __SIMPLELOCK_UNLOCKED) ? 1 : 0);
+	return (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
+	    == __SIMPLELOCK_UNLOCKED);
 }
 
 void
-__cpu_simple_unlock(__cpu_simple_lock_t *alp)
+__cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 {
 
-	*alp = __SIMPLELOCK_UNLOCKED;
+	*lockp = __SIMPLELOCK_UNLOCKED;
 }
 
 #endif /* !LOCKDEBUG */
