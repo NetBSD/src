@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.25 2002/07/03 01:42:59 enami Exp $	*/
+/*	$NetBSD: netstat.h,v 1.26 2003/02/04 01:22:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,6 +68,7 @@ int	af;		/* address family */
 int	kread __P((u_long addr, char *buf, int size));
 char	*plural __P((int));
 char	*plurales __P((int));
+int	get_hardticks __P((void));
 
 void	protopr __P((u_long, char *));
 void	tcp_stats __P((u_long, char *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 2002/07/23 23:34:39 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.39 2003/02/04 01:22:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.38 2002/07/23 23:34:39 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.39 2003/02/04 01:22:08 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -208,6 +208,8 @@ struct nlist nl[] = {
 	{ "_ppoeinq" },
 #define	N_PKINTRQ	68
 	{ "_pkintrq" },
+#define	N_HARDCLOCK_TICKS 69
+	{ "_hardclock_ticks" },
 	{ "" },
 };
 
@@ -748,6 +750,16 @@ plurales(n)
 {
 
 	return (n != 1 ? "es" : "");
+}
+
+int
+get_hardticks(void)
+{
+	int hardticks;
+
+	kread(nl[N_HARDCLOCK_TICKS].n_value, (char *)&hardticks,
+	    sizeof(hardticks));
+	return (hardticks);
 }
 
 /*
