@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.5 1998/12/05 19:43:49 mjacob Exp $	 */
+/* $NetBSD: adw.c,v 1.6 1998/12/09 08:47:18 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -70,9 +70,6 @@
 /******************************************************************************/
 
 
-static void adw_enqueue __P((ADW_SOFTC *, struct scsipi_xfer *, int));
-static struct scsipi_xfer *adw_dequeue __P((ADW_SOFTC *));
-
 static int adw_alloc_ccbs __P((ADW_SOFTC *));
 static int adw_create_ccbs __P((ADW_SOFTC *, ADW_CCB *, int));
 static void adw_free_ccb __P((ADW_SOFTC *, ADW_CCB *));
@@ -108,52 +105,6 @@ struct scsipi_device adw_dev =
 
 #define ADW_ABORT_TIMEOUT       10000	/* time to wait for abort (mSec) */
 #define ADW_WATCH_TIMEOUT       10000	/* time to wait for watchdog (mSec) */
-
-
-/******************************************************************************/
-/* scsipi_xfer queue routines                      */
-/******************************************************************************/
-
-/*
- * Insert a scsipi_xfer into the software queue.  We overload xs->free_list
- * to avoid having to allocate additional resources (since we're used
- * only during resource shortages anyhow.
- */
-static void
-adw_enqueue(sc, xs, infront)
-	ADW_SOFTC      *sc;
-	struct scsipi_xfer *xs;
-	int             infront;
-{
-
-	if (infront || sc->sc_queue.lh_first == NULL) {
-		if (sc->sc_queue.lh_first == NULL)
-			sc->sc_queuelast = xs;
-		LIST_INSERT_HEAD(&sc->sc_queue, xs, free_list);
-		return;
-	}
-	LIST_INSERT_AFTER(sc->sc_queuelast, xs, free_list);
-	sc->sc_queuelast = xs;
-}
-
-
-/*
- * Pull a scsipi_xfer off the front of the software queue.
- */
-static struct scsipi_xfer *
-adw_dequeue(sc)
-	ADW_SOFTC      *sc;
-{
-	struct scsipi_xfer *xs;
-
-	xs = sc->sc_queue.lh_first;
-	LIST_REMOVE(xs, free_list);
-
-	if (sc->sc_queue.lh_first == NULL)
-		sc->sc_queuelast = NULL;
-
-	return (xs);
-}
 
 
 /******************************************************************************/
@@ -474,7 +425,7 @@ adw_attach(sc)
 
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_waiting_ccb);
-	LIST_INIT(&sc->sc_queue);
+	TAILQ_INIT(&sc->sc_queue);
 
 
 	/*
@@ -531,8 +482,8 @@ adw_scsi_cmd(xs)
          * If we're running the queue from adw_done(), we've been
          * called with the first queue entry as our argument.
          */
-	if (xs == sc->sc_queue.lh_first) {
-		xs = adw_dequeue(sc);
+	if (xs == TAILQ_FIRST(&sc->sc_queue)) {
+		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
 		fromqueue = 1;
 	} else {
 
@@ -542,7 +493,7 @@ adw_scsi_cmd(xs)
 		/*
                  * If there are jobs in the queue, run them first.
                  */
-		if (sc->sc_queue.lh_first != NULL) {
+		if (TAILQ_FIRST(&sc->sc_queue) != NULL) {
 			/*
                          * If we can't queue, we have to abort, since
                          * we have to preserve order.
@@ -555,8 +506,9 @@ adw_scsi_cmd(xs)
 			/*
                          * Swap with the first queue entry.
                          */
-			adw_enqueue(sc, xs, 0);
-			xs = adw_dequeue(sc);
+			TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
+			xs = TAILQ_FIRST(&sc->sc_queue);
+			TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
 			fromqueue = 1;
 		}
 	}
@@ -581,7 +533,10 @@ adw_scsi_cmd(xs)
                  * Stuff ourselves into the queue, in front
                  * if we came off in the first place.
                  */
-		adw_enqueue(sc, xs, fromqueue);
+		if (fromqueue)
+			TAILQ_INSERT_HEAD(&sc->sc_queue, xs, adapter_q);
+		else
+			TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
 		splx(s);
 		return (SUCCESSFULLY_QUEUED);
 	}
@@ -794,7 +749,7 @@ adw_intr(arg)
          * NOTE: adw_scsi_cmd() relies on our calling it with
          * the first entry in the queue.
          */
-	if ((xs = sc->sc_queue.lh_first) != NULL)
+	if ((xs = TAILQ_FIRST(&sc->sc_queue)) != NULL)
 		(void) adw_scsi_cmd(xs);
 
 	return (1);
