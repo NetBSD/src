@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.51 2003/07/26 17:07:00 salo Exp $
+.\"	$NetBSD: postinstall,v 1.52 2003/09/02 05:38:13 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -173,9 +173,9 @@ For example:
 where your on-board interfaces may be one of
 .Li mc0 ,
 .Li bm0 ,
-.Li de0
+.Li tlp0
 or
-.Li gm0 .
+.Li gem0 .
 For example:
 .\}
 .el along the lines of
