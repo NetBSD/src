@@ -1,7 +1,8 @@
-/*	$OpenBSD: session.h,v 1.5 2001/01/29 01:58:18 niklas Exp $	*/
+/*	$NetBSD: session.h,v 1.1.1.1.2.3 2001/12/10 23:54:10 he Exp $	*/
+/*	$OpenBSD: session.h,v 1.13 2001/10/10 22:18:47 markus Exp $	*/
 
 /*
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,14 +27,12 @@
 #ifndef SESSION_H
 #define SESSION_H
 
-/* SSH1 */
-void	do_authenticated(struct passwd * pw);
+void	 do_authenticated(Authctxt *);
 
-/* SSH2 */
-void	do_authenticated2(Authctxt *ac);
-int	session_open(int id);
-void	session_input_channel_req(int id, void *arg);
-void	session_close_by_pid(pid_t pid, int status);
-void	session_close_by_channel(int id, void *arg);
+int	 session_open(Authctxt*, int);
+void	 session_input_channel_req(int, void *);
+void	 session_close_by_pid(pid_t, int);
+void	 session_close_by_channel(int, void *);
+void	 session_destroy_all(void);
 
 #endif
