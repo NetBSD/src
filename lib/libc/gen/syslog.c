@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.7 1995/03/04 01:56:12 cgd Exp $	*/
+/*	$NetBSD: syslog.c,v 1.8 1995/04/11 02:57:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.4 (Berkeley) 3/18/94";
 #else
-static char rcsid[] = "$NetBSD: syslog.c,v 1.7 1995/03/04 01:56:12 cgd Exp $";
+static char rcsid[] = "$NetBSD: syslog.c,v 1.8 1995/04/11 02:57:52 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -115,7 +115,7 @@ vsyslog(pri, fmt, ap)
 	}
 
 	/* Check priority against setlogmask values. */
-	if (!LOG_MASK(LOG_PRI(pri)) & LogMask)
+	if (!(LOG_MASK(LOG_PRI(pri)) & LogMask))
 		return;
 
 	saved_errno = errno;
