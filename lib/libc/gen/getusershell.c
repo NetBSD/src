@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.12 1998/11/13 15:49:29 christos Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.13 1999/01/16 07:47:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,19 +38,29 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.12 1998/11/13 15:49:29 christos Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.13 1999/01/16 07:47:19 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
 #include <sys/file.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <nsswitch.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <paths.h>
+#include <string.h>
+#include <stringlist.h>
+#ifdef HESIOD
+#include <hesiod.h>
+#endif
+#ifdef YP
+#include <rpc/rpc.h>
+#include <rpcsvc/ypclnt.h>
+#include <rpcsvc/yp_prot.h>
+#endif
 
 #ifdef __weak_alias
 __weak_alias(endusershell,_endusershell);
@@ -64,12 +74,13 @@ __weak_alias(setusershell,_setusershell);
  */
 
 static const char *const okshells[] = { _PATH_BSHELL, _PATH_CSHELL, NULL };
-static const char *const *curshell, **shells;
-static char *strings;
+static const char *const *curshell;
+static StringList	 *sl;
+
 static const char *const *initshells __P((void));
 
 /*
- * Get a list of shells from _PATH_SHELLS, if it exists.
+ * Get a list of shells from "shells" nsswitch database
  */
 __aconst char *
 getusershell()
@@ -78,10 +89,7 @@ getusershell()
 
 	if (curshell == NULL)
 		curshell = initshells();
-
-	/* LINTED (auditing puproses only */
 	ret = (__aconst char *)*curshell;
-
 	if (ret != NULL)
 		curshell++;
 	return (ret);
@@ -90,13 +98,9 @@ getusershell()
 void
 endusershell()
 {
-	
-	if (shells != NULL)
-		free(shells);
-	shells = NULL;
-	if (strings != NULL)
-		free(strings);
-	strings = NULL;
+	if (sl)
+		sl_free(sl, 1);
+	sl = NULL;
 	curshell = NULL;
 }
 
@@ -107,50 +111,170 @@ setusershell()
 	curshell = initshells();
 }
 
-static const char *const *
-initshells()
-{
-	const char **sp;
-	char *cp;
-	FILE *fp;
-	struct stat statb;
 
-	if (shells != NULL)
-		free(shells);
-	shells = NULL;
-	if (strings != NULL)
-		free(strings);
-	strings = NULL;
+static int	_local_initshells __P((void *, void *, va_list));
+
+static int
+_local_initshells(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
+{
+	char	*sp, *cp;
+	FILE	*fp;
+	char	 line[MAXPATHLEN + 2];
+
+	if (sl)
+		sl_free(sl, 1);
+	sl = sl_init();
+
 	if ((fp = fopen(_PATH_SHELLS, "r")) == NULL)
-		return (okshells);
-	if (fstat(fileno(fp), &statb) == -1) {
-		(void)fclose(fp);
-		return (okshells);
-	}
-	if ((cp = malloc((u_int)statb.st_size)) == NULL) {
-		(void)fclose(fp);
-		return (okshells);
-	}
-	sp = calloc((unsigned)statb.st_size / 3, sizeof (char *));
-	if (sp == NULL) {
-		(void)fclose(fp);
-		free(cp);
-		strings = NULL;
-		return (okshells);
-	}
-	shells = sp;
-	strings = cp;
+		return NS_UNAVAIL;
+
+	sp = cp = line;
 	while (fgets(cp, MAXPATHLEN + 1, fp) != NULL) {
 		while (*cp != '#' && *cp != '/' && *cp != '\0')
 			cp++;
 		if (*cp == '#' || *cp == '\0')
 			continue;
-		*sp++ = cp;
+		sp = cp;
 		while (!isspace(*cp) && *cp != '#' && *cp != '\0')
 			cp++;
 		*cp++ = '\0';
+		sl_add(sl, strdup(sp));
 	}
-	*sp = NULL;
 	(void)fclose(fp);
-	return (shells);
+	return NS_SUCCESS;
+}
+
+#ifdef HESIOD
+static int	_dns_initshells __P((void *, void *, va_list));
+
+static int
+_dns_initshells(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
+{
+	char	  shellname[] = "shells-XXXXX";
+	int	  hsindex, hpi;
+	char	**hp;
+
+	if (sl)
+		sl_free(sl, 1);
+	sl = sl_init();
+
+	for (hsindex = 0; ; hsindex++) {
+		snprintf(shellname, sizeof(shellname)-1, "shells-%d", hsindex);
+		hp = hes_resolve(shellname, "shells");
+		if (hp == NULL) {
+			switch(hes_error()) {
+			case HES_ER_OK:
+				break;
+			case HES_ER_NOTFOUND:
+				if (hsindex == 0)
+					return NS_NOTFOUND;
+				return NS_SUCCESS;
+			default:
+				return NS_UNAVAIL;
+			}
+		} else {
+			for (hpi = 0; hp[hpi]; hpi++)
+				sl_add(sl, hp[hpi]);
+			free(hp);
+		}
+	}
+	return NS_SUCCESS;
+}
+#endif /* HESIOD */
+
+#ifdef YP
+static int	_nis_initshells __P((void *, void *, va_list));
+
+static int
+_nis_initshells(rv, cb_data, ap)
+	void	*rv;
+	void	*cb_data;
+	va_list	 ap;
+{
+	static char *ypdomain;
+
+	if (sl)
+		sl_free(sl, 1);
+	sl = sl_init();
+
+	if (ypdomain == NULL) {
+		switch (yp_get_default_domain(&ypdomain)) {
+		case 0:
+			break;
+		case YPERR_RESRC:
+			return NS_TRYAGAIN;
+		default:
+			return NS_UNAVAIL;
+		}
+	}
+
+	for (;;) {
+		char	*ypcur = NULL;
+		int	 ypcurlen;
+		char	*key, *data;
+		int	 keylen, datalen;
+		int	 r;
+
+		key = data = NULL;
+		if (ypcur) {
+			r = yp_next(ypdomain, "shells", ypcur, ypcurlen,
+					&key, &keylen, &data, &datalen);
+			free(ypcur);
+			switch (r) {
+			case 0:
+				break;
+			case YPERR_NOMORE:
+				free(key);
+				free(data);
+				return NS_SUCCESS;
+			default:
+				free(key);
+				free(data);
+				return NS_UNAVAIL;
+			}
+			ypcur = key;
+			ypcurlen = keylen;
+		} else {
+			if (yp_first(ypdomain, "shells", &ypcur,
+				    &ypcurlen, &data, &datalen)) {
+				free(data);
+				return NS_UNAVAIL;
+			}
+		}
+		data[datalen] = '\0';		/* clear trailing \n */
+		sl_add(sl, data);
+	}
+	return NS_SUCCESS;
+}
+#endif /* YP */
+
+static const char *const *
+initshells()
+{
+	static ns_dtab	dtab[] = {
+		NS_FILES_CB(_local_initshells, NULL),
+		NS_DNS_CB(_dns_initshells, NULL),
+		NS_NIS_CB(_nis_initshells, NULL),
+		{ NULL, NULL, NULL }
+	};
+
+	if (sl)
+		sl_free(sl, 1);
+	sl = sl_init();
+
+	if (nsdispatch(NULL, dtab, NSDB_SHELLS) != NS_SUCCESS) {
+		if (sl)
+			sl_free(sl, 1);
+		sl = NULL;
+		return (okshells);
+	}
+	sl_add(sl, NULL);
+
+	return (const char *const *)(sl->sl_str);
 }
