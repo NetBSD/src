@@ -12,6 +12,7 @@
 ./usr/share/man/cat1/i386/vttest.0
 ./usr/share/man/cat1/ld.so.0
 ./usr/share/man/cat1/rtld.0
+./usr/share/man/cat1/x68k/aout2hux.0
 ./usr/share/man/cat1/x68k/bellctrl.0
 ./usr/share/man/cat1/x68k/loadfont.0
 ./usr/share/man/cat1/x68k/loadkmap.0
@@ -219,7 +220,10 @@
 ./usr/share/man/cat4/vax/va.0
 ./usr/share/man/cat4/vax/vp.0
 ./usr/share/man/cat4/vax/vv.0
+./usr/share/man/cat4/x68k/intio.0
 ./usr/share/man/cat4/x68k/intro.0
+./usr/share/man/cat4/x68k/mfp.0
+./usr/share/man/cat4/x68k/neptune.0
 ./usr/share/man/cat4/x68k/pow.0
 ./usr/share/man/cat5/i386/keycap.0
 ./usr/share/man/cat8/alpha/installboot.0
@@ -310,6 +314,7 @@
 ./usr/share/man/man1/i386/vttest.1
 ./usr/share/man/man1/ld.so.1
 ./usr/share/man/man1/rtld.1
+./usr/share/man/man1/x68k/aout2hux.1
 ./usr/share/man/man1/x68k/bellctrl.1
 ./usr/share/man/man1/x68k/loadfont.1
 ./usr/share/man/man1/x68k/loadkmap.1
@@ -517,7 +522,10 @@
 ./usr/share/man/man4/vax/va.4
 ./usr/share/man/man4/vax/vp.4
 ./usr/share/man/man4/vax/vv.4
+./usr/share/man/man4/x68k/intio.4
 ./usr/share/man/man4/x68k/intro.4
+./usr/share/man/man4/x68k/mfp.4
+./usr/share/man/man4/x68k/neptune.4
 ./usr/share/man/man4/x68k/pow.4
 ./usr/share/man/man5/i386/keycap.5
 ./usr/share/man/man8/alpha/installboot.8
