@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.30 2002/03/21 00:27:11 simonb Exp $   */
+/*      $NetBSD: raidctl.c,v 1.31 2002/11/16 17:22:36 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1092,18 +1092,13 @@ usage()
 	fprintf(stderr, "       %s [-v] -G dev\n", progname);
 	fprintf(stderr, "       %s [-v] -i dev\n", progname);
 	fprintf(stderr, "       %s [-v] -I serial_number dev\n", progname);
+	fprintf(stderr, "       %s [-v] -p dev\n", progname);
+	fprintf(stderr, "       %s [-v] -P dev\n", progname);
 	fprintf(stderr, "       %s [-v] -r component dev\n", progname); 
 	fprintf(stderr, "       %s [-v] -R component dev\n", progname);
 	fprintf(stderr, "       %s [-v] -s dev\n", progname);
 	fprintf(stderr, "       %s [-v] -S dev\n", progname);
 	fprintf(stderr, "       %s [-v] -u dev\n", progname);
-#if 0
-	fprintf(stderr, "usage: %s %s\n", progname, 
-		"-a | -f | -F | -g | -r | -R component dev");
-	fprintf(stderr, "       %s -B | -i | -s | -S -u dev\n", progname);
-	fprintf(stderr, "       %s -c | -C config_file dev\n", progname);
-	fprintf(stderr, "       %s -I serial_number dev\n", progname);
-#endif
 	exit(1);
 	/* NOTREACHED */
 }
