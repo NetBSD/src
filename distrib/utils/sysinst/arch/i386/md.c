@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 1998/02/20 02:33:52 jonathan Exp $ */
+/*	$NetBSD: md.c,v 1.14 1998/02/24 05:39:56 jonathan Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,12 +45,12 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+
 int mbr_present;
 int c1024_resp;
 
-int edit_mbr __P((void));
-
 /* prototypes */
+
 
 int md_get_info()
 {
@@ -103,129 +103,13 @@ int md_get_info()
 	return edit_mbr();
 }
 
-int edit_mbr()
-{
-	int i, j;
-
-	/* Ask full/part */
-	msg_display (MSG_fullpart, diskdev);
-	process_menu (MENU_fullpart);
-
-	/* DOS fdisk label checking and value setting. */
-	if (usefull) {
-		/* Ask if we really want to blow away non-BSD stuff */
-		if ((part[0][ID] != 0 && part[0][ID] != 165) ||
-		    (part[1][ID] != 0 && part[1][ID] != 165) ||
-		    (part[2][ID] != 0 && part[2][ID] != 165) ||
-		    (part[3][ID] != 0 && part[3][ID] != 165)) {
-			msg_display (MSG_ovrwrite);
-			process_menu (MENU_noyes);
-			if (!yesno) {
-				endwin();
-				return 0;
-			}
-		}
-		/* Set the partition information for full disk usage. */
-		part[0][ID] = part[0][SIZE] = 0;
-		part[0][SET] = 1;
-		part[1][ID] = part[1][SIZE] = 0;
-		part[1][SET] = 1;
-		part[2][ID] = part[2][SIZE] = 0;
-		part[2][SET] = 1;
-		part[3][ID] = 165;
-		part[3][SIZE] = bsize - bsec;
-		part[3][START] = bsec;
-		part[3][FLAG] = 0x80;
-		part[3][SET] = 1;
-
-		ptstart = bsec;
-		ptsize = bsize - bsec;
-		fsdsize = dlsize;
-		fsptsize = dlsize - bsec;
-		fsdmb = fsdsize / MEG;
-		activepart = 3;
-	} else {
-		int numbsd, overlap;
-		/* Ask for sizes, which partitions, ... */
-		ask_sizemult();
-		bsdpart = -1;
-		activepart = -1;
-		for (i=0; i<4; i++)
-			if (part[i][FLAG] != 0)
-				activepart = i;
-		do {
-			process_menu (MENU_editparttable);
-			numbsd = 0;
-			bsdpart = -1;
-			overlap = 0;
-			yesno = 0;
-			for (i=0; i<4; i++) {
-				if (part[i][ID] == 165) {
-					bsdpart = i;
-					numbsd++;
-				}
-				for (j = i+1; j<4; j++)
-				       if (partsoverlap(i,j))
-					       overlap = 1;
-			}
-			if (overlap || numbsd != 1) {
-				msg_display (MSG_reeditpart);
-				process_menu (MENU_yesno);
-			}
-		} while (yesno && (numbsd != 1 || overlap));
-
-		if (numbsd == 0) {
-			msg_display (MSG_nobsdpart);
-			process_menu (MENU_ok);
-			return 0;
-		}
-			
-		if (numbsd > 1) {
-			msg_display (MSG_multbsdpart, bsdpart);
-			process_menu (MENU_ok);
-		}
-			
-		ptstart = part[bsdpart][START];
-		ptsize = part[bsdpart][SIZE];
-		fsdsize = dlsize;
-		if (ptstart + ptsize < bsize)
-			fsptsize = ptsize;
-		else
-			fsptsize = dlsize - ptstart;
-		fsdmb = fsdsize / MEG;
-
-		/* Ask if a boot selector is wanted. XXXX */
-	}
-
-	/* Compute minimum NetBSD partition sizes (in sectors). */
-	minfsdmb = (80 + 4*rammb) * (MEG / sectorsize);
-
-	if (usefull) 
-	  swapadj = bsec;
-
-	return 1;
-}
-
 void md_pre_disklabel()
 {
-	int i;
-
 	/* Fdisk the disk! */
 	printf ("%s", msg_string (MSG_dofdisk));
-	if (bstuffset)
-		run_prog ("/sbin/fdisk -i -f -b %d/%d/%d /dev/r%sd",
-			  bcyl, bhead, bsec, diskdev);
-	
-	for (i=0; i<4; i++)
-		if (part[i][SET])
-			run_prog("/sbin/fdisk -u -f -%d -s %d/%d/%d /dev/r%sd",
-				 i, part[i][ID], part[i][START],
-				 part[i][SIZE],  diskdev);
 
-	if (activepart >= 0)
-		run_prog ("/sbin/fdisk -a -%d -f /dev/r%s",
-			  activepart, diskdev);
-
+	/* write edited MBR onto disk. */
+	set_fdisk_info ();
 }
 
 void md_post_disklabel (void)

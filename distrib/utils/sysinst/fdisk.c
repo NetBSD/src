@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.5 1998/02/24 04:32:22 jonathan Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.6 1998/02/24 05:39:56 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* fdisk.c -- routines to deal with fdisk ... */
+/* fdisk.c -- routines to deal with /sbin/fdisk ... */
 
 #include <stdio.h>
 #include "defs.h"
@@ -72,98 +72,11 @@ struct lookfor fdiskbuf[] = {
 
 int numfdiskbuf = sizeof(fdiskbuf) / sizeof(struct lookfor);
 
-struct part_id {
-	int id;
-	char *name;
-} part_ids[] = {
-	{0, "unused"},
-	{1, "Primary DOS, 12 bit FAT"},
-	{4, "Primary DOS, 16 bit FAT <32M"},
-	{5, "Extended DOS"},
-	{6, "Primary DOS, 16-bit FAT >32MB"},
-	{7, "NTFS"},
-	{131, "Linux native"},
-	{131, "Linux swap"},
-	{165, "NetBSD/FreeBSD/386bsd"},
-	{169, "new NetBSD"},
-	{-1, "Unknown"},
-};
-
-int partsoverlap(int i, int j)
-{
-	if (part[i][SIZE] == 0 || part[j][SIZE] == 0)
-		return 0;
-
-	return 
-		(part[i][START] < part[j][START] &&
-		 part[i][START] + part[i][SIZE] > part[j][START])
-		||
-		(part[i][START] > part[j][START] &&
-		 part[i][START] < part[j][START] + part[j][SIZE])
-		||
-		(part[i][START] == part[j][START]);
-
-}
 
 
-void disp_cur_part(int sel, int disp)
-{
-	int i, j, start, stop, rsize, rend;
-
-	if (disp < 0)
-		start = 0, stop = 4;
-	else
-		start = disp, stop = disp+1;
-	msg_display_add (MSG_part_head, multname, multname, multname);
-	for (i=start; i<stop; i++) {
-		if (sel == i) msg_standout();
-		if (part[i][SIZE] == 0 && part[i][START] == 0)
-			msg_printf_add ("%d %36s  ", i, "");
-		else {
-			rsize = part[i][SIZE] / sizemult;
-			if (part[i][SIZE] % sizemult)
-				rsize++;
-			rend = (part[i][START] + part[i][SIZE]) / sizemult;
-			if ((part[i][SIZE] + part[i][SIZE]) % sizemult)
-				rend++;
-			msg_printf_add("%d %12d%12d%12d  ", i,
-					part[i][START] / sizemult,
-					rsize, rend);
-		}
-		for (j = 0; part_ids[j].id != -1 &&
-			    part_ids[j].id != part[i][ID]; j++);
-		msg_printf_add ("%s\n", part_ids[j].name);
-		if (sel == i) msg_standend();
-	}
-}
-
-int check_geom (void)
-{
-	return bcyl <= 1024 && bsec < 64 && bcyl > 0 && bhead > 0 && bsec > 0;
-}
-
-
-void set_fdisk_geom (void)
-{
-	char res[80];
-	msg_display_add(MSG_setbiosgeom);
-	disp_cur_geom();
-	msg_printf_add ("\n");
-	msg_prompt_add (MSG_cylinders, NULL, res, 80);
-	bcyl = atoi(res);
-	msg_prompt_add (MSG_heads, NULL, res, 80);
-	bhead = atoi(res);
-	msg_prompt_add (MSG_sectors, NULL, res, 80);
-	bsec = atoi(res);
-	bstuffset = 1;
-}
-
-void disp_cur_geom (void)
-{
-	msg_display_add(MSG_realgeom, dlcyl, dlhead, dlsec);
-	msg_display_add(MSG_biosgeom, bcyl, bhead, bsec);
-}
-
+/*
+ * Fetch current MBR from disk into core by parsing /sbin/fdisk output.
+ */
 void get_fdisk_info (void)
 {
 	char *textbuf;
@@ -200,4 +113,28 @@ void get_fdisk_info (void)
 				bcyl = t2;
 		}
 	}
+}
+
+/*
+ * Write incore MBR geometry and partition info to disk
+ * using  /sbin/fdisk.
+ */
+void set_fdisk_info (void)
+{
+	int i;
+
+	if (bstuffset)
+		run_prog ("/sbin/fdisk -i -f -b %d/%d/%d /dev/r%sd",
+			  bcyl, bhead, bsec, diskdev);
+	
+	for (i=0; i<4; i++)
+		if (part[i][SET])
+			run_prog("/sbin/fdisk -u -f -%d -s %d/%d/%d /dev/r%sd",
+				 i, part[i][ID], part[i][START],
+				 part[i][SIZE],  diskdev);
+
+	if (activepart >= 0)
+		run_prog ("/sbin/fdisk -a -%d -f /dev/r%s",
+			  activepart, diskdev);
+
 }
