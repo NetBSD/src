@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.3 1996/09/23 04:33:00 cgd Exp $	*/
+/*	$NetBSD: start.S,v 1.4 1996/10/17 02:50:40 cgd Exp $	*/
 
 /*  
  * Mach Operating System
@@ -46,7 +46,7 @@
 NESTED(start, 1, ENTRY_FRAME, ra, 0, 0)
 	br	pv,Lstartgp
 Lstartgp:
-	SETGP(pv)
+	LDGP(pv)
 
 #ifndef PRIMARY_BOOTBLOCK
 	lda	sp,start		/* start stack below text */

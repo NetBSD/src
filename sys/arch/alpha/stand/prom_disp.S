@@ -1,4 +1,4 @@
-/*	$NetBSD: prom_disp.S,v 1.4 1996/09/23 04:33:00 cgd Exp $	*/
+/*	$NetBSD: prom_disp.S,v 1.5 1996/10/17 02:50:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -55,7 +55,7 @@
 #define	DISPATCH_REGS		IM_RA|IM_S0|IM_S1|IM_S2|IM_S3|IM_S4|IM_S5|IM_S6
 
 NESTED(prom_dispatch, 5, DISPATCH_FRAME_SIZE, ra, DISPATCH_REGS, 0)
-	SETGP(pv)
+	LDGP(pv)
 
 	lda	sp, -DISPATCH_FRAME_SIZE(sp)
 	stq	ra, D_RA(sp)

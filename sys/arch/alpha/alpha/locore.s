@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.25 1996/10/15 23:56:56 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.26 1996/10/17 02:50:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -62,7 +62,7 @@ bootstack:
  */
 NESTED_NOPROFILE(__start,1,0,ra,0,0)
 	br	pv,Lstart1
-Lstart1: SETGP(pv)
+Lstart1: LDGP(pv)
 
 	/* Switch to the boot stack. */
 	lda	sp,bootstack
@@ -81,7 +81,7 @@ Lstart1: SETGP(pv)
 	CALL(alpha_init)
 
 	/* Set up the virtual page table pointer. */
-	CONST(VPTBASE, a0)
+	ldiq	a0, VPTBASE
 	call_pal PAL_OSF1_wrvptptr	/* clobbers a0, t0, t8-t11 */
 
 	/*
@@ -90,7 +90,7 @@ Lstart1: SETGP(pv)
 	lda	t0,proc0			/* get phys addr of pcb */
 	ldq	a0,P_MD_PCBPADDR(t0)
 	call_pal PAL_OSF1_swpctx
-	CONST(-2, a0)
+	ldiq	a0, -2
 	call_pal PAL_OSF1_tbi
 
 	/*
@@ -106,7 +106,7 @@ Lstart1: SETGP(pv)
 	 * Call exception_return, to simulate return from (fake)
 	 * exception to user-land, running process 1, init!
 	 */
-	JMP(exception_return)		/* "And that's all she wrote." */
+	jmp	zero, exception_return		/* "And that's all she wrote." */
 	END(__start)
 
 /**************************************************************************/
@@ -155,11 +155,9 @@ NESTED(sigcode,0,0,ra,0,0)
 	jsr	ra, (t12)		/* call the signal handler (t12==pv) */
 	ldq	a0, 0(sp)		/* get the sigcontext pointer */
 	lda	sp, 16(sp)
-	CONST(SYS_sigreturn, v0)	/* and call sigreturn() with it. */
-	call_pal PAL_OSF1_callsys
+	CALLSYS_NOERROR(sigreturn)	/* and call sigreturn() with it. */
 	mov	v0, a0			/* if that failed, get error code */
-	CONST(SYS_exit, v0)		/* and call exit() with it. */
-	call_pal PAL_OSF1_callsys
+	CALLSYS_NOERROR(exit)		/* and call exit() with it. */
 XNESTED(esigcode,0)
 	END(sigcode)
 
@@ -174,7 +172,7 @@ IMPORT(astpending, 8)
 
 LEAF(exception_return, 1)			/* XXX should be NESTED */
 	br	pv, Ler1
-Ler1:	SETGP(pv)
+Ler1:	LDGP(pv)
 
 	ldq	s1, (FRAME_PS * 8)(sp)		/* get the saved PS */
 	and	s1, ALPHA_PSL_IPL_MASK, t0	/* look at the saved IPL */
@@ -185,12 +183,12 @@ Ler1:	SETGP(pv)
 	beq	t1, Lchkast			/* no, try an AST*/
 
 	/* We've got a SIR. */
-	CONST(ALPHA_PSL_IPL_SOFT, a0)		/* yes, lower IPL to soft */
+	ldiq	a0, ALPHA_PSL_IPL_SOFT		/* yes, lower IPL to soft */
 	call_pal PAL_OSF1_swpipl
 	CALL(do_sir)				/* do the SIR */
 
 Lchkast:
-	CONST(ALPHA_PSL_IPL_0, a0)		/* drop IPL to zero*/
+	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero*/
 	call_pal PAL_OSF1_swpipl
 
 	and	s1, ALPHA_PSL_USERMODE, t0	/* are we returning to user? */
@@ -298,11 +296,11 @@ LEAF(XentArith, 2)				/* XXX should be NESTED */
 	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
 
 	/* a0, a1, & a2 already set up */
-	CONST(ALPHA_KENTRY_ARITH, a3)
+	ldiq	a3, ALPHA_KENTRY_ARITH
 	mov	sp, a4
 	CALL(trap)
 
-	JMP(exception_return)
+	jmp	zero, exception_return
 	END(XentArith)
 
 /**************************************************************************/
@@ -321,11 +319,11 @@ LEAF(XentIF, 1)					/* XXX should be NESTED */
 	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
 
 	/* a0, a1, & a2 already set up */
-	CONST(ALPHA_KENTRY_IF, a3)
+	ldiq	a3, ALPHA_KENTRY_IF
 	mov	sp, a4
 	CALL(trap)
 
-	JMP(exception_return)
+	jmp	zero, exception_return
 	END(XentIF)
 
 /**************************************************************************/
@@ -347,7 +345,7 @@ LEAF(XentInt, 2)				/* XXX should be NESTED */
 	mov	sp, a3
 	CALL(interrupt)
 
-	JMP(exception_return)
+	jmp	zero, exception_return
 	END(XentInt)
 
 /**************************************************************************/
@@ -366,11 +364,11 @@ LEAF(XentMM, 3)					/* XXX should be NESTED */
 	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
 
 	/* a0, a1, & a2 already set up */
-	CONST(ALPHA_KENTRY_MM, a3)
+	ldiq	a3, ALPHA_KENTRY_MM
 	mov	sp, a4
 	CALL(trap)
 
-	JMP(exception_return)
+	jmp	zero, exception_return
 	END(XentMM)
 
 /**************************************************************************/
@@ -403,7 +401,7 @@ LEAF(XentSys, 0)				/* XXX should be NESTED */
 	mov	sp,a1
 	CALL(syscall)
 
-	JMP(exception_return)
+	jmp	zero, exception_return
 	END(XentSys)
 
 /**************************************************************************/
@@ -422,11 +420,11 @@ LEAF(XentUna, 3)				/* XXX should be NESTED */
 	bsr	ra, exception_save_regs		/* jmp/CALL trashes pv/t12 */
 
 	/* a0, a1, & a2 already set up */
-	CONST(ALPHA_KENTRY_UNA, a3)
+	ldiq	a3, ALPHA_KENTRY_UNA
 	mov	sp, a4
 	CALL(trap)
 
-	JMP(exception_return)
+	jmp	zero, exception_return
 	END(XentUna)
 
 /**************************************************************************/
@@ -439,7 +437,7 @@ LEAF(XentUna, 3)				/* XXX should be NESTED */
  */
 
 LEAF(savefpstate, 1)
-	SETGP(pv)
+	LDGP(pv)
 	/* save all of the FP registers */
 	lda	t1, FPREG_FPR_REGS(a0)	/* get address of FP reg. save area */
 	stt	$f0,   (0 * 8)(t1)	/* save first register, using hw name */
@@ -480,7 +478,7 @@ LEAF(savefpstate, 1)
 	 * Then save the FPCR; note that the necessary 'trapb's are taken
 	 * care of on kernel entry and exit.
 	 */
-	MF_FPCR(ft0)
+	mf_fpcr	ft0
 	stt	ft0, FPREG_FPR_CR(a0)	/* store to FPCR save area */
 
 	RET
@@ -496,13 +494,13 @@ LEAF(savefpstate, 1)
  */
 
 LEAF(restorefpstate, 1)
-	SETGP(pv)
+	LDGP(pv)
 	/*
 	 * Restore the FPCR; note that the necessary 'trapb's are taken care of
 	 * on kernel entry and exit.
 	 */
 	ldt	ft0, FPREG_FPR_CR(a0)	/* load from FPCR save area */
-	MT_FPCR(ft0)
+	mt_fpcr	ft0
 
 	/* Restore all of the FP registers. */
 	lda	t1, FPREG_FPR_REGS(a0)	/* get address of FP reg. save area */
@@ -562,7 +560,7 @@ LEAF(restorefpstate, 1)
 
 LEAF(savectx, 1)
 	br	pv, Lsavectx1
-Lsavectx1: SETGP(pv)
+Lsavectx1: LDGP(pv)
 	stq	sp, U_PCB_HWPCB_KSP(a0)		/* store sp */
 	stq	s0, U_PCB_CONTEXT+(0 * 8)(a0)	/* store s0 - s6 */
 	stq	s1, U_PCB_CONTEXT+(1 * 8)(a0)
@@ -595,16 +593,16 @@ IMPORT(Lev1map, 8)
  */
 LEAF(idle, 0)
 	br	pv, Lidle1
-Lidle1:	SETGP(pv)
+Lidle1:	LDGP(pv)
 	stq	zero, curproc			/* curproc <- NULL for stats */
 	mov	zero, a0			/* enable all interrupts */
 	call_pal PAL_OSF1_swpipl
 Lidle2:
 	ldl	t0, whichqs			/* look for non-empty queue */
 	beq	t0, Lidle2
-	CONST(ALPHA_PSL_IPL_HIGH, a0)		/* disable all interrupts */
+	ldiq	a0, ALPHA_PSL_IPL_HIGH		/* disable all interrupts */
 	call_pal PAL_OSF1_swpipl
-	JMP(sw1)				/* jump back into the fray */
+	jmp	zero, sw1				/* jump back into the fray */
 	END(idle)
 
 /*
@@ -613,7 +611,7 @@ Lidle2:
  * XXX should optimiize, and not do the switch if switching to curproc
  */
 LEAF(cpu_switch, 0)
-	SETGP(pv)
+	LDGP(pv)
 	/* do an inline savectx(), to save old context */
 	ldq	a0, curproc
 	ldq	a1, P_ADDR(a0)
@@ -635,11 +633,11 @@ LEAF(cpu_switch, 0)
 	ldl	t0, whichqs			/* look for non-empty queue */
 	beq	t0, idle			/* and if none, go idle */
 
-	CONST(ALPHA_PSL_IPL_HIGH, a0)		/* disable all interrupts */
+	ldiq	a0, ALPHA_PSL_IPL_HIGH		/* disable all interrupts */
 	call_pal PAL_OSF1_swpipl
 sw1:
 	br	pv, Lcs1
-Lcs1:	SETGP(pv)
+Lcs1:	LDGP(pv)
 	ldl	t0, whichqs			/* look for non-empty queue */
 	beq	t0, idle			/* and if none, go idle */
 	mov	t0, t3				/* t3 = saved whichqs */
@@ -670,7 +668,7 @@ Lcs4:
 	cmpeq	t0, t5, t0			/* see if queue is empty */
 	beq	t0, Lcs5			/* nope, it's not! */
 
-	CONST(1, t0)				/* compute bit in whichqs */
+	ldiq	t0, 1				/* compute bit in whichqs */
 	sll	t0, t2, t0
 	xor	t3, t0, t3			/* clear bit in whichqs */
 	stl	t3, whichqs
@@ -698,7 +696,7 @@ Lcs5:
 	stq	t2, USTP_OFFSET(t3)
 	mov	t5, a0				/* swap the context */
 	call_pal PAL_OSF1_swpctx
-	CONST(-1, a0)				/* & invalidate old TLB ents */
+	ldiq	a0, -1				/* & invalidate old TLB ents */
 	call_pal PAL_OSF1_tbi
 
 	/*
@@ -720,7 +718,7 @@ Lcs5:
 
 	mov	s3, a0				/* swap the context */
 	call_pal PAL_OSF1_swpctx
-	CONST(-2, a0)				/* & invalidate old TLB ents */
+	ldiq	a0, -2				/* & invalidate old TLB ents */
 	call_pal PAL_OSF1_tbi
 
 	ldq	a0, P_VMSPACE(s0)
@@ -748,7 +746,7 @@ Lcs5:
 	and	a0, ALPHA_PSL_IPL_MASK, a0
 	call_pal PAL_OSF1_swpipl
 
-	CONST(1, v0)				/* possible ret to savectx() */
+	ldiq	v0, 1				/* possible ret to savectx() */
 	RET
 	END(cpu_switch)
 
@@ -776,7 +774,7 @@ LEAF(switch_trampoline, 0)
  * to switch into a few process.  MUST BE CALLED AT SPLHIGH.
  */
 LEAF(switch_exit, 1)
-	SETGP(pv)
+	LDGP(pv)
 
 	/* save the exiting proc pointer */
 	mov	a0, s2
@@ -804,7 +802,7 @@ LEAF(switch_exit, 1)
 	mov	t5, a0				/* swap the context */
 	call_pal PAL_OSF1_swpctx
 #ifndef NEW_PMAP
-	CONST(-1, a0)				/* & invalidate old TLB ents */
+	ldiq	a0, -1				/* & invalidate old TLB ents */
 	call_pal PAL_OSF1_tbi
 #endif /* NEW_PMAP */
 
@@ -816,14 +814,14 @@ LEAF(switch_exit, 1)
 	/* blow away the old user struct */
 	ldq	a0, kernel_map
 	ldq	a1, P_ADDR(s2)
-	CONST(UPAGES*NBPG, a2)
+	ldiq	a2, (UPAGES * NBPG)
 	CALL(kmem_free)
 
 	/* and jump into the middle of cpu_switch. */
 #ifdef NEW_PMAP
 	/* XXX XXX LOSE */
 #endif
-	JMP(sw1)
+	jmp	zero, sw1
 	END(switch_exit)
 
 /**************************************************************************/
@@ -835,7 +833,7 @@ LEAF(switch_exit, 1)
  * int copystr(char *from, char *to, size_t len, size_t *lenp);
  */
 LEAF(copystr, 4)
-	SETGP(pv)
+	LDGP(pv)
 
 	mov	a2, t0			/* t0 = i = len */
 	beq	a2, Lcopystr2		/* if (len == 0), bail out */
@@ -862,7 +860,7 @@ Lcopystr2:
 Lcopystr3:
 	beq	t1, Lcopystr4		/* *from == '\0'; leave quietly */
 
-	CONST(ENAMETOOLONG, v0)		/* *from != '\0'; error. */
+	ldiq	v0, ENAMETOOLONG		/* *from != '\0'; error. */
 	RET
 
 Lcopystr4:
@@ -871,10 +869,10 @@ Lcopystr4:
 	END(copystr)
 
 NESTED(copyinstr, 4, 16, ra, 0, 0)
-	SETGP(pv)
+	LDGP(pv)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
-	CONST(VM_MAX_ADDRESS, t0)		/* make sure that src addr   */
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
 	cmpult	a0, t0, t1			/* is in user space.	     */
 	beq	t1, copyerr			/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
@@ -895,10 +893,10 @@ NESTED(copyinstr, 4, 16, ra, 0, 0)
 	END(copyinstr)
 
 NESTED(copyoutstr, 4, 16, ra, 0, 0)
-	SETGP(pv)
+	LDGP(pv)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
-	CONST(VM_MAX_ADDRESS, t0)		/* make sure that dest addr  */
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that dest addr  */
 	cmpult	a1, t0, t1			/* is in user space.	     */
 	beq	t1, copyerr			/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
@@ -1153,10 +1151,10 @@ bcopy_ov_short:
 	END(bcopy)
 
 NESTED(copyin, 3, 16, ra, 0, 0)
-	SETGP(pv)
+	LDGP(pv)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
-	CONST(VM_MAX_ADDRESS, t0)		/* make sure that src addr   */
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
 	cmpult	a0, t0, t1			/* is in user space.	     */
 	beq	t1, copyerr			/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
@@ -1178,10 +1176,10 @@ NESTED(copyin, 3, 16, ra, 0, 0)
 	END(copyin)
 
 NESTED(copyout, 3, 16, ra, 0, 0)
-	SETGP(pv)
+	LDGP(pv)
 	lda	sp, -16(sp)			/* set up stack frame	     */
 	stq	ra, (16-8)(sp)			/* save ra		     */
-	CONST(VM_MAX_ADDRESS, t0)		/* make sure that dest addr  */
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that dest addr  */
 	cmpult	a1, t0, t1			/* is in user space.	     */
 	beq	t1, copyerr			/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
@@ -1203,10 +1201,10 @@ NESTED(copyout, 3, 16, ra, 0, 0)
 	END(copyout)
 
 LEAF(copyerr, 0)
-	SETGP(pv)
+	LDGP(pv)
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
-	CONST(EFAULT, v0)			/* return EFAULT.	     */
+	ldiq	v0, EFAULT			/* return EFAULT.	     */
 	RET
 END(copyerr)
 
@@ -1221,8 +1219,8 @@ END(copyerr)
 #ifdef notdef
 LEAF(fuword, 1)
 XLEAF(fuiword, 1)
-	SETGP(pv)
-	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	LDGP(pv)
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
@@ -1243,8 +1241,8 @@ XLEAF(fuiword, 1)
 
 LEAF(fusword, 1)
 XLEAF(fuisword, 1)
-	SETGP(pv)
-	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	LDGP(pv)
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
@@ -1264,8 +1262,8 @@ XLEAF(fuisword, 1)
 
 LEAF(fubyte, 1)
 XLEAF(fuibyte, 1)
-	SETGP(pv)
-	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	LDGP(pv)
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
@@ -1285,8 +1283,8 @@ XLEAF(fuibyte, 1)
 #endif /* notdef */
 
 LEAF(suword, 2)
-	SETGP(pv)
-	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	LDGP(pv)
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
@@ -1307,8 +1305,8 @@ LEAF(suword, 2)
 
 #ifdef notdef
 LEAF(suiword, 2)
-	SETGP(pv)
-	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	LDGP(pv)
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
@@ -1329,8 +1327,8 @@ LEAF(suiword, 2)
 	END(suiword)
 
 LEAF(susword, 2)
-	SETGP(pv)
-	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	LDGP(pv)
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
@@ -1350,8 +1348,8 @@ LEAF(susword, 2)
 	END(susword)
 
 LEAF(suisword, 2)
-	SETGP(pv)
-	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	LDGP(pv)
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
@@ -1373,8 +1371,8 @@ LEAF(suisword, 2)
 #endif /* notdef */
 
 LEAF(subyte, 2)
-	SETGP(pv)
-	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	LDGP(pv)
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
@@ -1399,8 +1397,8 @@ LEAF(subyte, 2)
 	END(subyte)
 
 LEAF(suibyte, 2)
-	SETGP(pv)
-	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	LDGP(pv)
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswberr			/* if it's not, error out. */
 	lda	t0, fswberr
@@ -1426,8 +1424,8 @@ LEAF(suibyte, 2)
 	END(suibyte)
 
 LEAF(fswberr, 0)
-	SETGP(pv)
-	CONST(-1, v0)
+	LDGP(pv)
+	ldiq	v0, -1
 	RET
 	END(fswberr)
 
@@ -1441,8 +1439,8 @@ LEAF(fswberr, 0)
  */
 
 LEAF(fuswintr, 2)
-	SETGP(pv)
-	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	LDGP(pv)
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswintrberr			/* if it's not, error out. */
 	lda	t0, fswintrberr
@@ -1462,8 +1460,8 @@ LEAF(fuswintr, 2)
 	END(fuswintr)
 
 LEAF(suswintr, 2)
-	SETGP(pv)
-	CONST(VM_MAX_ADDRESS, t0)		/* make sure that addr */
+	LDGP(pv)
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that addr */
 	cmpult	a0, t0, t1			/* is in user space. */
 	beq	t1, fswintrberr			/* if it's not, error out. */
 	lda	t0, fswintrberr
@@ -1487,8 +1485,8 @@ LEAF(suswintr, 2)
 LEAF(fswintrberr, 0)
 XLEAF(fuswintr, 2)				/* XXX what is a 'word'? */
 XLEAF(suswintr, 2)				/* XXX what is a 'word'? */
-	SETGP(pv)
-	CONST(-1, v0)
+	LDGP(pv)
+	ldiq	v0, -1
 	RET
 	END(fswberr)
 
@@ -1569,7 +1567,7 @@ LEAF(XentRestart, 1)			/* XXX should be NESTED */
 	stq	ra,(FRAME_RA*8)(sp)
 
 	br	pv,LXconsole_restart1
-LXconsole_restart1: SETGP(pv)
+LXconsole_restart1: LDGP(pv)
 
 	ldq	a0,(FRAME_RA*8)(sp)		/* a0 = ra */
 	ldq	a1,(FRAME_T11*8)(sp)		/* a1 = ai */
