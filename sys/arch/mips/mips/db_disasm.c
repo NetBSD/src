@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.4 1999/04/24 08:10:38 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.5 1999/12/27 21:12:25 castor Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,6 +51,7 @@
 
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
+#include <ddb/db_extern.h>
 #include <ddb/db_sym.h>
 
 static char *op_name[64] = {
@@ -158,6 +159,7 @@ db_disasm_insn(insn, loc, altfmt)
 	db_addr_t	loc;
 	boolean_t	altfmt;
 {
+	boolean_t bdslot = FALSE;
 	InstFmt i;
 
 	i.word = insn;
@@ -211,7 +213,9 @@ db_disasm_insn(insn, loc, altfmt)
 
 		case OP_JR:
 		case OP_JALR:
-			/* FALLTHROUGH */
+			db_printf("\t%s", reg_name[i.RType.rs]);
+			bdslot = TRUE;
+			break;
 		case OP_MTLO:
 		case OP_MTHI:
 			db_printf("\t%s", reg_name[i.RType.rs]);
@@ -274,6 +278,7 @@ db_disasm_insn(insn, loc, altfmt)
 		    reg_name[i.IType.rt]);
 	pr_displ:
 		print_addr(loc + 4 + ((short)i.IType.imm << 2));
+		bdslot = TRUE;
 		break;
 
 	case OP_COP0:
@@ -358,6 +363,7 @@ db_disasm_insn(insn, loc, altfmt)
 	case OP_JAL:
 		db_printf("%s\t", op_name[i.JType.op]);
 		print_addr((loc & 0xF0000000) | (i.JType.target << 2));
+		bdslot = TRUE;
 		break;
 
 	case OP_LWC1:
@@ -424,6 +430,11 @@ db_disasm_insn(insn, loc, altfmt)
 		    (short)i.IType.imm);
 	}
 	db_printf("\n");
+	if (bdslot) {
+		db_printf("\t\tbdslot:\t");
+		db_print_loc_and_inst(loc+4);
+		return (loc + 8);
+	}
 	return (loc + 4);
 }
 
