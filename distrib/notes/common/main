@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.3 1999/02/20 16:19:48 scw Exp $
+.\" $NetBSD: main,v 1.4 1999/03/23 20:55:38 perry Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .
 .\"	--------------------  CONFIGURATION  --------------------
 .
-.nr FOR_RELEASE 0
+.nr FOR_RELEASE 1
 .ds MACHINE_LIST alpha amiga arm32 atari hp300 i386 mac68k mvme68k
 .as MACHINE_LIST " pc532 pmax sparc sun3 sun3x vax x68k
 .so \*[.CURDIR]/../common/macros
@@ -92,162 +92,137 @@ You are reading the
 .
 The
 .Nx
-Operating System is a fully functional UN*X-like system
-derived from the Berkeley Networking Release 2 (Net/2), 4.4BSD-Lite,
-and 4.4BSD-Lite2 sources.
+Operating System is a fully functional 
+.Tn Open Source
+UN*X-like operating system derived from the Berkeley Networking
+Release 2 (Net/2), 4.4BSD-Lite, and 4.4BSD-Lite2 sources.
 .Nx
-runs on many architectures and is
-being ported to more.
+runs on twenty different system architectures featuring eight distinct
+families of CPUs, and is being ported to more. The
+.Nx \*V
+release contains complete binary releases for fourteen different
+machine types. (The six remaining are not fully supported at this time
+and are thus not part of the binary distribution. For information on
+them, please see the NetBSD web site at
+.Lk http://www.netbsd.org/ )
 .Pp
+.Nx
+is a completely integrated system.
+In addition to its highly portable, high performance kernel,
+.Nx
+features a complete set of user utilities, compilers for several
+languages,
+.Tn The X Window System ,
+and numerous other tools, all accompanied by full source code.
+.Pp
+.\" XXX Should we include some text here about NetBSD's license
+.\" policies and how commercial-friendly it is?
 .Nx
 is a creation of the members of the Internet community.
 Without the unique cooperation and coordination the net makes
-possible, it's likely that this release wouldn't have come about.
+possible, it's likely that 
+.Nx
+wouldn't exist.
+.Ss Changes Since The Last Release
 .if \n[_FOR_RELEASE] \{\
-.Pp
 The
 .Nx \*V
-release is a landmark. Building upon the successful
-.Nx
-1.2 release, we have provided numerous and significant
-functional enhancements, including support for many new devices,
-integration of many bug fixes, new and updated kernel subsystems, and
-many userland enhancements. The results of these improvements is a
-stable operating system fit for production use that rivals most
-commercially available systems.
+release is a substantial improvement over its predecessors.  We have
+provided numerous significant functional enhancements, including
+support for many new devices, integration of hundreds of bug fixes,
+new and updated kernel subsystems, and many userland enhancements. The
+results of these improvements is a stable operating system fit for
+production use that rivals most commercially available systems.
 .Pp
-It is impossible to summarize the 18 months of development that went
-into the
+It is impossible to completely summarize the nearly two years of
+development that went into the
 .Nx \*V
-release. Some of the significant changes include:
+release. Some highlights include:
 .Bl -bullet
 .It
-Support for machine independent device drivers has been
-radically improved with the addition of the "bus.h" interface,
-providing a high quality abstraction for machine and
-architecture independent device access.
+Substantial improvements in the TCP/IP implementation, including
+numerous performance enhancements and bug fixes by Jason Thorpe and
+others.
 .It
-The bus_dma interface has also been integrated, providing a
-machine-independent abstraction for DMA mapping. This permits many
-good things, including (among many) clean multi-platform
-bounce buffer support.
+A new, high efficiency kernel memory pool allocator by Paul
+Kranenburg. This has been integrated into most kernel subsystems.
 .It
-Framework support for ISA "Plug and Play" has been added, as
-well as support for numerous "Plug and Play" devices.
+A new, totally rewritten virtual memory subsystem, UVM, created by
+Chuck Cranor, which is substantially cleaner and better performing
+than the old Mach derived VM subsystem.
 .It
-APM support has been added to NetBSD/i386.
+Improved POSIX and XPG standards compliance.
 .It
-An initial cut of multi-platform PCMCIA support has been added.
+Completion of the integration of all remaining
+.Bx 4.4
+Lite-2 kernel improvements and bug fixes that had not been previously
+integrated. (Integration of all userland components was completed
+before
+.Nx 1.3 )
 .It
-Support for ATAPI devices (initially just ATAPI CD-ROM drives)
-has been added.
+Several new ports, including macppc, bebox, sparc64, next68k, and
+others, have been integrated into the source tree.
 .It
-Support for Sun 3/80s (sun3x architecture) has been added.
+The system compilers have been upgraded to egcs 1.1.1, and the system
+compiler toolchain now (mostly) uses the latest versions of GNU
+binutils instead of the obsolete versions left over from
+.Bx 4.4
+Lite.
 .It
-Support for R4000 DECstations has been added.
+Everyone's favorite
+.Xr ftp 1
+client has been improved even further. See the man page for details.
 .It
-Integration/merger of 4.4BSD Lite-2 sources into userland
-programs has nearly been completed.
+A new architecture independent console driver,
+.Xr wscons 4 ,
+has been integrated into many ports.
 .It
-Most of userland now compiles with high levels of gcc warnings
-turned on, which has lead to the discovery and elimination of
-many bugs.
+Numerous improvements have been made to the audio subsystem support,
+including support for MIDI device drivers.
 .It
-The i386 boot blocks have been completely replaced with a new,
-libsa based two stage boot system. This has permitted
-integration of compressed boot support (see below).
+Linux compatibility support has been improved.
 .It
-Many ports now support booting of compressed kernels, and
-feature new "Single Floppy" install systems that boot
-compressed install kernels and ramdisks. We intend to do
-substantial work on improving ease of installation in the
-future.
+The scheduler has had several bugs fixed, yielding dramatic
+improvements in interactive performance.
 .It
-"ypserv" has been added, thus completing our support for the
-"yp" network information system suite.
+Several network tunneling protocols, including GRE and IP in IP, have
+been implemented.
 .It
-Support for the Linux "ext2fs" filesystem and for FAT32 "msdosfs"
-filesystems has been added.
+Kernel support for the CODA distributed file system has been added.
 .It
-TCP now has a SYN "compressed state engine" which provides
-increased robustness under high levels of received SYNs (as in
-the case of "SYN flood" attacks.) (Much of this code was
-derived from sources provided by BSDI.)
+Manuel Bouyer completed major changes to the IDE support.  It is now
+architecture independent. Major changes have been made to the IDE code
+for better error handling, improved ATAPI support, 32 bit data I/O
+support and bus-master DMA support on PCI IDE controllers.
 .It
-An initial implementation of Path MTU discovery has been
-integrated (though it is not turned on by default).
+Lennart Augustsson has added full USB support, permitting the use of a
+wide variety of Universal Serial Bus peripherals. The drivers should
+easily port to any future platforms that suport the PCI bus.  See
+.Xr usb 4
+for an overview.
 .It
-An initial kernel based random number generator pseudodevice has
-been added.
+RAIDframe, version 1.1, from the Parallel Data Laboratory at Carnegie
+Mellon University, has been integrated.  Supports RAID levels 0, 1, 4,
+5, 6, parity logging, and more.
 .It
-Several major fixes have been integrated for the VM subsystem,
-including the fix of a notorious VM leak, improved
-synchronization between mmap()ed and open()ed files, and
-massively improved performance in low real memory conditions.
+An
+.Pa /etc/nsswitch.conf
+file has been added to the system to specify
+search order for system databases. See the man page for details.
 .It
-A new swap subsystem has radically improved configuration and
-management of swap devices and adds swapping to files.
-.It
-Userland ntp support, including xntpd, has been integrated.
-.It
-The audio subsystems have been substantially debugged and
-improved, and now offer substantial emulation of the OSS audio
-interface, thus providing the ability to cleanly run emulated
-Linux and FreeBSD versions of sound intensive programs.
-.It
-A "packages" system has been adapted from FreeBSD and will
-provide binary package installations for third party
-applications.
-.It
-The XFree86 X source tree has been made a supported part of
-the
-.Nx
-distribution, and X servers (if built for this
-port), libraries and utilities are now shipped with our releases.
-.It
-The ftp(1) program has been made astoundingly overfunctional.
-It supports command line editing, tab completion, status bars,
-automatic download of URLs specified on the command line,
-firewall support and many other features.
-.It
-All ports now use "new" config. Old config has been laid to rest.
-.It
-The ARP subsystem and API has been rewritten to make it less
-ethernet-centric.
-.It
-A new if_media subsystem has been added which allows network
-interfaces to be configured using media type names rather than
-device-specific mode bits.
-.It
-Many kernel interface manual pages have been added to manual
-section 9.
-.It
-Several ports support much more hardware.
-.It
-Many updates to bring
-.Nx
-closer to standards compliance.
+.Xr syslogd 8
+now supports listening on multiple sockets, to make the
+chrooting of servers easier.
 .It
 Most third party packages have been updated to the latest stable
 release.
 .El
+.Pp
 As has been noted, there have also been innumerable bug fixes.	
 .Pp
 Kernel interfaces have continued to be refined, and more subsystems
 and device drivers are shared among the different ports. You can look
 for this trend to continue.
-.Pp
-.Nx \*V also includes some refinement to the
-.Nx
-binary emulation
-system (which includes FreeBSD, HP-UX, iBCS2, Linux, OSF/1, SunOS, SVR4,
-Solaris and Ultrix compatibility), bringing
-.Nx
-closer to the goal of
-making the emulation as accurate as possible.
-.Pp
-In the near future, we hope to integrate a fully rewritten Virtual
-Memory subsystem, kernel threads, and SMP support.
 .Pp
 .so whatis -----------------------------------------------
 .\}
@@ -290,9 +265,6 @@ promotional activities.
 periodically organizing workshops for developers and other
 interested people to discuss ongoing work.
 .El
-We hope to have regular releases of the full binary and source trees,
-but these are difficult to coordinate, especially with all of the
-architectures which we now support! 
 .Pp
 We hope to support even
 .Em more
