@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.63 2000/04/25 16:05:06 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.64 2000/05/08 13:49:48 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.63 $"
+#ident 		"GENERIC-$Revision: 1.64 $"
 
 maxusers	32
 
@@ -108,6 +108,7 @@ options 	NMBCLUSTERS=1024
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
