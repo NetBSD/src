@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.88 1997/07/16 00:01:45 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.89 1997/07/17 16:22:54 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -278,6 +278,8 @@ _fpfline:
 	jmp	fpsp_unimp		| yes, go handle it
 #endif
 #endif
+
+#ifdef FPU_EMULATE
 	.globl _fpemuli
 _fpemuli:
 	addql	#1,Lfpecnt
@@ -285,7 +287,8 @@ _fpemuli:
 	moveml	#0xFFFF,sp@-		| save registers
 	movql	#T_FPEMULI,d0		| denote as FP emulation trap
 	jra	fault			| do it
-
+#endif
+	
 _fpunsupp:
 #if defined(M68040)
 	cmpl	#MMU_68040,_mmutype	| 68040?
@@ -307,11 +310,6 @@ _fpunsupp:
  * Note that since some FP exceptions generate mid-instruction frames
  * and may cause signal delivery, we need to test for stack adjustment
  * after the trap call.
- *
- * XXX I don't really understand what they do for the 68881/82, for which
- * I dont have docs at the moment. I don't find anything which looks like
- * it is intended in the 68040 FP docs. I pretend for the moment I don't
- * need to do anything for the 68060. -is
  */
 	.globl	_fpfault
 _fpfault:
