@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.127 2005/03/16 00:38:27 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.128 2005/03/16 00:39:56 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.127 2005/03/16 00:38:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.128 2005/03/16 00:39:56 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -550,7 +550,7 @@ tcp_output(struct tcpcb *tp)
 	struct tcphdr *th;
 	u_char opt[MAX_TCPOPTLEN];
 	unsigned optlen, hdrlen;
-	unsigned int sack_optlen;
+	unsigned int sack_numblks;
 	int idle, sendalot, txsegsize, rxsegsize;
 	int txsegsize_nosack;
 	int maxburst = TCP_MAXBURST;
@@ -671,14 +671,17 @@ tcp_output(struct tcpcb *tp)
 
 	txsegsize_nosack = txsegsize;
 again:
-	sack_optlen = tcp_sack_optlen(tp);
-	if (sack_optlen && (tp->rcv_sack_flags & TCPSACK_HAVED) != 0) {
-		/* don't duplicate D-SACK. */
-		use_tso = 0;
+	use_tso = has_tso;
+	sack_numblks = tcp_sack_numblks(tp);
+	if (sack_numblks) {
+		if ((tp->rcv_sack_flags & TCPSACK_HAVED) != 0) {
+			/* don't duplicate D-SACK. */
+			use_tso = 0;
+		}
+		txsegsize = txsegsize_nosack - TCP_SACK_OPTLEN(sack_numblks);
 	} else {
-		use_tso = has_tso;
+		txsegsize = txsegsize_nosack;
 	}
-	txsegsize = txsegsize_nosack - sack_optlen;
 
 	/*
 	 * Determine length of data that should be transmitted, and
@@ -1076,25 +1079,30 @@ send:
 	/*
 	 * Tack on the SACK block if it is necessary.
 	 */
-	if (sack_optlen) {
-		int sack_len, i;
+	if (sack_numblks) {
+		int sack_len;
 		u_char *bp = (u_char *)(opt + optlen);
 		u_int32_t *lp = (u_int32_t *)(bp + 4);
+		struct ipqent *tiqe;
 
-		sack_len = tp->rcv_sack_num * 8 + 2;
+		sack_len = sack_numblks * 8 + 2;
 		bp[0] = TCPOPT_NOP;
 		bp[1] = TCPOPT_NOP;
 		bp[2] = TCPOPT_SACK;
 		bp[3] = sack_len;
-		for (i = 0; i < tp->rcv_sack_num; i++) {
-			*lp++ = htonl(tp->rcv_sack_block[i].left);
-			*lp++ = htonl(tp->rcv_sack_block[i].right);
-		}
 		if ((tp->rcv_sack_flags & TCPSACK_HAVED) != 0) {
+			sack_numblks--;
+			*lp++ = htonl(tp->rcv_dsack_block.left);
+			*lp++ = htonl(tp->rcv_dsack_block.right);
 			tp->rcv_sack_flags &= ~TCPSACK_HAVED;
-			tcp_update_sack_list(tp);
 		}
-		KASSERT(sack_len + 2 == sack_optlen);
+		for (tiqe = TAILQ_FIRST(&tp->timeq);
+		    sack_numblks > 0; tiqe = TAILQ_NEXT(tiqe, ipqe_timeq)) {
+			KASSERT(tiqe != NULL);
+			sack_numblks--;
+			*lp++ = htonl(tiqe->ipqe_seq);
+			*lp++ = htonl(tiqe->ipqe_seq + tiqe->ipqe_len);
+		}
 		optlen += sack_len + 2;
 	}
 

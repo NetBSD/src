@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.122 2005/03/16 00:38:27 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.123 2005/03/16 00:39:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -191,6 +191,7 @@ struct sackhole {
 struct tcpcb {
 	int	t_family;		/* address family on the wire */
 	struct ipqehead segq;		/* sequencing queue */
+	int	t_segqlen;		/* length of the above */
 	struct callout t_timer[TCPT_NTIMERS];/* tcp timers */
 	short	t_state;		/* state of this connection */
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
@@ -290,8 +291,6 @@ struct tcpcb {
 #define TCPSACK_NONE 0
 #define TCPSACK_HAVED 1
 	u_char rcv_sack_flags;		/* SACK flags. */
-	u_int32_t rcv_sack_num;		/* Num of RX SACK blocks. */
-	struct sackblk rcv_sack_block[TCP_SACK_MAX];	/* RX SACK blocks. */
 	struct sackblk rcv_dsack_block;	/* RX D-SACK block. */
 	struct ipqehead timeq;		/* time sequenced queue. */
 	struct sackhead snd_holes;	/* TX SACK holes. */
@@ -844,7 +843,6 @@ tcp_seq	 tcp_new_iss(struct tcpcb *, tcp_seq);
 tcp_seq  tcp_new_iss1(void *, void *, u_int16_t, u_int16_t, size_t,
 	    tcp_seq);
 
-void	 tcp_update_sack_list(struct tcpcb *);
 void	 tcp_new_dsack(struct tcpcb *, tcp_seq, u_int32_t);
 void	 tcp_sack_option(struct tcpcb *, struct tcphdr *, u_char *, int);
 void	 tcp_del_sackholes(struct tcpcb *, struct tcphdr *);
@@ -852,8 +850,8 @@ void	 tcp_free_sackholes(struct tcpcb *);
 void	 tcp_sack_adjust(struct tcpcb *tp);
 struct sackhole *tcp_sack_output(struct tcpcb *tp, int *sack_bytes_rexmt);
 void	 tcp_sack_newack(struct tcpcb *, struct tcphdr *);
-int	 tcp_sack_optlen(struct tcpcb *);
-
+int	 tcp_sack_numblks(const struct tcpcb *);
+#define	TCP_SACK_OPTLEN(nblks)	((nblks) * 8 + 2 + 2)
 
 int	 syn_cache_add(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, struct socket *,
