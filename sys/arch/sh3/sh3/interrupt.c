@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.8 2003/10/08 23:31:43 uwe Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.9 2003/10/18 23:21:35 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8 2003/10/08 23:31:43 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.9 2003/10/18 23:21:35 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8 2003/10/08 23:31:43 uwe Exp $");
 #include <sh3/tmureg.h>
 #include <machine/intr.h>
 
-void intc_intr_priority(int, int);
+int intc_intr_priority(int, int);
 struct intc_intrhand *intc_alloc_ih(void);
 void intc_free_ih(struct intc_intrhand *);
 int intc_unknown_intr(void *);
@@ -61,6 +61,7 @@ void tmu1_oneshot(void);
 int tmu1_intr(void *);
 void tmu2_oneshot(void);
 int tmu2_intr(void *);
+
 /*
  * EVTCODE to intc_intrhand mapper.
  * max #60 is SH7709_INTEVT2_ADC_ADI (0x980)
@@ -146,88 +147,127 @@ intc_intr_disestablish(void *arg)
 	intc_free_ih(ih);
 }
 
+int
+intc_intr_disable(int evtcode)
+{
+	int oldlevel;
+	int s;
+
+	s = _cpu_intr_suspend();
+	KASSERT(EVTCODE_TO_IH_INDEX(evtcode) != 0); /* there is a handler */
+	oldlevel = intc_intr_priority(evtcode, 0);
+	_cpu_intr_resume(s);
+
+	return (oldlevel);
+}
+
+void
+intc_intr_enable(int evtcode, int level)
+{
+#ifdef DIAGNOSTIC
+	int oldlevel;
+#endif
+	int s;
+
+	s = _cpu_intr_suspend();
+#ifdef DIAGNOSTIC
+	KASSERT(EVTCODE_TO_IH_INDEX(evtcode) != 0); /* there is a handler */
+	oldlevel = intc_intr_priority(evtcode, level);
+	KASSERT(oldlevel == 0);	/* that has been disabled previously */
+#else
+	(void)intc_intr_priority(evtcode, level);
+#endif
+	_cpu_intr_resume(s);
+}
+
+
 /*
- * void intc_intr_priority(int evtcode, int level)
- *	Setup interrupt priority register.
+ * int intc_intr_priority(int evtcode, int level)
+ *	Setup interrupt priority register.  Returns old level.
  *	SH7708, SH7708S, SH7708R, SH7750, SH7750S ... evtcode is INTEVT
  *	SH7709, SH7709A				  ... evtcode is INTEVT2
  */
-void
+int
 intc_intr_priority(int evtcode, int level)
 {
-#define	SET_LEVEL(r, pos, level)					\
-	r = (r & ~(0xf << (pos))) | (level << (pos))
-#define	__SH_IPR(sh, x, pos, level)					\
-do {									\
-	r = _reg_read_2(SH ## sh ## _IPR ## x);				\
-	SET_LEVEL(r, pos, level);					\
-	_reg_write_2(SH ## sh ## _IPR ## x, r);				\
-} while (/*CONSTCOND*/0)
-#define	SH3_IPR(x, pos, level)		__SH_IPR(3, x, pos, level)
-#define	SH4_IPR(x, pos, level)		__SH_IPR(4, x, pos, level)
-#define	SH7709_IPR(x, pos, level)	__SH_IPR(7709, x, pos, level)
-#define	SH_IPR(x, pos, level)						\
-do {									\
-	if (CPU_IS_SH3)							\
-		SH3_IPR(x, pos, level);					\
-	else								\
-		SH4_IPR(x, pos, level);					\
-} while (/*CONSTCOND*/0)
+	volatile uint16_t *iprreg;
+	int pos;
+	int oldlevel;
+	uint16_t r;
 
-	u_int16_t r;
+#define	__SH_IPR(_sh, _ipr, _pos)					   \
+	do {								   \
+		iprreg = (volatile uint16_t *)(SH ## _sh ## _IPR ## _ipr); \
+		pos = (_pos);						   \
+	} while (/*CONSTCOND*/0)
+
+#define	SH3_IPR(_ipr, _pos)		__SH_IPR(3, _ipr, _pos)
+#define	SH4_IPR(_ipr, _pos)		__SH_IPR(4, _ipr, _pos)
+#define	SH7709_IPR(_ipr, _pos)		__SH_IPR(7709, _ipr, _pos)
+
+#define	SH_IPR(_ipr, _pos)						\
+	do {								\
+		if (CPU_IS_SH3)						\
+			SH3_IPR(_ipr, _pos);				\
+		else							\
+			SH4_IPR(_ipr, _pos);				\
+	} while (/*CONSTCOND*/0)
+
+
+	pos = -1;
 
 	switch (evtcode) {
 	case SH_INTEVT_TMU0_TUNI0:
-		SH_IPR(A, 12, level);
+		SH_IPR(A, 12);
 		break;
 	case SH_INTEVT_TMU1_TUNI1:
-		SH_IPR(A, 8, level);
+		SH_IPR(A, 8);
 		break;
 	case SH_INTEVT_TMU2_TUNI2:
-		SH_IPR(A, 4, level);
+		SH_IPR(A, 4);
 		break;
 	case SH_INTEVT_SCI_ERI:
 	case SH_INTEVT_SCI_RXI:
 	case SH_INTEVT_SCI_TXI:
 	case SH_INTEVT_SCI_TEI:
-		SH_IPR(B, 4, level);
+		SH_IPR(B, 4);
 		break;
 	}
 
 	if (CPU_IS_SH3)
 		switch (evtcode) {
 		case SH7709_INTEVT2_IRQ3:
-			SH7709_IPR(C, 12, level);
+			SH7709_IPR(C, 12);
 			break;
 		case SH7709_INTEVT2_IRQ2:
-			SH7709_IPR(C, 8, level);
+			SH7709_IPR(C, 8);
 			break;
 		case SH7709_INTEVT2_IRQ1:
-			SH7709_IPR(C, 4, level);
+			SH7709_IPR(C, 4);
 			break;
 		case SH7709_INTEVT2_IRQ0:
-			SH7709_IPR(C, 0, level);
+			SH7709_IPR(C, 0);
 			break;
 		case SH7709_INTEVT2_PINT07:
-			SH7709_IPR(D, 12, level);
+			SH7709_IPR(D, 12);
 			break;
 		case SH7709_INTEVT2_PINT8F:
-			SH7709_IPR(D, 8, level);
+			SH7709_IPR(D, 8);
 			break;
 		case SH7709_INTEVT2_IRQ5:
-			SH7709_IPR(D, 4, level);
+			SH7709_IPR(D, 4);
 			break;
 		case SH7709_INTEVT2_IRQ4:
-			SH7709_IPR(D, 0, level);
+			SH7709_IPR(D, 0);
 			break;
 		case SH7709_INTEVT2_SCIF_ERI:
 		case SH7709_INTEVT2_SCIF_RXI:
 		case SH7709_INTEVT2_SCIF_BRI:
 		case SH7709_INTEVT2_SCIF_TXI:
-			SH7709_IPR(E, 4, level);
+			SH7709_IPR(E, 4);
 			break;
 		case SH7709_INTEVT2_ADC:
-			SH7709_IPR(E, 0, level);
+			SH7709_IPR(E, 0);
 			break;
 		}
 	else
@@ -236,9 +276,21 @@ do {									\
 		case SH4_INTEVT_SCIF_RXI:
 		case SH4_INTEVT_SCIF_BRI:
 		case SH4_INTEVT_SCIF_TXI:
-			SH4_IPR(C, 4, level);
+			SH4_IPR(C, 4);
 			break;
 		}
+
+#ifdef DIAGNOSTIC
+	if (pos < 0)
+		panic("intc_intr_priority: unknown EVTCODE %x", evtcode);
+#endif
+
+	r = _reg_read_2(iprreg);
+	oldlevel = (r >> (pos)) & 0xf;
+	r = (r & ~(0xf << (pos))) | (level << (pos));
+	_reg_write_2(iprreg, r);
+
+	return (oldlevel);
 }
 
 /*
