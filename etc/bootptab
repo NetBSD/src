@@ -1,4 +1,4 @@
-#	$NetBSD: bootptab,v 1.3 1996/05/08 17:19:22 thorpej Exp $
+#	$NetBSD: bootptab,v 1.4 1997/01/04 14:03:32 mrg Exp $
 #
 # /etc/bootptab: database for bootp server (/etc/bootpd)
 # Last update Mon 11/7/88 18:03
@@ -49,13 +49,13 @@
 
 # First, we define a global entry which specifies the stuff every host uses.
 
-global.dummy:\
-        :sm=255.255.255.0:\
-        :hd=/home/nfsclient:bf=null:\
-        :ds=128.32.149.141:\
-        :ns=0x80020b4d 0x80020ffd:\
-        :ts=0x80020b4d 0x80020ffd:\
-        :to=18000:
+#global.dummy:\
+#        :sm=255.255.255.0:\
+#        :hd=/home/nfsclient:bf=null:\
+#        :ds=128.32.149.141:\
+#        :ns=0x80020b4d 0x80020ffd:\
+#        :ts=0x80020b4d 0x80020ffd:\
+#        :to=18000:
 
 # Next, we can define different master entries for each subnet. . .
 
