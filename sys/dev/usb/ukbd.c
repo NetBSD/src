@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.9 1998/08/02 22:27:01 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.10 1998/09/17 18:31:43 drochner Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -205,7 +205,6 @@ const struct wskbd_accessops ukbd_accessops = {
 
 const struct wskbd_mapdata ukbd_keymapdata = {
 	pckbd_keydesctab,
-	sizeof(pckbd_keydesctab)/sizeof(pckbd_keydesctab[0]),
 #ifdef PCKBD_LAYOUT
 	PCKBD_LAYOUT,
 #else
