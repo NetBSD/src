@@ -1,4 +1,4 @@
-/*	$NetBSD: execle.S,v 1.3 2002/02/24 01:06:20 matt Exp $	*/
+/*	$NetBSD: execle.S,v 1.4 2003/08/24 21:04:53 ragge Exp $	*/
 /*
  * Copyright (c) 2001 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -31,7 +31,11 @@
 
 #include "SYS.h"
 
-ENTRY(execle, 0)
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(execle, _execle)
+#endif
+
+ENTRY(_execle, 0)
 	movl	(%ap),%r0		# Get number of args
 	pushl	(%ap)[%r0]	# Push last arg (envp)
 	pushal	8(%ap)		# Push pointer to argv vector
