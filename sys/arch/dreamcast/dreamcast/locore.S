@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2002/02/24 18:19:41 uch Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 2002/02/28 01:53:42 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <sh3/asm.h>
 #include <sh3/locore.h>
+#include <sh3/trapreg.h>
 #include <sh3/mmu_sh4.h>
 #include <sh3/cache_sh4.h>
 
@@ -53,7 +54,7 @@ NENTRY(start)
 	mov.l	_L.bootstrap_stack, r15
 
 	/* Mask all interrupt */
-	__INTR_MASK_r0_r1
+	__INTR_MASK(r0, r1)
 
 	/* 
 	 * Cache initialize. 
@@ -112,8 +113,8 @@ NENTRY(interrupt_exp)
 	MOV	(INTEVT, r0)
 	mov.l	@r0,	r0
 	mov.l	r0, @(TF_TRAPNO, r15)	/* trapframe->tf_trapno = INTEVT */
-	__INTR_MASK_r0_r1		/* mask all interrupt */
-	__EXCEPTION_UNBLOCK_r0_r1	/* enable exception for TLB handling */
+	__INTR_MASK(r0, r1)		/* mask all interrupt */
+	__EXCEPTION_UNBLOCK(r0, r1)	/* enable exception for TLB handling */
 	mov.l	_L.intrhandler, r0
 	jsr	@r0
  	 nop
@@ -142,8 +143,8 @@ NENTRY(Xspllower)
 	sts.l	pr,	@-r15
 
 restart:
-	__INTR_MASK_r0_r1
-	__EXCEPTION_UNBLOCK_r0_r1
+	__INTR_MASK(r0, r1)
+	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	_L.check_ipending, r0
 	jsr	@r0
 	 nop
@@ -156,7 +157,7 @@ restart:
 	 nop
 
 1:
-	__INTR_UNMASK_r0_r1
+	__INTR_UNMASK(r0, r1)
 	lds.l	@r15+,	pr
 	rts
 	 nop

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.1 2002/02/24 18:19:42 uch Exp $	*/
+/*	$NetBSD: locore.h,v 1.2 2002/02/28 01:53:43 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,15 +32,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-/* XXX XXX XXX */
-#define SH3_BBRA	0xffffffb8
-#define SH4_BBRA	0xff200008
-#define SH3_EXPEVT	0xffffffd4
-#define SH3_INTEVT	0xffffffd8
-#define SH4_EXPEVT	0xff000024	
-#define SH4_INTEVT	0xff000028
-/* XXX XXX XXX */
 
 #if defined(SH3) && defined(SH4)
 #define MOV(x, r)	mov.l _L./**/x, r; mov.l @r, r
@@ -151,49 +142,51 @@
 	mov.l	@r15+,	r0	/* tf_r0  */				;\
 	mov.l	@r15,	r15	/* tf_r15 */				;\
 	rte								;\
-	nop
+	 nop
 
 
 /*
  * Macros to disable and enable exceptions (including interrupts).
  * This modifies SR.BL
  */
-#define __EXCEPTION_BLOCK_r0_r1						;\
-	mov	#0x10,	r0						;\
-	swap.b	r0,	r0						;\
-	swap.w	r0,	r0	/* r0 = 0x10000000 */			;\
-	stc	sr,	r1						;\
-	or	r0,	r1						;\
-	ldc	r1,	sr	/* block exceptions */
+#define __0x10	#0x10
+#define __0x78	#0x78
 
-#define __EXCEPTION_UNBLOCK_r0_r1					;\
-	mov	#0x10,	r0						;\
-	swap.b	r0,	r0						;\
-	swap.w	r0,	r0	/* r0 = 0x10000000 */			;\
-	not	r0,	r0						;\
-	stc	sr,	r1						;\
-	and	r0,	r1						;\
-	ldc	r1,	sr	/* unblock exceptions */
+#define __EXCEPTION_BLOCK(Rn, Rm)					;\
+	mov	__0x10,	Rn						;\
+	swap.b	Rn,	Rn						;\
+	swap.w	Rn,	Rn	/* Rn = 0x10000000 */			;\
+	stc	sr,	Rm						;\
+	or	Rn,	Rm						;\
+	ldc	Rm,	sr	/* block exceptions */
+
+#define __EXCEPTION_UNBLOCK(Rn, Rm)					;\
+	mov	__0x10,	Rn						;\
+	swap.b	Rn,	Rn						;\
+	swap.w	Rn,	Rn	/* Rn = 0x10000000 */			;\
+	not	Rn,	Rn						;\
+	stc	sr,	Rm						;\
+	and	Rn,	Rm						;\
+	ldc	Rm,	sr	/* unblock exceptions */
 
 /*
  * Macros to disable and enable interrupts.
  * This modifies SR.I[0-3]
  */
-#define	__INTR_MASK_r0_r1						;\
-	mov	#0x78,	r0						;\
-	shll	r0		/* r0 = 0x000000f0 */			;\
-	stc	sr,	r1						;\
-	or	r0,	r1						;\
-	ldc	r1,	sr	/* mask all interrupt */
+#define	__INTR_MASK(Rn, Rm)						;\
+	mov	__0x78,	Rn						;\
+	shll	Rn		/* Rn = 0x000000f0 */			;\
+	stc	sr,	Rm						;\
+	or	Rn,	Rm						;\
+	ldc	Rm,	sr	/* mask all interrupt */
 
-#define __INTR_UNMASK_r0_r1						;\
-	mov	#0x78,	r0						;\
-	shll	r0		/* r0 = 0x000000f0 */			;\
-	not	r0,	r0						;\
-	stc	sr,	r1						;\
-	and	r0,	r1						;\
-	ldc	r1,	sr	/* unmask all interrupt */
-
+#define __INTR_UNMASK(Rn, Rm)						;\
+	mov	__0x78,	Rn						;\
+	shll	Rn		/* Rn = 0x000000f0 */			;\
+	not	Rn,	Rn						;\
+	stc	sr,	Rm						;\
+	and	Rn,	Rm						;\
+	ldc	Rm,	sr	/* unmask all interrupt */
 
 #define	RECURSEENTRY							;\
 	mov	r15,	r0						;\
