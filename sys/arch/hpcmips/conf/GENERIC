@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.121 2002/05/03 11:37:48 takemura Exp $
+# $NetBSD: GENERIC,v 1.122 2002/05/04 08:12:18 takemura Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.121 $"
+#ident 		"GENERIC-$Revision: 1.122 $"
 
 maxusers	16
 
@@ -334,10 +334,9 @@ hpcin*	at hpcioman5 evtype PCIINTR id PCIINTR_00_00_01 port 7 level 0 connect 1
 # SigmarionII
 #
 com*	at vrgiu? platform NEC_MCR_SIGMARION2 addr 0x0b600000 port 8
-vrisab6	at vrgiu? platform NEC_MCR_SIGMARION2 isaportoffset 0xf780f800
+vrisab6       at vrgiu? platform NEC_MCR_SIGMARION2 isaportoffset 0xf7800000 isamemoffset 0xfa000000
 isa6	at vrisab6
-ne*	at isa6 port 0x300 irq  0x00090003 # port 9, active high and thorough
-#wdc*	at isa6 port 0x170 irq 0x00090003 flags 0x0002  # single drive
+pcic0 at isa6 port 0x3e0 iomem 0x10000 iosiz 0x4000 irq 0x00090003
 hpcioman6 at vrgiu? platform NEC_MCR_SIGMARION2
 hpcin*	at hpcioman6 evtype PCIINTR id PCIINTR_00_12_00 port 0 level 1 connect 1
 
