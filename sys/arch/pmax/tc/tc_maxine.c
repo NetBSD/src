@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_maxine.c,v 1.2 1999/11/15 09:50:40 nisimura Exp $	*/
+/*	$NetBSD: tc_maxine.c,v 1.3 1999/12/01 08:41:42 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_maxine.c,v 1.2 1999/11/15 09:50:40 nisimura Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: tc_maxine.c,v 1.3 1999/12/01 08:41:42 nisimura Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,32 +41,31 @@ __KERNEL_RCSID(0, "$NetBSD: tc_maxine.c,v 1.2 1999/11/15 09:50:40 nisimura Exp $
 #include <pmax/pmax/maxine.h>
 
 /*
- * The builtin TURBOchannel devices on the MAXINE
- * is the IOCTL asic, which is mapped into TC slot 3, and the PMAG-DV
- * xcfb framebuffer, which is built into the baseboard.
+ * MAXINE has 4 TC option slot address space starting at 0x1000.0000.
+ * TC slot size is 32MB.  Two option slots are available.  Slot#2 is
+ * not available for option cards.  IOASIC, which governs various
+ * baseboard devices like RTC, DMA assisted ASC SCSI, LANCE Ether,
+ * forms a system base.  MAXINE IOASIC also controls ACCESS.bus
+ * keyboard/mouse, floppy disk and ISDN.  IOASIC is designed as a TC
+ * device and sits in slot #3 space.
  */
-const struct tc_builtin tc_xine_builtins[] = {
-	{ "IOCTL   ",	3, 0x0, TC_C(3), /*TC_C(3)*/ },
-	{ "PMAG-DV ",	2, 0x0, TC_C(2), /*TC_C(4)*/ }
-};
-
-/* MAXINE slot addreseses */
 static struct tc_slotdesc tc_xine_slots [4] = {
        	{ TC_KV(XINE_PHYS_TC_0_START), TC_C(0) }, /* 0 - tc option slot 0 */
 	{ TC_KV(XINE_PHYS_TC_1_START), TC_C(1) }, /* 1 - tc option slot 1 */
-	/*{ TC_KV(-1), TC_C(-1) },*/  /* physical space for ``slot 2'' is reserved */
-	{ TC_KV(XINE_PHYS_CFB_START), TC_C(2) },  /* 2 - fb on b'board */
-	{ TC_KV(XINE_PHYS_TC_3_START), TC_C(3) }  /* 3 - IOasic on b'board */
+	{ TC_KV(XINE_PHYS_CFB_START),  TC_C(2) }, /* 2 - fb on b'board */
+	{ TC_KV(XINE_PHYS_TC_3_START), TC_C(3) }, /* 3 - IOASIC on b'board */
 };
 
-int tc_xine_nslots = sizeof(tc_xine_slots) / sizeof(tc_xine_slots[0]);
+const struct tc_builtin tc_xine_builtins[] = {
+	{ "IOCTL   ",	3, 0x0, TC_C(3), },
+	{ "PMAG-DV ",	2, 0x0, TC_C(2), },	/* pretend as a TC device */
+};
 
 struct tcbus_attach_args xine_tc_desc = {
-	NULL,
-	0,
-  	TC_SPEED_12_5_MHZ,		/* TC bus speed */
+	NULL, 0,
+  	TC_SPEED_12_5_MHZ,
 	XINE_TC_NSLOTS, tc_xine_slots,
 	2, tc_xine_builtins,
-	NULL,
+	NULL, NULL,
 	NULL,
 };
