@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
+#	$NetBSD: files,v 1.88 1996/06/22 01:49:00 chuck Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -17,6 +17,7 @@ define	mulaw
 # net device attributes - we have generic code for arc(net), ether(net),
 # and fddi.
 define	arc
+define	atm
 define	ether
 define	fddi
 
@@ -204,6 +205,7 @@ file net/bpf.c				bpfilter		needs-count
 file net/bpf_filter.c			bpfilter | ppp
 file net/if.c
 file net/if_arcsubr.c			arc			needs-flag
+file net/if_atmsubr.c			atm			needs-flag
 file net/if_ethersubr.c			ether | fddi		needs-flag
 file net/if_fddisubr.c			fddi
 file net/if_loop.c			loop			needs-count
@@ -240,6 +242,7 @@ file netccitt/pk_output.c		ccitt
 file netccitt/pk_subr.c			ccitt
 file netccitt/pk_timer.c		ccitt
 file netccitt/pk_usrreq.c		ccitt
+file netinet/if_atm.c			atm
 file netinet/if_ether.c			ether
 file netinet/igmp.c			inet
 file netinet/in.c			inet
