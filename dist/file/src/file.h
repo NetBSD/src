@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.6 2003/11/12 02:08:11 matt Exp $	*/
+/*	$NetBSD: file.h,v 1.7 2004/03/23 08:40:12 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -34,7 +34,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)Id: file.h,v 1.59 2003/10/14 19:17:17 christos Exp
+ * @(#)Id: file.h,v 1.60 2004/03/22 19:12:15 christos Exp
  */
 
 #ifndef __file_h__
@@ -220,6 +220,7 @@ protected void file_error(struct magic_set *, int, const char *, ...);
 protected void file_magwarn(const char *, ...);
 protected void file_mdump(struct magic *);
 protected void file_showstr(FILE *, const char *, size_t);
+protected size_t file_mbswidth(const char *);
 protected const char *file_getbuffer(struct magic_set *);
 
 #ifndef HAVE_STRERROR
