@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.25 2003/10/12 04:12:23 tsutsui Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.26 2003/10/19 10:25:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.25 2003/10/12 04:12:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.26 2003/10/19 10:25:42 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,8 +271,8 @@ pcscp_attach(parent, self, aux)
 #define MDL_SEG_OFFSET	0x0FFF
 #define MDL_SIZE	(MAXPHYS / MDL_SEG_SIZE + 1) /* no hardware limit? */
 
-	if (bus_dmamap_create(esc->sc_dmat, MAXPHYS, MDL_SIZE, MAXPHYS, 0,
-	    BUS_DMA_NOWAIT, &esc->sc_xfermap)) {
+	if (bus_dmamap_create(esc->sc_dmat, MAXPHYS, MDL_SIZE, MDL_SEG_SIZE,
+	    MDL_SEG_SIZE, BUS_DMA_NOWAIT, &esc->sc_xfermap)) {
 		printf("%s: can't create DMA maps\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -525,7 +525,6 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 	u_int32_t *mdl;
 	int error, nseg, seg;
 	bus_addr_t s_offset, s_addr;
-	long rest, count;
 
 	WRITE_DMAREG(esc, DMA_CMD, DMACMD_IDLE | (datain ? DMACMD_DIR : 0));
 
@@ -566,40 +565,17 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 	nseg = dmap->dm_nsegs;
 
 	/* the first segment is possibly not aligned with 4k MDL boundary */
-	count = dmap->dm_segs[0].ds_len;
 	s_addr = dmap->dm_segs[0].ds_addr;
 	s_offset = s_addr & MDL_SEG_OFFSET;
 	s_addr -= s_offset;
-	rest = MDL_SEG_SIZE - s_offset;
 
 	/* set the first MDL and offset */
 	WRITE_DMAREG(esc, DMA_SPA, s_offset);
 	*mdl++ = htole32(s_addr);
-	count -= rest;
-
-	/* rests of the first dmamap segment */
-	while (count > 0) {
-		s_addr += MDL_SEG_SIZE;
-		*mdl++ = htole32(s_addr);
-		count -= MDL_SEG_SIZE;
-	}
 
 	/* the rest dmamap segments are aligned with 4k boundary */
-	for (seg = 1; seg < nseg; seg++) {
-		count = dmap->dm_segs[seg].ds_len;
-		s_addr = dmap->dm_segs[seg].ds_addr;
-
-		/* first 4kbyte of each dmamap segment */
-		*mdl++ = htole32(s_addr);
-		count -= MDL_SEG_SIZE;
-
-		/* trailing contiguous 4k frames of each dmamap segments */
-		while (count > 0) {
-			s_addr += MDL_SEG_SIZE;
-			*mdl++ = htole32(s_addr);
-			count -= MDL_SEG_SIZE;
-		}
-	}
+	for (seg = 1; seg < nseg; seg++)
+		*mdl++ = htole32(dmap->dm_segs[seg].ds_addr);
 
 	return 0;
 }
