@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.6 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: emacs.c,v 1.7 1999/10/20 15:49:15 hubertf Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -144,6 +144,7 @@ static int	x_fold_case ARGS((int c));
 static char	*x_lastcp ARGS((void));
 static void	do_complete ARGS((int flags, Comp_type type));
 static int 	x_do_ins    ARGS((const char *, int));
+static void	bind_if_not_bound ARGS((int, int, int));
 
 
 /* The lines between START-FUNC-TAB .. END-FUNC-TAB are run through a
