@@ -157,6 +157,14 @@ $ ENOSYS
 78 Fonction non implémentée
 $ EFTYPE
 79 Type ou format de fichier inadapté
+$ EAUTH
+80 Erreur lors de l'authentification
+$ ENEEDAUTH
+81 Authentication nécessaire
+$ EIDRM  
+82 Identifiant supprimé
+$ ENOMSG
+83 Pas de message du type demandé
 $set 2
 $ SIGHUP
 1 Raccroché
