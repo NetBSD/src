@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.37.6.2 1999/07/06 11:03:08 itojun Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.37.6.3 1999/11/30 13:36:19 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.42.6.1 1999/06/28 06:37:11 itojun Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.42.6.2 1999/11/30 13:36:17 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -512,6 +512,7 @@ struct	mbuf *m_get __P((int, int));
 struct	mbuf *m_getclr __P((int, int));
 struct	mbuf *m_gethdr __P((int, int));
 struct	mbuf *m_prepend __P((struct mbuf *,int,int));
+struct	mbuf *m_pulldown __P((struct mbuf *, int, int, int *));
 struct	mbuf *m_pullup __P((struct mbuf *, int));
 struct	mbuf *m_retry __P((int, int));
 struct	mbuf *m_retryhdr __P((int, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.28.2.1.4.2 1999/07/06 11:02:41 itojun Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.28.2.1.4.3 1999/11/30 13:35:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,6 +63,8 @@
  *
  *	@(#)rtsock.c	8.7 (Berkeley) 10/12/95
  */
+
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

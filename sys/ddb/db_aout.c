@@ -1,3 +1,5 @@
+/*	$NetBSD: db_aout.c,v 1.21.4.2.4.1 1999/11/30 13:33:44 itojun Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -9,7 +11,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  * 
@@ -23,41 +25,42 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-/*
- * HISTORY
- * $Log: db_aout.c,v $
- * Revision 1.1.1.1  1993/03/21 09:45:37  cgd
- * initial import of 386bsd-0.1 sources
- *
- * Revision 1.1  1992/03/25  21:44:55  pace
- * Initial revision
- *
- * Revision 2.3  91/02/05  17:05:55  mrt
- * 	Changed to new Mach copyright
- * 	[91/01/31  16:16:44  mrt]
- * 
- * Revision 2.2  90/08/27  21:48:35  dbg
- * 	Created.
- * 	[90/08/17            dbg]
- * 
- */
-/*
- *	Author: David B. Golub, Carnegie Mellon University
- *	Date:	7/90
- */
-/*
- * Symbol table routines for a.out format files.
- */
 
-#include "param.h"
-#include "proc.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+
 #include <machine/db_machdep.h>		/* data types */
+
 #include <ddb/db_sym.h>
+#include <ddb/db_output.h>
+#include <ddb/db_extern.h>
 
-#ifndef	DB_NO_AOUT
+#ifdef	DB_AOUT_SYMBOLS
 
-#define _AOUT_INCLUDE_
-#include "nlist.h"
+#include <ddb/db_aout.h>
+
+boolean_t	db_aout_sym_init __P((int, void *, void *, const char *));
+db_sym_t	db_aout_lookup __P((db_symtab_t *, char *));
+db_sym_t	db_aout_search_symbol __P((db_symtab_t *, db_addr_t,
+		    db_strategy_t, db_expr_t *));
+void		db_aout_symbol_values __P((db_symtab_t *, db_sym_t,
+		    char **, db_expr_t *));
+boolean_t	db_aout_line_at_pc __P((db_symtab_t *, db_sym_t,
+		    char **, int *, db_expr_t));
+boolean_t	db_aout_sym_numargs __P((db_symtab_t *, db_sym_t, int *,
+		    char **));
+
+db_symformat_t db_symformat_aout = {
+	"a.out",
+	db_aout_sym_init,
+	db_aout_lookup,
+	db_aout_search_symbol,
+	db_aout_symbol_values,
+	db_aout_line_at_pc,
+	db_aout_sym_numargs,
+};
 
 /*
  * An a.out symbol table as loaded into the kernel debugger:
@@ -73,69 +76,80 @@
  */
 
 /*
- * Find pointers to the start and end of the symbol entries,
- * given a pointer to the start of the symbol table.
+ * Find the symbol table and strings; tell ddb about them.
  */
-#define	db_get_aout_symtab(symtab, sp, ep) \
-	(sp = (struct nlist *)((symtab) + 1), \
-	 ep = (struct nlist *)((char *)sp + *(symtab)))
-
-#define SYMTAB_SPACE 63000
-int db_symtabsize = SYMTAB_SPACE;
-char db_symtab[SYMTAB_SPACE] = { 1 };
-
-X_db_sym_init(symtab, esymtab, name)
-	int *	symtab;		/* pointer to start of symbol table */
-	char *	esymtab;	/* pointer to end of string table,
+boolean_t
+db_aout_sym_init(symsize, vsymtab, vesymtab, name)
+	int symsize;		/* size of symbol table */
+	void *vsymtab;		/* pointer to start of symbol table */
+	void *vesymtab;		/* pointer to end of string table,
 				   for checking - rounded up to integer
 				   boundary */
-	char *	name;
+	const char *name;
 {
 	register struct nlist	*sym_start, *sym_end;
 	register struct nlist	*sp;
-	register char *	strtab;
-	register int	strlen;
+	register char *strtab;
+	register int slen, bad = 0;
+	char *estrtab;
 
-	if (*symtab < 4) {
-		printf ("DDB: no symbols\n");
-		return;
+	if (ALIGNED_POINTER(vsymtab, long) == 0) {
+		printf("[ %s symbol table has bad start address %p ]\n",
+		    name, vsymtab);
+		return (FALSE);
 	}
 
-	db_get_aout_symtab(symtab, sym_start, sym_end);
+	/*
+	 * Find pointers to the start and end of the symbol entries,
+	 * given a pointer to the start of the symbol table.
+	 */
+	sym_start = (struct nlist *)vsymtab;
+	sym_end   = (struct nlist *)((char *)sym_start + symsize);
 
 	strtab = (char *)sym_end;
-	strlen = *(int *)strtab;
+	slen = *(int *)strtab;
 
-#if 0
-	if (strtab + ((strlen + sizeof(int) - 1) & ~(sizeof(int)-1))
-	    != esymtab)
-	{
-	    db_printf("[ %s symbol table not valid ]\n", name);
-	    return;
-	}
+	estrtab = strtab + slen;
 
-	db_printf("[ preserving %#x bytes of %s symbol table ]\n",
-		esymtab - (char *)symtab, name);
-#endif
+#define	round_to_size(x) \
+	(((vaddr_t)(x) + sizeof(vsize_t) - 1) & ~(sizeof(vsize_t) - 1))
 
+	if (round_to_size(estrtab) != round_to_size(vesymtab)) {
+	    printf("[ %s a.out symbol table not valid ]\n", name);
+	    return (FALSE);
+        }
+#undef	round_to_size
+        
 	for (sp = sym_start; sp < sym_end; sp++) {
 	    register int strx;
 	    strx = sp->n_un.n_strx;
 	    if (strx != 0) {
-		if (strx > strlen) {
-		    db_printf("Bad string table index (%#x)\n", strx);
+		if (strx > slen) {
+		    printf("[ %s has bad a.out string table index (0x%x) ]\n",
+		        name, strx);
 		    sp->n_un.n_name = 0;
+		    bad = 1;
 		    continue;
 		}
 		sp->n_un.n_name = strtab + strx;
 	    }
 	}
 
-	db_add_symbol_table(sym_start, sym_end, name, (char *)symtab);
+	if (bad)
+		return (FALSE);
+
+	if (db_add_symbol_table((char *)sym_start, (char *)sym_end, name,
+	    NULL) !=  -1) {
+                printf("[ preserving %d bytes of %s a.out symbol table ]\n",
+                          (char *)vesymtab - (char *)vsymtab, name);
+		return (TRUE);
+        }
+	
+	return (FALSE);
 }
 
 db_sym_t
-X_db_lookup(stab, symstr)
+db_aout_lookup(stab, symstr)
 	db_symtab_t	*stab;
 	char *		symstr;
 {
@@ -158,7 +172,7 @@ X_db_lookup(stab, symstr)
 }
 
 db_sym_t
-X_db_search_symbol(symtab, off, strategy, diffp)
+db_aout_search_symbol(symtab, off, strategy, diffp)
 	db_symtab_t *	symtab;
 	register
 	db_addr_t	off;
@@ -175,13 +189,17 @@ X_db_search_symbol(symtab, off, strategy, diffp)
 	for (; sp < ep; sp++) {
 	    if (sp->n_un.n_name == 0)
 		continue;
-	    if ((sp->n_type & N_STAB) != 0)
+	    if ((sp->n_type & N_STAB) != 0 || (sp->n_type & N_TYPE) == N_FN)
 		continue;
 	    if (off >= sp->n_value) {
 		if (off - sp->n_value < diff) {
 		    diff = off - sp->n_value;
 		    symp = sp;
-		    if (diff == 0)
+		    if (diff == 0 &&
+				((strategy == DB_STGY_PROC &&
+					sp->n_type == (N_TEXT|N_EXT)) ||
+				 (strategy == DB_STGY_ANY &&
+					(sp->n_type & N_EXT))))
 			break;
 		}
 		else if (off - sp->n_value == diff) {
@@ -206,7 +224,8 @@ X_db_search_symbol(symtab, off, strategy, diffp)
  * Return the name and value for a symbol.
  */
 void
-X_db_symbol_values(sym, namep, valuep)
+db_aout_symbol_values(symtab, sym, namep, valuep)
+	db_symtab_t	*symtab;
 	db_sym_t	sym;
 	char		**namep;
 	db_expr_t	*valuep;
@@ -220,93 +239,107 @@ X_db_symbol_values(sym, namep, valuep)
 	    *valuep = sp->n_value;
 }
 
+
 boolean_t
-X_db_line_at_pc()
+db_aout_line_at_pc(symtab, cursym, filename, linenum, off)
+	db_symtab_t *	symtab;
+	db_sym_t	cursym;
+	char 		**filename;
+	int 		*linenum;
+	db_expr_t	off;
 {
+	register struct nlist	*sp, *ep;
+	unsigned long		sodiff = -1UL, lndiff = -1UL, ln = 0;
+	char			*fname = NULL;
+
+	sp = (struct nlist *)symtab->start;
+	ep = (struct nlist *)symtab->end;
+
+/* XXX - gcc specific */
+#define NEWSRC(str)	((str) != NULL && \
+			(str)[0] == 'g' && strcmp((str), "gcc_compiled.") == 0)
+
+	for (; sp < ep; sp++) {
+
+	    /*
+	     * Prevent bogus linenumbers in case module not compiled
+	     * with debugging options
+	     */
+#if 0
+	    if (sp->n_value <= off && (off - sp->n_value) <= sodiff &&
+		NEWSRC(sp->n_un.n_name)) {
+#endif
+	    if ((sp->n_type & N_TYPE) == N_FN || NEWSRC(sp->n_un.n_name)) { 
+		sodiff = lndiff = -1UL;
+		ln = 0;
+		fname = NULL;
+	    }
+
+	    if (sp->n_type == N_SO) {
+		if (sp->n_value <= off && (off - sp->n_value) < sodiff) {
+			sodiff = off - sp->n_value;
+			fname = sp->n_un.n_name;
+		}
+		continue;
+	    }
+
+	    if (sp->n_type != N_SLINE)
+		continue;
+
+	    if (sp->n_value > off)
+		break;
+
+	    if (off - sp->n_value < lndiff) {
+		lndiff = off - sp->n_value;
+		ln = sp->n_desc;
+	    }
+	}
+
+	if (fname != NULL && ln != 0) {
+		*filename = fname;
+		*linenum = ln;
+		return TRUE;
+	}
+
 	return (FALSE);
 }
 
-/*
- * Initialization routine for a.out files.
- */
-kdb_init()
+boolean_t
+db_aout_sym_numargs(symtab, cursym, nargp, argnamep)
+	db_symtab_t *	symtab;
+	db_sym_t	cursym;
+	int		*nargp;
+	char		**argnamep;
 {
-#if 0
-	extern char	*esym;
-	extern int	end;
+	register struct nlist	*sp, *ep;
+	u_long			addr;
+	int			maxnarg = *nargp, nargs = 0;
 
-	if (esym > (char *)&end) {
-	    X_db_sym_init((int *)&end, esym, "mach");
+	if (cursym == NULL)
+		return FALSE;
+
+	addr = ((struct nlist *)cursym)->n_value;
+	sp = (struct nlist *)symtab->start;
+	ep = (struct nlist *)symtab->end;
+
+	for (; sp < ep; sp++) {
+	    if (sp->n_type == N_FUN && sp->n_value == addr) {
+		while (++sp < ep && sp->n_type == N_PSYM) {
+			if (nargs >= maxnarg)
+				break;
+			nargs++;
+			*argnamep++ = sp->n_un.n_name?sp->n_un.n_name:"???";
+			{
+			/* XXX - remove trailers */
+			char *cp = *(argnamep-1);
+			while (*cp != '\0' && *cp != ':') cp++;
+			if (*cp == ':') *cp = '\0';
+			}
+		}
+		*nargp = nargs;
+		return TRUE;
+	    }
 	}
-#endif
-
-	X_db_sym_init (db_symtab, 0, "mach");
+	return FALSE;
 }
-
-#if 0
-/*
- * Read symbol table from file.
- * (should be somewhere else)
- */
-#include <boot_ufs/file_io.h>
-#include <vm/vm_kern.h>
-
-read_symtab_from_file(fp, symtab_name)
-	struct file	*fp;
-	char *		symtab_name;
-{
-	vm_size_t	resid;
-	kern_return_t	result;
-	vm_offset_t	symoff;
-	vm_size_t	symsize;
-	vm_offset_t	stroff;
-	vm_size_t	strsize;
-	vm_size_t	table_size;
-	vm_offset_t	symtab;
-
-	if (!get_symtab(fp, &symoff, &symsize)) {
-	    boot_printf("[ error %d reading %s file header ]\n",
-			result, symtab_name);
-	    return;
-	}
-
-	stroff = symoff + symsize;
-	result = read_file(fp, (vm_offset_t)stroff,
-			(vm_offset_t)&strsize, sizeof(strsize), &resid);
-	if (result || resid) {
-	    boot_printf("[ no valid symbol table present for %s ]\n",
-		symtab_name);
-		return;
-	}
-
-	table_size = sizeof(int) + symsize + strsize;
-	table_size = (table_size + sizeof(int)-1) & ~(sizeof(int)-1);
-
-	symtab = kmem_alloc_wired(kernel_map, table_size);
-
-	*(int *)symtab = symsize;
-
-	result = read_file(fp, symoff,
-			symtab + sizeof(int), symsize, &resid);
-	if (result || resid) {
-	    boot_printf("[ error %d reading %s symbol table ]\n",
-			result, symtab_name);
-	    return;
-	}
-
-	result = read_file(fp, stroff,
-			symtab + sizeof(int) + symsize, strsize, &resid);
-	if (result || resid) {
-	    boot_printf("[ error %d reading %s string table ]\n",
-			result, symtab_name);
-	    return;
-	}
-
-	X_db_sym_init((int *)symtab,
-			(char *)(symtab + table_size),
-			symtab_name);
-	
-}
-#endif
-
-#endif	/* DB_NO_AOUT */
+#endif	/* DB_AOUT_SYMBOLS */

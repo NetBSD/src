@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.13.6.2 1999/07/06 11:02:40 itojun Exp $	*/
+/*	$NetBSD: if_types.h,v 1.13.6.3 1999/11/30 13:35:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994

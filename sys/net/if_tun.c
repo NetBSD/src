@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.37.6.1 1999/06/28 06:36:56 itojun Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.37.6.2 1999/11/30 13:35:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>

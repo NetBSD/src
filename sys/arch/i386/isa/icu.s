@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.59.6.2 1999/07/06 11:02:34 itojun Exp $	*/
+/*	$NetBSD: icu.s,v 1.59.6.3 1999/11/30 13:32:14 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.44.6.1 1999/06/28 06:37:11 itojun Exp $	*/
+/*	$NetBSD: malloc.h,v 1.44.6.2 1999/11/30 13:36:17 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -146,7 +146,9 @@
 #define	M_SECA		94	/* security associations, key management */
 #define	M_IP6OPT	95	/* IPv6 options */
 #define	M_IP6NDP	96	/* IPv6 Neighbour Discovery */
-#define	M_LAST		97	/* Must be last type + 1 */
+#define	M_IP6RR		97	/* IPv6 Router Renumbering Prefix */
+#define	M_RR_ADDR	98	/* IPv6 Router Renumbering Ifid */
+#define	M_LAST		99	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -246,7 +248,9 @@
 	"key mgmt",	/* 94 M_SECA */ \
 	"ip6_options",	/* 95 M_IP6OPT */ \
 	"NDP",		/* 96 M_IP6NDP */ \
-	NULL,		/* 97 */ \
+	"ip6rr",	/* 97 M_IP6RR */ \
+	"rp_addr",	/* 98 M_RR_ADDR */ \
+	NULL,		/* 99 */ \
 }
 
 struct kmemstats {
