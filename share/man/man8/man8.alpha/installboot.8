@@ -1,4 +1,4 @@
-.\" $NetBSD: installboot.8,v 1.4 1998/02/06 06:14:53 perry Exp $
+.\" $NetBSD: installboot.8,v 1.5 1998/11/26 00:52:28 ross Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -38,6 +38,7 @@
 .Sh SYNOPSIS
 .Nm installboot
 .Op Fl nv
+.Op Fl b Ar bn
 .Ar boot
 .Ar bootxx
 .Ar rawdiskdevice
@@ -54,8 +55,8 @@ area of a disk
 .Po
 and hence is limited in size to 7680 bytes
 .Pc ,
-and a second-stage boot program that resides in a FFS or ISO-9660 file
-system on the disk or CD-ROM image
+and a second-stage boot program that resides in a FFS, ISO-9660, or USTAR
+file system on a disk, CD-ROM image, or magnetic tape image,
 .Po
 typically with the name 
 .Pa /boot
@@ -89,6 +90,11 @@ are as follows:
 Do not actually write anything on the disk.
 .It Fl v
 Verbose mode.
+.It Fl b Ar bn
+Ignore the file system type and assume that
+.Pa boot
+is contiguously present with initial block number
+.Ar bn .
 .El
 .Pp
 The arguments are:
