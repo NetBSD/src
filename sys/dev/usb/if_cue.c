@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.1 2000/01/17 17:12:20 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.2 2000/01/18 19:46:55 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -685,9 +685,8 @@ USB_DETACH(cue)
 	 * to the ifnet.
 	 */
 	if_delref(sc->cue_ec.ec_if);
-	return (0);
 #else
-	return (EBUSY);
+	return (0);
 #endif
 
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
