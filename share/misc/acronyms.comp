@@ -1,8 +1,8 @@
-$NetBSD: acronyms.comp,v 1.14 2003/09/16 07:29:31 keihan Exp $
+$NetBSD: acronyms.comp,v 1.15 2003/09/18 21:59:28 keihan Exp $
 
 ABI	application binary interface
-API	application programming interface
 AGP	accelerated graphics port
+API	application programming interface
 ATA	advanced technology attachment
 BIOS	basic input/output system
 BLOB	binary large object
@@ -22,8 +22,8 @@ DVD	digital versatile disc
 EISA	extended industry standard architecture
 FFS	fast file system
 FLOPS	floating [point] operations per second
-FTP	file transfer protocol
 FQDN	fully qualified domain name
+FTP	file transfer protocol
 GIF	graphics interchange format
 GNU	gnu's not unix
 GPL	gnu/general public license
@@ -36,8 +36,8 @@ ICB	internet citizen's band
 ICMP	internet control message protocol
 IDE	integrated drive electronics
 IEEE	institute [of] electrical [and] electronics engineers
-IETF	internet engineering task force
 IESG	internet engineering steering group
+IETF	internet engineering task force
 IKE	internet key exchange
 IMAP	internet mail access protocol
 IO	input/output
@@ -69,6 +69,7 @@ NIS	network information service
 NUMA	non uniform memory access
 PAX	portable archive exchange
 PCI	peripheral component interconnect
+PDP	page descriptor page
 PERL	practical extraction [and] report language
 PGP	pretty good privacy
 PID	process id
@@ -77,7 +78,6 @@ POP	post office protocol
 POSIX	portable operating system interface [for] unix
 PPP	point-to-point protocol
 PPPOE	point-to-point protocol over ethernet
-PDP	page descriptor page
 PTE	page table entry
 PTP	page table page
 RAID	redundant array of inexpensive disks
@@ -95,10 +95,10 @@ SMTP	simple mail transfer protocol
 SSH	secure shell
 SSL	secure sockets layer
 TCL	tool command language
+TCP	transmission control protocol
 TLD	top level domain
 TTY	teletype
 TZ	time zone
-TCP	transmission control protocol
 UDP	user datagram protocol
 UPS	uninterruptible power supply
 URI	uniform resource identifier
@@ -106,6 +106,6 @@ URL	uniform resource locator
 USB	universal serial bus
 UUCP	unix-to-unix copy protocol
 VPN	virtual private network
+WWW	world wide web
 XML	extensible markup language
 XSL	extensible stylesheet language
-WWW	world wide web
