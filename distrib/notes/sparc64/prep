@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.10 2004/06/12 07:00:00 mbw Exp $
+.\"	$NetBSD: prep,v 1.11 2004/06/12 17:34:29 mbw Exp $
 .
 .Ss2 Deciding on partition sizes
 .
@@ -77,6 +77,14 @@ You cannot use the security modes of the SPARC OpenFirmware.
 .(disp
 .No ok Ic "setenv security-mode none"
 .disp)
+.Pp
+If you are using a serial console, the
+.Nx*M
+installer defaults to using 9600 bps, 8N1 settings.  You may want to 
+configure your system and serial terminal like this prior to booting the 
+installer.  Additionally, a new installation of
+.Nx*M
+will default to these settings as well.
 .Pp
 SCSI devices are specified by an Open Firmware
 .Ic devalias
