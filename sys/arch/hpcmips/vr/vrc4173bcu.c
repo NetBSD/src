@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.2 2001/10/21 09:38:10 takemura Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.3 2001/10/22 13:44:05 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -223,7 +223,6 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, "vrc4173kiu", vrc4173bcu_print);
 	config_found(self, "vrc4173aiu", vrc4173bcu_print);
 	config_found(self, "vrc4173ps2u", vrc4173bcu_print);
-while (1); /* XXX */
 
 	/*
 	 * Establish VRCINT interrupt.  Normally connected to one of
