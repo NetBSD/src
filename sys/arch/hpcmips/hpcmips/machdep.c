@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2000/04/15 22:02:26 soda Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2000/05/09 13:20:55 shin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2000/04/15 22:02:26 soda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2000/05/09 13:20:55 shin Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -742,9 +742,15 @@ cpu_intr(status, cause, pc, ipending)
 #endif /* MIPS3 && MIPS_INT_MASK_CLOCK */
 
 	/* device interrupts */
-	if (ipending & INT_MASK_REAL_DEV) {
+#ifdef ENABLE_MIPS_TX3900
+	if (ipending & MIPS_HARD_INT_MASK) {
 		_splset((*platform.iointr)(status, cause, pc, ipending));
 	}
+#else
+	if (ipending & MIPS3_HARD_INT_MASK) {
+		_splset((*platform.iointr)(status, cause, pc, ipending));
+	}
+#endif
 
 	/* software simulated interrupt */
 	if ((ipending & MIPS_SOFT_INT_MASK_1)
