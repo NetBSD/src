@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 1999/02/27 06:39:36 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 1999/03/01 21:32:24 scottr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -121,6 +121,9 @@ struct pmap ofw_pmap;
 
 int msgbufmapped = 0;
 
+/*
+ * Declare these as initialized data so we can patch them.
+ */
 #ifdef	NBUF
 int	nbuf = NBUF;
 #else
@@ -130,6 +133,11 @@ int	nbuf = 0;
 int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
+#endif
+#ifdef BUFCACHE
+int	bufcache = BUFCACHE;
+#else
+int	bufcache = 0;
 #endif
 
 caddr_t allocsys __P((caddr_t));
@@ -657,10 +665,26 @@ allocsys(v)
 #endif
 
 	/*
-	 * Decide on buffer space to use.
+	 * Determine the number of pages to use for the buffer cache
+	 * (minimum 16).  Allocate 1/2 as many swap buffer headers as
+	 * file I/O buffers.
 	 */
-	if (bufpages == 0)
-		bufpages = (physmem / 20) / CLSIZE;
+	if (bufpages == 0) {
+		if (bufcache == 0) {	/* use old algorithm */
+			bufpages = (physmem / 20) / CLSIZE;
+		} else {
+			/*
+			 * Set size of buffer cache to physmem/bufcache * 100
+			 * (i.e., bufcache % of physmem).
+			 */
+			if (bufcache < 5 || bufcache > 95) {
+				printf("warning: unable to set bufcache "
+				    "to %d%% of RAM, using 10%%", bufcache);
+				bufcache = 10;
+			}
+			bufpages = physmem / (CLSIZE * 100) * bufcache;
+		}
+	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
