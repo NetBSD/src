@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.12.2.3 1993/09/29 06:31:06 mycroft Exp $
+ *	$Id: tty_pty.c,v 1.12.2.4 1993/10/06 12:26:09 mycroft Exp $
  */
 
 /*
@@ -151,10 +151,12 @@ ptsclose(dev, flag, mode, p)
 	ttyclose(tp);
 	ptcwakeup(tp, FREAD|FWRITE);
 	pt_ioctl[minor(dev)].pt_flags &= ~PF_SOPEN;
+#ifdef notyet /* XXXX */
 	if ((pt_ioctl[minor(dev)].pt_flags & PF_COPEN) == 0) {
 		ttyfree(tp);
 		pt_tty[minor(dev)] = (struct tty *)NULL;
 	}
+#endif
 	return(0);
 }
 
