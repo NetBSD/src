@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321reg.h,v 1.6 2002/10/03 20:10:40 thorpej Exp $	*/
+/*	$NetBSD: i80321reg.h,v 1.7 2003/01/01 00:44:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -77,7 +77,10 @@
 #define	VERDE_ATU_SIZE			0x0100
 
 #define	VERDE_DMA_BASE			0x0400
+#define	VERDE_DMA_BASE0			(VERDE_DMA_BASE + 0x00)
+#define	VERDE_DMA_BASE1			(VERDE_DMA_BASE + 0x40)
 #define	VERDE_DMA_SIZE			0x0100
+#define	VERDE_DMA_CHSIZE		0x0040
 
 #define	VERDE_MCU_BASE			0x0500
 #define	VERDE_MCU_SIZE			0x0100
