@@ -1,4 +1,4 @@
-# @(#)australasia	7.34
+# @(#)australasia	7.38
 # This file also includes Pacific islands.
 
 # Notes are at the end of this file
@@ -303,7 +303,7 @@ Rule	NZ	1928	only	-	Nov	 4	2:00	0:30	HD
 Rule	NZ	1929	only	-	Oct	30	2:00	0:30	HD
 Rule	NZ	1930	1933	-	Mar	Sun>=15	2:00	0	S
 Rule	NZ	1930	1933	-	Oct	Sun>=8	2:00	0:30	HD
-# Whitman says DST went on and off during war years, and the base GMT offset
+# Whitman says DST went on and off during war years, and the base UT offset
 # didn't change until 1945 Apr 30; go with Shanks.
 Rule	NZ	1934	1940	-	Apr	lastSun	2:00	0	S
 Rule	NZ	1934	1939	-	Sep	lastSun	2:00	0:30	HD
@@ -472,8 +472,6 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 #
 # See the `northamerica' file for Hawaii.
 # See the `southamerica' file for Easter I and the Galapagos Is.
-#
-# See the `africa' file for time zone naming and abbreviation conventions.
 
 ###############################################################################
 
