@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.8 1999/03/25 18:48:51 mrg Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.9 2000/06/02 11:47:53 pk Exp $	*/
 
 /*
  *
@@ -108,6 +108,7 @@ uvm_io(map, uio)
 		 * step 2: extract mappings from the map into kernel_map
 		 */
 
+		kva = 0;
 		error = uvm_map_extract(map, baseva, chunksz, kernel_map, &kva,
 			    UVM_EXTRACT_QREF | UVM_EXTRACT_CONTIG | 
 			    UVM_EXTRACT_FIXPROT);
