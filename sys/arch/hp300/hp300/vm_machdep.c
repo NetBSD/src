@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_machdep.c 1.21 91/04/06
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.8 1994/05/19 09:01:55 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.9 1994/05/19 09:03:22 mycroft Exp $
  */
 
 #include "param.h"
@@ -46,6 +46,7 @@
 #include "malloc.h"
 #include "buf.h"
 #include "user.h"
+#include "vnode.h"
 
 #include "../include/cpu.h"
 #include "../include/pte.h"
