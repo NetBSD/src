@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.21 2004/12/25 06:58:37 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.22 2004/12/25 07:24:17 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.21 2004/12/25 06:58:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.22 2004/12/25 07:24:17 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1250,7 +1250,7 @@ static void
 rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 {
 	u_int next, nproc = 0;
-	int rate, rssi;
+	int len, rate, rssi;
 	u_int32_t hrssi, hstat, htsfth, htsftl;
 	struct rtw_rxdesc *hrx;
 	struct rtw_rxctl *srx;
@@ -1305,6 +1305,12 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 			goto next;
 		}
 
+		len = MASK_AND_RSHIFT(hstat, RTW_RXSTAT_LENGTH_MASK);
+		if (len < IEEE80211_MIN_LEN) {
+			sc->sc_ic.ic_stats.is_rx_tooshort++;
+			goto next;
+		}
+
 		switch (hstat & RTW_RXSTAT_RATE_MASK) {
 		case RTW_RXSTAT_RATE_1MBPS:
 			rate = 2;
@@ -1315,17 +1321,13 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 		case RTW_RXSTAT_RATE_5MBPS:
 			rate = 11;
 			break;
-		default:
-#ifdef RTW_DEBUG
-			RTW_DPRINTF(RTW_DEBUG_RECV,
-			    ("%s: interpreting rate #%d as 11 Mb/s\n",
-			    sc->sc_dev.dv_xname,
-			    MASK_AND_RSHIFT(hstat, RTW_RXSTAT_RATE_MASK)));
-#endif /* RTW_DEBUG */
-			/*FALLTHROUGH*/
 		case RTW_RXSTAT_RATE_11MBPS:
 			rate = 22;
 			break;
+		default:
+			printf("%s: unknown rate #%d\n", sc->sc_dev.dv_xname,
+			    MASK_AND_RSHIFT(hstat, RTW_RXSTAT_RATE_MASK));
+			goto next;
 		}
 
 #ifdef RTW_DEBUG
@@ -1396,14 +1398,10 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 				rssi |= 0x80;
 		}
 
-		m->m_pkthdr.len = m->m_len =
-		    MASK_AND_RSHIFT(hstat, RTW_RXSTAT_LENGTH_MASK);
+		m->m_pkthdr.rcvif = &sc->sc_if;
+		m->m_pkthdr.len = m->m_len = len;
 		m->m_flags |= M_HASFCS;
 
-		if (m->m_pkthdr.len < IEEE80211_MIN_LEN) {
-			sc->sc_ic.ic_stats.is_rx_tooshort++;
-			goto next;
-		}
 		wh = mtod(m, struct ieee80211_frame *);
 		/* TBD use _MAR, _BAR, _PAR flags as hints to _find_rxnode? */
 		ni = ieee80211_find_rxnode(&sc->sc_ic, wh);
