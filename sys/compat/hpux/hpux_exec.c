@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.14 2000/04/11 04:37:49 chs Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.15 2000/06/26 14:38:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,8 +83,6 @@
 #include <sys/stat.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_map.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
