@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.48 2003/10/21 02:49:07 fvdl Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.49 2004/02/28 19:27:49 itojun Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.48 2003/10/21 02:49:07 fvdl Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.49 2004/02/28 19:27:49 itojun Exp $");
 #endif
 #endif
 
@@ -1731,8 +1731,6 @@ cifproxyarp(unit, hisaddr)
  * get_ether_addr - get the hardware address of an interface on the
  * the same subnet as ipaddr.
  */
-#define MAX_IFS		32
-
 static int
 get_ether_addr(ipaddr, hwaddr)
     u_int32_t ipaddr;
