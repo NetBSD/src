@@ -35,13 +35,23 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)pain.mc	$Revision: 1.2 $')
+VERSIONID(`@(#)pain.mc	$Revision: 1.3 $')
 OSTYPE(bsd4.4)dnl
+define(`UUCP_RELAY', life.ai.mit.edu)dnl
+define(`BITNET_RELAY', mitvma.mit.edu)dnl
+define(`MASQUERADE_NAME', NetBSD.ORG)dnl
+FEATURE(allmasquerade)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
-define(`MAIL_HUB', mail.netbsd.org)
-define(`SMART_HOST', mail.netbsd.org)
 define(`confCHECKPOINT_INTERVAL', 10)dnl
 define(`confAUTO_REBUILD', True)dnl
-define(`confMESSAGE_TIMEOUT', 3d/4h)dnl
-Cwftp.netbsd.org
+define(`confMESSAGE_TIMEOUT', 5d)dnl
+define(`confMIN_FREE_BLOCKS', 4096)dnl
+define(`confMCI_CACHE_SIZE', 10)dnl
+define(`confMCI_CACHE_TIMEOUT', 15m)dnl
+define(`confREAD_TIMEOUT', 10m)dnl
+define(`confQUEUE_LA', 12)dnl
+define(`confWORK_RECIPIENT_FACTOR', 100)dnl
+define(`confWORK_CLASS_FACTOR', 1800)dnl
+define(`confWORK_TIME_FACTOR', 90000)dnl
+CwNetBSD.ORG mail.NetBSD.ORG gnats.NetBSD.ORG ftp.NetBSD.ORG cvs.NetBSD.ORG sup.NetBSD.ORG
