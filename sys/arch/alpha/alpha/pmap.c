@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.63 1998/08/25 01:11:11 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.64 1998/08/25 06:21:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63 1998/08/25 01:11:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 1998/08/25 06:21:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,7 +429,7 @@ pa_to_pvh(pa)
 void	alpha_protection_init __P((void));
 boolean_t pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *,
 	    boolean_t));
-void	pmap_changebit __P((paddr_t, u_long, boolean_t));
+void	pmap_changebit __P((paddr_t, pt_entry_t, pt_entry_t));
 void	pmap_pinit __P((pmap_t));
 void	pmap_release __P((pmap_t));
 
@@ -1317,7 +1317,7 @@ pmap_page_protect(pa, prot)
 		pvh = pa_to_pvh(pa);
 		PMAP_HEAD_TO_MAP_LOCK();
 		simple_lock(&pvh->pvh_slock);
-/* XXX */	pmap_changebit(pa, PG_KWE | PG_UWE, FALSE);
+/* XXX */	pmap_changebit(pa, 0, ~(PG_KWE | PG_UWE));
 		simple_unlock(&pvh->pvh_slock);
 		PMAP_HEAD_TO_MAP_UNLOCK();
 		return;
@@ -2178,7 +2178,7 @@ pmap_clear_modify(pg)
 
 	if (pvh->pvh_attrs & PGA_MODIFIED) {
 		rv = TRUE;
-		pmap_changebit(pa, PG_FOW, TRUE);
+		pmap_changebit(pa, PG_FOW, ~0);
 		pvh->pvh_attrs &= ~PGA_MODIFIED;
 	}
 
@@ -2207,7 +2207,7 @@ pmap_clear_modify(pa)
 	simple_lock(&pvh->pvh_slock);
 
 	if (pvh->pvh_attrs & PGA_MODIFIED) {
-		pmap_changebit(pa, PG_FOW, TRUE); 
+		pmap_changebut(pa, PG_FOW, ~0);
 		pvh->pvh_attrs &= ~PGA_MODIFIED;
 	}
 
@@ -2242,7 +2242,7 @@ pmap_clear_reference(pg)
 
 	if (pvh->pvh_attrs & PGA_REFERENCED) {
 		rv = TRUE;
-		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, TRUE);
+		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, ~0);
 		pvh->pvh_attrs &= ~PGA_REFERENCED;
 	}
 
@@ -2271,7 +2271,7 @@ pmap_clear_reference(pa)
 	simple_lock(&pvh->pvh_slock);
 
 	if (pvh->pvh_attrs & PGA_REFERENCED) {
-		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, TRUE);
+		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, ~0);
 		pvh->pvh_attrs &= ~PGA_REFERENCED;
 	}
 
@@ -2622,10 +2622,9 @@ pmap_remove_mapping(pmap, va, pte, dolock)
  *	the pmaps as we encounter them.
  */
 void
-pmap_changebit(pa, bit, setem)
+pmap_changebit(pa, set, mask)
 	paddr_t pa;
-	u_long bit;
-	boolean_t setem;
+	u_long set, mask;
 {
 	struct pv_head *pvh;
 	pv_entry_t pv;
@@ -2655,7 +2654,7 @@ pmap_changebit(pa, bit, setem)
 		/*
 		 * XXX don't write protect pager mappings
 		 */
-/* XXX */	if (bit == (PG_UWE | PG_KWE)) {
+/* XXX */	if (mask == ~(PG_KWE | PG_UWE)) {
 #if defined(UVM)
 			if (va >= uvm.pager_sva && va < uvm.pager_eva)
 				continue;
@@ -2670,10 +2669,7 @@ pmap_changebit(pa, bit, setem)
 		simple_lock(&pv->pv_pmap->pm_slock);
 
 		pte = pmap_l3pte(pv->pv_pmap, va, NULL);
-		if (setem)
-			npte = *pte | bit;
-		else
-			npte = *pte & ~bit;
+		npte = (*pte | set) & mask;
 		if (*pte != npte) {
 			hadasm = (pmap_pte_asm(pte) != 0);
 			isactive = PMAP_ISACTIVE(pv->pv_pmap);
@@ -2802,7 +2798,7 @@ pmap_emulate_reference(p, v, user, write)
 		pvh->pvh_attrs |= PGA_MODIFIED;
 		faultoff |= PG_FOW;
 	}
-	pmap_changebit(pa, faultoff, FALSE);
+	pmap_changebit(pa, 0, ~faultoff);
 
 	simple_unlock(&pvh->pvh_slock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
