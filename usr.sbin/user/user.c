@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.26 2000/10/17 04:53:27 simonb Exp $ */
+/* $NetBSD: user.c,v 1.27 2000/10/17 05:31:50 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.26 2000/10/17 04:53:27 simonb Exp $");
+__RCSID("$NetBSD: user.c,v 1.27 2000/10/17 05:31:50 simonb Exp $");
 #endif
 
 #include <sys/types.h>
@@ -542,7 +542,9 @@ append_group(char *user, int ngroups, char **groups)
 	int		j;
 
 	for (i = 0 ; i < ngroups ; i++) {
-		if ((grp = getgrnam(groups[i])) != NULL) {
+		if ((grp = getgrnam(groups[i])) == NULL) {
+			warnx("can't append group `%s' for user `%s'", groups[i], user);
+		} else {
 			for (j = 0 ; grp->gr_mem[j] ; j++) {
 				if (strcmp(user, grp->gr_mem[j]) == 0) {
 					/* already in it */
@@ -979,6 +981,11 @@ adduser(char *login, user_t *up)
 		(void) close(ptmpfd);
 		(void) pw_abort();
 		err(EXIT_FAILURE, "can't create gid %d for login name %s", gid, login);
+	}
+	if (up->u_groupc > 0 && !append_group(login, up->u_groupc, up->u_groupv)) {
+		(void) close(ptmpfd);
+		(void) pw_abort();
+		errx(EXIT_FAILURE, "can't append `%s' to new groups", login);
 	}
 	(void) close(ptmpfd);
 	if (pw_mkdb() < 0) {
