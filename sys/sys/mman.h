@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.31 2003/04/28 23:16:28 bjh21 Exp $	*/
+/*	$NetBSD: mman.h,v 1.32 2003/06/23 21:32:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -91,6 +91,7 @@ typedef	__off_t		off_t;		/* file offset */
 #define	MAP_NORESERVE	 0x0040	/* Sun: don't reserve needed swap area */
 #define	MAP_INHERIT	 0x0080	/* region is retained after exec */
 #define	MAP_HASSEMAPHORE 0x0200	/* region may contain semaphores */
+#define	MAP_TRYFIXED     0x0400 /* attempt hint address, even within break */
 
 /*
  * Mapping type

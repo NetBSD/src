@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.118 2003/06/23 21:25:59 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.119 2003/06/23 21:32:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.118 2003/06/23 21:25:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.119 2003/06/23 21:32:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -497,7 +497,7 @@ linux_to_bsd_mmap_args(cma, uap)
 	struct sys_mmap_args *cma;
 	const struct linux_sys_mmap_args *uap;
 {
-	int flags = 0, fl = SCARG(uap, flags);
+	int flags = MAP_TRYFIXED, fl = SCARG(uap, flags);
 	
 	flags |= cvtto_bsd_mask(fl, LINUX_MAP_SHARED, MAP_SHARED);
 	flags |= cvtto_bsd_mask(fl, LINUX_MAP_PRIVATE, MAP_PRIVATE);
