@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.12 1998/12/12 20:08:22 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.12.2.1 2000/06/29 16:09:42 he Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.12 1998/12/12 20:08:22 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.12.2.1 2000/06/29 16:09:42 he Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -403,13 +403,10 @@ el_source(el, fname)
     char *ptr, path[MAXPATHLEN];
 
     if (fname == NULL) {
-	fname = &elpath[1];
-	if ((fp = fopen(fname, "r")) == NULL) {
-	    if ((ptr = getenv("HOME")) == NULL) 
-		return -1;
-	    (void)snprintf(path, sizeof(path), "%s%s", ptr, elpath);
-	    fname = path;
-	}
+	if ((ptr = getenv("HOME")) == NULL) 
+	    return -1;
+	(void)snprintf(path, sizeof(path), "%s%s", ptr, elpath);
+	fname = path;
     }
 
     if ((fp = fopen(fname, "r")) == NULL) 
