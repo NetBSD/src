@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 1996/03/03 17:21:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 1997/10/24 09:00:52 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	nfsstat
-CFLAGS+=-DNFS
+CPPFLAGS+=-DNFS
 DPADD=  ${LIBKVM}
 LDADD= -lkvm
 BINGRP=	kmem

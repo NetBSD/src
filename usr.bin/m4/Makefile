@@ -4,7 +4,7 @@
 # 	if you want the paste & spaste macros.
 
 PROG=	m4
-CFLAGS+=-DEXTENDED
+CPPFLAGS+=-DEXTENDED
 SRCS=	eval.c expr.c look.c main.c misc.c
 MAN=	m4.1
 
