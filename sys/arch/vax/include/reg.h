@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.3 1995/04/12 15:26:52 ragge Exp $	*/
+/*	$NetBSD: reg.h,v 1.3.50.1 2002/12/11 06:12:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,9 @@
  */
 
  /* All bugs are subject to removal without further notice */
-		
+
+#ifndef _VAX_REG_H_
+#define _VAX_REG_H_
 
 struct  reg {
 	int	r0;     /* General registers saved upon trap/syscall */
@@ -53,3 +55,4 @@ struct  reg {
 	int	psl;    /* User psl */
 };
 
+#endif /* _VAX_REG_H_ */

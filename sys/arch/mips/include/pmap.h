@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37.4.3 2002/10/18 02:38:44 nathanw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.37.4.4 2002/12/11 06:11:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -39,8 +39,8 @@
  *	@(#)pmap.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_PMAP_MACHINE_
-#define	_PMAP_MACHINE_
+#ifndef	_MIPS_PMAP_H_
+#define	_MIPS_PMAP_H_
 
 #include <mips/cpuregs.h>	/* for KSEG0 below */
 
@@ -157,4 +157,4 @@ void	pmap_prefer(vaddr_t, vaddr_t *);
 #define	PMAP_CCA_FOR_PA(pa)	2		/* uncached */
 
 #endif	/* _KERNEL */
-#endif	/* _PMAP_MACHINE_ */
+#endif	/* _MIPS_PMAP_H_ */

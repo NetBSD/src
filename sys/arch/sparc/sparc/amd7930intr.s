@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930intr.s,v 1.17.12.2 2002/08/01 02:43:25 nathanw Exp $	*/
+/*	$NetBSD: amd7930intr.s,v 1.17.12.3 2002/12/11 06:12:10 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Rolf Grossmann.
  * Copyright (c) 1992, 1993
@@ -49,6 +49,7 @@
 #include <machine/param.h>
 #include <machine/asm.h>
 #include <sparc/sparc/intreg.h>
+#include <machine/intr.h>
 #include <machine/psl.h>
 #include <dev/ic/am7930reg.h>
 
@@ -58,9 +59,9 @@
 	or	%l6, IE_L4, %l6;			\
 	stb	%l6, [%l5 + %lo(INTRREG_VA)]
 
-! raise(0,PIL_AUSOFT)	! NOTE: CPU#0 and PIL_AUSOFT=4
+! raise(0,IPL_SOFTAUDIO)	! NOTE: CPU#0
 #define AUDIO_SET_SWINTR_4M				\
-	sethi	%hi(1 << (16 + 4)), %l5;		\
+	sethi	%hi(PINTR_SINTRLEV(IPL_SOFTAUDIO)), %l5;\
 	set	ICR_PI_SET, %l6;			\
 	st	%l5, [%l6]
 

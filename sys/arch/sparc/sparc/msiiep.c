@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.2.2.7 2002/10/18 02:40:00 nathanw Exp $ */
+/*	$NetBSD: msiiep.c,v 1.2.2.8 2002/12/11 06:12:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.2.2.7 2002/10/18 02:40:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.2.2.8 2002/12/11 06:12:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -144,8 +144,8 @@ static void	mspcic_pci_map_print(struct mspcic_pci_map *, const char *);
 static int	mspcic_bus_map(bus_space_tag_t, bus_addr_t, bus_size_t,
 			       int, vaddr_t, bus_space_handle_t *);
 static paddr_t	mspcic_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
-static void	*mspcic_intr_establish(bus_space_tag_t, int, int, int,
-				       int (*)(void *), void *);
+static void	*mspcic_intr_establish(bus_space_tag_t, int, int,
+				       int (*)(void *), void *, void (*)(void));
 
 static struct sparc_bus_space_tag mspcic_io_tag = {
 	&mspcic_io_cookie,	/* cookie */
@@ -585,13 +585,13 @@ mspcic_bus_mmap(t, ba, off, prot, flags)
  * assignment select registers (but we use existing assignments).
  */
 static void *
-mspcic_intr_establish(t, line, ipl, flags, handler, arg)
+mspcic_intr_establish(t, line, ipl, handler, arg, fastvec)
 	bus_space_tag_t t;
 	int line;
 	int ipl;
-	int flags;
 	int (*handler)(void *);
 	void *arg;
+	void (*fastvec)(void);
 {
 	struct intrhand *ih;
 	int pil;
@@ -608,7 +608,7 @@ mspcic_intr_establish(t, line, ipl, flags, handler, arg)
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
-	intr_establish(pil, ih);
+	intr_establish(pil, ipl, ih, fastvec);
 
 	return(ih);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsNN.h,v 1.1.8.2 2002/04/01 07:40:59 nathanw Exp $	*/
+/*	$NetBSD: mipsNN.h,v 1.1.8.3 2002/12/11 06:11:04 thorpej Exp $	*/
 
 /*
  * Copyright 2000, 2001
@@ -87,7 +87,10 @@
 //	reserved		other values
 
 /* Reserved.  Write as 0, reads as 0. */
-//	reserved		0x00000078
+//	reserved		0x00000070
+
+/* "M" (R): Virtual instruction cache if set. */
+#define	MIPSNN_CFG_VI		0x00000008
 
 /* "K0" (RW): Kseg0 coherency algorithm.  (values are TLB_ATTRs) */
 #define	MIPSNN_CFG_K0_MASK	0x00000007

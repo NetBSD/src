@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45.4.6 2002/06/24 22:07:29 nathanw Exp $ */
+/*	$NetBSD: cpu.h,v 1.45.4.7 2002/12/11 06:12:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,13 +53,15 @@
 #define	CPU_BOOTED_KERNEL	1	/* string: booted kernel name */
 #define	CPU_BOOTED_DEVICE	2	/* string: device booted from */
 #define	CPU_BOOT_ARGS		3	/* string: args booted with */
-#define	CPU_MAXID		4	/* number of valid machdep ids */
+#define	CPU_ARCH		4	/* integer: cpu architecture version */
+#define	CPU_MAXID		5	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES {			\
 	{ 0, 0 },				\
 	{ "booted_kernel", CTLTYPE_STRING },	\
 	{ "booted_device", CTLTYPE_STRING },	\
 	{ "boot_args", CTLTYPE_STRING },	\
+	{ "cpu_arch", CTLTYPE_INT },		\
 }
 
 #ifdef _KERNEL
@@ -73,8 +75,8 @@
 #include "opt_sparc_arch.h"
 #endif
 
-#include <machine/psl.h>
 #include <machine/intr.h>
+#include <machine/psl.h>
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/intreg.h>
 
@@ -124,17 +126,6 @@ extern int eintstack[];
 #define	CLKF_INTR(framep)	((framep)->fp < (u_int)eintstack)
 #endif
 
-#if defined(SUN4M)
-extern void	raise __P((int, int));
-#if !(defined(SUN4) || defined(SUN4C))
-#define setsoftint()	raise(0,1)
-#else /* both defined */
-#define setsoftint()	(cputyp == CPU_SUN4M ? raise(0,1) : ienab_bis(IE_L1))
-#endif /* !4,!4c */
-#else	/* 4m not defined */
-#define setsoftint()	ienab_bis(IE_L1)
-#endif /* SUN4M */
-
 void	softintr_init __P((void));
 void	*softnet_cookie;
 
@@ -162,6 +153,9 @@ extern int	want_resched;		/* resched() was called */
  */
 #define	signotify(p)		(want_ast = 1)
 
+/* CPU architecture version */
+extern int cpu_arch;
+
 /* Number of CPUs in the system */
 extern int ncpu;
 
@@ -180,85 +174,76 @@ extern int foundfpu;		/* true => we have an FPU */
  * argument, or with a pointer to a clockframe if ih_arg is NULL.
  */
 extern struct intrhand {
-	int	(*ih_fun) __P((void *));
+	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	struct	intrhand *ih_next;
+	int	ih_classipl;
 } *intrhand[15];
 
-void	intr_establish __P((int level, struct intrhand *));
-void	intr_disestablish __P((int level, struct intrhand *));
+void	intr_establish(int level, int classipl, struct intrhand *,
+			void (*fastvec)(void));
+void	intr_disestablish(int level, struct intrhand *);
 
-/*
- * intr_fasttrap() is a lot like intr_establish, but is used for ``fast''
- * interrupt vectors (vectors that are not shared and are handled in the
- * trap window).  Such functions must be written in assembly.
- */
-void	intr_fasttrap __P((int level, void (*vec)(void)));
-
-void	intr_lock_kernel __P((void));
-void	intr_unlock_kernel __P((void));
+void	intr_lock_kernel(void);
+void	intr_unlock_kernel(void);
 
 /* disksubr.c */
 struct dkbad;
-int isbad __P((struct dkbad *bt, int, int, int));
+int isbad(struct dkbad *bt, int, int, int);
 /* machdep.c */
-int	ldcontrolb __P((caddr_t));
-void	dumpconf __P((void));
-caddr_t	reserve_dumppages __P((caddr_t));
+int	ldcontrolb(caddr_t);
+void	dumpconf(void);
+caddr_t	reserve_dumppages(caddr_t);
 /* clock.c */
 struct timeval;
-void	lo_microtime __P((struct timeval *));
-int	clockintr __P((void *));/* level 10 (clock) interrupt code */
-int	statintr __P((void *));	/* level 14 (statclock) interrupt code */
+void	lo_microtime(struct timeval *);
 /* locore.s */
 struct fpstate;
-void	savefpstate __P((struct fpstate *));
-void	loadfpstate __P((struct fpstate *));
-int	probeget __P((caddr_t, int));
-void	write_all_windows __P((void));
-void	write_user_windows __P((void));
-void 	proc_trampoline __P((void));
-void	switchexit __P((struct lwp *));
-void	switchlwpexit __P((struct lwp *));
+void	savefpstate(struct fpstate *);
+void	loadfpstate(struct fpstate *);
+int	probeget(caddr_t, int);
+void	write_all_windows(void);
+void	write_user_windows(void);
+void 	proc_trampoline(void);
+void	switchexit(struct lwp *);
+void	switchlwpexit(struct lwp *);
 struct pcb;
-void	snapshot __P((struct pcb *));
-struct frame *getfp __P((void));
-int	xldcontrolb __P((caddr_t, struct pcb *));
-void	copywords __P((const void *, void *, size_t));
-void	qcopy __P((const void *, void *, size_t));
-void	qzero __P((void *, size_t));
+void	snapshot(struct pcb *);
+struct frame *getfp(void);
+int	xldcontrolb(caddr_t, struct pcb *);
+void	copywords(const void *, void *, size_t);
+void	qcopy(const void *, void *, size_t);
+void	qzero(void *, size_t);
 /* trap.c */
-void	kill_user_windows __P((struct lwp *));
-int	rwindow_save __P((struct lwp *));
-/* amd7930intr.s */
-void	amd7930_trap __P((void));
+void	kill_user_windows(struct lwp *);
+int	rwindow_save(struct lwp *);
 /* cons.c */
-int	cnrom __P((void));
+int	cnrom(void);
 /* zs.c */
-void zsconsole __P((struct tty *, int, int, void (**)(struct tty *, int)));
+void zsconsole(struct tty *, int, int, void (**)(struct tty *, int));
 #ifdef KGDB
-void zs_kgdb_init __P((void));
+void zs_kgdb_init(void);
 #endif
 /* fb.c */
-void	fb_unblank __P((void));
+void	fb_unblank(void);
 /* cache.c */
-void cache_flush __P((caddr_t, u_int));
+void cache_flush(caddr_t, u_int);
 /* kgdb_stub.c */
 #ifdef KGDB
-void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
-void kgdb_connect __P((int));
-void kgdb_panic __P((void));
+void kgdb_attach(int (*)(void *), void (*)(void *, int), void *);
+void kgdb_connect(int);
+void kgdb_panic(void);
 #endif
 /* emul.c */
 struct trapframe;
-int fixalign __P((struct lwp *, struct trapframe *));
-int emulinstr __P((int, struct trapframe *));
+int fixalign(struct lwp *, struct trapframe *);
+int emulinstr(int, struct trapframe *);
 /* cpu.c */
-void mp_pause_cpus __P((void));
-void mp_resume_cpus __P((void));
-void mp_halt_cpus __P((void));
+void mp_pause_cpus(void);
+void mp_resume_cpus(void);
+void mp_halt_cpus(void);
 /* msiiep.c */
-void msiiep_swap_endian __P((int));
+void msiiep_swap_endian(int);
 
 /*
  *

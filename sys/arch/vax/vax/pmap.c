@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108.4.9 2002/10/05 07:28:48 gmcgarry Exp $	   */
+/*	$NetBSD: pmap.c,v 1.108.4.10 2002/12/11 06:12:43 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -142,7 +142,7 @@ static struct simplelock pvtable_lock;
 int	startpmapdebug = 0;
 #endif
 
-vaddr_t	  avail_start, avail_end;
+paddr_t	  avail_start, avail_end;
 vaddr_t	  virtual_avail, virtual_end; /* Available virtual memory	*/
 
 struct pv_entry *get_pventry(void);
@@ -158,7 +158,7 @@ void more_pventries(void);
 static vsize_t
 calc_kvmsize(vsize_t usrptsize)
 {
-	extern int bufcache;
+	extern u_int bufcache;
 	vsize_t kvmsize;
 	u_int n, s, bp, bc;
 
@@ -222,8 +222,9 @@ calc_kvmsize(vsize_t usrptsize)
 void
 pmap_bootstrap()
 {
+	extern unsigned int etext;
+	extern struct user *proc0paddr;
 	unsigned int sysptsize, i;
-	extern	unsigned int etext, proc0paddr;
 	struct pcb *pcb = (struct pcb *)proc0paddr;
 	pmap_t pmap = pmap_kernel();
 	vsize_t kvmsize, usrptsize;
@@ -618,10 +619,10 @@ rmspace(struct pmap *pm)
  * Avoid to remove ourselves.
  */
 
+#undef swappable
 #define swappable(l, pm)						\
-	(((l)->l_flag & L_INMEM) == L_INMEM &&	\
-	((l)->l_proc->p_flag & (P_SYSTEM | P_WEXIT)) == 0 &&		\
-	((l)->l_holdcnt == 0) && ((l)->l_proc->p_vmspace->vm_map.pmap != pm))
+	(((l)->l_flag & (P_SYSTEM | L_INMEM | P_WEXIT)) == L_INMEM &&	\
+	((l)->l_holdcnt == 0) && ((l)->l_vmspace->vm_map.pmap != pm))
 
 static int
 pmap_rmproc(struct pmap *pm)

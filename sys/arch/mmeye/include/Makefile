@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.14.6.4 2002/09/17 21:16:00 nathanw Exp $
+#	$NetBSD: Makefile,v 1.14.6.5 2002/12/11 06:11:21 thorpej Exp $
 
-KDIR=	/sys/arch/mmeye/include
 INCSDIR= /usr/include/mmeye
 
 INCS=	ansi.h aout_machdep.h asm.h \

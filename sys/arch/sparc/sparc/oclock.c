@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.1.2.3 2002/10/18 02:40:00 nathanw Exp $ */
+/*	$NetBSD: oclock.c,v 1.1.2.4 2002/12/11 06:12:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -192,7 +192,7 @@ oclockattach(parent, self, aux)
 	timer_init = oclock_init;
 
 	/* link interrupt handler */
-	intr_establish(10, &level10);
+	intr_establish(10, 0, &level10, NULL);
 
 	/* Our TOD clock year 0 represents 1968 */
 	if ((todr_handle = intersil7170_attach(bt, bh, 1968)) == NULL)

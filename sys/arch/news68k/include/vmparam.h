@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.7.8.2 2002/01/08 00:26:52 nathanw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7.8.3 2002/12/11 06:11:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,22 +58,16 @@
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.  LOWPAGES and HIGHPAGES are
- * the number of pages from the beginning of the P0 region to the
- * beginning of the text and from the beginning of the P1 region to the
- * beginning of the stack respectively.
+ * USRSTACK is the top (end) of the user stack.
  *
  * NOTE: the ONLY reason that HIGHPAGES is 0x100 instead of UPAGES (3)
  * is for HPUX compatibility.  Why??  Because HPUX's debuggers
  * have the user's stack hard-wired at FFF00000 for post-mortems,
  * and we must be compatible...
  */
-#define	USRTEXT		8192			/* Must equal __LDPGSZ */
 #define	USRSTACK	(-HIGHPAGES*NBPG)	/* Start of user stack */
 #define	BTOPUSRSTACK	(0x100000-HIGHPAGES)	/* btop(USRSTACK) */
 #define P1PAGES		0x100000
-#define	LOWPAGES	0
 #define HIGHPAGES	(0x100000/NBPG)
 
 /*

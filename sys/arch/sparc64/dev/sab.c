@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.1.2.5 2002/11/11 22:04:47 nathanw Exp $	*/
+/*	$NetBSD: sab.c,v 1.1.2.6 2002/12/11 06:12:24 thorpej Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -246,7 +246,7 @@ sab_attach(parent, self, aux)
 	}
 
 	sc->sc_ih = bus_intr_establish(ea->ea_bustag, ea->ea_intr[0],
-	    IPL_TTY, 0, sab_intr, sc);
+	    IPL_TTY, sab_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf(": can't map interrupt\n");
 		return;

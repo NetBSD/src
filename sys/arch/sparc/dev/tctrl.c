@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.13.6.5 2002/11/11 22:04:30 nathanw Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.13.6.6 2002/12/11 06:12:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -220,9 +220,9 @@ tctrl_attach(parent, self, aux)
 
 	if (sa->sa_nintr != 0) {
 		(void)bus_intr_establish(sc->sc_memt, sa->sa_pri, IPL_NONE,
-		    0, tctrl_intr, sc);
+					 tctrl_intr, sc);
 		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-		    sc->sc_dev.dv_xname, "intr");
+				     sc->sc_dev.dv_xname, "intr");
 	}
 
 	/* See what the external status is
@@ -1219,7 +1219,7 @@ filt_tctrlrdetach(struct knote *kn)
 	int s;
 
 	s = splts102();
-	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -1244,7 +1244,7 @@ tctrlkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.si_klist;
+		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &tctrlread_filtops;
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.29.8.3 2002/09/17 21:17:46 nathanw Exp $ */
+/*	$NetBSD: vmparam.h,v 1.29.8.4 2002/12/11 06:12:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,10 +54,8 @@
 #include <machine/param.h>
 
 /*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.
+ * USRSTACK is the top (end) of the user stack.
  */
-#define	USRTEXT		0x2000			/* Start of user text */
 #define	USRSTACK	KERNBASE		/* Start of user stack */
 
 /*

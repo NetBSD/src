@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.22.2.2 2002/01/08 00:28:43 nathanw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.22.2.3 2002/12/11 06:12:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,10 +58,8 @@
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.
+ * USRSTACK is the top (end) of the user stack.
  */
-#define	USRTEXT		8192			/* Must equal __LDPGSZ */
 #define	USRSTACK	VM_MAXUSER_ADDRESS	/* Start of user stack */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.27 2002/12/02 06:12:12 wdk Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.28 2002/12/11 06:11:11 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.27 2002/12/02 06:12:12 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.28 2002/12/11 06:11:11 thorpej Exp $");
 
 #include "opt_cputype.h"
 
@@ -1468,7 +1468,7 @@ savefpregs(l)
 		"mfc0	%0, $12		;"
 		"li	$1, %2		;"
 		"mtc0	$1, $12		;"
-		"nop; nop; nop; nop	;"
+		___STRING(COP0_HAZARD_FPUENABLE)
 		"cfc1	%1, $31		;"
 		"cfc1	%1, $31		;"
 		".set reorder		;"
@@ -1548,7 +1548,7 @@ loadfpregs(l)
 		"mfc0	%0, $12		;"
 		"li	$1, %1		;"
 		"mtc0	$1, $12		;"
-		"nop; nop; nop; nop	;"
+		___STRING(COP0_HAZARD_FPUENABLE)
 		".set reorder		;"
 		".set at" : "=r"(status) : "i"(MIPS_SR_COP_1_BIT));
 

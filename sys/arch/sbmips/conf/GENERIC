@@ -1,16 +1,18 @@
-# $NetBSD: GENERIC,v 1.9.2.3 2002/11/11 22:03:12 nathanw Exp $
+# $NetBSD: GENERIC,v 1.9.2.4 2002/12/11 06:11:50 thorpej Exp $
 
-include 	"arch/sbmips/conf/std.sbmips.eb"	# big-endian mode
-#include 	"arch/sbmips/conf/std.sbmips.el"	# little-endian mode
+include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.9.2.3 $"
+#ident 		"GENERIC-$Revision: 1.9.2.4 $"
+
+#options 	LOCKDEBUG	# XXX XXX XXX XXX
+options 	DEBUG		# extra kernel debugging support
 
 # The following three options are required for BCM1250 pass 1 silicon
-options 	SB1250_PASS1
-options 	NOFPU
-options 	SOFTFLOAT
+#options 	SB1250_PASS1
+#options 	NOFPU
+#options 	SOFTFLOAT
 
 maxusers	32
 
@@ -124,7 +126,8 @@ sbscn*		at sbobio? offset ?
 #sbgbus*	at sbobio? offset ?
 smbus*		at sbobio? offset ?
 
-rtc*		at smbus? chan ? dev ?
+xirtc*		at smbus? chan ? dev ?		# Xicor X1241 RTC
+strtc*		at smbus? chan ? dev ?		# ST M41T81 RTC
 
 # MII/PHY support
 brgphy*		at mii? phy ?

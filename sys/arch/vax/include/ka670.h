@@ -1,4 +1,4 @@
-/*	$NetBSD: ka670.h,v 1.2 2000/07/06 17:42:49 ragge Exp $	*/
+/*	$NetBSD: ka670.h,v 1.2.8.1 2002/12/11 06:12:39 thorpej Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -37,6 +37,8 @@
  *
  *	VAX 4000/300 (KA670)
  */
+#ifndef _VAX_KA670_H_
+#define _VAX_KA670_H_
 
 #define KA670_SIDEX	0x20040004	/* SID extension register */
 #define KA670_IORESET	0x20020000	/* I/O Reset register */
@@ -99,3 +101,4 @@
 #define RSSC_OPORT	0x30		/* Offset */
 #define RSSC_IPORT	0x40		/* Offset */
 
+#endif /* _VAX_KA670_H_ */

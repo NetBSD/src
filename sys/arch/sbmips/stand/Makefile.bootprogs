@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.1.2.2 2002/11/11 22:03:20 nathanw Exp $
+# $NetBSD: Makefile.bootprogs,v 1.1.2.3 2002/12/11 06:11:52 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -23,10 +23,10 @@ CLEANFILES+=machine mips
 
 realall: machine-links ${PROG}
 
-AFLAGS+=	-DASSEMBLER -D_LOCORE
+AFLAGS+=	-DASSEMBLER -D_LOCORE -mno-abicalls
 # -I${.CURDIR}/../.. done by Makefile.inc
 CPPFLAGS+=	-nostdinc -I${.OBJDIR} -D_STANDALONE -I${S}
-CFLAGS=		-Os -g -ffreestanding -mno-abicalls -mno-half-pic -G 0
+CFLAGS=		-Os -g -ffreestanding -mno-abicalls -msoft-float -G 0
 
 NETBSD_VERS!=sh ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'

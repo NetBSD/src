@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.88.4.6 2002/11/11 22:04:27 nathanw Exp $	*/
+/*	$NetBSD: fd.c,v 1.88.4.7 2002/12/11 06:12:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -174,6 +174,8 @@ struct fdc_softc {
 #define sc_nstat	sc_io.fdcio_nstat
 #define sc_status	sc_io.fdcio_status
 #define sc_intrcnt	sc_io.fdcio_intrcnt
+
+	void		*sc_sicookie;	/* softintr(9) cookie */
 };
 
 extern	struct fdcio	*fdciop;	/* I/O descriptor used in fdintr.s */
@@ -302,7 +304,7 @@ void	fdctimeout __P((void *arg));
 void	fdcpseudointr __P((void *arg));
 int	fdc_c_hwintr __P((void *));
 void	fdchwintr __P((void));
-int	fdcswintr __P((void *));
+void	fdcswintr __P((void *));
 int	fdcstate __P((struct fdc_softc *));
 void	fdcretry __P((struct fdc_softc *fdc));
 void	fdfinish __P((struct fd_softc *fd, struct buf *bp));
@@ -317,23 +319,6 @@ static void establish_chip_type __P((
 		bus_size_t,
 		bus_space_handle_t));
 
-
-#if PIL_FDSOFT == 4
-#define IE_FDSOFT	IE_L4
-#else
-#error 4
-#endif
-
-#if defined(SUN4M)
-#define FD_SET_SWINTR do {		\
-	if (CPU_ISSUN4M)		\
-		raise(0, PIL_FDSOFT);	\
-	else				\
-		ienab_bis(IE_L4);	\
-} while(0)
-#else
-#define FD_SET_SWINTR ienab_bis(IE_FDSOFT)
-#endif /* defined(SUN4M) */
 
 #define OBP_FDNAME	(CPU_ISSUN4M ? "SUNW,fdtwo" : "fd")
 
@@ -624,8 +609,6 @@ fdcattach(fdc, pri)
 		code = '2';
 	}
 
-	printf(" softpri %d: chip 8207%c\n", PIL_FDSOFT, code);
-
 	/*
 	 * Configure controller; enable FIFO, Implied seek, no POLL mode?.
 	 * Note: CFG_EFIFO is active-low, initial threshold value: 8
@@ -637,27 +620,20 @@ fdcattach(fdc, pri)
 	}
 
 	fdciop = &fdc->sc_io;
-	if (bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO,
-			 BUS_INTR_ESTABLISH_FASTTRAP,
-			 (int (*) __P((void *)))fdchwintr, NULL) == NULL) {
-
-		printf("%s: notice: no fast trap handler slot available\n",
-			fdc->sc_dev.dv_xname);
-		if (bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO, 0,
-				 fdc_c_hwintr, fdc) == NULL) {
-			printf("%s: cannot register interrupt handler\n",
-				fdc->sc_dev.dv_xname);
-			return (-1);
-		}
-	}
-
-	if (bus_intr_establish(fdc->sc_bustag, PIL_FDSOFT, IPL_BIO,
-			 BUS_INTR_ESTABLISH_SOFTINTR,
-			 fdcswintr, fdc) == NULL) {
-		printf("%s: cannot register interrupt handler\n",
+	if (bus_intr_establish2(fdc->sc_bustag, pri, 0,
+				fdc_c_hwintr, fdc, fdchwintr) == NULL) {
+		printf("\n%s: cannot register interrupt handler\n",
 			fdc->sc_dev.dv_xname);
 		return (-1);
 	}
+
+	fdc->sc_sicookie = softintr_establish(IPL_BIO, fdcswintr, fdc);
+	if (fdc->sc_sicookie == NULL) {
+		printf("\n%s: cannot register soft interrupt handler\n",
+			fdc->sc_dev.dv_xname);
+		return (-1);
+	}
+	printf(" softpri %d: chip 8207%c\n", IPL_SOFTFDC, code);
 
 	evcnt_attach_dynamic(&fdc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    fdc->sc_dev.dv_xname, "intr");
@@ -1320,7 +1296,14 @@ fdc_c_hwintr(arg)
 			fdc->sc_istatus = FDC_ISTATUS_ERROR;
 		else
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
-		FD_SET_SWINTR;
+		softintr_schedule(fdc->sc_sicookie);
+		return (1);
+	case FDC_ITASK_RESULT:
+		if (fdcresult(fdc) == -1)
+			fdc->sc_istatus = FDC_ISTATUS_ERROR;
+		else
+			fdc->sc_istatus = FDC_ISTATUS_DONE;
+		softintr_schedule(fdc->sc_sicookie);
 		return (1);
 	case FDC_ITASK_DMA:
 		/* Proceed with pseudo-dma below */
@@ -1328,7 +1311,7 @@ fdc_c_hwintr(arg)
 	default:
 		printf("fdc: stray hard interrupt: itask=%d\n", fdc->sc_itask);
 		fdc->sc_istatus = FDC_ISTATUS_SPURIOUS;
-		FD_SET_SWINTR;
+		softintr_schedule(fdc->sc_sicookie);
 		return (1);
 	}
 
@@ -1347,7 +1330,7 @@ fdc_c_hwintr(arg)
 		if ((msr & NE7_NDM) == 0) {
 			fdcresult(fdc);
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
-			FD_SET_SWINTR;
+			softintr_schedule(fdc->sc_sicookie);
 #ifdef FD_DEBUG
 			if (fdc_debug > 1)
 				printf("fdc: overrun: tc = %d\n", fdc->sc_tc);
@@ -1368,23 +1351,22 @@ fdc_c_hwintr(arg)
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
 			FTC_FLIP;
 			fdcresult(fdc);
-			FD_SET_SWINTR;
+			softintr_schedule(fdc->sc_sicookie);
 			break;
 		}
 	}
 	return (1);
 }
 
-int
+void
 fdcswintr(arg)
 	void *arg;
 {
 	struct fdc_softc *fdc = arg;
-	int s;
 
 	if (fdc->sc_istatus == FDC_ISTATUS_NONE)
 		/* This (software) interrupt is not for us */
-		return (0);
+		return;
 
 	switch (fdc->sc_istatus) {
 	case FDC_ISTATUS_ERROR:
@@ -1395,10 +1377,8 @@ fdcswintr(arg)
 		break;
 	}
 
-	s = splbio();
 	fdcstate(fdc);
-	splx(s);
-	return (1);
+	return;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.21.8.3 2002/11/11 22:06:02 nathanw Exp $	*/
+/*	$NetBSD: mem.c,v 1.21.8.4 2002/12/11 06:12:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,7 +60,7 @@
 
 #define DEV_LEDS	13	/* minor device 13 is leds */
 
-extern	unsigned int avail_end;
+extern	paddr_t avail_end;
 static	caddr_t zeropage;
 
 dev_type_read(mmrw);

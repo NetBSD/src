@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.14.6.8 2002/08/01 02:43:09 nathanw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.14.6.9 2002/12/11 06:11:45 thorpej Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -191,7 +191,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		if (frame != (db_addr_t) fakeframe) {
 			(*pr)("0x%08lx: ", frame);
 		} else {
-			(*pr)("  <????>  : ");
+			(*pr)("  <?>  : ");
 		}
 		if (caller + 4 == (db_addr_t) &trapexit) {
 			const char *trapstr;

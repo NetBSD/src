@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.25.4.5 2002/10/18 02:40:04 nathanw Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.25.4.6 2002/12/11 06:12:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -477,7 +477,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 	struct psycho_pbm *pp = (struct psycho_pbm *)pc->cookie;
 
 	DPRINTF(SPDB_INTR, ("pci_intr_establish: ih %lu; level %d", (u_long)ih, level));
-	cookie = bus_intr_establish(pp->pp_memt, ih, level, 0, func, arg);
+	cookie = bus_intr_establish(pp->pp_memt, ih, level, func, arg);
 
 	DPRINTF(SPDB_INTR, ("; returning handle %p\n", cookie));
 	return (cookie);

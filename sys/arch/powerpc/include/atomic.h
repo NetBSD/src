@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.1.2.2 2002/08/01 02:43:02 nathanw Exp $ */
+/* $NetBSD: atomic.h,v 1.1.2.3 2002/12/11 06:11:40 thorpej Exp $ */
 
 /*-
  */
@@ -20,14 +20,14 @@ atomic_setbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long tmp;
 
-	__asm __volatile("
-# BEGIN atomic_setbits_ulong	\n\
-1:	lwarx	%0,0,%2		\n\
-	or	%0,%1,%0	\n\
-	stwcx.	%0,0,%2		\n\
-	bne-	1b		\n\
-	sync			\n\
-# END atomic_setbits_ulong	\n"
+	__asm __volatile(
+"# BEGIN atomic_setbits_ulong	\n"
+"1:	lwarx	%0,0,%2		\n"
+"	or	%0,%1,%0	\n"
+"	stwcx.	%0,0,%2		\n"
+"	bne-	1b		\n"
+"	sync			\n"
+"# END atomic_setbits_ulong	\n"
 	: "=&r" (tmp)
 	: "r" (v), "r" (ulp)
 	: "memory");
@@ -43,14 +43,14 @@ atomic_clearbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long tmp;
 
-	__asm __volatile("
-# BEGIN atomic_clearbits_ulong	\n\
-1:	lwarx	%0,0,%2		\n\
-	and	%0,%1,%0	\n\
-	stwcx.	%0,0,%2		\n\
-	bne-	1b		\n\
-	sync			\n\
-# END atomic_clearbits_ulong	\n"
+	__asm __volatile(
+"# BEGIN atomic_clearbits_ulong	\n"
+"1:	lwarx	%0,0,%2		\n"
+"	and	%0,%1,%0	\n"
+"	stwcx.	%0,0,%2		\n"
+"	bne-	1b		\n"
+"	sync			\n"
+"# END atomic_clearbits_ulong	\n"
 	: "=&r" (tmp)
 	: "r" (~v), "r" (ulp)
 	: "memory");
@@ -66,14 +66,14 @@ atomic_add_ulong(__volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long tmp;
 
-	__asm __volatile("
-# BEGIN atomic_add_ulong	\n\
-1:	lwarx	%0,0,%2		\n\
-	add	%0,%1,%0	\n\
-	stwcx.	%0,0,%2		\n\
-	bne-	1b		\n\
-	sync			\n\
-# END atomic_add_ulong		\n"
+	__asm __volatile(
+"# BEGIN atomic_add_ulong	\n"
+"1:	lwarx	%0,0,%2		\n"
+"	add	%0,%1,%0	\n"
+"	stwcx.	%0,0,%2		\n"
+"	bne-	1b		\n"
+"	sync			\n"
+"# END atomic_add_ulong		\n"
 	: "=&r" (tmp)
 	: "r" (v), "r" (ulp)
 	: "memory");
@@ -89,14 +89,14 @@ atomic_sub_ulong(__volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long tmp;
 
-	__asm __volatile("
-# BEGIN atomic_sub_ulong	\n\
-1:	lwarx	%0,0,%2		\n\
-	sub	%0,%0,%1	\n\
-	stwcx.	%0,0,%2		\n\
-	bne-	1b		\n\
-	sync			\n\
-# END atomic_sub_ulong		\n"
+	__asm __volatile(
+"# BEGIN atomic_sub_ulong	\n"
+"1:	lwarx	%0,0,%2		\n"
+"	sub	%0,%0,%1	\n"
+"	stwcx.	%0,0,%2		\n"
+"	bne-	1b		\n"
+"	sync			\n"
+"# END atomic_sub_ulong		\n"
 	: "=&r" (tmp)
 	: "r" (v), "r" (ulp)
 	: "memory");
@@ -112,13 +112,13 @@ atomic_loadlatch_ulong(__volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long tmp;
 
-	__asm __volatile("
-# BEGIN atomic_loadlatch_ulong	\n\
-1:	lwarx	%0,0,%2		\n\
-	stwcx.	%1,0,%2		\n\
-	bne-	1b		\n\
-	sync			\n\
-# END atomic_loadlatch_ulong	\n"
+	__asm __volatile(
+"# BEGIN atomic_loadlatch_ulong	\n"
+"1:	lwarx	%0,0,%2		\n"
+"	stwcx.	%1,0,%2		\n"
+"	bne-	1b		\n"
+"	sync			\n"
+"# END atomic_loadlatch_ulong	\n"
 	: "=r" (tmp)
 	: "r" (v), "r" (ulp)
 	: "memory");

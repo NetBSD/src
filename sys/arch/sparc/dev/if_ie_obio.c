@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.23.4.3 2002/10/18 02:39:54 nathanw Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.23.4.4 2002/12/11 06:12:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -423,6 +423,6 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 
 	/* Establish interrupt channel */
 	ih = bus_intr_establish(oba->oba_bustag,
-				oba->oba_pri, IPL_NET, 0,
+				oba->oba_pri, IPL_NET,
 				i82586_intr, sc);
 }

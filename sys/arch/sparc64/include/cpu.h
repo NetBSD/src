@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29.6.7 2002/10/18 02:40:06 nathanw Exp $ */
+/*	$NetBSD: cpu.h,v 1.29.6.8 2002/12/11 06:12:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,11 +51,17 @@
  * CTL_MACHDEP definitions.
  */
 #define	CPU_BOOTED_KERNEL	1	/* string: booted kernel name */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define	CPU_BOOTED_DEVICE	2	/* string: device booted from */
+#define	CPU_BOOT_ARGS		3	/* string: args booted with */
+#define	CPU_ARCH		4	/* integer: cpu architecture version */
+#define	CPU_MAXID		5	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES {			\
 	{ 0, 0 },				\
 	{ "booted_kernel", CTLTYPE_STRING },	\
+	{ "booted_device", CTLTYPE_STRING },	\
+	{ "boot_args", CTLTYPE_STRING },	\
+	{ "cpu_arch", CTLTYPE_INT },		\
 }
 
 #ifdef _KERNEL

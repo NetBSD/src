@@ -1,4 +1,4 @@
-/*	$NetBSD: rpb.h,v 1.7 2000/04/18 20:23:54 ragge Exp $ */
+/*	$NetBSD: rpb.h,v 1.7.12.1 2002/12/11 06:12:40 thorpej Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,6 +31,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _VAX_RPB_H_
+#define _VAX_RPB_H_
 
 /*
  * Look at "VAX/VMS Internals and Data Structures" around page 907
@@ -125,3 +127,5 @@ struct rpb {		/* size		description */
 #ifdef _KERNEL
 extern struct rpb rpb;
 #endif
+
+#endif /* _VAX_RPB_H_ */

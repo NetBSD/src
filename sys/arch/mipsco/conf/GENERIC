@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.9.6.7 2002/11/11 22:01:15 nathanw Exp $
+# $NetBSD: GENERIC,v 1.9.6.8 2002/12/11 06:11:17 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -44,7 +44,7 @@ options 	HZ=25
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
-# Enable experimental buffer queue strategy for better responsiness under 
+# Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	NEW_BUFQ_STRATEGY
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.8 1997/03/15 20:54:10 pk Exp $ */
+/*	$NetBSD: aout_machdep.h,v 1.8.40.1 2002/12/11 06:12:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,7 +30,7 @@
 #ifndef _SPARC_EXEC_H_
 #define _SPARC_EXEC_H_
 
-#define __LDPGSZ	8192	/* linker page size */
+#define AOUT_LDPGSZ	8192	/* linker page size */
 
 enum reloc_type {
 	RELOC_8,	RELOC_16, 	RELOC_32,

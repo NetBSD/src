@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.14 2002/10/18 02:40:00 nathanw Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.15 2002/12/11 06:12:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1339,7 +1339,7 @@ syscall(code, tf, pc)
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
 		KERNEL_PROC_LOCK(p);
 
-	if ((error = trace_enter(l, code, args.i, rval)) != 0)
+	if ((error = trace_enter(l, code, code, args.i, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.8.4.5 2002/10/18 02:40:03 nathanw Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.8.4.6 2002/12/11 06:12:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -139,7 +139,7 @@ com_ebus_attach(parent, self, aux)
 
 	for (i = 0; i < ea->ea_nintr; i++)
 		bus_intr_establish(ea->ea_bustag, ea->ea_intr[i],
-		    IPL_SERIAL, 0, comintr, sc);
+		    IPL_SERIAL, comintr, sc);
 
 	kma.kmta_consdev = NULL;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: std.playstation2,v 1.2.4.3 2002/04/01 07:41:50 nathanw Exp $
+#	$NetBSD: std.playstation2,v 1.2.4.4 2002/12/11 06:11:32 thorpej Exp $
 
 machine playstation2 mips
 
@@ -17,5 +17,4 @@ options 	__NO_LEADING_UNDERSCORES__
 options 	__GP_SUPPORT__
 
 makeoptions	DEFTEXTADDR="0x80010000"
-makeoptions	MACHINE_ARCH="mipsel"
 makeoptions	DEFCOPTS="-Os -mmemcpy"

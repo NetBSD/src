@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.19.8.6 2002/10/18 02:40:50 nathanw Exp $
+#	$NetBSD: Makefile,v 1.19.8.7 2002/12/11 06:12:49 thorpej Exp $
 
-KDIR=	/sys/arch/x68k/include
 INCSDIR= /usr/include/x68k
 
 INCS=	ansi.h aout_machdep.h asm.h \

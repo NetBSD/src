@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4.c,v 1.1.2.3 2002/10/18 02:40:00 nathanw Exp $	*/
+/*	$NetBSD: timer_sun4.c,v 1.1.2.4 2002/12/11 06:12:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,42 +129,6 @@ statintr_4(void *cap)
 	return (1);
 }
 
-#if defined(SUN4C)
-static int
-timermatch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
-{
-	struct mainbus_attach_args *ma = aux;
-
-	return (strcmp("counter-timer", ma->ma_name) == 0);
-}
-
-static void
-timerattach_mainbus(struct device *parent, struct device *self, void *aux)
-{
-	struct mainbus_attach_args *ma = aux;
-	bus_space_handle_t bh; 
-
-	/*
-	 * This time we ignore any existing virtual address because
-	 * we have a fixed virtual address for the timer, to make
-	 * microtime() faster.
-	 */
-	if (bus_space_map2(ma->ma_bustag,
-			   ma->ma_paddr,
-			   sizeof(struct timerreg_4),
-			   BUS_SPACE_MAP_LINEAR,
-			   TIMERREG_VA, &bh) != 0) {
-		printf(": can't map registers\n");
-		return;
-	}
-
-	timerattach(&timerreg4->t_c14.t_counter, &timerreg4->t_c14.t_limit);
-}
-
-CFATTACH_DECL(timer_mainbus, sizeof(struct device),
-    timermatch_mainbus, timerattach_mainbus, NULL, NULL);
-#endif /* SUN4C */
-
 #if defined(SUN4)
 void
 timerattach_obio_4(struct device *parent, struct device *self, void *aux)
@@ -186,3 +150,28 @@ timerattach_obio_4(struct device *parent, struct device *self, void *aux)
 	timerattach(&timerreg4->t_c14.t_counter, &timerreg4->t_c14.t_limit);
 }
 #endif /* SUN4 */
+
+#if defined(SUN4C)
+void
+timerattach_mainbus_4c(struct device *parent, struct device *self, void *aux)
+{
+	struct mainbus_attach_args *ma = aux;
+	bus_space_handle_t bh; 
+
+	/*
+	 * This time we ignore any existing virtual address because
+	 * we have a fixed virtual address for the timer, to make
+	 * microtime() faster.
+	 */
+	if (bus_space_map2(ma->ma_bustag,
+			   ma->ma_paddr,
+			   sizeof(struct timerreg_4),
+			   BUS_SPACE_MAP_LINEAR,
+			   TIMERREG_VA, &bh) != 0) {
+		printf(": can't map registers\n");
+		return;
+	}
+
+	timerattach(&timerreg4->t_c14.t_counter, &timerreg4->t_c14.t_limit);
+}
+#endif /* SUN4C */

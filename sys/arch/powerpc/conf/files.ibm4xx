@@ -1,18 +1,16 @@
-#	$NetBSD: files.ibm4xx,v 1.2.2.2 2002/08/27 23:45:04 nathanw Exp $
+#	$NetBSD: files.ibm4xx,v 1.2.2.3 2002/12/11 06:11:37 thorpej Exp $
 #
 # IBM 4xx specific configuration info
 
 include "arch/powerpc/fpu/files.fpu"
 
 # Processor Local Bus
-define	plb { [irq=-1] }
-device	plb : plb
+device	plb { [irq = -1] }
 attach	plb at root
 file	arch/powerpc/ibm4xx/dev/plb.c		plb
 
 # On-chip Peripheral Bus
-define	opb {[addr=-1], [irq=-1]}
-device	opb : plb
+device	opb {[addr = -1], [irq = -1]}
 attach	opb at plb
 file	arch/powerpc/ibm4xx/dev/opb.c		opb
 

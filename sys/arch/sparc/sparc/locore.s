@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.14 2002/11/28 01:14:34 uwe Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.15 2002/12/11 06:12:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2440,13 +2440,18 @@ softintr_common:
 	std	%l2, [%sp + CCFSZ + 8]
 	inc	%o0
 	st	%o0, [%l4 + %l5]
-	set	_C_LABEL(intrhand), %l4	! %l4 = intrhand[intlev];
+	set	_C_LABEL(sintrhand), %l4! %l4 = sintrhand[intlev];
 	ld	[%l4 + %l5], %l4
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
-1:	ld	[%l4], %o1
+1:	ld	[%l4 + 12], %o2		! ih->ih_classipl
+	rd	%psr, %o3		!  (bits already shifted to PIL field)
+	andn	%o3, PSR_PIL, %o3	! %o3 = psr & ~PSR_PIL
+	wr	%o3, %o2, %psr		! splraise(ih->ih_classipl)
+	ld	[%l4], %o1
 	ld	[%l4 + 4], %o0
+	nop				! one more isns before touching ICC
 	tst	%o0
 	bz,a	2f
 	 add	%sp, CCFSZ, %o0
@@ -2601,8 +2606,13 @@ sparc_interrupt_common:
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
-1:	ld	[%l4], %o1
+1:	ld	[%l4 + 12], %o2		! ih->ih_classipl
+	rd	%psr, %o3		!  (bits already shifted to PIL field)
+	andn	%o3, PSR_PIL, %o3	! %o3 = psr & ~PSR_PIL
+	wr	%o3, %o2, %psr		! splraise(ih->ih_classipl)
+	ld	[%l4], %o1
 	ld	[%l4 + 4], %o0
+	nop				! one more isns before touching ICC
 	tst	%o0
 	bz,a	2f
 	 add	%sp, CCFSZ, %o0
@@ -3872,7 +3882,6 @@ remap_notvik:
 	add	%o1, %o2, %o1
 	sta	%l4, [%o1] ASI_BYPASS
 	!b,a	startmap_done
-
 4:
 #endif /* SUN4M || SUN4D */
 	! botch! We should blow up.
@@ -4013,8 +4022,6 @@ Lgandul:	nop
 	MUNGE(NOP_ON_4M_10)
 	MUNGE(NOP_ON_4M_11)
 	MUNGE(NOP_ON_4M_12)
-	MUNGE(NOP_ON_4M_13)
-	MUNGE(NOP_ON_4M_14)
 	MUNGE(NOP_ON_4M_15)
 	b,a	2f
 
@@ -4071,6 +4078,85 @@ Lgandul:	nop
 	call	_C_LABEL(main)
 	 clr	%o0			! our frame arg is ignored
 	/*NOTREACHED*/
+
+
+#if defined(SUN4M) || defined(SUN4D)
+/*
+ * V8 multiply and divide routines, to be copied over the code
+ * for the V6/V7 routines.  Seems a shame to spend the call, but....
+ * Note: while .umul and .smul return a 64-bit result in %o1%o0,
+ * gcc only really cares about the low 32 bits in %o0.  This is
+ * really just gcc output, cleaned up a bit.
+ */
+	.globl	_C_LABEL(sparc_v8_muldiv)
+_C_LABEL(sparc_v8_muldiv):
+	save    %sp, -CCFSZ, %sp
+
+#define	OVERWRITE(rtn, v8_rtn, len)	\
+	set	v8_rtn, %o0;		\
+	set	rtn, %o1;		\
+	call	_C_LABEL(bcopy);	\
+	 mov	len, %o2;		\
+	/* now flush the insn cache */	\
+	set	rtn, %o0;		\
+	 mov	len, %o1;		\
+0:					\
+	flush	%o0;			\
+	subcc	%o1, 8, %o1;		\
+	bgu	0b;			\
+	 add	%o0, 8, %o0;		\
+
+	OVERWRITE(.mul, v8_smul, v8_smul_len)
+	OVERWRITE(.umul, v8_umul, v8_umul_len)
+	OVERWRITE(.div, v8_sdiv, v8_sdiv_len)
+	OVERWRITE(.udiv, v8_udiv, v8_udiv_len)
+	OVERWRITE(.rem, v8_srem, v8_srem_len)
+	OVERWRITE(.urem, v8_urem, v8_urem_len)
+#undef	OVERWRITE
+	ret
+	 restore
+
+v8_smul:
+	retl
+	 smul	%o0, %o1, %o0
+v8_smul_len = .-v8_smul
+v8_umul:
+	retl
+	 umul	%o0, %o1, %o0
+!v8_umul_len = 2 * 4
+v8_umul_len = .-v8_umul
+v8_sdiv:
+	sra	%o0, 31, %g2
+	wr	%g2, 0, %y
+	nop; nop; nop
+	retl
+	 sdiv	%o0, %o1, %o0
+v8_sdiv_len = .-v8_sdiv
+v8_udiv:
+	wr	%g0, 0, %y
+	nop; nop; nop
+	retl
+	 udiv	%o0, %o1, %o0
+v8_udiv_len = .-v8_udiv
+v8_srem:
+	sra	%o0, 31, %g3
+	wr	%g3, 0, %y
+	nop; nop; nop
+	sdiv	%o0, %o1, %g2
+	smul	%g2, %o1, %g2
+	retl
+	 sub	%o0, %g2, %o0
+v8_srem_len = .-v8_srem
+v8_urem:
+	wr	%g0, 0, %y
+	nop; nop; nop
+	udiv	%o0, %o1, %g2
+	smul	%g2, %o1, %g2
+	retl
+	 sub	%o0, %g2, %o0
+v8_urem_len = .-v8_urem
+
+#endif /* SUN4M || SUN4D */
 
 #if defined(MULTIPROCESSOR)
 	/*
@@ -4836,13 +4922,12 @@ Lsw_load:
 	mov	1, %o1
 	sll	%o1, %o0, %o0
 	wr	%o0, 0, %wim		! %wim = 1 << newpcb->pcb_wim;
-	/* Clear FP & CP enable bits, as well as the PIL field */
 	/* now must not change %psr for 3 more instrs */
-/*1*/	set	PSR_EF|PSR_EC|PSR_PIL, %o0
-/*2*/	andn	%g2, %o0, %g2		! newpsr &= ~(PSR_EF|PSR_EC|PSR_PIL);
-/*3*/	nop
+	/* Clear FP & CP enable bits; continue new process at splclock() */
+/*1,2*/	set	PSR_EF|PSR_EC|PSR_PIL, %o0
+/*3*/	andn	%g2, %o0, %g2		! newpsr &= ~(PSR_EF|PSR_EC|PSR_PIL);
 	/* set new psr, but with traps disabled */
-	wr	%g2, PSR_ET, %psr	! %psr = newpsr ^ PSR_ET;
+	wr	%g2, (PIL_CLOCK << 8)|PSR_ET, %psr ! %psr = newpsr ^ PSR_ET;
 	/* set new cpcb */
 	st	%g5, [%g6 + %lo(cpcb)]	! cpcb = newpcb;
 	ldd	[%g5 + PCB_SP], %o6	! <sp,pc> = newpcb->pcb_<sp,pc>
@@ -4860,8 +4945,8 @@ Lsw_load:
 	SET_SP_REDZONE(%o0, %o1)
 	CHECK_SP_REDZONE(%o0, %o1)
 #endif
-	/* finally, enable traps and continue at splclock() */
-	wr	%g2, PIL_CLOCK << 8 , %psr	! psr = newpsr;
+	/* finally, enable traps */
+	wr	%g2, PIL_CLOCK << 8, %psr	! psr = newpsr;
 
 	/*
 	 * Now running p.  Make sure it has a context so that it
@@ -5933,31 +6018,15 @@ ENTRY(loadfpstate)
  * ienab_bis(bis) int bis;
  * ienab_bic(bic) int bic;
  *
- * Set and clear bits in the interrupt register.
+ * Set and clear bits in the sun4/sun4c interrupt register.
  */
-
-#if defined(SUN4M) && (defined(SUN4) || defined(SUN4C))
-ENTRY(ienab_bis)
-NOP_ON_4M_13:
-	b,a	_C_LABEL(ienab_bis_4_4c)
-	b,a	_C_LABEL(ienab_bis_4m)
-
-ENTRY(ienab_bic)
-NOP_ON_4M_14:
-	b,a	_C_LABEL(ienab_bic_4_4c)
-	b,a	_C_LABEL(ienab_bic_4m)
-#endif
 
 #if defined(SUN4) || defined(SUN4C)
 /*
  * Since there are no read-modify-write instructions for this,
  * and one of the interrupts is nonmaskable, we must disable traps.
  */
-#if defined(SUN4M)
-ENTRY(ienab_bis_4_4c)
-#else
 ENTRY(ienab_bis)
-#endif
 	! %o0 = bits to set
 	rd	%psr, %o2
 	wr	%o2, PSR_ET, %psr	! disable traps
@@ -5971,11 +6040,7 @@ ENTRY(ienab_bis)
 	retl
 	 nop
 
-#if defined(SUN4M)
-ENTRY(ienab_bic_4_4c)
-#else
 ENTRY(ienab_bic)
-#endif
 	! %o0 = bits to clear
 	rd	%psr, %o2
 	wr	%o2, PSR_ET, %psr	! disable traps
@@ -5988,30 +6053,9 @@ ENTRY(ienab_bic)
 	nop
 	retl
 	 nop
-#endif
+#endif	/* SUN4 || SUN4C */
 
 #if defined(SUN4M)
-/*
- * sun4m has separate registers for clearing/setting the interrupt mask.
- */
-#if defined(SUN4) || defined(SUN4C)
-ENTRY(ienab_bis_4m)
-#else
-ENTRY(ienab_bis)
-#endif
-	set	ICR_SI_SET, %o1
-	retl
-	 st	%o0, [%o1]
-
-#if defined(SUN4) || defined(SUN4C)
-ENTRY(ienab_bic_4m)
-#else
-ENTRY(ienab_bic)
-#endif
-	set	ICR_SI_CLR, %o1
-	retl
-	 st	%o0, [%o1]
-
 /*
  * raise(cpu, level)
  */

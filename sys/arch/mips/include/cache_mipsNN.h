@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.h,v 1.1.8.3 2002/04/17 00:03:46 nathanw Exp $	*/
+/*	$NetBSD: cache_mipsNN.h,v 1.1.8.4 2002/12/11 06:11:00 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,22 +36,20 @@
  */
 
 #ifdef _KERNEL
+void	mipsNN_cache_init(uint32_t, uint32_t);
+
 void	mipsNN_icache_sync_all_16(void);
 void	mipsNN_icache_sync_all_32(void);
 void	mipsNN_icache_sync_range_16(vaddr_t, vsize_t);
 void	mipsNN_icache_sync_range_32(vaddr_t, vsize_t);
-void	mipsNN_icache_sync_range_index_16_2way(vaddr_t, vsize_t);
-void	mipsNN_icache_sync_range_index_16_4way(vaddr_t, vsize_t);
-void	mipsNN_icache_sync_range_index_32_2way(vaddr_t, vsize_t);
-void	mipsNN_icache_sync_range_index_32_4way(vaddr_t, vsize_t);
+void	mipsNN_icache_sync_range_index_16(vaddr_t, vsize_t);
+void	mipsNN_icache_sync_range_index_32(vaddr_t, vsize_t);
 void	mipsNN_pdcache_wbinv_all_16(void);
 void	mipsNN_pdcache_wbinv_all_32(void);
 void	mipsNN_pdcache_wbinv_range_16(vaddr_t, vsize_t);
 void	mipsNN_pdcache_wbinv_range_32(vaddr_t, vsize_t);
-void	mipsNN_pdcache_wbinv_range_index_16_2way(vaddr_t, vsize_t);
-void	mipsNN_pdcache_wbinv_range_index_16_4way(vaddr_t, vsize_t);
-void	mipsNN_pdcache_wbinv_range_index_32_2way(vaddr_t, vsize_t);
-void	mipsNN_pdcache_wbinv_range_index_32_4way(vaddr_t, vsize_t);
+void	mipsNN_pdcache_wbinv_range_index_16(vaddr_t, vsize_t);
+void	mipsNN_pdcache_wbinv_range_index_32(vaddr_t, vsize_t);
 void	mipsNN_pdcache_inv_range_16(vaddr_t, vsize_t);
 void	mipsNN_pdcache_inv_range_32(vaddr_t, vsize_t);
 void	mipsNN_pdcache_wb_range_16(vaddr_t, vsize_t);

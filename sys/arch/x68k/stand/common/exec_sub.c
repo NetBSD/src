@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_sub.c,v 1.1.6.2 2002/06/20 03:42:34 nathanw Exp $ */
+/*	$NetBSD: exec_sub.c,v 1.1.6.3 2002/12/11 06:12:49 thorpej Exp $ */
 
 #include <sys/cdefs.h>
 
@@ -92,7 +92,7 @@ xk_aout(xarg, hdr)
 
 	/* text section and padding between data section */
 	s = (void *) (hdr + 1);
-	SECTION(sec, "text", s, hdr->a_text, -hdr->a_text & (__LDPGSZ-1));
+	SECTION(sec, "text", s, hdr->a_text, -hdr->a_text & (AOUT_LDPGSZ-1));
 
 	/* data and bss sections */
 	s += hdr->a_text;
