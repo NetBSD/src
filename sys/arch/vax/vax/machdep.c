@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.132 2003/01/18 07:10:34 thorpej Exp $	 */
+/* $NetBSD: machdep.c,v 1.133 2003/03/01 21:51:59 matt Exp $	 */
 
 /*
  * Copyright (c) 2002, Hugh Graham.
@@ -291,13 +291,44 @@ cpu_dumpconf()
 }
 
 int
-cpu_sysctl(a, b, c, d, e, f, g)
-	int	*a;
-	u_int	b;
-	void	*c, *e;
-	size_t	*d, f;
-	struct	proc *g;
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct	proc *p;
 {
+	dev_t consdev;
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case CPU_PRINTFATALTRAPS:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &cpu_printfataltraps));
+	case CPU_CONSDEV:
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof(consdev)));
+	case CPU_BOOTED_DEVICE:
+		if (booted_device != NULL)
+			return (sysctl_rdstring(oldp, oldlenp, newp,
+			    booted_device->dv_xname));
+		break;
+	case CPU_BOOTED_KERNEL:
+		/*
+		 * I don't think this is available to the kernel.
+		 */
+	default:
+		break;
+	}
 	return (EOPNOTSUPP);
 }
 
