@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.5.2.5 2002/10/18 02:43:05 nathanw Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.5.2.6 2002/12/29 20:49:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.5.2.5 2002/10/18 02:43:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.5.2.6 2002/12/29 20:49:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,11 +201,10 @@ rtk_pci_attach(parent, self, aux)
 			/* Save important PCI config data. */
 			iobase = pci_conf_read(pc, pa->pa_tag, RTK_PCI_LOIO);
 			membase = pci_conf_read(pc, pa->pa_tag, RTK_PCI_LOMEM);
-			irq = pci_conf_read(pc, pa->pa_tag,
-			    PCI_PRODUCT_DELTA_8139);
+			irq = pci_conf_read(pc, pa->pa_tag, PCI_INTERRUPT_REG);
 
 			/* Reset the power state. */
-			printf("%s: chip is is in D%d power mode "
+			printf("%s: chip is in D%d power mode "
 			    "-- setting to D0\n", sc->sc_dev.dv_xname,
 			    command & RTK_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
@@ -214,8 +213,7 @@ rtk_pci_attach(parent, self, aux)
 			/* Restore PCI config data. */
 			pci_conf_write(pc, pa->pa_tag, RTK_PCI_LOIO, iobase);
 			pci_conf_write(pc, pa->pa_tag, RTK_PCI_LOMEM, membase);
-			pci_conf_write(pc, pa->pa_tag,
-			    PCI_PRODUCT_DELTA_8139, irq);
+			pci_conf_write(pc, pa->pa_tag, PCI_INTERRUPT_REG, irq);
 		}
 	}
 

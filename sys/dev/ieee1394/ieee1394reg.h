@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394reg.h,v 1.5.2.4 2002/12/11 06:38:08 thorpej Exp $	*/
+/*	$NetBSD: ieee1394reg.h,v 1.5.2.5 2002/12/29 20:49:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -239,13 +239,13 @@ struct ieee1394_async_nodata {
 /*
  * Allocated CSR space initiator drivers have reserved. Add allocations here to
  * avoid overlaps. Use the initial 64k space for register space and alloc large
- * blocks above that for virtualizing data space (ala SBP).
+ * blocks within the initial 4G for virtualizing data space (ala SBP).
  */
 
 /*
- * 0xfffff0010000 - if_fw fifo
- * 0xfffff0010004 - 0xfffff0020000 - SBP2 addr range (64k in 4 byte chunks)
- * 0xfffff0020000 - 0xfffff101ffff - SBP2 data address range (16M in 512 byte
+ * 0xfffff0010000 - if_fw fifo  XXX - Move this below the 4G mark 
+ * 0x0000f0010004 - 0x0000f0020000 - SBP2 addr range (64k in 4 byte chunks)
+ * 0x0000f0020000 - 0x0000f101ffff - SBP2 data address range (16M in 512 byte
  *                                                            chunks)
  *
  */
@@ -256,24 +256,24 @@ struct ieee1394_async_nodata {
 #define FW_FIFO_LO      0xf0010000
 #define FW_FIFO		0x0000fffff0010000
 
-#define SBP_ADDR_BEG_HI	0xffff
+#define SBP_ADDR_BEG_HI	0x0000
 #define SBP_ADDR_BEG_LO	0xf0010004
-#define SBP_ADDR_BEG	0x0000fffff0010004
+#define SBP_ADDR_BEG	0x00000000f0010004
 
-#define SBP_ADDR_MAX_HI	0xffff
+#define SBP_ADDR_MAX_HI	0x0000
 #define SBP_ADDR_MAX_LO	0xf0020004
-#define SBP_ADDR_MAX	0x0000fffff0020004
+#define SBP_ADDR_MAX	0x00000000f0020004
 
 #define SBP_ADDR_SIZE	(SBP_ADDR_MAX - SBP_ADDR_BEG)
 #define SBP_ADDR_BLOCK_SIZE	4
 
-#define SBP_DATA_BEG_HI	0xffff
+#define SBP_DATA_BEG_HI	0x0000
 #define SBP_DATA_BEG_LO	0xf0020000
-#define SBP_DATA_BEG	0x0000fffff0020000
+#define SBP_DATA_BEG	0x00000000f0020000
 
-#define SBP_DATA_MAX_HI	0xffff
+#define SBP_DATA_MAX_HI	0x0000
 #define SBP_DATA_MAX_LO 0xf101ffff
-#define SBP_DATA_MAX	0x0000fffff1020000
+#define SBP_DATA_MAX	0x00000000f1020000
 
 #define SBP_DATA_SIZE	(SBP_DATA_MAX - SBP_DATA_BEG)
 #define SBP_DATA_BLOCK_SIZE	512

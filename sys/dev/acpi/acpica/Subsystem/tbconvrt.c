@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbconvrt - ACPI Table conversion utilities
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 45 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbconvrt.c,v 1.1.1.1.4.4 2002/06/20 03:44:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbconvrt.c,v 1.1.1.1.4.5 2002/12/29 20:46:00 thorpej Exp $");
 
 #define __TBCONVRT_C__
 
@@ -131,11 +131,13 @@ __KERNEL_RCSID(0, "$NetBSD: tbconvrt.c,v 1.1.1.1.4.4 2002/06/20 03:44:12 nathanw
  *
  * FUNCTION:    AcpiTbGetTableCount
  *
- * PARAMETERS:
+ * PARAMETERS:  RSDP            - Pointer to the RSDP
+ *              RSDT            - Pointer to the RSDT/XSDT
  *
- * RETURN:
+ * RETURN:      The number of tables pointed to by the RSDT or XSDT.
  *
- * DESCRIPTION: Calculate the number of tables
+ * DESCRIPTION: Calculate the number of tables.  Automatically handles either
+ *              an RSDT or XSDT.
  *
  ******************************************************************************/
 
@@ -176,9 +178,9 @@ AcpiTbGetTableCount (
  *
  * FUNCTION:    AcpiTbConvertToXsdt
  *
- * PARAMETERS:
+ * PARAMETERS:  TableInfo       - Info about the RSDT
  *
- * RETURN:
+ * RETURN:      Status
  *
  * DESCRIPTION: Convert an RSDT to an XSDT (internal common format)
  *
@@ -186,8 +188,7 @@ AcpiTbGetTableCount (
 
 ACPI_STATUS
 AcpiTbConvertToXsdt (
-    ACPI_TABLE_DESC         *TableInfo,
-    UINT32                  *NumberOfTables)
+    ACPI_TABLE_DESC         *TableInfo)
 {
     ACPI_SIZE               TableSize;
     UINT32                  i;
@@ -197,13 +198,10 @@ AcpiTbConvertToXsdt (
     ACPI_FUNCTION_ENTRY ();
 
 
-    /* Get the number of tables defined in the RSDT or XSDT */
-
-    *NumberOfTables = AcpiTbGetTableCount (AcpiGbl_RSDP, TableInfo->Pointer);
-
     /* Compute size of the converted XSDT */
 
-    TableSize = ((ACPI_SIZE) *NumberOfTables * sizeof (UINT64)) + sizeof (ACPI_TABLE_HEADER);
+    TableSize = ((ACPI_SIZE) AcpiGbl_RsdtTableCount * sizeof (UINT64)) +
+                    sizeof (ACPI_TABLE_HEADER);
 
     /* Allocate an XSDT */
 
@@ -220,7 +218,7 @@ AcpiTbConvertToXsdt (
 
     /* Copy the table pointers */
 
-    for (i = 0; i < *NumberOfTables; i++)
+    for (i = 0; i < AcpiGbl_RsdtTableCount; i++)
     {
         if (AcpiGbl_RSDP->Revision < 2)
         {
@@ -241,13 +239,11 @@ AcpiTbConvertToXsdt (
     /* Point the table descriptor to the new table */
 
     TableInfo->Pointer      = (ACPI_TABLE_HEADER *) NewTable;
-    TableInfo->BasePointer  = (ACPI_TABLE_HEADER *) NewTable;
     TableInfo->Length       = TableSize;
     TableInfo->Allocation   = ACPI_MEM_ALLOCATED;
 
     return (AE_OK);
 }
-
 
 
 /*******************************************************************************
@@ -372,49 +368,49 @@ AcpiTbConvertFadt2 (
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XPm1aEvtBlk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1aEvtBlk, 
+        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1aEvtBlk,
             LocalFadt->Pm1EvtLen,  LocalFadt->V1_Pm1aEvtBlk);
     }
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XPm1bEvtBlk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1bEvtBlk, 
+        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1bEvtBlk,
             LocalFadt->Pm1EvtLen,  LocalFadt->V1_Pm1bEvtBlk);
     }
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XPm1aCntBlk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1aCntBlk, 
+        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1aCntBlk,
             LocalFadt->Pm1CntLen,  LocalFadt->V1_Pm1aCntBlk);
     }
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XPm1bCntBlk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1bCntBlk, 
+        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm1bCntBlk,
             LocalFadt->Pm1CntLen,  LocalFadt->V1_Pm1bCntBlk);
     }
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XPm2CntBlk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm2CntBlk,  
+        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPm2CntBlk,
             LocalFadt->Pm2CntLen,  LocalFadt->V1_Pm2CntBlk);
     }
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XPmTmrBlk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPmTmrBlk,   
+        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XPmTmrBlk,
             LocalFadt->PmTmLen,    LocalFadt->V1_PmTmrBlk);
     }
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XGpe0Blk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XGpe0Blk,    
+        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XGpe0Blk,
             LocalFadt->Gpe0BlkLen, LocalFadt->V1_Gpe0Blk);
     }
 
     if (!(ACPI_GET_ADDRESS (LocalFadt->XGpe1Blk.Address)))
     {
-        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XGpe1Blk,    
+        ASL_BUILD_GAS_FROM_V1_ENTRY (LocalFadt->XGpe1Blk,
             LocalFadt->Gpe1BlkLen, LocalFadt->V1_Gpe1Blk);
     }
 }
@@ -427,13 +423,11 @@ AcpiTbConvertFadt2 (
  *
  * RETURN:      Status
  *
- * DESCRIPTION:
- *    Converts a BIOS supplied ACPI 1.0 FADT to an intermediate
- *    ACPI 2.0 FADT. If the BIOS supplied a 2.0 FADT then it is simply
- *    copied to the intermediate FADT.  The ACPI CA software uses this
- *    intermediate FADT. Thus a significant amount of special #ifdef
- *    type codeing is saved. This intermediate FADT will need to be
- *    freed at some point.
+ * DESCRIPTION: Converts a BIOS supplied ACPI 1.0 FADT to a local
+ *              ACPI 2.0 FADT. If the BIOS supplied a 2.0 FADT then it is simply
+ *              copied to the local FADT.  The ACPI CA software uses this
+ *              local FADT. Thus a significant amount of special #ifdef
+ *              type codeing is saved.
  *
  ******************************************************************************/
 
@@ -456,7 +450,7 @@ AcpiTbConvertTableFadt (void)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
-    
+
     /*
      * FADT length and version validation.  The table must be at least as
      * long as the version 1.0 FADT
@@ -473,7 +467,7 @@ AcpiTbConvertTableFadt (void)
         {
             /* Length is too short to be a V2.0 table */
 
-            ACPI_REPORT_WARNING (("Inconsistent FADT length (0x%X) and revision (0x%X), using FADT V1.0 portion of table\n", 
+            ACPI_REPORT_WARNING (("Inconsistent FADT length (0x%X) and revision (0x%X), using FADT V1.0 portion of table\n",
                         AcpiGbl_FADT->Header.Length, AcpiGbl_FADT->Header.Revision));
 
             AcpiTbConvertFadt1 (LocalFadt, (void *) AcpiGbl_FADT);
@@ -506,7 +500,6 @@ AcpiTbConvertTableFadt (void)
     /* Install the new table */
 
     TableDesc->Pointer      = (ACPI_TABLE_HEADER *) AcpiGbl_FADT;
-    TableDesc->BasePointer  = AcpiGbl_FADT;
     TableDesc->Allocation   = ACPI_MEM_ALLOCATED;
     TableDesc->Length       = sizeof (FADT_DESCRIPTOR_REV2);
 
@@ -552,7 +545,7 @@ AcpiTbBuildCommonFacs (
 
     if (AcpiGbl_FACS->Length < 64)
     {
-        ACPI_REPORT_WARNING (("FACS is shorter than the ACPI specification allows: 0x%X, using anyway\n", 
+        ACPI_REPORT_WARNING (("FACS is shorter than the ACPI specification allows: 0x%X, using anyway\n",
             AcpiGbl_FACS->Length));
     }
 

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Name: acobject.h - Definition of ACPI_OPERAND_OBJECT  (Internal object only)
- *       $Revision: 1.1.1.1.4.3 $
+ *       xRevision: 114 $
  *
  *****************************************************************************/
 
@@ -190,7 +190,6 @@
     union acpi_operand_obj      *AddrHandler;        /* Handler for Address space */
 
 
-
 /******************************************************************************
  *
  * Basic data types
@@ -247,7 +246,6 @@ typedef struct AcpiObjectPackage
 } ACPI_OBJECT_PACKAGE;
 
 
-
 /******************************************************************************
  *
  * Complex data types
@@ -292,6 +290,7 @@ typedef struct AcpiObjectMutex
     void                        *Semaphore;
     union acpi_operand_obj      *Prev;              /* Link for list of acquired mutexes */
     union acpi_operand_obj      *Next;              /* Link for list of acquired mutexes */
+    ACPI_NAMESPACE_NODE         *Node;              /* containing object */
 
 } ACPI_OBJECT_MUTEX;
 
@@ -309,7 +308,6 @@ typedef struct AcpiObjectRegion
     ACPI_PHYSICAL_ADDRESS       Address;
 
 } ACPI_OBJECT_REGION;
-
 
 
 /******************************************************************************
@@ -364,7 +362,6 @@ typedef struct AcpiObjectThermalZone
 
 
 } ACPI_OBJECT_THERMAL_ZONE;
-
 
 
 /******************************************************************************
@@ -430,7 +427,6 @@ typedef struct AcpiObjectBufferField
 } ACPI_OBJECT_BUFFER_FIELD;
 
 
-
 /******************************************************************************
  *
  * Objects for handlers
@@ -468,7 +464,6 @@ typedef struct AcpiObjectAddrHandler
     union acpi_operand_obj      *Next;
 
 } ACPI_OBJECT_ADDR_HANDLER;
-
 
 
 /******************************************************************************
@@ -537,14 +532,13 @@ typedef struct AcpiObjectCacheList
 } ACPI_OBJECT_CACHE_LIST;
 
 
-
 /******************************************************************************
  *
  * ACPI_OPERAND_OBJECT Descriptor - a giant union of all of the above
  *
  *****************************************************************************/
 
-typedef union acpi_operand_obj 
+typedef union acpi_operand_obj
 {
     ACPI_OBJECT_COMMON          Common;
 
@@ -581,9 +575,6 @@ typedef union acpi_operand_obj
 } ACPI_OPERAND_OBJECT;
 
 
-
-
-
 /******************************************************************************
  *
  * ACPI_DESCRIPTOR - objects that share a common descriptor identifier
@@ -608,7 +599,6 @@ typedef union acpi_operand_obj
 #define ACPI_DESC_TYPE_PARSER           0x66
 #define ACPI_DESC_TYPE_OPERAND          0x88
 #define ACPI_DESC_TYPE_NAMED            0xAA
-
 
 
 typedef union acpi_desc

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.1.4.4 2002/06/20 03:43:26 nathanw Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.1.4.5 2002/12/29 20:45:31 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.1.4.4 2002/06/20 03:43:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.1.4.5 2002/12/29 20:45:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,8 @@ acpi_resource_parse(struct device *dev, struct acpi_devnode *ad,
 				ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 				    "IRQ %d\n", res->Data.Irq.Interrupts[i]));
 				(*ops->irq)(dev, context,
-				    res->Data.Irq.Interrupts[i]);
+				    res->Data.Irq.Interrupts[i],
+				    res->Data.Irq.EdgeLevel);
 			}
 			break;
 
@@ -455,7 +456,7 @@ static void	acpi_res_parse_memory(struct device *, void *, uint32_t,
 static void	acpi_res_parse_memrange(struct device *, void *, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
 
-static void	acpi_res_parse_irq(struct device *, void *, uint32_t);
+static void	acpi_res_parse_irq(struct device *, void *, uint32_t, uint32_t);
 static void	acpi_res_parse_drq(struct device *, void *, uint32_t);
 
 static void	acpi_res_parse_start_dep(struct device *, void *, int);
@@ -606,7 +607,7 @@ acpi_res_parse_memrange(struct device *dev, void *context, uint32_t low,
 }
 
 static void
-acpi_res_parse_irq(struct device *dev, void *context, uint32_t irq)
+acpi_res_parse_irq(struct device *dev, void *context, uint32_t irq, uint32_t type)
 {
 	struct acpi_resources *res = context;
 	struct acpi_irq *ar;
@@ -621,6 +622,7 @@ acpi_res_parse_irq(struct device *dev, void *context, uint32_t irq)
 
 	ar->ar_index = res->ar_nirq++;
 	ar->ar_irq = irq;
+	ar->ar_type = type;
 
 	SIMPLEQ_INSERT_TAIL(&res->ar_irq, ar, ar_list);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.107.2.19 2002/12/11 06:38:25 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.107.2.20 2002/12/29 20:49:28 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.107.2.19 2002/12/11 06:38:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.107.2.20 2002/12/29 20:49:28 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -480,6 +480,11 @@ const struct pciide_product_desc pciide_promise_products[] =  {
 	{ PCI_PRODUCT_PROMISE_ULTRA133TX2v2,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  "Promise Ultra133TX2v2/ATA Bus Master IDE Accelerator",
+	  pdc202xx_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_SATA150TX2PLUS,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  "Promise Serial ATA/150 TX2plus Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
 	{ 0,

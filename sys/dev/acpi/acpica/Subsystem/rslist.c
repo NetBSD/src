@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rslist - Linked list utilities
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 31 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rslist.c,v 1.1.1.1.4.4 2002/06/20 03:44:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rslist.c,v 1.1.1.1.4.5 2002/12/29 20:45:59 thorpej Exp $");
 
 #define __RSLIST_C__
 
@@ -573,6 +573,8 @@ AcpiRsListToByteStream (
              * If we get here, everything is out of sync,
              *  so exit with an error
              */
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Invalid descriptor type (%X) in resource list\n",
+                LinkedList->Id));
             Status = AE_BAD_DATA;
             break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.1.4.4 2002/06/20 03:43:29 nathanw Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.1.4.5 2002/12/29 20:45:32 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.1.4.4 2002/06/20 03:43:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.1.4.5 2002/12/29 20:45:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -272,4 +272,18 @@ AcpiOsWritePciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register,
 	pci_conf_write(acpi_softc->sc_pc, tag, Register & ~3, tmp);
 
 	return (AE_OK);
+}
+
+/*
+ * AcpiOsDerivePciId:
+ *
+ *     Interim function needed for PCI IRQ routing.
+ */
+void
+AcpiOsDerivePciId(
+    ACPI_HANDLE        rhandle,
+    ACPI_HANDLE        chandle,
+    ACPI_PCI_ID        **PciId)
+{
+       /* XXX TBD */
 }

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acenv.h - Generation environment specific items
- *       $Revision: 1.2.4.3 $
+ *       xRevision: 101 $
  *
  *****************************************************************************/
 
@@ -123,26 +123,30 @@
  */
 
 #ifdef _ACPI_DUMP_APP
-#define ACPI_DEBUG
+#ifndef MSDOS
+#define ACPI_DEBUG_OUTPUT
+#endif
 #define ACPI_APPLICATION
-#define ENABLE_DEBUGGER
+#define ACPI_DISASSEMBLER
+#define ACPI_NO_METHOD_EXECUTION
 #define ACPI_USE_SYSTEM_CLIBRARY
-#define PARSER_ONLY
 #endif
 
 #ifdef _ACPI_EXEC_APP
 #undef DEBUGGER_THREADING
 #define DEBUGGER_THREADING      DEBUGGER_SINGLE_THREADED
-#define ACPI_DEBUG
+#define ACPI_DEBUG_OUTPUT
 #define ACPI_APPLICATION
-#define ENABLE_DEBUGGER
+#define ACPI_DEBUGGER
+#define ACPI_DISASSEMBLER
 #define ACPI_USE_SYSTEM_CLIBRARY
 #endif
 
 #ifdef _ACPI_ASL_COMPILER
-#define ACPI_DEBUG
+#define ACPI_DEBUG_OUTPUT
 #define ACPI_APPLICATION
-/* #define ENABLE_DEBUGGER */
+#define ACPI_DISASSEMBLER
+#define ACPI_CONSTANT_EVAL_ONLY
 #define ACPI_USE_SYSTEM_CLIBRARY
 #endif
 
@@ -239,7 +243,7 @@
  * 1) This is the debug version
  * 2) This is NOT a 16-bit version of the code (not enough real-mode memory)
  */
-#ifdef ACPI_DEBUG
+#ifdef ACPI_DEBUG_OUTPUT
 #if ACPI_MACHINE_WIDTH != 16
 #define ACPI_DBG_TRACK_ALLOCATIONS
 #endif
@@ -262,11 +266,10 @@
 #ifndef DEBUGGER_THREADING
 #ifdef ACPI_APPLICATION
 #define DEBUGGER_THREADING          DEBUGGER_SINGLE_THREADED
-
 #else
 #define DEBUGGER_THREADING          DEBUGGER_MULTI_THREADED
 #endif
-#endif
+#endif /* !DEBUGGER_THREADING */
 
 
 /******************************************************************************
@@ -279,7 +282,6 @@
 /*
  * Use the standard C library headers.
  * We want to keep these to a minimum.
- *
  */
 
 #ifdef ACPI_USE_STANDARD_HEADERS
@@ -309,12 +311,16 @@
 #define ACPI_STRTOUL(d,s,n)     strtoul((d), (s), (ACPI_SIZE)(n))
 #define ACPI_MEMCPY(d,s,n)      (void) memcpy((d), (s), (ACPI_SIZE)(n))
 #define ACPI_MEMSET(d,s,n)      (void) memset((d), (s), (ACPI_SIZE)(n))
+
 #define ACPI_TOUPPER            toupper
 #define ACPI_TOLOWER            tolower
 #define ACPI_IS_XDIGIT          isxdigit
 #define ACPI_IS_DIGIT           isdigit
 #define ACPI_IS_SPACE           isspace
 #define ACPI_IS_UPPER           isupper
+#define ACPI_IS_PRINT           isprint
+#define ACPI_IS_ALPHA           isalpha
+#define ACPI_IS_ASCII           isascii
 
 /******************************************************************************
  *
@@ -397,7 +403,7 @@ typedef char *va_list;
  * Calling conventions:
  *
  * ACPI_SYSTEM_XFACE        - Interfaces to host OS (handlers, threads)
- * ACPI_EXTERNAL_XFACE      - External ACPI interfaces 
+ * ACPI_EXTERNAL_XFACE      - External ACPI interfaces
  * ACPI_INTERNAL_XFACE      - Internal ACPI interfaces
  * ACPI_INTERNAL_VAR_XFACE  - Internal variable-parameter list interfaces
  */

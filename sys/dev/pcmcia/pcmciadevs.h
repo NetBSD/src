@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.120.2.14 2002/09/17 21:20:38 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.120.2.15 2002/12/29 20:49:31 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.177 2002/09/15 17:43:48 bouyer Exp 
+ *	NetBSD: pcmciadevs,v 1.178 2002/12/29 12:04:48 jdc Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -763,6 +763,9 @@
 #define	PCMCIA_CIS_DLINK_DFE670TXD	{ "D-Link", "DFE-670TXD", NULL, NULL }
 #define	PCMCIA_PRODUCT_DLINK_DFE670TXD	-1
 #define	PCMCIA_STR_DLINK_DFE670TXD	"D-Link DFE-670TXD"
+#define	PCMCIA_CIS_DLINK_DWL650H	{ "D-Link Corporation", "D-Link DWL-650H 11Mbps WLAN Adapter", NULL, NULL }
+#define	PCMCIA_PRODUCT_DLINK_DWL650H	-1
+#define	PCMCIA_STR_DLINK_DWL650H	"D-Link DWL-650H"
 #define	PCMCIA_CIS_DYNALINK_L10C	{ "DYNALINK", "L10C", NULL, NULL }
 #define	PCMCIA_PRODUCT_DYNALINK_L10C	-1
 #define	PCMCIA_STR_DYNALINK_L10C	"Dynalink L10C"

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.61.2.13 2002/11/11 22:11:24 nathanw Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.61.2.14 2002/12/29 20:49:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.13 2002/11/11 22:11:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.14 2002/12/29 20:49:25 thorpej Exp $");
 
 /*
 #define CBB_DEBUG
@@ -455,13 +455,14 @@ pccbbattach(parent, self, aux)
 	sc->sc_pwrmgt_offs = 0;
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT,
 	    &pwrmgt_offs, 0)) {
-		reg = pci_conf_read(pc, pa->pa_tag, pwrmgt_offs + 4);
+		reg = pci_conf_read(pc, pa->pa_tag, pwrmgt_offs + PCI_PMCSR);
 		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0 ||
 		    reg & 0x100 /* PCI_PMCSR_PME_EN */) {
 			reg &= ~PCI_PMCSR_STATE_MASK;
 			reg |= PCI_PMCSR_STATE_D0;
 			reg &= ~(0x100 /* PCI_PMCSR_PME_EN */);
-			pci_conf_write(pc, pa->pa_tag, pwrmgt_offs + 4, reg);
+			pci_conf_write(pc, pa->pa_tag,
+			    pwrmgt_offs + PCI_PMCSR, reg);
 		}
 
 		sc->sc_pwrmgt_offs = pwrmgt_offs;

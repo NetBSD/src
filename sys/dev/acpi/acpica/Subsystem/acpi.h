@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acpi.h - Master include file, Publics and external data.
- *       $Revision: 1.2.4.3 $
+ *       xRevision: 55 $
  *
  *****************************************************************************/
 
@@ -123,7 +123,7 @@
  * in the rest of the source code again and again.
  */
 #include "acconfig.h"           /* Configuration constants */
-#include "acenv.h"              /* Target environment specific items */
+#include "acenv.h"	        /* Target environment specific items */
 #include "actypes.h"            /* Fundamental common data types */
 #include "acexcep.h"            /* ACPI exception codes */
 #include "acmacros.h"           /* C macros */

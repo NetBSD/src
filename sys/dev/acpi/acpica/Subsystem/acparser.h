@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: acparser.h - AML Parser subcomponent prototypes and defines
- *       $Revision: 1.1.1.1.4.3 $
+ *       xRevision: 63 $
  *
  *****************************************************************************/
 
@@ -135,6 +135,7 @@
 #define ACPI_PARSE_EXECUTE              0x0030
 #define ACPI_PARSE_MODE_MASK            0x0030
 
+#define ACPI_PARSE_DEFERRED_OP          0x0100
 
 /* Parser external interfaces */
 
@@ -177,22 +178,23 @@ AcpiPsGetNextSimpleArg (
     UINT32                  ArgType,
     ACPI_PARSE_OBJECT       *Arg);
 
-void
+ACPI_STATUS
 AcpiPsGetNextNamepath (
+    ACPI_WALK_STATE         *WalkState,
     ACPI_PARSE_STATE        *ParserState,
     ACPI_PARSE_OBJECT       *Arg,
-    UINT32                  *ArgCount,
     BOOLEAN                 MethodCall);
 
 ACPI_PARSE_OBJECT *
 AcpiPsGetNextField (
     ACPI_PARSE_STATE        *ParserState);
 
-ACPI_PARSE_OBJECT *
+ACPI_STATUS
 AcpiPsGetNextArg (
+    ACPI_WALK_STATE         *WalkState,
     ACPI_PARSE_STATE        *ParserState,
     UINT32                  ArgType,
-    UINT32                  *ArgCount);
+    ACPI_PARSE_OBJECT       **ReturnArg);
 
 
 /* psfind */
@@ -356,6 +358,10 @@ AcpiPsDeleteCompletedOp (
 
 
 /* psutils - parser utilities */
+
+ACPI_PARSE_OBJECT *
+AcpiPsCreateScopeOp (
+    void);
 
 void
 AcpiPsInitOp (

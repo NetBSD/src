@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.310.2.25 2002/12/19 00:48:12 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.310.2.26 2002/12/29 20:49:27 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.491 2002/12/11 21:34:36 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.493 2002/12/26 20:52:58 matt Exp 
  */
 
 /*
@@ -1856,6 +1856,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Broadcom Corporation",
 	    "BCM5701 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5702 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5703 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702X,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5702X 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703X,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5703X 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401,
@@ -5576,6 +5600,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ProLAN",
 	    "Ethernet",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_SATA150TX2PLUS,
+	    0,
+	    "Promise Technology",
+	    "Serial ATA/150 TX2plus Bus Master IDE Accelerator",
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_DC5030,

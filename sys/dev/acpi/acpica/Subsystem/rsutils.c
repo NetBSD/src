@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsutils - Utilities for the resource manager
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 34 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsutils.c,v 1.1.1.1.4.4 2002/06/20 03:44:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsutils.c,v 1.1.1.1.4.5 2002/12/29 20:46:00 thorpej Exp $");
 
 #define __RSUTILS_C__
 
@@ -161,33 +161,12 @@ AcpiRsGetPrtMethodData (
     /* Parameters guaranteed valid by caller */
 
     /*
-     *  Execute the method, no parameters
+     * Execute the method, no parameters
      */
-    Status = AcpiNsEvaluateRelative (Handle, "_PRT", NULL, &ObjDesc);
+    Status = AcpiUtEvaluateObject (Handle, "_PRT", ACPI_BTYPE_PACKAGE, &ObjDesc);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
-    }
-
-    if (!ObjDesc)
-    {
-        /* Return object is required */
-
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "No object was returned from _PRT\n"));
-        return_ACPI_STATUS (AE_TYPE);
-    }
-
-    /*
-     * The return object must be a package, so check the parameters.  If the
-     * return object is not a package, then the underlying AML code is corrupt
-     * or improperly written.
-     */
-    if (ACPI_GET_OBJECT_TYPE (ObjDesc) != ACPI_TYPE_PACKAGE)
-    {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "_PRT did not return a Package, returned %s\n",
-                AcpiUtGetObjectTypeName (ObjDesc)));
-        Status = AE_AML_OPERAND_TYPE;
-        goto Cleanup;
     }
 
     /*
@@ -197,8 +176,6 @@ AcpiRsGetPrtMethodData (
     Status = AcpiRsCreatePciRoutingTable (ObjDesc, RetBuffer);
 
     /* On exit, we must delete the object returned by EvaluateObject */
-
-Cleanup:
 
     AcpiUtRemoveReference (ObjDesc);
     return_ACPI_STATUS (Status);
@@ -240,32 +217,10 @@ AcpiRsGetCrsMethodData (
     /*
      * Execute the method, no parameters
      */
-    Status = AcpiNsEvaluateRelative (Handle, "_CRS", NULL, &ObjDesc);
+    Status = AcpiUtEvaluateObject (Handle, "_CRS", ACPI_BTYPE_BUFFER, &ObjDesc);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
-    }
-
-    if (!ObjDesc)
-    {
-        /* Return object is required */
-
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "No object was returned from _CRS\n"));
-        return_ACPI_STATUS (AE_TYPE);
-    }
-
-    /*
-     * The return object will be a buffer, but check the
-     * parameters.  If the return object is not a buffer,
-     * then the underlying AML code is corrupt or improperly
-     * written.
-     */
-    if (ACPI_GET_OBJECT_TYPE (ObjDesc) != ACPI_TYPE_BUFFER)
-    {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "_CRS did not return a Buffer, returned %s\n",
-                AcpiUtGetObjectTypeName (ObjDesc)));
-        Status = AE_AML_OPERAND_TYPE;
-        goto Cleanup;
     }
 
     /*
@@ -276,8 +231,6 @@ AcpiRsGetCrsMethodData (
     Status = AcpiRsCreateResourceList (ObjDesc, RetBuffer);
 
     /* On exit, we must delete the object returned by evaluateObject */
-
-Cleanup:
 
     AcpiUtRemoveReference (ObjDesc);
     return_ACPI_STATUS (Status);
@@ -319,32 +272,10 @@ AcpiRsGetPrsMethodData (
     /*
      * Execute the method, no parameters
      */
-    Status = AcpiNsEvaluateRelative (Handle, "_PRS", NULL, &ObjDesc);
+    Status = AcpiUtEvaluateObject (Handle, "_PRS", ACPI_BTYPE_BUFFER, &ObjDesc);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
-    }
-
-    if (!ObjDesc)
-    {
-        /* Return object is required */
-
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "No object was returned from _PRS\n"));
-        return_ACPI_STATUS (AE_TYPE);
-    }
-
-    /*
-     * The return object will be a buffer, but check the
-     * parameters.  If the return object is not a buffer,
-     * then the underlying AML code is corrupt or improperly
-     * written..
-     */
-    if (ACPI_GET_OBJECT_TYPE (ObjDesc) != ACPI_TYPE_BUFFER)
-    {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "_PRS did not return a Buffer, returned %s\n",
-                AcpiUtGetObjectTypeName (ObjDesc)));
-        Status = AE_AML_OPERAND_TYPE;
-        goto Cleanup;
     }
 
     /*
@@ -355,8 +286,6 @@ AcpiRsGetPrsMethodData (
     Status = AcpiRsCreateResourceList (ObjDesc, RetBuffer);
 
     /* On exit, we must delete the object returned by evaluateObject */
-
-Cleanup:
 
     AcpiUtRemoveReference (ObjDesc);
     return_ACPI_STATUS (Status);

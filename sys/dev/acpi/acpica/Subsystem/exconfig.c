@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exconfig - Namespace reconfiguration (Load/Unload opcodes)
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 69 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exconfig.c,v 1.1.1.1.4.4 2002/06/20 03:43:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exconfig.c,v 1.1.1.1.4.5 2002/12/29 20:45:50 thorpej Exp $");
 
 #define __EXCONFIG_C__
 
@@ -163,7 +163,7 @@ AcpiExAddTable (
 
     /* Create an object to be the table handle */
 
-    ObjDesc = AcpiUtCreateInternalObject (INTERNAL_TYPE_REFERENCE);
+    ObjDesc = AcpiUtCreateInternalObject (ACPI_TYPE_LOCAL_REFERENCE);
     if (!ObjDesc)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
@@ -174,7 +174,6 @@ AcpiExAddTable (
     TableInfo.Pointer      = Table;
     TableInfo.Length       = (ACPI_SIZE) Table->Length;
     TableInfo.Allocation   = ACPI_MEM_ALLOCATED;
-    TableInfo.BasePointer  = Table;
 
     Status = AcpiTbInstallTable (&TableInfo);
     if (ACPI_FAILURE (Status))
@@ -237,6 +236,7 @@ AcpiExLoadTableOp (
     ACPI_FUNCTION_TRACE ("ExLoadTableOp");
 
 
+#if 0
     /*
      * Make sure that the signature does not match one of the tables that
      * is already loaded.
@@ -248,6 +248,7 @@ AcpiExLoadTableOp (
 
         return_ACPI_STATUS (AE_ALREADY_EXISTS);
     }
+#endif
 
     /* Find the ACPI table */
 
@@ -431,9 +432,9 @@ AcpiExLoadOp (
 
 
     case ACPI_TYPE_BUFFER_FIELD:
-    case INTERNAL_TYPE_REGION_FIELD:
-    case INTERNAL_TYPE_BANK_FIELD:
-    case INTERNAL_TYPE_INDEX_FIELD:
+    case ACPI_TYPE_LOCAL_REGION_FIELD:
+    case ACPI_TYPE_LOCAL_BANK_FIELD:
+    case ACPI_TYPE_LOCAL_INDEX_FIELD:
 
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Load from Field %p %s\n",
             ObjDesc, AcpiUtGetObjectTypeName (ObjDesc)));
@@ -538,7 +539,7 @@ AcpiExUnloadTable (
      */
     if ((!DdbHandle) ||
         (ACPI_GET_DESCRIPTOR_TYPE (DdbHandle) != ACPI_DESC_TYPE_OPERAND) ||
-        (ACPI_GET_OBJECT_TYPE (DdbHandle) != INTERNAL_TYPE_REFERENCE))
+        (ACPI_GET_OBJECT_TYPE (DdbHandle) != ACPI_TYPE_LOCAL_REFERENCE))
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }

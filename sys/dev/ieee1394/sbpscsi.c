@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpscsi.c,v 1.4.2.2 2002/12/11 06:38:09 thorpej Exp $	*/
+/*	$NetBSD: sbpscsi.c,v 1.4.2.3 2002/12/29 20:49:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.4.2.2 2002/12/11 06:38:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.4.2.3 2002/12/29 20:49:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.4.2.2 2002/12/11 06:38:09 thorpej Exp 
 #ifdef SBPSCSI_DEBUG
 #define DPRINTF(x)      if (sbpscsidebug) printf x
 #define DPRINTFN(n,x)   if (sbpscsidebug>(n)) printf x
-int     sbpscsidebug = 1;
+int     sbpscsidebug = 3;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -76,6 +76,7 @@ static void sbpscsi_scsipi_request(struct scsipi_channel *,
     scsipi_adapter_req_t, void *);
 static void sbpscsi_status(struct sbp2_status *, void *);
 static void sbpscsi_timeout(void *);
+static void sbpscsi_minphys(struct buf *);
 
 CFATTACH_DECL(sbpscsi, sizeof(struct sbpscsi_softc),
     sbpscsi_match, sbpscsi_attach, sbpscsi_detach, NULL);
@@ -127,7 +128,7 @@ sbpscsi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_adapter.adapt_nchannels = 1;
 	sc->sc_adapter.adapt_max_periph = 1;
 	sc->sc_adapter.adapt_request = sbpscsi_scsipi_request;
-	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_minphys = sbpscsi_minphys;
 	sc->sc_adapter.adapt_openings = 8; /*Start with some. Grow as needed.*/
 	
 	sc->sc_channel.chan_adapter = &sc->sc_adapter;
@@ -308,4 +309,14 @@ sbpscsi_status(struct sbp2_status *status, void *arg)
 		    SBPSCSI_STATUS_GET_SENSE3(status->data[3]);
 	}
 	scsipi_done(xs);
+}
+
+static void
+sbpscsi_minphys(bp)
+        struct buf *bp;
+{
+
+        if (bp->b_bcount > SBP2_MAXPHYS)
+                bp->b_bcount = SBP2_MAXPHYS;
+	minphys(bp);
 }

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acstruct.h - Internal structs
- *       $Revision: 1.1.1.1.4.3 $
+ *       xRevision: 21 $
  *
  *****************************************************************************/
 
@@ -150,6 +150,8 @@ typedef struct acpi_walk_state
     UINT8                   ReturnUsed;
     UINT8                   WalkType;
     UINT16                  Opcode;                             /* Current AML opcode */
+    UINT8                   ScopeDepth;
+    UINT8                   Reserved1;
     UINT32                  ArgCount;                           /* push for fixed or var args */
     UINT32                  AmlOffset;
     UINT32                  ArgTypes;
@@ -160,16 +162,16 @@ typedef struct acpi_walk_state
 
 
     UINT8                   *AmlLastWhile;
-    struct acpi_node        Arguments[MTH_NUM_ARGS];            /* Control method arguments */
+    struct acpi_node        Arguments[ACPI_METHOD_NUM_ARGS];    /* Control method arguments */
     union acpi_operand_obj  **CallerReturnDesc;
     ACPI_GENERIC_STATE      *ControlState;                      /* List of control states (nested IFs) */
-    struct acpi_node        LocalVariables[MTH_NUM_LOCALS];     /* Control method locals */
+    struct acpi_node        LocalVariables[ACPI_METHOD_NUM_LOCALS];     /* Control method locals */
     struct acpi_node        *MethodCallNode;                    /* Called method Node*/
     ACPI_PARSE_OBJECT       *MethodCallOp;                      /* MethodCall Op if running a method */
     union acpi_operand_obj  *MethodDesc;                        /* Method descriptor if running a method */
     struct acpi_node        *MethodNode;                        /* Method Node if running a method */
     ACPI_PARSE_OBJECT       *Op;                                /* Current parser op */
-    union acpi_operand_obj  *Operands[OBJ_NUM_OPERANDS+1];      /* Operands passed to the interpreter (+1 for NULL terminator) */
+    union acpi_operand_obj  *Operands[ACPI_OBJ_NUM_OPERANDS+1];      /* Operands passed to the interpreter (+1 for NULL terminator) */
     const ACPI_OPCODE_INFO  *OpInfo;                            /* Info on current opcode */
     ACPI_PARSE_OBJECT       *Origin;                            /* Start of walk [Obsolete] */
     union acpi_operand_obj  **Params;

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exresnte - AML Interpreter object resolution
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 61 $
  *
  *****************************************************************************/
 
@@ -116,12 +116,11 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exresnte.c,v 1.1.1.1.4.4 2002/06/20 03:43:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exresnte.c,v 1.1.1.1.4.5 2002/12/29 20:45:52 thorpej Exp $");
 
 #define __EXRESNTE_C__
 
 #include "acpi.h"
-#include "amlcode.h"
 #include "acdispat.h"
 #include "acinterp.h"
 #include "acnamesp.h"
@@ -181,8 +180,18 @@ AcpiExResolveNodeToValue (
     SourceDesc = AcpiNsGetAttachedObject (Node);
     EntryType  = AcpiNsGetType ((ACPI_HANDLE) Node);
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Entry=%p SourceDesc=%p Type=%X\n",
-         Node, SourceDesc, EntryType));
+    ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Entry=%p SourceDesc=%p [%s]\n",
+         Node, SourceDesc, AcpiUtGetTypeName (EntryType)));
+
+    if (EntryType == ACPI_TYPE_LOCAL_ALIAS)
+    {
+        /* There is always exactly one level of indirection */
+
+        Node       = (ACPI_NAMESPACE_NODE *) Node->Object;
+        SourceDesc = AcpiNsGetAttachedObject (Node);
+        EntryType  = AcpiNsGetType ((ACPI_HANDLE) Node);
+        *ObjectPtr = Node;
+    }
 
     /*
      * Several object types require no further processing:
@@ -281,9 +290,9 @@ AcpiExResolveNodeToValue (
 
 
     case ACPI_TYPE_BUFFER_FIELD:
-    case INTERNAL_TYPE_REGION_FIELD:
-    case INTERNAL_TYPE_BANK_FIELD:
-    case INTERNAL_TYPE_INDEX_FIELD:
+    case ACPI_TYPE_LOCAL_REGION_FIELD:
+    case ACPI_TYPE_LOCAL_BANK_FIELD:
+    case ACPI_TYPE_LOCAL_INDEX_FIELD:
 
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "FieldRead Node=%p SourceDesc=%p Type=%X\n",
             Node, SourceDesc, EntryType));
@@ -309,7 +318,7 @@ AcpiExResolveNodeToValue (
         break;
 
 
-    /* TYPE_Any is untyped, and thus there is no object associated with it */
+    /* TYPE_ANY is untyped, and thus there is no object associated with it */
 
     case ACPI_TYPE_ANY:
 
@@ -319,11 +328,11 @@ AcpiExResolveNodeToValue (
         return_ACPI_STATUS (AE_AML_OPERAND_TYPE);  /* Cannot be AE_TYPE */
 
 
-    case INTERNAL_TYPE_REFERENCE:
+    case ACPI_TYPE_LOCAL_REFERENCE:
 
         /* No named references are allowed here */
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unsupported reference opcode %X\n",
+        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unsupported Reference opcode %X\n",
             SourceDesc->Reference.Opcode));
 
         return_ACPI_STATUS (AE_AML_OPERAND_TYPE);

@@ -2,7 +2,7 @@
  *
  * Module Name: tbxface - Public interfaces to the ACPI subsystem
  *                         ACPI table oriented interfaces
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 60 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbxface.c,v 1.1.1.1.4.4 2002/06/20 03:44:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbxface.c,v 1.1.1.1.4.5 2002/12/29 20:46:01 thorpej Exp $");
 
 #define __TBXFACE_C__
 
@@ -147,7 +147,6 @@ AcpiLoadTables (void)
 {
     ACPI_POINTER            RsdpAddress;
     ACPI_STATUS             Status;
-    UINT32                  NumberOfTables = 0;
 
 
     ACPI_FUNCTION_TRACE ("AcpiLoadTables");
@@ -178,7 +177,7 @@ AcpiLoadTables (void)
 
     /* Get the RSDT via the RSDP */
 
-    Status = AcpiTbGetTableRsdt (&NumberOfTables);
+    Status = AcpiTbGetTableRsdt ();
     if (ACPI_FAILURE (Status))
     {
         ACPI_REPORT_ERROR (("AcpiLoadTables: Could not load RSDT: %s\n",
@@ -186,9 +185,9 @@ AcpiLoadTables (void)
         goto ErrorExit;
     }
 
-    /* Now get the rest of the tables */
+    /* Now get the tables needed by this subsystem (FADT, DSDT, etc.) */
 
-    Status = AcpiTbGetAllTables (NumberOfTables);
+    Status = AcpiTbGetRequiredTables ();
     if (ACPI_FAILURE (Status))
     {
         ACPI_REPORT_ERROR (("AcpiLoadTables: Error getting required tables (DSDT/FADT/FACS): %s\n",
@@ -196,7 +195,7 @@ AcpiLoadTables (void)
         goto ErrorExit;
     }
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_OK, "ACPI Tables successfully loaded\n"));
+    ACPI_DEBUG_PRINT ((ACPI_DB_INIT, "ACPI Tables successfully acquired\n"));
 
 
     /* Load the namespace from the tables */
@@ -255,10 +254,10 @@ AcpiLoadTable (
 
     /* Copy the table to a local buffer */
 
-    Address.PointerType     = ACPI_LOGICAL_POINTER;
+    Address.PointerType     = ACPI_LOGICAL_POINTER | ACPI_LOGICAL_ADDRESSING;
     Address.Pointer.Logical = TablePtr;
 
-    Status = AcpiTbGetTable (&Address, &TableInfo);
+    Status = AcpiTbGetTableBody (&Address, TablePtr, &TableInfo);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -269,7 +268,7 @@ AcpiLoadTable (
     Status = AcpiTbInstallTable (&TableInfo);
     if (ACPI_FAILURE (Status))
     {
-        /* Free table allocated by AcpiTbGetTable */
+        /* Free table allocated by AcpiTbGetTableBody */
 
         AcpiTbDeleteSingleTable (&TableInfo);
         return_ACPI_STATUS (Status);

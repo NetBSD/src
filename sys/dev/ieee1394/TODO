@@ -1,5 +1,5 @@
-Rewrite handler_set to allow sub regions, minimums, etc without having to
-register 100 callbacks for 100 quad reads.
+done - Rewrite handler_set to allow sub regions, minimums, etc without having to
+       register 100 callbacks for 100 quad reads.
 
 done - Use handler set (with NULL cb) to create a higher level <bus>_unreg
 
@@ -25,7 +25,7 @@ done - Write sub match setup for fwnode/fwscsi so matching devices listed in
 
 done - Remove all of the devcap stuff.
 
-SBP2 needs a complete API written up: logins, ORB management/allocation, etc.
+half done - SBP2 needs a complete API written up: logins, ORB management/allocation, etc. (should actually write up some docs explaining it all)
 
 done - Add locator detection/usage into fwohci code.
 

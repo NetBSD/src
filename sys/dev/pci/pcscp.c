@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.12.2.6 2002/12/11 06:38:27 thorpej Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.12.2.7 2002/12/29 20:49:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.12.2.6 2002/12/11 06:38:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.12.2.7 2002/12/29 20:49:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ struct pcscp_softc {
 #define	NCR_WRITE_REG(sc, reg, val)	pcscp_write_reg((sc), (reg), (val))
 
 int	pcscp_match __P((struct device *, struct cfdata *, void *)); 
-void	pcscp_attach __P((struct device *, struct device *, void *));  
+void	pcscp_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(pcscp, sizeof(struct pcscp_softc),
     pcscp_match, pcscp_attach, NULL, NULL);
@@ -195,7 +195,7 @@ pcscp_attach(parent, self, aux)
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE);
-				     
+
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
 	 * XXX should we really poke around the chip that much in
@@ -250,7 +250,7 @@ pcscp_attach(parent, self, aux)
 	}
 
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	esc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, 
+	esc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 	    ncr53c9x_intr, esc);
 	if (esc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
@@ -265,7 +265,7 @@ pcscp_attach(parent, self, aux)
 
 	/*
 	 * Create the DMA maps for the data transfers.
-         */
+	 */
 
 #define MDL_SEG_SIZE	0x1000 /* 4kbyte per segment */
 #define MDL_SEG_OFFSET	0x0FFF
@@ -449,7 +449,7 @@ pcscp_dma_intr(sc)
 			if (resid)
 				p = *esc->sc_dmaaddr;
 		}
-		
+
 		resid += (NCR_READ_REG(sc, NCR_TCL) |
 		    (NCR_READ_REG(sc, NCR_TCM) << 8) |
 		    ((sc->sc_cfg2 & NCRCFG2_FE)
@@ -480,7 +480,7 @@ pcscp_dma_intr(sc)
 	 *  When this happens, the residual byte should be retrieved
 	 *  via PIO following completion of the BLAST operation.'
 	 */
-	
+
 	if (p) {
 		p += trans;
 		*p = NCR_READ_REG(sc, NCR_FIFO);
@@ -576,7 +576,7 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 	WRITE_DMAREG(esc, DMA_SPA, s_offset); 
 	*mdl++ = htole32(s_addr);
 	count -= rest;
-	
+
 	/* rests of the first dmamap segment */
 	while (count > 0) {
 		s_addr += MDL_SEG_SIZE;

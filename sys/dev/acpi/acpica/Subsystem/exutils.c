@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exutils - interpreter/scanner utilities
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 106 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exutils.c,v 1.1.1.1.4.4 2002/06/20 03:43:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exutils.c,v 1.1.1.1.4.5 2002/12/29 20:45:53 thorpej Exp $");
 
 #define __EXUTILS_C__
 
@@ -144,6 +144,8 @@ __KERNEL_RCSID(0, "$NetBSD: exutils.c,v 1.1.1.1.4.4 2002/06/20 03:43:59 nathanw 
 #define _COMPONENT          ACPI_EXECUTER
         ACPI_MODULE_NAME    ("exutils")
 
+
+#ifndef ACPI_NO_METHOD_EXECUTION
 
 /*******************************************************************************
  *
@@ -210,34 +212,6 @@ AcpiExExitInterpreter (void)
     }
 
     return_VOID;
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiExValidateObjectType
- *
- * PARAMETERS:  Type            Object type to validate
- *
- * DESCRIPTION: Determine if a type is a valid ACPI object type
- *
- ******************************************************************************/
-
-BOOLEAN
-AcpiExValidateObjectType (
-    ACPI_OBJECT_TYPE        Type)
-{
-
-    ACPI_FUNCTION_ENTRY ();
-
-
-    if ((Type > ACPI_TYPE_MAX && Type < INTERNAL_TYPE_BEGIN) ||
-        (Type > INTERNAL_TYPE_MAX))
-    {
-        return (FALSE);
-    }
-
-    return (TRUE);
 }
 
 
@@ -315,7 +289,7 @@ AcpiExAcquireGlobalLock (
     {
         /* We should attempt to get the lock, wait forever */
 
-        Status = AcpiEvAcquireGlobalLock (ACPI_UINT32_MAX);
+        Status = AcpiEvAcquireGlobalLock (ACPI_WAIT_FOREVER);
         if (ACPI_SUCCESS (Status))
         {
             Locked = TRUE;
@@ -365,9 +339,12 @@ AcpiExReleaseGlobalLock (
         {
             /* Report the error, but there isn't much else we can do */
 
-            ACPI_REPORT_ERROR (("Could not release ACPI Global Lock\n"));
+            ACPI_REPORT_ERROR (("Could not release ACPI Global Lock, %s\n",
+                AcpiFormatException (Status)));
         }
     }
+
+    return_VOID;
 }
 
 
@@ -438,7 +415,7 @@ AcpiExEisaIdToString (
 
     EisaId = AcpiUtDwordByteSwap (NumericId);
 
-    OutString[0] = (char) ('@' + ((EisaId >> 26) & 0x1f));
+    OutString[0] = (char) ('@' + (((unsigned long) EisaId >> 26) & 0x1f));
     OutString[1] = (char) ('@' + ((EisaId >> 21) & 0x1f));
     OutString[2] = (char) ('@' + ((EisaId >> 16) & 0x1f));
     OutString[3] = AcpiUtHexToAsciiChar ((ACPI_INTEGER) EisaId, 12);
@@ -485,4 +462,4 @@ AcpiExUnsignedIntegerToString (
     }
 }
 
-
+#endif

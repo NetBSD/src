@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evxface - External interfaces for ACPI events
- *              $Revision: 1.1.1.1.4.4 $
+ *              xRevision: 132 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evxface.c,v 1.1.1.1.4.4 2002/06/20 03:43:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evxface.c,v 1.1.1.1.4.5 2002/12/29 20:45:49 thorpej Exp $");
 
 #define __EVXFACE_C__
 
@@ -126,7 +126,6 @@ __KERNEL_RCSID(0, "$NetBSD: evxface.c,v 1.1.1.1.4.4 2002/06/20 03:43:52 nathanw 
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evxface")
-
 
 
 /*******************************************************************************
@@ -413,7 +412,7 @@ AcpiInstallNotifyHandler (
 
         /* Install the handler */
 
-        NotifyObj = AcpiUtCreateInternalObject (INTERNAL_TYPE_NOTIFY);
+        NotifyObj = AcpiUtCreateInternalObject (ACPI_TYPE_LOCAL_NOTIFY);
         if (!NotifyObj)
         {
             Status = AE_NO_MEMORY;
@@ -759,7 +758,7 @@ Cleanup:
 
 ACPI_STATUS
 AcpiAcquireGlobalLock (
-    UINT32                  Timeout,
+    UINT16                  Timeout,
     UINT32                  *Handle)
 {
     ACPI_STATUS             Status;

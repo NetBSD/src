@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.4.2.15 2002/12/11 06:38:03 thorpej Exp $	*/
+/*	$NetBSD: wivar.h,v 1.4.2.16 2002/12/29 20:49:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -109,6 +109,7 @@ struct wi_softc	{
 #define	WI_FLAGS_HAS_SYSSCALE		0x0080
 #define	WI_FLAGS_BUG_AUTOINC		0x0100
 #define	WI_FLAGS_HAS_FRAGTHR		0x0200
+#define	WI_FLAGS_HAS_DBMADJUST		0x0400
 
 struct wi_card_ident {
 	u_int16_t	card_id;

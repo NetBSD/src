@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.5.6.5 2002/12/11 06:38:56 thorpej Exp $ */
+/* $NetBSD: wsevent.c,v 1.5.6.6 2002/12/29 20:49:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.5.6.5 2002/12/11 06:38:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.5.6.6 2002/12/29 20:49:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -100,12 +100,12 @@ void
 wsevent_init(struct wseventvar *ev)
 {
 
-#ifdef DIAGNOSTIC
 	if (ev->q != NULL) {
+#ifdef DIAGNOSTIC
 		printf("wsevent_init: already init\n");
+#endif
 		return;
 	}
-#endif
 	ev->get = ev->put = 0;
 	ev->q = malloc((u_long)WSEVENT_QSIZE * sizeof(struct wscons_event),
 		       M_DEVBUF, M_WAITOK|M_ZERO);
@@ -117,7 +117,12 @@ wsevent_init(struct wseventvar *ev)
 void
 wsevent_fini(struct wseventvar *ev)
 {
-
+	if (ev->q == NULL) {
+#ifdef DIAGNOSTIC
+		printf("wsevent_fini: already fini\n");
+#endif
+		return;
+	}
 	free(ev->q, M_DEVBUF);
 	ev->q = NULL;
 }

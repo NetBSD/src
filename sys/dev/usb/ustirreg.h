@@ -1,4 +1,4 @@
-/*	$NetBSD: ustirreg.h,v 1.1.4.2 2002/01/11 23:39:38 nathanw Exp $	*/
+/*	$NetBSD: ustirreg.h,v 1.1.4.3 2002/12/29 20:49:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,8 @@
 /*
  * Registers definitions for SigmaTel STIr4200 USB/IrDA Bridge
  * Controller.  Documentation available at:
- *  http://extranet.sigmatel.com/library/infrared/stir4200/stir4200-ds.pdf
+ *  http://www.sigmatel.com/technical_docs.htm
+ *  http://extranet.sigmatel.com/library/infrared/stir4200/stir4200-ds-1-0.pdf
  */
 
 /* Notes:
@@ -76,7 +77,14 @@
 #define STIR_MAX_REG		15
 
 
-/* Mode register bits */
+/*
+ * Mode register bits
+ *
+ * The MIR bit was documented in earlier revisions of the data sheet,
+ * but in the current published version (version 1.0, March 2002) the
+ * MIR bit is documented as "reserved".  Possibly the device has a
+ * design flaw affecting the MIR data rates.
+ */
 #define STIR_RMODE_FIR		0x80
 #define STIR_RMODE_MIR		0x40
 #define STIR_RMODE_SIR		0x20
@@ -146,6 +154,11 @@
 /*
  * The MSB is the MODE register setting, the LSB is the BRATE register
  * setting.
+ *
+ * The MIR rates (576000 and 1152000) were documented in earlier
+ * revisions of the data sheet, but in the current published version
+ * these data rates have disappeared.  Possibly the device has a
+ * design flaw affecting the MIR data rates.
  */
 #define STIR_BRMODE_4000000	0x8002
 #define STIR_BRMODE_1152000	0x4001

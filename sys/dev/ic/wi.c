@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.17.2.21 2002/12/11 06:38:03 thorpej Exp $	*/
+/*	$NetBSD: wi.c,v 1.17.2.22 2002/12/29 20:49:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.21 2002/12/11 06:38:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.22 2002/12/29 20:49:17 thorpej Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -256,7 +256,8 @@ wi_attach(struct wi_softc *sc)
 
 	sc->sc_dbm_adjust = 100; /* default */
 
-	if (sc->sc_firmware_type == WI_INTERSIL &&
+	buflen = sizeof(val);
+	if ((sc->sc_flags & WI_FLAGS_HAS_DBMADJUST) &&
 	    wi_read_rid(sc, WI_RID_DBM_ADJUST, &val, &buflen) == 0) {
 		sc->sc_dbm_adjust = le16toh(val);
 	}
@@ -297,6 +298,8 @@ wi_attach(struct wi_softc *sc)
 		sc->sc_flags |= WI_FLAGS_HAS_FRAGTHR;
 		sc->sc_flags |= WI_FLAGS_HAS_ROAMING;
 		sc->sc_flags |= WI_FLAGS_HAS_SYSSCALE;
+		if (sc->sc_sta_firmware_ver > 10101)
+			sc->sc_flags |= WI_FLAGS_HAS_DBMADJUST;
 		if (sc->sc_sta_firmware_ver >= 800) {
 			ic->ic_flags |= IEEE80211_F_HASHOSTAP;
 			ic->ic_flags |= IEEE80211_F_HASIBSS;
@@ -663,7 +666,9 @@ wi_init(struct ifnet *ifp)
 			IEEE80211_ADDR_COPY(&join.wi_bssid, ic->ic_des_bssid);
 		if (ic->ic_des_chan != IEEE80211_CHAN_ANY)
 			join.wi_chan = htole16(ic->ic_des_chan);
-		wi_write_rid(sc, WI_RID_JOIN_REQ, &join, sizeof(join));
+		/* Lucent firmware does not support the JOIN RID. */
+		if (sc->sc_firmware_type != WI_LUCENT)
+			wi_write_rid(sc, WI_RID_JOIN_REQ, &join, sizeof(join));
 	}
 
  out:
@@ -943,6 +948,15 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				error = 0;
 		}
 		break;
+	case SIOCS80211BSSID:
+		/* No use pretending that Lucent firmware supports
+		 * 802.11 MLME-JOIN.request.
+		 */
+		if (sc->sc_firmware_type == WI_LUCENT) {
+			error = ENODEV;
+			break;
+		}
+		/* fall through */
 	default:
 		error = ieee80211_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
@@ -1443,6 +1457,16 @@ wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 		len = sizeof(u_int16_t);
 		break;
 
+	case WI_RID_DBM_ADJUST:
+		if (sc->sc_enabled && (sc->sc_flags & WI_FLAGS_HAS_DBMADJUST)) {
+			error = wi_read_rid(sc, wreq.wi_type, wreq.wi_val,
+			    &len);
+			break;
+		}
+		wreq.wi_val[0] = htole16(sc->sc_dbm_adjust);
+		len = sizeof(u_int16_t);
+		break;
+
 	case WI_RID_ROAMING_MODE:
 		if (sc->sc_enabled && (sc->sc_flags & WI_FLAGS_HAS_ROAMING)) {
 			error = wi_read_rid(sc, wreq.wi_type, wreq.wi_val,
@@ -1548,6 +1572,9 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 		return error;
 	len = (wreq.wi_len - 1) * 2;
 	switch (wreq.wi_type) {
+	case WI_RID_DBM_ADJUST:
+		return ENODEV;
+
 	case WI_RID_NODENAME:
 		if (le16toh(wreq.wi_val[0]) * 2 > len ||
 		    le16toh(wreq.wi_val[0]) > sizeof(sc->sc_nodename)) {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbstats - Generation and display of ACPI table statistics
- *              $Revision: 1.3.4.4 $
+ *              xRevision: 64 $
  *
  ******************************************************************************/
 
@@ -115,15 +115,15 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbstats.c,v 1.3.4.4 2002/06/20 03:43:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbstats.c,v 1.3.4.5 2002/12/29 20:45:44 thorpej Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
 #include "acnamesp.h"
 
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 
-#define _COMPONENT          ACPI_DEBUGGER
+#define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbstats")
 
 /*
@@ -181,7 +181,7 @@ AcpiDbEnumerateObject (
 
     AcpiGbl_NumObjects++;
 
-    if (ACPI_GET_OBJECT_TYPE (ObjDesc) > INTERNAL_TYPE_NODE_MAX)
+    if (ACPI_GET_OBJECT_TYPE (ObjDesc) > ACPI_TYPE_NS_NODE_MAX)
     {
         AcpiGbl_ObjTypeCountMisc++;
     }
@@ -195,6 +195,7 @@ AcpiDbEnumerateObject (
     switch (ACPI_GET_OBJECT_TYPE (ObjDesc))
     {
     case ACPI_TYPE_PACKAGE:
+
         for (i = 0; i < ObjDesc->Package.Count; i++)
         {
             AcpiDbEnumerateObject (ObjDesc->Package.Elements[i]);
@@ -202,12 +203,14 @@ AcpiDbEnumerateObject (
         break;
 
     case ACPI_TYPE_DEVICE:
+
         AcpiDbEnumerateObject (ObjDesc->Device.SysHandler);
         AcpiDbEnumerateObject (ObjDesc->Device.DrvHandler);
         AcpiDbEnumerateObject (ObjDesc->Device.AddrHandler);
         break;
 
     case ACPI_TYPE_BUFFER_FIELD:
+
         if (AcpiNsGetSecondaryObject (ObjDesc))
         {
             AcpiGbl_ObjTypeCount [ACPI_TYPE_BUFFER_FIELD]++;
@@ -215,22 +218,26 @@ AcpiDbEnumerateObject (
         break;
 
     case ACPI_TYPE_REGION:
-        AcpiGbl_ObjTypeCount [INTERNAL_TYPE_REGION_FIELD ]++;
+
+        AcpiGbl_ObjTypeCount [ACPI_TYPE_LOCAL_REGION_FIELD ]++;
         AcpiDbEnumerateObject (ObjDesc->Region.AddrHandler);
         break;
 
     case ACPI_TYPE_POWER:
+
         AcpiDbEnumerateObject (ObjDesc->PowerResource.SysHandler);
         AcpiDbEnumerateObject (ObjDesc->PowerResource.DrvHandler);
         break;
 
     case ACPI_TYPE_PROCESSOR:
+
         AcpiDbEnumerateObject (ObjDesc->Processor.SysHandler);
         AcpiDbEnumerateObject (ObjDesc->Processor.DrvHandler);
         AcpiDbEnumerateObject (ObjDesc->Processor.AddrHandler);
         break;
 
     case ACPI_TYPE_THERMAL:
+
         AcpiDbEnumerateObject (ObjDesc->ThermalZone.SysHandler);
         AcpiDbEnumerateObject (ObjDesc->ThermalZone.DrvHandler);
         AcpiDbEnumerateObject (ObjDesc->ThermalZone.AddrHandler);
@@ -241,8 +248,6 @@ AcpiDbEnumerateObject (
     }
 }
 
-
-#ifndef PARSER_ONLY
 
 /*******************************************************************************
  *
@@ -277,7 +282,7 @@ AcpiDbClassifyOneObject (
     AcpiDbEnumerateObject (ObjDesc);
 
     Type = Node->Type;
-    if (Type > INTERNAL_TYPE_NODE_MAX)
+    if (Type > ACPI_TYPE_NS_NODE_MAX)
     {
         AcpiGbl_NodeTypeCountMisc++;
     }
@@ -338,7 +343,7 @@ AcpiDbCountNamespaceObjects (
     AcpiGbl_NumObjects = 0;
 
     AcpiGbl_ObjTypeCountMisc = 0;
-    for (i = 0; i < (INTERNAL_TYPE_NODE_MAX -1); i++)
+    for (i = 0; i < (ACPI_TYPE_NS_NODE_MAX -1); i++)
     {
         AcpiGbl_ObjTypeCount [i] = 0;
         AcpiGbl_NodeTypeCount [i] = 0;
@@ -347,8 +352,6 @@ AcpiDbCountNamespaceObjects (
     (void) AcpiNsWalkNamespace (ACPI_TYPE_ANY, ACPI_ROOT_OBJECT, ACPI_UINT32_MAX,
                         FALSE, AcpiDbClassifyOneObject, NULL, NULL);
 }
-
-#endif
 
 
 /*******************************************************************************
@@ -397,13 +400,11 @@ AcpiDbDisplayStatistics (
 
     switch (Type)
     {
-#ifndef PARSER_ONLY
     case CMD_STAT_ALLOCATIONS:
 #ifdef ACPI_DBG_TRACK_ALLOCATIONS
         AcpiUtDumpAllocationInfo ();
 #endif
         break;
-#endif
 
     case CMD_STAT_TABLES:
 
@@ -416,15 +417,13 @@ AcpiDbDisplayStatistics (
 
     case CMD_STAT_OBJECTS:
 
-#ifndef PARSER_ONLY
-
         AcpiDbCountNamespaceObjects ();
 
         AcpiOsPrintf ("\nObjects defined in the current namespace:\n\n");
 
-        AcpiOsPrintf ("%16.16s % 10.10s % 10.10s\n", "ACPI_TYPE", "NODES", "OBJECTS");
+        AcpiOsPrintf ("%16.16s %10.10s %10.10s\n", "ACPI_TYPE", "NODES", "OBJECTS");
 
-        for (i = 0; i < INTERNAL_TYPE_NODE_MAX; i++)
+        for (i = 0; i < ACPI_TYPE_NS_NODE_MAX; i++)
         {
             AcpiOsPrintf ("%16.16s % 10ld% 10ld\n", AcpiUtGetTypeName (i),
                 AcpiGbl_NodeTypeCount [i], AcpiGbl_ObjTypeCount [i]);
@@ -434,8 +433,6 @@ AcpiDbDisplayStatistics (
 
         AcpiOsPrintf ("%16.16s % 10ld% 10ld\n", "TOTALS:",
             AcpiGbl_NumNodes, AcpiGbl_NumObjects);
-
-#endif
         break;
 
     case CMD_STAT_MEMORY:
@@ -539,7 +536,7 @@ AcpiDbDisplayStatistics (
 
 
     case CMD_STAT_STACK:
-#if defined(ACPI_DEBUG)
+#if defined(ACPI_DEBUG_OUTPUT)
 
         Size = (UINT32) (AcpiGbl_EntryStackPointer - AcpiGbl_LowestStackPointer);
 
@@ -560,4 +557,4 @@ AcpiDbDisplayStatistics (
 }
 
 
-#endif /* ENABLE_DEBUGGER  */
+#endif /* ACPI_DEBUGGER  */
