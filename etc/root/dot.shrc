@@ -1,0 +1,8 @@
+hup(){ kill -HUP `cat /var/run/$1.pid`; }
+ll(){ ls -l ${1+"$@"}; }
+
+case "$-" in *i*)
+	PS1="`hostname -s`$PS1"
+	set -o emacs
+	;;
+esac
