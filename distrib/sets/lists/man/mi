@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.164 1999/09/13 23:03:44 augustss Exp $
+# $NetBSD: mi,v 1.165 1999/09/14 21:51:26 soren Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -1600,7 +1600,6 @@
 ./usr/share/man/man4/rnd.4
 ./usr/share/man/man4/route.4
 ./usr/share/man/man4/rtfps.4
-./usr/share/man/man4/rtpphy.4
 ./usr/share/man/man4/sb.4
 ./usr/share/man/man4/scsi.4
 ./usr/share/man/man4/sd.4
