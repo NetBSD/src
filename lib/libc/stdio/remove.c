@@ -1,4 +1,4 @@
-/*	$NetBSD: remove.c,v 1.9 1997/10/07 00:02:44 hubertf Exp $	*/
+/*	$NetBSD: remove.c,v 1.10 1998/09/07 14:22:30 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,14 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)remove.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: remove.c,v 1.9 1997/10/07 00:02:44 hubertf Exp $");
+__RCSID("$NetBSD: remove.c,v 1.10 1998/09/07 14:22:30 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <stdio.h>
+#include <unistd.h>
 
 int
 remove(file)
