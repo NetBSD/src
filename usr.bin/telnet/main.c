@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2003/07/12 13:33:08 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2003/07/14 15:56:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 2003/07/12 13:33:08 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2003/07/14 15:56:29 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,10 +66,6 @@ __RCSID("$NetBSD: main.c,v 1.19 2003/07/12 13:33:08 itojun Exp $");
 /* Either define them in both places, or put in some common header file. */
 #define OPTS_FORWARD_CREDS	0x00000002
 #define OPTS_FORWARDABLE_CREDS	0x00000001
-
-#if 0
-#define FORWARD
-#endif
 
 #if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
 char *ipsec_policy_in = NULL;
@@ -94,7 +90,7 @@ tninit(void)
 
     init_sys();
 
-#if defined(TN3270)
+#ifdef TN3270
     init_3270();
 #endif
 }
@@ -111,7 +107,7 @@ usage()
 	    "[-4] [-6] [-8] [-E] [-L] [-N] [-S tos] [-a] [-c] [-d] [-e char] [-l user]",
 	    "\n\t[-n tracefile]",
 #endif
-#if defined(TN3270) && defined(unix)
+#ifdef TN3270
 # ifdef AUTHENTICATION
 	    "[-noasynch] [-noasynctty]\n\t[-noasyncnet] [-r] [-t transcom] ",
 # else
@@ -196,19 +192,9 @@ main(int argc, char *argv[])
 			break;
 		case 'S':
 		    {
-#ifdef	HAS_GETTOS
-			extern int tos;
-
-			if ((tos = parsetos(optarg, "tcp")) < 0)
-				fprintf(stderr, "%s%s%s%s\n",
-					prompt, ": Bad TOS argument '",
-					optarg,
-					"; will try to use default TOS");
-#else
 			fprintf(stderr,
 			   "%s: Warning: -S ignored, no parsetos() support.\n",
 								prompt);
-#endif
 		    }
 			break;
 		case 'X':
@@ -279,7 +265,7 @@ main(int argc, char *argv[])
 			user = optarg;
 			break;
 		case 'n':
-#if defined(TN3270) && defined(unix)
+#ifdef TN3270
 			/* distinguish between "-n oasynch" and "-noasynch" */
 			if (argv[optind - 1][0] == '-' && argv[optind - 1][1]
 			    == 'n' && argv[optind - 1][2] == 'o') {
@@ -291,14 +277,14 @@ main(int argc, char *argv[])
 				else if (!strcmp(optarg, "oasynchnet"))
 					noasynchnet = 1;
 			} else
-#endif	/* defined(TN3270) && defined(unix) */
+#endif	/* defined(TN3270) */
 				SetNetTrace(optarg);
 			break;
 		case 'r':
 			rlogin = '~';
 			break;
 		case 't':
-#if defined(TN3270) && defined(unix)
+#ifdef TN3270
 			(void)strlcpy(tline, optarg, sizeof(tline));
 			transcom = tline;
 #else
