@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.124 2000/02/18 22:22:46 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.125 2000/02/19 00:29:42 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3459,3 +3459,13 @@ share/man/man9/Makefile				1.57 via patch
 
   Implement ratecheck(), a function which can help kernel programmers
   implement rate-limited actions.
+
+sys/arch/i386/conf/Makefile.i386		patch
+sys/arch/i386/include/param.h			patch
+sys/arch/i386/include/pmap.new.h		patch
+sys/arch/i386/include/vmparam.h			patch
+
+  Move KERNBASE to 0xc0000000, giving the kernel a more-or-less
+  full 1GB of virtual address space, leaving userland with 3GB,
+  and update comments to match the new reality.  Fixes parts of
+  PR#9389 and PR#9313.
