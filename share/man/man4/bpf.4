@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.8 1996/12/04 04:46:04 mikel Exp $
+.\"	$NetBSD: bpf.4,v 1.9 1997/03/22 02:59:11 cjs Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -140,7 +140,7 @@ and resets the statistics that are returned by BIOCGSTATS.
 .TP 10
 .B BIOCGETIF (struct ifreq)
 Returns the name of the hardware interface that the file is listening on.
-The name is returned in the if_name field of
+The name is returned in the ifr_name field of
 .I ifr.
 All other fields are undefined.
 .TP 10
@@ -148,7 +148,7 @@ All other fields are undefined.
 Sets the hardware interface associate with the file.  This
 command must be performed before any packets can be read.
 The device is indicated by name using the
-.I if_name
+.I ifr_name
 field of the
 .I ifreq.
 Additionally, performs the actions of BIOCFLUSH.
