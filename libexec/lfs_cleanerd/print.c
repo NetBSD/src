@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.6 1998/10/15 00:29:51 ross Exp $	*/
+/*	$NetBSD: print.c,v 1.7 1999/03/10 00:57:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.6 1998/10/15 00:29:51 ross Exp $");
+__RCSID("$NetBSD: print.c,v 1.7 1999/03/10 00:57:16 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,18 +65,24 @@ extern u_long cksum __P((void *, size_t));	/* XXX */
  * for empty segment or corrupt segment.
  * Returns a pointer to the array of inode addresses.
  */
+
 int
-dump_summary(lfsp, sp, flags, iaddrp)
+dump_summary(lfsp, sp, flags, iaddrp, addr)
 	struct lfs *lfsp;
 	SEGSUM *sp;
 	u_long flags;
 	daddr_t **iaddrp;
+	daddr_t addr;
 {
-	int i, j, numblocks;
-	daddr_t *dp;
-
+	int i, j, blk, numblocks, accino=0;
+	daddr_t *dp, ddp, *idp;
+	u_long *datap;
+	int size;
 	FINFO *fp;
-	int ck;
+	u_long ck;
+
+	blk=0;
+	datap = (u_long *)malloc((lfsp->lfs_ssize*lfsp->lfs_frag) * sizeof(u_long));
 
 	if (sp->ss_sumsum != (ck = cksum(&sp->ss_datasum, 
 	    LFS_SUMMARY_SIZE - sizeof(sp->ss_sumsum))))
@@ -98,16 +104,39 @@ dump_summary(lfsp, sp, flags, iaddrp)
 	if (flags & DUMP_INODE_ADDRS)
                 syslog(LOG_DEBUG, "    Inode addresses:");
 
-	dp = (daddr_t *)((caddr_t)sp + LFS_SUMMARY_SIZE);
-	for (--dp, i = 0; i < sp->ss_ninos; --dp)
-		if (flags & DUMP_INODE_ADDRS) {
+	idp = dp = (daddr_t *)((caddr_t)sp + LFS_SUMMARY_SIZE);
+	--idp;
+	for (--dp, i = 0; i < howmany(sp->ss_ninos,INOPB(lfsp)); --dp) {
+		if (flags & DUMP_INODE_ADDRS)
                         syslog(LOG_DEBUG, "\t0x%lx", (u_long)*dp);
-		} else
-			++i;
-	if (iaddrp)
-		*iaddrp = ++dp;
+		++i;
+	}
+	if (iaddrp) {
+		*iaddrp = dp;
+	}
 
+	ddp = addr + LFS_SUMMARY_SIZE/DEV_BSIZE;
 	for (fp = (FINFO *)(sp + 1), i = 0; i < sp->ss_nfinfo; ++i) {
+		/* Add any intervening Inode blocks to our checksum array */
+		/* printf("finfo %d: ddp=%lx, *idp=%lx\n",i,ddp,*idp); */
+		while(ddp == *idp) {
+			 /* printf(" [ino %lx]",ddp); */
+			datap[blk++] = *(u_long*)((caddr_t)sp + (ddp-addr)*DEV_BSIZE);
+			--idp;
+			ddp += lfsp->lfs_bsize/DEV_BSIZE;
+			accino++;
+		}
+		for(j=0;j<fp->fi_nblocks;j++) {
+			if(j==fp->fi_nblocks-1) {
+				size = fp->fi_lastlength/DEV_BSIZE;
+				/* printf(" %lx:%d",ddp,size); */
+			} else {
+				size = lfsp->lfs_bsize/DEV_BSIZE;
+				/* printf(" %lx/%d",ddp,size); */
+			}
+			datap[blk++] = *(u_long*)((caddr_t)sp + (ddp-addr)*DEV_BSIZE);
+			ddp += size;
+		}
 		numblocks += fp->fi_nblocks;
 		if (flags & DUMP_FINFOS) {
 			syslog(LOG_DEBUG, "    %s%d version %d nblocks %d\n",
@@ -117,11 +146,37 @@ dump_summary(lfsp, sp, flags, iaddrp)
 			for (j = 0; j < fp->fi_nblocks; j++, dp++) {
                             syslog(LOG_DEBUG, "\t%d", *dp);
 			}
-			fp = (FINFO *)dp;
-		} else {
-			fp = (FINFO *)(&fp->fi_blocks[fp->fi_nblocks]);
-		}
+		} else
+			dp = &fp->fi_blocks[fp->fi_nblocks];
+		fp = (FINFO *)dp;
+		/* printf("\n"); */
 	}
+	/* Add lagging inode blocks too */
+	/* printf("end: ddp=%lx, *idp=%lx\n",ddp,*idp); */
+	while(*idp >= ddp && accino < howmany(sp->ss_ninos,INOPB(lfsp))) {
+		ddp = *idp;
+		/* printf(" [ino %lx]",ddp); */
+		datap[blk++] = *(u_long*)((caddr_t)sp + (ddp-addr)*DEV_BSIZE);
+		--idp;
+		accino++;
+	}
+	/* printf("\n"); */
+
+	if(accino != howmany(sp->ss_ninos,lfsp->lfs_inopb)) {
+		syslog(LOG_DEBUG,"Oops, given %d inodes got %d\n", howmany(sp->ss_ninos,lfsp->lfs_inopb), accino);
+	}
+	if(blk!=numblocks) {
+		syslog(LOG_DEBUG,"Oops, blk=%d numblocks=%d\n",blk,numblocks);
+	}
+	/* check data/inode block(s) checksum too */
+	if ((ck=cksum ((void *)datap, numblocks * sizeof(u_long))) != sp->ss_datasum) {
+                syslog(LOG_DEBUG, "Bad data checksum: given %lu, got %lu",
+		       (unsigned long)sp->ss_datasum, ck);
+		free(datap);
+		return 0;
+        }
+	free(datap);
+
 	return (numblocks);
 }
 
@@ -144,6 +199,9 @@ dump_super(lfsp)
 	struct lfs *lfsp;
 {
 	int i;
+
+        if(debug < 2)
+            return;
 
 	syslog(LOG_DEBUG,"%s0x%X\t%s0x%X\t%s%d\t%s%d\n",
 		"magic    ", lfsp->lfs_magic,

@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.6 1998/10/07 15:00:34 christos Exp $	*/
+/*	$NetBSD: clean.h,v 1.7 1999/03/10 00:57:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,6 +73,8 @@
 #define	FIVE_MIN	1
 #define	FIFTEEN_MIN	2
 
+#include <sys/time.h>
+
 typedef struct fs_info {
 	struct	statfs	*fi_statfsp;	/* fsstat info from getfsstat */
 	struct	lfs	fi_lfs;		/* superblock */
@@ -82,6 +84,7 @@ typedef struct fs_info {
 	u_long	fi_daddr_shift;		/* shift to get byte offset of daddr */
 	u_long	fi_ifile_count;		/* # entries in the ifile table */
 	off_t	fi_ifile_length;	/* length of the ifile */
+	time_t  fi_fs_tstamp;           /* last fs activity, per ifile */
 } FS_INFO;
 
 /* 
@@ -106,8 +109,9 @@ typedef struct fs_info {
 	(i) % (fs)->lfs_sepb)
 
 __BEGIN_DECLS
-int	 dump_summary __P((struct lfs *, SEGSUM *, u_long, daddr_t **));
+int	 dump_summary __P((struct lfs *, SEGSUM *, u_long, daddr_t **, daddr_t));
 void	 err __P((const int, const char *, ...));
+void	 warn __P((const char *, ...));
 int	 fs_getmntinfo __P((struct statfs **, char *, const char *));
 void	 get __P((int, off_t, void *, size_t));
 FS_INFO	*get_fs_info __P((struct statfs *, int));
@@ -141,7 +145,7 @@ void	 toss __P((void *, int *, size_t,
 }
 
 #define PRINT_SEGUSE(sup, n) if(debug > 1) { \
-	syslog(LOG_DEBUG,"Segment %d nbytes=%lu\tflags=%c%c%c ninos=%d nsums=%d lastmod: %s\n", \
+	syslog(LOG_DEBUG,"Segment %d nbytes=%lu\tflags=%c%c%c ninos=%d nsums=%d lastmod: %s", \
 			n, (unsigned long)(sup)->su_nbytes, \
 			(sup)->su_flags & SEGUSE_DIRTY ? 'D' : 'C', \
 			(sup)->su_flags & SEGUSE_ACTIVE ? 'A' : ' ', \
@@ -152,6 +156,6 @@ void	 toss __P((void *, int *, size_t,
 
 void	 dump_super __P((struct lfs *));
 void	 dump_cleaner_info __P((void *));
-void	 print_SEGSUM __P(( struct lfs *, SEGSUM *));
+void	 print_SEGSUM __P(( struct lfs *, SEGSUM *, daddr_t));
 void	 print_CLEANERINFO __P((CLEANERINFO *));
 __END_DECLS
