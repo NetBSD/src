@@ -1614,6 +1614,17 @@ main (argc, argv)
 		  case 'u':
 		    unique = 1;
 		    break;
+		  case 'T':   /* set temp file prefix */
+                    if (s[1])
+                      prefix = s + 1;
+                    else
+                      {
+                        if (i == argc - 1)
+                          error (2, 0, "option `-T' requires an argument");
+                        else
+                          prefix = argv[++i];
+                      }
+                    goto outer;
 		  default:
 		    fprintf (stderr, "%s: unrecognized option `-%c'\n",
 			     argv[0], *s);
