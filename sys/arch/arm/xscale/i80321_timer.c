@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.6 2003/07/26 05:51:11 thorpej Exp $	*/
+/*	$NetBSD: i80321_timer.c,v 1.7 2003/07/27 04:52:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.6 2003/07/26 05:51:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.7 2003/07/27 04:52:28 thorpej Exp $");
 
 #include "opt_perfctrs.h"
 
@@ -330,6 +330,7 @@ todr_attach(todr_chip_handle_t todr)
 
 	if (todr_handle)
 		panic("todr_attach: rtc already configured");
+	todr_handle = todr;
 }
 
 /*
