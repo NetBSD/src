@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.22 2004/01/29 10:02:24 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.23 2004/01/29 10:25:49 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.22 2004/01/29 10:02:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.23 2004/01/29 10:25:49 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -175,31 +175,31 @@ static void atw_dump_pkt(struct ifnet *, struct mbuf *);
 #endif
 
 #ifdef ATW_STATS
-void	atw_print_stats __P((struct atw_softc *));
+void	atw_print_stats(struct atw_softc *);
 #endif
 
-void	atw_start __P((struct ifnet *));
-void	atw_watchdog __P((struct ifnet *));
-int	atw_ioctl __P((struct ifnet *, u_long, caddr_t));
-int	atw_init __P((struct ifnet *));
-void	atw_stop __P((struct ifnet *, int));
+void	atw_start(struct ifnet *);
+void	atw_watchdog(struct ifnet *);
+int	atw_ioctl(struct ifnet *, u_long, caddr_t);
+int	atw_init(struct ifnet *);
+void	atw_stop(struct ifnet *, int);
 
-void	atw_reset __P((struct atw_softc *));
-int	atw_read_srom __P((struct atw_softc *));
+void	atw_reset(struct atw_softc *);
+int	atw_read_srom(struct atw_softc *);
 
-void	atw_shutdown __P((void *));
+void	atw_shutdown(void *);
 
-void	atw_rxdrain __P((struct atw_softc *));
-int	atw_add_rxbuf __P((struct atw_softc *, int));
-void	atw_idle __P((struct atw_softc *, u_int32_t));
+void	atw_rxdrain(struct atw_softc *);
+int	atw_add_rxbuf(struct atw_softc *, int);
+void	atw_idle(struct atw_softc *, u_int32_t);
 
-int	atw_enable __P((struct atw_softc *));
-void	atw_disable __P((struct atw_softc *));
-void	atw_power __P((int, void *));
+int	atw_enable(struct atw_softc *);
+void	atw_disable(struct atw_softc *);
+void	atw_power(int, void *);
 
-void	atw_rxintr __P((struct atw_softc *));
-void	atw_txintr __P((struct atw_softc *));
-void	atw_linkintr __P((struct atw_softc *, u_int32_t));
+void	atw_rxintr(struct atw_softc *);
+void	atw_txintr(struct atw_softc *);
+void	atw_linkintr(struct atw_softc *, u_int32_t);
 
 static int atw_newstate(struct ieee80211com *, enum ieee80211_state, int);
 static void atw_tsf(struct atw_softc *);
@@ -293,8 +293,7 @@ atw_activate(struct device *self, enum devact act)
  *	Enable the ADM8211 chip.
  */
 int
-atw_enable(sc)
-	struct atw_softc *sc;
+atw_enable(struct atw_softc *sc)
 {
 
 	if (ATW_IS_ENABLED(sc) == 0) {
@@ -314,8 +313,7 @@ atw_enable(sc)
  *	Disable the ADM8211 chip.
  */
 void
-atw_disable(sc)
-	struct atw_softc *sc;
+atw_disable(struct atw_softc *sc)
 {
 	if (!ATW_IS_ENABLED(sc))
 		return;
@@ -842,8 +840,7 @@ atw_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
  *	Perform a soft reset on the ADM8211.
  */
 void
-atw_reset(sc)
-	struct atw_softc *sc;
+atw_reset(struct atw_softc *sc)
 {
 	int i;
 
@@ -882,8 +879,7 @@ atw_reset(sc)
 }
 
 static void
-atw_clear_sram(sc)
-	struct atw_softc *sc;
+atw_clear_sram(struct atw_softc *sc)
 {
 #if 0
 	for (addr = 0; addr < 448; addr++) {
@@ -913,8 +909,7 @@ atw_clear_sram(sc)
  *	Initialize the interface.  Must be called at splnet().
  */
 int
-atw_init(ifp)
-	struct ifnet *ifp;
+atw_init(struct ifnet *ifp)
 {
 	struct atw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1293,8 +1288,7 @@ atw_rfio_enable(struct atw_softc *sc, int enable)
 }
 
 static int
-atw_tune(sc)
-	struct atw_softc *sc;
+atw_tune(struct atw_softc *sc)
 {
 	int rc;
 	u_int32_t reg;
@@ -1332,8 +1326,7 @@ atw_tune(sc)
 
 #ifdef ATW_DEBUG
 static void
-atw_si4126_print(sc)
-	struct atw_softc *sc;
+atw_si4126_print(struct atw_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	u_int addr, val;
@@ -1370,9 +1363,7 @@ atw_si4126_print(sc)
  * works, but I have still programmed for XINDIV2 = 1 to be safe.
  */
 static int
-atw_si4126_tune(sc, chan)
-	struct atw_softc *sc;
-	u_int8_t chan;
+atw_si4126_tune(struct atw_softc *sc, u_int8_t chan)
 {
 	int rc = 0;
 	u_int mhz;
@@ -1479,8 +1470,7 @@ out:
  * Call this w/ Tx/Rx suspended.
  */
 static int
-atw_rf3000_init(sc)
-	struct atw_softc *sc;
+atw_rf3000_init(struct atw_softc *sc)
 {
 	int rc = 0;
 
@@ -1538,8 +1528,7 @@ out:
 
 #ifdef ATW_DEBUG
 static void
-atw_rf3000_print(sc)
-	struct atw_softc *sc;
+atw_rf3000_print(struct atw_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	u_int addr, val;
@@ -1560,9 +1549,7 @@ atw_rf3000_print(sc)
 
 /* Set the power settings on the BBP for channel `chan'. */
 static int
-atw_rf3000_tune(sc, chan)
-	struct atw_softc *sc;
-	u_int8_t chan;
+atw_rf3000_tune(struct atw_softc *sc, u_int8_t chan)
 {
 	int rc = 0;
 	u_int32_t reg;
@@ -1625,9 +1612,7 @@ out:
  * Return 0 on success.
  */
 static int
-atw_rf3000_write(sc, addr, val)
-	struct atw_softc *sc;
-	u_int addr, val;
+atw_rf3000_write(struct atw_softc *sc, u_int addr, u_int val)
 {
 	u_int32_t reg;
 	int i;
@@ -1679,9 +1664,7 @@ atw_rf3000_write(sc, addr, val)
  */
 #ifdef ATW_DEBUG
 static int
-atw_rf3000_read(sc, addr, val)
-	struct atw_softc *sc;
-	u_int addr, *val;
+atw_rf3000_read(struct atw_softc *sc, u_int addr, u_int *val)
 {
 	u_int32_t reg;
 	int i;
@@ -1729,9 +1712,7 @@ atw_rf3000_read(sc, addr, val)
  * Return 0 on success.
  */
 static int
-atw_si4126_write(sc, addr, val)
-	struct atw_softc *sc;
-	u_int addr, val;
+atw_si4126_write(struct atw_softc *sc, u_int addr, u_int val)
 {
 	u_int32_t reg;
 	int i;
@@ -1778,10 +1759,7 @@ atw_si4126_write(sc, addr, val)
  */
 #ifdef ATW_DEBUG
 static int
-atw_si4126_read(sc, addr, val)
-	struct atw_softc *sc;
-	u_int addr;
-	u_int *val;
+atw_si4126_read(struct atw_softc *sc, u_int addr, u_int *val)
 {
 	u_int32_t reg;
 	int i;
@@ -1832,8 +1810,7 @@ atw_si4126_read(sc, addr, val)
  *	Set the ADM8211's receive filter.
  */
 static void
-atw_filter_setup(sc)
-	struct atw_softc *sc;
+atw_filter_setup(struct atw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ethercom *ec = &ic->ic_ec;
@@ -1915,8 +1892,7 @@ allmulti:
  * beacon intervals given in ATW_BPLI, then it raises ATW_INTR_LINKOFF.
  */
 static void
-atw_write_bssid(sc)
-	struct atw_softc *sc;
+atw_write_bssid(struct atw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	u_int8_t *bssid;
@@ -1948,8 +1924,7 @@ atw_write_bssid(sc)
  * raised.
  */
 static void
-atw_write_bcn_thresh(sc)
-	struct atw_softc *sc;
+atw_write_bcn_thresh(struct atw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	int lost_bcn_thresh;
@@ -1985,11 +1960,7 @@ atw_write_bcn_thresh(sc)
  * 16-bit word.
  */
 static void
-atw_write_sram(sc, ofs, buf, buflen)
-	struct atw_softc *sc;
-	u_int ofs;
-	u_int8_t *buf;
-	u_int buflen;
+atw_write_sram(struct atw_softc *sc, u_int ofs, u_int8_t *buf, u_int buflen)
 {
 	u_int i;
 	u_int8_t *ptr;
@@ -2035,8 +2006,7 @@ atw_write_sram(sc, ofs, buf, buflen)
 
 /* Write WEP keys from the ieee80211com to the ADM8211's SRAM. */
 static void
-atw_write_wep(sc)
-	struct atw_softc *sc;
+atw_write_wep(struct atw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	/* SRAM shared-key record format: key0 flags key1 ... key12 */
@@ -2228,8 +2198,7 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
  * indications.
  */
 static void
-atw_write_ssid(sc)
-	struct atw_softc *sc;
+atw_write_ssid(struct atw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	/* 34 bytes are reserved in ADM8211 SRAM for the SSID */
@@ -2247,8 +2216,7 @@ atw_write_ssid(sc)
  * ADM8211.
  */
 static void
-atw_write_sup_rates(sc)
-	struct atw_softc *sc;
+atw_write_sup_rates(struct atw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	/* 14 bytes are probably (XXX) reserved in the ADM8211 SRAM for
@@ -2488,9 +2456,7 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
  *	Add a receive buffer to the indicated descriptor.
  */
 int
-atw_add_rxbuf(sc, idx)	
-	struct atw_softc *sc;
-	int idx;
+atw_add_rxbuf(struct atw_softc *sc, int idx)
 {
 	struct atw_rxsoft *rxs = &sc->sc_rxsoft[idx];
 	struct mbuf *m;
@@ -2534,9 +2500,7 @@ atw_add_rxbuf(sc, idx)
  *	Stop transmission on the interface.
  */
 void
-atw_stop(ifp, disable)
-	struct ifnet *ifp;
-	int disable;
+atw_stop(struct ifnet *ifp, int disable)
 {
 	struct atw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2588,8 +2552,7 @@ atw_stop(ifp, disable)
  *	Drain the receive queue.
  */
 void
-atw_rxdrain(sc)
-	struct atw_softc *sc;
+atw_rxdrain(struct atw_softc *sc)
 {
 	struct atw_rxsoft *rxs;
 	int i;
@@ -2610,8 +2573,7 @@ atw_rxdrain(sc)
  *	Detach an ADM8211 interface.
  */
 int
-atw_detach(sc)
-	struct atw_softc *sc;
+atw_detach(struct atw_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	struct atw_rxsoft *rxs;
@@ -2662,8 +2624,7 @@ atw_detach(sc)
 
 /* atw_shutdown: make sure the interface is stopped at reboot time. */
 void
-atw_shutdown(arg)
-	void *arg;
+atw_shutdown(void *arg)
 {
 	struct atw_softc *sc = arg;
 
@@ -2671,8 +2632,7 @@ atw_shutdown(arg)
 }
 
 int
-atw_intr(arg)
-	void *arg;
+atw_intr(void *arg)
 {
 	struct atw_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -2853,9 +2813,7 @@ atw_intr(arg)
  *	Rx bits switched with the Tx bits?
  */
 void
-atw_idle(sc, bits)
-	struct atw_softc *sc;
-	u_int32_t bits;
+atw_idle(struct atw_softc *sc, u_int32_t bits)
 {
 	u_int32_t ackmask = 0, opmode, stsr, test0;
 	int i, s;
@@ -2918,9 +2876,7 @@ out:
  *	Helper; handle link-status interrupts.
  */
 void
-atw_linkintr(sc, linkstatus)
-	struct atw_softc *sc;
-	u_int32_t linkstatus;
+atw_linkintr(struct atw_softc *sc, u_int32_t linkstatus)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 
@@ -2955,8 +2911,7 @@ atw_linkintr(sc, linkstatus)
  *	Helper; handle receive interrupts.
  */
 void
-atw_rxintr(sc)
-	struct atw_softc *sc;
+atw_rxintr(struct atw_softc *sc)
 {
 	static int rate_tbl[] = {2, 4, 11, 22, 44};
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -3116,8 +3071,7 @@ atw_rxintr(sc)
  *	Helper; handle transmit interrupts.
  */
 void
-atw_txintr(sc)
-	struct atw_softc *sc;
+atw_txintr(struct atw_softc *sc)
 {
 #define TXSTAT_ERRMASK (ATW_TXSTAT_TUF | ATW_TXSTAT_TLT | ATW_TXSTAT_TRT | \
     ATW_TXSTAT_TRO | ATW_TXSTAT_SOFBR)
@@ -3229,8 +3183,7 @@ atw_txintr(sc)
  *	Watchdog timer handler.
  */
 void
-atw_watchdog(ifp)
-	struct ifnet *ifp;
+atw_watchdog(struct ifnet *ifp)
 {
 	struct atw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -3372,8 +3325,7 @@ atw_dump_pkt(struct ifnet *ifp, struct mbuf *m0)
  *	Start packet transmission on the interface.
  */
 void
-atw_start(ifp)
-	struct ifnet *ifp;
+atw_start(struct ifnet *ifp)
 {
 	struct atw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -3772,9 +3724,7 @@ atw_start(ifp)
  *	Power management (suspend/resume) hook.
  */
 void
-atw_power(why, arg)
-	int why;
-	void *arg;
+atw_power(int why, void *arg)
 {
 	struct atw_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -3813,10 +3763,7 @@ atw_power(why, arg)
  *	Handle control requests from the operator.
  */
 int
-atw_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+atw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct atw_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_cardbus.c,v 1.4 2004/01/29 10:07:08 dyoung Exp $	*/
+/* $NetBSD: if_atw_cardbus.c,v 1.5 2004/01/29 10:25:49 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.4 2004/01/29 10:07:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.5 2004/01/29 10:25:49 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -121,23 +121,23 @@ struct atw_cardbus_softc {
 	int	sc_intrline;		/* interrupt line */
 };
 
-int	atw_cardbus_match __P((struct device *, struct cfdata *, void *));
-void	atw_cardbus_attach __P((struct device *, struct device *, void *));
-int	atw_cardbus_detach __P((struct device *, int));
+int	atw_cardbus_match(struct device *, struct cfdata *, void *);
+void	atw_cardbus_attach(struct device *, struct device *, void *);
+int	atw_cardbus_detach(struct device *, int);
 
 CFATTACH_DECL(atw_cardbus, sizeof(struct atw_cardbus_softc),
     atw_cardbus_match, atw_cardbus_attach, atw_cardbus_detach, atw_activate);
 
-void	atw_cardbus_setup __P((struct atw_cardbus_softc *));
+void	atw_cardbus_setup(struct atw_cardbus_softc *);
 
-int	atw_cardbus_enable __P((struct atw_softc *));
-void	atw_cardbus_disable __P((struct atw_softc *));
-void	atw_cardbus_power __P((struct atw_softc *, int));
+int	atw_cardbus_enable(struct atw_softc *);
+void	atw_cardbus_disable(struct atw_softc *);
+void	atw_cardbus_power(struct atw_softc *, int);
 
 static void atw_cardbus_intr_ack(struct atw_softc *);
 
 const struct atw_cardbus_product *atw_cardbus_lookup
-    __P((const struct cardbus_attach_args *));
+   (const struct cardbus_attach_args *);
 
 const struct atw_cardbus_product {
 	u_int32_t	 acp_vendor;	/* PCI vendor ID */
@@ -151,8 +151,7 @@ const struct atw_cardbus_product {
 };
 
 const struct atw_cardbus_product *
-atw_cardbus_lookup(ca)
-	const struct cardbus_attach_args *ca;
+atw_cardbus_lookup(const struct cardbus_attach_args *ca)
 {
 	const struct atw_cardbus_product *acp;
 
@@ -167,10 +166,7 @@ atw_cardbus_lookup(ca)
 }
 
 int
-atw_cardbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+atw_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -181,9 +177,7 @@ atw_cardbus_match(parent, match, aux)
 }
 
 void
-atw_cardbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct atw_cardbus_softc *csc = (void *)self;
 	struct atw_softc *sc = &csc->sc_atw;
@@ -297,16 +291,13 @@ atw_cardbus_attach(parent, self, aux)
 }
 
 static void
-atw_cardbus_intr_ack(sc)
-        struct atw_softc *sc;
+atw_cardbus_intr_ack(struct atw_softc *sc)
 {
 	ATW_WRITE(sc, ATW_FER, ATW_FER_INTR);
 }
 
 int
-atw_cardbus_detach(self, flags)
-	struct device *self;
-	int flags;
+atw_cardbus_detach(struct device *self, int flags)
 {
 	struct atw_cardbus_softc *csc = (void *)self;
 	struct atw_softc *sc = &csc->sc_atw;
@@ -339,8 +330,7 @@ atw_cardbus_detach(self, flags)
 }
 
 int
-atw_cardbus_enable(sc)
-	struct atw_softc *sc;
+atw_cardbus_enable(struct atw_softc *sc)
 {
 	struct atw_cardbus_softc *csc = (void *) sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
@@ -373,8 +363,7 @@ atw_cardbus_enable(sc)
 }
 
 void
-atw_cardbus_disable(sc)
-	struct atw_softc *sc;
+atw_cardbus_disable(struct atw_softc *sc)
 {
 	struct atw_cardbus_softc *csc = (void *) sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
@@ -390,9 +379,7 @@ atw_cardbus_disable(sc)
 }
 
 void
-atw_cardbus_power(sc, why)
-	struct atw_softc *sc;
-	int why;
+atw_cardbus_power(struct atw_softc *sc, int why)
 {
 	struct atw_cardbus_softc *csc = (void *) sc;
 
@@ -412,8 +399,7 @@ atw_cardbus_power(sc, why)
 }
 
 void
-atw_cardbus_setup(csc)
-	struct atw_cardbus_softc *csc;
+atw_cardbus_setup(struct atw_cardbus_softc *csc)
 {
 	struct atw_softc *sc = &csc->sc_atw;
 	cardbus_devfunc_t ct = csc->sc_ct;
@@ -471,4 +457,3 @@ atw_cardbus_setup(csc)
 		cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG, reg);
 	}
 }
-
