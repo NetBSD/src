@@ -1,4 +1,4 @@
-/*	$NetBSD: vmereg.h,v 1.4 1998/09/05 14:01:08 pk Exp $ */
+/*	$NetBSD: vmereg.h,v 1.5 1998/09/19 16:44:59 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,11 @@ struct vmebusreg {
 	volatile u_int32_t	vmebus_afsr;	/* VMEbus async fault status */
 };
 
+/* VME bus Register offsets */
+#define VMEBUS_CR_REG	0
+#define VMEBUS_AFAR_REG	4
+#define VMEBUS_AFSR_REG	8
+
 /* VME Control Register bits */
 #define VMEBUS_CR_C	0x80000000	/* I/O cache enable */
 #define VMEBUS_CR_S	0x40000000	/* VME slave enable */
@@ -49,6 +54,8 @@ struct vmebusreg {
 #define VMEBUS_CR_R	0x10000000	/* VMEbus reset */
 #define VMEBUS_CR_RSVD	0x0ffffff0	/* reserved */
 #define VMEBUS_CR_IMPL	0x0000000f	/* VMEbus interface implementation */
+#define VMEBUS_CR_BITS	"\177\020"	\
+			"f\0\4IMPL\0b\34R\0b\35L\0b\36S\0b\37C\0"
 
 /* VME Asynchronous Fault Status bits */
 #define VMEBUS_AFSR_SZ	0xe0000000	/* Error transaction size */
@@ -64,6 +71,8 @@ struct vmebusreg {
 #define VMEBUS_AFSR_S	0x01000000	/* MVME error in supervisor space */
 #define VMEBUS_AFSR_ME	0x00800000	/* Multiple error */
 #define VMEBUS_AFSR_RSVD 0x007fffff	/* reserved */
+#define VMEBUS_AFSR_BITS "\177\020"	\
+			 "b\27ME\0b\30S\0b\31ERR\0b\32WB\0\33TO\0f\34\3SZ\0"
 
 struct vmebusvec {
 	volatile u_int8_t	vmebusvec[16];
@@ -94,6 +103,8 @@ struct vmebusvec {
 #define VME_IOC_M		0x00400000	/* Line is modified */
 #define VME_IOC_V		0x00800000	/* Data is valid */
 #define VME_IOC_TAGMASK		0xff000000	/* Tag (bits <5-12> of DVMA) */
+#define VME_IOC_BITS		"\177\020"	\
+				"b\24W\0b\25IC\0b\26M\0b\27V\0f\30\10TAG\0"
 
 /*
  * Physical IO-cache addresses.
