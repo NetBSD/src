@@ -55,7 +55,7 @@ struct vnode *rootdir;
  */
 extern	struct vfsops ufs_vfsops;
 
-#ifdef NFS
+#ifdef NFSCLIENT
 extern	struct vfsops nfs_vfsops;
 #endif
 
@@ -82,7 +82,7 @@ extern	struct vfsops kernfs_vfsops;
 struct vfsops *vfssw[] = {
 	(struct vfsops *)0,	/* 0 = MOUNT_NONE */
 	&ufs_vfsops,		/* 1 = MOUNT_UFS */
-#ifdef NFS
+#ifdef NFSCLIENT
 	&nfs_vfsops,		/* 2 = MOUNT_NFS */
 #else
 	(struct vfsops *)0,
