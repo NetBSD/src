@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.3 2003/04/15 14:35:57 dsl Exp $ */
+/* $NetBSD: i386.c,v 1.4 2003/04/16 01:37:41 briggs Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: i386.c,v 1.3 2003/04/15 14:35:57 dsl Exp $");
+#if defined(__RCSID) && !defined(__lint)
+__RCSID("$NetBSD: i386.c,v 1.4 2003/04/16 01:37:41 briggs Exp $");
+#endif /* __RCSID && !__lint */
 
 #if HAVE_CONFIG_H
 #include "config.h"
