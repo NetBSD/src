@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.2 1998/08/28 23:05:55 dbj Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.3 1999/01/02 13:42:17 dbj Exp $	*/
 
 /*
  * This file was taken from from mvme68k/mvme68k/pmap_bootstrap.c
@@ -110,6 +110,7 @@ pmap_bootstrap(nextpa, firstpa)
 	paddr_t firstpa;
 {
 	paddr_t kstpa, kptpa, eiiopa, iiopa, kptmpa, lkptpa, p0upa;
+        paddr_t evpa, vpa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
@@ -130,6 +131,11 @@ pmap_bootstrap(nextpa, firstpa)
 	 *
 	 *	eiiopa		page following
 	 *			internal IO space
+	 *
+	 *	vpa 		video fb
+	 *			PT pages VIDEOSIZE pages
+	 *	evpa		page following
+	 *
 	 *
 	 * [ Sysptsize is the number of pages of PT, and IIOMAPSIZE
 	 *   is the number of PTEs, hence we need to round
@@ -152,10 +158,14 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += kstsize * NBPG;
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) +
-		(IIOMAPSIZE + NPTEPG - 1) / NPTEPG;
+		(IIOMAPSIZE + VIDEOMAPSIZE + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * NBPG;
 	eiiopa = nextpa;		/* just a reference for later */
 	iiopa = nextpa - IIOMAPSIZE * sizeof(pt_entry_t);
+	
+	evpa = nextpa - IIOMAPSIZE * sizeof(pt_entry_t);
+	vpa = evpa - VIDEOMAPSIZE * sizeof(pt_entry_t);
+
 	kptmpa = nextpa;
 	nextpa += NBPG;
 	lkptpa = nextpa;
@@ -370,6 +380,15 @@ pmap_bootstrap(nextpa, firstpa)
 		protopte += NBPG;
 	}
 
+	/* validate the video fb space PTEs */
+	pte = (u_int *)vpa;
+	epte = (u_int *)evpa;
+	protopte = VIDEOBASE | PG_RW | PG_CI | PG_V;
+	while (pte < epte) {
+		*pte++ = protopte;
+		protopte += NBPG;
+	}
+
 	/*
 	 * Calculate important exported kernel virtual addresses
 	 */
@@ -389,6 +408,17 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	RELOC(Sysmap, pt_entry_t *) =
 		(pt_entry_t *)m68k_ptob(nptpages * NPTEPG);
+
+	/*
+	 * videobase, videolimit: base and end of video fb space.
+	 * VIDEOMAPSIZE pages prior to external IO space at end of static
+	 * kernel page table.
+	 */
+	RELOC(videobase, char *) =
+		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - VIDEOMAPSIZE);
+	RELOC(videolimit, char *) =
+		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE);
+
 	/*
 	 * intiobase, intiolimit: base and end of internal IO space.
 	 * IIOMAPSIZE pages prior to external IO space at end of static

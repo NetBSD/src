@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 1998/10/11 23:21:01 chuck Exp $        */
+/*	$NetBSD: pmap.c,v 1.5 1999/01/02 13:42:17 dbj Exp $        */
 
 /*
  * This file was taken from from mvme68k/mvme68k/pmap.c
@@ -391,6 +391,13 @@ pmap_init()
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != KERN_SUCCESS)
 		goto bogons;
+	addr = (vaddr_t) videobase;
+	if (uvm_map(kernel_map, &addr, m68k_ptob(VIDEOMAPSIZE),
+				NULL, UVM_UNKNOWN_OFFSET,
+				UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+				UVM_INH_NONE, UVM_ADV_RANDOM,
+				UVM_FLAG_FIXED)) != KERN_SUCCESS)
+		goto bogons;
 	addr = (vaddr_t) Sysmap;
 	if (uvm_map(kernel_map, &addr, HP_MAX_PTSIZE,
 		    NULL, UVM_UNKNOWN_OFFSET,
@@ -410,6 +417,11 @@ bogons:
 	(void) vm_map_find(kernel_map, NULL, (vaddr_t) 0,
 			   &addr, m68k_ptob(IIOMAPSIZE), FALSE);
 	if (addr != (vaddr_t)intiobase)
+		goto bogons;
+	addr = (vaddr_t) videobase;
+	(void) vm_map_find(kernel_map, NULL, (vaddr_t) 0,
+			   &addr, m68k_ptob(VIDEOMAPSIZE), FALSE);
+	if (addr != (vaddr_t)videobase)
 		goto bogons;
 	addr = (vaddr_t) Sysmap;
 	vm_object_reference(kernel_object);
@@ -2532,7 +2544,7 @@ pmap_changebit(pa, bit, setem)
 				 * flushed (but only once).
 				 */
 				if (firstpage && mmutype == MMU_68040 &&
-				    (bit == PG_RO && setem ||
+				    ((bit == PG_RO && setem) ||
 				     (bit & PG_CMASK))) {
 					firstpage = FALSE;
 					DCFP(pa);
@@ -2783,7 +2795,7 @@ pmap_enter_ptpage(pmap, va)
 		do {
 			if (pv->pv_pmap == pmap_kernel() && pv->pv_va == va)
 				break;
-		} while (pv = pv->pv_next);
+		} while ((pv = pv->pv_next));
 	}
 #ifdef DEBUG
 	if (pv == NULL)

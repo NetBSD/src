@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 1998/11/10 22:45:45 dbj Exp $
+#	$NetBSD: genassym.cf,v 1.5 1999/01/02 13:42:17 dbj Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -156,8 +156,10 @@ define	SPL6			PSL_S | PSL_IPL6
 # magic
 define	FC_USERD		FC_USERD
 define	INTIOBASE		INTIOBASE
-define	INTIOTOP                INTIOTOP
+define	INTIOTOP		INTIOTOP
 define	IIOMAPSIZE		IIOMAPSIZE
+define	VIDEOBASE		VIDEOBASE
+define	VIDEOTOP		VIDEOTOP
 define	CACHE_ON		CACHE_ON
 define	CACHE_OFF		CACHE_OFF
 define	CACHE_CLR		CACHE_CLR

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.10 1999/01/02 13:03:20 dbj Exp $	*/
+/*	$NetBSD: locore.s,v 1.11 1999/01/02 13:42:17 dbj Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -1871,6 +1871,12 @@ GLOBAL(intiobase)
 
 GLOBAL(intiolimit)
 	.long	INTIOTOP        | KVA of end of internal IO space
+
+GLOBAL(videobase)
+	.long	VIDEOBASE       | KVA of base of mono FB
+
+GLOBAL(videolimit)
+	.long	VIDEOTOP        | KVA of end of mono FB
 
 ASLOCAL(save_vbr)               | VBR from ROM
         .long 0xdeadbeef
