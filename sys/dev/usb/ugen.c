@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.67 2004/04/23 17:25:25 itojun Exp $	*/
+/*	$NetBSD: ugen.c,v 1.68 2004/06/23 02:30:52 mycroft Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.67 2004/04/23 17:25:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.68 2004/06/23 02:30:52 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1202,13 +1202,15 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		free(cdesc, M_TEMP);
 		return (error);
 	}
-	case USB_GET_STRING_DESC:
+	case USB_GET_STRING_DESC: {
+		int len;
 		si = (struct usb_string_desc *)addr;
 		err = usbd_get_string_desc(sc->sc_udev, si->usd_string_index,
-			  si->usd_language_id, &si->usd_desc);
+			  si->usd_language_id, &si->usd_desc, &len);
 		if (err)
 			return (EINVAL);
 		break;
+	}
 	case USB_DO_REQUEST:
 	{
 		struct usb_ctl_request *ur = (void *)addr;
