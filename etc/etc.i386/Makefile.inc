@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile.inc,v 1.12.2.1 1999/11/11 21:08:05 he Exp $
+#	$NetBSD: Makefile.inc,v 1.12.2.2 2000/02/12 16:55:02 he Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
 
 # These are packaged and distributed
-EXTRA_KERNELS+= GENERIC_TINY
+EXTRA_KERNELS+= GENERIC GENERIC_TINY
 
 # These are for use by the bootfloppy construction tools
-INST_KERNELS= INSTALL INSTALL_TINY
+INST_KERNELS= INSTALL INSTALL_TINY INSTALL_SMALL
 
 # Build the INST_KERNELS and the boot floppies and install them
 snap_md_post:
