@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.72 2002/10/02 16:51:29 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.73 2002/10/17 01:17:30 fair Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.72 2002/10/02 16:51:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.73 2002/10/17 01:17:30 fair Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -937,7 +937,7 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_readreg = sip->sip_variant->sipv_mii_readreg;
 	sc->sc_mii.mii_writereg = sip->sip_variant->sipv_mii_writereg;
 	sc->sc_mii.mii_statchg = sip->sip_variant->sipv_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, SIP_DECL(mediachange),
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, SIP_DECL(mediachange),
 	    SIP_DECL(mediastatus));
 
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
