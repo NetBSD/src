@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.63 1998/12/30 15:09:04 cjs Exp $	*/
+/*	$NetBSD: ld.c,v 1.64 1999/02/27 03:31:12 tv Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,7 @@
 
 #ifndef lint
 /* from: "@(#)ld.c	6.10 (Berkeley) 5/22/91"; */
-__RCSID("$NetBSD: ld.c,v 1.63 1998/12/30 15:09:04 cjs Exp $");
+__RCSID("$NetBSD: ld.c,v 1.64 1999/02/27 03:31:12 tv Exp $");
 #endif /* not lint */
 
 #define GNU_BINUTIL_COMPAT	/* forwards compatiblity with binutils 2.x */
@@ -3163,8 +3163,14 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 				relocation = addend + sp->value;
 #endif
 			} else {
+#if defined (__arm32__) && 1 /* XXX MAGIC */
+				long temp;
+				temp = claim_rrs_jmpslot(entry, r, sp, addend);
+				relocation = addend + temp;
+#else
 				relocation = addend +
 					claim_rrs_jmpslot(entry, r, sp, addend);
+#endif
 			}
 		} else if (RELOC_BASEREL_P(r)) {
 
@@ -3534,6 +3540,11 @@ copdatrel(entry)
 
 		symindex = RELOC_SYMBOL(r);
 		sp = entry->symbols[symindex].symbol;
+
+#if defined(__arm32__) && 1 /* XXX MAGIC! */
+		if (sp == 0)
+			continue;
+#endif
 
 		if (symindex >= entry->header.a_syms)
 			errx(1, "%s: relocation symbolnum out of range",
