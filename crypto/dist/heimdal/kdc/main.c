@@ -33,7 +33,9 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: main.c,v 1.1.1.1 2000/06/16 18:31:38 thorpej Exp $");
+#include <util.h>
+
+RCSID("$Id: main.c,v 1.1.1.1.2.1 2000/08/06 21:11:07 thorpej Exp $");
 
 sig_atomic_t exit_flag = 0;
 krb5_context context;
@@ -94,6 +96,9 @@ main(int argc, char **argv)
     signal(SIGINT, sigterm);
     signal(SIGTERM, sigterm);
 #endif
+    if (no_detach == 0)
+	daemon(0, 0);
+    pidfile(NULL);
     loop();
     krb5_free_context(context);
     return 0;

@@ -1,4 +1,4 @@
-.\" $Id: kdc.8,v 1.1.1.1 2000/06/16 18:31:38 thorpej Exp $
+.\" $Id: kdc.8,v 1.1.1.1.2.1 2000/08/06 21:11:07 thorpej Exp $
 .\"
 .Dd July 27, 1997
 .Dt KDC 8
@@ -15,6 +15,7 @@ Kerberos 5 server
 .Op Fl p | Fl -no-require-preauth
 .Op Fl -max-request= Ns Ar size
 .Op Fl H | Fl -enable-http
+.Op Fl D | Fl -no-detach
 .Oo Fl r Ar string \*(Ba Xo
 .Fl -v4-realm= Ns Ar string Oc
 .Xc
@@ -60,6 +61,11 @@ willing to handle.
 .Fl -enable-http
 .Xc
 Makes the kdc listen on port 80 and handle requests encapsulated in HTTP.
+.It Xo
+.Fl D Ns ,
+.Fl -no-detach
+.Xc
+Makes the kdc not detach from the tty.  Useful for debugging.
 .It Xo
 .Fl K Ns ,
 .Fl -no-kaserver
