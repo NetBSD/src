@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.1 2004/03/11 21:44:08 cl Exp $
+#	$NetBSD: files.compat,v 1.2 2004/04/24 20:58:59 cl Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -58,6 +58,3 @@ defflag	opt_largepages.h		XXXLARGEPAGES
 
 # kernel stack debug
 defflag	opt_kstack_dr0.h		XXXKSTACK_CHECK_DR0
-
-# compat linux #include wsdisplay.h
-defparam wsdisplay.h			XXXWSDISPLAY

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.5 2004/04/24 20:05:49 cl Exp $
+# $NetBSD: GENERIC,v 1.6 2004/04/24 20:58:59 cl Exp $
 # NetBSD: GENERIC,v 1.596 2004/04/07 13:13:59 augustss Exp 
 #
 # GENERIC machine description file
@@ -23,7 +23,7 @@ include 	"arch/xen/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -209,6 +209,9 @@ xbd*		at hypervisor?		# Xen virtual block device
 wd*		at hypervisor?		# Xen vbd (wd identity)
 sd*		at hypervisor?		# Xen vbd (sd identity)
 cd*		at hypervisor?		# Xen vbd (cd identity)
+
+vga*		at hypervisor?		# Xen VGA display
+wsdisplay*	at vga? console ?
 
 
 # Pull in optional local configuration
