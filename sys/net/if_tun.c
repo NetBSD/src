@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.73 2004/12/04 18:31:43 peter Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.74 2004/12/04 23:22:58 peter Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,9 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.73 2004/12/04 18:31:43 peter Exp $");
-
-#include "tun.h"
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.74 2004/12/04 23:22:58 peter Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -291,9 +289,6 @@ tunopen(dev, flag, mode, p)
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
-
-	if (NTUN < 1)
-		return (ENXIO);
 
 	s = splnet();
 	tp = tun_find_unit(dev);
