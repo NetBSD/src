@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.23 2000/11/01 19:56:01 christos Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.24 2002/10/04 13:15:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.23 2000/11/01 19:56:01 christos Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.24 2002/10/04 13:15:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ stalloc(nbytes)
 {
 	char *p;
 
-	nbytes = ALIGN(nbytes);
+	nbytes = SHELL_ALIGN(nbytes);
 	if (nbytes > stacknleft) {
 		int blocksize;
 		struct stack_block *sp;
@@ -220,7 +220,7 @@ popstackmark(mark)
 void
 growstackblock() {
 	char *p;
-	int newlen = ALIGN(stacknleft * 2 + 100);
+	int newlen = SHELL_ALIGN(stacknleft * 2 + 100);
 	char *oldspace = stacknxt;
 	int oldlen = stacknleft;
 	struct stack_block *sp;
@@ -264,7 +264,7 @@ void
 grabstackblock(len)
 	int len;
 {
-	len = ALIGN(len);
+	len = SHELL_ALIGN(len);
 	stacknxt += len;
 	stacknleft -= len;
 }
