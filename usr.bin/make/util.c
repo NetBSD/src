@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.27 2001/12/11 20:37:24 tv Exp $	*/
+/*	$NetBSD: util.c,v 1.28 2002/01/25 17:51:32 tv Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: util.c,v 1.27 2001/12/11 20:37:24 tv Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.28 2002/01/25 17:51:32 tv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.27 2001/12/11 20:37:24 tv Exp $");
+__RCSID("$NetBSD: util.c,v 1.28 2002/01/25 17:51:32 tv Exp $");
 #endif
 #endif
 
@@ -24,8 +24,7 @@ __RCSID("$NetBSD: util.c,v 1.27 2001/12/11 20:37:24 tv Exp $");
 # endif
 #endif
 
-#ifdef sun
-
+#if defined(MAKE_BOOTSTRAP) && !defined(HAVE_STRERROR)
 extern int errno, sys_nerr;
 extern char *sys_errlist[];
 
@@ -43,7 +42,7 @@ strerror(e)
 }
 #endif
 
-#ifdef ultrix
+#if defined(MAKE_BOOTSTRAP) && !defined(HAVE_STRDUP)
 #include <string.h>
 
 /* strdup
@@ -65,11 +64,9 @@ strdup(str)
 
     return memcpy(p, str, len);
 }
-
 #endif
 
-#if defined(sun) || defined(__hpux__) || defined(__sgi) || defined(__hpux)
-
+#if defined(MAKE_BOOTSTRAP) && !defined(HAVE_SETENV)
 int
 setenv(name, value, dum)
     const char *name;
@@ -104,7 +101,6 @@ setenv(name, value, dum)
 #endif
 
 #if defined(__hpux__) || defined(__hpux)
-
 /* strrcpy():
  *	Like strcpy, going backwards and returning the new pointer
  */
@@ -156,7 +152,6 @@ char    *sys_siglist[] = {
         "DIL signal"                    /* SIGDIL    */
 };
 #endif /* __hpux__ || __hpux */
-
 
 #ifdef __hpux
 #include <sys/types.h>
@@ -352,10 +347,9 @@ signal(s, a)) __P((int))
     else
 	return osa.sa_handler;
 }
-
 #endif
 
-#if !defined(BSD4_4) && !defined(SUNOS_5_7) && !defined(__linux__)
+#if defined(MAKE_BOOTSTRAP) && !defined(HAVE_VSNPRINTF)
 #ifdef __STDC__
 #include <stdarg.h>
 #else
@@ -430,10 +424,7 @@ snprintf(va_alist)
 	return rv;
 }
 
-#if !defined(__SVR4) && !defined(__linux__) && !defined(ultrix) \
-	&& !defined(__sgi) && !defined(__osf__) && !defined(__hpux__) \
-	&& !defined(__CYGWIN__)
-
+#if defined(MAKE_BOOTSTRAP) && !defined(HAVE_STRFTIME)
 int
 strftime(buf, len, fmt, tm)
 	char *buf;
