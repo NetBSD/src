@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.38 1997/04/01 03:12:10 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.39 1997/05/12 08:17:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -121,6 +121,8 @@ cdev_decl(grf);
 cdev_decl(ppi);
 #include "dca.h"
 cdev_decl(dca);
+#include "apci.h"
+cdev_decl(apci);
 #include "ite.h"
 cdev_decl(ite);
 /* XXX shouldn't this be optional? */
@@ -172,6 +174,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 28 */
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
+	cdev_tty_init(NAPCI,apci),	/* 31: Apollo APCI UARTs */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -299,6 +302,9 @@ cons_decl(topcat);
 #define	dcacnpollc		nullcnpollc
 cons_decl(dca);
 
+#define	apcicnpollc		nullcnpollc
+cons_decl(apci);
+
 #define	dcmcnpollc		nullcnpollc
 cons_decl(dcm);
 
@@ -328,6 +334,9 @@ struct	consdev constab[] = {
 #endif /* NITE > 0 */
 #if NDCA > 0
 	cons_init(dca),
+#endif
+#if NAPCI > 0
+	cons_init(apci),
 #endif
 #if NDCM > 0
 	cons_init(dcm),
