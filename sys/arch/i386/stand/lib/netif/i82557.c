@@ -1,7 +1,7 @@
-/* $NetBSD: i82557.c,v 1.2 1999/02/19 19:30:46 drochner Exp $ */
+/* $NetBSD: i82557.c,v 1.3 1999/09/10 09:12:44 drochner Exp $ */
 
 /*
- * Copyright (c) 1998
+ * Copyright (c) 1998, 1999
  * 	Matthias Drochner.  All rights reserved.
  * Copyright (c) 1995, David Greenman
  * All rights reserved.
@@ -32,8 +32,7 @@
 #include <sys/types.h>
 #include <machine/pio.h>
 
-typedef int bus_dmamap_t; /* XXX */
-#include <dev/pci/if_fxpreg.h>
+#include <dev/ic/i82557reg.h>
 
 #include <lib/libsa/stand.h>
 
@@ -218,8 +217,8 @@ EtherInit(myadr)
 	 * zero and must be one bits in this structure and this is the easiest
 	 * way to initialize them all to proper values.
 	 */
-	bcopy(fxp_cb_config_template, (void *)&cbp->cb_status,
-		sizeof(fxp_cb_config_template));
+	bcopy(fxp_cb_config_template, (void *)cbp,
+	      sizeof(fxp_cb_config_template));
 
 #define prm 0
 #define phy_10Mbps_only 0
@@ -265,7 +264,7 @@ EtherInit(myadr)
 	 * Start the config command/DMA.
 	 */
 	fxp_scb_wait();
-	CSR_WRITE_4(FXP_CSR_SCB_GENERAL, SNDBUF_PHYS + 12); /* XXX */
+	CSR_WRITE_4(FXP_CSR_SCB_GENERAL, SNDBUF_PHYS);
 	CSR_WRITE_1(FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
 	i = 10000;
@@ -329,15 +328,25 @@ int EtherSend(pkt, len)
 	int len;
 {
 	volatile struct fxp_cb_tx *txp;
+#ifdef _STANDALONE
+	static volatile struct fxp_tbd tbd;
+#endif
+	volatile struct fxp_tbd *tbdp;
 	int i;
 
 	txp = SNDBUF_VIRT;
-	txp->tbd[0].tb_size = len;
 #ifdef _STANDALONE
-	txp->tbd[0].tb_addr = vtophys(pkt);
+	tbdp = &tbd;
+	txp->tbd_array_addr = vtophys((void *)&tbd);
+	tbdp->tb_addr = vtophys(pkt);
 #else
-	txp->tbd[0].tb_addr = SNDBUF_PHYS + 400;
+	/* XXX assuming we send at max 400 bytes */
+	tbdp = (struct fxp_tbd *)(SNDBUF_VIRT + 440);
+	txp->tbd_array_addr = SNDBUF_PHYS + 440;
+	bcopy(pkt, SNDBUF_VIRT + 400, len);
+	tbdp->tb_addr = SNDBUF_PHYS + 400;
 #endif
+	tbdp->tb_size = len;
 	txp->tbd_number = 1;
 	txp->cb_status = 0;
 	txp->cb_command =
@@ -345,16 +354,10 @@ int EtherSend(pkt, len)
 	txp->tx_threshold = tx_threshold;
 
 	txp->link_addr = -1;
-	txp->tbd_array_addr =
-	    (u_int32_t)&((struct fxp_cb_tx *)SNDBUF_PHYS)->tbd;
 	txp->byte_count = 0;
 
-#ifndef _STANDALONE
-	bcopy(pkt, SNDBUF_VIRT + 400, len);
-#endif
-
 	fxp_scb_wait();
-	CSR_WRITE_4(FXP_CSR_SCB_GENERAL, SNDBUF_PHYS + 12); /* XXX */
+	CSR_WRITE_4(FXP_CSR_SCB_GENERAL, SNDBUF_PHYS);
 	CSR_WRITE_1(FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
 	i = 10000;
