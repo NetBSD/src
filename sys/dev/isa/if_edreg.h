@@ -1,7 +1,27 @@
 /*
  * National Semiconductor DS8390 NIC register definitions 
  *
- *	$Id: if_edreg.h,v 1.3 1993/08/01 19:25:43 mycroft Exp $
+ * $Id: if_edreg.h,v 1.4 1993/09/09 09:41:03 davidg Exp $
+ *
+ * Modification history
+ *
+ * Revision 1.5  93/08/25  20:38:34  davidg
+ * added define for card type WD8013WC (10BaseT)
+ * 
+ * Revision 1.4  93/08/14  20:07:55  davidg
+ * fix board type definition for 8013EP
+ * 
+ * Revision 1.3  93/07/20  15:25:25  davidg
+ * added config flags for forcing 8/16bit mode and disabling double
+ * xmit buffers.
+ * 
+ * Revision 1.2  93/06/23  03:03:05  davidg
+ * added some additional definitions for the 83C584 bus interface
+ * chip (SMC/WD boards)
+ * 
+ * Revision 1.1  93/06/23  03:01:07  davidg
+ * Initial revision
+ * 
  */
 
 /*
@@ -651,7 +671,8 @@ struct ed_ring	{
 #define ED_TYPE_WD8003S		0x02
 #define ED_TYPE_WD8003E		0x03
 #define ED_TYPE_WD8013EBT	0x05
-#define ED_TYPE_WD8013EB	0x27
+#define ED_TYPE_WD8013EP	0x27
+#define ED_TYPE_WD8013WC	0x28
 #define ED_TYPE_WD8013EBP	0x2c
 #define ED_TYPE_WD8013EPC	0x29
 
