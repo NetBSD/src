@@ -1,4 +1,4 @@
-/* $NetBSD: postmortem.c,v 1.10 1997/07/29 01:37:30 mark Exp $ */
+/*	$NetBSD: postmortem.c,v 1.11 1997/10/14 10:26:56 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -56,10 +56,11 @@ typedef struct {
 	vm_offset_t virtual;
 } pv_addr_t;
 
+#ifdef ROTTEN_INARDS
 extern pv_addr_t irqstack;
 extern pv_addr_t undstack;
 extern pv_addr_t abtstack;
-extern struct proc *proc1;
+#endif
 
 int usertraceback = 0;
 
@@ -86,15 +87,13 @@ pm_dumpb(addr, count)
 		for (loop = 0; loop < 16; ++loop) {
 			byte = addr[loop];
 			if (byte < 0x20)
-				printf("\x1b[31m%c\x1b[0m", byte + '@');
-			else if (byte == 0x7f)
-				printf("\x1b[31m?\x1b[0m");
+				printf("%c", byte + '@');
+			else if ((byte == 0x7f) || (byte == 0xff))
+				printf("?");
 			else if (byte < 0x80)
 				printf("%c", byte);
 			else if (byte < 0xa0)
-				printf("\x1b[32m%c\x1b[0m", byte - '@');
-			else if (byte == 0xff)
-				printf("\x1b[32m?\x1b[0m");
+				printf("%c", byte - '@');
 			else
 				printf("%c", byte & 0x7f);
 		}
@@ -128,15 +127,13 @@ pm_dumpw(addr, count)
 		for (loop = 0; loop < 32; ++loop) {
 			byte = addr[loop];
 			if (byte < 0x20)
-				printf("\x1b[31m%c\x1b[0m", byte + '@');
-			else if (byte == 0x7f)
-				printf("\x1b[31m?\x1b[0m");
+				printf("%c", byte + '@');
+			else if ((byte == 0x7f) || (byte == 0xff))
+				printf("?");
 			else if (byte < 0x80)
 				printf("%c", byte);
 			else if (byte < 0xa0)
-				printf("\x1b[32m%c\x1b[0m", byte - '@');
-			else if (byte == 0xff)
-				printf("\x1b[32m?\x1b[0m");
+				printf("%c", byte - '@');
 			else
 				printf("%c", byte & 0x7f);
 		}
@@ -192,7 +189,7 @@ check_stacks(p)
 		    loop, USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM);
 	}
 }
-#endif
+#endif	/* STACKCHECKS */
 
 /* Perform a postmortem */
 
@@ -218,21 +215,26 @@ postmortem(frame)
 	/* Check the stack for a known pattern */
 
 	check_stacks(p);
-#endif
+#endif	/* STACKCHECKS */
 
 #ifdef ROTTEN_INARDS
 	addr = traceback();
 
 	dumpframe(frame);
 
-	printf("curproc=%08x paddr=%08x pcb=%08x curpcb=%08x\n",
-	    (u_int) curproc, (u_int) curproc->p_addr,
-	    (u_int) &curproc->p_addr->u_pcb, (u_int) curpcb);
-	printf("CPSR=%08x ", GetCPSR());
+	if (curproc) {
+		printf("curproc=%p paddr=%p pcb=%p curpcb=%p\n",
+		    curproc, curproc->p_addr, &curproc->p_addr->u_pcb,
+		    curpcb);
+		printf("CPSR=%08x ", GetCPSR());
 
-	printf("Process = %08x ", (u_int)curproc);
-	printf("pid = %d ", curproc->p_pid); 
-	printf("comm = %s\n", curproc->p_comm); 
+		printf("Process = %p ", curproc);
+		printf("pid = %d ", curproc->p_pid); 
+		printf("comm = %s\n", curproc->p_comm); 
+	} else {
+		printf("curproc=%p curpcb=%p\n", curproc, curpcb);
+		printf("CPSR=%08x ", GetCPSR());
+	}
 
 	pm_dumpw(irqstack.virtual + NBPG - 0x100, 0x100);
 	pm_dumpw(undstack.virtual + NBPG - 0x20, 0x20);
@@ -251,10 +253,14 @@ postmortem(frame)
 	printf("proc0=%08x paddr=%08x pcb=%08x\n", (u_int)&proc0,
 	    (u_int)proc0.p_addr, (u_int) &proc0.p_addr->u_pcb);
 
-#else
+#else	/* ROTTENS_INARDS */
 	printf("Process = %08x ", (u_int)curproc);
-	printf("pid = %d ", curproc->p_pid); 
-	printf("comm = %s\n", curproc->p_comm); 
+	if (curproc) {
+	  printf("pid = %d ", curproc->p_pid); 
+	  printf("comm = %s\n", curproc->p_comm); 
+	} else {
+	  printf("\n");
+	}
 	printf("CPSR=%08x ", GetCPSR());
 
 	printf("Traceback info (frame=%08x)\n", (u_int)frame);
@@ -267,13 +273,7 @@ postmortem(frame)
 		user_traceback(frame->tf_r11);
 	}
 
-#endif
-	if ((frame->tf_spsr & PSR_MODE) == PSR_IRQ32_MODE
-	    && addr >= irqstack.virtual && addr < (irqstack.virtual + NBPG)) {
-		printf("Trap occurred in IRQ\n");
-		printf("IRQ Traceback info\n");
-		irqtraceback(addr, irqstack.virtual);
-	}
+#endif	/* ROTTEN_INARDS */
 	--postmortem_active;
 	(void)splx(s);
 }
@@ -289,7 +289,7 @@ buried_alive(p)
 	    p->p_pid, p->p_comm);
 
 }
-#else
+#else	/* POSTMORTEM */
 void
 postmortem(frame)
 	trapframe_t *frame;
@@ -302,23 +302,6 @@ buried_alive(p)
 	struct proc *p;
 {
 }
-#endif
-
-void
-traceback_sym(lr, pc)
-	u_int lr;
-	u_int pc;
-{
-#ifdef DDB
-	printf("fp->lr=%08x fp->pc=%08x\n", lr, pc);
-/*	printf("fp->lr=");
-	db_printsym((db_addr_t)(lr), DB_STGY_ANY);
-	printf(" fp->pc=");
-	db_printsym((db_addr_t)(pc), DB_STGY_ANY);	
-	printf("\n");*/
-#else
-	printf("fp->lr=%08x fp->pc=%08x\n", lr, pc);
-#endif
-}
+#endif	/* POSTMORTEM */
 
 /* End of postmortem.c */
