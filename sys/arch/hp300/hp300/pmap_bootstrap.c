@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.4 1994/10/26 07:25:56 cgd Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.5 1995/04/12 08:30:49 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -143,7 +143,7 @@ pmap_bootstrap(nextpa, firstpa)
 	lkptpa = nextpa;
 	nextpa += NBPG;
 	p0upa = nextpa;
-	nextpa += UPAGES * NBPG;
+	nextpa += USPACE;
 
 	/*
 	 * Initialize segment table and kernel page table map.
@@ -407,7 +407,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * NOTE: `pte' and `epte' aren't PTEs here.
 	 */
 	pte = (u_int *)p0upa;
-	epte = (u_int *)(p0upa + UPAGES*NBPG);
+	epte = (u_int *)(p0upa + USPACE);
 	while (pte < epte)
 		*pte++ = 0;
 	/*
