@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.21 2003/09/13 15:26:38 christos Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.22 2003/09/13 17:19:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.21 2003/09/13 15:26:38 christos Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.22 2003/09/13 17:19:55 christos Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -919,8 +919,8 @@ pthread__signal_tramp(void (*handler)(int, siginfo_t *, void *),
 		 */
 		sigset_t *maskp = uc->uc_stack.ss_sp;
 		PTHREAD_UCONTEXT_TO_SIGCONTEXT(maskp, uc, &psc);
-		(*((void *)(*)(int, int, struct sigcontext *)handler))
-		    (si->si_signo, si->si_trap, &psc.psc_context);
+		((void *(*)(int, int, struct sigcontext *))handler)
+		    (info->si_signo, info->si_trap, &psc.psc_context);
 		PTHREAD_SIGCONTEXT_TO_UCONTEXT(&psc, uc);
 	}
 #endif
