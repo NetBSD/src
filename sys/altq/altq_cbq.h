@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.h,v 1.2 2000/12/14 08:49:49 thorpej Exp $	*/
+/*	$NetBSD: altq_cbq.h,v 1.3 2001/06/05 05:12:18 thorpej Exp $	*/
 /*	$KAME: altq_cbq.h,v 1.5 2000/12/02 13:44:40 kjc Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ struct cbq_getstats {
 #define	DISABLE		0x00
 #define	ENABLE		0x01
 
-#define	CBQ_WATCHDOG    	(HZ / 20)
+#define	CBQ_WATCHDOG    	(hz / 20)
 #define	CBQ_TIMEOUT		10
 #define	CBQ_LS_TIMEOUT		(20 * hz / 1000)
 
