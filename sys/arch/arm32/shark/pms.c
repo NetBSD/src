@@ -1,4 +1,4 @@
-/*      $NetBSD: pms.c,v 1.4 1999/01/23 22:18:43 sommerfe Exp $        */
+/*      $NetBSD: pms.c,v 1.5 1999/01/24 18:58:12 sommerfe Exp $        */
 
 /*
  * Copyright 1997
@@ -91,8 +91,8 @@
 */
 
 
-#include "pms.h"
-#if NPMS > 1
+#include "opms.h"
+#if NOPMS > 1
 #error Only one PS/2 style mouse may be configured into your system.
 #endif
 
