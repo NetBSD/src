@@ -1,4 +1,4 @@
-/*	$NetBSD: rpb.h,v 1.1 1995/02/13 23:07:54 cgd Exp $	*/
+/*	$NetBSD: rpb.h,v 1.2 1995/03/08 00:39:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,8 +28,8 @@
  */
 
 /*
- * From DEC 3000 300/400/500/600/800 System Programmer's Manual,
- * EK-D3SYS-PM.A01.
+ * From DEC 3000 300/400/500/600/700/800/900 System Programmer's Manual,
+ * EK-D3SYS-PM.B01.
  */
 
 /*
@@ -49,30 +49,54 @@ struct rpb {
 	u_int64_t	rpb_max_asn;		/*  38:   (16) */
 	char		rpb_ssn[16];		/*  40: only first 10 valid */
 
-#define	ST_ADU			1
-#define	ST_DEC_4000		2
-#define	ST_DEC_7000		3
-#define	ST_DEC_3000_500		4
-#define	ST_DEC_2000_300		6
-#define	ST_DEC_3000_300		7
+#define	ST_ADU			1		/* Alpha Demo. Unit (?) */
+#define	ST_DEC_4000		2		/* "Cobra" (?) */
+#define	ST_DEC_7000		3		/* "Ruby" (?) */
+#define	ST_DEC_3000_500		4		/* "Flamingo" family (TC) */
+#define	ST_DEC_2000_300		6		/* "Jensen" (EISA/ISA) */
+#define	ST_DEC_3000_300		7		/* "Pelican" (TC) */
+#define	ST_DEC_2100_A500	9		/* "Sable" (?) */
+#define	ST_DEC_APXVME_64	10		/* "AXPvme" (VME?) */
+#define	ST_DEC_AXPPCI_33	11		/* "NoName" (PCI/ISA?) */
+#define	ST_DEC_2100_A50		13		/* "Avanti" (PCI/ISA) */
+#define	ST_DEC_MUSTANG		14		/* "Mustang" (?) */
+#define	ST_DEC_1000		17		/* "Mikasa" (PCI/ISA?) */
+
 	u_int64_t	rpb_type;		/*  50: */
 
-#define	SYSTEM_VAR_MPCAP		0x0001	/* multiprocessor */
+#define	SV_MPCAP		0x00000001	/* multiprocessor capable */
 
-#define	SYSTEM_VAR_CONSOLE		0x001e	/* console hardware mask */
-#define	SYSTEM_VAR_CNSL_DETACHED	0x0002
-#define	SYSTEM_VAR_CNSL_EMBEDDED	0x0004
+#define	SV_CONSOLE		0x0000001e	/* console hardware mask */
+#define	SV_CONSOLE_DETACHED	0x00000002
+#define	SV_CONSOLE_EMBEDDED	0x00000004
 
-#define	SYSTEM_VAR_POWERFAIL		0x00e0	/* powerfail mask */
-#define	SYSTEM_VAR_PF_UNITED		0x0020
-#define	SYSTEM_VAR_PF_SEPARATE		0x0040
-#define	SYSTEM_VAR_PF_BBACKUP		0x0060
-#define	SYSTEM_VAR_PF_ACTION		0x0100	/* 1 -> restart all processors
-						 *      on powerfail
-						 * 0 -> only primary
-						 */
-#define	SYSTEM_VAR_GRAPHICS		0x0200	/* graphic engine present */
-#define	SYSTEM_VAR_mbz	    0xfffffffffffffc00	/* 10:64 -- must be zero */
+#define	SV_POWERFAIL		0x000000e0	/* powerfail mask */
+#define	SV_PF_UNITED		0x00000020
+#define	SV_PF_SEPARATE		0x00000040
+#define	SV_PF_BBACKUP		0x00000060
+#define	SV_PF_ACTION		0x00000100	/* powerfail restart */
+
+#define	SV_GRAPHICS		0x00000200	/* graphic engine present */
+
+#define	SV_ST_MASK		0x0000fc00	/* system type mask */
+#define	SV_ST_RESERVED		0x00000000	/* RESERVED */
+
+#define	SV_ST_SANDPIPER		0x00000400	/* Sandpiper;	3000/400 */
+#define	SV_ST_FLAMINGO		0x00000800	/* Flamingo;	3000/500 */
+#define	SV_ST_HOTPINK		0x00000c00	/* "Hot Pink";	3000/500X */
+#define	SV_ST_FLAMINGOPLUS	0x00001000	/* Flamingo+;	3000/800 */
+#define	SV_ST_ULTRA		0x00001400	/* "Ultra", aka Flamingo+ */
+#define	SV_ST_SANDPLUS		0x00001800	/* Sandpiper+;	3000/600 */
+#define	SV_ST_SANDPIPER45	0x00001c00	/* Sandpiper45;	3000/700 */
+#define	SV_ST_FLAMINGO45	0x00002000	/* Flamingo45;	3000/900 */
+
+#define	SV_ST_SABLE		0x00000400	/* Sable (???) */
+
+#define	SV_ST_PELICAN		0x00000000	/* Pelican;	 3000/300 */
+#define	SV_ST_PELICANL		0x00000400	/* ???;		 3000/300L */
+#define	SV_ST_PELICANX		0x00000800	/* ???;		 3000/300X */
+#define	SV_ST_PELICANLX		0x00000c00	/* ???;		 3000/300LX */
+
 	u_int64_t	rpb_variation;		/*  58 */
 
 	char		rpb_revision[8];	/*  60; only first 4 valid */
@@ -144,11 +168,13 @@ struct pcs {
 		u_int64_t
 			pcs_alpha	: 8,	/* alphabetic char 'a' - 'z' */
 #define	PAL_TYPE_STANDARD	0
-#define	PAL_TYPE_ULTRIX		1
+#define	PAL_TYPE_VMS		1
+#define	PAL_TYPE_OSF1		2
 			pcs_pal_type	: 8,	/* PALcode type:
 						 * 0 == standard
-						 * 1 == Ultrix
-						 * 2-127 DIGITAL reserv.
+						 * 1 == OpenVMS
+						 * 2 == OSF/1
+						 * 3-127 DIGITAL reserv.
 						 * 128-255 non-DIGITAL reserv.
 						 */
 			sbz1		: 16,
@@ -159,15 +185,29 @@ struct pcs {
 #define	pcs_pal_type	pcs_pal_rev.pal_type
 #define	pcs_proc_cnt	pcs_pal_rev.proc_cnt
 
-	u_int64_t	pcs_proc_type;		/*  B0: (always 2) */
-	struct {
-		u_int64_t
-			pcs_vaxfp	: 1,	/* Vax floating point */
-			pcs_ieeefp	: 1,	/* IEEE floating point */
-			pcs_reserved	: 62;
-	} pcs_proc_var;				/*  B8: */
-#define	pcs_vaxfp	pcs_proc_var.pcs_vaxfp
-#define	pcs_ieeefp	pcs_proc_var.pcs_ieeefp
+	u_int64_t	pcs_proc_type;		/*  B0: processor type */
+
+#define	PCS_PROC_MAJOR		0x00000000ffffffff
+#define	PCS_PROC_MAJORSHIFT	0
+#define	PCS_PROC_EV3		1			/* EV3 */
+#define	PCS_PROC_EV4		2			/* EV4: 21064 */
+#define	PCS_PROC_SIMULATOR	3			/* simulation */
+#define	PCS_PROC_LCA4		4			/* LCA4: 2106[68] */
+#define	PCS_PROC_EV45		6			/* EV45: 21064A */
+#ifdef XXX_UNKNOWN
+#define PCS_PROC_EV5		???			/* EV5: 21164 */
+#endif
+
+#define	PCS_PROC_MINOR		0xffffffff00000000
+#define	PCS_PROC_MINORSHIFT	32
+#define	PCS_PROC_PASS2		0			/* pass 2 or 2.1 */
+#define	PCS_PROC_PASS3		1			/* pass 3 */
+
+	u_int64_t	pcs_proc_var;		/* B8: processor variation. */
+
+#define	PCS_VAR_VAXFP		0x0000000000000001	/* VAX FP support */
+#define	PCS_VAR_IEEEFP		0x0000000000000002	/* IEEE FP support */
+#define	PCS_VAR_RESERVED	0xfffffffffffffffc	/* Reserved */
 
 	char		pcs_proc_revision[8];	/*  C0: only first 4 valid */
 	char		pcs_proc_sn[16];	/*  C8: only first 10 valid */

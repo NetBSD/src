@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 1995/02/13 23:07:04 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 1995/03/08 00:38:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,6 +33,7 @@
 #include <sys/reboot.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 
 struct mainbus_softc {
 	struct	device sc_dv;
@@ -51,16 +52,6 @@ void	mb_intr_establish __P((struct confargs *, int (*)(void *), void *));
 void	mb_intr_disestablish __P((struct confargs *));
 caddr_t	mb_cvtaddr __P((struct confargs *));
 int	mb_matchname __P((struct confargs *, char *));
-
-/*
- * The devices that might be hanging off of the mainbus.
- * XXX Needs rethinking for multi-cpu support, if that happens.
- */
-struct confargs mainbusdevs[] = {
-        { "cpu", 0, },
-        { "tc", 0, },
-};
-int nmainbusdevs = sizeof (mainbusdevs) / sizeof (mainbusdevs[0]);
 
 static int
 mbmatch(parent, cfdata, aux)
@@ -89,7 +80,9 @@ mbattach(parent, self, aux)
 	void *aux;
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
+	struct confargs nca;
 	int i;
+	extern int cputype;
 
 	printf("\n");
 
@@ -100,10 +93,24 @@ mbattach(parent, self, aux)
 	sc->sc_bus.ab_cvtaddr = mb_cvtaddr;
 	sc->sc_bus.ab_matchname = mb_matchname;
 
-	for (i = 0; i < nmainbusdevs; i++) {
-		mainbusdevs[i].ca_bus = &sc->sc_bus;
-		config_found(self, &mainbusdevs[i], mbprint);
+	nca.ca_name = "cpu";
+	nca.ca_slot = 0;
+	nca.ca_offset = 0;
+	nca.ca_bus = &sc->sc_bus;
+	config_found(self, &nca, mbprint);
+
+#if defined(DEC_3000_500) || defined(DEC_3000_300)
+	if (cputype == ST_DEC_3000_500 || cputype == ST_DEC_3000_300) {
+		/* we have a TurboChannel bus! */
+		nca.ca_name = "tc";
+		nca.ca_slot = 0;
+		nca.ca_offset = 0;
+		nca.ca_bus = &sc->sc_bus;
+		config_found(self, &nca, mbprint);
 	}
+#endif
+
+	/* XXX EISA, PCI busses. */
 }
 
 static int
