@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.384 2004/10/23 14:20:50 augustss Exp $
+$NetBSD: usbdevs,v 1.385 2004/10/24 12:58:44 augustss Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -296,6 +296,7 @@ vendor DIAMOND		0x0841	Diamond
 vendor NETGEAR		0x0846	BayNETGEAR
 vendor ACTIVEWIRE	0x0854	ActiveWire
 vendor PORTGEAR		0x085a	PortGear
+vendor NETGEAR2		0x0864	Netgear
 vendor SYSTEMTALKS	0x086e	System Talks
 vendor METRICOM		0x0870	Metricom
 vendor ADESSOKBTEK	0x087c	ADESSO/Kbtek America
@@ -1338,6 +1339,9 @@ product NETGEAR FA101		0x1020	10/100 Ethernet
 product NETGEAR FA120		0x1040	USB 2.0 Fast Ethernet Adapter
 product NETGEAR MA111NA		0x4110	802.11b Adapter
 product NETGEAR XA601		0x8100	USB to PL Adapter
+
+product NETGEAR2 MA101		0x4100	MA101
+product NETGEAR2 MA101B		0x4102	MA101 Rev B
 
 /* Nikon products */
 product NIKON E990		0x0102	Digital Camera E990
