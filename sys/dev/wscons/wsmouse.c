@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.13 2001/02/13 01:14:45 bjh21 Exp $ */
+/* $NetBSD: wsmouse.c,v 1.14 2001/10/13 13:36:01 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13 2001/02/13 01:14:45 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.14 2001/10/13 13:36:01 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -458,8 +458,12 @@ wsmouseopen(dev, flags, mode, p)
 						   so ioctl() is possible. */
 
 #if NWSMUX > 0
-	if (sc->sc_mux)
-		return (EBUSY);
+	if (sc->sc_mux != NULL) {
+		/* Grab the mouse out of the greedy hands of the mux. */
+		error = wsmouse_rem_mux(unit, sc->sc_mux);
+		if (error)
+			return (error);
+	}
 #endif
 
 	if (sc->sc_events.io)			/* and that it's not in use */

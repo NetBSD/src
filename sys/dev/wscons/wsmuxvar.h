@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmuxvar.h,v 1.1 1999/07/29 18:20:43 augustss Exp $	*/
+/*	$NetBSD: wsmuxvar.h,v 1.2 2001/10/13 13:36:02 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,8 @@ struct wsmuxops {
 	int (*dsetdisplay) __P((struct device *, struct wsmux_softc *));
 };
 
-struct wsmux_softc *wsmux_create __P((const char *name, int no));
+struct wsmux_softc *wsmux_getmux __P((int));
+struct wsmux_softc *wsmux_create __P((const char *, int));
 int	wsmux_attach_sc __P((
 	  struct wsmux_softc *,
 	  int, struct device *, struct wseventvar *,
