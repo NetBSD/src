@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comm.c	5.7 (Berkeley) 11/1/90";*/
-static char rcsid[] = "$Id: comm.c,v 1.4 1993/10/13 18:33:45 jtc Exp $";
+static char rcsid[] = "$Id: comm.c,v 1.5 1994/11/08 18:37:10 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -51,6 +51,7 @@ static char rcsid[] = "$Id: comm.c,v 1.4 1993/10/13 18:33:45 jtc Exp $";
 #include <limits.h>
 #include <locale.h>
 #include <unistd.h>
+#include <err.h>
 
 #define	MAXLINELEN	(_POSIX2_LINE_MAX + 1)
 
@@ -131,7 +132,8 @@ main(argc,argv)
 		if (!(comp = strcoll(line1, line2))) {
 			read1 = read2 = 1;
 			if (col3)
-				(void)printf("%s%s", col3, line1);
+				if (printf("%s%s", col3, line1) == EOF)
+					break;
 			continue;
 		}
 
@@ -140,14 +142,20 @@ main(argc,argv)
 			read1 = 1;
 			read2 = 0;
 			if (col1)
-				(void)printf("%s%s", col1, line1);
+				if (printf("%s%s", col1, line1) == EOF)
+					break;
 		} else {
 			read1 = 0;
 			read2 = 1;
 			if (col2)
-				(void)printf("%s%s", col2, line2);
+				if (printf("%s%s", col2, line2) == EOF)
+					break;
 		}
 	}
+
+	if (ferror (stdout) || fclose (stdout) == EOF)
+		err(1, "stdout");
+
 	exit(0);
 }
 
@@ -156,9 +164,8 @@ show(fp, offset, buf)
 	FILE *fp;
 	char *offset, *buf;
 {
-	do {
-		(void)printf("%s%s", offset, buf);
-	} while (fgets(buf, MAXLINELEN, fp));
+	while (printf("%s%s", offset, buf) != EOF && fgets(buf, MAXLINELEN, fp))
+		;
 }
 
 FILE *
