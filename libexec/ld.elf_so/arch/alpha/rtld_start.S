@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.7 2001/12/13 22:34:52 thorpej Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.8 2001/12/14 21:25:23 thorpej Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -54,11 +54,7 @@ LEAF_NOPROFILE(_rtld_start, 0)
 
 	lda	t5, _GLOBAL_OFFSET_TABLE_
 	addq	t8, t5, t9	/* add the displacement */
-#if defined(OLD_GOT)
-	ldq	t4, 0(t9)	/* Get the address of dynamic table */
-#else
 	lda	t4, _GOT_END_	/* Get the address of the end of the GOT */
-#endif
 	addq	t8, t4, t10	/* add the displacement */
 
 	/*
