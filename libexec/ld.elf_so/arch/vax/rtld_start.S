@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.7 2002/02/24 01:06:22 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.8 2002/09/12 17:43:30 mycroft Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -29,21 +29,27 @@
 
 #include <machine/asm.h>
 
+	.data
+.L1:	.long	_GLOBAL_OFFSET_TABLE_
+
 /* R9 contains the address of PS_STRINGS and since its caller saved,
  * we can just use it.  R6 has a backup copy of the stack pointer which
  * we can use as well.  Since the VAX has perfectly PIC code, we don't
  * need to relocate anything upon startup.
  */
 ENTRY(_rtld_start, 0)
-
 	/* Allocate space on the stack for the cleanup and obj_main
 	 * entries that _rtld() will provide for us.
 	 */
 	clrl	%fp
 	subl2	$8,%sp
-	pushl	%sp
 
-	calls	$1,_rtld
+	movab	_GLOBAL_OFFSET_TABLE_,%r0
+	subl2	.L1,%r0
+	movl	%sp,%r1
+	pushl	%r0		/* relocbase */
+	pushl	%r1		/* sp */
+	calls	$2,_rtld	/* entry = _rtld(sp, relocbase) */
 
 	movq	(%sp)+,%r7	/* grab cleanup and obj_main into %r7/%r8 */
 	jmp	2(%r0)		/* jump to entry point + 2 */
