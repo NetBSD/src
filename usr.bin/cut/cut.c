@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $	*/
+/*	$NetBSD: cut.c,v 1.10 1997/02/11 09:41:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $";
+static char rcsid[] = "$NetBSD: cut.c,v 1.10 1997/02/11 09:41:45 mrg Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -85,7 +85,7 @@ main(argc, argv)
 
 	/* Since we don't support multi-byte characters, the -c and -b 
 	   options are equivalent, and the -n option is meaningless. */
-	while ((ch = getopt(argc, argv, "b:c:d:f:sn")) != EOF)
+	while ((ch = getopt(argc, argv, "b:c:d:f:sn")) != -1)
 		switch(ch) {
 		case 'b':
 		case 'c':
