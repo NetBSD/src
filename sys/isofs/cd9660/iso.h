@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.11 1996/03/16 20:25:42 ws Exp $	*/
+/*	$NetBSD: iso.h,v 1.12 1996/09/30 15:53:13 ws Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -188,7 +188,7 @@ extern int (**cd9660_specop_p) __P((void *));
 extern int (**cd9660_fifoop_p) __P((void *));
 #endif
 
-static __inline int
+extern __inline int
 #if __STDC__
 isonum_711(u_char *p)
 #else
@@ -199,7 +199,7 @@ isonum_711(p)
 	return *p;
 }
 
-static __inline int
+extern __inline int
 #if __STDC__
 isonum_712(char *p)
 #else
@@ -212,7 +212,7 @@ isonum_712(p)
 
 #ifndef UNALIGNED_ACCESS
 
-static __inline int
+extern __inline int
 #if __STDC__
 isonum_723(u_char *p)
 #else
@@ -223,7 +223,7 @@ isonum_723(p)
 	return *p|(p[1] << 8);
 }
 
-static __inline int
+extern __inline int
 #if __STDC__
 isonum_733(u_char *p)
 #else
@@ -238,7 +238,7 @@ isonum_733(p)
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 
-static __inline int
+extern __inline int
 #if __STDC__
 isonum_723(u_char *p)
 #else
@@ -249,7 +249,7 @@ isonum_723(p)
 	return *(u_int16t *)p;
 }
 
-static __inline int
+extern __inline int
 #if __STDC__
 isonum_733(u_char *p)
 #else
@@ -264,7 +264,7 @@ isonum_733(p)
 
 #if BYTE_ORDER == BIG_ENDIAN
 
-static __inline int
+extern __inline int
 #if __STDC__
 isonum_723(u_char *p)
 #else
@@ -275,7 +275,7 @@ isonum_723(p)
 	return *(u_int16t *)(p + 2);
 }
 
-static __inline int
+extern __inline int
 #if __STDC__
 isonum_733(u_char *p)
 #else
