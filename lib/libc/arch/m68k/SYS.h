@@ -35,24 +35,43 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$Id: SYS.h,v 1.2 1994/01/30 21:55:52 mycroft Exp $
+ *	$Id: SYS.h,v 1.3 1994/02/08 02:31:55 chopps Exp $
  */
 
 #include <sys/syscall.h>
 #include <machine/asm.h>
+
+#ifdef __STDC__
+
+#ifdef	PIC
+/* With PIC code, we can't pass the error to cerror in d0,
+   because the jump might go via the binder. */
+#define	SYSCALL(x)	.even; err: movl d0,sp@-; jra cerror; ENTRY(x); \
+			movl \#SYS_ ## x,d0; trap \#0; jcs err
+#else /* !PIC */
+#define	SYSCALL(x)	.even; err: jra cerror; ENTRY(x); \
+			movl \#SYS_ ## x,d0; trap \#0; jcs err
+#endif /* !PIC */
+
+#define	RSYSCALL(x)	SYSCALL(x); rts
+#define	PSEUDO(x,y)	ENTRY(x); movl \#SYS_ ## y,d0; trap \#0; rts
+
+#else /* !__STDC__ */
 
 #ifdef	PIC
 /* With PIC code, we can't pass the error to cerror in d0,
    because the jump might go via the binder. */
 #define	SYSCALL(x)	.even; err: movl d0,sp@-; jra cerror; ENTRY(x); \
 			movl #SYS_/**/x,d0; trap #0; jcs err
-#else
+#else /* !PIC */
 #define	SYSCALL(x)	.even; err: jra cerror; ENTRY(x); \
 			movl #SYS_/**/x,d0; trap #0; jcs err
-#endif
+#endif /* !PIC */
 
 #define	RSYSCALL(x)	SYSCALL(x); rts
 #define	PSEUDO(x,y)	ENTRY(x); movl #SYS_/**/y,d0; trap #0; rts
+
+#endif /* !__STDC__ */
 
 #define	ASMSTR		.asciz
 
