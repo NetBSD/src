@@ -1,4 +1,4 @@
-	$Id: syscalls.master,v 1.3 1993/10/13 02:31:49 deraadt Exp $
+	$Id: syscalls.master,v 1.4 1993/10/15 10:58:42 deraadt Exp $
 ;	from: @(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SunOS).
 ; Processed to created sun_sysent.c, sun_syscalls.c and sun_syscall.h.
@@ -182,8 +182,8 @@
 159	STD	1 sun_unmount
 160	UNIMPL	0 nosys
 161	UNIMPL	0 nosys
-162	STD	2 sun_getdomainname
-163	STD	2 sun_setdomainname
+162	STD	2 getdomainname
+163	STD	2 setdomainname
 164	UNIMPL	5 rtschedule
 165	UNIMPL	4 quotactl
 166	UNIMPL	2 exportfs
