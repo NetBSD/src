@@ -81,23 +81,14 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
    The __arm2__ __arm3__ and __arm6__ are obvious. */
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dunix -Darm32 -D__arm32__ -D__arm6__ -Driscbsd -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ -Asystem(unix) -Asystem(NetBSD) -Acpu(arm) -Amachine(arm)"
+#define CPP_PREDEFINES "-Dunix -Darm32 -D__arm32__ -D__arm6__ -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ -Asystem(unix) -Asystem(NetBSD) -Acpu(arm) -Amachine(arm)"
 
 #undef CPP_SPEC
 #define CPP_SPEC "%{m2:-D__arm2__} %{m3:-D__arm3__} %{m2:-U__arm6__}	\
 	%{m3:-U__arm6__} %{m2:-U__arm32__} %{m3:-U__arm32__}		\
 	 %{m2:-Uarm32} %{m3:-Uarm32}					\
 	%{posix:-D_POSIX_SOURCE}"
-
-/* Provide a LIB_SPEC appropriate for NetBSD.  Select the appropriate
-   libc, depending on whether we're doing profiling, similarly for
-   libposix. IF compiling soft-float then add in a soft-float library*/
-
-#undef LIB_SPEC
-#define LIB_SPEC							\
-  "%{posix:%{!p:%{!pg:-lposix}}%{p:-lposix_p}%{pg:-lposix_p}}		\
-   %{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
-
+
 #undef SIZE_TYPE
 #define SIZE_TYPE "unsigned int"
 
@@ -112,8 +103,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
-
-#define HANDLE_SYSV_PRAGMA
 
 #undef TYPE_OPERAND_FMT
 #define TYPE_OPERAND_FMT	"#%s"
