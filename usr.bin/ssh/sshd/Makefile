@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/07/25 16:32:26 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2001/01/14 05:22:34 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -9,14 +9,14 @@ BINDIR=	/usr/sbin
 
 SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	pty.c log-server.c login.c servconf.c serverloop.c auth.c \
-	auth1.c auth2.c auth-options.c session.c
+	auth1.c auth2.c auth-options.c session.c dh.c
 
 CPPFLAGS+=-DLIBWRAP
 LDADD+=	-lwrap
 DPADD+=	${LIBWRAP}
 
 .ifdef SKEY
-SRCS+=	auth-skey.c
+SRCS+=	auth-skey.c auth2-skey.c
 CPPFLAGS+=-DSKEY
 LDADD+=	-lskey
 DPADD+=	${LIBSKEY}
