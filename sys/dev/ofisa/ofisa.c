@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.2 1998/03/21 02:06:17 cgd Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.3 1998/06/09 00:02:43 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -111,6 +111,11 @@ ofisaattach(parent, dev, aux)
 	}
 
 	printf("\n");
+
+	/*
+	 * Initialize our DMA state.
+	 */
+	isa_dmainit(iba.iba_ic, iba.iba_iot, iba.iba_dmat, self);
 
 	for (child = OF_child(oba->oba_phandle); child;
 	    child = OF_peer(child)) {
