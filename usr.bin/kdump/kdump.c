@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.24 1999/08/06 00:11:03 thorpej Exp $	*/
+/*	$NetBSD: kdump.c,v 1.25 1999/12/31 22:27:59 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.24 1999/08/06 00:11:03 thorpej Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.25 1999/12/31 22:27:59 eeh Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,7 @@ struct ktr_header ktr_header;
 
 #include <sys/syscall.h>
 
+#include "../../sys/compat/netbsd32/netbsd32_syscall.h"
 #include "../../sys/compat/freebsd/freebsd_syscall.h"
 #include "../../sys/compat/hpux/hpux_syscall.h"
 #include "../../sys/compat/ibcs2/ibcs2_syscall.h"
@@ -87,6 +88,7 @@ struct ktr_header ktr_header;
 #define KTRACE
 #include "../../sys/kern/syscalls.c"
 
+#include "../../sys/compat/netbsd32/netbsd32_syscalls.c"
 #include "../../sys/compat/freebsd/freebsd_syscalls.c"
 #include "../../sys/compat/hpux/hpux_syscalls.c"
 #include "../../sys/compat/ibcs2/ibcs2_syscalls.c"
@@ -114,6 +116,8 @@ struct emulation {
 
 static struct emulation emulations[] = {
 	{   "netbsd",	       syscallnames,         SYS_MAXSYSCALL,
+	        NULL,		        0 },
+	{   "netbsd32", netbsd32_syscallnames,	     SYS_MAXSYSCALL,
 	        NULL,		        0 },
 	{  "freebsd",  freebsd_syscallnames, FREEBSD_SYS_MAXSYSCALL,
 	        NULL,		        0 },
