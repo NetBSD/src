@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acenv.h - Generation environment specific items
- *       xRevision: 104 $
+ *       $Revision: 1.9 $
  *
  *****************************************************************************/
 
@@ -271,7 +271,6 @@
 #define DEBUGGER_THREADING          DEBUGGER_MULTI_THREADED
 #endif
 #endif /* !DEBUGGER_THREADING */
-
 
 /******************************************************************************
  *

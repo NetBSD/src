@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psparse - Parser top level AML parse routines
- *              xRevision: 139 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -114,8 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.6 2003/03/04 17:25:24 kochi Exp $");
 
 /*
  * Parse the AML and build an operation tree as most interpreters,
@@ -536,7 +534,6 @@ AcpiPsParseLoop (
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-
     ParserState = &WalkState->ParserState;
     WalkState->ArgTypes = 0;
 
@@ -606,8 +603,8 @@ AcpiPsParseLoop (
         {
             /* Get the next opcode from the AML stream */
 
-            WalkState->AmlOffset = ACPI_PTR_DIFF (ParserState->Aml,
-                                                  ParserState->AmlStart);
+            WalkState->AmlOffset = (UINT32) ACPI_PTR_DIFF (ParserState->Aml,
+                                                           ParserState->AmlStart);
             WalkState->Opcode    = AcpiPsPeekOpcode (ParserState);
 
             /*
@@ -832,16 +829,15 @@ AcpiPsParseLoop (
                 WalkState->ArgTypes = 0;
                 break;
 
-
             default:
 
-                /* Op is not a constant or string, append each argument */
+                /* Op is not a constant or string, append each argument to the Op */
 
                 while (GET_CURRENT_ARG_TYPE (WalkState->ArgTypes) &&
                         !WalkState->ArgCount)
                 {
-                    WalkState->AmlOffset = ACPI_PTR_DIFF (ParserState->Aml,
-                                                          ParserState->AmlStart);
+                    WalkState->AmlOffset = (UINT32) ACPI_PTR_DIFF (ParserState->Aml,
+                                                                   ParserState->AmlStart);
                     Status = AcpiPsGetNextArg (WalkState, ParserState,
                                 GET_CURRENT_ARG_TYPE (WalkState->ArgTypes), &Arg);
                     if (ACPI_FAILURE (Status))
@@ -857,24 +853,24 @@ AcpiPsParseLoop (
                     INCREMENT_ARG_LIST (WalkState->ArgTypes);
                 }
 
+                /* Special processing for certain opcodes */
+
                 switch (Op->Common.AmlOpcode)
                 {
                 case AML_METHOD_OP:
 
-                    /* For a method, save the length and address of the body */
-
                     /*
-                     * Skip parsing of control method or opregion body,
+                     * Skip parsing of control method
                      * because we don't have enough info in the first pass
-                     * to parse them correctly.
+                     * to parse it correctly.
+                     *
+                     * Save the length and address of the body
                      */
                     Op->Named.Data   = ParserState->Aml;
                     Op->Named.Length = (UINT32) (ParserState->PkgEnd - ParserState->Aml);
-                    /*
-                     * Skip body of method.  For OpRegions, we must continue
-                     * parsing because the opregion is not a standalone
-                     * package (We don't know where the end is).
-                     */
+
+                    /* Skip body of method */
+
                     ParserState->Aml    = ParserState->PkgEnd;
                     WalkState->ArgCount = 0;
                     break;
@@ -888,15 +884,15 @@ AcpiPsParseLoop (
                         (WalkState->DescendingCallback != AcpiDsExecBeginOp))
                     {
                         /*
-                         * Skip parsing of
+                         * Skip parsing of Buffers and Packages
                          * because we don't have enough info in the first pass
                          * to parse them correctly.
                          */
                         Op->Named.Data   = AmlOpStart;
                         Op->Named.Length = (UINT32) (ParserState->PkgEnd - AmlOpStart);
-                        /*
-                         * Skip body
-                         */
+
+                        /* Skip body */
+
                         ParserState->Aml    = ParserState->PkgEnd;
                         WalkState->ArgCount = 0;
                     }
@@ -911,6 +907,7 @@ AcpiPsParseLoop (
                     break;
 
                 default:
+
                     /* No action for all other opcodes */
                     break;
                 }
