@@ -5093,6 +5093,10 @@ for machine in $build $host $target; do
 	romp-*-openbsd*)
 		# Nothing special
 		;;
+	powerpc-*-darwin*)
+		xmake_file=x-darwin
+		xm_file="rs6000/xm-sysv4.h"
+		;;
 	powerpc-*-netbsd*)
 		tmake_file="${tmake_file} rs6000/t-rs6000"
 		xm_file="rs6000/xm-sysv4.h xm-netbsd.h"
