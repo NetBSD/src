@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.4.2.3 2001/07/29 20:13:09 he Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.4.2.4 2001/12/27 11:56:54 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -650,7 +650,6 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 	u_int32_t fmt=0;
 	int dma_count;
 
-	printf("cs4281_trigger_input: not implemented yet\n");
 #ifdef DIAGNOSTIC
 	if (sc->sc_rrun)
 		printf("cs4281_trigger_input: already running\n");
