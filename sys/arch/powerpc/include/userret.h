@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.2.2.2 2002/08/06 22:47:10 nathanw Exp $	*/
+/*	$NetBSD: userret.h,v 1.2.2.3 2002/08/06 22:59:39 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -83,5 +83,5 @@ userret(struct lwp *l, struct trapframe *frame)
 	}
 #endif
 
-	ci->ci_schedstate.spc_curpriority = l->p_priority = l->p_usrpri;
+	ci->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
