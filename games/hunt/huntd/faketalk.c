@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.3 1997/10/10 16:33:31 lukem Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.4 1997/10/11 08:13:48 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.3 1997/10/10 16:33:31 lukem Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.4 1997/10/11 08:13:48 lukem Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -107,7 +107,7 @@ faketalk()
 # ifdef LOG
 		syslog(LOG_ERR, "faketalk: smtp protocol not supported\n");
 # else
-		fprintf(stderr, "faketalk: stmp protocol not supported\n");
+		warn("faketalk: stmp protocol not supported");
 # endif
 		_exit(1);
 	}
@@ -121,7 +121,7 @@ faketalk()
 # ifdef LOG
 		syslog(LOG_ERR, "falktalk:  socket");
 # else
-		perror("falktalk:  socket");
+		warn("falktalk:  socket");
 # endif
 		_exit(-1);
 	}
@@ -130,7 +130,7 @@ faketalk()
 # ifdef LOG
 		syslog(LOG_ERR, "faketalk:  connect");
 # else
-		perror("faketalk:  connect");
+		warn("faketalk:  connect");
 # endif
 		_exit(-1);
 	}
@@ -138,7 +138,7 @@ faketalk()
 # ifdef LOG
 		syslog(LOG_ERR, "fdopen failed\n");
 # else
-		fprintf(stderr, "fdopen failed\n");
+		warn("faketalk:  fdopen");
 # endif
 		_exit(-2);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.2 1997/10/10 16:32:43 lukem Exp $	*/
+/*	$NetBSD: playit.c,v 1.3 1997/10/11 08:13:44 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,10 +7,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.2 1997/10/10 16:32:43 lukem Exp $");
+__RCSID("$NetBSD: playit.c,v 1.3 1997/10/11 08:13:44 lukem Exp $");
 #endif /* not lint */
 
 # include	<sys/file.h>
+# include	<err.h>
 # include	<errno.h>
 # include	<curses.h>
 # include	<ctype.h>
@@ -572,10 +573,8 @@ redraw_screen()
 
 	if (first) {
 		curscr = newwin(SCREEN_HEIGHT, SCREEN_WIDTH, 0, 0);
-		if (curscr == NULL) {
-			fprintf(stderr, "Can't create curscr\n");
-			exit(1);
-		}
+		if (curscr == NULL)
+			errx(1, "Can't create curscr");
 # if !defined(BSD_RELEASE) || BSD_RELEASE < 44
 		for (i = 0; i < SCREEN_HEIGHT; i++)
 			curscr->_y[i] = screen[i];
