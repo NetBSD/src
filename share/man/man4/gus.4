@@ -1,4 +1,4 @@
-.\"	$NetBSD: gus.4,v 1.10 2001/09/11 22:52:52 wiz Exp $
+.\"	$NetBSD: gus.4,v 1.11 2001/09/19 01:03:44 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@ Gravis UltraSound/UltraSound MAX audio device driver
 .Cd "audio* at gus?"
 .Sh DESCRIPTION
 The
-.Nm gus
+.Nm
 driver provides support for the Gravis UltraSound (GUS) and GUS MAX
 audio cards.  Both cards have on-board memory which is used for
 seamless playback of samples.  They can play back 8- or 16-bit samples
@@ -68,6 +68,16 @@ and only half-duplex mode will be available.
 The Gravis UltraSound MAX has an additional CODEC onboard which is
 addressed with four ports at an offset of 0x10C from the base ports
 (0x31C-0x36C).
+.Sh SEE ALSO
+.Xr audio 4
+.Sh REFERENCES
+Gravis UltraSound Low-Level Toolkit, Revision 2.01, 20 May 1993,
+published by Advanced Gravis and Forte Technologies.
+.Sh HISTORY
+The
+.Nm gus
+device driver appeared in
+.Nx 1.1 .
 .Sh BUGS
 The full-duplex features of the GUS MAX have not been fully tested, and
 full-duplex on the original GUS may not be possible at all.
@@ -82,13 +92,3 @@ Manipulating the mixer device seems to create pregnant system pauses,
 probably due to excessive interrupt masking.
 .Pp
 The joystick and MIDI port interfaces are not supported.
-.Sh SEE ALSO
-.Xr audio 4
-.Sh REFERENCES
-Gravis UltraSound Low-Level Toolkit, Revision 2.01, 20 May 1993,
-published by Advanced Gravis and Forte Technologies.
-.Sh HISTORY
-The
-.Nm gus
-device driver appeared in
-.Nx 1.1 .
