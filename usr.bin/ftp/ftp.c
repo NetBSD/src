@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.91 2000/02/14 21:46:27 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.92 2000/02/28 10:12:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.91 2000/02/14 21:46:27 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.92 2000/02/28 10:12:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -348,12 +348,14 @@ hookup(host, port)
 	if (myctladdr.su_len == 0)
 		myctladdr.su_len = len;
 
+#ifdef IPTOS_LOWDELAY
 	if (family == AF_INET) {
 		int tos = IPTOS_LOWDELAY;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
 			       sizeof(int)) < 0)
 			warn("setsockopt TOS (ignored)");
 	}
+#endif
 	cin = fdopen(s, "r");
 	cout = fdopen(s, "w");
 	if (cin == NULL || cout == NULL) {
@@ -1665,12 +1667,14 @@ reinit:
 			warn("connect");
 			goto bad;
 		}
+#ifdef IPTOS_THROUGHPUT
 		if (data_addr.su_family == AF_INET) {
 			on = IPTOS_THROUGHPUT;
 			if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
 				       sizeof(int)) < 0)
 				warn("setsockopt TOS (ignored)");
 		}
+#endif
 		return (0);
 	}
 
@@ -1791,12 +1795,14 @@ noport:
 	}
 	if (tmpno)
 		sendport = 1;
+#ifdef IPTOS_THROUGHPUT
 	if (data_addr.su_family == AF_INET) {
 		on = IPTOS_THROUGHPUT;
 		if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
 			       sizeof(int)) < 0)
 			warn("setsockopt TOS (ignored)");
 	}
+#endif
 	return (0);
 bad:
 	(void)close(data), data = -1;
@@ -1823,6 +1829,7 @@ dataconn(lmode)
 	}
 	(void)close(data);
 	data = s;
+#ifdef IPTOS_THROUGHPUT
 	if (from.su_family == AF_INET) {
 		int tos = IPTOS_THROUGHPUT;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
@@ -1830,6 +1837,7 @@ dataconn(lmode)
 			warn("setsockopt TOS (ignored)");
 		}
 	}
+#endif
 	return (fdopen(data, lmode));
 }
 
