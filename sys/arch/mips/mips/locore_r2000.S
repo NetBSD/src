@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.31 1997/06/18 04:07:06 mhitch Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.32 1997/06/19 06:30:05 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1229,8 +1229,8 @@ END(mips1_TLBGetPID)
  *	None.
  *
  * Side effects:
- *	The size of the data cache is stored into machDataCacheSize and the
- *	size of instruction cache is stored into machInstCacheSize.
+ *	The size of the data cache is stored into mips_L1DataCacheSize and the
+ *	size of instruction cache is stored into mips_L1InstCacheSize.
  *
  *----------------------------------------------------------------------------
  */
@@ -1251,7 +1251,7 @@ NON_LEAF(mips1_ConfigCache, STAND_FRAME_SIZE, ra)
  */
 	jal	_C_LABEL(mips1_SizeCache)	# Get the size of the d-cache.
 	nop
-	sw	v0, _C_LABEL(machDataCacheSize)
+	sw	v0, _C_LABEL(mips_L1DataCacheSize)
 	nop					# Make sure sw out of pipe
 	nop
 	nop
@@ -1269,7 +1269,7 @@ NON_LEAF(mips1_ConfigCache, STAND_FRAME_SIZE, ra)
 	nop
 	nop
 	nop
-	sw	v0, _C_LABEL(machInstCacheSize)
+	sw	v0, _C_LABEL(mips_L1InstCacheSize)
 	la	t0, 1f
 	j	t0				# Back to cached mode
 	nop
@@ -1353,8 +1353,8 @@ END(mips1_SizeCache)
  *----------------------------------------------------------------------------
  */
 LEAF(mips1_FlushCache)
-	lw	t1, _C_LABEL(machInstCacheSize)	# Must load before isolating
-	lw	t2, _C_LABEL(machDataCacheSize)	# Must load before isolating
+	lw	t1, _C_LABEL(mips_L1InstCacheSize)	# Must load before isolating
+	lw	t2, _C_LABEL(mips_L1DataCacheSize)	# Must load before isolating
 	mfc0	t3, MACH_COP_0_STATUS_REG 	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
 	la	v0, 1f
@@ -1587,6 +1587,141 @@ LEAF(mips1_proc_trampoline)
 	rfe
 	.set	at
 END(mips1_proc_trampoline)
+
+/*
+ * switch_exit(struct proc *)
+ * Make the named process exit.  Switch SP to nullproc stack, free the
+ * exiting proc's USPACE, then jump into the middle of cpu_switch().
+ * MUST BE CALLED AT SPLHIGH.
+ */
+LEAF(mips1_switch_exit)
+	la	v1, _C_LABEL(nullproc)		# !! SP runs on p->p_addr !!
+	lw	t0, P_MD_UPTE+0(v1)		# t0 = first u. pte
+	lw	t1, P_MD_UPTE+4(v1)		# t1 = 2nd u. pte
+	li	v0, MACH_CACHED_MEMORY_ADDR	# clear wired entries for pcb
+	mtc0	v0, MACH_COP_0_TLB_HI
+	mtc0	zero, MACH_COP_0_TLB_LOW
+	li	v0, 2 << VMMACH_TLB_INDEX_SHIFT
+	mtc0	v0, MACH_COP_0_TLB_INDEX	# clear wired entry 2
+	nop
+	tlbwi
+	li	v0, 3 << VMMACH_TLB_INDEX_SHIFT
+	mtc0	v0, MACH_COP_0_TLB_INDEX	# clear wired entry 3
+	nop
+	tlbwi
+	li	v0, UADDR			# still using UADDR for kstack
+	nop
+	mtc0	zero, MACH_COP_0_TLB_INDEX	# set the index register
+	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
+	mtc0	t0, MACH_COP_0_TLB_LOW		# init low entry
+	li	t0, 1 << VMMACH_TLB_INDEX_SHIFT
+	tlbwi					# Write the TLB entry.
+	addu	v0, v0, NBPG			# 2nd HI entry
+	mtc0	t0, MACH_COP_0_TLB_INDEX	# set the index register
+	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
+	mtc0	t1, MACH_COP_0_TLB_LOW		# init low entry
+	subu	v0, v0, NBPG			# back to start of u-area
+	tlbwi					# Write the TLB entry.
+
+	addu	sp, v0, USPACE - START_FRAME
+	li	a2, USPACE
+	lw	a1, P_ADDR(a0)
+	lw	a0, kernel_map
+	la	ra, sw1				# goto cpu_switch()
+	j	kmem_free			# free exiting USPACE
+END(mips1_switch_exit)
+
+/*
+ * Resume process indicated by the pte's for its u struct
+ * NOTE: This is hard coded to UPAGES == 2.
+ * Also, there should be no TLB faults at this point.
+ */
+/*
+ * XXXX - almost done with the UADDR mapping; only the kernel stack should
+ * now be using UADDR.  The first TLB entries (one one on the R4000) is used
+ * to map UADDR to the u-area.  Then the following TLB entries are used to
+ * map the current u-area.  This gets nasty on the R4000:  it can take one
+ * or two TLB entries to map the u-area, depending upon whether the u-area
+ * begins on an even or odd page.  Also, any current mapping for the u-area
+ * address space needs to be flushed as well.
+ */
+LEAF(mips1_cpu_switch_resume)
+	mtc0	zero, MACH_COP_0_TLB_INDEX	# set the index register
+	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
+	mtc0	t0, MACH_COP_0_TLB_LOW		# init low entry
+	li	s1, 1 << VMMACH_TLB_INDEX_SHIFT
+	tlbwi					# Write the TLB entry.
+	addu	v0, v0, NBPG			# 2nd HI entry
+	mtc0	s1, MACH_COP_0_TLB_INDEX	# set the index register
+	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
+	mtc0	t1, MACH_COP_0_TLB_LOW		# init low entry
+	nop
+	tlbwi					# Write the TLB entry.
+ # now map p_addr; may need to flush random TLB entries
+	andi	v0, VMMACH_TLB_PID		# mask PID
+	or	v0, s0				# insert p_addr
+	mtc0	v0, MACH_COP_0_TLB_HI
+	nop
+	tlbp					# probe for entry
+	nop
+	mfc0	s1, MACH_COP_0_TLB_INDEX	# see if we found it
+	bltz	s1, 1f				# not found
+	li	s1, MACH_CACHED_MEMORY_ADDR
+	mtc0	s1, MACH_COP_0_TLB_HI
+	mtc0	zero, MACH_COP_0_TLB_LOW
+	nop
+	tlbwi
+	nop
+	mtc0	v0, MACH_COP_0_TLB_HI		# restore High
+1:
+	li	s1, 2 << VMMACH_TLB_INDEX_SHIFT
+	mtc0	s1, MACH_COP_0_TLB_INDEX
+	mtc0	t0, MACH_COP_0_TLB_LOW
+	nop
+	tlbwi
+	addu	v0, v0, NBPG
+	mtc0	v0, MACH_COP_0_TLB_HI
+	nop
+	tlbp					# probe for entry
+	nop
+	mfc0	s1, MACH_COP_0_TLB_INDEX	# see if we found it
+	bltz	s1, 1f				# not found
+	li	s1, MACH_CACHED_MEMORY_ADDR
+	mtc0	s1, MACH_COP_0_TLB_HI
+	mtc0	zero, MACH_COP_0_TLB_LOW
+	nop
+	tlbwi
+	nop
+	mtc0	v0, MACH_COP_0_TLB_HI		# restore High
+1:
+	li	s1, 3 << VMMACH_TLB_INDEX_SHIFT
+	mtc0	s1, MACH_COP_0_TLB_INDEX
+	mtc0	t1, MACH_COP_0_TLB_LOW
+	nop
+	tlbwi
+/*
+ * Now running on new u struct.
+ * Restore registers and return.
+ */
+	lw	t0, _C_LABEL(curpcb)
+	nop
+	lw	v0, U_PCB_CONTEXT+44(t0)	# restore kernel context
+	lw	ra, U_PCB_CONTEXT+40(t0)
+	lw	s0, U_PCB_CONTEXT+0(t0)
+	lw	s1, U_PCB_CONTEXT+4(t0)
+	lw	s2, U_PCB_CONTEXT+8(t0)
+	lw	s3, U_PCB_CONTEXT+12(t0)
+	lw	s4, U_PCB_CONTEXT+16(t0)
+	lw	s5, U_PCB_CONTEXT+20(t0)
+	lw	s6, U_PCB_CONTEXT+24(t0)
+	lw	s7, U_PCB_CONTEXT+28(t0)
+	lw	sp, U_PCB_CONTEXT+32(t0)
+	lw	s8, U_PCB_CONTEXT+36(t0)
+	nop
+	mtc0	v0, MACH_COP_0_STATUS_REG
+	j	ra
+	li	v0, 1				# possible return to 'savectx()'
+END(mips1_cpu_switch_resume)
 
 /*----------------------------------------------------------------------------
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.33 1997/06/17 01:40:13 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.34 1997/06/19 06:30:03 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -595,67 +595,6 @@ NON_LEAF(remrunqueue, STAND_FRAME_SIZE, ra)
 END(remrunqueue)
 
 /*
- * switch_exit(struct proc *)
- * Make the named process exit.  Switch SP to nullproc stack, free the
- * exiting proc's USPACE, then jump into the middle of cpu_switch().
- * MUST BE CALLED AT SPLHIGH.
- */
-LEAF(switch_exit)
-	la	v1, _C_LABEL(nullproc)		# !! SP runs on p->p_addr !!
-	lw	t0, P_MD_UPTE+0(v1)		# t0 = first u. pte
-	lw	t1, P_MD_UPTE+4(v1)		# t1 = 2nd u. pte
-	li	v0, MACH_CACHED_MEMORY_ADDR	# clear wired entries for pcb
-	mtc0	v0, MACH_COP_0_TLB_HI
-#ifdef MIPS3
-	mtc0	zero, MACH_COP_0_TLB_LO0
-	mtc0	zero, MACH_COP_0_TLB_LO1
-	li	v0, 1				# clear wired entry 1
-	mtc0	v0, MACH_COP_0_TLB_INDEX
-	tlbwi
-	li	v0, 2				# clear wired entry 2
-	mtc0	v0, MACH_COP_0_TLB_INDEX
-	tlbwi
-#else
-	mtc0	zero, MACH_COP_0_TLB_LOW
-	li	v0, 2 << VMMACH_TLB_INDEX_SHIFT
-	mtc0	v0, MACH_COP_0_TLB_INDEX	# clear wired entry 2
-	nop
-	tlbwi
-	li	v0, 3 << VMMACH_TLB_INDEX_SHIFT
-	mtc0	v0, MACH_COP_0_TLB_INDEX	# clear wired entry 3
-	nop
-	tlbwi
-#endif
-	li	v0, UADDR			# still using UADDR for kstack
-	nop
-	mtc0	zero, MACH_COP_0_TLB_INDEX	# set the index register
-	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
-#ifdef MIPS3
-	mtc0	t0, MACH_COP_0_TLB_LO0		# init low entry 0
-	mtc0	t1, MACH_COP_0_TLB_LO1		# init low entry 1
-	nop
-	tlbwi					# Write the TLB entry.
-#else
-	mtc0	t0, MACH_COP_0_TLB_LOW		# init low entry
-	li	t0, 1 << VMMACH_TLB_INDEX_SHIFT
-	tlbwi					# Write the TLB entry.
-	addu	v0, v0, NBPG			# 2nd HI entry
-	mtc0	t0, MACH_COP_0_TLB_INDEX	# set the index register
-	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
-	mtc0	t1, MACH_COP_0_TLB_LOW		# init low entry
-	subu	v0, v0, NBPG			# back to start of u-area
-	tlbwi					# Write the TLB entry.
-#endif
-
-	addu	sp, v0, USPACE - START_FRAME
-	li	a2, USPACE
-	lw	a1, P_ADDR(a0)
-	lw	a0, kernel_map
-	la	ra, sw1				# goto cpu_switch()
-	j	kmem_free			# free exiting USPACE
-END(switch_exit)
-
-/*
  * When no processes are on the runq, cpu_switch branches to idle
  * to wait for something to come ready.
  * Note: this is really a part of cpu_switch() but defined here for kernel
@@ -751,170 +690,10 @@ sw1:
 	lw	t1, P_MD_UPTE+4(s0)		# t1 = 2nd u. pte
 	lw	s0, P_ADDR(s0)
 	sw	s0, _C_LABEL(curpcb)		# set curpcb
+	lw	s1, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_SWITCH_RESUME
 	or	v0, v0, UADDR			# v0 = first HI entry
-/*
- * Resume process indicated by the pte's for its u struct
- * NOTE: This is hard coded to UPAGES == 2.
- * Also, there should be no TLB faults at this point.
- */
-/*
- * XXXX - almost done with the UADDR mapping; only the kernel stack should
- * now be using UADDR.  The first TLB entries (one one on the R4000) is used
- * to map UADDR to the u-area.  Then the following TLB entries are used to
- * map the current u-area.  This gets nasty on the R4000:  it can take one
- * or two TLB entries to map the u-area, depending upon whether the u-area
- * begins on an even or odd page.  Also, any current mapping for the u-area
- * address space needs to be flushed as well.
- */
-	mtc0	zero, MACH_COP_0_TLB_INDEX	# set the index register
-	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
-#ifdef MIPS3
-	mtc0	t0, MACH_COP_0_TLB_LO0		# init low entry 0
-	mtc0	t1, MACH_COP_0_TLB_LO1		# init low entry 1
+	jr	s1
 	nop
-	nop
-	tlbwi					# Write the TLB entry.
-	nop
-	nop
-	nop
-	nop
-# now map the p_addr pages
-	andi	v0, MIPS3_PG_ASID
-	or	v0, s0
-	ori	t0, MIPS3_PG_G		# XXX set PG_G
-	ori	t1, MIPS3_PG_G		# XXX set PG_G
-	li	s1, MIPS3_PG_ODDPG
-	and	s1, v0				# does p_addr start on odd page
-	beq	s1, zero, 1f			# no, only one TLB entry needed
-# p_addr starts on an odd page, need to set up 2 TLB entries
-	addu	v0, v0, MIPS3_PG_ODDPG		# map second page
-# see if this address currently exists in TLB
-	mtc0	v0, MACH_COP_0_TLB_HI
-	nop
-	tlbp					# probe for existing entry
-	nop
-	mfc0	s1, MACH_COP_0_TLB_INDEX
-	slti	s1, s1, 8			# if found in random entry
-	bnez	s1, 2f
-	mtc0	zero, MACH_COP_0_TLB_LO0	# flush it
-	mtc0	zero, MACH_COP_0_TLB_LO1
-	li	s1, MACH_CACHED_MEMORY_ADDR
-	mtc0	s1, MACH_COP_0_TLB_HI
-	nop
-	tlbwi
-	nop
-	mtc0	v0, MACH_COP_0_TLB_HI		# restore high entry
-2:
-	mtc0	t1, MACH_COP_0_TLB_LO0		# even page to LO0
-	li	s1, MIPS3_PG_G		# XXX set PG_G
-	mtc0	s1, MACH_COP_0_TLB_LO1		# invalid page to LO1
-	li	s1, 2				# use TLB entry 2 for even page
-	mtc0	s1, MACH_COP_0_TLB_INDEX
-	nop
-	tlbwi					# write odd page TLB entry
-	move	t1, t0				# odd page to LO1
-	li	t0, MIPS3_PG_G		# XXX PG_G	# clear LO0
-	addi	v0, v0, -NBPG * 2		# backup to odd page mapping
-# set up TLB entry 1
-1:
-# see if this address currently exists in TLB
-	mtc0	v0, MACH_COP_0_TLB_HI
-	nop
-	tlbp					# probe for existing entry
-	nop
-	mfc0	s1, MACH_COP_0_TLB_INDEX
-	slti	s1, s1, 8			# if found in random entry
-	bnez	s1, 2f
-	mtc0	zero, MACH_COP_0_TLB_LO0	# flush it
-	mtc0	zero, MACH_COP_0_TLB_LO1
-	li	s1, MACH_CACHED_MEMORY_ADDR
-	mtc0	s1, MACH_COP_0_TLB_HI
-	nop
-	tlbwi
-	nop
-	mtc0	v0, MACH_COP_0_TLB_HI		# restore high entry
-2:
-	mtc0	t0, MACH_COP_0_TLB_LO0		# first page
-	mtc0	t1, MACH_COP_0_TLB_LO1		# second page
-	li	s1, 1				# use TLB entry 1
-	mtc0	s1, MACH_COP_0_TLB_INDEX
-	nop
-	tlbwi					# write TLB entry
-#else
-	mtc0	t0, MACH_COP_0_TLB_LOW		# init low entry
-	li	s1, 1 << VMMACH_TLB_INDEX_SHIFT
-	tlbwi					# Write the TLB entry.
-	addu	v0, v0, NBPG			# 2nd HI entry
-	mtc0	s1, MACH_COP_0_TLB_INDEX	# set the index register
-	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
-	mtc0	t1, MACH_COP_0_TLB_LOW		# init low entry
-	nop
-	tlbwi					# Write the TLB entry.
- # now map p_addr; may need to flush random TLB entries
-	andi	v0, VMMACH_TLB_PID		# mask PID
-	or	v0, s0				# insert p_addr
-	mtc0	v0, MACH_COP_0_TLB_HI
-	nop
-	tlbp					# probe for entry
-	nop
-	mfc0	s1, MACH_COP_0_TLB_INDEX	# see if we found it
-	bltz	s1, 1f				# not found
-	li	s1, MACH_CACHED_MEMORY_ADDR
-	mtc0	s1, MACH_COP_0_TLB_HI
-	mtc0	zero, MACH_COP_0_TLB_LOW
-	nop
-	tlbwi
-	nop
-	mtc0	v0, MACH_COP_0_TLB_HI		# restore High
-1:
-	li	s1, 2 << VMMACH_TLB_INDEX_SHIFT
-	mtc0	s1, MACH_COP_0_TLB_INDEX
-	mtc0	t0, MACH_COP_0_TLB_LOW
-	nop
-	tlbwi
-	addu	v0, v0, NBPG
-	mtc0	v0, MACH_COP_0_TLB_HI
-	nop
-	tlbp					# probe for entry
-	nop
-	mfc0	s1, MACH_COP_0_TLB_INDEX	# see if we found it
-	bltz	s1, 1f				# not found
-	li	s1, MACH_CACHED_MEMORY_ADDR
-	mtc0	s1, MACH_COP_0_TLB_HI
-	mtc0	zero, MACH_COP_0_TLB_LOW
-	nop
-	tlbwi
-	nop
-	mtc0	v0, MACH_COP_0_TLB_HI		# restore High
-1:
-	li	s1, 3 << VMMACH_TLB_INDEX_SHIFT
-	mtc0	s1, MACH_COP_0_TLB_INDEX
-	mtc0	t1, MACH_COP_0_TLB_LOW
-	nop
-	tlbwi
-#endif
-/*
- * Now running on new u struct.
- * Restore registers and return.
- */
-	lw	t0, _C_LABEL(curpcb)
-	nop
-	lw	v0, U_PCB_CONTEXT+44(t0)	# restore kernel context
-	lw	ra, U_PCB_CONTEXT+40(t0)
-	lw	s0, U_PCB_CONTEXT+0(t0)
-	lw	s1, U_PCB_CONTEXT+4(t0)
-	lw	s2, U_PCB_CONTEXT+8(t0)
-	lw	s3, U_PCB_CONTEXT+12(t0)
-	lw	s4, U_PCB_CONTEXT+16(t0)
-	lw	s5, U_PCB_CONTEXT+20(t0)
-	lw	s6, U_PCB_CONTEXT+24(t0)
-	lw	s7, U_PCB_CONTEXT+28(t0)
-	lw	sp, U_PCB_CONTEXT+32(t0)
-	lw	s8, U_PCB_CONTEXT+36(t0)
-	nop
-	mtc0	v0, MACH_COP_0_STATUS_REG
-	j	ra
-	li	v0, 1				# possible return to 'savectx()'
 END(cpu_switch)
 
 /*
@@ -1265,16 +1044,8 @@ LEAF(suiword)
 	sw	a1, 0(a0)			# store word
 	sw	zero, U_PCB_ONFAULT(v1)
 	move	v0, zero
-/* XXXX FIXME */
-#ifdef JONATHAN_BOTCHED_THIS
- 	b	_C_LABEL(MachFlushICache)	# NOTE: must not clobber v0!
-#else
-#ifdef MIPS3
-	b	_C_LABEL(mips3_FlushICache)	# NOTE: should not clobber v0!
-#else
-	b	_C_LABEL(mips1_FlushICache)	# NOTE: should not clobber v0!
-#endif
-#endif
+	lw	v1, _C_LABEL(mips_locore_jumpvec) + MIPSX_FLUSHICACHE
+	jr	v1				# NOTE: must not clobber v0!
 	li	a1, 4				# size of word
 END(suiword)
 
@@ -2069,40 +1840,32 @@ _C_LABEL(fpu_id):
 _C_LABEL(cpu_arch):
 	.word	0
 
-	.globl	_C_LABEL(machDataCacheSize)
-_C_LABEL(machDataCacheSize):
+	.globl	_C_LABEL(mips_L1DataCacheSize)
+_C_LABEL(mips_L1DataCacheSize):
 	.word	0
 
-	.globl	_C_LABEL(machInstCacheSize)
-_C_LABEL(machInstCacheSize):
+.globl	_C_LABEL(mips_L1InstCacheSize)
+_C_LABEL(mips_L1InstCacheSize):
 	.word	0
 
-	.globl	_C_LABEL(machPrimaryDataCacheSize)
-_C_LABEL(machPrimaryDataCacheSize):
+	.globl	_C_LABEL(mips_L1DataCacheLSize)
+_C_LABEL(mips_L1DataCacheLSize):
 	.word	0
 
-.globl	_C_LABEL(machPrimaryInstCacheSize)
-_C_LABEL(machPrimaryInstCacheSize):
+	.globl	_C_LABEL(mips_L1InstCacheLSize)
+_C_LABEL(mips_L1InstCacheLSize):
 	.word	0
 
-	.globl	_C_LABEL(machPrimaryDataCacheLSize)
-_C_LABEL(machPrimaryDataCacheLSize):
-	.word	0
-
-	.globl	_C_LABEL(machPrimaryInstCacheLSize)
-_C_LABEL(machPrimaryInstCacheLSize):
-	.word	0
-
-	.globl	_C_LABEL(machCacheAliasMask)
-_C_LABEL(machCacheAliasMask):
+	.globl	_C_LABEL(mips_CacheAliasMask)
+_C_LABEL(mips_CacheAliasMask):
 	.word 0
 
-	.globl	_C_LABEL(machSecondaryCacheSize)
-_C_LABEL(machSecondaryCacheSize):
+	.globl	_C_LABEL(mips_L2CacheSize)
+_C_LABEL(mips_L2CacheSize):
 	.word	0
 
-	.globl	_C_LABEL(machSecondaryCacheLSize)
-_C_LABEL(machSecondaryCacheLSize):
+	.globl	_C_LABEL(mips_L2CacheLSize)
+_C_LABEL(mips_L2CacheLSize):
 	.word	0
 
 /*

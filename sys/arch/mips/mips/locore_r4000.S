@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.32 1997/06/18 04:23:52 jonathan Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.33 1997/06/19 06:30:07 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1606,9 +1606,9 @@ END(mips3_TLBGetPID)
  *     	None.
  *
  * Side effects:
- *	The size of the data cache is stored into machPrimaryDataCacheSize.
- *	The size of instruction cache is stored into machPrimaryInstCacheSize.
- *	Alignment mask for cache aliasing test is stored in machCacheAliasMask.
+ *	The size of the data cache is stored into mips_L1DataCacheSize.
+ *	The size of instruction cache is stored into mips_L1InstCacheSize.
+ *	Alignment mask for cache aliasing test is stored in mips_CacheAliasMask.
  *
  *----------------------------------------------------------------------------
  */
@@ -1619,38 +1619,38 @@ LEAF(mips3_ConfigCache)
 	and	t1, 7				# ???
 	li	t2, 4096
 	sllv	t2, t2, t1
-	sw	t2, machPrimaryDataCacheSize
+	sw	t2, mips_L1DataCacheSize
 	addiu	t2, -1
 	and	t2, ~(NBPG - 1)
-	sw	t2, machCacheAliasMask
+	sw	t2, mips_CacheAliasMask
 
 	and	t2, v0, 0x20
 	srl	t2, t2, 1
 	addu	t2, t2, 16
-	sw	t2, machPrimaryDataCacheLSize
+	sw	t2, mips_L1DataCacheLSize
 
 	srl	t1, v0, 6			# Get I cache size.
 	and	t1, 7				# ???
 	li	t2, 4096
 	sllv	t2, t2, t1
-	sw	t2, machPrimaryInstCacheSize
+	sw	t2, mips_L1InstCacheSize
 
 	and	t2, v0, 0x10
 	addu	t2, t2, 16
-	sw	t2, machPrimaryInstCacheLSize
+	sw	t2, mips_L1InstCacheLSize
 
 	lui	t1, 2
 	and	t1, t1, v0
 	bne	t1, zero, 1f
 	nop
 	lui	t1, 0x10
-	sw	t1, machSecondaryCacheSize
+	sw	t1, mips_L2CacheSize
 	lui	t1, 0xc0
 	and	t1, t1, v0
 	srl	t1, 22
 	li	t2, 16
 	sllv	t2, t2, t1
-	sw	t2, machSecondaryCacheLSize
+	sw	t2, mips_L2CacheLSize
 1:
 	j	ra
 	nop
@@ -1671,10 +1671,10 @@ END(mips3_ConfigCache)
  *----------------------------------------------------------------------------
  */
 LEAF(mips3_FlushCache)
-	lw	t1, machPrimaryInstCacheSize
-	lw	t2, machPrimaryDataCacheSize
- #	lw	t3, machPrimaryInstCacheLSize
- #	lw	t4, machPrimaryDataCacheLSize
+	lw	t1, mips_L1InstCacheSize
+	lw	t2, mips_L1DataCacheSize
+ #	lw	t3, mips_L1InstCacheLSize
+ #	lw	t4, mips_L1DataCacheLSize
 /*
  * Flush the instruction cache.
  */
@@ -1712,7 +1712,7 @@ LEAF(mips3_FlushCache)
 	addu	t0, t0, 128
 
 #if 1
-	lw	t2, machSecondaryCacheSize
+	lw	t2, mips_L2CacheSize
 	beq	t2, zero, 2f
 	nop
 	li	t0, MACH_CACHED_MEMORY_ADDR
@@ -1792,7 +1792,7 @@ END(mips3_FlushICache)
  *----------------------------------------------------------------------------
  */
 LEAF(mips3_FlushDCache)
-	lw	a2, machPrimaryDataCacheSize
+	lw	a2, mips_L1DataCacheSize
 	addiu	a2, -1
 	move	t0, a0		# copy start address
 	and	a0, a0, a2	# get index into primary cache
@@ -1818,7 +1818,7 @@ LEAF(mips3_FlushDCache)
 	addu	a0, 128
 
 #if 1
-	lw	a2, machSecondaryCacheSize
+	lw	a2, mips_L2CacheSize
 	beq	a2, zero, 2f	# no secondary cache
 	addiu	a2, -1
 	and	t0,t0,a2	# secondary cache index
@@ -1941,7 +1941,7 @@ ALEAF(mips3_VCEI)	/* XXXX */
 	and	k0, -16
 	sw	k0, vce_savek0			# save virtual address
 	cache	1, 0(k0)			# writeback primary line
-	lw	k1, machPrimaryDataCacheSize
+	lw	k1, mips_L1DataCacheSize
 	addiu	k1, -1
 	and	k0, k0, k1			# mask to cache index
 	or	k0, 0x80000000			# physical K0SEG address
@@ -2089,6 +2089,155 @@ LEAF(mips3_proc_trampoline)
 	eret
 	.set	at
 END(mips3_proc_trampoline)
+
+/*
+ * mips3_switch_exit(struct proc *)
+ * Make the named process exit.  Switch SP to nullproc stack, free the
+ * exiting proc's USPACE, then jump into the middle of cpu_switch().
+ * MUST BE CALLED AT SPLHIGH.
+ */
+LEAF(mips3_switch_exit)
+	la	v1, _C_LABEL(nullproc)		# !! SP runs on p->p_addr !!
+	lw	t0, P_MD_UPTE+0(v1)		# t0 = first u. pte
+	lw	t1, P_MD_UPTE+4(v1)		# t1 = 2nd u. pte
+	li	v0, MACH_CACHED_MEMORY_ADDR	# clear wired entries for pcb
+	mtc0	v0, MACH_COP_0_TLB_HI
+	mtc0	zero, MACH_COP_0_TLB_LO0
+	mtc0	zero, MACH_COP_0_TLB_LO1
+	li	v0, 1				# clear wired entry 1
+	mtc0	v0, MACH_COP_0_TLB_INDEX
+	tlbwi
+	li	v0, 2				# clear wired entry 2
+	mtc0	v0, MACH_COP_0_TLB_INDEX
+	tlbwi
+	li	v0, UADDR			# still using UADDR for kstack
+	nop
+	mtc0	zero, MACH_COP_0_TLB_INDEX	# set the index register
+	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
+	mtc0	t0, MACH_COP_0_TLB_LO0		# init low entry 0
+	mtc0	t1, MACH_COP_0_TLB_LO1		# init low entry 1
+	nop
+	tlbwi					# Write the TLB entry.
+
+	addu	sp, v0, USPACE - START_FRAME
+	li	a2, USPACE
+	lw	a1, P_ADDR(a0)
+	lw	a0, kernel_map
+	la	ra, sw1				# goto cpu_switch()
+	j	kmem_free			# free exiting USPACE
+END(mips3_switch_exit)
+
+/*
+ * Resume process indicated by the pte's for its u struct
+ * NOTE: This is hard coded to UPAGES == 2.
+ * Also, there should be no TLB faults at this point.
+ */
+/*
+ * XXXX - almost done with the UADDR mapping; only the kernel stack should
+ * now be using UADDR.  The first TLB entries (one one on the R4000) is used
+ * to map UADDR to the u-area.  Then the following TLB entries are used to
+ * map the current u-area.  This gets nasty on the R4000:  it can take one
+ * or two TLB entries to map the u-area, depending upon whether the u-area
+ * begins on an even or odd page.  Also, any current mapping for the u-area
+ * address space needs to be flushed as well.
+ */
+LEAF(mips3_cpu_switch_resume)
+	mtc0	zero, MACH_COP_0_TLB_INDEX	# set the index register
+	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
+	mtc0	t0, MACH_COP_0_TLB_LO0		# init low entry 0
+	mtc0	t1, MACH_COP_0_TLB_LO1		# init low entry 1
+	nop
+	nop
+	tlbwi					# Write the TLB entry.
+	nop
+	nop
+	nop
+	nop
+# now map the p_addr pages
+	andi	v0, PG_ASID
+	or	v0, s0
+	ori	t0, MIPS3_PG_G		# XXX set PG_G
+	ori	t1, MIPS3_PG_G		# XXX set PG_G
+	li	s1, MIPS3_PG_ODDPG
+	and	s1, v0				# does p_addr start on odd page
+	beq	s1, zero, 1f			# no, only one TLB entry needed
+# p_addr starts on an odd page, need to set up 2 TLB entries
+	addu	v0, v0, MIPS3_PG_ODDPG		# map second page
+# see if this address currently exists in TLB
+	mtc0	v0, MACH_COP_0_TLB_HI
+	nop
+	tlbp					# probe for existing entry
+	nop
+	mfc0	s1, MACH_COP_0_TLB_INDEX
+	slti	s1, s1, 8			# if found in random entry
+	bnez	s1, 2f
+	mtc0	zero, MACH_COP_0_TLB_LO0	# flush it
+	mtc0	zero, MACH_COP_0_TLB_LO1
+	li	s1, MACH_CACHED_MEMORY_ADDR
+	mtc0	s1, MACH_COP_0_TLB_HI
+	nop
+	tlbwi
+	nop
+	mtc0	v0, MACH_COP_0_TLB_HI		# restore high entry
+2:
+	mtc0	t1, MACH_COP_0_TLB_LO0		# even page to LO0
+	li	s1, MIPS3_PG_G		# XXX set PG_G
+	mtc0	s1, MACH_COP_0_TLB_LO1		# invalid page to LO1
+	li	s1, 2				# use TLB entry 2 for even page
+	mtc0	s1, MACH_COP_0_TLB_INDEX
+	nop
+	tlbwi					# write odd page TLB entry
+	move	t1, t0				# odd page to LO1
+	li	t0, MIPS3_PG_G		# XXX PG_G	# clear LO0
+	addi	v0, v0, -NBPG * 2		# backup to odd page mapping
+# set up TLB entry 1
+1:
+# see if this address currently exists in TLB
+	mtc0	v0, MACH_COP_0_TLB_HI
+	nop
+	tlbp					# probe for existing entry
+	nop
+	mfc0	s1, MACH_COP_0_TLB_INDEX
+	slti	s1, s1, 8			# if found in random entry
+	bnez	s1, 2f
+	mtc0	zero, MACH_COP_0_TLB_LO0	# flush it
+	mtc0	zero, MACH_COP_0_TLB_LO1
+	li	s1, MACH_CACHED_MEMORY_ADDR
+	mtc0	s1, MACH_COP_0_TLB_HI
+	nop
+	tlbwi
+	nop
+	mtc0	v0, MACH_COP_0_TLB_HI		# restore high entry
+2:
+	mtc0	t0, MACH_COP_0_TLB_LO0		# first page
+	mtc0	t1, MACH_COP_0_TLB_LO1		# second page
+	li	s1, 1				# use TLB entry 1
+	mtc0	s1, MACH_COP_0_TLB_INDEX
+	nop
+	tlbwi					# write TLB entry
+/*
+ * Now running on new u struct.
+ * Restore registers and return.
+ */
+	lw	t0, _C_LABEL(curpcb)
+	nop
+	lw	v0, U_PCB_CONTEXT+44(t0)	# restore kernel context
+	lw	ra, U_PCB_CONTEXT+40(t0)
+	lw	s0, U_PCB_CONTEXT+0(t0)
+	lw	s1, U_PCB_CONTEXT+4(t0)
+	lw	s2, U_PCB_CONTEXT+8(t0)
+	lw	s3, U_PCB_CONTEXT+12(t0)
+	lw	s4, U_PCB_CONTEXT+16(t0)
+	lw	s5, U_PCB_CONTEXT+20(t0)
+	lw	s6, U_PCB_CONTEXT+24(t0)
+	lw	s7, U_PCB_CONTEXT+28(t0)
+	lw	sp, U_PCB_CONTEXT+32(t0)
+	lw	s8, U_PCB_CONTEXT+36(t0)
+	nop
+	mtc0	v0, MACH_COP_0_STATUS_REG
+	j	ra
+	li	v0, 1				# possible return to 'savectx()'
+END(mips3_cpu_switch_resume)
 
 /*----------------------------------------------------------------------------
  *
