@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.46 2003/10/01 02:01:20 petrov Exp $ */
+/*	$NetBSD: intr.c,v 1.47 2003/11/09 16:41:52 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.46 2003/10/01 02:01:20 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.47 2003/11/09 16:41:52 martin Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -313,7 +313,7 @@ softintr_establish(level, fun, arg)
 	struct intrhand *ih;
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, 0);
-	bzero(ih, sizeof(*ih));
+	memset(ih, 0, sizeof(*ih));
 	ih->ih_fun = (int (*) __P((void *)))fun;	/* XXX */
 	ih->ih_arg = arg;
 	ih->ih_pil = level;

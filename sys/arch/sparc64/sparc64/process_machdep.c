@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.15 2003/10/03 07:50:12 petrov Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.16 2003/11/09 16:41:53 martin Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15 2003/10/03 07:50:12 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16 2003/11/09 16:41:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 		/* NOTE: struct fpreg == struct fpstate */
 		if (l->l_md.md_fpstate)
 			statep = l->l_md.md_fpstate;
-		bcopy(statep, regs, sizeof(struct fpreg64));
+		memcpy(regs, statep, sizeof(struct fpreg64));
 		return 0;
 	}
 #endif
@@ -242,7 +242,7 @@ process_write_fpregs(struct lwp *l, struct fpreg *regs)
 			return EINVAL;
 
 		/* NOTE: struct fpreg == struct fpstate */
-		bcopy(regs, l->l_md.md_fpstate, sizeof(struct fpreg64));
+		memcpy(l->l_md.md_fpstate, regs, sizeof(struct fpreg64));
 		statep = l->l_md.md_fpstate;
 		statep->fs_qsize = 0;
 		return 0;

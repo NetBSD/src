@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.17 2003/10/26 08:05:27 christos Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.18 2003/11/09 16:41:53 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.17 2003/10/26 08:05:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.18 2003/11/09 16:41:53 martin Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -186,7 +186,7 @@ svr4_32_getmcontext(l, mc, flags)
 	 * Get the floating point registers
 	 */
 	/* Note: copies only pre-v9 floating point registers. */
-	bcopy(fps->fs_regs, f->fpu_regs, sizeof(f->fpu_regs));
+	memcpy(f->fpu_regs, fps->fs_regs, sizeof(f->fpu_regs));
 	f->fp_nqsize = sizeof(struct fp_qentry);
 	f->fp_nqel = fps->fs_qsize;
 	f->fp_fsr = fps->fs_fsr;
@@ -316,7 +316,7 @@ svr4_32_setmcontext(l, mc, flags)
 			return EINVAL;
 		}
 		/* Note: touches only pre-v9 floating point registers. */
-		bcopy(f->fpu_regs, fps->fs_regs, sizeof(f->fpu_regs));
+		memcpy(fps->fs_regs, f->fpu_regs, sizeof(f->fpu_regs));
 		fps->fs_qsize = f->fp_nqel;
 		fps->fs_fsr = f->fp_fsr;
 		if (f->fp_q != 0) {
