@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.44 2001/10/22 08:00:12 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.45 2002/02/23 17:18:55 scw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -412,7 +412,8 @@ clockattach(node, bt, bh)
 #endif
 
 	/* Our TOD clock year 0 is 1968 */
-	if ((todr_handle = mk48txx_attach(bt, bh, model, 1968)) == NULL)
+	todr_handle = mk48txx_attach(bt, bh, model, 1968, NULL, NULL);
+	if (todr_handle == NULL)
 		panic("Can't attach %s tod clock", model);
 
 #define IDPROM_OFFSET (8*1024 - 40)	/* XXX - get nvram sz from driver */
