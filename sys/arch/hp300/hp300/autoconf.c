@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.66 2003/08/07 16:27:35 agc Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.67 2003/11/08 11:18:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.66 2003/08/07 16:27:35 agc Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.67 2003/11/08 11:18:33 tsutsui Exp $");                                                  
 
 #include "hil.h"
 #include "dvbox.h"
@@ -152,9 +152,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.66 2003/08/07 16:27:35 agc Exp $");
 #include "rbox.h"
 #include "rbox.h"
 #include "topcat.h"
-#include "dca.h"
+#include "com_dio.h"
+#include "com_frodo.h"
 #include "dcm.h"
-#include "apci.h"
 #include "ite.h"
 
 #include <sys/param.h>
@@ -198,11 +198,15 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.66 2003/08/07 16:27:35 agc Exp $");
 
 #include <hp300/dev/hpibvar.h>
 
+#if NCOM_DIO > 0
+#include <hp300/dev/com_diovar.h>
+#endif
+#if NCOM_FRODO > 0
+#include <hp300/dev/com_frodovar.h>
+#endif
 
 /* should go away with a cleanup */
-extern int dcacnattach(bus_space_tag_t, bus_addr_t, int);
 extern int dcmcnattach(bus_space_tag_t, bus_addr_t, int);
-extern int apcicnattach(bus_space_tag_t, bus_addr_t, int);
 extern int dvboxcnattach(bus_space_tag_t, bus_addr_t, int);
 extern int gboxcnattach(bus_space_tag_t, bus_addr_t, int);
 extern int rboxcnattach(bus_space_tag_t, bus_addr_t, int);
@@ -829,12 +833,12 @@ hp300_cninit()
 	/*
 	 * Look for serial consoles first.
 	 */
-#if NAPCI > 0
-	if (!apcicnattach(bst, 0x1c020, -1))
+#if NCOM_FRODO > 0
+	if (!com_frodo_cnattach(bst, 0x1c020, -1))
 		return;
 #endif
-#if NDCA > 0
-	if (!dio_scan(dcacnattach))
+#if NCOM_DIO > 0
+	if (!dio_scan(com_dio_cnattach))
 		return;
 #endif
 #if NDCM > 0
