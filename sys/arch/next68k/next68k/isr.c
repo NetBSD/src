@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.19 2003/10/01 00:07:48 mycroft Exp $ */
+/*	$NetBSD: isr.c,v 1.20 2005/01/19 01:58:21 chs Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.19 2003/10/01 00:07:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.20 2005/01/19 01:58:21 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,16 +82,16 @@ struct	evcnt next68k_irq_evcnt[] = {
 };
 
 extern	int intrcnt[];		/* from locore.s. XXXSCW: will go away soon */
-extern	void (*vectab[]) __P((void));
-extern	void badtrap __P((void));
-extern	void intrhand_vectored __P((void));
+extern	void (*vectab[])(void);
+extern	void badtrap(void);
+extern	void intrhand_vectored(void);
 
 #if 0
-static	int spurintr __P((void *));
+static	int spurintr(void *);
 #endif
 
 void
-isrinit()
+isrinit(void)
 {
 	int i;
 
@@ -113,12 +113,8 @@ isrinit()
  * Called by driver attach functions.
  */
 void
-isrlink_autovec(func, arg, ipl, priority, evcnt)
-	int (*func) __P((void *));
-	void *arg;
-	int ipl;
-	int priority;
-	struct evcnt *evcnt;
+isrlink_autovec(int (*func)(void *), void *arg, int ipl, int priority,
+    struct evcnt *evcnt)
 {
 	struct isr_autovec *newisr, *curisr;
 	isr_autovec_list_t *list;
@@ -192,11 +188,8 @@ isrlink_autovec(func, arg, ipl, priority, evcnt)
  * Called by bus interrupt establish functions.
  */
 void
-isrlink_vectored(func, arg, ipl, vec, evcnt)
-	int (*func) __P((void *));
-	void *arg;
-	int ipl, vec;
-	struct evcnt *evcnt;
+isrlink_vectored(int (*func)(void *), void *arg, int ipl, int vec,
+    struct evcnt *evcnt)
 {
 	struct isr_vectored *isr;
 
@@ -229,8 +222,7 @@ isrlink_vectored(func, arg, ipl, vec, evcnt)
  * the specified ipl.
  */
 struct evcnt *
-isrlink_evcnt(ipl)
-	int ipl;
+isrlink_evcnt(int ipl)
 {
 
 #ifdef DIAGNOSTIC
@@ -246,8 +238,7 @@ isrlink_evcnt(ipl)
  * Unhook a vectored interrupt.
  */
 void
-isrunlink_vectored(vec)
-	int vec;
+isrunlink_vectored(int vec)
 {
 
 #ifdef DIAGNOSTIC
@@ -267,8 +258,7 @@ isrunlink_vectored(vec)
  * assembly language autovectored interrupt routine.
  */
 void
-isrdispatch_autovec(frame)
-	struct clockframe *frame;
+isrdispatch_autovec(struct clockframe *frame)
 {
 	struct isr_autovec *isr;
 	isr_autovec_list_t *list;
@@ -359,9 +349,7 @@ isrdispatch_autovec(frame)
  * assembly language vectored interrupt routine.
  */
 void
-isrdispatch_vectored(ipl, frame)
-	int ipl;
-	struct clockframe *frame;
+isrdispatch_vectored(int ipl, struct clockframe *frame)
 {
 	struct isr_vectored *isr;
 	int vec;
@@ -404,7 +392,7 @@ isrdispatch_vectored(ipl, frame)
  */
 
 void
-netintr()
+netintr(void)
 {
 	int n, s;
 

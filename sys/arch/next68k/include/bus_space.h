@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.10 2003/10/01 01:25:06 mycroft Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.11 2005/01/19 01:58:21 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -117,8 +117,8 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_free(t, h, s)
 
 /*
- *	paddr_t bus_space_mmap __P((bus_space_tag_t t, bus_addr_t base,
- *	    off_t offset, int prot, int flags));
+ *	paddr_t bus_space_mmap(bus_space_tag_t t, bus_addr_t base,
+ *	    off_t offset, int prot, int flags);
  *
  * Mmap an area of bus space.
  */
@@ -132,8 +132,8 @@ typedef u_long	bus_space_handle_t;
 		m68k_btop((t)+((a)-COLORBASE)) : (-1))))
 
 /*
- *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset));
+ *	u_intN_t bus_space_read_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset);
  *
  * Read a 1, 2, 4, or 8 byte quantity from bus space
  * described by tag/handle/offset.
@@ -153,9 +153,9 @@ typedef u_long	bus_space_handle_t;
 #endif
 
 /*
- *	void bus_space_read_multi_N __P((bus_space_tag_t tag,
+ *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count));
+ *	    u_intN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle/offset and copy into buffer provided.
@@ -208,9 +208,9 @@ typedef u_long	bus_space_handle_t;
 #endif
 
 /*
- *	void bus_space_read_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_read_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count));
+ *	    u_intN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle and starting at `offset' and copy into
@@ -264,9 +264,9 @@ typedef u_long	bus_space_handle_t;
 #endif
 
 /*
- *	void bus_space_write_N __P((bus_space_tag_t tag,
+ *	void bus_space_write_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t value));
+ *	    u_intN_t value);
  *
  * Write the 1, 2, 4, or 8 byte value `value' to bus space
  * described by tag/handle/offset.
@@ -286,9 +286,9 @@ typedef u_long	bus_space_handle_t;
 #endif
 
 /*
- *	void bus_space_write_multi_N __P((bus_space_tag_t tag,
+ *	void bus_space_write_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count));
+ *	    const u_intN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer
  * provided to bus space described by tag/handle/offset.
@@ -342,9 +342,9 @@ typedef u_long	bus_space_handle_t;
 #endif
 
 /*
- *	void bus_space_write_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_write_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count));
+ *	    const u_intN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
  * to bus space described by tag/handle starting at `offset'.
@@ -398,9 +398,9 @@ typedef u_long	bus_space_handle_t;
 #endif
 
 /*
- *	void bus_space_set_multi_N __P((bus_space_tag_t tag,
+ *	void bus_space_set_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
- *	    size_t count));
+ *	    size_t count);
  *
  * Write the 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle/offset `count' times.
@@ -454,9 +454,9 @@ typedef u_long	bus_space_handle_t;
 #endif
 
 /*
- *	void bus_space_set_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_set_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
- *	    size_t count));
+ *	    size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle starting at `offset'.
@@ -510,10 +510,10 @@ typedef u_long	bus_space_handle_t;
 #endif
 
 /*
- *	void bus_space_copy_N __P((bus_space_tag_t tag,
+ *	void bus_space_copy_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh1, bus_size_t off1,
  *	    bus_space_handle_t bsh2, bus_size_t off2,
- *	    size_t count));
+ *	    size_t count);
  *
  * Copy `count' 1, 2, 4, or 8 byte values from bus space starting
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
@@ -521,10 +521,10 @@ typedef u_long	bus_space_handle_t;
 
 #define	__NEXT68K_copy_region_N(BYTES)					\
 static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
-	__P((bus_space_tag_t,						\
-	    bus_space_handle_t bsh1, bus_size_t off1,			\
-	    bus_space_handle_t bsh2, bus_size_t off2,			\
-	    bus_size_t count));						\
+	(bus_space_tag_t,						\
+	 bus_space_handle_t, bus_size_t,				\
+	 bus_space_handle_t, bus_size_t,				\
+	 bus_size_t);							\
 									\
 static __inline void							\
 __CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
@@ -559,9 +559,9 @@ __NEXT68K_copy_region_N(4)
 /*
  * Bus read/write barrier methods.
  *
- *	void bus_space_barrier __P((bus_space_tag_t tag,
+ *	void bus_space_barrier(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    bus_size_t len, int flags));
+ *	    bus_size_t len, int flags);
  *
  * Note: the 680x0 does not currently require barriers, but we must
  * provide the flags to MI code.
