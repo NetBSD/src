@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.12.2.2 1999/02/25 03:55:04 chs Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.12.2.3 1999/05/30 14:56:33 chs Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -457,6 +457,7 @@ int lockpausetime = 0;
 struct ctldebug debug2 = { "lockpausetime", &lockpausetime };
 int simplelockrecurse;
 LIST_HEAD(slocklist, simplelock) slockdebuglist;
+int simple_lock_debugger = 0;
 
 /*
  * Simple lock functions so that the debugger can see from whence
@@ -498,6 +499,9 @@ _simple_lock(alp, id, l)
 			BACKTRACE(curproc);
 #endif
 		}
+		if (simple_lock_debugger) {
+			Debugger();
+		}
 		return;
 	}
 
@@ -533,6 +537,9 @@ _simple_lock_try(alp, id, l)
 #ifdef BACKTRACE
 			BACKTRACE(curproc);
 #endif
+		}
+		if (simple_lock_debugger) {
+			Debugger();
 		}
 		return (0);
 	}
@@ -574,6 +581,9 @@ _simple_unlock(alp, id, l)
 #ifdef BACKTRACE
 			BACKTRACE(curproc);
 #endif
+		}
+		if (simple_lock_debugger) {
+			Debugger();
 		}
 		return;
 	}
