@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 1996/10/13 02:59:38 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 1996/10/15 23:27:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -934,7 +934,6 @@ dumpconf()
 
 bad:
 	dumpsize = 0;
-	dumplo = -1;
 	return;
 }
 
@@ -965,7 +964,7 @@ dumpsys()
 	 */
 	if (dumpsize == 0)
 		dumpconf();
-	if (dumplo < 0) {
+	if (dumplo <= 0) {
 		printf("\ndump to dev %x not possible\n", dumpdev);
 		return;
 	}
