@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.171 2002/04/17 14:04:16 shell Exp $
+.\"	$NetBSD: main,v 1.172 2002/04/19 23:03:09 schmonz Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1647,6 +1647,7 @@ them, and would like to mentioned, tell us!)
 .It Ta SATO Kazumi Ta Mt sato@netbsd.org
 .It Ta Matthias Scheler Ta Mt tron@netbsd.org
 .It Ta Karl Schilke (rAT) Ta Mt rat@netbsd.org
+.It Ta Amitai Schlair Ta Mt schmonz@netbsd.org
 .It Ta Konrad Schroder Ta Mt perseant@netbsd.org
 .It Ta Reed Shadgett Ta Mt dent@netbsd.org
 .It Ta Tim Shepard Ta Mt shep@netbsd.org
