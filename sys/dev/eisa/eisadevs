@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.25 2002/11/16 10:03:32 tsutsui Exp $
+$NetBSD: eisadevs,v 1.26 2003/03/22 14:30:48 jdolecek Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -176,3 +176,4 @@ product	TCM 5920 	3C592 Etherlink III
 product	TCM 5970 	3C597 Fast Etherlink TX
 product	TCM 5971 	3C597 Fast Etherlink T4 
 product	TCM 5972 	3C597 Fast Etherlink MII 
+product	TCM 6790	3C679 Tokenlink III 16/4
