@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.80 1998/09/11 13:25:20 pk Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.81 1998/09/18 18:48:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -126,6 +126,19 @@ sigaction1(p, signum, nsa, osa)
 				p->p_flag |= P_NOCLDSTOP;
 			else
 				p->p_flag &= ~P_NOCLDSTOP;
+			if (sa->sa_flags & SA_NOCLDWAIT) {
+				/*
+				 * Paranoia: since SA_NOCLDWAIT is implemented
+				 * by reparenting the dying child to PID 1 (and
+				 * trust it to reap the zombie), PID 1 itself is
+				 * forbidden to set SA_NOCLDWAIT.
+				 */
+				if (p->p_pid == 1)
+					p->p_flag &= ~P_NOCLDWAIT;
+				else
+					p->p_flag |= P_NOCLDWAIT;
+			} else
+				p->p_flag &= ~P_NOCLDWAIT;
 		}
 		if ((nsa->sa_flags & SA_NODEFER) == 0)
 			sigaddset(&ps->ps_sigact[signum].sa_mask, signum);
