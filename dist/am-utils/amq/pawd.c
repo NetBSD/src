@@ -1,4 +1,5 @@
-/*	$NetBSD: pawd.c,v 1.1.1.1 2000/06/07 00:52:23 dogcow Exp $ */
+/*	$NetBSD: pawd.c,v 1.1.1.2 2000/11/19 23:42:57 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: pawd.c,v 1.6 2000/01/12 16:44:37 ezk Exp 
+ * Id: pawd.c,v 1.6 2000/01/12 16:44:37 ezk Exp
  *
  */
 

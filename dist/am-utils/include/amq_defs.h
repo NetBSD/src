@@ -1,4 +1,5 @@
-/*	$NetBSD: amq_defs.h,v 1.1.1.1 2000/06/07 00:52:21 dogcow Exp $ */
+/*	$NetBSD: amq_defs.h,v 1.1.1.2 2000/11/19 23:43:01 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amq_defs.h,v 1.4 2000/01/12 16:45:05 ezk Exp 
+ * Id: amq_defs.h,v 1.4 2000/01/12 16:45:05 ezk Exp
  *
  */
 

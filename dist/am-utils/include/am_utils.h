@@ -1,4 +1,5 @@
-/*	$NetBSD: am_utils.h,v 1.1.1.1 2000/06/07 00:52:21 dogcow Exp $ */
+/*	$NetBSD: am_utils.h,v 1.1.1.2 2000/11/19 23:42:59 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: am_utils.h,v 1.9 2000/02/07 08:35:27 ezk Exp 
+ * Id: am_utils.h,v 1.11 2000/02/16 05:18:05 ezk Exp
  *
  */
 
@@ -916,14 +917,17 @@ extern am_ops autofs_ops;	/* (Sun) Autofs FS */
 # define	D_FORK		0x0080	/* Fork server */
 		/* info service specific debugging (hesiod, nis, etc) */
 # define	D_INFO		0x0100
+# define	D_HRTIME	0x0200	/* Print high resolution time stamps */
+# define	D_XDRTRACE	0x0400	/* Trace xdr routines */
+# define	D_READDIR	0x0800	/* show browsable_dir progress */
 
 /*
- * Normally, don't enter daemon mode, and don't register amq
+ * Normally, don't enter daemon mode, don't register amq, and don't trace xdr
  */
 #  ifdef DEBUG_MEM
-# define	D_TEST	(~(D_DAEMON|D_MEM|D_STR))
+# define	D_TEST	(~(D_DAEMON|D_MEM|D_STR|D_XDRTRACE))
 #  else /* not DEBUG_MEM */
-# define	D_TEST	(~(D_DAEMON|D_STR))
+# define	D_TEST	(~(D_DAEMON|D_STR|D_XDRTRACE))
 #  endif /* not DEBUG_MEM */
 
 # define	amuDebug(x)	if (debug_flags & (x))

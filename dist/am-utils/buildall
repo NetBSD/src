@@ -10,13 +10,13 @@
 ##############################################################################
 # first test if we are in the right directory to run this script
 # change to the right directory
-test -f ../aux/config.guess && cd ..
-test -f ../../aux/config.guess && cd ../..
+test -f ../config.guess && cd ..
+test -f ../../config.guess && cd ../..
 pwd=`pwd`
-host_alias=`(cd /tmp; $pwd/aux/config.guess.long)`
+host_alias=`(cd /tmp; $pwd/config.guess.long)`
 if test -z "$host_alias" ; then
 	echo "$0: must run from the source or the A. directory."
-	echo "$0: cannot find $pwd/aux/config.guess"
+	echo "$0: cannot find $pwd/config.guess"
 	exit 1
 else
 	:
@@ -175,7 +175,14 @@ case "$1" in
     ;;
 
     -K )
-	mkcnf_cmd="../aux/mkconf"
+#	mkcnf_cmd="../aux/mkconf"
+	mkcnf_cmd="../bootstrap"
+	if test -f bootstrap ; then
+	    :
+	else
+	    echo "am-utils maintainer option only!"
+	    exit 1
+	fi
 	default=no
 	shift
     ;;
