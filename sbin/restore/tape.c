@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.46 2002/05/25 23:45:14 wiz Exp $	*/
+/*	$NetBSD: tape.c,v 1.47 2003/03/27 14:11:51 taca Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.46 2002/05/25 23:45:14 wiz Exp $");
+__RCSID("$NetBSD: tape.c,v 1.47 2003/03/27 14:11:51 taca Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,9 @@ static int	tpblksread = 0;		/* TP_BSIZE blocks read */
 static int	tapesread;
 static jmp_buf	restart;
 static int	gettingfile = 0;	/* restart has a valid frame */
+#ifdef RRESTORE
 static char	*host = NULL;
+#endif
 
 static int	ofile;
 static char	*map;
