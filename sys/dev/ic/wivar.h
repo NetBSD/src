@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.30 2003/03/27 04:53:52 dyoung Exp $	*/
+/*	$NetBSD: wivar.h,v 1.31 2003/05/13 06:33:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -63,6 +63,8 @@ struct wi_softc	{
 	int			sc_flags;
 	int			sc_bap_id;
 	int			sc_bap_off;
+
+	u_int16_t		sc_portnum;
 
 	u_int16_t		sc_dbm_adjust;
 	u_int16_t		sc_max_datalen;
