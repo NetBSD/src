@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/10/25 09:27:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 1998/02/19 02:17:06 cgd Exp $
 
 LIB=	io
 
@@ -14,6 +14,6 @@ outfloat.c str.cc stdfiles.c strops.c
 CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../include 
 CPPFLAGS+=	-I$(.CURDIR)
 NOMAN=		noman
-NOLINT=		nolint
+NOLINT=		nolint (c++)
 
 .include <bsd.lib.mk>
