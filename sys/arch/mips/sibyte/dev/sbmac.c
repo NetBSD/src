@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.16 2004/03/18 06:30:03 cgd Exp $ */
+/* $NetBSD: sbmac.c,v 1.17 2004/03/18 06:59:30 cgd Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.16 2004/03/18 06:30:03 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.17 2004/03/18 06:59:30 cgd Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -126,8 +126,9 @@ typedef enum { sbmac_state_uninit, sbmac_state_off, sbmac_state_on,
 
 #define	PKSEG1(x) ((sbmac_port_t) MIPS_PHYS_TO_KSEG1(x))
 
-#define	SBMAC_MAX_TXDESCR	64
-#define	SBMAC_MAX_RXDESCR	64
+/* These are limited to fit within one virtual page.  */
+#define	SBMAC_MAX_TXDESCR	256		/* should be 1024 */
+#define	SBMAC_MAX_RXDESCR	256		/* should be 512 */
 
 #define	ETHER_ALIGN	2
 
