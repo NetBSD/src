@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.8 2003/05/10 01:51:56 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.9 2003/05/10 15:25:19 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.8 2003/05/10 01:51:56 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.9 2003/05/10 15:25:19 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,15 +114,15 @@ static void	igsfb_blank_screen(struct igsfb_devconfig *, int);
 static int	igsfb_get_cmap(struct igsfb_devconfig *,
 			       struct wsdisplay_cmap *);
 static int	igsfb_set_cmap(struct igsfb_devconfig *,
-			       struct wsdisplay_cmap *);
+			       const struct wsdisplay_cmap *);
 static void	igsfb_update_cmap(struct igsfb_devconfig *, u_int, u_int);
 static void	igsfb_set_curpos(struct igsfb_devconfig *,
-				 struct wsdisplay_curpos *);
+				 const struct wsdisplay_curpos *);
 static void	igsfb_update_curpos(struct igsfb_devconfig *);
 static int	igsfb_get_cursor(struct igsfb_devconfig *,
 				 struct wsdisplay_cursor *);
 static int	igsfb_set_cursor(struct igsfb_devconfig *,
-				 struct wsdisplay_cursor *);
+				 const struct wsdisplay_cursor *);
 static void	igsfb_update_cursor(struct igsfb_devconfig *, u_int);
 static void	igsfb_convert_cursor_data(struct igsfb_devconfig *,
 					  u_int, u_int);
@@ -599,7 +599,7 @@ igsfb_get_cmap(dc, p)
 static int
 igsfb_set_cmap(dc, p)
 	struct igsfb_devconfig *dc;
-	struct wsdisplay_cmap *p;
+	const struct wsdisplay_cmap *p;
 {
 	u_int index = p->index, count = p->count;
 
@@ -660,19 +660,16 @@ igsfb_update_cmap(dc, index, count)
 static void
 igsfb_set_curpos(dc, curpos)
 	struct igsfb_devconfig *dc;
-	struct wsdisplay_curpos *curpos;
+	const struct wsdisplay_curpos *curpos;
 {
 	struct rasops_info *ri = &dc->dc_ri;
-	int x = curpos->x, y = curpos->y;
+	u_int x = curpos->x, y = curpos->y;
 
-	if (y < 0)
-		y = 0;
-	else if (y > ri->ri_height)
-		y = ri->ri_height;
-	if (x < 0)
-		x = 0;
-	else if (x > ri->ri_width)
-		x = ri->ri_width;
+	if (x >= ri->ri_width)
+		x = ri->ri_width - 1;
+	if (y >= ri->ri_height)
+		y = ri->ri_height - 1;
+
 	dc->dc_cursor.cc_pos.x = x;
 	dc->dc_cursor.cc_pos.y = y;
 
@@ -735,25 +732,29 @@ igsfb_get_cursor(dc, p)
 static int
 igsfb_set_cursor(dc, p)
 	struct igsfb_devconfig *dc;
-	struct wsdisplay_cursor *p;
+	const struct wsdisplay_cursor *p;
 {
 	struct igs_hwcursor *cc;
+	struct wsdisplay_curpos pos, hot;
 	u_int v, index, count, icount, iwidth;
 
 	cc = &dc->dc_cursor;
 	v = p->which;
 
+	/* verify that the new cursor colormap is valid */
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		index = p->cmap.index;
 		count = p->cmap.count;
 		if (index >= 2 || (index + count) > 2)
 			return (EINVAL);
+
 		if (!uvm_useracc(p->cmap.red, count, B_READ)
 		    || !uvm_useracc(p->cmap.green, count, B_READ)
 		    || !uvm_useracc(p->cmap.blue, count, B_READ))
 			return (EFAULT);
 	}
 
+	/* verify that the new cursor data are valid */
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		if (p->size.x > IGS_CURSOR_MAX_SIZE
 		    || p->size.y > IGS_CURSOR_MAX_SIZE)
@@ -766,18 +767,45 @@ igsfb_set_cursor(dc, p)
 			return (EFAULT);
 	}
 
-	/* XXX: verify that hot is within size, pos within screen? */
+	/* enforce that the position is within screen bounds */
+	if (v & WSDISPLAY_CURSOR_DOPOS) {
+		struct rasops_info *ri = &dc->dc_ri;
 
-	/* arguments verified, do the processing */
+		pos = p->pos;	/* local copy we can write to */
+		if (pos.x >= ri->ri_width)
+			pos.x = ri->ri_width - 1;
+		if (pos.y >= ri->ri_height)
+			pos.y = ri->ri_height - 1;
+	}
 
+	/* enforce that the hot spot is within sprite bounds */
+	if (v & WSDISPLAY_CURSOR_DOHOT)
+		hot = p->hot;	/* local copy we can write to */
+
+	if (v & (WSDISPLAY_CURSOR_DOHOT | WSDISPLAY_CURSOR_DOSHAPE)) {
+		const struct wsdisplay_curpos *nsize;
+		struct wsdisplay_curpos *nhot;
+
+		nsize = (v & WSDISPLAY_CURSOR_DOSHAPE) ?
+			    &p->size : &cc->cc_size;
+		nhot = (v & WSDISPLAY_CURSOR_DOHOT) ? &hot : &cc->cc_hot;
+
+		if (nhot->x >= nsize->x)
+			nhot->x = nsize->x - 1;
+		if (nhot->y >= nsize->y)
+			nhot->y = nsize->y - 1;
+	}
+
+
+	/* arguments verified, copy data to the driver's cursor info */
 	if (v & WSDISPLAY_CURSOR_DOCUR)
 		dc->dc_curenb = p->enable;
 
 	if (v & WSDISPLAY_CURSOR_DOPOS)
-		cc->cc_pos = p->pos;
+		cc->cc_pos = pos; /* local copy, possibly corrected */
 
 	if (v & WSDISPLAY_CURSOR_DOHOT)
-		cc->cc_hot = p->hot;
+		cc->cc_hot = hot; /* local copy, possibly corrected */
 
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		copyin(p->cmap.red, &cc->cc_color[index], count);
@@ -808,7 +836,9 @@ igsfb_set_cursor(dc, p)
 		igsfb_convert_cursor_data(dc, iwidth, p->size.y);
 	}
 
+	/* propagate changes to the device */
 	igsfb_update_cursor(dc, v);
+
 	return (0);
 }
 
