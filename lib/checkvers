@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$NetBSD: checkvers,v 1.4 1999/07/02 15:12:15 simonb Exp $
+#	$NetBSD: checkvers,v 1.5 2000/07/22 16:04:57 erh Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -150,7 +150,7 @@ if [ $usedir -eq 1 ] ; then
     fi
     for f in $libdir ; do
 	ls $f/lib*.so.*.*
-    done > $LIBLIST
+    done > $LIBLIST 2> /dev/null
 fi
 
 # Build list from set lists.  Parameter may be either
