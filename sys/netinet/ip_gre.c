@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.10.4.1 2000/08/25 01:13:26 mjl Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.10.4.2 2000/10/20 21:48:05 tv Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -222,6 +222,8 @@ gre_input2(struct mbuf *m ,int hlen,u_char proto)
 		bpf_mtap(sc->gre_bpf, &m0);
 		}
 #endif /*NBPFILTER > 0*/
+
+	m->m_pkthdr.rcvif = &sc->sc_if;
 
 	s = splimp();		/* possible */
 	if (IF_QFULL(ifq)) {
