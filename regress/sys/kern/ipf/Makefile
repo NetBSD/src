@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/09/19 08:09:49 martti Exp $
+#	$NetBSD: Makefile,v 1.4 2002/09/19 08:13:25 martti Exp $
 #
 # (C)opyright 1993-1996 by Darren Reed.
 #
@@ -21,7 +21,7 @@ ptests: i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12
 
 ntests: n1 n2 n3 n4 n5 n6 n7
 
-nitests: ni1 ni2 ni4 ni5
+nitests: ni1 ni2 ni3 ni4 ni5
 
 intests: in1 in2 in3 in4
 
@@ -50,7 +50,7 @@ i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12:
 n1 n2 n3 n4 n5 n6 n7:
 	@/bin/sh ${.CURDIR}/nattest $@ ${.CURDIR}
 
-ni1 ni2 ni4 ni5:
+ni1 ni2 ni3 ni4 ni5:
 	@/bin/sh ${.CURDIR}/natipftest $@ ${.CURDIR}
 
 in1 in2 in3 in4:
