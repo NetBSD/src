@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.20 1998/10/24 08:12:55 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.21 1999/02/27 13:11:21 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -178,6 +178,8 @@ struct cpu_info {
 	/* FPU information */
 	int		fpupresent;	/* true if FPU is present */
 	int		fpuvers;	/* FPU revision */
+	char		*fpu_name;	/* FPU model */
+	char		fpu_namebuf[32];/* Buffer for FPU name, if necessary */
 
 	/* various flags to workaround anomalies in chips */
 	int		flags;		/* see CPUFLG_xxx, below */

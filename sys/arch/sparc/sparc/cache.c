@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.46 1999/01/24 10:11:23 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.47 1999/02/27 13:11:22 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -101,8 +101,6 @@ sun4_cache_enable()
 	     lduba(AC_SYSENABLE, ASI_CONTROL) | SYSEN_CACHE);
 	CACHEINFO.c_enabled = 1;
 
-	printf("cache enabled\n");
-
 #ifdef notyet
 	if (cpuinfo.flags & SUN4_IOCACHE) {
 		stba(AC_SYSENABLE, ASI_CONTROL,
@@ -133,8 +131,6 @@ ms1_cache_enable()
 	sta(SRMMU_PCR, ASI_SRMMU, pcr | MS1_PCR_DCE | MS1_PCR_ICE);
 
 	CACHEINFO.c_enabled = CACHEINFO.dc_enabled = 1;
-
-	printf("cache enabled\n");
 }
 
 void
@@ -174,7 +170,6 @@ viking_cache_enable()
 		cpuinfo.flags |= CPUFLG_CACHEPAGETABLES; /* Ok to cache PTEs */
 		CACHEINFO.ec_enabled = 1;
 	}
-	printf("cache enabled\n");
 }
 
 void
@@ -208,6 +203,7 @@ hypersparc_cache_enable()
 	pcr |= HYPERSPARC_PCR_CE;
 	if (CACHEINFO.c_vactype == VAC_WRITEBACK)
 		pcr |= HYPERSPARC_PCR_CM;
+
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 	CACHEINFO.c_enabled = 1;
 
@@ -221,8 +217,6 @@ hypersparc_cache_enable()
 	 */
 	v = HYPERSPARC_ICCR_ICE | (ncpu == 1 ? HYPERSPARC_ICCR_FTD : 0);
 	wrasr(v, HYPERSPARC_ASRNUM_ICCR);
-
-	printf("cache enabled\n");
 }
 
 
@@ -255,7 +249,6 @@ swift_cache_enable()
 			sta(i, ASI_DCACHETAG, 0);
 
 	CACHEINFO.c_enabled = 1;
-	printf("cache enabled\n");
 }
 
 void
@@ -283,7 +276,6 @@ cypress_cache_enable()
 		pcr |= CYPRESS_PCR_CM;
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 	CACHEINFO.c_enabled = 1;
-	printf("cache enabled\n");
 }
 
 void
@@ -320,7 +312,6 @@ turbosparc_cache_enable()
 		printf("DVMA coherent ");
 
 	CACHEINFO.c_enabled = 1;
-	printf("cache enabled\n");
 }
 #endif
 
