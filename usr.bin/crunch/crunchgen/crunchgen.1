@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.9 1999/03/22 18:16:35 garbled Exp $
+.\"	$NetBSD: crunchgen.1,v 1.10 2000/10/30 10:02:39 garbled Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -222,6 +222,18 @@ parameters must also be valid.  If they are not valid for a particular program, 
 program is skipped in the 
 .Ar objs
 target.
+.Sh ENVIRONMENT
+.Bl -tag -width MAKE
+.It Ev MAKE
+If the environment variable
+.Ev MAKE
+is set, it is used as the name of the
+.Xr make 1
+executable to be called.  If this environment variable is not set,
+.Nm
+defaults to
+.Dq make .
+.El
 .Sh EXAMPLE
 Here is an example
 .Em crunchgen
@@ -260,7 +272,8 @@ The crunched binary ``kcopy'' can be built as follows:
 At this point the binary ``kcopy'' can be copied onto an install floppy
 and hard-linked to the names of the component programs.
 .Sh SEE ALSO
-.Xr crunchide 1
+.Xr crunchide 1 ,
+.Xr make 1
 .Sh CAVEATS
 While
 .Nm
