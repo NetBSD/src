@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.14 2000/04/24 09:27:31 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.15 2000/04/24 10:40:25 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -38,6 +38,11 @@
  *   we need to truncate the result.  We obey RFC2553 (and X/Open should be
  *   modified).
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: getnameinfo.c,v 1.15 2000/04/24 10:40:25 itojun Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
