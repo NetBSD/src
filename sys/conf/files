@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.295 1999/07/02 19:58:29 itojun Exp $
+#	$NetBSD: files,v 1.296 1999/07/02 19:59:09 itojun Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -581,17 +581,17 @@ file netinet6/esp_core.c		ipsec & ipsec_esp
 file netinet6/ipsec.c			ipsec
 file netinet6/ah_output.c		ipsec
 file netinet6/ah_input.c		ipsec
-file netinet6/esp_output.c	ipsec & ipsec_esp
+file netinet6/esp_output.c		ipsec & ipsec_esp
 file netinet6/esp_input.c		ipsec & ipsec_esp
 file crypto/des/des_cbc.c		ipsec & ipsec_esp
 file crypto/des/des_ecb.c		ipsec & ipsec_esp
-file crypto/des/des_setkey.c	ipsec & ipsec_esp
-file crypto/des/des_3cbc.c	ipsec & ipsec_esp
-file crypto/blowfish/bf_cbc.c	ipsec & ipsec_esp
-file crypto/blowfish/bf_cbc_m.c	ipsec & ipsec_esp
-file crypto/blowfish/bf_enc.c	ipsec & ipsec_esp
-file crypto/blowfish/bf_skey.c	ipsec & ipsec_esp
-file crypto/cast128/cast128.c	ipsec & ipsec_esp
+file crypto/des/des_setkey.c		ipsec & ipsec_esp
+file crypto/des/des_3cbc.c		ipsec & ipsec_esp
+file crypto/blowfish/bf_cbc.c		ipsec & ipsec_esp
+file crypto/blowfish/bf_cbc_m.c		ipsec & ipsec_esp
+file crypto/blowfish/bf_enc.c		ipsec & ipsec_esp
+file crypto/blowfish/bf_skey.c		ipsec & ipsec_esp
+file crypto/cast128/cast128.c		ipsec & ipsec_esp
 file crypto/cast128/cast128_cbc.c	ipsec & ipsec_esp
 file netinet6/ipcomp_core.c		ipsec
 file netinet6/ipcomp_input.c		ipsec
