@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.9 2002/01/31 19:36:55 tv Exp $ */
+/* $NetBSD: emit2.c,v 1.10 2004/09/12 08:58:52 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit2.c,v 1.9 2002/01/31 19:36:55 tv Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.10 2004/09/12 08:58:52 yamt Exp $");
 #endif
 
 #include "lint2.h"
@@ -58,6 +58,7 @@ outtype(type_t *tp)
 		if ((ts = tp->t_tspec) == INT && tp->t_isenum)
 			ts = ENUM;
 		switch (ts) {
+		case BOOL:	t = 'B';	s = '\0';	break;
 		case CHAR:	t = 'C';	s = '\0';	break;
 		case SCHAR:	t = 'C';	s = 's';	break;
 		case UCHAR:	t = 'C';	s = 'u';	break;

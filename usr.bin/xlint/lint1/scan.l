@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.32 2002/11/02 01:42:22 perry Exp $ */
+/* $NetBSD: scan.l,v 1.33 2004/09/12 08:58:52 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.32 2002/11/02 01:42:22 perry Exp $");
+__RCSID("$NetBSD: scan.l,v 1.33 2004/09/12 08:58:52 yamt Exp $");
 #endif
 
 #include <stdlib.h>
@@ -197,6 +197,7 @@ static	struct	kwtab {
 	{ "__asm__",	T_ASM,		0,	0,	0,	  0, 0, 0 },
 	{ "auto",	T_SCLASS,	AUTO,	0,	0,	  0, 0, 0 },
 	{ "break",	T_BREAK,	0,	0,	0,	  0, 0, 0 },
+	{ "_Bool",	T_TYPE,		0,	BOOL,	0,	  0, 1, 0 },
 	{ "case",	T_CASE,		0,	0,	0,	  0, 0, 0 },
 	{ "char",	T_TYPE,		0,	CHAR,	0,	  0, 0, 0 },
 	{ "const",	T_QUAL,		0,	0,	CONST,	  1, 0, 0 },
@@ -578,6 +579,7 @@ icon(int base)
 	case UCHAR:
 	case SCHAR:
 	case CHAR:
+	case BOOL:
 	case UNSIGN:
 		break;
 
