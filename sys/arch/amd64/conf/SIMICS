@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.15 2005/02/25 13:46:48 simonb Exp $
+#	$NetBSD: SIMICS,v 1.16 2005/03/11 16:44:31 matt Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -153,6 +153,7 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
+cpu*	at mainbus0
 
 #apm0	at mainbus0			# Advanced power management
 
