@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.18 1997/09/06 13:57:14 drochner Exp $	*/
+/*	$NetBSD: net.c,v 1.19 1997/09/17 16:30:51 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -70,10 +70,8 @@ sendudp(d, pkt, len)
 {
 	register ssize_t cc;
 	register struct ip *ip;
-	register struct udpiphdr *ui;
 	register struct udphdr *uh;
 	register u_char *ea;
-	struct ip tip;
 
 #ifdef NET_DEBUG
  	if (debug) {
@@ -106,13 +104,20 @@ sendudp(d, pkt, len)
 	uh->uh_dport = d->destport;
 	uh->uh_ulen = htons(len - sizeof(*ip));
 
-	/* Calculate checksum (must save and restore ip header) */
-	tip = *ip;
-	ui = (struct udpiphdr *)ip;
-	bzero(ui->ui_x1, sizeof(ui->ui_x1));
-	ui->ui_len = uh->uh_ulen;
-	uh->uh_sum = in_cksum(ui, len);
-	*ip = tip;
+#ifndef UDP_NO_CKSUM
+	{
+		register struct udpiphdr *ui;
+		struct ip tip;
+
+		/* Calculate checksum (must save and restore ip header) */
+		tip = *ip;
+		ui = (struct udpiphdr *)ip;
+		bzero(ui->ui_x1, sizeof(ui->ui_x1));
+		ui->ui_len = uh->uh_ulen;
+		uh->uh_sum = in_cksum(ui, len);
+		*ip = tip;
+	}
+#endif
 
 	if (ip->ip_dst.s_addr == INADDR_BROADCAST || ip->ip_src.s_addr == 0 ||
 	    netmask == 0 || SAMENET(ip->ip_src, ip->ip_dst, netmask))
@@ -143,8 +148,6 @@ readudp(d, pkt, len, tleft)
 	register size_t hlen;
 	register struct ip *ip;
 	register struct udphdr *uh;
-	register struct udpiphdr *ui;
-	struct ip tip;
 	u_int16_t etype;	/* host order */
 
 #ifdef NET_DEBUG
@@ -198,11 +201,11 @@ readudp(d, pkt, len, tleft)
 #endif
 		return -1;
 	}
-	NTOHS(ip->ip_len);
-	if (n < ip->ip_len) {
+	if (n < ntohs(ip->ip_len)) {
 #ifdef NET_DEBUG
 		if (debug)
-			printf("readudp: bad length %d < %d.\n", (int)n, ip->ip_len);
+			printf("readudp: bad length %d < %d.\n",
+			       (int)n, ntohs(ip->ip_len));
 #endif
 		return -1;
 	}
@@ -219,7 +222,7 @@ readudp(d, pkt, len, tleft)
 	/* If there were ip options, make them go away */
 	if (hlen != sizeof(*ip)) {
 		bcopy(((u_char *)ip) + hlen, uh, len - hlen);
-		ip->ip_len = sizeof(*ip);
+		ip->ip_len = htons(sizeof(*ip));
 		n -= hlen - sizeof(*ip);
 	}
 	if (uh->uh_dport != d->myport) {
@@ -231,7 +234,11 @@ readudp(d, pkt, len, tleft)
 		return -1;
 	}
 
+#ifndef UDP_NO_CKSUM
 	if (uh->uh_sum) {
+		register struct udpiphdr *ui;
+		struct ip tip;
+
 		n = ntohs(uh->uh_ulen) + sizeof(*ip);
 		if (n > RECV_SIZE - ETHER_SIZE) {
 			printf("readudp: huge packet, udp len %d\n", (int)n);
@@ -253,14 +260,12 @@ readudp(d, pkt, len, tleft)
 		}
 		*ip = tip;
 	}
-	NTOHS(uh->uh_dport);
-	NTOHS(uh->uh_sport);
-	NTOHS(uh->uh_ulen);
-	if (uh->uh_ulen < sizeof(*uh)) {
+#endif
+	if (ntohs(uh->uh_ulen) < sizeof(*uh)) {
 #ifdef NET_DEBUG
 		if (debug)
 			printf("readudp: bad udp len %d < %d\n",
-				uh->uh_ulen, (int)sizeof(*uh));
+				ntohs(uh->uh_ulen), (int)sizeof(*uh));
 #endif
 		return -1;
 	}
