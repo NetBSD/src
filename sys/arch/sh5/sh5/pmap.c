@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1 2002/07/05 13:32:05 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2 2002/08/26 10:21:04 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -806,25 +806,29 @@ pmap_bootstrap(vaddr_t avail, struct mem_region *mr)
  * mappings. Particularly the big page support.
  */
 vaddr_t
-pmap_bootstrap_mapping(paddr_t pa, u_int len)
+pmap_map_device(paddr_t pa, u_int len)
 {
 	vaddr_t va;
 	ptel_t *ptelp;
-	ptel_t ptel, pgsize;
+	ptel_t ptel;
 	int idx;
 
-	/*
-	 * Steal some KVA
-	 */
-	va = pmap_kva_avail_start;
 	len = sh5_round_page(len);
-	pmap_kva_avail_start += len;
+
+	if (pmap_initialized == 0) {
+		/*
+		 * Steal some KVA
+		 */
+		va = pmap_kva_avail_start;
+		pmap_kva_avail_start += len;
+	} else
+		va = uvm_km_valloc(kernel_map, len);
 
 	/*
 	 * Get the index into pmap_kernel_ipt.
 	 */
 	if ((idx = kva_to_iptidx(va)) < 0)
-		panic("pmap_bootstrap_mapping: Invalid KVA %p", (void *)va);
+		panic("pmap_map_device: Invalid KVA %p", (void *)va);
 
 	ptelp = &pmap_kernel_ipt[idx];
 	ptel = (ptel_t)(pa & SH5_PTEL_PPN_MASK) |
@@ -836,21 +840,38 @@ pmap_bootstrap_mapping(paddr_t pa, u_int len)
 	 * regions of device memory, for example.
 	 */
 	while (len) {
-		if (len >= 0x20000000)
+#if 0
+		ptel_t pgsize, pgend, mask;
+		if (len >= 0x20000000) {
 			pgsize = SH5_PTEL_SZ_512MB;	/* Impossible?!?! */
-		else
-		if (len >= 0x100000)
+			pgend = ptel + 0x20000000;
+			mask = SH5_PTEL_PPN_MASK & ~(0x20000000 - 1);
+		} else
+		if (len >= 0x100000) {
 			pgsize = SH5_PTEL_SZ_1MB;
-		else
-		if (len >= 0x10000)
+			pgend = ptel + 0x100000;
+			mask = SH5_PTEL_PPN_MASK & ~(0x100000 - 1);
+		} else
+		if (len >= 0x10000) {
 			pgsize = SH5_PTEL_SZ_64KB;
-		else
+			pgend = ptel + 0x10000;
+			mask = SH5_PTEL_PPN_MASK & ~(0x10000 - 1);
+		} else {
 			pgsize = SH5_PTEL_SZ_4KB;
+			pgend = ptel + 0x1000;
+			mask = SH5_PTEL_PPN_MASK & ~(0x1000 - 1);
+		}
 
-		*ptelp++ = ptel | pgsize;
-
-		len -= NBPG;
+		while (ptel < pgend && len) {
+			*ptelp++ = (ptel & mask) | pgsize;
+			ptel += NBPG;
+			len -= NBPG;
+		}
+#else
+		*ptelp++ = ptel | SH5_PTEL_SZ_4KB;
 		ptel += NBPG;
+		len -= NBPG;
+#endif
 	}
 
 	return (va);
@@ -867,7 +888,7 @@ pmap_init(void)
 	    sizeof(void *), 0, 0, "pmap_pl", NULL);
 
 	pool_init(&pmap_mpvo_pool, sizeof(struct pvo_entry),
-	    sizeof(struct pvo_entry), 0, 0, "pmap_mpvopl", NULL);
+	    0, 0, 0, "pmap_mpvopl", NULL);
 
 	pool_setlowat(&pmap_mpvo_pool, 1008);
 
@@ -1893,4 +1914,22 @@ pmap_unmap_poolpage(vaddr_t va)
 	 */
 	panic("pmap_unmap_poolpage: non-kseg0 page: va = 0x%lx", va);
 	return (0);
+}
+
+void dump_kipt(void);
+void
+dump_kipt(void)
+{
+	u_int va;
+	ptel_t *pt;
+
+	printf("\nKernel KSEG1 mappings:\n\n");
+
+	for (pt = &pmap_kernel_ipt[0], va = SH5_KSEG1_BASE;
+	    pt != &pmap_kernel_ipt[KERNEL_IPT_SIZE]; pt++, va += NBPG) {
+		if (*pt && *pt < 0x80000000u)
+			printf("KVA: 0x%08x -> PTEL: 0x%08x\n", va, (u_int)*pt);
+	}
+
+	printf("\n");
 }
