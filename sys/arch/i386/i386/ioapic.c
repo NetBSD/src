@@ -1,4 +1,4 @@
-/* $NetBSD: ioapic.c,v 1.1.2.11 2000/11/19 00:20:30 sommerfeld Exp $ */
+/* $NetBSD: ioapic.c,v 1.1.2.12 2000/11/19 00:30:42 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -417,7 +417,7 @@ apic_vectorset (sc, pin, minlevel, maxlevel)
 			printf("%s: WARNING: sharing interrupt "
 			    "between different IPLs (currently broken)\n",
 			    sc->sc_dev.dv_xname);
-			printf("%s: pin %d, ipls %x..%x",
+			printf("%s: pin %d, ipls %x..%x\n",
 			    sc->sc_dev.dv_xname,
 			    pin, minlevel, maxlevel);
 		}
