@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 2004/10/16 09:58:38 dan Exp $
+#	$NetBSD: Makefile,v 1.9 2004/10/16 18:07:16 christos Exp $
 
 .include <bsd.own.mk>
 
+WARNS=3
 # XXX Unsupported Kerberos options were removed from man page
 # XXX Don't forget to update the man page if you fix Kerberos
 PROG=	rcmd
