@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.5 2002/03/11 16:00:58 pk Exp $ */
+/*	$NetBSD: tcx.c,v 1.6 2002/03/20 20:41:35 eeh Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.5 2002/03/11 16:00:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.6 2002/03/20 20:41:35 eeh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,8 @@ tcxattach(parent, self, args)
 		printf("tcxattach: cannot map thc registers\n");
 		return;
 	}
-	sc->sc_thc = (volatile struct tcx_thc *)bh;
+	sc->sc_thc = (volatile struct tcx_thc *)
+		bus_space_vaddr(sa->sa_bustag, bh);
 
 	if (sbus_bus_map(sa->sa_bustag,
 			 sc->sc_physadr[TCX_REG_CMAP].sbr_slot,
@@ -203,7 +204,8 @@ tcxattach(parent, self, args)
 		printf("tcxattach: cannot map bt registers\n");
 		return;
 	}
-	sc->sc_bt = bt = (volatile struct bt_regs *)bh;
+	sc->sc_bt = bt = (volatile struct bt_regs *)
+		bus_space_vaddr(sa->sa_bustag, bh);
 
 	isconsole = fb_is_console(node);
 
