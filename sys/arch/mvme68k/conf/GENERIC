@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.21 2000/12/07 08:40:06 scw Exp $
+#	$NetBSD: GENERIC,v 1.22 2000/12/09 21:02:09 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.21 $"
+#ident 		"GENERIC-$Revision: 1.22 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -56,7 +56,6 @@ options 	COMPAT_12, COMPAT_13, COMPAT_14, COMPAT_15
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries
-#options 	EXEC_ELF32	# 32-bit ELF executables (Linux)
 
 ## force NFS root and swap
 #config	netbsd		root on ? type nfs
