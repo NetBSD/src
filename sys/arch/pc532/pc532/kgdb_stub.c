@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.3 1996/10/13 03:30:42 christos Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.4 1997/02/08 09:33:58 matthias Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,22 +82,8 @@ static void *kgdb_ioarg;
 static u_char buffer[KGDB_BUFLEN];
 static kgdb_reg_t gdb_regs[KGDB_NUMREGS];
 
-#define ROUND_PAGE(x) ((((vm_offset_t)(x)) + PGOFSET) & ~PGOFSET)
 #define GETC()	((*kgdb_getc)(kgdb_ioarg))
 #define PUTC(c)	((*kgdb_putc)(kgdb_ioarg, c))
-#define PUTESC(c) do { \
-	if (c == FRAME_END) { \
-		PUTC(FRAME_ESCAPE); \
-		c = TRANS_FRAME_END; \
-	} else if (c == FRAME_ESCAPE) { \
-		PUTC(FRAME_ESCAPE); \
-		c = TRANS_FRAME_ESCAPE; \
-	} else if (c == FRAME_START) { \
-		PUTC(FRAME_ESCAPE); \
-		c = TRANS_FRAME_START; \
-	} \
-	PUTC(c); \
-} while (0)
 
 /*
  * This little routine exists simply so that bcopy() can be debugged.
