@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.102 2001/07/01 18:07:33 thorpej Exp $ */
+/* $NetBSD: syscallargs.h,v 1.103 2001/10/30 21:52:26 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -18,8 +18,9 @@
 	union {								\
 		register_t pad;						\
 		struct { x datum; } le;					\
-		struct {						\
-			int8_t pad[ (sizeof (register_t) < sizeof (x))	\
+		struct { /* LINTED zero array dimension */		\
+			int8_t pad[  /* CONSTCOND */			\
+				(sizeof (register_t) < sizeof (x))	\
 				? 0					\
 				: sizeof (register_t) - sizeof (x)];	\
 			x datum;					\
