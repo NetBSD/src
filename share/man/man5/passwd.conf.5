@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.conf.5,v 1.4 2002/02/13 08:18:15 ross Exp $
+.\"	$NetBSD: passwd.conf.5,v 1.5 2002/05/24 04:02:48 itojun Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -60,11 +60,16 @@ The cipher to use for local passwords.
 Possible values are:
 .Dq old ,
 .Dq newsalt,\*[Lt]rounds\*[Gt] ,
+.Dq md5 ,
 and
-.Dq md5 .
+.Dq blowfish,\*[Lt]rounds\*[Gt] .
 For
 .Dq newsalt
 the value of rounds is a 24-bit integer with a minimum of 7250 rounds.
+For
+.Dq blowfish
+the value can be between 4 and 31.
+It specifies the base 2 logarithm of the number of rounds.
 .It Sy ypcipher
 The cipher to use for YP passwords.
 The possible values are the same as for localcipher.
