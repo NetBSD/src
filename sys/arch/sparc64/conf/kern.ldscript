@@ -1,3 +1,9 @@
+/*	$NetBSD: kern.ldscript,v 1.2 2001/03/04 13:41:00 mrg Exp $	*/
+
+/*
+ * Kernel linker script for NetBSD/sparc64.  This script is based on
+ * elf64_sparc.xn, but puts _etext after all of the read-only sections.
+ */
 OUTPUT_FORMAT("elf64-sparc", "elf64-sparc",
 	      "elf64-sparc")
 OUTPUT_ARCH(sparc:v9)
@@ -51,14 +57,15 @@ SECTIONS
     *(.gnu.warning)
     *(.gnu.linkonce.t*)
   } =0x01000000
-  _etext = .;
-  PROVIDE (etext = .);
   .fini      : { *(.fini)    } =0x01000000
   .rodata    : { *(.rodata) *(.gnu.linkonce.r*) }
   .rodata1   : { *(.rodata1) }
+  _etext = .;
+  PROVIDE (etext = .);
   /* Adjust the address for the data segment.  We want to adjust up to
      the same address within the page on the next page up.  */
   . = ALIGN(0x100000) + (. & (0x100000 - 1));
+  kernel_data_start = .;
   .data    :
   {
     *(.data)
