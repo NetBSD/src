@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.6 1999/07/08 18:05:28 thorpej Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.7 1999/08/05 14:57:38 minoura Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org
@@ -82,7 +82,8 @@ mappedcopyin(f, t, count)
 	register size_t count;
 {
 	register caddr_t fromp = f, top = t;
-	register vm_offset_t kva, upa;
+	register vm_offset_t kva;
+	vm_offset_t upa;
 	register size_t len;
 	int off, alignable;
 	pmap_t upmap;
@@ -137,7 +138,8 @@ mappedcopyout(f, t, count)
 	register size_t count;
 {
 	register caddr_t fromp = f, top = t;
-	register vm_offset_t kva, upa;
+	register vm_offset_t kva;
+	vm_offset_t upa;
 	register size_t len;
 	int off, alignable;
 	pmap_t upmap;
