@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.20 1999/04/29 15:06:41 kleink Exp $	 */
+/*	$NetBSD: reloc.c,v 1.21 1999/08/21 19:26:19 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -162,7 +162,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	extern Elf_Dyn   _DYNAMIC;
 #endif
 #if defined(__alpha__) || defined(__i386__) || defined(__m68k__) || \
-    defined(__powerpc__)
+    defined(__powerpc__) || defined(__vax__)
 	Elf_Addr         tmp;
 #endif
 
@@ -219,7 +219,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		break;
 #endif /* __i386__ || __m68k__ */
 
-#ifdef __alpha__
+#if defined(__alpha__)
 	case R_TYPE(REFQUAD):
 		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
 		    &defobj, false);
@@ -280,7 +280,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		break;
 #endif /* __i386__ || __alpha__ */
 
-#ifdef __mips__
+#if defined(__mips__)
 	case R_TYPE(REL32):
 		/* 32-bit PC-relative reference */
 		def = obj->symtab + ELF_R_SYM(rela->r_info);
@@ -306,7 +306,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 
 #endif /* __mips__ */
 
-#ifdef __powerpc__
+#if defined(__powerpc__) || defined(__vax__)
 	case R_TYPE(32):	/* word32 S + A */
 	case R_TYPE(GLOB_DAT):	/* word32 S + A */
 		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
@@ -334,14 +334,27 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 
 	case R_TYPE(RELATIVE):	/* word32 B + A */
 		tmp = (Elf_Addr)(obj->relocbase + rela->r_addend);
-		if (obj == &_rtld_objself && *where == tmp)
-			break;	/* GOT - already done */
-
-		*where = tmp;
+		if (*where != tmp)
+			*where = tmp;
 		rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
 		    (void *)*where));
 		break;
-#endif /* __powerpc__ */
+#endif /* __powerpc__ || __vax__ */
+
+#if defined(__vax__)
+	case R_TYPE(REL32):
+		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
+		    &defobj, false);
+		if (def == NULL)
+			return -1;
+
+		*where += (Elf_Addr)(defobj->relocbase + def->st_value
+			+ rela->r_addend);
+		rdbg(dodebug, ("32 %s in %s --> %p in %s",
+		    defobj->strtab + def->st_name, obj->path,
+		    (void *)*where, defobj->path));
+		break;
+#endif /* __vax__ */
 
 	default:
 		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
@@ -380,7 +393,8 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 	return _rtld_reloc_powerpc_plt(obj, rela, bind_now);
 #endif
 
-#if defined(__alpha__) || defined(__i386__) || defined(__m68k__)
+#if defined(__alpha__) || defined(__i386__) || defined(__m68k__) || \
+    defined(__vax__)
 	if (bind_now || obj->pltgot == NULL) {
 		const Elf_Sym  *def;
 		const Obj_Entry *defobj;
@@ -398,7 +412,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 		    defobj->strtab + def->st_name,
 		    (void *)*where, (void *)new_value));
 	} else
-#endif /* __alpha__ || __i386__ || __m68k__ */
+#endif /* __alpha__ || __i386__ || __m68k__ || __vax__ */
 	if (!obj->mainprog) {
 		/* Just relocate the GOT slots pointing into the PLT */
 		new_value = *where + (Elf_Addr)(obj->relocbase);
@@ -609,6 +623,10 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 			obj->pltgot[2] = NOP;
 
 			obj->pltgot[3] = (Elf_Addr) obj;
+#endif
+#if defined(__vax__)
+			obj->pltgot[0] = (Elf_Addr) & _rtld_bind_start;
+			obj->pltgot[1] = (Elf_Addr) obj;
 #endif
 		}
 	}
