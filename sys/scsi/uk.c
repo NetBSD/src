@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.12 1994/12/28 19:43:20 mycroft Exp $	*/
+/*	$NetBSD: uk.c,v 1.13 1995/03/24 20:17:15 glass Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -170,5 +170,5 @@ ukioctl(dev, cmd, addr, flag, p)
 {
 	register struct uk_softc *uk = ukcd.cd_devs[UKUNIT(dev)];
 
-	return scsi_do_ioctl(uk->sc_link, dev, cmd, addr, flag, p));
+	return scsi_do_ioctl(uk->sc_link, dev, cmd, addr, flag, p);
 }
