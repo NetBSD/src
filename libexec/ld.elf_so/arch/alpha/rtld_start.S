@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.12 2002/09/11 20:56:09 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.13 2002/09/12 17:07:25 mycroft Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -41,12 +41,12 @@ LEAF_NOPROFILE(_rtld_start, 0)
 	/*
 	 * Relocate ourself.
 	 */
-	br	t2, 2f		/* get our PC */
-2:	ldiq	t3, 2b		/* get where the linker thought we were */
-	subq	t2, t3, a1	/* calculate the displacement */
+	br	s2, 2f		/* get our PC */
+2:	ldiq	s3, 2b		/* get where the linker thought we were */
 
+	subq	s2, s3, a1	/* relocbase */
 	lda	t5, _DYNAMIC
-	addq	a1, t5, a0	/* add the displacement */
+	addq	a1, t5, a0	/* &_DYNAMIC */
 
 	bsr	ra, _rtld_relocate_nonplt_self
 	LDGP(ra)
@@ -57,8 +57,9 @@ LEAF_NOPROFILE(_rtld_start, 0)
 	 */
 	lda	sp, -16(sp)
 
-	mov	sp, a0		/* v0 = _rtld(sp); */
-	CALL(_rtld)
+	subq	s2, s3, a1	/* relocbase */
+	mov	sp, a0		/* sp */
+	CALL(_rtld)		/* v0 = _rtld(sp, relocbase); */
 
 	ldq	a1, 0(sp)	/* cleanup */
 	ldq	a2, 8(sp)	/* obj_main */

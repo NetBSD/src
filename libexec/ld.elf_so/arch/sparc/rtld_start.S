@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.7 2002/09/11 19:11:05 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.8 2002/09/12 17:07:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,11 +57,13 @@ _rtld_start:
 	call	.LLGETPC0
 	 add	%l7, %lo(_GLOBAL_OFFSET_TABLE_+4), %l7
 	ld	[%l7+_DYNAMIC], %o0
-	ld	[%l7+_GLOBAL_OFFSET_TABLE_], %o1
-	sub	%l7, %o1, %o1
-	call	_rtld_relocate_nonplt_self
-	 add	%o0, %o1, %o0
+	ld	[%l7+_GLOBAL_OFFSET_TABLE_], %l0
 
+	sub	%l7, %l0, %o1		/* relocbase */
+	call	_rtld_relocate_nonplt_self
+	 add	%o0, %o1, %o0		/* &_DYNAMIC */
+
+	sub	%l7, %l0, %o1		/* relocbase */
 	call	_rtld
 	 add	%sp, 64, %o0		/* &argc - 8 */
 
