@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.76 2004/06/20 22:20:14 jmc Exp $	*/
+/*	$NetBSD: options.c,v 1.77 2004/09/22 14:52:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.76 2004/06/20 22:20:14 jmc Exp $");
+__RCSID("$NetBSD: options.c,v 1.77 2004/09/22 14:52:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ static int getline_error;
  *
  *	name, blksz, hdsz, udev, hlk, blkagn, inhead, id, st_read,
  *	read, end_read, st_write, write, end_write, trail,
- *	rd_data, wr_data, options
+ *	subtrail, rd_data, wr_data, options
  */
 
 FSUB fsub[] = {
