@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.14 1997/06/17 18:56:57 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.15 1997/06/17 21:38:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -217,7 +217,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <fcntl.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
