@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.6 1997/08/11 22:53:27 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.7 1997/11/04 04:00:18 briggs Exp $	*/
 
 /*  From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -2158,7 +2158,7 @@ mrg_adbintr(void)
 }
 
 long
-mrg_pmintr(void)	/* we don't do this yet */
+mrg_pmintr(void)
 {
 	pm_intr();
 	return 1;	/* mimic mrg_pmintr in macrom.h just in case */
