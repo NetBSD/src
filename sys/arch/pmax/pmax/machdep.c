@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.103 1998/02/19 23:17:53 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104 1998/02/23 20:05:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 1998/02/19 23:17:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 1998/02/23 20:05:10 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -336,6 +336,11 @@ mach_init(argc, argv, code, cv)
 		argc--;
 		argv++;
 	}
+
+	/*
+	 * Set the VM page size.
+	 */
+	vm_set_page_size();
 
 	/*
 	 * Copy exception-dispatch code down to exception vector.
