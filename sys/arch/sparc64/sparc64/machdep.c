@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 1998/12/18 15:49:40 drochner Exp $ */
+/*	$NetBSD: machdep.c,v 1.26 1999/01/03 01:08:51 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -195,7 +195,7 @@ cpu_startup()
 {
 	unsigned i;
 	caddr_t v;
-	int sz;
+	long sz;
 	int base, residual;
 #ifdef DEBUG
 	extern int pmapdebug;
@@ -225,7 +225,7 @@ cpu_startup()
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	sz = (int)allocsys((caddr_t)0);
+	sz = (long)allocsys((caddr_t)0);
 
 #if defined(UVM)
 	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
@@ -553,10 +553,8 @@ setregs(p, pack, stack)
 }
 
 #ifdef DEBUG
-#define SDB_FOLLOW	0x01
-#define SDB_KSTACK	0x02
-#define SDB_FPSTATE	0x04
-#define SDB_DDB		0x08
+/* See sigdebug.h */
+#include <sparc64/sparc64/sigdebug.h>
 int sigdebug = 0x0;
 int sigpid = 0;
 #endif
@@ -676,7 +674,7 @@ sendsig(catcher, sig, mask, code)
 	 * XXX escape from the signal in a non-standard way and invoke
 	 * XXX sigreturn() directly.
 	 */
-	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
+	native_sigset_to_sigset13(mask, &sf.sf_sc.__sc_mask13);
 #endif
 	/* Save register context. */
 	sf.sf_sc.sc_sp = (long)tf->tf_out[6];
@@ -785,14 +783,14 @@ sys___sigreturn14(p, v, retval)
 #endif
 	if (rwindow_save(p)) {
 #ifdef DEBUG
-		printf("sigreturn: rwindow_save(%p) failed, sending SIGILL\n", p);
+		printf("sigreturn14: rwindow_save(%p) failed, sending SIGILL\n", p);
 		Debugger();
 #endif
 		sigexit(p, SIGILL);
 	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
-		printf("sigreturn: %s[%d], sigcntxp %p\n",
+		printf("sigreturn14: %s[%d], sigcntxp %p\n",
 		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
 		if (sigdebug & SDB_DDB) Debugger();
 	}
@@ -801,7 +799,7 @@ sys___sigreturn14(p, v, retval)
  	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
 #ifdef DEBUG
 	{
-		printf("sigreturn: copyin failed: scp=%p\n", scp);
+		printf("sigreturn14: copyin failed: scp=%p\n", scp);
 		Debugger();
 		return (EINVAL);
 	}
@@ -835,7 +833,7 @@ sys___sigreturn14(p, v, retval)
 	tf->tf_out[6] = (int64_t)scp->sc_sp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
-		printf("sys_sigreturn: return trapframe pc=%p sp=%p tstate=%llx\n",
+		printf("sigreturn14: return trapframe pc=%p sp=%p tstate=%llx\n",
 		       (vaddr_t)tf->tf_pc, (vaddr_t)tf->tf_out[6], tf->tf_tstate);
 		if (sigdebug & SDB_DDB) Debugger();
 	}
