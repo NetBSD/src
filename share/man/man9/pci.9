@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.14 2004/04/24 09:52:59 kleink Exp $
+.\"     $NetBSD: pci.9,v 1.15 2005/01/27 01:49:53 jmcneill Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,8 @@
 .Nm pci_conf_read ,
 .Nm pci_conf_write ,
 .Nm pci_conf_print ,
+.Nm pci_conf_capture ,
+.Nm pci_conf_restore ,
 .Nm pci_find_device ,
 .Nm pci_get_capability ,
 .Nm pci_mapreg_type ,
@@ -77,6 +79,12 @@
 .Ft void
 .Fn pci_conf_print "pci_chipset_tag_t pc" "pcitag_t tag" \
 "void (*func)(pci_chipset_tag_t, pcitag_t, const pcireg_t *)"
+.Ft void
+.Fn pci_conf_capture "pci_chipset_tag_t pc" "pcitag_t tag" \
+"struct pci_conf_state *"
+.Ft void
+.Fn pci_conf_restore "pci_chipset_tag_t pc" "pcitag_t tag" \
+"struct pci_conf_state *"
 .Ft int
 .Fn pci_find_device "struct pci_attach_args *pa" \
 "int (*func)(struct pci_attach_args *)"
@@ -197,6 +205,12 @@ It contains the following members:
 	pcireg_t pa_id;
 	pcireg_t pa_class;
 .Ed
+.It Fa struct pci_conf_state
+Stores the PCI configuration state of a device. It contains
+the following member:
+.Bd -literal
+	pcireg_t reg[16];			/* pci conf register */
+.Ed
 .El
 .Sh FUNCTIONS
 .Bl -tag -width compact
@@ -230,6 +244,22 @@ is a function called by
 to print the device-dependent registers.
 This function is only useful for driver development and is usually
 wrapped in pre-processor declarations.
+.It Fn pci_conf_capture "pc" "tag" "pcs"
+Capture PCI configuration space into structure
+.Fa pcs
+. The argument
+.Fa tag
+is the PCI tag for the current device attached to the PCI
+chipset
+.Fa pc .
+.It Fn pci_conf_restore "pc" "tag" "pcs"
+Restores PCI configuration space from structure
+.Fa pcs
+. The argument
+.Fa tag
+is the PCI tag for the current device attached to the PCI
+chipset
+.Fa pc .
 .It Fn pci_find_device "pa" "func"
 Find a device using a match function on all probed busses.
 The argument
