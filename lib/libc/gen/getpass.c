@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.8 1996/05/16 19:39:13 christos Exp $	*/
+/*	$NetBSD: getpass.c,v 1.9 1996/05/20 06:13:07 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getpass.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpass.c,v 1.8 1996/05/16 19:39:13 christos Exp $";
+static char rcsid[] = "$NetBSD: getpass.c,v 1.9 1996/05/20 06:13:07 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -95,7 +95,7 @@ getpass(prompt)
 		term.c_lflag |= ECHO;
 		(void)tcsetattr(fileno(fp), TCSAFLUSH|TCSASOFT, &term);
 	}
-	(void)sigprocmask(SIG_SETMASK, &nset, NULL);
+	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	if (fp != stdin)
 		(void)fclose(fp);
 	return(buf);
