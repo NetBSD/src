@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 1997/06/16 01:45:24 jonathan Exp $	*/
+/*	$NetBSD: clock.c,v 1.18 1997/06/22 01:31:45 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -320,13 +320,8 @@ setstatclockrate(newhz)
  * time-of-year in seconds.   The PROM checks the clock at boot time,
  * and if it's outside that range, sets it to 1972-01-01.
  */
-#if 1		/* testing, until we write time-of-year code as aboce */
-#define YR_OFFSET	24	/* good til dec 31, 1997 */
+#define YR_OFFSET	25	/* good until dec 31, 1998 */
 #define DAY_OFFSET	/*1*/ 0
-#else
-#define YR_OFFSET	22
-#define DAY_OFFSET	1
-#endif
 
 #define	BASE_YEAR	1972
 
