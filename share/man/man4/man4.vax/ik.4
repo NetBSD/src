@@ -1,4 +1,4 @@
-.\"	$NetBSD: ik.4,v 1.6 1999/12/15 23:44:55 abs Exp $
+.\"	$NetBSD: ik.4,v 1.7 2001/04/11 19:21:18 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,7 +68,7 @@ returns the virtual address where the user process can
 find the interface registers.
 The
 .Dv IK_WAITINT
-.Xr ioctl
+.Xr ioctl 2
 suspends the user process until the ikonas device
 has interrupted (for whatever reason \(em the user process has to set
 the interrupt enables).

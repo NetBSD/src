@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmc.4,v 1.6 1999/12/15 23:44:54 abs Exp $
+.\"	$NetBSD: dmc.4,v 1.7 2001/04/11 19:21:17 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,7 +88,7 @@ Several device error counters are available via
 .Xr adb 1 ,
 for
 more information see the
-.Xr adb
+.Xr adb 1
 script
 .Pa /usr/lib/adb/dmcstats ,
 or the
@@ -100,7 +100,7 @@ The host's address must be specified with an
 .Xr ioctl 2 ,
 and the destination address specified with a
 .Dv SIOCSIFDSTADDR
-.Xr ioctl ,
+.Xr ioctl 2 ,
 before the interface will transmit or receive any packets.
 .Sh ROUTING
 The driver places a
@@ -108,7 +108,7 @@ The driver places a
 entry in the kernel routing tables for the
 address given in the
 .Dv SIOCSIFDSTADDR
-.Xr ioctl.
+.Xr ioctl 2 .
 To use the
 .Tn DMC
 as a
