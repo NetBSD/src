@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.109 2001/03/12 21:06:01 zuntum Exp $
+.\"	$NetBSD: main,v 1.110 2001/03/14 10:23:30 nsmrtks Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1177,6 +1177,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Joseph Myers Ta Mt jsm@netbsd.org
 .It Ta Ken Nakata Ta Mt kenn@netbsd.org
 .It Ta Bob Nestor Ta Mt rnestor@netbsd.org
+.It Ta NISHIMURA Takeshi Ta Mt nsmrtks@netbsd.org
 .It Ta NONAKA Kimihiro Ta Mt nonaka@netbsd.org
 .It Ta Jesse Off Ta Mt joff@netbsd.org
 .It Ta Tatoku Ogaito Ta Mt tacha@netbsd.org
