@@ -3633,15 +3633,17 @@
   DONE;
 }")
 
+;; The USE in this pattern is needed to tell flow analysis that this is
+;; a CASESI insn.  It has no other purpose.
 (define_insn "casesi_internal"
   [(parallel [(set (pc)
-	(if_then_else
-	 (leu (match_operand:SI 0 "s_register_operand" "r")
-	      (match_operand:SI 1 "arm_rhs_operand" "rI"))
-	 (mem:SI (plus:SI (mult:SI (match_dup 0) (const_int 4))
-			  (label_ref (match_operand 2 "" "S"))))
-	 (label_ref (match_operand 3 "" "S"))))
-	(use (label_ref (match_dup 2 )))])]
+	       (if_then_else
+		(leu (match_operand:SI 0 "s_register_operand" "r")
+		     (match_operand:SI 1 "arm_rhs_operand" "rI"))
+		(mem:SI (plus:SI (mult:SI (match_dup 0) (const_int 4))
+				 (label_ref (match_operand 2 "" ""))))
+		(label_ref (match_operand 3 "" ""))))
+	      (use (label_ref (match_dup 2)))])]
   ""
   "*
   if (flag_pic)
@@ -3650,7 +3652,6 @@
 "
 [(set_attr "conds" "clob")
  (set_attr "length" "12")])
-
 
 (define_insn ""
   [(set (pc)
