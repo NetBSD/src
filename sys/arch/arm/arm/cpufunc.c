@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.41 2002/04/12 18:50:31 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.42 2002/04/12 21:52:45 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -830,7 +830,7 @@ set_cpufuncs()
 
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
-		pmap_pte_init_i80200();
+		pmap_pte_init_xscale();
 		return 0;
 	}
 #endif /* CPU_XSCALE_80200 */
