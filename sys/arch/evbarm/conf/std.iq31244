@@ -1,0 +1,27 @@
+#	$NetBSD: std.iq31244,v 1.1 2003/05/14 21:41:32 thorpej Exp $
+#
+# standard NetBSD/evbarm for IQ31244 options
+
+machine	evbarm arm
+
+# Pull in IQ31244 config definitions.
+include "arch/evbarm/conf/files.iq31244"
+
+options 	EXEC_ELF32
+options 	EXEC_AOUT
+options 	EXEC_SCRIPT
+
+# To support easy transit to ../arch/arm/arm32
+options 	ARM32
+
+# New pmap options are standard on this board
+options 	ARM32_PMAP_NEW
+#options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
+
+makeoptions	BOARDTYPE="iq31244"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.iq80321"
+
+options 	ARM_INTR_IMPL="<arch/arm/xscale/i80321_intr.h>"
+
+# We need to configure the PCI bus.
+options 	PCI_NETBSD_CONFIGURE
