@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.h,v 1.3 1996/10/21 23:12:58 thorpej Exp $	*/
+/*	$NetBSD: eisa_machdep.h,v 1.4 1997/06/06 23:12:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -41,6 +41,8 @@
 #define	EISA_ID			"EISA"
 #define	EISA_ID_LEN		(sizeof(EISA_ID) - 1)
 #define	EISA_ID_PADDR		0xfffd9
+
+extern struct i386_bus_dma_tag eisa_bus_dma_tag;
 
 /*
  * Types provided to machine-independent EISA code.
