@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.74 1994/11/04 07:30:51 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.75 1994/11/04 19:01:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -68,7 +68,6 @@
 
 #include <i386/isa/isareg.h>
 #include <i386/isa/isavar.h>
-#include <i386/isa/icu.h>
 #include <i386/isa/kbdreg.h>
 
 #define	XFREE86_BUG_COMPAT

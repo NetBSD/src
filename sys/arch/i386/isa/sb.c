@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.12 1994/11/04 18:35:19 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.13 1994/11/04 19:02:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -45,7 +45,6 @@
 
 #include <i386/isa/isavar.h>
 #include <i386/isa/dmavar.h>
-#include <i386/isa/icu.h>
 
 #include "sbreg.h"
 

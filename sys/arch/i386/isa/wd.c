@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.103 1994/11/03 23:23:44 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.104 1994/11/04 19:02:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.
@@ -66,7 +66,6 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isavar.h>
-#include <i386/isa/icu.h>
 #include <i386/isa/wdreg.h>
 
 #define WDCNDELAY	100000	/* delay = 100us; so 10s for a controller state change */

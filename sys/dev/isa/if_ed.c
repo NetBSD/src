@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.60 1994/11/04 18:35:02 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.61 1994/11/04 19:01:45 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -55,7 +55,6 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isavar.h>
-#include <i386/isa/icu.h>
 #include <i386/isa/if_edreg.h>
 
 /*

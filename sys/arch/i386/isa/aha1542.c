@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.36 1994/11/04 18:34:50 mycroft Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.37 1994/11/04 19:01:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -63,7 +63,6 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isavar.h>
-#include <i386/isa/icu.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 

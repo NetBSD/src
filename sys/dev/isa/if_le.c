@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.15 1994/11/03 23:15:03 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.16 1994/11/04 19:01:53 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -54,7 +54,6 @@
 
 #include <i386/isa/isavar.h>
 #include <i386/isa/dmavar.h>
-#include <i386/isa/icu.h>
 #include <i386/isa/if_lereg.h>
 
 

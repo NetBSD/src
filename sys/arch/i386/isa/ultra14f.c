@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.41 1994/11/04 18:35:22 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.42 1994/11/04 19:02:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -66,7 +66,6 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isavar.h>
-#include <i386/isa/icu.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
