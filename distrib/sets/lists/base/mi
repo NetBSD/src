@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.119 1999/07/09 11:55:32 fvdl Exp $
+# $NetBSD: mi,v 1.120 1999/07/19 09:16:34 kleink Exp $
 .
 ./altroot
 ./bin
@@ -542,6 +542,7 @@
 ./usr/sbin/iptest
 ./usr/sbin/kvm_mkdb
 ./usr/sbin/lastlogin
+./usr/sbin/link
 ./usr/sbin/lpc
 ./usr/sbin/lpd
 ./usr/sbin/lptest
@@ -637,6 +638,7 @@
 ./usr/sbin/traceroute6
 ./usr/sbin/trpt
 ./usr/sbin/trsp
+./usr/sbin/unlink
 ./usr/sbin/update
 ./usr/sbin/usbdevs
 ./usr/sbin/vipw
