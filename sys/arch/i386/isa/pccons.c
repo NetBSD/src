@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.36 1993/12/20 09:06:35 mycroft Exp $
+ *	$Id: pccons.c,v 1.37 1994/01/25 04:32:02 hpeyerl Exp $
  */
 
 #include "pc.h"
@@ -241,6 +241,7 @@ struct isa_device *dev;
 	if (kbd_cmd(KBC_RESET) != 0)
 		printf("Timeout for keyboard reset command\n");
 
+#if 0
 	/* Wait for the first response to reset and handle retries */
 	while ((response = kbd_response()) != KBR_ACK) {
 		if (response < 0) {
@@ -260,6 +261,7 @@ struct isa_device *dev;
 		 * keystrokes.
 		 */
 	}
+#endif
 
 	/* Wait for the second response to reset */
 	while ((response = kbd_response()) != KBR_RSTDONE) {
