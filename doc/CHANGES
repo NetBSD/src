@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.203 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.204 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -481,3 +481,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	kernel: Add a /dev/constty device (minor 1 on console), use for
 		terminal sessions on 'console'.  Stops terminal output
 		being 'stolen' by the TIOCCONS ioctl. [dsl 20031003]
+	mips: Add R10000 cache ops, written by KIYOHARA Takashi.
+		[tsutsui 20031005]
+	sgimips: O2 (IP32) support is now functional again by fixes
+		contributed by Christopher SEKIYA. [tsutsui 20031005]
