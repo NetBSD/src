@@ -1,4 +1,4 @@
-/*	$NetBSD: dptvar.h,v 1.1 1999/09/27 23:41:47 ad Exp $	*/
+/*	$NetBSD: dptvar.h,v 1.2 1999/09/28 23:35:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -36,6 +36,7 @@
 #define CCB_ABORT	0x02	/* abort has been issued on this CCB */
 #define CCB_INTR	0x04	/* HBA interrupted for this CCB */
 #define CCB_PRIVATE	0x08	/* ours; don't talk to scsipi when done */ 
+#define CCB_SYNC	0x10	/* write data synchronously */
 
 struct dpt_ccb {
 	struct eata_cp	ccb_eata_cp;		/* EATA command packet */
@@ -51,6 +52,24 @@ struct dpt_ccb {
 	struct scsipi_sense_data ccb_sense;	/* SCSI sense data on error */
 	struct scsipi_xfer *ccb_xs;		/* initiating SCSI command */
 };
+
+#ifdef DPT_PROFILE
+struct dpt_profile {
+	int	dp_nsync;		/* synchronous writes */
+	int	dp_nasync;		/* asynchronous writes */
+	int	dp_nread;		/* reads */
+	int	dp_maxchargeccb;	/* maximum CCB queue charge */
+	int	dp_maxchargexs;		/* maximum SCSI queue charge */
+	int	dp_curchargeccb;	/* current CCB queue charge */
+	int	dp_curchargexs;		/* current SCSI queue charge */
+	int	dp_ncmds;		/* total commands recieved */
+	int	dp_nsleepccb;		/* times sleeping on a CCB */
+	int	dp_nintr;		/* interrupts */
+	int	dp_nintrloop;		/* intrs handled with one h/w intr */
+};
+#endif	/* DPT_PROFILE */
+
+#ifdef _KERNEL
 
 struct dpt_softc {
 	struct device sc_dv;		/* generic device data */
@@ -81,5 +100,7 @@ struct dpt_softc {
 
 int	dpt_intr __P((void *));
 void	dpt_init __P((struct dpt_softc *, const char *));
+
+#endif	/* _KERNEL */
 
 #endif	/* !defined _IC_DPTVAR_H_ */
