@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.5 1997/10/10 11:40:13 lukem Exp $	*/
+/*	$NetBSD: parse.c,v 1.6 1997/10/11 02:07:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: parse.c,v 1.5 1997/10/10 11:40:13 lukem Exp $");
+__RCSID("$NetBSD: parse.c,v 1.6 1997/10/11 02:07:33 lukem Exp $");
 #endif
-#endif /* not lint */
+#endif				/* not lint */
 
 #include "extern.h"
 
@@ -55,9 +55,9 @@ wordinit()
 
 int
 hash(s)
-	char *s;
+	char   *s;
 {
-	int hashval = 0;
+	int     hashval = 0;
 
 	while (*s) {
 		hashval += *s++;
@@ -69,7 +69,7 @@ hash(s)
 
 struct wlist *
 lookup(s)
-	char *s;
+	char   *s;
 {
 	struct wlist *wp;
 
@@ -83,7 +83,7 @@ void
 install(wp)
 	struct wlist *wp;
 {
-	int hashval;
+	int     hashval;
 
 	if (lookup(wp->string) == NULL) {
 		hashval = hash(wp->string);
@@ -97,16 +97,16 @@ void
 parse()
 {
 	struct wlist *wp;
-	int n;
+	int     n;
 
-	wordnumber = 0;           /* for cypher */
+	wordnumber = 0;		/* for cypher */
 	for (n = 0; n <= wordcount; n++) {
 		if ((wp = lookup(words[n])) == NULL) {
 			wordvalue[n] = -1;
 			wordtype[n] = -1;
 		} else {
-			wordvalue[n] = wp -> value;
-			wordtype[n] = wp -> article;
+			wordvalue[n] = wp->value;
+			wordtype[n] = wp->article;
 		}
 	}
 }

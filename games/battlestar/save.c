@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.5 1997/10/10 11:40:19 lukem Exp $	*/
+/*	$NetBSD: save.c,v 1.6 1997/10/11 02:07:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,26 +38,26 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: save.c,v 1.5 1997/10/10 11:40:19 lukem Exp $");
+__RCSID("$NetBSD: save.c,v 1.6 1997/10/11 02:07:37 lukem Exp $");
 #endif
-#endif /* not lint */
+#endif				/* not lint */
 
 #include "extern.h"
 
 void
 restore()
 {
-	char *home;
-	char home1[100];
-	int n;
-	int tmp;
-	FILE *fp;
+	char   *home;
+	char    home1[100];
+	int     n;
+	int     tmp;
+	FILE   *fp;
 
 	home = getenv("HOME");
 	strcpy(home1, home);
 	strcat(home1, "/Bstar");
 	if ((fp = fopen(home1, "r")) == 0) {
-		perror(home1);
+		warn("fopen %s", home1);
 		return;
 	}
 	fread(&WEIGHT, sizeof WEIGHT, 1, fp);
@@ -100,17 +100,17 @@ restore()
 void
 save()
 {
-	char *home;
-	char home1[100];
-	int n;
-	int tmp;
-	FILE *fp;
+	char   *home;
+	char    home1[100];
+	int     n;
+	int     tmp;
+	FILE   *fp;
 
 	home = getenv("HOME");
 	strcpy(home1, home);
 	strcat(home1, "/Bstar");
 	if ((fp = fopen(home1, "w")) == 0) {
-		perror(home1);
+		warn("fopen %s", home1);
 		return;
 	}
 	printf("Saved in %s.\n", home1);
