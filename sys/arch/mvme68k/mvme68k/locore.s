@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.73 2000/12/10 18:43:02 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.74 2000/12/10 20:00:21 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1724,6 +1724,10 @@ Lm68060fprdone:
  */
 ENTRY_NOPROFILE(doboot)
 	movw	#PSL_HIGHIPL,%sr
+	movl	_C_LABEL(boothowto),%d1	| load howto
+	movl	%sp@(4),%d2		| arg
+	movl	_ASM_LABEL(bug_vbr),%d3	| Fetch Bug's original VBR value
+	movl	_C_LABEL(machineid),%d4	| What type of board is this?
 	movl	#CACHE_OFF,%d0
 #if defined(M68040) || defined(M68060)
 	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040/68060?
@@ -1744,42 +1748,32 @@ Lnocache0:
 	jra	Lbootcommon
 LmotommuF:
 #endif
-	movl	#0,%sp@-		| value for pmove to TC (turn off MMU)
+	clrl	%sp@-			| value for pmove to TC (turn off MMU)
 	pmove	%sp@,%tc		| disable MMU
+	addql	#4,%sp
 
 Lbootcommon:
-	movl	_C_LABEL(boothowto),%d0	| load howto
-					| (used to load bootdev in d1 here)
-	movl	%sp@(4),%d2		| arg
-	movl	_ASM_LABEL(bug_vbr),%d3	| Fetch Bug's original VBR value
-	movl	_C_LABEL(machineid),%d4	| What type of board is this?
-	lea	_ASM_LABEL(tmpstk),%sp	| physical SP in case of NMI
+	/*
+	 * MMU Switched off by now, so relocate all absolute references
+	 */
+	ASRELOC(tmpstk, %sp)		| physical SP in case of NMI
 	movc	%d3,%vbr		| Restore Bug's VBR
-	andl	#RB_SBOOT, %d0		| mask off
-	tstl	%d0			| 
+	andl	#RB_SBOOT, %d1		| mask off
 	bne	Lsboot			| sboot?
 	/* NOT sboot */
 	tstl	%d2			| autoboot?
 	beq	Ldoreset		| yes!
-Lres_justexit:
 	CALLBUG(MVMEPROM_EXIT)		| return to bug
 	/* NOTREACHED */
 
 Ldoreset:
-	cmpl	#MVME_147,%d4		| Running on an MVME-147?
-	jne	Lreset16x		| Nope.
 	movl	#0xff800000,%a0		| Bug's reset vector address
 	movl	%a0@+, %a7		| get SP
 	movl	%a0@, %a0		| get PC
 	jmp	%a0@			| go!
 
-Lreset16x:
-	movw	#0x80,0xfff40106	| Hit the hard RST bit in the GCSR
-	/* NOTREACHED */
-	jra	Lres_justexit		| But just in case...
-
 Lsboot: /* sboot */
-	cmpl	#0, %d2			| autoboot?
+	tstl	%d2			| autoboot?
 	beq	1f			| yes!
 	jmp 	0x4000			| back to sboot
 1:	jmp	0x400a			| tell sboot to reboot us
