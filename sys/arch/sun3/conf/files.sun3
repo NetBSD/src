@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.59 2001/01/17 00:07:38 fvdl Exp $
+#	$NetBSD: files.sun3,v 1.60 2001/02/22 07:11:09 chs Exp $
 
 #
 # sun3-specific configuration info
@@ -254,6 +254,9 @@ file dev/sun/ms.c			ms needs-flag
 file dev/md_root.c			memory_disk_hooks
 
 # Compatibility modules
+
+# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
+include "compat/aoutm68k/files.aoutm68k"
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"

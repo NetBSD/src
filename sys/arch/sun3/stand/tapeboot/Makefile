@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2001/02/04 08:57:22 jmc Exp $
+#	$NetBSD: Makefile,v 1.6 2001/02/22 07:11:11 chs Exp $
 
 SA_PROG= tapeboot
 SRCS=   boot.c conf.c rawfs.c dev_tape.c
 
-PROG=	${SA_PROG} ${SA_PROG}.bin
+PROG=	${SA_PROG}
 MKMAN= no
 NOMAN= yes
 
