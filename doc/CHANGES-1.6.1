@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.92 2003/01/27 06:57:49 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.93 2003/01/27 07:10:48 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3367,3 +3367,8 @@ sys/dev/tc/if_le_tc.c				1.15-1.16
 	Fixes Turbochannel Ethernet card on Alpha 3000 systems.
 	[mhitch, ticket #1118]
 
+sys/arch/shark/shark/shark_machdep.c		1.10-1.11
+
+	If booted_kernel ends in .aout, remove it, to help libkvm find 
+	an ELF kernel.
+	[toddpw, ticket #1081]
