@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.33 2000/02/29 16:54:29 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.34 2000/03/07 02:28:05 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -136,7 +136,6 @@ static int init_rad(RF_RaidAccessDesc_t *);
 static void clean_rad(RF_RaidAccessDesc_t *);
 static void rf_ShutdownRDFreeList(void *);
 static int rf_ConfigureRDFreeList(RF_ShutdownList_t **);
-void rf_UnconfigureVnodes( RF_Raid_t * );
 
 RF_DECLARE_MUTEX(rf_printf_mutex)	/* debug only:  avoids interleaved
 					 * printfs by different stripes */
@@ -279,63 +278,6 @@ rf_Shutdown(raidPtr)
 	rf_UnconfigureArray();
 
 	return (0);
-}
-
-void
-rf_UnconfigureVnodes( raidPtr )
-	RF_Raid_t *raidPtr;
-{
-	int r,c; 
-	struct proc *p;
-
-
-	/* We take this opportunity to close the vnodes like we should.. */
-
-	p = raidPtr->engine_thread;
-
-	for (r = 0; r < raidPtr->numRow; r++) {
-		for (c = 0; c < raidPtr->numCol; c++) {
-			printf("Closing vnode for row: %d col: %d\n", r, c);
-			if (raidPtr->raid_cinfo[r][c].ci_vp != NULL) {
-				if (raidPtr->Disks[r][c].auto_configured == 1) {
-					VOP_CLOSE(raidPtr->raid_cinfo[r][c].ci_vp, 
-						  FREAD, NOCRED, 0);
-					vput(raidPtr->raid_cinfo[r][c].ci_vp);
-		
-				} else {				
-					VOP_UNLOCK(raidPtr->raid_cinfo[r][c].ci_vp, 0);
-					(void) vn_close(raidPtr->raid_cinfo[r][c].ci_vp,
-							FREAD | FWRITE, p->p_ucred, p);
-				}
-				raidPtr->raid_cinfo[r][c].ci_vp = NULL;
-				raidPtr->Disks[r][c].auto_configured = 0;
-			} else {
-				printf("vnode was NULL\n");
-			}
-
-		}
-	}
-	for (r = 0; r < raidPtr->numSpare; r++) {
-		printf("Closing vnode for spare: %d\n", r);
-		if (raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp) {
-			if (raidPtr->Disks[0][raidPtr->numCol + r].auto_configured == 1) {
-				VOP_CLOSE(raidPtr->raid_cinfo[0][raidPtr->numCol +r].ci_vp, 
-					  FREAD, NOCRED, 0);
-				vput(raidPtr->raid_cinfo[0][raidPtr->numCol +r].ci_vp);
-				
-			} else {
-				VOP_UNLOCK(raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp, 0);
-				(void) vn_close(raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp,
-						FREAD | FWRITE, p->p_ucred, p);
-			}
-			raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp = NULL;			
-			raidPtr->Disks[0][raidPtr->numCol + r].auto_configured = 0;
-		} else {
-			printf("vnode was NULL\n");
-		}
-	}
-
-
 }
 
 
