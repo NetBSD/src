@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.12 2000/01/05 16:14:35 ad Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.13 2000/01/12 14:42:21 ad Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -46,8 +46,8 @@ pcdisplay_cursor_init(scr)
 {
 
 #ifdef PCDISPLAY_SOFTCURSOR
-	pcdisplay_6845_write(scr->hdl, cursorh, 0x10);
-	pcdisplay_6845_write(scr->hdl, cursorl, 0x10);
+	pcdisplay_6845_write(scr->hdl, curstart, 0x10);
+	pcdisplay_6845_write(scr->hdl, curend, 0x10);
 #endif
 }
 
