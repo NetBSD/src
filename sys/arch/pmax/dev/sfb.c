@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.4 1995/09/12 07:30:45 jonathan Exp $	*/
+/*	$NetBSD: sfb.c,v 1.5 1996/01/31 02:53:39 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: sfb.c,v 1.4 1995/09/12 07:30:45 jonathan Exp $
+ *      $Id: sfb.c,v 1.5 1996/01/31 02:53:39 jonathan Exp $
  */
 
 /*
@@ -91,6 +91,7 @@
 #include <sys/fcntl.h>
 
 #include <machine/autoconf.h>
+#include <dev/tc/tcvar.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 
@@ -152,13 +153,10 @@ sfbmatch(parent, match, aux)
 	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 	static int nsfbs = 1;
-	caddr_t sfbaddr = BUS_CVTADDR(ca);
 
 	/* make sure that we're looking for this type of device. */
-	/*if (!sfbprobe(sfbaddr)) return 0;*/
-	if (!BUS_MATCHNAME(ca, "PMAGB-BA"))
+	if (!TC_BUS_MATCHNAME(ca, "PMAGB-BA"))
 		return (0);
-
 
 #ifdef notyet
 	/* if it can't have the one mentioned, reject it */
@@ -179,7 +177,7 @@ sfbattach(parent, self, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	caddr_t base = 	BUS_CVTADDR(ca);
+	caddr_t sfbaddr = (caddr_t)ca->ca_addr;
 	int unit = self->dv_unit;
 
 #ifdef notyet
@@ -188,13 +186,12 @@ sfbattach(parent, self, aux)
 		return;	/* XXX patch up f softc pointer */
 #endif
 
-	if (!sfbinit(base, unit, 0))
+	if (!sfbinit(sfbaddr, unit, 0))
 		return;
 
 #if 0 /*XXX*/
-	*(base + SFB_INTERRUPT_ENABLE) = 0;
+	*(sfbaddr + SFB_INTERRUPT_ENABLE) = 0;
 #endif
-
 }
 
 /*
