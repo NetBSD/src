@@ -36,9 +36,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: mem.c 1.13 89/10/08$
- *	from: @(#)mem.c	7.2 (Berkeley) 5/9/91
- *	$Id: mem.c,v 1.3 1993/05/22 07:59:53 cgd Exp $
+ *	from: Utah Hdr: mem.c 1.13 89/10/08
+ *	from: @(#)mem.c 7.2 (Berkeley) 5/9/91
+ *	$Id: mem.c,v 1.4 1993/08/14 01:29:36 mycroft Exp $
  */
 
 /*
