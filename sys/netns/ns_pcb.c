@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.5 1994/06/29 06:41:46 cgd Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.6 1995/06/13 08:37:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -87,7 +87,7 @@ ns_pcbbind(nsp, nam)
 		int tport = sns->sns_port;
 
 		sns->sns_port = 0;		/* yech... */
-		if (ifa_ifwithaddr((struct sockaddr *)sns) == 0)
+		if (ifa_ifwithaddr(snstosa(sns)) == 0)
 			return (EADDRNOTAVAIL);
 		sns->sns_port = tport;
 	}
@@ -182,25 +182,26 @@ ns_pcbconnect(nsp, nam)
 		 * our src addr is taken from the i/f, else punt.
 		 */
 
-		ia = (struct ns_ifaddr *)0;
+		ia = 0;
 		/*
 		 * If we found a route, use the address
 		 * corresponding to the outgoing interface
 		 */
 		if (ro->ro_rt && (ifp = ro->ro_rt->rt_ifp))
-			for (ia = ns_ifaddr; ia; ia = ia->ia_next)
+			for (ia = ns_ifaddr.tqh_first; ia != 0;
+			    ia = ia->ia_list.tqe_next)
 				if (ia->ia_ifp == ifp)
 					break;
 		if (ia == 0) {
 			u_short fport = sns->sns_addr.x_port;
 			sns->sns_addr.x_port = 0;
 			ia = (struct ns_ifaddr *)
-				ifa_ifwithdstaddr((struct sockaddr *)sns);
+				ifa_ifwithdstaddr(snstosa(sns));
 			sns->sns_addr.x_port = fport;
 			if (ia == 0)
 				ia = ns_iaonnetof(&sns->sns_addr);
 			if (ia == 0)
-				ia = ns_ifaddr;
+				ia = ns_ifaddr.tqh_first;
 			if (ia == 0)
 				return (EADDRNOTAVAIL);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.6 1994/09/20 06:42:10 cgd Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.7 1995/06/13 08:37:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -431,7 +431,7 @@ struct route *ro;
 	struct sockaddr_ns *dst;
 
 	bzero((caddr_t)ro, sizeof (*ro));
-	dst = (struct sockaddr_ns *)&ro->ro_dst;
+	dst = satosns(&ro->ro_dst);
 
 	dst->sns_len = sizeof(*dst);
 	dst->sns_family = AF_NS;
@@ -472,13 +472,13 @@ struct ifnet *ifp;
 			idp->idp_sna.x_net = ns_zeronet;
 			idp->idp_sna.x_host = ns_thishost;
 			if (ifp && (ifp->if_flags & IFF_POINTOPOINT))
-			    for(ifa = ifp->if_addrlist; ifa;
-						ifa = ifa->ifa_next) {
-				if (ifa->ifa_addr->sa_family==AF_NS) {
-				    idp->idp_sna = IA_SNS(ifa)->sns_addr;
-				    break;
+				for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+				    ifa = ifa->ifa_list.tqe_next) {
+					if (ifa->ifa_addr->sa_family == AF_NS) {
+						idp->idp_sna = IA_SNS(ifa)->sns_addr;
+						break;
+					}
 				}
-			    }
 			idp->idp_len = ntohl(m0->m_pkthdr.len);
 			idp_input(m0, nsp);
 		}
