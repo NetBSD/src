@@ -1,7 +1,7 @@
-/*	$NetBSD: ite8181.c,v 1.7 2001/02/22 18:38:00 uch Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.8 2001/02/27 08:54:18 sato Exp $	*/
 
 /*-
- * Copyright (c) 2000 SATO Kazumi
+ * Copyright (c) 2000,2001 SATO Kazumi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -120,6 +120,14 @@ static int	ite8181_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 static paddr_t	ite8181_mmap __P((void *, off_t offset, int));
 static void	ite8181_erase_cursor __P((struct ite8181_softc *));
 static int	ite8181_lcd_power __P((struct ite8181_softc *, int));
+
+static void	ite8181_update_powerstate __P((struct ite8181_softc *, int));
+void	ite8181_get_backlight __P((struct ite8181_softc *));
+void	ite8181_init_brightness __P((struct ite8181_softc *));
+void	ite8181_init_contrast __P((struct ite8181_softc *));
+void	ite8181_set_brightness __P((struct ite8181_softc *, int));
+void	ite8181_set_contrast __P((struct ite8181_softc *, int));
+
 /*
  * static variables
  */
@@ -275,7 +283,6 @@ ite8181_attach(sc)
 	sc->sc_lcd = 1;
 
 	/* Add a power hook to power saving */
-	sc->sc_powerstate = ITE8181_POWERSTATE_D0;
 	sc->sc_powerhook = powerhook_establish(ite8181_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
@@ -291,6 +298,13 @@ ite8181_attach(sc)
 			sc->sc_dev.dv_xname);
 
 	ite8181_erase_cursor(sc);
+
+	/* initialize backlight brightness and lcd contrast */
+	sc->sc_brightness = sc->sc_contrast =
+	sc->sc_max_brightness = sc->sc_max_contrast = -1;
+	ite8181_get_backlight(sc);
+	ite8181_init_brightness(sc);
+	ite8181_init_contrast(sc);
 
 	if (console && hpcfb_cnattach(&sc->sc_fbconf) != 0) {
 		panic("ite8181_attach: can't init fb console");
@@ -409,6 +423,23 @@ ite8181_erase_cursor(sc)
 	/* other ? */
 }
 
+static void
+ite8181_update_powerstate(sc, updates)
+	struct ite8181_softc *sc;
+	int updates;
+{
+	if (updates & PWRSTAT_LCD)
+		config_hook_call(CONFIG_HOOK_POWERCONTROL,
+		    CONFIG_HOOK_POWERCONTROL_LCD,
+		    (void*)!(sc->sc_powerstate & PWRSTAT_SUSPEND));
+
+	if (updates & PWRSTAT_BACKLIGHT)
+		config_hook_call(CONFIG_HOOK_POWERCONTROL,
+		    CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
+		    (void*)(!(sc->sc_powerstate & PWRSTAT_SUSPEND) &&
+			     (sc->sc_powerstate & PWRSTAT_BACKLIGHT)));
+}
+
 static void 
 ite8181_power(why, arg)
 	int why;
@@ -428,18 +459,21 @@ ite8181_hardpower(ctx, type, id, msg)
 
 	switch (why) {
 	case PWR_STANDBY:
-		sc->sc_powerstate = ITE8181_POWERSTATE_D3;
+		sc->sc_powerstate |= PWRSTAT_SUSPEND;
+		ite8181_update_powerstate(sc, PWRSTAT_ALL);
 		/* ite8181_lcd_power(sc, 0); */
 		delay(MSEC);
 		break;
 	case PWR_SUSPEND:
-		sc->sc_powerstate = ITE8181_POWERSTATE_D2;
+		sc->sc_powerstate |= PWRSTAT_SUSPEND;
+		ite8181_update_powerstate(sc, PWRSTAT_ALL);
 		ite8181_lcd_power(sc, 0);	
 		delay(MSEC);
 		break;
 	case PWR_RESUME:
+		sc->sc_powerstate &= ~PWRSTAT_SUSPEND;
+		ite8181_update_powerstate(sc, PWRSTAT_ALL);
 		delay(MSEC);
-		sc->sc_powerstate = ITE8181_POWERSTATE_D0;
 		ite8181_lcd_power(sc, 1);	
 		/*
 		 * XXX:
@@ -458,7 +492,6 @@ ite8181_hardpower(ctx, type, id, msg)
 
 	return (0);
 }
-
 
 static int
 ite8181_fbinit(fb)
@@ -601,6 +634,7 @@ ite8181_ioctl(v, cmd, data, flag, p)
 	struct hpcfb_fbconf *fbconf;
 	struct hpcfb_dspconf *dspconf;
 	struct wsdisplay_cmap *cmap;
+	struct wsdisplay_param *dispparam;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GETCMAP:
@@ -631,6 +665,134 @@ ite8181_ioctl(v, cmd, data, flag, p)
 		 * This driver can't set color map.
 		 */
 		return (EINVAL);
+
+
+	case WSDISPLAYIO_GETPARAM:
+		dispparam = (struct wsdisplay_param*)data;
+		switch (dispparam->param) {
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			VPRINTF(("ite8181_ioctl: GETPARAM:BACKLIGHT call\n"));
+			if (sc->sc_max_brightness == -1)
+				ite8181_init_brightness(sc);
+			ite8181_get_backlight(sc);
+			dispparam->min = 0;
+			dispparam->max = 1;
+			if (sc->sc_max_brightness > 0)
+				dispparam->curval = sc->sc_brightness > 0? 1: 0;
+			else
+				dispparam->curval =
+				    (sc->sc_powerstate & PWRSTAT_BACKLIGHT) ? 1 : 0;
+			VPRINTF(("ite8181_ioctl: GETPARAM:BACKLIGHT:%d\n",
+				dispparam->curval));
+			return 0;
+			break;
+		case WSDISPLAYIO_PARAM_CONTRAST:
+			VPRINTF(("ite8181_ioctl: GETPARAM:CONTRAST call\n"));
+			if (sc->sc_max_contrast == -1)
+				ite8181_init_contrast(sc);
+			if (sc->sc_max_contrast > 0) {
+				dispparam->min = 0;
+				dispparam->max = sc->sc_max_contrast;
+				dispparam->curval = sc->sc_contrast;
+				VPRINTF(("ite8181_ioctl: GETPARAM:CONTRAST max=%d, current=%d\n", sc->sc_max_contrast, sc->sc_contrast));
+				return 0;
+			} else {
+				VPRINTF(("ite8181_ioctl: GETPARAM:CONTRAST ret\n"));
+				return (EINVAL);
+			}
+			break;	
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			VPRINTF(("ite8181_ioctl: GETPARAM:BRIGHTNESS call\n"));
+			if (sc->sc_max_brightness == -1)
+				ite8181_init_brightness(sc);
+			if (sc->sc_max_brightness > 0) {
+				dispparam->min = 0;
+				dispparam->max = sc->sc_max_brightness;
+				dispparam->curval = sc->sc_brightness;
+				VPRINTF(("ite8181_ioctl: GETPARAM:BRIGHTNESS max=%d, current=%d\n", sc->sc_max_brightness, sc->sc_brightness));
+				return 0;
+			} else {
+				VPRINTF(("ite8181_ioctl: GETPARAM:BRIGHTNESS ret\n"));
+				return (EINVAL);
+			}
+			return (EINVAL);
+		default:
+			return (EINVAL);
+		}
+		return (0);
+
+	case WSDISPLAYIO_SETPARAM:
+		dispparam = (struct wsdisplay_param*)data;
+		switch (dispparam->param) {
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			VPRINTF(("ite8181_ioctl: SETPARAM:BACKLIGHT call\n"));
+			if (dispparam->curval < 0 ||
+			    1 < dispparam->curval)
+				return (EINVAL);
+			if (sc->sc_max_brightness == -1)
+				ite8181_init_brightness(sc);
+			VPRINTF(("ite8181_ioctl: SETPARAM:max brightness=%d\n", sc->sc_max_brightness));
+			if (sc->sc_max_brightness > 0) { /* dimmer */
+				if (dispparam->curval == 0){
+					sc->sc_brightness_save = sc->sc_brightness;
+					ite8181_set_brightness(sc, 0);	/* min */
+				} else {
+					if (sc->sc_brightness_save == 0)
+						sc->sc_brightness_save = sc->sc_max_brightness;
+					ite8181_set_brightness(sc, sc->sc_brightness_save);
+				}
+				VPRINTF(("ite8181_ioctl: SETPARAM:BACKLIGHT: brightness=%d\n", sc->sc_brightness));
+			} else { /* off */
+				if (dispparam->curval == 0)
+					sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
+				else
+					sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
+				VPRINTF(("ite8181_ioctl: SETPARAM:BACKLIGHT: powerstate %d\n",
+						(sc->sc_powerstate & PWRSTAT_BACKLIGHT)?1:0));
+				ite8181_update_powerstate(sc, PWRSTAT_BACKLIGHT);
+				VPRINTF(("ite8181_ioctl: SETPARAM:BACKLIGHT:%d\n",
+					(sc->sc_powerstate & PWRSTAT_BACKLIGHT)?1:0));
+			}
+			return 0;
+			break;
+		case WSDISPLAYIO_PARAM_CONTRAST:
+			VPRINTF(("ite8181_ioctl: SETPARAM:CONTRAST call\n"));
+			if (sc->sc_max_contrast == -1)
+				ite8181_init_contrast(sc);
+			if (dispparam->curval < 0 ||
+			    sc->sc_max_contrast < dispparam->curval)
+				return (EINVAL);
+			if (sc->sc_max_contrast > 0) {
+				int org = sc->sc_contrast;
+				ite8181_set_contrast(sc, dispparam->curval);	
+				VPRINTF(("ite8181_ioctl: SETPARAM:CONTRAST org=%d, current=%d\n", org, sc->sc_contrast));
+				return 0;
+			} else {
+				VPRINTF(("ite8181_ioctl: SETPARAM:CONTRAST ret\n"));
+				return (EINVAL);
+			}
+			break;
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			VPRINTF(("ite8181_ioctl: SETPARAM:BRIGHTNESS call\n"));
+			if (sc->sc_max_brightness == -1)
+				ite8181_init_brightness(sc);
+			if (dispparam->curval < 0 ||
+			    sc->sc_max_brightness < dispparam->curval)
+				return (EINVAL);
+			if (sc->sc_max_brightness > 0) {
+				int org = sc->sc_brightness;
+				ite8181_set_brightness(sc, dispparam->curval);	
+				VPRINTF(("ite8181_ioctl: SETPARAM:BRIGHTNESS org=%d, current=%d\n", org, sc->sc_brightness));
+				return 0;
+			} else {
+				VPRINTF(("ite8181_ioctl: SETPARAM:BRIGHTNESS ret\n"));
+				return (EINVAL);
+			}
+			break;
+		default:
+			return (EINVAL);
+		}
+		return (0);
 
 	case HPCFBIO_GCONF:
 		fbconf = (struct hpcfb_fbconf *)data;
@@ -698,4 +860,86 @@ ite8181_mmap(ctx, offset, prot)
 		return -1;
 
 	return mips_btop((u_long)bootinfo->fb_addr + offset);
+}
+
+void
+ite8181_get_backlight(sc)
+	struct ite8181_softc *sc;
+{
+	int val = -1;
+
+	if (sc->sc_max_brightness < 0) {
+		if (config_hook_call(CONFIG_HOOK_GET, 
+		     CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
+			if (val == 0)
+				sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
+			else
+				sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
+		}
+	}
+}
+
+void
+ite8181_init_brightness(sc)
+	struct ite8181_softc *sc;
+{
+	int val = -1;
+
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
+		sc->sc_brightness = val;
+	}
+	val = -1;
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_BRIGHTNESS_MAX, &val) != -1) {
+		sc->sc_brightness_save = sc->sc_max_brightness = val;
+	}
+	return;
+}
+
+
+void
+ite8181_init_contrast(sc)
+	struct ite8181_softc *sc;
+{
+	int val = -1;
+
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_CONTRAST, &val) != -1) {
+		sc->sc_contrast = val;
+	}
+	val = -1;
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_CONTRAST_MAX, &val) != -1) {
+		sc->sc_max_contrast = val;
+	}
+	return;
+}
+
+void
+ite8181_set_brightness(sc, val)
+	struct ite8181_softc *sc;
+	int val;
+{
+	sc->sc_brightness = val;
+
+	config_hook_call(CONFIG_HOOK_SET, CONFIG_HOOK_BRIGHTNESS, &val);
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
+		sc->sc_brightness = val;
+	}
+}
+
+void
+ite8181_set_contrast(sc, val)
+	struct ite8181_softc *sc;
+	int val;
+{
+	sc->sc_contrast = val;
+
+	config_hook_call(CONFIG_HOOK_SET, CONFIG_HOOK_CONTRAST, &val);
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_CONTRAST, &val) != -1) {
+		sc->sc_contrast = val;
+	}
 }

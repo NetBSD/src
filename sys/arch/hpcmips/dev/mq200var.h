@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200var.h,v 1.2 2001/02/22 18:38:00 uch Exp $	*/
+/*	$NetBSD: mq200var.h,v 1.3 2001/02/27 08:54:18 sato Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -46,6 +46,16 @@ struct mq200_softc {
 	void			*sc_powerhook;	/* power management hook */
 	config_hook_tag		sc_hardpowerhook;
 	int			sc_powerstate;
+#define	PWRSTAT_SUSPEND		(1<<0)
+#define	PWRSTAT_LCD		(1<<1)
+#define	PWRSTAT_BACKLIGHT	(1<<2)
+#define PWRSTAT_ALL		(0xffffffff)
+	int			sc_brightness;
+	int			sc_brightness_save;
+	int			sc_max_brightness;
+	int			sc_contrast;
+	int			sc_max_contrast;
+	int			sc_mq200pwstate; /* mq200 power state */
 	struct hpcfb_fbconf	sc_fbconf;
 	struct hpcfb_dspconf	sc_dspconf;
 };
