@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.10 2003/09/25 19:29:49 mycroft Exp $ */
+/* $NetBSD: dtide.c,v 1.11 2003/10/08 10:58:13 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.10 2003/09/25 19:29:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.11 2003/10/08 10:58:13 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -106,7 +106,7 @@ dtide_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_map(pa->pa_fast_t,
 		    pa->pa_fast_base + dtide_ctloffsets[i], 0, 8,
 		    &sc->sc_chan[i].ctl_ioh);
+		wdcattach(&sc->sc_chan[i]);
 	}
 
-	wdcattach(&sc->sc_wdc);
 }
