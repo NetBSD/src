@@ -1,4 +1,4 @@
-/* $NetBSD: scireg.h,v 1.4 2002/03/24 18:04:40 uch Exp $ */
+/* $NetBSD: scireg.h,v 1.5 2002/04/25 20:17:04 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -77,5 +77,9 @@
 #define	SCSPTR_SPB1DT	0x04
 #define	SCSPTR_SPB0IO	0x02
 #define	SCSPTR_SPB0DT	0x01
+
+#if defined(SH3)
+#define	SCPTR_SCP0DT	0x01
+#endif
 
 #endif /* !_SH3_SCIREG_ */
