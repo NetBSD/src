@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.41 2004/03/26 12:45:39 keihan Exp $
+$NetBSD: acronyms.comp,v 1.42 2004/04/01 04:35:45 simonb Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -143,6 +143,7 @@ PNG	portable network graphics
 POP	post office protocol
 POSIX	portable operating system interface [for] unix
 POST	power on self test
+POTS	plain old telephone system
 PPP	point-to-point protocol
 PPPOA	point-to-point protocol over ATM
 PPPOE	point-to-point protocol over ethernet
