@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.10 2002/05/14 18:57:31 kleink Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.10.2.1 2002/08/27 09:25:43 lukem Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_ntop.c,v 8.7 1996/08/05 08:41:18 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_ntop.c,v 1.10 2002/05/14 18:57:31 kleink Exp $");
+__RCSID("$NetBSD: inet_ntop.c,v 1.10.2.1 2002/08/27 09:25:43 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -41,12 +41,6 @@ __RCSID("$NetBSD: inet_ntop.c,v 1.10 2002/05/14 18:57:31 kleink Exp $");
 
 #ifdef __weak_alias
 __weak_alias(inet_ntop,_inet_ntop)
-#endif
-
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) strlen(sprintf/**/x)
-#else
-# define SPRINTF(x) ((size_t)sprintf x)
 #endif
 
 /*
@@ -107,17 +101,19 @@ inet_ntop4(src, dst, size)
 	char *dst;
 	socklen_t size;
 {
-	static const char fmt[] = "%u.%u.%u.%u";
 	char tmp[sizeof "255.255.255.255"];
+	int l;
 
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(dst != NULL);
 
-	if (SPRINTF((tmp, fmt, src[0], src[1], src[2], src[3])) > size) {
+	l = snprintf(tmp, sizeof(tmp), "%u.%u.%u.%u",
+	    src[0], src[1], src[2], src[3]);
+	if (l <= 0 || l > size) {
 		errno = ENOSPC;
 		return (NULL);
 	}
-	strcpy(dst, tmp);
+	strlcpy(dst, tmp, size);
 	return (dst);
 }
 
@@ -140,10 +136,12 @@ inet_ntop6(src, dst, size)
 	 * Keep this in mind if you think this function should have been coded
 	 * to use pointer overlays.  All the world's not a VAX.
 	 */
-	char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"], *tp;
+	char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"];
+	char *tp, *ep;
 	struct { int base, len; } best, cur;
 	u_int words[IN6ADDRSZ / INT16SZ];
 	int i;
+	int advance;
 
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(dst != NULL);
@@ -183,7 +181,8 @@ inet_ntop6(src, dst, size)
 	 * Format the result.
 	 */
 	tp = tmp;
-	for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++) {
+	ep = tmp + sizeof(tmp);
+	for (i = 0; i < (IN6ADDRSZ / INT16SZ) && tp < ep; i++) {
 		/* Are we inside the best run of 0x00's? */
 		if (best.base != -1 && i >= best.base &&
 		    i < (best.base + best.len)) {
@@ -192,21 +191,34 @@ inet_ntop6(src, dst, size)
 			continue;
 		}
 		/* Are we following an initial run of 0x00s or any real hex? */
-		if (i != 0)
+		if (i != 0) {
+			if (tp + 1 >= ep)
+				return (NULL);
 			*tp++ = ':';
+		}
 		/* Is this address an encapsulated IPv4? */
 		if (i == 6 && best.base == 0 &&
 		    (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) {
-			if (!inet_ntop4(src+12, tp, sizeof tmp - (tp - tmp)))
+			if (!inet_ntop4(src+12, tp, (socklen_t)(ep - tp)))
 				return (NULL);
 			tp += strlen(tp);
 			break;
 		}
-		tp += SPRINTF((tp, "%x", words[i]));
+		advance = snprintf(tp, (size_t)(ep - tp), "%x", words[i]);
+		if (advance <= 0)
+			return (NULL);
+		tp += advance;
 	}
+	if (tp >= ep)
+		return (NULL);
 	/* Was it a trailing run of 0x00's? */
-	if (best.base != -1 && (best.base + best.len) == (IN6ADDRSZ / INT16SZ))
+	if (best.base != -1 && (best.base + best.len) == (IN6ADDRSZ / INT16SZ)) {
+		if (tp + 1 >= ep)
+			return (NULL);
 		*tp++ = ':';
+	}
+	if (tp + 1 >= ep)
+		return (NULL);
 	*tp++ = '\0';
 
 	/*
@@ -216,6 +228,6 @@ inet_ntop6(src, dst, size)
 		errno = ENOSPC;
 		return (NULL);
 	}
-	strcpy(dst, tmp);
+	strlcpy(dst, tmp, size);
 	return (dst);
 }
