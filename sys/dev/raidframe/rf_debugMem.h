@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.h,v 1.9 2001/10/04 15:58:52 oster Exp $	*/
+/*	$NetBSD: rf_debugMem.h,v 1.10 2002/09/16 23:40:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,12 +42,24 @@
 #include <sys/types.h>
 #include <sys/malloc.h>
 
+#ifndef RF_DEBUG_MEM
+#define RF_DEBUG_MEM 0
+#endif
+
+#if RF_DEBUG_MEM
 #define RF_Malloc(_p_, _size_, _cast_)                                      \
   {                                                                         \
      _p_ = _cast_ malloc((u_long)_size_, M_RAIDFRAME, M_WAITOK);            \
      memset((char *)_p_, 0, _size_);                                        \
      if (rf_memDebug) rf_record_malloc(_p_, _size_, __LINE__, __FILE__);    \
   }
+#else
+#define RF_Malloc(_p_, _size_, _cast_)                                      \
+  {                                                                         \
+     _p_ = _cast_ malloc((u_long)_size_, M_RAIDFRAME, M_WAITOK);            \
+     memset((char *)_p_, 0, _size_);                                        \
+  }
+#endif
 
 #define RF_MallocAndAdd(__p_, __size_, __cast_, __alist_)                   \
   {                                                                         \
@@ -66,11 +78,18 @@
      if (__alist) rf_AddToAllocList(__alist, __p, (__nel)*(__elsz));        \
   }
 
+#if RF_DEBUG_MEM
 #define RF_Free(_p_, _sz_)                                                  \
   {                                                                         \
      free((void *)(_p_), M_RAIDFRAME);                                      \
      if (rf_memDebug) rf_unrecord_malloc(_p_, (u_int32_t) (_sz_));          \
   }
+#else
+#define RF_Free(_p_, _sz_)                                                  \
+  {                                                                         \
+     free((void *)(_p_), M_RAIDFRAME);                                      \
+  }
+#endif
 
 void    rf_record_malloc(void *p, int size, int line, char *filen);
 void    rf_unrecord_malloc(void *p, int sz);
