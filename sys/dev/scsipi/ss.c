@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.57 2004/10/28 07:07:45 yamt Exp $	*/
+/*	$NetBSD: ss.c,v 1.58 2005/01/31 23:06:41 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.57 2004/10/28 07:07:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.58 2005/01/31 23:06:41 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,7 +247,7 @@ static int
 ssopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit;
-	u_int ssmode;
+	uint ssmode;
 	int error;
 	struct ss_softc *ss;
 	struct scsipi_periph *periph;
@@ -542,7 +542,7 @@ ssdone(struct scsipi_xfer *xs, int error)
  * knows about the internals of this device
  */
 int
-ssioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+ssioctl(dev_t dev, ulong cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error = 0;
