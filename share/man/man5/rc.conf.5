@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.27 1999/11/23 08:12:22 lukem Exp $
+.\"	$NetBSD: rc.conf.5,v 1.28 1999/11/29 01:40:34 itojun Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -229,6 +229,12 @@ If
 is
 .Dq - ,
 then use the default netmask for the interface.
+.Pp
+.Sy ifaliases_*
+covers IPv4 case only and considered unrecommended.
+We recommend using
+.Pa /etc/ifconfig.xxN
+with multiple lines instead.
 .It Sy flushroutes
 YES or NO.
 Flushes the route table on networking startup.
