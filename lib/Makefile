@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.91 2004/12/29 04:16:46 christos Exp $
+#	$NetBSD: Makefile,v 1.92 2004/12/29 15:49:42 lukem Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -7,7 +7,7 @@ SUBDIR=	csu libc .WAIT libarch libbsdmalloc libbz2 libcompat libcrypt \
 	libcurses libedit libevent libform libintl libkvm libl libm libmagic \
 	libmenu libossaudio libpcap libpci libpmc libposix libpthread \
 	libpthread_dbg libresolv librmt librpcsvc librt libterm libusbhid \
-	libutil libwrap liby libz .WAIT libpam
+	libutil libwrap liby libz
 
 .if (${MKSKEY} != "no")
 SUBDIR+= libskey
@@ -67,5 +67,7 @@ SUBDIR+=	libkrb5
 .if (${MKKERBEROS4} != "no")
 SUBDIR+=	libkrb
 .endif
+
+SUBDIR+=	.WAIT libpam
 
 .include <bsd.subdir.mk>
