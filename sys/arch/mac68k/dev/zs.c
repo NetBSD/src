@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.19 1998/01/12 19:22:18 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.20 1998/05/05 06:48:51 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Bill Studenmund
@@ -65,14 +65,14 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
-#include <dev/cons.h>
-
-#include <dev/ic/z8530reg.h>
-#include <machine/z8530var.h>
-
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/viareg.h>
+
+#include <dev/cons.h>
+#include <dev/ic/z8530reg.h>
+#include <machine/z8530var.h>
+#include <mac68k/dev/zs_cons.h>
 
 /* Are these in a header file anywhere? */
 /* Booter flags interface */
@@ -140,9 +140,7 @@ dev_t	mac68k_zsdev;
 /* Mac stuff */
 volatile unsigned char *sccA = 0;
 
-static struct zschan	*zs_get_chan_addr __P((int zsc_unit, int channel));
-void			zs_init __P((void));
-int			zs_cn_check_speed __P((int bps));
+int	zs_cn_check_speed __P((int bps));
 
 /*
  * Even though zsparam will set up the clock multiples, etc., we
@@ -170,7 +168,7 @@ static u_char zs_init_reg[16] = {
 	ZSWR15_BREAK_IE | ZSWR15_DCD_IE,
 };
 
-static struct zschan *
+struct zschan *
 zs_get_chan_addr(zsc_unit, channel)
 	int zsc_unit, channel;
 {
@@ -183,7 +181,7 @@ zs_get_chan_addr(zsc_unit, channel)
 	if (addr == NULL)
 		return NULL;
 	if (channel == 0) {
-		zc = (struct zschan *)(addr +2);
+		zc = (struct zschan *)(addr + 2);
 		/* handle the fact the ports are intertwined. */
 	} else {
 		zc = (struct zschan *)(addr);
@@ -465,8 +463,8 @@ int
 zshard(arg)
 	void *arg;
 {
-	register struct zsc_softc *zsc;
-	register int unit, rval;
+	struct zsc_softc *zsc;
+	int unit, rval;
 
 	rval = 0;
 	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
@@ -495,8 +493,8 @@ int
 zssoft(arg)
 	void *arg;
 {
-	register struct zsc_softc *zsc;
-	register int unit;
+	struct zsc_softc *zsc;
+	int unit;
 
 	/* This is not the only ISR on this IPL. */
 	if (zssoftpending == 0)
@@ -815,7 +813,7 @@ zs_write_reg(cs, reg, val)
 u_char zs_read_csr(cs)
 	struct zs_chanstate *cs;
 {
-	register u_char val;
+	u_char val;
 
 	val = *cs->cs_reg_csr;
 	ZS_DELAY();
@@ -836,7 +834,7 @@ void  zs_write_csr(cs, val)
 u_char zs_read_data(cs)
 	struct zs_chanstate *cs;
 {
-	register u_char val;
+	u_char val;
 
 	val = *cs->cs_reg_data;
 	ZS_DELAY();
@@ -862,8 +860,6 @@ void  zs_write_data(cs, val)
 #define zscnpollc	nullcnpollc
 cons_decl(zs);
 
-static void	zs_putc __P((register volatile struct zschan *, int));
-static int	zs_getc __P((register volatile struct zschan *));
 static void	zscnsetup __P((void));
 extern int	zsopen __P(( dev_t dev, int flags, int mode, struct proc *p));
 
@@ -1003,11 +999,12 @@ zscninit(struct consdev * cp)
 /*
  * Polled input char.
  */
-static int
-zs_getc(zc)
-	register volatile struct zschan *zc;
+int
+zs_getc(arg)
+	void *arg;
 {
-	register int s, c, rr0;
+	volatile struct zschan *zc = arg;
+	int s, c, rr0;
 
 	s = splhigh();
 	/* Wait for a character to arrive. */
@@ -1030,13 +1027,14 @@ zs_getc(zc)
 /*
  * Polled output char.
  */
-static void
-zs_putc(zc, c)
-	register volatile struct zschan *zc;
+void
+zs_putc(arg, c)
+	void *arg;
 	int c;
 {
-	register int s, rr0;
-	register long wait = 0;
+	volatile struct zschan *zc = arg;
+	int s, rr0;
+	long wait = 0;
 
 	s = splhigh();
 	/* Wait for transmitter to become ready. */
@@ -1060,8 +1058,8 @@ int
 zscngetc(dev)
 	dev_t dev;
 {
-	register volatile struct zschan *zc = zs_conschan;
-	register int c;
+	struct zschan *zc = zs_conschan;
+	int c;
 
 	c = zs_getc(zc);
 	return (c);
@@ -1075,7 +1073,7 @@ zscnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	register volatile struct zschan *zc = zs_conschan;
+	struct zschan *zc = zs_conschan;
 
 	zs_putc(zc, c);
 }
@@ -1091,7 +1089,7 @@ zs_abort(cs)
 {
 	volatile struct zschan *zc = zs_conschan;
 	int rr0;
-	register long wait = 0;
+	long wait = 0;
 
 	if (zs_cons_canabort == 0)
 		return;
