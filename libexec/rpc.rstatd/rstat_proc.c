@@ -29,7 +29,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: rstat_proc.c,v 1.6 1994/04/01 03:29:58 cgd Exp $";
+static char rcsid[] = "$Id: rstat_proc.c,v 1.7 1994/04/15 03:21:24 cgd Exp $";
 #endif
 
 /*
@@ -64,8 +64,8 @@ static char rcsid[] = "$Id: rstat_proc.c,v 1.6 1994/04/01 03:29:58 cgd Exp $";
 struct nlist nl[] = {
 #define	X_CPTIME	0
 	{ "_cp_time" },
-#define	X_SUM		1
-	{ "_sum" },
+#define	X_CNT		1
+	{ "_cnt" },
 #define	X_IFNET		2
 	{ "_ifnet" },
 #define	X_DKXFER	3
@@ -195,7 +195,7 @@ void
 updatestat()
 {
 	int off, i, hz;
-	struct vmmeter sum;
+	struct vmmeter cnt;
 	struct ifnet ifnet;
 	double avrun[3];
 	struct timeval tm, btm;
@@ -251,19 +251,19 @@ updatestat()
 	    stats_all.s1.cp_time[1], stats_all.s1.cp_time[2], stats_all.s1.cp_time[3]);
 #endif
 
- 	if (kvm_read((long)nl[X_SUM].n_value, (char *)&sum, sizeof sum) != sizeof sum) {
-		syslog(LOG_ERR, "rstat: can't read sum from kmem\n");
+ 	if (kvm_read((long)nl[X_CNT].n_value, (char *)&cnt, sizeof cnt) != sizeof cnt) {
+		syslog(LOG_ERR, "rstat: can't read cnt from kmem\n");
 		exit(1);
 	}
-	stats_all.s1.v_pgpgin = sum.v_pgpgin;
-	stats_all.s1.v_pgpgout = sum.v_pgpgout;
-	stats_all.s1.v_pswpin = sum.v_pswpin;
-	stats_all.s1.v_pswpout = sum.v_pswpout;
-	stats_all.s1.v_intr = sum.v_intr;
+	stats_all.s1.v_pgpgin = cnt.v_pgpgin;
+	stats_all.s1.v_pgpgout = cnt.v_pgpgout;
+	stats_all.s1.v_pswpin = cnt.v_pswpin;
+	stats_all.s1.v_pswpout = cnt.v_pswpout;
+	stats_all.s1.v_intr = cnt.v_intr;
 	gettimeofday(&tm, (struct timezone *) 0);
 	stats_all.s1.v_intr -= hz*(tm.tv_sec - btm.tv_sec) +
 	    hz*(tm.tv_usec - btm.tv_usec)/1000000;
-	stats_all.s2.v_swtch = sum.v_swtch;
+	stats_all.s2.v_swtch = cnt.v_swtch;
 
  	if (kvm_read((long)nl[X_DKXFER].n_value, (char *)stats_all.s1.dk_xfer, sizeof (stats_all.s1.dk_xfer))
 	    != sizeof (stats_all.s1.dk_xfer)) {
