@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c24x0_intr.h,v 1.3 2003/08/04 12:34:08 bsh Exp $ */
+/*	$NetBSD: s3c24x0_intr.h,v 1.4 2003/09/24 11:57:44 mycroft Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corporation.  All rights reserved.
@@ -43,7 +43,7 @@
 	(*s3c2xx0_intr_mask_reg = ~(intr_mask & global_intr_mask))
 
 /* no room for softinterrupts in intr_mask. */
-extern int soft_intr_mask;
+extern int __volatile soft_intr_mask;
 extern int s3c24x0_soft_imask[];
 
 
