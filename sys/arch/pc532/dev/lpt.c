@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.20 1997/03/22 08:29:52 matthias Exp $	*/
+/*	$NetBSD: lpt.c,v 1.21 1997/04/02 16:36:25 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -586,7 +586,7 @@ plipioctl(ifp, cmd, data)
 			LLADDR(sdl)[0] = 0xfc;
 			LLADDR(sdl)[1] = 0xfc;
 			bcopy((caddr_t)&IA_SIN(ifa)->sin_addr,
-			      LLADDR(sdl)[2], 4);
+			      (caddr_t)&LLADDR(sdl)[2], 4);
 #if defined(COMPAT_PLIP10)
 			if (ifp->if_flags & IFF_LINK0) {
 				int i;
@@ -595,12 +595,6 @@ plipioctl(ifp, cmd, data)
 				for (i = sc->sc_adrcksum = 0; i < 5; i++)
 					sc->sc_adrcksum += LLADDR(sdl)[i];
 				sc->sc_adrcksum *= 2;
-			}
-#endif
-#if 0
-			if (sdl) {
-				sdl->sdl_type = IFT_ETHER;
-				sdl->sdl_alen = ifp->if_addrlen;
 			}
 #endif
 			ifp->if_flags |= IFF_RUNNING | IFF_UP;
@@ -831,7 +825,7 @@ err:
 	if (sc->sc_ifierrs < PLIPMXERRS) {
 		i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
 	} else {
-		/* We are not able to send receive anything for now,
+		/* We are not able to send or receive anything for now,
 		 * so stop wasting our time and leave the interrupt
 		 * disabled.
 		 */
@@ -960,7 +954,7 @@ plipoutput(arg)
 		untimeout(plipoutput, sc);
 
 	for (;;) {
-		s = splimp();
+		s = splnet();
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		splx(s);
 		if (!m0)
@@ -1035,7 +1029,7 @@ retry:
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == (IFF_RUNNING | IFF_UP)
 	    && sc->sc_ifoerrs < PLIPMXRETRY) {
-		s = splimp();
+		s = splnet();
 		IF_PREPEND(&ifp->if_snd, m0);
 		splx(s);
 		i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
