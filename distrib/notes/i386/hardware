@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.48 1999/04/29 21:49:51 bad Exp $	
+.\"	$NetBSD: hardware,v 1.49 1999/05/03 21:58:10 fvdl Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -47,6 +47,8 @@ Supported devices include:
 		Adaptec AHA-3940[U][W] cards [b]
 		AdvanSys ABP-9x0[U][A] cards
 		AdvanSys ABP-940UW[68], ABP-970UW[68] ASB3940UW-00 cards
+		AMD PCscsi-PCI (Am53c974) based SCSI adapters, including
+			Tekram DC-390
 		BusLogic 54x (Adaptec AHA-154x clones)
 		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
 			of BusLogic SCSI adapters)
@@ -69,7 +71,9 @@ Supported devices include:
 					the PCI interrupt; leave it on INT A!)
 			Promise DC540 (a particularly common OEM model of
 					the SYM 8125)
+			Tekram DC-390U/F
 			Tyan Yorktown
+		Symbios Logic (NCR) 5380/53C400-based ISA SCSI host adapters [*] [+]
 		Ultrastor 14f, 34f, and (possibly) 24f
 		Western Digital WD7000 SCSI and TMC-7000 host adapters
 			(ISA cards only)
@@ -85,7 +89,8 @@ Supported devices include:
 		IBM PC-RT 4-port serial cards [*]
 		Single-port Hayes ESP serial cards [*]
 		Cyclades Cyclom-Y serial cards [*] [+]
-	Parallel ports.
+		PCI universal communication cards
+	Parallel ports. [*] [+]
 	Ethernet adapters:
 		AMD LANCE and PCnet-based ISA Ethernet adapters [*], including:
 			Novell NE1500T
@@ -103,8 +108,8 @@ Supported devices include:
 		3COM 3c503
 		3COM 3c505 [*]
 		3COM 3c507
-		3COM 3c509, 3c579, 3c59X, and 3c90X (including 3c905B)
-		3COM 3c589
+		3COM 3c509, 3c579, 3c589, and 3c59X
+		3COM 3c90X (including 3c905B)
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 			ASUS PCI-DEC100TX+
 			Cogent EM1X0, EM960 (a.k.a. Adaptec ANA-69XX)
@@ -122,9 +127,11 @@ Supported devices include:
 			SVEC PN0455
 			SVEC FD1000-TP
 			Znyx ZX34X
-		Digital EtherWORKS III ISA adapters (DE203/DE204/DE205)
+		Digital EtherWORKS III ISA adapters (DE203/DE204/DE205) [*]
 		Digital DEPCM-BA (PCMCIA) and DE305 (ISA) NE2000-compat. cards
 		BICC Isolan [* and not recently tested]
+		Efficient Networks EN-155 and Adaptec AIC-590x ATM interfaces
+		Essential Communications Hippi (800Mbit/s)
 		Fujitsu MB86960A/MB86965A based cards:
 			Fujitsu FMV-180 series
 			Allied-Telesis AT1700 series
@@ -135,7 +142,9 @@ Supported devices include:
 		Novell NE1000, NE2000 (ISA, PCI, PCMCIA, ISA PnP)
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
 		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)
-		SMC91C9x-based boards (ISA and PCMCIA)
+		SMC 91C9x-based boards (ISA and PCMCIA)
+		SMC EPIC/100 Fast Ethernet boards:
+			SMC Etherpower-II
 		Texas Instruments ThunderLAN based ethernet boards:
 			Compaq Netelligent 10/100 TX
 			Compaq ProLiant Integrated Netelligent 10/100 TX
@@ -147,6 +156,8 @@ Supported devices include:
 			Compaq Deskpro 4000 5233MMX (untested)
 			Texas Instruments TravelMate 5000 series laptop
 				docking station Ethernet board
+		VIA VT3043(Rhine) and VT86C100A(Rhine-II) based ethernet boards [*] [+]:
+			D-Link DFE530TX
 	FDDI adapters:
 		Digital DEFPA PCI FDDI adapters [*] [+]
 		Digital DEFEA EISA FDDI adapters [*] [+]
@@ -194,20 +205,17 @@ Supported devices include:
 		Ensoniq AudioPCI [*] [+]
 		Yamaha OPL3-SA3 [*] [+]
 		Aria based sound cards [*] [+]
+		S3 SonicVibes [*] [+]
+		ESS Technology ES1777/1868/1869/1887/1888/888 audio [*] [+]
 	Game Ports (Joysticks). [*] [+]
-	USB (Universal Serial Bus): [*] [+]
-		UHCI and OHCI host controllers.
-		Hubs.
-		Mice, keyboards, and other HID devices.
-		Printers.
 	Miscellaneous:
 		Advanced power management (APM) [*]
-        Universal Serial Bus:
-                UHCI host controllers [*] [+]
-                OHCI host controllers [*] [+]
-                Hubs [*] [+]
-                Keyboards using the boot protocol [*] [+]
-                Mice [*] [+]
+	Universal Serial Bus:
+		UHCI host controllers [*] [+]
+		OHCI host controllers [*] [+]
+		Hubs [*] [+]
+		Keyboards using the boot protocol [*] [+]
+		Mice [*] [+]
 		Printers [*] [+]
 		Generic support for HID devices [*] [+]
 .Ed
@@ -234,11 +242,9 @@ Hardware the we do NOT currently support, but get many questions
 about:
 .Bl -bullet
 .It
-AMD PCscsi SCSI host adapters (though the PCnet portion of the PCnet-SCSI works fine)
+Multiprocessor systems. (NetBSD will run, but only use one processor.)
 .It
-Multiprocessor Pentium and Pentium Pro systems. (Though they should run fine using one processor only.)
-.It
-NCR 5380-based SCSI host adapters.
+Adaptec AIC-7890 SCSI host adapters.
 .It
 PCI WD-7000 SCSI host adapters.
 .It
@@ -275,7 +281,7 @@ AHA-152x, AIC-6260- or AIC-6360-based SCSI host adapters
 		aic0	0x340	11	6
 
 AHA-2X4X or AIC-7XXX-based SCSI host adapters	[precise list: see NetBSD
-		ahc0	any  	any any		 System Requirements and
+		ahc0	any  	any	any	 System Requirements and
 						 Supported Devices]
 
 AdvanSys ABP-9x0[U][A] SCSI host adapters
@@ -284,9 +290,16 @@ AdvanSys ABP-9x0[U][A] SCSI host adapters
 AdvanSys ABP-940UW[68], ABP-970UW[68], ASB3940UW-00 SCSI host adapters
 		adw0	any	any	any
 
+AMD PCscsi-PCI based SCSI host adapters
+		pcscp0	any	any	any
+
 BusLogic BT445, BT74x, or BT9xx SCSI host adapters
 		bha0 	0x330	any	any
 		bha1 	0x334	any	any
+
+Symbios Logic/NCR 5380/53C400 based ISA SCSI host adapters
+		nca0	0x360	15
+		nca1		5		iomem 0xd8000
 
 Symbios Logic/NCR 53C8xx based PCI SCSI host adapters
 		ncr0	any  	any	any
@@ -314,8 +327,17 @@ SCSI and ATAPI CD-ROMs cd0, cd1, ...
 	master/slave order for ATA(PI). So the first SCSI drive found will
 	be called sd0, the second sd1, and so on ...
 
+3Com 3c501 Ethernet cards
+		el0	0x300	9
+
 3Com 3c503 Ethernet cards
 		ec0	0x250	9		iomem 0xd8000
+
+3Com 3c505 Ethernet cards
+		eg0	0x280	9
+
+3Com 3c507 Ethernet cards
+		ef0	0x360	7		iomem 0xd0000
 
 Novell NE1000, or NE2000 Ethernet boards
 		ne0 	0x280	9
@@ -328,8 +350,12 @@ SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards
 3COM 3c509 or 3COM 3c579 Ethernet boards
 		ep0 	any  	any
 
-3COM 3x59X or 3COM 3x90X PCI Ethernet boards
+3COM 3x59X PCI Ethernet boards
 		ep0 	any  	any	[you must assign an interrupt in your
+		    	    	   	 PCI BIOS, or let it do so for you]
+
+3COM 3x90X PCI Ethernet boards
+		ex0 	any  	any	[you must assign an interrupt in your
 		    	    	   	 PCI BIOS, or let it do so for you]
 
 AT\*&T StarLAN 10, EN100, or StarLAN Fiber, 3COM 3c507 or Intel
@@ -357,4 +383,19 @@ DC21x4x based Ethernet boards; see above for partial list
 
 Digital EtherWORKS III (DE203/DE204/DE205)
 		lc0 	any  	any
+
+Qlogic ISP [12]0x0 SCSI/FibreChannel boards
+		isp0	any	any
+
+Efficient Networks EN-155 and Adaptec AIC-590x ATM interfaces
+		en0	any	any
+
+SMC EPIC/100 Fast Ethernet boards:
+		epic0	any	any
+
+Texas Instruments ThunderLAN based ethernet boards:
+		tl0	any	any
+
+VIA VT3043(Rhine) and VT86C100A(Rhine-II) based ethernet boards
+		vr0	any	any
 .Ed
