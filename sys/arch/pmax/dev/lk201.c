@@ -1,4 +1,4 @@
-/* $NetBSD: lk201.c,v 1.10 1999/01/28 10:20:10 jonathan Exp $ */
+/* $NetBSD: lk201.c,v 1.11 1999/03/15 09:40:56 jonathan Exp $ */
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
@@ -184,7 +184,9 @@ static u_char kbdInitString[] = {
 	LK_CMD_MODE(LK_DOWN, 13), 
 	LK_CMD_MODE(LK_AUTODOWN, 14),
 	LK_AR_ENABLE,			/* we want autorepeat by default */
+#ifdef LK_KEY_CLICK
 	LK_CL_ENABLE, 0x83,		/* keyclick, volume */
+#endif
 	LK_KBD_ENABLE,			/* the keyboard itself */
 	LK_BELL_ENABLE, 0x83,		/* keyboard bell, volume */
 	LK_LED_DISABLE, LED_ALL,	/* clear keyboard leds */
@@ -210,10 +212,8 @@ KBDReset(kbddev, putc)
 
 	/* XXX no way to disable keyclick from userspace */
 	for (i = 0; i < sizeof(kbdInitString); i++) {
-#ifdef LK_KEY_CLICK
 		(*putc)(kbddev, (int)kbdInitString[i]);
 		DELAY(20000);
-#endif
 	}
 	inKBDReset = 0;
 	raw_kbd_putc = putc;
