@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.10 1999/11/15 22:04:14 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.11 1999/11/17 23:00:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1822,7 +1822,7 @@ uaudio_chan_alloc_buffers(sc, ch)
 
 	size = (ch->bytes_per_frame + ch->sample_size) * UAUDIO_NFRAMES;
 	for (i = 0; i < UAUDIO_NCHANBUFS; i++) {
-		xfer = usbd_alloc_request(sc->sc_udev);
+		xfer = usbd_alloc_xfer(sc->sc_udev);
 		if (xfer == 0)
 			goto bad;
 		ch->chanbufs[i].xfer = xfer;
@@ -1840,7 +1840,7 @@ uaudio_chan_alloc_buffers(sc, ch)
 bad:
 	while (--i >= 0)
 		/* implicit buffer free */
-		usbd_free_request(ch->chanbufs[i].xfer);
+		usbd_free_xfer(ch->chanbufs[i].xfer);
 	return (USBD_NOMEM);
 }
 
@@ -1852,7 +1852,7 @@ uaudio_chan_free_buffers(sc, ch)
 	int i;
 
 	for (i = 0; i < UAUDIO_NCHANBUFS; i++)
-		usbd_free_request(ch->chanbufs[i].xfer);
+		usbd_free_xfer(ch->chanbufs[i].xfer);
 }
 
 /* Called at splusb() */
@@ -1914,9 +1914,9 @@ uaudio_chan_ptransfer(ch)
 
 	DPRINTFN(5,("uaudio_chan_transfer: ptransfer xfer=%p\n", cb->xfer));
 	/* Fill the request */
-	usbd_setup_isoc_request(cb->xfer, ch->pipe, cb, cb->sizes, 
-				UAUDIO_NFRAMES, USBD_NO_COPY, 
-				uaudio_chan_pintr);
+	usbd_setup_isoc_xfer(cb->xfer, ch->pipe, cb, cb->sizes, 
+			     UAUDIO_NFRAMES, USBD_NO_COPY, 
+			     uaudio_chan_pintr);
 
 	(void)usbd_transfer(cb->xfer);
 }
@@ -1936,7 +1936,7 @@ uaudio_chan_pintr(xfer, priv, status)
 	if (status == USBD_CANCELLED)
 		return;
 
-	usbd_get_request_status(xfer, 0, 0, &count, 0);
+	usbd_get_xfer_status(xfer, 0, 0, &count, 0);
 	DPRINTFN(5,("uaudio_chan_pintr: count=%d, transferred=%d\n",
 		    count, ch->transferred));
 #ifdef DIAGNOSTIC
@@ -2005,9 +2005,9 @@ uaudio_chan_rtransfer(ch)
 
 	DPRINTFN(5,("uaudio_chan_rtransfer: transfer xfer=%p\n", cb->xfer));
 	/* Fill the request */
-	usbd_setup_isoc_request(cb->xfer, ch->pipe, cb, cb->sizes, 
-				UAUDIO_NFRAMES, USBD_NO_COPY, 
-				uaudio_chan_rintr);
+	usbd_setup_isoc_xfer(cb->xfer, ch->pipe, cb, cb->sizes, 
+			     UAUDIO_NFRAMES, USBD_NO_COPY, 
+			     uaudio_chan_rintr);
 
 	(void)usbd_transfer(cb->xfer);
 }
@@ -2027,7 +2027,7 @@ uaudio_chan_rintr(xfer, priv, status)
 	if (status == USBD_CANCELLED)
 		return;
 
-	usbd_get_request_status(xfer, 0, 0, &count, 0);
+	usbd_get_xfer_status(xfer, 0, 0, &count, 0);
 	DPRINTFN(5,("uaudio_chan_rintr: count=%d, transferred=%d\n",
 		    count, ch->transferred));
 #ifdef DIAGNOSTIC
