@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.4 2002/03/10 19:56:41 lukem Exp $
+# $NetBSD: RAMDISK,v 1.5 2002/03/17 05:43:18 gmcgarry Exp $
 #
 # RAMDISK machine description file
 #
@@ -12,7 +12,5 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_SIZE=2400	# size of memory disk, in blocks (1.2MB)
-
-file-system	MFS			# Memory-based filesystem
 
 pseudo-device 	md		1	# memory disk device (ramdisk)
