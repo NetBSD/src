@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.43.2.2 1996/06/07 12:28:22 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.43.2.3 1996/06/07 13:07:17 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -178,11 +178,11 @@ void
 via_set_modem(onoff)
 	int	onoff;
 {
-	via_reg(VIA1, vDirA) |= DA10_vSync;
+	via_reg(VIA1, vDirA) |= DA1O_vSync;
 	if (onoff)
-		via_reg(VIA1, vBufA) |= DA10_vSync;
+		via_reg(VIA1, vBufA) |= DA1O_vSync;
 	else
-		via_reg(VIA1, vBufA) &= ~DA10_vSync;
+		via_reg(VIA1, vBufA) &= ~DA1O_vSync;
 }
 
 void
