@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.8 2002/07/16 00:40:51 itojun Exp $	*/
+/*	$NetBSD: display.c,v 1.9 2003/03/05 01:10:46 jrf Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -550,6 +550,9 @@ int *stats;
 
     /* format and print the memory summary */
     summary_format(memory_buffer, stats, memory_names);
+    /* trim the string to fit on one line */
+    if (strlen(memory_buffer) + sizeof("Memory: ") - 1 > screen_width)
+      memory_buffer[screen_width - sizeof("Memory: ") + 1] = '\0';
     fputs(memory_buffer, stdout);
 }
 
