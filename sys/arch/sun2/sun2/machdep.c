@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2001/04/06 15:05:56 fredette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2001/04/10 12:33:09 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -907,7 +907,7 @@ softintr_handler(void *arg)
 		}
 	}
 
-	return (0);
+	return (1);
 }
 
 /*
@@ -1282,7 +1282,7 @@ _bus_dma_valloc_skewed(size, boundary, align, skew)
 
 #ifdef DIAGNOSTIC
 	if ((size & PAGE_MASK) != 0)
-		panic("_bus_dma_valloc_skewed: invalid size %lx", size);
+		panic("_bus_dma_valloc_skewed: invalid size %lx", (unsigned long) size);
 	if ((align & PAGE_MASK) != 0)
 		panic("_bus_dma_valloc_skewed: invalid alignment %lx", align);
 	if (align < skew)
@@ -1650,6 +1650,7 @@ sun2_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 {
 	bus_size_t	offset;
 	vaddr_t v;
+	int pte;
 
 	/*
 	 * If we suspect there might be one, try to find
@@ -1683,10 +1684,18 @@ sun2_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 	*hp = (bus_space_handle_t)(v | offset);
 
 	/*
-	 * Map the device.
+	 * Map the device.  If we think that this is a probe,
+	 * make and set the PTE by hand, otherwise use the pmap.
 	 */
-	addr |= iospace | PMAP_NC;
-	pmap_map(v, addr, addr + size, VM_PROT_ALL);
+	if (v == tmp_vpages[1]) {
+		pte = PA_PGNUM(addr);
+		pte |= (iospace << PG_MOD_SHIFT);
+		pte |= (PG_VALID | PG_WRITE | PG_SYSTEM | PG_NC);
+		set_pte(v, pte);
+	} else {
+		addr |= iospace | PMAP_NC;
+		pmap_map(v, addr, addr + size, VM_PROT_ALL);
+	}
 
 	return (0);
 }
