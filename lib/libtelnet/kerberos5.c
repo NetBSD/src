@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.4.2.3 2000/07/23 22:14:19 thorpej Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.4.2.4 2001/04/05 23:25:57 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,6 +70,8 @@
 #include "encrypt.h"
 #include "auth.h"
 #include "misc.h"
+
+extern int net;
 
 int forward_flags;	/* Flags get set in telnet/main.c on -f and -F */
 int got_forwarded_creds;/* Tell telnetd to pass -F or -f to login. */
@@ -168,7 +170,6 @@ kerberos5_send(Authenticator *ap)
 	int ap_opts;
 	krb5_data cksum_data;
 	char foo[2];
-	extern int net;
 
 	printf("[ Trying KERBEROS5 ... ]\r\n");
 
@@ -344,7 +345,7 @@ kerberos5_is(Authenticator * ap, unsigned char *data, int cnt)
 		}
 		if ((ap->way & AUTH_HOW_MASK) == AUTH_HOW_MUTUAL) {
 			ret = krb5_mk_rep(telnet_context,
-			    &auth_context, &outbuf);
+			    auth_context, &outbuf);
 			if (ret) {
 				Data(ap, KRB_REJECT,
 				    "krb5_mk_rep failed", -1);
@@ -431,7 +432,7 @@ kerberos5_is(Authenticator * ap, unsigned char *data, int cnt)
 					        ret));
 				break;
 			}
-			ret = krb5_rd_cred(telnet_context, auth_context,
+			ret = krb5_rd_cred2(telnet_context, auth_context,
 			    ccache, &inbuf);
 			if (ret) {
 				char *errbuf;
