@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.68 2003/06/24 09:56:04 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.69 2003/06/24 10:02:02 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -838,3 +838,12 @@ sys/net/rtsock.c				1.61
 	1.16). without it "route change X" would change less-specific route by
 	mistake.  reported by jinmei@kame
 	[itojun, ticket #1336]
+
+sys/arch/newsmips/dev/zs_hb.c			1.14
+
+	Call zshard() twice in zshard_hb() interrupt handler for workaround
+	otherwise news3400 sometimes losts zs interrupts.
+
+	This should fix "serial console hiccups on sysinst" problem
+	reported by Mauricio <raub at kudria.com> on port-newsmips.
+	[tsutsui, ticket #1286]
