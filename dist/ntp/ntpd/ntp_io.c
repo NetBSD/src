@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.2 2000/10/09 14:57:22 is Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.3 2001/11/12 03:06:44 christos Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -926,7 +926,7 @@ open_socket(
 	 * bind the local address.
 	 */
 	if (bind(fd, (struct sockaddr *)addr, sizeof(*addr)) < 0) {
-		msyslog(LOG_ERR, "bind() fd %d, family %d, port %d, addr %s, in_classd=%d flags=%d fails: %%m",
+		msyslog(LOG_ERR, "bind() fd %d, family %d, port %d, addr %s, in_classd=%d flags=%d fails: %m",
 			fd, addr->sin_family, (int)ntohs(addr->sin_port),
 			ntoa(addr),
 		    IN_CLASSD(ntohl(addr->sin_addr.s_addr)), flags);
