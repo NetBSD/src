@@ -1,3 +1,5 @@
+/*	$NetBSD: util.h,v 1.2 1996/10/04 05:15:32 christos Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -27,6 +29,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
  */
 
 #include <stdio.h>
