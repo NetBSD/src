@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.34 1999/07/22 22:58:38 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.35 1999/12/30 16:09:47 eeh Exp $	*/
 
 /*
  *
@@ -370,8 +370,8 @@ struct vm_page		*uvm_pagealloc_strat __P((struct uvm_object *,
 void			uvm_pagerealloc __P((struct vm_page *, 
 					     struct uvm_object *, vaddr_t));
 /* Actually, uvm_page_physload takes PF#s which need their own type */
-void			uvm_page_physload __P((vaddr_t, vaddr_t,
-					       vaddr_t, vaddr_t, int));
+void			uvm_page_physload __P((paddr_t, paddr_t,
+					       paddr_t, paddr_t, int));
 void			uvm_setpagesize __P((void));
 
 /* uvm_pdaemon.c */
@@ -390,6 +390,10 @@ void			uvm_swap_init __P((void));
 int			uvm_coredump __P((struct proc *, struct vnode *, 
 				struct ucred *, struct core *));
 int			uvm_grow __P((struct proc *, vaddr_t));
+/* should only be needed if COMPAT_NETBSD32 is defined */
+struct core32;
+int			uvm_coredump32 __P((struct proc *, struct vnode *, 
+				struct ucred *, struct core32 *));
 
 /* uvm_user.c */
 int			uvm_deallocate __P((vm_map_t, vaddr_t, vsize_t));
