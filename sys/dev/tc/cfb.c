@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.3 1998/11/09 03:58:05 nisimura Exp $ */
+/* $NetBSD: cfb.c,v 1.4 1998/11/18 12:26:31 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.3 1998/11/09 03:58:05 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.4 1998/11/18 12:26:31 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -548,13 +548,13 @@ cfbintr(arg)
 		u_int8_t *cp = sc->sc_cursor.cc_color;
 
 		BT459_SELECT(vdac, BT459_REG_CCOLOR_2);
-		vdac->bt_cmap = cp[1];	tc_wmb();
-		vdac->bt_cmap = cp[3];	tc_wmb();
-		vdac->bt_cmap = cp[5];	tc_wmb();
+		vdac->bt_reg = cp[1];	tc_wmb();
+		vdac->bt_reg = cp[3];	tc_wmb();
+		vdac->bt_reg = cp[5];	tc_wmb();
 
-		vdac->bt_cmap = cp[0];	tc_wmb();
-		vdac->bt_cmap = cp[2];	tc_wmb();
-		vdac->bt_cmap = cp[4];	tc_wmb();
+		vdac->bt_reg = cp[0];	tc_wmb();
+		vdac->bt_reg = cp[2];	tc_wmb();
+		vdac->bt_reg = cp[4];	tc_wmb();
 	}
 	if (v & DATA_CURSHAPE_CHANGED) {
 		u_int8_t *ip, *mp, img, msk;
@@ -597,9 +597,9 @@ cfbintr(arg)
 
 		BT459_SELECT(vdac, 0);
 		for (index = 0; index < CMAP_SIZE; index++) {
-			vdac->bt_cmap = cm->r[index];
-			vdac->bt_cmap = cm->g[index];
-			vdac->bt_cmap = cm->b[index];
+			vdac->bt_cmap = cm->r[index];	tc_wmb();
+			vdac->bt_cmap = cm->g[index];	tc_wmb();
+			vdac->bt_cmap = cm->b[index];	tc_wmb();
 		}
 	}
 	return (1);
@@ -728,7 +728,7 @@ set_cursor(sc, p)
 	struct wsdisplay_cursor *p;
 {
 #define	cc (&sc->sc_cursor)
-	int v, index, count;
+	int v, index, count, icount;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
@@ -744,7 +744,7 @@ set_cursor(sc, p)
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		if (p->size.x > CURSOR_MAX_SIZE || p->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
-		count = (CURSOR_MAX_SIZE / NBBY) * p->size.y;
+		icount = ((p->size.x < 33) ? 4 : 8) * p->size.y;
 		if (!useracc(p->image, count, B_READ) ||
 		    !useracc(p->mask, count, B_READ))
 			return (EFAULT);
@@ -763,7 +763,6 @@ set_cursor(sc, p)
 		sc->sc_changed |= DATA_ENB_CHANGED;
 	}
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
-		count = p->cmap.count;
 		copyin(p->cmap.red, &cc->cc_color[index], count);
 		copyin(p->cmap.green, &cc->cc_color[index + 2], count);
 		copyin(p->cmap.blue, &cc->cc_color[index + 4], count);
@@ -772,8 +771,8 @@ set_cursor(sc, p)
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		cc->cc_size = p->size;
 		memset(cc->cc_image, 0, sizeof cc->cc_image);
-		copyin(p->image, cc->cc_image, count);
-		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, count);
+		copyin(p->image, cc->cc_image, icount);
+		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, icount);
 		sc->sc_changed |= DATA_CURSHAPE_CHANGED;
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.4 1998/11/14 16:31:34 drochner Exp $ */
+/* $NetBSD: sfb.c,v 1.5 1998/11/18 12:26:32 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.4 1998/11/14 16:31:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.5 1998/11/18 12:26:32 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,7 +547,7 @@ sfbintr(arg)
 
 	if (v & DATA_ENB_CHANGED) {
 		BT459_SELECT(vdac, BT459_REG_CCR);
-		vdac->bt_reg = (sc->sc_curenb) ? 0xc0 : 0x00; tc_wmb();
+		vdac->bt_reg = (sc->sc_curenb) ? 0xc0 : 0x00;
 	}
 	if (v & DATA_CURCMAP_CHANGED) {
 		u_int8_t *cp = sc->sc_cursor.cc_color;
@@ -741,13 +741,12 @@ set_cursor(sc, p)
 	struct wsdisplay_cursor *p;
 {
 #define	cc (&sc->sc_cursor)
-	int v, index, count;
+	int v, index, count, icount;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		index = p->cmap.index;
 		count = p->cmap.count;
-
 		if (index >= 2 || (index + count) > 2)
 			return (EINVAL);
 		if (!useracc(p->cmap.red, count, B_READ) ||
@@ -758,7 +757,7 @@ set_cursor(sc, p)
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		if (p->size.x > CURSOR_MAX_SIZE || p->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
-		count = ((p->size.x < 33) ? 4 : 8) * p->size.y;
+		icount = ((p->size.x < 33) ? 4 : 8) * p->size.y;
 		if (!useracc(p->image, count, B_READ) ||
 		    !useracc(p->mask, count, B_READ))
 			return (EFAULT);
@@ -777,7 +776,6 @@ set_cursor(sc, p)
 		sc->sc_changed |= DATA_ENB_CHANGED;
 	}
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
-		count = p->cmap.count;
 		copyin(p->cmap.red, &cc->cc_color[index], count);
 		copyin(p->cmap.green, &cc->cc_color[index + 2], count);
 		copyin(p->cmap.blue, &cc->cc_color[index + 4], count);
@@ -786,8 +784,8 @@ set_cursor(sc, p)
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		cc->cc_size = p->size;
 		memset(cc->cc_image, 0, sizeof cc->cc_image);
-		copyin(p->image, cc->cc_image, count);
-		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, count);
+		copyin(p->image, cc->cc_image, icount);
+		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, icount);
 		sc->sc_changed |= DATA_CURSHAPE_CHANGED;
 	}
 
