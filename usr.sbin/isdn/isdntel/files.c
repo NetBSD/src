@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *      $Id: files.c,v 1.1.1.1 2001/01/06 13:00:35 martin Exp $ 
+ *      $Id: files.c,v 1.2 2003/10/06 04:19:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -268,7 +268,7 @@ delete(struct onefile *this)
 	if(this == NULL)
 		return;
 		
-	sprintf(buffer, "%s", this->fname);
+	snprintf(buffer, sizeof(buffer), "%s", this->fname);
 	
 	unlink(buffer);
 
@@ -303,7 +303,7 @@ play(struct onefile *this)
 	if(this == NULL)
 		return;
 		
-	sprintf(buffer, playstring, this->fname);
+	snprintf(buffer, sizeof(buffer), playstring, this->fname);
 	
 	system(buffer);
 }

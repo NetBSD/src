@@ -27,7 +27,7 @@
  *	i4b daemon - curses fullscreen output
  *	-------------------------------------
  *
- *	$Id: curses.c,v 1.3 2002/09/20 15:15:49 mycroft Exp $ 
+ *	$Id: curses.c,v 1.4 2003/10/06 04:19:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -48,7 +48,7 @@ static void display_chans(void);
 void
 do_exit(int exitval)
 {
-	if(curses_ready)
+	if (curses_ready)
 		endwin();
 	exit(exitval);
 }
@@ -65,7 +65,7 @@ init_screen(void)
 	
 	initscr();			/* curses init */
 	
-	if((COLS < 80) || (LINES < 24))
+	if ((COLS < 80) || (LINES < 24))
 	{
 		endwin();
 		fprintf(stderr, "ERROR, minimal screensize must be 80x24, is %dx%d, terminating!",COLS, LINES);
@@ -78,21 +78,21 @@ init_screen(void)
 	uheight = nctrl * 2; /* cards * b-channels */
 	lheight = LINES - uheight - 6 + 1; /* rest of display */
 	
-	if((upper_w = newwin(uheight, COLS, UPPER_B, 0)) == NULL)
+	if ((upper_w = newwin(uheight, COLS, UPPER_B, 0)) == NULL)
 	{
 		endwin();
 		fprintf(stderr, "ERROR, curses init upper window, terminating!");
 		exit(1);
 	}
 
-	if((mid_w = newwin(1, COLS, UPPER_B+uheight+1, 0)) == NULL)
+	if ((mid_w = newwin(1, COLS, UPPER_B+uheight+1, 0)) == NULL)
 	{
 		endwin();
 		fprintf(stderr, "ERROR, curses init mid window, terminating!");
 		exit(1);
 	}
 
-	if((lower_w = newwin(lheight, COLS, UPPER_B+uheight+3, 0)) == NULL)
+	if ((lower_w = newwin(lheight, COLS, UPPER_B+uheight+3, 0)) == NULL)
 	{
 		endwin();
 		fprintf(stderr, "ERROR, curses init lower window, LINES = %d, lheight = %d, uheight = %d, terminating!", LINES, lheight, uheight);
@@ -101,7 +101,7 @@ init_screen(void)
 	
 	scrollok(lower_w, 1);
 
-	sprintf(buffer, "----- isdn controller channel state ------------- isdnmonitor %02d.%02d.%d -", VERSION, REL, STEP);
+	snprintf(buffer, sizeof(buffer), "----- isdn controller channel state ------------- isdnmonitor %02d.%02d.%d -", VERSION, REL, STEP);
 
 	while(strlen(buffer) < COLS)
 		strcat(buffer, "-");	
@@ -115,10 +115,10 @@ init_screen(void)
 	/*      01234567890123456789012345678901234567890123456789012345678901234567890123456789 */
 	addstr("# tei b remote                 iface  dir outbytes   obps inbytes    ibps  units");
 	
-	if(hostname)
-		sprintf(buffer, "----- isdn userland interface state ------------- %s:%d -", hostname, portno);
+	if (hostname)
+		snprintf(buffer, sizeof(buffer), "----- isdn userland interface state ------------- %s:%d -", hostname, portno);
 	else
-		sprintf(buffer, "----- isdn userland interface state ------------- %s -", sockpath);
+		snprintf(buffer, sizeof(buffer), "----- isdn userland interface state ------------- %s -", sockpath);
 		
 	while(strlen(buffer) < COLS)
 		strcat(buffer, "-");	
@@ -128,7 +128,7 @@ init_screen(void)
 	addstr(buffer);
 	standend();
 
-	sprintf(buffer, "----- isdnd logfile display --------------------------------------------------");
+	snprintf(buffer, sizeof(buffer), "----- isdnd logfile display --------------------------------------------------");
 	while(strlen(buffer) < COLS)
 		strcat(buffer, "-");	
 
@@ -213,7 +213,7 @@ display_disconnect(int pos)
 	wclrtoeol(upper_w);
 	wrefresh(upper_w);
 
-	if(do_bell)
+	if (do_bell)
 		display_bell();
 }
 
@@ -223,7 +223,7 @@ display_disconnect(int pos)
 void
 display_updown(int pos, int updown, char *device)
 {
-	if(updown)
+	if (updown)
 		wstandend(mid_w);
 	else
 		wstandout(mid_w);
@@ -240,28 +240,28 @@ display_updown(int pos, int updown, char *device)
 void
 display_l12stat(int controller, int layer, int state)
 {
-	if(controller > nctrl)
+	if (controller > nctrl)
 		return;
 		
-	if(!(layer == 1 || layer == 2))
+	if (!(layer == 1 || layer == 2))
 		return;
 
-	if(state)
+	if (state)
 		wstandout(upper_w);
 	else
 		wstandend(upper_w);
 
-	if(layer == 1)
+	if (layer == 1)
 	{
 		mvwprintw(upper_w, (controller*2)+1, H_TEI+1, "1");
 
-		if(!state)
+		if (!state)
 			mvwprintw(upper_w, (controller*2)+1, H_TEI+2, "2");
 	}
-	else if(layer == 2)
+	else if (layer == 2)
 	{
 		mvwprintw(upper_w, (controller*2)+1, H_TEI+2, "2");
-		if(state)
+		if (state)
 			mvwprintw(upper_w, (controller*2)+1, H_TEI+1, "1");
 	}
 
@@ -275,10 +275,10 @@ display_l12stat(int controller, int layer, int state)
 void
 display_tei(int controller, int tei)
 {
-	if(controller > nctrl)
+	if (controller > nctrl)
 		return;
 
-	if(tei == -1)
+	if (tei == -1)
 		mvwprintw(upper_w, controller*2, H_TEI, "---");
 	else
 		mvwprintw(upper_w, controller*2, H_TEI, "%3d", tei);
@@ -317,7 +317,7 @@ do_menu(void)
 
 	/* create a new window in the lower screen area */
 	
-	if((menu_w = newwin(WMENU_HGT, WMENU_LEN, WMENU_POSLN, WMENU_POSCO )) == NULL)
+	if ((menu_w = newwin(WMENU_HGT, WMENU_LEN, WMENU_POSLN, WMENU_POSCO )) == NULL)
 	{
 		return;
 	}
@@ -354,7 +354,7 @@ do_menu(void)
 
 		/* if no char is available within timeout, exit menu*/
 		
-		if((poll(set, 1, WMTIMEOUT * 1000)) <= 0)
+		if ((poll(set, 1, WMTIMEOUT * 1000)) <= 0)
 			goto mexit;
 		
 		c = wgetch(menu_w);
@@ -365,7 +365,7 @@ do_menu(void)
 			case '\t':	/* hilite next option */
 				mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
 				mpos++;
-				if(mpos >= WMITEMS)
+				if (mpos >= WMITEMS)
 					mpos = 0;
 				wstandout(menu_w);
 				mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
@@ -447,7 +447,7 @@ display_connect(int pos, int dir, char *name, char *remtel, char *dev)
 
 	/* remote telephone number */
 
-	sprintf(buffer, "%s/%s", name, remtel);
+	snprintf(buffer, sizeof(buffer), "%s/%s", name, remtel);
 		
 	buffer[H_IFN - H_TELN - 1] = '\0';
 
@@ -464,7 +464,7 @@ display_connect(int pos, int dir, char *name, char *remtel, char *dev)
 	mvwprintw(upper_w, pos, H_IN,     "-");
 	mvwprintw(upper_w, pos, H_INBPS,  "-");
 
-	if(do_bell)
+	if (do_bell)
 		display_bell();
 	
 	wrefresh(upper_w);
@@ -491,13 +491,13 @@ display_chans(void)
 
         for(i = 0; i < nctrl; i++)
         {
-		if(remstate[i].ch1state)
+		if (remstate[i].ch1state)
 	                cnt++;
-		if(remstate[i].ch2state)
+		if (remstate[i].ch2state)
                         cnt++;
         }
 
-	if(cnt > 0)
+	if (cnt > 0)
 	{
 		if ((cc = (struct ctlr_chan *)malloc (cnt *
 			sizeof (struct ctlr_chan))) == NULL)
@@ -518,7 +518,7 @@ display_chans(void)
 
 	/* create a new window in the lower screen area */
 	
-	if((chan_w = newwin(nlines, ncols, pos_y, pos_x )) == NULL)
+	if ((chan_w = newwin(nlines, ncols, pos_y, pos_x )) == NULL)
 	{
 		if (cnt > 0)
 			free(cc);
@@ -553,18 +553,20 @@ display_chans(void)
 
 	for (i = 0; i < nctrl; i++)
 	{
-		if(remstate[i].ch1state)
+		if (remstate[i].ch1state)
 		{
-			sprintf(buffer, "%d - Controller %d channel %s", ncols, i, "B1");
+			snprintf(buffer, sizeof(buffer),
+			    "%d - Controller %d channel %s", ncols, i, "B1");
 			mvwaddstr(chan_w, nlines, 2, buffer);
 			cc[ncols - 1].cntl = i;
 			cc[ncols - 1].chn = CHAN_B1;
 			nlines++;
 			ncols++;
 		}
-		if(remstate[i].ch2state)		
+		if (remstate[i].ch2state)		
 		{
-			sprintf(buffer, "%d - Controller %d channel %s", ncols, i, "B2");
+			snprintf(buffer, sizeof(buffer),
+			    "%d - Controller %d channel %s", ncols, i, "B2");
 			mvwaddstr(chan_w, nlines, 2, buffer);
 			cc[ncols - 1].cntl = i;
 			cc[ncols - 1].chn = CHAN_B2;
@@ -581,7 +583,7 @@ display_chans(void)
 
 		/* if no char is available within timeout, exit menu*/
 		
-		if((poll(set, 1, WMTIMEOUT * 1000)) <= 0)
+		if ((poll(set, 1, WMTIMEOUT * 1000)) <= 0)
 			break;
 		
 		ncols = wgetch(chan_w);
