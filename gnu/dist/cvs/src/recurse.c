@@ -563,7 +563,7 @@ do_recursion (frame)
      * generating data, to give the buffers a chance to drain to the
      * remote client.  We should not have locks active at this point,
      * but if there are writelocks around, we cannot pause here.  */
-    if (server_active && locktype != CVS_LOCK_NONE)
+    if (server_active && locktype == CVS_LOCK_NONE)
 	server_pause_check();
 #endif
 
