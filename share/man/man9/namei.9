@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.5 2003/02/04 22:38:19 perry Exp $
+.\"     $NetBSD: namei.9,v 1.6 2003/04/06 15:52:38 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .Fn relookup "struct vnode *dvp" "struct vnode **vpp" \
 "struct componentname *cnp"
 .Ft void
-.Fn NDINIT "struct namidata *ndp" "u_long op" "u_long flags" \
+.Fn NDINIT "struct nameidata *ndp" "u_long op" "u_long flags" \
 "enum uio_seg segflg" "const char *namep" "struct proc *p"
 .Sh DESCRIPTION
 The
@@ -71,7 +71,7 @@ for name-to-inode conversion, in the days before the
 .Xr vfs 9
 interface was implemented.
 .Pp
-The arguments passed to the functions are uncapsulated in the
+The arguments passed to the functions are encapsulated in the
 .Em nameidata
 structure.
 It has the following structure:
