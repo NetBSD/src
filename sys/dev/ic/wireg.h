@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.33 2002/04/16 07:24:07 onoe Exp $	*/
+/*	$NetBSD: wireg.h,v 1.34 2002/04/18 05:24:29 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
