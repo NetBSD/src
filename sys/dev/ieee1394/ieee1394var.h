@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394var.h,v 1.17 2002/12/04 00:28:42 haya Exp $	*/
+/*	$NetBSD: ieee1394var.h,v 1.18 2002/12/13 07:47:53 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ struct ieee1394_abuf {
 	u_int32_t *ab_data;
 	struct uio *ab_uio;
 	u_int64_t ab_addr;
+	u_int64_t ab_retaddr;
 	u_int8_t ab_tcode;
 	u_int8_t ab_tlabel;
 	u_int32_t ab_length; 
