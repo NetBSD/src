@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_glue.c,v 1.2 1994/10/26 07:25:39 cgd Exp $	*/
+/*	$NetBSD: kgdb_glue.c,v 1.3 1997/04/01 03:12:19 scottr Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -56,7 +56,7 @@
 #include <machine/reg.h>
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.2 1994/10/26 07:25:39 cgd Exp $";
+static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.3 1997/04/01 03:12:19 scottr Exp $";
 #endif
 
 #define KGDB_STACKSIZE 0x800
@@ -69,8 +69,8 @@ u_long kgdb_stack[KGDB_STACKWORDS];
 
 static inline void
 copywords(src, dst, nbytes)
-	register u_long *src, *dst;
-	register u_int nbytes;
+	u_long *src, *dst;
+	u_int nbytes;
 {
 	u_long *limit = src + (nbytes / sizeof(u_long));
 
