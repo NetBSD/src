@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.1.4.3 1996/06/11 05:42:01 thorpej Exp $	*/
+/*	$NetBSD: grf_et.c,v 1.1.4.4 1996/06/11 05:57:33 veego Exp $	*/
 
 /*
  * Copyright (c) 1996 Tobias Abt
@@ -235,13 +235,13 @@ grfetmatch(pdp, match, auxp)
 	/* Configure either registers or framebuffer in any order */
 	/* as said before, oMniBus does not support ProdID */
 	if (ettype == OMNIBUS) {
-		if (zap->size == 64*1024) {
+		if (zap->size == 64 * 1024) {
 			/* register area */
-			et_regaddr=zap->va;
+			et_regaddr = zap->va;
 		} else {
 			/* memory area */
-			et_fbaddr=zap->va;
-			et_fbsize=zap->size;
+			et_fbaddr = zap->va;
+			et_fbsize = zap->size;
 		}
 	} else {
 		if (zap->prodid == regprod) {
@@ -408,7 +408,7 @@ et_boardinit(gp)
 		vgaw(ba, MERLIN_VDAC_DATA, 0);
 	}
 
-
+	
 	/* setup initial unchanging parameters */
 
 	vgaw(ba, GREG_HERCULESCOMPAT + ((ettype == DOMINO) ? 0x0fff : 0), 0x03);
@@ -512,16 +512,16 @@ et_boardinit(gp)
 	/* card spezific initialisations */
 	switch(ettype) {
 	    case OMNIBUS:
-		etctype=et_getControllerType(gp);
-		etdtype=et_getDACType(gp);
+		etctype = et_getControllerType(gp);
+		etdtype = et_getDACType(gp);
 		break;
 	    case MERLIN:
 		etctype = ETW32;
 		etdtype = MERLINDAC;
 		break;
 	    case DOMINO:
-		etctype=ET4000;
-		etdtype=SIERRA11483;
+		etctype = ET4000;
+		etdtype = SIERRA11483;
 		break;
 	}
 }
