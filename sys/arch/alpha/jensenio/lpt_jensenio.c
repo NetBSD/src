@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_jensenio.c,v 1.1 2000/07/12 20:36:10 thorpej Exp $ */
+/* $NetBSD: lpt_jensenio.c,v 1.2 2001/07/27 00:25:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_jensenio.c,v 1.1 2000/07/12 20:36:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_jensenio.c,v 1.2 2001/07/27 00:25:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,8 @@ struct lpt_jensenio_softc {
 	struct lpt_softc sc_lpt;	/* real "lpt" softc */
 
 	/* Jensen-specific goo. */
-	void	*sc_ih;			/* interrupt handler */
+	char	sc_vecstr[8];
+	struct evcnt sc_ev_intr;
 };
 
 int	lpt_jensenio_match(struct device *, struct cfdata *, void *);
@@ -81,6 +82,8 @@ struct cfattach lpt_jensenio_ca = {
 	sizeof(struct lpt_jensenio_softc), lpt_jensenio_match,
 	    lpt_jensenio_attach
 };
+
+void	lpt_jensenio_intr(void *, u_long);
 
 int
 lpt_jensenio_match(struct device *parent, struct cfdata *match, void *aux)
@@ -100,7 +103,6 @@ lpt_jensenio_attach(struct device *parent, struct device *self, void *aux)
 	struct lpt_jensenio_softc *jsc = (void *)self;
 	struct lpt_softc *sc = &jsc->sc_lpt;
 	struct jensenio_attach_args *ja = aux;
-	const char *intrstr;
 
 	sc->sc_iot = ja->ja_iot;
 
@@ -114,16 +116,20 @@ lpt_jensenio_attach(struct device *parent, struct device *self, void *aux)
 
 	lpt_attach_subr(sc);
 
-	intrstr = eisa_intr_string(ja->ja_ec, ja->ja_irq[0]);
-	jsc->sc_ih = eisa_intr_establish(ja->ja_ec, ja->ja_irq[0],
-	    IST_EDGE, IPL_TTY, lptintr, sc);
-	if (jsc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
-	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	scb_set(ja->ja_irq[0], lpt_jensenio_intr, sc);
+	printf("%s: interrupting at vector 0x%x\n",
+	    sc->sc_dev.dv_xname, ja->ja_irq[0]);
+
+	sprintf(jsc->sc_vecstr, "0x%x", ja->ja_irq[0]);
+	evcnt_attach_dynamic(&jsc->sc_ev_intr, EVCNT_TYPE_INTR,
+	    NULL, "vector", jsc->sc_vecstr);
+}
+
+void
+lpt_jensenio_intr(void *arg, u_long vec)
+{
+	struct lpt_jensenio_softc *jsc = arg;
+
+	jsc->sc_ev_intr.ev_count++;
+	(void) lptintr(&jsc->sc_lpt);
 }

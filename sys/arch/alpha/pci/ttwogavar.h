@@ -1,4 +1,4 @@
-/* $NetBSD: ttwogavar.h,v 1.1 2000/12/21 20:51:55 thorpej Exp $ */
+/* $NetBSD: ttwogavar.h,v 1.2 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ struct ttwoga_config {
 	struct extent *tc_io_ex, *tc_d_mem_ex, *tc_s_mem_ex;
 	int	tc_mallocsafe;
 
+	u_long	tc_vecbase;
 	struct alpha_shared_intr *tc_intrtab;
 
 	void	(*tc_enable_intr)(struct ttwoga_config *, int, int);
