@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.11 2000/01/09 03:06:35 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.12 2000/02/13 04:55:30 oster Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -76,6 +76,7 @@ static  void usage __P((void));
 static  void get_component_label __P((int, char *));
 static  void set_component_label __P((int, char *));
 static  void init_component_labels __P((int, int));
+static  void set_autoconfig __P((int, int, char *));
 static  void add_hot_spare __P((int, char *));
 static  void remove_hot_spare __P((int, char *));
 static  void rebuild_in_place __P((int, char *));
@@ -101,6 +102,7 @@ main(argc,argv)
 	char dev_name[PATH_MAX];
 	char name[PATH_MAX];
 	char component[PATH_MAX];
+	char autoconf[10];
 	int do_recon;
 	int do_rewrite;
 	int is_clean;
@@ -118,11 +120,17 @@ main(argc,argv)
 	is_clean = 0;
 	force = 0;
 
-	while ((ch = getopt(argc, argv, "a:Bc:C:f:F:g:iI:l:r:R:sSpPuv")) != -1)
+	while ((ch = getopt(argc, argv, "a:A:Bc:C:f:F:g:iI:l:r:R:sSpPuv")) 
+	       != -1)
 		switch(ch) {
 		case 'a':
 			action = RAIDFRAME_ADD_HOT_SPARE;
 			strncpy(component, optarg, PATH_MAX);
+			num_options++;
+			break;
+		case 'A':
+			action = RAIDFRAME_SET_AUTOCONFIG;
+			strncpy(autoconf, optarg, 10);
 			num_options++;
 			break;
 		case 'B':
@@ -255,13 +263,16 @@ main(argc,argv)
 
 	switch(action) {
 	case RAIDFRAME_ADD_HOT_SPARE:
-		add_hot_spare(fd,component);
+		add_hot_spare(fd, component);
 		break;
 	case RAIDFRAME_REMOVE_HOT_SPARE:
-		remove_hot_spare(fd,component);
+		remove_hot_spare(fd, component);
 		break;
 	case RAIDFRAME_CONFIGURE:
-		rf_configure(fd, config_filename,force);
+		rf_configure(fd, config_filename, force);
+		break;
+	case RAIDFRAME_SET_AUTOCONFIG:
+		set_autoconfig(fd, raidID, autoconf);
 		break;
 	case RAIDFRAME_COPYBACK:
 		printf("Copyback.\n");
@@ -273,16 +284,16 @@ main(argc,argv)
 		}
 		break;
 	case RAIDFRAME_FAIL_DISK:
-		rf_fail_disk(fd,component,do_recon);
+		rf_fail_disk(fd, component, do_recon);
 		break;
 	case RAIDFRAME_SET_COMPONENT_LABEL:
-		set_component_label(fd,component);
+		set_component_label(fd, component);
 		break;
 	case RAIDFRAME_GET_COMPONENT_LABEL:
-		get_component_label(fd,component);
+		get_component_label(fd, component);
 		break;
 	case RAIDFRAME_INIT_LABELS:
-		init_component_labels(fd,serial_number);
+		init_component_labels(fd, serial_number);
 		break;
 	case RAIDFRAME_REWRITEPARITY:
 		printf("Initiating re-write of parity\n");
@@ -291,7 +302,7 @@ main(argc,argv)
 		if (verbose) {
 			sleep(3); /* XXX give it time to get started */
 			printf("Parity Re-write status:\n");
-			do_meter(fd,RAIDFRAME_CHECK_PARITYREWRITE_STATUS);
+			do_meter(fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS);
 		}
 		break;
 	case RAIDFRAME_CHECK_RECON_STATUS:
@@ -301,10 +312,10 @@ main(argc,argv)
 		rf_get_device_status(fd);
 		break;
 	case RAIDFRAME_REBUILD_IN_PLACE:
-		rebuild_in_place(fd,component);
+		rebuild_in_place(fd, component);
 		break;
 	case RAIDFRAME_CHECK_PARITY:
-		check_parity(fd,do_rewrite,dev_name);
+		check_parity(fd, do_rewrite, dev_name);
 		break;
 	case RAIDFRAME_SHUTDOWN:
 		do_ioctl(fd, RAIDFRAME_SHUTDOWN, NULL, "RAIDFRAME_SHUTDOWN");
@@ -518,6 +529,28 @@ get_component_label(fd, component)
 		  "RAIDFRAME_GET_COMPONENT_LABEL");
 
 	printf("Component label for %s:\n",component);
+
+	printf("   Row: %d Column: %d Num Rows: %d Num Columns: %d\n",
+	       component_label.row, component_label.column, 
+	       component_label.num_rows, component_label.num_columns);
+	printf("   Version: %d Serial Number: %d Mod Counter: %d\n",
+	       component_label.version, component_label.serial_number,
+	       component_label.mod_counter);
+	printf("   Clean: %s Status: %d\n",
+	       component_label.clean ? "Yes" : "No", 
+	       component_label.status );
+	printf("   sectPerSU: %d SUsPerPU: %d SUsPerRU: %d\n",
+	       component_label.sectPerSU, component_label.SUsPerPU, 
+	       component_label.SUsPerRU);
+	printf("   RAID Level: %c  blocksize: %d numBlocks: %d\n",
+	       (char) component_label.parityConfig, 
+	       component_label.blockSize, component_label.numBlocks);
+	printf("   Autoconfig: %s\n", 
+	       component_label.autoconfigure ? "Yes" : "No" );
+	printf("   Last configured as: raid%d\n", component_label.last_unit );
+	printf("   Config order: %d\n", component_label.config_order);
+#if 0
+	/* old version */
 	printf("Version: %d\n",component_label.version);
 	printf("Serial Number: %d\n",component_label.serial_number);
 	printf("Mod counter: %d\n",component_label.mod_counter);
@@ -527,6 +560,7 @@ get_component_label(fd, component)
 	printf("Num Columns: %d\n", component_label.num_columns);
 	printf("Clean: %d\n", component_label.clean);
 	printf("Status: %s\n", device_status(component_label.status));
+#endif
 }
 
 static void
@@ -576,6 +610,42 @@ init_component_labels(fd, serial_number)
 	
 	do_ioctl( fd, RAIDFRAME_INIT_LABELS, &component_label,
 		  "RAIDFRAME_SET_COMPONENT_LABEL");
+}
+
+static void
+set_autoconfig(fd, raidID, autoconf)
+	int fd;
+	int raidID;
+	char *autoconf;
+{
+	int auto_config;
+	int root_config;
+
+	auto_config = 0;
+	root_config = 0;
+
+	if (strncasecmp(autoconf,"root", 4) == 0) {
+		root_config = 1;
+	}
+
+	if ((strncasecmp(autoconf,"yes", 3) == 0) ||
+	    root_config == 1) {
+		auto_config = 1;
+	}
+
+	do_ioctl(fd, RAIDFRAME_SET_AUTOCONFIG, &auto_config,
+		 "RAIDFRAME_SET_AUTOCONFIG");
+
+	do_ioctl(fd, RAIDFRAME_SET_ROOT, &root_config,
+		 "RAIDFRAME_SET_ROOT");
+
+	printf("raid%d: Autoconfigure: %s\n", raidID,
+	       auto_config ? "Yes" : "No");
+
+	if (root_config == 1) {
+		printf("raid%d: Root: %s\n", raidID,
+		       auto_config ? "Yes" : "No");
+	}
 }
 
 static void
