@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.131 2003/01/23 17:34:49 christos Exp $
+#	$NetBSD: Makefile,v 1.132 2003/04/06 16:35:37 lha Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -33,7 +33,7 @@ SUBDIR+= hesinfo
 .endif
 
 .if (${MKKERBEROS} != "no")
-SUBDIR+= compile_et kdestroy kinit klist kpasswd mk_cmds string2key
+SUBDIR+= compile_et kdestroy kinit klist mk_cmds string2key
 .endif
 
 .if (${MKSKEY} != "no")
