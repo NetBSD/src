@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.1 1997/02/04 03:52:50 thorpej Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.2 1997/04/27 21:15:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -36,6 +36,7 @@
  */
 
 #include <sys/types.h>
+#include <machine/hp300spu.h>
 
 #define	NHPIB		4
 #define	NSCSI		2
@@ -51,16 +52,6 @@
 #define	DIOCSIZE	(0x10000)
 #define DIOIIBASE	(0x01000000)
 #define DIOIICSIZE	(0x00400000)
-
-#define HP_320		0	/* 16Mhz 68020+HP MMU+16K external cache */
-#define HP_330		1	/* 16Mhz 68020+68851 MMU */
-#define HP_350		2	/* 25Mhz 68020+HP MMU+32K external cache */
-#define HP_360		3	/* 25Mhz 68030 */
-#define HP_370		4	/* 33Mhz 68030+64K external cache */
-#define HP_340		5	/* 16Mhz 68030 */
-#define HP_375		6	/* 50Mhz 68030+32K external cache */
-#define HP_380		7	/* 25Mhz 68040 */
-#define HP_433		8	/* 33Mhz 68040 */
 
 #define MHZ_8		1
 #define MHZ_16		2
