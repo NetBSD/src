@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.10 2002/12/30 06:20:02 jmcneill Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.11 2002/12/30 09:37:50 explorer Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.10 2002/12/30 06:20:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.11 2002/12/30 09:37:50 explorer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.10 2002/12/30 06:20:02 jmcneill Exp $
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 #define	BAT_WORDS	13
 
@@ -75,10 +77,28 @@ struct acpibat_softc {
 	int sc_pred_capacity;		/* estimated current max */
 	int sc_warn_capacity;		/* warning level */
 	int sc_low_capacity;		/* low level */
+	struct sysmon_power sc_sysmon;	/* sysmon hook */
 
 	ACPI_OBJECT sc_Ret[BAT_WORDS];	/* Return Buffer */
 };
 
+/*
+ * These flags are used to examine the battery device data returned from
+ * the ACPI interface, specifically the "battery status"
+ */
+#define ACPIBAT_PWRUNIT_MA	0x00000001  /* mA not mW */
+
+/*
+ * These flags are used to examine the battery charge/discharge/critical
+ * state returned from a get-status command.
+ */
+#define ACPIBAT_DISCHARGING	0x00000001  /* battery is discharging */
+#define ACPIBAT_CHARGING	0x00000002  /* battery is charging */
+#define ACPIBAT_CRITICAL        0x00000004  /* battery is critical */
+
+/*
+ * These flags are used to set internal state in our softc.
+ */
 #define	ABAT_F_VERBOSE		0x01	/* verbose events */
 #define ABAT_F_PWRUNIT_MA	0x02 	/* mA instead of mW */
 
@@ -128,7 +148,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	ACPI_STATUS rv;
 
-	printf(": ACPI Battery\n");
+	printf(": ACPI Battery (Control Method)\n");
 
 	sc->sc_node = aa->aa_node;
 
@@ -161,8 +181,13 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	acpibat_get_status(sc);
 
 	/*
-	 * XXX Hook into sysmon here.
+	 * Hook into sysmon.
 	 */
+#if 0
+	if (sysmon_power_register(&sc->sc_sysmon))
+		printf("%s: unable to to register with sysmon\n",
+		       sc->sc_dev.dv_xname);
+#endif
 }
 
 static void
@@ -207,7 +232,7 @@ acpibat_get_info(void *arg)
 	}
 
 	p2 = p1->Package.Elements;
-	if (p2[0].Integer.Value == 1)
+	if ((p2[0].Integer.Value & ACPIBAT_PWRUNIT_MA) != 0)
 		sc->sc_flags |= ABAT_F_PWRUNIT_MA;
 
 	sc->sc_design_capacity = p2[1].Integer.Value;
@@ -269,11 +294,36 @@ acpibat_get_status(void *arg)
 	sc->sc_mv = p2[3].Integer.Value;
 
 	if (sc->sc_flags & ABAT_F_VERBOSE) {
+
+		char *charge, *critical = "";
+
+		/*
+		 * Determine charging / discharging state.
+		 */
+		switch (sc->sc_status
+			& (ACPIBAT_DISCHARGING | ACPIBAT_CHARGING)) {
+		case ACPIBAT_DISCHARGING | ACPIBAT_CHARGING:
+			charge = "confused";
+			break;
+		case ACPIBAT_DISCHARGING:
+			charge = "discharging";
+			break;
+		case ACPIBAT_CHARGING:
+			charge = "charging";
+			break;
+		default:
+			charge = "idle";
+			break;
+		}
+
+		/*
+		 * If the critical bit is set, be loud about it.
+		 */
+		if ((sc->sc_status & ACPIBAT_CRITICAL) != 0)
+			critical = " CRITICAL";
+
 		printf("%s: %s%s: %d.%03dV cap %d.%03d%s (%d%%) rate %d.%03d%s\n",
-		       sc->sc_dev.dv_xname,
-		       (sc->sc_status&4) ? "CRITICAL ":"",
-		       (sc->sc_status&1) ? "discharging" : (
-		               (sc->sc_status & 2) ? "charging" : "idle"),
+		       sc->sc_dev.dv_xname, charge, critical,
 		       ACM_SCALE(sc->sc_mv),
 		       ACM_SCALE(sc->sc_capacity), ACM_CAPUNIT(sc),
 		       (sc->sc_design_capacity == 0) ? 0 : 
@@ -293,22 +343,33 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 	struct acpibat_softc *sc = context;
 	int rv;
 
+#ifdef ACPI_BAT_DEBUG
+	printf("%s: received notify message: 0x%x\n",
+	       sc->sc_dev.dv_xname, notify);
+#endif
+
 	switch (notify) {
 	case ACPI_NOTIFY_BusCheck:
-	case ACPI_NOTIFY_BatteryStatusChanged:
+		break;
+
 	case ACPI_NOTIFY_BatteryInformationChanged:
-#ifdef ACPI_BAT_DEBUG
-		printf("%s: received notify message: 0x%x\n",
-		    sc->sc_dev.dv_xname, notify);
-#endif
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
-		    acpibat_get_status, sc);
+					     acpibat_get_info, sc);
 		if (rv != AE_OK)
 			printf("%s: unable to queue status check: %d\n",
-			    sc->sc_dev.dv_xname, rv);
+			       sc->sc_dev.dv_xname, rv);
+		/* fallthrough */
+
+	case ACPI_NOTIFY_BatteryStatusChanged:
+		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
+					     acpibat_get_status, sc);
+		if (rv != AE_OK)
+			printf("%s: unable to queue status check: %d\n",
+			       sc->sc_dev.dv_xname, rv);
 		break;
+
 	default:
 		printf("%s: received unknown notify message: 0x%x\n",
-		    sc->sc_dev.dv_xname, notify);
+		       sc->sc_dev.dv_xname, notify);
 	}
 }
