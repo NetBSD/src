@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.30 1997/10/01 05:39:56 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.31 1997/10/18 19:50:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe <thorpej@and.com>
@@ -408,7 +408,7 @@ ch_move(sc, cm)
 	/*
 	 * Send command to changer.
 	 */
-	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	return (scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), NULL, 0, CHRETRIES,
 	    100000, NULL, 0));
 }
@@ -465,7 +465,7 @@ ch_exchange(sc, ce)
 	/*
 	 * Send command to changer.
 	 */
-	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	return (scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), NULL, 0, CHRETRIES,
 	    100000, NULL, 0));
 }
@@ -504,7 +504,7 @@ ch_position(sc, cp)
 	/*
 	 * Send command to changer.
 	 */
-	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	return (scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), NULL, 0, CHRETRIES,
 	    100000, NULL, 0));
 }
@@ -618,7 +618,7 @@ ch_getelemstatus(sc, first, count, data, datalen)
 	/*
 	 * Send command to changer.
 	 */
-	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	return (scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    (u_char *)data, datalen, CHRETRIES, 100000, NULL, SCSI_DATA_IN));
 }
@@ -639,7 +639,7 @@ ch_ielem(sc)
 	/*
 	 * Send command to changer.
 	 */
-	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	return (scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    NULL, 0, CHRETRIES, 100000, NULL, 0));
 }
@@ -674,7 +674,7 @@ ch_get_params(sc, scsiflags)
 	cmd.byte2 |= 0x08;	/* disable block descriptors */
 	cmd.page = 0x1d;
 	cmd.length = (sizeof(sense_data) & 0xff);
-	error = (*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	error = scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
 	    sizeof(sense_data), CHRETRIES, 6000, NULL,
 	    scsiflags | SCSI_DATA_IN);
@@ -707,7 +707,7 @@ ch_get_params(sc, scsiflags)
 	cmd.byte2 = 0x08;	/* disable block descriptors */
 	cmd.page = 0x1f;
 	cmd.length = (sizeof(sense_data) & 0xff);
-	error = (*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	error = scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
 	    sizeof(sense_data), CHRETRIES, 6000, NULL,
 	    scsiflags | SCSI_DATA_IN);

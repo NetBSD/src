@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.11 1997/10/14 11:18:18 matthias Exp $	*/
+/*	$NetBSD: if_se.c,v 1.12 1997/10/18 19:50:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -374,7 +374,7 @@ se_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 	int error;
 	int s = splbio();
 
-	error = (*sc_link->scsipi_cmd)(sc_link, scsipi_cmd, cmdlen, data_addr,
+	error = scsipi_command(sc_link, scsipi_cmd, cmdlen, data_addr,
 	    datalen, retries, timeout, bp, flags);
 	splx(s);
 	return (error);

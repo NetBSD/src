@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.106 1997/10/13 00:47:49 explorer Exp $	*/
+/*	$NetBSD: cd.c,v 1.107 1997/10/18 19:50:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -564,11 +564,10 @@ cdstart(v)
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		if (sc_link->scsipi_cmd(sc_link, cmdp, cmdlen,
-		    (u_char *) bp->b_data, bp->b_bcount,
-		    CDRETRIES, 30000, bp, SCSI_NOSLEEP |
+		if (scsipi_command(sc_link, cmdp, cmdlen, (u_char *)bp->b_data,
+		    bp->b_bcount, CDRETRIES, 30000, bp, SCSI_NOSLEEP |
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT))) {
-			disk_unbusy(&cd->sc_dk, 0);
+			disk_unbusy(&cd->sc_dk, 0); 
 			printf("%s: not queued", cd->sc_dev.dv_xname);
 		}
 	}
@@ -985,7 +984,7 @@ cd_size(cd, flags)
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks and a blocksize
 	 */
-	if ((*cd->sc_link->scsipi_cmd)(cd->sc_link,
+	if (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)&rdcap, sizeof(rdcap), CDRETRIES, 20000, NULL,
 	    flags | SCSI_DATA_IN) != 0)
@@ -1019,7 +1018,7 @@ cd_play(cd, blkno, nblks)
 	scsipi_cmd.opcode = PLAY;
 	_lto4b(blkno, scsipi_cmd.blk_addr);
 	_lto2b(nblks, scsipi_cmd.xfer_len);
-	return ((*cd->sc_link->scsipi_cmd)(cd->sc_link,
+	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, CDRETRIES, 200000, NULL, 0));
 }
@@ -1077,7 +1076,7 @@ cd_play_msf(cd, startm, starts, startf, endm, ends, endf)
 	scsipi_cmd.end_m = endm;
 	scsipi_cmd.end_s = ends;
 	scsipi_cmd.end_f = endf;
-	return ((*cd->sc_link->scsipi_cmd)(cd->sc_link,
+	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, CDRETRIES, 2000, NULL, 0));
 }
@@ -1095,7 +1094,7 @@ cd_pause(cd, go)
 	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = PAUSE;
 	scsipi_cmd.resume = go & 0xff;
-	return ((*cd->sc_link->scsipi_cmd)(cd->sc_link,
+	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, CDRETRIES, 2000, NULL, 0));
 }
@@ -1108,7 +1107,7 @@ cd_reset(cd)
 	struct cd_softc *cd;
 {
 
-	return ((*cd->sc_link->scsipi_cmd)(cd->sc_link, 0, 0, 0, 0,
+	return (scsipi_command(cd->sc_link, 0, 0, 0, 0,
 	    CDRETRIES, 2000, NULL, SCSI_RESET));
 }
 
@@ -1131,7 +1130,7 @@ cd_read_subchannel(cd, mode, format, track, data, len)
 	scsipi_cmd.subchan_format = format;
 	scsipi_cmd.track = track;
 	_lto2b(len, scsipi_cmd.data_len);
-	return ((*cd->sc_link->scsipi_cmd)(cd->sc_link,
+	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(struct scsipi_read_subchannel), (u_char *)data, len,
 	    CDRETRIES, 5000, NULL, SCSI_DATA_IN|SCSI_SILENT));
@@ -1162,7 +1161,7 @@ cd_read_toc(cd, mode, start, data, len)
 		scsipi_cmd.byte2 |= CD_MSF;
 	scsipi_cmd.from_track = start;
 	_lto2b(ntoc, scsipi_cmd.data_len);
-	return ((*cd->sc_link->scsipi_cmd)(cd->sc_link,
+	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(struct scsipi_read_toc), (u_char *)data, len, CDRETRIES,
 	    5000, NULL, SCSI_DATA_IN));
