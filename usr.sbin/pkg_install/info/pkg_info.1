@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.43 2004/08/23 19:41:05 cube Exp $
+.\" $NetBSD: pkg_info.1,v 1.44 2004/08/23 19:45:36 snj Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -98,9 +98,9 @@ stdout unless turned off using the
 .Fl q
 option.
 .Ar pkg-name
-can contain wildcards, see the
+can contain wildcards (see the
 .Sx PACKAGE WILDCARDS
-section below.
+section below).
 .It Fl F
 Interpret any pkg-name given as filename, and translate it to a
 package name using the Package Database.
@@ -196,7 +196,7 @@ Package wildcards use
 .Xr fnmatch 3 .
 In addition,
 .Xr csh 1
-style {,} alternates have also been implemented.
+style {,} alternates have been implemented.
 Package version numbers can also be matched in a relational manner
 using the
 .Pa \*[Ge] , \*[Le] , \*[Gt] ,
@@ -224,7 +224,7 @@ For example,
 will sort before
 .Pa name-1.3
 and after
-.Pa name-1.2.9
+.Pa name-1.2.9 .
 Similarly
 .Pa name-1.3alpha2
 will sort before
