@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.79 1997/09/12 08:41:55 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.80 1997/10/12 18:45:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -487,8 +487,7 @@ Lenab2:
 	orl	#MMU_CEN,a0@(MMUCMD)	| turn on external cache
 Lnocache0:
 /* Final setup for call to main(). */
-	jbsr	_C_LABEL(intr_init)	| initialize interrupt handlers
-	jbsr	_C_LABEL(hp300_calibrate_delay) | calibrate delay() loop
+	jbsr	_C_LABEL(hp300_init)
 
 /*
  * Create a fake exception frame so that cpu_fork() can copy it.
