@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.3 2001/04/12 19:45:25 thorpej Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.4 2001/05/08 17:23:09 uch Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -222,14 +222,19 @@ hpckbd_initif(struct hpckbd_core *hc)
 int
 hpckbd_putevent(struct hpckbd_core* hc, u_int type, int data)
 {
-	if (hc->hc_nevents == NEVENTQ)
+	int s = spltty();
+
+	if (hc->hc_nevents == NEVENTQ) {
+		splx(s);
 		return (0); /* queue is full */
+	}
 
 	hc->hc_nevents++;
 	hc->hc_tail->hq_type = type;
 	hc->hc_tail->hq_data = data;
 	if (&hc->hc_eventq[NEVENTQ] <= ++hc->hc_tail)
 		hc->hc_tail = hc->hc_eventq;
+	splx(s);
 
 	return (1);
 }
@@ -237,14 +242,19 @@ hpckbd_putevent(struct hpckbd_core* hc, u_int type, int data)
 int
 hpckbd_getevent(struct hpckbd_core* hc, u_int *type, int *data)
 {
-	if (hc->hc_nevents == 0)
+	int s = spltty();
+
+	if (hc->hc_nevents == 0) {
+		splx(s);
 		return (0); /* queue is empty */
+	}
 
 	*type = hc->hc_head->hq_type;
 	*data = hc->hc_head->hq_data;
 	hc->hc_nevents--;
 	if (&hc->hc_eventq[NEVENTQ] <= ++hc->hc_head)
 		hc->hc_head = hc->hc_eventq;
+	splx(s);
 
 	return (1);
 }
@@ -285,7 +295,7 @@ hpckbd_keymap_lookup(struct hpckbd_core *hc)
 #endif
 			if (tab->ht_cmdmap.map) {
 				hpckbd_keymap_setup(hc, tab->ht_cmdmap.map, 
-						    tab->ht_cmdmap.size);
+				    tab->ht_cmdmap.size);
 #if !defined(PCKBD_LAYOUT)
 				hpckbd_keymapdata.layout |= KB_MACHDEP;
 #endif
@@ -331,8 +341,8 @@ __hpckbd_input(void *arg, int flag, int scancode)
 	if ((key = hc->hc_keymap[scancode]) == UNK) {
 #ifdef DEBUG
 		printf("hpckbd: unknown scan code %#x (%d, %d)\n",
-		       scancode, scancode >> 3,
-		       scancode - ((scancode >> 3) << 3));
+		    scancode, scancode >> 3,
+		    scancode - ((scancode >> 3) << 3));
 #endif /* DEBUG */
 		return (0);
 	}
@@ -345,15 +355,20 @@ __hpckbd_input(void *arg, int flag, int scancode)
 		if (!flag)
 			return (0);
 		
-		if (scancode == hc->hc_special[KEY_SPECIAL_OFF])
-			printf("off button\n");
-		else if (scancode == hc->hc_special[KEY_SPECIAL_LIGHT]) {
+		if (scancode == hc->hc_special[KEY_SPECIAL_OFF]) {
+#ifdef DEBUG
+			printf("off button\n"); // XXX notyet -uch
+#endif
+		} else if (scancode == hc->hc_special[KEY_SPECIAL_LIGHT]) {
 			static int onoff; /* XXX -uch */
 			config_hook_call(CONFIG_HOOK_BUTTONEVENT,
-					 CONFIG_HOOK_BUTTONEVENT_LIGHT, 
-					 (void *)(onoff ^= 1));
-		} else 
+			    CONFIG_HOOK_BUTTONEVENT_LIGHT,
+			    (void *)(onoff ^= 1));
+		} else {
+#ifdef DEBUG
 			printf("unknown special key %d\n", scancode);
+#endif
+		}
 		
 		return (0);
 	}
@@ -370,8 +385,7 @@ __hpckbd_input(void *arg, int flag, int scancode)
 			wskbd_rawinput(hc->hc_wskbddev, data, n);
 		} else
 #endif
-		wskbd_input(hc->hc_wskbddev, type,
-			    hc->hc_keymap[scancode]);
+		wskbd_input(hc->hc_wskbddev, type, hc->hc_keymap[scancode]);
 	}
 
 	return (0);
@@ -400,26 +414,20 @@ void
 hpckbd_cngetc(void *arg, u_int *type, int *data)
 {
 	struct hpckbd_core *hc = arg;
-	int s;
 
 	if (!hc->hc_console || !hc->hc_polling || !hc->hc_ic)
 		return;
 
-	s = splvm();		/* XXX Questionable. */
 	while (hpckbd_getevent(hc, type, data) == 0) /* busy loop */
 		hpckbd_ic_poll(hc->hc_ic);
-	splx(s);
 }
 
 void
 hpckbd_cnpollc(void *arg, int on)
 {
 	struct hpckbd_core *hc = arg;
-	int s = splvm();	/* XXX See above. */
 
 	hc->hc_polling = on;
-
-	splx(s);
 }
 
 int
