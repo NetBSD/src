@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.7 2002/11/26 08:10:16 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.8 2002/11/28 21:21:33 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.7 2002/11/26 08:10:16 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.8 2002/11/28 21:21:33 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -100,9 +100,11 @@ mach_sys_host_self_trap(p, v, retval)
 }
 
 int 
-mach_port_deallocate(p, msgh)
+mach_port_deallocate(p, msgh, maxlen, dst)
 	struct proc *p;
 	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
 {
 	mach_port_deallocate_request_t req;
 	mach_port_deallocate_reply_t rep;
@@ -121,15 +123,22 @@ mach_port_deallocate(p, msgh)
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_trailer.msgh_trailer_size = 8;
 
+	if (sizeof(rep) > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
+
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;
 	return 0;
 }
 
 int 
-mach_port_allocate(p, msgh)
+mach_port_allocate(p, msgh, maxlen, dst)
 	struct proc *p;
 	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
 {
 	mach_port_allocate_request_t req;
 	mach_port_allocate_reply_t rep;
@@ -149,15 +158,22 @@ mach_port_allocate(p, msgh)
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_trailer.msgh_trailer_size = 8;
 
+	if (sizeof(rep) > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
+
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;
 	return 0;
 }
 
 int 
-mach_port_insert_right(p, msgh)
+mach_port_insert_right(p, msgh, maxlen, dst)
 	struct proc *p;
 	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
 {
 	mach_port_allocate_request_t req;
 	mach_port_allocate_reply_t rep;
@@ -176,6 +192,11 @@ mach_port_insert_right(p, msgh)
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_trailer.msgh_trailer_size = 8;
+
+	if (sizeof(rep) > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
 
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.4 2002/11/24 17:22:59 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.5 2002/11/28 21:21:33 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -121,8 +121,11 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_vm_deallocate_reply_t;
 
-int mach_vm_map __P((struct proc *, mach_msg_header_t *));
-int mach_vm_allocate __P((struct proc *, mach_msg_header_t *));
-int mach_vm_deallocate __P((struct proc *, mach_msg_header_t *));
+int mach_vm_map(struct proc *, mach_msg_header_t *,
+    size_t, mach_msg_header_t *);
+int mach_vm_allocate(struct proc *, mach_msg_header_t *,
+    size_t, mach_msg_header_t *);
+int mach_vm_deallocate(struct proc *, mach_msg_header_t *,
+    size_t, mach_msg_header_t *);
 
 #endif /* _MACH_VM_H_ */
