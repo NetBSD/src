@@ -1,4 +1,4 @@
-/* $NetBSD: sysconf.h,v 1.2.4.6 1999/12/06 09:38:16 nisimura Exp $ */
+/*	$NetBSD: sysconf.h,v 1.2.4.7 2000/03/14 09:45:54 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  * Additional reworking by Matthew Jacob for NASA/Ames Research Center.
  * Copyright (c) 1997
@@ -43,7 +44,6 @@
 
 #ifndef	_PMAX_SYSCONF_H_
 #define	_PMAX_SYSCONF_H_
-
 
 #ifdef _KERNEL
 /*
@@ -62,12 +62,16 @@ struct platform {
 	 *	cons_init	-	console initialization
 	 *	device_register -	boot configuration aid
 	 *	iointr		-	I/O interrupt handler
+	 *	intr_establish	-	establish interrupt handler
+	 *	intr_disestablish -	disestablish interrupt handler
 	 *	clkread		-	interporate HZ with hi-resolution timer
 	 */
 	void	(*bus_reset) __P((void));
 	void	(*cons_init) __P((void));
 	void	(*device_register) __P((struct device *, void *));
 	int	(*iointr) __P((unsigned, unsigned, unsigned, unsigned));
+	void	(*intr_establish) __P((struct device *, void *, int,
+		    int (*)(void *), void *));
 	int	(*memsize) __P((caddr_t));
 	unsigned (*clkread) __P((void));
 };
@@ -92,6 +96,6 @@ int	memsize_bitmap __P((caddr_t));
 void	platform_not_configured __P((void));
 void	platform_not_supported __P((void));
 
-
 #endif /* _KERNEL */
-#endif /* !_PMAX_SYSCONF_H_ */
+
+#endif	/* !_PMAX_SYSCONF_H_ */
