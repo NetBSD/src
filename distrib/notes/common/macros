@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.4.8.2 2001/05/06 22:30:49 he Exp $
+.\"	$NetBSD: macros,v 1.4.8.3 2002/02/23 20:58:56 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -149,7 +149,7 @@
 ..
 .
 .\" Generate NetBSD/${MACHINE}, with NetBSD being done with .Nx.
-.\" If there's trailing args to the macro, concatinate with no space.
+.\" If there's trailing args to the macro, concatenate with no space.
 .
 .de Nx*M
 .ie \\n[.$]>0 .Nx Ns / Ns \*M Ns \\$*
@@ -176,7 +176,7 @@
 .\" support for more than two pages, nor for right-margins.
 .\" Usage:
 .\"   .Bc [ncol]
-.\" Dependances:
+.\" Dependancies:
 .\"  macro CF   page trap macro for bottom of column
 .\"  macro CZ   code duplication; handling of diversion interpolation.
 .\"  macro CC   diversion trap macro for subdividing into pages.
@@ -303,6 +303,56 @@
 ..
 .als Ec Ed
 .\}
+.
+.\" Macros to support Table of Contents
+.\" TOC is set (from the command line) if we're generating the TOC file;
+.\" the TOC file is read from groff's stderr.
+.\" Usage:
+.\"   .Sh  			section header
+.\"   .Ss			subsection header
+.\"   .Ss2			sub2section header
+.\"   .Te depth "item"		Explicit toc entry, not based on other markup
+.\"   .To depth "item"		Like Te, but don't echo the item
+.\" XXX To should be unnecessary if we handle parseable/callable.
+.\"   .Tc			import the TOC
+.\"   .Ti depth page "item"	(internal) output an entry
+.if dTOC \{
+.rn Ss Ss-toc
+.de Ss
+.Ss-toc \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+\.tm .Ti 0 \\n% \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+..
+.rn Ss2 Ss2-toc
+.de Ss2
+.Ss2-toc \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+\.tm .Ti 1 \\n% \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+..
+.\}
+.de Te
+.ie rHTML <a name="\\$2">\\$2</a>
+.el \\$2
+.if dTOC \.tm .Ti \\$1 \\n% \\$2
+..
+.de To
+.if rHTML <a name="\\$2"></a>
+.if dTOC \.tm .Ti \\$1 \\n% \\$2
+..
+.de Ti
+.ie rHTML \{.ta (\n(.lu+\w'<a href="#\\$3"></a>'u)R
+\h'3n*\\$1u' <a href="#\\$3">\\$3</a>\a\\$2
+.\}
+.el \h'3n*\\$1u' \\$3\a\\$2
+..
+.de Tc
+.Bd -literal
+.ta (\n(.lu)R
+\.tm ...reading INSTALL.\*[format].toc
+.       Pp
+.\" Use so-real here becuase otherwise we lose on objdirs
+\.so-real INSTALL.\*[format].toc
+.Ed
+..
+.
 .
 .\"	--------------------  MISC  --------------------
 .
