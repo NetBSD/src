@@ -1,3 +1,5 @@
+/* $NetBSD: atppc_isa_subr.h,v 1.2 2004/01/21 00:33:37 bjh21 Exp $ */
+
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
  * All rights reserved.

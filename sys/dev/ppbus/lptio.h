@@ -1,3 +1,5 @@
+/* $NetBSD: lptio.h,v 1.2 2004/01/21 00:33:37 bjh21 Exp $ */
+
 #ifndef __DEV_PPBUS_LPTIO_H_
 #define __DEV_PPBUS_LPTIO_H_
 
