@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: autoconf.c 1.31 91/01/21
  *	from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.5 1993/08/01 19:24:36 mycroft Exp $
+ *	$Id: autoconf.c,v 1.6 1993/08/14 14:26:19 mycroft Exp $
  */
 
 /*
@@ -59,7 +59,7 @@
 
 #include "../include/vmparam.h"
 #include "../include/cpu.h"
-#include "pte.h"
+#include "../include/pte.h"
 #include "isr.h"
 #include "../dev/device.h"
 #include "../dev/grfioctl.h"
