@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.21 2000/05/01 14:05:53 pk Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.22 2000/05/05 11:07:15 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -184,10 +184,16 @@
 #define MXCC_CTRLREG		0x1c00a00	/* Control register for MXCC */
 
 /* Bits in MXCC_CTRLREG */
-#define MXCC_CTRLREG_CE		0x4		/* Enable e-cache */
+#define MXCC_CTRLREG_HC		0x1	/* Half cache (Xbus only) */
+#define MXCC_CTRLREG_CS		0x2	/* E-cache size (Xbus only) */
+#define MXCC_CTRLREG_CE		0x4	/* Enable e-cache */ 
+#define MXCC_CTRLREG_PE		0x8	/* Parity enable */ 
+#define MXCC_CTRLREG_MC		0x10	/* Multiple command enable */
+#define MXCC_CTRLREG_PF		0x20	/* Prefetch enable */
+#define MXCC_CTRLREG_WI		0x40	/* Write invalidate (Xbus only) */
+#define MXCC_CTRLREG_BWC_MASK	0x180	/* Bus watch count (Xbus only) */
+#define MXCC_CTRLREG_RC		0x200	/* Read reference count */
 
-#define MXCC_STREAM_BLKSZ	32		/* Unit for stream ops */
-#define MXCC_STREAM_C		0x1000000000ULL	/* Cacheable bit for stream ops */
 /*
  * Stream register usage:
  *	To fill a block with some value, load that value into the 64 byte
@@ -204,6 +210,8 @@
  *	cache-coherent. Note that stream operations do not cause cache
  *	lines to be allocated.
  */
+#define MXCC_STREAM_BLKSZ	32		/* Unit for stream ops */
+#define MXCC_STREAM_C		0x1000000000ULL	/* Cacheable bit for stream ops */
 
 /*
  * Bits in ASI_SRMMUFP space.
