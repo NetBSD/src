@@ -1,4 +1,4 @@
-	$NetBSD: hardware,v 1.25 1998/08/09 22:29:01 is Exp $	
+	$NetBSD: hardware,v 1.26 1998/10/29 20:57:03 is Exp $	
 
 NetBSD/amiga _VER runs on any Amiga that has a 68020 or better CPU with
 some form of MMU, and on 68060 DraCos.
@@ -32,7 +32,8 @@ larger, as your system will be doing much more swapping.
 Supported devices include:
 	A4000/A1200 IDE controller.
 	SCSI host adapters:
-		33c93 based boards: A2091, A3000 builtin and GVP series II.
+		33c93 based boards: A2091, A3000 builtin, A3000 builtin 
+		    modified for Apollo accellerator board, and GVP series II.
 		53c80 based boards: 12 Gauge, IVS, Wordsync/Bytesync and 
 		    Emplant.*)
 		53c710 based boards: A4091, Magnum, Warp Engine, Zeus 
