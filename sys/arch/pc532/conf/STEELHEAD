@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.20 1997/06/12 18:42:13 mrg Exp $
+#	$NetBSD: STEELHEAD,v 1.21 1997/07/29 18:36:24 phil Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -28,6 +28,7 @@ file-system 	FFS			# Berkeley fast file system
 #file-system	MFS			# memory file system; uses RAM and swap
 file-system	NFS			# Network File System client
 file-system	ISOFS			# ISO 9660 CD-ROM file system, with RR
+file-system	CD9660			# ISO 9660 CD-ROM file system, with RR
 #file-system	MSDOSFS			# MS-DOS FAT file system
 file-system	FDESC			# /dev/fd
 file-system	KERNFS			# kernel file system; recommended

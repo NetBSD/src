@@ -1,4 +1,4 @@
-#	$NetBSD: SALMON,v 1.8 1997/06/12 18:42:12 mrg Exp $
+#	$NetBSD: SALMON,v 1.9 1997/07/29 18:36:19 phil Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532 
 #
@@ -27,8 +27,8 @@ options 	COMPAT_12
 file-system 	FFS			# Berkeley fast file system
 #file-system	MFS			# memory file system; uses RAM and swap
 file-system 	NFS			# Network File System client
-#file-system	CD9660			# ISO 9660 CD-ROM file system, with RR
-#file-system	MSDOSFS			# MS-DOS FAT file system
+file-system	CD9660			# ISO 9660 CD-ROM file system, with RR
+file-system	MSDOSFS			# MS-DOS FAT file system
 file-system 	FDESC			# /dev/fd
 file-system 	KERNFS			# kernel file system; recommended
 
