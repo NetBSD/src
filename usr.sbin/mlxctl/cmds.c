@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.1 2001/02/04 17:30:37 ad Exp $	*/
+/*	$NetBSD: cmds.c,v 1.2 2001/02/15 01:59:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cmds.c,v 1.1 2001/02/04 17:30:37 ad Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.2 2001/02/15 01:59:54 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -327,7 +327,7 @@ cmd_check0(struct mlx_disk *md)
 	switch (result) {
 	case 0x0002:
 		warnx("one or more of the SCSI disks on which %s", md->name);
-		warnx("depends is DEAD.", md->name);
+		warnx("depends is DEAD.");
 		break;
 
 	case 0x0105:
