@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.3 1998/11/09 03:58:06 nisimura Exp $ */
+/* $NetBSD: xcfb.c,v 1.4 1998/11/19 06:52:49 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.3 1998/11/09 03:58:06 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.4 1998/11/19 06:52:49 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,7 @@ struct xcfb_softc {
 	struct fb_devconfig *sc_dc;	/* device configuration */
 	struct hwcmap sc_cmap;		/* software copy of colormap */
 	struct hwcursor sc_cursor;	/* software copy of cursor */
-	/* no sc_change field because PMAG-DV does not emit interrupt */
-	/* XXX XXX real-ly !?  See MACH code XXX XXX */
+	/* XXX MAXINE can take PMAG-DV virtical retrace interrupt XXX */
 	int nscreens;
 	/* cursor coordiate is located at upper-left corner */
 };
@@ -603,7 +602,6 @@ set_cursor(sc, p)
 		copyin(p->cmap.red, &cc->cc_color[index], count);
 		copyin(p->cmap.green, &cc->cc_color[index + 2], count);
 		copyin(p->cmap.blue, &cc->cc_color[index + 4], count);
-
 		ims332_load_curcmap(sc);
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
@@ -694,7 +692,7 @@ ims332_load_curcmap(sc)
 	struct xcfb_softc *sc;
 {
 	u_int8_t *cp = sc->sc_cursor.cc_color;
-	u_int16_t rgb;
+	u_int32_t rgb;
 
 	/* cursor background */
 	rgb = cp[5] << 16 | cp[3] << 8 | cp[1];
