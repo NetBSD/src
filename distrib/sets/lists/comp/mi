@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.249 2000/07/27 23:16:45 wiz Exp $
+#	$NetBSD: mi,v 1.250 2000/07/28 00:15:49 wiz Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1417,6 +1417,17 @@
 ./usr/share/man/cat1/lorder.0	comp-util-catman
 ./usr/share/man/cat1/menuc.0	comp-miscutil-catman
 ./usr/share/man/cat1/mkstr.0	comp-miscutil-catman
+./usr/share/man/cat1/msg_clear.0	comp-miscutil-catman
+./usr/share/man/cat1/msg_display.0	comp-miscutil-catman
+./usr/share/man/cat1/msg_display_add.0	comp-miscutil-catman
+./usr/share/man/cat1/msg_prompt.0	comp-miscutil-catman
+./usr/share/man/cat1/msg_prompt_add.0	comp-miscutil-catman
+./usr/share/man/cat1/msg_prompt_noecho.0	comp-miscutil-catman
+./usr/share/man/cat1/msg_standend.0	comp-miscutil-catman
+./usr/share/man/cat1/msg_standout.0	comp-miscutil-catman
+./usr/share/man/cat1/msg_string.0	comp-miscutil-catman
+./usr/share/man/cat1/msg_table_add.0	comp-miscutil-catman
+./usr/share/man/cat1/msg_window.0	comp-miscutil-catman
 ./usr/share/man/cat1/msgc.0	comp-miscutil-catman
 ./usr/share/man/cat1/nm.0	comp-util-catman
 ./usr/share/man/cat1/objcopy.0	comp-util-catman
@@ -1631,6 +1642,13 @@
 ./usr/share/man/cat3/MD5Final.0	comp-c-catman
 ./usr/share/man/cat3/MD5Init.0	comp-c-catman
 ./usr/share/man/cat3/MD5Update.0	comp-c-catman
+./usr/share/man/cat3/RMD160Data.0	comp-c-catman
+./usr/share/man/cat3/RMD160End.0	comp-c-catman
+./usr/share/man/cat3/RMD160File.0	comp-c-catman
+./usr/share/man/cat3/RMD160Final.0	comp-c-catman
+./usr/share/man/cat3/RMD160Init.0	comp-c-catman
+./usr/share/man/cat3/RMD160Transform.0	comp-c-catman
+./usr/share/man/cat3/RMD160Update.0	comp-c-catman
 ./usr/share/man/cat3/SHA1Data.0	comp-c-catman
 ./usr/share/man/cat3/SHA1End.0	comp-c-catman
 ./usr/share/man/cat3/SHA1File.0	comp-c-catman
@@ -2278,6 +2296,7 @@
 ./usr/share/man/cat3/pw_copy.0	comp-c-catman
 ./usr/share/man/cat3/pw_edit.0	comp-c-catman
 ./usr/share/man/cat3/pw_error.0	comp-c-catman
+./usr/share/man/cat3/pw_getconf.0	comp-c-catman
 ./usr/share/man/cat3/pw_init.0	comp-c-catman
 ./usr/share/man/cat3/pw_lock.0	comp-c-catman
 ./usr/share/man/cat3/pw_mkdb.0	comp-c-catman
@@ -2327,6 +2346,7 @@
 ./usr/share/man/cat3/rindex.0	comp-c-catman
 ./usr/share/man/cat3/rint.0	comp-c-catman
 ./usr/share/man/cat3/rintf.0	comp-c-catman
+./usr/share/man/cat3/rmd160.0	comp-c-catman
 ./usr/share/man/cat3/rmtops.0	comp-c-catman
 ./usr/share/man/cat3/rpc.0	comp-c-catman
 ./usr/share/man/cat3/rpc_broadcast.0	comp-c-catman
@@ -2779,6 +2799,8 @@
 ./usr/share/man/cat9/callout_pending.0	comp-kern-catman
 ./usr/share/man/cat9/callout_reset.0	comp-kern-catman
 ./usr/share/man/cat9/callout_stop.0	comp-kern-catman
+./usr/share/man/cat9/clock_secs_to_ymdhms.0	comp-kern-catman
+./usr/share/man/cat9/clock_ymdhms_to_secs.0	comp-kern-catman
 ./usr/share/man/cat9/cltom.0		comp-kern-catman
 ./usr/share/man/cat9/copy.0		comp-kern-catman
 ./usr/share/man/cat9/copyin.0		comp-kern-catman
@@ -2941,6 +2963,10 @@
 ./usr/share/man/cat9/time.0		comp-kern-catman
 ./usr/share/man/cat9/timeout.0		comp-kern-catman
 ./usr/share/man/cat9/todr.0		comp-kern-catman
+./usr/share/man/cat9/todr_getcal.0	comp-kern-man
+./usr/share/man/cat9/todr_gettime.0	comp-kern-man
+./usr/share/man/cat9/todr_setcal.0	comp-kern-man
+./usr/share/man/cat9/todr_settime.0	comp-kern-man
 ./usr/share/man/cat9/tsleep.0		comp-kern-catman
 ./usr/share/man/cat9/ttyprintf.0		comp-kern-catman
 ./usr/share/man/cat9/uao_create.0		comp-kern-catman
@@ -3036,6 +3062,17 @@
 ./usr/share/man/man1/lorder.1		comp-util-man
 ./usr/share/man/man1/menuc.1		comp-miscutil-man
 ./usr/share/man/man1/mkstr.1		comp-miscutil-man
+./usr/share/man/man1/msg_clear.1	comp-miscutil-catman
+./usr/share/man/man1/msg_display.1	comp-miscutil-catman
+./usr/share/man/man1/msg_display_add.1	comp-miscutil-catman
+./usr/share/man/man1/msg_prompt.1	comp-miscutil-catman
+./usr/share/man/man1/msg_prompt_add.1	comp-miscutil-catman
+./usr/share/man/man1/msg_prompt_noecho.1	comp-miscutil-catman
+./usr/share/man/man1/msg_standend.1	comp-miscutil-catman
+./usr/share/man/man1/msg_standout.1	comp-miscutil-catman
+./usr/share/man/man1/msg_string.1	comp-miscutil-catman
+./usr/share/man/man1/msg_table_add.1	comp-miscutil-catman
+./usr/share/man/man1/msg_window.1	comp-miscutil-catman
 ./usr/share/man/man1/msgc.1		comp-miscutil-man
 ./usr/share/man/man1/nm.1		comp-util-man
 ./usr/share/man/man1/objcopy.1		comp-util-man
@@ -3250,6 +3287,13 @@
 ./usr/share/man/man3/MD5Final.3		comp-c-man
 ./usr/share/man/man3/MD5Init.3		comp-c-man
 ./usr/share/man/man3/MD5Update.3		comp-c-man
+./usr/share/man/man3/RMD160Data.3	comp-c-catman
+./usr/share/man/man3/RMD160End.3	comp-c-catman
+./usr/share/man/man3/RMD160File.3	comp-c-catman
+./usr/share/man/man3/RMD160Final.3	comp-c-catman
+./usr/share/man/man3/RMD160Init.3	comp-c-catman
+./usr/share/man/man3/RMD160Transform.3	comp-c-catman
+./usr/share/man/man3/RMD160Update.3	comp-c-catman
 ./usr/share/man/man3/SHA1Data.3		comp-c-man
 ./usr/share/man/man3/SHA1End.3		comp-c-man
 ./usr/share/man/man3/SHA1File.3		comp-c-man
@@ -3897,6 +3941,7 @@
 ./usr/share/man/man3/pw_copy.3		comp-c-man
 ./usr/share/man/man3/pw_edit.3		comp-c-man
 ./usr/share/man/man3/pw_error.3		comp-c-man
+./usr/share/man/man3/pw_getconf.3	comp-c-catman
 ./usr/share/man/man3/pw_init.3		comp-c-man
 ./usr/share/man/man3/pw_lock.3		comp-c-man
 ./usr/share/man/man3/pw_mkdb.3		comp-c-man
@@ -3946,6 +3991,7 @@
 ./usr/share/man/man3/rindex.3		comp-c-man
 ./usr/share/man/man3/rint.3		comp-c-man
 ./usr/share/man/man3/rintf.3		comp-c-man
+./usr/share/man/man3/rmd160.3	comp-c-catman
 ./usr/share/man/man3/rmtops.3		comp-c-man
 ./usr/share/man/man3/rpc.3		comp-c-man
 ./usr/share/man/man3/rpc_broadcast.3	comp-c-man
@@ -4398,6 +4444,8 @@
 ./usr/share/man/man9/callout_pending.9	comp-kern-man
 ./usr/share/man/man9/callout_reset.9	comp-kern-man
 ./usr/share/man/man9/callout_stop.9	comp-kern-man
+./usr/share/man/man9/clock_secs_to_ymdhms.9	comp-kern-catman
+./usr/share/man/man9/clock_ymdhms_to_secs.9	comp-kern-catman
 ./usr/share/man/man9/cltom.9		comp-kern-man
 ./usr/share/man/man9/copy.9		comp-kern-man
 ./usr/share/man/man9/copyin.9		comp-kern-man
@@ -4560,6 +4608,10 @@
 ./usr/share/man/man9/time.9		comp-kern-man
 ./usr/share/man/man9/timeout.9		comp-kern-man
 ./usr/share/man/man9/todr.9		comp-kern-man
+./usr/share/man/man9/todr_getcal.9	comp-kern-man
+./usr/share/man/man9/todr_gettime.9	comp-kern-man
+./usr/share/man/man9/todr_setcal.9	comp-kern-man
+./usr/share/man/man9/todr_settime.9	comp-kern-man
 ./usr/share/man/man9/tsleep.9		comp-kern-man
 ./usr/share/man/man9/ttyprintf.9		comp-kern-man
 ./usr/share/man/man9/uao_create.9		comp-kern-man
