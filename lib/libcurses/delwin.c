@@ -1,4 +1,4 @@
-/*	$NetBSD: delwin.c,v 1.10 2000/04/11 13:57:09 blymn Exp $	*/
+/*	$NetBSD: delwin.c,v 1.11 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)delwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delwin.c,v 1.10 2000/04/11 13:57:09 blymn Exp $");
+__RCSID("$NetBSD: delwin.c,v 1.11 2000/04/15 13:17:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -52,8 +52,7 @@ __RCSID("$NetBSD: delwin.c,v 1.10 2000/04/11 13:57:09 blymn Exp $");
  *	Delete a window and release it back to the system.
  */
 int
-delwin(win)
-	WINDOW *win;
+delwin(WINDOW *win)
 {
 
 	WINDOW *wp, *np;

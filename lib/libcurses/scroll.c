@@ -1,4 +1,4 @@
-/*	$NetBSD: scroll.c,v 1.11 2000/04/11 13:57:10 blymn Exp $	*/
+/*	$NetBSD: scroll.c,v 1.12 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scroll.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scroll.c,v 1.11 2000/04/11 13:57:10 blymn Exp $");
+__RCSID("$NetBSD: scroll.c,v 1.12 2000/04/15 13:17:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -50,20 +50,31 @@ __RCSID("$NetBSD: scroll.c,v 1.11 2000/04/11 13:57:10 blymn Exp $");
  *	Scroll the window up a line.
  */
 int
-scroll(win)
-	WINDOW *win;
+scroll(WINDOW *win)
 {
 	return(wscrl(win, 1));
 }
+
+#ifndef _CURSES_USE_MACROS
+
+/*
+ * scrl --
+ *	Scroll stdscr n lines - up if n is positive, down if n is negative.
+ */
+int
+scrl(int lines)
+{
+	return wscrl(stdscr, lines);
+}
+
+#endif
 
 /*
  * wscrl --
  *	Scroll a window n lines - up if n is positive, down if n is negative.
  */
 int
-wscrl(win, lines)
-	WINDOW *win;
-	int	lines;
+wscrl(WINDOW *win, int lines)
 {
 	int     oy, ox;
 

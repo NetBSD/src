@@ -1,4 +1,4 @@
-/*	$NetBSD: longname.c,v 1.11 2000/04/13 00:01:46 simonb Exp $	*/
+/*	$NetBSD: longname.c,v 1.12 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)longname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: longname.c,v 1.11 2000/04/13 00:01:46 simonb Exp $");
+__RCSID("$NetBSD: longname.c,v 1.12 2000/04/15 13:17:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -52,8 +52,7 @@ __RCSID("$NetBSD: longname.c,v 1.11 2000/04/13 00:01:46 simonb Exp $");
  *	at most 128 characters.
  */
 char   *
-__longname(bp, def)
-	char   *bp, *def;
+__longname(char *bp, char *def)
 {
 	char   *cp;
 	int	i = 0;

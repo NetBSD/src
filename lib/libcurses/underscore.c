@@ -1,4 +1,4 @@
-/*	$NetBSD: underscore.c,v 1.3 2000/04/12 21:44:42 jdc Exp $	*/
+/*	$NetBSD: underscore.c,v 1.4 2000/04/15 13:17:05 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,13 +39,37 @@
 #include "curses.h"
 #include "curses_private.h"
 
+#ifndef _CURSES_USE_MACROS
+
+/*
+ * underscore
+ *	Enter underscore mode on stdscr.
+ */
+int
+underscore(void)
+{
+	return wunderscore(stdscr);
+}
+
+
+/*
+ * underend --
+ *	Exit underscore mode on stdscr.
+ */
+int
+underend(void)
+{
+	return wunderend(stdscr);
+}
+
+#endif
+
 /*
  * wunderscore
  *	Enter underscore mode.
  */
 int
-wunderscore(win)
-	WINDOW *win;
+wunderscore(WINDOW *win)
 {
 	/* If can underscore, set the screen underscore bit. */
 	if ((US != NULL && UE != NULL) || UC != NULL) {
@@ -65,8 +89,7 @@ wunderscore(win)
  *	Exit underscore mode.
  */
 int
-wunderend(win)
-	WINDOW *win;
+wunderend(WINDOW *win)
 {
 	if (UE != NULL) {
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: overwrite.c,v 1.11 2000/04/11 13:57:10 blymn Exp $	*/
+/*	$NetBSD: overwrite.c,v 1.12 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)overwrite.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: overwrite.c,v 1.11 2000/04/11 13:57:10 blymn Exp $");
+__RCSID("$NetBSD: overwrite.c,v 1.12 2000/04/15 13:17:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -53,8 +53,7 @@ __RCSID("$NetBSD: overwrite.c,v 1.11 2000/04/11 13:57:10 blymn Exp $");
  *	Writes win1 on win2 destructively.
  */
 int
-overwrite(win1, win2)
-	WINDOW *win1, *win2;
+overwrite(const WINDOW *win1, WINDOW *win2)
 {
 	int     x, y, endy, endx, starty, startx;
 

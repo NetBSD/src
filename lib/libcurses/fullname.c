@@ -1,4 +1,4 @@
-/*	$NetBSD: fullname.c,v 1.9 1999/04/13 14:08:18 mrg Exp $	*/
+/*	$NetBSD: fullname.c,v 1.10 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fullname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fullname.c,v 1.9 1999/04/13 14:08:18 mrg Exp $");
+__RCSID("$NetBSD: fullname.c,v 1.10 2000/04/15 13:17:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -50,8 +50,7 @@ __RCSID("$NetBSD: fullname.c,v 1.9 1999/04/13 14:08:18 mrg Exp $");
  *	This is assumed to be the last name in the list of aliases.
  */
 char   *
-fullname(bp, def)
-	char   *bp, *def;
+fullname(const char *bp, char *def)
 {
 	char   *cp;
 

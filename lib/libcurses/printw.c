@@ -1,4 +1,4 @@
-/*	$NetBSD: printw.c,v 1.14 2000/04/14 02:53:54 simonb Exp $	*/
+/*	$NetBSD: printw.c,v 1.15 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: printw.c,v 1.14 2000/04/14 02:53:54 simonb Exp $");
+__RCSID("$NetBSD: printw.c,v 1.15 2000/04/15 13:17:04 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -91,7 +91,7 @@ va_dcl
  */
 int
 #ifdef __STDC__
-wprintw(WINDOW * win, const char *fmt,...)
+wprintw(WINDOW *win, const char *fmt,...)
 #else
 wprintw(win, fmt, va_alist)
 	WINDOW *win;
@@ -194,10 +194,7 @@ __winwrite(cookie, buf, n)
  *	This routine actually executes the printf and adds it to the window.
  */
 int
-vwprintw(win, fmt, ap)
-	WINDOW *win;
-	const char *fmt;
-	va_list ap;
+vwprintw(WINDOW *win, const char *fmt, va_list ap)
 {
 	FILE   *f;
 

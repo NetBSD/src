@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.3 2000/04/12 21:35:35 jdc Exp $	*/
+/*	$NetBSD: border.c,v 1.4 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,16 +39,31 @@
 #include "curses.h"
 #include "curses_private.h"
 
+#ifndef _CURSES_USE_MACROS
+
+/*
+ * border --
+ *      Draw a border around stdscr using the specified
+ *	delimiting characters.
+ */
+int
+border(chtype left, chtype right, chtype top, chtype bottom, chtype topleft,
+       chtype topright, chtype botleft, chtype botright)
+{
+	return wborder(stdscr, left, right, top, bottom, topleft, topright,
+		       botleft, botright);
+}
+
+#endif
+
 /*
  * wborder --
  *	Draw a border around the given window using the specified delimiting
  *	characters.
  */
 int
-wborder(win, left, right, top, bottom, topleft, topright, botleft, botright)
-	WINDOW	*win;
-	chtype	 left, right, top, bottom;
-	chtype	 topleft, topright, botleft, botright;
+wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
+	chtype topleft, chtype topright, chtype botleft, chtype botright)
 {
 	int	 endy, endx, i;
 	__LDATA	*fp, *lp;

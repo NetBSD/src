@@ -1,4 +1,4 @@
-/*	$NetBSD: id_subwins.c,v 1.10 2000/04/11 13:57:09 blymn Exp $	*/
+/*	$NetBSD: id_subwins.c,v 1.11 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)id_subwins.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: id_subwins.c,v 1.10 2000/04/11 13:57:09 blymn Exp $");
+__RCSID("$NetBSD: id_subwins.c,v 1.11 2000/04/15 13:17:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -50,8 +50,7 @@ __RCSID("$NetBSD: id_subwins.c,v 1.10 2000/04/11 13:57:09 blymn Exp $");
  *	Re-sync the pointers to lines for all the subwindows.
  */
 void
-__id_subwins(orig)
-	WINDOW *orig;
+__id_subwins(WINDOW *orig)
 {
 	WINDOW *win;
 	int     oy, realy, y;
