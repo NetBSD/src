@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.40 1998/01/18 05:56:15 mellon Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.41 1998/01/21 01:21:22 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994, 1995
@@ -1931,7 +1931,6 @@ syn_cache_get(so, m)
 resetandabort:
 	(void) tcp_respond(NULL, ti, m, ti->ti_seq+ti->ti_len,
 	    (tcp_seq)0, TH_RST|TH_ACK);
-	m_freem (m);
 abort:
 	if (so != NULL)
 		(void) soabort(so);
