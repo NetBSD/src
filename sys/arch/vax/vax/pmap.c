@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 1999/03/26 23:41:38 mycroft Exp $	   */
+/*	$NetBSD: pmap.c,v 1.62 1999/04/17 00:01:19 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -556,38 +556,39 @@ printf("pmap_kenter_pgs: va: %lx, pgs %p, npgs %x\n", va, pgs, npgs);
 }
 #endif
 
-void 
+/*
+ * pmap_enter() is the main routine that puts in mappings for pages, or
+ * upgrades mappings to more "rights". Note that:
+ * - "wired" isn't used. We don't loose mappings unless asked for.
+ * - "access_type" is set if the entering was caused by a fault.
+ */
+void
 pmap_enter(pmap, v, p, prot, wired, access_type)
-	register pmap_t pmap;
+	pmap_t	pmap;
 	vaddr_t	v;
 	paddr_t	p;
-	vm_prot_t	prot;
-	boolean_t	wired;
-	vm_prot_t	access_type;
+	vm_prot_t prot, access_type;
+	boolean_t wired;
 {
 	struct	pv_entry *pv, *tmp;
-	int	i, s, nypte, *patch;
+	int	i, s, newpte, oldpte, *patch;
 
-
-#ifdef PMAPDEBUG
-if(startpmapdebug)
-printf("pmap_enter: pmap: %p,virt %lx, phys %lx, prot %x w %x\n",
-	pmap,v,p,prot, wired);
-#endif
+	/* Can this happen with UVM??? */
 	if (pmap == 0)
 		return;
 
-	if (v < 0x40000000) {
+	/* Find addess of correct pte */
+	if (v & KERNBASE) {
+		patch = (int *)Sysmap;
+		i = (v - KERNBASE) >> VAX_PGSHIFT;
+		newpte = (p>>VAX_PGSHIFT)|(prot&VM_PROT_WRITE?PG_KW:PG_KR);
+	} else if (v < 0x40000000) {
 		patch = (int *)pmap->pm_p0br;
 		i = (v >> VAX_PGSHIFT);
 		if (i >= (pmap->pm_p0lr & ~AST_MASK))
 			panic("P0 too small in pmap_enter");
 		patch = (int *)pmap->pm_p0br;
-		nypte = PG_V|(p>>VAX_PGSHIFT)|(prot&VM_PROT_WRITE?PG_RW:PG_RO);
-	} else if (v & KERNBASE) {
-		patch = (int *)Sysmap;
-		i = (v - KERNBASE) >> VAX_PGSHIFT;
-		nypte = PG_V|(p>>VAX_PGSHIFT)|(prot&VM_PROT_WRITE?PG_KW:PG_KR);
+		newpte = (p>>VAX_PGSHIFT)|(prot&VM_PROT_WRITE?PG_RW:PG_RO);
 	} else {
 		patch = (int *)pmap->pm_p1br;
 		i = (v - 0x40000000) >> VAX_PGSHIFT;
@@ -595,30 +596,29 @@ printf("pmap_enter: pmap: %p,virt %lx, phys %lx, prot %x w %x\n",
 			panic("pmap_enter: must expand P1");
 		if (v < pmap->pm_stack)
 			pmap->pm_stack = v;
-		nypte = PG_V|(p>>VAX_PGSHIFT)|(prot&VM_PROT_WRITE?PG_RW:PG_RO);
+		newpte = (p>>VAX_PGSHIFT)|(prot&VM_PROT_WRITE?PG_RW:PG_RO);
 	}
 
-	if ((patch[i] & ~PG_M) == nypte)
+	oldpte = patch[i] & ~(PG_V|PG_M);
+
+	/* No mapping change. Can this happen??? */
+	if (newpte == oldpte)
 		return;
 
-	if ((patch[i] & PG_FRAME) &&
-	    ((patch[i] & PG_FRAME) != (nypte & PG_FRAME)))
-#ifdef PMAP_NEW
-		pmap_page_protect(PHYS_TO_VM_PAGE((patch[i] & PG_FRAME)
-		    << VAX_PGSHIFT), 0);
-#else
-		pmap_page_protect((patch[i] & PG_FRAME) << VAX_PGSHIFT, 0);
-#endif
+	pv = pv_table + (p >> PGSHIFT);
 
-	/*
-	 * If we map in a new physical page we also must add it
-	 * in the pv_table.
-	 */
-	if ((patch[i] & PG_FRAME) != (nypte & PG_FRAME)) {
-		pv = pv_table + (p >> PGSHIFT);
+	/* Changing mapping? */
+	oldpte &= PG_FRAME;
+	if ((newpte & PG_FRAME) != oldpte) {
+
+		/* Mapped before? Remove it then. */
+		if (oldpte)
+			pmap_page_protect(PHYS_TO_VM_PAGE((oldpte
+			    << VAX_PGSHIFT)), 0);
+
 		s = splimp();
 		if (pv->pv_pte == 0) {
-			pv->pv_pte = (struct pte *)&patch[i];
+			pv->pv_pte = (struct pte *) & patch[i];
 			pv->pv_pmap = pmap;
 		} else {
 			MALLOC(tmp, struct pv_entry *, sizeof(struct pv_entry),
@@ -633,19 +633,27 @@ printf("pmap_enter: pmap: %p,virt %lx, phys %lx, prot %x w %x\n",
 			pv->pv_next = tmp;
 		}
 		splx(s);
+	} else {
+		/* No mapping change, just flush the TLB */
+		mtpr(0, PR_TBIA);
 	}
 	pmap->pm_stats.resident_count++;
 
-	patch[i] = nypte;
-	patch[i+1] = nypte+1;
-	patch[i+2] = nypte+2;
-	patch[i+3] = nypte+3;
-	patch[i+4] = nypte+4;
-	patch[i+5] = nypte+5;
-	patch[i+6] = nypte+6;
-	patch[i+7] = nypte+7;
+	if (access_type & VM_PROT_READ) {
+		pv->pv_attr |= PG_V;
+		newpte |= PG_V;
+	}
+	if (access_type & VM_PROT_WRITE)
+		pv->pv_attr |= PG_M;
 
-	mtpr(0, PR_TBIA);
+	patch[i] = newpte;
+	patch[i+1] = newpte+1;
+	patch[i+2] = newpte+2;
+	patch[i+3] = newpte+3;
+	patch[i+4] = newpte+4;
+	patch[i+5] = newpte+5;
+	patch[i+6] = newpte+6;
+	patch[i+7] = newpte+7;
 }
 
 void *
