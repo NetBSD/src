@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.114 1999/02/25 12:37:39 ross Exp $
+# $NetBSD: GENERIC,v 1.114.2.1 1999/04/20 14:50:39 perry Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -69,7 +69,7 @@ options 	SYSVSHM
 options 	LKM
 
 # Disable kernel security.
-#options 	INSECURE
+options 	INSECURE
 
 # Misc. options
 options 	EISAVERBOSE		# recognize "unknown" EISA devices
@@ -192,7 +192,7 @@ isa*	at	sio?
 
 # ISA devices
 mcclock* at	isa? port 0x70
-pckbc*	at	isa?				# PC keyboard controller
+pckbc0	at	isa?				# PC keyboard controller
 pckbd*	at	pckbc?				# PC keyboard (kbd port)
 pms*	at	pckbc?				# PS/2-style mouse (aux port)
 pcppi*	at	isa?				# PC prog. periph. interface
