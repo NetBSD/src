@@ -1,3 +1,5 @@
+/*	$NetBSD: whereis.c,v 1.6 1995/08/31 21:54:52 jtc Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,10 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)whereis.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: whereis.c,v 1.5 1994/09/18 02:14:34 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)whereis.c	8.3 (Berkeley) 5/4/95";
+#endif
+static char *rcsid = "$NetBSD: whereis.c,v 1.6 1995/08/31 21:54:52 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -51,6 +55,7 @@ static char *rcsid = "$Id: whereis.c,v 1.5 1994/09/18 02:14:34 mycroft Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 void usage __P((void));
 
