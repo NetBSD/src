@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.27 1996/05/22 13:55:24 mycroft Exp $	*/
+/*	$NetBSD: in.c,v 1.28 1996/05/22 14:42:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -150,7 +150,7 @@ in_control(so, cmd, data, ifp, p)
 	 * Find address for this interface, if it exists.
 	 */
 	if (ifp)
-		for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next)
+		for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
 			if (ia->ia_ifp == ifp)
 				break;
 
@@ -159,12 +159,11 @@ in_control(so, cmd, data, ifp, p)
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
 		if (ifra->ifra_addr.sin_family == AF_INET)
-		    for (; ia != 0; ia = ia->ia_list.tqe_next) {
-			if (ia->ia_ifp == ifp  &&
-			    ia->ia_addr.sin_addr.s_addr ==
-				ifra->ifra_addr.sin_addr.s_addr)
-			    break;
-		}
+			for (; ia != 0; ia = ia->ia_list.tqe_next) {
+				if (ia->ia_ifp == ifp  &&
+				    SAME_INADDR(&ia->ia_addr, &ifra->ifra_addr))
+					break;
+			}
 		if (cmd == SIOCDIFADDR && ia == 0)
 			return (EADDRNOTAVAIL);
 		/* FALLTHROUGH */
@@ -176,10 +175,10 @@ in_control(so, cmd, data, ifp, p)
 
 		if (ifp == 0)
 			panic("in_control");
-		if (ia == (struct in_ifaddr *)0) {
-			ia = (struct in_ifaddr *)
-				malloc(sizeof *ia, M_IFADDR, M_WAITOK);
-			if (ia == (struct in_ifaddr *)0)
+		if (ia == 0) {
+			MALLOC(ia, struct in_ifaddr *, sizeof(*ia),
+			       M_IFADDR, M_WAITOK);
+			if (ia == 0)
 				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof *ia);
 			TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
@@ -209,7 +208,7 @@ in_control(so, cmd, data, ifp, p)
 	case SIOCGIFNETMASK:
 	case SIOCGIFDSTADDR:
 	case SIOCGIFBRDADDR:
-		if (ia == (struct in_ifaddr *)0)
+		if (ia == 0)
 			return (EADDRNOTAVAIL);
 		break;
 	}
@@ -275,8 +274,7 @@ in_control(so, cmd, data, ifp, p)
 			if (ifra->ifra_addr.sin_len == 0) {
 				ifra->ifra_addr = ia->ia_addr;
 				hostIsNew = 0;
-			} else if (ifra->ifra_addr.sin_addr.s_addr ==
-					       ia->ia_addr.sin_addr.s_addr)
+			} else if (SAME_INADDR(&ia->ia_addr, &ifra->ifra_addr))
 				hostIsNew = 0;
 		}
 		if (ifra->ifra_mask.sin_len) {
