@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960reg.h,v 1.4 2001/12/23 09:21:00 ichiro Exp $	*/
+/*	$NetBSD: mb86960reg.h,v 1.5 2002/09/28 17:52:59 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -21,8 +21,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#define FE_MB86960_H_VERSION "mb86960.h ver. 0.8"
 
 /*
  * Registers of Fujitsu MB86960A/MB86965A Ethernet controller.
