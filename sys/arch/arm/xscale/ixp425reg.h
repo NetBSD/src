@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.4 2003/06/02 10:40:52 ichiro Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.5 2003/06/03 09:20:20 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -264,12 +264,12 @@
 #define	IXP425_INT_GPIO_4	21	/* GPIO 4 */
 #define	IXP425_INT_GPIO_3	20	/* GPIO 3 */
 #define	IXP425_INT_GPIO_2	19	/* GPIO 2 */
-#define	IXP425_INT_XPMU		18	/* XScale PMU */
-#define	IXP425_INT_PMU		17	/* PMU */
+#define	IXP425_INT_XSCALE_PMU	18	/* XScale PMU */
+#define	IXP425_INT_AHB_PMU	17	/* AHB PMU */
 #define	IXP425_INT_WDOG		16	/* Watchdog Timer */
-#define	IXP425_INT_UART1	15	/* Console UART */
+#define	IXP425_INT_UART0	15	/* HighSpeed UART */
 #define	IXP425_INT_STAMP	14	/* Timestamp Timer */
-#define	IXP425_INT_UART0	13	/* HighSpeed UART */
+#define	IXP425_INT_UART1	13	/* Console UART */
 #define	IXP425_INT_USB		12	/* USB */
 #define	IXP425_INT_TMR1		11	/* General-Purpose Timer1 */
 #define	IXP425_INT_PCIDMA2	10	/* PCI DMA Channel 2 */
