@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we.c,v 1.1 1997/11/03 21:22:50 thorpej Exp $	*/
+/*	$NetBSD: if_we.c,v 1.2 1997/11/08 06:13:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -519,14 +519,26 @@ we_attach(parent, self, aux)
 
 	/* Do generic parts of attach. */
 	if (wsc->sc_type & WE_SOFTCONFIG) {
-		int defmedia;
+		int defmedia = IFM_ETHER;
 
-		x = bus_space_read_1(asict, asich, WE_IRR);
-		defmedia = IFM_ETHER;
-		if (x & WE_IRR_OUT2)
-			defmedia |= IFM_10_2;
-		else
-			defmedia |= IFM_10_5;
+		if (sc->is790) {
+			x = bus_space_read_1(asict, asich, WE790_HWR);
+			bus_space_write_1(asict, asich, WE790_HWR,
+			    x | WE790_HWR_SWH);
+			if (bus_space_read_1(asict, asich, WE790_GCR) &
+			    WE790_GCR_GPOUT)
+				defmedia |= IFM_10_2;
+			else
+				defmedia |= IFM_10_5;
+			bus_space_write_1(asict, asich, WE790_HWR,
+			    x & ~WE790_HWR_SWH);
+		} else {
+			x = bus_space_read_1(asict, asich, WE_IRR);
+			if (x & WE_IRR_OUT2)
+				defmedia |= IFM_10_2;
+			else
+				defmedia |= IFM_10_5;
+		}
 		i = dp8390_config(sc, we_media, NWE_MEDIA, defmedia);
 	} else
 		i = dp8390_config(sc, NULL, 0, 0);
@@ -777,7 +789,7 @@ we_set_media(wsc, media)
 		bus_space_write_1(asict, asich, WE790_GCR,
 		    gcr | WE790_GCR_LIT);
 		bus_space_write_1(asict, asich, WE790_HWR,
-		    hwr &= ~WE790_HWR_SWH);
+		    hwr & ~WE790_HWR_SWH);
 		return;
 	}
 
