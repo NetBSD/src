@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.648 2004/08/26 13:16:08 itohy Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.649 2004/09/10 13:59:07 darrenr Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.647 2004/08/26 13:14:59 itohy Exp 
+ *	NetBSD: pcidevs,v 1.648 2004/09/10 13:56:32 darrenr Exp 
  */
 
 /*
@@ -1911,6 +1911,7 @@
 #define	PCI_PRODUCT_LUCENT_OR3LP26	0x5400		/* ORCA FPGA w/32-bit PCI ASIC core */
 #define	PCI_PRODUCT_LUCENT_OR3TP12	0x5401		/* ORCA FPGA w/64-bit PCI ASIC core */
 #define	PCI_PRODUCT_LUCENT_USBHC	0x5801		/* USB Host Controller */
+#define	PCI_PRODUCT_LUCENT_EVDO	0x5802		/* Sierra Wireless AirCard 580 */
 #define	PCI_PRODUCT_LUCENT_FW322_323	0x5811		/* FW322/323 IEEE 1394 Host Controller */
 
 /* Macronix */
