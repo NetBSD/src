@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.2 2000/09/08 10:15:23 tsubai Exp $	*/
+/*	$NetBSD: frame.h,v 1.3 2002/02/24 18:19:42 uch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -52,8 +52,10 @@
  * Exception/Trap Stack Frame
  */
 struct trapframe {
+	/* software member */
 	int	tf_trapno;
 	int	tf_ubc;
+	/* hardware registers */
 	int	tf_spc;
 	int	tf_ssr;
 	int	tf_macl;
@@ -75,36 +77,6 @@ struct trapframe {
 	int	tf_r1;
 	int	tf_r0;
 	int	tf_r15;
-};
-
-/*
- * Interrupt stack frame
- */
-struct intrframe {
-	int	if_trapno;
-	int	dummy;
-	int	if_spc;
-	int	if_ssr;
-	int	if_macl;
-	int	if_mach;
-	int	if_pr;
-	int	if_r14;
-	int	if_r13;
-	int	if_r12;
-	int	if_r11;
-	int	if_r10;
-	int	if_r9;
-	int	if_r8;
-	int	if_r7;
-	int	if_r6;
-	int	if_r5;
-	int	if_r4;
-	int	if_r3;
-	int	if_r2;
-	int	if_r1;
-	int	if_r0;
-	int	if_r15;
-	int	if_pri;
 };
 
 /*
