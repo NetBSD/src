@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.9 1995/12/11 12:45:16 pk Exp $ */
+/*	$NetBSD: auxreg.c,v 1.10 1996/02/19 09:46:32 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@ blink(zero)
 	 *	full cycle every 3 seconds if loadav = 2
 	 * etc.
 	 */
-	s = (((averunnable[0] + FSCALE) * hz) >> (FSHIFT + 1));
+	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
 	timeout(blink, (caddr_t)0, s);
 }
 #endif
