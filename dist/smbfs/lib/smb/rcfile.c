@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rcfile.c,v 1.4 2003/04/04 08:05:36 jdolecek Exp $");
+__RCSID("$NetBSD: rcfile.c,v 1.5 2004/10/29 19:18:32 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -392,7 +392,7 @@ rc_getbool(struct rcfile *rcp, const char *section, const char *key, int *value)
 	rkp = rc_sect_findkey(rsp,key);
 	if (!rkp) return ENOENT;
 	p = rkp->rk_value;
-	while (*p && isspace(*p)) p++;
+	while (*p && isspace((unsigned char)*p)) p++;
 	if (*p == '0' || strcasecmp(p,"no") == 0 || strcasecmp(p,"false") == 0) {
 		*value = 0;
 		return 0;
