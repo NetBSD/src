@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33 2000/06/26 14:20:39 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.34 2000/06/29 08:28:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,7 +54,6 @@
 #include <m68k/cpu.h>
 #include <m68k/cacheops.h>
 
-#include <vm/vm.h>
 #include <sys/user.h>
 
 #include <uvm/uvm_extern.h>

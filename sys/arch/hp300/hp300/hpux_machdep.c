@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.24 2000/06/26 14:38:56 mrg Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.25 2000/06/29 08:23:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,8 +107,6 @@
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/vmparam.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.14 2000/05/26 00:36:44 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.15 2000/06/29 08:28:23 mrg Exp $
 
 #-
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@ include <sys/msgbuf.h>
 include <sys/syscall.h>
 include <sys/user.h>
 
-include <vm/vm.h>
 include <uvm/uvm_extern.h>
 
 ifdef COMPAT_SVR4
