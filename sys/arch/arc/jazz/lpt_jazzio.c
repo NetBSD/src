@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_jazzio.c,v 1.3 2002/10/02 04:59:49 thorpej Exp $	*/
+/*	$NetBSD: lpt_jazzio.c,v 1.4 2002/12/28 16:25:39 tsutsui Exp $	*/
 /*	$OpenBSD: lpt_lbus.c,v 1.3 1997/04/10 16:29:17 pefo Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ lpt_jazzio_probe(parent, match, aux)
 #define	ABORT	goto out
 #endif
 
-	if(strcmp(ja->ja_name, "lpt") != 0)
+	if (strcmp(ja->ja_name, "LPT1") != 0)
 		 return (0);
 
 	iot = ja->ja_bust;

@@ -1,4 +1,4 @@
-/*	$NetBSD: p_acer_pica_61.c,v 1.1 2001/06/13 15:29:30 soda Exp $	*/
+/*	$NetBSD: p_acer_pica_61.c,v 1.2 2002/12/28 16:25:38 tsutsui Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 
 /*
@@ -74,16 +74,16 @@ struct platform platform_acer_pica_61 = {
 struct pica_dev acer_pica_61_cpu[] = {
 	{{ "timer",	-1, 0, },	(void *)R4030_SYS_IT_VALUE, },
 	{{ "dallas_rtc", -1, 0, },	(void *)PICA_SYS_CLOCK, },
-	{{ "lpt",	0, 0, },	(void *)PICA_SYS_PAR1, },
-	{{ "fdc",	1, 0, },	(void *)PICA_SYS_FLOPPY, },
+	{{ "LPT1",	0, 0, },	(void *)PICA_SYS_PAR1, },
+	{{ "I82077",	1, 0, },	(void *)PICA_SYS_FLOPPY, },
 	{{ "MAGNUM",	2, 0, },	(void *)PICA_SYS_SOUND,},
 	{{ "ALI_S3",	3, 0, },	(void *)PICA_V_LOCAL_VIDEO, },
-	{{ "sonic",	4, 0, },	(void *)PICA_SYS_SONIC, },
-	{{ "asc",	5, 0, },	(void *)PICA_SYS_SCSI, },
-	{{ "pckbd",	6, 0, },	(void *)PICA_SYS_KBD, },
-	{{ "pms",	7, 0, },	(void *)PICA_SYS_KBD, },
-	{{ "com",	8, 0, },	(void *)PICA_SYS_COM1, },
-	{{ "com",	9, 0, },	(void *)PICA_SYS_COM2, },
+	{{ "SONIC",	4, 0, },	(void *)PICA_SYS_SONIC, },
+	{{ "ESP216",	5, 0, },	(void *)PICA_SYS_SCSI, },
+	{{ "I8247",	6, 0, },	(void *)PICA_SYS_KBD, },
+	{{ "pms",	7, 0, },	(void *)PICA_SYS_KBD, }, /* XXX */
+	{{ "COM1",	8, 0, },	(void *)PICA_SYS_COM1, },
+	{{ "COM2",	9, 0, },	(void *)PICA_SYS_COM2, },
 	{{ NULL,	-1, 0, },	(void *)NULL, },
 };
 
