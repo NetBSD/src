@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.3 2001/09/16 03:42:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -178,10 +178,10 @@ agp_amd_attach(struct device *parent, struct device *self, void *aux)
 	}
 	memset(asc, 0, sizeof *asc);
 
-	error = pci_mapreg_map(pa, AGP_AMD751_REGISTERS, PCI_MAPREG_TYPE_IO, 0,
+	error = pci_mapreg_map(pa, AGP_AMD751_REGISTERS, PCI_MAPREG_TYPE_MEM, 0,
 	    &asc->iot, &asc->ioh, NULL, NULL);
 	if (error != 0) {
-		printf(": can't map i/o space\n");
+		printf(": can't map AGP registers\n");
 		agp_generic_detach(sc);
 		return error;
 	}
