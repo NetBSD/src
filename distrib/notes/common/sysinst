@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.20 2001/04/07 18:48:09 jhawk Exp $
+.\"	$NetBSD: sysinst,v 1.21 2001/04/16 20:42:43 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -654,6 +654,7 @@ program will automatically reserve space for bad144 tables.
 .It
 .Em Partitioning the disk
 .(bullet
+.if !r_macppc \{\
 Which portion of the disk to use.
 .Pp
 You will be asked if you want to use the entire disk or
@@ -708,6 +709,7 @@ disklabel.
 .Pp
 .\}
 .It
+.\} \" !r_macppc
 .Em Editing the NetBSD disklabel
 .Pp
 The partition table of the
@@ -716,15 +718,13 @@ part of a disk is called a
 .Em disklabel .
 .if r_macppc \{\
 In actuality, 
+.Nx*M
+uses the Apple Partition Map on your disk.  See 
+.Sx Partitioning your hard drive for NetBSD
+to determine whether or not you should use the
 .Nx
-uses the Apple Partition Map on your disk.  If you use
-.Nx
-to partition your drive, you will not be able to install HFS or HFS+
-partitions on your disk.  You may partition the drive using a MacOS tool,
-such as
-.Sq Drive Setup
-1.9.1 or later, however you may not be able to boot from this drive.  See
-above.
+installer to partition your disk.
+.Pp
 .\}
 .if r_sparc \{\
 .Nx
