@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.33.2.1 2002/06/28 12:42:40 lukem Exp $	*/
+/*	$NetBSD: str.c,v 1.33.2.2 2002/07/21 04:43:19 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.33.2.1 2002/06/28 12:42:40 lukem Exp $");
+__RCSID("$NetBSD: str.c,v 1.33.2.2 2002/07/21 04:43:19 lukem Exp $");
 #endif
 #endif
 
@@ -35,20 +35,31 @@ __RCSID("$NetBSD: str.c,v 1.33.2.1 2002/06/28 12:42:40 lukem Exp $");
 #include "lib.h"
 
 /*
+ * Return the suffix portion of a path
+ */
+const char *
+suffix_of(const char *str)
+{
+	const char *dot;
+
+	return ((dot = strrchr(basename_of(str), '.')) == NULL) ? "" : dot + 1;
+}
+
+/*
  * Return the filename portion of a path
  */
-char   *
-basename_of(char *str)
+const char *
+basename_of(const char *str)
 {
-	char   *slash;
+	const char *slash;
 
-	return ((slash = strrchr(str, '/')) == (char *) NULL) ? str : slash + 1;
+	return ((slash = strrchr(str, '/')) == NULL) ? str : slash + 1;
 }
 
 /*
  * Return the dirname portion of a path
  */
-char   *
+const char *
 dirname_of(const char *path)
 {
 	size_t  cc;
