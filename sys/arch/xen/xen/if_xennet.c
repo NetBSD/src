@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.11.8.2 2005/03/19 08:33:26 yamt Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.11.8.3 2005/03/19 09:06:56 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.11.8.2 2005/03/19 08:33:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.11.8.3 2005/03/19 09:06:56 yamt Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -443,11 +443,13 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 		if (sc->sc_backend_state == BEST_CLOSED) {
 			/* Move from CLOSED to DISCONNECTED state. */
 			sc->sc_tx = (netif_tx_interface_t *)
-				uvm_km_valloc_align(kernel_map, PAGE_SIZE, PAGE_SIZE);
+			    uvm_km_alloc(kernel_map, PAGE_SIZE, PAGE_SIZE,
+			    UVM_KMF_VAONLY);
 			if (sc->sc_tx == NULL)
 				panic("netif: no tx va");
 			sc->sc_rx = (netif_rx_interface_t *)
-				uvm_km_valloc_align(kernel_map, PAGE_SIZE, PAGE_SIZE);
+			    uvm_km_alloc(kernel_map, PAGE_SIZE, PAGE_SIZE,
+			    UVM_KMF_VAONLY);
 			if (sc->sc_rx == NULL)
 				panic("netif: no rx va");
 			sc->sc_pg_tx = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);

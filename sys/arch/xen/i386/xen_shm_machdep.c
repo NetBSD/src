@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.5.4.2 2005/03/19 08:33:22 yamt Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.5.4.3 2005/03/19 09:06:56 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -100,7 +100,8 @@ xen_shm_init()
 		panic("xen_shm_init can't prime pool");
 	}
 
-	xen_shm_base_address = uvm_km_valloc(kernel_map, xen_shm_size);
+	xen_shm_base_address = uvm_km_alloc(kernel_map, xen_shm_size, 0,
+	    UVM_KMF_VAONLY);
 	xen_shm_end_address = xen_shm_base_address + xen_shm_size;
 	xen_shm_base_address_pg = xen_shm_base_address >> PAGE_SHIFT;
 	if (xen_shm_base_address == 0) {
