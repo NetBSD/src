@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.19 2000/06/05 23:42:34 sommerfeld Exp $	*/
+/*	$NetBSD: rnd.c,v 1.20 2000/06/06 01:33:15 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #include <sys/vnode.h>
 #include <sys/pool.h>
 
-#ifdef __HAVE_CPU_TIMESTAMP
+#ifdef __HAVE_CPU_COUNTER
 #include <machine/rnd.h>
 #endif
 
@@ -159,7 +159,7 @@ int	rndpoll __P((dev_t, int, struct proc *));
 
 static inline void	rnd_wakeup_readers(void);
 static inline u_int32_t rnd_estimate_entropy(rndsource_t *, u_int32_t);
-static inline u_int32_t rnd_timestamp(void);
+static inline u_int32_t rnd_counter(void);
 static 	      void	rnd_timeout(void *);
 
 static int		rnd_ready = 0;
@@ -168,17 +168,17 @@ static int		rnd_have_entropy = 0;
 LIST_HEAD(, __rndsource_element)	rnd_sources;
 
 /*
- * Generate a 32-bit timestamp.  This should be more machine dependant,
+ * Generate a 32-bit counter.  This should be more machine dependant,
  * using cycle counters and the like when possible.
  */
 static inline u_int32_t
-rnd_timestamp()
+rnd_counter()
 {
 	struct timeval	tv;
 
-#ifdef __HAVE_CPU_TIMESTAMP
-	if (cpu_hastimestamp())
-		return cpu_timestamp();
+#ifdef __HAVE_CPU_COUNTER
+	if (cpu_hascounter())
+		return cpu_counter();
 #endif
 	microtime(&tv);
 
@@ -761,7 +761,7 @@ rnd_attach_source(rs, name, type, flags)
 {
 	u_int32_t ts;
 
-	ts = rnd_timestamp();
+	ts = rnd_counter();
 
 	strcpy(rs->data.name, name);
 	rs->data.last_time = ts;
@@ -852,10 +852,10 @@ rnd_add_uint32(rs, val)
 		return;
 
 	/*
-	 * Pick the timestamp as soon as possible to avoid
+	 * Sample the counter as soon as possible to avoid
 	 * entropy overestimation.
 	 */
-	ts = rnd_timestamp();
+	ts = rnd_counter();
 
 	/*
 	 * If the sample buffer is NULL, try to allocate one here.  If this
