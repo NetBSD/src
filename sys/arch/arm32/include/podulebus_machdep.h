@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus_machdep.h,v 1.2 2001/03/20 23:27:04 bjh21 Exp $ */
+/* $NetBSD: podulebus_machdep.h,v 1.3 2001/03/24 00:10:42 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -158,6 +158,8 @@ void netslot_ea	__P((u_int8_t *buffer));
 
 extern void *podulebus_irq_establish __P((podulebus_intr_handle_t, int,
     int (*)(void *), void *, struct evcnt *));
+extern void podulebus_shift_tag __P((bus_space_tag_t, u_int,
+    bus_space_tag_t *));
 
 #endif
 
