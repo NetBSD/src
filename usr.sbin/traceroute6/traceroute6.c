@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.23 2002/06/29 07:49:25 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.24 2002/08/09 02:57:10 itojun Exp $	*/
 /*	$KAME: traceroute6.c,v 1.53 2002/06/09 02:45:52 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.23 2002/06/29 07:49:25 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.24 2002/08/09 02:57:10 itojun Exp $");
 #endif
 #endif
 
@@ -327,7 +327,6 @@ void	usage __P((void));
 
 int rcvsock;			/* receive (icmp) socket file descriptor */
 int sndsock;			/* send (udp) socket file descriptor */
-struct timezone tz;		/* leftover */
 
 struct msghdr rcvmhdr;
 struct iovec rcviov[2];
@@ -839,12 +838,11 @@ main(argc, argv)
 		for (probe = 0; probe < nprobes; ++probe) {
 			int cc;
 			struct timeval t1, t2;
-			struct timezone tz;
 
-			(void) gettimeofday(&t1, &tz);
+			(void) gettimeofday(&t1, NULL);
 			send_probe(++seq, hops);
 			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
-				(void) gettimeofday(&t2, &tz);
+				(void) gettimeofday(&t2, NULL);
 				if ((i = packet_ok(&rcvmhdr, cc, seq))) {
 					if (! IN6_ARE_ADDR_EQUAL(&Rcv.sin6_addr,
 					    &lastaddr)) {
@@ -970,7 +968,7 @@ send_probe(seq, hops)
 
 	op->seq = seq;
 	op->hops = hops;
-	(void) gettimeofday(&op->tv, &tz);
+	(void) gettimeofday(&op->tv, NULL);
 
 	i = sendto(sndsock, (char *)outpacket, datalen , 0,
 	    (struct sockaddr *)&Dst, Dst.sin6_len);

@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.51 2002/08/01 09:03:50 itojun Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.52 2002/08/09 02:57:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.51 2002/08/01 09:03:50 itojun Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.52 2002/08/09 02:57:09 itojun Exp $");
 #endif
 #endif
 
@@ -909,12 +909,11 @@ again:
 		for (probe = 0; probe < nprobes; ++probe) {
 			int cc;
 			struct timeval t1, t2;
-			struct timezone tz;
 			struct ip *ip;
-			(void)gettimeofday(&t1, &tz);
+			(void)gettimeofday(&t1, NULL);
 			send_probe(++seq, ttl, &t1);
 			while ((cc = wait_for_reply(s, from, &t1)) != 0) {
-				(void)gettimeofday(&t2, &tz);
+				(void)gettimeofday(&t2, NULL);
 				/*
 				 * Since we'll be receiving all ICMP
 				 * messages to this host above, we may
@@ -1028,7 +1027,6 @@ wait_for_reply(int sock, struct sockaddr_in *fromp, struct timeval *tp)
 	fd_set *fdsp;
 	size_t nfds;
 	struct timeval now, wait;
-	struct timezone tz;
 	int cc = 0;
 	int fromlen = sizeof(*fromp);
 	int retval;
@@ -1043,7 +1041,7 @@ wait_for_reply(int sock, struct sockaddr_in *fromp, struct timeval *tp)
 
 	wait.tv_sec = tp->tv_sec + waittime;
 	wait.tv_usec = tp->tv_usec;
-	(void)gettimeofday(&now, &tz);
+	(void)gettimeofday(&now, NULL);
 	tvsub(&wait, &now);
 
 	if (wait.tv_sec < 0) {
