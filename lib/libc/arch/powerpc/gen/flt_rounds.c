@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.5 2001/05/25 12:14:05 simonb Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.6 2002/02/22 18:21:22 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,6 +33,7 @@
 
 #include <ieeefp.h>
 #include <float.h>
+#include <stdint.h>
 
 static const int map[] = {
 	1,	/* round to nearest */
@@ -47,10 +48,9 @@ __flt_rounds()
 #ifdef _SOFT_FLOAT
 	return map[fpgetround()];
 #else
-	double tmp;
-	int x;
+	uint64_t fpscr;
 
-	__asm__ __volatile("mffs %0; stfiwx %0,0,%1" : "=f"(tmp): "b"(&x));
-	return map[x & 0x03];
+	__asm__ __volatile("mffs %0" : "=f"(fpscr));
+	return map[(fpscr & 0x03)];
 #endif
 }
