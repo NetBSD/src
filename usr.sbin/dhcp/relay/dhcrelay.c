@@ -3,7 +3,7 @@
    DHCP/BOOTP Relay Agent. */
 
 /*
- * Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.
+ * Copyright (c) 1997-2000 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,27 +34,27 @@
  * SUCH DAMAGE.
  *
  * This software has been written for the Internet Software Consortium
- * by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
- * Enterprises.  To learn more about the Internet Software Consortium,
- * see ``http://www.vix.com/isc''.  To learn more about Vixie
- * Enterprises, see ``http://www.vix.com''.
+ * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
+ * To learn more about the Internet Software Consortium, see
+ * ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
+ * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+ * ``http://www.nominum.com''.
  */
 
 #ifndef lint
-static char ocopyright [] =
-"$Id: dhcrelay.c,v 1.2 1999/08/24 03:25:32 enami Exp $ Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+static char ocopyright[] =
+"$Id: dhcrelay.c,v 1.3 2000/04/22 08:18:16 mellon Exp $ Copyright (c) 1997-2000The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
+#include "version.h"
 
-static void usage PROTO ((char *));
+static void usage PROTO ((void));
 
 TIME cur_time;
 TIME default_lease_time = 43200; /* 12 hours... */
 TIME max_lease_time = 86400; /* 24 hours... */
 struct tree_cache *global_options [256];
-
-int log_perror = 1;
 
 /* Needed to prevent linking against conflex.c. */
 int lexline;
@@ -62,11 +62,45 @@ int lexchar;
 char *token_line;
 char *tlname;
 
-char *path_dhcrelay_pid = _PATH_DHCRELAY_PID;
+const char *path_dhcrelay_pid = _PATH_DHCRELAY_PID;
+
+int bogus_agent_drops = 0;	/* Packets dropped because agent option
+				   field was specified and we're not relaying
+				   packets that already have an agent option
+				   specified. */
+int bogus_giaddr_drops = 0;	/* Packets sent to us to relay back to a
+				   client, but with a bogus giaddr. */
+int client_packets_relayed = 0;	/* Packets relayed from client to server. */
+int server_packet_errors = 0;	/* Errors sending packets to servers. */
+int server_packets_relayed = 0;	/* Packets relayed from server to client. */
+int client_packet_errors = 0;	/* Errors sending packets to clients. */
+
+int add_agent_options = 0;	/* If nonzero, add relay agent options. */
+int drop_agent_mismatches = 0;	/* If nonzero, drop server replies that
+				   don't contain a Relay Agent Information
+				   option whose Agent ID suboption matches
+				   our giaddr. */
+int corrupt_agent_options = 0;	/* Number of packets dropped because
+				   relay agent information option was bad. */
+int missing_agent_option = 0;	/* Number of packets dropped because no
+				   RAI option matching our ID was found. */
+int bad_circuit_id = 0;		/* Circuit ID option in matching RAI option
+				   did not match any known circuit ID. */
+int missing_circuit_id = 0;	/* Circuit ID option in matching RAI option
+				   was missing. */
+
+	/* Maximum size of a packet with agent options added. */
+int dhcp_max_agent_option_packet_length = 576;
+
+	/* What to do about packets we're asked to relay that
+	   already have a relay option: */
+enum { forward_and_append,	/* Forward and append our own relay option. */
+       forward_and_replace,	/* Forward, but replace theirs with ours. */
+       forward_untouched,	/* Forward without changes. */
+       discard } agent_relay_mode = forward_and_replace;
 
 u_int16_t local_port;
 u_int16_t remote_port;
-int log_priority;
 
 struct server_list {
 	struct server_list *next;
@@ -76,9 +110,9 @@ struct server_list {
 static char copyright [] =
 "Copyright 1997, 1998, 1999 The Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Relay Agent V2.0b1pl27";
-static char contrib [] = "Please contribute if you find this software useful.";
-static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html";
+static char message [] = "Internet Software Consortium DHCP Relay Agent";
+static char contrib [] = "\nPlease contribute if you find this software useful.";
+static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
 
 int main (argc, argv, envp)
 	int argc;
@@ -89,20 +123,13 @@ int main (argc, argv, envp)
 	struct server_list *sp = (struct server_list *)0;
 	int no_daemon = 0;
 	int quiet = 0;
-	char *s;
+	isc_result_t status;
 
-	s = strchr (argv [0], '/');
-	if (!s)
-		s = argv [0];
-	else
-		s++;
-
-	/* Initially, log errors to stderr as well as to syslogd. */
 #ifdef SYSLOG_4_2
-	openlog (s, LOG_NDELAY);
-	log_priority = DHCPD_LOG_FACILITY;
+	openlog ("dhcrelay", LOG_NDELAY);
+	log_priority = LOG_DAEMON;
 #else
-	openlog (s, LOG_NDELAY, DHCPD_LOG_FACILITY);
+	openlog ("dhcrelay", LOG_NDELAY, LOG_DAEMON);
 #endif
 
 #if !(defined (DEBUG) || defined (SYSLOG_4_2))
@@ -112,25 +139,21 @@ int main (argc, argv, envp)
 	for (i = 1; i < argc; i++) {
 		if (!strcmp (argv [i], "-p")) {
 			if (++i == argc)
-				usage (s);
+				usage ();
 			local_port = htons (atoi (argv [i]));
-			debug ("binding to user-specified port %d",
+			log_debug ("binding to user-specified port %d",
 			       ntohs (local_port));
-		} else if (!strcmp (argv [i], "-pf")) {
-			if (++i == argc)
-				usage (s);
-			path_dhcrelay_pid = argv [i];
 		} else if (!strcmp (argv [i], "-d")) {
 			no_daemon = 1;
  		} else if (!strcmp (argv [i], "-i")) {
 			struct interface_info *tmp =
 				((struct interface_info *)
-				 dmalloc (sizeof *tmp, "specified_interface"));
+				 dmalloc (sizeof *tmp, MDL));
 			if (!tmp)
-				error ("Insufficient memory to %s %s",
+				log_fatal ("Insufficient memory to %s %s",
 				       "record interface", argv [i]);
 			if (++i == argc) {
-				usage (s);
+				usage ();
 			}
 			memset (tmp, 0, sizeof *tmp);
 			strcpy (tmp -> name, argv [i]);
@@ -140,8 +163,29 @@ int main (argc, argv, envp)
 		} else if (!strcmp (argv [i], "-q")) {
 			quiet = 1;
 			quiet_interface_discovery = 1;
+		} else if (!strcmp (argv [i], "-a")) {
+			add_agent_options = 1;
+		} else if (!strcmp (argv [i], "-A")) {
+			if (++i == argc)
+				usage ();
+			dhcp_max_agent_option_packet_length = atoi (argv [i]);
+		} else if (!strcmp (argv [i], "-m")) {
+			if (++i == argc)
+				usage ();
+			if (!strcasecmp (argv [i], "append")) {
+				agent_relay_mode = forward_and_append;
+			} else if (!strcasecmp (argv [i], "replace")) {
+				agent_relay_mode = forward_and_replace;
+			} else if (!strcasecmp (argv [i], "forward")) {
+				agent_relay_mode = forward_untouched;
+			} else if (!strcasecmp (argv [i], "discard")) {
+				agent_relay_mode = discard;
+			} else
+				usage ();
+		} else if (!strcmp (argv [i], "-D")) {
+			drop_agent_mismatches = 1;
  		} else if (argv [i][0] == '-') {
- 		    usage (s);
+ 		    usage ();
  		} else {
 			struct hostent *he;
 			struct in_addr ia, *iap = (struct in_addr *)0;
@@ -150,16 +194,18 @@ int main (argc, argv, envp)
 			} else {
 				he = gethostbyname (argv [i]);
 				if (!he) {
-					warn ("%s: host unknown", argv [i]);
+					log_error ("%s: host unknown",
+						   argv [i]);
 				} else {
 					iap = ((struct in_addr *)
 					       he -> h_addr_list [0]);
 				}
 			}
 			if (iap) {
-				sp = (struct server_list *)malloc (sizeof *sp);
+				sp = ((struct server_list *)
+				      dmalloc (sizeof *sp, MDL));
 				if (!sp)
-					error ("no memory for server.\n");
+					log_fatal ("no memory for server.\n");
 				sp -> next = servers;
 				servers = sp;
 				memcpy (&sp -> to.sin_addr,
@@ -169,13 +215,14 @@ int main (argc, argv, envp)
 	}
 
 	if (!quiet) {
-		note (message);
-		note (copyright);
-		note (arr);
-		note ("");
-		note (contrib);
-		note (url);
-		note ("");
+		log_info ("%s %s", message, DHCP_VERSION);
+		log_info (copyright);
+		log_info (arr);
+		log_info (contrib);
+		log_info (url);
+	} else {
+		quiet = 0;
+		log_perror = 0;
 	}
 
 	/* Default to the DHCP/BOOTP port. */
@@ -191,7 +238,7 @@ int main (argc, argv, envp)
   
 	/* We need at least one server. */
 	if (!sp) {
-		usage (s);
+		usage ();
 	}
 
 	/* Set up the server sockaddrs. */
@@ -205,6 +252,12 @@ int main (argc, argv, envp)
 
 	/* Get the current time... */
 	GET_TIME (&cur_time);
+
+	/* Set up the OMAPI. */
+	status = omapi_init ();
+	if (status != ISC_R_SUCCESS)
+		log_fatal ("Can't initialize OMAPI: %s",
+			   isc_result_totext (status));
 
 	/* Discover all the network interfaces. */
 	discover_interfaces (DISCOVER_RELAY);
@@ -221,7 +274,7 @@ int main (argc, argv, envp)
 		log_perror = 0;
 
 		if ((pid = fork()) < 0)
-			error ("can't fork daemon: %m");
+			log_fatal ("can't fork daemon: %m");
 		else if (pid)
 			exit (0);
 
@@ -229,11 +282,11 @@ int main (argc, argv, envp)
 			       O_CREAT | O_TRUNC | O_WRONLY, 0644);
 
 		if (pfdesc < 0) {
-			warn ("Can't create %s: %m", path_dhcrelay_pid);
+			log_error ("Can't create %s: %m", path_dhcrelay_pid);
 		} else {
 			pf = fdopen (pfdesc, "w");
 			if (!pf)
-				warn ("Can't fdopen %s: %m",
+				log_error ("Can't fdopen %s: %m",
 				      path_dhcrelay_pid);
 			else {
 				fprintf (pf, "%ld\n", (long)getpid ());
@@ -248,7 +301,7 @@ int main (argc, argv, envp)
 	}
 
 	/* Start dispatching packets and timeouts... */
-	dispatch (NULL);
+	dispatch ();
 
 	/*NOTREACHED*/
 	return 0;
@@ -257,7 +310,7 @@ int main (argc, argv, envp)
 void relay (ip, packet, length, from_port, from, hfrom)
 	struct interface_info *ip;
 	struct dhcp_packet *packet;
-	int length;
+	unsigned length;
 	unsigned int from_port;
 	struct iaddr from;
 	struct hardware *hfrom;
@@ -268,14 +321,32 @@ void relay (ip, packet, length, from_port, from, hfrom)
 	struct hardware hto;
 
 	if (packet -> hlen > sizeof packet -> chaddr) {
-		note ("Discarding packet with invalid hlen.");
+		log_info ("Discarding packet with invalid hlen.");
 		return;
+	}
+
+	/* XXX Dave:
+	   If you're using the circuit ID to figure out where to
+	   send the reply, you can delete the following code,
+	   but you still need to validate the giaddr and drop the
+	   packet if it's bogus. */
+	/* Find the interface that corresponds to the giaddr
+	   in the packet. */
+	if (packet -> giaddr.s_addr) {
+		for (out = interfaces; out; out = out -> next) {
+			if (!memcmp (&out -> primary_address,
+				     &packet -> giaddr,
+				     sizeof packet -> giaddr))
+				break;
+		}
+	} else {
+		out = (struct interface_info *)0;
 	}
 
 	/* If it's a bootreply, forward it to the client. */
 	if (packet -> op == BOOTREPLY) {
 		if (!(packet -> flags & htons (BOOTP_BROADCAST)) &&
-		    can_unicast_without_arp ()) {
+			can_unicast_without_arp (out)) {
 			to.sin_addr = packet -> yiaddr;
 			to.sin_port = remote_port;
 		} else {
@@ -287,90 +358,96 @@ void relay (ip, packet, length, from_port, from, hfrom)
 		to.sin_len = sizeof to;
 #endif
 
-		/* Set up the hardware destination address. */
-		hto.hlen = packet -> hlen;
-		if (hto.hlen > sizeof hto.haddr)
-			hto.hlen = sizeof hto.haddr;
-		memcpy (hto.haddr, packet -> chaddr, hto.hlen);
-		hto.htype = packet -> htype;
+		memcpy (&hto.hbuf [1], packet -> chaddr, packet -> hlen);
+		hto.hbuf [0] = packet -> htype;
+		hto.hlen = packet -> hlen + 1;
 
-		/* Find the interface that corresponds to the giaddr
-		   in the packet. */
-		for (out = interfaces; out; out = out -> next) {
-			if (!memcmp (&out -> primary_address,
-				     &packet -> giaddr,
-				     sizeof packet -> giaddr))
-				break;
-		}
+		/* Wipe out the agent relay options and, if possible, figure
+		   out which interface to use based on the contents of the
+		   option that we put on the request to which the server is
+		   replying. */
+		if (!(length =
+		      strip_relay_agent_options (ip, &out, packet, length)))
+			return;
+
 		if (!out) {
-			warn ("packet to bogus giaddr %s.\n",
+			log_error ("packet to bogus giaddr %s.\n",
 			      inet_ntoa (packet -> giaddr));
+			++bogus_giaddr_drops;
 			return;
 		}
 
-		if (!send_packet (out,
-				  (struct packet *)0,
-				  packet, length, out -> primary_address,
-				  &to, &hto) < 0)
-			debug ("forwarded BOOTREPLY for %s to %s",
+		if (send_packet (out,
+				 (struct packet *)0,
+				 packet, length, out -> primary_address,
+				 &to, &hto) < 0) {
+			++server_packet_errors;
+		} else {
+			log_debug ("forwarded BOOTREPLY for %s to %s",
 			       print_hw_addr (packet -> htype, packet -> hlen,
 					      packet -> chaddr),
 			       inet_ntoa (to.sin_addr));
 
+			++server_packets_relayed;
+		}
 		return;
 	}
 
-	/* If giaddr is set on a BOOTREQUEST, ignore it - it's already
-	   been gatewayed. */
-	if (packet -> giaddr.s_addr) {
-		note ("ignoring BOOTREQUEST with giaddr of %s\n",
-		      inet_ntoa (packet -> giaddr));
+	/* If giaddr matches one of our addresses, ignore the packet -
+	   we just sent it. */
+	if (out)
 		return;
-	}
 
-	/* Set the giaddr so the server can figure out what net it's
-	   from and so that we can later forward the response to the
-	   correct net. */
-	packet -> giaddr = ip -> primary_address;
+	/* Add relay agent options if indicated.   If something goes wrong,
+	   drop the packet. */
+	if (!(length = add_relay_agent_options (ip, packet, length,
+						ip -> primary_address)))
+		return;
+
+	/* If giaddr is not already set, Set it so the server can
+	   figure out what net it's from and so that we can later
+	   forward the response to the correct net.    If it's already
+	   set, the response will be sent directly to the relay agent
+	   that set giaddr, so we won't see it. */
+	if (!packet -> giaddr.s_addr)
+		packet -> giaddr = ip -> primary_address;
 
 	/* Otherwise, it's a BOOTREQUEST, so forward it to all the
 	   servers. */
 	for (sp = servers; sp; sp = sp -> next) {
-		if (!send_packet ((fallback_interface
-				   ? fallback_interface : interfaces),
-				  (struct packet *)0,
-				  packet, length, ip -> primary_address,
-				  &sp -> to, (struct hardware *)0) < 0) {
-			debug ("forwarded BOOTREQUEST for %s to %s",
+		if (send_packet ((fallback_interface
+				  ? fallback_interface : interfaces),
+				 (struct packet *)0,
+				 packet, length, ip -> primary_address,
+				 &sp -> to, (struct hardware *)0) < 0) {
+			++client_packet_errors;
+		} else {
+			log_debug ("forwarded BOOTREQUEST for %s to %s",
 			       print_hw_addr (packet -> htype, packet -> hlen,
 					      packet -> chaddr),
 			       inet_ntoa (sp -> to.sin_addr));
+			++client_packets_relayed;
 		}
 	}
 				 
 }
 
-static void usage (appname)
-	char *appname;
+static void usage ()
 {
-	note (message);
-	note (copyright);
-	note (arr);
-	note ("");
-	note (contrib);
-	note (url);
-	note ("");
-
-	warn ("Usage: %s [-i] [-d] [-i if0] [...-i ifN] [-p <port>]", appname);
-	error ("      [-pf pidfilename] [server1 [... serverN]]");
-}
-
-void cleanup ()
-{
+	log_fatal ("Usage: dhcrelay [-p <port>] [-d] [-D] [-i %s%s%s",
+	       "interface]\n                ",
+	       "[-q] [-a] [-A length] [-m append|replace|forward|discard]\n",
+	       "                [server1 [... serverN]]");
 }
 
 int write_lease (lease)
 	struct lease *lease;
+{
+	return 1;
+}
+
+int write_host (host)
+	struct host_decl *host;
 {
 	return 1;
 }
@@ -388,4 +465,345 @@ void bootp (packet)
 void dhcp (packet)
 	struct packet *packet;
 {
+}
+
+struct subnet *find_subnet (addr)
+	struct iaddr addr;
+{
+	return (struct subnet *)0;
+}
+
+/* Strip any Relay Agent Information options from the DHCP packet
+   option buffer.   If an RAI option is found whose Agent ID matches
+   the giaddr (i.e., ours), try to look up the outgoing interface
+   based on the circuit ID suboption. */
+
+int strip_relay_agent_options (in, out, packet, length)
+	struct interface_info *in, **out;
+	struct dhcp_packet *packet;
+	unsigned length;
+{
+	int is_dhcp = 0;
+	u_int8_t *op, *sp, *max;
+	int good_agent_option = 0;
+	int status;
+
+	/* If we're not adding agent options to packets, we're not taking
+	   them out either. */
+	if (!add_agent_options)
+		return length;
+
+	/* If there's no cookie, it's a bootp packet, so we should just
+	   forward it unchanged. */
+	if (memcmp (packet -> options, DHCP_OPTIONS_COOKIE, 4))
+		return length;
+
+	max = ((u_int8_t *)packet) + length;
+	sp = op = &packet -> options [4];
+
+	while (op < max) {
+		switch (*op) {
+			/* Skip padding... */
+		      case DHO_PAD:
+			if (sp != op)
+				*sp = *op;
+			++op;
+			++sp;
+			continue;
+
+			/* If we see a message type, it's a DHCP packet. */
+		      case DHO_DHCP_MESSAGE_TYPE:
+			is_dhcp = 1;
+			goto skip;
+			break;
+
+			/* Quit immediately if we hit an End option. */
+		      case DHO_END:
+			if (sp != op)
+				*sp++ = *op++;
+			goto out;
+
+		      case DHO_DHCP_AGENT_OPTIONS:
+			/* We shouldn't see a relay agent option in a
+			   packet before we've seen the DHCP packet type,
+			   but if we do, we have to leave it alone. */
+			if (!is_dhcp)
+				goto skip;
+
+			status = find_interface_by_agent_option (packet,
+								 out, op + 2,
+								 op [1]);
+			if (status == -1 && drop_agent_mismatches)
+				return 0;
+			if (status)
+				good_agent_option = 1;
+			op += op [1] + 2;
+			break;
+
+		      skip:
+			/* Skip over other options. */
+		      default:
+			if (sp != op)
+				memcpy (sp, op, (unsigned)(op [1] + 2));
+			sp += op [1] + 2;
+			op += op [1] + 2;
+			break;
+		}
+	}
+      out:
+
+	/* If it's not a DHCP packet, we're not supposed to touch it. */
+	if (!is_dhcp)
+		return length;
+
+	/* If none of the agent options we found matched, or if we didn't
+	   find any agent options, count this packet as not having any
+	   matching agent options, and if we're relying on agent options
+	   to determine the outgoing interface, drop the packet. */
+
+	if (!good_agent_option) {
+		++missing_agent_option;
+		if (drop_agent_mismatches)
+			return 0;
+	}
+
+	/* Adjust the length... */
+	if (sp != op) {
+		length = sp - ((u_int8_t *)packet);
+
+		/* Make sure the packet isn't short (this is unlikely,
+                   but WTH) */
+		if (length < BOOTP_MIN_LEN) {
+			memset (sp, 0, BOOTP_MIN_LEN - length);
+			length = BOOTP_MIN_LEN;
+		}
+	}
+	return length;
+}
+
+
+/* Find an interface that matches the circuit ID specified in the
+   Relay Agent Information option.   If one is found, store it through
+   the pointer given; otherwise, leave the existing pointer alone.
+
+   We actually deviate somewhat from the current specification here:
+   if the option buffer is corrupt, we suggest that the caller not
+   respond to this packet.  If the circuit ID doesn't match any known
+   interface, we suggest that the caller to drop the packet.  Only if
+   we find a circuit ID that matches an existing interface do we tell
+   the caller to go ahead and process the packet. */
+
+int find_interface_by_agent_option (packet, out, buf, len)
+	struct dhcp_packet *packet;
+	struct interface_info **out;
+	u_int8_t *buf;
+	int len;
+{
+	int i;
+	u_int8_t *circuit_id = 0;
+	unsigned circuit_id_len;
+	struct interface_info *ip;
+
+	while (i < len) {
+		/* If the next agent option overflows the end of the
+		   packet, the agent option buffer is corrupt. */
+		if (i + 1 == len ||
+		    i + buf [i + 1] + 2 > len) {
+			++corrupt_agent_options;
+			return -1;
+		}
+		switch (buf [i]) {
+			/* Remember where the circuit ID is... */
+		      case RAI_CIRCUIT_ID:
+			circuit_id = &buf [i + 2];
+			circuit_id_len = buf [i + 1];
+			i += circuit_id_len + 2;
+			continue;
+
+		      default:
+			i += buf [i + 1] + 2;
+			break;
+		}
+	}
+
+	/* If there's no circuit ID, it's not really ours, tell the caller
+	   it's no good. */
+	if (!circuit_id) {
+		++missing_circuit_id;
+		return -1;
+	}
+
+	/* Scan the interface list looking for an interface whose
+	   name matches the one specified in circuit_id. */
+
+	for (ip = interfaces; ip; ip = ip -> next) {
+		if (ip -> circuit_id &&
+		    ip -> circuit_id_len == circuit_id_len &&
+		    !memcmp (ip -> circuit_id, circuit_id, circuit_id_len))
+			break;
+	}
+
+	/* If we got a match, use it. */
+	if (ip) {
+		*out = ip;
+		return 1;
+	}
+
+	/* If we didn't get a match, the circuit ID was bogus. */
+	++bad_circuit_id;
+	return -1;
+}
+
+/* Examine a packet to see if it's a candidate to have a Relay
+   Agent Information option tacked onto its tail.   If it is, tack
+   the option on.  */
+
+int add_relay_agent_options (ip, packet, length, giaddr)
+	struct interface_info *ip;
+	struct dhcp_packet *packet;
+	unsigned length;
+	struct in_addr giaddr;
+{
+	int is_dhcp = 0, agent_options_present = 0;
+	u_int8_t *op, *sp, *max, *end_pad = 0;
+
+	/* If we're not adding agent options to packets, we can skip
+	   this. */
+	if (!add_agent_options)
+		return length;
+
+	/* If there's no cookie, it's a bootp packet, so we should just
+	   forward it unchanged. */
+	if (memcmp (packet -> options, DHCP_OPTIONS_COOKIE, 4))
+		return length;
+
+	max = ((u_int8_t *)packet) + length;
+	sp = op = &packet -> options [4];
+
+	while (op < max) {
+		switch (*op) {
+			/* Skip padding... */
+		      case DHO_PAD:
+			end_pad = sp;
+			if (sp != op)
+				*sp = *op;
+			++op;
+			++sp;
+			continue;
+
+			/* If we see a message type, it's a DHCP packet. */
+		      case DHO_DHCP_MESSAGE_TYPE:
+			is_dhcp = 1;
+			goto skip;
+			break;
+
+			/* Quit immediately if we hit an End option. */
+		      case DHO_END:
+			goto out;
+
+		      case DHO_DHCP_AGENT_OPTIONS:
+			/* We shouldn't see a relay agent option in a
+			   packet before we've seen the DHCP packet type,
+			   but if we do, we have to leave it alone. */
+			if (!is_dhcp)
+				goto skip;
+			end_pad = 0;
+
+			/* There's already a Relay Agent Information option
+			   in this packet.   How embarrassing.   Decide what
+			   to do based on the mode the user specified. */
+
+			switch (agent_relay_mode) {
+			      case forward_and_append:
+				goto skip;
+			      case forward_untouched:
+				return length;
+			      case discard:
+				return 0;
+			      case forward_and_replace:
+			      default:
+				break;
+			}
+
+			/* Skip over the agent option and start copying
+			   if we aren't copying already. */
+			op += op [1] + 2;
+			break;
+
+		      skip:
+			/* Skip over other options. */
+		      default:
+			end_pad = 0;
+			if (sp != op)
+				memcpy (sp, op, (unsigned)(op [1] + 2));
+			sp += op [1] + 2;
+			op += op [1] + 2;
+			break;
+		}
+	}
+      out:
+
+	/* If it's not a DHCP packet, we're not supposed to touch it. */
+	if (!is_dhcp)
+		return length;
+
+	/* If the packet was padded out, we can store the agent option
+	   at the beginning of the padding. */
+
+	if (end_pad)
+		sp = end_pad;
+
+	/* Remember where the end of the packet was after parsing
+	   it. */
+	op = sp;
+
+	/* XXX Is there room? */
+
+	/* Okay, cons up *our* Relay Agent Information option. */
+	*sp++ = DHO_DHCP_AGENT_OPTIONS;
+	*sp++ = 0;	/* Dunno... */
+
+	/* Copy in the circuit id... */
+	*sp++ = RAI_CIRCUIT_ID;
+	/* Sanity check.   Had better not every happen. */
+	if (ip -> circuit_id_len > 255 || ip -> circuit_id_len < 1)
+		log_fatal ("completely bogus circuit id length %d on %s\n",
+		       ip -> circuit_id_len, ip -> name);
+	*sp++ = ip -> circuit_id_len;
+	memcpy (sp, ip -> circuit_id, ip -> circuit_id_len);
+	sp += ip -> circuit_id_len;
+
+	/* Copy in remote ID... */
+	if (ip -> remote_id) {
+		*sp++ = RAI_REMOTE_ID;
+		if (ip -> remote_id_len > 255 || ip -> remote_id_len < 1)
+			log_fatal ("bogus remote id length %d on %s\n",
+			       ip -> circuit_id_len, ip -> name);
+		*sp++ = ip -> remote_id_len;
+		memcpy (sp, ip -> remote_id, ip -> remote_id_len);
+		sp += ip -> remote_id_len;
+	}
+
+	/* Relay option's total length shouldn't ever get to be more than
+	   257 bytes. */
+	if (sp - op > 257)
+		log_fatal ("total agent option length exceeds 257 (%d) on %s\n",
+		       sp - op, ip -> name);
+
+	/* Calculate length of RAI option. */
+	op [1] = sp - op - 2;
+
+	/* Deposit an END token. */
+	*sp++ = DHO_END;
+
+	/* Recalculate total packet length. */
+	length = sp - ((u_int8_t *)packet);
+
+	/* Make sure the packet isn't short (this is unlikely, but WTH) */
+	if (length < BOOTP_MIN_LEN) {
+		memset (sp, 0, BOOTP_MIN_LEN - length);
+		length = BOOTP_MIN_LEN;
+	}
+
+	return length;
 }

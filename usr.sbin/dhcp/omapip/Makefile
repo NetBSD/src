@@ -1,7 +1,6 @@
-# Makefile.inc
+# Makefile.dist
 #
-# Copyright (c) 1996, 1997 The Internet Software Consortium.
-# All rights reserved.
+# Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -30,19 +29,15 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-WARNS?=	0
+LIB    = omapi
+SRCS   = protocol.c buffer.c alloc.c result.c connection.c errwarn.c \
+         listener.c dispatch.c generic.c support.c handle.c message.c
 
-COBJDIR!=cd $(.CURDIR)/../common; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-OMOBJDIR!=cd $(.CURDIR)/../omapip; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-MROBJDIR!=cd $(.CURDIR)/../minires; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+MKLINT=	no
+MKPIC=	no
+MKPROFILE=no
 
-CPPFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
-LDADD=  ${COBJDIR}/libdhcp.a ${OMOBJDIR}/libomapi.a ${MROBJDIR}/libminires.a
-DPADD=  ${COBJDIR}/libdhcp.a ${OMOBJDIR}/libomapi.a ${MROBJDIR}/libminires.a
+# only needed during build
+libinstall::
 
-.if exists(${.CURDIR}/../../Makefile.inc)
-.include "${.CURDIR}/../../Makefile.inc"
-.endif
+.include <bsd.lib.mk>

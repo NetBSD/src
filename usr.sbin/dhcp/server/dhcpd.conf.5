@@ -1,40 +1,20 @@
 .\"	dhcpd.conf.5
 .\"
-.\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
-.\" The Internet Software Consortium.    All rights reserved.
+.\" Copyright (c) 1996-1999 Internet Software Consortium.
+.\" Use is subject to license terms which appear in the file named
+.\" ISC-LICENSE that should have accompanied this file when you
+.\" received it.   If a file named ISC-LICENSE did not accompany this
+.\" file, or you are not sure the one you have is correct, you may
+.\" obtain an applicable copy of the license at:
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
+.\"             http://www.isc.org/isc-license-1.0.html. 
 .\"
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. Neither the name of The Internet Software Consortium nor the names
-.\"    of its contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
+.\" This file is part of the ISC DHCP distribution.   The documentation
+.\" associated with this file is listed in the file DOCUMENTATION,
+.\" included in the top-level directory of this release.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
-.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
-.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
-.\"
-.\" This software has been written for the Internet Software Consortium
-.\" by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
-.\" Enterprises.  To learn more about the Internet Software Consortium,
-.\" see ``http://www.isc.org/isc''.  To learn more about Vixie
-.\" Enterprises, see ``http://www.vix.com''.
+.\" Support and other services are available for ISC products - see
+.\" http://www.isc.org for more information.
 .TH dhcpd.conf 5
 .SH NAME
 dhcpd.conf - dhcpd configuration file
@@ -98,17 +78,21 @@ clients from other departments on the same subnet.   For clients which
 will be declared explicitly with \fIhost\fR declarations, these
 declarations can be enclosed in a \fIgroup\fR declaration along with
 the parameters which are common to that department.   For clients
-whose addresses will be dynamically assigned, there is currently no
-way to group parameter assignments other than by network topology.
+whose addresses will be dynamically assigned, class declarations and
+conditional declarations may be used to group parameter assignments
+based on information the client sends.
 .PP
 When a client is to be booted, its boot parameters are determined by
-first consulting that client's \fIhost\fR declaration (if any), then
-consulting the \fIgroup\fR declaration (if any) which enclosed that
-\fIhost\fR declaration, then consulting the \fIsubnet\fR declaration
-for the subnet on which the client is booting, then consulting the
-\fIshared-network\fR declaration (if any) containing that subnet, and
-finally consulting the top-level parameters which may be specified
-outside of any declaration.
+consulting that client's \fIhost\fR declaration (if any), and then
+consulting the any \fIclass\fR declarations matching the client,
+followed by the \fIpool\fR, \fIsubnet\fR and \fIshared-network\fR
+declarations for the IP address assigned to the client.   Each of
+these declarations itself appears within a lexical scope, and all
+declarations at less specific lexical scopes are also consulted for
+client option declarations as well.   Scopes are never considered
+twice, and if parameters are declared in more than one scope, the
+parameter declared in the most specific scope is the one that is
+used.
 .PP
 When dhcpd tries to find a \fIhost\fR declaration for a client, it
 first looks for a \fIhost\fR declaration which has a
@@ -125,16 +109,14 @@ A typical dhcpd.conf file will look something like this:
 
 .I global parameters...
 
-shared-network ISC-BIGGIE {
-  \fIshared-network-specific parameters...\fR
-  subnet 204.254.239.0 netmask 255.255.255.224 {
-    \fIsubnet-specific parameters...\fR
-    range 204.254.239.10 204.254.239.30;
-  }
-  subnet 204.254.239.32 netmask 255.255.255.224 {
-    \fIsubnet-specific parameters...\fR
-    range 204.254.239.42 204.254.239.62;
-  }
+subnet 204.254.239.0 netmask 255.255.255.224 {
+  \fIsubnet-specific parameters...\fR
+  range 204.254.239.10 204.254.239.30;
+}
+
+subnet 204.254.239.32 netmask 255.255.255.224 {
+  \fIsubnet-specific parameters...\fR
+  range 204.254.239.42 204.254.239.62;
 }
 
 subnet 204.254.239.64 netmask 255.255.255.224 {
@@ -173,25 +155,11 @@ the entire organization), and so on.   So, for example:
 Figure 2
 .fi
 .PP
-As you can see in Figure 2, it's legal to specify host addresses in
-parameters as domain names rather than as numeric IP addresses.  If a
-given hostname resolves to more than one IP address (for example, if
-that host has two ethernet interfaces), both addresses are supplied to
-the client.
-.PP
-In Figure 1, you can see that both the shared-network statement and
-the subnet statements can have parameters.   Let us say that the
-shared network \fIISC-BIGGIE\fR supports an entire department -
-perhaps the accounting department.   If accounting has its own domain,
-then a shared-network-specific parameter might be:
-.nf
-
-	option domain-name "accounting.isc.org";
-.fi
-.PP
-All subnet declarations appearing in the shared-network declaration
-would then have the domain-name option set to "accounting.isc.org"
-instead of just "isc.org".
+As you can see in Figure 2, you can specify host addresses in
+parameters using their domain names rather than their numeric IP
+addresses.  If a given hostname resolves to more than one IP address
+(for example, if that host has two ethernet interfaces), then where
+possible, both addresses are supplied to the client.
 .PP
 The most obvious reason for having subnet-specific parameters as
 shown in Figure 1 is that each subnet, of necessity, has its own
@@ -276,6 +244,445 @@ group {
   host ncd8 { hardware ethernet 0:c0:c3:cc:a:8f; }
 }
 .fi
+.SH ADDRESS POOLS
+.PP
+The
+.B pool
+declaration can be used to specify a pool of addresses that will be
+treated differently than another pool of addresses, even on the same
+network segment or subnet.   For example, you may want to provide a
+large set of addresses that can be assigned to DHCP clients that are
+registered to your DHCP server, while providing a smaller set of
+addresses, possibly with short lease times, that are available for
+unknown clients.   If you have a firewall, you may be able to arrange
+for addresses from one pool to be allowed access to the Internet,
+while addresses in another pool are not, thus encouraging users to
+register their DHCP clients.   To do this, you would set up a pair of
+pool declarations:
+.PP
+.nf
+subnet 10.0.0.0 netmask 255.255.255.0 {
+  option routers 10.0.0.254;
+
+  # Unknown clients get this pool.
+  pool {
+    option domain-name-servers bogus.example.com;
+    max-lease-time 300;
+    range 10.0.0.200 10.0.0.253;
+    allow unknown clients;
+  }
+
+  # Known clients get this pool.
+  pool {
+    option domain-name-servers ns1.example.com, ns2.example.com;
+    max-lease-time 28800;
+    range 10.0.0.5 10.0.0.199;
+    deny unknown clients;
+  }
+}
+.fi
+.PP
+It is also possible to set up entirely different subnets for known and
+unknown clients - address pools exist at the level of shared networks,
+so address ranges within pool declarations can be on different
+subnets.
+.PP
+As you can see in the preceding example, pools can have permit lists
+that control which clients are allowed access to the pool and which
+aren't.  Each entry in a pool's permit list is introduced with the
+.I allow
+or \fIdeny\fR keyword.   If a pool has a permit list, then only those
+clients that match specific entries on the permit list will be
+elegible to be assigned addresses from the pool.   If a pool has a
+deny list, then only those clients that do not match any entries on
+the deny list will be elegible.    If both permit and deny lists exist
+for a pool, then only clients that match the permit list and do not
+match the deny list will be allowed access.
+.SH ADDRESS ALLOCATION
+Address allocation is actually only done when a client is in the INIT
+state and has sent a DHCPDISCOVER message.  If the client thinks it
+has a valid lease and sends a DHCPREQUEST to initiate or renew that
+lease, the server has only three choices - it can ignore the
+DHCPREQUEST, send a DHCPNAK to tell the client it should stop using
+the address, or send a DHCPACK, telling the client to go ahead and use
+the address for a while.  If the server finds the address the client
+is requesting, and that address is available to the client, the server
+will send a DHCPACK.  If the address is no longer available, or the
+client isn't permitted to have it, the server will send a DHCPNAK.  If
+the server knows nothing about the, it will remain silent, unless the
+address is incorrect for the network segment to which the client has
+been attached and the server is authoritative for that network
+segment, in which case the server will send a DHCPNAK even though it
+doesn't know about the address.
+.PP
+When the DHCP server allocates a new address for a client (remember,
+this only happens if the client has sent a DHCPDISCOVER), it first
+looks to see if the client already has a valid lease on an IP address,
+or if there is an old IP address the client had before that hasn't yet
+been reassigned.  In that case, the server will take that address and
+check it to see if the client is still permitted to use it.  If the
+client is no longer permitted to use it, the lease is freed if the
+server thought it was still in use - the fact that the client has sent
+a DHCPDISCOVER proves to the server that the client is no longer using
+the lease.
+.PP
+If no existing lease is found, or if the client is forbidden to
+receive the existing lease, then the server will look in the list of
+address pools for the network segment to which the client is attached
+for a lease that is not in use and that the client is permitted to
+have.   It looks through each pool declaration in sequence (all
+.I range
+declarations that appear outside of pool declarations are grouped into
+a single pool with no permit list).   If the permit list for the pool
+allows the client to be allocated an address from that pool, the pool
+is examined to see if there is an address available.   If so, then the
+client is tentatively assigned that address.   Otherwise, the next
+pool is tested.   If no addresses are found that can be assigned to
+the client, no response is sent to the client.
+.PP
+If an address is found that the client is permitted to have, and that
+has never been assigned to any client before, the address is
+immediately allocated to the client.   If the address is available for
+allocation but has been previously assigned to a different client, the
+server will keep looking in hopes of finding an address that has never
+before been assigned to a client.
+.SH CLIENT CLASSING
+Clients can be seperated into classes, and treated differently
+depending on what class they are in.   This seperation can be done
+either with a conditional statement, or with a match statement within
+the class declaration.   It is possible to specify a limit on the
+total number of clients within a particular class or subclass that may
+hold leases at one time, and it is possible to specify automatic
+subclassing based on the contents of the client packet.
+.PP
+To add clients to classes based on conditional evaluation, you would
+write an conditional statement to match the clients you wanted in the
+class, and then put an
+.B add
+statement in the conditional's list of statements:
+.PP
+.nf
+if substring (option dhcp-client-identifier, 0, 3) = "RAS" {
+  add "ras-clients";
+}
+.fi
+.PP
+A nearly equivalent way to do this is to simply specify the conditional
+expression as a matching expression in the class statement:
+.PP
+.nf
+class "ras-clients" {
+  match if substring (option dhcp-client-identifier, 0, 3) = "RAS";
+}
+.fi
+Note that whether you use matching expressions or add statements (or
+both) to classify clients, you must always write a class declaration
+for any class that you use.   If there will be no match statement and
+no in-scope statements for a class, the declaration should look like
+this:
+.nf
+class "ras-clients" {
+}
+.fi
+.PP
+Also, the
+.B add
+statement adds the client to the class as the client's scopes are being
+evaluated - after any address assignment decision has been made.   This means
+that a client that's a member of a class due to an add statement will not
+be affected by pool permits related to that class - when the pool permit list
+is computed, the client will not yet be a member of the pool.   This is an
+inconsistency that will probably be addressed in later versions of the DHCP
+server, but it important to be aware of it at lease for the time being.
+.SH SUBCLASSES
+.PP
+In addition to classes, it is possible to declare subclasses.   A
+subclass is a class with the same name as a regular class, but with a
+specific submatch expression which is hashed for quick matching.
+This is essentially a speed hack - the main difference between five
+classes with match expressions and one class with five subclasses is
+that it will be quicker to find the subclasses.   Subclasses work as
+follows:
+.PP
+.nf
+class "allocation-class-1" {
+  match pick-first-value (option dhcp-client-identifier, hardware);
+}
+
+class "allocation-class-2" {
+  match pick-first-value (option dhcp-client-identifier, hardware);
+}
+
+subclass "allocation-class-1" 1:8:0:2b:4c:39:ad;
+subclass "allocation-class-2" 1:8:0:2b:a9:cc:e3;
+subclass "allocation-class-1" 1:0:0:c4:aa:29:44;
+
+subnet 10.0.0.0 netmask 255.255.255.0 {
+  pool {
+    allow members of "allocation-class-1";
+    range 10.0.0.11 10.0.0.50;
+  }
+  pool {
+    allow members of "allocation-class-2";
+    range 10.0.0.51 10.0.0.100;
+  }
+}
+.fi
+.PP
+The data following the class name in the subclass declaration is a
+constant value to use in matching the match expression for the class.
+When class matching is done, the server will evaluate the match
+expression and then look the result up in the hash table.   If it
+finds a match, the client is considered a member of both the class and
+the subclass.
+.PP
+Subclasses can be declared with or without scope.   In the above
+example, the sole purpose of the subclass is to allow some clients
+access to one address pool, while other clients are given access to
+the other pool, so these subclasses are declared without scopes.   If
+part of the purpose of the subclass were to define different parameter
+values for some clients, you might want to declare some subclasses
+with scopes.
+.PP
+In the above example, if you had a single client that needed some
+configuration parameters, while most didn't, you might write the
+following subclass declaration for that client:
+.PP
+.nf
+subclass "allocation-class-2" 1:08:00:2b:a1:11:31 {
+  option root-path "samsara:/var/diskless/alphapc";
+  filename "/tftpboot/netbsd.alphapc-diskless";
+}
+.fi
+.PP
+In this example, we've used subclassing as a way to control address
+allocation on a per-client basis.  However, it's also possible to use
+subclassing in ways that are not specific to clients - for example, to
+use the value of the vendor-class-identifier option to determine what
+values to send in the vendor-encapsulated-options option.  An example
+of this is shown under the VENDOR ENCAPSULATED OPTIONS head later on
+in this document.
+.SH PER-CLASS LIMITS ON DYNAMIC ADDRESS ALLOCATION
+.PP
+You may specify a limit to the number of clients in a class that can
+be assigned leases.   The effect of this will be to make it difficult
+for a new client in a class to get an address.   Once a class with
+such a limit has reached its limit, the only way a new client in that
+class can get a lease is for an existing client to relinquish its
+lease, either by letting it expire, or by sending a DHCPRELEASE
+packet.   Classes with lease limits are specified as follows:
+.PP
+.nf
+class "limited-1" {
+  lease limit 4;
+}
+.fi
+.PP
+This will produce a class in which a maximum of four members may hold
+a lease at one time.
+.SH SPAWNING CLASSES
+.PP
+It is possible to declare a
+.I spawning class\fR.
+A spawning class is a class that automatically produces subclasses
+based on what the client sends.   The reason that spawning classes
+were created was to make it possible to create lease-limited classes
+on the fly.   The envisioned application is a cable-modem environment
+where the ISP wishes to provide clients at a particular site with more
+than one IP address, but does not wish to provide such clients with
+their own subnet, nor give them an unlimited number of IP addresses
+from the network segment to which they are connected.
+.PP
+Many cable modem head-end systems can be configured to add a Relay
+Agent Information option to DHCP packets when relaying them to the
+DHCP server.   These systems typically add a circuit ID or remote ID
+option that uniquely identifies the customer site.   To take advantage
+of this, you can write a class declaration as follows:
+.PP
+.nf
+class "customer" {
+  spawn with option agent.circuit-id;
+  lease limit 4;
+}
+.fi
+.PP
+Now whenever a request comes in from a customer site, the circuit ID
+option will be checked against the class's hash table.   If a subclass
+is found that matches the circuit ID, the client will be classified in
+that subclass and treated accordingly.   If no subclass is found
+matching the circuit ID, a new one will be created and logged in the
+.B dhcpd.leases
+file, and the client will be classified in this new class.   Once the
+client has been classified, it will be treated according to the rules
+of the class, including, in this case, being subject to the per-site
+limit of four leases.
+.PP
+The use of the subclass spawning mechanism is not restricted to relay
+agent options - this particular example is given only because it is a
+fairly straightforward one.
+.SH DYNAMIC DNS UPDATES
+.PP
+The DHCP server has the ability to dynamically update the Domain Name
+System.  Within the configuration files, you can define how you want
+the Domain Name System to be updated.  These updates are RFC 2136
+compliant so any DNS server supporting RFC 2136 should be able to
+accept updates from the DHCP server.   The DHCP server will only
+perform DNS updates if it has been built with DNS updates enabled as
+described in the README file that comes with the DHCP distribution.
+.PP
+The Dynamic DNS update scheme implemented in this version of the ISC
+DHCP server is an interim implementation, which does not implement any
+of the standard update methods that have been discussed in the working
+group, but rather implements some very basic, yet useful, update
+capabilities.
+.PP
+There are three parameters, which may vary according to the scope,
+that control how DDNS updates will be done.   The first two are the
+.I ddns-domainname
+and
+.I ddns-rev-domainname
+statements.   The
+.I ddns-domainname
+parameter sets the domain name that will be appended to the client's
+hostname to form a fully-qualified domain-name (FQDN).   For example,
+if the client's hostname is "hutson" and the
+.I ddns-domainname
+is set to "sneedville.edu", then the client's FQDN will be
+"hutson.sneedville.edu".
+.PP
+The
+.I ddns-rev-domainname
+parameter sets the domain name that will be appended to the client's
+reversed IP address to produce a name for use in the client's PTR
+record.   Normally, you would set this to "in-addr.arpa", but this is
+not required.
+.PP
+A third parameter,
+.I ddns-hostname
+can be used to specify the hostname that will be used as the client's
+hostname.   If no ddns-hostname is specified in scope, then the server
+will use a host-name option sent by the client.   If the client did
+not send a host-name option, then if there is a host declaration that
+applies to the client, the name from that declaration will be used.
+If none of these applies, the server will not have a hostname for the
+client, and will not be able to do a DDNS update.
+.SH HOW DNS UPDATES WORK
+.PP
+The client's FQDN, derived as we have described, is used as the name
+on which an "A" record will be stored.   The A record will contain the
+IP address that the client was assigned in its lease.   If there is
+already an A record with the same name in the DNS server, no update of
+either the A or PTR records will occur - this prevents a client from
+claiming that its hostname is the name of some network server.   For
+example, if you have a fileserver called "fs.sneedville.edu", and the
+client claims its hostname is "fs", no DNS update will be done for
+that client, and an error message will be logged.
+.PP
+If the A record update succeeds, a PTR record update for the assigned
+IP address will be done, pointing to the A record.   This update is
+unconditional - it will be done even if another PTR record of the same
+name exists.   Since the IP address has been assigned to the DHCP
+server, this should be safe.
+.PP
+Please note that the current implementation assumes clients only have
+a single network interface.   A client with two network interfaces
+will see unpredictable behaviour.   This is considered a bug, and will
+be fixed in a later release.   It may be helpful to enable the
+.I one-lease-per-client
+parameter so that roaming clients do not trigger this same behavior.
+.PP
+The DHCP protocol normally involves a four-packet exchange - first the
+client sends a DHCPDISCOVER message, then the server sends a
+DHCPOFFER, then the client sends a DHCPREQUEST, then the server sends
+a DHCPACK.   In the current version of the server, the server will do
+a DNS update after it has received the DHCPREQUEST, and before it has
+sent the DHCPOFFER.   It only sends the DNS update if it has not sent
+one for the client's address before, in order to minimize the impact
+on the DHCP server.
+.PP
+When the client's lease expires, the DHCP server (if it is operating
+at the time, or when next it operates) will remove the client's A and
+PTR records from the DNS database.   If the client releases its lease
+by sending a DHCPRELEASE message, the server will likewise remove the
+A and PTR records.
+.SH DYNAMIC DNS UPDATE SECURITY
+.PP
+Support for TSIG and DNSSEC is not yet available.  When you set your
+DNS server up to allow updates from the DHCP server, you may
+be exposing it to unauthorized updates.  To avoid this, the best you
+can do right now is to use IP address-based packet filtering to
+prevent unauthorized hosts from submitting update requests.
+.PP
+The DNS server must be configured to allow updates for any zone that
+the DHCP server will be updating.  For example, let us say that
+clients in the sneedville.edu domain will be assigned addresses on the
+10.10.17.0/24 subnet.  In that case, assuming you are using ISC BIND
+8.2.1 or later, you would need to have the following declarations in
+your /etc/named.conf file:
+.PP
+.nf
+zone "sneedville.edu" {
+	type master;
+	file "sneedville.edu.db";
+	allow-update { localhost; };
+};
+
+zone "17.10.10.in-addr.arpa" {
+	type master;
+	file "10.10.17.db";
+	allow-update { localhost; };
+};
+.fi
+.PP
+This assumes that your DHCP server and your name server will be
+running on the same computer - the "localhost" name is taken in the
+DNS server as an alias for all of that host's IP addresses, and
+updates from any of those addresses will be accepted.
+.PP
+You may wish to enable logging of DNS transactions on your DNS server.
+To do so, you might write a logging statement like the following:
+.PP
+.nf
+logging {
+	channel update_debug {
+		file "/var/log/update-debug.log";
+		severity	debug 3;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+	channel security_info	{
+		file	"/var/log/named-auth.info";
+		severity	info;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+
+	category update { update_debug; };
+	category security { security_info; };
+};
+.fi
+.PP
+You must create the /var/log/named-auth.info and
+/var/log/update-debug.log files before starting the name server.   For
+more information on configuring ISC BIND, consult the documentation
+that accompanies it.
+.SH REFERENCE: EVENTS
+.PP
+There are three kinds of events that can happen regarding a lease, and
+it is possible to declare statements that occur when any of these
+events happen.   These events are the commit event, when the server
+has made a commitment of a certain lease to a client, the release
+event, when the client has released the server from its commitment,
+and the expiry event, when the commitment expires.
+.PP
+To declare a set of statements to execute when an event happens, you
+must use the \fBon\fR statement, followed by the name of the event,
+followed by a series of statements to execute when the event happens,
+enclosed in braces.   Events are used to implement dynamic DNS
+updates, so you should not define your own event handlers if you are
+using the built-in dynamic DNS update mechanism.
 .SH REFERENCE: DECLARATIONS
 .PP
 .B The 
@@ -347,7 +754,7 @@ override the subnet mask declared in the subnet statement.
 .B statement
 .PP
 .nf
- \fBrange\fR [ \fBdynamic-bootp\fR ] \fIlow-address\fR [ \fIhigh-address\fR]\fB;\fR
+.B range\fR [ \fBdynamic-bootp\fR ] \fIlow-address\fR [ \fIhigh-address\fR]\fB;\fR
 .fi
 .PP
 For any subnet on which addresses will be assigned dynamically, there
@@ -425,15 +832,27 @@ be used for all clients that may boot using the BOOTP protocol.
 The group statement is used simply to apply one or more parameters to
 a group of declarations.   It can be used to group hosts, shared
 networks, subnets, or even other groups.
-.SH REFERENCE: ALLOW and DENY
-.PP
+.SH REFERENCE: ALLOW AND DENY
 The
 .I allow
 and
 .I deny
-statements can be used to control the behaviour of dhcpd to various
-sorts of requests.
+statements can be used to control the response of the DHCP server to
+various sorts of requests.  The allow and deny keywords actually have
+different meanings depending on the context.  In a pool context, these
+keywords can be used to set up access lists for address allocation
+pools.  In other contexts, the keywords simply control general server
+behaviour with respect to clients based on scope.   In a non-pool
+context, the
+.I ignore
+keyword can be used in place of the
+.I deny
+keyword to prevent logging of denied requests.
 .PP
+.SH ALLOW DENY AND IGNORE IN SCOPE
+The following usages of allow and deny will work in any scope,
+although it is not recommended that they be used in pool
+declarations.
 .PP
 .B The
 .I unknown-clients
@@ -441,6 +860,7 @@ sorts of requests.
 .PP
  \fBallow unknown-clients;\fR
  \fBdeny unknown-clients;\fR
+ \fBignore unknown-clients;\fR
 .PP
 The \fBunknown-clients\fR flag is used to tell dhcpd whether
 or not to dynamically assign addresses to unknown clients.   Dynamic
@@ -452,6 +872,7 @@ address assignment to unknown clients is \fBallow\fRed by default.
 .PP
  \fBallow bootp;\fR
  \fBdeny bootp;\fR
+ \fBignore bootp;\fR
 .PP
 The \fBbootp\fR flag is used to tell dhcpd whether
 or not to respond to bootp queries.  Bootp queries are \fBallow\fRed
@@ -463,13 +884,160 @@ by default.
 .PP
  \fBallow booting;\fR
  \fBdeny booting;\fR
+ \fBignore booting;\fR
 .PP
 The \fBbooting\fR flag is used to tell dhcpd whether or not to respond
 to queries from a particular client.  This keyword only has meaning
 when it appears in a host declaration.   By default, booting is
 \fBallow\fRed, but if it is disabled for a particular client, then
 that client will not be able to get and address from the DHCP server.
+.B The
+.I duplicates
+.B keyword
+.PP
+ \fBallow duplicates;\fR
+ \fBdeny duplicates;\fR
+.PP
+Host declarations can match client messages based on the DHCP Client
+Identifer option or based on the client's network hardware type and
+MAC address.   If the MAC address is used, the host declaration will
+match any client with that MAC address - even clients with different
+client identifiers.   This doesn't normally happen, but is possible
+when one computer has more than one operating system installed on it -
+for example, Microsoft Windows and NetBSD or Linux.
+.PP
+The \fBduplicates\fR flag tells the DHCP server that if a request is
+received from a client that matches the MAC address of a host
+declaration, any other leases matching that MAC address should be
+discarded by the server, even if the UID is not the same.   This is a
+violation of the DHCP protocol, but can prevent clients whose client
+identifiers change regularly from holding many leases at the same time.
+By default, duplicates are \fBallow\fRed.
+.B The
+.I declines
+.B keyword
+.PP
+ \fBallow declines;\fR
+ \fBdeny declines;\fR
+ \fBignore declines;\fR
+.PP
+The DHCPDECLINE message is used by DHCP clients to indicate that the
+lease the server has offered is not valid.   When the server receives
+a DHCPDECLINE for a particular address, it normally abandons that
+address, assuming that some unauthorized system is using it.
+Unfortunately, a malicious or buggy client can, using DHCPDECLINE
+messages, completely exhaust the DHCP server's allocation pool.   The
+server will reclaim these leases, but while the client is running
+through the pool, it may cause serious thrashing in the DNS, and it
+will also cause the DHCP server to forget old DHCP client address
+allocations.
+.PP
+The \fBdeclines\fR flag tells the DHCP server whether or not to honor
+DHCPDECLINE messages.   If it is set to \fBdeny\fR or \fBignore\fR in
+a particular scope, the DHCP server will not respond to DHCPDECLINE
+messages.
+.SH ALLOW AND DENY WITHIN POOL DECLARATIONS
+.PP
+The uses of the allow and deny keyword shown in the previous section
+work pretty much the same way whether the client is sending a
+DHCPDISCOVER or a DHCPREQUEST message - an address will be allocated
+to the client (either the old address it's requesting, or a new
+address) and then that address will be tested to see if it's okay to
+let the client have it.   If the client requested it, and it's not
+okay, the server will send a DHCPNAK message.   Otherwise, the server
+will simply not respond to the client.   If it is okay to give the
+address to the client, the server will send a DHCPACK message.
+.PP
+The primary motivation behind pool declarations is to have address
+allocation pools whose allocation policies are different.   A client
+may be denied access to one pool, but allowed access to another pool
+on the same network segment.   In order for this to work, access
+control has to be done during address allocation, not after address
+allocation is done.
+.PP
+When a DHCPREQUEST message is processed, address allocation simply
+consists of looking up the address the client is requesting and seeing
+if it's still available for the client.  If it is, then the DHCP
+server checks both the address pool permit lists and the relevant
+in-scope allow and deny statements to see if it's okay to give the
+lease to the client.  In the case of a DHCPDISCOVER message, the
+allocation process is done as described previously in the ADDRESS
+ALLOCATION section.
+.PP
+When declaring permit lists for address allocation pools, the
+following syntaxes are recognized following the allow or deny keyword:
+.PP
+ \fBknown clients;\fR
+.PP
+If specified, this statement either allows or prevents allocation from
+this pool to any client that has a host declaration (i.e., is known).
+A client is known if it has a host declaration in \fIany\fR scope, not
+just the current scope.
+.PP
+ \fBunknown clients;\fR
+.PP
+If specified, this statement either allows or prevents allocation from
+this pool to any client that has no host declaration (i.e., is not
+known).
+.PP
+ \fBmembers of "\fRclass\fB";\fR
+.PP
+If specified, this statement either allows or prevents allocation from
+this pool to any client that is a member of the named class.
+.PP
+ \fBdynamic bootp clients;\fR
+.PP
+If specified, this statement either allows or prevents allocation from
+this pool to any bootp client.
+.PP
+ \fBauthenticated clients;\fR
+.PP
+If specified, this statement either allows or prevents allocation from
+this pool to any client that has been authenticated using the DHCP
+authentication protocol.   This is not yet supported.
+.PP
+ \fBunauthenticated clients;\fR
+.PP
+If specified, this statement either allows or prevents allocation from
+this pool to any client that has not been authenticated using the DHCP
+authentication protocol.   This is not yet supported.
+.PP
+ \fBall clients;\fR
+.PP
+If specified, this statement either allows or prevents allocation from
+this pool to all clients.   This can be used when you want to write a
+pool declaration for some reason, but hold it in reserve, or when you
+want to renumber your network quickly, and thus want the server to
+force all clients that have been allocated addresses from this pool to
+obtain new addresses immediately when they next renew.
 .SH REFERENCE: PARAMETERS
+.PP
+.B The
+.I lease-file-name
+.B statement
+.PP
+.B lease-file-name
+.I name\fR\fB;\fR
+.PP
+.I Name
+should be the name of the DHCP server's lease file.   By default, this
+is DBDIR/dhcpd.leases.   This statement \fBmust\fR appear in the outer
+scope of the configuration file - if it appears in some other scope,
+it will have no effect.
+.PP
+.B The
+.I pid-file-name
+.B statement
+.PP
+.B pid-file-name
+.I name\fR\fB;\fR
+.PP
+.I Name
+should be the name of the DHCP server's process ID file.   This is the
+file in which the DHCP server's process ID is stored when the server
+starts.   By default, this is RUNDIR/dhcpd.pid.   Like the
+lease-file-name statement, this statement must appear in the outer scope
+of the configuration file.
 .PP
 .B The
 .I default-lease-time
@@ -490,8 +1058,41 @@ time.
 .PP
 .I Time
 should be the maximum length in seconds that will be assigned to a
-lease if the client requesting the lease asks for a specific
-expiration time.
+lease.   The only exception to this is that Dynamic BOOTP lease
+lengths, which are not specified by the client, are not limited by
+this maximum.
+.PP
+.B The
+.I min-lease-time
+.B statement
+.PP
+ \fBmin-lease-time\fR \fItime\fR\fB;\fR
+.PP
+.I Time
+should be the minimum length in seconds that will be assigned to a
+lease.
+.PP
+.B The
+.I min-secs
+.B statement
+.PP
+ \fBmin-secs\fR \fIseconds\fR\fB;\fR
+.PP
+.I Seconds
+should be the minimum number of seconds since a client began trying to
+acquire a new lease before the DHCP server will respond to its request.
+The number of seconds is based on what the client reports, and the maximum
+value that the client can report is 255 seconds.   Generally, setting this
+to one will result in the DHCP server not responding to the client's first
+request, but always responding to its second request.
+.PP
+This can be used
+to set up a secondary DHCP server which never offers an address to a client
+until the primary server has been given a chance to do so.   If the primary
+server is down, the client will bind to the secondary server, but otherwise
+clients should always bind to the primary.   Note that this does not, by
+itself, permit a primary server and a secondary server to share a pool of
+dynamically-allocatable addresses.
 .PP
 .B The 
 .I hardware
@@ -698,27 +1299,6 @@ specify that the server is authoritative for some host declarations
 and not others.
 .PP
 .B The
-.I use-lease-addr-for-default-route
-.B statement
-.PP
- \fBuse-lease-addr-for-default-route\fR \fIflag\fR\fB;\fR
-.PP
-If the \fIuse-lease-addr-for-default-route\fR parameter is true in a
-given scope, then instead of sending the value specified in the
-routers option (or sending no value at all), the IP address of the
-lease being assigned is sent to the client.   This supposedly causes
-Win95 machines to ARP for all IP addresses, which can be helpful if
-your router is configured for proxy ARP.
-.PP
-If use-lease-addr-for-default-route is enabled and an option routers
-statement are both in scope, the routers option will be preferred.
-The rationale for this is that in situations where you want to use
-this feature, you probably want it enabled for a whole bunch of
-Windows 95 machines, and you want to override it for a few other
-machines.   Unfortunately, if the opposite happens to be true for you
-site, you are probably better off not trying to use this flag.
-.PP
-.B The
 .I always-reply-rfc1048
 .B statement
 .PP
@@ -736,6 +1316,52 @@ option in that client's host declaration, and the DHCP server will
 respond with an RFC-1048-style vendor options field.   This flag can
 be set in any scope, and will affect all clients covered by that
 scope.
+.PP
+.B The
+.I always-broadcast
+.B statement
+.PP
+ \fBalways-broadcast\fR \fIflag\fR\fB;\fR
+.PP
+The DHCP and BOOTP protocols both require DHCP and BOOTP clients to
+set the broadcast bit in the flags field of the BOOTP message header.
+Unfortunately, some DHCP and BOOTP clients do not do this, and
+therefore may not receive responses from the DHCP server.   The DHCP
+server can be made to always broadcast its responses to clients by
+setting this flag to 'on' for the relevant scope.   To avoid creating
+excess broadcast traffic on your network, we recommend that you
+restrict the use of this option to as few clients as possible.   For
+example, the Microsoft DHCP client is known not to have this problem,
+as are the OpenTransport and ISC DHCP clients.
+.PP
+.B The
+.I one-lease-per-client
+.B statement
+.PP
+ \fBone-lease-per-client\fR \fIflag\fR\fB;\fR
+.PP
+If this flag is enabled, whenever a client sends a DHCPREQUEST for a
+particular lease, the server will automatically free any other leases
+the client holds.   This presumes that when the client sends a
+DHCPREQUEST, it has forgotten any lease not mentioned in the
+DHCPREQUEST - i.e., the client has only a single network interface
+.I and
+it does not remember leases it's holding on networks to which it is
+not currently attached.   Neither of these assumptions are guaranteed
+or provable, so we urge caution in the use of this statement.
+.PP
+.B The
+.I use-lease-addr-for-default-route
+.B statement
+.PP
+ \fBuse-lease-addr-for-default-route\fR \fIflag\fR\fB;\fR
+.PP
+If the \fIuse-lease-addr-for-default-route\fR parameter is true in a
+given scope, then instead of sending the value specified in the
+routers option (or sending no value at all), the IP address of the
+lease being assigned is sent to the client.   This supposedly causes
+Win95 machines to ARP for all IP addresses, which can be helpful if
+your router is configured for proxy ARP.
 .PP
 .B The
 .I server-identifier
@@ -764,6 +1390,17 @@ that the clients use this IP address when contacting the server.
 .PP
 Supplying a value for the dhcp-server-identifier option is equivalent
 to using the server-identifier statement.
+.PP
+.B The  
+.I ddns-updates
+.B statement
+.PP
+ \fBddns-updates \fIflag\fR\fB;\fR
+.PP
+The \fIddns-updates\fR parameter controls whether or not the server will
+attempt to do a ddns update when a lease is confirmed.   Set this to \fIoff\fR
+if the server should not attempt to do updates within a certain scope.
+The \fIddns-updates\fR parameter is on by default.
 .SH REFERENCE: OPTION STATEMENTS
 .PP
 DHCP option statements are documented in the
@@ -775,6 +1412,6 @@ dhcpd.conf(5), dhcpd.leases(5), RFC2132, RFC2131.
 .B dhcpd(8)
 was written by Ted Lemon <mellon@vix.com>
 under a contract with Vixie Labs.   Funding
-for this project was provided by the Internet Software Corporation.
+for this project was provided by the Internet Software Consortium.
 Information about the Internet Software Consortium can be found at
 .B http://www.isc.org/isc.

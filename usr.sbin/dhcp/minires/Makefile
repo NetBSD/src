@@ -1,7 +1,6 @@
-# Makefile.inc
+# Makefile.dist
 #
-# Copyright (c) 1996, 1997 The Internet Software Consortium.
-# All rights reserved.
+# Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -30,19 +29,19 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-WARNS?=	0
+LIB    = minires
+SRCS   = res_mkupdate.c res_init.c res_update.c res_send.c res_comp.c \
+	 res_sendsigned.c res_findzonecut.c res_query.c res_mkquery.c \
+	 ns_date.c ns_parse.c ns_sign.c ns_name.c ns_samedomain.c ns_verify.c \
+	 dst_api.c hmac_link.c md5_dgst.c prandom.c support.c base64.c
 
-COBJDIR!=cd $(.CURDIR)/../common; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-OMOBJDIR!=cd $(.CURDIR)/../omapip; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-MROBJDIR!=cd $(.CURDIR)/../minires; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+MKLINT=	no
+MKPIC=	no
+MKPROFILE=no
 
-CPPFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
-LDADD=  ${COBJDIR}/libdhcp.a ${OMOBJDIR}/libomapi.a ${MROBJDIR}/libminires.a
-DPADD=  ${COBJDIR}/libdhcp.a ${OMOBJDIR}/libomapi.a ${MROBJDIR}/libminires.a
+CFLAGS += -DMINIRES_LIB
 
-.if exists(${.CURDIR}/../../Makefile.inc)
-.include "${.CURDIR}/../../Makefile.inc"
-.endif
+# only needed during build
+libinstall::
+
+.include <bsd.lib.mk>

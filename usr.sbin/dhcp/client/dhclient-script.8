@@ -1,40 +1,20 @@
 .\"	dhclient-script.8
 .\"
-.\" Copyright (c) 1997 The Internet Software Consortium.
-.\" All rights reserved.
+.\" Copyright (c) 1996-1999 Internet Software Consortium.
+.\" Use is subject to license terms which appear in the file named
+.\" ISC-LICENSE that should have accompanied this file when you
+.\" received it.   If a file named ISC-LICENSE did not accompany this
+.\" file, or you are not sure the one you have is correct, you may
+.\" obtain an applicable copy of the license at:
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
+.\"             http://www.isc.org/isc-license-1.0.html. 
 .\"
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. Neither the name of The Internet Software Consortium nor the names
-.\"    of its contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
+.\" This file is part of the ISC DHCP distribution.   The documentation
+.\" associated with this file is listed in the file DOCUMENTATION,
+.\" included in the top-level directory of this release.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
-.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
-.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
-.\"
-.\" This software has been written for the Internet Software Consortium
-.\" by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
-.\" Enterprises.  To learn more about the Internet Software Consortium,
-.\" see ``http://www.isc.org/isc''.  To learn more about Vixie
-.\" Enterprises, see ``http://www.vix.com''.
+.\" Support and other services are available for ISC products - see
+.\" http://www.isc.org for more information.
 .TH dhclient-script 8
 .SH NAME
 dhclient-script - DHCP client network configuration script
@@ -95,8 +75,7 @@ When dhclient needs to invoke the client configuration script, it
 writes a shell script into /tmp which defines a variety of variables.
 In all cases, $reason is set to the name of the reason why the script
 has been invoked.   The following reasons are currently defined:
-MEDIUM, PREINIT, ARPCHECK, ARPSEND, BOUND, RENEW, REBIND, REBOOT,
-EXPIRE, FAIL and TIMEOUT.
+MEDIUM, PREINIT, BOUND, RENEW, REBIND, REBOOT, EXPIRE, FAIL and TIMEOUT.
 .PP
 .SH MEDIUM
 The DHCP client is requesting that an interface's media type
@@ -115,18 +94,6 @@ and the media type in $medium.
 If an IP alias has been declared in dhclient.conf, its address will be
 passed in $alias_ip_address, and that ip alias should be deleted from
 the interface, along with any routes to it.
-.SH ARPSEND
-The DHCP client is requesting that an address that has been offered to
-it be checked to see if somebody else is using it, by sending an ARP
-request for that address.   It's not clear how to implement this, so
-no examples exist yet.   The IP address to check is passed in
-$new_ip_address, and the interface name is passed in $interface.
-.SH ARPCHECK
-The DHCP client wants to know if a response to the ARP request send
-using ARPSEND has been received.   If one has, the script should exit
-with a nonzero status, indicating that the offered address has already
-been requested and should be declined.   $new_ip_address and
-$interface are set as with ARPSEND.
 .SH BOUND
 The DHCP client has done an initial binding to a new address.   The
 new ip address is passed in $new_ip_address, and the interface name is
@@ -136,6 +103,13 @@ described in \fBdhcp-options\fR, except that dashes ('-') are replaced
 by underscores ('_') in order to make valid shell variables, and the
 variable names start with new_.   So for example, the new subnet mask
 would be passed in $new_subnet_mask.
+.PP
+Before actually configuring the address, dhclient-script should
+somehow ARP for it and exit with a nonzero status if it receives a
+reply.   In this case, the client will send a DHCPDECLINE message to
+the server and acquire a different address.   This may also be done in
+the RENEW, REBIND, or REBOOT states, but is not required, and indeed
+may not be desirable.
 .PP
 When a binding has been completed, a lot of network parameters are
 likely to need to be set up.   A new /etc/resolv.conf needs to be

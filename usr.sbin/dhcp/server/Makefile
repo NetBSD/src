@@ -32,7 +32,8 @@
 
 .include <bsd.own.mk>
 
-SRCS   = dhcpd.c dhcp.c bootp.c confpars.c db.c
+SRCS   = dhcpd.c dhcp.c bootp.c confpars.c db.c class.c failover.c \
+         omapi.c mdb.c stables.c
 PROG   = dhcpd
 MAN    = dhcpd.8 dhcpd.conf.5 dhcpd.leases.5
 
