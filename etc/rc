@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.146 2000/02/05 17:02:42 itojun Exp $
+#	$NetBSD: rc,v 1.147 2000/02/09 16:24:03 itojun Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -513,11 +513,11 @@ if checkyesno rtsold; then
 fi
 
 if checkyesno rtadvd; then
-	if checkyesno ip6forwarding; then
+	if test "x$ip6mode" = "xrouter"; then
 		echo -n ' rtadvd';	rtadvd $rtadvd_flags
 	else
 		echo
-		logger -s "WARNING: rtadvd cannot be used on IPv6 host."
+		logger -s "WARNING: rtadvd can be used on IPv6 router only."
 	fi
 fi
 
