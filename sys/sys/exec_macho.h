@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.h,v 1.9 2002/11/29 11:31:11 manu Exp $	*/
+/*	$NetBSD: exec_macho.h,v 1.10 2002/11/29 15:49:09 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -242,16 +242,10 @@ struct exec_macho_thread_command {
 	u_long	count;
 };
 
-struct exec_macho_loaded_file {
-	char filename[MAXPATHLEN];
-	LIST_ENTRY(exec_macho_loaded_file) file_list;
-};
-
 struct exec_macho_emul_arg {
 	char *path;
 	char filename[MAXPATHLEN];
 	struct exec_macho_object_header *macho_hdr;
-	LIST_HEAD(loaded_files, exec_macho_loaded_file) loaded_files;
 };
 
 #ifndef _LKM
