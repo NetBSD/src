@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.7 1995/03/29 22:08:37 briggs Exp $	*/
+/*	$NetBSD: union.h,v 1.8 1995/05/30 18:55:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -103,6 +103,7 @@ extern int union_copyfile __P((struct vnode *, struct vnode *,
 					struct ucred *, struct proc *));
 extern int union_copyup __P((struct union_node *, int, struct ucred *,
 				struct proc *));
+extern void union_diruncache __P((struct union_node *));
 extern int union_dowhiteout __P((struct union_node *, struct ucred *,
 					struct proc *));
 extern int union_mkshadow __P((struct union_mount *, struct vnode *,
