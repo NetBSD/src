@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.3 1995/01/26 23:23:36 gwr Exp $ */
+/*	$NetBSD: if_ie.c,v 1.4 1995/04/09 05:08:33 gwr Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -167,10 +167,10 @@ static struct mbuf *last_not_for_us;
 #define	ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
 
-int iewatchdog __P(( /* short */ ));
+void iewatchdog __P(( /* short */ ));
 int ieinit __P((struct ie_softc *));
 int ieioctl __P((struct ifnet *, u_long, caddr_t));
-int iestart __P((struct ifnet *));
+void iestart __P((struct ifnet *));
 void iereset __P((struct ie_softc *));
 static void ie_readframe __P((struct ie_softc *, int));
 static void ie_drop_packet_buffer __P((struct ie_softc *));
@@ -315,7 +315,7 @@ ie_attach(parent, self, aux)
  * Device timeout/watchdog routine.  Entered if the device neglects to
  * generate an interrupt after a transmit has been started on it.
  */
-int
+void
 iewatchdog(unit)
 	short   unit;
 {
@@ -1027,7 +1027,7 @@ ie_drop_packet_buffer(sc)
 /*
  * Start transmission on an interface.
  */
-int
+void
 iestart(ifp)
 	struct ifnet *ifp;
 {
@@ -1037,13 +1037,13 @@ iestart(ifp)
 	u_short len;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		return 0;
+		return;
 
 	if (sc->xmit_free == 0) {
 		ifp->if_flags |= IFF_OACTIVE;
 		if (!sc->xmit_busy)
 			iexmit(sc);
-		return 0;
+		return;
 	}
 
 	do {
@@ -1074,7 +1074,7 @@ iestart(ifp)
 	if ((sc->xmit_free < NTXBUF) && (!sc->xmit_busy))
 		iexmit(sc);
 
-	return 1;
+	return;
 }
 
 /*
