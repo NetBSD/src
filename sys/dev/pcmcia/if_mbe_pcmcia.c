@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.30 2002/11/30 14:15:12 tsutsui Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.31 2004/08/08 23:17:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.30 2002/11/30 14:15:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.31 2004/08/08 23:17:13 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,9 +242,8 @@ mbe_pcmcia_attach(parent, self, aux)
 	 * Don't bother checking flags; the back-end sets the chip
 	 * into 16-bit mode.
 	 */
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16, 0,
-	    mpp->mpp_ioalign ? mpp->mpp_ioalign : cfe->iospace[0].length,
-	    &psc->sc_pcioh, &psc->sc_io_window)) {
+	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16, &psc->sc_pcioh,
+	    &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
 		goto iomap_failed;
 	}

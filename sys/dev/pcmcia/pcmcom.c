@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.14 2003/01/01 00:10:24 thorpej Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.15 2004/08/08 23:17:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.14 2003/01/01 00:10:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.15 2004/08/08 23:17:13 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,8 +256,8 @@ pcmcom_attach_slave(sc, slave)
 
 	printf("%s: slave %d", sc->sc_dev.dv_xname, slave);
 
-	if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO8, 0, psi->psi_pcioh.size,
-	    &psi->psi_pcioh, &psi->psi_io_window)) {
+	if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO8, &psi->psi_pcioh,
+	    &psi->psi_io_window)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
