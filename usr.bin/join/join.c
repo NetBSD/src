@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.10 1997/01/13 20:57:48 tls Exp $	*/
+/*	$NetBSD: join.c,v 1.11 1997/10/19 03:32:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,23 +37,28 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+__COPYRIGHT(
+    "@(#) Copyright (c) 1991 The Regents of the University of California.\n\
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";*/
-static char rcsid[] = "$Id: join.c,v 1.10 1997/01/13 20:57:48 tls Exp $";
+#if 0
+static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
+#else
+__RCSID("$NetBSD: join.c,v 1.11 1997/10/19 03:32:13 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <errno.h>
 
 /*
  * There's a structure per input file which encapsulates the state of the
@@ -93,16 +98,15 @@ u_long olistalloc;		/* output field allocated count */
 
 int joinout = 1;		/* show lines with matched join fields (-v) */
 int needsep;			/* need separator character */
-int showusage = 1;		/* show usage for usage err() calls */
 int spans = 1;			/* span multiple delimiters (-t) */
 char *empty;			/* empty field replacement string (-e) */
 char *tabchar = " \t";		/* delimiter characters (-t) */
 
 int  cmp __P((LINE *, u_long, LINE *, u_long));
 void enomem __P((void));
-void err __P((const char *, ...));
 void fieldarg __P((char *));
 void joinlines __P((INPUT *, INPUT *));
+int  main __P((int, char **));
 void obsolete __P((char **));
 void outfield __P((LINE *, u_long));
 void outoneline __P((INPUT *, LINE *));
@@ -115,7 +119,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register INPUT *F1, *F2;
+	INPUT *F1, *F2;
 	int aflag, ch, cval, vflag;
 	char *end;
 
@@ -124,24 +128,32 @@ main(argc, argv)
 
 	aflag = vflag = 0;
 	obsolete(argv);
-	while ((ch = getopt(argc, argv, "\01a:e:j:1:2:o:t:v:")) != EOF) {
+	while ((ch = getopt(argc, argv, "\01a:e:j:1:2:o:t:v:")) != -1) {
 		switch (ch) {
 		case '\01':
 			aflag = 1;
 			F1->unpair = F2->unpair = 1;
 			break;
 		case '1':
-			if ((F1->joinf = strtol(optarg, &end, 10)) < 1)
-				err("-1 option field number less than 1");
-			if (*end)
-				err("illegal field number -- %s", optarg);
+			if ((F1->joinf = strtol(optarg, &end, 10)) < 1) {
+				warnx("-1 option field number less than 1");
+				usage();
+			}
+			if (*end) {
+				warnx("illegal field number -- %s", optarg);
+				usage();
+			}
 			--F1->joinf;
 			break;
 		case '2':
-			if ((F2->joinf = strtol(optarg, &end, 10)) < 1)
-				err("-2 option field number less than 1");
-			if (*end)
-				err("illegal field number -- %s", optarg);
+			if ((F2->joinf = strtol(optarg, &end, 10)) < 1) {
+				warnx("-2 option field number less than 1");
+				usage();
+			}
+			if (*end) {
+				warnx("illegal field number -- %s", optarg);
+				usage();
+			}
 			--F2->joinf;
 			break;
 		case 'a':
@@ -154,21 +166,28 @@ main(argc, argv)
 				F2->unpair = 1;
 				break;
 			default:
-				err("-a option file number not 1 or 2");
+				warnx("-a option file number not 1 or 2");
+				usage();
 				break;
 			}
-			if (*end)
-				err("illegal file number -- %s", optarg);
+			if (*end) {
+				warnx("illegal file number -- %s", optarg);
+				usage();
+			}
 			break;
 		case 'e':
 			empty = optarg;
 			break;
 		case 'j':
 			if ((F1->joinf = F2->joinf =
-			    strtol(optarg, &end, 10)) < 1)
-				err("-j option field number less than 1");
-			if (*end)
-				err("illegal field number -- %s", optarg);
+			    strtol(optarg, &end, 10)) < 1) {
+				warnx("-j option field number less than 1");
+				usage();
+			}
+			if (*end) {
+				warnx("illegal field number -- %s", optarg);
+				usage();
+			}
 			--F1->joinf;
 			--F2->joinf;
 			break;
@@ -177,8 +196,10 @@ main(argc, argv)
 			break;
 		case 't':
 			spans = 0;
-			if (strlen(tabchar = optarg) != 1)
-				err("illegal tab character specification");
+			if (strlen(tabchar = optarg) != 1) {
+				warnx("illegal tab character specification");
+				usage();
+			}
 			break;
 		case 'v':
 			vflag = 1;
@@ -191,11 +212,14 @@ main(argc, argv)
 				F2->unpair = 1;
 				break;
 			default:
-				err("-v option file number not 1 or 2");
+				warnx("-v option file number not 1 or 2");
+				usage();
 				break;
 			}
-			if (*end)
-				err("illegal file number -- %s", optarg);
+			if (*end) {
+				warnx("illegal file number -- %s", optarg);
+				usage();
+			}
 			break;
 		case '?':
 		default:
@@ -206,24 +230,23 @@ main(argc, argv)
 	argv += optind;
 
 	if (aflag && vflag)
-		err("-a and -v options mutually exclusive");
+		errx(1, "-a and -v options mutually exclusive");
 
 	if (argc != 2)
 		usage();
-	showusage = 0;
 
 	/* Open the files; "-" means stdin. */
 	if (!strcmp(*argv, "-"))
 		F1->fp = stdin;
 	else if ((F1->fp = fopen(*argv, "r")) == NULL)
-		err("%s: %s", *argv, strerror(errno));
+		err(1, "%s", *argv);
 	++argv;
 	if (!strcmp(*argv, "-"))
 		F2->fp = stdin;
 	else if ((F2->fp = fopen(*argv, "r")) == NULL)
-		err("%s: %s", *argv, strerror(errno));
+		err(1, "%s", *argv);
 	if (F1->fp == stdin && F2->fp == stdin)
-		err("only one input file may be stdin");
+		errx(1, "only one input file may be stdin");
 
 	slurp(F1);
 	slurp(F2);
@@ -269,7 +292,7 @@ void
 slurp(F)
 	INPUT *F;
 {
-	register LINE *lp, *lastlp;
+	LINE *lp, *lastlp;
 	LINE tmp;
 	size_t len;
 	int cnt;
@@ -292,7 +315,7 @@ slurp(F)
 			if ((F->set = realloc(F->set,
 			    F->setalloc * sizeof(LINE))) == NULL)
 				enomem();
-			bzero(F->set + cnt, 100 * sizeof(LINE *));
+			memset(F->set + cnt, 0, 100 * sizeof(LINE *));
 		}
 			
 		/*
@@ -322,7 +345,7 @@ slurp(F)
 			    lp->linealloc * sizeof(char))) == NULL)
 				enomem();
 		}
-		bcopy(bp, lp->line, len+1);
+		memmove(lp->line, bp, len+1);
 
 		/* Replace trailing newline, if it exists. */ 
 		if (bp[len - 1] == '\n')
@@ -368,9 +391,9 @@ cmp(lp1, fieldno1, lp2, fieldno2)
 
 void
 joinlines(F1, F2)
-	register INPUT *F1, *F2;
+	INPUT *F1, *F2;
 {
-	register int cnt1, cnt2;
+	int cnt1, cnt2;
 
 	/*
 	 * Output the results of a join comparison.  The output may be from
@@ -390,9 +413,9 @@ joinlines(F1, F2)
 void
 outoneline(F, lp)
 	INPUT *F;
-	register LINE *lp;
+	LINE *lp;
 {
-	register int cnt;
+	int cnt;
 
 	/*
 	 * Output a single line from one of the files, according to the
@@ -409,16 +432,16 @@ outoneline(F, lp)
 			outfield(lp, cnt);
 	(void)printf("\n");
 	if (ferror(stdout))
-		err("stdout: %s", strerror(errno));
+		err(1, "stdout");
 	needsep = 0;
 }
 
 void
 outtwoline(F1, lp1, F2, lp2)
-	register INPUT *F1, *F2;
-	register LINE *lp1, *lp2;
+	INPUT *F1, *F2;
+	LINE *lp1, *lp2;
 {
-	register int cnt;
+	int cnt;
 
 	/* Output a pair of lines according to the join list (if any). */
 	if (olist)
@@ -442,7 +465,7 @@ outtwoline(F1, lp1, F2, lp2)
 	}
 	(void)printf("\n");
 	if (ferror(stdout))
-		err("stdout: %s", strerror(errno));
+		err(1, "stdout");
 	needsep = 0;
 }
 
@@ -463,7 +486,7 @@ outfield(lp, fieldno)
 			(void)printf("%s", lp->fields[fieldno]);
 		}
 	if (ferror(stdout))
-		err("stdout: %s", strerror(errno));
+		err(1, "stdout");
 }
 
 /*
@@ -480,13 +503,13 @@ fieldarg(option)
 	while ((token = strsep(&option, " \t")) != NULL) {
 		if (*token == '\0')
 			continue;
-		if (token[0] != '1' && token[0] != '2' || token[1] != '.')
-			err("malformed -o option field");
+		if ((token[0] != '1' && token[0] != '2') || token[1] != '.')
+			errx(1, "malformed -o option field");
 		fieldno = strtol(token + 2, &end, 10);
 		if (*end)
-			err("malformed -o option field");
+			errx(1, "malformed -o option field");
 		if (fieldno == 0)
-			err("field numbers are 1 based");
+			errx(1, "field numbers are 1 based");
 		if (olistcnt == olistalloc) {
 			olistalloc += 50;
 			if ((olist = realloc(olist,
@@ -506,7 +529,7 @@ obsolete(argv)
 	int len;
 	char **p, *ap, *t;
 
-	while (ap = *++argv) {
+	while ((ap = *++argv) != NULL) {
 		/* Return if "--". */
 		if (ap[0] == '-' && ap[1] == '-')
 			return;
@@ -546,7 +569,7 @@ obsolete(argv)
 			case '\0':
 				break;
 			default:
-jbad:				err("illegal option -- %s", ap);
+jbad:				errx(1, "illegal option -- %s", ap);
 				usage();
 			}
 			break;
@@ -558,7 +581,7 @@ jbad:				err("illegal option -- %s", ap);
 			if (ap[2] != '\0')
 				break;
 			for (p = argv + 2; *p; ++p) {
-				if (p[0][0] != '1' && p[0][0] != '2' ||
+				if ((p[0][0] != '1' && p[0][0] != '2') ||
 				    p[0][1] != '.')
 					break;
 				len = strlen(*p);
@@ -568,7 +591,7 @@ jbad:				err("illegal option -- %s", ap);
 					enomem();
 				t[0] = '-';
 				t[1] = 'o';
-				bcopy(*p, t + 2, len + 1);
+				memmove(t + 2, *p, len + 1);
 				*p = t;
 			}
 			argv = p - 1;
@@ -580,8 +603,7 @@ jbad:				err("illegal option -- %s", ap);
 void
 enomem()
 {
-	showusage = 0;
-	err("%s", strerror(errno));
+	errx(1, "no memory");
 }
 
 void
@@ -591,35 +613,4 @@ usage()
 	    "usage: join [-a fileno | -v fileno ] [-e string] [-1 field] ",
 	    "[-2 field]\n            [-o list] [-t char] file1 file2");
 	exit(1);
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "join: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	if (showusage)
-		usage();
-	exit(1);
-	/* NOTREACHED */
 }
