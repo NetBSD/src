@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.1.2.14 2002/10/23 18:23:12 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.1.2.15 2002/10/26 02:17:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -126,7 +126,8 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 		
 		/* Okay, didn't look free. Get the interlock... */
 		pthread_spinlock(self, &mutex->ptm_interlock);
-		/* The mutex_unlock routine will get the interlock
+		/*
+		 * The mutex_unlock routine will get the interlock
 		 * before looking at the list of sleepers, so if the
 		 * lock is held we can safely put ourselves on the
 		 * sleep queue. If it's not held, we can try taking it
@@ -134,7 +135,8 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 		 */
 		if (mutex->ptm_lock == __SIMPLELOCK_LOCKED) {
 			PTQ_INSERT_TAIL(&mutex->ptm_blocked, self, pt_sleep);
-			/* Locking a mutex is not a cancellation
+			/*
+			 * Locking a mutex is not a cancellation
 			 * point, so we don't need to do the
 			 * test-cancellation dance. We may get woken
 			 * up spuriously by pthread_cancel, though,
