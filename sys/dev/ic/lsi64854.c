@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.20 2001/11/15 09:48:06 lukem Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.21 2002/09/23 04:57:59 chs Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.20 2001/11/15 09:48:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.21 2002/09/23 04:57:59 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,9 +121,12 @@ lsi64854_attach(sc)
 		return;
 	}
 
-	printf(": dma rev ");
 	csr = L64854_GCSR(sc);
 	sc->sc_rev = csr & L64854_DEVID;
+	if (sc->sc_rev == DMAREV_HME) {
+		return;
+	}
+	printf(": dma rev ");
 	switch (sc->sc_rev) {
 	case DMAREV_0:
 		printf("0");
@@ -139,9 +142,6 @@ lsi64854_attach(sc)
 		break;
 	case DMAREV_2:
 		printf("2");
-		break;
-	case DMAREV_HME:
-		printf("fas");
 		break;
 	default:
 		printf("unknown (0x%x)", sc->sc_rev);
