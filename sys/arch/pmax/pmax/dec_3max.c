@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.7 1999/03/25 01:17:52 simonb Exp $	*/
+/*	$NetBSD: dec_3max.c,v 1.8 1999/03/27 03:27:09 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.7 1999/03/25 01:17:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.8 1999/03/27 03:27:09 mhitch Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -337,7 +337,7 @@ dec_3max_errintr()
 
 	/* Fetch error address, ECC chk/syn bits, clear interrupt */
 	erradr = *(u_int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR);
-	errsyn = *(u_int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN);
+	errsyn = MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN);
 	*(u_int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	wbflush();
 
