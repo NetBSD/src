@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.36 1998/11/29 06:57:46 thorpej Exp $ */
+/* $NetBSD: conf.c,v 1.37 1998/12/08 15:52:31 augustss Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.36 1998/11/29 06:57:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.37 1998/12/08 15:52:31 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,6 +245,7 @@ struct cdevsw	cdevsw[] =
 	cdev_usb_init(NUSB,usb),	/* 45: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 46: USB generic HID */
 	cdev_lpt_init(NULPT,ulpt),	/* 47: USB printer */
+	cdev_ugen_init(NUGEN,ugen),	/* 48: USB generic driver */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -334,6 +335,7 @@ static int chrtoblktbl[] = {
 	/* 45 */	NODEV,
 	/* 46 */	NODEV,
 	/* 47 */	NODEV,
+	/* 48 */	NODEV,
 };
 
 /*
