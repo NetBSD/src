@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.7 1998/01/06 08:46:16 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.8 1998/04/20 05:40:28 scottr Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -37,22 +37,53 @@
 
 include	<sys/param.h>
 include	<sys/buf.h>
-include	<sys/proc.h>
+include	<sys/map.h>
 include	<sys/mbuf.h>
 include	<sys/msgbuf.h>
+include	<sys/proc.h>
 include	<sys/syscall.h>
-include	<sys/systm.h>
-include	<sys/types.h>
 include	<sys/user.h>
 
 include	<vm/vm.h>
 
 include	<machine/cpu.h>
-include	<machine/trap.h>
 include	<machine/psl.h>
 include	<machine/reg.h>
 include	<machine/pte.h>
 
+# machine class
+define	CPUINFO_CLASS		offsetof(struct cpu_model_info, class)
+define	MACH_CLASSAV		MACH_CLASSAV
+
+# values for mmutype
+define	MMU_68851		MMU_68851
+define	MMU_68030		MMU_68030
+define	MMU_68040		MMU_68040
+
+# values for cputype
+define	CPU_68020		CPU_68020
+define	CPU_68030		CPU_68030
+define	CPU_68040		CPU_68040
+
+# values for fputype
+define	FPU_68881		FPU_68881
+define	FPU_68882		FPU_68882
+define	FPU_68040		FPU_68040
+
+# general constants
+define	UPAGES			UPAGES
+define	USPACE			USPACE
+define	P1PAGES 		P1PAGES
+define	CLSIZE			CLSIZE
+define	NBPG			NBPG
+define	NPTEPG			NPTEPG
+define	PGSHIFT 		PGSHIFT
+define	SYSPTSIZE		SYSPTSIZE
+define	USRPTSIZE		USRPTSIZE
+define	USRIOSIZE		USRIOSIZE
+define	USRSTACK		USRSTACK
+
+# proc fields and values
 define	P_FORW			offsetof(struct proc, p_forw)
 define	P_BACK			offsetof(struct proc, p_back)
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
@@ -68,56 +99,18 @@ define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 define	SSLEEP			SSLEEP
 define	SRUN			SRUN
 
-define	MD_REGS 		offsetof(struct mdproc, md_regs)
-
+# interrupt/fault metering
+ifdef UVM
+define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
+else
 define	V_SWTCH 		offsetof(struct vmmeter, v_swtch)
 define	V_TRAP			offsetof(struct vmmeter, v_trap)
 define	V_SYSCALL		offsetof(struct vmmeter, v_syscall)
 define	V_INTR			offsetof(struct vmmeter, v_intr)
 define	V_SOFT			offsetof(struct vmmeter, v_soft)
+endif
 
-define	UPAGES			UPAGES
-define	USPACE			USPACE
-define	P1PAGES 		P1PAGES
-define	CLSIZE			CLSIZE
-define	NBPG			NBPG
-define	NPTEPG			NPTEPG
-define	PGSHIFT 		PGSHIFT
-define	SYSPTSIZE		SYSPTSIZE
-define	USRPTSIZE		USRPTSIZE
-define	USRIOSIZE		USRIOSIZE
-define	USRSTACK		USRSTACK
-
-define	NMBCLUSTERS		NMBCLUSTERS
-define	MCLBYTES		MCLBYTES
-define	NKMEMCLUSTERS		NKMEMCLUSTERS
-
-quote	#ifdef SYSVSHM
-define	SHMMAXPGS		SHMMAXPGS
-quote	#endif
-
-define	U_PROF			offsetof(struct user, u_stats.p_prof)
-define	U_PROFSCALE		offsetof(struct user, u_stats.p_prof.pr_scale)
-define	RU_MINFLT		offsetof(struct rusage, ru_minflt)
-
-define	T_BUSERR		T_BUSERR
-define	T_ADDRERR		T_ADDRERR
-define	T_ILLINST		T_ILLINST
-define	T_ZERODIV		T_ZERODIV
-define	T_CHKINST		T_CHKINST
-define	T_TRAPVINST		T_TRAPVINST
-define	T_PRIVINST		T_PRIVINST
-define	T_TRACE 		T_TRACE
-define	T_MMUFLT		T_MMUFLT
-define	T_SSIR			T_SSIR
-define	T_FMTERR		T_FMTERR
-define	T_COPERR		T_COPERR
-define	T_FPERR 		T_FPERR
-define	T_ASTFLT		T_ASTFLT
-define	T_TRAP15		T_TRAP15
-define	T_FPEMULI		T_FPEMULI
-define	T_FPEMULD		T_FPEMULD
-
+# PSL values (should just include psl.h?)
 define	PSL_S			PSL_S
 define	PSL_IPL7		PSL_IPL7
 define	PSL_LOWIPL		PSL_LOWIPL
@@ -130,9 +123,9 @@ define	SPL4			(PSL_S | PSL_IPL4)
 define	SPL5			(PSL_S | PSL_IPL5)
 define	SPL6			(PSL_S | PSL_IPL6)
 
+# magic
 define	FC_USERD		FC_USERD
 define	FC_SUPERD		FC_SUPERD
-
 define	CACHE_ON		CACHE_ON
 define	CACHE_OFF		CACHE_OFF
 define	CACHE_CLR		CACHE_CLR
@@ -141,8 +134,10 @@ define	CACHE40_OFF		CACHE40_OFF
 define	IC_CLEAR		IC_CLEAR
 define	DC_CLEAR		DC_CLEAR
 
+# pte/ste bits
 define	PG_FRAME		PG_FRAME
 
+# pcb fields
 define	SIZEOF_PCB		sizeof(struct pcb)
 define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
 define	PCB_PS			offsetof(struct pcb, pcb_ps)
@@ -152,32 +147,18 @@ define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
 define	PCB_TRCB		5
 
+# exception frame offset/sizes
 define	FR_SP			offsetof(struct frame, f_regs[15])
 define	FR_HW			offsetof(struct frame, f_sr)
 define	FR_ADJ			offsetof(struct frame, f_stackadj)
+define	FR_SIZE			sizeof(struct trapframe)
 
-define	B_READ			B_READ
-
-define	ENOENT			ENOENT
-define	EFAULT			EFAULT
-define	ENAMETOOLONG		ENAMETOOLONG
-
+# system calls
 define	SYS_exit		SYS_exit
 define	SYS_execve		SYS_execve
 define	SYS_sigreturn		SYS_sigreturn
 
-define	CPU_68020		CPU_68020
-define	CPU_68030		CPU_68030
-define	CPU_68040		CPU_68040
-
-define	MMU_68851		MMU_68851
-define	MMU_68030		MMU_68030
-define	MMU_68040		MMU_68040
-
-define	FPU_68881		FPU_68881
-define	FPU_68882		FPU_68882
-define	FPU_68040		FPU_68040
-
-define	MACH_CLASSAV		MACH_CLASSAV
-
-define	CPUINFO_CLASS		offsetof(struct cpu_model_info, class)
+# errno
+define	ENOENT			ENOENT
+define	EFAULT			EFAULT
+define	ENAMETOOLONG		ENAMETOOLONG
