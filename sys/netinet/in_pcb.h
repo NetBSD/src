@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.20 1997/07/23 21:26:44 thorpej Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.21 1997/09/22 21:39:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -113,4 +113,6 @@ void	in_pcbstate __P((struct inpcb *, int));
 void	in_rtchange __P((struct inpcb *, int));
 void	in_setpeeraddr __P((struct inpcb *, struct mbuf *));
 void	in_setsockaddr __P((struct inpcb *, struct mbuf *));
+struct rtentry *
+	in_pcbrtentry __P((struct inpcb *));
 #endif
