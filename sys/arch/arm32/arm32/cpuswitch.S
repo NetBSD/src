@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.19 1997/10/14 10:09:46 mark Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.20 1998/01/20 01:18:24 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -319,7 +319,7 @@ ENTRY(cpu_switch)
 	mov	r7, r1
 
 #ifdef spl0
-	mov	r0, #(SPL_0)
+	mov	r0, #(_SPL_0)
 	bl	_splx
 #else
 	bl	_spl0
