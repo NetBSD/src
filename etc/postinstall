@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.27 2002/09/03 15:35:53 abs Exp $
+# $NetBSD: postinstall,v 1.28 2002/09/04 08:00:01 itojun Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -44,7 +44,6 @@
 #
 # checks to add:
 #	- sysctl(8) renames
-#	- postfix config
 #	- de* -> tlp* migration (/etc/ifconfig.de*, $ifconfig_de*,
 #	  dhclient.conf, ...) ?
 #	- support quiet/verbose mode ?
@@ -522,6 +521,25 @@ do_makedev()
 
 	compare_dir $1 ${SRC_DIR}/etc/etc.${MACHINE} \
 		${DEST_DIR}/dev 555 MAKEDEV || return 1
+}
+
+#
+#	postfix
+#
+additem postfix "/etc/postfix/* being up to date"
+do_postfix()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_postfix  fix|check"
+	op=$1
+	failed=0
+
+	compare_dir ${op} ${SRC_DIR}/gnu/dist/postfix/conf \
+		${DEST_DIR}/etc/postfix 555 postfix-script
+	compare_dir ${op} ${SRC_DIR}/gnu/dist/postfix/conf \
+		${DEST_DIR}/etc/postfix 444 post-install postfix-files
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
 }
 
 
