@@ -314,6 +314,17 @@ _spl0:
 #ifdef INET
 	DONET(NETISR_IP,_ipintr)
 #endif
+#ifdef ISO
+	DONET(NETISR_ISO,_clnlintr)
+#endif
+#ifdef NS
+	DONET(NETISR_NS,_nsintr)
+#endif
+#if notyet
+#ifdef CCITT
+	DONET(NETISR_CCITT,_cittintr)
+#endif
+#endif
 	cli				# disable interrupts
 	popl	_cpl			# save old priority
 	NOP
