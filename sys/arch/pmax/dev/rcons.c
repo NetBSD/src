@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.7 1996/02/02 18:07:35 mycroft Exp $	*/
+/*	$NetBSD: rcons.c,v 1.8 1996/02/11 07:14:58 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -93,7 +93,6 @@ char rcons_maxcols [20];
 
 void rcons_vputc __P ((dev_t dev, int c));
 
-extern int (*v_putc) /*__P((dev_t dev, int c))*/ ();
 void nobell __P ((int));
 
 /*
@@ -107,7 +106,6 @@ rcons_connect (info)
 	static struct rconsole rc;
 	static int row, col;
 
-	void * tem;
 	/* If we're running a serial console, don't set up a raster console
 	   even if there's a device that can support it. */
 	if (cn_tab -> cn_pri == CN_REMOTE)
@@ -153,7 +151,6 @@ rcons_connect (info)
 	row = (rc.rc_height / HW_FONT_HEIGHT) - 1;
 	col = 0;
 
-	tem = v_putc;	/* rcons putchar signature doesn't match dev/cons */
 	rcons_init (&rc);
 
 
