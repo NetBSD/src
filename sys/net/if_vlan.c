@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.26 2000/12/18 19:36:41 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.27 2001/01/16 21:18:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -109,8 +109,6 @@
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-
-extern struct	ifaddr **ifnet_addrs;	/* XXX if.c */
 
 struct vlan_mc_entry {
 	LIST_ENTRY(vlan_mc_entry)	mc_entries;
