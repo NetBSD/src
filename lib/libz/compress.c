@@ -1,8 +1,8 @@
-/*	$NetBSD: compress.c,v 1.4 1998/11/01 20:33:25 tron Exp $	*/
+/*	$NetBSD: compress.c,v 1.5 1999/07/02 15:51:37 simonb Exp $	*/
 
 /* compress.c -- compress a memory buffer
  * Copyright (C) 1995-1998 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* @(#) Id */

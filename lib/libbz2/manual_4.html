@@ -47,9 +47,9 @@ decompression and, in retrospect, are unnecessary.  These are:
 
       there.  Udi Manber and Gene Myers published a suffix
       array construction algorithm a few years back, which
-      can be employed to sort any block, no matter how 
+      can be employed to sort any block, no matter how
       repetitive, in O(N log N) time.  Subsequent work by
-      Kunihiko Sadakane has produced a derivative O(N (log N)^2) 
+      Kunihiko Sadakane has produced a derivative O(N (log N)^2)
       algorithm which usually outperforms the Manber-Myers
       algorithm.
 
@@ -73,7 +73,7 @@ decompression and, in retrospect, are unnecessary.  These are:
       handled by a library, and I have had to jump though
       some hoops to produce an efficient implementation of
       decompression.  It's a bit hairy.  Try passing
-      <CODE>decompress.c</CODE> through the C preprocessor 
+      <CODE>decompress.c</CODE> through the C preprocessor
       and you'll see what I mean.  Much of this complexity
       could have been avoided if the compressed size of
       each block of data was recorded in the data stream.
@@ -110,8 +110,8 @@ Improvements which I have been able to incorporate into
 </UL>
 
 <P>
-Further ahead, it would be nice 
-to be able to do random access into files.  This will 
+Further ahead, it would be nice
+to be able to do random access into files.  This will
 require some careful design of compressed file formats.
 
 </P>
@@ -125,18 +125,18 @@ GNU <CODE>autoconf</CODE> to configure 0.9.0.
 
 </P>
 <P>
-<CODE>autoconf</CODE>, admirable and wonderful though it is, 
+<CODE>autoconf</CODE>, admirable and wonderful though it is,
 mainly assists with portability problems between Unix-like
 platforms.  But <CODE>bzip2</CODE> doesn't have much in the way
 of portability problems on Unix; most of the difficulties appear
 when porting to the Mac, or to Microsoft's operating systems.
-<CODE>autoconf</CODE> doesn't help in those cases, and brings in a 
+<CODE>autoconf</CODE> doesn't help in those cases, and brings in a
 whole load of new complexity.
 
 </P>
 <P>
 Most people should be able to compile the library and program
-under Unix straight out-of-the-box, so to speak, especially 
+under Unix straight out-of-the-box, so to speak, especially
 if you have a version of GNU C available.
 
 </P>
@@ -144,7 +144,7 @@ if you have a version of GNU C available.
 There are a couple of <CODE>__inline__</CODE> directives in the code.  GNU C
 (<CODE>gcc</CODE>) should be able to handle them.  If your compiler doesn't
 like them, just <CODE>#define</CODE> <CODE>__inline__</CODE> to be null.  One
-easy way to do this is to compile with the flag <CODE>-D__inline__=</CODE>, 
+easy way to do this is to compile with the flag <CODE>-D__inline__=</CODE>,
 which should be understood by most Unix compilers.
 
 </P>
@@ -192,7 +192,7 @@ of GNU C (and other compilers) generating bad code for
 <CODE>bzip2</CODE>, and I've run across two such examples myself.
 
 2.7.X versions of GNU C are known to generate bad code from
-time to time, at high optimisation levels.  
+time to time, at high optimisation levels.
 If you get problems, try using the flags
 <CODE>-O2</CODE> <CODE>-fomit-frame-pointer</CODE> <CODE>-fno-strength-reduce</CODE>.
 You should specifically <EM>not</EM> use <CODE>-funroll-loops</CODE>.
@@ -222,7 +222,7 @@ it again.
 
 <P>
 If you've incorporated <CODE>libbzip2</CODE> into your own program
-and are getting problems, please, please, please, check that the 
+and are getting problems, please, please, please, check that the
 parameters you are passing in calls to the library, are
 correct, and in accordance with what the documentation says
 is allowable.  I have tried to make the library robust against
@@ -231,7 +231,7 @@ such problems, but I'm sure I haven't succeeded.
 </P>
 <P>
 Finally, if the above comments don't help, you'll have to send
-me a bug report.  Now, it's just amazing how many people will 
+me a bug report.  Now, it's just amazing how many people will
 send me a bug report saying something like
 
 <PRE>
@@ -240,7 +240,7 @@ send me a bug report saying something like
 
 <P>
 and absolutely nothing else.  Needless to say, a such a report
-is <EM>totally, utterly, completely and comprehensively 100% useless; 
+is <EM>totally, utterly, completely and comprehensively 100% useless;
 a waste of your time, my time, and net bandwidth</EM>.
 With no details at all, there's no way I can possibly begin
 to figure out what the problem is.
@@ -248,13 +248,13 @@ to figure out what the problem is.
 </P>
 <P>
 The rules of the game are: facts, facts, facts.  Don't omit
-them because "oh, they won't be relevant".  At the bare 
+them because "oh, they won't be relevant".  At the bare
 minimum:
 
 <PRE>
-   Machine type.  Operating system version.  
-   Exact version of <CODE>bzip2</CODE> (do <CODE>bzip2 -V</CODE>).  
-   Exact version of the compiler used.  
+   Machine type.  Operating system version.
+   Exact version of <CODE>bzip2</CODE> (do <CODE>bzip2 -V</CODE>).
+   Exact version of the compiler used.
    Flags passed to the compiler.
 </PRE>
 
@@ -285,7 +285,7 @@ requiring interactive behaviour.
 </P>
 <P>
 These aren't faults of my implementation, I hope, but more
-an intrinsic property of the Burrows-Wheeler transform (unfortunately).  
+an intrinsic property of the Burrows-Wheeler transform (unfortunately).
 Maybe this isn't what you want.
 
 </P>
@@ -334,7 +334,7 @@ First, some data sets:
       letters.  18.7 megabytes.
 <LI>H: my home directory tree.  Documents, source code, mail files,
 
-      compressed data.  H contains B, and also a directory of 
+      compressed data.  H contains B, and also a directory of
       files designed as boundary cases for the sorting; mostly very
       repetitive, nasty files.  445 megabytes.
 <LI>A: directory tree holding various applications built from source:
@@ -348,17 +348,17 @@ First, some data sets:
 </UL>
 
 <P>
-The tests conducted are as follows.  Each test means compressing 
+The tests conducted are as follows.  Each test means compressing
 (a copy of) each file in the data set, decompressing it and
 comparing it against the original.
 
 </P>
 <P>
 First, a bunch of tests with block sizes, internal buffer
-sizes and randomisation lengths set very small, 
+sizes and randomisation lengths set very small,
 to detect any problems with the
-blocking, buffering and randomisation mechanisms.  
-This required modifying the source code so as to try to 
+blocking, buffering and randomisation mechanisms.
+This required modifying the source code so as to try to
 break it.
 
 <OL>
@@ -440,7 +440,7 @@ Four documents describe essentially all the ideas behind <CODE>bzip2</CODE>:
 <PRE>
 Michael Burrows and D. J. Wheeler:
   "A block-sorting lossless data compression algorithm"
-   10th May 1994. 
+   10th May 1994.
    Digital SRC Research Report 124.
    ftp://ftp.digital.com/pub/DEC/SRC/research-reports/SRC-124.ps.gz
    If you have trouble finding it, try searching at the

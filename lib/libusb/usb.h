@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.4 1999/05/12 00:37:44 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.5 1999/07/02 15:46:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -30,7 +30,7 @@ typedef struct report_desc *report_desc_t;
 
 typedef struct hid_data *hid_data_t;
 
-typedef enum hid_kind { 
+typedef enum hid_kind {
 	hid_input, hid_output, hid_feature, hid_collection, hid_endcollection
 }hid_kind_t;
 

@@ -1,8 +1,8 @@
-/* $NetBSD: minigzip.c,v 1.7 1998/11/01 20:33:27 tron Exp $ */
+/* $NetBSD: minigzip.c,v 1.8 1999/07/02 15:51:40 simonb Exp $ */
 
 /* minigzip.c -- simulate gzip using the zlib compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /*
@@ -14,7 +14,7 @@
  * real thing. On MSDOS, use only on file names without extension
  * or in pipe mode.
  */
-  
+
 /* from: Id: minigzip.c,v 1.10 1996/07/24 13:41:04 me Exp */
 
 /* @(#) Id */
@@ -152,7 +152,7 @@ int gz_compress_mmap(in, out)
     if (buf_len <= 0) return Z_ERRNO;
 
     /* Now do the actual mmap: */
-    buf = mmap((caddr_t) 0, buf_len, PROT_READ, MAP_SHARED, ifd, (off_t)0); 
+    buf = mmap((caddr_t) 0, buf_len, PROT_READ, MAP_SHARED, ifd, (off_t)0);
     if (buf == (caddr_t)(-1)) return Z_ERRNO;
 
     /* Compress the whole file at once: */

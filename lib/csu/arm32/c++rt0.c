@@ -1,4 +1,4 @@
-/*	$NetBSD: c++rt0.c,v 1.1 1999/02/27 03:28:30 tv Exp $	*/
+/*	$NetBSD: c++rt0.c,v 1.2 1999/07/02 15:53:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ __dtors()
 {
 	unsigned long i = (unsigned long) __DTOR_LIST__[0];
 	void (**p)(void) = __DTOR_LIST__ + i;
- 
+
 	while (i--)
 #ifdef ARM32_BROKEN_RELOCATIONS		/* XXX ARM32_BROKEN_RELOCATIONS */
 		(*(void (*)(void))((char *)(*p--) + base))(); /* XXX ... */

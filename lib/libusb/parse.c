@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.3 1999/05/12 00:04:49 augustss Exp $	*/
+/*	$NetBSD: parse.c,v 1.4 1999/07/02 15:46:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -164,7 +164,7 @@ hid_get_item(hid_data_t s, hid_item_t *h)
 		default:
 			return (-1);
 		}
-		
+
 		switch (bType) {
 		case 0:			/* Main */
 			switch (bTag) {
@@ -179,8 +179,8 @@ hid_get_item(hid_data_t s, hid_item_t *h)
 					s->multi = 0;
 					c->report_count = 1;
 					if (s->minset) {
-						for (i = c->usage_minimum; 
-						     i <= c->usage_maximum; 
+						for (i = c->usage_minimum;
+						     i <= c->usage_maximum;
 						     i++) {
 							s->usages[s->nusage] = i;
 							if (s->nusage < MAXUSAGE-1)
@@ -190,7 +190,7 @@ hid_get_item(hid_data_t s, hid_item_t *h)
 					}
 					goto top;
 				} else {
-					if (s->minset) 
+					if (s->minset)
 						c->usage = c->usage_minimum;
 					*h = *c;
 					h->next = 0;
@@ -279,9 +279,9 @@ hid_get_item(hid_data_t s, hid_item_t *h)
 		case 2:		/* Local */
 			switch (bTag) {
 			case 0:
-				if (bSize == 1) 
+				if (bSize == 1)
 					dval = c->_usage_page | (dval&0xff);
-				else if (bSize == 2) 
+				else if (bSize == 2)
 					dval = c->_usage_page | (dval&0xffff);
 				c->usage = dval;
 				if (s->nusage < MAXUSAGE)
@@ -290,16 +290,16 @@ hid_get_item(hid_data_t s, hid_item_t *h)
 				break;
 			case 1:
 				s->minset = 1;
-				if (bSize == 1) 
+				if (bSize == 1)
 					dval = c->_usage_page | (dval&0xff);
-				else if (bSize == 2) 
+				else if (bSize == 2)
 					dval = c->_usage_page | (dval&0xffff);
 				c->usage_minimum = dval;
 				break;
 			case 2:
-				if (bSize == 1) 
+				if (bSize == 1)
 					dval = c->_usage_page | (dval&0xff);
-				else if (bSize == 2) 
+				else if (bSize == 2)
 					dval = c->_usage_page | (dval&0xffff);
 				c->usage_maximum = dval;
 				break;
@@ -334,7 +334,7 @@ hid_get_item(hid_data_t s, hid_item_t *h)
 	}
 }
 
-int 
+int
 hid_report_size(report_desc_t r, enum hid_kind k, int *idp)
 {
 	struct hid_data *d;

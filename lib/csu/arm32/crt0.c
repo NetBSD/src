@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.8 1999/01/22 11:45:16 mycroft Exp $	*/
+/*	$NetBSD: crt0.c,v 1.9 1999/07/02 15:53:55 simonb Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -39,7 +39,7 @@
 #undef mmap
 #define mmap(addr, len, prot, flags, fd, off)   		\
 	__syscall(SYS_mmap, (addr), (len), (prot), (flags),	\
-	(fd), 0, (off_t)(off)) 
+	(fd), 0, (off_t)(off))
 
 extern	void		start __P((void)) asm("start");
 	void		__start __P((int, char *[], char *[]));
@@ -61,7 +61,7 @@ start:
 	add	r2, r1, r0, lsl #2
 	add	r2, r2, #0x0004
 
-	b	___start	
+	b	___start
 
 	.align	0
 Lps_strings:
@@ -69,7 +69,7 @@ Lps_strings:
 ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.8 1999/01/22 11:45:16 mycroft Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.9 1999/07/02 15:53:55 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void

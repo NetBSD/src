@@ -1,4 +1,4 @@
-# $NetBSD: usb_hid_usages,v 1.2 1999/06/28 05:53:48 augustss Exp $
+# $NetBSD: usb_hid_usages,v 1.3 1999/07/02 15:46:53 simonb Exp $
 #
 # USB HID usage table
 # Syntax:
@@ -121,7 +121,7 @@
 	0x04	Glove
 	0x05	Head Tracker
 	0x06	Head Mounted Display
-	0x07	Hand Tracker 
+	0x07	Hand Tracker
 	0x08	Oculometer
 	0x09	Vest
 	0x0A	Animatronic Device
@@ -168,8 +168,8 @@
 5	Game Controls
 	0x00	Undefined
 	0x01	3D Game Controller
-	0x02	Pinball Device 
-	0x03	Gun Device 
+	0x02	Pinball Device
+	0x03	Gun Device
 	0x20	Point of View
 	0x21	Turn Right/Left
 	0x22	Pitch Right/Left
@@ -862,28 +862,28 @@
 	0x16	Video Gain Red
 	0x18	Video Gain Green
 	0x1A	Video Gain Blue
-	0x1C	Focus 
-	0x20	Horizontal Position 
-	0x22	Horizontal Size 
-	0x24	Horizontal Pincushion 
-	0x26	Horizontal Pincushion Balance 
-	0x28	Horizontal Misconvergence 
-	0x2A	Horizontal Linearity 
-	0x2C	Horizontal Linearity Balance 
-	0x30	Vertical Position 
-	0x32	Vertical Size 
-	0x34	Vertical Pincushion 
-	0x36	Vertical Pincushion Balance 
-	0x38	Vertical Misconvergence 
-	0x3A	Vertical Linearity 
-	0x3C	Vertical Linearity Balance 
+	0x1C	Focus
+	0x20	Horizontal Position
+	0x22	Horizontal Size
+	0x24	Horizontal Pincushion
+	0x26	Horizontal Pincushion Balance
+	0x28	Horizontal Misconvergence
+	0x2A	Horizontal Linearity
+	0x2C	Horizontal Linearity Balance
+	0x30	Vertical Position
+	0x32	Vertical Size
+	0x34	Vertical Pincushion
+	0x36	Vertical Pincushion Balance
+	0x38	Vertical Misconvergence
+	0x3A	Vertical Linearity
+	0x3C	Vertical Linearity Balance
 	0x40	Parallelogram Distortion
 	0x42	Trapezoidal Distortion
 	0x44	Tilt
-	0x46	Top Corner Distortion Control 
-	0x48	Top Corner Distortion Balance 
-	0x4A	Bottom Corner Distortion Control 
-	0x4C	Bottom Corner Distortion Balance 
+	0x46	Top Corner Distortion Control
+	0x48	Top Corner Distortion Balance
+	0x4A	Bottom Corner Distortion Control
+	0x4C	Bottom Corner Distortion Balance
 	0x56	Moiré Horizontal
 	0x58	Moiré Vertical
 	0x5E	Input Level Select

@@ -1,8 +1,8 @@
-/* $NetBSD: deflate.c,v 1.4 1998/11/01 20:33:25 tron Exp $ */
+/* $NetBSD: deflate.c,v 1.5 1999/07/02 15:51:38 simonb Exp $ */
 
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-1998 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /*
@@ -335,7 +335,7 @@ int ZEXPORT deflateReset (strm)
     z_streamp strm;
 {
     deflate_state *s;
-    
+
     if (strm == Z_NULL || strm->state == Z_NULL ||
         strm->zalloc == Z_NULL || strm->zfree == Z_NULL) return Z_STREAM_ERROR;
 
@@ -407,7 +407,7 @@ local void putShortMSB (s, b)
 {
     put_byte(s, (Byte)(b >> 8));
     put_byte(s, (Byte)(b & 0xff));
-}   
+}
 
 /* =========================================================================
  * Flush as much pending output as possible. All deflate() output goes
@@ -1201,7 +1201,7 @@ local block_state deflate_fast(s, flush)
                      * always MIN_MATCH bytes ahead.
                      */
                 } while (--s->match_length != 0);
-                s->strstart++; 
+                s->strstart++;
             } else
 #endif
 	    {
@@ -1221,7 +1221,7 @@ local block_state deflate_fast(s, flush)
             Tracevv((stderr,"%c", s->window[s->strstart]));
             _tr_tally_lit (s, s->window[s->strstart], bflush);
             s->lookahead--;
-            s->strstart++; 
+            s->strstart++;
         }
         if (bflush) FLUSH_BLOCK(s, 0);
     }

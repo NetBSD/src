@@ -1,4 +1,4 @@
-.\"	$NetBSD: fparseln.3,v 1.6 1999/02/16 19:37:43 kleink Exp $
+.\"	$NetBSD: fparseln.3,v 1.7 1999/07/02 15:49:12 simonb Exp $
 .\"
 .\" Copyright (c) 1997 Christos Zoulas.  All rights reserved.
 .\"
@@ -48,7 +48,7 @@ The
 function
 returns a pointer to the next logical line from the stream referenced by
 .Fa stream .
-This string is 
+This string is
 .Dv NUL
 terminated and it is dynamicaly allocated on each invocation. It is the
 responsibility of the caller to free the pointer.
@@ -78,7 +78,7 @@ Contains the escape, continuation, and comment characters.
 If a character is
 .Dv NUL
 then processing for that character is disabled.
-If 
+If
 .Dv NULL ,
 all characters default to values specified below.
 The contents of
@@ -131,23 +131,23 @@ The
 .Fn fparseln
 function uses internally
 .Xr fgetln 3 ,
-so all error conditions that apply to 
+so all error conditions that apply to
 .Xr fgetln 3 ,
-apply to 
+apply to
 .Fn fparseln .
 In addition
 .Fn fparseln
 may set
 .Va errno
 to
-.Bq Er ENOMEM 
-and return 
+.Bq Er ENOMEM
+and return
 .Dv NULL
 if it runs out of memory.
 .Sh SEE ALSO
-.Xr fgetln 3 
+.Xr fgetln 3
 .Sh HISTORY
 The
 .Fn fparseln
-function first appeared in 
+function first appeared in
 .Nx 1.4 .

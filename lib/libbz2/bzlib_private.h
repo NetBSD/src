@@ -1,4 +1,4 @@
-/*	$NetBSD: bzlib_private.h,v 1.2 1998/09/14 03:08:17 ross Exp $	*/
+/*	$NetBSD: bzlib_private.h,v 1.3 1999/07/02 15:55:41 simonb Exp $	*/
 
 /*-------------------------------------------------------------*/
 /*--- Private header file for the library.                  ---*/
@@ -18,16 +18,16 @@
   1. Redistributions of source code must retain the above copyright
      notice, this list of conditions and the following disclaimer.
 
-  2. The origin of this software must not be misrepresented; you must 
-     not claim that you wrote the original software.  If you use this 
-     software in a product, an acknowledgment in the product 
+  2. The origin of this software must not be misrepresented; you must
+     not claim that you wrote the original software.  If you use this
+     software in a product, an acknowledgment in the product
      documentation would be appreciated but is not required.
 
   3. Altered source versions must be plainly marked as such, and must
      not be misrepresented as being the original software.
 
-  4. The name of the author may not be used to endorse or promote 
-     products derived from this software without specific prior written 
+  4. The name of the author may not be used to endorse or promote
+     products derived from this software without specific prior written
      permission.
 
   THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
@@ -86,13 +86,13 @@ typedef int             Int32;
 typedef unsigned int    UInt32;
 typedef short           Int16;
 typedef unsigned short  UInt16;
-                                       
+
 #define True  ((Bool)1)
 #define False ((Bool)0)
 
 #ifdef _WIN32
 #define __inline__ __inline
-#endif 
+#endif
 
 #ifndef BZ_NO_STDIO
 extern void bz__AssertH__fail ( int errcode );
@@ -290,19 +290,19 @@ typedef
 
 /*-- externs for compression. --*/
 
-extern void 
+extern void
 blockSort ( EState* );
 
-extern void 
+extern void
 compressBlock ( EState*, Bool );
 
-extern void 
+extern void
 bsInitWrite ( EState* );
 
-extern void 
+extern void
 hbAssignCodes ( Int32*, UChar*, Int32, Int32, Int32 );
 
-extern void 
+extern void
 hbMakeCodeLengths ( UChar*, Int32*, Int32, Int32 );
 
 
@@ -446,7 +446,7 @@ typedef
       Int32    save_N;
       Int32    save_curr;
       Int32    save_zt;
-      Int32    save_zn; 
+      Int32    save_zn;
       Int32    save_zvec;
       Int32    save_zj;
       Int32    save_gSel;
@@ -496,13 +496,13 @@ typedef
 
 /*-- externs for decompression. --*/
 
-extern Int32 
+extern Int32
 indexIntoF ( Int32, Int32* );
 
-extern Int32 
+extern Int32
 decompress ( DState* );
 
-extern void 
+extern void
 hbCreateDecodeTables ( Int32*, Int32*, Int32*, UChar*,
                        Int32,  Int32, Int32 );
 

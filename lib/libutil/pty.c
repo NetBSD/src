@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.11 1998/12/09 14:35:03 christos Exp $	*/
+/*	$NetBSD: pty.c,v 1.12 1999/07/02 15:49:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.3 (Berkeley) 5/16/94";
 #else
-__RCSID("$NetBSD: pty.c,v 1.11 1998/12/09 14:35:03 christos Exp $");
+__RCSID("$NetBSD: pty.c,v 1.12 1999/07/02 15:49:12 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -99,10 +99,10 @@ openpty(amaster, aslave, name, termp, winp)
 					if (name)
 						strcpy(name, line);
 					if (termp)
-						(void) tcsetattr(slave, 
+						(void) tcsetattr(slave,
 							TCSAFLUSH, termp);
 					if (winp)
-						(void) ioctl(slave, TIOCSWINSZ, 
+						(void) ioctl(slave, TIOCSWINSZ,
 						    winp);
 					return (0);
 				}
@@ -130,7 +130,7 @@ forkpty(amaster, name, termp, winp)
 	case -1:
 		return (-1);
 	case 0:
-		/* 
+		/*
 		 * child
 		 */
 		(void) close(master);
