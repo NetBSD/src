@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.476 2002/10/05 17:04:28 kent Exp $	*/
+/*	\$NetBSD\$	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.472 2002/10/05 17:01:50 kent Exp 
+ *	NetBSD: pcidevs,v 1.473 2002/10/16 14:55:26 leo Exp 
  */
 
 /*
@@ -960,6 +960,7 @@
 
 /* AVM products */
 #define	PCI_PRODUCT_AVM_FRITZ_CARD	0x0a00		/* Fritz! Card ISDN Interface */
+#define	PCI_PRODUCT_AVM_FRITZ_PCI_V2_ISDN	0x0e00		/* Fritz!PCI v2.0 ISDN Interface */
 #define	PCI_PRODUCT_AVM_B1	0x0700		/* Basic Rate B1 ISDN Interface */
 #define	PCI_PRODUCT_AVM_T1	0x1200		/* Primary Rate T1 ISDN Interface */
 
