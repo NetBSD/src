@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 2002/02/13 09:02:12 tron Exp $
+#	$NetBSD: Makefile,v 1.6 2002/03/09 01:35:46 pk Exp $
 
 PROG=		xdrtest
 RPCSRCS=	testbits.x
-SRCS=		${RPCSRCS:.x=.c} ${RPCSRCS:.x=.h} xdrtest.c
-NOMAN=		# defined
+SRCS=		${RPCSRCS:.x=.c} xdrtest.c
+DPSRCS=		${RPCSRCS:.x=.h}
+CLEANFILES+=	${RPCSRCS:.x=.c}
 CPPFLAGS+=	-I.
-CLEANFILES+=	testbits.c testbits.h
+NOMAN=		# defined
 
 regress: ${PROG}
 	./${PROG}
@@ -17,6 +18,9 @@ _RPCGEN:=	${RPCGEN:M*rpcgen}
 .if ${_RPCGEN:M/*} == ""
 _RPCGEN!=	type ${RPCGEN} | awk '{print $$NF}'
 .endif
+
+# Explicit dependency on generated header file
+testbits.o xdrtest.o: testbits.h
 
 .SUFFIXES: .x
 
