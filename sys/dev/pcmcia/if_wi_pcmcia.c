@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.5 2001/07/01 16:35:37 thorpej Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.6 2001/07/13 03:09:39 onoe Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -378,6 +378,7 @@ wi_pcmcia_attach(parent, self, aux)
 attach_failed:
 	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
 no_interrupt:
+	pcmcia_function_disable(psc->sc_pf);
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 no_config_entry:
