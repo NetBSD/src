@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.75 1997/11/05 23:43:22 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.76 1997/11/06 22:34:01 cgd Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -155,19 +155,19 @@ CLEANFILES+= LintSysNormal.c LintSysNoerr.c LintSysPseudo.c
 LintSysNormal.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
-	@${.CURDIR}/sys/makelintstub -o ${.TARGET} \
+	@sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${ASM}
 
 LintSysNoerr.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
-	@${.CURDIR}/sys/makelintstub -o ${.TARGET} -n \
+	@sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} -n \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${NOERR}
 
 LintSysPseudoNoerr.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
-	@${.CURDIR}/sys/makelintstub -o ${.TARGET} -p \
+	@sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} -p \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDONOERR}
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
