@@ -1,4 +1,4 @@
-.\" $NetBSD: iswctype.3,v 1.2 2003/03/17 08:41:31 wiz Exp $
+.\" $NetBSD: iswctype.3,v 1.3 2003/03/17 08:49:46 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -45,7 +45,7 @@ The
 .Fn iswctype
 function returns a boolean value that indicates whether a wide character
 .Fa wc
-consists in
+is in
 .Fa charclass .
 .Pp
 The behaviour of the
@@ -55,14 +55,18 @@ if the
 .Fn iswctype
 function is called with an invalid
 .Fa charclass
-(changes of LC_CTYPE category invalidate
+(changes of
+.Dv LC_CTYPE
+category invalidate
 .Fa charclass )
 or invalid wide character as
 .Fa wc .
 .Pp
 The behaviour of the
 .Fn iswctype
-is affected by LC_CTYPE category of the current locale.
+is affected by the
+.Dv LC_CTYPE
+category of the current locale.
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
 The
@@ -71,11 +75,11 @@ returns:
 .Bl -tag -width 012345678901
 .It 0
 .Fa wc
-does not consist in
+is not in
 .Fa charclass .
 .It non-zero
 .Fa wc
-consists in
+is in
 .Fa charclass .
 .El
 .Pp
@@ -84,10 +88,10 @@ consists in
 No errors are defined.
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO
-.Xr wctype 3 ,
-.Xr wctrans 3 ,
+.Xr setlocale 3 ,
 .Xr towctrans 3 ,
-.Xr setlocale 3
+.Xr wctrans 3 ,
+.Xr wctype 3
 .\" ----------------------------------------------------------------------
 .Sh STANDARDS
 The
