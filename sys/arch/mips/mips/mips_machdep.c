@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.128 2002/04/05 01:22:17 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.129 2002/05/03 03:50:11 rafal Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.128 2002/04/05 01:22:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.129 2002/05/03 03:50:11 rafal Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -280,7 +280,8 @@ static const struct pridtab cputab[] = {
 	{ 0, MIPS_R4300, -1,			CPU_ARCH_MIPS3, 32,
 	  CPU_MIPS_R4K_MMU,			"NEC VR4300 CPU"	},
 	{ 0, MIPS_R4600, -1,			CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"QED R4600 Orion CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,			
+						"QED R4600 Orion CPU"	},
 	{ 0, MIPS_R4700, -1,			CPU_ARCH_MIPS3, 48,
 	  CPU_MIPS_R4K_MMU,			"QED R4700 Orion CPU"	},
 
@@ -309,7 +310,8 @@ static const struct pridtab cputab[] = {
 	{ 0, MIPS_TX3900, MIPS_REV_TX3927,	CPU_ARCH_MIPS1, 64,
 	  0,					"Toshiba TX3927 CPU"	},
 	{ 0, MIPS_R5000, -1,			CPU_ARCH_MIPS4, 48,
-	  CPU_MIPS_R4K_MMU,			"MIPS R5000 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,			
+						"MIPS R5000 CPU"	},
 	{ 0, MIPS_RM5200, -1,			CPU_ARCH_MIPS4, 48,
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_CAUSE_IV | CPU_MIPS_DOUBLE_COUNT,
 						"QED RM5200 CPU"	},
