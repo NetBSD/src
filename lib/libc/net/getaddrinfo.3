@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.23 2002/02/07 07:00:20 ross Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.24 2002/02/07 09:24:06 ross Exp $
 .\"	$KAME: getaddrinfo.3,v 1.29 2001/02/12 09:24:45 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -421,10 +421,10 @@ int error;
 int s;
 const char *cause = NULL;
 
-memset(&amp;hints, 0, sizeof(hints));
+memset(\*[Am]hints, 0, sizeof(hints));
 hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
-error = getaddrinfo("www.kame.net", "http", &amp;hints, &amp;res0);
+error = getaddrinfo("www.kame.net", "http", \*[Am]hints, \*[Am]res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
 	/*NOTREACHED*/
@@ -464,17 +464,17 @@ int s[MAXSOCK];
 int nsock;
 const char *cause = NULL;
 
-memset(&amp;hints, 0, sizeof(hints));
+memset(\*[Am]hints, 0, sizeof(hints));
 hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
 hints.ai_flags = AI_PASSIVE;
-error = getaddrinfo(NULL, "http", &amp;hints, &amp;res0);
+error = getaddrinfo(NULL, "http", \*[Am]hints, \*[Am]res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
 	/*NOTREACHED*/
 }
 nsock = 0;
-for (res = res0; res &amp;&amp; nsock \*[Lt] MAXSOCK; res = res-\*[Gt]ai_next) {
+for (res = res0; res \*[Am]\*[Am] nsock \*[Lt] MAXSOCK; res = res-\*[Gt]ai_next) {
 	s[nsock] = socket(res-\*[Gt]ai_family, res-\*[Gt]ai_socktype,
 	    res-\*[Gt]ai_protocol);
 	if (s[nsock] \*[Lt] 0) {

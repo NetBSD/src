@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.87 2002/02/07 07:00:17 ross Exp $
+.\"	$NetBSD: sysctl.3,v 1.88 2002/02/07 09:24:04 ross Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -143,7 +143,7 @@ size_t len;
 mib[0] = CTL_KERN;
 mib[1] = KERN_MAXPROC;
 len = sizeof(maxproc);
-sysctl(mib, 2, &amp;maxproc, &amp;len, NULL, 0);
+sysctl(mib, 2, \*[Am]maxproc, \*[Am]len, NULL, 0);
 .Ed
 .sp
 To retrieve the standard search path for the system utilities:
@@ -154,9 +154,9 @@ char *p;
 .sp
 mib[0] = CTL_USER;
 mib[1] = USER_CS_PATH;
-sysctl(mib, 2, NULL, &amp;len, NULL, 0);
+sysctl(mib, 2, NULL, \*[Am]len, NULL, 0);
 p = malloc(len);
-sysctl(mib, 2, p, &amp;len, NULL, 0);
+sysctl(mib, 2, p, \*[Am]len, NULL, 0);
 .Ed
 .Sh CTL_DEBUG
 The debugging variables vary from system to system.
@@ -182,7 +182,7 @@ For example, to export the variable
 as a debugging variable, the following declaration would be used:
 .Bd -literal -offset indent -compact
 int dospecialcheck = 1;
-struct ctldebug debug5 = { "dospecialcheck", &amp;dospecialcheck };
+struct ctldebug debug5 = { "dospecialcheck", \*[Am]dospecialcheck };
 .Ed
 .Sh CTL_VFS
 A distinguished second level name, VFS_GENERIC,

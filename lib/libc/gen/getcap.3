@@ -1,4 +1,4 @@
-.\"	$NetBSD: getcap.3,v 1.13 2002/02/07 07:00:12 ross Exp $
+.\"	$NetBSD: getcap.3,v 1.14 2002/02/07 09:24:04 ross Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -488,7 +488,7 @@ Non-printable
 codes, new lines, and colons may be conveniently represented by the use
 of escape sequences:
 .Bl -column "\e\|X,X\e\|X" "(ASCII octal nnn)"
-^X	('\fIX\fP' &amp; 037)	control-\fIX\fP
+^X	('\fIX\fP' \*[Am] 037)	control-\fIX\fP
 \e\|b, \e\|B	(ASCII 010)	backspace
 \e\|t, \e\|T	(ASCII 011)	tab
 \e\|n, \e\|N	(ASCII 012)	line feed (newline)

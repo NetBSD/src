@@ -1,6 +1,6 @@
 .\" @(#)rpc.3n 1.31 93/08/31 SMI; from SVr4
 .\" Copyright 1989 AT&T
-.\"	$NetBSD: rpc.3,v 1.13 2002/02/07 07:00:23 ross Exp $
+.\"	$NetBSD: rpc.3,v 1.14 2002/02/07 09:24:06 ross Exp $
 .Dd May 7, 1993
 .Dt RPC 3
 .Os
@@ -146,7 +146,7 @@ typedef struct {
     struct    opaque_auth    ah_verf;
     struct auth_ops {
         void    (*ah_nextverf)(\|);
-        int    (*ah_marshal)(\|);    /* nextverf &amp; serialize */
+        int    (*ah_marshal)(\|);    /* nextverf \*[Am] serialize */
         int    (*ah_validate)(\|);    /* validate verifier */
         int    (*ah_refresh)(\|);    /* refresh credentials */
         void    (*ah_destroy)(\|);    /* destroy this structure */

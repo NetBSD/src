@@ -1,4 +1,4 @@
-.\"	$NetBSD: sha1.3,v 1.9 2002/02/07 07:00:19 ross Exp $
+.\"	$NetBSD: sha1.3,v 1.10 2002/02/07 09:24:05 ross Exp $
 .\"	$OpenBSD: sha1.3,v 1.9 1998/03/07 22:18:12 millert Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -161,9 +161,9 @@ int n;
 
 buf = "abc";
 n = strlen(buf);
-SHA1Init(&amp;sha);
-SHA1Update(&amp;sha, (u_char *)buf, n);
-SHA1Final(results, &amp;sha);
+SHA1Init(\*[Am]sha);
+SHA1Update(\*[Am]sha, (u_char *)buf, n);
+SHA1Final(results, \*[Am]sha);
 
 /* Print the digest as one long hex value */
 printf("0x");

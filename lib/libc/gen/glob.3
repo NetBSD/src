@@ -1,4 +1,4 @@
-.\"	$NetBSD: glob.3,v 1.22 2002/02/07 07:00:13 ross Exp $
+.\"	$NetBSD: glob.3,v 1.23 2002/02/07 09:24:04 ross Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -429,8 +429,8 @@ following code:
 glob_t g;
 
 g.gl_offs = 2;
-glob("*.c", GLOB_DOOFFS, NULL, &amp;g);
-glob("*.h", GLOB_DOOFFS | GLOB_APPEND, NULL, &amp;g);
+glob("*.c", GLOB_DOOFFS, NULL, \*[Am]g);
+glob("*.h", GLOB_DOOFFS | GLOB_APPEND, NULL, \*[Am]g);
 g.gl_pathv[0] = "ls";
 g.gl_pathv[1] = "-l";
 execvp("ls", g.gl_pathv);

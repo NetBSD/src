@@ -1,4 +1,4 @@
-.\" $NetBSD: shquote.3,v 1.3 2002/02/07 07:00:17 ross Exp $
+.\" $NetBSD: shquote.3,v 1.4 2002/02/07 09:24:04 ross Exp $
 .\"
 .\" Copyright (c) 2001 Christopher G. Demetriou
 .\" All rights reserved.
@@ -153,7 +153,7 @@ int argc;
  * Size buffer to hold the command string, and allocate it.
  * Buffer of length one given to snprintf() for portability.
  */
-cmdlen = snprintf(&amp;c, 1, "${PROG-%s} ", PROG_DEFAULT);
+cmdlen = snprintf(\*[Am]c, 1, "${PROG-%s} ", PROG_DEFAULT);
 qlen = shquotev(argc, argv, NULL, 0) + 1;
 if (qlen == (size_t)-1) {
 	\&...
@@ -191,7 +191,7 @@ int argc, i;
  * Size buffer to hold the command string, and allocate it.
  * Buffer of length one given to snprintf() for portability.
  */
-cmdlen = snprintf(&amp;c, 1, "${PROG-%s} ", PROG_DEFAULT);
+cmdlen = snprintf(\*[Am]c, 1, "${PROG-%s} ", PROG_DEFAULT);
 for (i = 0; i \*[Lt] argc; i++) {
 	qlen = shquote(argv[i], NULL, 0) + 1;
 	if (qlen == (size_t)-1) {

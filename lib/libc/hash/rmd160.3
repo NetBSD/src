@@ -1,4 +1,4 @@
-.\"	$NetBSD: rmd160.3,v 1.4 2002/02/07 07:00:19 ross Exp $
+.\"	$NetBSD: rmd160.3,v 1.5 2002/02/07 09:24:05 ross Exp $
 .\"	$OpenBSD: rmd160.3,v 1.12 2000/04/18 03:01:29 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -165,9 +165,9 @@ int n;
 
 buf = "abc";
 n = strlen(buf);
-RMD160Init(&amp;rmd);
-RMD160Update(&amp;rmd, (u_char *)buf, n);
-RMD160Final(results, &amp;rmd);
+RMD160Init(\*[Am]rmd);
+RMD160Update(\*[Am]rmd, (u_char *)buf, n);
+RMD160Final(results, \*[Am]rmd);
 
 /* Print the digest as one long hex value */
 printf("0x");
