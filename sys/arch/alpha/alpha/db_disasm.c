@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.6 1999/05/09 19:40:00 cgd Exp $ */
+/* $NetBSD: db_disasm.c,v 1.7 2000/03/20 02:54:45 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.6 1999/05/09 19:40:00 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.7 2000/03/20 02:54:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,11 +383,12 @@ mul_name(op)
 }
 
 /*
- * These are few, the high nibble is enough to dispatch.
- * We single out the "f" case to halve the table size.
+ * These are few, the high nibble is usually enough to dispatch.
+ * We single out the `f' case to halve the table size, as
+ * well as the cases in which the high nibble isn't enough.
  */
 static const char *special_opname[8] = {
-	"drain_t", 0, "mb", 0, "fetch", "fetch_m", "rpcc", "rc"
+	"trapb", 0, "mb", 0, "fetch", "fetch_m", "rpcc", "rc"
 };
 
 static __inline const char *special_name __P((int));
@@ -398,7 +399,15 @@ special_name(op)
 	static char unk[32];
 	const char *name;
 
-	name = (op == op_rs) ? "rs" : special_opname[(op)>>13];
+	switch (op) {
+	case op_excb:		name = "excb";		break;
+	case op_wmb:		name = "wmb";		break;
+	case op_ecb:		name = "ecb";		break;
+	case op_rs:		name = "rs";		break;
+	case op_wh64:		name = "wh64";		break;
+	default:
+		name = special_opname[(op)>>13];
+	}
 
 	if (name != NULL)
 		return (name);
@@ -932,6 +941,10 @@ foperate:
 			opcode = special_name(code);
 
 			switch (code) {
+			case op_ecb:
+				db_printf("%s\t(%s)", opcode,
+					register_name(i.mem_format.rb));
+				break;
 			case op_fetch:
 			case op_fetch_m:
 				db_printf("%s\t0(%s)", opcode,
@@ -943,8 +956,6 @@ foperate:
 				db_printf("%s\t%s", opcode,
 					register_name(i.mem_format.ra));
 				break;
-			case op_draint:
-			case op_mb:
 			default:
 				db_printf("%s", opcode);
 			break;
