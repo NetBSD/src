@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.c,v 1.11 2002/12/27 19:57:47 manu Exp $ */
+/*	$NetBSD: mach_errno.c,v 1.12 2003/02/09 22:13:46 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.11 2002/12/27 19:57:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.12 2003/02/09 22:13:46 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -160,5 +160,27 @@ mach_msg_error(args, error)
 #ifdef DEBUG_MACH
 	printf("failure in kernel handler for msg id %d\n", req->msgh_id);
 #endif
+	return 0;
+}
+
+int
+mach_iokit_error(args, error)
+	struct mach_trap_args *args;
+	int error;
+{	
+	mach_msg_header_t *req = args->smsg;
+	mach_error_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->msgh_local_port;
+	rep->rep_msgh.msgh_id = req->msgh_id + 100;
+	rep->rep_retval = error;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.4 2003/02/07 20:40:37 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.5 2003/02/09 22:13:46 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.4 2003/02/07 20:40:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.5 2003/02/09 22:13:46 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,11 +46,12 @@ __KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.4 2003/02/07 20:40:37 manu Exp $");
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/device.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_port.h>
-
+#include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_iokit.h>
 
 
@@ -94,9 +95,49 @@ mach_io_iterator_next(args)
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
+	struct device *dev;
+	struct mach_device_iterator *mdi;
+	mach_port_t mn;
+
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_EPERM);
+	if (mr->mr_port->mp_datatype != MACH_MP_DEVICE_ITERATOR)
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
+	mdi = mr->mr_port->mp_data;
+
+	/* XXX No lock for the device list? */
+	/* Check that mdi->mdi_parent still exists, else give up */
+	TAILQ_FOREACH(dev, &alldevs, dv_list)
+		if (dev == mdi->mdi_parent)
+			break;
+	if (dev == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_ENODEV);
+
+	/* Check that mdi->mdi_current still exists, else reset it */
+	TAILQ_FOREACH(dev, &alldevs, dv_list)
+		if (dev == mdi->mdi_current)
+			break;
+	if (dev == NULL)
+		mdi->mdi_current = TAILQ_FIRST(&alldevs);
+
+	/* And now, find the next child of mdi->mdi_parrent. */
+	do {
+		if (dev->dv_parent == mdi->mdi_parent) {
+			mdi->mdi_current = dev;
+			break;
+		}
+	} while ((dev = TAILQ_NEXT(dev, dv_list)) != NULL);
+
+	if (dev == NULL) 
+		return mach_iokit_error(args, MACH_IOKIT_ENODEV);
 
 	mp = mach_port_get();
 	mp->mp_flags |= MACH_MP_INKERNEL;
+	mp->mp_datatype = MACH_MP_DEVICE;
+	mp->mp_data = mdi->mdi_current;
+	mdi->mdi_current = TAILQ_NEXT(mdi->mdi_current, dv_list);
+
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 	
 	rep->rep_msgh.msgh_bits = 
@@ -337,6 +378,9 @@ mach_io_registry_get_root_entry(args)
 
 	mp = mach_port_get();
 	mp->mp_flags |= MACH_MP_INKERNEL;
+	mp->mp_datatype = MACH_MP_DEVICE;
+	mp->mp_data = TAILQ_FIRST(&alldevs);
+
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 
 	rep->rep_msgh.msgh_bits = 
@@ -364,9 +408,24 @@ mach_io_registry_entry_get_child_iterator(args)
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
+	mach_port_t mn;
+	struct mach_device_iterator *mdi;
+
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_EPERM);
+	if (mr->mr_port->mp_datatype != MACH_MP_DEVICE)
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 
 	mp = mach_port_get();
-	mp->mp_flags |= MACH_MP_INKERNEL;
+	mp->mp_flags |= (MACH_MP_INKERNEL | MACH_MP_DATA_ALLOCATED);
+	mp->mp_datatype = MACH_MP_DEVICE_ITERATOR;
+
+	mdi = malloc(sizeof(*mdi), M_EMULDATA, M_WAITOK);
+	mdi->mdi_parent = mr->mr_port->mp_data;
+	mdi->mdi_current = TAILQ_FIRST(&alldevs);
+	mp->mp_data = mdi;
+
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 
 	rep->rep_msgh.msgh_bits = 
@@ -391,7 +450,17 @@ mach_io_registry_entry_get_name_in_plane(args)
 	mach_io_registry_entry_get_name_in_plane_request_t *req = args->smsg;
 	mach_io_registry_entry_get_name_in_plane_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize; 
-	char foobarbuz[] = "foobarbuz";
+	struct lwp *l = args->l;
+	struct mach_right *mr;
+	mach_port_t mn;
+	struct device *dev;
+
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_iokit_error(args, MACH_IOKIT_EPERM);
+	if (mr->mr_port->mp_datatype != MACH_MP_DEVICE)
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
+	dev = mr->mr_port->mp_data;
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -399,8 +468,8 @@ mach_io_registry_entry_get_name_in_plane(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	/* XXX Just return a dummy name for now */ 
-	rep->rep_namecount = sizeof(foobarbuz);
-	memcpy(&rep->rep_name, foobarbuz, sizeof(foobarbuz));
+	rep->rep_namecount = sizeof(dev->dv_xname);
+	memcpy(&rep->rep_name, dev->dv_xname, sizeof(dev->dv_xname));
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -414,7 +483,7 @@ mach_io_object_get_class(args)
 	mach_io_object_get_class_request_t *req = args->smsg;
 	mach_io_object_get_class_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize; 
-	char foobarbuz[] = "FoobarClass";
+	char classname[] = "unknownClass";
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -422,8 +491,8 @@ mach_io_object_get_class(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	/* XXX Just return a dummy name for now */ 
-	rep->rep_namecount = sizeof(foobarbuz);
-	memcpy(&rep->rep_name, foobarbuz, sizeof(foobarbuz));
+	rep->rep_namecount = sizeof(classname);
+	memcpy(&rep->rep_name, classname, sizeof(classname));
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -438,7 +507,7 @@ mach_io_registry_entry_get_location_in_plane(args)
 	    args->smsg;
 	mach_io_registry_entry_get_location_in_plane_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize; 
-	char foobarbuz[] = "/";
+	char location[] = "";
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -446,8 +515,8 @@ mach_io_registry_entry_get_location_in_plane(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	/* XXX Just return a dummy name for now */ 
-	rep->rep_locationcount = sizeof(foobarbuz);
-	memcpy(&rep->rep_location, foobarbuz, sizeof(foobarbuz));
+	rep->rep_locationcount = sizeof(location);
+	memcpy(&rep->rep_location, location, sizeof(location));
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
