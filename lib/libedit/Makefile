@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/10/23 22:24:09 christos Exp $
+#	$NetBSD: Makefile,v 1.13 1997/10/26 20:17:48 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
@@ -24,6 +24,7 @@ SRCS+=	common.h emacs.h fcns.h help.h vi.h
 
 INCS= histedit.h readline.h
 INCSDIR=/usr/include
+LINKS=${INCSDIR}/readline.h ${INCSDIR}/history.h
 
 CLEANFILES+=common.h editline.c emacs.h fcns.c fcns.h help.c help.h vi.h
 CPPFLAGS+=-I. -I${.CURDIR} 
