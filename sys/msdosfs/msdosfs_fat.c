@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.9 1994/07/19 04:29:58 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.10 1994/08/04 16:32:29 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -664,7 +664,7 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 	u_long *got;
 {
 	int error;
-	u_long idx, max_idx;
+	u_long idx;
 	u_long len, newst, foundcn, foundl, cn, l;
 	u_int map;
 	
@@ -692,11 +692,10 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 	foundcn = newst = (start * 1103515245 + 12345) % (pmp->pm_maxcluster - 1);
 	foundl = 0;
 	
-	max_idx = (pmp->pm_maxcluster - 1) / N_INUSEBITS;
-	idx = newst / N_INUSEBITS;
-	map = pmp->pm_inusemap[idx];
-	map |= (1 << (newst % N_INUSEBITS)) - 1;
-	while (1) {
+	for (cn = newst; cn <= pmp->pm_maxcluster;) {
+		idx = cn / N_INUSEBITS;
+		map = pmp->pm_inusemap[idx];
+		map |= (1 << (cn % N_INUSEBITS)) - 1;
 		if (map != (u_int)-1) {
 			cn = idx * N_INUSEBITS + ffs(map^(u_int)-1) - 1;
 			if ((l = chainlength(pmp, cn, count)) >= count)
@@ -706,19 +705,14 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 				foundl = l;
 			}
 			cn += l + 1;
-			if (cn > pmp->pm_maxcluster)
-				break;
-			idx = cn / N_INUSEBITS;
-			map = pmp->pm_inusemap[idx];
-			map |= (1 << (cn % N_INUSEBITS)) - 1;
 			continue;
 		}
-		if (++idx > max_idx)
-			break;
-		map = pmp->pm_inusemap[idx];
+		cn += N_INUSEBITS - cn % N_INUSEBITS;
 	}
-	for (idx = 0;;) {
+	for (cn = 0; cn < newst;) {
+		idx = cn / N_INUSEBITS;
 		map = pmp->pm_inusemap[idx];
+		map |= (1 << (cn % N_INUSEBITS)) - 1;
 		if (map != (u_int)-1) {
 			cn = idx * N_INUSEBITS + ffs(map^(u_int)-1) - 1;
 			if ((l = chainlength(pmp, cn, count)) >= count)
@@ -728,15 +722,9 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 				foundl = l;
 			}
 			cn += l + 1;
-			if (cn >= newst)
-				break;
-			idx = cn / N_INUSEBITS;
-			map = pmp->pm_inusemap[idx];
-			map |= (1 << (cn % N_INUSEBITS)) - 1;
 			continue;
 		}
-		if (++idx * N_INUSEBITS >= newst)
-			break;
+		cn += N_INUSEBITS - cn % N_INUSEBITS;
 	}
 
 	if (!foundl)
