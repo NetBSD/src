@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.238 2003/08/28 16:59:14 heas Exp $
+.\"	$NetBSD: main,v 1.239 2003/09/02 05:34:28 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -239,9 +239,9 @@ At present,
 cannot exist on the same hard drive as
 .Tn Mac OS
 unless you partition your disk before running the installer.
-Open Firmware versions prior to 3 cannot boot into
+Open Firmware versions prior to 3 require a dedicated
 .Nx
-on a drive partitioned in advance \(em you must use the entire disk,
+drive \(em you must use the entire disk,
 partitioned with the installation tools.
 Open Firmware version 3 cannot boot into
 .Nx
