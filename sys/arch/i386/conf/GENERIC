@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.423 2001/09/10 10:17:29 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.424 2001/09/10 10:18:37 fvdl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.423 $"
+#ident 		"GENERIC-$Revision: 1.424 $"
 
 maxusers	32		# estimated number of users
 
@@ -255,6 +255,8 @@ pcmb*	at pci? dev ? function ?	# PCI-MCA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
+
+agp* 	at pchb?
 
 # EISA bus support
 eisa*	at mainbus?
