@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mfsiom.h	7.2 (Berkeley) 6/28/90
+ *	from: @(#)mfsiom.h	7.2 (Berkeley) 6/28/90
+ *	$Id: mfsiom.h,v 1.3 1993/05/20 03:53:28 cgd Exp $
  */
 
 #ifndef _UFS_MFSIOM_H_

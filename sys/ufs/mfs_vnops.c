@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mfs_vnops.c	7.22 (Berkeley) 4/16/91
+ *	from: @(#)mfs_vnops.c	7.22 (Berkeley) 4/16/91
+ *	$Id: mfs_vnops.c,v 1.2 1993/05/20 03:53:27 cgd Exp $
  */
 
 #include "param.h"

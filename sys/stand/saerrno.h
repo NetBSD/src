@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)saerrno.h	7.3 (Berkeley) 6/28/90
+ *	from: @(#)saerrno.h	7.3 (Berkeley) 6/28/90
+ *	$Id: saerrno.h,v 1.2 1993/05/20 03:54:02 cgd Exp $
  */
 
 extern	int errno;	/* just like unix */

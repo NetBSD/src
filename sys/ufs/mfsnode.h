@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mfsnode.h	7.3 (Berkeley) 4/16/91
+ *	from: @(#)mfsnode.h	7.3 (Berkeley) 4/16/91
+ *	$Id: mfsnode.h,v 1.3 1993/05/20 03:53:29 cgd Exp $
  */
 
 #ifndef _UFS_MFSNODE_H_

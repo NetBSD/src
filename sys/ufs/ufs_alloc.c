@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_alloc.c	7.26 (Berkeley) 5/2/91
+ *	from: @(#)ufs_alloc.c	7.26 (Berkeley) 5/2/91
+ *	$Id: ufs_alloc.c,v 1.3 1993/05/20 03:53:32 cgd Exp $
  */
 
 #include "param.h"
