@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.3 1999/12/16 15:11:19 tron Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.4 2000/11/01 21:02:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,11 +54,6 @@
 #include <compat/linux/common/linux_machdep.h>
 
 #include <compat/linux/linux_syscallargs.h>
-
-#define LINUX_PTRACE_GETREGS		12
-#define LINUX_PTRACE_SETREGS		13
-#define LINUX_PTRACE_GETFPREGS		14
-#define LINUX_PTRACE_SETFPREGS		15
 
 struct linux_reg {
 	long ebx;
