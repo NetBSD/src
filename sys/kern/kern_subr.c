@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.34 1998/02/10 14:09:43 mrg Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.35 1998/02/13 17:36:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -234,7 +234,6 @@ hashinit(elements, type, flags, hashmask)
 		panic("hashinit: bad cnt");
 	for (hashsize = 1; hashsize <= elements; hashsize <<= 1)
 		continue;
-	hashsize >>= 1;
 	hashtbl = malloc((u_long)hashsize * sizeof(*hashtbl), type, flags);
 	for (i = 0; i < hashsize; i++)
 		LIST_INIT(&hashtbl[i]);
