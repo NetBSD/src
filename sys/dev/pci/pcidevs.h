@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.279 2000/11/18 05:29:27 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.280 2000/11/20 06:23:13 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.273 2000/11/18 05:29:00 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.274 2000/11/20 06:22:13 onoe Exp 
  */
 
 /*
@@ -1533,7 +1533,7 @@
 
 /* Sony products */
 #define	PCI_PRODUCT_SONY_CXD1947A	0x8009		/* CXD1947A IEEE 1394 Host Controller */
-#define	PCI_PRODUCT_SONY_CXD32222	0x8039		/* CXD3222 OHCI IEEE 1394 Host Controller */
+#define	PCI_PRODUCT_SONY_CXD3222	0x8039		/* CXD3222 OHCI IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_SONY_MEMSTICK	0x808a		/* Memory Stick I/F Controller */
 
 /* Sun Microsystems products */
