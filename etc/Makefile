@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.25 1993/10/26 18:07:31 jtc Exp $
+#	$Id: Makefile,v 1.26 1993/12/11 07:49:52 mycroft Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -92,17 +92,19 @@ distrib-dirs:
 	chmod 1777 ${DESTDIR}/tmp
 	-mkdir ${DESTDIR}/etc/mtree ${DESTDIR}/etc/namedb
 	chmod 755 ${DESTDIR}/etc/mtree ${DESTDIR}/etc/namedb
-	-mkdir ${DESTDIR}/var/backups ${DESTDIR}/var/cron ${DESTDIR}/var/db \
-	       ${DESTDIR}/var/log ${DESTDIR}/var/mail ${DESTDIR}/var/msgs \
-	       ${DESTDIR}/var/preserve ${DESTDIR}/var/run ${DESTDIR}/var/rwho \
-	       ${DESTDIR}/var/spool ${DESTDIR}/var/tmp
-	chmod 755 ${DESTDIR}/var/backups ${DESTDIR}/var/cron ${DESTDIR}/var/db \
-		  ${DESTDIR}/var/log ${DESTDIR}/var/mail ${DESTDIR}/var/msgs \
-		  ${DESTDIR}/var/preserve ${DESTDIR}/var/run ${DESTDIR}/var/rwho \
-		  ${DESTDIR}/var/spool
+	-mkdir ${DESTDIR}/var/at ${DESTDIR}/var/backups ${DESTDIR}/var/cron \
+	       ${DESTDIR}/var/db ${DESTDIR}/var/log ${DESTDIR}/var/mail \
+	       ${DESTDIR}/var/msgs ${DESTDIR}/var/preserve ${DESTDIR}/var/run \
+	       ${DESTDIR}/var/rwho ${DESTDIR}/var/spool ${DESTDIR}/var/tmp
+	chmod 755 ${DESTDIR}/var/at ${DESTDIR}/var/backups ${DESTDIR}/var/cron \
+		  ${DESTDIR}/var/db ${DESTDIR}/var/log ${DESTDIR}/var/mail \
+		  ${DESTDIR}/var/msgs ${DESTDIR}/var/preserve \
+		  ${DESTDIR}/var/run ${DESTDIR}/var/rwho ${DESTDIR}/var/spool
 	chmod 1777 ${DESTDIR}/var/tmp
-	-mkdir ${DESTDIR}/var/cron/tabs
-	chmod 700 ${DESTDIR}/var/cron/tabs
+	-mkdir ${DESTDIR}/var/cron/tabs \
+	       ${DESTDIR}/var/at/jobs ${DESTDIR}/var/at/spool
+	chmod 700 ${DESTDIR}/var/cron/tabs \
+		  ${DESTDIR}/var/at/jobs ${DESTDIR}/var/at/spool
 	-mkdir ${DESTDIR}/var/spool/lock ${DESTDIR}/var/spool/mqueue \
 	       ${DESTDIR}/var/spool/output ${DESTDIR}/var/spool/uucp \
 	       ${DESTDIR}/var/spool/uucppublic
