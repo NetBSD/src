@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.9 2003/08/07 16:30:24 agc Exp $	*/
+/*	$NetBSD: itevar.h,v 1.10 2005/01/18 07:12:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,13 +81,13 @@
 struct ite_softc;
 
 struct itesw {
-	int	(*ite_cnprobe) __P((int minor));
-	void	(*ite_init) __P((struct ite_softc *));
-	void	(*ite_deinit) __P((struct ite_softc *));
-	void	(*ite_clear) __P((struct ite_softc *,int,int,int,int));
-	void	(*ite_putc) __P((struct ite_softc *,int,int,int,int));
-	void	(*ite_cursor) __P((struct ite_softc *,int));
-	void	(*ite_scroll) __P((struct ite_softc *,int,int,int,int));
+	int	(*ite_cnprobe)(int minor);
+	void	(*ite_init)(struct ite_softc *);
+	void	(*ite_deinit)(struct ite_softc *);
+	void	(*ite_clear)(struct ite_softc *, int, int, int, int);
+	void	(*ite_putc)(struct ite_softc *, int, int, int, int);
+	void	(*ite_cursor)(struct ite_softc *, int);
+	void	(*ite_scroll)(struct ite_softc *, int, int, int, int);
 };
 
 enum ite_arraymaxs {
@@ -265,33 +265,33 @@ enum tab_size { TABSIZE = 8 };
 struct consdev;
 
 /* console related function */
-void	itecnprobe __P((struct consdev *));
-void	itecninit __P((struct consdev *));
-int	itecngetc __P((dev_t));
-void	itecnputc __P((dev_t, int));
-void	itecnfinish __P((struct ite_softc *));
+void	itecnprobe(struct consdev *);
+void	itecninit(struct consdev *);
+int	itecngetc(dev_t);
+void	itecnputc(dev_t, int);
+void	itecnfinish(struct ite_softc *);
 
 /* standard ite device entry points. */
-void	iteinit __P((dev_t));
-void	itestart __P((struct tty *));
+void	iteinit(dev_t);
+void	itestart(struct tty *);
 
 /* ite functions */
-int	iteon __P((dev_t, int));
-void	iteoff __P((dev_t, int));
-void	ite_reinit __P((dev_t));
-void	ite_reset __P((struct ite_softc *));
-int	ite_cnfilter __P((u_char));
-void	ite_filter __P((u_char));
+int	iteon(dev_t, int);
+void	iteoff(dev_t, int);
+void	ite_reinit(dev_t);
+void	ite_reset(struct ite_softc *);
+int	ite_cnfilter(u_char);
+void	ite_filter(u_char);
 
 /* lower layer functions */
-void	tv_init __P((struct ite_softc *));
-void	tv_deinit __P((struct ite_softc *));
+void	tv_init(struct ite_softc *);
+void	tv_deinit(struct ite_softc *);
 
 #ifdef _KERNEL
 extern unsigned char kern_font[];
 
 /* keyboard LED status variable */
 extern unsigned char kbdled;
-void ite_set_glyph __P((void));
-void kbd_setLED __P((void));
+void ite_set_glyph(void);
+void kbd_setLED(void);
 #endif
