@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.35 2000/02/03 04:09:02 nisimura Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.36 2000/02/29 04:41:52 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.35 2000/02/03 04:09:02 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.36 2000/02/29 04:41:52 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,9 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.35 2000/02/03 04:09:02 nisimura E
 
 #include "rasterconsole.h"
 
-/*
- * Forward declarations
- */
 void		dec_3maxplus_init __P((void));		/* XXX */
 static void	dec_3maxplus_bus_reset __P((void));
 static void	dec_3maxplus_cons_init __P((void));
@@ -107,7 +104,6 @@ static void 	dec_3maxplus_errintr __P((void));
 static int	dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_3maxplus_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
-static void	dec_3maxplus_intr_disestablish __P((struct device *, void *));
 
 static void	kn03_wbflush __P((void));
 static unsigned	kn03_clkread __P((void));
@@ -129,7 +125,6 @@ dec_3maxplus_init()
 	platform.device_register = dec_3maxplus_device_register;
 	platform.iointr = dec_3maxplus_intr;
 	platform.intr_establish = dec_3maxplus_intr_establish;
-	platform.intr_disestablish = dec_3maxplus_intr_disestablish;
 	platform.memsize = memsize_scan;
 	platform.clkread = kn03_clkread;
 	/* 3MAX+ has IOASIC free-running high resolution timer */
@@ -241,13 +236,6 @@ dec_3maxplus_device_register(dev, aux)
 	panic("dec_3maxplus_device_register unimplemented");
 }
 
-
-/*
- *	Enable interrupts.
- *	We pretend we actually have 8 slots even if we really have
- *	only 4: TCslots 0-2 maps to slots 0-2, TCslot3 maps to
- *	slots 3-7 (see pmax/tc/ds-asic-conf.c).
- */
 static void
 dec_3maxplus_intr_establish(dev, cookie, level, handler, arg)
 	struct device *dev;
@@ -256,84 +244,72 @@ dec_3maxplus_intr_establish(dev, cookie, level, handler, arg)
 	int (*handler) __P((void *));
 	void *arg;
 {
-	int slotno = (int)cookie;
 	unsigned mask;
 
-#if 0
-	printf("3MAXPLUS: imask %x, %sabling slot %d, unit %d addr 0x%x\n",
-	    kn03_tc3_imask, (on? "en" : "dis"), slotno, unit, handler);
-#endif
-
-	switch (slotno) {
-	  case 0:
+	switch ((int)cookie) {
+	  case SYS_DEV_OPT0:
 		mask = KN03_INTR_TC_0;
 		break;
-	  case 1:
+	  case SYS_DEV_OPT1:
 		mask = KN03_INTR_TC_1;
 		break;
-	  case 2:
+	  case SYS_DEV_OPT2:
 		mask = KN03_INTR_TC_2;
 		break;
-	  case KN03_SCSI_SLOT:
+	  case SYS_DEV_SCSI:
 		mask = (IOASIC_INTR_SCSI | IOASIC_INTR_SCSI_PTR_LOAD |
 			IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
 		break;
-	  case KN03_LANCE_SLOT:
+	  case SYS_DEV_LANCE:
 		mask = KN03_INTR_LANCE | IOASIC_INTR_LANCE_READ_E;
 		break;
-	  case KN03_SCC0_SLOT:
+	  case SYS_DEV_SCC0:
 		mask = KN03_INTR_SCC_0;
 		break;
-	  case KN03_SCC1_SLOT:
+	  case SYS_DEV_SCC1:
 		mask = KN03_INTR_SCC_1;
-		break;
-	  case KN03_ASIC_SLOT:
-		mask = KN03_INTR_ASIC;
 		break;
 	  default:
 #ifdef DIAGNOSTIC
-		printf("warning: enabling unknown intr %x\n", slotno);
+		printf("warning: enabling unknown intr %x\n", (int)cookie);
 #endif
-		goto done;
+		return;
 	}
 
 	kn03_tc3_imask |= mask;
-	intrtab[slotno].ih_func = handler;
-	intrtab[slotno].ih_arg = arg;
+	intrtab[(int)cookie].ih_func = handler;
+	intrtab[(int)cookie].ih_arg = arg;
 
-done:
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kn03_tc3_imask;
 	kn03_wbflush();
 }
 
-static void
-dec_3maxplus_intr_disestablish(dev, arg)
-	struct device *dev;
-	void *arg;
-{
-	printf("dec_3maxplus_intr_distestablish: not implemented\n");
-}
 
+#define CHECKINTR(vvv, bits)					\
+    do {							\
+	if (can_serve & (bits)) {				\
+		ifound = 1;					\
+		intrcnt[vvv] += 1;				\
+		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
+	}							\
+    } while (0)
 
-/*
- * 3Max+ hardware interrupts. (DECstation 5000/240)
- */
 static int
-dec_3maxplus_intr(mask, pc, status, cause)
-	unsigned mask;
+dec_3maxplus_intr(cpumask, pc, status, cause)
+	unsigned cpumask;
 	unsigned pc;
 	unsigned status;
 	unsigned cause;
 {
-	static int user_warned = 0;
+	static int warned = 0;
 	unsigned old_buscycle;
 
-	if (mask & MIPS_INT_MASK_4)
+	if (cpumask & MIPS_INT_MASK_4)
 		prom_haltbutton();
 
 	/* handle clock interrupts ASAP */
 	old_buscycle = latched_cycle_cnt;
-	if (mask & MIPS_INT_MASK_1) {
+	if (cpumask & MIPS_INT_MASK_1) {
 		struct clockframe cf;
 
 		__asm __volatile("lbu $0,48(%0)" ::
@@ -359,125 +335,68 @@ dec_3maxplus_intr(mask, pc, status, cause)
 	 * ticks to be missed.
 	 */
 #ifdef notdef
-	if ((mask & MIPS_INT_MASK_1) && old_buscycle > (tick+49) * 25) {
+	if ((cpumask & MIPS_INT_MASK_1) && old_buscycle > (tick+49) * 25) {
 		/* XXX need to include <sys/msgbug.h> for msgbufmapped */
   		if(msgbufmapped && 0)
 			 addlog("kn03: clock intr %d usec late\n",
 				 old_buscycle/25);
 	}
 #endif
+	if (cpumask & MIPS_INT_MASK_0) {
+		int ifound;
+		u_int32_t imsk, intr, can_serve, xxxintr;
+
+		do {
+			ifound = 0;
+			imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
+			intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
+			can_serve = intr & imsk;
+
+			CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
+			CHECKINTR(SYS_DEV_SCC1, IOASIC_INTR_SCC_1);
+			CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
+			CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
+			CHECKINTR(SYS_DEV_OPT2, KN03_INTR_TC_2);
+			CHECKINTR(SYS_DEV_OPT1, KN03_INTR_TC_1);
+			CHECKINTR(SYS_DEV_OPT0, KN03_INTR_TC_0);
+
+			if (warned > 0 && !(can_serve & KN03_INTR_PSWARN)) {
+				printf("%s\n", "Power supply ok now.");
+				warned = 0;
+			}
+			if ((can_serve & KN03_INTR_PSWARN) && (warned < 3)) {
+				warned++;
+				printf("%s\n", "Power supply overheating");
+			}
+
+#define ERRORS	(IOASIC_INTR_ISDN_OVRUN|IOASIC_INTR_ISDN_READ_E|IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E|IOASIC_INTR_LANCE_READ_E)
+#define PTRLOAD (IOASIC_INTR_ISDN_PTR_LOAD|IOASIC_INTR_SCSI_PTR_LOAD)
 	/*
-	 * IOCTL asic DMA-related interrupts should be checked here,
-	 * and DMA pointers serviced as soon as possible.
+	 * XXX future project is here XXX
+	 * IOASIC DMA completion interrupt (PTR_LOAD) should be checked
+	 * here, and DMA pointers serviced as soon as possible.
 	 */
-
-	if (mask & MIPS_INT_MASK_0) {
-		u_int32_t intr, imsk, turnoff;
-
-		turnoff = 0;
-		intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
-		imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
-		intr &= imsk;
-
-		if (intr & IOASIC_INTR_SCSI_PTR_LOAD) {
-			turnoff |= IOASIC_INTR_SCSI_PTR_LOAD;
-#ifdef notdef
-			asc_dma_intr();
-#endif
-		}
-
 	/*
-	 * XXX
-	 * DMA and non-DMA  interrupts from the IOCTl asic all use the
-	 * single interrupt request line from the IOCTL asic.
-	 * Disabling IOASIC interrupts while servicing network or
-	 * disk-driver interrupts causes DMA overruns. NON-dma IOASIC
-	 * interrupts should be disabled in the ioasic, and
-	 * interrupts from the IOASIC itself should be re-enabled.
+	 * All of IOASIC device interrupts comes through a single service
+	 * request line coupled with MIPS cpu INT 0.
+	 * Disabling INT 0 makes entire IOASIC interrupt services blocked,
+	 * and it's harmful because it causes DMA overruns during network
+	 * disk I/O interrupts.
+	 * So, Non-DMA interrupts should be selectively disabled by masking
+	 * IOASIC_IMSK register, and INT 3 itself be reenabled immediately,
+	 * and made available all the time.
 	 * DMA interrupts can then be serviced whilst still servicing
 	 * non-DMA interrupts from ioctl devices or TC options.
 	 */
-
-		if (intr & (IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E))
-			turnoff = IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E;
-
-		if (intr & IOASIC_INTR_LANCE_READ_E)
-			turnoff |= IOASIC_INTR_LANCE_READ_E;
-
-		if (turnoff)
-			*(u_int32_t *)(ioasic_base + IOASIC_INTR) = ~turnoff;
-
-		if ((intr & KN03_INTR_SCC_0) &&
-		    intrtab[KN03_SCC0_SLOT].ih_func) {
-			(*(intrtab[KN03_SCC0_SLOT].ih_func))
-			    (intrtab[KN03_SCC0_SLOT].ih_arg);
-			intrcnt[SERIAL0_INTR]++;
-		}
-
-		if ((intr & KN03_INTR_SCC_1) &&
-		    intrtab[KN03_SCC1_SLOT].ih_func) {
-			(*(intrtab[KN03_SCC1_SLOT].ih_func))
-			    (intrtab[KN03_SCC1_SLOT].ih_arg);
-			intrcnt[SERIAL1_INTR]++;
-		}
-
-		if ((intr & KN03_INTR_TC_0) &&
-		    intrtab[0].ih_func) {
-			(*(intrtab[0].ih_func))
-			    (intrtab[0].ih_arg);
-			intrcnt[SLOT0_INTR]++;
-		}
-#ifdef DIAGNOSTIC
-		else if (intr & KN03_INTR_TC_0)
-			printf ("can't handle tc0 interrupt\n");
-#endif /*DIAGNOSTIC*/
-
-		if ((intr & KN03_INTR_TC_1) &&
-		    intrtab[1].ih_func) {
-			(*(intrtab[1].ih_func))
-			    (intrtab[1].ih_arg);
-			intrcnt[SLOT1_INTR]++;
-		}
-#ifdef DIAGNOSTIC
-		else if (intr & KN03_INTR_TC_1)
-			printf ("can't handle tc1 interrupt\n");
-#endif /*DIAGNOSTIC*/
-
-		if ((intr & KN03_INTR_TC_2) &&
-		    intrtab[2].ih_func) {
-			(*(intrtab[2].ih_func))
-			    (intrtab[2].ih_arg);
-			intrcnt[SLOT2_INTR]++;
-		}
-#ifdef DIAGNOSTIC
-		else if (intr & KN03_INTR_TC_2)
-			printf ("can't handle tc2 interrupt\n");
-#endif /*DIAGNOSTIC*/
-
-		if ((intr & KN03_INTR_LANCE) &&
-		    intrtab[KN03_LANCE_SLOT].ih_func) {
-			(*(intrtab[KN03_LANCE_SLOT].ih_func))
-			    (intrtab[KN03_LANCE_SLOT].ih_arg);
-			intrcnt[LANCE_INTR]++;
-		}
-
-		if ((intr & IOASIC_INTR_SCSI) &&
-		    intrtab[KN03_SCSI_SLOT].ih_func) {
-			(*(intrtab[KN03_SCSI_SLOT].ih_func))
-			    (intrtab[KN03_SCSI_SLOT].ih_arg);
-			intrcnt[SCSI_INTR]++;
-		}
-
-		if (user_warned && ((intr & KN03_INTR_PSWARN) == 0)) {
-			printf("%s\n", "Power supply ok now.");
-			user_warned = 0;
-		}
-		if ((intr & KN03_INTR_PSWARN) && (user_warned < 3)) {
-			user_warned++;
-			printf("%s\n", "Power supply overheating");
-		}
-	}
-	if (mask & MIPS_INT_MASK_3)
+			xxxintr = can_serve & (ERRORS | PTRLOAD);
+			if (xxxintr) {
+				ifound = 1;
+				*(u_int32_t *)(ioasic_base + IOASIC_INTR)
+					= intr &~ xxxintr;
+			}
+		} while (ifound);
+        }
+	if (cpumask & MIPS_INT_MASK_3)
 		dec_3maxplus_errintr();
 
 	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));

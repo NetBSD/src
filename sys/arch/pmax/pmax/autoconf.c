@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.49 2000/02/23 18:50:51 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.50 2000/02/29 04:41:50 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.49 2000/02/23 18:50:51 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.50 2000/02/29 04:41:50 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.49 2000/02/23 18:50:51 mhitch Exp $")
 #error  MI SCSI can not coexist with pmax old SCSI.
 #endif
 
-struct intrhand intrtab[MAX_INTR_COOKIES];
+struct intrhand intrtab[MAX_DEV_NCOOKIES];
 struct device *booted_device;
 int	booted_slot, booted_unit, booted_partition;
 char	*booted_protocol;
@@ -95,30 +95,35 @@ cpu_configure()
 /*
  * Look at the string 'cp' and decode the boot device.  Boot names
  * can be something like 'rz(0,0,0)vmunix' or '5/rz0/vmunix'.
+ *
+ * 3100 allows abbrivation;
+ *	dev(controller[,uni-number[,partition-number]]])[filename]
  */
 void
 makebootdev(cp)
 	char *cp;
 {
 	booted_device = NULL;
-	booted_slot = booted_unit = -1;
-	booted_partition = 0;
+	booted_slot = booted_unit = booted_partition = 0;
 	booted_protocol = NULL;
 
 	if (cp[0] == 'r' && cp[1] == 'z' && cp[2] == '(') {
-		if (cp[3] >= '0' && cp[3] <= '9' && cp[4] == ','
-		    && cp[5] >= '0' && cp[5] <= '9' && cp[6] == ','
-		    && cp[7] >= '0' && cp[7] <= '9' && cp[8] == ')') {
-			booted_slot = cp[3] - '0';
-			booted_unit = cp[5] - '0';
-			booted_partition = cp[7] - '0';
-			booted_protocol = "SCSI";
-		}
+		cp += 3;
+		if (*cp >= '0' && *cp <= '9')
+			booted_slot = *cp++ - '0';
+		if (*cp == ',')
+			cp += 1;
+		if (*cp >= '0' && *cp <= '9')
+			booted_unit = *cp++ - '0';
+		if (*cp == ',')
+			cp += 1;
+		if (*cp >= '0' && *cp <= '9')
+			booted_partition = *cp - '0';
+		booted_protocol = "SCSI";
 		return;
 	}
 	if (cp[0] >= '0' && cp[0] <= '9' && cp[1] == '/') {
 		booted_slot = cp[0] - '0';
-		booted_unit = booted_partition = 0;
 		if (cp[2] == 'r' && cp[3] == 'z'
 		    && cp[4] >= '0' && cp[4] <= '9') {
 			booted_protocol = "SCSI";

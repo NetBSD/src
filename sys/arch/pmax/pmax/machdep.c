@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.163 2000/02/03 04:09:05 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.164 2000/02/29 04:41:54 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163 2000/02/03 04:09:05 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164 2000/02/29 04:41:54 nisimura Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -121,7 +121,6 @@ static void	unimpl_device_register __P((struct device *, void *));
 static int	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
 static void	unimpl_intr_establish __P((struct device *, void *, int,
 		    int (*)(void *), void *));
-static void	unimpl_intr_disestablish __P((struct device *, void *));
 static int	unimpl_memsize __P((caddr_t));
 static unsigned	nullwork __P((void));
 
@@ -132,7 +131,6 @@ struct platform platform = {
 	unimpl_device_register,
 	unimpl_iointr,
 	unimpl_intr_establish,
-	unimpl_intr_disestablish,
 	unimpl_memsize,
 	(void *)nullwork,
 };
@@ -763,14 +761,6 @@ unimpl_intr_establish(dev, cookie, level, handler, arg)
 	void *arg;
 {
 	panic("sysconf.init didn't set intr_establish");
-}
-
-static void
-unimpl_intr_disestablish(dev, arg)
-	struct device *dev;
-	void *arg;
-{
-	panic("sysconf.init didn't set intr_disestablish");
 }
 
 static int

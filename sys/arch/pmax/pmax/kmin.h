@@ -1,4 +1,4 @@
-/*	$NetBSD: kmin.h,v 1.7 1999/03/25 01:17:52 simonb Exp $	*/
+/*	$NetBSD: kmin.h,v 1.8 2000/02/29 04:41:55 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -99,21 +99,18 @@
 /*
  * 3MIN's Physical address space
  */
-
 #define KMIN_PHYS_MIN		0x00000000	/* 512 Meg */
 #define KMIN_PHYS_MAX		0x1fffffff
 
 /*
  * Memory map
  */
-
 #define KMIN_PHYS_MEMORY_START	0x00000000
 #define KMIN_PHYS_MEMORY_END	0x07ffffff	/* 128 Meg in 8 slots */
 
 /*
  * I/O map
  */
-
 #define	KMIN_PHYS_RESERVED	0x08000000	/* Reserved */
 						/*  64 Meg */
 
@@ -141,44 +138,25 @@
 #define	KMIN_TC_MIN		0
 #define KMIN_TC_MAX		2		/* don't look at system slot */
 
-/* Pseudo-TCslots */
-#define	KMIN_SCSI_SLOT		3
-#define	KMIN_LANCE_SLOT		4
-#define	KMIN_SCC1_SLOT		5
-#define	KMIN_SCC0_SLOT		6
-#define	KMIN_ASIC_SLOT		7
-
 /*
- * System module space (IO ASIC)
+ * System module space (IOASIC)
  */
-
 #define	KMIN_SYS_ASIC		( KMIN_PHYS_TC_3_START + 0x0000000 )
-
 #define	KMIN_SYS_ROM_START	( KMIN_SYS_ASIC + IOASIC_SLOT_0_START )
-
 #define KMIN_SYS_ASIC_REGS	( KMIN_SYS_ASIC + IOASIC_SLOT_1_START )
-
 #define	KMIN_SYS_ETHER_ADDRESS	( KMIN_SYS_ASIC + IOASIC_SLOT_2_START )
-
 #define	KMIN_SYS_LANCE		( KMIN_SYS_ASIC + IOASIC_SLOT_3_START )
-
 #define	KMIN_SYS_SCC_0		( KMIN_SYS_ASIC + IOASIC_SLOT_4_START )
-
 #define	KMIN_SYS_SCC_1		( KMIN_SYS_ASIC + IOASIC_SLOT_6_START )
-
 #define	KMIN_SYS_CLOCK		( KMIN_SYS_ASIC + IOASIC_SLOT_8_START )
-
 #define	KMIN_SYS_SCSI		( KMIN_SYS_ASIC + IOASIC_SLOT_12_START )
-
 #define	KMIN_SYS_SCSI_DMA	( KMIN_SYS_ASIC + IOASIC_SLOT_14_START )
-
 #define	KMIN_SYS_BOOT_ROM_START	( KMIN_PHYS_TC_3_START + 0x3c00000 )
 #define	KMIN_SYS_BOOT_ROM_END	( KMIN_PHYS_TC_3_START + 0x3c40000 )
 
 /*
  * Interrupts
  */
-
 #define KMIN_INT_FPA		IP_LEV7		/* Floating Point coproc */
 #define KMIN_INT_HALTB		IP_LEV6		/* Halt button */
 #define KMIN_INT_TC3		IP_LEV5		/* TC slot 3, system */
@@ -189,7 +167,6 @@
 /*
  *  System registers addresses (MREG and CREG space, and IO Control ASIC)
  */
-
 #define	KMIN_REG_MER		0x0c400000	/* Memory error register */
 #define	KMIN_REG_MSR		0x0c800000	/* Memory size register */
 
@@ -227,9 +204,7 @@
 /*
  *  System registers defines (MREG and CREG)
  */
-
 /* Memory error register */
-
 #define	KMIN_MER_xxx		0xfffe30ff	/* undefined */
 #define	KMIN_MER_PAGE_BRY	0x00010000	/* rw: Page boundary error */
 #define	KMIN_MER_TLEN		0x00008000	/* rw: Xfer length error */
@@ -241,7 +216,6 @@
 #	define	KMIN_LASTB07	0x00000100	/* .. lower byte */
 
 /* Memory size register */
-
 #define	KMIN_MSR_SIZE_16Mb	0x00002000	/* rw: using 16Mb mem banks */
 #define	KMIN_MSR_xxx		0xffffdfff	/* undefined */
 
@@ -265,29 +239,23 @@
  */
 
 /* Timeout config register */
-
 #define	KMIN_CNFG_VALUE_12Mhz		127
 #define	KMIN_CNFG_VALUE_25Mhz		0
 
 /* Address error register */
-
 #define	KMIN_AER_ADDR_MASK	0x1ffffffc	/* ro: phys addr in error */
 
 /* Boot 0 register */
-
 #define	KMIN_BOOT_FROM_SLOT0	0x00000001	/* rw: diag board boot */
 
 /* Memory access timeout interrupt register */
-
 #define	KMIN_TIMEO_INTR		0x00000001	/* rc: intr pending */
 
 /*
- * More system registers defines (IO Control ASIC)
+ * More system registers defines (IOASIC)
  */
-
 /* (re)defines for the system Status and Control register (SSR) */
-/* high-order 16 bits 0xFFFF0000 same on all DECstation ioasics */
-
+/* high-order 16 bits 0xFFFF0000 same on all DECstation IOASICs */
 #define KMIN_CSR_DIAGDN		0x00008000	/* rw */
 #define KMIN_CSR_TXDIS_2	0x00004000	/* rw */
 #define KMIN_CSR_TXDIS_1	0x00002000	/* rw */
@@ -298,8 +266,7 @@
 #define KMIN_CSR_LEDS		0x000000ff	/* rw */
 
 /* (re)defines for the System Interrupt and Mask Registers */
-/* high-order 16 bits 0xFFFF0000 same on all DECstation ioasics */
-
+/* high-order 16 bits 0xFFFF0000 same on all DECstation IOASICs */
 #define	KMIN_INTR_NVR_JUMPER	0x00004000	/* ro */
 #define	KMIN_INTR_TIMEOUT	0x00001000	/* ro */
 #define	KMIN_INTR_NRMOD_JUMPER	0x00000400	/* ro */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kn01.h,v 1.5 1999/03/25 01:17:52 simonb Exp $	*/
+/*	$NetBSD: kn01.h,v 1.6 2000/02/29 04:41:56 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -100,14 +100,12 @@
 /*
  * KN01's Physical address space
  */
-
 #define KN01_PHYS_MIN		0x00000000	/* 512 Meg */
 #define KN01_PHYS_MAX		0x1fffffff
 
 /*
  * Memory map
  */
-
 #define KN01_PHYS_MEMORY_START	0x00000000
 #define KN01_PHYS_MEMORY_END	0x01800000	/* 24 Meg in 8 slots */
 
@@ -118,83 +116,53 @@
 #define	KN01_PHYS_COLMASK_START	0x10000000	/* Color Plane mask */
 #define	KN01_PHYS_COLMASK_END	0x11000000	/* Color Plane mask */
 
-
 /*
  * I/O map
  */
-
 #define KN01_SYS_PCC		0x11000000	/* Progr. Cursor Chip */
-
 #define KN01_SYS_VDAC		0x12000000	/* Color map */
-
 #define KN01_SYS_ERRADR		0x17000000	/* Write error address */
-
-#define KN01_SYS_LANCE		0x18000000	/* Lance chip */
-
-#define KN01_SYS_LANCE_B_START	0x19000000	/* 64 Kb Lance Buffer */
+#define KN01_SYS_LANCE		0x18000000	/* LANCE chip */
+#define KN01_SYS_LANCE_B_START	0x19000000	/* 64 KB LANCE Buffer */
 #define KN01_SYS_LANCE_B_END	0x19010000
-
-#define KN01_SYS_SII		0x1a000000	/* scsi SII chip */
-
-#define KN01_SYS_SII_B_START	0x1b000000	/* 128 Kb SCSI buffer */
+#define KN01_SYS_SII		0x1a000000	/* SCSI SII chip */
+#define KN01_SYS_SII_B_START	0x1b000000	/* 128 KB SCSI buffer */
 #define KN01_SYS_SII_B_END	0x1b020000
-
 #define	KN01_SYS_DZ		0x1c000000	/* Serial lines (DZ) */
-
-#define	KN01_SYS_CLOCK		0x1d000000	/* rtc chip */
-
+#define	KN01_SYS_CLOCK		0x1d000000	/* RTC chip */
 #define	KN01_SYS_CSR		0x1e000000	/* System control register */
-
 #define	KN01_SYS_ROM_START	0x1f000000	/* System ROM */
 #define	KN01_SYS_ROM_END	0x1f07ffff
-
 
 /*
  * Interrupts
  */
-
 #define KN01_INT_FPA		IP_LEV7		/* Floating Point coproc */
 #define KN01_INT_MEM		IP_LEV6		/* memory controller */
-#define KN01_INT_CLOCK		IP_LEV5		/* rtc chip */
+#define KN01_INT_CLOCK		IP_LEV5		/* RTC chip */
 #define KN01_INT_DZ		IP_LEV4		/* serial line chip */
-#define KN01_INT_LANCE		IP_LEV3		/* ether */
+#define KN01_INT_LANCE		IP_LEV3		/* Ether */
 #define KN01_INT_SII		IP_LEV2		/* SCSI interface */
 
 /*
  * System board registers
  */
-
 /* system Status and Control register */
-
-#define KN01_CSR_LEDS_MASK	0x00ff		/* wo */
-						/* Diagnostic leds mask */
-#define KN01_CSR_VRGTRB		0x0001		/* ro */
-						/* Red VoltageLev > Blue */
-#define KN01_CSR_VRGTRG		0x0002		/* ro */
-						/* Red VoltageLev > Green */
-#define KN01_CSR_VBGTRG		0x0004		/* ro */
-						/* Blue VoltageLev > Green */
-#define KN01_CSR_TXDIS		0x0100		/* rw */
-						/* Disable DZ xmit */
-#define KN01_CSR_VINT		0x0200		/* rc */
-						/* Vertical retrace intr. */
-#define KN01_CSR_MERR		0x0400		/* rc */
-						/* Memory write error intr */
-#define KN01_CSR_MONO		0x0800		/* ro */
-						/* Mono Framebuf (or none) */
-#define KN01_CSR_CRSRTST	0x1000		/* ro */
-						/* Cursor test output */
-#define KN01_CSR_PARDIS		0x2000		/* rw */
-						/* Disable mem parity chks */
-#define KN01_CSR_SELFTEST	0x4000		/* rw */
-						/* Self-test ok pinout */
-#define KN01_CSR_MNFMOD		0x8000		/* ro */
-						/* Manifacturer MOD jumper */
+#define KN01_CSR_LEDS_MASK	0x00ff /* wo - Diagnostic leds mask */
+#define KN01_CSR_VRGTRB		0x0001 /* ro - Red VoltageLev > Blue */
+#define KN01_CSR_VRGTRG		0x0002 /* ro - Red VoltageLev > Green */
+#define KN01_CSR_VBGTRG		0x0004 /* ro - Blue VoltageLev > Green */
+#define KN01_CSR_TXDIS		0x0100 /* rw - Disable DZ xmit */
+#define KN01_CSR_VINT		0x0200 /* rc - Vertical retrace intr. */
+#define KN01_CSR_MERR		0x0400 /* rc - Memory write error intr */
+#define KN01_CSR_MONO		0x0800 /* ro - Mono Framebuf (or none) */
+#define KN01_CSR_CRSRTST	0x1000 /* ro - Cursor test output */
+#define KN01_CSR_PARDIS		0x2000 /* rw - Disable mem parity chks */
+#define KN01_CSR_SELFTEST	0x4000 /* rw - Self-test ok pinout */
+#define KN01_CSR_MNFMOD		0x8000 /* ro - Manifacturer MOD jumper */
 #define	KN01_CSR_MBZ		0x9800
 
 /* Error address status register */
-
 #define KN01_ERR_ADDRESS	0x07ffffff	/* phys address mask ? */
-
 
 #endif	/* MIPS_KN01_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_3max.c,v 1.7 2000/01/14 15:52:00 ad Exp $	*/
+/*	$NetBSD: ibus_3max.c,v 1.8 2000/02/29 04:41:47 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -31,25 +31,20 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.7 2000/01/14 15:52:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.8 2000/02/29 04:41:47 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <dev/tc/tcvar.h>
-
 #include <pmax/ibus/ibusvar.h>
-
 #include <pmax/pmax/kn02.h>
 
-#define KV(x) MIPS_PHYS_TO_KSEG1(x)
-
-struct ibus_attach_args kn02sys_devs[] = {
-	{ "mc146818",	0,	KV(KN02_SYS_CLOCK),		0,	},
-	{ "dc",  	1,	KV(KN02_SYS_DZ),		0,	},
+static struct ibus_attach_args kn02sys_devs[] = {
+	{ "mc146818",	SYS_DEV_BOGUS,	KV(KN02_SYS_CLOCK),	0 },
+	{ "dc",  	SYS_DEV_SCC0,	KV(KN02_SYS_DZ),	0 },
 };
-const int kn02sys_ndevs = sizeof(kn02sys_devs) / sizeof(kn02sys_devs[0]);
 
 static int	kn02sys_match __P((struct device *, struct cfdata *, void *));
 static void	kn02sys_attach __P((struct device *, struct device *, void *));
@@ -57,9 +52,8 @@ static void	kn02sys_attach __P((struct device *, struct device *, void *));
 struct cfattach kn02sys_ca = {
         sizeof(struct ibus_softc), kn02sys_match, kn02sys_attach,
 };
-extern struct cfdriver tc_cd;
 
-int
+static int
 kn02sys_match(parent, cfdata, aux)
         struct device *parent;
         struct cfdata *cfdata;
@@ -71,19 +65,16 @@ kn02sys_match(parent, cfdata, aux)
 	return (strncmp("KN02SYS ", ta->ta_modname, TC_ROM_LLEN) == 0);
 }
 
-void
+static void
 kn02sys_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
 	struct ibus_dev_attach_args ida;
-	struct tc_softc *sc = tc_cd.cd_devs[0];
 
 	ida.ida_busname = "ibus";
 	ida.ida_devs = kn02sys_devs;
-	ida.ida_ndevs = kn02sys_ndevs;
-	ida.ida_establish = sc->sc_intr_establish;
-	ida.ida_disestablish = sc->sc_intr_disestablish;
+	ida.ida_ndevs = sizeof(kn02sys_devs)/sizeof(kn02sys_devs[0]);
 
 	ibusattach(parent, self, &ida);
 }

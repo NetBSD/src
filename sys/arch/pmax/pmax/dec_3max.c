@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.24 2000/02/03 04:09:01 nisimura Exp $ */
+/* $NetBSD: dec_3max.c,v 1.25 2000/02/29 04:41:51 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.24 2000/02/03 04:09:01 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.25 2000/02/29 04:41:51 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,9 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.24 2000/02/03 04:09:01 nisimura Exp $
 
 #include "rasterconsole.h"
 
-/*
- * forward declarations
- */
 void		dec_3max_init __P((void));		/* XXX */
 static void	dec_3max_bus_reset __P((void));
 
@@ -105,7 +102,6 @@ static void	dec_3max_errintr __P((void));
 static int	dec_3max_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_3max_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
-static void	dec_3max_intr_disestablish __P((struct device *, void *));
 
 
 #define	kn02_wbflush()	mips1_wbflush()	/* XXX to be corrected XXX */
@@ -121,7 +117,6 @@ dec_3max_init()
 	platform.device_register = dec_3max_device_register;
 	platform.iointr = dec_3max_intr;
 	platform.intr_establish = dec_3max_intr_establish;
-	platform.intr_disestablish = dec_3max_intr_disestablish;
 	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
 
@@ -163,10 +158,10 @@ dec_3max_bus_reset()
 	 * Reset interrupts, clear any errors from newconf probes
 	 */
 
-	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	kn02_wbflush();
 
-	*(u_int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN) = 0;
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN) = 0;
 	kn02_wbflush();
 }
 
@@ -208,6 +203,17 @@ dec_3max_device_register(dev, aux)
 	panic("dec_3max_device_register unimplemented");
 }
 
+static const struct {
+	int cookie;
+	int intrbit;
+} kn02intrs[] = {
+	{ SYS_DEV_OPT0,	 KN02_IP_SLOT0 },
+	{ SYS_DEV_OPT1,	 KN02_IP_SLOT1 },
+	{ SYS_DEV_OPT2,	 KN02_IP_SLOT2 },
+	{ SYS_DEV_SCSI,	 KN02_IP_SCSI },
+	{ SYS_DEV_LANCE, KN02_IP_LANCE },
+	{ SYS_DEV_SCC0,	 KN02_IP_DZ },
+};
 
 static void
 dec_3max_intr_establish(dev, cookie, level, handler, arg)
@@ -217,55 +223,45 @@ dec_3max_intr_establish(dev, cookie, level, handler, arg)
 	int (*handler) __P((void *));
 	void *arg;
 {
-	int slotno = (int)cookie;
-	volatile int *p_csr =
-	    (volatile int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
-	int csr;
-	int s;
+	int i;
+	u_int32_t csr;
 
-#if 0
-	printf("3MAX enable_intr: %sabling slot %d, sc %p\n",
-	    (on? "en" : "dis"), slotno, sc);
-#endif 
-	if (slotno > MAX_INTR_COOKIES)
-		panic("dec_3max_intr_establish: bogus slot %d\n", slotno);
+	for (i = 0; i < sizeof(kn02intrs)/sizeof(kn02intrs[0]); i++) {
+		if (kn02intrs[i].cookie == (int)cookie)
+			goto found;
+	}
+	panic("intr_establish: invalid cookie %d", (int)cookie);
 
-	intrtab[slotno].ih_func = handler;
-	intrtab[slotno].ih_arg = arg;
+found:
+	intrtab[(int)cookie].ih_func = handler;
+	intrtab[(int)cookie].ih_arg = arg;
 
-	slotno = 1 << (slotno + KN02_CSR_IOINTEN_SHIFT);
-	s = splhigh();
-	csr = *p_csr & ~(KN02_CSR_WRESERVED | 0xFF);
-	*p_csr = csr | slotno;
-	splx(s);
-}
-
-static void
-dec_3max_intr_disestablish(dev, arg)
-	struct device *dev;
-	void *arg;
-{
-	printf("dec_3max_intr_distestablish: not implemented\n");
+	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) & 0x00ffff00;
+	csr |= (kn02intrs[i].intrbit << 16);
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
+	kn02_wbflush();
 }
 
 
-/*
- * Handle hardware interrupts for the KN02. (DECstation 5000/200)
- * Returns spl value.
- */
+#define CALLINTR(vvv)						\
+	do {							\
+		ifound = 1;					\
+		intrcnt[vvv] += 1;				\
+		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
+	} while (0)
+
 static int
-dec_3max_intr(mask, pc, status, cause)
-	unsigned mask;
+dec_3max_intr(cpumask, pc, status, cause)
+	unsigned cpumask;
 	unsigned pc;
 	unsigned status;
 	unsigned cause;
 {
 	static int warned = 0;
-	unsigned i, m;
-	unsigned csr;
+	u_int32_t csr;
 
 	/* handle clock interrupts ASAP */
-	if (mask & MIPS_INT_MASK_1) {
+	if (cpumask & MIPS_INT_MASK_1) {
 		struct clockframe cf;
 
 		csr = *(unsigned *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
@@ -291,35 +287,32 @@ dec_3max_intr(mask, pc, status, cause)
 	/* If clock interrups were enabled, re-enable them ASAP. */
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
 
-	if (mask & MIPS_INT_MASK_0) {
-		static int intr_map[8] = { SLOT0_INTR, SLOT1_INTR, SLOT2_INTR,
-					   /* these two bits reserved */
-					   STRAY_INTR,  STRAY_INTR,
-					   SCSI_INTR, LANCE_INTR,
-					   SERIAL0_INTR };
+	if (cpumask & MIPS_INT_MASK_0) {
+                int ifound;
 
-		csr = *(unsigned *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
-		m = csr & (csr >> KN02_CSR_IOINTEN_SHIFT) & KN02_CSR_IOINT;
-#if 0
-		*(unsigned *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) =
-			(csr & ~(KN02_CSR_WRESERVED | 0xFF)) |
-			(m << KN02_CSR_IOINTEN_SHIFT);
-#endif
-		for (i = 0; m; i++, m >>= 1) {
-			if (!(m & 1))
-				continue;
-			intrcnt[intr_map[i]]++;
-			if (intrtab[i].ih_func)
-				(*intrtab[i].ih_func)(intrtab[i].ih_arg);
-			else
-				printf("spurious interrupt %d\n", i);
-		}
-#if 0
-		*(unsigned *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) =
-			csr & ~(KN02_CSR_WRESERVED | 0xFF);
-#endif
+                do {
+                        ifound = 0;
+                        csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+                        csr &= (csr >> KN02_CSR_IOINTEN_SHIFT);
+                        switch (csr & 0xf0) {
+                        case KN02_IP_DZ:
+                                CALLINTR(SYS_DEV_SCC0); break;
+                        case KN02_IP_LANCE:
+                                CALLINTR(SYS_DEV_LANCE); break;
+                        case KN02_IP_SCSI:
+                                CALLINTR(SYS_DEV_SCSI); break;
+                        }
+                        switch (csr & 0x0f) {
+                        case KN02_IP_SLOT2:
+                                CALLINTR(SYS_DEV_OPT2); break;
+                        case KN02_IP_SLOT1:
+                                CALLINTR(SYS_DEV_OPT1); break;
+                        case KN02_IP_SLOT0:
+                                CALLINTR(SYS_DEV_OPT0); break;
+                        }
+                } while (ifound);
 	}
-	if (mask & MIPS_INT_MASK_3) {
+	if (cpumask & MIPS_INT_MASK_3) {
 		intrcnt[ERROR_INTR]++;
 		dec_3max_errintr();
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.20 2000/02/03 04:23:36 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.21 2000/02/29 04:41:53 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -56,7 +56,6 @@ static void	dec_5100_device_register __P((struct device *, void *));
 static int	dec_5100_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_5100_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
-static void	dec_5100_intr_disestablish __P((struct device *, void *));
 static void	dec_5100_memintr __P((void));
 
 void
@@ -68,7 +67,6 @@ dec_5100_init()
 	platform.device_register = dec_5100_device_register;
 	platform.iointr = dec_5100_intr;
 	platform.intr_establish = dec_5100_intr_establish;
-	platform.intr_disestablish = dec_5100_intr_disestablish;
 	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
 
@@ -136,34 +134,30 @@ dec_5100_intr_establish(dev, cookie, level, handler, arg)
 	int (*handler) __P((void *));
 	void *arg;
 {
-	int slotno = (int)cookie;
 
-	intrtab[slotno].ih_func = handler;
-	intrtab[slotno].ih_arg = arg;
-}
-
-static void
-dec_5100_intr_disestablish(dev, arg)
-	struct device *dev;
-	void *arg;
-{
-	printf("dec_5100_intr_distestablish: not implemented\n");
+	intrtab[(int)cookie].ih_func = handler;
+	intrtab[(int)cookie].ih_arg = arg;
 }
 
 
-/*
- * Handle mipsmate (DECstation 5100) interrupts.
- */
+#define CALLINTR(vvv, ibit)						\
+    do {								\
+	if ((icsr & (ibit)) && intrtab[vvv].ih_func) {			\
+		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);		\
+		intrcnt[vvv]++;						\
+	}								\
+    } while (0)
+
 static int
-dec_5100_intr(mask, pc, status, cause)
-	unsigned mask;
+dec_5100_intr(cpumask, pc, status, cause)
+	unsigned cpumask;
 	unsigned pc;
 	unsigned status;
 	unsigned cause;
 {
-	u_int icsr;
+	u_int32_t icsr;
 
-	if (mask & MIPS_INT_MASK_4) {
+	if (cpumask & MIPS_INT_MASK_4) {
 #ifdef DDB
 		Debugger();
 #else
@@ -171,10 +165,10 @@ dec_5100_intr(mask, pc, status, cause)
 #endif
 	}
 
-	icsr = *(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	icsr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 
 	/* handle clock interrupts ASAP */
-	if (mask & MIPS_INT_MASK_2) {
+	if (cpumask & MIPS_INT_MASK_2) {
 		struct clockframe cf;
 
 		__asm __volatile("lbu $0,48(%0)" ::
@@ -191,33 +185,18 @@ dec_5100_intr(mask, pc, status, cause)
 	/* If clock interrupts were enabled, re-enable them ASAP. */
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
 
-#define CALLINTR(slot, icnt) \
-	if (intrtab[slot].ih_func) {					\
-		(*intrtab[slot].ih_func) (intrtab[slot].ih_arg);	\
-		intrcnt[(icnt)]++;					\
+	if (cpumask & MIPS_INT_MASK_0) {
+		CALLINTR(SYS_DEV_SCC0, KN230_CSR_INTR_DZ0);
+		CALLINTR(SYS_DEV_OPT0, KN230_CSR_INTR_OPT0);
+		CALLINTR(SYS_DEV_OPT1, KN230_CSR_INTR_OPT1);
 	}
 
-	if (mask & MIPS_INT_MASK_0) {
-		if (icsr & KN230_CSR_INTR_DZ0) {
-		    CALLINTR(1, SERIAL0_INTR);
-		}
-		if (icsr & KN230_CSR_INTR_OPT0)
-		    CALLINTR(5, SERIAL0_INTR);
-		if (icsr & KN230_CSR_INTR_OPT1)
-		    CALLINTR(6, SERIAL0_INTR);
+	if (cpumask & MIPS_INT_MASK_1) {
+		CALLINTR(SYS_DEV_LANCE, KN230_CSR_INTR_LANCE);
+		CALLINTR(SYS_DEV_LANCE, KN230_CSR_INTR_SII);
 	}
 
-	if (mask & MIPS_INT_MASK_1) {
-		if (icsr & KN230_CSR_INTR_LANCE) {
-			CALLINTR(2, LANCE_INTR);
-		}
-		if (icsr & KN230_CSR_INTR_SII) {
-			CALLINTR(3, SCSI_INTR);
-		}
-	}
-#undef CALLINTR
-
-	if (mask & MIPS_INT_MASK_3) {
+	if (cpumask & MIPS_INT_MASK_3) {
 		dec_5100_memintr();
 		intrcnt[ERROR_INTR]++;
 	}
@@ -236,13 +215,12 @@ dec_5100_intr(mask, pc, status, cause)
 static void
 dec_5100_memintr()
 {
-	volatile u_int icsr;
-	volatile u_int *icsr_addr =
-		(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	u_int32_t icsr;
 
 	/* read icsr and clear error  */
-	icsr = *icsr_addr;
-	*icsr_addr = icsr | KN230_CSR_INTR_WMERR;
+	icsr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	icsr |= KN230_CSR_INTR_WMERR;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 	kn230_wbflush();
 
 #ifdef DIAGNOSTIC
