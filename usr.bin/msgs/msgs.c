@@ -1,4 +1,4 @@
-/*	$NetBSD: msgs.c,v 1.11 1997/10/19 05:19:54 lukem Exp $	*/
+/*	$NetBSD: msgs.c,v 1.12 1998/07/26 22:14:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: msgs.c,v 1.11 1997/10/19 05:19:54 lukem Exp $");
+__RCSID("$NetBSD: msgs.c,v 1.12 1998/07/26 22:14:34 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,6 +171,7 @@ main(argc, argv)
 	int firstmsg, nextmsg, lastmsg = 0;
 	int blast = 0;
 	FILE *bounds;
+	struct passwd *pw;
 
 #ifdef UNBUFFERED
 	setbuf(stdout, NULL);
@@ -361,9 +362,13 @@ main(argc, argv)
 			signal(SIGINT, onintr);
 
 		if (isatty(fileno(stdin))) {
-			ptr = getpwuid(uid)->pw_name;
+			pw = getpwuid(uid);
+			if (!pw) {
+				fprintf(stderr, "Who are you?\n");
+				exit(1);
+			}
 			printf("Message %d:\nFrom %s %sSubject: ",
-				nextmsg, ptr, ctime(&t));
+				nextmsg, pw->pw_name, ctime(&t));
 			fflush(stdout);
 			fgets(inbuf, sizeof inbuf, stdin);
 			putchar('\n');
