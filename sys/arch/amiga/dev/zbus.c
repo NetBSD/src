@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.16 1996/03/17 01:17:58 thorpej Exp $	*/
+/*	$NetBSD: zbus.c,v 1.17 1996/03/28 18:41:49 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -125,7 +125,9 @@ static struct aconfdata aconftab[] = {
 	/* Hacker Inc. */
 	{ "mlhsc",	2011,	1 },
 	/* Resource Management Force */
-	{ "qn",		2011,	2 }	/* QuickNet Ethernet */
+	{ "qn",		2011,	2 },	/* QuickNet Ethernet */
+	/* ??? */
+	{ "empsc",	2171,	21 }	/* Emplant SCSI */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
@@ -290,11 +292,11 @@ zbusprint(auxp, pnp)
 }
 
 /*
- * this function is used to map Zorro physical I/O addresses into kernel virtual
- * addresses. We don't keep track which address we map where, we don't NEED
- * to know this. We made sure in amiga_init.c (by scanning all available Zorro
- * devices) to have enough kva-space available, so there is no extra range
- * check done here.
+ * this function is used to map Zorro physical I/O addresses into kernel
+ * virtual addresses. We don't keep track which address we map where, we don't
+ * NEED to know this. We made sure in amiga_init.c (by scanning all available
+ * Zorro devices) to have enough kva-space available, so there is no extra
+ * range check done here.
  */
 caddr_t
 zbusmap (pa, size)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.40 1996/03/17 19:36:33 is Exp $
+#	$NetBSD: files.amiga,v 1.41 1996/03/28 18:41:55 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -226,6 +226,11 @@ file	arch/amiga/dev/otgsc.c		otgsc needs-flag
 device	mlhsc: scsi, sci
 attach	mlhsc at zbus
 file	arch/amiga/dev/mlhsc.c		mlhsc needs-flag
+
+# Emplant
+device	empsc: scsi, sci
+attach	empsc at zbus
+file	arch/amiga/dev/empsc.c		empsc needs-flag
 
 # Emulex ESP216 & FAS216 controllers
 define	sfas
