@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 1996/02/21 02:43:52 jtk Exp $
+#	$NetBSD: Makefile,v 1.9 1999/02/09 22:32:33 is Exp $
 
-.if exists(${MACHINE})
-SUBDIR+= ${MACHINE}
+.if exists(${MACHINE_ARCH})
+SUBDIR+= ${MACHINE_ARCH}
 .endif
 
 .include <bsd.subdir.mk>
