@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.1 1999/04/11 03:38:51 cgd Exp $ */
+/* $NetBSD: test.c,v 1.2 1999/05/11 00:04:52 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -46,6 +46,7 @@ int		done;
 unsigned long	arg_pfn, arg_ptb, arg_bim, arg_bip, arg_biv;
 
 const char *advance_past_space(const char *buf);
+const char *cvt_number(const char *buf, u_int64_t *nump);
 int	dispatch_cmd(const char *buf, const struct cmdtab *cmds);
 #define		DISPATCH_CMD_NOCMD	0
 #define		DISPATCH_CMD_MATCHED	1
@@ -55,10 +56,14 @@ void	print_cmds(const struct cmdtab *cmds, const char *match,
 	    size_t matchlen);
 void	print_stringarray(const char *s, size_t maxlen);
 
-void	toplevel_db(const char *buf);
-void	toplevel_dl(const char *buf);
-void	toplevel_dq(const char *buf);
-void	toplevel_dw(const char *buf);
+void	toplevel_dpb(const char *buf);
+void	toplevel_dpl(const char *buf);
+void	toplevel_dpq(const char *buf);
+void	toplevel_dpw(const char *buf);
+void	toplevel_dvb(const char *buf);
+void	toplevel_dvl(const char *buf);
+void	toplevel_dvq(const char *buf);
+void	toplevel_dvw(const char *buf);
 void	toplevel_halt(const char *buf);
 void	toplevel_help(const char *buf);
 void	toplevel_show(const char *buf);
@@ -80,10 +85,14 @@ main(pfn, ptb, bim, bip, biv)
 	const struct cmdtab toplevel_cmds[] = {
 	    {	"?",		toplevel_help,	},
 #if 0 /* XXX notyet */
-	    {	"db",		toplevel_db,	},
-	    {	"dl",		toplevel_dl,	},
-	    {	"dq",		toplevel_dq,	},
-	    {	"dw",		toplevel_dw,	},
+	    {	"dpb",		toplevel_dpb,	},
+	    {	"dpl",		toplevel_dpl,	},
+	    {	"dpq",		toplevel_dpq,	},
+	    {	"dpw",		toplevel_dpw,	},
+	    {	"dvb",		toplevel_dvb,	},
+	    {	"dvl",		toplevel_dvl,	},
+	    {	"dvq",		toplevel_dvq,	},
+	    {	"dvw",		toplevel_dvw,	},
 #endif
 	    {	"quit",		toplevel_halt,	},
 	    {	"show",		toplevel_show,	},
@@ -128,6 +137,38 @@ advance_past_space(const char *buf)
 	if (*buf == '\0')
 		return NULL;
 	return buf;
+}
+
+const char *
+cvt_number(const char *buf, u_int64_t *nump)
+{
+	int base;
+	unsigned char c;
+
+	base = 10;
+	*nump = 0;
+
+	c = *buf;
+	if (c == '0') {
+		c = *(++buf);
+
+		if (c == 'x' || c == 'X') {
+			base = 16;
+			buf++;
+		} else {
+			base = 8;
+		}
+	}
+
+	for (c = *buf; c != '\0' && !isspace(c); c = *(++buf)) {
+		switch (base) {
+		case 10:
+			if (c < '0' || c > '9')
+				goto done;
+		}
+	}
+done:
+
 }
 
 int
@@ -218,36 +259,92 @@ warn_ignored_args(const char *buf, const char *cmd)
 		    cmd);
 }
 
+
 /*
  * Top-level Commands
  */
 
 void
-toplevel_db(const char *buf)
+toplevel_dpb(const char *buf)
 {
+	u_int64_t startaddr, count = 1;
 
-	printf("\"db\" not yet implemented\n");
+	buf = advance_past_space(buf);
+	if (buf == NULL) {
+		printf("\"dpb\" must be given starting address\n");
+		return;
+	}
+	buf = cvt_number(buf, &startaddr);
+	if (*buf != '\0' && !isspace(*buf)) {
+		printf("bad character '%c' in starting address\n");
+		return;
+	}
+
+	buf = advance_past_space(buf);
+	if (buf != NULL) {
+		buf = cvt_number(buf, &count);
+		if (*buf != '\0' && !isspace(*buf)) {
+			printf("bad character '%c' in count\n");
+			return;
+		}
+		buf = advance_past_space(buf);
+		if (buf != NULL) {
+			printf("extra args at end of \"dpb\" command\n");
+			return;
+		}
+	}
+
+	printf("startaddr = 0x%lx, count = 0x%lx\n", startaddr, count);
+	printf("\"dpb\" not yet implemented\n");
 }
 
 void
-toplevel_dl(const char *buf)
+toplevel_dpl(const char *buf)
 {
 
-	printf("\"dl\" not yet implemented\n");
+	printf("\"dpl\" not yet implemented\n");
 }
 
 void
-toplevel_dq(const char *buf)
+toplevel_dpq(const char *buf)
 {
 
-	printf("\"dq\" not yet implemented\n");
+	printf("\"dpq\" not yet implemented\n");
 }
 
 void
-toplevel_dw(const char *buf)
+toplevel_dpw(const char *buf)
 {
 
-	printf("\"dw\" not yet implemented\n");
+	printf("\"dpw\" not yet implemented\n");
+}
+
+void
+toplevel_dvb(const char *buf)
+{
+
+	printf("\"dvb\" not yet implemented\n");
+}
+
+void
+toplevel_dvl(const char *buf)
+{
+
+	printf("\"dvl\" not yet implemented\n");
+}
+
+void
+toplevel_dvq(const char *buf)
+{
+
+	printf("\"dvq\" not yet implemented\n");
+}
+
+void
+toplevel_dvw(const char *buf)
+{
+
+	printf("\"dvw\" not yet implemented\n");
 }
 
 void
@@ -269,10 +366,22 @@ toplevel_help(const char *buf)
 	printf("    ?                       print help\n");
 	printf("    quit                    return to console\n");
 #if 0 /* XXX notyet */
-	printf("    db startaddr [count]    display memory (8-bit units)\n");
-	printf("    dw startaddr [count]    display memory (16-bit units)\n");
-	printf("    dl startaddr [count]    display memory (32-bit units)\n");
-	printf("    dq startaddr [count]    display memory (64-bit units)\n");
+	printf("    dpb startaddr [count]   display physical memory "
+	    "(8-bit units)\n");
+	printf("    dpw startaddr [count]   display physical memory "
+	    "(16-bit units)\n");
+	printf("    dpl startaddr [count]   display physical memory "
+	    "(32-bit units)\n");
+	printf("    dpq startaddr [count]   display physical memory "
+	    "(64-bit units)\n");
+	printf("    dvb startaddr [count]   display virtual memory "
+	    "(8-bit units)\n");
+	printf("    dvw startaddr [count]   display virtual memory "
+	    "(16-bit units)\n");
+	printf("    dvl startaddr [count]   display virtual memory "
+	    "(32-bit units)\n");
+	printf("    dvq startaddr [count]   display virtual memory "
+	    "(64-bit units)\n");
 #endif
 	printf("    show args               show test program arguments\n");
 	printf("    show bootinfo           show bootstrap bootinfo\n");
