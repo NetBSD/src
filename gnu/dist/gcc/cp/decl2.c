@@ -239,6 +239,7 @@ int warn_sign_compare;
 /* Warn about *printf or *scanf format/argument anomalies.  */
 
 int warn_format;
+int warn_format_y2k;
 
 /* Warn about a subscript that has type char.  */
 
@@ -712,7 +713,9 @@ lang_decode_option (argc, argv)
       else if (!strcmp (p, "sign-compare"))
 	warn_sign_compare = setting;
       else if (!strcmp (p, "format"))
-	warn_format = setting;
+	warn_format = warn_format_y2k = setting;
+      else if (!strcmp (p, "format-y2k"))
+	warn_format_y2k = setting;
       else if (!strcmp (p, "conversion"))
 	warn_conversion = setting;
       else if (!strcmp (p, "parentheses"))
@@ -756,7 +759,7 @@ lang_decode_option (argc, argv)
 	  warn_implicit = setting;
 	  warn_ctor_dtor_privacy = setting;
 	  warn_switch = setting;
-	  warn_format = setting;
+	  warn_format = warn_format_y2k = setting;
 	  warn_parentheses = setting;
 	  warn_missing_braces = setting;
 	  warn_sign_compare = setting;
