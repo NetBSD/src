@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.133 2000/02/19 02:10:31 tsutsui Exp $
+#	$NetBSD: bsd.own.mk,v 1.134 2000/02/20 06:50:54 wiz Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -79,9 +79,6 @@ STRIPFLAG?=	-s
 # source (``symlinks''), or a separate copy (``copies''); (latter useful
 # in environments where it's not possible to keep /sys publicly readable)
 #SYS_INCLUDE= 	symlinks
-
-# XXX The next one is temporary until the transition to UVM is complete.
-UVM?=		yes
 
 # The sparc64 port is incomplete.
 .if ${MACHINE_ARCH} == "sparc64"
