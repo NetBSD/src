@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.3 2001/05/14 15:12:39 fredette Exp $	*/
+/*	$NetBSD: promlib.c,v 1.4 2001/06/14 13:21:39 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sun2/sun2/machdep.h>
 #include <sun2/sun2/control.h>
-#include <sun2/sun2/vector.h>
+#include <sun68k/sun68k/vector.h>
 #include <machine/pte.h>
 
 /*
@@ -251,6 +251,17 @@ prom_getbootfile()
 	return (sunmon_bootparam.fileName);
 }
 
+/* This maps a PROM `sd' unit number into a SCSI target. */
+int
+prom_sd_target(unit)
+	int unit;
+{
+	switch(unit) {
+	case 2:	return (4);
+	}
+	return (unit);
+}
+
 /*
  * This aborts to the PROM, but should allow the user
  * to "c" continue back into the kernel.
@@ -258,8 +269,28 @@ prom_getbootfile()
 void
 prom_abort()
 {
+	u_int16_t old_g0_g4_vectors[4], *vec, *store;
 
 	_mode_monitor(&sunmon_kernel_state, 1);
+
+	/*
+	 * Set up our g0 and g4 handlers, by writing into
+	 * the PROM's vector table directly.  Note that
+	 * the braw instruction displacement is PC-relative.
+	 */
+#define	BRAW	0x6000
+	vec = (u_int16_t *) sunmon_vbr;
+	store = old_g0_g4_vectors;
+	*(store++) = *vec;
+	*(vec++) = BRAW;
+	*(store++) = *vec;
+	*(vec++) = ((u_long) g0_entry) - ((u_long) vec);
+	*(store++) = *vec;
+	*(vec++) = BRAW;
+	*(store++) = *vec;
+	*(vec++) = ((u_long) g4_entry) - ((u_long) vec);
+#undef	BRAW
+
 	delay(100000);
 
 	/*
@@ -270,6 +301,15 @@ prom_abort()
 	asm(" trap #14 ; _sunmon_continued: nop");
 
 	/* We have continued from a PROM abort! */
+
+	/* Put back the old g0 and g4 handlers. */
+	vec = (u_int16_t *) sunmon_vbr;
+	store = old_g0_g4_vectors;
+	*(vec++) = *(store++);
+	*(vec++) = *(store++);
+	*(vec++) = *(store++);
+	*(vec++) = *(store++);
+
 	_mode_kernel(&sunmon_kernel_state, 1);
 }
 
