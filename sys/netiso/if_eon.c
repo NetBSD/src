@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.26 1999/07/01 08:12:58 itojun Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.27 1999/12/24 05:01:33 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -71,6 +71,7 @@ SOFTWARE.
  */
 
 #include "opt_eon.h"
+#include "opt_ipsec.h"
 
 #ifdef EON
 #define NEON 1
@@ -441,6 +442,9 @@ send:
 	}
 #endif
 
+#ifdef IPSEC
+	m->m_pkthdr.rcvif = NULL;
+#endif
 	error = ip_output(m, (struct mbuf *) 0, ro, 0, NULL);
 	m = 0;
 	if (error) {
