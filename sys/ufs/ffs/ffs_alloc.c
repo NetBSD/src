@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.41.2.9 2002/06/24 22:12:23 nathanw Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.41.2.10 2002/07/15 20:49:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.41.2.9 2002/06/24 22:12:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.41.2.10 2002/07/15 20:49:20 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -133,7 +133,7 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 		while (off < endoff) {
 			pg = uvm_pagelookup(uobj, off);
 			KASSERT(pg != NULL);
-			KASSERT(pg->owner == curlwp->p_pid);
+			KASSERT(pg->owner == curproc->p_pid);
 			KASSERT((pg->flags & PG_CLEAN) == 0);
 			off += PAGE_SIZE;
 		}
@@ -219,7 +219,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 		while (off < endoff) {
 			pg = uvm_pagelookup(uobj, off);
 			KASSERT(pg != NULL);
-			KASSERT(pg->owner == curlwp->p_pid);
+			KASSERT(pg->owner == curproc->p_pid);
 			KASSERT((pg->flags & PG_CLEAN) == 0);
 			off += PAGE_SIZE;
 		}
