@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.118 1995/03/31 02:49:39 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.119 1995/04/07 22:29:39 fvdl Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -48,6 +48,9 @@
 #include <sys/syscall.h>
 #ifdef COMPAT_SVR4
 #include <compat/svr4/svr4_syscall.h>
+#endif
+#ifdef COMPAT_LINUX
+#include <compat/linux/linux_syscall.h>
 #endif
 
 #include <machine/cputypes.h>
@@ -639,6 +642,25 @@ ENTRY(svr4_sigcode)
 #endif
 	.globl	_esigcode
 _esigcode:
+
+/*****************************************************************************/
+
+#ifdef COMPAT_LINUX
+/*
+ * Signal trampoline; copied to top of user stack.
+ */
+ENTRY(linux_sigcode)
+	call	LINUX_SIGF_HANDLER(%esp)
+	leal	LINUX_SIGF_SC(%esp),%ebx	# scp (the call may have clobbered the
+					# copy at SIGF_SCP(%esp))
+	pushl	%eax			# junk to fake return address
+	movl	$LINUX_SYS_linux_sigreturn,%eax
+	int	$0x80	 		# enter kernel with args on stack
+	movl	$LINUX_SYS_exit,%eax
+	int	$0x80			# exit if sigreturn fails
+	.globl	_linux_esigcode
+_linux_esigcode:
+#endif
 
 /*****************************************************************************/
 
