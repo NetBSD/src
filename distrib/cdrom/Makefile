@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2003/02/13 23:55:12 jmc Exp $
+# $NetBSD: Makefile,v 1.17 2003/03/07 09:52:59 lukem Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -70,8 +70,6 @@ SUBDIR+=	macppc_installboot
 ##### Default paths for programs #####
 
 MKISOFS?=	/usr/pkg/bin/mkisofs
-MKSUNBOOTCDDIR!=cd ${NETBSDSRCDIR}/distrib/utils/mksunbootcd && ${PRINTOBJDIR}
-MKSUNBOOTCD?=	${MKSUNBOOTCDDIR}/mksunbootcd
 RSYNC?=		/usr/pkg/bin/rsync
 ALPHA_IBOOT?=	${INSTALLBOOT} -m alpha -o sunsum,append
 PMAX_IBOOT?=	${INSTALLBOOT} -m pmax -o sunsum,append
@@ -228,9 +226,9 @@ MKISOFS_ARGS.${image}+=	-apple --macbin -map ${.CURDIR}/hfsmap.lst
 
 SUN_BOOT_ARGS.${image}:=
 .if !empty(ports:Msparc*) || !empty(ports:Msun3*)	# {
-SUN_BOOT.123:=	/dev/null
-SUN_BOOT.4:=	/dev/null
-SUN_BOOT.5:=	/dev/null
+SUN_BOOT.123:=	-
+SUN_BOOT.4:=	-
+SUN_BOOT.5:=	-
 
 .if !empty(ports:Msparc)
 SUN_BOOT.123:=	${BOOTFILE.sparc}
@@ -250,7 +248,7 @@ SUN_BOOT.5:=	${BOOTFILE.sun3x}
 .endif
 
 .if !empty(ports:Msparc64)				# {
-.if (${SUN_BOOT.5} != "/dev/null")
+.if (${SUN_BOOT.5} != "-")
 # add warning
 SUN_BOOT.5:=	${SUN_BOOT.5} ${BOOTFILE.sparc64}
 .else
@@ -347,8 +345,8 @@ ${file:C/^.*://}: .PHONY
 
 # Size the CD image.  This is done via the following formula:
 # 1. Size the image produced by mkisofs.
-# 2. Add images added by mksunbootcd by rounding to a 320k boundary and
-#    adding each Sun image rounded to a 320k boundary.
+# 2. Add images added by distrib/common/sunbootcd.sh by rounding to a 320k
+#    boundary and adding each Sun image rounded to a 320k boundary.
 # 3. Add 64k if macppc is included (ofwboot munged to one 64k block).
 # 4. Add bootfile sizes rounded up to 512 bytes for pmax and vax.
 # 5. Round up to a 32k boundary, then add another 32k for TAO padding.
@@ -361,7 +359,7 @@ size-${image}: stage-${image} extfileprep fileprep-${image}
 	@size=$$((`cd ${STAGEDIR}/${image} && ${MKISOFS} ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} -print-size . 2>&1 | tee /dev/stderr | sed '/=/!d;s/^[^=]*=//'` * 2048)) && \
 	if [ "${SUN_BOOT_ARGS.${image}}" != "" ]; then \
 		size=$$(($$(($$size + 327679)) / 327680 * 327680)) && \
-		bootfiles=`for f in ${SUN_BOOT_ARGS.${image}:N/dev/null:O}; do echo $$f; done | uniq` && \
+		bootfiles=`for f in ${SUN_BOOT_ARGS.${image}:N-:O}; do echo $$f; done | uniq` && \
 		for f in $$bootfiles; do \
 			bfsize=`ls -l $$f | awk '{print $$5}'` && \
 			size=$$(($$size + $$(($$(($$bfsize + 327679)) / 327680 * 327680)))); \
@@ -391,7 +389,8 @@ ${IMAGEDIR}/${image}.iso: size-${image}
 	cd ${STAGEDIR}/${image} && ${MKISOFS} -o $@ ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} .
 .endif
 .if !empty(SUN_BOOT_ARGS.${image})
-	${MKSUNBOOTCD} -c 640 $@ ${SUN_BOOT_ARGS.${image}}
+	SUNLABEL=${SUNLABEL:Q} sh ${NETBSDSRCDIR}/distrib/common/sunbootcd.sh \
+	    ${.TARGET} ${SUN_BOOT_ARGS.${image}}
 .endif
 .if !empty(BASE_PORTS.${image}:Mmacppc)
 	@blknum=$$((`ls -l $@ | awk '{print $$5}'` / 512)) && \
