@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.60 1998/02/07 10:27:12 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.61 1998/02/07 20:40:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -3349,6 +3349,7 @@ tulip_rx_intr(
 	int accept = 0;
 #if defined(TULIP_BUS_DMA) && !defined(TULIP_BUS_DMA_NORX)
 	bus_dmamap_t map;
+	int error;
 #endif
 
 	if (fillok && sc->tulip_rxq.ifq_len < TULIP_RXQ_TARGET)
@@ -3618,8 +3619,13 @@ tulip_rx_intr(
 		}
 	    }
 	    M_SETCTX(ms, map);
-	    bus_dmamap_load(sc->tulip_dmatag, map, mtod(ms, void *),
-			    TULIP_RX_BUFLEN, NULL, BUS_DMA_NOWAIT);
+	    error = bus_dmamap_load(sc->tulip_dmatag, map, mtod(ms, void *),
+				    TULIP_RX_BUFLEN, NULL, BUS_DMA_NOWAIT);
+	    if (error) {
+		printf(TULIP_PRINTF_FMT ": unable to load rx map, "
+		       "error = %d\n", TULIP_PRINTF_ARGS, error);
+		panic("tulip_rx_intr");		/* XXX */
+	    }
 	    nextout->d_addr1 = map->dm_segs[0].ds_addr;
 	    nextout->d_length1 = map->dm_segs[0].ds_len;
 	    if (map->dm_nsegs == 2) {
@@ -4171,6 +4177,7 @@ tulip_txput(
     u_int32_t d_status;
 #if defined(TULIP_BUS_DMA) && !defined(TULIP_BUS_DMA_NOTX)
     bus_dmamap_t map;
+    int error;
 #else
     struct mbuf *m0;
 #endif
@@ -4218,19 +4225,30 @@ tulip_txput(
 	sc->tulip_flags |= TULIP_WANTTXSTART;
 	goto finish;
     }
-    if (bus_dmamap_load_mbuf(sc->tulip_dmatag, map, m, BUS_DMA_NOWAIT)
-	    || map->dm_nsegs > TULIP_MAX_TXSEG) {
+    error = bus_dmamap_load_mbuf(sc->tulip_dmatag, map, m, BUS_DMA_NOWAIT);
+    if (error == EFBIG) {
 	/*
 	 * The packet exceeds the number of transmit buffer
 	 * entries that we can use for one packet, so we have
-	 * recopy it into one mbuf and then try again.
+	 * to recopy it into one mbuf and then try again.
 	 */
-	if (map->dm_nsegs > 0)
-	    bus_dmamap_unload(sc->tulip_dmatag, map);
 	m = tulip_mbuf_compress(m);
 	if (m == NULL)
 	    goto finish;
-	bus_dmamap_load_mbuf(sc->tulip_dmatag, map, m, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->tulip_dmatag, map, m, BUS_DMA_NOWAIT);
+	if (error) {
+	    printf(TULIP_PRINTF_FMT ": unable to load tx map, "
+		   "error = %d\n", TULIP_PRINTF_ARGS, error);
+	    goto finish;
+	}
+    } else if (error != 0) {
+	/*
+	 * Some other error (possibly resource shortage?) has ocurred.
+	 * Report it.
+	 */
+	printf(TULIP_PRINTF_FMT ": unable to load tx map, error = %d\n",
+	       TULIP_PRINTF_ARGS, error);
+	goto finish;
     }
     if ((free -= (map->dm_nsegs + 1) / 2) <= 0
 	    /*
