@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.20 1998/03/22 22:02:29 mjacob Exp $	*/
+/*	$NetBSD: isp.c,v 1.21 1998/03/24 23:37:53 mjacob Exp $ */
 
 /*
  * Machine Independent (well, as best as possible)
@@ -456,7 +456,7 @@ isp_init(isp)
 
 	IDPRINTF(2, ("%s: devparm, W=wide, S=sync, T=Tag\n", isp->isp_name));
 	for (i = 0; i < MAX_TARGETS; i++) {
-		char bz[8];
+		char bz[9];
 		u_int16_t cj = (sdp->isp_devparam[i].sync_offset << 8) |
 				(sdp->isp_devparam[i].sync_period);
 
@@ -480,15 +480,15 @@ isp_init(isp)
 			sprintf(bz, "Async:");
 		}
 		if (sdp->isp_devparam[i].dev_flags & DPARM_WIDE)
-			bz[5] = 'W';
-		else
-			bz[5] = ' ';
-		if (sdp->isp_devparam[i].dev_flags & DPARM_TQING)
-			bz[6] = 'T';
+			bz[6] = 'W';
 		else
 			bz[6] = ' ';
-		bz[7] = 0;
-		IDPRINTF(2, (" id%X:%s", i, bz));
+		if (sdp->isp_devparam[i].dev_flags & DPARM_TQING)
+			bz[7] = 'T';
+		else
+			bz[7] = ' ';
+		bz[8] = 0;
+		IDPRINTF(2, (" id%x:%s", i, bz));
 		if (((i+1) & 0x3) == 0)
 			IDPRINTF(2, ("\n"));
 		if (sdp->isp_devparam[i].dev_enable == 0)
