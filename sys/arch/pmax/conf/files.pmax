@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.87 2000/06/07 04:14:55 perseant Exp $
+#	$NetBSD: files.pmax,v 1.88 2000/10/10 10:25:55 ad Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -94,7 +94,7 @@ major { cd = 25 }
 major { rz = 21 }
 
 # Memory Disk
-file	arch/pmax/pmax/md_root.c	memory_disk_hooks
+file	dev/md_root.c			memory_disk_hooks
 major { md = 17 }
 
 # RAIDframe
