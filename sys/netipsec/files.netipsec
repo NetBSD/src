@@ -1,4 +1,4 @@
-#	$Id: files.netipsec,v 1.4 2004/04/25 22:25:03 jonathan Exp $
+#	$Id: files.netipsec,v 1.5 2004/04/26 03:50:57 itojun Exp $
 #
 #
 defflag opt_ipsec.h	FAST_IPSEC:	opencrypto
@@ -17,4 +17,4 @@ file	netipsec/key.c			fast_ipsec
 file	netipsec/key_debug.c		fast_ipsec
 file	netipsec/keysock.c		fast_ipsec
 
-file	netipsec/xform_tcp.c		tcp_signature
+file	netipsec/xform_tcp.c		fast_ipsec & tcp_signature
