@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.62 2000/06/27 17:41:36 mrg Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.63 2000/07/28 04:21:26 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -92,7 +92,7 @@ sys_ptrace(p, v, retval)
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
-	int error, write;
+	int error, write, tmp;
 
 	/* "A foolish consistency..." XXX */
 	if (SCARG(uap, req) == PT_TRACE_ME)
@@ -210,6 +210,7 @@ sys_ptrace(p, v, retval)
 	/* Now do the operation. */
 	write = 0;
 	*retval = 0;
+	tmp = 0;
 
 	switch (SCARG(uap, req)) {
 	case  PT_TRACE_ME:
@@ -221,20 +222,23 @@ sys_ptrace(p, v, retval)
 	case  PT_WRITE_I:		/* XXX no seperate I and D spaces */
 	case  PT_WRITE_D:
 		write = 1;
+		tmp = SCARG(uap, data);
 	case  PT_READ_I:		/* XXX no seperate I and D spaces */
 	case  PT_READ_D:
 		/* write = 0 done above. */
-		iov.iov_base =
-		    write ? (caddr_t)&SCARG(uap, data) : (caddr_t)retval;
-		iov.iov_len = sizeof(int);
+		iov.iov_base = (caddr_t)&tmp;
+		iov.iov_len = sizeof(tmp);
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
 		uio.uio_offset = (off_t)(long)SCARG(uap, addr);
-		uio.uio_resid = sizeof(int);
+		uio.uio_resid = sizeof(tmp);
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_procp = p;
-		return (procfs_domem(p, t, NULL, &uio));
+		error = procfs_domem(p, t, NULL, &uio);
+		if (!write)
+			*retval = tmp;
+		return (error);
 
 #ifdef PT_STEP
 	case  PT_STEP:
