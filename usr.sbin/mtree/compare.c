@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.15 1998/08/27 18:03:45 ross Exp $	*/
+/*	$NetBSD: compare.c,v 1.16 1998/10/08 02:04:55 wsanchez Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.15 1998/08/27 18:03:45 ross Exp $");
+__RCSID("$NetBSD: compare.c,v 1.16 1998/10/08 02:04:55 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ compare(name, s, p)
 	NODE *s;
 	FTSENT *p;
 {
-	u_long len, val;
+	u_int32_t len, val;
 	int fd, label;
 	char *cp, *tab;
 
@@ -222,7 +222,7 @@ typeerr:		LABEL;
 			if (s->cksum != val) {
 				LABEL;
 				(void)printf("%scksum (%lu, %lu)\n", 
-				    tab, s->cksum, val);
+				    tab, s->cksum, (unsigned long)val);
 			}
 			tab = "\t";
 		}
@@ -292,7 +292,7 @@ rlink(name)
 	int len;
 
 	if ((len = readlink(name, lbuf, sizeof(lbuf))) == -1)
-		err("%s: %s", name, strerror(errno));
+		mtree_err("%s: %s", name, strerror(errno));
 	lbuf[len] = '\0';
 	return (lbuf);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.7 1995/03/07 21:26:27 cgd Exp $	*/
+/*	$NetBSD: mtree.h,v 1.8 1998/10/08 02:04:56 wsanchez Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -35,8 +35,12 @@
  *	@(#)mtree.h	8.1 (Berkeley) 6/6/93
  */
 
+#ifndef _MTREE_H_
+#define _MTREE_H_
+
 #include <string.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 #define	KEYDEFAULT \
 	(F_GID | F_MODE | F_NLINK | F_SIZE | F_SLINK | F_TIME | F_UID)
@@ -89,3 +93,5 @@ typedef struct _node {
 #define	RP(p)	\
 	((p)->fts_path[0] == '.' && (p)->fts_path[1] == '/' ? \
 	    (p)->fts_path + 2 : (p)->fts_path)
+
+#endif /* _MTREE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.16 1998/08/30 03:20:09 nathanw Exp $	*/
+/*	$NetBSD: create.c,v 1.17 1998/10/08 02:04:56 wsanchez Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.16 1998/08/30 03:20:09 nathanw Exp $");
+__RCSID("$NetBSD: create.c,v 1.17 1998/10/08 02:04:56 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ cwalk()
 	argv[0] = ".";
 	argv[1] = NULL;
 	if ((t = fts_open(argv, ftsoptions, dsort)) == NULL)
-		err("fts_open: %s", strerror(errno));
+		mtree_err("fts_open: %s", strerror(errno));
 	while ((p = fts_read(t)) != NULL)
 		switch(p->fts_info) {
 		case FTS_D:
@@ -128,7 +128,7 @@ statf(p)
 {
 	struct group *gr;
 	struct passwd *pw;
-	u_long len, val;
+	u_int32_t len, val;
 	int fd, indent;
 
 	if (S_ISDIR(p->fts_statp->st_mode))
@@ -161,14 +161,21 @@ statf(p)
 		output(&indent, "nlink=%u", p->fts_statp->st_nlink);
 	if (keys & F_SIZE && S_ISREG(p->fts_statp->st_mode))
 		output(&indent, "size=%qd", p->fts_statp->st_size);
+#ifndef __APPLE__
 	if (keys & F_TIME)
 		output(&indent, "time=%ld.%ld",
 		    p->fts_statp->st_mtimespec.tv_sec,
 		    p->fts_statp->st_mtimespec.tv_nsec);
+#else
+	if (keys & F_TIME)
+		output(&indent, "time=%ld.%ld",
+		    p->fts_statp->st_mtimespec.ts_sec,
+		    p->fts_statp->st_mtimespec.ts_nsec);
+#endif
 	if (keys & F_CKSUM && S_ISREG(p->fts_statp->st_mode)) {
 		if ((fd = open(p->fts_accpath, O_RDONLY, 0)) < 0 ||
 		    crc(fd, &val, &len))
-			err("%s: %s", p->fts_accpath, strerror(errno));
+			mtree_err("%s: %s", p->fts_accpath, strerror(errno));
 		(void)close(fd);
 		output(&indent, "cksum=%lu", val);
 	}
@@ -206,7 +213,7 @@ statd(t, parent, puid, pgid, pmode)
 	savemode = 0;
 	if ((p = fts_children(t, 0)) == NULL) {
 		if (errno)
-			err("%s: %s", RP(parent), strerror(errno));
+			mtree_err("%s: %s", RP(parent), strerror(errno));
 		return (1);
 	}
 
