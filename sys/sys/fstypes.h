@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.1 2004/04/21 01:05:43 christos Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.2 2004/04/21 02:21:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -47,6 +47,10 @@ struct fid {
 	unsigned short	fid_reserved;		/* force longword alignment */
 	char		fid_data[_VFS_MAXFIDSZ];/* data (variable length) */
 };
+
+#if defined(_NETBSD_SOURCE)
+#define	VFS_MAXFIDSZ	_VFS_MAXFIDSZ
+#endif
 
 /*
  * Generic file handle
