@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.17 2002/08/07 05:16:27 briggs Exp $	*/
+/*	$NetBSD: kernel.h,v 1.18 2003/01/21 13:56:53 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -53,7 +53,6 @@ extern int domainnamelen;
 
 extern volatile struct timeval mono_time;
 extern struct timeval boottime;
-extern struct timeval runtime;
 extern volatile struct timeval time;
 
 extern int rtc_offset;		/* offset of rtc from UTC in minutes */
