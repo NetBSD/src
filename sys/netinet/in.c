@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.61.4.3 2000/10/17 00:45:36 tv Exp $	*/
+/*	$NetBSD: in.c,v 1.61.4.4 2002/04/03 21:16:45 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -928,6 +928,7 @@ in_broadcast(in, ifp)
 #define ia (ifatoia(ifa))
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
 		if (ifa->ifa_addr->sa_family == AF_INET &&
+		    !in_hosteq(in, ia->ia_addr.sin_addr) &&
 		    (in_hosteq(in, ia->ia_broadaddr.sin_addr) ||
 		     in_hosteq(in, ia->ia_netbroadcast) ||
 		     (hostzeroisbroadcast && 
