@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.123 2003/06/29 22:31:50 fvdl Exp $	*/
+/*	$NetBSD: if.c,v 1.124 2003/07/06 07:54:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.123 2003/06/29 22:31:50 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.124 2003/07/06 07:54:43 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -129,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.123 2003/06/29 22:31:50 fvdl Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 #include <net/if_ieee80211.h>
 #include <net/if_types.h>
 #include <net/radix.h>
