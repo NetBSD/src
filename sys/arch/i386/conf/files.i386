@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.173 2000/11/26 11:18:20 jdolecek Exp $
+#	$NetBSD: files.i386,v 1.174 2000/11/26 17:44:09 ad Exp $
 #
 # new style config file for i386 architecture
 #
@@ -100,8 +100,8 @@ major	{md = 17}
 # RAIDframe
 major	{raid = 18}
 
-# Logical storage units
-major	{lsu = 19}
+# Logical disk
+major	{ld = 19}
 
 #
 # Machine-independent I2O drivers
