@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.30 1997/02/22 00:00:34 scottr Exp $	*/
+/*	$NetBSD: nubus.c,v 1.31 1997/02/24 06:20:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -44,6 +44,7 @@
 #include <machine/bus.h>
 #include <machine/vmparam.h>
 #include <machine/param.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
 
@@ -222,7 +223,7 @@ probe_slot(slot, fmt)
 	fmt->bytelanes = 0;
 	fmt->slot = (u_long)slot;
 
-	rom_probe = (caddr_t) (NUBUS_SLOT_TO_PADDR(fmt->slot) + NBMEMSIZE);
+	rom_probe = (caddr_t) (NUBUS_SLOT2PA(fmt->slot) + NBMEMSIZE);
 
 #ifdef DEBUG
 	if (nubus_debug & NDB_PROBE) {
@@ -273,12 +274,12 @@ probe_slot(slot, fmt)
 	 * to work.
 	 */
 	hdr = (vm_offset_t)
-		nubus_mapin(NUBUS_SLOT_TO_PADDR(fmt->slot), NBMEMSIZE);
+		nubus_mapin(NUBUS_SLOT2PA(fmt->slot), NBMEMSIZE);
 	if (hdr == NULL) {
 		printf("Failed to map %d bytes for NuBUS slot %d probe.  ",
 			NBMEMSIZE, fmt->slot);
 		printf("Physical slot address %x\n",
-			(unsigned int) NUBUS_SLOT_TO_PADDR(fmt->slot));
+			(unsigned int) NUBUS_SLOT2PA(fmt->slot));
 	}
 	fmt->virtual_base = hdr;
 	hdr += NBMEMSIZE;

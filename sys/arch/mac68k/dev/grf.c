@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.40 1997/02/20 00:23:26 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.41 1997/02/24 06:20:04 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -362,7 +362,7 @@ grfmap(dev, addrp, p)
 		*addrp = (caddr_t) mac68k_trunc_page(mac68k_vidphys);
 	else
 		*addrp = (caddr_t) mac68k_trunc_page(
-		    NUBUS_SLOT_TO_PADDR(gp->sc_slot->slot));
+		    NUBUS_SLOT2PA(gp->sc_slot->slot));
 
 	vn.v_type = VCHR;	/* XXX */
 	vn.v_specinfo = &si;	/* XXX */
