@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 2003/11/09 08:27:19 scw Exp $	*/
+/*	$NetBSD: param.h,v 1.8 2003/11/11 08:27:16 scw Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -48,7 +48,7 @@
  *	measure while we're finishing the conversion to ELF.
  *
  * For non-KERNEL code:
- *	If ELF, MACHINE and MACHINE_ARCH are forced to "arm".
+ *	If ELF, MACHINE and MACHINE_ARCH are forced to "arm/armeb".
  */
 
 #if defined(_KERNEL)
@@ -60,6 +60,7 @@
 #define	_MACHINE_ARCH	armeb
 #define	MACHINE_ARCH	"armeb"
 #endif /* __ARMEB__ */
+#endif /* MACHINE_ARCH */
 #elif defined(__ELF__)
 #undef _MACHINE
 #undef MACHINE
@@ -75,7 +76,6 @@
 #define	MACHINE_ARCH	"armeb"
 #endif /* __ARMEB__ */
 #endif /* __ELF__ */
-#endif /* _KERNEL */
 
 #define	MID_MACHINE	MID_ARM6
 
