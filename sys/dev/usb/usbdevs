@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.264 2002/07/29 03:29:34 augustss Exp $
+$NetBSD: usbdevs,v 1.265 2002/08/03 14:40:44 soren Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -499,7 +499,11 @@ product BTC BTC7932		0x6782	Keyboard with mouse port
 /* Canon, Inc. products */
 product CANON N656U		0x2206	CANOSCAN N656U
 product CANON S10		0x3041	PowerShot S10
-product CANON S100		0x3045	PowerShot S100
+product CANON S20		0x3043	PowerShot S20
+product CANON S100_US		0x3045	PowerShot S100
+product CANON S100_EU		0x3047	PowerShot S100
+product CANON G1		0x3048	PowerShot G1
+product CANON A20		0x304e	PowerShot A20
 
 /* CATC products */
 product CATC NETMATE		0x000a	Netmate ethernet adapter
