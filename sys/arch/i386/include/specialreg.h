@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.21 2002/03/20 15:59:26 joda Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.22 2002/06/07 01:30:19 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -288,6 +288,45 @@
 #define	PMC5_CESR_USR			0x0080
 #define	PMC5_CESR_E			0x0100
 #define	PMC5_CESR_P			0x0200
+
+#define PMC5_DATA_READ			0x00
+#define PMC5_DATA_WRITE			0x01
+#define PMC5_DATA_TLB_MISS		0x02
+#define PMC5_DATA_READ_MISS		0x03
+#define PMC5_DATA_WRITE_MISS		0x04
+#define PMC5_WRITE_M_E			0x05
+#define PMC5_DATA_LINES_WBACK		0x06
+#define PMC5_DATA_CACHE_SNOOP		0x07
+#define PMC5_DATA_CACHE_SNOOP_HIT	0x08
+#define PMC5_MEM_ACCESS_BOTH_PIPES	0x09
+#define PMC5_BANK_CONFLICTS		0x0a
+#define PMC5_MISALIGNED_DATA		0x0b
+#define PMC5_INST_READ			0x0c
+#define PMC5_INST_TLB_MISS		0x0d
+#define PMC5_INST_CACHE_MISS		0x0e
+#define PMC5_SEGMENT_REG_LOAD		0x0f
+#define PMC5_BRANCHES		 	0x12
+#define PMC5_BTB_HITS		 	0x13
+#define PMC5_BRANCH_TAKEN		0x14
+#define PMC5_PIPELINE_FLUSH		0x15
+#define PMC5_INST_EXECUTED		0x16
+#define PMC5_INST_EXECUTED_V_PIPE	0x17
+#define PMC5_BUS_UTILIZATION		0x18
+#define PMC5_WRITE_BACKUP_STALL		0x19
+#define PMC5_DATA_READ_STALL		0x1a
+#define PMC5_WRITE_E_M_STALL		0x1b
+#define PMC5_LOCKED_BUS			0x1c
+#define PMC5_IO_CYCLE			0x1d
+#define PMC5_NONCACHE_MEM_READ		0x1e
+#define PMC5_AGI_STALL			0x1f
+#define PMC5_FLOPS			0x22
+#define PMC5_BP0_MATCH			0x23
+#define PMC5_BP1_MATCH			0x24
+#define PMC5_BP2_MATCH			0x25
+#define PMC5_BP3_MATCH			0x26
+#define PMC5_HARDWARE_INTR		0x27
+#define PMC5_DATA_RW			0x28
+#define PMC5_DATA_RW_MISS		0x29
 
 /*
  * 686-class Event Selector MSR format.
