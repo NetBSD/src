@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.35 1998/10/13 15:18:47 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.36 1998/10/15 11:38:04 bouyer Exp $ */
 
 
 /*
@@ -767,7 +767,6 @@ wdc_probe_caps(drvp)
 			 * We didn't find a valid PIO mode.
 			 * Assume the values returned for DMA are buggy too
 			 */
-			printf("\n");
 			return;
 		}
 		drvp->drive_flags |= DRIVE_MODE;
