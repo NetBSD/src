@@ -1,4 +1,4 @@
-/*	$NetBSD: strcat.S,v 1.2 1997/05/08 13:38:55 matthias Exp $	*/
+/*	$NetBSD: strcat.S,v 1.3 1998/04/03 22:58:09 matthias Exp $	*/
 
 /* 
  * Written by Matthias Pfaller, 1996
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcat.S,v 1.2 1997/05/08 13:38:55 matthias Exp $")
+	RCSID("$NetBSD: strcat.S,v 1.3 1998/04/03 22:58:09 matthias Exp $")
 #endif
 
 /*
@@ -17,7 +17,7 @@
  *	append string s to d.
  */
 
-ENTRY(strcat)
+KENTRY(strcat, 8)
 	enter	[],0
 	movd	B_ARG0,tos
 	bsr	_strlen
@@ -28,4 +28,4 @@ ENTRY(strcat)
 	adjspd	-8
 	movd	B_ARG0,r0
 	exit	[]
-	ret	0
+	ret	ARGS
