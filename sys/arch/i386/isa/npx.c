@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.50 1995/10/05 23:06:15 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.51 1995/10/10 04:46:09 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -418,7 +418,7 @@ npxintr(arg)
 	 * Pass exception to process.  If it's the current process, try to do
 	 * it immediately.
 	 */
-	if (p == curproc && ISPL(frame->if_cs) == SEL_UPL) {
+	if (p == curproc && USERMODE(frame->if_cs, frame->if_eflags)) {
 		/*
 		 * Interrupt is essentially a trap, so we can afford to call
 		 * the SIGFPE handler (if any) as soon as the interrupt

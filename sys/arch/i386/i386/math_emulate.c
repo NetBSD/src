@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.14 1995/08/06 05:33:01 mycroft Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.15 1995/10/10 04:45:30 mycroft Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -75,7 +75,7 @@ math_emulate(struct trapframe *info)
 	char * address;
 	u_long oldeip;
 
-	if (ISPL(info->tf_cs) != SEL_UPL)
+	if (!USERMODE(info->tf_cs, info->tf_eflags))
 		panic("math emulator called from supervisor mode");
 
 	/* ever used fp? */

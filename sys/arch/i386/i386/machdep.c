@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.175 1995/10/10 01:26:43 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.176 1995/10/10 04:45:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -609,7 +609,7 @@ sys_sigreturn(p, v, retval)
 	 * than doing all of the checking here.
 	 */
 	if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    ISPL(context.sc_cs) != SEL_UPL)
+	    !USERMODE(context.sc_cs, context.sc_eflags))
 		return (EINVAL);
 
 	if (context.sc_onstack & 01)

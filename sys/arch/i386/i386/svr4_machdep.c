@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.16 1995/10/07 06:25:42 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.17 1995/10/10 04:45:39 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -158,7 +158,7 @@ svr4_setcontext(p, uc)
 	 * Check for security violations.
 	 */
 	if (((r[SVR4_X86_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    ISPL(r[SVR4_X86_CS]) != SEL_UPL)
+	    !USERMODE(r[SVR4_X86_CS], r[SVR4_X86_EFLAGS]))
 		return (EINVAL);
 
 	/*

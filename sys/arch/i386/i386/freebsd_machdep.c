@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.2 1995/10/10 01:40:13 mycroft Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.3 1995/10/10 04:45:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -202,7 +202,7 @@ freebsd_sys_sigreturn(p, v, retval)
 	 * than doing all of the checking here.
 	 */
 	if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    ISPL(context.sc_cs) != SEL_UPL)
+	    !USERMODE(context.sc_cs, context.sc_eflags))
 		return (EINVAL);
 
 	if (context.sc_onstack & 01)
