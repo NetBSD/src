@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.1.2.3 2001/11/18 18:03:18 scw Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.1.2.4 2001/12/02 10:43:01 scw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -146,6 +146,9 @@ GLOBAL(_Idle)				/* For sun2/sun3's clock.c ... */
 #endif
 	movl    _C_LABEL(sched_whichqs),%d0
 	jeq     _ASM_LABEL(Idle)
+#if defined(M68010)
+	movw	#PSL_LOWIPL,%sr
+#endif
 	jra	Lcpu_switch1
 
 Lcpu_switch_badsw:
@@ -169,54 +172,36 @@ ENTRY(cpu_switch)
 	 * Find the highest-priority queue that isn't empty,
 	 * then take the first proc from that queue.
 	 */
-	movl    _C_LABEL(sched_whichqs),%d0
-	jeq     _ASM_LABEL(Idle)
 Lcpu_switch1:
+
 #if defined(M68010)
-	/*
-	 * Find the highest-priority queue that isn't empty,
-	 * then take the first proc from that queue.
-	 */
-	clrl	%d0
 	lea	_C_LABEL(sched_whichqs),%a0
-	movl	%a0@,%d1
-Lcpu_switch_chk:
-	btst	%d0,%d1
-	jne	Lcpu_switch_fnd
-	addqb	#1,%d0
-	cmpb	#32,%d0
-	jne	Lcpu_switch_chk
-	jra	_C_LABEL(_Idle)
-Lcpu_switch_fnd:
-	movw	#PSL_HIGHIPL,%sr	| lock out interrupts
-	movl	%a0@,%d1		| and check again...
-	bclr	%d0,%d1
-	jeq	Lcpu_switch1		| proc moved, rescan
-	movl	%d1,%a0@		| update whichqs
-	moveq	#1,%d1			| double check for higher priority
-	lsll	%d0,%d1			| process (which may have snuck in
-	subql	#1,%d1			| while we were finding this one)
-	andl	%a0@,%d1
-	jeq	Lcpu_switch_ok		| no one got in, continue
-	movl	%a0@,%d1
-	bset	%d0,%d1			| otherwise put this one back
-	movl	%d1,%a0@
-	jra	Lcpu_switch1		| and rescan
-Lcpu_switch_ok:
-	movl	%d0,%d1
+	movl	%a0@,%d0		| Get runqueue bitmap
+	jeq     _ASM_LABEL(Idle)	| Go idle if empty
+1:	moveq	#31,%d1
+2:	lsrl	#1,%d0			| Find first bit set (starting at 0)
+	dbcs	%d1,2b
+	eorib	#31,%d1
+	movw	#PSL_HIGHIPL,%sr
+	movw	%a0@,%d0		| check again
+	btstl	%d1,%d0
+	beqs	1b			| Rescan at HIGHIPL process moved
+	moveq	#1,%d0			| Double check for higher priority
+	lsll	%d1,%d0			| process which may have sneaked in
+	subql	#1,%d0			| while we were finding this one
+	andl	%a0@,%d0
+	bnes	1b			| Yup. Go scan again
 #else
-	/*
-	 * Interrupts are blocked, sched_lock is held.  If
-	 * we come here via Idle, %d0 contains the contents
-	 * of a non-zero sched_whichqs.
-	 */
+	movw	#PSL_HIGHIPL,%sr
+	movl	_C_LABEL(sched_whichqs),%d0
+	jeq     _ASM_LABEL(Idle)	| Go idle if empty
 	movl    %d0,%d1
 	negl    %d0
 	andl    %d1,%d0
 	bfffo   %d0{#0:#32},%d1
 	eorib   #31,%d1
-	movl    %d1,%d0
 #endif
+	movl    %d1,%d0
 	lslb    #3,%d1			| convert queue number to index
 	addl    #_C_LABEL(sched_qs),%d1	| locate queue (q)
 	movl    %d1,%a1
@@ -238,7 +223,7 @@ Lcpu_switch_ok:
 	bclr    %d0,%d1			| no, clear bit
 	movl    %d1,_C_LABEL(sched_whichqs)
 Lcpu_switch_sw2:
-	movl	%sp@+,%a1
+	movl	%sp@+,%a1		| Restore saved `curproc'
 
 Lcpu_switch_common:
 	/* l->l_cpu initialized in fork1() for single-processor */
@@ -247,8 +232,12 @@ Lcpu_switch_common:
 	movl	%a0,_C_LABEL(curproc)
 	clrl	_C_LABEL(want_resched)
 
+#if 0
 	cmpal	%a0,%a1			| switching to same lwp?
 	jeq	Lcpu_switch_same	| yes, skip save and restore
+#else
+	movl	_C_LABEL(curpcb),%a1
+#endif
 
 #ifdef M68010
 	movl	%a1,%d0
@@ -261,7 +250,9 @@ Lcpu_switch_common:
 	/*
 	 * Save state of previous process in its pcb.
 	 */
+#if 0
 	movl	%a1@(L_ADDR),%a1
+#endif
 	moveml	%d2-%d7/%a2-%a7,%a1@(PCB_REGS)	| save non-scratch registers
 	movl	%usp,%a2		| grab USP (a2 has been saved)
 	movl	%a2,%a1@(PCB_USP)	| and save it
@@ -359,10 +350,11 @@ Lsame_mmuctx:
 	 */
 	pea	%a0@			| push lwp
 	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(l)
-	addql	#4,%sp
-	movl	_C_LABEL(curpcb),%a1	| restore p_addr
+	movl	%sp@+,%d0		| restore new lwp
+	movl	_C_LABEL(curpcb),%a1	| restore l_addr
 #endif
 
+	movl	%sp@(4),%d1		| cpu_switch(l) - d1 == l
 	lea     _ASM_LABEL(tmpstk),%sp	| now goto a tmp stack for NMI
 
 #ifdef PCB_CMAP2
@@ -374,7 +366,9 @@ Lsame_mmuctx:
 	movl	%a0,%usp		| and USP
 
 #ifdef _M68K_CUSTOM_FPU_CTX
+	moveml	%d0/%d1,%sp@-
 	jbsr	_ASM_LABEL(m68k_fpuctx_restore)
+	moveml	%sp@+,%d0/%d1
 #else
 #ifdef FPCOPROC
 #ifdef FPU_EMULATE
@@ -411,16 +405,18 @@ Lcpu_switch_resfprest:
 #endif /* !_M68K_CUSTOM_FPU_CTX */
 
 Lcpu_switch_nofprest:
+	subl	%d1,%d0
+	beqs	1f
 	moveq	#1,%d0
-	movw	%a1@(PCB_PS),%sr	| no, restore PS
+1:	movw	%a1@(PCB_PS),%sr	| no, restore PS
 	rts
 
 	/* Switching to the same LWP */
 Lcpu_switch_same:
-	moveq	#0,%d0
+	movl	%sp@(4),%d0
+	movl	%a1,%d0
 	movl	%a1@(L_ADDR),%a1	| restore l_addr
-	movw	%a1@(PCB_PS),%sr	| restore PS
-	rts
+	bras	Lcpu_switch_nofprest
 
 /*
  * void cpu_preempt(struct lwp *current, struct lwp *next)
@@ -503,3 +499,36 @@ Lsavectx_nofpsave:
 #endif /* !_M68K_CUSTOM_FPU_CTX */
 	moveq	#0,%d0			| return 0
 	rts
+
+/*
+ * void m68k_make_fpu_idle_frame(void)
+ *
+ * On machines with an FPU, generate an "idle" state frame to be
+ * used by cpu_setmcontext().
+ *
+ * Before calling, make sure the machine actually has an FPU ...
+ */
+ENTRY(m68k_make_fpu_idle_frame)
+	clrl	%sp@-
+	fnop
+
+	frestore %sp@		| Effectively `resets' the FPU
+	fnop
+
+	/* Loading '0.0' from the constant rom will change FPU to "idle". */
+	fmovecrx #15,%fp0
+	fnop
+
+	/* Save the resulting idle frame into the buffer */
+	lea	_C_LABEL(m68k_cached_fpu_idle_frame),%a0
+	fsave	%a0@
+	fnop
+
+	/* Reset the FPU again */
+	frestore %sp@
+	fnop
+	addql	#4,%sp
+	rts
+
+BSS(m68k_cached_fpu_idle_frame,FPF_SIZE)
+
