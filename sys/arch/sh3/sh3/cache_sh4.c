@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.1 2002/02/11 18:03:06 uch Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.2 2002/02/17 20:58:04 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,11 +62,11 @@ extern __inline__ void cache_sh4_op_8lines_32(vaddr_t, vaddr_t, u_int32_t,
     u_int32_t);
 
 void
-sh4_cache_config(int cpu_id)
+sh4_cache_config()
 {
 	u_int32_t r;
 
-	r = _reg_read_4(SH4REG_CCR);
+	r = _reg_read_4(SH4_CCR);
 
 	sh_cache_unified = 0;
 	sh_cache_enable_icache = (r & SH4_CCR_ICE);
@@ -98,7 +98,7 @@ sh4_cache_config(int cpu_id)
 }
 
 /*
- * cache_sh4_op_line_16: (index-operation)
+ * cache_sh4_op_line_32: (index-operation)
  *
  *	Clear the specified bits on single 32-byte cache line.
  *
@@ -113,7 +113,7 @@ cache_sh4_op_line_32(vaddr_t va, vaddr_t base, u_int32_t mask, u_int32_t bits)
 }
 
 /*
- * cache_sh4_op_8lines_16_nway: (index-operation)
+ * cache_sh4_op_8lines_32: (index-operation)
  *
  *	Clear the specified bits on 8 32-byte cache lines.
  *
@@ -144,7 +144,7 @@ sh4_icache_sync_all()
 
 	RUN_P2;
 	while (va < eva) {
-		cache_sh4_op_8lines_32(va, SH4REG_CCIA, CCIA_ENTRY_MASK, CCIA_V);
+		cache_sh4_op_8lines_32(va, SH4_CCIA, CCIA_ENTRY_MASK, CCIA_V);
 		va += 32 * 8;
 	}
 	RUN_P1;
@@ -157,12 +157,12 @@ sh4_icache_sync_range(vaddr_t va, vsize_t sz)
 	vaddr_t eva = round_line(va + sz);
 	va = trunc_line(va);
 
-	sh4_dcache_wbinv_range_index(va, (eva - va));
+	sh4_dcache_wbinv_range(va, (eva - va));
 
 	RUN_P2;
 	while (va < eva) {
 		/* CCR.IIX has no effect on this entry specification */
-		ccia = SH4REG_CCIA | CCIA_A | (va & CCIA_ENTRY_MASK);
+		ccia = SH4_CCIA | CCIA_A | (va & CCIA_ENTRY_MASK);
 		_reg_write_4(ccia, va & CCIA_TAGADDR_MASK); /* V = 0 */
 		va += 32;
 	}
@@ -179,12 +179,12 @@ sh4_icache_sync_range_index(vaddr_t va, vsize_t sz)
 
 	RUN_P2;
 	while ((eva - va) >= (8 * 32)) {
-		cache_sh4_op_8lines_32(va, SH4REG_CCIA, CCIA_ENTRY_MASK, CCIA_V);
+		cache_sh4_op_8lines_32(va, SH4_CCIA, CCIA_ENTRY_MASK, CCIA_V);
 		va += 32 * 8;
 	}
 
 	while (va < eva) {
-		cache_sh4_op_line_32(va, SH4REG_CCIA, CCIA_ENTRY_MASK, CCIA_V);
+		cache_sh4_op_line_32(va, SH4_CCIA, CCIA_ENTRY_MASK, CCIA_V);
 		va += 32;
 	}
 	RUN_P1;
@@ -198,7 +198,7 @@ sh4_dcache_wbinv_all()
 
 	RUN_P2;
 	while (va < eva) {
-		cache_sh4_op_8lines_32(va, SH4REG_CCDA, CCDA_ENTRY_MASK,
+		cache_sh4_op_8lines_32(va, SH4_CCDA, CCDA_ENTRY_MASK,
 		    (CCDA_U | CCDA_V));
 		va += 32 * 8;
 	}
@@ -225,13 +225,13 @@ sh4_dcache_wbinv_range_index(vaddr_t va, vsize_t sz)
 
 	RUN_P2;
 	while ((eva - va) >= (8 * 32)) {
-		cache_sh4_op_8lines_32(va, SH4REG_CCDA, CCDA_ENTRY_MASK,
+		cache_sh4_op_8lines_32(va, SH4_CCDA, CCDA_ENTRY_MASK,
 		    (CCDA_U | CCDA_V));
 		va += 32 * 8;
 	}
 
 	while (va < eva) {
-		cache_sh4_op_line_32(va, SH4REG_CCDA, CCDA_ENTRY_MASK,
+		cache_sh4_op_line_32(va, SH4_CCDA, CCDA_ENTRY_MASK,
 		    (CCDA_U | CCDA_V));
 		va += 32;
 	}
