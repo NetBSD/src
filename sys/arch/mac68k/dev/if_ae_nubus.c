@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.16 1997/04/30 19:32:32 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.17 1997/05/01 18:17:16 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -374,6 +374,7 @@ ae_nb_card_vendor(na)
 	case NUBUS_DRSW_3COM:
 		switch (na->drhw) {
 		case NUBUS_DRHW_APPLE_SN:
+		case NUBUS_DRHW_APPLE_SNT:
 			vendor = DP8390_VENDOR_UNKNOWN;
 			break;
 		default:
