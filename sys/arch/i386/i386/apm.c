@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.40 1999/08/17 19:04:24 drochner Exp $ */
+/*	$NetBSD: apm.c,v 1.41 1999/09/09 03:52:21 itohy Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -478,10 +478,12 @@ apm_event_handle(sc, regs)
 	case APM_POWER_CHANGE:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: power status change\n"));
 		error = apm_get_powstat(&nregs);
+#ifndef APM_NO_POWER_PRINT
 		/* only print if nobody is catching events. */
 		if (error == 0 &&
 		    (sc->sc_flags & (SCFLAG_OREAD|SCFLAG_OWRITE)) == 0)
 			apm_power_print(sc, &nregs);
+#endif
 		apm_record_event(sc, regs->BX);
 		break;
 
