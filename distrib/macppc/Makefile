@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/09/13 15:49:27 matt Exp $
+#	$NetBSD: Makefile,v 1.7 2001/04/09 20:28:22 tsubai Exp $
 
 .include <bsd.own.mk>		# Use /etc/mk.conf.
 
@@ -22,5 +22,5 @@ release:
 	${IINST} ${BOOTOBJ}/ofwboot.elf ${ITARGET}/
 	${IINST} ${BOOTOBJ}/ofwboot.xcf ${ITARGET}/
 	${IINST} ${BOOTFLOPOBJ}/boot.fs ${ITARGET}/
-	${IINST} ${BOOTFLOPOBJ}/netbsd.ram.gz ${ITARGET}/
+	cd ${.CURDIR}/floppies/md-kernel && ${MAKE} release
 .endif
