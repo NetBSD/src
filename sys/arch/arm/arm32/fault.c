@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.40 2003/11/14 00:21:30 scw Exp $	*/
+/*	$NetBSD: fault.c,v 1.41 2003/11/14 19:00:03 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.40 2003/11/14 00:21:30 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.41 2003/11/14 19:00:03 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ data_abort_handler(trapframe_t *tf)
 	uvmexp.traps++;
 
 	/* Re-enable interrupts if they were enabled previously */
-	if (__predict_false((tf->tf_spsr & I32_bit) == 0))
+	if (__predict_true((tf->tf_spsr & I32_bit) == 0))
 		enable_interrupts(I32_bit);
 
 	/* Get the current lwp structure or lwp0 if there is none */
@@ -270,22 +270,6 @@ data_abort_handler(trapframe_t *tf)
 	if (user)
 		l->l_addr->u_pcb.pcb_tf = tf;
 
-	/* See if the cpu state needs to be fixed up */
-	switch (data_abort_fixup(tf, fsr, far, l)) {
-	case ABORT_FIXUP_RETURN:
-		return;
-	case ABORT_FIXUP_FAILED:
-		/* Deliver a SIGILL to the process */
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGILL;
-		ksi.ksi_code = ILL_ILLOPC;
-		ksi.ksi_addr = (u_int32_t *)(intptr_t) far;
-		ksi.ksi_trap = fsr;
-		goto do_trapsignal;
-	default:
-		break;
-	}
-
 	/*
 	 * Make sure the Program Counter is sane. We could fall foul of
 	 * someone executing Thumb code, in which case the PC might not
@@ -315,18 +299,34 @@ data_abort_handler(trapframe_t *tf)
 		dab_fatal(tf, fsr, far, l, NULL);
 	}
 
+	/* See if the cpu state needs to be fixed up */
+	switch (data_abort_fixup(tf, fsr, far, l)) {
+	case ABORT_FIXUP_RETURN:
+		return;
+	case ABORT_FIXUP_FAILED:
+		/* Deliver a SIGILL to the process */
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLOPC;
+		ksi.ksi_addr = (u_int32_t *)(intptr_t) far;
+		ksi.ksi_trap = fsr;
+		goto do_trapsignal;
+	default:
+		break;
+	}
+
 	va = trunc_page((vaddr_t)far);
 
 	/*
 	 * It is only a kernel address space fault iff:
 	 *	1. user == 0  and
 	 *	2. pcb_onfault not set or
-	 *	3. pcb_onfault set but supervisor space fault
-	 * The last can occur during an exec() copyin where the
-	 * argument space is lazy-allocated.
+	 *	3. pcb_onfault set and not LDRT/LDRBT/STRT/STRBT instruction.
 	 */
 	if (user == 0 && (va >= VM_MIN_KERNEL_ADDRESS ||
-	    (va < VM_MIN_ADDRESS && vector_page == ARM_VECTORS_LOW))) {
+	    (va < VM_MIN_ADDRESS && vector_page == ARM_VECTORS_LOW)) &&
+	    __predict_true((pcb->pcb_onfault == NULL ||
+	     (ReadWord(tf->tf_pc) & 0x05200000) != 0x04200000))) {
 		map = kernel_map;
 
 		/* Was the fault due to the FPE/IPKDB ? */
@@ -684,7 +684,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	 * from user mode so we know interrupts were not disabled.
 	 * But we check anyway.
 	 */
-	if (__predict_false((tf->tf_spsr & I32_bit) == 0))
+	if (__predict_true((tf->tf_spsr & I32_bit) == 0))
 		enable_interrupts(I32_bit);
 
 	/* See if the cpu state needs to be fixed up */
