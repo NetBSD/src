@@ -1,6 +1,5 @@
-# $Header: /cvsroot/src/gnu/lib/Attic/Makefile,v 1.2 1993/04/29 11:37:12 cgd Exp $
+#	$Id: Makefile,v 1.3 1993/07/18 11:52:35 cgd Exp $
 
-SUBDIR+= regex-0.12
-SUBDIR+= libg++
+SUBDIR+= libg++ libregex
 
 .include <bsd.subdir.mk>
