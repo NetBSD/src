@@ -1,4 +1,5 @@
-/*	$NetBSD: lpd.c,v 1.6 1995/11/15 22:49:53 pk Exp $	*/
+/*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -498,15 +499,3 @@ again:
 	fatal("Your host does not have line printer access");
 	/*NOTREACHED*/
 }
-
-
-
-
-
-
-
-
-
-
-
-
