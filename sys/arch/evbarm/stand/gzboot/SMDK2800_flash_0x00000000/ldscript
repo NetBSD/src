@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript,v 1.1 2003/07/30 18:54:19 bsh Exp $	*/
+/*	$NetBSD: ldscript,v 1.2 2004/12/24 16:17:27 joff Exp $	*/
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
 	      "elf32-littlearm")
@@ -49,6 +49,7 @@ SECTIONS
   {
     *(.sdata) 
     *(.sdata.*)
+    . = ALIGN(32 / 8);
   } > sdram
   _edata = .;
   PROVIDE (edata = .);
