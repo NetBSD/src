@@ -32,7 +32,7 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)newvers.sh	8.1 (Berkeley) 4/20/94
-#	$Id: newvers.sh,v 1.13 1994/05/23 04:10:54 cgd Exp $
+#	$Id: newvers.sh,v 1.14 1994/06/08 11:47:03 mycroft Exp $
 
 if [ ! -r version ]
 then
@@ -44,7 +44,7 @@ v=`cat version` u=${USER-root} d=`pwd` h=`hostname` t=`date`
 id=`basename ${d}`
 
 ost="NetBSD"
-osr="0.9B"
+osr="0.9C"
 
 echo "char ostype[] = \"${ost}\";" > vers.c
 echo "char osrelease[] = \"${osr}\";" >> vers.c
