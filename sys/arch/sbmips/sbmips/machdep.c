@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.13 2002/11/09 05:49:30 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.14 2002/11/12 00:47:10 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -178,7 +178,6 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	 * called because we may need CFE's TLB handler
 	 */
 
-	cfe_present = 0;
 	if (magic == BOOTINFO_MAGIC)
 		bcopy((struct bootinfo_v1 *)bootdata, &bootinfo,
 		    sizeof bootinfo);
@@ -188,14 +187,17 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 		bootinfo.version = BOOTINFO_VERSION;
 		bootinfo.fwhandle = fwhandle;
 		bootinfo.fwentry = bootdata;
+		bootinfo.ssym = (vaddr_t)end;
+		bootinfo.esym = (vaddr_t)end;
 	}
 
+	kernend = (caddr_t)mips_round_page(end);
 #ifdef DDB
-        ksym_start = (void *)bootinfo.ssym;
-        ksym_end   = (void *)bootinfo.esym;
-        kernend = (caddr_t)mips_round_page((vaddr_t)ksym_end);
-#else
-        kernend = (caddr_t)mips_round_page((vaddr_t)end);
+	if (magic == BOOTINFO_MAGIC) {
+		ksym_start = (void *)bootinfo.ssym;
+		ksym_end   = (void *)bootinfo.esym;
+		kernend = (caddr_t)mips_round_page((vaddr_t)ksym_end);
+	}
 #endif
 
 	consinit();
