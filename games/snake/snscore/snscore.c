@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)snscore.c	5.7 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: snscore.c,v 1.2 1993/08/01 18:51:03 mycroft Exp $";
+static char rcsid[] = "$Id: snscore.c,v 1.3 1994/04/05 00:42:49 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -76,6 +76,7 @@ main()
 	printf("Snake players scores to date\n");
 	fread(&whoallbest, sizeof(short), 1, fd);
 	fread(&allbest, sizeof(short), 1, fd);
+	noplayers = 0;
 	for (uid=2;;uid++) {
 		if(fread(&score, sizeof(short), 1, fd) == 0)
 			break;
