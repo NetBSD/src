@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 1995/12/11 17:09:23 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 1997/03/18 14:13:59 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -141,6 +141,8 @@ extern struct pmap	kernel_pmap_store;
 #define pmap_kernel()	(&kernel_pmap_store)
 #define	active_pmap(pm) \
 	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
+#define	active_user_pmap(pm) \
+	((pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
 extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
