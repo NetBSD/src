@@ -1,4 +1,4 @@
-#	$NetBSD: ftpusers,v 1.2 2000/01/09 13:19:19 lukem Exp $
+#	$NetBSD: ftpusers,v 1.3 2003/07/26 20:17:31 salo Exp $
 #
 # example /etc/ftpusers
 #
@@ -15,10 +15,10 @@ toor			deny
 *@10.0.0.0/8		deny
 *@*.spammer.com		deny
 
-# anonymous ftp connections from *.netbsd.org and 204.152.186.0/24 go into
+# anonymous ftp connections from *.NetBSD.org and 204.152.186.0/24 go into
 # class `localguest'
 #
-ftp@*.netbsd.org	allow	localguest
+ftp@*.NetBSD.org	allow	localguest
 ftp@204.152.186.0/24	allow	localguest
 
 # permit anonymous ftp connections from elsewhere (both entries are required,
@@ -29,9 +29,9 @@ ftp			allow
 anonymous		allow
 
 # users who are members of a group name which ends with `src', connecting
-# from any host in the *.netbsd.org domain become class `source'
+# from any host in the *.NetBSD.org domain become class `source'
 #
-*:*src@*.netbsd.org	allow	source
+*:*src@*.NetBSD.org	allow	source
 
 # prevent all other users
 #
