@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.14 1995/09/03 20:59:55 briggs Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.15 1995/09/04 02:50:57 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -122,13 +122,6 @@ extdms_init()
 			buffer[2] = '\004'; /* make handler ID 4 */
 			extdms_done = 0;
 			cmd = (cmd & 0xf3) | 0x08; /* listen command */
-			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-			      (Ptr)&extdms_done, cmd);
-			while (!extdms_done)
-				/* busy wait until done */;
-
-			extdms_done = 0;
-			cmd = (cmd & 0xf3) | 0x0c; /* talk command */
 			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 			      (Ptr)&extdms_done, cmd);
 			while (!extdms_done)
