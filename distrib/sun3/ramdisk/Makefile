@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.26 2002/04/06 18:16:12 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.27 2002/04/18 15:36:58 bouyer Exp $
+
+
+.include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
 TOP=		${.CURDIR}/..
 
-# This include just sets DISTRIBREV=XX
 .include "${TOP}/Makefile.inc"
 
 DBG=	-Os
