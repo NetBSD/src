@@ -1,7 +1,7 @@
 #
 # PATEK -- Mycroft's 486 test box
 #
-#	$Id: PATEK,v 1.2 1994/01/05 17:05:56 mycroft Exp $
+#	$Id: PATEK,v 1.3 1994/01/05 17:17:17 mycroft Exp $
 #
 
 machine		"i386"
@@ -51,7 +51,7 @@ options		INET
 
 options		SCSI
 
-config		netbsd	at 0xfe100000 root on sd0 swap on sd0 and sd1 and sd2 and sd3
+config		netbsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3
 
 controller	isa0
 controller	uha0	at isa? port "IO_UHA0" bio irq 14 drq 5 vector uhaintr
