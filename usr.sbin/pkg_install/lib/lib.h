@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.38.2.3 2002/11/24 22:34:13 tron Exp $ */
+/* $NetBSD: lib.h,v 1.38.2.4 2003/02/08 07:52:42 jmc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -102,6 +102,7 @@
 #define BUILD_INFO_FNAME	"+BUILD_INFO"
 #define SIZE_PKG_FNAME		"+SIZE_PKG"
 #define SIZE_ALL_FNAME		"+SIZE_ALL"
+#define PRESERVE_FNAME		"+PRESERVE"
 
 #define CMD_CHAR		'@'	/* prefix for extended PLIST cmd */
 
@@ -116,6 +117,11 @@
 #define TAILQ_FIRST(head)               ((head)->tqh_first)
 #define TAILQ_NEXT(elm, field)          ((elm)->field.tqe_next)
 #endif
+
+enum {
+	ReadWrite,
+	ReadOnly
+};
 
 
 /* Enumerated constants for plist entry types */
@@ -271,8 +277,9 @@ void    pkgdb_close(void);
 int     pkgdb_store(const char *, const char *);
 char   *pkgdb_retrieve(const char *);
 int     pkgdb_remove(const char *);
+int	pkgdb_remove_pkg(const char *);
 char   *pkgdb_iter(void);
-char   *_pkgdb_getPKGDB_FILE(void);
+char   *_pkgdb_getPKGDB_FILE(char *, unsigned);
 char   *_pkgdb_getPKGDB_DIR(void);
 
 /* List of packages functions */
