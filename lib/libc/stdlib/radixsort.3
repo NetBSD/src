@@ -1,4 +1,4 @@
-.\"	$NetBSD: radixsort.3,v 1.6 1998/02/05 18:50:13 perry Exp $
+.\"	$NetBSD: radixsort.3,v 1.7 2000/12/13 22:11:24 garbled Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,9 +45,9 @@
 .Fd #include <limits.h>
 .Fd #include <stdlib.h>
 .Ft int
-.Fn radixsort "u_char **base" "int nmemb" "u_char *table" "u_int endbyte"
+.Fn radixsort "const u_char **base" "int nmemb" "u_char *table" "u_int endbyte"
 .Ft int
-.Fn sradixsort "u_char **base" "int nmemb" "u_char *table" "u_int endbyte"
+.Fn sradixsort "const u_char **base" "int nmemb" "u_char *table" "u_int endbyte"
 .Sh DESCRIPTION
 The
 .Fn radixsort
