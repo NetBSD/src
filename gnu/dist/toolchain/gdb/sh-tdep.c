@@ -183,10 +183,8 @@ gdb_print_insn_sh (memaddr, info)
      bfd_vma memaddr;
      disassemble_info *info;
 {
-  if (TARGET_BYTE_ORDER == BIG_ENDIAN)
-    return print_insn_sh (memaddr, info);
-  else
-    return print_insn_shl (memaddr, info);
+  info->endian = TARGET_BYTE_ORDER;
+  return print_insn_sh (memaddr, info);
 }
 
 /* Given a GDB frame, determine the address of the calling function's frame.
