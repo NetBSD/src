@@ -1,4 +1,5 @@
-# $NetBSD: md.macppc,v 1.21.2.1 2005/04/06 21:11:45 tron Exp $
+# $NetBSD: md.macppc,v 1.21.2.2 2005/04/06 22:17:41 tron Exp $
+./var/db/obsolete/xserver			xbase-sys-root
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xmacppc
