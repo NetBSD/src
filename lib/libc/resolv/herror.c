@@ -1,4 +1,4 @@
-/*	$NetBSD: herror.c,v 1.1.1.1 2004/05/20 17:18:55 christos Exp $	*/
+/*	$NetBSD: herror.c,v 1.2 2004/05/20 17:23:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -68,7 +68,6 @@ static const char rcsid[] = "Id: herror.c,v 1.2.206.1 2004/03/09 08:33:54 marka 
 #include <resolv.h>
 #include <string.h>
 #include <unistd.h>
-#include <irs.h>
 
 #include "port_after.h"
 
@@ -105,7 +104,7 @@ herror(const char *s) {
 		v->iov_len = 2;
 		v++;
 	}
-	DE_CONST(hstrerror(*__h_errno()), t);
+	DE_CONST(hstrerror(h_errno), t);
 	v->iov_base = t;
 	v->iov_len = strlen(v->iov_base);
 	v++;
