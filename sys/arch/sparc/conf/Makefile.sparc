@@ -1,5 +1,5 @@
 # from:	@(#)Makefile.sparc	8.1 (Berkeley) 7/19/93
-# $Id: Makefile.sparc,v 1.2 1993/10/11 02:33:25 deraadt Exp $
+# $Id: Makefile.sparc,v 1.3 1993/11/29 05:37:56 deraadt Exp $
 # Makefile for 4.4 BSD
 #
 # This makefile is constructed from a machine description:
@@ -19,7 +19,6 @@
 # -DQUOTA	compile in file system quotas
 
 # DEBUG is set to -g if debugging.
-DEBUG=-g
 # PROF is set to -pg if profiling.
 
 AS?=	as
@@ -34,7 +33,7 @@ S=	../../../..
 SPARC=	../..
 LIBKERN=../libkern.a
 
-INCLUDES=-nostdinc -I. -I$S/arch -I$S -I$S/sys -I/tmp/usr/include -I/usr/include
+INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL -DSUN4C -Dsun4c
 CFLAGS=	${COPTS}
 
@@ -111,7 +110,7 @@ genassym: genassym.o
 	${CC} -o $@ genassym.o
 
 genassym.o: ${SPARC}/sparc/genassym.c
-	${CC} -c ${CFLAGS} ${PARAM} $<
+	${CC} -c ${CFLAGS} -I/tmp/usr/include -I/usr/include ${PARAM} $<
 
 SRCS=	${CFILES} ${SPARC}/sparc/genassym.c ioconf.c param.c ${SPARC}/sparc/conf.c
 depend: .depend
