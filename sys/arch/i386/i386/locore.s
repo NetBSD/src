@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.268 2002/11/01 05:49:01 enami Exp $	*/
+/*	$NetBSD: locore.s,v 1.269 2002/11/01 06:06:17 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1853,12 +1853,12 @@ ENTRY(cpu_switch)
 	pushl	%edi
 
 #ifdef DEBUG
-	cmpl	$IPL_HIGH,CPL
+	cmpl	$IPL_SCHED,CPL
 	je	1f
 	pushl	$2f
 	call	_C_LABEL(panic)
 	/* NOTREACHED */
-2:	.asciz	"not splhigh() in cpu_switch!"
+2:	.asciz	"not splsched() in cpu_switch!"
 
 1:	
 #endif /* DEBUG */
