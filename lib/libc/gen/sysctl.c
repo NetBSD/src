@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.4 1995/05/13 06:58:24 jtc Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.5 1997/07/13 19:33:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-static char rcsid[] = "$NetBSD: sysctl.c,v 1.4 1995/05/13 06:58:24 jtc Exp $";
+__RCSID("$NetBSD: sysctl.c,v 1.5 1997/07/13 19:33:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,6 +51,7 @@ static char rcsid[] = "$NetBSD: sysctl.c,v 1.4 1995/05/13 06:58:24 jtc Exp $";
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "extern.h"
 
 int
 sysctl(name, namelen, oldp, oldlenp, newp, newlen)
