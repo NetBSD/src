@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.18 2003/10/24 23:03:50 chris Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.19 2003/11/07 18:29:30 he Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.18 2003/10/24 23:03:50 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.19 2003/11/07 18:29:30 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -815,6 +815,9 @@ set_cursor(sc, p)
 #define	cc (&dc->dc_cursor)
     	struct fb_devconfig *dc = sc->sc_dc;
 	u_int v, index, count, icount;
+
+	/* XXX gcc does not detect identical conditions */
+	index = count = icount = 0;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
