@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1982 Regents of the University of California.
  * All rights reserved.
  *
@@ -47,3 +48,5 @@ struct isr {
 void isr_init __P((void));
 void isr_add __P((int, int (*handler)(), int ));
 void isr_cleanup __P((void));
+void isr_add_custom __P((int, void (*handler)()));
+

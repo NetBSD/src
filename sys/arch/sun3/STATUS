@@ -1,7 +1,33 @@
-						<$Revision: 1.1 $> 
+						<$Revision: 1.2 $> 
 
 This is to be a summary of the status of code, its problems,
 and the directions it should and needs to take in the future.
+
+The major bugs:
+	
+	the clock interrupts are coming at a rate 100 times greater than
+	they are programmed for.  When the clock interrupts are going
+	at this rate, and the clock interrupt is calling hardclock(),
+	it makes no progress beyond enablertclock().  this bug is
+	priority one.  Until this works, we won't be able to get
+	nfsdiskless operation to work at all.
+
+	trap code.  the assembly part of the trap handling code is
+	not currently being used, because at until its time for the
+	fork(), it doesn't do much and the sun3 monitor diagnostics
+	are better than anything in the trap code.
+
+	This code has been hosted under SunOs.  Its not clear whether
+	the sun boot blocks can load kernels linked with our a.out, etc.
+	This is a question that *must* be answered.
+
+	I'm not running a current tree, because i can't afford a slip
+	connection at the moment.
+
+	there is an insane hack in 'swapnfs', and the
+	TIMESINK.nfsdiskless stuff because we don't have any way of
+	getting nfsdiskless information yet.  
+	
 
 Core code: (i.e sun3/sun3, sun3/include)
 ----------
@@ -26,6 +52,8 @@ Random:
 	ddb support
 
 	kgdb support
+
+	kernel still isn't protected.
 
 pmap: 
 
@@ -60,9 +88,9 @@ zs - for the Zilog 8530 that run the mouse, keyboard, and serial ports.
      model, the mouse, and keyboard drivers are just optional clients of the
      zs driver, and can be torched if you want to hack up a quick cable
      and use them as serial ports.  This is also the right way to deal
-     with the complexities of a zs channel being used for 'kgdb', and
-     for synchronous operation.  This design does make the core zs driver
-     more complicated, but i think it will be worth it.
+     with the complexities of a zs channels being used for things like
+     'kgdb', and synchronous operation.  This design does make the
+     core zs driver more complicated, but i think it will be worth it.
 
 scsi - I want to use torek's scsi system, if only to find out whether it is
        any good.  Or we could use Julien's lump of crud.  Either way

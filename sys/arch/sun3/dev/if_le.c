@@ -335,6 +335,8 @@ leintr(unit)
 	le_machdep_intrcheck(le, unit);
 	ler1 = le->sc_r1;
 	LERDWR(le, ler1->ler1_rdp, stat);
+	if (ledebug) 
+	    printf("[le%d: stat %b]", unit, stat, LE_STATUS_BITS);
 	if (stat & LE_SERR) {
 		leerror(unit, stat);
 		if (stat & LE_MERR) {
@@ -806,7 +808,7 @@ leerror(unit, stat)
 	log(LOG_WARNING,
 	    "le%d: error: stat=%b\n", unit,
 	    stat,
-	    "\20\20ERR\17BABL\16CERR\15MISS\14MERR\13RINT\12TINT\11IDON\10INTR\07INEA\06RXON\05TXON\04TDMD\03STOP\02STRT\01INIT");
+	    LE_STATUS_BITS);
 }
 
 lererror(unit, msg)
@@ -828,7 +830,7 @@ lererror(unit, msg)
 	    len > 11 ? ether_sprintf(&le->sc_r2->ler2_rbuf[le->sc_rmd][6]) : "unknown",
 	    le->sc_rmd, len,
 	    rmd->rmd1_bits,
-	    "\20\20OWN\17ERR\16FRAM\15OFLO\14CRC\13RBUF\12STP\11ENP");
+	    "\20\10OWN\7ERR\6FRAM\5OFLO\4CRC\3RBUF\2STP\1ENP");
 }
 
 lexerror(unit)
@@ -849,7 +851,7 @@ lexerror(unit)
 	    len > 5 ? ether_sprintf(&le->sc_r2->ler2_tbuf[0][0]) : "unknown",
 	    0, len,
 	    tmd->tmd1_bits,
-	    "\20\20OWN\17ERR\16RES\15MORE\14ONE\13DEF\12STP\11ENP",
+	    "\20\10OWN\7ERR\6RES\5MORE\4ONE\3DEF\2STP\1ENP",
 	    tmd->tmd3,
 	    "\20\20BUFF\17UFLO\16RES\15LCOL\14LCAR\13RTRY");
 }

@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1993 Adam Glass 
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -310,11 +311,13 @@ copyfault:
 	case T_SSIR|T_USER:
 		printf("software interrupt\n");
 		if (ssir & SIR_NET) {
+		        printf("soft interrupt: network\n");
 			siroff(SIR_NET);
 			cnt.v_soft++;
 			netintr();
 		}
 		if (ssir & SIR_CLOCK) {
+		        printf("soft interrupt: clock\n");
 			siroff(SIR_CLOCK);
 			cnt.v_soft++;
 			softclock((caddr_t)frame.f_pc, (int)frame.f_sr);
@@ -323,10 +326,13 @@ copyfault:
 		 * If this was not an AST trap, we are all done.
 		 */
 		if (type != (T_ASTFLT|T_USER)) {
+		        printf("soft interrupt: NOT AST\n");
 			cnt.v_trap--;
 			return;
 		}
+		printf("soft interrupt: before spl0\n");
 		spl0();
+		printf("soft interrupt: after spl0\n");
 #ifndef PROFTIMER
 		if ((p->p_flag&SOWEUPC) && p->p_stats->p_prof.pr_scale) {
 			addupc(frame.f_pc, &p->p_stats->p_prof, 1);
