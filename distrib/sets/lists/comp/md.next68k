@@ -1,6 +1,5 @@
-# $NetBSD: md.next68k,v 1.24 2003/01/18 17:50:27 thorpej Exp $
+# $NetBSD: md.next68k,v 1.25 2003/10/24 18:32:16 mycroft Exp $
 ./usr/include/next68k	comp-c-include
-./usr/include/next68k/_G_config.h	comp-c-include
 ./usr/include/next68k/ansi.h	comp-c-include
 ./usr/include/next68k/aout_machdep.h	comp-c-include
 ./usr/include/next68k/asm.h	comp-c-include

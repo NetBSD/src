@@ -1,6 +1,5 @@
-# $NetBSD: md.amiga,v 1.48 2003/01/18 17:50:21 thorpej Exp $
+# $NetBSD: md.amiga,v 1.49 2003/10/24 18:32:16 mycroft Exp $
 ./usr/include/amiga	comp-c-include
-./usr/include/amiga/_G_config.h	comp-c-include
 ./usr/include/amiga/ansi.h	comp-c-include
 ./usr/include/amiga/aout_machdep.h	comp-c-include
 ./usr/include/amiga/asm.h	comp-c-include
