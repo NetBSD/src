@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.7 1995/09/11 21:11:36 thorpej Exp $	*/
+/*	$NetBSD: arp.c,v 1.8 1995/09/13 15:06:12 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -234,7 +234,7 @@ bad:
 
 /*
  * Convert an ARP request into a reply and send it.
- * Notes:  Re-uses buffer.  Min send length = 60.
+ * Notes:  Re-uses buffer.  Pad to length = 46.
  */
 void
 arp_reply(d, pkt)
@@ -286,5 +286,6 @@ arp_reply(d, pkt)
 	 * No need to get fancy here.  If the send fails, the
 	 * requestor will just ask again.
 	 */
-	(void) sendether(d, pkt, 60, arp->arp_tha, ETHERTYPE_ARP);
+	(void) sendether(d, pkt, sizeof(*arp) + 18,
+	                 arp->arp_tha, ETHERTYPE_ARP);
 }
