@@ -1,4 +1,4 @@
-#	$Id: mkioctls,v 1.3 1994/10/06 15:44:35 mycroft Exp $
+#	$Id: mkioctls,v 1.4 1994/12/24 16:47:28 cgd Exp $
 #
 awk '
 BEGIN {
@@ -13,6 +13,7 @@ BEGIN {
 	print ""
 	print "char *"
 	print "ioctlname(val)"
+	print "long val;"
 	print "{"
 	print ""
 }
