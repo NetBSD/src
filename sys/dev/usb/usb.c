@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.38 2000/02/02 07:33:59 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.39 2000/02/22 11:30:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -694,6 +694,12 @@ usb_add_event(type, uep)
 	if (usb_async_proc != NULL)
 		psignal(usb_async_proc, SIGIO);
 	splx(s);
+}
+void
+usb_schedsoftintr(bus)
+	struct usbd_bus *bus;
+{
+	bus->methods->soft_intr(bus);
 }
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)

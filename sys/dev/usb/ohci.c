@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.71 2000/02/01 05:42:52 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.72 2000/02/22 11:30:54 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -130,11 +130,10 @@ static void		ohci_shutdown __P((void *v));
 static void		ohci_power __P((int, void *));
 static usbd_status	ohci_open __P((usbd_pipe_handle));
 static void		ohci_poll __P((struct usbd_bus *));
+static void		ohci_softintr __P((struct usbd_bus *));
 static void		ohci_waitintr __P((ohci_softc_t *,
 			    usbd_xfer_handle));
 static void		ohci_rhsc __P((ohci_softc_t *, usbd_xfer_handle));
-static void		ohci_process_done __P((ohci_softc_t *,
-			    ohci_physaddr_t));
 
 static usbd_status	ohci_device_request __P((usbd_xfer_handle xfer));
 static void		ohci_add_ed __P((ohci_soft_ed_t *, ohci_soft_ed_t *));
@@ -264,6 +263,7 @@ struct ohci_pipe {
 static struct usbd_bus_methods ohci_bus_methods = {
 	ohci_open,
 	ohci_poll,
+	ohci_softintr,
 	ohci_allocm,
 	ohci_freem,
 	ohci_allocx,
@@ -990,7 +990,6 @@ ohci_intr1(sc)
         intrs = 0;
 	done = LE(sc->sc_hcca->hcca_done_head);
 	if (done != 0) {
-		sc->sc_hcca->hcca_done_head = 0;
 		if (done & ~OHCI_DONE_INTRS)
 			intrs = OHCI_WDH;
 		if (done & OHCI_DONE_INTRS)
@@ -1019,7 +1018,21 @@ ohci_intr1(sc)
 		intrs &= ~OHCI_SO;
 	}
 	if (eintrs & OHCI_WDH) {
-		ohci_process_done(sc, done &~ OHCI_DONE_INTRS);
+		done &= OHCI_DONE_INTRS;
+		if (sc->sc_done == 0)
+			sc->sc_done = done;
+		else {
+			/* Tack on at the end of sc_done. */
+			ohci_physaddr_t ldone;
+			ohci_soft_td_t *std;
+
+			for (ldone = sc->sc_done; ldone != 0; 
+			     ldone = LE(std->td.td_nexttd))
+				std = ohci_hash_find_td(sc, done);
+			std->td.td_nexttd = LE(done);
+		}
+		sc->sc_hcca->hcca_done_head = 0;
+		usb_schedsoftintr(&sc->sc_bus);
 		intrs &= ~OHCI_WDH;
 	}
 	if (eintrs & OHCI_RD) {
@@ -1089,13 +1102,21 @@ char *ohci_cc_strs[] = {
 #endif
 
 void
-ohci_process_done(sc, done)
-	ohci_softc_t *sc;
-	ohci_physaddr_t done;
+ohci_softintr(bus)
+	struct usbd_bus *bus;
 {
+	ohci_softc_t *sc = (ohci_softc_t *)bus;
+	ohci_physaddr_t done;
 	ohci_soft_td_t *std, *sdone, *stdnext;
 	usbd_xfer_handle xfer;
-	int len, cc;
+	int len, cc, s;
+
+	sc->sc_bus.intr_context++;
+
+	s = splhardusb();
+	done = sc->sc_done;
+	sc->sc_done = 0;
+	splx(s);
 
 	DPRINTFN(10,("ohci_process_done: done=0x%08lx\n", (u_long)done));
 
@@ -1175,6 +1196,8 @@ ohci_process_done(sc, done)
 			usb_transfer_complete(xfer);
 		}
 	}
+
+	sc->sc_bus.intr_context--;
 }
 
 void
