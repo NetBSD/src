@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.141 2003/04/06 07:09:48 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.142 2003/04/07 07:09:47 gmcgarry Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -467,7 +467,7 @@ MLINKS+=vfssubr.9 vfs_getnewfsid.9 \
 	vfssubr.9 vfs_export.9 \
 	vfssubr.9 vfs_showexport.9 \
 	vfssubr.9 vfs_export_lookup.9 \
-	vfssubr.9 vfs_setpublic.9 \
+	vfssubr.9 vfs_setpublicfs.9 \
 	vfssubr.9 vfs_mountedon.9 \
 	vfssubr.9 vfs_mountroot.9 \
 	vfssubr.9 vfs_unmountall.9 \
