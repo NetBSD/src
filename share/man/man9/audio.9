@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.18 2001/10/02 23:58:03 augustss Exp $
+.\"	$NetBSD: audio.9,v 1.19 2001/10/03 20:50:31 augustss Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,8 +92,7 @@ struct audio_hw_if {
 		    void (*)(void *), void *, struct audio_params *);
 	int	(*trigger_input)(void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *);
-	int	(*dev_ioctl)(struct audio_softc *sc, u_long cmd,
-		    caddr_t addr, int flag, struct proc *p);
+	int	(*dev_ioctl)(void *, u_long, caddr_t, int, struct proc *);
 };
 
 struct audio_params {
@@ -411,7 +410,7 @@ should be called with the argument
 Once started the transfer may be stopped using
 .Va halt_input .
 Return 0 on success, otherwise an error code.
-.It Dv int dev_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr,
+.It Dv int dev_ioctl(void *hdl, u_long cmd, caddr_t addr,
 .br
 .Dv "int flag, struct proc *p)"
 .br
