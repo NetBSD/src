@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_init.c,v 1.1.1.1.8.3 2003/11/27 17:54:36 cyber Exp $	*/
+/*	$NetBSD: ns_init.c,v 1.1.1.1.8.4 2003/11/27 19:05:21 cyber Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_init.c	4.38 (Berkeley) 3/21/91";
-static const char rcsid[] = "Id: ns_init.c,v 8.77 2002/08/20 04:27:23 marka Exp";
+static const char rcsid[] = "Id: ns_init.c,v 8.77.8.2 2003/09/04 04:09:09 marka Exp";
 #endif /* not lint */
 
 /*
