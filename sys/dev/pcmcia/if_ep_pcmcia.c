@@ -1,12 +1,12 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.47 2004/08/09 20:30:19 mycroft Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.48 2004/08/10 08:56:08 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.47 2004/08/09 20:30:19 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.48 2004/08/10 08:56:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
