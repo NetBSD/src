@@ -11,6 +11,7 @@ options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		UCONSOLE, XSERVER
 #options		"WD8013"
+options		FDESC,KERNFS
 
 #options 	COM_IGNOREFIFO
 options 	COM_MULTIPORT
@@ -51,6 +52,8 @@ pseudo-device	ether
 pseudo-device	sl
 pseudo-device	log
 pseudo-device	pty	12
+
+pseudo-device	bpfilter	4
 
 pseudo-device	swappager
 pseudo-device	vnodepager
