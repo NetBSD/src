@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.3 1995/04/28 11:34:33 leo Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.4 1995/05/21 10:54:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -48,7 +48,7 @@
 static dmode_t    *get_best_display_mode __P((dimen_t *, int, dmode_t *));
 static view_t     *alloc_view __P((dmode_t *, dimen_t *, u_char));
 static void       init_view __P((view_t *, bmap_t *, dmode_t *, box_t *));
-static bmap_t	  *alloc_bitmap __P((u_long, u_long, u_char, int));
+static bmap_t	  *alloc_bitmap __P((u_long, u_long, u_char));
 static void 	  free_bitmap __P((bmap_t *));
 static colormap_t *alloc_colormap __P((dmode_t *));
 
@@ -117,7 +117,7 @@ grfabs_probe()
 	static  int	inited = 0;
 
 	if(inited)
-		return;	/* Has to be done only once */
+		return(1);	/* Has to be done only once */
 	inited++;
 
 	/*
@@ -142,7 +142,6 @@ grfabs_probe()
 	 */
 	for(i=0; i < 16; i++)
 		VIDEO->vd_tt_rgb[i] = def_color16[i];
-
 	return(1);
 }
 
@@ -154,9 +153,17 @@ u_char	depth;
 {
 	if(!d)
 		d = get_best_display_mode(dim, depth, NULL);
-	if(d) 
+	if(d)
 		return(alloc_view(d, dim, depth));
 	return(NULL);
+}
+
+dmode_t	*
+grf_get_best_mode(dim, depth)
+dimen_t	*dim;
+u_char	depth;
+{
+		return(get_best_display_mode(dim, depth, NULL));
 }
 
 void grf_display_view(v)
@@ -220,11 +227,22 @@ colormap_t	*cm;
 {
 	colormap_t	*gcm;
 	int		i, n;
-
-	bzero(cm->entry, cm->size * sizeof(long));
+	u_long		*sv_entry;
 
 	gcm = v->colormap;
 	n   = cm->size < gcm->size ? cm->size : gcm->size;
+
+	/*
+	 * Copy struct from view but be carefull to keep 'entry'
+	 */
+	sv_entry = cm->entry;
+	*cm = *gcm;
+	cm->entry = sv_entry;
+
+	/*
+	 * Copy the colors
+	 */
+	bzero(cm->entry, cm->size * sizeof(long));
 	for(i = 0; i < n; i++)
 		cm->entry[i] = gcm->entry[i];
 	return(0);
@@ -237,12 +255,26 @@ colormap_t	*cm;
 {
 	dmode_t			*dm;
 	volatile u_short	*creg;
-	long			*src;
+	u_long			*src;
+	colormap_t		*vcm;
+	u_long			*vcreg;
 	u_short			ncreg;
 	int			i;
 
-	dm = v->mode;
+	dm  = v->mode;
+	vcm = v->colormap;
 
+	/*
+	 * I guess it seems reasonable to require the maps to be
+	 * of the same type...
+	 */
+	if(cm->type != vcm->type)
+		return(EINVAL);
+
+	/*
+	 * First figure out where the actual colormap resides and
+	 * howmany colors are in it.
+	 */
 	switch(dm->vm_reg) {
 		case RES_STLOW:
 			creg  = &VIDEO->vd_tt_rgb[0];
@@ -270,18 +302,32 @@ colormap_t	*cm;
 			panic("grf_get_colormap: wrong mode!?");
 	}
 
+	/* If first entry specified beyond capabilities -> error */
 	if(cm->first >= ncreg)
 		return(EINVAL);
-	creg   = &creg[cm->first];
-	ncreg -= cm->first;
 
+	/*
+	 * A little tricky, the actual colormap pointer will be NULL
+	 * when view is not displaying, valid otherwise.
+	 */
+	if(v->flags & VF_DISPLAY)
+		creg = &creg[cm->first];
+	else creg = NULL;
+
+	vcreg  = &vcm->entry[cm->first];
+	ncreg -= cm->first;
 	if(cm->size > ncreg)
 		return(EINVAL);
 	ncreg = cm->size;
 
-	for(i = 0, src = cm->entry; i < ncreg; i++) {
-		register long	val = *src++;
-		*creg++ = CM_LTOW(val);
+	for(i = 0, src = cm->entry; i < ncreg; i++, vcreg++) {
+		*vcreg = *src++;
+
+		/*
+		 * If displaying, also update actual color register.
+		 */
+		if(creg != NULL)
+			*creg++ = CM_LTOW(*vcreg);
 	}
 	return(0);
 }
@@ -334,10 +380,11 @@ u_char   depth;
 	if(!atari_realconfig)
 		v = &con_view;
 	else v = malloc(sizeof(*v), M_DEVBUF, M_NOWAIT);
-
-	bm = alloc_bitmap(mode->size.width, mode->size.height, mode->depth, 1);
+	if(v == NULL)
+		return(NULL);
+	
+	bm = alloc_bitmap(mode->size.width, mode->size.height, mode->depth);
 	if(bm) {
-		int     i;
 		box_t   box;
 
 		v->colormap = alloc_colormap(mode);
@@ -362,16 +409,16 @@ box_t	*dbox;
 {
 	v->bitmap = bm;
 	v->mode   = mode;
+	v->flags  = 0;
 	bcopy(dbox, &v->display, sizeof(box_t));
 }
 
 /* bitmap functions */
 
 static bmap_t *
-alloc_bitmap(width, height, depth, clear)
+alloc_bitmap(width, height, depth)
 u_long	width, height;
 u_char	depth;
-int	clear;
 {
 	int     i;
 	u_long  total_size, bm_size;
@@ -404,8 +451,7 @@ int	clear;
 	bm->rows          = height;
 	bm->depth         = depth;
 
-	if(clear)
-		bzero(bm->plane, bm_size);
+	bzero(bm->plane, bm_size);
 	return(bm);
 }
 
@@ -442,6 +488,7 @@ dmode_t		*dm;
 		case RES_TTHIGH:
 			type     = CM_MONO;
 			nentries = 0;
+			break;
 		default:
 			panic("grf:alloc_colormap: wrong mode!?");
 	}
