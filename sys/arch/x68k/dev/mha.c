@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.2 1997/10/19 20:45:17 oki Exp $	*/
+/*	$NetBSD: mha.c,v 1.2.2.1 1998/10/13 21:26:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki, Takumi Nakamura and Masanobu Saitoh.  All rights reserved.
@@ -48,6 +48,18 @@
 /* Synchronous data transfers? */
 #define SPC_USE_SYNCHRONOUS	0
 #define SPC_SYNC_REQ_ACK_OFS 	8
+
+/* Default DMA mode? */
+#define MHA_DMA_LIMIT_XFER	1
+#define MHA_DMA_BURST_XFER	1
+#define MHA_DMA_SHORT_BUS_CYCLE	1
+
+#define MHA_DMA_DATAIN	(0 | (MHA_DMA_LIMIT_XFER << 1)		\
+			   | (MHA_DMA_BURST_XFER << 2)		\
+			   | (MHA_DMA_SHORT_BUS_CYCLE << 3))
+#define MHA_DMA_DATAOUT	(1 | (MHA_DMA_LIMIT_XFER << 1)		\
+			   | (MHA_DMA_BURST_XFER << 2)		\
+			   | (MHA_DMA_SHORT_BUS_CYCLE << 3))
 
 /* Include debug functions?  At the end of this file there are a bunch of
  * functions that will print out various information regarding queued SCSI
@@ -224,7 +236,7 @@ void	mha_timeout	__P((void *));
 void	mha_minphys	__P((struct buf *));
 void	mha_dequeue	__P((struct mha_softc *, struct acb *));
 inline void	mha_setsync	__P((struct mha_softc *, struct spc_tinfo *));
-#ifdef SPC_DEBUG
+#if SPC_DEBUG
 void	mha_print_acb __P((struct acb *));
 void	mha_show_scsi_cmd __P((struct acb *));
 void	mha_print_active_acb __P((void));
@@ -892,42 +904,58 @@ mha_done(sc, acb)
 			xs->error = XS_TIMEOUT;
 		} else if (acb->flags & ACB_CHKSENSE) {
 			xs->error = XS_SENSE;
-		} else if ((acb->stat & ST_MASK) == SCSI_CHECK) {
-			struct scsipi_sense *ss = (void *)&acb->cmd;
-			SPC_MISC(("requesting sense "));
-			/* First, save the return values */
-			xs->resid = acb->dleft;
-			xs->status = acb->stat;
-			/* Next, setup a request sense command block */
-			bzero(ss, sizeof(*ss));
-			ss->opcode = REQUEST_SENSE;
-			/*ss->byte2 = sc_link->lun << 5;*/
-			ss->length = sizeof(struct scsipi_sense_data);
-			acb->clen = sizeof(*ss);
-			acb->daddr = (char *)&xs->sense;
-			acb->dleft = sizeof(struct scsipi_sense_data);
-			acb->flags |= ACB_CHKSENSE;
-/*XXX - must take off queue here */
-			if (acb != sc->sc_nexus) {
-				panic("%s: mha_sched: floating acb %p",
-					sc->sc_dev.dv_xname, acb);
-			}
-			TAILQ_INSERT_HEAD(&sc->ready_list, acb, chain);
-			ACB_SETQ(acb, ACB_QREADY);
-			ti->lubusy &= ~(1<<sc_link->scsipi_scsi.lun);
-			ti->senses++;
-			timeout(mha_timeout, acb, (xs->timeout*hz)/1000);
-			if (sc->sc_nexus == acb) {
-				sc->sc_nexus = NULL;
-				sc->sc_state = SPC_IDLE;
-				mha_sched(sc);
-			}
-#if 0
-			mha_sense(sc, acb);
-#endif
-			return;
 		} else {
-			xs->resid = acb->dleft;
+			switch (acb->stat & ST_MASK) {
+			case SCSI_CHECK:
+			{
+				struct scsipi_sense *ss = (void *)&acb->cmd;
+				SPC_MISC(("requesting sense "));
+				/* First, save the return values */
+				xs->resid = acb->dleft;
+				xs->status = acb->stat;
+				/* Next, setup a request sense command block */
+				bzero(ss, sizeof(*ss));
+				ss->opcode = REQUEST_SENSE;
+				/*ss->byte2 = sc_link->lun << 5;*/
+				ss->length = sizeof(struct scsipi_sense_data);
+				acb->clen = sizeof(*ss);
+				acb->daddr = (char *)&xs->sense;
+				acb->dleft = sizeof(struct scsipi_sense_data);
+				acb->flags |= ACB_CHKSENSE;
+/*XXX - must take off queue here */
+				if (acb != sc->sc_nexus) {
+					panic("%s: mha_sched: floating acb %p",
+						sc->sc_dev.dv_xname, acb);
+				}
+				TAILQ_INSERT_HEAD(&sc->ready_list, acb, chain);
+				ACB_SETQ(acb, ACB_QREADY);
+				ti->lubusy &= ~(1<<sc_link->scsipi_scsi.lun);
+				ti->senses++;
+				timeout(mha_timeout, acb, (xs->timeout*hz)/1000);
+				if (sc->sc_nexus == acb) {
+					sc->sc_nexus = NULL;
+					sc->sc_state = SPC_IDLE;
+					mha_sched(sc);
+				}
+#if 0
+				mha_sense(sc, acb);
+#endif
+				return;
+			}
+			case SCSI_BUSY:
+				xs->error = XS_BUSY;
+				break;
+			case SCSI_OK:
+				xs->resid = acb->dleft;
+				break;
+			default:
+				xs->error = XS_DRIVER_STUFFUP;
+#if SPC_DEBUG
+				printf("%s: mha_done: bad stat 0x%x\n",
+					sc->sc_dev.dv_xname, acb->stat);
+#endif
+				break;
+			}
 		}
 	}
 
@@ -938,7 +966,7 @@ mha_done(sc, acb)
 		if (xs->resid != 0)
 			printf("resid=%d ", xs->resid);
 		if (xs->error == XS_SENSE)
-			printf("sense=0x%02x\n", xs->sense.error_code);
+			printf("sense=0x%02x\n", xs->sense.scsi_sense.error_code);
 		else
 			printf("error=%d\n", xs->error);
 	}
@@ -1197,14 +1225,14 @@ scsi_print_addr(acb->xs->sc_link); printf("MSG_MESSAGE_REJECT>>");
 					ti->period = mha_cpb2stp(sc, p);
 #endif
 
-#ifdef SPC_DEBUG
+#if SPC_DEBUG
 					scsi_print_addr(acb->xs->sc_link);
 #endif
 					if ((sc->sc_flags&SPC_SYNCHNEGO) == 0) {
 						/* Target initiated negotiation */
 						if (ti->flags & T_SYNCMODE) {
 						    ti->flags &= ~T_SYNCMODE;
-#ifdef SPC_DEBUG
+#if SPC_DEBUG
 						    printf("renegotiated ");
 #endif
 						}
@@ -1221,7 +1249,7 @@ scsi_print_addr(acb->xs->sc_link); printf("MSG_MESSAGE_REJECT>>");
 						TMR = TM_SYNC;
 						ti->flags |= T_SYNCMODE;
 					}
-#ifdef SPC_DEBUG
+#if SPC_DEBUG
 					printf("max sync rate %d.%02dMb/s\n",
 						r, s);
 #endif
@@ -1607,11 +1635,27 @@ mha_dataio_dma(dw, cw, sc, p, n)
 
   vaddr = p;
   paddr = (char *)kvtop(vaddr);
-  DCFP((vm_offset_t)paddr);	/* XXX */
+#if MHA_DMA_SHORT_BUS_CYCLE == 1
+  if ((*(int *)&IODEVbase->io_sram[0xac]) & (1 << ((vm_offset_t)paddr >> 19)))
+    dw &= ~(1 << 3);
+#endif
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
+  if (mmutype == MMU_68040)
+#endif
+    DCFP((vm_offset_t)paddr);	/* XXX */
+#endif
   for (ts = (NBPG - ((long)vaddr & PGOFSET));
        ts < n && (char *)kvtop(vaddr + ts + 4) == paddr + ts + 4;
        ts += NBPG)
-    DCFP((vm_offset_t)paddr + ts);
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
+    if (mmutype == MMU_68040)
+#endif
+      DCFP((vm_offset_t)paddr + ts);
+#else
+    ;
+#endif
   if (ts > n)
     ts = n;
 #if 0
@@ -1648,7 +1692,7 @@ mha_dataout(sc, p, n)
 
   if (((long)p & 1) || (n & 1))
     return mha_dataout_pio(sc, p, n);
-  return mha_dataio_dma(0x000F, CMD_SEND_FROM_DMA, sc, p, n);
+  return mha_dataio_dma(MHA_DMA_DATAOUT, CMD_SEND_FROM_DMA, sc, p, n);
 }
 
 int
@@ -1665,7 +1709,7 @@ mha_datain(sc, p, n)
     return n;
   if (acb->cmd.opcode == 0x03 || ((long)p & 1) || (n & 1))
     return mha_datain_pio(sc, p, n);
-  return mha_dataio_dma(0x000E, CMD_RECEIVE_TO_DMA, sc, p, n);
+  return mha_dataio_dma(MHA_DMA_DATAIN, CMD_RECEIVE_TO_DMA, sc, p, n);
 }
 
 
@@ -1681,7 +1725,7 @@ int
 mhaintr(unit)
 	int unit;
 {
-	struct mha_softc *sc = mha_cd.cd_devs[unit]; /* XXX */
+	struct mha_softc *sc;
 	u_char ints;
 	struct acb *acb;
 	struct scsipi_link *sc_link;
@@ -1690,15 +1734,21 @@ mhaintr(unit)
 	u_short r;
 	int n;
 
+#if 1	/* XXX called during attach? */
+	if (tmpsc != NULL) {
+		SPC_MISC(("[%x %x]\n", mha_cd.cd_devs, sc));
+		sc = tmpsc;
+	} else {
+#endif
+
 	/* return if not configured */
-	if (sc == NULL)
-		return;
+	if (!mha_cd.cd_devs)	/* Check if at least one unit is attached. */
+		return;		/* XXX should check if THE unit exists. */
+
+	sc = mha_cd.cd_devs[unit];
 
 #if 1	/* XXX */
-	if (tmpsc != NULL && tmpsc != sc) {
-	    SPC_MISC(("[%x %x]\n", mha_cd.cd_devs, sc));
-	    sc = tmpsc;
-	  }
+	}
 #endif
 
 	/*
@@ -2019,7 +2069,7 @@ again:
 	splx(s);
 }
 
-#ifdef SPC_DEBUG
+#if SPC_DEBUG
 /*
  * The following functions are mostly used for debugging purposes, either
  * directly called from the driver or from the kernel debugger.
