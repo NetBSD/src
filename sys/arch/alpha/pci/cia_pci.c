@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.7.2.1 1997/06/01 04:13:08 cgd Exp $ */
+/* $NetBSD: cia_pci.c,v 1.7.2.2 1997/06/06 00:14:06 cgd Exp $ */
 
 /*
  * Copyright Notice:
@@ -97,7 +97,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.7.2.1 1997/06/01 04:13:08 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.7.2.2 1997/06/06 00:14:06 cgd Exp $");
 __KERNEL_COPYRIGHT(0,
     "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
@@ -198,12 +198,13 @@ cia_conf_read(cpv, tag, offset)
 	 * are caused by accesing the configuration space of devices
 	 * that don't exist (for example).
 	 *
-	 * We clear the CIA error register's PCI master abort bit
-	 * before touching PCI configuration space and check it
-	 * afterwards.  If it indicates a master abort, the device
-	 * wasn't there so we return 0xffffffff.
+	 * We clear the CIA error register's outstanding errors 
+	 * before touching PCI configuration space and check them
+	 * afterwards.  If it indicates an abort, the device wasn't
+	 * there so we return 0xffffffff.
 	 */
-	REGVAL(CIA_CSR_CIA_ERR) = 0x00000080;			/* XXX */
+	alpha_mb();
+	REGVAL(CIA_CSR_CIA_ERR) = 0xffffffff;		/* clear errs XXX */
 	alpha_mb();
 	alpha_pal_draina();	
 
@@ -234,12 +235,17 @@ cia_conf_read(cpv, tag, offset)
 	}
 
 	/*
-	 * Finish PCI master abort checking: see if one actually happened.
+	 * Finish PCI abort checking: see if one actually happened.
 	 */
 	alpha_pal_draina();	
-	if (REGVAL(CIA_CSR_CIA_ERR) & 0x00000080) {	/* XXX */
+	if (REGVAL(CIA_CSR_CIA_ERR) & 0x00000180) {	/* check aborts XXX */
 		ba = 1;
 		data = 0xffffffff;
+
+		alpha_mb();
+		REGVAL(CIA_CSR_CIA_ERR) = 0xffffffff;	/* clear errs XXX */
+		alpha_mb();
+		alpha_pal_draina();	
 	}
 
 #if 0

@@ -1,6 +1,7 @@
-/* $NetBSD: pal.s,v 1.5.2.1 1997/06/01 04:11:32 cgd Exp $ */
+/* $NetBSD: pal.s,v 1.5.2.2 1997/06/06 00:13:57 cgd Exp $ */
 
 /*
+ * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
@@ -35,7 +36,7 @@
  * Richard L. Sites.
  */
 
-__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.5.2.1 1997/06/01 04:11:32 cgd Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.5.2.2 1997/06/06 00:13:57 cgd Exp $");
 
 /*
  * alpha_rpcc: read process cycle counter (XXX INSTRUCTION, NOT PALcode OP)
@@ -105,6 +106,18 @@ LEAF(alpha_pal_rdmces,1)
 	call_pal PAL_OSF1_rdmces
 	RET
 	END(alpha_pal_rdmces)
+
+/*
+ * alpha_pal_rdps: Read PS processor register. [PRIVILEGED]
+ *
+ * Return:
+ *	v0	current PS value
+ */
+	.text
+LEAF(alpha_pal_rdps,1)
+	call_pal PAL_OSF1_rdps
+	RET
+	END(alpha_pal_rdps)
 
 /*
  * alpha_pal_rdusp: Read user stack pointer. [PRIVILEGED]

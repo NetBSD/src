@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.31.2.6 1997/06/01 04:11:52 cgd Exp $
+# $NetBSD: GENERIC,v 1.31.2.7 1997/06/06 00:14:01 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -27,7 +27,6 @@ options		KTRACE			# System call tracing support
 
 # Diagnostic/debugging support options
 options		DIAGNOSTIC		# Cheap kernel consistency checks
-options		DEBUG			# Expensive debugging checks/support
 
 # File systems
 file-system 	FFS		# Fast file system
@@ -126,6 +125,7 @@ de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
+fxp*	at	pci? dev ? function ?		# Intel EEPRO 10/100B (unt.)
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
