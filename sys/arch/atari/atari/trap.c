@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.1.1.1 1995/03/26 07:12:18 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.2 1995/03/26 07:20:54 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -777,7 +777,7 @@ syscall(code, frame)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_narg, i, args);
+		ktrsyscall(p->p_tracep, code, i, args);
 #endif
 #ifdef SYSCALL_DEBUG
 	if (p->p_emul == EMUL_NETBSD) /* XXX */
