@@ -1,4 +1,4 @@
-/* $NetBSD: avalon_a12.c,v 1.4 1998/09/24 05:32:52 ross Exp $ */
+/* $NetBSD: avalon_a12.c,v 1.5 2000/05/22 20:13:32 thorpej Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.4 1998/09/24 05:32:52 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: avalon_a12.c,v 1.5 2000/05/22 20:13:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,8 @@ avalon_a12_device_register(dev, aux)
 
 	if (!initted) {
 		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
-		netboot = (strcmp(b->protocol, "BOOTP") == 0);
+		netboot = (strcmp(b->protocol, "BOOTP") == 0) ||
+		    (strcmp(b->protocol, "MOP") == 0);
 #if 0
 		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
 #endif
