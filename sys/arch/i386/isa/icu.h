@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.h	5.6 (Berkeley) 5/9/91
- *	$Id: icu.h,v 1.5 1993/07/11 14:03:51 mycroft Exp $
+ *	$Id: icu.h,v 1.6 1993/07/19 08:27:06 cgd Exp $
  */
 
 /*
@@ -44,9 +44,6 @@
 
 #ifndef	__ICU__
 #define	__ICU__
-
-#define AUTO_EOI_1
-/* #define AUTO_EOI_2	* seems to work, but leave it to the individual */
 
 #ifndef	LOCORE
 
