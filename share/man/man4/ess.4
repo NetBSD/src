@@ -1,4 +1,4 @@
-.\" $NetBSD: ess.4,v 1.2 1998/08/07 01:00:36 matt Exp $
+.\" $NetBSD: ess.4,v 1.3 1998/08/26 12:30:51 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -41,7 +41,8 @@
 .Cd "device ess0 at isa? port 0x220 irq 5 drq 0 drq2 1"
 .Cd "device ess* at ofisa?"
 .Cd "device ess* at isapnp?"
-.Cd "audio* at ess?"
+.Cd "audio*      at ess?"
+.Cd "opl*        at ess?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -58,4 +59,10 @@ channel also to 5.
 .Xr audio 4 ,
 .Xr isa 4 ,
 .Xr isapnp 4 ,
-.Xr ofisa 4
+.Xr ofisa 4 ,
+.Xr opl 4
+.Sh HISTORY
+The
+.Nm
+device driver appeared in
+.Nx 1.4 .
