@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.2 2001/09/11 06:30:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -99,13 +99,17 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 		return ENOMEM;
 	}
 	memset(isc, 0, sizeof *isc);
+
 	sc->as_methods = &agp_intel_methods;
+	sc->as_chipc = isc;
+
 	pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP, &sc->as_capoff,
 	    NULL);
 
 	if (agp_map_aperture(pa, sc) != 0) {
 		printf(": can't map aperture\n");
 		free(isc, M_AGP);
+		sc->as_chipc = NULL;
 		return ENXIO;
 	}
 
