@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.23 2001/10/07 10:12:05 jdolecek Exp $
+.\"	$NetBSD: compat_linux.8,v 1.24 2001/12/26 01:14:42 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -420,7 +420,7 @@ the files in the contents subdirectory, and grep through them for the file
 you need. Here is an example of a list of files that you might need, and
 in which contents-file you will find it by grepping through them:
 .Pp
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 Needed                  Package
 
 ld.so                   ldso
@@ -442,7 +442,7 @@ the package is,
 in our case it will tell us in which subdirectory we need to look.
 For our example, we would find the following locations:
 .Pp
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 Package                 Location
 
 ldso                    diska2
