@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.1 2002/07/15 17:13:32 ichiro Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.2 2002/07/21 14:26:05 ichiro Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
  * Copyright (c) 2002
@@ -344,7 +344,7 @@ initarm(void *arg)
 #endif
 
 #ifdef PMAP_DEBUG
-	pmap_debug(1);
+	pmap_debug(-1);
 #endif
 
 #ifdef DEBUG_BEFOREMMU
