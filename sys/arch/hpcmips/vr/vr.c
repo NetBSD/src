@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.9 1999/12/09 02:15:27 sato Exp $	*/
+/*	$NetBSD: vr.c,v 1.10 1999/12/16 13:09:02 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -145,10 +145,12 @@ vr_init()
 	platform.reboot = vr_reboot;
 
 #if NVRBCU > 0
-	sprintf(cpu_model, "NEC %s rev%d.%d", 
+	sprintf(cpu_model, "NEC %s rev%d.%d %d.%03dMHz", 
 		vrbcu_vrip_getcpuname(),
 		vrbcu_vrip_getcpumajor(),
-		vrbcu_vrip_getcpuminor());
+		vrbcu_vrip_getcpuminor(),
+		vrbcu_vrip_getcpuclock() / 1000000,
+		(vrbcu_vrip_getcpuclock() % 1000000) / 1000);
 #else
 	sprintf(cpu_model, "NEC VR41xx");
 #endif
