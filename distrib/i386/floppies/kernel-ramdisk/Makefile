@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2002/04/12 05:33:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 2002/04/12 13:39:46 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -14,11 +14,11 @@ ${V}DIR!=	cd ${.CURDIR}/../${F} && ${PRINTOBJDIR}
 ${V}=		${${V}DIR}/${F}.fs
 .endfor
 
-TARGETS=	INSTALL		${RAMDISK_B}	\
-		INSTALL_LAPTOP	${RAMDISK_B}	\
-		INSTALL_SMALL	${RAMDISK_S}	\
-		INSTALL_TINY	${RAMDISK_T}	\
-		INSTALL_PS2	${RAMDISK_S}
+MDSETTARGETS=	INSTALL		${RAMDISK_B}	-	\
+		INSTALL_LAPTOP	${RAMDISK_B}	-	\
+		INSTALL_SMALL	${RAMDISK_S}	-	\
+		INSTALL_TINY	${RAMDISK_T}	-	\
+		INSTALL_PS2	${RAMDISK_S}	-
 
 MDSETDIR=	binary/kernel
 

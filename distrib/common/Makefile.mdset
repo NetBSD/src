@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.3 2002/04/12 05:50:19 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.4 2002/04/12 13:39:45 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -6,36 +6,47 @@
 #
 # Required variables:
 #	_SRC_TOP_	Top level of src tree (set by <bsd.own.mk>)
-#	TARGETS		List of images to ${MDSETIMAGE} into kernels:
-#				KERNEL	IMAGE
+#	MDSETTARGETS	List of images to ${MDSETIMAGE} into kernels:
+#				KERNEL	IMAGE	FILENAME
+#			The kernel ${KERNOBJDIR}/${KERNEL}/netbsd is
+#			${MDSETIMAGE} with ${IMAGE}, ${STRIP}ped,
+#			and gzipped into ${FILENAME}.gz.
+#			If FILENAME is "-", use "netbsd.${KERNEL}"
 #
 # Optional variables:
 #	MDSETDIR		where to install kernels with "release" target
-#	netbsd.${KERNEL}.post	run after ${STRIP}; kernel is netbsd.tmp
+#	${FILENAME}.post	run after ${STRIP}; kernel is netbsd.tmp
 #
 # Variables modified by this:
-#	KERNELS		List of kernel .gz files to build
-#	KERNELSYMS	List of kernel .symbol files to build
+#	KERNELS			List of kernel .gz files to build
+#	KERNELSYMS		List of kernel .symbol files to build
+#	_KERNEL.${KERNEL}	Target filename for ${KERNEL}
 #
 
 .include <bsd.kernobj.mk>
 
-.for _KERNEL _IMAGE in ${TARGETS}			# {
-
-KERNELS+=	netbsd.${_KERNEL}.gz
-KERNELSYMS+=	netbsd.${_KERNEL}.symbols.gz
-
-netbsd.${_KERNEL}.gz: .NOTMAIN ${KERNOBJDIR}/${_KERNEL}/netbsd ${_IMAGE}
-	@echo "Populating ${_KERNEL} with ${_IMAGE}"
-	rm -f netbsd.tmp netbsd.tmp.gz
-	cp ${KERNOBJDIR}/${_KERNEL}/netbsd netbsd.tmp
-	${MDSETIMAGE} -v netbsd.tmp ${_IMAGE}
-	${NM} netbsd.tmp | gzip -9 > netbsd.${_KERNEL}.symbols.gz
-	${STRIP} netbsd.tmp
-.if defined(netbsd.${_KERNEL}.post)
-	${netbsd.${_KERNEL}.post}
+.for _K _I _F in ${MDSETTARGETS}	# {
+_FREAL:=${_F}			# work around obscure issue in make(1)
+.if ${_FREAL} == "-"
+_KERNEL.${_K}:=	netbsd.${_K}
+.else
+_KERNEL.${_K}:=	${_F}
 .endif
-	gzip -9 netbsd.tmp
+
+KERNELS+=	${_KERNEL.${_K}}.gz
+KERNELSYMS+=	${_KERNEL.${_K}}.symbols.gz
+
+${_KERNEL.${_K}}.gz: .NOTMAIN ${KERNOBJDIR}/${_K}/netbsd ${_I}
+	@echo "Populating ${_K} with ${_I} into ${.TARGET}"
+	rm -f netbsd.tmp ${_KERNEL.${_K}}.symbols.gz
+	cp ${KERNOBJDIR}/${_K}/netbsd netbsd.tmp
+	${MDSETIMAGE} -v netbsd.tmp ${_I}
+	${NM} netbsd.tmp | gzip -9 > ${_KERNEL.${_K}}.symbols.gz
+	${STRIP} netbsd.tmp
+.if defined(${_KERNEL.${_K}}.post)
+	${${_KERNEL.${_K}}.post}
+.endif
+	gzip -9f netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
 .endfor							# }
