@@ -1,4 +1,4 @@
-/*	$NetBSD: xutil.c,v 1.2 2000/11/20 03:19:36 wiz Exp $	*/
+/*	$NetBSD: xutil.c,v 1.3 2000/11/21 01:35:37 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Erez Zadok
@@ -84,6 +84,9 @@ static int orig_mem_bytes;
 /* forward definitions */
 static void real_plog(int lvl, const char *fmt, va_list vargs)
      __attribute__((__format__(__printf__, 2, 0)));
+/* for GCC format string auditing */
+static const char *expand_error(const char *f, char *e, int maxlen)
+     __attribute__((__format_arg__(1)));
 
 #ifdef DEBUG
 /*
@@ -288,7 +291,7 @@ checkup_mem(void)
  * with the current error code taken from errno.  Make sure
  * 'e' never gets longer than maxlen characters.
  */
-static void
+static const char *
 expand_error(const char *f, char *e, int maxlen)
 {
 #ifndef HAVE_STRERROR
@@ -302,7 +305,11 @@ expand_error(const char *f, char *e, int maxlen)
   for (p = f, q = e; (*q = *p) && len < maxlen; len++, q++, p++) {
     if (p[0] == '%' && p[1] == 'm') {
       const char *errstr;
+#ifdef HAVE_STRERROR
+      if (error < 0)
+#else
       if (error < 0 || error >= sys_nerr)
+#endif
 	errstr = NULL;
       else
 #ifdef HAVE_STRERROR
@@ -320,6 +327,7 @@ expand_error(const char *f, char *e, int maxlen)
     }
   }
   e[maxlen-1] = '\0';		/* null terminate, to be sure */
+  return e;
 }
 
 
@@ -452,19 +460,22 @@ real_plog(int lvl, const char *fmt, va_list vargs)
   checkup_mem();
 #endif /* DEBUG_MEM */
 
-  expand_error(fmt, efmt, 1024);
-
 #ifdef HAVE_VSNPRINTF
-  vsnprintf(ptr, 1024, efmt, vargs);
-#else /* not HAVE_VSNPRINTF */
   /*
    * XXX: ptr is 1024 bytes long, but we may write to ptr[strlen(ptr) + 2]
    * (to add an '\n', see code below) so we have to limit the string copy
    * to 1023 (including the '\0').
    */
-  fmt = efmt;
-  vsnprintf(ptr, 1023, fmt, vargs);
+  vsnprintf(ptr, 1023, expand_error(fmt, efmt, 1024), vargs);
   msg[1022] = '\0';		/* null terminate, to be sure */
+#else /* not HAVE_VSNPRINTF */
+  /*
+   * XXX: ptr is 1024 bytes long.  It is possible to write into it
+   * more than 1024 bytes, if efmt is already large, and vargs expand
+   * as well.  This is not as safe as using vsnprintf().
+   */
+  vsprintf(ptr, expand_error(fmt, efmt, 1024), vargs);
+  msg[1023] = '\0';		/* null terminate, to be sure */
 #endif /* not HAVE_VSNPRINTF */
 
   ptr += strlen(ptr);
