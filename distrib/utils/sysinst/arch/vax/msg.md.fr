@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.2 1999/06/20 06:08:26 cgd Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.3 1999/06/20 06:42:08 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,7 +37,7 @@
  *
  */
 
-/* vax machine dependend messages, french */
+/* vax machine dependent messages, french */
 
 
 message fullpart

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.3 1999/06/20 06:08:18 cgd Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.4 1999/06/20 06:42:06 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,12 +37,11 @@
  *
  */
 
-/* arm32 machine dependend messages, english */
+/* arm32 machine dependent messages, english */
 
 
 message fullpart
-{We are now going to install NetBSD on the disk %s.  NetBSD will
-You may
+{We are now going to install NetBSD on the disk %s.  You may
 choose to install NetBSD on the entire disk or part of the disk.
 Which would you like to do?
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.46 1999/06/20 06:08:15 cgd Exp $	*/
+/*	$NetBSD: net.c,v 1.47 1999/06/20 06:42:05 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -341,7 +341,7 @@ config_network()
 	 * ifconfig does not allow media specifiers on IFM_MANUAL interfaces.
 	 * Our UI gies no way to set an option back to null-string if it
 	 * gets accidentally set.
-	 * good way to re-set the media media to null-string.
+	 * good way to reset the media to null-string.
 	 * Check for plausible alternatives.
 	 */
 	if (strcmp(net_media, "<default>") == 0 ||
