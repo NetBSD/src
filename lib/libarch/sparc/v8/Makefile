@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2002/11/26 14:30:54 pk Exp $
+#	$NetBSD: Makefile,v 1.2 2002/11/27 12:06:10 pk Exp $
 
+NOLINKLIB=	# defined
+NOPROFILE=	# defined
 NOLINT=		# defined
 USE_SHLIBDIR=	yes
 LIB=		sparc_v8
