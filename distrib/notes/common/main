@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.33 2000/07/07 21:25:51 he Exp $
+.\" $NetBSD: main,v 1.6.2.34 2000/08/26 18:32:44 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -206,6 +206,10 @@ A problem with /etc/ftpchroot has been fixed.  Fixes SA#2000-006.
 .It
 A minor problem related to locking of semaphore resources has
 been fixed.  Fixes SA#2000-004.
+.It
+The sparc c++rt0.o code is now compiled with -fPIC.  This means
+that libraries with global constructors (which must link in 
+c++rt0.o on sparc/a.out) must also be compiled -fPIC.
 .El
 .Pp
 In addition, many bugs have been fixed -- more than 40 problems
