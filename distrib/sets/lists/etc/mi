@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.133 2004/01/04 23:55:11 lukem Exp $
+# $NetBSD: mi,v 1.134 2004/01/11 04:21:19 tls Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV				etc-sys-etc
@@ -225,6 +225,7 @@
 ./etc/spwd.db				etc-sys-etc
 ./etc/ssh/ssh_config			etc-secsh-etc	crypto
 ./etc/ssh/sshd_config			etc-secsh-etc	crypto
+./etc/ssh/ssh_known_hosts		etc-secsh-etc	crypto
 ./etc/sysctl.conf			etc-sys-etc
 ./etc/syslog.conf			etc-sys-etc
 ./etc/ttys				etc-sys-etc
