@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.38 1996/08/10 09:25:11 mycroft Exp $	*/
+/*	$NetBSD: ncr.c,v 1.39 1996/08/27 01:00:00 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -262,6 +262,7 @@ extern PRINT_ADDR();
 **----------------------------------------------------------
 */
 
+#undef assert
 #define	assert(expression) { \
 	if (!(expression)) { \
 		(void)printf(\
@@ -1331,7 +1332,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.38 1996/08/10 09:25:11 mycroft Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.39 1996/08/27 01:00:00 cgd Exp $\n";
 #endif
 
 u_long	ncr_version = NCR_VERSION	* 11
