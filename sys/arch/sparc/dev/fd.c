@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.19 1996/01/15 00:14:42 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.20 1996/01/16 19:35:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -183,6 +183,8 @@ struct fd_softc {
 #define	FD_MOTOR	0x02		/* motor should be on */
 #define	FD_MOTOR_WAIT	0x04		/* motor coming up */
 	int sc_cylin;		/* where we think the head is */
+
+	void	*sc_sdhook;	/* shutdownhook cookie */
 
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
@@ -541,6 +543,9 @@ fdattach(parent, self, aux)
 	 * with RB_ASKNAME and get selected as the boot device.
 	 */
 	mountroot_hook_establish(fd_mountroot_hook, &fd->sc_dv);
+
+	/* Make sure the drive motor gets turned off at shutdown time. */
+	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
 
 	/* XXX Need to do some more fiddling with sc_dk. */
 	dk_establish(&fd->sc_dk, &fd->sc_dv);
