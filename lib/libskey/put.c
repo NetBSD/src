@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.9 2002/06/23 12:20:10 itojun Exp $	*/
+/*	$NetBSD: put.c,v 1.10 2003/03/09 00:46:06 lukem Exp $	*/
 
 /* S/KEY v1.1b (put.c)
  *
@@ -10,6 +10,9 @@
  *
  * Dictionary lookup and extraction.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: put.c,v 1.10 2003/03/09 00:46:06 lukem Exp $");
 
 #include <stdio.h>
 #include <string.h>
