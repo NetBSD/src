@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.c,v 1.5 2000/04/05 19:38:34 is Exp $	*/
+/*	$NetBSD: cacheops.c,v 1.6 2000/04/15 20:31:27 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
+#include <machine/cpu.h>
 #include <m68k/cpu.h>
 #include <m68k/cacheops.h>
-#include <machine/cpu.h>
 
 #if defined(_MULTI_CPU)
 
