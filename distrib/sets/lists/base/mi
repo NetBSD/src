@@ -230,6 +230,7 @@
 ./usr/bin/md5
 ./usr/bin/merge
 ./usr/bin/mesg
+./usr/bin/midiplay
 ./usr/bin/mixerctl
 ./usr/bin/mkdep
 ./usr/bin/mkfifo
@@ -282,6 +283,7 @@
 ./usr/bin/shar
 ./usr/bin/shlock
 ./usr/bin/showmount
+./usr/bin/shuffle
 ./usr/bin/size
 ./usr/bin/skey
 ./usr/bin/skeyaudit
@@ -366,12 +368,12 @@
 ./usr/include
 ./usr/include/arpa
 ./usr/include/bfd
+./usr/include/compat
 ./usr/include/dev
 ./usr/include/dev/microcode
 ./usr/include/dev/ofw
 ./usr/include/dev/usb
 ./usr/include/g++
-./usr/include/g++/gen
 ./usr/include/kerberosIV
 ./usr/include/machine
 ./usr/include/net
@@ -573,11 +575,13 @@
 ./usr/sbin/sliplogin
 ./usr/sbin/slstats
 ./usr/sbin/spray
+./usr/sbin/statmsg
 ./usr/sbin/stdethers
 ./usr/sbin/stdhosts
 ./usr/sbin/sup
 ./usr/sbin/supfilesrv
 ./usr/sbin/supscan
+./usr/sbin/sysconfd
 ./usr/sbin/sysctl
 ./usr/sbin/syslogd
 ./usr/sbin/tcpdchk
@@ -726,6 +730,7 @@
 ./usr/share/keymaps
 ./usr/share/keymaps/amiga
 ./usr/share/keymaps/atari
+./usr/share/keymaps/x68k
 ./usr/share/lkm
 ./usr/share/lkm/misc
 ./usr/share/lkm/misc/module
@@ -1005,11 +1010,13 @@
 ./usr/share/zoneinfo/America/Bogota
 ./usr/share/zoneinfo/America/Boise
 ./usr/share/zoneinfo/America/Buenos_Aires
+./usr/share/zoneinfo/America/Cancun
 ./usr/share/zoneinfo/America/Caracas
 ./usr/share/zoneinfo/America/Catamarca
 ./usr/share/zoneinfo/America/Cayenne
 ./usr/share/zoneinfo/America/Cayman
 ./usr/share/zoneinfo/America/Chicago
+./usr/share/zoneinfo/America/Chihuahua
 ./usr/share/zoneinfo/America/Cordoba
 ./usr/share/zoneinfo/America/Costa_Rica
 ./usr/share/zoneinfo/America/Cuiaba
@@ -1104,6 +1111,7 @@
 ./usr/share/zoneinfo/America/Yellowknife
 ./usr/share/zoneinfo/Antarctica
 ./usr/share/zoneinfo/Antarctica/Casey
+./usr/share/zoneinfo/Antarctica/Davis
 ./usr/share/zoneinfo/Antarctica/DumontDUrville
 ./usr/share/zoneinfo/Antarctica/Mawson
 ./usr/share/zoneinfo/Antarctica/McMurdo
@@ -1113,7 +1121,7 @@
 ./usr/share/zoneinfo/Arctic/Longyearbyen
 ./usr/share/zoneinfo/Asia
 ./usr/share/zoneinfo/Asia/Aden
-./usr/share/zoneinfo/Asia/Alma-Ata
+./usr/share/zoneinfo/Asia/Almaty
 ./usr/share/zoneinfo/Asia/Amman
 ./usr/share/zoneinfo/Asia/Anadyr
 ./usr/share/zoneinfo/Asia/Aqtau
@@ -1167,6 +1175,7 @@
 ./usr/share/zoneinfo/Asia/Riyadh88
 ./usr/share/zoneinfo/Asia/Riyadh89
 ./usr/share/zoneinfo/Asia/Saigon
+./usr/share/zoneinfo/Asia/Samarkand
 ./usr/share/zoneinfo/Asia/Seoul
 ./usr/share/zoneinfo/Asia/Shanghai
 ./usr/share/zoneinfo/Asia/Singapore
