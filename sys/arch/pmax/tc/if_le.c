@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.5 1995/12/22 12:52:09 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.6 1995/12/28 06:41:07 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -77,6 +77,14 @@ extern u_long asic_base;
 #include <pmax/tc/tc.h>
 #include <pmax/pmax/asic.h>
 #include <pmax/tc/if_levar.h>
+
+/*
+ * Hacky things that should be in header files
+ */
+extern struct cfdriver ioasiccd;
+extern struct cfdriver tccd;
+extern struct cfdriver mainbuscd;	/* XXX really 3100/5100 b'board */
+
 #else /* Alpha */
 
 typedef  u_int64 word_t;
@@ -193,8 +201,8 @@ leattach(parent, self, aux)
 	u_char *cp;	/* pointer to MAC address */
 	int i;
 
-	if (sc->sc_dev.dv_unit == 0 && SYSTEM_HAS_ASIC()) {
-		/* It's on the system ASIC */
+	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
+		/* It's on the system IOCTL ASIC */
 		volatile u_int *ldp;
 		word_t dma_mask;
 
@@ -228,7 +236,7 @@ leattach(parent, self, aux)
 		wbflush();
 	}
 #ifdef pmax
-	 else if (sc->sc_dev.dv_unit == 0 && (pmax_boardtype == DS_PMAX)) {
+	 else if (parent->dv_cfdata->cf_driver == &mainbuscd) {
 		/* It's on the baseboard, attached directly to mainbus. */
 
 		sc->sc_r1 = (struct lereg1 *)BUS_CVTADDR(ca);
@@ -242,7 +250,8 @@ leattach(parent, self, aux)
 		sc->sc_zerobuf = zerobuf_gap2;
 	}
 #endif
-	else {
+	else
+	if (parent->dv_cfdata->cf_driver == &tccd) {
 		/* It's on the turbochannel proper, or on KN02 baseboard. */
 		sc->sc_r1 = (struct lereg1 *)
 		    (BUS_CVTADDR(ca) + LE_OFFSET_LANCE);
