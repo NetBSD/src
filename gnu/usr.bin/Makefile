@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.55 1998/10/19 04:18:15 ross Exp $
+#	$NetBSD: Makefile,v 1.56 1998/10/19 06:53:24 ross Exp $
 
 # XXX Temporary for USE_EGCS
 .include <bsd.own.mk>
@@ -15,7 +15,7 @@ SUBDIR+=	gas
 
 # XXX mips vs mips{el,eb}.  Should be all ELF hosts anyway.
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "mips")
-SUBDIR+=	ld.new
+SUBDIR+=	ld.new ld/rtld ld/ldd
 .else
 SUBDIR+=	ld
 .endif
