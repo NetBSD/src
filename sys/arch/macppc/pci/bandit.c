@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.14 2000/02/04 03:40:42 tsubai Exp $	*/
+/*	$NetBSD: bandit.c,v 1.15 2000/02/04 07:48:11 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -61,7 +61,6 @@ bandit_match(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	char compat[32];
 
 	if (strcmp(ca->ca_name, "bandit") == 0 ||
 	    strcmp(ca->ca_name, "chaos") == 0)
