@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.6 2002/09/27 20:41:58 thorpej Exp $ */
+/* $NetBSD: tcds.c,v 1.7 2002/09/29 23:23:59 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.6 2002/09/27 20:41:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.7 2002/09/29 23:23:59 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -228,7 +228,7 @@ tcdsattach(parent, self, aux)
 	    TCDS_CIR_GPI_2) != 0;
 
 	/*
-	 * Set up the per-slot defintions for later use.
+	 * Set up the per-slot definitions for later use.
 	 */
 
 	/* fill in common information first */
