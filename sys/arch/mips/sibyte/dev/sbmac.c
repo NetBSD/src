@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.6 2002/10/02 15:52:25 thorpej Exp $ */
+/* $NetBSD: sbmac.c,v 1.7 2002/11/08 19:40:05 cgd Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -387,7 +387,7 @@ sbdma_initctx(sbmacdma_t *d, struct sbmac_softc *s, int chan, int txrx,
 	d->sbdma_config0 = PKSEG1(s->sbm_base +
 	    R_MAC_DMA_REGISTER(txrx, chan, R_MAC_DMA_CONFIG0));
 	d->sbdma_config1 = PKSEG1(s->sbm_base +
-	    R_MAC_DMA_REGISTER(txrx, chan, R_MAC_DMA_CONFIG0));
+	    R_MAC_DMA_REGISTER(txrx, chan, R_MAC_DMA_CONFIG1));
 	d->sbdma_dscrbase = PKSEG1(s->sbm_base +
 	    R_MAC_DMA_REGISTER(txrx, chan, R_MAC_DMA_DSCR_BASE));
 	d->sbdma_dscrcnt = PKSEG1(s->sbm_base +
