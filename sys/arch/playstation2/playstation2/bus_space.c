@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 2001/10/16 15:38:53 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2 2002/09/27 15:36:35 provos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ bus_space_create(bus_space_tag_t t, const char *name,
 		    M_DEVBUF, 0, 0, EX_NOWAIT);
 		if (pbs->pbs_extent == 0) {
 			panic("%s:: unable to create bus_space for "
-			    "0x%08lx-%#lx\n", __FUNCTION__, addr, size);
+			    "0x%08lx-%#lx", __FUNCTION__, addr, size);
 		}
 	}
 

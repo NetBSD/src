@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.34 2000/07/18 06:10:06 thorpej Exp $ */
+/* $NetBSD: ioasic.c,v 1.35 2002/09/27 15:35:39 provos Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.34 2000/07/18 06:10:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.35 2002/09/27 15:35:39 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -291,7 +291,7 @@ ioasic_intrnull(val)
 	void *val;
 {
 
-	panic("ioasic_intrnull: uncaught IOASIC intr for cookie %ld\n",
+	panic("ioasic_intrnull: uncaught IOASIC intr for cookie %ld",
 	    (u_long)val);
 }
 

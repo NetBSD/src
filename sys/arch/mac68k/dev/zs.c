@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.36 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: zs.c,v 1.37 2002/09/27 15:36:16 provos Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -270,7 +270,7 @@ zsc_attach(parent, self, aux)
 
 	/* Make sure everything's inited ok. */
 	if (zsaddr[zsc_unit] == NULL)
-		panic("zs_attach: zs%d not mapped\n", zsc_unit);
+		panic("zs_attach: zs%d not mapped", zsc_unit);
 
 	chip = 0; /* We'll deal with chip types post 1.2 */
 	printf(" chip type %d \n",chip);

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.6 2002/09/27 03:17:45 thorpej Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.7 2002/09/27 15:35:49 provos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ sacc_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	} else if (sc->sc_intrtype[irq] != type)
 		/* XXX we should be able to share raising and
 		 * falling edge intrs */
-		panic("sacc_intr_establish: type must be unique\n");
+		panic("sacc_intr_establish: type must be unique");
 
 	/* install intr handler */
 #ifdef hpcarm

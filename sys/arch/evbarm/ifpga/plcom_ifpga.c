@@ -1,4 +1,4 @@
-/*      $NetBSD: plcom_ifpga.c,v 1.3 2002/09/27 02:17:26 thorpej Exp $ */
+/*      $NetBSD: plcom_ifpga.c,v 1.4 2002/09/27 15:35:59 provos Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -95,7 +95,7 @@ plcom_ifpga_attach(struct device *parent, struct device *self, void *aux)
 	isc->sc_ih = intr_claim(ifa->ifa_irq, IPL_SERIAL, irqname, plcomintr,
 	    sc);
 	if (isc->sc_ih == NULL)
-		panic("%s: cannot install interrupt handler\n",
+		panic("%s: cannot install interrupt handler",
 		    sc->sc_dev.dv_xname);
 }
 

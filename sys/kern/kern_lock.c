@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.63 2002/09/14 21:42:42 chs Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.64 2002/09/27 15:37:44 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.63 2002/09/14 21:42:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.64 2002/09/27 15:37:44 provos Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -495,7 +495,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 	 * on spin locks.
 	 */
 	if ((flags ^ lkp->lk_flags) & LK_SPIN)
-		panic("lockmgr: sleep/spin mismatch\n");
+		panic("lockmgr: sleep/spin mismatch");
 #endif /* } */
 
 	if (extflags & LK_SPIN)
@@ -533,7 +533,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			panic("lockmgr: using decommissioned lock");
 		if ((flags & LK_TYPE_MASK) != LK_RELEASE ||
 		    WEHOLDIT(lkp, pid, cpu_id) == 0)
-			panic("lockmgr: non-release on draining lock: %d\n",
+			panic("lockmgr: non-release on draining lock: %d",
 			    flags & LK_TYPE_MASK);
 #endif /* DIAGNOSTIC */ /* } */
 		lkp->lk_flags &= ~LK_DRAINING;
@@ -899,7 +899,7 @@ spinlock_acquire_count(__volatile struct lock *lkp, int count)
 
 #ifdef DIAGNOSTIC
 	if (WEHOLDIT(lkp, LK_NOPROC, cpu_id))
-		panic("spinlock_acquire_count: processor %lu already holds lock\n", (long)cpu_id);
+		panic("spinlock_acquire_count: processor %lu already holds lock", (long)cpu_id);
 #endif
 	/*
 	 * Try to acquire the want_exclusive flag.

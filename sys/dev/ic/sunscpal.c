@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.12 2002/04/05 18:27:54 bouyer Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.13 2002/09/27 15:37:19 provos Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.12 2002/04/05 18:27:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.13 2002/09/27 15:37:19 provos Exp $");
 
 #include "opt_ddb.h"
 
@@ -2177,7 +2177,7 @@ sunscpal_dma_alloc(sc)
 
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < sc->sc_min_dma_len)
-		panic("sunscpal_dma_alloc: xlen=0x%x\n", xlen);
+		panic("sunscpal_dma_alloc: xlen=0x%x", xlen);
 
 	/*
 	 * Never attempt single transfers of more than 63k, because

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.47 2002/09/23 05:51:17 simonb Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.48 2002/09/27 15:36:11 provos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.47 2002/09/23 05:51:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.48 2002/09/27 15:36:11 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -531,7 +531,7 @@ pci_intr_string(pc, ih)
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("pci_intr_string: bogus handle 0x%x\n", ih);
+		panic("pci_intr_string: bogus handle 0x%x", ih);
 
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
@@ -557,7 +557,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 {
 
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("pci_intr_establish: bogus handle 0x%x\n", ih);
+		panic("pci_intr_establish: bogus handle 0x%x", ih);
 
 	return isa_intr_establish(NULL, ih, IST_LEVEL, level, func, arg);
 }

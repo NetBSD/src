@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.8 2002/03/26 23:14:49 fredette Exp $	*/
+/*	$NetBSD: si.c,v 1.9 2002/09/27 15:37:39 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.8 2002/03/26 23:14:49 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.9 2002/09/27 15:37:39 provos Exp $");
 
 #include "opt_ddb.h"
 
@@ -320,7 +320,7 @@ si_attach(parent, self, aux)
 	i = SCI_OPENINGS * sizeof(struct si_dma_handle);
 	sc->sc_dma = (struct si_dma_handle *)malloc(i, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_dma == NULL)
-		panic("si: dma handle malloc failed\n");
+		panic("si: dma handle malloc failed");
 
 	for (i = 0; i < SCI_OPENINGS; i++) {
 		sc->sc_dma[i].dh_flags = 0;
@@ -494,7 +494,7 @@ si_dma_alloc(ncr_sc)
 
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
-		panic("si_dma_alloc: xlen=0x%x\n", xlen);
+		panic("si_dma_alloc: xlen=0x%x", xlen);
 
 	/* Find free DMA handle.  Guaranteed to find one since we have
 	   as many DMA handles as the driver has processes. */

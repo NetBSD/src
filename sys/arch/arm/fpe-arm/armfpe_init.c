@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_init.c,v 1.4 2002/03/10 15:29:54 bjh21 Exp $	*/
+/*	$NetBSD: armfpe_init.c,v 1.5 2002/09/27 15:35:45 provos Exp $	*/
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.4 2002/03/10 15:29:54 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.5 2002/09/27 15:35:45 provos Exp $");
 
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -209,7 +209,7 @@ arm_fpe_postproc(fpframe, frame)
 		pc = ReadWord(fpframe + 15*4);
 #ifdef DIAGNOSTIC
 		if (pc < 0x1000 || pc > 0xefc00000)
-			panic("armfpe_postproc: pc=%08x\n", pc);
+			panic("armfpe_postproc: pc=%08x", pc);
 #endif
 		addupc_task(p, pc, (int)(p->p_sticks - p->p_sticks) * psratio);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_axppci_33.c,v 1.28 2002/05/15 16:57:42 thorpej Exp $ */
+/* $NetBSD: pci_axppci_33.c,v 1.29 2002/09/27 15:35:38 provos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.28 2002/05/15 16:57:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.29 2002/09/27 15:35:38 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,7 +146,7 @@ dec_axppci_33_intr_map(pa, ihp)
 			break;
 #ifdef DIAGNOSTIC
 		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_axppci_33_intr_map: bogus PCI pin %d\n",
+			panic("dec_axppci_33_intr_map: bogus PCI pin %d",
 			    buspin);
 #endif
 		};
@@ -166,7 +166,7 @@ dec_axppci_33_intr_map(pa, ihp)
 			break;
 #ifdef DIAGNOSTIC
 		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_axppci_33_intr_map: bogus PCI pin %d\n",
+			panic("dec_axppci_33_intr_map: bogus PCI pin %d",
 			    buspin);
 #endif
 		};
@@ -186,7 +186,7 @@ dec_axppci_33_intr_map(pa, ihp)
 			break;
 #ifdef DIAGNOSTIC
 		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_axppci_33_intr_map bogus: PCI pin %d\n",
+			panic("dec_axppci_33_intr_map bogus: PCI pin %d",
 			    buspin);
 #endif
 		};

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39io.c,v 1.12 2002/03/06 15:02:04 uch Exp $ */
+/*	$NetBSD: tx39io.c,v 1.13 2002/09/27 15:36:06 provos Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -227,7 +227,7 @@ mfio_out(hpcio_chip_t arg, int port, int onoff)
 	pos = 1 << port;
 #ifdef DIAGNOSTIC
 	if (!(sc->sc_stat_mfio.dir & pos)) {
-		panic("%s: MFIO%d is not output port.\n",
+		panic("%s: MFIO%d is not output port.",
 		      sc->sc_dev.dv_xname, port);
 	}
 #endif
@@ -310,7 +310,7 @@ tx391x_io_out(hpcio_chip_t arg, int port, int onoff)
 	pos = 1 << port;
 #ifdef DIAGNOSTIC
 	if (!(sc->sc_stat_io.dir & pos))
-		panic("%s: IO%d is not output port.\n", sc->sc_dev.dv_xname,
+		panic("%s: IO%d is not output port.", sc->sc_dev.dv_xname,
 		      port);
 #endif
 	reg = tx_conf_read(tc, TX39_IOCTRL_REG);
@@ -391,7 +391,7 @@ tx392x_io_out(hpcio_chip_t arg, int port, int onoff)
 	pos = 1 << port;
 #ifdef DIAGNOSTIC
 	if (!(sc->sc_stat_io.dir & pos))
-		panic("%s: IO%d is not output port.\n", devname, port);
+		panic("%s: IO%d is not output port.", devname, port);
 #endif
 	reg = tx_conf_read(tc, TX392X_IODATAINOUT_REG);
 	iostat = TX392X_IODATAINOUT_DOUT(reg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.17 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: irframe.c,v 1.18 2002/09/27 15:37:22 provos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ irframe_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_methods->im_set_params == NULL ||
 	    sc->sc_methods->im_get_speeds == NULL ||
 	    sc->sc_methods->im_get_turnarounds == NULL)
-		panic("%s: missing methods\n", sc->sc_dev.dv_xname);
+		panic("%s: missing methods", sc->sc_dev.dv_xname);
 #endif
 
 	(void)sc->sc_methods->im_get_speeds(sc->sc_handle, &speeds);
@@ -437,5 +437,5 @@ irframe_dealloc(struct device *dev)
 			return;
 		}
 	}
-	panic("irframe_dealloc: device not found\n");
+	panic("irframe_dealloc: device not found");
 }

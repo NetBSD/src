@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.39 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: fd.c,v 1.40 2002/09/27 15:35:52 provos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -800,7 +800,7 @@ int	drive, head, dense;
 			DMA->dma_drvmode = (FDC_HDSET|FDC_HDSIG);
 			break;
 		default:
-			panic("fdselect: unknown density code\n");
+			panic("fdselect: unknown density code");
 	}
 	if(i != selected) {
 		selected = i;

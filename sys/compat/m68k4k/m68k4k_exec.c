@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.8 2001/11/13 02:09:02 lukem Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.9 2002/09/27 15:37:07 provos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.8 2001/11/13 02:09:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.9 2002/09/27 15:37:07 provos Exp $");
 
 #if !defined(__m68k__)
 #error YOU GOTTA BE KIDDING!
@@ -149,7 +149,7 @@ exec_m68k4k_prep_zmagic(p, epp)
 	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return ETXTBSY;
 	}

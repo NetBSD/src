@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.5 2002/05/22 22:43:19 bjh21 Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.6 2002/09/27 15:35:31 provos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -273,7 +273,7 @@ ne_pbus_attach(parent, self, aux)
 #ifdef	DIAGNOSTIC
 	/* This should never fail as we must have matched at probe time */
 	if (ne == NULL)
-		panic("Podule has vanished\n");
+		panic("Podule has vanished");
 #endif
 
 	/* Update the nic and asic base addresses appropriately */

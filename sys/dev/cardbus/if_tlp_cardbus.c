@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.33 2002/04/14 17:17:10 mycroft Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.34 2002/09/27 15:37:12 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.33 2002/04/14 17:17:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.34 2002/09/27 15:37:12 provos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -489,7 +489,7 @@ tlp_cardbus_detach(self, flags)
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL)
-		panic("%s: data structure lacks\n", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
 #endif
 
 	rv = tlp_detach(sc);

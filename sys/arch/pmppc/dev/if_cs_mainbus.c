@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_mainbus.c,v 1.1 2002/05/30 20:02:03 augustss Exp $	*/
+/*	$NetBSD: if_cs_mainbus.c,v 1.2 2002/09/27 15:36:36 provos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -220,20 +220,20 @@ cs_io_write_multi_2(struct cs_softc *sc, bus_size_t offs,
 static u_int16_t
 cs_mem_read_2(struct cs_softc *sc, bus_size_t offs)
 {
-	panic("cs_mem_read_2\n");
+	panic("cs_mem_read_2");
 }
 
 static void
 cs_mem_write_2(struct cs_softc *sc, bus_size_t offs, u_int16_t data)
 {
-	panic("cs_mem_write_2\n");
+	panic("cs_mem_write_2");
 }
 
 static void
 cs_mem_write_region_2(struct cs_softc *sc, bus_size_t offs,
 		      const u_int16_t *buf, bus_size_t cnt)
 {
-	panic("cs_mem_write_region_2\n");
+	panic("cs_mem_write_region_2");
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.28 2002/06/08 16:02:02 yamt Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.29 2002/09/27 15:36:04 provos Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -263,7 +263,7 @@ plumvideo_hpcfbinit(struct plumvideo_softc *sc, int reverse_flag)
 
 	switch (depth) {
 	default:
-		panic("plumvideo_hpcfbinit: not supported color depth\n");
+		panic("plumvideo_hpcfbinit: not supported color depth");
 		/* NOTREACHED */
 	case 16:
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.8 2002/09/25 22:21:05 thorpej Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.9 2002/09/27 15:35:47 provos Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -1221,7 +1221,7 @@ vidc_cursor_init(vc)
 		/* Allocate cursor memory first time round */
 		cursor_data = (char *)uvm_km_zalloc(kernel_map, NBPG);
 		if (!cursor_data)
-			panic("Cannot allocate memory for hardware cursor\n");
+			panic("Cannot allocate memory for hardware cursor");
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_data, &pa);
 		IOMD_WRITE_WORD(IOMD_CURSINIT, pa);
 	}
