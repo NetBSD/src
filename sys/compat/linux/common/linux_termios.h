@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.6 2000/12/10 14:12:17 fvdl Exp $	*/
+/*	$NetBSD: linux_termios.h,v 1.7 2001/01/19 01:40:39 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,6 +126,8 @@ struct linux_termios {
 #include <compat/linux/arch/m68k/linux_termios.h>
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_termios.h>
+#elif defined(__powerpc__)
+#include <compat/linux/arch/powerpc/linux_termios.h>
 #else
 #error Undefined linux_termios.h machine type.
 #endif

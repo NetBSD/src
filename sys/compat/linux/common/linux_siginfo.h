@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_siginfo.h,v 1.2 1998/12/15 19:31:39 itohy Exp $	*/
+/* 	$NetBSD: linux_siginfo.h,v 1.3 2001/01/19 01:40:39 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #include <compat/linux/arch/m68k/linux_siginfo.h>
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_siginfo.h>
+#elif defined(__powerpc__)
+#include <compat/linux/arch/powerpc/linux_siginfo.h>
 #else
 #error Undefined linux_siginfo.h machine type.
 #endif
