@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.19 2002/08/12 09:19:00 abs Exp $	*/
+/*	$NetBSD: utility.c,v 1.20 2002/09/18 20:58:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.19 2002/08/12 09:19:00 abs Exp $");
+__RCSID("$NetBSD: utility.c,v 1.20 2002/09/18 20:58:57 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,23 +96,19 @@ ttloop()
 stilloob(s)
     int	s;		/* socket number */
 {
-    static struct timeval timeout = { 0 };
-    fd_set	excepts;
+    struct pollfd set[1];
     int value;
 
-    if (s >= FD_SETSIZE)
-	fatal(pty, "fd too large");
-
+    set[0].fd = net;
+    set[0].events = POLLPRI;
     do {
-	FD_ZERO(&excepts);
-	FD_SET(s, &excepts);
-	value = select(s+1, (fd_set *)0, (fd_set *)0, &excepts, &timeout);
+	value = poll(set, 1, 0);
     } while ((value == -1) && (errno == EINTR));
 
     if (value < 0) {
 	fatalperror(pty, "select");
     }
-    if (FD_ISSET(s, &excepts)) {
+    if (set[0].revents & POLLPRI) {
 	return 1;
     } else {
 	return 0;

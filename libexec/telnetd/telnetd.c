@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.33 2002/08/20 13:58:22 christos Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.34 2002/09/18 20:58:56 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.33 2002/08/20 13:58:22 christos Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.34 2002/09/18 20:58:56 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1137,7 +1137,7 @@ telnet(f, p, host)
 	(void) ioctl(p, FIONBIO, (char *)&on);
 
 #if	defined(SO_OOBINLINE)
-	(void) setsockopt(net, SOL_SOCKET, SO_OOBINLINE,
+	(void) setsockopt(f, SOL_SOCKET, SO_OOBINLINE,
 				(char *)&on, sizeof on);
 #endif	/* defined(SO_OOBINLINE) */
 
@@ -1231,40 +1231,32 @@ telnet(f, p, host)
 
 	nfd = ((f > p) ? f : p) + 1;
 	for (;;) {
-		fd_set ibits, obits, xbits;
+		struct pollfd set[2];
 		register int c;
 
 		if (ncc < 0 && pcc < 0)
 			break;
 
-		FD_ZERO(&ibits);
-		FD_ZERO(&obits);
-		FD_ZERO(&xbits);
-
-		if (f >= FD_SETSIZE)
-			fatal(net, "fd too large");
-		if (p >= FD_SETSIZE)
-			fatal(net, "fd too large");
-
 		/*
 		 * Never look for input if there's still
 		 * stuff in the corresponding output buffer
 		 */
-		if (nfrontp - nbackp || pcc > 0) {
-			FD_SET(f, &obits);
-		} else {
-			FD_SET(p, &ibits);
-		}
-		if (pfrontp - pbackp || ncc > 0) {
-			FD_SET(p, &obits);
-		} else {
-			FD_SET(f, &ibits);
-		}
-		if (!SYNCHing) {
-			FD_SET(f, &xbits);
-		}
-		if ((c = select(nfd, &ibits, &obits, &xbits,
-						(struct timeval *)0)) < 1) {
+		set[0].fd = f;
+		set[0].events = 0;
+		set[1].fd = p;
+		set[1].events = 0;
+		if (nfrontp - nbackp || pcc > 0)
+			set[0].events |= POLLOUT;
+		else
+			set[1].events |= POLLIN;
+		if (pfrontp - pbackp || ncc > 0)
+			set[1].events |= POLLOUT;
+		else
+			set[0].events |= POLLIN;
+		if (!SYNCHing)
+			set[0].events |= POLLPRI;
+
+		if ((c = poll(set, 2, INFTIM)) < 1) {
 			if (c == -1) {
 				if (errno == EINTR) {
 					continue;
@@ -1277,14 +1269,14 @@ telnet(f, p, host)
 		/*
 		 * Any urgent data?
 		 */
-		if (FD_ISSET(net, &xbits)) {
+		if (set[0].revents & POLLPRI) {
 		    SYNCHing = 1;
 		}
 
 		/*
 		 * Something to read from the network...
 		 */
-		if (FD_ISSET(net, &ibits)) {
+		if (set[0].revents && POLLIN) {
 #if	!defined(SO_OOBINLINE)
 			/*
 			 * In 4.2 (and 4.3 beta) systems, the
@@ -1323,24 +1315,24 @@ telnet(f, p, host)
 		    if (SYNCHing) {
 			int atmark;
 
-			(void) ioctl(net, SIOCATMARK, (char *)&atmark);
+			(void) ioctl(f, SIOCATMARK, (char *)&atmark);
 			if (atmark) {
-			    ncc = recv(net, netibuf, sizeof (netibuf), MSG_OOB);
+			    ncc = recv(f, netibuf, sizeof (netibuf), MSG_OOB);
 			    if ((ncc == -1) && (errno == EINVAL)) {
-				ncc = read(net, netibuf, sizeof (netibuf));
+				ncc = read(f, netibuf, sizeof (netibuf));
 				if (sequenceIs(didnetreceive, gotDM)) {
-				    SYNCHing = stilloob(net);
+				    SYNCHing = stilloob(f);
 				}
 			    }
 			} else {
-			    ncc = read(net, netibuf, sizeof (netibuf));
+			    ncc = read(f, netibuf, sizeof (netibuf));
 			}
 		    } else {
-			ncc = read(net, netibuf, sizeof (netibuf));
+			ncc = read(f, netibuf, sizeof (netibuf));
 		    }
 		    settimer(didnetreceive);
 #else	/* !defined(SO_OOBINLINE)) */
-		    ncc = read(net, netibuf, sizeof (netibuf));
+		    ncc = read(f, netibuf, sizeof (netibuf));
 #endif	/* !defined(SO_OOBINLINE)) */
 		    if (ncc < 0 && errno == EWOULDBLOCK)
 			ncc = 0;
@@ -1358,7 +1350,7 @@ telnet(f, p, host)
 		/*
 		 * Something to read from the pty...
 		 */
-		if (FD_ISSET(p, &ibits)) {
+		if (set[1].revents & POLLIN) {
 #ifndef	STREAMSPTY
 			pcc = read(p, ptyibuf, BUFSIZ);
 #else
@@ -1443,11 +1435,11 @@ telnet(f, p, host)
 			}
 		}
 
-		if (FD_ISSET(f, &obits) && (nfrontp - nbackp) > 0)
+		if (set[0].revents & POLLOUT && (nfrontp - nbackp) > 0)
 			netflush();
 		if (ncc > 0)
 			telrcv();
-		if (FD_ISSET(p, &obits) && (pfrontp - pbackp) > 0)
+		if (set[1].revents & POLLOUT && (pfrontp - pbackp) > 0)
 			ptyflush();
 	}
 	cleanup(0);
