@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.16 1999/04/19 20:58:37 kleink Exp $	*/
+/*	$NetBSD: frame.h,v 1.17 2001/03/28 23:08:15 fredette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,6 +84,19 @@ struct frame {
 			u_int	f_pd1, f_pd2, f_pd3;
 		} F_fmt7;
 
+		struct fmt8 {
+			u_short	f_ssw;
+			u_int	f_accaddr;
+			u_short	f_ir0;
+			u_short	f_dob;
+			u_short	f_ir1;
+			u_short	f_dib;
+			u_short	f_ir2;
+			u_short	f_irc;
+			u_short	f_maskpc;
+			u_short	f_iregs[15];
+		} F_fmt8;
+
 		struct fmt9 {
 			u_int	f_iaddr;
 			u_short	f_iregs[4];
@@ -129,6 +142,7 @@ struct frame {
 #define	f_fmt3		F_u.F_fmt3
 #define	f_fmt4		F_u.F_fmt4
 #define	f_fmt7		F_u.F_fmt7
+#define	f_fmt8		F_u.F_fmt8
 #define	f_fmt9		F_u.F_fmt9
 #define	f_fmtA		F_u.F_fmtA
 #define	f_fmtB		F_u.F_fmtB
@@ -147,6 +161,7 @@ struct switchframe {
 #define	FMT3		0x3
 #define	FMT4		0x4
 #define	FMT7		0x7
+#define	FMT8		0x8
 #define	FMT9		0x9
 #define	FMTA		0xA
 #define	FMTB		0xB
@@ -158,6 +173,7 @@ struct switchframe {
 #define	FMT3SIZE	sizeof(struct fmt3)
 #define	FMT4SIZE	sizeof(struct fmt4)
 #define	FMT7SIZE	sizeof(struct fmt7)
+#define	FMT8SIZE	sizeof(struct fmt8)
 #define	FMT9SIZE	sizeof(struct fmt9)
 #define	FMTASIZE	sizeof(struct fmtA)
 #define	FMTBSIZE	sizeof(struct fmtB)
@@ -165,6 +181,16 @@ struct switchframe {
 #define	V_BUSERR	0x008
 #define	V_ADDRERR	0x00C
 #define	V_TRAP1		0x084
+
+/* 68010 SSW bits */
+#define SSW1_RR		0x8000
+#define SSW1_IF		0x2000
+#define SSW1_DF		0x1000
+#define SSW1_RM		0x0800
+#define SSW1_HI		0x0400
+#define SSW1_BX		0x0200
+#define SSW1_RW		0x0100
+#define SSW1_FCMASK	0x000F
 
 /* 68020/68030 SSW bits */
 #define	SSW_RC		0x2000
