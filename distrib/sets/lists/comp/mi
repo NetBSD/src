@@ -1654,6 +1654,7 @@
 ./usr/share/man/cat3/kvm_read.0
 ./usr/share/man/cat3/kvm_write.0
 ./usr/share/man/cat3/l64a.0
+./usr/share/man/cat3/l64a_r.0
 ./usr/share/man/cat3/labs.0
 ./usr/share/man/cat3/lcong48.0
 ./usr/share/man/cat3/ldexp.0
@@ -2663,6 +2664,7 @@
 ./usr/share/man/man3/kvm_read.3
 ./usr/share/man/man3/kvm_write.3
 ./usr/share/man/man3/l64a.3
+./usr/share/man/man3/l64a_r.3
 ./usr/share/man/man3/labs.3
 ./usr/share/man/man3/lcong48.3
 ./usr/share/man/man3/ldexp.3
