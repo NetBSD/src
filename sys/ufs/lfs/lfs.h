@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.53 2003/02/27 07:10:27 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.54 2003/03/02 04:34:30 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 # define LFS_ATIME_IFILE 0
 #endif
 /* Max block count for lfs_markv() */
-#define LFS_MARKV_MAXBLKCNT             65536
+#define LFS_MARKV_MAXBLKCNT		65536
 
 /* Local definition for LFS's usage of PG_PAGER1 */
 #define PG_DELWRI	PG_PAGER1
@@ -371,10 +371,10 @@ struct dlfs {
 	int32_t	  dlfs_uinodes;	  /* 48: inodes in cache not yet on disk */
 	int32_t	  dlfs_idaddr;	  /* 52: inode file disk address */
 	u_int32_t dlfs_ifile;	  /* 56: inode file inode number */
-	int32_t	  dlfs_lastseg;   /* 60: address of last segment written */
-	int32_t	  dlfs_nextseg;   /* 64: address of next segment to write */
-	int32_t	  dlfs_curseg;    /* 68: current segment being written */
-	int32_t	  dlfs_offset;    /* 72: offset in curseg for next partial */
+	int32_t	  dlfs_lastseg;	  /* 60: address of last segment written */
+	int32_t	  dlfs_nextseg;	  /* 64: address of next segment to write */
+	int32_t	  dlfs_curseg;	  /* 68: current segment being written */
+	int32_t	  dlfs_offset;	  /* 72: offset in curseg for next partial */
 	int32_t	  dlfs_lastpseg;  /* 76: address of last partial written */
 	u_int32_t dlfs_inopf;	  /* 80: v1: time stamp; v2: inodes per frag */
 #define dlfs_otstamp dlfs_inopf
@@ -849,6 +849,7 @@ struct segment {
 #define	SEGM_PROT	0x08		/* don't inactivate at segunlock */
 #define SEGM_PAGEDAEMON	0x10		/* pagedaemon called us */
 #define SEGM_WRITERD	0x20		/* LFS writed called us */
+#define SEGM_FORCE_CKP	0x40		/* Force checkpoint right away */
 	u_int16_t seg_flags;		/* run-time flags for this segment */
 	u_int32_t seg_iocount;		/* number of ios pending */
 	int	  ndupino;		/* number of duplicate inodes */
@@ -944,5 +945,6 @@ struct lfs_fcntl_markv {
 #define LFCNSEGWAIT	 _FCNW_FSPRIV('L', 1, struct timeval)
 #define LFCNBMAPV	_FCNRW_FSPRIV('L', 2, struct lfs_fcntl_markv)
 #define LFCNMARKV	_FCNRW_FSPRIV('L', 3, struct lfs_fcntl_markv)
+#define LFCNRECLAIM	 _FCNO_FSPRIV('L', 4)
 
 #endif /* !_UFS_LFS_LFS_H_ */
