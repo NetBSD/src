@@ -1,3 +1,5 @@
-#	$NetBSD: Makefile.evbppc.inc,v 1.1 2002/12/09 12:15:51 scw Exp $
+#	$NetBSD: Makefile.evbppc.inc,v 1.2 2003/03/04 07:52:21 matt Exp $
+
+CPPFLAGS += -D${BOARDTYPE}
 
 .-include "${THISPPC}/conf/Makefile.${BOARDTYPE}.inc"
