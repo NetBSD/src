@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.69 2003/10/27 00:12:41 lukem Exp $	*/
+/*	$NetBSD: options.c,v 1.70 2004/01/05 17:27:46 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.69 2003/10/27 00:12:41 lukem Exp $");
+__RCSID("$NetBSD: options.c,v 1.70 2004/01/05 17:27:46 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -1697,13 +1697,11 @@ static void
 printflg(unsigned int flg)
 {
 	int nxt;
-	int pos = 0;
 
 	(void)fprintf(stderr,"%s: Invalid combination of options:", argv0);
 	while ((nxt = ffs(flg)) != 0) {
-		flg = flg >> nxt;
-		pos += nxt;
-		(void)fprintf(stderr, " -%c", flgch[pos-1]);
+		flg &= ~(1 << (nxt - 1));
+		(void)fprintf(stderr, " -%c", flgch[nxt - 1]);
 	}
 	(void)putc('\n', stderr);
 }
