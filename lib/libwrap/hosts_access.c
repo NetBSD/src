@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.5 1999/01/18 20:21:19 christos Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.5.2.1 2000/01/23 12:01:27 he Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.20 96/02/11 17:01:27";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.5 1999/01/18 20:21:19 christos Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.5.2.1 2000/01/23 12:01:27 he Exp $");
 #endif
 #endif
 
@@ -46,8 +46,6 @@ __RCSID("$NetBSD: hosts_access.c,v 1.5 1999/01/18 20:21:19 christos Exp $");
 #include <netgroup.h>
 #include <rpcsvc/ypclnt.h>
 #endif
-
-extern int errno;
 
 #ifndef	INADDR_NONE
 #define	INADDR_NONE	(-1)		/* XXX should be 0xffffffff */
