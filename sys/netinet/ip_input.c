@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.158 2002/09/23 13:43:27 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.159 2002/11/02 07:28:12 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.158 2002/09/23 13:43:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.159 2002/11/02 07:28:12 perry Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -257,14 +257,14 @@ do {									\
 		printf("%s:%d: ipq already locked\n", __FILE__, __LINE__); \
 		panic("ipq_lock");					\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #define	IPQ_LOCK_CHECK()						\
 do {									\
 	if (ipq_locked == 0) {						\
 		printf("%s:%d: ipq lock not held\n", __FILE__, __LINE__); \
 		panic("ipq lock check");				\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #else
 #define	IPQ_LOCK()		(void) ipq_lock_try()
 #define	IPQ_LOCK_CHECK()	/* nothing */
