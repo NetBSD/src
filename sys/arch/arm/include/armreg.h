@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.22 2003/02/14 16:00:34 rjs Exp $	*/
+/*	$NetBSD: armreg.h,v 1.23 2003/03/18 11:17:31 bsh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -146,7 +146,10 @@
 /* Next three nybbles are part number */
 #define CPU_ID_PARTNO_MASK	0x0000fff0
 
-#define CPU_ID_XSCALE_COREREV_MASK	0x0000e000
+/* Intel XScale has sub fields in part number */
+#define CPU_ID_XSCALE_COREGEN_MASK	0x0000e000 /* core generation */
+#define CPU_ID_XSCALE_COREREV_MASK	0x00001c00 /* core revision */
+#define CPU_ID_XSCALE_PRODUCT_MASK	0x000003f0 /* product number */
 
 /* And finally, the revision number. */
 #define CPU_ID_REVISION_MASK	0x0000000f
@@ -189,6 +192,8 @@
 #define CPU_ID_SA1110		0x6901b110
 #define CPU_ID_IXP1200		0x6901c120
 #define CPU_ID_80200		0x69052000
+#define CPU_ID_PXA250    	0x69052100 /* sans core revision */
+#define CPU_ID_PXA210    	0x69052120
 #define CPU_ID_PXA250A		0x69052100 /* 1st version Core */
 #define CPU_ID_PXA210A		0x69052120 /* 1st version Core */
 #define CPU_ID_PXA250B		0x69052900 /* 3rd version Core */
