@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6.2.9 1997/12/25 20:15:04 perry Exp $	*/
+/*	$NetBSD: util.c,v 1.6.2.10 1997/12/26 02:39:49 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -208,7 +208,7 @@ int get_via_floppy (void)
 				process_menu (MENU_fdok);
 				if (!yesno)
 					return 0;
-				while (run_prog("/sbin/mount -t %s %s /mnt2",
+				while (run_prog("/sbin/mount -r -t %s %s /mnt2",
 						 fdtype, fddev)) {
 					msg_display (MSG_fdremount, fname);
 					process_menu (MENU_fdremount);
