@@ -435,6 +435,11 @@ ibcs2_ioctl(p, uap, retval)
 			return 0;
 		}
 
+	case IBCS2_TCGETSC:	/* SCO console - get scancode flags */
+		return ENOSYS;
+	case IBCS2_TCSETSC:	/* SCO console - set scancode flags */
+		return ENOSYS;
+
 	default:
 		DPRINTF(("ibcs2_ioctl(%d): unknown cmd 0x%x ",
 			 p->p_pid, uap->cmd));
