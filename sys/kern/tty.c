@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.125.2.3 2001/06/21 20:07:05 nathanw Exp $	*/
+/*	$NetBSD: tty.c,v 1.125.2.4 2001/08/22 18:36:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1932,7 +1932,7 @@ ttyinfo(struct tty *tp)
 				pick = p;
 
 		ttyprintf(tp, " cmd: %s %d [", pick->p_comm, pick->p_pid);
-		LIST_FOREACH(l, &p->p_lwps, l_sibling)
+		LIST_FOREACH(l, &pick->p_lwps, l_sibling)
 		    ttyprintf(tp, "%s%s",
 		    l->l_stat == LSONPROC ? "running" :
 		    l->l_stat == LSRUN ? "runnable" :
