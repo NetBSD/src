@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.26 2003/10/29 13:52:25 wennmach Exp $
+$NetBSD: acronyms.comp,v 1.27 2003/11/22 18:01:46 jschauma Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -102,6 +102,7 @@ MAC	media access control
 MBR	master boot record
 MDRAM	multibank dynamic random access memory
 MIPS	million instructions per second
+MMU	memory management unit
 MSB	most significant bit [or: byte]
 MTA	mail transfer agent
 MTU	maximum transmission unit
@@ -110,6 +111,7 @@ NAT	network address translation
 NIC	network interface card
 NIS	network information service
 NUMA	non uniform memory access
+OTP	one time password
 PAX	portable archive exchange
 PCI	peripheral component interconnect
 PCMCIA	Personal Computer Memory Card International Association
