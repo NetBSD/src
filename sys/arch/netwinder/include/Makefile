@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/11/25 15:56:06 thorpej Exp $
+#	$NetBSD: Makefile,v 1.12 2001/11/25 16:22:51 thorpej Exp $
 
 KDIR=	/sys/arch/netwinder/include
 INCSDIR= /usr/include/netwinder
@@ -6,7 +6,7 @@ INCSDIR= /usr/include/netwinder
 INCS=	ansi.h aout_machdep.h asm.h \
 	bswap.h bus.h \
 	cdefs.h cpu.h \
-	db_machdep.h disklabel.h disklabel_acorn.h \
+	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h fp.h frame.h \
 	ieee.h ieeefp.h \
