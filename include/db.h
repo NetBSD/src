@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)db.h	8.2 (Berkeley) 9/7/93
- *	$Id: db.h,v 1.10 1993/09/16 22:58:06 cgd Exp $
+ *	from: @(#)db.h	8.3 (Berkeley) 10/12/93
+ *	$Id: db.h,v 1.11 1993/10/20 07:25:53 cgd Exp $
  */
 
 #ifndef _DB_H_
@@ -102,12 +102,12 @@ typedef struct __db {
 	DBTYPE type;			/* Underlying db type. */
 	int (*close)	__P((struct __db *));
 	int (*del)	__P((const struct __db *, const DBT *, u_int));
-	int (*fd)	__P((const struct __db *));
 	int (*get)	__P((const struct __db *, const DBT *, DBT *, u_int));
 	int (*put)	__P((const struct __db *, DBT *, const DBT *, u_int));
 	int (*seq)	__P((const struct __db *, DBT *, DBT *, u_int));
 	int (*sync)	__P((const struct __db *, u_int));
-	void *internal;			/* access method private */
+	void *internal;			/* Access method private. */
+	int (*fd)	__P((const struct __db *));
 } DB;
 
 #define	BTREEMAGIC	0x053162
