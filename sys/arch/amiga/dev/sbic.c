@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
- *	$Id: sbic.c,v 1.3 1994/06/14 00:58:56 chopps Exp $
+ *	$Id: sbic.c,v 1.4 1994/06/15 19:06:26 chopps Exp $
  */
 
 /*
@@ -1295,7 +1295,7 @@ out:
 	 */
 #if 0
 	DCIS();
-#else
+#elif defined(M68040)
 	dma_cachectl(tmpaddr, len);
 
 	dspa = (u_int)dev->sc_chain[0].dc_addr;
@@ -1358,12 +1358,14 @@ sbicintr(dev)
 		/*
 		 * check for overlapping cache line, flush if so
 		 */
+#ifdef M68040
 		if (dev->sc_flags & SBICF_DCFLUSH) {
 			df = dev->sc_chain;
 			dl = dev->sc_last;
 			DCFL(df->dc_addr);
 			DCFL(dl->dc_addr + (dl->dc_count >> 1));
 		}
+#endif
 		dev->sc_flags &= ~(SBICF_INDMA | SBICF_BBUF | SBICF_DCFLUSH);
 		dev->sc_dmafree(dev);
 		sbic_scsidone(dev, dev->sc_stat[0]);
@@ -1402,12 +1404,14 @@ sbicintr(dev)
 			/*
 			 * check for overlapping cache line, flush if so
 			 */
+#ifdef M68040
 			if (dev->sc_flags & SBICF_DCFLUSH) {
 				df = dev->sc_chain;
 				dl = dev->sc_last;
 				DCFL(df->dc_addr);
 				DCFL(dl->dc_addr + (dl->dc_count >> 1));
 			}
+#endif
 			dev->sc_flags &= 
 			    ~(SBICF_INDMA | SBICF_BBUF | SBICF_DCFLUSH);
 			dev->sc_dmafree(dev);

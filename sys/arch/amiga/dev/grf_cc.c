@@ -1,9 +1,9 @@
 /*
- *	$Id: grf_cc.c,v 1.13 1994/06/13 08:12:55 chopps Exp $
+ *	$Id: grf_cc.c,v 1.14 1994/06/15 19:05:57 chopps Exp $
  */
 
-#include "grf.h"
-#if NGRF > 0
+#include "grfcc.h"
+#if NGRFCC > 0
 /*
  * currently this is a backward compat hack that interface to 
  * view.c

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
  *	@(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.3 1994/06/13 08:12:54 chopps Exp $
+ *	$Id: clock.c,v 1.4 1994/06/15 19:05:55 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -60,7 +60,9 @@
    We're using a 100 Hz clock. */
 
 #define CLK_INTERVAL amiga_clk_interval
-int amiga_clk_interval = (715909 / 100);	/* XXX NTSC */
+int amiga_clk_interval;
+int eclockfreq;
+
 /*
  * Machine-dependent clock routines.
  *
@@ -106,8 +108,13 @@ clockattach(pdp, dp, auxp)
 {
 	unsigned short interval;
 
-	/* be more elaborate XXX, whats the speed */
-	printf("\n");
+	if (eclockfreq == 0)
+		eclockfreq = 715909;	/* guess NTSC */
+		
+	CLK_INTERVAL = (eclockfreq / 100);
+
+	printf(": system hz %d hardware hz %d \n", hz, eclockfreq);
+
 	/*
 	 * stop timer A 
 	 */
