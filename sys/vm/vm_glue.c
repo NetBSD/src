@@ -73,7 +73,6 @@
 #include "vm_kern.h"
 
 int	avefree = 0;		/* XXX */
-unsigned maxdmap = MAXDSIZ;	/* XXX */
 int	readbuffers = 0;	/* XXX allow kgdb to read kernel buffer pool */
 
 kernacc(addr, len, rw)
