@@ -1,3 +1,4 @@
+/*	$NetBSD: bzip2.c,v 1.2 1998/09/14 02:37:24 ross Exp $	*/
 
 /*-----------------------------------------------------------*/
 /*--- A block-sorting, lossless compressor        bzip2.c ---*/
