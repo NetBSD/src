@@ -1,4 +1,4 @@
-.\" $NetBSD: extent.9,v 1.25 2003/04/16 13:35:28 wiz Exp $
+.\" $NetBSD: extent.9,v 1.26 2003/06/30 12:14:34 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -245,10 +245,7 @@ functions are extensions that take one additional argument,
 .Fa skew ,
 that modifies the requested alignment result in the following way:
 the value
-.Po Fa result
-\& -
-.Fa skew
-.Pc
+.Pq Fa result No - Fa skew
 is aligned to
 .Fa alignment
 boundaries.
