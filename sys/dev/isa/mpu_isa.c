@@ -1,11 +1,11 @@
-/*	$NetBSD: mpuvar.h,v 1.1 1999/03/22 07:37:35 mycroft Exp $	*/
+/*	$NetBSD: mpu_isa.c,v 1.3.2.2 1999/08/02 21:59:29 thorpej Exp $	*/
 
-/*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@netbsd.org).
+ * by Lennart Augustsson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,21 +36,79 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct mpu_softc {
-	bus_space_tag_t iot;		/* tag */
-	bus_space_handle_t ioh;		/* handle */
-	int	open;
-	void	(*intr)__P((void *, int)); /* midi input intr handler */
-	void	*arg;			/* arg for intr() */
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/errno.h>
+#include <sys/device.h>
+#include <sys/proc.h>
+#include <sys/conf.h>
+#include <sys/midiio.h>
+
+#include <machine/bus.h>
+
+#include <dev/midi_if.h>
+
+#include <dev/isa/isavar.h>
+#include <dev/ic/mpuvar.h>
+
+struct mpu_isa_softc {
+	struct mpu_softc sc_mpu;	/* generic part */
+	void	*sc_ih;			/* ISA interrupt handler */
 };
 
-struct midi_hw_if mpu_midi_hw_if;
+int	mpu_isa_match __P((struct device *, struct cfdata *, void *));
+void	mpu_isa_attach __P((struct device *, struct device *, void *));
 
-int	mpu_find __P((struct mpu_softc *));
-int	mpu_open __P((void *, int, 
-			 void (*iintr)__P((void *, int)),
-			 void (*ointr)__P((void *)), void *arg));
-void	mpu_close __P((void *));
-int	mpu_output __P((void *, int));
-void	mpu_getinfo __P((void *, struct midi_info *));
-int	mpu_intr __P((void *));
+struct cfattach mpu_isa_ca = {
+	sizeof (struct mpu_isa_softc), mpu_isa_match, mpu_isa_attach
+};
+
+int
+mpu_isa_match(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	struct isa_attach_args *ia = aux;
+	struct mpu_isa_softc sc;
+	int r;
+
+	memset(&sc, 0, sizeof sc);
+	sc.sc_mpu.iot = ia->ia_iot;
+	if (bus_space_map(sc.sc_mpu.iot, ia->ia_iobase, MPU401_NPORT, 0, 
+			  &sc.sc_mpu.ioh))
+		return (0);
+	r = mpu_find(&sc.sc_mpu);
+        bus_space_unmap(sc.sc_mpu.iot, sc.sc_mpu.ioh, MPU401_NPORT);
+	if (r) {
+		ia->ia_iosize = MPU401_NPORT;
+		ia->ia_msize = 0;
+	}
+	return (r);
+}
+
+void
+mpu_isa_attach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct mpu_isa_softc *sc = (struct mpu_isa_softc *)self;
+	struct isa_attach_args *ia = aux;
+
+	printf("\n");
+	
+	if (bus_space_map(sc->sc_mpu.iot, ia->ia_iobase, MPU401_NPORT, 0, 
+			  &sc->sc_mpu.ioh)) {
+		printf("mpu_isa_attach: bus_space_map failed\n");
+		return;
+	}
+
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, IPL_AUDIO,
+				       mpu_intr, sc);
+	
+	sc->model = "Roland MPU-401 MIDI UART";
+	mpu_attach(&sc->sc_mpu);
+}
+

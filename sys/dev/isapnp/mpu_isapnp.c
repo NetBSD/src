@@ -22,7 +22,7 @@
 #include <dev/isapnp/isapnpvar.h>
 #include <dev/isapnp/isapnpdevs.h>
 
-#include <dev/isa/mpuvar.h>
+#include <dev/ic/mpuvar.h>
 
 int	mpu_isapnp_match __P((struct device *, struct cfdata *, void *));
 void	mpu_isapnp_attach __P((struct device *, struct device *, void *));

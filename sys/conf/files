@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.285.2.1.2.4 1999/07/01 23:31:05 thorpej Exp $
+#	$NetBSD: files,v 1.285.2.1.2.5 1999/08/02 21:56:13 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -50,7 +50,8 @@ defopt  opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 				COMPAT_13 COMPAT_NOMID
 
 # networking protocols
-defopt	INET
+defopt	opt_inet.h	INET INET6
+defopt	opt_ipsec.h	IPSEC IPSEC_ESP
 defopt	opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
 defopt	opt_atalk.h	NETATALK
 defopt	opt_ns.h	NSIP	 	# XNS tunneled over IP
@@ -209,6 +210,9 @@ device	aha: scsi
 file	dev/ic/aha.c			aha
 
 # Qlogic ISP 10x0 SCSI Controllers
+defopt	opt_isp.h	ISP2100_FABRIC ISP2100_SCCLUN ISP_DISABLE_1020_SUPPORT
+			ISP_DISABLE_1080_SUPPORT ISP_DISABLE_2100_SUPPORT
+			ISP_DISABLE_2200_SUPPORT
 device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
@@ -336,6 +340,10 @@ device	opl: midibus, midisyn
 file	dev/ic/opl.c			opl
 file	dev/ic/oplinstrs.c		opl
 
+# MPU401 MIDI UART compatibles
+device	mpu: midibus
+file	dev/ic/mpu.c			mpu
+
 # AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
 define	ad1848
 file	dev/ic/ad1848.c			ad1848
@@ -364,8 +372,8 @@ file    dev/ic/wdc.c wdc_base
 # device attributes: display, display with emulator, keyboard, and mouse
 define  wsdisplaydev { }
 define  wsemuldisplaydev {[console = -1]}
-define  wskbddev {[console = -1]}
-define	wsmousedev { }
+define  wskbddev {[console = -1], [mux = -1]}
+define	wsmousedev {[mux = -1]}
 # attribute to pull in raster support
 define	wsrasteremulops
 # common PC display functions
@@ -400,30 +408,30 @@ device	ohci: usbus
 file	dev/usb/ohci.c			ohci	needs-flag
 
 # legitimate pseudo-devices
-pseudo-device vnd: disk
-pseudo-device ccd: disk
-pseudo-device raid: disk
-pseudo-device md: disk
-pseudo-device vcoda
+defpseudo vnd: disk
+defpseudo ccd: disk
+defpseudo raid: disk
+defpseudo md: disk
+defpseudo vcoda
 
-pseudo-device pty: tty
-pseudo-device tb: tty
-pseudo-device rnd
+defpseudo pty: tty
+defpseudo tb: tty
+defpseudo rnd
 
-pseudo-device loop: ifnet
-pseudo-device sl: ifnet
-pseudo-device ppp: ifnet
-pseudo-device sppp: ifnet
-pseudo-device tun: ifnet
-pseudo-device bpfilter: ifnet
-pseudo-device strip: ifnet
-pseudo-device ipfilter: ifnet
-pseudo-device ipip: ifnet
-pseudo-device gre: ifnet
-pseudo-device gif: ifnet
-pseudo-device faith: ifnet
+defpseudo loop: ifnet
+defpseudo sl: ifnet
+defpseudo ppp: ifnet
+defpseudo sppp: ifnet
+defpseudo tun: ifnet
+defpseudo bpfilter: ifnet
+defpseudo strip: ifnet
+defpseudo ipfilter: ifnet
+defpseudo ipip: ifnet
+defpseudo gre: ifnet
+defpseudo gif: ifnet
+defpseudo faith: ifnet
 
-pseudo-device sequencer
+defpseudo sequencer
 
 # kernel sources
 file adosfs/adlookup.c			adosfs
@@ -577,24 +585,9 @@ file netinet6/nd6_rtr.c			inet6
 file netinet6/raw_ip6.c			inet6
 file netinet6/udp6_usrreq.c		inet6
 file netinet6/ah_core.c			ipsec
-file netinet6/esp_core.c		ipsec & ipsec_esp
 file netinet6/ipsec.c			ipsec
 file netinet6/ah_output.c		ipsec
 file netinet6/ah_input.c		ipsec
-file netinet6/esp_output.c		ipsec & ipsec_esp
-file netinet6/esp_input.c		ipsec & ipsec_esp
-file crypto/des/des_cbc.c		ipsec & ipsec_esp
-file crypto/des/des_ecb.c		ipsec & ipsec_esp
-file crypto/des/des_setkey.c		ipsec & ipsec_esp
-file crypto/des/des_3cbc.c		ipsec & ipsec_esp
-file crypto/blowfish/bf_cbc.c		ipsec & ipsec_esp
-file crypto/blowfish/bf_cbc_m.c		ipsec & ipsec_esp
-file crypto/blowfish/bf_enc.c		ipsec & ipsec_esp
-file crypto/blowfish/bf_skey.c		ipsec & ipsec_esp
-file crypto/cast128/cast128.c		ipsec & ipsec_esp
-file crypto/cast128/cast128_cbc.c	ipsec & ipsec_esp
-file crypto/rc5/rc5.c			ipsec & ipsec_esp
-file crypto/rc5/rc5_cbc.c		ipsec & ipsec_esp
 file netinet6/ipcomp_core.c		ipsec
 file netinet6/ipcomp_input.c		ipsec
 file netinet6/ipcomp_output.c		ipsec
@@ -612,7 +605,6 @@ file kern/kern_descrip.c
 file kern/kern_exec.c
 file kern/kern_exit.c
 file kern/kern_fork.c
-file kern/kern_fthread.c
 file kern/kern_kthread.c
 file kern/kern_ktrace.c			ktrace
 file kern/kern_lkm.c			lkm
@@ -676,9 +668,11 @@ file miscfs/fdesc/fdesc_vfsops.c	fdesc
 file miscfs/fdesc/fdesc_vnops.c		fdesc
 file miscfs/fifofs/fifo_vnops.c
 file miscfs/genfs/genfs_vnops.c
+file miscfs/genfs/layer_subr.c
+file miscfs/genfs/layer_vfsops.c
+file miscfs/genfs/layer_vnops.c
 file miscfs/kernfs/kernfs_vfsops.c	kernfs
 file miscfs/kernfs/kernfs_vnops.c	kernfs
-file miscfs/nullfs/null_subr.c		nullfs
 file miscfs/nullfs/null_vfsops.c	nullfs
 file miscfs/nullfs/null_vnops.c		nullfs
 file miscfs/portal/portal_vfsops.c	portal

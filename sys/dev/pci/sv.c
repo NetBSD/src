@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.7.2.1.2.1 1999/06/21 01:18:42 thorpej Exp $ */
+/*      $NetBSD: sv.c,v 1.7.2.1.2.2 1999/08/02 22:02:30 thorpej Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -1459,13 +1459,13 @@ sv_free(addr, ptr, pool)
 	int pool;
 {
 	struct sv_softc *sc = addr;
-	struct sv_dma **p;
+	struct sv_dma **pp, *p;
 
-	for (p = &sc->sc_dmas; *p; p = &(*p)->next) {
-		if (KERNADDR(*p) == ptr) {
-			sv_freemem(sc, *p);
-			*p = (*p)->next;
-			free(*p, pool);
+	for (pp = &sc->sc_dmas; (p = *pp) != NULL; pp = &p->next) {
+		if (KERNADDR(p) == ptr) {
+			sv_freemem(sc, p);
+			*pp = p->next;
+			free(p, pool);
 			return;
 		}
 	}
