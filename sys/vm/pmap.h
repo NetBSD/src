@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pmap.h	7.4 (Berkeley) 5/7/91
- *	$Id: pmap.h,v 1.6 1994/04/15 07:04:43 cgd Exp $
+ *	from: @(#)pmap.h	8.1 (Berkeley) 6/11/93
+ *	$Id: pmap.h,v 1.7 1994/05/23 03:11:30 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -86,97 +86,51 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #include <machine/pmap.h>
 
 #ifdef KERNEL
-/*
- * Currently this option is used on the i386 to be able to handle the
- * memory from 0-640k and 1M+.
- */
-#ifdef MACHINE_NONCONTIG
-/*
- *	Routines used for initialization.
- *	There is traditionally also a pmap_bootstrap,
- *	used very early by machine-dependent code,
- *	but it is not part of the interface.
- */
-extern vm_offset_t	pmap_steal_memory();	/* During VM initialization,
-						 * steal a chunk of memory.
-						 */
-extern unsigned int	pmap_free_pages();	/* During VM initialization,
-						 * report remaining unused
-						 * physical pages.
-						 */
-extern void		pmap_startup();		/* During VM initialization,
-						 * use remaining physical pages
-						 * to allocate page frames.
-						 */
-extern void		pmap_init();		/* Initialization,
-						 * after kernel runs
-						 * in virtual memory.
-						 */
-
-/*
- * Currently the following isn't really an option. So don't define it.
- */
-#undef	MACHINE_PAGES
-#ifndef	MACHINE_PAGES
-/*
- *	If machine/pmap.h defines MACHINE_PAGES, it must implement
- *	the above functions.  The pmap modules has complete control.
- *	Otherwise, it must implement
- *		pmap_free_pages
- *		pmap_virtual_space
- *		pmap_next_page
- *		pmap_init
- *	and vm/vm_page.c implements pmap_steal_memory and pmap_startup
- *	using pmap_free_pages, pmap_next_page, pmap_virtual_space,
- *	and pmap_enter.  pmap_free_pages may over-estimate the number
- *	of unused physical pages, and pmap_next_page may return FALSE
- *	to indicate that there are no more unused pages to return.
- *	However, for best performance pmap_free_pages should be accurate.
- */
-extern boolean_t	pmap_next_page();	/* During VM initialization,
-						 * return the next unused
-						 * physical page.
-						 */
-extern void		pmap_virtual_space();	/* During VM initialization,
-						 * report virtual space
-						 * available for the kernel.
-						 */
-#endif	/* MACHINE_PAGES */
-
-#endif /* MACHINE_NONCONTIG */
-
-#ifdef	MACHINE_NONCONTIG
-void		pmap_init __P((void));
+__BEGIN_DECLS
+void		*pmap_bootstrap_alloc __P((int));
+void		 pmap_bootstrap( /* machine dependent */ );
+void		 pmap_change_wiring __P((pmap_t, vm_offset_t, boolean_t));
+void		 pmap_clear_modify __P((vm_offset_t pa));
+void		 pmap_clear_reference __P((vm_offset_t pa));
+void		 pmap_collect __P((pmap_t));
+void		 pmap_copy __P((pmap_t,
+		    pmap_t, vm_offset_t, vm_size_t, vm_offset_t));
+void		 pmap_copy_page __P((vm_offset_t, vm_offset_t));
+pmap_t		 pmap_create __P((vm_size_t));
+void		 pmap_destroy __P((pmap_t));
+void		 pmap_enter __P((pmap_t,
+		    vm_offset_t, vm_offset_t, vm_prot_t, boolean_t));
+vm_offset_t	 pmap_extract __P((pmap_t, vm_offset_t));
+#ifndef	MACHINE_NONCONTIG
+void		 pmap_init __P((vm_offset_t, vm_offset_t));
 #else
-void		pmap_init __P((vm_offset_t s, vm_offset_t e));
+void		 pmap_init __P((void));
 #endif
-void		pmap_pinit __P((struct pmap *pmap));
-void		pmap_release __P((struct pmap *pmap));
-vm_offset_t	pmap_map();
-pmap_t		pmap_create();
-void		pmap_destroy();
-void		pmap_reference();
-void		pmap_remove();
-void		pmap_page_protect();
-void		pmap_protect();
-void		pmap_enter();
-vm_offset_t	pmap_extract();
-void		pmap_update();
-void		pmap_collect();
-void		pmap_activate();
-void		pmap_deactivate();
-void		pmap_copy();
-void		pmap_statistics();
-void		pmap_clear_reference();
-boolean_t	pmap_is_referenced();
-#ifndef pmap_kernel
-pmap_t		pmap_kernel();
+boolean_t	 pmap_is_modified __P((vm_offset_t pa));
+boolean_t	 pmap_is_referenced __P((vm_offset_t pa));
+vm_offset_t	 pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+void		 pmap_page_protect __P((vm_offset_t, vm_prot_t));
+void		 pmap_pageable __P((pmap_t,
+		    vm_offset_t, vm_offset_t, boolean_t));
+vm_offset_t	 pmap_phys_address __P((int));
+void		 pmap_pinit __P((pmap_t));
+void		 pmap_protect __P((pmap_t,
+		    vm_offset_t, vm_offset_t, vm_prot_t));
+void		 pmap_reference __P((pmap_t));
+void		 pmap_release __P((pmap_t));
+void		 pmap_remove __P((pmap_t, vm_offset_t, vm_offset_t));
+void		 pmap_update __P((void));
+void		 pmap_zero_page __P((vm_offset_t));
+
+#ifdef MACHINE_NONCONTIG
+u_int		 pmap_free_pages __P(());
+void		 pmap_init __P(());
+boolean_t	 pmap_next_page __P(());
+void		 pmap_startup __P(());
+vm_offset_t	 pmap_steal_memory __P(());
+void		 pmap_virtual_space __P(());
 #endif
-
-void		pmap_redzone();
-boolean_t	pmap_access();
-
-extern pmap_t	kernel_pmap;
+__END_DECLS
 #endif
 
 #endif /* _PMAP_VM_ */
