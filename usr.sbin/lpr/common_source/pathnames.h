@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.7 2003/08/07 11:25:25 agc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.8 2003/10/19 05:51:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,3 +46,6 @@
 #define	_PATH_VFONTI		"/usr/libdata/vfont/I"
 #define	_PATH_VFONTR		"/usr/libdata/vfont/R"
 #define	_PATH_VFONTS		"/usr/libdata/vfont/S"
+
+/* from lib/libc/include/pathnames.h, for rcmd.c */
+#define	_PATH_BIN_RCMD		"/bin/rcmd"
