@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.3 1998/02/18 10:54:10 mycroft Exp $	*/
+/*	$NetBSD: float.h,v 1.4 1998/02/18 10:55:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -14,8 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -32,43 +32,43 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      @(#)float.h     7.2 (Berkeley) 6/28/90
+ *	@(#)float.h     7.2 (Berkeley) 6/28/90
  */
 
 #ifndef _VAX_FLOAT_H_
 #define _VAX_FLOAT_H_
 
-#define	FLT_RADIX	2		/* b */
-#define	FLT_ROUNDS	1		/* FP addition rounds to nearest */
+#define FLT_RADIX	2		/* b */
+#define FLT_ROUNDS	1		/* FP addition rounds to nearest */
 
-#define	FLT_MANT_DIG	24		/* p */
-#define	FLT_EPSILON	1.19209290E-7F	/* b**(1-p) */
-#define	FLT_DIG		6		/* floor((p-1)*log10(b))+(b == 10) */
-#define	FLT_MIN_EXP	(-127)		/* emin */
-#define	FLT_MIN		2.93873588E-39F	/* b**(emin-1) */
-#define	FLT_MIN_10_EXP	(-38)		/* ceil(log10(b**(emin-1))) */
-#define	FLT_MAX_EXP	127		/* emax */
-#define	FLT_MAX		1.70141173E+38F	/* (1-b**(-p))*b**emax */
-#define	FLT_MAX_10_EXP	38		/* floor(log10((1-b**(-p))*b**emax)) */
+#define FLT_MANT_DIG	24		/* p */
+#define FLT_EPSILON	1.19209290E-7F	/* b**(1-p) */
+#define FLT_DIG		6		/* floor((p-1)*log10(b))+(b == 10) */
+#define FLT_MIN_EXP	(-127)		/* emin */
+#define FLT_MIN		2.93873588E-39F	/* b**(emin-1) */
+#define FLT_MIN_10_EXP	(-38)		/* ceil(log10(b**(emin-1))) */
+#define FLT_MAX_EXP	127		/* emax */
+#define FLT_MAX		1.70141173E+38F	/* (1-b**(-p))*b**emax */
+#define FLT_MAX_10_EXP	38		/* floor(log10((1-b**(-p))*b**emax)) */
 
-#define	DBL_MANT_DIG	56
-#define	DBL_EPSILON	2.77555756156289135E-17
-#define	DBL_DIG		16
-#define	DBL_MIN_EXP	(-127)
-#define	DBL_MIN		2.93873587705571877E-39
-#define	DBL_MIN_10_EXP	(-38)
-#define	DBL_MAX_EXP	127
-#define	DBL_MAX		1.70141183460469229E+38
-#define	DBL_MAX_10_EXP	38
+#define DBL_MANT_DIG	56
+#define DBL_EPSILON	2.77555756156289135E-17
+#define DBL_DIG		16
+#define DBL_MIN_EXP	(-127)
+#define DBL_MIN		2.93873587705571877E-39
+#define DBL_MIN_10_EXP	(-38)
+#define DBL_MAX_EXP	127
+#define DBL_MAX		1.70141183460469229E+38
+#define DBL_MAX_10_EXP	38
 
-#define	LDBL_MANT_DIG	DBL_MANT_DIG
-#define	LDBL_EPSILON	DBL_EPSILON
-#define	LDBL_DIG	DBL_DIG
-#define	LDBL_MIN_EXP	DBL_MIN_EXP
-#define	LDBL_MIN	DBL_MIN
-#define	LDBL_MIN_10_EXP	DBL_MIN_10_EXP
-#define	LDBL_MAX_EXP	DBL_MAX_EXP
-#define	LDBL_MAX	DBL_MAX
-#define	LDBL_MAX_10_EXP	DBL_MAX_10_EXP
+#define LDBL_MANT_DIG	DBL_MANT_DIG
+#define LDBL_EPSILON	DBL_EPSILON
+#define LDBL_DIG	DBL_DIG
+#define LDBL_MIN_EXP	DBL_MIN_EXP
+#define LDBL_MIN	DBL_MIN
+#define LDBL_MIN_10_EXP	DBL_MIN_10_EXP
+#define LDBL_MAX_EXP	DBL_MAX_EXP
+#define LDBL_MAX	DBL_MAX
+#define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
 
 #endif	/* _VAX_FLOAT_H_ */
