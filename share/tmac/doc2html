@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.16 2000/03/05 18:40:07 kleink Exp $
+.\" $NetBSD: doc2html,v 1.17 2000/05/14 14:13:53 veego Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -564,7 +564,6 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .if !\\n(.$==1 .tm Usage: .Lb [library name]
 .if "\\$1"libarm32" \&ARM32 Architecture Library (libarm32, -larm32)
 .if "\\$1"libi386" \&i386 Architecture Library (libi386, -li386)
-.if "\\$1"libahdi" \&AHDI Disk Partition Library (libahdi, -lahdi)
 .if "\\$1"libc" \&Standard C Library (libc, -lc)
 .if "\\$1"libcompat" \&Compatibility Library (libcompat, -lcompat)
 .if "\\$1"libcrypt" \&Crypt Library (libcrypt, -lcrypt)
