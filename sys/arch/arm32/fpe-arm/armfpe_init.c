@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.3 1996/02/15 22:45:32 mark Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.4 1996/02/23 22:20:43 mark Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -40,7 +40,7 @@
  *
  * Created      : 22/10/95
  *
- *    $Id: armfpe_init.c,v 1.3 1996/02/15 22:45:32 mark Exp $
+ *    $Id: armfpe_init.c,v 1.4 1996/02/23 22:20:43 mark Exp $
  */
 
 /*#define DEBUG*/
@@ -151,7 +151,6 @@ initialise_arm_fpe(cpu)
 
 /* Return with start failure so the old FPE is installed */
 
-	strcat(cpu->fpu_model, " - insecure");
 /*	strcat(cpu->fpu_model, " - boot aborted");*/
 
 	return(0);
