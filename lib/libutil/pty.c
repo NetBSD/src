@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.9 1998/01/22 15:23:05 perry Exp $	*/
+/*	$NetBSD: pty.c,v 1.10 1998/01/22 15:29:14 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.3 (Berkeley) 5/16/94";
 #else
-__RCSID("$NetBSD: pty.c,v 1.9 1998/01/22 15:23:05 perry Exp $");
+__RCSID("$NetBSD: pty.c,v 1.10 1998/01/22 15:29:14 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,8 +70,8 @@ openpty(amaster, aslave, name, termp, winp)
 	struct winsize *winp;
 {
 	static char line[] = "/dev/XtyXX";
-	register const char *cp1, *cp2;
-	register int master, slave, ttygid;
+	const char *cp1, *cp2;
+	int master, slave, ttygid;
 	struct group *gr;
 
 	if ((gr = getgrnam("tty")) != NULL)

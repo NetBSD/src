@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.6 1997/07/01 06:10:53 mikel Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.7 1998/01/22 15:29:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: ttymsg.c,v 1.6 1997/07/01 06:10:53 mikel Exp $");
+__RCSID("$NetBSD: ttymsg.c,v 1.7 1998/01/22 15:29:14 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ ttymsg(iov, iovcnt, line, tmout)
 {
 	static char device[MAXNAMLEN] = _PATH_DEV;
 	static char errbuf[1024];
-	register int cnt, fd, left, wret;
+	int cnt, fd, left, wret;
 	struct iovec localiov[6];
 	int forked = 0;
 
