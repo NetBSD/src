@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.18 2002/08/07 10:31:09 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.19 2002/08/16 11:22:13 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.18 2002/08/07 10:31:09 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.19 2002/08/16 11:22:13 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,6 +203,7 @@ struct auich_softc {
 	struct auich_dma *sc_dmas;
 
 	int sc_fixed_rate;
+	int sc_calibrated;	/* sc_ac97rate has correct value */
 	int sc_ac97rate;
 	int sc_ignore_codecready;
 
@@ -442,6 +443,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTF(ICH_DEBUG_DMA, ("auich_attach: lists %p %p %p\n",
 	    sc->dmalist_pcmo, sc->dmalist_pcmi, sc->dmalist_mici));
 
+	sc->sc_ac97rate = FIXED_RATE;
 	/* Reset codec and AC'97 */
 	auich_reset_codec(sc);
 	status = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS);
@@ -481,12 +483,10 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		auich_write_codec(sc, AC97_REG_EXTENDED_STATUS, ext_status);
 
 		/* so it claims to do variable rate, let's make sure */
-		sc->sc_ac97rate = FIXED_RATE;
 		if (auich_set_rate(sc, AUMODE_PLAY, 44100) == 44100)
 			sc->sc_fixed_rate = 0;
 		else
 			sc->sc_fixed_rate = FIXED_RATE;
-		sc->sc_ac97rate = 0;
 	} else {
 		sc->sc_fixed_rate = FIXED_RATE;
 	}
@@ -597,8 +597,10 @@ auich_open(void *v, int flags)
 {
 	struct auich_softc *sc = v;
 
-	if (!sc->sc_fixed_rate && sc->sc_ac97rate == 0)
+	if (!sc->sc_fixed_rate && !sc->sc_calibrated) {
 		sc->sc_ac97rate = auich_calibrate(sc);
+		sc->sc_calibrated = TRUE;
+	}
 	return 0;
 }
 
