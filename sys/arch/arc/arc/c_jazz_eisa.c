@@ -1,4 +1,4 @@
-/*	$NetBSD: c_jazz_eisa.c,v 1.4 2003/01/31 22:01:13 tsutsui Exp $	*/
+/*	$NetBSD: c_jazz_eisa.c,v 1.5 2003/05/04 10:37:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -162,12 +162,17 @@ c_jazz_eisa_cons_init()
 #endif
 
 #if NVGA_ISA > 0
-		if (vga_isa_cnattach(&arc_bus_io, &arc_bus_mem) == 0) {
+		if (strcmp(arc_displayc_id, "necvdfrb") == 0
+			/* NEC RISCserver 2200 R4400 EISA [NEC-R96] */
+			/* NEC Express5800/240 R4400 EISA [NEC-J96A] */
+		    ) {
+			if (vga_isa_cnattach(&arc_bus_io, &arc_bus_mem) == 0) {
 #if NPCKBC_JAZZIO > 0
-			pckbc_cnattach(&jazzio_bus, PICA_SYS_KBD,
-			    JAZZIO_KBCMDP, PCKBC_KBD_SLOT);
+				pckbc_cnattach(&jazzio_bus, PICA_SYS_KBD,
+				    JAZZIO_KBCMDP, PCKBC_KBD_SLOT);
 #endif
-			return;
+				return;
+			}
 		}
 #endif
 
