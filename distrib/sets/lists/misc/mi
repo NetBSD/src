@@ -1,10 +1,15 @@
-# $NetBSD: mi,v 1.46 2000/11/08 11:11:29 wiz Exp $
+# $NetBSD: mi,v 1.47 2000/11/10 02:00:09 wiz Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
 ./usr/share/dict/web2
 ./usr/share/dict/web2a
 ./usr/share/dict/words
+./usr/share/doc/html/bzip2/manual_1.html
+./usr/share/doc/html/bzip2/manual_2.html
+./usr/share/doc/html/bzip2/manual_3.html
+./usr/share/doc/html/bzip2/manual_4.html
+./usr/share/doc/html/bzip2/manual_toc.html
 ./usr/share/doc/html/ntp/Oncore-SHMEM.htm
 ./usr/share/doc/html/ntp/accopt.htm
 ./usr/share/doc/html/ntp/assoc.htm
