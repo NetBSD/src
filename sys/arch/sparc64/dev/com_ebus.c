@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.1 2000/09/21 22:25:08 eeh Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.2 2000/11/08 23:24:12 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -157,7 +157,6 @@ com_ebus_attach(parent, self, aux)
 
 	com_attach_subr(sc);
 
-printf("com_ebus: orig cn_tab %p\n", cn_tab);
 	kma.kmta_consdev = NULL;
 	if (com_ebus_isconsole(ea->ea_node)) {
 		extern struct consdev comcons;
@@ -166,7 +165,6 @@ printf("com_ebus: orig cn_tab %p\n", cn_tab);
 		kma.kmta_baud = 9600;
 		kma.kmta_cflag = (CREAD | CS8 | HUPCL);
 		kma.kmta_consdev = &comcons;
-printf("com_ebus: reverted cn_tab %p\n", cn_tab);
 	}
 
 #if (NKBD > 0) || (NMS > 0)
@@ -196,12 +194,10 @@ printf("com_ebus: reverted cn_tab %p\n", cn_tab);
 #endif
 	if (kma.kmta_consdev) {
 		/* Attach com as the console. */
-printf("com_ebus: comcnattach at %d baud\n", kma.kmta_baud);
 		if (comcnattach(sc->sc_iot, sc->sc_iobase, kma.kmta_baud,
 			sc->sc_frequency, kma.kmta_cflag)) {
 			printf("Error: comcnattach failed\n");
 		}
-printf("com_ebus: setting cn_tab %p to %p\n", cn_tab, kma.kmta_consdev);
 		/*
 		 * If we're the keyboard then we need the original
 		 * cn_tab w/prom I/O, which sunkbd copied into kma.
