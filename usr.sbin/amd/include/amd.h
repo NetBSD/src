@@ -1,4 +1,4 @@
-/*	$NetBSD: amd.h,v 1.6 1999/02/01 19:05:13 christos Exp $	*/
+/*	$NetBSD: amd.h,v 1.6.2.1 1999/09/21 04:57:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amd.h,v 1.2 1999/01/10 21:53:40 ezk Exp 
+ * Id: amd.h,v 1.3 1999/02/04 07:24:14 ezk Exp 
  *
  */
 
@@ -282,6 +282,7 @@ extern bool_t xdr_mountres3(XDR *xdrs, mountres3 *objp);
 #ifdef HAVE_FS_AUTOFS
 extern SVCXPRT *autofsxprt;
 extern u_short autofs_port;
+extern int amd_use_autofs;
 
 extern int autofs_mount(am_node *mp);
 extern int autofs_umount(am_node *mp);
