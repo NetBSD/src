@@ -1,4 +1,4 @@
-/* $NetBSD: selection.c,v 1.7 2004/01/05 12:01:52 jmmv Exp $ */
+/* $NetBSD: selection.c,v 1.8 2004/01/20 22:11:02 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: selection.c,v 1.7 2004/01/05 12:01:52 jmmv Exp $");
+__RCSID("$NetBSD: selection.c,v 1.8 2004/01/20 22:11:02 matt Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -44,7 +44,6 @@ __RCSID("$NetBSD: selection.c,v 1.7 2004/01/05 12:01:52 jmmv Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,7 +61,7 @@ __RCSID("$NetBSD: selection.c,v 1.7 2004/01/05 12:01:52 jmmv Exp $");
 int  selection_startup(struct mouse *m);
 int  selection_cleanup(void);
 void selection_wsmouse_event(struct wscons_event);
-void selection_wscons_event(struct wscons_event, bool);
+void selection_wscons_event(struct wscons_event, int);
 void selection_poll_timeout(void);
 
 struct mode_bootstrap Selection_Mode = {
@@ -310,7 +309,7 @@ selection_wsmouse_event(struct wscons_event evt)
 
 /* Parse wscons status events. */
 void
-selection_wscons_event(struct wscons_event evt, bool preclose)
+selection_wscons_event(struct wscons_event evt, int preclose)
 {
 
 	switch (evt.type) {
