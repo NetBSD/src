@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.182 2003/03/14 22:46:05 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.183 2003/03/15 12:23:34 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.182 2003/03/14 22:46:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.183 2003/03/15 12:23:34 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -3232,8 +3232,8 @@ sis_chip_map(sc, pa)
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
-	printf("Silicon Integrated System ");
-	pci_find_device(pa, sis_hostbr_match);
+	printf(": Silicon Integrated System ");
+	pci_find_device(NULL, sis_hostbr_match);
 	if (sis_hostbr_type_match) {
 		if (sis_hostbr_type_match->type == SIS_TYPE_SOUTH) {
 			pciide_pci_write(sc->sc_pc, sc->sc_tag, SIS_REG_57,
@@ -3247,7 +3247,7 @@ sis_chip_map(sc, pa)
 				sc->sc_wdcdev.UDMA_cap =
 			    	    sis_hostbr_type_match->udma_mode;
 			} else {
-				if (pci_find_device(pa, sis_south_match)) {
+				if (pci_find_device(NULL, sis_south_match)) {
 					sc->sis_type = SIS_TYPE_133OLD;
 					sc->sc_wdcdev.UDMA_cap =
 				    	    sis_hostbr_type_match->udma_mode;
@@ -3258,19 +3258,19 @@ sis_chip_map(sc, pa)
 				}
 			}
 		} else {
-			printf(sis_hostbr_type_match->name);
 			sc->sis_type = sis_hostbr_type_match->type;
 			sc->sc_wdcdev.UDMA_cap =
 		    	    sis_hostbr_type_match->udma_mode;
 		}
+		printf(sis_hostbr_type_match->name);
 	} else {
 		printf("5597/5598");
-		sc->sis_type = 0;
 		if (rev >= 0xd0) {
-			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 			sc->sc_wdcdev.UDMA_cap = 2;
+			sc->sis_type = SIS_TYPE_66;
 		} else {
 			sc->sc_wdcdev.UDMA_cap = 0;
+			sc->sis_type = SIS_TYPE_NOUDMA;
 		}
 	}
 	printf(" IDE controller (rev. 0x%02x)\n", PCI_REVISION(pa->pa_class));
@@ -3487,6 +3487,7 @@ sis_setup_channel(chp)
 		}
 		idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 pio:		switch (sc->sis_type) {
+		case SIS_TYPE_NOUDMA:
 		case SIS_TYPE_66:
 		case SIS_TYPE_100OLD:
 			sis_tim |= sis_pio_act[drvp->PIO_mode] <<
