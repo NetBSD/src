@@ -1,9 +1,9 @@
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.42 1995/03/10 07:17:05 jtc Exp $
+#	$Id: Makefile,v 1.43 1995/04/21 04:42:34 cgd Exp $
 
 # not yet done: catman
 
-SUBDIR=	ac accton amd arp bootpd bootpgw bootpef bootptest \
+SUBDIR=	ac accton arp bootpd bootpgw bootpef bootptest \
 	chown chroot config config.new cron dev_mkdb \
 	diskpart edquota gettable htable inetd iostat kgmon \
 	kvm_mkdb lpr mrouted mtree named netgroup_mkdb portmap \
@@ -12,6 +12,11 @@ SUBDIR=	ac accton amd arp bootpd bootpgw bootpef bootptest \
 	sa sendmail sliplogin slstats spray sysctl \
 	syslogd tcpdump timed traceroute trpt trsp update vipw vnconfig \
 	ypbind yppoll ypset zdump zic
+
+# should be listed above, but doesn't work on the Alpha.
+.if   (${MACHINE_ARCH} != "alpha") || make(clean) || make(cleandir)
+SUBDIR+=amd
+.endif
 
 .if   make(clean) || make(cleandir)
 SUBDIR+=bad144 hilinfo grfinfo
