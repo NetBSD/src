@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.61.4.5 2003/08/04 19:11:46 msaitoh Exp $	*/
+/*	$NetBSD: in.c,v 1.61.4.6 2003/11/30 19:01:32 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -592,6 +592,9 @@ in_purgeif(ifp)
 	in_purgemkludge(ifp);
 
 	igmp_purgeif(ifp);
+#ifdef MROUTING
+	ip_mrouter_detach(ifp);
+#endif
 }
 
 /*
