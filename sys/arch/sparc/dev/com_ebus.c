@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.3 2002/03/12 00:32:30 uwe Exp $ */
+/*	$NetBSD: com_ebus.c,v 1.4 2002/04/12 19:34:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ com_ebus_attach(parent, self, aux)
 	sc->sc_iot = ea->ea_bustag;
 	sc->sc_iobase = EBUS_ADDR_FROM_REG(&ea->ea_reg[0]);
 	sc->sc_frequency = COM_FREQ;
+	sc->sc_hwflags = COM_HW_NO_TXPRELOAD;
 
 	/*
 	 * XXX: It would be nice to be able to split console input and
