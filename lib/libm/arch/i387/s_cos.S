@@ -35,6 +35,8 @@
 
 #include <machine/asm.h>
 
+RCSID("$Id: s_cos.S,v 1.3 1994/03/12 01:30:37 jtc Exp $")
+
 ENTRY(cos)
 	fldl	4(%esp)
 	fcos

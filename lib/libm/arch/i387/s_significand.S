@@ -35,6 +35,8 @@
 
 #include <machine/asm.h>
 
+RCSID("$Id: s_significand.S,v 1.2 1994/03/12 01:30:48 jtc Exp $")
+
 ENTRY(significand)
 	fldl	4(%esp)
 	fxtract

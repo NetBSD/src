@@ -35,6 +35,8 @@
 
 #include <machine/asm.h>
 
+RCSID("$Id: e_sqrt.S,v 1.2 1994/03/12 01:30:33 jtc Exp $")
+
 ENTRY(__ieee754_sqrt)
 	fldl	4(%esp)
 	fsqrt

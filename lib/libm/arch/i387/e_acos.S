@@ -35,6 +35,8 @@
 
 #include <machine/asm.h>
 
+RCSID("$Id: e_acos.S,v 1.2 1994/03/12 01:30:22 jtc Exp $")
+
 /* acos = atan (sqrt(1 - x^2) / x) */
 ENTRY(__ieee754_acos)
 	fldl	4(%esp)			/* x */
