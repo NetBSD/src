@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.33 1995/12/18 23:58:33 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.34 1996/02/06 02:03:46 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -1530,7 +1530,12 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 					return 1;
 				}
 				if ((ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) != 2) {
-printf("<RESELECT: %d bytes in FIFO>", ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF);
+					printf("%s: RESELECT: %d bytes in FIFO!\n",
+						sc->sc_dev.dv_xname,
+						ESP_READ_REG(sc, ESP_FFLAG) &
+						ESPFIFO_FF);
+					esp_init(sc, 1);
+					return 1;
 				}
 				sc->sc_selid = ESP_READ_REG(sc, ESP_FIFO);
 				sc->sc_selid &= ~(1<<sc->sc_id);
