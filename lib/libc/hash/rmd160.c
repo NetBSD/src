@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160.c,v 1.2 2000/07/05 13:51:32 ad Exp $	*/
+/*	$NetBSD: rmd160.c,v 1.3 2000/07/06 02:50:22 christos Exp $	*/
 
 /********************************************************************\
  *
@@ -20,7 +20,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rmd160.c,v 1.2 2000/07/05 13:51:32 ad Exp $");
+__RCSID("$NetBSD: rmd160.c,v 1.3 2000/07/06 02:50:22 christos Exp $");
 #endif	/* not lint */
 
 /* header files */
@@ -392,7 +392,7 @@ RMD160Final(u_char digest[20], RMD160_CTX *context)
 #endif
 
 	/* append the bit m_n == 1 */
-	context->bbuffer[context->buflen] = '\200';
+	context->bbuffer[context->buflen] = (u_char)'\200';
 
 	(void)memset(context->bbuffer + context->buflen + 1, 0,
 		63 - context->buflen);
