@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.73 1994/01/11 17:51:40 mycroft Exp $
+ *	$Id: machdep.c,v 1.74 1994/01/11 19:19:01 brezak Exp $
  */
 
 #include <stddef.h>
@@ -522,7 +522,29 @@ sigreturn(p, uap, retval)
 	    (eflags & PSL_IOPL) > (tf->tf_eflags & PSL_IOPL))
 		return(EINVAL);
 
-	/* XXXXXX NEED TO VALIDATE SEGMENT REGISTERS */
+	/*
+	 * Sanity check the user's selectors and error if they
+	 * are suspect.
+	 */
+#define max_ldt_sel(pcb) \
+	((((pcb)->pcb_ldt)? \
+	    (gdt_segs[GUSERLDT_SEL].ssd_limit + 1) : \
+		sizeof(ldt))/sizeof(union descriptor))
+
+#define valid_sel(sel) \
+	(((sel) == 0) || \
+	  (ISPL((sel)) == SEL_UPL && ISLDT((sel))) || \
+	  (ISLDT((sel)) && IDXSEL((sel)) < max_ldt_sel((struct pcb *)(p->p_addr))))
+
+	if (scp->sc_cs&0xffff != _ucodesel || scp->sc_ss&0xffff != _udatasel ||
+	    scp->sc_ds&0xffff != _udatasel || scp->sc_es&0xffff != _udatasel) {
+		if (!valid_sel(scp->sc_cs) || !valid_sel(scp->sc_ss) ||
+		    !valid_sel(scp->sc_ds) || !valid_sel(scp->sc_es)) {
+		    trapsignal(p, SIGBUS, T_PROTFLT);
+		    return(EINVAL);
+		}
+	}
+#undef valid_sel
 
 	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
 	p->p_sigmask = scp->sc_mask &~
