@@ -31,10 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rtsock.c	7.18 (Berkeley) 6/27/91
- *	$Id: rtsock.c,v 1.3 1993/05/22 11:42:21 cgd Exp $
+ *	$Id: rtsock.c,v 1.4 1993/09/04 00:00:20 jtc Exp $
  */
 
 #include "param.h"
+#include "systm.h"
 #include "mbuf.h"
 #include "proc.h"
 #include "socket.h"
