@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.86 2003/06/30 02:54:34 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.87 2003/06/30 03:00:40 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -970,3 +970,17 @@ sys/dev/ata/ata.c				1.18
 	Bump WDCC_IDENTIFY timeout to 3 seconds, as required by some drives.
 	Reported by Karl Janmar <karlj@mdstud.chalmers.se> on tech-kern.
 	[bouyer, ticket #1353]
+
+sys/dev/ata/wd.c				1.248-1.250 (via patch)
+sys/dev/ic/wdcreg.h				1.27
+
+	Add support for the getcache/setcache ioctls.
+
+	Acceptable cache operations are r and rw, not none and w
+	Properly initialise the timeout value.
+
+	Fix typo.
+
+	Rename WDSF_EN_WR_CACHE to WDSF_WRITE_CACHE_EN for consistency with
+	other subcommands.
+	[bouyer, ticket #1354]
