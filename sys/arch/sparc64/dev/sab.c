@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.15 2004/03/17 17:04:59 pk Exp $	*/
+/*	$NetBSD: sab.c,v 1.16 2004/03/21 15:08:24 pk Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.15 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.16 2004/03/21 15:08:24 pk Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1301,23 +1301,18 @@ sabtty_console_flags(sc)
 	struct sabtty_softc *sc;
 {
 	int node, channel, cookie;
-	u_int options;
 	char buf[255];
 
 	node = sc->sc_parent->sc_node;
 	channel = sc->sc_portno;
 
-	options = OF_finddevice("/options");
-
 	/* Default to channel 0 if there are no explicit prom args */
 	cookie = 0;
 
-	if (node == OF_instance_to_package(OF_stdin())) {
-		if (OF_getprop(options, "input-device", buf,
-		    sizeof(buf)) != -1) {
-			if (strcmp("ttyb", buf) == 0)
+	if (node == prom_instance_to_package(prom_stdin())) {
+		if (prom_getoption("input-device", buf, sizeof buf) == 0 &&
+			strcmp("ttyb", buf) == 0)
 				cookie = 1;
-		}
 
 		if (channel == cookie)
 			sc->sc_flags |= SABTTYF_CONS_IN;
@@ -1325,12 +1320,10 @@ sabtty_console_flags(sc)
 
 	/* Default to same channel if there are no explicit prom args */
 
-	if (node == OF_instance_to_package(OF_stdout())) {
-		if (OF_getprop(options, "output-device", buf,
-		    sizeof(buf)) != -1) {
-			if (strcmp("ttyb", buf) == 0)
+	if (node == prom_instance_to_package(prom_stdout())) {
+		if (prom_getoption("output-device", buf, sizeof buf) == 0 &&
+			strcmp("ttyb", buf) == 0)
 				cookie = 1;
-		}
 
 		if (channel == cookie)
 			sc->sc_flags |= SABTTYF_CONS_OUT;
