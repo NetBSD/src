@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.20 1998/10/14 19:33:49 kleink Exp $	*/
+/*	$NetBSD: res_init.c,v 1.21 1998/10/15 10:22:24 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.20 1998/10/14 19:33:49 kleink Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.21 1998/10/15 10:22:24 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -221,7 +221,7 @@ res_init()
 		if (!strncmp(buf, "lookup", sizeof("lookup") -1)) {
 		    char *sp = NULL;
 
-		    bzero(_res.lookups, sizeof _res.lookups);
+		    (void)memset(_res.lookups, 0, sizeof _res.lookups);
 		    cp = buf + sizeof("lookup") - 1;
 		    for (n = 0;; cp++) {
 		    	    if (n == MAXDNSLUS)
