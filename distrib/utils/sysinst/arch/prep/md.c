@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 2003/01/10 20:00:31 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.6 2003/01/12 21:49:52 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,8 +43,6 @@
 
 #include <stdio.h>
 #include <util.h>
-#define FSTYPENAMES
-#include <sys/disklabel.h>
 
 #include <machine/cpu.h>
 
