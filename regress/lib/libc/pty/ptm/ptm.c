@@ -1,4 +1,4 @@
-/*	$NetBSD: ptm.c,v 1.2 2004/05/27 03:18:19 christos Exp $	*/
+/*	$NetBSD: ptm.c,v 1.3 2004/11/11 00:03:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ptm.c,v 1.2 2004/05/27 03:18:19 christos Exp $");
+__RCSID("$NetBSD: ptm.c,v 1.3 2004/11/11 00:03:15 christos Exp $");
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -71,23 +71,28 @@ main(int argc, char *argv[])
 		err(1, "ioctl(TIOCPTMGET)");
 
 	if (strncmp(ptm.cn, "/dev/pty", 8) != 0)
-		errx(1, "bad master name %s", ptm.cn);
+		if (strncmp(ptm.cn, "/dev/null", 9) != 0)
+			errx(1, "bad master name %s", ptm.cn);
 
 	if (strncmp(ptm.sn, "/dev/tty", 8) != 0)
+		if (strncmp(ptm.sn, "/dev/pts/", 9) != 0)
 		errx(1, "bad slave name %s", ptm.sn);
 
-	if (fstat(ptm.cfd, &stm) == -1)
-		err(1, "fstat master");
-	if (stat(ptm.cn, &sts) == -1)
-		err(1, "stat master");
-	if (stm.st_rdev != sts.st_rdev)
-		errx(1, "master device mismatch %lu != %lu",
-		    (unsigned long)stm.st_rdev, (unsigned long)sts.st_rdev);
+	if (strncmp(ptm.cn, "/dev/null", 9) != 0) {
+		if (fstat(ptm.cfd, &stm) == -1)
+			err(1, "fstat master");
+		if (stat(ptm.cn, &sts) == -1)
+			err(1, "stat master");
+		if (stm.st_rdev != sts.st_rdev)
+			errx(1, "master device mismatch %lu != %lu",
+			    (unsigned long)stm.st_rdev,
+			    (unsigned long)sts.st_rdev);
+	}
 
 	if (fstat(ptm.sfd, &stm) == -1)
-		err(1, "fstat master");
+		err(1, "fstat slave");
 	if (stat(ptm.sn, &sts) == -1)
-		err(1, "stat master");
+		err(1, "stat slave");
 	if (stm.st_rdev != sts.st_rdev)
 		errx(1, "slave device mismatch %lu != %lu",
 		    (unsigned long)stm.st_rdev, (unsigned long)sts.st_rdev);
