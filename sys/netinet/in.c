@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.70 2001/11/04 20:55:25 matt Exp $	*/
+/*	$NetBSD: in.c,v 1.71 2001/11/13 00:32:35 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,6 +100,9 @@
  *
  *	@(#)in.c	8.4 (Berkeley) 1/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.71 2001/11/13 00:32:35 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
