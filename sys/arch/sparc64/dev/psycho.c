@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.17 2000/06/29 07:37:55 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.18 2000/07/03 17:42:37 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -60,6 +60,7 @@ int psycho_debug = 0x0;
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/psl.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -857,18 +858,18 @@ static int pci_ino_to_ipl_table[] = {
 	0, 0, 0, 0,	/* PCI B, Slot 0, INTA#/B#/C#/D# */
 	0, 0, 0, 0,	/* PCI B, Slot 2, INTA#/B#/C#/D# */
 	0, 0, 0, 0,	/* PCI B, Slot 3, INTA#/B#/C#/D# */
-	4,		/* SCSI */
-	6,		/* Ethernet */
+	PIL_SCSI,	/* SCSI */
+	PIL_NET,	/* Ethernet */
 	3,		/* Parallel */
-	9,		/* Audio Record */
-	9,		/* Audio Playback */
+	PIL_AUD,	/* Audio Record */
+	PIL_AUD,	/* Audio Playback */
 	14,		/* Power Fail */
 	4,		/* Keyboard/Mouse/Serial */
-	8,		/* Floppy */
+	PIL_FD,		/* Floppy */
 	14,		/* Thermal Warning */
-	12,		/* Keyboard */
-	12,		/* Mouse */
-	12,		/* Serial */
+	PIL_SER,	/* Keyboard */
+	PIL_SER,	/* Mouse */
+	PIL_SER,	/* Serial */
 	0,		/* Reserved */
 	0,		/* Reserved */
 	14,		/* Uncorrectable ECC error */
