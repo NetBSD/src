@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcbatterytable.h,v 1.3 2001/08/02 11:21:27 sato Exp $	*/
+/*	$NetBSD: hpcbatterytable.h,v 1.4 2003/12/27 07:27:22 shin Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 SATO Kazumi
@@ -211,6 +211,7 @@ struct platid_data hpcbattery_parameters[] = {
 	{ &platid_mask_MACH_NEC_MCR_700, &hpcbattery_mcr700_spec }, 
 	{ &platid_mask_MACH_NEC_MCR_700A, &hpcbattery_mcr700_spec }, /* XXX */
 	{ &platid_mask_MACH_NEC_MCR_730, &hpcbattery_mcr700_spec }, /* XXX */
+	{ &platid_mask_MACH_NEC_MCR_730A, &hpcbattery_mcr700_spec }, /* XXX */
 #endif /* hpcmips */
 	{ NULL, NULL }	/* terminator, don't delete */
 };
