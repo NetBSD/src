@@ -1,4 +1,4 @@
-.\"	$NetBSD: screenblank.1,v 1.10 2002/01/23 16:57:51 lukem Exp $
+.\"	$NetBSD: screenblank.1,v 1.11 2002/01/24 01:34:13 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,9 +43,10 @@
 .Sh SYNOPSIS
 .Nm screenblank
 .Op Fl k | Fl m
-.Op Fl d Ar timeout
-.Op Fl e Ar timeout
+.Op Fl d Ar inactivity-timeout
+.Op Fl e Ar wakeup-delay
 .Op Fl f Ar framebuffer
+.Op Fl i Ar input-device
 .Sh DESCRIPTION
 .Nm
 disables the framebuffer if the keyboard and mouse are idle for a period
@@ -63,14 +64,14 @@ The options are as follows:
 Do not check the keyboard for activity.
 .It Fl m
 Do not check the mouse for activity.
-.It Fl d Ar timeout
+.It Fl d Ar inactivity-timeout
 Wait the number of seconds specified by
-.Ar timeout ,
+.Ar inactivity-timeout ,
 expressed in the format `xxx.xxx', before disabling the framebuffer due to
 inactivity.  The default is 600 seconds (10 minutes).
-.It Fl e Ar timeout
+.It Fl e Ar wakeup-delay
 Wait the number of seconds specified by
-.Ar timeout ,
+.Ar wakeup-delay ,
 expressed in the format `xxx.xxx', before re-enabling the framebuffer once
 activity resumes.  The default is .25 seconds.
 .It Fl f Ar framebuffer
@@ -78,6 +79,10 @@ Use the framebuffer device
 .Ar framebuffer
 instead of the default
 .Pa /dev/fb .
+.It Fl i Ar input-device
+Add
+.Ar input-device
+to the list of devices to monitor for activity.
 .El
 .Pp
 Note that the

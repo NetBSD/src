@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.17 2002/01/23 17:30:17 lukem Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.18 2002/01/24 01:34:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996-2002 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.17 2002/01/23 17:30:17 lukem Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.18 2002/01/24 01:34:13 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -116,7 +116,7 @@ main(int argc, char *argv[])
 	timo_off.tv_sec = 0;
 	timo_off.tv_usec = 250000;
 
-	while ((ch = getopt(argc, argv, "d:e:f:km")) != -1) {
+	while ((ch = getopt(argc, argv, "d:e:f:i:km")) != -1) {
 		switch (ch) {
 		case 'd':
 			cvt_arg(optarg, &timo_on);
@@ -129,6 +129,10 @@ main(int argc, char *argv[])
 		case 'f':
 			fflag = 1;
 			add_dev(optarg, 1);
+			break;
+
+		case 'i':
+			add_dev(optarg, 0);
 			break;
 
 		case 'k':
@@ -387,7 +391,8 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-k | -m] [-d timeout] [-e timeout] [-f framebuffer]\n",
+	    "Usage: %s [-k | -m] [-d inactivity-timeout] [-e wakeup-delay]\n"
+	    "\t\t[-f framebuffer] [-i input-device]\n",
 	    getprogname());
 	exit(1);
 }
