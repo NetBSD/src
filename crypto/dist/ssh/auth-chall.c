@@ -1,5 +1,6 @@
+/*	$NetBSD: auth-chall.c,v 1.2.2.3 2001/12/10 23:52:21 he Exp $	*/
 /*
- * Copyright (c) 2001 Markus Friedl. All rights reserved.
+ * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,40 +24,60 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-chall.c,v 1.4 2001/02/04 15:32:22 stevesk Exp $");
+RCSID("$OpenBSD: auth-chall.c,v 1.8 2001/05/18 14:13:28 markus Exp $");
 
 #include "auth.h"
+#include "log.h"
+#include "xmalloc.h"
 
-#ifdef SKEY
-#include <skey.h>
+/* limited protocol v1 interface to kbd-interactive authentication */
+
+extern KbdintDevice *devices[];
+static KbdintDevice *device;
 
 char *
-get_challenge(Authctxt *authctxt, char *devs)
+get_challenge(Authctxt *authctxt)
 {
-	static char challenge[1024];
-	struct skey skey;
-	if (skeychallenge(&skey, authctxt->user, challenge, sizeof(challenge)) == -1)
+	char *challenge, *name, *info, **prompts;
+	u_int i, numprompts;
+	u_int *echo_on;
+
+	device = devices[0]; /* we always use the 1st device for protocol 1 */
+	if (device == NULL)
 		return NULL;
-	strlcat(challenge, "\nS/Key Password: ", sizeof challenge);
-	return challenge;
+	if ((authctxt->kbdintctxt = device->init_ctx(authctxt)) == NULL)
+		return NULL;
+	if (device->query(authctxt->kbdintctxt, &name, &info,
+	    &numprompts, &prompts, &echo_on)) {
+		device->free_ctx(authctxt->kbdintctxt);
+		authctxt->kbdintctxt = NULL;
+		return NULL;
+	}
+	if (numprompts < 1)
+		fatal("get_challenge: numprompts < 1");
+	challenge = xstrdup(prompts[0]);
+	for (i = 0; i < numprompts; i++)
+		xfree(prompts[i]);
+	xfree(prompts);
+	xfree(name);
+	xfree(echo_on);
+	xfree(info);
+
+	return (challenge);
 }
 int
-verify_response(Authctxt *authctxt, char *response)
+verify_response(Authctxt *authctxt, const char *response)
 {
-	return (authctxt->valid &&
-	    skey_haskey(authctxt->pw->pw_name) == 0 &&
-	    skey_passcheck(authctxt->pw->pw_name, response) != -1);
+	char *resp[1];
+	int res;
+
+	if (device == NULL)
+		return 0;
+	if (authctxt->kbdintctxt == NULL)
+		return 0;
+	resp[0] = (char *)response;
+	res = device->respond(authctxt->kbdintctxt, 1, resp);
+	device->free_ctx(authctxt->kbdintctxt);
+	authctxt->kbdintctxt = NULL;
+	return res ? 0 : 1;
 }
-#else
-/* not available */
-char *
-get_challenge(Authctxt *authctxt, char *devs)
-{
-	return NULL;
-}
-int
-verify_response(Authctxt *authctxt, char *response)
-{
-	return 0;
-}
-#endif

@@ -1,7 +1,8 @@
-/*	$OpenBSD: atomicio.h,v 1.2 2001/01/29 01:58:14 niklas Exp $	*/
+/*	$NetBSD: atomicio.h,v 1.2.2.3 2001/12/10 23:52:21 he Exp $	*/
+/*	$OpenBSD: atomicio.h,v 1.4 2001/06/26 06:32:46 itojun Exp $	*/
 
 /*
- * Copyright (c) 1995,1999 Theo de Raadt
+ * Copyright (c) 1995,1999 Theo de Raadt.  All rights reserved.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

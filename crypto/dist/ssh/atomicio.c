@@ -1,5 +1,6 @@
+/*	$NetBSD: atomicio.c,v 1.1.1.1.2.3 2001/12/10 23:52:21 he Exp $	*/
 /*
- * Copyright (c) 1995,1999 Theo de Raadt
+ * Copyright (c) 1995,1999 Theo de Raadt.  All rights reserved.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,9 +25,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: atomicio.c,v 1.8 2001/01/21 19:05:40 markus Exp $");
+RCSID("$OpenBSD: atomicio.c,v 1.10 2001/05/08 22:48:07 markus Exp $");
 
-#include "xmalloc.h"
 #include "atomicio.h"
 
 ssize_t
