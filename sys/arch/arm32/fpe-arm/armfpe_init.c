@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.8 1996/06/12 19:37:03 mark Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.9 1996/08/21 20:21:05 mark Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- * This product includes software developed by Brini.
+ *      This product includes software developed by Mark Brinicombe.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
@@ -40,8 +40,6 @@
  *
  * Created      : 22/10/95
  */
-
-/*#define DEBUG*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +72,8 @@ void arm_fpe_post_proc_glue __P(());
  * A module header, pointing into the module
  */
 
-extern u_int arm_fpe_mod[]; 
+extern u_int fpe_arm_start[];
+extern arm_fpe_mod_hdr_t fpe_arm_header;
 extern u_int undefined_handler_address;
 
 /*
@@ -90,39 +89,6 @@ static char *exception_errors[] = {
 	"Floating point major faliure... core fault trapped... not good!"
 };
 
-/*
- * Relocate the FPE.
- */
-
-void
-arm_fpe_mod_reloc(void)
-{
-	int cnt;
-
-	/* Go through the module header, and convert all offsets into absolute
-	 * addresses. Careful here - the last two fields of the header do _NOT_
-	 * want to be relocated!
-	 */
-
-	for (cnt = 0; cnt < (sizeof(arm_fpe_mod_hdr_t) >> 2) - 2; cnt ++) {
-#ifdef DEBUG
-		printf("FPE: entry %02x = %08x ", cnt, arm_fpe_mod[cnt]);
-#endif
-		arm_fpe_mod[cnt] += (u_int) arm_fpe_mod;
-#ifdef DEBUG
-		printf(" reloc=%08x\n", arm_fpe_mod[cnt]);
-#endif
-	}
-	/* Print a startup message, and a couple of variables needed, these may need
-	 * checking to make *sure* they are OK!
-	 */
-
-#ifdef DEBUG
-	printf("FPE: global workspace size = %d bytes, context size = %d bytes\n",
-	    arm_fpe_mod_hdr->WorkspaceLength, arm_fpe_mod_hdr->ContextLength);
-	printf("FPE: base=%08x\n", (u_int)arm_fpe_mod);
-#endif
-}
 
 /*
  * Initialisation point. The kernel calls this during the configuration of the cpu
@@ -167,32 +133,28 @@ arm_fpe_boot(cpu)
 {
 	u_int workspace;
 	int id;
-	arm_fpe_mod_hdr_t *arm_fpe_mod_hdr = (arm_fpe_mod_hdr_t *)arm_fpe_mod;
 	
 	/* First things first ... Relocate the FPE pointers */
 
-	arm_fpe_mod_reloc();
+#ifdef DEBUG
+	/* Print a bit of debugging info */
+	printf("FPE: base=%08x\n", (u_int)fpe_arm_start);
+	printf("FPE: global workspace size = %d bytes, context size = %d bytes\n",
+	    fpe_arm_header.WorkspaceLength, fpe_arm_header.ContextLength);
+#endif
 
 	/* Now we must do some memory allocation */
 
-	workspace = (u_int)malloc(arm_fpe_mod_hdr->WorkspaceLength, M_DEVBUF, M_NOWAIT);
-#ifdef DEBUG
-	printf("Gloabl workspace at 0x%08x\n", workspace);
-#endif
-
+	workspace = (u_int)malloc(fpe_arm_header.WorkspaceLength, M_DEVBUF, M_NOWAIT);
 	if (!workspace)
 		return(ENOMEM);
 
-	*arm_fpe_mod_hdr->main_ws_ptr_addr = workspace;
+	*fpe_arm_header.main_ws_ptr_addr = workspace;
 
-	*arm_fpe_mod_hdr->local_handler_ptr_addr = (u_int)&undefined_handler_address;
-	*arm_fpe_mod_hdr->old_handler_ptr_addr = undefined_handler_address;
+	*fpe_arm_header.local_handler_ptr_addr = (u_int)&undefined_handler_address;
+	*fpe_arm_header.old_handler_ptr_addr = undefined_handler_address;
 
 	/* Initialise out gloable workspace */
-
-#ifdef DEBUG
-	printf("Initing workspace ");
-#endif
 
 	id = arm_fpe_core_initws(workspace, (u_int)&fpe_nexthandler, (u_int)&fpe_nexthandler);
 
@@ -202,28 +164,23 @@ arm_fpe_boot(cpu)
 	}
 
 #ifdef DEBUG
-	printf("id=%08x\n", id);
+	printf("fpe id=%08x\n", id);
 #endif
 
 	/* Set up an exception handler */
 
-	*arm_fpe_mod_hdr->exc_handler_ptr_addr = (u_int)arm_fpe_exception_glue;
-
+	*fpe_arm_header.exc_handler_ptr_addr = (u_int)arm_fpe_exception_glue;
 	/* Set up post instruction handler */
-#if defined(CPU_ARM6) || defined(CPU_ARM7)
-	*arm_fpe_mod_hdr->fp_post_proc_addr = (((((u_int)arm_fpe_post_proc_glue -
-	    (u_int)arm_fpe_mod_hdr->fp_post_proc_addr - 8)>>2) & 0x00ffffff) | 0xea000000);
+#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7500)
+	*fpe_arm_header.fp_post_proc_addr = (((((u_int)arm_fpe_post_proc_glue -
+	    (u_int)fpe_arm_header.fp_post_proc_addr - 8)>>2) & 0x00ffffff) | 0xea000000);
 #ifdef DEBUG
-	printf("arm_fpe_mod_hdr->fp_post_proc_addr = %08x (%08x)",
-	    arm_fpe_mod_hdr->fp_post_proc_addr,
-	    *arm_fpe_mod_hdr->fp_post_proc_addr);
+	printf("fpe_arm_header.fp_post_proc_addr = %08x (%08x)",
+	    (u_int)fpe_arm_header.fp_post_proc_addr,
+	    (u_int)*fpe_arm_header.fp_post_proc_addr);
 #endif
 #else
-#error ARMFPE currently only supports ARM6 and ARM7
-#endif
-
-#ifdef DEBUG
-	printf("Initialising proc0 FPE context\n");
+#error ARMFPE currently only supports ARM6 and ARM7 cores
 #endif
 
 	/* Initialise proc0's FPE context */
@@ -251,7 +208,7 @@ arm_fpe_postproc(fpframe, frame)
 	p = curproc;
 	p->p_md.md_regs = frame;
 
-/* take pending signals */
+	/* take pending signals */
 
 	while ((sig = (CURSIG(p))) != 0) {
 		postsig(sig);
@@ -281,18 +238,17 @@ arm_fpe_postproc(fpframe, frame)
 		}
 	}
 
-/* Profiling. */
+	/* Profiling. */
 
 	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
 		u_int pc;
 
 		pc = ReadWord(fpframe + 15*4);
-
-		if (pc <0x1000 || pc > 0xefc00000)
-			printf("armfpe_postproc: pc=%08x\n", pc);
-
-/*		addupc_task(p, pc, (int)(p->p_sticks - sticks) * psratio);*/
+#ifdef DIAGNOSTIC
+		if (pc < 0x1000 || pc > 0xefc00000)
+			panic("armfpe_postproc: pc=%08x\n", pc);
+#endif
 		addupc_task(p, pc, (int)(p->p_sticks - p->p_sticks) * psratio);
 	}
 
