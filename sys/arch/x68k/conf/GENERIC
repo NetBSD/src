@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
+#	$NetBSD: GENERIC,v 1.2 1996/06/17 06:09:30 oki Exp $
 
 #
 #	GENERIC
@@ -98,8 +98,8 @@ scsibus*	at spc?
 grfbus0 	at mainbus0		# bitmapped display's
 grf0		at grfbus0		# graphics driver
 ite0		at grf0			# console
-#fdc0		at mainbus0		# floppy controller
-#fd*		at fdc0 unit ?		# builtin floppy drive
+dc0		at mainbus0		# floppy controller
+d*		at fdc0 unit ?		# builtin floppy drive
 
 # SCSI disks
 #sd*	at scsibus? target ? lun ?
