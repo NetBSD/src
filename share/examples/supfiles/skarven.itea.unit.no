@@ -1,0 +1,10 @@
+#	$NetBSD: skarven.itea.unit.no,v 1.1 1997/11/13 03:03:06 thorpej Exp $
+#
+# Example supfile for skarven.itea.unit.no.
+#
+
+current release=allsrc host=skarven.itea.unit.no hostbase=/supmirror \
+base=/usr prefix=/usr backup use-rel-suffix compress
+
+current release=doc host=skarven.itea.unit.no hostbase=/supmirror \
+base=/usr prefix=/usr backup use-rel-suffix compress
