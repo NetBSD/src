@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.193 2000/03/04 13:23:26 tron Exp $
+$NetBSD: pcidevs,v 1.194 2000/03/06 02:31:19 mark Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1304,6 +1304,7 @@ product SYMPHONY 82C101	0x0001	82C101
 product SYMPHONY 82C103	0x0103	82C103
 product SYMPHONY 82C105	0x0105	82C105
 product SYMPHONY2 82C101	0x0001	82C101
+product SYMPHONY 83C553	0x0565	83C553 PCI-ISA Bridge
 
 /* Tekram Technology products (1st PCI Vendor ID)*/
 product TEKRAM DC290		0xdc29	DC-290(M)
@@ -1454,6 +1455,7 @@ product WD 90C		0xC24A	90C
 product WINBOND W83769F	0x0001	W83769F
 product WINBOND W89C840F 0x0840	W89C840F 10/100 Ethernet
 product WINBOND W89C940F 0x0940	W89C940F Ethernet
+product WINBOND W89C940F_1 0x5a5a	W89C940F Ethernet
 
 /* Xircom products */
 /* is the `-3' here just indicating revision 3, or is it really part
