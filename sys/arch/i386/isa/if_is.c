@@ -11,7 +11,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.27 1994/04/07 06:50:52 mycroft Exp $
+ *	$Id: if_is.c,v 1.28 1994/04/22 22:58:57 mycroft Exp $
  */
 
 /* TODO
@@ -59,6 +59,7 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isavar.h>
+#include <i386/isa/dmavar.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/if_isreg.h>
 
