@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.18 1997/01/24 00:46:49 cgd Exp $	*/
+/*	$NetBSD: iso.h,v 1.19 1997/01/24 18:31:47 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -135,17 +135,17 @@ struct iso_extended_attributes {
 	u_char len_au			[ISODCL (247, 250)]; /* 723 */
 };
 
-extern __inline int isonum_711 __P((u_char *));
-extern __inline int isonum_712 __P((char *));
-extern __inline int isonum_721 __P((u_char *));
-extern __inline int isonum_722 __P((u_char *));
-extern __inline int isonum_723 __P((u_char *));
-extern __inline int isonum_731 __P((u_char *));
-extern __inline int isonum_732 __P((u_char *));
-extern __inline int isonum_733 __P((u_char *));
+static __inline int isonum_711 __P((u_char *));
+static __inline int isonum_712 __P((char *));
+static __inline int isonum_721 __P((u_char *));
+static __inline int isonum_722 __P((u_char *));
+static __inline int isonum_723 __P((u_char *));
+static __inline int isonum_731 __P((u_char *));
+static __inline int isonum_732 __P((u_char *));
+static __inline int isonum_733 __P((u_char *));
 
 /* 7.1.1: unsigned char */
-extern __inline int
+static __inline int
 #if __STDC__
 isonum_711(u_char *p)
 #else
@@ -157,7 +157,7 @@ isonum_711(p)
 }
 
 /* 7.1.2: signed(?) char */
-extern __inline int
+static __inline int
 #if __STDC__
 isonum_712(char *p)
 #else
@@ -169,7 +169,7 @@ isonum_712(p)
 }
 
 /* 7.2.1: unsigned little-endian 16-bit value.  NOT USED IN KERNEL. */
-extern __inline int
+static __inline int
 isonum_721(p)
 	u_char *p;
 {
@@ -181,7 +181,7 @@ isonum_721(p)
 }
 
 /* 7.2.2: unsigned big-endian 16-bit value.  NOT USED IN KERNEL. */
-extern __inline int     
+static __inline int     
 isonum_722(p)
 	unsigned char *p;
 {
@@ -193,7 +193,7 @@ isonum_722(p)
 } 
 
 /* 7.2.3: unsigned both-endian (little, then big) 16-bit value */
-extern __inline int
+static __inline int
 #if __STDC__
 isonum_723(u_char *p)
 #else
@@ -214,7 +214,7 @@ isonum_723(p)
 }
 
 /* 7.3.1: unsigned little-endian 32-bit value.  NOT USED IN KERNEL. */
-extern __inline int
+static __inline int
 isonum_731(p)
 	u_char *p;
 {
@@ -226,7 +226,7 @@ isonum_731(p)
 }
 
 /* 7.3.2: unsigned big-endian 32-bit value.  NOT USED IN KERNEL. */
-extern __inline int
+static __inline int
 isonum_732(p)
 	unsigned char *p;
 {
@@ -238,7 +238,7 @@ isonum_732(p)
 }
 
 /* 7.3.3: unsigned both-endian (little, then big) 32-bit value */
-extern __inline int
+static __inline int
 #if __STDC__
 isonum_733(u_char *p)
 #else
