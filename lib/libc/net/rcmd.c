@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.39 2000/02/18 04:16:54 itojun Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.40 2000/02/24 06:33:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.39 2000/02/18 04:16:54 itojun Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.40 2000/02/24 06:33:47 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,14 +78,14 @@ int	orcmd __P((char **, u_int, const char *, const char *, const char *,
 int	orcmd_af __P((char **, u_int, const char *, const char *, const char *,
 	    int *, int));
 int	__ivaliduser __P((FILE *, u_int32_t, const char *, const char *));
-int	__ivaliduser_sa __P((FILE *, struct sockaddr *, const char *,
+int	__ivaliduser_sa __P((FILE *, struct sockaddr *, socklen_t, const char *,
 	    const char *));
 static	int rshrcmd __P((char **, u_int32_t, const char *, const char *,
 	    const char *, int *, const char *));
 static	int resrcmd __P((struct addrinfo *, char **, u_int32_t, const char *,
 	    const char *, const char *, int *));
-static	int __icheckhost __P((struct sockaddr *, const char *));
-static	char *__gethostloop __P((struct sockaddr *));
+static	int __icheckhost __P((struct sockaddr *, socklen_t, const char *));
+static	char *__gethostloop __P((struct sockaddr *, socklen_t));
 
 int
 rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
@@ -637,7 +637,9 @@ iruserok(raddr, superuser, ruser, luser)
 
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
+#ifdef BSD4_4
 	sin.sin_len = sizeof(struct sockaddr_in);
+#endif
 	memcpy(&sin.sin_addr, &raddr, sizeof(sin.sin_addr));
 	return iruserok_sa(&sin, sizeof(struct sockaddr_in), superuser, luser,
 		    ruser);
@@ -669,15 +671,12 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 	_DIAGASSERT(luser != NULL);
 
 	sa = (struct sockaddr *)raddr;
-#ifdef lint
-	rlen = rlen;
-#endif
 
 	first = 1;
 	hostf = superuser ? NULL : fopen(_PATH_HEQUIV, "r");
 again:
 	if (hostf) {
-		if (__ivaliduser_sa(hostf, sa, luser, ruser) == 0) {
+		if (__ivaliduser_sa(hostf, sa, rlen, luser, ruser) == 0) {
 			(void)fclose(hostf);
 			return (0);
 		}
@@ -748,15 +747,19 @@ __ivaliduser(hostf, raddr, luser, ruser)
 
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
+#ifdef BSD4_4
 	sin.sin_len = sizeof(struct sockaddr_in);
+#endif
 	memcpy(&sin.sin_addr, &raddr, sizeof(sin.sin_addr));
-	return __ivaliduser_sa(hostf, (struct sockaddr *)&sin, luser, ruser);
+	return __ivaliduser_sa(hostf, (struct sockaddr *)&sin,
+	    sizeof(struct sockaddr_in), luser, ruser);
 }
 
 int
-__ivaliduser_sa(hostf, raddr, luser, ruser)
+__ivaliduser_sa(hostf, raddr, salen, luser, ruser)
 	FILE *hostf;
 	struct sockaddr *raddr;
+	socklen_t salen;
 	const char *luser, *ruser;
 {
 	register char *user, *p;
@@ -812,7 +815,7 @@ __ivaliduser_sa(hostf, raddr, luser, ruser)
 
 			case '@':
 				if (firsttime) {
-					rhost = __gethostloop(raddr);
+					rhost = __gethostloop(raddr, salen);
 					firsttime = 0;
 				}
 				if (rhost)
@@ -823,7 +826,7 @@ __ivaliduser_sa(hostf, raddr, luser, ruser)
 				break;
 
 			default:
-				hostok = __icheckhost(raddr, &ahost[1]);
+				hostok = __icheckhost(raddr, salen, &ahost[1]);
 				break;
 			}
 		else if (ahost[0] == '-')
@@ -834,7 +837,7 @@ __ivaliduser_sa(hostf, raddr, luser, ruser)
 
 			case '@':
 				if (firsttime) {
-					rhost = __gethostloop(raddr);
+					rhost = __gethostloop(raddr, salen);
 					firsttime = 0;
 				}
 				if (rhost)
@@ -845,11 +848,11 @@ __ivaliduser_sa(hostf, raddr, luser, ruser)
 				break;
 
 			default:
-				hostok = -__icheckhost(raddr, &ahost[1]);
+				hostok = -__icheckhost(raddr, salen, &ahost[1]);
 				break;
 			}
 		else
-			hostok = __icheckhost(raddr, ahost);
+			hostok = __icheckhost(raddr, salen, ahost);
 
 
 		if (auser[0] == '+')
@@ -908,8 +911,9 @@ __ivaliduser_sa(hostf, raddr, luser, ruser)
  * if af == AF_INET6.
  */
 static int
-__icheckhost(raddr, lhost)
+__icheckhost(raddr, salen, lhost)
 	struct sockaddr *raddr;
+	socklen_t salen;
 	const char *lhost;
 {
 	struct addrinfo hints, *res, *r;
@@ -925,7 +929,7 @@ __icheckhost(raddr, lhost)
 	_DIAGASSERT(lhost != NULL);
 
 	h1[0] = '\0';
-	if (getnameinfo(raddr, raddr->sa_len, h1, sizeof(h1), NULL, 0,
+	if (getnameinfo(raddr, salen, h1, sizeof(h1), NULL, 0,
 	    niflags) != 0)
 		return (0);
 
@@ -966,8 +970,9 @@ __icheckhost(raddr, lhost)
  * if af == AF_INET6.
  */
 static char *
-__gethostloop(raddr)
+__gethostloop(raddr, salen)
 	struct sockaddr *raddr;
+	socklen_t salen;
 {
 	static char remotehost[NI_MAXHOST];
 	char h1[NI_MAXHOST], h2[NI_MAXHOST];
@@ -982,10 +987,10 @@ __gethostloop(raddr)
 	_DIAGASSERT(raddr != NULL);
 
 	h1[0] = remotehost[0] = '\0';
-	if (getnameinfo(raddr, raddr->sa_len, remotehost, sizeof(remotehost),
+	if (getnameinfo(raddr, salen, remotehost, sizeof(remotehost),
 	    NULL, 0, NI_NAMEREQD) != 0)
 		return (NULL);
-	if (getnameinfo(raddr, raddr->sa_len, h1, sizeof(h1), NULL, 0,
+	if (getnameinfo(raddr, salen, h1, sizeof(h1), NULL, 0,
 	    niflags) != 0)
 		return (NULL);
 
