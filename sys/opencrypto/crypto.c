@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.6 2003/11/19 03:18:33 jonathan Exp $ */
+/*	$NetBSD: crypto.c,v 1.7 2003/11/19 03:24:20 jonathan Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.6 2003/11/19 03:18:33 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.7 2003/11/19 03:24:20 jonathan Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -1026,7 +1026,7 @@ crypto_getfeat(int *featp)
 
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
 		if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE) &&
-		    crypto_devallowsoft = 0) {
+		    crypto_devallowsoft == 0) {
 			continue;
 		}
 		if (crypto_drivers[hid].cc_kprocess == NULL)
