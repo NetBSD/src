@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.6 1999/12/11 22:29:32 explorer Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.7 1999/12/13 08:25:16 itohy Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,9 +31,20 @@
 #define	_SYS_CDEFS_ELF_H_
 
 #if defined(__sh3__)
-#define _C_LABEL(x)	__CONCAT(_,x)
+#define	_C_LABEL(x)	__CONCAT(_,x)
 #else
 #define	_C_LABEL(x)	x
+#endif
+
+#ifdef __STDC__
+#define	___RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
+#else
+#if defined(__sh3__)
+#define	___RENAME(x)	____RENAME(_/**/x)
+#define	____RENAME(x)	__asm__(___STRING(x))
+#else
+#define	___RENAME(x)	__asm__(___STRING(x))
+#endif
 #endif
 
 #undef	__DO_NOT_DO_WEAK__		/* NO WEAK SYMS IN LIBC YET */
