@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.19 1995/04/22 13:26:20 cgd Exp $	*/
+/*	$NetBSD: bpf.c,v 1.20 1995/07/23 16:29:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -122,7 +122,7 @@ static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
 static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
 static void	bpf_mcopy __P((const void *, void *, size_t));
 static int	bpf_movein __P((struct uio *, int,
-		    struct mbuf **, struct sockaddr *, int *));
+		    struct mbuf **, struct sockaddr *));
 static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
 static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
 static __inline void
@@ -132,9 +132,9 @@ static void	catchpacket __P((struct bpf_d *, u_char *, size_t,
 static void	reset_d __P((struct bpf_d *));
 
 static int
-bpf_movein(uio, linktype, mp, sockp, datlen)
+bpf_movein(uio, linktype, mp, sockp)
 	register struct uio *uio;
-	int linktype, *datlen;
+	int linktype;
 	register struct mbuf **mp;
 	register struct sockaddr *sockp;
 {
@@ -191,14 +191,16 @@ bpf_movein(uio, linktype, mp, sockp, datlen)
 	}
 
 	len = uio->uio_resid;
-	*datlen = len - hlen;
 	if ((unsigned)len > MCLBYTES)
 		return (EIO);
 
-	MGET(m, M_WAIT, MT_DATA);
+	MGETHDR(m, M_WAIT, MT_DATA);
 	if (m == 0)
 		return (ENOBUFS);
-	if (len > MLEN) {
+	m->m_pkthdr.rcvif = 0;
+	m->m_pkthdr.len = len - hlen;
+
+	if (len > MHLEN) {
 #if BSD >= 199103
 		MCLGET(m, M_WAIT);
 		if ((m->m_flags & M_EXT) == 0) {
@@ -526,7 +528,6 @@ bpfwrite(dev, uio)
 	struct mbuf *m;
 	int error, s;
 	static struct sockaddr dst;
-	int datlen;
 
 	if (d->bd_bif == 0)
 		return (ENXIO);
@@ -536,11 +537,11 @@ bpfwrite(dev, uio)
 	if (uio->uio_resid == 0)
 		return (0);
 
-	error = bpf_movein(uio, (int)d->bd_bif->bif_dlt, &m, &dst, &datlen);
+	error = bpf_movein(uio, (int)d->bd_bif->bif_dlt, &m, &dst);
 	if (error)
 		return (error);
 
-	if (datlen > ifp->if_mtu)
+	if (m->m_pkthdr.len > ifp->if_mtu)
 		return (EMSGSIZE);
 
 	s = splnet();
