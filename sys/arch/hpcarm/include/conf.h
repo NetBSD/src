@@ -9,5 +9,6 @@
 #define	CONF_HAVE_USB
 
 #include "biconsdev.h"
+#include "sacom.h"
 
 #endif	/* _HPCARM_CONF_H */
