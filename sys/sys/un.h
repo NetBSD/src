@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.8 1994/06/29 06:46:05 cgd Exp $	*/
+/*	$NetBSD: un.h,v 1.9 1995/01/08 23:57:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -61,7 +61,7 @@ void	unp_gc __P((void));
 void	unp_mark __P((struct file *fp));
 void	unp_scan __P((struct mbuf *m0, void (*op) __P((struct file *))));
 void	unp_shutdown __P((struct unpcb *unp));
-#else
+#else /* !KERNEL */
 
 /* actual length of an initialized sockaddr_un */
 #define SUN_LEN(su) \

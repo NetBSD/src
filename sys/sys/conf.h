@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.17 1994/12/14 18:52:32 mycroft Exp $	*/
+/*	$NetBSD: conf.h,v 1.18 1995/01/08 23:57:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,6 +50,9 @@ struct tty;
 struct uio;
 struct vnode;
 
+/*
+ * Block device switch table
+ */
 struct bdevsw {
 	int	(*d_open)	__P((dev_t dev, int oflags, int devtype,
 				     struct proc *p));
@@ -67,6 +70,9 @@ struct bdevsw {
 extern struct bdevsw bdevsw[];
 #endif
 
+/*
+ * Character device switch table
+ */
 struct cdevsw {
 	int	(*d_open)	__P((dev_t dev, int oflags, int devtype,
 				     struct proc *p));
@@ -92,6 +98,9 @@ extern char devopn[], devio[], devwait[], devin[], devout[];
 extern char devioc[], devcls[];
 #endif
 
+/*
+ * Line discipline switch table
+ */
 struct linesw {
 	int	(*l_open)	__P((dev_t dev, struct tty *tp));
 	int	(*l_close)	__P((struct tty *tp, int flags));
@@ -110,6 +119,9 @@ struct linesw {
 extern struct linesw linesw[];
 #endif
 
+/*
+ * Swap device table
+ */
 struct swdevt {
 	dev_t	sw_dev;
 	int	sw_flags;
