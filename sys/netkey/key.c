@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.86 2003/07/25 09:04:48 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.87 2003/08/22 05:46:37 itojun Exp $	*/
 /*	$KAME: key.c,v 1.299 2003/07/25 08:48:05 sakane Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.86 2003/07/25 09:04:48 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.87 2003/08/22 05:46:37 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -182,6 +182,7 @@ static const int minsize[] = {
 	0,				/* SADB_X_EXT_KMPRIVATE */
 	sizeof(struct sadb_x_policy),	/* SADB_X_EXT_POLICY */
 	sizeof(struct sadb_x_sa2),	/* SADB_X_SA2 */
+	sizeof(struct sadb_x_tag),	/* SADB_X_TAG */
 };
 static const int maxsize[] = {
 	sizeof(struct sadb_msg),	/* SADB_EXT_RESERVED */
@@ -204,6 +205,7 @@ static const int maxsize[] = {
 	0,				/* SADB_X_EXT_KMPRIVATE */
 	0,				/* SADB_X_EXT_POLICY */
 	sizeof(struct sadb_x_sa2),	/* SADB_X_SA2 */
+	sizeof(struct sadb_x_tag),	/* SADB_X_TAG */
 };
 
 static int ipsec_esp_keymin = 256;
@@ -306,6 +308,7 @@ static struct secasvar *key_allocsa_policy __P((struct secasindex *));
 static struct secasvar *key_do_allocsa_policy __P((struct secashead *, u_int));
 static void key_delsp __P((struct secpolicy *));
 static struct secpolicy *key_getsp __P((struct secpolicyindex *, int));
+static struct secpolicy *key_getspbytag __P((u_int16_t, int));
 static struct secpolicy *key_getspbyid __P((u_int32_t));
 static u_int32_t key_newreqid __P((void));
 static struct mbuf *key_gather_mbuf __P((struct mbuf *,
@@ -349,6 +352,7 @@ static struct mbuf *key_setsadbident __P((u_int16_t, u_int16_t, caddr_t,
 	int, u_int64_t));
 #endif
 static struct mbuf *key_setsadbxsa2 __P((u_int8_t, u_int32_t, u_int32_t));
+static struct mbuf *key_setsadbxtag __P((u_int16_t));
 static struct mbuf *key_setsadblifetime __P((u_int16_t, u_int32_t,
 	u_int64_t, u_int64_t, u_int64_t));
 static struct mbuf *key_setsadbxpolicy __P((u_int16_t, u_int8_t,
@@ -439,16 +443,13 @@ struct callout key_timehandler_ch;
  *	others:	found and return the pointer.
  */
 struct secpolicy *
-key_allocsp(spidx, dir)
+key_allocsp(tag, spidx, dir)
+	u_int16_t tag;
 	struct secpolicyindex *spidx;
 	u_int dir;
 {
 	struct secpolicy *sp;
 	int s;
-
-	/* sanity check */
-	if (spidx == NULL)
-		panic("key_allocsp: NULL pointer is passed.");
 
 	/* check direction */
 	switch (dir) {
@@ -461,19 +462,31 @@ key_allocsp(spidx, dir)
 
 	/* get a SP entry */
 	s = splsoftnet();	/*called from softclock()*/
-	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
-		printf("*** objects\n");
-		kdebug_secpolicyindex(spidx));
+	if (spidx) {
+		KEYDEBUG(KEYDEBUG_IPSEC_DATA,
+			printf("*** objects\n");
+			kdebug_secpolicyindex(spidx));
+	}
 
 	LIST_FOREACH(sp, &sptree[dir], chain) {
-		KEYDEBUG(KEYDEBUG_IPSEC_DATA,
-			printf("*** in SPD\n");
-			kdebug_secpolicyindex(sp->spidx));
-
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
-		if (key_cmpspidx_withmask(sp->spidx, spidx))
-			goto found;
+		if (!sp->spidx) {
+			if (!tag)
+				continue;
+			if (sp->tag == tag)
+				goto found;
+		} else {
+			if (!spidx)
+				continue;
+
+			KEYDEBUG(KEYDEBUG_IPSEC_DATA,
+				printf("*** in SPD\n");
+				kdebug_secpolicyindex(sp->spidx));
+
+			if (key_cmpspidx_withmask(sp->spidx, spidx))
+				goto found;
+		}
 	}
 
 	splx(s);
@@ -934,7 +947,30 @@ key_getsp(spidx, dir)
 	LIST_FOREACH(sp, &sptree[dir], chain) {
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
+		if (!sp->spidx)
+			continue;
 		if (key_cmpspidx_exactly(spidx, sp->spidx)) {
+			sp->refcnt++;
+			return sp;
+		}
+	}
+
+	return NULL;
+}
+
+static struct secpolicy *
+key_getspbytag(tag, dir)
+	u_int16_t tag;
+	int dir;
+{
+	struct secpolicy *sp;
+
+	LIST_FOREACH(sp, &sptree[dir], chain) {
+		if (sp->state == IPSEC_SPSTATE_DEAD)
+			continue;
+		if (sp->spidx)
+			continue;
+		if (sp->tag == tag) {
 			sp->refcnt++;
 			return sp;
 		}
@@ -965,14 +1001,41 @@ key_getspbyid(id)
 }
 
 struct secpolicy *
-key_newsp()
+key_newsp(id)
+	u_int32_t id;
 {
-	struct secpolicy *newsp = NULL;
+	struct secpolicy *newsp = NULL, *sp;
+	u_int32_t newid;
+
+	if (id > IPSEC_MANUAL_POLICYID_MAX) {
+		ipseclog((LOG_DEBUG,
+		    "key_newsp: policy_id=%u range "
+		    "violation, updated by kernel.\n", id));
+		id = 0;
+	}
+
+	if (id == 0) {
+		if ((newid = keydb_newspid()) == 0) {
+			ipseclog((LOG_DEBUG, 
+			    "key_newsp: new policy_id allocation failed."));
+			return NULL;
+		}
+	} else {
+		sp = key_getspbyid(id);
+		if (sp != NULL) {
+			ipseclog((LOG_DEBUG,
+			    "key_newsp: policy_id(%u) has been used.\n", id));
+			key_freesp(sp);
+			return NULL;
+		}
+		newid = id;
+	}
 
 	newsp = keydb_newsecpolicy();
 	if (!newsp)
 		return newsp;
 
+	newsp->id = newid;
 	newsp->refcnt = 1;
 	newsp->req = NULL;
 
@@ -1003,7 +1066,7 @@ key_msg2sp(xpl0, len, error)
 		return NULL;
 	}
 
-	if ((newsp = key_newsp()) == NULL) {
+	if ((newsp = key_newsp(xpl0->sadb_x_policy_id)) == NULL) {
 		*error = ENOBUFS;
 		return NULL;
 	}
@@ -1395,23 +1458,40 @@ key_spdadd(so, m, mhp)
 	struct sadb_address *src0, *dst0;
 	struct sadb_x_policy *xpl0, *xpl;
 	struct sadb_lifetime *lft = NULL;
+	struct sadb_x_tag *tag = NULL;
 	struct secpolicyindex spidx;
 	struct secpolicy *newsp;
 	struct ipsecrequest *isr;
 	int error;
+	u_int16_t tagvalue;
+	int spidxmode;
 
 	/* sanity check */
 	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
 		panic("key_spdadd: NULL pointer is passed.");
 
-	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
-	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL ||
-	    mhp->ext[SADB_X_EXT_POLICY] == NULL) {
+	if ((mhp->ext[SADB_EXT_ADDRESS_SRC] != NULL &&
+	     mhp->ext[SADB_EXT_ADDRESS_DST] != NULL) ||
+	    mhp->ext[SADB_X_EXT_TAG] != NULL) {
+		;
+	} else {
 		ipseclog((LOG_DEBUG, "key_spdadd: invalid message is passed.\n"));
 		return key_senderror(so, m, EINVAL);
 	}
-	if (mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address) ||
-	    mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address) ||
+	if (mhp->ext[SADB_X_EXT_TAG] != NULL) {
+		ipseclog((LOG_DEBUG, "key_spdadd: tag not supported.\n"));
+		return key_senderror(so, m, EOPNOTSUPP);
+	}
+	if (mhp->ext[SADB_X_EXT_POLICY] == NULL) {
+		ipseclog((LOG_DEBUG, "key_spdadd: invalid message is passed.\n"));
+		return key_senderror(so, m, EINVAL);
+	}
+	if ((mhp->extlen[SADB_EXT_ADDRESS_SRC] &&
+	     mhp->extlen[SADB_EXT_ADDRESS_SRC] < sizeof(struct sadb_address)) ||
+	    (mhp->extlen[SADB_EXT_ADDRESS_DST] &&
+	     mhp->extlen[SADB_EXT_ADDRESS_DST] < sizeof(struct sadb_address)) ||
+	    (mhp->extlen[SADB_X_EXT_TAG] &&
+	     mhp->extlen[SADB_X_EXT_TAG] < sizeof(struct sadb_x_tag)) ||
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
 		ipseclog((LOG_DEBUG, "key_spdadd: invalid message is passed.\n"));
 		return key_senderror(so, m, EINVAL);
@@ -1425,18 +1505,20 @@ key_spdadd(so, m, mhp)
 		lft = (struct sadb_lifetime *)mhp->ext[SADB_EXT_LIFETIME_HARD];
 	}
 
-	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
-	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
-	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
+	/* spidx mode, or tag mode */
+	spidxmode = (mhp->ext[SADB_EXT_ADDRESS_SRC] != NULL);
 
-	/* make secindex */
-	/* XXX boundary check against sa_len */
-	KEY_SETSECSPIDX(src0 + 1,
-	                dst0 + 1,
-	                src0->sadb_address_prefixlen,
-	                dst0->sadb_address_prefixlen,
-	                src0->sadb_address_proto,
-	                &spidx);
+	if (spidxmode) {
+		src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
+		dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
+		/* make secindex */
+		/* XXX boundary check against sa_len */
+		KEY_SETSECSPIDX(src0 + 1, dst0 + 1,
+		    src0->sadb_address_prefixlen, dst0->sadb_address_prefixlen,
+		    src0->sadb_address_proto, &spidx);
+	} else
+		tag = (struct sadb_x_tag *)mhp->ext[SADB_X_EXT_TAG];
+	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
 
 	/* checking the direciton. */
 	switch (xpl0->sadb_x_policy_dir) {
@@ -1471,7 +1553,15 @@ key_spdadd(so, m, mhp)
 	 * If the type is either SPDADD or SPDSETIDX AND a SP is found,
 	 * then error.
 	 */
-	newsp = key_getsp(&spidx, xpl0->sadb_x_policy_dir);
+	if (xpl0->sadb_x_policy_id != 0)
+		newsp = key_getspbyid(xpl0->sadb_x_policy_id);
+	else if (spidxmode)
+		newsp = key_getsp(&spidx, xpl0->sadb_x_policy_dir);
+	else {
+		tagvalue = m_nametag_tagname2tag(tag->sadb_x_tag_name);
+		/* tag refcnt++ */
+		newsp = key_getspbytag(tagvalue, xpl0->sadb_x_policy_dir);
+	}
 	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
 		if (newsp) {
 			key_sp_dead(newsp);
@@ -1483,31 +1573,39 @@ key_spdadd(so, m, mhp)
 		if (newsp != NULL) {
 			key_freesp(newsp);
 			ipseclog((LOG_DEBUG, "key_spdadd: a SP entry exists already.\n"));
+			if (!mhp->ext[SADB_EXT_ADDRESS_SRC])
+				m_nametag_unref(tagvalue);
 			return key_senderror(so, m, EEXIST);
 		}
 	}
 
 	/* allocation new SP entry */
 	if ((newsp = key_msg2sp(xpl0, PFKEY_EXTLEN(xpl0), &error)) == NULL) {
+		if (!spidxmode)
+			m_nametag_unref(tagvalue);
 		return key_senderror(so, m, error);
 	}
 
-	error = keydb_setsecpolicyindex(newsp, &spidx);
-	if (error) {
-		keydb_delsecpolicy(newsp);
-		return key_senderror(so, m, error);
-	}
+	if (spidxmode) {
+		error = keydb_setsecpolicyindex(newsp, &spidx);
+		if (error) {
+			keydb_delsecpolicy(newsp);
+			return key_senderror(so, m, error);
+		}
 
-	/* sanity check on addr pair */
-	if (((struct sockaddr *)(src0 + 1))->sa_family !=
-			((struct sockaddr *)(dst0 + 1))->sa_family) {
-		keydb_delsecpolicy(newsp);
-		return key_senderror(so, m, EINVAL);
-	}
-	if (((struct sockaddr *)(src0 + 1))->sa_len !=
-			((struct sockaddr *)(dst0 + 1))->sa_len) {
-		keydb_delsecpolicy(newsp);
-		return key_senderror(so, m, EINVAL);
+		/* sanity check on addr pair */
+		if (((struct sockaddr *)(src0 + 1))->sa_family !=
+				((struct sockaddr *)(dst0 + 1))->sa_family) {
+			keydb_delsecpolicy(newsp);
+			return key_senderror(so, m, EINVAL);
+		}
+		if (((struct sockaddr *)(src0 + 1))->sa_len !=
+				((struct sockaddr *)(dst0 + 1))->sa_len) {
+			keydb_delsecpolicy(newsp);
+			return key_senderror(so, m, EINVAL);
+		}
+	} else {
+		newsp->tag = tagvalue;
 	}
 
 	for (isr = newsp->req; isr; isr = isr->next) {
@@ -1516,7 +1614,7 @@ key_spdadd(so, m, mhp)
 		/*
 		 * port spec is not permitted for tunnel mode
 		 */
-		if (isr->saidx.mode == IPSEC_MODE_TUNNEL) {
+		if (isr->saidx.mode == IPSEC_MODE_TUNNEL && src0 && dst0) {
 			sa = (struct sockaddr *)(src0 + 1);
 			switch (sa->sa_family) {
 			case AF_INET:
@@ -1562,14 +1660,14 @@ key_spdadd(so, m, mhp)
 	for (isr = newsp->req; isr; isr = isr->next) {
 		struct sockaddr *sa;
 
-		if (isr->saidx.src.ss_family) {
+		if (isr->saidx.src.ss_family && src0) {
 			sa = (struct sockaddr *)(src0 + 1);
 			if (sa->sa_family != isr->saidx.src.ss_family) {
 				keydb_delsecpolicy(newsp);
 				return key_senderror(so, m, EINVAL);
 			}
 		}
-		if (isr->saidx.dst.ss_family) {
+		if (isr->saidx.dst.ss_family && dst0) {
 			sa = (struct sockaddr *)(dst0 + 1);
 			if (sa->sa_family != isr->saidx.dst.ss_family) {
 				keydb_delsecpolicy(newsp);
@@ -1588,7 +1686,8 @@ key_spdadd(so, m, mhp)
 	LIST_INSERT_TAIL(&sptree[newsp->dir], newsp, secpolicy, chain);
 
 	/* delete the entry in spacqtree */
-	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
+	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE &&
+	    mhp->ext[SADB_EXT_ADDRESS_SRC]) {
 		struct secspacq *spacq;
 		if ((spacq = key_getspacq(&spidx)) != NULL) {
 			/* reset counter in order to deletion by timehandler. */
@@ -1925,6 +2024,10 @@ key_spdacquire(sp)
 		panic("key_spdacquire: called but there is request.");
 	if (sp->policy != IPSEC_POLICY_IPSEC)
 		panic("key_spdacquire: policy mismathed. IPsec is expected.");
+	if (!sp->spidx) {
+		error = EOPNOTSUPP;
+		goto fail;
+	}
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	/* get an entry to check whether sent message or not. */
@@ -2099,27 +2202,31 @@ key_setdumpsp(sp, type, seq, pid)
 {
 	struct mbuf *result = NULL, *m;
 
-	if (!sp->spidx)
-		panic("policy-on-pcb to key_setdumpsp");
-
 	m = key_setsadbmsg(type, 0, SADB_SATYPE_UNSPEC, seq, pid, sp->refcnt);
 	if (!m)
 		goto fail;
 	result = m;
 
-	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
-	    (struct sockaddr *)&sp->spidx->src, sp->spidx->prefs,
-	    sp->spidx->ul_proto);
-	if (!m)
-		goto fail;
-	m_cat(result, m);
+	if (sp->spidx) {
+		m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
+		    (struct sockaddr *)&sp->spidx->src, sp->spidx->prefs,
+		    sp->spidx->ul_proto);
+		if (!m)
+			goto fail;
+		m_cat(result, m);
 
-	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
-	    (struct sockaddr *)&sp->spidx->dst, sp->spidx->prefd,
-	    sp->spidx->ul_proto);
-	if (!m)
-		goto fail;
-	m_cat(result, m);
+		m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
+		    (struct sockaddr *)&sp->spidx->dst, sp->spidx->prefd,
+		    sp->spidx->ul_proto);
+		if (!m)
+			goto fail;
+		m_cat(result, m);
+	} else if (sp->tag) {
+		m = key_setsadbxtag(sp->tag);
+		if (!m)
+			goto fail;
+		m_cat(result, m);
+	}
 
 	m = key_sp2msg(sp);
 	if (!m)
@@ -2212,9 +2319,6 @@ key_spdexpire(sp)
 	int error = -1;
 	struct sadb_lifetime *lt;
 
-	if (!sp->spidx)
-		panic("policy-on-pcb to key_spdexpire");
-
 	/* XXX: Why do we lock ? */
 	s = splsoftnet();	/*called from softclock()*/
 
@@ -2257,24 +2361,33 @@ key_spdexpire(sp)
 	m_cat(result, m);
 
 	/* set sadb_address for source */
-	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
-	    (struct sockaddr *)&sp->spidx->src,
-	    sp->spidx->prefs, sp->spidx->ul_proto);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
-	}
-	m_cat(result, m);
+	if (sp->spidx) {
+		m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
+		    (struct sockaddr *)&sp->spidx->src,
+		    sp->spidx->prefs, sp->spidx->ul_proto);
+		if (!m) {
+			error = ENOBUFS;
+			goto fail;
+		}
+		m_cat(result, m);
 
-	/* set sadb_address for destination */
-	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
-	    (struct sockaddr *)&sp->spidx->dst,
-	    sp->spidx->prefd, sp->spidx->ul_proto);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
+		/* set sadb_address for destination */
+		m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
+		    (struct sockaddr *)&sp->spidx->dst,
+		    sp->spidx->prefd, sp->spidx->ul_proto);
+		if (!m) {
+			error = ENOBUFS;
+			goto fail;
+		}
+		m_cat(result, m);
+	} else if (sp->tag) {
+		m = key_setsadbxtag(sp->tag);
+		if (!m) {
+			error = ENOBUFS;
+			goto fail;
+		}
+		m_cat(result, m);
 	}
-	m_cat(result, m);
 
 	/* set secpolicy */
 	m = key_sp2msg(sp);
@@ -3460,6 +3573,35 @@ key_setsadbxsa2(mode, seq, reqid)
 	p->sadb_x_sa2_reserved2 = 0;
 	p->sadb_x_sa2_sequence = seq;
 	p->sadb_x_sa2_reqid = reqid;
+
+	return m;
+}
+
+/*
+ * set data into sadb_x_tag.
+ */
+static struct mbuf *
+key_setsadbxtag(tag)
+	u_int16_t tag;
+{
+	struct mbuf *m;
+	struct sadb_x_tag *p;
+	size_t len;
+
+	len = PFKEY_ALIGN8(sizeof(struct sadb_x_tag));
+	m = key_alloc_mbuf(len);
+	if (!m || m->m_next) {	/*XXX*/
+		if (m)
+			m_freem(m);
+		return NULL;
+	}
+
+	p = mtod(m, struct sadb_x_tag *);
+
+	bzero(p, len);
+	p->sadb_x_tag_len = PFKEY_UNIT64(len);
+	p->sadb_x_tag_exttype = SADB_X_EXT_TAG;
+	m_nametag_tag2tagname(tag, p->sadb_x_tag_name);
 
 	return m;
 }
@@ -5677,6 +5819,16 @@ key_acquire(saidx, sp)
 		m_cat(result, m);
 	}
 
+	/* set sadb_x_tag */
+	if (sp && sp->tag) {
+		m = key_setsadbxtag(sp->tag);
+		if (!m) {
+			error = ENOBUFS;
+			goto fail;
+		}
+		m_cat(result, m);
+	}
+
 	/* XXX identity (optional) */
 #if 0
 	if (idexttype && fqdn) {
@@ -5788,7 +5940,7 @@ key_newacq(saidx)
 	bcopy(saidx, &newacq->saidx, sizeof(newacq->saidx));
 	newacq->seq = (acq_seq == ~0 ? 1 : ++acq_seq);
 	newacq->created = time.tv_sec;
-	newacq->count = 0;
+	newacq->count = 1;
 
 	return newacq;
 }
@@ -6906,6 +7058,7 @@ key_align(m, mhp)
 		case SADB_EXT_SPIRANGE:
 		case SADB_X_EXT_POLICY:
 		case SADB_X_EXT_SA2:
+		case SADB_X_EXT_TAG:
 			/* duplicate check */
 			/*
 			 * XXX Are there duplication payloads of either
@@ -7045,7 +7198,7 @@ key_init()
 
 	/* system default */
 #ifdef INET
-	ip4_def_policy = key_newsp();
+	ip4_def_policy = key_newsp(0);
 	if (!ip4_def_policy)
 		panic("could not initialize IPv4 default security policy");
 	ip4_def_policy->state = IPSEC_SPSTATE_ALIVE;
@@ -7054,7 +7207,7 @@ key_init()
 	ip4_def_policy->readonly = 1;
 #endif
 #ifdef INET6
-	ip6_def_policy = key_newsp();
+	ip6_def_policy = key_newsp(0);
 	if (!ip6_def_policy)
 		panic("could not initialize IPv6 default security policy");
 	ip6_def_policy->state = IPSEC_SPSTATE_ALIVE;

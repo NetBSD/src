@@ -1,5 +1,5 @@
-/*	$NetBSD: keydb.c,v 1.10 2003/06/28 14:33:39 simonb Exp $	*/
-/*	$KAME: keydb.c,v 1.64 2000/05/11 17:02:30 itojun Exp $	*/
+/*	$NetBSD: keydb.c,v 1.11 2003/08/22 05:46:39 itojun Exp $	*/
+/*	$KAME: keydb.c,v 1.75 2003/07/01 01:20:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.10 2003/06/28 14:33:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.11 2003/08/22 05:46:39 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.10 2003/06/28 14:33:39 simonb Exp $");
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
+#include <sys/mbuf.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -67,35 +68,41 @@ MALLOC_DEFINE(M_SECA, "key mgmt", "security associations, key management");
 struct secpolicy *
 keydb_newsecpolicy()
 {
-	struct secpolicy *p, *np;
+	struct secpolicy *p;
 
 	p = (struct secpolicy *)malloc(sizeof(*p), M_SECA, M_NOWAIT);
 	if (!p)
 		return p;
 	bzero(p, sizeof(*p));
-	if (TAILQ_EMPTY(&sptailq)) {
-		p->id = 1;
-		TAILQ_INSERT_HEAD(&sptailq, p, tailq);
-		return p;
-	} else if (TAILQ_LAST(&sptailq, _sptailq)->id < 0xffffffff) {
-		p->id = TAILQ_LAST(&sptailq, _sptailq)->id + 1;
-		TAILQ_INSERT_TAIL(&sptailq, p, tailq);
-		return p;
-	} else {
-		TAILQ_FOREACH(np, &sptailq, tailq) {
-			if (np->id + 1 != TAILQ_NEXT(np, tailq)->id) {
-				p->id = np->id + 1;
-				TAILQ_INSERT_AFTER(&sptailq, np, p, tailq);
-				break;
-			}
-		}
-		if (!np) {
-			free(p, M_SECA);
-			return NULL;
-		}
-	}
+	TAILQ_INSERT_TAIL(&sptailq, p, tailq);
 
 	return p;
+}
+
+u_int32_t
+keydb_newspid(void)
+{
+	u_int32_t newid = 0;
+	static u_int32_t lastalloc = IPSEC_MANUAL_POLICYID_MAX;
+	struct secpolicy *sp;
+
+	newid = lastalloc + 1;
+	/* XXX possible infinite loop */
+again:
+	TAILQ_FOREACH(sp, &sptailq, tailq) {
+		if (sp->id == newid)
+			break;
+	}
+	if (sp != NULL) {
+		if (newid + 1 < newid)	/* wraparound */
+			newid = IPSEC_MANUAL_POLICYID_MAX + 1;
+		else
+			newid++;
+		goto again;
+	}
+	lastalloc = newid;
+
+	return newid;
 }
 
 void
@@ -106,6 +113,8 @@ keydb_delsecpolicy(p)
 	TAILQ_REMOVE(&sptailq, p, tailq);
 	if (p->spidx)
 		free(p->spidx, M_SECA);
+	if (p->tag)
+		m_nametag_unref(p->tag);
 	free(p, M_SECA);
 }
 
