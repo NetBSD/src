@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.3 1999/05/09 16:03:11 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.4 1999/05/09 16:07:56 christos Exp $	*/
 
  /*
   * Misc routines that are used by tcpd and by tcpdchk.
@@ -11,7 +11,7 @@
 #if 0
 static char sccsic[] = "@(#) misc.c 1.2 96/02/11 17:01:29";
 #else
-__RCSID("$NetBSD: misc.c,v 1.3 1999/05/09 16:03:11 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.4 1999/05/09 16:07:56 christos Exp $");
 #endif
 #endif
 
@@ -78,6 +78,7 @@ unsigned long *addr;
 
     if (!inet_aton(str, &a))
 	return -1;
-    *addr = a.s_addr;
+    if (addr)
+	*addr = a.s_addr;
     return 0;
 }
