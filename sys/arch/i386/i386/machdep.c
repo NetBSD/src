@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.39 1993/07/17 16:06:44 mycroft Exp $
+ *	$Id: machdep.c,v 1.40 1993/07/18 08:23:07 andrew Exp $
  */
 
 #include "npx.h"
@@ -778,7 +778,6 @@ setregs(p, entry, stack, retval)
  * Initialize segments & interrupt table
  */
 
-
 #define	GNULL_SEL	0	/* Null Descriptor */
 #define	GCODE_SEL	1	/* Kernel Code Descriptor */
 #define	GDATA_SEL	2	/* Kernel Data Descriptor */
@@ -808,15 +807,15 @@ struct	i386tss	tss, panic_tss;
 
 extern  struct user *proc0paddr;
 
-/* software prototypes -- in more palitable form */
+/* software prototypes -- in more palatable form */
 struct soft_segment_descriptor gdt_segs[] = {
 	/* Null Descriptor */
 {	0x0,			/* segment base address  */
-	0x0,			/* length - all address space */
+	0x0,			/* length */
 	0,			/* segment type */
 	0,			/* segment descriptor priority level */
 	0,			/* segment descriptor present */
-	0,0,
+	0, 0,
 	0,			/* default 32 vs 16 bit size */
 	0  			/* limit granularity (byte/page units)*/ },
 	/* Code Descriptor for kernel */
@@ -825,7 +824,7 @@ struct soft_segment_descriptor gdt_segs[] = {
 	SDT_MEMERA,		/* segment type */
 	0,			/* segment descriptor priority level */
 	1,			/* segment descriptor present */
-	0,0,
+	0, 0,
 	1,			/* default 32 vs 16 bit size */
 	1  			/* limit granularity (byte/page units)*/ },
 	/* Data Descriptor for kernel */
@@ -834,7 +833,7 @@ struct soft_segment_descriptor gdt_segs[] = {
 	SDT_MEMRWA,		/* segment type */
 	0,			/* segment descriptor priority level */
 	1,			/* segment descriptor present */
-	0,0,
+	0, 0,
 	1,			/* default 32 vs 16 bit size */
 	1  			/* limit granularity (byte/page units)*/ },
 	/* LDT Descriptor */
@@ -843,16 +842,16 @@ struct soft_segment_descriptor gdt_segs[] = {
 	SDT_SYSLDT,		/* segment type */
 	0,			/* segment descriptor priority level */
 	1,			/* segment descriptor present */
-	0,0,
+	0, 0,
 	0,			/* unused - default 32 vs 16 bit size */
 	0  			/* limit granularity (byte/page units)*/ },
 	/* Null Descriptor - Placeholder */
 {	0x0,			/* segment base address  */
-	0x0,			/* length - all address space */
+	0x0,			/* length */
 	0,			/* segment type */
 	0,			/* segment descriptor priority level */
 	0,			/* segment descriptor present */
-	0,0,
+	0, 0,
 	0,			/* default 32 vs 16 bit size */
 	0  			/* limit granularity (byte/page units)*/ },
 	/* Panic Tss Descriptor */
@@ -861,7 +860,7 @@ struct soft_segment_descriptor gdt_segs[] = {
 	SDT_SYS386TSS,		/* segment type */
 	0,			/* segment descriptor priority level */
 	1,			/* segment descriptor present */
-	0,0,
+	0, 0,
 	0,			/* unused - default 32 vs 16 bit size */
 	0  			/* limit granularity (byte/page units)*/ },
 	/* Proc 0 Tss Descriptor */
@@ -870,36 +869,36 @@ struct soft_segment_descriptor gdt_segs[] = {
 	SDT_SYS386TSS,		/* segment type */
 	0,			/* segment descriptor priority level */
 	1,			/* segment descriptor present */
-	0,0,
+	0, 0,
 	0,			/* unused - default 32 vs 16 bit size */
 	0  			/* limit granularity (byte/page units)*/ }};
 
 struct soft_segment_descriptor ldt_segs[] = {
 	/* Null Descriptor - overwritten by call gate */
 {	0x0,			/* segment base address  */
-	0x0,			/* length - all address space */
+	0x0,			/* length */
 	0,			/* segment type */
 	0,			/* segment descriptor priority level */
 	0,			/* segment descriptor present */
-	0,0,
+	0, 0,
 	0,			/* default 32 vs 16 bit size */
 	0  			/* limit granularity (byte/page units)*/ },
 	/* Null Descriptor - overwritten by call gate */
 {	0x0,			/* segment base address  */
-	0x0,			/* length - all address space */
+	0x0,			/* length */
 	0,			/* segment type */
 	0,			/* segment descriptor priority level */
 	0,			/* segment descriptor present */
-	0,0,
+	0, 0,
 	0,			/* default 32 vs 16 bit size */
 	0  			/* limit granularity (byte/page units)*/ },
 	/* Null Descriptor - overwritten by call gate */
 {	0x0,			/* segment base address  */
-	0x0,			/* length - all address space */
+	0x0,			/* length */
 	0,			/* segment type */
 	0,			/* segment descriptor priority level */
 	0,			/* segment descriptor present */
-	0,0,
+	0, 0,
 	0,			/* default 32 vs 16 bit size */
 	0  			/* limit granularity (byte/page units)*/ },
 	/* Code Descriptor for user */
@@ -908,7 +907,7 @@ struct soft_segment_descriptor ldt_segs[] = {
 	SDT_MEMERA,		/* segment type */
 	SEL_UPL,		/* segment descriptor priority level */
 	1,			/* segment descriptor present */
-	0,0,
+	0, 0,
 	1,			/* default 32 vs 16 bit size */
 	1  			/* limit granularity (byte/page units)*/ },
 	/* Data Descriptor for user */
@@ -917,7 +916,7 @@ struct soft_segment_descriptor ldt_segs[] = {
 	SDT_MEMRWA,		/* segment type */
 	SEL_UPL,		/* segment descriptor priority level */
 	1,			/* segment descriptor present */
-	0,0,
+	0, 0,
 	1,			/* default 32 vs 16 bit size */
 	1  			/* limit granularity (byte/page units)*/ } };
 
@@ -974,8 +973,8 @@ init386(first)
 
 	for (x=0; x < NGDT; x++) ssdtosd(gdt_segs+x, gdt+x);
 	/* make ldt memory segments */
-	ldt_segs[LUCODE_SEL].ssd_limit = btoc(UPT_MIN_ADDRESS);
-	ldt_segs[LUDATA_SEL].ssd_limit = btoc(UPT_MIN_ADDRESS);
+	ldt_segs[LUCODE_SEL].ssd_limit = btoc(VM_MAXUSER_ADDRESS) - 1;
+	ldt_segs[LUDATA_SEL].ssd_limit = btoc(VM_MAXUSER_ADDRESS) - 1;
 	/* Note. eventually want private ldts per process */
 	for (x=0; x < 5; x++) ssdtosd(ldt_segs+x, ldt+x);
 
@@ -1072,7 +1071,8 @@ init386(first)
 		Maxmem = 640/4;
 	else {
 		Maxmem = pagesinext + 0x100000/NBPG;
-		first = 0x100000; /* skip hole */
+		if (first < 0x100000)
+			first = 0x100000; /* skip hole */
 	}
 
 	/* This used to explode, since Maxmem used to be 0 for bas CMOS*/
@@ -1205,67 +1205,6 @@ _remque(element)
 }
 
 vmunaccess() {}
-
-/*
- * Below written in C to allow access to debugging code
- */
-copyinstr(fromaddr, toaddr, maxlength, lencopied) u_int *lencopied, maxlength;
-	void *toaddr, *fromaddr; {
-	int c,tally;
-
-	tally = 0;
-	while (maxlength--) {
-		c = fubyte(fromaddr++);
-		if (c == -1) {
-			if(lencopied) *lencopied = tally;
-			return(EFAULT);
-		}
-		tally++;
-		*(char *)toaddr++ = (char) c;
-		if (c == 0){
-			if(lencopied) *lencopied = (u_int)tally;
-			return(0);
-		}
-	}
-	if(lencopied) *lencopied = (u_int)tally;
-	return(ENAMETOOLONG);
-}
-
-copyoutstr(fromaddr, toaddr, maxlength, lencopied) u_int *lencopied, maxlength;
-	void *fromaddr, *toaddr; {
-	int c;
-	int tally;
-
-	tally = 0;
-	while (maxlength--) {
-		c = subyte(toaddr++, *(char *)fromaddr);
-		if (c == -1) return(EFAULT);
-		tally++;
-		if (*(char *)fromaddr++ == 0){
-			if(lencopied) *lencopied = tally;
-			return(0);
-		}
-	}
-	if(lencopied) *lencopied = tally;
-	return(ENAMETOOLONG);
-}
-
-copystr(fromaddr, toaddr, maxlength, lencopied) u_int *lencopied, maxlength;
-	void *fromaddr, *toaddr; {
-	u_int tally;
-
-	tally = 0;
-	while (maxlength--) {
-		*(u_char *)toaddr = *(u_char *)fromaddr++;
-		tally++;
-		if (*(u_char *)toaddr++ == 0) {
-			if(lencopied) *lencopied = tally;
-			return(0);
-		}
-	}
-	if(lencopied) *lencopied = tally;
-	return(ENAMETOOLONG);
-}
 
 cpu_exec_makecmds(p, epp)
 struct proc *p;
