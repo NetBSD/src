@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2001/10/31 15:57:55 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:24:11 tv Exp $
 
-PROG=	threadstest
-SRCS=	mttest.c
-NOMAN=	yes
-
-LDADD+=	-lssl -lcrypto
-DPADD+=	${LIBSSL} ${LIBCRYPTO}
+PROG=		threadstest
+SRCS=		mttest.c
+NOMAN=		# defined
+DPADD+=		${LIBSSL} ${LIBCRYPTO}
+LDADD+=		-lssl -lcrypto
 
 regress:	${PROG}
 	@echo "==> running ${PROG}"

@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2001/10/19 03:10:15 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:24:11 tv Exp $
 
-PROG=   prename
-NOMAN=  t
-CLEANFILES+= t1 t2
+PROG=		prename
+NOMAN=		# defined
+CPPFLAGS+=	-DBSD_RENAME
+CLEANFILES+=	t1 t2
 
-.PATH:  ${.CURDIR}/..
-
-CPPFLAGS+= -DBSD_RENAME
+.PATH:		${.CURDIR}/..
 
 regress:
 	@echo Testing BSD rename

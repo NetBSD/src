@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2001/09/22 19:56:45 simonb Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:24:05 tv Exp $
 
-PROG=	fmtio_check
-SRCS=	fmtio_check.c
-MKMAN=	no
-WARNS=	2		# need this!
+PROG=		fmtio_check
+NOMAN=		# defined
+WARNS=		2 # need this!
 
 regress: ${PROG}
 	./${PROG}

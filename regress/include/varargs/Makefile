@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/12 01:24:13 tv Exp $
 
-PROG=	varargstest
-SRCS=	argtest.c
-MKMAN=	no
+PROG=		varargstest
+SRCS=		argtest.c
+NOMAN=		# defined
+CPPFLAGS+=	-DVARARGS
 
-CPPFLAGS+= -DVARARGS
-
-.PATH:	${.CURDIR}/../stdarg
+.PATH:		${.CURDIR}/../stdarg
 
 regress: ${PROG}
 	./${PROG}
