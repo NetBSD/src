@@ -1,5 +1,5 @@
 #
-# $NetBSD: fnetbsd.S,v 1.3 1997/07/28 19:01:14 is Exp $
+# $NetBSD: fnetbsd.S,v 1.4 1999/02/22 21:25:05 is Exp $
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -350,4 +350,3 @@ _FP_CALL_TOP:
 # 060 FPSP KERNEL PACKAGE NEEDS TO GO HERE!!!
 
 	.include	"fpsp.S"
-
