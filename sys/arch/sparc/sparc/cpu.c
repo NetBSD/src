@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.136 2002/11/29 08:02:05 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.137 2002/11/29 08:29:57 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -287,12 +287,7 @@ cpu_mainbus_attach(parent, self, aux)
 	struct mainbus_attach_args *ma = aux;
 	int mid;
 
-#if defined(MULTIPROCESSOR)
 	mid = (ma->ma_node != 0) ? PROM_getpropint(ma->ma_node, "mid", 0) : 0;
-#else
-	mid = 0;
-#endif
-
 	cpu_attach((struct cpu_softc *)self, ma->ma_node, mid);
 }
 
@@ -392,8 +387,12 @@ static	struct cpu_softc *bootcpu;
 	cpi->node = node;
 	simple_lock_init(&cpi->msg.lock);
 
-	if (ncpu > 1)
+	if (ncpu > 1) {
 		printf(": mid %d", mid);
+		if (mid == 0)
+			printf("[WARNING: mid should not be 0]");
+	}
+
 
 	if (cpi->master) {
 		cpu_setup(sc);
