@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.35 1996/09/02 06:44:54 mycroft Exp $	*/
+/*	$NetBSD: conf.h,v 1.36 1996/09/05 15:47:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -126,10 +126,14 @@ extern struct bdevsw bdevsw[];
 	dev_init(c,n,strategy), (dev_type_ioctl((*))) enodev, \
 	(dev_type_dump((*))) enodev, 0 }
 
+#ifdef LKM
 #define	bdev_lkm_dummy() { \
 	(dev_type_open((*))) lkmenodev, (dev_type_close((*))) enodev, \
 	(dev_type_strategy((*))) enodev, (dev_type_ioctl((*))) enodev, \
 	(dev_type_dump((*))) enodev, 0 }
+#else
+#define	bdev_lkm_dummy(c,n)	bdev_notdef(c,n)
+#endif
 
 #define	bdev_notdef() { \
 	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
@@ -206,11 +210,15 @@ extern struct cdevsw cdevsw[];
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
 	(dev_type_mmap((*))) enodev }
 
+#ifdef LKM
 #define	cdev_lkm_dummy() { \
 	(dev_type_open((*))) lkmenodev, (dev_type_close((*))) enodev, \
 	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
 	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
+#else
+#define	cdev_lkm_dummy(c,n)	cdev_notdef(c,n)
+#endif
 
 #define	cdev_notdef() { \
 	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
@@ -356,7 +364,6 @@ cdev_decl(log);
 
 #ifndef LKM
 # define	NLKM	0
-# define	lkmenodev	enodev
 #else
 # define	NLKM	1
 #endif

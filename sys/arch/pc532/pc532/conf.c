@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.27 1996/03/14 21:30:37 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.28 1996/09/05 15:46:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -42,8 +42,6 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-
-int	ttselect	__P((dev_t, int, struct proc *));
 
 #include "sd.h"
 bdev_decl(sd);
