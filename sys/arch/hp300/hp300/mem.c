@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.6 1994/10/26 07:25:50 cgd Exp $	*/
+/*	$NetBSD: mem.c,v 1.7 1995/01/09 09:20:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,14 +50,12 @@
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
+#include <sys/uio.h>
 #include <sys/malloc.h>
 
 #include <machine/cpu.h>
 
-#include <vm/vm_param.h>
-#include <vm/lock.h>
-#include <vm/vm_prot.h>
-#include <vm/pmap.h>
+#include <vm/vm.h>
 
 extern u_int lowram;
 caddr_t zeropage;
@@ -72,8 +70,19 @@ mmrw(dev, uio, flags)
 	register u_int c, v;
 	register struct iovec *iov;
 	int error = 0;
-	int kernloc;
+	static int physlock;
 
+	if (minor(dev) == 0) {
+		/* lock against other uses of shared vmempage */
+		while (physlock > 0) {
+			physlock++;
+			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
+			    "mmrw", 0);
+			if (error)
+				return (error);
+		}
+		physlock = 1;
+	}
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
@@ -97,22 +106,20 @@ mmrw(dev, uio, flags)
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = (int)uio->uio_offset & PGOFSET;
-			c = (u_int)(NBPG - ((int)iov->iov_base & PGOFSET));
-			c = min(c, (u_int)(NBPG - o));
-			c = min(c, (u_int)iov->iov_len);
-			error = uiomove((caddr_t)&vmmap[o], (int)c, uio);
+			c = min(uio->uio_resid, (u_int)(NBPG - o));
+			error = uiomove((caddr_t)vmmap + o, (int)c, uio);
 			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
-			    (vm_offset_t)&vmmap[NBPG]);
+			    (vm_offset_t)vmmap + NBPG);
 			continue;
 
 /* minor device 1 is kernel memory */
 		case 1:
-			kernloc = uio->uio_offset;
+			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (!kernacc((caddr_t)kernloc, c,
+			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)kernloc, (int)c, uio);
+			error = uiomove(v, (int)c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
@@ -140,7 +147,7 @@ mmrw(dev, uio, flags)
 				zeropage = Segtabzero;
 #else
 				zeropage = (caddr_t)
-					malloc(CLBYTES, M_TEMP, M_WAITOK);
+				    malloc(CLBYTES, M_TEMP, M_WAITOK);
 				bzero(zeropage, CLBYTES);
 #endif
 			}
@@ -157,6 +164,11 @@ mmrw(dev, uio, flags)
 		iov->iov_len -= c;
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
+	}
+	if (minor(dev) == 0) {
+		if (physlock > 1)
+			wakeup((caddr_t)&physlock);
+		physlock = 0;
 	}
 	return (error);
 }
