@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.5 2001/11/21 18:24:39 thorpej Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.6 2001/11/22 06:21:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -70,14 +70,20 @@
 	 * we need to provide a valid CPSR in case the context is	\
 	 * used in a setcontext(2) system call later.  (The CPSR	\
 	 * is only used in 32-bit mode, and ignored in 26-bit mode.)	\
+	 *								\
+	 * We play a trick with the PC, here.  We don't save the	\
+	 * LR (it's caller-save), but we instead stash it in the	\
+	 * PC slot in the ucontext so that when the context is		\
+	 * resumed, we magically appear back at the call site.		\
 	 */								\
 	mov	r2, #(_UC_USER)					;	\
 	orr	r2, r2, #(_UC_CPU)				;	\
 	str	r2, [reg, #(UC_FLAGS)]				;	\
 	mov	r2, #(PSR_USR32_MODE)				;	\
 	str	r2, [reg, #(_REG_CPSR)]				;	\
+	str	lr, [reg, #(_REG_PC)]				;	\
 	add	reg, reg, #(_REG_R4)				;	\
-	stmia	reg, {r4-r15}
+	stmia	reg, {r4-r13}
 
 /*
  * NOTE: Clobbers r2.
