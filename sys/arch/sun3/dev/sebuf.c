@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.1 1997/10/17 03:39:47 gwr Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.2 1997/10/25 18:20:09 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -98,19 +98,22 @@ sebuf_match(parent, cf, args)
 	void *args;
 {
 	struct confargs *ca = args;
-	int x;
+	int pa, x;
 
 	if (ca->ca_paddr == -1)
 		return (0);
 
 	/* Is it there at all? */
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 2);
+	pa = ca->ca_paddr;
+	x = bus_peek(ca->ca_bustype, pa, 2);
 	if (x == -1)
 		return (0);
 
-	/* How about the middle of the IE buffer? */
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr + 0x18000, 2);
-	if (x == -1)
+	/* Does the "ie" CSR look right? */
+	pa = ca->ca_paddr + 0x1FF00;	/* XXX */
+	/* Want to poke 0xFFFF here first. XXX */
+	x = bus_peek(ca->ca_bustype, pa+2, 2);
+	if ((x == -1) || (x & 0xFFF))
 		return (0);
 
 	/* Default interrupt priority always splbio==2 */
