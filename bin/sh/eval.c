@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.47 1999/07/09 03:05:49 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.48 1999/10/10 21:22:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.47 1999/07/09 03:05:49 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.48 1999/10/10 21:22:24 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,6 +210,7 @@ evaltree(n, flags)
 		evaltree(n->nbinary.ch1, EV_TESTED);
 		if (evalskip || exitstatus != 0) {
 			/* don't bomb out on "set -e; false && true" */
+			exitstatus = oexitstatus;
 			flags |= EV_TESTED;
 			goto out;
 		}
