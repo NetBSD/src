@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.10 1998/03/01 02:23:14 fvdl Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.11 1998/03/18 15:57:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,15 +41,20 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+#include <ufs/ufs/ufs_bswap.h>
 #endif
 
 #ifdef _KERNEL
 #include <sys/vnode.h>
+#include <sys/mount.h>
 #include <sys/buf.h>
 #include <ufs/ufs/quota.h>
+#include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/inode.h>
+#include <ufs/ufs/ufs_extern.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+#include <ufs/ufs/ufs_bswap.h>
 
 /*
  * Return buffer with the contents of block "offset" from the beginning of
@@ -94,11 +99,12 @@ ffs_blkatoff(v)
  * of some frags.
  */
 void
-ffs_fragacct(fs, fragmap, fraglist, cnt)
+ffs_fragacct(fs, fragmap, fraglist, cnt, needswap)
 	struct fs *fs;
 	int fragmap;
 	int32_t fraglist[];
 	int cnt;
+	int needswap;
 {
 	int inblk;
 	register int field, subfield;
@@ -113,7 +119,9 @@ ffs_fragacct(fs, fragmap, fraglist, cnt)
 		subfield = inside[siz];
 		for (pos = siz; pos <= fs->fs_frag; pos++) {
 			if ((fragmap & field) == subfield) {
-				fraglist[siz] += cnt;
+				fraglist[siz] = ufs_rw32(
+					ufs_rw32(fraglist[siz], needswap) + cnt,
+					needswap);
 				pos += siz;
 				field <<= siz;
 				subfield <<= siz;

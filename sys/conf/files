@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.175 1998/02/19 00:28:52 thorpej Exp $
+#	$NetBSD: files,v 1.176 1998/03/18 15:57:30 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -524,6 +524,7 @@ file ufs/ext2fs/ext2fs_vfsops.c		ext2fs
 file ufs/ext2fs/ext2fs_vnops.c		ext2fs
 file ufs/ffs/ffs_alloc.c		ffs | mfs
 file ufs/ffs/ffs_balloc.c		ffs | mfs
+file ufs/ffs/ffs_bswap.c		(ffs | mfs | lfs) & ffs_ei
 file ufs/ffs/ffs_inode.c		ffs | mfs
 file ufs/ffs/ffs_subr.c			ffs | mfs
 file ufs/ffs/ffs_tables.c		ffs | mfs

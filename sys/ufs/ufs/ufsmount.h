@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.6 1998/03/01 02:23:38 fvdl Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.7 1998/03/18 15:57:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -68,7 +68,7 @@ struct ufsmount {
 	struct	mount *um_mountp;		/* filesystem vfs structure */
 	dev_t	um_dev;				/* device mounted */
 	struct	vnode *um_devvp;		/* block device mounted vnode */
-
+	u_int32_t um_flags;			/* UFS-specific flags - see below */
 	union {					/* pointer to superblock */
 		struct	fs *fs;			/* FFS */
 		struct	lfs *lfs;		/* LFS */
@@ -90,6 +90,9 @@ struct ufsmount {
 	struct	netexport um_export;		/* export information */
 	u_int64_t um_savedmaxfilesize;		/* XXX - limit maxfilesize */
 };
+
+/* UFS-specific flags */
+#define UFS_NEEDSWAP	0x01	/* filesystem metadata need byte-swapping */
 
 /*
  * Flags describing the state of quotas.

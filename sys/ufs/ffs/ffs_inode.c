@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.18 1998/03/01 02:23:14 fvdl Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.19 1998/03/18 15:57:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -59,6 +59,7 @@
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/ufs_bswap.h>
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
@@ -117,8 +118,12 @@ ffs_update(v)
 		brelse(bp);
 		return (error);
 	}
-	*((struct dinode *)bp->b_data +
-	    ino_to_fsbo(fs, ip->i_number)) = ip->i_din.ffs_din;
+	if (UFS_MPNEEDSWAP(ap->a_vp->v_mount))
+		ffs_dinode_swap(&ip->i_din.ffs_din,
+			(struct dinode *)bp->b_data + ino_to_fsbo(fs, ip->i_number));
+	else
+		*((struct dinode *)bp->b_data +
+	    	ino_to_fsbo(fs, ip->i_number)) = ip->i_din.ffs_din;
 	if (ap->a_waitfor && (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
 		return (bwrite(bp));
 	else {
@@ -304,7 +309,7 @@ ffs_truncate(v)
 	indir_lbn[DOUBLE] = indir_lbn[SINGLE] - NINDIR(fs) - 1;
 	indir_lbn[TRIPLE] = indir_lbn[DOUBLE] - NINDIR(fs) * NINDIR(fs) - 1;
 	for (level = TRIPLE; level >= SINGLE; level--) {
-		bn = oip->i_ffs_ib[level];
+		bn = ufs_rw32(oip->i_ffs_ib[level], UFS_MPNEEDSWAP(ovp->v_mount));
 		if (bn != 0) {
 			error = ffs_indirtrunc(oip, indir_lbn[level],
 			    fsbtodb(fs, bn), lastiblock[level], level, &count);
@@ -327,7 +332,7 @@ ffs_truncate(v)
 	for (i = NDADDR - 1; i > lastblock; i--) {
 		register long bsize;
 
-		bn = oip->i_ffs_db[i];
+		bn = ufs_rw32(oip->i_ffs_db[i], UFS_MPNEEDSWAP(ovp->v_mount));
 		if (bn == 0)
 			continue;
 		oip->i_ffs_db[i] = 0;
@@ -342,7 +347,7 @@ ffs_truncate(v)
 	 * Finally, look for a change in size of the
 	 * last direct block; release any frags.
 	 */
-	bn = oip->i_ffs_db[lastblock];
+	bn = ufs_rw32(oip->i_ffs_db[lastblock], UFS_MPNEEDSWAP(ovp->v_mount));
 	if (bn != 0) {
 		long oldspace, newspace;
 
@@ -477,7 +482,7 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	 */
 	for (i = NINDIR(fs) - 1, nlbn = lbn + 1 - i * factor; i > last;
 	    i--, nlbn += factor) {
-		nb = bap[i];
+		nb = ufs_rw32(bap[i], UFS_MPNEEDSWAP(vp->v_mount));
 		if (nb == 0)
 			continue;
 		if (level > SINGLE) {
@@ -497,7 +502,7 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	 */
 	if (level > SINGLE && lastbn >= 0) {
 		last = lastbn % factor;
-		nb = bap[i];
+		nb = ufs_rw32(bap[i], UFS_MPNEEDSWAP(vp->v_mount));
 		if (nb != 0) {
 			error = ffs_indirtrunc(ip, nlbn, fsbtodb(fs, nb),
 					       last, level - 1, &blkcount);

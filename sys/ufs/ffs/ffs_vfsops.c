@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.33 1998/03/01 02:23:15 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.34 1998/03/18 15:57:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -62,6 +62,7 @@
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/ufs_bswap.h>
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
@@ -281,8 +282,8 @@ ffs_mount(mp, path, data, ndp, p)
 		if (fs->fs_clean & FS_WASCLEAN)
 			fs->fs_time = time.tv_sec;
 		else
-			printf("%s: file system not clean; please fsck(8)\n",
-			    mp->mnt_stat.f_mntfromname);
+			printf("%s: file system not clean (fs_flags=%x); please fsck(8)\n",
+			    mp->mnt_stat.f_mntfromname, fs->fs_clean);
 		(void) ffs_cgupdate(ump, MNT_WAIT);
 	}
 	return (0);
@@ -309,7 +310,6 @@ ffs_reload(mountp, cred, p)
 {
 	register struct vnode *vp, *nvp, *devvp;
 	struct inode *ip;
-	struct csum *space;
 	struct buf *bp;
 	struct fs *fs, *newfs;
 	struct partinfo dpart;
@@ -334,13 +334,19 @@ ffs_reload(mountp, cred, p)
 	error = bread(devvp, (ufs_daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp);
 	if (error)
 		return (error);
-	newfs = (struct fs *)bp->b_data;
+	fs = VFSTOUFS(mountp)->um_fs;
+	newfs = malloc(fs->fs_sbsize, M_UFSMNT, M_WAITOK);
+	bcopy(bp->b_data, newfs, fs->fs_sbsize);
+#ifdef FFS_EI
+	if (VFSTOUFS(mountp)->um_flags & UFS_NEEDSWAP)
+		ffs_sb_swap((struct fs*)bp->b_data, newfs, 0);
+#endif
 	if (newfs->fs_magic != FS_MAGIC || newfs->fs_bsize > MAXBSIZE ||
 	    newfs->fs_bsize < sizeof(struct fs)) {
 		brelse(bp);
+		free(newfs, M_UFSMNT);
 		return (EIO);		/* XXX needs translation */
 	}
-	fs = VFSTOUFS(mountp)->um_fs;
 	/* 
 	 * Copy pointer fields back into superblock before copying in	XXX
 	 * new superblock. These should really be in the ufsmount.	XXX
@@ -352,13 +358,13 @@ ffs_reload(mountp, cred, p)
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
+	free(newfs, M_UFSMNT);
 	mountp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
 	ffs_oldfscompat(fs);
 	/*
 	 * Step 3: re-read summary information from disk.
 	 */
 	blks = howmany(fs->fs_cssize, fs->fs_fsize);
-	space = fs->fs_csp[0];
 	for (i = 0; i < blks; i += fs->fs_frag) {
 		size = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
@@ -367,7 +373,13 @@ ffs_reload(mountp, cred, p)
 			      NOCRED, &bp);
 		if (error)
 			return (error);
-		bcopy(bp->b_data, fs->fs_csp[fragstoblks(fs, i)], (u_int)size);
+#ifdef FFS_EI
+		if (UFS_MPNEEDSWAP(mountp))
+			ffs_csum_swap((struct csum*)bp->b_data,
+				(struct csum*)fs->fs_csp[fragstoblks(fs, i)], size);
+		else
+#endif
+			bcopy(bp->b_data, fs->fs_csp[fragstoblks(fs, i)], (u_int)size);
 		brelse(bp);
 	}
 	/*
@@ -411,8 +423,14 @@ loop:
 			vput(vp);
 			return (error);
 		}
-		ip->i_din.ffs_din = *((struct dinode *)bp->b_data +
-		    ino_to_fsbo(fs, ip->i_number));
+#ifdef FFS_EI
+		if (UFS_MPNEEDSWAP(mountp))
+			ffs_dinode_swap((struct dinode *)bp->b_data +
+				ino_to_fsbo(fs, ip->i_number), &ip->i_din.ffs_din);
+		else
+#endif
+			ip->i_din.ffs_din = *((struct dinode *)bp->b_data +
+		    	ino_to_fsbo(fs, ip->i_number));
 		brelse(bp);
 		vput(vp);
 		simple_lock(&mntvnode_slock);
@@ -430,18 +448,19 @@ ffs_mountfs(devvp, mp, p)
 	struct mount *mp;
 	struct proc *p;
 {
-	register struct ufsmount *ump;
+	struct ufsmount *ump;
 	struct buf *bp;
-	register struct fs *fs;
+	struct fs *fs;
 	dev_t dev;
 	struct partinfo dpart;
 	caddr_t base, space;
 	int blks;
-	int error, i, size, ronly;
+	int error, i, size, ronly, needswap;
 	int32_t *lp;
 	struct ucred *cred;
 	extern struct vnode *rootvp;
 	u_int64_t maxfilesize;					/* XXX */
+	u_int32_t sbsize;
 
 	dev = devvp->v_rdev;
 	cred = p ? p->p_ucred : NOCRED;
@@ -472,27 +491,46 @@ ffs_mountfs(devvp, mp, p)
 	error = bread(devvp, (ufs_daddr_t)(SBOFF / size), SBSIZE, cred, &bp);
 	if (error)
 		goto out;
-	fs = (struct fs *)bp->b_data;
+
+	fs = (struct fs*)bp->b_data;
+	if (fs->fs_magic == FS_MAGIC) {
+		needswap = 0;
+		sbsize = fs->fs_sbsize;
+#ifdef FFS_EI
+	} else if (fs->fs_magic == bswap32(FS_MAGIC)) {
+		needswap = 1;
+		sbsize = bswap32(fs->fs_sbsize);
+#endif
+	} else {
+		error = EINVAL;
+		goto out;
+	
+	}
+
+	fs = malloc((u_long)sbsize, M_UFSMNT, M_WAITOK);
+	bcopy(bp->b_data, fs, sbsize);
+#ifdef FFS_EI
+	if (needswap)
+		ffs_sb_swap((struct fs*)bp->b_data, fs, 0);
+#endif
+		
 	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE ||
 	    fs->fs_bsize < sizeof(struct fs)) {
 		error = EINVAL;		/* XXX needs translation */
-		goto out;
+		goto out2;
 	}
 	/* XXX updating 4.2 FFS superblocks trashes rotational layout tables */
 	if (fs->fs_postblformat == FS_42POSTBLFMT && !ronly) {
 		error = EROFS;		/* XXX what should be returned? */
-		goto out;
+		goto out2;
 	}
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	bzero((caddr_t)ump, sizeof *ump);
-	ump->um_fs = malloc((u_long)fs->fs_sbsize, M_UFSMNT,
-	    M_WAITOK);
-	bcopy(bp->b_data, ump->um_fs, (u_int)fs->fs_sbsize);
+	ump->um_fs = fs;
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
 	bp = NULL;
-	fs = ump->um_fs;
 	fs->fs_ronly = ronly;
 	if (ronly == 0) {
 		fs->fs_clean <<= 1;
@@ -511,9 +549,16 @@ ffs_mountfs(devvp, mp, p)
 			      cred, &bp);
 		if (error) {
 			free(base, M_UFSMNT);
-			goto out;
+			goto out2;
 		}
-		bcopy(bp->b_data, space, (u_int)size);
+#ifdef FFS_EI
+		if (needswap)
+			ffs_csum_swap((struct csum*)bp->b_data,
+				(struct csum*)space, size);
+		else
+#endif
+			bcopy(bp->b_data, space, (u_int)size);
+			
 		fs->fs_csp[fragstoblks(fs, i)] = (struct csum *)space;
 		space += size;
 		brelse(bp);
@@ -529,6 +574,10 @@ ffs_mountfs(devvp, mp, p)
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_FFS);
 	mp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
 	mp->mnt_flag |= MNT_LOCAL;
+#ifdef FFS_EI
+	if (needswap)
+		ump->um_flags |= UFS_NEEDSWAP;
+#endif
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
 	ump->um_devvp = devvp;
@@ -544,12 +593,13 @@ ffs_mountfs(devvp, mp, p)
 	if (fs->fs_maxfilesize > maxfilesize)			/* XXX */
 		fs->fs_maxfilesize = maxfilesize;		/* XXX */
 	return (0);
+out2:
+	free(fs, M_UFSMNT);
 out:
 	if (bp)
 		brelse(bp);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
 	if (ump) {
-		free(ump->um_fs, M_UFSMNT);
 		free(ump, M_UFSMNT);
 		mp->mnt_data = (qaddr_t)0;
 	}
@@ -851,7 +901,14 @@ ffs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	ip->i_din.ffs_din = *((struct dinode *)bp->b_data + ino_to_fsbo(fs, ino));
+#ifdef FFS_EI
+	if (UFS_MPNEEDSWAP(mp))
+		ffs_dinode_swap((struct dinode *)bp->b_data + ino_to_fsbo(fs, ino),
+			&(ip->i_din.ffs_din));
+	else 
+#endif
+		ip->i_din.ffs_din =
+			*((struct dinode *)bp->b_data + ino_to_fsbo(fs, ino));
 	brelse(bp);
 
 	/*
@@ -980,27 +1037,41 @@ ffs_sbupdate(mp, waitfor)
 	struct ufsmount *mp;
 	int waitfor;
 {
-	register struct fs *dfs, *fs = mp->um_fs;
+	register struct fs *fs = mp->um_fs;
 	register struct buf *bp;
 	int i, error = 0;
+	int32_t saved_nrpos = fs->fs_nrpos;
+	int64_t saved_qbmask = fs->fs_qbmask;
+	int64_t saved_qfmask = fs->fs_qfmask;
+	u_int64_t saved_maxfilesize = fs->fs_maxfilesize;
 
-	bp = getblk(mp->um_devvp, SBOFF >> (fs->fs_fshift - fs->fs_fsbtodb),
-	    (int)fs->fs_sbsize, 0, 0);
-	bcopy((caddr_t)fs, bp->b_data, (u_int)fs->fs_sbsize);
 	/* Restore compatibility to old file systems.		   XXX */
-	dfs = (struct fs *)bp->b_data;				/* XXX */
 	if (fs->fs_postblformat == FS_42POSTBLFMT)		/* XXX */
-		dfs->fs_nrpos = -1;				/* XXX */
+		fs->fs_nrpos = -1;		/* XXX */
 	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
 		int32_t *lp, tmp;				/* XXX */
 								/* XXX */
-		lp = (int32_t *)&dfs->fs_qbmask;		/* XXX */
+		lp = (int32_t *)&fs->fs_qbmask;		/* XXX nuke qfmask too */
 		tmp = lp[4];					/* XXX */
 		for (i = 4; i > 0; i--)				/* XXX */
 			lp[i] = lp[i-1];			/* XXX */
 		lp[0] = tmp;					/* XXX */
 	}							/* XXX */
-	dfs->fs_maxfilesize = mp->um_savedmaxfilesize;		/* XXX */
+	fs->fs_maxfilesize = mp->um_savedmaxfilesize;	/* XXX */
+
+	bp = getblk(mp->um_devvp, SBOFF >> (fs->fs_fshift - fs->fs_fsbtodb),
+	    (int)fs->fs_sbsize, 0, 0);
+	bcopy(fs, bp->b_data, fs->fs_sbsize);
+#ifdef FFS_EI
+	if (mp->um_flags & UFS_NEEDSWAP)
+		ffs_sb_swap(fs, (struct fs*)bp->b_data, 1);
+#endif
+
+	fs->fs_nrpos = saved_nrpos; /* XXX */
+	fs->fs_qbmask = saved_qbmask; /* XXX */
+	fs->fs_qfmask = saved_qfmask; /* XXX */
+	fs->fs_maxfilesize = saved_maxfilesize; /* XXX */
+
 	if (waitfor == MNT_WAIT)
 		error = bwrite(bp);
 	else
@@ -1028,7 +1099,13 @@ ffs_cgupdate(mp, waitfor)
 			size = (blks - i) * fs->fs_fsize;
 		bp = getblk(mp->um_devvp, fsbtodb(fs, fs->fs_csaddr + i),
 		    size, 0, 0);
-		bcopy(space, bp->b_data, (u_int)size);
+#ifdef FFS_EI
+		if (mp->um_flags & UFS_NEEDSWAP)
+			ffs_csum_swap((struct csum*)space,
+				(struct csum*)bp->b_data, size);
+		else
+#endif
+			bcopy(space, bp->b_data, (u_int)size);
 		space += size;
 		if (waitfor == MNT_WAIT)
 			error = bwrite(bp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.10 1998/03/02 16:13:42 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.11 1998/03/18 15:57:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -630,6 +630,7 @@ ext2fs_mountfs(devvp, mp, p)
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_EXT2FS);
 	mp->mnt_maxsymlinklen = EXT2_MAXSYMLINKLEN;
 	mp->mnt_flag |= MNT_LOCAL;
+	ump->um_flags = 0;
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
 	ump->um_devvp = devvp;

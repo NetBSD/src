@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.9 1998/03/01 02:23:36 fvdl Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.10 1998/03/18 15:57:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -165,4 +165,16 @@ int ufs_vinit __P((struct mount *, int (**) __P((void *)),
 		   int (**) __P((void *)), struct vnode **));
 int ufs_makeinode __P((int, struct vnode *, struct vnode **,
 		       struct componentname *));
+
 __END_DECLS
+
+/* Macros to access UFS flags */
+#ifdef FFS_EI
+#define UFS_MPNEEDSWAP(mp) (VFSTOUFS(mp)->um_flags & UFS_NEEDSWAP)
+#define UFS_IPNEEDSWAP(ip) \
+	(VFSTOUFS(ITOV(ip)->v_mount)->um_flags & UFS_NEEDSWAP)
+#else
+#define UFS_MPNEEDSWAP(mp) (0)
+#define UFS_IPNEEDSWAP(ip) (0)
+#endif
+
