@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.6 1996/10/13 03:30:50 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.7 1997/02/02 08:30:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,9 +67,10 @@
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>
 #endif
+
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
-	extern struct emul emul_sunos;
+extern struct emul emul_sunos;
 #endif
 
 char	*trap_type[] = {
