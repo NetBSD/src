@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.34 2001/02/24 20:08:54 reinoud Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.35 2001/02/25 17:17:56 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -493,7 +493,7 @@ int
 vidcaudio_rate(rate)
 	int rate;
 {
-	WriteWord(VIDC_BASE, VIDC_SFR | rate);
+	WriteWord(vidc_base, VIDC_SFR | rate);
 	return 0;
 }
 
@@ -505,7 +505,7 @@ vidcaudio_stereo(channel, position)
 	if (channel < 0) return EINVAL;
 	if (channel > 7) return EINVAL;
 	channel = channel<<24 | VIDC_SIR0;
-	WriteWord(VIDC_BASE, channel | position);
+	WriteWord(vidc_base, channel | position);
 	return 0;
 }
 
