@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.245 1998/09/13 20:27:47 hwr Exp $
+#	$NetBSD: files,v 1.246 1998/09/15 02:02:55 rvb Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -366,12 +366,12 @@ file adosfs/adlookup.c			adosfs
 file adosfs/adutil.c			adosfs
 file adosfs/advfsops.c			adosfs
 file adosfs/advnops.c			adosfs
-file cfs/cfs_namecache.c		coda
-file cfs/cfs_psdev.c			vcoda			needs-count
-file cfs/cfs_subr.c			coda
-file cfs/cfs_venus.c			coda
-file cfs/cfs_vfsops.c			coda
-file cfs/cfs_vnodeops.c			coda
+file coda/coda_namecache.c		coda
+file coda/coda_psdev.c			vcoda			needs-count
+file coda/coda_subr.c			coda
+file coda/coda_venus.c			coda
+file coda/coda_vfsops.c			coda
+file coda/coda_vnops.c			coda
 file ddb/db_access.c			ddb | kgdb
 file ddb/db_aout.c			ddb
 file ddb/db_break.c			ddb

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.h,v 1.3 1998/09/12 15:05:49 rvb Exp $	*/
+/*	$NetBSD: coda_subr.h,v 1.4 1998/09/15 02:02:59 rvb Exp $	*/
 
 /*
  * 
@@ -28,7 +28,7 @@
  * improvements or extensions that  they  make,  and  to  grant  Carnegie
  * Mellon the rights to redistribute these changes without encumbrance.
  * 
- * 	@(#) cfs/cfs_subr.h,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
+ * 	@(#) coda/coda_subr.h,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
  */
 
 struct cnode *coda_alloc(void);

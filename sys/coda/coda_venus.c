@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.3 1998/09/12 15:05:49 rvb Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.4 1998/09/15 02:02:59 rvb Exp $	*/
 
 /*
  * 
@@ -28,7 +28,7 @@
  * improvements or extensions that  they  make,  and  to  grant  Carnegie
  * Mellon the rights to redistribute these changes without encumbrance.
  * 
- * 	@(#) cfs/cfs_venus.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
+ * 	@(#) coda/coda_venus.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
  */
 
 #include <sys/param.h>
@@ -40,10 +40,10 @@
 /* for CNV_OFLAGS below */
 #include <sys/fcntl.h>
 
-#include <cfs/coda.h>
-#include <cfs/cnode.h>
-#include <cfs/cfs_venus.h>
-#include <cfs/pioctl.h>
+#include <coda/coda.h>
+#include <coda/cnode.h>
+#include <coda/coda_venus.h>
+#include <coda/coda_pioctl.h>
 
 #define DECL_NO_IN(name) 				\
     struct coda_in_hdr *inp;				\
