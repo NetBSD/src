@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.32 2003/01/18 17:50:33 thorpej Exp $
+# $NetBSD: shl.elf,v 1.33 2003/01/24 01:54:53 thorpej Exp $
 ./lib/libc.so			comp-c-lib
 ./lib/libcrypt.so		comp-c-lib
 ./lib/libcrypto.so		comp-c-lib
@@ -54,6 +54,7 @@
 ./usr/lib/libpthread_dbg.so	comp-c-lib
 ./usr/lib/libresolv.so		comp-c-lib
 ./usr/lib/libroken.so		comp-c-lib
+./usr/lib/librt.so		comp-c-lib
 ./usr/lib/libskey.so		comp-c-lib
 ./usr/lib/libsl.so		comp-c-lib
 ./usr/lib/libss.so		comp-c-lib
