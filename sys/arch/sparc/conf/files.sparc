@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.78 1999/06/30 15:18:58 drochner Exp $
+#	$NetBSD: files.sparc,v 1.79 1999/07/28 05:45:50 christos Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -19,7 +19,7 @@ device obio { [addr = -1], [level = -1] }
 attach obio at mainbus
 
 include "dev/vme/files.vme"
-device sparcvme: vmebus
+device sparcvme: vme
 attach sparcvme at mainbus with vme_mainbus
 attach sparcvme at iommu with vme_iommu
 
