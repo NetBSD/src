@@ -1,4 +1,4 @@
-/* $NetBSD: zlib.h,v 1.8 1999/10/26 03:42:58 itojun Exp $ */
+/* $NetBSD: zlib.h,v 1.9 1999/10/26 22:16:48 itojun Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.1.3, July 9th, 1998
@@ -768,12 +768,12 @@ ZEXTERN int ZEXPORT    gzflush OF((gzFile file, int flush));
 #ifdef __ZLIB_BACKWARD_COMPAT
 ZEXTERN long ZEXPORT    gzseek OF((gzFile file,
 				      long offset, int whence));
-ZEXTERN z_off_t ZEXPORT    __gzseek15 OF((gzFile file,
+ZEXTERN z_off_t ZEXPORT    __gzseek1 OF((gzFile file,
 				      z_off_t offset, int whence));
 #else
 ZEXTERN z_off_t ZEXPORT    gzseek OF((gzFile file,
 				      z_off_t offset, int whence))
-				      __RENAME(__gzseek15);
+				      __RENAME(__gzseek1);
 #endif
 /* 
       Sets the starting position for the next gzread or gzwrite on the
@@ -804,9 +804,9 @@ ZEXTERN int ZEXPORT    gzrewind OF((gzFile file));
  */
 #ifdef __ZLIB_BACKWARD_COMPAT
 ZEXTERN long ZEXPORT    gztell OF((gzFile file));
-ZEXTERN z_off_t ZEXPORT    __gztell15 OF((gzFile file));
+ZEXTERN z_off_t ZEXPORT    __gztell1 OF((gzFile file));
 #else
-ZEXTERN z_off_t ZEXPORT    gztell OF((gzFile file)) __RENAME(__gztell15);
+ZEXTERN z_off_t ZEXPORT    gztell OF((gzFile file)) __RENAME(__gztell1);
 #endif
 /*
      Returns the starting position for the next gzread or gzwrite on the
