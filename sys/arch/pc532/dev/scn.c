@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.50 2001/07/22 13:34:07 wiz Exp $ */
+/*	$NetBSD: scn.c,v 1.50.2.1 2001/10/10 11:56:22 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -64,6 +64,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
@@ -83,8 +84,8 @@ int     scnprobe __P((struct device *, struct cfdata *, void *));
 void    scnattach __P((struct device *, struct device *, void *));
 int     scnparam __P((struct tty *, struct termios *));
 void    scnstart __P((struct tty *));
-int     scnopen __P((dev_t, int, int, struct proc *));
-int     scnclose __P((dev_t, int, int, struct proc *));
+int     scnopen __P((struct vnode *, int, int, struct proc *));
+int     scnclose __P((struct vnode *, int, int, struct proc *));
 void	scncnprobe __P((struct consdev *));
 void	scncninit __P((struct consdev *));
 int     scncngetc __P((dev_t));
@@ -1032,15 +1033,16 @@ scnattach(parent, self, aux)
 
 /* ARGSUSED */
 int
-scnopen(dev, flag, mode, p)
-	dev_t dev;
+scnopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	register struct tty *tp;
-	register int unit = DEV_UNIT(dev);
-	register struct scn_softc *sc;
+	dev_t dev = vdev_rdev(devvp);
+	struct tty *tp;
+	int unit = DEV_UNIT(dev);
+	struct scn_softc *sc;
 	int error = 0;
 	int hwset = 0;
 	int s;
@@ -1058,10 +1060,12 @@ scnopen(dev, flag, mode, p)
 	} else
 		tp = sc->sc_tty;
 
+	vdev_setprivdata(devvp, sc);
+
 	tp->t_oproc = scnstart;
 	tp->t_param = scnparam;
 	tp->t_hwiflow = scnhwiflow;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
@@ -1167,7 +1171,7 @@ scnopen(dev, flag, mode, p)
 	}
 	splx(s);
 
-	error = (*tp->t_linesw->l_open) (dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	if (error && hwset) {
 		scn_rxdisable(sc);
 		SCN_OP_BIC(sc, sc->sc_op_rts | sc->sc_op_dtr);
@@ -1178,15 +1182,14 @@ scnopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-scnclose(dev, flag, mode, p)
-	dev_t dev;
+scnclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	register int unit = DEV_UNIT(dev);
-	register struct scn_softc *sc = SOFTC(unit);
-	register struct tty *tp = sc->sc_tty;
+	struct scn_softc *sc = vdev_privdata(devvp);
+	struct tty *tp = sc->sc_tty;
 
 	if ((tp->t_state & TS_ISOPEN) == 0)
 		return 0;
@@ -1195,7 +1198,7 @@ scnclose(dev, flag, mode, p)
 
 #ifdef KGDB
 	/* do not disable interrupts if debugging */
-	if (kgdb_dev != makedev(scnmajor, unit))
+	if (kgdb_dev != makedev(scnmajor, DEV_UNIT(vdev_rdev(devvp))))
 #endif
 		if ((tp->t_state & TS_ISOPEN) == 0) {
 			scn_rxdisable(sc);
@@ -1219,46 +1222,46 @@ scnclose(dev, flag, mode, p)
 }
 
 int
-scnread(dev, uio, flag)
-	dev_t dev;
+scnread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
-	register struct tty *tp = sc->sc_tty;
+	struct scn_softc *sc = vdev_privdata(devvp);
+	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read) (tp, uio, flag));
 }
 
 int
-scnwrite(dev, uio, flag)
-	dev_t dev;
+scnwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
-	register struct tty *tp = sc->sc_tty;
+	struct scn_softc *sc = vdev_privdata(devvp);
+	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write) (tp, uio, flag));
 }
 
 int
-scnpoll(dev, events, p)
-	dev_t dev;
+scnpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
-	register struct tty *tp = sc->sc_tty;
+	struct scn_softc *sc = vdev_privdata(devvp);
+	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-scntty(dev)
-	dev_t dev;
+scntty(devvp)
+	struct vnode *devvp;
 {
-	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
+	register struct scn_softc *sc = vdev_privdata(devvp);
 
 	return sc->sc_tty;
 }
@@ -1315,8 +1318,7 @@ scnhwiflow(tp, stop)
 	struct tty *tp;
 	int stop;
 {
-	int unit = DEV_UNIT(tp->t_dev);
-	struct scn_softc *sc = SOFTC(unit);
+	struct scn_softc *sc = vdev_privdata(tp->t_devvp);
 	int s = splrtty();
 
 	if (!stop) {
@@ -1333,13 +1335,13 @@ scnintr(arg)
 	void *arg;
 {
 	int line1 = (int)arg;	/* NOTE: line _ONE_ */
-	register struct scn_softc *sc0 = SOFTC(line1 - 1);
-	register struct scn_softc *sc1 = SOFTC(line1);
+	struct scn_softc *sc0 = SOFTC(line1 - 1);
+	struct scn_softc *sc1 = SOFTC(line1);
 
-	register struct tty *tp0 = sc0->sc_tty;
-	register struct tty *tp1 = sc1->sc_tty;
+	struct tty *tp0 = sc0->sc_tty;
+	struct tty *tp1 = sc1->sc_tty;
 
-	register struct duart *duart = sc0->sc_duart;
+	struct duart *duart = sc0->sc_duart;
 
 	char rs_work;
 	u_char rs_stat;
@@ -1779,10 +1781,10 @@ scnparam(tp, t)
 	struct termios *t;
 {
 	int cflag = t->c_cflag;
-	int unit = DEV_UNIT(tp->t_dev);
+	int unit = DEV_UNIT(vdev_rdev(tp->t_devvp));
 	char mr1, mr2;
 	int error;
-	struct scn_softc *sc = SOFTC(unit);
+	struct scn_softc *sc = vdev_privdata(tp->t_devvp);
 
 	/* Is this a hang up? */
 	if (t->c_ospeed == B0) {
@@ -1850,8 +1852,7 @@ scnstart(tp)
 	struct tty *tp;
 {
 	int s, c;
-	int unit = DEV_UNIT(tp->t_dev);
-	struct scn_softc *sc = SOFTC(unit);
+	struct scn_softc *sc = vdev_privdata(devvp);
 
 	s = spltty();
 	if (tp->t_state & (TS_BUSY | TS_TTSTOP))

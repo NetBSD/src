@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14 2000/11/20 08:24:23 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.14.2.1 2001/10/10 11:56:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -43,6 +43,7 @@
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 #include <sys/disk.h>
+#include <sys/vnode.h>
 
 /*
  * Attempt to read a disk label from a device
@@ -60,8 +61,8 @@
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
+readdisklabel(devvp, strat, lp, osdep)
+	struct vnode *devvp;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
@@ -89,7 +90,7 @@ readdisklabel(dev, strat, lp, osdep)
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
@@ -97,7 +98,7 @@ readdisklabel(dev, strat, lp, osdep)
 	if (dp) {
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags |= B_READ;
+		bp->b_flags |= B_READ | B_DKLABEL;
 		bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
 
@@ -114,7 +115,7 @@ readdisklabel(dev, strat, lp, osdep)
 		bp->b_blkno = DOSPARTOFF;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags &= ~(B_DONE);
-		bp->b_flags |= B_READ;
+		bp->b_flags |= B_READ | B_DKLABEL;
 		bp->b_cylinder = DOSPARTOFF / lp->d_secpercyl;
 		(*strat)(bp);
 
@@ -176,7 +177,7 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags &= ~(B_DONE);
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
@@ -211,7 +212,7 @@ readdisklabel(dev, strat, lp, osdep)
 		do {
 			/* read a bad sector table */
 			bp->b_flags &= ~(B_DONE);
-			bp->b_flags |= B_READ;
+			bp->b_flags |= B_READ | B_DKLABEL;
 			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
 			if (lp->d_secsize > DEV_BSIZE)
 				bp->b_blkno *= lp->d_secsize / DEV_BSIZE;
@@ -240,6 +241,7 @@ readdisklabel(dev, strat, lp, osdep)
 	}
 
 done:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (msg);
 }
@@ -304,8 +306,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
+writedisklabel(devvp, strat, lp, osdep)
+	struct vnode *devvp;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
@@ -318,7 +320,7 @@ writedisklabel(dev, strat, lp, osdep)
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
@@ -327,7 +329,7 @@ writedisklabel(dev, strat, lp, osdep)
 		/* read master boot record */
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags |= B_READ;
+		bp->b_flags |= B_READ | B_DKLABEL;
 		bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
 		if (biowait(bp))
@@ -343,7 +345,7 @@ writedisklabel(dev, strat, lp, osdep)
 		bp->b_blkno = DOSPARTOFF;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags &= ~(B_DONE);
-		bp->b_flags |= B_READ;
+		bp->b_flags |= B_READ | B_DKLABEL;
 		bp->b_cylinder = DOSPARTOFF / lp->d_secpercyl;
 		(*strat)(bp);
 
@@ -423,7 +425,7 @@ writedisklabel(dev, strat, lp, osdep)
 	bp->b_blkno = dospartoff + LABELSECTOR;
 	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
@@ -437,7 +439,7 @@ writedisklabel(dev, strat, lp, osdep)
 		    dkcksum(dlp) == 0) {
 			*dlp = *lp;
 			bp->b_flags &= ~(B_READ|B_DONE);
-			bp->b_flags |= B_WRITE;
+			bp->b_flags |= B_WRITE | B_DKLABEL;
 			(*strat)(bp);
 			error = biowait(bp);
 			goto done;
@@ -445,6 +447,7 @@ writedisklabel(dev, strat, lp, osdep)
 	}
 	error = ESRCH;
 done:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return (error);
 }
@@ -460,9 +463,16 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
-	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	struct partition *p;
 	int labelsector = lp->d_partitions[RAW_PART].p_offset + LABELSECTOR;
-	int sz;
+	int sz, part;
+
+	if (bp->b_flags & B_DKLABEL)
+		part = RAW_PART;
+	else
+		part = DISKPART(vdev_rdev(bp->b_devvp));
+
+	p = lp->d_partitions + part;
 
 	sz = howmany(bp->b_bcount, lp->d_secsize);
 

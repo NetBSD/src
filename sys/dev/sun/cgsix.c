@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.5.6.1 2001/10/01 12:46:23 fvdl Exp $ */
+/*	$NetBSD: cgsix.c,v 1.5.6.2 2001/10/10 11:57:01 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #ifdef DEBUG
 #include <sys/proc.h>
@@ -526,25 +527,27 @@ cg6attach(sc, name, isconsole)
 
 
 int
-cgsixopen(dev, flags, mode, p)
-	dev_t dev;
+cgsixopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev);
 
 	if (unit >= cgsix_cd.cd_ndevs || cgsix_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
+	vdev_setprivdata(devvp, cgsix_cd.cd_devs[unit]);
 	return (0);
 }
 
 int
-cgsixclose(dev, flags, mode, p)
-	dev_t dev;
+cgsixclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
+	struct cgsix_softc *sc = vdev_privdata(devvp);
 
 	cg6_reset(sc);
 
@@ -556,14 +559,14 @@ cgsixclose(dev, flags, mode, p)
 }
 
 int
-cgsixioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+cgsixioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
+	struct cgsix_softc *sc = vdev_privdata(devvp);
 	u_int count;
 	int v, error;
 	union cursor_cmap tcm;
@@ -731,13 +734,13 @@ cgsixioctl(dev, cmd, data, flags, p)
 }
 
 int
-cgsixpoll(dev, events, p)
-	dev_t dev;
+cgsixpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 
-	return (seltrue(dev, events, p));
+	return (seltrue(devvp, events, p));
 }
 
 /*
@@ -911,12 +914,12 @@ struct mmo {
  * XXX	needs testing against `demanding' applications (e.g., aviator)
  */
 paddr_t
-cgsixmmap(dev, off, prot)
-	dev_t dev;
+cgsixmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
+	struct cgsix_softc *sc = vdev_privdata(devvp);
 	struct mmo *mo;
 	u_int u, sz;
 	static struct mmo mmo[] = {

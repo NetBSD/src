@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.70 2001/07/07 14:21:01 simonb Exp $	*/
+/*	$NetBSD: scc.c,v 1.70.4.1 2001/10/10 11:56:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.70 2001/07/07 14:21:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.70.4.1 2001/10/10 11:56:27 fvdl Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.70 2001/07/07 14:21:01 simonb Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <dev/dec/lk201.h>
 #include <dev/ic/z8530reg.h>
@@ -111,6 +112,8 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.70 2001/07/07 14:21:01 simonb Exp $");
 #include <dev/tc/ioasicvar.h>
 
 void	ttrstrt __P((void *));
+
+static struct tty *__scctty __P((dev_t));
 
 
 /*
@@ -221,9 +224,9 @@ void	(*sccMouseButtons) __P((void *));
 static void	sccPollc __P((dev_t, int));
 static int	sccparam __P((struct tty *, struct termios *));
 static void	sccstart __P((struct tty *));
-static int	sccmctl __P((dev_t, int, int));
+static int	sccmctl __P((struct vnode *, int, int));
 static int	cold_sccparam __P((struct tty *, struct termios *,
-		    struct scc_softc *sc));
+		    struct scc_softc *sc, dev_t));
 
 #ifdef SCC_DEBUG
 static void	rr __P((char *, scc_regmap_t *));
@@ -399,7 +402,6 @@ sccattach(parent, self, aux)
 			tty_attach(tp);	/* XXX */
 		pdp->p_arg = (long)tp;
 		pdp->p_fcn = NULL;
-		tp->t_dev = (dev_t)((unit << 1) | cntr);
 		pdp++;
 	}
 	/* What's the warning here? Defaulting to softCAR on line 2? */
@@ -459,13 +461,12 @@ scc_tty_init(sc, dev)
 	int s;
 
 	s = spltty();
-	ctty.t_dev = dev;
 	cterm.c_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
 	/* XXX -- why on pmax, not on Alpha? */
 	cterm.c_cflag  |= CLOCAL;
 	cterm.c_ospeed = cterm.c_ispeed = 9600;
 	/* scc_tty_init() may be called when very cold */
-	(void) cold_sccparam(&ctty, &cterm, sc);
+	(void) cold_sccparam(&ctty, &cterm, sc, dev);
 	DELAY(1000);
 	splx(s);
 }
@@ -481,12 +482,11 @@ scc_kbd_init(sc, dev)
 	int s;
 
 	s = spltty();
-	ctty.t_dev = dev;
 	cterm.c_cflag = CS8;
 	/* XXX -- why on pmax, not on Alpha? */
 	cterm.c_cflag |= CLOCAL;
 	cterm.c_ospeed = cterm.c_ispeed = 4800;
-	(void) sccparam(&ctty, &cterm);
+	(void) cold_sccparam(&ctty, &cterm, sc, dev);
 	DELAY(10000);
 #ifdef notyet
 	/*
@@ -494,7 +494,7 @@ scc_kbd_init(sc, dev)
 	 * during booting. Fortunately the keyboard
 	 * works ok without it.
 	 */
-	lk_reset(ctty.t_dev, sccPutc);
+	lk_reset(dev, sccPutc);
 #endif /* notyet */
 	DELAY(10000);
 	splx(s);
@@ -511,10 +511,9 @@ scc_mouse_init(sc, dev)
 	int s;
 
 	s = spltty();
-	ctty.t_dev = dev;
 	cterm.c_cflag = CS8 | PARENB | PARODD;
 	cterm.c_ospeed = cterm.c_ispeed = 4800;
-	(void) sccparam(&ctty, &cterm);
+	(void) cold_sccparam(&ctty, &cterm, sc, dev);
 #if NRASTERCONSOLE > 0
 	/*
 	 * This is a hack.  As Ted Lemon observed, we want bstreams,
@@ -525,7 +524,7 @@ scc_mouse_init(sc, dev)
 		goto done;
 
 	DELAY(10000);
-	lk_mouseinit(ctty.t_dev, sccPutc, sccGetc);
+	lk_mouseinit(dev, sccPutc, sccGetc);
 	DELAY(10000);
 
 done:
@@ -605,15 +604,18 @@ sccreset(sc)
 }
 
 int
-sccopen(dev, flag, mode, p)
-	dev_t dev;
+sccopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev;
 	struct scc_softc *sc;
 	struct tty *tp;
 	int unit, line;
 	int s, error = 0;
+
+	dev = vdev_rdev(devvp);
 
 	unit = SCCUNIT(dev);
 	if (unit >= scc_cd.cd_ndevs)
@@ -632,7 +634,9 @@ sccopen(dev, flag, mode, p)
 	}
 	tp->t_oproc = sccstart;
 	tp->t_param = sccparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
+
+	vdev_setprivdata(devvp, sc);
 
 	/*
 	 * Do the following only for first opens.
@@ -661,7 +665,7 @@ sccopen(dev, flag, mode, p)
 		splx(s);
 		goto bad;
 	}
-	(void) sccmctl(dev, DML_DTR, DMSET);
+	(void) sccmctl(devvp, DML_DTR, DMSET);
 
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	    !(tp->t_state & TS_CARR_ON)) {
@@ -676,7 +680,7 @@ sccopen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 
 	if (error)
 		goto bad;
@@ -686,16 +690,16 @@ bad:
 
 /*ARGSUSED*/
 int
-sccclose(dev, flag, mode, p)
-	dev_t dev;
+sccclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	struct scc_softc *sc = scc_cd.cd_devs[SCCUNIT(dev)];
+	struct scc_softc *sc = vdev_privdata(devvp);
 	struct tty *tp;
 	int line;
 
-	line = SCCLINE(dev);
+	line = SCCLINE(vdev_rdev(devvp));
 	tp = sc->scc_tty[line];
 	if (sc->scc_wreg[line].wr5 & ZSWR5_BREAK) {
 		sc->scc_wreg[line].wr5 &= ~ZSWR5_BREAK;
@@ -704,70 +708,78 @@ sccclose(dev, flag, mode, p)
 	(*tp->t_linesw->l_close)(tp, flag);
 	if ((tp->t_cflag & HUPCL) || tp->t_wopen ||
 	    !(tp->t_state & TS_ISOPEN))
-		(void) sccmctl(dev, 0, DMSET);
+		(void) sccmctl(devvp, 0, DMSET);
 	return (ttyclose(tp));
 }
 
 int
-sccread(dev, uio, flag)
-	dev_t dev;
+sccread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
 	struct scc_softc *sc;
 	struct tty *tp;
 
-	sc = scc_cd.cd_devs[SCCUNIT(dev)];		/* XXX*/
-	tp = sc->scc_tty[SCCLINE(dev)];
+	sc = vdev_privdata(devvp);
+	tp = sc->scc_tty[SCCLINE(vdev_rdev(devvp))];
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
-sccwrite(dev, uio, flag)
-	dev_t dev;
+sccwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
 	struct scc_softc *sc;
 	struct tty *tp;
 
-	sc = scc_cd.cd_devs[SCCUNIT(dev)];	/* XXX*/
-	tp = sc->scc_tty[SCCLINE(dev)];
+	sc  = vdev_privdata(devvp);
+	tp = sc->scc_tty[SCCLINE(vdev_rdev(devvp))];
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-sccpoll(dev, events, p)
-	dev_t dev;
+sccpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	struct scc_softc *sc;
 	struct tty *tp;
 
-	sc = scc_cd.cd_devs[SCCUNIT(dev)];	/* XXX*/
-	tp = sc->scc_tty[SCCLINE(dev)];
+	sc = vdev_privdata(devvp);
+	tp = sc->scc_tty[SCCLINE(vdev_rdev(devvp))];
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
-struct tty *
-scctty(dev)
+static struct tty *
+__scctty(dev)
 	dev_t dev;
 {
 	struct scc_softc *sc;
-	struct tty *tp;
-	int unit = SCCUNIT(dev);
 
-	if ((unit >= scc_cd.cd_ndevs) || (sc = scc_cd.cd_devs[unit]) == 0)
-		return (0);
-	tp = sc->scc_tty[SCCLINE(dev)];
+	sc = scc_cd.cd_devs[SCCUNIT(dev)];
+	return sc->scc_tty[SCCLINE(dev)];
+}
+
+struct tty *
+scctty(devvp)
+	struct vnode *devvp;
+{
+	struct scc_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->scc_tty[SCCLINE(vdev_rdev(devvp))];
 	return (tp);
 }
 
 /*ARGSUSED*/
 int
-sccioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+sccioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -777,8 +789,8 @@ sccioctl(dev, cmd, data, flag, p)
 	struct tty *tp;
 	int error, line;
 
-	line = SCCLINE(dev);
-	sc = scc_cd.cd_devs[SCCUNIT(dev)];
+	line = SCCLINE(vdev_rdev(devvp));
+	sc = vdev_privdata(devvp);
 	tp = sc->scc_tty[line];
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
@@ -800,27 +812,27 @@ sccioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSDTR:
-		(void) sccmctl(dev, DML_DTR|DML_RTS, DMBIS);
+		(void) sccmctl(devvp, DML_DTR|DML_RTS, DMBIS);
 		break;
 
 	case TIOCCDTR:
-		(void) sccmctl(dev, DML_DTR|DML_RTS, DMBIC);
+		(void) sccmctl(devvp, DML_DTR|DML_RTS, DMBIC);
 		break;
 
 	case TIOCMSET:
-		(void) sccmctl(dev, *(int *)data, DMSET);
+		(void) sccmctl(devvp, *(int *)data, DMSET);
 		break;
 
 	case TIOCMBIS:
-		(void) sccmctl(dev, *(int *)data, DMBIS);
+		(void) sccmctl(devvp, *(int *)data, DMBIS);
 		break;
 
 	case TIOCMBIC:
-		(void) sccmctl(dev, *(int *)data, DMBIC);
+		(void) sccmctl(devvp, *(int *)data, DMBIC);
 		break;
 
 	case TIOCMGET:
-		*(int *)data = sccmctl(dev, 0, DMGET);
+		*(int *)data = sccmctl(devvp, 0, DMGET);
 		break;
 
 	default:
@@ -842,8 +854,8 @@ sccparam(tp, t)
 	struct scc_softc *sc;
 
 	/* Extract the softc and call cold_sccparam to do all the work. */
-	sc = scc_cd.cd_devs[SCCUNIT(tp->t_dev)];
-	return cold_sccparam(tp, t, sc);
+	sc = vdev_privdata(tp->t_devvp);
+	return cold_sccparam(tp, t, sc, NODEV);
 }
 
 
@@ -851,16 +863,23 @@ sccparam(tp, t)
  * Do what sccparam() (t_param entry point) does, but callable when cold.
  */
 static int
-cold_sccparam(tp, t, sc)
+cold_sccparam(tp, t, sc, dev)
 	struct tty *tp;
 	struct termios *t;
 	struct scc_softc *sc;
+	dev_t dev;
 {
 	scc_regmap_t *regs;
 	int line;
 	u_char value, wvalue;
 	int cflag = t->c_cflag;
 	int ospeed;
+	dev_t rdev;
+
+	if (dev == NODEV)
+		rdev = vdev_rdev(tp->t_devvp);
+	else
+		rdev = dev;
 
 	/* Check arguments */
 	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
@@ -873,12 +892,12 @@ cold_sccparam(tp, t, sc)
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = cflag;
 
-	if (t->c_ospeed == 0) {
-		(void) sccmctl(tp->t_dev, 0, DMSET);	/* hang up line */
+	if (t->c_ospeed == 0 && dev == NODEV) {
+		(void) sccmctl(tp->t_devvp, 0, DMSET);	/* hang up line */
 		return (0);
 	}
 
-	line = SCCLINE(tp->t_dev);
+	line = SCCLINE(rdev);
 	regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
 
 	/*
@@ -1056,7 +1075,7 @@ scc_rxintr(sc, chan, regs, unit)
 	/*
 	 * Keyboard needs special treatment.
 	 */
-	if (tp == scctty(makedev(SCCDEV, SCCKBD_PORT))) {
+	if (tp == __scctty(makedev(SCCDEV, SCCKBD_PORT))) {
 #if defined(DDB) && defined(LK_DO)
 			if (cc == LK_DO) {
 				spl0();
@@ -1081,7 +1100,7 @@ scc_rxintr(sc, chan, regs, unit)
 	/*
 	 * Now for mousey
 	 */
-	} else if (tp == scctty(makedev(SCCDEV, SCCMOUSE_PORT)) &&
+	} else if (tp == __scctty(makedev(SCCDEV, SCCMOUSE_PORT)) &&
 	    sccMouseButtons) {
 #if NRASTERCONSOLE > 0
 		/*XXX*/
@@ -1199,8 +1218,8 @@ sccstart(tp)
 	u_char temp;
 	int s, sendone;
 
-	sc = scc_cd.cd_devs[SCCUNIT(tp->t_dev)];
-	dp = &sc->scc_pdma[SCCLINE(tp->t_dev)];
+	sc = vdev_privdata(tp->t_devvp);
+	dp = &sc->scc_pdma[SCCLINE(vdev_rdev(tp->t_devvp))];
 	regs = (scc_regmap_t *)dp->p_addr;
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
@@ -1224,7 +1243,7 @@ sccstart(tp)
 	/*
 	 * Enable transmission and send the first char, as required.
 	 */
-	chan = SCCLINE(tp->t_dev);
+	chan = SCCLINE(vdev_rdev(tp->t_devvp));
 	SCC_READ_REG(regs, chan, SCC_RR0, temp);
 	sendone = (temp & ZSRR0_TX_READY);
 	SCC_READ_REG(regs, chan, SCC_RR15, temp);
@@ -1260,8 +1279,8 @@ sccstop(tp, flag)
 	struct scc_softc *sc;
 	int s;
 
-	sc = scc_cd.cd_devs[SCCUNIT(tp->t_dev)];
-	dp = &sc->scc_pdma[SCCLINE(tp->t_dev)];
+	sc = vdev_privdata(tp->t_devvp);
+	dp = &sc->scc_pdma[SCCLINE(vdev_rdev(tp->t_devvp))];
 	s = spltty();
 	if (tp->t_state & TS_BUSY) {
 		dp->p_end = dp->p_mem;
@@ -1272,8 +1291,8 @@ sccstop(tp, flag)
 }
 
 static int
-sccmctl(dev, bits, how)
-	dev_t dev;
+sccmctl(devvp, bits, how)
+	struct vnode *devvp;
 	int bits, how;
 {
 	struct scc_softc *sc;
@@ -1282,8 +1301,8 @@ sccmctl(dev, bits, how)
 	u_char value;
 	int s;
 
-	sc = scc_cd.cd_devs[SCCUNIT(dev)];
-	line = SCCLINE(dev);
+	sc = vdev_privdata(devvp);
+	line = SCCLINE(vdev_rdev(devvp));
 	regs = (scc_regmap_t *)sc->scc_pdma[line].p_addr;
 	s = spltty();
 	/*

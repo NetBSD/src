@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.15.4.1 2001/10/01 12:41:51 fvdl Exp $ */
+/* $NetBSD: sci.c,v 1.15.4.2 2001/10/10 11:56:30 fvdl Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -491,7 +491,7 @@ static void
 scistart(tp)
 	struct tty *tp;
 {
-	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(tp->t_dev)];
+	struct sci_softc *sc = vdev_privdata(tp->t_devvp);
 	int s;
 
 	s = spltty();
@@ -553,7 +553,7 @@ sciparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(tp->t_dev)];
+	struct sci_softc *sc = vdev_privdata(tp->t_devvp);
 	int ospeed = t->c_ospeed;
 	int s;
 
@@ -683,11 +683,12 @@ sci_iflush(sc)
 }
 
 int
-sciopen(dev, flag, mode, p)
-	dev_t dev;
+sciopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = SCIUNIT(dev);
 	struct sci_softc *sc;
 	struct tty *tp;
@@ -712,6 +713,8 @@ sciopen(dev, flag, mode, p)
 		return (EBUSY);
 #endif
 
+	vdev_setprivdata(devvp, sc);
+
 	tp = sc->sc_tty;
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
@@ -727,7 +730,7 @@ sciopen(dev, flag, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
 
-		tp->t_dev = dev;
+		tp->t_devvp = devvp;
 
 		s2 = splserial();
 
@@ -789,7 +792,7 @@ sciopen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	if (error)
 		goto bad;
 
@@ -801,12 +804,12 @@ bad:
 }
 
 int
-sciclose(dev, flag, mode, p)
-	dev_t dev;
+sciclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
+	struct sci_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
@@ -823,60 +826,60 @@ sciclose(dev, flag, mode, p)
 }
 
 int
-sciread(dev, uio, flag)
-	dev_t dev;
+sciread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
+	struct sci_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
-sciwrite(dev, uio, flag)
-	dev_t dev;
+sciwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
+	struct sci_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-scipoll(dev, events, p)
-	dev_t dev;
+scipoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
+	struct sci_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-scitty(dev)
-	dev_t dev;
+scitty(devvp)
+	struct vnode *devvp;
 {
-	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
+	struct sci_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
 }
 
 int
-sciioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+sciioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
+	struct sci_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 	int error;
 	int s;
@@ -979,7 +982,7 @@ scistop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(tp->t_dev)];
+	struct sci_softc *sc = vdev_privdata(tp->t_devvp);
 	int s;
 
 	s = splserial();

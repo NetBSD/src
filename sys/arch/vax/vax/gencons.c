@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.35 2001/06/12 13:18:38 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.35.4.1 2001/10/10 11:56:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -49,6 +49,7 @@
 #include <sys/device.h>
 #include <sys/reboot.h>
 #include <sys/kernel.h>
+#include <sys/vnode.h>
 
 #include <dev/cons.h>
 
@@ -78,11 +79,13 @@ static	int gencnparam __P((struct tty *, struct termios *));
 static	void gencnstart __P((struct tty *));
 
 int
-gencnopen(dev_t dev, int flag, int mode, struct proc *p)
+gencnopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	int unit;
 	struct tty *tp;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	unit = minor(dev);
 	if (unit >= maxttys)
 		return ENXIO;
@@ -94,9 +97,11 @@ gencnopen(dev_t dev, int flag, int mode, struct proc *p)
 	gc_softc[unit].unit = unit;
 	tp = gc_softc[unit].gencn_tty;
 
+	vdev_setprivdata(devvp, &gc_softc[unit]);
+
 	tp->t_oproc = gencnstart;
 	tp->t_param = gencnparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -110,54 +115,62 @@ gencnopen(dev_t dev, int flag, int mode, struct proc *p)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 
-	return ((*tp->t_linesw->l_open)(dev, tp));
+	return ((*tp->t_linesw->l_open)(devvp, tp));
 }
 
 int
-gencnclose(dev_t dev, int flag, int mode, struct proc *p)
+gencnclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	struct tty *tp = gc_softc[minor(dev)].gencn_tty;
+	struct gc_softc *sc = vdev_privdata(devvp);
+	struct tty *tp = sc->gencn_tty;
 
-	gc_softc[minor(dev)].alive = 0;
+	sc->alive = 0;
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 	return (0);
 }
 
 struct tty *
-gencntty(dev_t dev)
+gencntty(struct vnode *devvp)
 {
-	return gc_softc[minor(dev)].gencn_tty;
+	struct gc_softc *sc = vdev_privdata(devvp);
+
+	return sc->gencn_tty;
 }
 
 int
-gencnread(dev_t dev, struct uio *uio, int flag)
+gencnread(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct tty *tp = gc_softc[minor(dev)].gencn_tty;
+	struct gc_softc *sc = vdev_privdata(devvp);
+	struct tty *tp = sc->gencn_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
-gencnwrite(dev_t dev, struct uio *uio, int flag)
+gencnwrite(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct tty *tp = gc_softc[minor(dev)].gencn_tty;
+	struct gc_softc *sc = vdev_privdata(devvp);
+	struct tty *tp = sc->gencn_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-gencnpoll(dev_t dev, int events, struct proc *p)
+gencnpoll(struct vnode *devvp, int events, struct proc *p)
 {
-	struct tty *tp = gc_softc[minor(dev)].gencn_tty;
+	struct gc_softc *sc = vdev_privdata(devvp);
+	struct tty *tp = sc->gencn_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int
-gencnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+gencnioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+	   struct proc *p)
 {
-	struct tty *tp = gc_softc[minor(dev)].gencn_tty;
+	struct gc_softc *sc = vdev_privdata(devvp);
+	struct tty *tp = sc->gencn_tty;
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
@@ -189,7 +202,7 @@ gencnstart(struct tty *tp)
 	if(cl->c_cc){
 		tp->t_state |= TS_BUSY;
 		ch = getc(cl);
-		mtpr(ch, pr_txdb[minor(tp->t_dev)]);
+		mtpr(ch, pr_txdb[minor(vdev_rdev(tp->t_devvp))]);
 	} else {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
@@ -214,7 +227,7 @@ gencnrint(void *arg)
 	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
 #ifdef DDB
-	if (tp->t_dev == cn_tab->cn_dev) {
+	if (vdev_rdev(tp->t_devvp) == cn_tab->cn_dev) {
 		int j = kdbrint(i);
 
 		if (j == 1) {	/* Escape received, just return */

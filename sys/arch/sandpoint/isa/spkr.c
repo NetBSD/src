@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.2 2001/04/18 15:43:01 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.2.4.1 2001/10/10 11:56:29 fvdl Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -24,6 +24,7 @@
 #include <sys/malloc.h>
 #include <sys/uio.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
@@ -436,12 +437,13 @@ spkrattach(parent, self, aux)
 }
 
 int
-spkropen(dev, flags, mode, p)
-    dev_t dev;
+spkropen(devvp, flags, mode, p)
+    struct vnode *devvp;
     int	flags;
     int mode;
     struct proc *p;
 {
+    dev_t dev = vdev_rdev(devvp);
 #ifdef DEBUG
     printf("spkropen: entering with dev = %x\n", dev);
 #endif /* DEBUG */
@@ -460,8 +462,8 @@ spkropen(dev, flags, mode, p)
 }
 
 int
-spkrwrite(dev, uio, flags)
-    dev_t dev;
+spkrwrite(devvp, uio, flags)
+    struct vnode *devvp;
     struct uio *uio;
     int flags;
 {
@@ -472,20 +474,16 @@ spkrwrite(dev, uio, flags)
 		dev, uio->uio_resid);
 #endif /* DEBUG */
 
-    if (minor(dev) != 0)
-	return(ENXIO);
-    else
-    {
-	n = min(DEV_BSIZE, uio->uio_resid);
-	error = uiomove(spkr_inbuf, n, uio);
-	if (!error)
-		playstring((char *)spkr_inbuf, n);
-	return(error);
-    }
+    n = min(DEV_BSIZE, uio->uio_resid);
+    error = uiomove(spkr_inbuf, n, uio);
+    if (!error)
+	playstring((char *)spkr_inbuf, n);
+    return(error);
 }
 
-int spkrclose(dev, flags, mode, p)
-    dev_t	dev;
+int
+spkrclose(devvp, flags, mode, p)
+    struct vnode *devvp;
     int flags;
     int mode;
     struct proc *p;
@@ -494,19 +492,15 @@ int spkrclose(dev, flags, mode, p)
     printf("spkrclose: entering with dev = %x\n", dev);
 #endif /* DEBUG */
 
-    if (minor(dev) != 0)
-	return(ENXIO);
-    else
-    {
-	endtone(NULL);
-	free(spkr_inbuf, M_DEVBUF);
-	spkr_active = 0;
-    }
+    endtone(NULL);
+    free(spkr_inbuf, M_DEVBUF);
+    spkr_active = 0;
     return(0);
 }
 
-int spkrioctl(dev, cmd, data, flag, p)
-    dev_t dev;
+int
+spkrioctl(devvp, cmd, data, flag, p)
+    struct vnode *devvp;
     u_long cmd;
     caddr_t data;
     int	flag;
@@ -516,19 +510,14 @@ int spkrioctl(dev, cmd, data, flag, p)
     printf("spkrioctl: entering with dev = %x, cmd = %lx\n", dev, cmd);
 #endif /* DEBUG */
 
-    if (minor(dev) != 0)
-	return(ENXIO);
-    else if (cmd == SPKRTONE)
-    {
+    if (cmd == SPKRTONE) {
 	tone_t	*tp = (tone_t *)data;
 
 	if (tp->frequency == 0)
 	    rest(tp->duration);
 	else
 	    tone(tp->frequency, tp->duration);
-    }
-    else if (cmd == SPKRTUNE)
-    {
+    } else if (cmd == SPKRTUNE) {
 	tone_t  *tp = (tone_t *)(*(caddr_t *)data);
 	tone_t ttp;
 	int error;
@@ -544,8 +533,7 @@ int spkrioctl(dev, cmd, data, flag, p)
 	    else
 		tone(ttp.frequency, ttp.duration);
 	}
-    }
-    else
+    } else
 	return(EINVAL);
     return(0);
 }

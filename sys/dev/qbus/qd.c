@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.22 2001/05/02 10:32:11 scw Exp $	*/
+/*	$NetBSD: qd.c,v 1.22.4.1 2001/10/10 11:56:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -73,6 +73,7 @@
 #include <sys/device.h>
 #include <sys/poll.h>
 #include <sys/buf.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -792,8 +793,8 @@ void qd_attach(parent, self, aux)
    
 /*ARGSUSED*/
 int
-qdopen(dev, flag, mode, p)
-	dev_t dev;
+qdopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -802,7 +803,9 @@ qdopen(dev, flag, mode, p)
 	volatile struct duart *duart;
 	int unit;
 	int minor_dev;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	minor_dev = minor(dev); /* get QDSS minor device number */
 	unit = minor_dev >> 2;
 
@@ -829,6 +832,7 @@ qdopen(dev, flag, mode, p)
 		 */
 		qdflags[unit].duart_imask |= 0x22;
 		duart->imask = qdflags[unit].duart_imask;
+		vdev_setprivdata(devvp, qd_cd.cd_devs[unit]);
 	} else {
 	       /* Only one console */
 	       if (minor_dev) return ENXIO;
@@ -839,6 +843,8 @@ qdopen(dev, flag, mode, p)
 	      
 	       if (qd_tty[minor_dev] == NULL)
 		       return ENXIO;
+
+		vdev_setprivdata(devvp, qd_cd.cd_devs[unit]);
 	   
 	       /*
 		* this is the console 
@@ -853,7 +859,7 @@ qdopen(dev, flag, mode, p)
 		tp = qd_tty[minor_dev];
 		/* tp->t_addr = ui->ui_addr; */
 		tp->t_oproc = qdstart;
-		tp->t_dev = dev;
+		tp->t_devvp = devvp;
 		if ((tp->t_state & TS_ISOPEN) == 0) {
 			ttychars(tp);
 			tp->t_ispeed = B9600;
@@ -869,7 +875,7 @@ qdopen(dev, flag, mode, p)
 		* enable intrpts, open line discipline 
 		*/
 		dga->csr |= GLOBAL_IE;	/* turn on the interrupts */
-		return ((*tp->t_linesw->l_open)(dev, tp));
+		return ((*tp->t_linesw->l_open)(devvp, tp));
 	}
 	dga->csr |= GLOBAL_IE;	/* turn on the interrupts */
 	return(0);
@@ -878,8 +884,8 @@ qdopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-qdclose(dev, flag, mode, p)
-	dev_t dev;
+qdclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -895,7 +901,7 @@ qdclose(dev, flag, mode, p)
 	int i;				/* SIGNED index */
 	struct uba_softc *uh;
    
-	minor_dev = minor(dev); 	/* get minor device number */
+	minor_dev = minor(vdev_rdev(devvp)); 	/* get minor device number */
 	unit = minor_dev >> 2;		/* get QDSS number */
 	qd = &qdmap[unit];
 
@@ -1076,8 +1082,8 @@ qdclose(dev, flag, mode, p)
 } /* qdclose */
 
 int
-qdioctl(dev, cmd, datap, flags, p)
-	dev_t dev;
+qdioctl(devvp, cmd, datap, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t datap;
 	int flags;
@@ -1095,6 +1101,7 @@ qdioctl(dev, cmd, datap, flags, p)
 	struct prgkbd *cmdbuf;
 	struct prg_cursor *curs;
 	struct _vs_cursor *pos;
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev) >> 2;	/* number of caller's QDSS */
 	u_int minor_dev = minor(dev);
 	int error;
@@ -1510,14 +1517,15 @@ qdioctl(dev, cmd, datap, flags, p)
 
 
 int
-qdpoll(dev, events, p)
-	dev_t dev;
+qdpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	int s;
 	int unit;
 	struct tty *tp;
+	dev_t dev = vdev_rdev(devvp);
 	u_int minor_dev = minor(dev);
 	int revents = 0;
 
@@ -1565,14 +1573,17 @@ void qd_strategy(struct buf *bp);
 
 /*ARGSUSED*/
 int
-qdwrite(dev, uio, flag)
-	dev_t dev;
+qdwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
+	int flag;
 {
 	struct tty *tp;
 	int minor_dev;
 	int unit;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	minor_dev = minor(dev);
 	unit = (minor_dev >> 2) & 0x07;
 
@@ -1594,14 +1605,17 @@ qdwrite(dev, uio, flag)
 
 /*ARGSUSED*/
 int
-qdread(dev, uio, flag)
-	dev_t dev;
+qdread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
+	int flag;
 {
 	struct tty *tp;
 	int minor_dev;
 	int unit;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	minor_dev = minor(dev);
 	unit = (minor_dev >> 2) & 0x07;
 
@@ -1639,7 +1653,7 @@ qd_strategy(bp)
 	int cookie;
 	struct uba_softc *uh;
    
-	unit = (minor(bp->b_dev) >> 2) & 0x07;
+	unit = (minor(vdev_rdev(bp->b_devvp)) >> 2) & 0x07;
 
 	uh = (struct uba_softc *)
 	     (((struct device *)(qd_cd.cd_devs[unit]))->dv_parent);
@@ -1707,7 +1721,7 @@ void qdstart(tp)
 	int which_unit, unit, c;
 	int s;
 
-	unit = minor(tp->t_dev);
+	unit = minor(vdev_rdev(tp->t_devvp));
 	which_unit = (unit >> 2) & 0x3;
 	unit &= 0x03;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.50.4.1 2001/10/01 12:41:31 fvdl Exp $	*/
+/*	$NetBSD: rcons.c,v 1.50.4.2 2001/10/10 11:56:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -46,6 +46,7 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
+#include <sys/vnode.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -145,7 +146,6 @@ rcons_connect (info)
 		info->fi_driver->fbd_putcmap(info, rasops_cmap, 0, 256);
 
 	fbconstty = &rcons_tty [0];
-	fbconstty->t_dev = makedev(85, 0);	/* /dev/console */
 	fbconstty->t_ispeed = fbconstty->t_ospeed = TTYDEF_SPEED;
 	fbconstty->t_param = (int (*)(struct tty *, struct termios *))nullop;
 
@@ -184,7 +184,6 @@ rcons_connect_native (ops, cookie, width, height, cols, rows)
 	/*XXX*/ cn_in_dev = cn_tab->cn_dev; /*XXX*/ /* FIXME */
 
 	fbconstty = &rcons_tty [0];
-	fbconstty->t_dev = makedev(85, 0);	/* /dev/console */
 	fbconstty->t_ispeed = fbconstty->t_ospeed = TTYDEF_SPEED;
 	fbconstty->t_param = (int (*)(struct tty *, struct termios *))nullop;
 
@@ -280,7 +279,7 @@ rasterconsoleattach (n)
 		/* try to get a reference on its vnode, but fail silently */
 		cdevvp(cn_in_dev, &cn_in_devvp);
 		status = ((*cdevsw[major(cn_in_dev)].d_open)
-			  (cn_in_dev, O_NONBLOCK, S_IFCHR, curproc)); /* XXX */
+			  (cn_in_devvp, O_NONBLOCK, S_IFCHR, curproc)); /*XXX*/
 		if (status)
 			printf ("rconsattach: input device open failed: %d\n",
 			        status);
@@ -295,8 +294,8 @@ rasterconsoleattach (n)
 
 /* ARGSUSED */
 int
-rconsopen(dev, flag, mode, p)
-	dev_t dev;
+rconsopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -309,6 +308,7 @@ rconsopen(dev, flag, mode, p)
 		 * Leave baud rate alone!
 		 */
 		ttychars(tp);
+		tp->t_devvp = devvp;
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_lflag = TTYDEF_LFLAG;
@@ -319,14 +319,14 @@ rconsopen(dev, flag, mode, p)
 	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
-	status = (*tp->t_linesw->l_open)(dev, tp);
+	status = (*tp->t_linesw->l_open)(devvp, tp);
 	return status;
 }
 
 /* ARGSUSED */
 int
-rconsclose(dev, flag, mode, p)
-	dev_t dev;
+rconsclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -340,8 +340,8 @@ rconsclose(dev, flag, mode, p)
 
 /* ARGSUSED */
 int
-rconsread(dev, uio, flag)
-	dev_t dev;
+rconsread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
@@ -352,8 +352,8 @@ rconsread(dev, uio, flag)
 
 /* ARGSUSED */
 int
-rconswrite(dev, uio, flag)
-	dev_t dev;
+rconswrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
@@ -364,8 +364,8 @@ rconswrite(dev, uio, flag)
 }
 
 int
-rconspoll(dev, events, p)
-	dev_t dev;
+rconspoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
@@ -376,8 +376,8 @@ rconspoll(dev, events, p)
 }
 
 struct tty *
-rconstty(dev)
-        dev_t dev;
+rconstty(devvp)
+	struct vnode *devvp;
 {
         struct tty *tp = &rcons_tty[0];
 
@@ -385,8 +385,8 @@ rconstty(dev)
 }
 
 int
-rconsioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+rconsioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -414,8 +414,8 @@ rconsstop(tp, rw)
 
 /*ARGSUSED*/
 paddr_t
-rconsmmap(dev, off, prot)
-	dev_t dev;
+rconsmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {

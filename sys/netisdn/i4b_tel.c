@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.4 2001/04/21 07:23:41 martin Exp $
+ *	$Id: i4b_tel.c,v 1.4.4.1 2001/10/10 11:57:06 fvdl Exp $
  *
  * $FreeBSD$
  *
@@ -60,6 +60,7 @@
 #include <net/if.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
+#include <sys/vnode.h>
 
 #ifdef __FreeBSD__
 
@@ -170,15 +171,15 @@ static u_char sinetab[];
 #ifndef __FreeBSD__
 #define	PDEVSTATIC	/* - not static - */
 PDEVSTATIC void i4btelattach __P((void));
-PDEVSTATIC int i4btelioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+PDEVSTATIC int i4btelioctl __P((struct vnode *devvp, u_long cmd, caddr_t data, int flag, struct proc *p));
 
-int i4btelopen __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4btelclose __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4btelread __P((dev_t dev, struct uio *uio, int ioflag));
-int i4btelwrite __P((dev_t dev, struct uio * uio, int ioflag));
+int i4btelopen __P((struct vnode *devvp, int flag, int fmt, struct proc *p));
+int i4btelclose __P((struct vnode *devvp, int flag, int fmt, struct proc *p));
+int i4btelread __P((struct vnode *devvp, struct uio *uio, int ioflag));
+int i4btelwrite __P((struct vnode *devvp, struct uio * uio, int ioflag));
 
 #ifdef OS_USES_POLL
-int i4btelpoll	__P((dev_t dev, int events, struct proc *p));
+int i4btelpoll	__P((struct vnode *devvp, int events, struct proc *p));
 #else
 int i4btelsel __P((dev_t dev, int rw, struct proc *p));
 #endif
@@ -354,8 +355,9 @@ i4btelattach()
  *	open tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btelopen(dev_t dev, int flag, int fmt, struct proc *p)
+i4btelopen(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
 	
@@ -383,8 +385,9 @@ i4btelopen(dev_t dev, int flag, int fmt, struct proc *p)
  *	close tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btelclose(dev_t dev, int flag, int fmt, struct proc *p)
+i4btelclose(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
 	tel_sc_t *sc;
@@ -425,8 +428,10 @@ i4btelclose(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4btelioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btelioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+i4btelioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+	    struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
 	int error = 0;
@@ -547,8 +552,9 @@ i4btelioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
  *	read from tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btelread(dev_t dev, struct uio *uio, int ioflag)
+i4btelread(struct vnode *devvp, struct uio *uio, int ioflag)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
 
@@ -667,8 +673,9 @@ i4btelread(dev_t dev, struct uio *uio, int ioflag)
  *	write to tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btelwrite(dev_t dev, struct uio * uio, int ioflag)
+i4btelwrite(struct vnode *devvp, struct uio * uio, int ioflag)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
 	struct mbuf *m;
@@ -830,8 +837,9 @@ tel_tone(tel_sc_t *sc)
  *	device driver poll
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btelpoll(dev_t dev, int events, struct proc *p)
+i4btelpoll(struct vnode *devvp, int events, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int revents = 0;	/* Events we found */
 	int s;
 	int unit = UNIT(dev);

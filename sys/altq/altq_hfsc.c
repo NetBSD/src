@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.3 2001/04/13 23:29:56 thorpej Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.3.4.1 2001/10/10 11:55:47 fvdl Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -130,9 +130,6 @@ static u_int64_t rtsc_x2y __P((struct runtime_sc *, u_int64_t));
 static void rtsc_min __P((struct runtime_sc *, struct internal_sc *,
 			  u_int64_t, u_int64_t));
 
-int hfscopen __P((dev_t, int, int, struct proc *));
-int hfscclose __P((dev_t, int, int, struct proc *));
-int hfscioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct proc *));
 static int hfsccmd_if_attach __P((struct hfsc_attach *));
 static int hfsccmd_if_detach __P((struct hfsc_interface *));
 static int hfsccmd_add_class __P((struct hfsc_add_class *));
@@ -1389,8 +1386,8 @@ rtsc_min(rtsc, isc, x, y)
  * hfsc device interface
  */
 int
-hfscopen(dev, flag, fmt, p)
-	dev_t dev;
+hfscopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -1407,8 +1404,8 @@ hfscopen(dev, flag, fmt, p)
 }
 
 int
-hfscclose(dev, flag, fmt, p)
-	dev_t dev;
+hfscclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -1431,8 +1428,8 @@ hfscclose(dev, flag, fmt, p)
 }
 
 int
-hfscioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+hfscioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;

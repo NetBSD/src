@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.11 2000/11/20 08:24:23 chs Exp $	*/
+/*	$NetBSD: crl.c,v 1.11.2.1 2001/10/10 11:56:44 fvdl Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -45,6 +45,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/buf.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #include <machine/mtpr.h>
@@ -70,9 +71,9 @@ void	crlintr __P((void *));
 void	crlattach __P((void));
 static	void crlstart __P((void));
 
-int	crlopen __P((dev_t, int, struct proc *));
-int	crlclose __P((dev_t, int, struct proc *));
-int	crlrw __P((dev_t, struct uio *, int));
+int	crlopen __P((struct vnode *, int, struct proc *));
+int	crlclose __P((struct vnode *, int, struct proc *));
+int	crlrw __P((struct vnode *, struct uio *, int));
 
 
 struct	ivec_dsp crl_intr;
@@ -87,8 +88,8 @@ crlattach()
 
 /*ARGSUSED*/
 int
-crlopen(dev, flag, p)
-	dev_t dev;
+crlopen(devvp, flag, p)
+	struct vnode *devvp;
 	int flag;
 	struct proc *p;
 {
@@ -103,8 +104,8 @@ crlopen(dev, flag, p)
 
 /*ARGSUSED*/
 int
-crlclose(dev, flag, p)
-	dev_t dev;
+crlclose(devvp, flag, p)
+	struct vnode *devvp;
 	int flag;
 	struct proc *p;
 {
@@ -116,8 +117,8 @@ crlclose(dev, flag, p)
 
 /*ARGSUSED*/
 int
-crlrw(dev, uio, flag)
-	dev_t dev;
+crlrw(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {

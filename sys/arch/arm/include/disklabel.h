@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 2001/01/10 19:02:05 bjh21 Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.1.4.1 2001/10/10 11:55:54 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -68,14 +68,15 @@ struct cpu_disklabel {
 #ifdef _KERNEL
 struct buf;
 struct disklabel;
+struct vnode;
 int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
 
 /* for readdisklabel.  rv != 0 -> matches, msg == NULL -> success */
-int	mbr_label_read __P((dev_t, void (*)(struct buf *), struct disklabel *,
+int	mbr_label_read __P((struct vnode *, void (*)(struct buf *), struct disklabel *,
 	    struct cpu_disklabel *, char **, int *, int *));
 
 /* for writedisklabel.  rv == 0 -> dosen't match, rv > 0 -> success */
-int	mbr_label_locate __P((dev_t, void (*)(struct buf *),
+int	mbr_label_locate __P((struct vnode *, void (*)(struct buf *),
 	    struct disklabel *, struct cpu_disklabel *, int *, int *));
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_acorn.c,v 1.1 2001/03/04 05:06:51 matt Exp $	*/
+/*	$NetBSD: disksubr_acorn.c,v 1.1.2.1 2001/10/10 11:55:53 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -70,6 +70,7 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
+#include <sys/vnode.h>
 
 static int filecore_checksum __P((u_char *));
 
@@ -144,8 +145,8 @@ filecore_checksum(bootblock)
 
 
 int
-filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
-	dev_t dev;
+filecore_label_read(devvp, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
+	struct vnode *devvp;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
@@ -165,7 +166,7 @@ filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 
 	/* get a buffer and initialize it */
         bp = geteblk((int)lp->d_secsize);
-        bp->b_dev = dev;
+        bp->b_devvp = devvp;
 
 	/* read the Acorn filecore boot block */
 
@@ -279,8 +280,8 @@ out:
 
 
 int
-filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
-	dev_t dev;
+filecore_label_locate(devvp, strat, lp, osdep, cylp, netbsd_label_offp)
+	struct vnode *devvp;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
@@ -295,7 +296,7 @@ filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 
 	/* get a buffer and initialize it */
         bp = geteblk((int)lp->d_secsize);
-        bp->b_dev = dev;
+        bp->b_devvp = devvp;
 
 	/* read the filecore boot block */
 

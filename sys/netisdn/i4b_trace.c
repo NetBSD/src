@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.5 2001/04/21 07:23:41 martin Exp $
+ *	$Id: i4b_trace.c,v 1.5.4.1 2001/10/10 11:57:06 fvdl Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -55,6 +55,7 @@
 #include <net/if.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
+#include <sys/vnode.h>
 
 #include <netisdn/i4b_trace.h>
 #include <netisdn/i4b_ioctl.h>
@@ -79,10 +80,10 @@ static int outunit = -1;			/* output device for trace data */
 
 #define	PDEVSTATIC	/* - not static - */
 void i4btrcattach __P((void));
-int i4btrcopen __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4btrcclose __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4btrcread __P((dev_t dev, struct uio * uio, int ioflag));
-int i4btrcioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+int i4btrcopen __P((struct vnode * dev, int flag, int fmt, struct proc *p));
+int i4btrcclose __P((struct vnode * dev, int flag, int fmt, struct proc *p));
+int i4btrcread __P((struct vnode * dev, struct uio * uio, int ioflag));
+int i4btrcioctl __P((struct vnode * dev, u_long cmd, caddr_t data, int flag, struct proc *p));
 
 /*---------------------------------------------------------------------------*
  *	interface attach routine
@@ -233,8 +234,9 @@ isdn_layer2_trace_ind(isdn_layer2token t, i4b_trace_hdr *hdr, size_t len, unsign
  *	open trace device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btrcopen(dev_t dev, int flag, int fmt, struct proc *p)
+i4btrcopen(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int x;
 	int unit = minor(dev);
 
@@ -261,8 +263,9 @@ i4btrcopen(dev_t dev, int flag, int fmt, struct proc *p)
  *	close trace device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btrcclose(dev_t dev, int flag, int fmt, struct proc *p)
+i4btrcclose(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int bri = minor(dev);
 	int x;
 
@@ -301,8 +304,9 @@ i4btrcclose(dev_t dev, int flag, int fmt, struct proc *p)
  *	read from trace device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btrcread(dev_t dev, struct uio * uio, int ioflag)
+i4btrcread(struct vnode *devvp, struct uio * uio, int ioflag)
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct mbuf *m;
 	int x;
 	int error = 0;
@@ -357,8 +361,9 @@ i4btrcpoll(dev_t dev, int events, struct proc *p)
  *	device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+i4btrcioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int error = 0;
 	int bri = minor(dev);
 	i4b_trace_setupa_t *tsa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.34 2001/06/19 13:42:15 wiz Exp $	*/
+/*	$NetBSD: zs.c,v 1.34.4.1 2001/10/10 11:56:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -877,7 +877,7 @@ void  zs_write_data(cs, val)
 cons_decl(zs);
 
 static void	zscnsetup __P((void));
-extern int	zsopen __P(( dev_t dev, int flags, int mode, struct proc *p));
+extern int	zsopen __P((struct vnode *, int flags, int mode, struct proc *p));
 
 /*
  * Console functions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirmio.c,v 1.2 2000/11/14 21:10:05 matt Exp $ */
+/*	$NetBSD: openfirmio.c,v 1.2.8.1 2001/10/10 11:56:57 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/openfirmio.h>
@@ -70,13 +71,13 @@ openfirmattach(int num)
 }
 
 int
-openfirmopen(dev_t dev, int flags, int mode, struct proc *p)
+openfirmopen(struct vnode *devvp, int flags, int mode, struct proc *p)
 {
 	return (0);
 }
 
 int
-openfirmclose(dev_t dev, int flags, int mode, struct proc *p)
+openfirmclose(struct vnode *devvp, int flags, int mode, struct proc *p)
 {
 
 	return (0);
@@ -114,7 +115,8 @@ openfirmgetstr(int len, char *user, char **cpp)
 }
 
 int
-openfirmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+openfirmioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flags,
+	      struct proc *p)
 {
 	struct ofiocdesc *of;
 	int node, len, ok, error, s;

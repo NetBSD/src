@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.47 2001/05/02 10:32:16 scw Exp $	*/
+/*	$NetBSD: ite.c,v 1.47.4.1 2001/10/10 11:56:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <machine/autoconf.h>
 
@@ -317,11 +318,12 @@ iteoff(ip, flag)
 
 /* ARGSUSED */
 int
-iteopen(dev, mode, devtype, p)
-	dev_t dev;
+iteopen(devvp, mode, devtype, p)
+	struct vnode *devvp;
 	int mode, devtype;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = ITEUNIT(dev);
 	struct tty *tp;
 	struct ite_softc *sc;
@@ -348,9 +350,12 @@ iteopen(dev, mode, devtype, p)
 			return (error);
 		first = 1;
 	}
+
+	vdev_setprivdata(devvp, sc);
+
 	tp->t_oproc = itestart;
 	tp->t_param = NULL;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 	if ((tp->t_state&TS_ISOPEN) == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -361,7 +366,7 @@ iteopen(dev, mode, devtype, p)
 		tp->t_state = TS_ISOPEN|TS_CARR_ON;
 		ttsetwater(tp);
 	}
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 	if (error == 0) {
 		tp->t_winsize.ws_row = ip->rows;
 		tp->t_winsize.ws_col = ip->cols;
@@ -372,12 +377,12 @@ iteopen(dev, mode, devtype, p)
 
 /*ARGSUSED*/
 int
-iteclose(dev, flag, mode, p)
-	dev_t dev;
+iteclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+	struct ite_softc *sc = vdev_privdata(devvp);
 	struct ite_data *ip = sc->sc_data;
 	struct tty *tp = ip->tty;
 
@@ -393,59 +398,59 @@ iteclose(dev, flag, mode, p)
 }
 
 int
-iteread(dev, uio, flag)
-	dev_t dev;
+iteread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+	struct ite_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_data->tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
-itewrite(dev, uio, flag)
-	dev_t dev;
+itewrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+	struct ite_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_data->tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-itepoll(dev, events, p)
-	dev_t dev;
+itepoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+	struct ite_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_data->tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-itetty(dev)
-	dev_t dev;
+itetty(devvp)
+	struct vnode *devvp;
 {
-	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+	struct ite_softc *sc = vdev_privdata(devvp);
 
 	return (sc->sc_data->tty);
 }
 
 int
-iteioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+iteioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+	struct ite_softc *sc = vdev_privdata(devvp);
 	struct ite_data *ip = sc->sc_data;
 	struct tty *tp = ip->tty;
 	int error;
@@ -468,7 +473,7 @@ itestart(tp)
 	struct ite_softc *sc;
 	struct ite_data *ip;
 
-	sc = ite_cd.cd_devs[ITEUNIT(tp->t_dev)];
+	sc = vdev_privdata(tp->t_devvp);
 	ip = sc->sc_data;
 
 	s = splkbd();

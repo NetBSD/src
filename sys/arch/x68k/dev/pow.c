@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.8 2000/02/20 16:18:51 minoura Exp $	*/
+/*	$NetBSD: pow.c,v 1.8.6.1 2001/10/10 11:56:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -46,6 +46,7 @@
 #include <sys/fcntl.h>
 #include <sys/signalvar.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <machine/powioctl.h>
 #include <x68k/dev/powvar.h>
@@ -113,11 +114,12 @@ powattach(num)
 
 /*ARGSUSED*/
 int
-powopen(dev, flags, mode, p)
-	dev_t dev;
+powopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct pow_softc *sc = &pows[minor(dev)];
 
 	if (minor(dev) >= NPOW)
@@ -137,12 +139,12 @@ powopen(dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-powclose (dev, flags, mode, p)
-	dev_t dev;
+powclose (devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	struct pow_softc *sc = &pows[minor(dev)];
+	struct pow_softc *sc = vdev_privdata(devvp);
 
 	if (sc->status == POW_BUSY)
 		sc->status = POW_FREE;
@@ -222,14 +224,15 @@ setalarm (bp)
 
 /*ARGSUSED*/
 int
-powioctl (dev, cmd, addr, flag, p)
-	dev_t dev;
+powioctl (devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct pow_softc *sc = &pows[minor(dev)];
+	struct pow_softc *sc = vdev_privdata(devvp);
+	dev_t dev = vdev_rdev(devvp);
 
 	switch (cmd) {
 	case POWIOCGPOWERINFO:

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.26.4.1 2001/10/01 12:37:51 fvdl Exp $	*/
+/*	$NetBSD: kbd.c,v 1.26.4.2 2001/10/10 11:55:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -200,13 +200,14 @@ extern struct cfdriver kbd_cd;
 #define KBD_ST_KCLKI	0x01
 
 int
-kbdopen(dev, flag, mode, p)
-	dev_t dev;
+kbdopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
 	struct kbd_softc *sc;
+	dev_t dev = vdev_rdev(devvp);
 	int unit = KBDUNIT(dev);
 
 	if (unit >= kbd_cd.cd_ndevs)
@@ -215,6 +216,8 @@ kbdopen(dev, flag, mode, p)
 	sc = kbd_cd.cd_devs[unit];
 
 	if (!sc) return(ENXIO);
+
+	vdev_setprivdata(devvp, sc);
 
 	switch (KBDFLAG(dev)) {
 	case KBDFLAG_RAWUNIT :
@@ -243,16 +246,17 @@ kbdopen(dev, flag, mode, p)
 
 
 int
-kbdclose(dev, flag, mode, p)
-	dev_t dev;
+kbdclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	int unit = KBDUNIT(dev);
-	struct kbd_softc *sc = kbd_cd.cd_devs[unit];
+	struct kbd_softc *sc;
 
-	switch (KBDFLAG(dev)) {
+	sc = vdev_privdata(devvp);
+
+	switch (KBDFLAG(vdev_rdev(devvp))) {
 	case KBDFLAG_RAWUNIT :
 		if (!(sc->sc_state & RAWKBD_OPEN))
 			return(EINVAL);
@@ -273,18 +277,20 @@ kbdclose(dev, flag, mode, p)
 
 
 int
-kbdread(dev, uio, flag)
-	dev_t dev;
+kbdread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct kbd_softc *sc = kbd_cd.cd_devs[KBDUNIT(dev)];
+	struct kbd_softc *sc;
 	int s;
 	int error = 0;
 	size_t length;
 	u_char buffer[128];
 
-	if (KBDFLAG(dev) == KBDFLAG_CONUNIT)
+	sc = vdev_privdata(devvp);
+
+	if (KBDFLAG(vdev_rdev(devvp)) == KBDFLAG_CONUNIT)
 		return(ENXIO);
 
 	/* Block until keyboard activity occurred. */
@@ -323,16 +329,18 @@ kbdread(dev, uio, flag)
 
 
 int
-kbdpoll(dev, events, p)
-	dev_t dev;
+kbdpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct kbd_softc *sc = kbd_cd.cd_devs[KBDUNIT(dev)];
+	struct kbd_softc *sc;
 	int revents = 0;
 	int s = spltty();
 
-	if (KBDFLAG(dev) == KBDFLAG_CONUNIT) {
+	sc = vdev_privdata(devvp);
+
+	if (KBDFLAG(vdev_rdev(devvp)) == KBDFLAG_CONUNIT) {
 		splx(s);
 		return(ENXIO);
 	}
@@ -350,17 +358,19 @@ kbdpoll(dev, events, p)
 
 
 int
-kbdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+kbdioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct kbd_softc *sc = kbd_cd.cd_devs[KBDUNIT(dev)];
+	struct kbd_softc *sc;
 	struct kbd_autorepeat *kbdar = (void *)data;
 	int *leds = (int *)data;
 	int s;
+
+	sc = vdev_privdata(devvp);
 
 	switch (cmd) {
 	case KBD_GETAUTOREPEAT:

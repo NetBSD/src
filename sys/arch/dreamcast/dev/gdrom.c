@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.5 2001/07/22 15:46:42 wiz Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.5.2.1 2001/10/10 11:56:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -40,6 +40,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <sys/buf.h>
 #include <sys/ioctl.h>
@@ -58,14 +59,14 @@
 
 int	gdrommatch __P((struct device *, struct cfdata *, void *));
 void	gdromattach __P((struct device *, struct device *, void *));
-int	gdromopen __P((dev_t, int, int, struct proc *));
-int	gdromclose __P((dev_t, int, int, struct proc *));
+int	gdromopen __P((struct vnode *, int, int, struct proc *));
+int	gdromclose __P((struct vnode *, int, int, struct proc *));
 void	gdromstrategy __P((struct buf *));
-int	gdromioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	gdromdump __P((dev_t, daddr_t, caddr_t, size_t));
-int	gdromsize __P((dev_t));
-int	gdromread __P((dev_t, struct uio *, int));
-int	gdromwrite __P((dev_t, struct uio *, int));
+int	gdromioctl __P((struct vnode *, u_long, caddr_t, int, struct proc *));
+int	gdromdump __P((dev_t dev, daddr_t, caddr_t, size_t));
+int	gdromsize __P((dev_t dev));
+int	gdromread __P((struct vnode *, struct uio *, int));
+int	gdromwrite __P((struct vnode *, struct uio *, int));
 
 struct gdrom_softc {
 	struct device sc_dv;	/* generic device info; must come first */
@@ -126,7 +127,8 @@ int	gdrom_mount_disk	__P((struct gdrom_softc *sc));
 int	gdrom_intr 	__P((void* arg));
 
 
-int gdrom_getstat()
+int
+gdrom_getstat()
 {
 	int s1, s2, s3;
 
@@ -200,7 +202,8 @@ gdrom_intr(arg)
 }
 
 
-int gdrom_do_command(sc, req, buf, nbyt)
+int
+gdrom_do_command(sc, req, buf, nbyt)
 	struct gdrom_softc *sc;
 	void *req;
 	void *buf;
@@ -242,7 +245,8 @@ int gdrom_do_command(sc, req, buf, nbyt)
 }
 
 
-int gdrom_command_sense(sc, req, buf, nbyt)
+int
+gdrom_command_sense(sc, req, buf, nbyt)
 	struct gdrom_softc *sc;
 	void *req;
 	void *buf;
@@ -299,7 +303,8 @@ int gdrom_command_sense(sc, req, buf, nbyt)
 	return (sense_key==0? 0 : EIO);
 }
 
-int gdrom_read_toc(sc, toc)
+int
+gdrom_read_toc(sc, toc)
 	struct gdrom_softc *sc;
 	struct gd_toc *toc;
 {
@@ -321,7 +326,8 @@ int gdrom_read_toc(sc, toc)
 	return gdrom_command_sense( sc, cmd, toc, sizeof(struct gd_toc) );
 }
 
-int gdrom_read_sectors(sc, buf, sector, cnt)
+int
+gdrom_read_sectors(sc, buf, sector, cnt)
 	struct gdrom_softc *sc;
 	void *buf;
 	int sector;
@@ -350,7 +356,8 @@ int gdrom_read_sectors(sc, buf, sector, cnt)
 	return gdrom_command_sense( sc, cmd, buf, cnt<<11 );
 }
 
-int gdrom_mount_disk(sc)
+int
+gdrom_mount_disk(sc)
 	struct gdrom_softc *sc;
 {
 	/* 76543210 76543210
@@ -425,11 +432,12 @@ gdromattach(pdp, dp, auxp)
 }
 
 int
-gdromopen(dev, flags, devtype, p)
-	dev_t dev;
+gdromopen(devvp, flags, devtype, p)
+	struct vnode *devvp;
 	int flags, devtype;
 	struct proc *p;
 {
+	dev_t dev;
 	struct gdrom_softc *sc;
 	int s, error, unit, cnt;
 	struct gd_toc toc;
@@ -437,6 +445,8 @@ gdromopen(dev, flags, devtype, p)
 #ifdef GDROMDEBUG
 	printf("GDROM: open\n");
 #endif
+
+	dev = vdev_rdev(devvp);
 
 	unit = DISKUNIT(dev);
 	if (unit >= gdrom_cd.cd_ndevs)
@@ -448,6 +458,8 @@ gdromopen(dev, flags, devtype, p)
 
 	if (sc->is_open)
 		return (EBUSY);
+
+	vdev_setprivdata(devvp, sc);
 
 	s = splbio();
 	while(sc->is_busy)
@@ -478,19 +490,16 @@ gdromopen(dev, flags, devtype, p)
 }
 
 int
-gdromclose(dev, flags, devtype, p)
-	dev_t dev;
+gdromclose(devvp, flags, devtype, p)
+	struct vnode *devvp;
 	int flags, devtype;
 	struct proc *p;
 {
 	struct gdrom_softc *sc;
-	int unit;
 #ifdef GDROMDEBUG
 	printf("GDROM: close\n");
 #endif
-	unit = DISKUNIT(dev);
-	sc = gdrom_cd.cd_devs[unit];
-
+	sc = vdev_privdata(devvp);
 	sc->is_open = 0;
 
 	return (0);
@@ -501,13 +510,12 @@ gdromstrategy(bp)
 	struct buf *bp;
 {
 	struct gdrom_softc *sc;
-	int s, unit, error;
+	int s, error;
 #ifdef GDROMDEBUG
 	printf("GDROM: strategy\n");
 #endif
 	
-	unit = DISKUNIT(bp->b_dev);
-	sc = gdrom_cd.cd_devs[unit];
+	sc = vdev_privdata(bp->b_devvp);
 
 	if (bp->b_bcount == 0)
 	  goto done;
@@ -540,21 +548,20 @@ done:
 }
 
 int
-gdromioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+gdromioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
 	struct gdrom_softc *sc;
-	int unit, error;
+	int error;
 #ifdef GDROMDEBUG
 	printf("GDROM: ioctl %lx\n", cmd);
 #endif
 
-	unit = DISKUNIT(dev);
-	sc = gdrom_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
 
 	switch (cmd) {
 	case CDIOREADMSADDR: {
@@ -623,23 +630,22 @@ gdromsize(dev)
 }
 
 int
-gdromread(dev, uio, flags)
-	dev_t	dev;
+gdromread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct	uio *uio;
 	int	flags;
 {
 #ifdef GDROMDEBUG
 	printf("GDROM: read\n");
 #endif
-	return (physio(gdromstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(gdromstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-gdromwrite(dev, uio, flags)
-	dev_t	dev;
+gdromwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct	uio *uio;
 	int	flags;
 {
 	return (EROFS);
 }
-

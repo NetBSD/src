@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.9 2001/06/19 13:42:18 wiz Exp $	*/
+/*	$NetBSD: rl.c,v 1.9.4.1 2001/10/10 11:56:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -52,6 +52,7 @@
 #include <sys/stat.h>
 #include <sys/dkio.h>
 #include <sys/fcntl.h>
+#include <sys/vnode.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -255,22 +256,27 @@ rlattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-rlopen(dev_t dev, int flag, int fmt, struct proc *p)
+rlopen(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
 	int part, unit, mask;
 	struct disklabel *dl;
 	struct rlc_softc *sc;
 	struct rl_softc *rc;
 	char *msg;
+	dev_t dev;
+
 	/*
 	 * Make sure this is a reasonable open request.
 	 */
+	dev = vdev_rdev(devvp);
 	unit = DISKUNIT(dev);
 	if (unit >= rl_cd.cd_ndevs)
 		return ENXIO;
 	rc = rl_cd.cd_devs[unit];
 	if (rc == 0)
 		return ENXIO;
+
+	vdev_setprivdata(devvp, rc);
 
 	sc = (struct rlc_softc *)rc->rc_dev.dv_parent;
 	/* XXX - check that the disk actually is useable */
@@ -288,8 +294,7 @@ rlopen(dev_t dev, int flag, int fmt, struct proc *p)
 		rc->rc_state = DK_OPEN;
 		/* Get disk label */
 		printf("%s: ", rc->rc_dev.dv_xname);
-		if ((msg = readdisklabel(MAKEDISKDEV(RLMAJOR,
-		    rc->rc_dev.dv_unit, RAW_PART), rlstrategy, dl, NULL)))
+		if ((msg = readdisklabel(devvp, rlstrategy, dl, NULL)))
 			printf("%s: ", msg);
 		printf("size %d sectors\n", dl->d_secperunit);
 	}
@@ -307,15 +312,15 @@ rlopen(dev_t dev, int flag, int fmt, struct proc *p)
 		break;
 	}
 	rc->rc_disk.dk_openmask |= mask;
+
 	return 0;
 }
 
 int
-rlclose(dev_t dev, int flag, int fmt, struct proc *p)
+rlclose(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
-	int unit = DISKUNIT(dev);
-	struct rl_softc *rc = rl_cd.cd_devs[unit];
-	int mask = (1 << DISKPART(dev));
+	struct rl_softc *rc = vdev_privdata(devvp);
+	int mask = (1 << DISKPART(vdev_rdev(devvp)));
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -339,12 +344,13 @@ rlstrategy(struct buf *bp)
 	struct disklabel *lp;
 	struct rlc_softc *sc;
         struct rl_softc *rc;
-        int unit, s, err;
+        int s, err, part;
+
         /*
          * Make sure this is a reasonable drive to use.
          */
-        unit = DISKUNIT(bp->b_dev);
-        if (unit > rl_cd.cd_ndevs || (rc = rl_cd.cd_devs[unit]) == NULL) {
+	rc = vdev_privdata(bp->b_devvp);
+        if (rc == NULL) {
                 bp->b_error = ENXIO;
                 bp->b_flags |= B_ERROR;
                 goto done;
@@ -356,11 +362,14 @@ rlstrategy(struct buf *bp)
 	if ((err = bounds_check_with_label(bp, lp, 1)) <= 0)
 		goto done;
 
+	part = (bp->b_flags & B_DKLABEL) ? RAW_PART :
+	    DISKPART(vdev_rdev(bp->b_devvp));
+
 	if (bp->b_bcount == 0)
 		goto done;
 
 	bp->b_rawblkno =
-	    bp->b_blkno + lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
+	    bp->b_blkno + lp->d_partitions[part].p_offset;
 	bp->b_cylinder = bp->b_rawblkno / lp->d_secpercyl;
 	sc = (struct rlc_softc *)rc->rc_dev.dv_parent;
 
@@ -374,9 +383,9 @@ done:	biodone(bp);
 }
 
 int
-rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+rlioctl(struct vnode *devvp, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
-	struct rl_softc *rc = rl_cd.cd_devs[DISKUNIT(dev)];
+	struct rl_softc *rc = vdev_privdata(devvp);
 	struct disklabel *lp = rc->rc_disk.dk_label;
 	int err = 0;
 #ifdef __HAVE_OLD_DISKLABEL
@@ -400,7 +409,7 @@ rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = lp;
 		((struct partinfo *)addr)->part =
-		    &lp->d_partitions[DISKPART(dev)];
+		    &lp->d_partitions[DISKPART(vdev_rdev(devvp))];
 		break;
 
 	case DIOCSDINFO:
@@ -430,7 +439,7 @@ rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 #endif
 			       cmd == DIOCSDINFO) ?
 			    setdisklabel(lp, tp, 0, 0) :
-			    writedisklabel(dev, rlstrategy, lp, 0));
+			    writedisklabel(devvp, rlstrategy, lp, 0));
 		break;
 	}
 
@@ -468,15 +477,15 @@ rldump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 }
 
 int
-rlread(dev_t dev, struct uio *uio, int ioflag)
+rlread(struct vnode *devvp, struct uio *uio, int ioflag)
 {
-	return (physio(rlstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(rlstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-rlwrite(dev_t dev, struct uio *uio, int ioflag)
+rlwrite(struct vnode *devvp, struct uio *uio, int ioflag)
 {
-	return (physio(rlstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(rlstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 static char *rlerr[] = {
@@ -539,6 +548,7 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
 	struct rl_softc *rc;
 	struct buf *bp;
 	int bn, cn, sn, tn, blks, err;
+	dev_t dev;
 
 	if (sc->sc_active)
 		return;	/* Already doing something */
@@ -556,7 +566,8 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
 		bp = ob;
 	sc->sc_active = bp;
 
-	rc = rl_cd.cd_devs[DISKUNIT(bp->b_dev)];
+	dev = vdev_rdev(bp->b_devvp);
+	rc = rl_cd.cd_devs[DISKUNIT(dev)];
 	bn = sc->sc_diskblk;
 	lp = rc->rc_disk.dk_label;
 	if (bn) {

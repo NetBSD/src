@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.8 2001/07/08 04:25:36 wdk Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8.4.1 2001/10/10 11:56:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -42,6 +42,7 @@
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
+#include <sys/vnode.h>
 #include <ufs/ufs/dinode.h>		/* XXX for fs.h */
 #include <ufs/ffs/fs.h>			/* XXX for BBSIZE & SBSIZE */
 
@@ -65,8 +66,8 @@ static int mipsvh_cksum __P((struct mips_volheader *));
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp)
-	dev_t dev;
+readdisklabel(devvp, strat, lp, clp)
+	struct vnode *devvp;
 	void (*strat) __P((struct buf *bp));
 	register struct disklabel *lp;
 	struct cpu_disklabel *clp;
@@ -88,13 +89,14 @@ readdisklabel(dev, strat, lp, clp)
 
 	bp = geteblk((int)lp->d_secsize);
 
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	(*strat)(bp);
 	err = biowait(bp);
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	
 	if (err)
@@ -109,13 +111,14 @@ readdisklabel(dev, strat, lp, clp)
 		}
 
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = MIPS_VHSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	(*strat)(bp);
 	err = biowait(bp);
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 
 	if (err)
@@ -193,15 +196,16 @@ setdisklabel(olp, nlp, openmask, clp)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t dev;
+writedisklabel(devvp, strat, lp, clp)
+	struct vnode *devvp;
 	void (*strat) __P((struct buf *bp));
 	register struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
 	struct buf *bp;
-	int labelpart;
 	int error;
+#if 0
+	int labelpart;
 
 	labelpart = dkpart(dev);
 	if (lp->d_partitions[labelpart].p_offset != 0) {
@@ -209,14 +213,15 @@ writedisklabel(dev, strat, lp, clp)
 			return (EXDEV);			/* not quite right */
 		labelpart = 0;
 	}
+#endif
 
 	/* Read RISC/os volume header before merging NetBSD partition info*/
 	bp = geteblk((int)lp->d_secsize);
 
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = MIPS_VHSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -228,7 +233,7 @@ writedisklabel(dev, strat, lp, clp)
 
 	/* Write MIPS RISC/os label to first sector */
 	bp->b_flags &= ~(B_READ|B_DONE);
-	bp->b_flags |= B_WRITE;
+	bp->b_flags |= B_WRITE | B_DKLABEL;
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto ioerror;
@@ -245,6 +250,7 @@ writedisklabel(dev, strat, lp, clp)
 	error = biowait(bp);
 
 ioerror:
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	return error;
 }
@@ -261,10 +267,18 @@ bounds_check_with_label(bp, lp, wlabel)
 	int wlabel;
 {
 
-	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
+	struct partition *p;
 	int labelsect = lp->d_partitions[0].p_offset;
-	int maxsz = p->p_size;
+	int maxsz;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+	int part;
+
+	if (bp->b_flags & B_DKLABEL)
+		part = RAW_PART;
+	else
+		part = dkpart(vdev_rdev(bp->b_devvp));
+	p = lp->d_partitions + part;
+	maxsz = p->p_size;
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */ 

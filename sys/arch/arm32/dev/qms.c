@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.22 1999/06/01 09:34:06 mark Exp $	*/
+/*	$NetBSD: qms.c,v 1.22.14.1 2001/10/10 11:55:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -105,13 +105,14 @@ qmsattach(sc)
 }
 
 int
-qmsopen(dev, flag, mode, p)
-	dev_t dev;
+qmsopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
 	struct qms_softc *sc;
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev);
  
  	/* validate the unit and softc */
@@ -136,6 +137,8 @@ qmsopen(dev, flag, mode, p)
 	if (clalloc(&sc->sc_buffer, QMOUSE_BSIZE, 0) == -1)
 		return(ENOMEM);
 
+	vdev_setprivdata(devvp, sc);
+
 	/* set mode and state */
 	sc->sc_mode = MOUSEMODE_ABS;
 	sc->sc_state |= QMOUSE_OPEN;
@@ -148,14 +151,15 @@ qmsopen(dev, flag, mode, p)
 
 
 int
-qmsclose(dev, flag, mode, p)
-	dev_t dev;
+qmsclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	int unit = minor(dev);
-	struct qms_softc *sc = qms_cd.cd_devs[unit];
+	struct qms_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
  	/* disable interrupts */
 	sc->sc_intenable(sc, 0);
@@ -170,17 +174,18 @@ qmsclose(dev, flag, mode, p)
 }
 
 int
-qmsread(dev, uio, flag)
-	dev_t dev;
+qmsread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	int unit = minor(dev);
-	struct qms_softc *sc = qms_cd.cd_devs[unit];
+	struct qms_softc *sc;
 	int error;
 	int s;
 	int length;
 	u_char buffer[128];
+
+	sc = vdev_privdata(devvp);
 
 	error = 0;
 	s = spltty();
@@ -233,14 +238,16 @@ qmsread(dev, uio, flag)
 
 
 int
-qmsioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+qmsioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct qms_softc *sc = qms_cd.cd_devs[minor(dev)];
+	struct qms_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	switch (cmd) {
 	case MOUSEIOC_WRITEX:
@@ -416,14 +423,18 @@ qmsintr(arg)
 
 
 int
-qmspoll(dev, events, p)
-	dev_t dev;
+qmspoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct qms_softc *sc = qms_cd.cd_devs[minor(dev)];
+	struct qms_softc *sc;
 	int revents = 0;
-	int s = spltty();
+	int s;
+
+	sc = vdev_privdata(devvp);
+
+	s = spltty();
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_buffer.c_cc > 0)

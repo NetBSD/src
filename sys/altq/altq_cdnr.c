@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.3 2001/04/13 23:29:55 thorpej Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.3.4.1 2001/10/10 11:55:47 fvdl Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
+#include <sys/vnode.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -72,10 +73,6 @@ int altq_cdnr_enabled = 0;
 
 /* cdnr_list keeps all cdnr's allocated. */
 static LIST_HEAD(, top_cdnr) tcb_list;
-
-int cdnropen __P((dev_t, int, int, struct proc *));
-int cdnrclose __P((dev_t, int, int, struct proc *));
-int cdnrioctl __P((dev_t, ioctlcmd_t, caddr_t, int, struct proc *));
 
 static int altq_cdnr_input __P((struct mbuf *, int));
 static struct top_cdnr *tcb_lookup __P((char *ifname));
@@ -1199,8 +1196,8 @@ cdnrcmd_get_stats(ap)
  * conditioner device interface
  */
 int
-cdnropen(dev, flag, fmt, p)
-	dev_t dev;
+cdnropen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -1217,8 +1214,8 @@ cdnropen(dev, flag, fmt, p)
 }
 
 int
-cdnrclose(dev, flag, fmt, p)
-	dev_t dev;
+cdnrclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -1237,8 +1234,8 @@ cdnrclose(dev, flag, fmt, p)
 }
 
 int
-cdnrioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+cdnrioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;

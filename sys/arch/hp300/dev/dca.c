@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.44 2001/06/12 15:17:18 wiz Exp $	*/
+/*	$NetBSD: dca.c,v 1.44.4.1 2001/10/10 11:56:04 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -317,11 +318,12 @@ dcaattach(parent, self, aux)
 
 /* ARGSUSED */
 int
-dcaopen(dev, flag, mode, p)
-	dev_t dev;
+dcaopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = DCAUNIT(dev);
 	struct dca_softc *sc;
 	struct tty *tp;
@@ -345,12 +347,14 @@ dcaopen(dev, flag, mode, p)
 		tp = sc->sc_tty;
 	tp->t_oproc = dcastart;
 	tp->t_param = dcaparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
 	    p->p_ucred->cr_uid != 0)
 		return (EBUSY);
+
+	vdev_setprivdata(devvp, sc);
 
 	s = spltty();
 
@@ -398,7 +402,7 @@ dcaopen(dev, flag, mode, p)
 	if (error)
 		goto bad;
 
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 
  bad:
 	return (error);
@@ -406,20 +410,17 @@ dcaopen(dev, flag, mode, p)
  
 /*ARGSUSED*/
 int
-dcaclose(dev, flag, mode, p)
-	dev_t dev;
+dcaclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct dca_softc *sc;
 	struct tty *tp;
 	struct dcadevice *dca;
-	int unit;
 	int s;
  
-	unit = DCAUNIT(dev);
-
-	sc = dca_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
 
 	dca = sc->sc_dca;
 	tp = sc->sc_tty;
@@ -449,17 +450,16 @@ dcaclose(dev, flag, mode, p)
 }
  
 int
-dcaread(dev, uio, flag)
-	dev_t dev;
+dcaread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	int unit = DCAUNIT(dev);
 	struct dca_softc *sc;
 	struct tty *tp;
 	int error, of;
 
-	sc = dca_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
  
 	tp = sc->sc_tty;
 	of = sc->sc_oflows;
@@ -474,34 +474,42 @@ dcaread(dev, uio, flag)
 }
  
 int
-dcawrite(dev, uio, flag)
-	dev_t dev;
+dcawrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct dca_softc *sc = dca_cd.cd_devs[DCAUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct dca_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-dcapoll(dev, events, p)
-	dev_t dev;
+dcapoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct dca_softc *sc = dca_cd.cd_devs[DCAUNIT(dev)];
-	struct tty *tp = sc->sc_tty;
+	struct dca_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-dcatty(dev)
-	dev_t dev;
+dcatty(devvp)
+	struct vnode *devvp;
 {
-	struct dca_softc *sc = dca_cd.cd_devs[DCAUNIT(dev)];
+	struct dca_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	return (sc->sc_tty);
 }
@@ -671,18 +679,21 @@ dcamint(sc)
 }
 
 int
-dcaioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+dcaioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	int unit = DCAUNIT(dev);
-	struct dca_softc *sc = dca_cd.cd_devs[unit];
-	struct tty *tp = sc->sc_tty;
-	struct dcadevice *dca = sc->sc_dca;
+	struct dca_softc *sc;
+	struct tty *tp;
+	struct dcadevice *dca;
 	int error;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
+	dca = sc->sc_dca;
  
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
@@ -767,12 +778,14 @@ dcaparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	int unit = DCAUNIT(tp->t_dev);
-	struct dca_softc *sc = dca_cd.cd_devs[unit];
-	struct dcadevice *dca = sc->sc_dca;
+	struct dca_softc *sc;
+	struct dcadevice *dca;
 	int cfcr, cflag = t->c_cflag;
 	int ospeed = ttspeedtab(t->c_ospeed, dcaspeedtab);
 	int s;
+
+	sc = vdev_privdata(tp->t_devvp);
+	dca = sc->sc_dca;
  
 	/* check requested parameters */
         if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
@@ -844,9 +857,12 @@ void
 dcastart(tp)
 	struct tty *tp;
 {
-	int s, c, unit = DCAUNIT(tp->t_dev);
-	struct dca_softc *sc = dca_cd.cd_devs[unit];
-	struct dcadevice *dca = sc->sc_dca;
+	int s, c;
+	struct dca_softc *sc;
+	struct dcadevice *dca;
+
+	sc = vdev_privdata(tp->t_devvp);
+	dca = sc->sc_dca;
  
 	s = spltty();
 

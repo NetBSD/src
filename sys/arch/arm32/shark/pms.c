@@ -1,4 +1,4 @@
-/*      $NetBSD: pms.c,v 1.6.6.1 2001/10/01 12:37:59 fvdl Exp $        */
+/*      $NetBSD: pms.c,v 1.6.6.2 2001/10/10 11:55:57 fvdl Exp $        */
 
 /*
  * Copyright 1997
@@ -410,12 +410,13 @@ pmsattach(parent, self, aux)
 **--
 */
 int
-pmsopen(dev, flag, mode, p)
-    dev_t dev;
+pmsopen(devvp, flag, mode, p)
+    struct vnode *devvp;
     int flag;
     int mode;
     struct proc *p;
 {
+    dev_t		dev = vdev_rdev(devvp);
     int                 unit = PMSUNIT(dev);
     struct pms_softc    *sc;
     
@@ -437,6 +438,9 @@ pmsopen(dev, flag, mode, p)
     {
         return EBUSY;
     }
+
+    vdev_setprivdata(devvp, sc);
+
     /* Initialise the mouse softc structure 
     */
     if (clalloc(&sc->sc_q, PMS_BSIZE, 0) == -1)
@@ -496,13 +500,15 @@ pmsopen(dev, flag, mode, p)
 **--
 */
 int
-pmsclose(dev, flag, mode, p)
-    dev_t dev;
+pmsclose(devvp, flag, mode, p)
+    struct vnode *devvp;
     int flag;
     int mode;
     struct proc *p;
 {
-    struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+    struct pms_softc *sc;
+
+    sc = vdev_privdata(devvp);
 
     /* Disable the mouse device and interrupts on it. Note that if we don't
     ** flush the device first it seems to generate LOTs of interrupts after
@@ -558,16 +564,18 @@ pmsclose(dev, flag, mode, p)
 **--
 */
 int
-pmsread(dev, uio, flag)
-    dev_t dev;
+pmsread(devvp, uio, flag)
+    struct vnode *devvp;
     struct uio *uio;
     int flag;
 {
-    struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+    struct pms_softc *sc;
     int s;
     int error = 0;
     size_t length;
     u_char buffer[PMS_CHUNK];
+
+    sc = vdev_privdata(devvp);
     
     /* 
     ** Check if there is data to be read. If there isn't 
@@ -658,17 +666,19 @@ pmsread(dev, uio, flag)
 **--
 */
 int
-pmsioctl(dev, cmd, addr, flag, p)
-    dev_t       dev;
+pmsioctl(devvp, cmd, addr, flag, p)
+    struct vnode *devvp;
     u_long      cmd;
     caddr_t     addr;
     int         flag;
     struct proc *p;
 {
-    struct pms_softc     *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+    struct pms_softc     *sc;
     struct mouseinfo     info;
     int                  oldIpl;
     int                  error;
+
+    sc = vdev_privdata(devvp);
     
     switch (cmd) 
     {
@@ -949,14 +959,16 @@ pmsintr(arg)
 **--
 */
 int
-pmspoll(dev, events, p)
-    dev_t dev;
+pmspoll(devvp, events, p)
+    struct vnode *devvp;
     int events;
     struct proc *p;
 {
-    struct pms_softc     *sc     = opms_cd.cd_devs[PMSUNIT(dev)];
+    struct pms_softc     *sc;
     int                  revents = 0;
     int                  oldIpl; 
+
+    sc = vdev_privdata(devvp);
 
     oldIpl = spltty();
     

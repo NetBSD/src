@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.24.2.1 2001/10/01 12:41:55 fvdl Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.24.2.2 2001/10/10 11:56:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 
 #include <machine/autoconf.h>
@@ -313,21 +314,22 @@ cgeightattach(parent, self, aux)
 }
 
 int
-cgeightopen(dev, flags, mode, p)
-	dev_t dev;
+cgeightopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	int unit = minor(dev);
+	int unit = minor(vdev_rdev(devvp));
 
 	if (unit >= cgeight_cd.cd_ndevs || cgeight_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
+	vdev_setprivdata(devvp, cgeight_cd.cd_devs[unit]);
 	return (0);
 }
 
 int
-cgeightclose(dev, flags, mode, p)
-	dev_t dev;
+cgeightclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
@@ -336,17 +338,19 @@ cgeightclose(dev, flags, mode, p)
 }
 
 int
-cgeightioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+cgeightioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
 {
 #if defined(SUN4)
-	struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];
+	struct cgeight_softc *sc;
 	struct fbgattr *fba;
 	int error;
+
+	sc = vdev_privdata(devvp);
 
 	switch (cmd) {
 
@@ -397,13 +401,13 @@ cgeightioctl(dev, cmd, data, flags, p)
 }
 
 int
-cgeightpoll(dev, events, p)
-	dev_t dev;
+cgeightpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 
-	return (seltrue(dev, events, p));
+	return (seltrue(devvp, events, p));
 }
 
 /*
@@ -416,12 +420,12 @@ cgeightpoll(dev, events, p)
  * register for NBPG, then the bootrom for 0x40000.
  */
 paddr_t
-cgeightmmap(dev, off, prot)
-	dev_t dev;
+cgeightmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];
+	struct cgeight_softc *sc;
 	off_t poff;
 
 #define START_ENABLE	(128*1024)
@@ -432,6 +436,8 @@ cgeightmmap(dev, off, prot)
 #define START_SPECIAL	0x800000
 #define PROMSIZE	0x40000
 #define NOOVERLAY	(0x04000000)
+
+	sc = vdev_privdata(devvp);
 
 	if (off & PGOFSET)
 		panic("cgeightmap");

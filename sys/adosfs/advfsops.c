@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.46.4.3 2001/09/30 19:25:35 fvdl Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.46.4.4 2001/10/10 11:55:46 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -196,7 +196,7 @@ adosfs_mountfs(devvp, mp, p)
 	 */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(devvp, FREAD, NOCRED, p, NULL);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(devvp, 0);
 	if (error != 0)
 		return error;
 	error = VOP_IOCTL(devvp, DIOCGDINFO,(caddr_t)&dl, FREAD, NOCRED, p);

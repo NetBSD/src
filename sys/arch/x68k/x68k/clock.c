@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2001/03/15 06:10:53 chs Exp $	*/
+/*	$NetBSD: clock.c,v 1.11.4.1 2001/10/10 11:56:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
@@ -226,8 +227,8 @@ int clockdebug = 0;
 #endif
 
 /*ARGSUSED*/
-clockopen(dev, flags)
-	dev_t dev;
+clockopen(devvp, flags)
+	struct vnode *devvp;
 {
 #ifdef PROFTIMER
 #ifdef PROF
@@ -251,18 +252,18 @@ clockopen(dev, flags)
 }
 
 /*ARGSUSED*/
-clockclose(dev, flags)
-	dev_t dev;
+clockclose(devvp, flags)
+	struct vnode *devvp;
 {
-	(void) clockunmmap(dev, (caddr_t)0, curproc);	/* XXX */
+	(void) clockunmmap(devvp, (caddr_t)0, curproc);
 	stopclock();
 	clockon = 0;
 	return(0);
 }
 
 /*ARGSUSED*/
-clockioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+clockioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	caddr_t data;
 	struct proc *p;
 {
@@ -271,11 +272,11 @@ clockioctl(dev, cmd, data, flag, p)
 	switch (cmd) {
 
 	case CLOCKMAP:
-		error = clockmmap(dev, (caddr_t *)data, p);
+		error = clockmmap(devvp, (caddr_t *)data, p);
 		break;
 
 	case CLOCKUNMAP:
-		error = clockunmmap(dev, *(caddr_t *)data, p);
+		error = clockunmmap(devvp, *(caddr_t *)data, p);
 		break;
 
 	case CLOCKGETRES:
@@ -290,20 +291,18 @@ clockioctl(dev, cmd, data, flag, p)
 }
 
 /*ARGSUSED*/
-clockmap(dev, off, prot)
-	dev_t dev;
+clockmap(devvp, off, prot)
+	struct vnode *devvp;
 {
 	return((off + (INTIOBASE+CLKBASE+CLKSR-1)) >> PGSHIFT);
 }
 
-clockmmap(dev, addrp, p)
-	dev_t dev;
+clockmmap(devvp, addrp, p)
+	struct vnode *devvp;
 	caddr_t *addrp;
 	struct proc *p;
 {
 	int error;
-	struct vnode vn;
-	struct specinfo si;
 	int flags;
 
 	flags = MAP_FILE|MAP_SHARED;
@@ -311,16 +310,13 @@ clockmmap(dev, addrp, p)
 		flags |= MAP_FIXED;
 	else
 		*addrp = (caddr_t)0x1000000;	/* XXX */
-	vn.v_type = VCHR;			/* XXX */
-	vn.v_specinfo = &si;			/* XXX */
-	vn.v_rdev = dev;			/* XXX */
 	error = vm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
-			PAGE_SIZE, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
+			PAGE_SIZE, VM_PROT_ALL, flags, devvp, 0);
 	return(error);
 }
 
-clockunmmap(dev, addr, p)
-	dev_t dev;
+clockunmmap(devvp, addr, p)
+	struct vnode *devvp;
 	caddr_t addr;
 	struct proc *p;
 {

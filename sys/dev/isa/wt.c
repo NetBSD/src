@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.52 2001/07/18 20:52:48 thorpej Exp $	*/
+/*	$NetBSD: wt.c,v 1.52.2.1 2001/10/10 11:56:55 fvdl Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -62,6 +62,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -315,12 +316,13 @@ wtsize(dev)
  * Open routine, called on every device open.
  */
 int
-wtopen(dev, flag, mode, p)
-	dev_t dev;
+wtopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev) & T_UNIT;
 	struct wt_softc *sc;
 	int error;
@@ -332,6 +334,8 @@ wtopen(dev, flag, mode, p)
 	/* Check that device is not in use */
 	if (sc->flags & TPINUSE)
 		return EBUSY;
+
+	vdev_setprivdata(devvp, sc);
 
 	/* If the tape is in rewound state, check the status and set density. */
 	if (sc->flags & TPSTART) {
@@ -404,13 +408,13 @@ wtopen(dev, flag, mode, p)
  * Close routine, called on last device close.
  */
 int
-wtclose(dev, flags, mode, p)
-	dev_t dev;
+wtclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
 {
-	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
+	struct wt_softc *sc = vdev_privdata(devvp);
 
 	/* If rewind is pending, do nothing */
 	if (sc->flags & TPREW)
@@ -457,14 +461,14 @@ done:
  * ioctl(int fd, WTQICMD, int qicop)		-- do QIC op
  */
 int
-wtioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+wtioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
+	struct wt_softc *sc = vdev_privdata(devvp);
 	int error, count, op;
 
 	switch (cmd) {
@@ -563,7 +567,7 @@ void
 wtstrategy(bp)
 	struct buf *bp;
 {
-	struct wt_softc *sc = device_lookup(&wt_cd, minor(bp->b_dev) & T_UNIT);
+	struct wt_softc *sc = vdev_privdata(bp->b_devvp);
 	int s;
 
 	bp->b_resid = bp->b_bcount;
@@ -634,23 +638,23 @@ xit:
 }
 
 int
-wtread(dev, uio, flags)
-	dev_t dev;
+wtread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(wtstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(wtstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-wtwrite(dev, uio, flags)
-	dev_t dev;
+wtwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(wtstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(wtstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 /*

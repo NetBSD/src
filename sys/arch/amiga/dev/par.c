@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.23 2000/08/27 10:35:43 is Exp $	*/
+/*	$NetBSD: par.c,v 1.23.2.1 2001/10/10 11:55:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -51,6 +51,7 @@
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/cia.h>
@@ -93,7 +94,7 @@ int	pardebug = 0;
 #define PDB_NOCHECK	0x80
 #endif
 
-int parrw __P((dev_t, struct uio *));
+int parrw __P((struct vnode *, struct uio *));
 int parhztoms __P((int));
 int parmstohz __P((int));
 int parsend __P((u_char *, int));
@@ -145,17 +146,25 @@ parattach(pdp, dp, auxp)
 }
 
 int
-paropen(dev, flags, mode, p)
-	dev_t dev;
+paropen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
 {
-	int unit = UNIT(dev);
-	struct par_softc *sc = getparsp(unit);
-  
+	dev_t dev;
+	int unit;
+	struct par_softc *sc;
+
+	dev = vdev_rdev(devvp);
+	unit = UNIT(dev);
+	sc = getparsp(unit);
+
 	if (unit >= NPAR || (sc->sc_flags & PARF_ALIVE) == 0)
 		return(ENXIO);
+
+	vdev_setprivdata(devvp, sc);
+
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW) {
 		printf("paropen(%x, %x): flags %x, ",
@@ -186,14 +195,15 @@ paropen(dev, flags, mode, p)
 }
 
 int
-parclose(dev, flags, mode, p)
-	dev_t dev;
+parclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
 {
-  int unit = UNIT(dev);
-  struct par_softc *sc = getparsp(unit);
+  struct par_softc *sc;
+
+  sc = vdev_privdata(devvp);
 
 #ifdef DEBUG
   if (pardebug & PDB_FOLLOW)
@@ -235,47 +245,48 @@ partimo(arg)
 }
 
 int
-parread(dev, uio, flags)
-	dev_t dev;
+parread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parread(%x, %p)\n", dev, uio);
+		printf("parread(%x, %p)\n", vdev_rdev(devvp), uio);
 #endif
-	return (parrw(dev, uio));
+	return (parrw(devvp, uio));
 }
 
 
 int
-parwrite(dev, uio, flags)
-	dev_t dev;
+parwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parwrite(%x, %p)\n", dev, uio);
+		printf("parwrite(%x, %p)\n", vdev_rdev(devvp), uio);
 #endif
-	return (parrw(dev, uio));
+	return (parrw(devvp, uio));
 }
 
 
 int
-parrw(dev, uio)
-     dev_t dev;
+parrw(devvp, uio)
+     struct vnode *devvp;
      register struct uio *uio;
 {
-  int unit = UNIT(dev);
-  register struct par_softc *sc = getparsp(unit);
+  register struct par_softc *sc;
   register int s, len, cnt;
   register char *cp;
   int error = 0, gotdata = 0;
   int buflen;
   char *buf;
+
+  sc = vdev_privdata(devvp);
 
   len = 0;
   cnt = 0;
@@ -448,16 +459,18 @@ again:
 }
 
 int
-parioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+parioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-  struct par_softc *sc = getparsp(UNIT(dev));
+  struct par_softc *sc;
   struct parparam *pp, *upp;
   int error = 0;
+
+  sc = vdev_privdata(devvp);
 
   switch (cmd) 
     {

@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.5 2001/06/13 15:03:53 soda Exp $	*/
+/*	$NetBSD: joy.c,v 1.5.4.1 2001/10/10 11:55:52 fvdl Exp $	*/
 /*	NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp 	*/
 
 /*-
@@ -37,6 +37,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
@@ -81,11 +82,11 @@ struct joy_softc {
 };
 
 int		joyprobe __P((struct device *, struct cfdata *, void *));
-int		joyread __P((dev_t dev, struct uio *uio, int flag));
-int		joyioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+int		joyread __P((struct vnode *devvp, struct uio *uio, int flag));
+int		joyioctl __P((struct vnode *devvp, u_long cmd, caddr_t data, int flag, struct proc *p));
 void		joyattach __P((struct device *, struct device *, void *));
-int		joyopen __P((dev_t, int, int, struct proc *));
-int		joyclose __P((dev_t, int, int, struct proc *));
+int		joyopen __P((struct vnode *, int, int, struct proc *));
+int		joyclose __P((struct vnode *, int, int, struct proc *));
 static int	get_tick __P((void));
 
 struct cfattach joy_ca = {
@@ -132,11 +133,12 @@ joyattach(parent, self, aux)
 }
 
 int
-joyopen(dev, flag, mode, p)
-	dev_t dev;
+joyopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = JOYUNIT(dev);
 	int i = JOYPART(dev);
 	struct joy_softc *sc;
@@ -149,34 +151,38 @@ joyopen(dev, flag, mode, p)
 	if (sc->timeout[i])
 		return EBUSY;
 
+	vdev_setprivdata(devvp, sc);
+
 	sc->x_off[i] = sc->y_off[i] = 0;
 	sc->timeout[i] = JOY_TIMEOUT;
 	return 0;
 }
 
 int
-joyclose(dev, flag, mode, p)
-	dev_t dev;
+joyclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = JOYUNIT(dev);
-	int i = JOYPART(dev);
-	struct joy_softc *sc = joy_cd.cd_devs[unit];
+	struct joy_softc *sc;
 
-	sc->timeout[i] = 0;
+	sc = vdev_privdata(devvp);
+
+	sc->timeout[JOYPART(vdev_rdev(devvp))] = 0;
 	return 0;
 }
 
 int
-joyread(dev_t dev, struct uio *uio, int flag)
+joyread(struct vnode *devvp, struct uio *uio, int flag)
 {
-	int unit = JOYUNIT(dev);
-	struct joy_softc *sc = joy_cd.cd_devs[unit];
+	struct joy_softc *sc;
 	struct joystick c;
-	int port = sc->port;
+	int port;
 	int i, t0, t1;
 	int state = 0, x = 0, y = 0;
+
+	sc = vdev_privdata(devvp);
+	port = sc->port;
 
 	/* disable_intr(); */ /* XXX BAD */
 	isa_outb(port, 0xff);
@@ -207,12 +213,15 @@ joyread(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-joyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+joyioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+	 struct proc *p)
 {
-	int unit = JOYUNIT(dev);
-	struct joy_softc *sc = joy_cd.cd_devs[unit];
-	int i = JOYPART(dev);
+	struct joy_softc *sc;
+	int i;
 	int x;
+
+	sc = vdev_privdata(devvp);
+	i = JOYPART(vdev_rdev(devvp));
 
 	switch (cmd) {
 	case JOY_SETTIMEOUT:

@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.24 2000/06/04 18:04:38 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.24.4.1 2001/10/10 11:56:42 fvdl Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -53,6 +53,7 @@
 #include <sys/syslog.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 #include <machine/trap.h>
@@ -124,6 +125,8 @@ hpattach(struct device *parent, struct device *self, void *aux)
 	struct	disklabel *dl;
 	struct  mba_attach_args *ma = aux;
 	char	*msg;
+	struct vnode vn;		/* XXX */
+	struct specinfo si;		/* XXX */
 
 	sc->sc_iot = ma->ma_iot;
 	sc->sc_ioh = ma->ma_ioh;
@@ -158,8 +161,11 @@ hpattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Read in label.
 	 */
-	if ((msg = readdisklabel(makedev(0, self->dv_unit * 8), hpstrategy,
-	    dl, NULL)) != NULL)
+	vn.v_specinfo = &si;
+	vn.v_type = VBLK;
+	vn.v_rdev = makedev(0, self->dv_unit * 8);
+	vn.v_devcookie = sc;
+	if ((msg = readdisklabel(&vn, hpstrategy, dl, NULL)) != NULL)
 		printf(": %s", msg);
 	printf(": %s, size = %d sectors\n", dl->d_typename, dl->d_secperunit);
 }
@@ -172,17 +178,21 @@ hpstrategy(struct buf *bp)
 	struct	buf *gp;
 	int	unit, s, err;
 	struct disklabel *lp;
+	dev_t dev;
+	int part;
 
-	unit = DISKUNIT(bp->b_dev);
+	dev = vdev_rdev(bp->b_devvp);
+	unit = DISKUNIT(dev);
 	sc = hp_cd.cd_devs[unit];
 	lp = sc->sc_disk.dk_label;
+	part = (bp->b_flags & B_DKLABEL) ? RAW_PART : DISKPART(dev);
 
 	err = bounds_check_with_label(bp, lp, sc->sc_wlabel);
 	if (err < 0)
 		goto done;
 
 	bp->b_rawblkno =
-	    bp->b_blkno + lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
+	    bp->b_blkno + lp->d_partitions[part].p_offset;
 	bp->b_cylinder = bp->b_rawblkno / lp->d_secpercyl;
 
 	s = splbio();
@@ -235,11 +245,13 @@ hpstart(struct	mba_device *md)
 }
 
 int
-hpopen(dev_t dev, int flag, int fmt, struct proc *p)
+hpopen(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
 	struct	hp_softc *sc;
 	int	unit, part;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	unit = DISKUNIT(dev);
 	if (unit >= hp_cd.cd_ndevs)
 		return ENXIO;
@@ -251,6 +263,8 @@ hpopen(dev_t dev, int flag, int fmt, struct proc *p)
 
 	if (part >= sc->sc_disk.dk_label->d_npartitions)
 		return ENXIO;
+
+	vdev_setprivdata(devvp, sc);
 
 	switch (fmt) {
 	case 	S_IFCHR:
@@ -268,15 +282,14 @@ hpopen(dev_t dev, int flag, int fmt, struct proc *p)
 }
 
 int
-hpclose(dev_t dev, int flag, int fmt, struct proc *p)
+hpclose(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
 	struct	hp_softc *sc;
-	int	unit, part;
+	int	part;
 
-	unit = DISKUNIT(dev);
-	sc = hp_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
 
-	part = DISKPART(dev);
+	part = DISKPART(vdev_rdev(devvp));
 
 	switch (fmt) {
 	case 	S_IFCHR:
@@ -294,11 +307,14 @@ hpclose(dev_t dev, int flag, int fmt, struct proc *p)
 }
 
 int
-hpioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+hpioctl(struct vnode *devvp, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
-	struct	hp_softc *sc = hp_cd.cd_devs[DISKUNIT(dev)];
-	struct	disklabel *lp = sc->sc_disk.dk_label;
+	struct	hp_softc *sc;
+	struct	disklabel *lp;
 	int	error;
+
+	sc = vdev_privdata(devvp);
+	lp = sc->sc_disk.dk_label;
 
 	switch (cmd) {
 	case	DIOCGDINFO:
@@ -308,7 +324,7 @@ hpioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case	DIOCGPART:
 		((struct partinfo *)addr)->disklab = lp;
 		((struct partinfo *)addr)->part =
-		    &lp->d_partitions[DISKPART(dev)];
+		    &lp->d_partitions[DISKPART(vdev_rdev(devvp))];
 		break;
 
 	case	DIOCSDINFO:
@@ -322,7 +338,7 @@ hpioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			error = EBADF;
 		else {
 			sc->sc_wlabel = 1;
-			error = writedisklabel(dev, hpstrategy, lp, 0);
+			error = writedisklabel(devvp, hpstrategy, lp, 0);
 			sc->sc_wlabel = 0;
 		}
 		return error;
@@ -431,13 +447,13 @@ hpdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 }
 
 int
-hpread(dev_t dev, struct uio *uio, int ioflag)
+hpread(struct vnode *devvp, struct uio *uio, int ioflag)
 {
-	return (physio(hpstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(hpstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-hpwrite(dev_t dev, struct uio *uio, int ioflag)
+hpwrite(struct vnode *devvp, struct uio *uio, int ioflag)
 {
-	return (physio(hpstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(hpstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.17.2.1 2001/10/01 12:37:52 fvdl Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.17.2.2 2001/10/10 11:55:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -33,6 +33,7 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -55,7 +56,7 @@ char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 u_int memory_disc_size = 0;		/* set by machdep.c */
 static struct md_conf *bootmd = NULL;
 
-extern int load_memory_disc_from_floppy __P((struct md_conf *md, dev_t dev));
+extern int load_memory_disc_from_floppy __P((struct md_conf *, struct vnode *));
 
 #include "fdc.h"
 #endif	/* MINIROOTSIZE */
@@ -97,11 +98,18 @@ md_open_hook(unit, md)
 	int unit;
 	struct md_conf *md;
 {
+#if !defined(MINIROOTSIZE) && NFDC > 0
+	struct vnode *mvp;
+#endif
+
 	if (unit == 0) {
 		/* The root memory disk only works single-user. */
 		boothowto |= RB_SINGLE;
 #if !defined(MINIROOTSIZE) && NFDC > 0
-		load_memory_disc_from_floppy(bootmd, makedev(17, 1));	/* XXX 1.44MB FD */
+		if (bdevvp(makedev(17, 1), &mvp) != 0)
+			panic("md_open_hook: unable to get vnode");
+		load_memory_disc_from_floppy(bootmd, mvp); /* XXX 1.44MB FD */
+		vrele(mvp);
 #endif
 	}
 }

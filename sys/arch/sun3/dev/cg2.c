@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.15.2.1 2001/10/01 12:42:45 fvdl Exp $	*/
+/*	$NetBSD: cg2.c,v 1.15.2.2 2001/10/10 11:56:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,7 @@
 #include <sys/mman.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -195,21 +196,23 @@ cg2attach(parent, self, args)
 }
 
 int
-cg2open(dev, flags, mode, p)
-	dev_t dev;
+cg2open(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = minor(dev);
 
 	if (unit >= cgtwo_cd.cd_ndevs || cgtwo_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
+	vdev_setprivdata(devvp, cgtwo_cd.cd_devs[unit]);
 	return (0);
 }
 
 int
-cg2close(dev, flags, mode, p)
-	dev_t dev;
+cg2close(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
@@ -218,14 +221,14 @@ cg2close(dev, flags, mode, p)
 }
 
 int
-cg2ioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+cg2ioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	struct cg2_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
+	struct cg2_softc *sc = vdev_privdata(devvp);
 
 	return (fbioctlfb(&sc->sc_fb, cmd, data));
 }
@@ -235,12 +238,12 @@ cg2ioctl(dev, cmd, data, flags, p)
  * offset, allowing for the given protection, or return -1 for error.
  */
 paddr_t
-cg2mmap(dev, off, prot)
-	dev_t dev;
+cg2mmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	struct cg2_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
+	struct cg2_softc *sc = vdev_privdata(devvp);
 
 	if (off & PGOFSET)
 		panic("cg2mmap");

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_localq.c,v 1.3 2001/08/22 08:54:51 itojun Exp $	*/
+/*	$NetBSD: altq_localq.c,v 1.3.2.1 2001/10/10 11:55:47 fvdl Exp $	*/
 /*	$KAME: altq_localq.c,v 1.4 2001/08/16 11:28:25 kjc Exp $	*/
 /*
  * a skeleton file for implementing a new queueing discipline.
@@ -14,6 +14,7 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
+#include <sys/vnode.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -27,8 +28,8 @@
 altqdev_decl(localq);
 
 int
-localqopen(dev, flag, fmt, p)
-	dev_t dev;
+localqopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -37,8 +38,8 @@ localqopen(dev, flag, fmt, p)
 }
 
 int
-localqclose(dev, flag, fmt, p)
-	dev_t dev;
+localqclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -48,8 +49,8 @@ localqclose(dev, flag, fmt, p)
 }
 
 int
-localqioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+localqioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;

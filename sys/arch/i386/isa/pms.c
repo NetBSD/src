@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.47.10.1 2001/10/01 12:40:05 fvdl Exp $	*/
+/*	$NetBSD: pms.c,v 1.47.10.2 2001/10/10 11:56:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1997 Charles M. Hannum.
@@ -376,12 +376,13 @@ opms_pckbc_attach(parent, self, aux)
 #endif
 
 int
-pmsopen(dev, flag, mode, p)
-	dev_t dev;
+pmsopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = PMSUNIT(dev);
 	struct opms_softc *sc;
 #if (NOPMS_PCKBC > 0)
@@ -400,6 +401,8 @@ pmsopen(dev, flag, mode, p)
 
 	if (clalloc(&sc->sc_q, PMS_BSIZE, 0) == -1)
 		return ENOMEM;
+
+	vdev_setprivdata(devvp, sc);
 
 	sc->sc_state |= PMS_OPEN;
 	sc->sc_status = 0;
@@ -438,13 +441,13 @@ pmsopen(dev, flag, mode, p)
 }
 
 int
-pmsclose(dev, flag, mode, p)
-	dev_t dev;
+pmsclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct opms_softc *sc = vdev_privdata(devvp);
 #if (NOPMS_PCKBC > 0)
 	u_char cmd[1];
 	int res;
@@ -476,12 +479,12 @@ pmsclose(dev, flag, mode, p)
 }
 
 int
-pmsread(dev, uio, flag)
-	dev_t dev;
+pmsread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct opms_softc *sc = vdev_privdata(devvp);
 	int s;
 	int error = 0;
 	size_t length;
@@ -524,14 +527,14 @@ pmsread(dev, uio, flag)
 }
 
 int
-pmsioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+pmsioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct opms_softc *sc = vdev_privdata(devvp);
 	struct mouseinfo info;
 	int s;
 	int error;
@@ -667,12 +670,12 @@ opmsintr(arg)
 #endif
 
 int
-pmspoll(dev, events, p)
-	dev_t dev;
+pmspoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct opms_softc *sc = vdev_privdata(devvp);
 	int revents = 0;
 	int s = spltty();
 

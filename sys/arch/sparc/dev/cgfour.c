@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.24.2.1 2001/10/01 12:41:55 fvdl Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.24.2.2 2001/10/10 11:56:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@
 #include <sys/mman.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
@@ -310,21 +311,22 @@ cgfourattach(parent, self, aux)
 }
 
 int
-cgfouropen(dev, flags, mode, p)
-	dev_t dev;
+cgfouropen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	int unit = minor(dev);
+	int unit = minor(vdev_rdev(devvp));
 
 	if (unit >= cgfour_cd.cd_ndevs || cgfour_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
+	vdev_setprivdata(devvp, cgfour_cd.cd_devs[unit]);
 	return (0);
 }
 
 int
-cgfourclose(dev, flags, mode, p)
-	dev_t dev;
+cgfourclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
@@ -333,17 +335,19 @@ cgfourclose(dev, flags, mode, p)
 }
 
 int
-cgfourioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+cgfourioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
 {
 #if defined(SUN4)
-	struct cgfour_softc *sc = cgfour_cd.cd_devs[minor(dev)];
+	struct cgfour_softc *sc;
 	struct fbgattr *fba;
 	int error;
+
+	sc = vdev_privdata(devvp);
 
 	switch (cmd) {
 
@@ -394,13 +398,13 @@ cgfourioctl(dev, cmd, data, flags, p)
 }
 
 int
-cgfourpoll(dev, events, p)
-	dev_t dev;
+cgfourpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 
-	return (seltrue(dev, events, p));
+	return (seltrue(devvp, events, p));
 }
 
 /*
@@ -415,13 +419,15 @@ cgfourpoll(dev, events, p)
  * only it's colour plane, at 0.
  */
 paddr_t
-cgfourmmap(dev, off, prot)
-	dev_t dev;
+cgfourmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	struct cgfour_softc *sc = cgfour_cd.cd_devs[minor(dev)];
+	struct cgfour_softc *sc;
 	off_t poff;
+
+	sc = vdev_privdata(devvp);
 
 #define START_ENABLE	(128*1024)
 #define START_COLOR	((128*1024) + (128*1024))

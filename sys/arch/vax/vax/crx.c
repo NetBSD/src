@@ -1,4 +1,4 @@
-/*	$NetBSD: crx.c,v 1.5 2000/05/27 04:52:33 thorpej Exp $	*/
+/*	$NetBSD: crx.c,v 1.5.6.1 2001/10/10 11:56:44 fvdl Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -51,6 +51,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <machine/ka820.h>
 #include <vax/vax/crx.h>
@@ -86,12 +87,13 @@ struct rx50state {
  */
 /*ARGSUSED*/
 int
-crxopen(dev, flags, fmt, p)
-	dev_t dev;
+crxopen(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct proc *p;
 {
 	int unit;
+	dev_t dev = vdev_rdev(devvp);
 
 #if	CRXDEBUG
 	printf("crxopen(csa%d)\n", minor(dev));
@@ -112,11 +114,13 @@ crxopen(dev, flags, fmt, p)
  */
 /*ARGSUSED*/
 int
-crxclose(dev, flags, fmt, p)
-	dev_t dev;
+crxclose(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
+
 #if	CRXDEBUG
 	printf("crxclose(csa%d)\n", minor(dev));
 #endif
@@ -128,10 +132,10 @@ crxclose(dev, flags, fmt, p)
 /*
  * Perform a read (uio->uio_rw==UIO_READ) or write (uio->uio_rw==UIO_WRITE).
  */
-int	crxrw __P((dev_t, struct uio *, int));
+int	crxrw __P((struct vnode *, struct uio *, int));
 int
-crxrw(dev, uio, flags)
-	dev_t dev;
+crxrw(devvp, uio, flags)
+	struct vnode *devvp;
 	register struct uio *uio;
 	int flags;
 {
@@ -140,6 +144,7 @@ crxrw(dev, uio, flags)
 	register int error, i, t;
 	char secbuf[512];
 	static char driveselect[2] = { RXCMD_DRIVE0, RXCMD_DRIVE1 };
+	dev_t dev = vdev_rdev(devvp);
 
 #if	CRXDEBUG
 	printf("crxrw(csa%d): %s\n", 

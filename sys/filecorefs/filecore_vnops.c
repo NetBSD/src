@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.13.4.1 2001/10/01 12:46:44 fvdl Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.13.4.2 2001/10/10 11:57:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -434,7 +434,7 @@ filecore_strategy(v)
 		return (0);
 	}
 	vp = ip->i_devvp;
-	bp->b_dev = vp->v_rdev;
+	bp->b_devvp = vp;
 	VOCALL (vp->v_op, VOFFSET(vop_strategy), ap);
 	return (0);
 }

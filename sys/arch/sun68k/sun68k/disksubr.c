@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 2001/06/14 13:08:11 fredette Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.1.4.1 2001/10/10 11:56:42 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -50,6 +50,7 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/dkbad.h>
+#include <sys/vnode.h>
 
 #include <dev/sun/disklabel.h>
 
@@ -73,8 +74,8 @@ static int disklabel_bsd_to_sun(struct disklabel *, char *);
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp)
-	dev_t dev;
+readdisklabel(devvp, strat, lp, clp)
+	struct vnode *devvp;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
@@ -96,11 +97,11 @@ readdisklabel(dev, strat, lp, clp)
 	bp = geteblk((int)lp->d_secsize);
 
 	/* next, dig out disk label */
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags |= B_READ | B_DKLABEL;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
@@ -109,6 +110,7 @@ readdisklabel(dev, strat, lp, clp)
 		/* Save the whole block in case it has info we need. */
 		bcopy(bp->b_data, clp->cd_block, sizeof(clp->cd_block));
 	}
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 	if (error)
 		return("disk label read error");
@@ -201,8 +203,8 @@ setdisklabel(olp, nlp, openmask, clp)
  * Current label is already in clp->cd_block[]
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t dev;
+writedisklabel(devvp, strat, lp, clp)
+	struct vnode *devvp;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
@@ -227,13 +229,14 @@ writedisklabel(dev, strat, lp, clp)
 	bcopy(clp->cd_block, bp->b_data, sizeof(clp->cd_block));
 
 	/* Write out the updated label. */
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_WRITE;
+	bp->b_flags |= B_WRITE | B_DKLABEL;
 	(*strat)(bp);
 	error = biowait(bp);
+	bp->b_flags &= ~B_DKLABEL;
 	brelse(bp);
 
 	return (error);
@@ -251,9 +254,14 @@ bounds_check_with_label(bp, lp, wlabel)
 	int wlabel;
 {
 	struct partition *p;
-	int sz, maxsz;
+	int sz, maxsz, part;
 
-	p = lp->d_partitions + DISKPART(bp->b_dev);
+	if (bp->b_flags & B_DKLABEL)
+		part = RAW_PART;
+	else
+		part = DISKPART(vdev_rdev(bp->b_devvp));
+
+	p = lp->d_partitions + part;
 	maxsz = p->p_size;
 	sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.28 2000/05/27 04:52:28 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.28.6.1 2001/10/10 11:56:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@
 #include <sys/kernel.h>
 #include <sys/tprintf.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
@@ -199,12 +200,12 @@ int st_extti = 0x01;		/* bitmask of unit numbers, do extra */
 /* bdev_decl(st); */
 /* cdev_decl(st); */
 /* XXX we should use macros to do these... */
-int	stopen __P((dev_t, int, int, struct proc *));
-int	stclose __P((dev_t, int, int, struct proc *));
+int	stopen __P((struct vnode *, int, int, struct proc *));
+int	stclose __P((struct vnode *, int, int, struct proc *));
 
-int	stioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	stread __P((dev_t, struct uio *, int));
-int	stwrite __P((dev_t, struct uio *, int));
+int	stioctl __P((struct vnode *, u_long, caddr_t, int, struct proc *));
+int	stread __P((struct vnode *, struct uio *, int));
+int	stwrite __P((struct vnode *, struct uio *, int));
 
 void	ststrategy __P((struct buf *));
 int	stdump __P((dev_t));
@@ -354,11 +355,12 @@ stattach(parent, self, aux)
 }
 
 int
-stopen(dev, flag, type, p)
-	dev_t dev;
+stopen(devvp, flag, type, p)
+	struct vnode *devvp;
 	int flag, type;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct st_softc *sc;
 	struct st_xsense *xsense;
 	int count;
@@ -384,6 +386,8 @@ stopen(dev, flag, type, p)
 
 	if (sc->sc_flags & STF_OPEN)
 		return (EBUSY);
+
+	vdev_setprivdata(devvp, sc);
 
 	ctlr = sc->sc_dev.dv_parent->dv_unit;
 	slave = sc->sc_target;
@@ -652,12 +656,13 @@ retryselect:
 
 /*ARGSUSED*/
 int
-stclose(dev, flag, mode, p)
-	dev_t dev;
+stclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	struct st_softc *sc = st_cd.cd_devs[UNIT(dev)];
+	struct st_softc *sc = vdev_privdata(devvp);
+	dev_t dev = vdev_rdev(devvp);
 	int hit = 0;
 
 	if ((sc->sc_flags & (STF_WMODE|STF_WRTTN)) == (STF_WMODE|STF_WRTTN)) {
@@ -665,22 +670,22 @@ stclose(dev, flag, mode, p)
 		 * Cartridge tapes don't do double EOFs on EOT.
 		 * We assume that variable-block devices use double EOF.
 		 */
-		stcommand(dev, MTWEOF, 1); 
+		stcommand(devvp, MTWEOF, 1); 
 		if (sc->sc_blklen == 0) {
-			stcommand(dev, MTWEOF, 1); 
-			stcommand(dev, MTBSR, 1); 
+			stcommand(devvp, MTWEOF, 1); 
+			stcommand(devvp, MTBSR, 1); 
 		}
 		hit++;
 	}
 	if ((minor(dev) & STDEV_NOREWIND) == 0) {
-		stcommand(dev, MTREW, 1);
+		stcommand(devvp, MTREW, 1);
 		hit++;
 	}
 #ifdef NOTDEF
 	/* wait until more stable before trying [XXX Needed ?] */
 	if (!hit && (sc->sc_flags & SFT_WMODE))
 		/* force out any any bufferd write data */
-		stcommand(dev, MTFSR, 0); 
+		stcommand(devvp, MTFSR, 0); 
 #endif
 	/* make stats available */
 	stxsense(sc->sc_dev.dv_parent->dv_unit, sc->sc_target, sc->sc_lun, sc);
@@ -696,9 +701,11 @@ ststrategy(bp)
 {
 	struct st_softc *sc;
 	int unit, s;
+	dev_t dev;
 
-	unit = UNIT(bp->b_dev);
-	sc = st_cd.cd_devs[unit];
+	dev = vdev_rdev(bp->b_devvp);
+	sc = vdev_privdata(bp->b_devvp);
+	unit = UNIT(dev);
 
 	s = splbio();
 	BUFQ_INSERT_TAIL(&sc->sc_tab, bp);
@@ -828,24 +835,24 @@ stfinish(sc, bp)
 }
 
 int
-stread(dev, uio, flags)
-	dev_t dev;
+stread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(ststrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(ststrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-stwrite(dev, uio, flags)
-	dev_t dev;
+stwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
 	/* XXX: check for hardware write-protect? */
-	return (physio(ststrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(ststrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 /*ARGSUSED*/
@@ -858,14 +865,14 @@ stdump(dev)
 
 /*ARGSUSED*/
 int
-stioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+stioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data; 
 	int flag;
 	struct proc *p;
 {
-	struct st_softc *sc = st_cd.cd_devs[UNIT(dev)];
+	struct st_softc *sc = vdev_privdata(devvp);
 	int cnt;
 	struct mtget *mtget;
 	struct st_xsense *xp = &sc->sc_sense;
@@ -901,7 +908,7 @@ stioctl(dev, cmd, data, flag, p)
 		}
 		if (cnt <= 0)
 			return(EINVAL);
-		stcommand(dev, (u_int)op->mt_op, cnt);
+		stcommand(devvp, (u_int)op->mt_op, cnt);
 		break;
 
 	/* drive status */
@@ -1108,12 +1115,13 @@ stintr(arg, stat)
 }
 
 void
-stcommand(dev, command, cnt)
-	dev_t dev;
+stcommand(devvp, command, cnt)
+	struct vnode *devvp;
 	u_int command;
 	int cnt;
 {
-	struct st_softc *sc = st_cd.cd_devs[UNIT(dev)];
+	struct st_softc *sc = vdev_privdata(devvp);
+	dev_t dev = vdev_rdev(devvp);
 	struct buf *bp = &sc->sc_bufstore;
 	struct scsi_fmt_cdb *cmd = &sc->sc_cmdstore;
 	int cmdcnt, s;
@@ -1149,12 +1157,12 @@ stcommand(dev, command, cnt)
 		/* Archive can't back up, will not get to BSR case */
 		if (sc->sc_tapeid == MT_ISAR) {
 			if ((sc->sc_filepos - cnt) < 0) {
-				stcommand(dev, MTREW, 1);
+				stcommand(devvp, MTREW, 1);
 				return;
 			}
 			cmdcnt = sc->sc_filepos - cnt + 1;
-			stcommand(dev, MTREW, 1);
-			stcommand(dev, MTFSF, cmdcnt);
+			stcommand(devvp, MTREW, 1);
+			stcommand(devvp, MTFSF, cmdcnt);
 			return;
 		}
 	case MTBSR:
@@ -1208,7 +1216,7 @@ again:
 	}
 	bp->b_flags = B_BUSY|B_READ;
 	splx(s);
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_bcount = 0;
 	bp->b_resid = 0;
 	bp->b_blkno = 0;

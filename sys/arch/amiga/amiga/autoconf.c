@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.78 2001/02/02 21:52:12 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.78.2.1 2001/10/10 11:55:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,6 +37,7 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/vnode.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/device.h>
@@ -357,6 +358,7 @@ findroot(void)
 	struct partition *pp;
 	struct device **devs;
 	int i, maj, unit;
+	struct vnode *vp;
 
 #if NSD > 0
 	/*
@@ -392,11 +394,14 @@ findroot(void)
 				if (bdp->d_strategy ==
 				    dkp->dk_driver->d_strategy)
 					break;
-			if (bdp->d_open(MAKEDISKDEV(4, unit, RAW_PART),
-			    FREAD | FNONBLOCK, 0, curproc))
+			if (bdevvp(MAKEDISKDEV(4, unit, RAW_PART), &vp) != 0)
 				continue;
-			bdp->d_close(MAKEDISKDEV(4, unit, RAW_PART),
-			    FREAD | FNONBLOCK, 0, curproc);
+			if (bdp->d_open(vp, FREAD | FNONBLOCK, 0, curproc)) {
+				vrele(vp);
+				continue;
+			}
+			bdp->d_close(vp, FREAD | FNONBLOCK, 0, curproc);
+			vrele(vp);
 			pp = &dkp->dk_label->d_partitions[0];
 			for (i = 0; i < dkp->dk_label->d_npartitions;
 			    i++, pp++) {
@@ -448,13 +453,18 @@ findroot(void)
 			if (maj >= nblkdev)
 				panic("findroot: impossible");
 #endif
+			if (bdevvp(MAKEDISKDEV(maj, unit, 0), &vp) != 0)
+				continue;
 
 			/* Open disk; forces read of disklabel. */
-			if ((*bdevsw[maj].d_open)(MAKEDISKDEV(maj,
-			    unit, 0), FREAD|FNONBLOCK, 0, &proc0))
+			if ((*bdevsw[maj].d_open)(vp, FREAD|FNONBLOCK, 0,
+			    &proc0)) {
+				vrele(vp);
 				continue;
-			(void)(*bdevsw[maj].d_close)(MAKEDISKDEV(maj,
-			    unit, 0), FREAD|FNONBLOCK, 0, &proc0);
+			}
+			(void)(*bdevsw[maj].d_close)(vp, FREAD|FNONBLOCK, 0,
+			    &proc0);
+			vrele(vp);
 
 			pp = &dkp->dk_label->d_partitions[0];
 			if (pp->p_size != 0 && pp->p_fstype == FS_BSDFFS) {

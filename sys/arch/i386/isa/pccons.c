@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.149 2001/07/31 13:15:29 jdolecek Exp $	*/
+/*	$NetBSD: pccons.c,v 1.149.4.1 2001/10/10 11:56:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -803,11 +803,12 @@ pcconskbd_cnattach(tag, slot)
 #endif
 
 int
-pcopen(dev, flag, mode, p)
-	dev_t dev;
+pcopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct pc_softc *sc;
 	int unit = PCUNIT(dev);
 	struct tty *tp;
@@ -824,9 +825,11 @@ pcopen(dev, flag, mode, p)
 	} else
 		tp = sc->sc_tty;
 
+	vdev_setprivdata(devvp, sc);
+
 	tp->t_oproc = pcstart;
 	tp->t_param = pcparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -844,12 +847,12 @@ pcopen(dev, flag, mode, p)
 }
 
 int
-pcclose(dev, flag, mode, p)
-	dev_t dev;
+pcclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 
 	if (tp == NULL)
@@ -863,46 +866,46 @@ pcclose(dev, flag, mode, p)
 }
 
 int
-pcread(dev, uio, flag)
-	dev_t dev;
+pcread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
-pcwrite(dev, uio, flag)
-	dev_t dev;
+pcwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-pcpoll(dev, events, p)
-	dev_t dev;
+pcpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-pctty(dev)
-	dev_t dev;
+pctty(devvp)
+	struct vnode *devvp;
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = vdev_privdata(devvp);
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);

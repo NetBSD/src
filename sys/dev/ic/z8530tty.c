@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.77.4.2 2001/09/26 15:28:13 fvdl Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.77.4.3 2001/10/10 11:56:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -954,7 +954,7 @@ zsstart(tp)
 	struct zs_chanstate *cs;
 	int s;
 
-	zst = vdev_privdata(devvp);
+	zst = vdev_privdata(tp->t_devvp);
 	cs = zst->zst_cs;
 
 	s = spltty();
@@ -1348,7 +1348,7 @@ zshwiflow(tp, block)
 {
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
-	int s, error;
+	int s;
 
 	zst = vdev_privdata(tp->t_devvp);
 
@@ -1426,7 +1426,7 @@ zstty_rxint(cs)
 	u_char rr0, rr1, c;
 
 	if (zst->zst_tty->t_devvp->v_type == VBAD)
-		return (0);
+		return;
 
 	end = zst->zst_ebuf;
 	put = zst->zst_rbput;
@@ -1553,7 +1553,7 @@ zstty_stint(cs, force)
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
 
 	if (zst->zst_tty->t_devvp->v_type == VBAD)
-		return (0);
+		return;
 
 	/*
 	 * Check here for console break, so that we can abort

@@ -27,7 +27,7 @@
  *	i4b_ctl.c - i4b system control port driver
  *	------------------------------------------
  *
- *	$Id: i4b_ctl.c,v 1.4 2001/07/08 10:33:58 martin Exp $
+ *	$Id: i4b_ctl.c,v 1.4.4.1 2001/10/10 11:57:05 fvdl Exp $
  *
  * $FreeBSD$
  *
@@ -59,6 +59,7 @@
 #include <sys/proc.h>
 #include <sys/fcntl.h>
 #include <sys/socket.h>
+#include <sys/vnode.h>
 #include <net/if.h>
 
 #ifdef __FreeBSD__
@@ -148,9 +149,9 @@ static void *devfs_token;
 #ifndef __FreeBSD__
 #define PDEVSTATIC	/* */
 void i4bctlattach __P((void));
-int i4bctlopen __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4bctlclose __P((dev_t dev, int flag, int fmt, struct proc *p));
-int i4bctlioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+int i4bctlopen __P((struct vnode * dev, int flag, int fmt, struct proc *p));
+int i4bctlclose __P((struct vnode * dev, int flag, int fmt, struct proc *p));
+int i4bctlioctl __P((struct vnode * dev, u_long cmd, caddr_t data, int flag, struct proc *p));
 #endif	/* !FreeBSD */
 
 #if BSD > 199306 && defined(__FreeBSD__)
@@ -233,8 +234,10 @@ i4bctlattach()
  *	i4bctlopen - device driver open routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bctlopen(dev_t dev, int flag, int fmt, struct proc *p)
+i4bctlopen(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
+
 	if(minor(dev))
 		return (ENXIO);
 
@@ -250,7 +253,7 @@ i4bctlopen(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4bctlclose - device driver close routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bctlclose(dev_t dev, int flag, int fmt, struct proc *p)
+i4bctlclose(struct vnode *devvp, int flag, int fmt, struct proc *p)
 {
 	openflag = 0;
 	return (0);
@@ -260,8 +263,10 @@ i4bctlclose(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4bctlioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+i4bctlioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+	    struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 #if DO_I4B_DEBUG
 	ctl_debug_t *cdbg;	
 	int error = 0;

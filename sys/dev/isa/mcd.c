@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.71 2001/07/18 20:39:53 thorpej Exp $	*/
+/*	$NetBSD: mcd.c,v 1.71.2.1 2001/10/10 11:56:54 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -72,6 +72,7 @@
 #include <sys/disklabel.h>
 #include <sys/device.h>
 #include <sys/disk.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -313,14 +314,16 @@ mcdunlock(sc)
 }
 
 int
-mcdopen(dev, flag, fmt, p)
-	dev_t dev;
+mcdopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
 	int error, part;
 	struct mcd_softc *sc;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
@@ -384,6 +387,8 @@ mcdopen(dev, flag, fmt, p)
 		goto bad;
 	}
 
+	vdev_setprivdata(devvp, sc);
+
 	/* Insure only one open at a time. */
 	switch (fmt) {
 	case S_IFCHR:
@@ -415,13 +420,13 @@ bad3:
 }
 
 int
-mcdclose(dev, flag, fmt, p)
-	dev_t dev;
+mcdclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
-	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
-	int part = MCDPART(dev);
+	struct mcd_softc *sc = vdev_privdata(devvp);
+	int part = MCDPART(vdev_rdev(devvp));
 	int error;
 	
 	MCD_TRACE("close: partition=%d\n", part, 0, 0, 0);
@@ -456,7 +461,8 @@ void
 mcdstrategy(bp)
 	struct buf *bp;
 {
-	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(bp->b_dev));
+	struct mcd_softc *sc = vdev_privdata(bp->b_devvp);
+	dev_t dev = vdev_rdev(bp->b_devvp);
 	struct disklabel *lp = sc->sc_dk.dk_label;
 	daddr_t blkno;
 	int s;
@@ -487,7 +493,7 @@ mcdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (MCDPART(bp->b_dev) != RAW_PART &&
+	if (MCDPART(dev) != RAW_PART && !(bp->b_flags & B_DKLABEL) && 
 	    bounds_check_with_label(bp, lp,
 	    (sc->flags & (MCDF_WLABEL|MCDF_LABELLING)) != 0) <= 0)
 		goto done;
@@ -497,8 +503,8 @@ mcdstrategy(bp)
 	 * terms of the device's logical block size.
 	 */
 	blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
-	if (MCDPART(bp->b_dev) != RAW_PART)
-		blkno += lp->d_partitions[MCDPART(bp->b_dev)].p_offset;
+	if (MCDPART(dev) != RAW_PART && !(bp->b_flags & B_DKLABEL))
+		blkno += lp->d_partitions[MCDPART(dev)].p_offset;
 
 	bp->b_rawblkno = blkno; 
 
@@ -570,34 +576,34 @@ loop:
 }
 
 int
-mcdread(dev, uio, flags)
-	dev_t dev;
+mcdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(mcdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(mcdstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-mcdwrite(dev, uio, flags)
-	dev_t dev;
+mcdwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 
-	return (physio(mcdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(mcdstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 int
-mcdioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+mcdioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
+	struct mcd_softc *sc = vdev_privdata(devvp);
 	int error;
 	int part;
 #ifdef __HAVE_OLD_DISKLABEL

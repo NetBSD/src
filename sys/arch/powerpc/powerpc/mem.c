@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10.2.1 2001/10/01 12:41:44 fvdl Exp $ */
+/*	$NetBSD: mem.c,v 1.10.2.2 2001/10/10 11:56:27 fvdl Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,19 +50,20 @@
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
 /* These should be defined in a header somewhere */
-int mmopen __P((dev_t, int, int));
-int mmclose __P((dev_t, int, int));
-int mmrw __P((dev_t, struct uio *, int));
-paddr_t mmmmap __P((dev_t, off_t, int));
+int mmopen __P((struct vnode *, int, int));
+int mmclose __P((struct vnode *, int, int));
+int mmrw __P((struct vnode *, struct uio *, int));
+paddr_t mmmmap __P((struct vnode *, off_t, int));
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
-	dev_t dev;
+mmopen(devvp, flag, mode)
+	struct vnode *devvp;
 	int flag, mode;
 {
 	return 0;
@@ -70,8 +71,8 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
-	dev_t dev;
+mmclose(devvp, flag, mode)
+	struct vnode *devvp;
 	int flag, mode;
 {
 
@@ -80,8 +81,8 @@ mmclose(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
+mmrw(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -90,6 +91,9 @@ mmrw(dev, uio, flags)
 	struct iovec *iov;
 	int error = 0;
 	static caddr_t zeropage;
+	dev_t dev;
+
+	dev = vdev_rdev(devvp);
 	
 	while (uio->uio_resid > 0 && !error) {
 		iov = uio->uio_iov;
@@ -145,14 +149,14 @@ mmrw(dev, uio, flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-        dev_t dev;
+mmmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
 	struct proc *p = curproc;
 
-	if (minor(dev) != 0)
+	if (minor(vdev_rdev(devvp)) != 0)
 		return (-1);
 
 	if (atop(off) >= physmem && suser(p->p_ucred, &p->p_acflag) != 0)

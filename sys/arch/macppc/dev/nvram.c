@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.4 2001/06/08 00:32:02 matt Exp $	*/
+/*	$NetBSD: nvram.c,v 1.4.4.1 2001/10/10 11:56:16 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -38,6 +38,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>
 
 #include <machine/autoconf.h>
 #include <machine/pio.h>
@@ -115,8 +116,8 @@ nvram_attach(parent, self, aux)
 }
 
 int
-nvramopen(dev, flag, mode, p)
-	dev_t dev;
+nvramopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -124,8 +125,8 @@ nvramopen(dev, flag, mode, p)
 }
 
 int
-nvramclose(dev, flag, mode, p)
-	dev_t dev;
+nvramclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
@@ -133,8 +134,8 @@ nvramclose(dev, flag, mode, p)
 }
 
 int
-nvramread(dev, uio, flag)
-	dev_t dev;
+nvramread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
@@ -194,8 +195,8 @@ out:
 }
 
 int
-nvramwrite(dev, uio, flag)
-	dev_t dev;
+nvramwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
@@ -203,8 +204,8 @@ nvramwrite(dev, uio, flag)
 }
 
 int
-nvramioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+nvramioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -214,8 +215,8 @@ nvramioctl(dev, cmd, data, flag, p)
 }
 
 paddr_t
-nvrammmap(dev, off, prot)
-        dev_t dev;
+nvrammmap(devvp, off, prot)
+	struct vnode *devvp;
         off_t off;
 	int prot;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.39 2000/07/30 21:40:49 briggs Exp $	*/
+/*	$NetBSD: asc.c,v 1.39.2.1 2001/10/10 11:56:15 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -71,6 +71,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -201,44 +202,47 @@ ascattach(parent, self, aux)
 }
 
 int
-ascopen(dev, flag, mode, p)
-	dev_t dev;
+ascopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
 	struct asc_softc *sc;
+	dev_t dev;
 	int unit;
 
+	dev = vdev_rdev(devvp);
 	unit = ASCUNIT(dev);
 	sc = asc_cd.cd_devs[unit];
 	if (unit >= asc_cd.cd_ndevs)
 		return (ENXIO);
 	if (sc->sc_open)
 		return (EBUSY);
+	vdev_setprivdata(devvp, sc);
 	sc->sc_open = 1;
 
 	return (0);
 }
 
 int
-ascclose(dev, flag, mode, p)
-	dev_t dev;
+ascclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
 	struct asc_softc *sc;
 
-	sc = asc_cd.cd_devs[ASCUNIT(dev)];
+	sc = vdev_privdata(devvp);
 	sc->sc_open = 0;
 
 	return (0);
 }
 
 int
-ascread(dev, uio, ioflag)
-	dev_t dev;
+ascread(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
@@ -246,8 +250,8 @@ ascread(dev, uio, ioflag)
 }
 
 int
-ascwrite(dev, uio, ioflag)
-	dev_t dev;
+ascwrite(devvp, uio, ioflag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int ioflag;
 {
@@ -255,8 +259,8 @@ ascwrite(dev, uio, ioflag)
 }
 
 int
-ascioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+ascioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	int cmd;
 	caddr_t data;
 	int flag;
@@ -264,9 +268,8 @@ ascioctl(dev, cmd, data, flag, p)
 {
 	struct asc_softc *sc;
 	int error;
-	int unit = ASCUNIT(dev);
 
-	sc = asc_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
 	error = 0;
 
 	switch (cmd) {
@@ -278,8 +281,8 @@ ascioctl(dev, cmd, data, flag, p)
 }
 
 int
-ascpoll(dev, events, p)
-	dev_t dev;
+ascpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
@@ -287,16 +290,15 @@ ascpoll(dev, events, p)
 }
 
 paddr_t
-ascmmap(dev, off, prot)
-	dev_t dev;
+ascmmap(devvp, off, prot)
+	struct vnode *devvp;
 	off_t off;
 	int prot;
 {
-	int unit = ASCUNIT(dev);
 	struct asc_softc *sc;
 	paddr_t pa;
 
-	sc = asc_cd.cd_devs[unit];
+	sc = vdev_privdata(devvp);
 	if ((u_int)off < MAC68K_ASC_LEN) {
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_handle.base,
 		    &pa);

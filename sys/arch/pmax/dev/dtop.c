@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.56.4.1 2001/10/01 12:41:28 fvdl Exp $	*/
+/*	$NetBSD: dtop.c,v 1.56.4.2 2001/10/10 11:56:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.56.4.1 2001/10/01 12:41:28 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.56.4.2 2001/10/10 11:56:24 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.56.4.1 2001/10/01 12:41:28 fvdl Exp $");
 #include <sys/file.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <dev/cons.h>
 #include <dev/dec/lk201.h>
@@ -292,16 +293,18 @@ dtopattach(parent, self, aux)
 
 
 int
-dtopopen(dev, flag, mode, p)
-	dev_t dev;
+dtopopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t dev;
 	struct tty *tp;
 	int unit;
 	int s, error = 0;
 	int firstopen = 0;
 
+	dev = vdev_rdev(devvp);
 	unit = minor(dev);
 	if (unit >= dtop_cd.cd_ndevs)
 		return (ENXIO);
@@ -312,7 +315,10 @@ dtopopen(dev, flag, mode, p)
 	}
 	tp->t_oproc = dtopstart;
 	tp->t_param = dtopparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
+
+	vdev_setprivdata(devvp, tp);
+
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
 		firstopen = 1;
@@ -339,7 +345,7 @@ dtopopen(dev, flag, mode, p)
 	splx(s);
 	if (error)
 		return (error);
-	error = (*tp->t_linesw->l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(devvp, tp);
 
 #if (RASTERCONSOLE > 0) && defined(RCONS_BRAINDAMAGE)
 	/* handle raster console specially */
@@ -353,76 +359,75 @@ dtopopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-dtopclose(dev, flag, mode, p)
-	dev_t dev;
+dtopclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct tty *tp;
-	int unit;
 
-	unit = minor(dev);
-	tp = DTOP_TTY(unit);
+	tp = vdev_privdata(devvp);
 	(*tp->t_linesw->l_close)(tp, flag);
 	return (ttyclose(tp));
 }
 
 int
-dtopread(dev, uio, flag)
-	dev_t dev;
+dtopread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
+	int flag;
 {
 	struct tty *tp;
 
-	tp = DTOP_TTY(minor(dev));
+	tp = vdev_privdata(devvp);
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
-dtopwrite(dev, uio, flag)
-	dev_t dev;
+dtopwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
+	int flag;
 {
 	struct tty *tp;
 
-	tp = DTOP_TTY(minor(dev));
+	tp = vdev_privdata(devvp);
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-dtoppoll(dev, events, p)
-	dev_t dev;
+dtoppoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	struct tty *tp;
 
-	tp = DTOP_TTY(minor(dev));
+	tp = vdev_privdata(devvp);
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
-dtoptty(dev)
-        dev_t dev;
+dtoptty(devvp)
+	struct vnode *devvp;
 {
-        struct tty *tp = DTOP_TTY(minor(dev));
+        struct tty *tp = vdev_privdata(devvp);
         return (tp);
 }
 
 /*ARGSUSED*/
 int
-dtopioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+dtopioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
 	struct tty *tp;
-	int unit = minor(dev);
 	int error;
 
-	tp = DTOP_TTY(unit);
+	tp = vdev_privdata(devvp);
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);

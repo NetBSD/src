@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.5 2000/06/26 04:55:35 simonb Exp $	*/
+/*	$NetBSD: et4000.c,v 1.5.2.1 2001/10/10 11:56:00 fvdl Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -58,6 +58,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 #include <atari/vme/vmevar.h>
 
 #include <machine/iomap.h>
@@ -376,25 +377,30 @@ et_vme_attach(parent, self, aux)
 }
 
 int
-etopen(dev, flags, devtype, p)
-	dev_t dev;
+etopen(devvp, flags, devtype, p)
+	struct vnode *devvp;
 	int flags, devtype;
 	struct proc *p;
 {
 	struct et_softc *sc;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	if (minor(dev) >= et_cd.cd_ndevs)
 		return(ENXIO);
 	sc = et_cd.cd_devs[minor(dev)];
 	if (sc->sc_flags & ET_SC_FLAGS_INUSE)
 		return(EBUSY);
+
+	vdev_setprivdata(devvp, sc);
+
 	sc->sc_flags |= ET_SC_FLAGS_INUSE;
 	return(0);
 }
 
 int
-etclose(dev, flags, devtype, p)
-	dev_t dev;
+etclose(devvp, flags, devtype, p)
+	struct vnode *devvp;
 	int flags, devtype;
 	struct proc *p;
 {
@@ -403,7 +409,7 @@ etclose(dev, flags, devtype, p)
 	/*
 	 * XXX: Should we reset to a default mode?
 	 */
-	sc = et_cd.cd_devs[minor(dev)];
+	sc = vdev_privdata(devvp);
 	sc->sc_flags &= ~ET_SC_FLAGS_INUSE;
 	return(0);
 }
@@ -427,8 +433,8 @@ etwrite(dev, uio, flags)
 }
 
 int
-etioctl(dev, cmd, data, flags, p)
-	dev_t dev;
+etioctl(devvp, cmd, data, flags, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flags;
@@ -437,7 +443,7 @@ etioctl(dev, cmd, data, flags, p)
 	struct grfinfo g_display;
 	struct et_softc *sc;
 
-	sc = et_cd.cd_devs[minor(dev)];
+	sc = vdev_privdata(devvp);
 	switch (cmd) {
 	case GRFIOCON:
 		return(0);
@@ -481,14 +487,14 @@ etioctl(dev, cmd, data, flags, p)
 }
 
 paddr_t
-etmmap(dev, offset, prot)
-	dev_t dev;
+etmmap(devvp, offset, prot)
+	struct vnode *devvp;
 	off_t offset;
 	int prot;
 {
 	struct et_softc *sc;
 
-	sc = et_cd.cd_devs[minor(dev)];
+	sc = vdev_privdata(devvp);
 
 	/* 
 	 * control registers

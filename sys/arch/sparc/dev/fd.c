@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.87.4.1 2001/10/01 12:41:56 fvdl Exp $	*/
+/*	$NetBSD: fd.c,v 1.87.4.2 2001/10/10 11:56:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <dev/cons.h>
 
@@ -269,7 +270,7 @@ struct cfattach fd_ca = {
 
 extern struct cfdriver fd_cd;
 
-void fdgetdisklabel __P((dev_t));
+void fdgetdisklabel __P((struct vnode *));
 int fd_get_parms __P((struct fd_softc *));
 void fdstrategy __P((struct buf *));
 void fdstart __P((struct fd_softc *));
@@ -294,7 +295,7 @@ int	fdcswintr __P((void *));
 int	fdcstate __P((struct fdc_softc *));
 void	fdcretry __P((struct fdc_softc *fdc));
 void	fdfinish __P((struct fd_softc *fd, struct buf *bp));
-int	fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
+int	fdformat __P((struct vnode *, struct ne7_fd_formb *, struct proc *));
 void	fd_do_eject __P((struct fd_softc *));
 void	fd_mountroot_hook __P((struct device *));
 static int fdconf __P((struct fdc_softc *));
@@ -819,13 +820,13 @@ fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
 {
 	struct fd_softc *fd;
-	int unit = FDUNIT(bp->b_dev);
 	int sz;
  	int s;
 
+	fd = vdev_privdata(bp->b_devvp);
+
 	/* Valid unit, controller, and request? */
-	if (unit >= fd_cd.cd_ndevs ||
-	    (fd = fd_cd.cd_devs[unit]) == 0 ||
+	if (fd == NULL ||
 	    bp->b_blkno < 0 ||
 	    (((bp->b_bcount % FD_BSIZE(fd)) != 0 ||
 	      (bp->b_blkno * DEV_BSIZE) % FD_BSIZE(fd) != 0) &&
@@ -1083,14 +1084,17 @@ fdc_wrfifo(fdc, x)
 }
 
 int
-fdopen(dev, flags, fmt, p)
-	dev_t dev;
+fdopen(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct proc *p;
 {
+	dev_t dev;
  	int unit, pmask;
 	struct fd_softc *fd;
 	struct fd_type *type;
+
+	dev = vdev_rdev(devvp);
 
 	unit = FDUNIT(dev);
 	if (unit >= fd_cd.cd_ndevs)
@@ -1106,6 +1110,8 @@ fdopen(dev, flags, fmt, p)
 	    fd->sc_type != type)
 		return (EBUSY);
 
+	vdev_setprivdata(devvp, fd);
+
 	fd->sc_type = type;
 	fd->sc_cylin = -1;
 	fd->sc_flags |= FD_OPEN;
@@ -1114,7 +1120,7 @@ fdopen(dev, flags, fmt, p)
 	 * Only update the disklabel if we're not open anywhere else.
 	 */
 	if (fd->sc_dk.dk_openmask == 0)
-		fdgetdisklabel(dev);
+		fdgetdisklabel(devvp);
 
 	pmask = (1 << DISKPART(dev));
 
@@ -1134,13 +1140,13 @@ fdopen(dev, flags, fmt, p)
 }
 
 int
-fdclose(dev, flags, fmt, p)
-	dev_t dev;
+fdclose(devvp, flags, fmt, p)
+	struct vnode *devvp;
 	int flags, fmt;
 	struct proc *p;
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
-	int pmask = (1 << DISKPART(dev));
+	struct fd_softc *fd = vdev_privdata(devvp);
+	int pmask = (1 << DISKPART(vdev_rdev(devvp)));
 
 	fd->sc_flags &= ~FD_OPEN;
 	fd->sc_opts &= ~(FDOPT_NORETRY|FDOPT_SILENT);
@@ -1161,23 +1167,23 @@ fdclose(dev, flags, fmt, p)
 }
 
 int
-fdread(dev, uio, flag)
-        dev_t dev;
+fdread(devvp, uio, flag)
+	struct vnode *devvp;
         struct uio *uio;
 	int flag;
 {
 
-        return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(fdstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-fdwrite(dev, uio, flag)
-        dev_t dev;
+fdwrite(devvp, uio, flag)
+	struct vnode *devvp;
         struct uio *uio;
 	int flag;
 {
 
-        return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(fdstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 void
@@ -1897,8 +1903,8 @@ fddump(dev, blkno, va, size)
 }
 
 int
-fdioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+fdioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
@@ -1910,15 +1916,10 @@ fdioctl(dev, cmd, addr, flag, p)
 	struct fdformat_cmd *form_cmd;
 	struct ne7_fd_formb *fd_formb;
 	int il[FD_MAX_NSEC + 1];
-	int unit;
 	int i, j;
 	int error;
 
-	unit = FDUNIT(dev);
-	if (unit >= fd_cd.cd_ndevs)
-		return (ENXIO);
-
-	fd = fd_cd.cd_devs[FDUNIT(dev)];
+	fd = vdev_privdata(devvp);
 	fdc = (struct fdc_softc *)fd->sc_dv.dv_parent;
 
 	switch (cmd) {
@@ -1942,7 +1943,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		if (error)
 			return (error);
 
-		error = writedisklabel(dev, fdstrategy,
+		error = writedisklabel(devvp, fdstrategy,
 				       fd->sc_dk.dk_label,
 				       fd->sc_dk.dk_cpulabel);
 		return (error);
@@ -1955,7 +1956,7 @@ fdioctl(dev, cmd, addr, flag, p)
 
 	case DIOCEJECT:
 		if (*(int *)addr == 0) {
-			int part = DISKPART(dev);
+			int part = DISKPART(vdev_rdev(devvp));
 			/*
 			 * Don't force eject: check that we are the only
 			 * partition open. If so, unlock it.
@@ -2085,7 +2086,7 @@ fdioctl(dev, cmd, addr, flag, p)
 			fd_formb->fd_formb_secsize(i) = fd->sc_type->secsize;
 		}
 
-		error = fdformat(dev, fd_formb, p);
+		error = fdformat(devvp, fd_formb, p);
 		free(fd_formb, M_TEMP);
 		return error;
 
@@ -2132,13 +2133,13 @@ fdioctl(dev, cmd, addr, flag, p)
 }
 
 int
-fdformat(dev, finfo, p)
-	dev_t dev;
+fdformat(devvp, finfo, p)
+	struct vnode *devvp;
 	struct ne7_fd_formb *finfo;
 	struct proc *p;
 {
 	int rv = 0, s;
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = vdev_privdata(devvp);
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 
@@ -2150,7 +2151,7 @@ fdformat(dev, finfo, p)
 	memset((void *)bp, 0, sizeof(struct buf));
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = p;
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 
 	/*
 	 * Calculate a fake blkno, so fdstrategy() would initiate a
@@ -2213,13 +2214,13 @@ fdformat(dev, finfo, p)
 }
 
 void
-fdgetdisklabel(dev)
-	dev_t dev;
+fdgetdisklabel(devvp)
+	struct vnode *devvp;
 {
-	int unit = FDUNIT(dev), i;
-	struct fd_softc *fd = fd_cd.cd_devs[unit];
+	struct fd_softc *fd = vdev_privdata(devvp);
 	struct disklabel *lp = fd->sc_dk.dk_label;
 	struct cpu_disklabel *clp = fd->sc_dk.dk_cpulabel;
+	int i;
 
 	bzero(lp, sizeof(struct disklabel));
 	bzero(lp, sizeof(struct cpu_disklabel));
@@ -2250,7 +2251,7 @@ fdgetdisklabel(dev)
 	 * Call the generic disklabel extraction routine.  If there's
 	 * not a label there, fake it.
 	 */
-	if (readdisklabel(dev, fdstrategy, lp, clp) != NULL) {
+	if (readdisklabel(devvp, fdstrategy, lp, clp) != NULL) {
 		strncpy(lp->d_packname, "default label",
 		    sizeof(lp->d_packname));
 		/*
@@ -2331,22 +2332,23 @@ fd_read_md_image(sizep, addrp)
 	caddr_t	*addrp;
 {
 	struct buf buf, *bp = &buf;
-	dev_t dev;
 	off_t offset;
 	caddr_t addr;
+	struct vnode *devvp;
 
-	dev = makedev(54,0);	/* XXX */
+	if (cdevvp(makedev(54,0), &devvp) != 0)	/* XXX */
+		panic("can't create md vnode");
 
 	MALLOC(addr, caddr_t, FDMICROROOTSIZE, M_DEVBUF, M_WAITOK);
 	*addrp = addr;
 
-	if (fdopen(dev, 0, S_IFCHR, NULL))
+	if (fdopen(devvp, 0, S_IFCHR, NULL))
 		panic("fd: mountroot: fdopen");
 
 	offset = 0;
 
 	for (;;) {
-		bp->b_dev = dev;
+		bp->b_devvp = devvp;
 		bp->b_error = 0;
 		bp->b_resid = 0;
 		bp->b_proc = NULL;
@@ -2369,9 +2371,10 @@ fd_read_md_image(sizep, addrp)
 		if (offset + DEV_BSIZE > FDMICROROOTSIZE)
 			break;
 	}
-	(void)fdclose(dev, 0, S_IFCHR, NULL);
+	(void)fdclose(devvp, 0, S_IFCHR, NULL);
+	vrele(devvp);
 	*sizep = offset;
-	fd_do_eject(fd_cd.cd_devs[FDUNIT(dev)]);
+	fd_do_eject(fd_cd.cd_devs[0]);
 	return (0);
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.17 2001/08/26 02:49:18 matt Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.17.2.1 2001/10/10 11:56:56 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,6 +42,7 @@
 #include <sys/stat.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -76,7 +77,7 @@ void ofdisk_strategy (struct buf *);
 struct dkdriver ofdisk_dkdriver = { ofdisk_strategy };
 
 void ofdisk_getdefaultlabel (struct ofdisk_softc *, struct disklabel *);
-void ofdisk_getdisklabel (dev_t);
+void ofdisk_getdisklabel (struct vnode *);
 
 static int
 ofdisk_match(struct device *parent, struct cfdata *match, void *aux)
@@ -129,8 +130,9 @@ ofdisk_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ofdisk_open(dev_t dev, int flags, int fmt, struct proc *p)
+ofdisk_open(struct vnode *devvp, int flags, int fmt, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = DISKUNIT(dev);
 	struct ofdisk_softc *of;
 	char path[256];
@@ -140,6 +142,8 @@ ofdisk_open(dev_t dev, int flags, int fmt, struct proc *p)
 		return ENXIO;
 	if (!(of = ofdisk_cd.cd_devs[unit]))
 		return ENXIO;
+
+	vdev_setprivdata(devvp, of);
 
 	if (!of->sc_ihandle) {
 		if ((l = OF_package_to_path(of->sc_phandle, path,
@@ -174,7 +178,7 @@ ofdisk_open(dev_t dev, int flags, int fmt, struct proc *p)
 		if (of->max_transfer > MAXPHYS)
 			of->max_transfer = MAXPHYS;
 
-		ofdisk_getdisklabel(dev);
+		ofdisk_getdisklabel(devvp);
 	}
 
 	switch (fmt) {
@@ -192,9 +196,10 @@ ofdisk_open(dev_t dev, int flags, int fmt, struct proc *p)
 }
 
 int
-ofdisk_close(dev_t dev, int flags, int fmt, struct proc *p)
+ofdisk_close(struct vnode *devvp, int flags, int fmt, struct proc *p)
 {
-	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
+	struct ofdisk_softc *of = vdev_privdata(devvp);
+	dev_t dev = vdev_rdev(devvp);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -223,25 +228,27 @@ ofdisk_close(dev_t dev, int flags, int fmt, struct proc *p)
 void
 ofdisk_strategy(struct buf *bp)
 {
-	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(bp->b_dev)];
+	struct ofdisk_softc *of = vdev_privdata(bp->b_devvp);
 	struct partition *p;
 	u_quad_t off;
 	int read;
 	int (*OF_io)(int, void *, int);
 	daddr_t blkno = bp->b_blkno;
+	dev_t dev;
 
+	dev = vdev_rdev(bp->b_devvp);
 	bp->b_resid = 0;
 	if (bp->b_bcount == 0)
 		goto done;
 	
 	OF_io = bp->b_flags & B_READ ? OF_read : OF_write;
 
-	if (DISKPART(bp->b_dev) != RAW_PART) {
+	if (DISKPART(dev) != RAW_PART && !(bp->b_flags & B_DKLABEL)) {
 		if (bounds_check_with_label(bp, of->sc_dk.dk_label, 0) <= 0) {
 			bp->b_resid = bp->b_bcount;
 			goto done;
 		}
-		p = &of->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
+		p = &of->sc_dk.dk_label->d_partitions[dev];
 		blkno = bp->b_blkno + p->p_offset;
 	}
 
@@ -271,28 +278,30 @@ done:
 static void
 ofminphys(struct buf *bp)
 {
-	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(bp->b_dev)];
+	struct ofdisk_softc *of = vdev_privdata(bp->b_devvp);
 	
 	if (bp->b_bcount > of->max_transfer)
 		bp->b_bcount = of->max_transfer;
 }
 
 int
-ofdisk_read(dev_t dev, struct uio *uio, int flags)
+ofdisk_read(struct vnode *devvp, struct uio *uio, int flags)
 {
-	return physio(ofdisk_strategy, NULL, dev, B_READ, ofminphys, uio);
+	return physio(ofdisk_strategy, NULL, devvp, B_READ, ofminphys, uio);
 }
 
 int
-ofdisk_write(dev_t dev, struct uio *uio, int flags)
+ofdisk_write(struct vnode *devvp, struct uio *uio, int flags)
 {
-	return physio(ofdisk_strategy, NULL, dev, B_WRITE, ofminphys, uio);
+	return physio(ofdisk_strategy, NULL, devvp, B_WRITE, ofminphys, uio);
 }
 
 int
-ofdisk_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+ofdisk_ioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+	     struct proc *p)
 {
-	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
+	struct ofdisk_softc *of = vdev_privdata(devvp);
+	dev_t dev = vdev_rdev(devvp);
 	int error;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
@@ -346,8 +355,7 @@ ofdisk_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    || xfer == ODIOCWDINFO
 #endif
 		    )
-			error = writedisklabel(MAKEDISKDEV(major(dev),
-			    DISKUNIT(dev), RAW_PART), ofdisk_strategy,
+			error = writedisklabel(devvp, ofdisk_strategy,
 			    of->sc_dk.dk_label, of->sc_dk.dk_cpulabel);
 
 		return error;
@@ -382,6 +390,7 @@ ofdisk_size(dev_t dev)
 	struct ofdisk_softc *of;
 	struct disklabel *lp;
 	int size, part, omask, unit;
+	struct vnode *devvp;
 
 	unit = DISKUNIT(dev);
 	if (unit >= ofdisk_cd.cd_ndevs ||
@@ -392,8 +401,14 @@ ofdisk_size(dev_t dev)
 	omask = of->sc_dk.dk_openmask & (1 << part);
 	lp = of->sc_dk.dk_label;
 
-	if (omask == 0 && ofdisk_open(dev, 0, S_IFBLK, curproc) != 0)
-		return -1;
+	if (omask == 0) {
+		if (bdevvp(dev, &devvp) != 0)
+			return -1;
+		if (ofdisk_open(devvp, 0, S_IFBLK, curproc) != 0) {
+			vrele(devvp);
+			return -1;
+		}
+	}
 
 	if (lp->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
@@ -401,8 +416,11 @@ ofdisk_size(dev_t dev)
 		size = lp->d_partitions[part].p_size *
 		    (lp->d_secsize / DEV_BSIZE);
 
-	if (omask == 0 && ofdisk_close(dev, 0, S_IFBLK, curproc) != 0)
-		return -1;
+	if (omask == 0) {
+		if (ofdisk_close(devvp, 0, S_IFBLK, curproc) != 0)
+			size = -1;
+		vrele(devvp);
+	}
 
 	return size;
 }
@@ -440,11 +458,10 @@ ofdisk_getdefaultlabel(struct ofdisk_softc *of, struct disklabel *lp)
 }
 
 void
-ofdisk_getdisklabel(dev)
-	dev_t dev;
+ofdisk_getdisklabel(devvp)
+	struct vnode *devvp;
 {
-	int unit = DISKUNIT(dev);
-	struct ofdisk_softc *of = ofdisk_cd.cd_devs[unit];
+	struct ofdisk_softc *of = vdev_privdata(devvp);
 	struct disklabel *lp = of->sc_dk.dk_label;
 	char *errmes;
 	int l;
@@ -469,8 +486,7 @@ ofdisk_getdisklabel(dev)
 		}
 		lp->d_checksum = dkcksum(lp);
 	} else {
-		errmes = readdisklabel(MAKEDISKDEV(major(dev),
-		    unit, RAW_PART), ofdisk_strategy, lp,
+		errmes = readdisklabel(devvp, ofdisk_strategy, lp,
 		    of->sc_dk.dk_cpulabel);
 		if (errmes != NULL)
 			printf("%s: %s\n", of->sc_dev.dv_xname, errmes);

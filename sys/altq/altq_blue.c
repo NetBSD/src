@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.3 2001/04/13 23:29:55 thorpej Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.3.4.1 2001/10/10 11:55:46 fvdl Exp $	*/
 /*	$KAME: altq_blue.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -80,6 +80,7 @@
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
+#include <sys/vnode.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -124,8 +125,8 @@ static int blue_request __P((struct ifaltq *, int, void *));
 altqdev_decl(blue);
 
 int
-blueopen(dev, flag, fmt, p)
-	dev_t dev;
+blueopen(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -134,8 +135,8 @@ blueopen(dev, flag, fmt, p)
 }
 
 int
-blueclose(dev, flag, fmt, p)
-	dev_t dev;
+blueclose(devvp, flag, fmt, p)
+	struct vnode *devvp;
 	int flag, fmt;
 	struct proc *p;
 {
@@ -153,8 +154,8 @@ blueclose(dev, flag, fmt, p)
 }
 
 int
-blueioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+blueioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;

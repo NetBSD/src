@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.12 2000/06/11 14:20:45 minoura Exp $	*/
+/*	$NetBSD: par.c,v 1.12.4.1 2001/10/10 11:56:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -49,6 +49,7 @@
 #include <sys/callout.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -87,7 +88,7 @@ struct	par_softc {
 void partimo __P((void *));
 void parstart __P((void *);)
 void parintr __P((void *));
-int parrw __P((dev_t, struct uio *));
+int parrw __P((struct vnode *, struct uio *));
 int parhztoms __P((int));
 int parmstohz __P((int));
 int parsendch __P((struct par_softc*, u_char));
@@ -185,11 +186,12 @@ parattach(pdp, dp, aux)
 }
 
 int
-paropen(dev, flags, mode, p)
-	dev_t dev;
+paropen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	register int unit = UNIT(dev);
 	register struct par_softc *sc;
 	
@@ -203,6 +205,8 @@ paropen(dev, flags, mode, p)
 	/* X680x0 can't read */
 	if ((flags & FREAD) == FREAD)
 		return (EINVAL);
+
+	vdev_setprivdata(devvp, sc);
 	
 	sc->sc_flags |= PARF_OPEN;
 	
@@ -216,14 +220,13 @@ paropen(dev, flags, mode, p)
 }
 
 int
-parclose(dev, flags, mode, p)
-	dev_t dev;
+parclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
-	int unit = UNIT(dev);
 	int s;
-	struct par_softc *sc = par_cd.cd_devs[unit];
+	struct par_softc *sc = vdev_privdata(devvp);
 	
 	sc->sc_flags &= ~(PARF_OPEN|PARF_OWRITE);
 
@@ -263,26 +266,25 @@ partimo(arg)
 }
 
 int
-parwrite(dev, uio, flag)
-	dev_t dev;
+parwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
 	
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parwrite(%x, %p)\n", dev, uio);
+		printf("parwrite(%x, %p)\n", vdev_rdev(devvp), uio);
 #endif
-	return (parrw(dev, uio));
+	return (parrw(devvp, uio));
 }
 
 int
-parrw(dev, uio)
-	dev_t dev;
+parrw(devvp, uio)
+	struct vnode *devvp;
 	register struct uio *uio;
 {
-	int unit = UNIT(dev);
-	register struct par_softc *sc = par_cd.cd_devs[unit];
+	register struct par_softc *sc = vdev_privdata(devvp);
 	register int s, len, cnt;
 	register char *cp;
 	int error = 0;
@@ -406,14 +408,14 @@ parrw(dev, uio)
 }
 
 int
-parioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+parioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct par_softc *sc = par_cd.cd_devs[UNIT(dev)];
+	struct par_softc *sc = vdev_privdata(devvp);
 	struct parparam *pp, *upp;
 	int error = 0;
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.28 2001/06/08 12:51:18 mrg Exp $	*/
+/*	$NetBSD: kbd.c,v 1.28.4.1 2001/10/10 11:57:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,6 +71,7 @@
 #include <sys/select.h>
 #include <sys/poll.h>
 #include <sys/file.h>
+#include <sys/vnode.h>
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
@@ -113,11 +114,12 @@ extern struct cfdriver kbd_cd;
  * setup event channel, clear ASCII repeat stuff.
  */
 int
-kbdopen(dev, flags, mode, p)
-	dev_t dev;
+kbdopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct kbd_softc *k;
 	int error, unit;
 
@@ -132,6 +134,8 @@ kbdopen(dev, flags, mode, p)
 	if (k->k_events.ev_io)
 		return (EBUSY);
 	k->k_events.ev_io = p;
+
+	vdev_setprivdata(devvp, k);
 
 	if ((error = kbd_iopen(k)) != 0) {
 		k->k_events.ev_io = NULL;
@@ -154,14 +158,14 @@ kbdopen(dev, flags, mode, p)
  * unless it is supplying console input.
  */
 int
-kbdclose(dev, flags, mode, p)
-	dev_t dev;
+kbdclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags, mode;
 	struct proc *p;
 {
 	struct kbd_softc *k;
 
-	k = kbd_cd.cd_devs[minor(dev)];
+	k = vdev_privdata(devvp);
 	k->k_evmode = 0;
 	ev_fini(&k->k_events);
 	k->k_events.ev_io = NULL;
@@ -169,21 +173,21 @@ kbdclose(dev, flags, mode, p)
 }
 
 int
-kbdread(dev, uio, flags)
-	dev_t dev;
+kbdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
 	struct kbd_softc *k;
 
-	k = kbd_cd.cd_devs[minor(dev)];
+	k = vdev_privdata(devvp);
 	return (ev_read(&k->k_events, uio, flags));
 }
 
 /* this routine should not exist, but is convenient to write here for now */
 int
-kbdwrite(dev, uio, flags)
-	dev_t dev;
+kbdwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
@@ -192,14 +196,14 @@ kbdwrite(dev, uio, flags)
 }
 
 int
-kbdpoll(dev, events, p)
-	dev_t dev;
+kbdpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	struct kbd_softc *k;
 
-	k = kbd_cd.cd_devs[minor(dev)];
+	k = vdev_privdata(devvp);
 	return (ev_poll(&k->k_events, events, p));
 }
 
@@ -215,8 +219,8 @@ static int kbd_oldkeymap __P((struct kbd_state *ks,
 #endif
 
 int
-kbdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+kbdioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -226,7 +230,7 @@ kbdioctl(dev, cmd, data, flag, p)
 	struct kbd_state *ks;
 	int error = 0;
 
-	k = kbd_cd.cd_devs[minor(dev)];
+	k = vdev_privdata(devvp);
 	ks = &k->k_state;
 
 	switch (cmd) {

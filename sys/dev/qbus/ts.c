@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.2 2001/05/13 15:32:40 ragge Exp $ */
+/*	$NetBSD: ts.c,v 1.2.6.1 2001/10/10 11:56:59 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -92,6 +92,7 @@
 #include <sys/mtio.h>
 #include <sys/uio.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 
@@ -158,7 +159,7 @@ struct	ts_softc {
 
 static	void tsintr(void *);
 static	void tsinit(struct ts_softc *);
-static	void tscommand(struct ts_softc *, dev_t, int, int);
+static	void tscommand(struct ts_softc *, struct vnode *, int, int);
 static	int tsstart(struct ts_softc *, int);
 static	void tswchar(struct ts_softc *);
 static	int tsreset(struct ts_softc *);
@@ -306,7 +307,7 @@ tsinit(struct ts_softc *sc)
  * issues the command to the controller.
  */
 void
-tscommand(struct ts_softc *sc, dev_t dev, int cmd, int count)
+tscommand(struct ts_softc *sc, struct vnode *devvp, int cmd, int count)
 {
 	struct buf *bp;
 	int s;	 
@@ -338,7 +339,7 @@ tscommand(struct ts_softc *sc, dev_t dev, int cmd, int count)
 	 * These 2 fields are "known" to be "safe" to use for this purpose.
 	 * (Most other drivers also use these fields in this way.)
 	 */
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_bcount = count;
 	bp->b_resid = cmd;
 	bp->b_blkno = 0;
@@ -797,9 +798,10 @@ tsintr(void *arg)
  * in the run state, call init to initialize the ts controller first.
  */
 int
-tsopen(dev_t dev, int flag, int type, struct proc *p)
+tsopen(struct vnode *devvp, int flag, int type, struct proc *p)
 {
 	struct ts_softc *sc;
+	dev_t dev = vdev_rdev(devvp);
 	int unit = TS_UNIT(dev);
 
 	if (unit >= ts_cd.cd_ndevs)
@@ -814,6 +816,9 @@ tsopen(dev_t dev, int flag, int type, struct proc *p)
 
 	if (sc->sc_openf)
 		return EBUSY;
+
+	vdev_setprivdata(devvp, sc);
+
 	sc->sc_openf = 1;
 
 	/*
@@ -827,7 +832,7 @@ tsopen(dev_t dev, int flag, int type, struct proc *p)
 		sc->sc_openf = 0;
 		return EIO;		/* transport is offline */
 	}
-	tscommand(sc, dev, MTNOP, 1);
+	tscommand(sc, devvp, MTNOP, 1);
 	if ((flag & FWRITE) && (sc->sc_vts->status.xst0 & TS_SF_WLK)) {
 		uprintf("%s: no write ring.\n", XNAME);
 		sc->sc_openf = 0;
@@ -837,7 +842,7 @@ tsopen(dev_t dev, int flag, int type, struct proc *p)
 		sc->sc_vts->cmd.cmdr = TS_CF_CVC|TS_CF_ACK;
 		TS_WCSR(TSDB, sc->sc_waddr);
 	}
-	tscommand(sc, dev, MTNOP, 1);
+	tscommand(sc, devvp, MTNOP, 1);
 #ifdef TSDEBUG
 	{
 		char buf[100];
@@ -861,9 +866,9 @@ tsopen(dev_t dev, int flag, int type, struct proc *p)
  * Make the tape available to others, by clearing openf flag.
  */
 int
-tsclose(dev_t dev, int flag, int type, struct proc *p)
+tsclose(struct vnode *devvp, int flag, int type, struct proc *p)
 {
-	struct ts_softc *sc = ts_cd.cd_devs[TS_UNIT(dev)];
+	struct ts_softc *sc = vdev_privdata(devvp);
 
 	if (flag == FWRITE || ((flag & FWRITE) && sc->sc_liowf)) {
 		/* 
@@ -871,13 +876,13 @@ tsclose(dev_t dev, int flag, int type, struct proc *p)
 		 * before the second one, so that another write operation
 		 * will overwrite the second one and leave and EOF-mark.
 		 */
-		tscommand(sc, dev, MTWEOF, 1);	/* Write Tape Mark */
-		tscommand(sc, dev, MTWEOF, 1);	/* Write Tape Mark */
-		tscommand(sc, dev, MTBSF, 1);	/* Skip Tape Marks Reverse */
+		tscommand(sc, devvp, MTWEOF, 1);	/* Write Tape Mark */
+		tscommand(sc, devvp, MTWEOF, 1);	/* Write Tape Mark */
+		tscommand(sc, devvp, MTBSF, 1);	/* Skip Tape Marks Reverse */
 	}
 
 	if ((dev & T_NOREWIND) == 0)
-		tscommand(sc, dev, MTREW, 0);
+		tscommand(sc, devvp, MTREW, 0);
 
 	sc->sc_openf = 0;
 	sc->sc_liowf = 0;
@@ -891,8 +896,7 @@ tsclose(dev_t dev, int flag, int type, struct proc *p)
 void
 tsstrategy(struct buf *bp)
 {
-	register int unit = TS_UNIT(bp->b_dev);
-	struct ts_softc *sc = (void *)ts_cd.cd_devs[unit];
+	struct ts_softc *sc = vdev_privdata(bp->b_devvp);
 	int s, empty;
 
 #ifdef TSDEBUG
@@ -911,8 +915,8 @@ tsstrategy(struct buf *bp)
  * Catch ioctl commands, and call the "command" routine to do them.
  */
 int
-tsioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+tsioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -928,10 +932,11 @@ tsioctl(dev, cmd, data, flag, p)
 	int error = 0;
 
 #ifdef TSDEBUG
-	printf("tsioctl (%x, %lx, %p, %d)\n", dev, cmd, data, flag);
+	printf("tsioctl (%x, %lx, %p, %d)\n", vdev_rdev(devvp), cmd, data,
+	    flag);
 #endif
 
-	sc = ts_cd.cd_devs[TS_UNIT(dev)];
+	sc = vdev_privdata(devvp);
 	bp = &sc->ts_cbuf;
 
 	switch (cmd) {
@@ -1035,18 +1040,18 @@ tsioctl(dev, cmd, data, flag, p)
  * 
  */
 int
-tsread(dev_t dev, struct uio *uio, int flag)
+tsread(struct vnode *devvp, struct uio *uio, int flag)
 {
-	return (physio (tsstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio (tsstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 /*
  *
  */
 int
-tswrite(dev_t dev, struct uio *uio, int flag)
+tswrite(struct vnode *devvp, struct uio *uio, int flag)
 {
-	return (physio (tsstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio (tsstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.28 2001/07/08 18:06:43 wiz Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.28.4.1 2001/10/10 11:56:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -79,6 +79,7 @@
 #include <sys/fdio.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#Include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -273,9 +274,9 @@ void	fdcpseudointr __P((void *arg));
 int	fdcintr __P((void *));
 void	fdcretry __P((struct fdc_softc *fdc));
 void	fdfinish __P((struct fd_softc *fd, struct buf *bp));
-int	fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
+int	fdformat __P((struct vnode *, struct ne7_fd_formb *, struct proc *));
 
-static void	fdgetdisklabel __P((struct fd_softc *, dev_t));
+static void	fdgetdisklabel __P((struct fd_softc *, struct vnode *));
 static void	fdgetdefaultlabel __P((struct fd_softc *, struct disklabel *,
 		    int));
 
@@ -565,9 +566,11 @@ void
 fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
 {
-	struct fd_softc *fd = hdfd_cd.cd_devs[FDUNIT(bp->b_dev)];
+	struct fd_softc *fd;
 	int sz;
  	int s;
+
+	fd = vdev_privdata(bp->b_devvp);
 
 	/* Valid unit, controller, and request? */
 	if (bp->b_blkno < 0 ||
@@ -681,21 +684,21 @@ fdfinish(fd, bp)
 }
 
 int
-fdread(dev, uio, flags)
-	dev_t dev;
+fdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(fdstrategy, NULL, devvp, B_READ, minphys, uio));
 }
 
 int
-fdwrite(dev, uio, flags)
-	dev_t dev;
+fdwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flags;
 {
-	return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(fdstrategy, NULL, devvp, B_WRITE, minphys, uio));
 }
 
 void
@@ -787,8 +790,8 @@ out_fdc(x)
 }
 
 int
-fdopen(dev, flags, mode, p)
-	dev_t dev;
+fdopen(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
@@ -796,7 +799,9 @@ fdopen(dev, flags, mode, p)
  	int unit;
 	struct fd_softc *fd;
 	struct fd_type *type;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	unit = FDUNIT(dev);
 	if (unit >= hdfd_cd.cd_ndevs)
 		return ENXIO;
@@ -811,23 +816,26 @@ fdopen(dev, flags, mode, p)
 	    fd->sc_type != type)
 		return EBUSY;
 
+	vdev_setprivdata(devvp, fd);
+
 	fd->sc_type = type;
 	fd->sc_cylin = -1;
 	fd->sc_flags |= FD_OPEN;
-	fdgetdisklabel(fd, dev);
+	fdgetdisklabel(fd, devvp);
 
 	return 0;
 }
 
 int
-fdclose(dev, flags, mode, p)
-	dev_t dev;
+fdclose(devvp, flags, mode, p)
+	struct vnode *devvp;
 	int flags;
 	int mode;
 	struct proc *p;
 {
-	struct fd_softc *fd = hdfd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd;
 
+	fd = vdev_privdata(devvp);
 	fd->sc_flags &= ~(FD_OPEN|FD_HAVELAB);
 	fd->sc_opts  &= ~(FDOPT_NORETRY|FDOPT_SILENT);
 	return 0;
@@ -1311,8 +1319,8 @@ fddump(dev, blkno, va, size)
 }
 
 int
-fdioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+fdioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
@@ -1328,16 +1336,16 @@ fdioctl(dev, cmd, addr, flag, p)
 	int			il[FD_MAX_NSEC + 1];
 	register int		i, j;
 
-	fd = hdfd_cd.cd_devs[FDUNIT(dev)];
+	fd = vdev_privdata(devvp);
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		fdgetdisklabel(fd, dev);
+		fdgetdisklabel(fd, devvp);
 		*(struct disklabel *)addr = *(fd->sc_dk.dk_label);
 		return 0;
 
 	case DIOCGPART:
-		fdgetdisklabel(fd, dev);
+		fdgetdisklabel(fd, devvp);
 		((struct partinfo *)addr)->disklab = fd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
 			      &fd->sc_dk.dk_label->d_partitions[RAW_PART];
@@ -1503,8 +1511,8 @@ fdioctl(dev, cmd, addr, flag, p)
 }
 
 int
-fdformat(dev, finfo, p)
-	dev_t dev;
+fdformat(devvp, finfo, p)
+	struct vnode *devvp;
 	struct ne7_fd_formb *finfo;
 	struct proc *p;
 {
@@ -1520,7 +1528,7 @@ fdformat(dev, finfo, p)
 	bzero((void *)bp, sizeof(struct buf));
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = p;
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 
 	/*
 	 * calculate a fake blkno, so fdstrategy() would initiate a
@@ -1566,9 +1574,9 @@ fdformat(dev, finfo, p)
  * is none, a fake one.
  */
 static void
-fdgetdisklabel(fd, dev)
+fdgetdisklabel(fd, devvp)
 struct fd_softc *fd;
-dev_t		dev;
+struct vnode	*devvp;
 {
 	struct disklabel	*lp;
 	struct cpu_disklabel	cpulab;

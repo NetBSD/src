@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.5.2.1 2001/10/01 12:39:03 fvdl Exp $ */
+/*	$NetBSD: apmdev.c,v 1.5.2.2 2001/10/10 11:56:09 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
 #include <sys/select.h>
 #include <sys/poll.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <arch/hpcmips/dev/apm/apmvar.h>
 
@@ -753,8 +754,9 @@ apm_thread(void *arg)
 }
 
 int
-apmdevopen(dev_t dev, int flag, int mode, struct proc *p)
+apmdevopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
+	dev_t dev = vdev_rdev(devvp);
 	int unit = APMUNIT(dev);
 	int ctl = APMDEV(dev);
 	int error = 0;
@@ -796,16 +798,21 @@ apmdevopen(dev_t dev, int flag, int mode, struct proc *p)
 		error = ENXIO;
 		break;
 	}
+	vdev_setprivdata(devvp, sc);
 	APM_UNLOCK(sc);
 
 	return (error);
 }
 
 int
-apmdevclose(dev_t dev, int flag, int mode, struct proc *p)
+apmdevclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];
+	struct apm_softc *sc;
+	dev_t dev;
 	int ctl = APMDEV(dev);
+
+	sc = vdev_privdata(devvp);
+	dev = vdev_rdev(devvp);
 
 	DPRINTF(APMDEBUG_DEVICE,
 	    ("apmclose: pid %d flag %x mode %x\n", p->p_pid, flag, mode));
@@ -828,15 +835,18 @@ apmdevclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+apmdevioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
+	    struct proc *p)
 {
-	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];
+	struct apm_softc *sc;
 	struct apm_power_info *powerp;
 	struct apm_event_info *evp;
 #if 0
 	struct apm_ctl *actl;
 #endif
 	int i, error = 0;
+
+	sc = vdev_privdata(devvp);
 
 	APM_LOCK(sc);
 	switch (cmd) {
@@ -890,10 +900,12 @@ apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 int
-apmdevpoll(dev_t dev, int events, struct proc *p)
+apmdevpoll(struct vnode *devvp, int events, struct proc *p)
 {
-	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];
+	struct apm_softc *sc;
 	int revents = 0;
+
+	sc = vdev_privdata(devvp);
 
 	APM_LOCK(sc);
 	if (events & (POLLIN | POLLRDNORM)) {

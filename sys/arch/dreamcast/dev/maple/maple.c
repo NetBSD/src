@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.9 2001/07/22 15:46:41 wiz Exp $	*/
+/*	$NetBSD: maple.c,v 1.9.2.1 2001/10/10 11:56:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -40,6 +40,7 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -84,10 +85,10 @@ static void	maple_check_responses __P((struct maple_softc *));
 int maple_alloc_dma __P((size_t, vaddr_t *, paddr_t *));
 void maple_free_dma __P((paddr_t, size_t));
 
-int	mapleopen __P((dev_t, int, int, struct proc *));
-int	mapleclose __P((dev_t, int, int, struct proc *));
+int	mapleopen __P((struct vnode *, int, int, struct proc *));
+int	mapleclose __P((struct vnode *, int, int, struct proc *));
 int	maple_internal_ioctl __P((struct maple_softc *,  int, int, u_long, caddr_t, int, struct proc *));
-int	mapleioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	mapleioctl __P((struct vnode *, u_long, caddr_t, int, struct proc *));
 
 
 
@@ -587,13 +588,15 @@ maple_get_function_data(devinfo, function_code)
 /* Generic maple device interface */
 
 int
-mapleopen(dev, flag, mode, p)
-	dev_t dev;
+mapleopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct maple_softc *sc;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	sc = device_lookup(&maple_cd, MAPLEBUSUNIT(dev));
 	if (sc == NULL)			/* make sure it was attached */
 		return (ENXIO);
@@ -607,20 +610,24 @@ mapleopen(dev, flag, mode, p)
 	if(!(sc->sc_port_units[MAPLEPORT(dev)] & (1<<MAPLESUBUNIT(dev))))
 		return (ENXIO);
 
+	vdev_setprivdata(devvp, sc);
+
 	sc->sc_port_units_open[MAPLEPORT(dev)] |= 1<<MAPLESUBUNIT(dev);
 
 	return (0);
 }
 
 int
-mapleclose(dev, flag, mode, p)
-	dev_t dev;
+mapleclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	struct maple_softc *sc;
+	dev_t dev;
 
-	sc = device_lookup(&maple_cd, MAPLEBUSUNIT(dev));
+	sc = vdev_privdata(devvp);
+	dev = vdev_rdev(devvp);
 
 	sc->sc_port_units_open[MAPLEPORT(dev)] &= ~(1<<MAPLESUBUNIT(dev));
 
@@ -652,16 +659,18 @@ maple_internal_ioctl(sc, port, subunit, cmd, data, flag, p)
 }
 
 int
-mapleioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+mapleioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
 	struct maple_softc *sc;
+	dev_t dev;
 
-	sc = device_lookup(&maple_cd, MAPLEBUSUNIT(dev));
+	sc = vdev_privdata(devvp);
+	dev = vdev_rdev(devvp);
 
 	return maple_internal_ioctl(sc, MAPLEPORT(dev), MAPLESUBUNIT(dev),
 				    cmd, data, flag, p);

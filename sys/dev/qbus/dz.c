@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.28 2001/05/02 10:32:10 scw Exp $	*/
+/*	$NetBSD: dz.c,v 1.28.4.1 2001/10/10 11:56:58 fvdl Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 
@@ -263,13 +264,15 @@ dzxint(void *arg)
 }
 
 int
-dzopen(dev_t dev, int flag, int mode, struct proc *p)
+dzopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct tty *tp;
 	int unit, line;
 	struct	dz_softc *sc;
 	int s, error = 0;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	unit = DZ_I2C(minor(dev));
 	line = DZ_PORT(minor(dev));
 	if (unit >= dz_cd.cd_ndevs ||  dz_cd.cd_devs[unit] == NULL)
@@ -287,9 +290,10 @@ dzopen(dev_t dev, int flag, int mode, struct proc *p)
 	tp = sc->sc_dz[line].dz_tty;
 	if (tp == NULL)
 		return (ENODEV);
+
 	tp->t_oproc   = dzstart;
 	tp->t_param   = dzparam;
-	tp->t_dev = dev;
+	tp->t_devvp = devvp;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		if (tp->t_ispeed == 0) {
@@ -319,18 +323,19 @@ dzopen(dev_t dev, int flag, int mode, struct proc *p)
 	(void) splx(s);
 	if (error)
 		return (error);
-	return ((*tp->t_linesw->l_open)(dev, tp));
+	return ((*tp->t_linesw->l_open)(devvp, tp));
 }
 
 /*ARGSUSED*/
 int
-dzclose(dev_t dev, int flag, int mode, struct proc *p)
+dzclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct	dz_softc *sc;
 	struct tty *tp;
 	int unit, line;
+	dev_t dev;
 
-	
+	dev = vdev_rdev(devvp);
 	unit = DZ_I2C(minor(dev));
 	line = DZ_PORT(minor(dev));
 	sc = dz_cd.cd_devs[unit];
@@ -350,11 +355,13 @@ dzclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-dzread(dev_t dev, struct uio *uio, int flag)
+dzread(struct vnode *devvp, struct uio *uio, int flag)
 {
 	struct tty *tp;
 	struct	dz_softc *sc;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	sc = dz_cd.cd_devs[DZ_I2C(minor(dev))];
 
 	tp = sc->sc_dz[DZ_PORT(minor(dev))].dz_tty;
@@ -362,11 +369,13 @@ dzread(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-dzwrite(dev_t dev, struct uio *uio, int flag)
+dzwrite(struct vnode *devvp, struct uio *uio, int flag)
 {
 	struct tty *tp;
 	struct	dz_softc *sc;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	sc = dz_cd.cd_devs[DZ_I2C(minor(dev))];
 
 	tp = sc->sc_dz[DZ_PORT(minor(dev))].dz_tty;
@@ -374,14 +383,16 @@ dzwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-dzpoll(dev, events, p)
-	dev_t dev;
+dzpoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
 	struct tty *tp;
 	struct	dz_softc *sc;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	sc = dz_cd.cd_devs[DZ_I2C(minor(dev))];
 
 	tp = sc->sc_dz[DZ_PORT(minor(dev))].dz_tty;
@@ -390,13 +401,15 @@ dzpoll(dev, events, p)
 
 /*ARGSUSED*/
 int
-dzioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+dzioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct	dz_softc *sc;
 	struct tty *tp;
 	int unit, line;
 	int error;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	unit = DZ_I2C(minor(dev));
 	line = DZ_PORT(minor(dev));
 	sc = dz_cd.cd_devs[unit];
@@ -450,8 +463,9 @@ dzioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 struct tty *
-dztty(dev_t dev)
+dztty(struct vnode *devvp)
 {
+	dev_t dev = vdev_rdev(devvp);
 	struct	dz_softc *sc = dz_cd.cd_devs[DZ_I2C(minor(dev))];
         struct tty *tp = sc->sc_dz[DZ_PORT(minor(dev))].dz_tty;
 
@@ -474,9 +488,11 @@ dzstart(struct tty *tp)
 	struct clist *cl;
 	int unit, line, s;
 	char state;
+	dev_t dev;
 
-	unit = DZ_I2C(minor(tp->t_dev));
-	line = DZ_PORT(minor(tp->t_dev));
+	dev = vdev_rdev(tp->t_devvp); 
+	unit = DZ_I2C(minor(dev));
+	line = DZ_PORT(minor(dev));
 	sc = dz_cd.cd_devs[unit];
 
 	s = spltty();
@@ -513,9 +529,11 @@ dzparam(struct tty *tp, struct termios *t)
 	int ospeed = ttspeedtab(t->c_ospeed, dzspeedtab);
 	unsigned lpr;
 	int s;
+	dev_t dev;
 
-	unit = DZ_I2C(minor(tp->t_dev));
-	line = DZ_PORT(minor(tp->t_dev));
+	dev = vdev_rdev(tp->t_devvp);
+	unit = DZ_I2C(minor(dev));
+	line = DZ_PORT(minor(dev));
 	sc = dz_cd.cd_devs[unit];
 
 	/* check requested parameters */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.13 1998/04/30 21:01:30 mark Exp $	*/
+/*	$NetBSD: iic.c,v 1.13.26.1 2001/10/10 11:55:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -51,6 +51,7 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -287,14 +288,14 @@ iicsearch(parent, cf, aux)
  */
 
 int
-iicopen(dev, flag, mode, p)
-	dev_t dev;
+iicopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
 	struct iic_softc *sc;
-	int unit = minor(dev);
+	int unit = minor(vdev_rdev(devvp));
     
 	if (unit >= iic_cd.cd_ndevs)
 		return(ENXIO);
@@ -307,20 +308,22 @@ iicopen(dev, flag, mode, p)
 
 	sc->sc_flags |= IIC_OPEN;
 
+	vdev_setprivdata(devvp, sc);
+
 	return(0);
 }
 
 
 int
-iicclose(dev, flag, mode, p)
-	dev_t dev;
+iicclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
 {
-	int unit = minor(dev);
-	struct iic_softc *sc = iic_cd.cd_devs[unit];
-    
+	struct iic_softc *sc;
+
+	sc = vdev_privdata(devvp); 
 	sc->sc_flags &= ~IIC_OPEN;
 
 	return(0);
@@ -331,41 +334,33 @@ iicclose(dev, flag, mode, p)
  */
 
 int
-iicread(dev, uio, flag)
-	dev_t dev;
+iicread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-/*	int unit = minor(dev);*/
-/*	struct iic_softc *sc = iic_cd.cd_devs[unit];*/
-
 	return(ENXIO);
 }
 
 
 int
-iicwrite(dev, uio, flag)
-	dev_t dev;
+iicwrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-/*	int unit = minor(dev);*/
-/*	struct iic_softc *sc = iic_cd.cd_devs[unit];*/
-
 	return(ENXIO);
 }
 
 
 int
-iicioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+iicioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	int cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-/*	struct iic_softc *sc = iic_cd.cd_devs[minor(dev)];*/
-
 /*	switch (cmd) {
 	case IICIOC_CONTROL:
 		if (iiccontrol() != 0) {

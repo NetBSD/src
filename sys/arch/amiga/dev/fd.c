@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.47.2.1 2001/10/01 12:37:14 fvdl Exp $	*/
+/*	$NetBSD: fd.c,v 1.47.2.2 2001/10/10 11:55:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -44,6 +44,7 @@
 #include <sys/disk.h>
 #include <sys/dkbad.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
@@ -196,9 +197,9 @@ void	fdidxintr __P((void));
 void	fdstrategy __P((struct buf *));
 int	fdloaddisk __P((struct fd_softc *));
 void	fdgetdefaultlabel __P((struct fd_softc *, struct disklabel *, int));
-int	fdgetdisklabel __P((struct fd_softc *, dev_t));
+int	fdgetdisklabel __P((struct fd_softc *, struct vnode *));
 int	fdsetdisklabel __P((struct fd_softc *, struct disklabel *));
-int	fdputdisklabel __P((struct fd_softc *, dev_t));
+int	fdputdisklabel __P((struct fd_softc *, struct vnode *));
 struct	fdtype * fdcgetfdtype __P((int));
 void	fdmotoroff __P((void *));
 void	fdsetpos __P((struct fd_softc *, int, int));
@@ -444,16 +445,18 @@ fdattach(pdp, dp, auxp)
 
 /*ARGSUSED*/
 int
-fdopen(dev, flags, devtype, p)
-	dev_t dev;
+fdopen(devvp, flags, devtype, p)
+	struct vnode *devvp;
 	int flags, devtype;
 	struct proc *p;
 {
 	struct fd_softc *sc;
 	int wasopen, fwork, error, s;
+	dev_t dev;
 
 	error = 0;
 
+	dev = vdev_rdev(devvp);
 	if (FDPART(dev) >= FDMAXPARTS)
 		return(ENXIO);
 
@@ -498,7 +501,7 @@ fdopen(dev, flags, devtype, p)
 	}
 	if ((error = fdloaddisk(sc)) != 0)
 		goto done;
-	if ((error = fdgetdisklabel(sc, dev)) != 0)
+	if ((error = fdgetdisklabel(sc, devvp)) != 0)
 		goto done;
 #ifdef FDDEBUG
 	printf("  open successful\n");
@@ -509,8 +512,10 @@ done:
 	 * complete its job now
 	 */
 	if (fwork)
-		fdfindwork(FDUNIT(dev));
+		fdfindwork(FDUNIT(vdev_rdev(devvp)));
 	splx(s);
+
+	vdev_setprivdata(devvp, sc);
 
 	/*
 	 * if we were not open and we marked us so reverse that.
@@ -522,8 +527,8 @@ done:
 
 /*ARGSUSED*/
 int
-fdclose(dev, flags, devtype, p)
-	dev_t dev;
+fdclose(devvp, flags, devtype, p)
+	struct vnode *devvp;
 	int flags, devtype;
 	struct proc *p;
 {
@@ -533,7 +538,8 @@ fdclose(dev, flags, devtype, p)
 #ifdef FDDEBUG
 	printf("fdclose()\n");
 #endif
-	sc = getsoftc(fd_cd, FDUNIT(dev));
+	sc = vdev_privdata(devvp);
+
 	s = splbio();
 	if (sc->flags & FDF_MOTORON) {
 		sc->flags |= FDF_WMOTOROFF;
@@ -547,8 +553,8 @@ fdclose(dev, flags, devtype, p)
 }
 
 int
-fdioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
+fdioctl(devvp, cmd, addr, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
@@ -556,8 +562,10 @@ fdioctl(dev, cmd, addr, flag, p)
 {
 	struct fd_softc *sc;
 	int error, wlab;
+	dev_t dev;
 
-	sc = getsoftc(fd_cd, FDUNIT(dev));
+	sc = vdev_privdata(devvp);
+	dev = vdev_rdev(devvp);
 
 	if ((sc->flags & FDF_HAVELABEL) == 0)
 		return(EBADF);
@@ -594,7 +602,7 @@ fdioctl(dev, cmd, addr, flag, p)
 			return(error);
 		wlab = sc->wlabel;
 		sc->wlabel = 1;
-		error = fdputdisklabel(sc, dev);
+		error = fdputdisklabel(sc, devvp);
 		sc->wlabel = wlab;
 		return(error);
 	case DIOCWLABEL:
@@ -621,21 +629,21 @@ fdsize(dev)
 }
 
 int
-fdread(dev, uio, flags)
-	dev_t	dev;
+fdread(devvp, uio, flags)
+	struct vnode *devvp;
 	struct	uio *uio;
 	int	flags;
 {
-	return (physio(fdstrategy, NULL, dev, B_READ, fdminphys, uio));
+	return (physio(fdstrategy, NULL, devvp, B_READ, fdminphys, uio));
 }
 
 int
-fdwrite(dev, uio, flags)
-	dev_t	dev;
+fdwrite(devvp, uio, flags)
+	struct vnode *devvp;
 	struct	uio *uio;
 	int	flags;
 {
-	return (physio(fdstrategy, NULL, dev, B_WRITE, fdminphys, uio));
+	return (physio(fdstrategy, NULL, devvp, B_WRITE, fdminphys, uio));
 }
 
 
@@ -670,11 +678,14 @@ fdstrategy(bp)
 {
 	struct disklabel *lp;
 	struct fd_softc *sc;
-	int unit, part, s;
+	int unit, part, s;	
+	dev_t dev;
 
-	unit = FDUNIT(bp->b_dev);
-	part = FDPART(bp->b_dev);
-	sc = getsoftc(fd_cd, unit);
+	dev = vdev_rdev(bp->b_devvp);
+	unit = FDUNIT(dev);
+	part = FDPART(dev);
+
+	sc = vdev_privdata(bp->b_devvp);
 
 #ifdef FDDEBUG
 	printf("fdstrategy: 0x%x\n", bp);
@@ -784,15 +795,17 @@ fdgetdefaultlabel(sc, lp, part)
  * return a new label if raw part and none found, otherwise err.
  */
 int
-fdgetdisklabel(sc, dev)
+fdgetdisklabel(sc, devvp)
 	struct fd_softc *sc;
-	dev_t dev;
+	struct vnode *devvp;
 {
 	struct disklabel *lp, *dlp;
 	struct cpu_disklabel *clp;
 	struct buf *bp;
 	int error, part;
+	dev_t dev;
 
+	dev = vdev_rdev(devvp);
 	if (sc->flags & FDF_HAVELABEL &&
 	    sc->dkdev.dk_label->d_npartitions == (FDPART(dev) + 1))
 		return(0);
@@ -821,7 +834,7 @@ fdgetdisklabel(sc, dev)
 	sc->flags |= FDF_HAVELABEL;
 
 	bp = (void *)geteblk((int)lp->d_secsize);
-	bp->b_dev = dev;
+	bp->b_devvp = devvp;
 	bp->b_blkno = 0;
 	bp->b_cylinder = 0;
 	bp->b_bcount = FDSECSIZE;
@@ -913,9 +926,9 @@ done:
  * write out the incore copy of this units disklabel
  */
 int
-fdputdisklabel(sc, dev)
+fdputdisklabel(sc, devvp)
 	struct fd_softc *sc;
-	dev_t dev;
+	struct vnode *devvp;
 {
 	struct disklabel *lp, *dlp;
 	struct buf *bp;
@@ -931,7 +944,7 @@ fdputdisklabel(sc, dev)
 	 */
 	lp = sc->dkdev.dk_label;
 	bp = geteblk((int)lp->d_secsize);
-	bp->b_dev = FDMAKEDEV(major(dev), FDUNIT(dev), RAW_PART);
+	bp->b_devvp = devvp;
 	bp->b_blkno = 0;
 	bp->b_cylinder = 0;
 	bp->b_bcount = FDSECSIZE;
@@ -1706,8 +1719,7 @@ fdminphys(bp)
 	struct fd_softc *sc;
 	int trk, sec, toff, tsz;
 
-	if ((sc = getsoftc(fd_cd, FDUNIT(bp->b_dev))) == NULL)
-		panic("fdminphys: couldn't get softc");
+	sc = vdev_privdata(bp->b_devvp);
 
 	trk = bp->b_blkno / sc->nsectors;
 	sec = bp->b_blkno % sc->nsectors;
