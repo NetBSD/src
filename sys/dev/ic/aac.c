@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.9 2003/05/03 18:11:11 wiz Exp $	*/
+/*	$NetBSD: aac.c,v 1.10 2003/12/09 20:12:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.9 2003/05/03 18:11:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.10 2003/12/09 20:12:14 ad Exp $");
 
 #include "locators.h"
 
@@ -631,14 +631,15 @@ aac_startup(struct aac_softc *sc)
 	/*
 	 * Loop over possible containers.
 	 */
-	mi.Command = htole32(VM_NameServe);
-	mi.MntType = htole32(FT_FILESYS);
 	hd = sc->sc_hdr;
 
 	for (i = 0; i < AAC_MAX_CONTAINERS; i++, hd++) {
 		/*
 		 * Request information on this container.
 		 */
+		memset(&mi, 0, sizeof(mi));
+		mi.Command = htole32(VM_NameServe);
+		mi.MntType = htole32(FT_FILESYS);
 		mi.MntCount = htole32(i);
 		if (aac_sync_fib(sc, ContainerCommand, 0, &mi, sizeof(mi), &mir,
 		    &rsize)) {
@@ -690,6 +691,7 @@ aac_shutdown(void *cookie)
 		 * talk to it anymore.  We've been closed and all I/O
 		 * completed already
 		 */
+		memset(&cc, 0, sizeof(cc));
 		cc.Command = htole32(VM_CloseAll);
 		cc.ContainerId = 0xffffffff;
 		if (aac_sync_fib(sc, ContainerCommand, 0, &cc, sizeof(cc),
