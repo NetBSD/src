@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.95 1998/06/26 00:08:41 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.96 1998/07/12 19:51:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -120,6 +120,20 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	(dev_type_mmap((*))) enodev }
 
+/* open, close, read, write, ioctl, poll */
+#define	cdev_usbdev_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev }
+
+/* open, close, ioctl */
+#define cdev_usb_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev }
+
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
@@ -180,6 +194,18 @@ cdev_decl(ccd);
 cdev_decl(joy);
 #include "apm.h"
 cdev_decl(apm);
+#include "usb.h"
+cdev_decl(usb);
+#include "ums.h"
+cdev_decl(ums);
+#include "ukbd.h"
+cdev_decl(ukbd);
+#include "uhid.h"
+cdev_decl(uhid);
+#include "ugen.h"
+cdev_decl(ugen);
+#include "ulpt.h"
+cdev_decl(ulpt);
 
 #include "ipfilter.h"
 #include "satlink.h"
@@ -316,6 +342,11 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 53 */
 	cdev_notdef(),			/* 54 */
 #endif
+	cdev_usb_init(NUSB,usb),	/* 55: USB controller */
+	cdev_usbdev_init(NUHID,uhid),	/* 56: USB generic HID */
+	cdev_lpt_init(NULPT,ulpt),	/* 57: USB printer */
+	cdev_mouse_init(NUMS,ums),	/* 58: USB mouse */
+	cdev_mouse_init(NUKBD,ukbd),	/* 59: USB keyboard */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -407,6 +438,16 @@ static int chrtoblktbl[] = {
 	/* 47 */	NODEV,
 	/* 48 */	NODEV,
 	/* 49 */	NODEV,
+	/* 50 */	NODEV,
+	/* 51 */	NODEV,
+	/* 52 */	NODEV,
+	/* 53 */	NODEV,
+	/* 54 */	NODEV,
+	/* 55 */	NODEV,
+	/* 56 */	NODEV,
+	/* 57 */	NODEV,
+	/* 58 */	NODEV,
+	/* 59 */	NODEV,
 };
 
 /*

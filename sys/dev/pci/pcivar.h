@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.34 1998/06/09 18:48:41 thorpej Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.35 1998/07/12 19:51:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -183,5 +183,10 @@ void	pci_conf_print __P((pci_chipset_tag_t, pcitag_t,
 	    void (*)(pci_chipset_tag_t, pcitag_t, const pcireg_t *)));
 const struct pci_quirkdata *
 	pci_lookup_quirkdata __P((pci_vendor_id_t, pci_product_id_t));
+
+/*
+ * Misc.
+ */
+char   *pci_findvendor __P((pcireg_t));
 
 #endif /* _DEV_PCI_PCIVAR_H_ */

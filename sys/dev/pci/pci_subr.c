@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.28 1998/06/26 17:53:09 cgd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.29 1998/07/12 19:51:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -229,6 +229,26 @@ struct pci_knowndev {
 
 #include <dev/pci/pcidevs_data.h>
 #endif /* PCIVERBOSE */
+
+char *
+pci_findvendor(id_reg)
+	pcireg_t id_reg;
+{
+#ifdef PCIVERBOSE
+	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);
+	struct pci_knowndev *kdp;
+
+	kdp = pci_knowndevs;
+        while (kdp->vendorname != NULL) {	/* all have vendor name */
+                if (kdp->vendor == vendor)
+                        break;
+		kdp++;
+	}
+        return (kdp->vendorname);
+#else
+	return (NULL);
+#endif
+}
 
 void
 pci_devinfo(id_reg, class_reg, showclass, cp)
