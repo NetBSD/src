@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.14 2001/06/28 23:02:47 itojun Exp $
+.\"	$NetBSD: mbuf.9,v 1.15 2001/06/28 23:15:24 itojun Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -390,10 +390,7 @@ will not be modified.
 On successful return, it is guaranteed that the mbuf pointed to by
 .Fa n
 does not have a shared external storage,
-therefore it is safe to update the
-.Fa len
-bytes of mbuf content from offset
-.Fa off .
+therefore it is safe to update the contiguous region.
 Returns
 .Dv NULL
 and frees the mbuf chain on failure.
