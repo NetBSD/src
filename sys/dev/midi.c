@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.35 2003/11/02 11:56:36 gson Exp $	*/
+/*	$NetBSD: midi.c,v 1.36 2003/11/23 01:25:59 gson Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.35 2003/11/02 11:56:36 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.36 2003/11/23 01:25:59 gson Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -293,7 +293,10 @@ midi_in(void *addr, int data)
 			switch(data) {
 			case 0xf0: /* Sysex */
 				sc->in_state = MIDI_IN_SYSEX;
-				break;
+				sc->in_msg[0] = data;
+				sc->in_pos = 1;
+				sc->in_left = 0;
+				goto deliver_raw;
 			case 0xf1: /* MTC quarter frame */
 			case 0xf3: /* Song select */
 				sc->in_state = MIDI_IN_DATA;
@@ -340,9 +343,12 @@ midi_in(void *addr, int data)
 			break;	/* deliver data */
 		return;
 	case MIDI_IN_SYSEX:
+		sc->in_msg[0] = data;
+		sc->in_pos = 1;
+		sc->in_left = 0;
 		if (data == MIDI_SYSEX_END)
 			sc->in_state = MIDI_IN_START;
-		return;
+		goto deliver_raw;
 	}
 deliver:
 	sc->in_state = MIDI_IN_START;
@@ -353,7 +359,7 @@ deliver:
 		return;
 	}
 #endif
-
+ deliver_raw:
 	if (mb->used + sc->in_pos > mb->usedhigh) {
 		DPRINTF(("midi_in: buffer full, discard data=0x%02x\n", 
 			 sc->in_msg[0]));
