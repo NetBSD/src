@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sys_machdep.c,v 1.1 2002/01/23 15:52:59 bjh21 Exp $	*/
+/*	$NetBSD: linux_sys_machdep.c,v 1.2 2002/01/27 15:27:33 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$Id: linux_sys_machdep.c,v 1.1 2002/01/23 15:52:59 bjh21 Exp $");
+__RCSID("$Id: linux_sys_machdep.c,v 1.2 2002/01/27 15:27:33 bjh21 Exp $");
 
 #include <sys/systm.h>
 
@@ -40,6 +40,14 @@ __RCSID("$Id: linux_sys_machdep.c,v 1.1 2002/01/23 15:52:59 bjh21 Exp $");
 #include <compat/linux/linux_syscallargs.h>
 
 #include <arm/cpufunc.h>
+
+int
+linux_sys_breakpoint(struct proc *p, void *v, register_t *retval)
+{
+
+	trapsignal(p, SIGTRAP, 0);
+	return ERESTART; /* Leave PC pointing back at the breakpoint. */
+}
 
 int
 linux_sys_cacheflush(struct proc *p, void *v, register_t *retval)
