@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.11 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: gio.c,v 1.12 2003/12/15 05:26:56 lonewolf Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.11 2003/11/17 10:07:58 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.12 2003/12/15 05:26:56 lonewolf Exp $");
 
 #include "opt_ddb.h"
 
@@ -41,10 +41,17 @@ __KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.11 2003/11/17 10:07:58 keihan Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/bus.h>
+
 #include <sgimips/gio/gioreg.h>
 #include <sgimips/gio/giovar.h>
 
 #include "locators.h"
+#include "newport.h"
+
+#if (NNEWPORT > 0)
+#include <sgimips/gio/newportvar.h>
+#endif
 
 struct gio_softc {
 	struct	device sc_dev;
@@ -54,15 +61,20 @@ static int	gio_match(struct device *, struct cfdata *, void *);
 static void	gio_attach(struct device *, struct device *, void *);
 static int	gio_print(void *, const char *);
 static int	gio_search(struct device *, struct cfdata *, void *);
+static int	gio_submatch(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(gio, sizeof(struct gio_softc),
     gio_match, gio_attach, NULL, NULL);
 
+static uint32_t gio_slot_addr[] = {
+	0x1f400000,
+	0x1f600000,
+	0x1f000000,
+	0
+};
+
 static int
-gio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+gio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct giobus_attach_args *gba = aux;
 
@@ -73,27 +85,55 @@ gio_match(parent, match, aux)
 }
 
 static void
-gio_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+gio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct gio_attach_args ga;
+	int i;
 
 	printf("\n");
+
+	for (i=0; gio_slot_addr[i] != 0; i++) {
+		ga.ga_slot = i;
+		ga.ga_addr = gio_slot_addr[i];
+		ga.ga_iot = 0;
+		ga.ga_ioh = MIPS_PHYS_TO_KSEG1(gio_slot_addr[i]);
+		
+#if 0
+		/* XXX */
+		if (bus_space_peek_4(ga.ga_iot, ga.ga_ioh, 0, &ga.ga_product))
+			continue;
+#else
+
+		if (badaddr((void *)ga.ga_ioh,sizeof(uint32_t)))
+			continue;
+
+		ga.ga_product = bus_space_read_4(ga.ga_iot, ga.ga_ioh, 0);
+#endif
+
+		config_found_sm(self, &ga, gio_print, gio_submatch);
+	}
 
 	config_search(gio_search, self, &ga);
 }
 
 static int
-gio_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+gio_print(void *aux, const char *pnp)
 {
 	struct gio_attach_args *ga = aux;
 
-	if (pnp != 0)
-		return QUIET;
+	if (pnp != NULL) {
+	  	int product, revision;
+
+		product = GIO_PRODUCT_PRODUCTID(ga->ga_product);
+
+		if (GIO_PRODUCT_32BIT_ID(ga->ga_product))
+			revision = GIO_PRODUCT_REVISION(ga->ga_product);
+		else
+			revision = 0;
+
+		aprint_normal("unknown product 0x%02x revision 0x%02x at %s",
+		    product, revision, pnp);
+	}
 
 	if (ga->ga_slot != GIOCF_SLOT_DEFAULT)
 		aprint_normal(" slot %d", ga->ga_slot);
@@ -104,21 +144,75 @@ gio_print(aux, pnp)
 }
 
 static int
-gio_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+gio_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct gio_attach_args *ga = aux;
 
 	do {
+		/* Handled by direct configuration, so skip here */
+		if (cf->cf_loc[GIOCF_ADDR] == GIOCF_ADDR_DEFAULT)
+			return 0;
+
 		ga->ga_slot = cf->cf_loc[GIOCF_SLOT];
 		ga->ga_addr = cf->cf_loc[GIOCF_ADDR];
 		ga->ga_iot = 0;
 		ga->ga_ioh = MIPS_PHYS_TO_KSEG1(ga->ga_addr);
+
 		if (config_match(parent, cf, ga) > 0)
 			config_attach(parent, cf, ga, gio_print);
 	} while (cf->cf_fstate == FSTATE_STAR);
 
 	return 0;
+}
+
+static int
+gio_submatch(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct gio_attach_args *ga = aux;
+
+	if (cf->cf_loc[GIOCF_SLOT] != GIOCF_SLOT_DEFAULT &&
+	    cf->cf_loc[GIOCF_SLOT] != ga->ga_slot)
+		return 0;
+
+	if (cf->cf_loc[GIOCF_ADDR] != GIOCF_ADDR_DEFAULT &&
+	    cf->cf_loc[GIOCF_ADDR] != ga->ga_addr)
+		return 0;
+
+	return config_match(parent, cf, aux);
+}
+
+int
+gio_cnattach()
+{
+	struct gio_attach_args ga;
+	int i;
+	
+	/* XXX Duplicate code XXX */
+	for (i=0; gio_slot_addr[i] != 0; i++) {
+		ga.ga_slot = i;
+		ga.ga_addr = gio_slot_addr[i];
+		ga.ga_iot = 0;
+		ga.ga_ioh = MIPS_PHYS_TO_KSEG1(gio_slot_addr[i]);
+		
+#if 0
+		/* XXX */
+		if (bus_space_peek_4(ga.ga_iot, ga.ga_ioh, 0, &ga.ga_product))
+			continue;
+#else
+
+		if (badaddr((void *)ga.ga_ioh,sizeof(uint32_t)))
+			continue;
+
+		ga.ga_product = bus_space_read_4(ga.ga_iot, ga.ga_ioh, 0);
+#endif
+
+		/* XXX This probably attaches console to the wrong newport on
+		 * dualhead Indys, as GFX slot is tried last not first */
+#if (NNEWPORT > 0)
+		if (newport_cnattach(&ga) == 0)
+			return 0;
+#endif
+	}
+
+	return ENXIO;
 }

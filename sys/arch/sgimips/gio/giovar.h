@@ -1,4 +1,4 @@
-/*	$NetBSD: giovar.h,v 1.3 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: giovar.h,v 1.4 2003/12/15 05:26:56 lonewolf Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -59,3 +59,5 @@ struct gio_attach_args {
 
 	u_int32_t	ga_product;
 };
+
+int gio_cnattach(void);
