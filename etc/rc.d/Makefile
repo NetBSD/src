@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.29 2002/06/02 18:37:45 jmcneill Exp $
+# $NetBSD: Makefile,v 1.30 2002/06/29 04:07:08 grant Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ FILES=	DAEMON LOGIN NETWORKING SERVERS \
 	route6d routed rtadvd rtsold rwho \
 	savecore screenblank sendmail securelevel sshd \
 	swap1 swap2 sysdb sysctl syslogd \
-	timed ttys virecover wscons xdm xfs ypbind yppasswdd ypserv
+	timed ttys virecover wscons wsmoused xdm xfs ypbind yppasswdd ypserv
 FILESDIR=	/etc/rc.d
 FILESMODE=	${BINMODE}
 
