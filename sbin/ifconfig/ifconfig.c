@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.77 2000/04/13 07:16:54 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.78 2000/04/13 07:39:57 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.77 2000/04/13 07:16:54 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.78 2000/04/13 07:39:57 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,6 +120,9 @@ __RCSID("$NetBSD: ifconfig.c,v 1.77 2000/04/13 07:16:54 itojun Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef HAVE_IFADDRS_H
+#include <ifaddrs.h>
+#endif
 
 struct	ifreq		ifr, flagreq, ridreq;
 struct	ifaliasreq	addreq __attribute__((aligned(4)));
@@ -614,6 +617,66 @@ getinfo(ifr)
 void
 printall()
 {
+#ifdef HAVE_IFADDRS_H
+	struct ifaddrs *ifap, *ifa;
+	struct ifreq ifr;
+	const struct sockaddr_dl *sdl;
+	int idx;
+	char *p;
+
+	if (getifaddrs(&ifap) != 0)
+		err(1, "getifaddrs");
+	p = NULL;
+	idx = 0;
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		memset(&ifr, 0, sizeof(ifr));
+		strncpy(ifr.ifr_name, ifa->ifa_name, sizeof(ifr.ifr_name));
+		if (sizeof(ifr.ifr_addr) >= ifa->ifa_addr->sa_len) {
+			memcpy(&ifr.ifr_addr, ifa->ifa_addr,
+			    ifa->ifa_addr->sa_len);
+		}
+
+		if (ifa->ifa_addr->sa_family == AF_LINK)
+			sdl = (const struct sockaddr_dl *) ifa->ifa_addr;
+		if (p && strcmp(p, ifa->ifa_name) == 0)
+			continue;
+		(void) strncpy(name, ifa->ifa_name, sizeof(name));
+		name[sizeof(name) - 1] = '\0';
+		p = ifa->ifa_name;
+
+		if (getinfo(&ifr) < 0)
+			continue;
+		if (bflag && (ifa->ifa_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)))
+			continue;
+		if (dflag && (ifa->ifa_flags & IFF_UP) != 0)
+			continue;
+		if (uflag && (ifa->ifa_flags & IFF_UP) == 0)
+			continue;
+
+		if (sflag && carrier())
+			continue;
+		idx++;
+		/*
+		 * Are we just listing the interfaces?
+		 */
+		if (lflag) {
+			if (idx > 1)
+				putchar(' ');
+			fputs(name, stdout);
+			continue;
+		}
+
+		if (sdl == NULL) {
+			status(NULL, 0);
+		} else {
+			status(LLADDR(sdl), sdl->sdl_alen);
+			sdl = NULL;
+		}
+	}
+	if (lflag)
+		putchar('\n');
+	freeifaddrs(ifap);
+#else
 	char inbuf[8192];
 	const struct sockaddr_dl *sdl = NULL;
 	struct ifconf ifc;
@@ -686,6 +749,7 @@ printall()
 	}
 	if (lflag)
 		putchar('\n');
+#endif
 }
 
 #define RIDADDR 0
@@ -1428,6 +1492,27 @@ void
 in_status(force)
 	int force;
 {
+#ifdef HAVE_IFADDRS_H
+	struct ifaddrs *ifap, *ifa;
+	struct ifreq ifr;
+
+	if (getifaddrs(&ifap) != 0)
+		err(1, "getifaddrs");
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (strcmp(name, ifa->ifa_name) != 0)
+			continue;
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		if (sizeof(ifr.ifr_addr) < ifa->ifa_addr->sa_len)
+			continue;
+
+		memset(&ifr, 0, sizeof(ifr));
+		strncpy(ifr.ifr_name, ifa->ifa_name, sizeof(ifr.ifr_name));
+		memcpy(&ifr.ifr_addr, ifa->ifa_addr, ifa->ifa_addr->sa_len);
+		in_alias(&ifr);
+	}
+	freeifaddrs(ifap);
+#else
 	char inbuf[8192];
 	struct ifconf ifc;
 	struct ifreq *ifr;
@@ -1464,6 +1549,7 @@ in_status(force)
 				in_alias(ifr);
 		}
 	}
+#endif
 }
 
 void
@@ -1609,6 +1695,27 @@ void
 in6_status(force)
 	int force;
 {
+#ifdef HAVE_IFADDRS_H
+	struct ifaddrs *ifap, *ifa;
+	struct in6_ifreq ifr;
+
+	if (getifaddrs(&ifap) != 0)
+		err(1, "getifaddrs");
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (strcmp(name, ifa->ifa_name) != 0)
+			continue;
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+		if (sizeof(ifr.ifr_addr) < ifa->ifa_addr->sa_len)
+			continue;
+
+		memset(&ifr, 0, sizeof(ifr));
+		strncpy(ifr.ifr_name, ifa->ifa_name, sizeof(ifr.ifr_name));
+		memcpy(&ifr.ifr_addr, ifa->ifa_addr, ifa->ifa_addr->sa_len);
+		in6_alias(&ifr);
+	}
+	freeifaddrs(ifap);
+#else
 	char inbuf[8192];
 	struct ifconf ifc;
 	struct ifreq *ifr;
@@ -1645,6 +1752,7 @@ in6_status(force)
 				in6_alias((struct in6_ifreq *)ifr);
 		}
 	}
+#endif
 }
 #endif /*INET6*/
 
