@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "arm/tm-arm.h"
 #include "tm-nbsd.h"
 #include <machine/setjmp.h>   /* for JMPBUF_REG_R14 definition */
+#ifndef _JB_REG_R14
+#define _JB_REG_R14	24
+#endif
 
 /* On NetBSD, sigtramp is above the user stack and immediately below
    the user area. Using constants here allows for cross debugging. */
