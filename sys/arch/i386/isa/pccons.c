@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.28 1993/07/12 11:37:17 mycroft Exp $
+ *	$Id: pccons.c,v 1.29 1993/08/29 13:47:05 deraadt Exp $
  */
 
 /*
@@ -144,7 +144,7 @@ static	int	char_count;
 #define	CN_TIMERVAL	(hz)		/* frequency at which to check cons */
 #define	CN_TIMO		(2*60)		/* intervals to allow for output char */
 
-int	pcstart();
+void	pcstart();
 int	pcparam();
 int	ttrstrt();
 char	partab[];
@@ -455,6 +455,7 @@ pcxint(dev)
 		pcstart(tp);
 }
 
+void
 pcstart(tp)
 register struct tty *tp;
 {
