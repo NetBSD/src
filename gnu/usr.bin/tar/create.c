@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: create.c,v 1.5 1993/08/07 07:42:50 cgd Exp $";
+static char rcsid[] = "$Id: create.c,v 1.6 1994/03/27 09:26:59 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -578,7 +578,7 @@ dump_file (p, curdev, toplevel)
 	    if (count < 0)
 	      {
 		msg_perror ("read error at byte %ld, reading\
- %d bytes, in file %s", hstat.st_size - sizeleft, bufsize, p);
+ %qd bytes, in file %s", hstat.st_size - sizeleft, bufsize, p);
 		goto padit;
 	      }
 	    sizeleft -= count;
