@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.1 2002/07/05 13:32:06 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.2 2002/07/05 14:04:00 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
  * Send an signal to process
  */
 void
-sendsig(sig_t action, int sig, sigset_t *returnmask, u_long code)
+sendsig(int sig, sigset_t *returnmask, u_long code)
 {
 }
 
