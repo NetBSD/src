@@ -1,4 +1,4 @@
-#	$NetBSD: KGDB,v 1.35 2003/09/22 14:11:30 cl Exp $
+#	$NetBSD: KGDB,v 1.35.2.1 2004/07/15 20:16:31 he Exp $
 
 # KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -27,6 +27,7 @@ options 	SYSVSHM		# System V shared memory
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Which kernel debugger?  Uncomment either this:
 #options 	DDB
