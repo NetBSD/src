@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 1998/12/16 00:48:22 perry Exp $
+#	$NetBSD: Makefile,v 1.36 1999/02/05 19:22:50 perry Exp $
 #
 #  NetBSD Makefile
 #
@@ -34,9 +34,10 @@ SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	savemail.c srvrsmtp.c stab.c stats.c sysexits.c trace.c udb.c \
 	usersmtp.c util.c version.c
 MAN=	aliases.5 mailq.1 newaliases.1 sendmail.8
-SYMLINKS=	/usr/sbin/sendmail /usr/bin/newaliases \
-		/usr/sbin/sendmail /usr/bin/mailq
-BINDIR=	/usr/sbin
+# symlinks are now made by the mailwrapper make file
+#SYMLINKS=	/usr/sbin/sendmail /usr/bin/newaliases \
+#		/usr/sbin/sendmail /usr/bin/mailq
+BINDIR=	/usr/libexec/sendmail
 BINOWN=	root
 BINGRP=	kmem
 BINMODE=6555
