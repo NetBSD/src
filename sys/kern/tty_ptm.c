@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.1 2004/11/10 17:29:54 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.2 2004/11/13 08:46:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.1 2004/11/10 17:29:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.2 2004/11/13 08:46:46 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -307,8 +307,8 @@ pty_fill_ptmget(dev_t dev, int cfd, int sfd, void *data)
 	if (ptm == NULL)
 		return EOPNOTSUPP;
 
-	ptmg->cfd = cfd;
-	ptmg->sfd = sfd;
+	ptmg->cfd = cfd == -1 ? minor(dev) : cfd;
+	ptmg->sfd = sfd == -1 ? minor(dev) : sfd;
 
 	error = (*ptm->makename)(ptm, ptmg->cn, sizeof(ptmg->cn), dev, 'p');
 	if (error)
