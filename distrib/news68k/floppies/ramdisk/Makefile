@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2000/11/01 07:57:59 garbled Exp $
+#	$NetBSD: Makefile,v 1.11 2001/01/31 20:58:31 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -53,7 +53,6 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
 	${MAKE} -f ${CBIN}.mk all
 
 HACKSRC=${TOP}/../../utils/libhack
-COPTS=	-Os
 .include "${HACKSRC}/Makefile.inc"
 
 # turn off small gethostby* temporarily
