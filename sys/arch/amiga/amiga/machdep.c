@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 1997/04/09 19:32:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.90 1997/06/04 22:12:46 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1245,11 +1245,16 @@ void
 initcpu()
 {
 	/* XXX should init '40 vecs here, too */
-#if defined(M68060) || defined(DRACO)
+#if defined(M68060) || defined(M68040) || defined(DRACO)
 	extern caddr_t vectab[256];
 #endif
 
+#if defined(M68060) || defined(M68040)
+	extern u_int8_t addrerr4060;
+#endif
+
 #ifdef M68060
+	extern u_int8_t buserr60;
 #if defined(M060SP)
 	/*extern u_int8_t I_CALL_TOP[];*/
 	extern u_int8_t intemu60, fpiemu60, fpdemu60, fpeaemu60;
@@ -1258,6 +1263,10 @@ initcpu()
 	extern u_int8_t illinst;
 #endif
 	extern u_int8_t fpfault;
+#endif
+
+#ifdef M68040
+	extern u_int8_t buserr40;
 #endif
 
 #ifdef DRACO
@@ -1269,6 +1278,10 @@ initcpu()
 	if (machineid & AMIGA_68060) {
 		asm volatile ("movl %0,d0; .word 0x4e7b,0x0808" : : 
 			"d"(m68060_pcr_init):"d0" );
+
+		/* bus/addrerr vectors */
+		vectab[2] = &buserr60;
+		vectab[3] = &addrerr4060;
 #if defined(M060SP)
 
 		/* integer support */
@@ -1301,6 +1314,16 @@ initcpu()
 /*
  * Vector initialization for special motherboards 
  */
+#ifdef M68040
+#ifdef M68060
+	else
+#endif
+	if (machineid & AMIGA_68040) {
+		/* addrerr vector */
+		vectab[2] = &buserr40;
+		vectab[3] = &addrerr4060;
+	}
+#endif
 
 #ifdef DRACO
 	dracorev = is_draco();
