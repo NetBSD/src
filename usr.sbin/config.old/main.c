@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.17 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.8 1994/01/08 10:33:57 cgd Exp $";
+static char rcsid[] = "$Id: main.c,v 1.9 1994/02/01 02:07:27 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -141,6 +141,11 @@ usage:		fputs("usage: config [-gkp] sysname\n", stderr);
 		pmax_ioconf();
 		break;
 
+        case MACHINE_AMIGA:
+                amiga_ioconf();
+                amigaglue();
+                break;
+  
 	default:
 		printf("Specify machine type, e.g. ``machine vax''\n");
 		exit(1);

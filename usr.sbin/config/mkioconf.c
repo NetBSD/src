@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkioconf.c	5.18 (Berkeley) 5/10/91";*/
-static char rcsid[] = "$Id: mkioconf.c,v 1.20 1994/01/14 19:43:24 deraadt Exp $";
+static char rcsid[] = "$Id: mkioconf.c,v 1.21 1994/02/01 02:07:32 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -955,6 +955,147 @@ pmax_ioconf()
 	(void) fclose(fp);
 }
 #endif
+
+#if MACHINE_AMIGA
+amiga_ioconf()
+{
+	register struct device *dp, *mp, *np;
+	register int controller, slave;
+	FILE *fp;
+	extern char *awnum();
+
+	fp = fopen(path("ioconf.c"), "w");
+	if (fp == 0) {
+		perror(path("ioconf.c"));
+		exit(1);
+	}
+	fprintf(fp, "#include \"sys/param.h\"\n");
+	fprintf(fp, "#include \"sys/buf.h\"\n");
+	fprintf(fp, "\n");
+	fprintf(fp, "#include \"arch/amiga/dev/device.h\"\n\n");
+	fprintf(fp, "\n");
+	fprintf(fp, "#define C (caddr_t)\n");
+	fprintf(fp, "#define D (struct driver *)\n\n");
+	/*
+	 * First print the controller initialization structures
+	 */
+	for (dp = dtab; dp != 0; dp = dp->d_next) {
+		mp = dp->d_conn;
+		if (dp->d_unit == QUES || mp == 0)
+			continue;
+		fprintf(fp, "extern struct driver %sdriver;\n", dp->d_name);
+	}
+	fprintf(fp, "\nstruct amiga_ctlr amiga_cinit[] = {\n");
+	fprintf(fp, "/*\tdriver,\t\tunit,\talive,\taddr,\tflags */\n");
+	for (dp = dtab; dp != 0; dp = dp->d_next) {
+		mp = dp->d_conn;
+		if (dp->d_unit == QUES ||
+			dp->d_type != MASTER && dp->d_type != CONTROLLER)
+			continue;
+		if (mp != TO_NEXUS) {
+			printf("%s%s must be attached to an controller\n",
+				dp->d_name, awnum(dp->d_unit));
+			continue;
+		}
+		if (dp->d_drive != UNKNOWN || dp->d_slave != UNKNOWN) {
+			printf("can't specify drive/slave for %s%s\n",
+				dp->d_name, awnum(dp->d_unit));
+			continue;
+		}
+		fprintf(fp,
+			"\t{ &%sdriver,\t%d,\t0,\tC 0x%x,\t0x%x },\n",
+			dp->d_name, dp->d_unit, dp->d_addr, dp->d_flags);
+	}
+	fprintf(fp, "\t0\n};\n");
+/* devices */
+	fprintf(fp, "\nstruct amiga_device amiga_dinit[] = {\n");
+	fprintf(fp,
+	   "/*driver,\tcdriver,\tunit,\tctlr,\tslave,\taddr,\tdk,\tflags*/\n");
+	for (dp = dtab; dp != 0; dp = dp->d_next) {
+		mp = dp->d_conn;
+		if (mp == 0 || dp->d_type != DEVICE || amigabadslave(mp, dp))
+			continue;
+		if (mp == TO_NEXUS) {
+			if (dp->d_drive != UNKNOWN || dp->d_slave != UNKNOWN) {
+				printf("can't specify drive/slave for %s%s\n",
+					dp->d_name, awnum(dp->d_unit));
+				continue;
+			}
+			slave = QUES;
+			controller = QUES;
+		} else {
+			if (dp->d_addr != 0) {
+				printf("can't specify manufacturer/product for device %s%s\n",
+					dp->d_name, awnum(dp->d_unit));
+				continue;
+			}
+			if (mp->d_type == CONTROLLER) {
+				if (dp->d_drive == UNKNOWN) {
+					printf("must specify drive for %s%s\n",
+						dp->d_name, awnum(dp->d_unit));
+					continue;
+				}
+				slave = dp->d_drive;
+			} else {
+				if (dp->d_slave == UNKNOWN) {
+					printf("must specify slave for %s%s\n",
+						dp->d_name, awnum(dp->d_unit));
+					continue;
+				}
+				slave = dp->d_slave;
+			}
+			controller = mp->d_unit;
+		}
+		fprintf(fp, "{ &%sdriver,\t", dp->d_name);
+		if (mp == TO_NEXUS)
+			fprintf(fp, "D 0x0,\t");
+		else
+			fprintf(fp, "&%sdriver,", mp->d_name);
+		fprintf(fp, "\t%d,\t%d,\t%d,\tC 0x%x,\t%d,\t0x%x },\n",
+			dp->d_unit, controller, slave,
+			dp->d_addr, dp->d_dk, dp->d_flags);
+	}
+	fprintf(fp, "0\n};\n");
+	pseudo_init(fp);
+	(void) fclose(fp);
+}
+
+#define isfloppydev(n) eq(n,"fd")
+#define isscsidev(n) (eq(n,"sd") || eq(n,"st"))
+
+amigabadslave(mp, dp)
+	register struct device *dp, *mp;
+{
+	extern char *awnum();
+
+	if (mp == TO_NEXUS && isfloppydev(dp->d_name) ||
+	    mp != TO_NEXUS && eq(mp->d_name, "floppy") &&
+	    !isfloppydev(dp->d_name)) {
+		printf("%s%s must be attached to a floppy\n",
+		       dp->d_name, awnum(dp->d_unit));
+		return (1);
+	}
+	if (mp == TO_NEXUS && isscsidev(dp->d_name) ||
+	    mp != TO_NEXUS && eq(mp->d_name, "scsi") &&
+	    !isscsidev(dp->d_name)) {
+		printf("%s%s must be attached to a scsi\n",
+		       dp->d_name, awnum(dp->d_unit));
+		return (1);
+	}
+	return (0);
+}
+
+char *
+awnum(num)
+{
+
+	if (num == QUES || num == UNKNOWN)
+		return ("?");
+	(void) sprintf(errbuf, "%d", num);
+	return (errbuf);
+}
+#endif
+
 
 char *
 intv(dev)
