@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.487 2002/11/15 22:20:02 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.488 2002/11/19 06:52:07 bsh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.486 2002/11/15 22:13:11 tsutsui Exp 
+ *	NetBSD: pcidevs,v 1.487 2002/11/19 06:47:24 bsh Exp 
  */
 
 /*
@@ -10768,6 +10768,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_SAMSUNGELEC2, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Samsung Electronics Co. Ltd. (2nd vendor ID)",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_STALLION, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Stallion Technologies",
@@ -10993,6 +10999,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TAMARACK, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Tamarack Microelectronics, Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_SAMSUNGELEC3, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Samsung Electronics Co. Ltd. (3rd vendor ID)",
 	    NULL,
 	},
 	{
