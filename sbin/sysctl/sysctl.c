@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.50 2001/12/24 01:30:38 lukem Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.51 2002/01/27 12:47:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.50 2001/12/24 01:30:38 lukem Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.51 2002/01/27 12:47:37 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -412,6 +412,11 @@ parse(string, flags)
 		break;
 
 	case CTL_HW:
+		switch (mib[1]) {
+		case HW_DISKSTATS:
+			USEAPP(string, "iostat");
+			return;
+		}
 		break;
 
 	case CTL_VM:
