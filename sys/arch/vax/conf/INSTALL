@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.5 2000/06/11 23:32:10 matt Exp $
+#	$NetBSD: INSTALL,v 1.6 2000/06/19 04:22:16 matt Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -151,10 +151,10 @@ mt*		at mscpbus? drive?	# MSCP tape
 # SCSI controllers.
 asc0		at vsbus0 csr 0x200c0080 # VS4000/{60,VLC} SCSI-controller
 #asc0		at vsbus0 csr 0x26000080 # VS4000/90 SCSI-controller
-ncr0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-controller (5380)
-ncr1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-controller (5380)
+si0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-controller (5380)
+si1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-controller (5380)
 scsibus*	at asc?
-scsibus*	at ncr?
+scsibus*	at si?
 
 # SCSI devices
 sd*		at scsibus? target? lun?
