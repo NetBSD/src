@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.30 2001/08/11 01:04:57 mjl Exp $	*/
+/*	$NetBSD: lpd.c,v 1.31 2001/10/09 02:15:37 mjl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.30 2001/08/11 01:04:57 mjl Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.31 2001/10/09 02:15:37 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -440,7 +440,7 @@ doit(void)
 		do {
 			if (cp >= &cbuf[sizeof(cbuf) - 1])
 				fatal("Command line too long");
-			if ((n = read(1, cp, 1)) != 1) {
+			if ((n = read(STDOUT_FILENO, cp, 1)) != 1) {
 				if (n < 0)
 					fatal("Lost connection");
 				return;

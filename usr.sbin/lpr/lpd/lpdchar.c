@@ -1,4 +1,4 @@
-/*	$NetBSD: lpdchar.c,v 1.5 1997/07/17 05:44:32 mikel Exp $	*/
+/*	$NetBSD: lpdchar.c,v 1.6 2001/10/09 02:15:38 mjl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lpdchar.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lpdchar.c,v 1.5 1997/07/17 05:44:32 mikel Exp $");
+__RCSID("$NetBSD: lpdchar.c,v 1.6 2001/10/09 02:15:38 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ __RCSID("$NetBSD: lpdchar.c,v 1.5 1997/07/17 05:44:32 mikel Exp $");
 #define c111111_ 0176
 #define c1111111 0177
 
-char scnkey[][HEIGHT] =	/* this is relatively easy to modify */
+const char scnkey[][HEIGHT] =	/* this is relatively easy to modify */
 			/* just look: */
 {
 	{ c_______,
