@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.54.2.1 2004/05/30 11:24:23 tron Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.54.2.2 2004/08/13 03:55:14 jmc Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.170 2004/02/10 12:23:08 darrenr Exp
+ * Id: ip_fil.h,v 2.170.2.5 2004/06/08 13:14:17 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FIL_H_
@@ -55,6 +55,7 @@
 # define	SIOCIPFGETNEXT	_IOWR('r', 87, struct ipfobj)
 # define	SIOCIPFGET	_IOWR('r', 88, struct ipfobj)
 # define	SIOCIPFSET	_IOWR('r', 89, struct ipfobj)
+# define	SIOCIPFL6	_IOWR('r', 90, int)
 #else
 # define	SIOCADAFR	_IOW(r, 60, struct ipfobj)
 # define	SIOCRMAFR	_IOW(r, 61, struct ipfobj)
@@ -86,6 +87,7 @@
 # define	SIOCIPFGETNEXT	_IOWR(r, 87, struct ipfobj)
 # define	SIOCIPFGET	_IOWR(r, 88, struct ipfobj)
 # define	SIOCIPFSET	_IOWR(r, 89, struct ipfobj)
+# define	SIOCIPFL6	_IOWR(r, 90, int)
 #endif
 #define	SIOCADDFR	SIOCADAFR
 #define	SIOCDELFR	SIOCRMAFR
@@ -234,6 +236,7 @@ typedef	struct	fr_ip	{
 #define	FI_BADSRC	0x4000
 #define	FI_LOWTTL	0x8000
 #define	FI_CMP		0xcff3	/* Not FI_FRAG,FI_FRAGTAIL */
+#define	FI_ICMPCMP	0x0003	/* Flags we can check for ICMP error packets */
 #define	FI_WITH		0xeffe	/* Not FI_TCPUDP */
 #define	FI_V6EXTHDR	0x10000
 #define	FI_COALESCE	0x20000
@@ -287,6 +290,7 @@ typedef	struct	fr_info	{
 	void	*fin_dp;		/* start of data past IP header */
 	int	fin_dlen;		/* length of data portion of packet */
 	int	fin_plen;
+	int	fin_ipoff;		/* # bytes from buffer start to hdr */
 	u_short	fin_id;			/* IP packet id field */
 	u_short	fin_off;
 	int	fin_depth;		/* Group nesting depth */
@@ -1246,7 +1250,7 @@ extern	int	fr_ifpfillv6addr __P((int, struct sockaddr_in6 *,
 				      struct in_addr *));
 #endif
 
-extern	int	frflush __P((minor_t, int));
+extern	int	frflush __P((minor_t, int, int));
 extern	void	frsync __P((void));
 extern	frgroup_t *fr_addgroup __P((char *, void *, u_32_t, minor_t, int));
 extern	int	fr_derefrule __P((frentry_t **));
@@ -1273,7 +1277,7 @@ extern	void		fr_getstat __P((struct friostat *));
 extern	int		fr_ifpaddr __P((int, int, void *,
 				struct in_addr *, struct in_addr *));
 extern	int		fr_initialise __P((void));
-extern	int		fr_lock __P((caddr_t, int *));
+extern	void		fr_lock __P((caddr_t, int *));
 extern  int		fr_makefrip __P((int, ip_t *, fr_info_t *));
 extern	int		fr_matchtag __P((ipftag_t *, ipftag_t *));
 extern	int		fr_matchicmpqueryreply __P((int, icmpinfo_t *,
