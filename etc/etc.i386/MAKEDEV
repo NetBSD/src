@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.118 2000/06/11 09:13:51 veego Exp $
+#	$NetBSD: MAKEDEV,v 1.118.2.1 2000/07/30 17:59:40 bouyer Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -107,7 +107,7 @@
 #	uk*	unknown SCSI device
 #	ch*	SCSI changer
 #	cfs*	Coda file system device
-#	lm	LM7[89] hardware monitor
+#	sysmon	System Monitoring hardware
 #	bktr	Brooktree 848/849/878/879 based TV cards
 #
 
@@ -147,7 +147,7 @@ all)
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 wscons
 	sh $0 ca0 ca1 ca2 ca3
-	sh $0 lm0
+	sh $0 sysmon
 	sh $0 bktr
 	sh $0 ttyCZ0
 	;;
@@ -662,14 +662,11 @@ cfs*)
 	chmod 600 $cfs
 	;;
 
-lm*)
-	unit=${i#lm}
-	lm=lm$unit
-	major=67
-	rm -f $lm
-	mknod $lm c $major $unit
-	chown root.wheel $lm
-	chmod 644 $lm
+sysmon)
+	rm -f sysmon
+	mknod sysmon c $major $unit
+	chown root.wheel sysmon
+	chmod 644 sysmon
 	;;
 
 scsibus*)
