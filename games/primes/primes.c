@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.c,v 1.11 2003/08/07 09:37:33 agc Exp $	*/
+/*	$NetBSD: primes.c,v 1.12 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: primes.c,v 1.11 2003/08/07 09:37:33 agc Exp $");
+__RCSID("$NetBSD: primes.c,v 1.12 2004/01/27 20:30:30 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,10 +103,10 @@ extern const ubig *pr_limit;		/* largest prime in the prime array */
 extern const char pattern[];
 extern const int pattern_size;	/* length of pattern array */
 
-int	main __P((int, char *[]));
-void	primes __P((ubig, ubig));
-ubig	read_num_buf __P((void));
-void	usage __P((void)) __attribute__((__noreturn__));
+int	main(int, char *[]);
+void	primes(ubig, ubig);
+ubig	read_num_buf(void);
+void	usage(void) __attribute__((__noreturn__));
 
 int
 main(argc, argv)

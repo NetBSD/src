@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.18 2003/08/07 09:37:11 agc Exp $	*/
+/*	$NetBSD: dm.c,v 1.19 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.18 2003/08/07 09:37:11 agc Exp $");
+__RCSID("$NetBSD: dm.c,v 1.19 2004/01/27 20:30:29 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,16 +66,16 @@ static int	priority = 0;		/* priority game runs at */
 static char	*game,			/* requested game */
 		*gametty;		/* from tty? */
 
-void	c_day __P((const char *, const char *, const char *));
-void	c_game __P((const char *, const char  *, const char *, const char *));
-void	c_tty __P((const char *));
-const char *hour __P((int));
-double	load __P((void));
-int	main __P((int, char *[]));
-void	nogamefile __P((void));
-void	play __P((char **)) __attribute__((__noreturn__));
-void	read_config __P((void));
-int	users __P((void));
+void	c_day(const char *, const char *, const char *);
+void	c_game(const char *, const char  *, const char *, const char *);
+void	c_tty(const char *);
+const char *hour(int);
+double	load(void);
+int	main(int, char *[]);
+void	nogamefile(void);
+void	play(char **) __attribute__((__noreturn__));
+void	read_config(void);
+int	users(void);
 
 int
 main(argc, argv)

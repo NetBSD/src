@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.8 2003/08/07 09:37:06 agc Exp $	*/
+/*	$NetBSD: timer.c,v 1.9 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)timer.c	8.2 (Berkeley) 2/22/94";
 #else
-__RCSID("$NetBSD: timer.c,v 1.8 2003/08/07 09:37:06 agc Exp $");
+__RCSID("$NetBSD: timer.c,v 1.9 2004/01/27 20:30:29 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: timer.c,v 1.8 2003/08/07 09:37:06 agc Exp $");
 #include "bog.h"
 #include "extern.h"
 
-static int waitch __P((int));
+static int waitch(int);
 
 extern int tlimit;
 extern time_t start_t;

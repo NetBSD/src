@@ -1,4 +1,4 @@
-/*	$NetBSD: pom.c,v 1.13 2003/08/07 09:37:32 agc Exp $	*/
+/*	$NetBSD: pom.c,v 1.14 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pom.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pom.c,v 1.13 2003/08/07 09:37:32 agc Exp $");
+__RCSID("$NetBSD: pom.c,v 1.14 2004/01/27 20:30:30 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,12 +84,12 @@ __RCSID("$NetBSD: pom.c,v 1.13 2003/08/07 09:37:32 agc Exp $");
 #define	Pzero	  36.340410	/* lunar mean long of perigee at EPOCH */
 #define	Nzero	  318.510107	/* lunar mean long of node at EPOCH */
 
-void	adj360 __P((double *));
-double	dtor __P((double));
-int	main __P((int, char *[]));
-double	potm __P((double));
-time_t	parsetime __P((char *));
-void	badformat __P((void)) __attribute__((__noreturn__));
+void	adj360(double *);
+double	dtor(double);
+int	main(int, char *[]);
+double	potm(double);
+time_t	parsetime(char *);
+void	badformat(void) __attribute__((__noreturn__));
 
 int
 main(argc, argv)

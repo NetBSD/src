@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.h,v 1.9 2003/08/07 09:37:49 agc Exp $	*/
+/*	$NetBSD: tetris.h,v 1.10 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -169,6 +169,6 @@ extern gid_t	gid, egid;
 extern char	key_msg[100];
 extern int	showpreview;
 
-int	fits_in __P((const struct shape *, int));
-void	place __P((const struct shape *, int, int));
-void	stop __P((const char *)) __attribute__((__noreturn__));
+int	fits_in(const struct shape *, int);
+void	place(const struct shape *, int, int);
+void	stop(const char *) __attribute__((__noreturn__));

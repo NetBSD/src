@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.invent.c,v 1.8 2003/04/02 18:36:37 jsm Exp $	*/
+/*	$NetBSD: hack.invent.c,v 1.9 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.invent.c,v 1.8 2003/04/02 18:36:37 jsm Exp $");
+__RCSID("$NetBSD: hack.invent.c,v 1.9 2004/01/27 20:30:29 jsm Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -78,8 +78,8 @@ __RCSID("$NetBSD: hack.invent.c,v 1.8 2003/04/02 18:36:37 jsm Exp $");
 
 static int      lastinvnr = 51;	/* 0 ... 51 */
 
-static void assigninvlet __P((struct obj *));
-static char *xprname __P((struct obj *, char));
+static void assigninvlet(struct obj *);
+static char *xprname(struct obj *, char);
 
 static void
 assigninvlet(otmp)
@@ -566,7 +566,7 @@ ckunpaid(otmp)
 int
 ggetobj(word, fn, max)
 	const char *word;
-	int (*fn)  __P((struct obj *));
+	int (*fn)(struct obj *);
 	int max;
 {
 	char            buf[BUFSZ];
@@ -575,8 +575,8 @@ ggetobj(word, fn, max)
 	int             oletct = 0, iletct = 0;
 	boolean         allflag = FALSE;
 	char            olets[20], ilets[20];
-	int           (*ckfn) __P((struct obj *)) =
-	    (int (*) __P((struct obj *))) 0;
+	int           (*ckfn)(struct obj *) =
+	    (int (*)(struct obj *)) 0;
 	xchar           allowgold = (u.ugold && !strcmp(word, "drop")) ? 1 : 0;	/* BAH */
 	if (!invent && !allowgold) {
 		pline("You have nothing to %s.", word);
@@ -652,8 +652,8 @@ askchain(objchn, olets, allflag, fn, ckfn, max)
 	struct obj     *objchn;
 	char           *olets;
 	int             allflag;
-	int           (*fn) __P((struct obj *));
-	int	      (*ckfn) __P((struct obj *));
+	int           (*fn)(struct obj *);
+	int	      (*ckfn)(struct obj *);
 	int             max;
 {
 	struct obj     *otmp, *otmp2;
