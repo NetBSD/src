@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.11 2000/05/31 19:39:21 cgd Exp $
+.\"	$NetBSD: disk.9,v 1.12 2001/04/21 08:22:44 jdolecek Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -129,7 +129,7 @@ Attach a disk; allocate storage for the disklabel, set the
 timestamp, insert the disk into the disklist, and intrement the
 system disk count.
 .It Fn disk_detach
-Detatch a disk; free storage for the disklabel, remove the disk
+Detach a disk; free storage for the disklabel, remove the disk
 from the disklist, and decrement the system disk count.  If the count
 drops below zero, panic.
 .It Fn disk_busy
