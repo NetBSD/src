@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.8 1995/09/18 21:19:30 pk Exp $	*/
+/*	$NetBSD: net.c,v 1.9 1995/09/23 17:14:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -329,6 +329,88 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 		tleft -= t - tlast;
 		tlast = t;
 	}
+}
+
+/*
+ * Like inet_addr() in the C library, but we only accept base-10.
+ * Return values are in network order.
+ */
+n_long
+inet_addr(cp)
+	char *cp;
+{
+	register u_long val;
+	register int n;
+	register char c;
+	u_int parts[4];
+	register u_int *pp = parts;
+
+	for (;;) {
+		/*
+		 * Collect number up to ``.''.
+		 * Values are specified as for C:
+		 * 0x=hex, 0=octal, other=decimal.
+		 */
+		val = 0;
+		while ((c = *cp) != '\0') {
+			if (c >= '0' && c <= '9') {
+				val = (val * 10) + (c - '0');
+				cp++;
+				continue;
+			}
+			break;
+		}
+		if (*cp == '.') {
+			/*
+			 * Internet format:
+			 *	a.b.c.d
+			 *	a.b.c	(with c treated as 16-bits)
+			 *	a.b	(with b treated as 24 bits)
+			 */
+			if (pp >= parts + 3 || val > 0xff)
+				goto bad;
+			*pp++ = val, cp++;
+		} else
+			break;
+	}
+	/*
+	 * Check for trailing characters.
+	 */
+	if (*cp != '\0')
+		goto bad;
+
+	/*
+	 * Concoct the address according to
+	 * the number of parts specified.
+	 */
+	n = pp - parts + 1;
+	switch (n) {
+
+	case 1:				/* a -- 32 bits */
+		break;
+
+	case 2:				/* a.b -- 8.24 bits */
+		if (val > 0xffffff)
+			goto bad;
+		val |= parts[0] << 24;
+		break;
+
+	case 3:				/* a.b.c -- 8.8.16 bits */
+		if (val > 0xffff)
+			goto bad;
+		val |= (parts[0] << 24) | (parts[1] << 16);
+		break;
+
+	case 4:				/* a.b.c.d -- 8.8.8.8 bits */
+		if (val > 0xff)
+			goto bad;
+		val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
+		break;
+	}
+
+	return (htonl(val));
+ bad:
+	return (htonl(INADDR_NONE));
 }
 
 char *
