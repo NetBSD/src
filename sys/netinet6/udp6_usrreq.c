@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.7 1999/07/31 18:41:17 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.8 1999/08/05 16:01:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -80,6 +80,7 @@
 #ifdef __NetBSD__
 #include <sys/proc.h>
 #endif
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -283,7 +284,8 @@ udp6_input(mp, offp, proto)
 					 * and m_copy() will copy M_PKTHDR
 					 * only if offset is 0.
 					 */
-					if (last->in6p_flags & IN6P_CONTROLOPTS) {
+					if (last->in6p_flags & IN6P_CONTROLOPTS
+					 || last->in6p_socket->so_options & SO_TIMESTAMP) {
 						ip6_savecontrol(last, &opts,
 								ip6, n);
 					}
@@ -334,8 +336,10 @@ udp6_input(mp, offp, proto)
 			goto bad;
 		}
 #endif /*IPSEC*/
-		if (last->in6p_flags & IN6P_CONTROLOPTS)
+		if (last->in6p_flags & IN6P_CONTROLOPTS
+		 || last->in6p_socket->so_options & SO_TIMESTAMP) {
 			ip6_savecontrol(last, &opts, ip6, m);
+		}
 
 		m_adj(m, off + sizeof(struct udphdr));
 		if (sbappendaddr(&last->in6p_socket->so_rcv,
@@ -401,8 +405,10 @@ udp6_input(mp, offp, proto)
 			udp_in6.sin6_scope_id = 0;
 	} else
 		udp_in6.sin6_scope_id = 0;
-	if (in6p->in6p_flags & IN6P_CONTROLOPTS)
+	if (in6p->in6p_flags & IN6P_CONTROLOPTS
+	 || in6p->in6p_socket->so_options & SO_TIMESTAMP) {
 		ip6_savecontrol(in6p, &opts, ip6, m);
+	}
 
 	m_adj(m, off + sizeof(struct udphdr));
 	if (sbappendaddr(&in6p->in6p_socket->so_rcv,
@@ -457,6 +463,10 @@ udp6_ctlinput(cmd, sa, ip6, m, off)
 		return;
 
 	/* translate addresses into internal form */
+	if (sa->sa_family != AF_INET6 ||
+	    sa->sa_len != sizeof(struct sockaddr_in6))
+		log(LOG_ERR, "udp6_ctlinput: arg sa is not for IPv6,"
+		    "sa->sa_family = %d, len = %d", sa->sa_family, sa->sa_len);
 	sa6 = *(struct sockaddr_in6 *)sa;
 	if (IN6_IS_ADDR_LINKLOCAL(&sa6.sin6_addr))
 		sa6.sin6_addr.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
@@ -543,6 +553,8 @@ udp6_output(in6p, m, addr6, control)
 	M_PREPEND(m, sizeof(struct ip6_hdr) + sizeof(struct udphdr), M_DONTWAIT);
 	if (m == 0) {
 		error = ENOBUFS;
+		if (addr6)
+			splx(s);
 		goto release;
 	}
 
