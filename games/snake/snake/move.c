@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.9 1995/04/22 10:16:04 cgd Exp $	*/
+/*	$NetBSD: move.c,v 1.10 1995/04/29 00:06:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 7/19/93";
 #else
-static char rcsid[] = "$NetBSD: move.c,v 1.9 1995/04/22 10:16:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: move.c,v 1.10 1995/04/29 00:06:37 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,6 @@ static char rcsid[] = "$NetBSD: move.c,v 1.9 1995/04/22 10:16:04 cgd Exp $";
  *
  *		point(&p,x,y)	return point set to x,y.
  *
- *		baudrate(x)	returns the baudrate of the terminal.
  *		delay(t)	causes an approximately constant delay
  *					independent of baudrate.
  *					Duration is ~ t/20 seconds.
@@ -511,28 +510,12 @@ char *str;
 	if (str)
 		tputs(str, 1, outch);
 }
-baudrate()
-{
-
-	switch (orig.sg_ospeed){
-	case B300:
-		return(300);
-	case B1200:
-		return(1200);
-	case B4800:
-		return(4800);
-	case B9600:
-		return(9600);
-	default:
-		return(0);
-	}
-}
 delay(t)
 int t;
 {
 	int k,j;
 
-	k = baudrate() * t / 300;
+	k = ospeed * t / 300;
 	for(j=0;j<k;j++){
 		putchar(PC);
 	}
@@ -550,18 +533,12 @@ cook()
 	putpad(TE);
 	putpad(KE);
 	fflush(stdout);
-	stty(0, &orig);
-#ifdef TIOCSLTC
-	ioctl(0, TIOCSLTC, &olttyc);
-#endif
+	tcsetattr(0, TCSADRAIN, &orig);
 }
 
 raw()
 {
-	stty(0, &new);
-#ifdef TIOCSLTC
-	ioctl(0, TIOCSLTC, &nlttyc);
-#endif
+	tcsetattr(0, TCSADRAIN, &new);
 }
 
 struct point *point(ps,x,y)
@@ -682,21 +659,17 @@ getcap()
 		exit(5);
 	}
 
-	gtty(0, &orig);
-	new=orig;
-	new.sg_flags &= ~(ECHO|CRMOD|ALLDELAY|XTABS);
-	new.sg_flags |= CBREAK;
+	tcgetattr(0, &orig);
+	new = orig;
+	new.c_lflag &= ~(ECHO|ICANON);
+	new.c_oflag &= ~(ONLCR|OXTABS);
 	signal(SIGINT,stop);
-	ospeed = orig.sg_ospeed;
-#ifdef TIOCGLTC
-	ioctl(0, TIOCGLTC, &olttyc);
-	nlttyc = olttyc;
-	nlttyc.t_suspc = '\377';
-	nlttyc.t_dsuspc = '\377';
-#endif
+	ospeed = cfgetospeed(&orig);
+	new.c_cc[VSUSP] = _POSIX_VDISABLE;
+	new.c_cc[VDSUSP] = _POSIX_VDISABLE;
 	raw();
 
-	if ((orig.sg_flags & XTABS) == XTABS) TA=0;
+	if (orig.c_oflag & OXTABS) TA=0;
 	putpad(KS);
 	putpad(TI);
 	point(&cursor,0,LINES-1);
