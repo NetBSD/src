@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.11 1998/03/02 19:42:25 cgd Exp $
+#	$NetBSD: Makefile,v 1.12 1998/10/04 10:49:58 veego Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
 
 PROG=	kdump
-CPPFLAGS+=-I${.CURDIR}/../ktrace
+CPPFLAGS+=-I${.CURDIR}/../ktrace -I${.CURDIR}/../../sys
 SRCS=	kdump.c ioctl.c subr.c
 .PATH:	${.CURDIR}/../ktrace
 LDSTATIC?=-static
