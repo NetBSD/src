@@ -1,4 +1,4 @@
-/*	$NetBSD: qsort.c,v 1.5 1995/12/28 08:52:36 thorpej Exp $	*/
+/*	$NetBSD: qsort.c,v 1.6 1996/12/19 07:56:33 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,15 +37,15 @@
 #if 0
 static char sccsid[] = "from: @(#)qsort.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: qsort.c,v 1.5 1995/12/28 08:52:36 thorpej Exp $";
+static char *rcsid = "$NetBSD: qsort.c,v 1.6 1996/12/19 07:56:33 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <stdlib.h>
 
-static inline char	*med3 __P((char *, char *, char *, int (*)()));
-static inline void	 swapfunc __P((char *, char *, int, int));
+static __inline char	*med3 __P((char *, char *, char *, int (*)()));
+static __inline void	 swapfunc __P((char *, char *, int, int));
 
 #define min(a, b)	(a) < (b) ? a : b
 
@@ -66,7 +66,7 @@ static inline void	 swapfunc __P((char *, char *, int, int));
 #define SWAPINIT(a, es) swaptype = ((char *)a - (char *)0) % sizeof(long) || \
 	es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
 
-static inline void
+static __inline void
 swapfunc(a, b, n, swaptype)
 	char *a, *b;
 	int n, swaptype;
@@ -87,7 +87,7 @@ swapfunc(a, b, n, swaptype)
 
 #define vecswap(a, b, n) 	if ((n) > 0) swapfunc(a, b, n, swaptype)
 
-static inline char *
+static __inline char *
 med3(a, b, c, cmp)
 	char *a, *b, *c;
 	int (*cmp)();

@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.6 1996/06/12 04:15:34 cgd Exp $	*/
+/*	$NetBSD: gmon.c,v 1.7 1996/12/19 07:56:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: gmon.c,v 1.6 1996/06/12 04:15:34 cgd Exp $";
+static char rcsid[] = "$NetBSD: gmon.c,v 1.7 1996/12/19 07:56:32 cgd Exp $";
 #endif
 #endif
 
@@ -52,7 +52,7 @@ static char rcsid[] = "$NetBSD: gmon.c,v 1.6 1996/06/12 04:15:34 cgd Exp $";
 #include <limits.h>
 #include <unistd.h>
 
-extern char *minbrk asm ("minbrk");
+extern char *minbrk __asm ("minbrk");
 
 struct gmonparam _gmonparam = { GMON_PROF_OFF };
 
