@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.517 2004/11/12 06:02:29 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.518 2004/11/12 06:04:48 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7953,3 +7953,9 @@ distrib/notes/macppc/hardware			1.42
 	 - update date of supported hardware info 
 
 	[mbw, ticket #937]
+
+sys/dev/pci/agp_i810.c				1.23
+
+	Add another case to match "PCI_PRODUCT_INTEL_82815_FULL_HUB"
+	(Intel 82815 Hub) in agp_i810_attach(). PR#27863
+	[xtraeme, ticket #938]
