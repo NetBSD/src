@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.12 1996/09/30 15:53:13 ws Exp $	*/
+/*	$NetBSD: iso.h,v 1.13 1996/10/04 03:23:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -187,6 +187,11 @@ extern int (**cd9660_specop_p) __P((void *));
 #ifdef FIFO
 extern int (**cd9660_fifoop_p) __P((void *));
 #endif
+
+extern __inline int isonum_711 __P((u_char *));
+extern __inline int isonum_712 __P((char *));
+extern __inline int isonum_723 __P((u_char *));
+extern __inline int isonum_733 __P((u_char *));
 
 extern __inline int
 #if __STDC__
