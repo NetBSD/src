@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.2 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.3 2000/12/04 16:11:07 itojun Exp $	*/
 /*	$KAME: pathnames.h,v 1.8 2000/12/04 06:45:30 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
 #ifndef PATHNAMES_H
 #define PATHNAMES_H
 
-#define _PATH_PIM6D_CONF	"/usr/local/v6/etc/pim6sd.conf"
+#define _PATH_PIM6D_CONF	"/etc/pim6sd.conf"
 #define _PATH_PIM6D_LOGFILE	"/var/log/pim6sd.log"
 
 #if (defined(BSD) && (BSD >= 199103))
