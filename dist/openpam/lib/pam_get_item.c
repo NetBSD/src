@@ -53,7 +53,8 @@ const char *_pam_item_name[PAM_NUM_ITEMS] = {
 	"PAM_USER_PROMPT",
 	"PAM_REPOSITORY",
 	"PAM_AUTHTOK_PROMPT",
-	"PAM_OLDAUTHTOK_PROMPT"
+	"PAM_OLDAUTHTOK_PROMPT",
+	"PAM_SOCKADDR"
 };
 
 /*
@@ -85,6 +86,7 @@ pam_get_item(pam_handle_t *pamh,
 	case PAM_AUTHTOK_PROMPT:
 	case PAM_OLDAUTHTOK_PROMPT:
 	case PAM_REPOSITORY:
+	case PAM_SOCKADDR:
 		*item = pamh->item[item_type];
 		RETURNC(PAM_SUCCESS);
 		/*NOTREACHED*/
@@ -136,6 +138,8 @@ pam_get_item(pam_handle_t *pamh,
  *	=PAM_OLDAUTHTOK_PROMPT:
  *		The prompt to use when asking the applicant for an
  *		expired authentication token prior to changing it.
+ *	=PAM_SOCKADDR:
+ *		The sockaddr_storage of the applicants's host.
  *
  * See =pam_start for a description of =struct pam_conv.
  *

@@ -38,6 +38,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 
 #include <security/pam_appl.h>
 
@@ -84,6 +85,9 @@ pam_set_item(pam_handle_t *pamh,
 		break;
 	case PAM_CONV:
 		osize = nsize = sizeof(struct pam_conv);
+		break;
+	case PAM_SOCKADDR:
+		osize = nsize = sizeof(struct sockaddr_storage);
 		break;
 	default:
 		RETURNC(PAM_SYMBOL_ERR);
