@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.255 1997/09/20 12:51:13 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.256 1997/09/27 10:55:48 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -243,6 +243,7 @@ void	init386 __P((vm_offset_t));
 #ifndef CONSDEVNAME
 #define CONSDEVNAME "pc"
 #endif
+#if (NCOM > 0)
 #ifndef CONADDR
 #define CONADDR 0x3f8
 #endif
@@ -252,12 +253,17 @@ void	init386 __P((vm_offset_t));
 #ifndef CONMODE
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
+int comcnmode = CONMODE;
+#endif /* NCOM */
 struct btinfo_console default_consinfo = {
 	{0, 0},
 	CONSDEVNAME,
+#if (NCOM > 0)
 	CONADDR, CONSPEED
+#else
+	0, 0
+#endif
 };
-int comcnmode = CONMODE;
 void	consinit __P((void));
 
 #ifdef KGDB
@@ -1777,7 +1783,7 @@ consinit()
 		bus_space_tag_t tag = I386_BUS_SPACE_IO;
 
 		if(comcnattach(tag, consinfo->addr, consinfo->speed,
-			       COM_FREQ, CONMODE))
+			       COM_FREQ, comcnmode))
 			panic("can't init serial console @%x", consinfo->addr);
 
 		return;
