@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.29 2001/05/11 06:10:44 jmc Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.30 2001/05/13 05:01:42 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -154,6 +154,7 @@ static int  fwohci_multi_resp(struct fwohci_softc *, void *,
 static int  fwohci_inreg(struct ieee1394_abuf *, int);
 static int  fwohci_parse_input(struct fwohci_softc *, void *,
     struct fwohci_pkt *);
+static int  fwohci_submatch(struct device *, struct cfdata *, void *);
 
 #ifdef FW_DEBUG
 
@@ -161,7 +162,7 @@ static int  fwohci_parse_input(struct fwohci_softc *, void *,
 
 #define DPRINTF(x)      if (fwdebug) printf x
 #define DPRINTFN(n,x)   if (fwdebug>(n)) printf x
-int     fwdebug = 3;
+int     fwdebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -616,7 +617,7 @@ fwohci_print(void *aux, const char *pnp)
 	if (pnp)
 		printf("%s at %s", name, pnp);
 
-	return UNCONF;
+	return QUIET;
 }
 
 static void
@@ -2464,8 +2465,8 @@ fwohci_uid_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *res)
 			fwa.write = fwohci_write;
 			fwa.inreg = fwohci_inreg;
 			iea = (struct ieee1394_softc *)
-			    config_found(&sc->sc_sc1394.sc1394_dev, &fwa, 
-			    fwohci_print);
+			    config_found_sm(&sc->sc_sc1394.sc1394_dev, &fwa, 
+			    fwohci_print, fwohci_submatch);
 			if (iea != NULL)
 				LIST_INSERT_HEAD(&sc->sc_nodelist, iea,
 				    sc1394_node);
@@ -3195,4 +3196,18 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	ab->ab_csr = csr;
 	ab->ab_cb(ab, IEEE1394_RCODE_COMPLETE);
 	return -1;
+}
+
+static int
+fwohci_submatch(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct ieee1394_attach_args *fwa = aux;
+
+	/* Both halves must be filled in for a match. */
+	if ((cf->fwbuscf_idhi == FWBUS_UNK_IDHI &&
+	    cf->fwbuscf_idlo == FWBUS_UNK_IDLO) ||
+	    (cf->fwbuscf_idhi == ntohl(*((u_int32_t *)&fwa->uid[0])) &&
+	    cf->fwbuscf_idlo == ntohl(*((u_int32_t *)&fwa->uid[4]))))
+		return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return 0;
 }

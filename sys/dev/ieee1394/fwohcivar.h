@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.12 2001/05/11 06:06:03 jmc Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.13 2001/05/13 05:01:43 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -181,5 +181,15 @@ int fwohci_print (void *, const char *);
 	bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, reg, htole32(val))
 #define	OHCI_CSR_READ(sc, reg) \
 	le32toh(bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, reg))
+
+/* Locators. */
+
+#include "locators.h"
+
+#define fwbuscf_idhi cf_loc[FWBUSCF_IDHI]
+#define FWBUS_UNK_IDHI FWBUSCF_IDHI_DEFAULT
+
+#define fwbuscf_idlo cf_loc[FWBUSCF_IDLO]
+#define FWBUS_UNK_IDLO FWBUSCF_IDLO_DEFAULT
 
 #endif	/* _DEV_IEEE1394_FWOHCIVAR_H_ */
