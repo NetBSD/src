@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.19.8.1 2000/07/18 16:15:14 tron Exp $	*/
+/*	$NetBSD: pppd.h,v 1.19.8.2 2000/09/30 06:21:45 simonb Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -107,6 +107,7 @@ typedef struct {
 #define OPT_INITONLY	0x2000000 /* option can only be set in init phase */
 #define OPT_DEVEQUIV	0x4000000 /* equiv to device name */
 #define OPT_DEVNAM	(OPT_PREPASS | OPT_INITONLY | OPT_DEVEQUIV)
+#define OPT_SEENIT	0x10000000 /* have seen this option already */
 
 #define OPT_VAL(x)	((x) & OPT_VALUE)
 
@@ -138,6 +139,30 @@ struct wordlist {
     char		*word;
 };
 
+/* An endpoint discriminator, used with multilink. */
+#define MAX_ENDP_LEN	20	/* maximum length of discriminator value */
+struct epdisc {
+    unsigned char	class;
+    unsigned char	length;
+    unsigned char	value[MAX_ENDP_LEN];
+};
+
+/* values for epdisc.class */
+#define EPD_NULL	0	/* null discriminator, no data */
+#define EPD_LOCAL	1
+#define EPD_IP		2
+#define EPD_MAC		3
+#define EPD_MAGIC	4
+#define EPD_PHONENUM	5
+
+typedef void (*notify_func) __P((void *, int));
+
+struct notifier {
+    struct notifier *next;
+    notify_func	    func;
+    void	    *arg;
+};
+
 /*
  * Global variables.
  */
@@ -145,7 +170,6 @@ struct wordlist {
 extern int	hungup;		/* Physical layer has disconnected */
 extern int	ifunit;		/* Interface unit number */
 extern char	ifname[];	/* Interface name */
-extern int	ttyfd;		/* Serial device file descriptor */
 extern char	hostname[];	/* Our hostname */
 extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
 extern int	phase;		/* Current state of link - see values below */
@@ -164,12 +188,20 @@ extern int	link_stats_valid; /* set if link_stats is valid */
 extern int	link_connect_time; /* time the link was up for */
 extern int	using_pty;	/* using pty as device (notty or pty opt.) */
 extern int	log_to_fd;	/* logging to this fd as well as syslog */
+extern bool	log_to_file;	/* log_to_fd is a file */
+extern bool	log_to_specific_fd;	/* log_to_fd was specified by user */
 extern char	*no_ppp_msg;	/* message to print if ppp not in kernel */
 extern volatile int status;	/* exit status for pppd */
 extern int	devnam_fixed;	/* can no longer change devnam */
 extern int	unsuccess;	/* # unsuccessful connection attempts */
 extern int	do_callback;	/* set if we want to do callback next */
 extern int	doing_callback;	/* set if this is a callback */
+extern char	ppp_devnam[MAXPATHLEN];
+extern struct notifier *pidchange;   /* for notifications of pid changing */
+extern struct notifier *phasechange; /* for notifications of phase changes */
+extern struct notifier *exitnotify;  /* for notification that we're exiting */
+extern struct notifier *sigreceived; /* notification of received signal */
+extern int	listen_time;	/* time to listen first (ms) */
 
 /* Values for do_callback and doing_callback */
 #define CALLBACK_DIALIN		1	/* we are expecting the call back */
@@ -211,12 +243,18 @@ extern int	idle_time_limit;/* Shut down link if idle for this long */
 extern int	holdoff;	/* Dead time before restarting */
 extern bool	holdoff_specified; /* true if user gave a holdoff value */
 extern bool	notty;		/* Stdin/out is not a tty */
+extern char	*pty_socket;	/* Socket to connect to pty */
 extern char	*record_file;	/* File to record chars sent/received */
 extern bool	sync_serial;	/* Device is synchronous serial device */
 extern int	maxfail;	/* Max # of unsuccessful connection attempts */
 extern char	linkname[MAXPATHLEN]; /* logical name for link */
 extern bool	tune_kernel;	/* May alter kernel settings as necessary */
 extern int	connect_delay;	/* Time to delay after connect script */
+extern int	max_data_rate;	/* max bytes/sec through charshunt */
+extern int	req_unit;	/* interface unit number to use */
+extern bool	multilink;	/* enable multilink operation */
+extern bool	noendpoint;	/* don't send or accept endpt. discrim. */
+extern char	*bundle_name;	/* bundle name for multilink */
 
 #ifdef PPP_FILTER
 /* Filter for packets to pass */
@@ -299,6 +337,7 @@ extern struct protent *protocols[];
  */
 
 /* Procedures exported from main.c. */
+void set_ifunit __P((int));	/* set stuff that depends on ifunit */
 void detach __P((void));	/* Detach from controlling tty */
 void die __P((int));		/* Cleanup and exit */
 void quit __P((void));		/* like die(1) */
@@ -307,14 +346,29 @@ void timeout __P((void (*func)(void *), void *arg, int t));
 				/* Call func(arg) after t seconds */
 void untimeout __P((void (*func)(void *), void *arg));
 				/* Cancel call to func(arg) */
+void record_child __P((int, char *, void (*) (void *), void *));
+int  device_script __P((char *cmd, int in, int out, int dont_wait));
+				/* Run `cmd' with given stdin and stdout */
 pid_t run_program __P((char *prog, char **args, int must_exist,
 		       void (*done)(void *), void *arg));
 				/* Run program prog with args in child */
 void reopen_log __P((void));	/* (re)open the connection to syslog */
 void update_link_stats __P((int)); /* Get stats at link termination */
-void script_setenv __P((char *, char *));	/* set script env var */
+void script_setenv __P((char *, char *, int));	/* set script env var */
 void script_unsetenv __P((char *));		/* unset script env var */
 void new_phase __P((int));	/* signal start of new phase */
+void add_notifier __P((struct notifier **, notify_func, void *));
+void remove_notifier __P((struct notifier **, notify_func, void *));
+void notify __P((struct notifier *, int));
+
+/* Procedures exported from tty.c. */
+void tty_init __P((void));
+void tty_device_check __P((void));
+void tty_check_options __P((void));
+int  connect_tty __P((void));
+void disconnect_tty __P((void));
+void tty_close_fds __P((void));
+void cleanup_tty __P((void));
 
 /* Procedures exported from utils.c. */
 void log_packet __P((u_char *, int, char *, int));
@@ -370,6 +424,12 @@ void demand_rexmit __P((int));	/* retransmit saved frames for an NP */
 int  loop_chars __P((unsigned char *, int)); /* process chars from loopback */
 int  loop_frame __P((unsigned char *, int)); /* should we bring link up? */
 
+/* Procedures exported from multilink.c */
+void mp_check_options __P((void)); /* Check multilink-related options */
+int  mp_join_bundle __P((void));  /* join our link to an appropriate bundle */
+char *epdisc_to_str __P((struct epdisc *)); /* string from endpoint discrim. */
+int  str_to_epdisc __P((struct epdisc *, char *)); /* endpt disc. from str */
+
 /* Procedures exported from sys-*.c */
 void sys_init __P((void));	/* Do system-dependent initialization */
 void sys_cleanup __P((void));	/* Restore system state before exiting */
@@ -381,6 +441,9 @@ int  open_ppp_loopback __P((void)); /* Open loopback for demand-dialling */
 int  establish_ppp __P((int));	/* Turn serial port into a ppp interface */
 void restore_loop __P((void));	/* Transfer ppp unit back to loopback */
 void disestablish_ppp __P((int)); /* Restore port to normal operation */
+void make_new_bundle __P((int, int, int, int)); /* Create new bundle */
+int  bundle_attach __P((int));	/* Attach link to existing bundle */
+void cfg_bundle __P((int, int, int, int)); /* Configure existing bundle */
 void clean_check __P((void));	/* Check if line was 8-bit clean */
 void set_up_tty __P((int, int)); /* Set up port's speed, parameters, etc. */
 void restore_tty __P((int));	/* Restore port's original parameters */
@@ -448,6 +511,8 @@ int  set_filters __P((struct bpf_program *pass_in, struct bpf_program *pass_out,
 int  sipxfaddr __P((int, unsigned long, unsigned char *));
 int  cipxfaddr __P((int));
 #endif
+int  get_if_hwaddr __P((u_char *addr, char *name));
+char *get_first_ethernet __P((void));
 
 /* Procedures exported from options.c */
 int  parse_args __P((int argc, char **argv));
@@ -466,6 +531,7 @@ void option_error __P((char *fmt, ...));
 int int_option __P((char *, int *));
 				/* Simplified number_option for decimal ints */
 void add_options __P((option_t *)); /* Add extra options */
+int parse_dotted_ip __P((char *, u_int32_t *));
 
 /*
  * This structure is used to store information about certain
@@ -499,6 +565,7 @@ extern void (*pap_logout_hook) __P((void));
 extern int (*pap_passwd_hook) __P((char *user, char *passwd));
 extern void (*ip_up_hook) __P((void));
 extern void (*ip_down_hook) __P((void));
+extern void (*ip_choose_hook) __P((u_int32_t *));
 
 /*
  * Inline versions of get/put char/short/long.

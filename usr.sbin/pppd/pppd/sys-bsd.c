@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.34 2000/04/20 03:28:15 itojun Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.34.4.1 2000/09/30 06:21:45 simonb Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -27,7 +27,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.46 1999/08/13 06:46:18 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.34 2000/04/20 03:28:15 itojun Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.34.4.1 2000/09/30 06:21:45 simonb Exp $");
 #endif
 #endif
 
@@ -107,6 +107,7 @@ static int sockfd;		/* socket for doing interface ioctls */
 #ifdef INET6
 static int sock6_fd = -1;	/* socket for doing ipv6 interface ioctls */
 #endif /* INET6 */
+static int ttyfd = -1;		/* the file descriptor of the tty */
 
 static fd_set in_fds;		/* set of fds that wait_input waits for */
 static int max_in_fd;		/* highest fd set in in_fds */
@@ -236,6 +237,7 @@ establish_ppp(fd)
 {
     int pppdisc = PPPDISC;
     int x;
+    ttyfd = fd;
 
     if (demand) {
 	/*
@@ -345,6 +347,99 @@ disestablish_ppp(fd)
 
     if (fd == ppp_fd)
 	ppp_fd = -1;
+}
+
+/*
+ * cfg_bundle - configure the existing bundle.
+ * Used in demand mode.
+ */
+void
+cfg_bundle(mrru, mtru, rssn, tssn)
+    int mrru, mtru, rssn, tssn;
+{
+    abort();
+#ifdef notyet
+    int flags;
+    struct ifreq ifr;
+
+    if (!new_style_driver)
+	return;
+
+    /* set the mrru, mtu and flags */
+    if (ioctl(ppp_dev_fd, PPPIOCSMRRU, &mrru) < 0)
+	error("Couldn't set MRRU: %m");
+    flags = get_flags(ppp_dev_fd);
+    flags &= ~(SC_MP_SHORTSEQ | SC_MP_XSHORTSEQ);
+    flags |= (rssn? SC_MP_SHORTSEQ: 0) | (tssn? SC_MP_XSHORTSEQ: 0);
+
+    if (mtru > 0 && mtru != link_mtu) {
+	memset(&ifr, 0, sizeof(ifr));
+	slprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "ppp%d", ifunit);
+	ifr.ifr_mtu = mtru;
+	if (ioctl(sock_fd, SIOCSIFMTU, &ifr) < 0)
+	    error("Couldn't set interface MTU: %m");
+	flags |= SC_MULTILINK;
+    }
+
+    set_flags(ppp_dev_fd, flags);
+
+    /* connect up the channel */
+    if (ioctl(ppp_fd, PPPIOCCONNECT, &ifunit) < 0)
+	fatal("Couldn't attach to PPP unit %d: %m", ifunit);
+    add_fd(ppp_dev_fd);
+#endif
+}
+
+/*
+ * make_new_bundle - create a new PPP unit (i.e. a bundle)
+ * and connect our channel to it.  This should only get called
+ * if `multilink' was set at the time establish_ppp was called.
+ * In demand mode this uses our existing bundle instead of making
+ * a new one.
+ */
+void
+make_new_bundle(mrru, mtru, rssn, tssn)
+    int mrru, mtru, rssn, tssn;
+{
+    abort();
+#ifdef notyet
+    if (!new_style_driver)
+	return;
+
+    /* make us a ppp unit */
+    if (make_ppp_unit() < 0)
+	die(1);
+
+    /* set the mrru, mtu and flags */
+    cfg_bundle(mrru, mtru, rssn, tssn);
+#endif
+}
+
+/*
+ * bundle_attach - attach our link to a given PPP unit.
+ * We assume the unit is controlled by another pppd.
+ */
+int
+bundle_attach(ifnum)
+	int ifnum;
+{
+    abort();
+#ifdef notyet
+    if (!new_style_driver)
+	return -1;
+
+    if (ioctl(ppp_dev_fd, PPPIOCATTACH, &ifnum) < 0) {
+	if (errno == ENXIO)
+	    return 0;	/* doesn't still exist */
+	fatal("Couldn't attach to interface unit %d: %m\n", ifnum);
+    }
+    if (ioctl(ppp_fd, PPPIOCCONNECT, &ifnum) < 0)
+	fatal("Couldn't connect to interface unit %d: %m", ifnum);
+    set_flags(ppp_dev_fd, get_flags(ppp_dev_fd) | SC_MULTILINK);
+
+    ifunit = ifnum;
+#endif
+    return 1;
 }
 
 /*
@@ -1593,6 +1688,75 @@ get_ether_addr(ipaddr, hwaddr)
     }
 
     return 0;
+}
+
+/*
+ * get_if_hwaddr - get the hardware address for the specified
+ * network interface device.
+ */
+int
+get_if_hwaddr(addr, name)
+    u_char *addr;
+    char *name;
+{
+    struct ifreq ifreq;
+    struct sockaddr_dl *sdl = (struct sockaddr_dl *) &ifreq.ifr_addr;
+    int fd;
+
+    if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+	return 0;
+    (void)memset(sdl, 0, sizeof(*sdl));
+    sdl->sdl_family = AF_LINK;
+    (void)strlcpy(ifreq.ifr_name, name, sizeof(ifreq.ifr_name));
+    if (ioctl(fd, SIOCGIFADDR, &ifreq) == -1) {
+	(void)close(fd);
+	return 0;
+    }
+    (void)close(fd);
+    (void)memcpy(addr, LLADDR(sdl), sdl->sdl_alen);
+    return sdl->sdl_nlen;
+}
+
+/*
+ * get_first_ethernet - return the name of the first ethernet-style
+ * interface on this system.
+ */
+char *
+get_first_ethernet()
+{
+    struct ifreq *ifr, *ifend;
+    static struct ifreq ifreq;
+    struct ifconf ifc;
+    struct ifreq ifs[MAX_IFS];
+
+    /*
+     * Scan through the system's network interfaces.
+     */
+    ifc.ifc_len = sizeof(ifs);
+    ifc.ifc_req = ifs;
+    if (ioctl(sockfd, SIOCGIFCONF, &ifc) < 0) {
+	warn("ioctl(SIOCGIFCONF): %m");
+	return NULL;
+    }
+    ifend = (struct ifreq *) (ifc.ifc_buf + ifc.ifc_len);
+    for (ifr = ifc.ifc_req; ifr < ifend; ifr = (struct ifreq *)
+	((char *)&ifr->ifr_addr + ifr->ifr_addr.sa_len)) {
+	/*
+	 * Check the interface's internet address.
+	 */
+	if (ifr->ifr_addr.sa_family != AF_INET)
+	    continue;
+	/*
+	 * Check that the interface is up, and not point-to-point or loopback.
+	 */
+	strlcpy(ifreq.ifr_name, ifr->ifr_name, sizeof(ifreq.ifr_name));
+	if (ioctl(sockfd, SIOCGIFFLAGS, &ifreq) < 0)
+	    continue;
+	if ((ifreq.ifr_flags & (IFF_UP|IFF_POINTOPOINT|IFF_LOOPBACK))
+	    != IFF_UP)
+	    return ifreq.ifr_name;
+    }
+    return NULL;
 }
 
 /*
