@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.46 2001/02/19 23:03:52 cgd Exp $	*/
+/*	$NetBSD: w.c,v 1.47 2001/11/05 03:35:49 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.46 2001/02/19 23:03:52 cgd Exp $");
+__RCSID("$NetBSD: w.c,v 1.47 2001/11/05 03:35:49 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -211,7 +211,7 @@ main(int argc, char **argv)
 			 */
 			if (strncmp(ep->utmp.ut_line, "ftp", 3) == 0)
 				ep->ftpd_pid =
-					strtol(ep->utmp.ut_line + 3, NULL, 10);
+				    strtol(ep->utmp.ut_line + 3, NULL, 10);
 #endif /* SUPPORT_FTPD_UTMP */
 			
 			continue;
@@ -233,10 +233,10 @@ main(int argc, char **argv)
 
 		touched = stp->st_atime;
 		if (touched < ep->utmp.ut_time) {
-				/* tty untouched since before login */
-				touched = ep->utmp.ut_time;
-			}
-	if ((ep->idle = now - touched) < 0)
+			/* tty untouched since before login */
+			touched = ep->utmp.ut_time;
+		}
+		if ((ep->idle = now - touched) < 0)
 			ep->idle = 0;
 	}
 	if (ut)
@@ -262,8 +262,8 @@ main(int argc, char **argv)
 			continue;
 
 		for (ep = ehead; ep != NULL; ep = ep->next) {
-			if (ep->tdev == kp->p_tdev
-				&& kp->p__pgid == kp->p_tpgid) {
+			if (ep->tdev == kp->p_tdev &&
+			    kp->p__pgid == kp->p_tpgid) {
 				/*
 				 * Proc is in foreground of this terminal
 				 */
@@ -278,11 +278,11 @@ main(int argc, char **argv)
 			/*
 			 * Hack to match process to ftp utmp entry.
 			 */
-			else if (ep->tdev == 0 && kp->p_tdev == NODEV
-				 && ep->ftpd_pid == kp->p_pid) {
+			else if (ep->tdev == 0 && kp->p_tdev == NODEV &&
+			    ep->ftpd_pid == kp->p_pid) {
 				ep->kp = kp;
 				lognamelen = max(lognamelen,
-					    strlen(kp->p_login));
+				    strlen(kp->p_login));
 			}
 #endif /* SUPPORT_FTPD_UTMP */
 		}
@@ -296,9 +296,9 @@ main(int argc, char **argv)
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 &&
 	     ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1 &&
 	     ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) || ws.ws_col == 0)
-	       ttywidth = 79;
-        else
-	       ttywidth = ws.ws_col - 1;
+		ttywidth = 79;
+	else
+		ttywidth = ws.ws_col - 1;
 	argwidth = ttywidth - argwidth;
 	if (argwidth < 4)
 		argwidth = 8;
@@ -351,7 +351,8 @@ main(int argc, char **argv)
 				p = hp->h_name;
 				p += strlen(hp->h_name);
 				p -= strlen(domain);
-				if (p > hp->h_name && strcasecmp(p, domain) == 0)
+				if (p > hp->h_name &&
+				    strcasecmp(p, domain) == 0)
 					*p = '\0';
 			}
 			p = hp->h_name;
@@ -361,11 +362,11 @@ main(int argc, char **argv)
 			p = buf;
 		}
 		if (ep->kp == NULL) {
-		    warnx("Stale utmp entry: %.*s %.*s %.*s",
-			UT_NAMESIZE, ep->utmp.ut_name,
-			UT_LINESIZE, ep->utmp.ut_line,
-			UT_HOSTSIZE, ep->utmp.ut_host);
-		    continue;
+			warnx("Stale utmp entry: %.*s %.*s %.*s",
+			    UT_NAMESIZE, ep->utmp.ut_name,
+			    UT_LINESIZE, ep->utmp.ut_line,
+			    UT_HOSTSIZE, ep->utmp.ut_host);
+			continue;
 		}
 		(void)printf("%-*s %-2.2s %-*.*s ",
 		    lognamelen, ep->kp->p_login,
@@ -482,7 +483,8 @@ ttystat(char *line, size_t sz)
 	static struct stat sb;
 	char ttybuf[MAXPATHLEN];
 
-	(void)snprintf(ttybuf, sizeof(ttybuf), "%s%.*s", _PATH_DEV, (int) sz, line);
+	(void)snprintf(ttybuf, sizeof(ttybuf), "%s%.*s", _PATH_DEV, (int) sz,
+	    line);
 	if (stat(ttybuf, &sb))
 		return (NULL);
 	return (&sb);
@@ -491,6 +493,7 @@ ttystat(char *line, size_t sz)
 static void
 usage(int wcmd)
 {
+
 	if (wcmd)
 		(void)fprintf(stderr,
 		    "usage: w: [-hin] [-M core] [-N system] [user]\n");
