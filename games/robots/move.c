@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.6 1997/10/12 14:09:59 lukem Exp $	*/
+/*	$NetBSD: move.c,v 1.7 1998/07/24 23:28:02 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.6 1997/10/12 14:09:59 lukem Exp $");
+__RCSID("$NetBSD: move.c,v 1.7 1998/07/24 23:28:02 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,9 @@ void
 get_move()
 {
 	int		c;
+#ifdef FANCY
+	int		lastmove;
+#endif /*FANCY*/
 
 	if (Waiting)
 		return;
@@ -64,7 +67,8 @@ get_move()
 			lastmove = *Next_move;
 		else
 			lastmove = -1;	/* flag for "first time in" */
-	}
+	} else
+		lastmove = 0; /* Shut up gcc */
 #endif
 	for (;;) {
 		if (Teleport && must_telep())
