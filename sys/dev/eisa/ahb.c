@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.27 1998/12/09 08:43:30 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.28 1999/09/30 23:04:39 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -323,7 +323,7 @@ ahb_send_mbox(sc, opcode, ecb)
 	bus_space_write_1(iot, ioh, ATTN, opcode |
 		ecb->xs->sc_link->scsipi_scsi.target);
 
-	if ((ecb->xs->flags & SCSI_POLL) == 0)
+	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0)
 		timeout(ahb_timeout, ecb, (ecb->timeout * hz) / 1000);
 }
 
@@ -356,7 +356,7 @@ ahb_send_immed(sc, cmd, ecb)
 	bus_space_write_1(iot, ioh, ATTN, OP_IMMED |
 		ecb->xs->sc_link->scsipi_scsi.target);
 
-	if ((ecb->xs->flags & SCSI_POLL) == 0)
+	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0)
 		timeout(ahb_timeout, ecb, (ecb->timeout * hz) / 1000);
 }
 
@@ -554,7 +554,7 @@ ahb_get_ecb(sc, flags)
 			TAILQ_REMOVE(&sc->sc_free_ecb, ecb, chain);
 			break;
 		}
-		if ((flags & SCSI_NOSLEEP) != 0)
+		if ((flags & XS_CTL_NOSLEEP) != 0)
 			goto out;
 		tsleep(&sc->sc_free_ecb, PRIBIO, "ahbecb", 0);
 	}
@@ -611,7 +611,7 @@ ahb_done(sc, ecb)
 	if (xs->datalen) {
 		bus_dmamap_sync(dmat, ecb->dmamap_xfer, 0,
 		    ecb->dmamap_xfer->dm_mapsize,
-		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
+		    (xs->xs_control & XS_CTL_DATA_IN) ? BUS_DMASYNC_POSTREAD :
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(dmat, ecb->dmamap_xfer);
 	}
@@ -661,7 +661,7 @@ ahb_done(sc, ecb)
 	}
 done:
 	ahb_free_ecb(sc, ecb);
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
 
 	/*
@@ -870,7 +870,7 @@ ahb_scsi_cmd(xs)
 	}
 
 	/* Polled requests can't be queued for later. */
-	dontqueue = xs->flags & SCSI_POLL;
+	dontqueue = xs->xs_control & XS_CTL_POLL;
 
 	/*
 	 * If there are jobs in the queue, run them first.
@@ -901,7 +901,7 @@ ahb_scsi_cmd(xs)
 	 * is from a buf (possibly from interrupt time)
 	 * then we can't allow it to sleep
 	 */
-	flags = xs->flags;
+	flags = xs->xs_control;
 	if ((ecb = ahb_get_ecb(sc, flags)) == NULL) {
 		/*
 		 * If we can't queue, we lose.
@@ -935,7 +935,7 @@ ahb_scsi_cmd(xs)
 	 * if there is already an immediate waiting,
 	 * then WE must wait
 	 */
-	if (flags & SCSI_RESET) {
+	if (flags & XS_CTL_RESET) {
 		ecb->flags |= ECB_IMMED;
 		if (sc->sc_immed_ecb)
 			return TRY_AGAIN_LATER;
@@ -945,7 +945,7 @@ ahb_scsi_cmd(xs)
 		ahb_send_immed(sc, AHB_TARG_RESET, ecb);
 		splx(s);
 
-		if ((flags & SCSI_POLL) == 0)
+		if ((flags & XS_CTL_POLL) == 0)
 			return SUCCESSFULLY_QUEUED;
 
 		/*
@@ -976,17 +976,17 @@ ahb_scsi_cmd(xs)
 		 * Map the DMA transfer.
 		 */
 #ifdef TFS
-		if (flags & SCSI_DATA_UIO) {
+		if (flags & XS_CTL_DATA_UIO) {
 			error = bus_dmamap_load_uio(sc->sc_dmat,
 			    ecb->dmamap_xfer, (struct uio *)xs->data,
-			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
 			    BUS_DMA_WAITOK);
 		} else
 #endif /* TFS */
 		{
 			error = bus_dmamap_load(sc->sc_dmat,
 			    ecb->dmamap_xfer, xs->data, xs->datalen, NULL,
-			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
 			    BUS_DMA_WAITOK);
 		}
 
@@ -1005,7 +1005,7 @@ ahb_scsi_cmd(xs)
 
 		bus_dmamap_sync(dmat, ecb->dmamap_xfer, 0,
 		    ecb->dmamap_xfer->dm_mapsize,
-		    (flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+		    (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
 		    BUS_DMASYNC_PREWRITE);
 
 		/*
@@ -1041,7 +1041,7 @@ ahb_scsi_cmd(xs)
 	/*
 	 * Usually return SUCCESSFULLY QUEUED
 	 */
-	if ((flags & SCSI_POLL) == 0)
+	if ((flags & XS_CTL_POLL) == 0)
 		return SUCCESSFULLY_QUEUED;
 
 	/*
@@ -1079,7 +1079,7 @@ ahb_poll(sc, xs, count)
 		 */
 		if (bus_space_read_1(iot, ioh, G2STAT) & G2STAT_INT_PEND)
 			ahbintr(sc);
-		if (xs->flags & ITSDONE)
+		if (xs->xs_status & XS_STS_DONE)
 			return 0;
 		delay(1000);
 		count--;

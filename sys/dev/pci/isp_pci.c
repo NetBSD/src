@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.41 1999/07/05 20:28:11 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.42 1999/09/30 23:04:42 thorpej Exp $ */
 /* release_6_5_99 */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -663,7 +663,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 		/* NOTREACHED */
 	}
 
-	if (xs->flags & SCSI_DATA_IN) {
+	if (xs->xs_control & XS_CTL_DATA_IN) {
 		drq = REQFLAG_DATA_IN;
 	} else {
 		drq = REQFLAG_DATA_OUT;
@@ -678,7 +678,8 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 		rq->req_flags |= drq;
 	}
 	error = bus_dmamap_load(pci->pci_dmat, dmap, xs->data, xs->datalen,
-	    NULL, xs->flags & SCSI_NOSLEEP ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+	    NULL, xs->xs_control & XS_CTL_NOSLEEP ?
+	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 	if (error) {
 		XS_SETERR(xs, HBA_BOTCH);
 		return (CMD_COMPLETE);
@@ -733,7 +734,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 
 dmasync:
 	bus_dmamap_sync(pci->pci_dmat, dmap, 0, dmap->dm_mapsize,
-	    (xs->flags & SCSI_DATA_IN) ?  BUS_DMASYNC_PREREAD :
+	    (xs->xs_control & XS_CTL_DATA_IN) ?  BUS_DMASYNC_PREREAD :
 	    BUS_DMASYNC_PREWRITE);
 
 mbxsync:
@@ -763,7 +764,7 @@ isp_pci_dmateardown(isp, xs, handle)
 	bus_dmamap_t dmap = pci->pci_xfer_dmap[handle];
 
 	bus_dmamap_sync(pci->pci_dmat, dmap, 0, dmap->dm_mapsize,
-	    xs->flags & SCSI_DATA_IN ?
+	    xs->xs_control & XS_CTL_DATA_IN ?
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(pci->pci_dmat, dmap);
 }

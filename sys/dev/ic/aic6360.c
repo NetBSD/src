@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.62 1999/09/26 08:14:57 enami Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.63 1999/09/30 23:04:40 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -502,7 +502,7 @@ aic_get_acb(sc, flags)
 	s = splbio();
 
 	while ((acb = sc->free_list.tqh_first) == NULL &&
-	       (flags & SCSI_NOSLEEP) == 0)
+	       (flags & XS_CTL_NOSLEEP) == 0)
 		tsleep(&sc->free_list, PRIBIO, "aicacb", 0);
 	if (acb) {
 		TAILQ_REMOVE(&sc->free_list, acb, chain);
@@ -552,7 +552,7 @@ aic_scsi_cmd(xs)
 	AIC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
 	    sc_link->scsipi_scsi.target));
 
-	flags = xs->flags;
+	flags = xs->xs_control;
 	if ((acb = aic_get_acb(sc, flags)) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
@@ -562,7 +562,7 @@ aic_scsi_cmd(xs)
 	acb->xs = xs;
 	acb->timeout = xs->timeout;
 
-	if (xs->flags & SCSI_RESET) {
+	if (xs->xs_control & XS_CTL_RESET) {
 		acb->flags |= ACB_RESET;
 		acb->scsipi_cmd_length = 0;
 		acb->data_length = 0;
@@ -582,7 +582,7 @@ aic_scsi_cmd(xs)
 
 	splx(s);
 
-	if ((flags & SCSI_POLL) == 0)
+	if ((flags & XS_CTL_POLL) == 0)
 		return SUCCESSFULLY_QUEUED;
 
 	/* Not allowed to use interrupts, use polling instead */
@@ -628,7 +628,7 @@ aic_poll(sc, xs, count)
 		 */
 		if ((bus_space_read_1(iot, ioh, DMASTAT) & INTSTAT) != 0)
 			aicintr(sc);
-		if ((xs->flags & ITSDONE) != 0)
+		if ((xs->xs_status & XS_STS_DONE) != 0)
 			return 0;
 		delay(1000);
 		count--;
@@ -889,7 +889,7 @@ aic_done(sc, acb)
 		}
 	}
 
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 
 #if AIC_DEBUG
 	if ((aic_debug & AIC_SHOWMISC) != 0) {
@@ -914,7 +914,7 @@ aic_done(sc, acb)
 	} else
 		aic_dequeue(sc, acb);
 
-	aic_free_acb(sc, acb, xs->flags);
+	aic_free_acb(sc, acb, xs->xs_control);
 	ti->cmds++;
 	scsipi_done(xs);
 }
@@ -1821,7 +1821,7 @@ loop:
 			sc->sc_cleft = acb->scsipi_cmd_length;
 
 			/* On our first connection, schedule a timeout. */
-			if ((acb->xs->flags & SCSI_POLL) == 0)
+			if ((acb->xs->xs_control & XS_CTL_POLL) == 0)
 				timeout(aic_timeout, acb,
 				    (acb->timeout * hz) / 1000);
 
@@ -2122,7 +2122,7 @@ aic_show_scsi_cmd(acb)
 	int i;
 
 	scsi_print_addr(sc_link);
-	if ((acb->xs->flags & SCSI_RESET) == 0) {
+	if ((acb->xs->xs_control & XS_CTL_RESET) == 0) {
 		for (i = 0; i < acb->scsipi_cmd_length; i++) {
 			if (i)
 				printf(",");

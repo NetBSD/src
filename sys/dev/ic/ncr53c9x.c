@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.35 1999/09/22 03:31:23 mhitch Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36 1999/09/30 23:04:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -504,7 +504,7 @@ ncr53c9x_select(sc, ecb)
 	 * expecting to come back due to an interrupt, because it is
 	 * always possible that the interrupt may never happen.
 	 */
-	if ((ecb->xs->flags & SCSI_POLL) == 0)
+	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0)
 		timeout(ncr53c9x_timeout, ecb,
 		    (ecb->timeout * hz) / 1000);
 
@@ -601,7 +601,7 @@ ncr53c9x_get_ecb(sc, flags)
 	s = splbio();
 
 	while ((ecb = sc->free_list.tqh_first) == NULL &&
-	       (flags & SCSI_NOSLEEP) == 0)
+	       (flags & XS_CTL_NOSLEEP) == 0)
 		tsleep(&sc->free_list, PRIBIO, "especb", 0);
 	if (ecb) {
 		TAILQ_REMOVE(&sc->free_list, ecb, chain);
@@ -634,7 +634,7 @@ ncr53c9x_scsi_cmd(xs)
 	NCR_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
 	    sc_link->scsipi_scsi.target));
 
-	flags = xs->flags;
+	flags = xs->xs_control;
 	if ((ecb = ncr53c9x_get_ecb(sc, flags)) == NULL)
 		return (TRY_AGAIN_LATER);
 
@@ -642,7 +642,7 @@ ncr53c9x_scsi_cmd(xs)
 	ecb->xs = xs;
 	ecb->timeout = xs->timeout;
 
-	if (flags & SCSI_RESET) {
+	if (flags & XS_CTL_RESET) {
 		ecb->flags |= ECB_RESET;
 		ecb->clen = 0;
 		ecb->dleft = 0;
@@ -662,7 +662,7 @@ ncr53c9x_scsi_cmd(xs)
 
 	splx(s);
 
-	if ((flags & SCSI_POLL) == 0)
+	if ((flags & XS_CTL_POLL) == 0)
 		return (SUCCESSFULLY_QUEUED);
 
 	/* Not allowed to use interrupts, use polling instead */
@@ -693,7 +693,7 @@ ncr53c9x_poll(sc, xs, count)
 		if (NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT)
 			ncr53c9x_intr(sc);
 #endif
-		if ((xs->flags & ITSDONE) != 0)
+		if ((xs->xs_status & XS_STS_DONE) != 0)
 			return (0);
 		if (sc->sc_state == NCR_IDLE) {
 			NCR_TRACE(("[ncr53c9x_poll: rescheduling] "));
@@ -822,7 +822,7 @@ ncr53c9x_done(sc, ecb)
 		}
 	}
 
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 
 #ifdef NCR53C9X_DEBUG
 	if (ncr53c9x_debug & NCR_SHOWMISC) {
@@ -849,7 +849,7 @@ ncr53c9x_done(sc, ecb)
 	} else
 		ncr53c9x_dequeue(sc, ecb);
 		
-	ncr53c9x_free_ecb(sc, ecb, xs->flags);
+	ncr53c9x_free_ecb(sc, ecb, xs->xs_control);
 	ti->cmds++;
 	scsipi_done(xs);
 }

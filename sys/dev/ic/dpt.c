@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.5 1999/09/30 17:15:54 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.6 1999/09/30 23:04:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.5 1999/09/30 17:15:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.6 1999/09/30 23:04:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -694,7 +694,7 @@ dpt_alloc_ccb(sc, flg)
 			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_chain);
 			break;
 		}
-		if ((flg & SCSI_NOSLEEP) != 0) {
+		if ((flg & XS_CTL_NOSLEEP) != 0) {
 			splx(s);
 			return (NULL);
 		}
@@ -732,7 +732,7 @@ dpt_done_ccb(sc, ccb)
 	if (xs->datalen) {
 		bus_dmamap_sync(dmat, ccb->ccb_dmamap_xfer, 0,
 		    ccb->ccb_dmamap_xfer->dm_mapsize,
-		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
+		    (xs->xs_control & XS_CTL_DATA_IN) ? BUS_DMASYNC_POSTREAD :
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(dmat, ccb->ccb_dmamap_xfer);
 	}
@@ -782,7 +782,7 @@ dpt_done_ccb(sc, ccb)
 
 	/* Free up the CCB and mark the command as done */
 	dpt_free_ccb(sc, ccb);
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
 
 	/*
@@ -811,7 +811,7 @@ dpt_scsi_cmd(xs)
 	bus_dma_tag_t dmat;
 
 	sc_link = xs->sc_link;
-	flags = xs->flags;
+	flags = xs->xs_control;
 	sc = sc_link->adapter_softc;
 	dmat = sc->sc_dmat;
 	fromqueue = 0;
@@ -838,13 +838,13 @@ dpt_scsi_cmd(xs)
 		}
 
 		/* XXX we can't reset devices just yet */
-		if ((flags & SCSI_RESET) != 0) {
+		if ((flags & XS_CTL_RESET) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
 			return (COMPLETE);
 		}
 
 		/* Polled requests can't be queued for later */
-		dontqueue = flags & SCSI_POLL;
+		dontqueue = flags & XS_CTL_POLL;
 
 		/* If there are jobs in the queue, run them first */
 		if (TAILQ_FIRST(&sc->sc_queue) != NULL) {
@@ -911,8 +911,8 @@ dpt_scsi_cmd(xs)
 	cp->cp_identify = 1;
 	cp->cp_autosense = 1;
 	cp->cp_nocache = ((ccb->ccb_flg & CCB_SYNC) != 0);
-	cp->cp_datain = ((flags & SCSI_DATA_IN) != 0);
-	cp->cp_dataout = ((flags & SCSI_DATA_OUT) != 0);
+	cp->cp_datain = ((flags & XS_CTL_DATA_IN) != 0);
+	cp->cp_dataout = ((flags & XS_CTL_DATA_OUT) != 0);
 	cp->cp_interpret = (sc->sc_hbaid[sc_link->scsipi_scsi.channel] ==
 	    sc_link->scsipi_scsi.target);
 
@@ -923,10 +923,10 @@ dpt_scsi_cmd(xs)
 		sg = ccb->ccb_sg;
 		seg = 0;
 #ifdef	TFS
-		if (flags & SCSI_DATA_UIO) {
+		if (flags & XS_CTL_DATA_UIO) {
 			error = bus_dmamap_load_uio(dmat,
 			    ccb->ccb_dmamap_xfer, (struct uio *)xs->data,
-			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
 			    BUS_DMA_WAITOK);
 		} else
 #endif /*TFS */
@@ -934,7 +934,7 @@ dpt_scsi_cmd(xs)
 			error = bus_dmamap_load(dmat, 
 			    ccb->ccb_dmamap_xfer, 
 			    xs->data, xs->datalen, NULL,
-			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
 			    BUS_DMA_WAITOK);
 		}
 
@@ -952,7 +952,7 @@ dpt_scsi_cmd(xs)
 
 		bus_dmamap_sync(dmat, ccb->ccb_dmamap_xfer, 0,
 		    ccb->ccb_dmamap_xfer->dm_mapsize,
-		    (flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+		    (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
 		    BUS_DMASYNC_PREWRITE);
 
 		/*

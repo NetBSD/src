@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.12 1999/05/27 14:22:28 pk Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.13 1999/09/30 23:04:42 thorpej Exp $ */
 /* release_03_25_99 */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -313,7 +313,7 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dmamap_t dmamap;
-	int dosleep = (xs->flags & SCSI_NOSLEEP) != 0;
+	int dosleep = (xs->xs_control & XS_CTL_NOSLEEP) != 0;
 
 	if (xs->datalen == 0) {
 		rq->req_seg_count = 1;
@@ -339,11 +339,11 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	}
 	bus_dmamap_sync(sbc->sbus_dmatag, dmamap,
 			dmamap->dm_segs[0].ds_addr, xs->datalen,
-			(xs->flags & SCSI_DATA_IN)
+			(xs->xs_control & XS_CTL_DATA_IN)
 				? BUS_DMASYNC_PREREAD
 				: BUS_DMASYNC_PREWRITE);
 
-	if (xs->flags & SCSI_DATA_IN) {
+	if (xs->xs_control & XS_CTL_DATA_IN) {
 		rq->req_flags |= REQFLAG_DATA_IN;
 	} else {
 		rq->req_flags |= REQFLAG_DATA_OUT;
@@ -376,7 +376,7 @@ isp_sbus_dmateardown(isp, xs, handle)
 	}
 	bus_dmamap_sync(sbc->sbus_dmatag, dmamap,
 			dmamap->dm_segs[0].ds_addr, xs->datalen,
-			(xs->flags & SCSI_DATA_IN)
+			(xs->xs_control & XS_CTL_DATA_IN)
 				? BUS_DMASYNC_POSTREAD
 				: BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sbc->sbus_dmatag, dmamap);
