@@ -1,11 +1,11 @@
-/*	$NetBSD: strftime.c,v 1.14 2002/10/02 06:56:24 itojun Exp $	*/
+/*	$NetBSD: strftime.c,v 1.15 2004/05/11 09:32:02 kleink Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char	elsieid[] = "@(#)strftime.c	7.64";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.14 2002/10/02 06:56:24 itojun Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.15 2004/05/11 09:32:02 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -17,6 +17,10 @@ __RCSID("$NetBSD: strftime.c,v 1.14 2002/10/02 06:56:24 itojun Exp $");
 */
 
 #include "private.h"
+
+#ifdef _LIBC
+#undef TM_ZONE
+#endif
 
 /*
 ** Copyright (c) 1989, 1993
