@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.34 1997/10/16 04:23:38 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.34.2.1 1998/01/29 11:46:27 mellon Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -52,12 +52,14 @@
 #include <sys/device.h>
 #include <sys/syscallargs.h>
 #include <sys/filedesc.h>
+#include <sys/exec_elf.h>
 
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_signal.h>
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_ioctl.h>
+#include <compat/linux/linux_exec.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -90,9 +92,19 @@ int linux_write_ldt __P((struct proc *, struct linux_sys_modify_ldt_args *,
 
 /*
  * Deal with some i386-specific things in the Linux emulation code.
- * This means just signals for now, will include stuff like
- * I/O map permissions and V86 mode sometime.
  */
+
+void
+linux_setregs(p, epp, stack)
+	struct proc *p;
+	struct exec_package *epp;
+	u_long stack;
+{
+	register struct pcb *pcb = &p->p_addr->u_pcb;
+
+	pcb->pcb_savefpu.sv_env.en_cw = __Linux_NPXCW__;
+	setregs(p, epp, stack);
+}
 
 /*
  * Send an interrupt to process.
