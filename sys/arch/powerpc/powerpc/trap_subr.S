@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.13 2002/02/27 03:27:14 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.14 2002/03/02 15:19:56 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -604,6 +604,7 @@ s_trap:
 /* Obliterate SRs so BAT spills work correctly */
 	lis	31,EMPTY_SEGMENT@h
 	ori	31,31,EMPTY_SEGMENT@l
+	mtsr	0,31
 	mtsr	1,31
 	mtsr	2,31
 	mtsr	3,31
@@ -759,7 +760,8 @@ s_isitrap:
 	bc	4,17,99f;	/* branch if PSL_PR is false */		\
 	lis	3,EMPTY_SEGMENT@h;					\
 	ori	3,3,EMPTY_SEGMENT@l;					\
-	mtsr	1,3;		/* reset SRs so BAT spills work */	\
+	mtsr	0,3;		/* reset SRs so BAT spills work */	\
+	mtsr	1,3;							\
 	mtsr	2,3;							\
 	mtsr	3,3;							\
 	mtsr	4,3;							\
