@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.14 2002/03/25 01:53:36 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.15 2002/03/25 16:32:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -68,7 +68,6 @@
 #include <arm/arm32/machdep.h>
  
 int cowfault __P((vaddr_t));
-int fetchuserword __P((u_int address, u_int *location));
 extern char fusubailout[];
 
 static void report_abort __P((const char *, u_int, u_int, u_int));
