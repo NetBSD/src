@@ -9787,23 +9787,23 @@ st52|Atari ST with VT52 emulation:\
 # :k0=\E9~:	map F10 to k0 - could have F0-9 -> k0-9, but ... F10 was 'k;'
 # (amiga: removed obsolete :kn#10:,
 # also added empty <acsc> to suppress a warning --esr)
-amiga-old|Amiga ANSI:\
+amiga|Amiga ANSI:\
 	:am:bs:bw:xn:\
 	:co#80:li#24:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
 	:LE=\E[%dD:RI=\E[%dC:SF=\E[%dS:SR=\E[%dT:UP=\E[%dA:ac=:\
 	:ae=^O:al=\E[L:as=^N:bl=^G:bt=\E[Z:cd=\E[J:ce=\E[K:\
 	:cl=\E[H\E[J:cm=\E[%i%d;%dH:dc=\E[P:dl=\E[M:do=\E[B:ei=:\
-	:ho=\E[H:ic=\E[@:im=:is=\E[20l:k0=\E9~:k1=\E0~:k2=\E1~:\
-	:k3=\E2~:k4=\E3~:k5=\E4~:k6=\E5~:k7=\E6~:k8=\E7~:k9=\E8~:\
-	:kb=^H:kd=\EB:kl=\ED:kr=\EC:ku=\EA:le=\E[D:mb=\E[7;2m:\
+	:ho=\E[H:ic=\E[@:im=:is=\E[20l:k0=\E[9~:k1=\E[0~:k2=\E[1~:\
+	:k3=\E[2~:k4=\E[3~:k5=\E[4~:k6=\E[5~:k7=\E[6~:k8=\E[7~:k9=\E[8~:\
+	:kb=^H:kd=\E[B:kl=\E[D:kr=\E[C:ku=\E[A:le=\E[D:mb=\E[7;2m:\
 	:md=\E[1m:me=\E[m:mh=\E[2m:mk=\E[8m:mr=\E[7m:nd=\E[C:\
-	:r1=\Ec:se=\E[m:sf=\E[S:so=\E[7m:sr=\E[T:ue=\E[m:up=\E[A:\
+	:rs=\Ec:se=\E[m:sf=\E[S:so=\E[7m:sr=\E[T:ue=\E[m:up=\E[A:\
 	:us=\E[4m:ve=\E[ p:vi=\E[0 p:
 
 # From: Hans Verkuil <hans@wyst.hobby.nl>, 4 Dec 1995
 # (amiga: added empty <acsc> to suppress a warning --esr)
-amiga|Amiga ANSI:\
+amiga-bad|Amiga ANSI:\
 	:bs:bw:ms:\
 	:co#80:li#24:\
 	:DC=\233%dP:DO=\233%dB:IC=\233%d@:LE=\233%dD:RI=\233%dC:\
