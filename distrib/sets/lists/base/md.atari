@@ -25,6 +25,8 @@
 ./usr/lib/libtermcap.so.0.0
 ./usr/lib/libtermlib.so.0.0
 ./usr/lib/libutil.so.3.3
+./usr/lib/libwrap.so.0.0
+./usr/lib/libz.so.0.0
 ./usr/libexec/ld.so
 ./usr/share/keymaps/atari/de.map
 ./usr/share/keymaps/atari/fr.map
