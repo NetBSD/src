@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.99 2003/08/22 22:00:39 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.100 2003/08/25 00:11:52 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.99 2003/08/22 22:00:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.100 2003/08/25 00:11:52 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1916,7 +1916,7 @@ icmp6_rip6_input(mp, off)
 	for (in6p = rawin6pcb.in6p_next;
 	     in6p != &rawin6pcb; in6p = in6p->in6p_next)
 	{
-		if (in6p->in6p_ip6_nxt != IPPROTO_ICMPV6)
+		if (in6p->in6p_ip6.ip6_nxt != IPPROTO_ICMPV6)
 			continue;
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) &&
 		   !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, &ip6->ip6_dst))
