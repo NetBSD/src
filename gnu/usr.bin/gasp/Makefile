@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/12/29 15:12:27 tv Exp $
+#	$NetBSD: Makefile,v 1.2 1998/12/29 15:13:03 tv Exp $
 
 DIST=		${.CURDIR}/../../dist
 
@@ -20,7 +20,5 @@ BFDOBJ!=	cd ${.CURDIR}/../../lib/bfd; \
 
 LDADD+=		-L${BFDOBJ} -lbfd
 DPADD+=		${BFDOBJ}/libbfd.a
-
-MAN=		gasp.1
 
 .include <bsd.prog.mk>
