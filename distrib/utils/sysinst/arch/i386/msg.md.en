@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.18 1999/07/06 06:10:06 cgd Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.19 2000/05/11 02:27:25 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -255,7 +255,8 @@ message configbootsel
 {Configure the different bootselection menu items. You can change the
 simple menu entries for the matching partition entries that are displayed
 when the system boots. Also, you can specify the timeout and default
-action to be taken (if no selection is made in the bootmenu).\n}
+action to be taken (if no selection is made in the bootmenu).\n
+}
 
 message bootseltimeout
 {Boot menu timeout: %d\n}
@@ -264,7 +265,7 @@ message defbootselopt
 {Default boot menu action: }
 
 message defbootseloptactive
-{boot the first active partition.}
+{boot the first active partition.\n}
 
 message defbootseloptpart
 {boot off partition %d.\n}

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.13 1999/07/06 06:10:06 cgd Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.14 2000/05/11 02:27:25 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -257,7 +257,7 @@ le programme d'amorcage existant, comme un selecteur de boot.}
 message configbootsel
 {Configurez les differents choix du selecteur de boot. Vous pouvez changer
 le menu proposé pour chaque partition lorsque le système demarre.
-Vous pouvez également préciser le choix par defaut et le temps d'attente.
+Vous pouvez également préciser le choix par defaut et le temps d'attente.\n
 }
 
 message bootseltimeout
@@ -267,7 +267,7 @@ message defbootselopt
 {Action par defaut: }
 
 message defbootseloptactive
-{Démarrer la première partition active.}
+{Démarrer la première partition active.\n}
 
 message defbootseloptpart
 {Démarrer depuis la partition %d.\n}
