@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.51 2003/10/30 22:15:28 he Exp $	*/
+/*	$NetBSD: stand.h,v 1.52 2004/05/19 23:37:41 abs Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -249,6 +249,9 @@ off_t	lseek(int, off_t, int);
 int	ioctl(int, u_long, char *);
 int	stat(const char *, struct stat *);
 int	fstat(int, struct stat *);
+
+typedef int cmp_t __P((const void *, const void *));
+void	qsort(void *, size_t, size_t, cmp_t * cmp);
 
 extern int opterr, optind, optopt, optreset;
 extern char *optarg;
