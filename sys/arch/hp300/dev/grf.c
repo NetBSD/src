@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.15 1995/11/19 22:32:38 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.16 1995/11/28 08:14:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,7 +66,7 @@
 #include <machine/cpu.h>
 
 #ifdef COMPAT_HPUX
-#include <hp300/hpux/hpux.h>
+#include <compat/hpux/hpux.h>
 extern struct emul emul_hpux;
 #endif
 

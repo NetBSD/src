@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38 1995/09/03 00:44:43 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.39 1995/11/28 08:12:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,7 +66,7 @@
 #include <vm/pmap.h>
 
 #ifdef COMPAT_HPUX
-#include <hp300/hpux/hpux.h>
+#include <compat/hpux/hpux.h>
 #endif
 
 char	*trap_type[] = {
