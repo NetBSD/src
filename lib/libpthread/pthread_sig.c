@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.9 2003/02/15 21:19:00 jdolecek Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.10 2003/02/28 17:30:07 lha Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,6 +62,8 @@
 #else
 #define SDPRINTF(x)
 #endif
+
+extern int pthread__started;
 
 extern pthread_spin_t pthread__runqueue_lock;
 extern struct pthread_queue_t pthread__runqueue;
@@ -198,11 +200,17 @@ __sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 	return retval;
 }
 
+int _sys___sigsuspend14(const sigset_t *);
+
 int
 __sigsuspend14(const sigset_t *sigmask)
 {
 	pthread_t self;
 	sigset_t oldmask;
+
+	/* if threading not started yet, just do the syscall */
+	if (__predict_false(pthread__started == 0))
+		return (_sys___sigsuspend14(sigmask));
 
 	self = pthread__self();
 
@@ -252,7 +260,6 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info, const
 	int error = 0;
 	pthread_t target;
 	sigset_t wset;
-	extern int pthread__started;
 	struct timespec timo;
 
 	/* if threading not started yet, just do the syscall */
