@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.67 1999/06/17 18:21:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.68 1999/06/17 19:23:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 1999/06/17 18:21:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 1999/06/17 19:23:25 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1332,29 +1332,25 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 }
 
 /*
- *	Routine:	pmap_change_wiring
- *	Function:	Change the wiring attribute for a map/virtual-address
+ *	Routine:	pmap_unwire
+ *	Function:	Clear the wired attribute for a map/virtual-address
  *			pair.
  *	In/out conditions:
  *			The mapping must already exist in the pmap.
  */
 void
-pmap_change_wiring(pmap, va, wired)
+pmap_unwire(pmap, va)
 	pmap_t pmap;
 	vaddr_t va;
-	boolean_t wired;
 {
 	pt_entry_t *pte;
-	u_int p;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_WIRING))
-		printf("pmap_change_wiring(%p, %lx, %x)\n", pmap, va, wired);
+		printf("pmap_unwire(%p, %lx)\n", pmap, va);
 #endif
 	if (pmap == NULL)
 		return;
-
-	p = wired ? mips_pg_wired_bit() : 0;
 
 	/*
 	 * Don't need to flush the TLB since PG_WIRED is only in software.
@@ -1363,22 +1359,35 @@ pmap_change_wiring(pmap, va, wired)
 		/* change entries in kernel pmap */
 #ifdef PARANOIADIAG
 		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
-			panic("pmap_change_wiring");
+			panic("pmap_unwire");
 #endif
 		pte = kvtopte(va);
 	} else {
-		if (!(pte = pmap_segmap(pmap, va)))
-			return;
+		pte = pmap_segmap(pmap, va);
+#ifdef DIAGNOSTIC
+		if (pte == NULL)
+			panic("pmap_unwire: pmap %p va 0x%lx invalid STE",
+			    pmap, va);
+#endif
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 	}
 
-	if (!mips_pg_wired(pte->pt_entry) && p)
-		pmap->pm_stats.wired_count++;
-	else if (mips_pg_wired(pte->pt_entry) && !p)
-		pmap->pm_stats.wired_count--;
+#ifdef DIAGNOSTIC
+	if (mips_pg_v(pte->pt_entry) == 0)
+		panic("pmap_unwire: pmap %p va 0x%lx invalid PTE",
+		    pmap, va);
+#endif
 
-	if (mips_pg_v(pte->pt_entry))
-		pte->pt_entry = (pte->pt_entry & ~mips_pg_wired_bit()) | p;
+	if (mips_pg_wired(pte->pt_entry)) {
+		pte->pt_entry &= ~mips_pg_wired_bit();
+		pmap->pm_stats.wired_count--;
+	}
+#ifdef DIAGNOSTIC
+	else {
+		printf("pmap_unwire: wiring for pmap %p va 0x%lx "
+		    "didn't change!\n", pmap, va);
+	}
+#endif
 }
 
 /*
