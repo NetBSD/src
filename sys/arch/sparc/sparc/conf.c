@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.42 1996/06/20 20:07:45 pk Exp $ */
+/*	$NetBSD: conf.c,v 1.43 1996/09/30 22:49:12 abrown Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,6 +74,7 @@
 #include "cgsix.h"
 #include "cgeight.h"
 #include "tcx.h"
+#include "cgfourteen.h"
 #include "xd.h"
 #include "xy.h"
 #include "rd.h"
@@ -209,7 +210,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 96 */
 	cdev_notdef(),			/* 97 */
 	cdev_notdef(),			/* 98 */
-	cdev_notdef(),			/* 99 */
+	cdev_fb_init(NCGFOURTEEN,cgfourteen), /* 99: /dev/cgfourteen */
 	cdev_notdef(),			/* 100 */
 	cdev_notdef(),			/* 101 */
 	cdev_notdef(),			/* 102 */
