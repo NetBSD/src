@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.52 2001/02/17 11:40:59 ragge Exp $
+# $NetBSD: md.i386,v 1.53 2001/04/14 12:40:10 kleink Exp $
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/_G_config.h		comp-c-include
 ./usr/include/i386/ansi.h		comp-c-include
@@ -27,6 +27,7 @@
 ./usr/include/i386/ibcs2_machdep.h		comp-c-include
 ./usr/include/i386/ieee.h		comp-c-include
 ./usr/include/i386/ieeefp.h		comp-c-include
+./usr/include/i386/int_mwgwtypes.h		comp-c-include
 ./usr/include/i386/int_types.h		comp-c-include
 ./usr/include/i386/intr.h		comp-c-include
 ./usr/include/i386/joystick.h		comp-c-include

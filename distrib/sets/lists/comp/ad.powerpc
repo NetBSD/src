@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.14 2001/02/07 17:01:02 ad Exp $
+# $NetBSD: ad.powerpc,v 1.15 2001/04/14 12:40:10 kleink Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/include/powerpc	comp-c-include
 ./usr/include/powerpc/ansi.h	comp-c-include
@@ -19,6 +19,7 @@
 ./usr/include/powerpc/hid_601.h	comp-c-include
 ./usr/include/powerpc/ieee.h	comp-c-include
 ./usr/include/powerpc/ieeefp.h	comp-c-include
+./usr/include/powerpc/int_mwgwtypes.h	comp-c-include
 ./usr/include/powerpc/int_types.h	comp-c-include
 ./usr/include/powerpc/ipkdb.h	comp-c-include
 ./usr/include/powerpc/kcore.h	comp-c-include
