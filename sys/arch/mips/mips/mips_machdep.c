@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.114 2001/05/29 17:54:56 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.115 2001/05/29 18:19:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.114 2001/05/29 17:54:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.115 2001/05/29 18:19:20 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -723,6 +723,7 @@ cpu_identify()
 	switch (MIPS_PRID_IMPL(cpu_id)) {
 #ifdef MIPS3
 	case MIPS_RM5200:
+	case MIPS_RM7000:
 	    {
 		extern void rm52xx_idle(void);
 
