@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.14 2003/09/12 17:32:31 mycroft Exp $	*/
+/*	$NetBSD: disks.c,v 1.15 2005/02/26 18:58:45 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: disks.c,v 1.14 2003/09/12 17:32:31 mycroft Exp $");
+__RCSID("$NetBSD: disks.c,v 1.15 2005/02/26 18:58:45 dsl Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -107,4 +107,6 @@ dkselect(char *args, int truefalse, int selections[])
 			error("%s: unknown drive", args);
 		args = cp;
 	}
+	labels();
+	display(0);
 }
