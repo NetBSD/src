@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.15 2002/07/12 03:02:55 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.16 2002/07/17 18:01:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.15 2002/07/12 03:02:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.16 2002/07/17 18:01:37 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -164,7 +164,7 @@ exit1(struct lwp *l, int rv)
 
 	if (__predict_false(p == initproc))
 		panic("init died (signal %d, exit %d)",
-		      WTERMSIG(rv), WEXITSTATUS(rv));
+		    WTERMSIG(rv), WEXITSTATUS(rv));
 
 	DPRINTF(("exit1: %d.%d exiting.\n", p->p_pid, l->l_lid));
 	/*
@@ -185,7 +185,6 @@ exit1(struct lwp *l, int rv)
 	 * wake up the parent early to avoid deadlock.
 	 */
 	p->p_flag |= P_WEXIT;
-
 	if (p->p_flag & P_PPWAIT) {
 		p->p_flag &= ~P_PPWAIT;
 		wakeup((caddr_t)p->p_pptr);
@@ -255,7 +254,6 @@ exit1(struct lwp *l, int rv)
 	p->p_stat = SDEAD;
 	p->p_nrlwps--;
 	l->l_stat = SDEAD;
-
 
 	/*
 	 * Remove proc from pidhash chain so looking it up won't
@@ -377,8 +375,9 @@ exit_lwps(struct lwp *l)
 	p->p_userret = lwp_exit_hook;
 	p->p_userret_arg = NULL;
 
-	/* Make SA-cached LWPs normal process runnable LWPs so that they'll
-	 * also self-destruct.
+	/*
+	 * Make SA-cached LWPs normal process runnable LWPs so that
+	 * they'll also self-destruct.
 	 */
 	if (p->p_sa && p->p_sa->sa_ncached > 0) {
 		DPRINTF(("exit_lwps: Making cached LWPs of %d runnable: ",
@@ -393,7 +392,8 @@ exit_lwps(struct lwp *l)
 		SCHED_UNLOCK(s);
 	}
 	
-	/* Interrupt LWPs in interruptable sleep, unsuspend suspended
+	/*
+	 * Interrupt LWPs in interruptable sleep, unsuspend suspended
 	 * LWPs, make detached LWPs undeached (so we can wait for
 	 * them) and then wait for everyone else to finish.  
 	 */
