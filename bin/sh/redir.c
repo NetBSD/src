@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.28 2003/08/07 09:05:37 agc Exp $	*/
+/*	$NetBSD: redir.c,v 1.29 2004/07/08 03:57:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.28 2003/08/07 09:05:37 agc Exp $");
+__RCSID("$NetBSD: redir.c,v 1.29 2004/07/08 03:57:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ MKINIT struct redirtab *redirlist;
 */
 int fd0_redirected = 0;
 
-STATIC void openredirect(union node *, char[10 ]);
+STATIC void openredirect(union node *, char[10], int);
 STATIC int openhere(union node *);
 
 
@@ -139,7 +139,7 @@ again:
 				switch (errno) {
 				case EBADF:
 					if (!try) {
-						openredirect(n, memory);
+						openredirect(n, memory, flags);
 						try++;
 						goto again;
 					}
@@ -161,7 +161,7 @@ again:
                 if (fd == 0)
                         fd0_redirected++;
 		if (!try)
-			openredirect(n, memory);
+			openredirect(n, memory, flags);
 	}
 	if (memory[1])
 		out1 = &memout;
@@ -171,12 +171,12 @@ again:
 
 
 STATIC void
-openredirect(union node *redir, char memory[10])
+openredirect(union node *redir, char memory[10], int flags)
 {
 	int fd = redir->nfile.fd;
 	char *fname;
 	int f;
-	int flags = O_WRONLY|O_CREAT|O_TRUNC;
+	int oflags = O_WRONLY|O_CREAT|O_TRUNC, eflags;
 
 	/*
 	 * We suppress interrupts so that we won't leave open file
@@ -188,8 +188,14 @@ openredirect(union node *redir, char memory[10])
 	switch (redir->nfile.type) {
 	case NFROM:
 		fname = redir->nfile.expfname;
-		if ((f = open(fname, O_RDONLY)) < 0)
+		if (flags & REDIR_VFORK)
+			eflags = O_NONBLOCK;
+		else
+			eflags = 0;
+		if ((f = open(fname, O_RDONLY|eflags)) < 0)
 			goto eopen;
+		if (eflags)
+			(void)fcntl(f, F_SETFL, fcntl(f, F_GETFL, 0) & ~eflags);
 		break;
 	case NFROMTO:
 		fname = redir->nfile.expfname;
@@ -198,11 +204,11 @@ openredirect(union node *redir, char memory[10])
 		break;
 	case NTO:
 		if (Cflag)
-			flags |= O_EXCL;
+			oflags |= O_EXCL;
 		/* FALLTHROUGH */
 	case NCLOBBER:
 		fname = redir->nfile.expfname;
-		if ((f = open(fname, flags, 0666)) < 0)
+		if ((f = open(fname, oflags, 0666)) < 0)
 			goto ecreate;
 		break;
 	case NAPPEND:
