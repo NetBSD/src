@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.1.2.2 2002/03/10 20:05:31 thorpej Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.1.2.3 2002/03/10 21:05:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,10 +43,10 @@
  *	Solaris Internals: Core Kernel Architecture, Jim Mauro and
  *	    Richard McDougall.
  *
- * Turnstiles are kept in a hash table.  Since there are likely to
- * be many more lock objects than there are threads.  Since a thread
- * can block on only one lock at a time, we only need one turnstile
- * per thread, and so they are allocated at thread creation time.
+ * Turnstiles are kept in a hash table.  There are likely to be many more
+ * lock objects than there are threads.  Since a thread can block on only
+ * one lock at a time, we only need one turnstile per thread, and so they
+ * are allocated at thread creation time.
  *
  * When a thread decides it needs to block on a lock, it looks up the
  * active turnstile for that lock.  If no active turnstile exists, then
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.2 2002/03/10 20:05:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.3 2002/03/10 21:05:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -109,7 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.2 2002/03/10 20:05:31 thorp
 
 struct turnstile_chain {
 	__cpu_simple_lock_t tc_lock;	/* lock on hash chain */
-	int		    tc_oldspl;	/* saved spl of lock holder */
+	int		    tc_oldspl;	/* saved spl of lock holder
+					   (only valid while tc_lock held) */
 	LIST_HEAD(, turnstile) tc_chain;/* turnstile chain */
 } turnstile_table[TURNSTILE_HASH_SIZE];
 
@@ -133,6 +134,9 @@ do {									\
 static const char turnstile_wmesg[] = "tstile";
 
 struct pool turnstile_pool;
+struct pool_cache turnstile_cache;
+
+int	turnstile_ctor(void *, void *, int);
 
 /*
  * turnstile_init:
@@ -153,6 +157,22 @@ turnstile_init(void)
 
 	pool_init(&turnstile_pool, sizeof(struct turnstile), 0, 0, 0,
 	    "tspool", &pool_allocator_nointr);
+	pool_cache_init(&turnstile_cache, &turnstile_pool,
+	    turnstile_ctor, NULL, NULL);
+}
+
+/*
+ * turnstile_ctor:
+ *
+ *	Constructor for turnstiles.
+ */
+int
+turnstile_ctor(void *arg, void *obj, int flags)
+{
+	struct turnstile *ts = obj;
+
+	memset(ts, 0, sizeof(*ts));
+	return (0);
 }
 
 static void
@@ -167,7 +187,7 @@ turnstile_remque(struct turnstile *ts, struct proc *p, struct slpque *qp)
 	 * This process is no longer using the active turnstile.
 	 * Find an inactive one on the free list to give to it.
 	 */
-	if ((nts == ts->ts_free) != NULL) {
+	if ((nts = ts->ts_free) != NULL) {
 		KASSERT(ts->ts_waiters > 1);
 		p->p_ts = nts;
 		ts->ts_free = nts->ts_free;
@@ -186,6 +206,9 @@ turnstile_remque(struct turnstile *ts, struct proc *p, struct slpque *qp)
 	*q = p->p_forw;
 	if (qp->sq_tailp == &p->p_forw)
 		qp->sq_tailp = q;
+
+	KASSERT(ts->ts_waiters != 0 || ts->ts_sleepq.sq_head == NULL);
+	KASSERT(ts->ts_waiters == 0 || ts->ts_sleepq.sq_head != NULL);
 }
 
 /*
