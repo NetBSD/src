@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pwmvar.h,v 1.2 2000/11/11 10:08:13 sato Exp $	*/
+/*	$Id: vrc4172pwmvar.h,v 1.3 2000/12/29 11:44:44 sato Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
@@ -25,25 +25,32 @@
  * SUCH DAMAGE.
  */
 
-#define VRC2_PWM_MAX_BRIGHTNESS	8
+#define VRC2_PWM_N_BRIGHTNESS	8
+#define VRC2_PWM_MAX_BRIGHTNESS	(VRC2_PWM_N_BRIGHTNESS-1)
 
 struct vrc4172pwm_param {
+	int n_brightness;
+	int values[VRC2_PWM_N_BRIGHTNESS];
+};
+
+struct vrc4172pwm_platid_param {
 	platid_mask_t *mask;
-	int max_brightness;
-	int values[VRC2_PWM_MAX_BRIGHTNESS];
+	struct vrc4172pwm_param *param;
 };
 
 struct vrc4172pwm_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-	config_hook_tag sc_hook;
+	config_hook_tag sc_lcdhook;
+	config_hook_tag sc_getlcdhook;
 	config_hook_tag sc_gethook;
+	config_hook_tag sc_getmaxhook;
 	config_hook_tag sc_sethook;
 	config_hook_tag sc_pmhook;
 	int sc_brightness;
 	int sc_raw_duty;
 	int sc_raw_freq;
-	struct vr4172pwm_param *sc_pwm_param;
+	struct vrc4172pwm_param *sc_param;
 };
 
