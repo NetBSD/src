@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.5 1997/10/09 07:25:54 jtc Exp $
+#	$NetBSD: install.md,v 1.5.2.1 1997/12/15 22:27:16 mellon Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,15 +58,19 @@ __mount_kernfs() {
 	# Make sure kernfs is mounted.
 	if [ ! -d /kern -o ! -e /kern/msgbuf ]; then
 		mkdir /kern > /dev/null 2>&1
-		/sbin/mount_kernfs /kern /kern >/dev/null 2>&1
+		/sbin/mount_kernfs /kern /kern
 	fi
 }
 
 md_makerootwritable() {
 	# Just remount the root device read-write.
-	__mount_kernfs
-	echo "Remounting root read-write..."
-	mount -u /kern/rootdev /
+	if [ ! -e /tmp/root_writable ]; then
+		echo "Remounting root read-write..."
+		__mount_kernfs
+		mount -u /kern/rootdev /
+		swapctl -a /kern/rootdev
+		cp /dev/null /tmp/root_writable
+	fi
 }
 
 md_get_diskdevs() {
@@ -114,43 +118,9 @@ md_native_fstype() {
 md_native_fsopts() {
 }
 
-md_checkfordisklabel() {
-	# $1 is the disk to check
-	local rval
-
-	disklabel $1 > /dev/null 2> /tmp/checkfordisklabel
-	if grep "no disk label" /tmp/checkfordisklabel; then
-		rval=1
-	elif grep "disk label corrupted" /tmp/checkfordisklabel; then
-		rval=2
-	else
-		rval=0
-	fi
-
-	rm -f /tmp/checkfordisklabel
-	return $rval
-}
-
-md_prep_disklabel()
-{
-	local _disk
-
-	_disk=$1
-	md_checkfordisklabel $_disk
-	case $? in
-	0)
-		echo -n "Do you wish to edit the disklabel on $_disk? [y]"
-		;;
-	1)
-		echo "WARNING: Disk $_disk has no label"
-		echo -n "Do you want to create one with the disklabel editor? [y]"
-		;;
-	2)
-		echo "WARNING: Label on disk $_disk is corrupted"
-		echo -n "Do you want to try and repair the damage using the disklabel editor? [y]"
-		;;
-	esac
-
+md_prep_disklabel() {
+	# $1 is the root disk
+	echo -n "Do you wish to edit the disklabel on ${1}? [y]"
 	getresp "y"
 	case "$resp" in
 	y*|Y*) ;;
@@ -159,30 +129,29 @@ md_prep_disklabel()
 
 	# display example
 	cat << \__md_prep_disklabel_1
-
 Here is an example of what the partition information will look like once
 you have entered the disklabel editor. Disk partition sizes and offsets
-are in sector (most likely 512 bytes) units. Make sure these size/offset
-pairs are on cylinder boundaries (the number of sector per cylinder is
-given in the `sectors/cylinder' entry, which is not shown here).
-
-Do not change any parameters except the partition layout and the label name.
-It's probably also wisest not to touch the `8 partitions:' line, even
-in case you have defined less than eight partitions.
+are in sector (most likely 512 bytes) units. Make sure all partitions
+start on a cylinder boundary (c/t/s == XXX/0/0).
 
 [Example]
-8 partitions:
-#        size   offset    fstype   [fsize bsize   cpg]
-  a:    50176        0    4.2BSD     1024  8192    16   # (Cyl.    0 - 111)
-  b:    64512    50176      swap                        # (Cyl.  112 - 255)
-  c:   640192        0   unknown                        # (Cyl.    0 - 1428)
-  d:   525504   114688    4.2BSD     1024  8192    16   # (Cyl.  256 - 1428)
+partition      start         (c/t/s)      nblks         (c/t/s)  type
+
+ a (root)          0       (0/00/00)      31392     (109/00/00)  4.2BSD
+ b (swap)      31392     (109/00/00)      73440     (255/00/00)  swap
+ c (disk)          0       (0/00/00)    1070496    (3717/00/00)  unused
+ d (user)     104832     (364/00/00)      30528     (106/00/00)  4.2BSD
+ e (user)     135360     (470/00/00)      40896     (142/00/00)  4.2BSD
+ f (user)     176256     (612/00/00)      92160     (320/00/00)  4.2BSD
+ g (user)     268416     (932/00/00)     802080    (2785/00/00)  4.2BSD
+
 [End of example]
 
+Hit the <return> key when you have read this...
+
 __md_prep_disklabel_1
-	echo -n "Press [Enter] to continue "
 	getresp ""
-	edlabel /dev/r${_disk}c
+	edlabel /dev/r${1}c
 }
 
 md_copy_kernel() {
