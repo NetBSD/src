@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.25 2001/10/17 22:16:41 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.26 2002/03/20 18:54:47 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -351,8 +351,8 @@ pci_conf_read(pc, tag, reg)
 		(long)tag, reg));
 	if (PCITAG_NODE(tag) != -1) {
 		DPRINTF(SPDB_CONF, ("asi=%x addr=%qx (offset=%x) ...",
-			bus_type_asi[sc->sc_configtag->type],
-			(long long)(sc->sc_configaddr + 
+			sc->sc_configaddr._asi,
+			(long long)(sc->sc_configaddr._ptr + 
 				PCITAG_OFFSET(tag) + reg),
 			(int)PCITAG_OFFSET(tag) + reg));
 
@@ -381,8 +381,8 @@ pci_conf_write(pc, tag, reg, data)
 	DPRINTF(SPDB_CONF, ("pci_conf_write: tag %lx; reg %x; data %x; ", 
 		(long)PCITAG_OFFSET(tag), reg, (int)data));
 	DPRINTF(SPDB_CONF, ("asi = %x; readaddr = %qx (offset = %x)\n",
-		bus_type_asi[sc->sc_configtag->type],
-		(long long)(sc->sc_configaddr + PCITAG_OFFSET(tag) + reg), 
+		sc->sc_configaddr._asi,
+		(long long)(sc->sc_configaddr._ptr + PCITAG_OFFSET(tag) + reg), 
 		(int)PCITAG_OFFSET(tag) + reg));
 
 	/* If we don't know it, just punt it.  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.47 2002/03/14 20:51:35 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.48 2002/03/20 18:54:48 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,8 +144,6 @@ static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static bus_dma_tag_t sbus_alloc_dmatag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int,
 			      struct sbus_intr **, int *, int));
-int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-			      int, bus_space_handle_t *));
 static int sbus_overtemp __P((void *));
 static int _sbus_bus_map __P((
 		bus_space_tag_t,
@@ -205,14 +203,6 @@ void sbus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
  * cannot be had from the PROM as an `interrupt' property. We then
  * fall back on the `intr' property which contains the CPU IPL.
  */
-
-/* Translate Sbus interrupt level to processor IPL */
-static int intr_sbus2ipl_4c[] = {
-	0, 1, 2, 3, 5, 7, 8, 9
-};
-static int intr_sbus2ipl_4m[] = {
-	0, 2, 3, 5, 7, 9, 11, 13
-};
 
 /*
  * This value is or'ed into the attach args' interrupt level cookie
@@ -283,19 +273,34 @@ sbus_attach(parent, self, aux)
 
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
-	sc->sc_sysio = (struct sysioreg*)(u_long)ma->ma_address[0];	/* Use prom mapping for sysio. */
-	sc->sc_ign = ma->ma_interrupts[0] & INTMAP_IGN;		/* Find interrupt group no */
+	sc->sc_ign = ma->ma_interrupts[0] & INTMAP_IGN;		
 
-	/* Setup interrupt translation tables */
-	sc->sc_intr2ipl = CPU_ISSUN4C
-				? intr_sbus2ipl_4c
-				: intr_sbus2ipl_4m;
+	/* XXXX Use sysio PROM mappings for interrupt vector regs. */
+	sparc_promaddr_to_handle(sc->sc_bustag,	ma->ma_address[0], &sc->sc_bh);
+	sc->sc_sysio = (struct sysioreg *)bus_space_vaddr(sc->sc_bustag, 
+		&sc->sc_bh);
+
+#ifdef _LP64
+	/* 
+	 * 32-bit kernels use virtual addresses for bus space operations
+	 * so we may as well use the prom VA.
+	 *
+	 * 64-bit kernels use physical addresses for bus space operations
+	 * so mapping this in again will reduce TLB thrashing.
+	 */
+	if (bus_space_map(sc->sc_bustag, ma->ma_reg[0].ur_paddr, 
+		ma->ma_reg[0].ur_len, 0, &sc->sc_bh) != 0) {
+		printf("%s: cannot map registers\n", self->dv_xname);
+		return;
+	}
+#endif
 
 	/*
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 25*1000*1000);
+	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 
+		25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbt = sbus_alloc_bustag(sc);
@@ -314,13 +319,18 @@ sbus_attach(parent, self, aux)
 	if (error)
 		panic("%s: error getting ranges property", sc->sc_dev.dv_xname);
 
-	/* initailise the IOMMU */
+	/* initialize the IOMMU */
 
 	/* punch in our copies */
 	sc->sc_is.is_bustag = sc->sc_bustag;
-	sc->sc_is.is_iommu = &sc->sc_sysio->sys_iommu;
-	sc->sc_is.is_sb[0] = &sc->sc_sysio->sys_strbuf;
-	sc->sc_is.is_sb[1] = NULL;
+	bus_space_subregion(sc->sc_bustag, sc->sc_bh, 
+		(vaddr_t)&((struct sysioreg *)NULL)->sys_iommu, 
+		sizeof (struct iommureg), &sc->sc_is.is_iommu);
+	bus_space_subregion(sc->sc_bustag, sc->sc_bh, 
+		(vaddr_t)&((struct sysioreg *)NULL)->sys_strbuf, 
+		sizeof (struct iommu_strbuf), &sc->sc_is.is_sb[0]);
+	sc->sc_is.is_sbvalid[0] = 1;
+	sc->sc_is.is_sbvalid[1] = 0;
 
 	/* give us a nice name.. */
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
@@ -484,33 +494,6 @@ _sbus_bus_map(t, addr, size, flags, v, hp)
 	return (EINVAL);
 }
 
-int
-sbus_bus_mmap(t, btype, paddr, flags, hp)
-	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t paddr;
-	int flags;
-	bus_space_handle_t *hp;
-{
-	bus_addr_t offset = paddr;
-	int slot = btype;
-	struct sbus_softc *sc = t->cookie;
-	int i;
-
-	for (i = 0; i < sc->sc_nrange; i++) {
-		bus_addr_t paddr;
-
-		if (sc->sc_range[i].cspace != slot)
-			continue;
-
-		paddr = sc->sc_range[i].poffset + offset;
-		paddr |= ((bus_addr_t)sc->sc_range[i].pspace<<32);
-		*hp = bus_space_mmap(sc->sc_bustag, paddr, 0,
-			VM_PROT_READ|VM_PROT_WRITE, flags);
-	}
-
-	return (*hp == -1 ? -1 : 0);
-}
 
 bus_addr_t
 sbus_bus_addr(t, btype, offset)
@@ -740,8 +723,8 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 			vec |= INTMAP_V;
 			/* Insert IGN */
 			vec |= sc->sc_ign;
-			bus_space_write_8(sc->sc_bustag,
-			    (bus_space_handle_t)(u_long)ih->ih_map, 0, vec);
+			/* XXXX */
+			*(ih->ih_map) = vec;
 		} else {
 			int64_t *intrptr = &sc->sc_sysio->scsi_int_map;
 			int64_t intrmap = 0;
@@ -763,9 +746,8 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 				ih->ih_clr = &intrptr[i];
 				/* Enable the interrupt */
 				intrmap |= INTMAP_V;
-				bus_space_write_8(sc->sc_bustag,
-				    (bus_space_handle_t)(u_long)ih->ih_map, 0,
-				    (u_long)intrmap);
+				/* XXXX */
+				*(ih->ih_map) = intrmap;
 			} else
 				panic("IRQ not found!");
 		}
