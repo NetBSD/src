@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.22 1998/07/06 11:11:34 augustss Exp $	*/
+/*	$NetBSD: audioio.h,v 1.23 1998/08/12 03:18:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -281,6 +281,7 @@ typedef struct mixer_ctrl {
 #define AudioNpseudo	"pseudo"
 #define AudioNmute	"mute"
 #define AudioNenhanced	"enhanced"
+#define AudioNpreamp	"preamp"
 #define AudioNon	"on"
 #define AudioNoff	"off"
 #define AudioNmode	"mode"

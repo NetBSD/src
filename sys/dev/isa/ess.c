@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.20 1998/08/11 12:16:22 matthias Exp $	*/
+/*	$NetBSD: ess.c,v 1.21 1998/08/12 03:18:34 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -1723,7 +1723,7 @@ ess_query_devinfo(addr, dip)
 		dip->mixer_class = ESS_RECORD_CLASS;
 		dip->prev = ESS_MIC_REC_VOL;
 		dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNenhanced);
+		strcpy(dip->label.name, AudioNpreamp);
 		dip->un.e.num_mem = 2;
 		strcpy(dip->un.e.member[0].label.name, AudioNoff);
 		dip->un.e.member[0].ord = 0;
