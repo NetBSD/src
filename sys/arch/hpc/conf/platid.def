@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.17 2004/08/13 15:48:51 uch Exp $	*/
+/*	$NetBSD: platid.def,v 1.18 2005/01/11 01:03:42 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -255,6 +255,13 @@ Compaq {
 	}
   }
 #endif /* hpcarm */
+#ifdef hpcsh
+  AERO " Aero" {
+    8000 {
+      CPU=SH_4_7750
+    }
+  }
+#endif /* hpcsh */
 }
 
 #ifdef hpcmips
@@ -317,6 +324,9 @@ HP {
 
 			680SV -" 680 (Scandinavian)"
 			690SV -" 690 (Scandinavian)"
+
+			680ES -" 680 (Spanish)"
+			690ES -" 690 (Spanish)"
 		}
 #endif /* hpcsh */
 #ifdef hpcarm
