@@ -30,17 +30,17 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)du.1	6.13 (Berkeley) 6/20/91
-.\"	$Id: uname.1,v 1.2 1993/08/01 07:27:08 mycroft Exp $
+.\"	$Id: uname.1,v 1.3 1993/08/28 03:20:25 jtc Exp $
 .\"
 .Dd March 29, 1992
 .Dt UNAME 1
-.Os Posix
+.Os
 .Sh NAME
 .Nm uname
 .Nd Print name of current UNIX system
 .Sh SYNOPSIS
 .Nm uname
-.Op Fl snrvma
+.Op Fl amnsrv
 .Sh DESCRIPTION
 The
 .Nm uname
@@ -50,21 +50,29 @@ which system one is using.
 .Pp
 The following options are available:
 .Bl -tag -width indent
-.It Fl s
-print the system name (default).
+.It Fl a 
+Behave as though all of the options
+.Fl mnrsv 
+were specified.
+.It Fl m
+print the machine hardware name.
 .It Fl n
 print the nodename (the nodename may be a name
 that the system is known by to a communications
 network).
+.It Fl s
+print the operating system name.
 .It Fl r
 print the operating system release.
 .It Fl v
 print the operating system version.
-.It Fl m
-print the machine hardware name.
-.It Fl a
-print all the above information.
-
+.El
+.Pp
+If no options are specified, 
+.Nm uname
+prints the operating system name as if the
+.Fl s
+option had been specified.
 .Sh SEE ALSO
 .Xr hostname 1 ,
 .Xr machine 1 ,
@@ -72,7 +80,6 @@ print all the above information.
 .Sh STANDARDS
 The
 .Nm uname
-utility is expected to be
-.St -p1003.2
-compatible.
+utility conforms to
+.St -p1003.2-92 .
 
