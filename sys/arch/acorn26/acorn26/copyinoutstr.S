@@ -1,4 +1,4 @@
-/* $NetBSD: copyinoutstr.S,v 1.1 2002/03/24 15:46:43 bjh21 Exp $ */
+/* $NetBSD: copyinoutstr.S,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -26,14 +26,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 /*
  * copyinout.S - copy data between user and kernel space
  */
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copyinoutstr.S,v 1.1 2002/03/24 15:46:43 bjh21 Exp $")
+RCSID("$NetBSD: copyinoutstr.S,v 1.2 2002/03/24 23:37:42 bjh21 Exp $")
 
 #include <sys/errno.h>
 #include "assym.h"

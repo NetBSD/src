@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.1 2002/03/24 15:46:45 bjh21 Exp $	*/
+/*	$NetBSD: fpu.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -26,14 +26,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 /*
  * fpu.c - Floating point unit support
  */
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1 2002/03/24 15:46:45 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
