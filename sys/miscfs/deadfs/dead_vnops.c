@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.30 2001/01/22 12:17:37 jdolecek Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.31 2001/11/10 13:33:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)dead_vnops.c	8.2 (Berkeley) 11/21/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.31 2001/11/10 13:33:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

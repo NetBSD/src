@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.40 2000/08/03 20:41:28 thorpej Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.41 2001/11/10 13:33:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -38,6 +38,9 @@
  *
  *	@(#)union_subr.c	8.20 (Berkeley) 5/20/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.41 2001/11/10 13:33:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
