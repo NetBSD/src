@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.h,v 1.8 2003/04/07 11:23:02 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.h,v 1.9 2003/04/07 19:35:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -127,10 +127,10 @@ struct smb_t2rq {
 	struct smb_vc * t2_vc;
 };
 
+int  smb_rqinit(void);
+
 int  smb_rq_alloc(struct smb_connobj *layer, u_char cmd,
 	struct smb_cred *scred, struct smb_rq **rqpp);
-int  smb_rq_init(struct smb_rq *rqp, struct smb_connobj *layer, u_char cmd,
-	struct smb_cred *scred);
 void smb_rq_done(struct smb_rq *rqp);
 int  smb_rq_getrequest(struct smb_rq *rqp, struct mbchain **mbpp);
 int  smb_rq_getreply(struct smb_rq *rqp, struct mdchain **mbpp);
@@ -146,8 +146,6 @@ void smb_rq_setcallback(struct smb_rq *, void (*)(void *), void *);
 
 int  smb_t2_alloc(struct smb_connobj *layer, u_short setup, struct smb_cred *scred,
 	struct smb_t2rq **rqpp);
-int  smb_t2_init(struct smb_t2rq *rqp, struct smb_connobj *layer, u_short setup,
-	struct smb_cred *scred);
 void smb_t2_done(struct smb_t2rq *t2p);
 int  smb_t2_request(struct smb_t2rq *t2p);
 
