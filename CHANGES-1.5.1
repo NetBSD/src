@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.42 2001/04/04 19:28:37 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.43 2001/04/04 21:00:09 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -2349,3 +2349,129 @@ sys/netinet6/icmp6.c				1.63
 sys/arch/alpha/pci/pci_550.c			1.20-1.21
 
   Fix a Miata panic-on-boot due to an unusual SRM irq routing.
+
+usr.sbin/dhcp/Makefile				1.10 via patch
+usr.sbin/dhcp/Makefile.inc			1.13-1.14 via patch
+usr.sbin/dhcp/README				1.10
+usr.sbin/dhcp/RELNOTES				1.10
+usr.sbin/dhcp/client/clparse.c			1.10
+usr.sbin/dhcp/client/dhclient-script.8		1.8
+usr.sbin/dhcp/client/dhclient.8			1.11
+usr.sbin/dhcp/client/dhclient.c			1.35
+usr.sbin/dhcp/client/dhclient.conf.5		1.1.1.6
+usr.sbin/dhcp/client/scripts/bsdos		1.6
+usr.sbin/dhcp/client/scripts/freebsd		1.7
+usr.sbin/dhcp/client/scripts/netbsd		1.12
+usr.sbin/dhcp/client/scripts/openbsd		1.1.1.4
+usr.sbin/dhcp/client/scripts/solaris		1.1.1.7
+usr.sbin/dhcp/common/Makefile			1.18
+usr.sbin/dhcp/common/alloc.c			1.1.1.9
+usr.sbin/dhcp/common/bpf.c			1.8
+usr.sbin/dhcp/common/comapi.c			1.5
+usr.sbin/dhcp/common/conflex.c			1.1.1.12
+usr.sbin/dhcp/common/convert.c			deleted
+usr.sbin/dhcp/common/ctrace.c			1.1 (new)
+usr.sbin/dhcp/common/dhcp-eval.5		1.1.1.4
+usr.sbin/dhcp/common/dhcp-options.5		1.8
+usr.sbin/dhcp/common/discover.c			1.11
+usr.sbin/dhcp/common/dispatch.c			1.5
+usr.sbin/dhcp/common/dlpi.c			1.1.1.9
+usr.sbin/dhcp/common/dns.c			1.4
+usr.sbin/dhcp/common/execute.c			1.1.1.7
+usr.sbin/dhcp/common/hash.c			deleted
+usr.sbin/dhcp/common/icmp.c			1.1.1.11
+usr.sbin/dhcp/common/nit.c			1.1.1.11
+usr.sbin/dhcp/common/options.c			1.10
+usr.sbin/dhcp/common/packet.c			1.4
+usr.sbin/dhcp/common/parse.c			1.4
+usr.sbin/dhcp/common/print.c			1.4
+usr.sbin/dhcp/common/resolv.c			1.1.1.4
+usr.sbin/dhcp/common/tables.c			1.8
+usr.sbin/dhcp/common/tree.c			1.1.1.9
+usr.sbin/dhcp/dhcpctl/Makefile.dist		1.1.1.5
+usr.sbin/dhcp/dhcpctl/omshell.c			1.1 (new)
+usr.sbin/dhcp/dhcpctl/remote.c			1.1.1.4
+usr.sbin/dhcp/dst/Makefile			1.1-1.2 (new)
+usr.sbin/dhcp/dst/base64.c			1.1 (new)
+usr.sbin/dhcp/dst/dst_api.c			1.1 (new)
+usr.sbin/dhcp/dst/dst_internal.h		1.1 (new)
+usr.sbin/dhcp/dst/dst_support.c			1.1 (new)
+usr.sbin/dhcp/dst/hmac_link.c			1.1 (new)
+usr.sbin/dhcp/dst/md5.h				1.1 (new)
+usr.sbin/dhcp/dst/md5_dgst.c			1.1 (new)
+usr.sbin/dhcp/dst/md5_locl.h			1.1 (new)
+usr.sbin/dhcp/dst/prandom.c			1.1 (new)
+usr.sbin/dhcp/includes/cf/linux.h		1.1.1.9
+usr.sbin/dhcp/includes/cf/netbsd.h		1.5
+usr.sbin/dhcp/includes/cf/rhapsody.h		1.1.1.3
+usr.sbin/dhcp/includes/ctrace.h			1.1 (new)
+usr.sbin/dhcp/includes/dhcp.h			1.4
+usr.sbin/dhcp/includes/dhcpd.h			1.18
+usr.sbin/dhcp/includes/dhctoken.h		1.1.1.10
+usr.sbin/dhcp/includes/failover.h		1.4
+usr.sbin/dhcp/includes/isc/result.h		1.1.1.3
+usr.sbin/dhcp/includes/isc/types.h		1.1.1.2
+usr.sbin/dhcp/includes/minires/minires.h	1.1.1.6
+usr.sbin/dhcp/includes/minires/res_update.h	1.1.1.2
+usr.sbin/dhcp/includes/omapip/alloc.h		1.1.1.2
+usr.sbin/dhcp/includes/omapip/omapip.h		1.1.1.6
+usr.sbin/dhcp/includes/omapip/omapip_p.h	1.1.1.5
+usr.sbin/dhcp/includes/omapip/trace.h		1.1 (new)
+usr.sbin/dhcp/includes/site.h			1.6
+usr.sbin/dhcp/includes/statement.h		1.1.1.3
+usr.sbin/dhcp/includes/tree.h			1.1.1.5
+usr.sbin/dhcp/includes/version.h		1.7
+usr.sbin/dhcp/minires/Makefile			1.2-1.3
+usr.sbin/dhcp/minires/Makefile.dist		1.1.1.3
+usr.sbin/dhcp/minires/base64.c			deleted
+usr.sbin/dhcp/minires/dst_api.c			deleted
+usr.sbin/dhcp/minires/dst_internal.h		deleted
+usr.sbin/dhcp/minires/hmac_link.c		deleted
+usr.sbin/dhcp/minires/md5.h			deleted
+usr.sbin/dhcp/minires/md5_dgst.c		deleted
+usr.sbin/dhcp/minires/md5_locl.h		deleted
+usr.sbin/dhcp/minires/ns_parse.c		1.1.1.2
+usr.sbin/dhcp/minires/ns_samedomain.c		1.1.1.2
+usr.sbin/dhcp/minires/ns_sign.c			1.1.1.2
+usr.sbin/dhcp/minires/ns_verify.c		1.1.1.2
+usr.sbin/dhcp/minires/prandom.c			deleted
+usr.sbin/dhcp/minires/res_findzonecut.c		1.1.1.6
+usr.sbin/dhcp/minires/res_init.c		1.1.1.2
+usr.sbin/dhcp/minires/res_mkquery.c		1.1.1.3
+usr.sbin/dhcp/minires/res_mkupdate.c		1.1.1.3
+usr.sbin/dhcp/minires/res_query.c		1.1.1.3
+usr.sbin/dhcp/minires/res_send.c		1.1.1.3
+usr.sbin/dhcp/minires/res_sendsigned.c		1.1.1.3
+usr.sbin/dhcp/minires/res_update.c		1.1.1.6
+usr.sbin/dhcp/minires/support.c			deleted
+usr.sbin/dhcp/minires/toisc.c			1.1 (new)
+usr.sbin/dhcp/omapip/Makefile			1.3
+usr.sbin/dhcp/omapip/alloc.c			1.1.1.7
+usr.sbin/dhcp/omapip/array.c			1.1 (new)
+usr.sbin/dhcp/omapip/buffer.c			1.1.1.4
+usr.sbin/dhcp/omapip/connection.c		1.1.1.5
+usr.sbin/dhcp/omapip/listener.c			1.1.1.4
+usr.sbin/dhcp/omapip/mrtrace.c			1.1 (new)
+usr.sbin/dhcp/omapip/protocol.c			1.3
+usr.sbin/dhcp/omapip/result.c			1.1.1.3
+usr.sbin/dhcp/omapip/support.c			1.1.1.6
+usr.sbin/dhcp/omapip/trace.c			1.1 (new)
+usr.sbin/dhcp/relay/dhcrelay.c			1.9
+usr.sbin/dhcp/server/Makefile			1.10
+usr.sbin/dhcp/server/bootp.c			1.15
+usr.sbin/dhcp/server/class.c			1.1.1.5
+usr.sbin/dhcp/server/confpars.c			1.7
+usr.sbin/dhcp/server/db.c			1.1.1.13
+usr.sbin/dhcp/server/ddns.c			1.1 (new)
+usr.sbin/dhcp/server/dhcp.c			1.18
+usr.sbin/dhcp/server/dhcpd.8			1.9
+usr.sbin/dhcp/server/dhcpd.c			1.24
+usr.sbin/dhcp/server/dhcpd.conf			1.1.1.4
+usr.sbin/dhcp/server/dhcpd.conf.5		1.15
+usr.sbin/dhcp/server/dhcpd.leases.5		1.5
+usr.sbin/dhcp/server/failover.c			1.1.1.7
+usr.sbin/dhcp/server/mdb.c			1.1.1.7
+usr.sbin/dhcp/server/omapi.c			1.7
+usr.sbin/dhcp/server/stables.c			1.1.1.6
+
+  Update DHCP software to ISC version 3, Beta 2, Patchlevel 23.
