@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.47.2.6 2004/07/15 15:59:44 tron Exp $	*/
+/*	$NetBSD: tar.c,v 1.47.2.7 2004/11/12 04:59:17 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.47.2.6 2004/07/15 15:59:44 tron Exp $");
+__RCSID("$NetBSD: tar.c,v 1.47.2.7 2004/11/12 04:59:17 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -1226,7 +1226,15 @@ name_split(char *name, int len)
 	 */
 	if (len < TNMSZ)
 		return(name);
-	if (len > (TPFSZ + TNMSZ))
+	/*
+	 * GNU tar does not honor the prefix+name mode if the magic
+	 * is not "ustar\0". So in GNU tar compatibility mode, we don't
+	 * split the filename into prefix+name because we are setting
+	 * the magic to "ustar " as GNU tar does. This of course will
+	 * end up creating a LongLink record in cases where it does not
+	 * really need do, but we are behaving like GNU tar after all.
+	 */
+	if (is_gnutar || len > (TPFSZ + TNMSZ))
 		return(NULL);
 
 	/*
