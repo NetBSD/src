@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.de,v 1.1 2004/02/29 18:46:43 jschauma Exp $	*/
+/*	$NetBSD: msg.mbr.de,v 1.2 2004/02/29 23:25:09 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,16 +69,16 @@ message part_header
 {   Total disk size %d %s.
 
 .if BOOTSEL
-   Start(%3s)  Grösse(%3s) Flg Typ                    Bootmenü
-   ---------- ------------ --- ----------------------- --------
+   Start(%3s) Grösse(%3s) Flg Typ                    Bootmenü
+   ---------- ----------- --- ----------------------- --------
 .else
-   Start(%3s)  Grösse(%3s) Flg Typ 
-   ---------- ------------ --- ----------------
+   Start(%3s) Grösse(%3s) Flg Typ 
+   ---------- ----------- --- ----------------
 .endif
 }
 
 message part_row_used
-{%10d %10d %c%c%c}
+{%10d %11d %c%c%c}
 
 message noactivepart
 {Sie haben keine Partition als aktiv markiert. Dies mag ihr System daran
@@ -111,30 +111,30 @@ message biosgeom
 {BIOS Geometrie: %d Zyl, %d Köpfe, %d Sek\n}
 
 message ovrwrite
-{Ihre Disk verfügt gegenwärtig über eine nicht-NetBSD Partition. Wollen sie
-diese Partition wirklich mit NetBSD überschreiben?
+{Ihre Disk verfügt gegenwärtig über eine nicht-NetBSD Partition.
+Wollen sie diese Partition wirklich mit NetBSD überschreiben?
 }
 
 message Partition_OK
 {Partition OK}
 
 message ptn_type
-{      Typ: %s}
+{         Typ: %s}
 message ptn_start
-{     Start: %d %s}
+{       Start: %d %s}
 message ptn_size
 {      Grösse: %d %s}
 message ptn_end
-{       Ende: %d %s}
+{        Ende: %d %s}
 message ptn_active
-{    Aktiv: %s}
+{       Aktiv: %s}
 message ptn_install
-{   Installation: %s}
+{Installation: %s}
 .if BOOTSEL
 message bootmenu
-{  Bootmenü: %s}
+{    Bootmenü: %s}
 message boot_dflt
-{   Bootvorgabe: %s}
+{ Bootvorgabe: %s}
 .endif
 
 message get_ptn_size {%ssize (maximum %d %s)}
@@ -148,10 +148,10 @@ message No_free_space {Keinen freien Speicherplatz}
 message Only_one_extended_ptn {Hier ist nur eine Erweiterte Partition möglich}
 
 message editparttable
-{Die aktuelle MBR Partition ist unten angezeigt.
+{Die aktuelle MBR Partition ist unten angezeigt. 
 Flgs: a => Aktive Partition,
 .if BOOTSEL
-d => 'Bootselect' (Bootauswahl) Vorgabe,
+d => 'Bootselect' (Bootauswahl) Vorgabe, 
 .endif
 I => hier installieren. 
 Wählen sie die Partition, die sie verändern möchten:
