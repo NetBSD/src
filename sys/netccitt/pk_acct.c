@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pk_acct.c	8.1 (Berkeley) 6/10/93
- *	$Id: pk_acct.c,v 1.4 1994/05/13 06:04:44 mycroft Exp $
+ *	$Id: pk_acct.c,v 1.5 1994/06/18 00:34:33 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -73,9 +73,8 @@ pk_accton (path)
 
 	if (path == 0)
 		goto close;
-	nd.ni_segflg = UIO_USERSPACE;
-	nd.ni_dirp = path;
-	if (error = vn_open (&nd, p, FWRITE, 0644))
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, path, p);
+	if (error = vn_open (&nd, FWRITE, 0644))
 		return (error);
 	vp = nd.ni_vp;
 	VOP_UNLOCK(vp);
