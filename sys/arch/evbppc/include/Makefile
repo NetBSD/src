@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2002/12/11 06:29:04 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2002/12/19 15:34:36 thorpej Exp $
 
 KDIR=	/sys/arch/evbppc/include
 INCSDIR= /usr/include/evbppc
@@ -13,7 +13,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	int_types.h intr.h ipkdb.h \
 	kcore.h \
 	limits.h lock.h \
-	math.h \
+	math.h mcontext.h \
 	param.h pcb.h pio.h pmap.h pmc.h powerpc.h proc.h profile.h \
 	psl.h pte.h ptrace.h \
 	reg.h reloc.h \
