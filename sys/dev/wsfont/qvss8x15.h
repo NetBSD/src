@@ -1,4 +1,4 @@
-/* $NetBSD: qvss8x15.h,v 1.2 1999/04/14 23:06:26 ad Exp $ */
+/* 	$NetBSD: qvss8x15.h,v 1.3 1999/05/18 21:51:58 ad Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986
@@ -71,6 +71,7 @@
  *   of its software on equipment which is not supplied by Digital.	*
  *									*
  ************************************************************************/
+
 extern u_char qvss8x15_data[];
 
 struct wsdisplay_font qvss8x15 = { 
