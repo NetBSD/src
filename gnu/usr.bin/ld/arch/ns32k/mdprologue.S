@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mdprologue.S,v 1.5 1997/07/09 19:32:54 matthias Exp $
+ *	$Id: mdprologue.S,v 1.6 1997/07/11 23:39:56 matthias Exp $
  */
 
 /*
@@ -81,22 +81,14 @@ ENTRY_NOPROFILE(binder_entry)
 	/* 
 	 * Now we have to 0x200-align the text segment.
 	 * We know that the a.out header is 0x20 bytes long.
-	 * The code so far is less then 0x60 bytes.
-	 * So we first do a 0x80-align.
+	 * The code so far is less then 0x1e0 bytes. So we
+	 * advance "." to address 0x1e0.
 	 */
 
-	.align 7,0xa2
+	.org	0x1e0
 
 	/*
-	 * Now we are at address 0xa0. Skip over the 
-	 * remaining 0x60 bytes.
-	 */
-	.long	0,0,0,0,0,0,0,0
-	.long	0,0,0,0,0,0,0,0
-	.long	0,0,0,0,0,0,0,0
-
-	/*
-	 * We are at address 0x100 now.
+	 * We are at address 0x200 now.
 	 */
 
 0:	ret	0;			/* 0000 */
@@ -137,36 +129,3 @@ ASGLOBAL(_C_LABEL(cinv))
 	.align 4,0xa2; ret 0		/* 01d0 */
 	.align 4,0xa2; ret 0		/* 01e0 */
 	.align 4,0xa2; ret 0		/* 01f0 */
-	.align 4,0xa2; ret 0		/* 0000 */
-	.align 4,0xa2; ret 0		/* 0010 */
-	.align 4,0xa2; ret 0		/* 0020 */
-	.align 4,0xa2; ret 0		/* 0030 */
-	.align 4,0xa2; ret 0		/* 0040 */
-	.align 4,0xa2; ret 0		/* 0050 */
-	.align 4,0xa2; ret 0		/* 0060 */
-	.align 4,0xa2; ret 0		/* 0070 */
-	.align 4,0xa2; ret 0		/* 0080 */
-	.align 4,0xa2; ret 0		/* 0090 */
-	.align 4,0xa2; ret 0		/* 00a0 */
-	.align 4,0xa2; ret 0		/* 00b0 */
-	.align 4,0xa2; ret 0		/* 00c0 */
-	.align 4,0xa2; ret 0		/* 00d0 */
-	.align 4,0xa2; ret 0		/* 00e0 */
-	.align 4,0xa2; ret 0		/* 00f0 */
-	.align 4,0xa2; ret 0		/* 0100 */
-	.align 4,0xa2; ret 0		/* 0110 */
-	.align 4,0xa2; ret 0		/* 0120 */
-	.align 4,0xa2; ret 0		/* 0130 */
-	.align 4,0xa2; ret 0		/* 0140 */
-	.align 4,0xa2; ret 0		/* 0150 */
-	.align 4,0xa2; ret 0		/* 0160 */
-	.align 4,0xa2; ret 0		/* 0170 */
-	.align 4,0xa2; ret 0		/* 0180 */
-	.align 4,0xa2; ret 0		/* 0190 */
-	.align 4,0xa2; ret 0		/* 01a0 */
-	.align 4,0xa2; ret 0		/* 01b0 */
-	.align 4,0xa2; ret 0		/* 01c0 */
-	.align 4,0xa2; ret 0		/* 01d0 */
-	.align 4,0xa2; ret 0		/* 01e0 */
-	.align 4,0xa2; ret 0		/* 01f0 */
-
