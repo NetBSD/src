@@ -1,4 +1,4 @@
-/*	$NetBSD: swdmover.c,v 1.3 2002/12/10 01:09:09 thorpej Exp $	*/
+/*	$NetBSD: swdmover.c,v 1.4 2003/03/06 21:10:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.3 2002/12/10 01:09:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.4 2003/03/06 21:10:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -262,10 +262,15 @@ static void
 swdmover_func_copy_process(struct dmover_request *dreq)
 {
 
-	/*
-	 * Middle-end makes sure input and output buffers are of
-	 * the same type.
-	 */
+	/* XXX Currently, both buffers must be of same type. */
+	if (dreq->dreq_inbuf_type != dreq->dreq_outbuf_type) {
+		/* XXXLOCK */
+		dreq->dreq_error = EINVAL;
+		dreq->dreq_flags |= DMOVER_REQ_ERROR;
+		/* XXXUNLOCK */
+		goto done;
+	}
+
 	switch (dreq->dreq_outbuf_type) {
 	case DMOVER_BUF_LINEAR:
 		if (dreq->dreq_outbuf.dmbuf_linear.l_len !=
@@ -328,6 +333,7 @@ swdmover_func_copy_process(struct dmover_request *dreq)
 		/* XXXUNLOCK */
 	}
 
+ done:
 	dmover_done(dreq);
 }
 
