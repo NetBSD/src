@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.11 1997/07/30 22:54:48 jtc Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.12 1997/09/29 05:24:25 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #define VND_CONFIG	1
 #define VND_UNCONFIG	2
@@ -158,17 +159,14 @@ config(dev, file, geom, action)
 {
 	struct vnd_ioctl vndio;
 	struct disklabel *lp;
-	char *rdev;
+	char rdev[MAXPATHLEN + 1];
 	int fd, rv;
 
-	rdev = rawdevice(dev);
-	fd = open(rdev, O_RDWR, 0666);
+	fd = opendisk(dev, O_RDWR, rdev, sizeof(rdev), 0);
 	if (fd < 0) {
 		warn(rdev);
-		(void) free(rdev);
 		return (1);
 	}
-	(void) free(rdev);
 
 	memset(&vndio, 0, sizeof(vndio));
 #ifdef __GNUC__
@@ -270,28 +268,6 @@ getgeom(vng, cp)
 #undef CVTARG
 
 	return (0);
-}
-
-char *
-rawdevice(dev)
-	char *dev;
-{
-	register char *rawbuf, *dp, *ep;
-	struct stat sb;
-	size_t len;
-
-	len = strlen(dev);
-	rawbuf = malloc(len + 2);
-	strcpy(rawbuf, dev);
-	if (stat(rawbuf, &sb) != 0 || !S_ISCHR(sb.st_mode)) {
-		dp = strrchr(rawbuf, '/');
-		if (dp) {
-			for (ep = &rawbuf[len]; ep > dp; --ep)
-				*(ep+1) = *ep;
-			*++ep = 'r';
-		}
-	}
-	return (rawbuf);
 }
 
 void
