@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.15 2003/07/30 18:49:27 jonathan Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.16 2003/08/28 01:53:06 thorpej Exp $	*/
 /* 	$FreeBSD: hifn7751.c,v 1.5.2.6 2003/07/02 17:04:50 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.139 2003/03/13 20:08:06 jason Exp $	*/
 
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.15 2003/07/30 18:49:27 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.16 2003/08/28 01:53:06 thorpej Exp $");
 
 #include "rnd.h"
 #include "opencrypto.h"
@@ -122,7 +122,7 @@ struct cfdriver hifn_cd = {
 void	hifn_reset_board(struct hifn_softc *, int);
 void	hifn_reset_puc(struct hifn_softc *);
 void	hifn_puc_wait(struct hifn_softc *);
-int	hifn_enable_crypto(struct hifn_softc *, pcireg_t);
+const char *hifn_enable_crypto(struct hifn_softc *, pcireg_t);
 void	hifn_set_retry(struct hifn_softc *);
 void	hifn_init_dma(struct hifn_softc *);
 void	hifn_init_pci_registers(struct hifn_softc *);
@@ -174,6 +174,56 @@ void	hifn_callback_comp(struct hifn_softc *, struct hifn_command *,
 
 struct hifn_stats hifnstats;
 
+static const struct hifn_product {
+	pci_vendor_id_t		hifn_vendor;
+	pci_product_id_t	hifn_product;
+	int			hifn_flags;
+	const char		*hifn_name;
+} hifn_products[] = {
+	{ PCI_VENDOR_INVERTEX,	PCI_PRODUCT_INVERTEX_AEON,
+	  0,
+	  "Invertex AEON",
+	},
+
+	{ PCI_VENDOR_HIFN,	PCI_PRODUCT_HIFN_7751,
+	  0,
+	  "Hi/Fn 7751",
+	},
+	{ PCI_VENDOR_NETSEC,	PCI_PRODUCT_NETSEC_7751,
+	  0,
+	  "Hi/Fn 7751 (NetSec)"
+	},
+
+	{ PCI_VENDOR_HIFN,	PCI_PRODUCT_HIFN_7811,
+	  HIFN_IS_7811 | HIFN_HAS_RNG | HIFN_HAS_LEDS | HIFN_NO_BURSTWRITE,
+	  "Hi/Fn 7811",
+	},
+
+	{ PCI_VENDOR_HIFN,	PCI_PRODUCT_HIFN_7951,
+	  HIFN_HAS_RNG | HIFN_HAS_PUBLIC,
+	  "Hi/Fn 7951",
+	},
+
+
+	{ 0,			0,
+	  0,
+	  NULL
+	}
+};
+
+static const struct hifn_product *
+hifn_lookup(const struct pci_attach_args *pa)
+{
+	const struct hifn_product *hp;
+
+	for (hp = hifn_products; hp->hifn_name != NULL; hp++) {
+		if (PCI_VENDOR(pa->pa_id) == hp->hifn_vendor &&
+		    PCI_PRODUCT(pa->pa_id) == hp->hifn_product)
+			return (hp);
+	}
+	return (NULL);
+}
+
 int
 hifn_probe(parent, match, aux)
 	struct device *parent;
@@ -186,21 +236,9 @@ hifn_probe(parent, match, aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INVERTEX &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INVERTEX_AEON)
+	if (hifn_lookup(pa) != NULL)
 		return (1);
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7751)
-		return (1);
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7811)
-		return (1);
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951)
-		return (1);
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NETSEC &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETSEC_7751)
-		return (1);
+
 	return (0);
 }
 
@@ -211,9 +249,11 @@ hifn_attach(parent, self, aux)
 {
 	struct hifn_softc *sc = (struct hifn_softc *)self;
 	struct pci_attach_args *pa = aux;
+	const struct hifn_product *hp;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	const char *hifncap;
 	char rbase;
 	bus_size_t iosize0, iosize1;
 	u_int32_t cmd;
@@ -223,39 +263,37 @@ hifn_attach(parent, self, aux)
 	int rseg;
 	caddr_t kva;
 
+	hp = hifn_lookup(pa);
+	if (hp == NULL) {
+		printf("\n");
+		panic("hifn_attach: impossible");
+	}
+
 	aprint_naive(": Crypto processor\n");
+	aprint_normal(": %s, rev. %d\n", hp->hifn_name,
+	    PCI_REVISION(pa->pa_class));
 
 	sc->sc_pci_pc = pa->pa_pc;
 	sc->sc_pci_tag = pa->pa_tag;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951)
-		sc->sc_flags = HIFN_HAS_RNG | HIFN_HAS_PUBLIC;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7811)
-		sc->sc_flags |= HIFN_IS_7811 | HIFN_HAS_RNG | HIFN_HAS_LEDS |
-		    HIFN_NO_BURSTWRITE;
+	sc->sc_flags = hp->hifn_flags;
 
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
+	cmd |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
-	if (!(cmd & PCI_COMMAND_MEM_ENABLE)) {
-		aprint_error(": failed to enable memory mapping\n");
-		return;
-	}
-
 	if (pci_mapreg_map(pa, HIFN_BAR0, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_st0, &sc->sc_sh0, NULL, &iosize0)) {
-		aprint_error(": can't find mem space %d\n", 0);
+		aprint_error("%s: can't map mem space %d\n",
+		    sc->sc_dv.dv_xname, 0);
 		return;
 	}
 
 	if (pci_mapreg_map(pa, HIFN_BAR1, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_st1, &sc->sc_sh1, NULL, &iosize1)) {
-		aprint_error(": can't find mem space %d\n", 1);
+		aprint_error("%s: can't find mem space %d\n",
+		    sc->sc_dv.dv_xname, 1);
 		goto fail_io0;
 	}
 
@@ -269,26 +307,29 @@ hifn_attach(parent, self, aux)
 	sc->sc_dmat = pa->pa_dmat;
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(*sc->sc_dma), PAGE_SIZE, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		aprint_error(": can't alloc DMA buffer\n");
+		aprint_error("%s: can't alloc DMA buffer\n",
+		    sc->sc_dv.dv_xname);
 		goto fail_io1;
         }
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, sizeof(*sc->sc_dma), &kva,
 	    BUS_DMA_NOWAIT)) {
-		aprint_error(": can't map DMA buffers (%lu bytes)\n",
-		    (u_long)sizeof(*sc->sc_dma));
+		aprint_error("%s: can't map DMA buffers (%lu bytes)\n",
+		    sc->sc_dv.dv_xname, (u_long)sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		goto fail_io1;
 	}
 	if (bus_dmamap_create(sc->sc_dmat, sizeof(*sc->sc_dma), 1,
 	    sizeof(*sc->sc_dma), 0, BUS_DMA_NOWAIT, &dmamap)) {
-		aprint_error(": can't create DMA map\n");
+		aprint_error("%s: can't create DMA map\n",
+		    sc->sc_dv.dv_xname);
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		goto fail_io1;
 	}
 	if (bus_dmamap_load(sc->sc_dmat, dmamap, kva, sizeof(*sc->sc_dma),
 	    NULL, BUS_DMA_NOWAIT)) {
-		aprint_error(": can't load DMA map\n");
+		aprint_error("%s: can't load DMA map\n",
+		    sc->sc_dv.dv_xname);
 		bus_dmamap_destroy(sc->sc_dmat, dmamap);
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
@@ -300,7 +341,7 @@ hifn_attach(parent, self, aux)
 
 	hifn_reset_board(sc, 0);
 
-	if (hifn_enable_crypto(sc, pa->pa_id) != 0) {
+	if ((hifncap = hifn_enable_crypto(sc, pa->pa_id)) == NULL) {
 		aprint_error("%s: crypto enabling failed\n",
 		    sc->sc_dv.dv_xname);
 		goto fail_mem;
@@ -328,7 +369,8 @@ hifn_attach(parent, self, aux)
 		sc->sc_ramsize >>= 1;
 
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error(": couldn't map interrupt\n");
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dv.dv_xname);
 		goto fail_mem;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -339,7 +381,8 @@ hifn_attach(parent, self, aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, hifn_intr, sc);
 #endif
 	if (sc->sc_ih == NULL) {
-		aprint_error(": couldn't establish interrupt\n");
+		aprint_error("%s: couldn't establish interrupt\n",
+		    sc->sc_dv.dv_xname);
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
@@ -354,12 +397,14 @@ hifn_attach(parent, self, aux)
 		rbase = 'M';
 		rseg /= 1024;
 	}
-	aprint_normal(", %d%cB %cram, %s\n", rseg, rbase,
+	aprint_normal("%s: %s, %d%cB %cram, interrupting at %s\n",
+	    sc->sc_dv.dv_xname, hifncap, rseg, rbase,
 	    sc->sc_drammodel ? 'd' : 's', intrstr);
 
 	sc->sc_cid = crypto_get_driverid(0);
 	if (sc->sc_cid < 0) {
-		aprint_error(": couldn't get crypto driver id\n");
+		aprint_error("%s: couldn't get crypto driver id\n",
+		    sc->sc_dv.dv_xname);
 		goto fail_intr;
 	}
 
@@ -702,7 +747,7 @@ struct pci2id {
  * "hifn_enable_crypto" is called to enable it.  The check is important,
  * as enabling crypto twice will lock the board.
  */
-int 
+const char *
 hifn_enable_crypto(sc, pciid)
 	struct hifn_softc *sc;
 	pcireg_t pciid;
@@ -722,7 +767,7 @@ hifn_enable_crypto(sc, pciid)
 #ifdef HIFN_DEBUG
 		aprint_debug("%s: Unknown card!\n", sc->sc_dv.dv_xname);
 #endif
-		return (1);
+		return (NULL);
 	}
 
 	ramcfg = READ_REG_0(sc, HIFN_0_PUCNFG);
@@ -753,7 +798,7 @@ hifn_enable_crypto(sc, pciid)
 		aprint_debug("%s: Unknown encryption level\n",
 		    sc->sc_dv.dv_xname);
 #endif
-		return 1;
+		return (NULL);
 	}
 
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_UNLOCK |
@@ -787,21 +832,18 @@ report:
 
 	switch (encl) {
 	case HIFN_PUSTAT_ENA_0:
-		offtbl = "LZS-only (no encr/auth)";
-		break;
-	case HIFN_PUSTAT_ENA_1:
-		offtbl = "DES";
-		break;
-	case HIFN_PUSTAT_ENA_2:
-		offtbl = "3DES";
-		break;
-	default:
-		offtbl = "disabled";
-		break;
-	}
-	aprint_normal(": %s", offtbl);
+		return ("LZS-only (no encr/auth)");
 
-	return 0;
+	case HIFN_PUSTAT_ENA_1:
+		return ("DES");
+
+	case HIFN_PUSTAT_ENA_2:
+		return ("3DES");
+
+	default:
+		return ("disabled");
+	}
+	/* NOTREACHED */
 }
 
 /*
