@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.16 1997/06/28 08:21:52 jonathan Exp $
+#	$NetBSD: Makefile,v 1.17 1997/10/22 16:02:27 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/1/93
 
-CFLAGS+=	-DLIBC_SCCS -fPIC -DPIC -DDYNAMIC -DELFSIZE=32
-CFLAGS+=	-I${.CURDIR}/../../../libexec/ld.elf_so
+CPPFLAGS+=	-DLIBC_SCCS -DPIC -DDYNAMIC -DELFSIZE=32
+CPPFLAGS+=	-I${.CURDIR}/../../../libexec/ld.elf_so
+COPTS+=		-fPIC
 
 OBJS=		crt0.o gcrt0.o crtn.o # crtbegin.o crtend.o
 CLEANFILES+=	core a.out
@@ -10,20 +11,20 @@ CLEANFILES+=	core a.out
 all: ${OBJS}
 
 crt0.o: crt0.c
-	@echo ${CC} ${CFLAGS} -DCRT0 -c ${.ALLSRC} -o ${.TARGET}
-	@${CC} ${CFLAGS} -DCRT0 -c ${.ALLSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.c} -DCRT0 ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.c} -DCRT0 ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 gcrt0.o: crt0.c
-	@echo ${CC} ${CFLAGS} -DMCRT0 -c ${.ALLSRC} -o ${.TARGET}
-	@${CC} ${CFLAGS} -DMCRT0 -c ${.ALLSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.c} -DMCRT0 ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.c} -DMCRT0 ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 crtn.o: crtend.c
-	@echo ${CC} ${CFLAGS} -DMCRT0 -c ${.ALLSRC} -o ${.TARGET}
-	@${CC} ${CFLAGS} -DMCRT0 -c ${.ALLSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.c} -DMCRT0 ${.ALLSRC} -o ${.TARGET}"
+	@${COMPILE.c} -DMCRT0 ${.ALLSRC} -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
