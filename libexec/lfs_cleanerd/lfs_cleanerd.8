@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_cleanerd.8,v 1.6 1999/03/22 18:25:45 garbled Exp $
+.\"	$NetBSD: lfs_cleanerd.8,v 1.7 2000/09/09 04:49:56 perseant Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,11 @@
 .Nd garbage collect a log-structured file system
 .Sh SYNOPSIS
 .Nm
-.Op Fl ds
+.Op Fl bdfmqs
+.Op Fl l Ar load-threshhold
+.Op Fl n Ar number-of-segments
+.Op Fl r Ar report-frequency
+.Op Fl t Ar timeout
 .Pa node
 .Sh DESCRIPTION
 The
@@ -65,14 +69,54 @@ taken by the inactive data which was in it.
 .Pp
 The following options are available:
 .Bl -tag -width indent
+.It Fl b
+Use bytes written, rather than segments read, when determining how many
+segments to clean at once.
 .It Fl d
 Run in debug mode.
-Do not become a daemon process, and print debugging information.
+Do not become a daemon process, and print debugging information.  More
+.Fl d
+s give more detailed debugging information.
+.It Fl f
+Use filesystem idle time as the criterion for aggressive cleaning,
+instead of system load.
+.It Fl l Ar load-threshhold
+Clean more aggressively when the system load is below the given
+threshhold.  The default threshhold is 0.2.
+.It Fl m
+Use mmap, rather than rereading the Ifile to update the cleaner's
+knowledge of the filesystem.  Do not use this option.
+.It Fl n Ar number-of-segments
+Clean this number of segments at a time: that is, pass this many
+segments' blocks through a single call to lfs_markv, or, if
+.Fl b
+was also given, pass this many segments' worth of blocks through a
+single call to lfs_markv.
+.It Fl q
+Quit after cleaning once.
+.It Fl r Ar report-frequency
+Give an efficiency report after every 
+.Ar report-frequency
+times through the main loop.
 .It Fl s
-When cleaning the file system, read data in small chunks.
+When cleaning the file system, send only a few blocks through lfs_markv
+at a time.  Don't use this option.
+.It Fl t Ar timeout
+Poll the filesystem every
+.Ar timeout
+seconds, looking for opportunities to clean.  The default is 300, that
+is, five minutes.  Note that
+.Nm
+will be automatically awakened when the filesystem is active, so it is
+not usually necessary to set
+.Ar timeout
+to a low value.
 .El
 .Sh SEE ALSO
 .Xr mount_lfs 8
+.Xr lfs_bmapv 2
+.Xr lfs_markv 2
+.Xr lfs_segwait 2
 .Sh HISTORY
 The
 .Nm

@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_subr.c,v 1.16 2000/06/27 20:57:16 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.17 2000/09/09 04:49:55 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -240,7 +240,7 @@ lfs_segunlock(fs)
 		ckp = sp->seg_flags & SEGM_CKP;
 		if (sp->bpp != sp->cbpp) {
 			/* Free allocated segment summary */
-			fs->lfs_offset -= LFS_SUMMARY_SIZE / DEV_BSIZE;
+			fs->lfs_offset -= btodb(LFS_SUMMARY_SIZE);
                         lfs_freebuf(*sp->bpp);
 		} else
 			printf ("unlock to 0 with no summary");
