@@ -1,18 +1,19 @@
-/*	$NetBSD: usbdevs.h,v 1.12 1998/12/29 15:21:33 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.13 1998/12/30 03:55:49 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.12 1998/12/29 15:19:40 augustss Exp 
+ *	NetBSD: usbdevs,v 1.14 1998/12/30 03:52:30 augustss Exp 
  */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Author: Lennart Augustsson <augustss@carlstedt.se>
- *         Carlstedt Research & Technology
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (augustss@carlstedt.se) at
+ * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -68,6 +69,7 @@
 #define	USB_VENDOR_EIZO	0x056d		/* EIZO */
 #define	USB_VENDOR_AGILER	0x056e		/* Agiler */
 #define	USB_VENDOR_BELKIN	0x05ab		/* Belkin */
+#define	USB_VENDOR_LOGITECH	0x05ac		/* Logitech */
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
 #define	USB_VENDOR_CHIC	0x05fe		/* Chic Technology */
 #define	USB_VENDOR_ADS	0x06e1		/* ADS Technologies */
@@ -81,6 +83,7 @@
 
 /* NEC products */
 #define	USB_PRODUCT_NEC_HUB	0x55aa		/* hub */
+#define	USB_PRODUCT_NEC_HUB_B	0x55ab		/* hub */
 
 /* Kodak products */
 #define	USB_PRODUCT_KODAK_DC260	0x0110		/* Digital Science DC260 */
@@ -140,6 +143,10 @@
 
 /* Belkin products */
 #define	USB_PRODUCT_BELKIN_F5U002	0x0002		/* Parallel printer adapter */
+
+/* Logitech products */
+#define	USB_PRODUCT_LOGITECH_M2452	0x0203		/* M2452 keyboard */
+#define	USB_PRODUCT_LOGITECH_M4848	0x0301		/* M4848 mouse */
 
 /* EIZO Nanao products */
 #define	USB_PRODUCT_EIZONANAO_HUB	0x0000		/* hub */
