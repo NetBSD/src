@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.41 1999/10/28 13:43:54 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.41.6.1 2001/05/01 10:42:03 he Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -149,7 +149,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 /* open, close, read, write */
 #define	cdev_i4brbch_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
 
 /* open, close, read, write */
