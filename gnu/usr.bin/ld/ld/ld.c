@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.24 1994/04/15 10:05:39 pk Exp $
+ *	$Id: ld.c,v 1.25 1994/04/22 07:55:19 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -250,6 +250,7 @@ static void	write_rel __P((void));
 static void	write_syms __P((void));
 static void	assign_symbolnums __P((struct file_entry *, int *));
 static void	myfatal __P((void));
+static int	parse __P((char *, char *, char *));
 
 
 int
@@ -1574,7 +1575,7 @@ digest_symbols ()
 	data_start = rrs_data_start + rrs_data_size;
 	if (!relocatable_output) {
 		set_sect_start = rrs_data_start + data_size;
-		data_size += set_sect_size;
+		data_size += MALIGN(set_sect_size);
 	}
 	bss_start = rrs_data_start + data_size;
 
@@ -1585,6 +1586,8 @@ printf("datastart = %#x, datasize = %#x, rrs_data_start %#x, rrs_data_size %#x\n
 	data_start, data_size, rrs_data_start, rrs_data_size);
 printf("bssstart = %#x, bsssize = %#x\n",
 	bss_start, bss_size);
+printf("set_sect_start = %#x, set_sect_size = %#x\n",
+	set_sect_start, set_sect_size);
 #endif
 
 	/* Compute start addresses of each file's sections and symbols.  */
@@ -3383,6 +3386,23 @@ write_file_syms(entry, syms_written_addr)
 
 	write_string_table();
 	entry->strings = 0;	/* Since it will disappear anyway.  */
+}
+
+/*
+ * Parse the string ARG using scanf format FORMAT, and return the result.
+ * If it does not parse, report fatal error
+ * generating the error message using format string ERROR and ARG as arg.
+ */
+
+static int
+parse(arg, format, error)
+	char *arg, *format, *error;
+{
+	int x;
+
+	if (1 != sscanf(arg, format, &x))
+		fatal(error, arg);
+	return x;
 }
 
 /*
