@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.12 1998/11/06 19:54:19 christos Exp $	*/
+/*	$NetBSD: telnet.c,v 1.13 1999/07/28 06:35:16 abs Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.12 1998/11/06 19:54:19 christos Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.13 1999/07/28 06:35:16 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,7 @@ int
 	donebinarytoggle,	/* the user has put us in binary */
 	dontlecho,	/* do we suppress local echoing right now? */
 	globalmode,
+	doaddrlookup = 1, /* do a reverse address lookup? */
 	clienteof = 0;
 
 char *prompt = 0;
@@ -2001,7 +2002,7 @@ telsnd()
 		}
 		if ((sc == '\n') || (sc == '\r'))
 			bol = 1;
-	} else if (sc == escape) {
+	} else if (sc == escape && escape != _POSIX_VDISABLE) {
 	    /*
 	     * Double escape is a pass through of a single escape character.
 	     */
