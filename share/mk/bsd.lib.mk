@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.203 2002/05/07 02:06:32 eeh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.203.2.1 2002/11/30 15:31:03 he Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -397,7 +397,11 @@ LLIBS?=		-lc
 llib-l${LIB}.ln: ${LOBJS}
 	@echo building llib-l${LIB}.ln
 	@rm -f llib-l${LIB}.ln
+.if defined(DESTDIR)
+	@${LINT} -C${LIB} ${.ALLSRC} -L${DESTDIR}/usr/libdata ${LLIBS}
+.else
 	@${LINT} -C${LIB} ${.ALLSRC} ${LLIBS}
+.endif
 .endif
 
 cleanlib:
