@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.2 1995/12/11 01:59:17 mycroft Exp $ */
+/*	$NetBSD: if_le.c,v 1.3 1996/02/03 06:38:27 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -149,3 +149,5 @@ leattach(parent, self, aux)
 	pccintr_establish(PCCV_LE, leintr, pri, sc);
 	sys_pcc->le_int = pri | PCC_IENABLE;
 }
+
+#include <dev/ic/am7990.c>
