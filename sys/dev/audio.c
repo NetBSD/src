@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.39 1997/03/20 16:13:55 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.40 1997/04/19 21:25:43 pk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1058,7 +1058,7 @@ audio_write(dev, uio, ioflag)
 				cb->otp = tp;
 				audio_fill_silence(sc->sc_pencoding, tp, cc);
 				DPRINTF(("audio_write: auzero 0x%x %d 0x%x\n",
-				         tp, cc, *(int *)tp));
+				         tp, cc, *tp));
 				tp += cc;
 			}
 		} else {
@@ -1129,6 +1129,9 @@ audio_ioctl(dev, cmd, addr, flag, p)
 			sc->sc_async = p;
 		} else
 			sc->sc_async = 0;
+		break;
+
+	case FIONBIO:	/* to be removed? */
 		break;
 
 	case AUDIO_FLUSH:
