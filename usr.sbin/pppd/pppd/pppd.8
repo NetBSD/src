@@ -1,4 +1,4 @@
-.\" $NetBSD: pppd.8,v 1.35 2002/05/29 19:06:33 christos Exp $
+.\" $NetBSD: pppd.8,v 1.36 2002/06/05 13:12:05 christos Exp $
 .\"
 .\" manual page [] for pppd 2.4
 .\" Id: pppd.8,v 1.57 2001/03/12 22:49:25 paulus Exp
@@ -380,13 +380,6 @@ address, even if the local IP address was specified in an option.
 With this option, pppd will accept the peer's idea of its (remote) IP
 address, even if the remote IP address was specified in an option.
 .TP
-.B +ipv6
-Enable IPv6CP negotiation and IPv6 communication.
-It needs to be explicitly specified if you want IPv6CP.
-.TP
-.B -ipv6
-Disable IPv6CP negotiation and IPv6 communication.
-.TP
 .B ipcp-max-configure \fIn
 Set the maximum number of IPCP configure-request transmissions to
 \fIn\fR (default 10).
@@ -414,6 +407,16 @@ It needs to be explicitly specified if you want IPv6CP.
 .TP
 .B -ipv6
 Disable IPv6CP negotiation and IPv6 communication.
+.TP
+.B ipv6cp-accept-local
+With this option, pppd will accept the peer's idea of our local IPv6
+address, even if the local IPv6 address was specified in an option.
+.TP
+.B ipv6cp-use-ipaddr
+Use the local IPv4 address as the local interface address.
+.TP
+.B ipv6cp-use-persistent
+Use uniquely-available persistent value for link local address (Solaris 2 only).
 .TP
 .B ipv6cp-max-configure \fIn
 Set the maximum number of IPv6CP configure-request transmissions to
