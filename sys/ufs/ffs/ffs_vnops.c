@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.23 2000/03/15 16:31:52 fvdl Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.24 2000/03/17 01:26:52 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -248,6 +248,9 @@ ffs_fsync(v)
 	struct buf *bp, *nbp;
 	struct timespec ts;
 	int s, error, passes, skipmeta;
+
+	if (vp->v_dirtyblkhd.lh_first == NULL && (ap->a_flags & FSYNC_RECLAIM))
+		return 0;
 
 	if (vp->v_type == VBLK &&
 	    vp->v_specmountpoint != NULL &&
