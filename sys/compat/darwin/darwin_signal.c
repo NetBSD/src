@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.16 2003/12/24 22:57:22 manu Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.17 2003/12/24 23:22:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.16 2003/12/24 22:57:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.17 2003/12/24 23:22:22 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -138,48 +138,29 @@ darwin_trapsignal(l, ksi)
 
 int
 darwin_tracesig(p, signo)
-	struct proc *l;
+	struct proc *p;
 	int signo;
 {
-	struct proc *p = l->l_proc;
 	struct darwin_emuldata *ded;
+	struct lwp *l;
 	int code[2];
 	int error;
-	int signo;
 
 	/* 
-	 * Don't generate Mach exeption for non 
-	 * maskable, stop and continue signals 
-	 */
-	if (sigprop[signo] & (SA_CANTMASK | SA_STOP | SA_CONT | SA_TTYSTOP))
-		return EINVAL;
-
-	/* Don't send an exception if the signal is masked or ignored */
-	if ((p->p_flag & P_TRACED) == 0) {
-		if ((sigismember(&p->p_sigctx.ps_sigignore, signo)) ||
-		    (sigismember(&p->p_sigctx.ps_sigmask, signo)))
-			return EINVAL;
-	}
-
-	/* 
-	 * Send signals as software exception if the process requested that.
+	 * If the process does not have softsignals,
+	 * we are done, normal signal delivery should 
+	 * occur.
 	 */
 	ded = (struct darwin_emuldata *)p->p_emuldata;
-	if (ded->ded_flags & DARWIN_DED_SIGEXC) {
-		code[0] = MACH_SOFT_SIGNAL;
-		code[1] = signo;
-		error = mach_exception(l, MACH_EXC_SOFTWARE, code);
+	if ((ded->ded_flags & DARWIN_DED_SIGEXC) == 0)
+		return 0;
 
-		/* Like if the signal was sent, wakeup any waiting process */
-		if ((error == 0) &&
-		    p->p_sigctx.ps_sigwaited &&
-		    sigismember(p->p_sigctx.ps_sigwait, signo) &&
-		    (p->p_stat != SSTOP))
-			wakeup_one(&p->p_sigctx.ps_sigwait);
+	code[0] = MACH_SOFT_SIGNAL;
+	code[1] = signo;
+	l = proc_representative_lwp(p);
+	error = mach_exception(l, MACH_EXC_SOFTWARE, code);
 
-		return error;
-	}
-
+	/* Inhibit normal signal delivery */
 	return EINVAL;
 }
 
@@ -199,7 +180,7 @@ darwin_sys_sigprocmask(l, v, retval)
 	int error;
 	sigset13_t kdset, kdoset;
 	sigset_t kbset, kboset;
-	sigset_t *ubset;
+	sigset_t *ubset = NULL;
 	sigset_t *uboset = NULL;
 
 	caddr_t sg = stackgap_init(p, 0);
@@ -207,13 +188,16 @@ darwin_sys_sigprocmask(l, v, retval)
 	if (SCARG(uap, oset) != NULL)
 		uboset = stackgap_alloc(p, &sg, sizeof(*uboset));
 	
-	if ((error = copyin(SCARG(uap, set), &kdset, sizeof(kdset))) != 0)
-		return error;
+	if (SCARG(uap, set) != NULL) {
+		error = copyin(SCARG(uap, set), &kdset, sizeof(kdset));
+		if (error != 0)
+			return error;
 
-	native_sigset13_to_sigset(&kdset, &kbset);
+		native_sigset13_to_sigset(&kdset, &kbset);
 
-	if ((error = copyout(&kbset, ubset, sizeof(kbset))) != 0)
-		return error;
+		if ((error = copyout(&kbset, ubset, sizeof(kbset))) != 0)
+			return error;
+	}
 
 	SCARG(&cup, how) = SCARG(uap, how);
 	SCARG(&cup, set) = ubset;

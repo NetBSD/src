@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.h,v 1.2 2003/12/18 01:10:20 grant Exp $ */
+/*	$NetBSD: mach_exception.h,v 1.3 2003/12/24 23:22:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -142,6 +142,10 @@ typedef struct {
 	mach_kern_return_t rep_retval;
 } mach_exception_raise_state_identity_reply_t;
 
+struct mach_exc_info {
+	int mei_flavor;
+	int mei_behavior;
+};
 
 void mach_trapsignal(struct lwp *, const struct ksiginfo *);
 int mach_trapsignal1(struct lwp *, const struct ksiginfo *);

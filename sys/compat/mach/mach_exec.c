@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.48 2003/12/20 19:43:17 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.49 2003/12/24 23:22:22 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.48 2003/12/20 19:43:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.49 2003/12/24 23:22:22 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -242,6 +242,10 @@ mach_e_proc_fork1(p, parent, allocate)
 	 * but we need to double their reference counts, 
 	 * since the ports are referenced by rights in the
 	 * parent and in the child.
+	 *
+	 * XXX we need to convert all the parent's rights
+	 * to the child namespace. This will make the
+	 * following fixup obsolete.
 	 */
 	for (i = 0; i <= MACH_EXC_MAX; i++) {
 		med1->med_exc[i] = med2->med_exc[i];
@@ -306,6 +310,7 @@ mach_e_proc_init(p, vmspace)
 		 */
 		LIST_INIT(&med->med_right);
 		lockinit(&med->med_rightlock, PZERO|PCATCH, "mach_right", 0, 0);
+		lockinit(&med->med_exclock, PZERO, "exclock", 0, 0);
 
 		/* 
 		 * For debugging purpose, it's convenient to have each process 
@@ -375,6 +380,14 @@ mach_e_proc_exit(p)
 
 	if (--med->med_bootstrap->mp_refcount <= 0)
 		mach_port_put(med->med_bootstrap);
+
+	/*
+	 * If the lock on this task exception handler is held,
+	 * release it now as it will never be released by the
+	 * exception handler.
+	 */
+	if (lockstatus(&med->med_exclock) != 0)
+		lockmgr(&med->med_exclock, LK_RELEASE, NULL);
 
 	/* 
 	 * If the kernel and host port are still referenced, remove
