@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.35 2003/04/17 13:32:21 grant Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2003/06/05 13:15:43 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.35 2003/04/17 13:32:21 grant Exp $");
+__RCSID("$NetBSD: main.c,v 1.36 2003/06/05 13:15:43 agc Exp $");
 #endif
 
 /*
@@ -338,6 +338,8 @@ lspattern_fn(const char *pkg, void *vp)
 int 
 main(int argc, char *argv[])
 {
+	setprogname(argv[0]);
+
 	if (argc < 2)
 		usage();
 

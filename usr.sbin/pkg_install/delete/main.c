@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.24 2003/01/10 10:55:26 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2003/06/05 13:15:44 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.24 2003/01/10 10:55:26 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2003/06/05 13:15:44 agc Exp $");
 #endif
 #endif
 
@@ -60,6 +60,8 @@ main(int argc, char **argv)
 	lpkg_t *lpp;
 	int	ex;
 	int     ch;
+
+	setprogname(argv[0]);
 
 	ProgramPath = argv[0];
 
