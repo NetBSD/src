@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2001/07/19 22:13:23 matt Exp $
+#	$NetBSD: Makefile,v 1.24 2001/07/26 11:28:21 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -67,6 +67,11 @@ fp-bit.c: ${DIST}/gcc/config/fp-bit.c
 dp-bit.c: ${DIST}/gcc/config/fp-bit.c
 	echo '#define FLOAT' > $@
 	cat $> >> $@
+
+INCS=		exception new new.h typeinfo
+INCSDIR=	/usr/include/g++
+
+.PATH: ${DIST}/gcc/cp/inc
 
 .include <bsd.lib.mk>
 
