@@ -1,11 +1,11 @@
-/*	$NetBSD: cs4237reg.h,v 1.2 2003/11/02 11:07:45 wiz Exp $ */
+/*	$NetBSD: cs4237reg.h,v 1.3 2003/12/04 13:57:30 keihan Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Rene Hexel (rh@netbsd.org).
+ * by Rene Hexel (rh@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

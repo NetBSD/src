@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.82 2003/10/30 01:43:09 simonb Exp $	*/
+/*	$NetBSD: in6.c,v 1.83 2003/12/04 13:57:31 keihan Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.82 2003/10/30 01:43:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.83 2003/12/04 13:57:31 keihan Exp $");
 
 #include "opt_inet.h"
 
@@ -1327,7 +1327,7 @@ in6_unlink_ifa(ia, ifp)
 
 	if (oia->ia6_multiaddrs.lh_first != NULL) {
 		/*
-		 * XXX thorpej@netbsd.org -- if the interface is going
+		 * XXX thorpej@NetBSD.org -- if the interface is going
 		 * XXX away, don't save the multicast entries, delete them!
 		 */
 		if (oia->ia_ifa.ifa_ifp->if_output == if_nulloutput) {
