@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.28 1999/05/21 23:08:00 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.29 1999/05/23 17:49:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@ typedef struct pv_entry {
 	LIST_ENTRY(pv_entry) pv_list;	/* pv_entry list */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
 	vaddr_t		pv_va;		/* virtual address for mapping */
+	pt_entry_t	*pv_pte;	/* PTE that maps the VA */
 } *pv_entry_t;
 
 /*
