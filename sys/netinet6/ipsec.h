@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.40 2003/09/12 07:38:13 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.41 2003/09/22 04:47:44 itojun Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -74,6 +74,7 @@ struct secpolicy {
 
 	u_int8_t dir;			/* direction of packet flow */
 	int readonly;			/* write prohibited */
+	int persist;			/* will never be removed */
 	int refcnt;			/* reference count */
 	struct secpolicyindex *spidx;	/* selector - NULL if not valid */
 	u_int16_t tag;			/* PF tag */

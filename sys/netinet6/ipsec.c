@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.81 2003/09/12 07:58:25 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.82 2003/09/22 04:47:43 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.81 2003/09/12 07:58:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.82 2003/09/22 04:47:43 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1175,13 +1175,15 @@ ipsec_init_pcbpolicy(so, pcb_sp)
 		in->policy = IPSEC_POLICY_ENTRUST;
 		in->dir = IPSEC_DIR_INBOUND;
 		in->readonly = 1;
-		in->so = so;
+		in->persist = 1;
+		in->so = NULL;
 
 		out->state = IPSEC_SPSTATE_ALIVE;
 		out->policy = IPSEC_POLICY_ENTRUST;
 		out->dir = IPSEC_DIR_OUTBOUND;
 		out->readonly = 1;
-		out->so = so;
+		out->persist = 1;
+		out->so = NULL;
 
 		initialized++;
 	}
