@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.c,v 1.5 1999/08/08 11:46:30 ragge Exp $ */
+/*	$NetBSD: scb.c,v 1.6 1999/08/14 18:42:17 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -93,12 +93,16 @@ scb_stray(arg)
 	int arg;
 {
 	struct	callsframe *cf = FRAMEOFFSET(arg);
+	int *a = &cf->ca_arg1;
 
 	gotintr = 1;
 	vector = ((cf->ca_pc - (u_int)scb_vec)/4) & ~3;
 	ipl = mfpr(PR_IPL);
 	if (cold == 0)
 		printf("stray interrupt: vector 0x%x, ipl %d\n", vector, ipl);
+	else
+		a[8] = (a[8] & 0xffe0ffff) | ipl << 16;
+	mtpr(ipl + 1, PR_IPL);
 }
 
 /*
@@ -129,6 +133,7 @@ scb_vecref(rvec, ripl)
 		*ripl = ipl;
 	save = gotintr;
 	gotintr = vector = ipl = 0;
+	mtpr(0, PR_IPL);
 	return save;
 }
 
