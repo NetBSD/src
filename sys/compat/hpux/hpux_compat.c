@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.61 2003/01/18 07:36:56 thorpej Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.62 2003/02/19 11:23:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.61 2003/01/18 07:36:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.62 2003/02/19 11:23:53 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1245,7 +1245,10 @@ hpux_sys_alarm_6x(l, v, retval)
 		ptp = pool_get(&ptimer_pool, PR_WAITOK);
 		ptp->pt_ev.sigev_notify = SIGEV_SIGNAL;
 		ptp->pt_ev.sigev_signo = SIGALRM;
+		ptp->pt_overruns = 0;
+		ptp->pt_proc = p;
 		ptp->pt_type = CLOCK_REALTIME;
+		ptp->pt_entry = CLOCK_REALTIME;
 		p->p_timers->pts_timers[ITIMER_REAL] = ptp;
 		callout_init(&ptp->pt_ch);
 	}
