@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_subr.c,v 1.77 2001/11/12 15:25:15 lukem Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.78 2002/02/08 00:58:58 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -90,8 +90,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.77 2001/11/12 15:25:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.78 2002/02/08 00:58:58 thorpej Exp $");
 
+#include "opt_ddb.h"
 #include "opt_md.h"
 
 #include <sys/param.h>
@@ -775,6 +776,11 @@ setroot(bootdv, bootpartition)
 				cpu_reboot(RB_HALT, NULL);
 			else if (len == 6 && strcmp(buf, "reboot") == 0)
 				cpu_reboot(0, NULL);
+#if defined(DDB)
+			else if (len == 3 && strcmp(buf, "ddb") == 0) {
+				console_debugger();
+			}
+#endif
 			else if (len == 7 && strcmp(buf, "generic") == 0) {
 				mountroot = NULL;
 				break;
@@ -788,6 +794,9 @@ setroot(bootdv, bootpartition)
 					if (vops->vfs_mountroot != NULL)
 						printf(" %s", vops->vfs_name);
 				}
+#if defined(DDB)
+				printf(" ddb");
+#endif
 				printf(" halt reboot\n");
 			} else {
 				mountroot = vops->vfs_mountroot;
@@ -1013,6 +1022,9 @@ getdisk(str, len, defpart, devp, isdump)
 		}
 		if (isdump)
 			printf(" none");
+#if defined(DDB)
+		printf(" ddb");
+#endif
 		printf(" halt reboot\n");
 	}
 	return (dv);
@@ -1037,6 +1049,10 @@ parsedisk(str, len, defpart, devp)
 		cpu_reboot(RB_HALT, NULL);
 	else if (len == 6 && strcmp(str, "reboot") == 0)
 		cpu_reboot(0, NULL);
+#if defined(DDB)
+	else if (len == 3 && strcmp(str, "ddb") == 0)
+		console_debugger();
+#endif
 
 	cp = str + len - 1;
 	c = *cp;
