@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.23 2003/05/18 12:59:06 yamt Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.24 2003/07/23 13:36:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.23 2003/05/18 12:59:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.24 2003/07/23 13:36:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,9 +173,9 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
 			if (ip->i_ump->um_fstype == UFS1) {
 				for (++bn; bn < NDADDR && *runp < maxrun &&
 				    is_sequential(ump,
-				        ufs_rw32(ip->i_ffs1_db[bn - 1],
+				        (int32_t)ufs_rw32(ip->i_ffs1_db[bn - 1],
 				            UFS_MPNEEDSWAP(vp->v_mount)),
-				        ufs_rw32(ip->i_ffs1_db[bn],
+				        (int32_t)ufs_rw32(ip->i_ffs1_db[bn],
 				            UFS_MPNEEDSWAP(vp->v_mount)));
 				    ++bn, ++*runp);
 			} else {
@@ -201,7 +201,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
 
 	/* Get disk address out of indirect block array */
 	if (ip->i_ump->um_fstype == UFS1)
-		daddr = ufs_rw32(ip->i_ffs1_ib[xap->in_off],
+		daddr = (int32_t)ufs_rw32(ip->i_ffs1_ib[xap->in_off],
 		    UFS_MPNEEDSWAP(vp->v_mount));
 	else
 		daddr = ufs_rw64(ip->i_ffs2_ib[xap->in_off],
@@ -255,15 +255,18 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
 			}
 		}
 		if (ip->i_ump->um_fstype == UFS1) {
-			daddr = ufs_rw32(((int32_t *)bp->b_data)[xap->in_off],
+			daddr = (int32_t)ufs_rw32(
+			    ((int32_t *)bp->b_data)[xap->in_off],
 			    UFS_MPNEEDSWAP(mp));
 			if (num == 1 && runp) {
 				for (bn = xap->in_off + 1;
 				    bn < MNINDIR(ump) && *runp < maxrun &&
 				    is_sequential(ump,
-				        ufs_rw32(((int32_t *)bp->b_data)[bn-1],
+				        (int32_t)ufs_rw32(
+					    ((int32_t *)bp->b_data)[bn-1],
 				            UFS_MPNEEDSWAP(mp)),
-				        ufs_rw32(((int32_t *)bp->b_data)[bn],
+				        (int32_t)ufs_rw32(
+					    ((int32_t *)bp->b_data)[bn],
 				            UFS_MPNEEDSWAP(mp)));
 				    ++bn, ++*runp);
 			}
