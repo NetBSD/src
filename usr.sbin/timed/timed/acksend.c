@@ -1,4 +1,4 @@
-/*	$NetBSD: acksend.c,v 1.5 1997/10/17 14:19:09 lukem Exp $	*/
+/*	$NetBSD: acksend.c,v 1.6 2001/09/02 00:13:05 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,13 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)acksend.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: acksend.c,v 1.5 1997/10/17 14:19:09 lukem Exp $");
+__RCSID("$NetBSD: acksend.c,v 1.6 2001/09/02 00:13:05 reinoud Exp $");
 #endif
 #endif /* not lint */
-
-#ifdef sgi
-#ident "$Revision: 1.5 $"
-#endif
 
 #include "globals.h"
 
