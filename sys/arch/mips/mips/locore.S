@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.86 2000/01/28 15:18:32 takemura Exp $	*/
+/*	$NetBSD: locore.S,v 1.87 2000/02/01 18:49:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -304,6 +304,7 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 	sw	t0, uvmexp+UVMEXP_SWTCH
 	bne	t1, zero, 1f
 	lw	t2, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_IDLE
+	nop					# for r2000/r3000
 	jal	ra, t2
 	nop
 1:
@@ -323,6 +324,7 @@ sw1:
 	li	t2, -1				# t2 = lowest bit set
 	bne	t0, zero, 1f
 	lw	t3, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_IDLE
+	nop					# for r2000/r3000
 	jal	ra, t3
 	nop
 1:
