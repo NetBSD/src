@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 1999/02/13 19:31:45 christos Exp $
+#	$NetBSD: Makefile,v 1.27 1999/02/16 20:19:04 tv Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -106,12 +106,3 @@ nm.h: ${DIST}/gdb/config/${MACHINE_GNU_ARCH}/nm-nbsd.h
 tm.h: ${DIST}/gdb/config/${MACHINE_GNU_ARCH}/tm-nbsd.h
 	@-rm -f $@
 	cp $> $@
-
-gdb.info: gdb-cfg.texi GDBvn.texi
-
-gdb-cfg.texi: all-cfg.texi
-	@-rm -f ${.TARGET}
-	ln -s ${.ALLSRC} ${.TARGET}
-
-GDBvn.texi:
-	echo 4.17 > ${.TARGET}
