@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.34 2000/05/01 09:32:59 augustss Exp $
+.\"	$NetBSD: audio.4,v 1.35 2000/05/13 15:20:35 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -172,7 +172,7 @@ The following
 .Xr ioctl 2
 commands are supported on the sample devices:
 .Pp
-.Bl -tag -width indent -compact
+.Bl -tag -width indent
 .It Dv AUDIO_FLUSH
 This command stops all playback and recording, clears all queued
 buffers, resets error counters, and restarts recording and playback as
@@ -213,6 +213,7 @@ typedef struct audio_encoding {
 #define AUDIO_ENCODINGFLAG_EMULATED 1 /* software emulation mode */
 } audio_encoding_t;
 .Ed
+
 To query
 all the supported encodings, start with an index field of 0 and
 continue with successive encodings (1, 2, ...) until the command returns
@@ -228,7 +229,8 @@ This command gets a bit set of hardware properties.
 If the hardware
 has a certain property the corresponding bit is set, otherwise it is not.
 The properties can have the following values:
-.Bl -tag -width indent -compact
+
+.Bl -tag -width AUDIO_PROP_INDEPENDENT -compact
 .It Dv AUDIO_PROP_FULLDUPLEX
 the device admits full duplex operation.
 .It Dv AUDIO_PROP_MMAP
@@ -363,7 +365,8 @@ If the hardware can handle different settings the
 property is set.
 .Pp
 The encoding parameter can have the following values:
-.Bl -tag -width indent -compact
+
+.Bl -tag -width AUDIO_ENCODING_SLINEAR_BE -compact
 .It Dv AUDIO_ENCODING_ULAW
 mulaw encoding, 8 bits/sample
 .It Dv AUDIO_ENCODING_ALAW
@@ -397,9 +400,10 @@ and the balance in the range
 .Bq Dv AUDIO_LEFT_BALANCE , Dv AUDIO_RIGHT_BALANCE
 with the normal setting at
 .Dv AUDIO_MID_BALANCE .
-.br
-The input port should be a combination of
-.Bl -tag -width indent -compact
+
+The input port should be a combination of:
+
+.Bl -tag -width AUDIO_MICROPHONE -compact
 .It Dv AUDIO_MICROPHONE
 to select microphone input.
 .It Dv AUDIO_LINE_IN
@@ -407,8 +411,10 @@ to select line input.
 .It Dv AUDIO_CD
 to select CD input.
 .El
-The output port should be a combination of
-.Bl -tag -width indent -compact
+
+The output port should be a combination of:
+
+.Bl -tag -width AUDIO_HEADPHONE -compact
 .It Dv AUDIO_SPEAKER
 to select speaker output.
 .It Dv AUDIO_HEADPHONE
@@ -416,6 +422,7 @@ to select headphone output.
 .It Dv AUDIO_LINE_OUT
 to select line output.
 .El
+
 The available ports can be found in
 .Va avail_ports .
 .Pp
@@ -461,11 +468,18 @@ or
 It supports the following
 .Xr ioctl 2
 commands:
-.Bl -tag -width indent -compact
+.Bl -tag -width indent
 .It Dv AUDIO_GETDEV (audio_device_t)
 This command is the same as described above for the sampling devices.
 .It Dv AUDIO_MIXER_READ (mixer_ctrl_t)
 .It Dv AUDIO_MIXER_WRITE (mixer_ctrl_t)
+These commands read the current mixer state or set new mixer state for
+the specified device
+.Va dev .
+.Va type
+identifies which type of value is supplied in the
+.Va mixer_ctrl_t
+argument.
 .Bd -literal
 #define AUDIO_MIXER_CLASS  0
 #define AUDIO_MIXER_ENUM   1
@@ -480,8 +494,7 @@ typedef struct mixer_ctrl {
 		mixer_level_t value;	/* value */
 	} un;
 } mixer_ctrl_t;
-.Ed
-.Bd -literal
+
 #define AUDIO_MIN_GAIN  0
 #define AUDIO_MAX_GAIN  255
 typedef struct mixer_level {
@@ -491,15 +504,8 @@ typedef struct mixer_level {
 #define AUDIO_MIXER_LEVEL_MONO  0
 #define AUDIO_MIXER_LEVEL_LEFT  0
 #define AUDIO_MIXER_LEVEL_RIGHT 1
-
 .Ed
-These commands read the current mixer state or set new mixer state for
-the specified device
-.Va dev .
-.Va type
-identifies which type of value is supplied in the
-.Va mixer_ctrl_t
-argument.
+
 For a mixer value, the
 .Va value
 field specifies both the number of channels and the values for each of
@@ -555,6 +561,7 @@ typedef struct mixer_devinfo {
 	} un;
 } mixer_devinfo_t;
 .Ed
+
 The
 .Va label
 field identifies the name of this particular mixer control.
