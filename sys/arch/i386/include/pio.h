@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.15 2000/03/13 21:10:24 kristerw Exp $	*/
+/*	$NetBSD: pio.h,v 1.16 2001/04/26 17:55:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -166,7 +166,7 @@ __outb(int port, u_int8_t data)
 }
 
 static __inline void
-outsb(int port, void *addr, int cnt)
+outsb(int port, const void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
@@ -191,7 +191,7 @@ __outw(int port, u_int16_t data)
 }
 
 static __inline void
-outsw(int port, void *addr, int cnt)
+outsw(int port, const void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
@@ -216,7 +216,7 @@ __outl(int port, u_int32_t data)
 }
 
 static __inline void
-outsl(int port, void *addr, int cnt)
+outsl(int port, const void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
