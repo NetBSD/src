@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.37 2003/10/08 20:39:07 itojun Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.38 2003/10/17 05:23:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.37 2003/10/08 20:39:07 itojun Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.38 2003/10/17 05:23:56 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -82,6 +82,7 @@ struct	flagval {
 	int	fv_val;
 } flagvaltab[] = {
 	{ "CCDF_UNIFORM",	CCDF_UNIFORM },
+	{ "CCDF_NOLABEL",	CCDF_NOLABEL },
 	{ NULL,			0 },
 };
 
