@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3.4.1 2000/06/30 16:27:37 simonb Exp $	*/
+/*	$NetBSD: bus.h,v 1.3.4.2 2001/10/08 18:36:02 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -90,6 +90,13 @@
 #define SH3_BUS_SPACE_PCMCIA_IO 2	/* PCMCIA IO space */
 #define SH3_BUS_SPACE_PCMCIA_MEM 3	/* PCMCIA Mem space */
 #define SH3_BUS_SPACE_PCMCIA_ATT 4	/* PCMCIA Attr space */
+#define SH3_BUS_SPACE_PCMCIA_8BIT 0x8000 /* PCMCIA BUS 8 BIT WIDTH */
+#define SH3_BUS_SPACE_PCMCIA_IO8 \
+            (SH3_BUS_SPACE_PCMCIA_IO|SH3_BUS_SPACE_PCMCIA_8BIT)
+#define SH3_BUS_SPACE_PCMCIA_MEM8 \
+            (SH3_BUS_SPACE_PCMCIA_MEM|SH3_BUS_SPACE_PCMCIA_8BIT)
+#define SH3_BUS_SPACE_PCMCIA_ATT8 \
+            (SH3_BUS_SPACE_PCMCIA_ATT|SH3_BUS_SPACE_PCMCIA_8BIT)
 #endif
 
 /*
