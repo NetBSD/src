@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.1.2.2 1997/03/17 00:20:24 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.1.2.2.2.1 1997/05/06 14:30:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -165,7 +165,7 @@ list_swap()
 	struct swapinfo *sip;
 
 	if (nswap < 1)
-		errx("no swap devices configured");
+		errx(1, "no swap devices configured");
 
 #ifdef DEBUG_SWAPON
 	fprintf(stderr, "SWAP_NSWAP returned %d\n", nswap);
@@ -177,7 +177,7 @@ list_swap()
 	fprintf(stderr, "SWAPSTATS returned %d\n", rnswap);
 #endif
 	if (nswap < 0)
-		errx("SWAP_STATS");
+		errx(1, "SWAP_STATS");
 	if (nswap != rnswap)
 		warnx("SWAP_STATS gave different value than SWAP_NSWAP");
 
