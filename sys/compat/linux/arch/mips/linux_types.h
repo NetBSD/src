@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.5 2002/02/17 23:57:57 rafal Exp $ */
+/*	$NetBSD: linux_types.h,v 1.5.16.1 2004/09/24 10:53:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -42,10 +42,6 @@
 /* 
  * from Linux's include/asm-mips/posix-types.h 
  */
-typedef struct {
-	int val[2];
-} linux_fsid_t;
-
 typedef int linux_uid_t;
 typedef int linux_gid_t;
 typedef unsigned int linux_dev_t;
@@ -77,23 +73,6 @@ typedef unsigned int linux_tcflag_t;
 typedef unsigned long linux_speed_t;
 typedef unsigned long linux_tcflag_t;
 #endif
-
-/* 
- * From Linux's include/asm-mips/statfs.h 
- */
-struct linux_statfs {
-	long l_ftype;	   /* Linux name -> NetBSD Linux emul name: s/f_/I_f/ */
-	long l_fbsize;	
-	long l_ffrsize;	
-	long l_fblocks;	
-	long l_fbfree;	
-	long l_ffiles;	
-	long l_fffree;	
-	long l_fbavail;	
-	linux_fsid_t l_ffsid;	
-	long l_fnamelen;	
-	long l_fspare[6];	
-};
 
 #if defined(ELFSIZE) && (ELFSIZE == 64)
 /* 

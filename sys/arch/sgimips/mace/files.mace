@@ -1,4 +1,4 @@
-#	$NetBSD: files.mace,v 1.2.4.4 2004/09/21 13:21:20 skrll Exp $
+#	$NetBSD: files.mace,v 1.2.4.5 2004/09/24 10:53:17 skrll Exp $
 
 device mace {[offset = -1], [intr = -1], [intrmask = 0] }
 attach mace at mainbus
@@ -19,7 +19,7 @@ file arch/sgimips/mace/mcclock_mace.c	mcclock_mace
 
 device mec: arp, ether, ifnet, mii
 attach mec at mace
-file arch/sgimips/mace/if_mec_mace.c	mec
+file arch/sgimips/mace/if_mec.c		mec
 
 device macau: audiobus, ad1848, auconv
 attach macau at mace with macau

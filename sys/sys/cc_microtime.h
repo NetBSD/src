@@ -1,11 +1,8 @@
-/*	$NetBSD: linux_types.h,v 1.1.46.1 2004/09/24 10:53:18 skrll Exp $	*/
+/*	$NetBSD: cc_microtime.h,v 1.1.2.2 2004/09/24 10:53:43 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,41 +33,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ALPHA_LINUX_TYPES_H
-#define _ALPAH_LINUX_TYPES_H
+#ifndef _CC_MICROTIME_H_
+#define	_CC_MICROTIME_H_
 
-typedef unsigned int linux_uid_t;
-typedef unsigned int linux_gid_t;
-typedef unsigned int linux_dev_t;
-typedef unsigned int linux_ino_t;
-typedef unsigned int linux_mode_t;
-typedef unsigned int linux_nlink_t;
-typedef long linux_time_t;
-typedef long linux_clock_t;
-typedef long linux_off_t;
-typedef int linux_pid_t;
+extern struct timeval cc_microset_time;
+void cc_microtime(struct timeval *);
+void cc_microset(struct cpu_info *);
 
-/* From linux_termios.h */
-typedef unsigned char linux_cc_t;
-typedef	unsigned int  linux_speed_t;
-typedef unsigned int  linux_tcflag_t;
-
-struct linux_stat {
-	linux_dev_t		lst_dev;
-	linux_ino_t		lst_ino;
-	linux_mode_t		lst_mode;
-	linux_nlink_t		lst_nlink;
-	linux_uid_t		lst_uid;
-	linux_gid_t		lst_gid;
-	linux_dev_t		lst_rdev;
-	linux_off_t		lst_size;
-	linux_time_t		lst_atime;	/* Note: Linux uses	*/
-	linux_time_t		lst_mtime;	/*       unsigned long	*/
-	linux_time_t		lst_ctime;	/*       for these	*/
-	unsigned int		lst_blksize;
-	int			lst_blocks;
-	unsigned int		lst_flags;	/* unused */
-	unsigned int		lst_gen;	/* unused */
+/*
+ * Variables used by cc_microtime().
+ */
+struct cc_microtime_state {
+	struct timeval cc_time;
+	int64_t cc_cc;
+	int64_t cc_ms_delta;
+	int64_t cc_denom;
 };
 
-#endif /* !_ALPHA_LINUX_TYPES_H */
+#endif /* _CC_MICROTIME_H_ */

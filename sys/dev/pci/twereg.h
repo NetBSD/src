@@ -1,4 +1,4 @@
-/*	$NetBSD: twereg.h,v 1.5.26.3 2004/09/21 13:31:08 skrll Exp $	*/
+/*	$NetBSD: twereg.h,v 1.5.26.4 2004/09/24 10:53:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -238,7 +238,7 @@ struct twe_param {
 #define TWE_PARAM_DRIVEINFO_Serial		4	/* drive serial number [20] */
 #define TWE_PARAM_DRIVEINFO_PhysCylNum		5	/* physical geometry [2] */
 #define TWE_PARAM_DRIVEINFO_PhysHeadNum		6	/* [2] */
-#define TWE_PARAM_DRIVEINFO_PhysSectorNym	7	/* [2] */
+#define TWE_PARAM_DRIVEINFO_PhysSectorNum	7	/* [2] */
 #define TWE_PARAM_DRIVEINFO_LogCylNum		8	/* logical geometry [2] */
 #define TWE_PARAM_DRIVEINFO_LogHeadNum		9	/* [2] */
 #define TWE_PARAM_DRIVEINFO_LogSectorNum	10	/* [2] */

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.615.2.6 2004/09/21 13:26:15 skrll Exp $
+#	$NetBSD: files,v 1.615.2.7 2004/09/24 10:53:27 skrll Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -153,6 +153,7 @@ defflag	opt_uvm.h		USE_TOPDOWN_VM UVMMAP_NOCOUNTERS
 defflag				SOFTDEP			# XXX files.ufs?
 defflag				QUOTA			# XXX files.ufs?
 defflag				VNODE_OP_NOINLINE
+defflag				VNODE_LOCKDEBUG
 
 # buffer cache size options
 #

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.6.2.3 2004/09/21 13:17:24 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.6.2.4 2004/09/24 10:53:16 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -89,13 +89,9 @@
 #include <m68k/cpu.h>
 #define M68K_MMU_MOTOROLA
 
-#include <sys/sched.h>
+#include <sys/cpu_data.h>
 struct cpu_info {
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
+	struct cpu_data ci_data;	/* MI per-cpu data */
 };
 
 #ifdef _KERNEL

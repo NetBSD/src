@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.43.2.6 2004/09/21 13:27:46 skrll Exp $ */
+/*      $NetBSD: ac97.c,v 1.43.2.7 2004/09/24 10:53:27 skrll Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.43.2.6 2004/09/21 13:27:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.43.2.7 2004/09/24 10:53:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -956,7 +956,10 @@ ac97_attach(struct ac97_host_if *host_if)
 		return error;
 	}
 
-	host_if->reset(host_if->arg);
+	if ((error = host_if->reset(host_if->arg))) {
+		free(as, M_DEVBUF);
+		return error;
+	}
 
 	host_if->write(host_if->arg, AC97_REG_POWER, 0);
 	host_if->write(host_if->arg, AC97_REG_RESET, 0);

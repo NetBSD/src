@@ -1,4 +1,4 @@
-/*	$NetBSD: ns87307reg.h,v 1.2 2002/10/05 17:01:51 chs Exp $	*/
+/*	$NetBSD: ns87307reg.h,v 1.2.6.1 2004/09/24 10:53:17 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -258,7 +258,7 @@
 */
 #define NSIO_CONFIG_IRQ( iot, ioh, irqNum, irqType ) \
 { \
-   if ( irqNum != ISACF_IRQ_DEFAULT ) \
+   if ( irqNum != -1 ) \
    { \
 	NSIO_WRITE_REG( iot, ioh, NSIO_CFG_IRQ, irqNum ); \
    } \

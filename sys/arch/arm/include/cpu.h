@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34.2.3 2004/09/21 13:13:19 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34.2.4 2004/09/24 10:53:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -196,13 +196,9 @@ void	arm32_vector_init(vaddr_t, int);
  */
 
 #include <sys/device.h>
-#include <sys/sched.h>
+#include <sys/cpu_data.h>
 struct cpu_info {
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
+	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct device *ci_dev;		/* Device corresponding to this CPU */
 	u_int32_t ci_arm_cpuid;		/* aggregate CPU id */
 	u_int32_t ci_arm_cputype;	/* CPU type */

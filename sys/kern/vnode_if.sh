@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.32.2.4 2004/09/21 13:35:19 skrll Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.32.2.5 2004/09/24 10:53:43 skrll Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -103,13 +103,26 @@ awk_parser='
 # Middle lines of description
 {
 	argdir[argc] = $1; i=2;
-	if ($2 == "WILLRELE") {
+
+	if ($2 == "LOCKED=YES") {
+		lockstate[argc] = 1;
+		i++;
+	} else if ($2 == "LOCKED=NO") {
+		lockstate[argc] = 0;
+		i++;
+	} else
+		lockstate[argc] = -1;
+
+	if ($2 == "WILLRELE" ||
+	    $3 == "WILLRELE") {
 		willrele[argc] = 1;
 		i++;
-	} else if ($2 == "WILLUNLOCK") {
+	} else if ($2 == "WILLUNLOCK" ||
+		   $3 == "WILLUNLOCK") {
 		willrele[argc] = 2;
 		i++;
-	} else if ($2 == "WILLPUT") {
+	} else if ($2 == "WILLPUT" ||
+		   $3 == "WILLPUT") {
 		willrele[argc] = 3;
 		i++;
 	} else
@@ -163,7 +176,10 @@ echo '/* LKMs always use non-inlined vnode ops. */'
 echo '#define	VNODE_OP_NOINLINE'
 echo '#else'
 echo '#include "opt_vnode_op_noinline.h"'
-echo '#endif'
+echo '#endif /* _LKM || LKM */'
+echo '#ifdef _KERNEL_OPT'
+echo '#include "opt_vnode_lockdebug.h"'
+echo '#endif /* _KERNEL_OPT */'
 echo '#endif /* _KERNEL */'
 echo '
 extern const struct vnodeop_desc vop_default_desc;
@@ -217,9 +233,24 @@ function doit() {
 		printf("\t%s %s;\n", argtype[i], argname[i]);
 	}
 	printf("{\n\tstruct %s_args a;\n", name);
+	printf("#ifdef VNODE_LOCKDEBUG\n");
+	for (i=0; i<argc; i++) {
+		if (lockstate[i] != -1)
+			printf("\tint islocked_%s;\n", argname[i]);
+	}
+	printf("#endif\n");
 	printf("\ta.a_desc = VDESC(%s);\n", name);
 	for (i=0; i<argc; i++) {
 		printf("\ta.a_%s = %s;\n", argname[i], argname[i]);
+		if (lockstate[i] != -1) {
+			printf("#ifdef VNODE_LOCKDEBUG\n");
+			printf("\tislocked_%s = (%s->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(%s) == LK_EXCLUSIVE) : %d;\n",
+			    argname[i], argname[i], argname[i], lockstate[i]);
+			printf("\tif (islocked_%s != %d)\n", argname[i],
+			    lockstate[i]);
+			printf("\t\tpanic(\"%s: %s: locked %%d, expected %%d\", islocked_%s, %d);\n", name, argname[i], argname[i], lockstate[i]);
+			printf("#endif\n");
+		}
 	}
 	printf("\treturn (VCALL(%s%s, VOFFSET(%s), &a));\n}\n",
 		argname[0], arg0special, name);
@@ -235,6 +266,7 @@ END	{
 	argc=1;
 	argtype[0]="struct buf *";
 	argname[0]="bp";
+	lockstate[0] = -1;
 	arg0special="->b_vp";
 	name="vop_bwrite";
 	doit();
@@ -273,7 +305,8 @@ echo '
 #define	VNODE_OP_NOINLINE
 #else
 #include "opt_vnode_op_noinline.h"
-#endif'
+#endif
+#include "opt_vnode_lockdebug.h"'
 echo '
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -370,9 +403,24 @@ function doit() {
 		printf("\t%s %s;\n", argtype[i], argname[i]);
 	}
 	printf("{\n\tstruct %s_args a;\n", name);
+	printf("#ifdef VNODE_LOCKDEBUG\n");
+	for (i=0; i<argc; i++) {
+		if (lockstate[i] != -1)
+			printf("\tint islocked_%s;\n", argname[i]);
+	}
+	printf("#endif\n");
 	printf("\ta.a_desc = VDESC(%s);\n", name);
 	for (i=0; i<argc; i++) {
 		printf("\ta.a_%s = %s;\n", argname[i], argname[i]);
+		if (lockstate[i] != -1) {
+			printf("#ifdef VNODE_LOCKDEBUG\n");
+			printf("\tislocked_%s = (%s->v_flag & VLOCKSWORK) ? (VOP_ISLOCKED(%s) == LK_EXCLUSIVE) : %d;\n",
+			    argname[i], argname[i], argname[i], lockstate[i]);
+			printf("\tif (islocked_%s != %d)\n", argname[i],
+			    lockstate[i]);
+			printf("\t\tpanic(\"%s: %s: locked %%d, expected %%d\", islocked_%s, %d);\n", name, argname[i], argname[i], lockstate[i]);
+			printf("#endif\n");
+		}
 	}
 	printf("\treturn (VCALL(%s%s, VOFFSET(%s), &a));\n}\n",
 		argname[0], arg0special, name);
@@ -386,6 +434,7 @@ BEGIN	{
 	argdir[0]="IN";
 	argtype[0]="struct buf *";
 	argname[0]="bp";
+	lockstate[0] = -1;
 	arg0special="->b_vp";
 	willrele[0]=0;
 	name="vop_bwrite";

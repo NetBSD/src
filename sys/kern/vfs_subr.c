@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.201.2.6 2004/09/21 13:35:17 skrll Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.201.2.7 2004/09/24 10:53:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.201.2.6 2004/09/21 13:35:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.201.2.7 2004/09/24 10:53:43 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1742,7 +1742,7 @@ vclean(vp, flags, l)
 	vp->v_tag = VT_NON;
 	simple_lock(&vp->v_interlock);
 	VN_KNOTE(vp, NOTE_REVOKE);	/* FreeBSD has this in vn_pollgone() */
-	vp->v_flag &= ~VXLOCK;
+	vp->v_flag &= ~(VXLOCK|VLOCKSWORK);
 	if (vp->v_flag & VXWANT) {
 		vp->v_flag &= ~VXWANT;
 		simple_unlock(&vp->v_interlock);
@@ -2658,11 +2658,12 @@ vfs_unmountall(l)
 	struct mount *mp, *nmp;
 	int allerror, error;
 
+	printf("unmounting file systems...");
 	for (allerror = 0,
 	     mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
 		nmp = mp->mnt_list.cqe_prev;
 #ifdef DEBUG
-		printf("unmounting %s (%s)...\n",
+		printf("\nunmounting %s (%s)...",
 		    mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
 #endif
 		/*
@@ -2680,6 +2681,7 @@ vfs_unmountall(l)
 			allerror = 1;
 		}
 	}
+	printf(" done\n");
 	if (allerror)
 		printf("WARNING: some file systems would not unmount\n");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.30.2.6 2004/09/21 13:38:46 skrll Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.30.2.7 2004/09/24 10:53:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -242,19 +242,19 @@ __END_DECLS
 
 #else
 
-int ktrcsw(struct lwp *, int, int);
-int ktremul(struct lwp *);
-int ktrgenio(struct lwp *, int, enum uio_rw, struct iovec *, int, int);
-int ktrnamei(struct lwp *, char *);
-int ktrpsig(struct lwp *, int, sig_t, const sigset_t *, const ksiginfo_t *);
-int ktrsyscall(struct lwp *, register_t, register_t, 
+void ktrcsw(struct lwp *, int, int);
+void ktremul(struct lwp *);
+void ktrgenio(struct lwp *, int, enum uio_rw, struct iovec *, int, int);
+void ktrnamei(struct lwp *, char *);
+void ktrpsig(struct lwp *, int, sig_t, const sigset_t *, const ksiginfo_t *);
+void ktrsyscall(struct lwp *, register_t, register_t, 
     const struct sysent *, register_t []);
-int ktrsysret(struct lwp *, register_t, int, register_t *);
-int ktruser(struct lwp *, const char *, void *, size_t, int);
-int ktrmmsg(struct lwp *, const void *, size_t);
-int ktrkmem(struct lwp *, int, const void *, size_t);
-int ktrmool(struct lwp *, const void *, size_t, const void *);
-int ktrsaupcall(struct lwp *, int, int, int, void *, void *);
+void ktrsysret(struct lwp *, register_t, int, register_t *);
+void ktruser(struct lwp *, const char *, void *, size_t, int);
+void ktrmmsg(struct lwp *, const void *, size_t);
+void ktrkmem(struct lwp *, int, const void *, size_t);
+void ktrmool(struct lwp *, const void *, size_t, const void *);
+void ktrsaupcall(struct lwp *, int, int, int, void *, void *);
 
 void ktrderef(struct proc *);
 void ktradref(struct proc *);

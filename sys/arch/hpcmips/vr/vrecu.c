@@ -1,4 +1,4 @@
-/* $NetBSD: vrecu.c,v 1.1.2.4 2004/09/21 13:16:13 skrll Exp $ */
+/* $NetBSD: vrecu.c,v 1.1.2.5 2004/09/24 10:53:16 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrecu.c,v 1.1.2.4 2004/09/21 13:16:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrecu.c,v 1.1.2.5 2004/09/24 10:53:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -173,7 +173,7 @@ pcic_vrip_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	sc->irq = ISACF_IRQ_DEFAULT;
+	sc->irq = -1;
 
 	pcic_attach(sc);
 	pcic_attach_sockets(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.60.2.6 2004/09/21 13:39:07 skrll Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.60.2.7 2004/09/24 10:53:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.60.2.6 2004/09/21 13:39:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.60.2.7 2004/09/24 10:53:58 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -931,6 +931,8 @@ ext2fs_vget(mp, ino, vpp)
 			return (0);
 		}
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+
+	vp->v_flag |= VLOCKSWORK;
 
 	ip = pool_get(&ext2fs_inode_pool, PR_WAITOK);
 	memset(ip, 0, sizeof(struct inode));

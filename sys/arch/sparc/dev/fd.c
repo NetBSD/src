@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.109.2.3 2004/09/21 13:22:02 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.109.2.4 2004/09/24 10:53:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.109.2.3 2004/09/21 13:22:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.109.2.4 2004/09/24 10:53:17 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -882,7 +882,7 @@ fdstrategy(bp)
 
 #ifdef FD_DEBUG
 	if (fdc_debug > 1)
-	    printf("fdstrategy: b_blkno %lld b_bcount %ld blkno %lld cylin %ld\n",
+	    printf("fdstrategy: b_blkno %lld b_bcount %d blkno %lld cylin %d\n",
 		    (long long)bp->b_blkno, bp->b_bcount,
 		    (long long)fd->sc_blkno, bp->b_cylinder);
 #endif
@@ -2231,7 +2231,7 @@ fdformat(dev, finfo, p)
 	if (fdc_debug) {
 		int i;
 
-		printf("fdformat: blkno 0x%llx count %ld\n",
+		printf("fdformat: blkno 0x%llx count %d\n",
 			(unsigned long long)bp->b_blkno, bp->b_bcount);
 
 		printf("\tcyl:\t%d\n", finfo->cyl);
