@@ -514,7 +514,7 @@ frame_saved_pc (frame)
 static void
 write_word (sp, word)
      CORE_ADDR sp;
-     unsigned LONGEST word;
+     ULONGEST word;
 {
   register int len = REGISTER_SIZE;
   char buffer[MAX_REGISTER_RAW_SIZE];

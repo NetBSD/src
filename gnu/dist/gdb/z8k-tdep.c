@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "gdbcmd.h"
 #include "gdbtypes.h"
 #include "dis-asm.h"
+#include "gdbcore.h"
 
 /* Return the saved PC from this frame.
 

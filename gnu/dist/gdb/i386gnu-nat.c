@@ -1,5 +1,5 @@
 /* Low level interface to I386 running the GNU Hurd
-   Copyright (C) 1992 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1995, 1996 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "floatformat.h"
 
 #include <stdio.h>
+#include <errno.h>
 
 #include <mach.h>
 #include <mach/message.h>
@@ -81,16 +82,20 @@ static int reg_offset[] =
 void
 gnu_fetch_registers (int reg)
 {
+  struct proc *thread;
   thread_state_t state;
-  struct proc *thread = inf_tid_to_thread (current_inferior, inferior_pid);
   
-  if (!thread)
+  inf_update_procs (current_inferior); /* Make sure we know about new threads.  */
+
+  thread = inf_tid_to_thread (current_inferior, inferior_pid);
+  if (! thread)
     error ("fetch inferior registers: %d: Invalid thread", inferior_pid);
 
   state = proc_get_state (thread, 0);
 
   if (! state)
-    warning ("Couldn't fetch register %s.", reg_names[reg]);
+    warning ("Couldn't fetch register %s from %s (invalid thread).",
+	     reg_names[reg], proc_string (thread));
   else if (reg >= 0)
     {
       proc_debug (thread, "fetching register: %s", reg_names[reg]);
@@ -116,11 +121,14 @@ void
 gnu_store_registers (reg)
      int reg;
 {
+  struct proc *thread;
   int was_aborted, was_valid;
   thread_state_t state;
   thread_state_data_t old_state;
-  struct proc *thread = inf_tid_to_thread (current_inferior, inferior_pid);
+  
+  inf_update_procs (current_inferior); /* Make sure we know about new threads.  */
 
+  thread = inf_tid_to_thread (current_inferior, inferior_pid);
   if (! thread)
     error ("store inferior registers: %d: Invalid thread", inferior_pid);
 
@@ -134,7 +142,8 @@ gnu_store_registers (reg)
   state = proc_get_state (thread, 1);
 
   if (! state)
-    warning ("Couldn't store register %s.", reg_names[reg]);
+    warning ("Couldn't store register %s from %s (invalid thread).",
+	     reg_names[reg], proc_string (thread));
   else
     {
       if (! was_aborted && was_valid)

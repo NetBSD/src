@@ -155,7 +155,7 @@ i386_insert_aligned_watchpoint (pid, waddr, addr, len, rw)
   if (i > DR_LASTADDR)
     return -1;
 
-  read_write_bits = ((rw & 1) ? DR_RW_READ : 0) | ((rw & 2) ? DR_RW_WRITE : 0);
+  read_write_bits = (rw & 1) ? DR_RW_READ : DR_RW_WRITE;
 
   if (len == 1)
     len_bits = DR_LEN_1;

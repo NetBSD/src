@@ -1,6 +1,122 @@
 		What has changed in GDB?
 	     (Organized release by release)
 
+*** Changes in GDB-4.17:
+
+* New native configurations
+
+Alpha GNU/Linux					alpha*-*-linux*
+Unixware 2.x					i[3456]86-unixware2*
+Irix 6.x					mips*-sgi-irix6*
+PowerPC GNU/Linux				powerpc-*-linux*
+PowerPC Solaris					powerpcle-*-solaris*
+Sparc GNU/Linux					sparc-*-linux*
+Motorola sysV68 R3V7.1				m68k-motorola-sysv
+
+* New targets
+
+Argonaut Risc Chip (ARC)			arc-*-*
+Hitachi H8/300S					h8300*-*-*
+Matsushita MN10200 w/simulator			mn10200-*-*
+Matsushita MN10300 w/simulator			mn10300-*-*
+MIPS NEC VR4100					mips64*vr4100*{,el}-*-elf*
+MIPS NEC VR5000					mips64*vr5000*{,el}-*-elf*
+MIPS Toshiba TX39				mips64*tx39*{,el}-*-elf*
+Mitsubishi D10V w/simulator			d10v-*-*
+Mitsubishi M32R/D w/simulator			m32r-*-elf*
+Tsqware Sparclet				sparclet-*-*
+NEC V850 w/simulator				v850-*-*
+
+* New debugging protocols
+
+ARM with RDI protocol				arm*-*-*
+M68K with dBUG monitor				m68*-*-{aout,coff,elf}
+DDB and LSI variants of PMON protocol		mips*-*-*
+PowerPC with DINK32 monitor			powerpc{,le}-*-eabi
+PowerPC with SDS protocol			powerpc{,le}-*-eabi
+Macraigor OCD (Wiggler) devices			powerpc{,le}-*-eabi
+
+* DWARF 2
+
+All configurations can now understand and use the DWARF 2 debugging
+format.  The choice is automatic, if the symbol file contains DWARF 2
+information.
+
+* Java frontend
+
+GDB now includes basic Java language support.  This support is
+only useful with Java compilers that produce native machine code.
+
+* solib-absolute-prefix and solib-search-path
+
+For SunOS and SVR4 shared libraries, you may now set the prefix for
+loading absolute shared library symbol files, and the search path for
+locating non-absolute shared library symbol files.
+
+* Live range splitting
+
+GDB can now effectively debug code for which GCC has performed live
+range splitting as part of its optimization.  See gdb/doc/LRS for
+more details on the expected format of the stabs information.
+
+* Hurd support
+
+GDB's support for the GNU Hurd, including thread debugging, has been
+updated to work with current versions of the Hurd.
+
+* ARM Thumb support
+
+GDB's ARM target configuration now handles the ARM7T (Thumb) 16-bit
+instruction set.  ARM GDB automatically detects when Thumb
+instructions are in use, and adjusts disassembly and backtracing
+accordingly.
+
+* MIPS16 support
+
+GDB's MIPS target configurations now handle the MIP16 16-bit
+instruction set.
+
+* Overlay support
+
+GDB now includes support for overlays; if an executable has been
+linked such that multiple sections are based at the same address, GDB
+will decide which section to use for symbolic info.  You can choose to
+control the decision manually, using overlay commands, or implement
+additional target-side support and use "overlay load-target" to bring
+in the overlay mapping.  Do "help overlay" for more detail.
+
+* info symbol
+
+The command "info symbol <address>" displays information about
+the symbol at the specified address.
+
+* Trace support
+
+The standard remote protocol now includes an extension that allows
+asynchronous collection and display of trace data.  This requires
+extensive support in the target-side debugging stub.  Tracing mode
+includes a new interaction mode in GDB and new commands: see the
+file tracepoint.c for more details.
+
+* MIPS simulator
+
+Configurations for embedded MIPS now include a simulator contributed
+by Cygnus Solutions.  The simulator supports the instruction sets
+of most MIPS variants.
+
+* Sparc simulator
+
+Sparc configurations may now include the ERC32 simulator contributed
+by the European Space Agency.  The simulator is not built into
+Sparc targets by default; configure with --enable-sim to include it.
+
+* set architecture
+
+For target configurations that may include multiple variants of a
+basic architecture (such as MIPS and SH), you may now set the
+architecture explicitly.  "set arch" sets, "info arch" lists
+the possible architectures.
+
 *** Changes in GDB-4.16:
 
 * New native configurations

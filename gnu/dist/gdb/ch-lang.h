@@ -37,3 +37,6 @@ chill_val_print PARAMS ((struct type *, char *, CORE_ADDR, GDB_FILE *, int, int,
 extern int
 chill_value_print PARAMS ((struct value *, GDB_FILE *,
 			   int, enum val_prettyprint));
+
+extern LONGEST
+type_lower_upper PARAMS ((enum exp_opcode, struct type *, struct type **));

@@ -924,7 +924,7 @@ hms_fetch_register (dummy)
   int s;
   int gottok;
 
-  unsigned LONGEST reg[NUM_REGS];
+  ULONGEST reg[NUM_REGS];
 
   check_open ();
 

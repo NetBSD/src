@@ -37,7 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* Prototypes for local functions */
 
-#if !defined(NO_MMALLOC) && defined(HAVE_MMAP)
+#if defined(USE_MMALLOC) && defined(HAVE_MMAP)
 
 static int
 open_existing_mapped_file PARAMS ((char *, long, int));
@@ -45,10 +45,13 @@ open_existing_mapped_file PARAMS ((char *, long, int));
 static int
 open_mapped_file PARAMS ((char *filename, long mtime, int mapped));
 
-static CORE_ADDR
-map_to_address PARAMS ((void));
+static PTR
+map_to_file PARAMS ((int));
 
-#endif  /* !defined(NO_MMALLOC) && defined(HAVE_MMAP) */
+#endif  /* defined(USE_MMALLOC) && defined(HAVE_MMAP) */
+
+static void
+add_to_objfile_sections PARAMS ((bfd *, sec_ptr, PTR));
 
 /* Externally visible variables that are owned by this module.
    See declarations in objfile.h for more info. */
@@ -82,6 +85,7 @@ add_to_objfile_sections (abfd, asect, objfile_p_char)
   section.offset = 0;
   section.objfile = objfile;
   section.the_bfd_section = asect;
+  section.ovly_mapped = 0;
   section.addr = bfd_section_vma (abfd, asect);
   section.endaddr = section.addr + bfd_section_size (abfd, asect);
   obstack_grow (&objfile->psymbol_obstack, (char *) &section, sizeof(section));
@@ -125,7 +129,8 @@ allocate_objfile (abfd, mapped)
 
   mapped |= mapped_symbol_files;
 
-#if !defined(NO_MMALLOC) && defined(HAVE_MMAP)
+#if defined(USE_MMALLOC) && defined(HAVE_MMAP)
+  if (abfd != NULL)
   {
 
     /* If we can support mapped symbol files, try to open/reopen the
@@ -144,11 +149,9 @@ allocate_objfile (abfd, mapped)
 			   mapped);
     if (fd >= 0)
       {
-	CORE_ADDR mapto;
 	PTR md;
 
-	if (((mapto = map_to_address ()) == 0) ||
-	    ((md = mmalloc_attach (fd, (PTR) mapto)) == NULL))
+	if ((md = map_to_file (fd)) == NULL)
 	  {
 	    close (fd);
 	  }
@@ -209,7 +212,7 @@ allocate_objfile (abfd, mapped)
 		 bfd_get_filename (abfd));
       }
   }
-#else	/* defined(NO_MMALLOC) || !defined(HAVE_MMAP) */
+#else	/* !defined(USE_MMALLOC) || !defined(HAVE_MMAP) */
 
   if (mapped)
     {
@@ -222,7 +225,7 @@ allocate_objfile (abfd, mapped)
       mapped_symbol_files = 0;
     }
 
-#endif	/* !defined(NO_MMALLOC) && defined(HAVE_MMAP) */
+#endif	/* defined(USE_MMALLOC) && defined(HAVE_MMAP) */
 
   /* If we don't support mapped symbol files, didn't ask for the file to be
      mapped, or failed to open the mapped file for some reason, then revert
@@ -252,15 +255,18 @@ allocate_objfile (abfd, mapped)
     {
       mfree (objfile -> md, objfile -> name);
     }
-  objfile -> name = mstrsave (objfile -> md, bfd_get_filename (abfd));
-  objfile -> mtime = bfd_get_mtime (abfd);
-
-  /* Build section table.  */
-
-  if (build_objfile_section_table (objfile))
+  if (abfd != NULL)
     {
-      error ("Can't find the file sections in `%s': %s", 
-	     objfile -> name, bfd_errmsg (bfd_get_error ()));
+      objfile -> name = mstrsave (objfile -> md, bfd_get_filename (abfd));
+      objfile -> mtime = bfd_get_mtime (abfd);
+
+      /* Build section table.  */
+
+      if (build_objfile_section_table (objfile))
+	{
+	  error ("Can't find the file sections in `%s': %s", 
+		 objfile -> name, bfd_errmsg (bfd_get_error ()));
+	}
     }
 
   /* Add this file onto the tail of the linked list of other such files. */
@@ -410,7 +416,7 @@ free_objfile (objfile)
      case.  Note that the mmalloc_detach or the mfree is the last thing
      we can do with this objfile. */
 
-#if !defined(NO_MMALLOC) && defined(HAVE_MMAP)
+#if defined(USE_MMALLOC) && defined(HAVE_MMAP)
 
   if (objfile -> flags & OBJF_MAPPED)
     {
@@ -424,7 +430,7 @@ free_objfile (objfile)
       close (mmfd);
     }
 
-#endif	/* !defined(NO_MMALLOC) && defined(HAVE_MMAP) */
+#endif	/* defined(USE_MMALLOC) && defined(HAVE_MMAP) */
 
   /* If we still have an objfile, then either we don't support reusable
      objfiles or this one was not reusable.  So free it normally. */
@@ -471,9 +477,9 @@ objfile_relocate (objfile, new_offsets)
      struct objfile *objfile;
      struct section_offsets *new_offsets;
 {
-  struct section_offsets *delta = (struct section_offsets *) alloca
-    (sizeof (struct section_offsets)
-     + objfile->num_sections * sizeof (delta->offsets));
+  struct section_offsets *delta = (struct section_offsets *) 
+    alloca (sizeof (struct section_offsets)
+	    + objfile->num_sections * sizeof (delta->offsets));
 
   {
     int i;
@@ -519,7 +525,7 @@ objfile_relocate (objfile, new_offsets)
 	    
 	    b = BLOCKVECTOR_BLOCK (bv, i);
 	    BLOCK_START (b) += ANOFFSET (delta, s->block_line_section);
-	    BLOCK_END (b) += ANOFFSET (delta, s->block_line_section);
+	    BLOCK_END (b)   += ANOFFSET (delta, s->block_line_section);
 
 	    for (j = 0; j < BLOCK_NSYMS (b); ++j)
 	      {
@@ -532,7 +538,7 @@ objfile_relocate (objfile, new_offsets)
 		     || SYMBOL_CLASS (sym) == LOC_STATIC)
 		    && SYMBOL_SECTION (sym) >= 0)
 		  {
-		    SYMBOL_VALUE_ADDRESS (sym) +=
+		    SYMBOL_VALUE_ADDRESS (sym) += 
 		      ANOFFSET (delta, SYMBOL_SECTION (sym));
 		  }
 #ifdef MIPS_EFI_SYMBOL_NAME
@@ -542,7 +548,8 @@ objfile_relocate (objfile, new_offsets)
 		  if (SYMBOL_CLASS (sym) == LOC_CONST
 		      && SYMBOL_NAMESPACE (sym) == LABEL_NAMESPACE
 		      && STRCMP (SYMBOL_NAME (sym), MIPS_EFI_SYMBOL_NAME) == 0)
-		    ecoff_relocate_efi (sym, ANOFFSET (delta, s->block_line_section));
+		ecoff_relocate_efi (sym, ANOFFSET (delta, 
+						   s->block_line_section));
 #endif
 	      }
 	  }
@@ -566,12 +573,14 @@ objfile_relocate (objfile, new_offsets)
 	 psym < objfile->global_psymbols.next;
 	 psym++)
       if (SYMBOL_SECTION (*psym) >= 0)
-	SYMBOL_VALUE_ADDRESS (*psym) += ANOFFSET (delta, SYMBOL_SECTION (*psym));
+	SYMBOL_VALUE_ADDRESS (*psym) += ANOFFSET (delta, 
+						  SYMBOL_SECTION (*psym));
     for (psym = objfile->static_psymbols.list;
 	 psym < objfile->static_psymbols.next;
 	 psym++)
       if (SYMBOL_SECTION (*psym) >= 0)
-	SYMBOL_VALUE_ADDRESS (*psym) += ANOFFSET (delta, SYMBOL_SECTION (*psym));
+	SYMBOL_VALUE_ADDRESS (*psym) += ANOFFSET (delta, 
+						  SYMBOL_SECTION (*psym));
   }
 
   {
@@ -605,42 +614,45 @@ objfile_relocate (objfile, new_offsets)
 
 	if (flags & SEC_CODE)
 	  {
-	    s->addr += ANOFFSET (delta, SECT_OFF_TEXT);
+	    s->addr    += ANOFFSET (delta, SECT_OFF_TEXT);
 	    s->endaddr += ANOFFSET (delta, SECT_OFF_TEXT);
 	  }
 	else if (flags & (SEC_DATA | SEC_LOAD))
 	  {
-	    s->addr += ANOFFSET (delta, SECT_OFF_DATA);
+	    s->addr    += ANOFFSET (delta, SECT_OFF_DATA);
 	    s->endaddr += ANOFFSET (delta, SECT_OFF_DATA);
 	  }
 	else if (flags & SEC_ALLOC)
 	  {
-	    s->addr += ANOFFSET (delta, SECT_OFF_BSS);
+	    s->addr    += ANOFFSET (delta, SECT_OFF_BSS);
 	    s->endaddr += ANOFFSET (delta, SECT_OFF_BSS);
 	  }
       }
   }
 
-  if (objfile->ei.entry_point != ~0)
+  if (objfile->ei.entry_point != ~(CORE_ADDR)0)
     objfile->ei.entry_point += ANOFFSET (delta, SECT_OFF_TEXT);
 
   if (objfile->ei.entry_func_lowpc != INVALID_ENTRY_LOWPC)
     {
-      objfile->ei.entry_func_lowpc += ANOFFSET (delta, SECT_OFF_TEXT);
+      objfile->ei.entry_func_lowpc  += ANOFFSET (delta, SECT_OFF_TEXT);
       objfile->ei.entry_func_highpc += ANOFFSET (delta, SECT_OFF_TEXT);
     }
 
   if (objfile->ei.entry_file_lowpc != INVALID_ENTRY_LOWPC)
     {
-      objfile->ei.entry_file_lowpc += ANOFFSET (delta, SECT_OFF_TEXT);
+      objfile->ei.entry_file_lowpc  += ANOFFSET (delta, SECT_OFF_TEXT);
       objfile->ei.entry_file_highpc += ANOFFSET (delta, SECT_OFF_TEXT);
     }
 
   if (objfile->ei.main_func_lowpc != INVALID_ENTRY_LOWPC)
     {
-      objfile->ei.main_func_lowpc += ANOFFSET (delta, SECT_OFF_TEXT);
+      objfile->ei.main_func_lowpc  += ANOFFSET (delta, SECT_OFF_TEXT);
       objfile->ei.main_func_highpc += ANOFFSET (delta, SECT_OFF_TEXT);
     }
+
+  /* Relocate breakpoints as necessary, after things are relocated. */
+  breakpoint_re_set ();
 }
 
 /* Many places in gdb want to test just to see if we have any partial
@@ -700,7 +712,7 @@ have_minimal_symbols ()
   return 0;
 }
 
-#if !defined(NO_MMALLOC) && defined(HAVE_MMAP)
+#if defined(USE_MMALLOC) && defined(HAVE_MMAP)
 
 /* Given the name of a mapped symbol file in SYMSFILENAME, and the timestamp
    of the corresponding symbol file in MTIME, try to open an existing file
@@ -824,71 +836,84 @@ open_mapped_file (filename, mtime, mapped)
   return (fd);
 }
 
-/* Return the base address at which we would like the next objfile's
-   mapped data to start.
-
-   For now, we use the kludge that the configuration specifies a base
-   address to which it is safe to map the first mmalloc heap, and an
-   increment to add to this address for each successive heap.  There are
-   a lot of issues to deal with here to make this work reasonably, including:
-
-     Avoid memory collisions with existing mapped address spaces
-
-     Reclaim address spaces when their mmalloc heaps are unmapped
-
-     When mmalloc heaps are shared between processes they have to be
-     mapped at the same addresses in each
-
-     Once created, a mmalloc heap that is to be mapped back in must be
-     mapped at the original address.  I.E. each objfile will expect to
-     be remapped at it's original address.  This becomes a problem if
-     the desired address is already in use.
-
-     etc, etc, etc.
-
- */
-
-
-static CORE_ADDR
-map_to_address ()
+static PTR
+map_to_file (fd)
+     int fd;
 {
+  PTR md;
+  CORE_ADDR mapto;
 
-#if defined(MMAP_BASE_ADDRESS) && defined (MMAP_INCREMENT)
-
-  static CORE_ADDR next = MMAP_BASE_ADDRESS;
-  CORE_ADDR mapto = next;
-
-  next += MMAP_INCREMENT;
-  return (mapto);
-
-#else
-
-  warning ("need to recompile gdb with MMAP_BASE_ADDRESS and MMAP_INCREMENT defined");
-  return (0);
-
-#endif
-
+  md = mmalloc_attach (fd, (PTR) 0);
+  if (md != NULL)
+    {
+      mapto = (CORE_ADDR) mmalloc_getkey (md, 1);
+      md = mmalloc_detach (md);
+      if (md != NULL)
+	{
+	  /* FIXME: should figure out why detach failed */
+	  md = NULL;
+	}
+      else if (mapto != (CORE_ADDR) NULL)
+	{
+	  /* This mapping file needs to be remapped at "mapto" */
+	  md = mmalloc_attach (fd, (PTR) mapto);
+	}
+      else
+	{
+	  /* This is a freshly created mapping file. */
+	  mapto = (CORE_ADDR) mmalloc_findbase (20 * 1024 * 1024);
+	  if (mapto != 0)
+	    {
+	      /* To avoid reusing the freshly created mapping file, at the 
+		 address selected by mmap, we must truncate it before trying
+		 to do an attach at the address we want. */
+	      ftruncate (fd, 0);
+	      md = mmalloc_attach (fd, (PTR) mapto);
+	      if (md != NULL)
+		{
+		  mmalloc_setkey (md, 1, (PTR) mapto);
+		}
+	    }
+	}
+    }
+  return (md);
 }
 
-#endif	/* !defined(NO_MMALLOC) && defined(HAVE_MMAP) */
+#endif	/* defined(USE_MMALLOC) && defined(HAVE_MMAP) */
 
-/* Returns a section whose range includes PC or NULL if none found. */
+/* Returns a section whose range includes PC and SECTION, 
+   or NULL if none found.  Note the distinction between the return type, 
+   struct obj_section (which is defined in gdb), and the input type
+   struct sec (which is a bfd-defined data type).  The obj_section
+   contains a pointer to the bfd struct sec section.  */
 
 struct obj_section *
-find_pc_section(pc)
+find_pc_sect_section (pc, section)
      CORE_ADDR pc;
+     struct sec *section;
 {
   struct obj_section *s;
   struct objfile *objfile;
   
   ALL_OBJFILES (objfile)
     for (s = objfile->sections; s < objfile->sections_end; ++s)
-      if (s->addr <= pc
-	  && pc < s->endaddr)
+      if ((section == 0 || section == s->the_bfd_section) && 
+	  s->addr <= pc && pc < s->endaddr)
 	return(s);
 
   return(NULL);
 }
+
+/* Returns a section whose range includes PC or NULL if none found. 
+   Backward compatibility, no section.  */
+
+struct obj_section *
+find_pc_section(pc)
+     CORE_ADDR pc;
+{
+  return find_pc_sect_section (pc, find_pc_mapped_section (pc));
+}
+  
 
 /* In SVR4, we recognize a trampoline by it's section name. 
    That is, if the pc is in a section named ".plt" then we are in

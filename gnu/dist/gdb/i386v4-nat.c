@@ -135,8 +135,6 @@ void
 supply_fpregset (fpregsetp)
      fpregset_t *fpregsetp;
 {
-  register int regi;
-  
   /* FIXME: see m68k-tdep.c for an example, for the m68k. */
 }
 
@@ -150,11 +148,6 @@ fill_fpregset (fpregsetp, regno)
      fpregset_t *fpregsetp;
      int regno;
 {
-  int regi;
-  char *to;
-  char *from;
-  extern char registers[];
-
   /* FIXME: see m68k-tdep.c for an example, for the m68k. */
 }
 

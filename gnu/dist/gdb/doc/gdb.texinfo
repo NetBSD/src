@@ -1,5 +1,5 @@
 \input texinfo      @c -*-texinfo-*-
-@c Copyright 1988 1989 1990 1991 1992 1993 1994 1995
+@c Copyright 1988 1989 1990 1991 1992 1993 1994 1995 1996 1997 1998
 @c Free Software Foundation, Inc.
 @c
 @c %**start of header 
@@ -31,14 +31,10 @@
 @syncodeindex vr cp
 
 @c !!set GDB manual's edition---not the same as GDB version!
-@set EDITION 4.12
+@set EDITION Fifth
 
 @c !!set GDB manual's revision date
-@set DATE January 1994
-
-@c GDB CHANGELOG CONSULTED BETWEEN:
-@c Fri Oct 11 23:27:06 1991  John Gilmore  (gnu at cygnus.com)
-@c Sat Dec 22 02:51:40 1990  John Gilmore  (gnu at cygint)
+@set DATE April 1998
 
 @c THIS MANUAL REQUIRES TEXINFO-2 macros and info-makers to format properly.
 
@@ -57,11 +53,11 @@ END-INFO-DIR-ENTRY
 This file documents the @sc{gnu} debugger @value{GDBN}.
 
 
-This is Edition @value{EDITION}, @value{DATE}, 
+This is the @value{EDITION} Edition, @value{DATE}, 
 of @cite{Debugging with @value{GDBN}: the @sc{gnu} Source-Level Debugger}
 for @value{GDBN} Version @value{GDBVN}.
 
-Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995
+Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
@@ -91,9 +87,9 @@ into another language, under the above conditions for modified versions.
 @subtitle (@value{TARGET})
 @end ifclear
 @sp 1
-@subtitle Edition @value{EDITION}, for @value{GDBN} version @value{GDBVN}
+@subtitle @value{EDITION} Edition, for @value{GDBN} version @value{GDBVN}
 @subtitle @value{DATE}
-@author Richard M. Stallman and Cygnus Support
+@author Richard M. Stallman and Roland H. Pesch
 @page
 @tex
 {\parskip=0pt
@@ -105,7 +101,7 @@ into another language, under the above conditions for modified versions.
 @end tex
 
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995
+Copyright @copyright{} 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
 Free Software Foundation, Inc. 
 @sp 2
 Published by the Free Software Foundation @*
@@ -134,7 +130,7 @@ into another language, under the above conditions for modified versions.
 
 This file describes @value{GDBN}, the @sc{gnu} symbolic debugger.
 
-This is Edition @value{EDITION}, @value{DATE}, for @value{GDBN} Version 
+This is the @value{EDITION} Edition, @value{DATE}, for @value{GDBN} Version 
 @value{GDBVN}.
 
 @menu
@@ -304,6 +300,8 @@ Henkel-Wallace, Rich Pixley, Steve Chamberlain, and John Gilmore.
 David Johnson wrote the original COFF support; Pace Willison did
 the original support for encapsulated COFF.
 
+Brent Benson of Harris Computer Systems contributed DWARF 2 support.
+
 Adam de Boor and Bradley Davis contributed the ISI Optimum V support.
 Per Bothner, Noboyuki Hikichi, and Alessandro Forin contributed MIPS
 support.
@@ -329,9 +327,10 @@ libraries.
 Jay Fenlason and Roland McGrath ensured that @value{GDBN} and GAS agree about
 several machine instruction sets.
 
-Patrick Duval, Ted Goldstein, Vikram Koka and Glenn Engel helped
-develop remote debugging.  Intel Corporation and Wind River Systems
-contributed remote debugging modules for their products.
+Patrick Duval, Ted Goldstein, Vikram Koka and Glenn Engel helped develop
+remote debugging.  Intel Corporation, Wind River Systems, AMD, and ARM
+contributed remote debugging modules for the i960, VxWorks, A29K UDI,
+and RDI targets, respectively.
 
 Brian Fox is the author of the readline libraries providing
 command-line editing and command history.
@@ -353,10 +352,15 @@ Hitachi America, Ltd. sponsored the support for Hitachi microprocessors.
 Kung Hsu, Jeff Law, and Rick Sladkey added support for hardware
 watchpoints.
 
+Michael Snyder added support for tracepoints.
+
 Stu Grossman wrote gdbserver.
 
 Jim Kingdon, Peter Schauer, Ian Taylor, and Stu Grossman made
 nearly innumerable bug fixes and cleanups throughout GDB.
+
+Cygnus Solutions has sponsored GDB maintenance and much of its
+development since 1991.
 
 @ifclear BARETARGET
 @node Sample Session
@@ -752,6 +756,9 @@ in sequential order.  The order makes a difference when the
 @end ifset
 @ifset MIPS
 * MIPS Remote::			@value{GDBN} and MIPS boards
+@end ifset
+@ifset SPARCLET
+* Sparclet Remote::             @value{GDBN} and Sparclet boards
 @end ifset
 @ifset SIMS
 * Simulator::                   Simulated CPU target
@@ -3307,7 +3314,7 @@ no provision for frameless functions elsewhere in the stack.
 @item frame @var{args}
 The @code{frame} command allows you to move from one stack frame to another, 
 and to print the stack frame you select.  @var{args} may be either the
-address of the frame of the stack frame number.  Without an argument, 
+address of the frame or the stack frame number.  Without an argument, 
 @code{frame} prints the current stack frame.  
 
 @kindex select-frame
@@ -3925,6 +3932,22 @@ to 0x808c:
  . 
 @end smallexample
 @end ifset
+
+@table @code
+@kindex set assembly-language
+@cindex assembly instructions
+@cindex instructions, assembly
+@cindex machine instructions
+@cindex listing machine instructions
+@item set assembly-language @var{instruction-set}
+This command selects the instruction set to use when disassembling the program via the
+@code{disassemble} or @code{x/i} commands.  It is useful for architectures that
+have more than one native instruction set.
+
+Currently it is only defined for the Intel x86 family.  You can set @var{instruction-set}
+to either @code{i386} or @code{i8086}.  The default is @code{i386}.
+@end table
+
 
 @node Data
 @chapter Examining Data
@@ -7581,6 +7604,10 @@ is the target system's machine name or IP address.
 @xref{VxWorks Remote, ,@value{GDBN} and VxWorks}.
 @end ifset
 
+@kindex target bug
+@item target bug @var{dev}
+BUG monitor, running on a MVME187 (m88k) board.
+
 @kindex target cpu32bug
 @item target cpu32bug @var{dev}
 CPU32BUG monitor, running on a CPU32 (M68K) board.
@@ -7682,6 +7709,9 @@ configuration of @value{GDBN}; use @code{help target} to list them.
 @end ifset
 @ifset MIPS
 * MIPS Remote::			@value{GDBN} and MIPS boards
+@end ifset
+@ifset SPARCLET
+* Sparclet Remote::             @value{GDBN} and Sparclet boards
 @end ifset
 @ifset SIMS
 * Simulator::                   Simulated CPU target

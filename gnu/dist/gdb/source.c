@@ -1,5 +1,5 @@
 /* List lines of source files for GDB, the GNU debugger.
-   Copyright 1986, 1987, 1988, 1989, 1991, 1992, 1993, 1994, 1995
+   Copyright 1986, 87, 88, 89, 91, 92, 93, 94, 95, 96, 1997
    Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -29,7 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include <sys/types.h>
 #include "gdb_string.h"
-#include <sys/param.h>
 #include "gdb_stat.h"
 #include <fcntl.h>
 #ifdef HAVE_UNISTD_H
@@ -41,6 +40,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "objfiles.h"
 #include "annotate.h"
 #include "gdbtypes.h"
+
+#ifdef CRLF_SOURCE_FILES
+
+/* Define CRLF_SOURCE_FILES in an xm-*.h file if source files on the
+   host use \r\n rather than just \n.  Defining CRLF_SOURCE_FILES is
+   much faster than defining LSEEK_NOT_LINEAR.  */
+
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
+#define OPEN_MODE (O_RDONLY | O_BINARY)
+#define FDOPEN_MODE FOPEN_RB
+
+#else /* ! defined (CRLF_SOURCE_FILES) */
+
+#define OPEN_MODE O_RDONLY
+#define FDOPEN_MODE FOPEN_RT
+
+#endif /* ! defined (CRLF_SOURCE_FILES) */
 
 /* Prototypes for local functions. */
 
@@ -450,7 +469,8 @@ source_info (ignore, from_tty)
     printf_filtered ("Contains %d line%s.\n", s->nlines,
 		     s->nlines == 1 ? "" : "s");
 
-  printf_filtered("Source language is %s.\n", language_str (s->language));
+  printf_filtered ("Source language is %s.\n", language_str (s->language));
+  printf_filtered ("Compiled with %s debugging format.\n", s->debugformat);
 }
 
 
@@ -607,7 +627,7 @@ open_source_file (s)
   /* Quick way out if we already know its full name */
   if (s->fullname) 
     {
-      result = open (s->fullname, O_RDONLY);
+      result = open (s->fullname, OPEN_MODE);
       if (result >= 0)
         return result;
       /* Didn't work -- free old one, try again. */
@@ -636,13 +656,13 @@ open_source_file (s)
 	}
     }
 
-  result = openp (path, 0, s->filename, O_RDONLY, 0, &s->fullname);
+  result = openp (path, 0, s->filename, OPEN_MODE, 0, &s->fullname);
   if (result < 0)
     {
       /* Didn't work.  Try using just the basename. */
       p = basename (s->filename);
       if (p != s->filename)
-	result = openp (path, 0, p, O_RDONLY, 0, &s->fullname);
+	result = openp (path, 0, p, OPEN_MODE, 0, &s->fullname);
     }
 #ifdef MPW
   if (result < 0)
@@ -650,14 +670,14 @@ open_source_file (s)
       /* Didn't work.  Try using just the MPW basename. */
       p = (char *) mpw_basename (s->filename);
       if (p != s->filename)
-	result = openp (path, 0, p, O_RDONLY, 0, &s->fullname);
+	result = openp (path, 0, p, OPEN_MODE, 0, &s->fullname);
     }
   if (result < 0)
     {
       /* Didn't work.  Try using the mixed Unix/MPW basename. */
       p = (char *) mpw_mixed_basename (s->filename);
       if (p != s->filename)
-	result = openp (path, 0, p, O_RDONLY, 0, &s->fullname);
+	result = openp (path, 0, p, OPEN_MODE, 0, &s->fullname);
     }
 #endif /* MPW */
 
@@ -715,7 +735,7 @@ find_source_lines (s, desc)
   int nlines = 0;
   int lines_allocated = 1000;
   int *line_charpos;
-  long exec_mtime;
+  long mtime;
   int size;
 
   line_charpos = (int *) xmmalloc (s -> objfile -> md,
@@ -723,10 +743,16 @@ find_source_lines (s, desc)
   if (fstat (desc, &st) < 0)
     perror_with_name (s->filename);
 
-  if (exec_bfd)
+  if (s && s->objfile && s->objfile->obfd)
     {
-      exec_mtime = bfd_get_mtime(exec_bfd);
-      if (exec_mtime && exec_mtime < st.st_mtime)
+      mtime = bfd_get_mtime(s->objfile->obfd);
+      if (mtime && mtime < st.st_mtime)
+	printf_filtered ("Source file is more recent than executable.\n");
+    }
+  else if (exec_bfd)
+    {
+      mtime = bfd_get_mtime(exec_bfd);
+      if (mtime && mtime < st.st_mtime)
 	printf_filtered ("Source file is more recent than executable.\n");
     }
 
@@ -766,7 +792,9 @@ find_source_lines (s, desc)
     data = (char *) xmalloc (size);
     old_cleanups = make_cleanup (free, data);
 
-    if (myread (desc, data, size) < 0)
+    /* Reassign `size' to result of read for systems where \r\n -> \n.  */
+    size = myread (desc, data, size);
+    if (size < 0)
       perror_with_name (s->filename);
     end = data + size;
     p = data;
@@ -947,7 +975,7 @@ print_source_lines (s, line, stopline, noerror)
       perror_with_name (s->filename);
     }
 
-  stream = fdopen (desc, FOPEN_RT);
+  stream = fdopen (desc, FDOPEN_MODE);
   clearerr (stream);
 
   while (nlines-- > 0)
@@ -962,6 +990,12 @@ print_source_lines (s, line, stopline, noerror)
 	      printf_filtered ("^%c", c + 0100);
 	  else if (c == 0177)
 	    printf_filtered ("^?");
+#ifdef CRLF_SOURCE_FILES
+	  else if (c == '\r')
+	    {
+	      /* Just skip \r characters.  */
+	    }
+#endif
 	  else
 	    printf_filtered ("%c", c);
 	} while (c != '\n' && (c = fgetc (stream)) >= 0);
@@ -1172,11 +1206,12 @@ line_info (arg, from_tty)
   CORE_ADDR start_pc, end_pc;
   int i;
 
+  INIT_SAL (&sal);	/* initialize to zeroes */
+
   if (arg == 0)
     {
       sal.symtab = current_source_symtab;
       sal.line = last_line_listed;
-      sal.pc = 0;
       sals.nelts = 1;
       sals.sals = (struct symtab_and_line *)
 	xmalloc (sizeof (struct symtab_and_line));
@@ -1300,7 +1335,7 @@ forward_search_command (regex, from_tty)
       perror_with_name (current_source_symtab->filename);
     }
 
-  stream = fdopen (desc, FOPEN_RT);
+  stream = fdopen (desc, FDOPEN_MODE);
   clearerr (stream);
   while (1) {
     static char *buf = NULL;
@@ -1385,7 +1420,7 @@ reverse_search_command (regex, from_tty)
       perror_with_name (current_source_symtab->filename);
     }
 
-  stream = fdopen (desc, FOPEN_RT);
+  stream = fdopen (desc, FDOPEN_MODE);
   clearerr (stream);
   while (line > 1)
     {

@@ -1,6 +1,6 @@
 /* Definitions for native support of irix5.
 
-Copyright (C) 1993 Free Software Foundation, Inc.
+Copyright (C) 1993, 1998 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -19,6 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "nm-sysv4.h"
+#undef IN_SOLIB_DYNSYM_RESOLVE_CODE
 
 #define TARGET_HAS_HARDWARE_WATCHPOINTS
 
@@ -32,6 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define STOPPED_BY_WATCHPOINT(W) \
   procfs_stopped_by_watchpoint(inferior_pid)
+extern int procfs_stopped_by_watchpoint PARAMS ((int));
 
 #define HAVE_NONSTEPPABLE_WATCHPOINT
 
@@ -39,3 +41,4 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* type can be 0: write watch, 1: read watch, 2: access watch (read/write) */
 #define target_insert_watchpoint(addr, len, type) procfs_set_watchpoint (inferior_pid, addr, len, 2)
 #define target_remove_watchpoint(addr, len, type) procfs_set_watchpoint (inferior_pid, addr, 0, 0)
+extern int procfs_set_watchpoint PARAMS ((int, CORE_ADDR, int, int));

@@ -1,5 +1,5 @@
 /* Macro definitions for RS/6000 running AIX4.
-   Copyright 1995 Free Software Foundation, Inc.
+   Copyright 1995, 1997 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -19,9 +19,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef TM_RS6000_AIX4_H
 #define TM_RS6000_AIX4_H
-
-/* The main executable doesn't need relocation in aix4.  */
-#define DONT_RELOCATE_SYMFILE_OBJFILE
 
 /* Use generic RS6000 definitions. */
 #include "rs6000/tm-rs6000.h"

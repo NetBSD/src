@@ -70,14 +70,12 @@ sh3_supply_register (regname, regnamelen, val, vallen)
 	    else
 	      regno = GBR_REGNUM;
 	  break;
-#if 0
 	case 'S':
 	  if (regname[1] == 'S' && regname[2] == 'R')
 	    regno = SSR_REGNUM;
 	  else if (regname[1] == 'P' && regname[2] == 'C')
 	    regno = SPC_REGNUM;
 	  break;
-#endif
 	}
     }
   else if (regnamelen == 4)
@@ -108,7 +106,10 @@ sh3_supply_register (regname, regnamelen, val, vallen)
 	  numregs = 8;
 	}
     }
-	
+  else if (regnamelen == 17)
+    {
+    }
+
   if (regno >= 0)
     while (numregs-- > 0)
       val = monitor_supply_register (regno++, val);
@@ -123,7 +124,7 @@ sh3_load (desc, file, hashmark)
   if (parallel_in_use) 
     {
       monitor_printf("pl;s\r");
-      load_srec (parallel, file, 80, SREC_ALL, hashmark);      
+      load_srec (parallel, file, 0, 80, SREC_ALL, hashmark, NULL);
       monitor_expect_prompt (NULL, 0);
     }
   else 
@@ -133,7 +134,7 @@ sh3_load (desc, file, hashmark)
       SERIAL_WRITE (desc, "\006", 1); /* Send ACK */
       monitor_expect ("LO x\r", NULL, 0); /* Look for filename */
 
-      load_srec (desc, file, 80, SREC_ALL, hashmark);
+      load_srec (desc, file, 0, 80, SREC_ALL, hashmark, NULL);
 
       monitor_expect ("\005", NULL, 0); /* Look for ENQ */
       SERIAL_WRITE (desc, "\006", 1); /* Send ACK */
@@ -153,6 +154,21 @@ static char *sh3_regnames[NUM_REGS] = {
   NULL, NULL,
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+  "SSR", "SPC",
+  "R0_BANK0", "R1_BANK0", "R2_BANK0", "R3_BANK0",
+  "R4_BANK0", "R5_BANK0", "R6_BANK0", "R7_BANK0",
+  "R0_BANK1", "R1_BANK1", "R2_BANK1", "R3_BANK1",
+  "R4_BANK1", "R5_BANK1", "R6_BANK1", "R7_BANK1"
+};
+
+static char *sh3e_regnames[NUM_REGS] = {
+  "R0", "R1", "R2",  "R3", "R4",  "R5",   "R6",  "R7",
+  "R8", "R9", "R10", "R11","R12", "R13",  "R14", "R15",
+  "PC", "PR", "GBR", "VBR","MACH","MACL", "SR",
+  "FPUL", "FPSCR",
+  "FR0", "FR1", "FR2", "FR3", "FR4", "FR5", "FR6", "FR7",
+  "FR8", "FR9", "FR10", "FR11", "FR12", "FR13", "FR14", "FR15",
+  "SSR","SPC",
   "R0_BANK0", "R1_BANK0", "R2_BANK0", "R3_BANK0",
   "R4_BANK0", "R5_BANK0", "R6_BANK0", "R7_BANK0",
   "R0_BANK1", "R1_BANK1", "R2_BANK1", "R3_BANK1",
@@ -163,7 +179,7 @@ static char *sh3_regnames[NUM_REGS] = {
    through to a printf style function, we may include formatting
    strings. We also need a CR or LF on the end.  */
 
-static struct target_ops sh3_ops;
+static struct target_ops sh3_ops, sh3e_ops;
 
 static char *sh3_inits[] = {"\003", NULL}; /* Exits sub-command mode & download cmds */
 
@@ -225,6 +241,11 @@ static struct monitor_ops sh3_cmds =
   MONITOR_OPS_MAGIC		/* magic */
 };
 
+/* This monitor structure is identical except for a couple slots, so
+   we will fill it in from the base structure when needed.  */
+
+static struct monitor_ops sh3e_cmds;
+
 static void
 sh3_open (args, from_tty)
      char *args;
@@ -263,9 +284,57 @@ sh3_open (args, from_tty)
     }
 
   /* If we connected successfully, we know the processor is an SH3.  */
-  sh_set_processor_type ("sh3");
+  set_architecture_from_arch_mach (bfd_arch_sh, bfd_mach_sh3);
 }
 
+
+static void
+sh3e_open (args, from_tty)
+     char *args;
+     int from_tty;
+{
+  char *serial_port_name = args;
+  char *parallel_port_name = 0;
+
+  if (args) 
+    {
+      char *cursor = serial_port_name = strsave (args);
+
+      while (*cursor && *cursor != ' ')
+ 	cursor++;
+
+      if (*cursor)
+	*cursor++ = 0;
+
+      while (*cursor == ' ')
+	cursor++;
+
+      if (*cursor)
+	parallel_port_name = cursor;
+    }
+
+  /* Set up the SH-3E monitor commands structure.  */
+
+  memcpy (&sh3e_cmds, &sh3_cmds, sizeof (struct monitor_ops));
+
+  sh3e_cmds.target = &sh3e_ops;
+  sh3e_cmds.regnames = sh3e_regnames;
+
+  monitor_open (serial_port_name, &sh3e_cmds, from_tty);
+
+  if (parallel_port_name)
+    {
+      parallel = SERIAL_OPEN (parallel_port_name);
+
+      if (!parallel)
+	perror_with_name ("Unable to open parallel port.");
+
+      parallel_in_use = 1;
+    }
+
+  /* If we connected successfully, we know the processor is an SH3E.  */
+  set_architecture_from_arch_mach (bfd_arch_sh, bfd_mach_sh3);
+}
 
 static void
 sh3_close (quitting)
@@ -279,7 +348,7 @@ sh3_close (quitting)
 }
 
 void
-_initialize_sh3 ()
+_initialize_sh3_rom ()
 {
   init_monitor_ops (&sh3_ops);
 
@@ -302,4 +371,28 @@ Specify the serial device it is connected to (e.g. /dev/ttya).";
   sh3_ops.to_close = sh3_close;
 
   add_target (&sh3_ops);
+
+  /* Setup the SH3e, which has float registers.  */
+
+  init_monitor_ops (&sh3e_ops);
+
+  sh3e_ops.to_shortname = "sh3e";
+  sh3e_ops.to_longname = "Hitachi SH-3E rom monitor";
+
+  sh3e_ops.to_doc = 
+#ifdef _WINDOWS
+  /* On windows we can talk through the parallel port too. */
+    "Debug on a Hitachi eval board running the SH-3E rom monitor.\n"
+    "Specify the serial device it is connected to (e.g. com2).\n"
+    "If you want to use the parallel port to download to it, specify that\n"
+    "as the second argument. (e.g. lpt1)";
+#else
+    "Debug on a Hitachi eval board running the SH-3E rom monitor.\n\
+Specify the serial device it is connected to (e.g. /dev/ttya).";
+#endif
+
+  sh3e_ops.to_open = sh3e_open;
+  sh3e_ops.to_close = sh3_close;
+
+  add_target (&sh3e_ops);
 }

@@ -33,6 +33,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    of ROMBUG is not available yet.
 */
 
+/* FIXME This file needs to be rewritten if it's to work again, either
+   to self-contained or to use the new monitor interface.  */
+
 #include "defs.h"
 #include "gdbcore.h"
 #include "target.h"
@@ -54,7 +57,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "objfiles.h"
 #include "gdb-stabs.h"
 
-struct monitor_ops *current_monitor;
 struct cmd_list_element *showlist;
 extern struct target_ops rombug_ops;		/* Forward declaration */
 extern struct monitor_ops rombug_cmds;		/* Forward declaration */

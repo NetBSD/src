@@ -54,9 +54,6 @@ mipscoff_symfile_read PARAMS ((struct objfile *, struct section_offsets *,
 static void
 mipscoff_symfile_finish PARAMS ((struct objfile *));
 
-static struct section_offsets *
-mipscoff_symfile_offsets PARAMS ((struct objfile *, CORE_ADDR));
-
 static void
 read_alphacoff_dynamic_symtab PARAMS ((struct section_offsets *,
 				       struct objfile *objfile));
@@ -145,29 +142,6 @@ static void
 mipscoff_symfile_finish (objfile)
      struct objfile *objfile;
 {
-}
-
-/* Fake up identical offsets for all sections.  */
-
-static struct section_offsets *
-mipscoff_symfile_offsets (objfile, addr)
-     struct objfile *objfile;
-     CORE_ADDR addr;
-{
-  struct section_offsets *section_offsets;
-  int i;
-
-  objfile->num_sections = SECT_OFF_MAX;
-  section_offsets = ((struct section_offsets *)
-		     obstack_alloc (&objfile->psymbol_obstack,
-				    (sizeof (struct section_offsets)
-				     + (sizeof (section_offsets->offsets)
-					* (SECT_OFF_MAX - 1)))));
-
-  for (i = 0; i < SECT_OFF_MAX; i++)
-    ANOFFSET (section_offsets, i) = addr;
-
-  return section_offsets;
 }
 
 /* Alpha OSF/1 encapsulates the dynamic symbols in ELF format in a
@@ -448,12 +422,7 @@ read_alphacoff_dynamic_symtab (section_offsets, objfile)
 	    }
 	}
 
-      prim_record_minimal_symbol (obsavestring (name,
-						strlen (name),
-						&objfile -> symbol_obstack),
-				  sym_value,
-				  ms_type,
-				  objfile);
+      prim_record_minimal_symbol (name, sym_value, ms_type, objfile);
     }
 }
 
@@ -466,7 +435,7 @@ static struct sym_fns ecoff_sym_fns =
   mipscoff_symfile_init,	/* sym_init: read initial info, setup for sym_read() */
   mipscoff_symfile_read,	/* sym_read: read a symbol file into symtab */
   mipscoff_symfile_finish,	/* sym_finish: finished with file, cleanup */
-  mipscoff_symfile_offsets,	/* sym_offsets: dummy FIXME til implem sym reloc */
+  default_symfile_offsets,	/* sym_offsets: dummy FIXME til implem sym reloc */
   NULL				/* next: pointer to next struct sym_fns */
 };
 
