@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.7 2002/11/26 19:50:21 christos Exp $	*/
+/*	$NetBSD: opms.c,v 1.8 2003/01/19 10:06:13 tsutsui Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -430,7 +430,7 @@ static void
 filt_opmsrdetach(struct knote *kn)
 {
 	struct opms_softc *sc = kn->kn_hook;
-	int s;  
+	int s;
 
 	s = spltty();
 	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);

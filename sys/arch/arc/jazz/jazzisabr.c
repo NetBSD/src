@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzisabr.c,v 1.3 2002/10/02 04:59:49 thorpej Exp $	*/
+/*	$NetBSD: jazzisabr.c,v 1.4 2003/01/19 10:06:15 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -71,9 +71,9 @@ jazzisabrmatch(parent, match, aux)
 {
 	struct confargs *ca = aux;
 
-        /* Make sure that we're looking for a JAZZISABR. */
-        if (strcmp(ca->ca_name, jazzisabr_cd.cd_name) != 0)
-                return (0);
+	/* Make sure that we're looking for a JAZZISABR. */
+	if (strcmp(ca->ca_name, jazzisabr_cd.cd_name) != 0)
+		return (0);
 
 	return (1);
 }

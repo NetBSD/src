@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.3 2002/12/28 16:52:02 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.4 2003/01/19 10:06:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -86,18 +86,18 @@ char *c_nec_pci_mainbusdevs[] = {
 	NULL,
 };
 
-/*      
+/*
  * chipset-dependent mcclock routines.
  */
 
 u_int	mc_nec_pci_read __P((struct mcclock_softc *, u_int));
 void	mc_nec_pci_write __P((struct mcclock_softc *, u_int, u_int));
-        
+
 struct mcclock_jazzio_config mcclock_nec_pci_conf = {
 	0x80004000, 2,
 	{ mc_nec_pci_read, mc_nec_pci_write }
-};      
- 
+};
+
 u_int
 mc_nec_pci_read(sc, reg)
 	struct mcclock_softc *sc;

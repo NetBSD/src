@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.10 2003/01/01 00:32:05 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.11 2003/01/19 10:06:15 tsutsui Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -132,13 +132,20 @@ struct fd_type {
 
 /* The order of entries in the following table is important -- BEWARE! */
 struct fd_type fd_types[] = {
-        { 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS,"1.44MB"    }, /* 1.44MB diskette */
-        { 15,2,30,2,0xff,0xdf,0x1b,0x54,80,2400,1,FDC_500KBPS, "1.2MB"    }, /* 1.2 MB AT-diskettes */
-        {  9,2,18,2,0xff,0xdf,0x23,0x50,40, 720,2,FDC_300KBPS, "360KB/AT" }, /* 360kB in 1.2MB drive */
-        {  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,1,FDC_250KBPS, "360KB/PC" }, /* 360kB PC diskettes */
-        {  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS, "720KB"    }, /* 3.5" 720kB diskette */
-        {  9,2,18,2,0xff,0xdf,0x23,0x50,80,1440,1,FDC_300KBPS, "720KB/x"  }, /* 720kB in 1.2MB drive */
-        {  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS, "360KB/x"  }, /* 360kB in 720kB drive */
+	/* 1.44MB diskette */
+	{ 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS,"1.44MB"    },
+	/* 1.2 MB AT-diskettes */
+	{ 15,2,30,2,0xff,0xdf,0x1b,0x54,80,2400,1,FDC_500KBPS, "1.2MB"    },
+	/* 360kB in 1.2MB drive */
+	{  9,2,18,2,0xff,0xdf,0x23,0x50,40, 720,2,FDC_300KBPS, "360KB/AT" },
+	/* 360kB PC diskettes */
+	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,1,FDC_250KBPS, "360KB/PC" },
+	/* 3.5" 720kB diskette */
+	{  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS, "720KB"    },
+	/* 720kB in 1.2MB drive */
+	{  9,2,18,2,0xff,0xdf,0x23,0x50,80,1440,1,FDC_300KBPS, "720KB/x"  },
+	/* 360kB in 720kB drive */
+	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS, "360KB/x"  },
 };
 
 /* software state, per disk (with up to 4 disks per ctlr) */
@@ -181,8 +188,7 @@ void fdattach __P((struct device *, struct device *, void *));
 
 extern struct cfdriver fd_cd;
 
-CFATTACH_DECL(fd, sizeof(struct fd_softc),
-    fdprobe, fdattach, NULL, NULL);
+CFATTACH_DECL(fd, sizeof(struct fd_softc), fdprobe, fdattach, NULL, NULL);
 
 dev_type_open(fdopen);
 dev_type_close(fdclose);
@@ -427,7 +433,7 @@ fdstrategy(bp)
 {
 	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(bp->b_dev));
 	int sz;
- 	int s;
+	int s;
 
 	/* Valid unit, controller, and request? */
 	if (bp->b_blkno < 0 ||
@@ -458,7 +464,7 @@ fdstrategy(bp)
 	}
 
 	bp->b_rawblkno = bp->b_blkno;
- 	bp->b_cylinder =
+	bp->b_cylinder =
 	    bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
@@ -811,7 +817,7 @@ loop:
 	fd = fdc->sc_drives.tqh_first;
 	if (fd == NULL) {
 		fdc->sc_state = DEVIDLE;
- 		return 1;
+		return 1;
 	}
 
 	/* Is there a transfer to this drive?  If not, deactivate drive. */

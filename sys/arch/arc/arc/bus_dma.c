@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.12 2002/06/02 14:44:42 drochner Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.13 2003/01/19 10:06:12 tsutsui Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -522,7 +522,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		minlen = len < map->dm_segs[i].ds_len - offset ?
 		    len : map->dm_segs[i].ds_len - offset;
 
-		addr = map->dm_segs[i]._ds_vaddr; 
+		addr = map->dm_segs[i]._ds_vaddr;
 
 #ifdef BUS_DMA_DEBUG
 		printf("bus_dmamap_sync: flushing segment %d "
@@ -594,12 +594,12 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 int
 _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
     flags, low, high)
-	bus_dma_tag_t t; 
+	bus_dma_tag_t t;
 	bus_size_t size, alignment, boundary;
 	bus_dma_segment_t *segs;
 	int nsegs;
 	int *rsegs;
-	int flags; 
+	int flags;
 	paddr_t low;
 	paddr_t high;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: c_isa.c,v 1.2 2002/12/04 07:43:55 imp Exp $	*/
+/*	$NetBSD: c_isa.c,v 1.3 2003/01/19 10:06:12 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 
 /*-
@@ -152,7 +152,7 @@ isabr_dti_intr_status()
 	if (vector < 0) /* XXX: OpenBSD source had a bug, re-look this */
 		return (-1);
 	isa_vector = vector & 7;
-	if (isa_vector == 2) { 
+	if (isa_vector == 2) {
 		isa_outb(IO_ICU2, 0x0f);
 		vector = isa_inb(IO_ICU2);
 		if (vector > 0) {

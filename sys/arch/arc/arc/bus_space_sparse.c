@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.6 2001/09/10 21:19:31 chris Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.7 2003/01/19 10:06:12 tsutsui Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -118,7 +118,7 @@ arc_sparse_bus_space_compose_handle(bst, addr, size, flags, bshp)
 	paddr_t start = bst->bs_pbase + mips_trunc_page(offset);
 	paddr_t end = bst->bs_pbase + mips_round_page(offset + size);
 
-	if (end <= MIPS_KSEG1_START - MIPS_KSEG0_START) { 
+	if (end <= MIPS_KSEG1_START - MIPS_KSEG0_START) {
 		/* mappable on KSEG0 or KSEG1 */
 		*bshp = (cacheable ?
 		    MIPS_PHYS_TO_KSEG0(start) :

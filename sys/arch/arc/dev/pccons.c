@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.31 2002/10/23 09:10:38 jdolecek Exp $	*/
+/*	$NetBSD: pccons.c,v 1.32 2003/01/19 10:06:13 tsutsui Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -651,7 +651,7 @@ pcpoll(dev, events, p)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
@@ -909,7 +909,7 @@ pccnpollc(dev, on)
 			}
 		}
 	}
-}	
+}
 
 /*
  * Set line parameters.
@@ -942,7 +942,7 @@ static char bgansitopc[] = {
 };
 
 static u_char iso2ibm437[] =
-{     
+{
             0,     0,     0,     0,     0,     0,     0,     0,
             0,     0,     0,     0,     0,     0,     0,     0,
             0,     0,     0,     0,     0,     0,     0,     0,
@@ -1027,7 +1027,7 @@ sput(cp, n)
 		switch (c) {
 		case 0x1B:
 			if (vs.state >= VSS_ESCAPE) {
-				wrtchar(c, vs.so_at); 
+				wrtchar(c, vs.so_at);
 				vs.state = 0;
 				goto maybe_scroll;
 			} else
@@ -1128,7 +1128,7 @@ sput(cp, n)
 						vs.state = 0;
 						break;
 					default: /* Invalid, clear state */
-						wrtchar(c, vs.so_at); 
+						wrtchar(c, vs.so_at);
 						vs.state = 0;
 						goto maybe_scroll;
 				}
@@ -1166,7 +1166,7 @@ sput(cp, n)
 						cx %= vs.nrow;
 					pos = crtat - Crtat;
 					pos += vs.ncol * cx;
-					if (pos >= vs.nchr) 
+					if (pos >= vs.nchr)
 						pos -= vs.nchr;
 					crtat = Crtat + pos;
 					vs.state = 0;
@@ -1417,7 +1417,7 @@ sput(cp, n)
 					}
 					vs.state = 0;
 					break;
-					
+
 				default: /* Only numbers valid here */
 					if ((c >= '0') && (c <= '9')) {
 						if (vs.state >= VSS_EPARAM) {
