@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.46 2002/03/01 20:57:26 tv Exp $
+#  $NetBSD: build.sh,v 1.47 2002/03/01 21:06:40 tv Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -54,6 +54,16 @@ getarch () {
 			MACHINE_ARCH=$MACHINE;;
 
 		*)	bomb "unknown target MACHINE: $MACHINE";;
+	esac
+}
+
+validatearch () {
+	# Ensure that the MACHINE_ARCH exists (and is supported by build.sh).
+	case $MACHINE_ARCH in
+		alpha|arm|i386|m68000|m68k|mipse[bl]|sh3e[bl]|sparc|sparc64|vax|x86_64)
+			;;
+
+		*)	bomb "unknown target MACHINE_ARCH: $MACHINE_ARCH";;
 	esac
 }
 
@@ -208,6 +218,7 @@ if [ -z "$MACHINE" ]; then
 	MACHINE=`uname -m`
 fi
 [ -n "$MACHINE_ARCH" ] || getarch
+validatearch
 
 # Set up default make(1) environment.
 makeenv="$makeenv TOOLDIR MACHINE MACHINE_ARCH MAKEFLAGS"
@@ -354,7 +365,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.46 2002/03/01 20:57:26 tv Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.47 2002/03/01 21:06:40 tv Exp $
 #
 
 EOF
