@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.615.2.4 2004/05/13 20:18:48 jdc Exp $
+$NetBSD: pcidevs,v 1.615.2.5 2004/06/22 15:25:21 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1203,6 +1203,7 @@ product COMPAQ USB		0x7020	USB Controller
 product COMPAQ USB_MEDIAGX	0xa0f8	USB Controller
 product COMPAQ SMART2P		0xae10	SMART2P RAID
 product COMPAQ N100TX		0xae32	Netelligent 10/100 TX
+product COMPAQ INT100TX		0xb030	Integrated Netelligent 10/100 TX
 product COMPAQ N10T		0xae34	Netelligent 10 T
 product COMPAQ IntNF3P		0xae35	Integrated NetFlex 3/P
 product COMPAQ DPNet100TX	0xae40	Dual Port Netelligent 10/100 TX
