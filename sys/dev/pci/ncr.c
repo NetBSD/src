@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.25 1996/03/11 16:13:57 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.26 1996/03/11 18:57:04 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -194,6 +194,7 @@
 extern PRINT_ADDR();
 #else
 #include <sys/device.h>
+#include <machine/bus.h>
 #include <dev/pci/ncr_reg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -269,8 +270,58 @@ extern PRINT_ADDR();
 **==========================================================
 */
 
+#ifdef __NetBSD__
+
 #ifdef NCR_IOMAPPED
 
+#define	INB(r) \
+    INB_OFF(offsetof(struct ncr_reg, r))
+#define	INB_OFF(o) \
+    bus_io_read_1 (np->sc_bc, np->sc_ioh, (o))
+#define	INW(r) \
+    bus_io_read_2 (np->sc_bc, np->sc_ioh, offsetof(struct ncr_reg, r))
+#define	INL(r) \
+    INL_OFF(offsetof(struct ncr_reg, r))
+#define	INL_OFF(o) \
+    bus_io_read_4 (np->sc_bc, np->sc_ioh, (o))
+
+#define	OUTB(r, val) \
+    bus_io_write_1 (np->sc_bc, np->sc_ioh, offsetof(struct ncr_reg, r), (val))
+#define	OUTW(r, val) \
+    bus_io_write_2 (np->sc_bc, np->sc_ioh, offsetof(struct ncr_reg, r), (val))
+#define	OUTL(r, val) \
+    OUTL_OFF(offsetof(struct ncr_reg, r), (val))
+#define	OUTL_OFF(o, val) \
+    bus_io_write_4 (np->sc_bc, np->sc_ioh, (o), (val))
+
+#else
+
+#define	INB(r) \
+    INB_OFF(offsetof(struct ncr_reg, r))
+#define	INB_OFF(o) \
+    bus_mem_read_1 (np->sc_bc, np->sc_memh, (o))
+#define	INW(r) \
+    bus_mem_read_2 (np->sc_bc, np->sc_memh, offsetof(struct ncr_reg, r))
+#define	INL(r) \
+    INL_OFF(offsetof(struct ncr_reg, r))
+#define	INL_OFF(o) \
+    bus_mem_read_4 (np->sc_bc, np->sc_memh, (o))
+
+#define	OUTB(r, val) \
+    bus_mem_write_1 (np->sc_bc, np->sc_memh, offsetof(struct ncr_reg, r), (val))
+#define	OUTW(r, val) \
+    bus_mem_write_2 (np->sc_bc, np->sc_memh, offsetof(struct ncr_reg, r), (val))
+#define	OUTL(r, val) \
+    OUTL_OFF(offsetof(struct ncr_reg, r), (val))
+#define	OUTL_OFF(o, val) \
+    bus_mem_write_4 (np->sc_bc, np->sc_memh, (o), (val))
+
+#endif
+
+#else /* !__NetBSD__ */
+
+#ifdef NCR_IOMAPPED
+ 
 #define	INB(r) inb (np->port + offsetof(struct ncr_reg, r))
 #define	INB_OFF(o) inb (np->port + (o))
 #define	INW(r) inw (np->port + offsetof(struct ncr_reg, r))
@@ -296,6 +347,8 @@ extern PRINT_ADDR();
 #define	OUTL_OFF(o, val) *((volatile INT32 *)((char *)np->reg + (o))) = val
 
 #endif
+
+#endif /* __NetBSD__ */
 
 /*==========================================================
 **
@@ -937,6 +990,12 @@ struct ncb {
 #ifdef __NetBSD__
 	struct device sc_dev;
 	void *sc_ih;
+	bus_chipset_tag_t sc_bc;
+#ifdef NCR_IOMAPPED
+	bus_io_handle_t sc_ioh;
+#else /* !NCR_IOMAPPED */
+	bus_mem_handle_t sc_memh;
+#endif /* NCR_IOMAPPED */
 #else /* !__NetBSD__ */
 	int	unit;
 #endif /* __NetBSD__ */
@@ -962,14 +1021,20 @@ struct ncb {
 	**	virtual and physical addresses
 	**	of the 53c810 chip.
 	*/
+#ifndef __NetBSD__
 	vm_offset_t     vaddr;
 	vm_offset_t     paddr;
+#else
+	bus_mem_addr_t	paddr;
+#endif
 
+#ifndef __NetBSD__
 	/*
 	**	pointer to the chip's registers.
 	*/
 	volatile
 	struct ncr_reg* reg;
+#endif
 
 	/*
 	**	A copy of the script, relocated for this ncb.
@@ -1085,7 +1150,7 @@ struct ncb {
 	*/
 	u_char		disc;
 
-#ifdef NCR_IOMAPPED
+#if defined(NCR_IOMAPPED) && !defined(__NetBSD__)
 	/*
 	**	address of the ncr control registers in io space
 	*/
@@ -1255,7 +1320,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.25 1996/03/11 16:13:57 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.26 1996/03/11 18:57:04 cgd Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
@@ -3303,7 +3368,8 @@ ncr_attach(parent, self, aux)
 	**	virtual and physical memory.
 	*/
 
-	retval = pci_map_mem(pa->pa_tag, 0x14, &np->vaddr, &np->paddr);
+	retval = pci_map_mem(pa->pa_tag, 0x14, (vm_offset_t *)&np->sc_memh,
+	    &np->paddr);
 	if (retval)
 		return;
 
@@ -3394,6 +3460,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	np->jump_tcb.l_cmd	= SCR_JUMP;
 	np->jump_tcb.l_paddr	= NCB_SCRIPT_PHYS (np, abort);
 
+#ifndef __NetBSD__
 	/*
 	**	Make the controller's registers available.
 	**	Now the INB INW INL OUTB OUTW OUTL macros
@@ -3401,6 +3468,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	*/
 
 	np->reg = (struct ncr_reg*) np->vaddr;
+#endif
 
 	/*
 	**  Get SCSI addr of host adapter (set by bios?).
