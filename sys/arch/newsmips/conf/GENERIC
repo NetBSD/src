@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: GENERIC,v 1.7 1998/11/16 16:44:57 oster Exp $
+# 	$NetBSD: GENERIC,v 1.8 1998/11/25 20:30:46 hwr Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -116,6 +116,7 @@ pseudo-device	pty		32	# pseudo-terminals
 pseudo-device	sl		2	# SLIP interfaces
 pseudo-device	ppp		2	# PPP interfaces
 pseudo-device	tun		4	# Network "tunnel" device
+#pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	bpfilter	16	# Berkeley Packet Filter
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated and striped disks

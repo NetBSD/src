@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.41 1998/11/16 16:44:56 oster Exp $
+#	$NetBSD: GENERIC,v 1.42 1998/11/25 20:30:45 hwr Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -173,5 +173,6 @@ pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	loop			# loopback network interface
 pseudo-device	ipfilter 		# IP Filter package
+#pseudo-device	gre		2	# generic L3 over IP tunnel
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator

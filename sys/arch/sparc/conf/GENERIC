@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.72 1998/11/22 23:36:42 pk Exp $
+# 	$NetBSD: GENERIC,v 1.73 1998/11/25 20:30:46 hwr Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -416,6 +416,9 @@ pseudo-device	ppp		2
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
 pseudo-device	tun		4
+
+## Generic L3 over IP tunnel
+#pseudo-device	gre		2	# generic L3 over IP tunnel
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.

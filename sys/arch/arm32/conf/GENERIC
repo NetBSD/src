@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.51 1998/11/16 16:44:56 oster Exp $
+#	$NetBSD: GENERIC,v 1.52 1998/11/25 20:30:45 hwr Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -256,6 +256,7 @@ pseudo-device	bpfilter 8              # packet filter
 pseudo-device	sl	2               # CSLIP
 pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
+#pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	ipfilter 1		# ip filter
 #pseudo-device	strip	4		# STRIP 
 pseudo-device	pty     32              # pseudo-terminals
