@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.32 1994/10/26 07:25:45 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.33 1994/12/30 07:22:21 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -657,11 +657,21 @@ Lnotim3:
 	movl	heartbeat,d0		| get tick count
 	addql	#1,d0			|  increment
 	movl	_hz,d1
-	lsrl	#1,d1			| throb twice a second
+	addl	#50,d1			| get the timing a little closer
+	cmpl	#0,beatstatus		| time to slow down?
+	jeq	SlowThrob
+	lsrl	#3,d1			| fast throb
+SlowThrob:
+	lsrl	#1,d1			| slow throb
 	cmpl	d0,d1			| are we there yet?
 	jne	Lnoled1			| no, nothing to do
 	tstl	_inledcontrol		| already updating LEDs?
 	jne	Lnoled2			| yes, skip it
+	addl	#1,beatstatus		| incr beat status
+	cmpl	#3,beatstatus		| time to reset?
+	ble	SkipReset
+	movl	#0,beatstatus		| reset the status indicator
+SkipReset:
 	movl	#LED_PULSE,sp@-
 	movl	#LED_DISK+LED_LANRCV+LED_LANXMT,sp@-
 	clrl	sp@-
@@ -2445,6 +2455,8 @@ _MMUbase:
 #ifdef USELEDS
 heartbeat:
 	.long	0		| clock ticks since last pulse of heartbeat
+beatstatus:
+	.long	0		| for determining a fast or slow throb
 #endif
 #ifdef DEBUG
 	.globl	fulltflush, fullcflush
