@@ -96,10 +96,14 @@ do_help()
 {
     printf("\t%s [-h|--help]\n", program_name);
     printf("\t%s [-v|--version]\n", program_name);
-    printf("\t%s [-l|--list [name ...]]\n", program_name);
+#ifdef __linux__
+    printf("\t%s [-l|--list [name]] [...]\n", program_name);
+#else
+    printf("\t%s [-l|--list] name [...]\n", program_name);
+#endif
     printf("\t%s [-r|--readonly] name ...\n", program_name);
     printf("\t%s [-i|--interactive]\n", program_name);
-    printf("\t%s name ...\n", program_name);
+    printf("\t%s name [...]\n", program_name);
 /*
 	{"debug",	no_argument,		0,	'd'},
 	{"abbr",	no_argument,		0,	'a'},
