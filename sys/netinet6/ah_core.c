@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.8 1999/07/31 18:41:16 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.9 1999/08/25 17:47:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -72,7 +72,7 @@
 
 #ifdef INET6
 #include <netinet6/ip6.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <netinet6/in6_pcb.h>
 #endif
 #include <netinet6/ip6_var.h>
@@ -1086,7 +1086,7 @@ ah6_calccksum(m0, ahdat, algo, sa)
 	u_char sumbuf[AH_MAXSUMSIZE];
 	int nest;
 
-	hdrtype = -1;	/*dummy, it is called IPPROTO_IP*/
+	hdrtype = -1;	/*dummy, it is called IPPROTO_IPV6 */
 
 	m = m0;
 
@@ -1173,8 +1173,8 @@ again:
 	 case IPPROTO_HOPOPTS:
 	 case IPPROTO_DSTOPTS:
 	 {
-		 int hdrlen, optlen, remain;
-		 u_int8_t *optp, *lastp = p, opt;
+		 int hdrlen, optlen;
+		 u_int8_t *optp, *lastp = p, *optend, opt;
 
 		 tlen = m->m_len - (p - mtod(m, u_char *));
 		 /* We assume all the options is contained in a single mbuf */
@@ -1188,35 +1188,77 @@ again:
 			 error = EINVAL;
 			 goto bad;
 		 }
+		 optend = p + hdrlen;
 
-		 for (optp = p + 2, remain = hdrlen - 2;
-		      remain > 0; optp += optlen, remain -= optlen) {
+		 /*
+		  * ICV calculation for the options header including all
+		  * options. This part is a little tricky since there are
+		  * two type of options; mutable and immutable. Our approach
+		  * is to calculate ICV for a consecutive immutable options
+		  * at once. Here is an example. In the following figure,
+		  * suppose that we've calculated ICV from the top of the
+		  * header to MutableOpt1, which is a mutable option.
+		  * lastp points to the end of MutableOpt1. Some immutable
+		  * options follows MutableOpt1, and we encounter a new
+		  * mutable option; MutableOpt2. optp points to the head
+		  * of MutableOpt2. In this situation, uncalculated immutable
+		  * field is the field from lastp to optp+2 (note that the
+		  * type and the length fields are considered as immutable
+		  * even in a mutable option). So we first calculate ICV
+		  * for the field as immutable, then calculate from optp+2
+		  * to the end of MutableOpt2, whose length is optlen-2,
+		  * where optlen is the length of MutableOpt2. Finally,
+		  * lastp is updated to point to the end of MutableOpt2
+		  * for further calculation. The updated point is shown as
+		  * lastp' in the figure.
+		  *                                <------ optlen ----->
+		  * -----------+-------------------+---+---+-----------+
+		  * MutableOpt1|ImmutableOptions...|typ|len|MutableOpt2|
+		  * -----------+-------------------+---+---+-----------+
+		  *            ^                   ^       ^
+		  *            lastp               optp    optp+2
+		  *            <---- optp + 2 - lastp -----><-optlen-2->
+		  *                                                    ^
+		  *                                                    lastp'
+		  */
+		 for (optp = p + 2; optp < optend; optp += optlen) {
 			 opt = optp[0];
 			 if (opt == IP6OPT_PAD1) {
 				 optlen = 1;
 			 } else {
-				 if (remain < 2) {
+				 if (optp + 2 > optend) {
 					 error = EINVAL; /* malformed option */
 					 goto bad;
 				 }
 				 optlen = optp[1] + 2;
 				 if (opt & IP6OPT_MUTABLE) {
+					 /*
+					  * ICV calc. for the (consecutive)
+					  * immutable field followd by the
+					  * option.
+					  */
 					 (algo->update)(&algos, lastp,
 							optp + 2 - lastp);
 					 if (optlen - 2 > ZEROBUFLEN) {
 						 error = EINVAL; /* XXX */
 						 goto bad;
 					 }
+					 /*
+					  * ICV calc. for the immutable
+					  * option using an all-0 buffer.
+					  */
 					 (algo->update)(&algos, zerobuf,
 							optlen - 2);
-					 remain -= optp - lastp + optlen;
 					 lastp = optp + optlen;
-					 optlen = 0;
 				 }
 			 }
 		 }
+		 /*
+		  * Wrap up the calulation; compute ICV for the consecutive
+		  * immutable options at the end of the header(if any).
+		  */
+		 (algo->update)(&algos, lastp, p + hdrlen - lastp);
 		 advancewidth = hdrlen;
-		 (algo->update)(&algos, lastp, p - lastp);
 		 break;
 	 }
 	 case IPPROTO_ROUTING:
