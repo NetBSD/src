@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.5 1995/02/27 04:13:35 cgd Exp $	*/
+/*	$NetBSD: glob.c,v 1.6 1997/07/13 19:15:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-static char rcsid[] = "$NetBSD: glob.c,v 1.5 1995/02/27 04:13:35 cgd Exp $";
+__RCSID("$NetBSD: glob.c,v 1.6 1997/07/13 19:15:11 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -574,7 +575,7 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob)
 	 * and dirent.h as taking pointers to differently typed opaque
 	 * structures.
 	 */
-	struct dirent *(*readdirfunc)();
+	struct dirent *(*readdirfunc) __P((void *));
 
 	*pathend = EOS;
 	errno = 0;
@@ -596,7 +597,7 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob)
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		readdirfunc = pglob->gl_readdir;
 	else
-		readdirfunc = readdir;
+		readdirfunc = (struct dirent *(*)__P((void *))) readdir;
 	while ((dp = (*readdirfunc)(dirp))) {
 		register u_char *sc;
 		register Char *dc;
