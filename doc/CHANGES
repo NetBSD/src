@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.200 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.201 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -474,3 +474,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	kernel: Add support for SA_SIGINFO on powerpc. [matt 20030925]
 	auich(4): Added support for four channels and six channels audio
 		playback.  [kent 20030928]
+	i2c: New generic i2c framework, supporting bit-bang and
+		"intelligent" controllers.  [thorpej 20030929]
