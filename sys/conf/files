@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.470 2001/11/20 14:34:25 lukem Exp $
+#	$NetBSD: files,v 1.471 2001/11/26 19:17:05 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -590,6 +590,10 @@ file	dev/ic/we.c			we
 # Allied-Telesis Ethernet driver based on Fujitsu MB8696xA controllers
 device	ate: arp, ether, ifnet, mb86960
 file	dev/ic/ate_subr.c		ate
+
+# Crystal Semiconductor CS8900, CS8920, and CS8920M Ethernet
+device	cs: arp, ether, ifnet
+file	dev/ic/cs89x0.c		cs
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
