@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.19 2001/11/22 14:22:31 takemura Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.20 2002/01/05 05:09:15 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -123,7 +123,8 @@ vrisabmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct hpcio_attach_args *haa = aux;
 	platid_mask_t mask;
-    
+	int n;
+
 	if (strcmp(haa->haa_busname, match->cf_driver->cd_name))
 		return (0);
 
@@ -131,8 +132,8 @@ vrisabmatch(struct device *parent, struct cfdata *match, void *aux)
 		return (1);
 
 	mask = PLATID_DEREF(match->cf_loc[HPCIOIFCF_PLATFORM]);
-	if (platid_match(&platid, &mask))
-		return (2);
+	if ((n = platid_match(&platid, &mask)) != 0)
+		return (n + 2);
 
 	return (0);
 }
