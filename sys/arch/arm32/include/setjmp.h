@@ -1,10 +1,10 @@
-/*	$NetBSD: setjmp.h,v 1.5 1998/08/04 02:01:17 mark Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.6 1998/09/14 18:06:01 thorpej Exp $	*/
 
 /*
  * machine/setjmp.h: machine dependent setjmp-related information.
  */
 
-#define	_JBLEN	26		/* size, in longs, of a jmp_buf */
+#define	_JBLEN	29		/* size, in longs, of a jmp_buf */
 
 /*
  * NOTE: The internal structure of a jmp_buf is *PRIVATE*
@@ -32,6 +32,9 @@
  *	23	r13		register 13 (sp)
  *	24	r14		register 14 (lr)
  *	25	signal mask	(dependant on magic)
+ *	26	(con't)
+ *	27	(con't)
+ *	28	(con't)
  *
  * The magic number number identifies the jmp_buf and
  * how the buffer was created as well as providing
