@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.8 2001/11/18 08:16:16 thorpej Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.9 2001/11/20 16:10:49 rafal Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -59,9 +59,6 @@
 #include <net/bpf.h>
 #endif 
 
-/* XXXrkb: cheap hack until parents pass in DMA tags */
-#define _SGIMIPS_BUS_DMA_PRIVATE
-
 #include <machine/bus.h>
 #include <machine/intr.h>
 
@@ -79,19 +76,18 @@
 /*
  * Short TODO list:
  *	(1) Do counters for bad-RX packets.
- *	(2) Inherit DMA tag via config machinery, don't hard-code it.
- *	(3) Allow multi-segment transmits, instead of copying to a single,
+ *	(2) Allow multi-segment transmits, instead of copying to a single,
  *	    contiguous mbuf.
- *	(4) Verify sq_stop() turns off enough stuff; I was still getting
+ *	(3) Verify sq_stop() turns off enough stuff; I was still getting
  *	    seeq interrupts after sq_stop().
- *	(5) Fix up printfs in driver (most should only fire ifdef SQ_DEBUG
+ *	(4) Fix up printfs in driver (most should only fire ifdef SQ_DEBUG
  *	    or something similar.
- *	(6) Implement EDLC modes: especially packet auto-pad and simplex
+ *	(5) Implement EDLC modes: especially packet auto-pad and simplex
  *	    mode.
- *	(7) Should the driver filter out its own transmissions in non-EDLC
+ *	(6) Should the driver filter out its own transmissions in non-EDLC
  *	    mode?
- *	(8) Multicast support -- multicast filter, address management, ...
- *	(9) Deal with RB0 (recv buffer overflow) on reception.  Will need
+ *	(7) Multicast support -- multicast filter, address management, ...
+ *	(8) Deal with RB0 (recv buffer overflow) on reception.  Will need
  *	    to figure out if RB0 is read-only as stated in one spot in the
  *	    HPC spec or read-write (ie, is the 'write a one to clear it')
  *	    the correct thing?
