@@ -1049,9 +1049,9 @@ u_char	reset_screen_saver	= 1;		/* reset the saver next time */
 u_char	scrnsv_active		= 0;		/* active flag */
 #endif /* PCVT_SCREENSAVER */
 
-#ifdef XSERVER
+#if XSERVER || PCVT_SCREENSAVER
 unsigned scrnsv_timeout		= 0;		/* initially off */
-#endif /* XSERVER */
+#endif /* XSERVER || PCVT_SCREENSAVER */
 
 #if PCVT_BACKUP_FONTS
 u_char *saved_charsets[NVGAFONTS] = {0};	/* backup copy of fonts */
@@ -1184,9 +1184,9 @@ extern u_char		sgr_tab_color[];
 extern u_char		sgr_tab_mono[];
 extern u_char		sgr_tab_imono[];
 
-#ifdef XSERVER
+#if defined(XSERVER) || PCVT_SCREENSAVER
 extern unsigned		scrnsv_timeout;
-#endif /* XSERVER */
+#endif /* XSERVER || PCVT_SCREENSAVER */
 
 #if PCVT_BACKUP_FONTS
 extern u_char		*saved_charsets[NVGAFONTS];
@@ -1300,9 +1300,9 @@ int	mouse_ioctl ( Dev_t dev, int cmd, caddr_t data );
 void 	pcvt_scrnsv_reset ( void );
 #endif /* PCVT_SCREENSAVER */
 
-#if PCVT_SCREENSAVER && defined(XSERVER)
+#if PCVT_SCREENSAVER
 void 	pcvt_set_scrnsv_tmo ( int );
-#endif /* PCVT_SCREENSAVER && defined(XSERVER) */
+#endif /* PCVT_SCREENSAVER */
 
 #ifdef XSERVER
 void	vga_move_charset ( unsigned n, unsigned char *b, int save_it);
