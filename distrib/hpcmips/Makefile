@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2002/05/02 18:02:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2002/05/07 03:34:16 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -18,7 +18,7 @@ PBSDBOOT1=	${PBSDBOOTDIR}/pbsdboot1.uu
 HPCBOOTDIR=	${KERNSRCDIR}/arch/hpc/stand
 HPCBOOT=	${HPCBOOTDIR}/binary/MIPS/hpcboot.exe.uu
 
-release: check_RELEASEDIR .WAIT ${PBSDBOOT1} ${PBSDBOOT} ${HPCBOOT}
+release:: check_RELEASEDIR .WAIT ${PBSDBOOT1} ${PBSDBOOT} ${HPCBOOT}
 	(cd ${RELEASEDIR}/installation; ${UUDECODE} ${PBSDBOOT1}; \
 	    chmod ${NONBINMODE} pbsdboot1.exe)
 	(cd ${RELEASEDIR}/installation; ${UUDECODE} ${PBSDBOOT}; \
