@@ -1,3 +1,5 @@
+/*	$NetBSD: if_faith.c,v 1.6 1999/12/02 07:22:19 itojun Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
