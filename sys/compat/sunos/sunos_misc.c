@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.98 1998/12/21 10:34:59 drochner Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.99 1999/02/09 20:29:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -158,7 +158,7 @@ sunos_sys_creat(p, v, retval)
 	struct sys_open_args ouap;
 
 	caddr_t sg = stackgap_init(p->p_emul);
-	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	SUNOS_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 
 	SCARG(&ouap, path) = SCARG(uap, path);
 	SCARG(&ouap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
@@ -213,7 +213,7 @@ sunos_sys_execv(p, v, retval)
 	register_t *retval;
 {
 	struct sunos_sys_execv_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(char **) argv;
 	} */ *uap = v;
 	struct sys_execve_args ap;
@@ -236,7 +236,7 @@ sunos_sys_execve(p, v, retval)
 	register_t *retval;
 {
 	struct sunos_sys_execve_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
 	} */ *uap = v;
@@ -818,7 +818,6 @@ sunos_sys_open(p, v, retval)
 	int ret;
 	
 	caddr_t sg = stackgap_init(p->p_emul);
-	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	/* convert mode into NetBSD mode */
 	l = SCARG(uap, flags);
@@ -828,6 +827,11 @@ sunos_sys_open(p, v, retval)
 	r |=	((l & 0x0080) ? O_SHLOCK : 0);
 	r |=	((l & 0x0100) ? O_EXLOCK : 0);
 	r |=	((l & 0x2000) ? O_FSYNC : 0);
+
+	if (r & O_CREAT)
+		SUNOS_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	else
+		SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(uap, flags) = r;
 	ret = sys_open(p, (struct sys_open_args *)uap, retval);
@@ -1024,7 +1028,7 @@ sunos_sys_mknod(p, v, retval)
 	struct sunos_sys_mknod_args *uap = v;
 
 	caddr_t sg = stackgap_init(p->p_emul);
-	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	SUNOS_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 
 	if (S_ISFIFO(SCARG(uap, mode)))
 		return sys_mkfifo(p, uap, retval);
