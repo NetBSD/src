@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.36 1996/12/10 21:27:38 thorpej Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.37 1996/12/16 16:17:09 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -202,7 +202,7 @@ extern __inline__ void finish_req(SC_REQ *reqp)
  * Auto config stuff....
  */
 void	ncr_attach __P((struct device *, struct device *, void *));
-int	ncr_match __P((struct device *, void *, void *));
+int	ncr_match __P((struct device *, struct cfdata *, void *));
 
 /*
  * Tricks to make driver-name configurable
@@ -220,9 +220,10 @@ struct cfdriver CFNAME(DRNAME) = {
 };
 
 int
-ncr_match(pdp, match, auxp)
-struct device	*pdp;
-void		*match, *auxp;
+ncr_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *auxp;
 {
 	return (machine_match(pdp, match, auxp, &CFNAME(DRNAME)));
 }

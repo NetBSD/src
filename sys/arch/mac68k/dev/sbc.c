@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.14 1996/11/13 07:02:17 thorpej Exp $	*/
+/*	$NetBSD: sbc.c,v 1.15 1996/12/16 16:17:12 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -160,7 +160,7 @@ struct sbc_softc {
 #define	SBC_OPTIONS_BITS	"\10\3RESELECT\2INTR\1PDMA"
 int sbc_options = SBC_PDMA;
 
-static	int	sbc_match __P((struct device *, void *, void *));
+static	int	sbc_match __P((struct device *, struct cfdata *, void *));
 static	void	sbc_attach __P((struct device *, struct device *, void *));
 static	void	sbc_minphys __P((struct buf *bp));
 
@@ -211,9 +211,10 @@ struct cfdriver sbc_cd = {
 
 
 static int
-sbc_match(parent, match, args)
+sbc_match(parent, cf, args)
 	struct device *parent;
-	void *match, *args;
+	struct cfdata *cf;
+	void *args;
 {
 	if (!mac68k_machine.scsi80)
 		return 0;

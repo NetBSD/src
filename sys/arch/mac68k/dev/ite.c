@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.28 1996/11/19 07:17:47 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.29 1996/12/16 16:17:08 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,7 +110,7 @@ static void	putc_getpars __P((char));
 static void	putc_square __P((char));
 static void	ite_putchar __P((char));
 static int	ite_pollforchar __P((void));
-static int	itematch __P((struct device *, void *, void *));
+static int	itematch __P((struct device *, struct cfdata *, void *));
 static void	iteattach __P((struct device *, struct device *, void *));
 
 #define dprintf if (0) printf
@@ -847,9 +847,10 @@ struct cfdriver ite_cd = {
 };
 
 static int
-itematch(parent, match, aux)
+itematch(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct grfbus_attach_args *ga = aux;
 	struct grfmode *gm = ga->ga_grfmode;

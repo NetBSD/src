@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.14 1996/11/09 17:26:26 briggs Exp $	*/
+/*	$NetBSD: asc.c,v 1.15 1996/12/16 16:17:02 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -61,7 +61,7 @@ static int bell_length = 10;
 static int bell_volume = 100;
 static int bell_ringing = 0;
 
-static int  ascmatch __P((struct device *, void *, void *));
+static int  ascmatch __P((struct device *, struct cfdata *, void *));
 static void ascattach __P((struct device *, struct device *, void *));
 
 struct cfattach asc_ca = {
@@ -73,9 +73,10 @@ struct cfdriver asc_cd = {
 };
 
 static int
-ascmatch(pdp, match, auxp)
-	struct device	*pdp;
-	void	*match, *auxp;
+ascmatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
 	if (badbaddr((unsigned char *) ASCBase))
 		return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.15 1996/10/13 03:21:18 christos Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.16 1996/12/16 16:17:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -57,7 +57,7 @@ extern unsigned long	videosize;
 
 static int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static caddr_t	grfiv_phys __P((struct grf_softc *gp, vm_offset_t addr));
-static int	grfiv_match __P((struct device *, void *, void *));
+static int	grfiv_match __P((struct device *, struct cfdata *, void *));
 static void	grfiv_attach __P((struct device *, struct device *, void *));
 
 struct cfdriver intvid_cd = {
@@ -69,9 +69,10 @@ struct cfattach intvid_ca = {
 };
 
 static int
-grfiv_match(pdp, match, auxp)
-	struct device	*pdp;
-	void	*match, *auxp;
+grfiv_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
 	static int	internal_video_found = 0;
 
