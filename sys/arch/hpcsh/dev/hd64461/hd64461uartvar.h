@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uartvar.h,v 1.1 2001/03/15 17:30:56 uch Exp $	*/
+/*	$NetBSD: hd64461uartvar.h,v 1.2 2001/04/19 18:24:16 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,4 +36,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void hd64461uart_cnattach(void);
+
