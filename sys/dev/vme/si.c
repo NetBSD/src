@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.10 2002/09/27 20:42:03 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.11 2002/10/01 01:28:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.10 2002/09/27 20:42:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.11 2002/10/01 01:28:03 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -200,9 +200,8 @@ void	si_intr_off __P((struct ncr5380_softc *));
 
 
 /* Auto-configuration glue. */
-const struct cfattach si_ca = {
-	sizeof(struct si_softc), si_match, si_attach
-};
+CFATTACH_DECL(si, sizeof(struct si_softc),
+    si_match, si_attach, NULL, NULL)
 
 static int
 si_match(parent, cf, aux)
