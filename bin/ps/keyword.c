@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.17 1998/02/17 21:37:56 thorpej Exp $	*/
+/*	$NetBSD: keyword.c,v 1.18 1999/04/16 13:34:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.17 1998/02/17 21:37:56 thorpej Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.18 1999/04/16 13:34:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,11 +55,15 @@ __RCSID("$NetBSD: keyword.c,v 1.17 1998/02/17 21:37:56 thorpej Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include "ps.h"
 
 static VAR *findvar __P((char *));
 static int  vcmp __P((const void *, const void *));
+
+
+#define SIGWIDTH	(((_NSIG / 32) + 1) * 8)
 
 #ifdef NOTINUSE
 int	utime(), stime(), ixrss(), idrss(), isrss();
@@ -151,11 +155,14 @@ VAR var[] = {
 	{"ruser", "RUSER", NULL, LJUST, runame, USERLEN},
 	{"sess", "SESS", NULL, 0, evar, 6, EOFF(e_sess), KPTR, "x"},
 	PID("sid", "SID", evar, EOFF(e_sid)),
-	{"sig", "PENDING", NULL, 0, pvar, 8, POFF(p_siglist), INT, "x"},
-	{"sigcatch", "CAUGHT", NULL, 0, pvar, 8, POFF(p_sigcatch), UINT, "x"},
+	{"sig", "PENDING",
+	    NULL, 0, pvar, SIGWIDTH, POFF(p_siglist), SIGLIST, "s"},
+	{"sigcatch", "CAUGHT",
+	    NULL, 0, pvar, SIGWIDTH, POFF(p_sigcatch), SIGLIST, "s"},
 	{"sigignore", "IGNORED",
-		NULL, 0, pvar, 8, POFF(p_sigignore), UINT, "x"},
-	{"sigmask", "BLOCKED", NULL, 0, pvar, 8, POFF(p_sigmask), UINT, "x"},
+	    NULL, 0, pvar, SIGWIDTH, POFF(p_sigignore), SIGLIST, "s"},
+	{"sigmask", "BLOCKED",
+	    NULL, 0, pvar, SIGWIDTH, POFF(p_sigmask), SIGLIST, "s"},
 	{"sl", "SL", NULL, INF127, pvar, 3, POFF(p_slptime), UINT, "d"},
 	{"start", "STARTED", NULL, LJUST|USER, started, 8},
 	{"stat", "", "state"},
