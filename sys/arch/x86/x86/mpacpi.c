@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.28 2004/05/21 16:22:05 kochi Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.29 2004/05/23 05:57:57 kochi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.28 2004/05/21 16:22:05 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.29 2004/05/23 05:57:57 kochi Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -904,6 +904,9 @@ mpacpi_pci_attach_hook(struct device *parent, struct device *self,
 	if (mpbios_scanned != 0 || mpacpi_nioapic == 0)
 		return ENOENT;
 #endif
+
+	if (TAILQ_EMPTY(&mpacpi_pcibusses))
+		return 0;
 
 	/*
 	 * If this bus is not found in mpacpi_find_pcibusses
