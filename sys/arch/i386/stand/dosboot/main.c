@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 1997/07/26 01:50:52 thorpej Exp $	 */
+/*	$NetBSD: main.c,v 1.5 1997/07/29 16:01:45 christos Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -332,11 +332,20 @@ bootmenu()
 static void
 print_banner(void)
 {
+	int extmem = getextmem();
+	char *s = "";
+
+#ifdef XMS
+	if (extmem == 0) {
+		if ((extmem = checkxms()) != 0)
+			s = "(xms) ";
+	}
+#endif
 
 	printf("\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
-	printf(">> Memory: %d/%d k\n", getbasemem(), getextmem());
+	printf(">> Memory: %d/%d %sk\n", getbasemem(), extmem, s);
 }
 
 void 
