@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.1 2002/02/10 01:14:05 gmcgarry Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.2 2002/03/15 05:26:37 gmcgarry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 
 
 message md_hello
-{If the floppy is not locked, you may now remove the disk.
+{If your machine has 4MB or less, sysinst will not operate correctly.
 
 }
 
