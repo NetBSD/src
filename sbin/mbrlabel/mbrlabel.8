@@ -27,9 +27,9 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: mbrlabel.8,v 1.7 2000/12/24 14:01:12 lukem Exp $
+.\"	$NetBSD: mbrlabel.8,v 1.8 2000/12/27 04:22:11 lukem Exp $
 .\"
-.Dd December 24, 2000
+.Dd December 27, 2000
 .Dt MBRLABEL 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd update disk label from MBR label(s)
 .Sh SYNOPSIS
 .Nm
-.Op Fl fq
+.Op Fl fqrw
 .Ar device
 .Sh DESCRIPTION
 .Nm
@@ -73,17 +73,23 @@ but
 .Em d
 on i386 and some othe platforms) is left alone during this process.
 .Pp
-If
-.Fl f
-is given, then the on-disk and in-core disk labels are updated.
-Otherwise, the proposed changed disk label will be displayed and no
-update will occur.
+By default, the proposed changed disk label will be displayed and no
+disk label update will occur.
 .Pp
-If
-.Fl q
-is given,
-.Nm
-performs its operation in a quiet fashion.
+Available options:
+.Pp
+.Bl -tag -width indent
+.It Fl f
+Force an update, even if there has been no change.
+.It Fl q
+Performs operations in a quiet fashion.
+.It Fl r
+Update both the in-core and the on-disk label if the in-core label has
+been changed.
+.It Fl w
+Update the on-disk label if it has been changed.
+.El
+.Pp
 .Sh SEE ALSO
 .Xr disklabel 8 ,
 .Xr fdisk 8
