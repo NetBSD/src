@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.12 2000/07/06 04:34:26 thorpej Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.13 2000/08/25 00:51:20 mjl Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "opt_atalk.h"
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +62,7 @@
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <net/bpf.h>
 #include <net/ethertypes.h>
 #include <net/if.h>
 #include <net/netisr.h>
@@ -209,6 +211,19 @@ gre_input2(struct mbuf *m ,int hlen,u_char proto)
 	m->m_len -= hlen;
 	m->m_pkthdr.len -= hlen;
 
+#if NBPFILTER > 0
+	if (sc->gre_bpf) {
+		struct mbuf m0;
+		u_int32_t af = AF_INET;
+
+		m0.m_next = m;
+		m0.m_len = 4;
+		m0.m_data = (char *)&af;
+
+		bpf_mtap(sc->gre_bpf, &m0);
+		}
+#endif /*NBPFILTER > 0*/
+
 	s = splimp();		/* possible */
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
@@ -283,6 +298,19 @@ gre_mobile_input(m, va_alist)
 
 	ip->ip_sum=0;
 	ip->ip_sum=in_cksum(m,(ip->ip_hl << 2));
+
+#if NBPFILTER > 0
+	if (sc->gre_bpf) {
+		struct mbuf m0;
+		u_int af = AF_INET; 
+
+		m0.m_next = m;
+		m0.m_len = 4;
+		m0.m_data = (char *)&af;
+
+		bpf_mtap(sc->gre_bpf, &m0);
+		}
+#endif /*NBPFILTER > 0*/
 
 	ifq = &ipintrq;
 	s = splimp();       /* possible */

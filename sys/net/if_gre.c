@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.11 2000/07/05 22:45:25 thorpej Exp $ */
+/*	$NetBSD: if_gre.c,v 1.12 2000/08/25 00:51:20 mjl Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -153,10 +153,8 @@ gre_clone_create(ifc, unit)
 	sc->g_dst.s_addr = sc->g_src.s_addr = INADDR_ANY;
 	sc->g_proto = IPPROTO_GRE;
 	if_attach(&sc->sc_if);
-#if 0
 #if NBPFILTER > 0
-	bpfattach(&sc->gre_bpf, &sc->sc_if, DLT_RAW, sizeof(u_int32_t));
-#endif
+	bpfattach(&sc->gre_bpf, &sc->sc_if, DLT_NULL, sizeof(u_int32_t));
 #endif
 	LIST_INSERT_HEAD(&gre_softc_list, sc, sc_list);
 	return (0);
@@ -169,10 +167,8 @@ gre_clone_destroy(ifp)
 	struct gre_softc *sc = ifp->if_softc;
 
 	LIST_REMOVE(sc, sc_list);
-#if 0
 #if NBPFILTER > 0
 	bpfdetach(ifp);
-#endif
 #endif
 	if_detach(ifp);
 	free(sc, M_DEVBUF);
@@ -204,9 +200,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	inp = NULL;
 	osrc = 0;
 
-#if 0
 #if NBPFILTER >0
-
 	if (sc->gre_bpf) {
 		/* see comment of other if_foo.c files */
 		struct mbuf m0;
@@ -216,9 +210,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
 		
-		bpf_mtap(ifp->if_bpf, &m0);
+		bpf_mtap(sc->gre_bpf, &m0);
 	}
-#endif
 #endif
 
 	ttl = 255;
