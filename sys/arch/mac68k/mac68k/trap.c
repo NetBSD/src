@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.11 1994/04/22 12:11:24 briggs Exp $
+ *	$Id: trap.c,v 1.12 1994/05/06 17:39:53 briggs Exp $
  */
 
 #include <sys/param.h>
@@ -113,6 +113,7 @@ int mmudebug = 0;
 #endif
 
 extern struct pcb *curpcb;
+extern char	  fubail[], subail[];
 
 static void
 userret(p, pc, oticks)
@@ -125,7 +126,7 @@ userret(p, pc, oticks)
 	while ((sig = CURSIG(p)) != 0)
 		psig(sig);
 
-	p->p_pri = p->p_usrpri;
+	p->p_priority = p->p_usrpri;
 
 	if (want_resched) {
 		/*
@@ -144,6 +145,7 @@ userret(p, pc, oticks)
 		while ((sig = CURSIG(p)) != 0)
 			psig(sig);
 	}
+#ifdef notyet
 	if (p->p_stats->p_prof.pr_scale) {
 		int ticks;
 		struct timeval *tv = &p->p_stime;
@@ -159,7 +161,8 @@ userret(p, pc, oticks)
 #endif
 		}
 	}
-	curpri = p->p_pri;
+#endif
+	curpriority = p->p_priority;
 }
 
 void
@@ -414,11 +417,13 @@ trap(type, code, v, frame)
 	p = curproc;
 	ucode = 0;
 	cnt.v_trap++;
+#ifdef notyet
 	syst = p->p_stime;
+#endif
 
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
-		p->p_regs = frame.f_regs;
+		p->p_md.md_regs = frame.f_regs;
 	}
 
 #ifdef DDB
@@ -427,6 +432,16 @@ trap(type, code, v, frame)
 			return;
 	}
 #endif
+
+	if (!p) /* XXX Is this ever going to happen? */
+		p = &proc0;
+
+	if ( p->p_addr->u_pcb.pcb_onfault &&
+	    (type == T_MMUFLT || p->p_addr->u_pcb.pcb_onfault == fubail
+	                      || p->p_addr->u_pcb.pcb_onfault == subail)) {
+		trapcpfault(p, &frame);
+		return;
+	}
 
 	switch (type) {
 	default:
@@ -586,7 +601,7 @@ trap(type, code, v, frame)
 		if (ssir & SIR_CLOCK) {
 			siroff(SIR_CLOCK);
 			cnt.v_soft++;
-			softclock(&frame.f_stackadj);
+			softclock();
 		}
 		/*
 		 * If this was not an AST trap, we are all done.
@@ -597,9 +612,9 @@ trap(type, code, v, frame)
 		}
 		spl0();
 #ifndef PROFTIMER
-		if ((p->p_flag&SOWEUPC) && p->p_stats->p_prof.pr_scale) {
+		if ((p->p_flag&P_OWEUPC) && p->p_stats->p_prof.pr_scale) {
 			addupc(frame.f_pc, &p->p_stats->p_prof, 1);
-			p->p_flag &= ~SOWEUPC;
+			p->p_flag &= ~P_OWEUPC;
 		}
 #endif
 		userret(p, frame.f_pc, &syst); 
@@ -644,9 +659,11 @@ syscall(code, frame)
 	cnt.v_syscall++;
 	
 	p = curproc;
-	p->p_regs = frame.f_regs;
+	p->p_md.md_regs = frame.f_regs;
 	p->p_md.md_flags &= ~MDP_STACKADJ;
+#ifdef notyet
 	syst = p->p_stime;
+#endif
 	opc = frame.f_pc - 2;
 	error = 0;
 
