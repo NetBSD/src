@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.9 1994/12/13 15:58:20 mycroft Exp $	*/
+/*	$NetBSD: dirent.h,v 1.10 1996/02/29 20:19:52 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -77,3 +77,15 @@ struct dirent {
  */
 #define	IFTODT(mode)	(((mode) & 0170000) >> 12)
 #define	DTTOIF(dirtype)	((dirtype) << 12)
+
+#ifdef	_KERNEL
+/*
+ * The DIRSIZ macro gives the minimum record length which will hold
+ * the directory entry.  This requires the amount of space in struct dirent
+ * without the d_name field, plus enough space for the name with a terminating
+ * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
+ */
+#define	DIRSIZ(dp) \
+    ((sizeof (struct dirent) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3))
+
+#endif	/* !_KERNEL */
