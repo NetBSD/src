@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.63 1999/08/03 20:19:21 wrstuden Exp $	*/
+/*	$NetBSD: vnode.h,v 1.64 1999/08/18 01:34:28 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -320,20 +320,20 @@ extern	struct vattr va_null;		/* predefined null vattr structure */
  */
 #define VDESC_MAX_VPS		8
 /* Low order 16 flag bits are reserved for willrele flags for vp arguments. */
-#define VDESC_VP0_WILLRELE	0x0001
-#define VDESC_VP1_WILLRELE	0x0002
-#define VDESC_VP2_WILLRELE	0x0004
-#define VDESC_VP3_WILLRELE	0x0008
-#define VDESC_VP0_WILLUNLOCK	0x0100
-#define VDESC_VP1_WILLUNLOCK	0x0200
-#define VDESC_VP2_WILLUNLOCK	0x0400
-#define VDESC_VP3_WILLUNLOCK	0x0800
-#define VDESC_VP0_WILLPUT	0x0101
-#define VDESC_VP1_WILLPUT	0x0202
-#define VDESC_VP2_WILLPUT	0x0404
-#define VDESC_VP3_WILLPUT	0x0808
-#define VDESC_NOMAP_VPP		0x0100
-#define VDESC_VPP_WILLRELE	0x0200
+#define VDESC_VP0_WILLRELE	0x00000001
+#define VDESC_VP1_WILLRELE	0x00000002
+#define VDESC_VP2_WILLRELE	0x00000004
+#define VDESC_VP3_WILLRELE	0x00000008
+#define VDESC_VP0_WILLUNLOCK	0x00000100
+#define VDESC_VP1_WILLUNLOCK	0x00000200
+#define VDESC_VP2_WILLUNLOCK	0x00000400
+#define VDESC_VP3_WILLUNLOCK	0x00000800
+#define VDESC_VP0_WILLPUT	0x00000101
+#define VDESC_VP1_WILLPUT	0x00000202
+#define VDESC_VP2_WILLPUT	0x00000404
+#define VDESC_VP3_WILLPUT	0x00000808
+#define VDESC_NOMAP_VPP		0x00010000
+#define VDESC_VPP_WILLRELE	0x00020000
 
 /*
  * VDESC_NO_OFFSET is used to identify the end of the offset list
