@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_svc.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_svc.c,v 1.3 1994/06/13 20:50:50 mycroft Exp $
+ *	$Id: amq_svc.c,v 1.4 1995/12/15 19:08:21 thorpej Exp $
  *
  */
 
@@ -119,7 +119,7 @@ amq_program_1(rqstp, transp)
 		return;
 	}
 	bzero((char *)&argument, sizeof(argument));
-	if (!svc_getargs(transp, xdr_argument, &argument)) {
+	if (!svc_getargs(transp, xdr_argument, (char *)&argument)) {
 		svcerr_decode(transp);
 		return;
 	}
@@ -127,7 +127,7 @@ amq_program_1(rqstp, transp)
 	if (result != NULL && !svc_sendreply(transp, xdr_result, result)) {
 		svcerr_systemerr(transp);
 	}
-	if (!svc_freeargs(transp, xdr_argument, &argument)) {
+	if (!svc_freeargs(transp, xdr_argument, (char *)&argument)) {
 		plog(XLOG_FATAL, "unable to free rpc arguments in amqprog_1");
 		going_down(1);
 	}
