@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.474 2002/08/28 08:01:31 gmcgarry Exp $
+#	$NetBSD: mi,v 1.475 2002/08/28 09:38:52 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1206,6 +1206,7 @@
 ./usr/share/man/cat2/pwrite.0		comp-c-catman
 ./usr/share/man/cat2/pwritev.0		comp-c-catman
 ./usr/share/man/cat2/quotactl.0		comp-c-catman
+./usr/share/man/cat2/rasctl.0		comp-c-catman
 ./usr/share/man/cat2/read.0		comp-c-catman
 ./usr/share/man/cat2/readlink.0		comp-c-catman
 ./usr/share/man/cat2/readv.0		comp-c-catman
@@ -3879,6 +3880,7 @@
 ./usr/share/man/man2/pwrite.2		comp-c-man
 ./usr/share/man/man2/pwritev.2		comp-c-man
 ./usr/share/man/man2/quotactl.2		comp-c-man
+./usr/share/man/man2/rasctl.2		comp-c-man
 ./usr/share/man/man2/read.2		comp-c-man
 ./usr/share/man/man2/readlink.2		comp-c-man
 ./usr/share/man/man2/readv.2		comp-c-man
