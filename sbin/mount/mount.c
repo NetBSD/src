@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.33 1997/10/29 18:55:58 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.34 1997/10/29 19:41:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.33 1997/10/29 18:55:58 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.34 1997/10/29 19:41:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -367,7 +367,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	argv[argc++] = name;
 	argv[argc] = NULL;
 
-	if (debug) {
+	if (verbose) {
 		(void)printf("exec: %s", execbase);
 		for (i = 1; i < argc; i++)
 			(void)printf(" %s", argv[i]);
@@ -381,6 +381,9 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		free(optbuf);
 		return (1);
 	case 0:					/* Child. */
+		if (debug)
+			_exit(0);
+
 		/* Go find an executable. */
 		edir = edirs;
 		do {
@@ -393,7 +396,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 
 		if (errno == ENOENT)
 			warnx("%s not found for %s", execbase, name);
-		exit(1);
+		_exit(1);
 		/* NOTREACHED */
 	default:				/* Parent. */
 		free(optbuf);
