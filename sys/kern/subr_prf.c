@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.17 1995/03/19 23:17:16 mycroft Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.18 1995/03/19 23:23:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -451,10 +451,11 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 			base = 10;
 			goto number;
 		case 'p':
-			lflag = 1;
 			putchar('0', flags, tp);
 			putchar('x', flags, tp);
-			/* FALLTHROUGH */
+			ul = (u_long)va_arg(ap, void *);
+			base = 16;
+			goto number;
 		case 'x':
 			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
 			base = 16;
