@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.10 2000/01/09 14:47:43 chopps Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.11 2000/01/09 17:32:58 chopps Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -793,7 +793,9 @@ sca_output(ifp, m, dst, rt0)
 	struct sockaddr *dst;
 	struct rtentry *rt0;
 {
+#ifdef ISO
 	struct hdlc_llc_header *llc;
+#endif
 	struct hdlc_header *hdlc;
 	struct ifqueue *ifq;
 	int s, error;
@@ -1513,7 +1515,6 @@ sca_frame_process(sca_port_t *scp)
 {
 	struct ifqueue *ifq;
 	struct hdlc_header *hdlc;
-	struct hdlc_llc_header *llc;
 	struct cisco_pkt *cisco;
 	sca_desc_t *desc;
 	struct mbuf *m;
@@ -1582,8 +1583,6 @@ sca_frame_process(sca_port_t *scp)
 	case HDLC_PROTOCOL_ISO:
 		if (m->m_pkthdr.len < sizeof(struct hdlc_llc_header)) 
                        goto dropit;
-		/* if not a std iso pdu drop it */
-		llc = (struct hdlc_llc_header *)hdlc;
 		m->m_pkthdr.rcvif = &scp->sp_if;
 		m->m_pkthdr.len -= sizeof(struct hdlc_llc_header);
 		m->m_data += sizeof(struct hdlc_llc_header);
