@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.76 1997/11/06 22:34:01 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.77 1997/11/29 18:38:23 kleink Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -20,8 +20,8 @@ DPSRCS+= Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c Lint_pipe.c \
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-SRCS+=	ftruncate.c lseek.c mmap.c semctl.c truncate.c stat.c msync.c swapon.c \
-	getdirentries.c
+SRCS+=	ftruncate.c getdirentries.c lseek.c mmap.c msync.c semctl.c \
+	sigaltstack.c stat.c swapon.c truncate.c
 
 # "stub" POSIX.1b interfaces which return -1 and set errno to ENOSYS, so
 # we can avoid bumping libc's minor number as functions are added to the
@@ -55,7 +55,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	setpriority.o setregid.o setreuid.o \
 	setrlimit.o setsid.o setsockopt.o settimeofday.o \
 	setuid.o shmat.o shmctl.o shmdt.o shmget.o shutdown.o sigaction.o \
-	sigaltstack.o socket.o socketpair.o __stat13.o statfs.o swapctl.o \
+	__sigaltstack14.o socket.o socketpair.o __stat13.o statfs.o swapctl.o \
 	symlink.o sysarch.o umask.o undelete.o unlink.o unmount.o \
 	utimes.o vadvise.o wait4.o write.o writev.o __semctl.o __syscall.o \
 	__sysctl.o

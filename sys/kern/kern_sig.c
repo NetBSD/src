@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.67 1997/10/16 02:45:39 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.68 1997/11/29 18:38:24 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -345,12 +345,12 @@ sys_sigsuspend(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_sigaltstack(p, v, retval)
+sys___sigaltstack14(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_sigaltstack_args /* {
+	register struct sys___sigaltstack14_args /* {
 		syscallarg(const struct sigaltstack *) nss;
 		syscallarg(struct sigaltstack *) oss;
 	} */ *uap = v;
