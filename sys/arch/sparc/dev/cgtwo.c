@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.18 1996/10/11 00:46:29 christos Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.19 1996/10/13 02:59:41 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -189,7 +189,7 @@ cgtwoattach(parent, self, args)
 
 	sc->sc_fb.fb_type.fb_cmsize = 256;
 	sc->sc_fb.fb_type.fb_size = roundup(CG2_MAPPED_SIZE, NBPG);
-	kprintf(": %s, %d x %d", nam,
+	printf(": %s, %d x %d", nam,
 	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
 
 	/*
@@ -235,12 +235,12 @@ cgtwoattach(parent, self, args)
 		     3 * CG2_CMSIZE, ca->ca_bustype);
 
 	if (isconsole) {
-		kprintf(" (console)\n");
+		printf(" (console)\n");
 #ifdef RASTERCONSOLE
 		fbrcons_init(&sc->sc_fb);
 #endif
 	} else
-		kprintf("\n");
+		printf("\n");
 
 	if (node == fbnode || CPU_ISSUN4)
 		fb_attach(&sc->sc_fb, isconsole);

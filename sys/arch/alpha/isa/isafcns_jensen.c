@@ -1,4 +1,4 @@
-/*	$NetBSD: isafcns_jensen.c,v 1.3 1996/10/10 23:50:53 christos Exp $	*/
+/*	$NetBSD: isafcns_jensen.c,v 1.4 1996/10/13 02:59:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -68,7 +68,7 @@ jensen_inb(ioaddr)
 	rval = ((val) >> (8 * offset)) & 0xff;
 	rval = val & 0xff;
 
-kprintf("inb(0x%x) => 0x%x @ %p => 0x%x\n", ioaddr, val, port, rval);
+printf("inb(0x%x) => 0x%x @ %p => 0x%x\n", ioaddr, val, port, rval);
 
 	return rval;
 }
@@ -106,7 +106,7 @@ jensen_inl(ioaddr)
 	rval = ((val) >> (8 * offset)) & 0xffffffff;
 	rval = val & 0xffffffff;
 
-kprintf("inl(0x%x) => 0x%x @ %p => 0x%x\n", ioaddr, val, port, rval);
+printf("inl(0x%x) => 0x%x @ %p => 0x%x\n", ioaddr, val, port, rval);
 
 	return rval;
 }
@@ -123,7 +123,7 @@ jensen_outb(ioaddr, val)
 	nval = val /*<< (8 * offset)*/;
 	port = (int32_t *)phystok0seg(0x300000000L | 0 << 5 | ioaddr << 7);
 
-kprintf("outb(0x%x, 0x%x) => 0x%x @ %p\n", ioaddr, val, nval, port);
+printf("outb(0x%x, 0x%x) => 0x%x @ %p\n", ioaddr, val, nval, port);
 
 	*port = nval;
 }
@@ -140,7 +140,7 @@ jensen_outw(ioaddr, val)
 	nval = val /*<< (8 * offset)*/;
 	port = (int32_t *)phystok0seg(0x300000000L | 1 << 5 | ioaddr << 7);
 
-kprintf("outb(0x%x, 0x%x) => 0x%x @ %p\n", ioaddr, val, nval, port);
+printf("outb(0x%x, 0x%x) => 0x%x @ %p\n", ioaddr, val, nval, port);
 
 	*port = nval;
 }
@@ -157,7 +157,7 @@ jensen_outl(ioaddr, val)
 	nval = val /*<< (8 * offset)*/;
 	port = (int32_t *)phystok0seg(0x300000000L | 3 << 5 | ioaddr << 7);
 
-kprintf("outb(0x%x, 0x%x) => 0x%x @ %p\n", ioaddr, val, nval, port);
+printf("outb(0x%x, 0x%x) => 0x%x @ %p\n", ioaddr, val, nval, port);
 
 	*port = nval;
 }

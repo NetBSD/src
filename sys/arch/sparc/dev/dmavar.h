@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.9 1996/10/11 00:46:33 christos Exp $ */
+/*	$NetBSD: dmavar.h,v 1.10 1996/10/13 02:59:45 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -66,7 +66,7 @@ struct dma_softc {
 #define TIME_WAIT(COND, MSG, SC) { int count = 500000; \
 				while (--count > 0 && (COND)) DELAY(1); \
 				if (count == 0) { \
-					kprintf("CSR = %lx\n",\
+					printf("CSR = %lx\n",\
 					    SC->sc_regs->csr);\
 					panic(MSG); } \
 			     }
