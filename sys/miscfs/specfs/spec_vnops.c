@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.69 2003/08/07 16:32:44 agc Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.70 2003/10/15 08:41:26 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.69 2003/08/07 16:32:44 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.70 2003/10/15 08:41:26 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -179,6 +179,7 @@ spec_open(v)
 	dev_t blkdev, dev = (dev_t)vp->v_rdev;
 	int error;
 	struct partinfo pi;
+	int (*d_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
 
 	/*
 	 * Don't allow open if fs is mounted -nodev.
@@ -220,7 +221,10 @@ spec_open(v)
 		VOP_UNLOCK(vp, 0);
 		error = (*cdev->d_open)(dev, ap->a_mode, S_IFCHR, p);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		return (error);
+		if (cdev->d_type != D_DISK)
+			return error;
+		d_ioctl = cdev->d_ioctl;
+		break;
 
 	case VBLK:
 		bdev = bdevsw_lookup(dev);
@@ -240,16 +244,8 @@ spec_open(v)
 		if ((error = vfs_mountedon(vp)) != 0)
 			return (error);
 		error = (*bdev->d_open)(dev, ap->a_mode, S_IFBLK, p);
-		if (error) {
-			return error;
-		}
-		error = (*bdev->d_ioctl)(vp->v_rdev,
-		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
-		if (error == 0) {
-			vp->v_size = (voff_t)pi.disklab->d_secsize *
-			    pi.part->p_size;
-		}
-		return 0;
+		d_ioctl = bdev->d_ioctl;
+		break;
 
 	case VNON:
 	case VLNK:
@@ -258,9 +254,15 @@ spec_open(v)
 	case VBAD:
 	case VFIFO:
 	case VSOCK:
-		break;
+	default:
+		return 0;
 	}
-	return (0);
+
+	if (error)
+		return error;
+	if (!(*d_ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&pi, FREAD, curproc))
+		vp->v_size = (voff_t)pi.disklab->d_secsize * pi.part->p_size;
+	return 0;
 }
 
 /*
