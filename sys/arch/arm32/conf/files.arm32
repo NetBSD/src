@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.55 1998/07/31 04:50:01 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.56 1998/07/31 16:42:01 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -86,6 +86,20 @@ file	dev/isa/sb.c				sb needs-flag
 # ESS Technology ES1887/ES888
 device	ess: audio, isadma, mulaw, auconv
 file	dev/isa/ess.c			ess needs-flag
+
+# XXX should pull in files.isa
+# AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
+define	ad1848
+file	dev/isa/ad1848.c		ad1848 
+
+# XXX should pull in files.isa
+device	ym: audio, isadma, ad1848, auconv
+file	dev/isa/ym.c			ym needs-flag
+
+# XXX should pull in files.isa
+# Microsoft Windows Sound System
+device	wss: audio, isadma, ad1848, auconv
+file	dev/isa/wss.c			wss needs-flag
 
 # cs8900 Crystal Ethernet Controller
 device	cs: arp, ether, ifnet, isadma
