@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.7 1998/02/03 04:17:30 perry Exp $	*/
+/*	$NetBSD: unvis.c,v 1.8 1998/10/13 17:02:53 wsanchez Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -43,11 +43,12 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unvis.c,v 1.7 1998/02/03 04:17:30 perry Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.8 1998/10/13 17:02:53 wsanchez Exp $");
 #endif /* not lint */
 
 #include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <vis.h>
 
