@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/01/23 17:04:04 mycroft Exp $
+#	$NetBSD: Makefile,v 1.10 2000/07/08 15:40:53 jdolecek Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -8,9 +8,9 @@ NEWVERSWHAT= "BOOT"
 ASRCS+= srt0.s
 CSRCS+= boot.c clock.c com.c conf.c cons.c cpu.c devopen.c
 CSRCS+= fd.c filesystem.c inkernel.c io.c tgets.c prf.c monitor.c
-CSRCS+= kbd.c ns16550.c vreset.c vga.c video.c
+CSRCS+= kbd.c ns16550.c vers.c vreset.c vga.c video.c
 
-CLEANFILES+= vers.c vers.o ${BOOTPROG} ${.CURDIR}/lib
+CLEANFILES+= vers.c ${BOOTPROG}
 
 CPPFLAGS= -I${.CURDIR} -I${.CURDIR}/../elf2pef -I${.CURDIR}/../../..
 CPPFLAGS+= -I${S} -I${S}/lib/libsa
@@ -52,11 +52,12 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
+vers.c: version
+	sh ${.CURDIR}/../newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
+
 realall: ${BOOTPROG}
 
 ${BOOTPROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	sh ${.CURDIR}/../newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
-	${COMPILE.c} vers.c
 	${LD} -o ${BOOTPROG} -s -N -T ld.script -Ttext ${RELOC} ${OBJS} \
 		${LIBSA} ${LIBZ} ${LIBKERN} vers.o
 
