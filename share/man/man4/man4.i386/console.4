@@ -1,4 +1,4 @@
-.\"	$NetBSD: console.4,v 1.6 2001/04/02 20:38:54 wiz Exp $
+.\"	$NetBSD: console.4,v 1.7 2002/01/15 01:41:11 wiz Exp $
 .\"
 .Dd May 12, 2000
 .Os
@@ -6,7 +6,6 @@
 .Sh NAME
 .Nm console
 .Nd i386 console interface
-
 .Sh DESCRIPTION
 The
 .Dq console
@@ -50,7 +49,6 @@ driver)
 .Xr com 4
 driver)
 .El
-
 .Pp
 The available
 .Em kernel configuration
@@ -84,22 +82,18 @@ for details. Default is
 This option takes always effect, because mode settings are not passed
 by the bootloader.
 .El
-
-.Sh EXAMPLES
-.Cd options \&"CONSDEVNAME=\e"com\e"",CONADDR=0x2f8,CONSPEED=19200
-
 .Sh FILES
 .Bl -tag -width /dev/console
 .It Pa /dev/console
 .It Pa /sys/arch/i386/conf/CONFIG
 .El
-
+.Sh EXAMPLES
+.Cd options \&"CONSDEVNAME=\e"com\e"",CONADDR=0x2f8,CONSPEED=19200
 .Sh SEE ALSO
 .Xr tty 4 ,
 .Xr boot 8 ,
 .Xr boot_console 8 ,
 .Xr config 8
-
 .Sh BUGS
 The console device is chosen early in system startup regardless
 if the specified driver / device is present in the system configuration file.
