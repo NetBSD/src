@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.83 2002/01/27 12:41:07 simonb Exp $
+.\"	$NetBSD: sysctl.3,v 1.84 2002/01/28 02:07:01 simonb Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -318,6 +318,7 @@ information.
 .It KERN\_SYSVMSG	integer	no
 .It KERN\_SYSVSEM	integer	no
 .It KERN\_SYSVSHM	integer	no
+.It KERN\_TKSTAT	node	not applicable
 .It KERN\_VERSION	string	no
 .It KERN\_VNODE	struct vnode	no
 .El
@@ -427,6 +428,7 @@ the third level names for the mbuf variables are detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
 .Bl -column "MBUFXNMBCLUSTERSXXX" "struct integerXXX" -offset indent
+.It Sy Pa Third level name	Type	Changeable
 .It MBUF\_MSIZE	integer	yes
 .It MBUF\_MCLBYTES	integer	yes
 .It MBUF\_NMBCLUSTERS	integer	yes
@@ -615,6 +617,30 @@ otherwise 0.
 Returns 1 if System V style share memory functionality is available
 on this system,
 otherwise 0.
+.It Li KERN_TKSTAT
+Return information about the number of characters sent and received
+on ttys.  The third level names for the tty statistic variables
+are detailed below.  The changeable column shows whether a process
+with appropriate privilege may change the value.
+.Bl -column "KERNXTKSTATXRAWCCXXX" "struct integerXXX" -offset indent
+.It Sy Pa Third level name	Type	Changeable
+.It KERN\_TKSTAT\_NIN	quad	no
+.It KERN\_TKSTAT\_NOUT	quad	no
+.It KERN\_TKSTAT\_CANCC	quad	no
+.It KERN\_TKSTAT\_RAWCC	quad	no
+.El
+.Pp
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Li KERN_TKSTAT_NIN
+The total number of input characters.
+.It Li KERN_TKSTAT_NOUT
+The total number of output characters.
+.It Li KERN_TKSTAT_CANCC
+The number of canonical input characters.
+.It Li KERN_TKSTAT_RAWCC
+The number of raw input characters.
+.El
 .It Li KERN_VERSION
 The system version string.
 .It Li KERN_VNODE

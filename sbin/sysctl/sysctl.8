@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.72 2002/01/27 13:04:21 simonb Exp $
+.\"	$NetBSD: sysctl.8,v 1.73 2002/01/28 02:07:02 simonb Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -211,6 +211,10 @@ privilege can change the value.
 .It kern.sysvmsg	integer	no
 .It kern.sysvsem	integer	no
 .It kern.sysvshm	integer	no
+.It kern.tkstat.nin	quad	no
+.It kern.tkstat.nout	quad	no
+.It kern.tkstat.cancc	quad	no
+.It kern.tkstat.rawcc	quad	no
 .It kern.vdisable	integer	no
 .It kern.version	string	no
 .It machdep.console_device	dev_t	no
