@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.42 1997/10/02 19:41:56 is Exp $	*/
+/*	$NetBSD: if.c,v 1.43 1998/01/28 02:35:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -102,8 +102,7 @@ if_attach(ifp)
 	 * create a Link Level name for this device
 	 */
 	namelen = strlen(ifp->if_xname);
-#define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
-	masklen = _offsetof(struct sockaddr_dl, sdl_data[0]) + namelen;
+	masklen = offsetof(struct sockaddr_dl, sdl_data[0]) + namelen;
 	socksize = masklen + ifp->if_addrlen;
 #define ROUNDUP(a) (1 + (((a) - 1) | (sizeof(long) - 1)))
 	if (socksize < sizeof(*sdl))
