@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.10 1994/12/13 09:14:34 mycroft Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.11 1995/05/30 09:02:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -120,6 +120,10 @@ cache_lookup(dvp, vpp, cnp)
 	if ((cnp->cn_flags & MAKEENTRY) == 0) {
 		nchstats.ncs_badhits++;
 	} else if (ncp->nc_vp == NULL) {
+		/*
+		 * Restore the ISWHITEOUT flag saved earlier.
+		 */
+		cnp->cn_flags |= ncp->nc_vpid;
 		if (cnp->cn_nameiop != CREATE) {
 			nchstats.ncs_neghits++;
 			/*
@@ -196,8 +200,13 @@ cache_enter(dvp, vp, cnp)
 	ncp->nc_vp = vp;
 	if (vp)
 		ncp->nc_vpid = vp->v_id;
-	else
-		ncp->nc_vpid = 0;
+	else {
+		/*
+		 * For negative hits, save the ISWHITEOUT flag so we can
+		 * restore it later when the cache entry is used again.
+		 */
+		ncp->nc_vpid = cnp->cn_flags & ISWHITEOUT;
+	}
 	/* fill in cache info */
 	ncp->nc_dvp = dvp;
 	ncp->nc_dvpid = dvp->v_id;
