@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.16 2000/11/26 11:47:26 jdolecek Exp $	*/
+/*	$NetBSD: locore.s,v 1.17 2000/12/24 07:13:36 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -229,7 +229,7 @@ Lnot1200:
 	jra	2f
 1:
 	RELOC(ectype, %a0)		| yes, we are news1600/1700
-	movl	#EC_PHYS,%a0@		|  and have a phisical address cache
+	movl	#EC_PHYS,%a0@		|  and have a physical address cache
 2:
 	/*
 	 * Fix up the physical addresses of the news1700's onboard
