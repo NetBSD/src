@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.14 1994/06/29 06:42:22 cgd Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.15 1994/07/22 23:16:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1076,6 +1076,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp)
 			cred->cr_uid = uidp->nu_cr.cr_uid;
 			for (i = 0; i < uidp->nu_cr.cr_ngroups; i++)
 				cred->cr_groups[i] = uidp->nu_cr.cr_groups[i];
+			cred->cr_ngroups = i;
 		} else {
 			vput(*vpp);
 			return (NQNFS_AUTHERR);
@@ -1084,6 +1085,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp)
 		cred->cr_uid = credanon->cr_uid;
 		for (i = 0; i < credanon->cr_ngroups && i < NGROUPS; i++)
 			cred->cr_groups[i] = credanon->cr_groups[i];
+		cred->cr_ngroups = i;
 	}
 	if (exflags & MNT_EXRDONLY)
 		*rdonlyp = 1;
