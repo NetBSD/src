@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.30 2002/07/03 21:39:42 thorpej Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.31 2002/10/24 20:54:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.30 2002/07/03 21:39:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.31 2002/10/24 20:54:41 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -98,9 +98,9 @@ struct sockaddr_x25 x25_dgmask = {
 	0,		/* _family */
 	0,		/* _net */
 	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* _addr */
-	{0},		/* opts */
+	{0, 0, 0, 0},		/* opts [flags, psize, wsize, speed] */
 	-1,		/* _udlen */
-	{-1}		/* _udata */
+	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* _udata */
 };
 
 struct if_x25stats {
