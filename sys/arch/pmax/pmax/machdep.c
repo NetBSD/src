@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 1995/05/01 17:35:45 mellon Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 1995/05/04 19:48:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1675,20 +1675,22 @@ tc_find_all_options()
 			if (cp->pmax_addr == (char *)QUES) {
 				cp->pmax_addr = (char *)sl->k1seg_address;
 				cp->pmax_pri = i;
-				/*
-				 * Only enable interrupts if there is an
-				 * interrupt handler for it. (e.g., PMAG-BA 
-				 * can't disable the vertical retrace interrupt
-				 * and we might want to ignore it).
-				 */
-				if (drp->d_intr)
+				/* #ifdef this back in if it breaks */
+#if 0
+				if (pmax_boardtype == DS_3MIN ||
+				    pmax_boardtype == DS_MAXINE)
+					if (drp->d_intr) {
+					  printf("Enabling %s, slot %d\n",
+						 drp->d_name, i);
 					(*tc_enable_interrupt)(i, 1);
+				  }
+#endif
 				cp->pmax_alive = 1;
 				break;
 			}
 			if (cp->pmax_addr != (char *)sl->k1seg_address) {
 				cp->pmax_addr = (char *)QUES;
-				printf("%s: device not at configued address (expected at %x, found at %x)\n",
+				printf("%s: device not at configured address (expected at %x, found at %x)\n",
 					drp->d_name,
 					cp->pmax_addr, sl->k1seg_address);
 			}
