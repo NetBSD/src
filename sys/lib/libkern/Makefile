@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.49 1999/03/03 12:00:20 jonathan Exp $
+#	$NetBSD: Makefile,v 1.50 1999/03/04 19:46:09 drochner Exp $
 
 LIB=	kern
 MKPIC=	no
 
-M=	${.CURDIR}/arch/${MACHINE_ARCH:S/mipse[bl]/mips/}
+ARCHSUBDIR= ${MACHINE_ARCH:C/mipse[bl]/mips/}
+M= ${.CURDIR}/arch/${ARCHSUBDIR}
 
 CPPFLAGS=	-I$M ${KERNCPPFLAGS} ${KERNMISCCPPFLAGS}
 
