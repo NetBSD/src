@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.2 2000/01/16 03:07:26 takemura Exp $	*/
+/*	$NetBSD: stand.h,v 1.3 2000/02/03 03:21:23 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -43,7 +43,6 @@
 
 int win_printf(LPWSTR lpszFmt, ...);
 
-#endif /* STANDALONE_WINDOWS_SIZE */
+#endif /* STANDALONE_WINDOWS_SIDE */
 
-#include "compat.h"
 #include "../../../../lib/libsa/stand.h"
