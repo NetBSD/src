@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 1996/03/16 23:31:42 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.61 1996/03/31 22:48:24 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,6 +78,7 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+#include <vm/vm_page.h>
 
 #include <machine/autoconf.h>
 #include <machine/frame.h>
@@ -112,7 +113,7 @@ int	physmem;
 
 extern struct msgbuf msgbuf;
 struct	msgbuf *msgbufp = &msgbuf;
-int	msgbufmapped = 1;	/* message buffer is always mapped */
+int	msgbufmapped = 0;	/* not mapped until pmap_bootstrap */
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -171,8 +172,10 @@ cpu_startup()
 	 * and then give everything true virtual addresses.
 	 */
 	sz = (int)allocsys((caddr_t)0);
+
 	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
+
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
 
@@ -181,12 +184,15 @@ cpu_startup()
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
+
 	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
 	    &maxaddr, size, TRUE);
+
 	minaddr = (vm_offset_t)buffers;
 	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
+
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	if (base >= MAXBSIZE) {
@@ -194,6 +200,7 @@ cpu_startup()
 		base = MAXBSIZE;
 		residual = 0;
 	}
+
 	for (i = 0; i < nbuf; i++) {
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
@@ -216,23 +223,15 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16*NCARGS, TRUE);
+				 16*NCARGS, TRUE);
 
 	/*
 	 * Allocate a map for physio.  Others use a submap of the kernel
 	 * map, but we want one completely separate, even though it uses
 	 * the same pmap.
 	 */
-#if defined(SUN4M)
-	if (cputyp == CPU_SUN4M) {
-		dvma_base = DVMA4M_BASE;
-		dvma_end = (vm_offset_t)(0 - NBPG); /* want 4BG, but cant express */
-	} else
-#endif
-	{
-		dvma_base = DVMA_BASE;
-		dvma_end = DVMA_END;
-	}
+	dvma_base = CPU_ISSUN4M ? DVMA4M_BASE : DVMA_BASE;
+	dvma_end = CPU_ISSUN4M ? DVMA4M_END : DVMA_END;
 	phys_map = vm_map_create(pmap_kernel(), dvma_base, dvma_end, 1);
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
@@ -285,7 +284,7 @@ cpu_startup()
 	 */
 
 	pmap_enter(pmap_kernel(), MSGBUF_VA, 0x0, VM_PROT_READ|VM_PROT_WRITE, 1);
-	if (cputyp == CPU_SUN4)
+	if (CPU_ISSUN4)
 		msgbufp = (struct msgbuf *)(MSGBUF_VA + 4096);
 	else
 		msgbufp = (struct msgbuf *)MSGBUF_VA;
@@ -325,7 +324,7 @@ allocsys(v)
 	valloc(msghdrs, struct msg, msginfo.msgtql);
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
-	
+
 	/*
 	 * Determine how many buffers to allocate (enough to
 	 * hold 5% of total physical memory, but at least 16).
@@ -483,7 +482,7 @@ sendsig(catcher, sig, mask, code)
 		printf("sendsig: %s[%d] sig %d newusp %p scp %p\n",
 		    p->p_comm, p->p_pid, sig, fp, &fp->sf_sc);
 #endif
-	/* 
+	/*
 	 * Now set up the signal frame.  We build it in kernel space
 	 * and then copy it out.  We probably ought to just build it
 	 * directly in user space....
@@ -772,10 +771,17 @@ dumpsys()
 	dump = bdevsw[major(dumpdev)].d_dump;
 
 	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++) {
-		register unsigned i, n;
+		register unsigned i = 0, n;
 		register maddr = mp->addr;
 
-		for (i = 0; i < mp->len; i += n) {
+		if (maddr == 0) {
+			/* Skip first page at physical address 0 */
+			maddr += NBPG;
+			i += NBPG;
+			blkno += btodb(NBPG);
+		}
+
+		for (; i < mp->len; i += n) {
 			n = mp->len - i;
 			if (n > BYTES_PER_DUMP)
 				 n = BYTES_PER_DUMP;
@@ -873,7 +879,7 @@ mapdev(phys, virt, offset, size, bustype)
 	register vm_offset_t pa;
 	register void *ret;
 	static vm_offset_t iobase;
-	int pmtype;
+	unsigned int pmtype;
 
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
@@ -893,13 +899,10 @@ mapdev(phys, virt, offset, size, bustype)
 			/* note: preserve page offset */
 
 	pa = trunc_page(phys->rr_paddr + offset);
-#ifdef notyet
-	pmtype = (cputyp == CPU_SUN4M)
+	pmtype = (CPU_ISSUN4M)
 			? (phys->rr_iospace << PMAP_SHFT4M)
 			: bt2pmt[bustype];
-#else
-	pmtype = bt2pmt[bustype];
-#endif
+
 	do {
 		pmap_enter(pmap_kernel(), v, pa | pmtype | PMAP_NC,
 			   VM_PROT_READ | VM_PROT_WRITE, 1);
@@ -949,14 +952,14 @@ oldmon_w_trace(va)
 	printf("stop at %lx\n", stop);
 	fp = (struct frame *) va;
 	while (round_up((u_long) fp) == stop) {
-		printf("  %x(%x, %x, %x, %x, %x, %x, %x) fp %p\n", fp->fr_pc, 
-		    fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2], fp->fr_arg[3], 
+		printf("  %x(%x, %x, %x, %x, %x, %x, %x) fp %p\n", fp->fr_pc,
+		    fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2], fp->fr_arg[3],
 		    fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6], fp->fr_fp);
 		fp = fp->fr_fp;
 		if (fp == NULL)
 			break;
 	}
-	printf("end of stack trace\n"); 
+	printf("end of stack trace\n");
 }
 
 void
@@ -996,6 +999,11 @@ caddr_t addr;
 	int res;
 	int s;
 
+	if (CPU_ISSUN4M) {
+		printf("warning: ldcontrolb called in sun4m\n");
+		return 0;
+	}
+
 	s = splhigh();
 	if (curproc == NULL)
 		xpcb = (struct pcb *)proc0paddr;
@@ -1003,7 +1011,7 @@ caddr_t addr;
 		xpcb = &curproc->p_addr->u_pcb;
 
 	saveonfault = (u_long)xpcb->pcb_onfault;
-	res = xldcontrolb(addr, xpcb);
+        res = xldcontrolb(addr, xpcb);
 	xpcb->pcb_onfault = (caddr_t)saveonfault;
 
 	splx(s);
