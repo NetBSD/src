@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.22 1999/12/16 17:29:52 bouyer Exp $	*/
+/*	$NetBSD: quota.c,v 1.23 2001/03/29 21:54:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.22 1999/12/16 17:29:52 bouyer Exp $");
+__RCSID("$NetBSD: quota.c,v 1.23 2001/03/29 21:54:01 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -659,13 +659,13 @@ getnfsquota(fst, fs, qup, id, quotatype)
 			/* blocks*/
 		dqp->dqb_bhardlimit =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bhardlimit *
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE;
+		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
 		dqp->dqb_bsoftlimit =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsoftlimit *
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE;
+		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
 		dqp->dqb_curblocks =
 		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_curblocks *
-		    gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE;
+		    (gq_rslt.getquota_rslt_u.gqr_rquota.rq_bsize / DEV_BSIZE);
 			/* inodes */
 		dqp->dqb_ihardlimit =
 			gq_rslt.getquota_rslt_u.gqr_rquota.rq_fhardlimit;
