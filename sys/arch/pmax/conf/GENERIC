@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.102 2002/09/18 02:44:06 lukem Exp $
+# $NetBSD: GENERIC,v 1.103 2002/09/20 10:39:57 martti Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.102 $"
+#ident		"GENERIC-$Revision: 1.103 $"
 
 maxusers	64
 
@@ -117,6 +117,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # NetBSD backwards compatibility

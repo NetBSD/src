@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.65 2002/09/18 02:43:59 lukem Exp $
+#	$NetBSD: CARDBUS,v 1.66 2002/09/20 10:39:52 martti Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -10,7 +10,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"CARDBUS-$Revision: 1.65 $"
+#ident		"CARDBUS-$Revision: 1.66 $"
 
 maxusers	32		# estimated number of users
 
@@ -154,6 +154,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
