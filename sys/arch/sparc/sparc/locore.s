@@ -2477,14 +2477,14 @@ dostart:
 	/*
 	 * are we on a sun4c or a sun4m?
 	 */
-	ld	[%g7 + 0x1c], %o4	! node = pv->pv_nodeops->no_nextnode(0)
-	ld	[%o4], %o4
+	ld	[%g7 + PV_NODEOPS], %o4	! node = pv->pv_nodeops->no_nextnode(0)
+	ld	[%o4 + NO_NEXTNODE], %o4
 	call	%o4
 	 mov	0, %o0			! node
 	set	_cputypvar, %o1		! name = "compatibility"
 	set	_cputypval, %o2		! buffer ptr (assume buffer long enough)
-	ld	[%g7 + 0x1c], %o4	! (void)pv->pv_nodeops->no_getprop(...)
-	ld	[%o4 + 0x0c], %o4
+	ld	[%g7 + PV_NODEOPS], %o4	! (void)pv->pv_nodeops->no_getprop(...)
+	ld	[%o4 + NO_GETPROP], %o4
 	call	 %o4
 	 nop
 
@@ -2499,7 +2499,7 @@ dostart:
 #endif /* SUN4C || SUN4M */
 
 	! ``on a sun4d?!  hell no!''
-	ld	[%g7 + 0x74], %o1	! by this kernel, then halt
+	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
 	call	%o1
 	 nop
 
@@ -2510,10 +2510,10 @@ is_sun4m:
 	 mov	CPU_SUN4M, %g4
 #else
 	set	sun4m_notsup-KERNBASE, %o0
-	ld	[%g7 + 0x7c], %o1
+	ld	[%g7 + PV_EVAL], %o1
 	call	%o1			! print a message saying that the
 	 nop				! sun4m architecture is not supported
-	ld	[%g7 + 0x74], %o1	! by this kernel, then halt
+	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
 	call	%o1
 	 nop
 	/*NOTREACHED*/
@@ -2529,10 +2529,24 @@ is_sun4c:
 	 mov	CPU_SUN4C, %g4		! XXX CPU_SUN4
 #else
 	set	sun4c_notsup-KERNBASE, %o0
-	ld	[%g7 + 0x7c], %o1
-	call	%o1			! print a message saying that the
+
+	ld	[%g7 + PV_ROMVEC_VERS], %o1
+	cmp	%o1, 0
+	bne	1f
+	 nop
+
+	! stupid version 0 rom interface is pv_eval(int length, char *string)
+	mov	%o0, %o1
+2:	ldub	[%o0], %o4
+	bne	2b
+	 inc	%o0
+	dec	%o0
+	sub	%o0, %o1, %o0
+
+1:	ld	[%g7 + PV_EVAL], %o2
+	call	%o2			! print a message saying that the
 	 nop				! sun4c architecture is not supported
-	ld	[%g7 + 0x74], %o1	! by this kernel, then halt
+	ld	[%g7 + PV_HALT], %o1	! by this kernel, then halt
 	call	%o1
 	 nop
 	/*NOTREACHED*/
@@ -2550,10 +2564,10 @@ is_sun4:
 	set	PROM_BASE, %g7
 
 	set	sun4_notsup-KERNBASE, %o0
-	ld	[%g7 + 0x84], %o1
+	ld	[%g7 + OLDMON_PRINTF], %o1
 	call	%o1			! print a message saying that the
 	 nop				! sun4 architecture is not supported
-	ld	[%g7 + 0xc4], %o1	! by this kernel, then halt
+	ld	[%g7 + OLDMON_HALT], %o1 ! by this kernel, then halt
 	call	%o1
 	 nop
 	/*NOTREACHED*/
@@ -2667,7 +2681,7 @@ start_havetype:
 	 set	_mapme-KERNBASE, %o0
 
 	! rominterpret("0 0 f8000000 15c6a0 map-pages");
-	ld	[%g7 + 0x7c], %o1
+	ld	[%g7 + PV_EVAL], %o1
 	call	%o1			! forth eval
 	 nop
 	b	startmap_done
