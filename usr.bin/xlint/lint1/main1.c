@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.2 1995/07/03 21:24:22 cgd Exp $	*/
+/*	$NetBSD: main1.c,v 1.3 1995/10/02 17:29:56 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: main1.c,v 1.2 1995/07/03 21:24:22 cgd Exp $";
+static char rcsid[] = "$NetBSD: main1.c,v 1.3 1995/10/02 17:29:56 jpo Exp $";
 #endif
 
 #include <stdio.h>
@@ -158,7 +158,7 @@ main(argc, argv)
 	yyparse();
 
 	/* Following warnings cannot be suppressed by LINTED */
-	lline = -1;
+	nowarn = 0;
 
 	chkglsyms();
 
