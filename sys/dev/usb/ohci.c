@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.146 2003/12/29 08:17:10 toshii Exp $	*/
+/*	$NetBSD: ohci.c,v 1.147 2004/06/22 07:20:35 mycroft Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.146 2003/12/29 08:17:10 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.147 2004/06/22 07:20:35 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2053,7 +2053,7 @@ ohci_open(usbd_pipe_handle pipe)
 		}
 		sed->ed.ed_flags = htole32(
 			OHCI_ED_SET_FA(addr) |
-			OHCI_ED_SET_EN(ed->bEndpointAddress) |
+			OHCI_ED_SET_EN(UE_GET_ADDR(ed->bEndpointAddress)) |
 			(dev->speed == USB_SPEED_LOW ? OHCI_ED_SPEED : 0) |
 			fmt |
 			OHCI_ED_SET_MAXP(UGETW(ed->wMaxPacketSize)));
