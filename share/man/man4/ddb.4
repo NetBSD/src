@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.30 1999/01/22 09:12:48 msaitoh Exp $
+.\"	$NetBSD: ddb.4,v 1.31 1999/03/06 22:44:10 mycroft Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -402,7 +402,7 @@ is supplied, continues
 .Pq Ar count Ns -1
 times before stopping at the breakpoint.
 If the breakpoint is set, a breakpoint number is printed with
-.Sq # .
+.Sq \&# .
 This number can be used to
 .Ic delete
 the breakpoint, or to add
@@ -437,7 +437,7 @@ as per
 or by the breakpoint number returned by
 .Ic break
 if it's prefixed with
-.Sq Cm # .
+.Sq Cm \&# .
 .It Xo
 .Ic step Ns Op Cm /p
 .Op Cm , Ns Ar count
@@ -819,10 +819,10 @@ All built-in variables are accessible via
 .Xr sysctl 3 .
 .Sh EXPRESSIONS
 Almost all expression operators in C are supported, except
-.Sq ~ ,
-.Sq ^ ,
+.Sq \&~ ,
+.Sq \&^ ,
 and unary
-.Sq & .
+.Sq \&& .
 Special rules in
 .Nm
 are:
@@ -830,9 +830,9 @@ are:
 .It Ar identifier
 name of a symbol.
 It is translated to the address (or value) of it.
-.Sq .
+.Sq \&.
 and
-.Sq :
+.Sq \&:
 can be used in the identifier.
 If supported by an object format dependent routine,
 .Sm off
@@ -888,14 +888,14 @@ last address explicitly specified.
 register name or variable.
 It is translated to the value of it.
 It may be followed by a
-.Sq :
+.Sq \&:
 and modifiers as described above.
 .It Cm a
 multiple of right-hand side.
 .It Cm * Ns Ar expr
 expression indirection.
 It may be followed by a
-.Sq :
+.Sq \&:
 and modifiers as described above.
 .El
 
