@@ -1,0 +1,79 @@
+# $NetBSD: Makefile.booters,v 1.1 2001/11/21 19:09:06 thorpej Exp $
+
+# $S must correspond to the top of the 'sys' tree
+S=	${.CURDIR}/../../../..
+
+.BEGIN: machine sgimips mips
+${PROG} realdepend realall: machine sgimips mips
+CLEANFILES+= machine sgimips mips
+machine:
+	-rm -f ${.TARGET}
+	ln -s $S/arch/${MACHINE}/include ${.TARGET}
+sgimips:
+	-rm -f ${.TARGET}
+	ln -s $S/arch/${MACHINE}/include ${.TARGET}
+mips:
+	-rm -f ${.TARGET}
+	ln -s $S/arch/mips/include mips
+
+BINMODE?=	444
+
+.PATH:		${.CURDIR}/../common
+AFLAGS+=	-D_LOCORE -D_KERNEL
+# -I${.CURDIR}/../.. done by Makefile.inc
+#CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -DHEAP_VARIABLE -I${.OBJDIR} -I${S}
+CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -I${.OBJDIR} -I${S}
+# compiler flags for smallest code size
+CFLAGS=		-Os -g -mmemcpy -mno-abicalls -G 128
+LDBUG=		-T $S/arch/mips/conf/stand.ldscript
+
+NETBSD_VERS!=	sh ${.CURDIR}/../../../../conf/osrelease.sh
+CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
+
+# PROG set by parent.
+MKMAN=		no
+LOAD_ADDRESS?=	0x89000000
+SRCS+=	vers.c
+CLEANFILES+= vers.c
+
+### find out what to use for libkern
+KERN_AS=	library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN=	${KERNLIB}
+
+### find out what to use for libz
+Z_AS=		library
+.include "${S}/lib/libz/Makefile.inc"
+LIBZ=		${ZLIB}
+
+### find out what to use for libsa
+SA_AS=		library
+SAMISCMAKEFLAGS+=SA_USE_LOADFILE=yes SA_USE_CREAD=yes
+# for now:
+SAMISCMAKEFLAGS+=SA_INCLUDE_NET=no
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA=		${SALIB}
+
+LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
+
+.PHONY: vers.c
+vers.c: ${.CURDIR}/version
+	sh ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "sgimips"
+
+${PROG}: machine mips sgimips ${OBJS} ${LIBS}
+	${LD} -Map ${PROG}.map -x -Ttext ${LOAD_ADDRESS} ${LDBUG} \
+	    -e start -o ${PROG} ${OBJS} ${LIBS}
+	@${SIZE} ${PROG}
+.if defined(CHECKSIZE_CMD)
+	@${CHECKSIZE_CMD} ${PROG} ${PRIMARY_MAX_LOAD} ${PRIMARY_MAX_TOTAL} || \
+	    (rm -f ${PROG} ; false)
+.endif
+
+CLEANFILES+=	${PROG}.map
+
+cleandir distclean: cleanlibdir
+
+cleanlibdir:
+	rm -rf lib
+
+.include <bsd.prog.mk>
