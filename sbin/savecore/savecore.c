@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.36 1998/04/01 15:15:58 kleink Exp $	*/
+/*	$NetBSD: savecore.c,v 1.37 1998/07/23 19:05:59 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.36 1998/04/01 15:15:58 kleink Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.37 1998/07/23 19:05:59 sommerfe Exp $");
 #endif
 #endif /* not lint */
 
@@ -630,7 +630,9 @@ check_space()
 		syslog(LOG_ERR, "%s: %m", dirname);
 		exit(1);
 	}
- 	spacefree = (fsbuf.f_bavail * fsbuf.f_bsize) / 1024;
+	spacefree = fsbuf.f_bavail;
+	spacefree *= fsbuf.f_bsize;
+	spacefree /= 1024;
 
 	(void)snprintf(path, sizeof(path), "%s/minfree", dirname);
 	if ((fp = fopen(path, "r")) == NULL)
