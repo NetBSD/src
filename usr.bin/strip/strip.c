@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$Id: strip.c,v 1.4 1993/08/07 04:44:27 mycroft Exp $";
+static char rcsid[] = "$Id: strip.c,v 1.5 1993/08/27 02:33:36 brezak Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,6 +63,8 @@ void s_stab __P((const char *, int, EXEC *));
 void s_sym __P((const char *, int, EXEC *));
 void usage __P((void));
 
+int xflag = 0;
+        
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -74,8 +76,11 @@ main(argc, argv)
 	char *fn;
 
 	sfcn = s_sym;
-	while ((ch = getopt(argc, argv, "d")) != EOF)
+	while ((ch = getopt(argc, argv, "dx")) != EOF)
 		switch(ch) {
+                case 'x':
+                        xflag = 1;
+                        /*FALLTHROUGH*/
 		case 'd':
 			sfcn = s_stab;
 			break;
@@ -181,6 +186,13 @@ s_stab(fn, fd, ep)
 			*nsym = *sym;
 			nsym->strx = nstr - nstrbase;
 			p = strbase + sym->strx;
+                        if (xflag && 
+                            (!(sym->n_type & N_EXT) ||
+                             strcmp(p, "gcc_compiled.") == 0 ||
+                             strcmp(p, "gcc2_compiled.") == 0 ||
+                             strcmp(p, "___gnu_compiled_c") == 0)) {
+                                continue;
+                        }
 			len = strlen(p) + 1;
 			bcopy(p, nstr, len);
 			nstr += len;
