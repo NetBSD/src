@@ -10,7 +10,7 @@ SRCS=	addbytes.c addch.c addnstr.c box.c clear.c clrtobot.c clrtoeol.c \
 	overwrite.c printw.c putchar.c refresh.c scanw.c scroll.c setterm.c \
 	standout.c toucholap.c touchwin.c tscroll.c tstp.c tty.c unctrl.c
 MAN=	curses.3
-INCS=curses.h
+INCS=curses.h unctrl.h
 INCSDIR=/usr/include
 
 .if make(install)
