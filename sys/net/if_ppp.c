@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.14 1994/06/29 06:36:16 cgd Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.15 1994/07/03 06:44:03 deraadt Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -423,6 +423,7 @@ pppwrite(tp, uio, flag)
 	    m_freem(m0);
 	    return (ENOBUFS);
 	}
+	m->m_len = 0;
 	if (uio->uio_resid >= MCLBYTES / 2)
 	    MCLGET(m, M_DONTWAIT);
 	len = M_TRAILINGSPACE(m);
