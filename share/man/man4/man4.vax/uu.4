@@ -1,4 +1,4 @@
-.\"	$NetBSD: uu.4,v 1.7 2001/04/11 19:23:02 wiz Exp $
+.\"	$NetBSD: uu.4,v 1.8 2001/08/18 14:37:49 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,6 +45,10 @@ cassette interface
 .Cd "options UUDMA"
 .Cd "uu0 at uba0 csr 0176500 vector uurintr uuxintr"
 .Sh DESCRIPTION
+NOTE: This driver has not been ported from
+.Bx 4.4
+yet.
+.Pp
 The
 .Nm uu
 device provides access to dual
