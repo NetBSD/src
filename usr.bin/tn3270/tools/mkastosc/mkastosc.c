@@ -1,4 +1,4 @@
-/*	$NetBSD: mkastosc.c,v 1.9 2002/06/13 23:41:21 wiz Exp $	*/
+/*	$NetBSD: mkastosc.c,v 1.10 2002/09/15 01:27:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,10 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
 #if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT(
 "@(#) Copyright (c) 1988 The Regents of the University of California.\n\
@@ -44,14 +47,9 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)mkastosc.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBS$");
+__RCSID("$NetBSD: mkastosc.c,v 1.10 2002/09/15 01:27:46 thorpej Exp $");
 #endif
 #endif /* not lint */
-
-#include <stdio.h>
-#include <string.h>
-#include <err.h>
-#include <ctype.h>
 
 #include "../general/general.h"
 #include "../ctlr/function.h"
@@ -124,8 +122,8 @@ char	*argv[];
     for (Pt = tbl, asciicode = 0; Pt <= tbl+highestof(tbl); Pt++, asciicode++) {
 	if (Pt->used == 0) {
 	    if (isprint(asciicode) && (asciicode != ' ')) {
-		warnx("Unable to produce scancode sequence for"
-		    " ASCII character [%c]!", asciicode);
+		fprintf(stderr, "mkastosc: Unable to produce scancode sequence"
+		    " for ASCII character [%c]!", asciicode);
 	    }
 	    printf("\t{ 0, 0, undefined, 0 },\t");
 	} else {
