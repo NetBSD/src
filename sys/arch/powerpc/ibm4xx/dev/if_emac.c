@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.16 2003/10/15 02:10:00 simonb Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.17 2003/10/27 03:58:17 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.16 2003/10/15 02:10:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.17 2003/10/27 03:58:17 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -530,6 +530,8 @@ emac_start(struct ifnet *ifp)
 	struct emac_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx, lasttx, ofree, seg;
+
+	lasttx = 0;	/* XXX gcc */
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
