@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.254 2004/11/11 14:07:53 wiz Exp $
+.\"	$NetBSD: options.4,v 1.255 2004/12/08 18:33:32 peter Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -346,9 +346,9 @@ This option is currenty on by default and enables the pty multiplexor
 and
 .Xr ptmx 4
 to find and use ptys named
-.Dq /dev/ptyXX
+.Pa /dev/ptyXX
 (master) and
-.Dq /dev/ttyXX
+.Pa /dev/ttyXX
 (slave).
 Eventually this option will become optional as ptyfs based pseudo-ttys become
 the default, see
@@ -549,7 +549,9 @@ Device name of kgdb device.
 .It Cd options KGDB_DEVRATE
 Baud rate of kgdb device.
 .It Cd makeoptions DEBUG="-g"
-The -g flag causes
+The
+.Fl g
+flag causes
 .Pa netbsd.gdb
 to be built in addition to
 .Pa netbsd .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: we.4,v 1.14 2003/06/27 18:53:12 wiz Exp $
+.\"	$NetBSD: we.4,v 1.15 2004/12/08 18:33:32 peter Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,7 +97,7 @@ or
 .Em aui
 media type with
 .Xr ifconfig 8 Ns 's
-.Sq media
+.Cm media
 directive.  To select the other media (transceiver), select the
 .Em 10base2
 or
@@ -144,8 +144,14 @@ these boards is only about 400-600k per second.
 This problem is exasperated by NFS because the 8bit boards lack
 sufficient memory to support the default 8k byte packets that NFS and
 other protocols use as their default.  If these cards must be used
-with NFS, use the NFS -r and -w options in /etc/fstab to limit NFS's
-packet size.  4096 byte packets generally work.
+with NFS, use the NFS
+.Fl r
+and
+.Fl w
+options in
+.Pa /etc/fstab
+to limit NFS's packet size.
+4096 byte packets generally work.
 .El
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
