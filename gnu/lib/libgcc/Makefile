@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/08/17 17:06:59 tv Exp $
+#	$NetBSD: Makefile,v 1.2 1998/08/28 19:05:54 tv Exp $
 
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo 
 
@@ -18,12 +18,12 @@ LIB2OBJS=	__gcc_bcmp.o _varargs.o __dummy.o _eprintf.o _bb.o _shtab.o \
 .if (${MACHINE_ARCH} == "m68k") || (${MACHINE_ARCH} == "i386")
 LIB2OBJS+=	_fixxfdi.o _fixunsxfdi.o _floatdixf.o _fixunsxfsi.o
 .endif
-SRCS=		${LIB2OBJS}
+OBJS+=		${LIB2OBJS}
 
 # Extra code to include in libgcc2 for C++ support.
 .if (${HAVE_GCC28} != "")
-SRCS+=		tinfo.cc tinfo2.cc new.cc exception.cc frame.c \
-		${NEW1OBJS} ${NEW2OBJS}
+SRCS+=		tinfo.cc tinfo2.cc new.cc exception.cc frame.c
+OBJS+=		${NEW1OBJS} ${NEW2OBJS}
 CXXFLAGS+=	-I${DIST}/cp/inc
 LIB2OBJS+=	_eh.o
 NEW1OBJS=	_op_new.o _op_newnt.o
