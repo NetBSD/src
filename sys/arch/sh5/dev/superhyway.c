@@ -1,4 +1,4 @@
-/*	$NetBSD: superhyway.c,v 1.6 2002/10/02 15:52:37 thorpej Exp $	*/
+/*	$NetBSD: superhyway.c,v 1.7 2003/01/01 02:11:57 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,10 +103,10 @@ superhywayprint(void *arg, const char *cp)
 	int pport = (int)sa->sa_pport;
 
 	if (pport != 0 && cp)
-		printf("%s at %s", sa->sa_name, cp);
+		aprint_normal("%s at %s", sa->sa_name, cp);
 
 	if (pport > 0)
-		printf(" p-port 0x%02x", pport);
+		aprint_normal(" p-port 0x%02x", pport);
 
 	return ((pport == 0) ? QUIET : UNCONF);
 }
