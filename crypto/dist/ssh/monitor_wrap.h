@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.h,v 1.1.1.2 2002/05/13 02:28:42 itojun Exp $	*/
+/*	$NetBSD: monitor_wrap.h,v 1.2 2002/09/09 06:45:19 itojun Exp $	*/
 /*	$OpenBSD: monitor_wrap.h,v 1.5 2002/05/12 23:53:45 djm Exp $	*/
 
 /*
@@ -79,6 +79,13 @@ int mm_bsdauth_respond(void *, u_int, char **);
 /* skey */
 int mm_skey_query(void *, char **, char **, u_int *, char ***, u_int **);
 int mm_skey_respond(void *, u_int, char **);
+
+/* auth_krb5 */
+#ifdef KRB5
+/* auth and reply are really krb5_data objects, but we don't want to
+ * include all of the krb5 headers here */
+int mm_auth_krb5(void *authctxt, void *auth, char **client, void *reply);
+#endif
 
 /* zlib allocation hooks */
 
