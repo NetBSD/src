@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.6 2002/02/13 08:18:38 ross Exp $
+.\"	$NetBSD: callout.9,v 1.7 2002/10/14 13:43:16 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,8 @@ The
 facility provides a mechanism to execute a function at a given time.
 The timer is based on the hardclock timer which ticks
 .Dv hz
-times per second.  The function is called at softclock interrupt level.
+times per second.
+The function is called at softclock interrupt level.
 .Pp
 Clients of the
 .Nm callout
@@ -85,7 +86,8 @@ The
 .Fn callout_init
 function initializes the callout handle
 .Fa c
-for use.  If it is inconvenient to call
+for use.
+If it is inconvenient to call
 .Fn callout_init ,
 statically-allocated callout handles may be initialized by assigning
 the value
@@ -110,7 +112,8 @@ and
 .Em PENDING .
 Once the timer expires,
 .Em PENDING
-status is cleared.  Expiration of the timer does not affect
+status is cleared.
+Expiration of the timer does not affect
 .Em ACTIVE
 status.
 .Pp
@@ -122,7 +125,8 @@ The
 .Em ACTIVE
 and
 .Em PENDING
-status for the callout handle is cleared.  It is safe to call
+status for the callout handle is cleared.
+It is safe to call
 .Fn callout_stop
 on a callout handle that is not active, so long as it is initialized.
 .Pp
@@ -137,10 +141,11 @@ An
 callout is one that has been started but not explicitly stopped.
 Testing
 .Em ACTIVE
-status is a way to determine if a callout has been started.  Once the
-callout fires, the executed function may clear
+status is a way to determine if a callout has been started.
+Once the callout fires, the executed function may clear
 .Em ACTIVE
-status.  See
+status.
+See
 .Fn callout_deactivate
 below.
 .Pp
@@ -153,10 +158,11 @@ status of the callout handle
 A
 .Em PENDING
 callout is one that has been started and whose function has not yet
-been called.  Note that it is possible for a callout's timer to have
-expired without its function being called if interrupt level has not
-dropped low enough to let softclock interrupts through.  Note that it
-is only safe to test
+been called.
+Note that it is possible for a callout's timer to have expired without
+its function being called if interrupt level has not dropped low enough
+to let softclock interrupts through.
+Note that it is only safe to test
 .Em PENDING
 status when at softclock interrupt level or higher.
 .Pp
@@ -176,7 +182,7 @@ status of the callout handle
 .Fa c .
 Note that is only safe to call
 .Fn callout_deactivate
-if the callout function has already been executed, i.e. the callout
+if the callout function has already been executed, i.e., the callout
 is no longer
 .Em PENDING .
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"     $NetBSD: ipkdb.9,v 1.4 2002/06/02 11:21:53 wiz Exp $
+.\"     $NetBSD: ipkdb.9,v 1.5 2002/10/14 13:43:24 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,10 +79,10 @@ argument to 0.
 .Fn ipkdbcmds
 is invoked by machine-dependent code when the trap mechanism
 determines that the debugger should be entered, i.e., on a single step
-or breakpoint interrupt from kernel code.  The trapping mechanism
-should already have stored the registers into the global area
-ipkdbregs.  The layout of this area must be the same as that expected
-by
+or breakpoint interrupt from kernel code.
+The trapping mechanism should already have stored the registers into
+the global area ipkdbregs.
+The layout of this area must be the same as that expected by
 .Xr gdb 1 .
 Valid return values are:
 .Pp
@@ -102,8 +102,8 @@ the machine-independent code.
 This routine gets called when the debugger should be entered for the
 first time.
 .It Fn ipkdb_trap ""
-This routine is part of the trap handler.  Whenever a trap happens
-(e.g., when hitting a breakpoint during debugging),
+This routine is part of the trap handler.
+Whenever a trap happens (e.g., when hitting a breakpoint during debugging),
 .Fn ipkdb_trap
 decides if the Debugger needs to be called.
 If there are other ways to decide that, it's not necessary to provide an
@@ -111,10 +111,11 @@ If there are other ways to decide that, it's not necessary to provide an
 implementation.
 .It Fn ipkdb_poll ""
 This routine gets called after a panic to check for a key press by the
-user.  If implemented it allows the user to press any key on the
-console to do the automatic reboot after a panic.  Otherwise the
-debugging interface will wait forever for some remote debugger to
-attach in case of a panic.
+user.
+If implemented it allows the user to press any key on the
+console to do the automatic reboot after a panic.
+Otherwise the debugging interface will wait forever for some remote
+debugger to attach in case of a panic.
 .It Fn ipkdbif_init "kip"
 In order to be able to find the debugging interface, the network
 driver must invoke
@@ -126,7 +127,8 @@ specifying a
 plus some additional parameters that allow it to access the devices
 registers, hopefully using
 .Xr bus_space 9
-methods.  In the
+methods.
+In the
 .Fa ipkdb_if
 structure, the attach routine must initialize the following fields:
 .Pp
@@ -173,9 +175,9 @@ This routine should set the byte pointed to by
 .Fa c
 to the value given as
 .Fa i .
-The routine must not enter any trap handling code.  Furthermore it should
-reset the modification bit in the relevant page table entry to the value
-before the store.
+The routine must not enter any trap handling code.
+Furthermore it should reset the modification bit in the relevant page
+table entry to the value before the store.
 .El
 .Sh SEE ALSO
 .Xr ipkdb 4

@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.25 2002/06/27 17:31:25 yamt Exp $
+.\"	$NetBSD: malloc.9,v 1.26 2002/10/14 13:43:26 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -132,8 +132,8 @@ the call can still wait for resources.
 .Pp
 Rather than depending on
 .Dv M_CANFAIL ,
-kernel code should do proper bound checking itself.  This
-flag should only be used in cases where this is not feasible.
+kernel code should do proper bound checking itself.
+This flag should only be used in cases where this is not feasible.
 Since it can hide real kernel bugs, it's usage is
 .Em strongly discouraged .
 .El

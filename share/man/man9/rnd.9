@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.12 2002/08/19 17:41:46 wiz Exp $
+.\"	$NetBSD: rnd.9,v 1.13 2002/10/14 13:43:31 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,8 @@ Ideally the first argument
 .Fa rnd_source
 of these functions gets included in the devices' entity struct,
 but any means to permanently (static) attach one such argument
-to one incarnation of the device is ok.  Do not share
+to one incarnation of the device is ok.
+Do not share
 .Fa rnd_source
 structures between two devices.
 .Pp
@@ -76,9 +77,9 @@ It must be called before the source struct pointed to by
 is used in any of the following functions.
 .Pp
 .Fa devname
-is the name of the device.  It is used to print a message (if the kernel is
-compiled with ``options RND_VERBOSE'') and also for status information printed
-with
+is the name of the device.
+It is used to print a message (if the kernel is compiled with
+``options RND_VERBOSE'') and also for status information printed with
 .Xr rndctl 8 .
 .Pp
 .Fa source_type
@@ -92,7 +93,8 @@ for a tape drive, and
 .Dv RND_TYPE_TTY
 for a tty.
 .Dv RND_TYPE_UNKNOWN
-is not to be used as a type.  It is used internally to the rnd system.
+is not to be used as a type.
+It is used internally to the rnd system.
 .Pp
 .Fa flags
 are the logical OR of
@@ -100,8 +102,8 @@ are the logical OR of
 (don't collect or estimate)
 .Dv RND_FLAG_NO_ESTIMATE
 (don't estimate)
-to control the default setting for collection and estimation.  Note that
-devices of type
+to control the default setting for collection and estimation.
+Note that devices of type
 .Dv RND_TYPE_NET
 default to
 .Dv RND_FLAG_NO_ESTIMATE .
@@ -111,25 +113,27 @@ This function disconnects the device from entropy collection.
 .It Fn rnd_add_uint32 "rndsource_element_t *rnd_source" "u_int32_t datum"
 This function adds the value of
 .Va datum
-to the entropy pool.  No entropy is assumed to be collected from this value,
-it merely helps stir the entropy pool.  All entropy is gathered from
-jitter between the timing of events.
+to the entropy pool.
+No entropy is assumed to be collected from this value, it merely helps
+stir the entropy pool.
+All entropy is gathered from jitter between the timing of events.
 .Pp
 Note that using a constant for
 .Va datum
 does not weaken security, but it does
-not help.  Try to use something that can change, such as an interrupt status
-register which might have a bit set for receive ready or transmit ready,
-or other device status information.
+not help.
+Try to use something that can change, such as an interrupt status register
+which might have a bit set for receive ready or transmit ready, or other
+device status information.
 .Pp
 To allow the system to gather the timing information accurately, this call
-should be placed within the actual hardware interrupt service routine.  Care
-must be taken to ensure that the interrupt was actually serviced by the
-interrupt handler, since on some systems interrupts can be shared.
+should be placed within the actual hardware interrupt service routine.
+Care must be taken to ensure that the interrupt was actually serviced by
+the interrupt handler, since on some systems interrupts can be shared.
 .Pp
 This function loses nearly all usefulness if it is called from a scheduled
-software interrupt.  If that is the only way to add the device as an entropy
-source, don't.
+software interrupt.
+If that is the only way to add the device as an entropy source, don't.
 .Pp
 If it is desired to mix in the
 .Va datum

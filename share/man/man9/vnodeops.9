@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.13 2002/10/14 05:05:02 gmcgarry Exp $
+.\"     $NetBSD: vnodeops.9,v 1.14 2002/10/14 13:43:36 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -233,19 +233,20 @@
 Not all header files are required for each function.
 .Sh DESCRIPTION
 The vnode operations vector describes what operations can be done to
-the file associated with the vnode.  The system maintains one vnode
-operations vector for each file system type configured into the
-kernel.  The vnode operations vector contains a pointer to a function
-for each operation supported by the file system.  Many of the
-functions described in the vnode operations vector are closely related
-to their corresponding system calls.  In most cases, they are called
-as a result of the system call associated with the operation being
-invoked.
+the file associated with the vnode.
+The system maintains one vnode operations vector for each file system
+type configured into the kernel.
+The vnode operations vector contains a pointer to a function for each
+operation supported by the file system.
+Many of the functions described in the vnode operations vector are
+closely related to their corresponding system calls.
+In most cases, they are called as a result of the system call
+associated with the operation being invoked.
 .Pp
 Functions in the vnode operations vector are invoked using specialised
-macros.  The following table lists the elements of the vnode
-operations vector, the corresponding invocation macro, and a
-description of the element.
+macros.
+The following table lists the elements of the vnode operations vector,
+the corresponding invocation macro, and a description of the element.
 .Pp
 .nf
 .ta \w'int (*vop_reallocblks)()'u+2n +\w'VOP_REALLOCBLKS'u+2n +\w'Map file into user address space'u
@@ -307,13 +308,15 @@ quite what is described here.
 .Pp
 If the file system type does not support a specific operation, it must
 nevertheless assign an appropriate function in the vnode operations
-vector to do the minimum required of it.  In most cases, such
-functions either do nothing or return an error value to the effect
-that it is not supported.
+vector to do the minimum required of it.
+In most cases, such functions either do nothing or return an error
+value to the effect that it is not supported.
 .Pp
 Many of the functions in the vnode operations vector take a
-componentname structure.  Is is used to encapsulate many parameters
-into a singla function argument.  It has the following structure:
+componentname structure.
+Is is used to encapsulate many parameters into a singla function
+argument.
+It has the following structure:
 .Bd -literal
 struct componentname {
         /*
@@ -337,8 +340,9 @@ struct componentname {
 The top half of the structure is used exclusively for the pathname
 lookups using
 .Fn VOP_LOOKUP
-and is initialised by the caller.  The semantics of the lookup are
-affected by the lookup operation specified in
+and is initialised by the caller.
+The semantics of the lookup are affected by the lookup operation
+specified in
 .Em cn_nameiop
 and the flags specified in
 .Em cn_flags .
@@ -379,10 +383,11 @@ do not follow symbolic links (pseudo)
 mask of operational modifiers
 .El
 .Pp
-No vnode operations may be called from interrupt context.  Most
-operations also require the vnode to be locked on entry.  To prevent
-deadlocks, when acquiring locks on multiple vnodes, the lock of parent
-directory must be acquired before the lock on the child directory.
+No vnode operations may be called from interrupt context.
+Most operations also require the vnode to be locked on entry.
+To prevent deadlocks, when acquiring locks on multiple vnodes, the
+lock of parent directory must be acquired before the lock on the child
+directory.
 .Pp
 Vnode operations for a file system type generally should not be
 called directly from the kernel, but accessed indirectly through the
@@ -391,13 +396,14 @@ high-level convenience functions discussed in
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn VOP_LOOKUP "dvp" "vpp" "cnp"
-Lookup a single pathname component in a given directory.  The argument
+Lookup a single pathname component in a given directory.
+The argument
 .Fa dvp
 is the locked vnode of the directory to search and
 .Fa cnp
-is the pathname component to be searched for.  If the pathname
-component is found, the address of the resulting locked vnode is
-returned in
+is the pathname component to be searched for.
+If the pathname component is found, the address of the resulting
+locked vnode is returned in
 .Fa vpp .
 The operation specified in
 .Em cnp-\*[Gt]cn_nameiop
@@ -407,8 +413,8 @@ hints about the reason for requesting the lookup and uses it to cache
 file system type specific information in the vnode for subsequent
 operations.
 .Pp
-There are three types of lookups: ".", ".." (ISDOTDOT), and other.  If
-the pathname component being searched for is ".", then
+There are three types of lookups: ".", ".." (ISDOTDOT), and other.
+If the pathname component being searched for is ".", then
 .Fa dvp
 has an extra reference added to it and it is returned in
 .Fa *vpp .
@@ -420,15 +426,18 @@ is relocked if and only if LOCKPARENT and ISLASTCN is set in
 .Em cnp-\*[Gt]cn_flags .
 If LOCKPARENT or ISLATCN is not set,
 .Fa dvp
-is returned unlocked on a successful lookup.  This process preserves
-the protocol of always locking nodes from root downward and prevents
-deadlock.  For other pathname components,
+is returned unlocked on a successful lookup.
+This process preserves the protocol of always locking nodes from root
+downward and prevents deadlock.
+For other pathname components,
 .Fn VOP_LOOKUP
 checks the accessibility of the directory and searches the name cache
-for the pathname component.  See
+for the pathname component.
+See
 .Xr namecache 9 .
 If the pathname is not found in the name cache, the directory is
-searched for the pathname.  The resulting locked vnode is returned in
+searched for the pathname.
+The resulting locked vnode is returned in
 .Fa vpp .
 If LOCKPARENT or ISLATCN is not set,
 .Fa dvp
@@ -438,103 +447,118 @@ On failure
 .Fa *vpp
 is NULL, and
 .Fa *dvp
-is left locked.  If there was an error relocking
+is left locked.
+If there was an error relocking
 .Fa dvp
 (for instance in the ISDOTDOT case) the error is returned with
 PDIRUNLOCK set in
 .Em cnp-\*[Gt]cn_flags .
 This flag signals to the caller that
 .Fa dvp ' s
-lock state has changed.  If the operation is successful
+lock state has changed.
+If the operation is successful
 .Fa *vpp
-is locked and zero is returned.  Typically, if
+is locked and zero is returned.
+Typically, if
 .Fa *vpp
 and
 .Fa dvp
 are the same vnode the caller will need to release twice (decrement
 the reference count) and unlock once.
 .It Fn VOP_CREATE "dvp" "vpp" "cnp" "vap"
-Create a new file in a given directory.  The argument
+Create a new file in a given directory.
+The argument
 .Fa dvp
 is the locked vnode of the directory to create the new file in and
 .Fa cnp
-is the pathname component of the new file.  The argument
+is the pathname component of the new file.
+The argument
 .Fa vap
-specifies the attributes that the new file should be created with.  If
-the file is successfully created, the address of the resulting locked
-vnode is returned in
+specifies the attributes that the new file should be created with.
+If the file is successfully created, the address of the resulting
+locked vnode is returned in
 .Fa vpp
 and zero is returned.
 .Pp
 This function is called after
 .Fn VOP_LOOKUP
-when a file is being created.  Normally,
+when a file is being created.
+Normally,
 .Fn VOP_LOOKUP
 will have set the SAVENAME flag in
 .Em cnp-\*[Gt]cn_flags
 to keep the memory pointed to by
 .Em cnp-\*[Gt]cn_pnbuf
-valid.  If an error is detected when creating the file, this memory is
-released.  If the file is created successfully it will be released
-unless the SAVESTART flags in specified in
+valid.
+If an error is detected when creating the file, this memory is
+released.
+If the file is created successfully it will be released unless the
+SAVESTART flags in specified in
 .Em cnp-\*[Gt]cn_flags .
 .It Fn VOP_MKNOD "dvp" "vpp" "cnp" "vap"
-Make a new device-special file in a given directory.  The argument
+Make a new device-special file in a given directory.
+The argument
 .Fa dvp
 is the locked vnode of the directory to create the new device-special
 file in and
 .Fa cnp
-is the pathname component of the new device-special file.  The
-argument
+is the pathname component of the new device-special file.
+The argument
 .Fa vap
 specifies the attributes that the new device-special file should be
-created with.  If the file is successfully created, the address of the
-resulting locked vnode is returned in
+created with.
+If the file is successfully created, the address of the resulting
+locked vnode is returned in
 .Fa vpp
 and zero is returned.
 .Pp
 This function is called after
 .Fn VOP_LOOKUP
-when a device-special file is being created.  Normally,
+when a device-special file is being created.
+Normally,
 .Fn VOP_LOOKUP
 will have set the SAVENAME flag in
 .Em cnp-\*[Gt]cn_flags
 to keep the memory pointed to by
 .Em cnp-\*[Gt]cn_pnbuf
-valid.  If an error is detected when creating the device-special file,
-this memory is released.  If the device-special file is created
-successfully it will be released unless the SAVESTART flags in
-specified in
+valid.
+If an error is detected when creating the device-special file,
+this memory is released.
+If the device-special file is created successfully it will be released
+unless the SAVESTART flags in specified in
 .Em cnp-\*[Gt]cn_flags .
 .It Fn VOP_OPEN "vp" "mode" "cred" "p"
-Open a file.  The argument
+Open a file.
+The argument
 .Fa vp
 is the vnode of the file to open and
 .Fa mode
-specifies the access mode required by the calling process.  The
-calling process and its credentials are specified by
+specifies the access mode required by the calling process.
+The calling process and its credentials are specified by
 .Fa p
 and
 .Fa cred
-respectively.  The access mode is a set of flags, including FREAD,
-FWRITE, O_NONBLOCK, O_APPEND, etc.
+respectively.
+The access mode is a set of flags, including FREAD, FWRITE,
+O_NONBLOCK, O_APPEND, etc.
 .Fn VOP_OPEN
-must be called before a file can be accessed by a thread.  The vnode
-reference count is incremented.
+must be called before a file can be accessed by a thread.
+The vnode reference count is incremented.
 .Pp
 .Fn VOP_OPEN
 expects the vnode
 .Fa vp
-to be locked on entry and will leave it locked on return.  If the
-operation is successful zero is returned, otherwise an appropriate
-error code is returned.
+to be locked on entry and will leave it locked on return.
+If the operation is successful zero is returned, otherwise an
+appropriate error code is returned.
 .It Fn VOP_CLOSE "vp" "fflag" "cred" "p"
-Close a file.  The argument
+Close a file.
+The argument
 .Fa vp
 is the vnode of the file to close and
 .Fa fflags
-specifies the access mode by the calling process.  The calling process
-and its credentials are specified by
+specifies the access mode by the calling process.
+The calling process and its credentials are specified by
 .Fa p
 and
 .Fa cred
@@ -544,11 +568,12 @@ must be called after a file is finished with.
 .Pp
 .Fn VOP_CLOSE
 expects at least a reference to be associated with the vnode and does
-not care whether the vnode is locked.  The lock and reference state is
-left unchanged on return.
+not care whether the vnode is locked.
+The lock and reference state is left unchanged on return.
 .It Fn VOP_ACCESS "vp" "mode" "cred" "p"
 Determine the accessibility (permissions) of the file against the
-specified credentials.  The argument
+specified credentials.
+The argument
 .Fa vp
 is the vnode of the file to check,
 .Fa mode
@@ -556,7 +581,8 @@ is the type of access required,
 .Fa cred
 contains the user credentials to check and
 .Fa p
-is the process which is checking the credentials.  The argument
+is the process which is checking the credentials.
+The argument
 .Fa mode
 is a mask which can contain VREAD, VWRITE or VEXEC.
 If the file is accessible in the specified way, zero is returned,
@@ -566,10 +592,11 @@ The vnode
 .Fa vp
 will be locked on entry and should remain locked on return.
 .It Fn VOP_GETATTR "vp" "vap" "cred" "p"
-Get specific vnode attributes on a file.  The argument
+Get specific vnode attributes on a file.
+The argument
 .Fa vp
-is the locked vnode of the file to get the attributes for.  The
-arguments
+is the locked vnode of the file to get the attributes for.
+The arguments
 .Fa p
 and
 .Fa cred
@@ -588,10 +615,11 @@ Attributes which are not available are set to the value VNOVAL.
 For more information on vnode attributes see
 .Xr vattr 9 .
 .It Fn VOP_SETATTR "vp" "vap" "cred" "p"
-Set specific vnode attributes on a file.  The argument
+Set specific vnode attributes on a file.
+The argument
 .Fa vp
-is the locked vnode of the file to set the attributes for.  The
-arguments
+is the locked vnode of the file to set the attributes for.
+The arguments
 .Fa p
 and
 .Fa cred
@@ -599,21 +627,23 @@ specifies the calling process and its credentials respectively.
 .Fn VOP_SETATTR
 uses the file system type specific data object
 .Em vp-\*[Gt]v_data
-to reference the underlying file attributes.  The new attributes are
-defined in
+to reference the underlying file attributes.
+The new attributes are defined in
 .Fa vap .
 Attributes associated with the file are set by setting the required
 attribute bits in
 .Em vap-\*[Gt]va_mask .
 Attributes which are not being modified by
 .Fn VOP_SETATTR
-should be set to the value VNOVAL.  If the operation is successful
-zero is returned, otherwise an appropriate error is returned.
+should be set to the value VNOVAL.
+If the operation is successful zero is returned, otherwise an
+appropriate error is returned.
 .Pp
 For more information on vnode attributes see
 .Xr vattr 9 .
 .It Fn VOP_READ "vp" "uio" "ioflag" "cred"
-Read the contents of a file.  The argument
+Read the contents of a file.
+The argument
 .Fa vp
 is the vnode of the file to read from,
 .Fa uio
@@ -625,11 +655,11 @@ are the credentials of the calling process.
 .Pp
 The
 .Fa ioflag
-argument is used to give directives and hints to the file system.  When
-attempting a read, the high 16 bits are used to provide a read-ahead
-hint (in unit of file system blocks) that the file system should
-attempt.  The low 16 bits are a bit mask which can contain the
-following flags:
+argument is used to give directives and hints to the file system.
+When attempting a read, the high 16 bits are used to provide a
+read-ahead hint (in unit of file system blocks) that the file system
+should attempt.
+The low 16 bits are a bit mask which can contain the following flags:
 .Pp
 .Bl -tag -offset indent -width IO_NODELOCKED -compact
 .It IO_UNIT
@@ -646,10 +676,11 @@ FNDELAY flag set in file table
 data already in VMIO space
 .El
 .Pp
-Zero is returned on success, otherwise an error is returned.  The vnode
-should be locked on entry and remains locked on exit.
+Zero is returned on success, otherwise an error is returned.
+The vnode should be locked on entry and remains locked on exit.
 .It Fn VOP_WRITE "vp" "uio" "ioflag" "cred"
-Write to a file.  The argument
+Write to a file.
+The argument
 .Fa vp
 is the vnode of the file to write to,
 .Fa uio
@@ -661,27 +692,31 @@ are the credentials of the calling process.
 .Pp
 The
 .Fa ioflag
-argument is used to give directives and hints to the file system.  The
-low 16 bits are a bit mask which can contain the same flags as
+argument is used to give directives and hints to the file system.
+The low 16 bits are a bit mask which can contain the same flags as
 .Fn VOP_READ .
 .Pp
-Zero is returned on success, otherwise an error is returned.  The vnode
-should be locked on entry and remains locked on exit.
+Zero is returned on success, otherwise an error is returned.
+The vnode should be locked on entry and remains locked on exit.
 .It Fn VOP_IOCTL "vp" "command" "data" "fflag" "cred" "p"
-Perform device-specific I/O.  The argument
+Perform device-specific I/O.
+The argument
 .Fa vp
-is the locked vnode of the file, normally representing a device.  The
-argument
+is the locked vnode of the file, normally representing a device.
+The argument
 .Fa command
 specifies the device-specific operation to perform and
 .Fa cnp
-provides extra data for the specified operation.  The argument
+provides extra data for the specified operation.
+The argument
 .Fa fflags
-is a set of flags.  The argument
+is a set of flags.
+The argument
 .Fa cred
 is the caller's credentials and
 .Fa p
-the calling process.  If the operation is successful, zero is
+the calling process.
+If the operation is successful, zero is
 returned, otherwise an appropriate error code is returned.
 .Pp
 Most file systems do not supply a function for
@@ -690,30 +725,36 @@ This function implments the
 .Xr ioctl 2
 system call.
 .It Fn VOP_FCNTL "vp" "command" "data" "fflag" "cred" "p"
-Perform file control.  The argument
+Perform file control.
+The argument
 .Fa vp
-is the locked vnode of the file.  The
-argument
+is the locked vnode of the file.
+The argument
 .Fa command
 specifies the operation to perform and
 .Fa cnp
-provides extra data for the specified operation.  The argument
+provides extra data for the specified operation.
+The argument
 .Fa fflags
-is a set of flags.  The argument
+is a set of flags.
+The argument
 .Fa cred
 is the caller's credentials and
 .Fa p
-the calling process.  If the operation is successful, zero is
-returned, otherwise an appropriate error code is returned.
+the calling process.
+If the operation is successful, zero is returned, otherwise an
+appropriate error code is returned.
 .It Fn VOP_POLL "vp" "events" "p"
-Test if a poll event has occurred.  The argument
+Test if a poll event has occurred.
+The argument
 .Fa vp
 is the locked vnode of the file to poll and
 .Fa p
-is the callling process. It returns any events of interest as
-specified by
+is the callling process.
+It returns any events of interest as specified by
 .Fa events
-that may have occurred for the file.  The argument
+that may have occurred for the file.
+The argument
 .Fa events
 is a set of flags as specified by
 .Xr poll 2 .
@@ -724,25 +765,29 @@ Eliminate all activity associated with the vnode
 .Fa vp .
 The argument
 .Fa flags
-is a set of flags.  If REVOKEALL is set in
+is a set of flags.
+If REVOKEALL is set in
 .Fa flags
 all vnodes aliased to the vnode
 .Fa vp
-are also eliminated.  If the operation is successful zero is returned,
-otherwise an appropriate error is returned.
+are also eliminated.
+If the operation is successful zero is returned, otherwise an
+appropriate error is returned.
 .It Fn VOP_MMAP "vp" "fflags" "cred" "p"
-Map file into user address space.  The argument
+Map file into user address space.
+The argument
 .Fa vp
-is the locked vnode of the file to map into an address space.  The
-argument
+is the locked vnode of the file to map into an address space.
+The argument
 .Fa fflags
-is a set of flags.  The argument
+is a set of flags.
+The argument
 .Fa cred
 is the caller's credentials and
 .Fa p
-the calling process requesting the map.  If the operation is
-successful, zero is returned, otherwise an appropriate error code is
-returned.
+the calling process requesting the map.
+If the operation is successful, zero is returned, otherwise an
+appropriate error code is returned.
 .Pp
 Most file systems do not supply a function for
 .Fn VOP_MMAP .
@@ -750,24 +795,28 @@ This function implements the
 .Xr mmap 2
 system call.
 .It Fn VOP_FSYNC "vp" "cred" "flags" "offlo" "offhi" "p"
-Flush pending data buffers for a file to disk.  The argument
+Flush pending data buffers for a file to disk.
+The argument
 .Fa vp
-is the locked vnode of the file for flush.  The argument
+is the locked vnode of the file for flush.
+The argument
 .Fa cred
 is the caller's credentials and
 .Fa p
-the calling process.  The argument
+the calling process.
+The argument
 .Fa flags
-is a set of flags. If FSYNC_WAIT is specified in
+is a set of flags.
+If FSYNC_WAIT is specified in
 .Fa flags ,
 the function should wait for I/O to complete before returning.
 The argument
 .Fa offlo
 and
 .Fa offhi
-specify the range of file to flush. If the
-operation is successful zero is returned, otherwise an appropriate
-error code is returned.
+specify the range of file to flush.
+If the operation is successful zero is returned, otherwise an
+appropriate error code is returned.
 .Pp
 This function implements the
 .Xr sync 2
@@ -779,156 +828,189 @@ Test if the file is seekable for the specified offset
 .Fa newoff .
 The argument
 .Fa vp
-is the locked vnode of the file to test.  For most filesystems this
-function simply tests if
+is the locked vnode of the file to test.
+For most filesystems this function simply tests if
 .Fa newoff
-is valid.  If the specified
+is valid.
+If the specified
 .Fa newoff
 is less than zero, the function returns error code EINVAL.
 .It Fn VOP_REMOVE "dvp" "vp" "cnp"
-Remove a file.  The argument
+Remove a file.
+The argument
 .Fa dvp
 is the locked vnode of the directory to remove the file from and
 .Fa vp
-is the locked vnode of the file to remove.  The argument
+is the locked vnode of the file to remove.
+The argument
 .Fa cnp
-is the pathname component about the file to remove.  If the operation
-is successful zero is returned, otherwise an appropriate error code is
-returned.  Both
+is the pathname component about the file to remove.
+If the operation is successful zero is returned, otherwise an
+appropriate error code is returned.
+Both
 .Fa dvp
 and
 .Fa vp
 should be locked on entry and remain locked on return.
 .It Fn VOP_LINK "dvp" "vp" "cnp"
-Link to a file.  The argument
+Link to a file.
+The argument
 .Fa dvp
 is the locked node of the directory to create the new link and
 .Fa vp
-is the vnode of the file to be linked.  The argument
+is the vnode of the file to be linked.
+The argument
 .Fa cnp
-is the pathname component of the the new link.  If the operation is
-successful zero is returned, otherwise an error code is returned.  The
-directory vnode
+is the pathname component of the the new link.
+If the operation is successful zero is returned, otherwise an error
+code is returned.
+The directory vnode
 .Fa dvp
-should be locked on entry and will remain locked on return.  The vnode
+should be locked on entry and will remain locked on return.
+The vnode
 .Fa vp
 should not be locked on entry and will remain unlocked on return.
 .It Fn VOP_RENAME "fdvp" "fvp" "fcnp" "tdvp" "tvp" "tcnp"
-Rename a file.  The argument
+Rename a file.
+The argument
 .Fa fdvp
 is the vnode of the old parent directory containing in the file to be
 renamed and
 .Fa fvp
-is the vnode of the file to be renamed.  The argument
+is the vnode of the file to be renamed.
+The argument
 .Fa fcnp
-is the pathname component about the file to be remained.  The argument
+is the pathname component about the file to be remained.
+The argument
 .Fa tdvp
 is the vnode of the new directory of the target file and
 .Fa tvp
-is the vnode of the target file (if it exists).  The argument
+is the vnode of the target file (if it exists).
+The argument
 .Fa tcnp
-is the pathname component about the file's new name.  If the operation
-is successful zero is returned, otherwise and error code is returned.
+is the pathname component about the file's new name.
+If the operation is successful zero is returned, otherwise and error
+code is returned.
 .Pp
 The source directory and file vnodes should be unlocked and their
-reference counts should be incremented before entry.  The target
-directory and file vnodes should both be locked on entry.
+reference counts should be incremented before entry.
+The target directory and file vnodes should both be locked on entry.
 .Fn VOP_RENAME
 updates the reference counts prior to returning.
 .It Fn VOP_MKDIR "dvp" "vpp" "cnp" "vap"
-Make a new directory in a given directory.  The argument
+Make a new directory in a given directory.
+The argument
 .Fa dvp
 is the locked vnode of the directory to create the new directory in and
 .Fa cnp
-is the pathname component of the new directory.  The argument
+is the pathname component of the new directory.
+The argument
 .Fa vap
-specifies the attributes that the new directory should be created with.  If
-the file is successfully created, the address of the resulting locked
-vnode is returned in
-.Fa vpp
-and zero is returned.
-.Pp
-This function is called after
-.Fn VOP_LOOKUP
-when a directory is being created.  Normally,
-.Fn VOP_LOOKUP
-will have set the SAVENAME flag in
-.Em cnp-\*[Gt]cn_flags
-to keep the memory pointed to by
-.Em cnp-\*[Gt]cn_pnbuf
-valid.  If an error is detected when creating the directory, this
-memory is released.  If the directory is created successfully it will
-be released unless the SAVESTART flags in specified in
-.Em cnp-\*[Gt]cn_flags .
-.It Fn VOP_RMDIR "dvp" "vp" "cnp"
-Remove a directory in a given directory.  The argument
-.Fa dvp
-is the locked vnode of the directory to remove the directory from and
-.Fa vp
-is the locked vnode of the directory to remove.  The argument
-.Fa cnp
-is the pathname component of the directory.  Zero is returned on
-success, otherwise an error code is returned.  Both
-.Fa dvp
-and
-.Fa vp
-should be locked on entry and remain locked on return.
-.It Fn VOP_SYMLINK "dvp" "vpp" "cnp" "vap" "target"
-Create a symbolic link in a given directory.  The argument
-.Fa dvp
-is the locked vnode of the directory to create the symbolic link in
-and
-.Fa cnp
-is the pathname component of the symbolic link.  The argument
-.Fa vap
-specifies the attributes that the symbolic link should be created
-with and
-.Fa target
-specifies the pathname of the target of the symbolic link.  If the
-symbolic link is successfully created, the address of the resulting
+specifies the attributes that the new directory should be created
+with.
+If the file is successfully created, the address of the resulting
 locked vnode is returned in
 .Fa vpp
 and zero is returned.
 .Pp
 This function is called after
 .Fn VOP_LOOKUP
-when a symbolic link is being created.  Normally,
+when a directory is being created.
+Normally,
 .Fn VOP_LOOKUP
 will have set the SAVENAME flag in
 .Em cnp-\*[Gt]cn_flags
 to keep the memory pointed to by
 .Em cnp-\*[Gt]cn_pnbuf
-valid.  If an error is detected when creating the symbolic link, this
-memory is released.  If the symbolic link is created successfully it
-will be released unless the SAVESTART flags in specified in
+valid.
+If an error is detected when creating the directory, this memory is
+released.
+If the directory is created successfully it will be released unless
+the SAVESTART flags in specified in
+.Em cnp-\*[Gt]cn_flags .
+.It Fn VOP_RMDIR "dvp" "vp" "cnp"
+Remove a directory in a given directory.
+The argument
+.Fa dvp
+is the locked vnode of the directory to remove the directory from and
+.Fa vp
+is the locked vnode of the directory to remove.
+The argument
+.Fa cnp
+is the pathname component of the directory.
+Zero is returned on success, otherwise an error code is returned.
+Both
+.Fa dvp
+and
+.Fa vp
+should be locked on entry and remain locked on return.
+.It Fn VOP_SYMLINK "dvp" "vpp" "cnp" "vap" "target"
+Create a symbolic link in a given directory.
+The argument
+.Fa dvp
+is the locked vnode of the directory to create the symbolic link in
+and
+.Fa cnp
+is the pathname component of the symbolic link.
+The argument
+.Fa vap
+specifies the attributes that the symbolic link should be created
+with and
+.Fa target
+specifies the pathname of the target of the symbolic link.
+If the symbolic link is successfully created, the address of the
+resulting locked vnode is returned in
+.Fa vpp
+and zero is returned.
+.Pp
+This function is called after
+.Fn VOP_LOOKUP
+when a symbolic link is being created.
+Normally,
+.Fn VOP_LOOKUP
+will have set the SAVENAME flag in
+.Em cnp-\*[Gt]cn_flags
+to keep the memory pointed to by
+.Em cnp-\*[Gt]cn_pnbuf
+valid.
+If an error is detected when creating the symbolic link, this memory
+is released.
+If the symbolic link is created successfully it will be released
+unless the SAVESTART flags in specified in
 .Em cnp-\*[Gt]cn_flags .
 .It Fn VOP_READDIR "vp" "uio" "cred" "eofflag" "cookies" "ncookies"
-Read directory entry.  The argument
+Read directory entry.
+The argument
 .Fa vp
 is the vnode of the directory to read the contents of and
 .Fa uio
-is the destination location to read the contents into.  The argument
+is the destination location to read the contents into.
+The argument
 .Fa cred
-is the caller's credientials.  The argument
+is the caller's credientials.
+The argument
 .Fa eofflag
 is the pointer to a flag which is set by
 .Fn VOP_READDIR
-to indicate and end-of-file condition.  If
+to indicate and end-of-file condition.
+If
 .Fa eofflag
-is NULL, the end-of-file condition is not returned.  The arguments
+is NULL, the end-of-file condition is not returned.
+The arguments
 .Fa cookies
 and
 .Fa ncookies
 specify the addresses for the list and number of directory seek
-cookies generated for NFS.  Both
+cookies generated for NFS.
+Both
 .Fa cookies
 and
 .Fa ncookies
 should be NULL if they aren't required to be returned by
 .Fn VOP_READDIR .
-The directory contents are read into struct dirent structures.  If the
-operation is successful zero is returned, otherwise an appropriate
-error code is returned.
+The directory contents are read into struct dirent structures.
+If the operation is successful zero is returned, otherwise an
+appropriate error code is returned.
 .Pp
 The directory should be locked on entry and will remain locked on
 return.
@@ -940,23 +1022,28 @@ is called from the NFS server, the extra arguments
 .Fa ncookies
 and
 .Fa cookies
-are used.  The value of
+are used.
+The value of
 .Fa *eofflag
 will be set to TRUE if the end of the directory is reached while
-reading.  The directory seek cookies are returned to the NFS client
-and may be used later to restart a directory read part way through the
-directory.  There should be one cookie returned per directory entry.
+reading.
+The directory seek cookies are returned to the NFS client and may be
+used later to restart a directory read part way through the directory.
+There should be one cookie returned per directory entry.
 The value of the cookie should be the offset within the directory
 where the on-disk version of the appropriate directory entry starts.
 .It Fn VOP_READLINK "vp" "uio" "cred"
-Read the contents of a symbolic link.  The argument
+Read the contents of a symbolic link.
+The argument
 .Fa vp
 is the locked vnode of the symlink and
 .Fa uio
-is the destination location to read the contents into.  The argument
+is the destination location to read the contents into.
+The argument
 .Fa cred
-is the credentials of the caller.  If the operation is successful zero
-is returned, otherwise an error code is returned.
+is the credentials of the caller.
+If the operation is successful zero is returned, otherwise an error
+code is returned.
 .Pp
 The vnode should be locked on entry and will remain locked on return.
 .It Fn VOP_ABORTOP "dvp" "cnp"
@@ -966,15 +1053,20 @@ This operation is rarely implemented in file systems.
 .It Fn VOP_INACTIVE "vp" "p"
 Release the inactive vnode.
 .Fn VOP_INACTIVE
-is called when the kernel is no longer using the vnode.  This may be
-because the reference count reaches zero or it may be that the file
-system is being forcibly unmounted while there are open files.  It can
-be used to reclaim space for open but deleted files.  The argument
+is called when the kernel is no longer using the vnode.
+This may be because the reference count reaches zero or it may be that
+the file system is being forcibly unmounted while there are open
+files.
+It can be used to reclaim space for open but deleted files.
+The argument
 .Fa vp
-is the locked vnode to be released.  The argument
+is the locked vnode to be released.
+The argument
 .Fa p
-is the calling process.  If the operation is successful zero is
-returned, otherwise an appropriate error code is returned.  The vnode
+is the calling process.
+If the operation is successful zero is returned, otherwise an
+appropriate error code is returned.
+The vnode
 .Fa vp
 must be locked on entry, and will be unlocked on return.
 .It Fn VOP_RECLAIM "vp" "p"
@@ -982,39 +1074,49 @@ Reclaim the vnode for another file system.
 .Fn VOP_RECLAIM
 is called when a vnode is being reused for a different file system.
 Any file system specific resources associated with the vnode should be
-freed. The argument
+freed.
+The argument
 .Fa vp
-is the locked vnode to be reclaimed.   The argument
+is the locked vnode to be reclaimed.
+The argument
 .Fa p
-is the calling process. If the operation is successful zero is returned,
-otherwise an appropriate error code is returned.  The vnode
+is the calling process.
+If the operation is successful zero is returned, otherwise an
+appropriate error code is returned.
+The vnode
 .Fa vp
 should not be locked on entry, and will remain unlocked on return.
 .It Fn VOP_LOCK "vp" "flags"
-Sleep until vnode lock is free.  The argument
+Sleep until vnode lock is free.
+The argument
 .Fa vp
-is the vnode of the file to be locked.  The argument
+is the vnode of the file to be locked.
+The argument
 .Fa flags
 is a set of
 .Xr lockmgr 9
-flags.  If the operation is successful zero is returned, otherwise an
+flags.
+If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .Fn VOP_LOCK
 is used to serialise access to the file system such as to present two
-writes to the same file from happening at the same time.  Kernel code
-should use
+writes to the same file from happening at the same time.
+Kernel code should use
 .Xr vn_lock 9
 to lock a vnode rather than calling
 .Fn VOP_LOCK
 directly.
 .It Fn VOP_UNLOCK "vp" "flags"
-Wake up process sleeping on lock.  The argument
+Wake up process sleeping on lock.
+The argument
 .Fa vp
-is the vnode of the file to be unlocked.  The argument
+is the vnode of the file to be unlocked.
+The argument
 .Fa flags
 is a set of
 .Xr lockmgr 9
-flags.  If the operation is successful zero is returned, otherwise an
+flags.
+If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .Fn VOP_UNLOCK
 is used to serialise access to the file system such as to present two
@@ -1022,14 +1124,16 @@ writes to the same file from happening at the same time.
 .It Fn VOP_ISLOCKED "vp"
 Test if the vnode
 .Fa vp
-is locked.  A non-zero values is returned if the vnode is not locked,
-otherwise zero is returned.
+is locked.
+A non-zero values is returned if the vnode is not locked, otherwise
+zero is returned.
 .It Fn VOP_BMAP "vp" "bn" "vpp" "bnp" "runp"
 Convert the logical block number
 .Fa bn
 of a file specified by vnode
 .Fa vp
-to its physical block number on the disk.  If
+to its physical block number on the disk.
+If
 .Fa vpp
 is not NULL, the vnode of the device vnode for the file system is
 returned in the address specified by
@@ -1040,21 +1144,25 @@ is not NULL, the maximum blocksize is returned in the address
 specified by
 .Fa runp .
 .It Fn VOP_PRINT "vp"
-Print debugging information.  The argument
+Print debugging information.
+The argument
 .Fa vp
-is the vnode to print.  If the operation is successful zero is
-returned, otherwise an appropriate error code is returned.
+is the vnode to print.
+If the operation is successful zero is returned, otherwise an
+appropriate error code is returned.
 .It Fn VOP_PATHCONF "vp" "name" "retval"
 Implement POSIX
 .Xr pathconf 2
 and
 .Xr fpathconf 2
-support.  The argument
+support.
+The argument
 .Fa vp
-is the locked vnode to get information about.  The argument
+is the locked vnode to get information about.
+The argument
 .Fa name
-specified the type of information to return.  The information
-is returned in the address specified by
+specified the type of information to return.
+The information is returned in the address specified by
 .Fa retval .
 Valid values for
 .Fa name
@@ -1085,19 +1193,24 @@ is recognised,
 is set to the specified value and zero is returned, otherwise an
 appropriate error is returned.
 .It Fn VOP_ADVLOCK "vp" "id" "op" "fl" "flags"
-Manipulate Advisory record locks on a file.  The argument
+Manipulate Advisory record locks on a file.
+The argument
 .Fa vp
-is the vnode is the file for the advisory record lock.  The argument
+is the vnode is the file for the advisory record lock.
+The argument
 .Fa id
 is the id token which is changing the lock and
 .Fa op
 is the
 .Xr fcntl 2
-operation to perform.  The argument
+operation to perform.
+The argument
 .Fa fl
-is a description of the lock.  The argument
+is a description of the lock.
+The argument
 .Fa flags
-is the set of flags.  Valid values are:
+is the set of flags.
+Valid values are:
 .Pp
 .Bl -tag -offset indent -width F_RDLCK -compact
 .It F_RDLCK
@@ -1131,7 +1244,8 @@ is non-zero, fill it in with a pointer to the remaining space in the
 directory.
 .It Fn VOP_VALLOC "pvp" "mode" "cred" "vpp"
 Allocate file system type specific data a new file in the file
-system.  The argument
+system.
+The argument
 .Fa pvp
 specifies the vnode of the directory to create the new file.
 The argument
@@ -1139,8 +1253,8 @@ The argument
 specifies file system type specific flags
 and
 .Fa cred
-are the credentials of the calling process.  The vnode of the new file
-is returned in the address specified by
+are the credentials of the calling process.
+The vnode of the new file is returned in the address specified by
 .Fa vpp .
 .It Fn VOP_BALLOC "vp" "startoffset" "size" "cred" "flags" "bpp"
 Allocate the physical blocks on a device given the vnode
@@ -1148,18 +1262,20 @@ Allocate the physical blocks on a device given the vnode
 and the offset
 logical block number
 .Fa startoffset
-in a file.  The argument
+in a file.
+The argument
 .Fa size
-specifies the size to be allocated.  The credentials of the calling
-processing are specified by
+specifies the size to be allocated.
+The credentials of the calling processing are specified by
 .Fa cred .
 If the argument
 .Fa bpp
-is not NULL, the buffer is written to the allocated blocks.  The
-argument
+is not NULL, the buffer is written to the allocated blocks.
+The argument
 .Fa flags
 is a set of flags controlling the low-level allocation when the buffer
-is written.  Valid values defined in
+is written.
+Valid values defined in
 .Pa \*[Lt]sys/buf.h\*[Gt]
 are:
 .Pp
@@ -1173,28 +1289,34 @@ do all allocations synchronously
 If the operation is successful zero is returned, otherwise an
 appropriate error is returned.
 .It Fn VOP_REALLOCBLKS "vp" "buflist"
-Rearrange block in a file to be contiguous.  The argument
+Rearrange block in a file to be contiguous.
+The argument
 .Fa vp
-is the vnode of the file to manipulate.  The argument
+is the vnode of the file to manipulate.
+The argument
 .Fa buflist
-is a list of buffers to rearrange.  If the operation is successful
-zero is returned, otherwise an appropriate error is returned.
+is a list of buffers to rearrange.
+If the operation is successful zero is returned, otherwise an
+appropriate error is returned.
 .It Fn VOP_VFREE "pvp" "ino" "mode"
-Release file resources.  This function is used by the file system to
-release cached file system specific data associated with the file when
-the vnode is recycled.
+Release file resources.
+This function is used by the file system to release cached file system
+specific data associated with the file when the vnode is recycled.
 .It Fn VOP_TRUNCATE "vp" "length" "flags" "cred" "p"
 Truncate the file specified by the vnode
 .Fa vp
 to at most
 .Fa length
-size and free the unused disk blocks.  The arguments
+size and free the unused disk blocks.
+The arguments
 .Fa p
 and
 .Fa cred
-is the calling process and its credentials respectively.  The argument
+is the calling process and its credentials respectively.
+The argument
 .Fa flags
-is a set of I/O flags.  Valid values are:
+is a set of I/O flags.
+Valid values are:
 .Pp
 .Bl -tag -offset indent -width IO_ALTSEMANTICS -compact
 .It IO_UNIT
@@ -1222,7 +1344,8 @@ The access and modification times are specified by the arguments
 .Fa access
 and
 .Fa modify
-respectively.  The change time is always taken from the current time.
+respectively.
+The change time is always taken from the current time.
 The argument
 .Fa flags
 is a set of file system type dependent flags indicating how times
@@ -1235,7 +1358,8 @@ wait for completion
 hint to file system to wait or not
 .El
 .It Fn VOP_LEASE "vp" "p" "cred" "flags"
-Validate vnode credentials and operation type.  The argument
+Validate vnode credentials and operation type.
+The argument
 .Fa vp
 is the locked vnode of the file to validate credentials
 .Fa cred .
@@ -1243,9 +1367,10 @@ The argument
 .Fa p
 specifies the calling process and
 .Fa flags
-specifies the operation flags.  If the operation is successful zero is
-returned, otherwise an appropriate error code is returned.  The vnode
-must be locked on entry and remains locked on return.
+specifies the operation flags.
+If the operation is successful zero is returned, otherwise an
+appropriate error code is returned.
+The vnode must be locked on entry and remains locked on return.
 .It Fn VOP_WHITEOUT "dvp" "cnp" "flags"
 Whiteout pathname component in directory with vnode
 .Fa dvp .
@@ -1256,42 +1381,49 @@ specifies the pathname component to whiteout.
 .Fa "vp" "offset" "m" "count" "centeridx"
 .Fa "access_type" "advice" "flags"
 .Fc
-Read VM pages from file.  The argument
+Read VM pages from file.
+The argument
 .Fa vp
-is the locked vnode to read the VM pages from.  The argument
+is the locked vnode to read the VM pages from.
+The argument
 .Fa offset
 is offset in the file to start accessing and
 .Fa m
 is an array of VM pages.
 The argument
 .Fa count
-specifies the number of pages to read.  If the operation is successful
-zero is returned, otherwise an appropriate error code is returned.
+specifies the number of pages to read.
+If the operation is successful zero is returned, otherwise an
+appropriate error code is returned.
 .Pp
 This function is primarily used by the page-fault handing mechanism.
 .It Fn VOP_PUTPAGES "vp" "offset" "len" "flags"
-Write modified (dirty) VM pages to file.  The argument
+Write modified (dirty) VM pages to file.
+The argument
 .Fa vp
 is the locked vnode to write the VM pages to and
 .Fa offset
 and
 .Fa len
-specifies the range of VM pages to write.  There seems to be some
-confusion in the code whether
+specifies the range of VM pages to write.
+There seems to be some confusion in the code whether
 .Fa offset
 and
 .Fa len
 specify the start and length of the VM pages for the start and end of
-the VM pages.  The argument
+the VM pages.
+The argument
 .Fa flags
 specifies whether the pages should be written asynchronously and also
 whether they should be marked invalid one the write back operation has
-completed.  If the operation is successful zero is returned, otherwise
-an appropriate error code is returned.
+completed.
+If the operation is successful zero is returned, otherwise an
+appropriate error code is returned.
 .Pp
 The function is primarily used by the pageout handling mechanism.
 .It Fn VOP_STRATEGY "bp"
-Read/write a file system buffer.  The argument
+Read/write a file system buffer.
+The argument
 .Fa bp
 is the buffer to be read or written.
 .Fn VOP_STRATEGY
@@ -1300,10 +1432,12 @@ will either read or write data to the file depending on the value of
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .It Fn VOP_BWRITE "bp"
-Write a file system buffer.  The argument
+Write a file system buffer.
+The argument
 .Fa bp
-specifies the buffer to be written.  If the operation is successful
-zero is returned, otherwise an appropriate error code is returned.
+specifies the buffer to be written.
+If the operation is successful zero is returned, otherwise an
+appropriate error code is returned.
 .El
 .Sh ERRORS
 .Bl -tag -width Er

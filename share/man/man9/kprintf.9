@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.12 2002/02/13 08:18:43 ross Exp $
+.\"     $NetBSD: kprintf.9,v 1.13 2002/10/14 13:43:25 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,8 +75,9 @@ The functions
 .Fn snprintf
 and
 .Fn vsnprintf
-write output to a string buffer.  These four functions work similarly
-to their user space counterparts, and are not described in detail here.
+write output to a string buffer.
+These four functions work similarly to their user space counterparts,
+and are not described in detail here.
 .Pp
 The functions
 .Fn uprintf
@@ -90,10 +91,11 @@ The
 function sends formatted strings to a process's controlling tty,
 via a handle of type tpr_t.
 This allows multiple write operations to the tty with a guarantee that the
-tty will be valid across calls.  A handle is acquired by calling
+tty will be valid across calls.
+A handle is acquired by calling
 .Fn tprintf_open
-with the target process as an argument.  This handle must be closed with
-a matching call to
+with the target process as an argument.
+This handle must be closed with a matching call to
 .Fn tprintf_close .
 .Sh RETURN VALUES
 The
@@ -114,7 +116,8 @@ The
 and
 .Fn vsprintf
 unsized string formatting functions are supported for compatibility only,
-and are not documented here.  New code should use the size-limited
+and are not documented here.
+New code should use the size-limited
 .Fn snprintf
 and
 .Fn vsnprintf
@@ -126,8 +129,8 @@ and earlier,
 .Fn printf
 supported more format strings than the user space
 .Fn printf .
-These nonstandard format strings are no longer supported.  For the
-functionality provided by the former
+These nonstandard format strings are no longer supported.
+For the functionality provided by the former
 .Li %b
 format string, see
 .Xr bitmask_snprintf 9 .
@@ -136,7 +139,8 @@ The
 .Fn uprintf
 and
 .Fn ttyprintf
-functions should be used sparingly, if at all.  Where multiple lines of
-output are required to reach a process's controlling terminal,
+functions should be used sparingly, if at all.
+Where multiple lines of output are required to reach a process's
+controlling terminal,
 .Fn tprintf
 is preferred.

@@ -1,4 +1,4 @@
-.\" $NetBSD: ratecheck.9,v 1.7 2002/02/13 08:18:50 ross Exp $
+.\" $NetBSD: ratecheck.9,v 1.8 2002/10/14 13:43:31 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,23 +56,26 @@ and
 .Fa lasttime
 is less than the value given by the
 .Fa mininterval
-argument, zero is returned.  Otherwise,
+argument, zero is returned.
+Otherwise,
 .Fa lasttime
 is set to the current time and a non-zero value is returned.
 .Pp
 The motivation for implementing
 .Fn ratecheck
 was to provide a mechanism that could be used to add rate limiting to
-diagnostic message output.  If printed too often, diagnostic messages can
-keep the system from doing useful work.  If the repeated messages can
-be caused by deliberate user action or network events, they can be
-exploited to cause denial of system service.
+diagnostic message output.
+If printed too often, diagnostic messages can keep the system from
+doing useful work.
+If the repeated messages can be caused by deliberate user action
+or network events, they can be exploited to cause denial of system service.
 .Pp
 Note that using a very short time interval (less than a second)
 for
 .Fa mininterval
-defeats the purpose of this function.  (It doesn't
-take much to flood a 9600 baud serial console with output, for instance.)
+defeats the purpose of this function.
+(It doesn't take much to flood a 9600 baud serial console with
+output, for instance.)
 .Sh EXAMPLES
 Here is a simple example of use of the
 .Fn ratecheck
@@ -88,7 +91,7 @@ struct timeval drv_lasterr2time;   /* time of last err2 message */
 long drv_err2count;                /* # of err2 errs since last msg */
 
 /*
- * the following variable will often be global or shared by all
+ * The following variable will often be global or shared by all
  * instances of a driver.  It should be initialized, so it can be
  * patched.  Allowing it to be set via an option might be nice,
  * but could lead to an insane proliferation of options.

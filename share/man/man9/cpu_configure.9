@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_configure.9,v 1.2 2002/05/25 11:08:21 wiz Exp $
+.\"     $NetBSD: cpu_configure.9,v 1.3 2002/10/14 13:43:18 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,9 +47,10 @@
 .Sh DESCRIPTION
 .Fn cpu_configure
 is called during system bootstrap to perform the machine-dependent
-portion of device autoconfiguration.  It sets the configuration
-machinery in motion by finding the root bus ("mainbus").  When this
-function returns, interrupts must be enabled.
+portion of device autoconfiguration.
+It sets the configuration machinery in motion by finding the root
+bus ("mainbus").
+When this function returns, interrupts must be enabled.
 .Pp
 .Fn cpu_configure
 performs the following tasks:

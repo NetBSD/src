@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_intr.9,v 1.9 2002/05/19 15:24:35 wiz Exp $
+.\" $NetBSD: pci_intr.9,v 1.10 2002/10/14 13:43:28 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,8 +59,8 @@
 The
 .Nm
 functions exist to allow device drivers machine-independent access to
-PCI bus interrupts.  The functions described in this page are
-typically declared in a port's
+PCI bus interrupts.
+The functions described in this page are typically declared in a port's
 .Pa Aq machine/pci_machdep.h
 header file; however, drivers should generally include
 .Pa Aq dev/pci/pcivar.h
@@ -82,8 +82,8 @@ it should pass the
 .Ft struct pci_attach_args *
 to the
 .Fn pci_intr_map
-function, which returns zero on success, and nonzero on failure.  The function
-sets the
+function, which returns zero on success, and nonzero on failure.
+The function sets the
 .Ft pci_intr_handle_t
 pointed at by its second argument to a machine-dependent value which
 identifies a particular interrupt source.
@@ -124,9 +124,9 @@ to determine how the device's interrupts are routed.
 .Ed
 .Pp
 PCI-PCI
-bridges swizzle (permute) interrupt wiring.  Depending on
-implementation details, it may be more convenient to use either
-original or the swizzled interrupt parameters.
+bridges swizzle (permute) interrupt wiring.
+Depending on implementation details, it may be more convenient to use
+either original or the swizzled interrupt parameters.
 The original device tag and interrupt pin can be found in
 .Ft pa_tag
 and

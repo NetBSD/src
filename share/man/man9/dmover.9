@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmover.9,v 1.5 2002/08/04 04:54:19 thorpej Exp $
+.\"	$NetBSD: dmover.9,v 1.6 2002/10/14 13:43:21 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -73,26 +73,29 @@ Back-end interface routines:
 .Sh DESCRIPTION
 The
 .Nm dmover
-facility provides an interface to hardware-assisted data movers.  This
-can be used to copy data from one location in memory to another, clear
+facility provides an interface to hardware-assisted data movers.
+This can be used to copy data from one location in memory to another, clear
 a region of memory, fill a region of memory with a pattern, and perform
 simple operations on multiple regions of memory, such as an XOR, without
 intervention by the CPU.
 .Pp
 The drivers for hardware-assisted data movers present themselves to
 .Nm dmover
-by registering their capabilities.  When a client wishes to use a
+by registering their capabilities.
+When a client wishes to use a
 .Nm dmover
 function, it creates a session for that function, which identifies back-ends
-capable of performing that function.  The client then enqueues requests
-on that session, which the back-ends process asynchronously.  The client
-may choose to block until the request is completed, or may have a call-back
-invoked once the request has been completed.
+capable of performing that function.
+The client then enqueues requests on that session, which the back-ends
+process asynchronously.
+The client may choose to block until the request is completed, or may
+have a call-back invoked once the request has been completed.
 .Pp
 When a client creates a session, the
 .Nm dmover
 facility identifies back-ends which are capable of handling the requested
-function.  When a request is scheduled for processing, the
+function.
+When a request is scheduled for processing, the
 .Nm dmover
 scheduler will identify the best back-end to process the request from
 the list of candidate back-ends, in an effort to provide load balancing,
@@ -100,10 +103,12 @@ while considering the relative performance of each back-end.
 .Pp
 A
 .Nm dmover
-function always has one output region.  A function may have zero or more
-input regions, or may use an immediate value as an input.  For functions
-which use input regions, the lengths of each input region and the output
-region must be the same.  All
+function always has one output region.
+A function may have zero or more input regions, or may use an immediate
+value as an input.
+For functions which use input regions, the lengths of each input region
+and the output region must be the same.
+All
 .Nm dmover
 functions with the same name will have the same number of and type inputs.
 If a back-end attempts to register a function which violates this invariant,
@@ -111,10 +116,10 @@ behavior is undefined.
 .Pp
 The
 .Nm dmover
-facility supports several types of buffer descriptors.  For functions
-which use input regions, each input buffer descriptor and the output buffer
-descriptor must be of the same type.  This restriction may be removed in
-a future revision of the interface.
+facility supports several types of buffer descriptors.
+For functions which use input regions, each input buffer descriptor and
+the output buffer descriptor must be of the same type.
+This restriction may be removed in a future revision of the interface.
 .Pp
 The
 .Nm dmover
@@ -149,15 +154,16 @@ typedef union {
 Together, these data types are used to describe buffer data structures
 which the
 .Nm dmover
-facility understands.  Additional buffer types may be added in future
-revisions of the
+facility understands.
+Additional buffer types may be added in future revisions of the
 .Nm dmover
 interface.
 .Pp
 The
 .Fa dmover_assignment
 structure contains the information about the back-end to which a
-request is currently assigned.  It contains the following public members:
+request is currently assigned.
+It contains the following public members:
 .Bl -tag -width "XXXX"
 .It struct dmover_backend *das_backend
 This is a pointer to the back-end.
@@ -183,19 +189,20 @@ structure contains the following public members:
 .It TAILQ_ENTRY(dmover_request) dreq_dmbq
 Linkage on the back-end's queue of pending requests.
 .It struct dmover_session *dreq_session
-Pointer to the session with which this request is associated.  This
-is intended for use by the back-end.
+Pointer to the session with which this request is associated.
+This is intended for use by the back-end.
 .It struct dmover_assignment *dreq_assignment
 Pointer to the
 .Fa dmover_assignment
 structure which describes the back-end to which the request is
-currently assigned.  The back-end is assigned when the request
-is scheduled with
+currently assigned.
+The back-end is assigned when the request is scheduled with
 .Fn dmover_process .
 .It void (*dreq_callback)(struct dmover_request *)
 This is a pointer to an optional call-back function provided by the
-client.  If provided, the call-back is invoked when the request is
-complete.  This field must be
+client.
+If provided, the call-back is invoked when the request is complete.
+This field must be
 .Dv NULL
 if
 .Em DMOVER_REQ_WAIT
@@ -210,13 +217,14 @@ is actively processing a request.
 The following flags are defined:
 .Bl -tag -width "DMOVER_REQ_RUNNINGXX"
 .It DMOVER_REQ_DONE
-The request has been completed.  If not using a call-back, the client
-may poll this bit to determine if a request has been processed.
+The request has been completed.
+If not using a call-back, the client may poll this bit to determine
+if a request has been processed.
 .It DMOVER_REQ_ERROR
 An error has occurred while processing the request.
 .It DMOVER_REQ_RUNNING
-The request is currently being executed by the back-end.  Once a
-command is running, it cannot be cancelled, and must run to completion.
+The request is currently being executed by the back-end.
+Once a command is running, it cannot be cancelled, and must run to completion.
 .It DMOVER_REQ_WAIT
 If set by the client,
 .Fn dmover_process
@@ -236,19 +244,21 @@ The type of the output buffer.
 .It dmover_buffer dreq_outbuf
 The output buffer.
 .It uint8_t dreq_immediate[8]
-This is the input for algorithms which use an immediate value.  Values
-smaller than 8 bytes should use the least-significant bytes first.  For
-example, a 32-bit integer would occupy bytes 0, 1, 2, and 3.
+This is the input for algorithms which use an immediate value.
+Values smaller than 8 bytes should use the least-significant bytes first.
+For example, a 32-bit integer would occupy bytes 0, 1, 2, and 3.
 .It dmover_buffer_type dreq_inbuf_type
-The type of the input buffer.  This is only used if the
+The type of the input buffer.
+This is only used if the
 .Nm dmover
 function has one or more inputs.
 .It dmover_buffer *dreq_inbuf
-A pointer to an array of input buffers.  This is only used if the
+A pointer to an array of input buffers.
+This is only used if the
 .Nm dmover
-function has one or more inputs.  The number of inputs, and thus the
-number of valid elements in the array, is specified by the algorithm
-description for the session.
+function has one or more inputs.
+The number of inputs, and thus the number of valid elements in the
+array, is specified by the algorithm description for the session.
 .El
 .Ss CLIENT INTERFACE
 The following functions are provided to the client:
@@ -267,38 +277,40 @@ A handle to the new session is returned in
 The following are valid data movement function names:
 .Bl -tag -width "fill8xx"
 .It Dq zero
-Fill a memory region with zeros.  This algorithm has an input count of 0.
+Fill a memory region with zeros.
+This algorithm has an input count of 0.
 .It Dq fill8
-Fill a memory region with an 8-bit pattern.  This algorithm has an input
-count of 0.  The pattern is provided in the
+Fill a memory region with an 8-bit pattern.
+This algorithm has an input count of 0.
+The pattern is provided in the
 .Em dreq_imm8
 member of the
 .Fa dmover_request
 structure.
 .It Dq copy
-Copy a memory region from one location to another.  This algorithm has an
-input count of 1.
+Copy a memory region from one location to another.
+This algorithm has an input count of 1.
 .It Dq xor2
-Perform an XOR operation on 2 inputs.  This algorithm has an input count
-of 2.
+Perform an XOR operation on 2 inputs.
+This algorithm has an input count of 2.
 .It Dq xor3
-Perform an XOR operation on 3 inputs.  This algorithm has an input count
-of 3.
+Perform an XOR operation on 3 inputs.
+This algorithm has an input count of 3.
 .It Dq xor4
-Perform an XOR operation on 4 inputs.  This algorithm has an input count
-of 4.
+Perform an XOR operation on 4 inputs.
+This algorithm has an input count of 4.
 .It Dq xor5
-Perform an XOR operation on 5 inputs.  This algorithm has an input count
-of 5.
+Perform an XOR operation on 5 inputs.
+This algorithm has an input count of 5.
 .It Dq xor6
-Perform an XOR operation on 6 inputs.  This algorithm has an input count
-of 6.
+Perform an XOR operation on 6 inputs.
+This algorithm has an input count of 6.
 .It Dq xor7
-Perform an XOR operation on 7 inputs.  This algorithm has an input count
-of 7.
+Perform an XOR operation on 7 inputs.
+This algorithm has an input count of 7.
 .It Dq xor8
-Perform an XOR operation on 8 inputs.  This algorithm has an input count
-of 8.
+Perform an XOR operation on 8 inputs.
+This algorithm has an input count of 8.
 .El
 .Pp
 Users of the
@@ -379,7 +391,8 @@ The
 .Fn dmover_request_free
 function frees a
 .Nm dmover
-request structure.  If the
+request structure.
+If the
 .Nm dmover
 function requires input buffers, and the input buffer descriptors
 associated with
@@ -395,8 +408,9 @@ function submits the
 .Nm dmover
 request
 .Fa req
-for processing.  The call-back specified by the request is
-invoked when processing is complete.
+for processing.
+The call-back specified by the request is invoked when processing is
+complete.
 .El
 .Pp
 The
@@ -438,7 +452,8 @@ The
 .Em dad_name
 member points to a valid
 .Nm dmover
-function name which the client may specify.  The
+function name which the client may specify.
+The
 .Em dad_data
 member points to a back-end-specific description of the algorithm.
 .Pp
@@ -446,8 +461,8 @@ A back-end presents itself to the
 .Nm dmover
 facility using the
 .Fa dmover_backend
-structure.  The back-end must initialize the following members
-of the structure:
+structure.
+The back-end must initialize the following members of the structure:
 .Bl -tag -width "XXXX"
 .It const char *dmb_name
 This is the name of the back-end.
@@ -497,8 +512,8 @@ value to indicate the error.
 When the back-end has finished processing the request, it must call
 the
 .Fn dmover_done
-function.  This function eventually invokes the client's call-back
-routine.
+function.
+This function eventually invokes the client's call-back routine.
 .Pp
 If a hardware-assisted data mover uses interrupts, the interrupt handlers
 should be registered at IPL_BIO.
@@ -522,7 +537,8 @@ function removes the back-end
 .Fa backend
 from the
 .Nm dmover
-facility.  The back-end must already be registered.
+facility.
+The back-end must already be registered.
 .It void Fn dmover_done "struct dmover_request *req"
 .Pp
 The
@@ -547,9 +563,10 @@ or in non-interrupt context.
 .Sh EXAMPLES
 The following is an example of a client using
 .Nm dmover
-to zero-fill a region of memory.  In this example, the CPU will be
-able to context switch to another thread and perform work while the
-hardware-assisted data mover clears the specified block of memory.
+to zero-fill a region of memory.
+In this example, the CPU will be able to context switch to another
+thread and perform work while the hardware-assisted data mover clears
+the specified block of memory.
 .Bd -literal
 int
 hw_bzero(void *buf, size_t len)
@@ -602,5 +619,6 @@ facility was designed and implemented by
 and contributed by Wasabi Systems, Inc.
 .Sh BUGS
 The mechanism by which a back-end should advertise its performance to
-the request scheduler is not well-defined.  Therefore, the load-balancing
-mechanism within the request scheduler is also not well-defined.
+the request scheduler is not well-defined.
+Therefore, the load-balancing mechanism within the request scheduler is
+also not well-defined.
