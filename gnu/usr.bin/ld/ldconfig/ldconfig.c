@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ldconfig.c,v 1.2 1993/12/08 10:16:37 pk Exp $
+ *	$Id: ldconfig.c,v 1.3 1994/01/13 19:35:38 pk Exp $
  */
 
 #include <sys/param.h>
@@ -72,7 +72,7 @@ struct shlib_list {
 static struct shlib_list	*shlib_head = NULL, **shlib_tail = &shlib_head;
 
 static void	enter __P((char *, char *, char *, int *, int));
-static int	dodir __P((char *));
+static int	dodir __P((char *, int));
 static int	build_hints __P((void));
 
 int
@@ -114,10 +114,10 @@ char	*argv[];
 		std_search_dirs(NULL);
 
 	for (i = 0; i < n_search_dirs; i++)
-		rval |= dodir(search_dirs[i]);
+		rval |= dodir(search_dirs[i], 1);
 
 	for (i = optind; i < argc; i++)
-		rval |= dodir(argv[i]);
+		rval |= dodir(argv[i], 0);
 
 	rval |= build_hints();
 
@@ -125,8 +125,9 @@ char	*argv[];
 }
 
 int
-dodir(dir)
+dodir(dir, silent)
 char	*dir;
+int	silent;
 {
 	DIR		*dd;
 	struct dirent	*dp;
@@ -134,7 +135,8 @@ char	*dir;
 	int		dewey[MAXDEWEY], ndewey;
 
 	if ((dd = opendir(dir)) == NULL) {
-		perror(dir);
+		if (!silent || errno != ENOENT)
+			perror(dir);
 		return -1;
 	}
 
