@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.5 2004/12/07 23:07:31 thorpej Exp $        */
+/*      $NetBSD: sd.c,v 1.6 2004/12/07 23:14:03 thorpej Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -115,8 +115,8 @@ sdprobe(char target, char lun)
 int
 sdgetinfo(struct sd_softc *ss)
 {
-    struct scsipi_read_capacity cdb;
-    struct scsipi_read_cap_data cap;
+    struct scsipi_read_capacity_10 cdb;
+    struct scsipi_read_capacity_10_data cap;
     struct sdminilabel *pi = &ss->sc_pinfo;
     struct next68k_disklabel *label;
     int error, i, blklen;
@@ -125,7 +125,7 @@ sdgetinfo(struct sd_softc *ss)
     int sc_blkshift = 0;
 
     bzero(&cdb, sizeof(cdb));
-    cdb.opcode = READ_CAPACITY;
+    cdb.opcode = READ_CAPACITY_10;
     count = sizeof(cap);
     error = scsiicmd(ss->sc_unit, ss->sc_lun, (u_char *)&cdb, sizeof(cdb),
 		     (char *)&cap, &count);
