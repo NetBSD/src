@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.13 1997/02/03 19:57:03 cgd Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.14 1997/06/26 01:19:07 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -292,7 +292,7 @@ db_symbol_values(sym, namep, valuep)
 		return;
 	}
 
-	X_db_symbol_values(sym, namep, &value);
+	X_db_symbol_values(db_last_symtab, sym, namep, &value);
 
 	if (db_symbol_is_ambiguous(sym))
 		*namep = db_qualify(sym, db_last_symtab->name);
