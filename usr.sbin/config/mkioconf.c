@@ -625,7 +625,7 @@ i386_ioconf()
   fprintf(fp, "#include \"sys/param.h\"\n");
   fprintf(fp, "#include \"sys/buf.h\"\n");
   fprintf(fp, "\n");
-  fprintf(fp, "#ifdef __STDC__\n");
+  fprintf(fp, "#if __STDC__ > 0\n");
   fprintf(fp, "#define VEC(s)	X##s\n");
   fprintf(fp, "#else\n");
   fprintf(fp, "#define VEC(s)	X/**/s\n");
