@@ -1,10 +1,11 @@
-#	from: @(#)Makefile	6.2 (Berkeley) 4/30/91
-#	$Id: Makefile,v 1.4 1993/10/07 07:25:38 cgd Exp $
+# $Id: Makefile,v 1.5 1993/10/16 21:52:27 pk Exp $
+#
 
 PROG=	ld
-SRCS=	ld.c cplus-dem.c
+SRCS=	ld.c symbol.c lib.c shlib.c warnings.c etc.c rrs.c xbits.c md.c
 NOMAN=	noman
-LDADD+=	-lgnumalloc
-DPADD+=	/usr/lib/libgnumalloc.a
+CFLAGS += -g -I$(.CURDIR) -I$(.CURDIR)/$(MACHINE)
+
+.PATH: $(.CURDIR)/$(MACHINE)
 
 .include <bsd.prog.mk>
