@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.1 2000/09/27 16:04:15 fvdl Exp $
+# $NetBSD: dot.profile,v 1.2 2001/01/24 18:18:57 jmc Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -58,6 +58,13 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
 	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
 	echo ''
+
+	# Create real /dev
+	mount -t mfs swap /dev
+	gzcat /MAKEDEV.gz > /dev/MAKEDEV
+	cd /dev
+	sh MAKEDEV all 2> /dev/null
+	cd ..
 
 	# mount the ramdisk read write
 	mount -u $ROOTDEV /
