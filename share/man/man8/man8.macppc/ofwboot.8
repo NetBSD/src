@@ -1,4 +1,4 @@
-.\"	$NetBSD: ofwboot.8,v 1.5 2003/02/10 13:36:00 grant Exp $
+.\"	$NetBSD: ofwboot.8,v 1.6 2003/06/30 19:12:33 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -126,7 +126,7 @@ if Open Firmware does not know where to find the kernel.
 The default is to load the file named
 .Nm netbsd
 on partition
-.Pa Dq a
+.Dq Pa a
 from the device used to load the primary bootloader.
 .Pp
 For systems with
@@ -214,7 +214,7 @@ location on the disk, partition
 .Dq zero .
 For example, the following command might be used to boot from a SCSI device
 with ID 2:
-.Ic "0 \*[Gt]boot Ar scsi-int/sd@2:0" .
+.Ic "0 \*[Gt]boot scsi-int/sd@2:0" .
 .It ofwboot.xcf
 .Nm ofwboot.xcf
 is in XCOFF format.
@@ -274,7 +274,7 @@ Usually located at
 Boot an Open Firmware 3 system, with
 .Ar netbsd
 installed on partition
-.Pa Dq a :
+.Dq Pa a :
 .Bd -unfilled
 0 \*[Gt] boot hd:,ofwboot.xcf
 .Ed
@@ -376,7 +376,7 @@ and hangs: See the real-base part in the FAQ.
 .br
 .Pa http://www.netbsd.org/Documentation/network/netboot/
 .Sh STANDARDS
-IEEE 1275 for OpenFirmware
+.St -ieee1275-94
 .Sh BUGS
 .Nm
 can only boot from devices recognized by Open Firmware.
