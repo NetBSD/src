@@ -1,4 +1,4 @@
-.\"	$NetBSD: cd.4,v 1.15 2001/09/11 22:52:52 wiz Exp $
+.\"	$NetBSD: cd.4,v 1.16 2001/09/12 18:19:16 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -79,7 +79,6 @@ disk label
 structure, which will contain correct figures for the size of the
 .Tn CD-ROM
 should that information be required.
-.Pp
 .Sh KERNEL CONFIGURATION
 Any number of
 .Tn CD-ROM
@@ -394,6 +393,11 @@ None.
 .Xr wd 4 ,
 .Xr disklabel 5 ,
 .Xr disklabel 8
+.Sh HISTORY
+The
+.Nm
+driver appeared in
+.Tn 386BSD 0.1 Ns .
 .Sh BUGS
 The names of the structures used for the third argument to
 .Fn ioctl
@@ -401,8 +405,3 @@ were poorly chosen, and a number of spelling errors have survived in
 the names of the
 .Fn ioctl
 commands.
-.Sh HISTORY
-The
-.Nm
-driver appeared in
-.Tn 386BSD 0.1 Ns .
