@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.3 1997/03/13 01:56:06 cgd Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.4 1997/03/13 03:33:07 mycroft Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -79,7 +79,7 @@ static struct ispmdvec mdvec = {
 	NULL,
 	NULL,
 	isp_pci_reset1,
-	(u_int16_t *) ISP_RISC_CODE,
+	(const u_int16_t *) ISP_RISC_CODE,
 	ISP_CODE_LENGTH,
 	ISP_CODE_ORG,
 /*	BIU_PCI_CONF1_FIFO_16 | BIU_BURST_ENABLE */ 0
