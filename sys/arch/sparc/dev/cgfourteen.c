@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.20.4.4 2002/06/28 07:50:43 jdolecek Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.20.4.5 2002/06/28 08:04:22 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -118,7 +118,7 @@ extern struct cfdriver cgfourteen_cd;
 /* frame buffer generic driver */
 static struct fbdriver cgfourteenfbdriver = {
 	cgfourteenunblank, cgfourteenopen, cgfourteenclose, cgfourteenioctl,
-	cgfourteenpoll, cgfourteenmmap
+	cgfourteenpoll, cgfourteenmmap, cgfourteenkqfilter
 };
 
 static void cg14_set_video __P((struct cgfourteen_softc *, int));

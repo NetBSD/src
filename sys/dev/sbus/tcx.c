@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.2.6.4 2002/06/28 07:50:49 jdolecek Exp $ */
+/*	$NetBSD: tcx.c,v 1.2.6.5 2002/06/28 08:04:18 jdolecek Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.2.6.4 2002/06/28 07:50:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.2.6.5 2002/06/28 08:04:18 jdolecek Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -130,7 +130,8 @@ extern struct cfdriver tcx_cd;
 
 /* frame buffer generic driver */
 static struct fbdriver tcx_fbdriver = {
-	tcx_unblank, tcxopen, tcxclose, tcxioctl, tcxpoll, tcxmmap
+	tcx_unblank, tcxopen, tcxclose, tcxioctl, tcxpoll, tcxmmap,
+	tcxkqfilter
 };
 
 static void tcx_reset __P((struct tcx_softc *));

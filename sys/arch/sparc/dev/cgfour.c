@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.24.4.3 2002/06/28 07:50:42 jdolecek Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.24.4.4 2002/06/28 08:04:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ extern struct cfdriver cgfour_cd;
 /* frame buffer generic driver */
 static struct fbdriver cgfourfbdriver = {
 	cgfourunblank, cgfouropen, cgfourclose, cgfourioctl, cgfourpoll,
-	cgfourmmap
+	cgfourmmap, cgfourkqfilter
 };
 
 static void cgfourloadcmap __P((struct cgfour_softc *, int, int));

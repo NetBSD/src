@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.2.6.2 2002/06/28 07:50:47 jdolecek Exp $ */
+/*	$NetBSD: cgthree.c,v 1.2.6.3 2002/06/28 08:04:12 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.2.6.2 2002/06/28 07:50:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.2.6.3 2002/06/28 08:04:12 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ extern struct cfdriver cgthree_cd;
 /* frame buffer generic driver */
 static struct fbdriver cgthreefbdriver = {
 	cgthreeunblank, cgthreeopen, cgthreeclose, cgthreeioctl, cgthreepoll,
-	cgthreemmap
+	cgthreemmap, cgthreekqfilter
 };
 
 /* Video control parameters */

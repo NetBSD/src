@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.2.4.3 2002/06/28 07:50:48 jdolecek Exp $ */
+/*	$NetBSD: p9100.c,v 1.2.4.4 2002/06/28 08:04:16 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.2.4.3 2002/06/28 07:50:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.2.4.4 2002/06/28 08:04:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ extern struct cfdriver pnozz_cd;
 /* frame buffer generic driver */
 static struct fbdriver p9100fbdriver = {
 	p9100unblank, p9100open, p9100close, p9100ioctl, p9100poll,
-	p9100mmap
+	p9100mmap, p9100kqfilter
 };
 
 static void p9100loadcmap(struct p9100_softc *, int, int);
