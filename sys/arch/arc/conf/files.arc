@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.14 2000/01/23 21:01:53 soda Exp $
+#	$NetBSD: files.arc,v 1.15 2000/01/26 12:48:45 soda Exp $
 #	$OpenBSD: files.arc,v 1.15 1997/05/18 13:45:24 pefo Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -95,7 +95,7 @@ major	{fd = 7}
 #
 #	Stock ISA bus support
 #
-define  pcmcia {}			# XXX dummy decl...
+define	pcmcia {}			# XXX dummy decl...
 
 include	"dev/pci/files.pci"
 include	"dev/isa/files.isa"
@@ -117,9 +117,9 @@ attach	opms at pica
 file	arch/arc/dev/pccons.c		pc & (pc_pica | pc_isa)	needs-flag
 
 #	BusLogic BT-445C VLB SCSI Controller. Special on TYNE local bus.
-device  btl: scsi
-attach  btl at isa
-file    arch/arc/dti/btl.c              btl needs-count
+device	btl: scsi
+attach	btl at isa
+file	arch/arc/dti/btl.c		btl needs-count
 
 #	NS16450/16550 Serial line driver
 attach	com at pica with com_pica
@@ -131,10 +131,10 @@ file	arch/arc/dev/com_lbus.c		com & (com_pica | com_algor)
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
 # XXX conflicts with other ports; can't be in files.isa
 ## XXX: should fix conflict with files.isa
-#device  ed: ether, ifnet
-#attach  ed at isa with ed_isa
-#attach  ed at pcmcia with ed_pcmcia
-#file    dev/isa/if_ed.c                 ed & (ed_isa | ed_pcmcia) needs-flag
+#device	ed: ether, ifnet
+#attach	ed at isa with ed_isa
+#attach	ed at pcmcia with ed_pcmcia
+#file	dev/isa/if_ed.c			ed & (ed_isa | ed_pcmcia) needs-flag
 
 #	Parallel printer port driver
 attach	lpt at pica with lpt_pica
