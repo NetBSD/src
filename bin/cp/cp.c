@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cp.c	5.26 (Berkeley) 10/27/91";*/
-static char rcsid[] = "$Id: cp.c,v 1.7 1993/11/09 18:57:54 jtc Exp $";
+static char rcsid[] = "$Id: cp.c,v 1.8 1994/02/25 00:43:25 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -50,7 +50,7 @@ static char rcsid[] = "$Id: cp.c,v 1.7 1993/11/09 18:57:54 jtc Exp $";
  * 
  * The global PATH_T structures "to" and "from" always contain paths to the
  * current source and target files, respectively.  Since cp does not change
- * directories, these paths can be either absolute or dot-realative.
+ * directories, these paths can be either absolute or dot-relative.
  * 
  * The basic algorithm is to initialize "to" and "from", and then call the
  * recursive copy() function to do the actual work.  If "from" is a file,
@@ -230,6 +230,14 @@ copy()
 			(void)fprintf(stderr,
 			    "%s: %s and %s are identical (not copied).\n",
 			    progname, to.p_path, from.p_path);
+			exit_val = 1;
+			return;
+		}
+
+		if (!S_ISDIR(from_stat.st_mode) && S_ISDIR(to_stat.st_mode)) {
+			(void)fprintf(stderr,
+			    "%s: %s: cannot overwrite directory with non-directory.\n",
+			    progname, to.p_path);
 			exit_val = 1;
 			return;
 		}
