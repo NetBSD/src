@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.79 2003/01/02 23:11:07 lukem Exp $
+#  $NetBSD: build.sh,v 1.80 2003/01/04 12:55:32 lukem Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -117,8 +117,9 @@ usage()
 {
 	cat <<_usage_
 Usage:
-$(basename $0) [-bdEnortUu] [-a arch] [-B buildid] [-D dest] [-i idir] [-j njob]
-    [-k kernel] [-M obj] [-m mach] [-O obj] [-R release] [-T tools] [-w wrapper]
+$(basename $0) [-bdEnortUu] [-a arch] [-B buildid] [-D dest] [-i instdir]
+    [-j njob] [-k kernel] [-M obj] [-m mach] [-O obj] [-R release] [-T tools]
+    [-V var=[value]] [-w wrapper]
 
     -a arch	set MACHINE_ARCH to arch (otherwise deduced from MACHINE)
     -B buildid	set BUILDID to buildid
@@ -126,7 +127,7 @@ $(basename $0) [-bdEnortUu] [-a arch] [-B buildid] [-D dest] [-i idir] [-j njob]
     -D dest	set DESTDIR to dest
     -d		build a full distribution into DESTDIR (including etc files)
     -E		set "expert" mode; disables some DESTDIR checks
-    -i idir	installworld from DESTDIR to idir
+    -i instdir	installworld from DESTDIR to instdir
     -j njob	run up to njob jobs in parallel; see make(1)
     -k kernel	build a kernel using the named configuration file
     -M obj	set obj root directory to obj (sets MAKEOBJDIRPREFIX)
@@ -140,6 +141,7 @@ $(basename $0) [-bdEnortUu] [-a arch] [-B buildid] [-D dest] [-i idir] [-j njob]
     -t		build and install tools only (implies -b)
     -U		set UNPRIVED
     -u		set UPDATE
+    -V v=[val]	set variable \`v' to \`val'
     -w wrapper	create nbmake script at wrapper
 		(default TOOLDIR/bin/nbmake-MACHINE)
 
@@ -162,7 +164,7 @@ makeenv=
 makewrapper=
 installworlddir=
 opt_a=no
-opts='a:B:bD:dEhi:j:k:M:m:nO:oR:rT:tUuw:'
+opts='a:B:bD:dEhi:j:k:M:m:nO:oR:rT:tUuV:w:'
 runcmd=
 
 if type getopts >/dev/null 2>&1; then
@@ -246,6 +248,21 @@ while eval $getoptcmd; do
 
 	-u)	UPDATE=yes; export UPDATE
 		makeenv="$makeenv UPDATE";;
+
+	-V)	eval $optargcmd
+		case "${OPTARG}" in
+		    # XXX: consider restricting which variables can be changed?
+		[a-zA-Z_][a-zA-Z_0-9]*=*)
+			var=${OPTARG%%=*}
+			value=${OPTARG#*=}
+			eval "${var}=\"${value}\"; export ${var}"
+			makeenv="$makeenv ${var}"
+			;;
+		*)
+			echo "-V argument must be of the form 'var=[value]'"
+			usage;;
+		esac
+		;;
 
 	-w)	eval $optargcmd; resolvepath
 		makewrapper="$OPTARG";;
@@ -447,7 +464,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.79 2003/01/02 23:11:07 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.80 2003/01/04 12:55:32 lukem Exp $
 #
 
 EOF
