@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.18 1993/11/05 07:21:35 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.19 1993/11/06 00:00:24 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -129,7 +129,7 @@ cpu_startup()
 	 * Initialize error message buffer (at end of core).
 	 */
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
-	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
+	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++)
 		pmap_enter(pmap_kernel(), (caddr_t)msgbufp + i * NBPG,
 			   avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
@@ -302,19 +302,19 @@ identifycpu()
 	}
 	printf(" (");
 	switch(cpu_class) {
-	case CPUCLASS_286:
+	    case CPUCLASS_286:
 		printf("286");
 		break;
-	case CPUCLASS_386:
+	    case CPUCLASS_386:
 		printf("386");
 		break;
-	case CPUCLASS_486:
+	    case CPUCLASS_486:
 		printf("486");
 		break;
-	case CPUCLASS_586:
+	    case CPUCLASS_586:
 		printf("586");
 		break;
-	default:
+	    default:
 		printf("unknown");	/* will panic below... */
 	}
 	printf("-class CPU)");
@@ -325,15 +325,15 @@ identifycpu()
 	 * let them know if that machine type isn't configured.
 	 */
 	switch (cpu_class) {
-	case CPUCLASS_286:	/* a 286 should not make it this far, anyway */
+	    case CPUCLASS_286:	/* a 286 should not make it this far, anyway */
 #if !defined(I386_CPU)
-	case CPUCLASS_386:
+	    case CPUCLASS_386:
 #endif
 #if !defined(I486_CPU)
-	case CPUCLASS_486:
+	    case CPUCLASS_486:
 #endif
 #if !defined(I586_CPU)
-	case CPUCLASS_586:
+	    case CPUCLASS_586:
 #endif
 #if !defined(I386_CPU) && !defined(I486_CPU) && !defined(I586_CPU)
 #error No CPU classes configured.
