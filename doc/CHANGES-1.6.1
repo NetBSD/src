@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.120 2003/02/26 18:58:28 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.121 2003/03/04 04:48:19 lukem Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3762,3 +3762,12 @@ share/tmac/doc					1.28
 	[wiz, ticket #1184]
 
 Moved RC2 tag for this file
+
+gnu/dist/sendmail/sendmail/headers.c		1.8
+gnu/dist/sendmail/sendmail/main.c		1.10
+gnu/dist/sendmail/sendmail/parseaddr.c		1.9
+gnu/dist/sendmail/sendmail/sendmail.h		1.11
+
+	Apply patch from sendmail.org to handle a new header overflow bug.
+	[atatat, ticket #1190]
+
