@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.50 1995/12/24 02:31:13 mycroft Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.51 1996/03/16 02:02:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -77,10 +77,9 @@ typedef u_long physlen;
 /*
  * I/O Port Interface
  */
-#define	BT_BASE			bt->sc_iobase
-#define	BT_CTRL_STAT_PORT	(BT_BASE + 0x0)		/* control & status */
-#define	BT_CMD_DATA_PORT	(BT_BASE + 0x1)		/* cmds and datas */
-#define	BT_INTR_PORT		(BT_BASE + 0x2)		/* Intr. stat */
+#define	BT_CTRL_STAT_PORT	0x0		/* control & status */
+#define	BT_CMD_DATA_PORT	0x1		/* cmds and datas */
+#define	BT_INTR_PORT		0x2		/* Intr. stat */
 
 /*
  * BT_CTRL_STAT bits (write)
@@ -419,6 +418,7 @@ bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
 	u_char args;
 {
 	unsigned *ic = &opcode;
+	int iobase = bt->sc_iobase;
 	u_char oc;
 	register i;
 	int sts;
@@ -438,7 +438,7 @@ bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
 	if (opcode != BT_MBX_INIT && opcode != BT_START_SCSI) {
 		i = 100000;	/* 1 sec? */
 		while (--i) {
-			sts = inb(BT_CTRL_STAT_PORT);
+			sts = inb(iobase + BT_CTRL_STAT_PORT);
 			if (sts & BT_IDLE) {
 				break;
 			}
@@ -455,8 +455,8 @@ bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
 	 * queue feeding to us.
 	 */
 	if (ocnt) {
-		while ((inb(BT_CTRL_STAT_PORT)) & BT_DF)
-			inb(BT_CMD_DATA_PORT);
+		while ((inb(iobase + BT_CTRL_STAT_PORT)) & BT_DF)
+			inb(iobase + BT_CMD_DATA_PORT);
 	}
 	/*
 	 * Output the command and the number of arguments given
@@ -465,9 +465,9 @@ bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
 	icnt++;
 	/* include the command */
 	while (icnt--) {
-		sts = inb(BT_CTRL_STAT_PORT);
+		sts = inb(iobase + BT_CTRL_STAT_PORT);
 		for (i = wait; i; i--) {
-			sts = inb(BT_CTRL_STAT_PORT);
+			sts = inb(iobase + BT_CTRL_STAT_PORT);
 			if (!(sts & BT_CDF))
 				break;
 			delay(10);
@@ -475,19 +475,19 @@ bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
 		if (!i) {
 			printf("%s: bt_cmd, cmd/data port full\n",
 				bt->sc_dev.dv_xname);
-			outb(BT_CTRL_STAT_PORT, BT_SRST);
+			outb(iobase + BT_CTRL_STAT_PORT, BT_SRST);
 			return ENXIO;
 		}
-		outb(BT_CMD_DATA_PORT, (u_char) (*ic++));
+		outb(iobase + BT_CMD_DATA_PORT, (u_char) (*ic++));
 	}
 	/*
 	 * If we expect input, loop that many times, each time,
 	 * looking for the data register to have valid data
 	 */
 	while (ocnt--) {
-		sts = inb(BT_CTRL_STAT_PORT);
+		sts = inb(iobase + BT_CTRL_STAT_PORT);
 		for (i = wait; i; i--) {
-			sts = inb(BT_CTRL_STAT_PORT);
+			sts = inb(iobase + BT_CTRL_STAT_PORT);
 			if (sts & BT_DF)
 				break;
 			delay(10);
@@ -497,7 +497,7 @@ bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
 				bt->sc_dev.dv_xname, ocnt);
 			return ENXIO;
 		}
-		oc = inb(BT_CMD_DATA_PORT);
+		oc = inb(iobase + BT_CMD_DATA_PORT);
 		if (retval)
 			*retval++ = oc;
 	}
@@ -506,7 +506,7 @@ bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
 	 */
 	i = 100000;	/* 1 sec? */
 	while (--i) {
-		sts = inb(BT_INTR_PORT);
+		sts = inb(iobase + BT_INTR_PORT);
 		if (sts & BT_HACC)
 			break;
 		delay(10);
@@ -516,7 +516,7 @@ bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
 			bt->sc_dev.dv_xname, sts);
 		return ENXIO;
 	}
-	outb(BT_CTRL_STAT_PORT, BT_IRST);
+	outb(iobase + BT_CTRL_STAT_PORT, BT_IRST);
 	return 0;
 }
 
@@ -629,6 +629,7 @@ btintr(arg)
 	void *arg;
 {
 	struct bt_softc *bt = arg;
+	int iobase = bt->sc_iobase;
 	struct bt_mbx_in *wmbi;
 	struct bt_mbx *wmbx;
 	struct bt_ccb *ccb;
@@ -645,28 +646,28 @@ btintr(arg)
 	 * not telling about a completed operation
 	 * just return.
 	 */
-	stat = inb(BT_INTR_PORT);
+	stat = inb(iobase + BT_INTR_PORT);
 	if ((stat & (BT_MBOA | BT_MBIF)) == 0) {
-		outb(BT_CTRL_STAT_PORT, BT_IRST);
+		outb(iobase + BT_CTRL_STAT_PORT, BT_IRST);
 		return -1;	/* XXX */
 	}
 
 	/* Mail box out empty? */
 	if (stat & BT_MBOA) {
 		/* Disable MBO available interrupt. */
-		outb(BT_CMD_DATA_PORT, BT_MBO_INTR_EN);
+		outb(iobase + BT_CMD_DATA_PORT, BT_MBO_INTR_EN);
 		for (i = 100000; i; i--) {
-			if (!(inb(BT_CTRL_STAT_PORT) & BT_CDF))
+			if (!(inb(iobase + BT_CTRL_STAT_PORT) & BT_CDF))
 				break;
 			delay(10);
 		}
 		if (!i) {
 			printf("%s: btintr, cmd/data port full\n",
 			    bt->sc_dev.dv_xname);
-			outb(BT_CTRL_STAT_PORT, BT_SRST);
+			outb(iobase + BT_CTRL_STAT_PORT, BT_SRST);
 			return 1;
 		}
-		outb(BT_CMD_DATA_PORT, 0x00);	/* Disable */
+		outb(iobase + BT_CMD_DATA_PORT, 0x00);	/* Disable */
 		wakeup(&bt->bt_mbx);
 	}
 
@@ -737,7 +738,7 @@ AGAIN:
 		}
 	}
 	wmbx->tmbi = wmbi;
-	outb(BT_CTRL_STAT_PORT, BT_IRST);
+	outb(iobase + BT_CTRL_STAT_PORT, BT_IRST);
 	return 1;
 }
 
@@ -873,6 +874,7 @@ bt_send_mbo(bt, cmd, ccb)
 	int cmd;
 	struct bt_ccb *ccb;
 {
+	int iobase = bt->sc_iobase;
 	struct bt_mbx_out *wmbo;	/* Mail Box Out pointer */
 	struct bt_mbx *wmbx;		/* Mail Box pointer specified unit */
 	int i;
@@ -888,19 +890,19 @@ bt_send_mbo(bt, cmd, ccb)
 	 */
 	while (wmbo->cmd != BT_MBO_FREE) {
 		/* Enable mbo available interrupt. */
-		outb(BT_CMD_DATA_PORT, BT_MBO_INTR_EN);
+		outb(iobase + BT_CMD_DATA_PORT, BT_MBO_INTR_EN);
 		for (i = 100000; i; i--) {
-			if (!(inb(BT_CTRL_STAT_PORT) & BT_CDF))
+			if (!(inb(iobase + BT_CTRL_STAT_PORT) & BT_CDF))
 				break;
 			delay(10);
 		}
 		if (!i) {
 			printf("%s: bt_send_mbo, cmd/data port full\n",
 			    bt->sc_dev.dv_xname);
-			outb(BT_CTRL_STAT_PORT, BT_SRST);
+			outb(iobase + BT_CTRL_STAT_PORT, BT_SRST);
 			return NULL;
 		}
-		outb(BT_CMD_DATA_PORT, 0x01);	/* Enable */
+		outb(iobase + BT_CMD_DATA_PORT, 0x01);	/* Enable */
 		tsleep(wmbx, PRIBIO, "btsnd", 0);/*XXX can't do this */
 	}
 
@@ -910,7 +912,7 @@ bt_send_mbo(bt, cmd, ccb)
 	wmbo->cmd = cmd;
 
 	/* Send it! */
-	outb(BT_CMD_DATA_PORT, BT_START_SCSI);
+	outb(iobase + BT_CMD_DATA_PORT, BT_START_SCSI);
 
 	return wmbo;
 }
@@ -982,6 +984,7 @@ int
 bt_find(bt)
 	struct bt_softc *bt;
 {
+	int iobase = bt->sc_iobase;
 	u_char ad[4];
 	volatile int i, sts;
 	struct bt_extended_inquire info;
@@ -992,10 +995,10 @@ bt_find(bt)
 	 * that it's not there.. good for the probe
 	 */
 
-	outb(BT_CTRL_STAT_PORT, BT_HRST | BT_SRST);
+	outb(iobase + BT_CTRL_STAT_PORT, BT_HRST | BT_SRST);
 
 	for (i = BT_RESET_TIMEOUT; i; i--) {
-		sts = inb(BT_CTRL_STAT_PORT);
+		sts = inb(iobase + BT_CTRL_STAT_PORT);
 		if (sts == (BT_IDLE | BT_INIT))
 			break;
 		delay(1000);
@@ -1363,6 +1366,7 @@ bt_poll(bt, xs, count)
 	struct scsi_xfer *xs;
 	int count;
 {
+	int iobase = bt->sc_iobase;
 
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
 	while (count) {
@@ -1370,7 +1374,7 @@ bt_poll(bt, xs, count)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (inb(BT_INTR_PORT) & BT_ANY_INTR)
+		if (inb(iobase + BT_INTR_PORT) & BT_ANY_INTR)
 			btintr(bt);
 		if (xs->flags & ITSDONE)
 			return 0;
