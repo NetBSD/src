@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60 2004/04/16 23:58:08 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.61 2004/08/28 22:12:41 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60 2004/04/16 23:58:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61 2004/08/28 22:12:41 thorpej Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -196,25 +196,6 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 void
 cpu_swapin(struct lwp *l)
 {
-}
-
-/*
- * Move pages from one kernel virtual address to another.
- */
-void
-pagemove(caddr_t from, caddr_t to, size_t size)
-{
-	paddr_t pa;
-	vaddr_t va;
-
-	for (va = (vaddr_t)from; size > 0; size -= PAGE_SIZE) {
-		(void) pmap_extract(pmap_kernel(), va, &pa);
-		pmap_kremove(va, PAGE_SIZE);
-		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE);
-		va += PAGE_SIZE;
-		to += PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
 }
 
 void
