@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262.2.2 1997/11/15 00:40:43 mellon Exp $	*/
+/*	$NetBSD: machdep.c,v 1.262.2.3 1997/11/19 21:20:03 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -432,6 +432,12 @@ cpu_startup()
 	 */
 	ioport_malloc_safe = 1;
 	configure();
+
+#ifdef I586_CPU
+	if (pentium_trap_fixup)
+		pmap_enter(pmap_kernel(), pentium_trap_vaddr,
+		    pentium_trap_paddr, VM_PROT_READ, TRUE);
+#endif
 
 	/*
 	 * Set up proc0's TSS and LDT.
@@ -1573,11 +1579,10 @@ init386(first_avail)
 	if (pentium_trap_fixup) {
 		struct gate_descriptor *new_idt;
 
-		pmap_enter(pmap_kernel(), pentium_trap_vaddr + NBPG,
+		pmap_enter(pmap_kernel(), pentium_trap_vaddr,
 		    pentium_trap_paddr, VM_PROT_ALL, TRUE);
-		new_idt =
-		    (struct gate_descriptor *)(pentium_trap_vaddr + NBPG) - 7;
-		bcopy(&idt[7], &new_idt[7], (NIDT - 7) * sizeof(idt[0]));
+		new_idt = (struct gate_descriptor *)pentium_trap_vaddr;
+		bcopy(idt, new_idt, NIDT * sizeof(idt[0]));
 		setgate(&new_idt[14], &IDTVEC(trap0e_pentium), 0, SDT_SYS386TGT,
 		    SEL_KPL);
 		idt = new_idt;
