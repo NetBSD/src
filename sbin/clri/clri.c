@@ -1,4 +1,4 @@
-/*	$NetBSD: clri.c,v 1.16 2003/08/07 10:04:12 agc Exp $	*/
+/*	$NetBSD: clri.c,v 1.17 2004/03/21 19:35:23 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)clri.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: clri.c,v 1.16 2003/08/07 10:04:12 agc Exp $");
+__RCSID("$NetBSD: clri.c,v 1.17 2004/03/21 19:35:23 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,10 +100,11 @@ main(argc, argv)
 	/* get the superblock. */
 	if ((fd = open(fs, O_RDWR, 0)) < 0)
 		err(1, "%s", fs);
-	for (i = 0; i < sblock_try[i] != -1; i++) {
-		if (lseek(fd, sblock_try[i], SEEK_SET) < 0)
-			err(1, "%s", fs);
-		if (read(fd, sblock, sizeof(sblock)) != sizeof(sblock))
+	for (i = 0;; i++) {
+		sblockloc = sblock_try[i];
+		if (sblockloc == -1)
+			errx(1, "%s: can't find superblock", fs);
+		if (pread(fd, sblock, sizeof(sblock), sblockloc) != sizeof(sblock))
 			errx(1, "%s: can't read superblock", fs);
 
 		sbp = (struct fs *)sblock;
@@ -112,21 +113,29 @@ main(argc, argv)
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/
 		case FS_UFS1_MAGIC:
-			goto found;
+			break;
 		case FS_UFS2_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/
 		case FS_UFS1_MAGIC_SWAPPED:
 			needswap = 1;
-			goto found;
+			break;
 		default:
 			continue;
 		}
-	}
-	errx(1, "%s: can't find superblock", fs);
 
-found:
-	sblockloc = sblock_try[i];
+		/* check we haven't found an alternate */
+		if (sbp->fs_old_flags & FS_FLAGS_UPDATED) {
+			if (sblockloc != ufs_rw64(sbp->fs_sblockloc, needswap))
+				continue;
+		} else {
+			if (sblockloc == SBLOCK_UFS2)
+				continue;
+		}
+
+		break;
+	}
+
 	/* check that inode numbers are valid */
 	imax = ufs_rw32(sbp->fs_ncg, needswap) *
 		ufs_rw32(sbp->fs_ipg, needswap);
@@ -135,9 +144,8 @@ found:
 			errx(1, "%s is not a valid inode number", argv[i]);
 
 	/* delete clean flag in the superblok */
-	sbp->fs_clean = ufs_rw32(
-						ufs_rw32(sbp->fs_clean, needswap) << 1,
-						needswap);
+	sbp->fs_clean = ufs_rw32(ufs_rw32(sbp->fs_clean, needswap) << 1,
+				needswap);
 	if (lseek(fd, sblockloc, SEEK_SET) < 0)
 		err(1, "%s", fs);
 	if (write(fd, sblock, sizeof(sblock)) != sizeof(sblock))
