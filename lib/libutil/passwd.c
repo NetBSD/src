@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.33 2002/04/15 03:06:46 perry Exp $	*/
+/*	$NetBSD: passwd.c,v 1.34 2002/04/17 11:14:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.33 2002/04/15 03:06:46 perry Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.34 2002/04/17 11:14:28 ad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -466,7 +466,7 @@ static const char *
 pw_default(const char *option)
 {
 	static const char *options[][2] = {
-		{ "localcipher",	"md5" },
+		{ "localcipher",	"old" },
 		{ "ypcipher",		"old" },
 	};
 	int i;
