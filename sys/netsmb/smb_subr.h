@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.6 2003/02/16 19:48:10 jdolecek Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.7 2003/02/24 19:32:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -135,7 +135,7 @@ struct smb_cred {
 	struct ucred *	scr_cred;
 };
 
-extern smb_unichar smb_unieol;
+extern const smb_unichar smb_unieol;
 
 struct mbchain;
 struct smb_vc;
