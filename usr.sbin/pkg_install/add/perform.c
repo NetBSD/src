@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.18 1998/08/27 23:37:35 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.19 1998/08/28 00:35:51 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.18 1998/08/27 23:37:35 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.19 1998/08/28 00:35:51 hubertf Exp $");
 #endif
 #endif
 
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: perform.c,v 1.18 1998/08/27 23:37:35 hubertf Exp $");
 static int pkg_do(char *);
 static int sanity_check(char *);
 static char LogDir[FILENAME_MAX];
+static int zapLogDir;          /* Should we delete LogDir? */
 
 int
 pkg_perform(char **pkgs)
@@ -79,6 +80,7 @@ pkg_do(char *pkg)
     int inPlace;
 
     code = 0;
+    zapLogDir = 0;
     LogDir[0] = '\0';
     strcpy(playpen, FirstPen);
     inPlace = 0;
@@ -395,6 +397,7 @@ pkg_do(char *pkg)
 	    goto success;	/* well, partial anyway */
 	}
 	sprintf(LogDir, "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR, PkgName);
+	zapLogDir = 1;
 	if (Verbose)
 	    printf("Attempting to record package into %s.\n", LogDir);
 	if (make_hierarchy(LogDir)) {
@@ -511,7 +514,7 @@ cleanup(int signo)
     	alreadyCleaning = 1;
 	if (signo)
 	    printf("Signal %d received, cleaning up.\n", signo);
-	if (!Fake && LogDir[0])
+	if (!Fake && zapLogDir && LogDir[0])
 	    vsystem("%s -rf %s", REMOVE_CMD, LogDir);
 	leave_playpen(Home);
 	if (signo)
