@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prop.c,v 1.10 2003/05/16 14:25:03 itojun Exp $	*/
+/*	$NetBSD: subr_prop.c,v 1.11 2003/05/17 03:12:08 itojun Exp $	*/
 
 /*  
  * Copyright (c) 2001 Eduardo Horvath.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.10 2003/05/16 14:25:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.11 2003/05/17 03:12:08 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ propdb_create(const char *name)
 	db = (struct propdb *)malloc(sizeof(struct propdb),
 		M_PROP,	M_WAITOK);
 
-	strncpy(db->kd_name, name, 32);
+	strncpy(db->kd_name, name, sizeof(db->kd_name));
 
 	/* Initialize the hash table. */
 	db->kd_size = KDB_SIZE;
