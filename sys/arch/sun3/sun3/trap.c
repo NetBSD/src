@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.39 1995/01/24 06:03:11 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.40 1995/02/24 05:03:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -81,6 +81,7 @@ extern int	nsunos_sysent;
 extern struct	sysent	sysent[];
 extern int	nsysent;
 extern int fubail(), subail();
+extern int *nofault;
 
 /* XXX - put these in some header file? */
 extern vm_offset_t virtual_avail;
@@ -263,20 +264,29 @@ trap(type, code, v, frame)
 		sig = SIGBUS;
 		break;
 
-	case T_ILLINST|T_USER:	/* illegal instruction fault */
-	case T_PRIVINST|T_USER:	/* privileged instruction fault */
-		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
-		sig = SIGILL;
+#ifdef	FPCOPROC
+	case T_COPERR:		/* kernel coprocessor violation */
+#endif	/* FPCOPROC */
+	case T_FMTERR|T_USER:	/* do all RTE errors come in as T_USER? */
+	case T_FMTERR:		/* ...just in case... */
+		/*
+		 * The user has most likely trashed the RTE or FP state info
+		 * in the stack frame of a signal handler.
+		 */
+		printf("pid %d: kernel %s exception\n", p->p_pid,
+		       type==T_COPERR ? "coprocessor" : "format");
+		type |= T_USER;
+		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
+		/* temporary use of sig as mask */
+		sig = sigmask(SIGILL);
+		p->p_sigignore &= ~sig;
+		p->p_sigcatch  &= ~sig;
+		p->p_sigmask   &= ~sig;
+		sig = SIGILL;	/* back to normal */
+		ucode = frame.f_format;
 		break;
 
-	case T_ZERODIV|T_USER:	/* Divide by zero */
-	case T_CHKINST|T_USER:	/* CHK instruction trap */
-	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
-		ucode = frame.f_format;	/* XXX was FPE_INTOVF_TRAP */
-		sig = SIGFPE;
-		break;
-
-#ifdef FPCOPROC
+#ifdef	FPCOPROC
 	case T_COPERR|T_USER:	/* user coprocessor violation */
 		/* What is a proper response here? */
 		ucode = 0;
@@ -296,27 +306,37 @@ trap(type, code, v, frame)
 		ucode = code;
 		sig = SIGFPE;
 		break;
+#endif	/* FPCOPROC */
 
-	case T_COPERR:		/* kernel coprocessor violation */
-		/*FALLTHROUGH*/
-#endif
-	case T_FMTERR|T_USER:	/* do all RTE errors come in as T_USER? */
-	case T_FMTERR:		/* ...just in case... */
-		/*
-		 * The user has most likely trashed the RTE or FP state info
-		 * in the stack frame of a signal handler.
-		 */
-		printf("pid %d: kernel %s exception\n", p->p_pid,
-		       type==T_COPERR ? "coprocessor" : "format");
-		type |= T_USER;
-		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
-		/* temporary use of sig as mask */
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch  &= ~sig;
-		p->p_sigmask   &= ~sig;
-		sig = SIGILL;	/* back to normal */
-		ucode = frame.f_format;	/* XXX was ILL_RESAD_FAULT */
+	case T_FPEMULI:		/* FPU faults in supervisor mode */
+	case T_FPEMULD:
+		if (nofault)	/* Doing FPU probe? */
+			longjmp(nofault);
+		goto dopanic;
+
+	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
+	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
+		/* XXX - Need to attach FPU emulator here. */
+		/* XXX need to FSAVE */
+		printf("pid %d(%s): unimplemented FP %s at %x (EA %x)\n",
+		       p->p_pid, p->p_comm,
+		       frame.f_format == 2 ? "instruction" : "data type",
+		       frame.f_pc, frame.f_fmt2.f_iaddr);
+		/* XXX need to FRESTORE */
+		sig = SIGFPE;
+		break;
+
+	case T_ILLINST|T_USER:	/* illegal instruction fault */
+	case T_PRIVINST|T_USER:	/* privileged instruction fault */
+		ucode = frame.f_format;
+		sig = SIGILL;
+		break;
+
+	case T_ZERODIV|T_USER:	/* Divide by zero */
+	case T_CHKINST|T_USER:	/* CHK instruction trap */
+	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
+		ucode = frame.f_format;
+		sig = SIGFPE;
 		break;
 
 	/*
