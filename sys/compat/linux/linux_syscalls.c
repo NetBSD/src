@@ -129,7 +129,11 @@ char *linux_syscallnames[] = {
 	"#120 (unimplemented linux_clone)",		/* 120 = unimplemented linux_clone */
 	"compat_09_setdomainname",			/* 121 = compat_09_setdomainname */
 	"linux_uname",			/* 122 = linux_uname */
+#ifdef __i386__
+	"linux_modify_ldt",			/* 123 = linux_modify_ldt */
+#else
 	"#123 (unimplemented linux_modify_ldt)",		/* 123 = unimplemented linux_modify_ldt */
+#endif
 	"#124 (unimplemented linux_adjtimex)",		/* 124 = unimplemented linux_adjtimex */
 	"mprotect",			/* 125 = mprotect */
 	"linux_sigprocmask",			/* 126 = linux_sigprocmask */

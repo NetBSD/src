@@ -231,6 +231,12 @@ struct linux_uname_args {
 	syscallarg(struct linux_utsname *) up;
 };
 
+struct linux_modify_ldt_args {
+	syscallarg(int) func;
+	syscallarg(void *) ptr;
+	syscallarg(size_t) bytecount;
+};
+
 struct linux_sigprocmask_args {
 	syscallarg(int) how;
 	syscallarg(linux_sigset_t *) set;
