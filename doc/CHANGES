@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.315 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.316 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -28,6 +28,8 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	login.conf(5): Add support for "sbsize" capability to control the
 		socket buffer size limit.  [matt 20040418]
 	share/mk: Deprecate AINC in favour of AFLAGS.  [lukem 20040418]
+	sysinst: use /etc/postinstall to update /etc (etc) instead of just
+		saving /etc to /etc/old [dsl 20040418]
 	sysctl(8): Add "vfs.generic.fstypes" node to display the currently 
 		available file system types.  [lukem 20040419]
 	locate.conf(5): "ignorefs type" appends to the default list of
@@ -48,6 +50,8 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	xdm(1): use /var/db/xdm for the default authDir.  [lukem 20040512]
 	du(1): add a -n flag to not include "nodump" files.  [simonb 20040517]
 	bind:	Bind-9.3.0beta3 imported. [christos 20040517]
+	sysinst: (i386) Allow installation/upgrade to an existing raid volume.
+		[dsl 20040518]
 	cvs:	cvs-1.11.16 via patch [christos 20040519]
 	resolver: The libc resolver has been updated to the bind9 one
 		[christos 20040521]
