@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.2 2003/09/10 21:40:02 christos Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.3 2003/09/11 19:15:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2 2003/09/10 21:40:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3 2003/09/11 19:15:12 christos Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2 2003/09/10 21:40:02 christ
 #include <sys/syscallargs.h>
 
 #ifdef VM86
+#include <machine/mcontext.h>
 #include <machine/vm86.h>
 #endif
 #include <uvm/uvm_extern.h>
@@ -263,3 +264,92 @@ sendsig_sigcontext(ksiginfo_t *ksi, sigset_t *mask)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 #endif
+
+#if defined(COMPAT_16) && defined(VM86)
+struct compat_16_vm86_kern {
+	struct sigcontext regs;
+	unsigned long ss_cpu_type;
+};
+
+struct compat_16_vm86_struct {
+	struct compat_16_vm86_kern substr;
+	unsigned long screen_bitmap;	/* not used/supported (yet) */
+	unsigned long flags;		/* not used/supported (yet) */
+	unsigned char int_byuser[32];	/* 256 bits each: pass control to user */
+	unsigned char int21_byuser[32];	/* otherwise, handle directly */
+};
+
+int
+compat_16_i386_vm86(struct lwp *l, char *args, register_t *retval)
+{
+	struct trapframe *tf = l->l_md.md_regs;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct compat_16_vm86_kern vm86s;
+	int error;
+
+	error = copyin(args, &vm86s, sizeof(vm86s));
+	if (error)
+		return (error);
+
+	pcb->vm86_userp = (void *)(args +
+	    (offsetof(struct compat_16_vm86_struct, screen_bitmap)
+	    - offsetof(struct vm86_struct, screen_bitmap)));
+	printf("offsetting by %lu\n", (unsigned long)
+	    (offsetof(struct compat_16_vm86_struct, screen_bitmap)
+	    - offsetof(struct vm86_struct, screen_bitmap)));
+
+	/*
+	 * Keep mask of flags we simulate to simulate a particular type of
+	 * processor.
+	 */
+	switch (vm86s.ss_cpu_type) {
+	case VCPU_086:
+	case VCPU_186:
+	case VCPU_286:
+		pcb->vm86_flagmask = PSL_ID|PSL_AC|PSL_NT|PSL_IOPL;
+		break;
+	case VCPU_386:
+		pcb->vm86_flagmask = PSL_ID|PSL_AC;
+		break;
+	case VCPU_486:
+		pcb->vm86_flagmask = PSL_ID;
+		break;
+	case VCPU_586:
+		pcb->vm86_flagmask = 0;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+#define DOVREG(reg) tf->tf_vm86_##reg = (u_short) vm86s.regs.sc_##reg
+#define DOREG(reg) tf->tf_##reg = (u_short) vm86s.regs.sc_##reg
+
+	DOVREG(ds);
+	DOVREG(es);
+	DOVREG(fs);
+	DOVREG(gs);
+	DOREG(edi);
+	DOREG(esi);
+	DOREG(ebp);
+	DOREG(eax);
+	DOREG(ebx);
+	DOREG(ecx);
+	DOREG(edx);
+	DOREG(eip);
+	DOREG(cs);
+	DOREG(esp);
+	DOREG(ss);
+
+#undef	DOVREG
+#undef	DOREG
+
+	/* Going into vm86 mode jumps off the signal stack. */
+	l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	set_vflags(l, vm86s.regs.sc_eflags | PSL_VM);
+
+	return (EJUSTRETURN);
+}
+
+#endif
+
