@@ -1,4 +1,4 @@
-/*	$NetBSD: pmioctl.h,v 1.5 1999/04/24 08:01:10 simonb Exp $	*/
+/*	$NetBSD: pmioctl.h,v 1.6 2000/01/09 15:34:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,6 +64,9 @@
  * from: Header: devSerialPmax.c,
  *	v 1.4 89/05/22 13:31:07 mnelson Exp  SPRITE (DECWRL)
  */
+
+#ifndef _PMAX_PMIOCTL_H_
+#define _PMAX_PMIOCTL_H_
 
 #include <sys/ioctl.h>
 
@@ -208,3 +211,5 @@ typedef struct {
 #define QIOVIDEOON	_IO('q', 10)			/* turn on the video */
 #define	QIOVIDEOOFF	_IO('q', 11)			/* turn off the video */
 #define QIOSETCMAP      _IOW('q', 12, ColorMap)
+
+#endif	/* !_PMAX_PMIOCTL_H_ */

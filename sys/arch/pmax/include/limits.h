@@ -1,7 +1,7 @@
-/*	$NetBSD: limits.h,v 1.11 1998/01/09 22:24:01 perry Exp $	*/
+/*	$NetBSD: limits.h,v 1.12 2000/01/09 15:34:43 ad Exp $	*/
 
-#ifndef	_MACHINE_LIMITS_H_
-#define	_MACHINE_LIMITS_H_
+#ifndef	_PMAX_LIMITS_H_
+#define	_PMAX_LIMITS_H_
 
 #include <mips/limits.h>
 
@@ -9,4 +9,4 @@
 #define CLK_TCK		60		/* ticks per second */
 #endif
 
-#endif /* _MACHINE_LIMITS_H_ */
+#endif	/* !_PMAX_LIMITS_H_ */

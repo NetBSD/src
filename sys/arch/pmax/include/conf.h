@@ -1,5 +1,4 @@
-/*	$NetBSD: conf.h,v 1.3 2000/01/09 03:55:52 simonb Exp $	*/
-
+/*	$NetBSD: conf.h,v 1.4 2000/01/09 15:34:42 ad Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -16,10 +15,12 @@
  * This file contributed by Jonathan Stone.
  */
 
+#ifndef _PMAX_CONF_H_
+#define _PMAX_CONF_H_
+
 #define mmread mmrw
 #define mmwrite mmrw
 cdev_decl(mm);
-
 
 cdev_decl(scc);		/* pmax (also alpha m-d z8530 SCC */
 cdev_decl(dc);		/* dc7085 dz11-on-a-chip */
@@ -34,3 +35,5 @@ cdev_decl(dtop);	/* Personal Decstation (MAXINE) desktop bus */
 cdev_decl(fb);		/* generic framebuffer pseudo-device */
 cdev_decl(rcons);	/* framebuffer-based raster console pseudo-device */
 cdev_decl(px);		/* PixelStamp framebuffers */
+
+#endif	/* !_PMAX_CONF_H_ */

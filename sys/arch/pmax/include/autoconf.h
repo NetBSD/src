@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.16 2000/01/09 13:24:16 simonb Exp $ */
+/*	$NetBSD: autoconf.h,v 1.17 2000/01/09 15:34:41 ad Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -27,6 +27,9 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _PMAX_AUTOCONF_H_
+#define	_PMAX_AUTOCONF_H_
+
 /*
  * Machine-dependent structures of autoconfiguration
  */
@@ -38,3 +41,5 @@ struct mainbus_attach_args {
 };
 
 void	makebootdev __P((char *));
+
+#endif	/* !_PMAX_AUTOCONF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.h,v 1.4 1999/08/25 02:12:05 simonb Exp $	*/
+/*	$NetBSD: clock_machdep.h,v 1.5 2000/01/09 15:34:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,6 +48,10 @@
  *		the acutal RTC hardware in use. clock
  */
 
+#ifndef _PMAX_CLOCK_MACHDEP_H_
+#define _PMAX_CLOCK_MACHDEP_H_
 
 /* The default clock rate on a pmax is 256 Hz. */
 #define CLOCK_RATE	256
+
+#endif	/* !_PMAX_CLOCK_MACHDEP_H_ */

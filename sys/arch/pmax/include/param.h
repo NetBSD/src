@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.29 2000/01/08 01:02:38 simonb Exp $	*/
+/*	$NetBSD: param.h,v 1.30 2000/01/09 15:34:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)param.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _PMAX_PARAM_H_
+#define _PMAX_PARAM_H_
 
 /*
  * Machine-dependent constants (VM, etc) common across MIPS cpus
@@ -109,3 +112,5 @@ extern	int cpuspeed;
 
 #endif	/* !_LOCORE */
 #endif	/* _KERNEL */
+
+#endif	/* !_PMAX_PARAM_H_ */

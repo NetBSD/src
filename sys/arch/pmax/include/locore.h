@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.3 2000/01/09 03:55:52 simonb Exp $	*/
+/*	$NetBSD: locore.h,v 1.4 2000/01/09 15:34:43 ad Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,6 +15,9 @@
  * This file contributed by Jonathan Stone
  */
 
+#ifndef _PMAX_LOCORE_H_
+#define _PMAX_LOCORE_H_
+
 #include <mips/locore.h>
 
 void	CopyToBuffer __P((u_short *src, 	/* NB: must be short aligned */
@@ -22,3 +25,5 @@ void	CopyToBuffer __P((u_short *src, 	/* NB: must be short aligned */
 void	CopyFromBuffer __P((volatile u_short *src, char *dst, int length));
 
 void	kn230_wbflush __P((void));
+
+#endif	/* !_PMAX_LOCORE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.9 2000/01/09 03:55:52 simonb Exp $ */
+/*	$NetBSD: fbvar.h,v 1.10 2000/01/09 15:34:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -44,6 +44,9 @@
  *
  *	@(#)fbvar.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifndef _PMAX_FBVAR_H_
+#define _PMAX_FBVAR_H_
 
 /* XXX */
 #include <sys/select.h>
@@ -113,3 +116,5 @@ void	fbconnect __P((char *name, struct fbinfo *info, int silent));
 int	tcfb_cnattach __P((int prom_slot));
 
 #endif /* _KERNEL */
+
+#endif	/* !_PMAX_FBVAR_H_ */

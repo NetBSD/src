@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_boot.h,v 1.8 1999/11/27 01:51:20 simonb Exp $	*/
+/*	$NetBSD: dec_boot.h,v 1.9 2000/01/09 15:34:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,9 @@
  * from: Header: /sprite/src/kernel/dev/RCS/devDiskLabel.h,
  *	v 9.4 90/03/01 12:22:36 jhh Exp  SPRITE (Berkeley)
  */
+
+#ifndef _PMAX_DEC_BOOT_H_
+#define _PMAX_DEC_BOOT_H_
 
 /*
  * Boot block information on the 0th sector.
@@ -115,3 +118,5 @@ typedef struct dec_disklabel {
 
 #define DEC_LABEL_MAGIC		0x00032957
 #define DEC_LABEL_SECTOR	31
+
+#endif	/* !_PMAX_DEC_BOOT_H_ */

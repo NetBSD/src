@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 1999/04/08 03:14:35 nisimura Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 2000/01/09 15:34:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -643,4 +643,4 @@ int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 extern struct pmax_bus_dma_tag pmax_default_bus_dma_tag;
 #endif /* _PMAX_BUS_DMA_PRIVATE */
 
-#endif /* _PMAX_BUS_H_ */
+#endif /* !_PMAX_BUS_H_ */

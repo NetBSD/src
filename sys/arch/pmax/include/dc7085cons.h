@@ -1,4 +1,4 @@
-/*	$NetBSD: dc7085cons.h,v 1.5 1999/04/24 08:01:10 simonb Exp $	*/
+/*	$NetBSD: dc7085cons.h,v 1.6 2000/01/09 15:34:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,8 +54,8 @@
  *	v 1.4 89/08/15 19:52:46 rab Exp  SPRITE (DECWRL)
  */
 
-#ifndef _DC7085
-#define _DC7085
+#ifndef _PMAX_DC7085CONS_H_
+#define _PMAX_DC7085CONS_H_
 
 typedef volatile struct dc7085regs {
 	u_short	dc_csr;		/* control and status (R/W) */
@@ -168,4 +168,4 @@ typedef volatile struct dc7085regs {
 #define	DML_DTR		0000002		/* data terminal ready */
 #define	DML_LE		0000001		/* line enable */
 
-#endif /* _DC7085 */
+#endif	/* !_PMAX_DC7085CONS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_exec.h,v 1.5 1999/04/24 08:01:10 simonb Exp $	*/
+/*	$NetBSD: dec_exec.h,v 1.6 2000/01/09 15:34:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,6 @@
  *	@(#)dec_exec.h	8.1 (Berkeley) 6/10/93
  */
 
-
 /*
  * Portions of this file are subject to the following copyright notice:
  *
@@ -55,6 +54,9 @@
  * /sprite/src/kernel/proc/ds3100.md/RCS/procMach.h,v 9.3 90/02/20 15:35:50
  * shirriff Exp  SPRITE (Berkeley)
  */
+
+#ifndef _PMAX_DEC_EXEC_H_
+#define _PMAX_DEC_EXEC_H_
 
 /* Description of the COFF section. */
 struct coff_exec {
@@ -97,3 +99,5 @@ typedef struct {
 	u_short	numLnno;	/* Numberof gp tables. */
 	long	flags;		/* Section flags. */
 } ProcSectionHeader;
+
+#endif	/* !_PMAX_DEC_EXEC_H_ */
