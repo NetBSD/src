@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.108 2001/09/23 06:35:30 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.109 2001/10/29 23:06:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -81,6 +81,7 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/kernel.h>
+#include <sys/vnode.h>
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -1827,6 +1828,20 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 			/* update pmap! */
 			pmap_protect(map->pmap, current->start, current->end,
 			    current->protection & MASK(entry));
+
+			/*
+			 * If this entry points at a vnode, and the
+			 * protection includes VM_PROT_EXECUTE, mark
+			 * the vnode as VTEXT.
+			 */
+			if (UVM_ET_ISOBJ(current)) {
+				struct uvm_object *uobj =
+				    current->object.uvm_obj;
+
+				if (UVM_OBJ_IS_VNODE(uobj) &&
+				    (current->protection & VM_PROT_EXECUTE))
+					vn_marktext((struct vnode *) uobj);
+			}
 		}
 
 		/*

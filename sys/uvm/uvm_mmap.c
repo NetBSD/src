@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.56 2001/09/15 20:36:46 chs Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.57 2001/10/29 23:06:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1069,6 +1069,13 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 
 			/* XXX for now, attach doesn't gain a ref */
 			VREF(vp);
+
+			/*
+			 * If the vnode is being mapped with PROT_EXEC,
+			 * then mark it as text.
+			 */
+			if (prot & PROT_EXEC)
+				vn_marktext(vp);
 		} else {
 			uobj = udv_attach((void *) &vp->v_rdev,
 			    (flags & MAP_SHARED) ? maxprot :
