@@ -1,4 +1,4 @@
-/*	$NetBSD: clonetest.c,v 1.7 2002/07/20 08:36:24 grant Exp $	*/
+/*	$NetBSD: clonetest.c,v 1.8 2003/02/08 00:44:00 cgd Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -44,18 +44,18 @@ static void
 test1()
 {
 	sigset_t mask;
-	void *stack;
+	void *allocstack, *stack;
 	pid_t pid;
 	__volatile long frobme[2];
 	int stat;
 
-	stack = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE|PROT_EXEC,
+	allocstack = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE|PROT_EXEC,
 	    MAP_PRIVATE|MAP_ANON, -1, (off_t) 0);
 
-	if (stack == MAP_FAILED)
+	if (allocstack == MAP_FAILED)
 		err(1, "mmap stack");
 
-	stack = (caddr_t) stack + STACKSIZE * stackdir(&stat);
+	stack = (caddr_t) allocstack + STACKSIZE * stackdir(&stat);
 
 	printf("parent: stack = %p, frobme = %p\n", stack, frobme);
 	fflush(stdout);
@@ -91,15 +91,36 @@ test1()
 
 	if (WEXITSTATUS(stat) != CHILDEXIT || frobme[1] != FROBVAL)
 		exit(1);
+
+	if (munmap(allocstack, STACKSIZE) == -1)
+		err(1, "munmap stack");
 }
 
 static void
 test2()
 {
-	if (__clone(0, NULL,
+	void *allocstack, *stack;
+	int stat;
+
+	allocstack = mmap(NULL, STACKSIZE, PROT_READ|PROT_WRITE|PROT_EXEC,
+	    MAP_PRIVATE|MAP_ANON, -1, (off_t) 0);
+
+	if (allocstack == MAP_FAILED)
+		err(1, "mmap stack");
+
+	stack = (caddr_t) allocstack + STACKSIZE * stackdir(&stat);
+
+	if (__clone(0, stack,
 	    CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|SIGCHLD,
 	    (void *)NULL) != -1 || errno != EINVAL)
-		errx(1, "clone did not return EINVAL on invalid arguments");
+		errx(1, "clone did not return EINVAL on NULL function pointer");
+	if (__clone(newclone, NULL,
+	    CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|SIGCHLD,
+	    (void *)NULL) != -1 || errno != EINVAL)
+		errx(1, "clone did not return EINVAL on NULL stack pointer");
+
+	if (munmap(allocstack, STACKSIZE) == -1)
+		err(1, "munmap stack");
 }
 
 static void
