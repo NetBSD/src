@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.7 1999/09/13 12:15:55 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.8 1999/09/19 21:31:34 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -72,6 +72,10 @@ laddr_to_eui64(dst, src, len)
 	size_t len;
 {
 	switch (len) {
+	case 1:
+		bzero(dst, 7);
+		dst[7] = src[0];
+		break;
 	case 6:
 		dst[0] = src[0];
 		dst[1] = src[1];
@@ -127,6 +131,8 @@ in6_ifattach_getifid(ifp0)
 			case IFT_ETHER:
 			case IFT_FDDI:
 			case IFT_ATM:
+			case IFT_ARCNET:
+			/* what others? */
 				/* IEEE802/EUI64 cases - what others? */
 				addr = LLADDR(sdl);
 				addrlen = sdl->sdl_alen;
@@ -343,6 +349,14 @@ in6_ifattach(ifp, type, laddr, noloop)
 		      (caddr_t)&ia->ia_addr.sin6_addr.s6_addr8[8],
 		      IFID_LEN);
 		break;
+	case IN6_IFT_ARCNET:
+		ia->ia_ifa.ifa_rtrequest = nd6_rtrequest;
+		ia->ia_ifa.ifa_flags |= RTF_CLONING;
+		rtflag = RTF_CLONING;
+		if (laddr == NULL)
+			break;
+		onebyte_to_eui64(&ia->ia_addr.sin6_addr.s6_addr8[8], laddr);
+		break;
 	}
 
 	ia->ia_ifa.ifa_metric = ifp->if_metric;
@@ -527,6 +541,7 @@ in6_ifattach(ifp, type, laddr, noloop)
 
 	/* mark the address TENTATIVE, if needed. */
 	switch (ifp->if_type) {
+	case IFT_ARCNET:
 	case IFT_ETHER:
 	case IFT_FDDI:
 #if 0

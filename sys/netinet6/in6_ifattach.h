@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.h,v 1.3 1999/07/03 21:30:18 thorpej Exp $	*/
+/*	$NetBSD: in6_ifattach.h,v 1.4 1999/09/19 21:31:34 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,5 +46,6 @@ void in6_ifdetach __P((struct ifnet *));
 #define IN6_IFT_P2P	2
 #define IN6_IFT_802	3
 #define IN6_IFT_P2P802	4
+#define IN6_IFT_ARCNET	5
 
 #endif /* _NETINET6_IN6_IFATTACH_H_ */

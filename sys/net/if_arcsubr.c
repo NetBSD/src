@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.26 1999/08/29 20:38:36 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.27 1999/09/19 21:31:33 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -65,6 +65,15 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/if_inarp.h>
+#endif
+
+#ifdef INET6
+#ifndef INET
+#include <netinet/in.h>
+#endif
+#include <netinet6/in6_var.h>
+#include <netinet6/nd6.h>
+#include <netinet6/in6_ifattach.h>
 #endif
 
 #define ARCNET_ALLOW_BROKEN_ARP
@@ -222,6 +231,19 @@ arc_output(ifp, m0, dst, rt0)
 #endif
 		break;
 #endif
+#ifdef INET6
+	case AF_INET6:
+#ifdef NEWIP6OUTPUT
+		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)&adst))
+			return(0); /* it must be impossible, but... */
+#else
+		if (!nd6_resolve(ifp, rt, m, dst, (u_char *)&adst))
+			return(0);	/* if not yet resolves */
+#endif /* NEWIP6OUTPUT */
+		atype = htons(ARCTYPE_INET6);
+		newencoding = 1;
+		break;
+#endif
 
 	case AF_UNSPEC:
 		ah = (struct arc_header *)dst->sa_data;
@@ -331,7 +353,6 @@ arc_output(ifp, m0, dst, rt0)
 		ah->arc_dhost = adst;
 		ah->arc_shost = myself;
 	}
-
 	s = splimp();
 	/*
 	 * Queue message on interface, and start output if interface
@@ -378,10 +399,12 @@ arc_defrag(ifp, m)
 	
 	ac = (struct arccom *)ifp;
 
-	m = m_pullup(m, ARC_HDRNEWLEN);
-	if (m == NULL) {
-		++ifp->if_ierrors;
-		return NULL;
+	if (m->m_len < ARC_HDRNEWLEN) {
+		m = m_pullup(m, ARC_HDRNEWLEN);
+		if (m == NULL) {
+			++ifp->if_ierrors;
+			return NULL;
+		}
 	}
 
 	ah = mtod(m, struct arc_header *);
@@ -396,10 +419,12 @@ arc_defrag(ifp, m)
 	if (ah->arc_flag == 0xff) {
 		m_adj(m, 4);
 
-		m = m_pullup(m, ARC_HDRNEWLEN);
-		if (m == NULL) {
-			++ifp->if_ierrors;
-			return NULL;
+		if (m->m_len < ARC_HDRNEWLEN) {
+			m = m_pullup(m, ARC_HDRNEWLEN);
+			if (m == NULL) {
+				++ifp->if_ierrors;
+				return NULL;
+			}
 		}
 
 		ah = mtod(m, struct arc_header *);
@@ -513,9 +538,9 @@ int
 arc_isphds(type)
 	u_int8_t type;
 {
-	return ((type != ARCTYPE_IP_OLD && 
-		 type != ARCTYPE_ARP_OLD) &&
-		 (type != ARCTYPE_DIAGNOSE));
+	return (type != ARCTYPE_IP_OLD && 
+		type != ARCTYPE_ARP_OLD &&
+		type != ARCTYPE_DIAGNOSE);
 }
 
 /*
@@ -586,6 +611,13 @@ arc_input(ifp, m)
 #ifdef ARCNET_ALLOW_BROKEN_ARP
 		mtod(m, struct arphdr *)->ar_pro = htons(ETHERTYPE_IP);
 #endif
+		break;
+#endif
+#ifdef INET6
+	case ARCTYPE_INET6:
+		m_adj(m, ARC_HDRNEWLEN);
+		schednetisr(NETISR_IPV6);
+		inq = &ip6intrq;
 		break;
 #endif
 	default:
@@ -670,4 +702,7 @@ arc_ifattach(ifp, lla)
 	arc_storelladdr(ifp, lla);
 
 	ifp->if_broadcastaddr = &arcbroadcastaddr;
+#ifdef INET6
+	in6_ifattach_getifid(ifp);
+#endif          
 }
