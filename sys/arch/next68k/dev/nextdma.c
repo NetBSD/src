@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.13 1999/03/02 12:11:25 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.14 1999/03/04 14:18:26 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -68,7 +68,6 @@ int nextdma_debug = 0;
 struct nextdma_config *debugernd;
 struct nextdma_config *debugexnd;
 
-int nextdma_intr __P((void *));
 void next_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
                        bus_size_t, int));
 int next_dma_continue __P((struct nextdma_config *));
@@ -120,8 +119,8 @@ nextdma_config(nd)
 
 	nextdma_init(nd);
 
-  isrlink_autovec(nextdma_intr, nd, NEXT_I_IPL(nd->nd_intr), 10);
-  INTR_ENABLE(nd->nd_intr);
+	isrlink_autovec(nextdma_intr, nd, NEXT_I_IPL(nd->nd_intr), 10);
+	INTR_ENABLE(nd->nd_intr);
 }
 
 void
