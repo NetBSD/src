@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.123 1998/02/18 03:14:31 jonathan Exp $
+#	$NetBSD: bsd.lib.mk,v 1.124 1998/02/18 08:14:31 jonathan Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -96,8 +96,8 @@ APICFLAGS?= -k
 
 # Platform-independent linker flags for ELF shared libraries
 .if (${SHLIB_TYPE} == "ELF")
-SHILB_WHOLE=--whole-archive
-SHILB_NOWHOLE=--no-whole-archive
+SHLIB_WHOLE=--whole-archive
+SHLIB_NOWHOLE=--no-whole-archive
 SHLIB_SOVERSION=${SHLIB_MAJOR}
 SHLIB_SHFLAGS=-shared -soname lib${LIB}.so.${SHLIB_SOVERSION}
 .endif
