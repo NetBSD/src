@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.35 2000/02/22 03:57:38 nisimura Exp $
+#	$NetBSD: MAKEDEV,v 1.36 2000/02/26 04:43:27 nisimura Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -162,7 +162,6 @@ md*)
 #	mknod rmd${unit}c c $chr $(($unit * 8 + 2)) 
 	chgrp operator md${unit}? #rmd${unit}?
 	chmod 640 md${unit}? #rmd${unit}?
-	;;
 	;;
 
 rz*|ccd*|cd*|raid*|sd*|vnd*)
