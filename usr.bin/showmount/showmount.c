@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.7 1996/05/01 18:14:10 cgd Exp $	*/
+/*	$NetBSD: showmount.c,v 1.8 1997/10/19 23:09:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993, 1995\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1995\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif not lint
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-static char rcsid[] = "$NetBSD: showmount.c,v 1.7 1996/05/01 18:14:10 cgd Exp $";
+__RCSID("$NetBSD: showmount.c,v 1.8 1997/10/19 23:09:43 lukem Exp $");
 #endif not lint
 
 #include <sys/types.h>
@@ -94,6 +94,7 @@ static struct mountlist *mntdump;
 static struct exportslist *exports;
 static int type = 0;
 
+int	main __P((int, char **));
 void	print_dump __P((struct mountlist *));
 void	usage __P((void));
 int	xdr_mntdump __P((XDR *, struct mountlist **));
@@ -220,6 +221,7 @@ xdr_mntdump(xdrsp, mlp)
 	int bool, val, val2;
 	char *strp;
 
+	otp = NULL;
 	*mlp = (struct mountlist *)0;
 	if (!xdr_bool(xdrsp, &bool))
 		return (0);
