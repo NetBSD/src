@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 1995/11/02 23:54:54 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.22 1995/11/08 02:30:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.21 1995/11/02 23:54:54 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.22 1995/11/08 02:30:58 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -157,6 +157,7 @@ MainParseArgs(argc, argv)
 	extern int optind;
 	extern char *optarg;
 	int c;
+	int forceJobs = 0;
 
 	optind = 1;	/* since we're called more than once */
 #ifdef REMOTE
@@ -261,6 +262,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 			Var_Append(MAKEFLAGS, "-i", VAR_GLOBAL);
 			break;
 		case 'j':
+			forceJobs = TRUE;
 			maxJobs = atoi(optarg);
 #ifndef REMOTE
 			maxLocal = maxJobs;
@@ -298,6 +300,13 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 			usage();
 		}
 	}
+
+	/*
+	 * Be compatible if user did not specify -j and did not explicitly
+	 * turned compatibility on
+	 */
+	if (!compatMake && !forceJobs)
+		compatMake = TRUE;
 
 	oldVars = TRUE;
 
@@ -674,10 +683,6 @@ main(argc, argv)
 	else
 		targs = Targ_FindList(create, TARG_CREATE);
 
-/*
- * this was original amMake -- want to allow parallelism, so put this
- * back in, eventually.
- */
 	if (!compatMake) {
 		/*
 		 * Initialize job module before traversing the graph, now that
