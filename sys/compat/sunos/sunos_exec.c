@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.9 1995/06/25 14:15:08 briggs Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.10 1996/03/14 19:33:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -61,6 +61,11 @@
 #define	sunos_exec_aout_prep_nmagic exec_aout_prep_nmagic
 #define	sunos_exec_aout_prep_omagic exec_aout_prep_omagic
 #endif
+
+int sunos_exec_aout_makecmds __P((struct proc *, struct exec_package *));
+int sunos_exec_aout_prep_zmagic __P((struct proc *, struct exec_package *));
+int sunos_exec_aout_prep_nmagic __P((struct proc *, struct exec_package *));
+int sunos_exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
 
 extern int nsunos_sysent;
 extern struct sysent sunos_sysent[];
@@ -152,7 +157,6 @@ sunos_exec_aout_prep_zmagic(p, epp)
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
-	struct exec_vmcmd *ccmdp;
 
 	epp->ep_taddr = SUNOS_N_TXTADDR(*execp, ZMAGIC);
 	epp->ep_tsize = execp->a_text;
@@ -202,7 +206,6 @@ sunos_exec_aout_prep_nmagic(p, epp)
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
-	struct exec_vmcmd *ccmdp;
 	long bsize, baddr;
 
 	epp->ep_taddr = SUNOS_N_TXTADDR(*execp, NMAGIC);
@@ -240,7 +243,6 @@ sunos_exec_aout_prep_omagic(p, epp)
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
-	struct exec_vmcmd *ccmdp;
 	long bsize, baddr;
 
 	epp->ep_taddr = SUNOS_N_TXTADDR(*execp, OMAGIC);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.22 1996/02/28 16:03:54 pk Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.23 1996/03/14 19:33:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -89,6 +89,11 @@ static u_long s2btab[] = {
 	19200,
 	38400,
 };
+
+static void stios2btios __P((struct sunos_termios *, struct termios *));
+static void btios2stios __P((struct termios *, struct sunos_termios *));
+static void stios2stio __P((struct sunos_termios *, struct sunos_termio *));
+static void stio2stios __P((struct sunos_termio *, struct sunos_termios *));
 
 /*
  * these two conversion functions have mostly been done
@@ -233,6 +238,7 @@ btios2stios(bt, st)
 	struct sunos_termios *st;
 {
 	register u_long l, r;
+	int s;
 
 	l = bt->c_iflag;
 	r = 	((l &  IGNBRK) ? 0x00000001	: 0);
@@ -323,9 +329,9 @@ btios2stios(bt, st)
 	r |=	((l &  PENDIN) ? 0x00004000	: 0);
 	st->c_lflag = r;
 
-	l = ttspeedtab(bt->c_ospeed, sptab);
-	if (l >= 0)
-		st->c_cflag |= l;
+	s = ttspeedtab(bt->c_ospeed, sptab);
+	if (s >= 0)
+		st->c_cflag |= s;
 
 	st->c_cc[0] = bt->c_cc[VINTR]   != _POSIX_VDISABLE? bt->c_cc[VINTR]:0;
 	st->c_cc[1] = bt->c_cc[VQUIT]   != _POSIX_VDISABLE? bt->c_cc[VQUIT]:0;
@@ -390,7 +396,7 @@ sunos_sys_ioctl(p, v, retval)
 	struct sunos_sys_ioctl_args *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
-	register int (*ctl)();
+	register int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
 	int error;
 
 	if ( (unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
@@ -545,14 +551,16 @@ sunos_sys_ioctl(p, v, retval)
 	case _IOW('t', 32, int): {	/* TIOCTCNTL */
 		int error, on;
 
-		if (error = copyin (SCARG(uap, data), (caddr_t)&on, sizeof (on)))
+		error = copyin (SCARG(uap, data), (caddr_t)&on, sizeof (on));
+		if (error)
 			return error;
 		return (*ctl)(fp, TIOCUCNTL, (caddr_t)&on, p);
 	}
 	case _IOW('t', 33, int): {	/* TIOCSIGNAL */
 		int error, sig;
 
-		if (error = copyin (SCARG(uap, data), (caddr_t)&sig, sizeof (sig)))
+		error = copyin (SCARG(uap, data), (caddr_t)&sig, sizeof (sig));
+		if (error)
 			return error;
 		return (*ctl)(fp, TIOCSIG, (caddr_t)&sig, p);
 	}
@@ -562,15 +570,17 @@ sunos_sys_ioctl(p, v, retval)
  */
 #define IFREQ_IN(a) { \
 	struct ifreq ifreq; \
-	if (error = copyin (SCARG(uap, data), (caddr_t)&ifreq, sizeof (ifreq))) \
+	error = copyin (SCARG(uap, data), (caddr_t)&ifreq, sizeof (ifreq)); \
+	if (error) \
 		return error; \
 	return (*ctl)(fp, a, (caddr_t)&ifreq, p); \
 }
 #define IFREQ_INOUT(a) { \
 	struct ifreq ifreq; \
-	if (error = copyin (SCARG(uap, data), (caddr_t)&ifreq, sizeof (ifreq))) \
+	error = copyin (SCARG(uap, data), (caddr_t)&ifreq, sizeof (ifreq)); \
+	if (error) \
 		return error; \
-	if (error = (*ctl)(fp, a, (caddr_t)&ifreq, p)) \
+	if ((error = (*ctl)(fp, a, (caddr_t)&ifreq, p)) != 0) \
 		return error; \
 	return copyout ((caddr_t)&ifreq, SCARG(uap, data), sizeof (ifreq)); \
 }
@@ -655,10 +665,12 @@ sunos_sys_ioctl(p, v, retval)
 		 * 1. our sockaddr's are variable length, not always sizeof(sockaddr)
 		 * 2. this returns a name per protocol, ie. it returns two "lo0"'s
 		 */
-		if (error = copyin (SCARG(uap, data), (caddr_t)&ifconf,
-		    sizeof (ifconf)))
+		error = copyin (SCARG(uap, data), (caddr_t)&ifconf,
+		    sizeof (ifconf));
+		if (error)
 			return error;
-		if (error = (*ctl)(fp, OSIOCGIFCONF, (caddr_t)&ifconf, p))
+		error = (*ctl)(fp, OSIOCGIFCONF, (caddr_t)&ifconf, p);
+		if (error)
 			return error;
 		return copyout ((caddr_t)&ifconf, SCARG(uap, data),
 		    sizeof (ifconf));
@@ -673,7 +685,8 @@ sunos_sys_ioctl(p, v, retval)
 		struct audio_info aui;
 		struct sunos_audio_info sunos_aui;
 
-		if (error = (*ctl)(fp, AUDIO_GETINFO, (caddr_t)&aui, p))
+		error = (*ctl)(fp, AUDIO_GETINFO, (caddr_t)&aui, p);
+		if (error)
 			return error;
 
 		sunos_aui.play = *(struct sunos_audio_prinfo *)&aui.play;
@@ -705,8 +718,9 @@ sunos_sys_ioctl(p, v, retval)
 		struct audio_info aui;
 		struct sunos_audio_info sunos_aui;
 
-		if (error = copyin (SCARG(uap, data), (caddr_t)&sunos_aui,
-		    sizeof (sunos_aui)))
+		error = copyin (SCARG(uap, data), (caddr_t)&sunos_aui,
+		    sizeof (sunos_aui));
+		if (error)
 			return error;
 
 		aui.play = *(struct audio_prinfo *)&sunos_aui.play;
@@ -736,7 +750,8 @@ sunos_sys_ioctl(p, v, retval)
 			 sunos_aui.record.active != (u_char)~0)
 			aui.record.pause = 1;
 
-		if (error = (*ctl)(fp, AUDIO_SETINFO, (caddr_t)&aui, p))
+		error = (*ctl)(fp, AUDIO_SETINFO, (caddr_t)&aui, p);
+		if (error)
 			return error;
 		/* Return new state */
 		goto sunos_au_getinfo;
