@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.67 2001/10/12 05:18:23 lukem Exp $
+#	$NetBSD: security,v 1.68 2001/10/13 14:22:11 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -805,16 +805,29 @@ if checkyesno check_changelist ; then
 		    sed '/^type=file/!d ; s/type=file \.//'
 	done > $CHANGEFILES
 
-		# Add other files which might dynamically exist, including:
+		# Add other files which might dynamically exist:
 		#	/etc/ifconfig.*
 		#	/etc/raid*.conf
+		#	/etc/rc.d/*
 		#	/etc/rc.conf.d/*
-	ls -1d $backup_dir/etc/ifconfig.*.current \
-	    $backup_dir/etc/raid*.conf.current \
-	    $backup_dir/etc/rc.conf.d/*.current		2>/dev/null |
+		#
+	ls -1d	$backup_dir/etc/ifconfig.*.current	\
+		$backup_dir/etc/raid*.conf.current	\
+		$backup_dir/etc/rc.d/*.current		\
+		$backup_dir/etc/rc.conf.d/*.current	\
+	    2>/dev/null |
 	    sed "s,^$backup_dir/,/, ; s,\.current$,," >> $CHANGEFILES
-	ls -1d /etc/ifconfig.* /etc/raid*.conf /etc/rc.conf.d/* \
+	ls -1d	/etc/ifconfig.*		\
+		/etc/raid*.conf		\
+		/etc/rc.d/*		\
+		/etc/rc.conf.d/*	\
 	    2>/dev/null >> $CHANGEFILES
+
+		# Add /etc/changelist
+		#
+	if [ -s /etc/changelist ]; then
+		grep -v '^#' /etc/changelist >> $CHANGEFILES
+	fi
 
 	CHANGELIST="$CHANGEFILES $CHANGELIST"
 fi
@@ -830,23 +843,16 @@ for file in $special_files; do
 	mtree -D -k type -f $file -I nomail |
 	    sed '/^type=file/!d ; s/type=file \.//'
 done >> $TMP1
-for file in `sort -u $TMP1`; do
+sort -u $TMP1 > $TMP2
+
+cat $TMP2 | while read file; do
 	backup_and_diff "$file" no
 done
 
 
 if [ -n "$CHANGELIST" ]; then
 	cat $CHANGELIST | sort -u > $TMP1
-
-	echo "$MP" > $TMP2		# always exclude /etc/master.passwd
-	for file in $special_files; do
-		[ ! -s $file ] && continue
-		mtree -D -k type -f $file -I nomail |
-		    sed '/^type=file/!d ; s/type=file \.//'
-	done >> $TMP2
-	sort -u -o $TMP2 $TMP2
-
-	for file in `comm -23 $TMP1 $TMP2`; do
+	comm -23 $TMP1 $TMP2 | while read file; do
 		backup_and_diff "$file" yes
 	done
 fi
