@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_udp.c,v 1.7 1997/07/13 20:13:08 christos Exp $	*/
+/*	$NetBSD: clnt_udp.c,v 1.8 1997/07/21 14:08:26 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_udp.c,v 1.7 1997/07/13 20:13:08 christos Exp $");
+__RCSID("$NetBSD: clnt_udp.c,v 1.8 1997/07/21 14:08:26 jtc Exp $");
 #endif
 #endif
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: clnt_udp.c,v 1.7 1997/07/13 20:13:08 christos Exp $");
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/poll.h>
 
@@ -57,6 +58,11 @@ __RCSID("$NetBSD: clnt_udp.c,v 1.7 1997/07/13 20:13:08 christos Exp $");
 #include <netdb.h>
 #include <errno.h>
 #include <rpc/pmap_clnt.h>
+
+#ifdef __weak_alias
+__weak_alias(clntudp_bufcreate,_clntudp_bufcreate);
+__weak_alias(clntudp_create,_clntudp_create);
+#endif
 
 /*
  * UDP bases client side rpc operations

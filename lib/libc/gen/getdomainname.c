@@ -1,4 +1,4 @@
-/*	$NetBSD: getdomainname.c,v 1.4 1997/07/13 19:45:54 christos Exp $	*/
+/*	$NetBSD: getdomainname.c,v 1.5 1997/07/21 14:07:04 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)gethostname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getdomainname.c,v 1.4 1997/07/13 19:45:54 christos Exp $");
+__RCSID("$NetBSD: getdomainname.c,v 1.5 1997/07/21 14:07:04 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctermid.c,v 1.6 1997/07/14 19:40:49 kleink Exp $	*/
+/*	$NetBSD: ctermid.c,v 1.7 1997/07/21 14:06:51 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,13 +38,18 @@
 #if 0
 static char sccsid[] = "@(#)ctermid.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ctermid.c,v 1.6 1997/07/14 19:40:49 kleink Exp $");
+__RCSID("$NetBSD: ctermid.c,v 1.7 1997/07/21 14:06:51 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <string.h>
 #include <paths.h>
+
+#ifdef __weak_alias
+__weak_alias(ctermid,_ctermid);
+#endif
 
 char *
 ctermid(s)

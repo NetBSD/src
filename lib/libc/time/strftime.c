@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.3 1997/07/13 20:26:52 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.4 1997/07/21 14:09:22 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,10 +38,11 @@
 #if 0
 static char *sccsid = "@(#)strftime.c	5.11 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.3 1997/07/13 20:26:52 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.4 1997/07/21 14:09:22 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/localedef.h>
 #include <locale.h>
 #include <string.h>

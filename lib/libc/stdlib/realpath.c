@@ -1,4 +1,4 @@
-/*	$NetBSD: realpath.c,v 1.4 1997/07/13 20:16:55 christos Exp $	*/
+/*	$NetBSD: realpath.c,v 1.5 1997/07/21 14:09:03 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "from: @(#)realpath.c	8.1 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: realpath.c,v 1.4 1997/07/13 20:16:55 christos Exp $");
+__RCSID("$NetBSD: realpath.c,v 1.5 1997/07/21 14:09:03 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/stat.h>
 
@@ -53,6 +54,10 @@ __RCSID("$NetBSD: realpath.c,v 1.4 1997/07/13 20:16:55 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(realpath,_realpath);
+#endif
 
 /*
  * char *realpath(const char *path, char resolved_path[MAXPATHLEN]);

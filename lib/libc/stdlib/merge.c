@@ -1,4 +1,4 @@
-/*	$NetBSD: merge.c,v 1.4 1997/07/13 20:16:47 christos Exp $	*/
+/*	$NetBSD: merge.c,v 1.5 1997/07/21 14:08:56 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)merge.c	8.2 (Berkeley) 2/14/94";
 #else
-__RCSID("$NetBSD: merge.c,v 1.4 1997/07/13 20:16:47 christos Exp $");
+__RCSID("$NetBSD: merge.c,v 1.5 1997/07/21 14:08:56 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,11 +59,16 @@ __RCSID("$NetBSD: merge.c,v 1.4 1997/07/13 20:16:47 christos Exp $");
  * (The default is pairwise merging.)
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(mergesort,_mergesort);
+#endif
 
 static void setup __P((u_char *, u_char *, size_t, size_t,
     int (*)(const void *, const void *)));

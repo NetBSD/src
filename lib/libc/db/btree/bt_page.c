@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_page.c,v 1.7 1997/07/13 18:51:54 christos Exp $	*/
+/*	$NetBSD: bt_page.c,v 1.8 1997/07/21 14:06:34 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)bt_page.c	8.3 (Berkeley) 7/14/94";
 #else
-__RCSID("$NetBSD: bt_page.c,v 1.7 1997/07/13 18:51:54 christos Exp $");
+__RCSID("$NetBSD: bt_page.c,v 1.8 1997/07/21 14:06:34 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 
 #include <stdio.h>

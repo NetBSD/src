@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.6 1997/07/13 19:46:02 christos Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.7 1997/07/21 14:07:17 jtc Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.6 1997/07/13 19:46:02 christos Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.7 1997/07/21 14:07:17 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -50,6 +51,12 @@ __RCSID("$NetBSD: getusershell.c,v 1.6 1997/07/13 19:46:02 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <paths.h>
+
+#ifdef __weak_alias
+__weak_alias(endusershell,_endusershell);
+__weak_alias(getusershell,_getusershell);
+__weak_alias(setusershell,_setusershell);
+#endif
 
 /*
  * Local shells should NOT be added here.  They should be added in

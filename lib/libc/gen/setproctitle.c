@@ -1,4 +1,4 @@
-/*	$NetBSD: setproctitle.c,v 1.7 1997/07/13 19:46:15 christos Exp $	*/
+/*	$NetBSD: setproctitle.c,v 1.8 1997/07/21 14:07:31 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
@@ -33,9 +33,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setproctitle.c,v 1.7 1997/07/13 19:46:15 christos Exp $");
+__RCSID("$NetBSD: setproctitle.c,v 1.8 1997/07/21 14:07:31 jtc Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -49,6 +50,10 @@ __RCSID("$NetBSD: setproctitle.c,v 1.7 1997/07/13 19:46:15 christos Exp $");
 #include <stdarg.h>
 #else
 #include <varargs.h>
+#endif
+
+#ifdef __weak_alias
+__weak_alias(setproctitle,_setproctitle);
 #endif
 
 #define	MAX_PROCTITLE	2048

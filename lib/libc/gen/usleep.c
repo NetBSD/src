@@ -1,4 +1,4 @@
-/*	$NetBSD: usleep.c,v 1.13 1997/07/19 15:58:31 kleink Exp $	*/
+/*	$NetBSD: usleep.c,v 1.14 1997/07/21 14:07:45 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,11 +38,16 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: usleep.c,v 1.13 1997/07/19 15:58:31 kleink Exp $");
+__RCSID("$NetBSD: usleep.c,v 1.14 1997/07/21 14:07:45 jtc Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <time.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(usleep,_usleep);
+#endif
 
 void
 usleep(useconds)

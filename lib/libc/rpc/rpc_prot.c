@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_prot.c,v 1.4 1997/07/13 20:12:12 christos Exp $	*/
+/*	$NetBSD: rpc_prot.c,v 1.5 1997/07/21 14:08:36 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_prot.c,v 1.4 1997/07/13 20:12:12 christos Exp $");
+__RCSID("$NetBSD: rpc_prot.c,v 1.5 1997/07/21 14:08:36 jtc Exp $");
 #endif
 #endif
 
@@ -52,9 +52,18 @@ __RCSID("$NetBSD: rpc_prot.c,v 1.4 1997/07/13 20:12:12 christos Exp $");
  * routines are also in this program.
  */
 
+#include "namespace.h"
 #include <sys/param.h>
-
 #include <rpc/rpc.h>
+
+#ifdef __weak_alias
+__weak_alias(xdr_accepted_reply,_xdr_accepted_reply);
+__weak_alias(xdr_callhdr,_xdr_callhdr);
+__weak_alias(xdr_des_block,_xdr_des_block);
+__weak_alias(xdr_opaque_auth,_xdr_opaque_auth);
+__weak_alias(xdr_rejected_reply,_xdr_rejected_reply);
+__weak_alias(xdr_replymsg,_xdr_replymsg);
+#endif
 
 static void accepted __P((enum accept_stat, struct rpc_err *));
 static void rejected __P((enum reject_stat, struct rpc_err *));

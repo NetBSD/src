@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetent.c,v 1.10 1997/07/20 13:33:21 mrg Exp $	*/
+/*	$NetBSD: getnetent.c,v 1.11 1997/07/21 14:07:56 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -48,10 +48,11 @@
 static char sccsid[] = "@(#)getnetent.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: getnetent.c,v 8.4 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetent.c,v 1.10 1997/07/20 13:33:21 mrg Exp $");
+__RCSID("$NetBSD: getnetent.c,v 1.11 1997/07/21 14:07:56 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -59,6 +60,12 @@ __RCSID("$NetBSD: getnetent.c,v 1.10 1997/07/20 13:33:21 mrg Exp $");
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(endnetent,_endnetent);
+__weak_alias(getnetent,_getnetent);
+__weak_alias(setnetent,_setnetent);
+#endif
 
 #define	MAXALIASES	35
 
@@ -68,8 +75,8 @@ static struct netent net;
 static char *net_aliases[MAXALIASES];
 int _net_stayopen;
 
-void _setnetent __P((int));
-void _endnetent __P((void));
+static void __setnetent __P((int));
+static void __endnetent __P((void));
 
 void
 setnetent(stayopen)
@@ -77,7 +84,7 @@ setnetent(stayopen)
 {
 
 	sethostent(stayopen);
-	_setnetent(stayopen);
+	__setnetent(stayopen);
 }
 
 void
@@ -85,11 +92,11 @@ endnetent()
 {
 
 	endhostent();
-	_endnetent();
+	__endnetent();
 }
 
-void
-_setnetent(f)
+static void
+__setnetent(f)
 	int f;
 {
 
@@ -100,8 +107,8 @@ _setnetent(f)
 	_net_stayopen |= f;
 }
 
-void
-_endnetent()
+static void
+__endnetent()
 {
 
 	if (netf) {

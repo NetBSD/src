@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.10 1997/07/13 20:08:16 christos Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.11 1997/07/21 14:08:23 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_perror.c,v 1.10 1997/07/13 20:08:16 christos Exp $");
+__RCSID("$NetBSD: clnt_perror.c,v 1.11 1997/07/21 14:08:23 jtc Exp $");
 #endif
 #endif
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: clnt_perror.c,v 1.10 1997/07/13 20:08:16 christos Exp $");
  * Copyright (C) 1984, Sun Microsystems, Inc.
  *
  */
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,6 +53,15 @@ __RCSID("$NetBSD: clnt_perror.c,v 1.10 1997/07/13 20:08:16 christos Exp $");
 #include <rpc/types.h>
 #include <rpc/auth.h>
 #include <rpc/clnt.h>
+
+#ifdef __weak_alias
+__weak_alias(clnt_pcreateerror,_clnt_pcreateerror);
+__weak_alias(clnt_perrno,_clnt_perrno);
+__weak_alias(clnt_perror,_clnt_perror);
+__weak_alias(clnt_spcreateerror,_clnt_spcreateerror);
+__weak_alias(clnt_sperrno,_clnt_sperrno);
+__weak_alias(clnt_sperror,_clnt_sperror);
+#endif
 
 static char *buf;
 static int buflen;

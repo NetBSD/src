@@ -1,4 +1,4 @@
-/*	$NetBSD: alarm.c,v 1.5 1997/07/13 19:45:36 christos Exp $	*/
+/*	$NetBSD: alarm.c,v 1.6 1997/07/21 14:06:48 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,15 +38,20 @@
 #if 0
 static char sccsid[] = "@(#)alarm.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: alarm.c,v 1.5 1997/07/13 19:45:36 christos Exp $");
+__RCSID("$NetBSD: alarm.c,v 1.6 1997/07/21 14:06:48 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * Backwards compatible alarm.
  */
+#include "namespace.h"
 #include <sys/time.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(alarm,_alarm);
+#endif
 
 unsigned int
 alarm(secs)

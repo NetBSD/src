@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.6 1997/07/13 20:24:20 christos Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.7 1997/07/21 14:09:08 jtc Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -38,12 +38,18 @@
 #if 0
 static const char sccsid[] = "@(#)strcasecmp.c	5.10 (Berkeley) 1/26/91";
 #else
-__RCSID("$NetBSD: strcasecmp.c,v 1.6 1997/07/13 20:24:20 christos Exp $");
+__RCSID("$NetBSD: strcasecmp.c,v 1.7 1997/07/21 14:09:08 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <ctype.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(strcasecmp,_strcasecmp);
+__weak_alias(strncasecmp,_strncasecmp);
+#endif
 
 typedef unsigned char u_char;
 

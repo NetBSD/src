@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.9 1997/07/13 20:16:47 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.10 1997/07/21 14:08:55 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.9 1997/07/13 20:16:47 christos Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.10 1997/07/21 14:08:55 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: malloc.c,v 1.9 1997/07/13 20:16:47 christos Exp $");
  * This is designed for use in a virtual memory environment.
  */
 
+#include "namespace.h"
 #if defined(DEBUG) || defined(RCHECK) || defined(MSTATS)
 #include <stdio.h>
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: get_myaddress.c,v 1.4 1997/07/13 20:13:09 christos Exp $	*/
+/*	$NetBSD: get_myaddress.c,v 1.5 1997/07/21 14:08:27 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)get_myaddress.c 1.4 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)get_myaddress.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: get_myaddress.c,v 1.4 1997/07/13 20:13:09 christos Exp $");
+__RCSID("$NetBSD: get_myaddress.c,v 1.5 1997/07/21 14:08:27 jtc Exp $");
 #endif
 #endif
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: get_myaddress.c,v 1.4 1997/07/13 20:13:09 christos Exp $");
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <sys/socket.h>
@@ -55,6 +56,10 @@ __RCSID("$NetBSD: get_myaddress.c,v 1.4 1997/07/13 20:13:09 christos Exp $");
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#ifdef __weak_alias
+__weak_alias(get_myaddress,_get_myaddress);
+#endif
 
 /* 
  * don't use gethostbyname, which would invoke yellow pages
