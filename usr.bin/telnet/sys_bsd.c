@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)sys_bsd.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: sys_bsd.c,v 1.6 1995/03/17 18:03:08 mycroft Exp $";
+static char *rcsid = "$Id: sys_bsd.c,v 1.7 1996/02/15 00:59:16 tls Exp $";
 #endif /* not lint */
 
 /*
@@ -530,9 +530,7 @@ TerminalNewMode(f)
 #ifndef	USE_TERMIO
 	ltc.t_lnextc = _POSIX_VDISABLE;
 #else
-# ifdef VLNEXT
-	tmp_tc.c_cc[VLNEXT] = (cc_t)(_POSIX_VDISABLE);
-# endif
+	tmp_tc.c_lflag &= ~IEXTEN;
 #endif
     }
 
