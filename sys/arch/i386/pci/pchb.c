@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.15 1998/07/13 03:30:52 mark Exp $	*/
+/*	$NetBSD: pchb.c,v 1.16 1998/10/08 20:04:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ pchbmatch(parent, match, aux)
 		case PCI_PRODUCT_INTEL_82439HX:
 		case PCI_PRODUCT_INTEL_82439TX:
 		case PCI_PRODUCT_INTEL_82441FX:
+		case PCI_PRODUCT_INTEL_82443BX:
 		case PCI_PRODUCT_INTEL_82443LX:
 		case PCI_PRODUCT_INTEL_PCI450_PB:
 		case PCI_PRODUCT_INTEL_PCI450_MC:
