@@ -1,3 +1,5 @@
+/*	$NetBSD: pcnfsd_test.c,v 1.2 1995/07/25 22:21:01 gwr Exp $	*/
+
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_test.c 1.2 92/01/27 18:00:39 SMI */
 #include <stdio.h>
 #include <rpc/rpc.h>
