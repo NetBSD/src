@@ -80,7 +80,7 @@ static void timed_wait_alarm(int unused_sig)
 int     timed_waitpid(pid_t pid, WAIT_STATUS_T *statusp, int options,
 		              int time_limit)
 {
-    char   *myname = "timed_waitpid";
+    const char *myname = "timed_waitpid";
     struct sigaction action;
     struct sigaction old_action;
     int     time_left;

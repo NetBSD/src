@@ -56,7 +56,7 @@ static VSTREAM *msg_stream;
 
 static void msg_vstream_print(int level, const char *text)
 {
-    static char *level_text[] = {
+    static const char *level_text[] = {
 	"info", "warning", "error", "fatal", "panic",
     };
 

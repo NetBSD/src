@@ -115,7 +115,7 @@ typedef struct {
 
 static int mac_expand_callback(int type, VSTRING *buf, char *ptr)
 {
-    char   *myname = "mac_expand_callback";
+    const char *myname = "mac_expand_callback";
     MAC_EXP *mc = (MAC_EXP *) ptr;
     int     lookup_mode;
     const char *text;
