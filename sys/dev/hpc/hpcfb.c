@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.14 2001/08/15 15:16:53 uch Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.15 2001/11/13 12:47:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -42,11 +42,14 @@
  * written by SATO Kazumi.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.15 2001/11/13 12:47:56 lukem Exp $");
+
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.14 2001/08/15 15:16:53 uch Exp $";
+    "$NetBSD: hpcfb.c,v 1.15 2001/11/13 12:47:56 lukem Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>

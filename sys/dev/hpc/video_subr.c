@@ -1,4 +1,4 @@
-/*	$NetBSD: video_subr.c,v 1.3 2001/06/05 15:02:12 uch Exp $	*/
+/*	$NetBSD: video_subr.c,v 1.4 2001/11/13 12:47:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: video_subr.c,v 1.4 2001/11/13 12:47:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

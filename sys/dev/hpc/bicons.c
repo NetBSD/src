@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.3 2001/09/15 15:27:59 uch Exp $	*/
+/*	$NetBSD: bicons.c,v 1.4 2001/11/13 12:47:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.4 2001/11/13 12:47:56 lukem Exp $");
 
 #define HALF_FONT
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcin.c,v 1.3 2001/06/13 19:02:13 uch Exp $	*/
+/*	$NetBSD: hpcin.c,v 1.4 2001/11/13 12:47:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.4 2001/11/13 12:47:56 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

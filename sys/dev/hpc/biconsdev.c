@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.2 2001/05/02 10:32:10 scw Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.3 2001/11/13 12:47:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -69,6 +69,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.3 2001/11/13 12:47:56 lukem Exp $");
 
 #include "biconsdev.h"
 #if NBICONSDEV > 0

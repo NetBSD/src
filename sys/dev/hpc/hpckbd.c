@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.5 2001/06/04 18:59:32 uch Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.6 2001/11/13 12:47:56 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.6 2001/11/13 12:47:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
