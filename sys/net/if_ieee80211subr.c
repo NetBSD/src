@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.4 2001/09/24 21:47:57 reinoud Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.5 2001/09/25 01:07:53 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -435,8 +435,7 @@ ieee80211_decap(struct ifnet *ifp, struct mbuf *m)
 		m_freem(m);
 		return NULL;
 	}
-	if (ALIGN(mtod(m, uintptr_t) + sizeof(*eh)) !=
-	    (mtod(m, uintptr_t) + sizeof(*eh))) {
+	if (!ALIGNED_POINTER(mtod(m, caddr_t) + sizeof(*eh), u_int32_t)) {
 		struct mbuf *n, *n0, **np;
 		caddr_t newdata;
 		int off;
