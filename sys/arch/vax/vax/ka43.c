@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.7 1998/06/04 19:42:14 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.8 1998/06/09 14:02:01 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -257,7 +257,6 @@ ka43_cache_invalidate()
 	 */
 	val = 0xff;
 	/* if (memory > 28 MB) val = 0x55; */
-	printf("clearing tags...\n");
 	for (i = 0; i < KA43_CT2_SIZE; i+= 4) {	/* Quadword entries ?? */
 		ka43_ctag[i/4] = val;		/* reset upper and lower */
 	}
@@ -357,9 +356,10 @@ ka43_steal_pages()
 	    (vm_offset_t)KA43_CH2_CREG + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	/* 2nd level CTA */
-	MAPVIRT(ka43_ctag, 1);
+	MAPVIRT(ka43_ctag, KA43_CT2_SIZE/NBPG);
 	pmap_map((vm_offset_t)ka43_ctag, (vm_offset_t)KA43_CT2_BASE,
-	    (vm_offset_t)KA43_CT2_BASE + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)KA43_CT2_BASE + KA43_CT2_SIZE,
+	    VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
 	 * Oh holy shit! It took me over one year(!) to find out that
