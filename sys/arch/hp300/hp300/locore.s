@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.60 1996/10/14 20:02:48 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.61 1996/10/14 22:11:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -74,18 +74,6 @@ tmpstk:
 #include <hp300/hp300/vectors.s>
 
 	.text
-/*
- * This is where we wind up if the kernel jumps to location 0.
- * (i.e. a bogus PC)  This is known to immediately follow the vector
- * table and is hence at 0x400 (see reset vector in vectors.s).
- */
-	.globl	_panic
-	pea	Ljmp0panic
-	jbsr	_panic
-	/* NOTREACHED */
-Ljmp0panic:
-	.asciz	"kernel jump to zero"
-	.even
 
 /*
  * Do a dump.
