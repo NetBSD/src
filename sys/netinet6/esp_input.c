@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.27 2002/10/28 16:42:44 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.28 2003/01/20 00:39:30 simonb Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.27 2002/10/28 16:42:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.28 2003/01/20 00:39:30 simonb Exp $");
 
 #include "opt_inet.h"
 
@@ -111,11 +111,11 @@ esp4_input(m, va_alist)
 	size_t esplen;
 	int s;
 	va_list ap;
-	int off, proto;
+	int off;
 
 	va_start(ap, m);
 	off = va_arg(ap, int);
-	proto = va_arg(ap, int);
+	(void)va_arg(ap, int);		/* ignore value, advance ap */
 	va_end(ap);
 
 	/* sanity check for alignment. */
