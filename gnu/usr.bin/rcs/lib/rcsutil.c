@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsutil.c,v 1.7 1998/07/27 01:21:18 mycroft Exp $	*/
+/*	$NetBSD: rcsutil.c,v 1.8 1999/09/17 13:13:32 lukem Exp $	*/
 
 /* RCS utility functions */
 
@@ -34,6 +34,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsutil.c,v $
+ * Revision 1.8  1999/09/17 13:13:32  lukem
+ * don't call fwrite() will a NULL buffer
+ *
  * Revision 1.7  1998/07/27 01:21:18  mycroft
  * const poisoning.
  *
@@ -818,6 +821,9 @@ awrite(buf, chars, f)
 	size_t chars;
 	FILE *f;
 {
+	if (buf == NULL)
+		return;
+
 	/* Posix 1003.1-1990 ssize_t hack */
 	while (SSIZE_MAX < chars) {
 		if (Fwrite(buf, sizeof(*buf), SSIZE_MAX, f)  !=  SSIZE_MAX)
