@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.226 2000/05/26 05:07:02 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.227 2000/05/27 11:40:04 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.219 2000/05/26 05:06:27 matt Exp 
+ *	NetBSD: pcidevs,v 1.220 2000/05/27 11:38:31 soren Exp 
  */
 
 /*
@@ -971,7 +971,7 @@
 /* Galileo Technology products */
 #define	PCI_PRODUCT_GALILEO_GT64010A	0x0146		/* GT-64010A System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64115	0x4111		/* GT-64115 System Controller */
-#define	PCI_PRODUCT_GALILEO_GT64011	0x4146		/* GT-64111 System Controller */
+#define	PCI_PRODUCT_GALILEO_GT64011	0x4146		/* GT-64011 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64120	0x4620		/* GT-64120 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64130	0x6320		/* GT-64130 System Controller */
 
@@ -1255,6 +1255,9 @@
 /* RISCom (SDL Communications, Inc?) products */
 #define	PCI_PRODUCT_RISCOM_N2	0x5568		/* N2 */
 
+/* RNS products */
+#define	PCI_PRODUCT_RNS_FDDI	0x2200		/* 2200 FDDI */
+
 /* S3 products */
 #define	PCI_PRODUCT_S3_VIRGE	0x5631		/* ViRGE */
 #define	PCI_PRODUCT_S3_TRIO32	0x8810		/* Trio32 */
@@ -1291,6 +1294,7 @@
 
 /* SGI products */
 #define	PCI_PRODUCT_SGI_IOC3	0x0003		/* IOC3 */
+#define	PCI_PRODUCT_SGI_RAD1	0x0005		/* PsiTech RAD1 */
 #define	PCI_PRODUCT_SGI_TIGON	0x0009		/* Tigon Gigabit Ethernet */
 
 /* SGS Thomson products */

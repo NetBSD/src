@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.224 2000/05/26 05:07:02 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.225 2000/05/27 11:40:05 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.219 2000/05/26 05:06:27 matt Exp 
+ *	NetBSD: pcidevs,v 1.220 2000/05/27 11:38:31 soren Exp 
  */
 
 /*
@@ -1735,7 +1735,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64011,
 	    0,
 	    "Galileo Technology",
-	    "GT-64111 System Controller",
+	    "GT-64011 System Controller",
 	},
 	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64120,
@@ -2902,6 +2902,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "N2",
 	},
 	{
+	    PCI_VENDOR_RNS, PCI_PRODUCT_RNS_FDDI,
+	    0,
+	    "RNS",
+	    "2200 FDDI",
+	},
+	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE,
 	    0,
 	    "S3",
@@ -3086,6 +3092,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Graphics",
 	    "IOC3",
+	},
+	{
+	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_RAD1,
+	    0,
+	    "Silicon Graphics",
+	    "PsiTech RAD1",
 	},
 	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON,
