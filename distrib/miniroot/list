@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.20 2002/05/07 14:59:35 lukem Exp $
+#	$NetBSD: list,v 1.21 2002/05/29 04:06:09 lukem Exp $
 
 SRCDIRS bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -24,8 +24,7 @@ PROG	bin/stty
 PROG	bin/sleep
 PROG	bin/sync
 
-PROG	sbin/fsck_ffs sbin/fsck
-PROG	sbin/reboot sbin/halt
+PROG	sbin/fsck_ffs	sbin/fsck
 PROG	sbin/ifconfig
 PROG	sbin/init
 PROG	sbin/mknod
@@ -35,6 +34,7 @@ PROG	sbin/mount_ffs
 PROG	sbin/mount_nfs
 PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/ping
+PROG	sbin/reboot	sbin/halt
 PROG	sbin/route
 PROG	sbin/shutdown
 PROG	sbin/slattach
@@ -68,7 +68,7 @@ COPY	${NETBSDSRCDIR}/etc/protocols		etc/protocols
 COPY	${NETBSDSRCDIR}/etc/services		etc/services
 
 # and the installation scripts
-COPY	${CURDIR}/install.sub		install.sub
-COPY	${CURDIR}/install.sh		install		755
-COPY	${CURDIR}/upgrade.sh		upgrade		755
+COPY	${CURDIR}/install.sh		install		555
+COPY	${CURDIR}/upgrade.sh		upgrade		555
 CMD	sed "/^VERSION=/s/=.*/=${DISTRIBREV}/" < ${CURDIR}/install.sub > install.sub
+MTREE	./install.sub	type=file uname=root gname=wheel mode=0444
