@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.30 2002/02/16 16:22:03 christos Exp $	*/
+/*	$NetBSD: pcb.h,v 1.31 2002/05/12 23:16:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ struct md_coredump {
 };    
 
 #ifdef _KERNEL
-struct pcb *curpcb;		/* our current running pcb */
+extern	struct pcb *curpcb;		/* our current running pcb */
 #endif
 
 #endif /* _I386_PCB_H_ */
