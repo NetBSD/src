@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.3 1997/09/15 01:29:30 lukem Exp $	*/
+/*	$NetBSD: command.c,v 1.4 2003/11/12 06:45:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: command.c,v 1.3 1997/09/15 01:29:30 lukem Exp $");
+__RCSID("$NetBSD: command.c,v 1.4 2003/11/12 06:45:14 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -153,12 +153,12 @@ parse(cmdline, args)
 	char   *cmdline;
 	char  **args;
 {
-	int     index;
+	int     idx;
 	int     argcnt = BLANK_LINE;
 
 	/* Initialize the args. */
-	for (index = 0; index < MAXARGS; index++)
-		args[index] = NULL;
+	for (idx = 0; idx < MAXARGS; idx++)
+		args[idx] = NULL;
 
 	/* Start looking for the commands */
 	while (*cmdline != 0) {
@@ -261,7 +261,7 @@ help(num, args, syntax)
 	char   *syntax;
 {
 	const struct command *item;
-	int     index;
+	int     idx;
 	int     show_cmds = FALSE;
 	char    dummy[2];
 
@@ -270,17 +270,17 @@ help(num, args, syntax)
 
 	/* Print help for each argument. */
 	if (num > 1)
-		for (index = 1; index < num; index++) {
-			item = find_entry(args[index]);
+		for (idx = 1; idx < num; idx++) {
+			item = find_entry(args[idx]);
 			if (item != NULL) {
 				printf("\n");
 				if (item->syntax[0] != 0)
 					printf("Syntax: %s\n", item->syntax);
 				printf("%s\n\n", item->help);
-				if (index < num - 1)
+				if (idx < num - 1)
 					prompt(dummy, 1, "cr to continue:");
 			} else {
-				printf("unknow command %s.\n", args[index]);
+				printf("unknow command %s.\n", args[idx]);
 				show_cmds = TRUE;
 			}
 		}
