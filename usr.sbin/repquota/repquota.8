@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)repquota.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: repquota.8,v 1.6 1999/03/22 18:44:06 garbled Exp $
+.\"	$NetBSD: repquota.8,v 1.7 2002/02/02 01:41:22 wiz Exp $
 .\"
 .Dd June 6, 1993
 .Dt REPQUOTA 8
@@ -88,6 +88,8 @@ at the filesystem root with group quotas
 .It Pa /etc/fstab
 for file system names and locations
 .El
+.Sh DIAGNOSTICS
+Various messages about inaccessible files; self-explanatory.
 .Sh SEE ALSO
 .Xr quota 1 ,
 .Xr quotactl 2 ,
@@ -95,8 +97,6 @@ for file system names and locations
 .Xr edquota 8 ,
 .Xr quotacheck 8 ,
 .Xr quotaon 8
-.Sh DIAGNOSTICS
-Various messages about inaccessible files; self-explanatory.
 .Sh HISTORY
 The
 .Nm
