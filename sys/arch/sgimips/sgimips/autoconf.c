@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2003/01/19 22:33:20 rafal Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 2003/04/04 04:27:29 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -116,17 +116,29 @@ makebootdev(cp)
 
 	booted_slot = booted_unit = booted_partition = 0;
 
-	if (strncmp(cp, "scsi(", 5) == NULL) {
+	if (strncmp(cp, "pci(", 4) == 0) {
+		cp += 4;
+
+		while (*cp && *cp != ')')
+		    cp++;
+
+		if (*cp != ')')
+		    return;
+
+		cp++;
+	}
+
+	if (strncmp(cp, "scsi(", 5) == 0) {
 		cp += 5;
 		if (*cp >= '0' && *cp <= '9')
 			booted_slot = *cp++ - '0';
-		if (strncmp(cp, ")disk(", 6) == NULL) {
+		if (strncmp(cp, ")disk(", 6) == 0) {
 			cp += 6;
 			if (*cp >= '0' && *cp <= '9')
 				booted_unit = *cp++ - '0';
 		}
 		/* XXX can rdisk() ever be other than 0? */
-		if (strncmp(cp, ")rdisk(0)partition(", 19) == NULL) {
+		if (strncmp(cp, ")rdisk(0)partition(", 19) == 0) {
 			cp += 19;
 			while (*cp >= '0' && *cp <= '9')
 				booted_partition =
@@ -137,7 +149,7 @@ makebootdev(cp)
 		booted_protocol = "SCSI";
 		return;
 	}
-	if (strncmp(cp, "dksc(", 5) == NULL) {
+	if (strncmp(cp, "dksc(", 5) == 0) {
 		cp += 5;
 		if (*cp >= '0' && *cp <= '9')
 			booted_slot = *cp++ - '0';
