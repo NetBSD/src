@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.1 1998/11/13 04:20:28 oster Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.2 1999/01/15 17:55:52 explorer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -171,8 +171,8 @@ struct RF_RaidAccessDesc_s {
 
 #ifdef SIMULATE
   RF_Owner_t  owner;                            
-  int         async_flag;
 #endif /* SIMULATE */
+  int         async_flag;
 
   RF_Etimer_t                 timer;            /* used for timing this access */
 };
