@@ -2,7 +2,7 @@
 /* Written by Pace Willisson (pace@blitz.com) 
  * and placed in the public domain
  *
- * $Header: /cvsroot/src/bin/expr/expr.y,v 1.6 1993/06/14 19:59:07 jtc Exp $
+ * $Header: /cvsroot/src/bin/expr/expr.y,v 1.7 1993/07/20 00:29:41 jtc Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -542,16 +542,14 @@ struct val *a, *b;
 	regmatch_t rm[SE_MAX];
 	char errbuf[256];
 	int eval;
-	char *newpat;
 	struct val *v;
 
-	/* patterns are anchored to the beginning of the line */
-	newpat = malloc (strlen (b->u.s) + 2);
-	strcpy (newpat, "^");
-	strcat (newpat, b->u.s);
+	/* coerce to both arguments to strings */
+	to_string(a);
+	to_string(b);
 
 	/* compile regular expression */
-	if ((eval = regcomp (&rp, newpat, 0)) != 0) {
+	if ((eval = regcomp (&rp, b->u.s, 0)) != 0) {
 		regerror (eval, &rp, errbuf, sizeof(errbuf));
 		fprintf (stderr, "expr: %s\n", errbuf);
 		exit (2);
