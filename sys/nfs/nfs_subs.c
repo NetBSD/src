@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.15 1994/07/22 23:16:36 mycroft Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.16 1994/08/17 11:41:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -89,7 +89,6 @@ u_long nfs_vers, nfs_prog, nfs_true, nfs_false;
 static u_long nfs_xid = 0;
 enum vtype ntov_type[7] = { VNON, VREG, VDIR, VBLK, VCHR, VLNK, VNON };
 extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
-extern struct nfsreq nfsreqh;
 extern int nqnfs_piggy[NFS_NPROCS];
 extern struct nfsrtt nfsrtt;
 extern time_t nqnfsstarttime;
@@ -630,7 +629,7 @@ nfs_init()
 	/*
 	 * Initialize reply list and start timer
 	 */
-	nfsreqh.r_prev = nfsreqh.r_next = &nfsreqh;
+	TAILQ_INIT(&nfs_reqq);
 	nfs_timer();
 }
 
