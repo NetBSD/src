@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.51 1997/12/02 13:54:50 pk Exp $	*/
+/*	$NetBSD: vnd.c,v 1.52 1997/12/31 02:38:24 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1157,6 +1157,13 @@ vndgetdisklabel(dev)
 		 * occupy the entire disk.
 		 */
 		for (i = 0; i < MAXPARTITIONS; i++) {
+			/*
+			 * Don't wipe out port specific hack (such as
+			 * dos partition hack of i386 port).
+			 */
+			if (lp->d_partitions[i].p_fstype != FS_UNUSED)
+				continue;
+
 			lp->d_partitions[i].p_size = lp->d_secperunit;
 			lp->d_partitions[i].p_offset = 0;
 			lp->d_partitions[i].p_fstype = FS_BSDFFS;
