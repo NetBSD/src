@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.40 2001/02/28 05:46:46 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.41 2001/03/08 02:21:44 thorpej Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -75,8 +75,7 @@
 #include <sys/reboot.h>
 
 /*
- * Gross! But there's no way around this until either bus_dma is corrected
- * or sparc64 iommu.c is fixed.
+ * Gross! But there's no way around this until sparc64 iommu.c is fixed.
  */
 #if	_MACHINE == sparc64
 #define	LMAP_FLAGS	BUS_DMA_NOWAIT|BUS_DMA_COHERENT
@@ -410,15 +409,15 @@ isp_sbus_mbxdma(isp)
 	    BUS_DMA_NOWAIT)) {
 		goto dmafail;
 	}
-	progress++;
-	if (bus_dmamap_load_raw(dmatag, sbc->sbus_rquest_dmamap, &reqseg, reqrs,
-	    len, LMAP_FLAGS) != 0) {
-		goto dmafail;
-	}
 	isp->isp_rquest_dma = sbc->sbus_rquest_dmamap->dm_segs[0].ds_addr;
 	progress++;
 	if (bus_dmamem_map(dmatag, &reqseg, reqrs, len,
 	    (caddr_t *)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
+		goto dmafail;
+	}
+	progress++;
+	if (bus_dmamap_load(dmatag, sbc->sbus_rquest_dmamap,
+	    isp->isp_rquest, len, NULL, LMAP_FLAGS) != 0) {
 		goto dmafail;
 	}
 	progress++;
@@ -433,28 +432,29 @@ isp_sbus_mbxdma(isp)
 	    BUS_DMA_NOWAIT)) {
 		goto dmafail;
 	}
-	progress++;
-	if (bus_dmamap_load_raw(dmatag, sbc->sbus_result_dmamap, &rspseg, rsprs,
-	    len, LMAP_FLAGS) != 0) {
-		goto dmafail;
-	}
+	isp->isp_result_dma = sbc->sbus_result_dmamap->dm_segs[0].ds_addr;
 	progress++;
 	if (bus_dmamem_map(dmatag, &rspseg, rsprs, len,
 	    (caddr_t *)&isp->isp_result, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;
 	}
-	isp->isp_result_dma = sbc->sbus_result_dmamap->dm_segs[0].ds_addr;
+	progress++;
+	if (bus_dmamap_load(dmatag, sbc->sbus_result_dmamap,
+	    isp->isp_result, len, NULL, LMAP_FLAGS) != 0) {
+		goto dmafail;
+	}
+	progress++;
 	return (0);
 
 dmafail:
 	isp_prt(isp, ISP_LOGERR, "Mailbox DMA Setup Failure");
 
 	if (progress >= 8) {
-		bus_dmamem_unmap(dmatag,
-		    isp->isp_result, ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp)));
+		bus_dmamap_unload(dmatag, sbc->sbus_result_dmamap);
 	}
 	if (progress >= 7) {
-		bus_dmamap_unload(dmatag,  sbc->sbus_result_dmamap);
+		bus_dmamem_unmap(dmatag,
+		    isp->isp_result, ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp)));
 	}
 	if (progress >= 6) {
 		bus_dmamem_free(dmatag, &rspseg, rsprs);
@@ -463,13 +463,13 @@ dmafail:
 		bus_dmamap_destroy(dmatag, sbc->sbus_result_dmamap);
 	}
 
-
 	if (progress >= 4) {
-		bus_dmamem_unmap(dmatag,
-		    isp->isp_rquest, ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)));
+		bus_dmamap_unload(dmatag, sbc->sbus_rquest_dmamap);
 	}
 	if (progress >= 3) {
-		bus_dmamap_unload(dmatag,  sbc->sbus_rquest_dmamap);
+		bus_dmamem_unmap(dmatag,
+		    isp->isp_rquest, ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)));
+
 	}
 	if (progress >= 2) {
 		bus_dmamem_free(dmatag, &reqseg, reqrs);
@@ -518,7 +518,8 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 		/* NOTREACHED */
 	}
 	if (bus_dmamap_load(sbc->sbus_dmatag, dmap, xs->data, xs->datalen,
-	    NULL, cansleep? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) != 0) {
+	    NULL, (cansleep ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT) |
+	    BUS_DMA_STREAMING) != 0) {
 		XS_SETERR(xs, HBA_BOTCH);
 		return (CMD_COMPLETE);
 	}
