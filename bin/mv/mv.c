@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mv.c	5.11 (Berkeley) 4/3/91";*/
-static char rcsid[] = "$Id: mv.c,v 1.5 1993/09/22 00:34:27 jtc Exp $";
+static char rcsid[] = "$Id: mv.c,v 1.6 1993/09/22 21:39:19 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,6 +58,7 @@ static char rcsid[] = "$Id: mv.c,v 1.5 1993/09/22 00:34:27 jtc Exp $";
 #include "pathnames.h"
 
 int fflg, iflg;
+int stdin_ok;
 
 main(argc, argv)
 	int argc;
@@ -90,6 +91,8 @@ main(argc, argv)
 
 	if (argc < 2)
 		usage();
+
+	stdin_ok = isatty(STDIN_FILENO);
 
 	/*
 	 * If the stat on the target fails or the target isn't a directory,
@@ -127,20 +130,27 @@ do_move(from, to)
 	char *from, *to;
 {
 	struct stat sb;
-	int ask, ch;
 
-	/*
-	 * Check access.  If interactive and file exists, ask user if it
-	 * should be replaced.  Otherwise if file exists but isn't writable
-	 * make sure the user wants to clobber it.
+	/* (1)	If the destination path exists, the -f option is not specified
+	 *	and either of the following conditions are true:
+	 *
+	 *	(a) The perimissions of the destination path do not permit
+	 *	    writing and the standard input is a terminal.
+	 *	(b) The -i option is specified.
+	 *
+	 *	the mv utility shall write a prompt to standard error and 
+	 *	read a line from standard input.  If the response is not
+	 *	affirmative, mv shall do nothing more with the current
+	 *	source file...
 	 */
 	if (!fflg && !access(to, F_OK)) {
-		ask = 0;
+		int ask = 0;
+		int ch;
+
 		if (iflg) {
 			(void)fprintf(stderr, "overwrite %s? ", to);
 			ask = 1;
-		}
-		else if (access(to, W_OK) && !stat(to, &sb)) {
+		} else if (stdin_ok && access(to, W_OK) && !stat(to, &sb)) {
 			(void)fprintf(stderr, "override mode %o on %s? ",
 			    sb.st_mode & 07777, to);
 			ask = 1;
@@ -152,6 +162,20 @@ do_move(from, to)
 				return(0);
 		}
 	}
+
+
+	/* (2)	If rename() succeeds, mv shall do nothing more with the 
+	 *	current source file.  If it fails for any other reason than
+	 *	EXDEV, mv shall write a diagnostic message to the standard
+	 *	error and do nothing more with the current source file.
+	 *
+	 * (3)	If the destination path exists, and it is a file of type
+	 *	directory and source_file is not a file of type directory,
+	 *	or it is a file not of type directory, and source file is
+	 *	a file of type directory, mv shall write a diagnostic 
+	 *	message to standard error, and do nothing more with the
+	 *	current source file...
+	 */
 	if (!rename(from, to))
 		return(0);
 
@@ -161,9 +185,23 @@ do_move(from, to)
 		return(1);
 	}
 
-	/*
-	 * If rename fails, and it's a regular file, do the copy internally;
-	 * otherwise, use cp and rm.
+
+	/* (4)	If the destination path exists, mv shall attempt to remove it.
+	 *	If this fails for any reason, mv shall write a diagnostic 
+	 *	message to the standard error and do nothing more with the
+	 *	current source file...
+	 */
+	if (!stat(to, &sb)) {
+		if ((S_ISDIR(sb.st_mode)) ? rmdir(to) : unlink(to)) {
+			(void) fprintf(stderr,
+			    "mv: can't remove %s: %s\n", to, strerror(errno));
+			return (1);
+		}
+	}
+
+
+	/* (5)	The file hierarchy rooted in source_file shall be duplicated
+	 *	as a file hiearchy rooted in the destination path...
 	 */
 	if (stat(from, &sb)) {
 		(void)fprintf(stderr, "mv: %s: %s\n", from, strerror(errno));
