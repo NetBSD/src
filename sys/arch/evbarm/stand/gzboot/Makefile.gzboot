@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.2 2002/02/23 18:19:09 thorpej Exp $
+#	$NetBSD: Makefile.gzboot,v 1.3 2002/02/23 20:19:52 thorpej Exp $
 
 NOMAN=  # defined
 
@@ -32,9 +32,18 @@ STARTFILE= srtbegin.o
 
 CPPFLAGS+= -nostdinc -I. -I${EVBARM_STAND}/gzboot -I${EVBARM_STAND}/board
 CPPFLAGS+= -I${S} -I${S}/arch -I${S}/lib/libsa
+
 CPPFLAGS+= -D_STANDALONE
+
+# libsa options
 CPPFLAGS+= -DHEAP_VARIABLE
-CPPFLAGS+= -DRELOC=0x${RELOC}
+
+# libz options
+CPPFLAGS+= -DDYNAMIC_CRC_TABLE
+
+CPPFLAGS+= -DRELOC=${RELOC}
+CPPFLAGS+= -DMAXIMAGESIZE=${MAXIMAGESIZE}
+CPPFLAGS+= -DLOADADDR=${LOADADDR}
 
 COPTS+=	-ffreestanding
 CWARNFLAGS+= -Wno-main
