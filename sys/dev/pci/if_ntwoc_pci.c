@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.4 2000/12/28 22:59:13 sommerfeld Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.5 2001/08/14 11:55:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -718,7 +718,7 @@ ntwoc_pci_setup_dma(struct sca_softc *sc)
 	 */
 	if (sc->scu_allocsize != addroff)
 		printf("ERROR:  scu_allocsize != addroff: %lu != %lu\n",
-		       sc->scu_allocsize, addroff);
+		       (u_long)sc->scu_allocsize, addroff);
 }
 
 #if __NetBSD_Version__ >= 104160000
