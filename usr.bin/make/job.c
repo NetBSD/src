@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.21 1997/09/28 03:31:05 lukem Exp $	*/
+/*	$NetBSD: job.c,v 1.22 1998/03/26 19:20:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.21 1997/09/28 03:31:05 lukem Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.22 1998/03/26 19:20:36 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.21 1997/09/28 03:31:05 lukem Exp $");
+__RCSID("$NetBSD: job.c,v 1.22 1998/03/26 19:20:36 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -79,6 +79,8 @@ __RCSID("$NetBSD: job.c,v 1.21 1997/09/28 03:31:05 lukem Exp $");
  *	    	  	    	Hence, the makefile must have been parsed
  *	    	  	    	before this function is called.
  *
+ *	Job_End  	    	Cleanup any memory used.
+ *
  *	Job_Full  	    	Return TRUE if the job table is filled.
  *
  *	Job_Empty 	    	Return TRUE if the job table is completely
@@ -88,7 +90,7 @@ __RCSID("$NetBSD: job.c,v 1.21 1997/09/28 03:31:05 lukem Exp $");
  *	    	  	    	the line as a shell specification. Returns
  *	    	  	    	FAILURE if the spec was incorrect.
  *
- *	Job_End	  	    	Perform any final processing which needs doing.
+ *	Job_Finish	    	Perform any final processing which needs doing.
  *	    	  	    	This includes the execution of any commands
  *	    	  	    	which have been/were attached to the .END
  *	    	  	    	target. It should only be called when the
@@ -220,7 +222,8 @@ static Shell 	*commandShell = &shells[DEFSHELL];/* this is the shell to
 						   * Job_ParseShell function */
 static char   	*shellPath = NULL,		  /* full pathname of
 						   * executable image */
-               	*shellName;	      	      	  /* last component of shell */
+               	*shellName = NULL,	      	  /* last component of shell */
+		*shellArgv = NULL;		  /* Custom shell args */
 
 
 static int  	maxJobs;    	/* The most children we can run at once */
@@ -2662,47 +2665,52 @@ Job_ParseShell(line)
     while (isspace(*line)) {
 	line++;
     }
-    words = brk_string(line, &wordCount, TRUE);
+
+    if (shellArgv)
+	free(shellArgv);
+
+    words = brk_string(line, &wordCount, TRUE, &shellArgv);
 
     memset((Address)&newShell, 0, sizeof(newShell));
 
     /*
      * Parse the specification by keyword
      */
-    for (path = NULL, argc = wordCount - 1, argv = words + 1;
-	 argc != 0;
-	 argc--, argv++) {
-	     if (strncmp(*argv, "path=", 5) == 0) {
-		 path = &argv[0][5];
-	     } else if (strncmp(*argv, "name=", 5) == 0) {
-		 newShell.name = &argv[0][5];
-	     } else {
-		 if (strncmp(*argv, "quiet=", 6) == 0) {
-		     newShell.echoOff = &argv[0][6];
-		 } else if (strncmp(*argv, "echo=", 5) == 0) {
-		     newShell.echoOn = &argv[0][5];
-		 } else if (strncmp(*argv, "filter=", 7) == 0) {
-		     newShell.noPrint = &argv[0][7];
-		     newShell.noPLen = strlen(newShell.noPrint);
-		 } else if (strncmp(*argv, "echoFlag=", 9) == 0) {
-		     newShell.echo = &argv[0][9];
-		 } else if (strncmp(*argv, "errFlag=", 8) == 0) {
-		     newShell.exit = &argv[0][8];
-		 } else if (strncmp(*argv, "hasErrCtl=", 10) == 0) {
-		     char c = argv[0][10];
-		     newShell.hasErrCtl = !((c != 'Y') && (c != 'y') &&
+    for (path = NULL, argc = wordCount - 1, argv = words;
+	argc != 0;
+	argc--, argv++) {
+	    if (strncmp(*argv, "path=", 5) == 0) {
+		path = &argv[0][5];
+	    } else if (strncmp(*argv, "name=", 5) == 0) {
+		newShell.name = &argv[0][5];
+	    } else {
+		if (strncmp(*argv, "quiet=", 6) == 0) {
+		    newShell.echoOff = &argv[0][6];
+		} else if (strncmp(*argv, "echo=", 5) == 0) {
+		    newShell.echoOn = &argv[0][5];
+		} else if (strncmp(*argv, "filter=", 7) == 0) {
+		    newShell.noPrint = &argv[0][7];
+		    newShell.noPLen = strlen(newShell.noPrint);
+		} else if (strncmp(*argv, "echoFlag=", 9) == 0) {
+		    newShell.echo = &argv[0][9];
+		} else if (strncmp(*argv, "errFlag=", 8) == 0) {
+		    newShell.exit = &argv[0][8];
+		} else if (strncmp(*argv, "hasErrCtl=", 10) == 0) {
+		    char c = argv[0][10];
+		    newShell.hasErrCtl = !((c != 'Y') && (c != 'y') &&
 					   (c != 'T') && (c != 't'));
-		 } else if (strncmp(*argv, "check=", 6) == 0) {
-		     newShell.errCheck = &argv[0][6];
-		 } else if (strncmp(*argv, "ignore=", 7) == 0) {
-		     newShell.ignErr = &argv[0][7];
-		 } else {
-		     Parse_Error(PARSE_FATAL, "Unknown keyword \"%s\"",
-				  *argv);
-		     return(FAILURE);
-		 }
-		 fullSpec = TRUE;
-	     }
+		} else if (strncmp(*argv, "check=", 6) == 0) {
+		    newShell.errCheck = &argv[0][6];
+		} else if (strncmp(*argv, "ignore=", 7) == 0) {
+		    newShell.ignErr = &argv[0][7];
+		} else {
+		    Parse_Error(PARSE_FATAL, "Unknown keyword \"%s\"",
+				*argv);
+		    free(words);
+		    return(FAILURE);
+		}
+		fullSpec = TRUE;
+	    }
     }
 
     if (path == NULL) {
@@ -2762,7 +2770,7 @@ Job_ParseShell(line)
 
     /*
      * Do not free up the words themselves, since they might be in use by the
-     * shell specification...
+     * shell specification.
      */
     free(words);
     return SUCCESS;
@@ -2918,7 +2926,7 @@ JobInterrupt(runINTERRUPT, signo)
 
 /*
  *-----------------------------------------------------------------------
- * Job_End --
+ * Job_Finish --
  *	Do final processing such as the running of the commands
  *	attached to the .END target.
  *
@@ -2931,7 +2939,7 @@ JobInterrupt(runINTERRUPT, signo)
  *-----------------------------------------------------------------------
  */
 int
-Job_End()
+Job_Finish()
 {
     if (postCommands != NILGNODE && !Lst_IsEmpty(postCommands->commands)) {
 	if (errors) {
@@ -2949,6 +2957,25 @@ Job_End()
     }
     (void) eunlink(tfile);
     return(errors);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * Job_End --
+ *	Cleanup any memory used by the jobs module
+ *
+ * Results:
+ *	None.
+ *
+ * Side Effects:
+ *	Memory is freed
+ *-----------------------------------------------------------------------
+ */
+void
+Job_End()
+{
+    if (shellArgv)
+	free(shellArgv);
 }
 
 /*-
