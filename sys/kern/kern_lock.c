@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.47 2000/08/26 19:26:43 sommerfeld Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.48 2000/08/28 21:07:52 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -127,6 +127,7 @@ do {									\
 } while (/*CONSTCOND*/0)
 #else
 #define COUNT(lkp, p, cpu_id, x)
+#define COUNT_CPU(cpu_id, x)
 #endif /* LOCKDEBUG || DIAGNOSTIC */ /* } */
 
 #define	INTERLOCK_ACQUIRE(lkp, flags, s)				\
