@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.10 1999/03/24 23:15:59 dbj Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.11 1999/12/07 06:27:33 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -106,6 +106,7 @@ char rom_machine_type;
 u_char *rom_return_sp;
 u_int rom_mon_stack;
 u_char rom_image[0x2000];
+vm_offset_t rom_image_base;
 u_int rom_vbr;;
 
 paddr_t rom_reboot_vect;
@@ -211,6 +212,7 @@ next68k_bootargs(args)
 		 * top of memory
 		 */
 		RELOC(phys_seg_list[j-1].ps_end, vm_offset_t) -= 0x2000;
+		RELOC(rom_image_base, vm_offset_t) = RELOC(phys_seg_list[j-1].ps_end, vm_offset_t);
 
     /* pmap is unhappy if it is not null terminated */
     for(;j<MAX_PHYS_SEGS;j++) {
@@ -288,7 +290,7 @@ next68k_bootargs(args)
 		RELOC(rom_reboot_vect, paddr_t) = MONRELOC(paddr_t *, MG_vbr)[45]; /* trap #13 */
 
 		for(i=0;i<sizeof(rom_image);i++) {
-			RELOC(rom_image[i], u_char) = *(u_char *)(0x6000000-0x2000+i);
+			RELOC(rom_image[i], u_char) = *(u_char *)(RELOC(rom_image_base, vm_offset_t) + i);
 		}
 	}
 
