@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.272.2.2 2002/05/30 15:33:30 gehenna Exp $	*/
+/*	$NetBSD: machdep.c,v 1.272.2.3 2002/07/14 18:37:06 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2427,10 +2427,11 @@ gray_bar()
    	3) restore regs
 */
 
-	__asm __volatile ("	movl %a0,%sp@-;
-				movl %a1,%sp@-;
-				movl %d0,%sp@-;
-				movl %d1,%sp@-");
+	__asm __volatile (
+			"	movl %a0,%sp@-;"
+			"	movl %a1,%sp@-;"
+			"	movl %d0,%sp@-;"
+			"	movl %d1,%sp@-");
 
 /* check to see if gray bars are turned off */
 	if (mac68k_machine.do_graybars) {
@@ -2442,10 +2443,11 @@ gray_bar()
 			((u_long *)videoaddr)[gray_nextaddr++] = 0x00000000;
 	}
 
-	__asm __volatile ("	movl %sp@+,%d1;
-				movl %sp@+,%d0;
-				movl %sp@+,%a1;
-				movl %sp@+,%a0");
+	__asm __volatile (
+			"	movl %sp@+,%d1;"
+			"	movl %sp@+,%d0;"
+			"	movl %sp@+,%a1;"
+			"	movl %sp@+,%a0");
 }
 #endif
 
@@ -2835,17 +2837,19 @@ printstar(void)
 	 * Be careful as we assume that no registers are clobbered
 	 * when we call this from assembly.
 	 */
-	__asm __volatile ("	movl %a0,%sp@-;
-				movl %a1,%sp@-;
-				movl %d0,%sp@-;
-				movl %d1,%sp@-");
+	__asm __volatile (
+			"	movl %a0,%sp@-;"
+			"	movl %a1,%sp@-;"
+			"	movl %d0,%sp@-;"
+			"	movl %d1,%sp@-");
 
 	/* printf("*"); */
 
-	__asm __volatile ("	movl %sp@+,%d1;
-				movl %sp@+,%d0;
-				movl %sp@+,%a1;
-				movl %sp@+,%a0");
+	__asm __volatile (
+			"	movl %sp@+,%d1;"
+			"	movl %sp@+,%d0;"
+			"	movl %sp@+,%a1;"
+			"	movl %sp@+,%a0");
 }
 
 /*
