@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.15 2003/08/12 05:06:54 matt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.16 2003/08/12 18:34:48 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -51,7 +51,6 @@ struct fpu {
 struct pcb {
 	struct pmap *pcb_pm;	/* pmap of our vmspace */
 	register_t pcb_sp;	/* saved SP */
-	int pcb_spl;		/* saved SPL */
 	int pcb_flags;
 #define	PCB_FPU		1	/* Process had FPU initialized */
 #define	PCB_ALTIVEC	2	/* Process had AltiVec initialized */
