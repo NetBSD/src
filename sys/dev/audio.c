@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.35 1997/03/13 02:19:44 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.36 1997/03/13 02:45:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -142,7 +142,7 @@ void	audio_pint __P((void *));
 void	audio_rpint __P((void *));
 
 int	audio_calc_blksize __P((struct audio_softc *));
-void	audio_fill_silence __P((struct audio_softc *, int, u_char *, int));
+void	audio_fill_silence __P((int, u_char *, int));
 int	audio_silence_copyout __P((struct audio_softc *, int, struct uio *));
 void	audio_alloc_auzero __P((struct audio_softc *, int));
 
@@ -838,16 +838,15 @@ audio_calc_blksize(sc)
 }
 
 void
-audio_fill_silence(sc, mode, p, n)
-	struct audio_softc *sc;
-	int mode;
+audio_fill_silence(encoding, p, n)
+	int encoding;
         u_char *p;
         int n;
 {
 	u_int auzero;
 	u_char *q;
     
-	switch (mode == AUMODE_PLAY ? sc->sc_pencoding : sc->sc_rencoding) {
+	switch (encoding) {
 	case AUDIO_ENCODING_ULAW:
 	    	auzero = 0x7f; 
 		break;
@@ -862,11 +861,11 @@ audio_fill_silence(sc, mode, p, n)
 		break;
 	}
 	q = p;
-	while(--n >= 0)
+	while (--n >= 0)
 		*q++ = auzero;
 }
 
-#define NSILENCE 16 /* An arbitrary even constant >= 2 */
+#define NSILENCE 128 /* An arbitrary even constant >= 2 */
 int
 audio_silence_copyout(sc, n, uio)
 	struct audio_softc *sc;
@@ -878,7 +877,7 @@ audio_silence_copyout(sc, n, uio)
 	u_char zerobuf[NSILENCE];
 	int k;
 
-	audio_fill_silence(sc, AUMODE_RECORD, zerobuf, NSILENCE);
+	audio_fill_silence(sc->sc_rencoding, zerobuf, NSILENCE);
 
         while (n > 0 && uio->uio_resid) {
                 iov = uio->uio_iov;
@@ -924,7 +923,7 @@ audio_alloc_auzero(sc, bs)
 		panic("audio_alloc_auzero: malloc auzero_block failed");
 	}
 #endif
-	audio_fill_silence(sc, AUMODE_PLAY, sc->auzero_block, bs);
+	audio_fill_silence(sc->sc_pencoding, sc->auzero_block, bs);
 	if (hw->sw_encode)
 		hw->sw_encode(sc->hw_hdl, sc->sc_pencoding, sc->auzero_block, bs);
 }
@@ -992,7 +991,7 @@ audio_write(dev, uio, ioflag)
 			cb->nblk = sc->sc_backlog;
 			cb->tp = cb->hp + sc->sc_backlog * blocksize;
 			splx(s);
-			audio_fill_silence(sc, AUMODE_PLAY, cb->hp, sc->sc_backlog * blocksize);
+			audio_fill_silence(sc->sc_pencoding, cb->hp, sc->sc_backlog * blocksize);
 		}
 #endif
 		/* Calculate sample number of first sample in block we write */
@@ -1029,7 +1028,7 @@ audio_write(dev, uio, ioflag)
 				/* fill with audio silence */
 				tp += cc;
 				cc = blocksize - cc;
-				audio_fill_silence(sc, AUMODE_PLAY, tp, cc);
+				audio_fill_silence(sc->sc_pencoding, tp, cc);
 				DPRINTF(("audio_write: auzero 0x%x %d 0x%x\n",
 				         tp, cc, *(int *)tp));
 				tp += cc;
