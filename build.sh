@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.8 2001/10/29 19:47:51 tv Exp $
+#  $NetBSD: build.sh,v 1.9 2001/10/30 21:04:05 jmc Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -71,6 +71,7 @@ mkdirp () {
 usage () {
 	echo "Usage:"
 	echo "$0 [-r] [-a arch] [-j njob] [-m mach] [-D dest] [-R release] [-T tools]"
+	echo "    -b: bootstrap only. Build nbmake, install it and then exit."
 	echo "    -m: set target MACHINE to mach (REQUIRED, or set in environment)"
 	echo "    -D: set DESTDIR to dest (REQUIRED, or set in environment)"
 	echo "    -T: set TOOLDIR to tools (REQUIRED, or set in environment)"
@@ -82,7 +83,7 @@ usage () {
 	exit 1
 }
 
-opts='a:hj:m:rD:R:T:'
+opts='a:bhj:m:rD:R:T:'
 
 if type getopts >/dev/null 2>&1; then
 	# Use POSIX getopts.
@@ -104,6 +105,8 @@ opt_a=no
 while eval $getoptcmd; do case $opt in
 	-a)	eval $optargcmd
 		MACHINE_ARCH=$OPTARG; opt_a=yes;;
+
+	-b)	BOOTSTRAP_ONLY=1;;
 
 	-j)	eval $optargcmd
 		buildjobs="NBUILDJOBS=$OPTARG";;
@@ -192,7 +195,7 @@ if ${rebuildmake-false} || [ ! -f $makeprog ] || [ $makeprog -ot build.sh ]; the
 	cat >$makeprog <<EOF
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.8 2001/10/29 19:47:51 tv Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.9 2001/10/30 21:04:05 jmc Exp $
 #
 exec $TOOLDIR/bin/nbmake MACHINE=$MACHINE MACHINE_ARCH=$MACHINE_ARCH \
 USETOOLS=yes USE_NEW_TOOLCHAIN=yes TOOLDIR="$TOOLDIR" \${1+\$@}
@@ -200,6 +203,8 @@ EOF
 	chmod +x $makeprog
 fi
 
-exec $makeprog -m `pwd`/share/mk ${buildtarget-build} \
-	MKTOOLS=yes DESTDIR="$DESTDIR" TOOLDIR="$TOOLDIR" \
-	$buildjobs $releasedir
+if [ "$BOOTSTRAP_ONLY" != "1" ]; then
+	exec $makeprog -m `pwd`/share/mk ${buildtarget-build} \
+		MKTOOLS=yes DESTDIR="$DESTDIR" TOOLDIR="$TOOLDIR" \
+		$buildjobs $releasedir
+fi
