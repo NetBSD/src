@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.h,v 1.6 2001/08/16 17:45:26 itojun Exp $	*/
+/*	$NetBSD: in6_gif.h,v 1.7 2001/12/21 03:58:15 itojun Exp $	*/
 /*	$KAME: in6_gif.h,v 1.7 2001/07/26 06:53:16 jinmei Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 #define _NETINET6_IN6_GIF_H_
 
 #define GIF_HLIM	30
+extern int	ip6_gif_hlim;		/* Hop limit for gif encap packet */
 
 struct gif_softc;
 int in6_gif_input __P((struct mbuf **, int *, int));

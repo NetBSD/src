@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.35 2001/12/21 03:21:51 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.36 2001/12/21 03:58:15 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.35 2001/12/21 03:21:51 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.36 2001/12/21 03:58:15 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -122,11 +122,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.35 2001/12/21 03:21:51 itojun Exp $"
 #include <netinet6/ip6protosw.h>
 
 #include <net/net_osdep.h>
-
-#include "gif.h"
-#if NGIF > 0
-#include <netinet6/in6_gif.h>
-#endif
 
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
@@ -277,7 +272,6 @@ int	ip6_hdrnestlimit = 50;	/* appropriate? */
 int	ip6_dad_count = 1;	/* DupAddrDetectionTransmits */
 u_int32_t ip6_flow_seq;
 int	ip6_auto_flowlabel = 1;
-int	ip6_gif_hlim = GIF_HLIM;
 int	ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
 int	ip6_rr_prune = 5;	/* router renumbering prefix
 				 * walk list every 5 sec.    */
