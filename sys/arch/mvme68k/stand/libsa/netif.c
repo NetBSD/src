@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.1.1.1 1995/07/25 23:12:24 chuck Exp $	*/
+/*	$NetBSD: netif.c,v 1.2 1995/10/12 22:48:24 chuck Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -47,6 +47,7 @@
 #include "config.h"
 
 static struct netif netif_prom;
+void machdep_common_ether __P((u_char *));
 
 #ifdef NETIF_DEBUG
 int netif_debug;
@@ -70,7 +71,7 @@ netif_open(machdep_hint)
 {
 	struct saioreq *si;
 	struct iodesc *io;
-	int fd, error;
+	int error;
 
 	/* find a free socket */
 	io = sockets;
@@ -122,7 +123,7 @@ int
 netif_put(desc, pkt, len)
 	struct iodesc *desc;
 	void *pkt;
-	int len;
+	size_t len;
 {
 
 #ifdef NETIF_DEBUG
@@ -149,7 +150,7 @@ int
 netif_get(desc, pkt, maxlen, timo)
 	struct iodesc *desc;
 	void *pkt;
-	int maxlen;
+	size_t maxlen;
 	time_t timo;
 {
 	struct saioreq *si;
