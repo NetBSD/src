@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.17 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.18 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -7688,5 +7688,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	acorn32: Generate sparkive with new bootloader for install
 		[gavan/abs 20040608]
 	cvs: cvs upgraded to 1.11.17 [christos 20040616]
+	geodeide(4): Added driver for the AMD Geode CS5530A IDE controller
+		[bouyer 20040709]
 	sgimips: Add support for on-board MACE MAC-110 Ethernet on O2.
 		[tsutsui 20040711]
