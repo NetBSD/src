@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_output.c,v 1.5 1994/06/29 06:37:36 cgd Exp $	*/
+/*	$NetBSD: pk_output.c,v 1.6 1994/09/20 06:41:04 cgd Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -196,7 +196,7 @@ struct pklcd *lcp;
 {
 	register struct mbuf *m, *n;
 	struct socket *so = lcp -> lcd_so;
-	register struct sockbuf *sb = & (so ? so -> so_snd : lcp -> lcd_sb);
+	register struct sockbuf *sb = (so ? &so->so_snd : &lcp->lcd_sb);
 
 	if (lcp -> lcd_template) {
 		m = lcp -> lcd_template;
