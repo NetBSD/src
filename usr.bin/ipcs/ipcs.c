@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.11 1996/06/07 01:26:38 thorpej Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.12 1996/07/19 23:58:33 explorer Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -343,7 +343,7 @@ main(argc, argv)
 				    symbols[X_SHMSEGS].n_name, kvm_geterr(kd));
 
 			xshmids = malloc(sizeof(struct shmid_ds) *
-			    msginfo.msgmni);
+			    shminfo.shmmni);
 
 			if (kvm_read(kd, (u_long)shmsegs, xshmids,
 			    sizeof(struct shmid_ds) * shminfo.shmmni) !=
