@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/06/24 05:52:29 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2002/06/24 06:11:12 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,6 @@ BINOWN=	root
 BINMODE=4555
 
 BINDIR=	/usr/libexec
-
 MAN=	ssh-keysign.8
 
 .include <bsd.prog.mk>
