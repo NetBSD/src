@@ -1,4 +1,4 @@
-/* $NetBSD: ioapic.c,v 1.1.2.10 2000/09/23 17:27:00 sommerfeld Exp $ */
+/* $NetBSD: ioapic.c,v 1.1.2.11 2000/11/19 00:20:30 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ void    ioapic_attach __P((struct device *, struct device *, void *));
 extern int i386_mem_add_mapping __P((bus_addr_t, bus_size_t,
     int, bus_space_handle_t *)); /* XXX XXX */
 
-void	apic_vectorset __P((struct ioapic_softc *, int, int));
+static void apic_vectorset __P((struct ioapic_softc *, int, int, int));
 
 int apic_verbose = 0;
 
@@ -193,7 +193,6 @@ ioapic_match(parent, match, aux)
 	return 0;
 }
 
-
 /*
  * can't use bus_space_xxx as we don't have a bus handle ...
  */
@@ -254,7 +253,8 @@ ioapic_attach(parent, self, aux)
 		sc->sc_pins[i].ip_map = NULL;
 		sc->sc_pins[i].ip_vector = 0;
 		sc->sc_pins[i].ip_type = 0;
-		sc->sc_pins[i].ip_level = 0;
+		sc->sc_pins[i].ip_minlevel = 0xff; /* XXX magic*/
+		sc->sc_pins[i].ip_maxlevel = 0;	/* XXX magic */
 	}
 	
 	/*
@@ -315,17 +315,17 @@ int	apic_intrcount[256];
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < APIC_ICU_LEN && (x) != 2)
 
 static void
-apic_set_redir (struct ioapic_softc *sc, int irq)
+apic_set_redir (struct ioapic_softc *sc, int pin)
 {
 	u_int32_t redlo;
 	u_int32_t redhi = 0;
 	int delmode;
 
-	struct ioapic_pin *pin;
+	struct ioapic_pin *pp;
 	struct mp_intr_map *map;
 	
-	pin = &sc->sc_pins[irq];
-	map = pin->ip_map;
+	pp = &sc->sc_pins[pin];
+	map = pp->ip_map;
 	if (map == NULL) {
 		redlo = IOAPIC_REDLO_MASK;
 	} else {
@@ -336,33 +336,35 @@ apic_set_redir (struct ioapic_softc *sc, int irq)
 	/* XXX magic numbers */
 	if ((delmode != 0) && (delmode != 1))
 		;
-	else if (pin->ip_handler == NULL) {
+	else if (pp->ip_handler == NULL) {
 		redlo |= IOAPIC_REDLO_MASK;
 	} else {
-		redlo |= (pin->ip_vector & 0xff);
+		redlo |= (pp->ip_vector & 0xff);
 		redlo |= (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
 		redlo &= ~IOAPIC_REDLO_DSTMOD;
 		
-		/* destination: BSP CPU */
-
 		/*
-		 * XXX will want to eventually switch to
-		 * lowest-priority delivery mode, possibly with focus
-		 * processor.
+		 * Destination: BSP CPU
+		 *
+		 * XXX will want to distribute interrupts across cpu's
+		 * eventually.  most likely, we'll want to vector each
+		 * interrupt to a specific CPU and load-balance across
+		 * cpu's.  but there's no point in doing that until after 
+		 * most interrupts run without the kernel lock.  
 		 */
 		redhi |= (ioapic_bsp_id << IOAPIC_REDHI_DEST_SHIFT);
 
 		/* XXX derive this bit from BIOS info */
-		if (pin->ip_type == IST_LEVEL)
+		if (pp->ip_type == IST_LEVEL)
 			redlo |= IOAPIC_REDLO_LEVEL;
 		else
 			redlo &= ~IOAPIC_REDLO_LEVEL;
 		/* XXX polarity goo, too */
 	}
-	ioapic_write(sc,IOAPIC_REDLO(irq), redlo);
-	ioapic_write(sc,IOAPIC_REDHI(irq), redhi);
+	ioapic_write(sc, IOAPIC_REDLO(pin), redlo);
+	ioapic_write(sc, IOAPIC_REDHI(pin), redhi);
 	if (mp_verbose)
-		ioapic_print_redir(sc, "int", irq);
+		ioapic_print_redir(sc, "int", pin);
 }
 
 static int fakeintr __P((void *)); 	/* XXX headerify */
@@ -391,25 +393,36 @@ static int fakeintr(arg)
  * interrupt configuration.
  */
 
-void
-apic_vectorset (sc, irq, level)
+static void
+apic_vectorset (sc, pin, minlevel, maxlevel)
 	struct ioapic_softc *sc;
-	int irq;
-	int level;
+	int pin;
+	int minlevel;
+	int maxlevel;
 {
-	struct ioapic_pin *pin = &sc->sc_pins[irq];
+	struct ioapic_pin *pp = &sc->sc_pins[pin];
 	int ovector = 0;
 	int nvector = 0;
 	void (*handler)(void);
 	
-	ovector = pin->ip_vector;
-
-	if (level == 0) {
+	ovector = pp->ip_vector;
+	
+	if (maxlevel == 0) {
 		/* no vector needed. */
-		pin->ip_level = 0;
-		pin->ip_vector = 0;
-	} else if (level != pin->ip_level) {
-		nvector = idt_vec_alloc (level, level+15);
+		pp->ip_minlevel = 0xff;/* XXX magic */
+		pp->ip_maxlevel = 0; /* XXX magic */
+		pp->ip_vector = 0;
+	} else if (maxlevel != pp->ip_maxlevel) {
+		if (minlevel != maxlevel) {
+			printf("%s: WARNING: sharing interrupt "
+			    "between different IPLs (currently broken)\n",
+			    sc->sc_dev.dv_xname);
+			printf("%s: pin %d, ipls %x..%x",
+			    sc->sc_dev.dv_xname,
+			    pin, minlevel, maxlevel);
+		}
+
+		nvector = idt_vec_alloc (maxlevel, maxlevel+15);
 
 		if (nvector == NULL) {
 			/*
@@ -419,15 +432,20 @@ apic_vectorset (sc, irq, level)
 			 */
 			panic("%s: can't alloc vector "
 			    "for pin %d at level %x",
-			    sc->sc_dev.dv_xname, irq, level);
+			    sc->sc_dev.dv_xname, pin, maxlevel);
 		}
+		/* 
+		 * XXX want special handler for the maxlevel != minlevel
+		 * case here!
+		 */
 		handler = apichandler[(nvector & 0xf) +
-		    ((level > IPL_HIGH) ? 0x10 : 0)];
+		    ((maxlevel > IPL_HIGH) ? 0x10 : 0)];
 		idt_vec_set(nvector, handler);
-		pin->ip_vector = nvector;
-		pin->ip_level = level;
+		pp->ip_vector = nvector;
+		pp->ip_minlevel = minlevel;
+		pp->ip_maxlevel = maxlevel;
 	}
-	apic_intrhand[pin->ip_vector] = pin->ip_handler;
+	apic_intrhand[pp->ip_vector] = pp->ip_handler;
 
 	if (ovector) {
 		/*
@@ -448,7 +466,7 @@ apic_vectorset (sc, irq, level)
 		printf("freed vector %x\n", ovector);
 	}
 	
-	apic_set_redir (sc, irq);
+	apic_set_redir (sc, pin);
 }
 
 /*
@@ -458,7 +476,7 @@ apic_vectorset (sc, irq, level)
 void
 ioapic_enable ()
 {
-	int p, maxlevel;
+	int p, maxlevel, minlevel;
 	struct ioapic_softc *sc;
 	struct intrhand *q;
 	extern void intr_calculatemasks __P((void)); /* XXX */
@@ -482,14 +500,17 @@ ioapic_enable ()
 		printf("%s: enabling\n", sc->sc_dev.dv_xname);
 
 		for (p=0; p<sc->sc_apic_sz; p++) {
-			maxlevel = 0;
+			maxlevel = 0;	 /* magic */
+			minlevel = 0xff; /* magic */
 				
 			for (q = sc->sc_pins[p].ip_handler; q != NULL;
 			     q = q->ih_next) {
 				if (q->ih_level > maxlevel)
 					maxlevel = q->ih_level;
+				if (q->ih_level < minlevel)
+					minlevel = q->ih_level;
 			}
-			apic_vectorset (sc, p, maxlevel);
+			apic_vectorset (sc, p, minlevel, maxlevel);
 		}
 	}
 }
@@ -529,7 +550,7 @@ apic_intr_establish(irq, type, level, ih_fun, ih_arg)
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
 	extern int cold;
-	int maxlevel;
+	int minlevel, maxlevel;
 
 	if (sc == NULL)
 		panic("apic_intr_establish: unknown ioapic %d", ioapic);
@@ -571,27 +592,36 @@ apic_intr_establish(irq, type, level, ih_fun, ih_arg)
 	 * preserve the order, and N is generally small.
 	 */
 	maxlevel = level;
+	minlevel = level;
 	for (p = &pin->ip_handler; (q = *p) != NULL; p = &q->ih_next) {
 		if (q->ih_level > maxlevel)
 			maxlevel = q->ih_level;
+		if (q->ih_level < minlevel)
+			minlevel = q->ih_level;
 	}
 
 	/*
 	 * Actually install a fake handler momentarily, since we might be doing
 	 * this with interrupts enabled and don't want the real routine called
 	 * until masking is set up.
+	 *
+	 * XXX MP locking?
 	 */
 	fakehand.ih_level = level;
 	*p = &fakehand;
 
 	/*
-	 * fix up the vector for this pin.
-	 * XXX perhaps defer this until most interrupts have been established?
-	 * (to avoid too much thrashing of the idt..)
+	 * Fix up the vector for this pin.
+	 * (if cold, defer this until most interrupts have been established,
+	 * to avoid too much thrashing of the idt..)
 	 */
 
 	if (!ioapic_cold)
-		apic_vectorset(sc, intr, maxlevel);
+		apic_vectorset(sc, intr, minlevel, maxlevel);
+
+#if 0
+	apic_calculatemasks();
+#endif
 
 	/*
 	 * Poke the real handler in now.
@@ -634,7 +664,7 @@ apic_intr_disestablish(arg)
 	struct ioapic_softc *sc = ioapic_find(ioapic);
 	struct ioapic_pin *pin = &sc->sc_pins[intr];
 	struct intrhand **p, *q;
-	int maxlevel;
+	int minlevel, maxlevel;
 	
 	if (sc == NULL)
 		panic("apic_intr_disestablish: unknown ioapic %d", ioapic);
@@ -647,21 +677,27 @@ apic_intr_disestablish(arg)
 	 * This is O(n^2), too.
 	 */
 	maxlevel = 0;
+	minlevel = 0xff;
 	for (p = &pin->ip_handler; (q = *p) != NULL && q != ih;
-	     p = &q->ih_next)
+	     p = &q->ih_next) {
 		if (q->ih_level > maxlevel)
 			maxlevel = q->ih_level;
-		
+		if (q->ih_level < minlevel)
+			minlevel = q->ih_level;
+	}
 	if (q)
 		*p = q->ih_next;
 	else
 		panic("intr_disestablish: handler not registered");
-	for (; q != NULL; q = q->ih_next)
+	for (; q != NULL; q = q->ih_next) {
 		if (q->ih_level > maxlevel)
 			maxlevel = q->ih_level;
+		if (q->ih_level < minlevel)
+			minlevel = q->ih_level;
+	}
 	
 	if (!ioapic_cold)
-		apic_vectorset(sc, intr, maxlevel);
+		apic_vectorset(sc, intr, minlevel, maxlevel);
 
 	free(ih, M_DEVBUF);
 }
