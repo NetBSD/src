@@ -1,4 +1,4 @@
-/* $Id: platid_mask.c,v 1.17 2000/02/06 14:02:43 takemura Exp $ */
+/* $Id: platid_mask.c,v 1.18 2000/02/14 07:19:25 jun Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -290,6 +290,10 @@ platid_t platid_mask_MACH_SHARP_MOBILON_HC = {{
 platid_t platid_mask_MACH_SHARP_MOBILON_HC4100 = {{
 	PLATID_CPU_MIPS_TX_3912,
 	PLATID_MACH_SHARP_MOBILON_HC4100
+}};
+platid_t platid_mask_MACH_SHARP_MOBILON_HC1200 = {{
+	PLATID_CPU_MIPS_TX_3912,
+	PLATID_MACH_SHARP_MOBILON_HC1200
 }};
 platid_t platid_mask_MACH_FUJITSU = {{
 	PLATID_WILD,
