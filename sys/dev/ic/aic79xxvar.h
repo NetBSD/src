@@ -1371,7 +1371,7 @@ int			ahd_match_scb(struct ahd_softc *, struct scb *,
 /****************************** Initialization ********************************/
 /*struct ahd_softc	*ahd_alloc(void *, char *);*/
 int			 ahd_softc_init(struct ahd_softc *);
-void			 ahd_controller_info(struct ahd_softc *, char *);
+void			 ahd_controller_info(struct ahd_softc *, char *, size_t);
 int			 ahd_init(struct ahd_softc *);
 int			 ahd_default_config(struct ahd_softc *);
 int			 ahd_parse_vpddata(struct ahd_softc *,
