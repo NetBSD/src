@@ -38,26 +38,26 @@
  * from: Utah $Hdr: mem.c 1.14 90/10/12$
  *
  *	@(#)mem.c	7.5 (Berkeley) 5/7/91
- *	$Id: mem.c,v 1.5 1994/02/11 06:59:48 chopps Exp $
+ *	$Id: mem.c,v 1.6 1994/02/13 21:13:25 chopps Exp $
  */
 
 /*
  * Memory special file
  */
 
-#include "param.h"
-#include "conf.h"
-#include "buf.h"
-#include "systm.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/buf.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
 
-#include "../include/cpu.h"
+#include <machine/cpu.h>
 
-#include "vm/vm_param.h"
-#include "vm/lock.h"
-#include "vm/vm_statistics.h"
-#include "vm/pmap.h"
-#include "vm/vm_prot.h"
+#include <vm/vm_param.h>
+#include <vm/lock.h>
+#include <vm/vm_statistics.h>
+#include <vm/pmap.h>
+#include <vm/vm_prot.h>
 
 
 extern int kernel_reload_write(struct uio *uio);
