@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.15 2000/02/08 18:45:27 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.16 2000/03/27 12:33:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,21 +121,21 @@ struct ucom_softc {
 
 cdev_decl(ucom);
 
-static void	ucom_cleanup	__P((struct ucom_softc *));
-static void	ucom_hwiflow	__P((struct ucom_softc *));
-static int	ucomparam	__P((struct tty *, struct termios *));
-static void	ucomstart	__P((struct tty *));
-static void	ucom_shutdown	__P((struct ucom_softc *));
-static void	ucom_dtr	__P((struct ucom_softc *, int));
-static void	ucom_rts	__P((struct ucom_softc *, int));
-static void	ucom_break	__P((struct ucom_softc *, int));
-static usbd_status ucomstartread __P((struct ucom_softc *));
-static void	ucomreadcb	__P((usbd_xfer_handle, usbd_private_handle, 
+Static void	ucom_cleanup	__P((struct ucom_softc *));
+Static void	ucom_hwiflow	__P((struct ucom_softc *));
+Static int	ucomparam	__P((struct tty *, struct termios *));
+Static void	ucomstart	__P((struct tty *));
+Static void	ucom_shutdown	__P((struct ucom_softc *));
+Static void	ucom_dtr	__P((struct ucom_softc *, int));
+Static void	ucom_rts	__P((struct ucom_softc *, int));
+Static void	ucom_break	__P((struct ucom_softc *, int));
+Static usbd_status ucomstartread __P((struct ucom_softc *));
+Static void	ucomreadcb	__P((usbd_xfer_handle, usbd_private_handle, 
 				     usbd_status status));
-static void	ucomwritecb	__P((usbd_xfer_handle, usbd_private_handle, 
+Static void	ucomwritecb	__P((usbd_xfer_handle, usbd_private_handle, 
 				     usbd_status status));
-static void	tiocm_to_ucom	__P((struct ucom_softc *, int, int));
-static int	ucom_to_tiocm	__P((struct ucom_softc *));
+Static void	tiocm_to_ucom	__P((struct ucom_softc *, int, int));
+Static int	ucom_to_tiocm	__P((struct ucom_softc *));
 
 USB_DECLARE_DRIVER(ucom);
 
