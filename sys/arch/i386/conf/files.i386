@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.224 2002/11/25 22:25:13 manu Exp $
+#	$NetBSD: files.i386,v 1.225 2002/12/28 17:51:16 jmcneill Exp $
 #
 # new style config file for i386 architecture
 #
@@ -482,6 +482,10 @@ file	arch/i386/acpi/vald_acpi.c		vald_acpi
 # Sony SPIC (jog dial etc.)
 attach	spic at acpi with spic_acpi
 file	arch/i386/acpi/spic_acpi.c		spic_acpi
+
+# Numeric Processing Extension; Math Co-processor
+attach	npx at acpi with npx_acpi
+file	arch/i386/acpi/npx_acpi.c		npx_acpi
 
 device	vesabios {}
 attach vesabios at mainbus
