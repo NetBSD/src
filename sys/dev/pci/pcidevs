@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.378 2001/12/30 12:45:32 ichiro Exp $
+$NetBSD: pcidevs,v 1.379 2002/01/01 21:47:08 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -554,6 +554,7 @@ vendor INDCOMPSRC	0x494f	Industrial Computer Source
 vendor NETVIN		0x4a14	NetVin
 vendor BUSLOGIC2	0x4b10	Buslogic (2nd PCI Vendor ID)
 vendor MEDIAQ		0x4d51	MediaQ Inc.
+vendor GUILLEMOT	0x5046	Guillemot
 vendor S3		0x5333	S3
 vendor NETPOWER2	0x5700	NetPower (2nd PCI Vendor ID)
 vendor C4T		0x6374	c't Magazin
@@ -1153,6 +1154,9 @@ product GALILEO	GT64011		0x4146	GT-64011 System Controller
 product GALILEO	GT64120		0x4620	GT-64120 System Controller
 product GALILEO	GT64130		0x6320	GT-64130 System Controller
 product GALILEO	GT64260		0x6430	GT-64260 System Controller
+
+/* Guillemot products */
+product GUILLEMOT MAXIRADIO	0x1001	MAXIRADIO
 
 /* Hewlett-Packard products */
 product HP J2585A	0x1030	J2585A
