@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.9 2000/10/11 19:10:19 thorpej Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.10 2000/11/19 01:49:29 sommerfeld Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		Simon Burge <simonb@netbsd.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.9 2000/10/11 19:10:19 thorpej Exp $
+ * $Id: m_netbsd15.c,v 1.10 2000/11/19 01:49:29 sommerfeld Exp $
  */
 
 #include <sys/param.h>
@@ -93,13 +93,12 @@ static char header[] =
 	"%5d %-8.8s %3d %4d%7s %5s %-7s%7s %5.2f%% %5.2f%% %.12s"
 
 
-/* Process state names for the "STATE" column of the display.
- * The extra nulls in the string "run" are for adding a slash and
- * the processor number when needed.
+/* 
+ * Process state names for the "STATE" column of the display.
  */
 
-char *state_abbrev[] = {
-	"", "start", "run\0\0\0", "sleep", "stop", "zomb", "dead", "onproc"
+const char *state_abbrev[] = {
+	"", "start", "run", "sleep", "stop", "zomb", "dead", "cpu"
 };
 
 static kvm_t *kd;
@@ -448,6 +447,10 @@ format_next_process(handle, get_userid)
 	long cputime;
 	double pct;
 	struct handle *hp;
+	const char *statep;
+#ifdef KI_NOCPU
+	char state[10];
+#endif
 	static char fmt[128];		/* static area where result is built */
 
 	/* find and remember the next proc structure */
@@ -481,6 +484,21 @@ format_next_process(handle, get_userid)
 	/* calculate the base for cpu percentages */
 	pct = pctdouble(pp->p_pctcpu);
 
+	statep = state_abbrev[(unsigned)pp->p_stat];
+
+#ifdef KI_NOCPU
+	/* Post-1.5 change: add cpu number if appropriate */
+	if (pp->p_cpuid != KI_NOCPU) {
+		switch (pp->p_stat) {
+		case SONPROC:
+		case SRUN:
+			snprintf(state, sizeof(state), "%s/%lld", 
+				 statep, (long long)pp->p_cpuid);
+			statep = state;
+			break;
+		}
+	}
+#endif
 	/* format this entry */
 	sprintf(fmt,
 	    Proc_format,
@@ -490,7 +508,7 @@ format_next_process(handle, get_userid)
 	    pp->p_nice - NZERO,
 	    format_k(pagetok(PROCSIZE(pp))),
 	    format_k(pagetok(pp->p_vm_rssize)),
-	    state_abbrev[(unsigned char) pp->p_stat],
+	    statep,
 	    format_time(cputime),
 	    100.0 * weighted_cpu(pct, pp),
 	    100.0 * pct,
