@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77 2003/01/28 22:35:16 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.78 2003/01/28 22:52:11 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -3715,7 +3715,7 @@ pv_list(pa, n)
 #ifdef NOT_YET
 /* and maybe not ever */
 /************************** LOW-LEVEL ROUTINES **************************
- * These routines will eventualy be re-written into assembly and placed *
+ * These routines will eventually be re-written into assembly and placed*
  * in locore.s.  They are here now as stubs so that the pmap module can *
  * be linked as a standalone user program for testing.                  *
  ************************************************************************/
