@@ -1,4 +1,4 @@
-/*	$KAME: kmpstat.c,v 1.31 2003/05/23 05:15:42 sakane Exp $	*/
+/*	$KAME: kmpstat.c,v 1.32 2004/04/15 08:55:22 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -599,10 +599,12 @@ f_exchangesa(ac, av)
 		return NULL;
 
 	head = (struct admin_com *)buf->v;
-	head->ac_len = buf->l + index->l;
-	head->ac_cmd = ADMIN_DELETE_SA;
+	head->ac_len = buf->l;
+	head->ac_cmd = ADMIN_ESTABLISH_SA;
 	head->ac_errno = 0;
 	head->ac_proto = proto;
+
+	memcpy(buf->v+sizeof(*head), index->v, index->l);
 
 	return buf;
 }
@@ -635,7 +637,7 @@ get_index(ac, av)
 {
 	int family;
 
-	if (ac != 3) {
+	if (ac != 3 && ac != 4) {
 		errno = EINVAL;
 		return NULL;
 	}
@@ -645,6 +647,7 @@ get_index(ac, av)
 	if (family == -1)
 		return NULL;
 	av++;
+	ac--;
 
 	return get_comindexes(family, ac, av);
 }
@@ -676,7 +679,7 @@ get_comindexes(family, ac, av)
 	struct sockaddr *src = NULL, *dst = NULL;
 	int ulproto;
 
-	if (ac != 2) {
+	if (ac != 2 && ac != 3) {
 		errno = EINVAL;
 		return NULL;
 	}
@@ -695,9 +698,18 @@ get_comindexes(family, ac, av)
 	if (src == NULL)
 		goto bad;
 	av++;
+	ac--;
 	if (get_comindex(*av, &p_name, &p_port, &p_prefd) == -1)
 		goto bad;
 	dst = get_sockaddr(family, p_name, p_port);
+	if (p_name) {
+		racoon_free(p_name);
+		p_name = NULL;
+	}
+	if (p_port) {
+		racoon_free(p_port);
+		p_port = NULL;
+	}
 	if (dst == NULL)
 		goto bad;
 
@@ -706,19 +718,30 @@ get_comindexes(family, ac, av)
 		goto bad;
 
 	av++;
-	ulproto = get_ulproto(*av);
-	if (ulproto == -1)
-		goto bad;
+	ac--;
+	if(ac){
+		ulproto = get_ulproto(*av);
+		if (ulproto == -1)
+			goto bad;
+	}else
+		ulproto=0;
 
-	ci = (struct admin_com_indexes *)buf;
-	ci->prefs = (u_int8_t)atoi(p_prefs); /* XXX should be handled error. */
-	ci->prefd = (u_int8_t)atoi(p_prefd); /* XXX should be handled error. */
+	ci = (struct admin_com_indexes *)buf->v;
+	if(p_prefs)
+		ci->prefs = (u_int8_t)atoi(p_prefs); /* XXX should be handled error. */
+	else
+		ci->prefs = 32;
+	if(p_prefd)
+		ci->prefd = (u_int8_t)atoi(p_prefd); /* XXX should be handled error. */
+	else
+		ci->prefd = 32;
 	ci->ul_proto = ulproto;
 	memcpy(&ci->src, src, src->sa_len);
 	memcpy(&ci->dst, dst, dst->sa_len);
 
 	if (p_name)
 		racoon_free(p_name);
+
 	return buf;
 
    bad:
@@ -775,6 +798,7 @@ get_comindex(str, name, port, pref)
 	return 0;
 
     bad:
+
 	if (*name)
 		racoon_free(*name);
 	if (*port)
@@ -795,6 +819,7 @@ get_sockaddr(family, name, port)
 
 	memset(&hint, 0, sizeof(hint));
 	hint.ai_family = PF_UNSPEC;
+	hint.ai_family = family;
 	hint.ai_socktype = SOCK_STREAM;
 
 	error = getaddrinfo(name, port, &hint, &ai);
@@ -811,6 +836,11 @@ get_ulproto(str)
 	char *str;
 {
 	struct ulproto_tag *cp;
+
+	if(str == NULL){
+		errno = EINVAL;
+		return -1;
+	}
 
 	/* checking the string of upper layer protocol. */
 	for (cp = &ulprototab[0]; cp->str; cp++) {

@@ -1,4 +1,4 @@
-/*	$KAME: handler.c,v 1.58 2004/03/27 03:27:45 suz Exp $	*/
+/*	$KAME: handler.c,v 1.59 2004/04/12 03:57:05 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -423,7 +423,7 @@ newph2()
 	if (iph2 == NULL)
 		return NULL;
 
-	iph2->status = PHASE1ST_SPAWN;
+	iph2->status = PHASE2ST_SPAWN;
 
 	return iph2;
 }
