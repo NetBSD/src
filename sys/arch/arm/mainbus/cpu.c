@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.17 2001/03/13 23:56:49 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.18 2001/04/04 21:40:20 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -50,7 +50,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <uvm/uvm_extern.h>
-#include <machine/bootconfig.h>
 #include <machine/io.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
