@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.38 2003/05/01 12:55:52 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.39 2003/05/01 13:01:17 wiz Exp $
 .\"
 .Dd April 30, 2003
 .Dt FDISK 8
@@ -319,16 +319,9 @@ bootmenu:
 start
 .Em start ,
 size
-.Em size
-(\c
-.Em MB
+.Em size ( MB
 MB, Cyls
-.cu 1
-first\c
--\c
-.cu 1
-next\c
-)\c
+.Em first Ns No - Ns Em next )
 .Op , Active
 .in -4
 .in -4
