@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
+/*	$NetBSD: nfsstat.c,v 1.8 1997/03/03 22:22:48 explorer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -46,28 +46,31 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
+static char *rcsid = "$NetBSD: nfsstat.c,v 1.8 1997/03/03 22:22:48 explorer Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
+
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
-#include <signal.h>
-#include <fcntl.h>
+
 #include <ctype.h>
-#include <errno.h>
-#include <kvm.h>
-#include <nlist.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <paths.h>
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <kvm.h>
+#include <limits.h>
+#include <nlist.h>
+#include <paths.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 struct nlist nl[] = {
 #define	N_NFSSTAT	0
@@ -87,7 +90,7 @@ main(argc, argv)
 	u_int interval;
 	int ch;
 	char *memf, *nlistf;
-	char errbuf[80];
+	char errbuf[_POSIX2_LINE_MAX];
 
 	interval = 0;
 	memf = nlistf = NULL;
