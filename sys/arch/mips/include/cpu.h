@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.62 2002/04/05 01:22:16 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.63 2002/06/01 12:10:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -133,6 +133,8 @@ extern int mips3_pg_cached;
 #define	CPU_MIPS_CACHED_CCA_MASK	0x0070
 #define	CPU_MIPS_CACHED_CCA_SHIFT	 4
 #define	CPU_MIPS_DOUBLE_COUNT		0x0080	/* 1 cp0 count == 2 clock cycles */
+#define	CPU_MIPS_USE_WAIT		0x0100	/* Use "wait"-based cpu_idle() */
+#define	CPU_MIPS_NO_WAIT		0x0200	/* Inverse of previous, for mips32/64 */
 #define	MIPS_NOT_SUPP			0x8000
 
 #ifdef _LKM
