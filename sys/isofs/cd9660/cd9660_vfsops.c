@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.47 2000/05/10 20:35:35 scw Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.48 2000/05/27 16:03:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -434,17 +434,15 @@ iso_mountfs(devvp, mp, p, argp)
 	}
 	isomp->im_flags = argp->flags & (ISOFSMNT_NORRIP | ISOFSMNT_GENS |
 					 ISOFSMNT_EXTATT | ISOFSMNT_NOJOLIET);
-	switch (isomp->im_flags&(ISOFSMNT_NORRIP|ISOFSMNT_GENS)) {
-	default:
-	    isomp->iso_ftype = ISO_FTYPE_DEFAULT;
-	    break;
-	case ISOFSMNT_GENS|ISOFSMNT_NORRIP:
-	    isomp->iso_ftype = ISO_FTYPE_9660;
-	    break;
-	case 0:
-	    isomp->iso_ftype = ISO_FTYPE_RRIP;
-	    break;
-	}
+
+	if (isomp->im_flags & ISOFSMNT_GENS)
+		isomp->iso_ftype = ISO_FTYPE_9660;
+	else if (isomp->im_flags & ISOFSMNT_NORRIP) {
+		isomp->iso_ftype = ISO_FTYPE_DEFAULT;
+		if (argp->flags & ISOFSMNT_NOCASETRANS)
+			isomp->im_flags |= ISOFSMNT_NOCASETRANS;
+	} else 
+		isomp->iso_ftype = ISO_FTYPE_RRIP;
 
 	/* Check the Joliet Extension support */
 	if ((argp->flags & ISOFSMNT_NORRIP) != 0 &&
