@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.1 (Berkeley) 3/3/91
-#	$Id: Makefile,v 1.5 1993/10/04 22:17:29 pk Exp $
+#	$Id: Makefile,v 1.6 1993/10/07 07:24:07 cgd Exp $
 
 .if !defined (HOST)
 HOST=$(MACHINE)
@@ -21,6 +21,9 @@ SRCS=		app.c as.c atof-generic.c bignum-copy.c \
 		obj-$(OBJFORMAT).c
 CFLAGS+=	-I$(.CURDIR) ${ADDINCLUDE} -I$(.CURDIR)/config \
 		-DPIC -DOLD_GAS -DSIGTY=void -Derror=as_fatal
+LDADD+=		-lgnumalloc
+DPADD+=		/usr/lib/libgnumalloc.a
+
 .PATH: $(.CURDIR)/config
 
 beforedepend: config.status
