@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace6.c,v 1.5 2000/12/04 07:03:18 itojun Exp $	*/
+/*	$NetBSD: mtrace6.c,v 1.6 2001/01/12 18:53:20 itojun Exp $	*/
 /*	$KAME: mtrace6.c,v 1.16 2000/12/04 06:45:34 itojun Exp $	*/
 
 /*
@@ -237,7 +237,7 @@ mtrace_loop()
 		tv_wait.tv_sec = waittime;
 		tv_wait.tv_usec = 0;
 
-		nfdsp = howmany(mldsoc + 1, NFDBITS);
+		nfdsp = howmany(mldsoc + 1, NFDBITS) * sizeof(fd_mask);
 		fdsp = malloc(nfdsp);
 		if (!fdsp)
 			err(1, "malloc");
