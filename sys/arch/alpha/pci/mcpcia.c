@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.16 2003/01/01 00:39:20 thorpej Exp $ */
+/* $NetBSD: mcpcia.c,v 1.17 2003/06/15 23:08:55 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.16 2003/01/01 00:39:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.17 2003/06/15 23:08:55 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,6 +212,7 @@ mcpciaattach(parent, self, aux)
 	pba.pba_memt = &ccp->cc_memt;
 	pba.pba_dmat =	/* start with direct, may change... */
 	    alphabus_dma_get_tag(&ccp->cc_dmat_direct, ALPHA_BUS_PCI);
+	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &ccp->cc_pc;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;

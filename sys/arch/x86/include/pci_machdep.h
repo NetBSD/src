@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.2 2003/06/15 23:09:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -64,6 +64,9 @@ union x86_pci_tag_u {
 };
 
 extern struct x86_bus_dma_tag pci_bus_dma_tag;
+#ifdef _LP64
+extern struct x86_bus_dma_tag pci_bus_dma64_tag;
+#endif
 
 /*
  * Types provided to machine-independent PCI code

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.14 2003/01/01 01:29:59 thorpej Exp $ */
+/*	$NetBSD: ifpga.c,v 1.15 2003/06/15 23:08:58 fvdl Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -343,6 +343,7 @@ ifpga_attach(struct device *parent, struct device *self, void *aux)
 	pci_pba.pba_iot = &ifpga_pci_io_tag;
 	pci_pba.pba_memt = &ifpga_pci_mem_tag;
 	pci_pba.pba_dmat = &ifpga_pci_bus_dma_tag;
+	pci_pba.pba_dmat64 = NULL;
 	pci_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pci_pba.pba_bus = 0;
 	pci_pba.pba_bridgetag = NULL;

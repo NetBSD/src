@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.12 2003/01/01 01:40:28 thorpej Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.13 2003/06/15 23:09:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -297,6 +297,7 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	pba.pba_memt = sc->sc_iot;
 	pba.pba_dmat = &hpcmips_default_bus_dma_tag.bdt;
+	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 

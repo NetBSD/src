@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1 2002/12/09 12:16:25 scw Exp $	*/
+/*	$NetBSD: pchb.c,v 1.2 2003/06/15 23:08:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -162,6 +162,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	/* PCI memory window is directly mapped */
 	pba.pba_memt = ibm4xx_make_bus_space_tag(0, 0);
 	pba.pba_dmat = &ibm4xx_default_bus_dma_tag;
+	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;

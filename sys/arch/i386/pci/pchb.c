@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.42 2003/04/16 07:37:09 scw Exp $	*/
+/*	$NetBSD: pchb.c,v 1.43 2003/06/15 23:09:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.42 2003/04/16 07:37:09 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.43 2003/06/15 23:09:01 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -313,6 +313,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		pba.pba_iot = pa->pa_iot;
 		pba.pba_memt = pa->pa_memt;
 		pba.pba_dmat = pa->pa_dmat;
+		pba.pba_dmat64 = pa->pa_dmat64;
 		pba.pba_pc = pa->pa_pc;
 		pba.pba_flags = attachflags;
 		pba.pba_bus = pbnum;

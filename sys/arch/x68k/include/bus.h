@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10 2003/01/28 01:08:08 kent Exp $	*/
+/*	$NetBSD: bus.h,v 1.11 2003/06/15 23:09:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -767,6 +767,9 @@ struct uio;
 
 typedef struct x68k_bus_dma		*bus_dma_tag_t;
 typedef struct x68k_bus_dmamap		*bus_dmamap_t;
+
+#define BUS_DMA_TAG_VALID(t)    ((t) != (bus_dma_tag_t)0)
+
 struct x68k_bus_dma {
 	/*
 	 * The `bounce threshold' is checked while we are loading

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.55 2003/03/25 21:56:20 thorpej Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.56 2003/06/15 23:09:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -66,6 +66,7 @@ struct pcibus_attach_args {
 	bus_space_tag_t pba_iot;	/* pci i/o space tag */
 	bus_space_tag_t pba_memt;	/* pci mem space tag */
 	bus_dma_tag_t pba_dmat;		/* DMA tag */
+	bus_dma_tag_t pba_dmat64;	/* DMA tag */
 	pci_chipset_tag_t pba_pc;
 	int		pba_flags;	/* flags; see below */
 
@@ -92,6 +93,7 @@ struct pci_attach_args {
 	bus_space_tag_t pa_iot;		/* pci i/o space tag */
 	bus_space_tag_t pa_memt;	/* pci mem space tag */
 	bus_dma_tag_t pa_dmat;		/* DMA tag */
+	bus_dma_tag_t pa_dmat64;	/* DMA tag */
 	pci_chipset_tag_t pa_pc;
 	int		pa_flags;	/* flags; see below */
 
@@ -147,6 +149,7 @@ struct pci_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot, sc_memt;
 	bus_dma_tag_t sc_dmat;
+	bus_dma_tag_t sc_dmat64;
 	pci_chipset_tag_t sc_pc;
 	int sc_bus, sc_maxndevs;
 	pcitag_t *sc_bridgetag;
@@ -230,6 +233,8 @@ int	pci_vpd_write __P((pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *));
 char   *pci_findvendor __P((pcireg_t));
 int	pci_find_device(struct pci_attach_args *pa,
 			int (*match)(struct pci_attach_args *));
+int	pci_dma64_available(struct pci_attach_args *);
+
 
 #endif /* _KERNEL */
 

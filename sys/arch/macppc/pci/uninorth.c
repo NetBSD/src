@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.7 2003/01/01 01:47:31 thorpej Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.8 2003/06/15 23:09:02 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -134,6 +134,7 @@ uninorth_attach(parent, self, aux)
 	pba.pba_memt = pc->memt;
 	pba.pba_iot = pc->iot;
 	pba.pba_dmat = &pci_bus_dma_tag;
+	pba.pba_dmat64 = NULL;
 	pba.pba_bus = pc->bus;
 	pba.pba_bridgetag = NULL;
 	pba.pba_pc = pc;

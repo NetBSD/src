@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2003/06/14 17:01:07 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2003/06/15 23:08:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -804,6 +804,7 @@ algor_get_ethaddr(struct pci_attach_args *pa, u_int8_t *buf)
 	 * XXX doesn't completely suck.
 	 */
 	pa->pa_dmat = &p4032_configuration.ac_pci_pf_dmat;
+	pa->pa_dmat64 = NULL;
 #endif
 	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.62 2003/05/17 01:38:39 nakayama Exp $	*/
+/*	$NetBSD: psycho.c,v 1.63 2003/06/15 23:09:06 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -588,6 +588,7 @@ found:
 	pba.pba_busname = "pci";
 	pba.pba_flags = sc->sc_psycho_this->pp_flags;
 	pba.pba_dmat = sc->sc_psycho_this->pp_dmat;
+	pba.pba_dmat64 = NULL;
 	pba.pba_iot = sc->sc_psycho_this->pp_iot;
 	pba.pba_memt = sc->sc_psycho_this->pp_memt;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 2003/01/28 01:07:59 kent Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 2003/06/15 23:09:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -625,6 +625,8 @@ struct uio;
 
 typedef struct hpcsh_bus_dma_tag		*bus_dma_tag_t;
 typedef struct hpcsh_bus_dmamap		*bus_dmamap_t;
+
+#define BUS_DMA_TAG_VALID(t)    ((t) != (bus_dma_tag_t)0)
 
 /*
  *	bus_dma_segment_t

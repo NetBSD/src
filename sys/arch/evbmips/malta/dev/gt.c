@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.5 2002/10/02 15:45:17 thorpej Exp $	*/
+/*	$NetBSD: gt.c,v 1.6 2003/06/15 23:08:59 fvdl Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@ gt_attach(parent, self, aux)
 	pba.pba_iot = &mcp->mc_iot;
 	pba.pba_memt = &mcp->mc_memt;
 	pba.pba_dmat = &mcp->mc_pci_dmat;	/* pci_bus_dma_tag */
-	//pba.pba_dmat = &pci_bus_dma_tag;
+	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &mcp->mc_pc;
 
 	config_found(self, &pba, gt_print);

@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower.c,v 1.8 2003/02/03 17:09:58 matt Exp $	*/
+/*	$NetBSD: firepower.c,v 1.9 2003/06/15 23:09:03 fvdl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -340,6 +340,7 @@ firepower_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_iot = &cp->c_iot;
 	pba.pba_memt = &cp->c_memt;
 	pba.pba_dmat = &cp->c_dmat_pci;
+	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &cp->c_pc;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;

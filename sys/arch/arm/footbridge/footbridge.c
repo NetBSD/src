@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.13 2003/03/23 14:12:25 chris Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.14 2003/06/15 23:08:56 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.13 2003/03/23 14:12:25 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.14 2003/06/15 23:08:56 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,6 +213,7 @@ footbridge_attach(parent, self, aux)
 	fba.fba_pba.pba_iot = &footbridge_pci_io_bs_tag;
 	fba.fba_pba.pba_memt = &footbridge_pci_mem_bs_tag;
 	fba.fba_pba.pba_dmat = &footbridge_pci_bus_dma_tag;
+	fba.fba_pba.pba_dmat64 = NULL;
 	fba.fba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	fba.fba_pba.pba_bus = 0;
 	fba.fba_pba.pba_bridgetag = NULL;

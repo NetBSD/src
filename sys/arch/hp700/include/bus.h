@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 2003/01/28 01:07:58 kent Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 2003/06/15 23:08:59 fvdl Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -329,6 +329,8 @@ struct uio;
 
 typedef const struct hppa_bus_dma_tag	*bus_dma_tag_t;
 typedef struct hppa_bus_dmamap	*bus_dmamap_t;
+
+#define BUS_DMA_TAG_VALID(t)    ((t) != (bus_dma_tag_t)0)
 
 /*
  *	bus_dma_segment_t

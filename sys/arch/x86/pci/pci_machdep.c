@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4 2003/05/29 20:22:32 fvdl Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5 2003/06/15 23:09:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4 2003/05/29 20:22:32 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5 2003/06/15 23:09:08 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -202,6 +202,28 @@ struct x86_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
 };
+
+#ifdef _LP64
+struct x86_bus_dma_tag pci_bus_dma64_tag = {
+	0,
+	0,
+	0,
+	NULL,			/* _may_bounce */
+	_bus_dmamap_create,
+	_bus_dmamap_destroy,
+	_bus_dmamap_load,
+	_bus_dmamap_load_mbuf,
+	_bus_dmamap_load_uio,
+	_bus_dmamap_load_raw,
+	_bus_dmamap_unload,
+	NULL,
+	_bus_dmamem_alloc,
+	_bus_dmamem_free,
+	_bus_dmamem_map,
+	_bus_dmamem_unmap,
+	_bus_dmamem_mmap,
+};
+#endif
 
 void
 pci_attach_hook(parent, self, pba)
