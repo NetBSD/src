@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.1 1996/05/15 21:36:46 jtc Exp $	*/
+/*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -60,6 +60,8 @@ void	pw_error __P((const char *name, int err, int eval));
 int	openpty __P((int *, int *, char *, struct termios *,
 		     struct winsize *));
 pid_t	forkpty __P((int *, char *, struct termios *, struct winsize *));
+int	getmaxpartitions __P((void));
+int	getrawpartition __P((void));
 __END_DECLS
 
 #endif /* !_UTIL_H_ */
