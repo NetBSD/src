@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.673 2004/02/18 13:37:40 yamt Exp $
+#	$NetBSD: mi,v 1.674 2004/02/26 22:48:28 he Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1554,6 +1554,7 @@
 ./usr/lib/libg2c.a				comp-fortran-lib
 ./usr/lib/libg2c_p.a				comp-fortran-proflib	profile
 ./usr/lib/libgcc.a				comp-c-lib
+./usr/lib/libgcc_s.a				comp-c-lib
 ./usr/lib/libgnumalloc.a			comp-c-lib
 ./usr/lib/libgnumalloc_p.a			comp-c-proflib		profile
 ./usr/lib/libgssapi.a				comp-krb5-lib		kerberos
