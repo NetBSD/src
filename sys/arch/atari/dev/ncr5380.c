@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.42 2002/09/27 20:30:59 thorpej Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.43 2002/10/02 05:51:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -194,10 +194,10 @@ int	ncr_match __P((struct device *, struct cfdata *, void *));
 #define CFNAME(n)	__CONCAT(n,_cd)
 #define CANAME(n)	__CONCAT(n,_ca)
 #define CFSTRING(n)	__STRING(n)
+#define	CFDRNAME(n)	n
 
-const struct cfattach CANAME(DRNAME) = {
-	sizeof(struct ncr_softc), ncr_match, ncr_attach
-};
+CFATTACH_DECL(CFDRNAME(DRNAME), sizeof(struct ncr_softc),
+    ncr_match, ncr_attach, NULL, NULL);
 
 extern struct cfdriver CFNAME(DRNAME);
 
