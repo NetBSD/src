@@ -1,4 +1,4 @@
-/*	$NetBSD: sun68k.c,v 1.14 2002/05/14 15:29:50 lukem Exp $ */
+/*	$NetBSD: sun68k.c,v 1.15 2002/05/15 02:18:24 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sun68k.c,v 1.14 2002/05/14 15:29:50 lukem Exp $");
+__RCSID("$NetBSD: sun68k.c,v 1.15 2002/05/15 02:18:24 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: sun68k.c,v 1.14 2002/05/14 15:29:50 lukem Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/stat.h>
 
 #include <assert.h>
 #include <err.h>
@@ -112,7 +111,6 @@ sun68k_clearboot(ib_params *params)
 int
 sun68k_setboot(ib_params *params)
 {
-	struct stat	filesystemsb, bootstrapsb;
 	char		bb[SUN68K_BOOT_BLOCK_MAX_SIZE];
 	int		retval;
 	ssize_t		rv;
@@ -142,19 +140,7 @@ sun68k_setboot(ib_params *params)
 		goto done;
 	}
 
-	if (fstat(params->fsfd, &filesystemsb) == -1) {
-		warn("Examining `%s'", params->filesystem);
-		goto done;
-	}
-	if (fstat(params->s1fd, &bootstrapsb) == -1) {
-		warn("Examining `%s'", params->stage1);
-		goto done;
-	}
-	if (!S_ISREG(bootstrapsb.st_mode)) {
-		warnx("`%s' must be a regular file", params->stage1);
-		goto done;
-	}
-	if (bootstrapsb.st_size > sizeof(bb)) {
+	if (params->s1stat.st_size > sizeof(bb)) {
 		warnx("`%s' cannot be larger than %lu bytes",
 		    params->stage1, (unsigned long)sizeof(bb));
 		goto done;
@@ -204,7 +190,7 @@ sun68k_setboot(ib_params *params)
 		goto done;
 	}
 
-	if (S_ISREG(filesystemsb.st_mode)) {
+	if (S_ISREG(params->fsstat.st_mode)) {
 		if (fsync(params->fsfd) == -1)
 			warn("Synchronising file system `%s'",
 			    params->filesystem);
@@ -261,10 +247,6 @@ sun68k_setboot(ib_params *params)
 		warnx("Writing `%s': short write", params->filesystem);
 		goto done;
 	} else {
-
-		/* Sync filesystems (to clean in-memory superblock?) */
-		sync();
-
 		retval = 1;
 	}
 

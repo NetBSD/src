@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.10 2002/05/14 06:40:33 lukem Exp $	*/
+/*	$NetBSD: alpha.c,v 1.11 2002/05/15 02:18:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.10 2002/05/14 06:40:33 lukem Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.11 2002/05/15 02:18:23 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -106,7 +106,6 @@ __RCSID("$NetBSD: alpha.c,v 1.10 2002/05/14 06:40:33 lukem Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/stat.h>
 
 #include <assert.h>
 #include <err.h>
@@ -222,7 +221,6 @@ alpha_clearboot(ib_params *params)
 int
 alpha_setboot(ib_params *params)
 {
-	struct stat		bootstrapsb;
 	struct alpha_boot_block	bb;
 	uint64_t		startblock;
 	int			retval;
@@ -251,20 +249,12 @@ alpha_setboot(ib_params *params)
 		goto done;
 	}
 
-	if (fstat(params->s1fd, &bootstrapsb) == -1) {
-		warn("Examining `%s'", params->stage1);
-		goto done;
-	}
-	if (!S_ISREG(bootstrapsb.st_mode)) {
-		warnx("`%s' must be a regular file", params->stage1);
-		goto done;
-	}
 	/*
 	 * Allocate a buffer, with space to round up the input file
 	 * to the next block size boundary, and with space for the boot
 	 * block.
 	 */
-	bootstrapsize = roundup(bootstrapsb.st_size,
+	bootstrapsize = roundup(params->s1stat.st_size,
 	    ALPHA_BOOT_BLOCK_BLOCKSIZE);
 
 	bootstrapbuf = malloc(bootstrapsize);
@@ -275,11 +265,11 @@ alpha_setboot(ib_params *params)
 	memset(bootstrapbuf, 0, bootstrapsize);
 
 	/* read the file into the buffer */
-	rv = pread(params->s1fd, bootstrapbuf, bootstrapsb.st_size, 0);
+	rv = pread(params->s1fd, bootstrapbuf, params->s1stat.st_size, 0);
 	if (rv == -1) {
 		warn("Reading `%s'", params->stage1);
 		return (0);
-	} else if (rv != bootstrapsb.st_size) {
+	} else if (rv != params->s1stat.st_size) {
 		warnx("Reading `%s': short read", params->stage1);
 		return (0);
 	}
@@ -320,7 +310,8 @@ alpha_setboot(ib_params *params)
 	}
 
 	bb.bb_secsize =
-	    htole64(howmany(bootstrapsb.st_size, ALPHA_BOOT_BLOCK_BLOCKSIZE));
+	    htole64(howmany(params->s1stat.st_size,
+		ALPHA_BOOT_BLOCK_BLOCKSIZE));
 	bb.bb_secstart = htole64(startblock);
 	bb.bb_flags = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.10 2002/05/14 06:40:32 lukem Exp $	*/
+/*	$NetBSD: installboot.h,v 1.11 2002/05/15 02:18:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,6 +46,9 @@
 #include <sys/bootblock.h>
 #endif
 
+#include <sys/stat.h>
+#include <stdint.h>
+
 typedef enum {
 				/* flags from global options */
 	IB_VERBOSE =	1<<0,		/* verbose operation */
@@ -66,8 +69,10 @@ typedef struct {
 	struct ib_fs	*fstype;	/* file system details (see below) */
 	const char	*filesystem;	/* name of target file system */
 	int		 fsfd;		/*  open fd to filesystem */
+	struct stat	 fsstat;	/*  fstat(2) of fsfd */
 	const char	*stage1;	/* name of stage1 bootstrap */
 	int		 s1fd;		/*  open fd to stage1 */
+	struct stat	 s1stat;	/*  fstat(2) of s1fd */
 	uint32_t	 s1start;	/*  start block of stage1 */
 	const char	*stage2;	/* name of stage2 bootstrap */
 	uint32_t	 s2start;	/*  start block of stage2 */
@@ -117,6 +122,8 @@ int		raw_findstage2(ib_params *, uint32_t *, ib_block *);
 int		alpha_parseopt(ib_params *, const char *);
 int		alpha_setboot(ib_params *);
 int		alpha_clearboot(ib_params *);
+int		macppc_setboot(ib_params *);
+int		macppc_clearboot(ib_params *);
 int		pmax_parseopt(ib_params *, const char *);
 int		pmax_setboot(ib_params *);
 int		pmax_clearboot(ib_params *);
