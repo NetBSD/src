@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.1.1.1 2000/05/03 10:55:30 veego Exp $	*/
+/*	$NetBSD: common.c,v 1.1.1.2 2000/05/11 19:49:13 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -575,4 +575,23 @@ frpcmp_t	*frp;
 	else
 		printf(" port %s %s", pcmp1[frp->frp_cmp],
 			     portname(pr, frp->frp_port));
+}
+
+
+void printbuf(buf, len, zend)
+char *buf;
+int len, zend;
+{
+	char *s, c;
+	int i;
+
+	for (s = buf, i = len; i; i--) {
+		c = *s++;
+		if (isprint(c))
+			putchar(c);
+		else
+			printf("\\%03o", c);
+		if ((c == '\0') && zend)
+			break;
+	}
 }
