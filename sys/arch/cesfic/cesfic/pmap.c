@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1 2001/05/14 18:23:03 drochner Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2 2001/05/16 18:47:04 drochner Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -620,7 +620,7 @@ pmap_collect_pv()
 	for (ph = &pv_table[page_cnt - 1]; ph >= &pv_table[0]; ph--) {
 		if (ph->pv_pmap == 0)
 			continue;
-		s = splimp();
+		s = splvm();
 		for (ppv = ph; (pv = ppv->pv_next) != 0; ) {
 			pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 			if (pvp->pvp_pgi.pgi_nfree == -1) {
@@ -676,6 +676,7 @@ pmap_map(va, spa, epa, prot)
 		va += NBPG;
 		spa += NBPG;
 	}
+	pmap_update();
 	return (va);
 }
 
@@ -980,7 +981,7 @@ pmap_page_protect(pg, prot)
 		break;
 	}
 	pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 	while (pv->pv_pmap != NULL) {
 		pt_entry_t *pte;
 
@@ -1128,9 +1129,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 	    ("pmap_enter(%p, %lx, %lx, %x, %x)\n",
 	    pmap, va, pa, prot, wired));
 
-	if (pmap == NULL)
-		return (0);
-
 #ifdef DIAGNOSTIC
 	/*
 	 * pmap_enter() should never be used for CADDR1 and CADDR2.
@@ -1215,7 +1213,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		int s;
 
 		pv = pa_to_pvh(pa);
-		s = splimp();
+		s = splvm();
 		PMAP_DPRINTF(PDB_ENTER,
 		    ("enter: pv at %p: %lx/%p/%p\n",
 		    pv, pv->pv_va, pv->pv_pmap, pv->pv_next));
@@ -1530,24 +1528,6 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	    dst_pmap, src_pmap, dst_addr, len, src_addr));
 }
 
-#if 0
-/*
- * pmap_update:
- *
- *	Require that all active physical maps contain no
- *	incorrect entires NOW, by processing any deferred
- *	pmap operations.
- */
-void
-pmap_update()
-{
-
-	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_update()\n"));
-
-	TBIA();		/* XXX should not be here. */
-}
-#endif
-
 /*
  * pmap_collect:		[ INTERFACE ]
  *
@@ -1573,7 +1553,7 @@ pmap_collect(pmap)
 		 * XXX pages much differently.
 		 */
 
-		s = splimp();
+		s = splvm();
 		for (bank = 0; bank < vm_nphysseg; bank++)
 			pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
 			    ptoa(vm_physmem[bank].end));
@@ -1586,6 +1566,7 @@ pmap_collect(pmap)
 		 * all necessary locking.
 		 */
 		pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
+		pmap_update();
 	}
 
 #ifdef notyet
@@ -1710,7 +1691,7 @@ ok:
  *	machine dependent page at a time.
  *
  *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
- *	      (Actually, we go to splimp(), and since we don't
+ *	      (Actually, we go to splvm(), and since we don't
  *	      support multiple processors, this is sufficient.)
  */
 void
@@ -1743,7 +1724,7 @@ pmap_zero_page(phys)
 	}
 #endif
 
-	s = splimp();
+	s = splvm();
 
 	*caddr1_pte = npte;
 	TBIS((vaddr_t)CADDR1);
@@ -1766,7 +1747,7 @@ pmap_zero_page(phys)
  *	dependent page at a time.
  *
  *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
- *	      (Actually, we go to splimp(), and since we don't
+ *	      (Actually, we go to splvm(), and since we don't
  *	      support multiple processors, this is sufficient.)
  */
 void
@@ -1802,7 +1783,7 @@ pmap_copy_page(src, dst)
 	}
 #endif
 
-	s = splimp();
+	s = splvm();
 
 	*caddr1_pte = npte1;
 	TBIS((vaddr_t)CADDR1);
@@ -2102,7 +2083,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 */
 	pv = pa_to_pvh(pa);
 	ste = ST_ENTRY_NULL;
-	s = splimp();
+	s = splvm();
 	/*
 	 * If it is the first entry on the list, it is actually
 	 * in the header and we must copy the following entry up
@@ -2252,7 +2233,7 @@ pmap_testbit(pa, bit)
 		return(FALSE);
 
 	pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 	/*
 	 * Check saved info first
 	 */
@@ -2312,7 +2293,7 @@ pmap_changebit(pa, set, mask)
 		return;
 
 	pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 
 	/*
 	 * Clear saved attributes (modify, reference)
@@ -2477,7 +2458,7 @@ pmap_enter_ptpage(pmap, va)
 	if (pmap == pmap_kernel()) {
 		struct kpt_page *kpt;
 
-		s = splimp();
+		s = splvm();
 		if ((kpt = kpt_free_list) == (struct kpt_page *)0) {
 			/*
 			 * No PT pages available.
@@ -2496,6 +2477,7 @@ pmap_enter_ptpage(pmap, va)
 		bzero((caddr_t)kpt->kpt_va, NBPG);
 		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT,
 		    VM_PROT_DEFAULT|PMAP_WIRED);
+		pmap_update();
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE)) {
 			int ix = pmap_ste(pmap, va) - pmap_ste(pmap, 0);
@@ -2557,7 +2539,7 @@ pmap_enter_ptpage(pmap, va)
 	 * the STE when we remove the mapping for the page.
 	 */
 	pv = pa_to_pvh(ptpa);
-	s = splimp();
+	s = splvm();
 	if (pv) {
 		pv->pv_flags |= PV_PTPAGE;
 		do {
