@@ -1,3 +1,5 @@
+/*	$NetBSD: isinf.c,v 1.3 1997/07/13 18:42:55 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,13 +37,18 @@
  * SUCH DAMAGE.
  *
  * from: Header: isinf.c,v 1.1 91/07/08 19:03:34 torek Exp
- * $Id: isinf.c,v 1.2 1996/02/05 04:31:28 jtc Exp $
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: isinf.c,v 1.3 1997/07/13 18:42:55 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <math.h>
 #include <sys/types.h>
 #include <machine/ieee.h>
 
