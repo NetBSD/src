@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.2 1997/03/22 09:13:48 thorpej Exp $	 */
+/*	$NetBSD: ls.c,v 1.3 1997/06/13 13:48:47 drochner Exp $	 */
 
 /*
  * Copyright (c) 1993
@@ -41,8 +41,6 @@
 #include <ufs/ufs/dir.h>
 
 #include "stand.h"
-
-extern char    *strerror __P((int));	/* XXX for now */
 
 static char    *typestr[] = {
 	"unknown",
