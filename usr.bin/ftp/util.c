@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.66 1999/09/28 07:54:01 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.67 1999/09/28 09:12:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.66 1999/09/28 07:54:01 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.67 1999/09/28 09:12:06 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -692,10 +692,6 @@ progressmeter(flag)
 			 *	(especially the number of characters in the
 			 *	`static' portion of it), be sure to update
 			 *	these appropriately.
-			 *
-			 * XXX:	sprintf() is used because it's more portable,
-			 *	so `buf' must be big enough to hold the
-			 *	largest values output.
 			 */
 	char		buf[256];	/* workspace for progress bar */
 #define BAROVERHEAD	43		/* non `*' portion of progress bar */
@@ -735,10 +731,12 @@ progressmeter(flag)
 	if (! foregroundproc())
 		return;
 
+#define BUFLEFT	(sizeof(buf) - len)
+
 	ratio = (int)((double)cursize * 100.0 / (double)filesize);
 	ratio = MAX(ratio, 0);
 	ratio = MIN(ratio, 100);
-	len += sprintf(buf + len, "\r%3d%% ", ratio);
+	len += snprintf(buf + len, BUFLEFT, "\r%3d%% ", ratio);
 
 			/*
 			 * calculate the length of the `*' bar, ensuring that
@@ -747,14 +745,14 @@ progressmeter(flag)
 	barlength = MIN(sizeof(buf) - 1, ttywidth) - BAROVERHEAD;
 	if (barlength > 0) {
 		i = barlength * ratio / 100;
-		len += sprintf(buf + len, "|%.*s%*s|",
-		    i, stars, barlength - i, "");
+		len += snprintf(buf + len, BUFLEFT,
+		    "|%.*s%*s|", i, stars, barlength - i, "");
 	}
 
 	abbrevsize = cursize;
 	for (i = 0; abbrevsize >= 100000 && i < sizeof(prefixes); i++)
 		abbrevsize >>= 10;
-	len += sprintf(buf + len,
+	len += snprintf(buf + len, BUFLEFT,
 #ifndef NO_QUAD
 	    " %5lld %c%c ", (long long)abbrevsize,
 #else
@@ -774,7 +772,7 @@ progressmeter(flag)
 	}
 	for (i = 1; bytespersec >= 1024000 && i < sizeof(prefixes); i++)
 		bytespersec >>= 10;
-	len += sprintf(buf + len,
+	len += snprintf(buf + len, BUFLEFT,
 #ifndef NO_QUAD
 	    " %3lld.%02d %cB/s ", (long long)bytespersec / 1024,
 #else
@@ -784,25 +782,27 @@ progressmeter(flag)
 	    prefixes[i]);
 
 	if (bytes <= 0 || elapsed <= 0.0 || cursize > filesize) {
-		len += sprintf(buf + len, "   --:-- ETA");
+		len += snprintf(buf + len, BUFLEFT, "   --:-- ETA");
 	} else if (wait.tv_sec >= STALLTIME) {
-		len += sprintf(buf + len, " - stalled -");
+		len += snprintf(buf + len, BUFLEFT, " - stalled -");
 	} else {
 		remaining = (int)
 		    ((filesize - restart_point) / (bytes / elapsed) - elapsed);
 		if (remaining >= 100 * SECSPERHOUR)
-			len += sprintf(buf + len, "   --:-- ETA");
+			len += snprintf(buf + len, BUFLEFT, "   --:-- ETA");
 		else {
 			i = remaining / SECSPERHOUR;
 			if (i)
-				len += sprintf(buf + len, "%2d:", i);
+				len += snprintf(buf + len, BUFLEFT, "%2d:", i);
 			else
-				len += sprintf(buf + len, "   ");
+				len += snprintf(buf + len, BUFLEFT, "   ");
 			i = remaining % SECSPERHOUR;
-			len += sprintf(buf + len, "%02d:%02d ETA",
-			    i / 60, i % 60);
+			len += snprintf(buf + len, BUFLEFT,
+			    "%02d:%02d ETA", i / 60, i % 60);
 		}
 	}
+	if (flag == 1)
+		len += snprintf(buf + len, BUFLEFT, "\n");
 	(void)write(fileno(ttyout), buf, len);
 
 	if (flag == -1) {
@@ -811,9 +811,7 @@ progressmeter(flag)
 	} else if (flag == 1) {
 		(void)xsignal(SIGALRM, SIG_DFL);
 		alarmtimer(0);
-		(void)putc('\n', ttyout);
 	}
-	fflush(ttyout);
 #endif	/* !NO_PROGRESS */
 }
 
@@ -834,14 +832,7 @@ ptransfer(siginfo)
 	off_t bytespersec;
 	int remaining, hh, i, len;
 
-			/*
-			 * Work variable for transfer status.
-			 *
-			 * XXX:	sprintf() is used because it's more portable,
-			 *	so `buf' must be large enough to hold the
-			 *	largest message length.
-			 */
-	char buf[256];
+	char buf[256];		/* Work variable for transfer status. */
 
 	if (!verbose && !progress && !siginfo)
 		return;
@@ -856,7 +847,7 @@ ptransfer(siginfo)
 			bytespersec /= elapsed;
 	}
 	len = 0;
-	len += sprintf(buf + len,
+	len += snprintf(buf + len, BUFLEFT,
 #ifndef NO_QUAD
 	    "%lld byte%s %s in ", (long long)bytes,
 #else
@@ -869,18 +860,19 @@ ptransfer(siginfo)
 
 		days = remaining / SECSPERDAY;
 		remaining %= SECSPERDAY;
-		len += sprintf(buf + len, "%d day%s ",
-		    days, days == 1 ? "" : "s");
+		len += snprintf(buf + len, BUFLEFT,
+		    "%d day%s ", days, days == 1 ? "" : "s");
 	}
 	hh = remaining / SECSPERHOUR;
 	remaining %= SECSPERHOUR;
 	if (hh)
-		len += sprintf(buf + len, "%2d:", hh);
-	len += sprintf(buf + len, "%02d:%02d ", remaining / 60, remaining % 60);
+		len += snprintf(buf + len, BUFLEFT, "%2d:", hh);
+	len += snprintf(buf + len, BUFLEFT,
+	    "%02d:%02d ", remaining / 60, remaining % 60);
 
 	for (i = 1; bytespersec >= 1024000 && i < sizeof(prefixes); i++)
 		bytespersec >>= 10;
-	len += sprintf(buf + len,
+	len += snprintf(buf + len, BUFLEFT,
 #ifndef NO_QUAD
 	    "(%lld.%02d %cB/s)", (long long)bytespersec / 1024,
 #else
@@ -895,16 +887,16 @@ ptransfer(siginfo)
 				  (bytes / elapsed) - elapsed);
 		hh = remaining / SECSPERHOUR;
 		remaining %= SECSPERHOUR;
-		len += sprintf(buf + len, "  ETA: ");
+		len += snprintf(buf + len, BUFLEFT, "  ETA: ");
 		if (hh)
-			len += sprintf(buf + len, "%2d:", hh);
-		len += sprintf(buf + len, "%02d:%02d",
+			len += snprintf(buf + len, BUFLEFT, "%2d:", hh);
+		len += snprintf(buf + len, BUFLEFT, "%02d:%02d",
 		    remaining / 60, remaining % 60);
 		timersub(&now, &lastupdate, &wait);
 		if (wait.tv_sec >= STALLTIME)
-			len += sprintf(buf + len, "  (stalled)");
+			len += snprintf(buf + len, BUFLEFT, "  (stalled)");
 	}
-	len += sprintf(buf + len, "\n");
+	len += snprintf(buf + len, BUFLEFT, "\n");
 	(void)write(siginfo ? STDERR_FILENO : fileno(ttyout), buf, len);
 }
 
