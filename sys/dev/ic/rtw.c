@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.23 2004/12/25 07:45:53 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.24 2004/12/26 22:59:41 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.23 2004/12/25 07:45:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.24 2004/12/26 22:59:41 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -355,6 +355,7 @@ rtw_continuous_tx_enable(struct rtw_softc *sc, int enable)
 	rtw_set_access(sc, RTW_ACCESS_NONE);
 }
 
+#ifdef RTW_DEBUG
 static const char *
 rtw_access_string(enum rtw_access access)
 {
@@ -369,6 +370,7 @@ rtw_access_string(enum rtw_access access)
 		return "unknown";
 	}
 }
+#endif /* RTW_DEBUG */
 
 static void
 rtw_set_access1(struct rtw_regs *regs,
@@ -1174,7 +1176,7 @@ rtw_rxctl_init_all(bus_dma_tag_t dmat, struct rtw_rxctl *desc,
 
 static __inline void
 rtw_rxdesc_init(bus_dma_tag_t dmat, bus_dmamap_t dmam,
-    struct rtw_rxdesc *hrx, struct rtw_rxctl *srx, int idx, int flags)
+    struct rtw_rxdesc *hrx, struct rtw_rxctl *srx, int idx, int kick)
 {
 	int is_last = (idx == RTW_RXQLEN - 1);
 	uint32_t ctl, octl, obuf;
@@ -1191,7 +1193,9 @@ rtw_rxdesc_init(bus_dma_tag_t dmat, bus_dmamap_t dmam,
 	octl = hrx->hrx_ctl;
 	hrx->hrx_ctl = htole32(ctl);
 
-	RTW_DPRINTF(flags,
+	RTW_DPRINTF(
+	    kick ? (RTW_DEBUG_RECV_DESC | RTW_DEBUG_IO_KICK)
+	         : RTW_DEBUG_RECV_DESC,
 	    ("%s: hrx %p buf %08x -> %08x ctl %08x -> %08x\n", __func__, hrx,
 	     le32toh(obuf), le32toh(hrx->hrx_buf), le32toh(octl),
 	     le32toh(hrx->hrx_ctl)));
@@ -1208,7 +1212,7 @@ rtw_rxdesc_init(bus_dma_tag_t dmat, bus_dmamap_t dmam,
 
 static void
 rtw_rxdesc_init_all(bus_dma_tag_t dmat, bus_dmamap_t dmam,
-    struct rtw_rxdesc *desc, struct rtw_rxctl *ctl, int flags)
+    struct rtw_rxdesc *desc, struct rtw_rxctl *ctl, int kick)
 {
 	int i;
 	struct rtw_rxdesc *hrx;
@@ -1217,7 +1221,7 @@ rtw_rxdesc_init_all(bus_dma_tag_t dmat, bus_dmamap_t dmam,
 	for (i = 0; i < RTW_RXQLEN; i++) {
 		hrx = &desc[i];
 		srx = &ctl[i];
-		rtw_rxdesc_init(dmat, dmam, hrx, srx, i, flags);
+		rtw_rxdesc_init(dmat, dmam, hrx, srx, i, kick);
 	}
 }
 
@@ -1420,7 +1424,7 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 		ieee80211_release_node(&sc->sc_ic, ni);
 next:
 		rtw_rxdesc_init(sc->sc_dmat, sc->sc_desc_dmamap,
-		    hrx, srx, next, RTW_DEBUG_RECV_DESC);
+		    hrx, srx, next, 0);
 	}
 	KASSERT(sc->sc_rxnext < RTW_RXQLEN);
 
@@ -1649,8 +1653,7 @@ rtw_swring_setup(struct rtw_softc *sc)
 	rtw_rxctl_init_all(sc->sc_dmat, sc->sc_rxctl, &sc->sc_rxnext,
 	    sc->sc_dev.dv_xname);
 	rtw_rxdesc_init_all(sc->sc_dmat, sc->sc_desc_dmamap,
-	    sc->sc_rxdesc, sc->sc_rxctl,
-	    RTW_DEBUG_RECV_DESC | RTW_DEBUG_IO_KICK);
+	    sc->sc_rxdesc, sc->sc_rxctl, 1);
 
 	rtw_txdescs_sync_all(sc->sc_dmat, sc->sc_desc_dmamap,
 	    &sc->sc_txdesc_blk[0]);
@@ -1689,7 +1692,7 @@ rtw_rxdescs_reset(struct rtw_softc *sc)
 {
 	/* Re-initialize descriptors, just in case. */
 	rtw_rxdesc_init_all(sc->sc_dmat, sc->sc_desc_dmamap, sc->sc_rxdesc,
-	    &sc->sc_rxctl[0], RTW_DEBUG_RECV_DESC | RTW_DEBUG_IO_KICK);
+	    &sc->sc_rxctl[0], 1);
 
 	/* Reset to start of ring. */
 	sc->sc_rxnext = 0;
@@ -1709,7 +1712,9 @@ rtw_intr_ioerror(struct rtw_softc *sc, uint16_t isr)
 	RTW_DPRINTF(RTW_DEBUG_BUGS, ("%s: restarting xmit/recv\n",
 	    sc->sc_dev.dv_xname));
 
+#ifdef RTW_DEBUG
 	rtw_dump_rings(sc);
+#endif /* RTW_DEBUG */
 
 	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 0);
 
@@ -1728,7 +1733,9 @@ rtw_intr_ioerror(struct rtw_softc *sc, uint16_t isr)
 
 	rtw_hwring_setup(sc);
 
+#ifdef RTW_DEBUG
 	rtw_dump_rings(sc);
+#endif /* RTW_DEBUG */
 
 	RTW_WRITE16(regs, RTW_IMR, sc->sc_inten);
 	RTW_SYNC(regs, RTW_IMR, RTW_IMR);
