@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.38 2005/02/20 15:41:48 jdolecek Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.39 2005/03/18 11:11:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -169,6 +169,7 @@ struct	ethercom {
 
 #ifdef	_KERNEL
 extern const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN];
+extern const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN];
 extern const uint8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
 extern const uint8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 
