@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2000/01/04 13:43:38 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2000/01/14 02:10:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.30 2000/01/04 13:43:38 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.31 2000/01/14 02:10:08 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -341,17 +341,17 @@ main(argc, argv)
                  * If this is the first time through this, and an
                  * issue file has been given, then send it. 
                  */
-                if (first_time && IF) {
-                	char buf[_POSIX2_LINE_MAX];
-                	FILE *fd;
-                        
-                        if ((fd = fopen(IF, "r")) != NULL) {
-                        	while (fgets(buf, sizeof(buf) - 1, fd) != NULL)
-                                	putf(buf);
+		if (first_time != 0 && IF != NULL) {
+			char buf[_POSIX2_LINE_MAX];
+			FILE *fd;
+
+			if ((fd = fopen(IF, "r")) != NULL) {
+				while (fgets(buf, sizeof(buf) - 1, fd) != NULL)
+					putf(buf);
 				fclose(fd);
-                	}
-                }
-                first_time = 0;
+			}
+		}
+		first_time = 0;
                     
 		if (IM && *IM)
 			putf(IM);
