@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.106 2003/03/04 19:19:43 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.107 2003/03/08 02:55:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.106 2003/03/04 19:19:43 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.107 2003/03/08 02:55:48 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1459,6 +1459,7 @@ lfs_initseg(struct lfs *fs)
 	sp = fs->lfs_sp;
 
 	repeat = 0;
+
 	/* Advance to the next segment. */
 	if (!LFS_PARTIAL_FITS(fs)) {
 		/* lfs_avail eats the remaining space */
@@ -1497,6 +1498,18 @@ lfs_initseg(struct lfs *fs)
 	}
 	fs->lfs_lastpseg = fs->lfs_offset;
 	
+	/* Record first address of this partial segment */
+	if (sp->seg_flags & SEGM_CLEAN) {
+		fs->lfs_cleanint[fs->lfs_cleanind] = fs->lfs_offset;
+		if (++fs->lfs_cleanind >= LFS_MAX_CLEANIND) {
+			/* "1" is the artificial inc in lfs_seglock */
+			while (fs->lfs_iocount > 1) {
+				tsleep(&fs->lfs_iocount, PRIBIO + 1, "lfs_initseg", 0);
+			}
+			fs->lfs_cleanind = 0;
+		}
+	}
+
 	sp->fs = fs;
 	sp->ibp = NULL;
 	sp->idp = NULL;
@@ -1952,7 +1965,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	/* Set the summary block busy too */
 	(*(sp->bpp))->b_flags |= B_BUSY;
 #endif
-	ssp->ss_datasum = cksum(datap, (nblocks - 1) * el_size);
+	ssp->ss_datasum = cksum(datap, dp - datap);
 	ssp->ss_sumsum =
 	    cksum(&ssp->ss_datasum, fs->lfs_sumsize - sizeof(ssp->ss_sumsum));
 	pool_put(&fs->lfs_bpppool, datap);
@@ -2311,7 +2324,7 @@ lfs_super_aiodone(struct buf *bp)
 	fs = (struct lfs *)bp->b_saveaddr;
 	fs->lfs_sbactive = 0;
 	wakeup(&fs->lfs_sbactive);
-	if (--fs->lfs_iocount == 0)
+	if (--fs->lfs_iocount <= 1)
 		wakeup(&fs->lfs_iocount);
 	lfs_freebuf(fs, bp);
 }
@@ -2451,7 +2464,7 @@ lfs_cluster_aiodone(struct buf *bp)
 	if (fs->lfs_iocount == 0)
 		panic("lfs_cluster_aiodone: zero iocount");
 #endif
-	if (--fs->lfs_iocount == 0)
+	if (--fs->lfs_iocount <= 1)
 		wakeup(&fs->lfs_iocount);
 
 	pool_put(&fs->lfs_bpppool, cl->bpp);
