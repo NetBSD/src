@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.32 2001/04/25 09:29:36 haya Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.33 2001/05/09 12:06:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -626,7 +626,7 @@ cardbus_detach_card(struct cardbus_softc *sc)
 		/* call device detach function */
 
 		if (0 != config_detach(fndev, 0)) {
-			printf("%s: cannot detaching dev %s, function %d\n",
+			printf("%s: cannot detach dev %s, function %d\n",
 			    sc->sc_dev.dv_xname, fndev->dv_xname, ct->ct_func);
 			prev_next = &(ct->ct_next);
 		} else {
