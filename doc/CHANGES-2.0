@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.277 2004/06/17 09:29:41 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.278 2004/06/17 12:43:37 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3969,4 +3969,52 @@ sys/netipsec/key.c				1.20
 	Set requstor's process-id in FAST_IPSEC's response messages to
 	PF_KEY SPB/SADB dump requests.
 	[jonathan, ticket #504]
+
+crypto/dist/kame/racoon/Makefile.in			patch
+crypto/dist/kame/racoon/algorithm.c			patch
+crypto/dist/kame/racoon/auth_gssapi.h			new file
+crypto/dist/kame/racoon/cfparse.y			patch
+crypto/dist/kame/racoon/cftoken.l			patch
+crypto/dist/kame/racoon/configure			patch
+crypto/dist/kame/racoon/configure.in			patch
+crypto/dist/kame/racoon/crypto_openssl.c		patch
+crypto/dist/kame/racoon/crypto_openssl.h		patch
+crypto/dist/kame/racoon/dhgroup.h			patch
+crypto/dist/kame/racoon/eaytest.c			patch
+crypto/dist/kame/racoon/grabmyaddr.c			patch
+crypto/dist/kame/racoon/gssapi.c			patch
+crypto/dist/kame/racoon/gssapi.h			deleted
+crypto/dist/kame/racoon/handler.c			patch
+crypto/dist/kame/racoon/ipsec_doi.c			patch
+crypto/dist/kame/racoon/isakmp.c			patch
+crypto/dist/kame/racoon/isakmp_agg.c			patch
+crypto/dist/kame/racoon/isakmp_base.c			patch
+crypto/dist/kame/racoon/isakmp_ident.c			patch
+crypto/dist/kame/racoon/isakmp_inf.c			patch
+crypto/dist/kame/racoon/isakmp_quick.c			patch
+crypto/dist/kame/racoon/isakmp_var.h			patch
+crypto/dist/kame/racoon/kmpstat.c			patch
+crypto/dist/kame/racoon/oakley.c			patch
+crypto/dist/kame/racoon/oakley.h			patch
+crypto/dist/kame/racoon/pfkey.c				patch
+crypto/dist/kame/racoon/print-isakmp.c			new file
+crypto/dist/kame/racoon/proposal.c			patch
+crypto/dist/kame/racoon/racoon.conf.5			patch
+crypto/dist/kame/racoon/session.c			patch
+crypto/dist/kame/racoon/sockmisc.c			patch
+crypto/dist/kame/racoon/strnames.c			patch
+crypto/dist/kame/racoon/missing/crypto/sha2/sha2.c	patch
+crypto/dist/kame/racoon/tcpdump/addrtoname.h		new file
+crypto/dist/kame/racoon/tcpdump/extract.h		new file
+crypto/dist/kame/racoon/tcpdump/interface.h		new file
+crypto/dist/kame/racoon/tcpdump/ipsec_doi.h		new file
+crypto/dist/kame/racoon/tcpdump/isakmp.h		new file
+crypto/dist/kame/racoon/tcpdump/oakley.h		new file
+usr.sbin/racoon/Makefile				patch
+usr.sbin/racoon/Makefile.inc				patch
+usr.sbin/racoon/libpfkey/Makefile			patch
+usr.sbin/racoon/racoon/Makefile				patch
+
+	Pullup racoon to version 20040617a which includes security fixes.
+	[itojun, ticket #505]
 
