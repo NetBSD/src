@@ -1,10 +1,7 @@
-.\" $NetBSD: pcmcia.4,v 1.13 2000/02/12 11:14:14 fair Exp $
+.\" $NetBSD: tcic.4,v 1.1 2000/02/12 11:14:14 fair Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
-.\"
-.\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Lennart Augustsson.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -34,103 +31,28 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 12, 2000
-.Dt PCMCIA 4
+.Dd May 21, 1999
+.Dt TCIC 4
 .Os
 .Sh NAME
-.Nm pcmcia
-.Nd
-introduction to
-.Tn PCMCIA
-.Pq Tn "PC Card"
-support
+.Nm tcic
+.Nd Databook PCMCIA controller driver
 .Sh SYNOPSIS
-.Cd "pcmcia* at pcic? controller ? socket ?"
+.Cd "tcic0   at isa? port 0x240 iomem 0xd0000 iosiz 0x4000"
 .Cd "pcmcia* at tcic? controller ? socket ?"
-.Cd "pcmcia* at cardslot?"
-.Ss hpcmips
-.Cd "pcmcia* at it8368e? controller ? socket ?"
-.Cd "pcmcia* at plumpcmcia? controller ? socket ?"
-.Ss sh3
-.Cd "pcmcia* at shpcic? controller ? socket ?"
 .Sh DESCRIPTION
 .Nx
-provides machine-independent bus support and drivers for
+provides support for the
+.Tn Databook
+DB86082, DB86084, DB86184, and DB86072
 .Tn PCMCIA
-.Pq Personal Computer Memory Card International Association
-a.k.a.
-.Tn "PC Card" ,
-.Tn CardBus
-devices.
-.Sh SUPPORTED DEVICES
-.Nx
-includes the following machine-independent
-.Tn PCMCIA
-drivers, sorted by function and driver name:
-.Pp
-.Ss Serial interfaces and modems
-.Bl -tag -width speaker -offset indent -compact
-.It com
-8250/16450/16550-compatible PCMCIA serial cards and modems.
-.El
-.\"
-.Pp
-.Ss Network interfaces
-.Bl -tag -width speaker -offset indent -compact
-.It awi
-BayStack 650 wireless 802.11FH controller.
-.It cnw
-Netwave AirSurfer Wireless LAN interface.
-.It ep
-3com 3c589 Etherlink-III Ethernet card.
-.It mbe
-Ethernet card based on the Fujitsu MB86960A/MB86965A chipset.
-.It mhzc
-Megahertz Ethernet/Modem combo cards
-.It ne
-NE2000 compatible cards.
-.It ray
-Raytheon Raylink and WebGear Aviator2.4 802.11 controller.
-.It sm
-Megahertz Ethernet card.
-.It wi
-Lucent WaveLan/IEEE 802.11 controller.
-.El
-.\"
-.Pp
-.Ss SCSI controllers
-.Bl -tag -width speaker -offset indent -compact
-.It aic
-Adaptec APA-1460 SCSI controller card.
-.El
-.Ss IDE controllers
-.Bl -tag -width speaker -offset indent -compact
-.It wdc
-Digital Hinote Ultra Mobile Media Adapter
-.El
-.\"
+controllers.
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr aic 4 ,
-.Xr awi 4 ,
-.Xr cardbus 4 ,
-.Xr cnw 4 ,
-.Xr com 4 ,
-.Xr ep 4 ,
-.Xr isa 4 ,
-.Xr mbe 4 ,
-.Xr mhzc 4 ,
-.Xr ne 4 ,
+.Xr pcmcia 4 ,
 .Xr pcic 4 ,
-.Xr pcmcom 4 ,
-.Xr ray 4 ,
-.Xr sm 4 ,
-.Xr tcic 4 ,
-.Xr wi 4
-.Pp
-.Pa http://www.pcmcia.org/
+.Xr isa 4
 .Sh HISTORY
 The
 .Nm
 driver appeared in
-.Nx 1.3 .
+.Nx 1.4 .

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.132 2000/02/12 09:19:04 fair Exp $
+#	$NetBSD: Makefile,v 1.133 2000/02/12 11:14:13 fair Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	adv.4 adw.4 ahb.4 ahc.4 aria.4 atalk.4 audio.4 awi.4 bha.4 bpf.4 \
@@ -35,6 +35,9 @@ MAN+=	aha.4 ai.4 aic.4 ast.4 ate.4 boca.4 cs.4 cy.4 ec.4 ef.4 eg.4 el.4 \
 	esp.4 ess.4 ex.4 fmv.4 gus.4 guspnp.4 ix.4 iy.4 le.4 mcd.4 pss.4 \
 	rtfps.4 sb.4 sea.4 tcom.4 wds.4 we.4 wss.4 wt.4
 
+# machine-independent PCMCIA devices
+MAN+=	pcic.4 tcic.4 pcmcom.4
+
 # machine-independent VME devices
 MAN+=	si.4
 
@@ -48,7 +51,6 @@ MLINKS+=fpa.4 fea.4 fpa.4 fta.4
 MLINKS+=le.4 bicc.4 le.4 nele.4 le.4 depca.4
 MLINKS+=netintro.4 networking.4
 MLINKS+=pms.4 pmsi.4
-MLINKS+=pcmcia.4 pcic.4
 MLINKS+=si.4 sw.4
 MLINKS+=audio.4 sound.4
 MLINKS+=audio.4 mixer.4
