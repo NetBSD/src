@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.4 1995/07/05 08:19:10 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.4.2.1 1995/10/15 13:56:26 ragge Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -195,6 +195,8 @@ extern char all_es_snpa[], all_is_snpa[], all_l1is_snpa[], all_l2is_snpa[];
 
 #define MINDATA 60
 
+void qetimeout(int);
+
 /*
  * Ethernet software status per interface.
  *
@@ -234,7 +236,7 @@ struct	uba_device *qeinfo[NQE];
 
 extern struct timeval time;
 
-int	qeprobe(), qeattach(), qeintr(), qetimeout();
+int	qeprobe(), qeattach(), qeintr();
 int	qeinit(), qeioctl(), qereset();
 void	qestart();
 
@@ -343,7 +345,7 @@ qeprobe(reg, ui)
 qeattach(ui)
 	struct uba_device *ui;
 {
-	volatile struct qe_softc *sc = &qe_softc[ui->ui_unit];
+	struct qe_softc *sc = &qe_softc[ui->ui_unit];
 	struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
 	volatile struct qedevice *addr=(struct qedevice *)ui->ui_addr;
 	int i;
@@ -747,7 +749,7 @@ qeioctl(ifp, cmd, data)
 	int cmd;
 	caddr_t data;
 {
-	volatile struct qe_softc *sc = &qe_softc[ifp->if_unit];
+	struct qe_softc *sc = &qe_softc[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splimp(), error = 0;
 
@@ -917,6 +919,7 @@ if (m) {
  * causes the board to lock up under heavy load. This routine detects
  * the hang up and restarts the device.
  */
+void
 qetimeout(unit)
 	int unit;
 {
