@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/06/02 17:40:46 pooka Exp $
+#	$NetBSD: Makefile,v 1.7 2003/07/10 10:34:30 lukem Exp $
 #
 #	@(#)Makefile	8.2 (Berkeley) 6/1/94
 
@@ -10,9 +10,9 @@ CLEANFILES+=Toc
 
 paper.ps: ${SRCS}
 	# Format twice to (only) generate Toc in the first run:
-	( ${SOELIM} -I${.CURDIR} ${.ALLSRC} | ${TBL} | \
-	    ${ROFF} ${MACROS} 2>&1 ) >/dev/null
-	${SOELIM} -I${.CURDIR} ${.ALLSRC} | ${TBL} | \
-	    ${ROFF} ${MACROS} > ${.TARGET}
+	( ${TOOL_SOELIM} -I${.CURDIR} ${.ALLSRC} | ${TOOL_TBL} | \
+	    ${TOOL_ROFF_PS} ${MACROS} 2>&1 ) >/dev/null
+	${TOOL_SOELIM} -I${.CURDIR} ${.ALLSRC} | ${TOOL_TBL} | \
+	    ${TOOL_ROFF_PS} ${MACROS} > ${.TARGET}
 
 .include <bsd.doc.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2003/06/28 08:25:08 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2003/07/10 10:34:16 lukem Exp $
 #
 # Makefile for sysinst
 
@@ -61,16 +61,13 @@ CLEANFILES=	menu_defs.c menu_defs.h menus.def \
 
 .PATH: ${.CURDIR}/../..
 
-MENUC?=		menuc
-MSGC?=		msgc
-
 .include <bsd.prog.mk>
 
 menu_defs.c menu_defs.h: menus.def
-	${MENUC} menus.def
+	${TOOL_MENUC} menus.def
 
 msg_defs.c msg_defs.h: msg.def
-	${MSGC} msg.def
+	${TOOL_MSGC} msg.def
 
 # Needed to get proper dependency checks on osrelease
 msgtouch: ${VERDEP}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2002/12/23 06:52:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.33 2003/07/10 10:34:39 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -49,8 +49,6 @@ TDATA=		$(YDATA) $(NDATA) $(SDATA)
 DATA=		$(YDATA) $(NDATA) $(SDATA) leapseconds # yearistype.sh
 USNO=		usno1988 usno1989
 
-ZIC?=		zic
-
 TZBUILDDIR=	${.OBJDIR}/builddir
 TZBUILDSPEC=	${.OBJDIR}/builddir.spec
 
@@ -58,21 +56,21 @@ TZBUILDSPEC=	${.OBJDIR}/builddir.spec
 posix_only: ${TDATA}
 	mkdir -p ${TZBUILDDIR}
 	cd ${.CURDIR} && \
-	    ${ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -L /dev/null ${TDATA}
+	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -L /dev/null ${TDATA}
 
 .PHONY:	right_only
 right_only: leapseconds ${TDATA}
 	mkdir -p ${TZBUILDDIR}
 	cd ${.CURDIR} && \
-	    ${ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -L leapseconds ${TDATA}
+	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -L leapseconds ${TDATA}
 
 .PHONY:	other_two
 other_two: leapseconds ${TDATA}
 	mkdir -p ${TZBUILDDIR}
 	cd ${.CURDIR} && \
-	    ${ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR}/posix -L /dev/null ${TDATA}
+	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR}/posix -L /dev/null ${TDATA}
 	cd ${.CURDIR} && \
-	    ${ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR}/right -L leapseconds ${TDATA}
+	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR}/right -L leapseconds ${TDATA}
 
 .PHONY:	posix_right
 posix_right: posix_only other_two
@@ -84,7 +82,7 @@ right_posix: right_only other_two
 afterinstall: ${DATA} ${REDO}
 	mkdir -p ${TZBUILDDIR}
 	cd ${.CURDIR} && \
-	    ${ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -p ${POSIXRULES}
+	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -p ${POSIXRULES}
 	cd ${TZBUILDDIR} && \
 	(   find . -type d | xargs -n 1 printf \
 		"%s type=dir mode=0755 uname=${BINOWN} gname=${BINGRP}\n" ; \
@@ -92,7 +90,7 @@ afterinstall: ${DATA} ${REDO}
 		"%s type=file mode=0444 uname=${BINOWN} gname=${BINGRP}\n" ; \
 	) > ${TZBUILDSPEC}
 	cd ${TZBUILDDIR} && \
-	  ${PAX} -O -rw ${UNPRIVED:D:U-pe} -M -N ${NETBSDSRCDIR}/etc \
+	  ${TOOL_PAX} -O -rw ${UNPRIVED:D:U-pe} -M -N ${NETBSDSRCDIR}/etc \
 	  ${DESTDIR}${TZDIR} < ${TZBUILDSPEC}
 .if defined(UNPRIVED)
 	sed -e "s|^\.|./${TZDIR}|g" -e "s|//|/|g" < ${TZBUILDSPEC} | \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.tarfloppy,v 1.9 2003/05/08 13:05:01 christos Exp $
+#	$NetBSD: Makefile.tarfloppy,v 1.10 2003/07/10 10:34:05 lukem Exp $
 #
 # Makefile snippet to create a set of ustar floppies.
 # Each floppy has an 8KB header, followed by part or all of the ustar archive.
@@ -63,7 +63,7 @@ ${FLOPPYMETAFILE}:
 
 ${FLOPPYBASE}1${FLOPPYSUFFIX}: ${FLOPPYFILES} ${DISTRIBDIR}/common/buildfloppies.sh
 	@echo "Creating ${FLOPPYBASE}1${FLOPPYSUFFIX} from: ${FLOPPYFILES}"
-	PAX=${PAX:Q} ${HOST_SH} ${DISTRIBDIR}/common/buildfloppies.sh \
+	PAX=${TOOL_PAX:Q} ${HOST_SH} ${DISTRIBDIR}/common/buildfloppies.sh \
 	    ${FLOPPYINSTBOOT:D-i ${FLOPPYINSTBOOT}} ${FLOPPYPAD:D-p} \
 	    ${FLOPPYMAX:D-m ${FLOPPYMAX}} ${FLOPPYSUFFIX:D-s ${FLOPPYSUFFIX}} \
 	    ${FLOPPYBASE} ${FLOPPYSIZE} ${FLOPPYFILES}

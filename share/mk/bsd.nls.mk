@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.38 2002/10/22 18:48:29 perry Exp $
+#	$NetBSD: bsd.nls.mk,v 1.39 2003/07/10 10:34:36 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -8,7 +8,6 @@ cleandir:	cleannls
 realinstall:	nlsinstall
 
 ##### Default values
-GENCAT?=	gencat
 NLSNAME?=	${PROG:Ulib${LIB}}
 
 NLS?=
@@ -25,7 +24,7 @@ realall:	${NLSALL}
 
 .msg.cat:
 	@rm -f ${.TARGET}
-	${GENCAT} ${.TARGET} ${.IMPSRC}
+	${TOOL_GENCAT} ${.TARGET} ${.IMPSRC}
 
 .endif # ${MKNLS} != "no"
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.253 2003/06/08 23:49:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.254 2003/07/10 10:34:17 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -50,8 +50,7 @@
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME?=	UTC
-PWD_MKDB?=	pwd_mkdb
-MAKESUMS=	CKSUM=${CKSUM:Q} sh ${NETBSDSRCDIR}/distrib/sets/makesums
+MAKESUMS=	CKSUM=${TOOL_CKSUM:Q} ${HOST_SH} ${NETBSDSRCDIR}/distrib/sets/makesums
 
 # Flags for creating ISO CDROM image
 # mkisofs is expected to be in $PATH, install via pkgsrc/sysutils/cdrecord
@@ -168,7 +167,7 @@ install-etc-files: check_DESTDIR
 	    crontab ${DESTDIR}/var/cron/tabs/root
 	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
 	    master.passwd ${DESTDIR}/etc
-	${PWD_MKDB} -p ${PWD_MKDB_ENDIAN} -d ${DESTDIR}/ \
+	${TOOL_PWD_MKDB} -p ${PWD_MKDB_ENDIAN} -d ${DESTDIR}/ \
 	    ${DESTDIR}/etc/master.passwd
 .if defined(UNPRIVED)
 	( \
@@ -304,7 +303,7 @@ install-obsolete-lists:
 #
 distrib-dirs: check_DESTDIR
 	${INSTALL_DIR} -o root -g wheel -m 755 ${BASE_PKG} ${DESTDIR}
-	${MTREE} -def ${.CURDIR}/mtree/NetBSD.dist -N ${.CURDIR} \
+	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist -N ${.CURDIR} \
 	    -p ${DESTDIR}/ -U ${UNPRIVED:D-W}
 
 
@@ -438,7 +437,7 @@ GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 .for configfile in ${ALL_KERNELS}					# {
 _KERNELS_TO_BUILD+=kern-${configfile}
 kern-${configfile}:
-	cd ${KERNCONFDIR} && ${CONFIG} -s ${KERNSRCDIR} \
+	cd ${KERNCONFDIR} && ${TOOL_CONFIG} -s ${KERNSRCDIR} \
 	    -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
 .if !defined(UPDATE)
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} distclean
@@ -469,7 +468,7 @@ kernset-${configfile}:
 					echo "./$${kernel}.$${s} type=file"; \
 				fi; \
 			done; \
-		done ) | GZIP=-9 ${PAX} -O -zw \
+		done ) | GZIP=-9 ${TOOL_PAX} -O -zw \
 		    -M -N ${NETBSDSRCDIR}/etc \
 		    -f ${RELEASEDIR}/${MACHINE}/binary/sets/kern-${configfile}.tgz
 .endfor	# KERNEL_SETS							# }

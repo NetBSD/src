@@ -1,16 +1,16 @@
-#	$NetBSD: Makefile.mdset,v 1.21 2003/03/11 07:18:38 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.22 2003/07/10 10:34:05 lukem Exp $
 #
-# Makefile snippet to ${MDSETIMAGE} file system images into kernels
+# Makefile snippet to ${TOOL_MDSETIMAGE} file system images into kernels
 #
 
 #
 # Required variables:
 #	NETBSDSRCDIR	Top level of src tree (set by <bsd.own.mk>)
-#	MDSETTARGETS	List of images to ${MDSETIMAGE} into kernels,
+#	MDSETTARGETS	List of images to ${TOOL_MDSETIMAGE} into kernels,
 #			containing one or more tuples of the form:
 #				KERNEL	IMAGE	FILENAME
 #
-#			The kernel is ${MDSETIMAGE} with ${IMAGE},
+#			The kernel is ${TOOL_MDSETIMAGE} with ${IMAGE},
 #			${STRIP}ped (after the symbols are stored in
 #			${FILENAME}.symbols.gz), and gzipped into
 #			${FILENAME}.gz.
@@ -37,7 +37,7 @@
 #	MDSET_SUFFIXES.${FILENAME}	List of extra install kernel suffixes
 #					and build commands to create from
 #					${FILENAME} after its created by
-#					${MDSET} ; ${NM} ; ${STRIP}:
+#					${TOOL_MDSETIMAGE} ; ${NM} ; ${STRIP}:
 #						SUFFIX	COMMANDVAR
 #					"${.TARGET}" is "${FILENAME}.${SUFFIX}"
 #					COMMANDVAR is the name of the variable
@@ -104,7 +104,7 @@ ${_KERNEL.${_K}.${_F}}: .NOTMAIN ${_KERNNAME.${_K}.${_F}} ${_I}
 	@echo "      into: ${.TARGET}"
 	@rm -f ${.TARGET} ${.TARGET}.symbols.gz
 	@cp ${_KERNNAME.${_K}.${_F}} ${.TARGET}
-	${MDSETIMAGE} -v ${.TARGET} ${_I}
+	${TOOL_MDSETIMAGE} -v ${.TARGET} ${_I}
 .if !defined(MDSET_NOSYMBOLS.${_FILENAME})
 	${NM} ${.TARGET} | gzip -9 > ${.TARGET}.symbols.gz
 .endif

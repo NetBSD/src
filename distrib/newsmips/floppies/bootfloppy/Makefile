@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2002/11/18 12:39:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2003/07/10 10:34:10 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -15,8 +15,7 @@ MDEC=		${DESTDIR}/usr/mdec
 KERNOBJ!=	cd ${.CURDIR}/../instkernel && ${PRINTOBJDIR}
 FLOPPY_NETBSD=	${KERNOBJ}/netbsd-INSTALL.gz
 FLOPPY_BOOT=	${MDEC}/boot
-FLOPPYINSTBOOT=	\
-    "${INSTALLBOOT} -m ${MACHINE} -t raw -v -B 17 @IMAGE@ ${MDEC}/bootxx boot"
+FLOPPYINSTBOOT=	"${TOOL_INSTALLBOOT} -m ${MACHINE} -t raw -v -B 17 @IMAGE@ ${MDEC}/bootxx boot"
 
 .include "${DISTRIBDIR}/common/Makefile.tarfloppy"
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2003/01/03 15:34:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2003/07/10 10:34:00 lukem Exp $
 #
 
 .include <bsd.own.mk>
@@ -27,7 +27,7 @@ tmp/BtNetBSD:
 	mkdir tmp
 	cp -R ${.CURDIR}/BtNetBSD tmp/
 	cp ${KERNOBJDIR}/INSTALL/netbsd tmp/BtNetBSD/InstKern
-	${MDSETIMAGE} tmp/BtNetBSD/InstKern ${RAMDISKDIR}/ramdisk.fs
+	${TOOL_MDSETIMAGE} tmp/BtNetBSD/InstKern ${RAMDISKDIR}/ramdisk.fs
 	find tmp -path '*/CVS/*' -type f -exec rm -rf {} \;
 	find tmp -name CVS -type d | xargs rmdir
 	find tmp -name '*.uue' | while read filename; do \

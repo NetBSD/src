@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/06/02 17:40:45 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2003/07/10 10:34:26 lukem Exp $
 #
 #	@(#)Makefile	1.8 (Berkeley) 6/8/93
 
@@ -7,7 +7,7 @@ SRCS=	kernmalloc.t appendix.t
 MACROS=	-ms
 
 paper.ps: ${SRCS} alloc.fig usage.tbl
-	${SOELIM} ${SRCS} | ${TBL} | ${PIC} | ${EQN} | ${GRIND} | \
-	    ${ROFF} ${MACROS} > ${.TARGET}
+	${TOOL_SOELIM} ${SRCS} | ${TOOL_TBL} | ${TOOL_PIC} | ${TOOL_EQN} | \
+	    ${TOOL_VGRIND} | ${TOOL_ROFF_PS} ${MACROS} > ${.TARGET}
 
 .include <bsd.doc.mk>

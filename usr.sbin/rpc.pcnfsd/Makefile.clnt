@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.clnt,v 1.10 2002/09/18 13:31:56 lukem Exp $
+#	$NetBSD: Makefile.clnt,v 1.11 2003/07/10 10:34:48 lukem Exp $
 
 #	This Makefile builds a client used for testing.
 
@@ -25,16 +25,16 @@ XRPCGEN != (cd ${.CURDIR} && ${MAKE} getrpcgen)
 .endif
 
 getrpcgen:
-	@set -- X `type ${RPCGEN}` && shift $$(($$# - 1)) && echo "$$1"
+	@set -- X `type ${TOOL_RPCGEN}` && shift $$(($$# - 1)) && echo "$$1"
 
 pcnfsd_clnt.c: pcnfsd.x ${XRPCGEN}
-	${RPCGEN} -l ${.CURDIR}/pcnfsd.x -o $@
+	${TOOL_RPCGEN} -l ${.CURDIR}/pcnfsd.x -o $@
 
 pcnfsd_xdr.c: pcnfsd.x ${XRPCGEN}
-	${RPCGEN} -c ${.CURDIR}/pcnfsd.x -o $@
+	${TOOL_RPCGEN} -c ${.CURDIR}/pcnfsd.x -o $@
 
 pcnfsd.h: pcnfsd.x ${XRPCGEN}
-	${RPCGEN} -h ${.CURDIR}/pcnfsd.x -o $@
+	${TOOL_RPCGEN} -h ${.CURDIR}/pcnfsd.x -o $@
 
 CLEANFILES += pcnfsd_clnt.c pcnfsd_xdr.c pcnfsd.h
 
