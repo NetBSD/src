@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.13 1998/10/03 23:38:32 fvdl Exp $
+#	$NetBSD: genassym.cf,v 1.14 1999/03/19 05:13:17 cgd Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ endif
 
 include "isa.h"
 if NISA > 0
-include <i386/isa/isa_machdep.h>
+include <machine/isa_machdep.h>
 endif
 
 define	SRUN			SRUN

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ofisa_consolehack.c,v 1.3 1998/05/01 21:18:42 cgd Exp $	*/
+/*	$NetBSD: com_ofisa_consolehack.c,v 1.4 1999/03/19 05:13:17 cgd Exp $	*/
 
 /*
  * Copyright 1997
@@ -50,7 +50,7 @@
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
-#include <arm32/isa/isa_machdep.h>	/* XXX for space tags */
+#include <machine/isa_machdep.h>	/* XXX for space tags */
 
 #include <dev/cons.h>
 

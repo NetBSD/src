@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.21 1999/03/17 01:34:04 chs Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.22 1999/03/19 05:13:17 cgd Exp $	*/
 
 /*
  *
@@ -80,7 +80,7 @@
 #include <machine/specialreg.h>
 
 #include <dev/isa/isareg.h>
-#include <i386/isa/isa_machdep.h>
+#include <machine/isa_machdep.h>
 
 /*
  * general info:
