@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.8 1996/04/01 17:29:52 christos Exp $ */
+/*	$NetBSD: ms.c,v 1.9 1996/05/30 01:40:21 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <machine/kbd.h>
 #include <machine/conf.h>
 
-#include <sparc/dev/event_var.h>
+#include <dev/sun/event_var.h>
 
 /*
  * Mouse state.  A Mouse Systems mouse is a fairly simple device,
