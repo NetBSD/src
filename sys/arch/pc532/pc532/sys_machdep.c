@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.6 1996/01/31 21:34:03 phil Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.7 1997/03/20 12:00:58 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -115,10 +115,5 @@ sys_sysarch(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sysarch_args /* {
-		syscallarg(int) op;
-		syscallarg(char *) parms;
-	} */ *uap = v;
-
 	return ENOSYS;
 }
