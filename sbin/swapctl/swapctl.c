@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.4 1997/06/25 23:18:11 thorpej Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.5 1997/07/11 03:36:27 mikel Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -355,7 +355,7 @@ do_fstab()
 #define PRIORITYEQ	"priority="
 #define NFSMNTPT	"nfsmntpt="
 #define PATH_MOUNT	"/sbin/mount_nfs"
-	while ((fp = getfsent())) {
+	while ((fp = getfsent()) != NULL) {
 		char *spec;
 
 		if (strcmp(fp->fs_type, "sw") != 0)
@@ -364,13 +364,13 @@ do_fstab()
 		spec = fp->fs_spec;
 		isblk = 0;
 
-		if ((s = strstr(fp->fs_mntops, PRIORITYEQ))) {
+		if ((s = strstr(fp->fs_mntops, PRIORITYEQ)) != NULL) {
 			s += sizeof(PRIORITYEQ) - 1;
 			priority = atol(s);
 		} else
 			priority = pri;
 
-		if ((s = strstr(fp->fs_mntops, NFSMNTPT))) {
+		if ((s = strstr(fp->fs_mntops, NFSMNTPT)) != NULL) {
 			char *t, cmd[2*PATH_MAX+sizeof(PATH_MOUNT)+2];
 
 			/*
