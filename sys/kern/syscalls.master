@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.142 2004/05/10 22:28:24 kleink Exp $
+	$NetBSD: syscalls.master,v 1.143 2005/01/02 16:08:29 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -713,3 +713,36 @@
 			    int flags); }
 359	STD		{ int sys_fhstatvfs1(const fhandle_t *fhp, \
 			    struct statvfs *buf, int flags); }
+360	STD		{ int sys_extattrctl(const char *path, int cmd, \
+			    const char *filename, int attrnamespace, \
+			    const char *attrname); }
+361	STD		{ int sys_extattr_set_file(const char *path, \
+			    int attrnamespace, const char *attrname, \
+			    const void *data, size_t nbytes); }
+362	STD		{ int sys_extattr_get_file(const char *path, \
+			    int attrnamespace, const char *attrname, \
+			    void *data, size_t nbytes); }
+363	STD		{ int sys_extattr_delete_file(const char *path, \
+			    int attrnamespace, const char *attrname); }
+364	STD		{ int sys_extattr_set_fd(int fd, \
+			    int attrnamespace, const char *attrname, \
+			    const void *data, size_t nbytes); }
+365	STD		{ int sys_extattr_get_fd(int fd, \
+			    int attrnamespace, const char *attrname, \
+			    void *data, size_t nbytes); }
+366	STD		{ int sys_extattr_delete_fd(int fd, \
+			    int attrnamespace, const char *attrname); }
+367	STD		{ int sys_extattr_set_link(const char *path, \
+			    int attrnamespace, const char *attrname, \
+			    const void *data, size_t nbytes); }
+368	STD		{ int sys_extattr_get_link(const char *path, \
+			    int attrnamespace, const char *attrname, \
+			    void *data, size_t nbytes); }
+369	STD		{ int sys_extattr_delete_link(const char *path, \
+			    int attrnamespace, const char *attrname); }
+370	STD		{ int sys_extattr_list_fd(int fd, \
+			    int attrnamespace, void *data, size_t nbytes); }
+371	STD		{ int sys_extattr_list_file(const char *path, \
+			    int attrnamespace, void *data, size_t nbytes); }
+372	STD		{ int sys_extattr_list_link(const char *path, \
+			    int attrnamespace, void *data, size_t nbytes); }
