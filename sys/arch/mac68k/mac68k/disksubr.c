@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.8 1994/11/28 04:43:51 briggs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9 1995/03/17 03:40:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -107,7 +107,8 @@ or -1 if no entry
 
 	for(i=0;i<MAXPARTITIONS;i++)
 	{
-		if (lp->d_partitions[i].p_fstype==FS_UNUSED)
+		if (   (i != RAW_PART)
+		    && (lp->d_partitions[i].p_fstype==FS_UNUSED) )
 			return i;
 	}
 
