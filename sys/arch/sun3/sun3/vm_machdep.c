@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.34 1996/02/20 22:05:39 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.35 1996/04/26 18:38:06 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -66,9 +66,6 @@
 
 extern int fpu_type;
 
-/* XXX - Put this in some header file? */
-void cpu_set_kpc __P((struct proc *p, u_long func));
-
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -131,7 +128,7 @@ cpu_fork(p1, p2)
 	 * onto the stack of p2, very much like signal delivery.
 	 * When p2 runs, it will find itself in child_return().
 	 */
-	cpu_set_kpc(p2, (long)child_return);
+	cpu_set_kpc(p2, child_return);
 }
 
 /*
@@ -158,14 +155,14 @@ cpu_fork(p1, p2)
 void
 cpu_set_kpc(proc, func)
 	struct proc *proc;
-	u_long func;
+	void (*func)(struct proc *);
 {
 	struct pcb *pcbp;
 	struct switchframe *sf;
 	extern void proc_trampoline();
 	struct ksigframe {
 		struct switchframe sf;
-		u_long func;
+		void (*func)(struct proc *);
 		void *proc;
 	} *ksfp;
 
@@ -282,9 +279,10 @@ cpu_coredump(p, vp, cred, chdr)
  * Both addresses are assumed to reside in the kernel map,
  * and size must be a multiple of CLSIZE.
  */
+void
 pagemove(from, to, size)
 	register caddr_t from, to;
-	int size;
+	size_t size;
 {
 	register vm_offset_t pa;
 
