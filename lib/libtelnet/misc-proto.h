@@ -1,4 +1,4 @@
-/*	$NetBSD: misc-proto.h,v 1.6 1998/02/27 10:33:46 christos Exp $	*/
+/*	$NetBSD: misc-proto.h,v 1.7 1998/07/27 01:45:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -60,8 +60,8 @@
 
 #include <sys/cdefs.h>
 
-void auth_encrypt_init __P((char *, char *, char *, int));
-void auth_encrypt_user __P((char *));
+void auth_encrypt_init __P((const char *, const char *, const char *, int));
+void auth_encrypt_user __P((const char *));
 void auth_encrypt_connect __P((int));
 void printd __P((unsigned char *, int));
 
