@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.164 2002/11/28 15:32:15 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.165 2002/11/29 07:56:50 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4071,7 +4071,15 @@ Lgandul:	nop
 	 clr	%o0			! our frame arg is ignored
 	/*NOTREACHED*/
 
-#if defined(SUN4M)
+
+#if defined(SUN4M) || defined(SUN4D)
+/*
+ * V8 multiply and divide routines, to be copied over the code
+ * for the V6/V7 routines.  Seems a shame to spend the call, but....
+ * Note: while .umul and .smul return a 64-bit result in %o1%o0,
+ * gcc only really cares about the low 32 bits in %o0.  This is
+ * really just gcc output, cleaned up a bit.
+ */
 	.globl	_C_LABEL(sparc_v8_muldiv)
 _C_LABEL(sparc_v8_muldiv):
 	save    %sp, -CCFSZ, %sp
@@ -4100,13 +4108,6 @@ _C_LABEL(sparc_v8_muldiv):
 	ret
 	 restore
 
-/*
- * V8 multiply and divide routines, to be copied over the code
- * for the V6/V7 routines.  Seems a shame to spend the call, but....
- * Note: while .umul and .smul return a 64-bit result in %o1%o0,
- * gcc only really cares about the low 32 bits in %o0.  This is
- * really just gcc output, cleaned up a bit.
- */
 v8_smul:
 	retl
 	 smul	%o0, %o1, %o0
@@ -4147,7 +4148,7 @@ v8_urem:
 	 sub	%o0, %g2, %o0
 v8_urem_len = .-v8_urem
 
-#endif /* SUN4M */
+#endif /* SUN4M || SUN4D */
 
 #if defined(MULTIPROCESSOR)
 	/*
