@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.38 2004/05/12 20:09:52 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.39 2004/10/07 10:56:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -221,26 +221,6 @@ struct vm_physseg {
  */
 
 extern boolean_t vm_page_zero_enable;
-
-/*
- *	Each pageable resident page falls into one of three lists:
- *
- *	free
- *		Available for allocation now.
- *	inactive
- *		Not referenced in any map, but still has an
- *		object/offset-page mapping, and may be dirty.
- *		This is the list of pages that should be
- *		paged out next.
- *	active
- *		A list of pages which have been placed in
- *		at least one physical map.  This list is
- *		ordered, in LRU-like fashion.
- */
-
-extern struct pglist	vm_page_queue_free;	/* memory free queue */
-extern struct pglist	vm_page_queue_active;	/* active memory queue */
-extern struct pglist	vm_page_queue_inactive;	/* inactive memory queue */
 
 /*
  * physical memory config is stored in vm_physmem.
