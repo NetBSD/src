@@ -1,4 +1,5 @@
-/*	$NetBSD: mount_linux.c,v 1.1.1.1 2000/06/07 00:52:20 dogcow Exp $ */
+/*	$NetBSD: mount_linux.c,v 1.1.1.2 2000/11/19 23:43:06 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: mount_linux.c,v 1.7 2000/01/12 16:44:41 ezk Exp 
+ * Id: mount_linux.c,v 1.11 2000/02/16 13:52:58 ezk Exp
  */
 
 /*
@@ -155,12 +156,12 @@ parse_opts(char *type, char *optstr, int *flags, char **xopts, int *noauto)
        * and parse the fs-specific options
        */
 #ifdef MOUNT_TYPE_PCFS
-      if (!STREQ(type, MOUNT_TYPE_PCFS))
+      if (STREQ(type, MOUNT_TYPE_PCFS))
 	dev_opts = dos_opts;
       else
 #endif /* MOUNT_TYPE_PCFS */
 #ifdef MOUNT_TYPE_CDFS
-	if (!STREQ(type, MOUNT_TYPE_CDFS))
+	if (STREQ(type, MOUNT_TYPE_CDFS))
 	  dev_opts = iso_opts;
 	else
 #endif /* MOUNT_TYPE_CDFS */
@@ -249,15 +250,25 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 
     /*
      * Linux kernels 2.0.x and earlier used a default NFS read/write size of
-     * 1024 bytes.  2.1 kernels and newer use a 4KB rsize/wsize.
-     * NOTE: 131326 => linux-2.1.0
+     * 1024 bytes.  2.1.86+ kernels and newer use a 4KB rsize/wsize.
      */
-    if (linux_version_code() >= 131326)
+    if (linux_version_code() >= 0x020156)
       nfs_def_file_io_buffer_size = 4096;
     if (!mnt_data->rsize)
       mnt_data->rsize = nfs_def_file_io_buffer_size;
     if (!mnt_data->wsize)
       mnt_data->wsize = nfs_def_file_io_buffer_size;
+    /*
+     * in nfs structure implementation version 4, the old
+     * filehandle field was renamed "old_root" and left as 3rd field,
+     * while a new field called "root" was added to the end of the
+     * structure.
+     */
+    if (mnt_data->flags & MNT2_NFS_OPT_VER3)
+      memset(mnt_data->old_root.data, 0, FHSIZE);
+    else
+      memcpy(mnt_data->old_root.data, mnt_data->root.data, FHSIZE);
+
 #ifdef HAVE_FIELD_NFS_ARGS_T_BSIZE
     /* linux mount version 3 */
     mnt_data->bsize = 0;	/* let the kernel decide */
@@ -282,9 +293,8 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
     /*
      * connect() the socket for kernels 1.3.10 and below
      * only to avoid problems with multihomed hosts.
-     * NOTE: 66314 => linux-1.3.10
      */
-    if (linux_version_code() <= 66314) {
+    if (linux_version_code() <= 0x01030a) {
       int ret = connect(mnt_data->fd,
 			(struct sockaddr *) &mnt_data->addr,
 			sizeof(mnt_data->addr));
@@ -343,9 +353,11 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
     plog(XLOG_DEBUG, "linux mount: dir %s\n", mnt->mnt_dir);
   }
   amuDebug(D_TRACE) {
-    plog(XLOG_DEBUG, "linux mount: updated nfs_args...");
     plog(XLOG_DEBUG, "linux mount: Generic mount flags 0x%x", MS_MGC_VAL | flags);
-    print_nfs_args(mnt_data, 0);
+    if (STREQ(type, MOUNT_TYPE_NFS)) {
+      plog(XLOG_DEBUG, "linux mount: updated nfs_args...");
+      print_nfs_args(mnt_data, 0);
+    }
   }
 #endif /* DEBUG */
 

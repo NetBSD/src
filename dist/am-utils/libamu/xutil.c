@@ -1,4 +1,5 @@
-/*	$NetBSD: xutil.c,v 1.1.1.1 2000/06/07 00:52:22 dogcow Exp $ */
+/*	$NetBSD: xutil.c,v 1.1.1.2 2000/11/19 23:43:24 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: xutil.c,v 1.9 2000/01/12 16:45:09 ezk Exp 
+ * Id: xutil.c,v 1.11.2.3 2000/05/27 23:41:24 ezk Exp
  *
  */
 
@@ -94,15 +95,20 @@ struct opt_tab dbg_opt[] =
   {"daemon", D_DAEMON},		/* Enter daemon mode */
   {"fork", D_FORK},		/* Fork server (nofork = don't fork) */
   {"full", D_FULL},		/* Program trace */
+#ifdef HAVE_CLOCK_GETTIME
+  {"hrtime", D_HRTIME},		/* Print high resolution time stamps */
+#endif /* HAVE_CLOCK_GETTIME */
   /* info service specific debugging (hesiod, nis, etc) */
   {"info", D_INFO},
 # ifdef DEBUG_MEM
   {"mem", D_MEM},		/* Trace memory allocations */
 # endif /* DEBUG_MEM */
   {"mtab", D_MTAB},		/* Use local mtab file */
+  {"readdir", D_READDIR},	/* check on browsable_dirs progress */
   {"str", D_STR},		/* Debug string munging */
   {"test", D_TEST},		/* Full debug - but no daemon */
   {"trace", D_TRACE},		/* Protocol trace */
+  {"xdrtrace", D_XDRTRACE},	/* Trace xdr routines */
   {0, 0}
 };
 #endif /* DEBUG */
@@ -321,13 +327,34 @@ show_time_host_and_name(int lvl)
 {
   static time_t last_t = 0;
   static char *last_ctime = 0;
-  time_t t = clocktime();
+  time_t t;
+#ifdef HAVE_CLOCK_GETTIME
+  struct timespec ts;
+#endif /* HAVE_CLOCK_GETTIME */
+  char nsecs[11] = "";	/* '.' + 9 digits + '\0' */
   char *sev;
+
+#ifdef HAVE_CLOCK_GETTIME
+  /*
+   * Some systems (AIX 4.3) seem to implement clock_gettime() as stub
+   * returning ENOSYS.
+   */
+  if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+    t = ts.tv_sec;
+#ifdef DEBUG
+    amuDebug(D_HRTIME)
+      sprintf(nsecs, ".%09ld", ts.tv_nsec);
+#endif /* DEBUG */
+  }
+  else
+#endif /* HAVE_CLOCK_GETTIME */
+    t = clocktime();
 
   if (t != last_t) {
     last_ctime = ctime(&t);
     last_t = t;
   }
+
   switch (lvl) {
   case XLOG_FATAL:
     sev = "fatal:";
@@ -357,8 +384,8 @@ show_time_host_and_name(int lvl)
     sev = "hmm:  ";
     break;
   }
-  fprintf(logfp, "%15.15s %s %s[%ld]/%s ",
-	  last_ctime + 4, am_get_hostname(),
+  fprintf(logfp, "%15.15s%s %s %s[%ld]/%s ",
+	  last_ctime + 4, nsecs, am_get_hostname(),
 	  am_get_progname(),
 	  (long) am_mypid,
 	  sev);
@@ -874,6 +901,7 @@ amu_release_controlling_tty(void)
 #ifdef TIOCNOTTY
   int fd;
 #endif /* TIOCNOTTY */
+  int tempfd;
 
 #ifdef HAVE_SETSID
   /* XXX: one day maybe use vhangup(2) */
@@ -884,6 +912,28 @@ amu_release_controlling_tty(void)
     return;
   }
 #endif /* HAVE_SETSID */
+
+  /*
+   * In daemon mode, leaving open file descriptors to terminals or pipes
+   * can be a really bad idea.
+   * Case in point: the redhat startup script calls us through their 'initlog'
+   * program, which exits as soon as the original amd process exits. If, at some
+   * point, a misbehaved library function decides to print something to the screen,
+   * we get a SIGPIPE and die.
+   * More precisely: NIS libc functions will attempt to print to stderr
+   * "YPBINDPROC_DOMAIN: Domain not bound" if ypbind is running but can't find
+   * a ypserver.
+   *
+   * So we close all of our "terminal" filedescriptors, i.e. 0, 1 and 2, then
+   * reopen them as /dev/null.
+   *
+   * XXX We should also probably set the SIGPIPE handler to SIG_IGN.
+   */
+  tempfd = open("/dev/null", O_RDWR);
+  fflush(stdin);  close(0); dup2(tempfd, 0);
+  fflush(stdout); close(1); dup2(tempfd, 1);
+  fflush(stderr); close(2); dup2(tempfd, 2);
+  close(tempfd);
 
 #ifdef TIOCNOTTY
   fd = open("/dev/tty", O_RDWR);
