@@ -284,7 +284,7 @@ print_insn_mode (size, p0, addr, info)
       if (reg == 0xF)
 	(*info->print_address_func) (addr + 2 + NEXTBYTE (p), info);
       else
-	(*info->fprintf_func) (info->stream, "0x%x(%s)", NEXTBYTE (p),
+	(*info->fprintf_func) (info->stream, "%d(%s)", NEXTBYTE (p),
 			       reg_names[reg]);
       break;
     case 0xD0: /* displacement word deferred:	*displ(Rn) */
@@ -293,7 +293,7 @@ print_insn_mode (size, p0, addr, info)
       if (reg == 0xF)
 	(*info->print_address_func) (addr + 3 + NEXTWORD (p), info);
       else
-	(*info->fprintf_func) (info->stream, "0x%x(%s)", NEXTWORD (p),
+	(*info->fprintf_func) (info->stream, "%d(%s)", NEXTWORD (p),
 			       reg_names[reg]);
       break;
     case 0xF0: /* displacement long deferred:	*displ(Rn) */
@@ -302,7 +302,7 @@ print_insn_mode (size, p0, addr, info)
       if (reg == 0xF)
 	(*info->print_address_func) (addr + 5 + NEXTLONG (p), info);
       else
-	(*info->fprintf_func) (info->stream, "0x%x(%s)", NEXTLONG (p),
+	(*info->fprintf_func) (info->stream, "%d(%s)", NEXTLONG (p),
 			       reg_names[reg]);
       break;
     }
