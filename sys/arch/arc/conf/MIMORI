@@ -1,10 +1,12 @@
-#	$NetBSD: MIMORI,v 1.16 2002/04/17 02:22:45 mycroft Exp $
+#	$NetBSD: MIMORI,v 1.17 2002/04/25 15:06:23 atatat Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
 #
 
 include		"arch/arc/conf/std.arc"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32		# estimated number of users
 

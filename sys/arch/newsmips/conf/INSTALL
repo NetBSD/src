@@ -1,8 +1,10 @@
-# 	$NetBSD: INSTALL,v 1.13 2002/04/14 02:30:22 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.14 2002/04/25 15:06:34 atatat Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
 include		"arch/newsmips/conf/std.newsmips"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmemcpy"	# Optimise for space. Implies -O2
 

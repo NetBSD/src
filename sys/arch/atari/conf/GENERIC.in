@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.18 2002/04/16 22:42:55 bjh21 Exp $
+#	$NetBSD: GENERIC.in,v 1.19 2002/04/25 15:06:24 atatat Exp $
 #
 # Generic atari
 #
@@ -11,6 +11,8 @@ include "arch/atari/conf/std.hades"
 #elif defined (MILAN_KERNEL)
 include "arch/atari/conf/std.milan"
 #endif
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #
 # Add support for about 16 users. This variable is used to size

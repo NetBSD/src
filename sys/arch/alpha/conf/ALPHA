@@ -1,10 +1,12 @@
-# $NetBSD: ALPHA,v 1.163 2002/04/17 02:22:43 mycroft Exp $
+# $NetBSD: ALPHA,v 1.164 2002/04/25 15:06:21 atatat Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.163 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+ident		"ALPHA-$Revision: 1.164 $"
 
 maxusers 32
 

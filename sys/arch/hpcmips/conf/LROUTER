@@ -1,11 +1,13 @@
 #
-# 	$NetBSD: LROUTER,v 1.5 2002/04/12 08:10:59 gmcgarry Exp $
+# 	$NetBSD: LROUTER,v 1.6 2002/04/25 15:06:27 atatat Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
 #
 
 include		"arch/hpcmips/conf/std.hpcmips"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.22 2002/04/16 11:49:55 wiz Exp $
+# $NetBSD: GENERIC,v 1.23 2002/04/25 15:06:33 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -19,6 +19,8 @@
 # device.
 
 include		"arch/netwinder/conf/std.netwinder"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 

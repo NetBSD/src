@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.44 2002/04/12 08:11:16 gmcgarry Exp $
+# 	$NetBSD: INSTALL,v 1.45 2002/04/25 15:06:35 atatat Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -9,6 +9,8 @@
 #
 #
 include		"arch/pmax/conf/std.pmax"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmemcpy"	# Optimise for space. Implies -O2
 

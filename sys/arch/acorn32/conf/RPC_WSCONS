@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.13 2002/04/12 08:10:46 gmcgarry Exp $
+#	$NetBSD: RPC_WSCONS,v 1.14 2002/04/25 15:06:21 atatat Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -20,7 +20,9 @@
 
 include		"arch/acorn32/conf/std.acorn32"
 
-#ident		"GENERIC-$Revision: 1.13 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident		"GENERIC-$Revision: 1.14 $"
 
 # estimated number of users
 maxusers	32

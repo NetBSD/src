@@ -1,11 +1,13 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.15 2002/04/17 02:22:43 mycroft Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.16 2002/04/25 15:06:21 atatat Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.15 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"FRAU-FARBISSINA-$Revision: 1.16 $"
 
 maxusers 64
 

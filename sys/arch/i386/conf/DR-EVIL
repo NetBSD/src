@@ -1,9 +1,11 @@
-#	$NetBSD: DR-EVIL,v 1.43 2002/04/18 12:54:13 wiz Exp $
+#	$NetBSD: DR-EVIL,v 1.44 2002/04/25 15:06:28 atatat Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
 
 include "arch/i386/conf/std.i386"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32		# estimated number of users
 

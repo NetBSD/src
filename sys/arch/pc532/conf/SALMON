@@ -1,9 +1,11 @@
-#	$NetBSD: SALMON,v 1.16 2002/04/12 08:11:15 gmcgarry Exp $
+#	$NetBSD: SALMON,v 1.17 2002/04/25 15:06:35 atatat Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532
 #
 
 include	"arch/pc532/conf/std.pc532"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	10			# estimated number of users
 #options 	DDB			# kernel debugger; not working

@@ -1,9 +1,11 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.11 2002/04/12 08:10:46 gmcgarry Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.12 2002/04/25 15:06:20 atatat Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
 
 include	"arch/acorn32/conf/std.acorn32"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 

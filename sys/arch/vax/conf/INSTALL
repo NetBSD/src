@@ -1,9 +1,11 @@
-#	$NetBSD: INSTALL,v 1.25 2002/04/12 08:11:26 gmcgarry Exp $
+#	$NetBSD: INSTALL,v 1.26 2002/04/25 15:06:39 atatat Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
 
 include		"arch/vax/conf/std.vax"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os"	# Optimise for space. Implies -O2
 
