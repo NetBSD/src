@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/01/12 19:19:16 cgd Exp $
+# $NetBSD: Makefile,v 1.3 2000/05/04 11:58:22 takemura Exp $
 #
 # Makefile to generate windows VC++ project and workspace files from
 # config files and templates
@@ -20,7 +20,7 @@ winfiles:
 clean:
 	rm -f hpcmips_stand.ncb
 	for dir in $(PROJECT_DIRS); do \
-	    (cd $$dir && rm -rf WMIPSDbg WMIPSRel); \
+	    (cd $$dir && rm -rf WMIPSDbg wmipsdbg WMIPSRel wmipsrel); \
 	    (cd $$dir && rm -f $$dir.plg $$dir.[0-9][0-9][0-9]); \
 	done
 
