@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.27 2004/04/23 21:13:06 itojun Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.28 2004/07/09 02:49:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.27 2004/04/23 21:13:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.28 2004/07/09 02:49:37 mycroft Exp $");
 
 #include "midi.h"
 
@@ -376,7 +376,7 @@ cs4280_intr(p)
 		handled = 1;
 		mem = BA1READ4(sc, CS4280_PFIE);
 		BA1WRITE4(sc, CS4280_PFIE, (mem & ~PFIE_PI_MASK) | PFIE_PI_DISABLE);
-		if (sc->sc_pintr) {
+		if (sc->sc_prun) {
 			if ((sc->sc_pi%sc->sc_pcount) == 0)
 				sc->sc_pintr(sc->sc_parg);
 		} else {
@@ -447,7 +447,7 @@ cs4280_intr(p)
 		if (sc->sc_rn >= sc->sc_re)
 			sc->sc_rn = sc->sc_rs;
 		BA1WRITE4(sc, CS4280_CIE, mem);
-		if (sc->sc_rintr) {
+		if (sc->sc_rrun) {
 			if ((sc->sc_ri%(sc->sc_rcount)) == 0)
 				sc->sc_rintr(sc->sc_rarg);
 		} else {
