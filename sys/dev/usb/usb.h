@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.33 1999/09/11 08:19:27 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.34 1999/09/16 21:53:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -360,8 +360,8 @@ typedef struct {
 #define  USUBCLASS_SCSI		6
 #define  UPROTO_MASS_CBI_I	0
 #define  UPROTO_MASS_CBI	1
-#define  UPROTO_MASS_BULK	80
-#define  UPROTO_MASS_BULK2	2
+#define  UPROTO_MASS_BULK	2
+#define  UPROTO_MASS_BULK_P	80
 #define UCLASS_HUB		9
 #define  USUBCLASS_HUB		0
 #define UCLASS_DATA		10
