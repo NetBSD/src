@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.conf.5,v 1.5 2002/05/24 04:02:48 itojun Exp $
+.\"	$NetBSD: passwd.conf.5,v 1.6 2002/05/24 04:17:44 itojun Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -82,11 +82,15 @@ To retrieve information from this file use
 .It Pa /etc/passwd.conf
 .El
 .Sh EXAMPLES
-Use MD5 as the local cipher and old-style DES as the YP cipher:
+Use MD5 as the local cipher and old-style DES as the YP cipher.
+Use blowfish with 2^5 rounds for root:
 .Bd -literal
  default:
       localcipher = md5
       ypcipher = old
+
+ root:
+      localcipher = blowfish,5
 .Ed
 .Sh SEE ALSO
 .Xr passwd 1 ,
