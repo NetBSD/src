@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.63 1998/09/01 01:02:34 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.64 1998/09/08 23:47:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -252,6 +252,18 @@ struct	pcred {
 	int	p_refcnt;		/* Number of references. */
 };
 
+LIST_HEAD(proclist, proc);		/* a list of processes */
+
+/*
+ * This structure associates a proclist with its lock.
+ */
+struct proclist_desc {
+	struct proclist *pd_list;	/* the list */
+	/*
+	 * XXX Add a pointer to the proclist's lock eventually.
+	 */
+};
+
 #ifdef _KERNEL
 /*
  * We use process IDs <= PID_MAX; PID_MAX + 1 must also fit in a pid_t,
@@ -298,10 +310,13 @@ extern struct proc *curproc;		/* Current running proc. */
 extern struct proc proc0;		/* Process slot for swapper. */
 extern int nprocs, maxproc;		/* Current and max number of procs. */
 
-LIST_HEAD(proclist, proc);
 extern struct proclist allproc;		/* List of all processes. */
+extern struct proclist deadproc;	/* List of dead processes. */
 extern struct proclist zombproc;	/* List of zombie processes. */
+
 struct proc *initproc;			/* Process slots for init, pager. */
+
+extern const struct proclist_desc proclists[];
 
 extern struct pool proc_pool;		/* memory pool for procs */
 extern struct pool pcred_pool;		/* memory pool for pcreds */
@@ -339,7 +354,9 @@ void	swapin __P((struct proc *));
 int	tsleep __P((void *chan, int pri, const char *wmesg, int timo));
 void	unsleep __P((struct proc *));
 void	wakeup __P((void *chan));
+void	reaper __P((void));
 void	exit1 __P((struct proc *, int));
+void	exit2 __P((struct proc *));
 int	fork1 __P((struct proc *, int, register_t *, struct proc **));
 void	kmeminit __P((void));
 void	rqinit __P((void));
