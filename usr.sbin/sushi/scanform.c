@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.19 2001/08/01 09:08:55 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.20 2001/08/03 09:18:58 itojun Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1127,7 +1127,10 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	if (ftp->list == NULL)
 		bailout("malloc: %s", strerror(errno));
 
-	for (i=0; (p = fgetln(file, &len)) != NULL; i++ ) {
+	for (i = 0; (p = fgetln(file, &len)) != NULL; i++) {
+		if (len == 1)
+			continue;
+		p[len - 1] = '\0';	/* NUL terminate */
 		ftp->list[i] = strdup(p);
 		ftp->list[i][len -1] = '\0';
 		ftp->list = realloc(ftp->list, sizeof(char *) * (i+2));
