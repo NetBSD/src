@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.70 1999/06/03 01:58:51 cgd Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.71 1999/06/03 20:59:04 is Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.70 1999/06/03 01:58:51 cgd Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.71 1999/06/03 20:59:04 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -1210,6 +1210,8 @@ showpartitions(f, lp)
 				break;
 
 			case FS_BSDFFS:
+			case FS_BSDLFS:
+			case FS_ADOS:
 				(void) fprintf(f, "    %5d %5d %5d ",
 				    pp->p_fsize, pp->p_fsize * pp->p_frag,
 				    pp->p_cpg);
@@ -1668,6 +1670,8 @@ getasciilabel(f, lp)
 				break;
 
 			case FS_BSDFFS:
+			case FS_BSDLFS:
+			case FS_ADOS:
 				NXTNUM(pp->p_fsize);
 				if (pp->p_fsize == 0)
 					break;
