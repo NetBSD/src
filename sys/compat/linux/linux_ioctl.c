@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.2 1995/06/22 21:34:34 fvdl Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.3 1995/06/24 20:20:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -42,7 +42,6 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
-#include <sys/exec.h>
 #include <net/if.h>
 #include <sys/sockio.h>
 
@@ -473,7 +472,7 @@ linux_ioctl(p, uap, retval)
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
 		return (EBADF);
 
-	sg = stackgap_init();
+	sg = stackgap_init(p->p_emul);
 
 	switch (com) {
 	case LINUX_TCGETS:

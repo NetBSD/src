@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.8 1995/06/22 21:34:27 fvdl Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.9 1995/06/24 20:20:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -37,7 +37,6 @@
 #include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
-#include <sys/exec.h>
 #include <sys/exec_elf.h>
 
 #include <sys/mman.h>
@@ -63,6 +62,7 @@ static void *linux_aout_copyargs __P((struct exec_package *,
 #define LINUX_ELF_AUX_ARGSIZ (sizeof(AuxInfo) * 8 / sizeof(char *))
 
 
+const char linux_emul_path[] = "/emul/linux";
 extern int linux_error[];
 extern struct sysent linux_sysent[];
 extern char *linux_syscallnames[];
@@ -364,8 +364,7 @@ linux_elf_probe(p, epp, itp, pos)
 	size_t len;
 
 	if (itp[0]) {
-		if ((error = linux_emul_find(p, NULL, linux_emul_path, itp,
-		    &bp, 0)))
+		if ((error = emul_find(p, NULL, linux_emul_path, itp, &bp, 0)))
 			return error;
 		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
 			return error;
@@ -409,8 +408,8 @@ linux_uselib(p, uap, retval)
 	struct exec_vmcmd_set vcset;
 	int rem, i, magic, error;
 
-	sg = stackgap_init();
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	sg = stackgap_init(p->p_emul);
+	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	NDINIT(&ni, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 
@@ -492,8 +491,8 @@ linux_execve(p, uap, retval)
 {
 	caddr_t sg;
 
-	sg = stackgap_init();
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	sg = stackgap_init(p->p_emul);
+	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return execve(p, uap, retval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.4 1995/06/22 21:34:39 fvdl Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.5 1995/06/24 20:20:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -44,7 +44,6 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
-#include <sys/exec.h>
 
 #include <sys/syscallargs.h>
 
@@ -295,7 +294,7 @@ linux_sigaction(p, uap, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init();
+	sg = stackgap_init(p->p_emul);
 	olsa = SCARG(uap, osa);
 	nlsa = SCARG(uap, nsa);
 
@@ -348,7 +347,7 @@ linux_signal(p, uap, retval)
 	struct sigaction *osa, *nsa, tmpsa;
 	int error;
 
-	sg = stackgap_init();
+	sg = stackgap_init(p->p_emul);
 	nsa = stackgap_alloc(&sg, sizeof *nsa);
 	osa = stackgap_alloc(&sg, sizeof *osa);
 

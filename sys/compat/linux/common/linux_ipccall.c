@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.3 1995/06/22 21:34:36 fvdl Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.4 1995/06/24 20:20:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -43,7 +43,6 @@
 #include <sys/mman.h>
 #include <sys/systm.h>
 #include <sys/stat.h>
-#include <sys/exec.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -443,7 +442,7 @@ linux_shmctl(p, uap, retval)
 
 	switch (SCARG(uap, a2)) {
 	case LINUX_IPC_STAT:
-		sg = stackgap_init();
+		sg = stackgap_init(p->p_emul);
 		bsp = stackgap_alloc(&sg, sizeof (struct shmid_ds));
 		SCARG(&bsa, shmid) = SCARG(uap, a1);
 		SCARG(&bsa, cmd) = IPC_STAT;
@@ -459,7 +458,7 @@ linux_shmctl(p, uap, retval)
 		     sizeof lseg)))
 			return error;
 		linux_to_bsd_shmid_ds(&lseg, &bs);
-		sg = stackgap_init();
+		sg = stackgap_init(p->p_emul);
 		bsp = stackgap_alloc(&sg, sizeof (struct shmid_ds));
 		if ((error = copyout((caddr_t) &bs, (caddr_t) bsp, sizeof bs)))
 			return error;
@@ -486,7 +485,7 @@ linux_shmctl(p, uap, retval)
 		     sizeof lseg)))
 			return error;
 		linux_to_bsd_shmid_ds(&lseg, &bs);
-		sg = stackgap_init();
+		sg = stackgap_init(p->p_emul);
 		bsp = stackgap_alloc(&sg, sizeof (struct shmid_ds));
 		if ((error = copyout((caddr_t) &bs, (caddr_t) bsp, sizeof bs)))
 			return error;
