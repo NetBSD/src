@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.4 2003/05/18 18:54:07 dsl Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.5 2003/06/03 11:54:51 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.2 2001/11/29 23:21:01 thorpej Exp 	*/
 
@@ -45,13 +45,13 @@ menu wdtype, title  "Wybierz typ";
 	option "IDE", 	exit;
 	option "ESDI", 	exit, action
 		{ msg_display (MSG_sectforward);
-		  process_menu (MENU_yesno);
+		  process_menu (MENU_yesno, NULL);
 		  if (yesno)
 			doessf = "sf:";
 		};
 	option "ST506", exit, action
 		{ msg_display (MSG_sectforward);
-		  process_menu (MENU_yesno);
+		  process_menu (MENU_yesno, NULL);
 		  if (yesno)
 			doessf = "sf:";
 		};

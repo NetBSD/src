@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.36 2003/05/30 22:17:00 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.37 2003/06/03 11:54:48 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -195,7 +195,7 @@ edit_mbr(mbr)
 	/* XXX this sucks ("part" is used in menus, no param passing there) */
 	part = &mbr->mbr_parts[0];
 	msg_display(MSG_fullpart, diskdev);
-	process_menu(MENU_fullpart);
+	process_menu(MENU_fullpart, NULL);
 
 	/* DOS fdisk label checking and value setting. */
 	if (usefull) {
@@ -212,7 +212,7 @@ edit_mbr(mbr)
 		/* Ask if we really want to blow away non-NetBSD stuff */
 		if (otherparts != 0 || ourparts > 1) {
 			msg_display(MSG_ovrwrite);
-			process_menu(MENU_noyes);
+			process_menu(MENU_noyes, NULL);
 			if (!yesno) {
 				if (logging)
 					(void)fprintf(logfp, "User answered no to destroy other data, aborting.\n");
@@ -250,7 +250,7 @@ edit_mbr(mbr)
 			}
 		}
 		do {
-			process_menu(MENU_editparttable);
+			process_menu(MENU_editparttable, NULL);
 			numbsd = 0;
 			bsdpart = -1;
 			freebsdpart = -1;
@@ -284,25 +284,25 @@ edit_mbr(mbr)
 			/* Check for overlap or multiple native partitions */
 			if (overlap || numbsd != 1) {
 				msg_display(MSG_reeditpart);
-				process_menu(MENU_yesno);
+				process_menu(MENU_yesno, NULL);
 			}
 		} while (yesno && (numbsd != 1 || overlap));
 
 
 		if (numbsd == 0) {
 			msg_display(MSG_nobsdpart);
-			process_menu(MENU_ok);
+			process_menu(MENU_ok, NULL);
 			return 0;
 		}
 			
 		if (numbsd > 1) {
 			msg_display(MSG_multbsdpart, bsdpart);
-			process_menu(MENU_ok);
+			process_menu(MENU_ok, NULL);
 		}
 
 		if (activepart == -1) {
 			msg_display(MSG_noactivepart);
-			process_menu(MENU_yesno);
+			process_menu(MENU_yesno, NULL);
 			if (yesno)
 				part[bsdpart].mbrp_flag = 0x80;
 		} else
@@ -310,7 +310,7 @@ edit_mbr(mbr)
 
 		if (bsdpart == freebsdpart) {
 			msg_display(MSG_upgradeparttype);
-			process_menu(MENU_yesno);
+			process_menu(MENU_yesno, NULL);
 			if (yesno)
 				part[bsdpart].mbrp_typ = dosptyp_nbsd;
 		}
@@ -802,7 +802,7 @@ configure_bootsel(void)
 	}
 
     labels_ok:
-	process_menu(MENU_configbootsel);
+	process_menu(MENU_configbootsel, NULL);
 
 #if 0
 	/* The current bootselect code doesn't need this... */

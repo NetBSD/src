@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.3 2003/01/10 20:00:27 christos Exp $
+/*	$NetBSD: aout2elf.c,v 1.4 2003/06/03 11:54:48 dsl Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -283,7 +283,7 @@ domove:
 
 	if (backedup) {
 		msg_display(MSG_emulbackup);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 	}
 
 	return n;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.5 2003/05/18 18:54:07 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.6 2003/06/03 11:54:51 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.11 2001/04/12 03:48:13 briggs Exp */
 
@@ -94,6 +94,12 @@ message askfsswap
 Nastepnie partycja wymiany. Masz %d %s wolnego miejsca na dysku.
 
 Rozmiar partycji wymiany? }
+
+message askfsusr
+{
+Nastepnie partycja /usr. Masz %d %s wolnego miejsca na dysku.
+
+Rozmiar partycji /usr? }
 
 message otherparts
 {Nadal masz wolna przestrzen na dysku. Podaj rozmiary i punkty montazu

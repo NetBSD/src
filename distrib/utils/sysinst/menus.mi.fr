@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.45 2003/05/16 19:28:10 dsl Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.46 2003/06/03 11:54:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -143,7 +143,7 @@ menu edfspart, title "Changer quoi?", exit, y=14;
 
 			if (!PI_ISBSDFS(&bsdlabel[editpart])) {
 				msg_display (MSG_not42bsd, 'a'+editpart);
-				process_menu (MENU_ok);
+				process_menu (MENU_ok, NULL);
 				return FALSE;
 			}
 			snprintf(buf, sizeof(buf), "%d",
@@ -167,7 +167,7 @@ menu edfspart, title "Changer quoi?", exit, y=14;
 					fsmount[editpart][0] = '\0';
 			} else {
 				msg_display (MSG_nomount, 'a'+editpart);
-				process_menu (MENU_ok);
+				process_menu (MENU_ok, NULL);
 			}
 		};
 	option "Preserve", action	/* XXX translate me */

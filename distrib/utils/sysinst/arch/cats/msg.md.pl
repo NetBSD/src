@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.2 2002/04/09 19:48:04 hubertf Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.3 2003/06/03 11:54:51 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2002/02/11 13:50:18 skrll Exp */
 
@@ -63,7 +63,7 @@ message askfsswap
 Nastepnie partycja wymiany. Masz %d %s wolnego miejsca na dysku.
 Rozmiar partycji wymiany? }
 
-message askfsuser
+message askfsusr
 {
 Nastepnie partycja /usr. Masz %d %s wolnego miejsca na dysku.
 Rozmiar partycji /usr? }
@@ -77,3 +77,14 @@ dla ponizszych partycji.
 message askfspart
 {Nastepna partycja jest /dev/%s%c. Masz %d %s wolnego miejsca na dysku.
 Rozmiar partycji? }
+
+message catsfspart	/* XXX translate */
+{We now have your NetBSD partitions on %s as follows (Size and Offset in %s):
+}
+
+message emulbackup 
+{Albo /emul/aout albo /emul w twoim systemie byl symbolicznym linkiem
+wskazujacym na niezamontowany system. Zostalo mu dodane rozszerzenie '.old'.
+Kiedy juz uruchomisz swoj zaktualizowany system, mozliwe ze bedziesz musial
+zajac sie polaczeniem nowo utworzonego /emul/aout ze starym. 
+}
