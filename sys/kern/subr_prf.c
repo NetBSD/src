@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.78 2001/04/30 21:29:45 kleink Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.79 2001/05/06 13:23:42 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -147,6 +147,8 @@ extern	struct tty *constty;	/* pointer to console "window" tty */
 extern	int log_open;	/* subr_log: is /dev/klog open? */
 const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */
+long	panicstart, panicend;	/* position in the msgbuf of the start and
+				   end of the formatted panicstr. */
 int	doing_shutdown;	/* set to indicate shutdown in progress */
 
 /*
@@ -203,12 +205,18 @@ panic(fmt, va_alist)
 	if (!panicstr)
 		panicstr = fmt;
 	doing_shutdown = 1;
+
+	if (msgbufp->msg_magic == MSG_MAGIC)
+		panicstart = msgbufp->msg_bufx;
 	
 	va_start(ap, fmt);
 	printf("panic: ");
 	vprintf(fmt, ap);
 	printf("\n");
 	va_end(ap);
+
+	if (msgbufp->msg_magic == MSG_MAGIC)
+		panicend = msgbufp->msg_bufx;
 
 #ifdef IPKDB
 	ipkdb_panic();
