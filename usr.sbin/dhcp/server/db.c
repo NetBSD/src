@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: db.c,v 1.1.1.5 1997/11/22 09:14:35 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: db.c,v 1.1.1.6 1998/05/18 06:54:01 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -71,7 +71,7 @@ int write_lease (lease)
 	}
 
 	t = gmtime (&lease -> starts);
-	sprintf (tbuf, "%d %d/%d/%d %02d:%02d:%02d;",
+	sprintf (tbuf, "%d %d/%02d/%02d %02d:%02d:%02d;",
 		 t -> tm_wday, t -> tm_year + 1900,
 		 t -> tm_mon + 1, t -> tm_mday,
 		 t -> tm_hour, t -> tm_min, t -> tm_sec);
@@ -82,7 +82,7 @@ int write_lease (lease)
 	}
 
 	t = gmtime (&lease -> ends);
-	sprintf (tbuf, "%d %d/%d/%d %02d:%02d:%02d;",
+	sprintf (tbuf, "%d %d/%02d/%02d %02d:%02d:%02d;",
 		 t -> tm_wday, t -> tm_year + 1900,
 		 t -> tm_mon + 1, t -> tm_mday,
 		 t -> tm_hour, t -> tm_min, t -> tm_sec);
@@ -201,6 +201,7 @@ void new_lease_file ()
 	char newfname [512];
 	char backfname [512];
 	TIME t;
+	int db_fd;
 
 	/* If we already have an open database, close it. */
 	if (db_file) {
@@ -210,8 +211,12 @@ void new_lease_file ()
 	/* Make a temporary lease file... */
 	GET_TIME (&t);
 	sprintf (newfname, "%s.%d", path_dhcpd_db, (int)t);
-	if ((db_file = fopen (newfname, "w")) == NULL) {
-		error ("Can't start new lease file: %m");
+	db_fd = open (newfname, O_WRONLY | O_TRUNC | O_CREAT, 0664);
+	if (db_fd < 0) {
+		error ("Can't create new lease file: %m");
+	}
+	if ((db_file = fdopen (db_fd, "w")) == NULL) {
+		error ("Can't fdopen new lease file!");
 	}
 
 	/* Write out all the leases that we know of... */

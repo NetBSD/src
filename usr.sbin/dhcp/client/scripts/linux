@@ -77,7 +77,7 @@ if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
     ifconfig $interface inet $new_ip_address $new_subnet_arg \
 					$new_broadcast_arg
     # Add a network route to the computed network address.
-    route add -net $new_network_address $new_subnet_arg dev $interface
+    route add -net $new_network_number $new_subnet_arg dev $interface
     for router in $new_routers; do
       route add default gw $router
     done
@@ -125,7 +125,7 @@ if [ x$reason = xTIMEOUT ]; then
       ifconfig $interface:0 inet $alias_ip_address $alias_subnet_arg
       route add -host $alias_ip_address dev $interface:0
     fi
-    route add -net $new_network_address
+    route add -net $new_network_number
     for router in $new_routers; do
       route add default gw $router
     done
