@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 1996/05/05 06:19:07 briggs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19 1996/05/05 06:54:26 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,7 +83,6 @@ cpu_fork(p1, p2)
 	register struct trapframe *tf;
 	register struct switchframe *sf;
 	extern struct pcb *curpcb;
-	extern void proc_trampoline __P((void)), child_return __P((void));
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
@@ -125,7 +124,6 @@ cpu_set_kpc(p, pc)
 {
 	struct pcb *pcbp;
 	struct switchframe *sf;
-	extern void proc_trampoline __P((void));
 
 	pcbp = &p->p_addr->u_pcb;
 	sf = (struct switchframe *) pcbp->pcb_regs[11];
