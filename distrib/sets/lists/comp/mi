@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.460 2002/07/31 01:45:20 itojun Exp $
+#	$NetBSD: mi,v 1.461 2002/08/02 01:31:06 thorpej Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3092,6 +3092,15 @@
 ./usr/share/man/cat9/disk_resetstat.0		comp-sys-catman
 ./usr/share/man/cat9/disk_unbusy.0		comp-sys-catman
 ./usr/share/man/cat9/disklabel.0		comp-sys-catman
+./usr/share/man/cat9/dmover.0		comp-sys-catman
+./usr/share/man/cat9/dmover_backend_register.0		comp-sys-catman
+./usr/share/man/cat9/dmover_backend_unregister.0		comp-sys-catman
+./usr/share/man/cat9/dmover_done.0		comp-sys-catman
+./usr/share/man/cat9/dmover_process.0		comp-sys-catman
+./usr/share/man/cat9/dmover_request_alloc.0		comp-sys-catman
+./usr/share/man/cat9/dmover_request_free.0		comp-sys-catman
+./usr/share/man/cat9/dmover_session_create.0		comp-sys-catman
+./usr/share/man/cat9/dmover_session_destroy.0		comp-sys-catman
 ./usr/share/man/cat9/dopowerhooks.0		comp-sys-catman
 ./usr/share/man/cat9/doshutdownhooks.0		comp-sys-catman
 ./usr/share/man/cat9/driver.0		comp-sys-catman
@@ -5661,6 +5670,15 @@
 ./usr/share/man/man9/disk_resetstat.9		comp-sys-man
 ./usr/share/man/man9/disk_unbusy.9		comp-sys-man
 ./usr/share/man/man9/disklabel.9		comp-sys-man
+./usr/share/man/man9/dmover.9		comp-sys-man
+./usr/share/man/man9/dmover_backend_register.9		comp-sys-man
+./usr/share/man/man9/dmover_backend_unregister.9		comp-sys-man
+./usr/share/man/man9/dmover_done.9		comp-sys-man
+./usr/share/man/man9/dmover_process.9		comp-sys-man
+./usr/share/man/man9/dmover_request_alloc.9		comp-sys-man
+./usr/share/man/man9/dmover_request_free.9		comp-sys-man
+./usr/share/man/man9/dmover_session_create.9		comp-sys-man
+./usr/share/man/man9/dmover_session_destroy.9		comp-sys-man
 ./usr/share/man/man9/dopowerhooks.9		comp-sys-man
 ./usr/share/man/man9/doshutdownhooks.9		comp-sys-man
 ./usr/share/man/man9/driver.9		comp-sys-man
