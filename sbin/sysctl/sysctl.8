@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.77 2002/05/19 08:12:56 itojun Exp $
+.\"	$NetBSD: sysctl.8,v 1.77.2.1 2002/05/30 20:45:01 tv Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -372,6 +372,7 @@ privilege can change the value.
 .It user.re_dup_max	integer	no
 .It vendor.\*[Lt]vendor\*[Gt].*	?	vendor specific
 .It vfs.generic.usermount	integer	yes
+.It vfs.nfs.iothreads	integer	yes
 .It vm.anonmax	integer	yes
 .It vm.anonmin	integer	yes
 .It vm.execmax	integer	yes
