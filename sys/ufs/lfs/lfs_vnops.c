@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.125 2003/12/16 11:45:07 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.126 2003/12/16 13:47:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.125 2003/12/16 11:45:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.126 2003/12/16 13:47:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1560,14 +1560,15 @@ lfs_putpages(void *v)
 	struct segment *sp;
 	off_t origoffset, startoffset, endoffset, origendoffset, blkeof;
 	off_t off, max_endoffset;
-	int s, sync, pagedaemon;
+	int s;
+	boolean_t seglocked, sync, pagedaemon;
 	struct vm_page *pg;
 	UVMHIST_FUNC("lfs_putpages"); UVMHIST_CALLED(ubchist);
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
-	sync = (ap->a_flags & PGO_SYNCIO);
+	sync = (ap->a_flags & PGO_SYNCIO) != 0;
 	pagedaemon = (curproc == uvm.pagedaemon_proc);
 
 	/* Putpages does nothing for metadata. */
@@ -1736,63 +1737,18 @@ lfs_putpages(void *v)
 	 * unless genfs_putpages returns EDEADLK; then we must flush
 	 * what we have, and correct FIP and segment header accounting.
 	 */
-	if (ap->a_flags & PGO_LOCKED) {
-		sp = fs->lfs_sp;
-		KASSERT(sp->vp == NULL);
-		sp->vp = vp;
 
+	seglocked = (ap->a_flags & PGO_LOCKED) != 0;
+	if (!seglocked) {
+		simple_unlock(&vp->v_interlock);
 		/*
-		 * Make sure that all pages in any given block are dirty, or
-		 * none of them are.
+		 * Take the seglock, because we are going to be writing pages.
 		 */
-	    again:
-		check_dirty(fs, vp, startoffset, endoffset, blkeof,
-			    ap->a_flags, 0);
-
-		if ((error = genfs_putpages(v)) == EDEADLK) {
-#ifdef DEBUG_LFS
-			printf("lfs_putpages: genfs_putpages returned EDEADLK"
-			       " ino %d off %x (seg %d)\n",
-			       ip->i_number, fs->lfs_offset,
-			       dtosn(fs, fs->lfs_offset));
-#endif
-			/* If nothing to write, short-circuit */
-			if (sp->cbpp - sp->bpp == 1) {
-				preempt(1);
-				simple_lock(&vp->v_interlock);
-				goto again;
-			}
-			/* Write gathered pages */
-			lfs_updatemeta(sp);
-			(void) lfs_writeseg(fs, sp);
- 
-			/* Reinitialize brand new FIP and add us to it */
-			KASSERT(sp->vp == vp);
-			sp->fip->fi_version = ip->i_gen;
-			sp->fip->fi_ino = ip->i_number;
-			/* Add us to the new segment summary. */
-			++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-			sp->sum_bytes_left -= FINFOSIZE;
-
-			/* Give the write a chance to complete */
-			preempt(1);
-
-			/* We've lost the interlock.  Start over. */
-			simple_lock(&vp->v_interlock);
-			goto again;
-		}
-		lfs_updatemeta(sp);
-		KASSERT(sp->vp == vp);
-		sp->vp = NULL;
-		return error;
+		error = lfs_seglock(fs, SEGM_PROT | (sync ? SEGM_SYNC : 0));
+		if (error != 0)
+			return error;
+		simple_lock(&vp->v_interlock);
 	}
-
-	simple_unlock(&vp->v_interlock);
-	/*
-	 * Take the seglock, because we are going to be writing pages.
-	 */
-	if ((error = lfs_seglock(fs, SEGM_PROT | (sync ? SEGM_SYNC : 0))) != 0)
-		return error;
 
 	/*
 	 * VOP_PUTPAGES should not be called while holding the seglock.
@@ -1806,17 +1762,21 @@ lfs_putpages(void *v)
 	 * (This should duplicate the setup at the top of lfs_writefile().)
 	 */
 	sp = fs->lfs_sp;
-	if (sp->seg_bytes_left < fs->lfs_bsize ||
-	    sp->sum_bytes_left < sizeof(struct finfo))
-		(void) lfs_writeseg(fs, fs->lfs_sp); 
- 
-	sp->sum_bytes_left -= FINFOSIZE;
-	++((SEGSUM *)(sp->segsum))->ss_nfinfo;
+	if (!seglocked) {
+		if (sp->seg_bytes_left < fs->lfs_bsize ||
+		    sp->sum_bytes_left < sizeof(struct finfo))
+			(void) lfs_writeseg(fs, fs->lfs_sp); 
+	 
+		sp->sum_bytes_left -= FINFOSIZE;
+		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
+	}
 	KASSERT(sp->vp == NULL);
 	sp->vp = vp;
  
-	if (vp->v_flag & VDIROP)
-		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
+	if (!seglocked) {
+		if (vp->v_flag & VDIROP)
+			((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
+	}
  
 	sp->fip->fi_nblocks = 0;
 	sp->fip->fi_ino = ip->i_number;
@@ -1828,8 +1788,7 @@ lfs_putpages(void *v)
 	 * Whenever we lose the interlock we have to rerun check_dirty, as
 	 * well.
 	 */
-    again2:
-	simple_lock(&vp->v_interlock);
+again:
 	check_dirty(fs, vp, startoffset, endoffset, blkeof, ap->a_flags, 0);
 
 	if ((error = genfs_putpages(v)) == EDEADLK) {
@@ -1842,7 +1801,7 @@ lfs_putpages(void *v)
 		/* If nothing to write, short-circuit */
 		if (sp->cbpp - sp->bpp == 1) {
 			preempt(1);
-			goto again2;
+			goto again;
 		}
 		/* Write gathered pages */
 		lfs_updatemeta(sp);
@@ -1863,26 +1822,35 @@ lfs_putpages(void *v)
 		preempt(1);
 
 		/* We've lost the interlock.  Start over. */
-		goto again2;
+		simple_lock(&vp->v_interlock);
+		goto again;
 	}
 
 	KASSERT(sp->vp == vp);
-	sp->vp = NULL; /* XXX lfs_gather below will set this */
+	if (!seglocked) {
+		sp->vp = NULL; /* XXX lfs_gather below will set this */
 
-	/* Write indirect blocks as well */
-	lfs_gather(fs, fs->lfs_sp, vp, lfs_match_indir);
-	lfs_gather(fs, fs->lfs_sp, vp, lfs_match_dindir);
-	lfs_gather(fs, fs->lfs_sp, vp, lfs_match_tindir);
+		/* Write indirect blocks as well */
+		lfs_gather(fs, fs->lfs_sp, vp, lfs_match_indir);
+		lfs_gather(fs, fs->lfs_sp, vp, lfs_match_dindir);
+		lfs_gather(fs, fs->lfs_sp, vp, lfs_match_tindir);
+
+		KASSERT(sp->vp == NULL);
+		sp->vp = vp;
+	}
 
 	/*
 	 * Blocks are now gathered into a segment waiting to be written.
 	 * All that's left to do is update metadata, and write them.
 	 */
-	KASSERT(sp->vp == NULL);
-	sp->vp = vp;
 	lfs_updatemeta(sp);
 	KASSERT(sp->vp == vp);
 	sp->vp = NULL;
+
+	if (seglocked) {
+		/* we're called by lfs_writefile. */
+		return error;
+	}
 
 	/*
 	 * Clean up FIP, since we're done writing this file.
