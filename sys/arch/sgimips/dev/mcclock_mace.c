@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.11 2003/10/05 15:38:08 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.12 2003/10/25 16:15:07 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.11 2003/10/05 15:38:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.12 2003/10/25 16:15:07 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ mcclock_mace_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_st = maa->maa_st;
 	/* XXX should be bus_space_map() */
 	if (bus_space_subregion(maa->maa_st, maa->maa_sh,
-	    maa->maa_offset, NULL, &sc->sc_sh))
+	    maa->maa_offset, 0, &sc->sc_sh))
 		panic("mcclock_mace_attach: couldn't map");
 
 	/*

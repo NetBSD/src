@@ -33,7 +33,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumconfig.c,v 1.1.1.1 2003/10/10 03:08:01 grog Exp $
+ * $Id: vinumconfig.c,v 1.2 2003/10/25 16:15:07 chs Exp $
  * $FreeBSD$
  */
 
@@ -104,7 +104,7 @@ throw_rude_remark(int error, char *msg,...)
 	    vprintf(msg, ap);				    /* print to the console */
 	    printf("\n");
 	} else {
-	    retval = snprintf(msg, NULL, (void *) text, 10, ap);
+	    retval = snprintf(msg, 0, (void *) text, 10, ap);
 	    text[retval] = '\0';			    /* delimit */
 	    strcpy(ioctl_reply->msg, text);
 	    ioctl_reply->error = error;			    /* first byte is the error number */
