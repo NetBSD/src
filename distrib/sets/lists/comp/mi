@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.493 2002/10/14 05:00:01 gmcgarry Exp $
+#	$NetBSD: mi,v 1.494 2002/10/14 15:59:46 dent Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -6453,7 +6453,7 @@
 ./usr/share/man/man9/vn_statfile.9		comp-sys-man
 ./usr/share/man/man9/vn_write.9		comp-sys-man
 ./usr/share/man/man9/vn_writechk.9		comp-sys-man
-./usr/share/man/man9/vnfileops.0		comp-sys-catman
+./usr/share/man/man9/vnfileops.9		comp-sys-man
 ./usr/share/man/man9/vnode.9		comp-sys-man
 ./usr/share/man/man9/vnodeops.9		comp-sys-man
 ./usr/share/man/man9/vnsubr.9		comp-sys-man
