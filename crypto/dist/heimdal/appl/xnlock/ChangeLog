@@ -1,3 +1,12 @@
+2004-03-22  Johan Danielsson  <joda@pdc.kth.se>
+
+	* xnlock.c: protect the world from des_encrypt in crypt.h
+	
+2004-03-01  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* xnlock.c: include <crypt.h>, From: Fredrik Ljungberg
+	<flag@pobox.se>
+	
 2003-05-06  Johan Danielsson  <joda@pdc.kth.se>
 
 	* no checks here

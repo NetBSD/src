@@ -1,10 +1,10 @@
-dnl $Heimdal: have-type.m4,v 1.6 2000/07/15 18:10:00 joda Exp $
-dnl $NetBSD: have-type.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: have-type.m4,v 1.6.12.1 2004/04/01 07:27:33 joda Exp $
+dnl $NetBSD: have-type.m4,v 1.1.1.4 2004/04/02 14:48:06 lha Exp $
 dnl
 dnl check for existance of a type
 
 dnl AC_HAVE_TYPE(TYPE,INCLUDES)
-AC_DEFUN(AC_HAVE_TYPE, [
+AC_DEFUN([AC_HAVE_TYPE], [
 AC_REQUIRE([AC_HEADER_STDC])
 cv=`echo "$1" | sed 'y%./+- %__p__%'`
 AC_MSG_CHECKING(for $1)

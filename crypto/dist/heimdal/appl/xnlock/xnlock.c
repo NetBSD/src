@@ -8,8 +8,8 @@
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: xnlock.c,v 1.93.2.1 2003/04/29 09:18:36 lha Exp $"
-        "$NetBSD: xnlock.c,v 1.1.1.7 2003/05/15 20:28:43 lha Exp $");
+__RCSID("$Heimdal: xnlock.c,v 1.93.2.3 2004/03/22 17:35:00 joda Exp $"
+        "$NetBSD: xnlock.c,v 1.1.1.8 2004/04/02 14:47:32 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -30,6 +30,12 @@ __RCSID("$Heimdal: xnlock.c,v 1.93.2.1 2003/04/29 09:18:36 lha Exp $"
 #endif
 #ifdef HAVE_PWD_H
 #include <pwd.h>
+#endif
+#ifdef HAVE_CRYPT_H
+#undef des_encrypt
+#define des_encrypt wingless_pigs_mostly_fail_to_fly
+#include <crypt.h>
+#undef des_encrypt
 #endif
 
 #ifdef KRB5

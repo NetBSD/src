@@ -1,5 +1,5 @@
-# $Heimdal: Makefile.am,v 1.122.6.1 2003/05/12 15:20:47 joda Exp $
-# $NetBSD: Makefile.am,v 1.1.1.7 2003/05/15 20:28:48 lha Exp $
+# $Heimdal: Makefile.am,v 1.122.6.3 2003/10/14 16:13:15 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.8 2004/04/02 14:47:54 lha Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -8,7 +8,7 @@ ACLOCAL_AMFLAGS = -I ../../cf
 CLEANFILES = roken.h make-roken.c $(XHEADERS)
 
 lib_LTLIBRARIES = libroken.la
-libroken_la_LDFLAGS = -version-info 16:2:0
+libroken_la_LDFLAGS = -version-info 16:3:0
 
 noinst_PROGRAMS = make-roken snprintf-test
 
@@ -86,86 +86,16 @@ libroken_la_SOURCES =		\
 	xdbm.h
 
 EXTRA_libroken_la_SOURCES =	\
-	chown.c			\
-	copyhostent.c		\
-	daemon.c		\
-	ecalloc.c		\
-	emalloc.c		\
-	erealloc.c		\
-	estrdup.c		\
-	err.c			\
 	err.hin			\
-	errx.c			\
-	fchown.c		\
-	flock.c			\
-	fnmatch.c		\
-	fnmatch.hin		\
-	freehostent.c		\
-	gai_strerror.c		\
-	getdtablesize.c		\
-	getegid.c		\
-	geteuid.c		\
-	getgid.c		\
-	gethostname.c		\
-	getifaddrs.c		\
-	getipnodebyaddr.c	\
-	getipnodebyname.c	\
-	getopt.c		\
-	gettimeofday.c		\
-	getuid.c		\
-	getusershell.c		\
 	glob.hin		\
-	hstrerror.c		\
 	ifaddrs.hin		\
-	inet_aton.c		\
-	inet_ntop.c		\
-	inet_pton.c		\
-	initgroups.c		\
-	innetgr.c		\
-	iruserok.c		\
-	lstat.c			\
-	memmove.c		\
-	mkstemp.c		\
-	putenv.c		\
-	rcmd.c			\
-	readv.c			\
-	recvmsg.c		\
-	sendmsg.c		\
-	setegid.c		\
-	setenv.c		\
-	seteuid.c		\
-	strcasecmp.c		\
-	strdup.c		\
-	strerror.c		\
-	strftime.c		\
-	strlcat.c		\
-	strlcpy.c		\
-	strlwr.c		\
-	strncasecmp.c		\
-	strndup.c		\
-	strnlen.c		\
-	strptime.c		\
-	strsep.c		\
-	strsep_copy.c		\
-	strtok_r.c		\
-	strupr.c		\
-	swab.c			\
-	unsetenv.c		\
-	verr.c			\
-	verrx.c			\
-	vis.hin			\
-	vsyslog.c		\
-	vwarn.c			\
-	vwarnx.c		\
-	warn.c			\
-	warnx.c			\
-	writev.c
+	vis.hin	
 
 EXTRA_DIST = roken.awk roken.h.in
 
 libroken_la_LIBADD = @LTLIBOBJS@ $(DBLIB)
 
-$(LTLIBOBJS) $(libroken_la_OBJECTS): $(include_HEADERS) roken.h $(XHEADERS)
+$(LTLIBOBJS) $(libroken_la_OBJECTS): roken.h $(XHEADERS)
 
 BUILT_SOURCES = make-roken.c roken.h
 
