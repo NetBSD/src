@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 1997/05/07 08:26:04 mycroft Exp $
+#	$NetBSD: Makefile,v 1.24 1997/05/07 17:16:05 mycroft Exp $
 #
 # Ported to boot 386BSD by Julian Elischer (julian@tfs.com)
 # September 1992
@@ -74,9 +74,5 @@ install: biosboot bootbios
 	ln ${DESTDIR}/usr/mdec/bootsd ${DESTDIR}/usr/mdec/bootfd
 
 CLEANFILES+=biosboot bootbios boot boot.sym machine ${MACHINE_ARCH}
-
-clean::
-	rm -f a.out [Ee]rrs mklog core *.core
-	rm -f ${PROG} ${OBJS} ${LOBJS} ${CLEANFILES}
 
 .include <bsd.prog.mk>
