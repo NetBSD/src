@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.697 2005/03/15 00:13:16 uwe Exp $
+$NetBSD: pcidevs,v 1.698 2005/03/15 16:06:38 xtraeme Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2428,6 +2428,7 @@ product S3 TRIO3D2X	0x8a13	Trio3D/2X
 product S3 SAVAGE3D	0x8a20	Savage3D
 product S3 SAVAGE3D_MV	0x8a21	Savage3D+MV
 product S3 SAVAGE4	0x8a22	Savage4
+product S3 PROSAVAGE_KM133  0x8a26  ProSavage KM133
 product S3 VIRGE_MX	0x8c01	ViRGE/MX
 product S3 VIRGE_MXP	0x8c03	ViRGE/MXP
 product S3 SAVAGE_MX_MV	0x8c10	Savage/MX+MV
