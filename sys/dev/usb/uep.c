@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.2 2004/06/12 17:52:41 tsarna Exp $	*/
+/*	$NetBSD: uep.c,v 1.3 2005/02/27 00:27:51 perry Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -43,9 +43,9 @@
  *
  *  http://www.egalax.com/SoftwareProgrammingGuide_1.1.pdf
  */
- 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.2 2004/06/12 17:52:41 tsarna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.3 2005/02/27 00:27:51 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ USB_ATTACH(uep)
 	a.accesscookie = sc;
 
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
-	
+
 	tpcalib_init(&sc->sc_tpcalib);
 	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
 		(caddr_t)&default_calib, 0, 0);
@@ -233,7 +233,7 @@ USB_DETACH(uep)
 
 	/* save current calib as defaults */
 	default_calib = sc->sc_tpcalib.sc_saved;
-	
+
 	if (sc->sc_wsmousedev != NULL) {
 		rv = config_detach(sc->sc_wsmousedev, flags);
 		sc->sc_wsmousedev = NULL;
@@ -339,7 +339,7 @@ uep_ioctl(void *v, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 		 id = (struct wsmouse_id *)data;
 		 if (id->type != WSMOUSE_ID_TYPE_UIDSTR)
 		 	return EINVAL;
-		 
+
 		strcpy(id->data, UIDSTR);
 		id->length = strlen(UIDSTR);
 		return 0;
@@ -394,7 +394,7 @@ uep_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
                  * 0000BBBB
                  * 0BBBBBBB
                  *
-                 * T: 1=touched 0=not touched 
+                 * T: 1=touched 0=not touched
                  * A: bits of axis A position, MSB to LSB
                  * B: bits of axis B position, MSB to LSB
                  *
@@ -404,12 +404,12 @@ uep_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
                  *
                  * The controller sends a stream of T=1 events while the
                  * panel is touched, followed by a single T=0 event.
-                 * 
+                 *
                  */
 
 		x = (p[3] << 7) | p[4];
 		y = (p[1] << 7) | p[2];
-		
+
 		tpcalib_trans(&sc->sc_tpcalib, x, y, &x, &y);
 
 		s = spltty();

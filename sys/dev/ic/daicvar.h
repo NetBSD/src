@@ -1,4 +1,4 @@
-/* $NetBSD: daicvar.h,v 1.7 2005/02/04 02:10:36 perry Exp $ */
+/* $NetBSD: daicvar.h,v 1.8 2005/02/27 00:27:01 perry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ struct daic_connection {
 	struct ifqueue tx_queue;	/* outgoing data */
 	struct ifqueue rx_queue;	/* incoming data */
 	isdn_link_t isdn_linktab;	/* description of ourself */
-	const struct isdn_l4_driver_functions 
+	const struct isdn_l4_driver_functions
 			*l4_driver;		/* layer 4 driver		*/
 	void		*l4_driver_softc;	/* layer 4 driver instance	*/
 	u_int8_t dchan_inst;		/* d-channel instance */

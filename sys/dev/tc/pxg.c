@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.17 2003/10/27 07:07:35 chs Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.18 2005/02/27 00:27:49 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.17 2003/10/27 07:07:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.18 2005/02/27 00:27:49 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,9 +252,9 @@ pxg_probe_planes(struct stic_info *si)
 	 * ID.
 	 */
 	vdac = si->si_vdac;
-	vdac[BT459_REG_ADDR_LOW] = (BT459_IREG_ID & 0xff) | 
+	vdac[BT459_REG_ADDR_LOW] = (BT459_IREG_ID & 0xff) |
 	    ((BT459_IREG_ID & 0xff) << 8) | ((BT459_IREG_ID & 0xff) << 16);
-	vdac[BT459_REG_ADDR_HIGH] = ((BT459_IREG_ID & 0xff00) >> 8) | 
+	vdac[BT459_REG_ADDR_HIGH] = ((BT459_IREG_ID & 0xff00) >> 8) |
 	    (BT459_IREG_ID & 0xff00) | ((BT459_IREG_ID & 0xff00) << 8);
 	tc_mb();
 	id = vdac[BT459_REG_IREG_DATA] & 0x00ffffff;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aacvar.h,v 1.4 2004/09/13 12:55:47 drochner Exp $	*/
+/*	$NetBSD: aacvar.h,v 1.5 2005/02/27 00:27:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -128,10 +128,10 @@ struct aac_softc;
 #define AAC_SYNC_DELAY		20000
 
 /*
- * The firmware interface allows for a 16-bit s/g list length.  We limit 
+ * The firmware interface allows for a 16-bit s/g list length.  We limit
  * ourselves to a reasonable maximum and ensure alignment.
  */
-#define AAC_MAX_SGENTRIES	17	/* max S/G entries, limit 65535 */		
+#define AAC_MAX_SGENTRIES	17	/* max S/G entries, limit 65535 */
 #define	AAC_MAX_XFER		((AAC_MAX_SGENTRIES - 1) * PAGE_SIZE)
 
 /*
@@ -175,7 +175,7 @@ struct aac_common {
 
 	/* buffer for text messages from the controller */
 	char	ac_printf[AAC_PRINTF_BUFSIZE];
-    
+
 	/* fib for synchronous commands */
 	struct aac_fib ac_sync_fib;
 };

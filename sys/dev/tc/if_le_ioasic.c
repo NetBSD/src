@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.22 2005/02/04 02:10:48 perry Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.23 2005/02/27 00:27:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.22 2005/02/04 02:10:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.23 2005/02/27 00:27:49 perry Exp $");
 
 #include "opt_inet.h"
 
@@ -194,20 +194,20 @@ le_ioasic_attach(parent, self, aux)
 
 void
 le_ioasic_copytobuf_gap2(sc, fromv, boff, len)
-	struct lance_softc *sc;  
+	struct lance_softc *sc;
 	void *fromv;
 	int boff;
 	int len;
 {
 	volatile caddr_t buf = sc->sc_mem;
 	caddr_t from = fromv;
-	volatile u_int16_t *bptr;  
+	volatile u_int16_t *bptr;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
 		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
 		*bptr = (*from++ << 8) | (*bptr & 0xff);
-		bptr += 2;  
+		bptr += 2;
 		len--;
 	} else
 		bptr = ((volatile u_int16_t *)buf) + boff;
@@ -328,7 +328,7 @@ le_ioasic_copytobuf_gap16(sc, fromv, boff, len)
 		} while (len >= 16);
 		break;
 
-		default: 
+		default:
 		/* Does odd-aligned case ever happen? */
 		do {
 			bcopy(from, bptr, 16);

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.33 2005/02/04 02:10:37 perry Exp $ */
+/* $NetBSD: pckbc.c,v 1.34 2005/02/27 00:27:02 perry Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.33 2005/02/04 02:10:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.34 2005/02/27 00:27:02 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ pckbc_poll_data1(pt, slot)
 		if (stat & KBS_DIB) {
 			KBD_DELAY;
 			c = bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
-		    
+
 		    process:
 			if (checkaux && (stat & 0x20)) { /* aux data */
 				if (slot != PCKBC_AUX_SLOT) {

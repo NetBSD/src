@@ -1,4 +1,4 @@
-/*	$NetBSD: icpvar.h,v 1.5 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: icpvar.h,v 1.6 2005/02/27 00:27:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define ICP_RETRIES		6
 #define	ICP_WATCHDOG_FREQ	5
 #define	ICP_BUSY_WAIT_MS	2500
-#define	ICP_MAX_XFER		65536		
+#define	ICP_MAX_XFER		65536
 #define	ICP_UCMD_SCRATCH_SIZE	4096
 #define ICP_SCRATCH_SIZE	(8192 + ICP_UCMD_SCRATCH_SIZE)
 #define	ICP_SCRATCH_SENSE \

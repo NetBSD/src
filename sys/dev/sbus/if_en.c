@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.19 2005/02/04 02:10:47 perry Exp $	*/
+/*	$NetBSD: if_en.c,v 1.20 2005/02/27 00:27:48 perry Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 /*
  *
- * i f _ e n _ s b u s . c  
+ * i f _ e n _ s b u s . c
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
  * started: spring, 1996.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.19 2005/02/04 02:10:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.20 2005/02/27 00:27:48 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

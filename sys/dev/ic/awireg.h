@@ -1,4 +1,4 @@
-/* $NetBSD: awireg.h,v 1.8 2003/01/20 05:30:06 simonb Exp $ */
+/* $NetBSD: awireg.h,v 1.9 2005/02/27 00:27:01 perry Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@
 #define AWI_STA_PSP			0x04 /* enable PSP */
 #define AWI_STA_RXEN			0x02 /* enable RX */
 #define AWI_STA_TXEN			0x01 /* enable TX */
-					      
+
 #define AWI_INTSTAT		0x4f3
 #define AWI_INTMASK		0x4f4
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.50 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: i82586.c,v 1.51 2005/02/27 00:27:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.50 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.51 2005/02/27 00:27:01 perry Exp $");
 
 #include "bpfilter.h"
 
@@ -327,7 +327,7 @@ i82586_cmd_wait(sc)
 
 	off = IE_SCB_STATUS(sc->scb);
 	printf("i82586_cmd_wait: timo(%ssync): scb status: 0x%x, cmd: 0x%x\n",
-		sc->async_cmd_inprogress?"a":"", 
+		sc->async_cmd_inprogress?"a":"",
 		sc->ie_bus_read16(sc, off), cmd);
 
 	return (1);	/* Timeout */
@@ -507,7 +507,7 @@ loop:
 	/*
 	 * Interrupt ACK was posted asynchronously; wait for
 	 * completion here before reading SCB status again.
-	 * 
+	 *
 	 * If ACK fails, try to reset the chip, in hopes that
 	 * it helps.
 	 */

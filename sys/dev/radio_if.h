@@ -1,4 +1,4 @@
-/* $NetBSD: radio_if.h,v 1.2 2004/10/29 12:57:16 yamt Exp $ */
+/* $NetBSD: radio_if.h,v 1.3 2005/02/27 00:26:58 perry Exp $ */
 /* $OpenBSD: radio_if.h,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio_if.h,v 1.6 2001/10/18 16:51:36 pva Exp $ */
 
@@ -38,7 +38,7 @@
 
 struct radio_hw_if {
 	/* open hardware */
-	int	(*open)(void *, int, int, struct proc *);	
+	int	(*open)(void *, int, int, struct proc *);
 
 	/* close hardware */
 	int	(*close)(void *, int, int, struct proc *);

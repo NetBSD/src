@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.83 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.84 2005/02/27 00:27:00 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.83 2005/02/21 00:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.84 2005/02/27 00:27:00 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -327,7 +327,7 @@ aic_detach(struct device *self, int flags)
 
 	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
-	
+
 	return (rv);
 }
 

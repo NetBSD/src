@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.11 2005/02/23 09:20:46 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.12 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -100,7 +100,7 @@
  * programming API as the older 8169, but also have some vendor-specific
  * registers for the on-board PHY. The 8110S is a LAN-on-motherboard
  * part designed to be pin-compatible with the RealTek 8100 10/100 chip.
- * 
+ *
  * This driver takes advantage of the RX and TX checksum offload and
  * VLAN tag insertion/extraction features. It also implements TX
  * interrupt moderation using the timer interrupt registers, which
@@ -621,8 +621,8 @@ re_attach(struct rtk_softc *sc)
 
 
 	/* Allocate DMA'able memory for the TX ring */
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, RTK_TX_LIST_SZ, 
-		    RTK_ETHER_ALIGN, 0, &sc->rtk_ldata.rtk_tx_listseg, 
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, RTK_TX_LIST_SZ,
+		    RTK_ETHER_ALIGN, 0, &sc->rtk_ldata.rtk_tx_listseg,
 		    1, &sc->rtk_ldata.rtk_tx_listnseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't allocate tx listseg, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -631,7 +631,7 @@ re_attach(struct rtk_softc *sc)
 
 	/* Load the map for the TX ring. */
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->rtk_ldata.rtk_tx_listseg,
-		    sc->rtk_ldata.rtk_tx_listnseg, RTK_TX_LIST_SZ, 
+		    sc->rtk_ldata.rtk_tx_listnseg, RTK_TX_LIST_SZ,
 		    (caddr_t *)&sc->rtk_ldata.rtk_tx_list,
 		    BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't map tx list, error = %d\n",
@@ -640,8 +640,8 @@ re_attach(struct rtk_softc *sc)
 	}
 	memset(sc->rtk_ldata.rtk_tx_list, 0, RTK_TX_LIST_SZ);
 
-	if ((error = bus_dmamap_create(sc->sc_dmat, RTK_TX_LIST_SZ, 1, 
-		    RTK_TX_LIST_SZ, 0, BUS_DMA_ALLOCNOW, 
+	if ((error = bus_dmamap_create(sc->sc_dmat, RTK_TX_LIST_SZ, 1,
+		    RTK_TX_LIST_SZ, 0, BUS_DMA_ALLOCNOW,
 		    &sc->rtk_ldata.rtk_tx_list_map)) != 0) {
 		aprint_error("%s: can't create tx list map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -649,8 +649,8 @@ re_attach(struct rtk_softc *sc)
 	}
 
 
-	if ((error = bus_dmamap_load(sc->sc_dmat, 
-		    sc->rtk_ldata.rtk_tx_list_map, sc->rtk_ldata.rtk_tx_list, 
+	if ((error = bus_dmamap_load(sc->sc_dmat,
+		    sc->rtk_ldata.rtk_tx_list_map, sc->rtk_ldata.rtk_tx_list,
 		    RTK_TX_LIST_SZ, NULL, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't load tx list, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -905,7 +905,7 @@ re_detach(struct rtk_softc *sc)
 	bus_dmamem_free(sc->sc_dmat,
 	    &sc->rtk_ldata.rtk_tx_listseg, sc->rtk_ldata.rtk_tx_listnseg);
 
-	
+
 	shutdownhook_disestablish(sc->sc_sdhook);
 	powerhook_disestablish(sc->sc_powerhook);
 
@@ -916,7 +916,7 @@ re_detach(struct rtk_softc *sc)
  * re_enable:
  *     Enable the RTL81X9 chip.
  */
-static int 
+static int
 re_enable(struct rtk_softc *sc)
 {
 	if (RTK_IS_ENABLED(sc) == 0 && sc->sc_enable != NULL) {
@@ -934,7 +934,7 @@ re_enable(struct rtk_softc *sc)
  * re_disable:
  *     Disable the RTL81X9 chip.
  */
-static void 
+static void
 re_disable(struct rtk_softc *sc)
 {
 
@@ -948,7 +948,7 @@ re_disable(struct rtk_softc *sc)
  * re_power:
  *     Power management (suspend/resume) hook.
  */
-void 
+void
 re_power(int why, void *arg)
 {
 	struct rtk_softc *sc = (void *) arg;
@@ -1199,7 +1199,7 @@ re_rxeof(struct rtk_softc *sc)
 
 		if (sc->rtk_head != NULL) {
 			m->m_len = total_len % (MCLBYTES - RTK_ETHER_ALIGN);
-			/* 
+			/*
 			 * Special case: if there's 4 bytes or less
 			 * in this buffer, the mbuf can be discarded:
 			 * the last 4 bytes is the CRC, which we don't
@@ -1677,7 +1677,7 @@ re_init(struct ifnet *ifp)
 	u_int32_t		rxcfg = 0;
 	u_int32_t		reg;
 	int error;
-	
+
 	if ((error = re_enable(sc)) != 0)
 		goto out;
 
@@ -1712,7 +1712,7 @@ re_init(struct ifnet *ifp)
 		    (IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4) ?
 		    RTK_CPLUSCMD_RXCSUM_ENB : 0);
 	}
- 
+
 	CSR_WRITE_2(sc, RTK_CPLUS_CMD,
 	    reg | RTK_CPLUSCMD_RXENB | RTK_CPLUSCMD_TXENB);
 
@@ -1862,7 +1862,7 @@ out:
 		aprint_error("%s: interface not running\n",
 		    sc->sc_dev.dv_xname);
 	}
-	  
+
 	return error;
 
 }

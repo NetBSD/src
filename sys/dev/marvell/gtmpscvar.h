@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpscvar.h,v 1.4 2003/03/24 17:02:15 matt Exp $	*/
+/*	$NetBSD: gtmpscvar.h,v 1.5 2005/02/27 00:27:21 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
 
 #include "opt_marvell.h"
 
-#ifndef GT_MPSC_DEFAULT_BAUD_RATE        
+#ifndef GT_MPSC_DEFAULT_BAUD_RATE
 #define	GT_MPSC_DEFAULT_BAUD_RATE	115200
 #endif
 #define	GTMPSC_CLOCK_DIVIDER            8
@@ -56,7 +56,7 @@
 #define	BRG_BCR_CDV_MAX                 0xffff
 
 /*
- * gtmpsc_poll_dmapage_t - used for MPSC getchar/putchar polled console 
+ * gtmpsc_poll_dmapage_t - used for MPSC getchar/putchar polled console
  *
  *	sdma descriptors must be 16 byte aligned
  *	sdma RX buffer pointers must be 8 byte aligned
@@ -79,7 +79,7 @@ typedef struct gtmpsc_pollrx {
 typedef struct {
 	gtmpsc_polltx_t tx[GTMPSC_NTXDESC];
 	gtmpsc_pollrx_t rx[GTMPSC_NRXDESC];
-} gtmpsc_poll_sdma_t; 
+} gtmpsc_poll_sdma_t;
 
 /* Size of the Rx FIFO */
 #define	GTMPSC_RXFIFOSZ   (GTMPSC_NRXDESC * GTMPSC_RXBUFSZ * 2)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.8 2005/02/25 16:03:09 martin Exp $ */
+/*	$NetBSD: fbvar.h,v 1.9 2005/02/27 00:27:49 perry Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,8 +61,8 @@ struct fbdriver {
 	paddr_t	(*fbd_mmap)(dev_t, off_t, int);
 	int	(*fbd_kqfilter)(dev_t, struct knote *);
 #ifdef notyet
-	/* 
-	 * XXX redundant idea? these can hook into rasops on a per-device 
+	/*
+	 * XXX redundant idea? these can hook into rasops on a per-device
 	 * basis like: fb_rinfo.ri_ops.copycols = ....;
 	 */
 	void	(*fbd_wrrop)();		/* `write region' rasterop */

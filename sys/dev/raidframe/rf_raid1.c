@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.24 2004/03/18 16:54:54 oster Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.25 2005/02/27 00:27:45 perry Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.24 2004/03/18 16:54:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.25 2005/02/27 00:27:45 perry Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -57,7 +57,7 @@ typedef struct RF_Raid1ConfigInfo_s {
 	RF_RowCol_t **stripeIdentifier;
 }       RF_Raid1ConfigInfo_t;
 /* start of day code specific to RAID level 1 */
-int 
+int
 rf_ConfigureRAID1(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		  RF_Config_t *cfgPtr)
 {
@@ -94,7 +94,7 @@ rf_ConfigureRAID1(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 
 
 /* returns the physical disk location of the primary copy in the mirror pair */
-void 
+void
 rf_MapSectorRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
@@ -111,7 +111,7 @@ rf_MapSectorRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
  * returns the physical disk location of the secondary copy in the mirror
  * pair
  */
-void 
+void
 rf_MapParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
@@ -128,7 +128,7 @@ rf_MapParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
  *
  * returns a list of disks for a given redundancy group
  */
-void 
+void
 rf_IdentifyStripeRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 		       RF_RowCol_t **diskids)
 {
@@ -145,7 +145,7 @@ rf_IdentifyStripeRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
  *
  * maps a logical stripe to a stripe in the redundant array
  */
-void 
+void
 rf_MapSIDToPSIDRAID1(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
 		     RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
 {
@@ -164,7 +164,7 @@ rf_MapSIDToPSIDRAID1(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
  *              createFunc - name of function to use to create the graph
  *****************************************************************************/
 
-void 
+void
 rf_RAID1DagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 		  RF_AccessStripeMap_t *asmap, RF_VoidFuncPtr *createFunc)
 {
@@ -179,7 +179,7 @@ rf_RAID1DagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 
 	if (asmap->numDataFailed + asmap->numParityFailed > 1) {
 #if RF_DEBUG_DAG
-		if (rf_dagDebug) 
+		if (rf_dagDebug)
 			RF_ERRORMSG("Multiple disks failed in a single group!  Aborting I/O operation.\n");
 #endif
 		*createFunc = NULL;
@@ -226,8 +226,8 @@ rf_RAID1DagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 #if RF_DEBUG_DAG > 0 || RF_DEBUG_MAP > 0
 			if (rf_dagDebug || rf_mapDebug) {
 				printf("raid%d: Redirected type '%c' c %d o %ld -> c %d o %ld\n",
-				       raidPtr->raidid, type, oc, 
-				       (long) oo, 
+				       raidPtr->raidid, type, oc,
+				       (long) oo,
 				       failedPDA->col,
 				       (long) failedPDA->startSector);
 			}
@@ -245,7 +245,7 @@ rf_RAID1DagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 	}
 }
 
-int 
+int
 rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		     RF_PhysDiskAddr_t *parityPDA, int correct_it,
 		     RF_RaidAccessFlags_t flags)
@@ -295,7 +295,7 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 #if RF_DEBUG_VERIFYPARITY
 	if (rf_verifyParityDebug) {
 		printf("raid%d: RAID1 parity verify: buf=%lx bcount=%d (%lx - %lx)\n",
-		       raidPtr->raidid, (long) buf, bcount, (long) buf, 
+		       raidPtr->raidid, (long) buf, bcount, (long) buf,
 		       (long) buf + bcount);
 	}
 #endif
@@ -370,7 +370,7 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 #endif
 #if 0
 	if (rf_verifyParityDebug > 1) {
-		printf("raid%d: RAID1 parity verify read dag:\n", 
+		printf("raid%d: RAID1 parity verify read dag:\n",
 		       raidPtr->raidid);
 		rf_PrintDAGList(rd_dag_h);
 	}
@@ -416,7 +416,7 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 #if RF_DEBUG_VERIFYPARITY
 		if (rf_verifyParityDebug) {
 			printf("raid%d: RAID1 parity verify %d bytes: i=%d buf1=%lx buf2=%lx buf=%lx\n",
-			       raidPtr->raidid, nbytes, i, (long) buf1, 
+			       raidPtr->raidid, nbytes, i, (long) buf1,
 			       (long) buf2, (long) buf);
 		}
 #endif
@@ -529,19 +529,19 @@ done:
 	rf_FreeAllocList(allocList);
 #if RF_DEBUG_VERIFYPARITY
 	if (rf_verifyParityDebug) {
-		printf("raid%d: RAID1 parity verify, returning %d\n", 
+		printf("raid%d: RAID1 parity verify, returning %d\n",
 		       raidPtr->raidid, ret);
 	}
 #endif
 	return (ret);
 }
 
-/* rbuf          - the recon buffer to submit 
+/* rbuf          - the recon buffer to submit
  * keep_it       - whether we can keep this buffer or we have to return it
  * use_committed - whether to use a committed or an available recon buffer
  */
 
-int 
+int
 rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *rbuf, int keep_it,
 			  int use_committed)
 {
@@ -564,7 +564,7 @@ rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *rbuf, int keep_it,
 #if RF_DEBUG_RECON
 	if (rf_reconbufferDebug) {
 		printf("raid%d: RAID1 reconbuffer submission c%d psid %ld ru%d (failed offset %ld)\n",
-		       raidPtr->raidid, rbuf->col, 
+		       raidPtr->raidid, rbuf->col,
 		       (long) rbuf->parityStripeID, rbuf->which_ru,
 		       (long) rbuf->failedDiskSectorOffset);
 	}
@@ -600,7 +600,7 @@ rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *rbuf, int keep_it,
 	if (keep_it) {
 #if RF_DEBUG_RECON
 		if (rf_reconbufferDebug) {
-			printf("raid%d: RAID1 rbuf submission: keeping rbuf\n", 
+			printf("raid%d: RAID1 rbuf submission: keeping rbuf\n",
 			       raidPtr->raidid);
 		}
 #endif
@@ -692,7 +692,7 @@ out:
 	RF_UNLOCK_MUTEX(reconCtrlPtr->rb_mutex);
 #if RF_DEBUG_RECON
 	if (rf_reconbufferDebug) {
-		printf("raid%d: RAID1 rbuf submission: returning %d\n", 
+		printf("raid%d: RAID1 rbuf submission: returning %d\n",
 		       raidPtr->raidid, retcode);
 	}
 #endif

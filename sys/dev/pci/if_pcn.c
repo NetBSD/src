@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.24 2004/10/30 18:09:22 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.25 2005/02/27 00:27:33 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 #include "opt_pcn.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.24 2004/10/30 18:09:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.25 2005/02/27 00:27:33 perry Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.24 2004/10/30 18:09:22 thorpej Exp $");
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/errno.h> 
+#include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/queue.h>
 
@@ -748,7 +748,7 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	default:
-		sc->sc_rcvfw_desc = pcn_79c971_rcvfw; 
+		sc->sc_rcvfw_desc = pcn_79c971_rcvfw;
 		/*
 		 * Read BCR25 to determine how much SRAM is
 		 * on the board.  If > 0, then we the chip
@@ -790,7 +790,7 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
-	if_attach(ifp); 
+	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
@@ -932,7 +932,7 @@ pcn_start(struct ifnet *ifp)
 		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			PCN_EVCNT_INCR(&sc->sc_ev_txcopy);
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			if (m == NULL) { 
+			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
 				    sc->sc_dev.dv_xname);
 				break;
@@ -1866,7 +1866,7 @@ pcn_stop(struct ifnet *ifp, int disable)
 		pcn_rxdrain(sc);
 
 	/* Mark the interface as down and cancel the watchdog timer. */
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);  
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 }
 
@@ -1887,9 +1887,9 @@ pcn_add_rxbuf(struct pcn_softc *sc, int idx)
 		return (ENOBUFS);
 
 	MCLGET(m, M_DONTWAIT);
-	if ((m->m_flags & M_EXT) == 0) {  
+	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
-		return (ENOBUFS); 
+		return (ENOBUFS);
 	}
 
 	if (rxs->rxs_mbuf != NULL)
@@ -1935,7 +1935,7 @@ pcn_set_filter(struct pcn_softc *sc)
 	 * filter.  The high order bits select the word, while the rest
 	 * of the bits select the bit within the word.
 	 */
-	
+
 	if (ifp->if_flags & IFF_PROMISC)
 		goto allmulti;
 
@@ -1943,9 +1943,9 @@ pcn_set_filter(struct pcn_softc *sc)
 	    sc->sc_initblock.init_ladrf[1] =
 	    sc->sc_initblock.init_ladrf[2] =
 	    sc->sc_initblock.init_ladrf[3] = 0;
-	
+
 	ETHER_FIRST_MULTI(step, ec, enm);
-	while (enm != NULL) { 
+	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.

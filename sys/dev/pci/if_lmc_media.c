@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_media.c,v 1.15 2003/02/22 04:57:49 tsutsui Exp $	*/
+/*	$NetBSD: if_lmc_media.c,v 1.16 2005/02/27 00:27:33 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc_media.c,v 1.15 2003/02/22 04:57:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc_media.c,v 1.16 2005/02/27 00:27:33 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_lmc_media.c,v 1.15 2003/02/22 04:57:49 tsutsui Ex
 /*
  * Sigh.  Every OS puts these in different places.
  */
-#if defined(__NetBSD__)  
+#if defined(__NetBSD__)
 #include <dev/pci/if_lmc_types.h>
 #include <dev/pci/if_lmcioctl.h>
 #include <dev/pci/if_lmcvar.h>
@@ -1016,7 +1016,7 @@ lmc_t1_init(lmc_softc_t * const sc)
 
 	mii16 |= LMC_MII16_T1_XOE;
 	lmc_mii_writereg (sc, 0, 16, mii16);
-	sc->lmc_miireg16 = mii16; 
+	sc->lmc_miireg16 = mii16;
 }
 
 static void
@@ -1091,7 +1091,7 @@ lmc_t1_get_link_status(lmc_softc_t * const sc)
 			printf(" link status: RAIS turn OFF Blue %x\n",
 			    link_status);
 			lmc_led_off(sc, LMC_DS3_LED1);
-		}       
+		}
 	}
 	/*
 	 * T1F_RYEL wiggles quite a bit,
@@ -1221,7 +1221,7 @@ lmc_t1_watchdog(lmc_softc_t * const sc)
 			printf ("%s: Red Alarm\n", sc->lmc_xname);
 		lmc_led_on (sc, LMC_DS3_LED2 | LMC_DS3_LED3);
 		sc->lmc_red = 1;
-	} else { 
+	} else {
 		if (sc->lmc_red == 1)
 			printf ("%s: Red Alarm ok\n", sc->lmc_xname);
 	lmc_led_off (sc, LMC_DS3_LED3);

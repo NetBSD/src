@@ -1,4 +1,4 @@
-/*	$NetBSD: st_atapi.c,v 1.14 2004/10/28 07:07:46 yamt Exp $ */
+/*	$NetBSD: st_atapi.c,v 1.15 2005/02/27 00:27:48 perry Exp $ */
 
 /*
  * Copyright (c) 2001 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.14 2004/10/28 07:07:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.15 2005/02/27 00:27:48 perry Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -123,11 +123,11 @@ st_atapibus_ops(struct st_softc *st, int op, int flags)
 	case ST_OPS_MODESELECT:
 		return st_atapibus_mode_select(st, flags);
 	case ST_OPS_CMPRSS_ON:
-	case ST_OPS_CMPRSS_OFF:       
+	case ST_OPS_CMPRSS_OFF:
 		return ENODEV;
 	default:
 		panic("st_scsibus_ops: invalid op");
-		/* NOTREACHED */      
+		/* NOTREACHED */
 	}
 }
 

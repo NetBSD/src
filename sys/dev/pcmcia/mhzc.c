@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.30 2005/02/04 02:10:45 perry Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.31 2005/02/27 00:27:43 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,9 +46,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.30 2005/02/04 02:10:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.31 2005/02/27 00:27:43 perry Exp $");
 
-#include "opt_inet.h" 
+#include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
 
@@ -65,10 +65,10 @@ __KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.30 2005/02/04 02:10:45 perry Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 
-#include <net/if.h>     
-#include <net/if_dl.h>  
+#include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_ether.h>
-#include <net/if_media.h> 
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -77,11 +77,11 @@ __KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.30 2005/02/04 02:10:45 perry Exp $");
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-        
-#ifdef NS 
+
+#ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
-#endif  
+#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -551,7 +551,7 @@ mhzc_em3336_enable(sc)
 	 * way (as per my reference... the Linux smc91c92_cs.c driver by
 	 * David A. Hinds).
 	 */
-	
+
 	/* Map the ISRPOWEREG. */
 	if (pcmcia_mem_alloc(sc->sc_pf, 0x1000, &memh) != 0) {
 		printf("%s: unable to allocate memory space\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.23 2005/02/04 02:10:43 perry Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.24 2005/02/27 00:27:32 perry Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed at Ludd, University of 
+ *	This product includes software developed at Ludd, University of
  *	Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.23 2005/02/04 02:10:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.24 2005/02/27 00:27:32 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -159,7 +159,7 @@ mtmatch(parent, cf, aux)
 void
 mtattach(parent, self, aux)
 	struct	device *parent, *self;
-	void	*aux; 
+	void	*aux;
 {
 	struct	mt_softc *mt = (void *)self;
 	struct	drive_attach_args *da = aux;
@@ -172,7 +172,7 @@ mtattach(parent, self, aux)
 	disk_printtype(mp->mscp_unit, mp->mscp_guse.guse_mediaid);
 }
 
-/* 
+/*
  * (Try to) put the drive online. This is done the first time the
  * drive is opened, or if it has fallen offline.
  */
@@ -363,7 +363,7 @@ mtonline(usc, mp)
 	struct mt_softc *mt = (void *)usc;
 
 	wakeup((caddr_t)&mt->mt_state);
-	if ((mp->mscp_status & M_ST_MASK) == M_ST_SUCCESS) 
+	if ((mp->mscp_status & M_ST_MASK) == M_ST_SUCCESS)
 		mt->mt_state = MT_ONLINE;
 
 	return (MSCP_DONE);

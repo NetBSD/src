@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_inline.h,v 1.5 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx_inline.h,v 1.6 2005/02/27 00:27:00 perry Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -382,7 +382,7 @@ ahc_get_scb(struct ahc_softc *ahc)
  */
 static __inline void
 ahc_free_scb(struct ahc_softc *ahc, struct scb *scb)
-{       
+{
 	struct hardware_scb *hscb;
 
 	hscb = scb->hscb;

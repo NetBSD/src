@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.11 2004/08/30 15:05:19 drochner Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.12 2005/02/27 00:27:21 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.11 2004/08/30 15:05:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.12 2005/02/27 00:27:21 perry Exp $");
 
 #include "opt_marvell.h"
 #include <sys/param.h>
@@ -207,7 +207,7 @@ int
 gtpci_cfprint(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = (struct pcibus_attach_args *) aux;
-	
+
 	if (pnp)
 		aprint_normal("pci at %s", pnp);
 
@@ -293,7 +293,7 @@ gtpci_attach(struct device *parent, struct device *self, void *aux)
 		    IPL_GTERR, gtpci_error_intr, pc);
 		intr_establish(pci_irqs[gtpc->gtpc_busno][2], IST_LEVEL,
 		    IPL_GTERR, gtpci_error_intr, pc);
-		aprint_normal("%s: %s%d error interrupts at irqs %s, %s, %s\n", 
+		aprint_normal("%s: %s%d error interrupts at irqs %s, %s, %s\n",
 		    pc->pc_parent->dv_xname, "pci", busno,
 		    intr_string(pci_irqs[gtpc->gtpc_busno][0]),
 		    intr_string(pci_irqs[gtpc->gtpc_busno][1]),
@@ -523,7 +523,7 @@ gtpci_bus_attach_hook(struct device *parent, struct device *self,
 #if defined(DEBUG)
 	if (gtpci_debug == 0)
 		return;
-	
+
 	data = gtpci_read(gtpc, PCI_BASE_ADDR_REGISTERS_ENABLE(gtpc->gtpc_busno));
 	aprint_normal("\n%s: BARs enabled: %#x", self->dv_xname, data);
 

@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.8 2004/08/10 18:39:08 mycroft Exp $
+#	$NetBSD: devlist2h.awk,v 1.9 2005/02/27 00:27:43 perry Exp $
 #
 # Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -213,7 +213,7 @@ END {
 			printf("\t    PCMCIA_VENDOR_%s, PCMCIA_PRODUCT_%s_%s,\n",
 			    products[i, 1], products[i, 1], products[i, 2]) > dfile
 		}
-		printf("\t    PCMCIA_CIS_%s_%s,\n", 
+		printf("\t    PCMCIA_CIS_%s_%s,\n",
 		    products[i, 1], products[i, 2]) > dfile
 		printf("\t    ") > dfile
 		printf("0") > dfile

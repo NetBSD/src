@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.101 2004/10/28 07:07:39 yamt Exp $	*/
+/*	$NetBSD: ccd.c,v 1.102 2005/02/27 00:26:58 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.101 2004/10/28 07:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.102 2005/02/27 00:26:58 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1057,7 +1057,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = EINVAL;
 			goto out;
 		}
-			
+
 		/* Fill in some important bits. */
 		cs->sc_ileave = ccio->ccio_ileave;
 		cs->sc_nccdisks = ccio->ccio_ndisks;

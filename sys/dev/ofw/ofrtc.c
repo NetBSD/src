@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.16 2005/02/04 02:10:44 perry Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.17 2005/02/27 00:27:32 perry Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.16 2005/02/04 02:10:44 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.17 2005/02/27 00:27:32 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,14 +71,14 @@ ofrtc_match(struct device *parent, struct cfdata *match, void *aux)
 	struct ofbus_attach_args *oba = aux;
 	char type[8];
 	int l;
-	
+
 	if (strcmp(oba->oba_busname, "ofw"))
 		return (0);
 	if ((l = OF_getprop(oba->oba_phandle, "device_type", type,
 	    sizeof type - 1)) < 0 ||
 	    l >= sizeof type)
 		return 0;
-	
+
 	return !strcmp(type, "rtc");
 }
 
@@ -89,7 +89,7 @@ ofrtc_attach(struct device *parent, struct device *self, void *aux)
 	struct ofbus_attach_args *oba = aux;
 	char name[32];
 	int l;
-	
+
 	of->sc_phandle = oba->oba_phandle;
 	of->sc_ihandle = 0;
 	if ((l = OF_getprop(of->sc_phandle, "name", name,
@@ -108,7 +108,7 @@ ofrtc_open(dev_t dev, int flags, int fmt, struct proc *p)
 	int unit = minor(dev);
 	char path[256];
 	int l;
-	
+
 	if (unit >= ofrtc_cd.cd_ndevs)
 		return ENXIO;
 	if (!(of = ofrtc_cd.cd_devs[unit]))
@@ -119,7 +119,7 @@ ofrtc_open(dev_t dev, int flags, int fmt, struct proc *p)
 		    l >= sizeof path)
 			return ENXIO;
 		path[l] = 0;
-		
+
 		if (!(of->sc_ihandle = OF_open(path))) {
 			if (of->sc_ihandle) {
 				OF_close(of->sc_ihandle);
@@ -144,7 +144,7 @@ static int
 twodigits(char *bp)
 {
 	int i;
-	
+
 	i = *bp++ - '0';
 	return i * 10 + *bp++ - '0';
 }
@@ -156,10 +156,10 @@ ofrtc_read(dev_t dev, struct uio *uio, int flag)
 	int date[6];
 	char buf[14];
 	int xlen;
-	
+
 	if (uio->uio_offset >= sizeof buf)
 		return 0;
-	
+
 	if (OF_call_method("get-time", of->sc_ihandle, 0, 6,
 			   date, date + 1, date + 2,
 			   date + 3, date + 4, date + 5))
@@ -173,11 +173,11 @@ ofrtc_read(dev_t dev, struct uio *uio, int flag)
 	buf[10] = '.';
 	twodigit(buf + 11, date[0]);
 	buf[13] = '\n';
-	
+
 	xlen = sizeof(buf) - uio->uio_offset;
 	if (xlen > uio->uio_resid)
 		xlen = uio->uio_resid;
-	
+
 	return uiomove((caddr_t)buf, xlen, uio);
 }
 
@@ -187,20 +187,20 @@ ofrtc_write(dev_t dev, struct uio *uio, int flag)
 	struct ofrtc_softc *of = ofrtc_cd.cd_devs[minor(dev)];
 	char buf[14];
 	int cnt, year, error;
-	
+
 	/*
 	 * We require atomic updates!
 	 */
 	cnt = uio->uio_resid;
 	if (uio->uio_offset || (cnt != sizeof buf && cnt != sizeof buf - 1))
 		return EINVAL;
-	
+
 	if ((error = uiomove((caddr_t)buf, sizeof buf, uio)) != 0)
 		return error;
 
 	if (cnt == sizeof buf && buf[sizeof buf - 1] != '\n')
 		return EINVAL;
-	
+
 	year = twodigits(buf) + 1900;
 	if (year < 1970)
 		year += 100;

@@ -1,4 +1,4 @@
-/* $NetBSD: dtidereg.h,v 1.2 2001/06/13 18:29:41 bjh21 Exp $ */
+/* $NetBSD: dtidereg.h,v 1.3 2005/02/27 00:27:44 perry Exp $ */
 
 /* This file is in the public domain */
 
@@ -20,4 +20,4 @@
 #define DTIDE_CTLBASE0	0x2500
 #define DTIDE_CMDBASE1	0x2600
 #define DTIDE_CTLBASE1	0x2700
-	
+

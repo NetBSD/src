@@ -1,4 +1,4 @@
-/* 	$NetBSD: nvrreg.h,v 1.2 2000/01/07 10:43:13 ad Exp $ 	*/
+/* 	$NetBSD: nvrreg.h,v 1.3 2005/02/27 00:27:49 perry Exp $ 	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -30,7 +30,7 @@
 #ifndef _TC_NVRREG_H_
 #define _TC_NVRREG_H_ 1
 
-/* Offsets within PrestoServe's slot */ 
+/* Offsets within PrestoServe's slot */
 #define	NVR_CSR 	0x00100000	/* Control and status register */
 #define	NVR_DAR        	0x00100004	/* DMA address register */
 #define NVR_BAT		0x00100008	/* Battery control register */
@@ -53,7 +53,7 @@
 #define NVR_CSR_TC_ERROR	0x01000000
 #define	NVR_CSR_MEMORY_ERROR	0x02000000
 #define NVR_CSR_TC_PARITY_ERR	0x04000000
-#define NVR_CSR_TC_PROTCAL_ERR	0x08000000        
+#define NVR_CSR_TC_PROTCAL_ERR	0x08000000
 #define NVR_CSR_ERROR_SUM	0x80000000
 
 #endif	/* _TC_NVRREG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.9 2005/02/21 02:12:48 thorpej Exp $ */
+/*	$NetBSD: if_dge.c,v 1.10 2005/02/27 00:27:32 perry Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,14 +80,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.9 2005/02/21 02:12:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.10 2005/02/27 00:27:32 perry Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/callout.h> 
+#include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -104,11 +104,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.9 2005/02/21 02:12:48 thorpej Exp $");
 #endif
 
 #include <net/if.h>
-#include <net/if_dl.h> 
+#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
@@ -798,7 +798,7 @@ dge_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_3;
 	}
 
-#ifdef DGE_OFFBYONE_RXBUG 
+#ifdef DGE_OFFBYONE_RXBUG
 	if (dge_alloc_rcvmem(sc) != 0)
 		return; /* Already complained */
 #endif
@@ -1075,7 +1075,7 @@ dge_tx_cksum(struct dge_softc *sc, struct dge_txsoft *txs, uint8_t *fieldsp)
 		    DGE_TCPIP_IPCSE(offset + iphl - 1);
 	}
 	DPRINTF(DGE_DEBUG_CKSUM,
-	    ("%s: CKSUM: offset %d ipcs 0x%x\n", 
+	    ("%s: CKSUM: offset %d ipcs 0x%x\n",
 	    sc->sc_dev.dv_xname, offset, ipcs));
 
 	offset += iphl;
@@ -1999,7 +1999,7 @@ dge_init(struct ifnet *ifp)
 	 */
 	sc->sc_mchash_type = 0;
 
-	sc->sc_rctl = RCTL_RXEN | RCTL_RDMTS_12 | RCTL_RPDA_MC | 
+	sc->sc_rctl = RCTL_RXEN | RCTL_RDMTS_12 | RCTL_RPDA_MC |
 	    RCTL_CFF | RCTL_SECRC | RCTL_MO(sc->sc_mchash_type);
 
 #ifdef DGE_OFFBYONE_RXBUG
@@ -2028,7 +2028,7 @@ dge_init(struct ifnet *ifp)
 	dge_set_filter(sc);
 
 	/* ...all done! */
-	ifp->if_flags |= IFF_RUNNING; 
+	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
@@ -2335,7 +2335,7 @@ dge_eeprom_clockout(struct dge_softc *sc, int bit)
 	reg = CSR_READ(sc, DGE_EECD) & ~(EECD_DI|EECD_SK);
 	if (bit)
 		reg |= EECD_DI;
-	
+
 	CSR_WRITE(sc, DGE_EECD, reg);
 	delay(2);
 	CSR_WRITE(sc, DGE_EECD, reg|EECD_SK);
@@ -2382,7 +2382,7 @@ phwait(struct dge_softc *sc, int p, int r, int d, int type)
 
         CSR_WRITE(sc, DGE_MDIO,
 	    MDIO_PHY(p) | MDIO_REG(r) | MDIO_DEV(d) | type | MDIO_CMD);
-        for (i = 0; i < 10; i++) { 
+        for (i = 0; i < 10; i++) {
                 delay(10);
                 if (((mdic = CSR_READ(sc, DGE_MDIO)) & MDIO_CMD) == 0)
                         break;

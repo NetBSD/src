@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.42 2005/02/04 02:10:47 perry Exp $ */
+/*	$NetBSD: stp4020.c,v 1.43 2005/02/27 00:27:48 perry Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.42 2005/02/04 02:10:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.43 2005/02/27 00:27:48 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -437,7 +437,7 @@ stp4020attach(parent, self, aux)
 			printf("%s: attach: cannot map registers\n",
 				self->dv_xname);
 			return;
-		}		
+		}
 
 		if (i == STP4020_BANK_CTRL) {
 			/*
@@ -710,7 +710,7 @@ stp4020_intr(arg)
 				}
 			}
 		}
-		
+
 		if ((v & STP4020_ISR0_IOINT) != 0) {
 			/* we can not deny this is ours, no matter what the
 			   card driver says. */
@@ -724,7 +724,7 @@ stp4020_intr(arg)
 			}
 
 			/*
-			 * Schedule softint to invoke driver interrupt 
+			 * Schedule softint to invoke driver interrupt
 			 * handler
 			 */
 			if (h->softint != NULL)

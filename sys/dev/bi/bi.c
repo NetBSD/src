@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.19 2005/02/04 02:10:36 perry Exp $ */
+/*	$NetBSD: bi.c,v 1.20 2005/02/27 00:26:59 perry Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
+ *      This product includes software developed at Ludd, University of
  *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.19 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.20 2005/02/27 00:26:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ bi_attach(sc)
 	ba.ba_intcpu = sc->sc_intcpu;
 	ba.ba_icookie = sc;
 	/*
-	 * Interrupt numbers. Assign them as described in 
+	 * Interrupt numbers. Assign them as described in
 	 * VAX 8800 system maintenance manual; this means like nexus
 	 * adapters have them assigned.
 	 * XXX - must address Unibus adapters.
@@ -133,7 +133,7 @@ bi_attach(sc)
 	for (nodenr = 0; nodenr < NNODEBI; nodenr++) {
 		if (bus_space_map(sc->sc_iot, sc->sc_addr + BI_NODE(nodenr),
 		    BI_NODESIZE, 0, &ba.ba_ioh)) {
-			printf("bi_attach: bus_space_map failed, node %d\n", 
+			printf("bi_attach: bus_space_map failed, node %d\n",
 			    nodenr);
 			return;
 		}

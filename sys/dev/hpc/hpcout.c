@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcout.c,v 1.7 2002/10/02 16:33:50 thorpej Exp $	*/
+/*	$NetBSD: hpcout.c,v 1.8 2005/02/27 00:26:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.7 2002/10/02 16:33:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.8 2005/02/27 00:26:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ hpcout_hook(void *arg, int type, long id, void *msg)
 {
 	struct hpcout_softc *sc = arg;
 
-	printf("%s: port %d: %s\n", __FUNCTION__, sc->sc_port, 
+	printf("%s: port %d: %s\n", __FUNCTION__, sc->sc_port,
 	    (int)msg ? "on" : "off");
 	hpcio_portwrite(sc->sc_hc, sc->sc_port,
 	    (int)msg ? sc->sc_on : sc->sc_off);

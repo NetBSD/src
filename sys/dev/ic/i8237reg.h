@@ -1,4 +1,4 @@
-/*	$NetBSD: i8237reg.h,v 1.6 1997/05/29 21:42:28 mycroft Exp $	*/
+/*	$NetBSD: i8237reg.h,v 1.7 2005/02/27 00:27:01 perry Exp $	*/
 
 /*
  * Intel 8237 DMA Controller
@@ -11,6 +11,6 @@
 #define	DMA37MD_SINGLE	0x40	/* single mode */
 #define	DMA37MD_BLOCK	0x80	/* block mode */
 #define	DMA37MD_CASCADE	0xc0	/* cascade mode */
-	
+
 #define	DMA37SM_CLEAR	0x00	/* clear mask bit */
 #define	DMA37SM_SET	0x04	/* set mask bit */

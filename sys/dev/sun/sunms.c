@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.18 2005/02/21 22:43:07 heas Exp $	*/
+/*	$NetBSD: sunms.c,v 1.19 2005/02/27 00:27:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.18 2005/02/21 22:43:07 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.19 2005/02/27 00:27:49 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ sunms_ioctl(v, cmd, data, flag, p)
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = WSMOUSE_TYPE_PS2; /* XXX  */
 		break;
-		
+
 	default:
 		return (EPASSTHROUGH);
 	}

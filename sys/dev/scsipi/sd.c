@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.236 2005/02/21 00:29:08 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.237 2005/02/27 00:27:48 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.236 2005/02/21 00:29:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.237 2005/02/27 00:27:48 perry Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -114,9 +114,9 @@ static int	sd_get_simplifiedparms(struct sd_softc *, struct disk_parms *,
 		    int);
 static int	sd_get_capacity(struct sd_softc *, struct disk_parms *, int);
 static int	sd_get_parms(struct sd_softc *, struct disk_parms *, int);
-static int	sd_get_parms_page4(struct sd_softc *, struct disk_parms *, 
+static int	sd_get_parms_page4(struct sd_softc *, struct disk_parms *,
 		    int);
-static int	sd_get_parms_page5(struct sd_softc *, struct disk_parms *, 
+static int	sd_get_parms_page5(struct sd_softc *, struct disk_parms *,
 		    int);
 
 static int	sd_flush(struct sd_softc *, int);
@@ -424,7 +424,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 
 	if ((error = lockmgr(&sd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
 		return (error);
-	
+
 	/*
 	 * If there are wedges, and this is not RAW_PART, then we
 	 * need to fail.
@@ -1216,7 +1216,7 @@ bad:
 		strcpy(dkw->dkw_parent, sd->sc_dev.dv_xname);
 		return (dkwedge_add(dkw));
 	    }
-	
+
 	case DIOCDWEDGE:
 	    {
 	    	struct dkwedge_info *dkw = (void *) addr;
@@ -1228,7 +1228,7 @@ bad:
 		strcpy(dkw->dkw_parent, sd->sc_dev.dv_xname);
 		return (dkwedge_del(dkw));
 	    }
-	
+
 	case DIOCLWEDGES:
 	    {
 	    	struct dkwedge_list *dkwl = (void *) addr;

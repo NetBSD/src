@@ -1,4 +1,4 @@
-/*	$NetBSD: i2odpt.h,v 1.1 2001/09/21 23:44:21 ad Exp $	*/
+/*	$NetBSD: i2odpt.h,v 1.2 2005/02/27 00:27:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ struct i2o_dpt_driver_set {
 /*
  * ================= Parameter groups =================
  */
-  
+
 #define	I2O_DPT_PARAM_DEVICE_INFO	0x8000
 struct i2o_dpt_param_device_info {
 	u_int8_t	devicetype;	/* as I2O_PARAM_SCSI_DEVICE_INFO */

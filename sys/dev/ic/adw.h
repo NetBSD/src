@@ -1,9 +1,9 @@
-/*      $NetBSD: adw.h,v 1.12 2005/02/21 00:29:07 thorpej Exp $        */
+/*      $NetBSD: adw.h,v 1.13 2005/02/27 00:27:00 perry Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
  * Systems Inc. SCSI controllers
- * 
+ *
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -53,7 +53,7 @@ typedef void (* ADW_ASYNC_CALLBACK) (ADW_SOFTC *, u_int8_t);
  */
 #define ADW_MAX_SG_LIST		255
 
-/* 
+/*
  * Scatter-Gather Definitions per request.
  */
 

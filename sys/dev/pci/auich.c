@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.88 2005/01/27 21:49:29 jdolecek Exp $	*/
+/*	$NetBSD: auich.c,v 1.89 2005/02/27 00:27:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THEPOSSIBILITY OF
  * SUCH DAMAGE.
  *
- * auich_calibrate() was from FreeBSD: ich.c,v 1.22 2002/06/27 22:36:01 scottl Exp 
+ * auich_calibrate() was from FreeBSD: ich.c,v 1.22 2002/06/27 22:36:01 scottl Exp
  */
 
 
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.88 2005/01/27 21:49:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.89 2005/02/27 00:27:32 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

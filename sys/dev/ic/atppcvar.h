@@ -1,4 +1,4 @@
-/* $NetBSD: atppcvar.h,v 1.5 2005/02/04 02:10:36 perry Exp $ */
+/* $NetBSD: atppcvar.h,v 1.6 2005/02/27 00:27:00 perry Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -89,7 +89,7 @@ extern int atppc_verbose;
 #define ATPPC_LOCK_INIT(sc)
 #define ATPPC_LOCK(sc)
 #define ATPPC_UNLOCK(sc)
-#define ATPPC_SC_LOCK(sc) NULL 
+#define ATPPC_SC_LOCK(sc) NULL
 #endif /* MULTIPROCESSOR || LOCKDEBUG */
 
 /* Single softintr callback entry */
@@ -105,7 +105,7 @@ struct atppc_softc {
 	struct device sc_dev;
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	/* Simple lock */ 
+	/* Simple lock */
 	struct simplelock sc_lock;
 #endif
 
@@ -141,11 +141,11 @@ struct atppc_softc {
 	int (*sc_dma_start)(struct atppc_softc *, void *, u_int, u_int8_t);
 	int (*sc_dma_finish)(struct atppc_softc *);
 	int (*sc_dma_abort)(struct atppc_softc *);
-	int (*sc_dma_malloc)(struct device *, caddr_t *, bus_addr_t *, 
+	int (*sc_dma_malloc)(struct device *, caddr_t *, bus_addr_t *,
 		bus_size_t);
-	void (*sc_dma_free)(struct device *, caddr_t *, bus_addr_t *, 
+	void (*sc_dma_free)(struct device *, caddr_t *, bus_addr_t *,
 		bus_size_t);
-	
+
 	/* Microsequence related members */
 	char * sc_ptr;		/* microseq current pointer */
 	int sc_accum;		/* microseq accumulator */
@@ -155,9 +155,9 @@ struct atppc_softc {
 #define ATPPC_NOATTACH 0
 	u_int8_t sc_dev_ok;
 
-	/* 
-	 * Hardware capabilities flags: standard mode and nibble mode are 
-	 * assumed to always be available since if they aren't you don't 
+	/*
+	 * Hardware capabilities flags: standard mode and nibble mode are
+	 * assumed to always be available since if they aren't you don't
 	 * HAVE a parallel port.
 	 */
 #define ATPPC_HAS_INTR	0x01	/* Interrupt available */
@@ -170,7 +170,7 @@ struct atppc_softc {
 
 	/* Flags specifying mode of chipset operation . */
 #define ATPPC_MODE_STD	0x01	/* Use centronics-compatible mode */
-#define ATPPC_MODE_PS2	0x02	/* Use PS2 mode */ 
+#define ATPPC_MODE_PS2	0x02	/* Use PS2 mode */
 #define ATPPC_MODE_EPP	0x04	/* Use EPP mode */
 #define ATPPC_MODE_ECP	0x08	/* Use ECP mode */
 #define ATPPC_MODE_NIBBLE 0x10	/* Use nibble mode */
@@ -257,4 +257,4 @@ int atppcintr(void *);
 
 #endif /* _KERNEL */
 
-#endif /* __ATPPCVAR_H */ 
+#endif /* __ATPPCVAR_H */

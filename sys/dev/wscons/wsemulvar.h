@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulvar.h,v 1.9 2004/07/28 12:34:05 jmmv Exp $ */
+/* $NetBSD: wsemulvar.h,v 1.10 2005/02/27 00:27:52 perry Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -71,8 +71,8 @@ extern const struct wsemul_ops wsemul_vt100_ops;
 
 const struct wsemul_ops *wsemul_pick(const char *);
 
-/* 
+/*
  * Callbacks from the emulation code to the display interface driver.
- */     
+ */
 void	wsdisplay_emulbell(void *v);
 void	wsdisplay_emulinput(void *v, const u_char *, u_int);

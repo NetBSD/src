@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.80 2005/02/11 21:11:16 rearnsha Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.81 2005/02/27 00:27:03 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -147,10 +147,10 @@ void	wdc_reset_channel(struct ata_channel *, int);
 
 int	wdc_exec_command(struct ata_drive_datas *, struct ata_command*);
 
-/*	
+/*
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
  * command is aborted.
- */   
+ */
 #define wdc_wait_for_drq(chp, timeout, flags) \
 		wdcwait((chp), WDCS_DRQ, WDCS_DRQ, (timeout), (flags))
 #define wdc_wait_for_unbusy(chp, timeout, flags) \

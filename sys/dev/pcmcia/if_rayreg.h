@@ -1,8 +1,8 @@
-/*	$NetBSD: if_rayreg.h,v 1.7 2003/11/02 11:14:22 wiz Exp $	*/
-/* 
+/*	$NetBSD: if_rayreg.h,v 1.8 2005/02/27 00:27:43 perry Exp $	*/
+/*
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -31,7 +31,7 @@
 #define	RAY_MAXSSIDLEN	32
 
 /*
- * CCR registers 
+ * CCR registers
  */
 #define RAY_COR		0	/* config option register */
 #define	RAY_CCSR	1	/* card config and status register */

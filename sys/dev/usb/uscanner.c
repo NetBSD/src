@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.46 2004/04/23 17:25:27 itojun Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.47 2005/02/27 00:27:51 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.46 2004/04/23 17:25:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.47 2005/02/27 00:27:51 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -744,7 +744,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 	case EVFILT_WRITE:
-		/* 
+		/*
 		 * We have no easy way of determining if a read will
 		 * yield any data or a write will happen.
 		 * Pretend they will.

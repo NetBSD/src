@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.17 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: trm.c,v 1.18 2005/02/27 00:27:34 perry Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.17 2005/02/21 00:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.18 2005/02/27 00:27:34 perry Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -1274,7 +1274,7 @@ trm_msgout_phase1(struct trm_softc *sc)
 	memset(sc->sc_msgbuf, 0, sizeof(sc->sc_msgbuf));
 
 	/* it's important for atn stop */
-	bus_space_write_2(iot, ioh, TRM_SCSI_CONTROL, DO_DATALATCH); 
+	bus_space_write_2(iot, ioh, TRM_SCSI_CONTROL, DO_DATALATCH);
 
 	/*
 	 * SCSI command
@@ -1300,7 +1300,7 @@ trm_command_phase1(struct trm_softc *sc)
 
 	sc->sc_state = TRM_COMMAND;
 	/* it's important for atn stop */
-	bus_space_write_2(iot, ioh, TRM_SCSI_CONTROL, DO_DATALATCH); 
+	bus_space_write_2(iot, ioh, TRM_SCSI_CONTROL, DO_DATALATCH);
 
 	/*
 	 * SCSI command
@@ -1554,7 +1554,7 @@ trm_dataio_xfer(struct trm_softc *sc, int iodir)
 			/* it's important for atn stop */
 			bus_space_write_2(iot, ioh, TRM_SCSI_CONTROL,
 			    DO_DATALATCH);
-									
+
 			/*
 			 * SCSI command
 			 */
@@ -1577,7 +1577,7 @@ trm_dataio_xfer(struct trm_softc *sc, int iodir)
 			/* it's important for atn stop */
 			bus_space_write_2(iot, ioh, TRM_SCSI_CONTROL,
 			    DO_DATALATCH);
-			
+
 			/*
 			 * SCSI command
 			 */
@@ -1956,7 +1956,7 @@ trm_msgin_phase1(struct trm_softc *sc)
 	}
 
 	/* it's important for atn stop */
-	bus_space_write_2(iot, ioh, TRM_SCSI_CONTROL, DO_DATALATCH); 
+	bus_space_write_2(iot, ioh, TRM_SCSI_CONTROL, DO_DATALATCH);
 
 	/*
 	 * SCSI command
@@ -2344,7 +2344,7 @@ trm_reset_scsi_bus(struct trm_softc *sc)
 	}
 	if (timeout == 0)
 		printf(": scsibus reset timeout\n");
-		
+
 	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.13 2004/10/29 12:57:16 yamt Exp $ */
+/* $NetBSD: radio.c,v 1.14 2005/02/27 00:26:58 perry Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.13 2004/10/29 12:57:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.14 2005/02/27 00:26:58 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ radioopen(dev_t dev, int flags, int fmt, struct proc *p)
 	if (unit >= radio_cd.cd_ndevs ||
 	    (sc = radio_cd.cd_devs[unit]) == NULL ||
 	     sc->hw_if == NULL)
-		return (ENXIO); 
+		return (ENXIO);
 
 	if (sc->hw_if->open != NULL)
 		return (sc->hw_if->open(sc->hw_hdl, flags, fmt, p));
@@ -104,7 +104,7 @@ radioopen(dev_t dev, int flags, int fmt, struct proc *p)
 }
 
 int
-radioclose(dev_t dev, int flags, int fmt, struct proc *p) 
+radioclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct radio_softc *sc;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_tpublic.h,v 1.12 2003/12/04 13:57:30 keihan Exp $ */
+/* $NetBSD: isp_tpublic.h,v 1.13 2005/02/27 00:27:01 perry Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -53,7 +53,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * Matthew Jacob
  * Feral Software
  * mjacob@feral.com
@@ -161,7 +161,7 @@ typedef struct {
  * It is an error for the CDFH_SNSVALID bit to be set and CDFH_STSVALID not
  * to be set. It is an error for the CDFH_SNSVALID be set and the associated
  * SCSI status (cd_scsi_status) not be set to CHECK CONDITON.
- * 
+ *
  * The tag cd_data points to a data segment to either be filled or
  * read from depending on the direction of data movement. The tag
  * is undefined if no data direction is set. The MD layer and outer
@@ -177,7 +177,7 @@ typedef struct {
  * The outer layers need to set this at the beginning of command processing
  * to equal cd_totlen. As data is successfully moved, this value is decreased.
  * At the end of a command, any nonzero residual indicates the number of bytes
- * requested but not moved. XXXXXXXXXXXXXXXXXXXXXXX TOO VAGUE!!! 
+ * requested but not moved. XXXXXXXXXXXXXXXXXXXXXXX TOO VAGUE!!!
  *
  * The tag cd_xfrlen is the length of the currently active data transfer.
  * This allows several interations between any outside software and the
@@ -207,7 +207,7 @@ typedef struct {
  *
  * The tag cd_lreserved, cd_hreserved are scratch areas for use for the MD
  * and outer layers respectively.
- * 
+ *
  */
 
 #ifndef	TMD_CDBLEN
