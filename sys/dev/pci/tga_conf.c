@@ -1,4 +1,4 @@
-/* $NetBSD: tga_conf.c,v 1.1 1998/04/15 20:16:32 drochner Exp $ */
+/* $NetBSD: tga_conf.c,v 1.2 2000/03/04 10:28:00 elric Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -43,7 +43,6 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T8_01 */
 	{
 		"T8-01",
-		&tga_ramdac_bt485,
 		8,
 		4 MB,
 		2 KB,
@@ -53,7 +52,6 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T8_02 */
 	{
 		"T8-02",
-		&tga_ramdac_bt485,
 		8,
 		4 MB,
 		4 KB,
@@ -63,7 +61,6 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T8_22 */
 	{
 		"T8-22",
-		&tga_ramdac_bt485,
 		8,
 		8 MB,
 		4 KB,
@@ -73,7 +70,6 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T8_44 */
 	{
 		"T8-44",
-		&tga_ramdac_bt485,
 		8,
 		16 MB,
 		4 KB,
@@ -83,7 +79,6 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T32_04 */
 	{
 		"T32-04",
-		&tga_ramdac_bt463,
 		32,
 		16 MB,
 		8 KB,
@@ -93,7 +88,6 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T32_08 */
 	{
 		"T32-08",
-		&tga_ramdac_bt463,
 		32,
 		16 MB,
 		16 KB,
@@ -103,7 +97,6 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T32_88 */
 	{
 		"T32-88",
-		&tga_ramdac_bt463,
 		32,
 		32 MB,
 		16 KB,
