@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.69 2001/12/09 03:07:19 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.70 2001/12/10 01:52:26 thorpej Exp $	*/
 
 /*
  *
@@ -479,6 +479,20 @@ struct vmspace {
 #ifdef _KERNEL
 
 /*
+ * used to keep state while iterating over the map for a core dump.
+ */
+struct uvm_coredump_state {
+	void *cookie;		/* opaque for the caller */
+	vaddr_t start;		/* start of region */
+	vaddr_t end;		/* end of region */
+	vm_prot_t prot;		/* protection of region */
+	int flags;		/* flags; see below */
+};
+
+#define	UVM_COREDUMP_STACK	0x01	/* region is user stack */
+#define	UVM_COREDUMP_NODUMP	0x02	/* don't actually dump this region */
+
+/*
  * the various kernel maps, owned by MD code
  */
 extern struct vm_map *exec_map;
@@ -545,6 +559,11 @@ int			uvm_fault __P((struct vm_map *, vaddr_t, vm_fault_t,
 #if defined(KGDB)
 void			uvm_chgkprot __P((caddr_t, size_t, int));
 #endif
+int			uvm_coredump_walkmap __P((struct proc *,
+			    struct vnode *, struct ucred *,
+			    int (*)(struct proc *, struct vnode *,
+				    struct ucred *,
+				    struct uvm_coredump_state *), void *));
 void			uvm_fork __P((struct proc *, struct proc *, boolean_t,
 			    void *, size_t, void (*)(void *), void *));
 void			uvm_exit __P((struct proc *));
