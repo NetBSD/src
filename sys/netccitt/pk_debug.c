@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_debug.c,v 1.5 1994/06/29 06:37:31 cgd Exp $	*/
+/*	$NetBSD: pk_debug.c,v 1.6 1996/02/13 22:05:14 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -53,6 +53,7 @@
 #include <netccitt/x25.h>
 #include <netccitt/pk.h>
 #include <netccitt/pk_var.h>
+#include <netccitt/pk_extern.h>
 
 char	*pk_state[] = {
 	"Listen",	"Ready",	"Received-Call",
@@ -68,10 +69,11 @@ char   *pk_name[] = {
 	"Invalid"
 };
 
+void
 pk_trace (xcp, m, dir)
-struct x25config *xcp;
-register struct mbuf *m;
-char *dir;
+	struct x25config *xcp;
+	register struct mbuf *m;
+	char *dir;
 {
 	register char *s;
 	struct x25_packet *xp = mtod(m, struct x25_packet *);
@@ -92,9 +94,10 @@ char *dir;
 	printf ("\n");
 }
 
+void
 mbuf_cache(c, m)
-register struct mbuf_cache *c;
-struct mbuf *m;
+	register struct mbuf_cache *c;
+	struct mbuf *m;
 {
 	register struct mbuf **mp;
 
@@ -137,6 +140,6 @@ struct mbuf *m;
 	c->mbc_num = (1 + c->mbc_num) % c->mbc_size;
 	if (*mp)
 		m_freem(*mp);
-	if (*mp = m_copym(m, 0, M_COPYALL, M_DONTWAIT))
+	if ((*mp = m_copym(m, 0, M_COPYALL, M_DONTWAIT)) != NULL)
 		(*mp)->m_flags |= m->m_flags & 0x08;
 }

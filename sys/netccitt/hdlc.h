@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlc.h,v 1.5 1994/06/29 06:37:17 cgd Exp $	*/
+/*	$NetBSD: hdlc.h,v 1.6 1996/02/13 22:04:37 christos Exp $	*/
 
 /*-
  * Copyright (c) University of British Columbia, 1984
@@ -41,10 +41,13 @@
  */
 
 #ifndef ORDER4
+#ifndef CCITT_TYPES_DEFINED
+#define CCITT_TYPES_DEFINED
 #define FALSE   0
 #define TRUE    1
 typedef u_char octet;
 typedef char    bool;
+#endif
 
 /*
  *  HDLC Packet format definitions
@@ -152,7 +155,3 @@ struct	Hdlc_frame {
 
 #define TX 0
 #define RX 1
-
-bool	range_check ();
-bool	valid_nr ();
-struct	mbuf *hd_remove ();
