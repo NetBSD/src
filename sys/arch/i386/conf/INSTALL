@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.117 1999/05/19 14:41:54 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.118 1999/06/09 01:47:14 christos Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -187,14 +187,21 @@ isa*	at pcib?
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
+pcmcia*	at tcic? controller ? socket ?
 
 # ISA PCMCIA controllers
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
 pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
+tcic0	at isa? port 0x240 iomem 0xd0000 iosiz 0x4000
+
+# PCI PCMCIA controllers
+pcic0	at pci? dev? function ?
 
 # ISA Plug-and-Play bus support
 isapnp0	at isa?
 
+# ISA Plug-and-Play PCMCIA controllers
+pcic*	at isapnp?
 
 # Coprocessor Support
 
@@ -213,6 +220,22 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #options 	FINNISH_KBD
 #options 	GERMAN_KBD
 #options 	NORWEGIAN_KBD
+
+# wscons
+#pckbc0	at isa?			# pc keyboard controller
+#pckbd*	at pckbc?		# PC keyboard
+# "opms" should not be enabled together with "pms" or "pmsi"
+#pms*		at pckbc?		# PS/2 mouse for wsmouse
+#pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
+#opms*		at pckbc?		# backwards compatible PS/2 mouse
+#vga0		at isa?
+#vga*		at pci?
+#pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
+#wsdisplay*	at vga? console ?
+#wsdisplay*	at pcdisplay? console ?
+#wskbd*	at pckbd? console ?
+#wsmouse*	at pms?
+#wsmouse*	at pmsi?
 
 #pcppi0	at isa?
 #sysbeep0	at pcppi?
@@ -242,6 +265,8 @@ com2	at isa? port 0x3e8 irq 5
 #com*	at ast? slave ?
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
 #com*	at boca? slave ?
+#tcom0	at isa? port 0x100 irq 7	# TC-800 8-port serial cards
+#com*	at tcom? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
 #cy0	at isa? iomem 0xd4000 irq 12	# Cyclades serial cards
@@ -261,7 +286,7 @@ com2	at isa? port 0x3e8 irq 5
 # SCSI Controllers and Devices
 
 # PCI SCSI controllers
-adv*	at pci? dev ? function ?	# AdvanSys 1200A[B], 9xx[U,UA] SCSI
+adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 adw*	at pci? dev ? function ?	# AdvanSys 9xxUW SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
@@ -279,15 +304,19 @@ uha*	at eisa? slot ?			# UltraStor 24f SCSI
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
 # ISA Plug-and-Play SCSI controllers
+aha*	at isapnp? 			# Adaptec AHA-154[02
 aic*	at isapnp?			# Adaptec AHA-1520B
 
 # ISA SCSI controllers
+adv0	at isa? port ? irq ? drq ?	# AdvanSys APB-514[02]
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
 aha1	at isa? port 0x334 irq ? drq ?
 ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI
 bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
 bha1	at isa? port 0x334 irq ? drq ?
+nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 contoller
+nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI
 uha1	at isa? port 0x340 irq ? drq ?
@@ -303,6 +332,7 @@ scsibus* at ahc?
 scsibus* at aic?
 scsibus* at bha?
 scsibus* at isp?
+scsibus* at nca?
 scsibus* at ncr?
 scsibus* at pcscp?
 scsibus* at sea?
@@ -326,7 +356,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 pciide* at pci ? dev ? function ? flags 0x0000
 
 # ISA Plug-and-Play IDE controllers
-wdc*    at isapnp?
+wdc*	at isapnp?
 
 # PCMCIA IDE controllers
 wdc*    at pcmcia? function ?   
@@ -349,16 +379,18 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-wd*	at pciide? channel ? drive ?
-wd*	at wdc? channel ? drive ?
+wd*	at wdc? channel ? drive ? flags 0x0000
+wd*	at pciide? channel ? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus* at pciide? channel ?
 atapibus* at wdc? channel ?
+atapibus* at pciide? channel ?
 
 # ATAPI devices
-cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
-sd*	at atapibus? drive ?		# ATAPI disk drives
+# flags have the same meaning as for IDE drives.
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+#uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 
 # Miscellaneous mass storage devices
@@ -388,11 +420,14 @@ en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
+esh*	at pci? dev ? function ?	# Essential HIPPI card
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
@@ -422,12 +457,12 @@ fmv0	at isa? port 0x2a0 irq ?		# FMV-180 series
 ix0	at isa? port 0x300 irq 10		# EtherExpress/16
 iy0	at isa? port 0x360 irq ?		# EtherExpress PRO 10 ISA
 lc0	at isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
-#depca0	at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5	# DEPCA
-#le*	at depca?
-#nele0	at isa? port 0x320 irq 9 drq 7		# NE2100
-#le*	at nele?
-#bicc0	at isa? port 0x320 irq 10 drq 7		# BICC IsoLan
-#le*	at bicc?
+depca0	at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5	# DEPCA
+le*	at depca?
+nele0	at isa? port 0x320 irq 9 drq 7		# NE2100
+le*	at nele?
+bicc0	at isa? port 0x320 irq 10 drq 7		# BICC IsoLan
+le*	at bicc?
 ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 ne1	at isa? port 0x300 irq 10
 sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
@@ -439,22 +474,59 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-nsphy*	at mii? phy ?			# NS83840 PHYs
-qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
+# USB Controller and Devices
+
+# PCI USB controllers
+#uhci*	at pci?				# Universal Host Controller (Intel)
+#ohci*	at pci?				# Open Host Controller
+
+# USB bus support
+#usb*	at uhci?
+#usb*	at ohci?
+
+# USB Hubs
+#uhub*	at usb?
+#uhub*	at uhub? port ? configuration ? interface ?
+
+# USB Mice
+#ums*	at uhub? port ? configuration ? interface ?
+#wsmouse*	at ums?
+
+# USB Keyboards
+#ukbd*	at uhub? port ? configuration ? interface ?
+#wskbd*	at ukbd? console ?
+
+# USB Generic HID devices
+#uhid*	at uhub? port ? configuration ? interface ?
+
+# USB Printer
+#ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Generic driver
+#ugen*	at uhub? port ? configuration ? interface ?
+
 # Audio Devices
+
+# PCI audio devices
+#eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+#sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
 #guspnp*	at isapnp?			# Gravis Ultra Sound PnP audio
 #sb*	at isapnp?			# SoundBlaster-compatible audio
 
 # ISA audio devices
+# the "aria" probe might give false hits
+#aria0	at isa? port 0x290 irq 10 		# Aria
 #gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 #pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 #pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
@@ -462,13 +534,25 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #sb0	at isa? port 0x220 irq 7 drq 1 drq2 5	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
+# OPL[23] FM syntheziers
+#opl0	at isa? port 0x388	# use only if not attached to sound card
+#opl*	at ess?
+#opl*	at sb?
+#opl*	at sv?
+ 
 # Audio support
+#audio*	at aria?
 #audio*	at gus?
 #audio*	at guspnp?
 #audio*	at pas?
 #audio*	at sb?
 #audio*	at sp?
 #audio*	at wss?
+
+# MIDI support
+#midi*	at pcppi?		# MIDI interface to the PC speaker
+#midi*	at sb?			# SB MPU401 port
+#midi*	at opl?			# OPL FM synth
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -477,12 +561,19 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # Mice
 
 # ISA busmice
+#lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
+#lms1	at isa? port 0x238 irq 5
+#mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
+#mms1	at isa? port 0x238 irq 5
+#wsmouse*	at lms?
+#wsmouse*	at mms?
+# backwards compatible versions
 #olms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 #olms1	at isa? port 0x238 irq 5
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
 #opms0	at pc? irq 12		# PS/2 auxiliary port mouse
-
+#opms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 # Joysticks
 
@@ -507,6 +598,7 @@ include	"arch/i386/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 #pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
 
@@ -518,9 +610,16 @@ pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
+#pseudo-device	sequencer	1	# MIDI sequencer
+# rnd works; RND_COM does not on port i386 yet.
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+
+# a pseudo device needed for Coda	# also needs CODA (above)
+#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
