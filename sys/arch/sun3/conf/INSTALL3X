@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL3X,v 1.17 2002/04/25 15:06:39 atatat Exp $
+# $NetBSD: INSTALL3X,v 1.18 2002/07/05 13:40:18 abs Exp $
 #
 # INSTALL3X - Installation kernel for the Sun3X
 #
@@ -30,7 +30,8 @@ maxusers	2
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
 #options 	USERCONF	# userconf(4) support
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Which kernel debugger?  Uncomment either this:
 #options 	DDB
@@ -76,7 +77,7 @@ file-system	KERNFS		# /kern
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-#options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 # Networking options
 options 	INET		# IP prototol stack support
