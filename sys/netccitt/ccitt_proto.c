@@ -1,4 +1,4 @@
-/*	$NetBSD: ccitt_proto.c,v 1.10 1999/01/14 01:21:52 thorpej Exp $	*/
+/*	$NetBSD: ccitt_proto.c,v 1.11 1999/07/01 05:53:04 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -87,7 +87,7 @@ struct protosw ccittsw[] = {
 	hd_init,	0,	 	hd_timer,	0,
 },
 #endif
-{	SOCK_STREAM,	DOMAIN,		CCITTPROTO_X25,	PR_CONNREQUIRED|PR_ATOMIC|PR_WANTRCVD,
+{	SOCK_STREAM,	DOMAIN,		CCITTPROTO_X25,	PR_CONNREQUIRED|PR_ATOMIC|PR_WANTRCVD|PR_LISTEN,
 	pk_input,	0,		pk_ctlinput,	pk_ctloutput,
 	pk_usrreq,
 	pk_init,	0,		pk_timer,	0,
