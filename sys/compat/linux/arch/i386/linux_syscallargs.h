@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.36 2001/03/30 18:02:28 jdolecek Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.37 2001/05/13 20:54:43 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -8,7 +8,7 @@
  */
 
 #ifndef _LINUX_SYS__SYSCALLARGS_H_
-#define _LINUX_SYS__SYSCALLARGS_H_
+#define	_LINUX_SYS__SYSCALLARGS_H_
 
 #ifdef	syscallarg
 #undef	syscallarg
@@ -196,6 +196,16 @@ struct linux_sys_sigsuspend_args {
 
 struct linux_sys_sigpending_args {
 	syscallarg(linux_old_sigset_t *) set;
+};
+
+struct linux_sys_gettimeofday_args {
+	syscallarg(struct timeval *) tp;
+	syscallarg(struct timezone *) tzp;
+};
+
+struct linux_sys_settimeofday_args {
+	syscallarg(struct timeval *) tp;
+	syscallarg(struct timezone *) tzp;
 };
 
 struct linux_sys_getgroups16_args {
@@ -635,8 +645,8 @@ int	compat_43_sys_sethostname(struct proc *, void *, register_t *);
 int	compat_43_sys_setrlimit(struct proc *, void *, register_t *);
 int	compat_43_sys_getrlimit(struct proc *, void *, register_t *);
 int	sys_getrusage(struct proc *, void *, register_t *);
-int	sys_gettimeofday(struct proc *, void *, register_t *);
-int	sys_settimeofday(struct proc *, void *, register_t *);
+int	linux_sys_gettimeofday(struct proc *, void *, register_t *);
+int	linux_sys_settimeofday(struct proc *, void *, register_t *);
 int	linux_sys_getgroups16(struct proc *, void *, register_t *);
 int	linux_sys_setgroups16(struct proc *, void *, register_t *);
 int	linux_sys_oldselect(struct proc *, void *, register_t *);
