@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh5,v 1.8 2002/10/04 10:24:05 scw Exp $
+#	$NetBSD: Makefile.sh5,v 1.9 2002/10/08 15:59:11 scw Exp $
 
 # Makefile for NetBSD/sh5
 #
@@ -38,9 +38,11 @@ SH5_ABI?=32
 .if (${SH5_ABI} == 32 || ${SH5_ABI} == 0x20)
 SH5_ABI=32
 SH5_ABI_DEF=-D_ILP32
+SH5_TEXT_ADDR=0xc0000000
 .elif (${SH5_ABI} == 64 || ${SH5_ABI} == 0x40)
 SH5_ABI=64
 SH5_ABI_DEF=-D_LP64
+SH5_TEXT_ADDR=0xffffffffc0000000
 .else
 .BEGIN:
 	@echo "SH5_ABI must be either 32 or 64"
@@ -67,6 +69,7 @@ NM=		sh5nm
 RANLIB=		sh5ranlib
 SIZE=		sh5size
 OBJCOPY=	sh5objcopy
+DBSYM=		sh5dbsym
 
 CPPFLAGS+=	-D__NetBSD__ -D${MACHINE} ${SH5_ABI_DEF}
 CFLAGS+=	${SH5_ENDIAN_CC} -m5-${SH5_ABI}media-nofpu
@@ -100,7 +103,7 @@ locore.o: ${THISSH5}/${MACHINE}/locore.S assym.h
 ## (5) link settings
 ##
 # LINKTEXT possibly set by individual sh5 port
-LINKTEXT?=	-Ttext 0xc0000000
+LINKTEXT?=	-Ttext ${SH5_TEXT_ADDR}
 
 # The following is needed until we get a bootloader.
 SYSTEM_LD_TAIL_EXTRA=	; \
