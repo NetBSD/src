@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.23 2003/01/18 11:29:50 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2003/01/28 20:26:04 kleink Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -26,13 +26,14 @@ SRCS+=	gets.c sprintf.c vsprintf.c tempnam.c tmpnam.c mktemp.c
 # namespace purity wrappers
 SRCS+=	_fseeko.c _ftello.c
 
-MAN+=	fclose.3 ferror.3 fflush.3 fgetln.3 fgets.3 fopen.3 fputs.3 \
-	fread.3 fseek.3 funopen.3 getc.3 mktemp.3 perror.3 printf.3 putc.3 \
-	remove.3 scanf.3 setbuf.3 stdio.3 tmpnam.3 ungetc.3 putwc.3 getwc.3 \
-	ungetwc.3 fwide.3 fparseln.3
+MAN+=	fclose.3 ferror.3 fflush.3 fgetln.3 fgets.3 flockfile.3 fopen.3 \
+	fputs.3 fread.3 fseek.3 funopen.3 getc.3 mktemp.3 perror.3 printf.3 \
+	putc.3 remove.3 scanf.3 setbuf.3 stdio.3 tmpnam.3 ungetc.3 putwc.3 \
+	getwc.3 ungetwc.3 fwide.3 fparseln.3
 
 MLINKS+=ferror.3 clearerr.3 ferror.3 feof.3 ferror.3 fileno.3
 MLINKS+=fflush.3 fpurge.3
+MLINKS+=flockfile.3 ftrylockfile.3 flockfile.3 funlockfile.3
 MLINKS+=fgets.3 gets.3
 MLINKS+=fopen.3 fdopen.3 fopen.3 freopen.3
 MLINKS+=fputs.3 puts.3
