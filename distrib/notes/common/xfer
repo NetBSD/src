@@ -1,6 +1,6 @@
-.\"	$NetBSD: xfer,v 1.39.2.1 2004/06/15 22:49:15 he Exp $
+.\"	$NetBSD: xfer,v 1.39.2.2 2004/08/25 21:40:36 he Exp $
 .\"
-.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -78,7 +78,10 @@ and
 .Pa boot-small2.fs .
 .Pp
 For old IBM PS/2 machines with MCA, use
-.Pa boot-ps2.fs .
+.Pa boot-ps2-1.fs
+and
+.Pa boot-ps2-2.fs
+floppy images.
 .Pp
 For all other systems, use
 .Pa boot1.fs
@@ -113,7 +116,7 @@ If you are using
 to write the floppy image(s) to floppy disk, you should use the
 .Ic rawrite
 utility, provided in the
-.Pa i386/utilities
+.Pa i386/installation/misc
 directory of the
 .Nx
 distribution.
@@ -298,10 +301,10 @@ the server.
 More information about diskless setting can be found at
 .Lk http://www.NetBSD.org/Documentation/network/netboot/
 .Pp
-On NWS-3xxx machines, PROM also supports network boot but it uses
-unusual protocol and it does not supported by
+On NWS-3xxx machines, the PROM also supports network boot but it uses
+an unusual protocol which is not supported by
 .Nx*M .
-On NWS-5000 machines, PROM uses ordinary tftp protocol, so
+On NWS-5000 machines, the PROM uses the ordinary tftp protocol, so
 you can load bootloader via network by
 .Ic "bo tftp()"
 command on the PROM prompt.
@@ -310,7 +313,7 @@ The
 .Tn NEWS
 PROM also supports tape boot, but
 .Nx*M
-does not support them currently.
+does not support that currently.
 .Pp
 After the boot floppy is prepared, just type
 .Ic "bo fd"
@@ -345,7 +348,7 @@ disk to the target installation system, and then boot the miniroot.
 Installing on a
 .Sq bare
 machine requires some bootable
-device; either a tape or floppy drive or a NFS server together
+device; either a tape, CD-ROM or floppy drive or a NFS server together
 with a machine that can act as a MOP loader, such as another
 machine running
 .Nx .
@@ -362,7 +365,7 @@ There are two ways to invoke the
 installation system;
 .Pp
 .(bullet -compact -offset indent
-Use
+Use the
 .Pa loadbsd.x
 utility to boot
 .Nx
@@ -377,8 +380,8 @@ When you chose the first method, you have to put the installation kernel
 and the
 .Pa loadbsd.x
 utility to a disk accessible from Human68k.
-These files can be found in
-.Pa installation/misc
+These files can be found in the
+.Pa x68k/installation/misc
 directory of the
 .Nx
 distribution.
@@ -395,7 +398,7 @@ When you chose the second method, you have to make the boot floppy
 from the floppy image
 .Pa sysinst.fs .
 The image file can be found in
-.Pa installation/floppy
+.Pa x68k/installation/floppy
 directory of the
 .Nx
 distribution.
@@ -420,10 +423,12 @@ If you are using
 to write the floppy images to disks, you should use the
 .Ic rawrite
 utility, provided in the
-.Pa installation/misc
+.Pa x68k/installation/misc
 directory of the
 .Nx
 distribution.
+PC versions can be found in
+.Pa i386/installation/misc .
 It will write the file system images (.fs files) to disks.
 .Pp
 To use the boot floppy, insert the floppy to your floppy drive 0,
@@ -443,6 +448,15 @@ respectively, both of which are found in
 directory of the
 .Nx
 distribution.
+The
+.Pa inst.fs
+file needs to be uncompressed from
+.Pa inst.fs.gz
+using the provided
+.Ic gzip.x
+program with the
+.Fl d
+switch. 
 See above how to write the images to floppies.
 .Pp
 To start the `floppy-root' installation system, insert the `kern' floppy
@@ -459,25 +473,22 @@ With the latter installation system the floppy disk is not used once the
 system has booted off and can be removed from the drive.
 .Pp
 .(Note
-The `floppy-root' installation system is currently broken,
-thus you cannot install
+The `floppy-root' installation system cannot be used to install
 .Nx*M
 on a machine with less than 5MB of memory.
 .Note)
 .Pp
 .\} \" \n[x68k]
 .
-.ig
-XXXX
-.\" THIS IS NOT APPLICABLE TO X68K!
+.if !\n[x68k] \{
 Note that if you are installing or upgrading from a writable media,
 the media can be write-protected if you wish.
 These systems mount a root image from inside the kernel, and will not
 need to write to the media.
 If you booted from a floppy, the floppy disk may be removed from
 the drive after the system has booted.
-XXXX
-..
+.Pp
+.\} \" \n[x68k]
 .
 .\" --------- MI instructions for getting distribution off installation medium
 .
@@ -490,7 +501,7 @@ Installation is supported from several media types, including:
 .It
 .\} \" \n[amiga]
 .
-CD-ROM
+CD-ROM / DVD
 .
 .if !\n[news68k]:\n[hp300]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc64]:\n[vax]:\n[x68k] \{\ 
 .It
@@ -508,7 +519,7 @@ Magneto-Optical (M-O) or other removable SCSI disk
 .It
 Remote NFS partition
 .
-.if !\n[macppc]:\n[news68k]:\n[sgimips] \{\
+.if !\n[macppc]:\n[news68k]:\n[sgimips]:\n[i386] \{\
 .It
 Tape
 .\} \" ! \n[macppc]:\n[news68k]:\n[sgimips]
@@ -557,14 +568,14 @@ Once you have done this, you can proceed to the next
 step in the installation process, preparing your hard disk.
 .\} \" \n[amiga]
 .
-.It Em CD-ROM
+.It Em CD-ROM / DVD
 .if \n[amiga] \{\
 To install
 .Nx
 from a CD-ROM drive, make sure it is a SCSI CD-ROM on a SCSI bus currently
 supported by
 .Nx
-(refer to the supported hardware list) or an ATAPI cd-rom connected to the
+(refer to the supported hardware list) or an ATAPI CD-ROM connected to the
 A1200 or A4000 internal IDE connector.
 If it is a SCSI CD-ROM on a non-supported SCSI bus like Blizzard-3 SCSI
 or Apollo SCSI you must first copy the distribution sets to an
@@ -576,7 +587,11 @@ or it is an ATAPI cd-rom connected to the A1200/A4000 internal IDE
 connector, simply put the CD into the drive before installation.
 .Pp
 .\} \" \n[amiga]
-Find out where the distribution set files are on the CD-ROM.
+Find out where the distribution set files are on the CD-ROM or DVD.
+Likely locations are
+.Pa binary/sets
+and
+.Pa \*M/binary/sets .
 .Pp
 Proceed to the instruction on installation.
 .
@@ -637,7 +652,8 @@ site from which you can retrieve the
 .Nx
 distribution when you're about to
 install or upgrade.
-You need to know the numeric IP address of that site, and,
+If you don't have DHCP available on your network,
+you will need to know the numeric IP address of that site, and,
 if it's not on a network directly connected to the machine
 on which you're installing or upgrading
 .Nx ,
@@ -665,7 +681,7 @@ from scratch, go to the section on preparing your hard disk, below.
 If you're upgrading an existing installation, go directly to
 the section on upgrading.
 .(Note
-This method of installation is recommended only for those already familiar
+This method of installation is recommended for those familiar
 with using
 .Bx
 network configuration and management commands.
@@ -717,7 +733,8 @@ file on of the NFS server and resetting its mount daemon (mountd).
 privileges on the server.)
 .Pp
 You need to know the numeric IP address of the NFS server,
-and, if the server is not on a network directly connected to
+and, if you don't have DHCP available on your network and
+the server is not on a network directly connected to
 the machine on which you're installing or upgrading
 .Nx ,
 you need to know the numeric IP address of the router closest
@@ -737,7 +754,7 @@ from scratch, go to the section on preparing your hard disk, below.
 If you're upgrading an existing installation, go directly to the
 section on upgrading.
 .(Note
-This method of installation is recommended only for those already
+This method of installation is recommended for those already
 familiar with using
 .Bx
 network configuration and management commands.
@@ -761,7 +778,7 @@ is believed to work is the
 .Tn DEC
 TK-50.
 This is a very slow device.
-Installation via disk or network is recommended if at all possible.
+Installation via disk or network is recommended if possible.
 .Note)
 .\} \" \n[pmax]:\n[vax]
 .Pp
@@ -807,51 +824,5 @@ from scratch, go to the section on preparing your hard disk, below.
 If you're upgrading an existing installation, go directly to the section
 on upgrading.
 .\} \" ! \n[macppc]:\n[news68k]:\n[sgimips]
-.
-.if !\n[news68k] \{\
-.It Em Upgrade
-If you are upgrading
-.Nx ,
-you also have the option of installing
-.Nx
-by putting the new distribution sets somewhere in your existing
-file system, and using them from there.
-To do that, you must do the following:
-.Pp
-Place the distribution sets you wish to upgrade somewhere in
-your current file system tree.
-.if !\n[hp300]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
-Please note that the
-.Pa /dev
-on the floppy used for upgrades only knows about
-.Li wd0 ,
-.Li wd1 ,
-.Li sd0 ,
-.Li sd1 ,
-and
-.Li sd2 .
-If you have more than two IDE drives or more than three SCSI drives, you
-should take care not to place the sets on the high-numbered drives.
-.\} \" ! \n[hp300]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]
-.Pp
-At a bare minimum, you must upgrade the
-.Sy base
-and
-.Sy kern
-binary distributions, and so must put the
-.Sy base
-and
-.Sy kern
-sets somewhere in your file system.
-If you wish, you can do the other sets, as well, but you should
-.Em not
-upgrade the
-.Sy etc
-distribution; it contains contains system configuration files
-that you should review and update by hand.
-.Pp
-Once you have done this, you can proceed to the next step in
-the upgrade process, actually upgrading your system.
-.\} \" ! \n[news68k]
 .
 .tag)
