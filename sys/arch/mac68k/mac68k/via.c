@@ -36,20 +36,19 @@
  *	This code handles both the VIA and RBV functionality.
  */
 
-#include "sys/param.h"
-#include "machine/frame.h"
+#include <sys/param.h>
+#include <machine/cpu.h>
+#include <machine/frame.h>
 #include "via.h"
-#include "kernel.h"
-/* #include "stand.h" */
+#include <sys/kernel.h>
 
 static int	scsi_drq_intr(void), scsi_irq_intr(void);
 
-long via1_noint(), via2_noint();
-long adb_intr_II(), rtclock_intr(), profclock();
-long nubus_intr();
-int  slot_noint();
-int VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
-long adb_intr_PB();
+long	via1_noint(), via2_noint();
+long	adb_intr(), rtclock_intr(), profclock();
+long	nubus_intr();
+int	slot_noint();
+int	VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
 
 long via1_spent[2][7]={
 	{0,0,0,0,0,0,0}, 
@@ -59,27 +58,22 @@ long via1_spent[2][7]={
 long (*via1itab[7])()={
 	via1_noint,
 	via1_noint,
-	adb_intr_II,
+	adb_intr,
 	via1_noint,
 	via1_noint,
 	via1_noint,
 	rtclock_intr,
- };	/* VIA1 interrupt handler table */
+};	/* VIA1 interrupt handler table */
 
 long (*via2itab[7])()={
-	scsi_drq_intr,
+	(long (*)()) scsi_drq_intr,
 	nubus_intr,
-	adb_intr_PB,	/* BARF BARF BARF - BG on hunch */
-	scsi_irq_intr,
+	via2_noint,
+	(long (*)()) scsi_irq_intr,
 	via2_noint,	/* snd_intr */
 	via2_noint,	/* via2t2_intr */
-#if defined(GPROF) && defined(PROFTIMER)
-/*	profclock, we don't have the right parameters for this. */
 	via2_noint,
-#else
-	via2_noint,
-#endif
- };	/* VIA2 interrupt handler table */
+};	/* VIA2 interrupt handler table */
 
 
 static int	via_inited=0;
@@ -345,15 +339,13 @@ int rbv_vidstatus(void)
 	return(montype);
 }
 
-extern int has53c96scsi,has5380scsi;
-
 static int
 scsi_irq_intr(void)
 {
-	if (has53c96scsi) {
+	if (mac68k_machine.scsi96) {
 		if (ncr53c96_irq_intr()) return 1;
 	}
-	if (has5380scsi) {
+	if (mac68k_machine.scsi80) {
 		if (ncr5380_irq_intr()) return 1;
 	}
 	return 0;
@@ -362,10 +354,10 @@ scsi_irq_intr(void)
 static int
 scsi_drq_intr(void)
 {
-	if (has53c96scsi) {
+	if (mac68k_machine.scsi96) {
 		if (ncr53c96_drq_intr()) return 1;
 	}
-	if (has5380scsi) {
+	if (mac68k_machine.scsi80) {
 		if (ncr5380_drq_intr()) return 1;
 	}
 	return 0;
