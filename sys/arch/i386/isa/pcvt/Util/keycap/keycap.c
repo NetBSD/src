@@ -91,7 +91,7 @@ char *id,*cstr;
 	register char *c = cstr+n;
 
 	if (strncmp(id,cstr,n)==0 &&
-	    (*c==':' || *c=='|' || *c=='=' || *c=='#') || *c=='@') 
+	    (*c==':' || *c=='|' || *c=='=' || *c=='#' || *c=='@'))
 	    	return c;
 	return 0;
 }
