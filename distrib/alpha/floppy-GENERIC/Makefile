@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1999/04/29 02:17:43 ross Exp $
+#	$NetBSD: Makefile,v 1.7 1999/05/11 20:08:01 veego Exp $
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -52,6 +52,9 @@ disk: all
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${CLEANFILES} ${GZKERNEL} ${GZKERNEL}.gz *.tmp
+
+# nothing to do here
+depend includes lint regress tags:
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
