@@ -1,4 +1,4 @@
-/*	$NetBSD: str.s,v 1.1 1996/08/02 11:22:50 ragge Exp $ */
+/*	$NetBSD: str.s,v 1.2 1996/08/02 16:18:40 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,17 +45,24 @@ ENTRY(strlen, 0);
 	subl2	4(ap), r0
 	ret
 
+ENTRY(strncmp, 0)
+	movl	12(ap), r3
+	brb	5f
+
 ENTRY(strcmp, 0)
-	movl	4(ap), r2
+	movl	$250, r3	# max string len to compare
+5:	movl	4(ap), r2
 	movl	8(ap), r1
 	movl	$1, r0
 
 2:	cmpb	(r2),(r1)+
 	bneq	1f		# something differ
 	tstb	(r2)+
-	bneq	2b		# continue, strings unequal
+	beql	4f		# continue, strings unequal
+	decl	r3		# max string len encountered?
+	bneq	2b
 
-	clrl	r0		# We are done, strings equal.
+4:	clrl	r0		# We are done, strings equal.
 	ret
 
 1:	bgtr	3f
