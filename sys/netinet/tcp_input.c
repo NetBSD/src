@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.72 1998/12/18 21:38:02 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.73 1999/01/19 21:58:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -486,7 +486,7 @@ tcp_input(m, va_alist)
 	bzero(ti->ti_x1, sizeof ti->ti_x1);
 	ti->ti_len = (u_int16_t)tlen;
 	HTONS(ti->ti_len);
-	if ((ti->ti_sum = in_cksum(m, len)) != 0) {
+	if (in_cksum(m, len) != 0) {
 		tcpstat.tcps_rcvbadsum++;
 		goto drop;
 	}
