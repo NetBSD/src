@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.26 2001/04/13 23:30:05 thorpej Exp $ */
+/*	$NetBSD: psl.h,v 1.27 2001/04/23 14:40:03 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,8 +84,7 @@
 #define PIL_VIDEO	5
 #define PIL_TTY		6
 #define PIL_LPT		6
-#define PIL_NET		6
-#define PIL_IMP		7
+#define PIL_NET		7
 #define PIL_CLOCK	10
 #define PIL_FD		11
 #define PIL_SER		12
