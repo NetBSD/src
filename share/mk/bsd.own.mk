@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.249 2002/01/04 06:23:41 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.250 2002/01/05 07:29:31 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -135,6 +135,7 @@ INSTALL_INFO=	${TOOLDIR}/bin/nbinstall-info
 LEX=		${TOOLDIR}/bin/nblex
 LINT=		CC=${CC:Q} ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
 LORDER=		NM=${NM:Q} ${TOOLDIR}/bin/nblorder
+MAKEFS=		${TOOLDIR}/bin/nbmakefs
 MAKEINFO=	${TOOLDIR}/bin/nbmakeinfo
 MAKEWHATIS=	${TOOLDIR}/bin/nbmakewhatis
 MDSETIMAGE=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-mdsetimage
