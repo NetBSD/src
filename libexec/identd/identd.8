@@ -1,4 +1,4 @@
-.\"	$NetBSD: identd.8,v 1.14 2002/10/29 16:19:49 wiz Exp $
+.\"	$NetBSD: identd.8,v 1.15 2003/03/15 19:15:58 wiz Exp $
 .\"
 .\" @(#)identd.8 1.9 92/02/11 Lysator
 .\" Copyright (c) 1992 Peter Eriksson, Lysator, Linkoping University.
@@ -81,7 +81,7 @@ flag should be used when starting the daemon from
 with the "wait" option in the
 .B /etc/inetd.conf
 file.
-This is the prefered mode of operation since that will start a copy of
+This is the preferred mode of operation since that will start a copy of
 .B identd
 at the first connection request and then
 .B identd
@@ -101,7 +101,7 @@ The
 flag can be used to make the daemon run in standalone
 mode without the assistance from
 .BR inetd.
-This mode is the least prefered mode since
+This mode is the least preferred mode since
 a bug or any other fatal condition in the server will make it terminate
 and it will then have to be restarted manually.
 Other than that it has the same advantage as the
