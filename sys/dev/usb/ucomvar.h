@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.3 2000/04/06 13:32:28 augustss Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.4 2000/04/08 01:22:26 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -103,4 +103,3 @@ struct ucom_attach_args {
 
 int ucomprint __P((void *aux, const char *pnp));
 int ucomsubmatch __P((struct device *parent, struct cfdata *cf, void *aux));
-void ucom_status_change __P((struct ucom_softc *sc));

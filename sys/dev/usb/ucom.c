@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.20 2000/04/07 12:40:16 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.21 2000/04/08 01:22:26 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -125,6 +125,7 @@ Static int	ucom_do_ioctl	__P((struct ucom_softc *, u_long, caddr_t,
 				     int, struct proc *));
 Static void	ucom_dtr	__P((struct ucom_softc *, int));
 Static void	ucom_rts	__P((struct ucom_softc *, int));
+Static void	ucom_status_change __P((struct ucom_softc *));
 Static void	ucom_break	__P((struct ucom_softc *, int));
 Static usbd_status ucomstartread __P((struct ucom_softc *));
 Static void	ucomreadcb	__P((usbd_xfer_handle, usbd_private_handle, 
@@ -891,7 +892,7 @@ out:
 	splx(s);
 }
 
-Static void
+void
 ucomstop(tp, flag)
 	struct tty *tp;
 	int flag;
