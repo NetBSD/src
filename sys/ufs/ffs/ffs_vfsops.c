@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.44 1998/10/23 00:31:29 thorpej Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.44.2.1 1999/05/30 15:06:57 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -948,6 +948,9 @@ ffs_vget(mp, ino, vpp)
 	}							/* XXX */
 
 	*vpp = vp;
+#ifdef UBC
+	uvm_vnp_setsize(vp, ip->i_ffs_size);
+#endif
 	return (0);
 }
 
