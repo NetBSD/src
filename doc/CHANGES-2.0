@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.498 2004/10/08 03:29:49 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.499 2004/10/13 05:48:45 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7820,4 +7820,4 @@ usr.bin/ftp/ftp.1				1.102-1.104
 sys/sys/param.h					patched by hand
 share/tmac/doc-common				patched by hand
 
-	Welcome to 2.0_RC3
+	Welcome to 2.0_RC4
