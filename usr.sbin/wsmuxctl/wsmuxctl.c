@@ -1,4 +1,4 @@
-/* $NetBSD: wsmuxctl.c,v 1.2 2001/10/18 12:27:15 augustss Exp $ */
+/* $NetBSD: wsmuxctl.c,v 1.3 2001/10/24 14:14:03 augustss Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -89,8 +89,8 @@ listdevs(int fd, int rec, int ind)
 	char buf[100];
 	struct wsmux_device_list devs;
 
-	if (ioctl(fd, WSMUX_LIST_DEVICES, &devs) < 0)
-		err(1, "WSMUX_LIST_DEVICES");
+	if (ioctl(fd, WSMUXIO_LIST_DEVICES, &devs) < 0)
+		err(1, "WSMUXIO_LIST_DEVICES");
 	for (i = 0; i < devs.ndevices; i++) {
 		printf("%*s%s%d\n", ind, "", devnames[devs.devices[i].type],
 		       devs.devices[i].idx);
@@ -174,14 +174,14 @@ main(int argc, char **argv)
 
 	if (add) {
 		parsedev(dev, &mdev);
-		if (ioctl(wsfd, WSMUX_ADD_DEVICE, &mdev) < 0)
-			err(1, "WSMUX_ADD_DEVICE");
+		if (ioctl(wsfd, WSMUXIO_ADD_DEVICE, &mdev) < 0)
+			err(1, "WSMUXIO_ADD_DEVICE");
 	}
 
 	if (rem) {
 		parsedev(dev, &mdev);
-		if (ioctl(wsfd, WSMUX_REMOVE_DEVICE, &mdev) < 0)
-			err(1, "WSMUX_REMOVE_DEVICE");
+		if (ioctl(wsfd, WSMUXIO_REMOVE_DEVICE, &mdev) < 0)
+			err(1, "WSMUXIO_REMOVE_DEVICE");
 	}
 
 	close(wsfd);
