@@ -5,7 +5,7 @@
  */
 
 #ifdef RCSID
-static char rcsid[] = "$Id: unpack.c,v 1.2 1993/10/15 23:05:54 jtc Exp $";
+static char rcsid[] = "$Id: unpack.c,v 1.3 2001/07/07 21:57:42 lukem Exp $";
 #endif
 
 #include "tailor.h"
@@ -231,7 +231,7 @@ int unpack(in, out)
     } /* for (;;) */
 
     flush_window();
-    Trace((stderr, "bytes_out %ld\n", bytes_out));
+    Trace((stderr, "bytes_out %lld\n", (long long)bytes_out));
     if (orig_len != (ulg)bytes_out) {
 	error("invalid compressed data--length error");
     }

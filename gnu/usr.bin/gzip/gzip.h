@@ -133,8 +133,8 @@ extern unsigned insize; /* valid bytes in inbuf */
 extern unsigned inptr;  /* index of next byte to be processed in inbuf */
 extern unsigned outcnt; /* bytes in output buffer */
 
-extern long bytes_in;   /* number of input bytes */
-extern long bytes_out;  /* number of output bytes */
+extern off_t bytes_in;   /* number of input bytes */
+extern off_t bytes_out;  /* number of output bytes */
 extern long header_bytes;/* number of bytes in gzip header */
 
 #define isize bytes_in
@@ -147,7 +147,7 @@ extern char ofname[];   /* output file name or "stdout" */
 extern char *progname;  /* program name */
 
 extern long time_stamp; /* original time stamp (modification time) */
-extern long ifile_size; /* input file size, -1 for devices (debug only) */
+extern off_t ifile_size; /* input file size, -1 for devices (debug only) */
 
 typedef int file_t;     /* Do not use stdio */
 #define NO_FILE  (-1)   /* in memory compression */
@@ -313,7 +313,7 @@ extern void error         OF((char *m));
 extern void warn          OF((char *a, char *b));
 extern void read_error    OF((void));
 extern void write_error   OF((void));
-extern void display_ratio OF((long num, long den, FILE *file));
+extern void display_ratio OF((off_t num, off_t den, FILE *file));
 extern voidp xmalloc      OF((unsigned int size));
 
 	/* in inflate.c */

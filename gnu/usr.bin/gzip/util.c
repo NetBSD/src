@@ -5,7 +5,7 @@
  */
 
 #ifdef RCSID
-static char rcsid[] = "$Id: util.c,v 1.2 1993/10/15 23:05:56 jtc Exp $";
+static char rcsid[] = "$Id: util.c,v 1.3 2001/07/07 21:57:42 lukem Exp $";
 #endif
 
 #include <ctype.h>
@@ -84,7 +84,7 @@ void clear_bufs()
 {
     outcnt = 0;
     insize = inptr = 0;
-    bytes_in = bytes_out = 0L;
+    bytes_in = bytes_out = 0;
 }
 
 /* ===========================================================================
@@ -368,8 +368,8 @@ void write_error()
  * Display compression ratio on the given stream on 6 characters.
  */
 void display_ratio(num, den, file)
-    long num;
-    long den;
+    off_t num;
+    off_t den;
     FILE *file;
 {
     long ratio;  /* 1000 times the compression ratio */
