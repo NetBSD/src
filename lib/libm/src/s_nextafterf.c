@@ -15,18 +15,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_nextafterf.c,v 1.6 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: s_nextafterf.c,v 1.7 2002/05/26 22:01:58 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float nextafterf(float x, float y)
-#else
-	float nextafterf(x,y)
-	float x,y;
-#endif
+float
+nextafterf(float x, float y)
 {
 	int32_t hx,hy,ix,iy;
 

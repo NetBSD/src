@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_log10.c,v 1.8 1999/07/02 15:37:44 simonb Exp $");
+__RCSID("$NetBSD: w_log10.c,v 1.9 2002/05/26 22:02:02 wiz Exp $");
 #endif
 
 /*
@@ -23,12 +23,8 @@ __RCSID("$NetBSD: w_log10.c,v 1.8 1999/07/02 15:37:44 simonb Exp $");
 #include "math_private.h"
 
 
-#ifdef __STDC__
-	double log10(double x)		/* wrapper log10 */
-#else
-	double log10(x)			/* wrapper log10 */
-	double x;
-#endif
+double
+log10(double x)		/* wrapper log10 */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_log10(x);

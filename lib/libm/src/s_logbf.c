@@ -15,18 +15,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_logbf.c,v 1.6 1999/07/02 15:37:43 simonb Exp $");
+__RCSID("$NetBSD: s_logbf.c,v 1.7 2002/05/26 22:01:57 wiz Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	float logbf(float x)
-#else
-	float logbf(x)
-	float x;
-#endif
+float
+logbf(float x)
 {
 	int32_t ix;
 	GET_FLOAT_WORD(ix,x);

@@ -5,7 +5,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_isinf.c,v 1.4 1997/10/09 11:32:19 lukem Exp $");
+__RCSID("$NetBSD: s_isinf.c,v 1.5 2002/05/26 22:01:56 wiz Exp $");
 #endif
 
 /*
@@ -16,12 +16,8 @@ __RCSID("$NetBSD: s_isinf.c,v 1.4 1997/10/09 11:32:19 lukem Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
-	int isinf(double x)
-#else
-	int isinf(x)
-	double x;
-#endif
+int
+isinf(double x)
 {
 	int32_t hx,lx;
 	EXTRACT_WORDS(hx,lx,x);

@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_exp.c,v 1.8 1999/07/02 15:37:44 simonb Exp $");
+__RCSID("$NetBSD: w_exp.c,v 1.9 2002/05/26 22:02:00 wiz Exp $");
 #endif
 
 /*
@@ -22,20 +22,12 @@ __RCSID("$NetBSD: w_exp.c,v 1.8 1999/07/02 15:37:44 simonb Exp $");
 #include "math.h"
 #include "math_private.h"
 
-#ifdef __STDC__
 static const double
-#else
-static double
-#endif
 o_threshold=  7.09782712893383973096e+02,  /* 0x40862E42, 0xFEFA39EF */
 u_threshold= -7.45133219101941108420e+02;  /* 0xc0874910, 0xD52D3051 */
 
-#ifdef __STDC__
-	double exp(double x)		/* wrapper exp */
-#else
-	double exp(x)			/* wrapper exp */
-	double x;
-#endif
+double
+exp(double x)		/* wrapper exp */
 {
 #ifdef _IEEE_LIBM
 	return __ieee754_exp(x);
