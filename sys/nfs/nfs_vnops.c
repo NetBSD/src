@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.54 1996/01/31 04:24:35 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.55 1996/01/31 05:13:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -239,6 +239,7 @@ void nqnfs_clientlease();
  * Global variables
  */
 extern u_int32_t nfs_procids[NFS_NPROCS];
+extern u_int32_t nfs_xdrneg1;
 extern u_int32_t nfs_prog, nfs_vers, nfs_true, nfs_false;
 struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 int nfs_numasync = 0;
@@ -967,7 +968,6 @@ nfs_mknod(ap)
 	register caddr_t cp;
 	register int32_t t1, t2;
 	struct vnode *newvp;
-	struct vattr vattr;
 	char *cp2;
 	caddr_t bpos, dpos;
 	int error = 0, isnq;
@@ -985,11 +985,6 @@ nfs_mknod(ap)
 		vput(dvp);
 		return (EOPNOTSUPP);
 	}
-	if (error = VOP_GETATTR(dvp, &vattr, cnp->cn_cred, cnp->cn_proc)) {
-		VOP_ABORTOP(dvp, cnp);
-		vput(dvp);
-		return (error);
-	}
 	newvp = NULLVP;
 	nfsstats.rpccnt[NFSPROC_CREATE]++;
 	isnq = (VFSTONFS(dvp->v_mount)->nm_flag & NFSMNT_NQNFS);
@@ -999,8 +994,8 @@ nfs_mknod(ap)
 	nfsm_strtom(cnp->cn_nameptr, cnp->cn_namelen, NFS_MAXNAMLEN);
 	nfsm_build(sp, struct nfsv2_sattr *, NFSX_SATTR(isnq));
 	sp->sa_mode = vtonfs_mode(vap->va_type, vap->va_mode);
-	sp->sa_uid = txdr_unsigned(cnp->cn_cred->cr_uid);
-	sp->sa_gid = txdr_unsigned(vattr.va_gid);
+	sp->sa_uid = nfs_xdrneg1;
+	sp->sa_gid = nfs_xdrneg1;
 	if (isnq) {
 		sp->sa_nqrdev = rdev;
 		sp->sa_nqflags = 0;
@@ -1047,13 +1042,7 @@ nfs_create(ap)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, isnq;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	struct vattr vattr;
 
-	if (error = VOP_GETATTR(dvp, &vattr, cnp->cn_cred, cnp->cn_proc)) {
-		VOP_ABORTOP(dvp, cnp);
-		vput(dvp);
-		return (error);
-	}
 	nfsstats.rpccnt[NFSPROC_CREATE]++;
 	isnq = (VFSTONFS(dvp->v_mount)->nm_flag & NFSMNT_NQNFS);
 	nfsm_reqhead(dvp, NFSPROC_CREATE,
@@ -1062,8 +1051,8 @@ nfs_create(ap)
 	nfsm_strtom(cnp->cn_nameptr, cnp->cn_namelen, NFS_MAXNAMLEN);
 	nfsm_build(sp, struct nfsv2_sattr *, NFSX_SATTR(isnq));
 	sp->sa_mode = vtonfs_mode(vap->va_type, vap->va_mode);
-	sp->sa_uid = txdr_unsigned(cnp->cn_cred->cr_uid);
-	sp->sa_gid = txdr_unsigned(vattr.va_gid);
+	sp->sa_uid = nfs_xdrneg1;
+	sp->sa_gid = nfs_xdrneg1;
 	if (isnq) {
 		u_quad_t qval = 0;
 
@@ -1399,8 +1388,8 @@ nfs_symlink(ap)
 	nfsm_strtom(ap->a_target, slen, NFS_MAXPATHLEN);
 	nfsm_build(sp, struct nfsv2_sattr *, NFSX_SATTR(isnq));
 	sp->sa_mode = vtonfs_mode(VLNK, vap->va_mode);
-	sp->sa_uid = txdr_unsigned(cnp->cn_cred->cr_uid);
-	sp->sa_gid = txdr_unsigned(cnp->cn_cred->cr_gid);
+	sp->sa_uid = nfs_xdrneg1;
+	sp->sa_gid = nfs_xdrneg1;
 	if (isnq) {
 		quad_t qval = -1;
 
@@ -1451,13 +1440,7 @@ nfs_mkdir(ap)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, firsttry = 1, isnq;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	struct vattr vattr;
 
-	if (error = VOP_GETATTR(dvp, &vattr, cnp->cn_cred, cnp->cn_proc)) {
-		VOP_ABORTOP(dvp, cnp);
-		vput(dvp);
-		return (error);
-	}
 	len = cnp->cn_namelen;
 	isnq = (VFSTONFS(dvp->v_mount)->nm_flag & NFSMNT_NQNFS);
 	nfsstats.rpccnt[NFSPROC_MKDIR]++;
@@ -1467,8 +1450,8 @@ nfs_mkdir(ap)
 	nfsm_strtom(cnp->cn_nameptr, len, NFS_MAXNAMLEN);
 	nfsm_build(sp, struct nfsv2_sattr *, NFSX_SATTR(isnq));
 	sp->sa_mode = vtonfs_mode(VDIR, vap->va_mode);
-	sp->sa_uid = txdr_unsigned(cnp->cn_cred->cr_uid);
-	sp->sa_gid = txdr_unsigned(vattr.va_gid);
+	sp->sa_uid = nfs_xdrneg1;
+	sp->sa_gid = nfs_xdrneg1;
 	if (isnq) {
 		quad_t qval = -1;
 
