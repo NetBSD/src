@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2003/12/11 09:46:27 dyoung Exp $
+#	$NetBSD: Makefile,v 1.33 2003/12/13 22:07:35 chs Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -48,28 +48,24 @@ SRCS=	authenc.c commands.c main.c network.c ring.c sys_bsd.c telnet.c \
 	terminal.c tn3270.c utilities.c
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/lib
-
 CPPFLAGS+=-DIPSEC
 LDADD+=	-lipsec
 DPADD+=	${LIBIPSEC}
+
 CPPFLAGS+=-DINET6
 
 LIBTELNETDIR!=	cd ${.CURDIR}/../../lib/libtelnet; ${PRINTOBJDIR}
 
 .if (${USE_KERBEROS} != "no")
-CPPFLAGS+=-DAUTHENTICATION -DENCRYPTION
-LDADD+= -ldes -lcrypto
-DPADD+=	${LIBDES} ${LIBCRYPTO}
-
 CPPFLAGS+=-I${DESTDIR}/usr/include/krb5
-CPPFLAGS+=-DKRB5 -DFORWARD
-LDADD+= -lkrb5 -lasn1
-DPADD+=	${LIBKRB5} ${LIBASN1}
+CPPFLAGS+=-DKRB5 -DFORWARD -DAUTHENTICATION -DENCRYPTION
+LDADD+= -lkrb5 -lasn1 -lcrypto
+DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCRYPTO}
 
 .if (${USE_KERBEROS4} != "no")
 CPPFLAGS+= -DKRB4
-LDADD+= -lkrb
-DPADD+=	${LIBKRB}
+LDADD+= -lkrb -ldes
+DPADD+=	${LIBKRB} ${LIBDES}
 .endif
 
 LDADD+= -lcom_err -lroken
