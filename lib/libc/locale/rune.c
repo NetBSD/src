@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.4 2000/12/26 00:34:49 itojun Exp $	*/
+/*	$NetBSD: rune.c,v 1.5 2001/01/03 15:23:26 lukem Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,11 +67,12 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.4 2000/12/26 00:34:49 itojun Exp $");
+__RCSID("$NetBSD: rune.c,v 1.5 2001/01/03 15:23:26 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "rune.h"
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -90,6 +91,12 @@ readrange(_RuneLocale *rl, _RuneRange *rr, _FileRuneRange *frr, void *lastp,
 	int i;
 	_RuneEntry *re;
 	_FileRuneEntry fre;
+
+	_DIAGASSERT(rl != NULL);
+	_DIAGASSERT(rr != NULL);
+	_DIAGASSERT(frr != NULL);
+	_DIAGASSERT(lastp != NULL);
+	_DIAGASSERT(fp != NULL);
 
 	re = (_RuneEntry *)rl->__rune_variable;
 
@@ -122,6 +129,9 @@ readentry(_RuneRange *rr, FILE *fp)
 	_RuneEntry *re;
 	size_t l, i, j;
 	int error;
+
+	_DIAGASSERT(rr != NULL);
+	_DIAGASSERT(fp != NULL);
 
 	re = rr->__rune_ranges;
 	for (i = 0; i < rr->__nranges; i++) {
@@ -166,6 +176,8 @@ _freeentry(_RuneRange *rr)
 	_RuneEntry *re;
 	int i;
 
+	_DIAGASSERT(rr != NULL);
+
 	re = rr->__rune_ranges;
 	for (i = 0; i < rr->__nranges; i++) {
 		if (re[i].__rune_types)
@@ -187,6 +199,8 @@ _Read_RuneMagi(fp)
 	_RuneLocale *rl;
 	struct stat sb;
 	int x;
+
+	_DIAGASSERT(fp != NULL);
 
 	if (fstat(fileno(fp), &sb) < 0)
 		return NULL;
@@ -279,6 +293,9 @@ void
 _NukeRune(rl)
 	_RuneLocale *rl;
 {
+
+	_DIAGASSERT(rl != NULL);
+
 	_freeentry(&rl->__runetype_ext);
 	free(rl);
 }
@@ -304,6 +321,8 @@ _Read_CTypeAsRune(fp)
 	_RuneLocale *rl;
 	struct stat sb;
 	int x;
+
+	_DIAGASSERT(fp != NULL);
 
 	if (fstat(fileno(fp), &sb) < 0)
 		return NULL;

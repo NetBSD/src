@@ -1,4 +1,4 @@
-/*	$NetBSD: utf2.c,v 1.4 2000/12/30 05:05:58 itojun Exp $	*/
+/*	$NetBSD: utf2.c,v 1.5 2001/01/03 15:23:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)utf2.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utf2.c,v 1.4 2000/12/30 05:05:58 itojun Exp $");
+__RCSID("$NetBSD: utf2.c,v 1.5 2001/01/03 15:23:26 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <errno.h>
 #include "rune.h"
 #include <stddef.h>
@@ -83,6 +84,8 @@ _UTF2_init(rl)
 	_RuneLocale *rl;
 {
 
+	_DIAGASSERT(rl != NULL);
+
 	/* sanity check to avoid overruns */
 	if (sizeof(_UTF2State) > sizeof(mbstate_t))
 		return (EINVAL);
@@ -108,6 +111,11 @@ _UTF2_mbrtowc(rl, pwcs, s, n, state)
 	_UTF2State *ps;
 	rune_t rune;
 	int c;
+
+	/* rl appears to be unused */
+	/* pwcs may be NULL */
+	_DIAGASSERT(s != NULL);
+	_DIAGASSERT(state != NULL);
 
 	ps = state;
 
@@ -179,6 +187,10 @@ _UTF2_wcrtomb(rl, s, n, wc, state)
         void *state;
 {
 
+	/* rl appears to be unused */
+	_DIAGASSERT(s != NULL);
+	/* state appears to be unused */
+
 	/* check invalid sequence */
 	if (wc & ~0xffff) {
 		errno = EILSEQ;
@@ -227,6 +239,8 @@ _UTF2_initstate(rl, s)
 {
 	_UTF2State *state;
 
+	/* rl appears to be unused */
+
 	if (!s)
 		return;
 	state = s;
@@ -240,6 +254,10 @@ _UTF2_packstate(rl, dst, src)
 	void* src;
 {
 
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
+
 	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_UTF2State));
 	return;
 }
@@ -250,6 +268,10 @@ _UTF2_unpackstate(rl, dst, src)
 	void* dst;
 	const mbstate_t *src;
 {
+
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
 
 	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_UTF2State));
 	return;
