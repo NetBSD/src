@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.70 2003/01/19 14:40:55 pk Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.71 2003/02/19 22:34:42 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.70 2003/01/19 14:40:55 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.71 2003/02/19 22:34:42 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -167,7 +167,7 @@ int simple_lock_debugger = 0;
 #define	SLOCK_DEBUGGER()	if (simple_lock_debugger) Debugger()
 #define	SLOCK_TRACE()							\
 	db_stack_trace_print((db_expr_t)__builtin_frame_address(0),	\
-	    TRUE, 65535, "", printf);
+	    TRUE, 65535, "", lock_printf);
 #else
 #define	SLOCK_DEBUGGER()	/* nothing */
 #define	SLOCK_TRACE()		/* nothing */
@@ -187,16 +187,16 @@ int simple_lock_debugger = 0;
 #define	SPINLOCK_SPINCHECK						\
 do {									\
 	if (++__spinc == 0) {						\
-		printf("LK_SPIN spinout, excl %d, share %d\n",		\
+		lock_printf("LK_SPIN spinout, excl %d, share %d\n",	\
 		    lkp->lk_exclusivecount, lkp->lk_sharecount);	\
 		if (lkp->lk_exclusivecount)				\
-			printf("held by CPU %lu\n",			\
+			lock_printf("held by CPU %lu\n",		\
 			    (u_long) lkp->lk_cpu);			\
 		if (lkp->lk_lock_file)					\
-			printf("last locked at %s:%d\n",		\
+			lock_printf("last locked at %s:%d\n",		\
 			    lkp->lk_lock_file, lkp->lk_lock_line);	\
 		if (lkp->lk_unlock_file)				\
-			printf("last unlocked at %s:%d\n",		\
+			lock_printf("last unlocked at %s:%d\n",		\
 			    lkp->lk_unlock_file, lkp->lk_unlock_line);	\
 		SLOCK_TRACE();						\
 		SPINLOCK_SPINCHECK_DEBUGGER;				\
