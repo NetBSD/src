@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.9.2.2 1993/11/26 12:07:43 deraadt Exp $
+ * $Id: sun_misc.c,v 1.9.2.3 1993/11/26 13:29:34 deraadt Exp $
  */
 
 /*
@@ -714,4 +714,40 @@ sun_open(p, uap, retval)
 			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t) 0, p);
 	}
 	return ret;
+}
+
+struct nfssvc_args {
+	int	fd;
+	caddr_t mskval;
+	int msklen;
+	caddr_t mtchval;
+	int mtchlen;
+};
+struct sun_nfssvc_args {
+	int	fd;
+};
+sun_nfssvc(p, uap, retval)
+	struct proc *p;
+	struct sun_nfssvc_args *uap;
+	int *retval;
+{
+	struct nfssvc_args outuap;
+	struct sockaddr sa;
+	int error;
+	extern char sigcode[], esigcode[];
+
+	bzero(&outuap, sizeof outuap);
+	outuap.fd = uap->fd;
+	outuap.mskval = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
+	outuap.msklen = sizeof sa;
+	outuap.mtchval = outuap.mskval + sizeof sa;
+	outuap.mtchlen = sizeof sa;
+
+	bzero(&sa, sizeof sa);
+	if (error = copyout(&sa, outuap.mskval, outuap.msklen))
+		return (error);
+	if (error = copyout(&sa, outuap.mtchval, outuap.mtchlen))
+		return (error);
+
+	return nfssvc(p, &outuap, retval);
 }
