@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.13 1993/11/01 00:06:04 mycroft Exp $
+ *	$Id: intr.c,v 1.14 1993/11/01 08:36:50 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -235,14 +235,18 @@ isa_flushintrs()
 	register int i;
 
 	/* clear any pending interrupts */
+#if 0
 	disable_intr();
 	intr_enable(ipending);
+#endif
 	for (i = 0; i < 16; i++) {
 		outb(IO_ICU1, ICU_EOI);
 		outb(IO_ICU2, ICU_EOI);
 	}
 	ipending = 0;
+#if 0
 	enable_intr();
+#endif
 }
 
 void
@@ -318,7 +322,7 @@ isa_strayintr(irq)
 		intrcnt_wild++;
 		log(LOG_ERR, "wild interrupt\n");
 	} else {
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 		isa_intrstate();
 #endif
 		if (intrcnt_stray[irq]++ < 5)
