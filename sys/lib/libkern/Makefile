@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1994/12/31 04:32:23 mycroft Exp $
+#	$NetBSD: Makefile,v 1.19 1995/02/13 21:48:17 cgd Exp $
 
 LIB=	kern
 NOPIC=
@@ -27,22 +27,23 @@ LIBC=	${.CURDIR}/../../../lib/libc
 AINC+=	-I${LIBC}/arch/${MACHINE_ARCH}
 CFLAGS+= -I${.CURDIR}/arch/${MACHINE_ARCH}
 
+.if (${MACHINE_ARCH} != "alpha")
 # Quad support
 SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 	lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c notdi2.c qdivrem.c \
 	subdi3.c  ucmpdi2.c udivdi3.c umoddi3.c xordi3.c
+.PATH: ${LIBC}/arch/${MACHINE_ARCH}/quad ${LIBC}/quad
+.endif
 
 # Other stuff
 SRCS+=	mcount.c
-
-.PATH: ${LIBC}/arch/${MACHINE_ARCH}/quad ${LIBC}/quad
-
-install:
 
 # mcount cannot be compiled with profiling
 mcount.po: mcount.o
 	cp mcount.o mcount.po
 
 CLEANFILES+= machine ${MACHINE_ARCH}
+
+install:
 
 .include <bsd.lib.mk>
