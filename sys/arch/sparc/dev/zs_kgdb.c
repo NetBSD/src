@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.6 2001/05/26 10:23:47 pk Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.7 2001/06/29 03:32:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
+#include <machine/autoconf.h>
 #include <machine/promlib.h>
 #include <sparc/dev/cons.h>
 
