@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.40 2000/03/30 12:45:37 augustss Exp $ */
+/*      $NetBSD: if_qe.c,v 1.41 2000/06/04 06:17:03 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -81,6 +81,7 @@ struct qe_cdata {
 
 struct	qe_softc {
 	struct device	sc_dev;		/* Configuration common part	*/
+	struct evcnt	sc_intrcnt;	/* Interrupt counting		*/
 	struct ethercom sc_ec;		/* Ethernet common part		*/
 #define sc_if	sc_ec.ec_if		/* network-visible interface	*/
 	bus_space_tag_t sc_iot;
@@ -347,7 +348,9 @@ qeattach(parent, self, aux)
 
 	QE_WCSR(QE_CSR_VECTOR, QE_RCSR(QE_CSR_VECTOR) & ~1); /* ??? */
 
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, qeintr, sc);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, qeintr,
+		sc, &sc->sc_intrcnt);
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.21 2000/06/02 21:49:06 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.22 2000/06/04 06:16:58 matt Exp $	*/
 
 /* 
  * :set tabs=4
@@ -54,7 +54,8 @@
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <machine/cpu.h>
-#include <machine/../vax/gencons.h>
+#include <machine/intr.h>
+#include <vax/vax/gencons.h>
 
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
@@ -206,7 +207,7 @@ void
 Debugger()
 {
 	splsave = splx(0xe);	/* XXX WRONG (this can lower IPL) */
-	schedsoftddb();		/* beg for debugger */
+	setsoftddb();		/* beg for debugger */
 	splx(splsave);
 }
 
@@ -514,7 +515,7 @@ kdbrint(tkn)
 {
 
 	if (ddbescape && ((tkn & 0x7f) == 'D')) {
-		schedsoftddb();
+		setsoftddb();
 		ddbescape = 0;
 		return 1;
 	}

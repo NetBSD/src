@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.44 2000/06/04 02:19:27 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.45 2000/06/04 06:16:59 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -336,6 +336,8 @@ TRAPCALL(ddbtrap, T_KDBTRAP)
 hardclock:
 	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 	pushr	$0x3f
+	incl	_clock_intrcnt+EV_COUNT	# count the number of clock interrupts
+#	adwc	$0,_clock_intrcnt+EV_COUNT+4
 #if VAX46
 	cmpl	_vax_boardtype,$VAX_BTYP_46
 	bneq	1f

@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.12 2000/03/30 12:45:37 augustss Exp $	*/
+/*	$NetBSD: dl.c,v 1.13 2000/06/04 06:17:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,25 +105,27 @@
 
 struct dl_softc {
 	struct device	sc_dev;
+	struct evcnt	sc_rintrcnt;
+	struct evcnt	sc_tintrcnt;
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
 	struct tty	*sc_tty;
 };
 
-static	int	dl_match __P((struct device *, struct cfdata *, void *));
-static	void	dl_attach __P((struct device *, struct device *, void *));
-static	void	dlrint __P((void *));
-static	void	dlxint __P((void *));
-static	void	dlstart __P((struct tty *));
-static	int	dlparam __P((struct tty *, struct termios *));
-static	void	dlbrk __P((struct dl_softc *, int));
-struct	tty *	dltty __P((dev_t));
-	int	dlopen __P((dev_t, int, int, struct proc *));
-	int	dlclose __P((dev_t, int, int, struct proc *));
-	int	dlread __P((dev_t, struct uio *, int));
-	int	dlwrite __P((dev_t, struct uio *, int));
-	int	dlioctl __P((dev_t, int, caddr_t, int, struct proc *));
-	void	dlstop __P((struct tty *, int));
+static	int	dl_match (struct device *, struct cfdata *, void *);
+static	void	dl_attach (struct device *, struct device *, void *);
+static	void	dlrint (void *);
+static	void	dlxint (void *);
+static	void	dlstart (struct tty *);
+static	int	dlparam (struct tty *, struct termios *);
+static	void	dlbrk (struct dl_softc *, int);
+struct	tty *	dltty (dev_t);
+	int	dlopen (dev_t, int, int, struct proc *);
+	int	dlclose (dev_t, int, int, struct proc *);
+	int	dlread (dev_t, struct uio *, int);
+	int	dlwrite (dev_t, struct uio *, int);
+	int	dlioctl (dev_t, int, caddr_t, int, struct proc *);
+	void	dlstop (struct tty *, int);
 
 struct cfattach dl_ca = {
 	sizeof(struct dl_softc), dl_match, dl_attach
@@ -220,8 +222,12 @@ dl_attach (parent, self, aux)
 	tty_attach(sc->sc_tty);
 
 	/* Now register the TX & RX interrupt handlers */
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec    , dlxint, sc);
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec - 4, dlrint, sc);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec,
+		dlxint, sc, &sc->sc_tintrcnt);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec - 4,
+		dlrint, sc, &sc->sc_rintrcnt);
+	evcnt_attach(&sc->sc_dev, "rintr", &sc->sc_rintrcnt);
+	evcnt_attach(&sc->sc_dev, "tintr", &sc->sc_tintrcnt);
 
 	printf("\n");
 }

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.68 2000/05/31 23:53:27 matt Exp $
+#	$NetBSD: GENERIC,v 1.69 2000/06/04 06:16:53 matt Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.68 $"
+#ident 		"GENERIC-$Revision: 1.69 $"
 
 # Here are all different supported CPU types listed.
 options 	"VAX8600"
@@ -141,7 +141,7 @@ smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 # Ibus, the internal bus on most Microvaxen
 uba0		at ibus0 		# Qbus adapter
 ze0		at ibus0 		# SGEC on-board ethernet
-#le0		at ibus0		# LANCE ethernet (MV3400)
+le0		at ibus0		# LANCE ethernet (MV3400)
 #dz0		at ibus0		# VAX 4000/105A serial lines
 #shac0		at ibus0 		# DSSI controller
 
@@ -149,9 +149,8 @@ ze0		at ibus0 		# SGEC on-board ethernet
 cpu*		at bi? node?		# KA820/KA825 cpu
 mem*		at bi? node?		# Memory subsystems
 #uba*		at bi? node?		# DWBUA BI-Unibus adapter
-#ni*		at bi? node?		# DEBNA/DEBNT ethernet adapter
-#kdb*		at bi? node?		# KDB50 MSCP disk ctlr
-#mscpbus*	at kdb?
+ni*		at bi? node?		# DEBNA/DEBNT ethernet adapter
+kdb*		at bi? node?		# KDB50 MSCP disk ctlr
 
 # CMI (VAX 11/750)
 mem*		at cmi? tr?		# Memory subsystems
@@ -175,7 +174,7 @@ mtc0		at uba? csr 0174500	# Tape MSCP ctlr
 #ts0		at uba? csr 0172520	# TS11/TSV05 tape.
 #qd0		at uba? csr 0177400	# 4- or 8-bitplans color graphics
 #qv0		at uba? csr 0177400	# Monochrome graphics
-#de0		at uba? csr 0174510	# DELUA/DEUNA
+de0		at uba? csr 0174510	# DELUA/DEUNA
 qe0		at uba? csr 0174440	# DEQNA/DELQA
 dhu0		at uba? csr 0160440	# DHU-11
 dz0		at uba? csr 0160100	# DZ-11
@@ -186,7 +185,7 @@ rl*		at rlc? drive?		# RL01/RL02 disk drive
 # MSCP devices
 mscpbus*	at uda?
 mscpbus*	at mtc?
-#mscpbus*	at kdb?
+mscpbus*	at kdb?
 
 ra*		at mscpbus? drive?	# MSCP disk
 rx*		at mscpbus? drive?	# MSCP floppy
