@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.c,v 1.1 2004/12/12 22:41:04 christos Exp $	*/
+/*	$NetBSD: ptyfs.c,v 1.2 2004/12/14 03:10:23 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ptyfs.c,v 1.1 2004/12/12 22:41:04 christos Exp $");
+__RCSID("$NetBSD: ptyfs.c,v 1.2 2004/12/14 03:10:23 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: ptyfs.c,v 1.1 2004/12/12 22:41:04 christos Exp $");
 #include <sys/mount.h>
 
 #define _KERNEL
+#include <miscfs/specfs/specdev.h>
 #include <fs/ptyfs/ptyfs.h>
 #undef _KERNEL
 
@@ -58,52 +59,43 @@ __RCSID("$NetBSD: ptyfs.c,v 1.1 2004/12/12 22:41:04 christos Exp $");
 #include <dirent.h>
 #include "fstat.h"
 
-static mode_t getptsmajor(void);
-
-/* XXX: Dup code from gen/devname.c */
-static mode_t
-getptsmajor(void)
-{
-	DIR *dirp;
-	struct dirent *dp;
-	struct stat st;
-	char buf[MAXPATHLEN];
-
-	if ((dirp = opendir(_PATH_DEV_PTS)) == NULL)
-		return (mode_t)~0;
-
-	while ((dp = readdir(dirp)) != NULL) {
-		if (dp->d_name[0] == '.')
-			continue;
-		(void)snprintf(buf, sizeof(buf), "%s%s", _PATH_DEV_PTS,
-		    dp->d_name);
-		if (stat(buf, &st) == -1)
-			continue;
-		(void)closedir(dirp);
-		return major(st.st_rdev);
-	}
-	(void)closedir(dirp);
-	return (mode_t)~0;
-}
-
 int
 ptyfs_filestat(struct vnode *vp, struct filestat *fsp)
 {
 	struct ptyfsnode pn;
-	static mode_t maj = 0;
+	struct specinfo si;
+	struct mount mt;
 
 	if (!KVM_READ(VTOPTYFS(vp), &pn, sizeof(pn))) {
 		dprintf("can't read ptyfs_node at %p for pid %d",
 		    VTOPTYFS(vp), Pid);
 		return 0;
 	}
-	fsp->fsid = 0; /* XXX */
+	if (!KVM_READ(vp->v_mount, &mt, sizeof(mt))) {
+		dprintf("can't read mount at %p for pid %d",
+		    VTOPTYFS(vp), Pid);
+		return 0;
+	}
+	fsp->fsid = mt.mnt_stat.f_fsidx.__fsid_val[0];
 	fsp->fileid = (long)pn.ptyfs_fileno;
 	fsp->mode = pn.ptyfs_mode;
 	fsp->size = 0;
-	if (maj == 0)
-		maj = getptsmajor();
-	if (maj == ~0)
-		fsp->rdev = makedev(maj, pn.ptyfs_pty);
+	switch (pn.ptyfs_type) {
+	    case PTYFSpts:
+	    case PTYFSptc:
+		if (!KVM_READ(vp->v_specinfo, &si, sizeof(si))) {
+			dprintf("can't read specinfo at %p for pid %d",
+				VTOPTYFS(vp), Pid);
+			return 0;
+		}
+		fsp->rdev = si.si_rdev;
+		fsp->mode |= S_IFCHR;
+		break;
+	    case PTYFSroot:
+		fsp->rdev = 0;
+		fsp->mode |= S_IFDIR;
+		break;
+	}
+
 	return 1;
 }
