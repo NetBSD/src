@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md,v 1.8 2003/10/08 04:25:43 lukem Exp $	*/
+/*	$NetBSD: menus.md,v 1.9 2003/10/19 20:17:33 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -81,7 +81,7 @@ menu consolebaud, title MSG_serial_baud_rate, x=40, y=13;
 	option "115200", exit, action
 	    {((struct x86_boot_params *)arg)->bp_conspeed = 115200;};
 
-menu biosonematch;
+menu biosonematch, y=-1;
 	option MSG_This_is_the_correct_geometry, exit, action { };
 	option MSG_Set_the_geometry_by_hand, exit, action
 	    {*(void **)arg = NULL;};

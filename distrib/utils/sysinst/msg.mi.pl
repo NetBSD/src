@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.32 2003/09/27 10:47:17 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.33 2003/10/19 20:17:32 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -56,6 +56,8 @@ message none {zadne}
 message ok {ok}
 message OK {OK}
 message unchanged {unchanged}	/* XXX translate */
+message On {On}
+message Off {Off}
 
 message install
 {zainstalowac}
@@ -195,9 +197,9 @@ or /home (users' home directories).
 Free space will be added to the partition marked with a '+'.
 }
 
-message ptnheaders	/* XXX translate */
+message ptnheaders /* XXX translate */
 {
-       MB Cylinders   Sectors    Filesystem
+       MB         Cylinders   Sectors   Filesystem
 }
 
 message askfsmount	/* XXX translate */
@@ -270,13 +272,13 @@ message fstype_fmt		/* XXX translate */
 {        FStype: %9s}
 
 message start_fmt		/* XXX translate */
-{         start: %9d %9d %9d}
+{         start: %9u %8u%c %9u}
 
 message size_fmt		/* XXX translate */
-{          size: %9d %9d %9d}
+{          size: %9u %8u%c %9u}
 
 message end_fmt			/* XXX translate */
-{           end: %9d %9d %9d}
+{           end: %9u %8u%c %9u}
 
 message bsize_fmt		/* XXX translate */
 {    block size: %9d bytes}
@@ -325,7 +327,7 @@ message label_offset	/* XXX translate */
 {%s
 Specjalne wartosci, ktore moga byc podane jako wartosci przesuniecia:
     -1:   zacznij na poczatku czesci dysku NetBSD
-   a-%c:   zacznij na koncu partycji X 
+   a-%c:   zacznij na koncu partycji X  (a, b, ... %c)
 
 start (%s)}
 
@@ -956,6 +958,17 @@ jeden mountpoint z "/".
 Nacisnij <enter> aby kontynuowac.
 }
 
+message Pick_an_option {Pick an option to turn on or off.}	/* XXX translate */
+message Scripting {Scripting}	/* XXX translate */
+message Logging {Logging}	/* XXX translate */
+
+message Status  { Status: }	/* XXX translate */
+message Command {Command: }	/* XXX translate */
+message Running {Running}	/* XXX translate */
+message Finished {Finished}	/* XXX translate */
+message Command_failed {Command failed}	/* XXX translate */
+message Command_ended_on_signal {Command ended on signal}	/* XXX translate */
+
 message NetBSD_VERSION_Install_System {System Instalacyjny NetBSD-@@VERSION@@}
 message Exit_Install_System {Wyjdz z Systemu Instalacyjnego}
 message Install_NetBSD_to_hard_disk {Zainstaluj NetBSD na twardym dysku}
@@ -984,7 +997,7 @@ message ftp {ftp}
 message nfs {nfs}
 message cdrom {cdrom}
 message floppy {dyskietka}
-message unmounted_fs {niezamontowany SP}
+message local_fs {niezamontowany SP}
 message local_dir {lokalny katalog}
 message Select_your_distribution {Wybierz swoja dystrybucje}
 message Full_installation {Pelna instalacja}

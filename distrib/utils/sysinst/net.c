@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.94 2003/08/10 08:28:09 mrg Exp $	*/
+/*	$NetBSD: net.c,v 1.95 2003/10/19 20:17:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -851,8 +851,7 @@ get_via_nfs(void)
 	process_menu(MENU_nfssource, NULL);
 again:
 
-	run_prog(0, NULL,
-	    "/sbin/umount /mnt2");
+	umount_mnt2();
 
 	/* Mount it */
 	if (run_prog(0, NULL,
@@ -865,6 +864,7 @@ again:
 		if (!ignorerror)
 			goto again;
 	}
+	mnt2_mounted = 1;
 
 	/* Verify distribution files exist.  */
 	if (distribution_sets_exist_p("/mnt2") == 0) {
@@ -879,7 +879,6 @@ again:
 	/* return location, don't clean... */
 	strlcpy(ext_dir, "/mnt2", sizeof(ext_dir));
 	clean_dist_dir = 0;
-	mnt2_mounted = 1;
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.23 2003/09/27 10:16:33 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.24 2003/10/19 20:17:31 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -93,9 +93,8 @@
 
 static int set_ptn_size(menudesc *, void *);
 
-#define NUM_PTN_MENU	(MAXPARTITIONS + 4)
-
 struct ptn_info {
+	int		menu_no;
 	struct ptn_size {
 		int	ptn_id;
 		char	mount[20];
@@ -103,13 +102,11 @@ struct ptn_info {
 		int	size;
 		int	limit;
 		char	changed;
-	}		ptn_sizes[NUM_PTN_MENU];
-	int		menu_no;
+	}		ptn_sizes[MAXPARTITIONS + 1];	/* +1 for delete code */
+	menu_ent	ptn_menus[MAXPARTITIONS + 1];	/* +1 for unit chg */
 	int		free_parts;
 	int		free_space;
 	struct ptn_size *pool_part;
-	menu_ent	ptn_menus[NUM_PTN_MENU];
-	char		ptn_titles[NUM_PTN_MENU][70];
 	char		exit_msg[70];
 };
 
@@ -164,46 +161,51 @@ save_ptn(int ptn, int start, int size, int fstype, const char *mountpt)
 }
 
 static void
-set_ptn_menu_texts(struct ptn_info *pi)
+set_ptn_titles(menudesc *m, int opt, void *arg)
+{
+	struct ptn_info *pi = arg;
+	struct ptn_size *p;
+	int sm = MEG / sectorsize;
+	int size;
+	char inc_free[12];
+
+	p = &pi->ptn_sizes[opt];
+	if (p->mount[0] == 0) {
+		wprintw(m->mw, msg_string(MSG_add_another_ptn));
+		return;
+	}
+	size = p->size;
+	if (p == pi->pool_part)
+		snprintf(inc_free, sizeof inc_free, "(%u)", 
+		    (size + pi->free_space) / sm);
+	else
+		inc_free[0] = 0;
+	wprintw(m->mw, "%6u%8s%10u%10u %c %s",
+		size / sm, inc_free, size / dlcylsize, size,
+		p == pi->pool_part ? '+' : ' ', p->mount);
+}
+
+static void
+set_ptn_menu(struct ptn_info *pi)
 {
 	struct ptn_size *p;
 	menu_ent *m;
-	int i;
-	int sm = MEG / sectorsize;
-	int size;
 
-	for (i = 0; i < NUM_PTN_MENU; i++) {
-		p = &pi->ptn_sizes[i];
-		m = &pi->ptn_menus[i];
+	for (m = pi->ptn_menus, p = pi->ptn_sizes;; m++, p++) {
+		m->opt_name = NULL;
 		m->opt_menu = OPT_NOMENU;
 		m->opt_flags = 0;
 		m->opt_action = set_ptn_size;
 		if (p->mount[0] == 0)
 			break;
-		size = p->size;
-		snprintf(pi->ptn_titles[i], sizeof pi->ptn_titles[0],
-			"%6u%10u%10u  %c %s",
-			size / sm, size / dlcylsize, size,
-			p == pi->pool_part ? '+' : ' ',
-			p->mount);
 	}
-
-	if (pi->free_parts > 0 && i < NUM_PTN_MENU) {
-		snprintf(pi->ptn_titles[i], sizeof pi->ptn_titles[0], "%s",
-			msg_string(MSG_add_another_ptn));
-		i++;
-	}
-
-	if (i < NUM_PTN_MENU) {	/* it always is... */
-		m = &pi->ptn_menus[i];
-		current_cylsize = dlcylsize;
-		m->opt_menu = MENU_sizechoice;
-		m->opt_flags = OPT_SUB;
-		m->opt_action = NULL;
-		snprintf(pi->ptn_titles[i], sizeof pi->ptn_titles[0], "%s",
-			msg_string(MSG_askunits));
-		i++;
-	}
+	if (pi->free_parts != 0)
+		m++;
+	m->opt_name = MSG_askunits;
+	m->opt_menu = MENU_sizechoice;
+	m->opt_flags = OPT_SUB;
+	m->opt_action = NULL;
+	m++;
 
 	if (pi->free_space >= 0)
 		snprintf(pi->exit_msg, sizeof pi->exit_msg,
@@ -214,7 +216,7 @@ set_ptn_menu_texts(struct ptn_info *pi)
 			msg_string(MSG_fssizesbad),
 			-pi->free_space / sizemult, multname, -pi->free_space);
 
-	set_menu_numopts(pi->menu_no, i);
+	set_menu_numopts(pi->menu_no, m - pi->ptn_menus);
 }
 
 static int
@@ -225,7 +227,7 @@ set_ptn_size(menudesc *m, void *arg)
 	char answer[10];
 	char dflt[10];
 	char *cp;
-	int size;
+	int size, old_size;
 	int mult;
 
 	p = pi->ptn_sizes + m->cursel;
@@ -242,6 +244,7 @@ set_ptn_size(menudesc *m, void *arg)
 	}
 
 	size = p->size;
+	old_size = size;
 	if (size == 0)
 		size = p->dflt_size;
 	size /= sizemult;
@@ -254,7 +257,7 @@ set_ptn_size(menudesc *m, void *arg)
 			dflt, answer, sizeof answer,
 			p->mount, multname);
 		/* Some special cases when /usr is first given a size */
-		if (p->size == 0 && !strcmp(p->mount, "/usr")) {
+		if (old_size == 0 && !strcmp(p->mount, "/usr")) {
 			/* Remove space for /usr from / */
 			if (!pi->ptn_sizes[0].changed) {
 				pi->ptn_sizes[0].size -= p->dflt_size;
@@ -290,7 +293,7 @@ set_ptn_size(menudesc *m, void *arg)
 			if (cp != answer)
 				break;
 			mult = 1;
-			size = p->size;
+			size = old_size;
 			break;
 		case 0:
 			cp--;
@@ -311,19 +314,20 @@ set_ptn_size(menudesc *m, void *arg)
 	if (p->limit != 0 && size > p->limit)
 		size = p->limit;
     adjust_free:
-	if (size != p->size)
+	if (size != old_size)
 		p->changed = 1;
-	pi->free_space += p->size - size;
+	pi->free_space += old_size - size;
+	p->size = size;
 	if (size == 0) {
-		if (p->size != 0)
+		if (old_size != 0)
 			pi->free_parts++;
 		if (p->ptn_id == PART_EXTRA)
 			memmove(p, p + 1,
-				(char *)&pi->ptn_sizes[NUM_PTN_MENU - 1]
+				(char *)&pi->ptn_sizes[MAXPARTITIONS]
 				- (char *)p);
 	} else {
 		int f = pi->free_space;
-		if (p->size == 0)
+		if (old_size == 0)
 			pi->free_parts--;
 		if (f < mult && -f < mult) {
 			/*
@@ -335,18 +339,20 @@ set_ptn_size(menudesc *m, void *arg)
 			else
 				f = ROUNDDOWN(f, dlcylsize);
 			size += f;
-			pi->free_space -= f;
+			if (size != 0) {
+				pi->free_space -= f;
+				p->size += f;
+			}
 		}
 	}
-	p->size = size;
 
-	set_ptn_menu_texts(pi);
+	set_ptn_menu(pi);
 
 	return 0;
 }
 
 static void
-get_ptn_sizes(int layout_kind, int part_start, int sectors)
+get_ptn_sizes(int part_start, int sectors, int no_swap)
 {
 	int i;
 	int maxpart = getmaxpartitions();
@@ -354,7 +360,7 @@ get_ptn_sizes(int layout_kind, int part_start, int sectors)
 	struct ptn_size *p;
 	int size;
 
-	static struct ptn_info pi = { {
+	static struct ptn_info pi = { -1, {
 #define PI_ROOT 0
 		{ PART_ROOT,	"/",	DEFROOTSIZE,	DEFROOTSIZE },
 #define PI_SWAP 1
@@ -364,8 +370,10 @@ get_ptn_sizes(int layout_kind, int part_start, int sectors)
 		{ PART_USR,	"/usr",	DEFUSRSIZE },
 		{ PART_ANY,	"/var",	DEFVARSIZE },
 		{ PART_ANY,	"/home",	0 },
-	}, -1 };
-	menu_ent *m;
+	}, {
+		{ NULL, OPT_NOMENU, 0, set_ptn_size },
+		{ MSG_askunits, MENU_sizechoice, OPT_SUB, NULL },
+	}, };
 
 	if (maxpart > MAXPARTITIONS)
 		maxpart = MAXPARTITIONS;	/* sanity */
@@ -374,6 +382,8 @@ get_ptn_sizes(int layout_kind, int part_start, int sectors)
 	msg_table_add(MSG_ptnheaders);
 
 	if (pi.menu_no < 0) {
+		/* If there is a swap partition elsewhere, don't add one here.*/		if (no_swap)
+			pi.ptn_sizes[PI_SWAP].size = 0;
 		/* If installing X increase default size of /usr */
 		if (sets_selected & SET_X11)
 			pi.ptn_sizes[PI_USR].dflt_size += XNEEDMB;
@@ -430,25 +440,24 @@ get_ptn_sizes(int layout_kind, int part_start, int sectors)
 		}
 
 		/* Count free partition slots */
-		pi.free_parts = -2;		/* allow for root and swap */
+		pi.free_parts = 0;
 		for (i = 0; i < maxpart; i++) {
 			if (bsdlabel[i].pi_size == 0)
 				pi.free_parts++;
 		}
-
-		/* Link data areas together for menu */
-		for (i = 0; i < NUM_PTN_MENU; i++) {
-			m = &pi.ptn_menus[i];
-			m->opt_name = pi.ptn_titles[i];
+		for (i = 0; i < MAXPARTITIONS; i++) {
 			p = &pi.ptn_sizes[i];
 			if (i != 0 && p->ptn_id == 0)
 				p->ptn_id = PART_EXTRA;
+			if (p->size != 0)
+				pi.free_parts--;
 		}
 
-		pi.menu_no = new_menu(0, pi.ptn_menus, NUM_PTN_MENU,
-			0, 9, 12, sizeof pi.ptn_titles[0],
-			MC_SCROLL | MC_NOBOX | MC_NOCLEAR,
-			NULL, NULL, NULL,
+		pi.menu_no = new_menu(0, pi.ptn_menus, nelem(pi.ptn_menus),
+			3, -1, 12, 70,
+			MC_NOSHORTCUT |
+			MC_ALWAYS_SCROLL | MC_NOBOX | MC_NOCLEAR,
+			NULL, set_ptn_titles, NULL,
 			"help", pi.exit_msg);
 
 		if (pi.menu_no < 0)
@@ -456,7 +465,7 @@ get_ptn_sizes(int layout_kind, int part_start, int sectors)
 	}
 
 	do {
-		set_ptn_menu_texts(&pi);
+		set_ptn_menu(&pi);
 		process_menu(pi.menu_no, &pi);
 	} while (pi.free_space < 0 || pi.free_parts < 0);
 
@@ -507,6 +516,7 @@ make_bsd_partitions(void)
 	int partstart;
 	int part_raw, part_bsd;
 	int ptend;
+	int no_swap = 0;
 	partinfo *p;
 
 	/*
@@ -581,7 +591,7 @@ make_bsd_partitions(void)
 	 * Save any partitions that are outside the area we are
 	 * going to use.
 	 * In particular this saves details of the other MBR
-	 * partitons on a multiboot i386 system.
+	 * partitions on a multiboot i386 system.
 	 */
 	 for (i = maxpart; i--;) {
 		if (bsdlabel[i].pi_size != 0)
@@ -594,10 +604,12 @@ make_bsd_partitions(void)
 			if (PI_ISBSDFS(p))
 				p->pi_flags |= PIF_MOUNT;
 		} else {
-		    if (p->pi_offset < ptstart + ptsize &&
-			p->pi_offset + p->pi_size > ptstart)
-			    /* Not outside area we are allocating */
-			    continue;
+			if (p->pi_offset < ptstart + ptsize &&			
+			    p->pi_offset + p->pi_size > ptstart)
+				/* Not outside area we are allocating */
+				continue;
+			if (p->pi_fstype == FS_SWAP)
+				no_swap = 1;
 		}
 		bsdlabel[i] = oldlabel[i];
 	 }
@@ -606,7 +618,7 @@ make_bsd_partitions(void)
 		/* XXX Check we have a sensible layout */
 		;
 	} else
-		get_ptn_sizes(layoutkind, partstart, ptend - partstart);
+		get_ptn_sizes(partstart, ptend - partstart, no_swap);
 
 	/*
 	 * OK, we have a partition table. Give the user the chance to
@@ -621,7 +633,7 @@ make_bsd_partitions(void)
 		goto edit_check;
 
 	/* Disk name */
-	msg_prompt(MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
+	msg_prompt(MSG_packname, bsddiskname, bsddiskname, sizeof bsddiskname);
 
 	/* save label to disk for MI code to update. */
 	(void) savenewlabel(bsdlabel, maxpart);

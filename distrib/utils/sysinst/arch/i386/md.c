@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.97 2003/10/08 04:25:43 lukem Exp $ */
+/*	$NetBSD: md.c,v 1.98 2003/10/19 20:17:33 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -423,19 +423,9 @@ md_upgrade_mbrtype(void)
 void
 md_cleanup_install(void)
 {
-	char realfrom[STRSIZE];
-	char realto[STRSIZE];
-	char cmd[STRSIZE];
+	const char *tp = target_prefix();
 
-	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
-	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
-	snprintf(cmd, sizeof cmd, "sed "
-			"-e 's/rc_configured=NO/rc_configured=YES/' "
-			" < %s > %s", realfrom, realto);
-	scripting_fprintf(logfp, "%s\n", cmd);
-	do_system(cmd);
-
-	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
+	enable_rc_conf();
 	
 	add_rc_conf("wscons=YES\n");
 
@@ -444,27 +434,15 @@ md_cleanup_install(void)
 	 * For GENERIC_TINY, do not enable any extra screens or wsmux.
 	 * Otherwise, run getty on 4 VTs.
 	 */
-	if (sets_selected & SET_KERNEL_TINY) {
-		strlcpy(realfrom, target_expand("/etc/wscons.conf"), STRSIZE);
-		strlcpy(realto, target_expand("/etc/wscons.conf.install"),
-		    STRSIZE);
-		snprintf(cmd, sizeof cmd, "sed"
-			    " -e '/^screen/s/^/#/'"
-			    " -e '/^mux/s/^/#/'"
-			    " < %s > %s", realfrom, realto);
-	} else
+	if (sets_selected & SET_KERNEL_TINY)
+		run_prog(0, NULL, "sed -an -e '/^screen/s/^/#/;/^mux/s/^/#/;"
+			    "H;$!d;g;w %s/etc/wscons.conf' %s/etc/wscons.conf",
+			tp, tp);
+	else
 #endif
-	       {
-		strlcpy(realfrom, target_expand("/etc/ttys"), STRSIZE);
-		strlcpy(realto, target_expand("/etc/ttys.install"), STRSIZE);
-		snprintf(cmd, sizeof cmd, "sed "
-				"-e '/^ttyE[1-9]/s/off/on/'"
-				" < %s > %s", realfrom, realto);
-	}
-		
-	scripting_fprintf(logfp, "%s\n", cmd);
-	do_system(cmd);
-	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
+		run_prog(0, NULL, "sed -an -e '/^ttyE[1-9]/s/off/on/;"
+			    "H;$!d;g;w %s/etc/ttys' %s/etc/ttys",
+			tp, tp);
 
 	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
 	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));

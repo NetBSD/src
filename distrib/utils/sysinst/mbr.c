@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.54 2003/10/08 04:25:43 lukem Exp $ */
+/*	$NetBSD: mbr.c,v 1.55 2003/10/19 20:17:31 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -228,6 +228,25 @@ get_mbrp(mbr_info_t **mbrip, int opt)
 }
 
 static int
+err_msg_win(const char *errmsg)
+{
+	const char *cont;
+	int l, l1;
+
+	errmsg = msg_string(errmsg);
+	cont = msg_string(MSG_Hit_enter_to_continue);
+
+	l = strlen(errmsg);
+	l1 = strlen(cont);
+	if (l < l1)
+		l = l1;
+
+	msg_prompt_win("%s.\n%s", -1, 18, l + 5, 4,
+			NULL, NULL, 1, errmsg, cont);
+	return 0;
+}
+
+static int
 set_mbr_type(menudesc *m, void *arg)
 {
 	mbr_info_t *mbri = arg;
@@ -268,7 +287,7 @@ set_mbr_type(menudesc *m, void *arg)
 		/* deleting extended partition.... */
 		if (mbri->sector || mbri->extended->extended)
 			/* We should have stopped this happening... */
-			return 0;
+			return err_msg_win("can't delete extended");
 		free(mbri->extended);
 		mbri->extended = NULL;
 	}
@@ -276,6 +295,7 @@ set_mbr_type(menudesc *m, void *arg)
 	if (type == 0) {
 		/* Deleting partition */
 		mbrp->mbrp_type = 0;
+		/* Remove references to this space from the NetBSD label */
 		remove_old_partitions(mbri->sector + mbrp->mbrp_start,
 		    mbrp->mbrp_size);
 #ifdef BOOTSEL
@@ -285,6 +305,7 @@ set_mbr_type(menudesc *m, void *arg)
 		memset(mbri->nametab[opt], 0, sizeof mbri->nametab[opt]);
 #endif
 		if (mbri->sector == 0) {
+			/* A main partition */
 			memset(mbrp, 0, sizeof *mbrp);
 			return 1;
 		}
@@ -292,6 +313,7 @@ set_mbr_type(menudesc *m, void *arg)
 		/* Merge with previous and next free areas */
 		ext = mbri->prev_ext;
 		if (ext != NULL && ext->mbr.mbr_parts[0].mbrp_type == 0) {
+			/* previous was free - back up one entry */
 			mbri = ext;
 			ombri->opt--;
 		}
@@ -306,9 +328,9 @@ set_mbr_type(menudesc *m, void *arg)
 			mbri->mbr.mbr_parts[1] = ext->mbr.mbr_parts[1];
 			/* fix list of extended partitions */
 			mbri->extended = ext->extended;
-			free(ext);
 			if (ext->extended != NULL)
 				ext->extended->prev_ext = mbri;
+			free(ext);
 			/* Make previous size cover all our ptn */
 			ext = mbri->prev_ext;
 			if (ext != NULL)
@@ -322,10 +344,10 @@ set_mbr_type(menudesc *m, void *arg)
 		/* Must be in the main partition */
 		if (mbri->sector != 0)
 			/* shouldn't be possible to have null start... */
-			return 0;
+			return err_msg_win("main-extended mixup");
 		if (find_mbr_space(&mbri->mbr, &start, &sz, bsec, -1) != 0)
 			/* no space */
-			return 0;
+			return err_msg_win(MSG_No_free_space);
 		mbrp->mbrp_start = start;
 		mbrp->mbrp_size = sz;
 		/* If there isn't an active partition mark this one active */
@@ -341,10 +363,10 @@ set_mbr_type(menudesc *m, void *arg)
 	if (MBR_IS_EXTENDED(type)) {
 		if (mbri->sector != 0)
 			/* Can't set extended partition in an extended one */
-			return 0;
+			return err_msg_win(MSG_Only_one_extended_ptn);
 		if (mbri->extended)
 			/* Can't have two extended partitions */
-			return 0;
+			return err_msg_win(MSG_Only_one_extended_ptn);
 		/* Create new extended partition */
 		ext = calloc(1, sizeof *mbri->extended);
 		if (!ext)
@@ -1144,7 +1166,7 @@ edit_mbr(mbr_info_t *mbri)
 	}
 
 	mbr_menu = new_menu(NULL, NULL, 16, 0, -1, 15, 70,
-			MC_NOBOX | MC_SCROLL | MC_NOCLEAR,
+			MC_NOBOX | MC_ALWAYS_SCROLL | MC_NOCLEAR,
 			set_mbr_header, set_mbr_label, NULL,
 			NULL, MSG_Partition_table_ok);
 	if (mbr_menu == -1)
@@ -1269,8 +1291,9 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 				break;
 			if (mbrp[2].mbrp_type != 0 || mbrp[3].mbrp_type != 0)
 				break;
+			/* Looks ok, link into extended chain */
 			mbri->extended = ext;
-			ext->prev_ext = ext_base != 0 ? mbri : NULL;
+			ext->prev_ext = next_ext != 0 ? mbri : NULL;
 			ext->extended = NULL;
 			mbri = ext;
 			ext = NULL;

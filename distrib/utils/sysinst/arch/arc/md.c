@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.19 2003/07/07 12:30:23 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.20 2003/10/19 20:17:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -150,19 +150,8 @@ md_update(void)
 void
 md_cleanup_install(void)
 {
-	char realfrom[STRSIZE];
-	char realto[STRSIZE];
-	char cmd[STRSIZE];
 
-	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
-	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
-	sprintf(cmd, "sed "
-			"-e 's/rc_configured=NO/rc_configured=YES/' "
-			" < %s > %s", realfrom, realto);
-	scripting_fprintf(logfp, "%s\n", cmd);
-	do_system(cmd);
-
-	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
+	enable_rc_conf();
 	
 	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
 	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));

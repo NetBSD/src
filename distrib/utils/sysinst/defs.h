@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.104 2003/09/27 10:47:17 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.105 2003/10/19 20:17:31 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,10 +70,14 @@ extern const char * const fstypenames[];
 #define T_OUTPUT 1
 
 /* run_prog flags */
-#define RUN_DISPLAY	0x0001		/* run in subwindow */
+#define RUN_DISPLAY	0x0001		/* Display program output */
 #define RUN_FATAL	0x0002		/* errors are fatal */
 #define RUN_CHROOT	0x0004		/* chroot to target disk */
 #define RUN_FULLSCREEN	0x0008		/* fullscreen (use with RUN_DISPLAY) */
+#define RUN_SILENT	0x0010		/* Do not show output */
+#define RUN_DISPLAY_ERR	0x0020		/* Display on error */
+#define RUN_ERROR_OK	0x0040		/* Don't wait for error confirmation */
+#define RUN_PROGRESS	0x0080		/* Output is just progess test */
 
 /* Installation sets */
 #define SET_KERNEL	0x000000ffu	/* allow 8 kernels */
@@ -204,13 +208,10 @@ EXTERN partinfo oldlabel[MAXPARTITIONS];	/* What we found on the disk */
 EXTERN partinfo bsdlabel[MAXPARTITIONS];	/* What we want it to look like */
 EXTERN int tmp_mfs_size INIT(0);
 
-#define DISKNAME_SIZE 80
-EXTERN char bsddiskname[DISKNAME_SIZE];
+#define DISKNAME_SIZE 16
+EXTERN char bsddiskname[DISKNAME_SIZE] INIT("mydisk");
 EXTERN const char *doessf INIT("");
 
-/* other vars for menu communication */
-EXTERN int  nodist;
-EXTERN int  got_dist;
 /* Relative file name for storing a distribution. */
 EXTERN char dist_dir[STRSIZE] INIT("/usr/INSTALL");  
 EXTERN int  clean_dist_dir INIT(0);
@@ -373,11 +374,13 @@ int	set_root_shell(void);
 void	scripting_fprintf(FILE *, const char *, ...);
 void	scripting_vfprintf(FILE *, const char *, va_list);
 void	add_rc_conf(const char *, ...);
+void	enable_rc_conf(void);
 int	check_partitions(void);
 void	set_sizemultname_cyl(void);
 void	set_sizemultname_meg(void);
 int	check_lfs_progs(void);
 void	customise_sets(void);
+void	umount_mnt2(void);
 
 /* from target.c */
 const	char *concat_paths(const char *, const char *);

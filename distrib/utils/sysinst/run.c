@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.52 2003/09/27 10:38:05 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.53 2003/10/19 20:17:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,28 +72,31 @@
 /*
  * local prototypes 
  */
-static int launch_subwin (WINDOW *actionwin, char **args, struct winsize *win,
-				int display, const char **errstr);
-int log_flip (menudesc *, void *);
-int script_flip (menudesc *, void *);
+static int log_flip (menudesc *, void *);
+static int script_flip (menudesc *, void *);
 
 #define BUFSIZE 4096
 
-char log_text[2][30] = {"Logging: Off", "Scripting: Off"};
-
 menu_ent logmenu [2] = {
-	{ log_text[0], OPT_NOMENU, 0, log_flip},
-	{ log_text[1], OPT_NOMENU, 0, script_flip} };
-	
+	{ NULL, OPT_NOMENU, 0, log_flip},
+	{ NULL, OPT_NOMENU, 0, script_flip} };
+
+static void
+log_menu_label(menudesc *m, int opt, void *arg)
+{
+	wprintw(m->mw, "%s: %s",
+		msg_string(opt ? MSG_Scripting : MSG_Logging),
+		msg_string((opt ? scripting : logging) ? MSG_On : MSG_Off));
+}
 
 void
 do_logging(void)
 {
 	int menu_no;
 
-	menu_no = new_menu ("Logging Functions", logmenu, 2, -1, 12,
-		0, 20, MC_SCROLL, NULL, NULL, NULL,
-		"Pick an option to turn on or off.\n", NULL);
+	menu_no = new_menu(MSG_Logging_functions, logmenu, 2, -1, 12,
+		0, 20, MC_SCROLL, NULL, log_menu_label, NULL,
+		MSG_Pick_an_option, NULL);
 
 	if (menu_no < 0) {
 		(void)fprintf(stderr, "Dynamic menu creation failed.\n");
@@ -105,7 +108,7 @@ do_logging(void)
 	free_menu(menu_no);
 }
 
-int
+static int
 /*ARGSUSED*/
 log_flip(menudesc *m, void *arg)
 {
@@ -113,7 +116,6 @@ log_flip(menudesc *m, void *arg)
 
 	(void)time(&tloc);
 	if (logging == 1) {
-		snprintf(log_text[0], sizeof(log_text[0]), "Logging: Off");
 		logging = 0;
 		fprintf(logfp, "Log ended at: %s\n", asctime(localtime(&tloc)));
 		fflush(logfp);
@@ -121,8 +123,6 @@ log_flip(menudesc *m, void *arg)
 	} else {
 		logfp = fopen("sysinst.log", "a");
 		if (logfp != NULL) {
-			snprintf(log_text[0], sizeof(log_text[0]),
-			    "Logging: On");
 			logging = 1;
 			fprintf(logfp,
 			    "Log started at: %s\n", asctime(localtime(&tloc)));
@@ -134,7 +134,7 @@ log_flip(menudesc *m, void *arg)
 	return(0);
 }
 
-int
+static int
 /*ARGSUSED*/
 script_flip(menudesc *m, void *arg)
 {
@@ -142,7 +142,6 @@ script_flip(menudesc *m, void *arg)
 
 	(void)time(&tloc);
 	if (scripting == 1) {
-		snprintf(log_text[1], sizeof(log_text[1]), "Scripting: Off");
 		scripting_fprintf(NULL, "# Script ended at: %s\n", asctime(localtime(&tloc)));
 		scripting = 0;
 		fflush(script);
@@ -150,8 +149,6 @@ script_flip(menudesc *m, void *arg)
 	} else {
 		script = fopen("sysinst.sh", "w");
 		if (script != NULL) {
-			snprintf(log_text[1], sizeof(log_text[1]),
-			    "Scripting: On");
 			scripting = 1;
 			scripting_fprintf(NULL, "#!/bin/sh\n");
 			scripting_fprintf(NULL, "# Script started at: %s\n",
@@ -258,13 +255,18 @@ make_argv(const char *cmd)
 	int l;
 
 	for (; *cmd != 0; cmd = cp + strspn(cp, " "), argc++) {
-		cp = strchr(cmd, ' ');
+		if (*cmd == '\'')
+			cp = strchr(++cmd, '\'');
+		else
+			cp = strchr(cmd, ' ');
 		if (cp == NULL)
 			cp = strchr(cmd, 0);
 		argv = realloc(argv, (argc + 2) * sizeof *argv);
 		if (argv == NULL)
 			err(1, "realloc(argv) for %s", cmd);
 		asprintf(argv + argc, "%.*s", (int)(cp - cmd), cmd);
+		if (*cp == '\'')
+			cp++;
 		if (cp[-1] != '*')
 			continue;
 		/* do limited filename globbing */
@@ -311,12 +313,55 @@ free_argv(char **argv)
 	free(argv);
 }
 
+static WINDOW *
+show_cmd(const char *scmd, struct winsize *win)
+{
+	int n, m;
+	WINDOW *actionwin;
+
+	wclear(stdscr);
+	clearok(stdscr, 1);
+	touchwin(stdscr);
+	refresh();
+
+	actionwin = subwin(stdscr, win->ws_row - 4, win->ws_col, 4, 0);
+	if (actionwin == NULL) {
+		fprintf(stderr, "sysinst: failed to allocate"
+			    " output window.\n");
+		exit(1);
+	}
+	scrollok(actionwin, TRUE);
+	if (has_colors()) {
+		wbkgd(actionwin, getbkgd(stdscr));
+		wattrset(actionwin, getattrs(stdscr));
+	}
+
+	mvaddstr(0, 3, msg_string(MSG_Status));
+	standout();
+	addstr(msg_string(MSG_Running));
+	standend();
+	mvaddstr(1, 4, msg_string(MSG_Command));
+	standout();
+	addstr(scmd);
+	standend();
+
+	move(3, 0);
+	for (n = win->ws_col; (m = min(n, 30)) > 0; n -= m)
+		addstr( "------------------------------" + 30 - m);
+	refresh();
+
+	wmove(actionwin, 0, 0);
+	wrefresh(actionwin);
+
+	return actionwin;
+}
+
 /*
  * launch a program inside a subwindow, and report it's return status when done
  */
 static int
-launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
-	const char **errstr)
+launch_subwin(WINDOW **actionwin, char **args, struct winsize *win, int flags,
+	const char *scmd, const char **errstr)
 {
 	int n, i;
 	int selectfailed;
@@ -329,12 +374,13 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 	struct termios rtt;
 	struct termios tt;
 	struct timeval tmo;
+	static int do_tioccons = 2;
 
 
 	(void)tcgetattr(STDIN_FILENO, &tt);
 	if (openpty(&master, &slave, NULL, &tt, win) == -1) {
 		*errstr = "openpty() failed";
-		return(1);
+		return -1;
 	}
 
 	rtt = tt;
@@ -342,6 +388,21 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 	/* ignore tty signals until we're done with subprocess setup */
 	ttysig_ignore = 1;
 	ioctl(master, TIOCPKT, &ttysig_ignore);
+
+	/* Try to get console output into our pipe */
+	if (do_tioccons) {
+		if (ioctl(slave, TIOCCONS, &do_tioccons) == 0
+		    && do_tioccons == 2) {
+			/* test our output - we don't want it grabbed */
+			write(1, " \b", 2);
+			ioctl(master, FIONREAD, &do_tioccons);
+			if (do_tioccons != 0) {
+				do_tioccons = 0;
+				ioctl(slave, TIOCCONS, &do_tioccons);
+			} else
+				do_tioccons = 1;
+		}
+	}
 
 	child = fork();
 	switch (child) {
@@ -361,11 +422,6 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 		rtt = tt;
 		rtt.c_lflag |= (ICANON|ECHO); 
 		(void)tcsetattr(slave, TCSANOW, &rtt);
-#if 0	/* This doesn't work (yet) */
-		i = 1;
-		/* steal console output */
-		ioctl(slave, TIOCCONS, &i);
-#endif
 		login_tty(slave);
 		if (logging) {
 			fprintf(logfp, "executing:");
@@ -436,31 +492,31 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 			if (i == STDIN_FILENO) {
 				(void)write(master, ibuf, (size_t)n);
 				if (!(rtt.c_lflag & ECHO))
-					cp += n;
+					continue;
 			} else {
 				pktdata = ibuf[0];
 				if (pktdata != 0) {
 					if (pktdata & TIOCPKT_IOCTL)
-						memcpy(&rtt, ibuf,
-							sizeof(rtt));
-					cp += n;
-				} else
-					cp += 1;
-			}
-			if ((flags & RUN_DISPLAY) != 0 && *cp != 0) {
-				if (logging) {
-					fprintf(logfp, "%s", cp);
-					fflush(logfp);
+						memcpy(&rtt, ibuf, sizeof(rtt));
+					continue;
 				}
-				/* posix curses is braindead wrt \r\n so... */
-				ncp = cp;
-				for (; (ncp = strstr(ncp, "\r\n")); ncp += 2) {
-					ncp[0] = '\n';
-					ncp[1] = '\r';
-				}
-				waddstr(actionwin, cp);
-				wrefresh(actionwin);
+				cp += 1;
 			}
+			if (*cp == 0 || flags & RUN_SILENT)
+				continue;
+			if (logging) {
+				fprintf(logfp, "%s", cp);
+				fflush(logfp);
+			}
+			if (*actionwin == NULL)
+				*actionwin = show_cmd(scmd, win);
+			/* posix curses is braindead wrt \r\n so... */
+			for (ncp = cp; (ncp = strstr(ncp, "\r\n")); ncp += 2) {
+				ncp[0] = '\n';
+				ncp[1] = '\r';
+			}
+			waddstr(*actionwin, cp);
+			wrefresh(*actionwin);
 		}
 loop:
 		pid = wait4(child, &status, WNOHANG, 0);
@@ -478,19 +534,31 @@ loop:
 	reset_prog_mode();
 
 	if (WIFEXITED(status)) {
-		*errstr = "command failed";
-		return(WEXITSTATUS(status));
-	} else if (WIFSIGNALED(status)) {
-		*errstr = "command ended on signal";
-		return(WTERMSIG(status));
-	} else
-		return(0);
+		*errstr = msg_string(MSG_Command_failed);
+		return WEXITSTATUS(status);
+	}
+	if (WIFSIGNALED(status)) {
+		*errstr = msg_string(MSG_Command_ended_on_signal);
+		return WTERMSIG(status);
+	}
+	return 0;
 }
 
 /*
- * generic program runner.  fatal and display can be set to
- * 1 if you wish the output to be displayed, or an error to be
- * fatal.
+ * generic program runner.
+ * flags:
+ *	RUN_DISPLAY	display command name and output
+ *	RUN_FATAL	program errors are fatal
+ *	RUN_CHROOT	chroot to target before the exec
+ *	RUN_FULLSCREEN	display output only
+ *	RUN_SILENT	do not display program output
+ *	RUN_DISPLAY_ERR	display status if program fails
+ *	RUN_ERROR_OK	don't wait for key if program fails
+ *	RUN_PROGRESS	don't wait for key if program has output
+ * If both RUN_DISPLAY and RUN_SILENT are clear then the program name will
+ * be displayed as soon as it generates output.
+ * Steps are taken to collect console messages, they will be interleaved
+ * into the program output - but not upset curses.
  */
 
 int
@@ -499,7 +567,7 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 	va_list ap;
 	struct winsize win;
 	int ret;
-	WINDOW *actionwin, *statuswin, *boxwin;
+	WINDOW *actionwin = NULL;
 	char *scmd;
 	char **args;
 	const char *errstr = NULL;
@@ -522,108 +590,71 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 		win.ws_col = 80;
 
 	if ((flags & RUN_DISPLAY) != 0) {
-		wclear(stdscr);
-		clearok(stdscr, 1);
-		touchwin(stdscr);
-		refresh();
-
-		if ((flags & RUN_FULLSCREEN) != 0) {
-			ret = launch_subwin(stdscr, args, &win, flags, &errstr);
-			if (ret != 0) {
-				waddstr(stdscr, "Press any key to continue");
-				wrefresh(stdscr);
-				getchar();
-			}
-			goto done;
-		}
-
-		statuswin = subwin(stdscr, 3, win.ws_col, 0, 0);
-		if (statuswin == NULL) {
-			fprintf(stderr, "sysinst: failed to allocate"
-			    " status window.\n");
-			exit(1);
-		}
-
-		boxwin = subwin(stdscr, 1, win.ws_col, 3, 0);
-		if (boxwin == NULL) {
-			fprintf(stderr, "sysinst: failed to allocate"
-			    " status box.\n");
-			exit(1);
-		}
-
-		actionwin = subwin(stdscr, win.ws_row - 4, win.ws_col, 4, 0);
-		if (actionwin == NULL) {
-			fprintf(stderr, "sysinst: failed to allocate"
-				    " output window.\n");
-			exit(1);
-		}
-		scrollok(actionwin, TRUE);
-
+		if (flags & RUN_FULLSCREEN) {
+			wclear(stdscr);
+			clearok(stdscr, 1);
+			touchwin(stdscr);
+			refresh();
+			actionwin = stdscr;
+		} else
+			actionwin = show_cmd(scmd, &win);
+	} else
 		win.ws_row -= 4;
 
-		wmove(statuswin, 0, 5);
-		waddstr(statuswin, "Status: ");
-		wstandout(statuswin);
-		waddstr(statuswin, "Running");
-		wstandend(statuswin);
-		wmove(statuswin, 1, 4);
-		waddstr(statuswin, "Command: ");
-		wstandout(statuswin);
-		waddstr(statuswin, scmd);
-		wstandend(statuswin);
-		wrefresh(statuswin);
+	ret = launch_subwin(&actionwin, args, &win, flags, scmd, &errstr);
 
-		wmove(boxwin, 0, 0);
-		{
-			int n, m;
-			for (n = win.ws_col; (m = min(n, 30)) > 0; n -= m)
-				waddstr(boxwin,
-				    "------------------------------" + 30 - m);
-		}
-		wrefresh(boxwin);
+	if (ret != 0 && actionwin == NULL && flags & RUN_DISPLAY_ERR)
+		actionwin = show_cmd(scmd, &win);
 
-		wrefresh(actionwin);
-
-		ret = launch_subwin(actionwin, args, &win, flags, &errstr);
-
-		wmove(statuswin, 0, 13);
-		wstandout(statuswin);
-		if (ret && errstr != NULL) {
-			waddstr(statuswin, "Failed: ");
-			waddstr(statuswin, errstr);
+	if (actionwin != NULL) {
+		int y, x;
+		getyx(actionwin, y, x);
+		standout();
+		if (ret != 0) {
+			if (actionwin != stdscr)
+				move(0, 13);
+			else if (x != 0)
+				addstr("\n");
+			addstr(errstr);
+			x = 1;	/* force newline below */
 		} else
-			waddstr(statuswin, "Finished");
-		wstandend(statuswin);
-		waddstr(statuswin, "  ");
-		wmove(statuswin, 2, 5);
-		if (ret != 0)
-			waddstr(statuswin, "Press any key to continue");
-		wrefresh(statuswin);
-		if (ret != 0)
-			(void)getchar();
+			if (actionwin != stdscr)
+				mvaddstr(0, 13, msg_string(MSG_Finished));
+		standend();
+		refresh();
+		if (ret != 0 || (y + x != 0 && !(flags & RUN_PROGRESS))) {
+			if (actionwin != stdscr)
+				move(2, 5);
+			else if (x != 0)
+				addstr("\n");
+			addstr(msg_string(MSG_Hit_enter_to_continue));
+			refresh();
+			getchar();
+		}
+	}
 
-		/* clean things up */
-		delwin(actionwin);
-		delwin(boxwin);
-		delwin(statuswin);
-done:
+	/* clean things up */
+	if (actionwin != NULL) {
+		if (actionwin != stdscr)
+			delwin(actionwin);
 		wclear(stdscr);
 		touchwin(stdscr);
 		clearok(stdscr, 1);
 		refresh();
-	} else { /* display */
-		ret = launch_subwin(NULL, args, &win, flags, &errstr);
 	}
+
 	va_end(ap);
 	/* restore tty setting we saved earlier */
 	reset_prog_mode();
-	if ((flags & RUN_FATAL) != 0 && ret != 0)
-		exit(ret);
-	if (ret && errmsg != NULL) {
-		msg_display(errmsg, scmd);
-		process_menu(MENU_ok, NULL);
+	if (ret != 0) {
+		if (errmsg != NULL) {
+			msg_display(errmsg, scmd);
+			process_menu(MENU_ok, NULL);
+		}
+		if (flags & RUN_FATAL)
+			exit(ret);
 	}
 	free(scmd);
 	free_argv(args);
-	return (ret);
+	return ret;
 }

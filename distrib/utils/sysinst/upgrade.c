@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.41 2003/09/27 10:47:17 dsl Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.42 2003/10/19 20:17:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,11 +48,10 @@
 /*
  * local prototypes
  */
-void 	check_prereqs(void);
-int	save_etc(void);
-int	merge_etc(void);
-int	save_X(void);
-int	merge_X(void);
+static int save_etc(void);
+static int merge_etc(void);
+static int save_X(void);
+static int merge_X(void);
 
 static int etc_saved;
 
@@ -114,7 +113,7 @@ do_upgrade(void)
 		return;
 
 	/* Copy back any files we should restore after the upgrade.*/
-	if (sets_selected & SET_ETC)
+	if (sets_installed & SET_ETC)
 		merge_etc();
 	merge_X();
 
@@ -128,7 +127,7 @@ do_upgrade(void)
  * back files we might want during the installation --  in case 
  * we are upgrading the target root.
  */
-int
+static int
 save_etc(void)
 {
 
@@ -206,7 +205,7 @@ restore_etc(void)
 /*
  * Save X symlink to X.old so it can be recovered later
  */
-int
+static int
 save_X(void)
 {
 	/* Only care for X if it's a symlink */
@@ -233,9 +232,13 @@ save_X(void)
  * Merge back saved target /etc files after unpacking the new
  * sets has completed.
  */
-int
+static int
 merge_etc(void)
 {
+
+	if (etc_saved == 0)
+		return 0;
+	etc_saved = 0;
 
 	/* just move back fstab, so we can boot cleanly.  */
 	cp_within_target("/etc.old/fstab", "/etc/");
@@ -247,7 +250,7 @@ merge_etc(void)
  * Merge back saved target X files after unpacking the new
  * sets has completed.
  */
-int
+static int
 merge_X(void)
 {
 	if (target_symlink_exists_p("/usr/X11R6/bin/X.old")) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.121 2003/09/27 10:47:17 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.122 2003/10/19 20:17:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,6 +53,8 @@ message None {None}
 message none {none}
 message OK {OK}
 message ok {ok}
+message On {On}
+message Off {Off}
 message unchanged {unchanged}
 
 message install
@@ -68,10 +70,10 @@ message hello
 {Welcome to sysinst, the NetBSD-@@VERSION@@ system installation tool.
 This menu-driven tool is designed to help you install NetBSD to a hard
 disk, or upgrade an existing NetBSD system, with a minimum of work. 
-In the following menus, you may change the current selection by
-either typing the reference letter (a, b, c, ...) or CTRL+N and CTRL+P.
-Arrow keys and Page-up/Page-down may also work. 
-You activate the current selection from the menu by typing the enter key.
+In the following menus type the reference letter (a, b, c, ...) to
+select an item, or type CTRL+N/CTRL+P to select the next/previous item. 
+The arrow keys and Page-up/Page-down may also work. 
+Activate the current selection from the menu by typing the enter key.
 
 }
 
@@ -87,6 +89,7 @@ before this procedure!  This procedure will do the following things:
 	a) Partition your disk 
 	b) Create new BSD file systems 
 	c) Load and install distribution sets
+	d) Some initial system configuraton
 
 (After you enter the partition information but before your disk is
 changed, you will have the opportunity to quit this procedure.)
@@ -158,14 +161,17 @@ message megname
 
 message layout
 {NetBSD uses a BSD disklabel to carve up the NetBSD portion of the disk
-into multiple BSD partitions.  You must now set up your BSD disklabel.
-You have several choices.  They are summarized below. 
--- Standard: the BSD disklabel partitions are computed by this program. 
--- Use existing: use current partitions. You must assign mount points. 
+into multiple BSD partitions.  You must now set up your BSD disklabel. 
 
-The NetBSD part of your disk is %d Megabytes. 
-Standard requires at least %d Megabytes. 
-Standard with X requires at least %d Megabytes.
+You can use a simple editor to set the sizes of the NetBSD partitions,
+or keep the existing partition sizes and contents. 
+
+You will then be given the opportunity to change any of the disklabel
+fields.
+
+The NetBSD part of your disk is %d Megabytes.
+A full installation requires at least %d Megabytes without X and
+at least %d Megabytes if the X sets are included.
 }
 
 message sizechoice
@@ -196,7 +202,7 @@ Free space will be added to the partition marked with a '+'.
 
 message ptnheaders
 {
-       MB Cylinders   Sectors    Filesystem
+       MB         Cylinders   Sectors   Filesystem
 }
 
 message askfsmount
@@ -258,10 +264,8 @@ message partition_sizes_ok
 {Partition sizes ok}
 
 message edfspart
-{You should set the file system (FS) kind first. 
-Then set the other values.
-
-The current values for partition %c are:
+{The current values for partition `%c' are, 
+Select the field you wish to change:
 
                           MB cylinders   sectors
 	             ------- --------- ---------
@@ -271,13 +275,13 @@ message fstype_fmt
 {        FStype: %9s}
 
 message start_fmt
-{         start: %9d %9d %9d}
+{         start: %9u %8u%c %9u}
 
 message size_fmt
-{          size: %9d %9d %9d}
+{          size: %9u %8u%c %9u}
 
 message end_fmt
-{           end: %9d %9d %9d}
+{           end: %9u %8u%c %9u}
 
 message bsize_fmt
 {    block size: %9d bytes}
@@ -286,7 +290,7 @@ message fsize_fmt
 { fragment size: %9d bytes}
 
 message isize_fmt
-{ Avg file size: %9d bytes}
+{ avg file size: %9d bytes (for number of inodes)}
 message isize_fmt_dflt
 { Avg file size:         4 fragments}
 
@@ -968,6 +972,17 @@ one mount point with "/".
 Press <return> to continue.
 }
 
+message Pick_an_option {Pick an option to turn on or off.}
+message Scripting {Scripting}
+message Logging {Logging}
+
+message Status  { Status: }
+message Command {Command: }
+message Running {Running}
+message Finished {Finished}
+message Command_failed {Command failed}
+message Command_ended_on_signal {Command ended on signal}
+
 message NetBSD_VERSION_Install_System {NetBSD-@@VERSION@@ Install System}
 message Exit_Install_System {Exit Install System}
 message Install_NetBSD_to_hard_disk {Install NetBSD to hard disk}
@@ -996,7 +1011,7 @@ message ftp {ftp}
 message nfs {nfs}
 message cdrom {cdrom}
 message floppy {floppy}
-message unmounted_fs {unmounted fs}
+message local_fs {unmounted fs}
 message local_dir {local directory}
 message Select_your_distribution {Select your distribution}
 message Full_installation {Full installation}

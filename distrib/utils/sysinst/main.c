@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.41 2003/07/28 11:32:21 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.42 2003/10/19 20:17:31 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -342,7 +342,7 @@ cleanup(void)
 	/* Ensure we aren't inside the target tree */
 	chdir(getenv("HOME"));
 	unwind_mounts();
-	run_prog(0, NULL, "/sbin/umount /mnt2");
+	umount_mnt2();
 
 	endwin();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.13 2003/09/27 10:42:16 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.14 2003/10/19 20:17:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ menu noyes, title MSG_yes_or_no;
 menu ok, title MSG_Hit_enter_to_continue;
 	option MSG_ok, exit;
 
-menu layout, title  MSG_Choose_your_installation;
+menu layout, y=-1, title  MSG_Choose_your_installation;
 	option MSG_Set_Sizes, 	  exit, action { layoutkind = 1; };
 	option MSG_Use_Existing,  exit, action { layoutkind = 4; };
 
@@ -201,14 +201,14 @@ menu sizechoice, title  MSG_Choose_your_size_specifier;
 		};
 
 menu distmedium, title MSG_Select_medium;
-	display action { msg_display (MSG_distmedium); nodist = 0; };
-	option MSG_ftp,		exit, action { got_dist = get_via_ftp(); };
-	option MSG_nfs,		exit, action { got_dist = get_via_nfs(); };
-	option MSG_cdrom,	exit, action  { got_dist = get_via_cdrom(); };
-	option MSG_floppy,	exit, action { got_dist = get_via_floppy(); };
-	option MSG_unmounted_fs, exit, action { got_dist = get_via_localfs(); };
-	option MSG_local_dir,	exit, action { got_dist = get_via_localdir(); };
-	option MSG_none,	exit,  action { nodist = 1; };
+	display action { umount_mnt2(); msg_display(MSG_distmedium); };
+	option MSG_ftp,	      exit, action { *(int *)arg = get_via_ftp(); };
+	option MSG_nfs,	      exit, action { *(int *)arg = get_via_nfs(); };
+	option MSG_cdrom,     exit, action { *(int *)arg = get_via_cdrom(); };
+	option MSG_floppy,    exit, action { *(int *)arg = get_via_floppy(); };
+	option MSG_local_fs,  exit, action { *(int *)arg = get_via_localfs(); };
+	option MSG_local_dir, exit, action { *(int *)arg = get_via_localdir();};
+	option MSG_none,      exit, action { *(int *)arg = -2; };
 
 menu distset, title MSG_Select_your_distribution;
 	display action { msg_display (MSG_distset); };
