@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.24 1997/03/13 17:35:39 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.25 1997/03/13 18:06:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-static char rcsid[] = "$NetBSD: inetd.c,v 1.24 1997/03/13 17:35:39 mycroft Exp $";
+static char rcsid[] = "$NetBSD: inetd.c,v 1.25 1997/03/13 18:06:15 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -530,24 +530,24 @@ main(argc, argv, envp)
 				}
 			}
 			pid = fork();
-		}
-		if (pid < 0) {
-			syslog(LOG_ERR, "fork: %m");
-			if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
-				close(ctrl);
-			sigsetmask(0L);
-			sleep(1);
-			continue;
-		}
-		if (pid && sep->se_wait) {
-			sep->se_wait = pid;
-			FD_CLR(sep->se_fd, &allsock);
-			nsock--;
+			if (pid < 0) {
+				syslog(LOG_ERR, "fork: %m");
+				if (sep->se_socktype == SOCK_STREAM)
+					close(ctrl);
+				sigsetmask(0L);
+				sleep(1);
+				continue;
+			}
+			if (pid != 0 && sep->se_wait) {
+				sep->se_wait = pid;
+				FD_CLR(sep->se_fd, &allsock);
+				nsock--;
+			}
+			if (pid == 0 && debug)
+				setsid();
 		}
 		sigsetmask(0L);
 		if (pid == 0) {
-			if (debug && dofork)
-				setsid();
 #ifdef LIBWRAP
 			request_init(&req, RQ_DAEMON, sep->se_argv[0] ?
 			    sep->se_argv[0] : sep->se_service, RQ_FILE, ctrl,
