@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.272 2003/08/29 08:26:21 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.273 2003/10/02 16:02:09 hannken Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.272 2003/08/29 08:26:21 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.273 2003/10/02 16:02:09 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -467,7 +467,7 @@ static struct pool segmap_pool;
  * solution: mask the invalid bits in the getsetmap macro.
  */
 
-static u_long segfixmask = 0xffffffff; /* all bits valid to start */
+static u_int segfixmask = 0xffffffff; /* all bits valid to start */
 #else
 #define segfixmask 0xffffffff	/* It's in getsegmap's scope */
 #endif
