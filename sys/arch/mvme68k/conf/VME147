@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.32 2000/12/09 21:02:09 scw Exp $
+#	$NetBSD: VME147,v 1.33 2001/05/28 11:14:41 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -34,8 +34,9 @@ options 	INET
 #options        EON
 
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
-options 	COMPAT_09, COMPAT_10, COMPAT_11, COMPAT_12, COMPAT_13, COMPAT_14
-options 	COMPAT_SUNOS
+options 	COMPAT_09, COMPAT_10, COMPAT_11
+options 	COMPAT_12, COMPAT_13, COMPAT_14, COMPAT_15
+#options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries
 
