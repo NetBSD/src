@@ -84,6 +84,7 @@
 ./usr/share/man/cat1/dig.0
 ./usr/share/man/cat1/dirname.0
 ./usr/share/man/cat1/dirs.0
+./usr/share/man/cat1/dnskeygen.0
 ./usr/share/man/cat1/dnsquery.0
 ./usr/share/man/cat1/domainname.0
 ./usr/share/man/cat1/du.0
@@ -731,6 +732,7 @@
 ./usr/share/man/cat8/nis.0
 ./usr/share/man/cat8/nologin.0
 ./usr/share/man/cat8/nslookup.0
+./usr/share/man/cat8/nsupdate.0
 ./usr/share/man/cat8/ntpdate.0
 ./usr/share/man/cat8/ntpq.0
 ./usr/share/man/cat8/ntptime.0
@@ -1197,6 +1199,7 @@
 ./usr/share/man/man1/dig.1
 ./usr/share/man/man1/dirname.1
 ./usr/share/man/man1/dirs.1
+./usr/share/man/man1/dnskeygen.1
 ./usr/share/man/man1/dnsquery.1
 ./usr/share/man/man1/domainname.1
 ./usr/share/man/man1/du.1
@@ -1844,6 +1847,7 @@
 ./usr/share/man/man8/nis.8
 ./usr/share/man/man8/nologin.8
 ./usr/share/man/man8/nslookup.8
+./usr/share/man/man8/nsupdate.8
 ./usr/share/man/man8/ntpdate.8
 ./usr/share/man/man8/ntpq.8
 ./usr/share/man/man8/ntptime.8
