@@ -1,4 +1,4 @@
-#	$NetBSD: VME162,v 1.6 2001/06/10 13:16:07 scw Exp $
+#	$NetBSD: VME162,v 1.7 2001/06/10 14:40:47 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -46,6 +46,8 @@ options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 ## "generic" boot (put root on boot device)
 config netbsd		root on ? type ?
 
+options 	NFS_BOOT_DHCP		# Diskless client w/ dhcp
+options 	NFS_BOOT_BOOTP		# Diskless client w/ bootp
 options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
 
 

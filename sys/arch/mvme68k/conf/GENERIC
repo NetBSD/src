@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.24 2001/04/30 09:05:58 scw Exp $
+#	$NetBSD: GENERIC,v 1.25 2001/06/10 14:40:47 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.24 $"
+#ident 		"GENERIC-$Revision: 1.25 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -63,6 +63,8 @@ options 	COMPAT_12, COMPAT_13, COMPAT_14, COMPAT_15
 config netbsd		root on ? type ?
 
 # Which protocol to use when booting over NFS
+options 	NFS_BOOT_DHCP		# Diskless client w/ dhcp
+options 	NFS_BOOT_BOOTP		# Diskless client w/ bootp
 options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
 
 pseudo-device	sl
