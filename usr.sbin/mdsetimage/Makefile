@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/01/04 09:44:22 itojun Exp $
+#	$NetBSD: Makefile,v 1.6 2001/01/05 01:35:45 shin Exp $
 
 PROG=	mdsetimage
 SRCS=	mdsetimage.c exec_aout.c exec_ecoff.c exec_elf32.c exec_elf64.c \
@@ -8,7 +8,7 @@ MAN=	mdsetimage.8
 .if	${MACHINE_ARCH} == "alpha"
 CPPFLAGS+=-DNLIST_ECOFF
 CPPFLAGS+=-DNLIST_ELF64
-.elif	${MACHINE_ARCH} == "mips"
+.elif	${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
 CPPFLAGS+=-DNLIST_ECOFF
 CPPFLAGS+=-DNLIST_ELF32
 CPPFLAGS+=-DNLIST_AOUT
