@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.22 2003/01/07 11:03:09 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.23 2003/01/07 13:45:41 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -499,7 +499,6 @@ badtrap:
 			sig = SIGFPE;
 			/* XXX - ucode? */
 #endif
-			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
 		/*
@@ -509,7 +508,6 @@ badtrap:
 		 */
 		if (fs->fs_qsize) {
 			fpu_cleanup(l, fs);
-			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
 #if 1
@@ -537,11 +535,13 @@ badtrap:
 			loadfpstate(fs);
 			cpuinfo.fplwp = l;		/* now we do have it */
 			l->l_md.md_fpu = curcpu();
+			FPU_UNLOCK();
 		}
 #else
 		if (cpuinfo.fplwp != l) {		/* we do not have it */
 			int mid;
 
+			FPU_LOCK();
 			mid = l->l_md.md_fpumid;
 			if (cpuinfo.fplwp != NULL) {	/* someone else had it*/
 				savefpstate(cpuinfo.fplwp->l_md.md_fpstate);
@@ -565,7 +565,6 @@ badtrap:
 			FPU_UNLOCK();
 		}
 #endif
-		KERNEL_PROC_UNLOCK(l);
 		tf->tf_psr |= PSR_EF;
 		break;
 	}
@@ -1373,7 +1372,8 @@ syscall(code, tf, pc)
 		KERNEL_PROC_LOCK(l);
 
 	if ((error = trace_enter(l, code, code, NULL, args.i, rval)) != 0) {
-		KERNEL_PROC_UNLOCK(l);
+		if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
+			KERNEL_PROC_UNLOCK(l);
 		goto bad;
 	}
 
