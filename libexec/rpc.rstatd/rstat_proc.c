@@ -29,7 +29,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: rstat_proc.c,v 1.5 1993/12/07 09:09:12 mycroft Exp $";
+static char rcsid[] = "$Id: rstat_proc.c,v 1.6 1994/04/01 03:29:58 cgd Exp $";
 #endif
 
 /*
@@ -113,7 +113,7 @@ kvm_read(off, addr, size)
         char *addr;
 {
         int len;
-	if (lseek(kmem, (long)off, 0) == -1)
+	if (lseek(kmem, off, 0) == -1)
                 return(-1);
 	return(read(kmem, addr, size));
 }
