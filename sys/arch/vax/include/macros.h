@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.23.8.2 2002/02/28 04:12:29 nathanw Exp $	*/
+/*	$NetBSD: macros.h,v 1.23.8.3 2002/03/29 23:31:41 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -186,7 +186,7 @@ static __inline__ char * __attribute__((__unused__))
 strncat(char *cp, const char *c2, size_t count)
 {
         __asm__ __volatile("locc $0,%2,(%1);"
-			   "subl3 %%r0,%2,%r2;"
+			   "subl3 %%r0,%2,%%r2;"
                            "locc $0,$65535,(%0);"
 			   "movc3 %%r2,(%1),(%%r1);"
 			   "movb $0,(%%r3)"
@@ -344,9 +344,12 @@ bbcci(int bitnr, long *addr)
 #define remrunqueue(p)	\
 	__asm__ __volatile("movl %0,%%r0;jsb Remrq" :: "g"(p):"r0","r1","r2");
 
-#define cpu_switch(p) \
-	__asm__ __volatile("movl %0,%%r6;movpsl -(%%sp);jsb Swtch" \
-	    ::"g"(p):"r0","r1","r2","r3","r4","r5","r6");
+#define cpu_switch(p) ({ 						\
+	register ret;							\
+	__asm__ __volatile("movpsl -(%%sp);jsb Swtch; movl %%r0,%0"	\
+	    : "=g"(ret) ::"r0","r1","r2","r3","r4","r5");		\
+	ret; })
+
 
 /*
  * Interlock instructions. Used both in multiprocessor environments to

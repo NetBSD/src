@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.120.4.2 2002/02/28 04:12:31 nathanw Exp $	 */
+/* $NetBSD: machdep.c,v 1.120.4.3 2002/03/29 23:22:44 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -69,6 +69,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/ptrace.h>
+#include <sys/savar.h>
 
 #include <dev/cons.h>
 
@@ -323,19 +324,20 @@ consinit()
 
 #if defined(COMPAT_13) || defined(COMPAT_ULTRIX)
 int
-compat_13_sys_sigreturn(p, v, retval)
-	struct proc *p;
+compat_13_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct compat_13_sys_sigreturn_args /* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct trapframe *scf;
 	struct sigcontext13 *cntx;
 	sigset_t mask;
 
-	scf = p->p_addr->u_pcb.framep;
+	scf = l->l_addr->u_pcb.framep;
 	cntx = SCARG(uap, sigcntxp);
 	if (uvm_useracc((caddr_t)cntx, sizeof (*cntx), B_READ) == 0)
 		return EINVAL;
@@ -364,18 +366,19 @@ compat_13_sys_sigreturn(p, v, retval)
 #endif
 
 int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
+sys___sigreturn14(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct trapframe *scf;
 	struct sigcontext *cntx;
 
-	scf = p->p_addr->u_pcb.framep;
+	scf = l->l_addr->u_pcb.framep;
 	cntx = SCARG(uap, sigcntxp);
 
 	if (uvm_useracc((caddr_t)cntx, sizeof (*cntx), B_READ) == 0)
@@ -419,14 +422,15 @@ sendsig(catcher, sig, mask, code)
 	sigset_t	*mask;
 	u_long		code;
 {
-	struct	proc	*p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	struct	trapframe *syscf;
 	struct	sigcontext *sigctx, gsigctx;
 	struct	trampframe *trampf, gtrampf;
 	unsigned	cursp;
 	int	onstack;
 
-	syscf = p->p_addr->u_pcb.framep;
+	syscf = l->l_addr->u_pcb.framep;
 
 	onstack =
 	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
@@ -467,7 +471,7 @@ sendsig(catcher, sig, mask, code)
 
 	if (copyout(&gtrampf, trampf, sizeof(gtrampf)) ||
 	    copyout(&gsigctx, sigctx, sizeof(gsigctx)))
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 
 	syscf->pc = (int)p->p_sigctx.ps_sigcode;
 	syscf->psl = PSL_U | PSL_PREVU;
@@ -601,11 +605,11 @@ dumpsys()
 }
 
 int
-process_read_regs(p, regs)
-	struct proc    *p;
+process_read_regs(l, regs)
+	struct lwp    *l;
 	struct reg     *regs;
 {
-	struct trapframe *tf = p->p_addr->u_pcb.framep;
+	struct trapframe *tf = l->l_addr->u_pcb.framep;
 
 	bcopy(&tf->r0, &regs->r0, 12 * sizeof(int));
 	regs->ap = tf->ap;
@@ -617,11 +621,11 @@ process_read_regs(p, regs)
 }
 
 int
-process_write_regs(p, regs)
-	struct proc    *p;
+process_write_regs(l, regs)
+	struct lwp    *l;
 	struct reg     *regs;
 {
-	struct trapframe *tf = p->p_addr->u_pcb.framep;
+	struct trapframe *tf = l->l_addr->u_pcb.framep;
 
 	bcopy(&regs->r0, &tf->r0, 12 * sizeof(int));
 	tf->ap = regs->ap;
@@ -634,17 +638,17 @@ process_write_regs(p, regs)
 }
 
 int
-process_set_pc(p, addr)
-	struct	proc *p;
+process_set_pc(l, addr)
+	struct	lwp *l;
 	caddr_t addr;
 {
 	struct	trapframe *tf;
 	void	*ptr;
 
-	if ((p->p_flag & P_INMEM) == 0)
+	if ((l->l_flag & L_INMEM) == 0)
 		return (EIO);
 
-	ptr = (char *) p->p_addr->u_pcb.framep;
+	ptr = (char *) l->l_addr->u_pcb.framep;
 	tf = ptr;
 
 	tf->pc = (unsigned) addr;
@@ -653,16 +657,16 @@ process_set_pc(p, addr)
 }
 
 int
-process_sstep(p, sstep)
-	struct proc    *p;
+process_sstep(l, sstep)
+	struct lwp    *l;
 {
 	void	       *ptr;
 	struct trapframe *tf;
 
-	if ((p->p_flag & P_INMEM) == 0)
+	if ((l->l_flag & L_INMEM) == 0)
 		return (EIO);
 
-	ptr = p->p_addr->u_pcb.framep;
+	ptr = l->l_addr->u_pcb.framep;
 	tf = ptr;
 
 	if (sstep)
@@ -807,3 +811,82 @@ krnunlock()
 	KERNEL_UNLOCK();
 }
 #endif
+
+void
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+    void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct proc *p = l->l_proc;
+	struct trapframe *tf = l->l_addr->u_pcb.framep;
+
+	/* XXX - separate frame later */
+	tf->r2 = (long)type;
+	tf->r3 = (long)sas;
+	tf->r4 = (long)nevents;
+	tf->r5 = (long)ninterrupted;
+	tf->r6 = (long)ap;
+	tf->r7 = (long)upcall;
+	tf->sp = (long)sp;
+	tf->pc = (long)p->p_sigctx.ps_sigcode;
+	tf->psl = (long)PSL_U | PSL_PREVU;
+}
+
+void
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
+{
+	const struct trapframe *tf = l->l_addr->u_pcb.framep;
+	__greg_t *gr = mcp->__gregs;
+
+	gr[_REG_R0] = tf->r0;
+	gr[_REG_R1] = tf->r1;
+	gr[_REG_R2] = tf->r2;
+	gr[_REG_R3] = tf->r3;
+	gr[_REG_R4] = tf->r4;
+	gr[_REG_R5] = tf->r5;
+	gr[_REG_R6] = tf->r6;
+	gr[_REG_R7] = tf->r7;
+	gr[_REG_R8] = tf->r8;
+	gr[_REG_R9] = tf->r9;
+	gr[_REG_R10] = tf->r10;
+	gr[_REG_R11] = tf->r11;
+	gr[_REG_AP] = tf->ap;
+	gr[_REG_FP] = tf->fp;
+	gr[_REG_SP] = tf->sp;
+	gr[_REG_PC] = tf->pc;
+	gr[_REG_PSL] = tf->psl;
+	*flags |= _UC_CPU;
+}
+
+int
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
+{
+	struct trapframe *tf = l->l_addr->u_pcb.framep;
+	__greg_t *gr = mcp->__gregs;
+
+	if ((flags & _UC_CPU) == 0)
+		return 0;
+
+	if ((gr[_REG_PSL] & (PSL_IPL | PSL_IS)) ||
+	    ((gr[_REG_PSL] & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
+	    (gr[_REG_PSL] & PSL_CM))
+		return (EINVAL);
+
+	tf->r0 = gr[_REG_R0];
+	tf->r1 = gr[_REG_R1];
+	tf->r2 = gr[_REG_R2];
+	tf->r3 = gr[_REG_R3];
+	tf->r4 = gr[_REG_R4];
+	tf->r5 = gr[_REG_R5];
+	tf->r6 = gr[_REG_R6];
+	tf->r7 = gr[_REG_R7];
+	tf->r8 = gr[_REG_R8];
+	tf->r9 = gr[_REG_R9];
+	tf->r10 = gr[_REG_R10];
+	tf->r11 = gr[_REG_R11];
+	tf->ap = gr[_REG_AP];
+	tf->fp = gr[_REG_FP];
+	tf->sp = gr[_REG_SP];
+	tf->pc = gr[_REG_PC];
+	tf->psl = gr[_REG_PSL];
+	return 0;
+}
