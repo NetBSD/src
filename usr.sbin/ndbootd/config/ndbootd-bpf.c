@@ -1,3 +1,5 @@
+/*	$NetBSD: ndbootd-bpf.c,v 1.2 2001/05/22 14:41:59 fredette Exp $	*/
+
 /* ndbootd-bpf.c - the Sun Network Disk (nd) daemon BPF component: */
 
 /*
