@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.10 1998/02/05 04:57:12 gwr Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.11 1998/06/29 20:05:36 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,8 +44,6 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <string.h>
-#include <time.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -388,9 +386,11 @@ netif_get(desc, pkt, maxlen, timo)
 		} while (getticks() == tick0);
 	} while (--tmo_ticks > 0);
 
+#if 0
 	/* No packet arrived.  Better reset the interface. */
 	printf("netif_get: timeout; resetting\n");
 	(*sif->sif_reset)(si->si_devdata, si);
+#endif
 
 break2:
 
@@ -438,12 +438,6 @@ netif_getether(si, ea)
 	struct saif *sif;
 
 	sif = si->si_sif;
-#ifdef NETIF_DEBUG
-	if (debug) {
-		printf("netif_getether: sif=0x%x\n", sif);
-		breakpoint();
-	}
-#endif
 
 	/*
 	 * On Sun3X machines we want to use the PROM function
