@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.h,v 1.4 2002/08/28 03:52:45 itojun Exp $	*/
+/*	$NetBSD: intercept.h,v 1.5 2002/10/08 14:49:24 provos Exp $	*/
 /*	$OpenBSD: intercept.h,v 1.11 2002/08/04 04:15:50 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -32,6 +32,7 @@
 
 #ifndef _INTERCEPT_H_
 #define _INTERCEPT_H_
+#include <sys/param.h>
 #include <sys/queue.h>
 
 struct intercept_pid;
@@ -84,12 +85,12 @@ struct intercept_pid {
 	char *name;		/* name of current process image */
 	char *newname;		/* image name to be committed by execve */
 
-#define ICFLAGS_UIDKNOWN	0x01
-#define ICFLAGS_GIDKNOWN	0x02
-	int flags;
-
 	uid_t uid;		/* current uid */
 	gid_t gid;		/* current gid */
+
+	char username[MAXLOGNAME];
+	char home[MAXPATHLEN];	/* current home dir for uid */
+	char cwd[MAXPATHLEN];	/* current working directory */
 
 	void *data;
 
@@ -175,5 +176,7 @@ void intercept_syscall(int, pid_t, u_int16_t, int, const char *, int,
     const char *, void *, int);
 void intercept_syscall_result(int, pid_t, u_int16_t, int, const char *, int,
     const char *, void *, int, int, void *);
+void intercept_ugid(struct intercept_pid *, uid_t, gid_t);
+void intercept_setpid(struct intercept_pid *);
 
 #endif /* _INTERCEPT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.9 2002/10/08 02:47:59 itojun Exp $	*/
+/*	$NetBSD: systrace.c,v 1.10 2002/10/08 14:49:24 provos Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -45,6 +45,7 @@
 #include <string.h>
 #include <err.h>
 #include <errno.h>
+#include <pwd.h>
 
 #include "intercept.h"
 #include "systrace.h"
@@ -58,12 +59,35 @@ int automatic = 0;		/* Do not run interactively */
 int allow = 0;			/* Allow all and generate */
 int userpolicy = 1;		/* Permit user defined policies */
 int noalias = 0;		/* Do not do system call aliasing */
-char *username = NULL;		/* Username in automatic mode */
-char cwd[MAXPATHLEN];		/* Current working directory of process */
+int iamroot = 0;		/* Set if we are running as root */
+char cwd[MAXPATHLEN];		/* Current working directory */
+char home[MAXPATHLEN];		/* Home directory of user */
+char username[MAXLOGNAME];	/* Username: predicate match and expansion */
 
 static void child_handler(int);
 static void usage(void);
 static int requestor_start(char *);
+
+void
+systrace_parameters(void)
+{
+	struct passwd *pw;
+	uid_t uid = getuid();
+
+	iamroot = getuid() == 0;
+
+	/* Find out current username. */
+	if ((pw = getpwuid(uid)) == NULL)
+		snprintf(username, sizeof(username), "uid %u", uid);
+	else
+		snprintf(username, sizeof(username), "%s", pw->pw_name);
+
+	strlcpy(home, pw->pw_dir, sizeof(home));
+
+	/* Determine current working directory for filtering */
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+		err(1, "getcwd");
+}
 
 /*
  * Generate human readable output and setup replacements if available.
@@ -151,7 +175,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 	if ((pflq = systrace_policyflq(policy, emulation, name)) == NULL)
 		errx(1, "%s:%d: no filter queue", __func__, __LINE__);
 
-	action = filter_evaluate(tls, pflq, &ipid->uflags);
+	action = filter_evaluate(tls, pflq, ipid);
 	if (action != ICPOLICY_ASK)
 		goto replace;
 
@@ -178,7 +202,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 			 alias->aemul, alias->aname)) == NULL)
 			errx(1, "%s:%d: no filter queue", __func__, __LINE__);
 
-		action = filter_evaluate(tls, pflq, &ipid->uflags);
+		action = filter_evaluate(tls, pflq, ipid);
 		if (action != ICPOLICY_ASK)
 			goto replace;
 
@@ -194,7 +218,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 	}
 
 	action = filter_ask(fd, tls, pflq, policynr, emulation, name,
-	    output, &future, &ipid->uflags);
+	    output, &future, ipid);
 	if (future != ICPOLICY_ASK)
 		filter_modifypolicy(fd, policynr, emulation, name, future);
 
@@ -219,7 +243,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 	if (log)
 		syslog(LOG_WARNING, "%s user: %s, prog: %s",
 		    action < ICPOLICY_NEVER ? "permit" : "deny",
-		    username, output);
+		    ipid->username, output);
 
 	return (action);
 }
@@ -231,6 +255,7 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 	char output[_POSIX2_LINE_MAX];
 	struct policy *policy;
 	struct intercept_pid *ipid;
+	struct filterq *pflq = NULL;
 	short action = ICPOLICY_PERMIT;
 	short future;
 	int len, off, log = 0;
@@ -256,6 +281,13 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 	if (len > 0)
 		snprintf(output + off, len, ", args: %d", argsize);
 
+	if ((pflq = systrace_policyflq(policy, emulation, name)) == NULL)
+		errx(1, "%s:%d: no filter queue", __func__, __LINE__);
+
+	action = filter_evaluate(NULL, pflq, ipid);
+	if (action != ICPOLICY_ASK)
+		goto out;
+
 	if (policy->flags & POLICY_UNSUPERVISED) {
 		action = ICPOLICY_NEVER;
 		log = 1;
@@ -263,7 +295,7 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 	}
 
 	action = filter_ask(fd, NULL, NULL, policynr, emulation, name,
-	    output, &future, &ipid->uflags);
+	    output, &future, ipid);
 	if (future != ICPOLICY_ASK)
 		systrace_modifypolicy(fd, policynr, name, future);
 
@@ -278,7 +310,7 @@ gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
 	if (log)
 		syslog(LOG_WARNING, "%s user: %s, prog: %s",
 		    action < ICPOLICY_NEVER ? "permit" : "deny",
-		    username, output);
+		    ipid->username, output);
 
 	return (action);
 }
@@ -471,12 +503,7 @@ main(int argc, char **argv)
 	if (argc == 0 || (pidattach && *argv[0] != '/'))
 		usage();
 
-	/* Username for automatic mode, and policy predicates */
-	username = uid_to_name(getuid());
-
-	/* Determine current working directory for filtering */
-	if (getcwd(cwd, sizeof(cwd)) == NULL)
-		err(1, "getcwd");
+	systrace_parameters();
 
 	/* Local initalization */
 	systrace_initalias();

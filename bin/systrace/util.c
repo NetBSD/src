@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 2002/07/30 16:29:31 itojun Exp $	*/
+/*	$NetBSD: util.c,v 1.3 2002/10/08 14:49:24 provos Exp $	*/
 /*	$OpenBSD: util.c,v 1.8 2002/07/19 14:38:58 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,13 +30,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.2 2002/07/30 16:29:31 itojun Exp $");
+__RCSID("$NetBSD: util.c,v 1.3 2002/10/08 14:49:24 provos Exp $");
 
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
-#include <pwd.h>
 
 #include "util.h"
 
@@ -73,21 +72,6 @@ strrpl(char *str, size_t size, char *match, char *value)
 
 	return (p);
 }
-
-char *
-uid_to_name(uid_t uid)
-{
-	static char buf[128];
-	struct passwd *pw;
-
-	if ((pw = getpwuid(uid)) == NULL)
-		snprintf(buf, sizeof(buf), "uid %u", uid);
-	else
-		snprintf(buf, sizeof(buf), "%s", pw->pw_name);
-
-	return (buf);
-}
-
 
 /* simplify_path is from pdksh and apparently in the public domain */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: openbsd-syscalls.c,v 1.3 2002/08/28 03:52:46 itojun Exp $	*/
+/*	$NetBSD: openbsd-syscalls.c,v 1.4 2002/10/08 14:49:24 provos Exp $	*/
 /*	$OpenBSD: openbsd-syscalls.c,v 1.12 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -596,6 +596,17 @@ obsd_read(int fd)
 			err(1, "%s:%d: answer", __func__, __LINE__);
 		break;
 
+	case SYSTR_MSG_UGID: {
+		struct str_msg_ugid *msg_ugid;
+		
+		msg_ugid = &msg.msg_data.msg_ugid;
+
+		intercept_ugid(icpid, msg_ugid->uid, msg_ugid->uid);
+
+		if (obsd_answer(fd, pid, seqnr, 0, 0, 0) == -1)
+			err(1, "%s:%d: answer", __func__, __LINE__);
+		break;
+	}
 	case SYSTR_MSG_CHILD:
 		intercept_child_info(msg.msg_pid,
 		    msg.msg_data.msg_child.new_pid);

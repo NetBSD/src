@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.2 2002/07/30 16:29:31 itojun Exp $	*/
+/*	$NetBSD: util.h,v 1.3 2002/10/08 14:49:24 provos Exp $	*/
 /*	$OpenBSD: util.h,v 1.1 2002/07/19 14:38:58 itojun Exp $	*/
 
 /*
@@ -31,6 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _UTIL_H_
+#define _UTIL_H_
+
 void simplify_path(char *);
-char *uid_to_name(uid_t);
 char *strrpl(char *, size_t, char *, char *);
+
+#endif /* !_UTIL_H_ */

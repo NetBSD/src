@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.6 2002/09/17 04:54:36 itojun Exp $	*/
+/*	$NetBSD: intercept.c,v 1.7 2002/10/08 14:49:23 provos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.6 2002/09/17 04:54:36 itojun Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.7 2002/10/08 14:49:23 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: intercept.c,v 1.6 2002/09/17 04:54:36 itojun Exp $");
 #include <errno.h>
 #include <err.h>
 #include <libgen.h>
+#include <pwd.h>
 
 #include "intercept.h"
 
@@ -233,6 +234,21 @@ sigusr1_handler(int signum)
 	/* all we need to do is pretend to handle it */
 }
 
+void
+intercept_setpid(struct intercept_pid *icpid)
+{
+	struct passwd *pw;
+
+	icpid->uid = getuid();
+	icpid->gid = getgid();
+	if (getcwd(icpid->cwd, sizeof(icpid->cwd)) == NULL)
+		err(1, "getcwd");
+	if ((pw = getpwuid(icpid->uid)) == NULL)
+		err(1, "getpwuid");
+	strlcpy(icpid->username, pw->pw_name, sizeof(icpid->username));
+	strlcpy(icpid->home, pw->pw_dir, sizeof(icpid->home));
+}
+
 pid_t
 intercept_run(int bg, int fd, char *path, char *const argv[])
 {
@@ -300,10 +316,8 @@ intercept_run(int bg, int fd, char *path, char *const argv[])
 	if ((icpid = intercept_getpid(pid)) == NULL)
 		err(1, "intercept_getpid");
 	
-	/* Set uid and gid information */
-	icpid->uid = getuid();
-	icpid->gid = getgid();
-	icpid->flags |= ICFLAGS_UIDKNOWN | ICFLAGS_GIDKNOWN;
+	/* Set up user related information */
+	intercept_setpid(icpid);
 	
 	/* Setup done, restore signal handling state */
 	if (signal(SIGUSR1, ohandler) == SIG_ERR) {
@@ -529,6 +543,7 @@ char *
 intercept_filename(int fd, pid_t pid, void *addr, int userp)
 {
 	static char cwd[2*MAXPATHLEN];
+	struct intercept_pid *icpid;
 	char *name;
 
 	name = intercept_get_string(fd, pid, addr);
@@ -543,6 +558,12 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 
 		err(1, "%s: getcwd", __func__);
 	}
+
+	/* Update cwd for process */
+	if ((icpid = intercept_getpid(pid)) == NULL)
+		err(1, "intercept_getpid");
+	if (strlcpy(icpid->cwd, cwd, sizeof(icpid->cwd)) >= sizeof(icpid->cwd))
+		errx(1, "cwd too long");
 
 	if (name[0] != '/') {
 		if (strlcat(cwd, "/", sizeof(cwd)) >= sizeof(cwd))
@@ -671,8 +692,6 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 
 		/* We need to know the result from this system call */
 		flags = ICFLAGS_RESULT;
-	} else if (!strcmp(name, "setuid") || !strcmp(name, "setgid")) {
-		flags = ICFLAGS_RESULT;
 	}
 
 	sc = intercept_sccb_find(emulation, name);
@@ -727,19 +746,8 @@ intercept_syscall_result(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 			(*intercept_newimagecb)(fd, pid, policynr, emulation,
 			    icpid->name, intercept_newimagecbarg);
 
-	} else if (!strcmp("setuid", name)) {
-		register_t reg;
-
-		intercept.getarg(0, args, argsize, (void **)&reg);
-		icpid->uid = reg;
-		icpid->flags |= ICFLAGS_UIDKNOWN;
-	} else if (!strcmp("setgid", name)) {
-		register_t reg;
-
-		intercept.getarg(0, args, argsize, (void **)&reg);
-		icpid->gid = reg;
-		icpid->flags |= ICFLAGS_GIDKNOWN;
 	}
+
  out:
 	/* Resume execution of the process */
 	intercept.answer(fd, pid, seqnr, 0, 0, 0);
@@ -803,10 +811,34 @@ intercept_child_info(pid_t opid, pid_t npid)
 	inpid->ppid = opid;
 
 	/* Copy some information */
-	inpid->flags = ipid->flags;
 	inpid->uid = ipid->uid;
 	inpid->gid = ipid->gid;
+	strlcpy(inpid->username, ipid->username, sizeof(inpid->username));
+	strlcpy(inpid->home, ipid->home, sizeof(inpid->home));
+	strlcpy(inpid->cwd, ipid->cwd, sizeof(inpid->cwd));
 
 	/* XXX - keeps track of emulation */
 	intercept.clonepid(ipid, inpid);
+}
+
+void
+intercept_ugid(struct intercept_pid *icpid, uid_t uid, gid_t gid)
+{
+	/* Update current home dir */
+	if (icpid->uid != uid) {
+		struct passwd *pw;
+
+		if ((pw = getpwuid(uid)) == NULL) {
+			snprintf(icpid->username, sizeof(icpid->username),
+			    "uid %d", uid);
+			strlcpy(icpid->home, "/", sizeof(icpid->home));
+		} else {
+			strlcpy(icpid->username, pw->pw_name,
+			    sizeof(icpid->username));
+			strlcpy(icpid->home, pw->pw_dir, sizeof(icpid->home));
+		}
+	}
+
+	icpid->uid = uid;
+	icpid->gid = gid;
 }
