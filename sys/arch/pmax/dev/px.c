@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.15 1999/09/05 11:34:30 simonb Exp $ */
+/* 	$NetBSD: px.c,v 1.16 1999/09/18 01:50:24 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.15 1999/09/05 11:34:30 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.16 1999/09/18 01:50:24 ad Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -958,13 +958,13 @@ px_intr(xxx_sc)
 		hi = (int32_t *)pxi->pxi_slotbase + (PXG_HOST_INTR_OFFSET>>2);
 		
 		/* Clear the interrupt condition */
-		i = hi[0];
+		i = hi[0] & 15;
 		hi[0] = 0;
 		tc_wmb();
 		hi[2] = 0;
 		tc_wmb();
 
-		if (i != 3) /* 3 == vblank */
+		if (i == 3) /* 3 == vblank */
 			state |= STIC_INT_V;
 	}
 #endif
