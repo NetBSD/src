@@ -39,9 +39,8 @@
 
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
-_rcsid:
-.asciz	"$Id: s_copysign.S,v 1.1 1994/02/14 21:55:12 jtc Exp $"
 
+RCSID("$Id: s_copysign.S,v 1.2 1994/03/18 23:22:47 jtc Exp $")
 
 | copysign(x,y)
 | returns x with the sign of y.

@@ -39,9 +39,8 @@
 
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
-_rcsid:
-.asciz	"$Id: s_logb.S,v 1.2 1994/03/12 01:09:29 jtc Exp $"
 
+RCSID("$Id: s_logb.S,v 1.3 1994/03/18 23:23:11 jtc Exp $")
 
 | logb(x)
 | returns the unbiased exponent of x, a signed integer in double precision,
@@ -68,4 +67,3 @@ Ldone:
 	movel	sp@+,d0
 	movel	sp@+,d1
 	rts
-
