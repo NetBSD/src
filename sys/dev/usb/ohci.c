@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.146.2.1 2004/06/24 08:18:42 tron Exp $	*/
+/*	$NetBSD: ohci.c,v 1.146.2.2 2004/06/24 08:37:09 tron Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.146.2.1 2004/06/24 08:18:42 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.146.2.2 2004/06/24 08:37:09 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1668,7 +1668,8 @@ ohci_device_request(usbd_xfer_handle xfer)
 	sed = opipe->sed;
 	opipe->u.ctl.length = len;
 
-	/* Update device address and length since they may have changed. */
+	/* Update device address and length since they may have changed
+	   during the setup of the control pipe in usbd_new_device(). */
 	/* XXX This only needs to be done once, but it's too early in open. */
 	/* XXXX Should not touch ED here! */
 	sed->ed.ed_flags = htole32(
