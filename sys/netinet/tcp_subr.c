@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_subr.c	7.20 (Berkeley) 12/1/90
- *	$Id: tcp_subr.c,v 1.6 1994/01/08 21:22:01 mycroft Exp $
+ *	$Id: tcp_subr.c,v 1.7 1994/01/08 23:07:21 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -69,6 +69,7 @@ extern	struct inpcb *tcp_last_inpcb;
 /*
  * Tcp initialization
  */
+void
 tcp_init()
 {
 
@@ -133,6 +134,7 @@ tcp_template(tp)
  * In any case the ack and sequence number of the transmitted
  * segment are as specified by the parameters.
  */
+void
 tcp_respond(tp, ti, m, ack, seq, flags)
 	struct tcpcb *tp;
 	register struct tcpiphdr *ti;
@@ -359,6 +361,7 @@ tcp_close(tp)
 	return ((struct tcpcb *)0);
 }
 
+void
 tcp_drain()
 {
 
@@ -369,6 +372,7 @@ tcp_drain()
  * store error as soft error, but wake up user
  * (for now, won't do anything until can select for soft error).
  */
+void
 tcp_notify(inp, error)
 	register struct inpcb *inp;
 	int error;
@@ -380,6 +384,7 @@ tcp_notify(inp, error)
 	sowwakeup(inp->inp_socket);
 }
 
+void
 tcp_ctlinput(cmd, sa, ip)
 	int cmd;
 	struct sockaddr *sa;
@@ -388,7 +393,7 @@ tcp_ctlinput(cmd, sa, ip)
 	register struct tcphdr *th;
 	extern struct in_addr zeroin_addr;
 	extern u_char inetctlerrmap[];
-	int (*notify)() = tcp_notify, tcp_quench();
+	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
 
 	if (cmd == PRC_QUENCH)
 		notify = tcp_quench;
@@ -409,8 +414,10 @@ tcp_ctlinput(cmd, sa, ip)
  * When a source quench is received, close congestion window
  * to one segment.  We will gradually open it again as we proceed.
  */
-tcp_quench(inp)
+void
+tcp_quench(inp, errno)
 	struct inpcb *inp;
+	int errno;
 {
 	struct tcpcb *tp = intotcpcb(inp);
 

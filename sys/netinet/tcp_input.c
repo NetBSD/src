@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_input.c	7.25 (Berkeley) 6/30/90
- *	$Id: tcp_input.c,v 1.4 1994/01/08 21:21:58 mycroft Exp $
+ *	$Id: tcp_input.c,v 1.5 1994/01/08 23:07:18 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -96,6 +96,7 @@ struct	tcpcb *tcp_newtcpcb();
 	} \
 }
 
+int
 tcp_reass(tp, ti, m)
 	register struct tcpcb *tp;
 	register struct tcpiphdr *ti;
@@ -203,6 +204,7 @@ present:
  * TCP input routine, follows pages 65-76 of the
  * protocol specification dated September, 1981 very closely.
  */
+void
 tcp_input(m, iphlen)
 	register struct mbuf *m;
 	int iphlen;
@@ -647,8 +649,15 @@ trimthenstep6:
 				todrop = ti->ti_len;
 				tiflags &= ~TH_FIN;
 				tp->t_flags |= TF_ACKNOW;
-			} else
-				goto dropafterack;
+			} else {
+				/*
+				 * Handle the case when a bound socket connects
+				 * to itself. Allow packets with a SYN and
+				 * an ACK to continue with the processing.
+				 */
+				if (todrop != 0 || (tiflags & TH_ACK) == 0)
+					goto dropafterack;
+			}
 		} else {
 			tcpstat.tcps_rcvpartduppack++;
 			tcpstat.tcps_rcvpartdupbyte += todrop;
@@ -1207,6 +1216,7 @@ drop:
 	return;
 }
 
+void
 tcp_dooptions(tp, om, ti)
 	struct tcpcb *tp;
 	struct mbuf *om;
@@ -1254,6 +1264,7 @@ tcp_dooptions(tp, om, ti)
  * It is still reflected in the segment length for
  * sequencing purposes.
  */
+void
 tcp_pulloutofband(so, ti, m)
 	struct socket *so;
 	struct tcpiphdr *ti;
@@ -1284,6 +1295,7 @@ tcp_pulloutofband(so, ti, m)
  * Collect new round-trip time estimate
  * and update averages and current timeout.
  */
+void
 tcp_xmit_timer(tp)
 	register struct tcpcb *tp;
 {
@@ -1367,7 +1379,7 @@ tcp_xmit_timer(tp)
  * While looking at the routing entry, we also initialize other path-dependent
  * parameters from pre-set or cached values in the routing entry.
  */
-
+int
 tcp_mss(tp, offer)
 	register struct tcpcb *tp;
 	u_short offer;
