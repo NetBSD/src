@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/autoconf.c,v 1.6 1994/02/23 08:29:31 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/autoconf.c,v 1.7 1994/03/01 08:22:59 glass Exp $
  */
 /*
  * Setup the system to run on the current machine.
@@ -38,21 +38,21 @@
  * and the drivers are initialized.
  */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/map.h"
-#include "sys/buf.h"
-#include "sys/dkstat.h"
-#include "sys/conf.h"
-#include "sys/dmap.h"
-#include "sys/reboot.h"
-#include "sys/device.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/map.h>
+#include <sys/buf.h>
+#include <sys/dkstat.h>
+#include <sys/conf.h>
+#include <sys/dmap.h>
+#include <sys/reboot.h>
+#include <sys/device.h>
 
-#include "machine/autoconf.h"
-#include "machine/vmparam.h"
-#include "machine/cpu.h"
-#include "machine/pte.h"
-#include "machine/isr.h"
+#include <machine/autoconf.h>
+#include <machine/vmparam.h>
+#include <machine/cpu.h>
+#include <machine/pte.h>
+#include <machine/isr.h>
 
 extern void mainbusattach __P((struct device *, struct device *, void *));
      

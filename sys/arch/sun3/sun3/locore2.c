@@ -28,25 +28,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore2.c,v 1.16 1994/02/23 08:29:50 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore2.c,v 1.17 1994/03/01 08:23:15 glass Exp $
  */
 
-#include "systm.h"
-#include "param.h"
-#include "proc.h"
-#include "user.h"
+#include <sys/systm.h>
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 
-#include "vm/vm.h"
+#include <vm/vm.h>
 
-#include "machine/control.h"
-#include "machine/cpufunc.h"
-#include "machine/cpu.h"
-#include "machine/mon.h"
-#include "machine/control.h"
-#include "machine/pte.h"
-#include "machine/pmap.h"
-#include "machine/idprom.h"
-#include "machine/obio.h"
+#include <machine/control.h>
+#include <machine/cpufunc.h>
+#include <machine/cpu.h>
+#include <machine/mon.h>
+#include <machine/control.h>
+#include <machine/pte.h>
+#include <machine/pmap.h>
+#include <machine/idprom.h>
+#include <machine/obio.h>
 
 #include "vector.h"
 #include "interreg.h"

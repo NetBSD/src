@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.12 1994/02/04 08:20:52 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.13 1994/03/01 08:23:00 glass Exp $
  */
 /*
  * machine-dependent clock routines; intersil7170
@@ -39,10 +39,10 @@
  *
  */
 
-#include "systm.h"
-#include "param.h"
-#include "kernel.h"
-#include "device.h"
+#include <sys/systm.h>
+#include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
 
 #include <machine/autoconf.h>
 #include <machine/psl.h>
