@@ -1,9 +1,16 @@
-#	$NetBSD: Makefile,v 1.17 2000/01/23 09:58:13 veego Exp $
+#	$NetBSD: Makefile,v 1.18 2002/11/04 22:03:38 christos Exp $
+
+.include <bsd.own.mk>
 
 PROG =	rpc.rusersd
-SRCS =	rusersd.c rusers_proc.c
+SRCS =	rusersd.c rusers_proc.c utmpentry.c
 MAN =	rpc.rusersd.8
 MLINKS=	rpc.rusersd.8 rusersd.8
+
+.PATH.c: ${NETBSDSRCDIR}/usr.bin/who
+
+CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/who -DSUPPORT_UTMPX -DSUPPORT_UTMP
+
 
 DPADD+=	${LIBRPCSVC}
 LDADD+=	-lrpcsvc

@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers_proc.c,v 1.23 2001/01/10 01:54:39 lukem Exp $	*/
+/*	$NetBSD: rusers_proc.c,v 1.24 2002/11/04 22:03:39 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers_proc.c,v 1.23 2001/01/10 01:54:39 lukem Exp $");
+__RCSID("$NetBSD: rusers_proc.c,v 1.24 2002/11/04 22:03:39 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: rusers_proc.c,v 1.23 2001/01/10 01:54:39 lukem Exp $");
 #include <rpc/rpc.h>
 
 #include "rusers_proc.h"
+#include "utmpentry.h"
 
 #ifdef XIDLE
 #include <setjmp.h>
@@ -60,40 +61,13 @@ __RCSID("$NetBSD: rusers_proc.c,v 1.23 2001/01/10 01:54:39 lukem Exp $");
 #include <rpcsvc/rusers.h>	/* New version */
 #include <rpcsvc/rnusers.h>	/* Old version */
 
-#define	IGNOREUSER	"sleeper"
-
-#ifdef OSF
-#define _PATH_UTMP UTMP_FILE
-#endif
-
-#ifndef _PATH_UTMP
-#define _PATH_UTMP "/etc/utmp"
-#endif
-
 #ifndef _PATH_DEV
 #define _PATH_DEV "/dev"
 #endif
 
-#ifndef UT_LINESIZE
-#define UT_LINESIZE sizeof(((struct utmp *)0)->ut_line)
-#endif
-#ifndef UT_NAMESIZE
-#define UT_NAMESIZE sizeof(((struct utmp *)0)->ut_name)
-#endif
-#ifndef UT_HOSTSIZE
-#define UT_HOSTSIZE sizeof(((struct utmp *)0)->ut_host)
-#endif
-
-typedef char ut_line_t[UT_LINESIZE];
-typedef char ut_name_t[UT_NAMESIZE];
-typedef char ut_host_t[UT_HOSTSIZE];
-
 static struct rusers_utmp utmps[MAXUSERS];
 static struct utmpidle *utmp_idlep[MAXUSERS];
 static struct utmpidle utmp_idle[MAXUSERS];
-static ut_line_t line[MAXUSERS];
-static ut_name_t name[MAXUSERS];
-static ut_host_t host[MAXUSERS];
 
 extern int from_inetd;
 
@@ -135,8 +109,8 @@ XqueryIdle(char *display)
 		}
 		if (XidleQueryExtension(dpy, &first_event, &first_error)) {
 			if (!XGetIdleTime(dpy, &IdleTime)) {
-				syslog(LOG_DEBUG, "%s: unable to get idle time",
-				    display);
+				syslog(LOG_DEBUG,
+				    "%s: unable to get idle time", display);
 				return (-1);
 			}
 		} else {
@@ -208,81 +182,39 @@ getidle(char *tty, char *display)
 	return idle;
 }
 	
+static struct utmpentry *ue = NULL;
+static int nusers = 0;
+
 static int *
 rusers_num_svc(void *arg, struct svc_req *rqstp)
 {
-	static int num_users = 0;
-	struct utmp usr;
-	FILE *ufp;
-
-	ufp = fopen(_PATH_UTMP, "r");
-	if (!ufp) {
-		syslog(LOG_WARNING, "%m");
-		return (0);
-	}
-
-	/* only entries with both name and line fields */
-	while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1)
-		if (*usr.ut_name && *usr.ut_line &&
-		    strncmp(usr.ut_name, IGNOREUSER,
-			    sizeof(usr.ut_name))
-#ifdef OSF
-		    && usr.ut_type == USER_PROCESS
-#endif
-		    ) {
-			num_users++;
-		}
-
-	fclose(ufp);
-	return (&num_users);
+	nusers = getutentries(NULL, &ue);
+	return &nusers;
 }
 
 static utmp_array *
 do_names_3(int all)
 {
 	static utmp_array ut;
-	struct utmp usr;
-	int nusers = 0;
-	FILE *ufp;
+	struct utmpentry *e;
+	int nu;
 
-	memset(&ut, 0, sizeof(ut));
+	(void)memset(&ut, 0, sizeof(ut));
 	ut.utmp_array_val = &utmps[0];
-	
-	ufp = fopen(_PATH_UTMP, "r");
-	if (!ufp) {
-		syslog(LOG_WARNING, "%m");
-		return (NULL);
+
+	nusers = getutentries(NULL, &ue);
+
+	for (nu = 0, e = ue; e != NULL && nu < MAXUSERS; e = e->next, nu++) {
+		utmps[nu].ut_type = RUSERS_USER_PROCESS;
+		utmps[nu].ut_time = e->tv.tv_sec;
+		utmps[nu].ut_idle = getidle(e->line, e->host);
+		utmps[nu].ut_line = e->line;
+		utmps[nu].ut_user = e->name;
+		utmps[nu].ut_host = e->host;
 	}
 
-	/* only entries with both name and line fields */
-	while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1 &&
-	       nusers < MAXUSERS)
-		if (*usr.ut_name && *usr.ut_line &&
-		    strncmp(usr.ut_name, IGNOREUSER,
-			    sizeof(usr.ut_name))
-#ifdef OSF
-		    && usr.ut_type == USER_PROCESS
-#endif
-		    ) {
-			utmps[nusers].ut_type = RUSERS_USER_PROCESS;
-			utmps[nusers].ut_time =
-				usr.ut_time;
-			utmps[nusers].ut_idle =
-				getidle(usr.ut_line, usr.ut_host);
-			utmps[nusers].ut_line = line[nusers];
-			strncpy(line[nusers], usr.ut_line,
-			    sizeof(line[nusers]));
-			utmps[nusers].ut_user = name[nusers];
-			strncpy(name[nusers], usr.ut_name,
-			    sizeof(name[nusers]));
-			utmps[nusers].ut_host = host[nusers];
-			strncpy(host[nusers], usr.ut_host,
-			    sizeof(host[nusers]));
-			nusers++;
-		}
-	ut.utmp_array_len = nusers;
+	ut.utmp_array_len = nu;
 
-	fclose(ufp);
 	return (&ut);
 }
 
@@ -304,46 +236,28 @@ static struct utmpidlearr *
 do_names_2(int all)
 {
 	static struct utmpidlearr ut;
-	struct utmp usr;
-	int nusers = 0;
-	FILE *ufp;
+	struct utmpentry *e;
+	int nu;
 
-	memset((char *)&ut, 0, sizeof(ut));
+	(void)memset(&ut, 0, sizeof(ut));
 	ut.uia_arr = utmp_idlep;
 	ut.uia_cnt = 0;
 	
-	ufp = fopen(_PATH_UTMP, "r");
-	if (!ufp) {
-		syslog(LOG_WARNING, "%m");
-		return (NULL);
+	nusers = getutentries(NULL, &ue);
+
+	for (nu = 0, e = ue; e != NULL && nu < MAXUSERS; e = e->next, nu++) {
+		utmp_idlep[nu] = &utmp_idle[nu];
+		utmp_idle[nu].ui_utmp.ut_time = e->tv.tv_sec;
+		utmp_idle[nu].ui_idle = getidle(e->line, e->host);
+		(void)strncpy(utmp_idle[nu].ui_utmp.ut_line, e->line,
+		    sizeof(utmp_idle[nu].ui_utmp.ut_line));
+		(void)strncpy(utmp_idle[nu].ui_utmp.ut_name, e->name,
+		    sizeof(utmp_idle[nu].ui_utmp.ut_name));
+		(void)strncpy(utmp_idle[nu].ui_utmp.ut_host, e->host,
+		    sizeof(utmp_idle[nu].ui_utmp.ut_host));
 	}
 
-	/* only entries with both name and line fields */
-	while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1 &&
-	       nusers < MAXUSERS)
-		if (*usr.ut_name && *usr.ut_line &&
-		    strncmp(usr.ut_name, IGNOREUSER,
-			    sizeof(usr.ut_name))
-#ifdef OSF
-		    && usr.ut_type == USER_PROCESS
-#endif
-		    ) {
-			utmp_idlep[nusers] = &utmp_idle[nusers];
-			utmp_idle[nusers].ui_utmp.ut_time =
-				usr.ut_time;
-			utmp_idle[nusers].ui_idle =
-				getidle(usr.ut_line, usr.ut_host);
-			strncpy(utmp_idle[nusers].ui_utmp.ut_line, usr.ut_line,
-			    sizeof(utmp_idle[nusers].ui_utmp.ut_line));
-			strncpy(utmp_idle[nusers].ui_utmp.ut_name, usr.ut_name,
-			    sizeof(utmp_idle[nusers].ui_utmp.ut_name));
-			strncpy(utmp_idle[nusers].ui_utmp.ut_host, usr.ut_host,
-			    sizeof(utmp_idle[nusers].ui_utmp.ut_host));
-			nusers++;
-		}
-
-	ut.uia_cnt = nusers;
-	fclose(ufp);
+	ut.uia_cnt = nu;
 	return (&ut);
 }
 
