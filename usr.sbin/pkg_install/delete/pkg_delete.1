@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.22 2001/10/04 19:44:48 agc Exp $
+.\" $NetBSD: pkg_delete.1,v 1.23 2002/02/02 01:32:25 wiz Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -37,7 +37,6 @@ command is used to delete packages that have been previously installed
 with the
 .Xr pkg_add 1
 command.
-
 .Sh WARNING
 .Bf -emphasis
 Since the
@@ -64,7 +63,6 @@ directives, and/or use the
 .Xr pkg_info 1
 command to examine the installed package control files.
 .Ef
-
 .Sh OPTIONS
 The following command line options are supported:
 .Bl -tag -width indent
@@ -129,7 +127,6 @@ Print version number and exit.
 .It Fl v
 Turn on verbose output.
 .El
-.Pp
 .Sh TECHNICAL DETAILS
 .Nm
 does pretty much what it says.  It examines installed package records in
@@ -211,7 +208,7 @@ is installed, even if the user might have changed it by specifying the
 option when running
 .Nm
 or
-.Cm pkg_add .
+.Xr pkg_add 1 .
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
 .Xr pkg_admin 1 ,
