@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.10 2002/09/16 19:59:00 manu Exp $
+#	$NetBSD: Makefile,v 1.11 2002/09/19 12:08:37 lukem Exp $
+
+.include <bsd.own.mk>
 
 .if (${MACHINE} == "i386" || ${MACHINE} == "macppc" || ${MACHINE} == "hpcarm")
 PROG=	apm
 SRCS=	apm.c apmsubr.c
-.PATH:	${.CURDIR}/../apmd
-CPPFLAGS+=-I${.CURDIR}/../apmd
+.PATH:	${NETBSDSRCDIR}/usr.sbin/apmd
+CPPFLAGS+=-I${NETBSDSRCDIR}/usr.sbin/apmd
 LINKS=	${BINDIR}/apm ${BINDIR}/zzz
 .endif
 
