@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.25.4.4 2002/10/10 18:32:00 jdolecek Exp $	*/
+/*	$NetBSD: grf.c,v 1.25.4.5 2002/10/10 22:00:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -109,11 +109,10 @@ dev_type_close(grfclose);
 dev_type_ioctl(grfioctl);
 dev_type_poll(grfpoll);
 dev_type_mmap(grfmmap);
-dev_type_kqfilter(grfkqfilter);
 
 const struct cdevsw grf_cdevsw = {
 	grfopen, grfclose, noread, nowrite, grfioctl,
-	nostop, notty, grfpoll, grfmmap, grfkqfilter,
+	nostop, notty, grfpoll, grfmmap, nokqfilter,
 };
 
 /*
@@ -284,14 +283,6 @@ grfpoll(dev, events, p)
 	if (events & (POLLOUT | POLLWRNORM))
 		revents |= events & (POLLOUT | POLLWRNORM);
 	return (revents);
-}
-
-int
-grfkqfilter(dev_t dev, struct knote *kn)
-{
-
-	/* XXXLUKEM (thorpej): not supported -- why is poll? */
-	return (1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.39.2.4 2002/10/10 18:32:37 jdolecek Exp $	*/
+/*	$NetBSD: grf.c,v 1.39.2.5 2002/10/10 22:00:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.2.4 2002/10/10 18:32:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.2.5 2002/10/10 22:00:10 jdolecek Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -103,11 +103,10 @@ dev_type_close(grfclose);
 dev_type_ioctl(grfioctl);
 dev_type_poll(grfpoll);
 dev_type_mmap(grfmmap);
-dev_type_kqfilter(grfkqfilter);
 
 const struct cdevsw grf_cdevsw = {
 	grfopen, grfclose, nullread, nullwrite, grfioctl,
-	nostop, notty, grfpoll, grfmmap, grfkqfilter,
+	nostop, notty, grfpoll, grfmmap, nokqfilter,
 };
 
 int	grfprint __P((void *, const char *));
@@ -306,14 +305,6 @@ grfpoll(dev, events, p)
 {
 
 	return (events & (POLLOUT | POLLWRNORM));
-}
-
-int
-grfkqfilter(dev_t dev, struct knote *kn)
-{
-
-	/* XXXLUKEM (thorpej): not supported -- why is poll? */
-	return (1);
 }
 
 /*ARGSUSED*/

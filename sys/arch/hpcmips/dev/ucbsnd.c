@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.5.6.4 2002/10/10 18:32:56 jdolecek Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.5.6.5 2002/10/10 22:00:10 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -182,11 +182,10 @@ dev_type_write(ucbsndwrite);
 dev_type_ioctl(ucbsndioctl);
 dev_type_poll(ucbsndpoll);
 dev_type_mmap(ucbsndmmap);
-dev_type_kqfilter(ucbsndkqfilter);
 
 const struct cdevsw ucbsnd_cdevsw = {
 	ucbsndopen, ucbsndclose, ucbsndread, ucbsndwrite, ucbsndioctl,
-	nostop, notty, ucbsndpoll, ucbsndmmap,  ucbsndkqfilter,
+	nostop, notty, ucbsndpoll, ucbsndmmap,  nokqfilter,
 };
 
 int
@@ -664,14 +663,6 @@ ucbsndpoll(dev_t dev, int events, struct proc *p)
 	/* not coded yet */
 
 	return (error);
-}
-
-int
-ucbsndkqfilter(dev_t dev, struct knote *kn)
-{
-
-	/* XXXLUKEM (jdolecek): not supported -- why is poll? */
-	return (1);
 }
 
 paddr_t

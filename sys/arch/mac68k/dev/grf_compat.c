@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.7.2.2 2002/10/10 18:33:46 jdolecek Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.7.2.3 2002/10/10 22:00:12 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -62,11 +62,10 @@ dev_type_close(grfclose);
 dev_type_ioctl(grfioctl);
 dev_type_poll(grfpoll);
 dev_type_mmap(grfmmap);
-dev_type_kqfilter(grfkqfilter);
 
 const struct cdevsw grf_cdevsw = {
 	grfopen, grfclose, noread, nowrite, grfioctl,
-	nostop, notty, grfpoll, grfmmap, grfkqfilter,
+	nostop, notty, grfpoll, grfmmap, nokqfilter,
 };
 
 void	grf_scinit __P((struct grf_softc *, const char *, int));
@@ -310,14 +309,6 @@ grfpoll(dev, events, p)
 	struct proc *p;
 {
 	return EINVAL;
-}
-
-int
-grfkqfilter(dev_t dev, struct knote *kn)
-{
-
-	/* XXXLUKEM (thorpej): not supported -- why is poll? */
-	return (1);
 }
 
 paddr_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.17.4.5 2002/10/10 18:31:33 jdolecek Exp $ */
+/*	$NetBSD: view.c,v 1.17.4.6 2002/10/10 22:00:09 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.17.4.5 2002/10/10 18:31:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.17.4.6 2002/10/10 22:00:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,11 +80,10 @@ dev_type_close(viewclose);
 dev_type_ioctl(viewioctl);
 dev_type_poll(viewpoll);
 dev_type_mmap(viewmmap);
-dev_type_kqfilter(viewkqfilter);
 
 const struct cdevsw view_cdevsw = {
 	viewopen, viewclose, nullread, nullwrite, viewioctl,
-	nostop, notty, viewpoll, viewmmap, viewkqfilter,
+	nostop, notty, viewpoll, viewmmap, nokqfilter,
 };
 
 /*
@@ -409,12 +408,4 @@ int
 viewpoll(dev_t dev, int events, struct proc *p)
 {
 	return(events & (POLLOUT | POLLWRNORM));
-}
-
-int
-viewkqfilter(dev_t dev, struct knote *kn)
-{
-
-	/* XXXLUKEM (thorpej): not supported -- why is poll? */
-	return (1);
 }

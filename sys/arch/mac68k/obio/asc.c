@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.39.4.3 2002/10/10 18:33:54 jdolecek Exp $	*/
+/*	$NetBSD: asc.c,v 1.39.4.4 2002/10/10 22:00:11 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -119,11 +119,10 @@ dev_type_write(ascwrite);
 dev_type_ioctl(ascioctl);
 dev_type_poll(ascpoll);
 dev_type_mmap(ascmmap);
-dev_type_kqfilter(asckqfilter);
 
 const struct cdevsw asc_cdevsw = {
 	ascopen, ascclose, ascread, ascwrite, ascioctl,
-	nostop, notty, ascpoll, ascmmap, asckqfilter
+	nostop, notty, ascpoll, ascmmap, nokqfilter
 };
 
 static int
@@ -298,14 +297,6 @@ ascpoll(dev, events, p)
 	struct proc *p;
 {
 	return (events & (POLLOUT | POLLWRNORM));
-}
-
-int
-asckqfilter(dev_t dev, struct knote *kn)
-{
-
-	/* XXXLUKEM (thorpej): not supported (why is poll?) */
-	return (1);
 }
 
 paddr_t
