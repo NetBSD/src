@@ -1,4 +1,4 @@
-/*    $NetBSD: nfs_boot.c,v 1.8 1994/07/19 02:23:27 gwr Exp $ */
+/*    $NetBSD: nfs_boot.c,v 1.9 1994/08/11 22:25:35 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Adam Glass, Gordon Ross
@@ -160,6 +160,7 @@ nfs_boot_init(nd, procp)
 	 */
 	/* Set interface address. */
 	sin = (struct sockaddr_in *)&ireq.ifr_addr;
+	bzero((char*)sin, sizeof(*sin));
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = my_ip.s_addr;
@@ -173,6 +174,7 @@ nfs_boot_init(nd, procp)
 	 * Get client name and gateway address.
 	 * RPC: bootparam/whoami
 	 */
+	bzero((char*)&bp_sin, sizeof(bp_sin));
 	bp_sin.sin_len = sizeof(bp_sin);
 	bp_sin.sin_family = AF_INET;
 	bp_sin.sin_addr.s_addr = srv_ip.s_addr;
@@ -201,11 +203,11 @@ nfs_boot_init(nd, procp)
 	if (gw_ip.s_addr) {
 		struct sockaddr dst, gw, mask;
 		/* Destination: (default) */
-		bzero(&dst, sizeof(dst));
+		bzero((char*)&dst, sizeof(dst));
 		dst.sa_len = sizeof(dst);
 		dst.sa_family = AF_INET;
 		/* Gateway: */
-		bzero(&gw, sizeof(gw));
+		bzero((char*)&gw, sizeof(gw));
 		sin = (struct sockaddr_in *)&gw;
 		sin->sin_len = sizeof(gw);
 		sin->sin_family = AF_INET;
@@ -520,6 +522,7 @@ bp_getfile(bpsin, key, md_sin, serv_name, pathname)
 	if (bia->atype != htonl(1))
 		goto bad;
 	sin = md_sin;
+	bzero((char*)sin, sizeof(*sin));
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	q = (u_char*) &sin->sin_addr;
