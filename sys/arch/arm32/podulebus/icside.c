@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.3 1997/10/14 22:59:08 mark Exp $	*/
+/*	$NetBSD: icside.c,v 1.4 1997/10/17 06:49:17 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -65,7 +65,7 @@
 #include <arm32/podulebus/icsidereg.h>
 
 #include <arm32/dev/wdreg.h>
-#include <arm32/dev/wdcvar.h>
+#include <arm32/dev/wdlink.h>
 
 /*
  * ICS IDE podule device.
