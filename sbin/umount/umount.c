@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,101 +32,83 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980, 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)umount.c	5.16 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: umount.c,v 1.6 1994/04/14 03:25:38 cgd Exp $";
+/*static char sccsid[] = "from: @(#)umount.c	8.3 (Berkeley) 2/20/94";*/
+static char *rcsid = "$Id: umount.c,v 1.7 1994/06/08 19:34:40 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-
-#ifdef NFS
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+
 #include <netdb.h>
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_prot.h>
 #include <nfs/rpcv2.h>
-#endif
 
 #include <err.h>
 #include <fstab.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
-#ifdef NFS
-char *nfshost;
-#endif
+typedef enum { MNTON, MNTFROM } mntwhat;
 
-int	vflag, all, errs, fake;
-int	fflag = MNT_NOFORCE;
+int	fake, fflag, vflag;
+char	**typelist;
+char	*nfshost;
 
-#define	MNTON	1
-#define	MNTFROM	2
-#define	MNTTYPE 3
-
-char **typelist;
-
-struct fstab *allocfsent __P((struct fstab *));
-int	badtype __P((char *, char **));
-void	freefsent __P((struct fstab *));
-char	*getmntname __P((char *, int, char *));
-char	**maketypelist __P((char *));
-void	umountall __P((char **));
-int	umountfs __P((char *, char **, int));
-void	usage __P((void));
-#ifdef NFS
-int	namematch __P((struct hostent *, char *));
-int	xdr_dir __P((XDR *, char *));
-#endif
+char	*getmntname __P((char *, mntwhat, char *));
+void	 maketypelist __P((char *));
+int	 selected __P((char *));
+int	 namematch __P((struct hostent *));
+int	 umountall __P((void));
+int	 umountfs __P((char *));
+void	 usage __P((void));
+int	 xdr_dir __P((XDR *, char *));
 
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
-	int ch;
+	int all, ch, errs;
 
+	/* Start disks transferring immediately. */
 	sync();
-	while ((ch = getopt(argc, argv, "afFh:t:v")) != EOF)
-		switch((char)ch) {
-		case 'v':
-			vflag++;
+
+	all = 0;
+	while ((ch = getopt(argc, argv, "aFfh:t:v")) != EOF)
+		switch (ch) {
+		case 'a':
+			all = 1;
+			break;
+		case 'F':
+			fake = 1;
 			break;
 		case 'f':
 			fflag = MNT_FORCE;
 			break;
-		case 'F':
-			fake++;
-			break;
-		case 'a':
-			all++;
+		case 'h':	/* -h implies -a. */
+			all = 1;
+			nfshost = optarg;
 			break;
 		case 't':
-			typelist = maketypelist(optarg);
+			maketypelist(optarg);
 			break;
-#ifdef	NFS
-		case 'h':
-			/* -h flag implies -a, and "-t nfs" if no -t flag */
-			nfshost = optarg;
-			all++;
-			if (typelist == NULL)
-				typelist = maketypelist(MOUNT_NFS);
+		case 'v':
+			vflag = 1;
 			break;
-#endif /* NFS */
-		case '?':
 		default:
 			usage();
 			/* NOTREACHED */
@@ -134,150 +116,106 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0 && !all)
+	if (argc == 0 && !all || argc != 0 && all)
 		usage();
+
+	/* -h implies "-t nfs" if no -t flag. */
+	if ((nfshost != NULL) && (typelist == NULL))
+		maketypelist("nfs");
+		
 	if (all) {
-		if (argc > 0)
-			usage();
 		if (setfsent() == 0)
-			err(1, "%s", FSTAB);
-		umountall(typelist);
-		exit(0);
+			err(1, "%s", _PATH_FSTAB);
+		errs = umountall();
 	} else
-		setfsent();
-	while (argc > 0) {
-		if (umountfs(*argv++, 0, 0) == 0)
-			errs++;
-		argc--;
-	}
+		for (errs = 0; *argv != NULL; ++argv)
+			if (umountfs(*argv) == 0)
+				errs = 1;
 	exit(errs);
 }
 
-void
-usage()
+int
+umountall()
 {
-	fprintf(stderr,
-		"%s\n%s\n",
-		"Usage: umount [-fv] special | node",
-#ifndef	NFS
-		"    or umount -a[fv] [-t fstypelist]"
-#else
-		"    or umount -a[fv] [-h host] [-t fstypelist]"
-#endif
-	      );
-	exit(1);
-}
+	struct fstab *fs;
+	int rval;
+	char *cp;
 
-void
-umountall(typelist)
-	char **typelist;
-{
-	register struct fstab *fs;
-	struct fstab *allocfsent();
+	while ((fs = getfsent()) != NULL) {
+		/* Ignore the root. */
+		if (strcmp(fs->fs_file, "/") == 0)
+			continue;
+		/*
+		 * !!!
+		 * Historic practice: ignore unknown FSTAB_* fields.
+		 */
+		if (strcmp(fs->fs_type, FSTAB_RW) &&
+		    strcmp(fs->fs_type, FSTAB_RO) &&
+		    strcmp(fs->fs_type, FSTAB_RQ))
+			continue;
 
-	if ((fs = getfsent()) == (struct fstab *)0)
-		return;
-	fs = allocfsent(fs);
-	umountall(typelist);
-	if (strcmp(fs->fs_file, "/") == 0) {
-		freefsent(fs);
-		return;
+		if (!selected(fs->fs_vfstype))
+			continue;
+
+		/* 
+		 * We want to unmount the file systems in the reverse order
+		 * that they were mounted.  So, we save off the file name
+		 * in some allocated memory, and then call recursively.
+		 */
+		if ((cp = malloc((size_t)strlen(fs->fs_file) + 1)) == NULL)
+			err(1, NULL);
+		(void)strcpy(cp, fs->fs_file);
+		rval = umountall();
+		return (umountfs(cp) || rval);
 	}
-	if (strcmp(fs->fs_type, FSTAB_RW) &&
-	    strcmp(fs->fs_type, FSTAB_RO) &&
-	    strcmp(fs->fs_type, FSTAB_RQ)) {
-		freefsent(fs);
-		return;
-	}
-	(void) umountfs(fs->fs_file, typelist, 1);
-	freefsent(fs);
-}
-
-struct fstab *
-allocfsent(fs)
-	register struct fstab *fs;
-{
-	register struct fstab *new;
-	register char *cp;
-
-	new = (struct fstab *)malloc((unsigned)sizeof (*fs));
-	cp = (char *)malloc((unsigned)strlen(fs->fs_file) + 1);
-	strcpy(cp, fs->fs_file);
-	new->fs_file = cp;
-	cp = (char *)malloc((unsigned)strlen(fs->fs_type) + 1);
-	strcpy(cp, fs->fs_type);
-	new->fs_type = cp;
-	cp = (char *)malloc((unsigned)strlen(fs->fs_spec) + 1);
-	strcpy(cp, fs->fs_spec);
-	new->fs_spec = cp;
-	new->fs_passno = fs->fs_passno;
-	new->fs_freq = fs->fs_freq;
-	return (new);
-}
-
-void
-freefsent(fs)
-	register struct fstab *fs;
-{
-
-	if (fs->fs_file != NULL)
-		free(fs->fs_file);
-	if (fs->fs_spec != NULL)
-		free(fs->fs_spec);
-	if (fs->fs_type != NULL)
-		free(fs->fs_type);
-	free((char *)fs);
+	return (0);
 }
 
 int
-umountfs(name, typelist, all)
+umountfs(name)
 	char *name;
-	char **typelist;
-	int all;
 {
-	char *mntpt;
-	struct stat stbuf;
-	char type[MFSNAMELEN+1];
-#ifdef NFS
-	register CLIENT *clp;
-	struct hostent *hp = 0;
-	struct sockaddr_in saddr;
-	struct timeval pertry, try;
 	enum clnt_stat clnt_stat;
-	int so = RPC_ANYSOCK;
-	char *hostp, *delimp;
-#endif /* NFS */
+	struct hostent *hp;
+	struct sockaddr_in saddr;
+	struct stat sb;
+	struct timeval pertry, try;
+	CLIENT *clp;
+	int so;
+	char *delimp, *hostp, *mntpt, rname[MAXPATHLEN], type[MFSNAMELEN];
 
-	if (stat(name, &stbuf) < 0) {
-		if (getmntname(name, MNTFROM, type) != 0)
-			mntpt = name;
-		else if ((mntpt = getmntname(name, MNTON, type)) == 0) {
-			if (!all)
-				warnx("%s: not currently mounted\n", name);
-			return (0);
-		}
-	} else if ((stbuf.st_mode & S_IFMT) == S_IFBLK) {
-		if ((mntpt = getmntname(name, MNTON, type)) == 0) {
-			if (!all)
-				warnx("%s: not currently mounted\n", name);
-			return (0);
-		}
-	} else if ((stbuf.st_mode & S_IFMT) == S_IFDIR) {
-		mntpt = name;
-		if (getmntname(mntpt, MNTFROM, type) == 0) {
-			if (!all)
-				warnx("%s: not currently mounted\n", name);
-			return (0);
-		}
-	} else {
-		if (!all)
-			warnx("%s: not a directory or special device\n", name);
+	if (realpath(name, rname) == NULL) {
+		warn("%s", rname);
 		return (0);
 	}
 
-	if (badtype(type, typelist))
-		return(1);
-#ifdef NFS
+	name = rname;
+
+	if (stat(name, &sb) < 0) {
+		if (((mntpt = getmntname(name, MNTFROM, type)) == NULL) &&
+		    ((mntpt = getmntname(name, MNTON, type)) == NULL)) {
+			warnx("%s: not currently mounted", name);
+			return (1);
+		}
+	} else if (S_ISBLK(sb.st_mode)) {
+		if ((mntpt = getmntname(name, MNTON, type)) == NULL) {
+			warnx("%s: not currently mounted", name);
+			return (1);
+		}
+	} else if (S_ISDIR(sb.st_mode)) {
+		mntpt = name;
+		if ((name = getmntname(mntpt, MNTFROM, type)) == NULL) {
+			warnx("%s: not currently mounted", mntpt);
+			return (1);
+		}
+	} else {
+		warnx("%s: not a directory or special device", name);
+		return (1);
+	}
+
+	if (!selected(type))
+		return (0);
+
 	if ((delimp = strchr(name, '@')) != NULL) {
 		hostp = delimp + 1;
 		*delimp = '\0';
@@ -287,39 +225,42 @@ umountfs(name, typelist, all)
 		*delimp = '\0';
 		hostp = name;
 		hp = gethostbyname(hostp);
-		name = delimp+1;
+		name = delimp + 1;
 		*delimp = ':';
-	}
-
-	if (!namematch(hp, nfshost))
-		return(1);
-#endif	/* NFS */
-	if (!fake && unmount(mntpt, fflag) < 0) {
-		warn("%s", mntpt);
+	} else
+		hp = NULL;
+	if (!namematch(hp))
 		return (0);
-	}
-	if (vflag)
-		fprintf(stderr, "%s: Unmounted from %s\n", name, mntpt);
 
-#ifdef	NFS
-	if (!fake && hp != NULL && (fflag & MNT_FORCE) == 0) {
+	if (vflag)
+		(void)printf("%s: unmount from %s\n", name, mntpt);
+	if (fake)
+		return (0);
+
+	if (unmount(mntpt, fflag) < 0) {
+		warn("%s", mntpt);
+		return (1);
+	}
+
+	if ((hp != NULL) && !(fflag & MNT_FORCE)) {
 		*delimp = '\0';
-		bzero((char *)&saddr, sizeof saddr);
-		bcopy(hp->h_addr,(caddr_t)&saddr.sin_addr,hp->h_length);
+		memset(&saddr, 0, sizeof(saddr));
 		saddr.sin_family = AF_INET;
 		saddr.sin_port = 0;
+		memmove(&saddr.sin_addr, hp->h_addr, hp->h_length);
 		pertry.tv_sec = 3;
 		pertry.tv_usec = 0;
-		if ((clp = clntudp_create(&saddr, RPCPROG_MNT, RPCMNT_VER1,
-		    pertry, &so)) == NULL) {
+		so = RPC_ANYSOCK;
+		if ((clp = clntudp_create(&saddr,
+		    RPCPROG_MNT, RPCMNT_VER1, pertry, &so)) == NULL) {
 			clnt_pcreateerror("Cannot MNT PRC");
 			return (1);
 		}
 		clp->cl_auth = authunix_create_default();
 		try.tv_sec = 20;
 		try.tv_usec = 0;
-		clnt_stat = clnt_call(clp, RPCMNT_UMOUNT, xdr_dir, name,
-			xdr_void, (caddr_t)0, try);
+		clnt_stat = clnt_call(clp,
+		    RPCMNT_UMOUNT, xdr_dir, name, xdr_void, (caddr_t)0, try);
 		if (clnt_stat != RPC_SUCCESS) {
 			clnt_perror(clp, "Bad MNT RPC");
 			return (1);
@@ -327,118 +268,122 @@ umountfs(name, typelist, all)
 		auth_destroy(clp->cl_auth);
 		clnt_destroy(clp);
 	}
-#endif /* NFS */
-	return (1);
+	return (0);
 }
 
 char *
 getmntname(name, what, type)
 	char *name;
-	int what;
+	mntwhat what;
 	char *type;
 {
-	int mntsize, i;
 	struct statfs *mntbuf;
+	int i, mntsize;
 
 	if ((mntsize = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0) {
-		warn("umount");
-		return (0);
+		warn("getmntinfo");
+		return (NULL);
 	}
 	for (i = 0; i < mntsize; i++) {
-		if (what == MNTON && !strcmp(mntbuf[i].f_mntfromname, name)) {
-			if (type) {
-				strncpy(type, mntbuf[i].f_fstypename,
-				    MFSNAMELEN);
-				type[MFSNAMELEN] = '\0';
-			}
+		if ((what == MNTON) && !strcmp(mntbuf[i].f_mntfromname, name)) {
+			if (type)
+				memcpy(type, mntbuf[i].f_fstypename,
+				    sizeof(mntbuf[i].f_fstypename));
 			return (mntbuf[i].f_mntonname);
 		}
-		if (what == MNTFROM && !strcmp(mntbuf[i].f_mntonname, name)) {
-			if (type) {
-				strncpy(type, mntbuf[i].f_fstypename,
-				    MFSNAMELEN);
-				type[MFSNAMELEN] = '\0';
-			}
+		if ((what == MNTFROM) && !strcmp(mntbuf[i].f_mntonname, name)) {
+			if (type)
+				memcpy(type, mntbuf[i].f_fstypename,
+				    sizeof(mntbuf[i].f_fstypename));
 			return (mntbuf[i].f_mntfromname);
 		}
 	}
-	return (0);
+	return (NULL);
 }
 
-static int skipvfs;
+static enum { IN_LIST, NOT_IN_LIST } which;
 
 int
-badtype(type, typelist)
+selected(type)
 	char *type;
-	char **typelist;
 {
+	char **av;
+
+	/* If no type specified, it's always selected. */
 	if (typelist == NULL)
-		return(0);
-	while (*typelist) {
-		if (!strcmp(type, *typelist))
-			return(skipvfs);
-		typelist++;
-	}
-	return(!skipvfs);
+		return (1);
+	for (av = typelist; *av != NULL; ++av)
+		if (!strcmp(type, *av))
+			return (which == IN_LIST ? 1 : 0);
+	return (which == IN_LIST ? 0 : 1);
 }
 
-char **
+void
 maketypelist(fslist)
 	char *fslist;
 {
-	register char *nextcp, **av;
-	register int i;
+	int i;
+	char *nextcp, **av;
 
-	if (fslist == NULL)
-		return(NULL);
+	if ((fslist == NULL) || (fslist[0] == '\0'))
+		errx(1, "empty type list");
+
+	/*
+	 * XXX
+	 * Note: the syntax is "noxxx,yyy" for no xxx's and
+	 * no yyy's, not the more intuitive "noyyy,noyyy".
+	 */
 	if (fslist[0] == 'n' && fslist[1] == 'o') {
 		fslist += 2;
-		skipvfs = 1;
+		which = NOT_IN_LIST;
 	} else
-		skipvfs = 0;
-	for (i = 0, nextcp = fslist; *nextcp; nextcp++)
+		which = IN_LIST;
+
+	/* Count the number of types. */
+	for (i = 0, nextcp = fslist; *nextcp != NULL; ++nextcp)
 		if (*nextcp == ',')
 			i++;
-	av = (char **)malloc((i+2) * sizeof(int));
-	if (av == NULL)
-		return(NULL);
-	for (i = 0; fslist; fslist = nextcp) {
+
+	/* Build an array of that many types. */
+	if ((av = typelist = malloc((i + 2) * sizeof(char *))) == NULL)
+		err(1, NULL);
+	for (i = 0; fslist != NULL; fslist = nextcp, ++i) {
 		if ((nextcp = strchr(fslist, ',')) != NULL)
 			*nextcp++ = '\0';
-		av[i++] = strdup(fslist);
+		/* Note that we're keeping pointers into the input string. */
+		av[i] = fslist;
 	}
-	av[i++] = 0;
-	return(av);
+	/* Terminate the array. */
+	av[i++] = NULL;
 }
 
-#ifdef	NFS
 int
-namematch(hp, nfshost)
+namematch(hp)
 	struct hostent *hp;
-	char *nfshost;
 {
-	register char *cp;
-	register char **np;
+	char *cp, **np;
 
-	if (hp == NULL || nfshost == NULL)
-		return(1);
+	if ((hp == NULL) || (nfshost == NULL))
+		return (1);
+
 	if (strcasecmp(nfshost, hp->h_name) == 0)
-		return(1);
+		return (1);
+
 	if ((cp = strchr(hp->h_name, '.')) != NULL) {
 		*cp = '\0';
 		if (strcasecmp(nfshost, hp->h_name) == 0)
-			return(1);
+			return (1);
 	}
 	for (np = hp->h_aliases; *np; np++) {
 		if (strcasecmp(nfshost, *np) == 0)
-			return(1);
+			return (1);
 		if ((cp = strchr(*np, '.')) != NULL) {
 			*cp = '\0';
 			if (strcasecmp(nfshost, *np) == 0)
-				return(1);
+				return (1);
 		}
 	}
-	return(0);
+	return (0);
 }
 
 /*
@@ -451,4 +396,13 @@ xdr_dir(xdrsp, dirp)
 {
 	return (xdr_string(xdrsp, &dirp, RPCMNT_PATHLEN));
 }
-#endif /* NFS */
+
+void
+usage()
+{
+	(void)fprintf(stderr,
+	    "usage: %s\n       %s\n",
+	    "umount [-fv] [-t fstypelist] special | node",
+	    "umount -a[fv] [-h host] [-t fstypelist]");
+	exit(1);
+}
