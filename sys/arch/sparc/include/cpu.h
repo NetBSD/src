@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10 1994/11/20 20:52:57 deraadt Exp $ */
+/*	$NetBSD: cpu.h,v 1.11 1994/11/25 23:11:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -190,6 +190,9 @@ struct trapvec {
 	int	tv_instr[4];		/* the four instructions */
 };
 extern struct trapvec trapbase[256];	/* the 256 vectors */
+
+extern void wzero __P((void *, u_int));
+extern void wcopy __P((const void *, void *, u_int));
 
 #endif /* KERNEL */
 #endif /* _CPU_H_ */
