@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.43 1998/07/04 22:18:35 jonathan Exp $ */
+/*	$NetBSD: scn.c,v 1.44 2000/07/14 08:18:49 matthias Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -84,7 +84,7 @@ int     scnparam __P((struct tty *, struct termios *));
 void    scnstart __P((struct tty *));
 int     scnopen __P((dev_t, int, int, struct proc *));
 int     scnclose __P((dev_t, int, int, struct proc *));
-int	scncnprobe __P((struct consdev *));
+void	scncnprobe __P((struct consdev *));
 void	scncninit __P((struct consdev *));
 int     scncngetc __P((dev_t));
 void    scncnputc __P((dev_t, int));
@@ -1898,7 +1898,7 @@ extern int _mapped;
 #define	DUADDR(dev)	(u_char *)(SCN_BASE + (DEV_UNIT(dev) >> 1) * DUART_SZ)
 #define	CHADDR(dev)	(u_char *)(SCN_BASE + DEV_UNIT(dev) * CH_SZ)
 
-int
+void
 scncnprobe(cp)
 	struct consdev *cp;
 {
@@ -1910,7 +1910,6 @@ scncnprobe(cp)
 	/* initialize required fields */
 	cp->cn_dev = makedev(scnmajor, SCN_CONSOLE);
 	cp->cn_pri = CN_NORMAL;
-	return 1;
 }
 
 void
@@ -1978,7 +1977,7 @@ scncnpollc(dev, on)
 void
 scncnputc(dev, c)
 	dev_t dev;
-	char c;
+	int c;
 {
 	volatile u_char *ch_base = CHADDR(dev);
 	volatile u_char *du_base = DUADDR(dev);
