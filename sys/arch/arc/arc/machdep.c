@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 2001/05/11 16:36:42 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 2001/05/11 21:15:11 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -94,11 +94,15 @@
 
 #include <dev/cons.h>
 
+#include <dev/ic/i8042reg.h>
+#include <dev/isa/isareg.h>
+
 #include <arc/arc/arctype.h>
 #include <arc/arc/arcbios.h>
 #include <arc/arc/wired_map.h>
 #include <arc/jazz/pica.h>
 #include <arc/jazz/rd94.h>
+#include <arc/jazz/pckbc_jazzioreg.h>
 #include <arc/dti/desktech.h>
 #include <arc/algor/algor.h>
 
@@ -116,8 +120,7 @@
 
 #include "pc.h"
 #if NPC > 0
-extern int kbc_8042sysreset __P((void));
-extern void pccnattach __P((void));
+#include <machine/pccons.h>
 #endif
 
 #include "vga_jazzio.h"
@@ -133,15 +136,10 @@ extern void pccnattach __P((void));
 #endif
 
 #include "pckbc_jazzio.h"
-#if NPCKBC_JAZZIO > 0
-#include <arc/jazz/pckbc_jazzioreg.h>
-#endif
 
 #include "pckbc.h"
 #if NPCKBC > 0
-#include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
-#include <dev/isa/isareg.h>
 #endif
 
 #include "com.h"
@@ -217,6 +215,7 @@ static void tlb_init_nec_pci __P((void));
 static void tlb_init_tyne __P((void));
 static int get_simm_size __P((int *, int));
 static char *getenv __P((char *env));
+static void arc_sysreset __P((bus_addr_t, bus_size_t));
 static void get_eth_hw_addr __P((char *));
 static int atoi __P((const char *, int));
 
@@ -964,7 +963,7 @@ consinit()
 	if (!com_console) {
 		switch (cputype) {
 		case ACER_PICA_61:
-#if NPC_PICA > 0
+#if NPC_JAZZIO > 0
 			pccnattach();
 			return;
 #endif
@@ -994,7 +993,7 @@ consinit()
 
 		case NEC_RAx94:
 #if 0				/* XXX - physical address unknown */
-#if NPC_PICA > 0
+#if NPC_JAZZIO > 0
 			pccnattach();
 			return;
 #endif
@@ -1020,7 +1019,7 @@ consinit()
 
 		case NEC_R96:
 			/* XXX - some machines have jazz, and others have vga */
-#if NPC_PICA > 0
+#if NPC_JAZZIO > 0
 			pccnattach();
 			return;
 #endif
@@ -1263,30 +1262,67 @@ cpu_reboot(howto, bootstr)
 		resettodr();
 	}
 	(void) splhigh();		/* extreme priority */
-	if (howto & RB_HALT) {
-		printf("System halted.\n");
-		while(1); /* Forever */
-	}
-	else {
-		if (howto & RB_DUMP)
-			dumpsys();
-		printf("System restart.\n");
-#if NPC > 0
-		/* XXX - Currently only done on systems with pccons driver */
-		switch (cputype) {
-		case ALGOR_P4032:
-		case ALGOR_P5064:
-			break;
-		default:
-			(void)kbc_8042sysreset();	/* Try this first */
-			delay(100000);			/* Give it a chance */
-			break;
-		}
+
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+		dumpsys();
+
+#if 0
+	doshutdownhooks();
 #endif
-		__asm__(" li $2, 0xbfc00000; jr $2; nop\n");
-		while(1); /* Forever */
+
+	if (howto & RB_HALT) {
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);	/* for proper keyboard command handling */
+		cngetc();
+		cnpollc(0);
 	}
-	/*NOTREACHED*/
+
+	printf("rebooting...\n");
+	delay(1000000);
+
+	switch (cputype) {
+	case ACER_PICA_61:
+	case MAGNUM:
+	case NEC_R94:
+	case NEC_R96:
+	case NEC_RD94:
+	case NEC_JC94:
+		arc_sysreset(PICA_SYS_KBD, JAZZIO_KBCMDP);
+		break;
+	case DESKSTATION_TYNE:
+		arc_sysreset(TYNE_V_ISA_IO + IO_KBD, KBCMDP);
+		break;
+	case DESKSTATION_RPC44:
+		arc_sysreset(RPC44_V_ISA_IO + IO_KBD, KBCMDP);
+		break;
+	default:
+		break;
+	}
+	__asm__(" li $2, 0xbfc00000; jr $2; nop\n");
+	for (;;)
+		; /* Forever */
+	/* NOTREACHED */
+}
+
+/*
+ * Pass system reset command to keyboard controller (8042).
+ */
+static void
+arc_sysreset(addr, cmd_offset)
+	bus_addr_t addr; 
+	bus_size_t cmd_offset;
+{
+	volatile u_int8_t *kbdata = (u_int8_t *)addr + KBDATAP;
+	volatile u_int8_t *kbcmd = (u_int8_t *)addr + cmd_offset;
+
+#define KBC_ARC_SYSRESET 0xd1
+
+	delay(1000);
+	*kbcmd = KBC_ARC_SYSRESET;
+	delay(1000);
+	*kbdata = 0;
 }
 
 /*

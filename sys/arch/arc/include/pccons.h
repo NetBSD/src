@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.h,v 1.4 2000/01/23 21:01:57 soda Exp $	*/
+/*	$NetBSD: pccons.h,v 1.5 2001/05/11 21:15:12 tsutsui Exp $	*/
 /*	$OpenBSD: pccons.h,v 1.2 1996/09/01 16:50:12 deraadt Exp $	*/
 /*	NetBSD: pccons.h,v 1.4 1996/02/02 18:06:06 mycroft Exp	*/
 
@@ -42,5 +42,9 @@ typedef struct {
 #define CONSOLE_SET_TYPEMATIC_RATE	_IOW('t',124,u_char)
 #define CONSOLE_GET_KEYMAP		_IOR('t',128,pccons_keymap_t[KB_NUM_KEYS])
 #define CONSOLE_SET_KEYMAP		_IOW('t',129,pccons_keymap_t[KB_NUM_KEYS])
+
+#ifdef _KERNEL
+void pccnattach(void);
+#endif
 
 #endif /* _PCCONS_H_ */
