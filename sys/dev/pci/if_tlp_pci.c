@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.74 2003/11/03 03:05:25 ichiro Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.75 2003/11/28 06:03:09 cube Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.74 2003/11/03 03:05:25 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.75 2003/11/28 06:03:09 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -161,6 +161,9 @@ const struct tulip_pci_product {
 	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AN985,
 	  TULIP_CHIP_AN985 },
 	{ PCI_VENDOR_ACCTON,		PCI_PRODUCT_ACCTON_EN2242,
+	  TULIP_CHIP_AN985 },
+
+	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_3C910SOHOB,
 	  TULIP_CHIP_AN985 },
 
 #if 0
