@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.5 2001/08/16 23:57:08 eeh Exp $
+$NetBSD: version,v 1.6 2001/08/30 23:00:20 eeh Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -8,3 +8,4 @@ is taken as the current.
 1.2:	get it to work with non-start-of-disk partitions
 1.3:	Support verbose/quiet boot.
 1.4:	Align end of BSS on 4MB boundary
+1.5:	Fix previous.
