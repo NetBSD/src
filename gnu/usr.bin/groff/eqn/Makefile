@@ -9,7 +9,7 @@ SRCS=		box.cc delim.cc eqn.y lex.cc limit.cc list.cc \
 		sqrt.cc text.cc
 LDADD+=		$(.CURDIR)/../libgroff/obj/libgroff.a
 # Delete the -Ig++-include after we fix libg++ and install it
-GXXFLAGS+=	-I. -I$(.CURDIR) -I$(.CURDIR)/../libgroff \
+CXXFLAGS+=	-I. -I$(.CURDIR) -I$(.CURDIR)/../libgroff \
 		-I$(.CURDIR)/../../../lib/libg++/g++-include
 CLEANFILES+=	eqn.tab.h
 

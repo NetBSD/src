@@ -6,7 +6,7 @@ PROG=		groff
 SRCS=		groff.cc
 LDADD+=		$(.CURDIR)/../libgroff/obj/libgroff.a
 # Nuke -Ig++-include when we finally install libg++.
-GXXFLAGS+= -I$(.CURDIR)/../libgroff \
+CXXFLAGS+= -I$(.CURDIR)/../libgroff \
 		-I$(.CURDIR)/../../../lib/libg++/g++-include
 
 afterinstall:
