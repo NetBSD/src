@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.39 2004/04/09 20:30:28 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.40 2004/04/09 20:44:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,8 +93,8 @@
 /*
  * Driver callbacks for media status and change requests.
  */
-typedef	int (*ifm_change_cb_t) __P((struct ifnet *));
-typedef	void (*ifm_stat_cb_t) __P((struct ifnet *, struct ifmediareq *));
+typedef	int (*ifm_change_cb_t)(struct ifnet *);
+typedef	void (*ifm_stat_cb_t)(struct ifnet *, struct ifmediareq *);
 
 /*
  * In-kernel representation of a single supported media type.
@@ -120,27 +120,25 @@ struct ifmedia {
 };
 
 /* Initialize an interface's struct if_media field. */
-void	ifmedia_init __P((struct ifmedia *, int, ifm_change_cb_t,
-	    ifm_stat_cb_t));
+void	ifmedia_init(struct ifmedia *, int, ifm_change_cb_t, ifm_stat_cb_t);
 
 /* Add one supported medium to a struct ifmedia. */
-void	ifmedia_add __P((struct ifmedia *, int, int, void *));
+void	ifmedia_add(struct ifmedia *, int, int, void *);
 
 /* Add an array (of ifmedia_entry) media to a struct ifmedia. */
 void	ifmedia_list_add(struct ifmedia *, struct ifmedia_entry *, int);
 
 /* Set default media type on initialization. */
-void	ifmedia_set __P((struct ifmedia *ifm, int mword));
+void	ifmedia_set(struct ifmedia *ifm, int mword);
 
 /* Common ioctl function for getting/setting media, called by driver. */
-int	ifmedia_ioctl __P((struct ifnet *, struct ifreq *, struct ifmedia *,
-	    u_long));
+int	ifmedia_ioctl(struct ifnet *, struct ifreq *, struct ifmedia *, u_long);
 
 /* Look up a media entry. */
-struct ifmedia_entry *ifmedia_match __P((struct ifmedia *, u_int, u_int));
+struct ifmedia_entry *ifmedia_match(struct ifmedia *, u_int, u_int);
 
 /* Delete all media for a given media instance */
-void	ifmedia_delete_instance __P((struct ifmedia *, u_int));
+void	ifmedia_delete_instance(struct ifmedia *, u_int);
 
 /* Compute baudrate for a given media. */
 u_quad_t	ifmedia_baudrate(int);
