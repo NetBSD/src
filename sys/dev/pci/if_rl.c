@@ -1,4 +1,4 @@
-/* $NetBSD: if_rl.c,v 1.1 1999/06/27 15:19:41 drochner Exp $ */
+/* $NetBSD: if_rl.c,v 1.2 1999/08/20 03:36:59 sommerfeld Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -824,21 +824,9 @@ rl_attach(parent, self, aux)
 		printf("\n");
 		goto fail;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* Reset the adapter. */
 	rl_reset(sc);
-
-	/*
-	 * Get station address from the EEPROM.
-	 */
-	rl_read_eeprom(sc, (caddr_t)&eaddr, RL_EE_EADDR, 3, 0);
-
-	/*
-	 * A RealTek chip was detected. Inform the world.
-	 */
-	printf("%s: Ethernet address: %s\n", sc->sc_dev.dv_xname,
-	       ether_sprintf(eaddr));
 
 	/*
 	 * Now read the exact device type from the EEPROM to find
@@ -853,15 +841,29 @@ rl_attach(parent, self, aux)
 #if 0
 	    || rl_did == SIS_DEVICEID_8139
 #endif
-	    )
+	    ) {
+		printf(": RealTek 8139 Ethernet (id 0x%x)\n", rl_did);
 		sc->rl_type = RL_8139;
-	else if (rl_did == PCI_PRODUCT_REALTEK_RT8129)
+	} else if (rl_did == PCI_PRODUCT_REALTEK_RT8129) {
+		printf(": RealTek 8129 Ethernet (id 0x%x)\n", rl_did);
 		sc->rl_type = RL_8129;
-	else {
-		printf("%s: unknown device ID: %x\n", sc->sc_dev.dv_xname, rl_did);
+	} else {
+		printf(": unknown device ID: 0x%x\n", rl_did);
 		free(sc, M_DEVBUF);
 		goto fail;
 	}
+	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+
+	/*
+	 * Get station address from the EEPROM.
+	 */
+	rl_read_eeprom(sc, (caddr_t)&eaddr, RL_EE_EADDR, 3, 0);
+
+	/*
+	 * A RealTek chip was detected. Inform the world.
+	 */
+	printf("%s: Ethernet address: %s\n", sc->sc_dev.dv_xname,
+	       ether_sprintf(eaddr));
 
 	sc->sc_dmat = pa->pa_dmat;
 
