@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 2001/11/04 22:39:08 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 2001/11/05 01:25:38 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -226,7 +226,7 @@ STATIC void pmap_pvo_check(const struct pvo_entry *);
 STATIC int pmap_pte_insert(int, pte_t *);
 STATIC int pmap_pvo_enter(pmap_t, struct pool *, struct pvo_head *,
 	vaddr_t, paddr_t, u_int, int);
-STATIC void pmap_pvo_remove(struct pvo_entry *, int, int);
+STATIC void pmap_pvo_remove(struct pvo_entry *, int);
 STATIC struct pvo_entry *pmap_pvo_find_va(pmap_t, vaddr_t, int *); 
 STATIC volatile pte_t *pmap_pvo_to_pte(const struct pvo_entry *, int);
 
@@ -1365,6 +1365,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	int first;
 	int ptegidx;
 	int i;
+	int poolflags = PR_NOWAIT;
 
 	if (pmap_pvo_remove_depth > 0)
 		panic("pmap_pvo_enter: called while pmap_pvo_remove active!");
@@ -1402,7 +1403,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #endif
 			}
 #endif
-			pmap_pvo_remove(pvo, -1, FALSE);
+			pmap_pvo_remove(pvo, -1);
 			break;
 		}
 	}
@@ -1410,37 +1411,29 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	/*
 	 * If we aren't overwriting an mapping, try to allocate
 	 */
+	if ((flags & PMAP_CANFAIL) == 0)
+		poolflags |= PR_URGENT;
+	pmap_interrupts_restore(msr);
+	pvo = pool_get(pl, poolflags);
+	msr = pmap_interrupts_off();
 	if (pvo == NULL) {
-		int poolflags = PR_NOWAIT;
-		if ((flags & PMAP_CANFAIL) == 0)
-			poolflags |= PR_URGENT;
-		pmap_interrupts_restore(msr);
-		pvo = pool_get(pl, poolflags);
-		msr = pmap_interrupts_off();
+#if 0
+		pvo = pmap_pvo_reclaim(pm);
 		if (pvo == NULL) {
-#if 0
-			pvo = pmap_pvo_reclaim(pm);
-			if (pvo == NULL) {
 #endif
-				if ((flags & PMAP_CANFAIL) == 0)
-					panic("pmap_pvo_enter: failed");
-				pmap_pvo_enter_depth--;
-				pmap_interrupts_restore(msr);
-				return ENOMEM;
+			if ((flags & PMAP_CANFAIL) == 0)
+				panic("pmap_pvo_enter: failed");
+			pmap_pvo_enter_depth--;
+			pmap_interrupts_restore(msr);
+			return ENOMEM;
 #if 0
-			}
-#endif
 		}
-		pmap_pvo_entries++;
-		pvo->pvo_vaddr = va;
-		pvo->pvo_pmap = pm;
-		LIST_INSERT_HEAD(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
-#if 0
-	} else {
-		if (pmap_initialized && pm != pmap_kernel())
-			printf("pmap_pvo_enter: pmap %p: reusing pvo %p for va %#x\n", pm, pvo, va);
 #endif
 	}
+	pmap_pvo_entries++;
+	pvo->pvo_vaddr = va;
+	pvo->pvo_pmap = pm;
+	LIST_INSERT_HEAD(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
 	pvo->pvo_vaddr &= ~ADDR_POFF;
 	if (flags & VM_PROT_EXECUTE)
 		pvo->pvo_vaddr |= PVO_EXECUTABLE;
@@ -1486,7 +1479,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 }
 
 void
-pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, int freeit)
+pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 {
 	volatile pte_t *pt;
 
@@ -1532,15 +1525,13 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, int freeit)
 	 * Remove this from the Overflow list and return it to the pool...
 	 * ... if we aren't going to reuse it.
 	 */
-	if (freeit) {
-		LIST_REMOVE(pvo, pvo_olink);
-		pool_put(pvo->pvo_vaddr & PVO_MANAGED
-		    ? &pmap_mpvo_pool
-		    : &pmap_upvo_pool,
-		    pvo);
-		pmap_pvo_entries--;
-		pmap_pvo_remove_calls++;
-	}
+	LIST_REMOVE(pvo, pvo_olink);
+	pool_put(pvo->pvo_vaddr & PVO_MANAGED
+	    ? &pmap_mpvo_pool
+	    : &pmap_upvo_pool,
+	    pvo);
+	pmap_pvo_entries--;
+	pmap_pvo_remove_calls++;
 	pmap_pvo_remove_depth--;
 }
 
@@ -1698,7 +1689,7 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 		msr = pmap_interrupts_off();
 		pvo = pmap_pvo_find_va(pm, va, &pteidx);
 		if (pvo != NULL) {
-			pmap_pvo_remove(pvo, pteidx, TRUE);
+			pmap_pvo_remove(pvo, pteidx);
 		}
 		pmap_interrupts_restore(msr);
 		splx(s);
@@ -1869,7 +1860,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		 */
 		if ((prot & VM_PROT_READ) == 0) {
 			if ((pvo->pvo_vaddr & PVO_WIRED) == 0)
-				pmap_pvo_remove(pvo, -1, TRUE);
+				pmap_pvo_remove(pvo, -1);
 			continue;
 		} 
 
