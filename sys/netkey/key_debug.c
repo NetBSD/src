@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.5 1999/07/03 21:32:48 thorpej Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.6 1999/07/05 08:15:39 cjs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME @(#)$Id: key_debug.c,v 1.5 1999/07/03 21:32:48 thorpej Exp $ */
+/* KAME @(#)$Id: key_debug.c,v 1.6 1999/07/05 08:15:39 cjs Exp $ */
 
 #ifdef _KERNEL
 # define KERNEL
@@ -541,7 +541,8 @@ kdebug_secas(sa)
 
 	printf("  refcnt=%u state=%u type=%u auth=%u enc=%u\n",
 	    sa->refcnt, sa->state, sa->type, sa->alg_auth, sa->alg_enc);
-	printf("  spi=%lu flags=%u\n", ntohl(sa->spi), sa->flags);
+	printf("  spi=%lu flags=%u\n", (unsigned long) ntohl(sa->spi),
+	    sa->flags);
 
 	if (sa->key_auth != NULL)
 		kdebug_sadb_key((struct sadb_ext *)sa->key_auth);
