@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.11 2003/02/24 10:01:02 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.12 2003/02/24 16:19:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -133,9 +133,9 @@ static struct vnodeopv_entry_desc smbfs_vnodeop_entries[] = {
 	{ &vop_getpages_desc,		genfs_compat_getpages },
 	{ &vop_inactive_desc,		smbfs_inactive },
 	{ &vop_ioctl_desc,		genfs_enoioctl },
-	{ &vop_islocked_desc,		genfs_noislocked },
+	{ &vop_islocked_desc,		genfs_islocked },
 	{ &vop_link_desc,		smbfs_link },
-	{ &vop_lock_desc,		genfs_nolock },
+	{ &vop_lock_desc,		genfs_lock },
 	{ &vop_lookup_desc,		smbfs_lookup },
 	{ &vop_mkdir_desc,		smbfs_mkdir },
 	{ &vop_mknod_desc,		genfs_eopnotsupp },
@@ -152,7 +152,7 @@ static struct vnodeopv_entry_desc smbfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc,		smbfs_setattr },
 	{ &vop_strategy_desc,		smbfs_strategy },
 	{ &vop_symlink_desc,		smbfs_symlink },
-	{ &vop_unlock_desc,		genfs_nounlock },
+	{ &vop_unlock_desc,		genfs_unlock },
 	{ &vop_write_desc,		smbfs_write },
 	{ NULL, NULL }
 };
@@ -863,11 +863,12 @@ smbfs_print(v)
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 
-	printf("tag VT_SMBFS, name = %.*s, parent = %p, opencount = %d",
+	printf("tag VT_SMBFS, name = %.*s, parent = %p, opencount = %d\n",
 	    (int)np->n_nmlen, np->n_name,
 	    np->n_parent ? SMBTOV(np->n_parent) : NULL,
 	    np->n_opencount);
-	lockmgr_printinfo(&vp->v_lock);
+	printf("       ");
+	lockmgr_printinfo(vp->v_vnlock);
 	printf("\n");
 	return (0);
 }
@@ -1129,10 +1130,6 @@ smbfs_pathcheck(struct smbmount *smp, const char *name, int nmlen)
 	return (ENOENT);
 }
 
-#ifndef PDIRUNLOCK
-#define	PDIRUNLOCK	0
-#endif
-
 /*
  * Things go even weird without fixed inode numbers...
  */
@@ -1174,6 +1171,9 @@ smbfs_lookup(v)
 	SMBVDEBUG("%d '%.*s' in '%.*s' id=d\n", nameiop, nmlen, name, 
 	    (int) VTOSMB(dvp)->n_nmlen, VTOSMB(dvp)->n_name);
 #endif
+
+	islastcn = flags & ISLASTCN;
+	lockparent = flags & LOCKPARENT;
 
 	/*
 	 * Before tediously performing a linear scan of the directory,
@@ -1230,13 +1230,18 @@ smbfs_lookup(v)
 			&& vattr.va_ctime.tv_sec == VTOSMB(newvp)->n_ctime)
 		{
 			/* nfsstats.lookupcache_hits++; */
-			if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
+			if (cnp->cn_nameiop != LOOKUP && islastcn)
 				cnp->cn_flags |= SAVENAME;
-			if ((!lockparent || !(flags & ISLASTCN)) &&	
-			     newvp != dvp)
+
+			if ((!lockparent || !islastcn) &&	
+			     newvp != dvp) {
 				VOP_UNLOCK(dvp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
+
 			return (0);
 		}
+
 		cache_purge(newvp);
 		if (newvp != dvp)
 			vput(newvp);
@@ -1246,6 +1251,7 @@ smbfs_lookup(v)
 	}
 
  dolookup:
+
 	/* ensure the name is sane */
 	if (nameiop != LOOKUP) {
 		error = smbfs_pathcheck(VFSTOSMBFS(mp), cnp->cn_nameptr,
@@ -1254,8 +1260,6 @@ smbfs_lookup(v)
 			return (error);
 	}
 
-	islastcn = flags & ISLASTCN;
-	lockparent = flags & LOCKPARENT;
 	wantparent = flags & (LOCKPARENT|WANTPARENT);
 	dnp = VTOSMB(dvp);
 	isdot = (nmlen == 1 && name[0] == '.');
@@ -1308,9 +1312,17 @@ smbfs_lookup(v)
 
 	/* Handle RENAME case... */
 	if (nameiop == RENAME && islastcn && wantparent) {
+		error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred, cnp->cn_proc);
+		if (error)
+			return (error);
+
 		if (isdot)
 			return (EISDIR);
+		if (flags & ISDOTDOT)
+			VOP_UNLOCK(dvp, 0);
 		error = smbfs_nget(mp, dvp, name, nmlen, &fattr, vpp);
+		if (flags & ISDOTDOT)
+			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
 			return (error);
 		cnp->cn_flags |= SAVENAME;
@@ -1356,7 +1368,6 @@ smbfs_lookup(v)
 		error = smbfs_nget(mp, dvp, name, nmlen, &fattr, vpp);
 		if (error)
 			return error;
-		SMBVDEBUG("lookup: getnewvp!\n");
 		if (!lockparent || !islastcn) {
 			VOP_UNLOCK(dvp, 0);
 			cnp->cn_flags |= PDIRUNLOCK;
