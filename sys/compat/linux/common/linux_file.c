@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.9 1995/08/27 20:51:48 fvdl Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.10 1995/09/07 21:48:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -487,7 +487,7 @@ linux_lstat(p, uap, retval)
 }
 
 /*
- * The following syscalls are only here because of the alternate path check.
+ * The following syscalls are mostly here because of the alternate path check.
  */
 int
 linux_access(p, uap, retval)
@@ -521,7 +521,8 @@ linux_unlink(p, uap, retval)
 	return unlink(p, uap, retval);
 }
 
-int linux_chdir(p, uap, retval)
+int
+linux_chdir(p, uap, retval)
 	struct proc *p;
 	struct linux_chdir_args /* {
 		syscallarg(char *) path;
@@ -546,10 +547,19 @@ linux_mknod(p, uap, retval)
 	register_t *retval;
 {
 	caddr_t sg = stackgap_init(p->p_emul);
+	struct mkfifo_args bma;
 
 	LINUX_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 
-	return mknod(p, uap, retval);
+	/*
+	 * BSD handles FIFOs seperately
+	 */
+	if (SCARG(uap, mode) & S_IFIFO) {
+		SCARG(&bma, path) = SCARG(uap, path);
+		SCARG(&bma, mode) = SCARG(uap, mode);
+		return mkfifo(p, uap, retval);
+	} else
+		return mknod(p, uap, retval);
 }
 
 int
@@ -578,11 +588,39 @@ linux_chown(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
+	struct chown_args bca;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return chmod(p, uap, retval);
+	SCARG(&bca, path) = SCARG(uap, path);
+	SCARG(&bca, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
+		(uid_t)-1 : SCARG(uap, uid);
+	SCARG(&bca, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
+		(gid_t)-1 : SCARG(uap, gid);
+	
+	return chown(p, &bca, retval);
+}
+
+int
+linux_fchown(p, uap, retval)
+	struct proc *p;
+	struct linux_fchown_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) uid;
+		syscallarg(int) gid;
+	} */ *uap;
+	register_t *retval;
+{
+	struct fchown_args bfa;
+
+	SCARG(&bfa, fd) = SCARG(uap, fd);
+	SCARG(&bfa, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
+		(uid_t)-1 : SCARG(uap, uid);
+	SCARG(&bfa, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
+		(gid_t)-1 : SCARG(uap, gid);
+	
+	return fchown(p, &bfa, retval);
 }
 
 int
