@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.50 2004/03/13 03:32:08 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.51 2004/03/21 06:32:03 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.50 2004/03/13 03:32:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.51 2004/03/21 06:32:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -524,8 +524,10 @@ rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 	/* XXX fix for n-fault tolerant */
 	/* XXX this should probably check to see how many failures
 	   we can handle for this configuration! */
-	if (numFailuresThisRow > 0)
+	if (numFailuresThisRow > 0) {
 		raidPtr->status = rf_rs_degraded;
+		raidPtr->numFailures = numFailuresThisRow;
+	}
 	
 	/* close the device for the ones that didn't get used */
 
