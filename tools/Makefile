@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2002/01/31 22:43:43 tv Exp $
+#	$NetBSD: Makefile,v 1.33 2002/02/08 17:48:38 pk Exp $
 
 # XXX Note: NO_DBSYM is a stopgap temporary variable for use
 # with the development of non-NetBSD hosting support.  This will go away.
@@ -62,6 +62,7 @@ _last:=
 _this:=		${d}
 .if ${_this} == ".WAIT"
 _dep:=		${_dep} install-${_last}
+install-${_last}: all-${_last}
 .else
 _last:=		${d}
 depend-${d} all-${d} dependall-${d}: ${_dep}
