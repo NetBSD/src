@@ -1,4 +1,4 @@
-# $NetBSD: defs.mk,v 1.2 2003/09/14 10:14:20 martin Exp $
+# $NetBSD: defs.mk,v 1.3 2003/09/26 17:37:56 christos Exp $
 #
 G_GDB_OBJS=\
 annotate.o \
@@ -134,6 +134,19 @@ target.o \
 thread.o \
 top.o \
 tracepoint.o \
+typeprint.o \
+ui-file.o \
+ui-out.o \
+utils.o \
+valarith.o \
+valops.o \
+valprint.o \
+values.o \
+varobj.o \
+version.o \
+wrapper.o
+
+G_TUI_OBJS=\
 tui-file.o \
 tui-hooks.o \
 tui-out.o \
@@ -149,18 +162,7 @@ tuiRegs.o \
 tuiSource.o \
 tuiSourceWin.o \
 tuiStack.o \
-tuiWin.o \
-typeprint.o \
-ui-file.o \
-ui-out.o \
-utils.o \
-valarith.o \
-valops.o \
-valprint.o \
-values.o \
-varobj.o \
-version.o \
-wrapper.o
+tuiWin.o
 
 G_BFD_CPPFLAGS=-DDEFAULT_VECTOR=bfd_elf64_sparc_vec -DSELECT_VECS='&bfd_elf64_sparc_vec,&bfd_elf32_sparc_vec,&sunos_big_vec,&bfd_elf64_little_generic_vec,&bfd_elf64_big_generic_vec,&bfd_elf32_little_generic_vec,&bfd_elf32_big_generic_vec' -DSELECT_ARCHITECTURES='&bfd_sparc_arch' -DHAVE_bfd_elf64_sparc_vec -DHAVE_bfd_elf32_sparc_vec -DHAVE_sunos_big_vec -DHAVE_bfd_elf64_little_generic_vec -DHAVE_bfd_elf64_big_generic_vec -DHAVE_bfd_elf32_little_generic_vec -DHAVE_bfd_elf32_big_generic_vec
 G_BFD_OBJS=\
