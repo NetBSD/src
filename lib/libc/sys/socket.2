@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.10 1998/07/28 09:43:31 is Exp $
+.\"	$NetBSD: socket.2,v 1.11 1998/08/01 21:51:06 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,12 +58,12 @@ These families are defined in the include file
 The currently understood formats are
 .Pp
 .Bd -literal -offset indent -compact
-AF_LOCAL	local (previously UNIX) domain protocols
-AF_INET		ARPA Internet protocols
-AF_ISO		ISO protocols
-AF_NS		Xerox Network Systems protocols
-AF_IMPLINK	IMP \*(lqhost at IMP\*(rq link layer
-AF_APPLETALK	AppleTalk protocols
+PF_LOCAL	local (previously UNIX) domain protocols
+PF_INET		ARPA Internet protocols
+PF_ISO		ISO protocols
+PF_NS		Xerox Network Systems protocols
+PF_IMPLINK	IMP \*(lqhost at IMP\*(rq link layer
+PF_APPLETALK	AppleTalk protocols
 .Ed
 .Pp
 The socket has the indicated
