@@ -1,4 +1,4 @@
-/*      $NetBSD: signal.h,v 1.10 2003/08/07 16:30:12 agc Exp $   */
+/*      $NetBSD: signal.h,v 1.11 2003/09/29 21:04:53 matt Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -40,6 +40,8 @@
 
 typedef int sig_atomic_t;
 
+#define __HAVE_SIGINFO
+
 #if defined(_NETBSD_SOURCE)
 /*
  * Information pushed on stack when a signal is delivered.
@@ -71,29 +73,16 @@ struct sigcontext {
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
 
-/*
- * The following macros are used to convert from a ucontext to sigcontext,
- * and vice-versa.  This is for building a sigcontext to deliver to old-style
- * signal handlers, and converting back (in the event the handler modifies
- * the context).
- */
-#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
-do {									\
-	(sc)->sc_sp = (uc)->uc_mcontext.__gregs[_REG_SP];		\
-	(sc)->sc_fp = (uc)->uc_mcontext.__gregs[_REG_FP];		\
-	(sc)->sc_ap = (uc)->uc_mcontext.__gregs[_REG_AP];		\
-	(sc)->sc_pc = (uc)->uc_mcontext.__gregs[_REG_PC];		\
-	(sc)->sc_ps = (uc)->uc_mcontext.__gregs[_REG_PSL];		\
-} while (/*CONSTCOND*/0)
+#ifdef _KERNEL
+void sendsig_context(int, const sigset_t *, u_long);
 
-#define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
-do {									\
-	(uc)->uc_mcontext.__gregs[_REG_SP]  = (sc)->sc_sp;		\
-	(uc)->uc_mcontext.__gregs[_REG_FP]  = (sc)->sc_fp;		\
-	(uc)->uc_mcontext.__gregs[_REG_AP]  = (sc)->sc_ap;		\
-	(uc)->uc_mcontext.__gregs[_REG_PC]  = (sc)->sc_pc;		\
-	(uc)->uc_mcontext.__gregs[_REG_PSL] = (sc)->sc_ps;		\
-} while (/*CONSTCOND*/0)
+#ifdef COMPAT_16
+#define	SIGTRAMP_VALID(vers)	((vers) <= 3 && (vers) != 1)
+#else
+#define	SIGTRAMP_VALID(vers)	((vers) == 3)
+#endif
+
+#endif	/* _KERNEL */
 
 #endif	/* _NETBSD_SOURCE */
 #endif	/* !_VAX_SIGNAL_H_ */
