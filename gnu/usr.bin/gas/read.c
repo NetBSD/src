@@ -19,7 +19,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: read.c,v 1.15 1996/04/14 11:31:32 pk Exp $";
+static char rcsid[] = "$Id: read.c,v 1.16 1996/11/03 17:50:41 ws Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -936,8 +936,19 @@ int needs_align;	/* 1 if this was a ".bss" directive, which may require
 			align = 0;
 			as_warn("Alignment negative. 0 assumed.");
 		}
-		record_alignment(SEG_BSS, align);
-	} /* if needs align */
+	} else { /* if needs align */
+		/* FIXME. This needs to be machine independent. */
+		if (temp >= 8)
+			align = 3;
+		else if (temp >= 4)
+			align = 2;
+		else if (temp >= 2)
+			align = 1;
+		else
+			align = 0;
+		needs_align = 1;
+	} /* if !needs align */
+	record_alignment(SEG_BSS, align);
 	
 	*p = 0;
 	symbolP = symbol_find_or_make(name);
