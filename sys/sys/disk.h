@@ -41,7 +41,7 @@
  *
  *	@(#)disk.h	5.1 (Berkeley) 7/10/92
  *
- * from: $Header: /cvsroot/src/sys/sys/disk.h,v 1.1.2.1 1993/09/24 08:57:48 mycroft Exp $ (LBL)
+ * from: $Header: /cvsroot/src/sys/sys/disk.h,v 1.1.2.2 1993/10/01 01:43:14 deraadt Exp $ (LBL)
  */
 
 /*
@@ -105,9 +105,12 @@ struct disksort_stats {
 #endif
 
 #ifdef KERNEL
+#if 0
+/* This is how 4.4 does it, delete them or something */
 void	disksort __P((struct buf *, struct buf *));
 char	*readdisklabel __P((struct dkdevice *, int));
 int	setdisklabel __P((struct dkdevice *, struct disklabel *));
 int	writedisklabel __P((struct dkdevice *, int));
 int	diskerr __P((struct dkdevice *, struct buf *, char *, int, int));
+#endif
 #endif
