@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.19 2000/10/15 17:50:10 kleink Exp $
+.\"	$NetBSD: df.1,v 1.20 2000/12/30 16:20:58 hubertf Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd display free disk space
 .Sh SYNOPSIS
 .Nm
-.Op Fl aiklnP
+.Op Fl aiklmnP
 .Op Fl t Ar type
 .Op Ar file | Ar file_system ...
 .Sh DESCRIPTION
@@ -80,7 +80,11 @@ Include statistics on the number of free inodes.
 By default, all sizes are reported in 512-byte block counts.
 The
 .Fl k
-option causes the numbers to be reported in kilobyte counts.
+option causes the numbers to be reported in kilobyte (1024 bytes) counts.
+.It Fl m
+The 
+.Fl m
+option causes the numbers to be reported in megabyte (1024*1024 bytes) counts.
 .It Fl l
 Display statistics only about mounted file systems with the
 .Dv MNT_LOCAL
@@ -143,7 +147,9 @@ If the environment variable
 .Ev BLOCKSIZE
 is set, and the
 .Fl k
-option is not specified, the block counts will be displayed in units of that
+and
+.Fl m
+options are not specified, the block counts will be displayed in units of that
 size block.
 .El
 .Sh SEE ALSO
