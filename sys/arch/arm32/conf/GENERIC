@@ -248,6 +248,8 @@ pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd     4               # paging to files
 pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	md	1		# Ramdisk driver
+# rnd is EXPERIMENTAL
+#pseudo-device	rnd			# /dev/random and in-kernel generator
 
 makeoptions MONITOR="Taxan875+LR"
 #makeoptions MONITOR="AKF60"
