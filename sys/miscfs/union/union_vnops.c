@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.10 1994/12/13 16:59:50 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.11 1994/12/13 20:15:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -749,7 +749,6 @@ union_write(ap)
 	return (error);
 }
 
-int
 union_lease(ap)
 	struct vop_lease_args /* {
 		struct vnode *a_vp;
@@ -1500,6 +1499,7 @@ struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_setattr_desc, union_setattr },		/* setattr */
 	{ &vop_read_desc, union_read },			/* read */
 	{ &vop_write_desc, union_write },		/* write */
+	{ &vop_lease_desc, union_lease },		/* lease */
 	{ &vop_ioctl_desc, union_ioctl },		/* ioctl */
 	{ &vop_select_desc, union_select },		/* select */
 	{ &vop_mmap_desc, union_mmap },			/* mmap */
