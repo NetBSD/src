@@ -1,3 +1,5 @@
+/*	$NetBSD: ftpcmd.y,v 1.5 1995/04/11 02:44:51 cgd Exp $	*/
+
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -41,8 +43,11 @@
 %{
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
-static char rcsid[] = "$Id: ftpcmd.y,v 1.4 1994/06/29 01:49:41 deraadt Exp $";
+#else
+static char rcsid[] = "$NetBSD: ftpcmd.y,v 1.5 1995/04/11 02:44:51 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
