@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.19.8.2 1998/02/04 21:04:11 gwr Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19.8.3 1998/02/05 04:11:18 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,13 +41,6 @@
 #endif	/* SUN3X */
 
 /*
- * USRTEXT is the start of the user text/data space, while
- * USRSTACK is the top (end) of the user stack.
- */
-#define	USRTEXT 	NBPG		/* Start of user text */
-#define	USRSTACK	KERNBASE	/* High end of user stack */
-
-/*
  * The time for a process to be blocked before being very swappable.
  * This is a number of seconds which the system takes as being a non-trivial
  * amount of real time.  You probably shouldn't change this;
@@ -77,19 +70,3 @@
  */
 #define	SAFERSS		4		/* nominal ``small'' resident set size
 					   protected against replacement */
-
-/*
- * Mach-derived constants:
- */
-
-/* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAX_ADDRESS		((vm_offset_t)KERNBASE)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)KERNBASE)
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNBASE)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)KERN_END)
-
-/* virtual sizes (bytes) for various kernel submaps */
-#define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
-#define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
-#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
