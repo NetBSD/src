@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.57 2000/03/27 21:47:47 scottr Exp $
+#	$NetBSD: files.sun3,v 1.58 2000/11/03 05:52:42 tsutsui Exp $
 
 #
 # sun3-specific configuration info
@@ -250,7 +250,7 @@ file dev/sun/ms.c			ms needs-flag
 
 
 # Memory Disk for boot tape
-file arch/sun3/dev/md_root.c		memory_disk_hooks
+file dev/md_root.c			memory_disk_hooks
 
 # Compatibility modules
 
