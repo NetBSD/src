@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.4 2003/01/18 06:12:59 thorpej Exp $	*/
+/*	$NetBSD: kloader.c,v 1.5 2003/05/08 13:35:06 shin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -287,7 +287,7 @@ kloader_load_bucket(vaddr_t kv, off_t ofs, size_t sz)
 struct vnode *
 kloader_open(const char *filename)
 {
-	struct proc *p = curlwp;
+	struct proc *p = curlwp->l_proc;
 	struct nameidata nid;
 
 	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, filename, p);
@@ -308,7 +308,7 @@ kloader_open(const char *filename)
 void
 kloader_close()
 {
-	struct proc *p = curlwp;
+	struct proc *p = curlwp->l_proc;
 	struct vnode *vp = kloader.vp;
 
 	VOP_UNLOCK(vp, 0);
@@ -318,7 +318,7 @@ kloader_close()
 int
 kloader_read(size_t ofs, size_t size, void *buf)
 {
-	struct proc *p = curlwp;
+	struct proc *p = curlwp->l_proc;
 	struct vnode *vp = kloader.vp;
 	size_t resid;
 	int error;
