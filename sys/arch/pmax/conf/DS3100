@@ -1,18 +1,18 @@
 #
 # DECstation (3100 or 2100) config file
 #
-# 	$NetBSD: DS3100,v 1.6 1997/05/29 02:22:27 mhitch Exp $
+# 	$NetBSD: DS3100,v 1.7 1997/08/20 04:21:28 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
 maxusers	64
 
-options		MIPS1			# R2000/R3000 support (new)
-#options	MIPS3			# R4000/R4400 support (not finished)
+options 	MIPS1			# R2000/R3000 support (new)
+#options 	MIPS3			# R4000/R4400 support (not finished)
 
 
 # Support for specific models of DECstation
-options		DS3100			# PMAX (kn01) DECstation 2100, 3100
+options 	DS3100			# PMAX (kn01) DECstation 2100, 3100
 #options 	DS5000_25		# MAXINE (kn02ca/xine) support
 #options 	DS5000_100		# 3MIN (kn02ba/kmin) support
 #options 	DS5000_200		# 3MAX (kn02) support
@@ -20,17 +20,17 @@ options		DS3100			# PMAX (kn01) DECstation 2100, 3100
 
 
 # Standard system options
-#options	DIAGNOSTIC		# extra kernel debugging checks
-#options	DEBUG			# extra kernel debugging support
-options		"COMPAT_43"		# compatibility with 4.3BSD binaries
-options		KTRACE			# system call tracing support
-options		"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
-#options	KGDB			# support for kernel gdb
-#options	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
-#options	"KGDBDEV=15*256+0"	# device for kernel gdb
+#options 	DIAGNOSTIC		# extra kernel debugging checks
+#options 	DEBUG			# extra kernel debugging support
+options 	"COMPAT_43"		# compatibility with 4.3BSD binaries
+options 	KTRACE			# system call tracing support
+options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
+#options 	KGDB			# support for kernel gdb
+#options 	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
+#options 	"KGDBDEV=15*256+0"	# device for kernel gdb
 
 
-#options	NTP			# network time protocol
+#options 	NTP			# network time protocol
 #options        UCONSOLE		# users can redirect console (unsafe)
 
 # Filesystem options
@@ -45,30 +45,30 @@ file-system	UNION
 #file-system	LFS		# Log-based filesystem (still experimental)
 #file-system	PORTAL		# portal filesystem (still experimental)
 
-options		FIFO		# POSIX fifo support (in all filesystems)
-options		NFSSERVER	# Sun NFS-compatible filesystem (server)
+options 	FIFO		# POSIX fifo support (in all filesystems)
+options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 
 # Networking options
-options		INET		# Internet protocols
-options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
-options		GATEWAY		# IP packet forwarding
-#options	MULTICAST	# Multicast support
-#options	MROUTING	# Multicast routing support
-#options	ISO		# OSI networking
-#options	TPIP
-#options	EON
+options 	INET		# Internet protocols
+options 	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+options 	GATEWAY		# IP packet forwarding
+#options 	MULTICAST	# Multicast support
+#options 	MROUTING	# Multicast routing support
+#options 	ISO		# OSI networking
+#options 	TPIP
+#options 	EON
 
 
 # NetBSD backwards compatibility
-#options	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
-#options	COMPAT_11	# NetBSD 1.1,
-options		COMPAT_12	# Netbsd 1.2 reboot()
+#options 	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
+#options 	COMPAT_11	# NetBSD 1.1,
+options 	COMPAT_12	# Netbsd 1.2 reboot()
 
 
 # pmax specific
-options		COMPAT_ULTRIX	# ultrix compatibility
-options		EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
-options		"HZ=256"	# RTC rate required
+options 	COMPAT_ULTRIX	# ultrix compatibility
+options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
+options 	"HZ=256"	# RTC rate required
 
 config		netbsd root on ? type ?
 
