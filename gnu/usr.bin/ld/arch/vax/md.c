@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 1998/10/23 00:51:36 matt Exp $	*/
+/*	$NetBSD: md.c,v 1.12 1998/10/31 09:04:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,8 +64,15 @@ unsigned char		*addr;
 	case 1:
 		return get_short(addr);
 	case 2:
-		if (rp->r_baserel)
-			return 0;
+		if (rp->r_baserel) {
+			long addend = get_long(addr);
+			if (rp->r_pcrel) {
+				addend += rp->r_address + 4;
+				if (addend)
+					put_long(addr, -(rp->r_address+4));
+			}
+			return addend;
+		}
 		return get_long(addr);
 	default:
 		errx(1, "Unsupported relocation size: %x",
@@ -92,8 +99,11 @@ int			relocatable_output;
 		break;
 	case 2:
 #ifndef RTLD
-		if (rp->r_baserel)
+		if (rp->r_baserel) {
 			relocation += got_symbol->value + get_long(addr);
+			if (rp->r_copy)
+				put_byte(addr-1, 0x10 | get_byte(addr-1));
+		}
 #endif
 		put_long(addr, relocation);
 		break;
@@ -229,6 +239,7 @@ struct relocation_info	*rp, *r;
 int			type;
 {
 	r->r_baserel = 1;
+
 	if (type & RELTYPE_RELATIVE)
 		r->r_relative = 1;
 
@@ -248,6 +259,19 @@ struct relocation_info	*rp, *r;
 
 	r->r_copy = 1;
 }
+
+#ifndef RTLD
+int
+md_convert_textreloc(r)
+struct relocation_info *r;
+{
+	if (r->r_length != 2 || !r->r_pcrel || !r->r_copy)
+		return 0;
+
+	r->r_baserel = 1;
+	return 1;
+}
+#endif
 
 void
 md_set_breakpoint(where, savep)
@@ -379,9 +403,7 @@ jmpslot_t	*j;
 int		n;
 {
 	for (; n; n--, j++) {
-		j->opcode = md_swap_short(j->opcode);
-		j->addr[0] = md_swap_short(j->addr[0]);
-		j->addr[1] = md_swap_short(j->addr[1]);
+		j->mask = md_swap_short(j->mask);
 		j->reloc_index = md_swap_short(j->reloc_index);
 	}
 }
