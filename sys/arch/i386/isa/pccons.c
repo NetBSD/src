@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -34,15 +35,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.41 1994/02/17 15:08:30 hpeyerl Exp $
+ *	$Id: pccons.c,v 1.42 1994/02/22 23:01:22 mycroft Exp $
  */
-
-#include "pc.h"
-#if NPC > 0
 
 /*
  * code to work keyboard & display for PC-style console
  */
+
+#include "pc.h"
+
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
@@ -55,66 +56,59 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/device.h>
 
 #include <dev/cons.h>
 
+#include <machine/cpu.h>
 #include <machine/pio.h>
-#include <machine/pccons.h>
 #include <machine/pc/display.h>
+#include <machine/pccons.h>
 
 #include <i386/isa/isa_device.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/isa.h>
 #include <i386/isa/ic/i8042.h>
-#include <i386/isa/kbd.h>
+#include <i386/isa/kbdreg.h>
 
 #ifndef BEEP_FREQ
 #define BEEP_FREQ 1500
 #endif
 #ifndef BEEP_TIME
-#define BEEP_TIME (hz/4)
+#define BEEP_TIME (hz/5)
 #endif
 
 #define PCBURST 128
 
-extern u_short *Crtat;
-
-#ifdef XSERVER						/* 15 Aug 92*/
+extern u_short *Crtat;			/* pointer to backing store */
+static u_short *crtat;			/* pointer to current char */
+static volatile u_char ack, nak;	/* Don't ask. */
+static u_char async, kernel, polling;	/* Really, you don't want to know. */
+static u_char lock_state,		/* all off */
+	      typematic = 0xff;		/* don't update until set by user */
 int pc_xmode = 0;
-#endif /* XSERVER */
 
-struct	tty *pc_tty[1];
+#define	PCUNIT(x)	(minor(x))
 
-struct	pcconsoftc {
+struct	tty *pc_tty[NPC];
+
+struct	pc_softc {
 	char	cs_flags;
-#define	CSF_ACTIVE	0x1	/* timeout active */
-#define	CSF_POLLING	0x2	/* polling for input */
-	char	cs_lastc;	/* last char sent */
-	int	cs_timo;	/* timeouts since interrupt */
-	u_long	cs_wedgecnt;	/* times restarted */
+#define	CSF_POLLING	0x1	/* polling for input */
 } pcconsoftc;
 
-struct	kbdsoftc {
-	char	kbd_flags;
-#define	KBDF_ACTIVE	0x1	/* timeout active */
-#define	KBDF_POLLING	0x2	/* polling for input */
-#define	KBDF_RAW	0x4	/* pass thru scan codes for input */
-	char	kbd_lastc;	/* last char sent */
-} kbdsoftc;
-
 static struct video_state {
-	char	esc;	/* seen escape */
-	char	ebrac;	/* seen escape bracket */
-	char	eparm;	/* seen escape and parameters */
-	char	so;	/* in standout mode? */
-	int 	cx;	/* "x" parameter */
-	int 	cy;	/* "y" parameter */
+	int 	cx, cy;		/* escape parameters */
 	int 	row, col;	/* current cursor position */
-	int 	nrow, ncol;	/* current screen geometry */
-	char	fg_at, bg_at;	/* normal attributes */
-	char	so_at;	/* standout attribute */
-	char	kern_fg_at, kern_bg_at;
-	char	color;	/* color or mono display */
+	int 	nrow, ncol, nchr;	/* current screen geometry */
+	u_char	state;		/* parser state */
+#define	VSS_ESCAPE	1
+#define	VSS_EBRACE	2
+#define	VSS_EPARAM	3
+	char	so;		/* in standout mode? */
+	char	color;		/* color or mono display */
+	char	at;		/* normal attributes */
+	char	so_at;		/* standout attributes */
 } vs;
 
 int pcprobe(), pcattach();
@@ -131,75 +125,183 @@ struct	isa_driver pcdriver = {
 #define	ROW		25
 #define	CHR		2
 
-static unsigned int addr_6845 = MONO_BASE;
-static openf;
-
-char *sgetc __P((int));
-static sputc __P((u_char, u_char));
-
-static	char	*more_chars;
-static	int	char_count;
-
 /*
- * We check the console periodically to make sure
- * that it hasn't wedged.  Unfortunately, if an XOFF
- * is typed on the console, that can't be distinguished
- * from more catastrophic failure.
+ * DANGER WIL ROBINSON -- the values of SCROLL, NUM, CAPS, and ALT are
+ * important.
  */
-#define	CN_TIMERVAL	(hz)		/* frequency at which to check cons */
-#define	CN_TIMO		(2*60)		/* intervals to allow for output char */
+#define	SCROLL		0x0001	/* stop output */
+#define	NUM		0x0002	/* numeric shift  cursors vs. numeric */
+#define	CAPS		0x0004	/* caps shift -- swaps case of letter */
+#define	SHIFT		0x0008	/* keyboard shift */
+#define	CTL		0x0010	/* control shift  -- allows ctl function */
+#define	ASCII		0x0020	/* ascii code for this key */
+#define	ALT		0x0080	/* alternate shift -- alternate chars */
+#define	FUNC		0x0100	/* function key */
+#define	KP		0x0200	/* Keypad keys */
+#define	NONE		0x0400	/* no function */
+
+static unsigned int addr_6845 = MONO_BASE;
+
+char *sget __P((void));
+void sput __P((u_char *, int));
 
 void	pcstart();
 int	pcparam();
 char	partab[];
 
-static void set_typematic(u_char data);
-
-
 extern pcopen(dev_t, int, int, struct proc *);
-/*
- * Wait for CP to accept last CP command sent
- * before setting up next command.
- */
-#define	waitforlast(timo) { \
-	if (pclast) { \
-		(timo) = 10000; \
-		do \
-			uncache((char *)&pclast->cp_unit); \
-		while ((pclast->cp_unit&CPTAKE) == 0 && --(timo)); \
-	} \
+
+static inline int
+kbd_wait()
+{
+	u_int i;
+
+	for (i = 100000; i; i--)
+		if ((inb(KBSTATP) & KBS_IBF) == 0)
+			return 1;
+	return 0;
 }
 
 /*
- * Pass command to keyboard controller (8042)
+ * Pass command to keyboard controller (8042).
  */
-static int kbc_8042cmd(val)
-int val;
+static int
+kbc_8042cmd(val)
+	u_char val;
 {
-	unsigned timeo;
 
-	timeo = 100000; 	/* > 100 msec */
-	while (inb(KBSTATP) & KBS_IBF)
-		if (--timeo == 0)
-			return (-1);
-	outb(KBCMDP, val);
-	return (0);
+	if (!kbd_wait())
+		return 0;
+	outb(KBCMDP, K_LDCMDBYTE);
+	if (!kbd_wait())
+		return 0;
+	outb(KBOUTP, val);
+	return 1;
 }
 
 /*
  * Pass command to keyboard itself
  */
-int kbd_cmd(val)
-int val;
+int
+kbd_cmd(val, polling)
+	u_char val;
+	u_char polling;
 {
-	unsigned timeo;
+	u_int retries = 3;
+	register u_int i;
 
-	timeo = 100000; 	/* > 100 msec */
-	while (inb(KBSTATP) & KBS_IBF)
-		if (--timeo == 0)
-			return (-1);
-	outb(KBOUTP, val);
-	return (0);
+	/* XXXX */
+#if 0
+	extern int ipending;
+	printf("%c%c%c%c ", (cpl & 2) ? 'm' : '-', (ipending & 2) ? 'i' : '-', kernel ? 'k' : '-', polling ? 'p' : '-');
+	if (!kernel && !polling && !(ipending & 2) && (cpl & 2))
+		Debugger();
+#endif
+#if 1
+	/*
+	 * This is a fugly backward-compatibility hack for jokers who aren't on
+	 * current-users or don't pay attention.
+	 */
+	if (!polling && (cpl & 2)) {
+		static int warned;
+		if (!warned) {
+			warned = 1;
+			printf("PLEASE UPDATE YOUR COPY OF CONFIG(8)!\r\n");
+		}
+		polling = 1;
+	}
+#endif
+
+	do {
+		if (!kbd_wait())
+			return 0;
+		ack = nak = 0;
+		outb(KBOUTP, val);
+		if (polling)
+			for (i = 100000; i; i--) {
+				if (inb(KBSTATP) & KBS_DIB) {
+					register u_char c;
+					c = inb(KBDATAP);
+					if (c == KBR_ACK || c == KBR_ECHO) {
+						ack = 1;
+						return 1;
+					}
+					if (c == KBR_RESEND) {
+						nak = 1;
+						break;
+					}
+#ifdef DIAGNOSTIC
+					printf("kbd_cmd: input char %x lost\n", c);
+#endif
+				}
+			}
+		else
+			for (i = 100000; i; i--) {
+				if (ack)
+					return 1;
+				if (nak)
+					break;
+			}
+		if (!nak)
+			return 0;
+	} while (--retries);
+	return 0;
+}
+
+void
+do_async_update(poll)
+	u_char poll;
+{
+	int pos = crtat - Crtat;
+	static int old_pos;
+	static u_char old_leds = 0xff, old_typematic = 0xff;
+
+	if (pc_xmode > 0)
+		return;
+
+	async = 0;
+
+	if (pos != old_pos) {
+		register u_short iobase = addr_6845;
+		outb(iobase, 14);
+		outb(iobase+1, pos>>8);
+		outb(iobase, 15);
+		outb(iobase+1, pos);
+		old_pos = pos;
+	}
+
+	if (lock_state != old_leds) {
+		old_leds = lock_state;
+		if (!kbd_cmd(KBC_MODEIND, poll) ||
+		    !kbd_cmd(lock_state, poll)) {
+			printf("pc: timeout updating leds\n");
+			(void) kbd_cmd(KBC_ENABLE, poll);
+		}
+	}
+	if (typematic != old_typematic) {
+		old_typematic = typematic;
+		if (!kbd_cmd(KBC_TYPEMATIC, poll) ||
+		    !kbd_cmd(typematic, poll)) {
+			printf("pc: timeout updating typematic rate\n");
+			(void) kbd_cmd(KBC_ENABLE, poll);
+		}
+	}
+}
+
+void
+async_update()
+{
+
+	if (kernel || polling) {
+		if (async)
+			untimeout((timeout_t)do_async_update, 0);
+		do_async_update(1);
+	} else {
+		if (async)
+			return;
+		async = 1;
+		timeout((timeout_t)do_async_update, 0, 1);
+	}
 }
 
 /*
@@ -210,7 +312,7 @@ int kbd_response()
 	unsigned timeo;
 
 	timeo = 500000; 	/* > 500 msec (KBR_RSTDONE requires 87) */
-	while (!(inb(KBSTATP) & KBS_DIB))
+	while ((inb(KBSTATP) & KBS_DIB) == 0)
 		if (--timeo == 0)
 			return (-1);
 	return ((u_char) inb(KBDATAP));
@@ -220,68 +322,29 @@ int kbd_response()
  * these are both bad jokes
  */
 pcprobe(dev)
-struct isa_device *dev;
+	struct isa_device *dev;
 {
-	int again = 0;
-	int response;
+	u_char c;
 
 	/* Enable interrupts and keyboard, etc. */
-	if (kbc_8042cmd(K_LDCMDBYTE) != 0)
-		printf("Timeout specifying load of keyboard command byte\n");
-	if (kbd_cmd(CMDBYTE) != 0)
-		printf("Timeout writing keyboard command byte\n");
-	/*
-	 * Discard any stale keyboard activity.  The 0.1 boot code isn't
-	 * very careful and sometimes leaves a KBR_RESEND.
-	 */
-	while (inb(KBSTATP) & KBS_DIB)
-		kbd_response();
-
-	/* Start keyboard reset */
-	if (kbd_cmd(KBC_RESET) != 0)
-		printf("Timeout for keyboard reset command\n");
-
-	/* Wait for the first response to reset and handle retries */
-	while ((response = kbd_response()) != KBR_ACK) {
-		if (response < 0) {
-			printf("Timeout for keyboard reset ack byte #1\n");
-			response = KBR_RESEND;
-		}
-		if (response == KBR_RESEND) {
-			if (!again) {
-				printf("KEYBOARD disconnected: RECONNECT\n");
-				again = 1;
-			}
-			if (kbd_cmd(KBC_RESET) != 0)
-				printf("Timeout for keyboard reset command\n");
-		}
-		/*
-		 * Other responses are harmless.  They may occur for new
-		 * keystrokes.
-		 */
+	if (!kbc_8042cmd(CMDBYTE)) {
+		printf("pcprobe: command error\n");
+		return 0;
 	}
 
-	/* Wait for the second response to reset */
-	while ((response = kbd_response()) != KBR_RSTDONE) {
-		if (response < 0) {
-			printf("Timeout for keyboard reset ack byte #2\n");
-			/*
-			 * If KBR_RSTDONE never arrives, the loop will
-			 * finish here unless the keyboard babbles or
-			 * KBS_DIB gets stuck.
-			 */
-			break;
-		}
-	}
+	/* Reset the keyboard. */
+	if (!kbd_cmd(KBC_RESET, 1))
+		printf("pcprobe: reset error 1\n");
+	while ((inb(KBSTATP) & KBS_DIB) == 0);
+	if (inb(KBDATAP) != KBR_RSTDONE)
+		printf("pcprobe: reset error 2\n");
 
-	return (16);
+	return 16;
 }
 
 pcattach(dev)
-struct isa_device *dev;
+	struct isa_device *dev;
 {
-	u_short *cp = Crtat + (CGA_BUF-MONO_BUF)/CHR;
-	u_short was;
 
 	printf("pc%d: ", dev->id_unit);
 	if (vs.color == 0)
@@ -289,32 +352,30 @@ struct isa_device *dev;
 	else
 		printf("color");
 	printf("\n");
-	cursor(0);
+
+	do_async_update(1);
 }
 
-/* ARGSUSED */
-#ifdef __STDC__
-pcopen(dev_t dev, int flag, int mode, struct proc *p)
-#else
+int
 pcopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
-#endif
 {
-	register struct tty *tp;
+	int unit = PCUNIT(dev);
+	struct tty *tp;
 
-	if (minor(dev) != 0)
-		return (ENXIO);
-	if(!pc_tty[0]) {
+	if (unit >= NPC)
+		return ENXIO;
+
+	if (!pc_tty[0])
 		tp = pc_tty[0] = ttymalloc();
-	} else {
+	else
 		tp = pc_tty[0];
-	}
+
 	tp->t_oproc = pcstart;
 	tp->t_param = pcparam;
 	tp->t_dev = dev;
-	openf++;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
@@ -326,11 +387,13 @@ pcopen(dev, flag, mode, p)
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
-		return (EBUSY);
+		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
+
 	return ((*linesw[tp->t_line].l_open)(dev, tp));
 }
 
+int
 pcclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -340,27 +403,30 @@ pcclose(dev, flag, mode, p)
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
+#ifdef notyet /* XXX */
+	ttyfree(tp);
+#endif
 	return(0);
 }
 
-/*ARGSUSED*/
 int
 pcread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
-	register struct tty *tp = pc_tty[0];
+	register struct tty *tp = pc_tty[PCUNIT(dev)];
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
-/*ARGSUSED*/
 int
 pcwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
-	register struct tty *tp = pc_tty[0];
+	register struct tty *tp = pc_tty[PCUNIT(dev)];
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
@@ -370,32 +436,28 @@ pcwrite(dev, uio, flag)
  * the console processor wants to give us a character.
  * Catch the character, and see who it goes to.
  */
-void
-pcrint(dev, irq, cpl)
-	dev_t dev;
+int
+pcrint(unit)
+	int unit;
 {
-	register struct tty *tp = pc_tty[0];
+	register struct tty *tp = pc_tty[unit];
+	u_char *cp;
 
-	int c;
-	char *cp;
-
-	cp = sgetc(1);
-	if (cp == 0)
-		return;
-	if (pcconsoftc.cs_flags & CSF_POLLING)
-		return;
-#ifdef KDB
-	if (kdbrintr(c, tp))
-		return;
-#endif
-	if (!openf)
-		return;
-
+	if ((inb(KBSTATP) & KBS_DIB) == 0)
+		return 0;
+	if (polling)
+		return 1;
 	do {
-		(*linesw[tp->t_line].l_rint)(*cp++ & 0xff, tp);
-	} while (*cp);
+		cp = sget();
+		if (!tp || (tp->t_state & TS_ISOPEN) == 0)
+			return 1;
+		if (cp)
+			do
+				(*linesw[tp->t_line].l_rint)(*cp++, tp);
+			while (*cp);
+	} while (inb(KBSTATP) & KBS_DIB);
+	return 1;
 }
-
 
 int
 pcioctl(dev, cmd, data, flag, p)
@@ -405,106 +467,91 @@ pcioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct tty *tp = pc_tty[0];
-	register error;
+	struct tty *tp = pc_tty[PCUNIT(dev)];
+	int error;
 
-#ifdef XSERVER						/* 15 Aug 92*/
-	if (cmd == CONSOLE_X_MODE_ON) {
-		pc_xmode_on ();
-		return (0);
-	} else if (cmd == CONSOLE_X_MODE_OFF) {
-		pc_xmode_off ();
-		return (0);
-	} else if (cmd == CONSOLE_X_BELL) {
-		/* if set, data is a pointer to a length 2 array of
-		   integers. data[0] is the pitch in Hz and data[1]
-		   is the duration in msec.  */
-		if (data) {
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	if (error >= 0)
+		return error;
+	error = ttioctl(tp, cmd, data, flag, p);
+	if (error >= 0)
+		return error;
+
+	switch (cmd) {
+	case CONSOLE_X_MODE_ON:
+		pc_xmode_on();
+		return 0;
+	case CONSOLE_X_MODE_OFF:
+		pc_xmode_off();
+		return 0;
+	case CONSOLE_X_BELL:
+		/*
+		 * If set, data is a pointer to a length 2 array of
+		 * integers.  data[0] is the pitch in Hz and data[1]
+		 * is the duration in msec.
+		 */
+		if (data)
 			sysbeep(((int*)data)[0],
-				(((int*)data)[1] * hz)/ 3000);
-		} else {
+				(((int*)data)[1] * hz) / 1000);
+		else
 			sysbeep(BEEP_FREQ, BEEP_TIME);
-		}
-		return (0);
-	}
-#endif /* XSERVER */
- 	if (cmd == CONSOLE_SET_TYPEMATIC_RATE) {
+		return 0;
+	case CONSOLE_SET_TYPEMATIC_RATE: {
  		u_char	rate;
 
  		if (!data)
-			return(EINVAL);
+			return EINVAL;
 		rate = *((u_char *)data);
 		/*
-		 * check that it isn't too big (which would then be confused as
-		 * a command)
+		 * Check that it isn't too big (which would cause it to be
+		 * confused with a command).
 		 */
-		if (!(rate & 0x80))
-			set_typematic(rate);	/* set the new rate & delay */
-		else
-			return(EINVAL);
+		if (rate & 0x80)
+			return EINVAL;
+		typematic = rate;
+		async_update();
+		return 0;
  	}
- 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
-		return (error);
-	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
-		return (error);
-	return (ENOTTY);
-}
+	default:
+		return ENOTTY;
+	}
 
-int	pcconsintr = 1;
-/*
- * Got a console transmission interrupt -
- * the console processor wants another character.
- */
-pcxint(dev)
-	dev_t dev;
-{
-	register struct tty *tp = pc_tty[0];
-	register int unit;
-
-	if (!pcconsintr)
-		return;
-	tp->t_state &= ~TS_BUSY;
-	pcconsoftc.cs_timo = 0;
-	if (tp->t_line)
-		(*linesw[tp->t_line].l_start)(tp);
-	else
-		pcstart(tp);
+#ifdef DIAGNOSTIC
+	panic("pcioctl: impossible");
+#endif
 }
 
 void
 pcstart(tp)
-register struct tty *tp;
+	struct tty *tp;
 {
-	register struct clist *rbp;
+	struct clist *cl;
 	int s, len, n;
 	u_char buf[PCBURST];
 
 	s = spltty();
-	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
+	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP))
 		goto out;
 	tp->t_state |= TS_BUSY;
 	splx(s);
 	/*
 	 * We need to do this outside spl since it could be fairly
 	 * expensive and we don't want our serial ports to overflow.
+	 * The tty is locked, so it shouldn't get corrupted.
 	 */
-	rbp = &tp->t_outq;
-	len = q_to_b(rbp, buf, PCBURST);
-	for (n = 0; n < len; n++)
-		if (buf[n]) sputc(buf[n], 0);
+	cl = &tp->t_outq;
+	len = q_to_b(cl, buf, PCBURST);
+	sput(buf, len);
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
-	if (rbp->c_cc) {
+	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
 		timeout((timeout_t)ttrstrt, (caddr_t)tp, 1);
 	}
-	if (rbp->c_cc <= tp->t_lowat) {
-		if (tp->t_state&TS_ASLEEP) {
+	if (cl->c_cc <= tp->t_lowat) {
+		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)rbp);
+			wakeup((caddr_t)cl);
 		}
 		selwakeup(&tp->t_wsel);
 	}
@@ -531,6 +578,7 @@ pccnprobe(cp)
 pccninit(cp)
 	struct consdev *cp;
 {
+
 	/*
 	 * For now, don't screw with it.
 	 */
@@ -544,22 +592,15 @@ pccnputc(dev, c)
 	dev_t dev;
 	char c;
 {
+	u_char oldkernel = kernel;
+
+	kernel = 1;
 	if (c == '\n')
-		sputc('\r', 1);
-	sputc(c, 1);
+		sput("\r\n", 2);
+	else
+		sput(&c, 1);
+	kernel = oldkernel;
 }
-
-/*
- * Print a character on console.
- */
-pcputchar(c, tp)
-	char c;
-	register struct tty *tp;
-{
-	sputc(c, 1);
-	/*if (c=='\n') getchar();*/
-}
-
 
 /* ARGSUSED */
 pccngetc(dev)
@@ -567,47 +608,37 @@ pccngetc(dev)
 {
 	register int s;
 	register char *cp;
+	u_char oldpolling = polling;
 
-#ifdef XSERVER						/* 15 Aug 92*/
 	if (pc_xmode > 0)
-		return (0);
-#endif /* XSERVER */
+		return 0;
 
-	s = spltty();		/* block pcrint while we poll */
-	cp = sgetc(0);
-	splx(s);
-	if (*cp == '\r') return('\n');
-	return (*cp);
-}
-
-pcgetchar(tp)
-	register struct tty *tp;
-{
-	char *cp;
-
-#ifdef XSERVER						/* 15 Aug 92*/
-	if (pc_xmode > 0)
-		return (0);
-#endif /* XSERVER */
-
-	cp = sgetc(0);
-	return (*cp&0xff);
+	polling = 1;
+	do {
+		/* wait for byte */
+		while ((inb(KBSTATP) & KBS_DIB) == 0);
+		/* see if it's worthwhile */
+		cp = sget();
+	} while (!cp);
+	polling = oldpolling;
+	if (*cp == '\r')
+		return '\n';
+	return *cp;
 }
 
 /*
- * Set line parameters
+ * Set line parameters.
  */
+int
 pcparam(tp, t)
-	register struct tty *tp;
-	register struct termios *t;
+	struct tty *tp;
+	struct termios *t;
 {
-	register int cflag = t->c_cflag;
-        /* and copy to tty */
-        tp->t_ispeed = t->c_ispeed;
-        tp->t_ospeed = t->c_ospeed;
-        tp->t_cflag = cflag;
 
-	return(0);
+	tp->t_ispeed = t->c_ispeed;
+	tp->t_ospeed = t->c_ospeed;
+	tp->t_cflag = t->c_cflag;
+	return 0;
 }
 
 #ifdef KDB
@@ -628,8 +659,6 @@ pcpoll(onoff)
  *   the fg_at attribute. Thus if fg_at is left as 0, (FG_BLACK),
  *   as when a portion of screen memory is 0, the cursor may dissappear.
  */
-
-static u_short *crtat = 0;
 
 cursor(int a)
 { 	int pos = crtat - Crtat;
@@ -656,49 +685,43 @@ cursor(int a)
 
 static u_char shift_down, ctrl_down, alt_down, caps, num, scroll;
 
-#define	wrtchar(c, at) \
-	{ char *cp = (char *)crtat; *cp++ = (c); *cp = (at); crtat++; vs.col++; }
-
+#define	wrtchar(c, at) do {\
+	char *cp = (char *)crtat; *cp++ = (c); *cp = (at); crtat++; vs.col++; \
+} while (0)
 
 /* translate ANSI color codes to standard pc ones */
-static char fgansitopc[] =
-{	FG_BLACK, FG_RED, FG_GREEN, FG_BROWN, FG_BLUE,
-	FG_MAGENTA, FG_CYAN, FG_LIGHTGREY};
+static char fgansitopc[] = {
+	FG_BLACK, FG_RED, FG_GREEN, FG_BROWN, FG_BLUE,
+	FG_MAGENTA, FG_CYAN, FG_LIGHTGREY
+};
 
-static char bgansitopc[] =
-{	BG_BLACK, BG_RED, BG_GREEN, BG_BROWN, BG_BLUE,
-	BG_MAGENTA, BG_CYAN, BG_LIGHTGREY};
+static char bgansitopc[] = {
+	BG_BLACK, BG_RED, BG_GREEN, BG_BROWN, BG_BLUE,
+	BG_MAGENTA, BG_CYAN, BG_LIGHTGREY
+};
 
 /*
- *   sputc has support for emulation of the 'pc3' termcap entry.
- *   if ka, use kernel attributes.
+ * `pc3' termcap emulation.
  */
-#ifdef __STDC__
-static sputc(u_char c, u_char ka)
-#else
-static sputc(c, ka)
-	u_char c, ka;
-#endif
+void
+sput(cp, n)
+	u_char *cp;
+	int n;
 {
+	u_char c, scroll = 0;
 
-	int sc = 1;	/* do scroll check */
-	char fg_at, bg_at, at;
-
-#ifdef XSERVER						/* 15 Aug 92*/
 	if (pc_xmode > 0)
 		return;
-#endif /* XSERVER */
 
-	if (crtat == 0)
-	{
+	if (crtat == 0) {
 		u_short volatile *cp = Crtat + (CGA_BUF-MONO_BUF)/CHR;
 		u_short was;
 		unsigned cursorat;
 
 		/*
-		 *   Crtat  initialized  to  point  to  MONO  buffer  if not present
-		 *   change   to  CGA_BUF  offset  ONLY  ADD  the  difference  since
-		 *   locore.s adds in the remapped offset at the right time
+		 * Crtat initialized to point to MONO buffer if not present
+		 * change to CGA_BUF offset ONLY ADD the difference since
+		 * locore.s adds in the remapped offset at the right time
 		 */
 
 		was = *cp;
@@ -721,288 +744,352 @@ static sputc(c, ka)
 		crtat = Crtat + cursorat;
 		vs.ncol = COL;
 		vs.nrow = ROW;
-		vs.fg_at = FG_LIGHTGREY;
-		vs.bg_at = BG_BLACK;
+		vs.nchr = COL * ROW;
+		vs.at = FG_LIGHTGREY | BG_BLACK;
 
-		if (vs.color == 0) {
-			vs.kern_fg_at = FG_UNDERLINE;
+		if (vs.color == 0)
 			vs.so_at = FG_BLACK | BG_LIGHTGREY;
-		} else {
-			vs.kern_fg_at = FG_LIGHTGREY;
+		else
 			vs.so_at = FG_YELLOW | BG_BLACK;
-		}
-		vs.kern_bg_at = BG_BLACK;
 
-		fillw(((vs.bg_at|vs.fg_at)<<8)|' ', crtat, COL*ROW-cursorat);
+		fillw((vs.at << 8) | ' ', crtat, vs.nchr - cursorat);
 	}
 
-	/* which attributes do we use? */
-	if (ka) {
-		fg_at = vs.kern_fg_at;
-		bg_at = vs.kern_bg_at;
-	} else {
-		fg_at = vs.fg_at;
-		bg_at = vs.bg_at;
-	}
-	at = fg_at|bg_at;
+	while (n--) {
+		if (!(c = *cp++))
+			continue;
 
-	switch(c) {
-		int inccol;
-
-	case 0x1B:
-		if(vs.esc)
-			wrtchar(c, vs.so_at); 
-		vs.esc = 1; vs.ebrac = 0; vs.eparm = 0;
-		break;
-
-	case '\t':
-		inccol = (8 - vs.col % 8);	/* non-destructive tab */
-		crtat += inccol;
-		vs.col += inccol;
-		break;
-
-	case '\010':
-		if (crtat <= Crtat)
+		switch (c) {
+		case 0x1B:
+			if (vs.state >= VSS_ESCAPE) {
+				wrtchar(c, vs.so_at); 
+				vs.state = 0;
+				goto maybe_scroll;
+			} else
+				vs.state = VSS_ESCAPE;
 			break;
-		crtat--; vs.col--;
-		if (vs.col < 0) vs.col += vs.ncol;  /* non-destructive backspace */
-		break;
 
-	case '\r':
-		crtat -=  (crtat - Crtat) % vs.ncol; vs.col = 0;
-		break;
+		case '\t': {
+			int inccol = 8 - (vs.col & 7);
+			crtat += inccol;
+			vs.col += inccol;
+		}
+		maybe_scroll:
+			if (vs.col >= COL) {
+				vs.col -= COL;
+				scroll = 1;
+			}
+			break;
 
-	case '\n':
-		crtat += vs.ncol ;
-		break;
+		case '\010':
+			if (crtat <= Crtat)
+				break;
+			--crtat;
+			if (--vs.col < 0)
+				vs.col += COL;	/* non-destructive backspace */
+			break;
 
-	default:
-	bypass:
-		if (vs.esc) {
-			if (vs.ebrac) {
-				switch(c) {
+		case '\r':
+			crtat -= vs.col;
+			vs.col = 0;
+			break;
+
+		case '\n':
+			crtat += vs.ncol;
+			scroll = 1;
+			break;
+
+		default:
+		bypass:
+			switch (vs.state) {
+			case 0:
+				if (c == '\a')
+					sysbeep(BEEP_FREQ, BEEP_TIME);
+				else {
+					/*
+					 * If we're outputting multiple printed
+					 * characters, just blast them to the
+					 * screen until we reach the end of the
+					 * buffer or a control character.  This
+					 * saves time by short-circuiting the
+					 * switch.
+					 * If we reach the end of the line, we
+					 * break to do a scroll check.
+					 */
+					for (;;) {
+						if (vs.so)
+							wrtchar(c, vs.so_at);
+						else
+							wrtchar(c, vs.at);
+						if (vs.col >= vs.ncol) {
+							vs.col = 0;
+							scroll = 1;
+							break;
+						}
+						if (!n || (c = *cp) < ' ')
+							break;
+						n--, cp++;
+					}
+				}
+				break;
+			case VSS_ESCAPE:
+				if (c == '[') {	/* Start ESC [ sequence */
+					vs.cx = vs.cy = 0;
+					vs.state = VSS_EBRACE;
+				} else if (c == 'c') { /* Clear screen & home */
+					fillw((vs.at << 8) | ' ', Crtat,
+					    vs.nchr);
+					crtat = Crtat;
+					vs.col = 0;
+					vs.state = 0;
+				} else { /* Invalid, clear state */
+					wrtchar(c, vs.so_at); 
+					vs.state = 0;
+					goto maybe_scroll;
+				}
+				break;
+			default: /* VSS_EBRACE or VSS_EPARAM */
+				switch (c) {
 					int pos;
 				case 'm':
-					if (!vs.cx) vs.so = 0;
-					else vs.so = 1;
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+					if (!vs.cx)
+						vs.so = 0;
+					else
+						vs.so = 1;
+					vs.state = 0;
 					break;
-				case 'A': /* back cx rows */
-					if (vs.cx <= 0) vs.cx = 1;
-					vs.cx %= vs.nrow;
+				case 'A': { /* back cx rows */
+					int cx = vs.cx;
+					if (cx <= 0)
+						cx = 1;
+					else
+						cx %= vs.nrow;
 					pos = crtat - Crtat;
-					pos -= vs.ncol * vs.cx;
+					pos -= vs.ncol * cx;
 					if (pos < 0)
-						pos += vs.nrow * vs.ncol;
+						pos += vs.nchr;
 					crtat = Crtat + pos;
-					sc = vs.esc = vs.ebrac = vs.eparm = 0;
+					vs.state = 0;
 					break;
-				case 'B': /* down cx rows */
-					if (vs.cx <= 0) vs.cx = 1;
-					vs.cx %= vs.nrow;
+				}
+				case 'B': { /* down cx rows */
+					int cx = vs.cx;
+					if (cx <= 0)
+						cx = 1;
+					else
+						cx %= vs.nrow;
 					pos = crtat - Crtat;
-					pos += vs.ncol * vs.cx;
-					if (pos >= vs.nrow * vs.ncol) 
-						pos -= vs.nrow * vs.ncol;
+					pos += vs.ncol * cx;
+					if (pos >= vs.nchr) 
+						pos -= vs.nchr;
 					crtat = Crtat + pos;
-					sc = vs.esc = vs.ebrac = vs.eparm = 0;
+					vs.state = 0;
 					break;
-				case 'C': /* right cursor */
-					if (vs.cx <= 0)
-						vs.cx = 1;
-					vs.cx %= vs.ncol;
+				}
+				case 'C': { /* right cursor */
+					int cx = vs.cx,
+					    col = vs.col;
+					if (cx <= 0)
+						cx = 1;
+					else
+						cx %= vs.ncol;
 					pos = crtat - Crtat;
-					pos += vs.cx; vs.col += vs.cx;
-					if (vs.col >= vs.ncol) {
-						vs.col -= vs.ncol;
-						pos -= vs.ncol;     /* cursor stays on same line */
+					pos += cx;
+					col += cx;
+					if (col >= vs.ncol) {
+						pos -= vs.ncol;
+						col -= vs.ncol;
 					}
+					vs.col = col;
 					crtat = Crtat + pos;
-					sc = vs.esc = vs.ebrac = vs.eparm = 0;
+					vs.state = 0;
 					break;
-				case 'D': /* left cursor */
-					if (vs.cx <= 0)
-						vs.cx = 1;
-					vs.cx %= vs.ncol;
+				}
+				case 'D': { /* left cursor */
+					int cx = vs.cx,
+					    col = vs.col;
+					if (cx <= 0)
+						cx = 1;
+					else
+						cx %= vs.ncol;
 					pos = crtat - Crtat;
-					pos -= vs.cx; vs.col -= vs.cx;
-					if (vs.col < 0) {
-						vs.col += vs.ncol;
-						pos += vs.ncol;     /* cursor stays on same line */
+					pos -= cx;
+					col -= cx;
+					if (col < 0) {
+						pos += vs.ncol;
+						col += vs.ncol;
 					}
+					vs.col = col;
 					crtat = Crtat + pos;
-					sc = vs.esc = vs.ebrac = vs.eparm = 0;
+					vs.state = 0;
 					break;
+				}
 				case 'J': /* Clear ... */
-					if (vs.cx == 0)
+					switch (vs.cx) {
+					case 0:
 						/* ... to end of display */
-						fillw((at << 8) + ' ',
-							crtat,
-							Crtat + vs.ncol * vs.nrow - crtat);
-					else if (vs.cx == 1)
+						fillw((vs.at << 8) | ' ', crtat,
+						    Crtat + vs.nchr - crtat);
+						break;
+					case 1:
 						/* ... to next location */
-						fillw((at << 8) + ' ',
-							Crtat,
-							crtat - Crtat + 1);
-					else if (vs.cx == 2)
+						fillw((vs.at << 8) | ' ', Crtat,
+						    crtat - Crtat + 1);
+						break;
+					case 2:
 						/* ... whole display */
-						fillw((at << 8) + ' ',
-							Crtat,
-							vs.ncol * vs.nrow);
-						
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+						fillw((vs.at << 8) | ' ', Crtat,
+						    vs.nchr);
+						break;
+					}
+					vs.state = 0;
 					break;
 				case 'K': /* Clear line ... */
-					if (vs.cx == 0)
+					switch (vs.cx) {
+					case 0:
 						/* ... current to EOL */
-						fillw((at << 8) + ' ',
-							crtat,
-							vs.ncol - (crtat - Crtat) % vs.ncol);
-					else if (vs.cx == 1)
+						fillw((vs.at << 8) | ' ', crtat,
+						    vs.ncol - vs.col);
+						break;
+					case 1:
 						/* ... beginning to next */
-						fillw((at << 8) + ' ',
-							crtat - (crtat - Crtat) % vs.ncol,
-							((crtat - Crtat) % vs.ncol) + 1);
-					else if (vs.cx == 2)
+						fillw((vs.at << 8) | ' ',
+						    crtat - vs.col,
+						    vs.col + 1);
+						break;
+					case 2:
 						/* ... entire line */
-						fillw((at << 8) + ' ',
-							crtat - (crtat - Crtat) % vs.ncol,
-							vs.ncol);
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+						fillw((vs.at << 8) | ' ',
+						    crtat - vs.col, vs.ncol);
+						break;
+					}
+					vs.state = 0;
 					break;
 				case 'f': /* in system V consoles */
-				case 'H': /* Cursor move */
-					if ((!vs.cx)||(!vs.cy)) {
+				case 'H': { /* Cursor move */
+					int cx = vs.cx,
+					    cy = vs.cy;
+					if (!cx || !cy) {
 						crtat = Crtat;
 						vs.col = 0;
 					} else {
-						if (vs.cx > vs.nrow)
-							vs.cx = vs.nrow;
-						if (vs.cy > vs.ncol)
-							vs.cy = vs.ncol;
-						crtat = Crtat + (vs.cx - 1) * vs.ncol + vs.cy - 1;
-						vs.col = vs.cy - 1;
+						if (cx > vs.nrow)
+							cx = vs.nrow;
+						if (cy > vs.ncol)
+							cy = vs.ncol;
+						crtat = Crtat +
+						    (cx - 1) * vs.ncol + cy - 1;
+						vs.col = cy - 1;
 					}
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+					vs.state = 0;
 					break;
-				case 'S':  /* scroll up cx lines */
-					if (vs.cx <= 0)
-						vs.cx = 1;
-					if (vs.cx > vs.nrow)
-						vs.cx = vs.nrow;
-					if (vs.cx < vs.nrow)
-						bcopy(Crtat+vs.ncol*vs.cx, Crtat, vs.ncol*(vs.nrow-vs.cx)*CHR);
-					fillw((at <<8)+' ', Crtat+vs.ncol*(vs.nrow-vs.cx), vs.ncol*vs.cx);
-					/* crtat -= vs.ncol*vs.cx; /* XXX */
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+				}
+				case 'S': { /* scroll up cx lines */
+					int cx = vs.cx;
+					if (cx <= 0)
+						cx = 1;
+					if (cx > vs.nrow)
+						cx = vs.nrow;
+					if (cx < vs.nrow)
+						bcopy(Crtat + vs.ncol * cx,
+						    Crtat, vs.ncol * (vs.nrow -
+						    cx) * CHR);
+					fillw((vs.at << 8) | ' ',
+					    Crtat + vs.ncol * (vs.nrow - cx),
+					    vs.ncol * cx);
+					/* crtat -= vs.ncol * cx; /* XXX */
+					vs.state = 0;
 					break;
-				case 'T':  /* scroll down cx lines */
-					if (vs.cx <= 0)
-						vs.cx = 1;
-					if (vs.cx > vs.nrow)
-						vs.cx = vs.nrow;
-					if (vs.cx < vs.nrow)
-						bcopy(Crtat, Crtat+vs.ncol*vs.cx, vs.ncol*(vs.nrow-vs.cx)*CHR);
-					fillw((at <<8)+' ', Crtat, vs.ncol*vs.cx);
-					/* crtat += vs.ncol*vs.cx; /* XXX */
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+				}
+				case 'T': { /* scroll down cx lines */
+					int cx = vs.cx;
+					if (cx <= 0)
+						cx = 1;
+					if (cx > vs.nrow)
+						cx = vs.nrow;
+					if (cx < vs.nrow)
+						bcopy(Crtat,
+						    Crtat + vs.ncol * cx,
+						    vs.ncol * (vs.nrow - cx) *
+						    CHR);
+					fillw((vs.at << 8) | ' ', Crtat,
+					    vs.ncol * cx);
+					/* crtat += vs.ncol * cx; /* XXX */
+					vs.state = 0;
 					break;
+				}
 				case ';': /* Switch params in cursor def */
-					vs.eparm = 1;
+					vs.state = VSS_EPARAM;
 					break;
 				case 'r':
-					vs.so_at = (vs.cx & 0x0f) | ((vs.cy & 0x0f) << 4);
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+					vs.so_at = (vs.cx & FG_MASK) |
+					    ((vs.cy << 4) & BG_MASK);
+					vs.state = 0;
 					break;
 				case 'x': /* set attributes */
 					switch (vs.cx) {
 					case 0:
-						/* reset to normal attributes */
-						bg_at = BG_BLACK;
-						if (ka)
-							fg_at = vs.color? FG_LIGHTGREY: FG_UNDERLINE;
-						else
-							fg_at = FG_LIGHTGREY;
+						vs.at = FG_LIGHTGREY | BG_BLACK;
 						break;
 					case 1:
 						/* ansi background */
-						if (vs.color)
-							bg_at = bgansitopc[vs.cy & 7];
+						if (!vs.color)
+							break;
+						vs.at &= FG_MASK;
+						vs.at |= bgansitopc[vs.cy & 7];
 						break;
 					case 2:
 						/* ansi foreground */
-						if (vs.color)
-							fg_at = fgansitopc[vs.cy & 7];
+						if (!vs.color)
+							break;
+						vs.at &= BG_MASK;
+						vs.at |= fgansitopc[vs.cy & 7];
 						break;
 					case 3:
 						/* pc text attribute */
-						if (vs.eparm) {
-							fg_at = vs.cy & 0x8f;
-							bg_at = vs.cy & 0x70;
-						}
+						if (vs.state >= VSS_EPARAM)
+							vs.at = vs.cy;
 						break;
 					}
-					if (ka) {
-						vs.kern_fg_at = fg_at;
-						vs.kern_bg_at = bg_at;
-					} else {
-						vs.fg_at = fg_at;
-						vs.bg_at = bg_at;
-					}
-					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
+					vs.state = 0;
 					break;
 					
 				default: /* Only numbers valid here */
-					if ((c >= '0')&&(c <= '9')) {
-						if (vs.eparm) {
+					if ((c >= '0') && (c <= '9')) {
+						if (vs.state >= VSS_EPARAM) {
 							vs.cy *= 10;
 							vs.cy += c - '0';
 						} else {
 							vs.cx *= 10;
 							vs.cx += c - '0';
 						}
-					} else {
-						vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
-					}
+					} else
+						vs.state = 0;
 					break;
 				}
 				break;
-			} else if (c == 'c') { /* Clear screen & home */
-				fillw((at << 8) + ' ', Crtat, vs.ncol*vs.nrow);
-				crtat = Crtat; vs.col = 0;
-				vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
-			} else if (c == '[') { /* Start ESC [ sequence */
-				vs.ebrac = 1; vs.cx = 0; vs.cy = 0; vs.eparm = 0;
-			} else { /* Invalid, clear state */
-				 vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
-					wrtchar(c, vs.so_at); 
 			}
-		} else {
-			if (c == 7)
-				sysbeep(BEEP_FREQ, BEEP_TIME);
-			else {
-				if (vs.so) {
-					wrtchar(c, vs.so_at);
-				} else
-					wrtchar(c, at); 
-				if (vs.col >= vs.ncol) vs.col = 0;
-				break ;
+		}
+		if (scroll) {
+			scroll = 0;
+			/* scroll check */
+			if (crtat >= Crtat + vs.nchr) {
+				if (!kernel) {
+					int s = spltty();
+					if (lock_state & SCROLL)
+						tsleep((caddr_t)&lock_state,
+						    PUSER, "pcputc", 0);
+					splx(s);
+				}
+				bcopy(Crtat + vs.ncol, Crtat,
+				    (vs.nchr - vs.ncol) * CHR);
+				fillw((vs.at << 8) | ' ',
+				    Crtat + vs.nchr - vs.ncol, vs.ncol);
+				crtat -= vs.ncol;
 			}
 		}
 	}
-	if (sc && crtat >= Crtat+vs.ncol*vs.nrow) { /* scroll check */
-		if (openf) {
-			(void)sgetc(1);
-			if (scroll)
-				sleep((caddr_t)&scroll, PUSER);
-		}
-		bcopy(Crtat+vs.ncol, Crtat, vs.ncol*(vs.nrow-1)*CHR);
-		fillw ((at << 8) + ' ', Crtat + vs.ncol*(vs.nrow-1),
-			vs.ncol);
-		crtat -= vs.ncol;
-	}
-	if (ka)
-		cursor(1);
+	async_update();
 }
 
 
@@ -1275,28 +1362,16 @@ static char extscantokey[] = {
 0,
 118,	/* F7 */
 };
+
 #define	CODE_SIZE	4		/* Use a max of 4 for now... */
-typedef struct
-{
+typedef struct {
 	u_short	type;
-	char	unshift[CODE_SIZE];
-	char	shift[CODE_SIZE];
-	char	ctrl[CODE_SIZE];
+	char unshift[CODE_SIZE];
+	char shift[CODE_SIZE];
+	char ctl[CODE_SIZE];
 } Scan_def;
 
-#define	SHIFT		0x0002	/* keyboard shift */
-#define	ALT		0x0004	/* alternate shift -- alternate chars */
-#define	NUM		0x0008	/* numeric shift  cursors vs. numeric */
-#define	CTL		0x0010	/* control shift  -- allows ctl function */
-#define	CAPS		0x0020	/* caps shift -- swaps case of letter */
-#define	ASCII		0x0040	/* ascii code for this key */
-#define	SCROLL		0x0080	/* stop output */
-#define	FUNC		0x0100	/* function key */
-#define	KP		0x0200	/* Keypad keys */
-#define	NONE		0x0400	/* no function */
-
-static Scan_def	scan_codes[] =
-{
+static Scan_def	scan_codes[] = {
 	NONE,	"",		"",		"",		/* 0 unused */
 	ASCII,	"\033",		"\033",		"\033",		/* 1 ESCape */
 	ASCII,	"1",		"!",		"!",		/* 2 1 */
@@ -1427,402 +1502,220 @@ static Scan_def	scan_codes[] =
 	NONE,	"",		"",		"",		/* 127 */
 };
 
-
-
-void
-update_led(void)
-{
-#if 0
-	int response;
-#endif
-
-	if (kbd_cmd(KBC_MODEIND) != 0)
-		printf("Timeout for keyboard LED command\n");
-	else if (kbd_cmd(scroll | (num << 1) | (caps << 2)) != 0)
-		printf("Timeout for keyboard LED data\n");
-#if 0
-	else if ((response = kbd_response()) < 0)
-		printf("Timeout for keyboard LED ack\n");
-	else if (response != KBR_ACK)
-		printf("Unexpected keyboard LED ack %d\n", response);
-#else
-	/*
-	 * Skip waiting for and checking the response.  The waiting
-	 * would be too long (about 3 msec) and the checking might eat
-	 * fresh keystrokes.  The waiting should be done using timeout()
-	 * and the checking should be done in the interrupt handler.
-	 */
-#endif
-}
-
-
-static void
-set_typematic(u_char data)
-{
-	if (kbd_cmd(KBC_TYPEMATIC) != 0)
-		printf("Timeout for keyboard typematic command\n");
-	else if (kbd_cmd(data) != 0)
-		printf("Timeout for keyboard typematic data\n");
-#if 0
-	else if ((response = kbd_response()) < 0)
-		printf("Timeout for keyboard typematic ack\n");
-	else if (response != KBR_ACK)
-		printf("Unexpected keyboard typematic ack %d\n", response);
-#else
-	/*
-	 * Skip waiting for and checking the response.  The waiting
-	 * would be too long (about 3 msec) and the checking might eat
-	 * fresh keystrokes.  The waiting should be done using timeout()
-	 * and the checking should be done in the interrupt handler.
-	 */
-#endif
-}
-
-
 /*
- *   sgetc(noblock):  get  characters  from  the  keyboard.  If
- *   noblock  ==  0  wait  until a key is gotten. Otherwise return a
- *    if no characters are present 0.
+ * Get characters from the keyboard.  If none are present, return NULL.
  */
-char *sgetc(noblock)
+char *
+sget()
 {
-	u_char		dt;
-	unsigned	key;
-	static u_char	extended = 0, lock_down = 0;
-	static char	capchar[2];
+	u_char dt;
+	static u_char extended = 0, shift_state = 0;
+	static u_char capchar[2];
 
-	/*
-	 *   First see if there is something in the keyboard port
-	 */
-loop:
-#ifdef XSERVER						/* 15 Aug 92*/
-	if (inb(KBSTATP) & KBS_DIB) {
-		dt = inb(KBDATAP);
-		if (pc_xmode > 0) {
-#if defined(DDB) && defined(XSERVER_DDB)
-			/* F12 enters the debugger while in X mode */
-			if (dt == 88)
-				Debugger();
+top:
+	dt = inb(KBDATAP);
+
+#if 0
+	/* XXXX */
+	printf("%c%c%02x ", kernel ? 'k' : '-', polling ? 'p' : '-', dt);
 #endif
-			capchar[0] = dt;
-			/*
-			 *   Check for locking keys
-			 */
-			switch (scan_codes[dt & 0x7f].type)
-			{
-				case NUM:
-					if (dt & 0x80) {
-						lock_down &= ~NUM;
-						break;
-					}
-					if (lock_down & NUM)
-						goto loop;
-					lock_down |= NUM;
-					num ^= 1;
-					update_led();
-					break;
-				case CAPS:
-					if (dt & 0x80) {
-						lock_down &= ~CAPS;
-						break;
-					}
-					if (lock_down & CAPS)
-						goto loop;
-					lock_down |= CAPS;
-					caps ^= 1;
-					update_led();
-					break;
-				case SCROLL:
-					if (dt & 0x80) {
-						lock_down &= ~SCROLL;
-						break;
-					}
-					if (lock_down & SCROLL)
-						goto loop;
-					lock_down |= SCROLL;
-					scroll ^= 1;
-					if (!scroll)
-						wakeup((caddr_t)&scroll);
-					update_led();
-					break;
+
+	if (pc_xmode > 0) {
+#if defined(DDB) && defined(XSERVER_DDB)
+		/* F12 enters the debugger while in X mode */
+		if (dt == 88)
+			Debugger();
+#endif
+		capchar[0] = dt;
+		capchar[1] = 0;
+		/*
+		 * Check for locking keys.
+		 */
+		switch (scan_codes[dt & 0x7f].type) {
+		case NUM:
+			if (dt & 0x80) {
+				shift_state &= ~NUM;
+				break;
 			}
-			return (&capchar[0]);
+			shift_state |= NUM;
+			lock_state ^= NUM;
+			break;
+		case CAPS:
+			if (dt & 0x80) {
+				shift_state &= ~CAPS;
+				break;
+			}
+			shift_state |= CAPS;
+			lock_state ^= CAPS;
+			break;
+		case SCROLL:
+			if (dt & 0x80) {
+				shift_state &= ~SCROLL;
+				break;
+			}
+			shift_state |= SCROLL;
+			lock_state ^= SCROLL;
+			if ((lock_state & SCROLL) == 0)
+				wakeup((caddr_t)&lock_state);
+			break;
 		}
-	}
-#else	/* !XSERVER*/
-	if (inb(KBSTATP) & KBS_DIB)
-		dt = inb(KBDATAP);
-#endif /* !XSERVER*/
-	else
-	{
-		if (noblock)
-			return 0;
-		else
-			goto loop;
+		return capchar;
 	}
 
-	if (dt == 0xe0)
-	{
+	switch (dt) {
+	case KBR_EXTENDED:
 		extended = 1;
-#ifdef XSERVER						/* 15 Aug 92*/
 		goto loop;
-#else	/* !XSERVER*/
-		if (noblock)
-			return 0;
-		else
-			goto loop;
-#endif /* !XSERVER*/
+	case KBR_ACK:
+		ack = 1;
+		goto loop;
+	case KBR_RESEND:
+		nak = 1;
+		goto loop;
 	}
 
 #ifdef DDB
 	/*
-	 *   Check for cntl-alt-esc
+	 * Check for cntl-alt-esc.
 	 */
-	if ((dt == 1) && ctrl_down && alt_down) {
+	if ((dt == 1) && (shift_state & (CTL | ALT)) == (CTL | ALT)) {
 		Debugger();
-		dt |= 0x80;	/* discard esc (ddb discarded ctrl-alt) */
+		dt |= 0x80;	/* discard esc (ddb discarded ctl-alt) */
 	}
 #endif
 
 	/*
-	 *   Check for make/break
+	 * Check for make/break.
 	 */
-	if (dt & 0x80)
-	{
+	if (dt & 0x80) {
 		/*
-		 *   break
+		 * break
 		 */
-		dt = dt & 0x7f;
-		switch (scan_codes[dt].type)
-		{
-			case NUM:
-				lock_down &= ~NUM;
+		dt &= 0x7f;
+		switch (scan_codes[dt].type) {
+		case NUM:
+			shift_state &= ~NUM;
+			break;
+		case CAPS:
+			shift_state &= ~CAPS;
+			break;
+		case SCROLL:
+			shift_state &= ~SCROLL;
+			break;
+		case SHIFT:
+			shift_state &= ~SHIFT;
+			break;
+		case ALT:
+			shift_state &= ~ALT;
+			break;
+		case CTL:
+			shift_state &= ~CTL;
+			break;
+		}
+	} else {
+		/*
+		 * make
+		 */
+		switch (scan_codes[dt].type) {
+		/*
+		 * locking keys
+		 */
+		case NUM:
+			if (shift_state & NUM)
 				break;
-			case CAPS:
-				lock_down &= ~CAPS;
+			shift_state |= NUM;
+			lock_state ^= NUM;
+			async_update();
+			break;
+		case CAPS:
+			if (shift_state & CAPS)
 				break;
-			case SCROLL:
-				lock_down &= ~SCROLL;
+			shift_state |= CAPS;
+			lock_state ^= CAPS;
+			async_update();
+			break;
+		case SCROLL:
+			if (shift_state & SCROLL)
 				break;
-			case SHIFT:
-				shift_down = 0;
-				break;
-			case ALT:
-				alt_down = 0;
-				break;
-			case CTL:
-				ctrl_down = 0;
-				break;
+			shift_state |= SCROLL;
+			lock_state ^= SCROLL;
+			if ((lock_state & SCROLL) == 0)
+				wakeup((caddr_t)&lock_state);
+			async_update();
+			break;
+		/*
+		 * non-locking keys
+		 */
+		case SHIFT:
+			shift_state |= SHIFT;
+			break;
+		case ALT:
+			shift_state |= ALT;
+			break;
+		case CTL:
+			shift_state |= CTL;
+			break;
+		case ASCII:
+			/* control has highest priority */
+			if (shift_state & CTL)
+				capchar[0] = scan_codes[dt].ctl[0];
+			else if (shift_state & SHIFT)
+				capchar[0] = scan_codes[dt].shift[0];
+			else
+				capchar[0] = scan_codes[dt].unshift[0];
+			if ((lock_state & CAPS) && capchar[0] >= 'a' &&
+			    capchar[0] <= 'z') {
+				capchar[0] -= ('a' - 'A');
+			}
+			capchar[0] |= (shift_state & ALT);
+			extended = 0;
+			return capchar;
+		case NONE:
+			break;
+		case FUNC: {
+			char *more_chars;
+			if (shift_state & SHIFT)
+				more_chars = scan_codes[dt].shift;
+			else if (shift_state & CTL)
+				more_chars = scan_codes[dt].ctl;
+			else
+				more_chars = scan_codes[dt].unshift;
+			extended = 0;
+			return more_chars;
+		}
+		case KP: {
+			char *more_chars;
+			if (shift_state & (SHIFT | CTL) ||
+			    (lock_state & NUM) == 0 || extended)
+				more_chars = scan_codes[dt].shift;
+			else
+				more_chars = scan_codes[dt].unshift;
+			extended = 0;
+			return more_chars;
+		}
 		}
 	}
-	else
-	{
-		/*
-		 *   Make
-		 */
-		dt = dt & 0x7f;
-		switch (scan_codes[dt].type)
-		{
-			/*
-			 *   Locking keys
-			 */
-			case NUM:
-				if (lock_down & NUM)
-					break;
-				lock_down |= NUM;
-				num ^= 1;
-				update_led();
-				break;
-			case CAPS:
-				if (lock_down & CAPS)
-					break;
-				lock_down |= CAPS;
-				caps ^= 1;
-				update_led();
-				break;
-			case SCROLL:
-				if (lock_down & SCROLL)
-					break;
-				lock_down |= SCROLL;
-				scroll ^= 1;
-				if (!scroll)
-					wakeup((caddr_t)&scroll);
-				update_led();
-				break;
 
-			/*
-			 *   Non-locking keys
-			 */
-			case SHIFT:
-				shift_down = 1;
-				break;
-			case ALT:
-				alt_down = 0x80;
-				break;
-			case CTL:
-				ctrl_down = 1;
-				break;
-			case ASCII:
-#ifdef XSERVER						/* 15 Aug 92*/
-/*
- * 18 Sep 92	Terry Lambert	I find that this behaviour is questionable --
- *				I believe that this should be conditional on
- *				the value of pc_xmode rather than always
- *				done.  In particular, "case NONE" seems to
- *				not cause a scancode return.  This may
- *				invalidate alt-"=" and alt-"-" as well as the
- *				F11 and F12 keys, and some keys on lap-tops,
- *				Especially Toshibal T1100 and Epson Equity 1
- *				and Equity 1+ when not in pc_xmode.
- */
-				/* control has highest priority */
-				if (ctrl_down)
-					capchar[0] = scan_codes[dt].ctrl[0];
-				else if (shift_down)
-					capchar[0] = scan_codes[dt].shift[0];
-				else
-					capchar[0] = scan_codes[dt].unshift[0];
-
-				if (caps && (capchar[0] >= 'a'
-					 && capchar[0] <= 'z')) {
-					capchar[0] = capchar[0] - ('a' - 'A');
-				}
-				capchar[0] |= alt_down;
-				extended = 0;
-				return(&capchar[0]);
-#else	/* !XSERVER*/
-			case NONE:
-#endif	/* !XSERVER*/
-			case FUNC:
-				if (shift_down)
-					more_chars = scan_codes[dt].shift;
-				else if (ctrl_down)
-					more_chars = scan_codes[dt].ctrl;
-				else
-					more_chars = scan_codes[dt].unshift;
-#ifndef XSERVER						/* 15 Aug 92*/
-				/* XXX */
-				if (caps && more_chars[1] == 0
-					&& (more_chars[0] >= 'a'
-						&& more_chars[0] <= 'z')) {
-					capchar[0] = *more_chars - ('a' - 'A');
-					more_chars = capchar;
-				}
-#endif	/* !XSERVER*/
-				extended = 0;
-				return(more_chars);
-			case KP:
-				if (shift_down || ctrl_down || !num || extended)
-					more_chars = scan_codes[dt].shift;
-				else
-					more_chars = scan_codes[dt].unshift;
-				extended = 0;
-				return(more_chars);
-#ifdef XSERVER						/* 15 Aug 92*/
-			case NONE:
-				break;
-#endif	/* XSERVER*/
-		}
-	}
 	extended = 0;
-#ifdef XSERVER						/* 15 Aug 92*/
-	goto loop;
-#else	/* !XSERVER*/
-	if (noblock)
+loop:
+	if ((inb(KBSTATP) & KBS_DIB) == 0)
 		return 0;
-	else
-		goto loop;
-#endif	/* !XSERVER*/
+	goto top;
 }
 
-/* special characters */
-#define bs	8
-#define lf	10	
-#define cr	13	
-#define cntlc	3	
-#define del	0177	
-#define cntld	4
-
-getchar()
+int
+pcmmap(dev, offset, nprot)
+	dev_t dev;
+	int offset;
+	int nprot;
 {
-	char	thechar;
-	register	delay;
-	int		x;
 
-	pcconsoftc.cs_flags |= CSF_POLLING;
-	x = splhigh();
-	sputc('>', 1);
-	/*while (1) {*/
-		thechar = *(sgetc(0));
-		pcconsoftc.cs_flags &= ~CSF_POLLING;
-		splx(x);
-		switch (thechar) {
-		    default: if (thechar >= ' ')
-			     	sputc(thechar, 1);
-			     return(thechar);
-		    case cr:
-		    case lf: sputc('\r', 1);
-		    		sputc('\n', 1);
-			     return(lf);
-		    case bs:
-		    case del:
-			     sputc('\b', 1);
-			     sputc(' ', 1);
-			     sputc('\b', 1);
-			     return(thechar);
-		    case cntlc:
-			     sputc('^', 1) ; sputc('C', 1) ; sputc('\r', 1) ; sputc('\n', 1) ;
-			     cpu_reset();
-		    case cntld:
-			     sputc('^', 1) ; sputc('D', 1) ; sputc('\r', 1) ; sputc('\n', 1) ;
-			     return(0);
-		}
-	/*}*/
-}
-
-#include <machine/stdarg.h>
-static nrow;
-
-#define	DPAUSE 1
-void
-#ifdef __STDC__
-dprintf(unsigned flgs, const char *fmt, ...)
-#else
-dprintf(flgs, fmt /*, va_alist */)
-        char *fmt;
-	unsigned flgs;
-#endif
-{	extern unsigned __debug;
-	va_list ap;
-
-	if((flgs&__debug) > DPAUSE) {
-		__color = ffs(flgs&__debug)+1;
-		va_start(ap,fmt);
-		kprintf(fmt, 1, (struct tty *)0, ap);
-		va_end(ap);
-	if (flgs&DPAUSE || nrow%24 == 23) { 
-		int x;
-		x = splhigh();
-		if (nrow%24 == 23) nrow = 0;
-		(void)sgetc(0);
-		splx(x);
-	}
-	}
-	__color = 0;
-}
-
-int pcmmap(dev_t dev, int offset, int nprot)
-{
 	if (offset > 0x20000)
 		return -1;
-	return i386_btop((0xa0000 + offset));
+	return i386_btop(0xa0000 + offset);
 }
 
-#ifdef XSERVER						/* 15 Aug 92*/
-#include <machine/psl.h>
-#include <machine/frame.h>
-
-pc_xmode_on ()
+pc_xmode_on()
 {
 	struct trapframe *fp;
 
@@ -1834,7 +1727,7 @@ pc_xmode_on ()
 	fp->tf_eflags |= PSL_IOPL;
 }
 
-pc_xmode_off ()
+pc_xmode_off()
 {
 	struct trapframe *fp;
 
@@ -1842,11 +1735,8 @@ pc_xmode_off ()
 		return;
 	pc_xmode = 0;
 
-	cursor(0);
+	async_update();
 
 	fp = (struct trapframe *)curproc->p_regs;
 	fp->tf_eflags &= ~PSL_IOPL;
 }
-#endif	/* XSERVER*/
-
-#endif /* NPC > 0 */
