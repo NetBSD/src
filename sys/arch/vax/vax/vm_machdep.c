@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.11 1995/04/12 15:35:14 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.12 1995/05/05 10:47:44 ragge Exp $       */
 
 #undef SWDEBUG
 /*
@@ -34,6 +34,11 @@
  /* All bugs are subject to removal without further notice */
 		
 #include "sys/types.h"
+#include "sys/param.h"
+#include "sys/proc.h"
+#include "sys/user.h"
+#include "sys/exec.h"
+#include "sys/vnode.h"
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
 #include "vm/vm_page.h"
@@ -44,14 +49,9 @@
 #include "machine/macros.h"
 #include "machine/pcb.h"
 #include "machine/trap.h"
-#include "sys/param.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/exec.h"
-#include "sys/vnode.h"
 
 volatile int whichqs;
-extern u_int proc0paddr;
+
 /*
  * pagemove - moves pages at virtual address from to virtual address to,
  * block moved of size size. Using fast insn bcopy for pte move.
@@ -76,108 +76,100 @@ pagemove(from, to, size)
 	(((*(int *)((((((int)x)&0x7fffffff)>>9)*4)+ \
 		(unsigned int)Sysmap))&0x1fffff)<<9)
 
-
-volatile unsigned int ustat,p0br,p0lr,p1br,p1lr,savpcb;
-
+/*
+ * cpu_fork() copies parent process trapframe directly into child PCB
+ * so that when we swtch() to the child process it will go directly
+ * back to user mode without any need to jump back through kernel.
+ * No need for either double-map kernel stack or relocate it when
+ * forking.
+ */
+int
 cpu_fork(p1, p2)
 	struct proc *p1, *p2;
 {
-	unsigned int *i,ksp,uorig,uchld,j,uofset;
 	struct pcb *nyproc;
-	struct pte *ptep;
-	extern int sigsida;
-	struct pmap *pmap;
+	struct trapframe *tf;
+	struct pmap *pmap, *opmap;
+	extern vm_map_t pte_map;
 
-	uorig=(unsigned int)p1->p_addr;
-	pmap=&p2->p_vmspace->vm_pmap;
-	(u_int)nyproc=uchld=(unsigned int)p2->p_addr;
-	uofset=uchld-uorig;
-	nyproc->framep=((struct pcb *)uorig)->framep+uofset;
-/*
- * Kopiera stacken. pcb skiter vi i, eftersom det ordnas fr}n savectx.
- * OBS! Vi k|r p} kernelstacken!
- */
+	nyproc = &p2->p_addr->u_pcb;
+	tf = p1->p_addr->u_pcb.framep;
+	opmap = &p1->p_vmspace->vm_pmap;
+	pmap = &p2->p_vmspace->vm_pmap;
+	pmap->pm_pcb = nyproc;
 
-	splhigh();
-	ksp=mfpr(PR_KSP);
-#define UAREA   (NBPG*UPAGES)
-#define size    (uorig+UAREA-ksp)
-	bcopy((void *)ksp,(void *)(uchld+UAREA-size),size);
-	ustat=(uchld+UAREA-size)-8; /* Kompensera f|r PC + PSL */
-/*
- * Ett VIDRIGT karpen-s{tt att s{tta om s} att sp f}r r{tt adress...
- */
-
-	for((u_int)i=ustat;(u_int)i<uchld+UAREA;i++)
-		if(*i<(uorig+UAREA)&& *i>ksp)
-			*i = *i+(uchld-uorig);
-
-
-	nyproc->P0BR=nyproc->P1BR=0;
-	nyproc->P0LR=AST_PCB;
-	nyproc->P1LR=0x200000;
-	nyproc->USP = mfpr(PR_USP);
-	nyproc->iftrap=NULL;
-	(u_int)pmap->pm_pcb=uchld;
-/*
- * %0 is child pcb. %1 is diff parent - child.
- */
-
-asm("
-	addl3	%1,sp,(%0)	# stack offset
-	addl2	$16,%0		# offset for r1
-	movl	$1,(%0)+
-	movl	r1,(%0)+
-	movq	r2,(%0)+
-	movq	r4,(%0)+
-	movq	r6,(%0)+
-	movq	r8,(%0)+
-	movq	r10,(%0)+
-	movl	ap,(%0)+
-	movl	fp,(%0)
-	addl2	%1,(%0)+
-	movl	$Lre,(%0)+	# pc
-	movpsl	(%0)
-	clrl	r0
-Lre:	mtpr	$0,$18		# spl0();
-	ret
-":: "r"(nyproc),"r"(uofset));
-
-#if 0
-	/*
-	 * For the microvax, the stack registers PR_KSP,.. live in the PCB,
-	 * so we need to make sure they get copied to the new pcb.
-	 */
-	asm("
-		mfpr $8,_p0br
-		mfpr $9,_p0lr
-		mfpr $0xa,_p1br
-		mfpr $0xb,_p1lr
-		mfpr $0x10,_savpcb
-	"); /* page registers changes after pmap_expandp1() */
-
-	mtpr(VIRT2PHYS(uchld),PR_PCBB);
-	mtpr(uchld,PR_ESP); /* Kan ev. faulta ibland XXX */
-
-	asm("movpsl  -(sp)");
-	asm("jsb _savectx");
-	asm("movl r0,_ustat");
-
-	if (ustat){
-		asm("
-			mtpr _savpcb,$0x10
-		");
-		spl0();
-		/*
-		 * Return 1 in child.
-		 */
-		return (0);
-	}
-	spl0();
-	return (1);
+#ifdef notyet
+	/* Set up internal defs in PCB, and alloc PTEs. */
+	nyproc->P0BR = kmem_alloc_wait(pte_map,
+	    (opmap->pm_pcb->P0LR & ~AST_MASK) * 4);
+	nyproc->P1BR = kmem_alloc_wait(pte_map,
+	    (0x800000 - (pmap->pm_pcb->P1LR * 4))) - 0x800000;
+	nyproc->P0LR = opmap->pm_pcb->P0LR;
+	nyproc->P1LR = opmap->pm_pcb->P1LR;
+#else
+	nyproc->P0BR = 0;
+	nyproc->P1BR = 0x80000000;
+	nyproc->P0LR = AST_PCB;
+	nyproc->P1LR = 0x200000;
 #endif
+	nyproc->USP = mfpr(PR_USP);
+	nyproc->iftrap = NULL;
+	nyproc->KSP = (u_int)p2->p_addr + USPACE;
+
+	/* General registers as taken from userspace */
+	/* trapframe should be synced with pcb */
+	bcopy(&tf->r2,&nyproc->R[2],10*sizeof(int));
+	nyproc->AP = tf->ap;
+	nyproc->FP = tf->fp;
+	nyproc->PC = tf->pc;
+	nyproc->PSL = tf->psl & ~PSL_C;
+	nyproc->R[0] = p1->p_pid; /* parent pid. (shouldn't be needed) */
+	nyproc->R[1] = 1;
+
+	return 0; /* Child is ready. Parent, return! */
+
 }
 
+/*
+ * cpu_set_kpc() sets up pcb for the new kernel process so that it will
+ * start at the procedure pointed to by pc next time swtch() is called.
+ * When that procedure returns, it will pop off everything from the
+ * faked calls frame on the kernel stack, do an REI and go down to
+ * user mode.
+ */
+void
+cpu_set_kpc(p, pc)
+        struct proc *p;
+        u_int pc;
+{
+	struct pcb *nyproc;
+	struct {
+		u_int	chand;
+		u_int	mask;
+		u_int	ap;
+		u_int	fp;
+		u_int	pc;
+		u_int	nargs;
+		u_int	pp;
+		u_int	rpc;
+		u_int	rpsl;
+	} *kc;
+	extern int rei;
+
+	kc = (void *)p->p_addr + USPACE - sizeof(*kc);
+	kc->chand = 0;
+	kc->mask = 0x20000000;
+	kc->pc = (u_int)&rei;
+	kc->nargs = 1;
+	kc->pp = (u_int)p;
+	kc->rpsl = 0x3c00000;
+
+	nyproc = &p->p_addr->u_pcb;
+	nyproc->framep = (void *)p->p_addr + USPACE - sizeof(struct trapframe);
+	nyproc->AP = (u_int)&kc->nargs;
+	nyproc->FP = nyproc->KSP = (u_int)kc;
+	nyproc->PC = pc + 2;
+}
 
 void 
 setrunqueue(p)

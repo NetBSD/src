@@ -1,5 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.10 1995/04/10 12:42:39 mycroft Exp $     */
-#undef	oldway
+/*      $NetBSD: pmap.c,v 1.11 1995/05/05 10:47:39 ragge Exp $     */
 #define DEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -53,14 +52,6 @@
 #include "uba.h"
 
 pt_entry_t *pmap_virt2pte(pmap_t, u_int);
-
-/**** Machine specific definitions ****/
-#define VAX_PAGES_PER_PAGE PAGE_SIZE/NBPG
-
-
-#define	VAXLOOP	{int vaxloop;for(vaxloop=0;vaxloop<	\
-		VAX_PAGES_PER_PAGE;vaxloop++){
-#define	VAXEND	}}
 
 #define	PTE_TO_PV(pte)	(PHYS_TO_PV((pte&PG_FRAME)<<PG_SHIFT))
 
@@ -180,16 +171,15 @@ pmap_bootstrap()
 		 /* used for signal trampoline code */
 	sigsida=(u_int)(scratch+NBPG)&0x7fffffff;
 	bcopy(&sigcode, (void *)sigsida, (u_int)&esigcode-(u_int)&sigcode);
-	for(i=2;i<16;i++){
-		*(pt_entry_t *)(proc0paddr+NBPG*2-16*4+i*4)=
-			Sysmap[((proc0paddr&0x7fffffff)>>PG_SHIFT)+i];
-	}
-	p0pmap->pm_pcb->P1BR=(void *)(proc0paddr+NBPG*2-0x800000);
-	p0pmap->pm_pcb->P1LR=0x200000-14;
-	p0pmap->pm_pcb->P0LR=AST_PCB;
-	mtpr(proc0paddr+NBPG*2-0x800000,PR_P1BR);
-	mtpr(0x200000-14,PR_P1LR);
-	mtpr(AST_PCB,PR_P0LR);
+
+	p0pmap->pm_pcb->P1BR = (void *)0x80000000;
+	p0pmap->pm_pcb->P0BR = 0;
+	p0pmap->pm_pcb->P1LR = 0x200000;
+	p0pmap->pm_pcb->P0LR = AST_PCB;
+	mtpr(0x80000000, PR_P1BR);
+	mtpr(0, PR_P0BR);
+	mtpr(0x200000, PR_P1LR);
+	mtpr(AST_PCB, PR_P0LR);
 /*
  * Now everything should be complete, start virtual memory.
  */
@@ -365,32 +355,13 @@ printf("pmap_enter: pmap: %x,virt %x, phys %x,pv %x prot %x\n",
 		if((patch[i]&PG_W)!=(pte&PG_W)){ /* wiring change */
 			pmap_change_wiring(pmap, v, wired);
 		} else if((patch[i]&PG_PROT)!=(pte&PG_PROT)){
-#ifdef oldway
-			VAXLOOP
-				patch[i+vaxloop]&= ~PG_PROT; /* Protection */
-				patch[i+vaxloop]|= prot_array[prot];
-				mtpr(v+vaxloop*NBPG,PR_TBIS);
-			VAXEND
-#else
 			patch[i]&= ~PG_PROT;
 			patch[i++]|= prot_array[prot];
 			patch[i]&= ~PG_PROT;
 			patch[i]|= prot_array[prot];
 			mtpr(v,PR_TBIS);
 			mtpr(v+NBPG,PR_TBIS);
-#endif
 		} else if((patch[i]&PG_V)==0) {
-#ifdef oldway
-			VAXLOOP
-				if(patch[i+vaxloop]&PG_SREF){
-					s=splhigh();
-					patch[i+vaxloop]&=~PG_SREF;
-					patch[i+vaxloop]|=PG_V|PG_REF;
-				} else patch[i+vaxloop]|=PG_V;
-				splx(s);
-				mtpr(v+vaxloop*NBPG,PR_TBIS);
-			VAXEND
-#else
 			if(patch[i]&PG_SREF){
 				patch[i]&=~PG_SREF;
 				patch[i]|=PG_V|PG_REF;
@@ -401,7 +372,6 @@ printf("pmap_enter: pmap: %x,virt %x, phys %x,pv %x prot %x\n",
 			} else patch[i]|=PG_V;
 			mtpr(v,PR_TBIS);
 			mtpr(v+NBPG,PR_TBIS);
-#endif
 		} /* else nothing to do */
 		splx(s);
 		return;
@@ -418,20 +388,10 @@ printf("pmap_enter: pmap: %x,virt %x, phys %x,pv %x prot %x\n",
 		tmp->pv_va=v;
 		pv->pv_next=tmp;
 	}
-#ifdef oldway
-	splhigh();
-	VAXLOOP
-		patch[i]=pte;
-		i++;pte++;
-		mtpr(v+NBPG*vaxloop,PR_TBIS);
-	VAXEND
-	mtpr(0,PR_TBIA);
-#else
 	patch[i++]=pte++;
 	patch[i]=pte;
 	mtpr(v,PR_TBIS);
 	mtpr(v+NBPG,PR_TBIS);
-#endif
 	splx(s);
 }
 
@@ -576,8 +536,7 @@ printf("pmap_remove: ptestart %x, pteslut %x, pv %x\n",ptestart, pteslut,pv);
 #endif
 
 	s=splimp();
-	for(countup=start;ptestart<pteslut;ptestart+=VAX_PAGES_PER_PAGE,
-			countup+=PAGE_SIZE){
+	for(countup=start;ptestart<pteslut;ptestart+=2, countup+=PAGE_SIZE){
 
 		if(!(*ptestart&PG_FRAME))
 			continue; /* not valid phys addr,no mapping */
@@ -641,16 +600,6 @@ pmap_copy_page(src, dst)
 if(startpmapdebug)printf("pmap_copy_page: src %x, dst %x\n",src, dst);
 #endif
 	s=splimp();
-#ifdef oldway
-	VAXLOOP
-		pte_cmap[0]=((src>>PGSHIFT)+vaxloop)|PG_V|PG_RO;
-		pte_cmap[1]=((dst>>PGSHIFT)+vaxloop)|PG_V|PG_KW;
-		mtpr(vmmap,PR_TBIS);
-		mtpr(vmmap+NBPG,PR_TBIS);
-				mtpr(0,PR_TBIA);
-		bcopy((void *)vmmap, (void *)vmmap+NBPG, NBPG);
-	VAXEND
-#else
 	pte_cmap[0]=(src>>PGSHIFT)|PG_V|PG_RO;
 	pte_cmap[1]=(dst>>PGSHIFT)|PG_V|PG_KW;
 	mtpr(vmmap,PR_TBIS);
@@ -661,7 +610,6 @@ if(startpmapdebug)printf("pmap_copy_page: src %x, dst %x\n",src, dst);
 	mtpr(vmmap,PR_TBIS);
 	mtpr(vmmap+NBPG,PR_TBIS);
 	bcopy((void *)vmmap, (void *)vmmap+NBPG, NBPG);
-#endif
 	splx(s);
 }
 
@@ -710,17 +658,9 @@ pmap_is_referenced(pa)
 	if(!pv->pv_pmap) return 0;
 
 	do {
-#ifdef oldway
-		VAXLOOP
-			pte=(u_int *)pmap_virt2pte(pv->pv_pmap, 
-				pv->pv_va+vaxloop*NBPG);
-			spte|=*pte;
-		VAXEND
-#else
 		pte=(u_int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
 		spte|=*pte++;
 		spte|=*pte;
-#endif
 	} while(pv=pv->pv_next);
 	return((spte&PG_REF)?1:0);
 }
@@ -735,17 +675,9 @@ pmap_is_modified(pa)
 	pv=PHYS_TO_PV(pa);
 	if(!pv->pv_pmap) return 0;
 	do {
-#ifdef	oldway
-		VAXLOOP
-			pte=(u_int *)pmap_virt2pte(pv->pv_pmap,
-				pv->pv_va+vaxloop*NBPG);
-			spte|=*pte;
-		VAXEND
-#else
                 pte=(u_int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
                 spte|=*pte++;
                 spte|=*pte;
-#endif
 	} while(pv=pv->pv_next);
 	return((spte&PG_M)?1:0);
 }
@@ -773,23 +705,11 @@ if(startpmapdebug) printf("pmap_clear_reference: pa %x, pv %x\n",pa,pv);
 	if(!pv->pv_pmap) return;
 
 	do {
-#ifdef oldway
-		VAXLOOP
-			pte=(int *)pmap_virt2pte(pv->pv_pmap, 
-				pv->pv_va+vaxloop*NBPG);
-			s=splclock();
-			i=*pte;
-			*pte&= ~(PG_REF|PG_V);
-			*pte|=PG_SREF;
-			splx(s);
-		VAXEND
-#else
 		pte=(int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
 		*pte&= ~(PG_REF|PG_V);
 		*pte++|=PG_SREF;
 		*pte&= ~(PG_REF|PG_V);
 		*pte|=PG_SREF;
-#endif
 	} while(pv=pv->pv_next);
 	mtpr(0,PR_TBIA);
 }
@@ -804,19 +724,9 @@ pmap_clear_modify(pa)
 	pv=PHYS_TO_PV(pa);
 	if(!pv->pv_pmap) return;
 	do {
-#ifdef oldway
-		s=splclock();
-		VAXLOOP
-			pte=(u_int *)pmap_virt2pte(pv->pv_pmap, 
-				pv->pv_va+vaxloop*NBPG);
-			*pte&= ~PG_M;
-		VAXEND
-		splx(s);
-#else
 		pte=(u_int *)pmap_virt2pte(pv->pv_pmap,pv->pv_va);
 		*pte++&= ~PG_M;
 		*pte&= ~PG_M;
-#endif
 	} while(pv=pv->pv_next);
 }
 
@@ -868,15 +778,6 @@ if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
 		do {
 			pte=pte1=(int *)pmap_virt2pte(pv->pv_pmap, pv->pv_va);
 			s=splimp();
-#ifdef oldway
-			VAXLOOP
-				*(pte+vaxloop)&=~PG_PROT;
-				if(pv->pv_va>0x7fffffff)
-					*(pte+vaxloop)|=kprot;
-				else
-					*(pte+vaxloop)|=nyprot;
-			VAXEND
-#else
 			*pte1++&=~PG_PROT;
 			*pte1&=~PG_PROT;
 			if(pv->pv_va>0x7fffffff){
@@ -886,7 +787,6 @@ if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
 				*pte|=nyprot;
 				*pte1|=nyprot;
 			}
-#endif
 			splx(s);
 		} while(pv=pv->pv_next);
 		mtpr(0,PR_TBIA);
@@ -896,27 +796,15 @@ if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
 
 		pte=(int *)pmap_virt2pte(pv->pv_pmap, pv->pv_va);
 		s = splimp();
-#ifdef oldway
-		VAXLOOP
-			*(pte+vaxloop)=0;
-		VAXEND
-#else
 		*pte++=0;
 		*pte=0;
-#endif
 		opv=pv;
 		pv=pv->pv_next;
 		bzero(opv,sizeof(struct pv_entry));
 		while(pv){
 			pte=(int *)pmap_virt2pte(pv->pv_pmap, pv->pv_va);
-#ifdef oldway
-			VAXLOOP
-				*(pte+vaxloop)=0;
-			VAXEND
-#else
 			*pte++=0;
 			*pte=0;
-#endif
 			opv=pv;
 			pv=pv->pv_next;
 			free_pv_entry(opv);
@@ -945,19 +833,11 @@ if(startpmapdebug)printf("pmap_zero_page(phys %x, vmmap %x, pte_cmap %x\n",
 	phys,vmmap,pte_cmap);
 #endif
 	s=splimp();
-#ifdef oldway
-	VAXLOOP
-		*pte_cmap=((phys+(NBPG*vaxloop))>>PG_SHIFT)|PG_V|PG_KW;
-		mtpr(vmmap,PR_TBIA);
-		bzero(vmmap,NBPG);
-	VAXEND
-#else
 	pte_cmap[0]=(phys>>PG_SHIFT)|PG_V|PG_KW;
 	pte_cmap[1]=pte_cmap[0]+1;
 	mtpr(vmmap,PR_TBIS);
 	mtpr(vmmap+NBPG,PR_TBIS);
-	bzero(vmmap,NBPG*2);
-#endif
+	bzero((void *)vmmap,NBPG*2);
 	pte_cmap[0]=pte_cmap[1]=0;
 	mtpr(vmmap,PR_TBIS);
 	mtpr(vmmap+NBPG,PR_TBIS);
@@ -993,16 +873,9 @@ pmap_expandp0(pmap,ny_storlek)
 
 	astlvl=pmap->pm_pcb->P0LR&AST_MASK;
 	osize=(pmap->pm_pcb->P0LR&~AST_MASK)*4;
-/*	size=osize+PAGE_SIZE; */
 	size=ny_storlek*4;
 	tmp=kmem_alloc_wait(pte_map, size);
 	s=splhigh();
-#if 0
-for(j=(u_int)tmp+size,i=tmp;i<j;i++)
-	if(*i!=0)
-		printf("Onollad pte\n");
-	blkclr((void*)tmp,size); /* Sanity */
-#endif
 	if(osize) blkcpy(pmap->pm_pcb->P0BR, (void*)tmp,osize);
 	oaddr=(u_int)pmap->pm_pcb->P0BR;
 	mtpr(tmp,PR_P0BR);
@@ -1023,12 +896,7 @@ pmap_expandp1(pmap)
 	size=osize+PAGE_SIZE;
 	tmp=kmem_alloc_wait(pte_map, size);
 	s=splhigh();
-#if 0
-for(j=(u_int)tmp+size,i=tmp;i<j;i++)
-	if(*i!=0)
-		printf("Onollad pte\n");
-	blkclr((void*)tmp,size); /* Sanity */
-#endif
+
 	if(osize) blkcpy((void*)pmap->pm_stack, (void*)tmp+PAGE_SIZE,osize);
 	oaddr=pmap->pm_stack;
 	pmap->pm_pcb->P1BR=(void*)(tmp+size-0x800000);
