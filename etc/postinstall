@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.50 2003/02/18 10:12:52 lukem Exp $
+# $NetBSD: postinstall,v 1.51 2003/02/20 11:40:28 lukem Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,12 +40,6 @@
 #	check for or fix configuration changes that occur
 #	over time as NetBSD evolves.
 #
-
-# bugs:
-#	- may need MACHINE_ARCH set.
-#	- need MAKE set (c.f, uwe@)
-#	- makeobsolete needs copy of obsolete files, or better way to
-#	  generate them
 
 #
 # checks to add:
@@ -267,15 +261,19 @@ rcconf_is_set()
 	)
 }
 
-# find_file_in_dirlist() file dir1 [...] --
+# find_file_in_dirlist() file message dir1 [...] --
 #	find which directory file is in, and sets ${dir} to match
 #	returns 0 if matched, otherwise 1 (and sets ${dir} to "").
 #
+#	generally, check the directory for the "checking from source" case,
+#	and then the directory for the "checking from extracted etc.tgz" case.
+#
 find_file_in_dirlist()
 {
-	[ $# -ge 2 ] || err 2 "USAGE: find_file_in_dirlist file dir1 [...]"
+	[ $# -ge 3 ] || err 2 "USAGE: find_file_in_dirlist file msg dir1 [...]"
 
 	_file=$1 ; shift
+	_msg=$1 ; shift
 	_dir1st=
 	for dir in $*; do
 		: ${_dir1st:=${dir}}
@@ -287,7 +285,7 @@ find_file_in_dirlist()
 			return 0
 		fi
 	done
-	msg "Can't find source directory"
+	msg "Can't find source directory for ${_msg}"
 	return 1
 }
 
@@ -587,7 +585,7 @@ do_makedev()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_makedev   fix|check"
 
-	find_file_in_dirlist MAKEDEV \
+	find_file_in_dirlist MAKEDEV "MAKEDEV" \
 	    ${SRC_DIR}/etc/etc.${MACHINE} ${SRC_DIR}/dev \
 	    || return 1
 
@@ -604,7 +602,7 @@ do_postfix()
 	op=$1
 	failed=0
 
-	find_file_in_dirlist postfix-script \
+	find_file_in_dirlist postfix-script "postfix scripts" \
 	    ${SRC_DIR}/gnu/dist/postfix/conf \
 	    ${DEST_DIR}/usr/share/examples/postfix \
 	    || return 1
@@ -627,17 +625,13 @@ do_obsolete()
 	[ -n "$1" ] || err 2 "USAGE: do_obsolete  fix|check"
 	op=$1
 
-	setdir=${SRC_DIR}/distrib/sets
-	makeobs=${setdir}/makeobsolete
-	if [ ! -x "${makeobs}" ]; then
-		warn "Can't find program \"${makeobs}\""
-		return 1
-	fi
-
-	( cd ${setdir} && ./makeobsolete -s . -t ${SCRATCHDIR} )
 	failed=0
 
-	for obssrcfile in ${SCRATCHDIR}/*_obsolete; do
+	find_file_in_dirlist base "obsolete set lists" \
+	    ${SRC_DIR}/etc/obsolete ${DEST_DIR}/etc/obsolete \
+	    || return 1
+
+	for obssrcfile in ${dir}/*; do
 		while read ofile; do
 			ofile=${DEST_DIR}${ofile#.}
 			cmd="rm"
