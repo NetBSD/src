@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.13 2004/03/18 23:20:32 bouyer Exp $ */
+/* $NetBSD: if_tireg.h,v 1.13.2.1 2004/07/28 11:00:30 tron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -996,9 +996,15 @@ struct ti_event_desc {
  * allocated for the standard, mini and jumbo receive rings.
  */
 
-#define TI_SSLOTS	64 /* 256 */
-#define TI_MSLOTS	64 /* 256 */
-#define TI_JSLOTS	64 /* 256 */
+#ifndef TI_SSLOTS
+#define TI_SSLOTS	256
+#endif
+#ifndef TI_MSLOTS
+#define TI_MSLOTS	256
+#endif
+#ifndef TI_JSLOTS
+#define TI_JSLOTS	384
+#endif
 #define TI_RSLOTS	128
 
 #define TI_JRAWLEN (ETHER_MAX_LEN_JUMBO + ETHER_ALIGN + sizeof(u_int64_t))
