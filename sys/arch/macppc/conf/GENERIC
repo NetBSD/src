@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.171.2.1 2004/04/05 20:52:25 tron Exp $
+# $NetBSD: GENERIC,v 1.171.2.2 2004/06/24 17:26:16 jmc Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.171.2.1 $"
+#ident 		"GENERIC-$Revision: 1.171.2.2 $"
 
 maxusers	32
 
@@ -204,6 +204,7 @@ lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
 sip*	at pci? dev ? function ?	# SiS 900/7016 Ethernet
