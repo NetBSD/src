@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tables.c,v 1.6 2000/09/04 23:19:33 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tables.c,v 1.7 2000/10/17 16:10:43 taca Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -69,9 +69,22 @@ HASH_FUNCTIONS (option, const char *, struct option)
    t - ASCII text
    f - flag (true or false)
    A - array of whatever precedes (e.g., IA means array of IP addresses)
+   a - array of the preceding character (e.g., IIa means two or more IP
+       addresses)
    U - name of an option space (universe)
    F - implicit flag - the presence of the option indicates that the
        flag is true.
+   o - the preceding value is optional.
+   E - encapsulation, string or colon-seperated hex list (the latter
+       two for parsing).   E is followed by a text string containing
+       the name of the option space to encapsulate, followed by a '.'.
+       If the E is immediately followed by '.', the applicable vendor
+       option space is used if one is defined.
+   e - If an encapsulation directive is not the first thing in the string,
+       the option scanner requires an efficient way to find the encapsulation.
+       This is done by placing a 'e' at the beginning of the option.   The
+       'e' has no other purpose, and is not required if 'E' is the first
+       thing in the option.
 */
 
 struct universe dhcp_universe;
@@ -119,7 +132,7 @@ struct option dhcp_options [256] = {
 	{ "nis-domain", "t",				&dhcp_universe, 40 },
 	{ "nis-servers", "IA",				&dhcp_universe, 41 },
 	{ "ntp-servers", "IA",				&dhcp_universe, 42 },
-	{ "vendor-encapsulated-options", "X",		&dhcp_universe, 43 },
+	{ "vendor-encapsulated-options", "E.",		&dhcp_universe, 43 },
 	{ "netbios-name-servers", "IA",			&dhcp_universe, 44 },
 	{ "netbios-dd-server", "IA",			&dhcp_universe, 45 },
 	{ "netbios-node-type", "B",			&dhcp_universe, 46 },
@@ -139,7 +152,7 @@ struct option dhcp_options [256] = {
 	{ "vendor-class-identifier", "X",		&dhcp_universe, 60 },
 	{ "dhcp-client-identifier", "X",		&dhcp_universe, 61 },
 	{ "nwip-domain", "X",				&dhcp_universe, 62 },
-	{ "nwip-suboptions", "X",			&dhcp_universe, 63 },
+	{ "nwip-suboptions", "Enwip.",			&dhcp_universe, 63 },
 	{ "nisplus-domain", "t",			&dhcp_universe, 64 },
 	{ "nisplus-servers", "IA",			&dhcp_universe, 65 },
 	{ "tftp-server-name", "t",			&dhcp_universe, 66 },
@@ -154,11 +167,11 @@ struct option dhcp_options [256] = {
 	{ "streettalk-server", "IA",			&dhcp_universe, 75 },
 	{ "streettalk-directory-assistance-server", "IA", &dhcp_universe, 76 },
 	{ "user-class", "t",				&dhcp_universe, 77 },
-	{ "option-78", "X",				&dhcp_universe, 78 },
-	{ "option-79", "X",				&dhcp_universe, 79 },
+	{ "slp-directory-agent", "fIa",			&dhcp_universe, 78 },
+	{ "slp-service-scope", "fto",			&dhcp_universe, 79 },
 	{ "option-80", "X",				&dhcp_universe, 80 },
-	{ "option-81", "X",				&dhcp_universe, 81 },
-	{ "option-82", "X",				&dhcp_universe, 82 },
+	{ "fqdn", "Efqdn.",				&dhcp_universe, 81 },
+	{ "relay-agent-information", "Eagent.",		&dhcp_universe, 82 },
 	{ "option-83", "X",				&dhcp_universe, 83 },
 	{ "option-84", "X",				&dhcp_universe, 84 },
 	{ "nds-servers", "IA",				&dhcp_universe, 85 },
@@ -594,6 +607,266 @@ struct option nwip_options [256] = {
 	{ "option-end", "e",				&nwip_universe, 255 },
 };
 
+struct universe fqdn_universe;
+struct option fqdn_options [256] = {
+	{ "pad", "",					&fqdn_universe, 0 },
+	{ "no-client-update", "f",			&fqdn_universe, 1 },
+	{ "server-update", "f",				&fqdn_universe, 2 },
+	{ "encoded", "f",				&fqdn_universe, 3 },
+	{ "rcode1", "B",				&fqdn_universe, 4 },
+	{ "rcode2", "B",				&fqdn_universe, 5 },
+	{ "name", "t",					&fqdn_universe, 6 },
+	{ "option-7", "X",				&fqdn_universe, 7 },
+	{ "option-8", "X",				&fqdn_universe, 8 },
+	{ "option-9", "X",				&fqdn_universe, 9 },
+	{ "option-10", "X",				&fqdn_universe, 10 },
+	{ "option-11", "X",				&fqdn_universe, 11 },
+	{ "option-12", "X",				&fqdn_universe, 12 },
+	{ "option-13", "X",				&fqdn_universe, 13 },
+	{ "option-14", "X",				&fqdn_universe, 14 },
+	{ "option-15", "X",				&fqdn_universe, 15 },
+	{ "option-16", "X",				&fqdn_universe, 16 },
+	{ "option-17", "X",				&fqdn_universe, 17 },
+	{ "option-18", "X",				&fqdn_universe, 18 },
+	{ "option-19", "X",				&fqdn_universe, 19 },
+	{ "option-20", "X",				&fqdn_universe, 20 },
+	{ "option-21", "X",				&fqdn_universe, 21 },
+	{ "option-22", "X",				&fqdn_universe, 22 },
+	{ "option-23", "X",				&fqdn_universe, 23 },
+	{ "option-24", "X",				&fqdn_universe, 24 },
+	{ "option-25", "X",				&fqdn_universe, 25 },
+	{ "option-26", "X",				&fqdn_universe, 26 },
+	{ "option-27", "X",				&fqdn_universe, 27 },
+	{ "option-28", "X",				&fqdn_universe, 28 },
+	{ "option-29", "X",				&fqdn_universe, 29 },
+	{ "option-30", "X",				&fqdn_universe, 30 },
+	{ "option-31", "X",				&fqdn_universe, 31 },
+	{ "option-32", "X",				&fqdn_universe, 32 },
+	{ "option-33", "X",				&fqdn_universe, 33 },
+	{ "option-34", "X",				&fqdn_universe, 34 },
+	{ "option-35", "X",				&fqdn_universe, 35 },
+	{ "option-36", "X",				&fqdn_universe, 36 },
+	{ "option-37", "X",				&fqdn_universe, 37 },
+	{ "option-38", "X",				&fqdn_universe, 38 },
+	{ "option-39", "X",				&fqdn_universe, 39 },
+	{ "option-40", "X",				&fqdn_universe, 40 },
+	{ "option-41", "X",				&fqdn_universe, 41 },
+	{ "option-42", "X",				&fqdn_universe, 42 },
+	{ "option-43", "X",				&fqdn_universe, 43 },
+	{ "option-44", "X",				&fqdn_universe, 44 },
+	{ "option-45", "X",				&fqdn_universe, 45 },
+	{ "option-46", "X",				&fqdn_universe, 46 },
+	{ "option-47", "X",				&fqdn_universe, 47 },
+	{ "option-48", "X",				&fqdn_universe, 48 },
+	{ "option-49", "X",				&fqdn_universe, 49 },
+	{ "option-50", "X",				&fqdn_universe, 50 },
+	{ "option-51", "X",				&fqdn_universe, 51 },
+	{ "option-52", "X",				&fqdn_universe, 52 },
+	{ "option-53", "X",				&fqdn_universe, 53 },
+	{ "option-54", "X",				&fqdn_universe, 54 },
+	{ "option-55", "X",				&fqdn_universe, 55 },
+	{ "option-56", "X",				&fqdn_universe, 56 },
+	{ "option-57", "X",				&fqdn_universe, 57 },
+	{ "option-58", "X",				&fqdn_universe, 58 },
+	{ "option-59", "X",				&fqdn_universe, 59 },
+	{ "option-60", "X",				&fqdn_universe, 60 },
+	{ "option-61", "X",				&fqdn_universe, 61 },
+	{ "option-62", "X",				&fqdn_universe, 62 },
+	{ "option-63", "X",				&fqdn_universe, 63 },
+	{ "option-64", "X",				&fqdn_universe, 64 },
+	{ "option-65", "X",				&fqdn_universe, 65 },
+	{ "option-66", "X",				&fqdn_universe, 66 },
+	{ "option-67", "X",				&fqdn_universe, 67 },
+	{ "option-68", "X",				&fqdn_universe, 68 },
+	{ "option-69", "X",				&fqdn_universe, 69 },
+	{ "option-70", "X",				&fqdn_universe, 70 },
+	{ "option-71", "X",				&fqdn_universe, 71 },
+	{ "option-72", "X",				&fqdn_universe, 72 },
+	{ "option-73", "X",				&fqdn_universe, 73 },
+	{ "option-74", "X",				&fqdn_universe, 74 },
+	{ "option-75", "X",				&fqdn_universe, 75 },
+	{ "option-76", "X",				&fqdn_universe, 76 },
+	{ "option-77", "X",				&fqdn_universe, 77 },
+	{ "option-78", "X",				&fqdn_universe, 78 },
+	{ "option-79", "X",				&fqdn_universe, 79 },
+	{ "option-80", "X",				&fqdn_universe, 80 },
+	{ "option-81", "X",				&fqdn_universe, 81 },
+	{ "option-82", "X",				&fqdn_universe, 82 },
+	{ "option-83", "X",				&fqdn_universe, 83 },
+	{ "option-84", "X",				&fqdn_universe, 84 },
+	{ "option-85", "X",				&fqdn_universe, 85 },
+	{ "option-86", "X",				&fqdn_universe, 86 },
+	{ "option-87", "X",				&fqdn_universe, 87 },
+	{ "option-88", "X",				&fqdn_universe, 88 },
+	{ "option-89", "X",				&fqdn_universe, 89 },
+	{ "option-90", "X",				&fqdn_universe, 90 },
+	{ "option-91", "X",				&fqdn_universe, 91 },
+	{ "option-92", "X",				&fqdn_universe, 92 },
+	{ "option-93", "X",				&fqdn_universe, 93 },
+	{ "option-94", "X",				&fqdn_universe, 94 },
+	{ "option-95", "X",				&fqdn_universe, 95 },
+	{ "option-96", "X",				&fqdn_universe, 96 },
+	{ "option-97", "X",				&fqdn_universe, 97 },
+	{ "option-98", "X",				&fqdn_universe, 98 },
+	{ "option-99", "X",				&fqdn_universe, 99 },
+	{ "option-100", "X",				&fqdn_universe, 100 },
+	{ "option-101", "X",				&fqdn_universe, 101 },
+	{ "option-102", "X",				&fqdn_universe, 102 },
+	{ "option-103", "X",				&fqdn_universe, 103 },
+	{ "option-104", "X",				&fqdn_universe, 104 },
+	{ "option-105", "X",				&fqdn_universe, 105 },
+	{ "option-106", "X",				&fqdn_universe, 106 },
+	{ "option-107", "X",				&fqdn_universe, 107 },
+	{ "option-108", "X",				&fqdn_universe, 108 },
+	{ "option-109", "X",				&fqdn_universe, 109 },
+	{ "option-110", "X",				&fqdn_universe, 110 },
+	{ "option-111", "X",				&fqdn_universe, 111 },
+	{ "option-112", "X",				&fqdn_universe, 112 },
+	{ "option-113", "X",				&fqdn_universe, 113 },
+	{ "option-114", "X",				&fqdn_universe, 114 },
+	{ "option-115", "X",				&fqdn_universe, 115 },
+	{ "option-116", "X",				&fqdn_universe, 116 },
+	{ "option-117", "X",				&fqdn_universe, 117 },
+	{ "option-118", "X",				&fqdn_universe, 118 },
+	{ "option-119", "X",				&fqdn_universe, 119 },
+	{ "option-120", "X",				&fqdn_universe, 120 },
+	{ "option-121", "X",				&fqdn_universe, 121 },
+	{ "option-122", "X",				&fqdn_universe, 122 },
+	{ "option-123", "X",				&fqdn_universe, 123 },
+	{ "option-124", "X",				&fqdn_universe, 124 },
+	{ "option-125", "X",				&fqdn_universe, 125 },
+	{ "option-126", "X",				&fqdn_universe, 126 },
+	{ "option-127", "X",				&fqdn_universe, 127 },
+	{ "option-128", "X",				&fqdn_universe, 128 },
+	{ "option-129", "X",				&fqdn_universe, 129 },
+	{ "option-130", "X",				&fqdn_universe, 130 },
+	{ "option-131", "X",				&fqdn_universe, 131 },
+	{ "option-132", "X",				&fqdn_universe, 132 },
+	{ "option-133", "X",				&fqdn_universe, 133 },
+	{ "option-134", "X",				&fqdn_universe, 134 },
+	{ "option-135", "X",				&fqdn_universe, 135 },
+	{ "option-136", "X",				&fqdn_universe, 136 },
+	{ "option-137", "X",				&fqdn_universe, 137 },
+	{ "option-138", "X",				&fqdn_universe, 138 },
+	{ "option-139", "X",				&fqdn_universe, 139 },
+	{ "option-140", "X",				&fqdn_universe, 140 },
+	{ "option-141", "X",				&fqdn_universe, 141 },
+	{ "option-142", "X",				&fqdn_universe, 142 },
+	{ "option-143", "X",				&fqdn_universe, 143 },
+	{ "option-144", "X",				&fqdn_universe, 144 },
+	{ "option-145", "X",				&fqdn_universe, 145 },
+	{ "option-146", "X",				&fqdn_universe, 146 },
+	{ "option-147", "X",				&fqdn_universe, 147 },
+	{ "option-148", "X",				&fqdn_universe, 148 },
+	{ "option-149", "X",				&fqdn_universe, 149 },
+	{ "option-150", "X",				&fqdn_universe, 150 },
+	{ "option-151", "X",				&fqdn_universe, 151 },
+	{ "option-152", "X",				&fqdn_universe, 152 },
+	{ "option-153", "X",				&fqdn_universe, 153 },
+	{ "option-154", "X",				&fqdn_universe, 154 },
+	{ "option-155", "X",				&fqdn_universe, 155 },
+	{ "option-156", "X",				&fqdn_universe, 156 },
+	{ "option-157", "X",				&fqdn_universe, 157 },
+	{ "option-158", "X",				&fqdn_universe, 158 },
+	{ "option-159", "X",				&fqdn_universe, 159 },
+	{ "option-160", "X",				&fqdn_universe, 160 },
+	{ "option-161", "X",				&fqdn_universe, 161 },
+	{ "option-162", "X",				&fqdn_universe, 162 },
+	{ "option-163", "X",				&fqdn_universe, 163 },
+	{ "option-164", "X",				&fqdn_universe, 164 },
+	{ "option-165", "X",				&fqdn_universe, 165 },
+	{ "option-166", "X",				&fqdn_universe, 166 },
+	{ "option-167", "X",				&fqdn_universe, 167 },
+	{ "option-168", "X",				&fqdn_universe, 168 },
+	{ "option-169", "X",				&fqdn_universe, 169 },
+	{ "option-170", "X",				&fqdn_universe, 170 },
+	{ "option-171", "X",				&fqdn_universe, 171 },
+	{ "option-172", "X",				&fqdn_universe, 172 },
+	{ "option-173", "X",				&fqdn_universe, 173 },
+	{ "option-174", "X",				&fqdn_universe, 174 },
+	{ "option-175", "X",				&fqdn_universe, 175 },
+	{ "option-176", "X",				&fqdn_universe, 176 },
+	{ "option-177", "X",				&fqdn_universe, 177 },
+	{ "option-178", "X",				&fqdn_universe, 178 },
+	{ "option-179", "X",				&fqdn_universe, 179 },
+	{ "option-180", "X",				&fqdn_universe, 180 },
+	{ "option-181", "X",				&fqdn_universe, 181 },
+	{ "option-182", "X",				&fqdn_universe, 182 },
+	{ "option-183", "X",				&fqdn_universe, 183 },
+	{ "option-184", "X",				&fqdn_universe, 184 },
+	{ "option-185", "X",				&fqdn_universe, 185 },
+	{ "option-186", "X",				&fqdn_universe, 186 },
+	{ "option-187", "X",				&fqdn_universe, 187 },
+	{ "option-188", "X",				&fqdn_universe, 188 },
+	{ "option-189", "X",				&fqdn_universe, 189 },
+	{ "option-190", "X",				&fqdn_universe, 190 },
+	{ "option-191", "X",				&fqdn_universe, 191 },
+	{ "option-192", "X",				&fqdn_universe, 192 },
+	{ "option-193", "X",				&fqdn_universe, 193 },
+	{ "option-194", "X",				&fqdn_universe, 194 },
+	{ "option-195", "X",				&fqdn_universe, 195 },
+	{ "option-196", "X",				&fqdn_universe, 196 },
+	{ "option-197", "X",				&fqdn_universe, 197 },
+	{ "option-198", "X",				&fqdn_universe, 198 },
+	{ "option-199", "X",				&fqdn_universe, 199 },
+	{ "option-200", "X",				&fqdn_universe, 200 },
+	{ "option-201", "X",				&fqdn_universe, 201 },
+	{ "option-202", "X",				&fqdn_universe, 202 },
+	{ "option-203", "X",				&fqdn_universe, 203 },
+	{ "option-204", "X",				&fqdn_universe, 204 },
+	{ "option-205", "X",				&fqdn_universe, 205 },
+	{ "option-206", "X",				&fqdn_universe, 206 },
+	{ "option-207", "X",				&fqdn_universe, 207 },
+	{ "option-208", "X",				&fqdn_universe, 208 },
+	{ "option-209", "X",				&fqdn_universe, 209 },
+	{ "authenticate", "X",				&fqdn_universe, 210 },
+	{ "option-211", "X",				&fqdn_universe, 211 },
+	{ "option-212", "X",				&fqdn_universe, 212 },
+	{ "option-213", "X",				&fqdn_universe, 213 },
+	{ "option-214", "X",				&fqdn_universe, 214 },
+	{ "option-215", "X",				&fqdn_universe, 215 },
+	{ "option-216", "X",				&fqdn_universe, 216 },
+	{ "option-217", "X",				&fqdn_universe, 217 },
+	{ "option-218", "X",				&fqdn_universe, 218 },
+	{ "option-219", "X",				&fqdn_universe, 219 },
+	{ "option-220", "X",				&fqdn_universe, 220 },
+	{ "option-221", "X",				&fqdn_universe, 221 },
+	{ "option-222", "X",				&fqdn_universe, 222 },
+	{ "option-223", "X",				&fqdn_universe, 223 },
+	{ "option-224", "X",				&fqdn_universe, 224 },
+	{ "option-225", "X",				&fqdn_universe, 225 },
+	{ "option-226", "X",				&fqdn_universe, 226 },
+	{ "option-227", "X",				&fqdn_universe, 227 },
+	{ "option-228", "X",				&fqdn_universe, 228 },
+	{ "option-229", "X",				&fqdn_universe, 229 },
+	{ "option-230", "X",				&fqdn_universe, 230 },
+	{ "option-231", "X",				&fqdn_universe, 231 },
+	{ "option-232", "X",				&fqdn_universe, 232 },
+	{ "option-233", "X",				&fqdn_universe, 233 },
+	{ "option-234", "X",				&fqdn_universe, 234 },
+	{ "option-235", "X",				&fqdn_universe, 235 },
+	{ "option-236", "X",				&fqdn_universe, 236 },
+	{ "option-237", "X",				&fqdn_universe, 237 },
+	{ "option-238", "X",				&fqdn_universe, 238 },
+	{ "option-239", "X",				&fqdn_universe, 239 },
+	{ "option-240", "X",				&fqdn_universe, 240 },
+	{ "option-241", "X",				&fqdn_universe, 241 },
+	{ "option-242", "X",				&fqdn_universe, 242 },
+	{ "option-243", "X",				&fqdn_universe, 243 },
+	{ "option-244", "X",				&fqdn_universe, 244 },
+	{ "option-245", "X",				&fqdn_universe, 245 },
+	{ "option-246", "X",				&fqdn_universe, 246 },
+	{ "option-247", "X",				&fqdn_universe, 247 },
+	{ "option-248", "X",				&fqdn_universe, 248 },
+	{ "option-249", "X",				&fqdn_universe, 249 },
+	{ "option-250", "X",				&fqdn_universe, 250 },
+	{ "option-251", "X",				&fqdn_universe, 251 },
+	{ "option-252", "X",				&fqdn_universe, 252 },
+	{ "option-253", "X",				&fqdn_universe, 253 },
+	{ "option-254", "X",				&fqdn_universe, 254 },
+	{ "option-end", "e",				&fqdn_universe, 255 },
+};
+
 const char *hardware_types [] = {
 	"unknown-0",
 	"ethernet",
@@ -878,11 +1151,11 @@ void initialize_common_option_spaces()
 	dhcp_universe.lookup_func = lookup_hashed_option;
 	dhcp_universe.option_state_dereference =
 		hashed_option_state_dereference;
-	dhcp_universe.get_func = hashed_option_get;
-	dhcp_universe.set_func = hashed_option_set;
 	dhcp_universe.save_func = save_hashed_option;
 	dhcp_universe.delete_func = delete_hashed_option;
 	dhcp_universe.encapsulate = hashed_option_space_encapsulate;
+	dhcp_universe.foreach = hashed_option_space_foreach;
+	dhcp_universe.decode = parse_option_buffer;
 	dhcp_universe.length_size = 1;
 	dhcp_universe.tag_size = 1;
 	dhcp_universe.store_tag = putUChar;
@@ -901,28 +1174,56 @@ void initialize_common_option_spaces()
 
 	/* Set up the Novell option universe (for option 63)... */
 	nwip_universe.name = "nwip";
-	nwip_universe.lookup_func = lookup_hashed_option;
+	nwip_universe.lookup_func = lookup_linked_option;
 	nwip_universe.option_state_dereference =
-		hashed_option_state_dereference;
-	nwip_universe.get_func = hashed_option_get;
-	nwip_universe.set_func = hashed_option_set;
-	nwip_universe.save_func = save_hashed_option;
-	nwip_universe.delete_func = delete_hashed_option;
+		linked_option_state_dereference;
+	nwip_universe.save_func = save_linked_option;
+	nwip_universe.delete_func = delete_linked_option;
 	nwip_universe.encapsulate = nwip_option_space_encapsulate;
+	nwip_universe.foreach = linked_option_space_foreach;
+	nwip_universe.decode = parse_option_buffer;
 	nwip_universe.length_size = 1;
 	nwip_universe.tag_size = 1;
 	nwip_universe.store_tag = putUChar;
 	nwip_universe.store_length = putUChar;
+	fqdn_universe.enc_opt = &dhcp_options [DHO_NWIP_SUBOPTIONS];
 	nwip_universe.index = universe_count++;
 	universes [nwip_universe.index] = &nwip_universe;
 	nwip_universe.hash = new_hash (0, 0, 1);
 	if (!nwip_universe.hash)
-		log_fatal ("Can't allocate dhcp option hash table.");
+		log_fatal ("Can't allocate nwip option hash table.");
 	for (i = 0; i < 256; i++) {
-		nwip_universe.options [i] = &dhcp_options [i];
+		nwip_universe.options [i] = &nwip_options [i];
 		option_hash_add (nwip_universe.hash,
-				 dhcp_options [i].name, 0,
-				 &dhcp_options [i], MDL);
+				 nwip_options [i].name, 0,
+				 &nwip_options [i], MDL);
+	}
+
+	/* Set up the FQDN option universe... */
+	fqdn_universe.name = "fqdn";
+	fqdn_universe.lookup_func = lookup_linked_option;
+	fqdn_universe.option_state_dereference =
+		linked_option_state_dereference;
+	fqdn_universe.save_func = save_linked_option;
+	fqdn_universe.delete_func = delete_linked_option;
+	fqdn_universe.encapsulate = fqdn_option_space_encapsulate;
+	fqdn_universe.foreach = linked_option_space_foreach;
+	fqdn_universe.decode = fqdn_universe_decode;
+	fqdn_universe.length_size = 1;
+	fqdn_universe.tag_size = 1;
+	fqdn_universe.store_tag = putUChar;
+	fqdn_universe.store_length = putUChar;
+	fqdn_universe.index = universe_count++;
+	fqdn_universe.enc_opt = &dhcp_options [DHO_FQDN];
+	universes [fqdn_universe.index] = &fqdn_universe;
+	fqdn_universe.hash = new_hash (0, 0, 1);
+	if (!fqdn_universe.hash)
+		log_fatal ("Can't allocate fqdn option hash table.");
+	for (i = 0; i < 256; i++) {
+		fqdn_universe.options [i] = &fqdn_options [i];
+		option_hash_add (fqdn_universe.hash,
+				 fqdn_options [i].name, 0,
+				 &fqdn_options [i], MDL);
 	}
 
 	/* Set up the hash of universes. */
@@ -933,4 +1234,7 @@ void initialize_common_option_spaces()
 	universe_hash_add (universe_hash,
 			   nwip_universe.name, 0,
 			   &nwip_universe, MDL);
+	universe_hash_add (universe_hash,
+			   fqdn_universe.name, 0,
+			   &fqdn_universe, MDL);
 }
