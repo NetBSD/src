@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.5 1997/10/15 16:54:48 thorpej Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.6 1997/11/02 00:23:55 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -21,9 +21,10 @@
 struct dp8390_softc {
 	struct device	sc_dev;
 	void	*sc_ih;
-	int	sc_flags;	/* interface flags, from config */
+	int	sc_flags;		/* interface flags, from config */
 
-	struct ethercom sc_ec;	/* ethernet common */
+	struct ethercom sc_ec;		/* ethernet common */
+	struct ifmedia sc_media;	/* supported media information */
 
 	bus_space_tag_t	sc_regt;	/* NIC register space tag */
 	bus_space_handle_t sc_regh;	/* NIC register space handle */
@@ -68,6 +69,10 @@ struct dp8390_softc {
 
 	int	(*sc_enable) __P((struct dp8390_softc *));
 	void	(*sc_disable) __P((struct dp8390_softc *));
+
+	int	(*sc_mediachange) __P((struct dp8390_softc *));
+	void	(*sc_mediastatus) __P((struct dp8390_softc *,
+		    struct ifmediareq *));
 };
 
 /*
@@ -119,7 +124,7 @@ struct dp8390_softc {
 #define NIC_PUT(t, h, reg, val)	bus_space_write_1(t, h,			\
 				    ((sc)->sc_reg_map[reg]), (val))
 
-int	dp8390_config __P((struct dp8390_softc *));
+int	dp8390_config __P((struct dp8390_softc *, int *, int, int));
 int	dp8390_intr __P((void *));
 int	dp8390_ioctl __P((struct ifnet *, u_long, caddr_t));
 void	dp8390_start __P((struct ifnet *));
