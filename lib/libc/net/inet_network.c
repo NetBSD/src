@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.7 1997/07/21 14:08:06 jtc Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.8 1999/09/16 11:45:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_network.c,v 1.7 1997/07/21 14:08:06 jtc Exp $");
+__RCSID("$NetBSD: inet_network.c,v 1.8 1999/09/16 11:45:14 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,8 @@ __RCSID("$NetBSD: inet_network.c,v 1.7 1997/07/21 14:08:06 jtc Exp $");
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include <assert.h>
 #include <ctype.h>
 
 #ifdef __weak_alias
@@ -65,6 +67,12 @@ inet_network(cp)
 	register char c;
 	u_long parts[4], *pp = parts;
 	register int i;
+
+	_DIAGASSERT(cp != NULL);
+#ifdef _DIAGNOSTIC
+	if (cp == NULL)
+		return (INADDR_NONE);
+#endif
 
 again:
 	val = 0; base = 10;

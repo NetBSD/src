@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.8 1998/11/18 20:51:51 kleink Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.9 1999/09/16 11:45:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.8 1998/11/18 20:51:51 kleink Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.9 1999/09/16 11:45:05 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.8 1998/11/18 20:51:51 kleink Exp $");
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <limits.h>
 #include <paths.h>
@@ -66,9 +67,19 @@ sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	const void *newp;
 	size_t *oldlenp, newlen;
 {
+
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
+
 	if (name[0] != CTL_USER)
 		/* LINTED will fix when sysctl interface gets corrected */
-		return (__sysctl(name, namelen, oldp, oldlenp, (void *)newp, newlen));
+		return (__sysctl(name, namelen, oldp, oldlenp,
+		    (void *)newp, newlen));
 
 	if (newp != NULL) {
 		errno = EPERM;

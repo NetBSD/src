@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.11 1999/09/10 12:48:43 drochner Exp $	*/
+/*	$NetBSD: md5c.c,v 1.12 1999/09/16 11:45:10 lukem Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -33,9 +33,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/md5.h>
+#define _DIAGASSERT(x)	(void)0
 #else
 #include "namespace.h"
 #include <sys/types.h>
+#include <assert.h>
 #include <string.h>
 #include <md5.h>
 #endif /* _KERNEL || _STANDALONE */
@@ -98,6 +100,9 @@ Encode (output, input, len)
 {
 	unsigned int i, j;
 
+	_DIAGASSERT(output != 0);
+	_DIAGASSERT(input != 0);
+
 	for (i = 0, j = 0; j < len; i++, j += 4) {
 		output[j] = (unsigned char)(input[i] & 0xff);
 		output[j+1] = (unsigned char)((input[i] >> 8) & 0xff);
@@ -117,6 +122,9 @@ Decode (output, input, len)
 	unsigned int len;
 {
 	unsigned int i, j;
+
+	_DIAGASSERT(output != 0);
+	_DIAGASSERT(input != 0);
 
 	for (i = 0, j = 0; j < len; i++, j += 4)
 		output[i] = ((UINT4)input[j]) | (((UINT4)input[j+1]) << 8) |
@@ -178,6 +186,12 @@ MD5Init(context)
 	MD5_CTX *context;		/* context */
 {
 
+	_DIAGASSERT(context != 0);
+#ifdef _DIAGNOSTIC
+	if (context == 0)
+		return;
+#endif
+
 	context->count[0] = context->count[1] = 0;
 
 	/* Load magic initialization constants. */
@@ -199,6 +213,13 @@ MD5Update(context, input, inputLen)
 	unsigned int inputLen;		/* length of input block */
 {
 	unsigned int i, idx, partLen;
+
+	_DIAGASSERT(context != 0);
+	_DIAGASSERT(input != 0);
+#ifdef _DIAGNOSTIC
+	if (context == 0 || input == 0)
+		return;
+#endif
 
 	/* Compute number of bytes mod 64 */
 	idx = (unsigned int)((context->count[0] >> 3) & 0x3F);
@@ -243,6 +264,13 @@ MD5Final(digest, context)
 	unsigned char bits[8];
 	unsigned int idx, padLen;
 
+	_DIAGASSERT(digest != 0);
+	_DIAGASSERT(context != 0);
+#ifdef _DIAGNOSTIC
+	if (digest == 0 || context == 0)
+		return;
+#endif
+
 	/* Save number of bits */
 	Encode(bits, context->count, 8);
 
@@ -269,8 +297,15 @@ MD5Transform(state, block)
 	UINT4 state[4];
 	const unsigned char block[64];
 {
-	UINT4 a = state[0], b = state[1], c = state[2], d = state[3], x[16];
+	UINT4 a, b, c, d, x[16];
 
+	_DIAGASSERT(state != 0);
+	_DIAGASSERT(block != 0);
+
+	a = state[0];
+	b = state[1];
+	c = state[2];
+	d = state[3];
 	Decode(x, block, 64);
 
 	/* Round 1 */

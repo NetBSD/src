@@ -1,4 +1,4 @@
-/*	$NetBSD: fdopen.c,v 1.8 1998/10/13 14:07:04 kleink Exp $	*/
+/*	$NetBSD: fdopen.c,v 1.9 1999/09/16 11:45:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,16 +41,19 @@
 #if 0
 static char sccsid[] = "@(#)fdopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fdopen.c,v 1.8 1998/10/13 14:07:04 kleink Exp $");
+__RCSID("$NetBSD: fdopen.c,v 1.9 1999/09/16 11:45:25 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
+
+#include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <errno.h>
+
 #include "local.h"
 
 #ifdef __weak_alias
@@ -64,6 +67,14 @@ fdopen(fd, mode)
 {
 	FILE *fp;
 	int flags, oflags, fdflags, tmp;
+
+	_DIAGASSERT(fd != -1);
+#ifdef _DIAGNOSTIC
+	if (fd == -1) {
+		errno = EBADF;
+		return (NULL);
+	}
+#endif
 
 	if ((flags = __sflags(mode, &oflags)) == 0)
 		return (NULL);

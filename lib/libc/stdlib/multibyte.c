@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.c,v 1.6 1997/07/13 20:16:48 christos Exp $	*/
+/*	$NetBSD: multibyte.c,v 1.7 1999/09/16 11:45:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -38,10 +38,12 @@
 #if 0
 static char *sccsid = "from: @(#)multibyte.c	5.1 (Berkeley) 2/18/91";
 #else
-__RCSID("$NetBSD: multibyte.c,v 1.6 1997/07/13 20:16:48 christos Exp $");
+__RCSID("$NetBSD: multibyte.c,v 1.7 1999/09/16 11:45:35 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 
 /*
@@ -104,6 +106,13 @@ mbstowcs(pwcs, s, n)
 {
 	int count = 0;
 
+	_DIAGASSERT(pwcs != NULL);
+	_DIAGASSERT(s != NULL);
+#ifdef _DIAGNOSTIC
+	if (pwcs == NULL || s == NULL)
+		return (0);
+#endif
+
 	if (n != 0) {
 		do {
 			if ((*pwcs++ = (wchar_t) *s++) == 0)
@@ -124,6 +133,11 @@ wcstombs(s, pwcs, n)
 {
 	int count = 0;
 
+	_DIAGASSERT(s != NULL);
+	_DIAGASSERT(pwcs != NULL);
+	if (s == NULL || pwcs == NULL)
+		return (0);
+
 	if (n != 0) {
 		do {
 			if ((*s++ = (char) *pwcs++) == 0)
@@ -134,4 +148,3 @@ wcstombs(s, pwcs, n)
 
 	return count;
 }
-

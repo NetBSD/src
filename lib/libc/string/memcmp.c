@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.c,v 1.9 1998/03/26 23:53:36 cgd Exp $	*/
+/*	$NetBSD: memcmp.c,v 1.10 1999/09/16 11:45:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,14 +41,16 @@
 #if 0
 static char sccsid[] = "@(#)memcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memcmp.c,v 1.9 1998/03/26 23:53:36 cgd Exp $");
+__RCSID("$NetBSD: memcmp.c,v 1.10 1999/09/16 11:45:40 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <assert.h>
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
+#define _DIAGASSERT(x)	(void)0
 #endif 
 
 /*
@@ -59,6 +61,13 @@ memcmp(s1, s2, n)
 	const void *s1, *s2;
 	size_t n;
 {
+	_DIAGASSERT(s1 != 0);
+	_DIAGASSERT(s2 != 0);
+#ifdef _DIAGNOSTIC
+	if (s1 == 0 || s2 == 0)
+		return (0);
+#endif
+
 	if (n != 0) {
 		const unsigned char *p1 = s1, *p2 = s2;
 

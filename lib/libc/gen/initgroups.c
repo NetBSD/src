@@ -1,4 +1,4 @@
-/*	$NetBSD: initgroups.c,v 1.16 1999/03/31 12:19:32 lukem Exp $	*/
+/*	$NetBSD: initgroups.c,v 1.17 1999/09/16 11:45:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)initgroups.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: initgroups.c,v 1.16 1999/03/31 12:19:32 lukem Exp $");
+__RCSID("$NetBSD: initgroups.c,v 1.17 1999/09/16 11:45:00 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
 
+#include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -59,6 +60,12 @@ initgroups(uname, agroup)
 {
 	gid_t groups[NGROUPS];
 	int ngroups;
+
+	_DIAGASSERT(uname != NULL);
+#ifdef _DIAGNOSTIC
+	if (uname == NULL)
+		return (-1);
+#endif
 
 	ngroups = NGROUPS;
 	getgrouplist(uname, agroup, groups, &ngroups);

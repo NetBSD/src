@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.21 1999/03/16 18:13:46 christos Exp $	*/
+/*	$NetBSD: setmode.c,v 1.22 1999/09/16 11:45:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.21 1999/03/16 18:13:46 christos Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.22 1999/09/16 11:45:04 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: setmode.c,v 1.21 1999/03/16 18:13:46 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <signal.h>
@@ -98,6 +99,12 @@ getmode(bbox, omode)
 {
 	const BITCMD *set;
 	mode_t clrval, newmode, value;
+
+	_DIAGASSERT(bbox != NULL);
+#ifdef _DIAGNOSTIC
+	if (bbox == NULL)
+		return (omode);
+#endif
 
 	set = (const BITCMD *)bbox;
 	newmode = omode;
@@ -361,6 +368,9 @@ addcmd(set, op, who, oparg, mask)
 	int op;
 	u_int mask;
 {
+
+	_DIAGASSERT(set != NULL);
+
 	switch (op) {
 	case '=':
 		set->cmd = '-';
@@ -406,6 +416,9 @@ static void
 dumpmode(set)
 	BITCMD *set;
 {
+
+	_DIAGASSERT(set != NULL);
+
 	for (; set->cmd; ++set)
 		(void)printf("cmd: '%c' bits %04o%s%s%s%s%s%s\n",
 		    set->cmd, set->bits, set->cmd2 ? " cmd2:" : "",
@@ -429,6 +442,8 @@ compress_mode(set)
 {
 	BITCMD *nset;
 	int setbits, clrbits, Xbits, op;
+
+	_DIAGASSERT(set != NULL);
 
 	for (nset = set;;) {
 		/* Copy over any 'u', 'g' and 'o' commands. */

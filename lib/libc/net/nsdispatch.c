@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.11 1999/05/03 15:17:13 christos Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.12 1999/09/16 11:45:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.11 1999/05/03 15:17:13 christos Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.12 1999/09/16 11:45:16 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: nsdispatch.c,v 1.11 1999/05/03 15:17:13 christos Exp $");
 #include <sys/param.h>
 #include <sys/stat.h>
 
+#include <assert.h>
 #include <err.h>
 #include <fcntl.h>
 #define _NS_PRIVATE
@@ -103,6 +104,14 @@ _nsdbtaddsrc(dbt, src)
 	ns_dbt		*dbt;
 	const ns_src	*src;
 {
+
+	_DIAGASSERT(dbt != NULL);
+	_DIAGASSERT(src != NULL);
+#ifdef _DIAGNOSTIC
+	if (dbt == NULL || src == NULL)
+		return;
+#endif
+
 	if ((dbt->srclistsize % NSELEMSPERCHUNK) == 0) {
 		dbt->srclist = (ns_src *)realloc(dbt->srclist,
 		    (dbt->srclistsize + NSELEMSPERCHUNK) * sizeof(ns_src));
@@ -118,6 +127,12 @@ _nsdbtdump(dbt)
 	const ns_dbt *dbt;
 {
 	int i;
+
+	_DIAGASSERT(dbt != NULL);
+#ifdef _DIAGNOSTIC
+	if (dbt == NULL)
+		return;
+#endif
 
 	printf("%s (%d source%s):", dbt->name, dbt->srclistsize,
 	    dbt->srclistsize == 1 ? "" : "s");
@@ -153,6 +168,12 @@ _nsdbtget(name)
 
 	extern	FILE 	*_nsyyin;
 	extern	int	 _nsyyparse __P((void));
+
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL)
+		return (NULL);
+#endif
 
 	dbt.name = name;
 
@@ -206,6 +227,12 @@ _nsdbtput(dbt)
 {
 	int	i;
 
+	_DIAGASSERT(dbt != NULL);
+#ifdef _DIAGNOSTIC
+	if (dbt == NULL)
+		return;
+#endif
+
 	for (i = 0; i < _nsmapsize; i++) {
 		if (_nscmp(dbt, &_nsmap[i]) == 0) {
 					/* overwrite existing entry */
@@ -246,6 +273,13 @@ nsdispatch(retval, disp_tab, database, method, defaults, va_alist)
 	const ns_dbt	*dbt;
 	const ns_src	*srclist;
 	int		 srclistsize;
+
+	_DIAGASSERT(database != NULL);
+	_DIAGASSERT(method != NULL);
+#ifdef _DIAGNOSTIC
+	if (database == NULL || method == NULL)
+		return (NS_UNAVAIL);
+#endif
 
 	dbt = _nsdbtget(database);
 	if (dbt != NULL) {

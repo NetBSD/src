@@ -1,4 +1,4 @@
-/*	$NetBSD: linkaddr.c,v 1.9 1998/11/13 15:46:55 christos Exp $	*/
+/*	$NetBSD: linkaddr.c,v 1.10 1999/09/16 11:45:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,13 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)linkaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: linkaddr.c,v 1.9 1998/11/13 15:46:55 christos Exp $");
+__RCSID("$NetBSD: linkaddr.c,v 1.10 1999/09/16 11:45:15 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if_dl.h>
+
+#include <assert.h>
 #include <string.h>
 
 /* States*/
@@ -67,6 +69,13 @@ link_addr(addr, sdl)
 	char *cplim = sdl->sdl_len + (char *)(void *)sdl;
 	register int byte = 0, state = NAMING;
 	register int newaddr = 0;	/* pacify gcc */
+
+	_DIAGASSERT(addr != NULL);
+	_DIAGASSERT(sdl != NULL);
+#ifdef _DIAGNOSTIC
+	if (addr == NULL || sdl == NULL)
+		return;
+#endif
 
 	(void)memset(&sdl->sdl_family, 0, (size_t)sdl->sdl_len - 1);
 	sdl->sdl_family = AF_LINK;
@@ -140,6 +149,12 @@ link_ntoa(sdl)
 	register u_char *in = (u_char *)LLADDR(sdl);
 	u_char *inlim = in + sdl->sdl_alen;
 	int firsttime = 1;
+
+	_DIAGASSERT(sdl != NULL);
+#ifdef _DIAGNOSTIC
+	if (sdl == NULL)
+		return (NULL);
+#endif
 
 	if (sdl->sdl_nlen) {
 		(void)memcpy(obuf, sdl->sdl_data, (size_t)sdl->sdl_nlen);

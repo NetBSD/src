@@ -5,10 +5,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: a64l.c,v 1.5 1997/07/21 14:08:48 jtc Exp $");
+__RCSID("$NetBSD: a64l.c,v 1.6 1999/09/16 11:45:33 lukem Exp $");
 #endif
 
 #include "namespace.h"
+
+#include <assert.h>
 #include <stdlib.h>
 
 #ifdef __weak_alias
@@ -21,6 +23,12 @@ a64l(s)
 {
 	long value, digit, shift;
 	int i;
+
+	_DIAGASSERT(s != NULL);
+#ifdef _DIAGNOSTIC
+	if (s == NULL)
+		return (0L);
+#endif
 
 	value = 0;
 	shift = 0;

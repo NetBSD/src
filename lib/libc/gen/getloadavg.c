@@ -1,4 +1,4 @@
-/*	$NetBSD: getloadavg.c,v 1.7 1997/07/21 14:07:08 jtc Exp $	*/
+/*	$NetBSD: getloadavg.c,v 1.8 1999/09/16 11:44:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getloadavg.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getloadavg.c,v 1.7 1997/07/21 14:07:08 jtc Exp $");
+__RCSID("$NetBSD: getloadavg.c,v 1.8 1999/09/16 11:44:59 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,9 @@ __RCSID("$NetBSD: getloadavg.c,v 1.7 1997/07/21 14:07:08 jtc Exp $");
 #include <sys/resource.h>
 #include <sys/sysctl.h>
 #include <vm/vm_param.h>
+
+#include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 
 #ifdef __weak_alias
@@ -68,6 +71,14 @@ getloadavg(loadavg, nelem)
 	struct loadavg loadinfo;
 	int i, mib[2];
 	size_t size;
+
+	_DIAGASSERT(loadavg != NULL);
+#ifdef _DIAGNOSTIC
+	if (loadavg == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	mib[0] = CTL_VM;
 	mib[1] = VM_LOADAVG;

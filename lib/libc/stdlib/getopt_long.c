@@ -31,10 +31,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/cdefs.h>
 #include "getopt.h"
 
 extern int	  opterr;	/* if error message should be printed */
@@ -46,12 +49,20 @@ extern char *optarg;	/* argument associated with option */
 static char * __progname __P((char *));
 int getopt_internal __P((int, char * const *, const char *));
 
-static char * __progname(nargv0)
-    char * nargv0;
+static char *
+__progname(nargv0)
+	char * nargv0;
 {
-    char * tmp = strrchr(nargv0, '/');
-    if (tmp) tmp++; else tmp = nargv0;
-    return(tmp);
+	char * tmp;
+
+	_DIAGASSERT(nargv0 != NULL);
+
+	tmp = strrchr(nargv0, '/');
+	if (tmp)
+		tmp++;
+	else
+		tmp = nargv0;
+	return(tmp);
 }
 
 #define	BADCH	(int)'?'
@@ -70,6 +81,16 @@ getopt_internal(nargc, nargv, ostr)
 {
 	static char *place = EMSG;		/* option letter processing */
 	char *oli;				/* option letter list index */
+
+	_DIAGASSERT(nargv != NULL);
+	_DIAGASSERT(ostr != NULL);
+#ifdef _DIAGNOSTIC
+	if (nargv == NULL || ostr == NULL) {
+		errno = EFAULT;
+		place = EMSG;
+		return (-1);
+	}
+#endif
 
 	if (optreset || !*place) {		/* update scanning pointer */
 		optreset = 0;
@@ -147,13 +168,24 @@ getopt2(nargc, nargv, ostr)
  */
 int
 getopt_long(nargc, nargv, options, long_options, index)
-     int nargc;
-     char ** nargv;
-     char * options;
-     struct option * long_options;
-     int * index;
+	int nargc;
+	char ** nargv;
+	char * options;
+	struct option * long_options;
+	int * index;
 {
 	int retval;
+
+	_DIAGASSERT(nargv != NULL);
+	_DIAGASSERT(ostr != NULL);
+	_DIAGASSERT(long_options != NULL);
+	/* index may be NULL */
+#ifdef _DIAGNOSTIC
+	if (nargv == NULL || ostr == NULL || long_options) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	if ((retval = getopt_internal(nargc, nargv, options)) == -2) {
 		char *current_argv = nargv[optind++] + 2, *has_equal;
@@ -215,4 +247,3 @@ getopt_long(nargc, nargv, options, long_options, index)
 	}
 	return(retval);
 }
-

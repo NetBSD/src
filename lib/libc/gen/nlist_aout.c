@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_aout.c,v 1.9 1999/06/17 21:15:52 thorpej Exp $	*/
+/*	$NetBSD: nlist_aout.c,v 1.10 1999/09/16 11:45:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.9 1999/06/17 21:15:52 thorpej Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.10 1999/09/16 11:45:01 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: nlist_aout.c,v 1.9 1999/06/17 21:15:52 thorpej Exp $");
 #include <sys/stat.h>
 #include <sys/file.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -71,6 +72,19 @@ __fdnlist_aout(fd, list)
 	struct nlist nbuf[1024];
 	struct exec exec;
 	struct stat st;
+
+	_DIAGASSERT(fd != -1);
+	_DIAGASSERT(list != NULL);
+#ifdef _DIAGNOSTIC
+	if (fd == -1) {
+		errno = EBADF;
+		return (-1);
+	}
+	if (list == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	if (pread(fd, &exec, sizeof(exec), (off_t)0) != sizeof(exec) ||
 	    N_BADMAG(exec) || fstat(fd, &st) < 0)

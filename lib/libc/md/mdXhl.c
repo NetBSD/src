@@ -1,4 +1,4 @@
-/*	$NetBSD: mdXhl.c,v 1.3 1998/11/13 15:48:30 christos Exp $	*/
+/*	$NetBSD: mdXhl.c,v 1.4 1999/09/16 11:45:10 lukem Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -16,12 +16,13 @@
  */
 
 #include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
 
+#include <assert.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #define	CONCAT(x,y)	__CONCAT(x,y)
 #define	MDNAME(x)	CONCAT(MDALGORITHM,x)
@@ -34,6 +35,12 @@ MDNAME(End)(ctx, buf)
 	int i;
 	unsigned char digest[16];
 	static const char hex[]="0123456789abcdef";
+
+	_DIAGASSERT(ctx != 0);
+#ifdef _DIAGNOSTIC
+	if (ctx == 0)
+		return (NULL);
+#endif
 
 	if (buf == NULL)
 		buf = malloc(33);
@@ -60,6 +67,13 @@ MDNAME(File)(filename, buf)
 	MDNAME(_CTX) ctx;
 	int f, i, j;
 
+	_DIAGASSERT(filename != 0);
+	/* buf may be NULL */
+#ifdef _DIAGNOSTIC
+	if (filename == 0 || *filename == '\0')
+		return (NULL);
+#endif
+
 	MDNAME(Init)(&ctx);
 	f = open(filename, O_RDONLY, 0666);
 	if (f < 0)
@@ -85,6 +99,12 @@ MDNAME(Data)(data, len, buf)
 	char *buf;
 {
 	MDNAME(_CTX) ctx;
+
+	_DIAGASSERT(data != 0);
+#ifdef _DIAGNOSTIC
+	if (data == 0)
+		return (NULL);
+#endif
 
 	MDNAME(Init)(&ctx);
 	MDNAME(Update)(&ctx, data, len);

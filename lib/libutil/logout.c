@@ -1,4 +1,4 @@
-/*	$NetBSD: logout.c,v 1.9 1998/08/10 02:47:35 perry Exp $	*/
+/*	$NetBSD: logout.c,v 1.10 1999/09/16 11:45:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,20 +38,21 @@
 #if 0
 static char sccsid[] = "@(#)logout.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logout.c,v 1.9 1998/08/10 02:47:35 perry Exp $");
+__RCSID("$NetBSD: logout.c,v 1.10 1999/09/16 11:45:50 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 
+#include <assert.h>
 #include <fcntl.h>
-#include <utmp.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 #include <util.h>
+#include <utmp.h>
 
 typedef struct utmp UTMP;
 
@@ -61,6 +62,12 @@ logout(line)
 {
 	int fd, rval;
 	UTMP ut;
+
+	_DIAGASSERT(line != NULL);
+#ifdef _DIAGNOSTIC
+	if (line == NULL)
+		return(0);
+#endif
 
 	if ((fd = open(_PATH_UTMP, O_RDWR, 0)) < 0)
 		return(0);

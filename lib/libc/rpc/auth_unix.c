@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.14 1999/01/20 11:37:34 lukem Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.15 1999/09/16 11:45:22 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_unix.c,v 1.14 1999/01/20 11:37:34 lukem Exp $");
+__RCSID("$NetBSD: auth_unix.c,v 1.15 1999/09/16 11:45:22 lukem Exp $");
 #endif
 #endif
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: auth_unix.c,v 1.14 1999/01/20 11:37:34 lukem Exp $");
 
 #include <sys/param.h>
 
+#include <assert.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -236,8 +237,12 @@ authunix_marshal(auth, xdrs)
 	AUTH *auth;
 	XDR *xdrs;
 {
-	struct audata *au = AUTH_PRIVATE(auth);
+	struct audata *au;
 
+	_DIAGASSERT(auth != NULL);
+	_DIAGASSERT(xdrs != NULL);
+
+	au = AUTH_PRIVATE(auth);
 	return (XDR_PUTBYTES(xdrs, au->au_marshed, au->au_mpos));
 }
 
@@ -248,6 +253,9 @@ authunix_validate(auth, verf)
 {
 	struct audata *au;
 	XDR xdrs;
+
+	_DIAGASSERT(auth != NULL);
+	_DIAGASSERT(verf != NULL);
 
 	if (verf->oa_flavor == AUTH_SHORT) {
 		au = AUTH_PRIVATE(auth);
@@ -281,6 +289,8 @@ authunix_refresh(auth)
 	struct timeval now;
 	XDR xdrs;
 	int stat;
+
+	_DIAGASSERT(auth != NULL);
 
 	if (auth->ah_cred.oa_base == au->au_origcred.oa_base) {
 		/* there is no hope.  Punt */
@@ -319,8 +329,11 @@ static void
 authunix_destroy(auth)
 	AUTH *auth;
 {
-	struct audata *au = AUTH_PRIVATE(auth);
+	struct audata *au;
 
+	_DIAGASSERT(auth != NULL);
+
+	au = AUTH_PRIVATE(auth);
 	mem_free(au->au_origcred.oa_base, au->au_origcred.oa_length);
 
 	if (au->au_shcred.oa_base != NULL)
@@ -344,8 +357,11 @@ marshal_new_auth(auth)
 {
 	XDR	xdr_stream;
 	XDR	*xdrs = &xdr_stream;
-	struct audata *au = AUTH_PRIVATE(auth);
+	struct audata *au;
 
+	_DIAGASSERT(auth != NULL);
+
+	au = AUTH_PRIVATE(auth);
 	xdrmem_create(xdrs, au->au_marshed, MAX_AUTH_BYTES, XDR_ENCODE);
 	if ((! xdr_opaque_auth(xdrs, &(auth->ah_cred))) ||
 	    (! xdr_opaque_auth(xdrs, &(auth->ah_verf))))

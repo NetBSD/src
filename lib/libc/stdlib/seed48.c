@@ -1,4 +1,4 @@
-/*	$NetBSD: seed48.c,v 1.4 1998/01/09 03:15:41 perry Exp $	*/
+/*	$NetBSD: seed48.c,v 1.5 1999/09/16 11:45:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -14,6 +14,9 @@
  */
 
 #include "namespace.h"
+
+#include <assert.h>
+
 #include "rand48.h"
 
 #ifdef __weak_alias
@@ -24,6 +27,12 @@ unsigned short *
 seed48(unsigned short xseed[3])
 {
 	static unsigned short sseed[3];
+
+	_DIAGASSERT(xseed != NULL);
+#ifdef _DIAGNOSTIC
+	if (xseed == NULL)
+		return (NULL);
+#endif
 
 	sseed[0] = __rand48_seed[0];
 	sseed[1] = __rand48_seed[1];

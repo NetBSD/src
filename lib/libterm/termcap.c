@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.20 1999/08/17 12:13:24 blymn Exp $	*/
+/*	$NetBSD: termcap.c,v 1.21 1999/09/16 11:45:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,15 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.20 1999/08/17 12:13:24 blymn Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.21 1999/09/16 11:45:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #define	PBUFSIZ		512	/* max length of filename path */
 #define	PVECSIZ		32	/* max number of names in path */
 
-#include <stdio.h>
+#include <assert.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termcap.h>
@@ -97,6 +98,13 @@ t_getent(bp, name)
 	char   pathbuf[PBUFSIZ];	/* holds raw path of filenames */
 	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
 	char  *termpath;
+
+	_DIAGASSERT(bp != NULL);
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (bp == NULL || name == NULL)
+		return (-2);
+#endif
 
 	if ((*bp = malloc(sizeof(struct tinfo))) == NULL) return 0;
 	
@@ -224,6 +232,12 @@ t_getnum(info, id)
 {
 	long num;
 
+	_DIAGASSERT(id != NULL);
+#ifdef _DIAGNOSTIC
+	if (id == NULL)
+		return (-1);
+#endif
+
 	if (cgetnum(info->info, id, &num) == 0)
 		return (int)(num);
 	else
@@ -254,6 +268,13 @@ int
 tgetflag(id)
 	const char *id;
 {
+
+	_DIAGASSERT(id != NULL);
+#ifdef _DIAGNOSTIC
+	if (id == NULL)
+		return (-1);
+#endif
+
 	return t_getflag(fbuf, id);
 }
 
@@ -276,6 +297,13 @@ t_getstr(info, id, area, limit)
 	char ids[3];
 	char *s;
 	int i;
+
+	_DIAGASSERT(id != NULL);
+	_DIAGASSERT(area != NULL);
+#ifdef _DIAGNOSTIC
+	if (id == NULL || area == NULL)
+		return (NULL);
+#endif
 
 	/*
 	 * XXX

@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.11 1999/01/20 12:58:21 christos Exp $	*/
+/*	$NetBSD: engine.c,v 1.12 1999/09/16 11:45:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -155,10 +155,15 @@ int eflags;
 	char *start;
 	char *stop;
 
+	_DIAGASSERT(g != NULL);
+	_DIAGASSERT(string != NULL);
+	/* pmatch checked below */
+
 	/* simplify the situation where possible */
 	if (g->cflags&REG_NOSUB)
 		nmatch = 0;
 	if (eflags&REG_STARTEND) {
+		_DIAGASSERT(pmatch != NULL);
 		start = string + (size_t)pmatch[0].rm_so;
 		stop = string + (size_t)pmatch[0].rm_eo;
 	} else {
@@ -276,6 +281,7 @@ int eflags;
 
 	/* fill in the details if requested */
 	if (nmatch > 0) {
+		_DIAGASSERT(pmatch != NULL);
 		pmatch[0].rm_so = m->coldp - m->offp;
 		pmatch[0].rm_eo = endp - m->offp;
 	}
@@ -326,6 +332,10 @@ sopno stopst;
 #ifndef NDEBUG
 	char *dp;
 #endif
+
+	_DIAGASSERT(m != NULL);
+	_DIAGASSERT(start != NULL);
+	_DIAGASSERT(stop != NULL);
 
 	AT("diss", start, stop, startst, stopst);
 	sp = start;
@@ -530,6 +540,10 @@ sopno lev;			/* PLUS nesting level */
 	regoff_t offsave;
 	cset *cs;
 
+	_DIAGASSERT(m != NULL);
+	_DIAGASSERT(start != NULL);
+	_DIAGASSERT(stop != NULL);
+
 	AT("back", start, stop, startst, stopst);
 	sp = start;
 
@@ -730,6 +744,10 @@ sopno stopst;
 	int i;
 	char *coldp;	/* last p after which no match was underway */
 
+	_DIAGASSERT(m != NULL);
+	_DIAGASSERT(start != NULL);
+	_DIAGASSERT(stop != NULL);
+
 	CLEAR(st);
 	SET1(st, startst);
 	st = step(m->g, startst, stopst, st, NOTHING, st);
@@ -820,6 +838,10 @@ sopno stopst;
 	int flagch;
 	int i;
 	char *matchp;	/* last p at which a match ended */
+
+	_DIAGASSERT(m != NULL);
+	_DIAGASSERT(start != NULL);
+	_DIAGASSERT(stop != NULL);
 
 	AT("slow", start, stop, startst, stopst);
 	CLEAR(st);
@@ -914,6 +936,8 @@ states aft;		/* states already known reachable after */
 	onestate here;		/* note, macros know this name */
 	sopno look;
 	int i;
+
+	_DIAGASSERT(g != NULL);
 
 	for (pc = start, INIT(here, pc); pc != stop; pc++, INC(here)) {
 		s = g->strip[pc];
@@ -1033,8 +1057,13 @@ FILE *d;
 	int i;
 	int first = 1;
 
+	_DIAGASSERT(m != NULL);
+	_DIAGASSERT(caption != NULL);
+
 	if (!(m->eflags&REG_TRACE))
 		return;
+
+	_DIAGASSERT(d != NULL);
 
 	fprintf(d, "%s", caption);
 	if (ch != '\0')
@@ -1063,6 +1092,12 @@ char *stop;
 sopno startst;
 sopno stopst;
 {
+
+	_DIAGASSERT(m != NULL);
+	_DIAGASSERT(title != NULL);
+	_DIAGASSERT(start != NULL);
+	_DIAGASSERT(stop != NULL);
+
 	if (!(m->eflags&REG_TRACE))
 		return;
 

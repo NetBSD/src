@@ -1,4 +1,4 @@
-/*	$NetBSD: ferror.c,v 1.7 1998/11/20 14:44:14 kleink Exp $	*/
+/*	$NetBSD: ferror.c,v 1.8 1999/09/16 11:45:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)ferror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ferror.c,v 1.7 1998/11/20 14:44:14 kleink Exp $");
+__RCSID("$NetBSD: ferror.c,v 1.8 1999/09/16 11:45:26 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <stdio.h>
 #include "reentrant.h"
 
@@ -58,6 +59,12 @@ ferror(fp)
 	FILE *fp;
 {
 	int r;
+
+	_DIAGASSERT(fp != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL)
+		return (0);
+#endif
 
 	FLOCKFILE(fp);
 	r = __sferror(fp);

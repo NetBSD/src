@@ -1,4 +1,4 @@
-/*	$NetBSD: tcsetpgrp.c,v 1.4 1997/07/21 14:09:19 jtc Exp $	*/
+/*	$NetBSD: tcsetpgrp.c,v 1.5 1999/09/16 11:45:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,13 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcsetpgrp.c,v 1.4 1997/07/21 14:09:19 jtc Exp $");
+__RCSID("$NetBSD: tcsetpgrp.c,v 1.5 1999/09/16 11:45:45 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/ioctl.h>
+
+#include <assert.h>
+#include <errno.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -62,6 +65,14 @@ tcsetpgrp(fd, pgrp)
 #endif
 {
 	int s;
+
+	_DIAGASSERT(fd != -1);
+#ifdef _DIAGNOSTIC
+	if (fd == -1) {
+		errno = EBADF;
+		return (-1);
+	}
+#endif
 
 	s = pgrp;
 	return (ioctl(fd, TIOCSPGRP, &s));
