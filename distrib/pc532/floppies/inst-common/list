@@ -1,4 +1,4 @@
-#	$Id: list,v 1.7 1996/10/09 00:13:36 jtc Exp $
+#	$Id: list,v 1.7.2.1 1997/12/25 09:20:39 matthias Exp $
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
@@ -19,7 +19,7 @@ SPECIAL	/usr/sbin/chroot . ./pwd_mkdb -p /etc/master.passwd
 SPECIAL	/bin/rm pwd_mkdb
 
 # copy the crunched binary, link to it
-COPY	${OBJDIR}/netbsd.gz	netbsd.gz
+#COPY	${OBJDIR}/netbsd.gz	netbsd.gz
 COPY	${OBJDIR}/instbin	instbin
 LINK	instbin			bin/cat
 LINK	instbin			bin/chmod
@@ -68,6 +68,7 @@ LINK	instbin			sbin/restore
 LINK	instbin			sbin/route
 LINK	instbin			sbin/rrestore
 LINK	instbin			sbin/slattach
+LINK	instbin			sbin/sysinst
 LINK	instbin			sbin/swapon
 LINK	instbin			sbin/umount
 SYMLINK	/instbin		usr/bin/basename
@@ -87,7 +88,7 @@ SYMLINK	/instbin		usr/bin/sed
 SYMLINK	/instbin		usr/bin/strings
 SYMLINK	/instbin		usr/bin/tar
 SYMLINK	/instbin		usr/bin/tip
-SYMLINK /instbin		usr/bin/vi
+#SYMLINK /instbin		usr/bin/vi
 SYMLINK /instbin		usr/bin/view
 SYMLINK /instbin		usr/games/factor
 SYMLINK	/instbin		usr/sbin/chat
