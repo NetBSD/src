@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.4 1999/01/28 18:37:02 mhitch Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.5 1999/01/29 16:10:06 castor Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -204,12 +204,12 @@ _C_LABEL(mips3_TLBMissEnd):
  */
 	.globl	_C_LABEL(mips3_XTLBMiss)
 _C_LABEL(mips3_XTLBMiss):
-	dmfc0	k0, MIPS_COP_0_TLB_XCONTEXT
-	addu	k1, $0, k0		# Pick up up sign of k0 for user/kernel
-	bltz	k1, 4f
-	srl	k1, k0, (SEGSHIFT - 2 - (PGSHIFT - 3))
-	andi	k1, k1, 0x7fc		# index of segment table
-	dsra	k0, k0, 32		# Tricky -- The lower bit is
+	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
+	dmfc0	k1, MIPS_COP_0_TLB_XCONTEXT
+	bltz	k0, 4f
+	srl	k0, k0, SEGSHIFT - 2	# compute segment table index
+	andi	k0, k0, 0x7fc		# index of segment table
+	dsra	k1, k1, 32		# Tricky -- The lower bit is
 					# actually part of KSU but we must
 					# be a user address
 	add	k1, k0, k1		
