@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98.2.3 2002/01/28 20:49:39 nathanw Exp $
+#	$NetBSD: Makefile,v 1.98.2.4 2002/01/29 19:50:39 nathanw Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -22,6 +22,8 @@ USE_SHLIBDIR=	yes
 CPPFLAGS+=	-D_LIBC -DNLS -DYP -DHESIOD -DLIBC_SCCS -DSYSLIBC_SCCS \
 		-D_REENTRANT -I${.CURDIR}/include
 CPPFLAGS+=	-DINET6
+
+LDADD+=		 -lsyscall
 
 .include <bsd.own.mk>
 
