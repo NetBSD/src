@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.36 2001/03/10 13:18:09 wiz Exp $	*/
+/*	$NetBSD: perform.c,v 1.37 2001/03/10 18:41:45 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.36 2001/03/10 13:18:09 wiz Exp $");
+__RCSID("$NetBSD: perform.c,v 1.37 2001/03/10 18:41:45 wiz Exp $");
 #endif
 #endif
 
@@ -199,6 +199,9 @@ pkg_do(char *pkg)
 		}
 		if ((Flags & SHOW_DEINSTALL) && fexists(DEINSTALL_FNAME)) {
 			show_file("De-Install script:\n", DEINSTALL_FNAME);
+		}
+		if ((Flags & SHOW_REQUIRE) && fexists(REQUIRE_FNAME)) {
+			show_file("Require script:\n", REQUIRE_FNAME);
 		}
 		if ((Flags & SHOW_MTREE) && fexists(MTREE_FNAME)) {
 			show_file("mtree file:\n", MTREE_FNAME);
