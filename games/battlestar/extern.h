@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.24 2000/09/24 09:46:28 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.25 2000/09/24 14:11:09 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -302,10 +302,6 @@ struct wlist {
 	int     value, article;
 	struct wlist *next;
 };
-#define HASHSIZE	256
-#define HASHMUL		81
-#define HASHMASK	(HASHSIZE - 1)
-extern struct wlist *hashtab[HASHSIZE];
 extern struct wlist wlist[];
 
 struct objs {
