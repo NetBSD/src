@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 2000/01/25 22:13:24 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 2000/03/05 21:22:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ struct vax_bus_space {
  */
 
 #define bus_space_subregion(t, h, o, s, nhp)				\
-	(*(t)->vbs_subregion)((t)->vbs_cookie, (h), (o), (s), (hp))
+	(*(t)->vbs_subregion)((t)->vbs_cookie, (h), (o), (s), (nhp))
 
 /*
  *	int bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
