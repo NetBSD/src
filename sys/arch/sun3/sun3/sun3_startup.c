@@ -28,12 +28,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/sun3_startup.c,v 1.19 1994/04/18 06:10:12 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/sun3_startup.c,v 1.20 1994/05/04 05:51:36 gwr Exp $
  */
 
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/reboot.h>
 #include <sys/user.h>
 
 #include <vm/vm.h>
@@ -79,7 +80,7 @@ static void initialize_vector_table()
     old_vector_table = getvbr();
     for (i = 0; i < NVECTORS; i++) {
 	if (vector_table[i] == COPY_ENTRY)
-	    set_vector_entry(i, old_vector_table[i]);
+	    set_vector_entry(i, (void(*)())old_vector_table[i]);
     }
     setvbr((unsigned int *) vector_table);
     orig_nmi_vector = get_vector_entry(VEC_LEVEL_7_INT);
@@ -102,23 +103,61 @@ vm_offset_t high_segment_alloc(npages)
     return tmp;
 }
 
-void sun3_stop()
+static void
+sun3_stop(how)
+	int how;	/* borrowing howto codes here... */
 {
-    unsigned int *new_vect;
-    mon_printf("sun3_stop: kernel ended deliberately\n");
-/*    set_clk_mode(0, IREG_CLOCK_ENAB_5);*/
-    mon_printf("sun3_stop: clock(0,0)\n");
+    static unsigned int *save_vbr;
+
+    /* Restore vector table and NMI clock for PROM. */
+    set_clk_mode(0, IREG_CLOCK_ENAB_5, 0);
+    save_vbr = getvbr();
     setvbr(old_vector_table);
-    new_vect = getvbr();
-    mon_printf("post: nmi vec %x\n", new_vect[VEC_LEVEL_7_INT]);
-/*    set_clk_mode(IREG_CLOCK_ENAB_7,0);*/
-    mon_printf("interrupt_reg_value: %x\n", *interrupt_reg);
-    mon_printf("sun3_stop: clock(7,1)\n");
-    mon_exit_to_mon();
+    set_clk_mode(IREG_CLOCK_ENAB_7, 0, 1);
+
+    if (how) {
+#if 0
+	/* Not sure about this... -gwr */
+	if (how == RB_KDB)
+	    (romVectorPtr->abortEntry)();
+#endif
+	mon_printf("exit to monitor\n");
+	mon_exit_to_mon();
+    } else {
+	mon_printf("rebooting...\n");
+	mon_reboot(""); 	/* or do i have to get the value out of
+				 * the eeprom...bleh
+				 */
+    }
+    /* The user has continued from an abort. */
+    /* XXX - Does not work.  Maybe setjmp/longjmp would work. */
+
+    /* Restore our vector table and disable the NMI clock. */
+    set_clk_mode(0, IREG_CLOCK_ENAB_7, 0);
+    setvbr(save_vbr);
+    set_clk_mode(IREG_CLOCK_ENAB_5, 0, 1);
+}
+
+void
+sun3_rom_abort()
+{
+    sun3_stop(RB_KDB);
+}
+
+void
+sun3_rom_halt()
+{
+    sun3_stop(RB_HALT);
+}
+
+void
+sun3_rom_reboot()
+{
+    sun3_stop(0);
 }
 
 void sun3_printf(str)
-     char *str;
+    char *str;
 {
     mon_printf(str);
 }
@@ -374,6 +413,7 @@ void sun3_verify_hardware()
 {
     unsigned char arch;
     int cpu_match = 0;
+    extern int cpuspeed;
 
     if (idprom_fetch(&identity_prom, IDPROM_VERSION))
 	mon_panic("idprom fetch failed\n");
@@ -387,36 +427,42 @@ void sun3_verify_hardware()
 	cpu_match++;
 #endif
 	cpu_string = "160";
+	cpuspeed = 25; /* MHz */	/* XXX - Correct? */
 	break;
     case SUN3_MACH_50 :
 #ifdef SUN3_50
 	cpu_match++;
 #endif
 	cpu_string = "50";
+	cpuspeed = 16; /* MHz */
 	break;
     case SUN3_MACH_260:
 #ifdef SUN3_260
 	cpu_match++;
 #endif
 	cpu_string = "260";
+	cpuspeed = 25; /* MHz */	/* XXX - Correct? */
 	break;
     case SUN3_MACH_110:
 #ifdef SUN3_110
 	cpu_match++;
 #endif
 	cpu_string = "110";
+	cpuspeed = 25; /* MHz */	/* XXX - Correct? */
 	break;
     case SUN3_MACH_60 :
 #ifdef SUN3_60
 	cpu_match++;
 #endif
 	cpu_string = "60";
+	cpuspeed = 20; /* MHz */
 	break;
     case SUN3_MACH_E  :
 #ifdef SUN3_E
 	cpu_match++;
 #endif
 	cpu_string = "E";
+	cpuspeed = 30; /* MHz */	/* XXX - Correct? */
 	break;
     default:
 	mon_panic("unknown sun3 model\n");
