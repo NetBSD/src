@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.12 2001/02/18 12:42:31 reinoud Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.13 2001/02/25 21:31:14 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -353,26 +353,29 @@ set_cpufuncs()
 
 	switch (cputype) {
 #ifdef CPU_ARM6
-	case ID_ARM610:
+	case CPU_ID_ARM610:
 		cpufuncs = arm6_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
 		break;
 #endif	/* CPU_ARM6 */
 #ifdef CPU_ARM7
-	case ID_ARM700:
-	case ID_ARM710:
+	case CPU_ID_ARM700:
+	case CPU_ID_ARM710:
+	case CPU_ID_ARM7500:
+	case CPU_ID_ARM7100:
+	case CPU_ID_ARM710T:
 		cpufuncs = arm7_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
 		break;
 #endif	/* CPU_ARM7 */
 #ifdef CPU_ARM8
-	case ID_ARM810:
+	case CPU_ID_ARM810:
 		cpufuncs = arm8_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;	/* XXX correct? */
 		break;
 #endif	/* CPU_ARM8 */
 #ifdef CPU_SA110
-	case ID_SA110:
+	case CPU_ID_SA110:
 		cpufuncs = sa110_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 2001/02/25 18:40:26 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3 2001/02/25 21:31:14 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -200,7 +200,7 @@ identify_master_cpu(cpu_number, dev_name)
 
 #ifdef CPU_ARM8
 	if (cpus[CPU_MASTER].cpu_class == CPU_CLASS_ARM
-	    && (cpus[CPU_MASTER].cpu_id & CPU_ID_CPU_MASK) == ID_ARM810) {
+	    && (cpus[CPU_MASTER].cpu_id & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
 		int clock = arm8_clock_config(0, 0);
 		char *fclk;
 		printf("%s: ARM810 cp15=%02x", dev_name, clock);
@@ -341,41 +341,41 @@ identify_arm_cpu(cpu_number)
 		return;
 	}
 
-/*	if ((cpuid & CPU_ID_DESIGNER_MASK) != CPU_ID_ARM_LTD)
-		printf("Unrecognised designer ID = %08x\n", cpuid);*/
-
 	switch (cpuid & CPU_ID_CPU_MASK) {
 #ifdef CPU_ARM6
-        case ID_ARM610:
-        	cpu_type = cpuid & CPU_ID_CPU_MASK;
+        case CPU_ID_ARM610:
+        	cpu_type = cpuid & CPU_ID_PARTNO_MASK;
 		break;
 #endif
 #ifdef CPU_ARM7
-	case ID_ARM710 :
-	case ID_ARM700 :
-		cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
+	case CPU_ID_ARM700 :
+	case CPU_ID_ARM710 :
+	case CPU_ID_ARM7500:
+	case CPU_ID_ARM7100:
+	case CPU_ID_ARM710T:
+		cpu_type = (cpuid & CPU_ID_PARTNO_MASK) >> 4;
 		break;
 #endif
 #ifdef CPU_ARM8
-	case ID_ARM810 :
-		cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
+	case CPU_ID_ARM810 :
+		cpu_type = (cpuid & CPU_ID_PARTNO_MASK) >> 4;
 		break;
 #endif
 #ifdef CPU_SA110
-	case ID_SA110 :
-		cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
+	case CPU_ID_SA110 :
+		cpu_type = (cpuid & CPU_ID_PARTNO_MASK) >> 4;
 		cpu->cpu_class = CPU_CLASS_SARM;
 		sprintf(cpu->cpu_model, "SA-110 rev %d",
 		    cpuid & CPU_ID_REVISION_MASK);
 		break;
-	case ID_SA1100 :
-		cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
+	case CPU_ID_SA1100 :
+		cpu_type = (cpuid & CPU_ID_PARTNO_MASK) >> 4;
 		cpu->cpu_class = CPU_CLASS_SARM;
 		sprintf(cpu->cpu_model, "SA-1100 rev %d",
 		    cpuid & CPU_ID_REVISION_MASK);
 		break;
-	case ID_SA1110 :
-		cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
+	case CPU_ID_SA1110 :
+		cpu_type = (cpuid & CPU_ID_PARTNO_MASK) >> 4;
 		cpu->cpu_class = CPU_CLASS_SARM;
 		sprintf(cpu->cpu_model, "SA-1110 rev %d",
 		    cpuid & CPU_ID_REVISION_MASK);
@@ -383,7 +383,7 @@ identify_arm_cpu(cpu_number)
 #endif
 	default :
 		printf("Unrecognised processor ID = %08x\n", cpuid);
-		cpu_type = cpuid & CPU_ID_CPU_MASK;
+		cpu_type = cpuid & CPU_ID_PARTNO_MASK;
 		break;
 	}
 
