@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.6 1996/11/11 23:40:10 gwr Exp $	*/
+/*	$NetBSD: sem.h,v 1.7 1997/01/31 03:12:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,11 +59,12 @@ struct attr    *getattr __P((const char *name));
 void		setmajor __P((struct devbase *d, int n));
 void		addconf __P((struct config *));
 void		setconf __P((struct nvlist **, const char *, struct nvlist *));
+void		setfstype __P((const char **, const char *));
 void		adddev __P((const char *, const char *, struct nvlist *, int));
 void		addpseudo __P((const char *name, int number));
 const char     *ref __P((const char *name));
 const char     *starref __P((const char *name));
 const char     *wildref __P((const char *name));
 
-extern const char *s_generic;
+extern const char *s_qmark;
 extern const char *s_nfs;

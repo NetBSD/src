@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.12 1996/11/11 23:54:17 gwr Exp $	*/
+/*	$NetBSD: gram.y,v 1.13 1997/01/31 03:12:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,9 +100,9 @@ static	void	check_maxpart __P((void));
 }
 
 %token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEVICE DUMPS ENDFILE
-%token	XFILE FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS MAXUSERS MAXPARTITIONS
-%token	MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE SWAP WITH
-%token	NEEDS_COUNT NEEDS_FLAG
+%token	XFILE FILE_SYSTEM FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS
+%token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE
+%token	SWAP TYPE WITH NEEDS_COUNT NEEDS_FLAG
 %token	<val> NUMBER
 %token	<str> PATHNAME WORD
 
@@ -110,6 +110,7 @@ static	void	check_maxpart __P((void));
 %left '&'
 
 %type	<list>	fopts fexpr fatom
+%type	<str>	fs_spec
 %type	<val>	fflgs fflag
 %type	<str>	rule
 %type	<attr>	attr
@@ -309,10 +310,12 @@ spec:
 config_spec:
 	file |
 	include |
+	FILE_SYSTEM fs_list |
 	OPTIONS opt_list |
 	MAKEOPTIONS mkopt_list |
 	MAXUSERS NUMBER			{ setmaxusers($2); } |
-	CONFIG conf sysparam_list	{ addconf(&conf); } |
+	CONFIG conf root_spec sysparam_list
+					{ addconf(&conf); } |
 	PSEUDO_DEVICE WORD npseudo	{ addpseudo($2, $3); } |
 	device_instance AT attachment locators flags_opt
 					{ adddev($1, $3, $4, $5); };
@@ -332,19 +335,38 @@ option:
 	WORD				{ addoption($1, NULL); } |
 	WORD '=' value			{ addoption($1, $3); };
 
+fs_list:
+	fs_list ',' fsoption |
+	fsoption;
+
+fsoption:
+	WORD				{ addfsoption($1); };
+
 conf:
 	WORD				{ conf.cf_name = $1;
 					    conf.cf_lineno = currentline();
+					    conf.cf_fstype = NULL;
 					    conf.cf_root = NULL;
 					    conf.cf_swap = NULL;
 					    conf.cf_dump = NULL; };
 
+root_spec:
+	ROOT on_opt dev_spec fs_spec_opt
+				{ setconf(&conf.cf_root, "root", $3); };
+
+fs_spec_opt:
+	TYPE fs_spec		{ setfstype(&conf.cf_fstype, $2); } |
+	/* empty */;
+
+fs_spec:
+	'?'				{ $$ = intern("?"); } |
+	WORD				{ $$ = intern($1); };
+
 sysparam_list:
 	sysparam_list sysparam |
-	sysparam;
+	/* empty */;
 
 sysparam:
-	ROOT on_opt dev_spec	 { setconf(&conf.cf_root, "root", $3); } |
 	SWAP on_opt swapdev_list { setconf(&conf.cf_swap, "swap", $3); } |
 	DUMPS on_opt dev_spec	 { setconf(&conf.cf_dump, "dumps", $3); };
 
@@ -353,6 +375,7 @@ swapdev_list:
 	dev_spec			{ $$ = $1; };
 
 dev_spec:
+	'?'				{ $$ = new_si(intern("?"), NODEV); } |
 	WORD				{ $$ = new_si($1, NODEV); } |
 	major_minor			{ $$ = new_si(NULL, $1); };
 
