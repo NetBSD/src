@@ -1,6 +1,7 @@
-/*	$NetBSD: undefined.c,v 1.7 2001/03/13 23:56:48 bjh21 Exp $	*/
+/*	$NetBSD: undefined.c,v 1.8 2001/03/17 18:12:09 bjh21 Exp $	*/
 
 /*
+ * Copyright (c) 2001 Ben Harris.
  * Copyright (c) 1995 Mark Brinicombe.
  * Copyright (c) 1995 Brini.
  * All rights reserved.
@@ -51,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.7 2001/03/13 23:56:48 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.8 2001/03/17 18:12:09 bjh21 Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -185,17 +186,6 @@ undefinedinstruction(trapframe_t *frame)
 	 */
 
 	fault_instruction = *(u_int32_t *)fault_pc;
-
-#ifdef CPU_ARM2
-	/*
-	 * Check if the aborted instruction was a SWI (ARM2 bug --
-	 * ARM3 data sheet p87) and call SWI handler if so.
-	 */
-	if ((fault_instruction & 0x0f000000) == 0x0f000000) {
-		swi_handler(frame);
-		return;
-	}
-#endif
 
 	/* Update vmmeter statistics */
 	uvmexp.traps++;
