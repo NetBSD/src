@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.150 2004/07/20 12:46:51 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.151 2004/07/21 00:09:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.150 2004/07/20 12:46:51 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.151 2004/07/21 00:09:14 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1694,7 +1694,6 @@ go_fetch(const char *url)
  * If an ftp path has a trailing "/", the path will be cd-ed into and
  * the connection remains open, and the function will return -1
  * (to indicate the connection is alive).
- * If the transfer was interrupted with SIGINT, the return value is EXIT_SIGINT.
  * If an error occurs the return value will be the offset+1 in
  * argv[] of the file that caused a problem (i.e, argv[x]
  * returns x+1)
@@ -1708,14 +1707,11 @@ auto_fetch(int argc, char *argv[])
 
 	argpos = 0;
 
-	sigint_raised = 0;
 	if (sigsetjmp(toplevel, 1)) {
 		if (connected)
 			disconnect(0, NULL);
 		if (rval > 0)
 			rval = argpos + 1;
-		if (sigint_raised)
-			rval = EXIT_SIGINT;
 		return (rval);
 	}
 	(void)xsignal(SIGINT, intr);
@@ -1736,8 +1732,6 @@ auto_fetch(int argc, char *argv[])
 			outfile = NULL;
 		if (rval > 0)
 			rval = argpos + 1;
-		if (sigint_raised)
-			rval = EXIT_SIGINT;
 	}
 
 	if (connected && rval != -1)
