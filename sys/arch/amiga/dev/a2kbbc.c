@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.3 1997/07/23 10:19:44 is Exp $	*/
+/*	$NetBSD: a2kbbc.c,v 1.4 1997/10/19 21:22:19 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,7 +83,7 @@ a2kbbc_match(pdp, cfp, auxp)
 	if (cfp->cf_unit != 0)
 		return (0);	/* only one of us please */
 
-	if (is_a1200() || is_a3000() || is_a4000() 
+	if (/* is_a1200() || */ is_a3000() || is_a4000() 
 #ifdef DRACO
 	    || is_draco()
 #endif
