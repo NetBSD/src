@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1994/11/25 23:09:34 deraadt Exp $
+#	$NetBSD: Makefile,v 1.6 1995/06/26 23:26:57 pk Exp $
 
 RELOC_SUN4=	240000
 RELOC_SUN4C=	340000
@@ -19,6 +19,7 @@ S=	${.CURDIR}/../../..
 
 INCPATH=-I${.CURDIR} -I${S}/arch -I${S} -I${S}/lib/libsa
 
+KERNREL=
 ### find out what to use for libkern and libsa
 .include "$S/lib/libkern/Makefile.inc"
 LIBKERN= ${KERNLIB}
@@ -65,7 +66,7 @@ installboot: ${.CURDIR}/installboot.c
 fixhdr: fixhdr.c
 	${CC} -o fixhdr ${.CURDIR}/fixhdr.c
 
-clean cleandir:
+clean::
 	rm -f *.o errs make.out
 	rm -f a.out boot cat ls fixhdr
 
