@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.306 2001/02/18 17:54:50 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.307 2001/03/02 06:53:54 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.302 2001/02/18 17:54:18 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.303 2001/03/02 06:51:07 thorpej Exp 
  */
 
 /*
@@ -5702,6 +5702,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Xircom",
 	    "X3201-3 Fast Ethernet Controller (21143)",
+	},
+	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_WINGLOBAL,
+	    0,
+	    "Xircom",
+	    "WinGlobal Modem",
 	},
 	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724,
