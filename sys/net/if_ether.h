@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.2 1997/03/15 18:12:25 is Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.3 1997/11/02 14:26:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -174,9 +174,9 @@ struct ether_multistep {
 __BEGIN_DECLS
 char *	ether_ntoa __P((struct ether_addr *));
 struct ether_addr *
-	ether_aton __P((char *));
+	ether_aton __P((const char *));
 int	ether_ntohost __P((char *, struct ether_addr *));
-int	ether_hostton __P((char *, struct ether_addr *));
-int	ether_line __P((char *, struct ether_addr *, char *));
+int	ether_hostton __P((const char *, struct ether_addr *));
+int	ether_line __P((const char *, struct ether_addr *, char *));
 __END_DECLS
 #endif
