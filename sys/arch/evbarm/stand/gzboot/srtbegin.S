@@ -1,4 +1,4 @@
-/*	$NetBSD: srtbegin.S,v 1.5 2002/10/14 22:32:54 bjh21 Exp $	*/
+/*	$NetBSD: srtbegin.S,v 1.6 2003/07/22 04:57:24 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -87,6 +87,9 @@ relocated:
 	ldmia	r1, {r1-r3}
 	cmp	r1, r2			/* __data_store == __data_start? */
 	beq	2f			/* yes, in RAM */
+
+	cmp	r2, r3			/* __data_store == _edata? */
+	beq	2f			/* yes, skip copy */
 
 	/* Copy data segment from ROM to RAM */
 1:	ldrb	r0, [r1], #0x01
