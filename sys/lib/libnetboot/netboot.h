@@ -1,4 +1,4 @@
-/*	$NetBSD: netboot.h,v 1.3 1994/10/26 06:43:13 cgd Exp $	*/
+/*	$NetBSD: netboot.h,v 1.4 1995/04/22 14:07:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass 
@@ -124,6 +124,6 @@ int	getchar __P((void));
 
 void	machdep_common_ether __P((unsigned char *));
 void	machdep_exec_setup __P((struct exec_var *));
-int	machdep_exec_override __P((int, int));			/* ??? */
-int	machdep_exec __P((int, int));				/* ??? */
+int	machdep_exec_override __P((struct iodesc *, struct exec_var *));
+int	machdep_exec __P((struct iodesc *, struct exec_var *));
 void	machdep_stop __P((void));
