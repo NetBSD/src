@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 1997/04/14 06:25:32 scottr Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 1997/05/12 07:29:29 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -100,6 +100,7 @@ extern volatile u_int8_t ssir;
 #define	SIR_NET		0x01
 #define	SIR_CLOCK	0x02
 #define	SIR_SERIAL	0x04
+#define SIR_DTMGR	0x08
 
 #define	siron(mask)	\
 	__asm __volatile ( "orb %0,_ssir" : : "i" (mask))
@@ -109,6 +110,7 @@ extern volatile u_int8_t ssir;
 #define	setsoftnet()	siron(SIR_NET)
 #define	setsoftclock()	siron(SIR_CLOCK)
 #define	setsoftserial()	siron(SIR_SERIAL)
+#define	setsoftdtmgr()	siron(SIR_DTMGR)
 
 /* locore.s */
 int	spl0 __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49 1997/04/09 20:20:46 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.50 1997/05/12 07:29:35 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -474,6 +474,12 @@ copyfault:
 			siroff(SIR_CLOCK);
 			cnt.v_soft++;
 			softclock();
+		}
+		if (ssir & SIR_DTMGR) {
+			void mrg_execute_deferred __P((void));
+			siroff(SIR_DTMGR);
+			cnt.v_soft++;
+			mrg_execute_deferred();
 		}
 		/*
 		 * If this was not an AST trap, we are all done.
