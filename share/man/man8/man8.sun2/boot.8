@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.2 2003/04/29 13:05:32 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.3 2003/04/29 15:04:43 fredette Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,33 +39,86 @@
 .Sh NAME
 .Nm boot
 .Nd system bootstrapping procedures
-.\" .Sh SYNOPSIS
-.\" .Nm reboot
-.\" .Op Fl n
-.\" .Op Fl q
-.\" .Oo
-.\" .Ar -- <boot string>
-.\" .Oc
+.Sh SYNOPSIS
+.Nm b
+.Oo
+.Ar dev 
+.Oo ( Ar cntrl , unit , part )
+.Oc
+.Oc
+.Op Ar file
+.Op Fl adqsv
 .Sh DESCRIPTION
 .Ss Power fail and crash recovery
 Normally, the system will reboot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed
 as described in
-.Xr fsck 8 .
+.Xr fsck 8 ,
 and unless this fails, the system will resume multi-user operations.
-.Ss Cold starts
-A disk-boot program
-.Pq Pa /usr/mdec/ufsboot
-will attempt to load
-.Pa netbsd
-from partition A of the boot device,
-which must currently be an
-.Dq sd
-disk.
-Alternatively, network boot program
-.Pq Pa /usr/mdec/netboot
-will load
-.Pa netbsd
+.Ss Selecting the device and kernel to boot
+Normally, the
+.Nm b
+command alone is sufficient to boot the system, as the PROM chooses
+a default boot device
+.Ar dev
+if none is specified.  The PROM chooses the first device present on
+the system from the following ordered list:
+.Pp 
+.Bd -unfilled -offset indent -compact
+sd	SCSI disk
+ie	Intel Ethernet
+ec	3Com Ethernet
+.Ed
+.Pp
+Unless specified, the controller number
+.Ar cntrl ,
+unit number
+.Ar unit ,
+and partition number
+.Ar part
+default to zero, which is almost always correct.
+.Pp
+The controller number can
+be specified if there is more than one of the given device in the system.
+For example, use
+.Dq ie(1,,)
+to boot off of the second Intel Ethernet in the system.
+.Pp
+The unit number specifies one of the many devices attached to a 
+controller.  The exact meaning and values vary depending on the device name.
+For example,
+.Dq sd(,18,)
+boots the disk at target 6 on the first SCSI controller, 18 being the target
+number 6, multiplied by 4, and given in hexadecimal.
+.Pp
+The partition number specifies one of the many partitions on a device.  The
+exact meaning and values vary depending on the device name.  For example,
+.Dq sd(,18,1)
+boots the second partition on the disk at target 6 on the first SCSI
+controller.
+.Pp
+The PROM only loads a first-stage boot program, currently either
+.Pa /usr/mdec/bootxx
+(for a disk boot), or
+.Pa /usr/mdec/bootyy
+(for a network boot).  This first-stage boot program then loads the
+second-stage boot program from the same device, currently either
+.Pa /usr/mdec/ufsboot
+(for a disk boot), or
+.Pa /usr/mdec/netboot
+(for a network boot).
+.Pp
+The second-stage boot program will then attempt to load the kernel named
+.Ar file
+(or
+.Pa vmunix
+if none is specified).
+The second-stage disk boot program
+.Pa /usr/mdec/ufsboot
+loads the kernel from the same device that it was loaded from, 
+while the second-stage network boot program
+.Pa /usr/mdec/netboot
+will load the kernel
 from the NFS root as determined by the procedure described in
 .Xr diskless 8 .
 .Ss Boot program options
@@ -86,9 +139,6 @@ Bring the system up in single-user mode.
 Boot the system in verbose mode.
 .El
 .Pp
-Any extra flags or arguments, or the
-.Aq Ar boot string
-after the -- separator are passed to the boot PROM.
 Other flags are currently ignored.
 .Pp
 At any time you can break back to the ROM by pressing the
