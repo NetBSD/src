@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.489 2004/06/25 15:54:31 itojun Exp $
+# $NetBSD: mi,v 1.490 2004/06/25 16:25:00 itojun Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1114,6 +1114,7 @@
 ./usr/sbin/slstats				base-slip-bin
 ./usr/sbin/smrsh				base-obsolete		obsolete
 ./usr/sbin/sntp					base-ntp-bin
+./usr/sbin/spamdb				base-netutil-bin
 ./usr/sbin/spawn				base-obsolete		obsolete
 ./usr/sbin/spray				base-rpcutil-bin
 ./usr/sbin/sshd					base-secsh-bin		crypto
