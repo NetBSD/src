@@ -1,9 +1,0 @@
-Some of the options of this utility (add, delete) are *not* intended for
-public release. Any work regarding the consistancy of the pkgdb should
-be put into pkg_add/pkg_delete, instead of a brute-force "rebuild". 
-
-The "rebuild" should be only needed wen upgrading from non-pkgdb-
-pkg_* tools to pkgdb-pkg_* tools.
-
-
- - hubertf
