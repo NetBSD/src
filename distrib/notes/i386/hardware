@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.43 1999/03/25 10:39:14 dante Exp $	
+.\"	$NetBSD: hardware,v 1.44 1999/03/30 01:07:26 perry Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -103,7 +103,7 @@ Supported devices include:
 		3COM 3c503
 		3COM 3c505 [*]
 		3COM 3c507
-		3COM 3c509, 3c579, 3c59X, and 3c90X (but not 3c905B)
+		3COM 3c509, 3c579, 3c59X, and 3c90X (including 3c905B)
 		3COM 3c589
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 			Cogent EM1X0, EM960 (a.k.a. Adaptec ANA-69XX)
