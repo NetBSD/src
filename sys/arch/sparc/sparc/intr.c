@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.48 2001/01/15 20:19:57 thorpej Exp $ */
+/*	$NetBSD: intr.c,v 1.49 2001/03/15 03:01:40 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,6 +77,7 @@ int	soft01intr __P((void *));
 /*
  * Stray interrupt handler.  Clear it if possible.
  * If not, and if we get 10 interrupts in 10 seconds, panic.
+ * XXXSMP: We are holding the kernel lock at entry & exit.
  */
 void
 strayintr(fp)
@@ -112,6 +113,7 @@ soft01intr(fp)
 	void *fp;
 {
 
+	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 	if (sir.sir_any) {
 		/*
 		 * XXX	this is bogus: should just have a list of
@@ -151,6 +153,7 @@ soft01intr(fp)
 		}
 #endif
 	}
+	KERNEL_UNLOCK();
 	return (1);
 }
 
@@ -175,6 +178,7 @@ nmi_hard()
 	char bits[64];
 	u_int afsr, afva;
 
+	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 	afsr = afva = 0;
 	if ((*cpuinfo.get_asyncflt)(&afsr, &afva) == 0) {
 		printf("Async registers (mid %d): afsr=%s; afva=0x%x%x\n",
@@ -188,6 +192,7 @@ nmi_hard()
 		 * For now, just return.
 		 * Should wait on damage analysis done by the master.
 		 */
+		KERNEL_UNLOCK();
 		return;
 	}
 
@@ -219,6 +224,7 @@ nmi_hard()
 			fatal |= (*moduleerr_handler)();
 	}
 
+	KERNEL_UNLOCK();
 	if (fatal)
 		panic("nmi");
 }
@@ -228,6 +234,7 @@ nmi_soft()
 {
 
 #ifdef MULTIPROCESSOR
+	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 	switch (cpuinfo.msg.tag) {
 	case XPMSG_SAVEFPU: {
 		savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
@@ -288,6 +295,7 @@ nmi_soft()
 		break;
 	}
 	simple_unlock(&cpuinfo.msg.lock);
+	KERNEL_UNLOCK();
 #endif
 }
 #endif
@@ -421,3 +429,22 @@ intr_fasttrap(level, vec)
 	fastvec |= 1 << level;
 	splx(s);
 }
+
+#ifdef MULTIPROCESSOR
+/*
+ * Called by interrupt stubs, etc., to lock/unlock the kernel.
+ */
+void
+intr_lock_kernel()
+{
+
+	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+}
+
+void
+intr_unlock_kernel()
+{
+
+	KERNEL_UNLOCK();
+}
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.29 2001/03/03 19:11:02 pk Exp $ */
+/*	$NetBSD: memreg.c,v 1.30 2001/03/15 03:01:40 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -261,6 +261,8 @@ hypersparc_memerr(type, sfsr, sfva, tf)
 
 	if ((tf->tf_psr & PSR_PS) == 0)
 		KERNEL_PROC_LOCK(curproc);
+	else
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
 	(*cpuinfo.get_asyncflt)(&afsr, &afva);
 	if ((afsr & AFSR_AFO) != 0) {	/* HS async fault! */
@@ -278,6 +280,8 @@ hypersparc_memerr(type, sfsr, sfva, tf)
 out:
 	if ((tf->tf_psr & PSR_PS) == 0)
 		KERNEL_PROC_UNLOCK(curproc);
+	else
+		KERNEL_UNLOCK();
 	return;
 
 hard:
@@ -297,6 +301,8 @@ viking_memerr(type, sfsr, sfva, tf)
 
 	if ((tf->tf_psr & PSR_PS) == 0)
 		KERNEL_PROC_LOCK(curproc);
+	else
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
 	if (type == T_STOREBUFFAULT) {
 
@@ -333,6 +339,8 @@ viking_memerr(type, sfsr, sfva, tf)
 out:
 	if ((tf->tf_psr & PSR_PS) == 0)
 		KERNEL_PROC_UNLOCK(curproc);
+	else
+		KERNEL_UNLOCK();
 	return;
 
 hard:
@@ -352,6 +360,8 @@ memerr4m(type, sfsr, sfva, tf)
 
 	if ((tf->tf_psr & PSR_PS) == 0)
 		KERNEL_PROC_LOCK(curproc);
+	else
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
 	/*
 	 * No known special cases.
@@ -363,5 +373,7 @@ memerr4m(type, sfsr, sfva, tf)
 	hardmemerr4m(type, sfsr, sfva, afsr, afva);
 	if ((tf->tf_psr & PSR_PS) == 0)
 		KERNEL_PROC_UNLOCK(curproc);
+	else
+		KERNEL_UNLOCK();
 }
 #endif /* SUN4M */
