@@ -5,14 +5,14 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_erf.c,v 1.9 1997/10/09 11:31:35 lukem Exp $");
+__RCSID("$NetBSD: s_erf.c,v 1.10 1999/07/02 15:37:42 simonb Exp $");
 #endif
 
 /* double erf(double x)
@@ -20,11 +20,11 @@ __RCSID("$NetBSD: s_erf.c,v 1.9 1997/10/09 11:31:35 lukem Exp $");
  *			     x
  *		      2      |\
  *     erf(x)  =  ---------  | exp(-t*t)dt
- *	 	   sqrt(pi) \| 
+ *	 	   sqrt(pi) \|
  *			     0
  *
  *     erfc(x) =  1-erf(x)
- *  Note that 
+ *  Note that
  *		erf(-x) = -erf(x)
  *		erfc(-x) = 2 - erfc(x)
  *
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: s_erf.c,v 1.9 1997/10/09 11:31:35 lukem Exp $");
  *	   Q is an odd poly of degree 10.
  *						 -57.90
  *			| R - (erf(x)-x)/x | <= 2
- *	
+ *
  *
  *	   Remark. The formula is derived by noting
  *          erf(x) = (2/sqrt(pi))*(x - x^3/3 + x^5/10 - x^7/42 + ....)
@@ -60,14 +60,14 @@ __RCSID("$NetBSD: s_erf.c,v 1.9 1997/10/09 11:31:35 lukem Exp $");
  *	   That is, we use rational approximation to approximate
  *			erf(1+s) - (c = (single)0.84506291151)
  *	   Note that |P1/Q1|< 0.078 for x in [0.84375,1.25]
- *	   where 
+ *	   where
  *		P1(s) = degree 6 poly in s
  *		Q1(s) = degree 6 poly in s
  *
- *      3. For x in [1.25,1/0.35(~2.857143)], 
+ *      3. For x in [1.25,1/0.35(~2.857143)],
  *         	erfc(x) = (1/x)*exp(-x*x-0.5625+R1/S1)
  *         	erf(x)  = 1 - erfc(x)
- *	   where 
+ *	   where
  *		R1(z) = degree 7 poly in z, (z=1/x^2)
  *		S1(z) = degree 8 poly in z
  *
@@ -85,7 +85,7 @@ __RCSID("$NetBSD: s_erf.c,v 1.9 1997/10/09 11:31:35 lukem Exp $");
  *	   To compute exp(-x*x-0.5625+R/S), let s be a single
  *	   precision number and s := x; then
  *		-x*x = -s*s + (s-x)*(s+x)
- *	        exp(-x*x-0.5626+R/S) = 
+ *	        exp(-x*x-0.5626+R/S) =
  *			exp(-s*s-0.5625)*exp((s-x)*(s+x)+R/S);
  *      Note2:
  *	   Here 4 and 5 make use of the asymptotic series
@@ -105,7 +105,7 @@ __RCSID("$NetBSD: s_erf.c,v 1.9 1997/10/09 11:31:35 lukem Exp $");
  *
  *      7. Special case:
  *         	erf(0)  = 0, erf(inf)  = 1, erf(-inf) = -1,
- *         	erfc(0) = 1, erfc(inf) = 0, erfc(-inf) = 2, 
+ *         	erfc(0) = 1, erfc(inf) = 0, erfc(-inf) = 2,
  *	   	erfc/erf(NaN) is NaN
  */
 
@@ -140,7 +140,7 @@ qq3  =  5.08130628187576562776e-03, /* 0x3F74D022, 0xC4D36B0F */
 qq4  =  1.32494738004321644526e-04, /* 0x3F215DC9, 0x221C1A10 */
 qq5  = -3.96022827877536812320e-06, /* 0xBED09C43, 0x42A26120 */
 /*
- * Coefficients for approximation to  erf  in [0.84375,1.25] 
+ * Coefficients for approximation to  erf  in [0.84375,1.25]
  */
 pa0  = -2.36211856075265944077e-03, /* 0xBF6359B8, 0xBEF77538 */
 pa1  =  4.14856118683748331666e-01, /* 0x3FDA8D00, 0xAD92B34D */
@@ -193,9 +193,9 @@ sb6  =  4.74528541206955367215e+02, /* 0x407DA874, 0xE79FE763 */
 sb7  = -2.24409524465858183362e+01; /* 0xC03670E2, 0x42712D62 */
 
 #ifdef __STDC__
-	double erf(double x) 
+	double erf(double x)
 #else
-	double erf(x) 
+	double erf(x)
 	double x;
 #endif
 {
@@ -210,7 +210,7 @@ sb7  = -2.24409524465858183362e+01; /* 0xC03670E2, 0x42712D62 */
 
 	if(ix < 0x3feb0000) {		/* |x|<0.84375 */
 	    if(ix < 0x3e300000) { 	/* |x|<2**-28 */
-	        if (ix < 0x00800000) 
+	        if (ix < 0x00800000)
 		    return 0.125*(8.0*x+efx8*x);  /*avoid underflow */
 		return x + efx*x;
 	    }
@@ -242,16 +242,16 @@ sb7  = -2.24409524465858183362e+01; /* 0xC03670E2, 0x42712D62 */
 	    S=one+s*(sb1+s*(sb2+s*(sb3+s*(sb4+s*(
 				sb5+s*(sb6+s*sb7))))));
 	}
-	z  = x;  
+	z  = x;
 	SET_LOW_WORD(z,0);
 	r  =  __ieee754_exp(-z*z-0.5625)*__ieee754_exp((z-x)*(z+x)+R/S);
 	if(hx>=0) return one-r/x; else return  r/x-one;
 }
 
 #ifdef __STDC__
-	double erfc(double x) 
+	double erfc(double x)
 #else
-	double erfc(x) 
+	double erfc(x)
 	double x;
 #endif
 {
@@ -284,7 +284,7 @@ sb7  = -2.24409524465858183362e+01; /* 0xC03670E2, 0x42712D62 */
 	    P = pa0+s*(pa1+s*(pa2+s*(pa3+s*(pa4+s*(pa5+s*pa6)))));
 	    Q = one+s*(qa1+s*(qa2+s*(qa3+s*(qa4+s*(qa5+s*qa6)))));
 	    if(hx>=0) {
-	        z  = one-erx; return z - P/Q; 
+	        z  = one-erx; return z - P/Q;
 	    } else {
 		z = erx+P/Q; return one+z;
 	    }

@@ -5,18 +5,18 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_j1.c,v 1.7 1997/10/09 11:35:12 lukem Exp $");
+__RCSID("$NetBSD: w_j1.c,v 1.8 1999/07/02 15:37:44 simonb Exp $");
 #endif
 
-/* 
- * wrapper of j1,y1 
+/*
+ * wrapper of j1,y1
  */
 
 #include "math.h"

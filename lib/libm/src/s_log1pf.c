@@ -8,14 +8,14 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_log1pf.c,v 1.6 1998/08/19 00:45:37 thorpej Exp $");
+__RCSID("$NetBSD: s_log1pf.c,v 1.7 1999/07/02 15:37:43 simonb Exp $");
 #endif
 
 #include "math.h"
@@ -73,11 +73,11 @@ static float zero = 0.0;
 	    }
 	    if(hx>0||hx<=((int32_t)0xbe95f61f)) {
 		k=0;f=x;hu=1;}	/* -0.2929<x<0.41422 */
-	} 
+	}
 	if (hx >= 0x7f800000) return x+x;
 	if(k!=0) {
 	    if(hx<0x5a000000) {
-		u  = (float)1.0+x; 
+		u  = (float)1.0+x;
 		GET_FLOAT_WORD(hu,u);
 	        k  = (hu>>23)-127;
 		/* correction term */
@@ -93,7 +93,7 @@ static float zero = 0.0;
 	    if(hu<0x3504f7) {
 	        SET_FLOAT_WORD(u,hu|0x3f800000);/* normalize u */
 	    } else {
-	        k += 1; 
+	        k += 1;
 		SET_FLOAT_WORD(u,hu|0x3f000000);	/* normalize u/2 */
 	        hu = (0x00800000-hu)>>2;
 	    }
@@ -101,14 +101,14 @@ static float zero = 0.0;
 	}
 	hfsq=(float)0.5*f*f;
 	if(hu==0) {	/* |f| < 2**-20 */
-	    if(f==zero) { if(k==0) return zero;  
+	    if(f==zero) { if(k==0) return zero;
 			  else {c += k*ln2_lo; return k*ln2_hi+c;}
 	    }
 	    R = hfsq*((float)1.0-(float)0.66666666666666666*f);
 	    if(k==0) return f-R; else
 	    	     return k*ln2_hi-((R-(k*ln2_lo+c))-f);
 	}
- 	s = f/((float)2.0+f); 
+ 	s = f/((float)2.0+f);
 	z = s*s;
 	R = z*(Lp1+z*(Lp2+z*(Lp3+z*(Lp4+z*(Lp5+z*(Lp6+z*Lp7))))));
 	if(k==0) return f-(hfsq-s*(hfsq+R)); else

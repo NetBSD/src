@@ -1,46 +1,46 @@
-#  $NetBSD: Makefile,v 1.45 1999/07/01 20:46:35 is Exp $
+#  $NetBSD: Makefile,v 1.46 1999/07/02 15:37:33 simonb Exp $
 #
-#  @(#)Makefile 5.1beta 93/09/24 
-# 
+#  @(#)Makefile 5.1beta 93/09/24
+#
 #  ====================================================
 #  Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
-# 
+#
 #  Developed at SunPro, a Sun Microsystems, Inc. business.
 #  Permission to use, copy, modify, and distribute this
-#  software is freely granted, provided that this notice 
+#  software is freely granted, provided that this notice
 #  is preserved.
 #  ====================================================
-# 
-# 
+#
+#
 
 #
 # There are two options in making libm at fdlibm compile time:
 # 	_IEEE_LIBM 	--- IEEE libm; smaller, and somewhat faster
-#	_MULTI_LIBM	--- Support multi-standard at runtime by 
-#			    imposing wrapper functions defined in 
+#	_MULTI_LIBM	--- Support multi-standard at runtime by
+#			    imposing wrapper functions defined in
 #			    fdlibm.h:
 #				_IEEE_MODE 	-- IEEE
 #				_XOPEN_MODE 	-- X/OPEN
 #				_POSIX_MODE 	-- POSIX/ANSI
 #				_SVID3_MODE 	-- SVID
 #
-# Here is how to set up CPPFLAGS to create the desired libm at 
+# Here is how to set up CPPFLAGS to create the desired libm at
 # compile time:
 #
 # 	CPPFLAGS = -D_IEEE_LIBM		... IEEE libm (recommended)
 #	CPPFLAGS = -D_SVID3_MODE	... Multi-standard supported
-#					    libm with SVID as the 
+#					    libm with SVID as the
 #					    default standard
 #	CPPFLAGS = -D_XOPEN_MODE	... Multi-standard supported
-#					    libm with XOPEN as the 
+#					    libm with XOPEN as the
 #					    default standard
 #	CPPFLAGS = -D_POSIX_MODE	... Multi-standard supported
-#					    libm with POSIX as the 
+#					    libm with POSIX as the
 #					    default standard
 #	CPPFLAGS = 			... Multi-standard supported
-#					    libm with IEEE as the 
+#					    libm with IEEE as the
 #					    default standard
-# 
+#
 
 # require this for the value of I387_LIBM from mk.conf, if set.
 .include <bsd.own.mk>
@@ -116,8 +116,8 @@ NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \
 	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_floor.c n_fmod.c n_gamma.c \
 	n_lgamma.c n_j0.c n_j1.c n_jn.c n_log.c n_log10.c n_log1p.c \
 	n_log__L.c n_pow.c n_sinh.c n_tanh.c \
-	n_sincos.c n_tan.c 
-#	n_sqrt.c n_argred.c n_infnan.c n_atan2.c n_cabs.c n_cbrt.c n_support.c 
+	n_sincos.c n_tan.c
+#	n_sqrt.c n_argred.c n_infnan.c n_atan2.c n_cabs.c n_cbrt.c n_support.c
 
 
 # NetBSD's C library supplies these functions:
@@ -129,7 +129,7 @@ SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH}
 SRCS=	${COMMON_SRCS}
 .endif
 
-# Substitute common sources with any arch specific sources 
+# Substitute common sources with any arch specific sources
 .for i in ${ARCH_SRCS} ${NOIEEE_ARCH}
     SRCS:=${SRCS:S/${i:S/.S/.c/}/$i/}
 .endfor
@@ -137,7 +137,7 @@ SRCS=	${COMMON_SRCS}
 .if (${MACHINE_ARCH} == "vax") # XXX until POLYD is written.
 .PATH:	${.CURDIR}/arch/vax
 SRCS:=${SRCS} n_sqrt.S n_argred.S n_infnan.S n_atan2.S n_cabs.S n_cbrt.S \
-	n_support.S 
+	n_support.S
 .endif
 
 # XXX lint buts on some archs and needs stubs

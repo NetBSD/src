@@ -5,21 +5,21 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_jn.c,v 1.7 1997/10/09 11:35:18 lukem Exp $");
+__RCSID("$NetBSD: w_jn.c,v 1.8 1999/07/02 15:37:44 simonb Exp $");
 #endif
 
 /*
  * wrapper jn(int n, double x), yn(int n, double x)
  * floating point Bessel's function of the 1st and 2nd kind
  * of order n
- *          
+ *
  * Special cases:
  *	y0(0)=y1(0)=yn(n,0) = -inf with division by zero signal;
  *	y0(-ve)=y1(-ve)=yn(n,-ve) are NaN with invalid signal.
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: w_jn.c,v 1.7 1997/10/09 11:35:18 lukem Exp $");
  *	yn(n,x) is similar in all respects, except
  *	that forward recursion is used for all
  *	values of n>1.
- *	
+ *
  */
 
 #include "math.h"

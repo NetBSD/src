@@ -8,14 +8,14 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_gammaf.c,v 1.5 1997/10/09 11:34:54 lukem Exp $");
+__RCSID("$NetBSD: w_gammaf.c,v 1.6 1999/07/02 15:37:44 simonb Exp $");
 #endif
 
 #include "math.h"
@@ -46,4 +46,4 @@ extern int signgam;
         } else
             return y;
 #endif
-}             
+}
