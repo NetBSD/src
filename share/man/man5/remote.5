@@ -1,4 +1,4 @@
-.\"	$NetBSD: remote.5,v 1.6 1998/04/29 11:33:58 fair Exp $
+.\"	$NetBSD: remote.5,v 1.7 1998/10/18 12:17:16 mellon Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -143,6 +143,9 @@ The default frame size is equal to
 (bool)
 The host uses half-duplex communication, local
 echo should be performed.
+.It Cm \&hf
+(bool)
+Use hardware (RTS/CTS) flow control.
 .It Cm \&ie
 (str)
 Input end-of-file marks.
