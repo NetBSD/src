@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.3 1997/10/14 09:20:37 mark Exp $	*/
+/*	$NetBSD: varargs.h,v 1.4 1999/01/22 14:19:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -40,25 +40,24 @@
  *	from: @(#)varargs.h	8.2 (Berkeley) 3/22/94
  */
 
-#ifndef _MACHINE_VARARGS_H_
-#define	_MACHINE_VARARGS_H_
+#ifndef _ARM32_VARARGS_H_
+#define	_ARM32_VARARGS_H_
 
-typedef char *va_list;
+#include <machine/stdarg.h>
 
-#define	va_dcl	int va_alist; ...
-
-#define	va_start(ap) \
-	ap = (char *)&va_alist
-
-#ifdef _KERNEL
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type)))[-1]
+#if __GNUC__ == 1
+#define	__va_ellipsis
 #else
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type) < sizeof(int) ? \
-		(abort(), 0) : sizeof(type)))[-1]
+#define	__va_ellipsis	...
 #endif
+
+#define	va_alist	__builtin_va_alist
+#define	va_dcl		long __builtin_va_alist; __va_ellipsis
+
+#undef va_start
+#define	va_start(ap) \
+	((ap) = (va_list)&__builtin_va_alist)
 
 #define	va_end(ap)
 
-#endif /* !_MACHINE_VARARGS_H_ */
+#endif /* !_ARM32_VARARGS_H_ */
