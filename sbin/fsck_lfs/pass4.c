@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.10 2005/01/19 19:41:59 xtraeme Exp $	 */
+/* $NetBSD: pass4.c,v 1.11 2005/02/06 06:13:47 perry Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -56,8 +56,8 @@ extern SEGUSE *seg_table;
 void
 pass4(void)
 {
-	register ino_t inumber;
-	register struct zlncnt *zlnp;
+	ino_t inumber;
+	struct zlncnt *zlnp;
 	struct ufs1_dinode *dp;
 	struct inodesc idesc;
 	int n;
@@ -115,7 +115,7 @@ pass4(void)
 int
 pass4check(struct inodesc * idesc)
 {
-	register struct dups *dlp;
+	struct dups *dlp;
 	int ndblks, res = KEEPON;
 	daddr_t blkno = idesc->id_blkno;
 	SEGUSE *sup;
