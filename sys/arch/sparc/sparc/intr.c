@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.76 2003/01/22 21:58:28 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.77 2003/01/23 14:56:06 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -122,7 +122,8 @@ bogusintr(fp)
 {
 	char bits[64];
 
-	printf("bogus interrupt ipl 0x%x pc=0x%x npc=0x%x psr=%s\n",
+	printf("cpu%d: bogus interrupt ipl 0x%x pc=0x%x npc=0x%x psr=%s\n",
+		cpu_number(),
 		fp->ipl, fp->pc, fp->npc, bitmask_snprintf(fp->psr,
 		       PSR_BITS, bits, sizeof(bits)));
 }
