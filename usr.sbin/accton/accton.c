@@ -1,6 +1,8 @@
+/*	$NetBSD: accton.c,v 1.5 1997/03/06 05:40:11 mikel Exp $	*/
+
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,29 +34,65 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)accton.c	4.3 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: accton.c,v 1.4 1993/10/20 00:13:10 cgd Exp $";
+/* from: static char sccsid[] = "@(#)accton.c	8.1 (Berkeley) 6/6/93"; */
+static char *rcsid = "$NetBSD: accton.c,v 1.5 1997/03/06 05:40:11 mikel Exp $";
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <errno.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
+void usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	if (argc > 2) {
-		fputs("usage: accton [file]\n", stderr);
-		exit(1);
-	}
-	if (acct(argc == 2 ? argv[1] : (char *)NULL)) {
-		perror("accton");
-		exit(1);
+	int ch;
+
+	while ((ch = getopt(argc, argv, "")) != -1)
+		switch(ch) {
+		case '?':
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
+
+	switch(argc) {
+	case 0: 
+		if (acct(NULL)) {
+			(void)fprintf(stderr,
+			    "accton: %s\n", strerror(errno));
+			exit(1);
+		}
+		break;
+	case 1:
+		if (acct(*argv)) {
+			(void)fprintf(stderr,
+			    "accton: %s: %s\n", *argv, strerror(errno));
+			exit(1);
+		}
+		break;
+	default:
+		usage();
 	}
 	exit(0);
+}
+
+void
+usage()
+{
+	(void)fprintf(stderr, "usage: accton [file]\n");
+	exit(1);
 }
