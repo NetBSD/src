@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.4 1995/05/01 14:15:09 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.5 1995/05/01 19:45:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -123,8 +123,8 @@ linux_sendsig(catcher, sig, mask, code)
 	} else
 #else
 	{
-		__asm("movl %%gs,%w0" : "=r" (frame.ls_sc.sc_gs));
-		__asm("movl %%fs,%w0" : "=r" (frame.ls_sc.sc_fs));
+		__asm("movl %%gs,%w0" : "=r" (frame.ls_sc.lsc_gs));
+		__asm("movl %%fs,%w0" : "=r" (frame.ls_sc.lsc_fs));
 		frame.ls_sc.lsc_es = tf->tf_es;
 		frame.ls_sc.lsc_ds = tf->tf_ds;
 	}
