@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.12 2000/06/14 06:49:24 cgd Exp $
+.\" $NetBSD: lint.1,v 1.13 2000/07/06 01:17:18 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 .Nd a C program verifier.
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl abceghprvxzHFV
+.Op Fl abceghprvwxzHFV
 .Bk -words
 .Op Fl s | Fl t
 .Ek
@@ -69,9 +69,12 @@
 .Bk -words
 .Op Fl B Ar directory
 .Ek
+.Bk -words
+.Op Fl X Ar id Op ,id ...
+.Ek
 .Ar
 .Nm lint
-.Op Fl abceghprvzHFV
+.Op Fl abceghprvwzHFV
 .Bk -words
 .Op Fl s | Fl t
 .Ek
@@ -92,6 +95,9 @@
 .Ek
 .Bk -words
 .Op Fl B Ar directory
+.Ek
+.Bk -words
+.Op Fl X Ar id Op ,id ...
 .Ek
 .Ar
 .Sh DESCRIPTION
@@ -391,6 +397,12 @@ Print the command lines constructed by the controller program to
 run the C preprocessor and
 .Nm lint Ns 's
 first and second pass.
+.It Fl w
+Treat warnings as errors.
+.It Fl X Ar id Op ,id ...
+Suppress error messages identified by the list of ids. A list of messages
+and ids can be found in
+.Xr lint 7 .
 .El
 .Pp
 .Sy Input Grammar
