@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.20.2.3 2000/10/02 00:33:23 lukem Exp $
+# $NetBSD: rc.subr,v 1.20.2.4 2000/10/02 01:02:49 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -368,7 +368,7 @@ run_rc_command()
 			done
 			for _f in $required_dirs; do
 				if [ ! -d "${_f}/." ]; then
-					warn "\$${_f} is not a directory."
+					warn "${_f} is not a directory."
 					if [ -z "$_rc_force_run" ]; then
 						return 1
 					fi
@@ -376,7 +376,7 @@ run_rc_command()
 			done
 			for _f in $required_files; do
 				if [ ! -r "${_f}" ]; then
-					warn "\$${_f} is not readable."
+					warn "${_f} is not readable."
 					if [ -z "$_rc_force_run" ]; then
 						return 1
 					fi
