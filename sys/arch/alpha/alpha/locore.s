@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.28 1997/02/03 19:50:23 cgd Exp $	*/
+/* $NetBSD: locore.s,v 1.29 1997/04/07 05:39:10 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
