@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.53 2002/01/28 01:37:17 simonb Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.54 2002/01/28 02:07:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.53 2002/01/28 01:37:17 simonb Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.54 2002/01/28 02:07:40 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,6 +185,7 @@ static int sysctl_vfsgen(char *, char **, int[], int, int *);
 static int sysctl_mbuf(char *, char **, int[], int, int *);
 static int sysctl_pipe(char *, char **, int[], int, int *);
 static int sysctl_proc(char *, char **, int[], int, int *);
+static int sysctl_tkstat(char *, char **, int[], int, int *);
 static int findname(char *, char *, char **, struct list *);
 static void usage(void);
 
@@ -399,6 +400,11 @@ parse(char *string, int flags)
 			break;
 		case KERN_PIPE:
 			len = sysctl_pipe(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+			break;
+		case KERN_TKSTAT:
+			len = sysctl_tkstat(string, &bufp, mib, flags, &type);
 			if (len < 0)
 				return;
 			break;
@@ -1095,6 +1101,28 @@ static int
 sysctl_pipe(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	struct list *lp = &pipevars;
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, lp);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, lp)) == -1)
+		return (-1);
+	mib[2] = indx;
+	*typep = lp->list[indx].ctl_type;
+	return (3);
+}
+
+struct ctlname tkstatnames[] = KERN_TKSTAT_NAMES;
+struct list tkstatvars = { tkstatnames, KERN_TKSTAT_MAXID };
+/*
+ * handle kern.tkstat requests
+ */
+static int
+sysctl_tkstat(char *string, char **bufpp, int mib[], int flags, int *typep)
+{
+	struct list *lp = &tkstatvars;
 	int indx;
 
 	if (*bufpp == NULL) {
