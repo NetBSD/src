@@ -1,6 +1,6 @@
 #! /bin/sh -
 #	from: @(#)makesyscalls.sh	7.6 (Berkeley) 4/20/91
-#	$Id: makesyscalls.sh,v 1.4 1993/05/20 16:17:38 cgd Exp $
+#	$Id: makesyscalls.sh,v 1.5 1993/06/07 19:52:40 cgd Exp $
 
 set -e
 
@@ -104,14 +104,15 @@ awk < $1 "
 		if (NF < 5)
 			$5 = $4
 	}
-	$2 == "STD" {
+	$2 == "STD" || $2 == "NODEF" {
 		printf("int\t%s();\n", $4) > sysdcl
 		printf("\t%d, %s,\t\t\t/* %d = %s */\n", \
 		    $3, $4, syscall, $5) > sysent
 		printf("\t\"%s\",\t\t\t/* %d = %s */\n", \
 		    $5, syscall, $5) > sysnames
-		printf("#define\tSYS_%s\t%d\n", \
-		    $5, syscall) > syshdr
+		if ($2 == "STD")
+			printf("#define\tSYS_%s\t%d\n", \
+			    $5, syscall) > syshdr
 		syscall++
 		next
 	}

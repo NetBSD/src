@@ -168,6 +168,19 @@ int	shmsys();
 int	setgid();
 int	setegid();
 int	seteuid();
+#ifdef LKM
+int	lkmnosys();
+int	lkmnosys();
+int	lkmnosys();
+int	lkmnosys();
+int	lkmnosys();
+int	lkmnosys();
+int	lkmnosys();
+int	lkmnosys();
+int	lkmnosys();
+int	lkmnosys();
+#else	/* !LKM*/
+#endif	/* !LKM*/
 
 #ifdef COMPAT_43
 #define compat(n, name) n, __CONCAT(o,name)
@@ -210,6 +223,9 @@ int	ogetsockname();
 #ifdef SYSVSHM
 #else
 #endif
+#ifdef LKM
+#else	/* !LKM*/
+#endif	/* !LKM*/
 
 #else /* COMPAT_43 */
 #define compat(n, name) 0, nosys
@@ -436,6 +452,38 @@ struct sysent sysent[] = {
 	0, nosys,			/* 188 = nosys */
 	0, nosys,			/* 189 = nosys */
 	0, nosys,			/* 190 = nosys */
+	0, nosys,			/* 191 = nosys */
+	0, nosys,			/* 192 = nosys */
+	0, nosys,			/* 193 = nosys */
+	0, nosys,			/* 194 = nosys */
+	0, nosys,			/* 195 = nosys */
+	0, nosys,			/* 196 = nosys */
+	0, nosys,			/* 197 = nosys */
+	0, nosys,			/* 198 = nosys */
+	0, nosys,			/* 199 = nosys */
+#ifdef LKM
+	0, lkmnosys,			/* 200 = lkmnosys */
+	0, lkmnosys,			/* 201 = lkmnosys */
+	0, lkmnosys,			/* 202 = lkmnosys */
+	0, lkmnosys,			/* 203 = lkmnosys */
+	0, lkmnosys,			/* 204 = lkmnosys */
+	0, lkmnosys,			/* 205 = lkmnosys */
+	0, lkmnosys,			/* 206 = lkmnosys */
+	0, lkmnosys,			/* 207 = lkmnosys */
+	0, lkmnosys,			/* 208 = lkmnosys */
+	0, lkmnosys,			/* 209 = lkmnosys */
+#else	/* !LKM*/
+	0, nosys,			/* 200 = nosys */
+	0, nosys,			/* 201 = nosys */
+	0, nosys,			/* 202 = nosys */
+	0, nosys,			/* 203 = nosys */
+	0, nosys,			/* 204 = nosys */
+	0, nosys,			/* 205 = nosys */
+	0, nosys,			/* 206 = nosys */
+	0, nosys,			/* 207 = nosys */
+	0, nosys,			/* 208 = nosys */
+	0, nosys,			/* 209 = nosys */
+#endif	/* !LKM*/
 };
 
 int	nsysent = sizeof(sysent) / sizeof(sysent[0]);

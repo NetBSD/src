@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.27 1993/06/06 04:16:14 cgd Exp $
+ *	$Id: machdep.c,v 1.28 1993/06/07 19:52:28 cgd Exp $
  */
 
 #include <stddef.h>
@@ -892,8 +892,11 @@ init386(first)
 
 	cninit (KERNBASE+0xa0000);
 
+#ifndef LKM		/* don't do this if we're using LKM's */
 	/* make gdt memory segments */
 	gdt_segs[GCODE_SEL].ssd_limit = btoc((int) &etext + NBPG);
+#endif
+
 	for (x=0; x < NGDT; x++) ssdtosd(gdt_segs+x, gdt+x);
 	/* make ldt memory segments */
 	ldt_segs[LUCODE_SEL].ssd_limit = btoc(UPT_MIN_ADDRESS);

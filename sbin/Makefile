@@ -1,14 +1,15 @@
 #	@(#)Makefile	5.4.1.1 (Berkeley) 5/7/91
 #
-#	$Header: /cvsroot/src/sbin/Makefile,v 1.8 1993/04/09 23:13:38 cgd Exp $
+#	$Header: /cvsroot/src/sbin/Makefile,v 1.9 1993/06/07 19:52:08 cgd Exp $
 
 # Not ported: XNSrouted enpload
 # Missing: icheck ncheck
 
 SUBDIR=	badsect chown clri disklabel dmesg dump dumpfs fastboot fsck \
-	halt ifconfig init mknod mount mount_isofs mount_miscfs mount_pcfs \
-	mountd newfs nfsd nfsiod ping quotacheck reboot restore route \
-	routed savecore shutdown slattach swapon tunefs umount
+	halt ifconfig init mknod modload modunload mount mount_isofs \
+	mount_miscfs mount_pcfs mountd newfs nfsd nfsiod ping \
+	quotacheck reboot restore route routed savecore shutdown \
+	slattach swapon tunefs umount
 
 .if   make(clean) || make(cleandir)
 SUBDIR+= fdisk
