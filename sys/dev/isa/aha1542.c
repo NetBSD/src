@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.48 1995/08/12 20:31:21 mycroft Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.49 1995/08/12 23:00:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -719,9 +719,9 @@ aha_free_ccb(aha, ccb, flags)
 	struct aha_ccb *ccb;
 	int flags;
 {
-	int opri;
+	int s;
 
-	opri = splbio();
+	s = splbio();
 
 	ccb->flags = CCB_FREE;
 	TAILQ_INSERT_HEAD(&aha->free_ccb, ccb, chain);
@@ -733,7 +733,7 @@ aha_free_ccb(aha, ccb, flags)
 	if (!ccb->chain.tqe_next)
 		wakeup(&aha->free_ccb);
 
-	splx(opri);
+	splx(s);
 }
 
 /*
@@ -744,11 +744,11 @@ aha_get_ccb(aha, flags)
 	struct aha_softc *aha;
 	int flags;
 {
-	int opri;
+	int s;
 	struct aha_ccb *ccb;
 	int hashnum;
 
-	opri = splbio();
+	s = splbio();
 
 	/*
 	 * If we can and have to, sleep waiting for one
@@ -784,7 +784,7 @@ aha_get_ccb(aha, flags)
 		tsleep(&aha->free_ccb, PRIBIO, "ahaccb", 0);
 	}
 
-	splx(opri);
+	splx(s);
 	return ccb;
 }
 
