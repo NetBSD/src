@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.607 2003/08/02 18:49:10 lukem Exp $
+#	$NetBSD: mi,v 1.608 2003/08/26 17:37:48 wiz Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2227,6 +2227,7 @@
 ./usr/share/man/cat3/getifaddrs.0	comp-c-catman
 ./usr/share/man/cat3/getlabeloffset.0	comp-c-catman
 ./usr/share/man/cat3/getlabelsector.0	comp-c-catman
+./usr/share/man/cat3/getlastlogx.0	comp-c-catman
 ./usr/share/man/cat3/getloadavg.0	comp-c-catman
 ./usr/share/man/cat3/getmaxpartitions.0	comp-c-catman
 ./usr/share/man/cat3/getmaxx.0		comp-c-catman
@@ -2273,6 +2274,8 @@
 ./usr/share/man/cat3/gettmode.0		comp-c-catman
 ./usr/share/man/cat3/getttyent.0	comp-c-catman
 ./usr/share/man/cat3/getttynam.0	comp-c-catman
+./usr/share/man/cat3/getutmp.0	comp-c-catman
+./usr/share/man/cat3/getutmpx.0	comp-c-catman
 ./usr/share/man/cat3/getusershell.0	comp-c-catman
 ./usr/share/man/cat3/getutxent.0	comp-c-catman
 ./usr/share/man/cat3/getutxid.0	comp-c-catman
@@ -3463,12 +3466,15 @@
 ./usr/share/man/cat3/unsetenv.0	comp-c-catman
 ./usr/share/man/cat3/untouchwin.0		comp-c-catman
 ./usr/share/man/cat3/unvis.0	comp-c-catman
+./usr/share/man/cat3/updlastlogx.0	comp-c-catman
+./usr/share/man/cat3/updwtmpx.0	comp-c-catman
 ./usr/share/man/cat3/usbhid.0	comp-c-catman
 ./usr/share/man/cat3/use_default_colors.0		comp-c-catman
 ./usr/share/man/cat3/user_from_uid.0	comp-c-catman
 ./usr/share/man/cat3/usleep.0	comp-c-catman
 ./usr/share/man/cat3/util.0	comp-c-catman
 ./usr/share/man/cat3/utime.0	comp-c-catman
+./usr/share/man/cat3/utmpxname.0	comp-c-catman
 ./usr/share/man/cat3/va_arg.0	comp-c-catman
 ./usr/share/man/cat3/va_copy.0	comp-c-catman
 ./usr/share/man/cat3/va_end.0	comp-c-catman
@@ -5648,6 +5654,7 @@
 ./usr/share/man/man3/getifaddrs.3		comp-c-man
 ./usr/share/man/man3/getlabeloffset.3	comp-c-man
 ./usr/share/man/man3/getlabelsector.3	comp-c-man
+./usr/share/man/man3/getlastlogx.3	comp-c-man
 ./usr/share/man/man3/getloadavg.3		comp-c-man
 ./usr/share/man/man3/getmaxpartitions.3		comp-c-man
 ./usr/share/man/man3/getmaxx.3		comp-c-man
@@ -5694,6 +5701,8 @@
 ./usr/share/man/man3/gettmode.3		comp-c-man
 ./usr/share/man/man3/getttyent.3		comp-c-man
 ./usr/share/man/man3/getttynam.3		comp-c-man
+./usr/share/man/man3/getutmp.3		comp-c-man
+./usr/share/man/man3/getutmpx.3		comp-c-man
 ./usr/share/man/man3/getusershell.3		comp-c-man
 ./usr/share/man/man3/getutxent.3		comp-c-man
 ./usr/share/man/man3/getutxid.3		comp-c-man
@@ -6884,12 +6893,15 @@
 ./usr/share/man/man3/unsetenv.3		comp-c-man
 ./usr/share/man/man3/untouchwin.3		comp-c-man
 ./usr/share/man/man3/unvis.3		comp-c-man
+./usr/share/man/man3/updlastlogx.3		comp-c-man
+./usr/share/man/man3/updwtmpx.3		comp-c-man
 ./usr/share/man/man3/usbhid.3		comp-c-man
 ./usr/share/man/man3/use_default_colors.3		comp-c-man
 ./usr/share/man/man3/user_from_uid.3		comp-c-man
 ./usr/share/man/man3/usleep.3		comp-c-man
 ./usr/share/man/man3/util.3		comp-c-man
 ./usr/share/man/man3/utime.3		comp-c-man
+./usr/share/man/man3/utmpxname.3		comp-c-man
 ./usr/share/man/man3/va_arg.3		comp-c-man
 ./usr/share/man/man3/va_copy.3		comp-c-man
 ./usr/share/man/man3/va_end.3		comp-c-man
