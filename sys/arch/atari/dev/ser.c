@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.1 1997/05/25 12:41:57 leo Exp $	*/
+/*	$NetBSD: ser.c,v 1.1.4.1 1997/08/27 22:21:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -792,8 +792,16 @@ printf("loadchannelregs: mf_imrb: %x sc_imrb: %x\n", (u_int)MFP->mf_imrb,
 	single_inst_bset_b(MFP->mf_tcdcr, (sc->sc_ospeed >> 8) & 0x0f);
 
 	sc->sc_mcr_active = sc->sc_mcr;
-	ym2149_rts(!(sc->sc_mcr_active & MCR_RTS));
-	ym2149_dtr(!(sc->sc_mcr_active & MCR_DTR));
+
+	if (machineid & ATARI_HADES) {
+		/* PCB fault, wires exchanged..... */
+		ym2149_rts(!(sc->sc_mcr_active & MCR_DTR));
+		ym2149_dtr(!(sc->sc_mcr_active & MCR_RTS));
+	}
+	else {
+		ym2149_rts(!(sc->sc_mcr_active & MCR_RTS));
+		ym2149_dtr(!(sc->sc_mcr_active & MCR_DTR));
+	}
 
 	single_inst_bset_b(MFP->mf_imra, sc->sc_imra);
 	single_inst_bset_b(MFP->mf_imrb, sc->sc_imrb);
@@ -850,7 +858,13 @@ ser_hwiflow(sc, block)
 		SET(sc->sc_mcr, sc->sc_mcr_rts);
 		SET(sc->sc_mcr_active, sc->sc_mcr_rts);
 	}
-	ym2149_rts(sc->sc_mcr_active & MCR_RTS);
+	if (machineid & ATARI_HADES) {
+		/* PCB fault, wires exchanged..... */
+		ym2149_dtr(sc->sc_mcr_active & MCR_RTS);
+	}
+	else {
+		ym2149_rts(sc->sc_mcr_active & MCR_RTS);
+	}
 }
 
 void

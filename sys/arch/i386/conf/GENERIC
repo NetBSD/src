@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.86.2.2 1997/08/23 07:08:49 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.86.2.3 1997/08/27 22:24:13 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -27,7 +27,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 options 	DDB		# in-kernel debugger
 #options 	KGDB		# remote debugger
-#options	"KGDB_DEVNAME=\"com0\"",KGDBRATE=9600
+#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
 options 	DIAGNOSTIC	# internal consistency checks
 options 	KTRACE		# system call tracing, a la ktrace(1)
@@ -87,11 +87,11 @@ options 	CCITT,LLC,HDLC	# X.25
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 
 config		netbsd	root on ? type ?
-#options	"CONSDEVNAME=\"com0\"",CONSPEED=9600
+#options 	"CONSDEVNAME=\"com\"",CONADDR=0x3f8,CONSPEED=9600
 
 options 	EISAVERBOSE	# verbose EISA device messages
 options 	PCIVERBOSE	# verbose PCI device messages
-#options	SCSIVERBOSE	# Verbose SCSI errors
+options 	SCSIVERBOSE	# Verbose SCSI errors
 
 mainbus0 at root
 
@@ -185,6 +185,8 @@ fd*	at fdc? drive ?
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
+atapibus* at wdc?
+cd* at atapibus? drive ?
 
 # note: the wt driver conflicts unpleasantly with ed devices at the
 # same I/O address. The probe reprograms their eeproms. Don't
@@ -210,18 +212,18 @@ ep*	at pci? dev ? function ?		# 3C59x/3C90x ethernet cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
 
-pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
-sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
+pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
+sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 audio*	at sp0
 
-sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
+sb0	at isa? port 0x220 irq 7 drq 1 drq2 5	# SoundBlaster
 sb*	at isapnp?
 audio*	at sb?
-wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
+wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 audio*	at wss0
-pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
+pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 audio*	at pas0
-gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
+gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 audio*	at gus0
 #spkr0	at pckbd? port 0x61
 

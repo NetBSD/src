@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.15.2.1 1997/08/23 07:08:02 thorpej Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.15.2.2 1997/08/27 22:16:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -278,7 +278,7 @@ vidcaudio_close(addr)
  * ************************************************************************* */
 
 int    vidcaudio_query_encoding  __P((void *, struct audio_encoding *));
-int    vidcaudio_set_params	 __P((void *, int, struct audio_params *, struct audio_params *));
+int    vidcaudio_set_params	 __P((void *, int, int, struct audio_params *, struct audio_params *));
 int    vidcaudio_round_blocksize __P((void *, int));
 int    vidcaudio_set_out_port	 __P((void *, int));
 int    vidcaudio_get_out_port	 __P((void *));
@@ -321,21 +321,16 @@ int vidcaudio_query_encoding ( void *addr, struct audio_encoding *fp )
 }
 
 int
-vidcaudio_set_params(addr, mode, p, q)
+vidcaudio_set_params(addr, setmode, usemode, p, r)
 	void *addr;
-	struct audio_params *p, *q;
+	int setmode, usemode;
+	struct audio_params *p, *r;
 {
 	if (p->encoding != AUDIO_ENCODING_ULAW ||
 	    p->channels != 8)
 		return EINVAL;
 	vidcaudio_rate(4 * p->sample_rate / (3 * 1024)); /* XXX probably wrong */
-	p->sw_code = 0;
 
-	/* Update setting for the other mode. */
-	q->sample_rate = p->sample_rate;
-	q->encoding = p->encoding;
-	q->channels = p->channels;
-	q->precision = p->precision;
 	return 0;
 }
 
