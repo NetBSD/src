@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.22 1994/03/08 12:21:22 mycroft Exp $
+ *	$Id: if_ep.c,v 1.23 1994/03/09 17:19:10 mycroft Exp $
  */
 /*
  * TODO:
@@ -83,8 +83,6 @@
  */
 struct ep_softc {
 	struct arpcom ep_ac;		/* Ethernet common part		*/
-#define ep_if   ep_ac.ac_if		/* network-visible interface    */
-#define ep_addr ep_ac.ac_enaddr		/* hardware Ethernet address    */
 	short   ep_io_addr;		/* i/o bus address		*/
 	char    ep_connectors;		/* Connectors on this card.	*/
 #define MAX_MBS  4			/* # of mbufs we keep around	*/
@@ -211,7 +209,7 @@ epattach(is)
 	struct isa_device *is;
 {
 	struct ep_softc *sc = &ep_softc[is->id_unit];
-	struct ifnet *ifp = &sc->ep_if;
+	struct ifnet *ifp = &sc->ep_ac.ac_if;
 	u_short i;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
@@ -252,12 +250,12 @@ epattach(is)
 		outw(BASE + EP_W0_EEPROM_COMMAND, READ_EEPROM | i);
 		if (epbusyeeprom(is))
 			return (0);
-		p = (u_short *) & sc->ep_addr[i * 2];
+		p = (u_short *) & sc->ep_ac.ac_enaddr[i * 2];
 		*p = htons(inw(BASE + EP_W0_EEPROM_DATA));
 		GO_WINDOW(2);
 		outw(BASE + EP_W2_ADDR_0 + (i * 2), ntohs(*p));
 	}
-	printf(" address %s\n", ether_sprintf(sc->ep_addr));
+	printf(" address %s\n", ether_sprintf(sc->ep_ac.ac_enaddr));
 
 	ifp->if_unit = is->id_unit;
 	ifp->if_name = "ep";
@@ -285,7 +283,7 @@ epattach(is)
 		sdl->sdl_type = IFT_ETHER;
 		sdl->sdl_alen = ETHER_ADDR_LEN;
 		sdl->sdl_slen = 0;
-		bcopy(sc->ep_addr, LLADDR(sdl), ETHER_ADDR_LEN);
+		bcopy(sc->ep_ac.ac_enaddr, LLADDR(sdl), ETHER_ADDR_LEN);
 	}
 #if NBPFILTER > 0
 	bpfattach(&sc->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -303,7 +301,7 @@ epinit(unit)
 	int     unit;
 {
 	register struct ep_softc *sc = &ep_softc[unit];
-	register struct ifnet *ifp = &sc->ep_if;
+	register struct ifnet *ifp = &sc->ep_ac.ac_if;
 	int     s, i;
 
 	if (ifp->if_addrlist == (struct ifaddr *) 0)
@@ -320,7 +318,7 @@ epinit(unit)
 
 	GO_WINDOW(2);
 	for (i = 0; i < 6; i++)	/* Reload the ether_addr. */
-		outb(BASE + EP_W2_ADDR_0 + i, sc->ep_addr[i]);
+		outb(BASE + EP_W2_ADDR_0 + i, sc->ep_ac.ac_enaddr[i]);
 
 	outw(BASE + EP_COMMAND, RX_RESET);
 	outw(BASE + EP_COMMAND, TX_RESET);
@@ -395,13 +393,14 @@ epstart(ifp)
 	int     s, len, pad;
 
 	s = splimp();
-	if (sc->ep_if.if_flags & IFF_OACTIVE) {
+	if (sc->ep_ac.ac_if.if_flags & IFF_OACTIVE) {
 		splx(s);
 		return (0);
 	}
 
 startagain:
-	m = sc->ep_if.if_snd.ifq_head;	/* Sneak a peek at the next packet */
+	/* Sneak a peek at the next packet */
+	m = sc->ep_ac.ac_if.if_snd.ifq_head;
 	if (m == 0) {
 		splx(s);
 		return (0);
@@ -422,8 +421,8 @@ startagain:
 	 */
 	if (len + pad > ETHER_MAX_LEN) {
 		/* packet is obviously too large: toss it */
-		+sc->ep_if.if_oerrors;
-		IF_DEQUEUE(&sc->ep_if.if_snd, m);
+		+sc->ep_ac.ac_if.if_oerrors;
+		IF_DEQUEUE(&sc->ep_ac.ac_if.if_snd, m);
 		m_freem(m);
 		goto readcheck;
 	}
@@ -431,11 +430,11 @@ startagain:
 	if (inw(BASE + EP_W1_FREE_TX) < len + pad + 4) {
 		/* no room in FIFO */
 		outw(BASE + EP_COMMAND, SET_TX_AVAIL_THRESH | (len + pad + 4));
-		sc->ep_if.if_flags |= IFF_OACTIVE;
+		sc->ep_ac.ac_if.if_flags |= IFF_OACTIVE;
 		splx(s);
 		return (0);
 	}
-	IF_DEQUEUE(&sc->ep_if.if_snd, m);
+	IF_DEQUEUE(&sc->ep_ac.ac_if.if_snd, m);
 	if (m == 0) {		/* not really needed */
 		splx(s);
 		return (0);
@@ -522,7 +521,7 @@ startagain:
 #endif
 
 	m_freem(top);
-	++sc->ep_if.if_opackets;
+	++sc->ep_ac.ac_if.if_opackets;
 
 	/*
 	 * Is another packet coming in? We don't want to overflow the
@@ -542,7 +541,7 @@ epintr(unit)
 {
 	int     status, i;
 	register struct ep_softc *sc = &ep_softc[unit];
-	struct ifnet *ifp = &sc->ep_if;
+	struct ifnet *ifp = &sc->ep_ac.ac_if;
 
 	status = 0;
 checkintr:
@@ -559,8 +558,8 @@ checkintr:
 	if (status & S_TX_AVAIL) {
 		status &= ~S_TX_AVAIL;
 		inw(BASE + EP_W1_FREE_TX);
-		sc->ep_if.if_flags &= ~IFF_OACTIVE;
-		epstart(&sc->ep_if);
+		sc->ep_ac.ac_if.if_flags &= ~IFF_OACTIVE;
+		epstart(&sc->ep_ac.ac_if);
 	}
 	if (status & S_RX_COMPLETE) {
 		status &= ~S_RX_COMPLETE;
@@ -582,7 +581,7 @@ checkintr:
 			outw(BASE + EP_W1_TX_STATUS, 0x0);
 			if (i & (TXS_MAX_COLLISION | TXS_JABBER | TXS_UNDERRUN)) {
 				if (i & TXS_MAX_COLLISION)
-					++sc->ep_if.if_collisions;
+					++sc->ep_ac.ac_if.if_collisions;
 				if (i & (TXS_JABBER | TXS_UNDERRUN)) {
 					outw(BASE + EP_COMMAND, TX_RESET);
 					if (i & TXS_UNDERRUN) {
@@ -595,7 +594,7 @@ checkintr:
 					}
 				}
 				outw(BASE + EP_COMMAND, TX_ENABLE);
-				++sc->ep_if.if_oerrors;
+				++sc->ep_ac.ac_if.if_oerrors;
 			}
 		}
 		epstart(ifp);
@@ -618,7 +617,7 @@ epread(sc)
 	top = 0;
 
 	if (totlen & ERR_RX) {
-		++sc->ep_if.if_ierrors;
+		++sc->ep_ac.ac_if.if_ierrors;
 		goto out;
 	}
 	save_totlen = totlen &= RX_BYTES_MASK;	/* Lower 11 bits = RX bytes. */
@@ -718,11 +717,11 @@ epread(sc)
 		top->m_pkthdr.len = save_totlen;
 	}
 
-	top->m_pkthdr.rcvif = &sc->ep_if;
+	top->m_pkthdr.rcvif = &sc->ep_ac.ac_if;
 	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
 	while (inb(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
-	++sc->ep_if.if_ipackets;
+	++sc->ep_ac.ac_if.if_ipackets;
 #if NBPFILTER > 0
 	if (sc->bpf) {
 		bpf_mtap(sc->bpf, top);
@@ -744,7 +743,7 @@ epread(sc)
 	}
 #endif
 	m_adj(top, sizeof(struct ether_header));
-	ether_input(&sc->ep_if, eh, top);
+	ether_input(&sc->ep_ac.ac_if, eh, top);
 	return;
 
 out:	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
@@ -783,14 +782,15 @@ epioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
+			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *) (sc->ep_ac.ac_enaddr);
+				ina->x_host =
+				    *(union ns_host *)(sc->ep_ac.ac_enaddr);
 			else {
 				ifp->if_flags &= ~IFF_RUNNING;
-				bcopy((caddr_t) ina->x_host.c_host,
-				    (caddr_t) sc->ns_addr,
+				bcopy(ina->x_host.c_host,
+				    sc->ep_ac.ac_enaddr,
 				    sizeof(sc->ep_ac.ac_enaddr));
 			}
 			epinit(ifp->if_unit);
