@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.29 2003/05/02 08:31:51 gmcgarry Exp $
+.\"	$NetBSD: syslogd.8,v 1.30 2003/05/06 08:30:19 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -90,11 +90,14 @@ the default is 20 minutes.
 Do not perform hostname lookups; report only numeric addresses.
 .It Fl P
 Specify the pathname of a file containing a list of sockets to be
-created.  The format of the file is simply one socket per line.
+created.
+The format of the file is simply one socket per line.
 .It Fl p
-Specify the pathname of a log socket.  Multiple
+Specify the pathname of a log socket.
+Multiple
 .Fl p
-options create multiple log sockets.  If no
+options create multiple log sockets.
+If no
 .Fl p
 arguments are created, the default socket of
 .Pa /var/run/log
@@ -164,8 +167,8 @@ Note: the normal log socket must now also be passed to
 .Nm .
 .Pp
 The logged message includes the date, time, and hostname (or pathname of
-the log socket).  Commonly, the program name and the process id is
-included.
+the log socket).
+Commonly, the program name and the process id is included.
 .Pp
 Accesses from UDP socket can be filtered by libwrap configuration files, like
 .Pa /etc/hosts.deny .
