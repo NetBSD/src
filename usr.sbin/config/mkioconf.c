@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.58 2002/02/12 23:20:11 atatat Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.59 2002/06/05 10:56:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -170,7 +170,7 @@ emitcfdrivers(FILE *fp)
 	struct devbase *d;
 
 	NEWLINE;
-	for (d = allbases; d != NULL; d = d->d_next) {
+	TAILQ_FOREACH(d, &allbases, d_next) {
 		if (!devbase_has_instances(d, WILD))
 			continue;
 		if (fprintf(fp, "struct cfdriver %s_cd = {\n",
@@ -192,7 +192,7 @@ emitexterns(FILE *fp)
 	struct deva *da;
 
 	NEWLINE;
-	for (da = alldevas; da != NULL; da = da->d_next) {
+	TAILQ_FOREACH(da, &alldevas, d_next) {
 		if (!deva_has_instances(da, WILD))
 			continue;
 		if (fprintf(fp, "extern struct cfattach %s_ca;\n",
@@ -393,13 +393,14 @@ emitpseudo(FILE *fp)
 
 	if (fputs("\n/* pseudo-devices */\n", fp) < 0)
 		return (1);
-	for (i = allpseudo; i != NULL; i = i->i_next)
+	TAILQ_FOREACH(i, &allpseudo, i_next) {
 		if (fprintf(fp, "void %sattach(int);\n",
 		    i->i_base->d_name) < 0)
 			return (1);
+	}
 	if (fputs("\nstruct pdevinit pdevinit[] = {\n", fp) < 0)
 		return (1);
-	for (i = allpseudo; i != NULL; i = i->i_next) {
+	TAILQ_FOREACH(i, &allpseudo, i_next) {
 		d = i->i_base;
 		if (fprintf(fp, "\t{ %sattach, %d },\n",
 		    d->d_name, d->d_umax) < 0)
@@ -459,7 +460,7 @@ emitname2blk(FILE *fp)
 	if (fprintf(fp, "struct devnametobdevmaj dev_name2blk[] = {\n") < 0)
 		return (1);
 
-	for (dev = allbases; dev != NULL; dev = dev->d_next) {
+	TAILQ_FOREACH(dev, &allbases, d_next) {
 		if (dev->d_major == NODEV)
 			continue;
 
