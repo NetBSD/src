@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.10 2002/04/05 16:58:04 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.11 2002/04/10 19:35:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 #include <arm/cpufunc.h>
 
 int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int, vm_offset_t *, int *, int);
+	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
 int	_bus_dma_inrange(bus_dma_segment_t *, int, bus_addr_t);
 
 /*
@@ -143,7 +143,7 @@ int
 _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags)
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, error;
 
 #ifdef DEBUG_DMA
@@ -181,7 +181,7 @@ int
 _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
     int flags)
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, error, first;
 	struct mbuf *m;
 
@@ -230,7 +230,7 @@ int
 _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
     int flags)
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
@@ -443,10 +443,10 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
  * by bus-specific DMA memory allocation functions.
  */
 
-extern vm_offset_t physical_start;
-extern vm_offset_t physical_freestart;
-extern vm_offset_t physical_freeend;
-extern vm_offset_t physical_end;
+extern paddr_t physical_start;
+extern paddr_t physical_freestart;
+extern paddr_t physical_freeend;
+extern paddr_t physical_end;
 
 int
 _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
@@ -505,7 +505,7 @@ int
 _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
     size_t size, caddr_t *kvap, int flags)
 {
-	vm_offset_t va;
+	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
 	pt_entry_t *ptep/*, pte*/;
@@ -581,7 +581,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 #endif	/* DIAGNOSTIC */
 
 	size = round_page(size);
-	uvm_km_free(kernel_map, (vm_offset_t)kva, size);
+	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 }
 
 /*
@@ -628,12 +628,12 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  */
 int
 _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    bus_size_t buflen, struct proc *p, int flags, vm_offset_t *lastaddrp,
+    bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp,
     int *segp, int first)
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
-	vm_offset_t vaddr = (vm_offset_t)buf;
+	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
 	pmap_t pmap;
 
@@ -746,9 +746,9 @@ _bus_dma_inrange(bus_dma_segment_t *ranges, int nranges, bus_addr_t curaddr)
 int
 _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
-    int flags, vm_offset_t low, vm_offset_t high)
+    int flags, paddr_t low, paddr_t high)
 {
-	vm_offset_t curaddr, lastaddr;
+	paddr_t curaddr, lastaddr;
 	struct vm_page *m;
 	struct pglist mlist;
 	int curseg, error;
