@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.92 1998/07/19 18:43:20 drochner Exp $ */
+/*	$NetBSD: st.c,v 1.93 1998/07/30 00:55:20 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -53,7 +53,7 @@
  * to be depending on whether we expect to retension or not.
  */
 
-#include "opt_scsiverbose.h"
+#include "opt_scsi.h"
 #include "rnd.h"
 
 #include <sys/types.h>
@@ -365,7 +365,7 @@ struct scsipi_device st_switch = {
 #define	ST_WRITTEN	0x0004	/* data have been written, EOD needed */
 #define	ST_FIXEDBLOCKS	0x0008
 #define	ST_AT_FILEMARK	0x0010
-#define	ST_EIO_PENDING	0x0020	/* we couldn't report it then (had data) */
+#define	ST_EIO_PENDING	0x0020	/* error reporting deferred until next op */
 #define	ST_NEW_MOUNT	0x0040	/* still need to decide mode             */
 #define	ST_READONLY	0x0080	/* st_mode_sense says write protected */
 #define	ST_FM_WRITTEN	0x0100	/*
@@ -377,11 +377,20 @@ struct scsipi_device st_switch = {
 #define	ST_2FM_AT_EOD	0x0400	/* write 2 file marks at EOD */
 #define	ST_MOUNTED	0x0800	/* Device is presently mounted */
 #define	ST_DONTBUFFER	0x1000	/* Disable buffering/caching */
+#define	ST_EARLYWARN	0x2000	/* Do (deferred) EOM for variable mode */
+#define	ST_EOM_PENDING	0x4000	/* EOM reporting deferred until next op */
 
-#define	ST_PER_ACTION	(ST_AT_FILEMARK | ST_EIO_PENDING | ST_BLANK_READ)
+#define	ST_PER_ACTION	(ST_AT_FILEMARK | ST_EIO_PENDING | ST_EOM_PENDING | \
+			 ST_BLANK_READ)
 #define	ST_PER_MOUNT	(ST_INFO_VALID | ST_BLOCK_SET | ST_WRITTEN |	\
 			 ST_FIXEDBLOCKS | ST_READONLY | ST_FM_WRITTEN |	\
 			 ST_2FM_AT_EOD | ST_PER_ACTION)
+
+#if	defined(ST_ENABLE_EARLYWARN)
+#define	ST_INIT_FLAGS	ST_EARLYWARN
+#else
+#define	ST_INIT_FLAGS	0
+#endif
 
 struct scsipi_inquiry_pattern st_patterns[] = {
 	{T_SEQUENTIAL, T_REMOV,
@@ -431,11 +440,16 @@ stattach(parent, self, aux)
 	sc_link->openings = 1;
 
 	/*
+	 * Set initial flags
+	 */
+
+	st->flags = ST_INIT_FLAGS;
+
+	/*
 	 * Check if the drive is a known criminal and take
 	 * Any steps needed to bring it into line
 	 */
 	st_identify_drive(st, &sa->sa_inqbuf);
-
 	/*
 	 * Use the subdriver to request information regarding
 	 * the drive. We cannot use interrupts yet, so the
@@ -1022,7 +1036,7 @@ ststart(v)
 			continue;
 		}
 		/*
-		 * only FIXEDBLOCK devices have pending operations
+		 * only FIXEDBLOCK devices have pending I/O or space operations.
 		 */
 		if (st->flags & ST_FIXEDBLOCKS) {
 			/*
@@ -1052,18 +1066,20 @@ ststart(v)
 					continue;	/* seek more work */
 				}
 			}
-			/*
-			 * If we are at EIO (e.g. EOM) but have not reported it
-			 * yet then we should report it now
-			 */
+		}
+		/*
+		 * If we are at EOM but have not reported it
+		 * yet then we should report it now. 
+		 */
+		if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
+			bp->b_resid = bp->b_bcount;
 			if (st->flags & ST_EIO_PENDING) {
-				bp->b_resid = bp->b_bcount;
 				bp->b_error = EIO;
 				bp->b_flags |= B_ERROR;
-				st->flags &= ~ST_EIO_PENDING;
-				biodone(bp);
-				continue;	/* seek more work */
 			}
+			st->flags &= ~(ST_EOM_PENDING|ST_EIO_PENDING);
+			biodone(bp);
+			continue;	/* seek more work */
 		}
 
 		/*
@@ -1293,6 +1309,13 @@ stioctl(dev, cmd, arg, flag, p)
 			error = st_cmprss(st, number);
 			break;
 
+		case MTEWARN:
+			if (number)
+				st->flags |= ST_EARLYWARN;
+			else
+				st->flags &= ~ST_EARLYWARN;
+			break;
+
 		default:
 			error = EINVAL;
 		}
@@ -1317,6 +1340,7 @@ stioctl(dev, cmd, arg, flag, p)
 	case MTIOCHLOCATE:
 		error = st_setpos(st, 1, (u_int32_t *) arg);
 		break;
+
 
 	default:
 		error = scsipi_do_ioctl(st->sc_link, dev, cmd, arg,
@@ -1770,7 +1794,7 @@ st_space(st, number, what, flags)
 					st->flags &= ~ST_BLANK_READ;
 					return (EIO);
 				}
-				st->flags &= ~ST_EIO_PENDING;
+				st->flags &= ~(ST_EIO_PENDING|ST_EOM_PENDING);
 			}
 		}
 		break;
@@ -1796,6 +1820,11 @@ st_space(st, number, what, flags)
 		}
 		break;
 	case SP_EOM:
+		if (st->flags & ST_EOM_PENDING) {
+			/* we're already there */
+			st->flags &= ~ST_EOM_PENDING;
+			return (0);
+		}
 		if (st->flags & ST_EIO_PENDING) {
 			/* pretend we just discovered the error */
 			st->flags &= ~ST_EIO_PENDING;
@@ -2090,7 +2119,9 @@ st_interpret_sense(xs)
 	if (st->flags & ST_FIXEDBLOCKS) {
 		xs->resid = info * st->blksize;
 		if (sense->flags & SSD_EOM) {
-			st->flags |= ST_EIO_PENDING;
+			if ((st->flags & ST_EARLYWARN) == 0)
+				st->flags |= ST_EIO_PENDING;
+			st->flags |= ST_EOM_PENDING;
 			if (bp)
 				bp->b_resid = xs->resid;
 		}
@@ -2136,9 +2167,17 @@ st_interpret_sense(xs)
 			/*
 			 * The current semantics of this
 			 * driver requires EOM detection
-			 * to return EIO.
+			 * to return EIO unless early
+			 * warning detection is enabled
+			 * for variable mode (this is always
+			 * on for fixed block mode).
 			 */
-			retval = EIO;
+			if (st->flags & ST_EARLYWARN) {
+				st->flags |= ST_EOM_PENDING;
+				retval = SCSIRET_NOERROR;
+			} else {
+				retval = EIO;
+			}
 
 			/*
 			 * If it's an unadorned EOM detection,
