@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.31 1998/07/05 06:49:09 jonathan Exp $ */
+/*	$NetBSD: if_qe.c,v 1.32 1998/11/05 19:48:46 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -548,7 +548,7 @@ qestart(ifp)
 	register struct qe_softc *sc = ifp->if_softc;
 	volatile struct qedevice *addr = sc->qe_vaddr;
 	register struct qe_ring *rp;
-	register index;
+	register int index;
 	struct mbuf *m;
 	int buf_addr, len, s;
 
@@ -923,7 +923,7 @@ void
 qesetup(sc)
 	struct qe_softc *sc;
 {
-	register i, j;
+	register int i, j;
 
 	/*
 	 * Copy the target address to the rest of the entries in this row.
@@ -958,7 +958,7 @@ qesetup(sc)
 	} else if (sc->qe_if.if_flags & IFF_ALLMULTI) {
 		sc->setuplength = QE_ALLMULTI;
 	} else {
-		register k;
+		register int k;
 		struct ether_multi *enm;
 		struct ether_multistep step;
 		/*
@@ -1095,7 +1095,7 @@ qerestart(sc)
 	register struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
 	register struct qedevice *addr = sc->addr;
 	register struct qe_ring *rp;
-	register i;
+	register int i;
 
 	addr->qe_csr = QE_RESET;
 	addr->qe_csr &= ~QE_RESET;
