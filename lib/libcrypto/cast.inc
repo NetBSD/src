@@ -1,4 +1,4 @@
-#	$NetBSD: cast.inc,v 1.1.1.1 2000/06/16 04:21:32 thorpej Exp $
+#	$NetBSD: cast.inc,v 1.1.1.1.2.1 2000/06/22 06:55:04 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,7 +7,7 @@
 
 .PATH:	${OPENSSLSRC}/crypto/cast
 
-CFLAGS+=	-I${OPENSSLSRC}/crypto/cast
+CPPFLAGS+=	-I${OPENSSLSRC}/crypto/cast
 
 SRCS+=c_skey.c c_ecb.c c_enc.c  c_cfb64.c c_ofb64.c
 

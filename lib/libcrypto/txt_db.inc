@@ -1,4 +1,4 @@
-#	$NetBSD: txt_db.inc,v 1.1.1.1 2000/06/16 04:21:32 thorpej Exp $
+#	$NetBSD: txt_db.inc,v 1.1.1.1.2.1 2000/06/22 06:55:05 thorpej Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,7 +7,7 @@
 
 .PATH:	${OPENSSLSRC}/crypto/txt_db
 
-CFLAGS+=	-I${OPENSSLSRC}/crypto/txt_db
+CPPFLAGS+=	-I${OPENSSLSRC}/crypto/txt_db
 
 SRCS+=txt_db.c
 
