@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.3 2003/03/10 09:23:50 wiz Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.4 2003/04/03 14:55:16 christos Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -46,6 +46,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <strings.h>
+#include <err.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/param.h>		/* MAXFRAG */
@@ -53,22 +54,6 @@
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufs_bswap.h>	/* ufs_rw32 */
-
-extern const char *__progname;
-
-/* Patchup for systems that don't yet have __progname */
-#ifdef NO_PROGNAME
-const char *__progname;
-int main(int, char **);
-int main_(int, char **);
-int
-main(int ac, char **av)
-#define main main_
-{
-	__progname = av[0];
-	return (main(ac, av));
-}
-#endif
 
 /* Suppress warnings about unused arguments */
 #if	defined(__GNUC__) &&				\
@@ -95,14 +80,19 @@ static int smallio;
 /* size of a cg, in bytes, rounded up to a frag boundary */
 static int cgblksz;
 
+/* possible superblock localtions */
+static int search[] = SBLOCKSEARCH;
+/* location of the superblock */
+static off_t where;
+
 /* Superblocks. */
 static struct fs *oldsb;	/* before we started */
 static struct fs *newsb;	/* copy to work with */
 /* Buffer to hold the above.  Make sure it's aligned correctly. */
-static char sbbuf[2 * SBSIZE] __attribute__((__aligned__(__alignof__(struct fs))));
+static char sbbuf[2 * SBLOCKSIZE] __attribute__((__aligned__(__alignof__(struct fs))));
 
 /* a cg's worth of brand new squeaky-clean inodes */
-static struct dinode *zinodes;
+static struct ufs1_dinode *zinodes;
 
 /* pointers to the in-core cgs, read off disk and possibly modified */
 static struct cg **cgs;
@@ -124,7 +114,7 @@ static unsigned int *blkmove;
 static unsigned int *inomove;
 
 /* in-core copies of all inodes in the fs, indexed by inumber */
-static struct dinode *inodes;
+static struct ufs1_dinode *inodes;
 
 /* per-inode flags, indexed by inumber */
 static unsigned char *iflags;
@@ -132,6 +122,38 @@ static unsigned char *iflags;
 #define IF_BDIRTY 0x02		/* like DIRTY, but is set on first inode in a
 				 * block of inodes, and applies to the whole
 				 * block. */
+
+/* Old FFS1 macros */
+#define cg_blktot(cgp, ns) \
+    (cg_chkmagic(cgp, ns) ? \
+    ((int32_t *)((u_int8_t *)(cgp) + ufs_rw32((cgp)->cg_old_btotoff, (ns)))) \
+    : (((struct ocg *)(cgp))->cg_btot))
+#define cg_blks(fs, cgp, cylno, ns) \
+    (cg_chkmagic(cgp, ns) ? \
+    ((int16_t *)((u_int8_t *)(cgp) + ufs_rw32((cgp)->cg_old_boff, (ns))) + \
+	(cylno) * (fs)->fs_old_nrpos) \
+    : (((struct ocg *)(cgp))->cg_b[cylno]))
+#define cbtocylno(fs, bno) \
+   (fsbtodb(fs, bno) / (fs)->fs_old_spc) 
+#define cbtorpos(fs, bno) \
+    ((fs)->fs_old_nrpos <= 1 ? 0 : \
+     (fsbtodb(fs, bno) % (fs)->fs_old_spc / \
+      (fs)->fs_old_nsect * (fs)->fs_old_trackskew + \
+      fsbtodb(fs, bno) % (fs)->fs_old_spc % \
+      (fs)->fs_old_nsect * (fs)->fs_old_interleave) %\
+    (fs)->fs_old_nsect * (fs)->fs_old_nrpos / (fs)->fs_old_npsect)
+#define dblksize(fs, dip, lbn) \
+    (((lbn) >= NDADDR || (dip)->di_size >= lblktosize(fs, (lbn) + 1)) \
+    ? (fs)->fs_bsize \
+    : (fragroundup(fs, blkoff(fs, (dip)->di_size))))
+
+
+/*
+ * Number of disk sectors per block/fragment; assumes DEV_BSIZE byte
+ * sector size. 
+ */ 
+#define NSPB(fs)	((fs)->fs_old_nspf << (fs)->fs_fragshift)
+#define NSPF(fs)	((fs)->fs_old_nspf)
 
 /*
  * See if we need to break up large I/O operations.  This should never
@@ -157,11 +179,9 @@ static void
 readat(off_t blkno, void *buf, int size)
 {
 	/* Seek to the correct place. */
-	if (lseek(fd, blkno * DEV_BSIZE, L_SET) < 0) {
-		fprintf(stderr, "%s: lseek: %s\n", __progname,
-		    strerror(errno));
-		exit(1);
-	}
+	if (lseek(fd, blkno * DEV_BSIZE, L_SET) < 0)
+		err(1, "lseek failed");
+
 	/* See if we have to break up the transfer... */
 	if (smallio) {
 		char *bp;	/* pointer into buf */
@@ -173,33 +193,20 @@ readat(off_t blkno, void *buf, int size)
 		while (left > 0) {
 			n = (left > 8192) ? 8192 : left;
 			rv = read(fd, bp, n);
-			if (rv < 0) {
-				fprintf(stderr, "%s: read: %s\n", __progname,
-				    strerror(errno));
-				exit(1);
-			}
-			if (rv != n) {
-				fprintf(stderr,
-				    "%s: read: wanted %d, got %d\n",
-				    __progname, n, rv);
-				exit(1);
-			}
+			if (rv < 0)
+				err(1, "read failed");
+			if (rv != n)
+				errx(1, "read: wanted %d, got %d", n, rv);
 			bp += n;
 			left -= n;
 		}
 	} else {
 		int rv;
 		rv = read(fd, buf, size);
-		if (rv < 0) {
-			fprintf(stderr, "%s: read: %s\n", __progname,
-			    strerror(errno));
-			exit(1);
-		}
-		if (rv != size) {
-			fprintf(stderr, "%s: read: wanted %d, got %d\n",
-			    __progname, size, rv);
-			exit(1);
-		}
+		if (rv < 0)
+			err(1, "read failed");
+		if (rv != size)
+			errx(1, "read: wanted %d, got %d", size, rv);
 	}
 }
 /*
@@ -210,11 +217,8 @@ static void
 writeat(off_t blkno, const void *buf, int size)
 {
 	/* Seek to the correct place. */
-	if (lseek(fd, blkno * DEV_BSIZE, L_SET) < 0) {
-		fprintf(stderr, "%s: lseek: %s\n", __progname,
-		    strerror(errno));
-		exit(1);
-	}
+	if (lseek(fd, blkno * DEV_BSIZE, L_SET) < 0)
+		err(1, "lseek failed");
 	/* See if we have to break up the transfer... */
 	if (smallio) {
 		const char *bp;	/* pointer into buf */
@@ -226,33 +230,20 @@ writeat(off_t blkno, const void *buf, int size)
 		while (left > 0) {
 			n = (left > 8192) ? 8192 : left;
 			rv = write(fd, bp, n);
-			if (rv < 0) {
-				fprintf(stderr, "%s: write: %s\n", __progname,
-				    strerror(errno));
-				exit(1);
-			}
-			if (rv != n) {
-				fprintf(stderr,
-				    "%s: write: wanted %d, got %d\n",
-				    __progname, n, rv);
-				exit(1);
-			}
+			if (rv < 0)
+				err(1, "write failed");
+			if (rv != n)
+				errx(1, "write: wanted %d, got %d", n, rv);
 			bp += n;
 			left -= n;
 		}
 	} else {
 		int rv;
 		rv = write(fd, buf, size);
-		if (rv < 0) {
-			fprintf(stderr, "%s: write: %s\n", __progname,
-			    strerror(errno));
-			exit(1);
-		}
-		if (rv != size) {
-			fprintf(stderr, "%s: write: wanted %d, got %d\n",
-			    __progname, size, rv);
-			exit(1);
-		}
+		if (rv < 0)
+			err(1, "write failed");
+		if (rv != size)
+			errx(1, "write: wanted %d, got %d", size, rv);
 	}
 }
 /*
@@ -272,9 +263,8 @@ nfmalloc(size_t nb, const char *tag)
 	rv = malloc(nb);
 	if (rv)
 		return (rv);
-	fprintf(stderr, "%s: can't allocate %lu bytes for %s\n",
-                __progname, (unsigned long int) nb, tag);
-	exit(1);
+	err(1, "Can't allocate %lu bytes for %s",
+	    (unsigned long int) nb, tag);
 }
 /*
  * Never-fail realloc.
@@ -287,9 +277,8 @@ nfrealloc(void *blk, size_t nb, const char *tag)
 	rv = realloc(blk, nb);
 	if (rv)
 		return (rv);
-	fprintf(stderr, "%s: can't reallocate to %lu bytes for %s\n",
-                __progname, (unsigned long int) nb, tag);
-	exit(1);
+	err(1, "Can't re-allocate %lu bytes for %s",
+	    (unsigned long int) nb, tag);
 }
 /*
  * Allocate memory that will never be freed or reallocated.  Arguably
@@ -306,9 +295,8 @@ alloconce(size_t nb, const char *tag)
 	rv = mmap(0, nb, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
 	if (rv != MAP_FAILED)
 		return (rv);
-	fprintf(stderr, "%s: can't allocate %lu bytes for %s\n", __progname,
-                (unsigned long int) nb, tag);
-	exit(1);
+	err(1, "Can't map %lu bytes for %s",
+	    (unsigned long int) nb, tag);
 }
 /*
  * Load the cgs and csums off disk.  Also allocates the space to load
@@ -474,12 +462,12 @@ initcg(int cgn)
 	cg->cg_time = newsb->fs_time;
 	cg->cg_magic = CG_MAGIC;
 	cg->cg_cgx = cgn;
-	cg->cg_ncyl = newsb->fs_cpg;
-	/* fsck whines if the cg->cg_ncyl value in the last cg is fs_cpg
-	 * instead of zero, when fs_cpg is the correct value. */
+	cg->cg_old_ncyl = newsb->fs_old_cpg;
+	/* fsck whines if the cg->cg_old_ncyl value in the last cg is fs_old_cpg
+	 * instead of zero, when fs_old_cpg is the correct value. */
 	/* XXX fix once fsck is fixed */
-	if ((cgn == newsb->fs_ncg - 1) /* && (newsb->fs_ncyl % newsb->fs_cpg) */ ) {
-		cg->cg_ncyl = newsb->fs_ncyl % newsb->fs_cpg;
+	if ((cgn == newsb->fs_ncg - 1) /* && (newsb->fs_old_ncyl % newsb->fs_old_cpg) */ ) {
+		cg->cg_old_ncyl = newsb->fs_old_ncyl % newsb->fs_old_cpg;
 	}
 	cg->cg_niblk = newsb->fs_ipg;
 	cg->cg_ndblk = dmax;
@@ -488,22 +476,23 @@ initcg(int cgn)
 	 * _entire_ cg against a recomputed cg, and whines if there is any
 	 * mismatch, including the bitmap offsets. */
 	/* XXX update this comment when fsck is fixed */
-	cg->cg_btotoff = &cg->cg_space[0] - (unsigned char *) cg;
-	cg->cg_boff = cg->cg_btotoff + (newsb->fs_cpg * sizeof(int32_t));
-	cg->cg_iusedoff = cg->cg_boff +
-	    (newsb->fs_cpg * newsb->fs_nrpos * sizeof(int16_t));
+	cg->cg_old_btotoff = &cg->cg_space[0] - (unsigned char *) cg;
+	cg->cg_old_boff = cg->cg_old_btotoff
+	    + (newsb->fs_old_cpg * sizeof(int32_t));
+	cg->cg_iusedoff = cg->cg_old_boff +
+	    (newsb->fs_old_cpg * newsb->fs_old_nrpos * sizeof(int16_t));
 	cg->cg_freeoff = cg->cg_iusedoff + howmany(newsb->fs_ipg, NBBY);
 	if (newsb->fs_contigsumsize > 0) {
 		cg->cg_nclusterblks = cg->cg_ndblk / newsb->fs_frag;
 		cg->cg_clustersumoff = cg->cg_freeoff +
-		    howmany(newsb->fs_cpg * newsb->fs_spc / NSPF(newsb),
+		    howmany(newsb->fs_old_cpg * newsb->fs_old_spc / NSPF(newsb),
 		    NBBY) - sizeof(int32_t);
 		cg->cg_clustersumoff =
 		    roundup(cg->cg_clustersumoff, sizeof(int32_t));
 		cg->cg_clusteroff = cg->cg_clustersumoff +
 		    ((newsb->fs_contigsumsize + 1) * sizeof(int32_t));
 		cg->cg_nextfreeoff = cg->cg_clusteroff +
-		    howmany(newsb->fs_cpg * newsb->fs_spc / NSPB(newsb),
+		    howmany(newsb->fs_old_cpg * newsb->fs_old_spc / NSPB(newsb),
 		    NBBY);
 		n = dlow / newsb->fs_frag;
 		if (n > 0) {
@@ -513,7 +502,7 @@ initcg(int cgn)
 		}
 	} else {
 		cg->cg_nextfreeoff = cg->cg_freeoff +
-		    howmany(newsb->fs_cpg * newsb->fs_spc / NSPF(newsb),
+		    howmany(newsb->fs_old_cpg * newsb->fs_old_spc / NSPF(newsb),
 		    NBBY);
 	}
 	/* Mark the data areas as free; everything else is marked busy by the
@@ -578,7 +567,7 @@ initcg(int cgn)
 	newsb->fs_cstotal.cs_nifree += cg->cg_cs.cs_nifree;
 	/* Write out the cleared inodes. */
 	writeat(fsbtodb(newsb, cgimin(newsb, cgn)), zinodes,
-	    newsb->fs_ipg * sizeof(struct dinode));
+	    newsb->fs_ipg * sizeof(struct ufs1_dinode));
 	/* Dirty the cg. */
 	cgflags[cgn] |= CGF_DIRTY;
 }
@@ -892,9 +881,9 @@ grow(void)
 	/* Update the timestamp. */
 	newsb->fs_time = timestamp();
 	/* Allocate and clear the new-inode area, in case we add any cgs. */
-	zinodes = alloconce(newsb->fs_ipg * sizeof(struct dinode),
+	zinodes = alloconce(newsb->fs_ipg * sizeof(struct ufs1_dinode),
                             "zeroed inodes");
-	bzero(zinodes, newsb->fs_ipg * sizeof(struct dinode));
+	bzero(zinodes, newsb->fs_ipg * sizeof(struct ufs1_dinode));
 	/* Update the size. */
 	newsb->fs_size = dbtofsb(newsb, newsize);
 	/* Did we actually not grow?  (This can happen if newsize is less than
@@ -908,9 +897,9 @@ grow(void)
 	 * what to write is irrelevant; it's just something handy that's known
 	 * to be at least one frag in size.) */
 	writeat(newsb->fs_size - 1, &sbbuf, newsb->fs_fsize);
-	/* Update fs_ncyl and fs_ncg. */
-	newsb->fs_ncyl = (newsb->fs_size * NSPF(newsb)) / newsb->fs_spc;
-	newsb->fs_ncg = howmany(newsb->fs_ncyl, newsb->fs_cpg);
+	/* Update fs_old_ncyl and fs_ncg. */
+	newsb->fs_old_ncyl = (newsb->fs_size * NSPF(newsb)) / newsb->fs_old_spc;
+	newsb->fs_ncg = howmany(newsb->fs_old_ncyl, newsb->fs_old_cpg);
 	/* Does the last cg end before the end of its inode area? There is no
 	 * reason why this couldn't be handled, but it would complicate a lot
 	 * of code (in all filesystem code - fsck, kernel, etc) because of the
@@ -918,8 +907,8 @@ grow(void)
 	 * minimal, at most the pre-sb data area. */
 	if (cgdmin(newsb, newsb->fs_ncg - 1) > newsb->fs_size) {
 		newsb->fs_ncg--;
-		newsb->fs_ncyl = newsb->fs_ncg * newsb->fs_cpg;
-		newsb->fs_size = (newsb->fs_ncyl * newsb->fs_spc) / NSPF(newsb);
+		newsb->fs_old_ncyl = newsb->fs_ncg * newsb->fs_old_cpg;
+		newsb->fs_size = (newsb->fs_old_ncyl * newsb->fs_old_spc) / NSPF(newsb);
 		printf("Warning: last cylinder group is too small;\n");
 		printf("    dropping it.  New size = %lu.\n",
 		    (unsigned long int) fsbtodb(newsb, newsb->fs_size));
@@ -943,7 +932,7 @@ grow(void)
 			initcg(i);
 			cgp += cgblksz;
 		}
-		cgs[oldsb->fs_ncg - 1]->cg_ncyl = oldsb->fs_cpg;
+		cgs[oldsb->fs_ncg - 1]->cg_old_ncyl = oldsb->fs_old_cpg;
 		cgflags[oldsb->fs_ncg - 1] |= CGF_DIRTY;
 	}
 	/* If the old fs ended partway through a cg, we have to update the old
@@ -961,7 +950,7 @@ grow(void)
 			newcgsize = newsb->fs_fpg;
 		oldcgsize = oldsb->fs_size % oldsb->fs_fpg;
 		set_bits(cg_blksfree(cg, 0), oldcgsize, newcgsize - oldcgsize);
-		cg->cg_ncyl = howmany(newcgsize * NSPF(newsb), newsb->fs_spc);
+		cg->cg_old_ncyl = howmany(newcgsize * NSPF(newsb), newsb->fs_old_spc);
 		cg->cg_ndblk = newcgsize;
 	}
 	/* Fix up the csum info, if necessary. */
@@ -975,7 +964,7 @@ grow(void)
  *  over either the old or the new filesystem's set of inodes.
  */
 static void
-     map_inodes(void (*fn) (struct dinode * di, unsigned int, void *arg), int ncg, void *cbarg) {
+     map_inodes(void (*fn) (struct ufs1_dinode * di, unsigned int, void *arg), int ncg, void *cbarg) {
 	int i;
 	int ni;
 
@@ -1000,7 +989,7 @@ typedef void (*mark_callback_t) (unsigned int blocknum, unsigned int nfrags, uns
  * function and returns number of bytes occupied in file (actually,
  * rounded up to a frag boundary).  The name is historical.  */
 static int
-markblk(mark_callback_t fn, struct dinode * di, int bn, off_t o)
+markblk(mark_callback_t fn, struct ufs1_dinode * di, int bn, off_t o)
 {
 	int sz;
 	int nb;
@@ -1019,7 +1008,7 @@ markblk(mark_callback_t fn, struct dinode * di, int bn, off_t o)
  * For the sake of update_for_data_move(), we read the indirect block
  * _after_ making the _PRE callback.  The name is historical.  */
 static int
-markiblk(mark_callback_t fn, struct dinode * di, int bn, off_t o, int lev)
+markiblk(mark_callback_t fn, struct ufs1_dinode * di, int bn, off_t o, int lev)
 {
 	int i;
 	int j;
@@ -1066,7 +1055,7 @@ markiblk(mark_callback_t fn, struct dinode * di, int bn, off_t o, int lev)
  *  of a file).
  */
 static void
-map_inode_data_blocks(struct dinode * di, mark_callback_t fn)
+map_inode_data_blocks(struct ufs1_dinode * di, mark_callback_t fn)
 {
 	off_t o;		/* offset within  inode */
 	int inc;		/* increment for o - maybe should be off_t? */
@@ -1092,7 +1081,7 @@ map_inode_data_blocks(struct dinode * di, mark_callback_t fn)
 }
 
 static void
-dblk_callback(struct dinode * di, unsigned int inum, void *arg)
+dblk_callback(struct ufs1_dinode * di, unsigned int inum, void *arg)
 {
 	mark_callback_t fn;
 	fn = (mark_callback_t) arg;
@@ -1138,15 +1127,15 @@ static void
 loadinodes(void)
 {
 	int cg;
-	struct dinode *iptr;
+	struct ufs1_dinode *iptr;
 
-	inodes = alloconce(oldsb->fs_ncg * oldsb->fs_ipg * sizeof(struct dinode), "inodes");
+	inodes = alloconce(oldsb->fs_ncg * oldsb->fs_ipg * sizeof(struct ufs1_dinode), "inodes");
 	iflags = alloconce(oldsb->fs_ncg * oldsb->fs_ipg, "inode flags");
 	bzero(iflags, oldsb->fs_ncg * oldsb->fs_ipg);
 	iptr = inodes;
 	for (cg = 0; cg < oldsb->fs_ncg; cg++) {
 		readat(fsbtodb(oldsb, cgimin(oldsb, cg)), iptr,
-		    oldsb->fs_ipg * sizeof(struct dinode));
+		    oldsb->fs_ipg * sizeof(struct ufs1_dinode));
 		iptr += oldsb->fs_ipg;
 	}
 }
@@ -1332,7 +1321,7 @@ movemap_blocks(int32_t * vec, int n)
 	return (rv);
 }
 static void
-moveblocks_callback(struct dinode * di, unsigned int inum, void *arg)
+moveblocks_callback(struct ufs1_dinode * di, unsigned int inum, void *arg)
 {
 	switch (di->di_mode & IFMT) {
 	case IFLNK:
@@ -1512,7 +1501,7 @@ update_dir_data(unsigned int bn, unsigned int size, unsigned int nb, int kind)
 	}
 }
 static void
-dirmove_callback(struct dinode * di, unsigned int inum, void *arg)
+dirmove_callback(struct ufs1_dinode * di, unsigned int inum, void *arg)
 {
 	switch (di->di_mode & IFMT) {
 	case IFDIR:
@@ -1542,14 +1531,14 @@ shrink(void)
 	newsb->fs_time = timestamp();
 	/* Update the size figures. */
 	newsb->fs_size = dbtofsb(newsb, newsize);
-	newsb->fs_ncyl = (newsb->fs_size * NSPF(newsb)) / newsb->fs_spc;
-	newsb->fs_ncg = howmany(newsb->fs_ncyl, newsb->fs_cpg);
+	newsb->fs_old_ncyl = (newsb->fs_size * NSPF(newsb)) / newsb->fs_old_spc;
+	newsb->fs_ncg = howmany(newsb->fs_old_ncyl, newsb->fs_old_cpg);
 	/* Does the (new) last cg end before the end of its inode area?  See
 	 * the similar code in grow() for more on this. */
 	if (cgdmin(newsb, newsb->fs_ncg - 1) > newsb->fs_size) {
 		newsb->fs_ncg--;
-		newsb->fs_ncyl = newsb->fs_ncg * newsb->fs_cpg;
-		newsb->fs_size = (newsb->fs_ncyl * newsb->fs_spc) / NSPF(newsb);
+		newsb->fs_old_ncyl = newsb->fs_ncg * newsb->fs_old_cpg;
+		newsb->fs_size = (newsb->fs_old_ncyl * newsb->fs_old_spc) / NSPF(newsb);
 		printf("Warning: last cylinder group is too small;\n");
 		printf("    dropping it.  New size = %lu.\n",
 		    (unsigned long int) fsbtodb(newsb, newsb->fs_size));
@@ -1633,14 +1622,14 @@ shrink(void)
 	 * keeping track of exactly which ones require it. */
 	for (i = 0; i < newsb->fs_ncg; i++)
 		cgflags[i] |= CGF_DIRTY | CGF_BLKMAPS | CGF_INOMAPS;
-	/* Update the cg_ncyl value for the last cylinder.  The condition is
+	/* Update the cg_old_ncyl value for the last cylinder.  The condition is
 	 * commented out because fsck whines if not - see the similar
 	 * condition in grow() for more. */
 	/* XXX fix once fsck is fixed */
-	/* if (newsb->fs_ncyl % newsb->fs_cpg) XXX */
+	/* if (newsb->fs_old_ncyl % newsb->fs_old_cpg) XXX */
 /*XXXJTK*/
-	cgs[newsb->fs_ncg - 1]->cg_ncyl =
-	    newsb->fs_ncyl % newsb->fs_cpg;
+	cgs[newsb->fs_ncg - 1]->cg_old_ncyl =
+	    newsb->fs_old_ncyl % newsb->fs_old_cpg;
 	/* Make fs_dsize match the new reality. */
 	recompute_fs_dsize();
 }
@@ -1669,9 +1658,9 @@ rescan_blkmaps(int cgn)
 	cg->cg_cs.cs_nbfree = 0;
 	bzero(&cg->cg_frsum[0], MAXFRAG * sizeof(cg->cg_frsum[0]));
 	bzero(&cg_blktot(cg, 0)[0],
-	    newsb->fs_cpg * sizeof(cg_blktot(cg, 0)[0]));
+	    newsb->fs_old_cpg * sizeof(cg_blktot(cg, 0)[0]));
 	bzero(&cg_blks(newsb, cg, 0, 0)[0],
-	    newsb->fs_cpg * newsb->fs_nrpos *
+	    newsb->fs_old_cpg * newsb->fs_old_nrpos *
 	    sizeof(cg_blks(newsb, cg, 0, 0)[0]));
 	if (newsb->fs_contigsumsize > 0) {
 		cg->cg_nclusterblks = cg->cg_ndblk / newsb->fs_frag;
@@ -1679,7 +1668,7 @@ rescan_blkmaps(int cgn)
 		    newsb->fs_contigsumsize *
 		    sizeof(cg_clustersum(cg, 0)[1]));
 		bzero(&cg_clustersfree(cg, 0)[0],
-		    howmany((newsb->fs_cpg * newsb->fs_spc) / NSPB(newsb),
+		    howmany((newsb->fs_old_cpg * newsb->fs_old_spc) / NSPB(newsb),
 			NBBY));
 	}
 	/* Scan the free-frag bitmap.  Runs of free frags are kept track of
@@ -1826,9 +1815,9 @@ write_sbs(void)
 {
 	int i;
 
-	writeat(SBLOCK, newsb, SBSIZE);
+	writeat(where, newsb, SBLOCKSIZE);
 	for (i = 0; i < newsb->fs_ncg; i++) {
-		writeat(fsbtodb(newsb, cgsblock(newsb, i)), newsb, SBSIZE);
+		writeat(fsbtodb(newsb, cgsblock(newsb, i)), newsb, SBLOCKSIZE);
 	}
 }
 /*
@@ -1838,26 +1827,26 @@ int main(int, char **);
 int
 main(int ac, char **av)
 {
+	size_t i;
 	if (ac != 3) {
-		fprintf(stderr, "Usage: %s filesystem new-size\n", __progname);
+		fprintf(stderr, "Usage: %s filesystem new-size\n",
+		    getprogname());
 		exit(1);
 	}
 	fd = open(av[1], O_RDWR, 0);
-	if (fd < 0) {
-		fprintf(stderr, "%s: %s: %s\n", __progname, av[1],
-		    strerror(errno));
-		exit(1);
-	}
+	if (fd < 0)
+		err(1, "Cannot open `%s'", av[1]);
 	checksmallio();
 	newsize = atoi(av[2]);
 	oldsb = (struct fs *) & sbbuf;
-	newsb = (struct fs *) (SBSIZE + (char *) &sbbuf);
-	readat(SBLOCK, oldsb, SBSIZE);
-	if (oldsb->fs_magic != FS_MAGIC) {
-		fprintf(stderr, "%s: %s: bad magic number\n", __progname,
-		    av[1]);
-		exit(1);
+	newsb = (struct fs *) (SBLOCKSIZE + (char *) &sbbuf);
+	for (where = search[i = 0]; search[i] != -1; where = search[++i]) {
+		readat(where, oldsb, SBLOCKSIZE);
+		if (oldsb->fs_magic == FS_UFS1_MAGIC)
+			break;
 	}
+	if (where == (off_t)-1)
+		errx(1, "Bad magic number");
 	oldsb->fs_qbmask = ~(int64_t) oldsb->fs_bmask;
 	oldsb->fs_qfmask = ~(int64_t) oldsb->fs_fmask;
 	if (oldsb->fs_ipg % INOPB(oldsb)) {
@@ -1866,10 +1855,10 @@ main(int ac, char **av)
 		exit(1);
 	}
 	/* The superblock is bigger than struct fs (there are trailing tables,
-	 * of non-fixed size); make sure we copy the whole thing.  SBSIZE may
+	 * of non-fixed size); make sure we copy the whole thing.  SBLOCKSIZE may
 	 * be an over-estimate, but we do this just once, so being generous is
 	 * cheap. */
-	bcopy(oldsb, newsb, SBSIZE);
+	bcopy(oldsb, newsb, SBLOCKSIZE);
 	loadcgs();
 	if (newsize > fsbtodb(oldsb, oldsb->fs_size)) {
 		grow();
