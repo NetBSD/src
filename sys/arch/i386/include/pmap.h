@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	7.4 (Berkeley) 5/12/91
- *	$Id: pmap.h,v 1.11 1994/09/07 20:48:52 mycroft Exp $
+ *	$Id: pmap.h,v 1.12 1994/09/09 23:59:36 mycroft Exp $
  */
 
 /*
@@ -151,9 +151,10 @@ struct pv_page {
 };
 
 #ifdef	KERNEL
-extern pmap_t	kernel_pmap;
-struct pv_entry	*pv_table;		/* array of entries, one per page */
+extern struct pmap	kernel_pmap_store;
+struct pv_entry		*pv_table;	/* array of entries, one per page */
 
+#define	kernel_pmap			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
 static __inline void
