@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.184 2004/08/02 22:02:35 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.185 2004/08/02 22:20:54 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.184 2004/08/02 22:02:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.185 2004/08/02 22:20:54 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -948,7 +948,7 @@ wdcintr(void *arg)
 	if (chp->ch_flags & WDCF_DMA_WAIT) {
 		wdc->dma_status =
 		    (*wdc->dma_finish)(wdc->dma_arg, chp->ch_channel,
-			xfer->c_drive, 0);
+			xfer->c_drive, WDC_DMAEND_END);
 		if (wdc->dma_status & WDC_DMAST_NOIRQ) {
 			/* IRQ not for us, not detected by DMA engine */
 			return 0;
@@ -1035,7 +1035,7 @@ wdc_reset_channel(struct wdc_channel *chp, int flags)
 					    chp->ch_wdc->dma_arg,
 					    chp->ch_channel,
 					    xfer->c_drive,
-					    1);
+					    WDC_DMAEND_ABRT_QUIET);
 					chp->ch_flags &= WDCF_DMA_WAIT;
 				}
 			}
@@ -1327,14 +1327,14 @@ wdc_dmawait(struct wdc_channel *chp, struct ata_xfer *xfer, int timeout)
 	for (time = 0;  time < timeout * 1000 / WDCDELAY; time++) {
 		wdc->dma_status =
 		    (*wdc->dma_finish)(wdc->dma_arg,
-			chp->ch_channel, xfer->c_drive, 0);
+			chp->ch_channel, xfer->c_drive, WDC_DMAEND_END);
 		if ((wdc->dma_status & WDC_DMAST_NOIRQ) == 0)
 			return 0;
 		delay(WDCDELAY);
 	}
 	/* timeout, force a DMA halt */
 	wdc->dma_status = (*wdc->dma_finish)(wdc->dma_arg,
-	    chp->ch_channel, xfer->c_drive, 1);
+	    chp->ch_channel, xfer->c_drive, WDC_DMAEND_ABRT);
 	return 1;
 }
 
@@ -1358,7 +1358,8 @@ wdctimeout(void *arg)
 		if (chp->ch_flags & WDCF_DMA_WAIT) {
 			wdc->dma_status =
 			    (*wdc->dma_finish)(wdc->dma_arg,
-				chp->ch_channel, xfer->c_drive, 1);
+				chp->ch_channel, xfer->c_drive,
+				WDC_DMAEND_ABRT);
 			chp->ch_flags &= ~WDCF_DMA_WAIT;
 		}
 		/*
