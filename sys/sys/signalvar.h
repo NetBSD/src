@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.42 2003/09/06 22:01:20 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.43 2003/09/14 07:00:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -55,19 +55,21 @@ struct sigacts {
 /*
  * Process signal state.
  */
-struct	sigctx {
+struct sigctx {
 	/* This needs to be zeroed on fork */
 	sigset_t ps_siglist;		/* Signals arrived but not delivered. */
 	char	ps_sigcheck;		/* May have deliverable signals. */
 	int	ps_sigwaited;		/* Delivered signal from wait set */
 	sigset_t ps_sigwait;		/* Signals being waited for */
+	struct ksiginfo *ps_siginfo;	/* for SA_SIGINFO */
 
 	/* This should be copied on fork */
 #define	ps_startcopy	ps_sigstk
 	struct	sigaltstack ps_sigstk;	/* sp & on stack state variable */
 	sigset_t ps_oldmask;		/* saved mask from before sigpause */
 	int	ps_flags;		/* signal flags, below */
-	struct ksiginfo ps_siginfo;	/* for core dump/debugger XXX */
+	int	ps_signo;		/* for core dump/debugger XXX */
+	int	ps_code;		/* for core dump/debugger XXX */
 	int	ps_lwp;			/* for core dump/debugger XXX */
 	void	*ps_sigcode;		/* address of signal trampoline */
 	sigset_t ps_sigmask;		/* Current signal mask. */
