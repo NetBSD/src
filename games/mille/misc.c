@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 1998/07/26 16:11:40 mycroft Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 1999/03/29 05:12:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.7 1998/07/26 16:11:40 mycroft Exp $");
+__RCSID("$NetBSD: misc.c,v 1.8 1999/03/29 05:12:39 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,10 +56,6 @@ __RCSID("$NetBSD: misc.c,v 1.7 1998/07/26 16:11:40 mycroft Exp $");
 #include	"unctrl.h"
 #endif
 
-
-# ifdef	attron
-#	include	<term.h>
-# endif	attron
 
 /*
  * @(#)misc.c	1.2 (Berkeley) 3/28/83
