@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.11 2002/04/23 20:41:15 bouyer Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.12 2002/05/04 17:51:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -339,6 +339,8 @@ static const struct scf_period dt_scf_period[] __attribute__((__unused__)) = {
 #define SIOP_STEST0	0x4C /* SCSI test 0, RO */
 
 #define SIOP_STEST1	0x4D /* SCSI test 1, RO, RW on 875 */
+#define STEST1_DOGE	0x20	/* 1010 only */
+#define STEST1_DIGE	0x10	/* 1010 only */
 #define STEST1_DBLEN	0x08	/* 875-only */
 #define STEST1_DBLSEL	0x04	/* 875-only */
 
