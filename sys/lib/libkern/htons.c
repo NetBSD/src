@@ -27,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: htons.c,v 1.4 1995/01/06 00:10:06 cgd Exp $
+ *	$Id: htons.c,v 1.5 1995/01/06 00:48:26 cgd Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: htons.c,v 1.4 1995/01/06 00:10:06 cgd Exp $";
+static char *rcsid = "$Id: htons.c,v 1.5 1995/01/06 00:48:26 cgd Exp $";
 #endif
 
 #include <sys/types.h>

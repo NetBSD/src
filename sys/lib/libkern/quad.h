@@ -1,5 +1,3 @@
-/*	$NetBSD: quad.h,v 1.2 1994/10/26 06:42:41 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)quad.h	8.1 (Berkeley) 6/4/93
+ *	from: @(#)quad.h	8.1 (Berkeley) 6/4/93
+ *	$Id: quad.h,v 1.3 1995/01/06 00:48:39 cgd Exp $
  */
 
 /*
@@ -93,9 +92,9 @@ union uu {
  * and lower halves, and to reassemble a product as a quad_t, shifted left
  * (sizeof(long)*CHAR_BIT/2).
  */
-#define	HHALF(x)	((x) >> HALF_BITS)
-#define	LHALF(x)	((x) & ((1 << HALF_BITS) - 1))
-#define	LHUP(x)		((x) << HALF_BITS)
+#define	HHALF(x)	((long)(x) >> HALF_BITS)
+#define	LHALF(x)	((long)(x) & (((long)1 << HALF_BITS) - 1))
+#define	LHUP(x)		((long)(x) << HALF_BITS)
 
 extern u_quad_t __qdivrem __P((u_quad_t u, u_quad_t v, u_quad_t *rem));
 
