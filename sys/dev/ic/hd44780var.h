@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.h,v 1.3 2005/01/09 15:43:56 joff Exp $ */
+/* $NetBSD: hd44780var.h,v 1.1 2005/01/11 00:57:56 joff Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -27,8 +27,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_IC_HD44780_SUBR_H_
-#define _DEV_IC_HD44780_SUBR_H_
+#ifndef _DEV_IC_HD44780VAR_H_
+#define _DEV_IC_HD44780VAR_H_
 
 /* IOCTL definitions */
 #define HLCD_DISPCTL		_IOW('h',   1, struct hd44780_dispctl)
@@ -132,4 +132,4 @@ u_int8_t hd44780_readreg(struct hd44780_chip *, u_int32_t);
 
 #endif /* _KERNEL */
 
-#endif /* _DEV_IC_HD44780_SUBR_H_ */
+#endif /* _DEV_IC_HD44780VAR_H_ */
