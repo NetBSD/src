@@ -123,8 +123,8 @@ the editor), then try setting it to `8 partitions:'.
 
 
 <BEGIN SAMPLE DISKLABEL SCREEN>
-# disklabel sd2
-# /dev/rsd2c:
+netbsd# disklabel sd2
+ # /dev/rsd2c:
 type: SCSI 
 disk: SCSI disk
 label: Hold Your Breath
@@ -153,7 +153,7 @@ drivedata: 0
 
 If you are upgrading a NetBSD installation, start the upgrade script:
 
-#netbsd sh upgrade.sh
+netbsd# sh upgrade.sh
 
 else, start the installation script:
 
