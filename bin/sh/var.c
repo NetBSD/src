@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.26 2000/12/20 00:15:10 cgd Exp $	*/
+/*	$NetBSD: var.c,v 1.27 2001/02/04 19:52:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.26 2000/12/20 00:15:10 cgd Exp $");
+__RCSID("$NetBSD: var.c,v 1.27 2001/02/04 19:52:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,9 +142,9 @@ STATIC int varequal __P((const char *, const char *));
 
 #ifdef mkinit
 INCLUDE "var.h"
+MKINIT char **environ;
 INIT {
 	char **envp;
-	extern char **environ;
 
 	initvar();
 	for (envp = environ ; *envp ; envp++) {
@@ -431,7 +431,7 @@ environment() {
  */
 
 #ifdef mkinit
-MKINIT void shprocvar __P((void));
+void shprocvar __P((void));
 
 SHELLPROC {
 	shprocvar();

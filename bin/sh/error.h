@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.13 1999/07/09 03:05:49 christos Exp $	*/
+/*	$NetBSD: error.h,v 1.14 2001/02/04 19:52:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -82,7 +82,6 @@ extern int exception;
 
 extern volatile int suppressint;
 extern volatile int intpending;
-extern char *commandname;	/* name of command--printed on error */
 
 #define INTOFF suppressint++
 #define INTON { if (--suppressint == 0 && intpending) onint(); }
