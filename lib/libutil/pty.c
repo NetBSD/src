@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)pty.c	5.6 (Berkeley) 5/10/91";*/
-static char rcsid[] = "$Id: pty.c,v 1.2 1993/08/01 18:31:48 mycroft Exp $";
+static char rcsid[] = "$Id: pty.c,v 1.3 1994/04/06 08:54:35 andrew Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -64,7 +64,7 @@ openpty(amaster, aslave, name, termp, winp)
 	else
 		ttygid = -1;
 
-	for (cp1 = "pqrs"; *cp1; cp1++) {
+	for (cp1 = "pqrstuvwxyzPQRST"; *cp1; cp1++) {
 		line[8] = *cp1;
 		for (cp2 = "0123456789abcdef"; *cp2; cp2++) {
 			line[9] = *cp2;
