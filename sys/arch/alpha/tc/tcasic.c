@@ -1,4 +1,4 @@
-/*	$NetBSD: tcasic.c,v 1.12 1996/10/23 04:12:38 cgd Exp $	*/
+/*	$NetBSD: tcasic.c,v 1.13 1996/11/15 23:59:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -102,8 +102,13 @@ tcasicattach(parent, self, aux)
 		tba.tba_speed = TC_SPEED_25_MHZ;
 		tba.tba_nslots = tc_3000_500_nslots;
 		tba.tba_slots = tc_3000_500_slots;
-		tba.tba_nbuiltins = tc_3000_500_nbuiltins;
-		tba.tba_builtins = tc_3000_500_builtins;
+		if (hwrpb->rpb_variation & SV_GRAPHICS) {
+			tba.tba_nbuiltins = tc_3000_500_graphics_nbuiltins;
+			tba.tba_builtins = tc_3000_500_graphics_builtins;
+		} else {
+			tba.tba_nbuiltins = tc_3000_500_nographics_nbuiltins;
+			tba.tba_builtins = tc_3000_500_nographics_builtins;
+		}
 		tba.tba_intr_establish = tc_3000_500_intr_establish;
 		tba.tba_intr_disestablish = tc_3000_500_intr_disestablish;
 		break;
