@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.44.2.3 1999/02/25 03:59:04 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.44.2.4 1999/04/30 04:32:06 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -224,15 +224,13 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		error = 0;
 		while (uio->uio_resid > 0) {
 			void *win;
-			int byteoff = uio->uio_offset & (MAXBSIZE - 1);
-			int bytelen = min(np->n_size - uio->uio_offset,
-					  min(uio->uio_resid,
-					      MAXBSIZE - byteoff));
+			vsize_t bytelen = min(np->n_size - uio->uio_offset,
+					      uio->uio_resid);
 
 			if (bytelen == 0)
 				break;
 			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
-					bytelen, UBC_READ);
+					&bytelen, UBC_READ);
 #ifdef DIAGNOSTIC
 			if (win == NULL)
 				panic("nfs_bioread: ubc_alloc -> NULL");
@@ -649,8 +647,7 @@ nfs_write(v)
 #ifdef UBC
 		void *win;
 		vaddr_t oldoff = uio->uio_offset;
-		int byteoff = uio->uio_offset & (MAXBSIZE - 1);
-		int bytelen = min(uio->uio_resid, MAXBSIZE - byteoff);
+		vsize_t bytelen = uio->uio_resid;
 
 		/*
 		 * XXX only do one page at a time for now.
@@ -661,8 +658,8 @@ nfs_write(v)
 		 * returned with write rpcs until the
 		 * the entire write operation has finished.
 		 */
-		byteoff = uio->uio_offset & (PAGE_SIZE - 1);
-		bytelen = min(uio->uio_resid, PAGE_SIZE - byteoff);
+		bytelen = min(uio->uio_resid,
+			      PAGE_SIZE - (uio->uio_offset & (PAGE_SIZE - 1)));
 
 		/* XXX */
 		on = bn = lbn = 0;
@@ -715,10 +712,7 @@ nfs_write(v)
 
 		/* XXX check dirty region stuff */
 
-		if (bytelen == 0) {
-			break;
-		}
-		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, bytelen,
+		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, &bytelen,
 				UBC_WRITE);
 #ifdef DIAGNOSTIC
 		if (win == NULL) {

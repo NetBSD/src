@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.21.2.3 1999/04/09 04:37:27 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.21.2.4 1999/04/30 04:32:08 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -287,7 +287,7 @@ void			uao_reference __P((struct uvm_object *));
 void			uao_reference_locked __P((struct uvm_object *));
 
 /* uvm_bio.c */
-void *			ubc_alloc __P((struct uvm_object *, vaddr_t, vsize_t,
+void *			ubc_alloc __P((struct uvm_object *, vaddr_t, vsize_t *,
 				       int));
 void			ubc_release __P((void *, vsize_t));
 void			ubc_flush __P((struct uvm_object *, vaddr_t, vaddr_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.18.2.3 1999/04/29 05:34:15 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.18.2.4 1999/04/30 04:32:07 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -113,13 +113,12 @@ READ(v)
 	error = 0;
 	while (uio->uio_resid > 0) {
 		void *win;
-		int byteoff = uio->uio_offset & (MAXBSIZE - 1);
-		int bytelen = min(ip->i_ffs_size - uio->uio_offset,
-				  min(uio->uio_resid, MAXBSIZE - byteoff));
+		vsize_t bytelen = min(ip->i_ffs_size - uio->uio_offset,
+				      uio->uio_resid);
 
 		if (bytelen == 0)
 			break;
-		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, bytelen,
+		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, &bytelen,
 				UBC_READ);
 #ifdef DIAGNOSTIC
 		if (win == NULL)
@@ -288,13 +287,10 @@ WRITE(v)
 
 	while (uio->uio_resid > 0) {
 		void *win;
-		int byteoff = uio->uio_offset & (MAXBSIZE - 1);
-		int bytelen = min(uio->uio_resid, MAXBSIZE - byteoff);
+		vsize_t bytelen = uio->uio_resid;
 /* XXX if file is mapped and this is the last block, limit len to a page */
 
-		if (bytelen == 0)
-			break;
-		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, bytelen,
+		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, &bytelen,
 				UBC_WRITE);
 #ifdef DIAGNOSTIC
 		if (win == NULL) {
