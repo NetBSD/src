@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.73 2004/11/23 14:19:57 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.74 2004/12/09 00:56:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.73 2004/11/23 14:19:57 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.74 2004/12/09 00:56:47 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,6 +172,7 @@ struct filed {
 	int	f_prevlen;			/* length of f_prevline */
 	int	f_prevcount;			/* repetition cnt of prevline */
 	int	f_repeatcount;			/* number of "repeated" msgs */
+	int	f_lasterror;			/* last error on writev() */
 	int	f_flags;			/* file-specific flags */
 #define	FFLAG_SYNC	0x01
 };
@@ -1273,6 +1274,13 @@ fprintlog(struct filed *f, int flags, char *msg)
 	again:
 		if (writev(f->f_file, iov, 7) < 0) {
 			int e = errno;
+			if (f->f_type == F_FILE && e == ENOSPC) {
+				int lasterror = f->f_lasterror;
+				f->f_lasterror = e;
+				if (lasterror != e)
+					logerror(f->f_un.f_fname);
+				break;
+			}
 			(void)close(f->f_file);
 			/*
 			 * Check for errors on TTY's due to loss of tty
@@ -1288,10 +1296,14 @@ fprintlog(struct filed *f, int flags, char *msg)
 			} else {
 				f->f_type = F_UNUSED;
 				errno = e;
+				f->f_lasterror = e;
 				logerror(f->f_un.f_fname);
 			}
-		} else if ((flags & SYNC_FILE) && (f->f_flags & FFLAG_SYNC))
-			(void)fsync(f->f_file);
+		} else {
+			f->f_lasterror = 0;
+			if ((flags & SYNC_FILE) && (f->f_flags & FFLAG_SYNC))
+				(void)fsync(f->f_file);
+		}
 		break;
 
 	case F_USERS:
