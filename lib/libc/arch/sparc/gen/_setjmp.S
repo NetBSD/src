@@ -1,12 +1,11 @@
-/*	$NetBSD: _setjmp.S,v 1.5 1998/07/01 02:16:27 tv Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.6 1999/06/27 11:10:18 pk Exp $	*/
 
-/*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
  *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Paul Kranenburg.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -18,34 +17,30 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Header: _setjmp.s,v 1.1 91/07/06 16:45:53 torek Exp
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <machine/asm.h>
+#include <machine/trap.h>
+
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-	.asciz "@(#)_setjmp.s	8.1 (Berkeley) 6/4/93"
-#else
-	RCSID("$NetBSD: _setjmp.S,v 1.5 1998/07/01 02:16:27 tv Exp $")
-#endif
+RCSID("$NetBSD: _setjmp.S,v 1.6 1999/06/27 11:10:18 pk Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -55,42 +50,30 @@
  * will generate a "return(v?v:1)" from
  * the last call to
  *	_setjmp(a)
- * by unwinding the call stack.
  * The previous signal state is NOT restored.
  */
 
 ENTRY(_setjmp)
 	st	%sp, [%o0+0]	/* store caller's stack pointer */
-	st	%o7, [%o0+4]	/* ... return pc */
-	st	%fp, [%o0+8]	/* ... and frame pointer */
+	st	%o7, [%o0+4]	/* and the return pc */
 	retl
 	 clr	%o0		! return 0
 
 ENTRY(_longjmp)
-	addcc	%o1, %g0, %g6	! compute v ? v : 1 in a global register
+	sub	%sp, 64, %sp	! set up a local stack frame
+	tst	%o1		! compute v ? v : 1
 	be,a	0f
-	 mov	1, %g6
+	 mov	1, %o1
 0:
-	mov	%o0, %g1	! save a in another global register
-	ld	[%g1+8], %g7	/* get caller's frame */
-1:
-	cmp	%fp, %g7	! compare against desired frame
-	bl,a	1b		! if below,
-	 restore		!    pop frame and loop
-	be,a	2f		! if there,
-	 ld	[%g1+0], %o2	!    fetch return %sp
+	t	ST_FLUSHWIN	! flush register windows out to the stack
 
-Lbotch:
-	call	_C_LABEL(longjmperror)	! otherwise, went too far; bomb out
-	nop
-	unimp	0
+	/*
+	 * We restore the saved stack pointer to %fp, then issue
+	 * a `restore' instruction which will reload the register
+	 * window from the stack.
+	 */
+	ld	[%o0+4], %o7	/* restore return pc */
+	ld	[%o0+0], %fp	/* and stack pointer */
 
-2:
-	cmp	%o2, %sp	! %sp must not decrease
-	bge,a	3f
-	 mov	%o2, %sp	! it is OK, put it in place
-	b,a	Lbotch
-3:
-	ld	[%g1+4], %o3	! fetch pc
-	jmp	%o3 + 8		! success, return %g6
-	 mov	%g6, %o0
+	retl			! success, return %g6
+	 restore	%o1, 0, %o0
