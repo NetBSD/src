@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.34 2000/08/26 18:32:44 he Exp $
+.\" $NetBSD: main,v 1.6.2.35 2000/08/26 19:15:19 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1031,6 +1031,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Hubert Feyrer Ta Mt hubertf@NetBSD.ORG
 .It Ta Thorsten Frueauf Ta Mt frueauf@NetBSD.ORG
 .It Ta Castor Fu Ta Mt castor@NetBSD.ORG
+.It Ta Ichiro Fukuhara Ta Mt ichiro@NetBSD.ORG
 .It Ta Brian R. Gaeke Ta Mt brg@dgate.org
 .It Ta Thomas Gerner Ta Mt thomas@NetBSD.ORG
 .It Ta Simon J. Gerraty Ta Mt sjg@NetBSD.ORG
@@ -1051,10 +1052,12 @@ them, and would like to mentioned, tell us!)
 .It Ta Marc Horowitz Ta Mt marc@NetBSD.ORG
 .It Ta Dean Huxley Ta Mt dean@netbsd.org
 .It Ta ITOH Yasufumi Ta Mt itohy@NetBSD.ORG
+.It Ta IWAMOTO Toshihiro Ta Mt toshii@NetBSD.ORG
 .It Ta Matthew Jacob Ta Mt mjacob@NetBSD.ORG
 .It Ta Lonhyn T. Jasinskyj Ta Mt lonhyn@NetBSD.ORG
 .It Ta Chris Jones Ta Mt cjones@NetBSD.ORG
 .It Ta Soren Jorvang Ta Mt soren@NetBSD.ORG
+.It Ta Takahiro Kambe Ta Mt taca@NetBSD.ORG
 .It Ta Antti Kantee Ta Mt pooka@NetBSD.ORG
 .It Ta Lawrence Kesteloot Ta Mt kesteloo@cs.unc.edu
 .It Ta Thomas Klausner Ta Mt wiz@NetBSD.ORG
@@ -1099,12 +1102,14 @@ them, and would like to mentioned, tell us!)
 .It Ta Konrad Schroder Ta Mt perseant@NetBSD.ORG
 .It Ta Tim Shepard Ta Mt shep@NetBSD.ORG
 .It Ta Takao Shinohara Ta Mt shin@NetBSD.ORG
+.It Ta Takuya SHIOZAKI Ta Mt tshiozak@NetBSD.ORG
 .It Ta Chuck Silvers Ta Mt chs@NetBSD.ORG
 .It Ta Thor Lancelot Simon Ta Mt tls@NetBSD.ORG
 .It Ta Noriyuki Soda Ta Mt soda@NetBSD.ORG
 .It Ta Bill Sommerfeld Ta Mt sommerfeld@NetBSD.ORG
 .It Ta Bill Studenmund Ta Mt wrstuden@NetBSD.ORG
 .It Ta Kevin Sullivan Ta Mt sullivan@NetBSD.ORG
+.It Ta SUNAGAWA Keiki Ta Mt kei@NetBSD.ORG
 .It Ta Kimmo Suominen Ta Mt kim@NetBSD.ORG
 .It Ta Matt Thomas Ta Mt matt@NetBSD.ORG
 .It Ta Christoph Toshok Ta Mt toshok@NetBSD.ORG
