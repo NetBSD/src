@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.100 2001/06/06 17:47:54 matt Exp $
+#	$NetBSD: GENERIC,v 1.101 2001/06/10 15:41:13 tsubai Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.100 $"
+#ident 		"GENERIC-$Revision: 1.101 $"
 
 maxusers	32
 
@@ -90,7 +90,6 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
-options 	NMBCLUSTERS=1024
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
