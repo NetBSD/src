@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.12 1996/02/26 23:05:26 gwr Exp $	*/
+/*	$NetBSD: rpc.c,v 1.13 1996/07/10 18:41:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -184,8 +184,8 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	recv_head -= sizeof(*reply);
 
 	cc = sendrecv(d,
-	    sendudp, send_head, ((int)send_tail - (int)send_head),
-	    recvrpc, recv_head, ((int)recv_tail - (int)recv_head));
+	    sendudp, send_head, send_tail - send_head,
+	    recvrpc, recv_head, recv_tail - recv_head);
 
 #ifdef RPC_DEBUG
 	if (debug)
@@ -224,7 +224,7 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	}
 	recv_head += sizeof(*reply);
 
-	return (ssize_t)((int)recv_tail - (int)recv_head);
+	return (ssize_t)(recv_tail - recv_head);
 }
 
 /*
