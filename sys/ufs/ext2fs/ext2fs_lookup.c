@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.27.2.6 2004/09/21 13:39:07 skrll Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.27.2.7 2004/10/29 06:55:20 skrll Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.27.2.6 2004/09/21 13:39:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.27.2.7 2004/10/29 06:55:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1046,10 +1046,9 @@ ext2fs_dirempty(ip, parentino, cred)
  * The target is always vput before returning.
  */
 int
-ext2fs_checkpath(source, target, cred, l)
+ext2fs_checkpath(source, target, cred)
 	struct inode *source, *target;
 	struct ucred *cred;
-	struct lwp *l;
 {
 	struct vnode *vp;
 	int error, rootino, namlen;

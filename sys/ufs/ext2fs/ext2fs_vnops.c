@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.48.2.7 2004/09/24 10:53:58 skrll Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.48.2.8 2004/10/29 06:55:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.48.2.7 2004/09/24 10:53:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.48.2.8 2004/10/29 06:55:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -806,7 +806,7 @@ abortit:
 			goto bad;
 		if (xp != NULL)
 			vput(tvp);
-		error = ext2fs_checkpath(ip, dp, tcnp->cn_cred, tcnp->cn_lwp);
+		error = ext2fs_checkpath(ip, dp, tcnp->cn_cred);
 		if (error != 0)
 			goto out;
 		if ((tcnp->cn_flags & SAVESTART) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.18.2.5 2004/09/21 13:39:07 skrll Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.18.2.6 2004/10/29 06:55:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -122,8 +122,7 @@ int ext2fs_dirremove __P((struct vnode *, struct componentname *));
 int ext2fs_dirrewrite __P((struct inode *, struct inode *,
 			   struct componentname *));
 int ext2fs_dirempty __P((struct inode *, ino_t, struct ucred *));
-int ext2fs_checkpath __P((struct inode *, struct inode *, struct ucred *,
-			  struct lwp *));
+int ext2fs_checkpath __P((struct inode *, struct inode *, struct ucred *));
 
 /* ext2fs_subr.c */
 int ext2fs_blkatoff __P((void *));
