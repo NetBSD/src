@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.7 1998/12/02 21:16:46 thorpej Exp $ */
+/*	$NetBSD: asm.h,v 1.8 1999/01/31 09:21:19 mrg Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -44,7 +44,7 @@
 #ifndef _ASM_H_
 #define _ASM_H_
 
-#ifdef _LP64
+#ifdef __arch64__
 #ifndef __ELF__
 #define __ELF__
 #endif

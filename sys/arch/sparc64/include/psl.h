@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.5 1998/09/05 23:57:26 eeh Exp $ */
+/*	$NetBSD: psl.h,v 1.6 1999/01/31 09:21:20 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,7 +135,7 @@
 
 #define	PSTATE_BITS "\20\14IG\13MG\12CLE\11TLE\10\7MM\6RED\5PEF\4AM\3PRIV\2IE\1AG"
 
-#ifdef _LP64
+#ifdef __arch64__
 #define PSTATE_PROM	(PSTATE_MM_TSO|PSTATE_PRIV)
 #define PSTATE_NUCLEUS	(PSTATE_MM_TSO|PSTATE_PRIV|PSTATE_AG)
 #define PSTATE_KERN	(PSTATE_MM_TSO|PSTATE_PRIV)

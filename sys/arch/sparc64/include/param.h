@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 1998/10/06 05:18:55 eeh Exp $ */
+/*	$NetBSD: param.h,v 1.9 1999/01/31 09:21:20 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 #define	_MACHINE	sparc64
 #define	MACHINE		"sparc64"
-#ifdef _LP64
+#ifdef __arch64__
 #define	_MACHINE_ARCH	sparc64
 #define	MACHINE_ARCH	"sparc64"
 #define	MID_MACHINE	MID_SPARC64
@@ -79,7 +79,7 @@
  */
 #define ALIGNBYTES32		0x7
 #define ALIGNBYTES64		0xf
-#ifdef _LP64
+#ifdef __arch64__
 #define	ALIGNBYTES		ALIGNBYTES64
 #else
 #define	ALIGNBYTES		ALIGNBYTES32
@@ -111,7 +111,7 @@ extern int nbpg, pgofset, pgshift;
 #define	CLSIZELOG2	0
 
 /* NOTE: SSIZE must be multiple of CLSIZE */
-#ifdef _LP64
+#ifdef __arch64__
 /* We get stack overflows w/8K stacks in 64-bit mode */
 #define	SSIZE		2		/* initial stack size in pages */
 #else

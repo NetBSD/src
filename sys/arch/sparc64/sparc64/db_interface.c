@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.12 1998/11/27 19:58:46 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.13 1999/01/31 09:21:18 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -179,7 +179,7 @@ kdb_trap(type, tf)
 		printf("kernel trap %x: %s\n", type, trap_type[type & 0x1ff]);
 		if (db_recover != 0) {
 #if 0
-#ifdef	_LP64
+#ifdef	__arch64__
 			/* For now, don't get into infinite DDB trap loop */
 			printf("Faulted in DDB; going to OBP...\n");
 			OF_enter();

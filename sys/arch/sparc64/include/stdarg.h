@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.5 1999/01/09 23:15:39 eeh Exp $ */
+/*	$NetBSD: stdarg.h,v 1.6 1999/01/31 09:21:20 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
 
 #include <machine/ansi.h>
 
-#ifdef _LP64
+#ifdef __arch64__
 /*
  * For sparcv9 code.
  */

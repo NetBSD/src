@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 1999/01/09 23:23:47 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.12 1999/01/31 09:21:18 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -217,7 +217,7 @@ bootstrap(nctx)
 #else
 	ddb_init();
 #endif
-#ifdef _LP64
+#ifdef __arch64__
 	/* This can only be installed on an 64-bit system cause otherwise our stack is screwed */
 	OF_set_symbol_lookup(OF_sym2val, OF_val2sym);
 #endif
