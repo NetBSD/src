@@ -1,4 +1,13 @@
-#	$NetBSD: files.ieee1394,v 1.1 2000/11/05 17:17:14 onoe Exp $
+#	$NetBSD: files.ieee1394,v 1.2 2000/11/14 23:37:20 matt Exp $
+
+file	dev/ieee1394/fwlynx.c		fwlynx
+file	dev/ieee1394/fwohci.c		fwohci
+
+device	fwnode {[vendor=-1],[idhi=-1],[idlo=-1]}: scsi
+attach	fwnode at fwbus
+
+#file	dev/ieee1394/fw_node.c		fwbus
+#file	dev/ieee1394/fw_kthread.c	fwbus
 
 device  fw: arp, ieee1394, ifnet
 attach	fw at fwbus
