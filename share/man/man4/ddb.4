@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.63 2003/03/30 18:05:22 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.64 2003/05/08 05:38:10 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,7 +76,8 @@ To enable history editing:
 .Cd options DDB_HISTORY_SIZE=integer
 .Pp
 To disable entering
-.Nm
+.\" XXX: hack; .Nm automatically introduces newline in SYNOPSIS
+.Ic ddb
 upon kernel panic:
 .Cd options DDB_ONPANIC=0
 .Sh DESCRIPTION
