@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.20 1999/04/12 22:17:21 is Exp $
+#	$NetBSD: install.sh,v 1.21 1999/10/07 00:07:05 sjg Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -64,11 +64,20 @@ MODE="install"
 #	md_native_fsopts()	- native filesystem options for disk installs
 #	md_makerootwritable()	- make root writable (at least /tmp)
 
+# we need to make sure .'s below work if this directory is not in $PATH
+# dirname may not be available but expr is
+Mydir=`expr $0 : '^\(.*\)/[^/]*$'`
+Mydir=`cd ${Mydir:-.}; pwd`
+
+# this is the most likely place to find the binary sets
+# so save them having to type it in
+Default_sets_dir=$Mydir/../../binary/sets
+
 # include machine dependent subroutines
-. install.md
+. $Mydir/install.md
 
 # include common subroutines
-. install.sub
+. $Mydir/install.sub
 
 # which sets?
 THESETS="$ALLSETS $MDSETS"
