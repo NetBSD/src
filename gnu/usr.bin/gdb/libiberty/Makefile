@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 1994/01/28 12:42:52 pk Exp $
+# $Id: Makefile,v 1.2 1997/05/07 16:20:33 mycroft Exp $
 
 LIB=		iberty
 NOPROFILE=
@@ -8,6 +8,7 @@ CFLAGS+=	-I$(.CURDIR)/../include
 SRCS=		argv.c basename.c concat.c cplus-dem.c getopt.c getopt1.c \
 		obstack.c strsignal.c ieee-float.c insque.c
 
-install:
+# only needed during build
+libinstall::
 
 .include <bsd.lib.mk>

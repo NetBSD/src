@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/02/16 21:25:22 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1997/05/07 16:20:50 mycroft Exp $
 
 LIB=	z
 NOPIC=
@@ -18,7 +18,8 @@ SRCS=	${LIBZSRCS}
 # Files to clean up
 CLEANFILES+= lib${LIB}.o
 
-install:
+# only needed during build
+libinstall::
 
 .include <bsd.lib.mk>
 

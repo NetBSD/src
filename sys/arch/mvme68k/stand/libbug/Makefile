@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1996/05/17 19:50:10 chuck Exp $
+#	$NetBSD: Makefile,v 1.3 1997/05/07 16:20:41 mycroft Exp $
 
 LIB=bug
 
@@ -13,6 +13,7 @@ CFLAGS+=-I${.CURDIR}/../../include -I${DIR_SA}
 SRCS=	delay.c diskrd.c diskwr.c getbrdid.c inchr.c instat.c outln.c \
 	outstr.c putchar.c return.c rtc_rd.c
 
-install:
+# only needed during build
+libinstall::
 
 .include <bsd.lib.mk>

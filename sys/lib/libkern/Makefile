@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 1997/04/30 00:53:38 thorpej Exp $
+#	$NetBSD: Makefile,v 1.34 1997/05/07 16:20:47 mycroft Exp $
 
 LIB=	kern
 NOPIC=
@@ -29,7 +29,8 @@ CLEANFILES+= lib${LIB}.o lib${LIB}.po
 mcount.po: mcount.o
 	cp mcount.o mcount.po
 
-install:
+# only needed during build
+libinstall::
 
 .include <bsd.lib.mk>
 

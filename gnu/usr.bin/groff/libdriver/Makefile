@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1993/10/05 21:39:16 pk Exp $
+#	$Id: Makefile,v 1.7 1997/05/07 16:20:36 mycroft Exp $
 
 LIB=		driver
 SRCS=		input.cc printer.cc
@@ -8,7 +8,8 @@ NOMAN=		noman
 NOPROFILE=	noprofile
 NOPIC=		nopic
 
-install:
+# only needed during build
+libinstall::
 
 .include "../Makefile.cfg"
 .include <bsd.lib.mk>
