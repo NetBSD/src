@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/08/05 01:28:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2005/01/21 05:15:36 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ LIB=	Xext
 SRCS=	DPMS.c MITMisc.c XAppgroup.c XEVI.c XLbx.c XMultibuf.c XSecurity.c \
 	XShape.c XShm.c XSync.c XTestExt1.c Xcup.c Xdbe.c extutil.c globals.c
 
-CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	${X11FLAGS.THREADS}
 CPPFLAGS+=	-I${X11SRCDIR.xc}/lib/X11
 
 LIBDPLIBS=	X11	${.CURDIR}/../X11/dynamic

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/08/05 01:28:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2005/01/21 05:15:36 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ SRCS=	Color.c Composite.c Cursor.c FillRect.c FillRects.c Filter.c \
 INCS=	Xrender.h
 INCSDIR=${X11INCDIR}/X11/extensions
 
-CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	${X11FLAGS.THREADS}
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/extensions
 CPPFLAGS+=	-I${X11SRCDIR.xc}/lib/X11
 
