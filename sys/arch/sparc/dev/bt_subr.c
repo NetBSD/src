@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.10 2000/04/04 21:47:17 pk Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.11 2000/04/16 22:07:24 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -195,8 +195,8 @@ out:
 /*
  * Initialize the color map to the default state:
  *
- *	- 0 is black
- *	- all other entries are full white
+ *	- 0 is white			(PROM uses entry 0 for background)
+ *	- all other entries are black	(PROM uses entry 255 for foreground)
  */
 void
 bt_initcmap(cm, cmsize)
@@ -207,8 +207,73 @@ bt_initcmap(cm, cmsize)
 	u_char *cp;
 
 	cp = &cm->cm_map[0][0];
-	cp[0] = cp[1] = cp[2] = 0;
+	cp[0] = cp[1] = cp[2] = 0xff;
 
 	for (i = 1, cp = &cm->cm_map[i][0]; i < cmsize; cp += 3, i++)
-		cp[0] = cp[1] = cp[2] = 0xff;
+		cp[0] = cp[1] = cp[2] = 0;
+
+#ifdef RASTERCONSOLE
+	if (cmsize > 16) {
+		/*
+		 * Setup an ANSI map at offset 1, for rasops;
+		 * see dev/fb.c for usage (XXX - this should
+		 * be replaced by more general colormap handling)
+		 */
+		extern u_char rasops_cmap[];
+		bcopy(rasops_cmap, &cm->cm_map[1][0], 3*16);
+	}
+#endif
 }
+
+#if notyet
+static void
+bt_loadcmap_packed256(fb, bt, start, ncolors)
+	struct fbdevice	*fb;
+	volatile struct bt_regs *bt;
+	int start, ncolors;
+{
+	u_int v;
+	int count, i;
+	u_char *c[3], **p;
+	struct cmap *cm = &fb->fb_cmap;
+
+	count = BT_D4M3(start + ncolors - 1) - BT_D4M3(start) + 3;
+	bt = &sc->sc_fbc->fbc_dac;
+	bt->bt_addr = BT_D4M4(start);
+
+	/*
+	 * Figure out where to start in the RGB arrays
+	 * See btreg.h for the way RGB triplets are packed into 4-byte words.
+	 */
+	c[0] = &cm->red[(4 * count) / 3)];
+	c[1] = &cm->green[(4 * count) / 3];
+	c[2] = &cm->blue[(4 * count) / 3];
+	p = &c[0];
+	i = (4 * count) % 3;	/* This much of the last triplet is already in
+				   the last packed word */
+	while (i--) {
+		c[1-i]++;
+		p++;
+	}
+
+
+	while (--count >= 0) {
+		u_int v = 0;
+
+		/*
+		 * Retrieve four colormap entries, pack them into
+		 * a 32-bit word and write to the hardware register.
+		 */
+		for (i = 0; i < 4; i++) {
+			u_char *cp = *p;
+			v |= *cp++ << (8 * i);
+			*p = cp;
+			if (p++ == &c[2])
+				/* Wrap around */
+				p = &c[0];
+		}
+
+		bt->bt_cmap = v;
+	}
+}
+#endif
