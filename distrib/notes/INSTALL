@@ -301,6 +301,7 @@ Paul Kranenburg		<pk@netbsd.org>
 
 The port-masters (and their ports):
 Allen Briggs		<briggs@mail.vt.edu>		(mac68k)
+Chuck Cranor		<chuck@netbsd.org>		(mvme68k)
 Chris G. Demetriou	<cgd@netbsd.org>		(alpha)
 Charles Hannum		<mycroft@netbsd.org>		(i386)
 Chris Hopps		<chopps@netbsd.org>		(amiga)
