@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.4 1996/07/08 16:32:12 oki Exp $	*/
+/*	$NetBSD: fd.c,v 1.5 1996/08/11 15:32:49 oki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -982,11 +982,15 @@ loop:
 			return 1;
 		}
 		if ((fd->sc_flags & FD_MOTOR) == 0) {
-			/* Turn on the motor, being careful about pairing. */
-			struct fd_softc *ofd = fdc->sc_fd[fd->sc_drive ^ 1];
-			if (ofd && ofd->sc_flags & FD_MOTOR) {
-				untimeout(fd_motor_off, ofd);
-				ofd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
+			/* Turn on the motor */
+			/* being careful about other drives. */
+			for (i = 0; i < 4; i++) {
+				struct fd_softc *ofd = fdc->sc_fd[i];
+				if (ofd && ofd->sc_flags & FD_MOTOR) {
+					untimeout(fd_motor_off, ofd);
+					ofd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
+					break;
+				}
 			}
 			fd->sc_flags |= FD_MOTOR | FD_MOTOR_WAIT;
 			fd_set_motor(fdc, 0);
