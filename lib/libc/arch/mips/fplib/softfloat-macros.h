@@ -29,6 +29,96 @@ this code that are retained.
 ===============================================================================
 */
 
+INLINE void shift32RightJamming( bits32 a, int16 count, bits32 *zPtr );
+INLINE void shift64RightJamming( bits64 a, int16 count, bits64 *zPtr );
+INLINE void
+ shift64ExtraRightJamming(
+     bits64 a0, bits64 a1, int16 count, bits64 *z0Ptr, bits64 *z1Ptr );
+INLINE void
+ shift128Right(
+     bits64 a0, bits64 a1, int16 count, bits64 *z0Ptr, bits64 *z1Ptr );
+INLINE void
+ shift128RightJamming(
+     bits64 a0, bits64 a1, int16 count, bits64 *z0Ptr, bits64 *z1Ptr );
+INLINE void
+ shift128ExtraRightJamming(
+     bits64 a0,
+     bits64 a1,
+     bits64 a2,
+     int16 count,
+     bits64 *z0Ptr,
+     bits64 *z1Ptr,
+     bits64 *z2Ptr
+ );
+INLINE void
+ shortShift128Left(
+     bits64 a0, bits64 a1, int16 count, bits64 *z0Ptr, bits64 *z1Ptr );
+INLINE void
+ shortShift192Left(
+     bits64 a0,
+     bits64 a1,
+     bits64 a2,
+     int16 count,
+     bits64 *z0Ptr,
+     bits64 *z1Ptr,
+     bits64 *z2Ptr
+ );
+INLINE void
+ add128(
+     bits64 a0, bits64 a1, bits64 b0, bits64 b1, bits64 *z0Ptr, bits64 *z1Ptr );
+INLINE void
+ add192(
+     bits64 a0,
+     bits64 a1,
+     bits64 a2,
+     bits64 b0,
+     bits64 b1,
+     bits64 b2,
+     bits64 *z0Ptr,
+     bits64 *z1Ptr,
+     bits64 *z2Ptr
+ );
+INLINE void
+ sub128(
+     bits64 a0, bits64 a1, bits64 b0, bits64 b1, bits64 *z0Ptr, bits64 *z1Ptr );
+INLINE void
+ sub192(
+     bits64 a0,
+     bits64 a1,
+     bits64 a2,
+     bits64 b0,
+     bits64 b1,
+     bits64 b2,
+     bits64 *z0Ptr,
+     bits64 *z1Ptr,
+     bits64 *z2Ptr
+ );
+INLINE void mul64To128( bits64 a, bits64 b, bits64 *z0Ptr, bits64 *z1Ptr );
+INLINE void
+ mul128By64To192(
+     bits64 a0,
+     bits64 a1,
+     bits64 b,
+     bits64 *z0Ptr,
+     bits64 *z1Ptr,
+     bits64 *z2Ptr
+ );
+INLINE void
+ mul128To256(
+     bits64 a0,
+     bits64 a1,
+     bits64 b0,
+     bits64 b1,
+     bits64 *z0Ptr,
+     bits64 *z1Ptr,
+     bits64 *z2Ptr,
+     bits64 *z3Ptr
+ );
+INLINE flag eq128( bits64 a0, bits64 a1, bits64 b0, bits64 b1 );
+INLINE flag le128( bits64 a0, bits64 a1, bits64 b0, bits64 b1 );
+INLINE flag lt128( bits64 a0, bits64 a1, bits64 b0, bits64 b1 );
+INLINE flag ne128( bits64 a0, bits64 a1, bits64 b0, bits64 b1 );
+
 /*
 -------------------------------------------------------------------------------
 Shifts `a' right by the number of bits given in `count'.  If any nonzero

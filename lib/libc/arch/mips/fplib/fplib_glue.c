@@ -1,4 +1,4 @@
-/*	$NetBSD: fplib_glue.c,v 1.1.1.1 1999/09/16 12:18:25 takemura Exp $	*/
+/*	$NetBSD: fplib_glue.c,v 1.2 2000/02/22 01:18:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,6 +37,21 @@
  */
 #include "environment.h"
 #include "softfloat.h"
+
+int __eqsf2(float32 a,float32 b);
+int __eqdf2(float64 a,float64 b);
+int __nesf2(float32 a,float32 b);
+int __nedf2(float64 a,float64 b);
+int __gtsf2(float32 a,float32 b);
+int __gtdf2(float64 a,float64 b);
+int __gesf2(float32 a,float32 b);
+int __gedf2(float64 a,float64 b);
+int __ltsf2(float32 a,float32 b);
+int __ltdf2(float64 a,float64 b);
+int __lesf2(float32 a,float32 b);
+int __ledf2(float64 a,float64 b);
+float32 __negsf2(float32 a);
+float64 __negdf2(float64 a);
 
 /********************************* COMPARISONS ********************************/
 

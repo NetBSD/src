@@ -32,6 +32,17 @@ this code that are retained.
 #include "environment.h"
 #include "softfloat.h"
 
+INLINE bits32 extractFloat32Frac( float32 a );
+INLINE int16 extractFloat32Exp( float32 a );
+INLINE flag extractFloat32Sign( float32 a );
+INLINE float32 packFloat32( flag zSign, int16 zExp, bits32 zSig );
+INLINE bits64 extractFloat64Frac( float64 a );
+INLINE int16 extractFloat64Exp( float64 a );
+INLINE flag extractFloat64Sign( float64 a );
+INLINE float64 packFloat64( flag zSign, int16 zExp, bits64 zSig );
+uint32 float32_to_uint32_round_to_zero( float32 a );
+uint32 float64_to_uint32_round_to_zero( float64 a );
+
 /*
 -------------------------------------------------------------------------------
 Floating-point rounding mode, extended double-precision rounding precision,
@@ -1178,7 +1189,6 @@ float32 int64_to_float32( int64 a )
     flag zSign;
     uint64 absA;
     int8 shiftCount;
-    bits32 zSig;
 
     if ( a == 0 ) return 0;
     zSign = ( a < 0 );
@@ -2175,7 +2185,6 @@ IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 flag float32_le_quiet( float32 a, float32 b )
 {
     flag aSign, bSign;
-    int16 aExp, bExp;
 
     if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
          || ( ( extractFloat32Exp( b ) == 0xFF ) && extractFloat32Frac( b ) )
@@ -2974,7 +2983,6 @@ float64 float64_sqrt( float64 a )
     int16 aExp, zExp;
     bits64 aSig, zSig, doubleZSig;
     bits64 rem0, rem1, term0, term1;
-    float64 z;
 
     aSig = extractFloat64Frac( a );
     aExp = extractFloat64Exp( a );
@@ -3117,7 +3125,6 @@ IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 flag float64_le_quiet( float64 a, float64 b )
 {
     flag aSign, bSign;
-    int16 aExp, bExp;
 
     if (    ( ( extractFloat64Exp( a ) == 0x7FF ) && extractFloat64Frac( a ) )
          || ( ( extractFloat64Exp( b ) == 0x7FF ) && extractFloat64Frac( b ) )
