@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.1 1998/01/25 16:06:26 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.2 1998/02/04 01:01:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -89,7 +89,8 @@ int 		vmeintr4m __P((void *));
 
 
 static int	sparc_vme_probe __P((void *, bus_space_tag_t, vme_addr_t,
-			      vme_size_t, vme_mod_t));
+				     vme_size_t, vme_mod_t,
+				     int (*) __P((void *, void *)), void *));
 static int	sparc_vme_map __P((void *, vme_addr_t, vme_size_t, vme_mod_t,
 				   bus_space_tag_t, bus_space_handle_t *));
 static void	sparc_vme_unmap __P((void *));
@@ -401,12 +402,14 @@ sparc_vme_async_fault()
 }
 
 int
-sparc_vme_probe(cookie, tag, addr, size, mod)
+sparc_vme_probe(cookie, tag, addr, size, mod, callback, arg)
 	void *cookie;
 	bus_space_tag_t tag;
 	vme_addr_t addr;
 	vme_size_t size;
 	int mod;
+	int (*callback) __P((void *, void *));
+	void *arg;
 {
 	struct rom_reg reg;
 	caddr_t tmp;
@@ -418,6 +421,8 @@ sparc_vme_probe(cookie, tag, addr, size, mod)
 	vmebus_translate(sc, mod, &reg);
 	tmp = (caddr_t)mapdev(&reg, TMPMAP_VA, 0, NBPG);
 	result = probeget(tmp, size) != -1;
+	if (result && callback != NULL)
+		result = (*callback)(tmp, arg);
 	pmap_remove(pmap_kernel(), TMPMAP_VA, TMPMAP_VA+NBPG);
 	return (result);
 }
