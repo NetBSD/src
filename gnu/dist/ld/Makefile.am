@@ -488,6 +488,18 @@ eshlelf.c: $(srcdir)/emulparams/shlelf.sh \
 eshl.c: $(srcdir)/emulparams/shl.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/sh.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} shl "$(tdir_shl)"
+eshunx.c: $(srcdir)/emulparams/shunx.sh \
+  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/sh.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} shunx "$(tdir_shunx)"
+eshlunx.c: $(srcdir)/emulparams/shlunx.sh \
+  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/shunx.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} shlunx "$(tdir_shlunx)"
+eelf32shunx.c: $(srcdir)/emulparams/elf32shunx.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32shunx "$(tdir_elf32shunx)"
+eelf32shlunx.c: $(srcdir)/emulparams/elf32shlunx.sh \
+  $(srcdir)/emultempl/elf32.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32shlunx "$(tdir_elf32shlunx)"
 esparcaout.c: $(srcdir)/emulparams/sparcaout.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} sparcaout "$(tdir_sparcaout)"
