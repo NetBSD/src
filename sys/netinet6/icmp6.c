@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.c,v 1.33.2.1 2000/07/20 00:07:05 itojun Exp $	*/
-/*	$KAME: icmp6.c,v 1.113 2000/06/12 09:24:41 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.33.2.2 2000/08/04 15:11:59 itojun Exp $	*/
+/*	$KAME: icmp6.c,v 1.131 2000/08/03 15:24:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -979,14 +979,13 @@ icmp6_mtudisc_update(dst, icmp6, m)
 }
 
 /*
- * Process a Node Information Query packet, (roughly) based on
- * draft-ietf-ipngwg-icmp-name-lookups-05.
+ * Process a Node Information Query packet, based on
+ * draft-ietf-ipngwg-icmp-name-lookups-06.
  * 
  * Spec incompatibilities:
  * - IPv6 Subject address handling
  * - IPv4 Subject address handling support missing
  * - Proxy reply (answer even if it's not for me)
- * - "Supported Qtypes" support missing
  * - joins NI group address at in6_ifattach() time only, does not cope
  *   with hostname changes by sethostname(3)
  */
@@ -1026,24 +1025,8 @@ ni6_input(m, off)
 	 * Validate IPv6 destination address.
 	 *
 	 * We accept packets with the following IPv6 destination address:
-	 * - Responder's unicast/anycast address,
-	 * - link-local multicast address
-	 * This is a violation to last paragraph in icmp-name-lookups-05
-	 * page 4, which restricts IPv6 destination address of a query to:
-	 * - Responder's unicast/anycast address,
-	 * - NI group address for a name belongs to the Responder, or
-	 * - NI group address for a name for which the Responder is providing
-	 *   proxy service.
-	 * (note: NI group address is a link-local multicast address)
-	 *
-	 * We allow any link-local multicast address, since "ping6 -w ff02::1"
-	 * has been really useful for us debugging our network.  Also this is
-	 * still questionable if the restriction in spec buy us security at all,
-	 * since RFC2463 permits echo packet to multicast destination.
-	 * Even if we forbid NI query to ff02::1, we can effectively get the
-	 * same result as "ping6 -w ff02::1" by the following steps:
-	 * - run "ping6 ff02::1", then
-	 * - run "ping6 -w" for all addresses replied.
+	 * - Responder's unicast/anycast address, and
+	 * - link-local multicast address (including NI group address)
 	 */
 	bzero(&sin6, sizeof(sin6));
 	sin6.sin6_family = AF_INET6;
@@ -1063,7 +1046,7 @@ ni6_input(m, off)
 	case NI_QTYPE_NOOP:
 		break;		/* no reply data */
 	case NI_QTYPE_SUPTYPES:
-		goto bad;	/* xxx: to be implemented */
+		replylen += sizeof(u_int32_t);
 		break;
 	case NI_QTYPE_FQDN:
 		/* XXX will append a mbuf */
@@ -1096,10 +1079,10 @@ ni6_input(m, off)
 	switch (qtype) {
 	case NI_QTYPE_NOOP:
 	case NI_QTYPE_SUPTYPES:
-		if (subjlen != 0)
-			goto bad;
-		break;
-
+		/* 06 draft */
+		if (ni6->ni_code == ICMP6_NI_SUBJ_FQDN && subjlen == 0)
+			break;
+		/*FALLTHROUGH*/
 	case NI_QTYPE_FQDN:
 	case NI_QTYPE_NODEADDR:
 		switch (ni6->ni_code) {
@@ -1111,10 +1094,15 @@ ni6_input(m, off)
 			 * backward compatibility - try to accept 03 draft
 			 * format, where no Subject is present.
 			 */
-			if (subjlen == 0) {
+			if (qtype == NI_QTYPE_FQDN && ni6->ni_code == 0 &&
+			    subjlen == 0) {
 				oldfqdn++;
 				break;
 			}
+#if ICMP6_NI_SUBJ_IPV6 != 0
+			if (ni6->ni_code != ICMP6_NI_SUBJ_IPV6)
+				goto bad;
+#endif
 
 			if (subjlen != sizeof(sin6.sin6_addr))
 				goto bad;
@@ -1195,10 +1183,6 @@ ni6_input(m, off)
 			goto bad;
 		}
 		break;
-
-	default:
-		/* should never be here due to "switch (qtype)" above */
-		goto bad;
 	}
 
 	/* allocate a mbuf to reply. */
@@ -1231,12 +1215,17 @@ ni6_input(m, off)
 	/* qtype dependent procedure */
 	switch (qtype) {
 	case NI_QTYPE_NOOP:
+		nni6->ni_code = ICMP6_NI_SUCCESS;
 		nni6->ni_flags = 0;
 		break;
 	case NI_QTYPE_SUPTYPES:
-		goto bad;	/* xxx: to be implemented */
+		nni6->ni_code = ICMP6_NI_SUCCESS;
+		nni6->ni_flags = htons(0x0000);	/* raw bitmap */
+		/* supports NOOP, SUPTYPES, FQDN, and NODEADDR */
+		*(u_int32_t *)(nni6 + 1) = htonl(0x0000000f);
 		break;
 	case NI_QTYPE_FQDN:
+		nni6->ni_code = ICMP6_NI_SUCCESS;
 		fqdn = (struct ni_reply_fqdn *)(mtod(n, caddr_t) +
 						sizeof(struct ip6_hdr) +
 						sizeof(struct icmp6_nodeinfo));
@@ -1257,6 +1246,7 @@ ni6_input(m, off)
 	{
 		int lenlim, copied;
 
+		nni6->ni_code = ICMP6_NI_SUCCESS;
 		if (n->m_flags & M_EXT)
 			lenlim = MCLBYTES - sizeof(struct ip6_hdr) -
 				sizeof(struct icmp6_nodeinfo);
@@ -1274,7 +1264,6 @@ ni6_input(m, off)
 	}
 
 	nni6->ni_type = ICMP6_NI_REPLY;
-	nni6->ni_code = ICMP6_NI_SUCESS;
 	m_freem(m);
 	return(n);
 
@@ -1386,6 +1375,7 @@ ni6_nametodns(name, namelen, old)
 /*
  * check if two DNS-encoded string matches.  takes care of truncated
  * form (with \0\0 at the end).  no compression support.
+ * XXX upper/lowercase match (see RFC2065)
  */
 static int
 ni6_dnsmatch(a, alen, b, blen)
