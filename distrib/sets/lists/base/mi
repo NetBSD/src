@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.5 2000/07/26 17:17:18 itojun Exp $
+# $NetBSD: mi,v 1.169.2.6 2000/08/02 07:23:13 kleink Exp $
 .
 ./altroot
 ./bin
@@ -1279,8 +1279,10 @@
 ./usr/share/zoneinfo/America/Mazatlan
 ./usr/share/zoneinfo/America/Mendoza
 ./usr/share/zoneinfo/America/Menominee
+./usr/share/zoneinfo/America/Merida
 ./usr/share/zoneinfo/America/Mexico_City
 ./usr/share/zoneinfo/America/Miquelon
+./usr/share/zoneinfo/America/Monterrey
 ./usr/share/zoneinfo/America/Montevideo
 ./usr/share/zoneinfo/America/Montreal
 ./usr/share/zoneinfo/America/Montserrat
