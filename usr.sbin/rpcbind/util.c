@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1 2000/06/02 23:15:42 fvdl Exp $	*/
+/*	$NetBSD: util.c,v 1.2 2000/06/04 04:51:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <rpc/rpc.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <netconfig.h>
