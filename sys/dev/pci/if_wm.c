@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.1 2002/03/28 04:54:35 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.2 2002/05/02 16:33:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -112,16 +112,17 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
 #endif /* WM_DEBUG */
 
 /*
- * Transmit descriptor list size.  This is arbitrary, but allocate
- * enough descriptors for 128 pending transmissions, and 8 segments
- * per packet.  This MUST work out to a power of 2, and also must
- * be evenly divisible by 8.
+ * Transmit descriptor list size.  Due to errata, we can only have
+ * 256 hardware descriptors in the ring.  We tell the upper layers
+ * that they can queue a lot of packets, and we go ahead and mange
+ * up to 32 of them at a time.  We allow up to 16 DMA segments per
+ * packet.
  */
-#define	WM_NTXSEGS		8
-
-#define	WM_TXQUEUELEN		128
+#define	WM_NTXSEGS		16
+#define	WM_IFQUEUELEN		256
+#define	WM_TXQUEUELEN		32
 #define	WM_TXQUEUELEN_MASK	(WM_TXQUEUELEN - 1)
-#define	WM_NTXDESC		(WM_TXQUEUELEN * WM_NTXSEGS)
+#define	WM_NTXDESC		256
 #define	WM_NTXDESC_MASK		(WM_NTXDESC - 1)
 #define	WM_NEXTTX(x)		(((x) + 1) & WM_NTXDESC_MASK)
 #define	WM_NEXTTXS(x)		(((x) + 1) & WM_TXQUEUELEN_MASK)
@@ -236,12 +237,7 @@ struct wm_softc {
 	struct evcnt sc_ev_txipsum;	/* IP checksums comp. out-bound */
 	struct evcnt sc_ev_txtusum;	/* TCP/UDP cksums comp. out-bound */
 
-	struct evcnt sc_ev_txseg1;	/* Tx packets w/ 1 segment */
-	struct evcnt sc_ev_txseg2;	/* Tx packets w/ 2 segments */
-	struct evcnt sc_ev_txseg3;	/* Tx packets w/ 3 segments */
-	struct evcnt sc_ev_txseg4;	/* Tx packets w/ 4 segments */
-	struct evcnt sc_ev_txseg5;	/* Tx packets w/ 5 segments */
-	struct evcnt sc_ev_txsegmore;	/* Tx packets w/ more than 5 segments */
+	struct evcnt sc_ev_txseg[WM_NTXSEGS]; /* Tx packets w/ N segments */
 	struct evcnt sc_ev_txdrop;	/* Tx packets dropped (too many segs) */
 
 	struct evcnt sc_ev_tu;		/* Tx underrun */
@@ -481,6 +477,30 @@ const struct wm_product {
 	  NULL,
 	  0,			0 },
 };
+
+#ifdef WM_EVENT_COUNTERS
+#if WM_NTXSEGS != 16
+#error Update wm_txseg_evcnt_names
+#endif
+static const char *wm_txseg_evcnt_names[WM_NTXSEGS] = {
+	"txseg1",
+	"txseg2",
+	"txseg3",
+	"txseg4",
+	"txseg5",
+	"txseg6",
+	"txseg7",
+	"txseg8",
+	"txseg9",
+	"txseg10",
+	"txseg11",
+	"txseg12",
+	"txseg13",
+	"txseg14",
+	"txseg15",
+	"txseg16",
+};
+#endif /* WM_EVENT_COUNTERS */
 
 static const struct wm_product *
 wm_lookup(const struct pci_attach_args *pa)
@@ -793,6 +813,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = wm_watchdog;
 	ifp->if_init = wm_init;
 	ifp->if_stop = wm_stop;
+	IFQ_SET_MAXLEN(&ifp->if_snd, WM_IFQUEUELEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
@@ -838,18 +859,10 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_txtusum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txtusum");
 
-	evcnt_attach_dynamic(&sc->sc_ev_txseg1, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txseg1");
-	evcnt_attach_dynamic(&sc->sc_ev_txseg2, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txseg2");
-	evcnt_attach_dynamic(&sc->sc_ev_txseg3, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txseg3");
-	evcnt_attach_dynamic(&sc->sc_ev_txseg4, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txseg4");
-	evcnt_attach_dynamic(&sc->sc_ev_txseg5, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txseg5");
-	evcnt_attach_dynamic(&sc->sc_ev_txsegmore, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txsegmore");
+	for (i = 0; i < WM_NTXSEGS; i++)
+		evcnt_attach_dynamic(&sc->sc_ev_txseg[i], EVCNT_TYPE_MISC,
+		    NULL, sc->sc_dev.dv_xname, wm_txseg_evcnt_names[i]);
+
 	evcnt_attach_dynamic(&sc->sc_ev_txdrop, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txdrop");
 
@@ -954,7 +967,7 @@ wm_tx_cksum(struct wm_softc *sc, struct mbuf *m0, uint32_t *cmdp,
 
 	if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
 		WM_EVCNT_INCR(&sc->sc_ev_txtusum);
-		tcmd |= WTX_TCPIP_CMD_TCP;
+		tcmd |= htole32(WTX_TCPIP_CMD_TCP);
 		fields |= htole32(WTX_TXSM);
 		tucs = htole32(WTX_TCPIP_TUCSS(offset) |
 		    WTX_TCPIP_TUCSO(offset + m0->m_pkthdr.csum_data) |
@@ -966,7 +979,8 @@ wm_tx_cksum(struct wm_softc *sc, struct mbuf *m0, uint32_t *cmdp,
 	t = (struct livengood_tcpip_ctxdesc *) &sc->sc_txdescs[sc->sc_txnext];
 	t->tcpip_ipcs = ipcs;
 	t->tcpip_tucs = tucs;
-	t->tcpip_cmdlen = htole32(WTX_CMD_DEXT | WTX_DTYP_C) | tcmd;
+	t->tcpip_cmdlen =
+	    htole32(WTX_CMD_DEXT | WTX_CMD_IDE | WTX_DTYP_C) | tcmd;
 	t->tcpip_seg = 0;
 	WM_CDTXSYNC(sc, sc->sc_txnext, 1, BUS_DMASYNC_PREWRITE);
 
@@ -1096,28 +1110,7 @@ wm_start(struct ifnet *ifp)
 		    ("%s: TX: packet has %d DMA segments\n",
 		    sc->sc_dev.dv_xname, dmamap->dm_nsegs));
 
-#ifdef WM_EVENT_COUNTERS
-		switch (dmamap->dm_nsegs) {
-		case 1:
-			WM_EVCNT_INCR(&sc->sc_ev_txseg1);
-			break;
-		case 2:
-			WM_EVCNT_INCR(&sc->sc_ev_txseg2);
-			break;
-		case 3:
-			WM_EVCNT_INCR(&sc->sc_ev_txseg3);
-			break;
-		case 4:
-			WM_EVCNT_INCR(&sc->sc_ev_txseg4);
-			break;
-		case 5:
-			WM_EVCNT_INCR(&sc->sc_ev_txseg5);
-			break;
-		default:
-			WM_EVCNT_INCR(&sc->sc_ev_txsegmore);
-			break;
-		}
-#endif /* WM_EVENT_COUNTERS */
+		WM_EVCNT_INCR(&sc->sc_ev_txseg[dmamap->dm_nsegs - 1]);
 
 		/*
 		 * Set up checksum offload parameters for
@@ -1167,8 +1160,7 @@ wm_start(struct ifnet *ifp)
 		 * delay the interrupt.
 		 */
 		sc->sc_txdescs[lasttx].wtx_cmdlen |=
-		    htole32(WTX_CMD_EOP | WTX_CMD_IFCS | WTX_CMD_RS |
-		    WTX_CMD_RPS);
+		    htole32(WTX_CMD_EOP | WTX_CMD_IFCS | WTX_CMD_RS);
 		if (sc->sc_txsnext & WM_TXINTR_MASK)
 			sc->sc_txdescs[lasttx].wtx_cmdlen |=
 			    htole32(WTX_CMD_IDE);
@@ -1258,8 +1250,9 @@ wm_watchdog(struct ifnet *ifp)
 	wm_txintr(sc);
 
 	if (sc->sc_txfree != WM_NTXDESC) {
-		printf("%s: device timeout (txfree %d txsfree %d)\n",
-		    sc->sc_dev.dv_xname, sc->sc_txfree, sc->sc_txsfree);
+		printf("%s: device timeout (txfree %d txsfree %d txnext %d)\n",
+		    sc->sc_dev.dv_xname, sc->sc_txfree, sc->sc_txsfree,
+		    sc->sc_txnext);
 		ifp->if_oerrors++;
 
 		/* Reset the interface. */
