@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16.4.1 1999/06/21 00:57:01 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16.4.2 1999/08/06 15:10:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -168,5 +168,12 @@ struct pmap_physseg {
 	struct pv_head *pvhead; 	/* pv_head array */
 	short *attrs;			/* attrs array */
 };
+
+/*
+ * Parameters for Unified Buffer Cache.
+ */
+
+#define UBC_WINSIZE 8192
+#define UBC_NWINS 1024
 
 #endif

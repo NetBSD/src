@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10.6.1 1999/06/21 00:52:31 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.10.6.2 1999/08/06 15:10:27 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -255,5 +255,12 @@ struct pmap_physseg {
 	struct pv_entry *pvent;		/* pv table for this seg */
 	char *attrs;			/* page attributes for this seg */
 };
+
+/*
+ * Parameters for Unified Buffer Cache.
+ */
+
+#define UBC_WINSIZE 8192
+#define UBC_NWINS 1024
 
 #endif /* _MVME68K_VMPARAM_H_ */

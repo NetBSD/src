@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8.12.1 1999/06/21 00:58:59 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8.12.2 1999/08/06 15:10:28 chs Exp $	*/
 
 #include <mips/vmparam.h>
 
@@ -15,3 +15,10 @@
 
 /* pcb base */
 /*#define	pcbb(p)		((u_int)(p)->p_addr) */
+
+/*
+ * Parameters for Unified Buffer Cache.
+ */
+
+#define UBC_WINSIZE 8192
+#define UBC_NWINS 1024

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5.4.1 1999/06/21 01:02:34 thorpej Exp $ */
+/*	$NetBSD: vmparam.h,v 1.5.4.2 1999/08/06 15:10:29 chs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -150,3 +150,10 @@ struct vm_map;
 vaddr_t		dvma_mapin __P((struct vm_map *, vaddr_t, int, int));
 void		dvma_mapout __P((vaddr_t, vaddr_t, int));
 #endif
+
+/*
+ * Parameters for Unified Buffer Cache.
+ */
+
+#define UBC_WINSIZE 8192
+#define UBC_NWINS 1024

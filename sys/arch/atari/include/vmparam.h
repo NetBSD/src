@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.9.4.1 1999/06/21 00:48:36 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9.4.2 1999/08/06 15:10:26 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -177,4 +177,12 @@ struct pmap_physseg {
  * number of kernel PT pages (initial only, can grow dynamically)
  */
 #define VM_KERNEL_PT_PAGES	((vsize_t)4)		/* XXX: SYSPTSIZE */
+
+/*
+ * Parameters for Unified Buffer Cache.
+ */
+
+#define UBC_WINSIZE 8192
+#define UBC_NWINS 1024
+
 #endif /* !_MACHINE_VMPARAM_H_ */

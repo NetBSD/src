@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.24.4.1 1999/06/21 01:03:43 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.24.4.2 1999/08/06 15:10:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -158,5 +158,12 @@ struct pmap_physseg {
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+
+/*
+ * Parameters for Unified Buffer Cache.
+ */
+
+#define UBC_WINSIZE 8192
+#define UBC_NWINS 1024
 
 #endif
