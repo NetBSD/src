@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.1.1.1 1999/11/20 18:54:08 veego Exp $	*/
+/*	$NetBSD: gen.c,v 1.2 2000/03/01 10:50:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -382,6 +382,13 @@ default_map_rules(struct gen_p *irs) {
 
 static void
 init_map_rules(struct gen_p *irs, const char *conf_file) {
+#ifdef __NetBSD__
+	/*
+	 * We don't read irs.conf here.  It adds too much complexity to
+	 * the complex situation with "BIND4 in libc" + "BIND8 in userland"
+	 */
+	default_map_rules(irs);
+#else
 	char line[1024], pattern[40], mapname[20], accname[20], options[100];
 	FILE *conf;
 
@@ -426,4 +433,5 @@ init_map_rules(struct gen_p *irs, const char *conf_file) {
 		add_rule(irs, map, acc, options);
 	}
 	fclose(conf);
+#endif
 }

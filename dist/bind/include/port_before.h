@@ -1,4 +1,4 @@
-/*	$NetBSD: port_before.h,v 1.2 1999/11/20 19:14:30 veego Exp $	*/
+/*	$NetBSD: port_before.h,v 1.3 2000/03/01 10:50:00 itojun Exp $	*/
 
 /*
 #define WANT_IRS_NIS
@@ -12,5 +12,3 @@
 
 #define SETGRENT_VOID
 #define SETPWENT_VOID
-
-#include "namespace.h"
