@@ -35,67 +35,36 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)bit.h	5.3 (Berkeley) 6/1/90
- *	$Id: bit.h,v 1.3 1994/03/05 00:34:33 cgd Exp $
+ *	from: @(#)dir.h	5.4 (Berkeley) 12/28/90
+ *	$Id: dir.h,v 1.1 1994/03/05 00:34:43 cgd Exp $
  */
 
-/*
- * bit.h --
- *
- *	Definition of macros for setting and clearing bits in an array
- *	of integers.
- *
- *	It is assumed that "int" is 32 bits wide.
+/* dir.h --
  */
 
-#ifndef _BIT
-#define _BIT
+#ifndef	_DIR
+#define	_DIR
 
-#include "sprite.h"
+typedef struct Path {
+    char         *name;	    	/* Name of directory */
+    int	    	  refCount; 	/* Number of paths with this directory */
+    int		  hits;	    	/* the number of times a file in this
+				 * directory has been found */
+    Hash_Table    files;    	/* Hash table of files in directory */
+} Path;
 
-#define BIT_NUM_BITS_PER_INT	32
-#define BIT_NUM_BITS_PER_BYTE	8
+void Dir_Init __P((void));
+Boolean Dir_HasWildcards __P((char *));
+void Dir_Expand __P((char *, Lst, Lst));
+char *Dir_FindFile __P((char *, Lst));
+int Dir_MTime __P((GNode *));
+void Dir_AddDir __P((Lst, char *));
+char *Dir_MakeFlags __P((char *, Lst));
+void Dir_ClearPath __P((Lst));
+void Dir_Concat __P((Lst, Lst));
+void Dir_PrintDirectories __P((void));
+void Dir_PrintPath __P((Lst));
+void Dir_Destroy __P((Path *));
+ClientData Dir_CopyDir __P((Path *));
 
-#define Bit_NumInts(numBits)	\
-	(((numBits)+BIT_NUM_BITS_PER_INT -1)/BIT_NUM_BITS_PER_INT)
-
-#define Bit_NumBytes(numBits)	\
-	(Bit_NumInts(numBits) * sizeof(int))
-
-#define Bit_Alloc(numBits, bitArrayPtr)  	\
-        bitArrayPtr = (int *)malloc((unsigned)Bit_NumBytes(numBits)); \
-        Bit_Zero((numBits), (bitArrayPtr))
-
-#define Bit_Free(bitArrayPtr)	\
-        free((char *)bitArrayPtr)
-
-#define Bit_Set(numBits, bitArrayPtr) \
-	((bitArrayPtr)[(numBits)/BIT_NUM_BITS_PER_INT] |= \
-				(1 << ((numBits) % BIT_NUM_BITS_PER_INT)))
-
-#define Bit_IsSet(numBits, bitArrayPtr) \
-	((bitArrayPtr)[(numBits)/BIT_NUM_BITS_PER_INT] & \
-				(1 << ((numBits) % BIT_NUM_BITS_PER_INT)))
-
-#define Bit_Clear(numBits, bitArrayPtr) \
-	((bitArrayPtr)[(numBits)/BIT_NUM_BITS_PER_INT] &= \
-				~(1 << ((numBits) % BIT_NUM_BITS_PER_INT)))
-
-#define Bit_IsClear(numBits, bitArrayPtr) \
-	(!(Bit_IsSet((numBits), (bitArrayPtr))))
-
-#define Bit_Copy(numBits, srcArrayPtr, destArrayPtr) \
-	bcopy((char *)(srcArrayPtr), (char *)(destArrayPtr), \
-		Bit_NumBytes(numBits))
-
-#define Bit_Zero(numBits, bitArrayPtr) \
-	bzero((char *)(bitArrayPtr), Bit_NumBytes(numBits))
-
-extern int	  Bit_FindFirstSet();
-extern int	  Bit_FindFirstClear();
-extern Boolean	  Bit_Intersect();
-extern Boolean 	  Bit_Union();
-extern Boolean 	  Bit_AnySet();
-extern int  	  *Bit_Expand();
-	 
-#endif /* _BIT */
+#endif /* _DIR */

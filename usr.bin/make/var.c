@@ -37,8 +37,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)var.c	5.7 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: var.c,v 1.4 1994/01/13 21:02:09 jtc Exp $";
+/* from: static char sccsid[] = "@(#)var.c	5.7 (Berkeley) 6/1/90"; */
+static char *rcsid = "$Id: var.c,v 1.5 1994/03/05 00:35:17 cgd Exp $";
 #endif /* not lint */
 
 /*-
@@ -62,7 +62,8 @@ static char rcsid[] = "$Id: var.c,v 1.4 1994/01/13 21:02:09 jtc Exp $";
  *	Var_Value 	    Return the value of a variable in a context or
  *	    	  	    NULL if the variable is undefined.
  *
- *	Var_Subst 	    Substitute for all variables in a string using
+ *	Var_Subst 	    Substitute named variable, or all variables if
+ *			    NULL in a string using
  *	    	  	    the given context as the top-most one. If the
  *	    	  	    third argument is non-zero, Parse_Error is
  *	    	  	    called if any variables are undefined.
@@ -82,8 +83,6 @@ static char rcsid[] = "$Id: var.c,v 1.4 1994/01/13 21:02:09 jtc Exp $";
  * XXX: There's a lot of duplication in these functions.
  */
 
-#include    <stdio.h>
-#include    <stdlib.h>
 #include    <ctype.h>
 #include    "make.h"
 #include    "buf.h"
@@ -100,7 +99,7 @@ char 	var_Error[] = "";
  * set false. Why not just use a constant? Well, gcc likes to condense
  * identical string instances...
  */
-char	varNoError[] = "";
+static char	varNoError[] = "";
 
 /*
  * Internally, variables are contained in four different contexts.
@@ -137,6 +136,32 @@ typedef struct Var {
 				     * it. Used by Var_Parse for undefined,
 				     * modified variables */
 }  Var;
+
+typedef struct {
+    char    	  *lhs;	    /* String to match */
+    int	    	  leftLen;  /* Length of string */
+    char    	  *rhs;	    /* Replacement string (w/ &'s removed) */
+    int	    	  rightLen; /* Length of replacement */
+    int	    	  flags;
+#define VAR_SUB_GLOBAL	1   /* Apply substitution globally */
+#define VAR_MATCH_START	2   /* Match at start of word */
+#define VAR_MATCH_END	4   /* Match at end of word */
+#define VAR_NO_SUB	8   /* Substitution is non-global and already done */
+} VarPattern;
+
+static int VarCmp __P((Var *, char *));
+static Var *VarFind __P((char *, GNode *, int));
+static void VarAdd __P((char *, char *, GNode *));
+static Boolean VarHead __P((char *, Boolean, Buffer));
+static Boolean VarTail __P((char *, Boolean, Buffer));
+static Boolean VarSuffix __P((char *, Boolean, Buffer));
+static Boolean VarRoot __P((char *, Boolean, Buffer));
+static Boolean VarMatch __P((char *, Boolean, Buffer, char *));
+static Boolean VarSYSVMatch __P((char *, Boolean, Buffer, VarPattern *));
+static Boolean VarNoMatch __P((char *, Boolean, Buffer, char *));
+static Boolean VarSubstitute __P((char *, Boolean, Buffer, VarPattern *));
+static char *VarModify __P((char *, Boolean (*modProc )(), ClientData));
+static int VarPrintVar __P((Var *));
 
 /*-
  *-----------------------------------------------------------------------
@@ -291,7 +316,7 @@ VarFind (name, ctxt, flags)
  *	safely be freed.
  *-----------------------------------------------------------------------
  */
-static
+static void
 VarAdd (name, val, ctxt)
     char           *name;	/* name of variable to add */
     char           *val;	/* value to set it to */
@@ -304,7 +329,7 @@ VarAdd (name, val, ctxt)
 
     v->name = strdup (name);
 
-    len = strlen(val);
+    len = val ? strlen(val) : 0;
     v->val = Buf_Init(len+1);
     Buf_AddBytes(v->val, len, (Byte *)val);
 
@@ -434,7 +459,6 @@ Var_Append (name, val, ctxt)
     GNode          *ctxt;	/* Context in which this should occur */
 {
     register Var   *v;
-    register char  *cp;
 
     v = VarFind (name, ctxt, (ctxt == VAR_GLOBAL) ? FIND_ENV : 0);
 
@@ -446,7 +470,7 @@ Var_Append (name, val, ctxt)
 
 	if (DEBUG(VAR)) {
 	    printf("%s:%s = %s\n", ctxt->name, name,
-		   Buf_GetAll(v->val, (int *)NULL));
+		   (char *) Buf_GetAll(v->val, (int *)NULL));
 	}
 
 	if (v->flags & VAR_FROM_ENV) {
@@ -544,7 +568,7 @@ VarHead (word, addSpace, buf)
 {
     register char *slash;
 
-    slash = rindex (word, '/');
+    slash = strrchr (word, '/');
     if (slash != (char *)NULL) {
 	if (addSpace) {
 	    Buf_AddByte (buf, (Byte)' ');
@@ -594,7 +618,7 @@ VarTail (word, addSpace, buf)
 	Buf_AddByte (buf, (Byte)' ');
     }
 
-    slash = rindex (word, '/');
+    slash = strrchr (word, '/');
     if (slash != (char *)NULL) {
 	*slash++ = '\0';
 	Buf_AddBytes (buf, strlen(slash), (Byte *)slash);
@@ -628,7 +652,7 @@ VarSuffix (word, addSpace, buf)
 {
     register char *dot;
 
-    dot = rindex (word, '.');
+    dot = strrchr (word, '.');
     if (dot != (char *)NULL) {
 	if (addSpace) {
 	    Buf_AddByte (buf, (Byte)' ');
@@ -670,7 +694,7 @@ VarRoot (word, addSpace, buf)
 	Buf_AddByte (buf, (Byte)' ');
     }
 
-    dot = rindex (word, '.');
+    dot = strrchr (word, '.');
     if (dot != (char *)NULL) {
 	*dot = '\0';
 	Buf_AddBytes (buf, strlen (word), (Byte *)word);
@@ -715,6 +739,50 @@ VarMatch (word, addSpace, buf, pattern)
     return(addSpace);
 }
 
+
+
+/*-
+ *-----------------------------------------------------------------------
+ * VarSYSVMatch --
+ *	Place the word in the buffer if it matches the given pattern.
+ *	Callback function for VarModify to implement the System V %
+ *	modifiers.
+ *	
+ * Results:
+ *	TRUE if a space should be placed in the buffer before the next
+ *	word.
+ *
+ * Side Effects:
+ *	The word may be copied to the buffer.
+ *
+ *-----------------------------------------------------------------------
+ */
+static Boolean
+VarSYSVMatch (word, addSpace, buf, pat)
+    char    	  *word;    	/* Word to examine */
+    Boolean 	  addSpace; 	/* TRUE if need to add a space to the
+				 * buffer before adding the word, if it
+				 * matches */
+    Buffer  	  buf;	    	/* Buffer in which to store it */
+    VarPattern 	  *pat; 	/* Pattern the word must match */
+{
+    int len;
+    char *ptr;
+
+    if (addSpace)
+	Buf_AddByte(buf, (Byte)' ');
+
+    addSpace = TRUE;
+
+    if ((ptr = Str_SYSVMatch(word, pat->lhs, &len)) != NULL)
+	Str_SYSVSubst(buf, pat->rhs, ptr, len);
+    else
+	Buf_AddBytes(buf, strlen(word), (Byte *) word);
+
+    return(addSpace);
+}
+
+
 /*-
  *-----------------------------------------------------------------------
  * VarNoMatch --
@@ -749,17 +817,6 @@ VarNoMatch (word, addSpace, buf, pattern)
     return(addSpace);
 }
 
-typedef struct {
-    char    	  *lhs;	    /* String to match */
-    int	    	  leftLen;  /* Length of string */
-    char    	  *rhs;	    /* Replacement string (w/ &'s removed) */
-    int	    	  rightLen; /* Length of replacement */
-    int	    	  flags;
-#define VAR_SUB_GLOBAL	1   /* Apply substitution globally */
-#define VAR_MATCH_START	2   /* Match at start of word */
-#define VAR_MATCH_END	4   /* Match at end of word */
-#define VAR_NO_SUB	8   /* Substitution is non-global and already done */
-} VarPattern;
 
 /*-
  *-----------------------------------------------------------------------
@@ -968,16 +1025,15 @@ VarModify (str, modProc, datum)
     cp = str;
     addSpace = FALSE;
     
-    while (1) {
+    for (;;) {
 	/*
 	 * Skip to next word and place cp at its end.
 	 */
 	while (isspace (*str)) {
 	    str++;
 	}
-	for (cp = str; *cp != '\0' && !isspace (*cp); cp++) {
-	    /* void */ ;
-	}
+	for (cp = str; *cp != '\0' && !isspace (*cp); cp++) 
+	    continue;
 	if (cp == str) {
 	    /*
 	     * If we didn't go anywhere, we must be done!
@@ -1258,8 +1314,8 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
      * return.
      */
     str = (char *)Buf_GetAll(v->val, (int *)NULL);
-    if (index (str, '$') != (char *)NULL) {
-	str = Var_Subst(str, ctxt, err);
+    if (strchr (str, '$') != (char *)NULL) {
+	str = Var_Subst(NULL, str, ctxt, err);
 	*freePtr = TRUE;
     }
     
@@ -1353,8 +1409,6 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    VarPattern 	    pattern;
 		    register char   delim;
 		    Buffer  	    buf;    	/* Buffer for patterns */
-		    register char   *cp2;
-		    int	    	    lefts;
 
 		    pattern.flags = 0;
 		    delim = tstr[1];
@@ -1580,9 +1634,8 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			 * Now we break this sucker into the lhs and
 			 * rhs. We must null terminate them of course.
 			 */
-			for (cp = tstr; *cp != '='; cp++) {
-			    ;
-			}
+			for (cp = tstr; *cp != '='; cp++)
+			    continue;
 			pattern.lhs = tstr;
 			pattern.leftLen = cp - tstr;
 			*cp++ = '\0';
@@ -1598,9 +1651,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			 * SYSV modifications happen through the whole
 			 * string. Note the pattern is anchored at the end.
 			 */
-			pattern.flags |= VAR_SUB_GLOBAL|VAR_MATCH_END;
-
-			newStr = VarModify(str, VarSubstitute,
+			newStr = VarModify(str, VarSYSVMatch,
 					   (ClientData)&pattern);
 
 			/*
@@ -1613,9 +1664,8 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			Error ("Unknown modifier '%c'\n", *tstr);
 			for (cp = tstr+1;
 			     *cp != ':' && *cp != endc && *cp != '\0';
-			     cp++) {
-				 ;
-			}
+			     cp++) 
+				 continue;
 			termc = *cp;
 			newStr = var_Error;
 		    }
@@ -1700,8 +1750,9 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
  *-----------------------------------------------------------------------
  */
 char *
-Var_Subst (str, ctxt, undefErr)
-    register char *str;	    	    /* the string in which to substitute */
+Var_Subst (var, str, ctxt, undefErr)
+    char	  *var;		    /* Named variable || NULL for all */
+    char 	  *str;	    	    /* the string in which to substitute */
     GNode         *ctxt;	    /* the context wherein to find variables */
     Boolean 	  undefErr; 	    /* TRUE if undefineds are an error */
 {
@@ -1713,11 +1764,11 @@ Var_Subst (str, ctxt, undefErr)
 				     * been reported to prevent a plethora
 				     * of messages when recursing */
 
-    buf = Buf_Init (BSIZE);
+    buf = Buf_Init (MAKE_BSIZE);
     errorReported = FALSE;
 
     while (*str) {
-	if ((*str == '$') && (str[1] == '$')) {
+	if (var == NULL && (*str == '$') && (str[1] == '$')) {
 	    /*
 	     * A dollar sign may be escaped either with another dollar sign.
 	     * In such a case, we skip over the escape character and store the
@@ -1733,11 +1784,65 @@ Var_Subst (str, ctxt, undefErr)
 	     */
 	    char  *cp;
 
-	    for (cp = str++; *str != '$' && *str != '\0'; str++) {
-		;
-	    }
+	    for (cp = str++; *str != '$' && *str != '\0'; str++)
+		continue;
 	    Buf_AddBytes(buf, str - cp, (Byte *)cp);
 	} else {
+	    if (var != NULL) {
+		int expand;
+		for (;;) {
+		    if (str[1] != '(' && str[1] != '{') {
+			if (str[1] != *var) {
+			    Buf_AddBytes(buf, 2, (Byte *) str);
+			    str += 2;
+			    expand = FALSE;
+			}
+			else
+			    expand = TRUE;
+			break;
+		    }
+		    else {
+			char *p;
+
+			/*
+			 * Scan up to the end of the variable name.
+			 */
+			for (p = &str[2]; *p && 
+			     *p != ':' && *p != ')' && *p != '}'; p++)
+			    if (*p == '$') 
+				break;
+			/*
+			 * A variable inside the variable. We cannot expand
+			 * the external variable yet, so we try again with
+			 * the nested one
+			 */
+			if (*p == '$') {
+			    Buf_AddBytes(buf, p - str, (Byte *) str);
+			    str = p;
+			    continue;
+			}
+				
+			if (strncmp(var, str + 2, p - str - 2) != 0 || 
+			    var[p - str - 2] != '\0') {
+			    /*
+			     * Not the variable we want to expand, scan
+			     * until the next variable
+			     */
+			    for (;*p != '$' && *p != '\0'; p++) 
+				continue;
+			    Buf_AddBytes(buf, p - str, (Byte *) str);
+			    str = p;
+			    expand = FALSE;
+			}
+			else
+			    expand = TRUE;
+			break;
+		    }
+		}
+		if (!expand)
+		    continue;
+	    }
+			
 	    val = Var_Parse (str, ctxt, undefErr, &length, &doFree);
 
 	    /*
@@ -1860,11 +1965,11 @@ Var_Init ()
 }
 
 /****************** PRINT DEBUGGING INFO *****************/
-static
+static int
 VarPrintVar (v)
     Var            *v;
 {
-    printf ("%-16s = %s\n", v->name, Buf_GetAll(v->val, (int *)NULL));
+    printf ("%-16s = %s\n", v->name, (char *) Buf_GetAll(v->val, (int *)NULL));
     return (0);
 }
 
@@ -1874,6 +1979,7 @@ VarPrintVar (v)
  *	print all variables in a context
  *-----------------------------------------------------------------------
  */
+void
 Var_Dump (ctxt)
     GNode          *ctxt;
 {

@@ -43,8 +43,8 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)main.c	5.25 (Berkeley) 4/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.12 1994/01/13 21:01:55 jtc Exp $";
+/* from: static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91"; */
+static char *rcsid = "$Id: main.c,v 1.13 1994/03/05 00:34:53 cgd Exp $";
 #endif /* not lint */
 
 /*-
@@ -74,16 +74,24 @@ static char rcsid[] = "$Id: main.c,v 1.12 1994/01/13 21:01:55 jtc Exp $";
  *				exiting.
  */
 
+#include <sys/types.h>
+#include <sys/time.h>
 #include <sys/param.h>
+#include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <stdlib.h>
+#if __STDC__
+#include <stdarg.h>
+#else
 #include <varargs.h>
-#include <unistd.h>
+#endif
 #include "make.h"
+#include "hash.h"
+#include "dir.h"
+#include "job.h"
 #include "pathnames.h"
 
 #ifndef	DEFMAXLOCAL
@@ -99,8 +107,9 @@ Boolean			allPrecious;	/* .PRECIOUS given on line by itself */
 
 static Boolean		noBuiltins;	/* -r flag */
 static Lst		makefiles;	/* ordered list of makefiles to read */
-int			maxJobs;	/* -j argument */
+int			maxJobs;	/* -J argument */
 static int		maxLocal;	/* -L argument */
+Boolean			compatMake;	/* -B argument */
 Boolean			debug;		/* -d flag */
 Boolean			noExecute;	/* -n flag */
 Boolean			keepgoing;	/* -k flag */
@@ -114,9 +123,10 @@ Boolean			checkEnvFirst;	/* -e flag */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 
 static Boolean		ReadMakefile();
+static void		usage();
 
-static char *curdir;			/* pathname of dir where make ran */
-static int obj_is_elsewhere;		/* if chdir'd for an architecture */
+static char *curdir;			/* startup directory */
+static char *objdir;			/* where we chdir'ed to */
 
 /*-
  * MainParseArgs --
@@ -139,12 +149,15 @@ MainParseArgs(argc, argv)
 {
 	extern int optind;
 	extern char *optarg;
-	register int i;
-	register char *cp;
 	char c;
 
 	optind = 1;	/* since we're called more than once */
-rearg:	while((c = getopt(argc, argv, "D:I:Sd:ef:ij:knqrst")) != EOF) {
+#ifdef notyet
+# define OPTFLAGS "BD:I:L:PSd:ef:ij:knqrst"
+#else
+# define OPTFLAGS "D:I:d:ef:ij:knqrst"
+#endif
+rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 		switch(c) {
 		case 'D':
 			Var_Set(optarg, "1", VAR_GLOBAL);
@@ -156,7 +169,10 @@ rearg:	while((c = getopt(argc, argv, "D:I:Sd:ef:ij:knqrst")) != EOF) {
 			Var_Append(MAKEFLAGS, "-I", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
-#ifdef notdef
+#ifdef notyet
+		case 'B':
+			compatMake = TRUE;
+			break;
 		case 'L':
 			maxLocal = atoi(optarg);
 			Var_Append(MAKEFLAGS, "-L", VAR_GLOBAL);
@@ -166,11 +182,11 @@ rearg:	while((c = getopt(argc, argv, "D:I:Sd:ef:ij:knqrst")) != EOF) {
 			usePipes = FALSE;
 			Var_Append(MAKEFLAGS, "-P", VAR_GLOBAL);
 			break;
-#endif
 		case 'S':
 			keepgoing = FALSE;
 			Var_Append(MAKEFLAGS, "-S", VAR_GLOBAL);
 			break;
+#endif
 		case 'd': {
 			char *modules = optarg;
 
@@ -187,6 +203,9 @@ rearg:	while((c = getopt(argc, argv, "D:I:Sd:ef:ij:knqrst")) != EOF) {
 					break;
 				case 'd':
 					debug |= DEBUG_DIR;
+					break;
+				case 'f':
+					debug |= DEBUG_FOR;
 					break;
 				case 'g':
 					if (modules[1] == '1') {
@@ -284,10 +303,10 @@ rearg:	while((c = getopt(argc, argv, "D:I:Sd:ef:ij:knqrst")) != EOF) {
 			if (!**argv)
 				Punt("illegal (null) argument.");
 			if (**argv == '-') {
-/* 17 Mar 92*/			if ((*argv)[1])
-/* 17 Mar 92*/				optind = 0;	/* -flag... */
-/* 17 Mar 92*/			else
-/* 17 Mar 92*/				optind = 1;	/* - */
+				if ((*argv)[1])
+					optind = 0;     /* -flag... */
+				else
+					optind = 1;     /* - */
 				goto rearg;
 			}
 			(void)Lst_AtEnd(create, (ClientData)*argv);
@@ -318,7 +337,8 @@ Main_ParseArgLine(line)
 
 	if (line == NULL)
 		return;
-	for (; *line == ' '; ++line);
+	for (; *line == ' '; ++line)
+		continue;
 	if (!*line)
 		return;
 
@@ -343,15 +363,42 @@ Main_ParseArgLine(line)
  * Side Effects:
  *	The program exits when done. Targets are created. etc. etc. etc.
  */
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
 	Lst targs;	/* target nodes to create -- passed to Make_Init */
-	Boolean outOfDate; 	/* FALSE if all targets up to date */
-	struct stat sb;
-	char mdpath[MAXPATHLEN + 1], *p, *path, *getenv();
-	char objpath[MAXPATHLEN + 1];
+	Boolean outOfDate = TRUE; 	/* FALSE if all targets up to date */
+	struct stat sb, sa;
+	char *p, *path, *pwd, *getenv(), *getwd();
+	char mdpath[MAXPATHLEN + 1];
+	char obpath[MAXPATHLEN + 1];
+	char cdpath[MAXPATHLEN + 1];
+
+	/*
+	 * Find where we are and take care of PWD for the automounter...
+	 * All this code is so that we know where we are when we start up
+	 * on a different machine with pmake.
+	 */
+	curdir = cdpath;
+	if (getwd(curdir) == NULL) {
+		(void)fprintf(stderr, "make: %s.\n", curdir);
+		exit(2);
+	}
+
+	if (stat(curdir, &sa) == -1) {
+	    (void)fprintf(stderr, "make: %s: %s.\n",
+			  curdir, strerror(errno));
+	    exit(2);
+	}
+
+	if ((pwd = getenv("PWD")) != NULL) {
+	    if (stat(pwd, &sb) == 0 && sa.st_ino == sb.st_ino &&
+		sa.st_dev == sb.st_dev) 
+		(void) strcpy(curdir, pwd);
+	}
+
 
 	/*
 	 * if the MAKEOBJDIR (or by default, the _PATH_OBJDIR) directory
@@ -362,33 +409,50 @@ main(argc, argv)
 	 */
 	if (!(path = getenv("MAKEOBJDIR"))) {
 		path = _PATH_OBJDIR;
-		snprintf(mdpath, MAXPATHLEN + 1, "%s.%s", path, MACHINE);
-	} else {
-		strncpy(mdpath, path, MAXPATHLEN + 1);
+		(void) sprintf(mdpath, "%s.%s", path, MACHINE);
 	}
+	else
+		(void) strncpy(mdpath, path, MAXPATHLEN + 1);
+	
+	if (stat(mdpath, &sb) == 0 && S_ISDIR(sb.st_mode)) {
 
-	curdir = emalloc((u_int)MAXPATHLEN + 1);
-	if (!getwd(curdir)) {
-		(void)fprintf(stderr, "make: %s.\n", curdir);
-		exit(2);
-	}
-	if (!lstat(mdpath, &sb)) {
-		snprintf(objpath, MAXPATHLEN + 1, "%s/%s", curdir, mdpath);
-		if (chdir(mdpath))
+		if (chdir(mdpath)) {
 			(void)fprintf(stderr, "make warning: %s: %s.\n",
-			    mdpath, strerror(errno));
-		else
-			obj_is_elsewhere = 1;
-	} else {
-		if (!lstat(path, &sb)) {
-			snprintf(objpath, MAXPATHLEN + 1, "%s/%s", curdir, path);
-			if (chdir(path))
-				(void)fprintf(stderr, "make warning: %s: %s.\n",
-				    path, strerror(errno));
+				      mdpath, strerror(errno));
+			objdir = curdir;
+		}
+		else {
+			if (mdpath[0] != '/') {
+				(void) sprintf(obpath, "%s/%s", curdir, mdpath);
+				objdir = obpath;
+			}
 			else
-				obj_is_elsewhere = 1;
+				objdir = mdpath;
 		}
 	}
+	else {
+		if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
+
+			if (chdir(path)) {
+				(void)fprintf(stderr, "make warning: %s: %s.\n",
+					      path, strerror(errno));
+				objdir = curdir;
+			}
+			else {
+				if (path[0] != '/') {
+					(void) sprintf(obpath, "%s/%s", curdir,
+						       path);
+					objdir = obpath;
+				}
+				else
+					objdir = obpath;
+			}
+		}
+		else
+			objdir = curdir;
+	}
+
+	setenv("PWD", objdir, 1);
 
 	create = Lst_Init(FALSE);
 	makefiles = Lst_Init(FALSE);
@@ -406,7 +470,13 @@ main(argc, argv)
 
 	maxJobs = DEFMAXJOBS;		/* Set default max concurrency */
 	maxLocal = DEFMAXLOCAL;		/* Set default local max concurrency */
+#ifdef notyet
+	compatMake = FALSE;		/* No compat mode */
+#else
+	compatMake = TRUE;		/* No compat mode */
+#endif
     
+
 	/*
 	 * Initialize the parsing, directory and variable modules to prepare
 	 * for the reading of inclusion paths and variable settings on the
@@ -418,11 +488,10 @@ main(argc, argv)
 				 * directories */
 	Var_Init();		/* As well as the lists of variables for
 				 * parsing arguments */
-
-	if (obj_is_elsewhere)
+	if (objdir != curdir)
 		Dir_AddDir(dirSearchPath, curdir);
 	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
-	Var_Set(".OBJDIR", obj_is_elsewhere?objpath:curdir, VAR_GLOBAL);
+	Var_Set(".OBJDIR", objdir, VAR_GLOBAL);
 
 	/*
 	 * Initialize various variables.
@@ -433,8 +502,12 @@ main(argc, argv)
 	Var_Set("MAKE", argv[0], VAR_GLOBAL);
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
 	Var_Set("MFLAGS", "", VAR_GLOBAL);
+#ifdef MACHINE
 	Var_Set("MACHINE", MACHINE, VAR_GLOBAL);
+#endif
+#ifdef MACHINE_ARCH
 	Var_Set("MACHINE_ARCH", MACHINE_ARCH, VAR_GLOBAL);
+#endif
 
 	/*
 	 * First snag any flags out of the MAKE environment variable.
@@ -499,7 +572,7 @@ main(argc, argv)
 	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL), VAR_GLOBAL);
 
 	/* Install all the flags into the MAKE envariable. */
-	if ((p = Var_Value(MAKEFLAGS, VAR_GLOBAL)) && *p)
+	if (((p = Var_Value(MAKEFLAGS, VAR_GLOBAL)) != NULL) && *p)
 #ifdef POSIX
 		setenv("MAKEFLAGS", p, 1);
 #else
@@ -521,11 +594,12 @@ main(argc, argv)
 		 */
 		static char VPATH[] = "${VPATH}";
 
-		vpath = Var_Subst(VPATH, VAR_CMD, FALSE);
+		vpath = Var_Subst(NULL, VPATH, VAR_CMD, FALSE);
 		path = vpath;
 		do {
 			/* skip to end of directory */
-			for (cp = path; *cp != ':' && *cp != '\0'; cp++);
+			for (cp = path; *cp != ':' && *cp != '\0'; cp++)
+				continue;
 			/* Save terminator character so know when to stop */
 			savec = *cp;
 			*cp = '\0';
@@ -561,7 +635,7 @@ main(argc, argv)
  * this was original amMake -- want to allow parallelism, so put this
  * back in, eventually.
  */
-	if (0) {
+	if (!compatMake) {
 		/*
 		 * Initialize job module before traversing the graph, now that
 		 * any .BEGIN and .END targets have been read.  This is done
@@ -589,9 +663,9 @@ main(argc, argv)
 		Targ_PrintGraph(2);
 
 	if (queryFlag && outOfDate)
-		exit(1);
+		return(1);
 	else
-		exit(0);
+		return(0);
 }
 
 /*-
@@ -616,12 +690,12 @@ ReadMakefile(fname)
 		Parse_File("(stdin)", stdin);
 		Var_Set("MAKEFILE", "", VAR_GLOBAL);
 	} else {
-		if (stream = fopen(fname, "r"))
+		if ((stream = fopen(fname, "r")) != NULL)
 			goto found;
 		/* if we've chdir'd, rebuild the path name */
-		if (obj_is_elsewhere && *fname != '/') {
+		if (curdir != objdir && *fname != '/') {
 			(void)sprintf(path, "%s/%s", curdir, fname);
-			if (stream = fopen(path, "r")) {
+			if ((stream = fopen(path, "r")) != NULL) {
 				fname = path;
 				goto found;
 			}
@@ -657,14 +731,22 @@ found:		Var_Set("MAKEFILE", fname, VAR_GLOBAL);
  */
 /* VARARGS */
 void
+#if __STDC__
+Error(char *fmt, ...)
+#else
 Error(va_alist)
 	va_dcl
+#endif
 {
 	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
 	char *fmt;
 
 	va_start(ap);
 	fmt = va_arg(ap, char *);
+#endif
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
@@ -684,17 +766,25 @@ Error(va_alist)
  */
 /* VARARGS */
 void
+#if __STDC__
+Fatal(char *fmt, ...)
+#else
 Fatal(va_alist)
 	va_dcl
+#endif
 {
 	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
 	char *fmt;
-
-	if (jobsRunning)
-		Job_Wait();
 
 	va_start(ap);
 	fmt = va_arg(ap, char *);
+#endif
+	if (jobsRunning)
+		Job_Wait();
+
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
@@ -718,15 +808,24 @@ Fatal(va_alist)
  */
 /* VARARGS */
 void
+#if __STDC__
+Punt(char *fmt, ...)
+#else
 Punt(va_alist)
 	va_dcl
+#endif
 {
 	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
 	char *fmt;
 
-	(void)fprintf(stderr, "make: ");
 	va_start(ap);
 	fmt = va_arg(ap, char *);
+#endif
+
+	(void)fprintf(stderr, "make: ");
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
@@ -792,6 +891,7 @@ emalloc(len)
  * enomem --
  *	die when out of memory.
  */
+void
 enomem()
 {
 	(void)fprintf(stderr, "make: %s.\n", strerror(errno));
@@ -802,6 +902,7 @@ enomem()
  * usage --
  *	exit with usage message
  */
+static void
 usage()
 {
 	(void)fprintf(stderr,
