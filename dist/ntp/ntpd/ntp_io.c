@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.4 2002/01/02 20:47:37 martin Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.5 2002/01/03 11:22:07 martin Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -446,7 +446,7 @@ create_sockets(
 			continue;
 		}
 # endif /* SYS_WINNT */
-		memcpy(&ifreq, ifr, sizeof ifreq);
+		ifreq = *ifr;
 		inter_list[i].flags = 0;
 		/* is it broadcast capable? */
 # ifndef SYS_WINNT
