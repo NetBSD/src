@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.50 2001/11/13 13:14:39 lukem Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.51 2001/12/14 00:13:45 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.50 2001/11/13 13:14:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.51 2001/12/14 00:13:45 mjacob Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -621,13 +621,13 @@ isp_dog(void *arg)
 			XS_CMD_S_CLEAR(xs);
 			isp_done(xs);
 		} else {
-			u_int16_t iptr, optr;
-			ispreq_t *mp;
+			u_int16_t nxti, optr;
+			ispreq_t local, *mp = &local, *qe;
 			isp_prt(isp, ISP_LOGDEBUG2,
 			    "possible command timeout on handle %x", handle);
 			XS_CMD_C_WDOG(xs);
 			callout_reset(&xs->xs_callout, hz, isp_dog, xs);
-			if (isp_getrqentry(isp, &iptr, &optr, (void **) &mp)) {
+			if (isp_getrqentry(isp, &nxti, &optr, (void **) &qe)) {
 				ISP_UNLOCK(isp);
 				return;
 			}
@@ -637,8 +637,8 @@ isp_dog(void *arg)
 			mp->req_header.rqs_entry_type = RQSTYPE_MARKER;
 			mp->req_modifier = SYNC_ALL;
 			mp->req_target = XS_CHANNEL(xs) << 7;
-			ISP_SWIZZLE_REQUEST(isp, mp);
-			ISP_ADD_REQUEST(isp, iptr);
+			isp_put_request(isp, mp, qe);
+			ISP_ADD_REQUEST(isp, nxti);
 		}
 	} else {
 		isp_prt(isp, ISP_LOGDEBUG0, "watchdog with no command");
