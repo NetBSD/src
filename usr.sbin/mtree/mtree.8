@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.22 2001/10/08 00:53:30 lukem Exp $
+.\"	$NetBSD: mtree.8,v 1.23 2001/10/09 04:50:01 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd October 6, 2001
+.Dd October 9, 2001
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -213,6 +213,75 @@ The checksum of the file using the default algorithm specified by
 the
 .Xr cksum 1
 utility.
+.It Sy device
+The device number to use for
+.Sy block
+or
+.Sy char
+file types.
+The argument must be one of the following forms:
+.Pp
+.Bl -tag -width 4n
+.It Xo
+.Sm off
+.Ar format ,
+.Ar major ,
+.Ar minor
+.Sm on
+.Xc
+A device with
+.Ar major
+and
+.Ar minor
+fields, for an operating system specified with
+.Ar format .
+See below for valid formats.
+.It Xo
+.Sm off
+.Ar format ,
+.Ar major ,
+.Ar unit ,
+.Ar subunit
+.Sm on
+.Xc
+A device with
+.Ar major ,
+.Ar unit ,
+and
+.Ar subunit
+fields, for an operating system specified with
+.Ar format .
+(Currently this is only supported by the
+.Sy bsdos
+format.)
+.It Ar number
+Opaque number (as stored on the file system).
+.El
+.Pp
+The following values for
+.Ar format
+are recognized:
+.Sy native ,
+.Sy 386bsd ,
+.Sy 4bsd ,
+.Sy bsdos ,
+.Sy freebsd ,
+.Sy hpux ,
+.Sy isc ,
+.Sy linux ,
+.Sy netbsd ,
+.Sy osf1 ,
+.Sy sco ,
+.Sy solaris ,
+.Sy sunos ,
+.Sy svr3 ,
+.Sy svr4 ,
+and
+.Sy ultrix .
+.Pp
+See
+.Xr mknod 8
+for more details.
 .It Sy flags
 The file flags as a symbolic name.  See
 .Xr chflags 1
@@ -415,7 +484,8 @@ for distributions and other such things.
 .Xr stat 2 ,
 .Xr fts 3 ,
 .Xr strsvis 3 ,
-.Xr chown 8
+.Xr chown 8 ,
+.Xr mknod 8
 .Sh HISTORY
 The
 .Nm
@@ -441,7 +511,8 @@ flags
 appeared in
 .Nx 1.4 .
 The
-.Sy tags
+.Sy device ,
+.Sy tags ,
 and
 .Sy all
 keywords,
