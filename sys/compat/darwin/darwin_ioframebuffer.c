@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.9 2003/05/15 23:35:37 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.10 2003/05/22 22:07:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,20 +37,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.9 2003/05/15 23:35:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.10 2003/05/22 22:07:38 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/queue.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_object.h>
+#include <uvm/uvm_device.h>
 #include <uvm/uvm_map.h>
 #include <uvm/uvm.h>
+
+#include <dev/wscons/wsconsio.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
@@ -60,6 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.9 2003/05/15 23:35:37 man
 
 #include <compat/darwin/darwin_iokit.h>
 #include <compat/darwin/darwin_ioframebuffer.h>
+
+#include "ioconf.h"
+
+/* Redefined from sys/dev/wscons/wsdisplay.c */
+extern const struct cdevsw wsdisplay_cdevsw;
+#define WSDISPLAYMINOR(unit, screen)        (((unit) << 8) | (screen))
 
 static struct uvm_object *darwin_ioframebuffer_shmem = NULL;
 static void darwin_ioframebuffer_shmeminit(vaddr_t);
@@ -88,6 +100,7 @@ struct mach_iokit_devclass darwin_ioframebuffer_devclass = {
 	darwin_ioframebuffer_connect_method_scalari_scalaro,
 	darwin_ioframebuffer_connect_method_scalari_structo,
 	darwin_ioframebuffer_connect_method_structi_structo,
+	darwin_ioframebuffer_connect_method_scalari_structi,
 	darwin_ioframebuffer_connect_map_memory,
 	"IOFramebuffer",
 };
@@ -105,10 +118,6 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 
 #ifdef DEBUG_DARWIN
 	printf("darwin_ioframebuffer_connect_method_scalari_scalaro()\n");
-	printf("select = %d, incount = %d, in0 = %d, in1 = %d, in2 = %d\n",
-		req->req_selector, req->req_incount, req->req_in[0],
-		req->req_in[1], req->req_in[2]);
-	printf("outcount = %d\n", req->req_in[req->req_incount]);
 #endif
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -122,16 +131,19 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 	switch (req->req_selector) {
 	case DARWIN_IOFBCREATESHAREDCURSOR: {
 		/* Create the shared memory containing cursor information */
-#if 0 /* Avoid warning for unused vars */
-		int shmemvers = req->req_in[0]; /* 0x2 */
-		int maxwidth = req->req_in[1];	/* 0x20 */
-		int maxheight = req->req_in[2]; /* 0x20 */
-#endif
+		int shmemvers;
+		int maxwidth;
+		int maxheight;
 		size_t memsize;
 		vaddr_t kvaddr;
 
+		shmemvers = req->req_in[0]; /* 0x2 */
+		maxwidth = req->req_in[1];  /* 0x20 */
+		maxheight = req->req_in[2]; /* 0x20 */
 #ifdef DEBUG_DARWIN
-		printf("DARWIN_IOFBCREATESHAREDCURSOR\n");
+		printf("DARWIN_IOFBCREATESHAREDCURSOR: shmemvers = %d, "
+		    "maxwidth = %d, maxheight = %d\n", shmemvers, 
+		    maxwidth, maxheight);
 #endif
 		if (darwin_ioframebuffer_shmem == NULL) {
 			memsize = 
@@ -164,6 +176,34 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 		break;
 	}
 
+	case DARWIN_IOFBSETSTARTUPDISPLAYMODE: {
+		darwin_iodisplaymodeid mode;
+		darwin_ioindex depth;
+
+		mode = req->req_in[0];
+		depth = req->req_in[1];
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOFBSETSTARTUPDISPLAYMODE: mode = %d, "
+		    "depth = %d\n", mode, depth);
+#endif
+		/* Nothing for now */
+		break;
+	}
+
+	case DARWIN_IOFBSETDISPLAYMODE: {
+		darwin_iodisplaymodeid mode;
+		darwin_ioindex depth;
+
+		mode = req->req_in[0];
+		depth = req->req_in[1];
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOFBSETDISPLAYMODE: mode = %d, "
+		    "depth = %d\n", mode, depth);
+#endif
+		/* Nothing for now */
+		break;
+	}
+
 	case DARWIN_IOFBGETCURRENTDISPLAYMODE: {
 		/* Get current display mode and depth. No input args */
 
@@ -175,16 +215,17 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 
 		rep->rep_outcount = 2;
 		rep->rep_out[0] = 0x2e; /* mode XXX */
-		rep->rep_out[1] = 2; /* depth  (0=>8b 1=>15b 2=>24b) */
+		rep->rep_out[1] = 0; /* depth  (0=>8b 1=>15b 2=>24b) */
 		break;
 	}
 
 	case DARWIN_IOFBGETATTRIBUTE: {
 		/* Get attribute value */
-		char *name = (char *)&req->req_in[0];
+		char *name;
 
+		name = (char *)&req->req_in[0];
 #ifdef DEBUG_DARWIN
-		printf("DARWIN_IOFBGETATTRIBUTE\n");
+		printf("DARWIN_IOFBGETATTRIBUTE: name = %s\n", name);
 #endif
 
 		/* We only heard about the mrdf attribute. What is it? */
@@ -206,12 +247,12 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 	}
 
 	case DARWIN_IOFBGETVRAMMAPOFFSET: {
-#if 0 /* Avoid warning for unused vars */
 		darwin_iopixelaperture aperture; /* 0 XXX Current aperture? */
-#endif
 
+		aperture = req->req_in[0];
 #ifdef DEBUG_DARWIN
-		printf("DARWIN_IOFBGETVRAMMAPOFFSET\n");
+		printf("DARWIN_IOFBGETVRAMMAPOFFSET: aperture = %d\n", 
+		    aperture);
 #endif
 		if (maxoutcount < 1)	
 			return mach_msg_error(args, EINVAL);
@@ -247,10 +288,6 @@ darwin_ioframebuffer_connect_method_scalari_structo(args)
 
 #ifdef DEBUG_DARWIN
 	printf("darwin_ioframebuffer_connect_method_scalari_structo()\n");
-	printf("select = %d, incount = %d, in0 = %d, in1 = %d, in2 = %d\n",
-		req->req_selector, req->req_incount, req->req_in[0],
-		req->req_in[1], req->req_in[2]);
-	printf("outcount = %d\n", req->req_in[req->req_incount]);
 #endif
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -264,17 +301,18 @@ darwin_ioframebuffer_connect_method_scalari_structo(args)
 	switch(req->req_selector) {
 	case DARWIN_IOFBGETPIXELINFORMATION: {
 		/* Get bit per pixel, etc... */
-#if 0 /* Avoid warning for unused vars */
-		darwin_iodisplaymodeid displaymode = req->req_in[0]; /* 0x2e */
-#endif
-		darwin_ioindex depth = req->req_in[1]; /* 0 or 1 */
-#if 0 /* Avoid warning for unused vars */
-		darwin_iopixelaperture aperture = req->req_in[2]; /* 0 */
-#endif
+		darwin_iodisplaymodeid displaymode;
+		darwin_ioindex depth;
+		darwin_iopixelaperture aperture;
 		darwin_iopixelinformation *pixelinfo;
 
+		displaymode = req->req_in[0]; /* 0x2e */
+		depth = req->req_in[1]; /* 0 or 1 */
+		aperture = req->req_in[2]; /* 0 */
 #ifdef DEBUG_DARWIN
-		printf("DARWIN_IOFBGETPIXELINFORMATION\n");
+		printf("DARWIN_IOFBGETPIXELINFORMATION: displaymode = %d, "
+		    "depth = %d, aperture = %d\n", displaymode, depth, 
+		    aperture);
 #endif
 		pixelinfo = (darwin_iopixelinformation *)&rep->rep_out[0];
 
@@ -425,7 +463,82 @@ darwin_ioframebuffer_connect_map_memory(args)
 #endif
 		break;
 
-	case DARWIN_IOFRAMEBUFFER_SYSTEM_APERTURE:
+	case DARWIN_IOFRAMEBUFFER_SYSTEM_APERTURE: {
+		struct device *dv;
+		int major, minor;
+		dev_t device;
+		int screen;
+		struct uvm_object *udo;
+		struct wsdisplay_fbinfo *fbi;
+
+		/* Find the first wsdisplay available */
+		TAILQ_FOREACH(dv, &alldevs, dv_list)
+			if (dv->dv_cfdriver == &wsdisplay_cd)
+				break;
+		if (dv == NULL) {
+#ifdef DEBUG_DARWIN
+			printf("*** Cannot find wsdisplay ***\n");
+#endif
+			return mach_msg_error(args, ENODEV);
+
+		}
+
+		/* For now use the first screen available */
+		screen = 0;
+
+		/* Derive the device number */
+		major = cdevsw_lookup_major(&wsdisplay_cdevsw);
+		minor = WSDISPLAYMINOR(dv->dv_unit, screen);
+		device = makedev(major, minor);
+#ifdef DEBUG_DARWIN
+		printf("major = %d, minor = %d\n", major, minor);
+#endif
+
+		/* Find the framebuffer's size */
+#if 0
+		if ((error = (*wsdisplay_cdevsw.d_ioctl)(device, 
+		    WSDISPLAYIO_GINFO, (caddr_t)&fbi, 0, p)) != 0) {
+#ifdef DEBUG_DARWIN
+			printf("*** Cannot get screen params ***\n");
+#endif
+			return mach_msg_error(args, error);
+		}
+#ifdef DEBUG_DARWIN
+		printf("framebuffer: %d x %d x %d\n", 
+		    fbi->width, fbi->height, fbi->depth);
+#endif
+		len = round_page(fbi->height * fbi->width * fbi->depth / 8);
+#else
+		/* It does not work for now, assume 640 x 400 */
+		fbi = NULL; /* Avoid warning for unused var */
+		len = round_page(640 * 400);
+#endif
+
+		/* Create the uvm_object */
+		udo = udv_attach(&device, UVM_PROT_RW, 0, len);
+		if (udo == NULL) {
+#ifdef DEBUG_DARWIN
+			printf("*** Cannot udv_attach ***\n");
+#endif
+			return mach_msg_error(args, ENODEV);
+		}
+
+		/* Map it in user space */
+		if ((error == uvm_map(&p->p_vmspace->vm_map, &pvaddr,
+		    len, udo, 0, PAGE_SIZE, 
+		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0))) != 0) {
+#ifdef DEBUG_DARWIN
+			printf("*** Cannot uvm_map ***\n");
+#endif
+			return mach_msg_error(args, error);
+		}
+#ifdef DEBUG_DARWIN
+		printf("mapped framebuffer at %p\n", (void *)pvaddr);
+#endif
+		break;
+	}
+
 	case DARWIN_IOFRAMEBUFFER_VRAM_MEMORY:
 	default:
 #ifdef DEBUG_DARWIN
@@ -459,4 +572,69 @@ darwin_ioframebuffer_shmeminit(kvaddr)
 	shmem = (struct darwin_ioframebuffer_shmem *)kvaddr;
 
 	return;
+}
+
+int
+darwin_ioframebuffer_connect_method_scalari_structi(args)
+	struct mach_trap_args *args;
+{
+	mach_io_connect_method_scalari_structi_request_t *req = args->smsg;
+	mach_io_connect_method_scalari_structi_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+
+#ifdef DEBUG_DARWIN
+	printf("darwin_ioframebuffer_connect_method_scalari_structi()\n");
+#endif
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	switch (req->req_selector) {
+	case DARWIN_IOFBSETCLUTWITHENTRIES: {
+		int index;
+		int option;
+		struct darwin_iocolorentry *clut; 
+		size_t clutlen;
+		int offset;
+
+		index = req->req_in[0];
+		option = req->req_in[1];
+		offset = req->req_incount;
+		clutlen = req->req_in[offset] / sizeof(*clut);
+		if (clutlen == 0)
+			break;	
+		if (clutlen >= 256)
+			return mach_msg_error(args, EINVAL);
+
+		offset += sizeof(req->req_instructcount);
+		clut = (struct darwin_iocolorentry *)&req->req_in[offset];
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOFBSETCLUTWITHENTRIES: index = %d, "
+		    "option = %d, clutlen = %d\n", index, option, clutlen);
+		do {
+			printf("index %d, R = %d, G = %d, B = %d\n",
+			    clut->index, clut->red, clut->green, clut->blue);
+			clutlen--;
+			clut++;
+		} while (clutlen != 0);
+#endif
+		/* We do not do anything with it for now */
+		break;
+	}
+
+	default:
+#ifdef DEBUG_DARWIN
+		printf("Unknown selector %d\n", req->req_selector);
+#endif
+		return mach_msg_error(args, EINVAL);
+		break;
+	}
+
+	*msglen = sizeof(*rep); 
+
+	return 0;
 }
