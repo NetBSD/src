@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_token.l,v 1.2 2000/02/08 13:17:52 itojun Exp $	*/
+/*	$NetBSD: policy_token.l,v 1.3 2000/03/13 21:23:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -46,7 +46,11 @@
 #include <unistd.h>
 #include <errno.h>
 
+#ifndef __NetBSD__
+#include "y.tab.h"
+#else
 #include "policy_parse.h"
+#endif
 #define yylval __libyylval	/* XXX */
 
 int yylex __P((void));
@@ -80,9 +84,7 @@ decstring	{digit}+
 hexpair		{hexdigit}{hexdigit}
 hexstring	0[xX]{hexdigit}+
 octetstring	{octet}({dot}{octet})+
-ipaddress	[a-zA-Z0-9:\._][a-zA-Z0-9:\._]*
-name		{letter}(({letter}|{digit}|{hyphen})*({letter}|{digit}))*
-hostname	{name}(({dot}{name})+{dot}?)?
+ipaddress	[a-zA-Z0-9:\._][a-zA-Z0-9:\._]*(%[a-zA-Z0-9]+)?
 
 %%
 

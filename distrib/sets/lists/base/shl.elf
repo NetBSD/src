@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.16 2000/02/20 07:02:48 mycroft Exp $
+# $NetBSD: shl.elf,v 1.17 2000/03/13 21:23:58 itojun Exp $
 ./usr/lib/libamu.so.1
 ./usr/lib/libbz2.so.0
 ./usr/lib/libc.so.12
@@ -7,7 +7,7 @@
 ./usr/lib/libedit.so.2
 ./usr/lib/libg2c.so.0
 ./usr/lib/libgnumalloc.so.0
-./usr/lib/libipsec.so.1
+./usr/lib/libipsec.so.2
 ./usr/lib/libkvm.so.5
 ./usr/lib/libm.so.0
 ./usr/lib/libmenu.so.0

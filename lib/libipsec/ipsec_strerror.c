@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_strerror.c,v 1.4 2000/01/31 14:15:31 itojun Exp $	*/
+/*	$NetBSD: ipsec_strerror.c,v 1.5 2000/03/13 21:23:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -37,7 +37,7 @@
 
 #include "ipsec_strerror.h"
 
-int ipsec_errcode;
+int __ipsec_errcode;
 
 static char *ipsec_errlist[] = {
 "Success",					/*EIPSEC_NO_ERROR*/
@@ -72,15 +72,15 @@ NULL,						/*EIPSEC_SYSTEM_ERROR*/
 
 char *ipsec_strerror(void)
 {
-	if (ipsec_errcode < 0 || ipsec_errcode > EIPSEC_MAX)
-		ipsec_errcode = EIPSEC_MAX;
+	if (__ipsec_errcode < 0 || __ipsec_errcode > EIPSEC_MAX)
+		__ipsec_errcode = EIPSEC_MAX;
 
-	return ipsec_errlist[ipsec_errcode];
+	return ipsec_errlist[__ipsec_errcode];
 }
 
-void ipsec_set_strerror(char *str)
+void __ipsec_set_strerror(char *str)
 {
-	ipsec_errcode = EIPSEC_SYSTEM_ERROR;
+	__ipsec_errcode = EIPSEC_SYSTEM_ERROR;
 	ipsec_errlist[EIPSEC_SYSTEM_ERROR] = str;
 
 	return;

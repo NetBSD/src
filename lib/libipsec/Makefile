@@ -1,17 +1,18 @@
-# $NetBSD: Makefile,v 1.3 2000/01/31 14:15:30 itojun Exp $
+# $NetBSD: Makefile,v 1.4 2000/03/13 21:23:55 itojun Exp $
 
 LIB=	ipsec
 CFLAGS+=-g
 CPPFLAGS+=-DIPSEC_DEBUG -DIPSEC -DINET6 -I. -DYY_NO_UNPUT
 
-.PATH:	${.CURDIR}/../../sys/netkey
-SRCS=	pfkey.c pfkey_dump.c
 SRCS+=	ipsec_strerror.c policy_parse.y policy_token.l
 SRCS+=	ipsec_get_policylen.c ipsec_dump_policy.c
-SRCS+=	key_debug.c
 LPREFIX+=__libyy
 YPREFIX+=__libyy
 YHEADER=1
+
+#.PATH:	${.CURDIR}/../../sys/netkey
+#SRCS+=	pfkey.c pfkey_dump.c
+#SRCS+=	key_debug.c
 
 #LFLAGS+=	-olex.yy.c
 
