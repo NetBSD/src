@@ -1,4 +1,4 @@
-/*	$NetBSD: targparam.h,v 1.1 2001/10/21 21:39:50 thorpej Exp $	*/
+/*	$NetBSD: targparam.h,v 1.2 2001/10/24 00:42:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -41,12 +41,7 @@
  * kept in sync with the compiler!
  */     
 
-/*
- * XXX This is not right!  It picks up ELF from the host, not
- * XXX the target.
- */
-
-#if defined(__ELF__)
+#if defined(TARGET_OBJFMT_ELF)
 #define	PTRDIFF_IS_LONG		1
 #define	SIZEOF_IS_ULONG		1
 #else
