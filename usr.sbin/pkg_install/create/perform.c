@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.15 1999/01/19 17:01:59 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.16 1999/03/09 11:10:40 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.15 1999/01/19 17:01:59 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.16 1999/03/09 11:10:40 agc Exp $");
 #endif
 #endif
 
@@ -52,7 +52,7 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
     FILE *totar;
     pid_t pid;
 
-    args[nargs++] = "tar";	/* argv[0] */
+    args[nargs++] = TAR_CMD;	/* argv[0] */
 
     if (*pkg == '/')
 	snprintf(tball, FILENAME_MAX, "%s.%s", pkg, suffix);
@@ -75,7 +75,7 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
     args[nargs] = NULL;
 
     if (Verbose)
-	printf("Creating gzip'd tar ball in '%s'\n", tball);
+	printf("Creating gzip'd %s ball in '%s'\n", TAR_CMD, tball);
 
     /* Set up a pipe for passing the filenames, and fork off a tar process. */
     if (pipe(pipefds) == -1) {
@@ -84,15 +84,15 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
     }
     if ((pid = fork()) == -1) {
 	cleanup(0);
-	errx(2, "cannot fork process for tar");
+	errx(2, "cannot fork process for %s", TAR_CMD);
     }
     if (pid == 0) {	/* The child */
 	dup2(pipefds[0], 0);
 	close(pipefds[0]);
 	close(pipefds[1]);
-	execv("/usr/bin/tar", args);
+	execv(TAR_FULLPATHNAME, args);
 	cleanup(0);
-	errx(2, "failed to execute tar command");
+	errx(2, "failed to execute %s command", TAR_CMD);
     }
 
     /* Meanwhile, back in the parent process ... */
@@ -142,7 +142,7 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
     /* assume either signal or bad exit is enough for us */
     if (ret) {
 	cleanup(0);
-	errx(2, "tar command failed with code %d", ret);
+	errx(2, "%s command failed with code %d", TAR_CMD, ret);
     }
 }
 

@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.14 1999/03/02 10:32:23 agc Exp $	*/
+/*	$NetBSD: extract.c,v 1.15 1999/03/09 11:10:39 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.14 1999/03/02 10:32:23 agc Exp $");
+__RCSID("$NetBSD: extract.c,v 1.15 1999/03/09 11:10:39 agc Exp $");
 #endif
 #endif
 
@@ -33,22 +33,26 @@ __RCSID("$NetBSD: extract.c,v 1.14 1999/03/02 10:32:23 agc Exp $");
 #include "lib.h"
 #include "add.h"
 
+#define TAR_ARGS	" cf - "
 
-#define STARTSTRING "tar cf - "
 #define TOOBIG(str) ((strlen(str) + 22 + strlen(home) + where_count > maxargs) \
 		|| (strlen(str) + 6 + strlen(home) + perm_count > maxargs))
 
 #define PUSHOUT(todir) /* push out string */				\
-        if (where_count > sizeof(STARTSTRING)-1) {			\
-		    strcat(where_args, "|tar xf - -C ");		\
+        if (where_count > sizeof(TAR_CMD) + sizeof(TAR_ARGS)-1) {	\
+		    strcat(where_args, "|");				\
+		    strcat(where_args, TAR_CMD);			\
+		    strcat(where_args, " xf - -C ");			\
 		    strcat(where_args, todir);				\
 		    if (system(where_args)) {				\
 			cleanup(0);					\
-			errx(2, "can not invoke %lu byte tar pipeline: %s", \
-				(u_long)strlen(where_args), where_args); \
+			errx(2, "can not invoke %lu byte %s pipeline: %s", \
+				(u_long)strlen(where_args), TAR_CMD,	\
+				where_args);				\
 		    }							\
-		    strcpy(where_args, STARTSTRING);			\
-		    where_count = sizeof(STARTSTRING)-1;		\
+		    strcpy(where_args, TAR_CMD);			\
+		    strcpy(where_args, TAR_ARGS);			\
+		    where_count = sizeof(TAR_CMD) + sizeof(TAR_ARGS)-1;	\
 	}								\
 	if (perm_count) {						\
 		    apply_perms(todir, perm_args);			\
@@ -102,8 +106,9 @@ extract_plist(char *home, package_t *pkg)
 	cleanup(0);
 	errx(2, "can't get argument list space");
     }
-    strcpy(where_args, STARTSTRING);
-    where_count = sizeof(STARTSTRING)-1;
+    strcpy(where_args, TAR_CMD);
+    strcpy(where_args, TAR_ARGS);
+    where_count = sizeof(TAR_CMD) + sizeof(TAR_ARGS) - 1;
     perm_args[0] = 0;
 
     last_chdir = 0;
