@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.19 1999/06/20 02:09:20 cgd Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.20 1999/06/20 05:44:26 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,7 +55,7 @@
 #include "menu_defs.h"
 }
 
-default x=20, y=12, no exit, scrollable;
+default y=12, no exit, scrollable;
 
 allow dynamic menus;
 
