@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.46.2.2 2004/09/18 19:22:41 he Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.46.2.3 2005/01/11 06:35:42 jmc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -119,7 +119,7 @@ struct nfsnode_dir {
 	daddr_t ndir_dblkno;		/* faked dir blkno */
 	struct nfsdirhashhead *ndir_dircache; /* offset -> cache hash heads */
 	struct nfsdirchainhead ndir_dirchain; /* Chain of dir cookies */
-	struct timespec ndir_nctime;	/* Last neg cache entry */
+	struct timespec ndir_nctime;	/* Last name cache entry */
 	unsigned ndir_dircachesize;	/* Size of dir cookie cache */
 };
 
