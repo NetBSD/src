@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.123 2004/08/27 04:56:16 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.124 2004/09/28 04:24:54 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.123 2004/08/27 04:56:16 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.124 2004/09/28 04:24:54 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -7146,11 +7146,6 @@ key_parse(m, so)
 	error = key_align(m, &mh);
 	if (error)
 		return error;
-
-	if (m->m_next) {	/*XXX*/
-		m_freem(m);
-		return ENOBUFS;
-	}
 
 	msg = mh.msg;
 
