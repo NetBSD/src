@@ -259,6 +259,7 @@ struct internal_nlist {
 #define	N_COMM	0x12	/* Common symbol (visible after shared lib dynlink) */
 #define N_FN	0x1f	/* File name of .o file */
 #define	N_FN_SEQ 0x0C	/* N_FN from Sequent compilers (sigh) */
+#define	N_SIZE	0x0C	/* (NetBSD) symbol size */
 /* Note: N_EXT can only be usefully OR-ed with N_UNDF, N_ABS, N_TEXT,
    N_DATA, or N_BSS.  When the low-order bit of other types is set,
    (e.g. N_WARNING versus N_FN), they are two different types.  */
