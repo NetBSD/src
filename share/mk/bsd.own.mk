@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.356 2003/09/01 09:38:42 uwe Exp $
+#	$NetBSD: bsd.own.mk,v 1.357 2003/09/12 07:44:10 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -665,5 +665,19 @@ USE_${var}?= yes
     ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
 USE_XF86_4?=	yes
 .endif
+
+#
+# Where X11R6 sources are and where it is installed to
+#
+X11SRCDIR?=		/usr/xsrc
+X11SRCDIR.xc?=		${X11SRCDIR}/xfree/xc
+X11SRCDIR.local?=	${X11SRCDIR}/local
+X11ROOTDIR?=		/usr/X11R6
+X11BINDIR?=		${X11ROOTDIR}/bin
+X11FONTDIR?=		${X11ROOTDIR}/lib/X11/fonts
+X11INCDIR?=		${X11ROOTDIR}/include
+X11LIBDIR?=		${X11ROOTDIR}/lib/X11
+X11MANDIR?=		${X11ROOTDIR}/man
+X11USRLIBDIR?=		${X11ROOTDIR}/lib
 
 .endif	# !defined(_BSD_OWN_MK_)
