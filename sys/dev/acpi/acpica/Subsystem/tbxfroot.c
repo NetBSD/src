@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbxfroot.c,v 1.6 2003/03/04 17:25:28 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbxfroot.c,v 1.7 2003/05/11 21:20:24 fvdl Exp $");
 
 #define __TBXFROOT_C__
 
@@ -263,7 +263,7 @@ AcpiGetFirmwareTable (
         if ((Flags & ACPI_MEMORY_MODE) == ACPI_LOGICAL_ADDRESSING)
         {
             Status = AcpiOsMapMemory (RsdpAddress.Pointer.Physical, sizeof (RSDP_DESCRIPTOR),
-                                        (void **) &AcpiGbl_RSDP);
+                                        (void *) &AcpiGbl_RSDP);
             if (ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
@@ -524,7 +524,7 @@ AcpiTbFindRsdp (
          * 1) Search EBDA (low memory) paragraphs
          */
         Status = AcpiOsMapMemory ((UINT64) ACPI_LO_RSDP_WINDOW_BASE, ACPI_LO_RSDP_WINDOW_SIZE,
-                                    (void **) &TablePtr);
+                                    (void *) &TablePtr);
         if (ACPI_FAILURE (Status))
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not map memory at %X for length %X\n",
@@ -550,7 +550,7 @@ AcpiTbFindRsdp (
          * 2) Search upper memory: 16-byte boundaries in E0000h-F0000h
          */
         Status = AcpiOsMapMemory ((UINT64) ACPI_HI_RSDP_WINDOW_BASE, ACPI_HI_RSDP_WINDOW_SIZE,
-                                    (void **) &TablePtr);
+                                    (void *) &TablePtr);
         if (ACPI_FAILURE (Status))
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not map memory at %X for length %X\n",

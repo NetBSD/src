@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbget.c,v 1.6 2003/03/04 17:25:27 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbget.c,v 1.7 2003/05/11 21:20:23 fvdl Exp $");
 
 #define __TBGET_C__
 
@@ -225,7 +225,7 @@ AcpiTbGetTableHeader (
         /* Create a logical address for the physical pointer*/
 
         Status = AcpiOsMapMemory (Address->Pointer.Physical, sizeof (ACPI_TABLE_HEADER),
-                                    (void **) &Header);
+                                    (void *) &Header);
         if (ACPI_FAILURE (Status))
         {
             ACPI_REPORT_ERROR (("Could not map memory at %8.8X%8.8X for length %X\n",
@@ -449,7 +449,7 @@ AcpiTbGetThisTable (
          * into our address space.
          */
         Status = AcpiOsMapMemory (Address->Pointer.Physical, (ACPI_SIZE) Header->Length,
-                                    (void **) &FullTable);
+                                    (void *) &FullTable);
         if (ACPI_FAILURE (Status))
         {
             ACPI_REPORT_ERROR (("Could not map memory for table [%4.4s] at %8.8X%8.8X for length %X\n",
