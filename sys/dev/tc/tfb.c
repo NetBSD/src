@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.5 1998/11/19 15:38:26 mrg Exp $ */
+/* $NetBSD: tfb.c,v 1.6 1998/12/14 02:45:52 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.5 1998/11/19 15:38:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.6 1998/12/14 02:45:52 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ struct bt463reg {
 };
 
 /*
- * N.B. a paif of Bt431s are located adjascently.
+ * N.B. a pair of Bt431s are located adjascently.
  * 	struct bt431twin {
  *		struct {
  *			u_int8_t u0;	for sprite image
@@ -475,7 +475,7 @@ tfbioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
 	}
-	return ENOTTY;
+	return (ENOTTY);
 }
 
 int
