@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.2 1999/07/06 13:20:04 itojun Exp $	*/
+/*	$NetBSD: ndp.c,v 1.3 1999/09/03 03:54:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -115,6 +115,11 @@
 #include <unistd.h>
 #include "gmt2local.h"
 
+/* packing rule for routing socket */
+#define ROUNDUP(a) \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
+
 extern int errno;
 static int pid;
 static int fflag;
@@ -145,7 +150,6 @@ void plist __P((void));
 void pfx_flush __P((void));
 void rtr_flush __P((void));
 void harmonize_rtr __P((void));
-void quit __P((char *));
 static char *sec2str __P((time_t t));
 static char *ether_str __P((struct sockaddr_dl *sdl));
 static void ts_print __P((const struct timeval *));
@@ -369,7 +373,7 @@ tryagain:
 		return (1);
 	}
 	sin = (struct sockaddr_in6 *)(rtm + 1);
-	sdl = (struct sockaddr_dl *)(sin->sin6_len + (char *)sin);
+	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin6_len) + (char *)sin);
 	if (IN6_ARE_ADDR_EQUAL(&sin->sin6_addr, &sin_m.sin6_addr)) {
 		if (sdl->sdl_family == AF_LINK &&
 		    (rtm->rtm_flags & RTF_LLINFO) &&
@@ -451,7 +455,7 @@ delete(host)
 		return (1);
 	}
 	sin = (struct sockaddr_in6 *)(rtm + 1);
-	sdl = (struct sockaddr_dl *)(sin->sin6_len + (char *)sin);
+	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin6_len) + (char *)sin);
 	if (IN6_ARE_ADDR_EQUAL(&sin->sin6_addr, &sin_m.sin6_addr)) {
 		if (sdl->sdl_family == AF_LINK &&
 		    (rtm->rtm_flags & RTF_LLINFO) &&
@@ -505,19 +509,22 @@ again:;
 	mib[4] = NET_RT_FLAGS;
 	mib[5] = RTF_LLINFO;
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
-		quit("route-sysctl-estimate");
-	if ((buf = malloc(needed)) == NULL)
-		quit("malloc");
-	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-		quit("actual retrieval of routing table");
-	lim = buf + needed;
+		err(1, "sysctl(PF_ROUTE estimate)");
+	if (needed > 0) {
+		if ((buf = malloc(needed)) == NULL)
+			errx(1, "malloc");
+		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+			err(1, "sysctl(PF_ROUTE, NET_RT_FLAGS)");
+		lim = buf + needed;
+	} else
+		buf = lim = NULL;
 
-	for (next = buf; next < lim; next += rtm->rtm_msglen) {
+	for (next = buf; next && next < lim; next += rtm->rtm_msglen) {
 		int isrouter = 0, prbs = 0;
 
 		rtm = (struct rt_msghdr *)next;
 		sin = (struct sockaddr_in6 *)(rtm + 1);
-		sdl = (struct sockaddr_dl *)(sin + 1);
+		sdl = (struct sockaddr_dl *)((char *)sin + ROUNDUP(sin->sin6_len));
 		if (addr) {
 			if (!IN6_ARE_ADDR_EQUAL(addr, &sin->sin6_addr))
 				continue;
@@ -610,7 +617,7 @@ again:;
 			if (rtm->rtm_addrs & RTA_NETMASK) {
 				sin = (struct sockaddr_in6 *)
 					(sdl->sdl_len + (char *)sdl);
-				if (!IN6_IS_ADDR_ANY(&sin->sin6_addr))
+				if (!IN6_IS_ADDR_UNSPECIFIED(&sin->sin6_addr))
 					p += sprintf((char *)p, "P");
 				if (sin->sin6_len != sizeof(struct sockaddr_in6))
 					p += sprintf((char *)p, "W");
@@ -940,14 +947,6 @@ harmonize_rtr()
  		perror("ioctl (SIOCSNDFLUSH_IN6)");
  		exit(1);
  	}
-}
-
-void
-quit(msg)
-	char *msg;
-{
-	fprintf(stderr, "%s\n", msg);
-	exit(1);
 }
 
 static char *
