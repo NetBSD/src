@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)iso.c	5.6 (Berkeley) 4/27/91";*/
-static char rcsid[] = "$Id: iso.c,v 1.4 1993/08/01 18:10:51 mycroft Exp $";
+static char rcsid[] = "$Id: iso.c,v 1.5 1993/11/03 06:17:08 mycroft Exp $";
 #endif /* not lint */
 
 /*******************************************************************************
@@ -207,7 +207,9 @@ iso_protopr(off, name)
 	int istp = (strcmp(name, "tp") == 0);
 
 	if (off == 0) {
+#ifdef DEBUG
 		printf("%s control block: symbol not in namelist\n", name);
+#endif
 		return;
 	}
 	kget(off, cb);
@@ -398,7 +400,9 @@ x25_protopr(off, name)
 	struct x25_pcb xpcb;
 
 	if (off == 0) {
+#ifdef DEBUG
 		printf("%s control block: symbol not in namelist\n", name);
+#endif
 		return;
 	}
 	kvm_read(off, &xpcb, sizeof (struct x25_pcb));
