@@ -1,4 +1,4 @@
-.\" Copyright (c) 1985, 1990, 1993
+.\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -29,46 +29,40 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)lptest.1	8.2 (Berkeley) 12/30/93
+.\"	@(#)0.t	8.1 (Berkeley) 6/8/93
 .\"
-.Dd December 30, 1993
-.Dt LPTEST 1
-.Os BSD 4.3
-.Sh NAME
-.Nm lptest
-.Nd generate lineprinter ripple pattern
-.Sh SYNOPSIS
-.Nm lptest
-.Op Ar length
-.Op Ar count
-.Sh DESCRIPTION
-.Nm Lptest
-writes the traditional "ripple test" pattern on standard output.
-In 96 lines,
-this pattern will print all 96 printable
-.Tn ASCII
-characters
-in each position.
-While originally created to test printers, it is quite
-useful for testing terminals,
-driving terminal ports for debugging purposes,
-or any other task where a quick supply of random data is needed.
-.Pp
-The
-.Ar length
-argument specifies the output line length if the default
-length of 79 is inappropriate.
-.Pp
-The
-.Ar count
-argument specifies the number of output lines to be generated if
-the default count of 200 is inappropriate.
-Note that if
-.Ar count
-is to be specified,
-.Ar length
-must be also be specified.
-.Sh HISTORY
-.Nm Lptest
-appeared in
-.Bx 4.3 .
+.if n .ND
+.TL
+4.3BSD Line Printer Spooler Manual
+.EH 'SMM:7-%''4.3BSD Line Printer Spooler Manual'
+.OH '4.3BSD Line Printer Spooler Manual''SMM:7-%'
+.AU
+Ralph Campbell
+.AI
+Computer Systems Research Group
+Computer Science Division
+Department of Electrical Engineering and Computer Science
+University of California, Berkeley
+Berkeley, CA  94720
+.AB
+.FS
+* UNIX is a trademark of Bell Laboratories.
+.FE
+This document describes the structure and installation procedure
+for the line printer spooling system
+developed for the 4.3BSD version
+of the UNIX* operating system.
+.de D?
+.ie \\n(.$>1 Revised \\$1 \\$2 \\$3
+.el DRAFT of \n(mo/\n(dy/\n(yr
+..
+.sp 2
+.LP
+.D? June 8, 1993
+.AE
+.de IR
+\fI\\$1\fP\\$2
+..
+.de DT
+.TA 8 16 24 32 40 48 56 64 72 80
+..

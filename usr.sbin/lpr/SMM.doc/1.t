@@ -1,4 +1,4 @@
-.\" Copyright (c) 1985, 1990, 1993
+.\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -29,46 +29,49 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)lptest.1	8.2 (Berkeley) 12/30/93
+.\"	@(#)1.t	8.1 (Berkeley) 6/8/93
 .\"
-.Dd December 30, 1993
-.Dt LPTEST 1
-.Os BSD 4.3
-.Sh NAME
-.Nm lptest
-.Nd generate lineprinter ripple pattern
-.Sh SYNOPSIS
-.Nm lptest
-.Op Ar length
-.Op Ar count
-.Sh DESCRIPTION
-.Nm Lptest
-writes the traditional "ripple test" pattern on standard output.
-In 96 lines,
-this pattern will print all 96 printable
-.Tn ASCII
-characters
-in each position.
-While originally created to test printers, it is quite
-useful for testing terminals,
-driving terminal ports for debugging purposes,
-or any other task where a quick supply of random data is needed.
-.Pp
-The
-.Ar length
-argument specifies the output line length if the default
-length of 79 is inappropriate.
-.Pp
-The
-.Ar count
-argument specifies the number of output lines to be generated if
-the default count of 200 is inappropriate.
-Note that if
-.Ar count
-is to be specified,
-.Ar length
-must be also be specified.
-.Sh HISTORY
-.Nm Lptest
-appeared in
-.Bx 4.3 .
+.NH 1
+Overview
+.PP
+The line printer system supports:
+.IP \(bu 3
+multiple printers,
+.IP \(bu 3
+multiple spooling queues,
+.IP \(bu 3
+both local and remote
+printers, and
+.IP \(bu 3
+printers attached via serial lines that require
+line initialization such as the baud rate.
+.LP
+Raster output devices
+such as a Varian or Versatec, and laser printers such as an Imagen,
+are also supported by the line printer system.
+.PP
+The line printer system consists mainly of the
+following files and commands:
+.DS
+.TS
+l l.
+/etc/printcap	printer configuration and capability data base
+/usr/lib/lpd	line printer daemon, does all the real work
+/usr/ucb/lpr	program to enter a job in a printer queue
+/usr/ucb/lpq	spooling queue examination program
+/usr/ucb/lprm	program to delete jobs from a queue
+/etc/lpc	program to administer printers and spooling queues
+/dev/printer	socket on which lpd listens
+.TE
+.DE
+The file /etc/printcap is a master data base describing line
+printers directly attached to a machine and, also, printers
+accessible across a network. The manual page entry
+.IR printcap (5)
+provides the authoritative definition of
+the format of this data base, as well as
+specifying default values for important items
+such as the directory in which spooling is performed.
+This document introduces some of the
+information that may be placed
+.IR printcap .

@@ -1,4 +1,4 @@
-.\" Copyright (c) 1985, 1990, 1993
+.\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -29,46 +29,45 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)lptest.1	8.2 (Berkeley) 12/30/93
+.\"	@(#)3.t	8.1 (Berkeley) 6/8/93
 .\"
-.Dd December 30, 1993
-.Dt LPTEST 1
-.Os BSD 4.3
-.Sh NAME
-.Nm lptest
-.Nd generate lineprinter ripple pattern
-.Sh SYNOPSIS
-.Nm lptest
-.Op Ar length
-.Op Ar count
-.Sh DESCRIPTION
-.Nm Lptest
-writes the traditional "ripple test" pattern on standard output.
-In 96 lines,
-this pattern will print all 96 printable
-.Tn ASCII
-characters
-in each position.
-While originally created to test printers, it is quite
-useful for testing terminals,
-driving terminal ports for debugging purposes,
-or any other task where a quick supply of random data is needed.
-.Pp
-The
-.Ar length
-argument specifies the output line length if the default
-length of 79 is inappropriate.
-.Pp
-The
-.Ar count
-argument specifies the number of output lines to be generated if
-the default count of 200 is inappropriate.
-Note that if
-.Ar count
-is to be specified,
-.Ar length
-must be also be specified.
-.Sh HISTORY
-.Nm Lptest
-appeared in
-.Bx 4.3 .
+.NH 1
+Access control
+.PP
+The printer system maintains protected spooling areas so that
+users cannot circumvent printer accounting or
+remove files other than their own.
+The strategy used to maintain protected
+spooling areas is as follows:
+.IP \(bu 3
+The spooling area is writable only by a \fIdaemon\fP user
+and \fIdaemon\fP group.
+.IP \(bu 3
+The \fIlpr\fP program runs set-user-id to \fIroot\fP and
+set-group-id to group \fIdaemon\fP.  The \fIroot\fP access permits
+reading any file required. Accessibility is verified
+with an \fIaccess\fP\|(2) call.  The group ID
+is used in setting up proper ownership of files
+in the spooling area for \fIlprm\fP.
+.IP \(bu 3
+Control files in a spooling area are made with \fIdaemon\fP
+ownership and group ownership \fIdaemon\fP.  Their mode is 0660.
+This insures control files are not modified by a user
+and that no user can remove files except through \fIlprm\fP.
+.IP \(bu 3
+The spooling programs,
+\fIlpd\fP, \fIlpq\fP, and \fIlprm\fP run set-user-id to \fIroot\fP
+and set-group-id to group \fIdaemon\fP to access spool files and printers.
+.IP \(bu 3
+The printer server, \fIlpd\fP,
+uses the same verification procedures as \fIrshd\fP\|(8C)
+in authenticating remote clients.  The host on which a client
+resides must be present in the file /etc/hosts.equiv or /etc/hosts.lpd and
+the request message must come from a reserved port number.
+.PP
+In practice, none of \fIlpd\fP, \fIlpq\fP, or
+\fIlprm\fP would have to run as user \fIroot\fP if remote
+spooling were not supported.  In previous incarnations of
+the printer system \fIlpd\fP ran set-user-id to \fIdaemon\fP,
+set-group-id to group \fIspooling\fP, and \fIlpq\fP and \fIlprm\fP ran
+set-group-id to group \fIspooling\fP.

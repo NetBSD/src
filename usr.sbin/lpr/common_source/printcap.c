@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,11 +32,18 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)printcap.c	5.7 (Berkeley) 3/4/91";
+static char sccsid[] = "@(#)printcap.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
-#include <ctype.h>
+#include <sys/param.h>
+
+#include <fcntl.h>
+#include <dirent.h>
+#include <unistd.h>
 #include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+#include "lp.h"
 #include "pathnames.h"
 
 #ifndef BUFSIZ
@@ -76,15 +83,16 @@ static char sccsid[] = "@(#)printcap.c	5.7 (Berkeley) 3/4/91";
 static	FILE *pfp = NULL;	/* printcap data base file pointer */
 static	char *tbuf;
 static	int hopcount;		/* detect infinite loops in termcap, init 0 */
-char	*tskip();
-char	*tgetstr();
-char	*tdecode();
-char	*getenv();
+
+static char *tskip __P((char *));
+static char *tskip __P((char *bp));
+static char *tdecode __P((char *, char **));
 
 /*
  * Similar to tgetent except it returns the next enrty instead of
  * doing a lookup.
  */
+int
 getprent(bp)
 	register char *bp;
 {
@@ -126,6 +134,7 @@ getprent(bp)
 	}
 }
 
+void
 endprent()
 {
 	if (pfp != NULL)
@@ -137,6 +146,7 @@ endprent()
  * from the termcap file.  Parse is very rudimentary;
  * we just notice escaped newlines.
  */
+int
 tgetent(bp, name)
 	char *bp, *name;
 {
@@ -144,7 +154,6 @@ tgetent(bp, name)
 	register int c;
 	register int i = 0, cnt = 0;
 	char ibuf[BUFSIZ];
-	char *cp2;
 	int tf;
 
 	tbuf = bp;
@@ -221,6 +230,7 @@ tgetent(bp, name)
  * entries to say "like an HP2621 but doesn't turn on the labels".
  * Note that this works because of the left to right scan.
  */
+int
 tnchktc()
 {
 	register char *p, *q;
@@ -268,6 +278,7 @@ tnchktc()
  * against each such name.  The normal : terminator after the last
  * name (before the first field) stops us.
  */
+int
 tnamatch(np)
 	char *np;
 {
@@ -314,6 +325,7 @@ tskip(bp)
  * a # character.  If the option is not found we return -1.
  * Note that we handle octal numbers beginning with 0.
  */
+int
 tgetnum(id)
 	char *id;
 {
@@ -347,6 +359,7 @@ tgetnum(id)
  * of the buffer.  Return 1 if we find the option, or 0 if it is
  * not given.
  */
+int
 tgetflag(id)
 	char *id;
 {
@@ -442,3 +455,4 @@ nextc:
 	*area = cp;
 	return (str);
 }
+
