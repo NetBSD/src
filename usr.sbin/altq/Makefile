@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2000/12/16 18:57:34 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2001/01/09 03:13:41 lukem Exp $
 
-SUBDIR=	libaltq altqd altqstat tbrconfig
-
-all-altqd all-altqstat all-abrconfig: all-libaltq
+SUBDIR=	libaltq .WAIT altqd altqstat tbrconfig
 
 .include <bsd.subdir.mk>
