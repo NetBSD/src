@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.61 1999/04/07 06:45:15 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.62 1999/06/18 05:13:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -376,7 +376,8 @@ grfmap(dev, addrp, p)
 	vn.v_rdev = dev;	/* XXX */
 
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
-	    (vsize_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
+	    (vsize_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0,
+	    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 
 	/* Offset into page: */
 	*addrp += (unsigned long)gm->fboff;
