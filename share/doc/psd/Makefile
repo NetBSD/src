@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.9 1999/02/13 02:54:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 1999/02/14 08:56:59 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 5/23/94
+
+.include <bsd.own.mk>
 
 # The following modules do not build/install:
 # 10.gdb, 13.rcs
