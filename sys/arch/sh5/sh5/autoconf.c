@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2002/07/05 13:32:03 scw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2002/08/26 10:24:57 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -55,6 +55,8 @@ cpu_configure(void)
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");
+
+	_cpu_intr_set(IPL_NONE);
 }
 
 void
