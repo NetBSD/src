@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: DAEMON,v 1.6 2001/04/19 16:18:27 lukem Exp $
+# $NetBSD: DAEMON,v 1.7 2002/01/31 01:26:05 lukem Exp $
 #
 
 # PROVIDE: DAEMON
-# REQUIRE: NETWORK SERVERS
+# REQUIRE: NETWORKING SERVERS
 # REQUIRE: accounting aftermountlkm amd cleartmp dmesg ipmon
 # REQUIRE: ipnat ipsec ldconfig named nonlocalswap nfslocking
 # REQUIRE: pwcheck quota savecore securelevel sysctl sysdb virecover ypbind

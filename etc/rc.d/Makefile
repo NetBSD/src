@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.25 2001/12/12 12:19:09 lukem Exp $
+# $NetBSD: Makefile,v 1.26 2002/01/31 01:26:05 lukem Exp $
 
 NOPROG= noprog
 
 .include <bsd.own.mk>
 
-FILES=	DAEMON LOGIN NETWORK SERVERS \
+FILES=	DAEMON LOGIN NETWORKING SERVERS \
 	accounting altqd amd apmd \
 	bootparams bootconf.sh ccd cleartmp cron \
 	dhclient dhcpd dhcrelay dmesg downinterfaces fsck \
