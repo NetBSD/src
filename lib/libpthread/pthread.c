@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.39 2005/02/10 02:20:49 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.40 2005/02/10 23:42:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.39 2005/02/10 02:20:49 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.40 2005/02/10 23:42:37 christos Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -152,7 +152,7 @@ pthread_init(void)
 
 	/* Find out requested/possible concurrency */
 	p = getenv("PTHREAD_CONCURRENCY");
-	pthread__maxconcurrency = p ? atoi(p) : ncpu;
+	pthread__maxconcurrency = p ? atoi(p) : 1;
 		
 	if (pthread__maxconcurrency < 1)
 		pthread__maxconcurrency = 1;
