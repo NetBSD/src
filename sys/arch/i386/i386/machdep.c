@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.289 1998/02/11 01:46:56 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.290 1998/02/11 03:03:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -2613,24 +2613,14 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 {
 	vm_offset_t va;
 	bus_addr_t addr;
-	int curseg, s;
+	int curseg;
 
 	size = round_page(size);
 
 #if defined(UVM)
-	/*
-	 * VALLOC some unmapped VAs from kmem_map
-	 *
-	 * NOTE: all access to kmem_map/kmem_object must be at splimp
-	 */
-	s = splimp();
-	va = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object, size,
-			      UVM_KMF_VALLOC);
-	splx(s);
+	va = uvm_km_valloc(kernel_map, size);
 #else
-	s = splimp();
-	va = kmem_alloc_pageable(kmem_map, size);
-	splx(s);
+	va = kmem_alloc_pageable(kernel_map, size);
 #endif
 
 	if (va == 0)
@@ -2666,7 +2656,6 @@ _bus_dmamem_unmap(t, kva, size)
 	caddr_t kva;
 	size_t size;
 {
-	int s;
 
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
@@ -2676,16 +2665,9 @@ _bus_dmamem_unmap(t, kva, size)
 	size = round_page(size);
 
 #if defined(UVM)
-	/*
-	 * NOTE: all accesses through kmem_map must be at splimp
-	 */
-	s = splimp();
-	uvm_km_free(kmem_map, (vm_offset_t)kva, size);
-	splx(s);
+	uvm_km_free(kernel_map, (vm_offset_t)kva, size);
 #else
-	s = splimp();
-	kmem_free(kmem_map, (vm_offset_t)kva, size);
-	splx(s);
+	kmem_free(kernel_map, (vm_offset_t)kva, size);
 #endif
 }
 
