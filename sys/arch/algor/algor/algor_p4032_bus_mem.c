@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_bus_mem.c,v 1.1 2001/06/01 16:00:03 thorpej Exp $	*/
+/*	$NetBSD: algor_p4032_bus_mem.c,v 1.2 2001/06/14 17:57:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,20 +53,26 @@
 #include <algor/algor/algor_p4032reg.h>
 #include <algor/algor/algor_p4032var.h>
 
+#include <algor/pci/vtpbcvar.h>
+
 #define	CHIP		algor_p4032
 
 #define	CHIP_EX_MALLOC_SAFE(v)	(((struct p4032_config *)(v))->ac_mallocsafe)
 #define	CHIP_MEM_EXTENT(v)	(((struct p4032_config *)(v))->ac_mem_ex)
 
 /* MEM region 1 */
-#define	CHIP_MEM_W1_BUS_START(v)	0x00000000UL
-#define	CHIP_MEM_W1_BUS_END(v)		0x007fffffUL
+#define	CHIP_MEM_W1_BUS_START(v)	\
+	(vtpbc_configuration.vt_pci_membase + 0x00000000UL)
+#define	CHIP_MEM_W1_BUS_END(v)		\
+	(vtpbc_configuration.vt_pci_membase + 0x007fffffUL)
 #define	CHIP_MEM_W1_SYS_START(v)	P4032_ISAMEM
 #define	CHIP_MEM_W1_SYS_END(v)		(P4032_ISAMEM + CHIP_MEM_W1_BUS_END(v))
 
 /* MEM region 2 */
-#define	CHIP_MEM_W2_BUS_START(v)	0x01000000UL
-#define	CHIP_MEM_W2_BUS_END(v)		0x07ffffffUL
+#define	CHIP_MEM_W2_BUS_START(v)	\
+	(vtpbc_configuration.vt_pci_membase + 0x01000000UL)
+#define	CHIP_MEM_W2_BUS_END(v)		\
+	(vtpbc_configuration.vt_pci_membase + 0x07ffffffUL)
 #define	CHIP_MEM_W2_SYS_START(v)	P4032_PCIMEM
 #define	CHIP_MEM_W2_SYS_END(v)		(P4032_PCIMEM + 0x06ffffffUL)
 
