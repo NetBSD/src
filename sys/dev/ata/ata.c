@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.65 2005/02/27 00:26:58 perry Exp $      */
+/*      $NetBSD: ata.c,v 1.66 2005/03/04 11:00:54 tacha Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.65 2005/02/27 00:26:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.66 2005/03/04 11:00:54 tacha Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -515,6 +515,10 @@ atabus_detach(struct device *self, int flags)
 	wakeup(&chp->ch_thread);
 	while (chp->ch_thread != NULL)
 		(void) tsleep((void *)&chp->ch_flags, PRIBIO, "atadown", 0);
+
+	/* power hook */
+	if (sc->sc_powerhook)
+	      powerhook_disestablish(sc->sc_powerhook);
 
 	/*
 	 * Detach atapibus and its children.
