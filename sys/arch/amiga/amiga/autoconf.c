@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.53 1997/07/22 15:03:22 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.54 1997/07/23 10:47:12 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -291,6 +291,11 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "zbus", simple_devprint);
 	if (is_a3000())
 		config_found(dp, "ahsc", simple_devprint);
+#ifdef DRACO
+	if (!is_draco())
+#endif
+		config_found(dp, "aucc", simple_devprint);
+
 }
 
 int
@@ -365,6 +370,7 @@ findroot(devpp, partp)
 	 */
 	if (boot_partition != 0) {
 	 	struct bdevsw *bdp;
+		int i;
 
 		for (unit = 0; unit < sd_cd.cd_ndevs; ++unit) {
 			if (sd_cd.cd_devs[unit] == NULL)
@@ -390,18 +396,20 @@ findroot(devpp, partp)
 				continue;
 			bdp->d_close(MAKEDISKDEV(4, unit, 0),
 			    FREAD | FNONBLOCK, 0, curproc);
-			/*
-			 * XXX - assumes booting only from 'a' partition
-			 */
 			pp = &dkp->dk_label->d_partitions[0];
-			if (pp->p_size == 0 || pp->p_fstype != FS_BSDFFS)
-				continue;
-			if (pp->p_offset == boot_partition) {
-				if (*devpp == NULL) {
-					*devpp = devs[unit];
-					*partp = 0;	/* XXX */
-				} else
-					printf("Ambiguous boot device\n");
+			for (i = 0; i < dkp->dk_label->d_npartitions;
+			    i++, pp++) {
+				if (pp->p_size == 0 ||
+				    (pp->p_fstype != FS_BSDFFS &&
+				    pp->p_fstype != FS_SWAP))
+					continue;
+				if (pp->p_offset == boot_partition) {
+					if (*devpp == NULL) {
+						*devpp = devs[unit];
+						*partp = i;
+					} else
+						printf("Ambiguous boot device\n");
+				}
 			}
 		}
 	}
