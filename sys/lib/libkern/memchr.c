@@ -1,4 +1,4 @@
-/*	$NetBSD: memchr.c,v 1.3 1998/01/21 21:17:08 cgd Exp $	*/
+/*	$NetBSD: memchr.c,v 1.4 1998/02/22 05:10:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,12 +36,12 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char *sccsid = "@(#)memchr.c	5.6 (Berkeley) 1/26/91";
 #else
-__RCSID("$NetBSD: memchr.c,v 1.3 1998/01/21 21:17:08 cgd Exp $");
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: memchr.c,v 1.4 1998/02/22 05:10:55 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
