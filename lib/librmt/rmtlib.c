@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.15 2001/01/05 05:40:38 enami Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.16 2001/01/05 05:42:45 enami Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -415,7 +415,7 @@ _rmt_read(int fildes, void *buf, size_t nbyte)
 
 	_DIAGASSERT(buf != NULL);
 
-	(void)snprintf(buffer, sizeof buffer, "R%d\n", nbyte);
+	(void)snprintf(buffer, sizeof buffer, "R%lu\n", (u_long)nbyte);
 	if (command(fildes, buffer) == -1 || (rc = status(fildes)) == -1)
 		return (-1);
 
@@ -444,7 +444,7 @@ _rmt_write(int fildes, const void *buf, size_t nbyte)
 
 	_DIAGASSERT(buf != NULL);
 
-	(void)snprintf(buffer, sizeof buffer, "W%d\n", nbyte);
+	(void)snprintf(buffer, sizeof buffer, "W%lu\n", (u_long)nbyte);
 	if (command(fildes, buffer) == -1)
 		return (-1);
 
