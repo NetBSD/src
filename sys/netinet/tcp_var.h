@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.46 1998/05/01 18:31:12 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.47 1998/05/02 04:21:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -383,7 +383,8 @@ struct	tcpstat {
 #define	TCPCTL_COMPAT_42	13	/* 4.2BSD TCP bug work-arounds */
 #define	TCPCTL_CWM		14	/* Congestion Window Monitoring */
 #define	TCPCTL_CWM_BURSTSIZE	15	/* burst size allowed by CWM */
-#define	TCPCTL_MAXID		16
+#define	TCPCTL_ACK_ON_PUSH	16	/* ACK immediately on PUSH */
+#define	TCPCTL_MAXID		17
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -402,6 +403,7 @@ struct	tcpstat {
 	{ "compat_42", CTLTYPE_INT }, \
 	{ "cwm", CTLTYPE_INT }, \
 	{ "cwm_burstsize", CTLTYPE_INT }, \
+	{ "ack_on_push", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -418,6 +420,7 @@ extern	int tcp_mss_ifmtu;	/* take MSS from interface, not in_maxmtu */
 extern	int tcp_compat_42;	/* work around ancient broken TCP peers */
 extern	int tcp_cwm;		/* enable Congestion Window Monitoring */
 extern	int tcp_cwm_burstsize;	/* burst size allowed by CWM */
+extern	int tcp_ack_on_push;	/* ACK immediately on PUSH */
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_syn_cache_interval; /* compressed state timer */
@@ -444,6 +447,7 @@ extern	u_long syn_cache_count;
 	&tcp_compat_42, \
 	&tcp_cwm, \
 	&tcp_cwm_burstsize, \
+	&tcp_ack_on_push, \
 }
 
 int	 tcp_attach __P((struct socket *));
