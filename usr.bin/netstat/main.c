@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 1999/12/13 15:22:55 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2000/02/26 09:55:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.25 1999/12/13 15:22:55 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2000/02/26 09:55:24 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,6 +175,8 @@ struct nlist nl[] = {
 	{ "_mf6ctable" },
 #define N_MIF6TABLE	52
 	{ "_mif6table" },
+#define N_PFKEYSTAT	53
+	{ "_pfkeystat" },
 	{ "" },
 };
 
@@ -236,6 +238,15 @@ struct protox ip6protox[] = {
 };
 #endif
 
+#ifdef IPSEC
+struct protox pfkeyprotox[] = {
+	{ -1,		N_PFKEYSTAT,	1,	0,
+	  pfkey_stats,	NULL,		0,	"pfkey" },
+	{ -1,		-1,		0,	0,
+	  0,		NULL,		0,	0 }
+};
+#endif
+
 #ifndef SMALL
 struct protox atalkprotox[] = {
 	{ N_DDPCB,	N_DDPSTAT,	1,	atalkprotopr,
@@ -272,6 +283,9 @@ struct protox isoprotox[] = {
 struct protox *protoprotox[] = { protox,
 #ifdef INET6
 				 ip6protox,
+#endif
+#ifdef IPSEC
+				 pfkeyprotox,
 #endif
 #ifndef SMALL
 				 atalkprotox, nsprotox, isoprotox,
@@ -547,6 +561,11 @@ main(argc, argv)
 #ifdef INET6
 	if (af == AF_INET6 || af == AF_UNSPEC)
 		for (tp = ip6protox; tp->pr_name; tp++)
+			printproto(tp, tp->pr_name);
+#endif
+#ifdef IPSEC
+	if (af == PF_KEY || af == AF_UNSPEC)
+		for (tp = pfkeyprotox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);
 #endif
 #ifndef SMALL
