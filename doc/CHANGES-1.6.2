@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.29 2003/06/16 14:12:16 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.30 2003/06/16 21:19:23 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -427,3 +427,20 @@ sys/dev/wscons/wsemul_vt100var.h		1.7
 	PR/17738: Matthias Drochner, PR/21230: Onno van der Linden: vt100
 	wscons crashes restoring cursor. Fixed by adding a flag as suggested.
 	[drochner, ticket #1277]
+
+sys/dev/pci/pcidevs				1.511-1.512 (via patch)
+sys/dev/pci/pcidevs.h				Regenerate
+sys/dev/pci/pcidevs_data.h			Regenerate
+sys/dev/pci/pciide.c				1.182 (via patch)
+sys/dev/pci/pciide_sis_reg.h			1.10 (via patch)
+sys/dev/pci/pciidevar.h				1.9 (via patch)
+
+	Rework SiS support: more controller supported (up to Ultra/133) and
+	better support for the older ones.
+
+	Information for this work extracted from Soeren Schmidt's FreeBSD
+	driver.
+
+	Sync with the latest diff I made available, and also include changes
+	from kern/18015 which is much better than the hack I've done.
+	[bouyer, ticket #1234]
