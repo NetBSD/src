@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.5 1998/10/07 23:06:17 erh Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.6 1998/12/15 19:31:39 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@
 
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_mmap.h>
+#elif defined(__m68k__)
+#include <compat/linux/arch/m68k/linux_mmap.h>
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_mmap.h>
 /*

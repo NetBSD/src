@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.4 1998/10/04 00:02:33 fvdl Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.5 1998/12/15 19:31:39 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -60,6 +60,8 @@ struct linux_flock {
 
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_fcntl.h>
+#elif defined(__m68k__)
+#include <compat/linux/arch/m68k/linux_fcntl.h>
 #elif defined(__alpha__)
 #include <compat/linux/arch/alpha/linux_fcntl.h>
 #else
