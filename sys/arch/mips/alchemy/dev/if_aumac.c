@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.8 2003/01/16 01:14:17 simonb Exp $ */
+/* $NetBSD: if_aumac.c,v 1.9 2003/01/17 12:40:20 simonb Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.8 2003/01/16 01:14:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.9 2003/01/17 12:40:20 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -422,6 +422,12 @@ aumac_start(struct ifnet *ifp)
 
 		m_copydata(m, 0, m->m_pkthdr.len,
 		    sc->sc_txbufs[nexttx].buf_vaddr);
+
+		/* Zero out the remainder of any short packets. */
+		if (m->m_pkthdr.len < (ETHER_MIN_LEN - ETHER_CRC_LEN))
+			memset(sc->sc_txbufs[nexttx].buf_vaddr +
+			    m->m_pkthdr.len, 0,
+			    ETHER_MIN_LEN - ETHER_CRC_LEN - m->m_pkthdr.len);
 
 		bus_space_write_4(sc->sc_st, sc->sc_dma_sh,
 		    MACDMA_TX_STAT(nexttx), 0);
