@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.69 2003/07/15 00:25:09 lukem Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.70 2003/09/16 08:18:22 agc Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.69 2003/07/15 00:25:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.70 2003/09/16 08:18:22 agc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -282,6 +282,12 @@ cpu_reboot(howto, bootstr)
 	/*NOTREACHED*/
 }
 
+/* Number of DRAM pages which are installed */
+/* Units are 4K pages, so 8192 is 32 MB of memory */
+#ifndef DRAM_PAGES
+#define DRAM_PAGES	8192
+#endif
+
 /*
  *
  * Initial entry point on startup. This gets called before main() is
@@ -329,7 +335,7 @@ initarm(argc, argv, bi)
 	 * XXX kill bootconfig and directly call uvm_physload
 	 */
 	bootconfig.dram[0].address = 0xc0000000;
-	bootconfig.dram[0].pages = 8192;
+	bootconfig.dram[0].pages = DRAM_PAGES;
 	bootconfig.dramblocks = 1;
 	kerneldatasize = (u_int32_t)&end - (u_int32_t)KERNEL_TEXT_BASE;
 
