@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.6 1996/05/15 07:31:55 leo Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.6.4.1 1996/12/05 07:05:20 rat Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -849,6 +849,7 @@ fpu_emul_arith(fe, insn)
 	break;
 
     case 0x30:
+    case 0x31:
     case 0x32:
     case 0x33:
     case 0x34:
