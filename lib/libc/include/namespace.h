@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.20 1998/10/13 21:03:32 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.21 1998/10/14 11:25:18 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -141,6 +141,7 @@
 #define fdopen			_fdopen
 #define fnmatch			_fnmatch
 #define ftok			_ftok
+#define ftruncate		_ftruncate
 #define fts_children		_fts_children
 #define fts_close		_fts_close
 #define fts_open		_fts_open
@@ -220,7 +221,9 @@
 #define localtime_r		_localtime_r
 #define lockf			_lockf
 #define lrand48			_lrand48
+#define lseek			_lseek
 #define mergesort		_mergesort
+#define mmap			_mmap
 #define mpool_close		_mpool_close
 #define mpool_filter		_mpool_filter
 #define mpool_get		_mpool_get
@@ -245,8 +248,10 @@
 #define pmap_unset		_pmap_unset
 #define popen			_popen
 #define posix2time		_posix2time
+#define pread			_pread
 #define psignal			_psignal
 #define putenv			_putenv
+#define pwrite			_pwrite
 #define qabs			_qabs
 #define qdiv			_qdiv
 #define radixsort		_radixsort
