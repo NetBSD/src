@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.53 1999/01/08 19:26:14 augustss Exp $
+#	$NetBSD: Makefile.pc532,v 1.54 1999/03/14 05:03:35 jonb Exp $
 
 # Makefile for NetBSD
 #
@@ -170,7 +170,9 @@ depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PC532}/pc532/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+.if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+.endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	  ${CPPFLAGS} < ${PC532}/pc532/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
