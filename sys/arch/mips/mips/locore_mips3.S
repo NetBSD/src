@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.77 2002/03/11 16:39:40 uch Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.78 2002/06/01 13:16:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -300,7 +300,6 @@ LEAF(mipsNN_cp0_config1_read)
 	.set push
 	.set mips32
 	mfc0	v0, MIPS_COP_0_CONFIG, 1
-	nop
 	j	ra
 	nop
 	.set pop
@@ -330,7 +329,6 @@ LEAF(mipsNN_cp0_config2_read)
 	.set push
 	.set mips32
 	mfc0	v0, MIPS_COP_0_CONFIG, 2
-	nop
 	j	ra
 	nop
 	.set pop
@@ -345,7 +343,6 @@ LEAF(mipsNN_cp0_config3_read)
 	.set push
 	.set mips32
 	mfc0	v0, MIPS_COP_0_CONFIG, 3
-	nop
 	j	ra
 	nop
 	.set pop
