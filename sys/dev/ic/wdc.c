@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.57 1999/02/15 18:47:59 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.58 1999/02/18 14:45:31 bouyer Exp $ */
 
 
 /*
@@ -766,8 +766,9 @@ wdc_probe_caps(drvp)
 				break;
 			}
 		}
-	} else if (drvp->drive_flags & DRIVE_CAP32)
+	} else 
 #endif
+	if (drvp->drive_flags & DRIVE_CAP32)
 		printf("\n");
 
 	/* An ATAPI device is at last PIO mode 3 */
