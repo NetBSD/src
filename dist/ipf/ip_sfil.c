@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sfil.c,v 1.3 2000/05/03 11:40:16 veego Exp $	*/
+/*	$NetBSD: ip_sfil.c,v 1.4 2000/05/21 18:53:55 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_sfil.c,v 2.23 2000/03/17 03:10:22 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_sfil.c,v 2.23.2.1 2000/05/13 07:47:26 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -714,9 +714,7 @@ qif_t *qif;
 	tcp2->th_ack = htonl(ntohl(tcp->th_seq) + tlen);
 	tcp2->th_seq = tcp->th_ack;
 	tcp2->th_off = sizeof(struct tcphdr) >> 2;
-	tcp2->th_x2 = 0;
 	tcp2->th_flags = TH_RST|TH_ACK;
-	tcp2->th_win = 0;
 
 	/*
 	 * This is to get around a bug in the Solaris 2.4/2.5 TCP checksum

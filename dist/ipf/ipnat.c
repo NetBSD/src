@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.4 2000/05/11 19:54:36 veego Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.5 2000/05/21 18:53:55 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -59,7 +59,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipnat.c,v 2.16.2.1 2000/05/06 12:02:53 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipnat.c,v 2.16.2.2 2000/05/15 06:54:18 darrenr Exp";
 #endif
 
 
@@ -305,6 +305,8 @@ int fd, opts;
 			ns.ns_mapped[0], ns.ns_mapped[1]);
 		printf("added\t%lu\texpired\t%lu\n",
 			ns.ns_added, ns.ns_expire);
+		printf("no memory\t%lu\tbad nat\t%lu\n",
+			ns.ns_memfail, ns.ns_badnat);
 		printf("inuse\t%lu\nrules\t%lu\n", ns.ns_inuse, ns.ns_rules);
 		if (opts & OPT_VERBOSE)
 			printf("table %p list %p\n", ns.ns_table, ns.ns_list);
