@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.124 2001/05/16 12:57:55 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.125 2001/05/17 13:15:47 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.124 2001/05/14 01:41:16 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.126 2001/05/17 13:14:19 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -241,6 +241,9 @@
 #define	PCMCIA_CIS_INTEL_EEPRO100	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_INTEL_EEPRO100	0x010a
 #define	PCMCIA_STR_INTEL_EEPRO100	"Intel EtherExpress PRO/100"
+#define	PCMCIA_CIS_INTEL_PRO_WLAN_2011	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_INTEL_PRO_WLAN_2011	0x0001
+#define	PCMCIA_STR_INTEL_PRO_WLAN_2011	"Intel PRO/Wireless 2011 LAN PC Card"
 
 /* I-O DATA */
 #define	PCMCIA_CIS_IODATA_PCLATE	{ NULL, NULL, NULL, NULL }
