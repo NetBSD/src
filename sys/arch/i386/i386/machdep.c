@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.412 2000/11/10 04:00:25 enami Exp $	*/
+/*	$NetBSD: machdep.c,v 1.413 2000/11/13 16:40:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1046,8 +1046,8 @@ identifycpu()
 		u_int64_t last_tsc;
 
 		last_tsc = rdtsc();
-		delay(1000000);
-		cpu_tsc_freq = rdtsc() - last_tsc;
+		delay(100000);
+		cpu_tsc_freq = (rdtsc() - last_tsc) * 10;
 	}
 #endif
 }
