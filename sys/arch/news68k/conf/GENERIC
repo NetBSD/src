@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.56 2004/11/10 17:54:06 christos Exp $
+# $NetBSD: GENERIC,v 1.57 2005/01/05 09:01:24 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.56 $"
+#ident 		"GENERIC-$Revision: 1.57 $"
 
 maxusers	8
 
@@ -46,7 +46,7 @@ options 	SYSVSHM			# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support
-#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under
@@ -77,7 +77,7 @@ options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 #options 	COMPAT_SVR4		# binary compatibility with SVR4
 options 	COMPAT_SUNOS		# binary compatibility with SunOS
 #options 	COMPAT_LINUX		# binary compatibllity with Linux/m68k
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY		# /dev/[pt]ty?? ptys.
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -225,13 +225,13 @@ pseudo-device	ccd		4	# concatenated and striped disks
 pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
-# options	RF_INCLUDE_EVENODD=1
-# options	RF_INCLUDE_RAID5_RS=1
-# options	RF_INCLUDE_PARITYLOGGING=1
-# options	RF_INCLUDE_CHAINDECLUSTER=1
-# options	RF_INCLUDE_INTERDECLUSTER=1
-# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
-# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	sl		2	# SLIP interfaces
 pseudo-device	ppp		2	# PPP interfaces
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
@@ -245,7 +245,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	rnd			# /dev/random and in-kernle generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	clockctl		# user control of clock subsystem
