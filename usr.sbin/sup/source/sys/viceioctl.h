@@ -1,4 +1,4 @@
-/*	$NetBSD: viceioctl.h,v 1.2 1997/06/17 18:57:14 christos Exp $	*/
+/*	$NetBSD: viceioctl.h,v 1.3 2002/05/16 19:49:06 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -74,4 +74,4 @@ struct ViceIoctl {
 
 #define _VALIDVICEIOCTL(com) (com >= _VICEIOCTL(0) && com <= _VICEIOCTL(255))
 
-#endif	_SYS_VICEIOCTL_H_
+#endif	/* _SYS_VICEIOCTL_H_ */
