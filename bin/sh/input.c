@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.30 1998/05/20 00:30:20 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.31 1998/05/20 01:36:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.30 1998/05/20 00:30:20 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.31 1998/05/20 01:36:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,9 +98,6 @@ struct parsefile {
 };
 
 
-#ifndef SMALL
-int lastevent = 0;		/* last event number */
-#endif
 int plinno = 1;			/* input line number */
 MKINIT int parsenleft;		/* copy of parsefile->nleft */
 MKINIT int parselleft;		/* copy of parsefile->lleft */
@@ -301,19 +298,8 @@ check:
 	if (parsefile->fd == 0 && hist && something) {
 		HistEvent he;
 		INTOFF;
-		if (whichprompt == 1) {
-			history(hist, &he, H_ENTER, parsenextc);
-			lastevent = he.num;
-		}
-		else {
-		    /*
-		     * In case the user moved around in the history buffer,
-		     * we reset to the last full line event.
-		     */
-		    if (history(hist, &he, H_SET, lastevent) == -1)
-			error("History: %d: `%s'", lastevent, he.str);
-		    history(hist, &he, H_ADD, parsenextc);
-		}
+		history(hist, &he, whichprompt == 1? H_ENTER : H_APPEND,
+		    parsenextc);
 		INTON;
 	}
 #endif
