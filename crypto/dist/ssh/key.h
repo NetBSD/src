@@ -1,5 +1,5 @@
-/*	$NetBSD: key.h,v 1.1.1.9 2002/04/22 07:37:29 itojun Exp $	*/
-/*	$OpenBSD: key.h,v 1.19 2002/03/18 17:23:31 markus Exp $	*/
+/*	$NetBSD: key.h,v 1.1.1.10 2003/04/03 05:57:23 itojun Exp $	*/
+/*	$OpenBSD: key.h,v 1.20 2003/02/12 09:33:04 markus Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -78,5 +78,10 @@ int	 key_names_valid2(const char *);
 
 int	 key_sign(Key *, u_char **, u_int *, u_char *, u_int);
 int	 key_verify(Key *, u_char *, u_int, u_char *, u_int);
+
+int	 ssh_dss_sign(Key *, u_char **, u_int *, u_char *, u_int);
+int	 ssh_dss_verify(Key *, u_char *, u_int, u_char *, u_int);
+int	 ssh_rsa_sign(Key *, u_char **, u_int *, u_char *, u_int);
+int	 ssh_rsa_verify(Key *, u_char *, u_int, u_char *, u_int);
 
 #endif
