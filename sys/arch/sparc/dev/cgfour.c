@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.5 1996/03/17 02:00:47 thorpej Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.6 1996/03/31 22:30:52 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -97,7 +97,9 @@ int		cgfouropen __P((dev_t, int, int, struct proc *));
 int		cgfourclose __P((dev_t, int, int, struct proc *));
 int		cgfourioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int		cgfourmmap __P((dev_t, int, int));
+#if defined(SUN4)
 static void	cgfourunblank __P((struct device *));
+#endif
 
 struct cfattach cgfour_ca = {
 	sizeof(struct cgfour_softc), cgfourmatch, cgfourattach
@@ -107,6 +109,7 @@ struct cfdriver cgfour_cd = {
 	NULL, "cgfour", DV_DULL
 };
 
+#if defined(SUN4)
 /* frame buffer generic driver */
 static struct fbdriver cgfourfbdriver = {
 	cgfourunblank, cgfouropen, cgfourclose, cgfourioctl, cgfourmmap
@@ -118,6 +121,7 @@ extern struct tty *fbconstty;
 static void cgfourloadcmap __P((struct cgfour_softc *, int, int));
 static int cgfour_get_video __P((struct cgfour_softc *));
 static void cgfour_set_video __P((struct cgfour_softc *, int));
+#endif
 
 /*
  * Match a cgfour.
@@ -178,6 +182,7 @@ cgfourattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
+#if defined(SUN4)
 	register struct cgfour_softc *sc = (struct cgfour_softc *)self;
 	register struct confargs *ca = args;
 	register int node = 0, ramsize, i;
@@ -215,8 +220,7 @@ cgfourattach(parent, self, args)
 
 	isconsole = 0;
 
-#if defined(SUN4)
-	if (cputyp == CPU_SUN4) {
+	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
 
 		/*
@@ -224,9 +228,8 @@ cgfourattach(parent, self, args)
 		 * to be found.
 		 */
 		if (eep == NULL || eep->eeConsole == EE_CONS_P4OPT)
-			isconsole = (fbconstty != NULL); 
+			isconsole = (fbconstty != NULL);
 	}
-#endif
 
 #if 0
 	/*
@@ -281,6 +284,7 @@ cgfourattach(parent, self, args)
 	 * to notice if we're the console framebuffer.
 	 */
 	fb_attach(fb, isconsole);
+#endif
 }
 
 int
@@ -314,6 +318,7 @@ cgfourioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
+#if defined(SUN4)
 	register struct cgfour_softc *sc = cgfour_cd.cd_devs[minor(dev)];
 	register struct fbgattr *fba;
 	int error;
@@ -362,44 +367,8 @@ cgfourioctl(dev, cmd, data, flags, p)
 	default:
 		return (ENOTTY);
 	}
+#endif
 	return (0);
-}
-
-/*
- * Undo the effect of an FBIOSVIDEO that turns the video off.
- */
-static void
-cgfourunblank(dev)
-	struct device *dev;
-{
-
-	cgfour_set_video((struct cgfour_softc *)dev, 1);
-}
-
-/*
- * Load a subset of the current (new) colormap into the Brooktree DAC.
- */
-static void
-cgfourloadcmap(sc, start, ncolors)
-	register struct cgfour_softc *sc;
-	register int start, ncolors;
-{
-	register volatile struct bt_regs *bt;
-	register u_int *ip, i;
-	register int count;
-
-	ip = &sc->sc_cmap.cm_chip[BT_D4M3(start)];	/* start/4 * 3 */
-	count = BT_D4M3(start + ncolors - 1) - BT_D4M3(start) + 3;
-	bt = &sc->sc_fbc->fbc_dac;
-	bt->bt_addr = BT_D4M4(start) << 24;
-	while (--count >= 0) {
-		i = *ip++;
-		/* hardware that makes one want to pound boards with hammers */
-		bt->bt_cmap = i;
-		bt->bt_cmap = i << 8;
-		bt->bt_cmap = i << 16;
-		bt->bt_cmap = i << 24;
-	}
 }
 
 /*
@@ -409,7 +378,7 @@ cgfourloadcmap(sc, start, ncolors)
  * the cg4 maps it's overlay plane for 128K, followed by the enable
  * plane for 128K, followed by the colour plane (for as much colour
  * as their is.)
- * 
+ *
  * As well, mapping at an offset of 0x04000000 causes the cg4 to map
  * only it's colour plane, at 0.
  */
@@ -456,12 +425,24 @@ cgfourmmap(dev, off, prot)
 	} else if ((u_int)off < END_COLOR) {
 		/*
 		 * in colour plane
-		 */ 
+		 */
 		poff = (off - START_COLOR) + PFOUR_COLOR_OFF_COLOR;
 	} else
 		return (-1);
 
 	return (REG2PHYS(&sc->sc_phys, poff, sc->sc_bustype) | PMAP_NC);
+}
+
+#if defined(SUN4)
+/*
+ * Undo the effect of an FBIOSVIDEO that turns the video off.
+ */
+static void
+cgfourunblank(dev)
+	struct device *dev;
+{
+
+	cgfour_set_video((struct cgfour_softc *)dev, 1);
 }
 
 static int
@@ -480,3 +461,30 @@ cgfour_set_video(sc, enable)
 
 	fb_pfour_set_video(&sc->sc_fb, enable);
 }
+
+/*
+ * Load a subset of the current (new) colormap into the Brooktree DAC.
+ */
+static void
+cgfourloadcmap(sc, start, ncolors)
+	register struct cgfour_softc *sc;
+	register int start, ncolors;
+{
+	register volatile struct bt_regs *bt;
+	register u_int *ip, i;
+	register int count;
+
+	ip = &sc->sc_cmap.cm_chip[BT_D4M3(start)];	/* start/4 * 3 */
+	count = BT_D4M3(start + ncolors - 1) - BT_D4M3(start) + 3;
+	bt = &sc->sc_fbc->fbc_dac;
+	bt->bt_addr = BT_D4M4(start) << 24;
+	while (--count >= 0) {
+		i = *ip++;
+		/* hardware that makes one want to pound boards with hammers */
+		bt->bt_cmap = i;
+		bt->bt_cmap = i << 8;
+		bt->bt_cmap = i << 16;
+		bt->bt_cmap = i << 24;
+	}
+}
+#endif
