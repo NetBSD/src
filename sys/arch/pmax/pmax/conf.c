@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.32 1999/03/25 01:17:51 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.33 1999/04/26 04:42:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -176,6 +176,8 @@ cdev_decl(tun);
 cdev_decl(vnd);
 #include "ipfilter.h"
 #include "rnd.h"
+#include "px.h"
+cdev_decl(px);
 
 #include "scsibus.h"
 cdev_decl(scsibus);
@@ -299,6 +301,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 95: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 96: RAIDframe disk driver */
 	cdev_disk_init(NMD,md),	/* 97: memory disk  driver */
+	cdev_fbm_init(NPX,px),	/* 98: PixelStamp board driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
