@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.5 2002/07/02 16:22:28 thorpej Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.6 2002/07/16 16:40:56 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.5 2002/07/02 16:22:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.6 2002/07/16 16:40:56 thorpej Exp $");
 
 #include "opt_systrace.h"
 
@@ -539,7 +539,7 @@ systraceopen(dev_t dev, int flag, int mode, struct proc *p)
 		fst->issuser = 1;
 
 	fp->f_flag = FREAD | FWRITE;
-	fp->f_type = DTYPE_SYSTRACE;
+	fp->f_type = DTYPE_MISC;
 	fp->f_ops = &systracefops;
 	fp->f_data = (caddr_t) fst;
 
