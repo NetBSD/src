@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_1185.c,v 1.3 1998/06/05 12:34:06 tsubai Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -217,15 +219,16 @@ static void append_wb __P((VOLATILE struct sc_chan_stat *));
 static int get_wb_chan __P((void));
 static int release_wb __P((void));
 static void adjust_transfer __P((struct sc_chan_stat *));
+static void clean_k2dcache __P((struct scsi *));
 
 extern void sc_done __P((struct scsi *));
 extern vm_offset_t kvtophys __P((vm_offset_t));
 
 #if defined(mips) && defined(CPU_SINGLE)
-#define dma_reset(x) { \
-	int s = splscsi(); \
-	dmac_gsel = (x); dmac_cctl = DM_RST; dmac_cctl = 0; \
-	splx(s); \
+#define dma_reset(x) {						\
+	int s = splscsi();					\
+	dmac_gsel = (x); dmac_cctl = DM_RST; dmac_cctl = 0;	\
+	splx(s);						\
 }
 #endif
 
@@ -858,17 +861,13 @@ scsi_softreset()
 			scdp = &sc_data[cs->chan_num];
 			MachFlushDCache((vm_offset_t)scdp->scd_scaddr, sizeof(struct scsi));
 
-			if (MACH_IS_USPACE(scdp->scd_vaddr)) {
+			if (MACH_IS_USPACE(scdp->scd_vaddr))
 				panic("scsi_softreset: user address is not supported");
-			} else if (MACH_IS_CACHED(scdp->scd_vaddr)) {
+
+			if (MACH_IS_CACHED(scdp->scd_vaddr))
 			    MachFlushDCache(scdp->scd_vaddr, scdp->scd_count);
-			} else if (MACH_IS_MAPPED(scdp->scd_vaddr)) {
-#ifdef notyet /* KU:XXX */
-				clean_k2dcache(scdp->scd_vaddr, scdp->scd_count);
-#else
-				MachFlushCache();
-#endif
-			}
+			else
+			    clean_k2dcache(sc);
 #endif /* mips */
 #if 0
 			if ((cs->intr_flg == SCSI_INTEN)
@@ -1045,17 +1044,14 @@ sc_discon()
 		scdp = &sc_data[cs->chan_num];
 		MachFlushDCache((vm_offset_t)scdp->scd_scaddr, sizeof(struct scsi));
 
-		if (MACH_IS_USPACE(scdp->scd_vaddr)) {
+		if (MACH_IS_USPACE(scdp->scd_vaddr))
 			panic("sc_discon: user address is not supported");
-		} else if (MACH_IS_CACHED(scdp->scd_vaddr)) {
+
+		if (MACH_IS_CACHED(scdp->scd_vaddr))
 			MachFlushDCache(scdp->scd_vaddr, scdp->scd_count);
-		} else if (MACH_IS_MAPPED(scdp->scd_vaddr)) {
-#ifdef notyet /* KU:XXX */
-			clean_k2dcache(scdp->scd_vaddr, scdp->scd_count);
-#else
-			MachFlushCache();
-#endif
-		}
+		else
+			clean_k2dcache(sc);
+
 #endif /* mips */
 #if 0
 		if ((cs->intr_flg == SCSI_INTEN)
@@ -1870,3 +1866,23 @@ adjust_transfer(cs)
 	if ((sc->sc_map == NULL) || (sc->sc_map->mp_pages <= 0))
 		cs->act_point += sent_byte;
 }
+
+#ifdef mips
+static void
+clean_k2dcache(sc)
+	struct scsi *sc;
+{
+	struct sc_map *sc_map = sc->sc_map;
+	vm_offset_t pa;
+	int i, pages;
+
+	if (sc_map == NULL)
+		return;
+
+	pages = sc_map->mp_pages;
+	for (i = 0; i < pages; i++) {
+		pa = sc_map->mp_addr[i] << PGSHIFT;
+		MachFlushDCache(MIPS_PHYS_TO_KSEG0(pa), NBPG);
+	}
+}
+#endif
