@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.13 1997/12/04 15:34:00 tv Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.14 1998/08/09 03:12:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -56,7 +56,7 @@
 #include <compat/sunos/sunos_exec.h>
 #include <compat/sunos/sunos_syscall.h>
 
-#ifdef sparc
+#ifdef __sparc__
 #define	sunos_exec_aout_prep_zmagic exec_aout_prep_zmagic
 #define	sunos_exec_aout_prep_nmagic exec_aout_prep_nmagic
 #define	sunos_exec_aout_prep_omagic exec_aout_prep_omagic
@@ -77,7 +77,7 @@ const char sunos_emul_path[] = "/emul/sunos";
 struct emul emul_sunos = {
 	"sunos",
 	NULL,
-#ifdef sparc
+#ifdef __sparc__
 	sendsig,
 #else
 	sunos_sendsig,
@@ -127,7 +127,7 @@ exec_sunos_aout_makecmds(p, epp)
 /*
  * the code below is only needed for sun3 emulation.
  */
-#ifndef sparc
+#ifndef __sparc__
 
 /* suns keep data seg aligned to SEGSIZ because of sun custom mmu */
 #define SEGSIZ		0x20000
