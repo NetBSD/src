@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.3 2003/08/07 16:30:33 agc Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.4 2004/02/02 08:28:00 soren Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -84,7 +84,7 @@
 #define CR4_OSXMMEXCPT	0x00000400	/* enable unmasked SSE exceptions */
 
 /*
- * CPUID "features" bits:
+ * CPUID "features" bits in %edx
  */
 
 #define	CPUID_FPU	0x00000001	/* processor has an FPU? */
@@ -143,6 +143,16 @@
 #define CPUID_EXT_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34B27\35B28\36LONG" \
 				    "\0373DNOW2\0403DNOW"
 
+/*
+ * CPUID "features" bits in %ecx
+ */
+
+#define	CPUID2_TM2	0x00000080	/* Thermal Monitor 2 */
+#define	CPUID2_EST	0x00000100	/* Enhanced SpeedStep Technology */
+#define	CPUID2_CID	0x00000400	/* Context ID */
+
+#define CPUID2_FLAGS	"\20\10TM2\11EST\13CID"
+
 #define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
 #define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
 #define CPUID2STEPPING(cpuid)	((cpuid) & 15)
@@ -187,6 +197,13 @@
 #define MSR_MCG_CTL		0x17b
 #define MSR_EVNTSEL0		0x186
 #define MSR_EVNTSEL1		0x187
+#define MSR_PERF_STATUS		0x198	/* Pentium M */
+#define MSR_PERF_CTL		0x199	/* Pentium M */
+#define MSR_THERM_CONTROL	0x19a
+#define MSR_THERM_INTERRUPT	0x19b
+#define MSR_THERM_STATUS	0x19c
+#define MSR_THERM2_CTL		0x19d	/* Pentium M */
+#define MSR_MISC_ENABLE		0x1a0
 #define MSR_DEBUGCTLMSR		0x1d9
 #define MSR_LASTBRANCHFROMIP	0x1db
 #define MSR_LASTBRANCHTOIP	0x1dc
