@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.14 1997/10/19 05:50:01 lukem Exp $	*/
+/*	$NetBSD: iso.c,v 1.15 1998/01/29 09:11:21 frueauf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: iso.c,v 1.14 1997/10/19 05:50:01 lukem Exp $");
+__RCSID("$NetBSD: iso.c,v 1.15 1998/01/29 09:11:21 frueauf Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,6 +106,7 @@ SOFTWARE.
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <string.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "netstat.h"
@@ -287,7 +288,7 @@ iso_protopr1(kern_addr, istp)
 			printf("*.*\t");
 	else {
 			if ((char *)isopcb.isop_laddr == ((char *)kern_addr) +
-					_offsetof(struct isopcb, isop_sladdr))
+					offsetof(struct isopcb, isop_sladdr))
 					laddr.siso = isopcb.isop_sladdr;
 			else
 					kget(isopcb.isop_laddr, laddr);
@@ -300,7 +301,7 @@ iso_protopr1(kern_addr, istp)
 		printf("*.*\t");
 	else {
 		if ((char *)isopcb.isop_faddr == ((char *)kern_addr) +
-			_offsetof(struct isopcb, isop_sfaddr))
+			offsetof(struct isopcb, isop_sfaddr))
 			faddr.siso = isopcb.isop_sfaddr;
 		else
 			kget(isopcb.isop_faddr, faddr);
