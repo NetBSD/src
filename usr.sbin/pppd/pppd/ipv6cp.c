@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6cp.c,v 1.3 2000/01/19 20:23:46 christos Exp $	*/
+/*	$NetBSD: ipv6cp.c,v 1.4 2000/01/20 04:55:52 itojun Exp $	*/
 
 /*
  * ipv6cp.c - PPP IPV6 Control Protocol.
@@ -35,7 +35,7 @@
 #if 0
 #define RCSID	"Id: ipv6cp.c,v 1.3 1999/08/24 05:31:09 paulus Exp "
 #else
-__RCSID("$NetBSD: ipv6cp.c,v 1.3 2000/01/19 20:23:46 christos Exp $");
+__RCSID("$NetBSD: ipv6cp.c,v 1.4 2000/01/20 04:55:52 itojun Exp $");
 #endif
 #endif
 
@@ -231,7 +231,7 @@ setifaceid(arg)
     if (comma != p) {
 	*comma = '\0';
 
-	if (inet_pton(AF_INET6, p, &addr) == 0 || !VALIDID(addr)) {
+	if (inet_pton(AF_INET6, p, &addr) != 1 || !VALIDID(addr)) {
 	    option_error("Illegal interface identifier: %s", p);
 	    return 0;
 	}
@@ -245,7 +245,7 @@ setifaceid(arg)
      * If comma last character, the no remote identifier
      */
     if (*comma != 0 && *++comma != '\0') {
-	if (inet_pton(AF_INET6, comma, &addr) == 0 || !VALIDID(addr)) {
+	if (inet_pton(AF_INET6, comma, &addr) != 1 || !VALIDID(addr)) {
 	    option_error("Illegal interface identifier: %s", comma);
 	    return 0;
 	}
