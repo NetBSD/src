@@ -1,4 +1,4 @@
-.\" $NetBSD: isdnd.rc.5,v 1.8 2002/04/11 12:34:31 wiz Exp $
+.\" $NetBSD: isdnd.rc.5,v 1.8.2.1 2002/06/14 17:26:38 lukem Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.rc.5,v 1.8 2002/04/11 12:34:31 wiz Exp $
+.\"	$Id: isdnd.rc.5,v 1.8.2.1 2002/06/14 17:26:38 lukem Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -497,7 +497,7 @@ successful connection is made for
 ISDN connections. The specification unit is 1/100 second. A zero (0) disables
 this feature and is the default value. This feature is implemented (and makes
 sense only) for the
-.Xr i4bipr 4
+.Xr irip 4
 IP over raw HDLC ISDN driver. (optional)
 .It Li isdntxdel-outgoing
 How long to delay the transmission of the first packet after a
@@ -506,7 +506,7 @@ successful connection is made for
 ISDN connections. The specification unit is 1/100 second. A zero (0) disables
 this feature and is the default value. This feature is implemented (and makes
 sense only) for the
-.Xr i4bipr 4
+.Xr irip 4
 IP over raw HDLC ISDN driver. (optional)
 .It Li local-phone-dialout
 The local telephone number used when the local site dials out. When dialing
