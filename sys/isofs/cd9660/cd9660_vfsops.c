@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.34 1998/09/05 04:34:47 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.35 1999/01/04 15:32:09 is Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -57,6 +57,7 @@
 #include <sys/disklabel.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/cdio.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
@@ -252,6 +253,7 @@ iso_mountfs(devvp, mp, p, argp)
 	struct iso_primary_descriptor *pri;
 	struct iso_directory_record *rootp;
 	int logical_block_size;
+	int sess = 0;
 	
 	if (!ronly)
 		return EROFS;
@@ -279,9 +281,17 @@ iso_mountfs(devvp, mp, p, argp)
 	 * whichever is greater.  For now, we'll just use a constant.
 	 */
 	iso_bsize = ISO_DEFAULT_BLOCK_SIZE;
+
+	error = VOP_IOCTL(devvp, CDIOREADMSADDR, (caddr_t)&sess, 0, FSCRED, p);
+	if (error)
+		sess = 0;	/* never mind */
+#if 0
+	else
+		printf("cdfs: detected multi-session at offset %d\n", sess);
+#endif
 	
 	for (iso_blknum = 16; iso_blknum < 100; iso_blknum++) {
-		if ((error = bread(devvp, iso_blknum * btodb(iso_bsize),
+		if ((error = bread(devvp, (iso_blknum+sess) * btodb(iso_bsize),
 				   iso_bsize, NOCRED, &bp)) != 0)
 			goto out;
 		
