@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.9 2001/12/02 09:14:20 blymn Exp $	*/
+/*	$NetBSD: acs.c,v 1.10 2002/01/04 13:53:26 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: acs.c,v 1.9 2001/12/02 09:14:20 blymn Exp $");
+__RCSID("$NetBSD: acs.c,v 1.10 2002/01/04 13:53:26 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -89,10 +89,10 @@ __init_acs(SCREEN *screen)
 	ACS_VLINE = '|';
 	ACS_BULLET = 'o';
 
-	if (__tc_ac == NULL)
+	if (screen->tc_ac == NULL)
 		return;
 
-	aofac = __tc_ac;
+	aofac = screen->tc_ac;
 
 	while (*aofac != '\0') {
 		if ((acs = *aofac) == '\0')
@@ -113,8 +113,9 @@ __init_acs(SCREEN *screen)
 	for (count=0; count < NUM_ACS; count++)
 		screen->acs_char[count]= _acs_char[count];
 
-	if (__tc_eA != NULL)
-		tputs(__tc_eA, 0, __cputchar);
+	if (screen->tc_eA != NULL)
+		t_puts(screen->cursesi_genbuf, screen->tc_eA, 0,
+		       __cputchar_args, screen->outfd);
 }
 
 void
