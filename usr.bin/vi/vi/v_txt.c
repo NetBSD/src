@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.6 2001/08/20 21:44:57 aymeric Exp $	*/
+/*	$NetBSD: v_txt.c,v 1.7 2001/12/31 18:54:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -1946,8 +1946,10 @@ txt_dent(sp, tp, isindent)
 	target = current;
 	if (isindent)
 		target += COL_OFF(target, sw);
-	else
-		target -= --target % sw;
+	else {
+		--target;
+		target -= target % sw;
+	}
 
 	/*
 	 * The AI characters will be turned into overwrite characters if the
