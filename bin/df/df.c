@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)df.c	5.30 (Berkeley) 4/23/92";*/
-static char rcsid[] = "$Id: df.c,v 1.12 1994/05/17 04:06:00 cgd Exp $";
+static char rcsid[] = "$Id: df.c,v 1.13 1994/06/13 06:39:17 chopps Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -148,7 +148,7 @@ main(argc, argv)
 					prtstat(&statfsbuf, maxwidth);
 				} else
 					warn("%s", *argv);
-				(void)unmount(mntpt, MNT_NOFORCE);
+				(void)unmount(mntpt, 0);
 				(void)rmdir(mntpt);
 				continue;
 			}
@@ -231,7 +231,7 @@ prtstat(sfsp, maxwidth)
  * This code constitutes the old df code for extracting
  * information from filesystem superblocks.
  */
-#include <ufs/fs.h>
+#include <ufs/ffs/fs.h>
 #include <errno.h>
 #include <fstab.h>
 
