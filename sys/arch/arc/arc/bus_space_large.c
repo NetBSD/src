@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_large.c,v 1.1 2000/06/09 05:14:44 soda Exp $	*/
+/*	$NetBSD: bus_space_large.c,v 1.2 2000/06/29 08:34:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,8 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/extent.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <arc/arc/wired_map.h>

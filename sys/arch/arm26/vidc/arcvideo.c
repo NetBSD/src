@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.2 2000/06/26 04:55:27 simonb Exp $ */
+/* $NetBSD: arcvideo.c,v 1.3 2000/06/29 08:32:36 mrg Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -39,13 +39,13 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.2 2000/06/26 04:55:27 simonb Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.3 2000/06/29 08:32:36 mrg Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/wscons/wsconsio.h>
 #define WSDISPLAY_TYPE_ARCHIMEDES 42 /* XXX Should be in wsconsio.h */

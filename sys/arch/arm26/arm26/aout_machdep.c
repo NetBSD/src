@@ -1,4 +1,4 @@
-/* $NetBSD: aout_machdep.c,v 1.1 2000/05/09 21:55:55 bjh21 Exp $ */
+/* $NetBSD: aout_machdep.c,v 1.2 2000/06/29 08:32:34 mrg Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -37,14 +37,15 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: aout_machdep.c,v 1.1 2000/05/09 21:55:55 bjh21 Exp $");
+__RCSID("$NetBSD: aout_machdep.c,v 1.2 2000/06/29 08:32:34 mrg Exp $");
 
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <machine/aout_machdep.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 int cpu_exec_aout_prep_ozmagic(struct proc *, struct exec_package *);
 

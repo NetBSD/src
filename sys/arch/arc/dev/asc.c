@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.22 2000/06/09 05:28:47 soda Exp $	*/
+/*	$NetBSD: asc.c,v 1.23 2000/06/29 08:34:11 mrg Exp $	*/
 /*	$OpenBSD: asc.c,v 1.9 1998/03/16 09:38:39 pefo Exp $	*/
 /*	NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp 	*/
 
@@ -129,7 +129,7 @@
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
