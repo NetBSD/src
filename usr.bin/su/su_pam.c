@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.4 2005/01/18 21:39:11 manu Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.5 2005/02/25 21:49:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.4 2005/01/18 21:39:11 manu Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.5 2005/02/25 21:49:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -345,7 +345,7 @@ main(int argc, char **argv)
 			 * Parent: wait for the child to terminate
 			 * and call pam_close_session.
 			 */
-			if ((xpid = wait(&status)) != pid) {
+			if ((xpid = waitpid(pid, &status, 0)) != pid) {
 				pam_err = pam_close_session(pamh, 0);
 				if (pam_err != PAM_SUCCESS) {
 					syslog(LOG_ERR, 
@@ -354,8 +354,14 @@ main(int argc, char **argv)
 					warnx("pam_close_session: %s", 
 					    pam_strerror(pamh, pam_err));
 				}
-				ERRX_PAM_END((1, 
-				    "wrong PID: %d != %d", pid, xpid));
+				if (xpid == -1) {
+					ERR_PAM_END((1, 
+					    "error waiting for pid %d", pid));
+				} else {
+					// Can't happen.
+					ERRX_PAM_END((1, 
+					    "wrong PID: %d != %d", pid, xpid));
+				}
 			}
 		
 			(void)signal(SIGINT, oint);
