@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.419 2003/07/16 08:25:18 itojun Exp $
+# $NetBSD: mi,v 1.420 2003/07/19 20:20:39 tshiozak Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1163,10 +1163,22 @@
 ./usr/share/i18n/csmapper/JIS				base-sysutil-share
 ./usr/share/i18n/csmapper/JIS/JISX0201-KANA%UCS.mps	base-sysutil-share
 ./usr/share/i18n/csmapper/JIS/JISX0208@1990%UCS.mps	base-sysutil-share
+./usr/share/i18n/csmapper/JIS/JISX0208@MS%UCS.mps	base-sysutil-share
+./usr/share/i18n/csmapper/JIS/JISX0208UDC%UCS.mps	base-sysutil-share
+./usr/share/i18n/csmapper/JIS/JISX0208VDC@NEC%UCS.mps	base-sysutil-share
 ./usr/share/i18n/csmapper/JIS/JISX0212%UCS.mps		base-sysutil-share
+./usr/share/i18n/csmapper/JIS/JISX0212@MS%UCS.mps	base-sysutil-share
+./usr/share/i18n/csmapper/JIS/JISX0212UDC%UCS.mps	base-sysutil-share
+./usr/share/i18n/csmapper/JIS/JISX0212VDC@IBM%UCS.mps	base-sysutil-share
 ./usr/share/i18n/csmapper/JIS/UCS%JISX0201-KANA.mps	base-sysutil-share
 ./usr/share/i18n/csmapper/JIS/UCS%JISX0208@1990.mps	base-sysutil-share
+./usr/share/i18n/csmapper/JIS/UCS%JISX0208@MS.mps	base-sysutil-share
+./usr/share/i18n/csmapper/JIS/UCS%JISX0208UDC.mps	base-sysutil-share
+./usr/share/i18n/csmapper/JIS/UCS%JISX0208VDC@NEC.mps	base-sysutil-share
 ./usr/share/i18n/csmapper/JIS/UCS%JISX0212.mps		base-sysutil-share
+./usr/share/i18n/csmapper/JIS/UCS%JISX0212@MS.mps	base-sysutil-share
+./usr/share/i18n/csmapper/JIS/UCS%JISX0212UDC.mps	base-sysutil-share
+./usr/share/i18n/csmapper/JIS/UCS%JISX0212VDC@IBM.mps	base-sysutil-share
 ./usr/share/i18n/csmapper/KS				base-sysutil-share
 ./usr/share/i18n/csmapper/KS/KSC5601%UCS.mps		base-sysutil-share
 ./usr/share/i18n/csmapper/KS/UCS%KSC5601.mps		base-sysutil-share
@@ -1259,6 +1271,7 @@
 ./usr/share/i18n/esdb/EUC			base-sysutil-share
 ./usr/share/i18n/esdb/EUC/EUC-CN.esdb		base-sysutil-share
 ./usr/share/i18n/esdb/EUC/EUC-JP.esdb		base-sysutil-share
+./usr/share/i18n/esdb/EUC/EUC-JP-MS.esdb	base-sysutil-share
 ./usr/share/i18n/esdb/EUC/EUC-KR.esdb		base-sysutil-share
 ./usr/share/i18n/esdb/EUC/EUC-TW.esdb		base-sysutil-share
 ./usr/share/i18n/esdb/ISO-2022			base-sysutil-share
