@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.6 1996/08/05 21:18:56 soda Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.7 1996/08/28 23:46:18 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -189,7 +189,15 @@ aic7770probe(void)
 
 #elif defined(__NetBSD__)
 
+/*
+ * Under normal circumstances, these messages are unnecessary
+ * and not terribly cosmetic.
+ */
+#ifdef DEBUG
 #define bootverbose	1
+#else
+#define bootverbose	0
+#endif
 
 int	ahc_eisa_irq __P((bus_chipset_tag_t, bus_io_handle_t));
 int	ahc_eisa_match __P((struct device *, void *, void *));
