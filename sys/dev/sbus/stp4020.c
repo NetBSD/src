@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.37 2004/07/05 07:26:04 martin Exp $ */
+/*	$NetBSD: stp4020.c,v 1.38 2004/07/05 10:48:29 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.37 2004/07/05 07:26:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.38 2004/07/05 10:48:29 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,6 @@ struct stp4020_socket {
 struct stp4020_softc {
 	struct device	sc_dev;		/* Base device */
 	struct sbusdev	sc_sd;		/* SBus device */
-	bus_space_tag_t	sc_bustag;
 	pcmcia_chipset_tag_t	sc_pct;	/* Chipset methods */
 
 	struct proc	*event_thread;		/* event handling thread */
@@ -376,17 +375,18 @@ stp4020attach(parent, self, aux)
 #ifdef SUN4U
 	tag = sa->sa_bustag;
 #else
-	tag = (bus_space_tag_t)
-	    malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
-	*tag = *sa->sa_bustag;
+	tag = bus_space_tag_alloc(sa->sa_bustag, sc);
+	if (tag == NULL) {
+		printf("%s: attach: out of memory\n", self->dv_xname);
+		return;
+	}
 	tag->sparc_read_2 = stp4020_read_2;
 	tag->sparc_read_4 = stp4020_read_4;
 	tag->sparc_read_8 = stp4020_read_8;
 	tag->sparc_write_2 = stp4020_write_2;
 	tag->sparc_write_4 = stp4020_write_4;
 	tag->sparc_write_8 = stp4020_write_8;
-#endif	/* ultra sparc */
-	sc->sc_bustag = tag;
+#endif	/* SUN4U */
 
 	/* Set up per-socket static initialization */
 	sc->sc_socks[0].sc = sc->sc_socks[1].sc = sc;
