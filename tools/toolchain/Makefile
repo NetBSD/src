@@ -1,69 +1,24 @@
-#	$NetBSD: Makefile,v 1.8 2001/11/01 01:52:45 thorpej Exp $
+#	$NetBSD: Makefile,v 1.9 2001/11/12 23:16:35 tv Exp $
 
-.include <bsd.own.mk>	# for TOOLDIR
+.include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../gnu/dist/toolchain
-TIMESTAMP=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
+MODULE=		toolchain
 
-# Dependencies that trigger a rebuild.
-${TIMESTAMP}: \
-	${.CURDIR}/Makefile \
-	${DIST}/ChangeLog \
-	${DIST}/bfd/ChangeLog \
-	${DIST}/binutils/ChangeLog \
-	${DIST}/gas/ChangeLog \
-	${DIST}/gcc/ChangeLog \
-	${DIST}/gcc/cp/ChangeLog \
-	${DIST}/gcc/f/ChangeLog \
-	${DIST}/ld/ChangeLog \
-	${DIST}/opcodes/ChangeLog
+FIND_ARGS=	\! \( -type d -name sim -prune \)
 
-.if ${USETOOLS} == "yes"
-realall: toolchain.all
-realinstall: toolchain.install
-clean: toolchain.clean
+CONFIGURE_ENV=	LANGUAGES="c c++ objc"
+CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls
+
+.MAKEFLAGS+=	MACHINE= \
+		LIBGCC= LIBGCC1= LIBGCC1_TEST= LIBGCC2= INSTALL_LIBGCC= \
+		INSTALL_CPP=
+
+ALL_TARGET=	all-binutils all-gas all-ld all-gcc
+INSTALL_TARGET=	install-binutils install-gas install-ld install-gcc
+
+.if ${MKCROSSGDB:Uno} == "yes"
+ALL_TARGET+=	all-gdb
+INSTALL_TARGET+=install-gdb
 .endif
 
-.for f in aclocal autoconf autoheader automake
-toolchain.configure: ${TOOLDIR}/bin/${f}
-${TOOLDIR}/bin/${f}: stub.sh
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${BINMODE} $> $@
-.endfor
-
-toolchain.configure:
-	rm -rf toolchain
-	mkdir toolchain
-	cd toolchain && \
-		CC="${HOST_CC}" \
-		CFLAGS="${HOST_CFLAGS}" \
-		CPPFLAGS="${HOST_CPPFLAGS}" \
-		LDFLAGS="${HOST_LDFLAGS}" \
-		PATH="${TOOLDIR}/bin:$$PATH" \
-		LANGUAGES="c c++ objc" \
-		${DIST}/configure \
-		--target=${MACHINE_GNU_PLATFORM} \
-		--disable-shared --disable-nls \
-		--prefix=${TOOLDIR}
-	cd toolchain/gcc && \
-		mv -f Makefile Makefile.orig && \
-		egrep -v '^(LIBGCC|LIBGCC1_TEST|LIBGCC2|INSTALL_LIBGCC) =' \
-			Makefile.orig >Makefile
-	@touch $@
-
-toolchain.all: toolchain.configure
-	cd toolchain && \
-		PATH="${TOOLDIR}/bin:$$PATH" \
-		${MAKE} -j1 all-binutils all-gas all-ld all-gcc \
-		LEX=true BISON=true MACHINE= DESTDIR=
-
-toolchain.install:
-	cd toolchain && \
-		PATH="${TOOLDIR}/bin:$$PATH" \
-		${MAKE} -j1 install-binutils install-gas install-ld install-gcc \
-		LEX=true BISON=true DESTDIR=
-	mv ${TOOLDIR}/bin/cpp ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
-
-toolchain.clean:
-	rm -rf toolchain*
-
-.include <bsd.hostprog.mk>
+.include "${.CURDIR}/../Makefile.gnuhost"

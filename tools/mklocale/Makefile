@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2001/10/20 06:05:01 jmc Exp $
+#	$NetBSD: Makefile,v 1.2 2001/11/12 23:16:33 tv Exp $
 
 HOST_SRCDIR=	usr.bin/mklocale
 
 .include "${.CURDIR}/../Makefile.host"
-
-${TIMESTAMP}: ${SRCS}

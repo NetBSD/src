@@ -239,23 +239,6 @@ CONFIGURATION
 
                     Default: ``yes''
 
-     MKTOOLS        Indicates whether the host tools will be built and in-
-                    stalled automatically if they are out-of-date.
-
-                    yes    Build tools as needed into TOOLDIR, but only if the
-                           tools in question are out-of-date.
-
-                    no     Do not update the tools in TOOLDIR; halt the build
-                           as a safety precaution if tools are out-of-date.
-
-                    always
-                           Always rebuild the tools in TOOLDIR from scratch
-                           during a build.  This is similar to the standard
-                           NetBSD source tree build method, but is not typi-
-                           cally required for host tools.
-
-                    Default: ``yes''
-
      NBUILDJOBS     If set, specifies the number of parallel make(1) processes
                     that should be run simultaneously.  This can speed up
                     builds on SMP machines, or machines with much more CPU
@@ -468,4 +451,4 @@ HISTORY
 BUGS
      Many platforms are not yet using the USE_NEW_TOOLCHAIN system.
 
-NetBSD                         October 29, 2001                              8
+NetBSD                         November 12, 2001                             7

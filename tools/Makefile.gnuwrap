@@ -1,0 +1,14 @@
+#	$NetBSD: Makefile.gnuwrap,v 1.1 2001/11/12 23:16:23 tv Exp $
+#
+# Wrapper for GNU Makefiles.
+
+.include "${.CURDIR}/Makefile"
+
+# Prevent targets in source directories from being rebuilt.
+
+_srcdir:=	${srcdir}
+.MADE:		${.ALLTARGETS:M${srcdir}/*}
+
+# Don't rebuild .gmo files, or lex/yacc (which GNU puts in the source tree).
+.po.gmo .l.c .y.c .y.h:
+	@true

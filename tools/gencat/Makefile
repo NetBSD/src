@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2001/08/14 11:01:59 tv Exp $
+#	$NetBSD: Makefile,v 1.2 2001/11/12 23:16:27 tv Exp $
 
 HOST_SRCDIR=	usr.bin/gencat
 
 .include "${.CURDIR}/../Makefile.host"
-
-${TIMESTAMP}: ${SRCS}

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.58 2001/11/11 21:41:00 tv Exp $
+#	$NetBSD: bsd.sys.mk,v 1.59 2001/11/12 23:16:21 tv Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -53,6 +53,7 @@ HOST_LDFLAGS?=
 
 CONFIG?=	config
 CRUNCHGEN?=	crunchgen
+GROFF?=		groff
 OBJCOPY?=	objcopy
 RPCGEN?=	rpcgen
 STRIP?=		strip

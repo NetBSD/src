@@ -1,67 +1,35 @@
-#	$NetBSD: Makefile,v 1.4 2001/10/25 02:37:18 thorpej Exp $
-
-PROG=	mdsetimage
-
-.if defined(MDSETIMAGE_TARGET_PREFIX)
-PROGNAME= ${MDSETIMAGE_TARGET_PREFIX}${PROG}
-MAN=	${MDSETIMAGE_TARGET_PREFIX}mdsetimage.8
-.else
-MAN=	mdsetimage.8
-.endif
-
-.if defined(MDSETIMAGE_TARGET_PREFIX)
-${MDSETIMAGE_TARGET_PREFIX}mdsetimage.8: ${.CURDIR}/mdsetimage.8
-	cp ${.IMPSRC} ${.TARGET}
-.endif
-
-.ifdef HOSTPROG
-# BFDDIR and IBERTYDIR must already be set
-TOP=		${.CURDIR}/../..
-DIST=		${TOP}/dist/toolchain
-
-# Host tool Makefile MUST set HOST_CPPFLAGS!
-#CPPFLAGS+=	-I${BFDDIR} -I${DIST}/include
-
-DPADD+=	${BFDDIR}/libbfd.a
-LDADD+=	-L${BFDDIR} -lbfd
-
-DPADD+=	${IBERTYDIR}/libiberty.a
-LDADD+=	-L${IBERTYDIR} -liberty
-.else
-# XXX in an ideal world...
-# LDADD+= -lbfd
-# DPADD+= ${LIBBFD}
+#	$NetBSD: Makefile,v 1.5 2001/11/12 23:16:19 tv Exp $
 
 .include <bsd.own.mk>
-.ifdef USE_NEW_TOOLCHAIN
+
+.if defined(USE_NEW_TOOLCHAIN)
 TOP=		${.CURDIR}/../..
 DIST=		${TOP}/dist/toolchain
 
-.include	"${TOP}/lib/libbfd/arch/${MACHINE_ARCH}/defs.mk"
+PROG=		mdsetimage
+MAN=		mdsetimage.8
 
-CPPFLAGS+=	-I${TOP}/lib/libbfd/arch/${MACHINE_ARCH} \
-		-I${BFDOBJ} ${G_INCLUDES}
-
-BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd && ${PRINTOBJDIR}
-DPADD+=		${BFDOBJ}/libbfd_pic.a
-LDADD+=		-L${BFDOBJ} -lbfd
-
-IBERTYOBJ!=	cd ${TOP}/lib/libiberty && ${PRINTOBJDIR}
-LDADD+=		-L${IBERTYOBJ} -liberty
-DPADD+=		${IBERTYOBJ}/libiberty.a
-
-LDADD+=		-lintl
-DPADD+=		${LIBINTL}
-.else # !USE_NEW_TOOLCHAIN
-DIST=		${.CURDIR}/../../dist
-BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd && ${PRINTOBJDIR}
-
-CPPFLAGS+=	-I${BFDOBJ} -I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include \
+CPPFLAGS+=	-I${BFDDIR} -I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include \
 		-DHAVE_CONFIG_H
 
-DPADD+=		${BFDOBJ}/libbfd_pic.a
-LDADD+=		-L${BFDOBJ} -lbfd
-.endif # !USE_NEW_TOOLCHAIN
+DPADD+=		${BFDDIR}/libbfd.a
+LDADD+=		-L${BFDDIR} -lbfd
 
+DPADD+=		${IBERTYDIR}/libiberty.a
+LDADD+=		-L${IBERTYDIR} -liberty
+
+.ifndef HOSTPROG
+.include	"${TOP}/lib/libbfd/arch/${MACHINE_ARCH}/defs.mk"
+
+BFDDIR!=	cd ${.CURDIR}/../../lib/libbfd && ${PRINTOBJDIR}
+IBERTYDIR!=	cd ${TOP}/lib/libiberty && ${PRINTOBJDIR}
+
+CPPFLAGS+=	-I${TOP}/lib/libbfd/arch/${MACHINE_ARCH} ${G_INCLUDES}
+LDADD+=		-lintl
+DPADD+=		${LIBINTL}
+.endif # HOSTPROG
+.endif # USE_NEW_TOOLCHAIN
+
+.ifndef HOSTPROG
 .include <bsd.prog.mk>
 .endif # HOSTPROG

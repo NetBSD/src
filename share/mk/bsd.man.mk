@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.65 2001/11/04 00:30:52 enami Exp $
+#	$NetBSD: bsd.man.mk,v 1.66 2001/11/12 23:16:20 tv Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -9,7 +9,12 @@
 realinstall:	${MANINSTALL}
 
 ##### Default values
+.if ${USETOOLS} == "yes"
+TMACDIR?=	${TOOLDIR}/share/groff/tmac
+.else
 TMACDIR?=	${DESTDIR}/usr/share/tmac
+.endif
+
 HTMLDIR?=	${DESTDIR}/usr/share/man
 CATDEPS?=	${TMACDIR}/tmac.andoc \
 		${TMACDIR}/tmac.doc \
@@ -18,9 +23,9 @@ CATDEPS?=	${TMACDIR}/tmac.andoc \
 		${TMACDIR}/tmac.doc-nroff \
 		${TMACDIR}/tmac.doc-syms
 MANTARGET?=	cat
-NROFF?=		nroff -Tascii
-GROFF?=		groff -Tascii
-GROFF_HTML?=	groff -Tlatin1 -mdoc2html -P-b -P-o -P-u
+
+GROFF_HTML?=	${GROFF} -Tlatin1 -mdoc2html -P-b -P-o -P-u
+NROFF?=		${GROFF} -Tascii -mtty-char
 TBL?=		tbl
 
 MAN?=
