@@ -1,4 +1,4 @@
-.\" $NetBSD: isdn.4,v 1.1 2002/03/16 17:57:39 martin Exp $
+.\" $NetBSD: isdn.4,v 1.1.2.1 2003/09/12 19:05:04 tron Exp $
 .\"
 .\" Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdn.4,v 1.1 2002/03/16 17:57:39 martin Exp $
+.\"	$Id: isdn.4,v 1.1.2.1 2003/09/12 19:05:04 tron Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -34,7 +34,7 @@
 .Os
 .Sh NAME
 .Nm isdn
-.Nd isdn kernel to userland master device
+.Nd ISDN kernel to userland master device
 .Sh SYNOPSIS
 .Cd "pseudo-device isdn"
 .Sh DESCRIPTION
@@ -42,7 +42,7 @@ The
 .Nm
 device driver is used by the
 .Xr isdnd 8
-daemon to exchange messages with the isdn kernel part for the purpose
+daemon to exchange messages with the ISDN kernel part for the purpose
 of call establishment, control and disconnection and to access various
 control and status informations.
 .Pp
@@ -105,5 +105,5 @@ Charging information from the kernel.
 .Sh AUTHORS
 The
 .Nm
-device driver and this manpage were written by
+device driver and this man page were written by
 .An Hellmuth Michaelis Aq hm@kts.org .
