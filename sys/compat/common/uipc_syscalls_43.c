@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.17 2001/11/13 02:08:04 lukem Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.18 2002/03/16 20:43:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.17 2001/11/13 02:08:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.18 2002/03/16 20:43:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,14 +235,14 @@ compat_43_sys_recvmsg(p, v, retval)
 	 * DTRT.
 	 */
 	if (omsg.msg_accrights && omsg.msg_accrightslen) {
-		caddr_t sg = stackgap_init(p->p_emul);
+		caddr_t sg = stackgap_init(p, 0);
 		struct cmsg *ucmsg;
 
 		/* it was this way in 4.4BSD */
 		if ((u_int) omsg.msg_accrightslen > MLEN)
 			return (EINVAL);
 
-		ucmsg = stackgap_alloc(&sg, CMSG_SPACE(omsg.msg_accrightslen));
+		ucmsg = stackgap_alloc(p, &sg, CMSG_SPACE(omsg.msg_accrightslen));
 		if (ucmsg == NULL)
 			return (EMSGSIZE);
 
@@ -345,7 +345,7 @@ compat_43_sys_sendmsg(p, v, retval)
 	struct msghdr msg;
 	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	error = copyin(SCARG(uap, msg), (caddr_t)&omsg,
 	    sizeof (struct omsghdr));
@@ -381,7 +381,7 @@ compat_43_sys_sendmsg(p, v, retval)
 		sa->sa_family = osa->sa_family;
 		sa->sa_len = omsg.msg_namelen;
 
-		usa = stackgap_alloc(&sg, omsg.msg_namelen);
+		usa = stackgap_alloc(p, &sg, omsg.msg_namelen);
 		if (!usa) {
 			free(osa, M_TEMP);
 			return (ENOMEM);
@@ -420,7 +420,7 @@ compat_43_sys_sendmsg(p, v, retval)
 			return (error);
 		}
 		
-		ucmsg = stackgap_alloc(&sg, CMSG_SPACE(omsg.msg_accrightslen));
+		ucmsg = stackgap_alloc(p, &sg, CMSG_SPACE(omsg.msg_accrightslen));
 		if (!ucmsg) {
 			free(cmsg, M_TEMP);
 			return (EMSGSIZE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.47 2001/11/13 02:09:25 lukem Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.48 2002/03/16 20:43:57 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.47 2001/11/13 02:09:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.48 2002/03/16 20:43:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -282,12 +282,12 @@ clean_pipe(p, path)
 	register_t retval;
 	struct stat st;
 	int error;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	size_t l = strlen(path) + 1;
 	void *tpath;
 
-	tpath = stackgap_alloc(&sg, l);
-	SCARG(&la, ub) = stackgap_alloc(&sg, sizeof(struct stat));
+	tpath = stackgap_alloc(p, &sg, l);
+	SCARG(&la, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
 
 	if ((error = copyout(path, tpath, l)) != 0)
 		return error;
@@ -830,8 +830,8 @@ ti_bind(fp, fd, ioc, p)
 		return ENOSYS;
 	}
 
-	sg = stackgap_init(p->p_emul);
-	sup = stackgap_alloc(&sg, sasize);
+	sg = stackgap_init(p, 0);
+	sup = stackgap_alloc(p, &sg, sasize);
 
 	if ((error = copyout(skp, sup, sasize)) != 0)
 		return error;
@@ -940,9 +940,9 @@ svr4_stream_ti_ioctl(fp, p, retval, fd, cmd, dat)
 		return ENOSYS;
 	}
 
-	sg = stackgap_init(p->p_emul);
-	sup = stackgap_alloc(&sg, sasize);
-	lenp = stackgap_alloc(&sg, sizeof(*lenp));
+	sg = stackgap_init(p, 0);
+	sup = stackgap_alloc(p, &sg, sasize);
+	lenp = stackgap_alloc(p, &sg, sizeof(*lenp));
 
 	if ((error = copyout(&sasize, lenp, sizeof(*lenp))) != 0) {
 		DPRINTF(("ti_ioctl: error copying out lenp\n"));
@@ -1607,8 +1607,8 @@ svr4_sys_putmsg(p, v, retval)
 		return ENOSYS;
 	}
 
-	sg = stackgap_init(p->p_emul);
-	sup = stackgap_alloc(&sg, sasize);
+	sg = stackgap_init(p, 0);
+	sup = stackgap_alloc(p, &sg, sasize);
 
 	if ((error = copyout(skp, sup, sasize)) != 0)
 		return error;
@@ -1734,9 +1734,9 @@ svr4_sys_getmsg(p, v, retval)
 		return ENOSYS;
 	}
 
-	sg = stackgap_init(p->p_emul);
-	sup = stackgap_alloc(&sg, sasize);
-	flen = (int *) stackgap_alloc(&sg, sizeof(*flen));
+	sg = stackgap_init(p, 0);
+	sup = stackgap_alloc(p, &sg, sasize);
+	flen = (int *) stackgap_alloc(p, &sg, sizeof(*flen));
 
 	fl = sasize;
 	if ((error = copyout(&fl, flen, sizeof(fl))) != 0)

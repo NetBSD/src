@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.7 2001/11/13 02:09:05 lukem Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.8 2002/03/16 20:43:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.7 2001/11/13 02:09:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.8 2002/03/16 20:43:54 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -570,7 +570,7 @@ netbsd32___stat13(p, v, retval)
 	const char *path;
 
 	path = (char *)(u_long)SCARG(uap, path);
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, path);
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
@@ -634,7 +634,7 @@ netbsd32___lstat13(p, v, retval)
 	const char *path;
 
 	path = (char *)(u_long)SCARG(uap, path);
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, path);
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);

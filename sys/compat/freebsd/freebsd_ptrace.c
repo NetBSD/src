@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.4 2001/11/13 02:08:09 lukem Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.5 2002/03/16 20:43:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.4 2001/11/13 02:08:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.5 2002/03/16 20:43:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,8 @@ freebsd_sys_ptrace(p, v, retval)
 
 	case FREEBSD_PT_READ_U:
 	case FREEBSD_PT_WRITE_U:
-		sg = stackgap_init(p->p_emul);
-		nrp = stackgap_alloc(&sg, sizeof(*nrp));
+		sg = stackgap_init(p, 0);
+		nrp = stackgap_alloc(p, &sg, sizeof(*nrp));
 #ifdef PT_GETREGS
 		SCARG(&npa, req) = PT_GETREGS;
 		SCARG(&npa, pid) = SCARG(uap, pid);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.70 2002/02/16 16:23:09 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.71 2002/03/16 20:43:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.70 2002/02/16 16:23:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.71 2002/03/16 20:43:52 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -358,13 +358,13 @@ linux_read_ldt(p, uap, retval)
 	caddr_t sg;
 	char *parms;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 
 	gl.start = 0;
 	gl.desc = SCARG(uap, ptr);
 	gl.num = SCARG(uap, bytecount) / sizeof(union descriptor);
 
-	parms = stackgap_alloc(&sg, sizeof(gl));
+	parms = stackgap_alloc(p, &sg, sizeof(gl));
 
 	if ((error = copyout(&gl, parms, sizeof(gl))) != 0)
 		return (error);
@@ -426,9 +426,9 @@ linux_write_ldt(p, uap, retval)
 		sd.sd_def32 = ldt_info.seg_32bit;
 		sd.sd_gran = ldt_info.limit_in_pages;
 	}
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	sl.start = ldt_info.entry_number;
-	sl.desc = stackgap_alloc(&sg, sizeof(sd));
+	sl.desc = stackgap_alloc(p, &sg, sizeof(sd));
 	sl.num = 1;
 
 #if 0
@@ -436,7 +436,7 @@ linux_write_ldt(p, uap, retval)
 	    ldt_info.entry_number, ldt_info.base_addr, ldt_info.limit);
 #endif
 
-	parms = stackgap_alloc(&sg, sizeof(sl));
+	parms = stackgap_alloc(p, &sg, sizeof(sl));
 
 	if ((error = copyout(&sd, sl.desc, sizeof(sd))) != 0)
 		return (error);
@@ -720,8 +720,8 @@ linux_machdepioctl(p, v, retval)
 		lvt.relsig = linux_to_native_sig[lvt.relsig];
 		lvt.acqsig = linux_to_native_sig[lvt.acqsig];
 		lvt.frsig = linux_to_native_sig[lvt.frsig];
-		sg = stackgap_init(p->p_emul);
-		bvtp = stackgap_alloc(&sg, sizeof (struct vt_mode));
+		sg = stackgap_init(p, 0);
+		bvtp = stackgap_alloc(p, &sg, sizeof (struct vt_mode));
 		if ((error = copyout(&lvt, bvtp, sizeof (struct vt_mode))))
 			return error;
 		SCARG(&bia, data) = bvtp;

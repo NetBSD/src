@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.7 2001/11/23 22:02:40 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.8 2002/03/16 20:43:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.7 2001/11/23 22:02:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.8 2002/03/16 20:43:54 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -85,7 +85,7 @@ netbsd32_execve(p, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TOP_UAP(argp, char *);
 	NETBSD32TOP_UAP(envp, char *);
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return netbsd32_execve2(p, &ua, retval);

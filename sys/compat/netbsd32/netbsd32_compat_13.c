@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.10 2001/11/13 02:09:04 lukem Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.11 2002/03/16 20:43:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.10 2001/11/13 02:09:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.11 2002/03/16 20:43:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,11 +61,11 @@ compat_13_netbsd32_sigaltstack13(p, v, retval)
 	if (!SCARG(uap, nss))
 		return (EINVAL);
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 
-	SCARG(&ua, nss) = nss13up = stackgap_alloc(&sg, sizeof(*nss13up));
+	SCARG(&ua, nss) = nss13up = stackgap_alloc(p, &sg, sizeof(*nss13up));
 	if (SCARG(uap, oss))
-		SCARG(&ua, oss) = oss13up = stackgap_alloc(&sg, sizeof(*oss13up));
+		SCARG(&ua, oss) = oss13up = stackgap_alloc(p, &sg, sizeof(*oss13up));
 	else
 		SCARG(&ua, oss) = NULL;
 

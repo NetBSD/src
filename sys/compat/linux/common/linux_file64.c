@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.7 2002/02/15 16:48:02 christos Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.8 2002/03/16 20:43:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.7 2002/02/15 16:48:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.8 2002/03/16 20:43:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,9 +123,9 @@ linux_sys_fstat64(p, v, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 
-	st = stackgap_alloc(&sg, sizeof (struct stat));
+	st = stackgap_alloc(p, &sg, sizeof (struct stat));
 
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
@@ -158,8 +158,8 @@ linux_do_stat64(p, v, retval, dolstat)
 	int error;
 	struct linux_sys_stat64_args *uap = v;
 
-	sg = stackgap_init(p->p_emul);
-	st = stackgap_alloc(&sg, sizeof (struct stat));
+	sg = stackgap_init(p, 0);
+	st = stackgap_alloc(p, &sg, sizeof (struct stat));
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&sa, ub) = st;
@@ -218,7 +218,7 @@ linux_sys_truncate64(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(off_t) length;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 

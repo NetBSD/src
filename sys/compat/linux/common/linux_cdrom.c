@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.11 2002/02/15 20:02:56 christos Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.12 2002/03/16 20:43:53 christos Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.11 2002/02/15 20:02:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.12 2002/03/16 20:43:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,8 +184,8 @@ linux_ioctl_cdrom(p, uap, retval)
 		if (error)
 			break;
 	    
-		sg = stackgap_init(p->p_emul);
-		entry = stackgap_alloc(&sg, sizeof *entry);
+		sg = stackgap_init(p, 0);
+		entry = stackgap_alloc(p, &sg, sizeof *entry);
 		t_toc_entry.address_format = l_tocentry.cdte_format;
 		t_toc_entry.starting_track = l_tocentry.cdte_track;
 		t_toc_entry.data_len = sizeof *entry;
@@ -244,8 +244,8 @@ linux_ioctl_cdrom(p, uap, retval)
 		if (error)
 			break;
 
-		sg = stackgap_init(p->p_emul);
-		info = stackgap_alloc(&sg, sizeof *info);
+		sg = stackgap_init(p, 0);
+		info = stackgap_alloc(p, &sg, sizeof *info);
 		t_subchannel.address_format = CD_MSF_FORMAT;
 		t_subchannel.track = 0;
 		t_subchannel.data_format = l_subchnl.cdsc_format;
@@ -349,8 +349,8 @@ linux_ioctl_cdrom(p, uap, retval)
 		if (error)
 			break;
 
-		sg = stackgap_init(p->p_emul);
-		entry = stackgap_alloc(&sg, sizeof *entry);
+		sg = stackgap_init(p, 0);
+		entry = stackgap_alloc(p, &sg, sizeof *entry);
 		t_toc_entry.address_format = l_session.addr_format;
 		t_toc_entry.starting_track = 0;
 		t_toc_entry.data_len = sizeof *entry;

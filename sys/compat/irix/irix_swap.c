@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_swap.c,v 1.1 2002/03/16 13:29:42 manu Exp $ */
+/*	$NetBSD: irix_swap.c,v 1.2 2002/03/16 20:43:52 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.1 2002/03/16 13:29:42 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.2 2002/03/16 20:43:52 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h> 
@@ -67,7 +67,7 @@ irix_sys_swapctl(p, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	struct sys_swapctl_args cup;
 	int error = 0;
 
@@ -107,7 +107,7 @@ irix_sys_swapctl(p, v, retval)
 			return error;
 
 		SCARG(&cup, cmd) = SWAP_STATS;
-		SCARG(&cup, arg) = stackgap_alloc(&sg, len);
+		SCARG(&cup, arg) = stackgap_alloc(p, &sg, len);
 		SCARG(&cup, misc) = ist.swt_n;
 		if ((error = sys_swapctl(p, &cup, retval)) != 0) /*sets retval*/
 			goto bad;
