@@ -1,3 +1,5 @@
+/* $NetBSD: pickmove.c,v 1.2 1996/12/28 18:57:04 tls Exp $
+*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
+#else
+static char rcsid[] = "$NetBSD: pickmove.c,v 1.2 1996/12/28 18:57:04 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include <stdio.h>
