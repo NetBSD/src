@@ -201,6 +201,37 @@ iswritable (file)
     return isaccessible(file, W_OK);
 }
 
+#ifdef SETXID_SUPPORT
+int
+ingroup(gid_t gid)
+{
+    gid_t *gidp;
+    int i, ngroups;
+
+    if (gid == getegid())
+	return 1;
+
+    ngroups = getgroups(0, NULL);
+    if (ngroups == -1)
+	return 0;
+
+    if ((gidp = malloc(sizeof(gid_t) * ngroups)) == NULL)
+	return 0;
+
+    if (getgroups(ngroups, gidp) == -1) {
+	free(gidp);
+	return 0;
+    }
+
+    for (i = 0; i < ngroups; i++)
+	if (gid == gidp[i])
+	    break;
+
+    free(gidp);
+    return i != ngroups;
+}
+#endif
+
 /*
  * Returns non-zero if the argument file is accessable according to
  * mode.  If compiled with SETXID_SUPPORT also works if cvs has setxid
@@ -252,7 +283,7 @@ isaccessible (file, mode)
 	omask |= S_IXOTH;
     }
 
-    mask = sb.st_uid == uid ? umask : sb.st_gid == getegid() ? gmask : omask;
+    mask = sb.st_uid == uid ? umask : ingroup(sb.st_gid) ? gmask : omask;
     if ((sb.st_mode & mask) == mask)
 	return 1;
     errno = EACCES;
