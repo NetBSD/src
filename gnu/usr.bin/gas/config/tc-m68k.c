@@ -423,6 +423,8 @@ static void s_proc();
 
 static enum m68k_architecture current_architecture = 0;
 
+int warn_about_missing_register_prefixes = 0;
+
 /* BCC68000 is for patching in an extra jmp instruction for long offsets
    on the 68000.  The 68000 doesn't support long branches with branchs */
 
@@ -555,16 +557,20 @@ register char **ccp;
 #ifndef MAX_REG_NAME_LEN
 #define MAX_REG_NAME_LEN (6)
 #endif /* MAX_REG_NAME_LEN */
-	register char c[MAX_REG_NAME_LEN];
+	register char c[MAX_REG_NAME_LEN + 1];
 	char *p, *q;
 	register int n = 0,
 	ret = FAIL;
-	
+#ifdef REGISTER_PREFIX
+	int has_register_prefix = 0;
+#endif
+
 	c[0] = mklower(ccp[0][0]);
 #ifdef REGISTER_PREFIX
 	if (c[0] == REGISTER_PREFIX) {
 		/* Advance pointer: skip prefix. */
 		ccp[0]++;
+		has_register_prefix = 1;
 	}
 #ifndef REGISTER_PREFIX_OPTIONAL
 	else {
@@ -583,6 +589,7 @@ register char **ccp;
 		    else
 			*p = mklower(*q);
 	    } /* downcase */
+	*p = 0;			/* make sure it's terminated */
 	
 	switch (c[0]) {
 	case 'a':
@@ -800,6 +807,11 @@ register char **ccp;
 		    ccp[0]+=n;
 	} else
 	    ret = FAIL;
+#if defined(REGISTER_PREFIX)
+	if (ret != FAIL && has_register_prefix == 0 &&
+	    warn_about_missing_register_prefixes != 0)
+		as_warn("register prefix missing: %s", c);
+#endif
 	return ret;
 }
 
@@ -3866,8 +3878,14 @@ char ***vecP;
 		if (**argP == 'c') {
 			(*argP)++;
 		} /* allow an optional "c" */
-		
-		if (!strcmp(*argP, "68000")
+
+		/*
+		 * XXX Hack for optional warning about missing register
+		 * XXX prefixes.  --thorpej
+		 */
+		if (strcmp(*argP, "warn-no-reg-prefixes") == 0) {
+			warn_about_missing_register_prefixes = 1;
+		} else if (!strcmp(*argP, "68000")
 		    || !strcmp(*argP, "68008")) {
 			current_architecture |= m68000;
 		} else if (!strcmp(*argP, "68010")) {
