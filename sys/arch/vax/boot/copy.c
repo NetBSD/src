@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.c,v 1.1 1995/09/16 12:53:49 ragge Exp $ */
+/*	$NetBSD: copy.c,v 1.2 1995/09/29 16:35:00 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -154,7 +154,7 @@ again:
 
 	printf ("\n");
 	do {
-		printf ("Make sure unit %s is online and holds the proper volume.\n");
+		printf ("Make sure unit %s is online and holds the proper volume.\n", devname);
 		printf ("Then type \'g\' to Go or \'a\' to Abort.\n");
 		printf ("\n");
 		printf ("OK to go on ? [g/a] ");
