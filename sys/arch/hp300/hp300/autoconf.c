@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 1997/02/05 20:56:29 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34 1997/03/26 22:38:58 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -244,10 +244,6 @@ struct devnametobdevmaj hp300_nam2blk[] = {
 void
 configure()
 {
-	extern int (*mountroot) __P((void));
-	struct dev_data *dd;
-	struct device *dv;
-	struct vfsops *vops;
 
 	/*
 	 * Initialize the dev_data_lists.
@@ -278,6 +274,21 @@ configure()
 	(void)spl0();
 
 	isrprintlevels();
+
+	cold = 0;
+}
+
+/**********************************************************************
+ * Code to find and set the boot device
+ **********************************************************************/
+
+void
+cpu_rootconf()
+{
+	extern int (*mountroot) __P((void));
+	struct dev_data *dd;
+	struct device *dv;
+	struct vfsops *vops;
 
 	/*
 	 * Find boot device.
@@ -337,21 +348,14 @@ configure()
 		boothowto |= RB_ASKNAME;
 
 	setroot(dv, booted_partition, hp300_nam2blk);
-	swapconf();
-	dumpconf();
 
 	/*
-	 * Set bootdev based on how we mounted root.
+	 * Set bootdev based on what we found as the root.
 	 * This is given to the boot program when we reboot.
 	 */
 	setbootdev();
 
-	cold = 0;
 }
-
-/**********************************************************************
- * Code to find and set the boot device
- **********************************************************************/
 
 /*
  * Register a device.  We're passed the device and the arguments

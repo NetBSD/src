@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 1997/02/23 04:09:53 mark Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 1997/03/26 22:38:52 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -150,12 +150,10 @@ set_root_device()
 
 
 /*
- * Set up the root and swap device numbers, configure the swap space and
- * dump space
+ * Set up the root and swap devices from the boot args
  */
-
 void
-set_boot_devs()
+cpu_rootconf()
 {
 	set_root_device();
 
@@ -163,9 +161,6 @@ set_boot_devs()
 	    booted_device != NULL ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition, arm32_nam2blk);
-
-	swapconf();
-	dumpconf();
 }
 
 

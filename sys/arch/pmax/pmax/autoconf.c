@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 1997/02/05 17:53:52 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 1997/03/26 22:39:12 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,8 +120,7 @@ struct devnametobdevmaj pmax_nam2blk[] = {
 void
 configure()
 {
-	struct device *booted_device;
-	int booted_partition, s;
+	int s;
 
 	/*
 	 * Set CPU type for new-style config. 
@@ -173,16 +172,21 @@ configure()
 	printf("Beginning old-style SCSI device autoconfiguration\n");
 	configure_scsi();
 
+	cold = 0;
+}
+
+void
+cpu_rootconf()
+{
+	struct device *booted_device;
+	int booted_partition;
+
 	findroot(&booted_device, &booted_partition);
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition, pmax_nam2blk);
-
-	swapconf();
-	dumpconf();
-	cold = 0;
 }
 
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */

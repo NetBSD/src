@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 1997/02/03 21:08:48 oki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 1997/03/26 22:39:25 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -62,8 +62,6 @@ struct devnametobdevmaj x68k_nam2blk[] = {
 void
 configure()
 {
-	struct device *booted_device;
-	int booted_partition;
 	extern int x68k_realconfig;
 	
 	x68k_realconfig = 1;
@@ -71,18 +69,21 @@ configure()
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 
+	cold = 0;
+}
+
+void
+cpu_rootconf()
+{
+	struct device *booted_device;
+	int booted_partition;
+
 	findroot(&booted_device, &booted_partition);
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition, x68k_nam2blk);
-
-	swapconf();
-	dumpconf();
-	if (dumplo < 0)
-		dumplo = 0;
-	cold = 0;
 }
 
 /*ARGSUSED*/
