@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.21 2003/10/14 07:08:45 itojun Exp $
+.\"	$NetBSD: select.2,v 1.22 2003/10/14 07:44:43 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)select.2	8.2 (Berkeley) 3/25/94
 .\"
-.Dd March 25, 1994
+.Dd October 14, 2003
 .Dt SELECT 2
 .Os
 .Sh NAME
@@ -198,7 +198,9 @@ Note:
 .Xr rpc 3
 library uses
 .Ft fd_set
-with the default FD_SETSIZE as part of its ABI.
+with the default
+.Dv FD_SETSIZE
+as part of its ABI.
 Therefore, programs that use
 .Xr rpc 3
 routines cannot change
@@ -224,7 +226,7 @@ userland libraries:
 		return (-1);
 	}
 	FD_SET(fd, fdsr);
-	n = select(max+1, fdsr, NULL, NULL, &tv);
+	n = select(max+1, fdsr, NULL, NULL, \*[Am]tv);
 	...
 	free(fdsr);
 .Ed
