@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.8 2003/12/14 09:56:53 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.8.2.1 2004/08/03 16:54:47 jmc Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -185,6 +185,8 @@ extern	struct ieee80211_node *ieee80211_find_txnode(struct ieee80211com *,
 		u_int8_t *);
 extern	struct ieee80211_node * ieee80211_lookup_node(struct ieee80211com *,
 		u_int8_t *macaddr, struct ieee80211_channel *);
+extern	struct ieee80211_node * ieee80211_lookup_node_for_beacon(struct ieee80211com *,
+		u_int8_t *macaddr, struct ieee80211_channel *, char *);
 extern	void ieee80211_free_node(struct ieee80211com *,
 		struct ieee80211_node *);
 extern	void ieee80211_free_allnodes(struct ieee80211com *);

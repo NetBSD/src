@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.21 2004/02/11 10:19:32 mrg Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.21.2.1 2004/08/03 16:54:42 jmc Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.12 2003/10/17 23:59:11 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.21 2004/02/11 10:19:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.21.2.1 2004/08/03 16:54:42 jmc Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1027,8 +1027,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		 * This may result in a bloat of the scanned AP list but
 		 * it shouldn't be too much.
 		 */
-		ni = ieee80211_lookup_node(ic, wh->i_addr2,
-				&ic->ic_channels[chan]);
+		ni = ieee80211_lookup_node_for_beacon(ic, wh->i_addr2,
+				&ic->ic_channels[chan], ssid);
 #ifdef IEEE80211_DEBUG
 		if (ieee80211_debug &&
 		    (ni == NULL || ic->ic_state == IEEE80211_S_SCAN)) {
