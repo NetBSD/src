@@ -253,6 +253,9 @@ _bfd_elf_strtab_emit (abfd, tab)
   if (bfd_bwrite ("", 1, abfd) != 1)
     return false;
 
+  if (tab == NULL)
+    return true;
+
   for (i = 1; i < tab->size; ++i)
     {
       register const char *str;
