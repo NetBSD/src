@@ -235,9 +235,9 @@ void tc_aout_fix_to_chars PARAMS ((char *where, struct fix *fixP, relax_addressT
 extern int aout_pic_flag;
 
 #ifdef TE_NetBSD
-extern void obj_aout_add_size_symbols PARAMS ((void));
+extern void obj_aout_nbsd_frob_file PARAMS ((void));
 #define TARGET_SYMBOL_FIELDS expressionS *sy_sizexp;
-#define obj_frob_file_before_adjust() obj_aout_add_size_symbols ()
+#define obj_frob_file_before_adjust() obj_aout_nbsd_frob_file ()
 
 /* XXX This isn't the right thing to do... */
 #define obj_fix_adjustable(X) (!(aout_pic_flag \
