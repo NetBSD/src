@@ -18,7 +18,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: tc-sparc.c,v 1.4 1994/02/01 21:49:18 pk Exp $";
+static char rcsid[] = "$Id: tc-sparc.c,v 1.5 1994/02/04 14:19:33 pk Exp $";
 #endif
 
 #define cypress 1234
@@ -457,7 +457,8 @@ char *str;
 		
 	case SPECIAL_CASE_SET:
 		special_case = 0;
-		know(the_insn.reloc == RELOC_HI22);
+		know(the_insn.reloc == RELOC_HI22 ||
+					the_insn.reloc == RELOC_BASE22);
 		/* See if "set" operand has no low-order bits; skip OR if so. */
 		if (the_insn.exp.X_seg == SEG_ABSOLUTE
 		    && ((the_insn.exp.X_add_number & 0x3FF) == 0))
@@ -473,7 +474,7 @@ char *str;
 			the_insn.exp.X_subtract_symbol,
 			the_insn.exp.X_add_number,
 			the_insn.pcrel,
-			RELOC_LO10,
+			the_insn.reloc==RELOC_HI22?RELOC_LO10:RELOC_BASE10,
 			the_insn.exp.X_got_symbol);
 		return;
 		
@@ -1267,10 +1268,21 @@ long val;
 		   became  ( ( 2 * addend ) + adjustment ).  [and there should
 		   be no cases that reach here anyway.  */
 	case RELOC_32:
-		buf[0] = 0; /* val >> 24; */
-		buf[1] = 0; /* val >> 16; */
-		buf[2] = 0; /* val >> 8; */
-		buf[3] = 0; /* val; */
+		if (fixP->fx_addsy == NULL) {
+			/*
+			 * Ok, the remarks above do not hold if the
+			 * expression has been reduced to a number.
+			 */
+			buf[0] = val >> 24;
+			buf[1] = val >> 16;
+			buf[2] = val >> 8;
+			buf[3] = val;
+		} else {
+			buf[0] = 0;
+			buf[1] = 0;
+			buf[2] = 0;
+			buf[3] = 0;
+		}
 		break;
 		
 	case RELOC_JMP_TBL:
@@ -1421,6 +1433,7 @@ relax_addressT segment_address_in_file;
 			case RELOC_32:
 				if (!S_IS_EXTERNAL(fixP->fx_addsy))
 					break;
+				r_extern = 1;
 				r_index = fixP->fx_addsy->sy_number;
 				/*kflag = 1;*/
 				break;
