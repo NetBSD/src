@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.31 1995/12/13 03:09:57 briggs Exp $	*/
+/*	$NetBSD: ser.c,v 1.32 1995/12/13 14:30:29 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -1243,7 +1243,6 @@ zsoverrun(unit, ptime, what)
 	}
 }
 
-int have_received = 0;
 /*
  * ZS software interrupt.  Scan all channels for deferred interrupts.
  */
@@ -1317,8 +1316,6 @@ again:
 				 * bstreams	XXX gag choke
 				 */
 				if (tp != NULL) {
-					if ((have_received++)==0)
-						printf("Off with %x",cc);
 					line->l_rint(cc, tp);
 				} else {printf("tp == NULL!");}
 				break;
