@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.42 2000/01/28 06:53:33 fair Exp $
+# $NetBSD: mi,v 1.43 2000/03/01 11:06:27 itojun Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -37,8 +37,8 @@
 ./etc/mrouted.conf
 ./etc/mtree/NetBSD.dist
 ./etc/mtree/special
-./etc/namedb/0000:0000:0000:0000:0000:0000:000
 ./etc/namedb/127
+./etc/namedb/loopback.v6
 ./etc/namedb/named.conf
 ./etc/namedb/root.cache
 ./etc/netstart
