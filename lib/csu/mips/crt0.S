@@ -34,24 +34,24 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)crt0.s	8.2 (Berkeley) 3/21/94
- *	$Id: crt0.S,v 1.3 1994/12/15 17:04:55 mycroft Exp $    
+ *	$Id: crt0.S,v 1.4 1995/05/03 22:13:15 mellon Exp $    
  */
 
 #include <machine/regdef.h>
 #include <machine/machAsmDefs.h>
 
-	.data
 	.comm	_C_LABEL(environ), 4
-	.align	2
-	.globl	_C_LABEL(__progname)
-_C_LABEL(__progname):
-	.word	$L1
+	.comm	_C_LABEL(__progname), 4
+	.data
 $L1:
 	.word	0		# null string plus padding
 	.text
 
 NON_LEAF(start, 24, ra)
 	.set	noreorder
+#ifdef __GP_SUPPORT__
+	la	gp, _C_LABEL (_gp)
+#endif
 	lw	s0, 0(sp)		# get argc from stack
 	addu	s1, sp, 4		# get pointer to argv
 	addu	s2, s1, 4		# skip null pointer on stack
@@ -74,7 +74,11 @@ eprol:
 #endif
 	lw	a0, 0(s1)		# a0 = argv[0];
 	nop
-	beq	a0, zero, 2f		# skip if a0 == NULL
+	bne	a0, zero, 2f		# If a0 is NULL, use null string.
+	nop
+	la	a0, $L1
+	nop
+2:
 	move	s3, a0			# save argv[0]
 	jal	_C_LABEL(strrchr)
 	li	a1, 0x2f		# a1 = '/'
@@ -83,7 +87,6 @@ eprol:
 	move	v0, s3			# v0 = argv[0];
 1:
 	sw	v0, _C_LABEL(__progname)
-2:
 	move	a0, s0
 	move	a1, s1
 	jal	_C_LABEL(main)		# v0 = main(argc, argv, env);
