@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.56 2000/10/11 23:47:57 fvdl Exp $	*/
+/*	$NetBSD: util.c,v 1.57 2000/11/26 01:11:26 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -633,6 +633,7 @@ cleanup_dist(name)
 			fprintf(log, "Adding file %s, type %d to list of "
 			    "obsolete file\n", current->name, current->type);
 	}
+	fclose(list_file);
 	if (head == NULL)
 		return 1;
 #if 0
