@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.58 2003/08/07 10:31:20 agc Exp $
+.\"	$NetBSD: hier.7,v 1.59 2004/01/27 21:24:07 agc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd April 1, 2003
+.Dd January 27, 2004
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -1032,7 +1032,18 @@ system crash dumps; see
 scheduled commands configuration files; see
 .Xr cron 8
 .It Sy db/
-miscellaneous automatically generated system-specific database files
+miscellaneous automatically generated system-specific database files,
+and persistent files used in the maintenance of third party software.
+.Pp
+.Bl -tag -width "monthly.out" -compact
+.It Sy pkg
+default location for metadata related to third party software
+packages.
+See 
+.Xr pkg_install 1
+for more details of the NetBSD Packages Collection, or pkgsrc.
+.El
+.Pp
 .It Sy games/
 miscellaneous game status and log files
 .It Sy heimdal/
@@ -1094,8 +1105,6 @@ user system mailboxes
 system messages; see
 .Xr msgs 1
 .\" since we use nvi (now called vi) this isn't the place any more, is it?
-.It Sy pkg/
-working files for third party packages
 .It Sy preserve/
 temporary home of files preserved after an accidental death of
 .Xr ex 1
