@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.399 2000/09/15 03:41:18 enami Exp $	*/
+/*	$NetBSD: machdep.c,v 1.400 2000/09/15 03:44:28 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -262,6 +262,12 @@ const struct i386_cache_info {
 	{ 0x44,		&cpu_l2cache_info,	"1M 32b/line 4-way",
 	  1 * 1024 * 1024, 32 },
 	{ 0x45,		&cpu_l2cache_info,	"2M 32b/line 4-way",
+	  2 * 1024 * 1024, 32 },
+	{ 0x82,		&cpu_l2cache_info,	"256K 32b/line 8-way",
+	  256 * 1024,	32 },
+	{ 0x84,		&cpu_l2cache_info,	"1M 32b/line 8-way",
+	  1 * 1024 * 1024, 32 },
+	{ 0x85,		&cpu_l2cache_info,	"2M 32b/line 8-way",
 	  2 * 1024 * 1024, 32 },
 
 	{ 0,		NULL,		NULL,	0,	0 },
