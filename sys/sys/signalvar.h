@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.22 1999/04/30 21:23:50 thorpej Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.23 1999/12/30 15:53:09 eeh Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -175,10 +175,13 @@ void	sigactsfree __P((struct proc *));
  */
 void	sendsig __P((sig_t action, int sig, sigset_t *returnmask, u_long code));
 struct core;
+struct core32;
 struct vnode;
 struct ucred;
 int	cpu_coredump __P((struct proc *, struct vnode *, struct ucred *,
 			  struct core *));
+int	cpu_coredump32 __P((struct proc *, struct vnode *, struct ucred *, 
+			       struct core32 *));
 
 /*
  * Compatibility functions.  See compat/common/kern_sig_13.c.
