@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.11 1997/07/15 07:46:04 augustss Exp $	*/
+/*	$NetBSD: aucc.c,v 1.12 1997/07/15 07:51:04 augustss Exp $	*/
 #undef AUDIO_DEBUG
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -170,9 +170,6 @@ int	aucc_open __P((dev_t, int));
 void	aucc_close __P((void *));
 int	aucc_set_out_sr __P((void *, u_long));
 int	aucc_query_encoding __P((void *, struct audio_encoding *));
-int	aucc_get_encoding __P((void *));
-int	aucc_get_precision __P((void *));
-int	aucc_get_channels __P((void *));
 int	aucc_round_blocksize __P((void *, int));
 int	aucc_set_out_port __P((void *, int));
 int	aucc_get_out_port __P((void *));
@@ -457,27 +454,6 @@ aucc_set_params(addr, mode, p, q)
 	q->sample_rate = p->sample_rate;
 	
 	return aucc_set_out_sr(addr, p->sample_rate);
-}
-
-int
-aucc_get_encoding(addr)
-	void *addr;
-{
-	return ((struct aucc_softc *)addr)->sc_encoding;
-}
-
-int
-aucc_get_precision(addr)
-	void *addr;
-{
-	return(8);
-}
-
-int
-aucc_get_channels(addr)
-	void *addr;
-{
-	return ((struct aucc_softc *)addr)->sc_channels;
 }
 
 int
@@ -972,12 +948,10 @@ aucc_encode(enc, channels, i, p, dmap)
 	case AUDIO_ENCODING_ULAW:
 		tab=ulaw_to_lin;
 		break;
-	case AUDIO_ENCODING_ULINEAR:
 	case AUDIO_ENCODING_ULINEAR_BE:
 	case AUDIO_ENCODING_ULINEAR_LE:
 		off=-128;
 		break;
-	case AUDIO_ENCODING_SLINEAR:
 	case AUDIO_ENCODING_SLINEAR_BE:
 	case AUDIO_ENCODING_SLINEAR_LE:
 		break;
