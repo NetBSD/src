@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.65 2002/05/28 10:11:26 simonb Exp $	*/
+/*	$NetBSD: locore.s,v 1.66 2002/07/09 23:10:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -148,10 +148,12 @@ KENTRY(delay, 4)		/* bsr  2 cycles;  80 ns */
  */
 
 ENTRY_NOPROFILE(sigcode)
-	jsr	0(SIGF_HANDLER(sp))
-	addr	SIGF_SC(sp),tos		/* scp (the call may have clobbered */
-					/* the copy at SIGF_SCP(sp)). */
-	movqd	0,tos			/* Push a fake return address. */
+	/*
+	 * Handler has returned here as if we called it.  The sigcontext
+	 * is on the stack after the 3 args "we" pushed.
+	 */
+	addr	12(sp),4(sp)		/* get pointer to sigcontext
+					   and put it in the argument slot */
 	movd	SYS___sigreturn14,r0
 	svc
 	movd	0,0			/* Illegal instruction. */
