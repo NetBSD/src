@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.2 2001/01/20 18:56:42 manu Exp $ */
+/*	$NetBSD: linux_termios.h,v 1.3 2001/01/20 18:59:55 manu Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _POWERPC_LINUX_TERMIOS_H
 
 #define LINUX_NCC 10
- 
+
 /*
  * Enable optional part of struct termios in sys/compat/linux/common/termios.h
  */
@@ -49,56 +49,58 @@
 /* 
  * From Linux's include/asm-ppc/termios.h 
  */
-#define LINUX_TCGETS		_LINUX_IO('T', 19)
-#define LINUX_TCSETS		_LINUX_IO('T', 20)
-#define LINUX_TCSETSW	_LINUX_IO('T', 21)
-#define LINUX_TCSETSF	_LINUX_IO('T', 22)
-#define LINUX_TCGETA		_LINUX_IO('T', 24)
-#define LINUX_TCSETA		_LINUX_IO('T', 23)
-#define LINUX_TCSETAW	_LINUX_IO('T', 25)
-#define LINUX_TCSETAF	_LINUX_IO('T', 28)
-#define LINUX_TCSBRK		_LINUX_IO('T', 29)
-#define LINUX_TCXONC		_LINUX_IO('T', 30)
-#define LINUX_TCFLSH		_LINUX_IO('T', 31)
-#define LINUX_TIOCEXCL	0x540c /* _LINUX_IO('T', ) */
-#define LINUX_TIOCNXCL	0x540d /* _LINUX_IO('T', ) */
-#define LINUX_TIOCSCTTY	0x540e /* _LINUX_IO('T', ) */
-#define LINUX_TIOCGPGRP	_LINUX_IO('T', 119)
-#define LINUX_TIOCSPGRP	_LINUX_IO('T', 118)
-#define LINUX_TIOCOUTQ	_LINUX_IO('T', 115)
-#define LINUX_TIOCSTI		0x5412 /* _LINUX_IO('T', ) */
-#define LINUX_TIOCGWINSZ 	_LINUX_IO('T', 104)
-#define LINUX_TIOCSWINSZ 	_LINUX_IO('T', 103)
-#define LINUX_TIOCMGET		0x5415 /* _LINUX_IO('T', ) */
-#define LINUX_TIOCMBIS		0x5416 /* _LINUX_IO('T', ) */
-#define LINUX_TIOCMBIC		0x5417 /* _LINUX_IO('T', ) */
-#define LINUX_TIOCMSET		0x5418 /* _LINUX_IO('T', ) */
-#define LINUX_TIOCGSOFTCAR	0x5419 /* _LINUX_IO('T', ) */
-#define LINUX_TIOCSSOFTCAR	0x541a /* _LINUX_IO('T', ) */
-#define LINUX_FIONREAD		_LINUX_IO('F', 127)
+#define LINUX_TCGETS		_LINUX_IOR('t', 19, struct linux_termios)
+#define LINUX_TCSETS		_LINUX_IOW('t', 20, struct linux_termios)
+#define LINUX_TCSETSW	_LINUX_IOW('t', 21, struct linux_termios)
+#define LINUX_TCSETSF	_LINUX_IOW('t', 22, struct linux_termios)
+#define LINUX_TCGETA		_LINUX_IOR('t', 23, struct linux_termio)
+#define LINUX_TCSETA		_LINUX_IOW('t', 24, struct linux_termio)
+#define LINUX_TCSETAW	_LINUX_IOW('t', 25, struct linux_termio)
+#define LINUX_TCSETAF	_LINUX_IOW('t', 28, struct linux_termio)
+#define LINUX_TCSBRK		_LINUX_IO('t', 29)
+#define LINUX_TCXONC		_LINUX_IO('t', 30)
+#define LINUX_TCFLSH		_LINUX_IO('t', 31)
+#define LINUX_TIOCEXCL	0x540c 
+#define LINUX_TIOCNXCL	0x540d 
+#define LINUX_TIOCSCTTY	0x540e 
+#define LINUX_TIOCGPGRP	_LINUX_IOR('t', 119, int)
+#define LINUX_TIOCSPGRP	_LINUX_IOW('t', 118, int)
+#define LINUX_TIOCOUTQ	_LINUX_IOR('t', 115, int)
+#define LINUX_TIOCSTI		0x5412 
+#define LINUX_TIOCGWINSZ 	_LINUX_IOR('t', 104, struct linux_winsize)
+#define LINUX_TIOCSWINSZ 	_LINUX_IOW('t', 103, struct linux_winsize)
+#define LINUX_TIOCMGET		0x5415 
+#define LINUX_TIOCMBIS		0x5416 
+#define LINUX_TIOCMBIC		0x5417 
+#define LINUX_TIOCMSET		0x5418 
+#define LINUX_TIOCGSOFTCAR	0x5419 
+#define LINUX_TIOCSSOFTCAR	0x541a 
+#define LINUX_FIONREAD		_LINUX_IOR('f', 127, int)
 #define LINUX_TIOCINQ		LINUX_FIONREAD
-#define LINUX_TIOCLINUX		0x541c /* _LINUX_IO('T', ) */
-#define LINUX_TIOCCONS		0x541d /* _LINUX_IO('T', ) */
-#define LINUX_TIOCGSERIAL	0x541e /* _LINUX_IO('T', ) */
-#define LINUX_TIOCSSERIAL	0x541f /* _LINUX_IO('T', ) */
-#define LINUX_TIOCPKT		0x5420 /* _LINUX_IO('T', ) */
-#define LINUX_FIONBIO		_LINUX_IO('F', 126)
-#define LINUX_TIOCNOTTY		0x5422 /* _LINUX_IO('T', ) */
-#define LINUX_TIOCSETD		0x5423 /* _LINUX_IO('T', ) */
-#define LINUX_TIOCGETD		0x5424 /* _LINUX_IO('T', ) */
-#define LINUX_TCSBRKP		0x5435 /* _LINUX_IO('T', ) */
-#define LINUX_TIOCTTYGSTRUCT	0x5426 /*	_LINUX_IO('T', ) */
+#define LINUX_TIOCLINUX		0x541c 
+#define LINUX_TIOCCONS		0x541d 
+#define LINUX_TIOCGSERIAL	0x541e 
+#define LINUX_TIOCSSERIAL	0x541f 
+#define LINUX_TIOCPKT		0x5420 
+#define LINUX_FIONBIO		_LINUX_IOW('f', 126, int)
+#define LINUX_TIOCNOTTY		0x5422 
+#define LINUX_TIOCSETD		0x5423
+#define LINUX_TIOCGETD		0x5424
+#define LINUX_TCSBRKP		0x5425
+#define LINUX_TIOCTTYGSTRUCT	0x5426
 
-#define LINUX_FIONCLEX		_LINUX_IO('F', 2)
-#define LINUX_FIOCLEX		_LINUX_IO('F', 1)
-#define LINUX_FIOASYNC		_LINUX_IO('F', 125)
-#define LINUX_TIOCSERCONFIG	0x5453 /* _LINUX_IO('T', 83) */
-#define LINUX_TIOCSERGWILD		0x5454 /* _LINUX_IO('T', 84) */
-#define LINUX_TIOCSERSWILD		0x5455 /* _LINUX_IO('T', 85) */
-#define LINUX_TIOCGLCKTRMIOS	0x5456 /* _LINUX_IO('T', 86) */
-#define LINUX_TIOCSLCKTRMIOS	0x5457 /* _LINUX_IO('T', 87) */
-#define LINUX_TIOCSERGSTRUCT	0x5458 /* _LINUX_IO('T', 88) */
-#define LINUX_TIOCSERGETLSR	0x5459 /* _LINUX_IO('T', 89) */
+#define LINUX_FIONCLEX		_LINUX_IO('f', 2)
+#define LINUX_FIOCLEX		_LINUX_IO('f', 1)
+#define LINUX_FIOASYNC		_LINUX_IOW('f', 125, int)
+#define LINUX_TIOCSERCONFIG	0x5453
+#define LINUX_TIOCSERGWILD		0x5454
+#define LINUX_TIOCSERSWILD		0x5455
+#define LINUX_TIOCGLCKTRMIOS	0x5456
+#define LINUX_TIOCSLCKTRMIOS	0x5457
+#define LINUX_TIOCSERGSTRUCT	0x5458
+#define LINUX_TIOCSERGETLSR	0x5459
+#define LINUX_TIOCSERGETMULTI 0x545a
+#define LINUX_TIOCSERSETMULTI 0x545b
 
 /* 
  * linux_termios c_cc chars: 
