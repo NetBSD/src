@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.5 1994/10/26 21:10:41 cgd Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.6 1994/11/24 17:50:51 dean Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,7 +69,7 @@ struct	genericconf {
 	char	*gc_name;
 	dev_t	gc_root;
 } genericconf[] = {
-	{ (caddr_t)&rzdriver,	"rz",	makedev(0, 0),	},
+	{ (caddr_t)&rzdriver,	"rz",	makedev(21, 0),	},
 	{ 0 },
 };
 
