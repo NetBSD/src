@@ -40,15 +40,13 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_scalbn.S,v 1.3 1995/05/09 03:01:41 jtc Exp $")
+RCSID("$NetBSD: s_scalbn.S,v 1.4 1997/10/10 10:40:40 is Exp $")
 
 | scalbn(x, N)
 | returns  x * (2**N), for integer values N.
 ENTRY(scalbn)
 	fmoved	sp@(4),fp0
-	fbeq	Ldone
 	fscalel	sp@(12),fp0
-Ldone:
 	fmoved	fp0,sp@-
 	movel	sp@+,d0
 	movel	sp@+,d1
