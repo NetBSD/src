@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.3 1995/03/10 05:57:35 jtc Exp $	*/
+/*	$NetBSD: localtime.c,v 1.4 1995/03/16 19:14:16 jtc Exp $	*/
 
 #ifndef lint
 #ifndef NOID
@@ -191,7 +191,20 @@ const char * const	codep;
 {
 	register long	result;
 
-	result = (codep[0] << 24) \
+	/*
+        ** The first character must be sign extended on systems with >32bit
+        ** longs.  This was solved differently in the master tzcode sources
+        ** (the fix first appeared in tzcode95c.tar.gz).  But I believe 
+	** that this implementation is superior.
+        */
+
+#ifdef __STDC__
+#define SIGN_EXTEND_CHAR(x)	((signed char) x)
+#else
+#define SIGN_EXTEND_CHAR(x)	((x & 0x80) ? ((~0 << 8) | x) : x)
+#endif
+
+	result = (SIGN_EXTEND_CHAR(codep[0]) << 24) \
 	       | (codep[1] & 0xff) << 16 \
 	       | (codep[2] & 0xff) << 8
 	       | (codep[3] & 0xff);
