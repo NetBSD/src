@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.8 1996/01/01 18:10:54 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.9 1997/01/30 10:32:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -39,7 +39,7 @@
 
 #include <lib/libsa/netif.h>
 
-#include <hp300/dev/device.h>
+#include <hp300/stand/device.h>
 #include <hp300/stand/if_lereg.h>
 
 #include "samachdep.h"

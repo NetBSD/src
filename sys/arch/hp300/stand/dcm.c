@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.9 1996/02/27 22:11:44 scottr Exp $	*/
+/*	$NetBSD: dcm.c,v 1.10 1997/01/30 10:32:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,10 +44,11 @@
 #include <sys/param.h>
 #include <dev/cons.h>
 
-#include <hp300/dev/device.h>
 #include <hp300/dev/dcmreg.h>
+
 #include <hp300/stand/consdefs.h>
 #include <hp300/stand/samachdep.h>
+#include <hp300/stand/device.h>
 
 struct dcmdevice *dcmcnaddr = NULL;
 

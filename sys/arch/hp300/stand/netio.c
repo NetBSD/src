@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.4 1996/10/06 19:07:00 thorpej Exp $	*/
+/*	$NetBSD: netio.c,v 1.5 1997/01/30 10:32:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe
@@ -89,7 +89,7 @@ netopen(f, devname)
 	char *devname;		/* Device part of file name (or NULL). */
 {
 	int error = 0;
-
+	
 	/* On first open, do netif open, mount, etc. */
 	if (open_count == 0) {
 		/* Find network interface. */
