@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.44 2001/06/04 21:38:28 mrg Exp $	*/
+/*	$NetBSD: key.c,v 1.45 2001/07/27 04:48:13 itojun Exp $	*/
 /*	$KAME: key.c,v 1.182 2001/02/16 23:43:01 thorpej Exp $	*/
 
 /*
@@ -7365,8 +7365,6 @@ key_alloc_mbuf(l)
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
-static int *key_sysvars[] = KEYCTL_VARS;
-
 int
 key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	int *name;
@@ -7378,11 +7376,35 @@ key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 {
 	if (name[0] >= KEYCTL_MAXID)
 		return EOPNOTSUPP;
-	if (!key_sysvars[name[0]])
-		return EOPNOTSUPP;
 	switch (name[0]) {
-	default:
+#ifdef KEY_DEBUG
+	case KEYCTL_DEBUG_LEVEL:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-			key_sysvars[name[0]]);
+		    &key_debug_level);
+#endif
+	case KEYCTL_SPI_TRY:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &key_spi_trycnt);
+	case KEYCTL_SPI_MIN_VALUE:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &key_spi_minval);
+	case KEYCTL_SPI_MAX_VALUE:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &key_spi_maxval);
+	case KEYCTL_RANDOM_INT:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &key_int_random);
+	case KEYCTL_LARVAL_LIFETIME:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &key_larval_lifetime);
+	case KEYCTL_BLOCKACQ_COUNT:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &key_blockacq_count);
+	case KEYCTL_BLOCKACQ_LIFETIME:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &key_blockacq_lifetime);
+	default:
+		return EOPNOTSUPP;
 	}
+	/* NOTREACHED */
 }
