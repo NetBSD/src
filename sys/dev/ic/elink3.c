@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.56 1999/04/19 23:26:48 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.57 1999/04/20 04:40:24 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -277,12 +277,12 @@ ep_finish_reset(iot, ioh)
 	bus_space_handle_t ioh;
 
 {
-	register int i;
+	int i;
 
-	for (i = 0; i < 1000; i++) {
-	if (bus_space_read_2(iot, ioh, ELINK_STATUS) & S_COMMAND_IN_PROGRESS)
-		return;
-	DELAY(100);
+	for (i = 0; i < 10000; i++) {
+		if ((bus_space_read_2(iot, ioh, ELINK_STATUS) & S_COMMAND_IN_PROGRESS) == 0)
+			break;
+		DELAY(10);
 	}
 }
 
@@ -299,7 +299,6 @@ ep_reset_cmd(sc, cmd, arg)
 	register bus_space_handle_t ioh = sc->sc_ioh;
 
 	bus_space_write_2(iot, ioh, cmd, arg);
-
 	ep_finish_reset(iot, ioh);
 }
 
@@ -309,8 +308,22 @@ ep_discard_rxtop(iot, ioh)
 	register bus_space_tag_t iot;
 	register bus_space_handle_t ioh;
 {
+	int i;
 
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, RX_DISCARD_TOP_PACK);
+
+        /*
+	 * Spin for about 1 msec, to avoid forcing a DELAY() between
+	 * every received packet (adding latency and  limiting pkt-recv rate).
+	 * On PCI, at 4 30-nsec PCI bus cycles for a read, 8000 iterations
+	 * is about right.
+	 */
+	for (i = 0; i < 8000; i++) {
+		if  ((bus_space_read_2(iot, ioh, ELINK_STATUS) & S_COMMAND_IN_PROGRESS) == 0)
+		    return;
+	}
+
+	/*  Didn't complete in a hurry. Do DELAY()s. */
 	ep_finish_reset(iot, ioh);
 }
 
