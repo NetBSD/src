@@ -28,7 +28,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.12 2001/02/07 13:12:29 djm Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.17 2001/02/08 17:57:59 stevesk Exp $");
 
 #include "buffer.h"
 #include "xmalloc.h"
@@ -71,29 +71,29 @@ struct CMD {
 };
 
 const struct CMD cmds[] = {
-	{ "CD",		I_CHDIR },
-	{ "CHDIR",	I_CHDIR },
-	{ "CHGRP",	I_CHGRP },
-	{ "CHMOD",	I_CHMOD },
-	{ "CHOWN",	I_CHOWN },
-	{ "DIR",	I_LS },
-	{ "EXIT",	I_QUIT },
-	{ "GET",	I_GET },
-	{ "HELP",	I_HELP },
-	{ "LCD",	I_LCHDIR },
-	{ "LCHDIR",	I_LCHDIR },
-	{ "LLS",	I_LLS },
-	{ "LMKDIR",	I_LMKDIR },
-	{ "LPWD",	I_LPWD },
-	{ "LS",		I_LS },
-	{ "LUMASK",	I_LUMASK },
-	{ "MKDIR",	I_MKDIR },
-	{ "PUT",	I_PUT },
-	{ "PWD",	I_PWD },
-	{ "QUIT",	I_QUIT },
-	{ "RENAME",	I_RENAME },
-	{ "RM",		I_RM },
-	{ "RMDIR",	I_RMDIR },
+	{ "cd",		I_CHDIR },
+	{ "chdir",	I_CHDIR },
+	{ "chgrp",	I_CHGRP },
+	{ "chmod",	I_CHMOD },
+	{ "chown",	I_CHOWN },
+	{ "dir",	I_LS },
+	{ "exit",	I_QUIT },
+	{ "get",	I_GET },
+	{ "help",	I_HELP },
+	{ "lcd",	I_LCHDIR },
+	{ "lchdir",	I_LCHDIR },
+	{ "lls",	I_LLS },
+	{ "lmkdir",	I_LMKDIR },
+	{ "lpwd",	I_LPWD },
+	{ "ls",		I_LS },
+	{ "lumask",	I_LUMASK },
+	{ "mkdir",	I_MKDIR },
+	{ "put",	I_PUT },
+	{ "pwd",	I_PWD },
+	{ "quit",	I_QUIT },
+	{ "rename",	I_RENAME },
+	{ "rm",		I_RM },
+	{ "rmdir",	I_RMDIR },
 	{ "!",		I_SHELL },
 	{ "?",		I_HELP },
 	{ NULL,			-1}
@@ -103,28 +103,29 @@ static void
 help(void)
 {
 	printf("Available commands:\n");
-	printf("CD path                       Change remote directory to 'path'\n");
-	printf("LCD path                      Change local directory to 'path'\n");
-	printf("CHGRP grp path                Change group of file 'path' to 'grp'\n");
-	printf("CHMOD mode path               Change permissions of file 'path' to 'mode'\n");
-	printf("CHOWN own path                Change owner of file 'path' to 'own'\n");
-	printf("HELP                          Display this help text\n");
-	printf("GET remote-path [local-path]  Download file\n");
-	printf("LLS [ls options] [path]       Display local directory listing\n");
-	printf("LMKDIR path                   Create local directory\n");
-	printf("LPWD                          Print local working directory\n");
-	printf("LS [path]                     Display remote directory listing\n");
-	printf("LUMASK umask                  Set local umask to 'umask'\n");
-	printf("MKDIR path                    Create remote directory\n");
-	printf("PUT local-path [remote-path]  Upload file\n");
-	printf("PWD                           Display remote working directory\n");
-	printf("EXIT                          Quit sftp\n");
-	printf("QUIT                          Quit sftp\n");
-	printf("RENAME oldpath newpath        Rename remote file\n");
-	printf("RMDIR path                    Remove remote directory\n");
-	printf("RM path                       Delete remote file\n");
+	printf("cd path                       Change remote directory to 'path'\n");
+	printf("lcd path                      Change local directory to 'path'\n");
+	printf("chgrp grp path                Change group of file 'path' to 'grp'\n");
+	printf("chmod mode path               Change permissions of file 'path' to 'mode'\n");
+	printf("chown own path                Change owner of file 'path' to 'own'\n");
+	printf("help                          Display this help text\n");
+	printf("get remote-path [local-path]  Download file\n");
+	printf("lls [ls-options [path]]       Display local directory listing\n");
+	printf("lmkdir path                   Create local directory\n");
+	printf("lpwd                          Print local working directory\n");
+	printf("ls [path]                     Display remote directory listing\n");
+	printf("lumask umask                  Set local umask to 'umask'\n");
+	printf("mkdir path                    Create remote directory\n");
+	printf("put local-path [remote-path]  Upload file\n");
+	printf("pwd                           Display remote working directory\n");
+	printf("exit                          Quit sftp\n");
+	printf("quit                          Quit sftp\n");
+	printf("rename oldpath newpath        Rename remote file\n");
+	printf("rmdir path                    Remove remote directory\n");
+	printf("rm path                       Delete remote file\n");
 	printf("!command                      Execute 'command' in local shell\n");
 	printf("!                             Escape to local shell\n");
+	printf("?                             Synonym for help\n");
 }
 
 static void
@@ -170,11 +171,13 @@ local_do_ls(const char *args)
 	if (!args || !*args)
 		local_do_shell("ls");
 	else {
-		char *buf = xmalloc(8 + strlen(args) + 1);
+		int len = sizeof("/bin/ls ") + strlen(args) + 1;
+		char *buf = xmalloc(len);
 
 		/* XXX: quoting - rip quoting code from ftp? */
-		sprintf(buf, "/bin/ls %s", args);
+		snprintf(buf, len, "/bin/ls %s", args);
 		local_do_shell(buf);
+		xfree(buf);
 	}
 }
 
@@ -226,7 +229,6 @@ get_pathname(const char **cpp, char **path)
 	if (!*cp) {
 		*cpp = cp;
 		*path = NULL;
-
 		return (0);
 	}
 
@@ -239,19 +241,16 @@ get_pathname(const char **cpp, char **path)
 			error("Unterminated quote");
 			goto fail;
 		}
-
 		if (cp == end) {
 			error("Empty quotes");
 			goto fail;
 		}
-
 		*cpp = end + 1 + strspn(end + 1, WHITESPACE);
 	} else {
 		/* Read to end of filename */
 		end = strpbrk(cp, WHITESPACE);
 		if (end == NULL)
 			end = strchr(cp, '\0');
-
 		*cpp = end + strspn(end, WHITESPACE);
 	}
 
@@ -260,12 +259,10 @@ get_pathname(const char **cpp, char **path)
 	*path = xmalloc(i + 1);
 	memcpy(*path, cp, i);
 	(*path)[i] = '\0';
-
 	return(0);
 
  fail:
 	*path = NULL;
-
 	return (-1);
 }
 
@@ -277,7 +274,6 @@ infer_path(const char *p, char **ifp)
 	debug("XXX: P = \"%s\"", p);
 
 	cp = strrchr(p, '/');
-
 	if (cp == NULL) {
 		*ifp = xstrdup(p);
 		return(0);
@@ -428,7 +424,6 @@ parse_args(const char **cpp, int *pflag, unsigned long *n_arg,
 	}
 
 	*cpp = cp;
-
 	return(cmdnum);
 }
 
@@ -524,7 +519,7 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 		break;
 	case I_LMKDIR:
 		if (mkdir(path1, 0777) == -1)
-			error("Couldn't create local directory to "
+			error("Couldn't create local directory "
 			    "\"%s\": %s", path1, strerror(errno));
 		break;
 	case I_LLS:
@@ -589,7 +584,6 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 		xfree(path1);
 	if (path2)
 		xfree(path2);
-
 	return(0);
 }
 
@@ -603,8 +597,8 @@ interactive_loop(int fd_in, int fd_out)
 	if (pwd == NULL)
 		fatal("Need cwd");
 
-	setlinebuf(stdout);
-	setlinebuf(stdin);
+	setvbuf(stdout, NULL, _IOLBF, 0);
+	setvbuf(stdin, NULL, _IOLBF, 0);
 
 	for(;;) {
 		char *cp;

@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.36 2001/02/04 15:32:22 stevesk Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.39 2001/02/08 18:20:01 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -113,13 +113,6 @@ do_authentication2()
 	if (options.challenge_reponse_authentication)
 		options.kbd_interactive_authentication = 1;
 
-#ifdef AFS
-	/* If machine has AFS, set process authentication group. */
-	if (k_hasafs()) {
-		k_setpag();
-		k_unlog();
-	}
-#endif
 	dispatch_init(&protocol_error);
 	dispatch_set(SSH2_MSG_SERVICE_REQUEST, &input_service_request);
 	dispatch_run(DISPATCH_BLOCK, &authctxt->success, authctxt);
@@ -281,7 +274,7 @@ userauth_reply(Authctxt *authctxt, int authenticated)
 	char *methods;
 
 	/* XXX todo: check if multiple auth methods are needed */
-	if (authenticated) {
+	if (authenticated == 1) {
 		/* turn off userauth */
 		dispatch_set(SSH2_MSG_USERAUTH_REQUEST, &protocol_error);
 		packet_start(SSH2_MSG_USERAUTH_SUCCESS);
