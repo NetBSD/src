@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.11 2000/10/23 23:18:10 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.12 2001/02/11 18:04:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -133,7 +133,10 @@ siop_setuptables(siop_cmd)
 
 	siop_cmd->siop_tables.id = htole32(sc->targets[target]->id);
 	memset(siop_cmd->siop_tables.msg_out, 0, 8);
-	siop_cmd->siop_tables.msg_out[0] = MSG_IDENTIFY(lun, 1);
+	if (siop_cmd->status != CMDST_SENSE)
+		siop_cmd->siop_tables.msg_out[0] = MSG_IDENTIFY(lun, 1);
+	else
+		siop_cmd->siop_tables.msg_out[0] = MSG_IDENTIFY(lun, 0);
 	siop_cmd->siop_tables.t_msgout.count= htole32(1);
 	if (sc->targets[target]->status == TARST_ASYNC) {
 		if (sc->targets[target]->flags & TARF_WIDE) {
