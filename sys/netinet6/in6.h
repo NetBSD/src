@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.5 1999/07/03 21:30:18 thorpej Exp $	*/
+/*	$NetBSD: in6.h,v 1.6 1999/07/06 12:23:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -75,7 +75,7 @@
  * Identification of the network protocol stack
  */
 #define __KAME__
-#define __KAME_VERSION		"SNAP 19990628/NetBSD-current"
+#define __KAME_VERSION		"SNAP 19990705/NetBSD-current"
 
 /*
  * Local port number conventions:

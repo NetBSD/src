@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.3 1999/07/03 21:30:18 thorpej Exp $	*/
+/*	$NetBSD: ip6.h,v 1.4 1999/07/06 12:23:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,7 +69,7 @@
 
 /*
  * Definition for internet protocol version 6.
- * RFC 1883
+ * RFC 2460
  */
 
 struct ip6_hdr {
@@ -142,8 +142,9 @@ struct ip6_dest {
 #define IP6OPT_JUMBO_LEN	6
 #define IP6OPT_RTALERT		0x05	/* 00 0 00101 */
 #define IP6OPT_RTALERT_LEN	4
-#define IP6OPT_RTALERT_MLD	0	/* Datagram contains MLD message */
-#define IP6OPT_RTALERT_RSVP	1	/* Datagram contains RSVP message */
+#define IP6OPT_RTALERT_MLD	0	/* Datagram contains an MLD message */
+#define IP6OPT_RTALERT_RSVP	1	/* Datagram contains an RSVP message */
+#define IP6OPT_RTALERT_ACTNET	2 	/* contains an Active Networks msg */
 #define IP6OPT_MINLEN		2
 
 #define IP6OPT_TYPE(o)		((o) & 0xC0)

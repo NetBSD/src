@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.h,v 1.3 1999/07/03 21:32:49 thorpej Exp $	*/
+/*	$NetBSD: keysock.h,v 1.4 1999/07/06 12:23:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: keysock.h,v 1.3 1999/07/03 21:32:49 thorpej Exp $ */
+/* KAME Id: keysock.h,v 1.1.6.3.6.1 1999/05/17 17:03:19 itojun Exp */
 
 #ifndef _NETKEY_KEYSOCK_H_
 #define _NETKEY_KEYSOCK_H_
