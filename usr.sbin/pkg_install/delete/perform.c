@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.13 1999/02/26 17:04:13 chopps Exp $	*/
+/*	$NetBSD: perform.c,v 1.14 1999/03/01 12:11:42 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.13 1999/02/26 17:04:13 chopps Exp $");
+__RCSID("$NetBSD: perform.c,v 1.14 1999/03/01 12:11:42 agc Exp $");
 #endif
 #endif
 
@@ -281,7 +281,7 @@ int
 recurse_require_find(rec_del_t *thisrdp)
 {
     rec_del_head_t reqq;
-    rec_del_t *rdp;
+    rec_del_t *rdp = NULL;
     FILE *cfile;
     char *nl, *tmp;
 
