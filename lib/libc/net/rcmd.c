@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.19.2.1 1997/02/16 12:00:33 mrg Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.19.2.2 1997/02/16 12:32:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.19.2.1 1997/02/16 12:00:33 mrg Exp $";
+static char *rcsid = "$NetBSD: rcmd.c,v 1.19.2.2 1997/02/16 12:32:49 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -336,9 +336,12 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 			warn("exec %s", _PATH_BSHELL);
 		} else {
 			if (rshcmd == NULL)
-				rshcmd = _PATH_BIN_RCMD;
-			execlp(rshcmd, rshcmd, *ahost, "-l", remuser, cmd,
-			    NULL);
+				execlp(_PATH_BIN_RCMD, _PATH_BIN_RCMD,
+				   *ahost, "-l", remuser, "-u", locuser, cmd,
+				   NULL);
+			else
+				execlp(rshcmd, rshcmd, *ahost, "-l", remuser,
+				    cmd, NULL);
 			warn("exec %s", rshcmd);
 		}
 		_exit(1);
