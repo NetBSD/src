@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.51 2002/11/24 19:43:43 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.52 2002/11/24 22:47:01 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1601,4 +1601,26 @@ sys/dev/ic/siop_common.c			1.30
 	bus_space_set_region_4() the RAM in reset routine.
 	Problem reported and fix tested by Allen Briggs.
 	[bouyer, ticket #747]
+
+usr.sbin/pkg_install/Makefile.inc		1.22-1.23
+usr.sbin/pkg_install/add/extract.c		1.24
+usr.sbin/pkg_install/add/futil.c		1.9
+usr.sbin/pkg_install/add/perform.c		1.71-1.75
+usr.sbin/pkg_install/add/pkg_add.1		1.35-1.38
+usr.sbin/pkg_install/admin/pkg_admin.1		1.18-1.20
+usr.sbin/pkg_install/create/perform.c		1.34
+usr.sbin/pkg_install/create/pkg_create.1	1.33-1.34
+usr.sbin/pkg_install/delete/perform.c		1.37-1.38
+usr.sbin/pkg_install/delete/pkg_delete.1	1.25-1.26
+usr.sbin/pkg_install/info/pkg_info.1		1.30-1.32
+usr.sbin/pkg_install/lib/file.c			1.56
+usr.sbin/pkg_install/lib/ftpio.c		1.42-1.47
+usr.sbin/pkg_install/lib/lib.h			1.44
+usr.sbin/pkg_install/lib/path.c			1.2-1.4
+usr.sbin/pkg_install/lib/path.h			1.2-1.3
+usr.sbin/pkg_install/lib/str.c			1.40
+usr.sbin/pkg_install/lib/version.h		1.16-1.19
+
+	Update the package tools to version 20021123.
+	[jschauma, ticket #1011]
 
