@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.38 2003/06/13 05:13:43 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.39 2003/06/13 07:27:17 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.38 2003/06/13 05:13:43 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.39 2003/06/13 07:27:17 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,7 +337,8 @@ static const struct auich_devtype {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_AC,
 	    "i82801CA (ICH3) AC-97 Audio",	"ICH3" }, /* i830Mx i845MP/MZ*/
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_AC,
-	    "i82801DB (ICH4) AC-97 Audio",	"ICH4" }, /* i845E i845Gx */
+	    "i82801DB (ICH4) AC-97 Audio",	"ICH4",
+	    QUIRK_IGNORE_CODEC_READY_MAYBE },
 	{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_AC,
 	    "SiS 7012 AC-97 Audio",		"SiS7012" },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC,
