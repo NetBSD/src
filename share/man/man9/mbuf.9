@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.21 2002/02/13 08:18:45 ross Exp $
+.\"	$NetBSD: mbuf.9,v 1.22 2002/05/12 15:48:38 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,7 +99,7 @@
 .Ft struct mbuf *
 .Fn m_prepend "struct mbuf *m" "int len" "int how"
 .Ft struct mbuf *
-.Fn m_pulldown "struct mbuf *n" "int off" "int len" "int *offp"
+.Fn m_pulldown "struct mbuf *m" "int off" "int len" "int *offp"
 .Ft struct mbuf *
 .Fn m_pullup "struct mbuf *n" "int len"
 .Ft struct mbuf *
@@ -364,7 +364,7 @@ The
 parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
 from caller.
-.It Fn m_pulldown "struct mbuf *n" "int off" "int len" "int *offp"
+.It Fn m_pulldown "struct mbuf *m" "int off" "int len" "int *offp"
 Rearranges an mbuf chain so that
 .Fa len
 bytes from offset

@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.62 2002/04/06 19:28:01 mhitch Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.63 2002/05/12 15:48:38 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.62 2002/04/06 19:28:01 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.63 2002/05/12 15:48:38 wiz Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1047,7 +1047,7 @@ ex_start(ifp)
 		dpd->dpd_nextptr = 0;
 		dpd->dpd_fsh = htole32(totlen);
 
-		/* Byte-swap constants to compiler can optimize. */
+		/* Byte-swap constants so compiler can optimize. */
 
 		if (sc->ex_conf & EX_CONF_90XB) {
 			csum_flags = 0;
