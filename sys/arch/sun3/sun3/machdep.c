@@ -38,7 +38,7 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
  *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
- *	$Id: machdep.c,v 1.33 1994/06/28 22:05:52 gwr Exp $
+ *	$Id: machdep.c,v 1.34 1994/07/11 03:41:32 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -1110,7 +1110,7 @@ void boot(howto)
 
 regdump(fp, sbytes)
 	struct frame *fp; /* must not be register */
-  int sbytes;
+	int sbytes;
 {
 	static int doingdump = 0;
 	register int i;

@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: trap.c 1.37 92/12/20
  *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
- *	$Id: trap.c,v 1.25 1994/07/01 21:30:13 gwr Exp $
+ *	$Id: trap.c,v 1.26 1994/07/11 03:41:35 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -439,20 +439,13 @@ trap(type, code, v, frame)
 			ftype = VM_PROT_READ;
 		va = trunc_page((vm_offset_t)v);
 #ifdef DIAGNOSTIC
-		if (map == kernel_map) {
-			if (va == 0) {
-				printf("trap: bad kernel access at %x\n", v);
-				goto dopanic;
-			}
-		} else {
-			if (va >= VM_MAXUSER_ADDRESS) {
-				printf("trap: user access at kern addr %x\n", v);
-				Debugger();
-			}
+		if (map == kernel_map && va == 0) {
+			printf("trap: bad kernel access at v=0x%x\n", v);
+			goto dopanic;
 		}
 #endif
 		rv = vm_fault(map, va, ftype, FALSE);
-#if 1 /* def DEBUG */
+#if defined(DEBUG) || defined(PMAP_DEBUG)	/* XXX */
 		if (rv) {
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
