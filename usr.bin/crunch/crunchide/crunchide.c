@@ -1,4 +1,4 @@
-/* $NetBSD: crunchide.c,v 1.11 2000/06/14 06:49:20 cgd Exp $ */
+/* $NetBSD: crunchide.c,v 1.12 2004/08/24 12:25:26 wiz Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchide.c,v 1.11 2000/06/14 06:49:20 cgd Exp $");
+__RCSID("$NetBSD: crunchide.c,v 1.12 2004/08/24 12:25:26 wiz Exp $");
 #endif
 
 #include <unistd.h>
@@ -78,8 +78,6 @@ __RCSID("$NetBSD: crunchide.c,v 1.11 2000/06/14 06:49:20 cgd Exp $");
 
 #include "extern.h"
 
-char *pname = "crunchide";
-
 void usage(void);
 
 void add_to_keep_list(char *symbol);
@@ -89,118 +87,126 @@ int hide_syms(const char *filename);
 
 int verbose;
 
-int main __P((int, char *[]));
-
-int main(argc, argv)
-int argc;
-char **argv;
+int
+main(int argc, char *argv[])
 {
-    int ch, errors;
+	int ch, errors;
 
-    if(argc > 0) pname = argv[0];
+	setprogname(argv[0]);
 
-    while ((ch = getopt(argc, argv, "k:f:v")) != -1)
-	switch(ch) {
-	case 'k':
-	    add_to_keep_list(optarg);
-	    break;
-	case 'f':
-	    add_file_to_keep_list(optarg);
-	    break;
-	case 'v':
-	    verbose = 1;
-	    break;
-	default:
-	    usage();
+	while ((ch = getopt(argc, argv, "k:f:v")) != -1)
+		switch(ch) {
+		case 'k':
+			add_to_keep_list(optarg);
+			break;
+		case 'f':
+			add_file_to_keep_list(optarg);
+			break;
+		case 'v':
+			verbose = 1;
+			break;
+		default:
+			usage();
+		}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc == 0)
+		usage();
+
+	errors = 0;
+	while (argc) {
+		if (hide_syms(*argv))
+			errors = 1;
+		argc--, argv++;
 	}
 
-    argc -= optind;
-    argv += optind;
-
-    if(argc == 0) usage();
-
-    errors = 0;
-    while(argc) {
-	if (hide_syms(*argv))
-		errors = 1;
-	argc--, argv++;
-    }
-
-    return errors;
+	return errors;
 }
 
-void usage(void)
+void
+usage(void)
 {
-    fprintf(stderr,
-	    "Usage: %s [-k <symbol-name>] [-f <keep-list-file>] <files> ...\n",
-	    pname);
-    exit(1);
+	fprintf(stderr,
+		"Usage: %s [-k keep-symbol] [-f keep-list-file] object-file\n"
+		"\t\t [object-file ...]\n",
+		getprogname());
+	exit(1);
 }
 
 /* ---------------------------- */
 
 struct keep {
-    struct keep *next;
-    char *sym;
+	struct keep *next;
+	char *sym;
 } *keep_list;
 
-void add_to_keep_list(char *symbol)
+void
+add_to_keep_list(char *symbol)
 {
-    struct keep *newp, *prevp, *curp;
-    int cmp;
+	struct keep *newp, *prevp, *curp;
+	int cmp;
 
-    cmp = 0;
+	cmp = 0;
 
-    for(curp = keep_list, prevp = NULL; curp; prevp = curp, curp = curp->next)
-	if((cmp = strcmp(symbol, curp->sym)) <= 0) break;
+	for (curp = keep_list, prevp = NULL; curp; prevp = curp, curp = curp->next)
+		if ((cmp = strcmp(symbol, curp->sym)) <= 0)
+			break;
 
-    if(curp && cmp == 0)
-	return;	/* already in table */
+	if (curp && cmp == 0)
+		return;	/* already in table */
 
-    newp = (struct keep *) malloc(sizeof(struct keep));
-    if(newp) newp->sym = strdup(symbol);
-    if(newp == NULL || newp->sym == NULL) {
-	fprintf(stderr, "%s: out of memory for keep list\n", pname);
-	exit(1);
-    }
+	newp = (struct keep *) malloc(sizeof(struct keep));
+	if (newp)
+		newp->sym = strdup(symbol);
+	if (newp == NULL || newp->sym == NULL) {
+		fprintf(stderr, "%s: out of memory for keep list\n", getprogname());
+		exit(1);
+	}
 
-    newp->next = curp;
-    if(prevp) prevp->next = newp;
-    else keep_list = newp;
+	newp->next = curp;
+	if (prevp)
+		prevp->next = newp;
+	else
+		keep_list = newp;
 }
 
-int in_keep_list(const char *symbol)
+int
+in_keep_list(const char *symbol)
 {
-    struct keep *curp;
-    int cmp;
+	struct keep *curp;
+	int cmp;
 
-    cmp = 0;
+	cmp = 0;
 
-    for(curp = keep_list; curp; curp = curp->next)
-	if((cmp = strcmp(symbol, curp->sym)) <= 0) break;
+	for (curp = keep_list; curp; curp = curp->next)
+		if((cmp = strcmp(symbol, curp->sym)) <= 0)
+			break;
 
-    return curp && cmp == 0;
+	return curp && cmp == 0;
 }
 
-void add_file_to_keep_list(char *filename)
+void
+add_file_to_keep_list(char *filename)
 {
-    FILE *keepf;
-    char symbol[1024];
-    int len;
+	FILE *keepf;
+	char symbol[1024];
+	int len;
 
-    if((keepf = fopen(filename, "r")) == NULL) {
-	perror(filename);
-	usage();
-    }
+	if ((keepf = fopen(filename, "r")) == NULL) {
+		perror(filename);
+		usage();
+	}
 
-    while(fgets(symbol, 1024, keepf)) {
-	len = strlen(symbol);
-	if(len && symbol[len-1] == '\n')
-	    symbol[len-1] = '\0';
+	while (fgets(symbol, 1024, keepf)) {
+		len = strlen(symbol);
+		if (len && symbol[len-1] == '\n')
+			symbol[len-1] = '\0';
 
-	add_to_keep_list(symbol);
-    }
-    fclose(keepf);
+		add_to_keep_list(symbol);
+	}
+	fclose(keepf);
 }
 
 /* ---------------------------- */
@@ -227,7 +233,8 @@ struct {
 #endif
 };
 
-int hide_syms(const char *filename)
+int
+hide_syms(const char *filename)
 {
 	int fd, i, n, rv;
 
@@ -264,8 +271,8 @@ int hide_syms(const char *filename)
 	rv = (*exec_formats[i].hide)(fd, filename);
 
 out:
-	close (fd);
-	return (rv);
+	close(fd);
+	return rv;
 
 err:
 	rv = 1;
