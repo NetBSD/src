@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.75 2004/04/15 18:29:39 jwise Exp $
+#	$NetBSD: services,v 1.76 2004/06/23 11:58:48 itojun Exp $
 #
 # Network services, Internet style
 #
@@ -294,6 +294,8 @@ afs3-remio	7011/udp		# MR-AFS remote IO server
 #
 supfilesrv	871/tcp			# SUP server
 supfiledbg	1127/tcp		# SUP debugging
+spamd		8025/tcp		# spamd(8)
+spamd-cfg	8026/tcp		# spamd(8) configuration
 
 #
 # other common ports
