@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.76.4.1 2000/10/30 23:01:17 tv Exp $	*/
+/*	$NetBSD: rtld.c,v 1.76.4.2 2001/04/06 09:39:43 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -650,6 +650,10 @@ map_object(sodp, smp)
 	if (smp)
 		name += (long)LM_LDBASE(smp);
 
+#ifdef DEBUG
+	xprintf("map_object: loading %s\n", name);
+#endif
+
 	if (sodp->sod_library) {
 		usehints = 1;
 again:
@@ -1080,8 +1084,11 @@ lookup(name, ref_map, src_map, strong)
 	struct rt_symbol	*rtsp;
 	struct	nzlist		*weak_np = 0;
 
-	if ((rtsp = lookup_rts(name)) != NULL)
+	if ((rtsp = lookup_rts(name)) != NULL) {
+		/* common symbol is not a member of particular shlib */
+		*src_map = NULL;
 		return (rtsp->rt_sp);
+	}
 
 	weak_smp = NULL; /* XXX - gcc! */
 
@@ -1207,6 +1214,9 @@ restart:
 	 */
 	rtsp = enter_rts(name, (long)calloc(1, common_size),
 					N_UNDF + N_EXT, 0, common_size, NULL);
+
+	/* common symbol is not a member of particular shlib */
+	*src_map = NULL;
 
 #if DEBUG
 xprintf("Allocating common: %s size %d at %#x\n", name, common_size, rtsp->rt_sp->nz_value);
@@ -1473,6 +1483,9 @@ findhint(name, major, minor, prefered_path)
 	char	*prefered_path;
 {
 	struct hints_bucket	*bp;
+
+	if (hheader->hh_nbucket == 0)
+		return (NULL);
 
 	bp = hbuckets + (hinthash(name, major, minor) % hheader->hh_nbucket);
 
