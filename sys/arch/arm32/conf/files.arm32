@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.90 2001/02/20 22:49:56 reinoud Exp $
+#	$NetBSD: files.arm32,v 1.91 2001/02/21 00:51:27 reinoud Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -321,12 +321,12 @@ file	arch/arm32/podulebus/amps.c		amps
 
 device  vidcconsole   
 attach  vidcconsole at vidc   
-file    arch/arm32/vidc/console/vidcvideo.c     vidcconsole needs-count
+file    arch/arm32/vidc/console/vidcconsole.c     vidcconsole needs-count
 device  vt: tty
 attach  vt at vidc
 
 file    arch/arm32/vidc/console/console.c	vt needs-count
-file    arch/arm32/vidc/console/vidcconsole.c	vt
+file    arch/arm32/vidc/console/vidcrender.c	vt
 file	arch/arm32/vidc/console/vidc_mc.S	vt
 file    arch/arm32/vidc/console/vidc.c		vt
 file    arch/arm32/vidc/console/vt220.c		vt
