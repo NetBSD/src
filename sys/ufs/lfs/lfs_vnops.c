@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.53 2001/08/17 05:54:37 chs Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.54 2001/08/24 06:42:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -119,7 +119,9 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, ufs_poll },			/* poll */
 	{ &vop_revoke_desc, ufs_revoke },		/* revoke */
+#if 0 /* XXX until LFS is fixed */
 	{ &vop_mmap_desc, ufs_mmap },			/* mmap */
+#endif
 	{ &vop_fsync_desc, lfs_fsync },			/* fsync */
 	{ &vop_seek_desc, ufs_seek },			/* seek */
 	{ &vop_remove_desc, lfs_remove },		/* remove */
