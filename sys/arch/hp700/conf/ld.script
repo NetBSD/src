@@ -1,10 +1,10 @@
-/*	$NetBSD: ld.script,v 1.1 2002/06/06 19:48:02 fredette Exp $	*/
+/*	$NetBSD: ld.script,v 1.2 2002/08/05 20:58:36 fredette Exp $	*/
 
 /* 	$OpenBSD: ld.script,v 1.7 1999/12/17 07:02:38 mickey Exp $	*/
 
 OUTPUT_FORMAT("elf32-hppa")
 OUTPUT_ARCH(hppa)
-ENTRY($start)
+ENTRY(start)
 SECTIONS
 {
 	/* Read-only sections, merged into text segment: */
@@ -24,8 +24,8 @@ SECTIONS
 		__unwind_end = .;
 		. = ALIGN(4096);
 	} = 0 /* 0x08000240 nop filled, does not work */
-	. = ALIGN(524288);
 	etext = ABSOLUTE(.);
+	. = ALIGN(0x200000);
 
 	.data  :
 	{
