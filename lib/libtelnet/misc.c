@@ -31,9 +31,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/* from: static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/4/93"; */
-static char rcsid[] = "$NetBSD: misc.c,v 1.5 1996/02/24 01:15:25 jtk Exp $";
+#if 0
+static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: misc.c,v 1.6 1997/10/09 13:52:44 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <stdio.h>
@@ -68,8 +72,6 @@ auth_encrypt_init(local, remote, name, server)
 auth_encrypt_user(name)
 	char *name;
 {
-	extern char *strdup();
-
 	if (UserNameRequested)
 		free(UserNameRequested);
 	UserNameRequested = name ? strdup(name) : 0;
