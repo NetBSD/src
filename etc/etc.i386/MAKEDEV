@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.116 2000/06/09 16:59:03 wrstuden Exp $
+#	$NetBSD: MAKEDEV,v 1.117 2000/06/09 17:58:29 wrstuden Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -73,7 +73,7 @@
 #	com*	standard PC COM ports			(XXX)
 #	tty*	alias for PC COM ports, this is what the system really wants
 #	ttyCZ*	Cyclades-Z multiport serial boards.  Each "unit"
-#		makes 16 ports.
+#		makes 64 ports.
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -417,35 +417,25 @@ ca*|ccd*|fd*|sd*|vnd*|wd*|raid*)
 
 ttyCZ*)
 	unit=${i#ttyCZ}
-	case $unit in
-	[0-9])  un=$unit ;;
-	a)      un=10 ;;
-	b)      un=11 ;;
-	c)      un=12 ;;
-	d)      un=13 ;;
-	e)      un=14 ;;
-	f)      un=15 ;;
-	esac
 	major=73
-	for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
-	do
-		case $j in
-		[0-9])  jn=$j ;;
-		a)      jn=10 ;;
-		b)      jn=11 ;;
-		c)      jn=12 ;;
-		d)      jn=13 ;;
-		e)      jn=14 ;;
-		f)      jn=15 ;;
-		esac
-		minor=$(($un * 16 + $jn))
-		nminor=$unit$j
-#
+	minor=$(($unit * 64))
+	eminor=$(($minor + 64))
+	while [ $minor -lt $eminor ]; do
+		if [ $minor -lt 10 ]; then
+			nminor=000$minor
+		elif [ $minor -lt 100 ]; then
+			nminor=00$minor
+		elif [ $minor -lt 1000 ]; then
+			nminor=0$minor
+		else
+			nminor=$minor
+		fi
 		rm -f ttyCZ$nminor dtyCZ$nminor
 		mknod ttyCZ$nminor c $major $(($minor + $dialin  ))
 		mknod dtyCZ$nminor c $major $(($minor + $dialout ))
 		chown uucp.wheel ttyCZ$nminor dtyCZ$nminor
 		chmod 600 ttyCZ$nminor dtyCZ$nminor
+		minor=$(($minor + 1))
 	done
 	;;
 
