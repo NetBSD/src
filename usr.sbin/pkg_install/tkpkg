@@ -1,7 +1,17 @@
 #!/usr/local/bin/wish -f
-# FreeBSD Id: tkpkg,v 1.4 1997/02/22 16:09:13 peter Exp
+# from FreeBSD Id: tkpkg,v 1.4 1997/02/22 16:09:13 peter Exp
 #
 #$Log: tkpkg,v $
+#Revision 1.2  1997/06/05 12:59:20  agc
+#Add NetBSD Ids
+#Un-munge pkg_install/lib/Makefile which I'd overwritten on libftpio commit.
+#Make it compile on NetBSD.
+#Install pkg_* programs in /usr/sbin
+#
+#XXX agc - Still to do XXX
+#Cleanup call to mktemp (for a tmp dir) in pkg_install/lib/pen.c
+#Create ftperr.c in the correct directory.
+#
 #Revision 1.1.1.1  1997/06/05 08:54:23  agc
 #Initial import of FreeBSD packaging tool.
 #
