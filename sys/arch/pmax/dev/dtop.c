@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.52 2000/03/26 06:51:46 nisimura Exp $	*/
+/*	$NetBSD: dtop.c,v 1.53 2000/04/26 04:16:17 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.52 2000/03/26 06:51:46 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.53 2000/04/26 04:16:17 mhitch Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -158,7 +158,6 @@ struct dtop_softc {
 		int		(*handler) __P((dtop_device_t, dtop_message_t,
 				    int, int));
 		dtop_device	status;
-		struct callout repeat_ch;
 	} device[(DTOP_ADDR_DEFAULT - DTOP_ADDR_FIRST) >> 1];
 
 #	define	DTOP_DEVICE_NO(address)	(((address)-DTOP_ADDR_FIRST)>>1)
@@ -275,7 +274,7 @@ dtopattach(parent, self, aux)
 
 	for (i = 0; i < DTOP_MAX_DEVICES; i++) {
 		sc->device[i].handler = dtop_null_device_handler;
-		callout_init(&sc->device[i].repeat_ch);
+		callout_init(&sc->device[i].status.keyboard.repeat_ch);
 	}
 
 	/* a lot more needed here, fornow: */
@@ -856,7 +855,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	s = splhigh();
 	if (dev->keyboard.k_ar_state != K_AR_IDLE) {
 		dev->keyboard.k_ar_state = K_AR_IDLE;
-		callout_stop(&dev->repeat_ch);
+		callout_stop(&dev->keyboard.repeat_ch);
 	}
 	splx(s);
 	msg_len = msg->code.val.len;
@@ -967,7 +966,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 		bcopy(save, dev->keyboard.last_codes, msg_len);
 	dev->keyboard.last_codes_count = msg_len;
 	if (dev->keyboard.k_ar_state == K_AR_ACTIVE)
-		callout_reset(&dev->repeat_ch, hz / 2,
+		callout_reset(&dev->keyboard.repeat_ch, hz / 2,
 		    dtop_keyboard_repeat, (void *)dev);
 	return (outc);
 }
@@ -1011,7 +1010,7 @@ dtop_keyboard_repeat(arg)
 		}
 	}
 	if (gotone)
-		callout_reset(&dev->repeat_ch, hz / 20,
+		callout_reset(&dev->keyboard.repeat_ch, hz / 20,
 		    dtop_keyboard_repeat, dev);
 	else
 		dev->keyboard.k_ar_state = K_AR_IDLE;
