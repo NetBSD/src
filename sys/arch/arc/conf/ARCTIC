@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.22 2003/06/14 08:09:48 tsutsui Exp $
+#	$NetBSD: ARCTIC,v 1.23 2003/06/15 06:08:12 tsutsui Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -193,7 +193,6 @@ ne1		at isa? port 0x300 irq 10
 #ne*		at isapnp?			# NE[12]000 PnP ethernet
 we0		at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1		at isa? port 0x300 iomem 0xcc000 irq 10
-#we*		at isapnp?
 
 #aha0		at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
 #aha1		at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI

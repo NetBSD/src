@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.88 2003/06/15 06:05:31 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.89 2003/06/15 06:08:12 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.88 $"
+#ident		"GENERIC-$Revision: 1.89 $"
 
 maxusers	32		# estimated number of users
 
@@ -277,7 +277,6 @@ lpt0		at isa? port 0x378 irq 7
 #ne*		at isapnp?			# NE[12]000 PnP ethernet
 #we0		at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 #we1		at isa? port 0x300 iomem 0xcc000 irq 10
-#we*		at isapnp?
 
 # XXX - should be configured
 #btl0		at isa? port 0x330 irq ? drq ?
