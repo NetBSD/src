@@ -2611,9 +2611,7 @@ assign_file_positions_for_segments (abfd)
 		  if ((abfd->flags & D_PAGED) != 0)
 		    adjust = (sec->vma - voff) % bed->maxpagesize;
 		  else
-		    { 
-		      adjust = (sec->vma - (p->p_paddr + p->p_memsz)) % align;
-		    }
+		    adjust = (sec->vma - (p->p_paddr + p->p_memsz)) % align;
 		}
 	      else
 		adjust = 0;
@@ -2622,13 +2620,11 @@ assign_file_positions_for_segments (abfd)
 		{
 		  if (i == 0)
 		    abort ();
-		  voff += adjust;
 		  p->p_memsz += adjust;
+		  off += adjust;
+		  voff += adjust;
 		  if ((flags & SEC_LOAD) != 0)
-		    {
-		      off += adjust;
-		      p->p_filesz += adjust;
-		    }
+		    p->p_filesz += adjust;
 		}
 
 	      sec->filepos = off;
