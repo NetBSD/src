@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.18 1994/12/05 08:30:30 mycroft Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.19 1994/12/10 17:14:42 mycroft Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -249,23 +249,23 @@ semundo_clear(semid, semnum)
 	register struct sem_undo *suptr;
 
 	for (suptr = semu_list; suptr != NULL; suptr = suptr->un_next) {
-		register struct undo *sunptr = &suptr->un_ent[0];
-		register int i = 0;
+		register struct undo *sunptr;
+		register int i;
 
-		while (i < suptr->un_cnt) {
+		sunptr = &suptr->un_ent[0];
+		for (i = 0; i < suptr->un_cnt; i++, sunptr++) {
 			if (sunptr->un_id == semid) {
 				if (semnum == -1 || sunptr->un_num == semnum) {
 					suptr->un_cnt--;
 					if (i < suptr->un_cnt) {
 						suptr->un_ent[i] =
 						  suptr->un_ent[suptr->un_cnt];
-						continue;
+						i--, sunptr--;
 					}
 				}
 				if (semnum != -1)
 					break;
 			}
-			i++, sunptr++;
 		}
 	}
 }
