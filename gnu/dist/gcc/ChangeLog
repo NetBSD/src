@@ -1,0 +1,3341 @@
+Sun Mar 15 23:39:10 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Update for egcs-1.0.2 release.
+
+Sun Mar 15 23:29:25 1998  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* config/m68k/mot3300.h (ASM_BYTE_OP): Don't include '\t' in the
+	definition.
+	(ASM_OUTPUT_ASCII): Prefix ASM_BYTE_OP by one single '\t'.
+
+Sun Mar 15 23:29:18 1998  Jeffrey A Law  (law@cygnus.com)
+
+        * m68k.h: Fix mis-applied fix from the mainline branch.
+
+Wed Mar 10 14:26:52 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* rtlanal.c (optimize): Declare.
+
+Sun Mar  8 11:16:23 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* emit-rtl.c (gen_lowpart_common): Handle more case where converting
+	a CONST_INT into SFmode.
+
+Sat Mar  7 01:12:46 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* i386/aix386ng.h (CPP_PREDEFINES): Put back -Di386.
+	* i386/freebsd-elf.h: Likewise.
+	* i386/gas.h: Likewise.
+	* i386/linux-aout.h: Likewise.
+	* i386/linux-oldld.h: Likewise.
+	* i386/linux.h: Likewise.
+	* i386/osfelf.h: Likewise.
+	* i386/osfrose.h: Likewise.
+	* i386/sco.h: Likewise.
+	* i386/sco4.h: Likewise.
+	* i386/sco4dbx.h: Likewise.
+	* i386/sco5.h: Likewise.
+	* i386/scodbx.h: Likewise.
+	* i386/sol2.h: Likewise.
+	* i386/sysv3.h: Likewise.
+
+Wed Mar  4 22:03:38 1998 Franz Sirl <franz.sirl-kernel@lauterbach.com>
+
+	* rs6000/linux.h: don't define DEFAULT_VTABLE_THUNKS to 1 if 
+	USE_GNULIBC_1 is defined
+	* configure.in: add a new case powerpc-*-linux-gnulibc1 which
+	includes the t-linux-gnulibc1 fragment
+
+Tue Mar  3 00:06:45 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for 1.0.2 prerelease diffs.
+
+Sun Mar  1 18:14:46 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* ginclude/va-ppc.h (va_arg): Fix typo in long long support.
+
+Tue Feb 24 09:32:24 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* expr.c (emit_move_insn_1): Fix minor buglet in last change
+	caused by importint it into the release branch.
+
+Sun Feb 22 20:46:31 1998  Bernd Schmidt <crux@ohara.Informatik.RWTH-Aachen.DE>
+
+	* expr.c (emit_move_insn_1): When moving complex values in several
+	steps, emit a CLOBBER to show the destination dies.
+
+Sun Feb 22 20:06:34 1998  Jim Wilson  <wilson@cygnus.com>
+
+	* iris5.h (DWARF2_UNWIND_INFO): Define to 0.
+	* iris5gas.h (DWARF2_UNWIND_INFO): Define to 1.
+
+Thu Feb 19 09:41:23 1998  Mumit Khan <khan@xraylith.wisc.edu>
+
+	* i386/x-cygwin32 (USE_COLLECT2): Disable collect2 for now on
+	i386-{cygwin32,mingw32}.
+
+Sun Feb 22 09:45:39 1998  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* collect2.c (scan_prog_file): Completely cover uses of variable
+	`exports' with macro COLLECT_EXPORT_LIST.
+
+1998-02-20  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* collect2.c (main): Still handle !do_collecting for non-AIX targets.
+
+Thu Feb 19 22:36:53 1998  Andrey Slepuhin  <pooh@msu.net>
+                          David Edelsohn  <edelsohn@mhpcc.edu>
+
+	* collect2.c (XCOFF_SCAN_LIBS): Remove.
+	(export_flag): New variable.
+	(export_file): #ifdef COLLECT_EXPORT_LIST.
+	(import_file, exports, imports, undefined): New variables.
+	(libs, cmdline_lib_dirs, libpath_lib_dirs, libpath, libexts): Same.
+	(dump_list, dump_prefix_list, is_in_list): New functions.
+	(write_export_file): $ifdef COLLECT_EXPORT_LIST.
+	(write_import_file, resolve_lib_name): New functions.
+	(use_import_list, ignore_library): Same.
+	(collect_exit): maybe_unlink import_file and #ifdef.
+	(handler): Same.
+	(main): New variable importf, #ifdef exportf.  Move parsing of
+	-shared before general argument parsing.  Resolve AIX library
+	paths and import libgcc.a symbols.  Treat .so shared libraries the
+	same as objects and .a libraries.  Create alias for object_lst and
+	increment it instead of original pointer.  Scan AIX libraries as
+	objects earlier instead of using scan_libraries.  Perform AIX
+	tlink later to resolve templates instead of forking ld.
+	(GCC_OK_SYMBOL): Ensure symbol not in undef section.
+	(GCC_UNDEF_SYMBOL): New macro.
+	(scan_prog_file): Loop for members of AIX libraries.  Handle
+	export/import of ctors/dtors.
+	(aix_std_libs): New variable.
+	(scan_libraries, XCOFF): Delete.
+
+1998-02-19  Mike Stump  <mrs@wrs.com>
+
+	* Makefile.in: Use $tooldir for sys-include to match toplevel
+	configure.
+
+Thu Feb 19 01:41:47 1998  Robin Kirkham <rjk@mlb.dmt.csiro.au>
+
+	* m68k.h (TARGET_SWITCHES): -mcpu32 now clears MASK_68881.
+	(MACHINE_STATE_m68010_up): Replaced __mc68332__ with __mcpu32__.
+	* m68k/m68k-none.h(CPP_FPU_SPEC): Update relative to TARGET_SWITCHES.
+	(CPP_SPEC, ASM_SPEC, CC1_SPEC): Likewise.
+	(CPP_SPEC): -m68332 defines both __mc68332 and __mcpu32__.
+	* m68k/t-m68kbare (MULTILIB_OPTIONS): Add mcpu32.
+	(MULTILIB_MATCHES): -m68332 now uses mcpu32 libraries, not m68000.
+	(MULTILIB_EXCEPTIONS): Don't build 68881 libraries for m68000,
+	mcpu32 or m5200.
+	* longlong.h: Replace __mc68332__ with __mcpu32__.
+
+Thu Feb 19 01:32:37 1998  Jeffrey A Law  (law@cygnus.com)
+			  Richard Kenner  <kenner@vlsi1.ultra.nyu.edu>
+
+	* emit-rtl.c (gen_lowpart_common): Suppress last change if __complex__.
+
+	* emit-rtl.c (hard-reg-set.h): Include.
+	(get_lowpart_common): Don't make new REG for hard reg in a 
+	class that cannot change size.
+	* Makefile.in (emit-rtl.o): Depend on hard-reg-set.h.
+
+	* combine.c: Revert previous patch.
+
+Tue Feb 17 23:34:29 1998 David Edelsohn  <edelsohn@mhpcc.edu>
+
+	* rs6000.h (MY_ISCOFF): Add numeric value of U803XTOCMAGIC.
+        * x-aix31 (INSTALL): Delete.
+
+Tue Feb 17 22:56:14 1998  Richard Henderson  <rth@cygnus.com>
+
+	* combine.c (simplify_rtx): Obey CLASS_CANNOT_CHANGE_SIZE when
+	simplifying a subreg of a hard reg.
+	(expand_compound_operation): Likewise.
+	(force_to_mode): Likewise.
+
+Sun Feb 15 21:07:48 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* arm/netbsd.h (DWARF2_UNWIND_INFO): Define as zero for now.
+	* i386/netbsd.h, m68k/netbsd.h, ns32k/netbsd.h: Likewise.
+	* sparc/netbsd.h, vax/netbsd.h: Likewise.
+
+Sun Feb 15 20:55:23 1998  Bernd Schmidt <crux@ohara.Informatik.RWTH-Aachen.DE>
+
+	* i386.c (notice_update_cc): Use reg_overlap_mentioned_p.
+
+Sat Feb 14 15:54:28 1998  H.J. Lu  (hjl@gnu.org)
+
+	* config/alpha/elf.h (LIB_SPEC): New. Defined if
+	USE_GNULIBC_1 is not defined.
+
+	* config/linux.h (LIB_SPEC): Add -lc for -shared if
+	USE_GNULIBC_1 is not defined.
+	* config/sparc/linux.h: Ditto.
+
+	* config/sparc/linux64.h (LIB_SPEC): Add -lc for -shared.
+
+	* config/sparc/linux64.h (LIBGCC_SPEC): Removed.
+	(CPP_SUBTARGET_SPEC): Add %{pthread:-D_REENTRANT}.
+	(LIB_SPEC): Updated for glibc 2.
+
+Sat Nov 29 12:45:51 1997  Mumit Khan  <khan@xraylith.wisc.edu>
+
+	* config/i386/cygwin32.h (DWARF2_UNWIND): Exception handling 
+	doesn't work with it yet, so set it to 0.
+	* config/i386/x-cygwin32 (USE_COLLECT2): Delete.
+	* config/i386/xm-cygwin32.h (NO_SYS_SIGLIST): Define.
+
+Fri Feb 13 01:29:29 1998 Franz Sirl <franz.sirl-kernel@lauterbach.com>
+
+	* rs6000/sysv4.h (ENDFILE_SPEC): add missing %(endfile_linux)
+	for -mcall-linux
+
+Fri Feb 13 00:47:21 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* cccp.c (new_include_prefix): Correctly handle -I./.
+
+Sun Dec 28 00:32:16 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* flow.c (find_basic_blocks): Don't create a new basic block
+	for calls in a LIBCALL block.
+
+Fri Dec 12 01:19:48 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* flow.c (flow_analysis): Be consistent with find_basic_blocks in
+	determining when a new basic block starts.
+
+Thu Dec 11 22:02:10 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* flow.c (find_basic_blocks): A CALL_INSN that can throw starts
+	a new basic block.
+	(find_basic_blocks_1): Likewise.
+
+Thu Dec  4 11:51:00 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* except.c (get_dynamic_handler_chain): Only make the call once per
+ 	function.
+
+Wed Dec  3 12:01:56 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* except.c (expand_fixup_region_end): New fn.
+	(expand_fixup_region_start): Likewise.
+	(expand_eh_region_start_tree): Store cleanup into finalization here.
+	* stmt.c (expand_cleanups): Use them to protect fixups.
+
+Mon Nov 24 22:41:55 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* except.c (get_dynamic_handler_chain): Build up a FUNCTION_DECL.
+	* optabs.c (init_optabs): Lose get_dynamic_handler_chain_libfunc.
+	* expr.h: Likewise.
+
+Wed Feb 11 01:39:47 1998  Richard Henderson  <rth@cygnus.com>
+
+	* stor-layout.c (layout_type): Do upper - lower in the native type,
+	so as to properly handle negative indices.
+
+Tue Feb 10 00:26:25 1998  Richard Kenner  <kenner@vlsi1.ultra.nyu.edu>
+
+	* rs6000.c (setup_incoming_varargs): Always set rs6000_sysv_varargs_p.
+
+Mon Feb  9 23:15:14 1998 Franz Sirl <franz.sirl-kernel@lauterbach.com>
+
+	* rs6000/linux.h (CPP_PREDEFINES): Add -D__ELF__.
+
+Mon Feb  9 23:08:56 1998  Richard Henderson  <rth@cygnus.com>
+
+	* i386.md (push): Prohibit symbolic constants if flag_pic.
+	(movsi+1): Likewise for move to non-register.
+
+Mon Feb  9 23:07:04 1998  John Wehle  (john@feith.com)
+
+	* i386.md: Remove redundant integer push patterns.
+	Don't bother checking for TARGET_PUSH_MEMORY when
+	pushing constants or registers.
+
+1998-01-28  Mike Stump  <mrs@wrs.com>
+ 
+	* rtlanal.c (dead_or_set_regno_p): Ignore REG_DEAD notes after
+	reload completes.
+	* genattrtab.c (reload_completed, optimize): Define.
+
+Mon Feb  9 22:16:04 1998  J"orn Rennecke <amylaar@cygnus.co.uk>
+
+	* c-decl.c (grokdeclarator): Get parameter tags from
+	last_function_parm_tags.
+	* dwarfout.c (output_formal_types): Set TREE_ASM_WRITTEN before
+	traversing the parameter types.
+	(output_type): No early exit for FUNCTION_TYPE / METHOD_TYPE context.
+
+Mon Feb  9 22:10:58 1998  Todd Vierling <tv@pobox.com>
+
+	* fixincludes: Tweak fix for struct exception in math.h
+
+Mon Feb  9 01:15:08 1998  Mark Mitchell  <mmitchell@usa.net>
+
+        * integrate.c (get_label_from_map): New function.
+        (expand_inline_function): Use it.  Initialize the label_map to
+        NULL_RTX instead of gen_label_rtx.
+        (copy_rtx_and_substitute): Use get_label_from_map.
+        * integrate.h (get_label_from_map): New function.
+        (set_label_from_map): New macro.
+        * unroll.c (unroll_loop): Use them.
+        (copy_loop_body): Ditto.
+
+        * toplev.c (rest_of_compilation): Don't call save_for_inline_copy
+        if all we're doing is dealing with -Wreturn-type.
+
+Mon Feb  9 01:07:41 1998  Jeffrey A Law  (law@cygnus.com)
+
+        * i386/x-sco5 (CC): Remove trailing whitespace.
+
+Mon Feb  9 01:07:37 1998  J. Kean Johnston  <jkj@sco.com>
+
+	* i386/sco5.h (STARTFILE_SPEC, ENDFILE_SPEC): Correctly handle
+	"-static".
+
+Mon Feb  9 00:02:53 1998  Jim Wilson  <wilson@cygnus.com>
+
+	* function.c (assign_parms): New variable named_arg, with value
+	depending on STRICT_ARGUMENT_NAMING.  Use instead of ! last_named.
+
+Mon Feb  9 00:01:00 1998  Richard Kenner  <kenner@vlsi1.ultra.nyu.edu>
+
+	* stmt.c (pushcase_range): Clean up handling of "infinite" values.
+
+	* loop.c (strength_reduce): When placing increment for auto-inc
+	case, do comparison in loop order.
+
+Fri Jan  2 23:40:09 1998  Jim Wilson  (wilson@cygnus.com)
+			  Jeffrey A Law  (law@cygnus.com)
+
+	* crtstuff.c (__frame_dummy): New function for irix6.
+	(__do_global_ctors): Call __frame_dummy for irix6.
+	* iris6.h (LINK_SPEC): Hide __frame_dummy too.
+	 
+Wed Dec 24 23:03:42 1997  Jim Wilson  (wilson@cygnus.com)
+
+	* mips.c (mips_expand_epilogue): Emit blockage insn before call to
+	save_restore_insns if no FP and GP will be restored.
+
+	* abi64.h (LONG_MAX_SPEC): Check MIPS_ABI_DEFAULT and TARGET_DEFAULT,
+	and define __LONG_MAX__ appropriately.  Add support for -mabi=X,
+	-mlong64, and -mgp{32,64} options.
+	* mips.c (mips_abi): Change type to int.
+	* mips.h (enum mips_abi_type): Delete.
+	(ABI_32, ABI_N32, ABI_64, ABI_EABI): Define as constants.
+	(mips_abi): Change type to int.
+
+Mon Dec 22 09:55:01 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for beta release of egcs-1.0.1.
+
+	* haifa-sched.c (create_reg_dead_note): Detect and handle another
+	case where we kill more regs after sched than were killed before
+	sched.
+	* sched.c (create_reg_dead_note): Similarly.
+
+Sun Dec 21 21:47:38 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* pa.c (emit_move_sequence): Handle a function label source
+	operand.
+
+Sat Dec 20 16:14:50 1997  David Edelsohn  <edelsohn@mhpcc.edu>
+
+	* rs6000.h (FUNCTION_ARG_PADDING): Define.
+	* rs6000.c (function_arg_padding): New function.
+
+Sat Dec 20 13:36:06 1997  Paul Eggert  <eggert@twinsun.com>
+                          Richard Kenner  <kenner@vlsi1.ultra.nyu.edu>
+                          H.J. Lu  (hjl@gnu.org)
+
+	* frame.h (__register_frame, __register_frame_table,
+	__deregister_frame): New.
+	* frame.c (__register_frame, __register_frame_table,
+	__deregister_frame): New.
+	* frame.c (__deregister_frame_info): Return void *.
+	* frame.h (__deregister_frame_info): Ditto.
+	* collect2.c (__deregister_frame_info): Ditto.
+
+	* frame.h (__register_frame_info_table): Fix typo in declaration.
+
+	* frame.c (__register_frame_info): Renamed from __register_frame.
+	(__register_frame_info_table, __deregister_frame_info): Similarly.
+	* frame.h (__{,de}register_frame_info): Likewise.
+	(__register_frame_info_table): New declaration.
+	* crtstuff.c (__do_global_dtors{,_aux}): Rename __deregister_frame.
+	(frame_dummy, __do_global_ctors): Likewise for __register_frame.
+	* collect2.c (write_c_file_{stat,glob}): Rename __register_frame
+	to __register_frame_info and similarly for __deregister_frame and
+	__register_frame_table.
+
+	* collect2.c (write_c_file_glob):
+	Allocate initial frame object in static storage and pass its address.
+
+	* crtstuff.c (__do_global_ctors): Fix typo in last change.
+
+	* crtstuff.c (__do_global_ctors): Add missing arg to __register_frame.
+
+	* collect2.c (write_c_file_stat): Fix error in last change;
+	use __SIZE_TYPE__, not size_t.
+
+	Alter C startup code so that it doesn't invoke malloc on Solaris.
+	* frame.h (struct object): Decl moved here from frame.c.
+	* frame.c (struct object): Move decl to frame.h.
+	("frame.h"): Include after <stddef.h>, so that size_t is defined.
+	(__register_frame, __register_frame_table, __deregister_frame):
+	It's now the caller's responsibility to allocate storage for object.
+	* crtstuff.c (frame_dummy), collect2.c (write_c_file_stat):
+	Allocate initial frame object in static storage and pass its address.
+	* crtstuff.c (<stddef.h>, "frame.h"): Include.
+	* Makefile.in ($(T)crtbegin.o, $(T)crtend.o, stamp-crtS):
+	Depend on defaults.h and frame.h.
+
+Fri Dec 19 10:02:57 1997  Richard Kenner  <kenner@vlsi1.ultra.nyu.edu>
+
+	* i386.h (INITIAL_ELIMINATION_OFFSET): Correctly test for PIC
+	register used.
+
+Fri Dec 19 09:50:30 1997  Bernd Schmidt <crux@ohara.Informatik.RWTH-Aachen.DE>
+
+	* combine.c (simplify_rtx, case ABS): Don't get confused by a
+	VOIDmode operand.
+
+	* i386.c (notice_update_cc): Remove bogus pentium GCC code.
+
+Fri Dec 19 09:39:48 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* i386/t-sol2 (CRTSTUFF_T_CFLAGS): Turn on the optimizer.
+
+	* stmt.c (warn_if_unused_value): Don't warn for TRY_CATCH_EXPR.
+
+	* stmt.c (expand_asm_operands): If an ASM has no outputs, then treat
+	it as volatile.
+
+Wed Dec  3 01:13:45 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Update for egcs-1.0 release.
+
+Mon Dec  1 15:36:13 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+Tue Nov 25 14:08:12 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* mips.md (fix_truncdfsi2, fix_truncsfsi2, fix_truncdfdi2,
+	fix_truncsfdi2): Change *.
+
+Sun Nov 30 19:59:20 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* stmt.c (expand_decl_cleanup): Update thisblock after eh_region_start.
+
+Sat Nov 29 12:44:57 1997  David Edelsohn  <edelsohn@mhpcc.edu>
+
+	* rs6000.c (function_arg_partial_nregs): Undo Nov. 26 patch.
+
+	* rs6000/aix41.h (ASM_CPU_SPEC): Define.
+
+Fri Nov 28 10:00:27 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* sh/elf.h (PREFERRED_DEBUGGING_TYPE): Prefer stabs again.
+
+	* arm.md (movsfcc, movdfcc): Fix "patch" lossage.
+
+	* configure.in: Fix NCR entries.
+
+Thu Nov 27 12:20:19 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+	
+	* flow.c (find_basic_blocks): Handle cfg issues for rethrows and
+	nested exceptions correctly.
+
+	* unroll.c (find_splittable_givs): Don't split givs with a dest_reg
+	that was created by loop.
+
+Thu Nov 27 09:34:58 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* expr.c (preexpand_calls): Don't look past a TRY_CATCH_EXPR.
+
+	* except.c (expand_start_all_catch): One more do_pending_stack_adjust.
+
+Thu Nov 27 09:32:39 1997  Richard Earnshaw  (rearnsha@arm.com)
+
+	* arm.md (movsfcc): If not TARGET_HARD_FLOAT, ensure operand[3] 
+	valid.
+
+Wed Nov 26 13:04:46 1997  Michael Meissner  <meissner@cygnus.com>
+
+	* rs6000.c (SMALL_DATA_REG): Register to use for small data relocs.
+	(print_operand): Use SMALL_DATA_REG for the register involved in
+	small data relocations.
+	(print_operand_address): Ditto.
+
+	* rs6000/linux.h (LINK_SPEC): Pass -dynamic-linker /lib/ld.so.1 if
+	-dynamic linker is not used.
+
+	* rs6000.md (call insns): For local calls, use @local suffix under
+	System V.  Don't use @plt under Solaris.
+
+	* rs6000.c (output_function_profiler): Put label address in r0, and
+	store LR in 4(sp) for System V/eabi.
+
+	* rs6000.h (ASM_OUTPUT_REG_{PUSH,POP}): Keep stack aligned to 16
+	byte boundary, and maintain stack backchain.
+
+	(patches originally from Geoffrey Keating)
+	* rs6000.c (function_arg): Excess floating point arguments don't
+	go into GPR registers after exhausting FP registers under the
+	System V.4 ABI.
+	(function_arg_partial_nregs): Ditto.
+
+	* rs6000.md (call insns): If -fPIC or -mrelocatable, add @plt
+	suffix to calls.
+
+Wed Nov 26 13:04:46 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* toplev.c (main): Complain about -gdwarfn.
+
+Tue Nov 25 22:43:30 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* dwarf2out.c (outout_call_frame_info): Ensure that the info has
+	proper alignment.
+
+	* libgcc2.c (__throw): Initialize HANDLER.
+
+	* dwarfout.c (output_type): If finalizing, write out nested types 
+	of types we've already written.
+
+Tue Nov 25 10:00:42 1997  J"orn Rennecke <amylaar@cygnus.co.uk>
+
+	* sh/elf.h (PREFERRED_DEBUGGING_TYPE): Undefine before including
+	svr4.h.
+
+	* sh/elf.h (PREFERRED_DEBUGGING_TYPE): Don't redefine.
+
+	* sh/elf.h (HANDLE_SYSV_PRAGMA): Undefine.
+
+	* sh/elf.h: (LINK_SPEC): Use shlelf.
+	(USER_LABEL_PREFIX, LOCAL_LABEL_PREFIX, ASM_FILE_START): Redefine.
+
+	* sh.h: dwarf patches from Fred Fish.
+
+	* va-sh.h (__va_arg_sh1): Define.
+	(va_arg): Use it.
+	SH3E doesn't use any integer registers for subsequent arguments
+	once a non-float value was passed in the stack.
+	* sh.h (PASS_IN_REG_P): Fix SH3E case.
+
+Tue Nov 25 10:00:42 1997  Richard Henderson  (rth@cygnus.com)
+
+	* alpha.h (CONST_OK_FOR_LETTER): Fix 'L' handling.
+
+Tue Nov 25 10:00:42 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* configure.in (alphaev56*-*-*): Disable MASK_BYTE_OPS until
+	ev56 support works correctly.
+
+	* crtstuff.c (do_global_dtors_aux): Handle multiple calls better.
+
+Sun Nov 23 13:01:48 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+Sat Nov 22 18:58:20 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* pa-hpux10.h (NEW_HP_ASSEMBLER): Define.
+	* pa.h (LEGITIMATE_CONSTANT_P): Reject LABEL_REFs if not using
+	gas and not using the new HP assembler.
+
+Fri Nov 21 15:20:05 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* Makefile.in (program_transform_cross_name): Clean up "-e" confusion.
+	(GCC_INSTALL_NAME, GCC_CROSS_NAME): Likewise.
+
+	* i386.h (TARGET_CMOV): Disable conditional moves for this release.
+
+Fri Nov 21 12:18:51 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* except.h: Add outer_context_label_stack.
+	* except.c: Likewise.
+	(expand_start_all_catch): Push the outer_context for the try block
+ 	onto outer_context_label_stack.
+	(expand_end_all_catch): Use it and pop it.
+
+Fri Nov 21 10:13:11 1997  Robert Lipe (robertl@dgii.com)
+
+	* i386/sco5.h (HAVE_ATEXIT): Revert last change.
+
+Thu Nov 20 16:11:50 1997  Richard Henderson  <rth@cygnus.com>
+
+	* alpha.c (alpha_emit_set_const_1): Handle narrow hosts better.
+
+Thu Nov 20 16:11:50 1997  Klaus Kaempf  <kkaempf@progis.de>
+
+	* alpha/vms.h (ASM_OUTPUT_ADDR_VEC_ELT): Add an L for the local label
+	to correspond with the change to ASM_GENERATE_INTERNAL_LABEL.
+
+Thu Nov 20 14:42:15 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* except.c (output_exception_table): Don't bother with
+ 	__EXCEPTION_END__.
+
+Thu Nov 20 16:11:50 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* pa.md (pre_stwm, post_stwm, pre_ldwm, post_ldwm): Base register
+	is an in/out operand. 
+	(zero extended variants of stwm/stwm patterns): Similarly.
+
+	* mips/x-iris (FIXPROTO_DEFINES): Add -D_SGI_SOURCE.
+
+Thu Nov 20 13:19:32 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* dwarf2out.c (ASM_OUTPUT_DWARF_OFFSET4): Rename from VALUE4.
+	Use assemble_name.
+	(ASM_OUTPUT_DEFINE_LABEL_DIFFERENCE_SYMBOL): Use assemble_name.
+	(output_call_frame_info): Emit a \n after using it.
+
+Thu Nov 20 00:38:46 1997  Dave Love  <d.love@dl.ac.uk>
+
+	* configure.in: Add AC_ARG_ENABLE for Haifa as documentation.
+
+Wed Nov 19 12:03:04 1997  Philippe De Muyter  <phdm@macqel.be>
+
+	* dwarf2out.c (CIE_LENGTH_LABEL, FDE_LENGTH_LABEL): New macros.
+	(ASM_OUTPUT_DWARF_VALUE4): New macro.
+	(ASM_OUTPUT_DEFINE_LABEL_DIFFERENCE_SYMBOL): Define if SET_ASM_OP is
+	defined.
+	(output_call_frame_info): Do not output forward label differences
+	if ASM_OUTPUT_DEFINE_LABEL_DIFFERENCE_SYMBOL is defined.
+	* m68k/mot3300.h (SET_ASM_OP): Define when not using gas.
+
+Tue Nov 18 22:50:24 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* mips/mips.c (save_restore_insns): If gp_offset or fp_offset are
+	large_int, emit two insns instead of one splitable insn.
+	* dwarf2out.c (dwarf2out_frame_debug): When set cfa_store_offset
+	from cfa_temp_value, use cfa_offset.  Abort if cfa_reg is not SP.
+
+Fri Nov  7 15:33:11 1997  Robert Lipe (robertl@dgii.com)
+
+        * i386/sco5.h (HAVE_ATEXIT): Delete definition.
+
+Sun Nov 16 23:52:48 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* cse.c (cse_insn): Don't look at JUMP_LABEL field of a conditionl
+	return.
+	(cse_end_of_basic_block): Similarly.
+	
+Sun Nov 16 23:01:40 1997  J. Kean Johnston  <jkj@sco.com>
+
+	* i386/sco5.h (ASM_OUTPUT_ALIGNED_BSS): Define.
+	(SELECT_RTX_SECTION): Define.
+	(LIBGCC_SPEC, LIB_SPEC): Do the right thing for PIC.
+
+Sun Nov 16 22:47:03 1997  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* Makefile.in (compare, compare-lean): Define $stage for each
+	shell command.
+	(gnucompare, gnucompare-lean): Likewise.
+
+Sun Nov 16 22:02:16 1997  Richard Henderson  (rth@cygnus.com)
+
+	* alpha/win-nt.h (TRAMPOLINE_TEMPLATE): Fix offsets.
+
+	* alpha.h (ASM_OUTPUT_ADDR_DIFF_ELT): Add an L for the local label
+	to correspond with the change to ASM_GENERATE_INTERNAL_LABEL.
+
+Fri Nov 14 08:01:25 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+1997-11-14  Paul Eggert  <eggert@twinsun.com>
+
+        Fix some confusion with IEEE minus zero.
+
+        * real.h (REAL_VALUES_IDENTICAL): New macro.
+
+        * expr.c (is_zeros_p): Don't consider -0.0 to be all zeros.
+        * fold-const.c (operand_equal_p): Don't consider -0.0 to be
+        identical to 0.0.
+        * tree.c (simple_cst_equal): Don't consider -0.0 to have the
+        same tree structure as 0.0.
+
+        * varasm.c (immed_real_const_1): Use new REAL_VALUES_IDENTICAL
+        macro instead of doing it by hand.
+
+Fri Nov 14 07:24:20 1997  Richard Henderson  <rth@cygnus.com>
+
+	* expr.c (expand_builtin_setjmp): Set
+	current_function_has_nonlocal_label.
+	* stupid.c (stupid_life_analysis): If has_nonlocal_label, kill
+	call-saved registers across calls.
+
+	* alpha.md (exception_receiver): Remove.
+	(nonlocal_goto_receiver_osf): New
+	(nonlocal_goto_receiver_vms): Renamed from nonlocal_goto_receiver.
+	(nonlocal_goto_receiver): New, select _osf or _vms.
+
+	* alpha.c (output_prolog [*]): Prefix entry labels with '$' to 
+	keep them from being propogated to the object file.
+	(alpha_write_linkage): Likewise.
+	* alpha.md (call_vms): Likewise.
+	(call_value_vms): Likewise.
+	(unnamed osf call insns): Likewise.
+
+	* alpha.h (ASM_OUTPUT_INTERNAL_LABEL): Don't omit L from local label.
+	(ASM_GENERATE_INTERNAL_LABEL): Likewise.
+
+	* alpha.c (call_operand): Any reg is valid for WinNT.
+	* alpha.md (call_nt, call_value_nt): Don't force address into $27.
+	(anon nt calls): Add 'R' alternative.
+	* alpha/win-nt.h (TRAMPOLINE_TEMPLATE, TRAMPOLINE_SIZE,
+	INITIALIZE_TRAMPOLINE): Handle lack of original $27 and 32-bit ptrs.
+
+Thu Nov 13 12:53:44 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* mips.h (GO_IF_LEGITIMATE_ADDRESS): Delete code swapping xplus0 and
+	xplus1 when xplus0 is not a register.
+
+Thu Nov 13 11:51:32 1997  David Edelsohn  <edelsohn@mhpcc.edu>
+
+	* rs6000.md (lshrdi3_power): Delete '&' from first alternative and
+	swap instruction order.
+
+Thu Nov 13 11:47:55 1997  Michael Meissner  <meissner@cygnus.com>
+
+	* rs6000.c (num_insns_constant): Use REAL_VALUE_FROM_CONST_DOUBLE to
+	pick apart floating point values, instead of using CONST_DOUBLE_LOW
+	and CONST_DOUBLE_HIGH.
+
+	* rs6000.md (define_splits for DF constants): Use the appropriate
+	REAL_VALUE_* interface to pick apart DF floating point constants in
+	a machine independent fashion.
+
+Thu Nov 13 11:41:42 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* flow.c (find_basic_blocks): During marking phase, if we encounter
+	an insn with a REG_LABEL note, make the target block live and
+	create an edge from the insn to the target block.  Do not make
+	edges from all blocks to the target block.
+
+	* m68k/x-next (OTHER_FIXINCLUDES_DIRS): Include /NextDeveloper/Headers.
+
+	* configure.in: Tweak NCR entries.
+	* configure: Rebuilt.
+
+Wed Nov 12 09:37:01 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* except.c: Do not include "assert.h".
+	(save_eh_status): Turn asserts into conditional aborts.
+	(restore_eh_status, scan_region): Likewise.
+	* dwarfout.c: Do not include "assert.h".
+	(bit_offset_attribute): Turn asserts into conditional aborts.
+	(bit_size_attribute, output_inlined_enumeration_type_die): Likewise.
+	(output_inlined_structure_type_die): Likewise.
+	(output_inlined_union_type_die): Likewise
+	(output_tagged_type_instantiation): Likewise.
+	(dwarfout_file_scope_decl): Likewise.
+	* dwarf2out.c: Do not include "assert.h"
+	(expand_builtin_dwarf_reg_size): Turn asserts into conditional aborts.
+	(reg_save, initial_return_save, dwarf2out_frame_debug): Likewise.
+	(add_child_die, modified_type_die, add_bit_offset_attribute): Likewise.
+	(add_bit_size_attribute, scope_die_for): Likewise.
+	(output_pending_types_for_scope): Likewise.
+	(get_inlined_enumeration_type_die): Likewise.
+	(get_inlined_structure_type_die): Likewise.
+	(get_inlined_union_type_die, gen_subprogram_die): Likewise.
+	(gen_tagged_type_instantiation_die): Likewise.
+
+	* flow.c (find_basic_blocks): Refine further to get a more correct
+	cfg, especially in the presense of exception handling, computed
+	gotos, and other non-trivial cases.  Call abort if an inaccuracy
+	is detected in the cfg.
+
+Mon Nov 10 03:02:19 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* stmt.c (expand_decl_cleanup_no_eh): New fn.
+
+	* except.c (expand_leftover_cleanups): do_pending_stack_adjust.
+
+	Sun Oct 19 09:07:38 1997  Richard Kenner  <kenner@vlsi1.ultra.nyu.edu>
+
+	* stmt.c (using_eh_for_cleanups_p): New variable.
+	(using_eh_for_cleanups): New function.
+	(expand_decl_cleanup): Don't call expand_eh_region_start_tree
+	unless using EH for cleanups.
+
+Mon Nov 10 00:05:56 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* alias.c (MAX_ALIAS_LOOP_PASSES): Define.
+	(init_alias_analysis): Break out of loops after MAX_ALIAS_LOOP_PASSES.
+
+Sun Nov  9 02:07:16 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* fixinc.svr4 (__STDC__): Add another case.
+
+Sun Nov  9 02:00:29 1997  J"orn Rennecke <amylaar@cygnus.co.uk>
+
+	* a29k.h (ELIGIBLE_FOR_EPILOGUE_DELAY): Avoid loads from varying
+	addresses in the epilogue delay slot.
+
+Sun Nov  9 01:40:40 1997  Manfred Hollstein  (manfred@s-direktnet.de)
+
+	* m88k/dgux.h (ASM_CPU_SPEC): Reformatted to suppress wrong whitespace
+	in generated `specs' file.
+
+Fri Nov  7 16:23:20 1997  Jim Wilson  (wilson@cygnus.com)
+
+	* flags.h (flag_rerun_loop_opt): Declare.
+	* loop.c (invariant_p, case LABEL_REF): Check flag_rerun_loop_opt.
+	* toplev.c (flag_rerum_loop_opt): Delete static.
+
+Fri Nov  7 10:22:24 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* frame.c (add_fdes, count_fdes): Go back to checking pc_begin for
+ 	linked once FDEs.
+
+Wed Nov  5 01:42:12 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+	* alias.c (find_base_value): Only return the known base value for
+	pseudo registers.
+
+Tue Nov  4 16:07:15 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* fixincludes: Fix "hypot" prototype in NeXT math.h.
+
+	* Makefile.in (USE_ALLOCA): Always include alloca.o.
+	(USE_HOST_ALLOCA): Likewise.
+
+	* alias.c (find_base_value): When copying arguments, return the
+	tenative value for a hard register.
+
+Tue Nov  4 14:12:30 1997  Richard Henderson  (rth@cygnus.com)
+			  Jim Wilson  (wilson@cygnus.com)
+
+	* alpha.c (summarize_insn): Handle ASM_OPERANDS.  Don't recurse
+	for SUBREG, just fall through.
+
+	* alpha.c (alpha_handle_trap_shadows): Init sum.defd to zero.
+
+	* alpha.md (attr trap): Make TRAP_YES non-zero for sanity's sake.
+
+	* combine.c (try_combine): When setting elim_i1, check if newi2pat
+	sets i1dest.
+
+        * combine.c (try_combine): When setting elim_i2, check whether newi2pat
+        sets i2dest.  When calling distribute_notes for i3dest_killed, pass
+        elim_i2 and elim_i1.
+
+Mon Nov  3 14:36:50 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* configure.in (sco5): Use cpio to install header files.
+
+Sun Nov  2 23:30:31 1997  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* aclocal.m4 (conftestdata_from, conftestdata_to): Names shortened to
+	14 char length.
+	* configure: Rebuild.
+
+Sun Nov  2 22:53:16 1997  Richard Earnshaw  (rearnsha@arm.com)
+
+	* arm.c (load_multiple_sequence): Support SUBREG of MEM.
+	(store_multiple_sequence): Likewise.
+
+Sun Nov  2 19:44:00 1997  Robert Lipe (robertl@dgii.com)
+
+	* i386/sco5.h: enable -gstabs once again.
+
+Sun Nov  2 19:27:21 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* arm.c (output_move_double): Allocate 3 entries in otherops array.
+
+Sat Nov  1 21:43:00 1997  Mike Stump  (mrs@wrs.com)
+
+	* except.c (expand_ex_region_start_for_decl): Emit EH_REGION_BEG
+	notes for sjlj exceptions too.
+	(expand_eh_region_end): Similarly for EH_REGION_END notes.
+	(exception_optimize): Optimize EH regions for sjlj exceptions too.
+	* final.c (final_scan_insn): Don't output labels for EH REGION
+	notes if doing sjlj exceptions.
+
+Sat Nov  1 19:15:28 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* alias.c (init_alias_analysis): Handle -fno-alias-check when
+	optimizing correctly.
+
+	* expr.c (expand_builtin_setjmp): Don't emit a SETJMP note
+	or set current_function_calls_setjmp anymore.
+
+	* flow.c (find_basic_blocks): If we delete the label for an
+	exception handler, remove it from the EH label list and remove
+	the EH_BEGIN/EH_END notes for that EH region.
+
+Sat Nov  1 16:44:49 1997  Jason Merrill  (jason@cygnus.com)
+
+	* flow.c (find_basic_blocks): Generate correct flow control
+	information when exception handling notes are present.
+
+Sat Nov  1 13:42:19 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* dwarf2out.c (output_call_frame_info): Fix length argument
+	to ASM_OUTPUT_ASCII.
+	(output_die, output_pubnames, output_line_info): Likewise.
+
+Fri Oct 31 07:10:09 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+	* dwarf2out.c (output_call_frame_info): Use ASM_OUTPUT_ASCII to
+	output ASCII by default.  Only use ASM_OUTPUT_DWARF_STRING if
+	flag_debug_asm is on.
+	(output_die, output_pubnames, output_line_info): Likewise.
+
+	* alias.c (init_alias_analysis): Add struct_value_incoming_rtx
+	and static_chain_rtx into the potential base values array if
+	they are registers.
+
+	* alias.c (new_reg_base_value): New array of potential base values.
+	(unique_id): Now file scoped static.
+	(find_base_value, case REG): Return the value in reg_base_value
+	array for the REG if it exists.  Else, return the value from
+	new_reg_base_value if copying args and REG is a hard register.
+	(find_base_value, case PLUS): If either operand of the PLUS is
+	a REG, try to get its base value.  Handle base + index and
+	index + base.
+	(record_set): Use new_reg_base_value instead of reg_base_value.
+	(init_alias_analysis): Allocate space for new_reg_base_value too.
+	Rework code to iterate over the insns propagating base value
+	information until nothing changes.
+
+	* global.c (global_alloc): Free the conflict matrix after
+	reload has finished.
+
+Fri Oct 31 01:45:31 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* libgcc2.c (L_eh): Define __eh_pc.
+	Replace __eh_type with generic pointer __eh_info.
+
+Fri Oct 31 00:34:55 1996  J"orn Rennecke <amylaar@cygnus.co.uk>
+
+	* expr.c (expand_increment): When enqueing a postincrement for a MEM,
+	use copy_to_reg if address is not a general_operand.
+
+Fri Oct 31 00:16:55 1997  J"orn Rennecke <amylaar@cygnus.co.uk>
+
+	* profile.c (output_func_start_profiler): Clear flag_inline_functions
+	for the duration of the call to rest_of_compilation.
+
+Thu Oct 30 14:40:10 1997  Doug Evans  <devans@canuck.cygnus.com>
+
+	* configure.in (sparc-*-elf*): Use sparc/elf.h, sparc/t-elf.
+	Set extra_parts.
+	(sparc*-*-*): Recognize --with-cpu=v9.
+	* sparc/elf.h: New file.
+	* sparc/t-elf: New file.
+
+Thu Oct 30 13:26:12 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300.c (const_8bit_operand): New function.
+	(mask_ok_for_mem_btst): New funtion.
+	* mn10300.md (btst patterns with mem operands): Use new functions
+	to avoid creating btst instructions with invalid operands.
+
+Wed Oct 29 16:57:19 1997  Michael Meissner  <meissner@cygnus.com>
+
+	* rs6000/xm-sysv4.h: Include xm-linux.h instead of xm-svr4.h if we
+	are running on PowerPC Linux.
+
+Wed Oct 29 13:10:11 1997  Gavin Koch  <gavin@cygnus.com>
+
+	* config/mips/elf64.h (PREFERRED_DEBUGGING_TYPE): Only define
+	if not previously defined.
+
+Tue Oct 28 23:55:27 1997  Doug Evans  (devans@cygnus.com)
+
+	* function.c (assign_parms): Correct mode of stack_parm if
+	entry_parm underwent a mode conversion.
+
+1997-10-28  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* global.c (global_alloc): Use xmalloc instead of alloca for
+	CONFLICTS, since max_allocno * allocno_row_words alone can be more
+	than 2.5Mb sometimes.
+
+Tue Oct 28 15:29:15 1997  Richard Henderson  <rth@cygnus.com>
+
+	* reload1.c (eliminate_regs [SET]): If [SUBREG] widened the mode of
+	DEST for the spill, adjust mode of SRC to compensate.
+
+Tue Oct 28 14:36:45 1997  Richard Henderson  <rth@cygnus.com>
+
+	* alpha.md (reload_inqi): Check for MEM before strict_memory_address_p,
+	since any_memory_operand() allows pseudos during reload.
+	(reload_inhi, reload_outqi, reload_outhi): Likewise.
+
+Tue Oct 28 11:53:14 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* m68k.md (btst patterns): Add 5200 support.
+
+Tue Oct 28 11:58:40 1997  Toon Moene  <toon@moene.indiv.nluug.nl>
+
+	* fold-const.c (fold): For ((a * C1) / C3) or (((a * C1) + C2) / C3)
+	optimizations, look inside dividend to determine if the expression
+	can be simplified by using EXACT_DIV_EXPR.
+
+Tue Oct 28 10:19:01 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	From Brendan:
+	* dwarf2out.c (output_call_frame_info): Use l1 instead of ".".
+
+Tue Oct 28 00:32:14 1997  Richard Henderson  <rth@cygnus.com>
+
+	* alpha.c (summarize_insn [SUBREG]): Propogate SET.
+
+Mon Oct 27 23:59:26 1997  Richard Henderson  <rth@cygnus.com>
+
+	* alpha.c (alpha_handle_trap_shadows): Don't call get_attr_trap
+	on a CLOBBER.
+
+Mon Oct 27 21:25:20 1997  Richard Henderson  <rth@cygnus.com>
+
+	* alpha.md (movqi, movhi): Make sure new insns created during reload
+	won't need reloading themselves.
+	(reload_inqi, reload_inhi, reload_outqi, reload_outhi): Likewise.
+
+Mon Oct 27 16:11:10 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300.h (GO_IF_LEGITIMATE_ADDRESS): Disable reg+reg.
+
+Sun Oct 26 13:50:44 1997  Richard Henderson  <rth@cygnus.com>
+
+	* alpha.c (alpha_sa_mask [VMS]): Don't include $26 in the mask.
+	Patch from Klaus Kaempf <kkaempf@progis.de>.
+
+Sun Oct 26 13:31:47 1997  Jim Wilson  (wilson@cygnus.com)
+
+	* expr.c (expand_expr, case INDIRECT_REF): Optimize a reference
+	to an element in a constant string.
+
+Sun Oct 26 11:41:49 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* dwarf2out.c (output_call_frame_info): The CIE pointer is now a 32
+ 	bit PC-relative offset.  The exception range table pointer is now in
+ 	the CIE.
+	* frame.c (dwarf_cie, dwarf_fde): Rename CIE_pointer to CIE_delta.
+	(count_fdes, add_fdes, get_cie): Adjust.
+	(cie_info, extract_cie_info, __frame_state_for): Adjust eh_ptr uses.
+
+	From H.J. Lu:
+	* frame.c (count_fdes, add_fdes): Skip linked once FDE entries.
+
+Sun Oct 26 11:52:01 1997  Richard Henderson  <rth@cygnus.com>
+
+	* alias.c (memrefs_conflict_p): Treat arg_pointer_rtx just
+	like stack_pointer_rtx.
+
+Sun Oct 26 11:32:16 1997  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* Makefile.in (bootstrap-lean): Combined with `normal' bootstrap
+	targets using "$@" to provide support for similar but not identical
+	targets without having to duplicate code.
+	(bootstrap4): New goal.
+
+	* Makefile.in (compare, compare-lean, compare3): Combined to one
+	ruleset determining actions to be performed via $@.
+	(compare4, compare4-lean): New targets.
+	(gnucompare, gnucompare3): Combined to one ruleset determining
+	actions to be performed via $@. Also, note which files failed
+	the comparison test in .bad_compare.
+	(gnucompare-lean, gnucompare3-lean, gnucompare4-lean): New targets.
+
+Sun Oct 26 10:06:11 1997  Toon Moene  <toon@moene.indiv.nluug.nl>
+
+	* fold-const (fold): Also simplify FLOOR_DIV_EXPR to EXACT_DIV_EXPR
+	if the dividend is a multiple of the divisor.
+
+Sun Oct 26 09:21:40 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* Makefile.in (LIBGCC2_CFLAGS): Add -fexceptions.
+
+	* alias.c (find_base_term): Handle PRE_INC, PRE_DEC, POST_INC,
+	and POS_DEC.
+
+	* alias.c (true_dependence): Fix typo.
+
+	* toplev.c (flag_rerun_loop_opt): New variable.
+	(f_options): Handle -frerun-loop-opt.
+	(rest_of_compilation): If -frerun-loop-opt, then run the loop
+	optimizer twice.
+	(main): Enable -frerun-loop-opt by default for -O2 or greater.
+
+	* loop.c (simplify_giv_expr): Adding two invariants results
+	in an invariant.
+
+Sun Oct 26 09:15:15 1997  Richard Henderson  <rth@cygnus.com>
+
+	* expr.c (get_inner_reference): Remove the array bias after 
+	converting the index to Pmode.
+
+Sat Oct 25 12:20:58 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300.h (TARGET_SWITCHES): Add -mmult-bug and -mno-mult-bug.
+	(TARGET_MULT_BUG): Define.
+	(TARGET_DEFAULT): Default to TARGET_MULT_BUG.
+	* mn10300.md (mulsi3): Handle TARGET_MULT_BUG.
+
+Fri Oct 24 17:40:34 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10200.c (indirect_memory_operand): Delete unused function.
+	* mn10200.h (EXTRA_CONSTRAINT): Handle 'R'.
+	* mn10200.md (bset, bclr insns): Handle output in a reg too.
+
+Fri Oct 24 15:54:57 1997  Richard Henderson  <rth@cygnus.com>
+
+	* alpha.md (call patterns): Revert Oct 16 change; if we are to elide
+	the callee's ldgp, we must do it ourselves, and we use the jsr tag
+	for more than scheduling.
+
+Fri Oct 24 13:23:04 1997  Doug Evans  <devans@canuck.cygnus.com>
+
+	* sparc/sparc.h (ASM_SPEC): Delete asm_arch.
+
+Fri Oct 24 13:19:40 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300.c (symbolic_operand, legitimize_address): New functions.
+	* mn10300.h (LEGITIMIZE_ADDRESS): Call legitimize_address.
+	(GO_IF_LEGITIMATE_ADDRESS): Don't allow base + symbolic.
+
+Thu Oct 23 09:35:12 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+Thu Oct 23 08:03:59 1997  J"orn Rennecke <amylaar@cygnus.co.uk>
+
+	* dbxout.c (dbxout_start_new_source_file): Use output_quoted_string
+	for FILENAME.
+
+Wed Oct 22 00:34:12 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* toplev.c (flag_exceptions): Default value is 2.
+	(compile_file): If flag_exceptions still has the value 2, then
+	set it to 0.
+
+	* rs6000.c (struct machine_function): Add pic_offset_table_rtx.
+	(rs6000_save_machine_status): Save pic_offset_table_rtx.
+	(rs6000_restore_machine_status: Restore pic_offset_table_rtx.
+
+	* local-alloc.c (block_alloc): Don't lose if two SCRATCH expressions
+	are shared.
+
+	* rs6000.md (*movsi_got_internal_mem): New pattern.
+	(*movsi_got_internal_mem splitter): New define_split.
+
+Tue Oct 21 18:14:03 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* obstack.h (obstack_empty_p): Fix spurious space after backslash.
+
+Tue Oct 21 18:34:01 1997  Geoffrey KEATING  <geoffk@ozemail.com.au>
+
+	* rs6000.c: Avoid creating a stack frame under SYSV ABI if we
+	only need to save LR.
+
+Tue Oct 21 10:06:40 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* mn10300.md (movqi, movhi): Avoid using address registers as
+	destinations unless absolutely necessary.
+
+	* mn10200.c (expand_prologue): Fix typo.
+
+	* mn10200.h (GO_IF_LEGITIMATE_ADDRESS): Do not allow indexed
+	addresses.
+	* mn10200.md (neghi2): Provide an alternative which works if
+	the input and output register are the same.
+
+	* mn10300.c (print_operand): Handle 'S'.
+	* mn10300.md (ashlsi3, lshrsi3, ashrsi3): Use %S for
+	shift amount in last alternative
+
+	* mn10300.c (expand_epilogue): Rework to handle register restores
+	in "ret" and "retf" instructions correctly.
+
+Mon Oct 20 16:47:08 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* expmed.c (extract_bit_field): Don't make flag_force_mem disable
+	extzv for memory operands.
+
+	* cse.c (simplify_ternary_operation, case IF_THEN_ELSE): Collapse
+	redundant conditional moves to single operand.
+
+Mon Oct 20 15:30:26 1997  Nick Clifton  <nickc@cygnus.com>
+
+	* v850.h: Move define of __v850__ from CPP_PREDEFINES
+	to CPP_SPEC.
+	
+	* xm-v850.h: Use __v850 rather than __v850__ to
+	identify v850 port.
+
+Mon Oct 20 14:15:02 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* mips/mips.c (compute_frame_size): Not a leaf function if
+	profile_flag set.
+
+Mon Oct 20 14:16:38 1997  Geoffrey KEATING  <geoffk@ozemail.com.au>
+
+	* rs6000/t-ppccomm: Use -msdata=none for crtstuff.
+
+Mon Oct 20 12:28:17 1997  Doug Evans  <devans@canuck.cygnus.com>
+
+	* sparc/sparc.h (SPARC_V9,SPARC_ARCH64): Delete.
+	(DEFAULT_ARCH32_P): New macro.
+	(TARGET_ARCH{32,64}): Allow compile time or runtime selection.
+	(enum cmodel): Declare.
+	(sparc_cmodel_string,sparc_cmodel): Declare.
+	(SPARC_DEFAULT_CMODEL): Provide default.
+	(TARGET_{MEDLOW,MEDANY}): Renamed to TARGET_CM_{MEDLOW,MEDANY}.
+	(TARGET_FULLANY): Deleted.
+	(TARGET_CM_MEDMID): New macro.
+	(CPP_CPU_DEFAULT_SPEC): Renamed from CPP_DEFAULT_SPEC.
+	(ASM_CPU_DEFAULT_SPEC): Renamed from ASM_DEFAULT_SPEC.
+	(CPP_PREDEFINES): Take out stuff now handled by %(cpp_arch).
+	(CPP_SPEC): Rewrite.
+	(CPP_ARCH{,32,64,_DEFAULT}_SPEC): New macros.
+	(CPP_{ENDIAN,SUBTARGET}_SPEC): New macros.
+	(ASM_ARCH{,32,64,_DEFAULT}_SPEC): New macros.
+	(ASM_SPEC): Add %(asm_arch).
+	(EXTRA_SPECS): Rename cpp_default to cpp_cpu_default.
+	Rename asm_default to asm_cpu_default.
+	Add cpp_arch32, cpp_arch64, cpp_arch_default, cpp_arch, cpp_endian,
+	cpp_subtarget, asm_arch32, asm_arch64, asm_arch_default, asm_arch.
+	(NO_BUILTIN_{PTRDIFF,SIZE}_TYPE): Define ifdef SPARC_BI_ARCH.
+	({PTRDIFF,SIZE}_TYPE): Provide 32 and 64 bit values.
+	(MASK_INT64,MASK_LONG64): Delete.
+	(MASK_ARCH64): Renamed to MASK_64BIT.
+	(MASK_{MEDLOW,MEDANY,FULLANY,CODE_MODEL}): Delete.
+	(EMBMEDANY_BASE_REG): Renamed from MEDANY_BASE_REG.
+	(TARGET_SWITCHES): Always provide 64 bit options.
+	(ARCH64_SWITCHES): Delete.
+	(TARGET_OPTIONS): New option -mcmodel=.
+	(INT_TYPE_SIZE): Always 32.
+	(MAX_LONG_TYPE_SIZE): Define ifdef SPARC_BI_ARCH.
+	(INIT_EXPANDERS): sparc64_init_expanders renamed to sparc_init_....
+	(FUNCTION_{,BLOCK_}PROFILER): Delete TARGET_EMBMEDANY support.
+	(PRINT_OPERAND_PUNCT_VALID_P): Add '_'.
+	* sparc/linux-aout.h (CPP_PREDEFINES): Take out stuff handled by
+	CPP_SPEC.
+	(CPP_SUBTARGET_SPEC): Renamed from CPP_SPEC.
+	* sparc/linux.h: Likewise.
+	* sparc/linux64.h (SPARC_V9,SPARC_ARCH64): Delete.
+	(ASM_CPU_DEFAULT_SPEC): Renamed from ASM_DEFAULT_SPEC.
+	(TARGET_DEFAULT): Delete MASK_LONG64, MASK_MEDANY, add MASK_64BIT.
+	(SPARC_DEFAULT_CMODEL): Define.
+	(CPP_PREDEFINES): Take out stuff handled by CPP_SPEC.
+	(CPP_SUBTARGET_SPEC): Renamed from CPP_SPEC.
+	(LONG_DOUBLE_TYPE_SIZE): Define.
+	(ASM_SPEC): Add %(asm_arch).
+	* sparc/sol2.h (CPP_PREDEFINES): Take out stuff handled by CPP_SPEC.
+	(CPP_SUBTARGET_SPEC): Renamed from CPP_SPEC.
+	(TARGET_CPU_DEFAULT): Add ultrasparc case.
+	* sparc/sp64-aout.h (SPARC_V9,SPARC_ARCH64): Delete.
+	(TARGET_DEFAULT): MASK_ARCH64 renamed to MASK_64BIT.
+	(SPARC_DEFAULT_CMODEL): Define.
+	* sparc/sp64-elf.h (SPARC_V9,SPARC_ARCH64): Delete.
+	(TARGET_DEFAULT): MASK_ARCH64 renamed to MASK_64BIT.  Delete
+	MASK_LONG64, MASK_MEDANY.
+	(SPARC_DEFAULT_CMODEL): Define.
+	(CPP_PREDEFINES): Delete.
+	(CPP_SUBTARGET_SPEC): Renamed from CPP_SPEC.
+	(ASM_SPEC): Add %(asm_arch).
+	(LONG_DOUBLE_TYPE_SIZE): Define.
+	(DWARF2_DEBUGGING_INFO): Define.
+	* sparc/splet.h (CPP_SPEC): Delete.
+	* sparc/sysv4.h (CPP_PREDEFINES): Take out stuff handled by CPP_SPEC.
+	(FUNCTION_BLOCK_PROFILER): Delete TARGET_EMBMEDANY support.
+	(BLOCK_PROFILER): Likewise.
+	* sparc/sparc.c (sparc_cmodel_string,sparc_cmodel): New globals.
+	(sparc_override_options): Handle code model selection.
+	(sparc_init_expanders): Renamed from sparc64_init_expanders.
+	* sparc/sparc.md: TARGET_<code_model> renamed to TARGET_CM_....
+	TARGET_MEDANY renamed to TARGET_CM_EMBMEDANY.
+	(sethi_di_embmedany_{data,text}): Renamed from sethi_di_medany_....
+	(sethi_di_fullany): Delete.
+
+Mon Oct 20 02:00:18 1997  Klaus Kaempf <kkaempf@progis.de>
+			  Jeff Law <law@cygnus.com>
+			  Richard Kenner <kenner@vlsi1.ultra.nyu.edu>
+
+	* alpha/vms.h (DIVSI3_LIBCALL): OTS$ functions are upper case.
+	(DIVDI3_LIBCALL, UDIVSI3_LIBCALL, UDIVDI3_LIBVALL): Likewise.
+	(MODSI3_LIBCALL, MODDI3_LIBCALL): Likewise.
+	(UMODSI3_LIBCALL, UMODDI3_LIBCALL): Likewise.
+	* alpha/alpha.md (arg_home): Likewise.
+
+	* alpha/alpha.c (vmskrunch): Delete
+	* alpha/vms.h (ENCODE_SECTION_INFO, ASM_DECLARE_FUNCTION_NAME): Delete.
+	* alpha.c (output_prolog, VMS): Use alloca for entry_label and don't
+	truncate to 64 characters.
+
+	* make-l2.com: Support openVMS/Alpha.
+
+	* vmsconfig.com: Fix to work on openVMS/Alpha and openVMS/VAX.
+
+Sun Oct 19 19:00:35 1997 J"orn Rennecke <amylaar@cygnus.co.uk>
+
+	* longlong.h (count_leading_zeros): Add missing casts to USItype.
+
+Sun Oct 19 18:44:06 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* i386/bsd386.h (ASM_COMMENT_START): Define.
+
+Sat Oct 18 13:47:15 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* tree.c (restore_tree_status): Also free up temporary storage
+	when we finish a toplevel function.
+	(dump_tree_statistics): Print stats for backend obstacks.
+
+Sat Oct 18 12:47:31 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* expr.c (use_group_regs): Don't call use_reg for MEMs.
+
+Sat Oct 18 09:49:46 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* libgcc2.c (__throw): Don't copy the return address.
+	* dwarf2out.c (expand_builtin_dwarf_reg_size): Ignore return address.
+
+	* except.c (exceptions_via_longjmp): Initialize to 2 (uninitialized).
+	* toplev.c (main): Initialize exceptions_via_longjmp.
+
+	* tree.c: Add extra_inline_obstacks.
+	(save_tree_status): Use it.
+	(restore_tree_status): If this is a toplevel inline obstack and we
+	didn't want to save anything on it, recycle it.
+	(print_inline_obstack_statistics): New fn.
+	* function.c (pop_function_context_from): Pass context to 
+	restore_tree_status.
+	* obstack.h (obstack_empty_p): New macro.
+
+Sat Oct 18 00:43:59 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* i386/freebsd.h (ASM_COMMENT_START): Fix.
+
+Fri Oct 17 23:48:52 1997  Jim Wilson  (wilson@cygnus.com)
+
+	* v850.c (ep_memory_offset): New function.
+	(ep_memory_operand, substitute_ep_register, v850_reorg): Call it.
+
+	* v850.h (CONST_OK_FOR_*): Add and correct comments.
+	(CONSTANT_ADDRESS_P): Add comment.
+	(EXTRA_CONSTRAINT): Define 'U'.
+	* v850.md: Add comments on bit field instructions.
+	(addsi3): Delete &r/r/r alternative.  Add r/r/U alternative.
+	(lshrsi3): Use N not J constraint. 
+
+	* v850.md (v850_tst1+1): New define_split for tst1 instruction.
+
+	* v850.c (reg_or_0_operand): Call register_operand.
+	(reg_or_int5_operand): Likewise.
+	* v850.h (MASK_BIG_SWITCH, TARGET_BIG_SWITCH): New macros.
+	(TARGET_SWITCHES): Add "big-switch".
+	(ASM_OUTPUT_ADDR_VEC_ELT, ASM_OUTPUT_ADDR_DIFF_ELT, CASE_VECTOR_MODE,
+	ASM_OUTPUT_BEFORE_BASE_LABEL): Add support for TARGET_BIG_SWITCH.
+	(CASE_DROPS_THROUGH): Comment out.
+	(CASE_VECTOR_PC_RELATIVE, JUMP_TABLES_IN_TEXT_SECTION): Define.
+	* v850.md (cmpsi): Delete compare mode.
+	(casesi): New pattern.
+
+	* v850.h (CONST_OK_FOR_N): Delete redundant compare against zero.
+	* v850.md (ashlsi3): Use SImode not QImode for shift count.
+	(lshrsi3): Likewise.
+
+	* v850.c (print_operand): Add 'c', 'C', and 'z' support.  Delete
+	unreachable switch statement after 'b' support.  Remove "b" from
+	strings for 'b' support.
+	* v850.md (branch_normal, branch_invert): Change %b to b%b.
+
+Fri Oct 17 23:33:20 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* Makefile.in (LIBGCC2_CFLAGS): Avoid a backslash then an
+	empty line if @inhibit_libc@ is empty.
+
+Fri Oct 17 23:24:40 1997  Robert Lipe (robertl@dgii.com)
+
+	* i386/sco5.h: Let ELF use dwarf2 unwinding.  COFF uses sjlj.
+	(EH_FRAME_SECTION_ASM_OP, EH_FRAME_SECTION_ASM_OP_ELF): Defined.
+	(EH_FRAME_SECTION_ASM_OP_COFF): Likewise.
+	(DWARF2_UNWIND_INFO): Let this track object file format.
+	(EXTRA_SECTIONS): Add in_eh.
+	(EH_FRAME_SECTION_ASM_OP, EH_FRAME_SECTION_ASM_OP_ELF): Define.
+	(EH_FRAME_SECTION_ASM_OP_COFF): Likewise.
+
+Fri Oct 17 17:13:42 1997  David S. Miller  <davem@tanya.rutgers.edu>
+
+	* sparc/linux64.h (LINK_SPEC): Dynamic linker is ld-linux64.so.2.
+	* sparc/sparc.h (FUNCTION_PROFILER): Fix format string when
+	TARGET_MEDANY.
+	* sparc/sparc.c (dwarf2out_cfi_label): Extern no longer needed.
+	(output_double_int): Output DI mode values correctly when
+	HOST_BITS_PER_WIDE_INT is 64.
+	(output_fp_move_quad): If TARGET_V9 and not TARGET_HARD_QUAD, use
+	fmovd so it works if a quad float ends up in one of the upper 32
+	float regs.
+	* sparc/sparc.md (pic_{lo_sum,sethi}_di): New patterns
+	necessary for PIC support on sparc64.
+
+Fri Oct 17 13:39:56 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* sparc/sp64-elf.h (TARGET_DEFAULT): Delete MASK_STACK_BIAS.
+	* sparc/sparc.h (PROMOTE_MODE): Promote small ints if arch64.
+	(PROMOTE_FUNCTION_ARGS,PROMOTE_FUNCTION_RETURN): Define.
+	(SPARC_FIRST_FP_REG, SPARC_FP_REG_P): New macros.
+	(SPARC_{OUTGOING,INCOMING}_INT_ARG_FIRST): New macros.
+	(SPARC_FP_ARG_FIRST): New macro.
+	(CONDITIONAL_REGISTER_USAGE): All v9 fp regs are volatile now.
+	(REG_ALLOC_ORDER,REG_LEAF_ALLOC_ORDER): Reorganize fp regs.
+	(NPARM_REGS): There are 32 fp argument registers now.
+	(FUNCTION_ARG_REGNO_P): Likewise.
+	(FIRST_PARM_OFFSET): Update to new v9 abi.
+	(REG_PARM_STACK_SPACE): Define for arch64.
+	(enum sparc_arg_class): Delete.
+	(sparc_arg_count,sparc_n_named_args): Delete.
+	(struct sparc_args): Redefine and use for arch32 as well as arch64.
+	(GET_SPARC_ARG_CLASS,ROUND_REG,ROUND_ADVANCE): Delete.
+	(FUNCTION_ARG_ADVANCE): Rewrite.
+	(FUNCTION_ARG,FUNCTION_INCOMING_ARG): Rewrite.
+	(FUNCTION_ARG_{PARTIAL_NREGS,PASS_BY_REFERENCE}): Rewrite.
+	(FUNCTION_ARG_CALLEE_COPIES): Delete.
+	(FUNCTION_ARG_{PADDING,BOUNDARY}): Define.
+	(STRICT_ARGUMENT_NAMING): Define.
+	(doublemove_string): Declare.
+	* sparc/sparc.c (sparc_arg_count,sparc_n_named_args): Delete.
+	(single_move_string): Use GEN_INT, and HOST_WIDE_INT.
+	(doublemove_string): New function.
+	(output_move_quad): Clean up some of the arch64 support.
+	(compute_frame_size): Add REG_PARM_STACK_SPACE if arch64.
+	Don't add 8 bytes of reserved space if arch64.
+	(sparc_builtin_saveregs): Combine arch32/arch64 versions.
+	(init_cumulative_args): New function.
+	(function_arg_slotno): New static function.
+	(function_arg,function_arg_partial_nregs): New functions.
+	(function_arg_{pass_by_reference,advance}): New functions.
+	(function_arg_padding): New function.
+	* ginclude/va-sparc.h: Rewrite v9 support.
+
+Fri Oct 17 12:29:48 1997  Christian Iseli  <Christian.Iseli@lslsun.epfl.ch>
+
+	* regclass.c (record_address_regs): Look at REG_OK_FOR_{BASE,INDEX}_P
+	for hard regs to determine base and index registers.
+
+	* reload.c (debug_reload_to_stream): New function.  Specify stream
+ 	into which to write debug info.
+	(debug_reload): Modify to call debug_reload_to_stream with stderr.
+
+Thu Oct 16 15:07:51 1997  Richard Henderson  <rth@cygnus.com>
+
+	* combine.c (can_combine_p): Don't combine with an asm whose
+	output is a hard register.
+
+Thu Oct 16 15:43:26 1997  Mike Stump  (mrs@wrs.com)
+
+	* c-decl.c (start_struct): Ensure that structs with forward
+	declarations are in fact packed when -fpack-struct is given.
+
+	* stor-layout.c (layout_record): Ignore STRUCTURE_SIZE_BOUNDARY if
+	we are packing a structure.  This allows a structure with only
+	bytes to be aligned on a byte boundary and have no padding on a
+	m68k.
+
+Thu Oct 16 15:17:54 1997  Richard Kenner  <kenner@vlsi1.ultra.nyu.edu>
+
+	* rs6000.h (ROUND_TYPE_ALIGN): Don't blow up if no fields in record.
+
+Thu Oct 16 11:20:30 1997  Richard Henderson  <rth@cygnus.com>
+
+	* alpha.c (alpha_return_addr_rtx): New variable.
+	(alpha_save_machine_status): New; save it.
+	(alpha_restore_machine_status): New; restore it.
+	(alpha_init_expanders): New; clear it.
+	(alpha_return_addr): New; set it.
+	(alpha_ra_ever_killed): New; if alpha_return_addr_rtx, regs_ever_live
+	is overly conservative, so search the insns explicitly.
+	(alpha_sa_mask [VMS]): Check alpha_ra_ever_killed.
+	(alpha_sa_size [VMS && !VMS]): Likewise.
+	* alpha.h (RETURN_ADDR_RTX): Call alpha_return_addr.
+	(INIT_EXPANDERS): New definition.
+	
+	* alpha.c: Move REG_PV, REG_RA somewhere more visible in the file.
+	(output_prolog [!VMS]): Use them.
+
+	* alpha.c (output_prolog [!VMS]): Move gp detection to ...
+	(alpha_does_function_need_gp): ... a new function.  Refine the 
+	CALL_INSN test to just TYPE_JSR.
+	* alpha.md (most call insns): Fix some jsr/ibr type transpositions.
+
+Thu Oct 16 09:36:47 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+Wed Oct 15 21:38:18 1997  Richard Kenner  <kenner@vlsi1.ultra.nyu.edu>
+
+	* pa.c (move_operand): Respect -mdisable-indexing.
+	* pa.h (GO_IF_LEGITIMATE_ADDRESS): Likewise.
+
+Wed Oct 15 21:34:45 1997  David Edelsohn  <edelsohn@mhpcc.edu>
+
+	* rs6000.md (udivsi3, divsi3): Split into MQ and non-MQ cases for
+	PPC601.
+	(umulsidi3,umulsi3_highpart): Ditto.
+	(smulsi3_highpart_no_mq): Add !TARGET_POWER.
+
+Wed Oct 15 18:21:46 1997  Richard Henderson  <rth@cygnus.com>
+
+	* alpha.c (final_prescan_insn): Gut, remove and transform to ...
+	(alpha_handle_trap_shadows): ... a new function.  Handle the entire
+	function in one go.  Emit RTL for trapb, instead of printf directly.
+	(alpha_reorg): New function.  Call alpha_handle_trap_shadows.
+	(trap_pending): Kill global variable.
+	(output_epilog): Don't call final_prescan_insn.
+	(struct shadow_summary): Elide $31 and $f31; now it fits in a word.
+	* alpha.h (FINAL_PRESCAN_INSN): Remove.
+	(MACHINE_DEPENENT_REORG): Define.
+	* alpha.md (jsr patterns with trapb): Stupid and useless.  Kill.
+	(trapb): New insn.
+
+Wed Oct 15 18:16:05 1997  Richard Henderson  <rth@cygnus.com>
+
+	Tune Haifa scheduler for Alpha:
+	* alpha.h (ISSUE_RATE): Define.
+	* alpha.c (alpha_adjust_cost): Handle EV5 mult delay; don't apply
+	EV4 adjustments to EV5.
+	* alpha.md: Remove all scaling from function unit delays.  Rework
+	EV5 function units to match the CPU.
+	(umuldi3_highpart): EV5 added the IMULH insn class.
+
+Wed Oct 15 17:42:41 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* pa.c (following_call): Fail if the CALL_INSN is an indirect
+	call.
+
+Tue Oct 14 12:01:00 1997  Mark Mitchell  <mmitchell@usa.net>
+
+	* cplus-dem.c (demangle_signature): Don't look for return types on
+	constructors.  Handle member template constructors.
+
+Tue Oct 14 11:30:29 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* tree.c (expr_tree_cons, build_expr_list, expralloc): New fns.
+	* tree.h: Declare them.
+
+Fri Oct 10 13:46:56 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* configure.in: Handle --with-newlib.
+	* Makefile.in (LIBGCC2_CFLAGS): Add @inhibit_libc@.
+
+	* sparc/t-sp64 (LIBGCC2_CFLAGS): Delete.
+
+Wed Oct  8 14:37:44 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* config/ptx4.h: Fix typo.
+
+Wed Oct  8 08:57:20 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+Tue Oct  7 16:27:34 1997  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* aclocal.m4: Substitute INSTALL.
+	* configure: Re-built.
+
+Tue Oct  7 15:37:35 1997  Jeffrey A Law  (law@cygnus.com)
+
+        * integrate.c (save_for_inline_copying): Avoid undefined pointer
+        operations.
+        (expand_inline_function): Likewise.
+
+	* dwarf2out.c (output_call_frame_info): Reinstate last change
+	using flag_debug_asm check instead of flag_verbose_asm.
+
+Tue Oct  7 12:57:26 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* dwarf2out.c (output_call_frame_info): Remove last change.
+
+1997-10-04  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* frame.c (__frame_state_for): Execute the FDE insns until the
+	current pc value is strictly bigger than the target pc value.
+
+Tue Oct  7 11:00:42 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* regclass.c (init_reg_modes): If we can't find a mode for the 
+	register, use the previous one.
+
+Tue Oct  7 10:55:34 1997  Richard Henderson  <rth@cygnus.com>
+
+	* haifa-sched.c (print_block_visualization): Call fprintf directly,
+	don't sprintf through an alloca'ed buffer.
+
+Tue Oct  7 10:52:29 1997  Thomas Koenig (ig25@rz.uni-karlsruhe.de)
+
+	* reload.c (decompose): Always initialize val.base.
+
+Tue Oct  7 10:19:26 1997  Manfred Hollstein  (manfred@lts.sel.alcatel.de)
+
+	* m68k/mot3300.h (ASM_OUTPUT_ALIGN): Accept any alignment
+	instead of aborting.
+	* dwarf2out.c (output_call_frame_info): Call app_enable and
+	app_disable to let GNU as accept the generated comments.
+
+Tue Oct  7 11:41:21 1997  Michael Meissner  <meissner@cygnus.com>
+
+	* tree.h (get_file_function_name): Add declaration.
+	* dwarf2out.c (output_call_frame_info): No need to cast
+	get_file_function_name call anymore.
+	* profile.c (toplevel): Remove get_file_function_name
+	declaration.
+	* c-lang.c (finish_file): Ditto.
+
+Tue Oct  7 10:01:45 1997  Chip Salzenberg <chip@rio.atlantic.net>
+
+	* Makefile.in (program_transform_name): Let autoconf substitute
+	the correct value.
+
+Tue Oct  7 09:54:35 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* haifa-sched.c (schedule_block): If the first real insn in a
+	block has any special notes attached to it, remove them.
+
+Tue Oct  7 09:48:51 1997  Richard Henderson  <rth@cygnus.com>
+
+	* alpha.h (FLOAT_STORE_FLAG_VALUE): It's 2.0 not 0.5.
+
+Mon Oct  6 12:47:32 1997  Manfred Hollstein  (manfred@lts.sel.alcatel.de)
+
+	* m88k.c (m88k_begin_prologue): Remove superfluous backslash.
+
+Mon Oct  6 12:04:24 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* Makefile.in (check-g77): New test target.
+	(CHECK-TARGETS): Add check-g77.
+
+Fri Oct  3 11:56:36 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* toplev.c (rest_of_compilation): Defer all non-nested inlines.
+
+Fri Oct  3 15:49:27 1997  Michael Meissner  <meissner@cygnus.com>
+
+	* flow.c (print_rtl_with_bb): Cast alloca return value for
+	in_bb_p.
+
+Thu Oct  2 21:15:03 1997  Richard Henderson  <rth@cygnus.com>
+
+	* i386.h (RETURN_ADDR_RTX): New definition that works for 
+	__builtin_return_address(0) and -fomit-frame-pointer.
+
+Wed Oct  1 13:43:53 1997  Jim Wilson  <wilson@cygnus.com>
+
+	Bring over from FSF.
+	Tue Aug  5 16:10:45 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* mips.c (function_arg): Handle passing a struct 
+	containing a double in a DFmode register without the PARALLEL.
+
+Wed Oct  1 11:13:25 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* pexecute.c: Use spawn if __CYGWIN32__.
+
+	* pexecute.c: Include "config.h" first, as per autoconf manual
+	(from Paul Eggert  <eggert@twinsun.com>).
+
+Wed Oct  1 01:44:36 1997  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* m68k/x-mot3300 (XCFLAGS): Disable as's long/short jump
+	optimisation for f/expr.o and f/stb.o.
+
+Tue Sep 30 23:48:57 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* cse.c (this_insn_cc0_mode): Initialize.
+
+Tue Sep 30 23:09:40 1997  Thomas Koenig <ig25@mvmap66.ciw.uni-karlsruhe.de>
+
+	* cccp.c (expand_to_temp_buffer): Initialize all members of obuf.
+
+	* haifa-sched.c (get_block_head_tail): Remove unneeded initialization.
+
+Tue Sep 30 23:06:43 1997  Richard Henderson  <rth@cygnus.com>
+
+	* alpha.md (beq): For registers and ints 0-255, use cmpeq+bne, since
+	that pair will dual-issue on the 21164 and plus+beq won't.
+	(bne): Likewise for cmpeq+beq.
+
+Tue Sep 30 16:07:58 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* except.c (find_exception_handler_labels): Correct argument to free.
+
+Tue Sep 30 11:00:00 1997  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* except.c (find_exception_handler_labels): Free LABELS when we're
+	done.
+
+Mon Sep 29 14:04:35 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+Mon Sep 29 10:51:53 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* flow.c (find_basic_blocks): Mark calls as potentially jumping
+	to the EH labels.
+
+Mon Sep 29 09:58:06 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* configure.in: Substitute for "install" too.
+	* configure: Rebuilt.
+
+Mon Sep 29 00:38:42 1997 Aaron Jackson <jackson@negril.msrce.howard.edu>
+
+	* Makefile.in (bootstrap-lean, compare-lean): New targets.
+
+Mon Sep 29 00:18:16 1997  Richard Henderson  (rth@cygnus.com)
+
+	* alias.c (base_alias_check): Two symbols can conflict if they
+	are accessed via AND.
+	(memrefs_conflict_p): Likewise.
+
+	* alpha.h (SETUP_INCOMING_VARARGS): Emit a blockage insn
+	after flushing argument registers to the stack.
+
+	* Makefile.in (mostlyclean): Remove .regmove files.
+
+Sun Sep 28 18:59:58 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* libgcc2.c (__throw): Fix thinko.
+
+Sun Sep 28 12:00:52 1997  Mark Mitchell  <mmitchell@usa.net>
+
+        * cplus-dem.c (demangle_template): Add new parameter.  Handle new
+        template-function mangling.
+        (consume_count_with_underscores): New function.
+        (demangle_signature): Handle new name-mangling scheme.
+
+Sun Sep 28 01:55:04 1997  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* flow.c (print_rtl_with_bb): Cast alloca return values for variables
+	start and end.
+
+Sun Sep 28 01:05:16 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* frame.c: Remove last change.
+	* dwarf2.h: Remove last change.
+	* tree.h: Add declarations of DWARF2 unwind info support
+	functions.
+
+Sat Sep 27 11:02:38 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* c-decl.c (init_decl_processing): Add __builtin_dwarf_reg_size.
+	* tree.h (built_in_function): Likewise.
+	* expr.c (expand_builtin): Likewise.
+	* except.h: Likewise.
+	* dwarf2out.c (expand_builtin_dwarf_reg_size): New fn.
+	* libgcc2.c (copy_reg): New fn.
+	(__throw): Use it.
+
+Fri Sep 26 08:54:59 1997  Paul Eggert  <eggert@twinsun.com>
+
+	* c-typeck.c (build_binary_op): Warn about comparing signed vs
+	unsigned if -W is specified and -Wno-sign-compare is not.
+	* c-decl.c (warn_sign_compare): Initialize to -1.
+	(c_decode_option): -Wall no longer implies -Wsign-compare.
+
+Fri Sep 26 09:00:13 1997  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* frame.c: Include gansidecl.h for PROTO.
+	* dwarf2out.c: Move inclusion of dwarf2.h down so that PROTO is
+	defined.  Don't declare dwarf2out_cfi_label here.
+	* dwarf2.h: Add declarations of DWARF2 unwind info support
+	functions.
+	* m68k.c: Include dwarf2.h.
+	(output_function_prologue): Add dwarf2 support.
+	* m68k.h (INCOMING_RETURN_ADDR_RTX, DWARF_FRAME_REGNUM): New macros.
+	(INCOMING_FRAME_SP_OFFSET): Likewise.
+
+	* integrate.c (expand_inline_function): Make sure there is at
+	least one insn that can be used as an insertion point.
+
+Wed Sep 24 21:34:06 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* dwarf2out.c: s/flag_verbose_asm/flag_debug_asm/
+
+Wed Sep 24 22:05:30 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+Wed Sep 24 17:36:23 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	Bring over from FSF.
+
+	Wed Sep 24 19:17:08 1997  Doug Evans  <dje@cygnus.com>
+
+	* sparc/sparc.md (get_pc_via_call): Renamed from get_pc_sp32.
+	(get_pc_via_rdpc): Renamed from get_pc_sp64.
+	* sparc/sparc.c (finalize_pic): Update call to gen_get_pc_via_call.
+
+	Wed Sep 24 18:38:22 1997  David S. Miller  <davem@tanya.rutgers.edu>
+
+	* sparc/sparc.h (ASM_CPU_SPEC): Pass -Av9a for v8plus, ultrasparc.
+	(TARGET_OPTIONS): Add -malign-loops=, -malign-jumps=,
+	-malign-functions=.
+	(sparc_align_{loops,jumps,funcs}_string): Declare.
+	(sparc_align_{loops,jumps,funcs}): Declare.
+	(DEFAULT_SPARC_ALIGN_FUNCS): New macro.
+	(FUNCTION_BOUNDARY): Use sparc_align_funcs.
+	(STACK_BIAS): Define.
+	(SPARC_SIMM*_P): Cast to unsigned HOST_WIDE_INT first, then perform
+	test.
+	(SPARC_SETHI_P): New macro.
+	(CONST_OK_FOR_LETTER_P): Use it.
+	(ASM_OUTPUT_ALIGN_CODE): Define.
+	(ASM_OUTPUT_LOOP_ALIGN): Define.
+	* sparc/sparc.c (sparc_align_{loops,jumps,funcs}_string): New globals.
+	(sparc_align_{loops,jumps,funcs}): New globals.
+	(sparc_override_options): Handle -malign-loops=, -malign-jumps=,
+	-malign-functions=.
+	(move_operand): Use SPARC_SETHI_P.
+	(arith_double_operand): Cast to unsigned HOST_WIDE_INT first, then
+	perform test.
+	(arith11_double_operand): Likewise.
+	(arith10_double_operand): Likewise.
+	(finalize_pic): Finish sparc64 support.
+	(emit_move_sequence): Use SPARC_SETHI_P.  Simplify low part of
+	64 bit constants if able.
+	(output_fp_move_quad): Don't use fmovq unless TARGET_HARD_QUAD.
+	(sparc_builtin_saveregs, sparc64 case): Don't save fp regs if
+	! TARGET_FPU.
+	* sparc/sparc.md (*): Use GEN_INT instead of gen_rtx.
+	(get_pc_sp32): Use for sparc64 as well.
+	(lo_sum_di_sp{32,64}): Fix handling on 64 bit hosts.
+	(sethi_di_sp64_const): Likewise.
+	(movtf_cc_sp64): Check TARGET_HARD_QUAD.
+	(cmp_zero_extract_sp64): Use unsigned HOST_WIDE_INT in cast.
+	(ashlsi3, ashldi3, ashrsi3, ashrdi3, lshrsi3, lshrdi3): Likewise.
+
+	Tue Sep 23 19:02:46 1997  Doug Evans  <dje@cygnus.com>
+
+	* sparc/linux-aout.h (COMMENT_BEGIN): Delete.
+	* sparc/linux.h (COMMENT_BEGIN): Likewise.
+	* sparc/linux64.h (COMMENT_BEGIN): Likewise.
+
+	Tue Sep 23 14:48:18 1997  David S. Miller  <davem@tanya.rutgers.edu>
+
+	Add sparc64 linux support.
+	* configure.in (sparc64-*-linux*): Recognize.  Add sparc/xm-sparc.h
+	to xm_file list on 32-bit sparc-linux.
+	* sparc/xm-sp64.h: New file.
+	* sparc/linux64.h: New file.
+	* sparc/xm-linux.h: Include some standard headers if not inhibit_libc.
+	Don't include xm-sparc.h.
+	* config/xm-linux.h (HAVE_PUTENV, HAVE_ATEXIT): Define.
+	* glimits.h (LONG_MAX): Handle sparc64.
+
+	Sat Sep 20 03:07:54 1997  Doug Evans  <dje@cygnus.com>
+
+	* sparc/sysv4.h (ASM_COMMENT_START): Delete.
+	* sparc.h (ASM_COMMENT_START): Define.
+	* sparc.c (output_function_prologue): Use it.
+	(sparc_flat_output_function_{epi,pro}logue): Likewise.
+
+	Wed Sep 17 15:04:19 1997  Doug Evans  <dje@cygnus.com>
+
+	* sparc/sysv4.h (ASM_OUTPUT_{FLOAT,DOUBLE,LONG_DOUBLE}): Delete,
+	use sparc.h's copies.
+	* sparc/sparc.h (ASM_OUTPUT_{FLOAT,DOUBLE,LONG_DOUBLE}): Print
+	ascii form as well.
+
+	Mon Sep  8 08:45:19 1997  Richard Kenner  <kenner@vlsi1.ultra.nyu.edu>
+
+	* sparc.c (dwarf2out_cfi_label): Add declaration.
+	(save_regs, output_function_prologue): Remove cast for it.
+	(sparc_flat_{save_restore,output_function_prologue): Likewise.
+	({save,restore}_regs): No longer inline.
+
+Tue Sep 23 12:34:51 1997  Richard Kenner  <kenner@vlsi1.ultra.nyu.edu>
+
+	* fold-const.c (make_range): Correctly handle cases of converting
+	from unsigned to signed type.
+
+Tue Sep 23 12:34:51 1997  Bernd Schmidt  <crux@pool.informatik.rwth-aachen.de>
+
+	* fold-const.c (merge_ranges): Make sure that if one range is subset
+	of another, it will always be the second range.  Correct (+,-) case to
+	account for this.
+
+Tue Sep 23 08:32:51 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* final.c (final_end_function): Also do dwarf2 thing if
+	DWARF2_DEBUGGING_INFO.
+	(final_start_function): Likewise.
+
+Tue Sep 23 01:15:50 1997  David S. Miller  <davem@tanya.rutgers.edu>
+
+	* expmed.c (expand_divmod): If compute_mode is not the same as
+	mode, handle the case where convert_modes() causes op1 to no
+	longer be a CONST_INT.
+
+	* reorg.c (dbr_schedule): At end of this pass, add REG_BR_PRED
+	note holding get_jump_flags() calculation to all JUMP_INSNs.
+	* rtl.h (enum reg_note): New note types REG_BR_PRED and REG_SAVE_AREA.
+	* rtl.c (reg_note_name): Add new note types.
+
+Tue Sep 23 00:59:54 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* rtlanal.c (computed_jump_p): Fix typo in last change.
+
+Tue Sep 23 00:42:44 1997  H.J. Lu  (hjl@gnu.ai.mit.edu)
+
+	* loop.c (indirect_jump_in_function_p): Return 0
+	by default.
+
+Tue Sep 23 00:33:55 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* rs6000/xm-rs6000.h: Fix thinko in last change.
+	* rs6000/xm-sysv4.h: Likewise.
+
+Mon Sep 22 19:33:53 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* mips.c (save_restore_insns): Only set RTX_FRAME_RELATED_P if store_p.
+
+Mon Sep 22 14:41:00 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* reg-stack.c (find_blocks): Fix thinko in last change.
+
+1997-09-21  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* m68k.c (output_function_prologue): Add dwarf2 support.
+
+	* m68k.h (INCOMING_RETURN_ADDR_RTX, DWARF_FRAME_REGNUM,
+	INCOMING_FRAME_SP_OFFSET): New definitions.
+ 
+Mon Sep 22 11:36:42 1997  David S. Miller  <davem@tanya.rutgers.edu>
+
+	* combine.c (try_combine): Use NULL_RTX instead of '0' where
+	appropriate in calls to gen_rtx().
+	* cse.c (cse_main): Likewise.
+	* emit-rtl.c (gen_label_rtx): Likewise.
+	* expr.c (init_expr_once): Likewise.
+	* haifa-sched.c (flush_pending_lists, sched_analyze_insn,
+	sched_analyze, init_rgn_data_dependences,
+	compute_block_backward_dependences): Likewise.
+	* sched.c (schedule_insns): Likewise.
+	* varasm.c (immed_double_const): Likewise.
+
+	* sparc.h (INCOMING_FRAME_SP_OFFSET): Define to
+	SPARC_STACK_BIAS for sake of dwarf2 on sparc64.
+
+Mon Sep 22 11:21:33 1997  J. Kean Johnston  <jkj@sco.com>
+
+	* i386/sco5.h: Make ELF default file format and add -mcoff/-melf..
+	(MULTILIB_DEFAULTS): Define.
+	(ASM_SPEC, CPP_SPEC): Handle -mcoff.
+	(STARTFILE_SPEC, ENDFILE_SPEC, LINK_SPEC): Likewise.
+	(LIBGCC_SPEC): Likewise.
+	(MASK_COFF, TARGET_COFF, TARGET_ELF): Define.
+	(SUBTARGET_SWITCHES): Add -mcoff and -melf.
+	* i386/t-sco5 (CRTSTUFF_T_CFLAGS): Add -fPIC.
+	(CRTSTUFF_T_CFLAGS_S): Tweak for COFF.
+	(EXTRA_PARTS, TAROUTOPTS): Delete.
+	(libgcc1-elf, libgcc2-elf, libgcc-elf targets): Delete.
+	(MULTILIB_OPTIONS): Define.
+	(MULTILIB_DIRNAMES, MULTILIB_EXCEPTIONS): Likewise.
+	(MULTILIB_MATCHE, MULTILIB_EXTRA_OPTS): Likewise.
+
+Mon Sep 22 02:10:43 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+Sun Sep 21 17:45:45 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* loop.c (loop_number): Delete function.  Change all references
+	to use uid_loop_num array.
+	* loop.h (loop_number): Delete declaration.
+	* unroll.c (unroll_loop): Change "loop_number" references to
+	use uid_loop_num instead.
+
+	* loop.c (loop_unroll_factor): Move outside #ifdef HAIFA
+	conditional.
+	(loop_unroll_iter): Remove unused variable and all references.
+	(loop_optimize): Always allocate and clear space for loop_unroll_factor.
+	(insert_bct): Fix minor formatting problems.
+	* loop.h (loop_unroll_factor): Move decl outside #ifdef HAIFA.
+	(loop_unroll_iter): Removed unused decl.
+	* unroll.c (unroll_loop): Remove code to set loop_unroll_iter.
+	Always record the unrolling factor.
+
+	* cse.c (simplify_relational_operation): Set h0u just like h0s.
+	Similarly for h1u and h1s.
+
+	* flow.c (jmp_uses_reg_or_mem): Deleted unused function.
+	(find_basic_blocks): Use computed_jump_p to determine if a
+	particular JUMP_INSN is a computed jump.
+	* reg-stack.c (find_blocks): Use computed_jump_p to determine
+	if a particular JUMP_INSN is a computed jump.
+	* rtlanal.c (jmp_uses_reg_or_mem): New function.
+	(computed_jump_p): Likewise.
+	* rtl.h (computed_jump_p): Declare.
+	* genattrtab.c (pc_rtx): Define and initialize.
+	* loop.c (loop_optimize): Always determine if the current
+	function has a computed jump.
+	(indirect_jump_in_function_p): Use computed_jump_p to determine
+	if a particular JUMP_INSN is a computed jump.
+
+	* loop.c (fix_bct_param): Delete unused function.
+	(check_bct_param): Likewise.
+
+Sat Sep 20 16:22:06 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* frame.c (__deregister_frame): Check properly for initialized object.
+
+Fri Sep 19 20:51:03 1997  H.J. Lu  (hjl@gnu.ai.mit.edu)
+
+	* alpha/linux.h (HANDLE_SYSV_PRAGMA): Defined.
+
+Fri Sep 19 18:53:50 1997 J"orn Rennecke <amylaar@cygnus.co.uk>
+
+	* jump.c (thread_jumps): check can_reverse_comparison_p before
+	threading a reversed-condition jump.
+
+	* sched.c (update_flow_info): Don't pass SCRATCH to dead_or_set_p.
+	* haifa-sched.c (update_flow_info): Likewise.
+
+Thu Sep 18 21:13:40 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* Makefile.in (BOOT_CFLAGS): Use -O2.
+
+	* configure.in (strtoul, bsearch): Have autoconf check for these
+	functions.
+	* configure, config.in: Rebuilt.
+
+	* m68k/xm-mot3300.h (alloca): Properly declare if __STDC__.
+	* mips/mips.h (alloca): Likewise.
+	* rs6000/xm-rs6000.h (alloca): Likewise.
+	* rs6000/xm-sysv4.h: Likewise.
+
+Thu Sep 18 14:22:22 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* final.c (final_scan_insn): Hand BARRIERs off to the dwarf2 code.
+	* dwarf2out.c (dwarf2out_frame_debug): Pass the whole insn along.
+	(dwarf2out_stack_adjust): A BARRIER resets the args space to 0.
+
+	* except.c (end_eh_unwinder): Subtract 1 from return address.
+	* libgcc2.c (__throw): Likewise.
+	(find_exception_handler): Don't change PC here.  Compare end with >.
+
+Thu Sep 18 10:43:07 1997  Nick Clifton  <nickc@cygnus.com>
+ 
+ 	* v850.c (compute_register_save_size): Correct register
+ 	number.
+ 	* v850.md (save_interrupt, return_interrupt): Correct
+ 	register number.
+ 	* v850/lib1funcs.asm (save_interrupt): Correct register number.
+ 	(return_interrupt): Use stack pointer, not element pointer.
+
+1997-09-18  Brendan Kehoe  <brendan@lisa.cygnus.com>
+
+	* configure.in, configure: Make sure to create the stage* and include
+	symbolic links in each subdirectory.
+
+Thu Sep 18 01:47:06 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* pa.md (reload_peepholes): Don't allow addresses with side
+	effects for the memory operand.
+
+Wed Sep 17 18:19:53 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* libgcc2.c (find_exception_handler): Subtract one from our PC when
+ 	looking for a handler, to avoid hitting the beginning of the next
+ 	region.
+
+	* except.c (expand_builtin_set_return_addr_reg): Use force_operand.
+
+Wed Sep 17 18:33:59 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* mips/abi64.h (LONG_MAX_SPEC): Define.
+	* mips.h (LONG_MAX_SPEC): Define.
+	(CPP_SPEC): Include long_max_spec.
+	(EXTRA_SPECS): Include long_max_spec.
+
+Wed Sep 17 14:11:38 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* v850.c (construct_save_jarl): Fix thinko in last change.
+
+Wed Sep 17 09:53:07 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+Tue Sep 16 14:22:36 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* libgcc2.c (find_exception_handler): Not found is -1.
+
+	* integrate.c (expand_inline_function): Move expand_start_bindings
+	after expanding the arguments.
+
+Tue Sep 16 11:13:46 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* expr.c (expand_expr): Remove previous incorrect change.
+	If target and slot has no DECL_RTL, then call mark_addressable
+	again for the slot after we give it RTL.
+
+Tue Sep 16 09:18:52 1997  Jason Merrill  (jason@cygnus.com)
+
+	* expr.c (expand_expr, case TARGET_EXPR): Call mark_addressable
+	again for the slot after we give it RTL.
+
+Tue Sep 16 00:13:20 1997  Nick Clifton  <nickc@cygnus.com>
+
+	* v850.c (register_is_ok_for_epilogue,
+	pattern_is_ok_for_epilogue, construct_restore_jr,
+	pattern_is_ok_for_prologue, construct_save_jarl): New functions.
+
+	* v850.h (pattern_is_ok_for_prologue,
+	pattern_is_ok_for_epilogue, register_is_ok_for_epilogue): New
+	predicates.
+
+	* v850.md: Replace prologue and epilogue patterns with a
+	match_parallel pattern.
+
+Mon Sep 15 22:53:01 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* aclocal.m4: Add replacement for AC_PROG_INSTALL.
+	* configure.in: Use EGCS_PROG_INSTALL.
+
+Mon Sep 15 22:40:55 1997  Jim Wilson  (wilson@cygnus.com)
+
+	* dwarf2out.c (gen_subprogram_die): Handle redefinition of an
+	extern inline function.
+
+Mon Sep 15 22:40:55 1997  Richard Henderson  (rth@cygnus.com)
+
+	* dwarf2out.c (reg_loc_descriptor): Fix prototype.
+	(concat_loc_descriptor): New function.
+	(loc_descriptor): Call it.
+	(add_AT_location_description): Also elide the descriptor if both
+	halves of a CONCAT are pseudos.
+	(add_location_or_const_value_attribute): Recognize CONCAT too.
+
+Mon Sep 15 15:24:00 1997  Richard Henderson  <rth@cygnus.com>
+
+	* alpha.md (movdi): Handle CONST_DOUBLE for TARGET_BUILD_CONSTANTS.
+
+	* alpha/alpha.c (output_prolog): New variable sa_reg.  Use it for
+	out-or-range reg_offset.
+	(output_epilog): Likewise.
+
+Mon Sep 15 15:39:26 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* cse.c (simplify_relational_operation): If MODE specifies a
+	mode wider than HOST_WIDE_INT, then the high word of a CONST_INT
+	is derived from the sign bit of the low word.
+
+Mon Sep 15 11:43:38 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	Support dwarf2 unwinding on PUSH_ROUNDING targets like the x86.
+
+	* dwarf2.h: Add DW_CFA_GNU_args_size.
+	* frame.c (execute_cfa_insn): Likewise.
+	* dwarf2out.c (dwarf_cfi_name, output_cfi): Likewise.
+	(dwarf2out_args_size, dwarf2out_stack_adjust): New fns.
+	(dwarf2out_frame_debug): If this isn't a prologue or epilogue
+	insn, hand it off to dwarf2out_stack_adjust.
+	(dwarf2out_begin_prologue): Initialize args_size.
+	* frame.h (struct frame_state): Add args_size.
+	* libgcc2.c (__throw): Use args_size.
+	* final.c (final_scan_insn): If we push args, hand off all insns
+	to dwarf2out_frame_debug.
+	* defaults.h (DWARF2_UNWIND_INFO): OK for !ACCUMULATE_OUTGOING_ARGS.
+
+	* dwarf2out.c dwarf2out_frame_debug): Fix typo.
+	Handle epilogue restore of SP from FP.
+	* emit-rtl.c (gen_sequence): Still generate a sequence if the 
+	lone insn has RTX_FRAME_RELATED_P set.
+
+	* frame.c (extract_cie_info): Handle "e" augmentation.
+	* dwarf2out.c (ASM_OUTPUT_DWARF_*): Provide definitions in the
+ 	absence of UNALIGNED_*_ASM_OP.
+	(UNALIGNED_*_ASM_OP): Only provide defaults if OBJECT_FORMAT_ELF.
+	(output_call_frame_info): Use "e" instead of "z" for augmentation.
+	Don't emit augmentation fields length.
+	(dwarf2out_do_frame): Move outside of #ifdefs.
+	* defaults.h (DWARF2_UNWIND_INFO): Don't require unaligned data
+	opcodes.
+
+	* sparc.h (UNALIGNED_INT_ASM_OP et al): Don't define here after all.
+	* sparc/sysv4.h (UNALIGNED_INT_ASM_OP): Define here.
+	* sparc/sunos4.h (DWARF2_UNWIND_INFO): Define to 0.
+	* sparc/sun4gas.h: New file.
+	* configure.in: Use sun4gas.h if SunOS 4 --with-gnu-as.
+
+	* collect2.c (write_c_file_stat, write_c_file_glob): Declare 
+	__register_frame_table and __deregister_frame.
+
+1997-09-15  Brendan Kehoe  <brendan@cygnus.com>
+
+	* except.c (find_exception_handler_labels): Use xmalloc instead of
+	alloca, since MAX_LABELNO - MIN_LABELNO can be more than 1 million
+	in some cases.
+
+Sun Sep 14 21:01:23 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* Makefile.in: Various changes to build info files
+	in the object tree rather than the source tree.
+
+Sun Sep 14 12:24:30 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* fixinc.math: New file to fix math.h on some systems.
+	* configure.in (freebsd, netbsd): Use fixinc.math on these
+	systems.
+	* configure: Rebuilt.
+
+Sun Sep 14 11:11:05 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* regmove.c (regmove_optimize): If we end up moving the
+	original insn due to lifetime overlaps, make sure to move
+	REG_NOTES too.
+
+Sat Sep 13 15:51:11 1997  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* Makefile.in (INSTALL_{PROGRAM,DATA}): Use value found by configure.
+
+Sat Sep 13 12:57:26 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* haifa-sched.c (add_branch_dependences): Make each insn in
+	a SCHED_GROUP_P block explicitly depend on the previous insn.
+
+Fri Sep 12 13:49:58 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* except.h: Prototype dwarf2 hooks.
+	* expr.c: Adjust.
+
+Thu Sep 11 17:43:55 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* configure.in (native_prefix): Delete.
+	(mips-dec-netbsd): Don't set prefix.
+	(*linux*): Don't set prefix.
+
+Thu Sep 11 15:48:32 1997  Fred Fish  <fnf@ninemoons.com>
+
+	* protoize.c: Include <varargs.h> only if HAVE_VARARGS_H is
+	defined.  If not defined, include <sys/varargs.h> if
+	HAVE_SYS_VARARGS_H is defined.
+	* configure.in: Test for varargs.h and sys/varargs.h.
+	* configure: Regenerate with autoconf.
+	* config.in: Regenerate with autoheader.
+
+	* cpplib.c (quote_string): Cast first arg of sprintf call
+	from "unsigned char *" to "char *".
+	(output_line_command): Ditto.
+	(macroexpand): Ditto.
+	(do_line): Cast atoi arg from "unsigned char *" to "char *".
+
+Wed Sep 10 21:37:30 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+	* Makefile.in (compare): Exit with nonzero status if there
+	are comparison failures.  Note which files failed the
+	comparison test in .bad_compare.
+
+Wed Sep 10 17:05:46 1997  H.J. Lu  (hjl@gnu.ai.mit.edu)
+
+	* config/alpha/elf.h (CPP_PREDEFINES): Remove -D__PIC__ -D__pic__.
+
+Wed Sep 10 16:37:28 1997  Fred Fish  <fnf@ninemoons.com>
+
+	* Makefile.in (LN, LN_S): New macros, use where appropriate.
+	* aclocal.m4 (GCC_PROG_LN_S, GCC_PROG_LN): New tests.
+	* configure.in: Use GCC_PROG_LN_S and GCC_PROG_LN.
+	* configure: Regenerated.
+
+Thu Sep 11 11:09:43 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* loop.c (strength_reduce): Fix typo.
+
+Wed Sep 10 16:01:15 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* m88k/m88k.c (struct option): Rename to struct options.
+	* m88k/dolph.h (INITIALIZE_TRAMPOLINE): Delete here.
+	* m88k/sysv3.h (INITIALIZE_TRAMPOLINE): Delete ifdef and comments.
+	* libgcc2.c (__enable_execute_stack): Check for __sysV88__ not
+	__DOLPHIN__ or sysV88.
+
+Wed Sep 10 14:58:40 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* emit-rtl.c (gen_lowpart_common): For a SUBREG, add in word when
+	create new subreg.
+
+Wed Sep 10 15:19:22 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* config.sub: Accept 'amigados' for backward compatability.
+
+Wed Sep 10 14:05:08 1997  H.J. Lu  (hjl@gnu.ai.mit.edu)
+
+	* Makefile.in (testsuite/site.exp): New target.
+	(check-gcc, check-g++): Depend on testsuite/site.exp.
+	Don't stop for failure.
+
+Wed Sep 10 12:59:57 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* expr.c (expand_builtin): Only support __builtin_dwarf_fp_regnum()
+	if DWARF2_UNWIND_INFO.
+
+Wed Sep 10 11:49:20 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	Add support for exception handling using DWARF 2 frame unwind info.
+	Currently works on SPARC and MIPS, and almost on x86.
+	
+	* libgcc2.c (get_reg, put_reg, get_return_addr, put_return_addr,
+	next_stack_level, in_reg_window): Helper fns.
+	(__throw): Implement for DWARF2_UNWIND_INFO.
+
+	* expr.c (expand_builtin): Handle builtins used by __throw.
+	* tree.h (enum built_in_function): Add builtins used by __throw.
+	* c-decl.c (init_decl_processing): Declare builtins used by __throw.
+	* dwarf2out.c (expand_builtin_dwarf_fp_regnum): Used by __throw.
+	* except.c (expand_builtin_unwind_init): Hook for dwarf2 __throw.
+	(expand_builtin_extract_return_addr): Likewise.
+	(expand_builtin_frob_return_addr): Likewise.
+	(expand_builtin_set_return_addr_reg): Likewise.
+	(expand_builtin_eh_stub): Likewise.
+	(expand_builtin_set_eh_regs): Likewise.
+	(eh_regs): Choose two call-clobbered registers for passing back values.
+
+	* frame.c, frame.h: New files for parsing dwarf 2 frame info.
+	* Makefile.in (LIB2ADD): New variable.  Add $(srcdir)/frame.c.
+	(libgcc2.a): Use it instead of $(LIB2FUNCS_EXTRA) $(LANG_LIB2FUNCS)
+	(stmp-multilib): Likewise.
+	($(T)crtbegin.o, $(T)crtend.o): Add -fno-exceptions.
+
+	* except.c: #include "defaults.h".
+	(exceptions_via_longjmp): Default depends on DWARF2_UNWIND_INFO.
+	(emit_throw): Don't defeat assemble_external if DWARF2_UNWIND_INFO.
+	(register_exception_table_p): New fn.
+	(start_eh_unwinder): Don't do anything if DWARF2_UNWIND_INFO.
+	(end_eh_unwinder): Likewise.
+
+	* crtstuff.c: Wrap .eh_frame section, use EH_FRAME_SECTION_ASM_OP, 
+	call __register_frame and __deregister_frame as needed.
+	* varasm.c (eh_frame_section): New fn if EH_FRAME_SECTION_ASM_OP.
+	* dwarf2out.c (EH_FRAME_SECTION): Now a function-like macro.  Check
+	EH_FRAME_SECTION_ASM_OP.
+	* sparc/sysv4.h (EH_FRAME_SECTION_ASM_OP): Define.
+	* mips/iris6.h: (EH_FRAME_SECTION_ASM_OP): Define.
+	(LINK_SPEC): Add __EH_FRAME_BEGIN__ to hidden symbols.
+
+	* dwarf2out.c (output_call_frame_info): If no support for
+ 	EXCEPTION_SECTION, mark the start of the frame info with a
+ 	collectable tag.
+	* collect2.c (frame_tables): New list.
+	(is_ctor_dtor): Recognise frame entries.
+	(scan_prog_file): Likewise.
+	(main): Pass -fno-exceptions to sub-compile.  Also do collection
+	if there are any frame entries.
+	(write_c_file_stat): Call __register_frame_table and
+ 	__deregister_frame as needed.
+	(write_c_file_glob): Likewise.
+
+	* defaults.h (DWARF2_UNWIND_INFO): Default to 1 if supported.  
+	Also require unaligned reloc support.
+	* sparc.h (UNALIGNED_SHORT_ASM_OP, UNALIGNED_INT_ASM_OP,
+ 	UNALIGNED_DOUBLE_INT_ASM_OP): Define here.
+	* sparc/sysv4.h: Not here.
+
+	* toplev.c (compile_file): Call dwarf2out_frame_{init,finish}.
+	* dwarf2out.c (dwarf2out_init): Don't call dwarf2out_frame_init.
+	(dwarf2out_finish): Don't call dwarf2out_frame_finish.
+
+	* libgcc2.c (L_eh): Reorganize, moving code shared by different
+	EH implementations to the top.
+	(find_exception_handler): Split out.  Start from 0.  Compare against
+	end with >=.
+	(__find_first_exception_table_match): Use it.
+	* except.c (output_exception_table): Don't do anything if there's
+	no table.  Don't output a first entry of zeroes.
+	(eh_outer_context): Adjust properly.
+	(add_eh_table_entry): Use xrealloc.
+	* toplev.c (compile_file): Just call output_exception_table.
+
+Wed Sep 10  11:30:36 1997  Jason Merrill  <jason@cygnus.com>
+
+	* i386.c (ix86_prologue): Add dwarf2 support for !do_rtl case.
+
+Wed Sep 10 08:17:10 1997  Torbjorn Granlund  <tege@pdc.kth..se>
+
+	* except.c (eh_outer_context): Do masking using expand_and.
+
+Wed Sep 10 01:38:30 1997  Doug Evans  <dje@cygnus.com>
+
+	Add port done awhile ago for the ARC cpu.
+	* arc/arc.h: New file.
+	* arc/arc.c: New file.
+	* arc/arc.md: New file.
+	* arc/initfini.c: New file.
+	* arc/lib1funcs.asm: New file.
+	* arc/t-arc: New file.
+	* arc/xm-arc.h: New file.
+	* ginclude/va-arc.h: New file.
+	* ginclude/stdarg.h: Include va-arc.h ifdef __arc__.
+	* ginclude/varargs.h: Likewise.
+	* Makefile.in (USER_H): Add va-arc.h.
+	* configure.in (arc-*-elf*): Recognize.
+	* longlong.h: Add ARC support.
+
+Wed Sep 10 01:32:54 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* expr.c (clear_storage): Use CONST0_RTX instead of const0_rtx.
+	when clearing non-BLKmode data.
+
+Wed Sep 10 00:29:29 1997  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* m88k/sysv3.h (INITIALIZE_TRAMPOLINE) Define.
+	* libgcc2.c (__enable_execute_stack): Provide for sysV88 too.
+
+	* xm-m88k.h (USG): Only define if it hasn't already been defined.
+
+	* Makefile.in (risky-stage1): Delete gratutious whitespace.
+
+	* Makefile.in (clean): Delete libgcc1-test.
+
+	* Makefile.in (INSTALL): cd to $(srcdir) before running texinfo.
+
+Tue Sep  9 17:07:36 1997  Stan Cox  <coxs@dg-rtp.dg.com>
+
+	* m88k.c (m88k_expand_prologue): Set MEM_IN_STRUCT_P of va_list
+	template.
+
+Tue Sep  9 09:50:02 1997  Richard Kenner  <kenner@vlsi1.ultra.nyu.edu>
+
+	* dwarf2out.c (output_call_frame_info): Call named_section.
+
+Tue Sep  9 09:12:17 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* haifa-sched.c (print_value): Fix last change.
+
+Tue Sep  9 01:30:37 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* mips.h (DWARF_FRAME_REGNUM): Use the same numbering regardless of
+	write_symbols.
+
+Mon Sep  8 16:32:43 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* mips.c (function_prologue): Set up the CFA when ABI_32.
+
+	* sparc.c (save_regs): Check dwarf2out_do_frame instead of DWARF2_DEBUG
+	for dwarf2 unwind info.
+	(output_function_prologue, sparc_flat_output_function_prologue): Same.
+
+	* final.c (final_end_function): Check dwarf2out_do_frame instead
+ 	of DWARF2_DEBUG for dwarf2 unwind info.
+	(final_scan_insn): Likewise.
+	(final_start_function): Likewise.  Initialize dwarf2 frame debug here.
+	(final): Not here.
+
+	* expr.c (expand_builtin_return_addr): Only SETUP_FRAME_ADDRESSES if
+	count > 0.
+
+	* varasm.c (exception_section): Check EXCEPTION_SECTION first.
+
+Mon Sep  8 15:15:11 1997  Nick Clifton  <nickc@cygnus.com>
+
+	* v850.h (ASM_SPEC): Pass on target processor.
+	(CPP_PREDEFINES): Only define if not already specified.
+	(TARGET_VERSION): Only define if not already specified.
+	(MASK_CPU, MASK_V850, MASK_DEFAULT): Bits to specify target
+	processor.
+	(EXTRA_SWITCHES): Extra entries in the switches array.
+	(TARGET_DEFAULT): Set default target processor.
+
+Mon Sep  8 18:26:35 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* m68k.h (MACHINE_STATE_SAVE, MACHINE_STATE_RESTORE): In MOTOROLA
+	cases, add %# and %/, and add : to make them into extended asms.
+
+Sun Sep  7 23:57:50 1997  Weiwen Liu  <liu@hepunix.physics.yale.edu>
+
+	* alias.c (init_alias_analysis): Clean up incompatible pointer
+	type warning in bzero.
+	* regmove.c (regmove_optimize): Ditto.
+	* haifa-sched.c (find_rgns): Ditto.
+
+	* haifa-sched.c (print_value): Clean up ptr->int cast
+	warnings.
+
+Sun Sep  7 23:18:32 1997  Fred Fish  <fnf@ninemoons.com>
+
+	* INSTALL: Change 'amigados' to 'amigaos' to match current usage.
+	* install.texi (Configurations): Ditto.
+	* config.sub: Ditto.
+
+Sun Sep  7 22:56:56 1997  Weiwen Liu  (liu@hepvms.physics.yale.edu)
+
+	* Makefile.in (sdbout.o): Depend on insn-config.h.
+
+Sun Sep  7 18:44:50 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* m68k/m68k.h (TARGET_SWITCHES): For 68000, 68302, subtract MASK_68881.
+	For 68303, 68332, cpu32, subtract MASK_68040_ONLY.
+
+Sun Sep  7 18:30:46 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* dwarf2out.c (dwarf2out_frame_debug): Assume that in a PARALLEL
+ 	prologue insn, only the first elt is significant.
+	(output_call_frame_info): For exception handling, always use 4-byte
+ 	fields as specified by the dwarf2 spec.
+	Don't skip trivial FDEs.
+
+Sun Sep  7 14:19:39 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+Sun Sep  7 14:17:36 1997  Torbjorn Granlund  (tege@pdc.kth.se)
+
+	* expmed.c (expand_divmod): Make op1_is_pow2 depend on unsignedp
+	for negative constants.  Promote EXACT_DIV_EXPR to TRUNC_DIV_EXPR
+	when op1_is_pow2.
+
+Sun Sep  7 13:46:46 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* final.c (shorten_branches): During first pass, assume worst
+	possible alignment for ADDR_VEC and ADDR_VEC_DIFF insns.
+
+	* Makefile.in (distclean): Remove various things left around
+	by running the testsuite.
+
+Sun Sep  7 13:16:06 1997  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* configure.in (out_file): Emit definition to config.status in order
+	to have a defined value for configure.lang.
+	* configure: Re-built.
+
+Sun Sep  7 09:59:08 1997  Jan-Jaap van der Heijden (J.J.vanderHeijden@student.utwente.nl)
+
+	* configure.in: Make symlink to as-new rather than as.new.  Similarly
+	for ld-new.
+	* configure: Rebuilt.
+
+Fri Sep  5 16:54:55 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* profile.c (output_func_start_profiler): Set DECL_EXTERNAL to zero.
+
+Fri Sep  5 16:16:44 1997  Christian Kuehnke  <Christian.Kuehnke@arbi.Informatik.Uni-Oldenburg.DE>
+
+	* sparc/sparc.md: Add ultrasparc scheduling support.
+	* sparc/sparc.h (RTX_COSTS): For MULT give v9 a cost of 25 insns.
+
+Fri Sep  5 14:04:59 1997  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* integrate.c (save_for_inline_copying): Use 0, not NULL_PTR,
+	as initial value for real_label_map.
+	(copy_for_inline): Likewise.
+
+Fri Sep  5 13:36:44 1997  J"orn Rennecke <amylaar@cygnus.co.uk>
+
+	* sched.c (update_flow_info) When looking if to set found_split_dest
+	or found_orig_dest, look at all parts of a PARALLEL.
+	* haifa-sched.c (update_flow_info): Likewise.
+
+Fri Sep  5 10:08:44 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* v850: New directory for v850 port.
+	* v850/lib1funcs.asm: New file.
+	* t-v850, v850.c, v850.h, v850.md, xm-v850.h: New files.
+	* ginclude/va-v850.h: New file.
+	* ginclude/varargs.h, ginclude/stdarg.h: Include va-mn10200.h.
+	* configure.in (mn10200-*-*): New target.
+	* configure: Rebuilt.
+	* config.sub: Handle v850-elf.
+	* Makefile.in (USER_H): Add va-mn10200.h. 
+	* invoke.texi: Document v850 stuff.
+
+Fri Sep  5 09:37:50 1997  Jim Wilson  (wilson@cygnus.com)
+
+	* sdbout.c (plain_type_1, case ARRAY_TYPE): Verify that TYPE_DOMAIN
+	has integer TYPE_{MAX,MIN}_VALUE before using them.
+
+	* m68k/m68k.h (MACHINE_STATE_SAVE, MACHINE_STATE_RESTORE): Add
+	__HPUX_ASM__ versions.
+
+Fri Sep  5 09:08:44 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* install.sh: Delete duplicate install script.
+
+Thu Sep  4 23:14:27 1997  Stan Cox  (coxs@dg-rtp.dg.com)
+
+	* reg-stack.c (subst_stack_regs): Pop the stack register for a
+	computed goto which sets the same stack register.
+
+	* reg-stack.c (compare_for_stack_reg): Swap only if the source and
+	destination are both on the regstack.
+	(subst_stack_regs_pat): Put the destination at the top of the regstack.
+
+Thu Sep  4 15:02:27 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* mips.md (nonlocal_goto_receiver): Define.
+
+	* profile.c (output_arc_profiler): Check next_insert_after for non
+	NULL before deferencing it.
+
+	* i386/t-sol2 (TARGET_LIBGCC2_CFLAGS): Define to -fPIC.
+
+Thu Sep  4 14:51:57 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* i386.h (CPP_CPU_DEFAULT): Avoid using #elif.
+
+Thu Sep  4 15:01:49 1997  Michael Meissner  <meissner@cygnus.com>
+
+	* toplev.c (rest_of_compilation): For passes starting with
+	flow_analysis, use print_rtl_with_bb instead of print_rtl.
+
+	* print-rtl.c (print_rtl_single): Print a single rtl value to a
+	file.
+
+	* flow.c (print_rtl_with_bb): Print which insns start and end
+	basic blocks.  For the start of a basic block, also print the live
+	information.
+
+Thu Sep  4 11:51:43 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* toplev.c (main): Change #elif to #else/#ifdef
+
+	* tlink.c: Include ctype.h.
+	* ginclude/va-mips.h: Add _VA_MIPS_H_ENUM ifdef/define/endif.
+
+Thu Sep  4 11:17:16 1997  Mikeael Meissner  (meissner@cygnus.com)
+
+	* bitmap.c: Conditionally include stdlib.h.
+	(free): Provide a declaration if NEED_DECLARATION_FREE.
+
+Thu Sep  4 09:58:53 1997  Joel Sherrill  (joel@OARcorp.com)
+
+	* i960/i960.h: Added default for SUBTARGET_SWITCHES macro.
+
+Thu Sep  4 09:53:20 1997  Jim Wilson  (wilson@cygnus.com)
+
+	* profile.c (output_arc_profiler): Verify next_insert_after is an
+	INSN before and after skipping a stack pop.
+
+Thu Sep  4 07:39:19 1997  J"orn Rennecke <amylaar@cygnus.co.uk>
+
+	* final.c (shorten_branches): Don't count the lengths of deleted
+	instructions.
+
+Thu Sep  4 09:43:01 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+Thu Sep  4 11:04:21 1997  Michael Meissner  <meissner@cygnus.com>
+
+	* bitmap.h (EXECUTE_IF_AND_IN_BITMAP): New macro, to iterate over
+	two bitmaps ANDed together.
+	(bitmap_print): Declare.
+
+	* bitmap.c (function_obstack): Don't declare any more.
+	(bitmap_obstack): Obstack for allocating links from.
+	(bitmap_obstack_init): New static to say whether to initialize
+	bitmap_obstack.
+	(bitmap_element_allocate): Use bitmap_obstack to allocate from.
+	(bitmap_release_memory): Free all memory allocated from
+	bitmap_obstack.
+
+	* basic-block.h (EXECUTE_IF_AND_IN_REG_SET): New macro, invoke
+	EXECUTE_IF_AND_IN_BITMAP.
+
+Wed Sep  3 10:39:42 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* alias.c (true_dependence): Address with AND can alias scalars.
+	(anti_dependence, output_dependence): Likewise.
+	
+	* alias.c (true_dependence): Test x for BLKmode, in addition to mem.
+
+Wed Sep  3 09:28:50 CDT 1997  Joel Sherrill (joel@OARcorp.com)
+
+	* i386/go32-rtems.h, i386/rtems.h, i960/rtems.h, m68k/rtems.h,
+	  mips/rtems64.h, pa/rtems.h, rs6000/rtems.h, sh/rtems.h,
+	  sparc/rtems.h (subtarget_switches): Removed SUBTARGET_SWITCHES
+	  definitions.  Use -qrtems instead of -mrtems.
+
+Wed Sep  3 09:05:41 1997  Robert Lipe  (robert@dgii.com)
+
+	* xm-sco5.h (sys_siglist): Define.
+	(SYS_SIGLIST_DECLARED): Likewise.
+
+Tue Sep  2 23:33:33 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* expr.c (convert_move): Handle truncation from TQFmode to QFmode.
+
+Wed Sep  3 02:09:30 1997  Torbjorn Granlund  <tege@pdc.kth..se>
+
+	* except.c (eh_outer_context): Expand masking operation using
+	expand_binop.
+
+Tue Sep  2 18:09:39 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* alpha.md (floatdisf2-1): New pattern.
+
+Tue Sep  2 18:41:55 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* xm-svr4.h (SYS_SIGLIST_DECLARED): Define.
+	* xm-news.h (SYS_SIGLIST_DECLARED): Likewise.
+	* xm-sysv4.h (SYS_SIGLIST_DECLARED): Likewise.
+	* gcc.texi: Note that if you define sys_siglist that you should
+	also define SYS_SIGLIST_DECLARED.
+
+	* mn10200.h (INITIALIZE_TRAMPOLINE): PC relative instructions
+	are relative to the next instruction, not the current instruction.
+
+Tue Sep  2 14:22:43 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* local-alloc.c (contains_replace_regs): New function.
+	(update_equiv_regs): When adding a REG_EQUIV note for a set of a MEM,
+	verify that there is no existing REG_EQUIV note, and add a call to
+	contains_place_regs.
+
+Tue Sep  2 12:48:11 1997  H.J. Lu  (hjl@gnu.ai.mit.edu)
+
+	* config/alpha/elf.h (CPP_PREDEFINES): Add -D__PIC__ -D__pic__.
+	(STARTFILE_SPEC): Always use crtbegin.o%s
+	(ENDFILE_SPEC): Always use crtend.o%s.
+
+Tue Sep  2 12:00:36 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* alpha/alpha.h (PREFERRED_RELOAD_CLASS): Return NO_REGS if NO_REGS
+	is passed in.
+	* emit-rtl.c (gen_lowpart_common): Add code to convert CONST_INT to
+	SFmode for 64 bit hosts.
+	
+Tue Sep  2 13:42:38 1997  Paul N. Hilfinger  <hilfingr@CS.Berkeley.EDU>
+
+	* fixincludes: Permits spaces between # and define.  Discard C++
+	comments in sys/pci.h on HP/UX 10.20.
+
+Mon Sep  1 22:13:18 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for snapshot.
+
+	* pa.c (restore_unscaled_index_insn_codes): New function.
+	(record_unscaled_index_insn_codes): Likewise.
+	(output_function_prologue): Call restore_unscaled_index_insn_codes.
+	(output_function_epilogue): Free memory for unscaled_index_insn_codes.
+	(pa_reorg): Call record_unscaled_index_insn_codes.
+
+	* haifa-sched.c (move_insn): Handle notes correctly for insns
+	with SCHED_GROUP_P set.
+	
+Mon Sep  1 16:58:57 1997  H.J. Lu  (hjl@gnu.ai.mit.edu)
+
+	* alpha/xm-linux.h (USE_BFD): Undef before define.
+
+Mon Sep  1 16:25:34 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* cse.c (cse_insn): Don't record BLKmode values.
+
+Mon Sep  1 11:25:47 1997  Stephen Williams  (steve@icarus.icarus.com)
+
+	* i960.h (LINK_SPEC): Handle "-mjX" and "-mrp" switches.
+
+Mon Sep  1 08:29:46 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* cccp.c (sys_errlist): Remove special 4.4bsd declaration.
+	* collect2.c (sys_errlist): Likewise.
+	* cpplib.c (sys_errlist): Likewise.
+	* gcc.c (sys_errlist): Likewise.
+	* protoize (sys_errlist): Likewise.
+	* configure.in: Check for strerror.
+	* xm-freebsd.h (HAVE_STRERROR): Remove definition.
+	* xm-gnu.h (HAVE_STRERROR): Likewise.
+	* xm-linux.h (HAVE_STRERROR): Likewise.
+	* xm-netbsd.h (HAVE_STRERROR): Likewise.
+	* xm-bsd386.h (HAVE_STRERROR): Likewise.
+	* xm-cygwin32.h (HAVE_STRERROR): Likewise.
+	* xm-dos.h (HAVE_STRERROR): Likewise.
+	* xm-mingw32.h (HAVE_STRERROR): Likewise.
+	* xm-pa.h (HAVE_STRERROR): Likewise.
+	* xm-papro.h (HAVE_STRERROR): Likewise.
+	* xm-sysv4.h (HAVE_STRERROR): Likewise.
+	* configure, config.in: Rebuilt.
+
+	* Makefile.in: Add several missing "else true" clauses.
+
+	* collect2.c: Change DONT_DECLARE_SYS_SIGLIST to SYS_SIGLIST_DECLARED.
+	* mips-tfile.c: Likewise.
+	* gcc.texi: DONT_DECLARE_SYS_SIGLIST: Remove docs.
+	* xm-linux.h (DONT_DECLARE_SYS_SIGLIST): Delete definition.
+	* xm-freebsd.h, xm-bsd386.h, xm-sysv4.h, xm-sol2.h: Likewise.
+	* configure.in: Check for sys_siglist declaration.
+	* configure, config.in: Rebuilt.
+
+Mon Sep  1 08:04:07 1997  Joel Sherrill (joel@OARcorp.com)
+
+	* i386/go32-rtems.h, i386/rtems.h, i960/rtems.h, 
+	m68k/rtems.h, mips/rtems64.h, pa/rtems.h, rs6000/rtems.h,
+	sparc/rtems.h (subtarget_switches): Added -mrtems as a switch.
+	* i960/i960.h: Added SUBTARGET_SWITCHES macro.
+	* rs6000/sysv4.h (extra_subtarget_switches): Added new
+	macro EXTRA_SUBTARGET_SWITCHES.
+	* configure.in (sh*-*-rtems*): New target.
+	* sh/rtems.h: New file.
+	* sh/sh.h: Added SUBTARGET_SWITCHES macro.
+	* configure: Rebuilt.
+
+Sat Aug 30 22:54:26 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* unroll.c (calculate_giv_inc): Handle increment with code PLUS.
+
+Sat Aug 30 10:49:46 1997  David Edelsohn  <edelsohn@mhpcc.edu>
+
+	* rs6000.md: Make DF fused-add operations pay attention to
+	-mno-fused-add.
+
+Fri Aug 29 19:19:54 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* i386/xm-sysv4.h (DONT_DECLARE_SYS_SIGLIST): Define.
+
+Fri Aug 29 16:13:51 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* pa.md (reload_peepholes): Make sure operand is a REG before
+	examining REGNO.  Allow general registers too.
+
+Fri Aug 29 11:42:04 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* varasm.c (mark_constants): Don't look inside CONST_DOUBLEs.
+
+Fri Aug 29 09:33:20 1997  Philipp Thomas  (kthomas@lxi165.gwdg.de)
+
+	* dwarf2out.c (build_abbrev_table): Use xrealloc, not xmalloc
+	to reallocate abbrev_die_table.
+
+Thu Aug 28 15:14:46 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* m68k/m68k.md (iorsi_zexthi_ashl16): Disable.
+
+1997-08-27  Andreas Schwab  <schwab@issan.informatik.uni-dortmund.de>
+
+	* Makefile.in (config.status): Depend on version.c
+
+	* expr.h (insn_gen_function): Reenable prototype.
+
+	* expr.c (move_by_pieces_1, clear_by_pieces_1): Fix prototype of
+	first parameter.
+
+Thu Aug 28 13:01:43 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* i386.c (ix86_expand_epilogue): Emit blockage instruction when pic.
+
+Thu Aug 28 07:03:15 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for latest snapshot.
+
+	* bc-optab.c: Conditionally include stdlib.h.
+	(free): Provide a declaration if NEED_DECLARATION_FREE.
+	* tree.c (free): Provide a declaration if NEED_DECLARATION_FREE.
+	* rtl.h (free): Remove declaration.
+	* tree.h (free): Remvoe declaration.
+
+	* configure: Rebuilt.
+
+Wed Aug 27 21:32:20 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* flags.h (flag_move_all_movables): Declare.
+	(flag_reduce_all_givs): Likewise.
+	* loop.c (move_movables): Handle flag_move_all_movables.
+	(strength_reduce): Handle flag_reduce_all_givs.
+	* toplev.c (flag_move_all_movables): Define.
+	(flag_reduce_all_givs): Likewise.
+	(f_options): Add -fmove-all-movables and -freduce-all-givs.
+	* invoke.texi: Document new options, including alias stuff that
+	wasn't included last time.
+
+Wed Aug 27 18:08:51 1997  Bob Manson  (manson@cygnus.com)
+
+	* t-h8300: Use TARGET_LIBGCC2_CFLAGS instead of LIBGCC2_CFLAGS.
+	* t-mn10200: Ditto.
+	* t-vxsparc: Ditto.
+	* t-vxworks68: Ditto.
+	* t-vxworks960: Ditto.
+	* t-vx29k: Ditto.
+
+Wed Aug 27 16:35:29 1997  Richard Henderson  <rth@cygnus.com>
+
+	* alpha/xm-alpha.h (alloca): Define alloca to builtin_alloca for GNUC
+	if not already defined, and USE_C_ALLOCA not defined.
+
+Wed Aug 27 16:08:43 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* config.guess: Replace with script that uses ../config.guess.
+
+	* config/alpha/elf.h (DEFAULT_VTABLE_THUNKS): New. Defined as 1
+	if USE_GNULIBC_1 is not defined.
+
+Wed Aug 27 15:49:12 1997  Richard Henderson  <rth@cygnus.com>
+
+	* alpha/elf.h (LINK_SPEC): Conditionalize on USE_GNULIBC_1.
+	* config.guess: Recognize alpha-linux-gnulibc1.
+	* configure.in (alpha-*-linux-gnulibc1): New target.
+	(alpha-*-linux-gnu*): Don't build crtbegin/end.
+
+Wed Aug 27 11:52:58 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* m68k.md (iorsi3_internal): Readd ! TARGET_5200 check lost in
+	last change.
+
+Wed Aug 27 01:56:18 1997  Doug Evans  <dje@seba.cygnus.com>
+
+	* loop.c (combine_movables): Earlier insns don't match later ones.
+
+Wed Aug 27 01:24:25 1997  H.J. Lu   (hjl@gnu.ai.mit.edu)
+
+	* config/linux.h (CC1_SPEC): Define it only if not defined.
+
+	* config/m68k/linux.h (CC1_SPEC): Undefine it before include
+	<linux.h>
+
+	* config/linux.h (DEFAULT_VTABLE_THUNKS): New. Defined as 1 if
+	USE_GNULIBC_1 is not defined.
+
+	* config/rs6000/linux.h (DEFAULT_VTABLE_THUNKS): New.  Defined as 1.
+
+	* config/sparc/linux.h (DEFAULT_VTABLE_THUNKS): New. Defined
+	as 1 if USE_GNULIBC_1 is not defined.
+
+Wed Aug 27 00:49:14 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* reorg.c (dbr_schedule): Allow current_function_return_rtx
+	to be something other than a REG.
+	* function.c (expand_function_end): Fix current_function_return_rtx
+	if it was a pseudo.
+
+	* t-freebsd (USER_H): Include EXTRA_HEADERS and LANG_EXTRA_HEADERS.
+	* x-netbsd: Likewise
+	* x-dgux (USER_H): Include EXTRA_HEADERS and LANG_EXTRA_HEADERS
+	(INSTALL_HEADERS): Delete.
+	* x-dguxbcs: Likewise.
+	* x-hp3bsd44: Likewise
+	* x-pa: Likewise.
+
+Wed Aug 27 00:30:00 1997  Bernd Schmidt  <crux@pool.informatik.rwth-aachen.de>
+
+	* i386.md (pop): pop increments the stack pointer.
+	(prologue_set_stack_ptr): New pattern.
+	* i386.c (ix86_expand_prologue): Use prologue_set_stack_ptr
+	instead of subsi3.
+
+Tue Aug 26 18:50:32 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* reload.c (find_reloads, case '0'): Reject matching a non-offsettable
+	address where an offsettable address is required.
+
+Tue Aug 26 17:54:56 1997  Michael P. Hayes  (michaelh@ongaonga.chch.cri.nz>
+
+	* loop.c (check_final_value): Don't miss a biv increment in a
+	parallel.
+
+Tue Aug 26 12:03:49 1997  Jim Wilson  (wilson@cygnus.com)
+
+	* dwarfout.c (dwarfout_file_scope_decl, case TYPE_DECL): Check
+	TYPE_DECL_IS_STUB instead of DECL_NAME.
+
+Mon Aug 25 23:27:10 1997  H.J. Lu  (hjl@gnu.ai.mit.edu)
+
+	* objc/Make-lang.in ($(OBJC_O)): Also depend on cc1obj.
+
+Mon Aug 25 23:27:10 1997  Jim Meyering <meyering@eng.ascend.com>
+
+	* objc/Make-lang.in ($(OBJC_O)): Also depend on $(GCC_PASSES).
+
+Mon Aug 25 13:12:24 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* haifa-sched.c (find_pre_sched_live): Remove #if 0 code.
+	(find_post_sched_live): Likewise.
+
+	* haifa-sched.c (schedule_block): Remove old code to get arguments
+	from hard regs into pseudos early.
+
+Mon Aug 25 08:55:00 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for new snapshot.
+
+	* local-alloc.c (update_equiv_regs): All the target to reject
+	promotion of some REG_EQUAL to REG_EQUIV notes.
+	* pa.h (DONT_RECORD_EQUIVALENCE): Define.
+
+	* pa.c (secondary_reload_class): (mem (mem ... )) does not need
+	secondary reloads.
+
+	* pa.c (hppa_builtin_saveregs): Emit a blockage insn after the
+	store of the argument registers.
+
+Mon Aug 25 08:39:02 1997  Craig Burley  (burley@gnu.ai.mit.edu)
+
+	* fold-const.c (multiple_of_p): New function.
+	(fold): Turn some cases of *_DIV_EXPR into EXACT_DIV_EXPR.
+
+Mon Aug 25 01:47:41 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* expr.h (insn_gen_function): Temporarily remove prototype.
+
+Sun Aug 24 17:22:21 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* Makefile.in (install-info): Don't cd into srcdir.  Add srcdir to
+	filenames.  Use sed to extract base filename for install.
+
+Sat Aug 23 18:19:40 1997  John F. Carr  <jfc@mit.edu>
+
+	* unroll.c (find_splittable_givs): Only share if two givs have the
+	same add and multiply values.
+
+Sat Aug 23 14:36:27 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* m68k/next.h (GO_IF_INDEXABLE_BASE): Fix typo in undef.
+	* m68k/m68kemb.h (LIB_SPEC): Add missing comment end before it.
+
+Sat Aug 23 00:18:22 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* pa.c (pa_reorg): Always put begin_brtab and end_brtab insns
+	around branch tables.
+	* pa.md (begin_brtab, end_brtab): Only emit the .begin_brtab
+	and .end_brtab directives if TARGET_GAS.
+
+Fri Aug 22 14:05:55 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* alias.c (true_dependence): Pass x_addr not x to varies.
+
+	* acconfig.h (NEED_DECLARATION_CALLOC): Add.
+	* configure.in: Add GCC_NEED_DECLARATION call for calloc.
+	* rs6000/xm-rs6000.h (malloc, realloc, calloc, free): Delete
+	declarations.
+	* config.in, configure: Regenerate.
+
+Thu Aug 21 23:52:16 1997  John F. Carr  <jfc@mit.edu>
+
+	* alias.c (find_base_value): Improve handling of PLUS, MINUS, and
+	LO_SUM.
+	(record_set): Handle LO_SUM like PLUS.
+	(init_alias_analysis): When following chains of base addresses,
+	do not stop on reaching a hard register.
+
+Thu Aug 21 20:17:37 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump for new snapshot.
+
+Thu Aug 21 17:28:00 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* alpha.h (ARCH_ASM_FILE_START): Define.
+	(ASM_FILE_START): Use ARCH_ASM_FILE_START.
+	* osf12.h, osf2or3.h (ARCH_ASM_FILE_START): Redefine to null string.
+
+Thu Aug 21 10:22:19 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* Makefile.in (install-common): Put gcov comment at start of line.
+
+Wed Aug 20 22:47:33 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* alias.c (init_alias_analysis): When simplifying the reg_base_value
+	array, simplify entries for hard registers too.
+
+Wed Aug 20 12:35:47 1997  Dave Love  <d.love@dl.ac.uk>
+
+	* dwarf2.h (enum dwarf_call_frame_info): Remove trailing comma from
+	list.
+
+Wed Aug 20 11:58:33 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* stmt.c (start_cleanup_deferal, end_cleanup_deferal): Test
+	block_stack before dereferencing it.
+
+Wed Aug 20 11:57:11 1997  Michael Meissner  <meissner@cygnus.com>
+
+	* rs6000.h (ISSUE_RATE): Define instead of MACHINE_issue_rate.
+
+Tue Aug 19 17:10:56 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* cplus-dem.c: Add 'extern' to prepends_underscore.
+
+Tue Aug 19 09:34:57 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* haifa-sched.c (ISSUE_RATE): Renamed from MACHINE_issue_rate.
+	(get_issue_rate): Delete.
+	* pa.h (ISSUE_RATE): Define.
+
+	* configure.in: Turn on haifa by default for the PA.
+	* configure: Rebuilt.
+	* pa.c (override_options): Accept -mschedule=7200 option.
+	(pa_adjust_cost): No longer need to scale costs for newer
+	processors.
+	* pa.h (enum processor_type): Add PROCESSOR_7200.
+	* pa.md: Revamp scheduling parameters to work better with
+	haifa.  Add scheduling parameters for the 7200.
+
+	* haifa-sched.c (move_insn): Reemit notes for SCHED_GROUP_P
+	insns too.
+	(schedule_block): When adjusting basic_block_{head,end}, account
+	for movement of SCHED_GROUP_P insns too.
+
+	* haifa-sched.c (debug_dependencies): Fix thinko.
+
+	* Makefile.in (EXPECT, RUNTEST, RUNTESTFLAGS): Define.
+	(site.exp, check, check-g++, check-gcc): New targets.
+
+	* haifa-sched.c: Make lots of variables static.
+
+Tue Aug 19 07:18:34 1997  H.J. Lu  (hjl@gnu.ai.mit.edu)
+
+	* expr.h, real.h: Finish prototyping.
+
+Mon Aug 18 21:49:02 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* reload.c (find_reloads): Add code to convert RELOAD_FOR_OPADDR_ADDR
+	reloads to RELOAD_FOR_OPERAND_ADDRESS reloads.
+	* reload1.c: Undo bugfix from Aug 11.
+
+Mon Aug 18 17:39:02 1997  Mike Meissner  <meissner@cygnus.com>
+
+	* configure.in ({powerpc,rs6000}*-*-*, --with-cpu): Remove single
+	quotes around the name.
+	* configure: Regenerate.
+
+Mon Aug 18 13:46:47 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* Makefile.in (stmp-multilib-sub): Fix typo in last change.
+
+Thu Aug  7 10:33:13 1997  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* Makefile.in (sub-makes): Pass the current value of LANGUAGES down
+	to sub-makes to avoid building more passes than the user might have
+	requested on the command line.
+
+Sun Aug 17 15:42:17 1997  Dave Love  (d.love@dl.ac.uk)
+
+	* configure.in: Expurgate `broken_install' (install is
+ 	autoconfed).
+
+	* configure.lang: Substitute autoconfed ${INSTALL} (not currently
+	relevant).
+
+Sat Aug 16 01:08:12 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* loop.c (is_power_of_2, is_conditional_branch): Delete unused
+	functions and declarations.
+	(analyze_loop_iterations): Use condjump_p.
+	(insert_bct): Likewise.  Use exact_log2.
+	
+Fri Aug 15 23:48:32 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* haifa-sched.c (find_post_sched_live): Call FREE_REG_SET as needed.
+	(schedule_region): Likewise.
+	(schedule_insns): Likewise.
+
+	* PROJECTS: Update with Haifa stuff.
+
+Fri Aug 15 12:49:56 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Change the version string to look like:
+	egcs-2.90.00 970814 (gcc2-970802 experimental).
+
+	* loop.c (is_conditional_branch): Make definition match declaration.
+
+	* gcc.c: Take out experimental snapshot warning message.
+
+Fri Aug 15 13:43:39 1997  Michael Meissner  <meissner@cygnus.com>
+
+	* haifa-sched.c (debug_dependencies): Use GET_NOTE_INSN_NAME to
+	print out the names of the notes.  Print out the name of the insn
+	that is not a note, and not an {,CALL_,JUMP_}INSN.
+
+Wed Aug 13 17:32:38 1997  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* expr.c (expand_expr, case TARGET_EXPR): Call mark_addressable
+ 	again for the slot after we give it RTL.
+
+Wed Aug 13 01:03:37 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* configure.in (haifa configury): Fix typo.
+	* configure: Regenerate.
+
+Tue Aug 12 10:20:36 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* version.c: Bump version to "gcc-3.0.0 970802 experimental".
+
+	* gcc.info*: Rebuilt.
+
+	* COPYING.g77, README.g77: New files.
+	* real.c (ereal_unto_float, ereal_unto_double): New functions.
+	* real.h (ereal_unto_float, ereal_unto_double): Declare them.
+	(REAL_VALUE_UNTO_TARGET_DOUBLE, REAL_VALUE_UNTO_TARGET_SINGLE): Define.
+
+Mon Aug 11 14:50:55 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* Integrate Haifa instruction scheduler.
+	* Makefile.in (ALL_CFLAGS): Add SCHED_CFLAGS.  Prefix all references
+	to sched with $(SCHED_CFLAGS.
+	* configure.in: Handle --enable-haifa.
+	* configure: Rebuilt.
+	* flags.h: Add new flags for haifa instruction scheduler.
+	* genattrtab.c (expand_units): For haifa, don't subtract one
+	when computing blockage.
+	* toplev.h (flag_schedule_interblock): Haifa scheduler flag.
+	(flag_schedule_speculative): Ditto.
+	(flag_schedule_speculative_load): Ditto.
+	(flag_schedule_speculative_load_dangerous): Ditto.
+	(flag_schedule_reverse_before_reload): Ditto.
+	(flag_schedule_reverse_after_reload): Ditto.
+	(flag_branch_on_count_reg): Ditto.
+	(f_options): Add Haifa switches.
+	(main): Turn off some Haifa options if appropriate macro is
+	defined.  Process Haifa switches.
+	* unroll.c (iteration_info): No longer static, since Haifa
+	scheduler uses it.
+	(unroll_loop): Inform HAIFA scheduler about loop unrolling factor.
+	* unroll.c (unroll_loop): Set loop_unroll_iter, loop_start_value.
+	* loop.h (loop_unroll_factor, loop_number): Add HAIFA decls.
+	* loop.h (loop_initial_value,loop_unroll_iter): New globals.
+	* loop.c (loop_optimize): If HAIFA is defined, allocate additional
+	storage for the Haifa scheduler.
+	(mark_loop_jump): If HAIFA defined, set LABEL_OUTSIDE_LOOP_P and
+	LABEL_NEXTREF.
+	(strength_reduce): If HAIFA and HAVE_decrement_and_branch_on_count
+	are defined, call analyze_loop_iterations and insert_bct to use
+	countdown loops.
+	(record_giv): Refine test for jumps out of loops if HAIFA is
+	defined.
+	(analyze_loop_iterations): New function to identify if we can use
+	a countdown loop.
+	(insert_bct): Insert countdown loop.
+	(instrument_loop_bct): Low level code to insert countdown loop.
+	(loop_number): Calculate UID of loop.
+	(indirect_jump_in_function_p): Return true if an indirect jump is
+	in the function.
+	(is_power_of_2): Return true if value is a power of 2.
+	(is_conditional_branch): Return true if insn is a conditional
+	jump.
+	(fix_bct_param): Process -fbct-{min,max}-N switches.
+	(check_bct_param): Return true if loop should be instrumented.
+	* loop.c (loop_initial_value,loop_unroll_iter): New globals.
+	(loop_optimize): Initialize.
+	(get_condition_for_loop): Ditto.
+	* loop.c (strength_reduce): Inside of code that uses #ifdef
+	HAVE_decrement_and_branch_on_count code, test it to make sure the
+	condition is true.
+	(instrument_loop_bct): Ditto.
+	* haifa-sched.c: New file.
+	
+
+	* Integrate regmove pass.
+	* Makefile.in (OBJS): Add regmove.o
+	(regmove.o): Add dependencies.
+	* flow.c (find_use_as_address): No longer static.
+	* rtl.h (find_use_as_address): Declare.
+	* toplev.c (regmove_dump, flag_regmove): Define.
+	(f_options): Add -fregmove.
+	(regmove_dump_file, regmove_time): Define.
+	(fatal_insn): Close the regmove dump file.
+	(compile_file): Initialize regmove_time; open/close the regmove dump
+	file as needed.  Print regmove time as needed.
+	(rest_of_compilation): Run regmove pass if requested, dump
+	RTL after regmove if requested.
+	(main): If -O2 or more, turn on regmove.  Handle dump switches.
+	* regmove.c: New file.
+	
+Mon Aug 11 14:15:02 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* Integrate tlink patch from jason@cygnus.com
+	* gcc.c (SWITCH_TAKES_ARG): Add 'V', 'B' and 'b'.
+  	(process_command): Increment n_switches for them.  Don't discard
+ 	their args.  Validate them.
+	(main): Escape " marks when creating COLLECT_GCC_OPTIONS.
+	From Rohan Lenard.
+	(process_command): Set include_prefixes from COMPILER_PATH.
+	(main): Set COLLECT_GCC_OPTIONS sooner.
+	* confiugre.in: Link ../ld/ld.new to collect-ld rather than real-ld.
+	* tlink.c, hash.c, hash.h: New files.
+	* Makefile.in (USE_COLLECT2): Always use collect2.
+	(collect2): Depend on and link in hash.o and tlink.o.
+	(tlink.o, hash.o): Add dependencies.
+
+Mon Aug 11 10:04:49 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* Integrate alias analysis changes from jfc@mit.edu
+	* Makefile.in (OBJS): Add alias.o
+	(alias.o): Add dependencies.
+	* alias.c: New file.
+	* sched.c: Remove alias analysis code.  It lives in alias.c now.
+	(sched_analyze_2): Add new arguments to true_dependence.
+	(schedule_insns): Always call init_alias_analysis.
+	* calls.c (expand_call): Note calls to malloc, calloc, and realloc;
+	mark return value from such functions as a pointer and keep track of
+	them for alias analysis.  If a return value from a function is a
+	pointer, mark it as such.
+	* combine.c (distribute_notes): Handle REG_NOALIAS.
+	* cse.c (struct write_data): Delete.  No longer needed.
+	(invalidate): Don't call set_nonvarying_address_components anymore.
+	Use true_dependence to decide if an entry should be removed from
+	the hash table.
+	(invalidate_memory): Remove WRITES argument, simplify appropriately.
+	Fix all callers.
+	(note_mem_written): Similarly for WRITE_PTR argument.
+	(invalidate_from_clobbers): Similarly for W argument.
+	(invalidate_for_call): Remove memory elements from the hash table.
+	(refers_to_mem_p, cse_rtx_addr_varies_p): Deleted.
+	(cse_rtx_varies_p): New function.  Derived from old
+	cse_rtx_addr_varies_p.
+	(cse_insn): Remove WRITES_MEMORY and INIT variables and all references.
+	Don't call note_mem_written anymore.  Stack pushes invalidate the stack
+	pointer if PUSH_ROUNDING is defined.  No longer need to call
+	cse_rtx_addr_varies_p to decide if a MEM should be invalidated.
+	(skipped_writes_memory): Remove variable.
+	(invalidate_skipped_set): Simplify and wewrite to use invalidate_memory.
+	(invalidate_skipped_block): Simplify for new alias analysis code.
+	(cse_set_around_loop): Likewise.
+	(cse_main): Call init_alias_analysis.
+	* flags.h (flag_alias_check, flag_argument_noalias): Declare.
+	* toplev.c (flag_alias_check, flag_argument_noalias): Define.
+	(f_options): Add new alias checking arguments.
+	(main): Set flag_alias_check when optimizing.
+	* local_alloc (validate_equiv_mem_from_store): Add new arguments
+	to true_dependence.
+	(memref_referenced_p): Likewise.
+	* loop.c (NUM_STORES): Increase to 30.
+	(prescan_loop): Only non-constant calls set unknown_address_altered.
+	(invariant_p): Add new arguments to true_dependence.
+	(record_giv): Initialize unrolled and shared fields.
+	(emit_iv_add_mult): Call record_base_value as needed.
+	* loop.h (struct induction): Add unrolled and shared fields.
+	* unroll.c  (unroll_loop): Call record_base_value as needed.
+	(copy_loop_body): Likewise.
+	(final_biv_value): Likewise.
+	(final_giv_value): Likewise.
+	(find_splittable_regs): Likewise.  Only create one new pseudo
+	if we have multiple address GIVs that were combined with the same
+	dst_reg GIV.  Note when a new register is created due to unrolling.
+	* rtl.c (reg_note_name): Add REG_NOALIAS.
+	* rtl.h (enum reg_note): Similarly.
+	(rtx_varies_p, may_trap_p, side_effects_p): Declare.
+	(volatile_refs_p, volatile_insn_p, remove_note): Likewise.
+	(note_stores, refers_to_regno_p, reg_overlap_mentioned_p): Likewise.
+	(true_dependence, read_dependence, anti_dependence): Likewise.
+	(output_dependence, init_alias_analysis, end_alias_analysis): Likewise.
+	(mark_user_reg, mark_reg_pointer): Likewise.
+
+
+	* Integrate reload bugfix from Wilon which enables the PA port
+	to bootstrap again.
+	* reload1.c (reload): Sum needs for both OPADDR_ADDR and and
+	OPERAND_ADDRESS when computing how many registers an insn needs.
+	(reload_reg_free_p): OPADDR_ADDR and OPERAND_ADDRESS reloads do
+	conflict.
+	(reload_reg_free_before_p): Treat OPERAND_ADDRESS reloads just like
+	OPADDR_ADDR reload.
+	(reload_reg_reaches_end_p): For RELOAD_FOR_OPADDR_ADDR insns, registers
+	in reload_reg_use_in_op_addr do not reach the end.
+	do not reach the end.
+	(reloads_conflict): RELOAD_FOR_OPADDR_ADDR conflicts with
+	RELOAD_FOR_OPERAND_ADDRESS.
+
+Sun Aug 10 12:00:20 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* egcs project officially starts.
+
