@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.1.1.7 1999/02/19 21:58:12 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.1.1.8 1999/02/24 04:11:00 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -92,7 +92,7 @@ int save_scripts;
 static char copyright[] =
 "Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Client V2.0b1pl14";
+static char message [] = "Internet Software Consortium DHCP Client V2.0b1pl15";
 static char contrib [] = "\nPlease contribute if you find this software useful.";
 static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
 
@@ -1049,8 +1049,6 @@ void send_discover (ipp)
 			      ip -> client -> packet_length,
 			      inaddr_any, &sockaddr_broadcast,
 			      (struct hardware *)0);
-	if (result < 0)
-		warn ("send_packet: %m");
 
 	add_timeout (cur_time + ip -> client -> interval, send_discover, ip);
 }
@@ -1303,9 +1301,6 @@ void send_request (ipp)
 				      from, &destination,
 				      (struct hardware *)0);
 
-	if (result < 0)
-		warn ("send_packet: %m");
-
 	add_timeout (cur_time + ip -> client -> interval,
 		     send_request, ip);
 }
@@ -1327,8 +1322,6 @@ void send_decline (ipp)
 			      ip -> client -> packet_length,
 			      inaddr_any, &sockaddr_broadcast,
 			      (struct hardware *)0);
-	if (result < 0)
-		warn ("send_packet: %m");
 }
 
 void send_release (ipp)
@@ -1348,8 +1341,6 @@ void send_release (ipp)
 			      ip -> client -> packet_length,
 			      inaddr_any, &sockaddr_broadcast,
 			      (struct hardware *)0);
-	if (result < 0)
-		warn ("send_packet: %m");
 }
 
 void make_discover (ip, lease)

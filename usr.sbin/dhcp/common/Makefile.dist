@@ -50,7 +50,7 @@ libdhcp.a:	$(OBJ)
 	ar cruv libdhcp.a $(OBJ)
 	ranlib libdhcp.a
 
-install: $(CATMANPAGES)
+install: all
 	for dir in $(FFMANDIR); do \
 	  foo=""; \
 	  for bar in `echo $(DESTDIR)$${dir} |tr / ' '`; do \

@@ -774,16 +774,16 @@ dhcpd.conf(5)                                       dhcpd.conf(5)
        other than the default value to be sent on occasions where
        the default value would be incorrect.   The default  value
        is  the first IP address associated with the physical net­
-       work interface on which the request arrived.    The  usual
-       case  where  the  _s_e_r_v_e_r_-_i_d_e_n_t_i_f_i_e_r  statement needs to be
-       sent is when a physical interface has  more  than  one  IP
-       address, and the one being sent by default isn't appropri­
-       ate for some or all clients served by that interface.
+       work interface on which the request arrived.
 
-RREEFFEERREENNCCEE:: OOPPTTIIOONN SSTTAATTEEMMEENNTTSS
-       DHCP  option  statements  are  documented  in  the   ddhhccpp--
-       ooppttiioonnss((55)) manual page.
-
+       The usual case where the _s_e_r_v_e_r_-_i_d_e_n_t_i_f_i_e_r statement needs
+       to  be sent is when a physical interface has more than one
+       IP address, and the one being sent by default isn't appro­
+       priate  for  some or all clients served by that interface.
+       Another common case is when an alias is  defined  for  the
+       purpose  of  having  a  consistent IP address for the DHCP
+       server, and it is desired that the  clients  use  this  IP
+       address when contacting the server.
 
 
 
@@ -796,6 +796,13 @@ RREEFFEERREENNCCEE:: OOPPTTIIOONN SSTTAATTEEMMEENNTTSS
 dhcpd.conf(5)                                       dhcpd.conf(5)
 
 
+       Supplying a value for the dhcp-server-identifier option is
+       equivalent to using the server-identifier statement.
+
+RREEFFEERREENNCCEE:: OOPPTTIIOONN SSTTAATTEEMMEENNTTSS
+       DHCP  option  statements  are  documented  in  the   ddhhccpp--
+       ooppttiioonnss((55)) manual page.
+
 SSEEEE AALLSSOO
        dhcpd.conf(5), dhcpd.leases(5), RFC2132, RFC2131.
 
@@ -805,13 +812,6 @@ AAUUTTHHOORR
        provided  by  the Internet Software Corporation.  Informa­
        tion about the Internet Software Consortium can  be  found
        at hhttttpp::////wwwwww..iisscc..oorrgg//iisscc..
-
-
-
-
-
-
-
 
 
 

@@ -43,7 +43,7 @@ CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 
 all:	$(PROG) $(CATMANPAGES)
 
-install: $(PROG) $(CATMANPAGES)
+install: all
 	for dir in $(BINDIR) $(ADMMANDIR) $(FFMANDIR) $(VARDB); do \
 	  foo=""; \
 	  for bar in `echo $(DESTDIR)$${dir} |tr / ' '`; do \

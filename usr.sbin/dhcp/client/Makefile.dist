@@ -44,8 +44,9 @@ CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 
 all:	$(PROG) $(CATMANPAGES)
 
-install: $(PROG) $(CATMANPAGES)
-	for dir in $(CLIENTBINDIR) $(ETC) $(FFMANDIR) $(ADMMANDIR); do \
+install: all
+	for dir in $(CLIENTBINDIR) $(ETC) $(FFMANDIR) $(ADMMANDIR) $(VARDB); \
+	do \
 	  foo=""; \
 	  for bar in `echo $(DESTDIR)$${dir} |tr / ' '`; do \
 	    foo=$${foo}/$$bar; \
