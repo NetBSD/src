@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: st.c,v 1.18 1994/01/11 17:22:06 mycroft Exp $
+ *	$Id: st.c,v 1.19 1994/02/06 08:01:45 mycroft Exp $
  */
 
 /*
@@ -124,7 +124,7 @@ stattach(int masunit, struct scsi_switch *sw, int physid, int *unit)
 	 */
 	st->buf_queue.b_active = 0;
 	st->buf_queue.b_actf = 0;
-	st->buf_queue.b_actl = 0;
+	st->buf_queue.b_actb = &st->buf_queue.b_actf;
 	st->initialized = 1;
 	return 1;
 }
@@ -352,17 +352,16 @@ ststrategy(struct buf *bp)
 	dp = &st->buf_queue;
 
 	/*
-	 * Place it in the queue of disk activities for this tape*
-	 * at the end
+	 * Place it at the end of the queue of activities for this tape.
 	 */
-	while ( dp->b_actf) 
-		dp = dp->b_actf;
-	dp->b_actf = bp;
 	bp->b_actf = NULL;
+	bp->b_actb = dp->b_actb;
+	*dp->b_actb = bp;
+	dp->b_actb = &bp->b_actf;
 
 	/*
 	 * Tell the device to get going on the transfer if it's
-	 * not doing anything, otherwise just wait for completion*
+	 * not doing anything, otherwise just wait for completion.
 	 */
 	ststart(unit);
 
@@ -419,11 +418,14 @@ trynext:
 		return;
 	}
 
-	dp = &st->buf_queue;
-	if ((bp = dp->b_actf) != NULL)
-		dp->b_actf = bp->b_actf;
-	else
+	bp = st->buf_queue.b_actf;
+	if (!bp)
 		return;
+	if (dp = bp->b_actf)
+		dp->b_actb = bp->b_actb;
+	else
+		st->buf_queue.b_actb = bp->b_actb;
+	*bp->b_actb = dp;
 	xs->flags = INUSE;    /* Now ours */
 
 	/*
