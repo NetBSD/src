@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.68 1997/06/19 20:54:48 pk Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.69 1998/01/03 02:53:02 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -202,26 +202,20 @@ vsunlock(addr, len)
  * after cpu_fork returns.
  */
 void
-vm_fork(p1, p2)
+vm_fork(p1, p2, shared)
 	register struct proc *p1, *p2;
+	boolean_t shared;
 {
 	register struct user *up;
 	vm_offset_t addr;
 
-#if defined(i386) || defined(pc532)
 	/*
-	 * avoid copying any of the parent's pagetables or other per-process
-	 * objects that reside in the map by marking all of them non-inheritable
+	 * Share the address space if we've been directed to.
 	 */
-	(void)vm_map_inherit(&p1->p_vmspace->vm_map,
-		VM_MAXUSER_ADDRESS, VM_MAX_ADDRESS, VM_INHERIT_NONE);
-#endif
-	p2->p_vmspace = vmspace_fork(p1->p_vmspace);
-
-#ifdef SYSVSHM
-	if (p1->p_vmspace->vm_shm)
-		shmfork(p1, p2);
-#endif
+	if (shared == TRUE)
+		vmspace_share(p1, p2);
+	else
+		p2->p_vmspace = vmspace_fork(p1->p_vmspace);
 
 #if !defined(vax)
 	/*
@@ -259,17 +253,6 @@ vm_fork(p1, p2)
 	bcopy(&p1->p_stats->pstat_startcopy, &up->u_stats.pstat_startcopy,
 	    ((caddr_t)&up->u_stats.pstat_endcopy -
 	     (caddr_t)&up->u_stats.pstat_startcopy));
-
-#if defined(i386) || defined(pc532)
-	{ vm_offset_t addr = VM_MAXUSER_ADDRESS; struct vm_map *vp;
-
-	/* ream out old pagetables and kernel stack */
-	vp = &p2->p_vmspace->vm_map;
-	(void)vm_deallocate(vp, addr, VM_MAX_ADDRESS - addr);
-	(void)vm_allocate(vp, &addr, VM_MAX_ADDRESS - addr, FALSE);
-	(void)vm_map_inherit(vp, addr, VM_MAX_ADDRESS, VM_INHERIT_NONE);
-	}
-#endif
 
 	/*
 	 * cpu_fork will copy and update the kernel stack and pcb,
