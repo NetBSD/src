@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.7 2002/11/02 07:23:11 perry Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.8 2002/11/07 06:51:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.7 2002/11/02 07:23:11 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.8 2002/11/07 06:51:51 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -287,32 +287,32 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 	do { \
 		int j; \
 		for (j = 0; j < (PAR)->channels; j++) { \
-			(V)[j] = READ_S##BITS####EN##(RP); \
+			(V)[j] = READ_S##BITS##EN(RP); \
 			RP += (BITS) / NBBY; \
 		} \
 	} while (/*CONSTCOND*/ 0)
 #define P_WRITE_Sn(BITS, EN, V, WP, PAR, CON, WC)	\
 	do { \
 		if ((PAR)->channels == 2 && (PAR)->hw_channels == 1) { \
-			WRITE_S##BITS####EN##(WP, ((V)[0] + (V)[1]) / 2); \
+			WRITE_S##BITS##EN(WP, ((V)[0] + (V)[1]) / 2); \
 			WP += (BITS) / NBBY; \
 			RING_CHECK(CON, WP); \
 			WC += (BITS) / NBBY; \
 		} else { /* channels <= hw_channels */ \
 			int j; \
 			for (j = 0; j < (PAR)->channels; j++) { \
-				WRITE_S##BITS####EN##(WP, (V)[j]); \
+				WRITE_S##BITS##EN(WP, (V)[j]); \
 				WP += (BITS) / NBBY; \
 				RING_CHECK(CON, WP); \
 			} \
 			if (j == 1 && 1 < (PAR)->hw_channels) { \
-				WRITE_S##BITS####EN##(WP, (V)[0]); \
+				WRITE_S##BITS##EN(WP, (V)[0]); \
 				WP += (BITS) / NBBY; \
 				RING_CHECK(CON, WP); \
 				j++; \
 			} \
 			for (; j < (PAR)->hw_channels; j++) { \
-				WRITE_S##BITS####EN##(WP, 0); \
+				WRITE_S##BITS##EN(WP, 0); \
 				WP += (BITS) / NBBY; \
 				RING_CHECK(CON, WP); \
 			} \
@@ -324,7 +324,7 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 	do { \
 		int j; \
 		for (j = 0; j < (PAR)->hw_channels; j++) { \
-			(V)[j] = READ_S##BITS####EN##(RP); \
+			(V)[j] = READ_S##BITS##EN(RP); \
 			RP += (BITS) / NBBY; \
 			RING_CHECK(CON, RP); \
 			RC += (BITS) / NBBY; \
@@ -333,19 +333,19 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 #define R_WRITE_Sn(BITS, EN, V, WP, PAR, WC)	\
 	do { \
 		if ((PAR)->channels == 2 && (PAR)->hw_channels == 1) { \
-			WRITE_S##BITS####EN##(WP, (V)[0]); \
+			WRITE_S##BITS##EN(WP, (V)[0]); \
 			WP += (BITS) / NBBY; \
-			WRITE_S##BITS####EN##(WP, (V)[0]); \
+			WRITE_S##BITS##EN(WP, (V)[0]); \
 			WP += (BITS) / NBBY; \
 			WC += (BITS) / NBBY * 2; \
 		} else if ((PAR)->channels == 1 && (PAR)->hw_channels >= 2) { \
-			WRITE_S##BITS####EN##(WP, ((V)[0] + (V)[1]) / 2); \
+			WRITE_S##BITS##EN(WP, ((V)[0] + (V)[1]) / 2); \
 			WP += (BITS) / NBBY; \
 			WC += (BITS) / NBBY; \
 		} else {	/* channels <= hw_channels */ \
 			int j; \
 			for (j = 0; j < (PAR)->channels; j++) { \
-				WRITE_S##BITS####EN##(WP, (V)[j]); \
+				WRITE_S##BITS##EN(WP, (V)[j]); \
 				WP += (BITS) / NBBY; \
 			} \
 			WC += (BITS) / NBBY * j; \
@@ -362,7 +362,7 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
  */
 #define AUCONV_PLAY_SLINEAR(BITS, EN)	\
 static int \
-auconv_play_slinear##BITS##_##EN##(struct auconv_context *context, \
+auconv_play_slinear##BITS##_##EN (struct auconv_context *context, \
 			       const struct audio_params *params, \
 			       uint8_t *dest, const uint8_t *src, \
 			       int srcsize) \
@@ -421,7 +421,7 @@ auconv_play_slinear##BITS##_##EN##(struct auconv_context *context, \
 
 #define AUCONV_RECORD_SLINEAR(BITS, EN)	\
 static int \
-auconv_record_slinear##BITS##_##EN##(struct auconv_context *context, \
+auconv_record_slinear##BITS##_##EN (struct auconv_context *context, \
 				 const struct audio_params *params, \
 				 uint8_t *dest, const uint8_t *src, \
 				 int srcsize) \
