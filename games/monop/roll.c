@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)roll.c	5.5 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)roll.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
@@ -41,7 +41,7 @@ static char sccsid[] = "@(#)roll.c	5.5 (Berkeley) 6/1/90";
 
 # define	reg	register
 
-# if !defined(vax) && !defined(tahoe)
+# if defined(pdp11)
 # define	MAXRAND	32767L
 
 roll(ndie, nsides)

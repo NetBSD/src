@@ -1,4 +1,4 @@
-#	@(#)Makefile	5.5 (Berkeley) 5/11/90
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	monop
 SRCS=	monop.c cards.c execute.c getinp.c houses.c jail.c misc.c morg.c \
@@ -9,7 +9,9 @@ LDADD=	-lcompat
 HIDEGAME=hidegame
 CLEANFILES+=initdeck cards.pck
 
-all: cards.pck
+all: ${PROG} ${MAN6}
+
+monop: cards.pck
 
 cards.pck: initdeck
 	./initdeck ${.CURDIR}/cards.inp
@@ -18,7 +20,7 @@ initdeck: initdeck.c
 	${CC} ${CFLAGS} -o ${.TARGET} ${.CURDIR}/initdeck.c
 
 beforeinstall:
-	install -o ${BINOWN} -g ${BINGRP} -m 444 cards.pck \
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 cards.pck \
 	    ${DESTDIR}/usr/share/games
 
 .include <bsd.prog.mk>

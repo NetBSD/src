@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)endgame.c	5.3 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)endgame.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 # include	"hangman.h"
@@ -69,5 +69,17 @@ endgame()
 
 	leaveok(stdscr, TRUE);
 	move(MESGY, MESGX);
-	addstr("\n\n\n");
+	deleteln();
+	deleteln();
+	deleteln();
 }
+
+
+
+
+
+
+
+
+
+

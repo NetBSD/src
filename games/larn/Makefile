@@ -1,4 +1,4 @@
-#	@(#)Makefile	5.9 (Berkeley) 7/25/90
+#	@(#)Makefile	5.12 (Berkeley) 5/30/93
 
 # EXTRA
 #	Incorporates code to gather additional performance statistics
@@ -53,7 +53,7 @@
 
 PROG=	larn
 MAN6=	larn.0
-CFLAGS+=-DBSD -DVER=12 -DSUBVER=0 -DNONAP
+CFLAGS+=-DBSD -DVER=12 -DSUBVER=0 -DNONAP -DUIDSCORE -fwritable-strings
 SRCS=	main.c object.c create.c tok.c display.c global.c data.c io.c \
 	monster.c store.c diag.c help.c config.c nap.c bill.c scores.c \
 	signal.c moreobj.c movem.c regen.c fortune.c savelev.c
@@ -63,7 +63,7 @@ HIDEGAME=hidegame
 
 beforeinstall:
 	(cd ${.CURDIR}/datfiles; install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    larnmaze larnopts lfortune larn.help \
+	    larnmaze larnopts larn.help \
 	    ${DESTDIR}/usr/share/games/larn)
 
 .include <bsd.prog.mk>
