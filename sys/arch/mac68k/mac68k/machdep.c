@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 1996/08/04 04:08:25 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113 1996/08/05 04:36:45 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -140,6 +140,7 @@ struct mac68k_machine_S mac68k_machine;
 volatile u_char *Via1Base, *Via2Base;
 u_long  NuBusBase = NBBASE;
 u_long  IOBase;
+u_long	conspa;
 
 vm_offset_t SCSIBase;
 
@@ -199,8 +200,9 @@ int     safepri = PSL_LOWIPL;
  */
 int     fpu_type;
 
-static void identifycpu __P((void));
-void dumpsys __P((void));
+static void	identifycpu __P((void));
+static u_long	get_physical __P((u_int, u_long *));
+void		dumpsys __P((void));
 
 /*
  * Console initialization: called early on from main,
@@ -2191,6 +2193,13 @@ setmachdep()
 		return;
 
 	/*
+	 * Get the console buffer physical address.  If we can't, we
+	 * punt and set it to 0.
+	 */
+	if (!get_physical(videoaddr, &conspa))
+		conspa = 0;
+
+	/*
 	 * Set up any machine specific stuff that we have to before
 	 * ANYTHING else happens
 	 */
@@ -2381,8 +2390,6 @@ extern int get_pte __P((u_int addr, u_long pte[2], u_short * psr));
  *  in *phys and return 1, or returns 0 on failure.  This is intended
  *  to look through MacOS page tables.
  */
-
-static u_long	get_physical __P((u_int, u_long *));
 
 static u_long
 get_physical(u_int addr, u_long * phys)
