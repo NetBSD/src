@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.78 2002/01/27 01:50:55 reinoud Exp $	*/
+/*	$NetBSD: parse.c,v 1.79 2002/02/03 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.78 2002/01/27 01:50:55 reinoud Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.79 2002/02/03 21:41:44 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.78 2002/01/27 01:50:55 reinoud Exp $");
+__RCSID("$NetBSD: parse.c,v 1.79 2002/02/03 21:41:44 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -172,6 +172,7 @@ typedef enum {
 		     * make */
     NoExport,	    /* .NOEXPORT */
     NoPath,	    /* .NOPATH */
+    NoSuff,	    /* .NOSUFF */
     Not,	    /* Not special */
     NotParallel,    /* .NOTPARALLEL */
     Null,   	    /* .NULL */
@@ -231,6 +232,7 @@ static struct {
 { ".MAKEFLAGS",	  MFlags,   	0 },
 { ".MFLAGS",	  MFlags,   	0 },
 { ".NOPATH",	  NoPath,	OP_NOPATH },
+{ ".NOSUFF",	  NoSuff,	OP_NOSUFF },
 { ".NOTMAIN",	  Attribute,   	OP_NOTMAIN },
 { ".NOTPARALLEL", NotParallel,	0 },
 { ".NO_PARALLEL", NotParallel,	0 },
