@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.25.2.4 1999/07/02 16:40:06 perry Exp $
+#	$NetBSD: install.sub,v 1.25.2.5 2000/02/04 23:02:41 he Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -187,6 +187,13 @@ get_localdir() {
 	_mp=$1
 	_dir=
 	while : ; do
+	    if [ X$_mp != X ]; then
+		cat << __get_localdir_1
+Note: your filesystems are mounted under the temporary mount point \"$_mp\".
+The pathname you are requested to enter below should NOT include the \"$_mp\"
+prefix.
+__get_localdir_1
+	    fi
 	    echo -n "Enter the pathname where the sets are stored [$_dir] "
 	    getresp "$_dir"
 	    _dir=$resp
@@ -210,10 +217,10 @@ get_localdir() {
 		local_sets_dir="$_mp/$_dir"
 		break
 	    else
-		cat << __get_reldir_1
-The directory \"$local_sets_dir\" does not exist, or does not hold any of the
+		cat << __get_localdir_2
+The directory \"$_mp/$_dir\" does not exist, or does not hold any of the
 upgrade sets.
-__get_reldir_1
+__get_localdir_2
 		echo -n "Re-enter pathname? [y] "
 		getresp "y"
 		case "$resp" in
