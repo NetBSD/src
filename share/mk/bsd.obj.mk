@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.45 2003/11/06 22:47:22 lukem Exp $
+#	$NetBSD: bsd.obj.mk,v 1.46 2003/12/04 12:15:20 lukem Exp $
 
 .if !defined(_BSD_OBJ_MK_)
 _BSD_OBJ_MK_=1
@@ -74,7 +74,8 @@ obj:
 		fi; \
 		subdir=$${subdir%/}; \
 		dest=${__usrobjdir}/$$subdir${__usrobjdirpf}; \
-		if  ttarg=`${TOOL_STAT} -qf '%Y' $${here}${__objdir}` && \
+		if  [ -x ${TOOL_STAT} ] && \
+		    ttarg=`${TOOL_STAT} -qf '%Y' $${here}${__objdir}` && \
 		    [ "$$dest" = "$$ttarg" ]; then \
 			: ; \
 		else \
