@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.4 1996/05/15 07:29:05 leo Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.5 1996/08/23 11:14:59 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -159,8 +159,7 @@ MODES	*modelp;
 	struct videl *vregs;
 	int	i;
 
-	/* XXX: The address definition should moved to a header file */
-	mon_type = *(volatile unsigned char *)(0xff8006L);
+	mon_type = *(volatile unsigned char *)(AD_FAL_MON_TYPE);
 	mon_type = (mon_type & 0xc0) << 2;
 
 	/*
