@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.70 2001/01/14 02:38:15 mrg Exp $	*/
+/*	$NetBSD: net.c,v 1.71 2001/03/06 09:22:40 dogcow Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -893,7 +893,7 @@ mnt_net_config(void)
 		add_rc_conf("defaultroute=\"%s\"\n", net_defroute);
 	} else {
 		add_rc_conf("dhclient=YES\n");
-		add_rc_conf("dhclient_flags=\"%s\"", net_dev);
+		add_rc_conf("dhclient_flags=\"%s\"\n", net_dev);
         }
 	fflush(NULL);
 }
