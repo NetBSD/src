@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 1999/12/16 06:16:16 jwise Exp $	*/
+/*	$NetBSD: extern.h,v 1.15 1999/12/20 03:45:02 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -74,13 +74,12 @@ void	 closenetstat __P((WINDOW *));
 void	 closepigs __P((WINDOW *));
 void	 closeswap __P((WINDOW *));
 void	 closetcp __P ((WINDOW *));
-int	 cmdiostat __P((char *, char *));
-int	 cmdkre __P((char *, char *));
-int	 cmdnetstat __P((char *, char *));
 void	 command __P((char *));
 void	 die __P((int));
+void	 disks_add __P((char *));
+void	 disks_delete __P((char *));
+void	 disks_drives __P((char *));
 void	 display __P((int));
-int	 dkcmd __P((char *, char *));
 int	 dkinit __P((int, gid_t));
 void	 error __P((const char *fmt, ...));
 void	 fetchbufcache __P((void));
@@ -108,6 +107,9 @@ int	 initnetstat __P((void));
 int	 initpigs __P((void));
 int	 initswap __P((void));
 int	 inittcp __P((void));
+void	 iostat_bars __P((char *));
+void	 iostat_numbers __P((char *));
+void	 iostat_secs __P((char *));
 int	 keyboard __P((void)) __attribute__((__noreturn__));
 ssize_t	 kvm_ckread __P((void *, void *, size_t));
 void	 labelbufcache __P((void));
@@ -123,7 +125,15 @@ void	 labels __P((void));
 void	 labelswap __P((void));
 void	 labeltcp __P((void));
 void	 labeltcpsyn __P((void));
-int	 netcmd __P((char *, char *));
+void	 netstat_all __P((char *));
+void	 netstat_display __P((char *));
+void	 netstat_ignore __P((char *));
+void	 netstat_names __P((char *));
+void	 netstat_numbers __P((char *));
+void	 netstat_reset __P((char *));
+void	 netstat_show __P((char *));
+void	 netstat_tcp __P((char *));
+void	 netstat_udp __P((char *));
 void	 nlisterr __P((struct nlist []));
 WINDOW	*openbufcache __P((void));
 WINDOW	*openicmp __P((void));
@@ -151,3 +161,7 @@ void	 showtcp __P((void));
 void	 showtcpsyn __P((void));
 void	 status __P((void));
 void	 suspend __P((int));
+void	 vmstat_boot __P((char *args));
+void	 vmstat_run __P((char *args));
+void	 vmstat_time __P((char *args));
+void	 vmstat_zero __P((char *args));
