@@ -796,7 +796,7 @@
 #define PACKAGE "libstdc++"
 
 /* Version number of package */
-#define VERSION "3.3.2-nb1"
+#define VERSION "3.3.2"
 
 /* Define if the compiler is configured for setjmp/longjmp exceptions. */
 #define _GLIBCPP_SJLJ_EXCEPTIONS 1
