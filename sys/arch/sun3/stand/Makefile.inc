@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 1997/09/05 04:31:50 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.12 1998/06/29 20:09:14 gwr Exp $
 
 .if defined(SA_PROG)
 
@@ -28,9 +28,11 @@ CLEANFILES+= ${SA_PROG} ${SA_PROG}.bin machine m68k
 # and with its length padded to a multiple of 1k bytes.
 # (The padding is for convenience when making tapes.)
 ${SA_PROG}.bin : ${SA_PROG}
-	cp ${SA_PROG} a.out ; strip a.out
-	dd if=a.out ibs=32 skip=1 of=$@ obs=1k conv=osync
-	-rm -f a.out
+	cp ${SA_PROG} ${SA_PROG}.tmp
+	strip ${SA_PROG}.tmp
+	dd if=${SA_PROG}.tmp ibs=32 skip=1 obs=1k | \
+	  dd of=$@ bs=1k conv=sync
+	-rm -f ${SA_PROG}.tmp
 
 ${SA_PROG} : ${OBJS} ${DPADD} ${SRTLIB}
 	${LD} -N -Ttext ${RELOC} -e start -o $@ \
@@ -49,7 +51,7 @@ m68k :
 
 .if !target(cleanprog)
 cleanprog:
-	-rm -f a.out [Ee]rrs mklog core *.core
+	-rm -f ${SA_PROG}.tmp [Ee]rrs mklog core *.core
 	-rm -f ${CLEANFILES} *.o
 .endif
 
