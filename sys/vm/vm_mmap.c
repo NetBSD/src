@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.37 1995/01/09 17:36:48 mycroft Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.38 1995/03/08 01:46:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -100,7 +100,7 @@ sstk(p, uap, retval)
 	return (EOPNOTSUPP);
 }
 
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_OSF1)
 /* ARGSUSED */
 int
 compat_43_getpagesize(p, uap, retval)
@@ -112,7 +112,7 @@ compat_43_getpagesize(p, uap, retval)
 	*retval = PAGE_SIZE;
 	return (0);
 }
-#endif /* COMPAT_43 || COMPAT_SUNOS */
+#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_OSF1 */
 
 #ifdef COMPAT_43
 int
