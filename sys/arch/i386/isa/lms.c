@@ -20,28 +20,28 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: lms.c,v 1.6.2.12 1993/10/16 06:39:37 mycroft Exp $
+ *	$Id: lms.c,v 1.6.2.13 1993/10/17 05:33:34 mycroft Exp $
  */
 
-#include "param.h"
-#include "kernel.h"
-#include "systm.h"
-#include "buf.h"
-#include "malloc.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "file.h"
-#include "select.h"
-#include "proc.h"
-#include "vnode.h"
-#include "sys/device.h"
+#include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/malloc.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/file.h>
+#include <sys/select.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
+#include <sys/device.h>
 
-#include "machine/cpu.h"
-#include "machine/mouse.h"
-#include "machine/pio.h"
+#include <machine/cpu.h>
+#include <machine/mouse.h>
+#include <machine/pio.h>
 
-#include "i386/isa/isavar.h"
-#include "i386/isa/icu.h"
+#include <i386/isa/isavar.h>
+#include <i386/isa/icu.h>
 
 #define LMS_DATA	0       /* Offset for data port, read-only */
 #define LMS_SIGN	1       /* Offset for signature port, read-write */
@@ -224,6 +224,7 @@ lmsread(dev, uio, flag)
 			return error;
 		}
 	}
+	splx(s);
 
 	/* Transfer as many chunks as possible */
 
@@ -240,10 +241,6 @@ lmsread(dev, uio, flag)
 			break;
 	}
 
-	/* reset counters */
-	sc->sc_x = sc->sc_y = 0;
-
-	splx(s);
 	return error;
 }
 
