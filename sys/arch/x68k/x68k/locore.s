@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.55 2000/05/18 15:24:30 minoura Exp $	*/
+/*	$NetBSD: locore.s,v 1.56 2000/05/26 00:36:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1124,6 +1124,12 @@ Lsw1:
 	movl	a1@(P_FORW),a0		| p = q->p_forw
 	cmpal	d1,a0			| anyone on queue?
 	jeq	Lbadsw			| no, panic
+#ifdef DIAGNOSTIC
+	tstl	a0@(P_WCHAN)
+	jne	Lbadsw
+	cmpb	#SRUN,a0@(P_STAT)
+	jne	Lbadsw
+#endif
 	movl	a0@(P_FORW),a1@(P_FORW)	| q->p_forw = p->p_forw
 	movl	a0@(P_FORW),a1		| n = p->p_forw
 	movl	d1,a1@(P_BACK)		| n->p_back = q
@@ -1133,6 +1139,7 @@ Lsw1:
 	bclr	d0,d1			| no, clear bit
 	movl	d1,_C_LABEL(whichqs)
 Lsw2:
+	movb	#SONPROC,a0@(P_STAT)	| p->p_stat = SONPROC
 	movl	a0,_C_LABEL(curproc)
 	clrl	_C_LABEL(want_resched)
 #ifdef notyet
@@ -1176,12 +1183,6 @@ Lsavfp60:
 #endif
 Lswnofpsave:
 
-#ifdef DIAGNOSTIC
-	tstl	a0@(P_WCHAN)
-	jne	Lbadsw
-	cmpb	#SRUN,a0@(P_STAT)
-	jne	Lbadsw
-#endif
 	clrl	a0@(P_BACK)		| clear back link
 	movb	a0@(P_MD_FLAGS+3),mdpflag | low byte of p_md.md_flags
 	movl	a0@(P_ADDR),a1		| get p_addr
