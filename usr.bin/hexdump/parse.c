@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.10 2000/10/14 17:41:55 bjh21 Exp $	*/
+/*	$NetBSD: parse.c,v 1.11 2001/02/07 18:32:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.10 2000/10/14 17:41:55 bjh21 Exp $");
+__RCSID("$NetBSD: parse.c,v 1.11 2001/02/07 18:32:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,13 +85,13 @@ addfile(name)
 
 void
 add(fmt)
-	char *fmt;
+	const char *fmt;
 {
-	char *p;
+	const char *p;
 	static FS **nextfs;
 	FS *tfs;
 	FU *tfu, **nextfu;
-	char *savep;
+	const char *savep;
 
 	/* start new linked list of format units */
 	tfs = emalloc(sizeof(FS));
@@ -507,7 +507,7 @@ badsfmt()
 
 void
 badfmt(fmt)
-	char *fmt;
+	const char *fmt;
 {
 	errx(1, "\"%s\": bad format\n", fmt);
 }
