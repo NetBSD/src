@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.183 2003/04/09 02:10:57 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.184 2003/05/02 07:17:18 gmcgarry Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.182 2003/04/09 02:09:55 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.183 2003/05/02 07:16:40 gmcgarry Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -55,6 +55,7 @@
 #define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* New Media Corporation */
 #define	PCMCIA_VENDOR_INTEL	0x0089	/* Intel */
 #define	PCMCIA_VENDOR_IBM	0x00a4	/* IBM Corporation */
+#define	PCMCIA_VENDOR_SHARP	0x00b0	/* Sharp Corporation */
 #define	PCMCIA_VENDOR_3COM	0x0101	/* 3Com Corporation */
 #define	PCMCIA_VENDOR_MEGAHERTZ	0x0102	/* Megahertz Corporation */
 #define	PCMCIA_VENDOR_SOCKET	0x0104	/* Socket Communications */
@@ -557,6 +558,11 @@
 #define	PCMCIA_CIS_SANDISK_SDCFB	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SANDISK_SDCFB	0x0401
 #define	PCMCIA_STR_SANDISK_SDCFB	"Sandisk CompactFlash Card"
+
+/* Sharp Products */
+#define	PCMCIA_CIS_SHARP_PALDIO611S	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SHARP_PALDIO611S	0x0000
+#define	PCMCIA_STR_SHARP_PALDIO611S	"PALDIO 611S PC CARD"
 
 /* Simple Technology Products */
 #define	PCMCIA_CIS_SIMPLETECH_COMMUNICATOR288	{ NULL, NULL, NULL, NULL }

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.183 2003/04/09 02:10:58 christos Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.184 2003/05/02 07:17:18 gmcgarry Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.182 2003/04/09 02:09:55 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.183 2003/05/02 07:16:40 gmcgarry Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -855,6 +855,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Sandisk CompactFlash Card",	}
 	,
 	{
+	    PCMCIA_VENDOR_SHARP, PCMCIA_PRODUCT_SHARP_PALDIO611S,
+	    PCMCIA_CIS_SHARP_PALDIO611S,
+	    0,
+	    "Sharp Corporation",
+	    "PALDIO 611S PC CARD",	}
+	,
+	{
 	    PCMCIA_VENDOR_SIMPLETECH, PCMCIA_PRODUCT_SIMPLETECH_COMMUNICATOR288,
 	    PCMCIA_CIS_SIMPLETECH_COMMUNICATOR288,
 	    0,
@@ -1580,6 +1587,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "IBM Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SHARP,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Sharp Corporation",
 	    NULL,
 	},
 	{
