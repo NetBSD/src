@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.18 2002/09/13 14:03:53 ad Exp $
+#	$NetBSD: files.sbus,v 1.19 2004/07/24 12:45:00 mrg Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -78,6 +78,15 @@ attach	mtty at magma
 device	mbpp
 attach	mbpp at magma
 file	dev/sbus/magma.c		magma | mtty | mbpp needs-flag
+
+# XXX this should use the cd18xx code when it (the cd18xx code) works.
+device spif {}
+attach spif at sbus
+device stty: tty
+attach stty at spif
+device sbpp
+attach sbpp at spif
+file   dev/sbus/spif.c                 spif | stty | sbpp needs-flag
 
 device siosixteen { channel = -1 }
 attach siosixteen at sbus
