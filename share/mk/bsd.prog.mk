@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.53 1995/06/25 22:29:02 cgd Exp $
+#	$NetBSD: bsd.prog.mk,v 1.54 1995/10/22 00:45:57 christos Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -148,3 +148,4 @@ lint: ${LOBJS}
 .include <bsd.obj.mk>
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
+.include <bsd.sys.mk>
