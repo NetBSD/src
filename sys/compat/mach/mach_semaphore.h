@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.h,v 1.4 2002/12/12 23:18:22 manu Exp $ */
+/*	$NetBSD: mach_semaphore.h,v 1.1 2002/12/12 23:18:21 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,71 +36,67 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACH_THREAD_H_
-#define	_MACH_THREAD_H_
+#ifndef	_MACH_SEMAPHORE_H_
+#define	_MACH_SEMAPHORE_H_
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/signal.h>
-#include <sys/proc.h>
+#include <sys/lock.h>
+#include <sys/queue.h>
 
-#include <compat/mach/mach_types.h>
-#include <compat/mach/mach_message.h>
+extern int mach_semaphore_cold;
 
-/* For mach_create_thread_child() */
-struct mach_create_thread_child_args {
-	struct proc **mctc_proc;
-	int mctc_flavor;
-	mach_natural_t *mctc_state;
-	int mctc_child_done;
+struct mach_waiting_proc {
+	TAILQ_ENTRY(mach_waiting_proc) mwp_list;
+	struct proc *mwp_p;
 };
 
-/* For mach_sys_syscall_thread_switch() */
-#define MACH_SWITCH_OPTION_NONE	0
-#define MACH_SWITCH_OPTION_DEPRESS	1
-#define MACH_SWITCH_OPTION_WAIT	2
-#define MACH_SWITCH_OPTION_IDLE	3
+struct mach_semaphore {
+	int ms_value;
+	int ms_policy;
+	LIST_ENTRY(mach_semaphore) ms_list;
+	TAILQ_HEAD(ms_waiting, mach_waiting_proc) ms_waiting;
+	struct lock ms_lock;
+};
 
-/* thread_policy */
-typedef int mach_policy_t;
+/* semaphore_create */
+
+#define MACH_SYNC_POLICY_FIFO 0
+#define MACH_SYNC_POLICY_FIXED_PRIORITY 1
 
 typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_ndr_record_t req_ndr;
-	mach_policy_t req_policy;
-	mach_msg_type_number_t req_count;
-	mach_integer_t req_base[5];
-	mach_boolean_t req_setlimit;
-} mach_thread_policy_request_t;
+	int req_policy;
+	int req_value;
+} mach_semaphore_create_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_sem;
+	mach_msg_trailer_t rep_trailer;
+} mach_semaphore_create_reply_t;
+
+/* semaphore_destroy */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_body;
+	mach_msg_port_descriptor_t req_sem;
+} mach_semaphore_destroy_request_t;
 
 typedef struct {
 	mach_msg_header_t rep_msgh;
 	mach_ndr_record_t rep_ndr;
 	mach_kern_return_t rep_retval;
 	mach_msg_trailer_t rep_trailer;
-} mach_thread_policy_reply_t;
+} mach_semaphore_destroy_reply_t;
 
-/* mach_thread_create_running */
-
-typedef struct {
-	mach_msg_header_t req_msgh;
-	mach_ndr_record_t req_ndr;
-	mach_thread_state_flavor_t req_flavor;
-	mach_msg_type_number_t req_count;
-	mach_natural_t req_state[144];
-} mach_thread_create_running_request_t;
-
-typedef struct {
-	mach_msg_header_t rep_msgh;
-	mach_msg_body_t rep_body;
-	mach_msg_port_descriptor_t rep_child_act;
-	mach_msg_trailer_t rep_trailer;
-} mach_thread_create_running_reply_t;
-	
-int mach_thread_policy(struct proc *, mach_msg_header_t *, 
+void mach_semaphore_init(void);
+void mach_semaphore_cleanup(struct proc *);
+int mach_semaphore_create(struct proc *, mach_msg_header_t *, 
     size_t, mach_msg_header_t *);
-int mach_thread_create_running(struct proc *, mach_msg_header_t *, 
+int mach_semaphore_destroy(struct proc *, mach_msg_header_t *, 
     size_t, mach_msg_header_t *);
-void mach_create_thread_child(void *);
 
-#endif /* _MACH_THREAD_H_ */
+#endif /* _MACH_SEMAPHORE_H_ */
+
