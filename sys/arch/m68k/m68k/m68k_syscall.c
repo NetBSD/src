@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.1.18.2 2002/07/16 08:36:51 gehenna Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.1.18.3 2002/07/21 13:00:41 gehenna Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -116,7 +116,9 @@ void	syscall_intern(struct proc *);
 void	aoutm68k_syscall_intern(struct proc *);
 #endif
 static void syscall_plain(register_t, struct proc *, struct frame *);
+#if defined(KTRACE) || defined(SYSTRACE)
 static void syscall_fancy(register_t, struct proc *, struct frame *);
+#endif
 
 
 /*
@@ -300,6 +302,7 @@ syscall_plain(register_t code, struct proc *p, struct frame *frame)
 #endif
 }
 
+#if defined(KTRACE) || defined(SYSTRACE)
 static void
 syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 {
@@ -414,6 +417,7 @@ syscall_fancy(register_t code, struct proc *p, struct frame *frame)
 
 	trace_exit(p, code, args, rval, error);
 }
+#endif /* KTRACE || SYSTRACE */
 
 void
 child_return(arg)

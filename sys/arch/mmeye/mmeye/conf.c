@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7.8.2 2002/07/14 18:37:19 gehenna Exp $	*/
+/*	$NetBSD: conf.c,v 1.7.8.3 2002/07/21 13:00:44 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.

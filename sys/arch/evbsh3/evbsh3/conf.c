@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5.8.2 2002/07/14 17:46:11 gehenna Exp $	*/
+/*	$NetBSD: conf.c,v 1.5.8.3 2002/07/21 13:00:36 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -31,6 +31,10 @@
 
 #include <sys/param.h>
 #include <sys/conf.h>
+
+#include "com.h"
+#include "sci.h"
+#include "scif.h"
 
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15.2.1 2002/07/16 13:09:57 gehenna Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15.2.2 2002/07/21 13:00:47 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -214,7 +214,8 @@ void __syncicache(void *, size_t);
 #define	CPU_CACHEINFO		5
 #define	CPU_ALTIVEC		6
 #define	CPU_MODEL		7
-#define	CPU_MAXID		8
+#define	CPU_POWERSAVE		8
+#define	CPU_MAXID		9
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -225,6 +226,7 @@ void __syncicache(void *, size_t);
 	{ "cacheinfo", CTLTYPE_STRUCT }, \
 	{ "altivec", CTLTYPE_INT }, \
 	{ "model", CTLTYPE_STRING }, \
+	{ "powersave", CTLTYPE_INT }, \
 }
 
 #endif	/* _POWERPC_CPU_H_ */

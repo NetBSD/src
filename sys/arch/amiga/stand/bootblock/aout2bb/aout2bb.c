@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2bb.c,v 1.6 2002/01/26 13:17:12 aymeric Exp $	*/
+/*	$NetBSD: aout2bb.c,v 1.6.8.1 2002/07/21 13:00:26 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ main(argc, argv)
 	if (tsz+dsz+bsz > bbsize)
 		errx(1, "%s: resulting image too big\n", argv[0]);
 
-	memset(buffer, sizeof(buffer), 0);
+	memset(buffer, 0, sizeof(buffer));
 	memcpy(buffer, image + N_TXTOFF(*eh), tsz+dsz);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.4.2.1 2002/07/16 13:09:57 gehenna Exp $	*/
+/*	$NetBSD: frame.h,v 1.4.2.2 2002/07/21 13:00:47 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -90,7 +90,8 @@ struct callframe {
 	register_t r31;
 };
 
-#define	IFRAMELEN	sizeof(struct intrframe)
+
+#define	IFRAMELEN	roundup(sizeof(struct intrframe), 16)
 struct intrframe {
 	register_t r1;			/*  0 */
 	register_t _pad4;		/*  4 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.471.2.3 2002/07/16 08:29:34 gehenna Exp $	*/
+/*	$NetBSD: machdep.c,v 1.471.2.4 2002/07/21 13:00:40 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.471.2.3 2002/07/16 08:29:34 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.471.2.4 2002/07/21 13:00:40 gehenna Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2212,12 +2212,10 @@ haltsys:
 	doshutdownhooks();
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-#if 0
 #if NACPI > 0
 		delay(500000);
 		acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
 		printf("WARNING: powerdown failed!\n");
-#endif
 #endif
 #if NAPM > 0 && !defined(APM_NO_POWEROFF)
 		/* turn off, if we can.  But try to turn disk off and

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.57.8.2 2002/07/15 01:41:02 gehenna Exp $	*/
+/*	$NetBSD: conf.c,v 1.57.8.3 2002/07/21 13:00:58 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.

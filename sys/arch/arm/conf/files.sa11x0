@@ -1,4 +1,4 @@
-#	$NetBSD: files.sa11x0,v 1.3 2002/04/16 20:50:18 thorpej Exp $
+#	$NetBSD: files.sa11x0,v 1.3.2.1 2002/07/21 13:00:28 gehenna Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -43,11 +43,7 @@ device	sacpcic: pcmciabus
 attach	sacpcic at sacc
 file	arch/arm/sa11x0/sa11x1_pcic.c	sacpcic needs-flag
 
-device	sagpcic: pcmciabus
-attach	sagpcic at saip
-file	arch/arm/sa11x0/sa11x0_pcic.c	sagpcic needs-flag
-
-file	arch/arm/sa11x0/sa11xx_pcic.c	sacpcic | sagpcic
+file	arch/arm/sa11x0/sa11xx_pcic.c	sacpcic | ipaqpcic
 
 # USB
 

@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.2.2.2 2002/07/09 05:03:57 gehenna Exp $ */
+/* $NetBSD: conf.c,v 1.2.2.3 2002/07/21 13:00:24 gehenna Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 #include <sys/param.h>
 #include <sys/conf.h>
 
-__RCSID("$NetBSD: conf.c,v 1.2.2.2 2002/07/09 05:03:57 gehenna Exp $");
+__RCSID("$NetBSD: conf.c,v 1.2.2.3 2002/07/21 13:00:24 gehenna Exp $");
 
 #include <dev/cons.h>
 

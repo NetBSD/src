@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.23 2002/05/03 16:45:22 rjs Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.23.2.1 2002/07/21 13:00:28 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -342,6 +342,12 @@ void	armv4_tlb_flushD	__P((void));
 void	armv4_tlb_flushD_SE	__P((u_int va));
 
 void	armv4_drain_writebuf	__P((void));
+#endif
+
+#if defined(CPU_IXP12X0)
+void	ixp12x0_drain_readbuf	__P((void));
+void	ixp12x0_context_switch	__P((void));
+void	ixp12x0_setup		__P((char *string));
 #endif
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \

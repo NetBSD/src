@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4.8.2 2002/07/15 01:22:07 gehenna Exp $	*/
+/*	$NetBSD: conf.c,v 1.4.8.3 2002/07/21 13:00:58 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross

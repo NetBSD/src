@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.14.2.2 2002/07/16 13:09:59 gehenna Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.14.2.3 2002/07/21 13:00:48 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -217,7 +217,7 @@ cpu_attach_common(struct device *self, int id)
 		/* Select NAP mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_NAP | HID0_DPM;
-		powersave = 1;
+		powersave = 0;		/* but don't use it */
 		break;
 
 	default:

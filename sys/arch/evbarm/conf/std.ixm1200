@@ -1,0 +1,23 @@
+#	$NetBSD: std.ixm1200,v 1.1.2.2 2002/07/21 13:00:34 gehenna Exp $
+#
+# standard NetBSD/evbarm for IXM1200 options
+
+machine	evbarm arm
+
+# Pull in IXM1200 config definitions.
+include "arch/evbarm/conf/files.ixm1200"
+
+options 	EXEC_ELF32
+options 	EXEC_AOUT
+options 	EXEC_SCRIPT
+
+# To support easy transit to ../arch/arm/arm32
+options 	ARM32
+
+makeoptions	LOADADDRESS="0xC0200000"
+makeoptions	BOARDTYPE="ixm1200"
+
+# We need to configure the PCI bus.
+options 	PCI_NETBSD_CONFIGURE
+#options		__OLD_INTERRUPT_CODE	# XXX XXX for now
+#options		__HAVE_GENERIC_SOFT_INTERRUPTS
