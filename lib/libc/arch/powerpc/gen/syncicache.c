@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.4 2001/01/26 13:20:32 wiz Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.5 2001/08/27 16:46:43 matt Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -45,13 +45,13 @@
 #error "Must know the size of a cache line"
 #endif
 #else
-static void getcachelinesize __P((void));
+static void getcachelinesize (void);
 
 static int _cachelinesize;
 #define	CACHELINESIZE	_cachelinesize
 
 static void
-getcachelinesize()
+getcachelinesize(void)
 {
 	static int cachemib[] = { CTL_MACHDEP, CPU_CACHELINE };
 	size_t clen = sizeof(_cachelinesize);
@@ -64,9 +64,7 @@ getcachelinesize()
 #endif
 
 void
-__syncicache(from, len)
-	void *from;
-	int len;
+__syncicache(void *from, int len)
 {
 	int l, off;
 	char *p;
