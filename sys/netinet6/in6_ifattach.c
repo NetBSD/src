@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.16 2000/02/02 13:44:06 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.17 2000/02/02 16:58:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -221,6 +221,10 @@ found:
 	}
 }
 
+/*
+ * XXX multiple loopback interface needs more care.  for instance,
+ * nodelocal address needs to be configured onto only one of them.
+ */
 void
 in6_ifattach(ifp, type, laddr, noloop)
 	struct ifnet *ifp;
@@ -611,6 +615,9 @@ in6_ifattach(ifp, type, laddr, noloop)
 	return;
 }
 
+/*
+ * NOTE: in6_ifdetach() does not support loopback if at this moment.
+ */
 void
 in6_ifdetach(ifp)
 	struct ifnet *ifp;
@@ -664,6 +671,9 @@ in6_ifdetach(ifp)
 		free(ia, M_IFADDR);
 	}
 
+	/* cleanup multicast address kludge table, if there is any */
+	in6_purgemkludge(ifp);
+  
 	/* remove route to link-local allnodes multicast (ff02::1) */
 	bzero(&sin6, sizeof(sin6));
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
