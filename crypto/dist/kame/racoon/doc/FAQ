@@ -1,0 +1,101 @@
+racoon FAQ
+KAME team
+$KAME: FAQ,v 1.9 2000/11/24 03:09:38 itojun Exp $
+
+
+Q: With what other IKE/IPsec implementation racoon is known to be interoperable?
+
+A:
+	See "IMPLEMENTATION" document supplied with KAME kit, or:
+	http://www.kame.net/dev/cvsweb.cgi/kame/IMPLEMENTATION
+	As we have tested/got test reports in the past, and our end and
+	the other end may have changed their implemenations, we are not sure
+	if we can interoperate with them today (we hope them to interoperate,
+	but we are not sure).
+	Also note that, IKE interoperability highly depends on configuration
+	on both ends.  You must configure both ends exactly the same.
+
+Q: How can I make racoon interoperate with <IKE/IPsec implementation>?
+
+A:
+	Configure both ends exactly the same.  With just a tiny little
+	differnce, you will be in trouble.
+
+Q: How to build racoon on my platform?
+
+A: (NetBSD 1.5/current, FreeBSD 4.1/current)
+	To build racoon on these platforms, there are couple of ways:
+	- on NetBSD/FreeBSD integrated platforms, use pkgsrc/ports.
+	  It is the easiest and recommended way.
+	- If you need to use configure.in and Makefile.in distributed with
+	  KAME kit, kame/kame/racoon, use the following operation:
+		% (cd ../../../netbsd/lib; make)
+		% env LIBS=-L../../../netbsd/lib/libpfkey CFLAGS=-I../../sys \
+		    ./configure --with-libpfkey
+		% make
+	  If you do not do the above, you may see missing symbols with pfkey_xx
+	  functions, and/or mismatch in ipsec.h.  PKGSRC/PORTS IS DEFINITELY
+	  THE RECOMMENDED WAY.
+
+A: (KAME-patched platforms)
+	- on KAME-patched platforms, use <opsys>/usr.sbin/racoon, not
+	  configure.in and Makefile.in.
+	- If you need to use configure.in and Makefile.in under
+	  kame/kame/racoon, use the following options to configure.in:
+		% env LIBS=-L../../../bsdi4/lib/libpfkey ./configure \
+		    --with-libpfkey
+		% make
+
+Q: Describe me the options to "configure".
+
+A:
+	--enable-debug:
+		Enable debugging options.
+	--enable-yydebug:
+		Enable yacc/lex tracing.
+	--enable-pedant:
+		Use strict compilation options (-Wall -Werror).
+	--with-adminport: (INSECURE)
+		Lets racoon to listen to racoon admin port, which is to
+		be contacted by kmpstat(8).  This one still needs more work
+		(it lacks authentication, and is insecure), and is disabled
+		by default.  If you need kmpstat(8) for your experiment,
+		you may turn this on, but make sure to use use it only in
+		testbed network environment (not the reallife network).
+	--with-efence: (for debug only)
+		Use ElectricFence library, which helps us debug dynamic
+		memory allocation mistakes.
+	--with-gc: (experimental)
+		Use Bohem-GC garbage collector.
+		Make sure you compile all the binaries, including libipsec/
+		whatever, with "GC_malloc" and "GC_free" instead of "malloc"
+		and "free" (cc -Dmalloc=GC_malloc -Dfree=GC_free").
+
+Q: How can I get help?
+
+A:
+	Always identify your operating system platforms, the versions you are
+	using (like "KAME SNAP, 2000/Sep/4"), and information to repeat the
+	problem.  It is *mandatory* for you to submit the following at least:
+	- version identification
+	- trace from racoon, taken by "racoon -d 0xffffffff"
+		(maximum debug level)
+	- configuration file you are using
+	- probabaly, tcpdump trace
+	http://orange.kame.net/dev/send-pr.html has the guideline.
+
+	If you do not identify the version you are using, we will not help you.
+
+	If your question is not confidential, send your questions to:
+	- as KAME problem report from http://orange.kame.net/dev/send-pr.html
+	- snap-users@kame.net
+		users mailing list, subscription guildeline: seewww.kame.net.
+	- NOT TO INDIVIDUAL DEVELOPERS.
+
+	If your question is confidential, send your questions to:
+	- core@kame.net
+
+Q: Other documents to look at?
+	http://www.netbsd.org/Documentation/network/ipsec/
+	http://www.kame.net/
+	http://www.kame.net/newsletter/
