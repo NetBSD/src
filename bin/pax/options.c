@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.48 2002/10/16 03:46:08 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.49 2002/10/16 18:53:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.48 2002/10/16 03:46:08 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.49 2002/10/16 18:53:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -776,6 +776,7 @@ tar_options(int argc, char **argv)
 	 * Set default values.
 	 */
 	rmleadslash = 1;
+	is_gnutar = 1;
 
 	/*
 	 * process option flags

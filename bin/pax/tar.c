@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.27 2002/10/16 04:40:55 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.28 2002/10/16 18:53:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.27 2002/10/16 04:40:55 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.28 2002/10/16 18:53:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ static int ull_oct(unsigned long long, char *, int, int);
  */
 
 static int tar_nodir;			/* do not write dirs under old tar */
-int is_gnutar = 1;			/* behave like gnu tar; enable gnu
+int is_gnutar;				/* behave like gnu tar; enable gnu
 					 * extensions and skip end-ofvolume
 					 * checks
 					 */
