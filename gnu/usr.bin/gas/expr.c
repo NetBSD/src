@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: expr.c,v 1.6 1997/03/09 20:49:06 pk Exp $";
+static char rcsid[] = "$Id: expr.c,v 1.6.2.1 1998/11/24 07:56:59 cgd Exp $";
 #endif
 
 #include <ctype.h>
@@ -845,7 +845,9 @@ segT expr(rank, resultP)
  * expression is given the segment of right expression (always a DIFFERENCE,
  * which should get resolved by fixup_segment())
  */
-				if (resultP->X_got_symbol) {
+				if (resultP->X_got_symbol &&
+				    right.X_add_symbol != NULL &&
+				    right.X_subtract_symbol != NULL) {
 					resultP->X_add_symbol = right.X_add_symbol;
 					resultP->X_subtract_symbol = right.X_subtract_symbol;
 					seg1 = S_GET_SEGMENT(right.X_add_symbol);
