@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.595 2003/12/06 11:20:55 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.596 2003/12/08 11:07:27 scw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.597 2003/12/06 11:19:17 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.598 2003/12/08 11:06:36 scw Exp 
  */
 
 /*
@@ -1732,6 +1732,7 @@
 
 /* Intersil products */
 #define	PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN	0x3873		/* Intersil PRISM2.5 Mini-PCI WLAN */
+#define	PCI_PRODUCT_INTERSIL_MINI_PCI_P54	0x3890		/* Intersil PRISM-54 Mini-PCI WLAN */
 
 /* Invertex */
 #define	PCI_PRODUCT_INVERTEX_AEON	0x0005		/* AEON */
