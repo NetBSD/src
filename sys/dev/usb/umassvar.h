@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.8 2001/12/14 08:58:51 gehenna Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.9 2001/12/17 12:16:15 gehenna Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -162,53 +162,29 @@ struct umass_softc {
 
 	u_int8_t		sc_epaddr[UMASS_NEP];
 	usbd_pipe_handle	sc_pipe[UMASS_NEP];
+	usb_device_request_t	sc_req;
 
 	const struct umass_wire_methods *sc_methods;
 
-	unsigned char		drive;
-#define DRIVE_GENERIC		0	/* use defaults for this one */
-#define ZIP_100			1	/* to be used for quirks */
-#define ZIP_250			2
-#define SHUTTLE_EUSB		3
-#define INSYSTEM_USBCABLE	4
-	unsigned char		quirks;
-	/* The drive does not support Test Unit Ready. Convert to
-	 * Start Unit.
-	 * Y-E Data
-	 * ZIP 100
-	 */
-#define NO_TEST_UNIT_READY	0x01
-	/* The drive does not reset the Unit Attention state after
-	 * REQUEST SENSE has been sent. The INQUIRY command does not reset
-	 * the UA either, and so CAM runs in circles trying to retrieve the
-	 * initial INQUIRY data.
-	 * Y-E Data
-	 */
-#define RS_NO_CLEAR_UA		0x02	/* no REQUEST SENSE on INQUIRY*/
-	/* The drive does not support START_STOP.
-	 * Shuttle E-USB
-	 */
-#define NO_START_STOP		0x04
-	/* Don't ask for full inquiry data (255 bytes).
-	 * Yano ATAPI-USB
-	 */
-#define FORCE_SHORT_INQUIRY      0x08
+	u_int8_t		sc_wire;	/* wire protocol */
+#define	UMASS_WPROTO_UNSPEC	0
+#define	UMASS_WPROTO_BBB	1
+#define	UMASS_WPROTO_CBI	2
+#define	UMASS_WPROTO_CBI_I	3
 
-	/* The device uses a weird CSWSIGNATURE. */
-#define WRONG_CSWSIG		0x10
+	u_int8_t		sc_cmd;		/* command protocol */
+#define	UMASS_CPROTO_UNSPEC	0
+#define	UMASS_CPROTO_SCSI	1
+#define	UMASS_CPROTO_ATAPI	2
+#define	UMASS_CPROTO_UFI	3
+#define	UMASS_CPROTO_RBC	4
 
-	u_int8_t	wire_proto;		/* USB wire protocol */
-#define WPROTO_BBB	1
-#define WPROTO_CBI	2
-#define WPROTO_CBI_I	3
-	u_int8_t	cmd_proto;		/* command protocol */
-#define CPROTO_SCSI	1
-#define CPROTO_ATAPI	2
-#define CPROTO_UFI	3
-#define CPROTO_RBC	4
-
-	u_char			subclass;	/* interface subclass */
-	u_char			protocol;	/* interface protocol */
+	u_int32_t		sc_quirks;
+#define	UMASS_QUIRK_NO_TEST_UNIT_READY	0x00000001
+#define	UMASS_QUIRK_RS_NO_CLEAR_UA	0x00000002
+#define	UMASS_QUIRK_NO_START_STOP	0x00000004
+#define	UMASS_QUIRK_FORCE_SHORT_INQUIRY	0x00000008
+#define	UMASS_QUIRK_WRONG_CSWSIG	0x00000010
 
 	/* Bulk specific variables for transfers in progress */
 	umass_bbb_cbw_t		cbw;	/* command block wrapper */
@@ -216,10 +192,6 @@ struct umass_softc {
 	/* CBI specific variables for transfers in progress */
 	umass_cbi_cbl_t		cbl;	/* command block */ 
 	umass_cbi_sbl_t		sbl;	/* status block */
-
-	/* generic variables for transfers in progress */
-	/* ctrl transfer requests */
-	usb_device_request_t	request;
 
 	/* xfer handles
 	 * Most of our operations are initiated from interrupt context, so
