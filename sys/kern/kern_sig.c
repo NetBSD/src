@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.39 1995/02/03 11:35:57 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.40 1995/03/08 01:20:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -445,7 +445,7 @@ compat_43_sigstack(p, uap, retval)
 	}
 	return (error);
 }
-#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_HPUX */
+#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_HPUX || COMPAT_OSF1 */
 
 /* ARGSUSED */
 sigaltstack(p, uap, retval)
