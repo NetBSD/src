@@ -1,4 +1,4 @@
-.\"	$NetBSD: termcap.5,v 1.13 1998/04/28 07:19:29 fair Exp $
+.\"	$NetBSD: termcap.5,v 1.14 1999/03/07 04:19:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1001,13 +1001,11 @@ shifts over to the
 which then move together around the end of the
 current line and onto the next as you insert, then you have the second type of
 terminal and should give the capability
-.Sy \&in ,
+.Sy in ,
 which stands for
 .Dq insert null .
 While these are two logically separate attributes
-(one line
-.Em \&vs .
-multi-line insert mode,
+(one-line vs. multi-line insert mode,
 and special treatment of untyped spaces),
 we have seen no terminals whose insert
 mode cannot be described with the single attribute.
