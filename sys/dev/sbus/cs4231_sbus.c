@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.25 2002/12/10 13:44:47 pk Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.26 2003/02/27 13:30:39 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.25 2002/12/10 13:44:47 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.26 2003/02/27 13:30:39 pk Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.25 2002/12/10 13:44:47 pk Exp $");
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>
 
@@ -148,7 +149,17 @@ cs4231_sbus_match(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(sa->sa_name, AUDIOCS_PROM_NAME) == 0);
+	if (strcmp(sa->sa_name, AUDIOCS_PROM_NAME) != 0)
+		return (0);
+
+	/*
+	 * Some machine have a SUNW,CS4231 node, but no hardware.
+	 * It seems these can be identified by a `serial' device type.
+	 */
+	if (strcmp(PROM_getpropstring(sa->sa_node, "device_type"),
+		   "serial") == 0)
+		return (0);
+	return (1);
 }
 
 
