@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.156 2004/04/29 04:31:56 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.157 2004/04/29 04:33:19 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1564,3 +1564,9 @@ share/man/man4/termios.4			1.28
 
 	Add missing itemization for CR and NL special characters. PR#25352
 	[uwe, ticket #216]
+
+libexec/ld.elf_so/arch/vax/Makefile.inc		1.9
+
+	The -symbolic flag in gcc 2.95.3 is not passed to the linker, which is
+	required.  Restore the -Bsymbolic option in LDFLAGS on the vax.
+	[mhitch, ticket #219]
