@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.92 1999/06/09 04:25:30 christos Exp $
+	$NetBSD: syscalls.master,v 1.93 1999/06/15 23:28:16 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -486,8 +486,8 @@
 240	STD		{ int sys_nanosleep(const struct timespec *rqtp, \
 			    struct timespec *rmtp); }
 241	STD		{ int sys_fdatasync(int fd); }
-242	UNIMPL
-243	UNIMPL
+242	STD		{ int sys_mlockall(int flags); }
+243	STD		{ int sys_munlockall(void); }
 244	UNIMPL
 245	UNIMPL
 246	UNIMPL
