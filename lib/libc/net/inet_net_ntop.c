@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_ntop.c,v 1.14 2001/12/09 01:17:36 lukem Exp $	*/
+/*	$NetBSD: inet_net_ntop.c,v 1.15 2002/08/16 12:18:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_ntop.c,v 1.8 2001/09/27 15:08:36 marka Exp ";
 #else
-__RCSID("$NetBSD: inet_net_ntop.c,v 1.14 2001/12/09 01:17:36 lukem Exp $");
+__RCSID("$NetBSD: inet_net_ntop.c,v 1.15 2002/08/16 12:18:06 itojun Exp $");
 #endif
 #endif
 
@@ -40,12 +40,6 @@ __RCSID("$NetBSD: inet_net_ntop.c,v 1.14 2001/12/09 01:17:36 lukem Exp $");
 
 #ifdef __weak_alias
 __weak_alias(inet_net_ntop,_inet_net_ntop)
-#endif
-
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) strlen(sprintf/**/x)
-#else
-# define SPRINTF(x) ((size_t)sprintf x)
 #endif
 
 static char *	inet_net_ntop_ipv4(const u_char *, int, char *, size_t);
@@ -96,55 +90,69 @@ static char *
 inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 {
 	char *odst = dst;
-	char *t;
 	u_int m;
 	int b;
+	char *ep;
+	int advance;
 
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(dst != NULL);
+
+	ep = dst + size;
+	if (ep < dst)
+		goto emsgsize;
 
 	if (bits < 0 || bits > 32) {
 		errno = EINVAL;
 		return (NULL);
 	}
 	if (bits == 0) {
-		if (size < sizeof "0")
+		if (ep - dst < sizeof "0")
 			goto emsgsize;
 		*dst++ = '0';
-		size--;
 		*dst = '\0';
 	}
 
 	/* Format whole octets. */
 	for (b = bits / 8; b > 0; b--) {
-		if (size <= sizeof "255.")
+		if (ep - dst <= sizeof "255.")
 			goto emsgsize;
-		t = dst;
-		dst += SPRINTF((dst, "%u", *src++));
+		advance = snprintf(dst, ep - dst, "%u", *src++);
+		if (advance <= 0 || advance >= ep - dst)
+			goto emsgsize;
+		dst += advance;
 		if (b > 1) {
+			if (dst + 1 >= ep)
+				goto emsgsize;
 			*dst++ = '.';
 			*dst = '\0';
 		}
-		size -= (size_t)(dst - t);
 	}
 
 	/* Format partial octet. */
 	b = bits % 8;
 	if (b > 0) {
-		if (size <= sizeof ".255")
+		if (ep - dst <= sizeof ".255")
 			goto emsgsize;
-		t = dst;
-		if (dst != odst)
+		if (dst != odst) {
+			if (dst + 1 >= ep)
+				goto emsgsize;
 			*dst++ = '.';
+		}
 		m = ((1 << b) - 1) << (8 - b);
-		dst += SPRINTF((dst, "%u", *src & m));
-		size -= (size_t)(dst - t);
+		advance = snprintf(dst, ep - dst, "%u", *src & m);
+		if (advance <= 0 || advance >= ep - dst)
+			goto emsgsize;
+		dst += advance;
 	}
 
 	/* Format CIDR /width. */
-	if (size <= sizeof "/32")
+	if (ep - dst <= sizeof "/32")
 		goto emsgsize;
-	dst += SPRINTF((dst, "/%u", bits));
+	advance = snprintf(dst, ep - dst, "/%u", bits);
+	if (advance <= 0 || advance >= ep - dst)
+		goto emsgsize;
+	dst += advance;
 	return (odst);
 
  emsgsize:
@@ -184,6 +192,8 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 	char	*cp;
 	int	words;
 	u_char	*s;
+	char	*ep;
+	int	advance;
 
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(dst != NULL);
@@ -194,6 +204,7 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 	}
 
 	cp = outbuf;
+	ep = outbuf + sizeof(outbuf);
 
 	if (bits == 0) {
 		*cp++ = ':';
@@ -256,25 +267,36 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 				continue;
 			}
 
-			if (is_ipv4 && p > 5 ) {
+			if (is_ipv4 && p > 5) {
 				*cp++ = (p == 6) ? ':' : '.';
-				cp += SPRINTF((cp, "%u", *s++));
+				advance = snprintf(cp, ep - cp, "%u", *s++);
+				if (advance <= 0 || advance >= ep - cp)
+					goto emsgsize;
+				cp += advance;
 				/* we can potentially drop the last octet */
 				if (p != 7 || bits > 120) {
 					*cp++ = '.';
-					cp += SPRINTF((cp, "%u", *s++));
+					advance = snprintf(cp, ep - cp, "%u",
+					    *s++);
+					if (advance <= 0 || advance >= ep - cp)
+						goto emsgsize;
+					cp += advance;
 				}
 			} else {
 				if (cp != outbuf)
 					*cp++ = ':';
-				cp += SPRINTF((cp, "%x", *s * 256 + s[1]));
+				advance = snprintf(cp, ep - cp, "%x",
+				    *s * 256 + s[1]);
+				if (advance <= 0 || advance >= ep - cp)
+					goto emsgsize;
+				cp += advance;
 				s += 2;
 			}
 		}
 	}
 	/* Format CIDR /width. */
 	/* LINTED */
-	SPRINTF((cp, "/%u", bits));
+	snprintf(cp, ep - cp, "/%u", bits);
 	if (strlen(outbuf) + 1 > size)
 		goto emsgsize;
 	strcpy(dst, outbuf);
