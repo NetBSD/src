@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.26 1994/04/07 06:50:48 mycroft Exp $
+ *	$Id: if_ep.c,v 1.27 1994/04/08 17:58:47 mycroft Exp $
  */
 /*
  * TODO:
@@ -202,7 +202,9 @@ isa_epprobe(sc, ia)
 
 	outb(ELINK_ID_PORT, ACTIVATE_ADAPTER_TO_CONFIG);
 
-	return (0x10);		/* 16 bytes of I/O space used. */
+	ia->ia_iosize = 0x10;		/* 16 ports of I/O space used. */
+	ia->ia_msize = 0;
+	return 1;
 }
 
 static void
