@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.232 2003/01/20 12:06:49 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.233 2003/01/20 15:45:40 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3358,7 +3358,7 @@ pmap_bootstrap4m(void)
 	 */
 	pmap_kernel()->pm_reg_ptps[0] = (int *) kernel_regtable_store;
 	pmap_kernel()->pm_reg_ptps_pa[0] =
-		VA2PA((caddr_t)pmap_kernel()->pm_reg_ptps[0]);
+		 PMAP_BOOTSTRAP_VA2PA(kernel_regtable_store);
 
 	/* Install L1 table in context 0 */
 	setpgt4m(&cpuinfo.ctx_tbl[0],
@@ -3378,7 +3378,8 @@ pmap_bootstrap4m(void)
 		    &kernel_segtable_store[reg * SRMMU_L2SIZE];
 
 		setpgt4m(&pmap_kernel()->pm_reg_ptps[0][reg + VA_VREG(KERNBASE)],
-			 (VA2PA(kphyssegtbl) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
+		    (PMAP_BOOTSTRAP_VA2PA(kphyssegtbl) >> SRMMU_PPNPASHIFT) |
+		    SRMMU_TEPTD);
 
 		rp->rg_seg_ptps = (int *)kphyssegtbl;
 
@@ -3394,7 +3395,7 @@ pmap_bootstrap4m(void)
 				[((reg * NSEGRG) + seg) * SRMMU_L3SIZE];
 
 			setpgt4m(&rp->rg_seg_ptps[seg],
-				 (VA2PA(kphyspagtbl) >> SRMMU_PPNPASHIFT) |
+				 (PMAP_BOOTSTRAP_VA2PA(kphyspagtbl) >> SRMMU_PPNPASHIFT) |
 				 SRMMU_TEPTD);
 			sp->sg_pte = (int *) kphyspagtbl;
 		}
@@ -3578,17 +3579,15 @@ void
 pmap_globalize_boot_cpuinfo(cpi)
 	struct cpu_info *cpi;
 {
-#if defined(SUN4M) || defined(SUN4D)	/* Only implemented for SUN4M/D */
 	vaddr_t va;
 	vsize_t off;
 
 	off = 0;
 	for (va = (vaddr_t)cpi; off < sizeof(*cpi); va += NBPG, off += NBPG) {
-		paddr_t pa = VA2PA((caddr_t)CPUINFO_VA + off);
+		paddr_t pa = PMAP_BOOTSTRAP_VA2PA(CPUINFO_VA + off);
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 	}
 	pmap_update(pmap_kernel());
-#endif /* SUN4M || SUN4D */
 }
 
 /*
