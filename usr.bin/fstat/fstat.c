@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.35 1999/05/02 22:50:19 thorpej Exp $	*/
+/*	$NetBSD: fstat.c,v 1.36 1999/07/08 12:07:56 tron Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.35 1999/05/02 22:50:19 thorpej Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.36 1999/07/08 12:07:56 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,9 +61,11 @@ __RCSID("$NetBSD: fstat.c,v 1.35 1999/05/02 22:50:19 thorpej Exp $");
 #include <sys/sysctl.h>
 #include <sys/filedesc.h>
 #define	_KERNEL
+#define _LKM
 #include <sys/file.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
+#undef _LKM
 #undef _KERNEL
 #define NFS
 #include <sys/mount.h>
