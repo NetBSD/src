@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.45 2000/03/20 00:49:42 mycroft Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.46 2000/03/20 05:48:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -326,8 +326,7 @@ ncr53c9x_reset(sc)
 	}
 
 	if (sc->sc_rev == NCR_VARIANT_AM53C974)
-		NCR_WRITE_REG(sc, NCR_AMDCFG4,
-		    NCRAMDCFG4_GE12NS | NCRAMDCFG4_RADE);
+		NCR_WRITE_REG(sc, NCR_AMDCFG4, sc->sc_cfg4);
 }
 
 /*
