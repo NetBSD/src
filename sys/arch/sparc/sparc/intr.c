@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.16 1996/10/13 03:00:33 christos Exp $ */
+/*	$NetBSD: intr.c,v 1.17 1996/10/20 19:32:42 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,8 +43,6 @@
  *
  *	@(#)intr.c	8.3 (Berkeley) 11/11/93
  */
-
-#include "ppp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
