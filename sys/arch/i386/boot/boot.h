@@ -25,11 +25,12 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: boot.h,v 1.2 1993/08/02 17:52:15 mycroft Exp $
+ *	$Id: boot.h,v 1.3 1994/04/27 21:32:00 cgd Exp $
  */
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #include <ufs/quota.h>
 #include <ufs/fs.h>
 #include <ufs/inode.h>
