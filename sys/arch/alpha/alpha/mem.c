@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1 1995/02/13 23:07:05 cgd Exp $	*/
+/*	$NetBSD: mem.c,v 1.2 1995/04/10 01:55:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,6 +60,26 @@
 #include <vm/pmap.h>
 
 caddr_t zeropage;
+
+/*ARGSUSED*/
+int
+mmopen(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
+
+/*ARGSUSED*/
+int
+mmclose(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
 
 /*ARGSUSED*/
 mmrw(dev, uio, flags)
@@ -155,7 +175,8 @@ mmrw(dev, uio, flags)
 	return (error);
 }
 
-mmmap(dev, off, prot)
+int
+mmmmap(dev, off, prot)
 	dev_t dev;
 	vm_offset_t off;
 	int prot;
