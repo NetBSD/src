@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.1 2004/10/22 13:08:23 augustss Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.2 2004/10/23 13:29:18 augustss Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.1 2004/10/22 13:08:23 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.2 2004/10/23 13:29:18 augustss Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -104,7 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.1 2004/10/22 13:08:23 augustss Exp $")
 
 #include <dev/usb/if_cdcereg.h>
 
-Static void	*cdce_get_desc(usbd_device_handle dev, int type, int subtype);
 Static int	 cdce_tx_list_init(struct cdce_softc *);
 Static int	 cdce_rx_list_init(struct cdce_softc *);
 Static int	 cdce_newbuf(struct cdce_softc *, struct cdce_chain *,
@@ -117,7 +116,7 @@ Static int	 cdce_ioctl(struct ifnet *, u_long, caddr_t);
 Static void	 cdce_init(void *);
 Static void	 cdce_watchdog(struct ifnet *);
 Static void	 cdce_stop(struct cdce_softc *);
-static uint32_t	 cdce_crc32(const void *, size_t);
+Static uint32_t	 cdce_crc32(const void *, size_t);
 
 Static const struct cdce_type cdce_devs[] = {
   {{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2501 }, CDCE_NO_UNION },
@@ -163,11 +162,12 @@ USB_ATTACH(cdce)
 	const struct cdce_type		*t;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
-	usb_cdc_union_descriptor_t	*ud;
+	const usb_cdc_union_descriptor_t *ud;
 	int				 data_ifcno;
-	u_int16_t			 macaddr_hi;
 	int				 i;
 	u_char				 eaddr[ETHER_ADDR_LEN];
+	const usb_cdc_ethernet_descriptor_t *ue;
+	char				 eaddr_str[USB_MAX_STRING_LEN];
 
 	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
 	USB_ATTACH_SETUP;
@@ -183,8 +183,8 @@ USB_ATTACH(cdce)
 	if (sc->cdce_flags & CDCE_NO_UNION)
 		sc->cdce_data_iface = sc->cdce_ctl_iface;
 	else {
-		ud = cdce_get_desc(sc->cdce_udev, UDESC_CS_INTERFACE,
-		    UDESCSUB_CDC_UNION);
+		ud = (usb_cdc_union_descriptor_t *)usb_find_desc(sc->cdce_udev,
+		    UDESC_CS_INTERFACE, UDESCSUB_CDC_UNION);
 		if (ud == NULL) {
 			printf("%s: no union descriptor\n",
 			    USBDEVNAME(sc->cdce_dev));
@@ -247,16 +247,32 @@ USB_ATTACH(cdce)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	s = splnet();
+	ue = (usb_cdc_ethernet_descriptor_t *)usb_find_desc(dev,
+            UDESC_INTERFACE, UDESCSUB_CDC_ENF);
+	if (!ue || usbd_get_string(dev, ue->iMacAddress, eaddr_str)) {
+		printf("%s: faking address\n", USBDEVNAME(sc->cdce_dev));
+		eaddr[0]= 0x2a;
+		memcpy(&eaddr[1], &hardclock_ticks, sizeof(u_int32_t));
+		eaddr[5] = (u_int8_t)(sc->cdce_dev.dv_unit);
+	} else {
+		int i;
 
-	/*
-	 * XXX This is totally broken for CDC.
-	 * The address can be found as a string (weird, huh?).
-	 */
-	macaddr_hi = htons(0x2acb);
-	memcpy(&eaddr[0], &macaddr_hi, sizeof(u_int16_t));
-	memcpy(&eaddr[2], &hardclock_ticks, sizeof(u_int32_t));
-	eaddr[5] = (u_int8_t)(sc->cdce_dev.dv_unit);
+		memset(eaddr, 0, ETHER_ADDR_LEN);
+		for (i = 0; i < ETHER_ADDR_LEN * 2; i++) {
+			int c = eaddr_str[i];
+
+			if ('0' <= c && c <= '9')
+				c -= '0';
+			else
+				c -= 'A';
+			c &= 0xf;
+			if (c%2 == 0)
+				c <<= 4;
+			eaddr[i / 2] |= c;
+		}
+	}
+
+	s = splnet();
 
 	printf("%s: address %s\n", USBDEVNAME(sc->cdce_dev),
 	    ether_sprintf(eaddr));
@@ -777,26 +793,7 @@ cdce_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	splx(s);
 }
 
-void *
-cdce_get_desc(usbd_device_handle dev, int type, int subtype)
-{
-	usb_descriptor_t	*desc;
-	usb_config_descriptor_t	*cd = usbd_get_config_descriptor(dev);
-	uByte			*p = (uByte *)cd;
-	uByte			*end = p + UGETW(cd->wTotalLength);
-
-	while (p < end) {
-		desc = (usb_descriptor_t *)p;
-		if (desc->bDescriptorType == type &&
-		    desc->bDescriptorSubtype == subtype)
-			return (desc);
-		p += desc->bLength;
-	}
-
-	return (NULL);
-}
-
-int
+Static int
 cdce_activate(device_ptr_t self, enum devact act)
 {
 	struct cdce_softc *sc = (struct cdce_softc *)self;
@@ -865,7 +862,7 @@ static uint32_t cdce_crc32_tab[] = {
 	0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-uint32_t
+Static uint32_t
 cdce_crc32(const void *buf, size_t size)
 {
 	const uint8_t *p;
