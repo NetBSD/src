@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.15 2003/05/24 06:21:22 gmcgarry Exp $	*/
+/*	$NetBSD: intio.c,v 1.16 2003/07/05 16:21:17 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.15 2003/05/24 06:21:22 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.16 2003/07/05 16:21:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ intioattach(parent, self, aux)
 
 	memset(&ia, 0, sizeof(ia));
 
-	for (i=0; i<ndevs; i++) {
+	for (i = 0; i < ndevs; i++) {
 
 		/*
 		 * Internal HP-IB doesn't always return a device ID,
