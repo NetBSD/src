@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.73 2003/06/26 07:41:48 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.74 2003/06/26 21:49:17 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.73 2003/06/26 07:41:48 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.74 2003/06/26 21:49:17 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1350,7 +1350,7 @@ ip_mdq(m, ifp, rt)
 	struct ip  *ip = mtod(m, struct ip *);
 	vifi_t vifi;
 	struct vif *vifp;
-	int plen = ntohs(ip->ip_len);
+	int plen = ntohs(ip->ip_len) - (ip->ip_hl << 2);
 
 /*
  * Macro to send packet on vif.  Since RSVP packets don't get counted on
