@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.5,v 1.21 2002/10/02 11:05:56 wiz Exp $
+.\"	$NetBSD: disklabel.5,v 1.22 2002/12/12 11:34:46 scw Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,12 +63,13 @@ type (standard file system, swap area, etc.).
 The file system updates the in-core copy of the label if it contains
 incomplete information about the file system.
 .Pp
-The label is located in sector number
-.Dv LABELSECTOR
-of the drive, usually sector 0 where it may be found
+The label is located in the sector number returned by the
+.Xr getlabelsector 3
+function, usually sector 0 where it may be found
 without any information about the disk geometry.
-It is at an offset
-.Dv LABELOFFSET
+It is at an offset (specified by the
+.Xr getlabeloffset 3
+function)
 from the beginning of the sector, to allow room for the initial bootstrap.
 The disk sector containing the label is normally made read-only
 so that it is not accidentally overwritten by pack-to-pack copies
