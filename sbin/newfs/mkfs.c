@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkfs.c	8.3 (Berkeley) 2/3/94";*/
-static char *rcsid = "$Id: mkfs.c,v 1.15 1994/12/18 16:00:21 cgd Exp $";
+static char *rcsid = "$Id: mkfs.c,v 1.16 1995/03/04 06:10:39 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1094,7 +1094,7 @@ rdfs(bno, size, bf)
 		memcpy(bf, membase + bno * sectorsize, size);
 		return;
 	}
-	if (lseek(fsi, (off_t)bno * sectorsize, 0) < 0) {
+	if (lseek(fsi, (off_t)bno * sectorsize, SEEK_SET) < 0) {
 		printf("seek error: %ld\n", bno);
 		perror("rdfs");
 		exit(33);
