@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.24 1998/06/02 20:41:51 mark Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.25 1998/07/06 01:56:41 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,6 +43,7 @@
  * Created      : 08/10/94
  */
 
+#include "opt_armfpe.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>
