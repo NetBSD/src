@@ -135,7 +135,7 @@ static void handle_notified PROTO((char *, int));
 static size_t try_read_from_server PROTO ((char *, size_t));
 
 static void auth_server PROTO ((cvsroot_t *, struct buffer *, struct buffer *,
-				int, int, char *));
+				int, int));
 
 /* We need to keep track of the list of directories we've sent to the
    server.  This list, along with the current CVSROOT, will help us
@@ -3925,7 +3925,7 @@ connect_to_pserver (root, to_server_p, from_server_p, verify_only, do_gssapi)
 
     make_bufs_from_fds (sock, sock, 0, &to_server, &from_server, 1);
 
-    auth_server (root, to_server, from_server, verify_only, do_gssapi, hostname);
+    auth_server (root, to_server, from_server, verify_only, do_gssapi);
 
     if (verify_only)
     {
@@ -3959,13 +3959,12 @@ connect_to_pserver (root, to_server_p, from_server_p, verify_only, do_gssapi)
 
 
 static void
-auth_server (root, lto_server, lfrom_server, verify_only, do_gssapi, hostname)
+auth_server (root, lto_server, lfrom_server, verify_only, do_gssapi)
     cvsroot_t *root;
     struct buffer *lto_server;
     struct buffer *lfrom_server;
     int verify_only;
     int do_gssapi;
-    char *hostname;
 {
     char *username;			/* the username we use to connect */
     char no_passwd = 0;			/* gets set if no password found */
@@ -3995,7 +3994,7 @@ auth_server (root, lto_server, lfrom_server, verify_only, do_gssapi, hostname)
 	    error (1, 0, "gserver currently only enabled for socket connections");
 	}
 
-	if (! connect_to_gserver (root, fd, hostname))
+	if (! connect_to_gserver (root, fd, root->hostname))
 	{
 	    error (1, 0,
 		    "authorization failed: server %s rejected access to %s",
