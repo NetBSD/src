@@ -1,4 +1,4 @@
-/*	$NetBSD: ah.h,v 1.18 2002/09/11 03:45:44 itojun Exp $	*/
+/*	$NetBSD: ah.h,v 1.19 2003/07/20 18:01:41 itojun Exp $	*/
 /*	$KAME: ah.h,v 1.16 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ struct ah_algorithm {
 	const char *name;
 	int (*init) __P((struct ah_algorithm_state *, struct secasvar *));
 	void (*update) __P((struct ah_algorithm_state *, u_int8_t *, size_t));
-	void (*result) __P((struct ah_algorithm_state *, u_int8_t *));
+	void (*result) __P((struct ah_algorithm_state *, u_int8_t *, size_t));
 };
 
 #define	AH_MAXSUMSIZE	16

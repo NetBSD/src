@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.27 2003/07/20 17:17:20 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.28 2003/07/20 18:01:41 itojun Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.27 2003/07/20 17:17:20 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.28 2003/07/20 18:01:41 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -1139,7 +1139,7 @@ esp_auth(m0, skip, length, sav, sum)
 			break;
 		}
 	}
-	(*algo->result)(&s, sumbuf);
+	(*algo->result)(&s, sumbuf, sizeof(sumbuf));
 	bcopy(sumbuf, sum, siz);	/* XXX */
 
 	return 0;
