@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.40 2000/12/01 12:28:32 jdolecek Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.41 2000/12/01 20:31:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -119,6 +119,11 @@ const struct emul emul_linux = {
 	linux_e_proc_exec,
 	linux_e_proc_fork,
 	linux_e_proc_exit,
+#ifdef LINUX_MACHDEP_PASS_PPID_AND_EUID
+	EMUL_GETPID_PASS_PPID|EMUL_GETID_PASS_EID,
+#else
+	0,
+#endif
 };
 
 /*
