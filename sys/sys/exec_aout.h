@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.22 1998/11/15 12:43:04 drochner Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.23 1999/09/13 10:31:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -78,6 +78,7 @@ struct exec {
 #define	MID_ALPHA	141	/* Alpha BSD binary */
 #define	MID_MIPS	142	/* big-endian MIPS */
 #define	MID_ARM6	143	/* ARM6 */
+#define	MID_SH3		145	/* SH3 */
 #define	MID_POWERPC	149	/* big-endian PowerPC */
 #define	MID_VAX		150	/* vax */
 #define	MID_SPARC64	151	/* LP64 sparc */

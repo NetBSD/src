@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.1 1999/03/20 01:39:22 thorpej Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.2 1999/09/13 10:31:44 itojun Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -31,6 +31,12 @@
 #else /* __GNUC__ */
 #define	__warn_references(sym,msg)
 #endif /* __GNUC__ */
+
+#if defined(__sh3__)		/* XXX SH COFF */
+#undef __indr_reference(sym,alias)
+#undef __warn_references(sym,msg)
+#define __warn_references(sym,msg)
+#endif
 
 #define __IDSTRING(name,string)						\
 	static const char name[] __attribute__((__unused__)) = string
