@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.204 2004/08/06 19:07:27 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.205 2004/08/07 17:18:20 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.203 2004/08/06 19:07:13 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.204 2004/08/07 17:18:09 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -432,10 +432,16 @@
 #define	PCMCIA_PRODUCT_LINKSYS2_WCF11	0x3301
 #define	PCMCIA_STR_LINKSYS2_WCF11	"Instant Wireless Network CF Card"
 
-/* Lucent WaveLAN/IEEE */
-#define	PCMCIA_CIS_LUCENT_WAVELAN_IEEE	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE	0x0002
-#define	PCMCIA_STR_LUCENT_WAVELAN_IEEE	"WaveLAN/IEEE"
+/* Lucent */
+#define	PCMCIA_CIS_LUCENT_HERMES	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LUCENT_HERMES	0x0002
+#define	PCMCIA_STR_LUCENT_HERMES	"Hermes"
+#define	PCMCIA_CIS_LUCENT_HERMES2	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LUCENT_HERMES2	0x0003
+#define	PCMCIA_STR_LUCENT_HERMES2	"Hermes II"
+#define	PCMCIA_CIS_LUCENT_HERMES25	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LUCENT_HERMES25	0x0004
+#define	PCMCIA_STR_LUCENT_HERMES25	"Hermes II.5"
 
 /* MACNICA */
 #define	PCMCIA_CIS_MACNICA_ME1_JEIDA	{ NULL, NULL, NULL, NULL }
