@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.16 1995/06/19 00:20:11 cgd Exp $	*/
+/*	$NetBSD: dirs.c,v 1.17 1996/09/27 03:07:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$NetBSD: dirs.c,v 1.16 1995/06/19 00:20:11 cgd Exp $";
+static char rcsid[] = "$NetBSD: dirs.c,v 1.17 1996/09/27 03:07:05 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,9 +111,9 @@ struct rstdirdesc {
 static long	seekpt;
 static FILE	*df, *mf;
 static RST_DIR	*dirp;
-static char	dirfile[32] = "#";	/* No file */
-static char	modefile[32] = "#";	/* No file */
-static char	dot[2] = ".";		/* So it can be modified */
+static char	dirfile[MAXPATHLEN] = "#";	/* No file */
+static char	modefile[MAXPATHLEN] = "#";	/* No file */
+static char	dot[2] = ".";			/* So it can be modified */
 
 /*
  * Format of old style directories.
@@ -151,7 +151,13 @@ extractdirs(genmode)
 	struct direct nulldir;
 
 	vprintf(stdout, "Extract directories from tape\n");
-	(void) sprintf(dirfile, "%s/rstdir%d", _PATH_TMP, dumpdate);
+	(void) sprintf(dirfile, "%s/rstdir%d-XXXXXX", _PATH_TMP, dumpdate);
+	if (mktemp(dirfile) == NULL) {
+		fprintf(stderr,
+		    "restore: %s - cannot generate directory temporary\n",
+		    dirfile);
+		exit(1);
+	}
 	df = fopen(dirfile, "w");
 	if (df == NULL) {
 		fprintf(stderr,
@@ -161,7 +167,14 @@ extractdirs(genmode)
 		exit(1);
 	}
 	if (genmode != 0) {
-		(void) sprintf(modefile, "%s/rstmode%d", _PATH_TMP, dumpdate);
+		(void) sprintf(modefile, "%s/rstmode%d-XXXXXX", _PATH_TMP,
+			       dumpdate);
+		if (mktemp(modefile) == NULL) {
+			fprintf(stderr,
+			    "restore: %s - cannot generate modefile\n",
+			    modefile);
+			exit(1);
+		}
 		mf = fopen(modefile, "w");
 		if (mf == NULL) {
 			fprintf(stderr,
