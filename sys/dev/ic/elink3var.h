@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.16 1998/08/15 07:28:04 thorpej Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.17 1998/08/15 16:15:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -79,6 +79,8 @@ struct ep_softc {
 #define	EP_CHIPSET_ROADRUNNER		0x03	/* like Boomerang, but for
 						   PCMCIA; has shared memory
 						   plus FIFO buffer */
+#define	EP_CHIPSET_CORKSCREW		0x04	/* like Boomerang, but DMA
+						   hacked to work w/ ISA */
 
 	u_char	bustype;		/* parent bus type */
 #define EP_BUS_ISA	  	0x0
