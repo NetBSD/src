@@ -1,7 +1,7 @@
 #
 #	BOAT_ANCHOR -- 386-20 the gang uses for testing
 #
-#	$Id: BOAT_ANCHOR,v 1.23.2.5 1993/10/06 12:15:27 mycroft Exp $
+#	$Id: BOAT_ANCHOR,v 1.23.2.6 1993/12/04 07:37:09 cgd Exp $
 #
 
 # standard options
@@ -11,7 +11,7 @@ options		"I386_CPU"		# 386DX, 386SX, etc.
 options		DUMMY_NOPS		# speed hack; dangerous
 
 #options	GENERIC			# historical
-maxusers	10			# estimated number of users
+maxusers	4			# estimated number of users
 options		TIMEZONE=480, DST=1	# time zone to read RTC in
 options		SWAPPAGER		# paging
 options		VNODEPAGER,DEVPAGER	# vnode and device node caching
@@ -20,7 +20,7 @@ options		DDB			# kernel debugger; recommended
 
 #options	ACCOUNTING		# process accounting
 options		KTRACE			# system call tracing, a la ktrace(1)
-options		FIFO			# fifos; recommended
+#options	FIFO			# fifos; recommended
 #options	SYSVSHM			# System V shared memory; broken
 #options	"SHMMAXPGS=1024"
 #options	LKM			# loadable kernel modules
@@ -28,18 +28,18 @@ options		FIFO			# fifos; recommended
 # compatibility options
 options		"COMPAT_NOMID"		# old zmagic executables
 options		"COMPAT_43"		# 4.3 system calls
-options		"TCP_COMPAT_42"		# 4.2 networking ABI
+#options	"TCP_COMPAT_42"		# 4.2 networking ABI
 
 # file system options
 #options	QUOTA			# file system quotas
 options		FFS			# Berkeley fast file system
 options		FASTLINKS		# fast symbolic links in FFS
 options		MFS			# memory file system; uses RAM and swap
-options		NFSSERVER		# Network File System server
+#options	NFSSERVER		# Network File System server
 options		NFSCLIENT		# Network File System client
 #options	ISOFS			# ISO 9660 CD-ROM file system, with RR
 options		MSDOSFS			# MS-DOS FAT file system
-options		FDESC			# /dev/fd
+#options	FDESC			# /dev/fd
 options		KERNFS			# kernel file system; recommended
 
 # networking options
@@ -65,7 +65,7 @@ npx0 at isa? port 0xf0
 
 #serial ports
 com0 at isa? port 0x3f8
-#com1 at isa? port 0x2f8
+com1 at isa? port 0x2f8
 #com2 at isa? port 0x3e8
 #com3 at isa? port 0x2e8
 
@@ -84,12 +84,14 @@ com0 at isa? port 0x3f8
 #non-scsi disk controllers
 wdc0 at isa? port 0x1f0				# MFM, RLL, IDE, ESDI
 #wdc1 at isa? port 0x170
-wd* at wdc? drive ?
+#wd* at wdc? drive ?
+wd0 at wdc0 drive 0
 
 #non-scsi floppy controllers
 fdc0 at isa? port 0x3f0 drq 2
 #fdc1 at isa? port 0x370 drq ?
-fd* at fdc? drive ?
+#fd* at fdc? drive ?
+fd0 at fdc0 drive 0
 
 #non-scsi tape drives
 #wt0 at isa? port 0x300 drq 1			# QIC-02, QIC-36
@@ -125,8 +127,8 @@ ed0 at isa? port 0x280 iomem 0xd0000
 #pseudo-device	spkr			# speaker queue
 pseudo-device	pty 32			# pseudo-terminals
 pseudo-device	loop 1			# loopback network
-#pseudo-device	bpfilter 4		# packet filter
-#pseudo-device	sl 1			# compressed SLIP
+pseudo-device	bpfilter 1		# packet filter
+pseudo-device	sl 1			# compressed SLIP
 #pseudo-device	ppp 1			# Point-to-Point Protocol
 #pseudo-device	tb 2			# was never ported to 4.4
 #pseudo-device	tun			# missing header files
