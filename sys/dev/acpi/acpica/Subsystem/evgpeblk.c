@@ -115,14 +115,14 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evgpeblk.c,v 1.2 2003/03/04 17:25:15 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evgpeblk.c,v 1.3 2003/03/05 15:13:01 kochi Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
 #include "acnamesp.h"
 
 #define _COMPONENT          ACPI_EVENTS
-        ACPI_MODULE_NAME    ("evgpe")
+        ACPI_MODULE_NAME    ("evgpeblk")
 
 
 /*******************************************************************************
@@ -209,7 +209,7 @@ AcpiEvSaveMethodInfo (
     /* Ensure that we have a valid GPE number for this GPE block */
 
     if ((GpeNumber < GpeBlock->BlockBaseNumber) ||
-        (GpeNumber >= (GpeBlock->RegisterCount * 8)))
+        (GpeNumber - GpeBlock->BlockBaseNumber >= (GpeBlock->RegisterCount * 8)))
     {
         /* Not valid, all we can do here is ignore it */
 
