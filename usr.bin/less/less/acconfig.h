@@ -1,5 +1,7 @@
+/*	$NetBSD: acconfig.h,v 1.1.1.2 1997/04/22 13:45:27 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,6 +45,9 @@
 /* Define HAVE_VOID if your compiler supports the "void" type. */
 #undef HAVE_VOID
 
+/* Define HAVE_CONST if your compiler supports the "const" modifier. */
+#undef HAVE_CONST
+
 /* Define HAVE_TIME_T if your system supports the "time_t" type. */
 #undef HAVE_TIME_T
 
@@ -53,15 +58,18 @@
 #undef HAVE_FILENO
 
 /* Define HAVE_ERRNO if you have the errno variable */
+/* Define MUST_DEFINE_ERRNO if you have errno but it is not define 
+ * in errno.h */
 #undef HAVE_ERRNO
+#undef MUST_DEFINE_ERRNO
 
 /* Define HAVE_SYS_ERRLIST if you have the sys_errlist[] variable */
 #undef HAVE_SYS_ERRLIST
 
 /* Define HAVE_OSPEED if your termcap library has the ospeed variable */
-#undef HAVE_OSPEED
 /* Define MUST_DEFINE_OSPEED if you have ospeed but it is not defined
  * in termcap.h. */
+#undef HAVE_OSPEED
 #undef MUST_DEFINE_OSPEED
 
 /* Define HAVE_LOCALE if you have locale.h and setlocale. */

@@ -1,5 +1,7 @@
+/*	$NetBSD: main.c,v 1.1.1.2 1997/04/22 13:45:20 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,13 +44,8 @@ public int	any_display = FALSE;
 public int	wscroll;
 public char *	progname;
 public int	quitting;
-public int	more_mode = 0;
-
-extern int	quit_at_eof;
-extern int	cbufs;
-extern int	errmsgs;
-extern int	screen_trashed;
-extern int	force_open;
+public int	secure;
+public int	dohelp;
 
 #if LOGFILE
 public int	logfile = -1;
@@ -67,6 +64,8 @@ extern char *	tagoption;
 extern int	jump_sline;
 #endif
 
+extern int	missing_cap;
+extern int	know_dumb;
 
 
 /*
@@ -78,7 +77,7 @@ main(argc, argv)
 	char *argv[];
 {
 	IFILE ifile;
-	extern char *__progname;
+	char *s;
 
 #ifdef __EMX__
 	_response(&argc, &argv);
@@ -86,40 +85,52 @@ main(argc, argv)
 #endif
 
 	progname = *argv++;
+	argc--;
+
+	secure = 0;
+	s = lgetenv("LESSSECURE");
+	if (s != NULL && *s != '\0')
+		secure = 1;
 
 	/*
 	 * Process command line arguments and LESS environment arguments.
 	 * Command line arguments override environment arguments.
 	 */
+	is_tty = isatty(1);
 	get_term();
 	init_cmds();
 	init_prompt();
 	init_charset();
 	init_option();
-
-	if (strcmp(__progname, "more") == 0) {
-		more_mode = 1;
-		scan_option("-E");
-		scan_option("-m");
-		scan_option(getenv("MORE"));
-	} else
-		scan_option(getenv("LESS"));
+	scan_option(lgetenv("LESS"));
 
 #if GNU_OPTIONS
 	/*
 	 * Special case for "less --help" and "less --version".
 	 */
-	if (argc == 2)
+	if (argc == 1)
 	{
 		if (strcmp(argv[0], "--help") == 0)
+		{
 			scan_option("-?");
+			argc = 0;
+		}
 		if (strcmp(argv[0], "--version") == 0)
+		{
 			scan_option("-V");
+			argc = 0;
+		}
 	}
 #endif
 #define	isoptstring(s)	(((s)[0] == '-' || (s)[0] == '+') && (s)[1] != '\0')
-	while (--argc > 0 && (isoptstring(argv[0]) || isoptpending()))
-		scan_option(*argv++);
+	while (argc > 0 && (isoptstring(*argv) || isoptpending()))
+	{
+		s = *argv++;
+		argc--;
+		if (strcmp(s, "--") == 0)
+			break;
+		scan_option(s);
+	}
 #undef isoptstring
 
 	if (isoptpending())
@@ -133,14 +144,14 @@ main(argc, argv)
 	}
 
 #if EDITOR
-	editor = getenv("VISUAL");
+	editor = lgetenv("VISUAL");
 	if (editor == NULL || *editor == '\0')
 	{
-		editor = getenv("EDITOR");
+		editor = lgetenv("EDITOR");
 		if (editor == NULL || *editor == '\0')
 			editor = EDIT_PGM;
 	}
-	editproto = getenv("LESSEDIT");
+	editproto = lgetenv("LESSEDIT");
 	if (editproto == NULL || *editproto == '\0')
 		editproto = "%E ?lm+%lm. %f";
 #endif
@@ -150,9 +161,11 @@ main(argc, argv)
 	 * to "register" them with the ifile system.
 	 */
 	ifile = NULL_IFILE;
-	while (--argc >= 0)
+	if (dohelp)
+		ifile = get_ifile(FAKE_HELPFILE, ifile);
+	while (argc-- > 0)
 	{
-#if MSOFTC || OS2
+#if MSDOS_COMPILER || OS2
 		/*
 		 * Because the "shell" doesn't expand filename patterns,
 		 * treat each argument as a filename pattern rather than
@@ -163,7 +176,7 @@ main(argc, argv)
 		char *gfilename;
 		char *filename;
 		
-		gfilename = glob(*argv++);
+		gfilename = lglob(*argv++);
 		init_textlist(&tlist, gfilename);
 		filename = NULL;
 		while ((filename = forw_textlist(&tlist, filename)) != NULL)
@@ -176,7 +189,6 @@ main(argc, argv)
 	/*
 	 * Set up terminal, etc.
 	 */
-	is_tty = isatty(1);
 	if (!is_tty)
 	{
 		/*
@@ -196,6 +208,8 @@ main(argc, argv)
 		quit(QUIT_OK);
 	}
 
+	if (missing_cap && !know_dumb)
+		error("WARNING: terminal is not fully functional", NULL_PARG);
 	init_mark();
 	raw_mode(1);
 	open_getchr();
@@ -328,12 +342,12 @@ quit(status)
 		save_status = status;
 	quitting = 1;
 	edit((char*)NULL);
-	if (any_display)
+	if (any_display && is_tty)
 		clear_bot();
 	deinit();
 	flush();
 	raw_mode(0);
-#if MSOFTC
+#if MSDOS_COMPILER
 	/* 
 	 * If we don't close 2, we get some garbage from
 	 * 2's buffer when it flushes automatically.
@@ -342,5 +356,6 @@ quit(status)
 	 */
 	close(2);
 #endif
+	close_getchr();
 	exit(status);
 }
