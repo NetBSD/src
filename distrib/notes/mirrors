@@ -1,6 +1,6 @@
 NetBSD Mirror Site List
 
-The following sites mirror NetBSD as of November 29, 1998.
+The following sites mirror NetBSD as of December 01, 1998.
 
 If you wish to become a distribution site for NetBSD, contact
 mirrors@netbsd.org.
@@ -66,6 +66,7 @@ Germany
 Japan
 
 * ftp.jp.netbsd.org
+  Internet Research Institute Inc., Tokyo
   ftp://ftp.jp.netbsd.org/pub/NetBSD
 
 * ftp.dti.ad.jp
@@ -203,6 +204,7 @@ Germany
 Japan
 
 * sup.jp.netbsd.org
+  Internet Research Institute Inc., Tokyo
   Instructions: ftp://sup.jp.netbsd.org/pub/NetBSD/sup/README.sup
 
 Norway
@@ -262,6 +264,12 @@ Germany
 
 * www.de.netbsd.org
   http://www.de.netbsd.org/
+
+Japan
+
+* www.jp.netbsd.org
+  Internet Research Institute Inc., Tokyo
+  http://www.jp.netbsd.org/
 
 Norway
 
