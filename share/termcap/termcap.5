@@ -1,4 +1,4 @@
-.\"	$NetBSD: termcap.5,v 1.23 2002/02/11 12:12:40 wiz Exp $
+.\"	$NetBSD: termcap.5,v 1.24 2002/02/11 16:21:55 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -177,13 +177,13 @@ functions
 .It "@7	str		Sent by end key."
 .It "@8	str		Sent by enter key."
 .It "@9	str		Sent by exit key."
-.It "AB	str		Set background colour to #1 using ANSI escape".
+.It "AB	str		Set background colour to #1 using ANSI escape."
 .It "ac	str		Alternative (graphic) character set pairs."
 .It "ae	str	(P)	End alternative character set."
 .It AL	str	(NP*)	Add"
 .Em n
 new blank lines
-.It "AF	str		Set foreground colour to #1 using ANSI escape".
+.It "AF	str		Set foreground colour to #1 using ANSI escape."
 .It "al	str	(P*)	Add new blank line."
 .It "am	bool		Terminal has automatic margins."
 .It "as	str	(P)	Start alternative character set."
@@ -231,10 +231,10 @@ delay needed (default 0).
 lines.
 .It "dl	str	(P*)	Delete line."
 .It "dm	str		Enter delete mode."
-.It "dN	num	(o)	Milliseconds of
+.It "dN	num	(o)	Milliseconds of"
 .Sy \&nl
 delay needed (default 0).
-.It "DO	str	(NP*)	Move cursor down:
+.It "DO	str	(NP*)	Move cursor down:"
 .Ar n
 lines.
 .It "do	str		Down one line."
@@ -376,12 +376,12 @@ version 2 only).
 .It "nw	str	(P)	Newline (behaves like"
 .Sy \&cr
 followed by
-.Sy \&do ).
+.Sy \&do ) .
 .It "OP	bool	(o)	Odd parity."
 .It "os	bool		Terminal overstrikes."
 .It "pa	num		Maximum number of colour-pairs on the screen."
 .It "pb	num		Lowest baud where delays are required."
-.It "pc	str		Pad character (default" Tn NUL ).
+.It "pc	str		Pad character (default" Tn NUL ) .
 .It "pf	str		Turn off the printer."
 .It "pk	str		Program function key"
 .Em n
@@ -401,7 +401,7 @@ bytes.
 .It "po	str		Turn on the printer."
 .It "ps	str		Print contents of the screen."
 .It "pt	bool	(o)	Has hardware tabs (may need to be set with"
-.Sy \&is ).
+.Sy \&is ) .
 .It "px	str		Program function key"
 .Em n
 to transmit string
@@ -913,7 +913,7 @@ is safe to send.
 This turns out to be essential for the Ann Arbor 4080.)
 .Pp
 A final example is the Lear Siegler
-.Tn ADM Ns \-3a,
+.Tn ADM Ns \-3a ,
 which offsets row and column
 by a blank character, thus
 .Dq Li cm=\eE=%+ %+\ \& .
