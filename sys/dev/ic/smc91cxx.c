@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.1.2.3 1997/08/13 03:54:26 jtk Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.1.2.4 1997/08/24 15:25:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -69,6 +69,13 @@
  *      
  *   from FreeBSD Id: if_sn.c,v 1.4 1996/03/18 15:47:16 gardner Exp
  */      
+
+/*
+ * Core driver for the SMC 91Cxx family of Ethernet chips.
+ *
+ * Memory allocation interrupt logic is drived from an SMC 91C90 driver
+ * written for NetBSD/amiga by Michael Hitch.
+ */
 
 #include "bpfilter.h"
 
@@ -155,6 +162,8 @@ const int smc91cxx_media[] = {
 int	smc91cxx_mediachange __P((struct ifnet *));
 void	smc91cxx_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
+int	smc91cxx_set_media __P((struct smc91cxx_softc *, int));
+
 void	smc91cxx_init __P((struct smc91cxx_softc *));
 void	smc91cxx_read __P((struct smc91cxx_softc *));
 void	smc91cxx_reset __P((struct smc91cxx_softc *));
@@ -196,9 +205,6 @@ smc91cxx_attach(sc, myea)
 
 	/* Make sure the chip is stopped. */
 	smc91cxx_stop(sc);
-
-	/* Initialize misc. state. */
-	sc->sc_pages_wanted = -1;
 
 	SMC_SELECT_BANK(sc, 3);
 	tmp = bus_space_read_2(bst, bsh, REVISION_REG_W);
@@ -261,20 +267,28 @@ smc91cxx_mediachange(ifp)
 	struct ifnet *ifp;
 {
 	struct smc91cxx_softc *sc = ifp->if_softc;
-	struct ifmedia *ifm = &sc->sc_media;
+
+	return (smc91cxx_set_media(sc, sc->sc_media.ifm_media));
+}
+
+int
+smc91cxx_set_media(sc, media)
+	struct smc91cxx_softc *sc;
+	int media;
+{
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	u_int16_t tmp;
 
-	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
+	if (IFM_TYPE(media) != IFM_ETHER)
 		return (EINVAL);
 
-	switch (IFM_SUBTYPE(ifm->ifm_media)) {
+	switch (IFM_SUBTYPE(media)) {
 	case IFM_10_T:
 	case IFM_10_5:
 		SMC_SELECT_BANK(sc, 1);
 		tmp = bus_space_read_2(bst, bsh, CONFIG_REG_W);
-		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_10_5)
+		if (IFM_SUBTYPE(media) == IFM_10_5)
 			tmp |= CR_AUI_SELECT;
 		else
 			tmp &= ~CR_AUI_SELECT;
@@ -400,6 +414,11 @@ smc91cxx_init(sc)
 	bus_space_write_2(bst, bsh, TXMIT_CONTROL_REG_W, tmp);
 
 	/*
+	 * Set current media.
+	 */
+	smc91cxx_set_media(sc, sc->sc_media.ifm_cur->ifm_media);
+
+	/*
 	 * Now, enable interrupts.
 	 */
 	SMC_SELECT_BANK(sc, 2);
@@ -407,7 +426,7 @@ smc91cxx_init(sc)
 	bus_space_write_1(bst, bsh, INTR_MASK_REG_B,
 	    IM_EPH_INT | IM_RX_OVRN_INT | IM_RCV_INT | IM_TX_INT);
 
-	sc->sc_pages_wanted = -1;
+	/* Interface is now running, with no output active. */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -438,12 +457,6 @@ smc91cxx_start(ifp)
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
-
-	if (sc->sc_pages_wanted != -1) {
-		printf("%s: start called while memory allocation pending\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
 
  again:
 	/*
@@ -517,7 +530,6 @@ smc91cxx_start(ifp)
 
 		ifp->if_timer = 5;
 		ifp->if_flags |= IFF_OACTIVE;
-		sc->sc_pages_wanted = npages;
 
 		return;
 	}
@@ -598,7 +610,6 @@ smc91cxx_start(ifp)
 
 	bus_space_write_2(bst, bsh, MMU_CMD_REG_W, MMUCR_ENQUEUE);
 
-	ifp->if_flags |= IFF_OACTIVE;
 	ifp->if_timer = 5;
 
 #if NBPFILTER > 0
@@ -618,214 +629,6 @@ smc91cxx_start(ifp)
 	 */
 	if (bus_space_read_2(bst, bsh, FIFO_PORTS_REG_W) & FIFO_REMPTY)
 		goto again;
-}
-
-/*
- * Resume packet transmission after memory allocation has completed.
- *
- * This is essentially a modified version of smc91cxx_start() which
- * handles a completed memory allocation the same way smc91cxx_start()
- * does.
- *
- * XXX This should share more code with smc91cxx_start().
- *
- * Called at interrupt level.
- */
-void
-smc91cxx_resume(sc)
-	struct smc91cxx_softc *sc;
-{
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	bus_space_tag_t bst = sc->sc_bst;
-	bus_space_handle_t bsh = sc->sc_bsh;
-	u_int len;
-	struct mbuf *m, *top;
-	u_int16_t length, npages;
-	u_int8_t packetno;
-	int pad, pages_wanted;
-
-	/*
-	 * Make sure there was a memory allocation pending.
-	 */
-	if (sc->sc_pages_wanted == -1)
-		return;
-
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) !=
-	    (IFF_RUNNING|IFF_OACTIVE)) {
-		printf("%s: resumed but not active\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	pages_wanted = sc->sc_pages_wanted;
-	sc->sc_pages_wanted = -1;
-
-	/*
-	 * Peek at the next packet.
-	 */
-	if ((m = ifp->if_snd.ifq_head) == NULL) {
-		printf("%s: resume with no pending packets\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	/*
-	 * Compute the frame length and set pad to give an overall even
-	 * number of bytes.  Below, we assume that the packet length
-	 * is even.
-	 */
-	for (len = 0, top = m; m != NULL; m = m->m_next)
-		len += m->m_len;
-	pad = (len & 1);
-
-	/*
-	 * We drop packets that are too large.  Perhaps we should
-	 * truncate them instead?
-	 *
-	 * XXX is this check needed?  It should have been done in
-	 * XXX smc91cxx_start().  --thorpej
-	 */
-	if ((len + pad) > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
-		printf("%s: large packet discarded\n", sc->sc_dev.dv_xname);
-		ifp->if_oerrors++;
-		IF_DEQUEUE(&ifp->if_snd, m);
-		m_freem(m);
-		goto start;
-	}
-
-#ifdef SMC91CXX_SW_PAD
-	/*
-	 * Not using hardware padding; pad to ETHER_MIN_LEN.
-	 */
-	if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN))
-		pad = ETHER_MIN_LEN - ETHER_CRC_LEN - len;
-#endif
-
-	length = pad + len;
-
-	/*
-	 * The MMU has a 256 byte page size.  The MMU expects us to
-	 * ask for "npages - 1".  We include space for the status word,
-	 * byte count, and control bytes in the allocation request.
-	 */
-	npages = (length + 6) >> 8;
-
-	/*
-	 * The memory allocation has allegedly completed.  Check the results.
-	 * If it failed, return control to smc91cxx_start(), which will
-	 * start this machinery all over again.
-	 */
-	SMC_SELECT_BANK(sc, 2);
-	packetno = bus_space_read_1(bst, bsh, ALLOC_RESULT_REG_B);
-	if (packetno & ARR_FAILED) {
-		printf("%s: resumed, but memory allocation failed\n",
-		    sc->sc_dev.dv_xname);
-		goto start;
-	}
-
-	/*
-	 * We have a packet number - set the data window.
-	 */
-	bus_space_write_1(bst, bsh, PACKET_NUM_REG_B, packetno);
-
-	/*
-	 * Make sure we got the number of pages we wanted.
-	 */
-	if (pages_wanted != npages) {
-		printf("%s: memory allocation botch\n", sc->sc_dev.dv_xname);
-
-		/*
-		 * Release the allocated memory and try once again.
-		 */
-		while (bus_space_read_2(bst, bsh, MMU_CMD_REG_W) & MMUCR_BUSY)
-			/* XXX bound this loop! */ ;
-		bus_space_write_2(bst, bsh, MMU_CMD_REG_W, MMUCR_FREEPKT);
-		goto start;
-	}
-
-	/*
-	 * Point to the beginning of the packet.
-	 */
-	bus_space_write_2(bst, bsh, POINTER_REG_W, PTR_AUTOINC /* | 0x0000 */);
-
-	/*
-	 * Send the packet length (+6 for stats, length, and control bytes)
-	 * and the status word (set to zeros).
-	 */
-	bus_space_write_2(bst, bsh, DATA_REG_W, 0);
-	bus_space_write_1(bst, bsh, DATA_REG_B, (length + 6) & 0xff);
-	bus_space_write_1(bst, bsh, DATA_REG_B, ((length + 6) >> 8) & 0xff);
-
-	/*
-	 * Get the packet from the kernel.  This will include the Ethernet
-	 * frame header, MAC address, etc.
-	 */
-	IF_DEQUEUE(&ifp->if_snd, m);
-
-	/*
-	 * Push the packet out to the card.
-	 */
-	for (top = m; m != NULL; m = m->m_next) {
-		/* Words... */
-		bus_space_write_multi_2(bst, bsh, DATA_REG_W,
-		    mtod(m, u_int16_t *), m->m_len >> 1);
-
-		/* ...and the remaining byte, if any. */
-		if (m->m_len & 1)
-			bus_space_write_1(bst, bsh, DATA_REG_B,
-			  *(u_int8_t *)(mtod(m, u_int8_t *) + (m->m_len - 1)));
-	}
-
-#ifdef SMC91CXX_SW_PAD
-	/*
-	 * Push out padding.
-	 */
-	while (pad > 1) {
-		bus_space_write_2(bst, bsh, DATA_REG_W, 0);
-		pad -= 2;
-	}
-	if (pad)
-		bus_space_write_1(bst, bsh, DATA_REG_B, 0);
-#endif
-
-	/*
-	 * Push out control byte and unused packet byte.  The control byte
-	 * is 0, meaning the packet is even lengthed and no special
-	 * CRC handling is necessary.
-	 */
-	bus_space_write_2(bst, bsh, DATA_REG_W, 0);
-
-	/*
-	 * Enable transmit interrupts and let the chip go.  Set a watchdog
-	 * in case we miss the interrupt.
-	 */
-	bus_space_write_1(bst, bsh, INTR_MASK_REG_B,
-	    bus_space_read_1(bst, bsh, INTR_MASK_REG_B) |
-	    IM_TX_INT | IM_TX_EMPTY_INT);
-
-	bus_space_write_2(bst, bsh, MMU_CMD_REG_W, MMUCR_ENQUEUE);
-
-#if NBPFILTER > 0
-	/* Hand off a copy to the bpf. */
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, top);
-#endif
-
-	ifp->if_opackets++;
-	m_freem(top);
-
- start:
-	/*
-	 * Now, pass control to smc91cxx_start() to queue additional
-	 * packets.
-	 */
-	ifp->if_flags &= ~IFF_OACTIVE;
-	smc91cxx_start(ifp);
-
-	/*
-	 * Mark the interface active and set up the watchdog timer.
-	 */
-	ifp->if_flags |= IFF_OACTIVE;
-	ifp->if_timer = 5;
 }
 
 /*
@@ -898,7 +701,20 @@ smc91cxx_intr(arg)
 	if (status & IM_ALLOC_INT) {
 		/* Disable this interrupt. */
 		mask &= ~IM_ALLOC_INT;
-		smc91cxx_resume(sc);
+
+		/*
+		 * Release the just-allocated memory.  We will reallocate
+		 * it through the normal start logic.
+		 */
+		while (bus_space_read_2(bst, bsh, MMU_CMD_REG_W) & MMUCR_BUSY)
+			/* XXX bound this loop! */ ;
+		bus_space_write_2(bst, bsh, MMU_CMD_REG_W, MMUCR_FREEPKT);
+
+		/*
+		 * Attempt to queue more packets for transmission.
+		 */
+		ifp->if_flags &= ~IFF_OACTIVE;
+		smc91cxx_start(ifp);
 	}
 
 	/*
