@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.10 1997/10/17 00:08:33 mark Exp $	*/
+/*	$NetBSD: ast.c,v 1.11 1998/01/20 01:18:23 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -70,7 +70,7 @@ userret(p, pc, oticks)
 	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
 		panic("userret called in non SVC mode !");
 
-	if (current_spl_level != SPL_0) {
+	if (current_spl_level != _SPL_0) {
 		printf("userret: spl level=%d on entry\n", current_spl_level);
 #ifdef DDB
 		Debugger();
@@ -124,7 +124,7 @@ userret(p, pc, oticks)
 	curpriority = p->p_priority;
 
 #ifdef DIAGNOSTIC
-	if (current_spl_level != SPL_0) {
+	if (current_spl_level != _SPL_0) {
 		printf("userret: spl level=%d on exit\n", current_spl_level);
 #ifdef DDB
 		Debugger();
