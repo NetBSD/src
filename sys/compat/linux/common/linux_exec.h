@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.4 1995/06/22 21:34:31 fvdl Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.5 1995/10/07 06:27:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -70,7 +70,5 @@ int exec_linux_elf_makecmds __P((struct proc *, struct exec_package *));
 
 int linux_elf_probe __P((struct proc *p, struct exec_package *epp, char *itp,
 	 u_long *pos));
-
-extern char linux_sigcode[], linux_esigcode[];
 
 #endif /* !_LINUX_EXEC_H */

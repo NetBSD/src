@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit_43.c,v 1.2 1995/09/29 05:18:41 thorpej Exp $	*/
+/*	$NetBSD: kern_exit_43.c,v 1.3 1995/10/07 06:26:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -78,15 +78,15 @@
 #endif
 
 int
-compat_43_wait(p, uap, retval)
+compat_43_sys_wait(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 	caddr_t sg = stackgap_init(p->p_emul);
 	int error;
 
-	struct wait4_args /* {
+	struct sys_wait4_args /* {
 		syscallarg(int) pid;
 		syscallarg(int *) status;
 		syscallarg(int) options;
@@ -107,7 +107,7 @@ compat_43_wait(p, uap, retval)
 #endif
 	SCARG(&a, pid) = WAIT_ANY;
 	SCARG(&a, status) = stackgap_alloc(&sg, sizeof(SCARG(&a, status)));
-	if ((error = wait4(p, &a, retval)) != 0)
+	if ((error = sys_wait4(p, &a, retval)) != 0)
 		return error;
 	return copyin(SCARG(&a, status), &retval[1], sizeof(retval[1]));
 }

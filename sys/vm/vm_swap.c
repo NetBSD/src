@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.30 1995/09/19 21:57:38 thorpej Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.31 1995/10/07 06:29:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -279,12 +279,12 @@ swwrite(dev, uio)
  */
 /* ARGSUSED */
 int
-swapon(p, v, retval)
+sys_swapon(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct swapon_args /* {
+	struct sys_swapon_args /* {
 		syscallarg(char *) name;
 	} */ *uap = v;
 	register struct vnode *vp;

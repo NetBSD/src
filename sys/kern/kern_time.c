@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.15 1995/09/19 21:45:09 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.16 1995/10/07 06:28:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -59,12 +59,12 @@
 
 /* ARGSUSED */
 int
-gettimeofday(p, v, retval)
+sys_gettimeofday(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct gettimeofday_args /* {
+	register struct sys_gettimeofday_args /* {
 		syscallarg(struct timeval *) tp;
 		syscallarg(struct timezone *) tzp;
 	} */ *uap = v;
@@ -85,12 +85,12 @@ gettimeofday(p, v, retval)
 
 /* ARGSUSED */
 int
-settimeofday(p, v, retval)
+sys_settimeofday(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct settimeofday_args /* {
+	struct sys_settimeofday_args /* {
 		syscallarg(struct timeval *) tv;
 		syscallarg(struct timezone *) tzp;
 	} */ *uap = v;
@@ -132,12 +132,12 @@ long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
 
 /* ARGSUSED */
 int
-adjtime(p, v, retval)
+sys_adjtime(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct adjtime_args /* {
+	register struct sys_adjtime_args /* {
 		syscallarg(struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
 	} */ *uap = v;
@@ -211,12 +211,12 @@ adjtime(p, v, retval)
  */
 /* ARGSUSED */
 int
-getitimer(p, v, retval)
+sys_getitimer(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct getitimer_args /* {
+	register struct sys_getitimer_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct itimerval *) itv;
 	} */ *uap = v;
@@ -248,12 +248,12 @@ getitimer(p, v, retval)
 
 /* ARGSUSED */
 int
-setitimer(p, v, retval)
+sys_setitimer(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct setitimer_args /* {
+	register struct sys_setitimer_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct itimerval *) itv;
 		syscallarg(struct itimerval *) oitv;
@@ -269,7 +269,7 @@ setitimer(p, v, retval)
 	    sizeof(struct itimerval))))
 		return (error);
 	if ((SCARG(uap, itv) = SCARG(uap, oitv)) &&
-	    (error = getitimer(p, uap, retval)))
+	    (error = sys_getitimer(p, uap, retval)))
 		return (error);
 	if (itvp == 0)
 		return (0);

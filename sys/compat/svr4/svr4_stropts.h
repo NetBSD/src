@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stropts.h,v 1.4 1995/03/31 03:06:42 christos Exp $	 */
+/*	$NetBSD: svr4_stropts.h,v 1.5 1995/10/07 06:27:53 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -75,7 +75,7 @@ struct svr4_strbuf {
 
 /* Struct passed for SVR4_I_STR */
 struct svr4_strioctl {
-	int	 cmd;
+	u_long	 cmd;
 	int	 timeout;
 	int	 len;
 	char	*buf;
