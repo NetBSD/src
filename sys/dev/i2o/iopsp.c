@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.2.2.3 2000/12/08 09:12:19 bouyer Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.2.2.4 2001/01/15 09:27:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -629,11 +629,8 @@ iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
 			case SCSI_CHECK:
 				xs->error = XS_SENSE;
 				sl = le32toh(rb->senselen);
-				if (xs->req_sense_length != 0 &&
-				    xs->req_sense_length < sl)
-					sl = xs->req_sense_length;
 				if (sl > sizeof(xs->sense.scsi_sense))
-					sl = le32toh(rb->senselen);
+					sl = sizeof(xs->sense.scsi_sense);
 				memcpy(&xs->sense.scsi_sense, rb->sense, sl);
 				break;
 			case SCSI_BUSY:
@@ -653,7 +650,6 @@ iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
 	/* Free the message wrapper and pass the news to scsipi. */
 	iop_msg_unmap(iop, im);
 	iop_msg_free(iop, &sc->sc_ii, im);
-	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.87.2.5 2001/01/05 17:36:10 bouyer Exp $	*/
+/*	$NetBSD: ncr.c,v 1.87.2.6 2001/01/15 09:27:43 bouyer Exp $	*/
 
 /**************************************************************************
 **
@@ -1538,7 +1538,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.87.2.5 2001/01/05 17:36:10 bouyer Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.87.2.6 2001/01/15 09:27:43 bouyer Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4947,8 +4947,6 @@ static void ncr_start(struct scsipi_xfer *xp)
 	cp->sensecmd[0]			= 0x03;
 	cp->sensecmd[1]			= xp->sc_link->scsipi_scsi.lun << 5;
 	cp->sensecmd[4]			= sizeof(struct scsipi_sense_data);
-	if (xp->req_sense_length)
-		cp->sensecmd[4]		= xp->req_sense_length;
 	/*
 	**	sense data
 	*/
@@ -5307,8 +5305,6 @@ void ncr_complete (ncb_p np, ccb_p cp)
 		xp->error = XS_TIMEOUT;
 	}
 
-	xp->xs_status |= XS_STS_DONE;
-
 	/*
 	**	trace output
 	*/
@@ -5329,7 +5325,8 @@ void ncr_complete (ncb_p np, ccb_p cp)
 			case S_CHECK_COND:
 				printf ("  SENSE:");
 				p = (u_char*) &xp->sense.scsi_sense;
-				for (i=0; i<xp->req_sense_length; i++)
+				for (i=0; i<sizeof(struct scsipi_sense_data);
+				    i++)
 					printf (" %x", *p++);
 				break;
 			default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.21.2.6 2001/01/05 17:36:32 bouyer Exp $	*/
+/*	$NetBSD: umass.c,v 1.21.2.7 2001/01/15 09:27:45 bouyer Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -3251,7 +3251,6 @@ umass_scsipi_request(struct scsipi_channel *chan,
 
 		/* Return if command finishes early. */
 done:
-		xs->xs_status |= XS_STS_DONE;
 		scsipi_done(xs);
 		return;
 	default:
@@ -3327,7 +3326,6 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 	struct scsipi_xfer *xs = priv;
 	struct scsipi_periph *periph = xs->xs_periph;
 	int cmdlen;
-	int s;
 #ifdef UMASS_DEBUG
 	struct timeval tv;
 	u_int delta;
@@ -3372,16 +3370,12 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 			USBDEVNAME(sc->sc_dev), status);
 	}
 
-	xs->xs_status |= XS_STS_DONE;
-
 	DPRINTF(UDMASS_CMD,("umass_scsipi_cb: at %lu.%06lu: return xs->error="
             "%d, xs->xs_status=0x%x xs->resid=%d\n",
 	     tv.tv_sec, tv.tv_usec,
 	     xs->error, xs->xs_status, xs->resid));
 
-	s = splbio();
 	scsipi_done(xs);
-	splx(s);
 }
 
 /* 
