@@ -1,3 +1,5 @@
+/* $NetBSD: awi.c,v 1.3 1999/11/05 05:13:36 sommerfeld Exp $ */
+
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
