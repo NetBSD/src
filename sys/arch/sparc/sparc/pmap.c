@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34 1995/02/10 20:40:47 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.35 1995/02/17 20:33:15 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -600,16 +600,6 @@ pmap_page_index(pa)
 	return (idx + atop(pa - mp->addr));
 }
 #endif /* MACHINE_NONCONTIG */
-
-#if 0
-/*
- * Pages are physically contiguous, and hardware PFN == software PFN.
- *
- * XXX assumes PAGE_SIZE == NBPG (???)
- */
-#define	HWTOSW(pg)	(pg)
-#define	SWTOHW(pg)	(pg)
-#endif
 
 /* update pv_flags given a valid pte */
 #define	MR(pte) (((pte) >> PG_M_SHIFT) & (PV_MOD | PV_REF))
@@ -1791,8 +1781,10 @@ pmap_reference(pm)
 	}
 }
 
-static int pmap_rmk(struct pmap *, vm_offset_t, vm_offset_t, int, int, int);
-static int pmap_rmu(struct pmap *, vm_offset_t, vm_offset_t, int, int, int);
+static int pmap_rmk __P((struct pmap *, vm_offset_t, vm_offset_t,
+			 int, int, int));
+static int pmap_rmu __P((struct pmap *, vm_offset_t, vm_offset_t,
+			 int, int, int));
 
 /*
  * Remove the given range of mapping entries.
@@ -1905,13 +1897,10 @@ pmap_rmk(pm, va, endva, vseg, nleft, pmeg)
 			va += PAGE_SIZE;
 			continue;
 		}
-		pv = NULL;
-		/* if cacheable, flush page as needed */
-		if ((tpte & PG_NC) == 0) {
-			if (perpage)
-				cache_flush_page(va);
-		}
 		if ((tpte & PG_TYPE) == PG_OBMEM) {
+			/* if cacheable, flush page as needed */
+			if (perpage && (tpte & PG_NC) == 0)
+				cache_flush_page(va);
 			i = ptoa(HWTOSW(tpte & PG_PFNUM));
 			if (managed(i)) {
 				pv = pvhead(i);
@@ -2015,13 +2004,10 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 		tpte = getpte(pteva);
 		if ((tpte & PG_V) == 0)
 			continue;
-		pv = NULL;
-		/* if cacheable, flush page as needed */
-		if ((tpte & PG_NC) == 0) {
-			if (perpage)
-				cache_flush_page(va);
-		}
 		if ((tpte & PG_TYPE) == PG_OBMEM) {
+			/* if cacheable, flush page as needed */
+			if (perpage && (tpte & PG_NC) == 0)
+				cache_flush_page(va);
 			i = ptoa(HWTOSW(tpte & PG_PFNUM));
 			if (managed(i)) {
 				pv = pvhead(i);
@@ -2240,7 +2226,8 @@ if (nva == 0) panic("pmap_protect: last segment");	/* cannot happen */
 				for (; va < nva; va += NBPG) {
 					tpte = getpte(va);
 					pmap_stats.ps_npg_prot_all++;
-					if (tpte & PG_W) {
+					if ((tpte & (PG_W|PG_TYPE)) ==
+					    (PG_W|PG_OBMEM)) {
 						pmap_stats.ps_npg_prot_actual++;
 						if (vactype != VAC_NONE)
 							cache_flush_page(va);
@@ -2318,7 +2305,7 @@ pmap_changeprot(pm, va, prot, wired)
 				goto useless;
 			}
 			if (vactype == VAC_WRITEBACK &&
-			    (tpte & (PG_U | PG_NC)) == PG_U)
+			    (tpte & (PG_U|PG_NC|PG_TYPE)) == (PG_U|PG_OBMEM))
 				cache_flush_page((int)va);
 		} else {
 			setcontext(0);
@@ -2431,8 +2418,6 @@ pmap_enk(pm, va, prot, wired, pv, pteproto)
 			 * Switcheroo: changing pa for this va.
 			 * If old pa was managed, remove from pvlist.
 			 * If old page was cached, flush cache.
-			 * We are assuming that non-OBMEM addresses are
-			 * not cached.
 			 */
 			addr = ptoa(HWTOSW(tpte & PG_PFNUM));
 			if (managed(addr))
@@ -2590,8 +2575,6 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			 * Switcheroo: changing pa for this va.
 			 * If old pa was managed, remove from pvlist.
 			 * If old page was cached, flush cache.
-			 * We are assuming that non-OBMEM addresses are
-			 * not cached.
 			 */
 /*printf("%s[%d]: pmap_enu: changing existing va(%x)=>pa entry\n",
 curproc->p_comm, curproc->p_pid, va);*/
@@ -2943,7 +2926,7 @@ kvm_uncache(va, npages)
 			panic("kvm_uncache !pg_v");
 		pte |= PG_NC;
 		setpte(va, pte);
-		if (vactype != VAC_NONE)
+		if (vactype != VAC_NONE && (pte & PG_TYPE) == PG_OBMEM)
 			cache_flush_page((int)va);
 	}
 }
