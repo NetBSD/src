@@ -1,7 +1,7 @@
-/*	$NetBSD: rpc_machdep.c,v 1.5 1998/02/22 00:08:16 mark Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.6 1998/04/19 03:59:19 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1997 Mark Brinicombe.
+ * Copyright (c) 1994-1998 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -108,17 +108,6 @@
 
 u_int cpu_reset_address = 0;
 
-/* Describe different actions to take when boot() is called */
-
-#define ACTION_HALT   0x01	/* Halt and boot */
-#define ACTION_REBOOT 0x02	/* Halt and request RiscBSD reboot */
-#define ACTION_KSHELL 0x04	/* Call kshell */
-#define ACTION_DUMP   0x08	/* Dump the system to the dump dev if requested */
-
-#define HALT_ACTION	ACTION_HALT | ACTION_KSHELL | ACTION_DUMP	/* boot(RB_HALT) */
-#define REBOOT_ACTION	ACTION_REBOOT | ACTION_DUMP			/* boot(0) */
-#define PANIC_ACTION	ACTION_HALT | ACTION_DUMP			/* panic() */
-
 BootConfig bootconfig;		/* Boot config storage */
 videomemory_t videomemory;	/* Video memory descriptor */
 
@@ -134,9 +123,6 @@ int physmem = 0;
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
-#if 0
-int cpu_cache;
-#endif
 
 u_int videodram_size = 0;			/* Amount of DRAM to reserve for video */
 vm_offset_t videodram_start;
@@ -192,7 +178,6 @@ struct user *proc0paddr;
 
 /* Prototypes */
 
-void physconputchar		__P((char));
 void physcon_display_base	__P((u_int addr));
 extern void consinit			__P((void));
 
@@ -205,7 +190,6 @@ void map_entry_ro	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 
 void pmap_bootstrap		__P((vm_offset_t kernel_l1pt, pt_entry_t kernel_ptpt));
 void process_kernel_args	__P((void));
-u_long strtoul			__P((const char *s, char **ptr, int base));
 caddr_t allocsys		__P((caddr_t v));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
@@ -218,7 +202,7 @@ extern void db_machine_init	__P((void));
 extern void console_flush	__P((void));
 extern void vidcconsole_reinit	__P((void));
 extern int vidcconsole_blank	__P((struct vconsole *vc, int type));
-void rpc_sa110_kickstart	__P((void));
+void rpc_sa110_cc_setup		__P((void));
 
 extern void parse_mi_bootargs		__P((char *args));
 void parse_rpc_bootargs		__P((char *args));
@@ -248,23 +232,11 @@ cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
-	int loop;
-	int action;
-
-#ifdef DIAGNOSTIC
-	/* Info */
-
-	if (curproc == NULL)
-		printf("curproc = 0 - must have been in cpu_idle()\n");
-/*	if (curpcb)
-		printf("curpcb=%08x pcb_sp=%08x pcb_und_sp=%08x\n", curpcb, curpcb->pcb_sp, curpcb->pcb_und_sp);*/
-#endif	/* DIAGNOSTIC */
-
 #if NHYDRABUS > 0
 	/*
 	 * If we are halting the master then we should halt the slaves :-)
 	 * otherwise it can get a bit disconcerting to have 4 other
-	 * processor still tearing away doing things.
+	 * processors still tearing away doing things.
 	 */
 
 	hydrastop();
@@ -272,8 +244,7 @@ cpu_reboot(howto, bootstr)
 
 #ifdef DIAGNOSTIC
 	/* info */
-
-	printf("boot: howto=%08x %08x curproc=%08x\n", howto, spl_mask, (u_int)curproc);
+	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
 
 	printf("current_mask=%08x spl_mask=%08x\n", current_mask, spl_mask);
 	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x ipl_imp=%08x\n",
@@ -283,37 +254,27 @@ cpu_reboot(howto, bootstr)
 	dump_spl_masks();
 
 	/* Did we encounter the ARM700 bug we discovered ? */
-
 	if (arm700bugcount > 0)
 		printf("ARM700 PREFETCH/SWI bug count = %d\n", arm700bugcount);
 #endif	/* DIAGNOSTIC */
 
-	/* If we are still cold then hit the air brakes and crash to earth fast */
-
+	/*
+	 * If we are still cold then hit the air brakes
+	 * and crash to earth fast
+	 */
 	if (cold) {
 		doshutdownhooks();
 		printf("Halted while still in the ICE age.\n");
-		printf("Hit a key to reboot\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
 		cngetc();
-		printf("rebooting.");
+		printf("rebooting...\n");
 		cpu_reset();
+		/*NOTREACHED*/
 	}
 
 	/* Disable console buffering */
-
 	cnpollc(1);
-
-	/*
-	 * Depending on how we got here and with what intructions, choose
-	 * the actions to take. (See the actions defined above)
-	 */
- 
-	if (panicstr)
-		action = PANIC_ACTION;
-	else if (howto & RB_HALT)
-		action = HALT_ACTION;
-	else
-		action = REBOOT_ACTION;
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.
@@ -321,97 +282,72 @@ cpu_reboot(howto, bootstr)
 	 * It looks like syslogd is getting woken up only to find that it cannot
 	 * page part of the binary in as the filesystem has been unmounted.
 	 */
-
 	if (!(howto & RB_NOSYNC))
 		bootsync();
 
 	/* Say NO to interrupts */
-
 	splhigh();
 
-	/* If we need to do a dump, do it */
-
-	if ((howto & RB_DUMP) && (action & ACTION_DUMP)) {
+	/* Do a dump if requested. */
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-	}
-	
-#ifdef KSHELL
-	cold = 0;
-
-	/* Now enter our crude debug shell if required. Soon to be replaced with DDB */
-
-	if (action & ACTION_KSHELL)
-		kshell();
-#else	/* KSHELL */
-	if (action & ACTION_KSHELL) {
-		printf("Halted.\n");
-		printf("Hit a key to reboot ");
-		cngetc();
-	}
-#endif	/* KSHELL */
-
-	/* Auto reboot overload protection */
 
 	/*
-	 * This code stops the kernel entering an endless loop of reboot - panic
-	 * cycles. This will only effect kernels that have been configured to
-	 * reboot on a panic and will have the effect of stopping further reboots
-	 * after it has rebooted 16 times after panics and clean halt or reboot
-	 * will reset the counter.
+	 * Auto reboot overload protection
+	 *
+	 * This code stops the kernel entering an endless loop of reboot
+	 * - panic cycles. This will have the effect of stopping further
+	 * reboots after it has rebooted 8 times after panics. A clean
+	 * halt or reboot will reset the counter.
 	 */
 
 	/*
-	 * Have we done 16 reboots in a row ? If so halt rather than reboot
-	 * since 16 panics in a row without 1 clean halt means something is
-	 * seriously wrong
+	 * Have we done 8 reboots in a row ? If so halt rather than reboot
+	 * since 8 panics in a row without 1 clean halt means something is
+	 * seriously wrong.
 	 */
 
-	if (cmos_read(RTC_ADDR_REBOOTCNT) > 16)
-		action = (action & ~ACTION_REBOOT) | ACTION_HALT;
+	if (cmos_read(RTC_ADDR_REBOOTCNT) > 8)
+		howto |= RB_HALT;
 
 	/*
-	 * If we are rebooting on a panic then up the reboot count otherwise reset
+	 * If we are rebooting on a panic then up the reboot count
+	 * otherwise reset.
 	 * This will thus be reset if the kernel changes the boot action from
 	 * reboot to halt due to too any reboots.
 	 */
  
-	if ((action & ACTION_REBOOT) && panicstr)
+	if (((howto & RB_HALT) == 0) && panicstr)
 		cmos_write(RTC_ADDR_REBOOTCNT,
 		   cmos_read(RTC_ADDR_REBOOTCNT) + 1);
 	else
 		cmos_write(RTC_ADDR_REBOOTCNT, 0);
 
 	/*
-	 * If we need a RiscBSD reboot, request it but setting a bit in the CMOS RAM
-	 * This can be detected by the RiscBSD boot loader during a RISC OS boot
-	 * No other way to do this as RISC OS is in ROM.
+	 * If we need a RiscBSD reboot, request it buy setting a bit in
+	 * the CMOS RAM. This can be detected by the RiscBSD boot loader
+	 * during a RISCOS boot. No other way to do this as RISCOS is in ROM.
 	 */
 
-	if (action & ACTION_REBOOT)
+	if ((howto & RB_HALT) == 0)
 		cmos_write(RTC_ADDR_BOOTOPTS,
 		    cmos_read(RTC_ADDR_BOOTOPTS) | 0x02);
 
 	/* Run any shutdown hooks */
-
-	printf("Running shutdown hooks ...\n");
 	doshutdownhooks();
 
 	/* Make sure IRQ's are disabled */
-
 	IRQdisable;
 
-	/* Tell the user we are booting */
-
-	printf("boot...");
-
-	/* Give the user time to read the last couple of lines of text. */
-
-	for (loop = 5; loop > 0; --loop) {
-		printf("%d..", loop);
-		delay(500000);
+	if (howto & RB_HALT) {
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
+		cngetc();
 	}
 
+	printf("rebooting...\n");
 	cpu_reset();
+	/*NOTREACHED*/
 }
 
 
@@ -1242,16 +1178,16 @@ initarm(bootconf)
 	printf("done.\n");
 
 	if (cmos_read(RTC_ADDR_REBOOTCNT) > 0)
-		printf("Warning: REBOOTCNT = %d\n", cmos_read(RTC_ADDR_REBOOTCNT));
+		printf("Warning: REBOOTCNT = %d\n",
+		    cmos_read(RTC_ADDR_REBOOTCNT));
 
 #ifdef CPU_SA110
 	if (cputype == ID_SA110)
-		rpc_sa110_kickstart();	
+		rpc_sa110_cc_setup();	
 #endif	/* CPU_SA110 */
 
-	/* Initialise ipkdb */
-
 #if NIPKDB > 0
+	/* Initialise ipkdb */
 	ipkdb_init();
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
@@ -1279,10 +1215,6 @@ process_kernel_args()
 
 	args = (char *)bootconfig.argvirtualbase;
 	boothowto = 0;
-#if 0
-	cpu_cache = 0x03;
-#endif
-/*	videodram_size = 0;*/
     
 	/* Skip the first parameter (the boot loader filename) */
 
@@ -1300,16 +1232,6 @@ process_kernel_args()
 	while (*args == ' ')
 		++args;
 
-/*
-	boot_args = NULL;
-
-	if (*args != 0) {
-		boot_args = args;
-
-		parse_mi_bootargs(boot_args);
-		parse_rpc_bootargs(boot_args);
-	}
-	*/
 	boot_args = args;
 	parse_mi_bootargs(boot_args);
 	parse_rpc_bootargs(boot_args);
@@ -1517,7 +1439,7 @@ vmem_cachectl(flag)
 extern unsigned int sa110_cache_clean_addr;
 extern unsigned int sa110_cache_clean_size;
 void
-rpc_sa110_kickstart(void)
+rpc_sa110_cc_setup(void)
 {
 	vm_offset_t addr;
 	int cleanarea;
