@@ -1,4 +1,4 @@
-/* $NetBSD: iic.h,v 1.1 1996/04/19 19:52:46 mark Exp $ */
+/* $NetBSD: iic.h,v 1.2 1997/01/03 23:13:05 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -47,7 +47,7 @@
 #ifdef _KERNEL
 
 struct iicbus_attach_args {
-	u_int	ib_addr;	/* i/o address */
+	int	ib_addr;	/* i/o address */
 	void	*ib_aux;	/* driver specific */
 };
 
