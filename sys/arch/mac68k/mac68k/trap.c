@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96.4.8 2002/09/26 20:04:47 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.96.4.9 2002/10/05 06:06:45 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,6 +54,8 @@
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
