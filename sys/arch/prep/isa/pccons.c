@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.5 2000/11/02 00:42:39 eeh Exp $	*/
+/*	$NetBSD: pccons.c,v 1.6 2001/05/02 10:32:22 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -675,6 +675,18 @@ pcwrite(dev, uio, flag)
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+pcpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

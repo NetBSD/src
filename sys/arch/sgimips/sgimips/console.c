@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.2 2000/11/02 00:42:39 eeh Exp $	*/
+/*	$NetBSD: console.c,v 1.3 2001/05/02 10:32:22 scw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -200,6 +200,17 @@ arcswrite(dev, uio, flag)
 	struct tty *tp = arcs_tty[minor(dev)];
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+arcspoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct tty *tp = arcs_tty[minor(dev)];
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
  
 int

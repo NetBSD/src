@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.4 2000/11/02 00:42:41 eeh Exp $	*/
+/*	$NetBSD: qv.c,v 1.5 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -495,6 +495,26 @@ qvwrite(dev, uio)
 	return ((*tp->t_linesw->l_write)(tp, uio));
 }
 
+int
+qvpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	register struct tty *tp;
+	int unit = minor( dev );
+
+	/*
+	 * XXX Should perform similar checks to deprecated `qvselect()'
+	 */
+	tp = &qv_tty[unit];
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
+}
+
+/*
+ * XXX Is qvselect() even useful now?
+ * This driver looks to have suffered some serious bit-rot...
+ */
 
 /*
  * Mouse activity select routine

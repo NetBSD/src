@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.9 2000/11/02 00:01:46 eeh Exp $	*/
+/*	$NetBSD: magma.c,v 1.10 2001/05/02 10:32:11 scw Exp $	*/
 /*
  * magma.c
  *
@@ -1032,6 +1032,22 @@ mttywrite(dev, uio, flags)
 	struct tty *tp = mp->mp_tty;
 
 	return( (*tp->t_linesw->l_write)(tp, uio, flags) );
+}
+
+/*
+ * Poll routine
+ */
+int
+mttypoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
+	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
+	struct tty *tp = mp->mp_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.31 2001/05/01 13:18:27 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.32 2001/05/02 10:32:21 scw Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -142,6 +142,14 @@ gencnwrite(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp = gencn_tty[minor(dev)];
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+gencnpoll(dev_t dev, int events, struct proc *p)
+{
+	struct tty *tp = gencn_tty[minor(dev)];
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int

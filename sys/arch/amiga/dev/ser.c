@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.55 2001/01/13 02:09:27 aymeric Exp $	*/
+/*	$NetBSD: ser.c,v 1.56 2001/05/02 10:32:13 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -450,6 +450,17 @@ serwrite(dev, uio, flag)
 	/* ARGSUSED */
 
 	return ser_tty->t_linesw->l_write(ser_tty, uio, flag);
+}
+
+int
+serpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	/* ARGSUSED */
+ 
+	return ser_tty->t_linesw->l_poll(ser_tty, events, p);
 }
 
 struct tty *

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.25 2001/03/26 12:33:26 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.26 2001/05/02 10:32:21 scw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -89,7 +89,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define cdev_ite_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
-	dev_init(c,n,tty), ttpoll, dev_noimpl(mmap,enodev), D_TTY }
+	dev_init(c,n,tty), dev_init(c,n,poll), dev_noimpl(mmap,enodev), D_TTY }
 
 /* open, close, write, ioctl */
 #define	cdev_par_init(c,n)	cdev__ocwi_init(c,n)

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.18 2000/11/02 00:42:41 eeh Exp $	*/
+/*	$NetBSD: com.c,v 1.19 2001/05/02 10:32:21 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@ struct tty *comtty __P((dev_t));
 void comstop __P((struct tty *, int));
 void comdiag __P((void *));
 int comintr __P((void *));
-void compoll __P((void *));
+void compollin __P((void *));
 int comparam __P((struct tty *, struct termios *));
 void comstart __P((struct tty *));
 void cominit __P((int, int));
@@ -489,7 +489,7 @@ comopen(dev, flag, mode, p)
 		ttsetwater(tp);
 
 		if (comsopen++ == 0)
-			callout_reset(&com_poll_ch, 1, compoll, NULL);
+			callout_reset(&com_poll_ch, 1, compollin, NULL);
 
 		sc->sc_ibufp = sc->sc_ibuf = sc->sc_ibufs[0];
 		sc->sc_ibufhigh = sc->sc_ibuf + COM_IHIGHWATER;
@@ -625,6 +625,18 @@ comwrite(dev, uio, flag)
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+compoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
@@ -981,7 +993,7 @@ comdiag(arg)
 }
 
 void
-compoll(arg)
+compollin(arg)
 	void *arg;
 {
 	int unit;
@@ -1057,7 +1069,7 @@ compoll(arg)
 	}
 
 out:
-	callout_reset(&com_poll_ch, 1, compoll, NULL);
+	callout_reset(&com_poll_ch, 1, compollin, NULL);
 }
 
 int

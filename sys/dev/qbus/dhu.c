@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.22 2001/03/31 00:35:22 enami Exp $	*/
+/*	$NetBSD: dhu.c,v 1.23 2001/05/02 10:32:10 scw Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -484,6 +484,21 @@ dhuwrite(dev, uio, flag)
 
 	tp = sc->sc_dhu[DHU_LINE(minor(dev))].dhu_tty;
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+dhupoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct dhu_softc *sc;
+	struct tty *tp;
+
+	sc = dhu_cd.cd_devs[DHU_M2U(minor(dev))];
+
+	tp = sc->sc_dhu[DHU_LINE(minor(dev))].dhu_tty;
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 /*ARGSUSED*/

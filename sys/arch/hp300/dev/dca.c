@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.41 2000/11/27 15:28:42 tsutsui Exp $	*/
+/*	$NetBSD: dca.c,v 1.42 2001/05/02 10:32:16 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -481,6 +481,18 @@ dcawrite(dev, uio, flag)
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+dcapoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct dca_softc *sc = dca_cd.cd_devs[DCAUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
