@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.46 2002/05/05 16:26:17 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.46.4.1 2002/06/21 00:55:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.46 2002/05/05 16:26:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.46.4.1 2002/06/21 00:55:51 lukem Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -463,7 +463,7 @@ uvmpd_scan_inactive(pglst)
 				uvmexp.pdrefile++;
 				continue;
 			}
-			if (anon && anonreact) {
+			if ((anon || UVM_OBJ_IS_AOBJ(uobj)) && anonreact) {
 				uvm_pageactivate(p);
 				uvmexp.pdreanon++;
 				continue;
