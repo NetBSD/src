@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.148 2003/11/05 15:09:09 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.149 2003/11/05 15:34:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.148 2003/11/05 15:09:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.149 2003/11/05 15:34:50 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1507,9 +1507,11 @@ nextgap:
 		 * space requirement
 		 */
 		if (topdown) {
-			hint = tmp->next->start - length;
+			if (hint > tmp->next->start - length)
+				hint = tmp->next->start - length;
 		} else {
-			hint = tmp->end;
+			if (hint < tmp->end)
+				hint = tmp->end;
 		}
 		switch (uvm_map_space_avail(&hint, length, uoffset, align,
 		    topdown, tmp)) {
