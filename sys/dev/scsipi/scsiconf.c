@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.103 1998/07/31 03:00:51 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.104 1998/08/05 16:29:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -371,9 +371,9 @@ scsibusprint(aux, pnp)
 	if (dtype == 0)
 		dtype = scsipi_dtype(type);
 
-	scsipi_strvis(vendor, inqbuf->vendor, 8);
-	scsipi_strvis(product, inqbuf->product, 16);
-	scsipi_strvis(revision, inqbuf->revision, 4);
+	scsipi_strvis(vendor, 33, inqbuf->vendor, 8);
+	scsipi_strvis(product, 65, inqbuf->product, 16);
+	scsipi_strvis(revision, 17, inqbuf->revision, 4);
 
 	printf(" targ %d lun %d: <%s, %s, %s> SCSI%d %d/%s %s%s",
 	    target, lun, vendor, product, revision,
