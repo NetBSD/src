@@ -99,7 +99,7 @@ Boston, MA 02111-1307, USA.  */
 
 #undef FUNCTION_PROFILER
 #define FUNCTION_PROFILER(FILE, LABELNO)			\
-	fputs ("\tjsr $28,_mcount\n", (FILE))
+	fputs ("\tlda $28,_mcount\n\tjsr $28,($28),_mcount\n", (FILE))
 
 /* Show that we need a GP when profiling.  */
 #define TARGET_PROFILING_NEEDS_GP
