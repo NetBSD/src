@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.79 2001/07/01 18:12:00 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.79.2.1 2001/07/10 13:44:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -58,6 +58,7 @@
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
+#include <sys/event.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -481,6 +482,8 @@ fdrelease(struct proc *p, int fd)
 
 	*fpp = NULL;
 	fdp->fd_ofileflags[fd] = 0;
+	if (fd < fdp->fd_knlistsize)
+		knote_fdclose(p, fd);
 	fd_unused(fdp, fd);
 	return (closef(fp, p));
 }
@@ -582,8 +585,11 @@ sys_fpathconf(struct proc *p, void *v, register_t *retval)
 		error = VOP_PATHCONF(vp, SCARG(uap, name), retval);
 		break;
 
+	case DTYPE_KQUEUE:
+		error = EINVAL;
+		break;
 	default:
-		panic("fpathconf");
+ 		panic("fpathconf");
 	}
 
 	FILE_UNUSE(fp, p);
@@ -874,6 +880,7 @@ fdinit1(struct filedesc0 *newfdp)
 	newfdp->fd_fd.fd_ofiles = newfdp->fd_dfiles;
 	newfdp->fd_fd.fd_ofileflags = newfdp->fd_dfileflags;
 	newfdp->fd_fd.fd_nfiles = NDFILE;
+	newfdp->fd_fd.fd_knlistsize = -1;
 }
 
 /*
@@ -958,6 +965,20 @@ fdcopy(struct proc *p)
 	newfdp->fd_nfiles = i;
 	memcpy(newfdp->fd_ofiles, fdp->fd_ofiles, i * sizeof(struct file **));
 	memcpy(newfdp->fd_ofileflags, fdp->fd_ofileflags, i * sizeof(char));
+	/*
+	 * kq descriptors cannot be copied.
+	 */
+	if (newfdp->fd_knlistsize != -1) {
+		fpp = newfdp->fd_ofiles;
+		for (i = newfdp->fd_lastfile; i-- >= 0; fpp++) {
+			if (*fpp != NULL && (*fpp)->f_type == DTYPE_KQUEUE)
+				*fpp = NULL;
+		}
+		newfdp->fd_knlist = NULL;
+		newfdp->fd_knlistsize = -1;
+		newfdp->fd_knhash = NULL;
+		newfdp->fd_knhashmask = 0;
+	}
 	fpp = newfdp->fd_ofiles;
 	for (i = newfdp->fd_lastfile; i >= 0; i--, fpp++)
 		if (*fpp != NULL)
@@ -984,12 +1005,18 @@ fdfree(struct proc *p)
 		if (fp != NULL) {
 			*fpp = NULL;
 			FILE_USE(fp);
+			if (i < fdp->fd_knlistsize)
+				knote_fdclose(p, i);
 			(void) closef(fp, p);
 		}
 	}
 	p->p_fd = NULL;
 	if (fdp->fd_nfiles > NDFILE)
 		free(fdp->fd_ofiles, M_FILEDESC);
+	if (fdp->fd_knlist)
+		free(fdp->fd_knlist, M_KEVENT);
+	if (fdp->fd_knhash)
+		hashdone(fdp->fd_knhash, M_KEVENT);
 	pool_put(&filedesc0_pool, fdp);
 }
 
