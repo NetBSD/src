@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_500.c,v 1.27 1999/08/08 01:40:20 ross Exp $ */
+/* $NetBSD: dec_3000_500.c,v 1.28 1999/11/19 10:49:46 mrg Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.27 1999/08/08 01:40:20 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.28 1999/11/19 10:49:46 mrg Exp $");
 
 #include "opt_new_scc_driver.h"
 
@@ -191,6 +191,7 @@ dec_3000_500_device_register(dev, aux)
 {
 	static int found, initted, scsiboot, netboot;
 	static struct device *scsidev;
+	static struct device *tcdsdev;
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
@@ -205,32 +206,47 @@ dec_3000_500_device_register(dev, aux)
 #if 0
 		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
 #endif
-		initted =1;
+		initted = 1;
 	}
 
-	if (scsiboot && (strcmp(cd->cd_name, "asc") == 0)) {
-		if (b->slot == 6 &&
-		    strcmp(parent->dv_cfdata->cf_driver->cd_name, "tcds")
-		      == 0) {
-			struct tcdsdev_attach_args *tcdsdev = aux;
+	/*
+	 * for scsi boot, we look for "tcds", make sure it has the
+	 * right slot number, then find the "asc" on this tcds that
+	 * as the right channel.  then we find the actual scsi
+	 * device we came from.  note: no SCSI LUN support (yet).
+	 */
+	if (scsiboot && (strcmp(cd->cd_name, "tcds") == 0)) {
+		struct tc_attach_args *tcargs = aux;
 
-			if (tcdsdev->tcdsda_chip == b->channel) {
-				scsidev = dev;
+		if (b->slot != tcargs->ta_slot)
+			return;
+
+		tcdsdev = dev;
 #if 0
-				printf("\nscsidev = %s\n", dev->dv_xname);
+		printf("\ntcdsdev = %s\n", dev->dv_xname);
 #endif
-			}
-		}
+	}
+	if (scsiboot && tcdsdev &&
+	    (strcmp(cd->cd_name, "asc") == 0)) {
+		struct tcdsdev_attach_args *ta = aux;
+
+		if (parent != (struct device *)tcdsdev)
+			return;
+
+		if (ta->tcdsda_chip != b->channel)
+			return;
+
+		scsidev = dev;
+#if 0
+		printf("\nscsidev = %s\n", dev->dv_xname);
+#endif
 	}
 
-	if (scsiboot &&
+	if (scsiboot && scsidev &&
 	    (strcmp(cd->cd_name, "sd") == 0 ||
 	     strcmp(cd->cd_name, "st") == 0 ||
 	     strcmp(cd->cd_name, "cd") == 0)) {
 		struct scsipibus_attach_args *sa = aux;
-
-		if (scsidev == NULL)
-			return;
 
 		if (parent->dv_parent != scsidev)
 			return;
