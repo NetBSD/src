@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.78 2000/05/17 23:35:44 soren Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.79 2000/05/21 04:03:34 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.78 2000/05/17 23:35:44 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.79 2000/05/21 04:03:34 soren Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -423,7 +423,9 @@ mips_vector_init()
 #ifndef ENABLE_MIPS_R3NKK /* ID conflict */
 	case MIPS_R5000:
 #endif
-	case MIPS_RM5230:
+	case MIPS_R10000:
+	case MIPS_R12000:
+	case MIPS_RM5200:
 		cpu_arch = 4;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
 		mips3_L1TwoWayCache = 1;
@@ -485,6 +487,7 @@ struct pridtab cputab[] = {
 	{ MIPS_R4200,	"NEC VR4200 CPU",	},
 	{ MIPS_R4300,	"NEC VR4300 CPU",	},
 	{ MIPS_R4100,	"NEC VR4100 CPU",	},
+	{ MIPS_R12000,	"MIPS R12000 CPU",	},
 	{ MIPS_R8000,	"MIPS R8000 Blackbird/TFP CPU", },
 	{ MIPS_R4600,	"QED R4600 Orion CPU",	},
 	{ MIPS_R4700,	"QED R4700 Orion CPU",	},
@@ -495,10 +498,11 @@ struct pridtab cputab[] = {
 #endif
 	{ MIPS_R5000,	"MIPS R5000 CPU",	},
 	{ MIPS_RC32364,	"IDT RC32364 CPU",	},
-	{ MIPS_RM5230,	"QED RM5200 CPU",	},
+	{ MIPS_RM7000,	"QED RM7000 CPU",	},
+	{ MIPS_RM5200,	"QED RM5200 CPU",	},
 	{ MIPS_RC64470,	"IDT RC64474/RC64475 CPU",	},
 	{ MIPS_R5400,	"NEC VR5400 CPU",	},
-#if 0 /* ID crashs */
+#if 0 /* ID collisions */
 	/*
 	 * According to documents from Toshiba and QED, PRid 0x22 is
 	 * used by both of TX3900 (ISA-I) and QED4640/4650 (ISA-III).
