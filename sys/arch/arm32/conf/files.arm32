@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.127 2001/11/24 01:11:51 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.128 2001/11/24 01:15:36 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -38,20 +38,6 @@ include "dev/wsfont/files.wsfont"
 #
 include "dev/ata/files.ata"
 major	{wd = 16}
-
-# PIOC (Peripheral IO Controller) device
-# parent to wdc, fdc, com and lpt
-device	pioc { [offset = -1], [dack = -1], [irq = -1] }
-attach	pioc at mainbus
-file	arch/arm32/mainbus/pioc.c		pioc
-
-# Standard NetBSD wdc driver
-attach	wdc at pioc with wdc_pioc
-file	arch/arm32/mainbus/wdc_pioc.c		wdc_pioc
-
-# Standard parallel driver
-attach	lpt at pioc with lpt_pioc
-file	arch/arm32/mainbus/lpt_pioc.c		lpt_pioc
 
 # Common OFW files
 include "dev/ofw/files.ofw"
@@ -96,18 +82,6 @@ device	ofrom
 attach	ofrom at ofbus
 file	arch/arm32/ofw/ofrom.c				ofrom	needs-flag
 
-# Standard NetBSD fd driver
-device	fdc {drive = -1}
-attach	fdc at pioc
-device	fd: disk
-attach	fd at fdc
-file	arch/arm32/mainbus/fd.c			fdc needs-flag
-major	{fd = 17}
-
-# Standard serial driver
-attach	com at pioc with com_pioc
-file	arch/arm32/mainbus/com_pioc.c		com_pioc
-
 # Memory disk driver
 file	arch/arm32/dev/md_hooks.c		md & memory_disk_hooks
 major	{md = 18}
@@ -115,79 +89,15 @@ major	{md = 18}
 # RAIDframe
 major	{raid = 71}
 
-# IOMD device
-# parent to kbd, qms, pms, iic
-# also provides irq and timer services
-device	iomd {}
-attach	iomd at mainbus
-file	arch/arm32/iomd/iomd.c			iomd needs-flag
-file	arch/arm32/iomd/iomd_io.c		iomd
-file	arch/arm32/iomd/iomd_io_asm.S		iomd
-file	arch/arm32/iomd/iomd_irq.S		iomd
-file	arch/arm32/iomd/iomd_irqhandler.c	iomd
-file	arch/arm32/iomd/iomd_fiq.S		iomd
-file	arch/arm32/iomd/iomd_dma.c		iomd
-
-# IOMD mouse devices
-# clock device
-device	clock
-attach	clock at iomd
-file	arch/arm32/iomd/iomd_clock.c		iomd
-
-# quadmouse device
-device	qms
-file	arch/arm32/dev/qms.c			qms needs-flag
-
-attach	qms at iomd with qms_iomd
-file	arch/arm32/iomd/qms_iomd.c		qms_iomd
-
-# wscons quadmouse device
-device	wsqms : wsmousedev
-file	arch/arm32/dev/wsqms.c			wsqms needs-flag
-
-attach wsqms at iomd with wsqms_iomd
-file	arch/arm32/iomd/wsqms_iomd.c		wsqms_iomd
-
 # attribute used to represent the "keyboard controller" on the shark
 # XXX should be a real device
 define	spckbd { [irq = -1], [port = -1] }
 
 # PS/2 mouse device
 device	opms: tty
-file	arch/arm32/dev/pms.c			opms & opms_iomd needs-flag
-file	arch/arm32/shark/pms.c			opms & ofw needs-flag
+file	arch/arm32/shark/pms.c			opms needs-flag
 
 attach	opms at spckbd with opms
-attach	opms at iomd with opms_iomd
-file	arch/arm32/iomd/pms_iomd.c		opms_iomd
-
-# Standard keyboard driver
-device	kbd
-file	arch/arm32/dev/kbd.c			kbd needs-flag
-
-attach	kbd at iomd with kbd_iomd
-file	arch/arm32/iomd/kbd_iomd.c		kbd_iomd
-
-# RPC wscons keyboard driver
-device rpckbd : wskbddev
-file	arch/arm32/dev/rpckbd.c			rpckbd needs-flag
-file	arch/arm32/dev/wskbdmap_mfii.c		rpckbd
-
-attach rpckbd at iomd with rpckbd_iomd
-file	arch/arm32/iomd/rpckbd_iomd.c		rpckbd_iomd
-
-# IIC device
-device	iic { addr = -1 }
-file	arch/arm32/dev/iic.c			iic	needs-flag
-
-attach iic at iomd with iic_iomd
-file	arch/arm32/iomd/iic_iomd.c		iic_iomd
-file	arch/arm32/iomd/iomd_iic.S		iic_iomd
-
-# IIC based RTC
-device	rtc : todservice
-attach	rtc at iic
-file	arch/arm32/dev/rtc.c			rtc	needs-flag
 
 device	todclock
 attach	todclock at todservice
