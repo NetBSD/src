@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.47 2002/11/24 13:55:20 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.48 2002/11/24 15:45:33 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1512,4 +1512,30 @@ The new comment in the file says it all:
 	Under no circumstances should this Makefile test the output of "uname".
 	Doing do breaks cross compiling.
 	[thorpej, tickets #830 and #831]
+
+share/man/man4/wm.4				1.5
+
+	Note that checksum offload is supported.
+	[thorpej, ticket #716]
+
+sys/arch/macppc/pci/pci_machdep.c		1.19
+
+	Enable memory for cards with 64-bit memory mappings in addition to
+	32-bit memory mappings. Makes Intel GigE card work in my Beige G3.
+	[thorpej, ticket #717]
+
+sys/arch/alpha/alpha/pmap.c			1.192
+
+	Add missing PMAP_TLB_SHOOTDOWN() after PMAP_INVALIDATE_TLB() in
+	pmap_page_protect().  Closes NetBSD Problem Report #18045.
+	[mhitch, ticket #722]
+
+etc/rc.subr					1.52
+share/man/man5/rc.conf.5			1.65
+
+	Append ' - see rc.conf(5)' to unset variable warning:
+	  /etc/rc.d/fu: WARNING: $fu is not set properly - see rc.conf(5).
+	Add a note to rc.conf that third party packages may test for additional
+	variables.
+	[abs, ticket #732]
 
