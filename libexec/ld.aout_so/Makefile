@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2001/04/18 11:48:21 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.32 2001/05/06 13:54:04 wiz Exp $
 
 .include <bsd.own.mk>
 .if (${OBJECT_FMT} == "a.out")
@@ -47,7 +47,6 @@ ld.so:	${.CURDIR}/ld.so.${MACHINE_ARCH}.uue
 
 .endif
 
-MAN= rtld.1
-MLINKS=	rtld.1 ld.so.1
+MAN= ld.aout_so.1
 
 .include <bsd.prog.mk>
