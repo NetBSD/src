@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: SERVERS,v 1.7 2001/04/19 15:56:32 lukem Exp $
+# $NetBSD: SERVERS,v 1.8 2001/04/26 03:56:20 lukem Exp $
 #
 
 # PROVIDE: SERVERS
-# REQUIRE: ike ipmon kdc mountcritremote newsyslog ppp savecore syslogd
+# REQUIRE: ike ipmon isdnd kdc mountcritremote newsyslog ppp savecore syslogd
 
 #	This is a dummy dependency, for early-start servers relying on
 #	some basic configuration.
