@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.23 1996/08/28 18:59:58 cgd Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.24 1996/09/16 06:20:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -1841,6 +1841,17 @@ SC_REQ	*reqp;
 	 */
 	if (req_len == 0)
 		return (0);
+
+	/*
+	 * If DMA is emulated in software, we don't have to breakup the
+	 * request. Just build a chain with a single element and stash in
+	 * the KVA and not the KPA.
+	 */
+	if (emulated_dma()) {
+		dm->dm_addr    = (u_long)req_addr;
+		dm->dm_count   = req_len;
+		return (1);
+	}
 
 	/*
 	 * LWP: I think that this restriction is not strictly nessecary.

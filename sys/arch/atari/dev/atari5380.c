@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.17 1996/08/16 08:25:46 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.18 1996/09/16 06:20:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -38,6 +38,8 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_message.h>
 #include <scsi/scsiconf.h>
+
+#include <m68k/asm_single.h>
 
 #include <atari/atari/stalloc.h>
 
@@ -113,6 +115,9 @@ static int	machine_match __P((struct device *, void *, void *,
 #define	pdma_ready()		0
 
 #if defined(TT_SCSI)
+
+void	ncr5380_drq_intr __P((void));
+
 /*
  * Define all the things we need of the DMA-controller
  */
@@ -125,6 +130,8 @@ struct scsi_dma {
 	volatile u_char		s_dma_res[4];	/* data residue register  */
 	volatile u_char		s_dma_gap;	/* not used		  */
 	volatile u_char		s_dma_ctrl;	/* control register	  */
+	volatile u_char		s_dma_gap2;	/* not used		  */
+	volatile u_char		s_hdma_ctrl;	/* Hades control register */
 };
 
 #define	set_scsi_dma(addr, val)	(void)(					\
@@ -150,6 +157,13 @@ struct scsi_dma {
 #define	SD_ENABLE	0x02		/* 1 = Enable DMA		*/
 #define	SD_OUT		0x01		/* Direction: memory to SCSI	*/
 #define	SD_IN		0x00		/* Direction: SCSI to memory	*/
+
+/*
+ * Defines for Hades-DMA control register
+ */
+#define	SDH_BUSERR	0x02		/* 1 = Bus error		*/
+#define SDH_EOP		0x01		/* 1 = Signal EOP on 5380	*/
+#define	SDH_ZERO	0x40		/* 1 = Byte counter is zero	*/
 
 /*
  * Define the 5380 register set
@@ -185,6 +199,7 @@ static struct ncr_softc	*cur_softc;
 #define poll_edma(reqp)		tt_poll_edma(reqp)
 #define get_dma_result(r, b)	tt_get_dma_result(r, b)
 #define	can_access_5380()	1
+#define emulated_dma()		((machineid & ATARI_HADES) ? 1 : 0)
 
 #define fair_to_keep_dma()	1
 #define claimed_dma()		1
@@ -241,9 +256,13 @@ scsi_tt_init(struct ncr_softc *sc)
 	 */
 	MFP2->mf_aer  |= 0x80;		/* SCSI IRQ goes HIGH!!!!!	*/
 
-	MFP2->mf_ierb |= IB_SCDM;	/* SCSI-dma interrupts		*/
-	MFP2->mf_iprb &= ~IB_SCDM;
-	MFP2->mf_imrb |= IB_SCDM;
+	if (machineid & ATARI_TT) {
+		/* SCSI-dma interrupts		*/
+		MFP2->mf_ierb |= IB_SCDM;
+		MFP2->mf_iprb &= ~IB_SCDM;
+		MFP2->mf_imrb |= IB_SCDM;
+	}
+	else SCSI_DMA->s_hdma_ctrl = 0;
 
 	MFP2->mf_iera |= IA_SCSI;	/* SCSI-5380 interrupts		*/
 	MFP2->mf_ipra &= ~IA_SCSI;
@@ -275,19 +294,17 @@ set_tt_5380_reg(u_short rnum, u_short val)
 extern __inline__ void
 scsi_tt_ienable(void)
 {
-	int	sps = splbio();
-	MFP2->mf_ierb |= IB_SCDM;
-	MFP2->mf_iera |= IA_SCSI;
-	splx(sps);
+	if (machineid & ATARI_TT)
+		single_inst_bset_b(MFP2->mf_imrb, IB_SCDM);
+	single_inst_bset_b(MFP2->mf_imra, IA_SCSI);
 }
 
 extern __inline__ void
 scsi_tt_idisable(void)
 {
-	int	sps = splbio();
-	MFP2->mf_ierb &= ~IB_SCDM;
-	MFP2->mf_iera &= ~IA_SCSI;
-	splx(sps);
+	if (machineid & ATARI_TT)
+		single_inst_bclr_b(MFP2->mf_imrb, IB_SCDM);
+	single_inst_bclr_b(MFP2->mf_imra, IA_SCSI);
 }
 
 extern __inline__ void
@@ -297,6 +314,9 @@ scsi_tt_clr_ipend(void)
 
 	SCSI_DMA->s_dma_ctrl = 0;
 	tmp = GET_TT_REG(NCR5380_IRCV);
+	if (machineid & ATARI_TT)
+		single_inst_bclr_b(MFP2->mf_iprb, IB_SCDM);
+	single_inst_bclr_b(MFP2->mf_ipra, IA_SCSI);
 }
 
 static void
@@ -304,6 +324,8 @@ scsi_tt_dmasetup(SC_REQ *reqp, u_int phase, u_char	mode)
 {
 	if (PH_IN(phase)) {
 		SCSI_DMA->s_dma_ctrl = SD_IN;
+		if (machineid & ATARI_HADES)
+		    SCSI_DMA->s_hdma_ctrl &= ~(SDH_BUSERR|SDH_EOP);
 		set_scsi_dma(&(SCSI_DMA->s_dma_ptr), reqp->dm_cur->dm_addr);
 		set_scsi_dma(&(SCSI_DMA->s_dma_cnt), reqp->dm_cur->dm_count);
 		SET_TT_REG(NCR5380_ICOM, 0);
@@ -313,6 +335,8 @@ scsi_tt_dmasetup(SC_REQ *reqp, u_int phase, u_char	mode)
 	}
 	else {
 		SCSI_DMA->s_dma_ctrl = SD_OUT;
+		if (machineid & ATARI_HADES)
+		    SCSI_DMA->s_hdma_ctrl &= ~(SDH_BUSERR|SDH_EOP);
 		set_scsi_dma(&(SCSI_DMA->s_dma_ptr), reqp->dm_cur->dm_addr);
 		set_scsi_dma(&(SCSI_DMA->s_dma_cnt), reqp->dm_cur->dm_count);
 		SET_TT_REG(NCR5380_MODE, mode);
@@ -420,7 +444,8 @@ tt_get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 	/*
 	 * Check if there are some 'restbytes' left in the DMA-controller.
 	 */
-	if (((u_long)byte_p & 3) && PH_IN(reqp->phase)) {
+	if ((machineid & ATARI_TT) && ((u_long)byte_p & 3)
+	    && PH_IN(reqp->phase)) {
 		u_char	*p, *q;
 
 		p = ptov(reqp, (u_long *)((u_long)byte_p & ~3));
@@ -433,6 +458,146 @@ tt_get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 	}
 	*bytes_left = leftover;
 	return ((dmastat & (SD_BUSERR|SD_ZERO)) ? 1 : 0);
+}
+
+static u_char *dma_ptr;
+static int dbgflag = 3;
+void
+ncr5380_drq_intr()
+{
+extern	int			*nofault;
+	label_t			faultbuf;
+	int			write;
+	u_long	 		count;
+	u_char			*data_p = (u_char*)(stio_addr+0x741);
+
+	/*
+	 * Block SCSI interrupts while emulating DMA. They come
+	 * at a higher priority.
+	 */
+	single_inst_bclr_b(MFP2->mf_imra, ~IA_SCSI);
+
+	/*
+	 * Setup for a possible bus error caused by SCSI controller
+	 * switching out of DATA-IN/OUT before we're done with the
+	 * current transfer.
+	 */
+	nofault = (int *) &faultbuf;
+
+	if (setjmp((label_t *) nofault)) {
+		u_char	*ptr;
+		u_long	cnt, tmp;
+
+		PID("drq berr");
+		nofault = (int *) 0;
+
+		/*
+		 * Determine number of bytes transferred
+		 */
+		get_scsi_dma(SCSI_DMA->s_dma_ptr, (u_long)ptr);
+		cnt = dma_ptr - ptr;
+
+		if (cnt != 0) {
+			/*
+			 * Update the dma pointer/count fields
+			 */
+			set_scsi_dma(SCSI_DMA->s_dma_ptr, dma_ptr);
+			get_scsi_dma(SCSI_DMA->s_dma_cnt, tmp);
+			set_scsi_dma(SCSI_DMA->s_dma_cnt, tmp - cnt);
+
+			if (tmp > cnt) {
+				/*
+				 * Still more to transfer
+				 */
+				single_inst_bset_b(MFP2->mf_imra, IA_SCSI);
+				return;
+			}
+
+			/*
+			 * Signal EOP to 5380
+			 */
+			SCSI_DMA->s_hdma_ctrl |= SDH_EOP;
+		}
+		else {
+			/*
+			 * Set the bus-error bit
+			 */
+			SCSI_DMA->s_hdma_ctrl |= SDH_BUSERR;
+		}
+
+		/*
+		 * Schedule an interrupt
+		 */
+		if (SCSI_DMA->s_dma_ctrl & SD_ENABLE)
+		    add_sicallback((si_farg)ncr_dma_intr, (void *)cur_softc, 0);
+
+		/*
+		 * Clear DMA-mode
+		 */
+		SCSI_DMA->s_dma_ctrl &= ~SD_ENABLE;
+		single_inst_bset_b(MFP2->mf_imra, IA_SCSI);
+
+		return;
+	}
+
+	write = (SCSI_DMA->s_dma_ctrl & SD_OUT) ? 1 : 0;
+#if DBG_PID
+	if (write) {
+		PID("drq (in)");
+	} else {
+		PID("drq (out)");
+	}
+#endif
+
+	get_scsi_dma(SCSI_DMA->s_dma_cnt, count);
+	get_scsi_dma(SCSI_DMA->s_dma_ptr, (u_long)dma_ptr);
+
+	/*
+	 * Keep pushing bytes until we're done or a bus-error
+	 * signals that the SCSI controller is not ready.
+	 * NOTE: I tried some optimalizations in these loops,
+	 *       but they had no effect on transfer speed.
+	 */
+	if (write) {
+		while(count--) {
+			*data_p = *dma_ptr++;
+		}
+	}
+	else {
+		while(count--) {
+			*dma_ptr++ = *data_p;
+		}
+	}
+
+	/*
+	 * Schedule an interrupt
+	 */
+	if (SCSI_DMA->s_dma_ctrl & SD_ENABLE)
+	    add_sicallback((si_farg)ncr_dma_intr, (void *)cur_softc, 0);
+
+	/*
+	 * Clear DMA-mode
+	 */
+	SCSI_DMA->s_dma_ctrl &= ~SD_ENABLE;
+
+	/*
+	 * OK.  No bus error occurred above.  Clear the nofault flag
+	 * so we no longer short-circuit bus errors.
+	 */
+	nofault = (int *) 0;
+
+	/*
+	 * Update the DMA 'registers' to reflect that all bytes
+	 * have been transfered and tell this to the 5380 too.
+	 */
+	set_scsi_dma(SCSI_DMA->s_dma_ptr, (u_long)dma_ptr);
+	set_scsi_dma(SCSI_DMA->s_dma_cnt, 0);
+	SCSI_DMA->s_hdma_ctrl |= SDH_EOP;
+
+	PID("end drq");
+	single_inst_bset_b(MFP2->mf_imra, IA_SCSI);
+	
+	return;
 }
 
 #endif /* defined(TT_SCSI) */
@@ -451,6 +616,7 @@ tt_get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 #define poll_edma(reqp)		falcon_poll_edma(reqp)
 #define get_dma_result(r, b)	falcon_get_dma_result(r, b)
 #define	can_access_5380()	falcon_can_access_5380()
+#define	emulated_dma()		0
 
 #define fair_to_keep_dma()	(!st_dmawanted())
 #define claimed_dma()		falcon_claimed_dma()
@@ -510,13 +676,13 @@ u_short	rnum, val;
 extern __inline__ void
 scsi_falcon_ienable()
 {
-	MFP->mf_ierb  |= IB_DINT;
+	single_inst_bset_b(MFP->mf_ierb, IB_DINT);
 }
 
 extern __inline__ void
 scsi_falcon_idisable()
 {
-	MFP->mf_ierb  &= ~IB_DINT;
+	single_inst_bclr_b(MFP->mf_ierb, ~IB_DINT);
 }
 
 extern __inline__ void
@@ -860,6 +1026,8 @@ can_access_5380()
 		return(falcon_can_access_5380());
 	return(1);
 }
+
+#define emulated_dma()		((machineid & ATARI_HADES) ? 1 : 0)
 
 /*
  * Locking stuff. All turns into NOP's on the TT.
