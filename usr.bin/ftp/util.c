@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.75 1999/10/09 03:00:56 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.76 1999/10/11 12:35:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.75 1999/10/09 03:00:56 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.76 1999/10/11 12:35:42 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -909,8 +909,10 @@ psummary(notused)
 {
 	int oerrno = errno;
 
-	if (bytes > 0)
+	if (bytes > 0) {
+		write(fileno(ttyout), "\n", 1);
 		ptransfer(1);
+	}
 	errno = oerrno;
 }
 
@@ -978,7 +980,8 @@ setttywidth(a)
  * Change the rate limit up (SIGUSR1) or down (SIGUSR2)
  */
 void
-crankrate(int sig)
+crankrate(sig)
+	int sig;
 {
 
 	switch (sig) {
