@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.84 2003/10/21 08:26:31 petrov Exp $ */
+/*	$NetBSD: autoconf.c,v 1.85 2003/11/09 16:41:52 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.84 2003/10/21 08:26:31 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.85 2003/11/09 16:41:52 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -266,7 +266,7 @@ bootpath_build()
 	register long chosen;
 	char buf[128];
 
-	bzero((void*)bootpath, sizeof(bootpath));
+	memset(bootpath, 0, sizeof(bootpath));
 	bp = bootpath;
 
 	/*
@@ -637,7 +637,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			continue;
 		if (strcmp(buf, "cpu") != 0)
 			continue;
-		bzero(&ma, sizeof(ma));
+		memset(&ma, 0, sizeof(ma));
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_node = node;
@@ -676,7 +676,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (sp != NULL)
 			continue; /* an "early" device already configured */
 
-		bzero(&ma, sizeof ma);
+		memset(&ma, 0, sizeof ma);
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_name = buf;
@@ -737,7 +737,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			free(ma.ma_address, M_DEVBUF);
 	}
 	/* Try to attach PROM console */
-	bzero(&ma, sizeof ma);
+	memset(&ma, 0, sizeof ma);
 	ma.ma_name = "pcons";
 	(void) config_found(dev, (void *)&ma, mbprint);
 }

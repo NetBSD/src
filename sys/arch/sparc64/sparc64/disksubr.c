@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.18 2003/07/15 03:36:08 lukem Exp $ */
+/*	$NetBSD: disksubr.c,v 1.19 2003/11/09 16:41:52 martin Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18 2003/07/15 03:36:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19 2003/11/09 16:41:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ readdisklabel(dev, strat, lp, clp)
 	error = biowait(bp);
 	if (error == 0) {
 		/* Save the whole block in case it has info we need. */
-		bcopy(bp->b_data, clp->cd_block, sizeof(clp->cd_block));
+		memcpy(clp->cd_block, bp->b_data, sizeof(clp->cd_block));
 	}
 	brelse(bp);
 	if (error)
@@ -132,7 +132,7 @@ readdisklabel(dev, strat, lp, clp)
 		return (disklabel_sun_to_bsd(clp->cd_block, lp));
 
 
-	bzero(clp->cd_block, sizeof(clp->cd_block));
+	memset(clp->cd_block, 0, sizeof(clp->cd_block));
 	return ("no disk label");
 }
 
@@ -202,7 +202,7 @@ writedisklabel(dev, strat, lp, clp)
 		return EFBIG;
 
 	slp = (struct sun_disklabel *)clp->cd_block;
-	bzero(slp->sl_bsdlabel, sizeof(slp->sl_bsdlabel));
+	memset(slp->sl_bsdlabel, 0, sizeof(slp->sl_bsdlabel));
 	dlp = (struct disklabel *)slp->sl_bsdlabel;
 	*dlp = *lp;
 
@@ -213,7 +213,7 @@ writedisklabel(dev, strat, lp, clp)
 
 	/* Get a buffer and copy the new label into it. */
 	bp = geteblk((int)lp->d_secsize);
-	bcopy(clp->cd_block, bp->b_data, sizeof(clp->cd_block));
+	memcpy(bp->b_data, clp->cd_block, sizeof(clp->cd_block));
 
 	/* Write out the updated label. */
 	bp->b_dev = dev;

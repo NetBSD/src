@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.155 2003/10/30 21:02:55 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.156 2003/11/09 16:41:52 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2003/10/30 21:02:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2003/11/09 16:41:52 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -358,7 +358,7 @@ setregs(l, pack, stack)
 		free((void *)fs, M_SUBPROC);
 		l->l_md.md_fpstate = NULL;
 	}
-	bzero((caddr_t)tf, sizeof *tf);
+	memset(tf, 0, sizeof *tf);
 	tf->tf_tstate = tstate;
 	tf->tf_global[1] = (vaddr_t)l->l_proc->p_psstr;
 	/* %g4 needs to point to the start of the data segment */
@@ -716,7 +716,7 @@ haltsys:
 		i = strlen(user_boot_string);
 		if (i > sizeof(str))
 			OF_boot(user_boot_string);	/* XXX */
-		bcopy(user_boot_string, str, i);
+		memcpy(str, user_boot_string, i);
 	} else {
 		i = 1;
 		str[0] = '\0';
@@ -1017,7 +1017,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	bzero(mapstore, mapsize);
+	memset(mapstore, 0, mapsize);
 	map = (struct sparc_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.100 2003/11/04 14:24:25 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.101 2003/11/09 16:41:53 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 2003/11/04 14:24:25 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2003/11/09 16:41:53 martin Exp $");
 
 #define NEW_FPSTATE
 
@@ -2036,7 +2036,7 @@ syscall(tf, code, pc)
 				       (i - nap) * sizeof(register64_t));
 			i = nap;
 		}
-		/* It should be faster to do <=6 longword copies than call bcopy */
+		/* It should be faster to do <=6 longword copies than call memcpy */
 		for (argp = &args.l[0]; i--;) 
 			*argp++ = *ap++;
 		

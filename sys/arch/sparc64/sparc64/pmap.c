@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.148 2003/10/26 19:18:16 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.149 2003/11/09 16:41:53 martin Exp $	*/
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148 2003/10/26 19:18:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.149 2003/11/09 16:41:53 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -527,7 +527,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		prom_printf("no virtual-memory?");
 		OF_exit();
 	}
-	bzero((caddr_t)memlist, sizeof(memlist));
+	memset(memlist, 0, sizeof(memlist));
 	if (OF_getprop(vmemh, "available", memlist, sizeof(memlist)) <= 0) {
 		prom_printf("no vmemory avail?");
 		OF_exit();
@@ -700,8 +700,8 @@ remap_data:
 		prom_map_phys(newkp, sz, (vaddr_t)newkv, -1); 
 		BDPRINTF(PDB_BOOT1, ("Copying %ld bytes kernel data...",
 			kdsize));
-		bzero((void *)newkv, sz);
-		bcopy((void *)kdata, (void *)newkv, kdsize);
+		memset((void*)newkv, 0, sz);
+		memcpy((void*)newkv, (void*)kdata, kdsize);
 		BDPRINTF(PDB_BOOT1, ("done.  Swapping maps..unmap new\r\n"));
 		prom_unmap_virt((vaddr_t)newkv, sz);
 		BDPRINTF(PDB_BOOT, ("remap old "));
@@ -735,7 +735,7 @@ remap_data:
 	}
 	memsize = OF_getproplen(memh, "reg") + 2 * sizeof(struct mem_region);
 	valloc(mem, struct mem_region, memsize);
-	bzero((caddr_t)mem, memsize);
+	memset(mem, 0, memsize);
 	if (OF_getprop(memh, "reg", mem, memsize) <= 0) {
 		prom_printf("no memory installed?");
 		OF_exit();
@@ -823,7 +823,7 @@ remap_data:
 		prom_map_phys(newkp, ktsize, (vaddr_t)newkv, -1); 
 		BDPRINTF(PDB_BOOT1, ("Copying %ld bytes kernel text...",
 			ktsize));
-		bcopy((void *)ktext, (void *)newkv,
+		memcpy((void *)newkv, (void *)ktext,
 		    ktsize);
 		BDPRINTF(PDB_BOOT1, ("done.  Swapping maps..unmap new\r\n"));
 		prom_unmap_virt((vaddr_t)newkv, 4*MEG);
@@ -931,7 +931,7 @@ remap_data:
 	 */
 	sz = OF_getproplen(memh, "available") + sizeof(struct mem_region);
 	valloc(orig, struct mem_region, sz);
-	bzero((caddr_t)orig, sz);
+	memset(orig, 0, sz);
 	if (OF_getprop(memh, "available", orig, sz) <= 0) {
 		prom_printf("no available RAM?");
 		OF_exit();
@@ -948,7 +948,7 @@ remap_data:
 	}
 #endif
 	valloc(avail, struct mem_region, sz);
-	bzero((caddr_t)avail, sz);
+	memset(avail, 0, sz);
 	for (pcnt = 0, mp = orig, mp1 = avail; (mp1->size = mp->size);
 	    mp++, mp1++) {
 		mp1->start = mp->start;
@@ -960,7 +960,7 @@ remap_data:
 	 */
 	numctx = maxctx;
 	valloc(ctxbusy, paddr_t, CTXSIZE);
-	bzero((caddr_t)ctxbusy, CTXSIZE);
+	memset(ctxbusy, 0, CTXSIZE);
 	LIST_INIT(&pmap_ctxlist);
 
 	/*
@@ -985,9 +985,9 @@ remap_data:
 	BDPRINTF(PDB_BOOT, ("frobbed i, firstaddr before TSB=%x, %lx\r\n", 
 			    (int)i, (u_long)firstaddr));
 	valloc(tsb_dmmu, pte_t, TSBSIZE);
-	bzero(tsb_dmmu, TSBSIZE);
+	memset(tsb_dmmu, 0, TSBSIZE);
 	valloc(tsb_immu, pte_t, TSBSIZE);
-	bzero(tsb_immu, TSBSIZE);
+	memset(tsb_immu, 0, TSBSIZE);
 
 	BDPRINTF(PDB_BOOT1, ("firstaddr after TSB=%lx\r\n", (u_long)firstaddr));
 	BDPRINTF(PDB_BOOT1, ("TSB allocated at %p/%p size %08x\r\n",
@@ -1103,7 +1103,7 @@ remap_data:
 		 * Check whether some memory is left here.
 		 */
 		if (mp->size == 0) {
-			bcopy(mp + 1, mp,
+			memcpy(mp, mp + 1,
 			      (pcnt - (mp - avail)) * sizeof *mp);
 			pcnt--;
 			mp--;
@@ -1116,7 +1116,7 @@ remap_data:
 			if (s < mp1->start)
 				break;
 		if (mp1 < mp) {
-			bcopy(mp1, mp1 + 1, (char *)mp - (char *)mp1);
+			memcpy(mp1 + 1, mp1, (char *)mp - (char *)mp1);
 			mp1->start = s;
 			mp1->size = sz;
 		}
@@ -1338,7 +1338,7 @@ remap_data:
 		BDPRINTF(PDB_BOOT1, ("Initializing cpu_info\r\n"));
 
 		/* Initialize our cpu_info structure */
-		bzero((void *)intstk, 8*PAGE_SIZE);
+		memset((void*)intstk, 0, 8*PAGE_SIZE);
 		cpus->ci_next = NULL; /* Redundant, I know. */
 		cpus->ci_curlwp = &lwp0;
 		cpus->ci_cpcb = (struct pcb *)u0[0]; /* Need better source */
