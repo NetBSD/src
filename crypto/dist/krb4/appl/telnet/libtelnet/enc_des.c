@@ -33,7 +33,8 @@
 
 #include <config.h>
 
-RCSID("$Id: enc_des.c,v 1.1.1.3 2001/09/17 12:09:46 assar Exp $");
+__RCSID("$KTH-KRB: enc_des.c,v 1.20 2001/08/29 00:45:19 assar Exp $"
+      "$NetBSD: enc_des.c,v 1.1.1.4 2002/09/12 12:22:05 joda Exp $");
 
 #if	defined(AUTHENTICATION) && defined(ENCRYPTION) && defined(DES_ENCRYPTION)
 #include <arpa/telnet.h>

@@ -37,7 +37,8 @@
 
 #ifndef HAVE_INNETGR
 
-RCSID("$Id: innetgr.c,v 1.1.1.2 2000/12/29 01:43:26 assar Exp $");
+__RCSID("$KTH-KRB: innetgr.c,v 1.1 1999/03/11 14:04:01 joda Exp $"
+      "$NetBSD: innetgr.c,v 1.1.1.3 2002/09/12 12:22:10 joda Exp $");
 
 int
 innetgr(const char *netgroup, const char *machine, 

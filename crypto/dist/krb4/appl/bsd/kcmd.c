@@ -33,7 +33,8 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: kcmd.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
+__RCSID("$KTH-KRB: kcmd.c,v 1.23 2001/09/17 04:57:22 assar Exp $"
+      "$NetBSD: kcmd.c,v 1.1.1.4 2002/09/12 12:22:03 joda Exp $");
 
 #define	START_PORT	5120	 /* arbitrary */
 

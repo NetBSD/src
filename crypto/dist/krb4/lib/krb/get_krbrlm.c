@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_krbrlm.c,v 1.1.1.3 2001/09/17 12:09:54 assar Exp $");
+__RCSID("$KTH-KRB: get_krbrlm.c,v 1.27 2002/09/09 15:51:02 joda Exp $"
+      "$NetBSD: get_krbrlm.c,v 1.1.1.4 2002/09/12 12:22:09 joda Exp $");
 
 /*
  * krb_get_lrealm takes a pointer to a string, and a number, n.  It fills
@@ -48,47 +49,38 @@ RCSID("$Id: get_krbrlm.c,v 1.1.1.3 2001/09/17 12:09:54 assar Exp $");
  */
 
 static int
-krb_get_lrealm_f(char *r, int n, const char *fname)
+krb_get_lrealm_f(char *r, int n, FILE *f)
 {
     char buf[1024];
     char *p;
-    int rlen, tlen;
-    FILE *f;
-    int ret = KFAILURE;
-    char *rstart;
+    int nchar;
 
     if (n < 0)
         return KFAILURE;
     if(n == 0)
 	n = 1;
 
-    f = fopen(fname, "r");
-    if (f == 0)
-        return KFAILURE;
-
     for (; n > 0; n--)
         if (fgets(buf, sizeof(buf), f) == 0)
-            goto done;
+	    return KFAILURE;
 
     /* We now have the n:th line, remove initial white space. */
-    rstart = p = buf + strspn(buf, " \t");
+    p = buf + strspn(buf, " \t");
 
     /* Collect realmname. */
-    rlen    = strcspn(p, " \t\n");
-    if (rlen == 0 || rlen > REALM_SZ)
-        goto done;		/* No realmname */
+    nchar = strcspn(p, " \t\n");
+    if (nchar == 0 || nchar > REALM_SZ)
+        return KFAILURE;	/* No realmname */
+
+    strncpy(r, p, nchar);
+    r[nchar] = '\0';
 
     /* Does more junk follow? */
-    p += rlen;
-    tlen = strspn(p, " \t\n");
-    if (p[tlen] == 0) {
-	strncpy(r, rstart, rlen);
-	r[rlen] = 0;
-        ret = KSUCCESS;		/* This was a realm name only line. */
-    }
-  done:
-    fclose(f);
-    return ret;
+    p += nchar;
+    nchar = strspn(p, " \t\n");
+    if (p[nchar] == 0)
+        return KSUCCESS;		/* This was a realm name only line. */
+    return KFAILURE;
 }
 
 static const char *no_default_realm = "NO.DEFAULT.REALM";
@@ -96,22 +88,40 @@ static const char *no_default_realm = "NO.DEFAULT.REALM";
 int
 krb_get_lrealm(char *r, int n)
 {
-    int i;
-    char file[MaxPathLen];
+    FILE *f;
+    int i, have_krb_conf = 0;
+    char fname[MaxPathLen];
 
-    for (i = 0; krb_get_krbconf(i, file, sizeof(file)) == 0; i++)
-	if (krb_get_lrealm_f(r, n, file) == KSUCCESS)
+    for (i = 0; krb_get_krbconf(i, fname, sizeof(fname)) == 0; i++) {
+	f = fopen(fname, "r");
+	if(f == NULL)
+	    continue;
+	have_krb_conf = 1;
+	if (krb_get_lrealm_f(r, n, f) == KSUCCESS) {
+	    fclose(f);
 	    return KSUCCESS;
+	}
+	fclose(f);
+    }
+
+#if 0
+    /*
+     * If there is no krb.conf file, don't continue; it is not
+     * intended that Kerberos be used.
+     */
+    if (!have_krb_conf)
+	return KFAILURE;
+#endif
 
     /* When nothing else works try default realm */
     if (n == 1) {
-      char *t = krb_get_default_realm();
+	char *t = krb_get_default_realm();
 
-      if (strcmp(t, no_default_realm) == 0)
-	return KFAILURE;	/* Can't figure out default realm */
+	if (strcmp(t, no_default_realm) == 0)
+	    return KFAILURE;	/* Can't figure out default realm */
 
-      strcpy(r, t);
-      return KSUCCESS;
+	strcpy(r, t);
+	return KSUCCESS;
     }
     else
 	return(KFAILURE);
@@ -131,8 +141,16 @@ krb_get_default_realm(void)
 
 	gethostname(hostname, sizeof(hostname));
 	t = krb_realmofhost(hostname);
-	if (t && strcmp(t, no_default_realm) != 0)
-	    strlcpy(local_realm, t, sizeof(local_realm));
+	if (t && strcmp(t, no_default_realm) != 0) {
+	    /*
+	     * Before just assuming this can be the default
+	     * realm, make sure there's a KDC.  If not, it
+	     * can't possibly be, and should therefore
+	     * return NO.DEFAULT.REALM.
+	     */
+	    if (krb_get_host(1, t, 0) != NULL)
+		strlcpy(local_realm, t, sizeof(local_realm));
+	}
     }
     return local_realm;
 }

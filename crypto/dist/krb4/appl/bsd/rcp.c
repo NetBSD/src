@@ -33,7 +33,8 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: rcp.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
+__RCSID("$KTH-KRB: rcp.c,v 1.59 2001/09/17 04:42:47 assar Exp $"
+      "$NetBSD: rcp.c,v 1.1.1.4 2002/09/12 12:22:04 joda Exp $");
 
 /* Globals */
 static char	dst_realm_buf[REALM_SZ];

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: mk_safe.c,v 1.1.1.3 2001/09/17 12:09:54 assar Exp $");
+__RCSID("$KTH-KRB: mk_safe.c,v 1.27 2002/09/09 15:55:28 joda Exp $"
+      "$NetBSD: mk_safe.c,v 1.1.1.4 2002/09/12 12:22:09 joda Exp $");
 
 /* application include files */
 #include "krb-archaeology.h"
@@ -50,7 +51,6 @@ RCSID("$Id: mk_safe.c,v 1.1.1.3 2001/09/17 12:09:54 assar Exp $");
 
 /* from rd_safe.c */
 extern int dqc_type;
-void fixup_quad_cksum(void*, size_t, des_cblock*, void*, void*, int);
 
 /*
  * krb_mk_safe() constructs an AUTH_MSG_SAFE message.  It takes some

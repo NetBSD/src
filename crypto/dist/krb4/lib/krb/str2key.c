@@ -33,7 +33,8 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: str2key.c,v 1.1.1.3 2001/09/17 12:09:55 assar Exp $");
+__RCSID("$KTH-KRB: str2key.c,v 1.20 2001/09/16 22:41:58 assar Exp $"
+      "$NetBSD: str2key.c,v 1.1.1.4 2002/09/12 12:22:10 joda Exp $");
 
 #define lowcase(c) (('A' <= (c) && (c) <= 'Z') ? ((c) - 'A' + 'a') : (c))
 

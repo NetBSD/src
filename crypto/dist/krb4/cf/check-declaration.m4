@@ -1,4 +1,5 @@
-dnl $Id: check-declaration.m4,v 1.1.1.2 2000/12/29 01:44:09 assar Exp $
+dnl $KTH-KRB: check-declaration.m4,v 1.3 1999/03/01 13:03:08 joda Exp $
+dnl $NetBSD: check-declaration.m4,v 1.1.1.3 2002/09/12 12:22:14 joda Exp $
 dnl
 dnl
 dnl Check if we need the declaration of a variable

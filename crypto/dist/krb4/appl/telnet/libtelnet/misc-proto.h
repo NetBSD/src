@@ -53,7 +53,8 @@
  * or implied warranty.
  */
 
-/* $Id: misc-proto.h,v 1.1.1.3 2001/09/17 12:09:46 assar Exp $ */
+/* $KTH-KRB: misc-proto.h,v 1.9 2000/11/15 23:00:21 assar Exp $
+   $NetBSD: misc-proto.h,v 1.1.1.4 2002/09/12 12:22:05 joda Exp $ */
 
 #ifndef	__MISC_PROTO__
 #define	__MISC_PROTO__

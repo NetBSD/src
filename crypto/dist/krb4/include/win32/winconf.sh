@@ -1,6 +1,7 @@
 #!/bin/sh
 
-# $Id: winconf.sh,v 1.1.1.2 2000/12/29 01:43:05 assar Exp $
+# $KTH-KRB: winconf.sh,v 1.1 1997/11/09 14:35:15 joda Exp $
+# $NetBSD: winconf.sh,v 1.1.1.3 2002/09/12 12:22:08 joda Exp $
 
 cat ../config.h.in | sed '
 s%#undef gid_t$%#define gid_t int%

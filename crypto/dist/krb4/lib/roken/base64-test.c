@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: base64-test.c,v 1.1.1.1 2001/09/17 12:09:55 assar Exp $");
+__RCSID("$KTH-KRB: base64-test.c,v 1.2 2001/05/29 13:12:21 assar Exp $"
+      "$NetBSD: base64-test.c,v 1.1.1.2 2002/09/12 12:22:10 joda Exp $");
 #endif
 
 #include <roken.h>

@@ -1,5 +1,6 @@
 dnl
-dnl $Id: capabilities.m4,v 1.1.1.2 2000/12/29 01:44:09 assar Exp $
+dnl $KTH-KRB: capabilities.m4,v 1.2 1999/09/01 11:02:26 joda Exp $
+dnl $NetBSD: capabilities.m4,v 1.1.1.3 2002/09/12 12:22:14 joda Exp $
 dnl
 
 dnl

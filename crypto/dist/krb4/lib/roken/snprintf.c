@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: snprintf.c,v 1.1.1.3 2001/09/17 12:09:57 assar Exp $");
+__RCSID("$KTH-KRB: snprintf.c,v 1.34 2002/04/18 08:50:57 joda Exp $"
+      "$NetBSD: snprintf.c,v 1.1.1.4 2002/09/12 12:22:11 joda Exp $");
 #endif
 #include <stdio.h>
 #include <stdarg.h>
@@ -135,7 +136,7 @@ use_alternative (int flags, u_longest num, unsigned base)
 
 static int
 append_number(struct snprintf_state *state,
-	      u_longest num, unsigned base, char *rep,
+	      u_longest num, unsigned base, const char *rep,
 	      int width, int prec, int flags, int minusp)
 {
   int len = 0;
@@ -496,6 +497,7 @@ snprintf (char *str, size_t sz, const char *format, ...)
 
   va_start(args, format);
   ret = vsnprintf (str, sz, format, args);
+  va_end(args);
 
 #ifdef PARANOIA
   {
@@ -506,14 +508,15 @@ snprintf (char *str, size_t sz, const char *format, ...)
     if (tmp == NULL)
       abort ();
 
+    va_start(args, format);
     ret2 = vsprintf (tmp, format, args);
+    va_end(args);
     if (ret != ret2 || strcmp(str, tmp))
       abort ();
     free (tmp);
   }
 #endif
 
-  va_end(args);
   return ret;
 }
 #endif
@@ -527,6 +530,7 @@ asprintf (char **ret, const char *format, ...)
 
   va_start(args, format);
   val = vasprintf (ret, format, args);
+  va_end(args);
 
 #ifdef PARANOIA
   {
@@ -536,14 +540,15 @@ asprintf (char **ret, const char *format, ...)
     if (tmp == NULL)
       abort ();
 
+    va_start(args, format);
     ret2 = vsprintf (tmp, format, args);
+    va_end(args);
     if (val != ret2 || strcmp(*ret, tmp))
       abort ();
     free (tmp);
   }
 #endif
 
-  va_end(args);
   return val;
 }
 #endif

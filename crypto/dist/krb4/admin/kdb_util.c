@@ -16,7 +16,8 @@
 #include "adm_locl.h"
 #include <getarg.h>
 
-RCSID("$Id: kdb_util.c,v 1.1.1.3 2001/09/17 12:09:42 assar Exp $");
+__RCSID("$KTH-KRB: kdb_util.c,v 1.46 2001/02/20 23:07:49 assar Exp $"
+      "$NetBSD: kdb_util.c,v 1.1.1.4 2002/09/12 12:22:03 joda Exp $");
 
 static des_cblock master_key, new_master_key;
 static des_key_schedule master_key_schedule, new_master_key_schedule;

@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: getaddrinfo.c,v 1.1.1.1 2001/09/17 12:09:56 assar Exp $");
+__RCSID("$KTH-KRB: getaddrinfo.c,v 1.12 2001/08/17 13:06:57 joda Exp $"
+      "$NetBSD: getaddrinfo.c,v 1.1.1.2 2002/09/12 12:22:10 joda Exp $");
 #endif
 
 #include "roken.h"

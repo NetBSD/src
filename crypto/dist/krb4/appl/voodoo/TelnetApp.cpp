@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: TelnetApp.cpp,v 1.1.1.2 2000/12/29 01:42:29 assar Exp $ */
+/* $KTH-KRB: TelnetApp.cpp,v 1.7 1999/12/02 16:58:34 joda Exp $
+   $NetBSD: TelnetApp.cpp,v 1.1.1.3 2002/09/12 12:22:04 joda Exp $ */
 
 // TelnetApp.cpp
 // Author: Jörgen Karlsson - d93-jka@nada.kth.se
