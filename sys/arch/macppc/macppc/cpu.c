@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.13 2000/10/28 21:57:43 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.14 2000/11/08 17:53:46 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -31,6 +31,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_l2cr_config.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
