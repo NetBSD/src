@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 2003/08/07 11:15:26 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 2005/01/11 22:42:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,8 +37,6 @@ enum {
 	PW_USE,
 	PW_DONT_USE
 };
-
-int	pwd_gensalt(char *salt, int max, struct passwd *pwd, char type);
 
 #ifdef KERBEROS5
 int	krb5_init __P((const char *));

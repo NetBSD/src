@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.27 2004/10/30 21:05:53 dsl Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.28 2005/01/11 22:42:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.27 2004/10/30 21:05:53 dsl Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.28 2005/01/11 22:42:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,8 +108,8 @@ getnewpasswd(pw, min_pw_len)
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
 
-	if(!pwd_gensalt(salt, _PASSWORD_LEN, pw, 'l')) {
-		(void)printf("Couldn't generate salt.\n");
+	if(pw_gensalt(salt, _PASSWORD_LEN, pw, 'l') == -1) {
+		warn("Couldn't generate salt");
 		pw_error(NULL, 0, 0);
 	}
 	return(crypt(buf, salt));
