@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 1999/01/12 10:51:41 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 1999/01/12 15:12:44 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1068,6 +1068,7 @@ mapiodev(pa, len)
 	return (void *)(va + off);
 }
 
+#include "akbd.h"
 #include "ofb.h"
 #include "ite.h"
 #include "zstty.h"
