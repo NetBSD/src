@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8 2001/04/24 04:31:05 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.9 2001/07/07 06:24:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -175,7 +175,7 @@ cpu_coredump(p, vp, cred, chdr)
 			return error;
 	} else {
 		/* Make sure these are clear. */
-		bzero((caddr_t)&md_core.freg, sizeof(md_core.freg));
+		memset((caddr_t)&md_core.freg, 0, sizeof(md_core.freg));
 	}
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
