@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.202 2000/02/02 22:57:33 he Exp $
+# $NetBSD: mi,v 1.203 2000/02/04 09:31:36 veego Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -353,6 +353,7 @@
 ./usr/share/man/cat4/aha.0
 ./usr/share/man/cat4/ahb.0
 ./usr/share/man/cat4/ahc.0
+./usr/share/man/cat4/ahw.0
 ./usr/share/man/cat4/aic.0
 ./usr/share/man/cat4/aria.0
 ./usr/share/man/cat4/arp.0
@@ -413,7 +414,6 @@
 ./usr/share/man/cat4/inet.0
 ./usr/share/man/cat4/inet6.0
 ./usr/share/man/cat4/inphy.0
-./usr/share/man/cat4/ioat.0
 ./usr/share/man/cat4/iophy.0
 ./usr/share/man/cat4/ip.0
 ./usr/share/man/cat4/ip6.0
@@ -1291,6 +1291,7 @@
 ./usr/share/man/man4/aha.4
 ./usr/share/man/man4/ahb.4
 ./usr/share/man/man4/ahc.4
+./usr/share/man/man4/ahw.4
 ./usr/share/man/man4/aic.4
 ./usr/share/man/man4/aria.4
 ./usr/share/man/man4/arp.4
@@ -1351,7 +1352,6 @@
 ./usr/share/man/man4/inet.4
 ./usr/share/man/man4/inet6.4
 ./usr/share/man/man4/inphy.4
-./usr/share/man/man4/ioat.4
 ./usr/share/man/man4/iophy.4
 ./usr/share/man/man4/ip.4
 ./usr/share/man/man4/ip6.4
