@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.22 1999/11/12 00:34:58 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.23 1999/11/17 23:00:50 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -463,28 +463,28 @@ umass_usb_transfer(umass_softc_t *sc, usbd_pipe_handle pipe,
 	 * transfer and then wait for it to complete
 	 */
 
-	xfer = usbd_alloc_request(usbd_pipe2device_handle(pipe));
+	xfer = usbd_alloc_xfer(usbd_pipe2device_handle(pipe));
 	if (xfer == NULL) {
 		DPRINTF(UDMASS_USB, ("%s: not enough memory\n",
 		    USBDEVNAME(sc->sc_dev)));
 		return USBD_NOMEM;
 	}
 
-	usbd_setup_request(xfer, pipe, 0, buf, buflen,flags, 3000/*ms*/, NULL);
+	usbd_setup_xfer(xfer, pipe, 0, buf, buflen,flags, 3000/*ms*/, NULL);
 	err = usbd_sync_transfer(xfer);
 	if (err) {
 		DPRINTF(UDMASS_USB, ("%s: transfer failed: %s\n",
 			USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
-		usbd_free_request(xfer);
+		usbd_free_xfer(xfer);
 		return(err);
 	}
 
-	usbd_get_request_status(xfer, &priv, &buffer, &size, &err);
+	usbd_get_xfer_status(xfer, &priv, &buffer, &size, &err);
 
 	if (xfer_size != NULL)
 		*xfer_size = size;
 
-	usbd_free_request(xfer);
+	usbd_free_xfer(xfer);
 	return(USBD_NORMAL_COMPLETION);
 }
 

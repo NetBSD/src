@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.53 1999/11/12 00:34:57 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.54 1999/11/17 23:00:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -188,9 +188,9 @@ static void		ohci_rhsc_able __P((ohci_softc_t *, int));
 
 static void		ohci_close_pipe __P((usbd_pipe_handle pipe, 
 			    ohci_soft_ed_t *head));
-static void		ohci_abort_req __P((usbd_xfer_handle xfer,
+static void		ohci_abort_xfer __P((usbd_xfer_handle xfer,
 			    usbd_status status));
-static void		ohci_abort_req_end __P((void *));
+static void		ohci_abort_xfer_end __P((void *));
 
 static void		ohci_device_clear_toggle __P((usbd_pipe_handle pipe));
 static void		ohci_noop __P((usbd_pipe_handle pipe));
@@ -1393,7 +1393,7 @@ ohci_timeout(addr)
 
 	s = splusb();
 	xfer->device->bus->intr_context++;
-	ohci_abort_req(xfer, USBD_TIMEOUT);
+	ohci_abort_xfer(xfer, USBD_TIMEOUT);
 	xfer->device->bus->intr_context--;
 	splx(s);
 }
@@ -1578,34 +1578,34 @@ ohci_close_pipe(pipe, head)
  * interrupt processing to process it.
  */
 void
-ohci_abort_req(xfer, status)
+ohci_abort_xfer(xfer, status)
 	usbd_xfer_handle xfer;
 	usbd_status status;
 {
 	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->pipe;
 	ohci_soft_ed_t *sed;
 
-	DPRINTF(("ohci_abort_req: xfer=%p pipe=%p\n", xfer, opipe));
+	DPRINTF(("ohci_abort_xfer: xfer=%p pipe=%p\n", xfer, opipe));
 
 	xfer->status = status;
 
 	usb_untimeout(ohci_timeout, xfer, xfer->timo_handle);
 
 	sed = opipe->sed;
-	DPRINTFN(1,("ohci_abort_req: stop ed=%p\n", sed));
+	DPRINTFN(1,("ohci_abort_xfer: stop ed=%p\n", sed));
 	sed->ed.ed_flags |= LE(OHCI_ED_SKIP); /* force hardware skip */
 
 	if (xfer->device->bus->intr_context) {
 		/* We have no process context, so we can't use tsleep(). */
-		timeout(ohci_abort_req_end, xfer, hz / USB_FRAMES_PER_SECOND);
+		timeout(ohci_abort_xfer_end, xfer, hz / USB_FRAMES_PER_SECOND);
 	} else {
 		usb_delay_ms(opipe->pipe.device->bus, 1);
-		ohci_abort_req_end(xfer);
+		ohci_abort_xfer_end(xfer);
 	}
 }
 
 void
-ohci_abort_req_end(v)
+ohci_abort_xfer_end(v)
 	void *v;
 {
 	usbd_xfer_handle xfer = v;
@@ -1620,7 +1620,7 @@ ohci_abort_req_end(v)
 	p = xfer->hcpriv;
 #ifdef DIAGNOSTIC
 	if (!p) {
-		printf("ohci_abort_req: hcpriv==0\n");
+		printf("ohci_abort_xfer: hcpriv==0\n");
 		return;
 	}
 #endif
@@ -1631,7 +1631,7 @@ ohci_abort_req_end(v)
 	}
 
 	sed = opipe->sed;
-	DPRINTFN(2,("ohci_abort_req: set hd=%x, tl=%x\n",
+	DPRINTFN(2,("ohci_abort_xfer: set hd=%x, tl=%x\n",
 		    (int)LE(p->physaddr), (int)LE(sed->ed.ed_tailp)));
 	sed->ed.ed_headp = p->physaddr; /* unlink TDs */
 	sed->ed.ed_flags &= LE(~OHCI_ED_SKIP); /* remove hardware skip */
@@ -2158,7 +2158,7 @@ ohci_device_ctrl_abort(xfer)
 	usbd_xfer_handle xfer;
 {
 	DPRINTF(("ohci_device_ctrl_abort: xfer=%p\n", xfer));
-	ohci_abort_req(xfer, USBD_CANCELLED);
+	ohci_abort_xfer(xfer, USBD_CANCELLED);
 }
 
 /* Close a device control pipe. */
@@ -2301,7 +2301,7 @@ ohci_device_bulk_abort(xfer)
 	usbd_xfer_handle xfer;
 {
 	DPRINTF(("ohci_device_bulk_abort: xfer=%p\n", xfer));
-	ohci_abort_req(xfer, USBD_CANCELLED);
+	ohci_abort_xfer(xfer, USBD_CANCELLED);
 }
 
 /* 
@@ -2420,7 +2420,7 @@ ohci_device_intr_abort(xfer)
 		DPRINTF(("ohci_device_intr_abort: remove\n"));
 		xfer->pipe->intrxfer = 0;
 	}
-	ohci_abort_req(xfer, USBD_CANCELLED);
+	ohci_abort_xfer(xfer, USBD_CANCELLED);
 }
 
 /* Close a device interrupt pipe. */
