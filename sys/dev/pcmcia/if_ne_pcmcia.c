@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.49 2000/02/02 10:00:07 itojun Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.50 2000/02/02 11:17:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -617,7 +617,6 @@ ne_pcmcia_detach(self, flags)
 	struct device *self;
 	int flags;
 {
-#if 0
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)self;
 	int rv;
 
@@ -632,9 +631,6 @@ ne_pcmcia_detach(self, flags)
 	}
 
 	return rv;
-#else
-	return EBUSY;
-#endif
 }
 
 int
