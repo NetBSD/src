@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.1 1995/02/13 23:07:09 cgd Exp $	*/
+/*	$NetBSD: prom.c,v 1.2 1995/04/22 12:42:51 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1994, 1995 Carnegie Mellon University
@@ -34,7 +34,7 @@
 #include <dev/cons.h>
 
 /* XXX this is to fake out the console routines, while booting. */
-int promcnputc __P((dev_t, int));
+void promcnputc __P((dev_t, int));
 int promcngetc __P((dev_t));
 void promcnpollc __P((dev_t, int));
 struct consdev promcons = { NULL, NULL, promcngetc, promcnputc,
@@ -76,7 +76,7 @@ init_prom_interface()
  * is called in alpha_init. This is due to the hard coded address
  * of the console area.
  */
-int
+void
 promcnputc(dev, c)
 	dev_t dev;
 	int c;
@@ -86,7 +86,7 @@ promcnputc(dev, c)
 
 #ifdef notdef /* XXX */
 	if (!prom_mapped)
-		return (0);
+		return;
 #endif
 
 	s = splhigh();
