@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.2 2000/10/28 04:58:35 itojun Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.3 2000/10/30 00:26:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -158,22 +158,17 @@ void
 pchb_rnd_callout(void *v)
 {
 	struct pchb_softc *sc = v;
-	int s;
 	u_int8_t reg8;
 
-	s = splhigh();
-	while ((bus_space_read_1(sc->sc_st, sc->sc_sh, I82802_RNG_RNGST) &
-	    I82802_RNG_RNGST_DATAV) == 0)
-		; /* spin */
-	reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh, I82802_RNG_DATA);
-
-	if (sc->sc_rnd_i--) {
-		sc->sc_rnd_ax = (sc->sc_rnd_ax << 8) | reg8;
-		splx(s);
-	} else {
-		sc->sc_rnd_i = 4;
-		splx(s);
-		rnd_add_uint32(&sc->sc_rnd_source, sc->sc_rnd_ax);
+	if ((bus_space_read_1(sc->sc_st, sc->sc_sh, I82802_RNG_RNGST) &
+	     I82802_RNG_RNGST_DATAV) != 0) {
+		reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh, I82802_RNG_DATA);
+		if (sc->sc_rnd_i--)
+			sc->sc_rnd_ax = (sc->sc_rnd_ax << 8) | reg8;
+		else {
+			sc->sc_rnd_i = 4;
+			rnd_add_uint32(&sc->sc_rnd_source, sc->sc_rnd_ax);
+		}
 	}
 	callout_reset(&sc->sc_rnd_ch, 1, pchb_rnd_callout, sc);
 }
