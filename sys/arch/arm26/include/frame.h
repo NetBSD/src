@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.2 2001/01/11 22:03:52 bjh21 Exp $	*/
+/*	$NetBSD: frame.h,v 1.3 2001/01/18 21:48:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -42,9 +42,9 @@
 #ifndef _ARM26_FRAME_H_
 #define _ARM26_FRAME_H_
 
-#ifndef _LOCORE
+#include <arm/frame.h>
 
-#include <sys/signal.h>
+#ifndef _LOCORE
 
 #include <machine/armreg.h>
 
@@ -115,18 +115,6 @@ typedef struct trapframe {
 } trapframe_t;
 
 /*
- * Signal frame
- */
-
-struct sigframe {
-	int    	sf_signum;
-	int	sf_code;
-	struct	sigcontext *sf_scp;
-	sig_t	sf_handler;
-	struct	sigcontext sf_sc;
-};
-
-/*
  * Switch frame
  */
 
@@ -152,20 +140,6 @@ struct fpframe {
 	register_t	ff_regs[8*3];
 };
  
-/*
- * Stack frame. Used during stack traces (db_trace.c)
- */
-struct frame {
-	register_t	fr_fp;
-	register_t	fr_sp;
-	register_t	fr_lr;
-	register_t	fr_r15;
-};
-
-#ifdef _KERNEL
-void validate_trapframe __P((trapframe_t *, int));
-#endif /* _KERNEL */
-
 #endif _LOCORE
 
 #endif /* _ARM26_FRAME_H_ */
