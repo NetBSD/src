@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.13.4.3 2000/08/13 00:52:50 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.13.4.4 2000/08/13 03:08:52 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.35 2000/08/13 00:39:44 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.13.4.3 2000/08/13 00:52:50 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.13.4.4 2000/08/13 03:08:52 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -2725,7 +2725,9 @@ filterconfig()
 	struct	iff ftmp, *iff_obj;
 	struct	ifc *ifcp;
 	struct	riprt *rrt;
+#if 0
 	struct	in6_addr gw;
+#endif
 
 	for (i = 0; i < nfilter; i++) {
 		ap = filter[i];
@@ -2784,6 +2786,7 @@ ifonly:
 		rrt->rrt_rflags = RRTF_AGGREGATE;
 		rrt->rrt_t = 0;
 		rrt->rrt_index = loopifindex;
+#if 0
 		if (getroute(&rrt->rrt_info, &gw)) {
 #if 0
 			/*
@@ -2800,6 +2803,7 @@ ifonly:
 			    rrt->rrt_info.rip6_plen);
 #endif
 		}
+#endif
 		/* Put the route to the list */
 		rrt->rrt_next = riprt;
 		riprt = rrt;
