@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.18 1998/06/24 20:58:48 sommerfe Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.19 1998/09/01 03:26:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993, 1995
@@ -48,6 +48,7 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/signalvar.h>
 
 #include <vm/vm.h>
@@ -519,7 +520,7 @@ lfs_reclaim(v)
 
 	if ((error = ufs_reclaim(vp, ap->a_p)))
 		return (error);
-	FREE(vp->v_data, M_LFSNODE);
+	pool_put(&lfs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
 }
