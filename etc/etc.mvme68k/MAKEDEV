@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.11 1997/08/22 11:30:57 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.12 1997/11/07 21:29:21 scw Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -39,6 +39,11 @@
 #	md*	"memory" pseudo-disks
 #	ccd*	contatenated disk devices
 #
+# Serial ports:
+#	tty*	Onboard serial ports 1 to 3 (tty01 -> tty03). Note that
+#		tty00 is grabbed by the console device so is not created
+#		by default.
+#
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 #
@@ -66,7 +71,7 @@ do
 case $i in
 
 all)
-	sh $0 std fd sd0 sd1 sd2 pty0 
+	sh $0 std fd sd0 sd1 sd2 pty0 tty01 tty02 tty03
 	sh $0 st0 st1 ch0 cd0 cd1 lpa0 lpt0 vnd0 vnd1 
 	sh $0 bpf0 bpf1 bpf2 bpf3 tun0 tun1
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 lkm
@@ -149,6 +154,13 @@ ccd*|sd*|vnd*)
 	mknod r${name}${unit}h	c $chr $(($unit * 8 + 7))
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
+	;;
+
+tty*)
+	unit=${i#???}
+	rm -f tty$unit
+	mknod tty$unit c 12 $unit
+	chown uucp.wheel tty$unit
 	;;
 
 pty*)
