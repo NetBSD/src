@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)isdigit.3	5.2 (Berkeley) 6/29/91
-.\"	$Id: isdigit.3,v 1.2 1993/07/30 08:37:14 mycroft Exp $
+.\"	$Id: isdigit.3,v 1.3 1993/10/15 00:58:57 jtc Exp $
 .\"
 .Dd June 29, 1991
 .Dt ISDIGIT 3
@@ -56,9 +56,10 @@ The
 macro returns zero if the character tests false and
 returns non-zero if the character tests true.
 .Sh SEE ALSO
-.Xr isascii 3 ,
 .Xr isalnum 3 ,
 .Xr isalpha 3 ,
+.Xr isascii 3 ,
+.Xr isblank 3 ,
 .Xr iscntrl 3 ,
 .Xr isdigit 3 ,
 .Xr isgraph 3 ,
@@ -71,7 +72,7 @@ returns non-zero if the character tests true.
 .Xr toascii 3 ,
 .Xr tolower 3 ,
 .Xr toupper 3 ,
-.Xr stdio 3
+.Xr stdio 3 ,
 .Xr ascii 7
 .Sh STANDARDS
 The
