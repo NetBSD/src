@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.15 2003/08/20 21:48:37 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.16 2003/09/10 16:46:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -705,7 +705,7 @@ NENTRY(proc_trampoline)
 	/* NOTREACHED */
 
 /*****************************************************************************/
-
+#ifdef COMPAT_16
 /*
  * Signal trampoline; copied to top of user stack.
  */
@@ -724,6 +724,7 @@ NENTRY(sigcode)
 	int	$0x80			# exit if sigreturn fails
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
+#endif
 
 /*****************************************************************************/
 
