@@ -1,7 +1,7 @@
-/*	$NetBSD: interrupt.c,v 1.13 1996/11/13 21:13:07 cgd Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.14 1996/11/13 22:20:54 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Authors: Keith Bostic, Chris G. Demetriou
