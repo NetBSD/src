@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.52 2000/10/30 21:31:50 jdolecek Exp $	*/
+/*	$NetBSD: mount.c,v 1.53 2000/11/01 04:01:45 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.52 2000/10/30 21:31:50 jdolecek Exp $");
+__RCSID("$NetBSD: mount.c,v 1.53 2000/11/01 04:01:45 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,22 +70,23 @@ __RCSID("$NetBSD: mount.c,v 1.52 2000/10/30 21:31:50 jdolecek Exp $");
 
 static int	debug, verbose;
 
-int	checkvfsname __P((const char *, const char **));
 static void	catopt __P((char **, const char *));
-static struct statfs	*getmntpt __P((const char *));
+static const char *
+		getfslab __P((const char *str));
+static struct statfs *
+		getmntpt __P((const char *));
 static int	hasopt __P((const char *, const char *));
-const char
-      **makevfslist __P((char *));
-const static char *
-	getfslab __P((const char *str));
-static void
-	mangle __P((char *, int *, const char ***, int *));
+static void	mangle __P((char *, int *, const char ***, int *));
 static int	mountfs __P((const char *, const char *, const char *,
-			int, const char *, const char *, int));
+		    int, const char *, const char *, int));
 static void	prmount __P((struct statfs *));
 static void	usage __P((void));
-int	main __P((int, char *[]));
+
 void	checkname __P((int, char *[]));
+int	checkvfsname __P((const char *, const char **));
+int	main __P((int, char *[]));
+const char **
+	makevfslist __P((char *));
 
 /* Map from mount otions to printable formats. */
 static const struct opt {
@@ -162,7 +163,8 @@ main(argc, argv)
 			break;
 		case 't':
 			if (vfslist != NULL)
-				errx(1, "only one -t option may be specified.");
+				errx(1,
+				    "only one -t option may be specified.");
 			vfslist = makevfslist(optarg);
 			vfstype = optarg;
 			break;
@@ -284,7 +286,7 @@ main(argc, argv)
 		int pid;
 
 		if (fscanf(mountdfp, "%d", &pid) == 1 &&
-		     pid > 0 && kill(pid, SIGHUP) == -1 && errno != ESRCH)
+		    pid > 0 && kill(pid, SIGHUP) == -1 && errno != ESRCH)
 			err(1, "signal mountd");
 		(void)fclose(mountdfp);
 	}
@@ -365,18 +367,21 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 			return (1);
 		}
 		for(i = 0; i < numfs; i++) {
-			/* XXX can't check f_mntfromname,
-			 thanks to mfs, union, etc. */
+			/*
+			 * XXX can't check f_mntfromname,
+			 * thanks to mfs, union, etc.
+			 */
 			if (strncmp(name, sfp[i].f_mntonname, MNAMELEN) == 0 &&
 			    strncmp(vfstype, sfp[i].f_fstypename,
-				    MFSNAMELEN) == 0) {
+				MFSNAMELEN) == 0) {
 				if (verbose)
-					(void)printf("%s on %s type %.*s: %s\n",
-						     sfp[i].f_mntfromname,
-						     sfp[i].f_mntonname,
-						     MFSNAMELEN,
-						     sfp[i].f_fstypename,
-						     "already mounted");
+					(void)printf("%s on %s type %.*s: "
+					    "%s\n",
+					    sfp[i].f_mntfromname,
+					    sfp[i].f_mntonname,
+					    MFSNAMELEN,
+					    sfp[i].f_fstypename,
+					    "already mounted");
 				return (0);
 			}
 		}
@@ -477,8 +482,8 @@ prmount(sfp)
 	struct passwd *pw;
 	int f;
 
-	(void)printf("%s on %s type %.*s", sfp->f_mntfromname, sfp->f_mntonname,
-	    MFSNAMELEN, sfp->f_fstypename);
+	(void)printf("%s on %s type %.*s", sfp->f_mntfromname,
+	    sfp->f_mntonname, MFSNAMELEN, sfp->f_fstypename);
 
 	flags = sfp->f_flags & MNT_VISFLAGMASK;
 	for (f = 0, o = optnames; flags && o->o_opt; o++)
@@ -579,9 +584,8 @@ mangle(options, argcp, argvp, maxargcp)
 	*maxargcp = maxargc;
 }
 
-	/* deduce the filesystem type from the disk label */
-
-const static char *
+/* Deduce the filesystem type from the disk label. */
+static const char *
 getfslab(str)
 	const char *str;
 {
@@ -590,7 +594,7 @@ getfslab(str)
 	int part;
 	const char *vfstype;
 	u_char fstype;
-	char buf[MAXPATHLEN+1];
+	char buf[MAXPATHLEN + 1];
 	char *sp, *ep;
 
 	if ((fd = open(str, O_RDONLY)) == -1) {
@@ -605,18 +609,18 @@ getfslab(str)
 			++sp;
 		else
 			sp = buf;
-		for( ep = sp + strlen(sp) + 1 ;  ep > sp ; ep-- )
-			*ep = *(ep-1);
+		for (ep = sp + strlen(sp) + 1;  ep > sp; ep--)
+			*ep = *(ep - 1);
 		*sp = 'r';
 
 		/* Silently fail here - mount call can display error */
 		if ((fd = open(buf, O_RDONLY)) == -1)
-			return NULL;
+			return (NULL);
 	}
 
 	if (ioctl(fd, DIOCGDINFO, &dl) == -1) {
 		warn("cannot get disklabel for `%s'", str);
-		return NULL;
+		return (NULL);
 	}
 
 	(void) close(fd);
@@ -632,7 +636,7 @@ getfslab(str)
 	else
 		vfstype = mountnames[fstype];
 
-	return vfstype;
+	return (vfstype);
 }
 
 static void
@@ -640,11 +644,10 @@ usage()
 {
 
 	(void)fprintf(stderr,
-		"usage: mount %s %s\n       mount %s\n       mount %s\n",
-		"[-dfruvw] [-o options] [-t ffs | external_type]",
-			"special node",
-		"[-adfruvw] [-t ffs | external_type]",
-		"[-dfruvw] special | node");
+	    "usage: mount %s\n       mount %s\n       mount %s\n",
+	    "[-dfruvw] [-o options] [-t ffs | external_type] special node",
+	    "[-adfruvw] [-t ffs | external_type]",
+	    "[-dfruvw] special | node");
 	exit(1);
 	/* NOTREACHED */
 }
