@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.5 1994/06/29 06:41:57 cgd Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.6 1995/03/08 02:14:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -1269,7 +1269,7 @@ spp_usrreq(so, req, m, nam, controlp)
 	register struct sockbuf *sb;
 
 	if (req == PRU_CONTROL)
-                return (ns_control(so, (int)m, (caddr_t)nam,
+                return (ns_control(so, (long)m, (caddr_t)nam,
 			(struct ifnet *)controlp));
 	if (nsp == NULL) {
 		if (req != PRU_ATTACH) {
@@ -1484,8 +1484,8 @@ spp_usrreq(so, req, m, nam, controlp)
 		break;
 
 	case PRU_SLOWTIMO:
-		cb = spp_timers(cb, (int)nam);
-		req |= ((int)nam) << 8;
+		cb = spp_timers(cb, (long)nam);
+		req |= ((long)nam) << 8;
 		break;
 
 	case PRU_FASTTIMO:
@@ -1664,7 +1664,7 @@ spp_slowtimo()
 	register struct nspcb *ip, *ipnxt;
 	register struct sppcb *cb;
 	int s = splnet();
-	register int i;
+	register long i;
 
 	/*
 	 * Search through tcb's and update active timers.
@@ -1704,7 +1704,7 @@ tpgone:
 struct sppcb *
 spp_timers(cb, timer)
 	register struct sppcb *cb;
-	int timer;
+	long timer;
 {
 	long rexmt;
 	int win;
