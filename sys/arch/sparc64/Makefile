@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/09/13 23:19:59 eeh Exp $
+#	$NetBSD: Makefile,v 1.12 2002/07/20 11:46:14 mrg Exp $
 
 # Makefile for sparc64 tags file and boot blocks
 
@@ -34,6 +34,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR= include stand
+SUBDIR= include ../sparc/include stand
 
 .include <bsd.subdir.mk>
