@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.178 2001/11/20 12:56:30 lukem Exp $
+#	$NetBSD: INSTALL,v 1.179 2001/12/01 00:09:08 bouyer Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -420,6 +420,7 @@ atapibus* at pciide? channel ?
 # flags have the same meaning as for IDE drives.
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
 #uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 
