@@ -1,4 +1,4 @@
-/*	$NetBSD: video_subr.h,v 1.2 2001/06/05 15:02:40 uch Exp $	*/
+/*	$NetBSD: video_subr.h,v 1.2.22.1 2005/03/04 16:41:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 int cmap_work_alloc(u_int8_t **, u_int8_t **, u_int8_t **, u_int32_t **, int);
 void cmap_work_free(u_int8_t *, u_int8_t *, u_int8_t *, u_int32_t *);
-void rgb24_compose(u_int32_t *, u_int8_t *, u_int8_t *, u_int8_t *, int); 
+void rgb24_compose(u_int32_t *, u_int8_t *, u_int8_t *, u_int8_t *, int);
 void rgb24_decompose(u_int32_t *, u_int8_t *, u_int8_t *, u_int8_t *, int);
 
 /* debug function */

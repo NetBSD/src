@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.17.6.4 2005/02/04 11:46:08 skrll Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.17.6.5 2005/03/04 16:43:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.17.6.4 2005/02/04 11:46:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.17.6.5 2005/03/04 16:43:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,7 +298,7 @@ ix_copyin (sc, dst, offset, size)
 			wptr++;
 		}
 	} else {
-		bus_space_read_region_2(sc->bt, sc->bh, offset, 
+		bus_space_read_region_2(sc->bt, sc->bh, offset,
 					(u_int16_t *) bptr, size / 2);
 	}
 
@@ -330,7 +330,7 @@ ix_copyout (sc, src, offset, size)
 	if (isc->use_pio) {
 		/* Reset write pointer to the specified offset */
 		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR, offset);
-		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2, 
+		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2,
 						  BUS_SPACE_BARRIER_WRITE);
 	}
 
@@ -351,7 +351,7 @@ ix_copyout (sc, src, offset, size)
 			wptr++;
 		}
 	} else {
-		bus_space_write_region_2(sc->bt, sc->bh, offset, 
+		bus_space_write_region_2(sc->bt, sc->bh, offset,
 					 (u_int16_t *)bptr, size / 2);
 	}
 
@@ -366,7 +366,7 @@ ix_copyout (sc, src, offset, size)
 	}
 
 	if (isc->use_pio)
-		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2, 
+		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2,
 						  BUS_SPACE_BARRIER_WRITE);
 	else
 	bus_space_barrier(sc->bt, sc->bh, ooffset, osize,
@@ -399,12 +399,12 @@ ix_read_16 (sc, offset)
 
 		/* Reset read pointer to the specified offset */
 		bus_space_write_2(sc->bt, sc->bh, IX_READPTR, offset);
-		bus_space_barrier(sc->bt, sc->bh, IX_READPTR, 2, 
+		bus_space_barrier(sc->bt, sc->bh, IX_READPTR, 2,
 						  BUS_SPACE_BARRIER_WRITE);
 
 		return bus_space_read_2(sc->bt, sc->bh, IX_DATAPORT);
 	} else {
-		bus_space_barrier(sc->bt, sc->bh, offset, 2, 
+		bus_space_barrier(sc->bt, sc->bh, offset, 2,
 						  BUS_SPACE_BARRIER_READ);
         return bus_space_read_2(sc->bt, sc->bh, offset);
 	}
@@ -421,15 +421,15 @@ ix_write_16 (sc, offset, value)
 	if (isc->use_pio) {
 		/* Reset write pointer to the specified offset */
 		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR, offset);
-		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2, 
+		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2,
 						  BUS_SPACE_BARRIER_WRITE);
 
 		bus_space_write_2(sc->bt, sc->bh, IX_DATAPORT, value);
-		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2, 
+		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2,
 						  BUS_SPACE_BARRIER_WRITE);
 	} else {
         bus_space_write_2(sc->bt, sc->bh, offset, value);
-		bus_space_barrier(sc->bt, sc->bh, offset, 2, 
+		bus_space_barrier(sc->bt, sc->bh, offset, 2,
 						  BUS_SPACE_BARRIER_WRITE);
 	}
 }
@@ -446,19 +446,19 @@ ix_write_24 (sc, offset, addr)
 	if (isc->use_pio) {
 		/* Reset write pointer to the specified offset */
 		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR, offset);
-		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2, 
+		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2,
 						  BUS_SPACE_BARRIER_WRITE);
 
 		ptr = (char*) &val;
-		bus_space_write_2(sc->bt, sc->bh, IX_DATAPORT, 
+		bus_space_write_2(sc->bt, sc->bh, IX_DATAPORT,
 						  *((u_int16_t *)ptr));
-		bus_space_write_2(sc->bt, sc->bh, IX_DATAPORT, 
+		bus_space_write_2(sc->bt, sc->bh, IX_DATAPORT,
 						  *((u_int16_t *)(ptr + 2)));
-		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2, 
+		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2,
 						  BUS_SPACE_BARRIER_WRITE);
 	} else {
         	bus_space_write_4(sc->bt, sc->bh, offset, val);
-		bus_space_barrier(sc->bt, sc->bh, offset, 4, 
+		bus_space_barrier(sc->bt, sc->bh, offset, 4,
 						  BUS_SPACE_BARRIER_WRITE);
 	}
 }
@@ -475,7 +475,7 @@ ix_zeromem(sc, offset, count)
 	if (isc->use_pio) {
 		/* Reset write pointer to the specified offset */
 		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR, offset);
-		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2, 
+		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2,
 						  BUS_SPACE_BARRIER_WRITE);
 
 		if (offset % 2) {
@@ -490,11 +490,11 @@ ix_zeromem(sc, offset, count)
 		if (dribble)
 			bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT, 0);
 
-		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2, 
+		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2,
 						  BUS_SPACE_BARRIER_WRITE);
 	} else {
 		bus_space_set_region_1(sc->bt, sc->bh, offset, 0, count);
-		bus_space_barrier(sc->bt, sc->bh, offset, count, 
+		bus_space_barrier(sc->bt, sc->bh, offset, count,
 						  BUS_SPACE_BARRIER_WRITE);
 	}
 }
@@ -654,7 +654,7 @@ ix_match(parent, cf, aux)
 	}
 
 	/*
-	 * Only do the following bit if using memory-mapped access.  For 
+	 * Only do the following bit if using memory-mapped access.  For
 	 * boards with no mapped memory, we use PIO.  We also use PIO for
 	 * boards with 16K of mapped memory, as those setups don't seem
 	 * to work otherwise.
@@ -670,7 +670,7 @@ ix_match(parent, cf, aux)
 	bus_space_write_1(iot, ioh, IX_MPCTRL, (~decode & 0xFF));
 
 		/* XXX disable Exxx */
-		bus_space_write_1(iot, ioh, IX_MECTRL, edecode); 
+		bus_space_write_1(iot, ioh, IX_MECTRL, edecode);
 	}
 
 	/*
@@ -741,9 +741,9 @@ ix_attach(parent, self, aux)
 
 	iot = ia->ia_iot;
 
-	/* 
+	/*
 	 * Shared memory access seems to fail on 16K mapped boards, so
-	 * disable shared memory access if the board is in 16K mode.  If 
+	 * disable shared memory access if the board is in 16K mode.  If
 	 * no memory is mapped, we have no choice but to use PIO
 	 */
 	isc->use_pio = (ia->ia_iomem[0].ir_size <= (16 * 1024));
@@ -814,10 +814,10 @@ ix_attach(parent, self, aux)
 		sc->bt = iot;
 		sc->bh = ioh;
 
-		/* 
-		 * If using PIO, the memory size is bounded by on-card memory, 
-		 * not by how much is mapped into the memory-mapped region, so 
-		 * determine how much total memory we have to play with here.  
+		/*
+		 * If using PIO, the memory size is bounded by on-card memory,
+		 * not by how much is mapped into the memory-mapped region, so
+		 * determine how much total memory we have to play with here.
 		 */
 		for(memsize = 64 * 1024; memsize; memsize -= 16 * 1024) {
 			/* warm up shared memory, the zero it all out */
@@ -826,7 +826,7 @@ ix_attach(parent, self, aux)
 
 			/* Reset write pointer to the start of RAM */
 			bus_space_write_2(iot, ioh, IX_WRITEPTR, 0);
-			bus_space_barrier(iot, ioh, IX_WRITEPTR, 2, 
+			bus_space_barrier(iot, ioh, IX_WRITEPTR, 2,
 						    BUS_SPACE_BARRIER_WRITE);
 
 			/* write test pattern */
@@ -836,13 +836,13 @@ ix_attach(parent, self, aux)
 			}
 
 			/* Flush all reads & writes to data port */
-			bus_space_barrier(iot, ioh, IX_DATAPORT, 2, 
+			bus_space_barrier(iot, ioh, IX_DATAPORT, 2,
 						    BUS_SPACE_BARRIER_READ |
 						    BUS_SPACE_BARRIER_WRITE);
 
 			/* Reset read pointer to beginning of card RAM */
 			bus_space_write_2(iot, ioh, IX_READPTR, 0);
-			bus_space_barrier(iot, ioh, IX_READPTR, 2, 
+			bus_space_barrier(iot, ioh, IX_READPTR, 2,
 						    BUS_SPACE_BARRIER_WRITE);
 
 			/* read and verify test pattern */
@@ -865,7 +865,7 @@ ix_attach(parent, self, aux)
 
 			/* Reset write pointer to start of card RAM */
 			bus_space_write_2(iot, ioh, IX_WRITEPTR, 0);
-			bus_space_barrier(iot, ioh, IX_WRITEPTR, 2, 
+			bus_space_barrier(iot, ioh, IX_WRITEPTR, 2,
 						    BUS_SPACE_BARRIER_WRITE);
 
 			/* write out test pattern */
@@ -875,13 +875,13 @@ ix_attach(parent, self, aux)
 			}
 
 			/* Flush all reads & writes to data port */
-			bus_space_barrier(iot, ioh, IX_DATAPORT, 2, 
+			bus_space_barrier(iot, ioh, IX_DATAPORT, 2,
 						    BUS_SPACE_BARRIER_READ |
 						    BUS_SPACE_BARRIER_WRITE);
 
 			/* Reset read pointer to beginning of card RAM */
 			bus_space_write_2(iot, ioh, IX_READPTR, 0);
-			bus_space_barrier(iot, ioh, IX_READPTR, 2, 
+			bus_space_barrier(iot, ioh, IX_READPTR, 2,
 						    BUS_SPACE_BARRIER_WRITE);
 
 			/* read and verify test pattern */
@@ -892,7 +892,7 @@ ix_attach(parent, self, aux)
 				bpat += 3;
 			}
 
-			/* If we got through all of memory, we're done! */ 
+			/* If we got through all of memory, we're done! */
 			if (i == memsize)
 				break;
 		}
@@ -935,7 +935,7 @@ ix_attach(parent, self, aux)
 
 	/* set card to 16-bit bus mode */
 	if (isc->use_pio) {
-		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR, 
+		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR,
 				  	    IE_SCP_BUS_USE((u_long)sc->scp));
 		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2,
 					          BUS_SPACE_BARRIER_WRITE);
@@ -943,7 +943,7 @@ ix_attach(parent, self, aux)
 		bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT,
 				  IE_SYSBUS_16BIT);
 	} else {
-		bus_space_write_1(sc->bt, sc->bh, 
+		bus_space_write_1(sc->bt, sc->bh,
 				  IE_SCP_BUS_USE((u_long)sc->scp),
 				  IE_SYSBUS_16BIT);
 	}

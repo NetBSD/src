@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.37.2.5 2005/02/04 11:45:25 skrll Exp $	*/
+/*	$NetBSD: hme.c,v 1.37.2.6 2005/03/04 16:41:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.37.2.5 2005/02/04 11:45:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.37.2.6 2005/03/04 16:41:28 skrll Exp $");
 
 /* #define HMEDEBUG */
 
@@ -75,6 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.37.2.5 2005/02/04 11:45:25 skrll Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 #endif
 
 #ifdef NS
@@ -115,9 +117,9 @@ static void	hme_mii_statchg(struct device *);
 int		hme_mediachange(struct ifnet *);
 void		hme_mediastatus(struct ifnet *, struct ifmediareq *);
 
-struct mbuf	*hme_get(struct hme_softc *, int, int);
+struct mbuf	*hme_get(struct hme_softc *, int, uint32_t);
 int		hme_put(struct hme_softc *, int, struct mbuf *);
-void		hme_read(struct hme_softc *, int, int);
+void		hme_read(struct hme_softc *, int, uint32_t);
 int		hme_eint(struct hme_softc *, u_int);
 int		hme_rint(struct hme_softc *);
 int		hme_tint(struct hme_softc *);
@@ -203,7 +205,7 @@ hme_config(sc)
 	size =	2048 +					/* TX descriptors */
 		2048 +					/* RX descriptors */
 		sc->sc_rb.rb_ntbuf * _HME_BUFSZ +	/* TX buffers */
-		sc->sc_rb.rb_nrbuf * _HME_BUFSZ;	/* TX buffers */
+		sc->sc_rb.rb_nrbuf * _HME_BUFSZ;	/* RX buffers */
 
 	/* Allocate DMA buffer */
 	if ((error = bus_dmamem_alloc(dmatag, size,
@@ -255,6 +257,8 @@ hme_config(sc)
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	sc->sc_if_flags = ifp->if_flags;
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
+				IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Initialize ifmedia structures and MII info */
@@ -508,6 +512,7 @@ hme_init(sc)
 	    (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
 	    ETHER_VLAN_ENCAP_LEN + ETHER_MAX_LEN :
             ETHER_MAX_LEN);
+	sc->sc_ec_capenable = sc->sc_ethercom.ec_capenable;
 
 	/* Load station MAC address */
 	ea = sc->sc_enaddr;
@@ -603,6 +608,12 @@ hme_init(sc)
 
 	/* Enable DMA */
 	v |= HME_ERX_CFG_DMAENABLE;
+
+	/* set h/w rx checksum start offset (# of half-words) */
+	v |= (((ETHER_HDR_LEN + sizeof(struct ip) +
+		((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
+		ETHER_VLAN_ENCAP_LEN : 0)) / 2) << HME_ERX_CFG_CSUMSHIFT) &
+		HME_ERX_CFG_CSUMSTART;
 	bus_space_write_4(t, erx, HME_ERXI_CFG, v);
 
 	/* step 11. XIF Configuration */
@@ -612,7 +623,7 @@ hme_init(sc)
 
 	/* step 12. RX_MAC Configuration Register */
 	v = bus_space_read_4(t, mac, HME_MACI_RXCFG);
-	v |= HME_MAC_RXCFG_ENABLE;
+	v |= HME_MAC_RXCFG_ENABLE | HME_MAC_RXCFG_PSTRIP;
 	bus_space_write_4(t, mac, HME_MACI_RXCFG, v);
 
 	/* step 13. TX_MAC Configuration Register */
@@ -692,15 +703,17 @@ hme_put(sc, ri, m)
  * we copy into clusters.
  */
 struct mbuf *
-hme_get(sc, ri, totlen)
+hme_get(sc, ri, flags)
 	struct hme_softc *sc;
-	int ri, totlen;
+	int ri;
+	u_int32_t flags;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m, *m0, *newm;
 	caddr_t bp;
-	int len;
+	int len, totlen;
 
+	totlen = HME_XD_DECODE_RSIZE(flags);
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == 0)
 		return (0);
@@ -741,6 +754,95 @@ hme_get(sc, ri, totlen)
 		}
 	}
 
+	if (ifp->if_csum_flags_rx & (M_CSUM_TCPv4 | M_CSUM_TCPv4)) {
+		struct ether_header *eh;
+		struct ip *ip;
+		struct udphdr *uh;
+		uint16_t *opts;
+		int32_t hlen, pktlen;
+		uint32_t temp;
+
+		if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) {
+			pktlen = m0->m_pkthdr.len - ETHER_HDR_LEN -
+				ETHER_VLAN_ENCAP_LEN;
+			eh = (struct ether_header *) mtod(m0, caddr_t) +
+				ETHER_VLAN_ENCAP_LEN;
+		} else {
+			pktlen = m0->m_pkthdr.len - ETHER_HDR_LEN;
+			eh = mtod(m0, struct ether_header *);
+		}
+		if (ntohs(eh->ether_type) != ETHERTYPE_IP)
+			goto swcsum;
+		ip = (struct ip *) ((caddr_t) eh + ETHER_HDR_LEN);
+
+		/* IPv4 only */
+		if (ip->ip_v != IPVERSION)
+			goto swcsum;
+
+		hlen = ip->ip_hl << 2;
+		if (hlen < sizeof(struct ip))
+			goto swcsum;
+
+		/* too short, truncated, fragment */
+		if ((ntohs(ip->ip_len) < hlen) || (ntohs(ip->ip_len) > pktlen)
+		    || (ntohs(ip->ip_off) & (IP_MF | IP_OFFMASK)))
+                       goto swcsum;
+
+		switch (ip->ip_p) {
+		case IPPROTO_TCP:
+			if (! (ifp->if_csum_flags_rx & M_CSUM_TCPv4))
+				goto swcsum;
+			if (pktlen < (hlen + sizeof(struct tcphdr)))
+				goto swcsum;
+			m0->m_pkthdr.csum_flags = M_CSUM_TCPv4;
+			break;
+		case IPPROTO_UDP:
+			if (! (ifp->if_csum_flags_rx & M_CSUM_UDPv4))
+				goto swcsum;
+			if (pktlen < (hlen + sizeof(struct udphdr)))
+				goto swcsum;
+			uh = (struct udphdr *)((caddr_t)ip + hlen);
+			/* no checksum */
+			if (uh->uh_sum == 0)
+				goto swcsum;
+			m0->m_pkthdr.csum_flags = M_CSUM_UDPv4;
+			break;
+		default:
+                       goto swcsum;
+		}
+
+		/* w/ M_CSUM_NO_PSEUDOHDR, the uncomplemented sum is expected */
+		m0->m_pkthdr.csum_data = (~flags) & HME_XD_RXCKSUM;
+
+		/* if the pkt had ip options, we have to deduct them */
+		if (hlen > sizeof(struct ip)) {
+			uint32_t optsum;
+
+			optsum = 0;
+			temp = hlen - sizeof(struct ip);
+			opts = (uint16_t *) ((caddr_t) ip + sizeof(struct ip));
+
+		        while (temp > 1) {
+				optsum += ntohs(*opts++);
+				temp -= 2;
+			}
+			while (optsum >> 16)
+				optsum = (optsum >> 16) + (optsum & 0xffff);
+
+			/* Deduct the ip opts sum from the hwsum (rfc 1624). */
+			m0->m_pkthdr.csum_data = ~((~m0->m_pkthdr.csum_data) -
+						   ~optsum);
+
+			while (m0->m_pkthdr.csum_data >> 16)
+				m0->m_pkthdr.csum_data =
+					(m0->m_pkthdr.csum_data >> 16) +
+					(m0->m_pkthdr.csum_data & 0xffff);
+		}
+
+		m0->m_pkthdr.csum_flags |= M_CSUM_DATA | M_CSUM_NO_PSEUDOHDR;
+	}
+
+swcsum:
 	return (m0);
 
 bad:
@@ -752,13 +854,16 @@ bad:
  * Pass a packet to the higher levels.
  */
 void
-hme_read(sc, ix, len)
+hme_read(sc, ix, flags)
 	struct hme_softc *sc;
-	int ix, len;
+	int ix;
+	u_int32_t flags;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
+	int len;
 
+	len = HME_XD_DECODE_RSIZE(flags);
 	if (len <= sizeof(struct ether_header) ||
 	    len > ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
 	    ETHER_VLAN_ENCAP_LEN + ETHERMTU + sizeof(struct ether_header) :
@@ -772,7 +877,7 @@ hme_read(sc, ix, len)
 	}
 
 	/* Pull packet off interface. */
-	m = hme_get(sc, ix, len);
+	m = hme_get(sc, ix, flags);
 	if (m == 0) {
 		ifp->if_ierrors++;
 		return;
@@ -800,6 +905,7 @@ hme_start(ifp)
 	struct hme_softc *sc = (struct hme_softc *)ifp->if_softc;
 	caddr_t txd = sc->sc_rb.rb_txd;
 	struct mbuf *m;
+	unsigned int txflags;
 	unsigned int ri, len;
 	unsigned int ntbuf = sc->sc_rb.rb_ntbuf;
 
@@ -822,6 +928,34 @@ hme_start(ifp)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
+		/* collect bits for h/w csum, before hme_put frees the mbuf */
+		if (ifp->if_csum_flags_tx & (M_CSUM_TCPv4 | M_CSUM_UDPv4) &&
+		    m->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_UDPv4)) {
+			struct ether_header *eh;
+			uint16_t offset, start;
+
+			eh = mtod(m, struct ether_header *);
+			switch (ntohs(eh->ether_type)) {
+			case ETHERTYPE_IP:
+				start = ETHER_HDR_LEN;
+				break;
+			case ETHERTYPE_VLAN:
+				start = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
+				break;
+			default:
+				/* unsupported, drop it */
+				m_free(m);
+				continue;
+			}
+			start += M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data);
+			offset = M_CSUM_DATA_IPv4_OFFSET(m->m_pkthdr.csum_data)
+			    + start;
+			txflags = HME_XD_TXCKSUM |
+				  (offset << HME_XD_TXCSSTUFFSHIFT) |
+		  		  (start << HME_XD_TXCSSTARTSHIFT);
+		} else
+			txflags = 0;
+
 		/*
 		 * Copy the mbuf chain into the transmit buffer.
 		 */
@@ -832,7 +966,7 @@ hme_start(ifp)
 		 */
 		HME_XD_SETFLAGS(sc->sc_pci, txd, ri,
 			HME_XD_OWN | HME_XD_SOP | HME_XD_EOP |
-			HME_XD_ENCODE_TSIZE(len));
+			HME_XD_ENCODE_TSIZE(len) | txflags);
 
 		/*if (sc->sc_rb.rb_td_nbusy <= 0)*/
 		bus_space_write_4(sc->sc_bustag, sc->sc_etx, HME_ETXI_PENDING,
@@ -920,7 +1054,7 @@ hme_rint(sc)
 {
 	caddr_t xdr = sc->sc_rb.rb_rxd;
 	unsigned int nrbuf = sc->sc_rb.rb_nrbuf;
-	unsigned int ri, len;
+	unsigned int ri;
 	u_int32_t flags;
 
 	ri = sc->sc_rb.rb_rdtail;
@@ -936,10 +1070,8 @@ hme_rint(sc)
 		if (flags & HME_XD_OFL) {
 			printf("%s: buffer overflow, ri=%d; flags=0x%x\n",
 					sc->sc_dev.dv_xname, ri, flags);
-		} else {
-			len = HME_XD_DECODE_RSIZE(flags);
-			hme_read(sc, ri, len);
-		}
+		} else
+			hme_read(sc, ri, flags);
 
 		/* This buffer can be used by the hardware again */
 		HME_XD_SETFLAGS(sc->sc_pci, xdr, ri,
@@ -1339,6 +1471,10 @@ hme_ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
+#ifdef HMEDEBUG
+		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
+#endif
+
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -1361,18 +1497,19 @@ hme_ioctl(ifp, cmd, data)
 			 * which will trigger a reset.
 			 */
 #define RESETIGN (IFF_CANTCHANGE | IFF_DEBUG)
-			if (ifp->if_flags == sc->sc_if_flags)
-				break;
-			if ((ifp->if_flags & (~RESETIGN))
-			    == (sc->sc_if_flags & (~RESETIGN)))
-				hme_setladrf(sc);
-			else
-				hme_init(sc);
+			if (ifp->if_flags != sc->sc_if_flags) {
+				if ((ifp->if_flags & (~RESETIGN))
+				    == (sc->sc_if_flags & (~RESETIGN)))
+					hme_setladrf(sc);
+				else
+					hme_init(sc);
+			}
 #undef RESETIGN
 		}
-#ifdef HMEDEBUG
-		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
-#endif
+
+		if (sc->sc_ec_capenable != sc->sc_ethercom.ec_capenable)
+			hme_init(sc);
+
 		break;
 
 	case SIOCADDMULTI:

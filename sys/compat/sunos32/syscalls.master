@@ -1,6 +1,6 @@
-;	$NetBSD: syscalls.master,v 1.9 2003/01/18 08:38:15 thorpej Exp $
+;	$NetBSD: syscalls.master,v 1.9.2.1 2005/03/04 16:40:29 skrll Exp $
 
-;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp 
+;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp
 
 ; NetBSD COMPAT_SUNOS, 32 bit mode for sparc64 system call name/number "master" file.
 ; (See syscalls32.conf to see what it is processed into.)
@@ -109,14 +109,14 @@
 43	UNIMPL		sunos_times
 44	NOARGS		{ int netbsd32_profil(netbsd32_caddr_t samples, u_int size, \
 			    u_int offset, u_int scale); }
-45	UNIMPL		
+45	UNIMPL
 46	NOARGS		{ int netbsd32_setgid(uid_t gid); }
 47	NOARGS		{ gid_t sys_getgid_with_egid(void); }
 48	UNIMPL		sunos_ssig
 49	UNIMPL		reserved for USG
 50	UNIMPL		reserved for USG
 51	NOARGS		{ int netbsd32_acct(netbsd32_charp path); }
-52	UNIMPL		
+52	UNIMPL
 53	STD		{ int sunos32_sys_mctl(netbsd32_voidp addr, int len, int func, \
 			    netbsd32_voidp arg); }
 54	STD		{ int sunos32_sys_ioctl(int fd, netbsd32_u_long com, \
@@ -130,7 +130,7 @@
 60	NOARGS		{ int netbsd32_umask(int newmask); }
 61	NOARGS		{ int netbsd32_chroot(netbsd32_charp path); }
 62	NOARGS		{ int compat_43_netbsd32_fstat43(int fd, netbsd32_stat43p_t sb); }
-63	UNIMPL		
+63	UNIMPL
 64	NOARGS		{ int compat_43_sys_getpagesize(void); } ogetpagesize
 65	STD		{ int sunos32_sys_omsync(netbsd32_caddr_t addr, netbsd32_size_t len, \
 			    int flags); }
@@ -200,7 +200,7 @@
 117	NOARGS		{ int netbsd32_getrusage(int who, netbsd32_rusagep_t rusage); }
 118	NOARGS		{ int netbsd32_getsockopt(int s, int level, int name, \
 			    netbsd32_caddr_t val, netbsd32_intp avalsize); }
-119	UNIMPL		
+119	UNIMPL
 120	NOARGS		{ int netbsd32_readv(int fd, netbsd32_iovecp_t iovp, \
 			    u_int iovcnt); }
 121	NOARGS		{ int netbsd32_writev(int fd, netbsd32_iovecp_t iovp, \
@@ -218,7 +218,7 @@
 129	NOARGS		{ int compat_43_netbsd32_otruncate(netbsd32_charp path, netbsd32_long length); }
 130	NOARGS		{ int compat_43_netbsd32_oftruncate(int fd, netbsd32_long length); }
 131	NOARGS		{ int netbsd32_flock(int fd, int how); }
-132	UNIMPL		
+132	UNIMPL
 133	NOARGS		{ int netbsd32_sendto(int s, netbsd32_caddr_t buf, netbsd32_size_t len, \
 			    int flags, netbsd32_caddr_t to, int tolen); }
 134	NOARGS		{ int netbsd32_shutdown(int s, int how); }
@@ -239,20 +239,20 @@
 145	STD		{ int sunos32_sys_setrlimit(u_int which, \
 			    netbsd32_orlimitp_t rlp); }
 146	NOARGS		{ int compat_43_netbsd32_killpg(int pgid, int signum); }
-147	UNIMPL		
-148	UNIMPL		
-149	UNIMPL		
+147	UNIMPL
+148	UNIMPL
+149	UNIMPL
 150	NOARGS		{ int compat_43_netbsd32_ogetsockname(int fdes, netbsd32_caddr_t asa, \
 			    netbsd32_intp alen); }
 151	UNIMPL		getmsg
 152	UNIMPL		putmsg
 153	NOARGS		{ int netbsd32_poll(netbsd32_pollfdp_t fds, u_int nfds, \
 			    int timeout); }
-154	UNIMPL		
+154	UNIMPL
 #ifdef NFSSERVER
 155	STD		{ int sunos32_sys_nfssvc(int fd); }
 #else
-155	UNIMPL		
+155	UNIMPL
 #endif
 156	NOARGS		{ int compat_43_netbsd32_ogetdirentries(int fd, netbsd32_charp buf, \
 			    u_int count, netbsd32_longp basep); }
@@ -265,8 +265,8 @@
 160	NOARGS		{ int async_daemon(void); }
 161	NOARGS		{ int sys_getfh(netbsd32_charp fname, netbsd32_fhandlep_t fhp); }
 #else
-160	UNIMPL		
-161	UNIMPL		
+160	UNIMPL
+161	UNIMPL
 #endif
 162	NOARGS		{ int compat_09_netbsd32_ogetdomainname(netbsd32_charp domainname, \
 			    int len); }
@@ -311,7 +311,7 @@
 181	UNIMPL		aiowait
 182	UNIMPL		aiocancel
 183	STD		{ int sunos32_sys_sigpending(netbsd32_intp mask); }
-184	UNIMPL		
+184	UNIMPL
 185	NOARGS		{ int netbsd32_setpgid(int pid, int pgid); }
 186	NOARGS		{ netbsd32_long netbsd32_pathconf(netbsd32_charp path, int name); }
 187	NOARGS		{ netbsd32_long netbsd32_fpathconf(int fd, int name); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus.c,v 1.7.6.3 2004/09/21 13:14:39 skrll Exp $	*/
+/*	$NetBSD: g2bus.c,v 1.7.6.4 2005/03/04 16:38:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g2bus.c,v 1.7.6.3 2004/09/21 13:14:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2bus.c,v 1.7.6.4 2005/03/04 16:38:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ int
 g2busmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-        return (1);
+        return 1;
 }
 
 void
@@ -83,7 +83,7 @@ int
 g2busprint(void *aux, const char *pnp)
 {
 
-	return (UNCONF);
+	return UNCONF;
 }
 
 int
@@ -93,5 +93,5 @@ g2bussearch(struct device *parent, struct cfdata *cf, void *aux)
 	if (config_match(parent, cf, aux) > 0)
 		config_attach(parent, cf, aux, g2busprint);
 
-	return (0);
+	return 0;
 }

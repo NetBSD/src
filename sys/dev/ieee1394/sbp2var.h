@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2var.h,v 1.5 2002/12/28 10:54:47 jmc Exp $	*/
+/*	$NetBSD: sbp2var.h,v 1.5.2.1 2005/03/04 16:43:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ struct sbp2_mapping {
 struct sbp2_map {
 	unsigned char datamap[SBP_DATA_SIZE / SBP_DATA_BLOCK_SIZE / CHAR_BIT];
 	unsigned int next_data;
-	
+
 	/*
 	 * Divide by 4 because this is allocated in quad chunks and divide by
 	 * 8 to make it a bitmap.
@@ -93,13 +93,13 @@ struct sbp2_pagetable {
 
 struct sbp2_orb {
 	struct sbp2_mapping data_map;
-	
+
 	struct ieee1394_abuf cmd;
 	struct ieee1394_abuf data;
 	struct ieee1394_abuf resp;
 
 	struct sbp2_pagetable *pt;
-	
+
 	struct sbp2_status status;
 	u_int8_t status_rec;
 	u_int8_t ack;
@@ -109,7 +109,7 @@ struct sbp2_orb {
 	int state;
 	struct sbp2 *sbp2;
 	struct sbp2_lun *lun;
-	
+
 	void (*cb)(struct sbp2_status *, void *);
 	void *cb_arg;
 
@@ -133,13 +133,13 @@ struct sbp2_lun {
 
 	int login_flag;
 	int state;
-	
+
 	struct ieee1394_abuf command;
 	struct ieee1394_abuf doorbell;
 	struct ieee1394_abuf status;
 	TAILQ_ENTRY(sbp2_lun) lun_list;
 };
- 
+
 struct sbp2 {
 	struct ieee1394_softc *sc; /* node softc */
 
@@ -148,7 +148,7 @@ struct sbp2 {
 
 	u_int8_t orb_size;
 	u_int8_t orb_timeout;
-	
+
 	u_int16_t max_reconnect;
 
 	u_int32_t cmd_spec_id;
@@ -158,12 +158,12 @@ struct sbp2 {
 
 	u_int64_t uniq_id;
 	u_int64_t mgmtreg;
-	
+
 	u_int16_t luncnt;
 
 	struct sbp2_map *map;
 	struct simplelock orblist_lock;
-	
+
 	TAILQ_HEAD(, sbp2_lun) luns;
 	CIRCLEQ_HEAD(, sbp2_orb) orbs;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_errno.h,v 1.1 2001/12/02 16:16:57 manu Exp $ */
+/*	$NetBSD: irix_errno.h,v 1.1.20.1 2005/03/04 16:39:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -170,8 +170,8 @@ extern const int native_to_irix_errno[];
 #define IRIX_EREMDEV 		142
 #define IRIX_ECANCELED 		158
 
-/* 
- * The following seems to be kernel specific, it 
+/*
+ * The following seems to be kernel specific, it
  * is possible that we don't need them.
  */
 #define IRIX_ENOLIMFILE 	1001

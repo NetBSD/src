@@ -1,9 +1,9 @@
-/*      $NetBSD: advmcode.c,v 1.5.16.3 2004/09/21 13:27:46 skrll Exp $        */
+/*      $NetBSD: advmcode.c,v 1.5.16.4 2005/03/04 16:41:23 skrll Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
  * Systems Inc. SCSI controllers
- * 
+ *
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -42,7 +42,7 @@
  */
 /*
  * advansys.c - Linux Host Driver for AdvanSys SCSI Adapters
- * 
+ *
  * Copyright (c) 1995-1998 Advanced System Products, Inc.
  * All Rights Reserved.
  *
@@ -55,7 +55,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advmcode.c,v 1.5.16.3 2004/09/21 13:27:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advmcode.c,v 1.5.16.4 2005/03/04 16:41:23 skrll Exp $");
 
 #include <sys/param.h>
 

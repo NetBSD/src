@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.45.2.7 2005/02/15 21:33:12 skrll Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.45.2.8 2005/03/04 16:41:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.45.2.7 2005/02/15 21:33:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.45.2.8 2005/03/04 16:41:32 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -407,7 +407,7 @@ rtk_mii_writereg(sc, frame)
 	frame->mii_stdelim = RTK_MII_STARTDELIM;
 	frame->mii_opcode = RTK_MII_WRITEOP;
 	frame->mii_turnaround = RTK_MII_TURNAROUND;
-	
+
 	/*
  	 * Turn on data output.
 	 */
@@ -717,7 +717,7 @@ rtk_attach(sc)
 	sc->sc_flags |= RTK_ATTACHED;
 
 	/* Init Early TX threshold. */
-	sc->sc_txthresh = TXTH_256; 
+	sc->sc_txthresh = TXTH_256;
 
 	/* Reset the adapter. */
 	rtk_reset(sc);
@@ -744,7 +744,7 @@ rtk_attach(sc)
 	sc->mii.mii_writereg = rtk_phy_writereg;
 	sc->mii.mii_statchg = rtk_phy_statchg;
 	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, rtk_ifmedia_upd, rtk_ifmedia_sts);
-	mii_attach(&sc->sc_dev, &sc->mii, 0xffffffff, 
+	mii_attach(&sc->sc_dev, &sc->mii, 0xffffffff,
 	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
 	/* Choose a default media. */
@@ -856,7 +856,7 @@ rtk_activate(self, act)
  * rtk_detach:
  *     Detach a rtk interface.
  */
-int 
+int
 rtk_detach(sc)
 	struct rtk_softc *sc;
 {
@@ -906,7 +906,7 @@ rtk_detach(sc)
  * rtk_enable:
  *     Enable the RTL81X9 chip.
  */
-int 
+int
 rtk_enable(sc)
 	struct rtk_softc *sc;
 {
@@ -926,7 +926,7 @@ rtk_enable(sc)
  * rtk_disable:
  *     Disable the RTL81X9 chip.
  */
-void 
+void
 rtk_disable(sc)
 	struct rtk_softc *sc;
 {
@@ -941,7 +941,7 @@ rtk_disable(sc)
  * rtk_power:
  *     Power management (suspend/resume) hook.
  */
-void 
+void
 rtk_power(why, arg)
 	int why;
 	void *arg;
@@ -1043,7 +1043,7 @@ rtk_rxeof(sc)
 			ifp->if_ierrors++;
 
 			/*
-			 * submitted by:[netbsd-pcmcia:00484] 
+			 * submitted by:[netbsd-pcmcia:00484]
 			 *	Takahiro Kambe <taca@sky.yamashina.kyoto.jp>
 			 * obtain from:
 			 *     FreeBSD if_rl.c rev 1.24->1.25
@@ -1068,7 +1068,7 @@ rtk_rxeof(sc)
 #endif
 		}
 
-		/* No errors; receive the packet. */	
+		/* No errors; receive the packet. */
 		rx_bytes += total_len + RTK_RXSTAT_LEN;
 
 		/*

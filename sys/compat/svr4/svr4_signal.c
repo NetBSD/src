@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.49.2.1 2004/11/02 07:51:07 skrll Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.49.2.2 2005/03/04 16:40:29 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.49.2.1 2004/11/02 07:51:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.49.2.2 2005/03/04 16:40:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +248,7 @@ svr4_sys_sigaction(l, v, retval)
 	return (0);
 }
 
-int 
+int
 svr4_sys_sigaltstack(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -529,14 +529,14 @@ svr4_setcontext(l, uc)
 	}
 
 	/* Ignore the stack; see comment in svr4_getcontext. */
-	
+
 	l->l_ctxlink = uc->uc_link;
 	svr4_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 
 	return EJUSTRETURN;
 }
 
-int 
+int
 svr4_sys_context(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -557,14 +557,14 @@ svr4_sys_context(l, v, retval)
 	return (copyout(&uc, SCARG(uap, uc), sizeof (*SCARG(uap, uc))));
 
 
-	case SVR4_SETCONTEXT: 
+	case SVR4_SETCONTEXT:
 		DPRINTF(("setcontext(%p)\n", SCARG(uap, uc)));
 		error = copyin(SCARG(uap, uc), &uc, sizeof (uc));
 		if (error)
 			return (error);
-		svr4_setcontext(l, &uc);   
+		svr4_setcontext(l, &uc);
 		return EJUSTRETURN;
-		
+
 	default:
 		DPRINTF(("context(%d, %p)\n", SCARG(uap, func),
 		    SCARG(uap, uc)));

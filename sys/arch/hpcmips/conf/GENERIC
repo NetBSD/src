@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.138.2.9 2005/02/15 21:32:33 skrll Exp $
+# $NetBSD: GENERIC,v 1.138.2.10 2005/03/04 16:38:36 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.138.2.9 $"
+#ident 		"GENERIC-$Revision: 1.138.2.10 $"
 
 maxusers	16
 
@@ -94,7 +94,7 @@ options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	QUOTA		# UFS quotas
 options 	VNODE_OP_NOINLINE # don't inline vnode op calls
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
@@ -126,6 +126,7 @@ options 	INET6		# IPV6
 # NetBSD backwards compatibility
 options 	COMPAT_43
 options 	COMPAT_16
+options 	COMPAT_20
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	LKM		# loadable kernel modules

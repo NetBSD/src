@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.102.2.4 2004/09/24 10:53:16 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.102.2.5 2005/03/04 16:38:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -120,6 +120,7 @@ struct cpu_info {
 	u_int32_t	ci_signature;	 /* X86 cpuid type */
 	u_int32_t	ci_feature_flags;/* X86 %edx CPUID feature bits */
 	u_int32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
+	u_int32_t	ci_feature3_flags;/* X86 extended feature bits */
 	u_int32_t	ci_cpu_class;	 /* CPU class */
 	u_int32_t	ci_brand_id;	 /* Intel brand id */
 	u_int32_t	ci_vendor[4];	 /* vendor string */

@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.4.4.6 2005/01/17 19:29:13 skrll Exp $	*/
+/*	$NetBSD: aica.c,v 1.4.4.7 2005/03/04 16:38:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.4.4.6 2005/01/17 19:29:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.4.4.7 2005/03/04 16:38:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,7 +274,7 @@ aica_disable(struct aica_softc *sc)
 }
 
 inline static void
-aica_g2fifo_wait()
+aica_g2fifo_wait(void)
 {
 	int i;
 

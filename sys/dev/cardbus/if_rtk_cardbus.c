@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.15.2.4 2005/02/04 11:45:23 skrll Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.15.2.5 2005/03/04 16:41:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -30,13 +30,13 @@
 /*
  * if_rtk_cardbus.c:
  *	Cardbus specific routines for Realtek 8139 ethernet adapter.
- *	Tested for 
+ *	Tested for
  *		- elecom-Laneed	LD-10/100CBA (Accton MPX5030)
  *		- MELCO		LPC3-TX-CB   (Realtek 8139)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.15.2.4 2005/02/04 11:45:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.15.2.5 2005/03/04 16:41:05 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.15.2.4 2005/02/04 11:45:23 skrl
  * on the part of Realtek. Memory mapped mode does appear to work on
  * uniprocessor systems though.
  */
-#define RTK_USEIOSPACE 
+#define RTK_USEIOSPACE
 
 #include <dev/ic/rtl81x9reg.h>
 #include <dev/ic/rtl81x9var.h>
@@ -130,7 +130,7 @@ static void rtk_cardbus_attach(struct device *, struct device *, void *);
 static int rtk_cardbus_detach(struct device *, int);
 
 struct rtk_cardbus_softc {
-	struct rtk_softc sc_rtk;	/* real rtk softc */ 
+	struct rtk_softc sc_rtk;	/* real rtk softc */
 
 	/* CardBus-specific goo. */
 	void *sc_ih;
@@ -161,7 +161,7 @@ rtk_cardbus_lookup(ca)
 {
 	const struct rtk_type *t;
 
-	for (t = rtk_cardbus_devs; t->rtk_name != NULL; t++){ 	
+	for (t = rtk_cardbus_devs; t->rtk_name != NULL; t++){
 		if (CARDBUS_VENDOR(ca->ca_id) == t->rtk_vid &&
 		    CARDBUS_PRODUCT(ca->ca_id) == t->rtk_did) {
 			return (t);
@@ -202,13 +202,13 @@ rtk_cardbus_attach(parent, self, aux)
 	csc->sc_tag = ca->ca_tag;
 	csc->sc_intrline = ca->ca_intrline;
 
-	t = rtk_cardbus_lookup(ca); 
-	if (t == NULL) { 
-		printf("\n"); 
+	t = rtk_cardbus_lookup(ca);
+	if (t == NULL) {
+		printf("\n");
 		panic("rtk_cardbus_attach: impossible");
-	 } 
-	printf(": %s\n", t->rtk_name); 
-	
+	 }
+	printf(": %s\n", t->rtk_name);
+
 	/*
 	 * Power management hooks.
 	 */
@@ -265,7 +265,7 @@ rtk_cardbus_attach(parent, self, aux)
 	Cardbus_function_disable(csc->sc_ct);
 }
 
-int 
+int
 rtk_cardbus_detach(self, flags)
 	struct device *self;
 	int flags;
@@ -287,7 +287,7 @@ rtk_cardbus_detach(self, flags)
 	 */
 	if (csc->sc_ih != NULL)
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
-	
+
 	/*
 	 * Release bus space and close window.
 	 */
@@ -298,7 +298,7 @@ rtk_cardbus_detach(self, flags)
 	return (0);
 }
 
-void 
+void
 rtk_cardbus_setup(csc)
 	struct rtk_cardbus_softc *csc;
 {
@@ -354,11 +354,11 @@ rtk_cardbus_setup(csc)
 	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the CARDBUS CSR. */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag, 
+	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
 	    CARDBUS_COMMAND_STATUS_REG);
 	reg &= ~(CARDBUS_COMMAND_IO_ENABLE|CARDBUS_COMMAND_MEM_ENABLE);
 	reg |= csc->sc_csr;
-	cardbus_conf_write(cc, cf, csc->sc_tag, 
+	cardbus_conf_write(cc, cf, csc->sc_tag,
 	    CARDBUS_COMMAND_STATUS_REG, reg);
 
 	/*
@@ -373,7 +373,7 @@ rtk_cardbus_setup(csc)
 	}
 }
 
-int 
+int
 rtk_cardbus_enable(sc)
 	struct rtk_softc *sc;
 {
@@ -408,7 +408,7 @@ rtk_cardbus_enable(sc)
 	return (0);
 }
 
-void 
+void
 rtk_cardbus_disable(sc)
 	struct rtk_softc *sc;
 {
@@ -425,7 +425,7 @@ rtk_cardbus_disable(sc)
 	Cardbus_function_disable(ct);
 }
 
-void 
+void
 rtk_cardbus_power(sc, why)
 	struct rtk_softc *sc;
 	int why;

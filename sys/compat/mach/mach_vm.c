@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.30.2.6 2004/10/12 06:00:41 skrll Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.30.2.7 2005/03/04 16:40:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.30.2.6 2004/10/12 06:00:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.30.2.7 2005/03/04 16:40:13 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,11 +62,11 @@ __KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.30.2.6 2004/10/12 06:00:41 skrll Exp $
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
-#include <compat/mach/mach_clock.h> 
-#include <compat/mach/mach_vm.h> 
-#include <compat/mach/mach_errno.h> 
-#include <compat/mach/mach_port.h> 
-#include <compat/mach/mach_services.h> 
+#include <compat/mach/mach_clock.h>
+#include <compat/mach/mach_vm.h>
+#include <compat/mach/mach_errno.h>
+#include <compat/mach/mach_port.h>
+#include <compat/mach/mach_services.h>
 #include <compat/mach/mach_syscallargs.h>
 
 int
@@ -88,8 +88,8 @@ mach_vm_map(args)
 	    "mask = 0x%08lx, flags = 0x%x, offset = 0x%08llx, "
 	    "copy = %d, cur_prot = 0x%x, max_prot = 0x%x, inh = 0x%x);\n",
 	    (void *)req->req_address, (long)req->req_size, req->req_object.name,
-	    (long)req->req_mask, req->req_flags, (off_t)req->req_offset, 
-	    req->req_copy, req->req_cur_protection, req->req_max_protection, 
+	    (long)req->req_mask, req->req_flags, (off_t)req->req_offset,
+	    req->req_copy, req->req_cur_protection, req->req_max_protection,
 	    req->req_inherance);
 #endif
 
@@ -113,14 +113,14 @@ mach_vm_map(args)
 		flags = MAP_FIXED;
 	}
 
-	/* 
-	 * Use uvm_map_findspace to find a place which conforms to the 
+	/*
+	 * Use uvm_map_findspace to find a place which conforms to the
 	 * requested alignement.
 	 */
 	vm_map_lock(&tp->p_vmspace->vm_map);
 	ret = uvm_map_findspace(&tp->p_vmspace->vm_map,
-	    trunc_page(req->req_address), req->req_size, &addr, 
-	    NULL, 0, req->req_mask, flags); 
+	    trunc_page(req->req_address), req->req_size, &addr,
+	    NULL, 0, req->req_mask, flags);
 	vm_map_unlock(&tp->p_vmspace->vm_map);
 
 	if (ret == NULL)
@@ -147,7 +147,7 @@ mach_vm_map(args)
 	SCARG(&cup, prot) = req->req_cur_protection;
 	SCARG(&cup, fd) = -1;		/* XXX For now, no object mapping */
 	SCARG(&cup, pos) = req->req_offset;
-	
+
 	if ((error = sys_mmap(tl, &cup, &rep->rep_retval)) != 0)
 		return mach_msg_error(args, error);
 
@@ -176,11 +176,11 @@ mach_vm_allocate(args)
 	size = req->req_size;
 
 #ifdef DEBUG_MACH_VM
-	printf("mach_vm_allocate(addr = %p, size = 0x%08x);\n", 
+	printf("mach_vm_allocate(addr = %p, size = 0x%08x);\n",
 	    (void *)addr, size);
 #endif
 
-	/* 
+	/*
 	 * Avoid mappings at address zero: it should
 	 * be a "red zone" with nothing mapped on it.
 	 */
@@ -216,7 +216,7 @@ mach_vm_allocate(args)
 	SCARG(&cup, fd) = -1;
 	SCARG(&cup, pos) = 0;
 
-	if ((error = sys_mmap(tl, &cup, &rep->rep_address)) != 0) 
+	if ((error = sys_mmap(tl, &cup, &rep->rep_address)) != 0)
 		return mach_msg_error(args, error);
 #ifdef DEBUG_MACH_VM
 	printf("vm_allocate: success at %p\n", (void *)rep->rep_address);
@@ -271,7 +271,7 @@ int
 mach_vm_wire(args)
 	struct mach_trap_args *args;
 {
-	mach_vm_wire_request_t *req = args->smsg; 
+	mach_vm_wire_request_t *req = args->smsg;
 	mach_vm_wire_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *tl = args->tl;
@@ -288,7 +288,7 @@ mach_vm_wire(args)
 	if ((req->req_access & ~VM_PROT_ALL) != 0)
 		return mach_msg_error(args, EINVAL);
 
-	/* 
+	/*
 	 * Mach maintains a count of how many times a page is wired
 	 * and unwire it once the count is zero. We cannot do that yet.
 	 */
@@ -307,7 +307,7 @@ mach_vm_wire(args)
 	}
 	if (error != 0)
 		return mach_msg_error(args, error);
-		
+
 	if ((error = uvm_map_protect(&tl->l_proc->p_vmspace->vm_map,
 	    req->req_address, req->req_address + req->req_size,
 	    req->req_access, 0)) != 0)
@@ -360,7 +360,7 @@ mach_sys_map_fd(l, v, retval)
 		syscallarg(mach_boolean_t) findspace;
 		syscallarg(mach_vm_size_t) size;
 	} */ *uap = v;
-	struct file *fp; 
+	struct file *fp;
 	struct filedesc *fdp;
 	struct vnode *vp;
 	struct exec_vmcmd evc;
@@ -391,7 +391,7 @@ mach_sys_map_fd(l, v, retval)
 	vref(vp);
 
 #ifdef DEBUG_MACH_VM
-	printf("vm_map_fd: addr = %p len = 0x%08lx\n", 
+	printf("vm_map_fd: addr = %p len = 0x%08lx\n",
 	    va, (long)SCARG(uap, size));
 #endif
 	bzero(&evc, sizeof(evc));
@@ -416,7 +416,7 @@ mach_sys_map_fd(l, v, retval)
 
 		vm_map_lock(&p->p_vmspace->vm_map);
 		if ((ret = uvm_map_findspace(&p->p_vmspace->vm_map,
-		    vm_map_min(&p->p_vmspace->vm_map), evc.ev_len, 
+		    vm_map_min(&p->p_vmspace->vm_map), evc.ev_len,
 		    (vaddr_t *)&evc.ev_addr, NULL, 0, PAGE_SIZE, 0)) == NULL) {
 			vm_map_unlock(&p->p_vmspace->vm_map);
 			goto bad2;
@@ -452,21 +452,21 @@ mach_sys_map_fd(l, v, retval)
 
 	if ((error = copyout((void *)&va, SCARG(uap, va), sizeof(va))) != 0)
 		return error;
-	
+
 	return 0;
 
 bad1:
 	VOP_UNLOCK(vp, 0);
-bad2:	
+bad2:
 	vrele(vp);
 	FILE_UNUSE(fp, l);
 #ifdef DEBUG_MACH_VM
-	printf("mach_sys_map_fd: mapping at %p failed, error = %d\n", 
+	printf("mach_sys_map_fd: mapping at %p failed, error = %d\n",
 	    (void *)evc.ev_addr, error);
 #endif
 	return error;
 }
- 
+
 int
 mach_vm_inherit(args)
 	struct mach_trap_args *args;
@@ -486,7 +486,7 @@ mach_vm_inherit(args)
 
 	if ((error = sys_minherit(tl, &cup, &retval)) != 0)
 		return mach_msg_error(args, error);
-	
+
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 	mach_set_trailer(rep, *msglen);
@@ -506,7 +506,7 @@ mach_make_memory_entry_64(args)
 	struct mach_port *mp;
 	struct mach_right *mr;
 	struct mach_memory_entry *mme;
-	
+
 	printf("mach_make_memory_entry_64, offset 0x%lx, size 0x%lx\n",
 	    (u_long)req->req_offset, (u_long)req->req_size);
 
@@ -521,7 +521,7 @@ mach_make_memory_entry_64(args)
 	mp->mp_data = mme;
 
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
-	
+
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 	mach_add_port_desc(rep, mr->mr_name);
@@ -545,16 +545,16 @@ mach_vm_region(args)
 	struct vm_map *map;
 	struct vm_map_entry *vme;
 	int error;
-	
+
 	/* Sanity check req_count */
 	if (req->req_count > 9)
 		return mach_msg_error(args, EINVAL);
 
-	/* 
+	/*
 	 * MACH_VM_REGION_BASIC_INFO is the only
 	 * supported flavor in Darwin.
 	 */
-	if (req->req_flavor != MACH_VM_REGION_BASIC_INFO) 
+	if (req->req_flavor != MACH_VM_REGION_BASIC_INFO)
 		return mach_msg_error(args, EINVAL);
 	if (req->req_count != (sizeof(*rbi) / sizeof(int))) /* This is 8 */
 		return mach_msg_error(args, EINVAL);
@@ -593,7 +593,7 @@ mach_vm_region(args)
 }
 
 int
-mach_vm_region_64(args) 
+mach_vm_region_64(args)
 	struct mach_trap_args *args;
 {
 	mach_vm_region_64_request_t *req = args->smsg;
@@ -608,12 +608,12 @@ mach_vm_region_64(args)
 	/* Sanity check req_count */
 	if (req->req_count > 10)
 		return mach_msg_error(args, EINVAL);
-	
-	/* 
-	 * MACH_VM_REGION_BASIC_INFO is the only 
+
+	/*
+	 * MACH_VM_REGION_BASIC_INFO is the only
 	 * supported flavor in Darwin.
 	 */
-	if (req->req_flavor != MACH_VM_REGION_BASIC_INFO) 
+	if (req->req_flavor != MACH_VM_REGION_BASIC_INFO)
 		return mach_msg_error(args, EINVAL);
 	if (req->req_count != (sizeof(*rbi) / sizeof(int))) /* This is 8 */
 		return mach_msg_error(args, EINVAL);
@@ -661,7 +661,7 @@ mach_vm_msync(args)
 	struct sys___msync13_args cup;
 	int error;
 	register_t dontcare;
-	
+
 	SCARG(&cup, addr) = (void *)req->req_addr;
 	SCARG(&cup, len) = req->req_size;
 	SCARG(&cup, flags) = 0;
@@ -677,7 +677,7 @@ mach_vm_msync(args)
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 
-	rep->rep_retval = native_to_mach_errno[error];	
+	rep->rep_retval = native_to_mach_errno[error];
 
 	mach_set_trailer(rep, *msglen);
 
@@ -722,7 +722,7 @@ mach_vm_copy(args)
 		dst += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	} while (size > 0);
-	
+
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 
@@ -758,13 +758,13 @@ mach_vm_read(args)
 		return mach_msg_error(args, EFAULT);
 	}
 
-	/* 
+	/*
 	 * Copy the data from the target process to the current process
 	 * This is reasonable for small chunk of data, but we should
 	 * remap COW for areas bigger than a page.
 	 */
 	buf = malloc(size, M_EMULDATA, M_WAITOK);
-	
+
 	addr = (void *)req->req_addr;
 	if ((error = copyin_proc(tl->l_proc, addr, buf, size)) != 0) {
 		printf("copyin_proc error = %d, addr = %p, size = %x\n", error, addr, size);
@@ -779,7 +779,7 @@ mach_vm_read(args)
 	}
 
 #ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0) 
+	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0)
 		ktrmool(l, buf, size, (void *)va);
 #endif
 
@@ -815,14 +815,14 @@ mach_vm_write(args)
 		printf("mach_vm_write: OOL descriptor count is not 1\n");
 #endif
 
-	/* 
+	/*
 	 * Copy the data from the current process to the target process
 	 * This is reasonable for small chunk of data, but we should
 	 * remap COW for areas bigger than a page.
 	 */
 	size = req->req_data.size;
 	buf = malloc(size, M_EMULDATA, M_WAITOK);
-	
+
 	if ((error = copyin(req->req_data.address, buf, size)) != 0) {
 		printf("copyin error = %d\n", error);
 		free(buf, M_WAITOK);
@@ -837,12 +837,12 @@ mach_vm_write(args)
 	}
 
 #ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0) 
+	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0)
 		ktrmool(l, buf, size, (void *)addr);
 #endif
 
 	free(buf, M_WAITOK);
-	
+
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 
@@ -873,7 +873,7 @@ mach_vm_machine_attribute(args)
 		case MACH_MATTR_VAL_CACHE_FLUSH:
 		case MACH_MATTR_VAL_DCACHE_FLUSH:
 		case MACH_MATTR_VAL_ICACHE_FLUSH:
-		case MACH_MATTR_VAL_CACHE_SYNC: 
+		case MACH_MATTR_VAL_CACHE_SYNC:
 			error = mach_vm_machine_attribute_machdep(tl,
 			    req->req_addr, req->req_size, &value);
 			break;
@@ -895,7 +895,7 @@ mach_vm_machine_attribute(args)
 		error = EINVAL;
 		break;
 	}
-	
+
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 

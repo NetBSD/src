@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.17.8.8 2005/02/15 21:32:31 skrll Exp $
+#	$NetBSD: RPC_WSCONS,v 1.17.8.9 2005/03/04 16:38:00 skrll Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.17.8.8 $"
+#ident		"GENERIC-$Revision: 1.17.8.9 $"
 
 # estimated number of users
 maxusers	32
@@ -70,7 +70,7 @@ options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

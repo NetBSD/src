@@ -27,14 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for ELSA Quickstep 1000pro ISA
  *	=====================================================================
  *
- *	$Id: isic_isapnp_elsa_qs1i.c,v 1.9.10.1 2005/02/04 11:46:28 skrll Exp $
+ *	$Id: isic_isapnp_elsa_qs1i.c,v 1.9.10.2 2005/03/04 16:43:40 skrll Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.9.10.1 2005/02/04 11:46:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.9.10.2 2005/03/04 16:43:40 skrll Exp $");
 
 #include "opt_isicpnp.h"
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_ELSA_PCC16)
@@ -144,7 +144,7 @@ i4b_eq1i_clrirq(struct isic_softc *sc)
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
 
-static void             
+static void
 eqs1pi_read_fifo(void *buf, const void *base, size_t len)
 {
 	if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDHSCXB)
@@ -156,12 +156,12 @@ eqs1pi_read_fifo(void *buf, const void *base, size_t len)
 	{
 	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_OFF, 0);
 		insb((((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_HSCX), (u_char *)buf, (u_int)len);
-	}		
+	}
 	else /* if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDISAC) */
 	{
 	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_OFF, 0);
 		insb((((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ISAC), (u_char *)buf, (u_int)len);
-	}		
+	}
 }
 
 #else
@@ -206,7 +206,7 @@ eqs1pi_write_fifo(void *base, const void *buf, size_t len)
 	{
 	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_OFF, 0);
 		outsb((((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_HSCX), (u_char *)buf, (u_int)len);
-	}		
+	}
 	else /* if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDISAC) */
 	{
 	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_OFF, 0);
@@ -250,17 +250,17 @@ eqs1pi_write_reg(u_char *base, u_int offset, u_int v)
 	{
 	        outb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_OFF, (u_char)(offset+0x40));
 	        outb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_HSCX, (u_char)v);
-	}		
+	}
 	else if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDHSCXA)
 	{
 	        outb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_OFF, (u_char)offset);
 	        outb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_HSCX, (u_char)v);
-	}		
+	}
 	else /* if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDISAC) */
 	{
 	        outb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_OFF, (u_char)offset);
 	        outb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ISAC, (u_char)v);
-	}		
+	}
 }
 
 #else
@@ -304,12 +304,12 @@ eqs1pi_read_reg(u_char *base, u_int offset)
 	{
 	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_OFF, (u_char)offset);
 		return(inb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_HSCX));
-	}		
+	}
 	else /* if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDISAC) */
 	{
 	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_OFF, (u_char)offset);
 		return(inb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ISAC));
-	}		
+	}
 }
 
 #else
@@ -344,15 +344,15 @@ int
 isic_probe_Eqs1pi(struct isa_device *dev, unsigned int iobase2)
 {
 	struct isic_softc *sc = &l1_sc[dev->id_unit];
-	
+
 	/* check max unit range */
-	
+
 	if(dev->id_unit >= ISIC_MAXUNIT)
 	{
 		printf("isic%d: Error, unit %d >= ISIC_MAXUNIT for ELSA QuickStep 1000pro/ISA!\n",
 				dev->id_unit, dev->id_unit);
-		return(0);	
-	}	
+		return(0);
+	}
 	sc->sc_unit = dev->id_unit;
 
 	/* check IRQ validity */
@@ -360,15 +360,15 @@ isic_probe_Eqs1pi(struct isa_device *dev, unsigned int iobase2)
 	switch(ffs(dev->id_irq) - 1)
 	{
 		case 3:
-		case 4:		
+		case 4:
 		case 5:
 		case 7:
 		case 10:
 		case 11:
 		case 12:
-		case 15:		
+		case 15:
 			break;
-			
+
 		default:
 			printf("isic%d: Error, invalid IRQ [%d] specified for ELSA QuickStep 1000pro/ISA!\n",
 				dev->id_unit, ffs(dev->id_irq)-1);
@@ -386,7 +386,7 @@ isic_probe_Eqs1pi(struct isa_device *dev, unsigned int iobase2)
 		return(0);
 	}
 	dev->id_msize = 0;
-	
+
 	/* check if we got an iobase */
 
 	if(!((dev->id_iobase >= 0x160) && (dev->id_iobase <= 0x360)))
@@ -407,23 +407,23 @@ isic_probe_Eqs1pi(struct isa_device *dev, unsigned int iobase2)
 	sc->writefifo = eqs1pi_write_fifo;
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp = CARD_TYPEP_ELSAQS1ISA;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;
-	sc->sc_bfifolen = HSCX_FIFO_LEN;	
+	sc->sc_bfifolen = HSCX_FIFO_LEN;
 
 	/* setup ISAC and HSCX base addr */
-	
+
 	ISAC_BASE   = (caddr_t) ((u_int)dev->id_iobase | ELSA_IDISAC);
 	HSCX_A_BASE = (caddr_t) ((u_int)dev->id_iobase | ELSA_IDHSCXA);
 	HSCX_B_BASE = (caddr_t) ((u_int)dev->id_iobase | ELSA_IDHSCXB);
 
-	/* 
+	/*
 	 * Read HSCX A/B VSTR.  Expected value for the ELSA QuickStep 1000pro
 	 * ISA card is 0x05 ( = version 2.1 ) in the least significant bits.
 	 */
@@ -438,7 +438,7 @@ isic_probe_Eqs1pi(struct isa_device *dev, unsigned int iobase2)
 		printf("isic%d: HSC1: VSTR: %#x\n",
 			dev->id_unit, HSCX_READ(1, H_VSTR));
 		return (0);
-	}                   
+	}
 
 	return (1);
 }
@@ -590,11 +590,11 @@ isic_attach_Eqs1pi(struct isic_softc *sc)
 	sc->drv_command = elsa_command_req;
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp = CARD_TYPEP_ELSAQS1ISA;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;

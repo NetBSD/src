@@ -1,4 +1,4 @@
-/*	$NetBSD: lptreg.h,v 1.6.24.3 2004/09/21 13:28:04 skrll Exp $	*/
+/*	$NetBSD: lptreg.h,v 1.6.24.4 2005/03/04 16:41:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,11 +44,11 @@
 /*
  * On a standard DB25 parallel port, the bits show up as follows:
  *
- *   13   12   11   10    9    8    7    6    5    4    3    2    1 
+ *   13   12   11   10    9    8    7    6    5    4    3    2    1
  *  ~S7   S6   S5   S4   D7   D6   D5   D4   D3   D2   D1   D0  ~C0
  *
  *      G    G    G    G    G    G    G    G   ~C3   C2   S3  ~C1
- *      25   24   23   22   21   20   19   18   17   16   15   14     
+ *      25   24   23   22   21   20   19   18   17   16   15   14
  *
  *  D7-D0 are output bits from the data register
  *  S7-S3 are input bits read at the status register

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.32.2.4 2004/09/21 13:27:54 skrll Exp $	*/
+/*	$NetBSD: cy.c,v 1.32.2.5 2005/03/04 16:41:27 skrll Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.32.2.4 2004/09/21 13:27:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.32.2.5 2005/03/04 16:41:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -115,7 +115,7 @@ cy_find(struct cy_softc *sc)
 
 		/* wait until the chip is ready for command */
 		DELAY(1000);
-		if (bus_space_read_1(tag, bsh, chip + 
+		if (bus_space_read_1(tag, bsh, chip +
 		    ((CD1400_CCR << 1) << bustype)) != 0) {
 #ifdef CY_DEBUG
 			printf("not ready for command\n");
@@ -474,7 +474,7 @@ cypoll(dev_t dev, int events, struct lwp *l)
 
 	cy = CY_PORT(dev);
 	tp = cy->cy_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
@@ -665,7 +665,7 @@ cyparam(struct tty *tp, struct termios *t)
 
 	/* channel was selected by the above call to cy_modem_control() */
 #if 0
-	cd_write_reg(sc, cy->cy_chip, CD1400_CAR, port & CD1400_CAR_CHAN); 
+	cd_write_reg(sc, cy->cy_chip, CD1400_CAR, port & CD1400_CAR_CHAN);
 #endif
 
 	/* set transmit speed */
@@ -1014,7 +1014,7 @@ cy_poll(void *arg)
 #ifdef CY_DEBUG1
 				did_something = 1;
 #endif
-			} else 
+			} else
 				splx(s);
 
 			s = spltty();
@@ -1135,7 +1135,7 @@ cy_intr(void *arg)
 				if (cy->cy_tty == NULL ||
 				    !ISSET(cy->cy_tty->t_state, TS_ISOPEN)) {
 					while (n_chars--)
-						cd_read_reg(sc, cy->cy_chip, 
+						cd_read_reg(sc, cy->cy_chip,
 							    CD1400_RDSR);
 					goto end_rx_serv;
 				}
@@ -1172,19 +1172,19 @@ cy_intr(void *arg)
 				if (bf < 0)
 					bf += CY_IBUF_SIZE;
 
-				if (bf > (CY_IBUF_SIZE / 2)) { 
+				if (bf > (CY_IBUF_SIZE / 2)) {
 					/* turn RTS off */
-					if (cy->cy_clock == CY_CLOCK_60) 
+					if (cy->cy_clock == CY_CLOCK_60)
 						msvr = CD1400_MSVR2;
 					else
-						msvr = CD1400_MSVR1; 
+						msvr = CD1400_MSVR1;
 					cd_write_reg(sc, cy->cy_chip, msvr, 0);
 				}
 			}
 
 	end_rx_serv:
 			/* terminate service context */
-			cd_write_reg(sc, cy->cy_chip, CD1400_RIR, 
+			cd_write_reg(sc, cy->cy_chip, CD1400_RIR,
 				     save_rir & 0x3f);
 			cd_write_reg(sc, cy->cy_chip, CD1400_CAR, save_car);
 			int_serviced = 1;

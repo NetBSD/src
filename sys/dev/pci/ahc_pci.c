@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.41.2.5 2005/02/04 11:46:37 skrll Exp $
+ * $Id: ahc_pci.c,v 1.41.2.6 2005/03/04 16:45:15 skrll Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.41.2.5 2005/02/04 11:46:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.41.2.6 2005/03/04 16:45:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -501,7 +501,7 @@ struct ahc_pci_identity ahc_pci_ident_table [] =
 		"Adaptec 2915LP Ultra160 SCSI adapter",
 		ahc_aic7892_setup
 	},
-	/* aic7895 based controllers */	
+	/* aic7895 based controllers */
 	{
 		ID_AHA_2940U_DUAL,
 		ID_ALL_MASK,
@@ -526,7 +526,7 @@ struct ahc_pci_identity ahc_pci_ident_table [] =
 		"Adaptec aic7895 Ultra SCSI adapter (ARO)",
 		ahc_aic7895_setup
 	},
-	/* aic7896/97 based controllers */	
+	/* aic7896/97 based controllers */
 	{
 		ID_AHA_3950U2B_0,
 		ID_ALL_MASK,
@@ -557,7 +557,7 @@ struct ahc_pci_identity ahc_pci_ident_table [] =
 		"Adaptec aic7896/97 Ultra2 SCSI adapter (ARO)",
 		ahc_aic7896_setup
 	},
-	/* aic7899 based controllers */	
+	/* aic7899 based controllers */
 	{
 		ID_AHA_3960D,
 		ID_ALL_MASK,
@@ -658,7 +658,7 @@ struct ahc_pci_identity ahc_pci_ident_table [] =
 };
 
 const u_int ahc_num_pci_devs = NUM_ELEMENTS(ahc_pci_ident_table);
-		
+
 #define AHC_394X_SLOT_CHANNEL_A	4
 #define AHC_394X_SLOT_CHANNEL_B	5
 
@@ -734,7 +734,7 @@ ahc_find_pci_device(id, subid, func)
 	 * ID as valid.
 	 */
 	if (func > 0
-	    && ahc_9005_subdevinfo_valid(PCI_VENDOR(id), PCI_PRODUCT(id), 
+	    && ahc_9005_subdevinfo_valid(PCI_VENDOR(id), PCI_PRODUCT(id),
 					 PCI_VENDOR(subid), PCI_PRODUCT(subid))
 	    && SUBID_9005_MFUNCENB(PCI_PRODUCT(subid)) == 0)
 		return (NULL);
@@ -841,7 +841,7 @@ ahc_pci_attach(parent, self, aux)
 	}
 #endif
 	ioh_valid = (pci_mapreg_map(pa, AHC_PCI_IOADDR,
-				    PCI_MAPREG_TYPE_IO, 0, &iot, 
+				    PCI_MAPREG_TYPE_IO, 0, &iot,
 				    &ioh, NULL, NULL) == 0);
 #if 0
 	printf("%s: bus info: memt 0x%lx, memh 0x%lx, iot 0x%lx, ioh 0x%lx\n",
@@ -894,7 +894,7 @@ ahc_pci_attach(parent, self, aux)
 			       ahc_name(ahc));
 		devconfig |= DACEN;
 	}
-	
+
 	/* Ensure that pci error generation, a test feature, is disabled. */
 	devconfig |= PCIERRGENDIS;
 
@@ -1024,7 +1024,7 @@ ahc_pci_attach(parent, self, aux)
 				  M_DEVBUF, M_NOWAIT);
 	if (ahc->seep_config == NULL)
 		goto error_out;
-	
+
 	memset(ahc->seep_config, 0, sizeof(*ahc->seep_config));
 
 	/* See if we have a SEEPROM and perform auto-term */
@@ -1241,7 +1241,7 @@ ahc_probe_ext_scbram(struct ahc_softc *ahc)
 	fast = FALSE;
 	large = FALSE;
 	num_scbs = 0;
-	
+
 	if (ahc_ext_scbram_present(ahc) == 0)
 		goto done;
 
@@ -1316,7 +1316,7 @@ done:
 	ahc_outb(ahc, CLRINT, CLRBRKADRINT);
 	if (1/*bootverbose*/ && enable) {
 		printf("%s: External SRAM, %s access%s, %dbytes/SCB\n",
-		       ahc_name(ahc), fast ? "fast" : "slow", 
+		       ahc_name(ahc), fast ? "fast" : "slow",
 		       pcheck ? ", parity checking enabled" : "",
 		       large ? 64 : 32);
 	}
@@ -1438,7 +1438,7 @@ ahc_pci_intr(struct ahc_softc *ahc)
 
 	if ((status1 & (DPE|SSE|RMA|RTA|STA|DPR)) == 0) {
 		printf("%s: Latched PCIERR interrupt with "
-		       "no status bits set\n", ahc_name(ahc)); 
+		       "no status bits set\n", ahc_name(ahc));
 	} else {
 		ahc_outb(ahc, CLRINT, CLRPARERR);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.66.2.9 2005/02/15 21:33:13 skrll Exp $	*/
+/*	$NetBSD: eap.c,v 1.66.2.10 2005/03/04 16:45:17 skrll Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.66.2.9 2005/02/15 21:33:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.66.2.10 2005/03/04 16:45:17 skrll Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -1306,7 +1306,7 @@ eap_trigger_input(
 	sc->sc_rrun = 1;
 #endif
 
-	DPRINTFN(1, ("eap_trigger_input: ei=%p start=%p end=%p blksize=%d intr=%p(%p)\n", 
+	DPRINTFN(1, ("eap_trigger_input: ei=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
 	    addr, start, end, blksize, intr, arg));
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;

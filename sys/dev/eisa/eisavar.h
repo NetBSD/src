@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.17.24.3 2004/09/21 13:27:37 skrll Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.17.24.4 2005/03/04 16:41:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ struct eisa_cfg_io;
 #include <machine/bus.h>
 #include <dev/eisa/eisareg.h>		/* For ID register & string info. */
 
-/* 
+/*
  * Structures and definitions needed by the machine-dependent header.
  */
 struct eisabus_attach_args;

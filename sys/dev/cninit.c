@@ -1,4 +1,4 @@
-/*	$NetBSD: cninit.c,v 1.4.16.3 2004/09/21 13:26:24 skrll Exp $	*/
+/*	$NetBSD: cninit.c,v 1.4.16.4 2005/03/04 16:40:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.4.16.3 2004/09/21 13:26:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.4.16.4 2005/03/04 16:40:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -98,7 +98,7 @@ cninit()
 {
 	struct consdev *cp;
 	struct consdev *bestMatch;
-	
+
 	bestMatch = cn_tab = NULL;
 	/*
 	 * Collect information about all possible consoles

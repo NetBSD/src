@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.6.2.3 2004/09/21 13:26:40 skrll Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.6.2.4 2005/03/04 16:40:54 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.6.2.3 2004/09/21 13:26:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.6.2.4 2005/03/04 16:40:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -437,7 +437,7 @@ acpi_resource_cleanup(struct acpi_resources *res)
 		AcpiOsFree(ar);
 	}
 
-	res->ar_nio = res->ar_niorange = res->ar_nmem = 
+	res->ar_nio = res->ar_niorange = res->ar_nmem =
 	    res->ar_nmemrange = res->ar_nirq = res->ar_ndrq = 0;
 }
 

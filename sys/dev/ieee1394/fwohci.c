@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.78.2.4 2004/09/21 13:29:41 skrll Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.78.2.5 2005/03/04 16:43:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.78.2.4 2004/09/21 13:29:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.78.2.5 2005/03/04 16:43:12 skrll Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -170,7 +170,7 @@ static void fwohci_phy_busreset(struct fwohci_softc *);
 static void fwohci_phy_input(struct fwohci_softc *, struct fwohci_pkt *);
 
 static int  fwohci_handler_set(struct fwohci_softc *, int, u_int32_t, u_int32_t,
-    u_int32_t, int (*)(struct fwohci_softc *, void *, struct fwohci_pkt *), 
+    u_int32_t, int (*)(struct fwohci_softc *, void *, struct fwohci_pkt *),
     void *);
 
 ieee1394_ir_tag_t fwohci_ir_ctx_set(struct device *, int, int, int, int, int);
@@ -329,7 +329,7 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 		aprint_normal(", unknown speed %u",
 		    sc->sc_sc1394.sc1394_link_speed);
 	}
-	
+
 	/* MaxRec is encoded as log2(max_rec_octets)-1
 	 */
 	sc->sc_sc1394.sc1394_max_receive =
@@ -381,7 +381,7 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	sc->sc_sc1394.sc1394_callback.sc1394_write = fwohci_write;
 	sc->sc_sc1394.sc1394_callback.sc1394_inreg = fwohci_inreg;
 	sc->sc_sc1394.sc1394_callback.sc1394_unreg = fwohci_unreg;
-	
+
 	kthread_create(fwohci_create_event_thread, sc);
 	return 0;
 }
@@ -591,7 +591,7 @@ fwohci_thread_init(void *arg)
 #endif
 
 	/*
-	 * establish hooks for shutdown and suspend/resume 
+	 * establish hooks for shutdown and suspend/resume
 	 */
 	sc->sc_shutdownhook = shutdownhook_establish(fwohci_shutdown, sc);
 	sc->sc_powerhook = powerhook_establish(fwohci_power, sc);
@@ -1248,7 +1248,7 @@ fwohci_ctx_init(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 			OHCI_SYNC_RX_DMA_WRITE(sc, n,
 			    OHCI_SUBREG_ContextControlSet,
 			    OHCI_CTXCTL_RX_MULTI_CHAN_MODE);
-			
+
 			/* Receive all the isochronous channels */
 			OHCI_CSR_WRITE(sc, OHCI_REG_IRMultiChanMaskHiSet,
 			    0xffffffff);
@@ -1451,7 +1451,7 @@ fwohci_buf_next(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 			fb->fb_off = 0;
 			fb->fb_desc->fd_rescount = fb->fb_desc->fd_reqcount;
 		}
-	
+
 		/* rotating buffer */
 		fctmp = fc->fc_buf;
 		fc->fc_buf = fc->fc_buf2;
@@ -1576,7 +1576,7 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	    pkt->fp_tcode != IEEE1394_TCODE_READ_REQ_BLOCK)
 		pkt->fp_dlen = pkt->fp_hdr[3] >> 16;
 #ifdef FW_DEBUG
-	tlabel = (pkt->fp_hdr[0] & 0x0000fc00) >> 10; 
+	tlabel = (pkt->fp_hdr[0] & 0x0000fc00) >> 10;
 #endif
 	DPRINTFN(1, ("fwohci_buf_input: tcode=0x%x, tlabel=0x%x, hlen=%d, "
 	    "dlen=%d\n", pkt->fp_tcode, tlabel, pkt->fp_hlen, pkt->fp_dlen));
@@ -1768,15 +1768,15 @@ fwohci_handler_set(struct fwohci_softc *sc,
 				    fh->fh_key2 == key2 && fh->fh_key3 == key3)
 					break;
 				/* Make sure it's not within a current range. */
-				addr = ((u_int64_t)fh->fh_key1 << 32) + 
+				addr = ((u_int64_t)fh->fh_key1 << 32) +
 				    fh->fh_key2;
 				off = fh->fh_key3;
-				if (key3 && 
-				    (((naddr >= addr) && 
+				if (key3 &&
+				    (((naddr >= addr) &&
 				     (naddr < (addr + off))) ||
 				    (((naddr + key3) > addr) &&
 				     ((naddr + key3) <= (addr + off))) ||
-				    ((addr > naddr) && 
+				    ((addr > naddr) &&
 				      (addr < (naddr + key3)))))
 					if (handler)
 						return EEXIST;
@@ -1975,7 +1975,7 @@ fwohci_it_set(struct ieee1394_softc *isc, int channel, int tagbm)
 
 /*
  * static ieee1394_it_tag_t
- * fwohci_it_ctx_set(struct fwohci_softc *sc, 
+ * fwohci_it_ctx_set(struct fwohci_softc *sc,
  *    u_int32_t key1 (channel), u_int32_t key2 (tag), int maxsize)
  *
  *	This function will return non-negative value if it succeeds.
@@ -2131,7 +2131,7 @@ fwohci_it_ctx_clear(ieee1394_it_tag_t *it)
 	fwohci_it_ctx_destruct(itc);
 
 	sc->sc_ctx_it[itc->itc_num] = NULL;
-	
+
 
 	return 0;
 }
@@ -2177,17 +2177,17 @@ fwohci_arrq_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		    fh = LIST_NEXT(fh, fh_list)) {
 			if (pkt.fp_tcode == fh->fh_tcode) {
 				/* Assume length check happens in handler */
-				if (key1 == fh->fh_key1 && 
+				if (key1 == fh->fh_key1 &&
 				    key2 == fh->fh_key2) {
-					rcode = (*fh->fh_handler)(sc, 
+					rcode = (*fh->fh_handler)(sc,
 					    fh->fh_handarg, &pkt);
 					break;
 				}
-				addr = ((u_int64_t)fh->fh_key1 << 32) + 
+				addr = ((u_int64_t)fh->fh_key1 << 32) +
 				    fh->fh_key2;
 				off = fh->fh_key3;
 				/* Check for a range qualifier */
-				if (len && 
+				if (len &&
 				    ((naddr >= addr) && (naddr < (addr + off))
 				     && (naddr + len <= (addr + off)))) {
 					rcode = (*fh->fh_handler)(sc,
@@ -2252,7 +2252,7 @@ fwohci_arrs_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 				break;
 			}
 		}
-		if (fh == NULL) 
+		if (fh == NULL)
 			DPRINTFN(1, ("fwohci_arrs_input: no listner\n"));
 	}
 	fwohci_buf_next(sc, fc);
@@ -2373,9 +2373,9 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	u_int32_t val;
 #ifdef FW_DEBUG
 	struct iovec *iov;
-        int tlabel = (pkt->fp_hdr[0] & 0x0000fc00) >> 10; 
+        int tlabel = (pkt->fp_hdr[0] & 0x0000fc00) >> 10;
 #endif
-	
+
 	if ((sc->sc_nodeid & OHCI_NodeId_NodeNumber) == IEEE1394_BCAST_PHY_ID)
 		/* We can't send anything during selfid duration */
 		return EAGAIN;
@@ -2383,7 +2383,7 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 #ifdef FW_DEBUG
 	DPRINTFN(1, ("fwohci_at_output: tcode 0x%x, tlabel 0x%x hlen %d, "
 	    "dlen %d", pkt->fp_tcode, tlabel, pkt->fp_hlen, pkt->fp_dlen));
-	for (i = 0; i < pkt->fp_hlen/4; i++) 
+	for (i = 0; i < pkt->fp_hlen/4; i++)
 		DPRINTFN(2, ("%s%08x", i?" ":"\n    ", pkt->fp_hdr[i]));
 	DPRINTFN(2, ("$"));
 	for (ndesc = 0, iov = pkt->fp_iov;
@@ -2437,8 +2437,8 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 
 	fb = malloc(sizeof(*fb), M_DEVBUF, M_WAITOK);
 	if (ndesc > 2) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, pkt->fp_dlen, 
-		    OHCI_DESC_MAX - 2, pkt->fp_dlen, 0, BUS_DMA_WAITOK, 
+		if ((error = bus_dmamap_create(sc->sc_dmat, pkt->fp_dlen,
+		    OHCI_DESC_MAX - 2, pkt->fp_dlen, 0, BUS_DMA_WAITOK,
 		    &fb->fb_dmamap)) != 0) {
 			fwohci_desc_put(sc, fb->fb_desc, ndesc);
 			free(fb, M_DEVBUF);
@@ -2476,7 +2476,7 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	fb->fb_callback = pkt->fp_callback;
 	fb->fb_statuscb = pkt->fp_statuscb;
 	fb->fb_statusarg = pkt->fp_statusarg;
-	
+
 	fd = fb->fb_desc;
 	fd->fd_flags = OHCI_DESC_IMMED;
 	fd->fd_reqcount = pkt->fp_hlen;
@@ -2578,9 +2578,9 @@ fwohci_at_done(struct fwohci_softc *sc, struct fwohci_ctx *fc, int force)
 
 		if (fb->fb_statuscb) {
 			memset(&pkt, 0, sizeof(pkt));
-			pkt.fp_status = fd->fd_status; 
+			pkt.fp_status = fd->fd_status;
 			memcpy(pkt.fp_hdr, fd + 1, sizeof(pkt.fp_hdr[0]));
-			
+
 			/* Indicate this is just returning the status bits. */
 			pkt.fp_tcode = -1;
 			(*fb->fb_statuscb)(sc, fb->fb_statusarg, &pkt);
@@ -2609,7 +2609,7 @@ fwohci_atrs_output(struct fwohci_softc *sc, int rcode, struct fwohci_pkt *req,
 {
 
 	if (((*req->fp_trail & 0x001f0000) >> 16) !=
-	    OHCI_CTXCTL_EVENT_ACK_PENDING) 
+	    OHCI_CTXCTL_EVENT_ACK_PENDING)
 		return;
 
 	res->fp_hdr[0] = (req->fp_hdr[0] & 0x0000fc00) | 0x00000100;
@@ -2848,7 +2848,7 @@ fwohci_configrom_init(struct fwohci_softc *sc)
 	CFR_PUT_DATA1(&cfr, FW_FIFO_HI);
 	CFR_PUT_DATA1(&cfr, FW_FIFO_LO);
 	CFR_END_UNIT(&cfr);
-	
+
 #endif /* INET */
 
 #ifdef INET6
@@ -2880,7 +2880,7 @@ fwohci_configrom_init(struct fwohci_softc *sc)
 	CFR_PUT_DATA1(&cfr, FW_FIFO_HI);
 	CFR_PUT_DATA1(&cfr, FW_FIFO_LO);
 	CFR_END_UNIT(&cfr);
-	
+
 #endif /* INET6 */
 
 	fb->fb_off = cfr.ptr - hdr;
@@ -2908,9 +2908,9 @@ fwohci_configrom_init(struct fwohci_softc *sc)
 	    (OHCI_Version_GET_Revision(val) == 1))
 		OHCI_CSR_WRITE(sc, OHCI_REG_HCControlSet,
 		    OHCI_HCControl_BIBImageValid);
-	
+
 	/* Only allow quad reads of the rom. */
-	for (i = 0; i < fb->fb_off; i++) 
+	for (i = 0; i < fb->fb_off; i++)
 		fwohci_handler_set(sc, IEEE1394_TCODE_READ_REQ_QUAD,
 		    CSR_BASE_HI, CSR_BASE_LO + CSR_CONFIG_ROM + (i * 4), 0,
 		    fwohci_configrom_input, NULL);
@@ -3040,7 +3040,7 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 	}
 	sc->sc_nodeid = val & 0xffff;
 	sc->sc_sc1394.sc1394_node_id = sc->sc_nodeid & OHCI_NodeId_NodeNumber;
-	
+
 	DPRINTF(("%s: nodeid=0x%04x(%d), rootid=%d, irmid=%d\n",
 	    sc->sc_sc1394.sc1394_dev.dv_xname, sc->sc_nodeid,
 	    sc->sc_nodeid & OHCI_NodeId_NodeNumber, sc->sc_rootid,
@@ -3065,7 +3065,7 @@ static void
 fwohci_csr_init(struct fwohci_softc *sc)
 {
 	int i;
-	static u_int32_t csr[] = { 
+	static u_int32_t csr[] = {
 	    CSR_STATE_CLEAR, CSR_STATE_SET, CSR_SB_CYCLE_TIME,
 	    CSR_SB_BUS_TIME, CSR_SB_BUSY_TIMEOUT, CSR_SB_BUS_MANAGER_ID,
 	    CSR_SB_CHANNEL_AVAILABLE_HI, CSR_SB_CHANNEL_AVAILABLE_LO,
@@ -3074,10 +3074,10 @@ fwohci_csr_init(struct fwohci_softc *sc)
 
 	for (i = 0; i < sizeof(csr) / sizeof(csr[0]); i++) {
 		fwohci_handler_set(sc, IEEE1394_TCODE_WRITE_REQ_QUAD,
-		    CSR_BASE_HI, CSR_BASE_LO + csr[i], 0, fwohci_csr_input, 
+		    CSR_BASE_HI, CSR_BASE_LO + csr[i], 0, fwohci_csr_input,
 		    NULL);
 		fwohci_handler_set(sc, IEEE1394_TCODE_READ_REQ_QUAD,
-		    CSR_BASE_HI, CSR_BASE_LO + csr[i], 0, fwohci_csr_input, 
+		    CSR_BASE_HI, CSR_BASE_LO + csr[i], 0, fwohci_csr_input,
 		    NULL);
 	}
 	sc->sc_csr[CSR_SB_BROADCAST_CHANNEL] = 31;	/*XXX*/
@@ -3149,7 +3149,7 @@ fwohci_uid_collect(struct fwohci_softc *sc)
 			iea = (struct ieee1394_softc *)sc->sc_sc1394.sc1394_if;
 			if (iea) {
 				iea->sc1394_node_id = i;
-				DPRINTF(("%s: Updating nodeid to %d\n", 
+				DPRINTF(("%s: Updating nodeid to %d\n",
 				    iea->sc1394_dev.dv_xname,
 				    iea->sc1394_node_id));
 			}
@@ -3171,7 +3171,7 @@ fwohci_uid_req(struct fwohci_softc *sc, int phyid)
 	pkt.fp_tcode = IEEE1394_TCODE_READ_REQ_QUAD;
 	pkt.fp_hlen = 12;
 	pkt.fp_dlen = 0;
-	pkt.fp_hdr[0] = 0x00000100 | (sc->sc_tlabel << 10) | 
+	pkt.fp_hdr[0] = 0x00000100 | (sc->sc_tlabel << 10) |
 	    (pkt.fp_tcode << 4);
 	pkt.fp_hdr[1] = ((0xffc0 | phyid) << 16) | CSR_BASE_HI;
 	pkt.fp_hdr[2] = CSR_BASE_LO + CSR_CONFIG_ROM + 12;
@@ -3180,7 +3180,7 @@ fwohci_uid_req(struct fwohci_softc *sc, int phyid)
 	sc->sc_tlabel = (sc->sc_tlabel + 1) & 0x3f;
 	fwohci_at_output(sc, sc->sc_ctx_atrq, &pkt);
 
-	pkt.fp_hdr[0] = 0x00000100 | (sc->sc_tlabel << 10) | 
+	pkt.fp_hdr[0] = 0x00000100 | (sc->sc_tlabel << 10) |
 	    (pkt.fp_tcode << 4);
 	pkt.fp_hdr[2] = CSR_BASE_LO + CSR_CONFIG_ROM + 16;
 	fwohci_handler_set(sc, IEEE1394_TCODE_READ_RESP_QUAD, phyid,
@@ -3225,7 +3225,7 @@ fwohci_uid_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *res)
 			if (memcmp(iea->sc1394_guid, fu->fu_uid, 8) == 0) {
 				found = 1;
 				iea->sc1394_node_id = n;
-				DPRINTF(("%s: Updating nodeid to %d\n", 
+				DPRINTF(("%s: Updating nodeid to %d\n",
 				    iea->sc1394_dev.dv_xname,
 				    iea->sc1394_node_id));
 				if (iea->sc1394_callback.sc1394_reset)
@@ -3239,7 +3239,7 @@ fwohci_uid_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *res)
 			fwa.nodeid = n;
 			iea = (struct ieee1394_softc *)
 			    config_found_sm_loc(&sc->sc_sc1394.sc1394_dev,
-				"fwbus", NULL, &fwa, 
+				"fwbus", NULL, &fwa,
 				fwohci_print, fwohci_submatch);
 			if (iea != NULL)
 				LIST_INSERT_HEAD(&sc->sc_nodelist, iea,
@@ -3286,7 +3286,7 @@ fwohci_check_nodes(struct fwohci_softc *sc)
 			LIST_REMOVE(iea, sc1394_node);
 		}
 	}
-	if (detach) 
+	if (detach)
 		config_detach(detach, 0);
 }
 
@@ -3661,18 +3661,18 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
  * This routine will attempt to read a region from the requested node.
  * A callback must be provided which will be called when either the completed
  * read is done or an unrecoverable error occurs. This is mainly a convenience
- * routine since it will encapsulate retrying a region as quadlet vs. block 
- * reads and recombining all the returned data. This could also be done with a 
+ * routine since it will encapsulate retrying a region as quadlet vs. block
+ * reads and recombining all the returned data. This could also be done with a
  * series of write/inreg's for each packet sent.
  *
  * int fwohci_write(struct ieee1394_abuf *)
  *
  * The work horse main entry point for putting packets on the bus. This is the
  * generalized interface for fwnode/etc code to put packets out onto the bus.
- * It accepts all standard ieee1394 tcodes (XXX: only a few today) and 
- * optionally will callback via a func pointer to the calling code with the 
- * resulting ACK code from the packet. If the ACK code is to be ignored (i.e. 
- * no cb) then the write routine will take care of free'ing the abuf since the 
+ * It accepts all standard ieee1394 tcodes (XXX: only a few today) and
+ * optionally will callback via a func pointer to the calling code with the
+ * resulting ACK code from the packet. If the ACK code is to be ignored (i.e.
+ * no cb) then the write routine will take care of free'ing the abuf since the
  * fwnode/etc code won't have any knowledge of when to do this. This allows for
  * simple one-off packets to be sent from the upper-level code without worrying
  * about a callback for cleanup.
@@ -3695,7 +3695,7 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
  * int argument specifies the same behavior as inreg, except in reverse (i.e.
  * it unregisters).
  */
- 
+
 static int
 fwohci_read(struct ieee1394_abuf *ab)
 {
@@ -3715,7 +3715,7 @@ fwohci_read(struct ieee1394_abuf *ab)
 	fcb->ab = ab;
 	fcb->count = 0;
 	fcb->abuf_valid = 1;
-	
+
 	high = ((ab->ab_addr & 0x0000ffff00000000ULL) >> 32);
 	lo = (ab->ab_addr & 0x00000000ffffffffULL);
 
@@ -3742,7 +3742,7 @@ fwohci_read(struct ieee1394_abuf *ab)
 
 	rv = fwohci_handler_set(psc, tcode, ab->ab_req->sc1394_node_id,
 	    psc->sc_tlabel, 0, fwohci_read_resp, fcb);
-	if (rv) 
+	if (rv)
 		return rv;
 	rv = fwohci_at_output(psc, psc->sc_ctx_atrq, &pkt);
 	if (rv)
@@ -3759,7 +3759,7 @@ fwohci_write(struct ieee1394_abuf *ab)
 	struct fwohci_pkt pkt;
 	struct ieee1394_softc *sc = ab->ab_req;
 	struct fwohci_softc *psc =
-	    (struct fwohci_softc *)sc->sc1394_dev.dv_parent; 
+	    (struct fwohci_softc *)sc->sc1394_dev.dv_parent;
 	u_int32_t high, lo;
 	int rv;
 
@@ -3770,13 +3770,13 @@ fwohci_write(struct ieee1394_abuf *ab)
 		}
 	}
 
-	if (ab->ab_length > 
+	if (ab->ab_length >
 	    IEEE1394_MAX_ASYNCH_FOR_SPEED(sc->sc1394_link_speed)) {
 		DPRINTF(("Packet too large: %d\n", ab->ab_length));
 		return E2BIG;
 	}
 
-	if (ab->ab_data && ab->ab_uio) 
+	if (ab->ab_data && ab->ab_uio)
 		panic("Can't call with uio and data set");
 	if ((ab->ab_data == NULL) && (ab->ab_uio == NULL))
 		panic("One of either ab_data or ab_uio must be set");
@@ -3788,9 +3788,9 @@ fwohci_write(struct ieee1394_abuf *ab)
 		pkt.fp_uio.uio_iov = pkt.fp_iov;
 		pkt.fp_uio.uio_segflg = UIO_SYSSPACE;
 		pkt.fp_uio.uio_rw = UIO_WRITE;
-	} else 
+	} else
 		memcpy(&pkt.fp_uio, ab->ab_uio, sizeof(struct uio));
-	
+
 	pkt.fp_statusarg = ab;
 	pkt.fp_statuscb = fwohci_write_ack;
 
@@ -3864,7 +3864,7 @@ fwohci_read_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	 * etc which makes it much more difficult to process if both aren't
 	 * handled here.
 	 */
-	
+
 	/* Check for status packet. */
 
 	if (pkt->fp_tcode == -1) {
@@ -3881,7 +3881,7 @@ fwohci_read_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		 * Got all the ack's back and the buffer is invalid (i.e. the
 		 * callback has been called. Clean up.
 		 */
-		
+
 		if (fcb->abuf_valid == 0) {
 			if (fcb->count == 0)
 				free(fcb, M_DEVBUF);
@@ -3978,12 +3978,12 @@ fwohci_read_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 				ab->ab_retlen += pkt->fp_iov[i].iov_len;
 			}
 		}
-		if (status != -1) 
+		if (status != -1)
 			/* XXX: Need a complete tlabel interface. */
 			for (i = 0; i < 64; i++)
 				fwohci_handler_set(sc,
 				    IEEE1394_TCODE_READ_RESP_QUAD,
-				    ab->ab_req->sc1394_node_id, i, 0, NULL, 
+				    ab->ab_req->sc1394_node_id, i, 0, NULL,
 				    NULL);
 		(*ab->ab_cb)(ab, rcode);
 		goto cleanup;
@@ -3992,7 +3992,7 @@ fwohci_read_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		return IEEE1394_RCODE_COMPLETE;
 
 	/* Can't get here unless ab->ab_cb has been called. */
-	
+
  cleanup:
 	fcb->abuf_valid = 0;
 	if (fcb->count == 0)
@@ -4061,7 +4061,7 @@ fwohci_read_multi_resp(struct fwohci_softc *sc, void *arg,
 		rv = fwohci_handler_set(sc, IEEE1394_TCODE_READ_RESP_QUAD,
 		    ab->ab_req->sc1394_node_id, sc->sc_tlabel, 0,
 		    fwohci_read_multi_resp, fcb);
-		if (rv) 
+		if (rv)
 			(*ab->ab_cb)(ab, -1);
 		else {
 			rv = fwohci_at_output(sc, sc->sc_ctx_atrq, &newpkt);
@@ -4117,7 +4117,7 @@ fwohci_inreg(struct ieee1394_abuf *ab, int allow)
 {
 	struct ieee1394_softc *sc = ab->ab_req;
 	struct fwohci_softc *psc =
-	    (struct fwohci_softc *)sc->sc1394_dev.dv_parent; 
+	    (struct fwohci_softc *)sc->sc1394_dev.dv_parent;
 	u_int32_t high, lo;
 	int rv;
 
@@ -4139,19 +4139,19 @@ fwohci_inreg(struct ieee1394_abuf *ab, int allow)
 	case IEEE1394_TCODE_WRITE_REQ_BLOCK:
 		if (allow) {
 			if (ab->ab_cb) {
-				rv = fwohci_handler_set(psc, ab->ab_tcode, 
-				    high, lo, ab->ab_length, 
+				rv = fwohci_handler_set(psc, ab->ab_tcode,
+				    high, lo, ab->ab_length,
 				    fwohci_parse_input, ab);
 				if (rv)
-					fwohci_handler_set(psc, ab->ab_tcode, 
-					    high, lo, ab->ab_length, NULL, 
+					fwohci_handler_set(psc, ab->ab_tcode,
+					    high, lo, ab->ab_length, NULL,
 					    NULL);
                                 ab->ab_subok = 1;
-			} else 
+			} else
 				fwohci_handler_set(psc, ab->ab_tcode, high, lo,
 				    ab->ab_length, NULL, NULL);
 		} else {
-			if (ab->ab_cb) 
+			if (ab->ab_cb)
 				rv = fwohci_handler_set(psc, ab->ab_tcode, high,
 				    lo, 0, fwohci_parse_input, ab);
 			else
@@ -4172,7 +4172,7 @@ fwohci_unreg(struct ieee1394_abuf *ab, int allow)
 {
 	void *save;
 	int rv;
-	
+
 	save = ab->ab_cb;
 	ab->ab_cb = NULL;
 	rv = fwohci_inreg(ab, allow);
@@ -4216,9 +4216,9 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	case IEEE1394_TCODE_WRITE_REQ_QUAD:
 		ab->ab_retlen = 4;
 		/* Fall through. */
-		
+
 	case IEEE1394_TCODE_WRITE_REQ_BLOCK:
-		if (!ab->ab_retlen) 
+		if (!ab->ab_retlen)
 			ab->ab_retlen = (pkt->fp_hdr[3] >> 16) & 0xffff;
 		if (ab->ab_subok) {
 			if ((addr + ab->ab_retlen) >
@@ -4308,7 +4308,7 @@ fwohci_activate(struct device *self, enum devact act)
 	case DVACT_DEACTIVATE:
 		if (sc->sc_sc1394.sc1394_if != NULL)
 	                rv = config_deactivate(sc->sc_sc1394.sc1394_if);
-		break; 
+		break;
 	}
 	splx(s);
 
@@ -4552,7 +4552,7 @@ fwohci_misc_dmabuf_alloc(bus_dma_tag_t dmat, int dsize, int segno,
   fail_0:
 	return error;
 }
-    
+
 
 static void
 fwohci_misc_dmabuf_free(bus_dma_tag_t dmat, int dsize, int nsegs,
@@ -4609,7 +4609,7 @@ fwohci_ir_ctx_construct(struct fwohci_softc *sc, int no, int ch, int tagbm,
 	    maxsize, i);
 
 	maxsize = i;
-	
+
 	irc->irc_maxsize = maxsize;
 	irc->irc_buf_totalsize = bufnum * maxsize;
 
@@ -4676,7 +4676,7 @@ fwohci_ir_buf_setup(struct fwohci_ir_ctx *irc)
 	bus_size_t bufused = 0;	/* offset in a DMA segment */
 
 	irc->irc_desc_size = irc->irc_desc_num * sizeof(struct fwohci_desc);
-	
+
 	nsegs = fwohci_misc_dmabuf_alloc(irc->irc_sc->sc_dmat,
 	    irc->irc_desc_size, 1, &irc->irc_desc_seg, &irc->irc_desc_dmamap,
 	    (void **)&irc->irc_desc_map,
@@ -4722,12 +4722,12 @@ fwohci_ir_buf_setup(struct fwohci_ir_ctx *irc)
 #endif
 		fd->fd_reqcount = irc->irc_maxsize;
 		fd->fd_status = fd->fd_rescount = 0;
-		
+
 		fd->fd_branch = branch | 0x01;
 		branch += sizeof(struct fwohci_desc);
 
 		/* physical addr to data? */
-		fd->fd_data = 
+		fd->fd_data =
 		    (u_int32_t)((irc->irc_buf_segs[bufno].ds_addr + bufused));
 		bufused += irc->irc_maxsize;
 		if (bufused > irc->irc_buf_segs[bufno].ds_len) {
@@ -4790,7 +4790,7 @@ fwohci_ir_init(struct fwohci_ir_ctx *irc)
 		OHCI_SYNC_RX_DMA_WRITE(sc, n,
 		    OHCI_SUBREG_ContextControlSet,
 		    OHCI_CTXCTL_RX_MULTI_CHAN_MODE);
-			
+
 		/* Receive all the isochronous channels */
 		OHCI_CSR_WRITE(sc, OHCI_REG_IRMultiChanMaskHiSet, 0xffffffff);
 		OHCI_CSR_WRITE(sc, OHCI_REG_IRMultiChanMaskLoSet, 0xffffffff);
@@ -5025,7 +5025,7 @@ fwohci_ir_read(struct device *dev, ieee1394_ir_tag_t tag, struct uio *uio,
 #ifdef FW_DEBUG
 	int totalread = 0;
 #endif
-	
+
 	if (irc->irc_status & IRC_STATUS_READY) {
 		printf("fwohci_ir_read: starting iso read engine\n");
 		fwohci_ir_start(irc);
@@ -5372,7 +5372,7 @@ fwohci_ir_ctx_drain(struct fwohci_ir_ctx *irc)
 		    OHCI_CTXCTL_RUN | OHCI_CTXCTL_DEAD);
 
 		startadr = (u_int32_t)irc->irc_desc_dmamap->dm_segs[0].ds_addr;
-	
+
 		printf("fwohci_ir_ctx_drain: remove %d pkts\n", count);
 
 		OHCI_SYNC_RX_DMA_WRITE(irc->irc_sc, irc->irc_num,
@@ -5424,7 +5424,7 @@ fwohci_ir_ctx_drain(struct fwohci_ir_ctx *irc)
 
 
 struct fwohci_it_ctx *
-fwohci_it_ctx_construct(struct fwohci_softc *sc, int no, int ch, int tag, int maxsize) 
+fwohci_it_ctx_construct(struct fwohci_softc *sc, int no, int ch, int tag, int maxsize)
 {
 	struct fwohci_it_ctx *itc;
 	size_t dmastrsize;
@@ -5477,7 +5477,7 @@ fwohci_it_ctx_construct(struct fwohci_softc *sc, int no, int ch, int tag, int ma
 	descphys = itc->itc_dseg.ds_addr;
 
 	for (i = 0; i < itc->itc_bufnum; ++i) {
-		
+
 		if (fwohci_itd_construct(itc, &dmastr[i], i, desc,
 		    descphys, nodesc,
 		    itc->itc_maxsize, itc->itc_scratch_paddr)) {
@@ -5654,7 +5654,7 @@ fwohci_it_desc_free(struct fwohci_it_ctx *itc)
 	bus_dmamap_destroy(dmat, itc->itc_ddmamap);
 	bus_dmamem_unmap(dmat, (caddr_t)itc->itc_descmap, dsize);
 	bus_dmamem_free(dmat, &itc->itc_dseg, itc->itc_dnsegs);
-	
+
 	itc->itc_dnsegs = 0;
 	itc->itc_descmap = NULL;
 }
@@ -5931,7 +5931,7 @@ fwohci_it_ctx_run(struct fwohci_it_ctx *itc)
 
 	OHCI_SYNC_TX_DMA_WRITE(sc, ctx, OHCI_SUBREG_ContextControlClear,
 	    OHCI_CTXCTL_RUN);
-	
+
 	reg = OHCI_SYNC_TX_DMA_READ(sc, ctx, OHCI_SUBREG_ContextControlSet);
 	i = 0;
 	while (reg & (OHCI_CTXCTL_ACTIVE | OHCI_CTXCTL_RUN)) {
@@ -6183,7 +6183,7 @@ fwohci_it_intr(struct fwohci_softc *sc, struct fwohci_it_ctx *itc)
 				    "and end [%d, %d]: %d\n",
 				    startidx, endidx, linkendidx);
 			}
-				
+
 		}
 	}
 
@@ -6274,7 +6274,7 @@ fwohci_it_intr(struct fwohci_softc *sc, struct fwohci_it_ctx *itc)
  *			    struct fwohci_desc *desc, bus_addr_t phys,
  *			    int descsize, int maxsize, paddr_t scratch)
  *
- *	
+ *
  *
  */
 int
@@ -6401,7 +6401,7 @@ fwohci_itd_construct(struct fwohci_it_ctx *itc, struct fwohci_it_dmabuf *itd,
 #endif
 
 		/* physical addr to data? */
-		fl->fd_data = 
+		fl->fd_data =
 		    (u_int32_t)((itd->itd_seg[bufno].ds_addr + bufused));
 		bufused += itd->itd_maxsize;
 		if (bufused > itd->itd_seg[bufno].ds_len) {
@@ -6418,7 +6418,7 @@ fwohci_itd_construct(struct fwohci_it_ctx *itc, struct fwohci_it_dmabuf *itd,
 		u_int32_t *fdp;
 		u_int32_t adr;
 		int i = 0;
-		
+
 		fdp = (u_int32_t *)itd->itd_desc;
 		adr = (u_int32_t)itd->itd_desc_phys; /* XXX */
 
@@ -6431,7 +6431,7 @@ fwohci_itd_construct(struct fwohci_it_ctx *itc, struct fwohci_it_dmabuf *itd,
 			printf(" %08x", fdp[i]);
 		}
 		printf("\n");
-		
+
 	}
 #endif
 	/* last branch should be 0 */

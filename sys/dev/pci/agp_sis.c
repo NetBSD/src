@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_sis.c,v 1.4 2003/01/31 00:07:40 thorpej Exp $	*/
+/*	$NetBSD: agp_sis.c,v 1.4.2.1 2005/03/04 16:45:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_sis.c,v 1.4 2003/01/31 00:07:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_sis.c,v 1.4.2.1 2005/03/04 16:45:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ agp_sis_attach(struct device *parent, struct device *self, void *aux)
 	/* Install the gatt. */
 	pci_conf_write(sc->as_pc, sc->as_tag, AGP_SIS_ATTBASE,
 	    gatt->ag_physical);
-	
+
 	/* Enable the aperture and auto-tlb-inval */
 	reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_SIS_WINCTRL);
 	reg |= (0x05 << 24) | 3;
@@ -184,7 +184,7 @@ agp_sis_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 
 	gws = ffs(aperture / 4*1024*1024) - 1;
 
-	reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_SIS_WINCTRL);	
+	reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_SIS_WINCTRL);
 	reg &= ~0x00000070;
 	reg |= gws << 4;
 	pci_conf_write(sc->as_pc, sc->as_tag, AGP_SIS_WINCTRL, reg);

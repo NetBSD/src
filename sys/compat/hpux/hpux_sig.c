@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.25.2.3 2004/09/21 13:25:13 skrll Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.25.2.4 2005/03/04 16:39:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.25.2.3 2004/09/21 13:25:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.25.2.4 2005/03/04 16:39:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,7 +344,7 @@ hpux_sys_sigaction(l, v, retval)
 	if (sig <= 0 || sig >= NSIG || sig == SIGKILL || sig == SIGSTOP)
 		return (EINVAL);
 
-	bsa = &SIGACTION(l->l_proc, sig); 
+	bsa = &SIGACTION(l->l_proc, sig);
 
 	sa = &action;
 	if (SCARG(uap, osa)) {

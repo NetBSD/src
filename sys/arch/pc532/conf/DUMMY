@@ -1,4 +1,4 @@
-#	$NetBSD: DUMMY,v 1.21.6.5 2005/02/04 11:44:47 skrll Exp $
+#	$NetBSD: DUMMY,v 1.21.6.6 2005/03/04 16:39:00 skrll Exp $
 #
 # DUMMY: Matthias Pfaller's second pc532
 #
@@ -38,6 +38,8 @@ options 	COMPAT_11		# NetBSD 1.1,
 options 	COMPAT_12		# NetBSD 1.2,
 options 	COMPAT_13		# NetBSD 1.3,
 options 	COMPAT_14		# NetBSD 1.4,
+options 	COMPAT_16		# NetBSD 1.6,
+options 	COMPAT_20		# NetBSD 2.0,
 options 	COMPAT_43		# and 4.3BSD
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -48,6 +50,7 @@ file-system 	FFS			# Berkeley fast file system
 file-system 	NFS			# Network File System client
 
 #options 	QUOTA			# file system quotas
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 # networking options
 #options 	GATEWAY			# packet forwarding
@@ -60,7 +63,7 @@ options 	INET			# IP + ICMP + TCP + UDP
 
 # pc532 specific options
 options 	CONSOLE_SPEED=B9600	# default console baud rate
-options 	SCNDEF_CFLAG="CREAD+CS8+HUPCL"
+options 	SCNDEF_CFLAG="CREAD|CS8|HUPCL"
 options 	NS381			# FPU installed
 options 	NO_INLINE_SPLX
 

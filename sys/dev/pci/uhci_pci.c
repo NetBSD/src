@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.24.6.3 2004/09/21 13:31:08 skrll Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.24.6.4 2005/03/04 16:45:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.24.6.3 2004/09/21 13:31:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.24.6.4 2005/03/04 16:45:26 skrll Exp $");
 
 #include "ehci.h"
 
@@ -88,7 +88,7 @@ uhci_pci_match(struct device *parent, struct cfdata *match, void *aux)
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_USB &&
 	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_UHCI)
 		return (1);
- 
+
 	return (0);
 }
 
@@ -171,7 +171,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	else
 		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
 		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
-	
+
 	r = uhci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", devname, r);

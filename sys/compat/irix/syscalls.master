@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.47 2003/01/18 07:44:52 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.47.2.1 2005/03/04 16:39:39 skrll Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -270,7 +270,7 @@
 141	UNIMPL		quotactl
 142	UNIMPL
 143	NOARGS		{ int sys_getpgrp(void); }
-144	STD		{ int irix_sys_setpgrp(int pid, int pgid); } 
+144	STD		{ int irix_sys_setpgrp(int pid, int pgid); }
 145	UNIMPL		vhangup
 146	NOARGS		{ int sys_fsync(int fd); }
 147	NOARGS		{ int sys_fchdir(int fd); }

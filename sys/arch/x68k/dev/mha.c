@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.33.2.4 2005/01/24 08:35:10 skrll Exp $	*/
+/*	$NetBSD: mha.c,v 1.33.2.5 2005/03/04 16:39:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.33.2.4 2005/01/24 08:35:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.33.2.5 2005/03/04 16:39:13 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.33.2.4 2005/01/24 08:35:10 skrll Exp $");
 
 #include <machine/bus.h>
 
+#include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_message.h>
@@ -928,7 +929,7 @@ mha_done(struct mha_softc *sc, struct acb *acb)
 		if (xs->resid != 0)
 			printf("resid=%d ", xs->resid);
 		if (xs->error == XS_SENSE)
-			printf("sense=0x%02x\n", xs->sense.scsi_sense.error_code);
+			printf("sense=0x%02x\n", xs->sense.scsi_sense.response_code);
 		else
 			printf("error=%d\n", xs->error);
 	}
@@ -1626,7 +1627,7 @@ mha_datain(struct mha_softc *sc, u_char *p, int n)
 
 	 if (n == 0)
 		 return n;
-	 if (acb->cmd.opcode == REQUEST_SENSE || (n & 1))
+	 if (acb->cmd.opcode == SCSI_REQUEST_SENSE || (n & 1))
 		 return mha_datain_pio(sc, p, n);
 	 return mha_dataio_dma(MHA_DMA_DATAIN, CMD_RECEIVE_TO_DMA, sc, p, n);
 }

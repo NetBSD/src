@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.22.2.6 2005/01/17 19:30:39 skrll Exp $ */
+/*	$NetBSD: iha.c,v 1.22.2.7 2005/03/04 16:41:29 skrll Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.22.2.6 2005/01/17 19:30:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.22.2.7 2005/03/04 16:41:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.22.2.6 2005/01/17 19:30:39 skrll Exp $");
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
@@ -332,7 +333,7 @@ iha_find_pend_scb(struct iha_softc *sc)
 				if (tcs->ntagscb == NULL)
 					break;
 
-			} else	if (scb->cmd[0] == REQUEST_SENSE) {
+			} else	if (scb->cmd[0] == SCSI_REQUEST_SENSE) {
 				/*
 				 * OK to do a non-tagged request sense
 				 * even if a non-tagged I/O has been
@@ -1158,7 +1159,7 @@ iha_exec_scb(struct iha_softc *sc, struct iha_scb *scb)
 	s = splbio();
 
 	if (((scb->xs->xs_control & XS_RESET) != 0) ||
-	    (scb->cmd[0] == REQUEST_SENSE))
+	    (scb->cmd[0] == SCSI_REQUEST_SENSE))
 		iha_push_pend_scb(sc, scb);   /* Insert SCB at head of Pend */
 	else
 		iha_append_pend_scb(sc, scb); /* Append SCB to tail of Pend */
@@ -1293,15 +1294,14 @@ iha_push_sense_request(struct iha_softc *sc, struct iha_scb *scb)
 {
 	struct scsipi_xfer *xs = scb->xs;
 	struct scsipi_periph *periph = xs->xs_periph;
-	struct scsipi_sense *ss = (struct scsipi_sense *)scb->cmd;
+	struct scsi_request_sense *ss = (struct scsi_request_sense *)scb->cmd;
 	int lun = periph->periph_lun;
 	int err;
 
-	ss->opcode = REQUEST_SENSE;
+	memset(ss, 0, sizeof(*ss));
+	ss->opcode = SCSI_REQUEST_SENSE;
 	ss->byte2 = lun << SCSI_CMD_LUN_SHIFT;
-	ss->unused[0] = ss->unused[1] = 0;
-	ss->length = sizeof(struct scsipi_sense_data);
-	ss->control = 0;
+	ss->length = sizeof(struct scsi_sense_data);
 
 	scb->flags = FLAG_RSENS | FLAG_DATAIN;
 
@@ -1310,7 +1310,7 @@ iha_push_sense_request(struct iha_softc *sc, struct iha_scb *scb)
 	scb->scb_tagmsg = 0;
 	scb->ta_stat = SCSI_OK;
 
-	scb->cmdlen = sizeof(struct scsipi_sense);
+	scb->cmdlen = sizeof(struct scsi_request_sense);
 	scb->buflen = ss->length;
 
 	err = bus_dmamap_load(sc->sc_dmat, scb->dmap,

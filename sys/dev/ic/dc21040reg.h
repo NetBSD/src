@@ -1,4 +1,4 @@
-/*	$NetBSD: dc21040reg.h,v 1.16.22.3 2004/09/21 13:27:54 skrll Exp $	*/
+/*	$NetBSD: dc21040reg.h,v 1.16.22.4 2005/03/04 16:41:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -416,7 +416,7 @@ typedef struct {
 #define	TULIP_GP_ZX346_FULLDUPLEX	0x00000004	/* Full Duplex Sensed */
 #define	TULIP_GP_ZX34X_LB102		0x00000002	/* 100tx twister LB */
 #define	TULIP_GP_ZX34X_NLB101		0x00000001	/* PDT/PDR LB */
-#define	TULIP_GP_ZX34X_INIT		0x00000009	
+#define	TULIP_GP_ZX34X_INIT		0x00000009
 
 /*
  * Compex's OUI.  We need to twiddle a bit on their 21041 card.

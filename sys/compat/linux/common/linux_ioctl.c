@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.38.2.8 2005/02/04 11:45:08 skrll Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.38.2.9 2005/03/04 16:40:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.38.2.8 2005/02/04 11:45:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.38.2.9 2005/03/04 16:40:02 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -108,6 +108,9 @@ linux_sys_ioctl(l, v, retval)
 	case 't':
 	case 'f':
 		error = linux_ioctl_termios(l, uap, retval);
+		break;
+	case 'm':
+		error = linux_ioctl_mtio(l, uap, retval);
 		break;
 	case 'T':
 	{

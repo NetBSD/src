@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc.c,v 1.20 2003/05/03 18:11:36 wiz Exp $	*/
+/*	$NetBSD: if_lmc.c,v 1.20.2.1 2005/03/04 16:45:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.20 2003/05/03 18:11:36 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.20.2.1 2005/03/04 16:45:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,9 +214,9 @@ static inline void
 lmc_srom_idle(lmc_softc_t * const sc)
 {
 	unsigned bit, csr;
-    
+
 	csr  = SROMSEL ; EMIT;
-	csr  = SROMSEL | SROMRD; EMIT;  
+	csr  = SROMSEL | SROMRD; EMIT;
 	csr ^= SROMCS; EMIT;
 	csr ^= SROMCLKON; EMIT;
 
@@ -232,11 +232,11 @@ lmc_srom_idle(lmc_softc_t * const sc)
 	csr  = 0; EMIT;
 }
 
-     
+
 static void
 lmc_srom_read(lmc_softc_t * const sc)
-{   
-	unsigned idx; 
+{
+	unsigned idx;
 	const unsigned bitwidth = SROM_BITWIDTH;
 	const unsigned cmdmask = (SROMCMD_RD << bitwidth);
 	const unsigned msb = 1 << (bitwidth + 3 - 1);
@@ -250,7 +250,7 @@ lmc_srom_read(lmc_softc_t * const sc)
 		csr  = SROMSEL | SROMRD;        EMIT;
 		csr ^= SROMCSON;                EMIT;
 		csr ^=            SROMCLKON;    EMIT;
-    
+
 		lastbit = 0;
 		for (bits = idx|cmdmask, bit = bitwidth + 3
 			     ; bit > 0
@@ -269,7 +269,7 @@ lmc_srom_read(lmc_softc_t * const sc)
 
 		for (data = 0, bits = 0; bits < 16; bits++) {
 			data <<= 1;
-			csr ^= SROMCLKON; EMIT;     /* clock H data valid */ 
+			csr ^= SROMCLKON; EMIT;     /* clock H data valid */
 			data |= LMC_CSR_READ(sc, csr_srom_mii) & SROMDIN ? 1 : 0;
 			csr ^= SROMCLKOFF; EMIT;    /* clock L data invalid */
 		}
@@ -615,7 +615,7 @@ lmc_rx_intr(lmc_softc_t * const sc)
 		 */
 		if (eop == ri->ri_nextout)
 			break;
-	    
+
 		/*
 		 * 90% of the packets will fit in one descriptor.  So we
 		 * optimize for that case.
@@ -623,7 +623,7 @@ lmc_rx_intr(lmc_softc_t * const sc)
 		LMC_RXDESC_POSTSYNC(sc, eop, sizeof(*eop));
 		status = le32toh(((volatile lmc_desc_t *) eop)->d_status);
 		if ((status &
-			(TULIP_DSTS_OWNER|TULIP_DSTS_RxFIRSTDESC|TULIP_DSTS_RxLASTDESC)) == 
+			(TULIP_DSTS_OWNER|TULIP_DSTS_RxFIRSTDESC|TULIP_DSTS_RxLASTDESC)) ==
 			(TULIP_DSTS_RxFIRSTDESC|TULIP_DSTS_RxLASTDESC)) {
 			IF_DEQUEUE(&sc->lmc_rxq, ms);
 			me = ms;
@@ -646,7 +646,7 @@ lmc_rx_intr(lmc_softc_t * const sc)
 				LMC_RXDESC_POSTSYNC(sc, eop, sizeof(*eop));
 				status = le32toh(((volatile lmc_desc_t *)
 					eop)->d_status);
-				if (eop == ri->ri_nextout || 
+				if (eop == ri->ri_nextout ||
 					(status & TULIP_DSTS_OWNER)) {
 					return;
 				}
@@ -781,7 +781,7 @@ lmc_rx_intr(lmc_softc_t * const sc)
 		}
 		if (ms == NULL) {
 			/*
-			 * Couldn't allocate a new buffer.  Don't bother 
+			 * Couldn't allocate a new buffer.  Don't bother
 			 * trying to replenish the receive queue.
 			 */
 			fillok = 0;
@@ -809,7 +809,7 @@ lmc_rx_intr(lmc_softc_t * const sc)
 			}
 			M_SETCTX(ms, map);
 			error = bus_dmamap_load(sc->lmc_dmatag, map,
-				mtod(ms, void *), LMC_RX_BUFLEN, 
+				mtod(ms, void *), LMC_RX_BUFLEN,
 				NULL, BUS_DMA_NOWAIT);
 			if (error) {
 				printf(LMC_PRINTF_FMT
@@ -827,22 +827,22 @@ lmc_rx_intr(lmc_softc_t * const sc)
 			nextout->d_addr1 = htole32(map->dm_segs[0].ds_addr);
 			if (map->dm_nsegs == 2) {
 				nextout->d_addr2 = htole32(map->dm_segs[1].ds_addr);
-				nextout->d_ctl = 
+				nextout->d_ctl =
 					htole32(LMC_CTL(LMC_CTL_FLGS(ctl),
 						map->dm_segs[0].ds_len,
 						map->dm_segs[1].ds_len));
 			} else {
 				nextout->d_addr2 = 0;
-				nextout->d_ctl = 
+				nextout->d_ctl =
 					htole32(LMC_CTL(LMC_CTL_FLGS(ctl),
 						map->dm_segs[0].ds_len, 0));
 			}
 			LMC_RXDESC_POSTSYNC(sc, nextout, sizeof(*nextout));
 #else /* LMC_BUS_DMA */
 			ctl = le32toh(ri->ri_nextout->d_ctl);
-			ri->ri_nextout->d_addr1 = htole32(LMC_KVATOPHYS(sc, 
+			ri->ri_nextout->d_addr1 = htole32(LMC_KVATOPHYS(sc,
 				mtod(ms, caddr_t)));
-			ri->ri_nextout->d_ctl = htole32(LMC_CTL(LMC_CTL_FLGS(ctl), 
+			ri->ri_nextout->d_ctl = htole32(LMC_CTL(LMC_CTL_FLGS(ctl),
 				LMC_RX_BUFLEN, 0));
 #endif /* LMC_BUS_DMA */
 			ri->ri_nextout->d_status = htole32(TULIP_DSTS_OWNER);
@@ -1216,7 +1216,7 @@ again:
 		eop->d_status  = htole32(d_status);
 		eop->d_addr1   = htole32(map->dm_segs[segcnt].ds_addr);
 		eop->d_addr2   = htole32(map->dm_segs[segcnt+1].ds_addr);
-		eop->d_ctl     = htole32(LMC_CTL(flg, 
+		eop->d_ctl     = htole32(LMC_CTL(flg,
 				 map->dm_segs[segcnt].ds_len,
 				 map->dm_segs[segcnt+1].ds_len));
 		d_status = TULIP_DSTS_OWNER;
@@ -1235,7 +1235,7 @@ again:
 		eop->d_status  = htole32(d_status);
 		eop->d_addr1   = htole32(map->dm_segs[segcnt].ds_addr);
 		eop->d_addr2   = 0;
-		eop->d_ctl     = htole32(LMC_CTL(flg, 
+		eop->d_ctl     = htole32(LMC_CTL(flg,
 				 map->dm_segs[segcnt].ds_len, 0));
 		if (++nextout == ri->ri_last)
 			nextout = ri->ri_first;
@@ -1664,7 +1664,7 @@ lmc_attach(lmc_softc_t * const sc)
 	ifp->if_type = IFT_NONE;
 	ifp->if_unit = (sc->lmc_dev.dv_unit);
 #endif
-  
+
 	if_attach(ifp);
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)

@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.h,v 1.7.2.1 2005/01/17 08:25:44 skrll Exp $	*/
+/*	$NetBSD: maple.h,v 1.7.2.2 2005/03/04 16:38:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -112,22 +112,22 @@ typedef int8_t maple_response_t;
 #define MAPLE_FUNC(fn)		(1 << (fn))
 
 struct maple_devinfo {
-	u_int32_t di_func;		/* function code */
-	u_int32_t di_function_data[3];  /* function data */
-	u_int8_t di_area_code;		/* region settings */
-	u_int8_t di_connector_direction; /* direction of expansion connector */
+	uint32_t di_func;		/* function code */
+	uint32_t di_function_data[3];	/* function data */
+	uint8_t di_area_code;		/* region settings */
+	uint8_t di_connector_direction; /* direction of expansion connector */
 	char di_product_name[30];	/* name of the device */
 	char di_product_license[60];	/* manufacturer info */
-	u_int16_t di_standby_power;	/* standby power consumption */
-	u_int16_t di_max_power;		/* maximum power consumption */
+	uint16_t di_standby_power;	/* standby power consumption */
+	uint16_t di_max_power;		/* maximum power consumption */
 };
 
 #define MAPLE_CONN_TOP		0	/* connector is to the top */
 #define MAPLE_CONN_BOTTOM	1	/* connector is to the bottom */
 
 struct maple_response {
-	u_int32_t	response_code;
-	u_int32_t	data[1];	/* variable length */
+	uint32_t	response_code;
+	uint32_t	data[1];	/* variable length */
 };
 
 #define MAPLE_FLAG_PERIODIC		1
@@ -145,7 +145,7 @@ extern void	maple_enable_periodic(struct device *, struct maple_unit *,
 extern void	maple_command(struct device *, struct maple_unit *,
 		    int /*func*/, int /*command*/, int /*datalen*/,
 		    const void *, int /*flags*/);
-extern u_int32_t maple_get_function_data(struct maple_devinfo *, int);
+extern uint32_t	maple_get_function_data(struct maple_devinfo *, int);
 extern void	maple_run_polling(struct device *);
 extern int	maple_unit_ioctl(struct device *, struct maple_unit *,
 		    u_long, caddr_t, int, struct lwp *);

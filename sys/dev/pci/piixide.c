@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.9.2.8 2005/02/04 11:46:40 skrll Exp $	*/
+/*	$NetBSD: piixide.c,v 1.9.2.9 2005/03/04 16:45:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -457,7 +457,7 @@ ok:	/* The modes are setup */
 	if (mode[0] >= 2)
 		idetim |= piix_setup_idetim_timings(
 		    mode[0], 0, chp->ch_channel);
-	else 
+	else
 		idetim |= piix_setup_idetim_timings(
 		    mode[1], 0, chp->ch_channel);
 end:	/*
@@ -591,7 +591,7 @@ piix3_4_setup_channel(struct ata_channel *chp)
 			}
 		}
 		idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-	
+
 pio:		/* use PIO mode */
 		idetim |= piix_setup_idetim_drvs(drvp);
 		if (drive == 0) {
@@ -623,15 +623,15 @@ piix_setup_idetim_timings(mode, dma, channel)
 	u_int8_t dma;
 	u_int8_t channel;
 {
-	
+
 	if (dma)
 		return PIIX_IDETIM_SET(0,
-		    PIIX_IDETIM_ISP_SET(piix_isp_dma[mode]) | 
+		    PIIX_IDETIM_ISP_SET(piix_isp_dma[mode]) |
 		    PIIX_IDETIM_RTC_SET(piix_rtc_dma[mode]),
 		    channel);
-	else 
+	else
 		return PIIX_IDETIM_SET(0,
-		    PIIX_IDETIM_ISP_SET(piix_isp_pio[mode]) | 
+		    PIIX_IDETIM_ISP_SET(piix_isp_pio[mode]) |
 		    PIIX_IDETIM_RTC_SET(piix_rtc_pio[mode]),
 		    channel);
 }
@@ -702,7 +702,7 @@ piix_setup_sidetim_timings(mode, dma, channel)
 	if (dma)
 		return PIIX_SIDETIM_ISP_SET(piix_isp_dma[mode], channel) |
 		    PIIX_SIDETIM_RTC_SET(piix_rtc_dma[mode], channel);
-	else 
+	else
 		return PIIX_SIDETIM_ISP_SET(piix_isp_pio[mode], channel) |
 		    PIIX_SIDETIM_RTC_SET(piix_rtc_pio[mode], channel);
 }

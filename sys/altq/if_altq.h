@@ -1,4 +1,4 @@
-/*	$NetBSD: if_altq.h,v 1.8 2002/09/22 20:09:15 jdolecek Exp $	*/
+/*	$NetBSD: if_altq.h,v 1.8.6.1 2005/03/04 16:38:00 skrll Exp $	*/
 /*	$KAME: if_altq.h,v 1.7 2002/02/19 06:37:39 kjc Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ struct tb_regulator {
 extern int altq_attach __P((struct ifaltq *, int, void *,
 			    int (*)(struct ifaltq *, struct mbuf *,
 				    struct altq_pktattr *),
-			    struct mbuf *(*)(struct ifaltq *, int), 
+			    struct mbuf *(*)(struct ifaltq *, int),
 			    int (*)(struct ifaltq *, int, void *),
 			    void *,
 			    void *(*)(void *, struct mbuf *, int)));

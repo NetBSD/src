@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.10.6.3 2004/09/21 13:11:19 skrll Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.10.6.4 2005/03/04 16:38:00 skrll Exp $	*/
 /*	$KAME: altq_conf.c,v 1.13 2002/01/29 10:16:01 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.10.6.3 2004/09/21 13:11:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.10.6.4 2005/03/04 16:38:00 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -189,14 +189,14 @@ void	altqattach __P((int));
 
 #if defined(__FreeBSD__)
 #if (__FreeBSD_version < 400000)
-static struct cdevsw altq_cdevsw = 
+static struct cdevsw altq_cdevsw =
         { altqopen,	altqclose,	noread,	        nowrite,
 	  altqioctl,	nostop,		nullreset,	nodevtotty,
  	  seltrue,	nommap,		NULL,	"altq",	NULL,	  -1 };
 #else
-static struct cdevsw altq_cdevsw = 
+static struct cdevsw altq_cdevsw =
         { altqopen,	altqclose,	noread,	        nowrite,
-	  altqioctl,	seltrue,	nommap,		nostrategy,	
+	  altqioctl,	seltrue,	nommap,		nostrategy,
 	  "altq",	CDEV_MAJOR,	nodump,		nopsize,  0,  -1 };
 #endif
 #endif
@@ -393,7 +393,7 @@ void altq_module_declref(type)
 	altq_modules[type]->ref--;
 }
 
-static int 
+static int
 altq_module_register(mdata)
 	struct altq_module_data *mdata;
 {
@@ -408,7 +408,7 @@ altq_module_register(mdata)
 	return (0);
 }
 
-static int 
+static int
 altq_module_deregister(mdata)
 	struct altq_module_data *mdata;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586reg.h,v 1.9 2001/11/26 23:31:00 fredette Exp $	*/
+/*	$NetBSD: i82586reg.h,v 1.9.16.1 2005/03/04 16:41:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,8 +84,8 @@
  */
 
 /*
- * The i82596 has a hardware port that can be used to command the 
- * chip to perform special functions.  For all but IE_PORT_RESET, 
+ * The i82596 has a hardware port that can be used to command the
+ * chip to perform special functions.  For all but IE_PORT_RESET,
  * a 16-byte aligned memory address is ORed into the port command.
  */
 #define IE_PORT_RESET		0x00	/* software reset */
@@ -109,7 +109,7 @@ struct __ie_sys_conf_ptr {
 #define IE_SCP_ISCP(base)	((base) + 8)
 
 /*
- * SYSBUS byte flags.  Most are specific to the i82596, and so 
+ * SYSBUS byte flags.  Most are specific to the i82596, and so
  * far we always run an i82596 in i82586-compatible mode.
  */
 #define IE_SYSBUS_16BIT		(0x0 << 0)
@@ -288,7 +288,7 @@ struct __ie_recv_buf_desc {
  * All commands share this in common.
  *-
 struct __ie_cmd_common {
-	u_int16_t ie_cmd_status;	// status of this command 
+	u_int16_t ie_cmd_status;	// status of this command
 	u_int16_t ie_cmd_cmd;		// command word
 	u_int16_t ie_cmd_link;		// link to next command
 };

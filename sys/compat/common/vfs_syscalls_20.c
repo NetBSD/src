@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.3.2.5 2004/09/21 13:24:58 skrll Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.3.2.6 2005/03/04 16:39:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.3.2.5 2004/09/21 13:24:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.3.2.6 2005/03/04 16:39:22 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.3.2.5 2004/09/21 13:24:58 skrl
 #define MOUNTNO_MSDOS	4		/* MSDOS Filesystem */
 #define MOUNTNO_CD9660	5		/* iso9660 cdrom */
 #define MOUNTNO_FDESC	6		/* /dev/fd filesystem */
-#define MOUNTNO_KERNFS	7		/* kernel variable filesystem */ 
+#define MOUNTNO_KERNFS	7		/* kernel variable filesystem */
 #define MOUNTNO_DEVFS	8		/* device node filesystem */
 #define MOUNTNO_AFS	9		/* AFS 3.x */
 static const struct {
@@ -91,7 +91,7 @@ static const struct {
 #endif
 
 static int
-vfs2fs(struct statfs12 *bfs, const struct statvfs *fs) 
+vfs2fs(struct statfs12 *bfs, const struct statvfs *fs)
 {
 	struct statfs12 ofs;
 #ifdef COMPAT_09

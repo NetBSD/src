@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ulimit.h,v 1.3 1998/09/04 19:54:41 christos Exp $	 */
+/*	$NetBSD: svr4_ulimit.h,v 1.3.46.1 2005/03/04 16:40:30 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #define	SVR4_SFILLIM		 2
 #define	SVR4_GMEMLIM		 3
 #define	SVR4_GDESLIM		 4
-#define	SVR4_GTXTOFF		64 
+#define	SVR4_GTXTOFF		64
 
 
 #endif /* !_SVR4_ULIMIT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.h,v 1.9.2.3 2004/09/21 13:25:42 skrll Exp $ */
+/*	$NetBSD: mach_thread.h,v 1.9.2.4 2005/03/04 16:40:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -96,8 +96,8 @@ struct mach_policy_timeshare_info {
 #define MACH_THREAD_SCHED_FIFO_INFO	12
 
 /* For mach_policy_t */
-#define MACH_THREAD_STANDARD_POLICY	1 
-#define MACH_THREAD_TIME_CONSTRAINT_POLICY 2 
+#define MACH_THREAD_STANDARD_POLICY	1
+#define MACH_THREAD_TIME_CONSTRAINT_POLICY 2
 #define MACH_THREAD_PRECEDENCE_POLICY	3
 
 /* thread_policy */
@@ -143,7 +143,7 @@ typedef struct {
 	mach_thread_flavor_t req_flavor;
 	mach_msg_type_number_t req_count;
 } mach_thread_info_request_t;
-	
+
 typedef struct {
 	mach_msg_header_t rep_msgh;
 	mach_ndr_record_t rep_ndr;
@@ -161,7 +161,7 @@ typedef struct {
 	mach_thread_state_flavor_t req_flavor;
 	mach_msg_type_number_t req_count;
 } mach_thread_get_state_request_t;
-	
+
 typedef struct {
 	mach_msg_header_t rep_msgh;
 	mach_ndr_record_t rep_ndr;
@@ -180,7 +180,7 @@ typedef struct {
 	mach_msg_type_number_t req_count;
 	mach_integer_t req_state[0];
 } mach_thread_set_state_request_t;
-	
+
 typedef struct {
 	mach_msg_header_t rep_msgh;
 	mach_ndr_record_t rep_ndr;
@@ -226,7 +226,7 @@ typedef struct {
 	mach_kern_return_t rep_retval;
 	mach_msg_trailer_t rep_trailer;
 } mach_thread_abort_reply_t;
- 
+
 /* thread_set_policy */
 
 typedef struct {

@@ -27,14 +27,14 @@
  *	i4b_l1fsm.c - isdn4bsd layer 1 I.430 state machine
  *	--------------------------------------------------
  *
- *	$Id: isic_l1fsm.c,v 1.9 2002/10/29 21:02:45 leo Exp $ 
+ *	$Id: isic_l1fsm.c,v 1.9.6.1 2005/03/04 16:41:29 skrll Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.9 2002/10/29 21:02:45 leo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1fsm.c,v 1.9.6.1 2005/03/04 16:41:29 skrll Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -94,7 +94,7 @@ static char *state_text[N_STATES] = {
 	"F6 Synchronized",
 	"F7 Activated",
 	"F8 Lost Framing",
-	"Illegal State"	
+	"Illegal State"
 };
 
 static char *event_text[N_EVENTS] = {
@@ -133,7 +133,7 @@ static void F_NULL (struct isic_softc *sc);
 
 /*---------------------------------------------------------------------------*
  *	I.430 Timer T3 expire function
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 timer3_expired(struct isic_softc *sc)
 {
@@ -155,7 +155,7 @@ timer3_expired(struct isic_softc *sc)
 #endif /* NNISAC > 0 */
 				break;
 		}
-			
+
 		sc->sc_init_tries++;	/* increment retry count */
 
 /*XXX*/		if(sc->sc_init_tries > 4)
@@ -163,7 +163,7 @@ timer3_expired(struct isic_softc *sc)
 			int s = splnet();
 
 			sc->sc_init_tries = 0;
-			
+
 			if(sc->sc_obuf2 != NULL)
 			{
 				i4b_Dfreembuf(sc->sc_obuf2);
@@ -182,8 +182,8 @@ timer3_expired(struct isic_softc *sc)
 
 			isdn_layer2_status_ind(&sc->sc_l2, sc->sc_l3token, STI_NOL1ACC, 0);
 		}
-		
-		isic_next_state(sc, EV_T3);		
+
+		isic_next_state(sc, EV_T3);
 	}
 	else
 	{
@@ -193,7 +193,7 @@ timer3_expired(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	I.430 Timer T3 start
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 T3_start(struct isic_softc *sc)
 {
@@ -205,14 +205,14 @@ T3_start(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	I.430 Timer T3 stop
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 T3_stop(struct isic_softc *sc)
 {
 	NDBGL1(L1_T_MSG, "state = %s", isic_printstate(sc));
 
 	sc->sc_init_tries = 0;	/* init connect retry count */
-	
+
 	if(sc->sc_I430T3)
 	{
 		sc->sc_I430T3 = 0;
@@ -222,7 +222,7 @@ T3_stop(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	I.430 Timer T3 expiry
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_T3ex(struct isic_softc *sc)
 {
@@ -233,7 +233,7 @@ F_T3ex(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	Timer T4 expire function
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 timer4_expired(struct isic_softc *sc)
 {
@@ -251,7 +251,7 @@ timer4_expired(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	Timer T4 start
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 T4_start(struct isic_softc *sc)
 {
@@ -263,7 +263,7 @@ T4_start(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	Timer T4 stop
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 T4_stop(struct isic_softc *sc)
 {
@@ -278,7 +278,7 @@ T4_stop(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	FSM function: received AI8
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AI8(struct isic_softc *sc)
 {
@@ -295,7 +295,7 @@ F_AI8(struct isic_softc *sc)
 	{
 		i4b_trace_hdr hdr;
 		char info = INFO4_8;
-		
+
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
@@ -305,12 +305,12 @@ F_AI8(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	FSM function: received AI10
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AI10(struct isic_softc *sc)
 {
 	T4_stop(sc);
-	
+
 	NDBGL1(L1_F_MSG, "FSM function F_AI10 executing");
 
 	if(((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S)
@@ -322,7 +322,7 @@ F_AI10(struct isic_softc *sc)
 	{
 		i4b_trace_hdr hdr;
 		char info = INFO4_10;
-		
+
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
@@ -332,7 +332,7 @@ F_AI10(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	FSM function: received INFO 0 in states F3 .. F5
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_I01(struct isic_softc *sc)
 {
@@ -342,7 +342,7 @@ F_I01(struct isic_softc *sc)
 	{
 		i4b_trace_hdr hdr;
 		char info = INFO0;
-		
+
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
@@ -352,7 +352,7 @@ F_I01(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	FSM function: received INFO 0 in state F6
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_I02(struct isic_softc *sc)
 {
@@ -365,7 +365,7 @@ F_I02(struct isic_softc *sc)
 	{
 		i4b_trace_hdr hdr;
 		char info = INFO0;
-		
+
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
@@ -375,7 +375,7 @@ F_I02(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	FSM function: received INFO 0 in state F7 or F8
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_I03(struct isic_softc *sc)
 {
@@ -385,12 +385,12 @@ F_I03(struct isic_softc *sc)
 		isdn_layer2_activate_ind(&sc->sc_l2, sc->sc_l3token, 0);
 
 	T4_start(sc);
-	
+
 	if(sc->sc_trace & TRACE_I)
 	{
 		i4b_trace_hdr hdr;
 		char info = INFO0;
-		
+
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
@@ -400,7 +400,7 @@ F_I03(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	FSM function: activate request
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_AR(struct isic_softc *sc)
 {
@@ -410,7 +410,7 @@ F_AR(struct isic_softc *sc)
 	{
 		i4b_trace_hdr hdr;
 		char info = INFO1_8;
-		
+
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_TE;
 		hdr.count = 0;
@@ -435,7 +435,7 @@ F_AR(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	FSM function: received INFO2
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_I2(struct isic_softc *sc)
 {
@@ -445,7 +445,7 @@ F_I2(struct isic_softc *sc)
 	{
 		i4b_trace_hdr hdr;
 		char info = INFO2;
-		
+
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
@@ -455,7 +455,7 @@ F_I2(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	illegal state default action
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_ill(struct isic_softc *sc)
 {
@@ -464,7 +464,7 @@ F_ill(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	No action
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 static void
 F_NULL(struct isic_softc *sc)
 {
@@ -474,7 +474,7 @@ F_NULL(struct isic_softc *sc)
 
 /*---------------------------------------------------------------------------*
  *	layer 1 state transition table
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 struct isic_state_tab {
 	void (*func) (struct isic_softc *sc);	/* function to execute */
 	int newstate;				/* next state */
@@ -498,7 +498,7 @@ struct isic_state_tab {
 
 /*---------------------------------------------------------------------------*
  *	event handler
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 void
 isic_next_state(struct isic_softc *sc, int event)
 {
@@ -510,13 +510,13 @@ isic_next_state(struct isic_softc *sc, int event)
 	currstate = sc->sc_I430state;
 
 	if(currstate >= N_STATES)
-		panic("i4b_l1fsm.c: currstate >= N_STATES");	
+		panic("i4b_l1fsm.c: currstate >= N_STATES");
 
 	newstate = isic_state_tab[event][currstate].newstate;
 
 	if(newstate >= N_STATES)
-		panic("i4b_l1fsm.c: newstate >= N_STATES");	
-	
+		panic("i4b_l1fsm.c: newstate >= N_STATES");
+
 	NDBGL1(L1_F_MSG, "FSM event [%s]: [%s => %s]", event_text[event],
                                            state_text[currstate],
                                            state_text[newstate]);
@@ -538,7 +538,7 @@ isic_next_state(struct isic_softc *sc, int event)
 #if DO_I4B_DEBUG
 /*---------------------------------------------------------------------------*
  *	return pointer to current state description
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 char *
 isic_printstate(struct isic_softc *sc)
 {

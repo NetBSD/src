@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.1.60.3 2004/09/21 13:15:27 skrll Exp $	*/
+/*	$NetBSD: ct.c,v 1.1.60.4 2005/03/04 16:38:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -82,8 +82,7 @@ static int ctident(int, int);
 static int cterror(int, int);
 
 int
-ctinit(ctlr, unit)
-	int ctlr, unit;
+ctinit(int ctlr, int unit)
 {
 	struct ct_softc *rs = &ct_softc[ctlr][unit];
 	u_char stat;
@@ -107,8 +106,7 @@ ctinit(ctlr, unit)
 }
 
 int
-ctident(ctlr, unit)
-	int ctlr, unit;
+ctident(int ctlr, int unit)
 {
 	struct ct_describe desc;
 	u_char stat, cmd[3];
@@ -157,8 +155,7 @@ ctident(ctlr, unit)
 }
 
 int
-ctpunit(ctlr, slave, punit)
-	int ctlr, slave, *punit;
+ctpunit(int ctlr, int slave, int *punit)
 {
 	struct ct_softc *rs;
 
@@ -210,8 +207,7 @@ ctopen(struct open_file *f, ...)
 }
 
 int
-ctclose(f)
-	struct open_file *f;
+ctclose(struct open_file *f)
 {
 	size_t resid;
 
@@ -220,13 +216,8 @@ ctclose(f)
 }
 
 int
-ctstrategy(devdata, func, dblk, size, v_buf, rsize)
-	void *devdata;
-	int func;
-	daddr_t dblk;
-	size_t size;
-	void *v_buf;
-	size_t *rsize;
+ctstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
+    size_t *rsize)
 {
 	struct ct_softc *rs = devdata;
 	char *buf = v_buf;
@@ -298,8 +289,7 @@ retry:
 }
 
 int
-cterror(ctlr, unit)
-	int ctlr, unit;
+cterror(int ctlr, int unit)
 {
 	struct ct_softc *rs = &ct_softc[ctlr][unit];
 	char stat;

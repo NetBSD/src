@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_sysctl.c,v 1.1.2.4 2004/09/21 13:25:42 skrll Exp $ */
+/*	$NetBSD: mach_sysctl.c,v 1.1.2.5 2005/03/04 16:40:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,12 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_sysctl.c,v 1.1.2.4 2004/09/21 13:25:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_sysctl.c,v 1.1.2.5 2005/03/04 16:40:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/resource.h>
-#include <sys/sysctl.h> 
+#include <sys/sysctl.h>
 
 #include <compat/mach/mach_sysctl.h>
 
@@ -67,14 +67,14 @@ SYSCTL_SETUP(sysctl_emul_mach_setup, "sysctl emul.mach subtree setup")
 		       CTLTYPE_NODE, "exception",
 		       SYSCTL_DESCR("Mach exceptions settings"),
 		       NULL, 0, NULL, 0,
-		       CTL_EMUL, EMUL_MACH, 
+		       CTL_EMUL, EMUL_MACH,
 		       EMUL_MACH_EXCEPTION, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "hang",
 		       SYSCTL_DESCR("Mach exceptions hang the process"),
 		       NULL, 0, &mach_exception_hang, 0,
-		       CTL_EMUL, EMUL_MACH, EMUL_MACH_EXCEPTION, 
+		       CTL_EMUL, EMUL_MACH, EMUL_MACH_EXCEPTION,
 		       EMUL_MACH_EXCEPTION_HANG, CTL_EOL);
 }
 

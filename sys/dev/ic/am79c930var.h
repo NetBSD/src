@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930var.h,v 1.2.36.3 2004/09/21 13:27:52 skrll Exp $ */
+/* $NetBSD: am79c930var.h,v 1.2.36.4 2005/03/04 16:41:26 skrll Exp $ */
 /* $FreeBSD$ */
 
 /*-
@@ -40,7 +40,7 @@
 #define AM79C930_BUS_PCMCIA 1
 #define AM79C930_BUS_ISAPNP 2	/* not implemented */
 
-struct am79c930_softc 
+struct am79c930_softc
 {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -53,7 +53,7 @@ struct am79c930_softc
 	int sc_bustype;
 };
 
-struct am79c930_ops 
+struct am79c930_ops
 {
 	void (*write_1)(struct am79c930_softc *, u_int32_t, u_int8_t);
 	void (*write_2)(struct am79c930_softc *, u_int32_t, u_int16_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.39.6.5 2005/01/24 08:34:06 skrll Exp $	*/
+/*	$NetBSD: ite.c,v 1.39.6.6 2005/03/04 16:38:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.39.6.5 2005/01/24 08:34:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.39.6.6 2005/03/04 16:38:04 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -430,6 +430,8 @@ iteopen(dev, mode, devtype, l)
 
 	first = 0;
 	ip = getitesp(dev);
+	if (ip == NULL)
+		return ENXIO;
 	if ((ip->flags & ITE_ATTACHED) == 0)
 		return (ENXIO);
 

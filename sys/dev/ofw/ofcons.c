@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.21.6.2 2005/02/04 11:46:36 skrll Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.21.6.3 2005/03/04 16:44:59 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.21.6.2 2005/02/04 11:46:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.21.6.3 2005/03/04 16:44:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -91,7 +91,7 @@ ofcons_match(parent, match, aux)
 	void *aux;
 {
 	struct ofbus_attach_args *oba = aux;
-	
+
 	if (strcmp(oba->oba_busname, "ofw"))
 		return (0);
 	if (!ofcons_probe())
@@ -125,7 +125,7 @@ ofcons_open(dev, flag, mode, l)
 	struct ofcons_softc *sc;
 	int unit = minor(dev);
 	struct tty *tp;
-	
+
 	if (unit >= ofcons_cd.cd_ndevs)
 		return ENXIO;
 	sc = ofcons_cd.cd_devs[unit];
@@ -149,7 +149,7 @@ ofcons_open(dev, flag, mode, l)
 	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
-	
+
 	if (!(sc->of_flags & OFPOLL)) {
 		sc->of_flags |= OFPOLL;
 		callout_reset(&sc->sc_poll_ch, 1, ofcons_pollin, sc);
@@ -182,7 +182,7 @@ ofcons_read(dev, uio, flag)
 {
 	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
-	
+
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
@@ -194,7 +194,7 @@ ofcons_write(dev, uio, flag)
 {
 	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
-	
+
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
@@ -206,7 +206,7 @@ ofcons_poll(dev, events, l)
 {
 	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 int
@@ -220,7 +220,7 @@ ofcons_ioctl(dev, cmd, data, flag, l)
 	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	int error;
-	
+
 	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l)) != EPASSTHROUGH)
 		return error;
 	return ttioctl(tp, cmd, data, flag, l);
@@ -242,7 +242,7 @@ ofcons_start(tp)
 	struct clist *cl;
 	int s, len;
 	u_char buf[OFBURSTLEN];
-	
+
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP)) {
 		splx(s);
@@ -287,7 +287,7 @@ ofcons_pollin(aux)
 	struct ofcons_softc *sc = aux;
 	struct tty *tp = sc->of_tty;
 	char ch;
-	
+
 	while (OF_read(stdin, &ch, 1) > 0) {
 		if (tp && (tp->t_state & TS_ISOPEN))
 			(*tp->t_linesw->l_rint)(ch, tp);
@@ -344,7 +344,7 @@ ofcons_cngetc(dev)
 {
 	unsigned char ch = '\0';
 	int l;
-	
+
 	while ((l = OF_read(stdin, &ch, 1)) != 1)
 		if (l != -2 && l != 0)
 			return -1;
@@ -357,7 +357,7 @@ ofcons_cnputc(dev, c)
 	int c;
 {
 	char ch = c;
-	
+
 	OF_write(stdout, &ch, 1);
 }
 
@@ -367,7 +367,7 @@ ofcons_cnpollc(dev, on)
 	int on;
 {
 	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
-	
+
 	if (!sc)
 		return;
 	if (on) {

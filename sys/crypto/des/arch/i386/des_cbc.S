@@ -1,4 +1,4 @@
-/* $NetBSD: des_cbc.S,v 1.2.6.3 2004/09/21 13:26:23 skrll Exp $ */
+/* $NetBSD: des_cbc.S,v 1.2.6.4 2005/03/04 16:40:52 skrll Exp $ */
 
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -6,21 +6,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -35,10 +35,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -50,7 +50,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -71,7 +71,7 @@ ENTRY(des_ncbc_encrypt)
 	pushl	%esi
 	pushl	%edi
 	movl	28(%esp),	%ebp
-	# getting iv ptr from parameter 4 
+	# getting iv ptr from parameter 4
 	movl	36(%esp),	%ebx
 	movl	(%ebx),		%esi
 	movl	4(%ebx),	%edi
@@ -82,11 +82,11 @@ ENTRY(des_ncbc_encrypt)
 	movl	%esp,		%ebx
 	movl	36(%esp),	%esi
 	movl	40(%esp),	%edi
-	# getting encrypt flag from parameter 5 
+	# getting encrypt flag from parameter 5
 	movl	56(%esp),	%ecx
-	# get and push parameter 5 
+	# get and push parameter 5
 	pushl	%ecx
-	# get and push parameter 3 
+	# get and push parameter 3
 	movl	52(%esp),	%eax
 	pushl	%eax
 	pushl	%ebx
@@ -271,7 +271,7 @@ ENTRY(des_ede3_cbc_encrypt)
 	pushl	%esi
 	pushl	%edi
 	movl	28(%esp),	%ebp
-	# getting iv ptr from parameter 6 
+	# getting iv ptr from parameter 6
 	movl	44(%esp),	%ebx
 	movl	(%ebx),		%esi
 	movl	4(%ebx),	%edi
@@ -282,15 +282,15 @@ ENTRY(des_ede3_cbc_encrypt)
 	movl	%esp,		%ebx
 	movl	36(%esp),	%esi
 	movl	40(%esp),	%edi
-	# getting encrypt flag from parameter 7 
+	# getting encrypt flag from parameter 7
 	movl	64(%esp),	%ecx
-	# get and push parameter 5 
+	# get and push parameter 5
 	movl	56(%esp),	%eax
 	pushl	%eax
-	# get and push parameter 4 
+	# get and push parameter 4
 	movl	56(%esp),	%eax
 	pushl	%eax
-	# get and push parameter 3 
+	# get and push parameter 3
 	movl	56(%esp),	%eax
 	pushl	%eax
 	pushl	%ebx

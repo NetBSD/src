@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9reg.h,v 1.2.46.3 2004/09/21 13:28:07 skrll Exp $	*/
+/*	$NetBSD: rtl80x9reg.h,v 1.2.46.4 2005/03/04 16:41:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 #define	NERTL_RTL3_EECR		0x01	/* EEPROM Command Register */
 #define	RTL3_EECR_EEM1		0x80	/* EEPROM Operating Mode */
-#define	RTL3_EECR_EEM0		0x40	
+#define	RTL3_EECR_EEM0		0x40
 					/* 0 0 Normal operation */
 					/* 0 1 Auto-load */
 					/* 1 0 9346 programming */

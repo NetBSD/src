@@ -1,14 +1,14 @@
-/*	$NetBSD: rrunner.c,v 1.39.2.6 2005/02/04 11:45:26 skrll Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.39.2.7 2005/03/04 16:41:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code contributed to The NetBSD Foundation by Kevin M. Lahey
- * of the Numerical Aerospace Simulation Facility, NASA Ames Research 
+ * of the Numerical Aerospace Simulation Facility, NASA Ames Research
  * Center.
  *
- * Partially based on a HIPPI driver written by Essential Communications 
+ * Partially based on a HIPPI driver written by Essential Communications
  * Corporation.  Thanks to Jason Thorpe, Matt Jacob, and Fred Templin
  * for invaluable advice and encouragement!
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.39.2.6 2005/02/04 11:45:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.39.2.7 2005/03/04 16:41:32 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -154,7 +154,7 @@ static void esh_init_snap_ring(struct esh_softc *);
 static void esh_close_snap_ring(struct esh_softc *);
 static void esh_read_snap_ring(struct esh_softc *, u_int16_t, int);
 static void esh_fill_fp_ring(struct esh_softc *, struct esh_fp_ring_ctl *);
-static void esh_flush_fp_ring(struct esh_softc *, 
+static void esh_flush_fp_ring(struct esh_softc *,
 				   struct esh_fp_ring_ctl *,
 				   struct esh_dmainfo *);
 static void esh_init_fp_rings(struct esh_softc *);
@@ -208,19 +208,19 @@ eshconfig(sc)
 	TAILQ_INIT(&sc->sc_dmainfo_freelist);
 	sc->sc_dmainfo_freelist_count = 0;
 
-	/* 
+	/*
 	 * Allocate and divvy up some host side memory that can hold
 	 * data structures that will be DMA'ed over to the NIC
 	 */
 
-	sc->sc_dma_size = sizeof(struct rr_gen_info) + 
+	sc->sc_dma_size = sizeof(struct rr_gen_info) +
 		sizeof(struct rr_ring_ctl) * RR_ULP_COUNT +
 		sizeof(struct rr_descr) * RR_SEND_RING_SIZE +
 		sizeof(struct rr_descr) * RR_SNAP_RECV_RING_SIZE +
 		sizeof(struct rr_event) * RR_EVENT_RING_SIZE;
-	
-	error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dma_size, 
-				 0, RR_DMA_BOUNDARY, &sc->sc_dmaseg, 1, 
+
+	error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dma_size,
+				 0, RR_DMA_BOUNDARY, &sc->sc_dmaseg, 1,
 				 &rseg, BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error("%s: couldn't allocate space for host-side"
@@ -232,9 +232,9 @@ eshconfig(sc)
 		aprint_error("%s: contiguous memory not available\n",
 		       sc->sc_dev.dv_xname);
 		goto bad_dmamem_map;
-	}	
+	}
 
-	error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dmaseg, rseg, 
+	error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dmaseg, rseg,
 			       sc->sc_dma_size, &sc->sc_dma_addr,
 			       BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error) {
@@ -243,23 +243,23 @@ eshconfig(sc)
 		       sc->sc_dev.dv_xname);
 		goto bad_dmamem_map;
 	}
-    
-	if (bus_dmamap_create(sc->sc_dmat, sc->sc_dma_size, 
-			      1, sc->sc_dma_size, RR_DMA_BOUNDARY, 
-			      BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT, 
+
+	if (bus_dmamap_create(sc->sc_dmat, sc->sc_dma_size,
+			      1, sc->sc_dma_size, RR_DMA_BOUNDARY,
+			      BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT,
 			      &sc->sc_dma)) {
 		aprint_error("%s: couldn't create DMA map\n",
 		    sc->sc_dev.dv_xname);
 		goto bad_dmamap_create;
 	}
-    
-	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dma, sc->sc_dma_addr, 
+
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dma, sc->sc_dma_addr,
 			    sc->sc_dma_size, NULL, BUS_DMA_NOWAIT)) {
 		aprint_error("%s: couldn't load DMA map\n",
 		    sc->sc_dev.dv_xname);
 		goto bad_dmamap_load;
 	}
-    
+
 	memset(sc->sc_dma_addr, 0, sc->sc_dma_size);
 
 	sc->sc_gen_info_dma = sc->sc_dma->dm_segs->ds_addr;
@@ -267,7 +267,7 @@ eshconfig(sc)
 	size = sizeof(struct rr_gen_info);
 
 	sc->sc_recv_ring_table_dma = sc->sc_dma->dm_segs->ds_addr + size;
-	sc->sc_recv_ring_table = 
+	sc->sc_recv_ring_table =
 		(struct rr_ring_ctl *) (sc->sc_dma_addr + size);
 	size += sizeof(struct rr_ring_ctl) * RR_ULP_COUNT;
 
@@ -293,17 +293,17 @@ eshconfig(sc)
 	}
 #endif
 
-	/* 
-	 * Allocate DMA maps for transfers.  We do this here and now 
-	 * so we won't have to wait for them in the middle of sending 
+	/*
+	 * Allocate DMA maps for transfers.  We do this here and now
+	 * so we won't have to wait for them in the middle of sending
 	 * or receiving something.
 	 */
 
-	if (bus_dmamap_create(sc->sc_dmat, ESH_MAX_NSEGS * RR_DMA_MAX, 
+	if (bus_dmamap_create(sc->sc_dmat, ESH_MAX_NSEGS * RR_DMA_MAX,
 			      ESH_MAX_NSEGS, RR_DMA_MAX, RR_DMA_BOUNDARY,
-			      BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT, 
+			      BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT,
 			      &sc->sc_send.ec_dma)) {
-		aprint_error("%s: failed bus_dmamap_create\n", 
+		aprint_error("%s: failed bus_dmamap_create\n",
 		       sc->sc_dev.dv_xname);
 			goto bad_other;
 	}
@@ -313,14 +313,14 @@ eshconfig(sc)
 	bufq_alloc(&sc->sc_send.ec_buf_queue, BUFQ_FCFS);
 
 	for (i = 0; i < RR_MAX_SNAP_RECV_RING_SIZE; i++)
-		if (bus_dmamap_create(sc->sc_dmat, RR_DMA_MAX, 1, RR_DMA_MAX, 
-				      RR_DMA_BOUNDARY, 
-				      BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT, 
+		if (bus_dmamap_create(sc->sc_dmat, RR_DMA_MAX, 1, RR_DMA_MAX,
+				      RR_DMA_BOUNDARY,
+				      BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT,
 				      &sc->sc_snap_recv.ec_dma[i])) {
-			aprint_error("%s: failed bus_dmamap_create\n", 
+			aprint_error("%s: failed bus_dmamap_create\n",
 			       sc->sc_dev.dv_xname);
 			for (i--; i >= 0; i--)
-				bus_dmamap_destroy(sc->sc_dmat, 
+				bus_dmamap_destroy(sc->sc_dmat,
 						   sc->sc_snap_recv.ec_dma[i]);
 			goto bad_ring_dmamap_create;
 		}
@@ -334,14 +334,14 @@ eshconfig(sc)
 	/* Halt the processor (preserve NO_SWAP, if set) */
 
 	misc_host_ctl = bus_space_read_4(iot, ioh, RR_MISC_HOST_CTL);
-	bus_space_write_4(iot, ioh, RR_MISC_HOST_CTL, 
+	bus_space_write_4(iot, ioh, RR_MISC_HOST_CTL,
 			  (misc_host_ctl & RR_MH_NO_SWAP) | RR_MH_HALT_PROC);
 
 	/* Make the EEPROM readable */
 
 	misc_local_ctl = bus_space_read_4(iot, ioh, RR_MISC_LOCAL_CTL);
 	bus_space_write_4(iot, ioh, RR_MISC_LOCAL_CTL,
-	    misc_local_ctl & ~(RR_LC_FAST_PROM | RR_LC_ADD_SRAM | 
+	    misc_local_ctl & ~(RR_LC_FAST_PROM | RR_LC_ADD_SRAM |
 			       RR_LC_PARITY_ON));
 
 	/* Extract interesting information from the EEPROM: */
@@ -353,7 +353,7 @@ eshconfig(sc)
 		goto bad_other;
 	}
 
-	/* 
+	/*
 	 * As it is now, the runcode version in the EEPROM doesn't
 	 * reflect the actual runcode version number.  That is only
 	 * available once the runcode starts up.  We should probably
@@ -370,36 +370,36 @@ eshconfig(sc)
 
 	/* General tuning values */
 
-	sc->sc_tune.rt_mode_and_status = 
+	sc->sc_tune.rt_mode_and_status =
 		esh_read_eeprom(sc, RR_EE_MODE_AND_STATUS);
-	sc->sc_tune.rt_conn_retry_count = 
+	sc->sc_tune.rt_conn_retry_count =
 		esh_read_eeprom(sc, RR_EE_CONN_RETRY_COUNT);
-	sc->sc_tune.rt_conn_retry_timer = 
+	sc->sc_tune.rt_conn_retry_timer =
 		esh_read_eeprom(sc, RR_EE_CONN_RETRY_TIMER);
-	sc->sc_tune.rt_conn_timeout = 
+	sc->sc_tune.rt_conn_timeout =
 		esh_read_eeprom(sc, RR_EE_CONN_TIMEOUT);
-	sc->sc_tune.rt_interrupt_timer = 
+	sc->sc_tune.rt_interrupt_timer =
 		esh_read_eeprom(sc, RR_EE_INTERRUPT_TIMER);
-	sc->sc_tune.rt_tx_timeout = 
+	sc->sc_tune.rt_tx_timeout =
 		esh_read_eeprom(sc, RR_EE_TX_TIMEOUT);
-	sc->sc_tune.rt_rx_timeout = 
+	sc->sc_tune.rt_rx_timeout =
 		esh_read_eeprom(sc, RR_EE_RX_TIMEOUT);
-	sc->sc_tune.rt_stats_timer = 
+	sc->sc_tune.rt_stats_timer =
 		esh_read_eeprom(sc, RR_EE_STATS_TIMER);
 	sc->sc_tune.rt_stats_timer = ESH_STATS_TIMER_DEFAULT;
 
 	/* DMA tuning values */
 
-	sc->sc_tune.rt_pci_state = 
+	sc->sc_tune.rt_pci_state =
 		esh_read_eeprom(sc, RR_EE_PCI_STATE);
-	sc->sc_tune.rt_dma_write_state = 
+	sc->sc_tune.rt_dma_write_state =
 		esh_read_eeprom(sc, RR_EE_DMA_WRITE_STATE);
-	sc->sc_tune.rt_dma_read_state = 
+	sc->sc_tune.rt_dma_read_state =
 		esh_read_eeprom(sc, RR_EE_DMA_READ_STATE);
-	sc->sc_tune.rt_driver_param = 
+	sc->sc_tune.rt_driver_param =
 		esh_read_eeprom(sc, RR_EE_DRIVER_PARAM);
 
-	/* 
+	/*
 	 * Snag the ULA.  The first two bytes are reserved.
 	 * We don't really use it immediately, but it would be good to
 	 * have for building IPv6 addresses, etc.
@@ -452,14 +452,14 @@ bad_dmamem_map:
 /*
  * Bring device up.
  *
- * Assume that the on-board processor has already been stopped, 
- * the rings have been cleared of valid buffers, and everything 
+ * Assume that the on-board processor has already been stopped,
+ * the rings have been cleared of valid buffers, and everything
  * is pretty much as it was when the system started.
  *
- * Stop the processor (just for good measure), clear the SRAM, 
- * reload the boot code, and start it all up again, with the PC 
- * pointing at the boot code.  Once the boot code has had a chance 
- * to come up, adjust all of the appropriate parameters, and send 
+ * Stop the processor (just for good measure), clear the SRAM,
+ * reload the boot code, and start it all up again, with the PC
+ * pointing at the boot code.  Once the boot code has had a chance
+ * to come up, adjust all of the appropriate parameters, and send
  * the 'start firmware' command.
  *
  * The NIC won't actually be up until it gets an interrupt with an
@@ -491,16 +491,16 @@ eshinit(sc)
 	/* Halt the processor (preserve NO_SWAP, if set) */
 
 	misc_host_ctl = bus_space_read_4(iot, ioh, RR_MISC_HOST_CTL);
-	bus_space_write_4(iot, ioh, RR_MISC_HOST_CTL, 
-			  (misc_host_ctl & RR_MH_NO_SWAP) 
+	bus_space_write_4(iot, ioh, RR_MISC_HOST_CTL,
+			  (misc_host_ctl & RR_MH_NO_SWAP)
 			  | RR_MH_HALT_PROC | RR_MH_CLEAR_INT);
 
 	/* Make the EEPROM readable */
 
 	misc_local_ctl = bus_space_read_4(iot, ioh, RR_MISC_LOCAL_CTL);
 	bus_space_write_4(iot, ioh, RR_MISC_LOCAL_CTL,
-			  misc_local_ctl & ~(RR_LC_FAST_PROM | 
-					     RR_LC_ADD_SRAM | 
+			  misc_local_ctl & ~(RR_LC_FAST_PROM |
+					     RR_LC_ADD_SRAM |
 					     RR_LC_PARITY_ON));
 
 	/* Reset DMA */
@@ -541,7 +541,7 @@ eshinit(sc)
 
 	value = sc->sc_bist_read(sc);
 	if (value != 0) {
-		printf("%s:  BIST is %d, not 0!\n", 
+		printf("%s:  BIST is %d, not 0!\n",
 		       sc->sc_dev.dv_xname, value);
 		goto bad_init;
 	}
@@ -563,7 +563,7 @@ eshinit(sc)
 	sc->sc_cmd_consumer = 0;
 
 	mode = bus_space_read_4(iot, ioh, RR_MODE_AND_STATUS);
-	mode |= (RR_MS_WARNINGS | 
+	mode |= (RR_MS_WARNINGS |
 		 RR_MS_ERR_TERM |
 		 RR_MS_NO_RESTART |
 		 RR_MS_SWAP_DATA);
@@ -590,30 +590,30 @@ eshinit(sc)
 
 	/* Set tuning parameters */
 
-	bus_space_write_4(iot, ioh, RR_CONN_RETRY_COUNT, 
+	bus_space_write_4(iot, ioh, RR_CONN_RETRY_COUNT,
 			  sc->sc_tune.rt_conn_retry_count);
-	bus_space_write_4(iot, ioh, RR_CONN_RETRY_TIMER, 
+	bus_space_write_4(iot, ioh, RR_CONN_RETRY_TIMER,
 			  sc->sc_tune.rt_conn_retry_timer);
-	bus_space_write_4(iot, ioh, RR_CONN_TIMEOUT, 
+	bus_space_write_4(iot, ioh, RR_CONN_TIMEOUT,
 			  sc->sc_tune.rt_conn_timeout);
-	bus_space_write_4(iot, ioh, RR_INTERRUPT_TIMER, 
+	bus_space_write_4(iot, ioh, RR_INTERRUPT_TIMER,
 			  sc->sc_tune.rt_interrupt_timer);
-	bus_space_write_4(iot, ioh, RR_TX_TIMEOUT, 
+	bus_space_write_4(iot, ioh, RR_TX_TIMEOUT,
 			  sc->sc_tune.rt_tx_timeout);
-	bus_space_write_4(iot, ioh, RR_RX_TIMEOUT, 
+	bus_space_write_4(iot, ioh, RR_RX_TIMEOUT,
 			  sc->sc_tune.rt_rx_timeout);
-	bus_space_write_4(iot, ioh, RR_STATS_TIMER, 
+	bus_space_write_4(iot, ioh, RR_STATS_TIMER,
 			  sc->sc_tune.rt_stats_timer);
-	bus_space_write_4(iot, ioh, RR_PCI_STATE, 
+	bus_space_write_4(iot, ioh, RR_PCI_STATE,
 			  sc->sc_tune.rt_pci_state);
-	bus_space_write_4(iot, ioh, RR_DMA_WRITE_STATE, 
+	bus_space_write_4(iot, ioh, RR_DMA_WRITE_STATE,
 			  sc->sc_tune.rt_dma_write_state);
-	bus_space_write_4(iot, ioh, RR_DMA_READ_STATE, 
+	bus_space_write_4(iot, ioh, RR_DMA_READ_STATE,
 			  sc->sc_tune.rt_dma_read_state);
 
 	sc->sc_max_rings = bus_space_read_4(iot, ioh, RR_MAX_RECV_RINGS);
 
-	sc->sc_runcode_version = 
+	sc->sc_runcode_version =
 		bus_space_read_4(iot, ioh, RR_RUNCODE_VERSION);
 	sc->sc_version = sc->sc_runcode_version >> 16;
 	if (sc->sc_version != 1 && sc->sc_version != 2) {
@@ -637,9 +637,9 @@ eshinit(sc)
 
 	printf("%s: startup runcode version %d.%d.%d, options %x\n",
 	       sc->sc_dev.dv_xname,
-	       sc->sc_version, 
+	       sc->sc_version,
 	       (sc->sc_runcode_version >> 8) & 0xff,
-	       sc->sc_runcode_version & 0xff, 
+	       sc->sc_runcode_version & 0xff,
 	       sc->sc_options);
 
 	/* Initialize the general ring information */
@@ -670,7 +670,7 @@ eshinit(sc)
 	ring->rr_entries = RR_SEND_RING_SIZE;
 	ring->rr_entry_size = sizeof(struct rr_descr);
 
-	ring->rr_prod_index = sc->sc_send.ec_producer = 
+	ring->rr_prod_index = sc->sc_send.ec_producer =
 		sc->sc_send.ec_consumer = 0;
 	sc->sc_send.ec_cur_mbuf = NULL;
 	sc->sc_send.ec_cur_buf = NULL;
@@ -686,7 +686,7 @@ eshinit(sc)
 	sc->sc_watchdog = 0;
 	ifp->if_timer = 5;
 
-	/* 
+	/*
 	 * Can't actually turn on interface until we see some events,
 	 * so set initialized flag, but don't start sending.
 	 */
@@ -745,16 +745,16 @@ esh_fpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 	}
 
 	if ((sc->sc_flags & ESH_FL_RUNCODE_UP) == 0) {
-		/* 
+		/*
 		 * Wait for the runcode to indicate that it is up,
 		 * while watching to make sure we haven't crashed.
 		 */
 
 		error = 0;
-		while (error == 0 && 
+		while (error == 0 &&
 		       (sc->sc_flags & ESH_FL_INITIALIZED) != 0 &&
 		       (sc->sc_flags & ESH_FL_RUNCODE_UP) == 0) {
-			error = tsleep((void *) sc, PCATCH | PRIBIO, 
+			error = tsleep((void *) sc, PCATCH | PRIBIO,
 				       "eshinit", 0);
 #ifdef ESH_PRINTF
 			printf("esh_fpopen:  tslept\n");
@@ -772,7 +772,7 @@ esh_fpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 		}
 	}
 
-	    
+
 #ifdef ESH_PRINTF
 	printf("esh_fpopen:  card up\n");
 #endif
@@ -793,20 +793,20 @@ esh_fpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 	printf("esh_fpopen:  ring %d okay\n", ulp);
 #endif
 
-	/* 
+	/*
 	 * Allocate the DMA space for the ring;  space for the
 	 * ring control blocks has already been staticly allocated.
 	 */
 
-	recv = (struct esh_fp_ring_ctl *) 
+	recv = (struct esh_fp_ring_ctl *)
 	    malloc(sizeof(*recv), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (recv == NULL)
 		return(ENOMEM);
 	TAILQ_INIT(&recv->ec_queue);
 
 	size = RR_FP_RECV_RING_SIZE * sizeof(struct rr_descr);
-	error = bus_dmamem_alloc(sc->sc_dmat, size, 0, RR_DMA_BOUNDARY, 
-				 &recv->ec_dmaseg, 1, 
+	error = bus_dmamem_alloc(sc->sc_dmat, size, 0, RR_DMA_BOUNDARY,
+				 &recv->ec_dmaseg, 1,
 				 &rseg, BUS_DMA_WAITOK);
 
 	if (error) {
@@ -819,9 +819,9 @@ esh_fpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 		printf("%s:  contiguous memory not available for "
 		       "FP receive ring\n", sc->sc_dev.dv_xname);
 		goto bad_fp_dmamem_map;
-	}	
+	}
 
-	error = bus_dmamem_map(sc->sc_dmat, &recv->ec_dmaseg, rseg, 
+	error = bus_dmamem_map(sc->sc_dmat, &recv->ec_dmaseg, rseg,
 			       size, (caddr_t *) &recv->ec_descr,
 			       BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 	if (error) {
@@ -829,29 +829,29 @@ esh_fpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 		       sc->sc_dev.dv_xname);
 		goto bad_fp_dmamem_map;
 	}
-    
-	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, RR_DMA_BOUNDARY, 
-			      BUS_DMA_ALLOCNOW | BUS_DMA_WAITOK, 
+
+	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, RR_DMA_BOUNDARY,
+			      BUS_DMA_ALLOCNOW | BUS_DMA_WAITOK,
 			      &recv->ec_dma)) {
-		printf("%s: couldn't create DMA map for FP receive ring\n", 
+		printf("%s: couldn't create DMA map for FP receive ring\n",
 		       sc->sc_dev.dv_xname);
 		goto bad_fp_dmamap_create;
 	}
 
 	if (bus_dmamap_load(sc->sc_dmat, recv->ec_dma, recv->ec_descr,
 			    size, NULL, BUS_DMA_WAITOK)) {
-		printf("%s: couldn't load DMA map for FP receive ring\n", 
+		printf("%s: couldn't load DMA map for FP receive ring\n",
 		       sc->sc_dev.dv_xname);
 		goto bad_fp_dmamap_load;
 	}
 
 	memset(recv->ec_descr, 0, size);
 
-	/* 
+	/*
 	 * Create the ring:
 	 *
 	 * XXX:  HTF are we gonna deal with the fact that we don't know
-	 *	 if the open succeeded until we get a response from 
+	 *	 if the open succeeded until we get a response from
 	 *	 the event handler?  I guess we could go to sleep waiting
 	 *	 for the interrupt, and get woken up by the eshintr
 	 *       case handling it.
@@ -883,7 +883,7 @@ esh_fpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 #endif
 
 	while (recv->ec_index == -1) {
-		error = tsleep((void *) &recv->ec_ulp, PCATCH | PRIBIO, 
+		error = tsleep((void *) &recv->ec_ulp, PCATCH | PRIBIO,
 			       "eshfpopen", 0);
 		if (error != 0 || recv->ec_index == -1) {
 			splx(s);
@@ -894,7 +894,7 @@ esh_fpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 	printf("esh_fpopen:  created ring\n");
 #endif
 
-	/* 
+	/*
 	 * Ring is created.  Set up various pointers to the ring
 	 * information, fill the ring, and get going...
 	 */
@@ -953,7 +953,7 @@ esh_fpclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 	assert(ring);
 	assert(ring_ctl);
 
-	/* 
+	/*
 	 * Disable the ring, wait for notification, and get rid of DMA
 	 * stuff and dynamically allocated memory.  Loop, waiting to
 	 * learn that the ring has been disabled, or the card
@@ -963,7 +963,7 @@ esh_fpclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 	do {
 		esh_send_cmd(sc, RR_CC_DISABLE_RING, ulp, ring->ec_producer);
 
-		error = tsleep((void *) &ring->ec_index, PCATCH | PRIBIO, 
+		error = tsleep((void *) &ring->ec_index, PCATCH | PRIBIO,
 			       "esh_fpclose", 0);
 		if (error != 0 && error != EAGAIN) {
 			printf("%s:  esh_fpclose:  wait on ring disable bad\n",
@@ -973,7 +973,7 @@ esh_fpclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 		}
 	} while (ring->ec_index != -1 && sc->sc_flags != 0);
 
-	/* 
+	/*
 	 * XXX:  Gotta unload the ring, removing old descriptors!
 	 *       *Can* there be outstanding reads with a close issued!?
 	 */
@@ -991,12 +991,12 @@ esh_fpclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 	sc->sc_fp_rings--;
 	if (sc->sc_fp_rings == 0)
 		sc->sc_flags &= ~ESH_FL_FP_RING_UP;
-		
+
 	splx(s);
 	return 0;
 }
 
-int 
+int
 esh_fpread(dev, uio, ioflag)
 	dev_t dev;
 	struct uio *uio;
@@ -1033,14 +1033,14 @@ esh_fpread(dev, uio, ioflag)
 	/* Check for validity */
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		/* Check for valid offsets and sizes */
-		if (((u_long) uio->uio_iov[i].iov_base & 3) != 0 || 
-		    (i < uio->uio_iovcnt - 1 && 
+		if (((u_long) uio->uio_iov[i].iov_base & 3) != 0 ||
+		    (i < uio->uio_iovcnt - 1 &&
 		     (uio->uio_iov[i].iov_len & 3) != 0)) {
 			error = EFAULT;
 			goto fpread_done;
 		}
 	}
-	
+
 	PHOLD(l);	/* Lock process info into memory */
 
 	/* Lock down the pages */
@@ -1059,7 +1059,7 @@ esh_fpread(dev, uio, ioflag)
 		}
 	}
 
-	/* 
+	/*
 	 * Perform preliminary DMA mapping and throw the buffers
 	 * onto the queue to be sent.
 	 */
@@ -1078,23 +1078,23 @@ esh_fpread(dev, uio, ioflag)
 	       ulp, uio->uio_offset, uio->uio_resid, uio->uio_iovcnt);
 #endif
 
-	error = bus_dmamap_load_uio(sc->sc_dmat, di->ed_dma, 
+	error = bus_dmamap_load_uio(sc->sc_dmat, di->ed_dma,
 				    uio, BUS_DMA_READ|BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s:  esh_fpread:  bus_dmamap_load_uio "
-		       "failed\terror code %d\n", 
+		       "failed\terror code %d\n",
 		       sc->sc_dev.dv_xname, error);
 		error = ENOBUFS;
 		esh_free_dmainfo(sc, di);
 		goto fpread_done;
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, di->ed_dma, 
+	bus_dmamap_sync(sc->sc_dmat, di->ed_dma,
 			0, di->ed_dma->dm_mapsize,
 			BUS_DMASYNC_PREREAD);
 
 #ifdef ESH_PRINTF
-	printf("esh_fpread:  ulp %d, di %p, nsegs %d, uio len %d\n", 
+	printf("esh_fpread:  ulp %d, di %p, nsegs %d, uio len %d\n",
 	       ulp, di, di->ed_dma->dm_nsegs, uio->uio_resid);
 #endif
 
@@ -1109,7 +1109,7 @@ esh_fpread(dev, uio, ioflag)
 		printf("esh_fpread:  ulp %d, tslept %d\n", ulp, error);
 #endif
 		if (error) {
-			/* 
+			/*
 			 * Remove the buffer entries from the ring;  this
 			 * is gonna require a DISCARD_PKT command, and
 			 * will certainly disrupt things.  This is why we
@@ -1133,7 +1133,7 @@ esh_fpread(dev, uio, ioflag)
 		error = EIO;
 
 	/*
-	 * How do we let the caller know how much has been read?  
+	 * How do we let the caller know how much has been read?
 	 * Adjust the uio_resid stuff!?
 	 */
 
@@ -1157,7 +1157,7 @@ fpread_done:
 }
 
 
-int 
+int
 esh_fpwrite(dev, uio, ioflag)
 	dev_t dev;
 	struct uio *uio;
@@ -1194,14 +1194,14 @@ esh_fpwrite(dev, uio, ioflag)
 
 	/* Check for validity */
 	for (i = 0; i < uio->uio_iovcnt; i++) {
-		if (((u_long) uio->uio_iov[i].iov_base & 3) != 0 || 
-		    (i < uio->uio_iovcnt - 1 && 
+		if (((u_long) uio->uio_iov[i].iov_base & 3) != 0 ||
+		    (i < uio->uio_iovcnt - 1 &&
 		     (uio->uio_iov[i].iov_len & 3) != 0)) {
 			error = EFAULT;
 			goto fpwrite_done;
 		}
 	}
-	
+
 	PHOLD(l);	/* Lock process info into memory */
 
 	/* Lock down the pages */
@@ -1220,7 +1220,7 @@ esh_fpwrite(dev, uio, ioflag)
 		}
 	}
 
-	/* 
+	/*
 	 * Perform preliminary DMA mapping and throw the buffers
 	 * onto the queue to be sent.
 	 */
@@ -1238,23 +1238,23 @@ esh_fpwrite(dev, uio, ioflag)
 	       uio->uio_offset, uio->uio_resid, uio->uio_iovcnt);
 #endif
 
-	error = bus_dmamap_load_uio(sc->sc_dmat, di->ed_dma, 
+	error = bus_dmamap_load_uio(sc->sc_dmat, di->ed_dma,
 				    uio, BUS_DMA_WRITE|BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s:  esh_fpwrite:  bus_dmamap_load_uio "
-		       "failed\terror code %d\n", 
+		       "failed\terror code %d\n",
 		       sc->sc_dev.dv_xname, error);
 		error = ENOBUFS;
 		esh_free_dmainfo(sc, di);
 		goto fpwrite_done;
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, di->ed_dma, 
+	bus_dmamap_sync(sc->sc_dmat, di->ed_dma,
 			0, di->ed_dma->dm_mapsize,
 			BUS_DMASYNC_PREWRITE);
 
 #ifdef ESH_PRINTF
-	printf("esh_fpwrite:  di %p, nsegs %d, uio len %d\n", 
+	printf("esh_fpwrite:  di %p, nsegs %d, uio len %d\n",
 	       di, di->ed_dma->dm_nsegs, uio->uio_resid);
 #endif
 
@@ -1290,7 +1290,7 @@ esh_fpwrite(dev, uio, ioflag)
 		error = EIO;
 
 	/*
-	 * How do we let the caller know how much has been written?  
+	 * How do we let the caller know how much has been written?
 	 * Adjust the uio_resid stuff!?
 	 */
 
@@ -1313,7 +1313,7 @@ fpwrite_done:
 	return error;
 }
 
-void 
+void
 esh_fpstrategy(bp)
 	struct buf *bp;
 {
@@ -1350,7 +1350,7 @@ esh_fpstrategy(bp)
 #undef UP_FLAGS
 
 	if (bp->b_flags & B_READ) {
-		/* 
+		/*
 		 * Perform preliminary DMA mapping and throw the buffers
 		 * onto the queue to be sent.
 		 */
@@ -1364,14 +1364,14 @@ esh_fpstrategy(bp)
 			goto done;
 		}
 		di->ed_buf = bp;
-		error = bus_dmamap_load(sc->sc_dmat, di->ed_dma, 
-					bp->b_data, bp->b_bcount, 
+		error = bus_dmamap_load(sc->sc_dmat, di->ed_dma,
+					bp->b_data, bp->b_bcount,
 					bp->b_proc,
 					BUS_DMA_READ|BUS_DMA_WAITOK);
 		if (error) {
 			printf("%s:  esh_fpstrategy:  "
 			       "bus_dmamap_load "
-			       "failed\terror code %d\n", 
+			       "failed\terror code %d\n",
 			       sc->sc_dev.dv_xname, error);
 			bp->b_error = ENOBUFS;
 			bp->b_flags |= B_ERROR;
@@ -1379,7 +1379,7 @@ esh_fpstrategy(bp)
 			goto done;
 		}
 
-		bus_dmamap_sync(sc->sc_dmat, di->ed_dma, 
+		bus_dmamap_sync(sc->sc_dmat, di->ed_dma,
 				0, di->ed_dma->dm_mapsize,
 				BUS_DMASYNC_PREREAD);
 
@@ -1390,7 +1390,7 @@ esh_fpstrategy(bp)
 		TAILQ_INSERT_TAIL(&ring->ec_queue, di, ed_list);
 		esh_fill_fp_ring(sc, ring);
 	} else {
-		/* 
+		/*
 		 * Queue up the buffer for future sending.  If the card
 		 * isn't already transmitting, give it a kick.
 		 */
@@ -1404,7 +1404,7 @@ esh_fpstrategy(bp)
 	}
 	splx(s);
 	return;
-	    
+
 done:
 	splx(s);
 #ifdef ESH_PRINTF
@@ -1463,8 +1463,8 @@ eshintr(arg)
 		rc_send_consumer = (rc_offsets >> 8) & 0xff;
 		rc_snap_ring_consumer = (rc_offsets >> 16) & 0xff;
 		for (i = 0; i < RR_MAX_RECV_RING; i += 4) {
-			rc_offsets = 
-				bus_space_read_4(iot, ioh, 
+			rc_offsets =
+				bus_space_read_4(iot, ioh,
 						 RR_RUNCODE_RECV_CONS + i);
 			/* XXX:  should do this right! */
 			NTOHL(rc_offsets);
@@ -1477,21 +1477,21 @@ eshintr(arg)
 
 	/* Take care of synchronizing DMA with entries we read... */
 
-	esh_dma_sync(sc, sc->sc_event_ring, 
-		     start_consumer, sc->sc_event_producer, 
+	esh_dma_sync(sc, sc->sc_event_ring,
+		     start_consumer, sc->sc_event_producer,
 		     RR_EVENT_RING_SIZE, sizeof(struct rr_event), 0,
 		     BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	while (sc->sc_event_consumer != sc->sc_event_producer) {
-		struct rr_event *event = 
+		struct rr_event *event =
 			&sc->sc_event_ring[sc->sc_event_consumer];
 
 #ifdef ESH_PRINTF
 		if (event->re_code != RR_EC_WATCHDOG &&
 		    event->re_code != RR_EC_STATS_UPDATE &&
 		    event->re_code != RR_EC_SET_CMD_CONSUMER) {
-			printf("%s:  event code %x, ring %d, index %d\n", 
-			       sc->sc_dev.dv_xname, event->re_code, 
+			printf("%s:  event code %x, ring %d, index %d\n",
+			       sc->sc_dev.dv_xname, event->re_code,
 			       event->re_ring, event->re_index);
 			if (okay == 0)
 				printf("%s\n", buf);
@@ -1514,7 +1514,7 @@ eshintr(arg)
 			if (sc->sc_fp_rings > 0)
 				esh_init_fp_rings(sc);
 
-			/* 
+			/*
 			 * XXX:   crank up FP rings that might be
 			 *        in use after a reset!
 			 */
@@ -1522,9 +1522,9 @@ eshintr(arg)
 			break;
 
 		case RR_EC_WATCHDOG:
-			/* 
-			 * Record the watchdog event.  
-			 * This is checked by eshwatchdog 
+			/*
+			 * Record the watchdog event.
+			 * This is checked by eshwatchdog
 			 */
 
 			sc->sc_watchdog = 1;
@@ -1542,8 +1542,8 @@ eshintr(arg)
 			esh_send_cmd(sc, RR_CC_UPDATE_STATS, 0, 0);
 			if ((sc->sc_flags & ESH_FL_SNAP_RING_UP) != 0) {
 				/*
-				 * Interface is now `running', with no 
-				 * output active. 
+				 * Interface is now `running', with no
+				 * output active.
 				 */
 				ifp->if_flags |= IFF_RUNNING;
 				ifp->if_flags &= ~IFF_OACTIVE;
@@ -1558,9 +1558,9 @@ eshintr(arg)
 			printf("%s:  link down\n", sc->sc_dev.dv_xname);
 			break;
 
-		/* 
-		 * These are all unexpected.  We need to handle all 
-		 * of them, though. 
+		/*
+		 * These are all unexpected.  We need to handle all
+		 * of them, though.
 		 */
 
 		case RR_EC_INVALID_CMD:
@@ -1607,7 +1607,7 @@ eshintr(arg)
 			/* FALLTHROUGH */
 
 		case RR_EC_SEND_RING_LOW:
-			eshstart_cleanup(sc, event->re_index, 0); 
+			eshstart_cleanup(sc, event->re_index, 0);
 			break;
 
 
@@ -1618,7 +1618,7 @@ eshintr(arg)
 		case RR_EC_INTERNAL_PARITY:
 		case RR_EC_TX_IDLE:
 		case RR_EC_SEND_LINK_OFF:
-			eshstart_cleanup(sc, event->re_index, event->re_code); 
+			eshstart_cleanup(sc, event->re_index, event->re_code);
 			break;
 
 			/* Receive events */
@@ -1630,13 +1630,13 @@ eshintr(arg)
 				esh_fill_snap_ring(sc);
 
 				if (sc->sc_flags & ESH_FL_LINK_UP) {
-					/* 
-					 * Interface is now `running', with no 
-					 * output active. 
+					/*
+					 * Interface is now `running', with no
+					 * output active.
 					 */
 					ifp->if_flags |= IFF_RUNNING;
 					ifp->if_flags &= ~IFF_OACTIVE;
-					
+
 					/* Attempt to start output, if any. */
 
 					eshstart(ifp);
@@ -1647,7 +1647,7 @@ eshintr(arg)
 					       event->re_index);
 #endif
 			} else {
-				struct esh_fp_ring_ctl *ring = 
+				struct esh_fp_ring_ctl *ring =
 					sc->sc_fp_recv[event->re_ring];
 
 				sc->sc_flags |= ESH_FL_FP_RING_UP;
@@ -1664,37 +1664,37 @@ eshintr(arg)
 
 		case RR_EC_RING_DISABLED:
 #ifdef ESH_PRINTF
-			printf("eshintr:  disabling ring %d\n", 
+			printf("eshintr:  disabling ring %d\n",
 			       event->re_ring);
-#endif	
+#endif
 			if (event->re_ring == HIPPI_ULP_802) {
-				struct rr_ring_ctl *ring = 
+				struct rr_ring_ctl *ring =
 					sc->sc_recv_ring_table + HIPPI_ULP_802;
 				memset(ring, 0, sizeof(*ring));
 				sc->sc_flags &= ~ESH_FL_CLOSING_SNAP;
 				sc->sc_flags &= ~ESH_FL_SNAP_RING_UP;
-				while (sc->sc_snap_recv.ec_consumer 
+				while (sc->sc_snap_recv.ec_consumer
 				       != sc->sc_snap_recv.ec_producer) {
 					struct mbuf *m0;
 					u_int16_t offset = sc->sc_snap_recv.ec_consumer;
-					
-					bus_dmamap_unload(sc->sc_dmat, 
+
+					bus_dmamap_unload(sc->sc_dmat,
 							  sc->sc_snap_recv.ec_dma[offset]);
 					MFREE(sc->sc_snap_recv.ec_m[offset], m0);
 					sc->sc_snap_recv.ec_m[offset] = NULL;
-					sc->sc_snap_recv.ec_consumer = 
+					sc->sc_snap_recv.ec_consumer =
 						NEXT_RECV(sc->sc_snap_recv.ec_consumer);
 				}
-				sc->sc_snap_recv.ec_consumer = 
+				sc->sc_snap_recv.ec_consumer =
 					rc_snap_ring_consumer;
-				sc->sc_snap_recv.ec_producer = 
+				sc->sc_snap_recv.ec_producer =
 					rc_snap_ring_consumer;
 				wakeup((void *) &sc->sc_snap_recv);
 			} else {
-				struct esh_fp_ring_ctl *recv = 
+				struct esh_fp_ring_ctl *recv =
 					sc->sc_fp_recv[event->re_ring];
 				assert(recv != NULL);
-				recv->ec_consumer = recv->ec_producer = 
+				recv->ec_consumer = recv->ec_producer =
 					fp_ring_consumer[recv->ec_index];
 				recv->ec_index = -1;
 				wakeup((void *) &recv->ec_index);
@@ -1711,7 +1711,7 @@ eshintr(arg)
 				eshstatus(sc);
 #endif
 			} else {
-				/* 
+				/*
 				 * If we just leave the ring index as-is,
 				 * the driver will figure out that
 				 * we failed to open the ring.
@@ -1721,11 +1721,11 @@ eshintr(arg)
 			break;
 
 		case RR_EC_PACKET_DISCARDED:
-		        /* 
+		        /*
 			 * Determine the dmainfo for the current packet
 			 * we just discarded and wake up the waiting
 			 * process.
-			 * 
+			 *
 			 * This should never happen on the network ring!
 			 */
 
@@ -1736,7 +1736,7 @@ eshintr(arg)
 				ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 				sc->sc_flags = ESH_FL_CRASHED;
 			} else {
-				struct esh_fp_ring_ctl *ring = 
+				struct esh_fp_ring_ctl *ring =
 					sc->sc_fp_recv[event->re_ring];
 				struct esh_dmainfo *di =
 					ring->ec_cur_dmainfo;
@@ -1756,7 +1756,7 @@ eshintr(arg)
 					break;
 				}
 
-				di->ed_flags &= 
+				di->ed_flags &=
 					~(ESH_DI_READING | ESH_DI_BUSY);
 				wakeup((void *) &di->ed_flags);
 			}
@@ -1772,7 +1772,7 @@ eshintr(arg)
 			if (event->re_ring == HIPPI_ULP_802)
 				esh_read_snap_ring(sc, event->re_index, 0);
 			else if (sc->sc_fp_recv[event->re_ring] != NULL)
-				esh_read_fp_ring(sc, event->re_index, 0, 
+				esh_read_fp_ring(sc, event->re_index, 0,
 						 event->re_ring);
 			break;
 
@@ -1789,7 +1789,7 @@ eshintr(arg)
 		case RR_EC_STATE_TRANS_ERR:
 		case RR_EC_NO_READY_PULSE:
 			if (event->re_ring == HIPPI_ULP_802) {
-				esh_read_snap_ring(sc, event->re_index, 
+				esh_read_snap_ring(sc, event->re_index,
 						   event->re_code);
 			} else {
 				struct esh_fp_ring_ctl *r;
@@ -1814,8 +1814,8 @@ eshintr(arg)
 		default:
 			printf("%s:  Bogus event code %x, "
 			       "ring %d, index %d, timestamp %x\n",
-			       sc->sc_dev.dv_xname, event->re_code, 
-			       event->re_ring, event->re_index, 
+			       sc->sc_dev.dv_xname, event->re_code,
+			       event->re_ring, event->re_index,
 			       event->re_timestamp);
 			break;
 		}
@@ -1834,14 +1834,14 @@ eshintr(arg)
 		}
 		if (sc->sc_snap_recv.ec_consumer != rc_snap_ring_consumer &&
 		    (sc->sc_flags & ESH_FL_SNAP_RING_UP) != 0) {
-			esh_read_snap_ring(sc, rc_snap_ring_consumer, 0); 
+			esh_read_snap_ring(sc, rc_snap_ring_consumer, 0);
 			ret = 1;
 			blah++;
 		}
 		for (i = 0; i < RR_MAX_RECV_RING; i++) {
 			struct esh_fp_ring_ctl *r = sc->sc_fp_recv_index[i];
 
-			if (r != NULL && 
+			if (r != NULL &&
 			    r->ec_consumer != fp_ring_consumer[i]) {
 #ifdef ESH_PRINTF
 				printf("eshintr:  performed read on ring %d, index %d\n",
@@ -1859,14 +1859,14 @@ eshintr(arg)
 			printf("%s\n", buf);
 #endif
 		}
-		rc_offsets = (sc->sc_snap_recv.ec_consumer << 16) | 
+		rc_offsets = (sc->sc_snap_recv.ec_consumer << 16) |
 			(sc->sc_send.ec_consumer << 8) | sc->sc_event_consumer;
 	} else {
 		rc_offsets = sc->sc_event_consumer;
 	}
 
-	esh_dma_sync(sc, sc->sc_event_ring, 
-		     start_consumer, sc->sc_event_producer, 
+	esh_dma_sync(sc, sc->sc_event_ring,
+		     start_consumer, sc->sc_event_producer,
 		     RR_EVENT_RING_SIZE, sizeof(struct rr_event), 0,
 		     BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
@@ -1884,7 +1884,7 @@ eshintr(arg)
 			snprintf(t, sizeof(t), "%.8x|", u);
 			strlcat(buf, t, sizeof(buf));
 			NTOHL(u);
-			bus_space_write_4(iot, ioh, 
+			bus_space_write_4(iot, ioh,
 					  RR_DRIVER_RECV_CONS + i, u);
 		}
 #ifdef ESH_PRINTF
@@ -1895,7 +1895,7 @@ eshintr(arg)
 		buf[0] = '\0';
 		strlcat(buf, "rcn: ", sizeof(buf));
 		for (i = 0; i < RR_MAX_RECV_RING; i += 4) {
-			u = bus_space_read_4(iot, ioh, 
+			u = bus_space_read_4(iot, ioh,
 					     RR_RUNCODE_RECV_CONS + i);
 			/* XXX:  should do this right! */
 			NTOHL(u);
@@ -1907,7 +1907,7 @@ eshintr(arg)
 			printf("%s\n", buf);
 #endif
 	}
-	
+
 	/* Clear interrupt */
 	bus_space_write_4(iot, ioh, RR_EVENT_CONSUMER, rc_offsets);
 
@@ -1961,20 +1961,20 @@ eshstart(ifp)
 #if NBPFILTER > 0
 		if (ifp->if_bpf) {
 			/*
-			 * On output, the raw packet has a eight-byte CCI 
+			 * On output, the raw packet has a eight-byte CCI
 			 * field prepended.  On input, there is no such field.
 			 * The bpf expects the packet to look the same in both
 			 * places, so we temporarily lop off the prepended CCI
 			 * field here, then replace it.  Ugh.
 			 *
-			 * XXX:  Need to use standard mbuf manipulation 
-			 *       functions, first mbuf may be less than 
+			 * XXX:  Need to use standard mbuf manipulation
+			 *       functions, first mbuf may be less than
 			 *       8 bytes long.
 			 */
- 
+
 			m->m_len -= 8;
 			m->m_data += 8;
-			m->m_pkthdr.len -= 8; 
+			m->m_pkthdr.len -= 8;
 			bpf_mtap(ifp->if_bpf, m);
 			m->m_len += 8;
 			m->m_data -= 8;
@@ -1991,12 +1991,12 @@ eshstart(ifp)
 					     m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 		if (error)
 			panic("%s:  eshstart:  "
-			      "bus_dmamap_load_mbuf failed err %d\n", 
+			      "bus_dmamap_load_mbuf failed err %d\n",
 			      sc->sc_dev.dv_xname, error);
 		send->ec_offset = 0;
 	}
 
-	/* 
+	/*
 	 * If there are no network packets to send, see if there
 	 * are any FP packets to send.
 	 *
@@ -2022,9 +2022,9 @@ eshstart(ifp)
 		send->ec_offset = 0;
 		send->ec_len = bp->b_bcount;
 
-		/* 
+		/*
 		 * Determine the DMA mapping for the buffer.
-		 * If this is too large, what do we do!? 
+		 * If this is too large, what do we do!?
 		 */
 
 		error = bus_dmamap_load(sc->sc_dmat, send->ec_dma,
@@ -2034,11 +2034,11 @@ eshstart(ifp)
 
 		if (error)
 			panic("%s:  eshstart:  "
-			      "bus_dmamap_load failed err %d\n", 
+			      "bus_dmamap_load failed err %d\n",
 			      sc->sc_dev.dv_xname, error);
 	}
 
-	/* 
+	/*
 	 * If there are no packets from strategy to send, see if there
 	 * are any FP packets to send from fpwrite.
 	 */
@@ -2068,7 +2068,7 @@ eshstart(ifp)
 		return;
 
 	assert(send->ec_len);
-	assert(send->ec_dma->dm_nsegs || 
+	assert(send->ec_dma->dm_nsegs ||
 	       send->ec_cur_dmainfo->ed_dma->dm_nsegs);
 	assert(send->ec_cur_mbuf || send->ec_cur_buf || send->ec_cur_dmainfo);
 
@@ -2077,7 +2077,7 @@ eshstart(ifp)
 }
 
 
-/* 
+/*
  * Put the buffers from the send dmamap into the descriptors and
  * send 'em off...
  */
@@ -2089,7 +2089,7 @@ esh_send(sc)
 	struct esh_send_ring_ctl *send = &sc->sc_send;
 	u_int start_producer = send->ec_producer;
 	bus_dmamap_t dma;
- 
+
 	if (send->ec_cur_dmainfo != NULL)
 		dma = send->ec_cur_dmainfo->ed_dma;
 	else
@@ -2104,11 +2104,11 @@ esh_send(sc)
 		     RR_SEND_RING_SIZE, sizeof(struct rr_descr), 1,
 		     BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	while (NEXT_SEND(send->ec_producer) != send->ec_consumer && 
+	while (NEXT_SEND(send->ec_producer) != send->ec_consumer &&
 	       send->ec_offset < dma->dm_nsegs) {
 		int offset = send->ec_producer;
 
-		send->ec_descr[offset].rd_buffer_addr = 
+		send->ec_descr[offset].rd_buffer_addr =
 			dma->dm_segs[send->ec_offset].ds_addr;
 		send->ec_descr[offset].rd_length =
 			dma->dm_segs[send->ec_offset].ds_len;
@@ -2116,7 +2116,7 @@ esh_send(sc)
 
 		if (send->ec_offset == 0) {
 			/* Start of the dmamap... */
-			send->ec_descr[offset].rd_control |= 
+			send->ec_descr[offset].rd_control |=
 				RR_CT_PACKET_START;
 		}
 
@@ -2128,36 +2128,36 @@ esh_send(sc)
 		send->ec_producer = NEXT_SEND(send->ec_producer);
 	}
 
-	/* 
+	/*
 	 * XXX:   we could optimize the dmamap_sync to just get what we've
 	 *        just set up, rather than the whole buffer...
 	 */
 
-	bus_dmamap_sync(sc->sc_dmat, dma, 0, dma->dm_mapsize, 
+	bus_dmamap_sync(sc->sc_dmat, dma, 0, dma->dm_mapsize,
 			BUS_DMASYNC_PREWRITE);
 	esh_dma_sync(sc, send->ec_descr,
 		     start_producer, send->ec_consumer,
-		     RR_SEND_RING_SIZE, sizeof(struct rr_descr), 1, 
+		     RR_SEND_RING_SIZE, sizeof(struct rr_descr), 1,
 		     BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 #ifdef ESH_PRINTF
-	if (send->ec_offset != dma->dm_nsegs) 
+	if (send->ec_offset != dma->dm_nsegs)
 		printf("eshstart:  couldn't fit packet in send ring!\n");
 #endif
 
 	if (sc->sc_version == 1) {
-		esh_send_cmd(sc, RR_CC_SET_SEND_PRODUCER, 
+		esh_send_cmd(sc, RR_CC_SET_SEND_PRODUCER,
 			     0, send->ec_producer);
 	} else {
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, 
-				  RR_SEND_PRODUCER, send->ec_producer); 
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+				  RR_SEND_PRODUCER, send->ec_producer);
 	}
 	return;
 }
 
 
 /*
- * Cleanup for the send routine.  When the NIC sends us an event to 
+ * Cleanup for the send routine.  When the NIC sends us an event to
  * let us know that it has consumed our buffers, we need to free the
  * buffers, and possibly send another packet.
  */
@@ -2179,25 +2179,25 @@ eshstart_cleanup(sc, consumer, error)
 
 #ifdef ESH_PRINTF
 	printf("eshstart_cleanup:  consumer %x, send->consumer %x\n",
-	       consumer, send->ec_consumer);	
+	       consumer, send->ec_consumer);
 #endif
 
 	esh_dma_sync(sc, send->ec_descr,
 		     send->ec_consumer, consumer,
-		     RR_SEND_RING_SIZE, sizeof(struct rr_descr), 0, 
+		     RR_SEND_RING_SIZE, sizeof(struct rr_descr), 0,
 		     BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	while (send->ec_consumer != consumer) {
 		assert(dma->dm_nsegs);
-		assert(send->ec_cur_mbuf || send->ec_cur_buf || 
+		assert(send->ec_cur_mbuf || send->ec_cur_buf ||
 		       send->ec_cur_dmainfo);
 
-		if (send->ec_descr[send->ec_consumer].rd_control & 
+		if (send->ec_descr[send->ec_consumer].rd_control &
 		    RR_CT_PACKET_END) {
 #ifdef ESH_PRINT
 			printf("eshstart_cleanup:  dmamap_sync mapsize %d\n",
 			       send->ec_dma->dm_mapsize);
-#endif			
+#endif
 			bus_dmamap_sync(sc->sc_dmat, dma, 0, dma->dm_mapsize,
 					BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, dma);
@@ -2206,7 +2206,7 @@ eshstart_cleanup(sc, consumer, error)
 				send->ec_cur_mbuf = NULL;
 			} else if (send->ec_cur_dmainfo) {
 				send->ec_cur_dmainfo->ed_flags &= ~ESH_DI_BUSY;
-				send->ec_cur_dmainfo->ed_error = 
+				send->ec_cur_dmainfo->ed_error =
 					(send->ec_error ? send->ec_error : error);
 				send->ec_error = 0;
 				wakeup((void *) send->ec_cur_dmainfo);
@@ -2216,11 +2216,11 @@ eshstart_cleanup(sc, consumer, error)
 				send->ec_cur_buf = NULL;
 			} else {
 				panic("%s:  eshstart_cleanup:  "
-				      "no current mbuf, buf, or dmainfo!\n", 
+				      "no current mbuf, buf, or dmainfo!\n",
 				      sc->sc_dev.dv_xname);
 			}
 
-			/* 
+			/*
 			 * Version 1 of the firmware sent an event each
 			 * time it sent out a packet.  Later versions do not
 			 * (which results in a considerable speedup), so we
@@ -2238,7 +2238,7 @@ eshstart_cleanup(sc, consumer, error)
 
 	esh_dma_sync(sc, send->ec_descr,
 		     start_consumer, consumer,
-		     RR_SEND_RING_SIZE, sizeof(struct rr_descr), 0, 
+		     RR_SEND_RING_SIZE, sizeof(struct rr_descr), 0,
 		     BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	eshstart(&sc->sc_if);
@@ -2246,13 +2246,13 @@ eshstart_cleanup(sc, consumer, error)
 
 
 /*
- * XXX:  Ouch:  The NIC can only send word-aligned buffers, and only 
- *       the last buffer in the packet can have a length that is not 
+ * XXX:  Ouch:  The NIC can only send word-aligned buffers, and only
+ *       the last buffer in the packet can have a length that is not
  *       a multiple of four!
  *
- * Here we traverse the packet, pick out the bogus mbufs, and fix 'em 
- * if possible.  The fix is amazingly expensive, so we sure hope that 
- * this is a rare occurance (it seems to be).  
+ * Here we traverse the packet, pick out the bogus mbufs, and fix 'em
+ * if possible.  The fix is amazingly expensive, so we sure hope that
+ * this is a rare occurance (it seems to be).
  */
 
 static struct mbuf *
@@ -2287,7 +2287,7 @@ esh_adjust_mbufs(sc, m)
 
 			sc->sc_misaligned_bufs++;
 			MGETHDR(o, M_DONTWAIT, MT_DATA);
-			if (!o) 
+			if (!o)
 				goto bogosity;
 
 			MCLGET(o, M_DONTWAIT);
@@ -2296,12 +2296,12 @@ esh_adjust_mbufs(sc, m)
 				goto bogosity;
 			}
 
-			/* 
-			 * XXX: Copy as much as we can into the 
-			 *      cluster.  For now we can't have more 
+			/*
+			 * XXX: Copy as much as we can into the
+			 *      cluster.  For now we can't have more
 			 *      than a cluster in there.  May change.
-			 *      I'd prefer not to get this 
-			 *      down-n-dirty, but we have to be able 
+			 *      I'd prefer not to get this
+			 *      down-n-dirty, but we have to be able
 			 *      to do this kind of funky copy.
 			 */
 
@@ -2364,8 +2364,8 @@ esh_read_snap_ring(sc, consumer, error)
 
 	esh_dma_sync(sc, recv->ec_descr,
 		     start_consumer, consumer,
-		     RR_SNAP_RECV_RING_SIZE, 
-		     sizeof(struct rr_descr), 0, 
+		     RR_SNAP_RECV_RING_SIZE,
+		     sizeof(struct rr_descr), 0,
 		     BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	while (recv->ec_consumer != consumer) {
@@ -2387,7 +2387,7 @@ esh_read_snap_ring(sc, consumer, error)
 			if (recv->ec_cur_pkt) {
 				m_freem(recv->ec_cur_pkt);
 				recv->ec_cur_pkt = NULL;
-				printf("%s:  possible skipped packet!\n", 
+				printf("%s:  possible skipped packet!\n",
 				       sc->sc_dev.dv_xname);
 			}
 			recv->ec_cur_pkt = recv->ec_cur_mbuf = m;
@@ -2397,7 +2397,7 @@ esh_read_snap_ring(sc, consumer, error)
 		} else {
 			if (!recv->ec_cur_pkt)
 				panic("esh_read_snap_ring:  no cur_pkt");
-		
+
 			recv->ec_cur_mbuf->m_next = m;
 			recv->ec_cur_mbuf = m;
 			recv->ec_cur_pkt->m_pkthdr.len += m->m_len;
@@ -2413,21 +2413,21 @@ esh_read_snap_ring(sc, consumer, error)
 			m = recv->ec_cur_pkt;
 			if (!error && !recv->ec_error) {
 				/*
-				 * We have a complete packet, send it up 
-				 * the stack... 
+				 * We have a complete packet, send it up
+				 * the stack...
 				 */
 				ifp->if_ipackets++;
 
 #if NBPFILTER > 0
 				/*
-				 * Check if there's a BPF listener on this 
+				 * Check if there's a BPF listener on this
 				 * interface.  If so, hand off the raw packet
 				 * to BPF.
 				 */
 				if (ifp->if_bpf) {
 					/*
 					 * Incoming packets start with the FP
-					 * data, so no alignment problems 
+					 * data, so no alignment problems
 					 * here...
 					 */
 					bpf_mtap(ifp->if_bpf, m);
@@ -2454,8 +2454,8 @@ esh_read_snap_ring(sc, consumer, error)
 
 	esh_dma_sync(sc, recv->ec_descr,
 		     start_consumer, consumer,
-		     RR_SNAP_RECV_RING_SIZE, 
-		     sizeof(struct rr_descr), 0, 
+		     RR_SNAP_RECV_RING_SIZE,
+		     sizeof(struct rr_descr), 0,
 		     BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	esh_fill_snap_ring(sc);
@@ -2499,7 +2499,7 @@ esh_init_snap_ring(sc)
 				(caddr_t) ring - (caddr_t) sc->sc_dma_addr,
 				sizeof(ring),
 				BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-		esh_send_cmd(sc, RR_CC_ENABLE_RING, HIPPI_ULP_802, 
+		esh_send_cmd(sc, RR_CC_ENABLE_RING, HIPPI_ULP_802,
 			     sc->sc_snap_recv.ec_producer);
 	} else {
 		printf("%s:  snap receive ring already initialized!\n",
@@ -2513,7 +2513,7 @@ esh_close_snap_ring(sc)
 {
 #ifdef ESH_PRINTF
 	printf("esh_close_snap_ring:  starting\n");
-#endif	
+#endif
 
 	if ((sc->sc_flags & ESH_FL_SNAP_RING_UP) == 0)
 		return;
@@ -2524,7 +2524,7 @@ esh_close_snap_ring(sc)
 	/* Disable event will trigger the rest of the cleanup. */
 }
 
-/* 
+/*
  * Fill in the snap ring with more mbuf buffers so that we can
  * receive traffic.
  */
@@ -2539,8 +2539,8 @@ esh_fill_snap_ring(sc)
 
 	esh_dma_sync(sc, recv->ec_descr,
 		     recv->ec_producer, recv->ec_consumer,
-		     RR_SNAP_RECV_RING_SIZE, 
-		     sizeof(struct rr_descr), 1, 
+		     RR_SNAP_RECV_RING_SIZE,
+		     sizeof(struct rr_descr), 1,
 		     BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	while (NEXT_RECV(recv->ec_producer) != recv->ec_consumer) {
@@ -2561,26 +2561,26 @@ esh_fill_snap_ring(sc)
 					NULL, BUS_DMA_READ|BUS_DMA_NOWAIT);
 		if (error) {
 			printf("%s:  esh_fill_recv_ring:  bus_dmamap_load "
-			       "failed\toffset %x, error code %d\n", 
+			       "failed\toffset %x, error code %d\n",
 			       sc->sc_dev.dv_xname, offset, error);
 			MFREE(m, m0);
 			break;
 		}
 
-		/* 
-		 * In this implementation, we should only see one segment 
+		/*
+		 * In this implementation, we should only see one segment
 		 * per DMA.
 		 */
 
 		assert(recv->ec_dma[offset]->dm_nsegs == 1);
 
-		/* 
-		 * Load into the descriptors.  
+		/*
+		 * Load into the descriptors.
 		 */
 
-		recv->ec_descr[offset].rd_ring = 
+		recv->ec_descr[offset].rd_ring =
 			(sc->sc_version == 1) ? HIPPI_ULP_802 : 0;
-		recv->ec_descr[offset].rd_buffer_addr = 
+		recv->ec_descr[offset].rd_buffer_addr =
 			recv->ec_dma[offset]->dm_segs->ds_addr;
 		recv->ec_descr[offset].rd_length =
 			recv->ec_dma[offset]->dm_segs->ds_len;
@@ -2596,15 +2596,15 @@ esh_fill_snap_ring(sc)
 
 	esh_dma_sync(sc, recv->ec_descr,
 		     start_producer, recv->ec_consumer,
-		     RR_SNAP_RECV_RING_SIZE, 
-		     sizeof(struct rr_descr), 1, 
+		     RR_SNAP_RECV_RING_SIZE,
+		     sizeof(struct rr_descr), 1,
 		     BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	if (sc->sc_version == 1)
-		esh_send_cmd(sc, RR_CC_SET_RECV_PRODUCER, HIPPI_ULP_802, 
+		esh_send_cmd(sc, RR_CC_SET_RECV_PRODUCER, HIPPI_ULP_802,
 			     recv->ec_producer);
 	else
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, 
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 				  RR_SNAP_RECV_PRODUCER, recv->ec_producer);
 }
 
@@ -2655,13 +2655,13 @@ esh_read_fp_ring(sc, consumer, error, ulp)
 	if ((sc->sc_flags & ESH_FL_FP_RING_UP) == 0)
 		return;
 
-	if (error != 0) 
+	if (error != 0)
 		recv->ec_error = error;
 
 	esh_dma_sync(sc, recv->ec_descr,
 		     start_consumer, consumer,
-		     RR_FP_RECV_RING_SIZE, 
-		     sizeof(struct rr_descr), 0, 
+		     RR_FP_RECV_RING_SIZE,
+		     sizeof(struct rr_descr), 0,
 		     BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	while (recv->ec_consumer != consumer) {
@@ -2672,7 +2672,7 @@ esh_read_fp_ring(sc, consumer, error, ulp)
 		if (control & RR_CT_PACKET_START) {
 			if (recv->ec_read_len) {
 				recv->ec_error = 0;
-				printf("%s:  ulp %d: possible skipped FP packet!\n", 
+				printf("%s:  ulp %d: possible skipped FP packet!\n",
 				       sc->sc_dev.dv_xname, recv->ec_ulp);
 			}
 			recv->ec_seen_end = 0;
@@ -2688,30 +2688,30 @@ esh_read_fp_ring(sc, consumer, error, ulp)
 
 #ifdef ESH_PRINTF
 		printf("esh_read_fp_ring: offset %d addr %d len %d flags %x, total %d\n",
-		       offset, recv->ec_descr[offset].rd_buffer_addr, 
+		       offset, recv->ec_descr[offset].rd_buffer_addr,
 		       recv->ec_descr[offset].rd_length, control, recv->ec_read_len);
 #endif
 		/* Note that we can START and END on the same buffer */
 
 		if ((control & RR_CT_PACKET_END) == RR_CT_PACKET_END) {
 			if (recv->ec_dmainfo[offset] != NULL) {
-				struct esh_dmainfo *di = 
+				struct esh_dmainfo *di =
 				    recv->ec_dmainfo[offset];
 
 				recv->ec_dmainfo[offset] = NULL;
-				bus_dmamap_sync(sc->sc_dmat, di->ed_dma, 
+				bus_dmamap_sync(sc->sc_dmat, di->ed_dma,
 						0, recv->ec_read_len,
 						BUS_DMASYNC_POSTREAD);
 				bus_dmamap_unload(sc->sc_dmat, di->ed_dma);
 
 				if (!error && !recv->ec_error) {
-				/* 
+				/*
 				 * XXX:  we oughta do this right, with full
 				 *  BPF support and the rest...
 				 */
 					if (di->ed_buf != NULL) {
-						di->ed_buf->b_resid = 
-							di->ed_buf->b_bcount - 
+						di->ed_buf->b_resid =
+							di->ed_buf->b_bcount -
 							recv->ec_read_len;
 					} else {
 						di->ed_read_len =
@@ -2733,7 +2733,7 @@ esh_read_fp_ring(sc, consumer, error, ulp)
 				printf("esh_read_fp_ring:  ulp %d, read %d, resid %ld\n",
 				       recv->ec_ulp, recv->ec_read_len, (di->ed_buf ? di->ed_buf->b_resid : di->ed_read_len));
 #endif
-				di->ed_flags &= 
+				di->ed_flags &=
 					~(ESH_DI_BUSY | ESH_DI_READING);
 				if (di->ed_buf != NULL)
 					biodone(di->ed_buf);
@@ -2757,8 +2757,8 @@ esh_read_fp_ring(sc, consumer, error, ulp)
 
 	esh_dma_sync(sc, recv->ec_descr,
 		     start_consumer, consumer,
-		     RR_SNAP_RECV_RING_SIZE, 
-		     sizeof(struct rr_descr), 0, 
+		     RR_SNAP_RECV_RING_SIZE,
+		     sizeof(struct rr_descr), 0,
 		     BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	esh_fill_fp_ring(sc, recv);
@@ -2777,11 +2777,11 @@ esh_fill_fp_ring(sc, recv)
         printf("esh_fill_fp_ring:  ulp %d, di %p, producer %d\n",
 		recv->ec_ulp, di, start_producer);
 #endif
-        
+
 	esh_dma_sync(sc, recv->ec_descr,
 		     recv->ec_producer, recv->ec_consumer,
-		     RR_SNAP_RECV_RING_SIZE, 
-		     sizeof(struct rr_descr), 1, 
+		     RR_SNAP_RECV_RING_SIZE,
+		     sizeof(struct rr_descr), 1,
 		     BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	while (NEXT_RECV(recv->ec_producer) != recv->ec_consumer) {
@@ -2804,26 +2804,26 @@ esh_fill_fp_ring(sc, recv)
 			recv->ec_cur_dmainfo = di;
 			di->ed_flags |= ESH_DI_READING;
 #ifdef ESH_PRINTF
-			printf("\toffset %d nsegs %d\n", 
+			printf("\toffset %d nsegs %d\n",
 			       recv->ec_offset, di->ed_dma->dm_nsegs);
-#endif		
+#endif
 		}
 
-		/* 
-		 * Load into the descriptors.  
+		/*
+		 * Load into the descriptors.
 		 */
 
 		recv->ec_descr[offset].rd_ring = 0;
-		recv->ec_descr[offset].rd_buffer_addr = 
+		recv->ec_descr[offset].rd_buffer_addr =
 			di->ed_dma->dm_segs[recv->ec_offset].ds_addr;
 		recv->ec_descr[offset].rd_length =
 			di->ed_dma->dm_segs[recv->ec_offset].ds_len;
 		recv->ec_descr[offset].rd_control = 0;
 		recv->ec_dmainfo[offset] = NULL;
-		
+
 		if (recv->ec_offset == 0) {
 			/* Start of the dmamap... */
-			recv->ec_descr[offset].rd_control |= 
+			recv->ec_descr[offset].rd_control |=
 				RR_CT_PACKET_START;
 		}
 
@@ -2844,13 +2844,13 @@ esh_fill_fp_ring(sc, recv)
 fp_fill_done:
 	esh_dma_sync(sc, recv->ec_descr,
 		     start_producer, recv->ec_consumer,
-		     RR_SNAP_RECV_RING_SIZE, 
-		     sizeof(struct rr_descr), 1, 
+		     RR_SNAP_RECV_RING_SIZE,
+		     sizeof(struct rr_descr), 1,
 		     BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 
 	if (sc->sc_version == 1) {
-		esh_send_cmd(sc, RR_CC_SET_RECV_PRODUCER, recv->ec_ulp, 
+		esh_send_cmd(sc, RR_CC_SET_RECV_PRODUCER, recv->ec_ulp,
 			     recv->ec_producer);
 	} else {
 		union {
@@ -2879,11 +2879,11 @@ fp_fill_done:
 			recv->ec_ulp, which, v.producer);
 #endif
 		HTONL(v.producer);
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, 
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 				  RR_RECVS_PRODUCER + which, v.producer);
 	}
 #ifdef ESH_PRINTF
-	printf("esh_fill_fp_ring:  ulp %d, final producer %d\n", 
+	printf("esh_fill_fp_ring:  ulp %d, final producer %d\n",
 		recv->ec_ulp, recv->ec_producer);
 #endif
 }
@@ -2902,7 +2902,7 @@ esh_flush_fp_ring(sc, recv, di)
 {
 	int error = 0;
 
-	/* 
+	/*
 	 * If the read request hasn't yet made it to the top of the queue,
 	 * just remove it from the queue, and return.
 	 */
@@ -2919,7 +2919,7 @@ esh_flush_fp_ring(sc, recv, di)
 
 	/* Now we gotta get tough.  Issue a discard packet command */
 
-	esh_send_cmd(sc, RR_CC_DISCARD_PKT, recv->ec_ulp, 
+	esh_send_cmd(sc, RR_CC_DISCARD_PKT, recv->ec_ulp,
 		     recv->ec_producer - 1);
 
 	/* Wait for it to finish */
@@ -2986,8 +2986,8 @@ eshioctl(ifp, cmd, data)
 		if ((sc->sc_flags & (ESH_FL_RUNCODE_UP | ESH_FL_SNAP_RING_UP))
 		    == ESH_FL_RUNCODE_UP) {
 			while (sc->sc_flags & ESH_FL_CLOSING_SNAP) {
-				error = tsleep((void *) &sc->sc_snap_recv, 
-					       PRIBIO, "esh_closing_fp_ring", 
+				error = tsleep((void *) &sc->sc_snap_recv,
+					       PRIBIO, "esh_closing_fp_ring",
 					       hz);
 				if (error != 0)
 					goto ioctl_done;
@@ -3004,7 +3004,7 @@ eshioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 		{
-			struct ns_addr *ina = 
+			struct ns_addr *ina =
 				&IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
@@ -3034,8 +3034,8 @@ eshioctl(ifp, cmd, data)
 			ifp->if_flags &= ~IFF_RUNNING;
 			esh_close_snap_ring(sc);
 			while (sc->sc_flags & ESH_FL_CLOSING_SNAP) {
-				error = tsleep((void *) &sc->sc_snap_recv, 
-					       PRIBIO, "esh_closing_fp_ring", 
+				error = tsleep((void *) &sc->sc_snap_recv,
+					       PRIBIO, "esh_closing_fp_ring",
 					       hz);
 				if (error != 0)
 					goto ioctl_done;
@@ -3082,8 +3082,8 @@ ioctl_done:
 }
 
 
-static int 
-esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data, 
+static int
+esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 		  u_long len, struct proc *p)
 {
 	struct ifnet *ifp = &sc->sc_if;
@@ -3099,7 +3099,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 	int error = 0;
 	int i;
 
-	/* 
+	/*
 	 * If we have a proc pointer, check to make sure that the
 	 * user is privileged before performing any destruction operations.
 	 */
@@ -3123,7 +3123,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 		if (len != sizeof(struct rr_tuning))
 			error = EMSGSIZE;
 		else {
-			error = copyout((caddr_t) &sc->sc_tune, data, 
+			error = copyout((caddr_t) &sc->sc_tune, data,
 					sizeof(struct rr_tuning));
 		}
 		break;
@@ -3133,7 +3133,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 			if (len != sizeof(struct rr_tuning)) {
 				error = EMSGSIZE;
 			} else {
-				error = copyin(data, (caddr_t) &sc->sc_tune, 
+				error = copyin(data, (caddr_t) &sc->sc_tune,
 					       sizeof(struct rr_tuning));
 			}
 		} else {
@@ -3144,7 +3144,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 	case EIOCGSTATS:
 		if (len != sizeof(struct rr_stats))
 			error = EMSGSIZE;
-		else 
+		else
 			error = copyout((caddr_t) &sc->sc_gen_info->ri_stats,
 					data, sizeof(struct rr_stats));
 		break;
@@ -3172,7 +3172,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 			error = EFBIG;
 			break;
 		}
-	    
+
 		if (offset + length > RR_EE_MAX_LEN * sizeof(u_int32_t)) {
 			error = EFAULT;
 			break;
@@ -3182,23 +3182,23 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 			error = EIO;
 			break;
 		}
-	    
+
 		/* Halt the processor (preserve NO_SWAP, if set) */
 
 		misc_host_ctl = bus_space_read_4(iot, ioh, RR_MISC_HOST_CTL);
-		bus_space_write_4(iot, ioh, RR_MISC_HOST_CTL, 
-				  (misc_host_ctl & RR_MH_NO_SWAP) | 
+		bus_space_write_4(iot, ioh, RR_MISC_HOST_CTL,
+				  (misc_host_ctl & RR_MH_NO_SWAP) |
 				  RR_MH_HALT_PROC);
 
 		/* Make the EEPROM accessible */
 
 		misc_local_ctl = bus_space_read_4(iot, ioh, RR_MISC_LOCAL_CTL);
-		value = misc_local_ctl & 
+		value = misc_local_ctl &
 			~(RR_LC_FAST_PROM | RR_LC_ADD_SRAM | RR_LC_PARITY_ON);
 		if (cmd == EIOCSEEPROM)   /* make writable! */
 			value |= RR_LC_WRITE_PROM;
 		bus_space_write_4(iot, ioh, RR_MISC_LOCAL_CTL, value);
-	    
+
 		if (cmd == EIOCSEEPROM) {
 			printf("%s:  writing EEPROM\n", sc->sc_dev.dv_xname);
 			sc->sc_flags |= ESH_FL_EEPROM_BUSY;
@@ -3211,7 +3211,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 			if (cmd == EIOCGEEPROM) {
 				value = esh_read_eeprom(sc, address);
 				address += RR_EE_WORD_LEN;
-				if (copyout(&value, 
+				if (copyout(&value,
 					    (caddr_t) rr_eeprom.ifr_buffer + i,
 					    sizeof(u_int32_t)) != 0) {
 					error = EFAULT;
@@ -3223,18 +3223,18 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 					error = EFAULT;
 					break;
 				}
-				if (esh_write_eeprom(sc, address, 
+				if (esh_write_eeprom(sc, address,
 						     value) != 0) {
 					error = EIO;
 					break;
 				}
 
-				/* 
-				 * Have to give up control now and 
+				/*
+				 * Have to give up control now and
 				 * then, so sleep for a clock tick.
-				 * Might be good to figure out how 
-				 * long a tick is, so that we could 
-				 * intelligently chose the frequency 
+				 * Might be good to figure out how
+				 * long a tick is, so that we could
+				 * intelligently chose the frequency
 				 * of these pauses.
 				 */
 
@@ -3242,16 +3242,16 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 					tsleep((void *)&sc->sc_flags,
 					       PRIBIO, "eshweeprom", 1);
 				}
-			
+
 				address += RR_EE_WORD_LEN;
 			}
-		}		
+		}
 
 		bus_space_write_4(iot, ioh, RR_MISC_LOCAL_CTL, misc_local_ctl);
 		if (cmd == EIOCSEEPROM) {
 			sc->sc_flags &= ~ESH_FL_EEPROM_BUSY;
 			wakeup((void *)&sc->sc_flags);
-			printf("%s:  done writing EEPROM\n", 
+			printf("%s:  done writing EEPROM\n",
 			       sc->sc_dev.dv_xname);
 		}
 		break;
@@ -3301,7 +3301,7 @@ eshwatchdog(ifp)
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		eshstatus(sc);
 #if 0
- 		eshstop(sc);  /*   DON'T DO THIS, it'll clear data we 
+ 		eshstop(sc);  /*   DON'T DO THIS, it'll clear data we
 				   could use to debug it! */
 #endif
 	} else {
@@ -3338,21 +3338,21 @@ eshstop(sc)
 			BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	misc_host_ctl = bus_space_read_4(iot, ioh, RR_MISC_HOST_CTL);
-	bus_space_write_4(iot, ioh, RR_MISC_HOST_CTL, 
+	bus_space_write_4(iot, ioh, RR_MISC_HOST_CTL,
 			  (misc_host_ctl & RR_MH_NO_SWAP) | RR_MH_HALT_PROC);
 	sc->sc_flags = 0;
 	ifp->if_timer = 0;  /* turn off watchdog timer */
 
-	while (sc->sc_snap_recv.ec_consumer 
+	while (sc->sc_snap_recv.ec_consumer
                != sc->sc_snap_recv.ec_producer) {
 		struct mbuf *m0;
 		u_int16_t offset = sc->sc_snap_recv.ec_consumer;
-	
-		bus_dmamap_unload(sc->sc_dmat, 
+
+		bus_dmamap_unload(sc->sc_dmat,
 				  sc->sc_snap_recv.ec_dma[offset]);
 		MFREE(sc->sc_snap_recv.ec_m[offset], m0);
 		sc->sc_snap_recv.ec_m[offset] = NULL;
-		sc->sc_snap_recv.ec_consumer = 
+		sc->sc_snap_recv.ec_consumer =
 			NEXT_RECV(sc->sc_snap_recv.ec_consumer);
 		wakeup((void *) &sc->sc_snap_recv);
 	}
@@ -3367,12 +3367,12 @@ eshstop(sc)
 			continue;
 
 		/* Get rid of outstanding buffers */
-		
+
 		esh_dma_sync(sc, ring->ec_descr,
 			     ring->ec_consumer, ring->ec_producer,
-			     RR_FP_RECV_RING_SIZE, sizeof(struct rr_descr), 0, 
+			     RR_FP_RECV_RING_SIZE, sizeof(struct rr_descr), 0,
 			     BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-			
+
 		while (ring->ec_consumer != ring->ec_producer) {
 			di = ring->ec_dmainfo[ring->ec_consumer];
 			if (di != NULL)
@@ -3416,7 +3416,7 @@ eshstop(sc)
 	sc->sc_send.ec_cur_buf = NULL;
 	sc->sc_send.ec_cur_dmainfo = NULL;
 
-	/* 
+	/*
 	 * Clear out the index values, since they'll be useless
 	 * when we restart.
 	 */
@@ -3429,7 +3429,7 @@ eshstop(sc)
 	wakeup((void *) sc);		/* Wait on initialization */
 	wakeup((void *) &sc->sc_flags);	/* Wait on EEPROM write */
 
-	/* 
+	/*
 	 * XXX:  I have to come up with a way to avoid handling interrupts
 	 *       received before this shuts down the card, but processed
 	 *       afterwards!
@@ -3448,7 +3448,7 @@ eshstop(sc)
  * All addresses listed here are the actual starting addresses.
  */
 
-static u_int32_t 
+static u_int32_t
 esh_read_eeprom(sc, addr)
 	struct esh_softc *sc;
 	u_int32_t addr;
@@ -3463,9 +3463,9 @@ esh_read_eeprom(sc, addr)
 		addr += RR_EE_OFFSET;
 
 	for (i = 0; i < 4; i++, addr += RR_EE_BYTE_LEN) {
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, 
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 				  RR_WINDOW_BASE, addr);
-		tmp = bus_space_read_4(sc->sc_iot, sc->sc_ioh, 
+		tmp = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 				       RR_WINDOW_DATA);
 		value = (value << 8) | ((tmp >> 24) & 0xff);
 	}
@@ -3475,7 +3475,7 @@ esh_read_eeprom(sc, addr)
 
 /*
  * Write a value to the eeprom.  Just like esh_read_eeprom, this routine
- * expects that the NIC has already been tweaked to put it into the right 
+ * expects that the NIC has already been tweaked to put it into the right
  * state for reading from the EEPROM.  Things are further complicated
  * in that we need to read each byte after we write it to ensure that
  * the new value has been successfully written.  It can take as long
@@ -3490,27 +3490,27 @@ esh_write_eeprom(sc, addr, value)
 {
 	int i, j;
 	u_int32_t shifted_value, tmp = 0;
- 
+
 	/* If the offset hasn't been added, add it.  Otherwise pass through */
 
 	if (!(addr & RR_EE_OFFSET))
 		addr += RR_EE_OFFSET;
 
 	for (i = 0; i < 4; i++, addr += RR_EE_BYTE_LEN) {
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, 
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 				  RR_WINDOW_BASE, addr);
 
-		/* 
-		 * Get the byte out of value, starting with the top, and 
+		/*
+		 * Get the byte out of value, starting with the top, and
 		 * put it into the top byte of the word to write.
 		 */
 
 		shifted_value = ((value >> ((3 - i) * 8)) & 0xff) << 24;
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, RR_WINDOW_DATA, 
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, RR_WINDOW_DATA,
 				  shifted_value);
 		for (j = 0; j < 50; j++) {
-			tmp = bus_space_read_4(sc->sc_iot, sc->sc_ioh, 
-					       RR_WINDOW_DATA); 
+			tmp = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+					       RR_WINDOW_DATA);
 			if (tmp == shifted_value)
 				break;
 			delay(500);  /* 50us break * 20 = 1ms */
@@ -3528,7 +3528,7 @@ esh_write_eeprom(sc, addr, value)
  * panic.
  */
 
-static void 
+static void
 esh_send_cmd(sc, cmd, ring, index)
 	struct esh_softc *sc;
 	u_int8_t cmd;
@@ -3544,7 +3544,7 @@ esh_send_cmd(sc, cmd, ring, index)
 	c.b.rc_ring = ring;
 	c.b.rc_index = index;
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			  RR_COMMAND_RING + sizeof(c) * sc->sc_cmd_producer,
 			  c.l);
 
@@ -3611,7 +3611,7 @@ esh_reset_runcode(sc)
 		len = esh_read_eeprom(sc, rc_addr);
 		rc_addr += RR_EE_WORD_LEN;
 		ee_addr = esh_read_eeprom(sc, rc_addr);
-	
+
 		while (len--) {
 			value = esh_read_eeprom(sc, ee_addr);
 			bus_space_write_4(iot, ioh, RR_WINDOW_BASE, sram_addr);
@@ -3645,14 +3645,14 @@ esh_dma_sync(sc, mem, start, end, entries, size, do_equal, ops)
 
 	if (start < end) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma,
-				offset + start * size, 
+				offset + start * size,
 				(end - start) * size, ops);
 	} else if (do_equal || start != end) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma,
-				offset, 
+				offset,
 				end * size, ops);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma,
-				offset + start * size, 
+				offset + start * size,
 				(entries - start) * size, ops);
 	}
 }
@@ -3681,11 +3681,11 @@ esh_new_dmainfo(sc)
 	    M_WAITOK|M_ZERO);
 	assert(di != NULL);
 
-	if (bus_dmamap_create(sc->sc_dmat, ESH_MAX_NSEGS * RR_DMA_MAX, 
-			      ESH_MAX_NSEGS, RR_DMA_MAX, RR_DMA_BOUNDARY, 
-			      BUS_DMA_ALLOCNOW | BUS_DMA_WAITOK, 
+	if (bus_dmamap_create(sc->sc_dmat, ESH_MAX_NSEGS * RR_DMA_MAX,
+			      ESH_MAX_NSEGS, RR_DMA_MAX, RR_DMA_BOUNDARY,
+			      BUS_DMA_ALLOCNOW | BUS_DMA_WAITOK,
 			      &di->ed_dma)) {
-		printf("%s:  failed dmainfo bus_dmamap_create\n", 
+		printf("%s:  failed dmainfo bus_dmamap_create\n",
 		       sc->sc_dev.dv_xname);
 		free(di,  M_DEVBUF);
 		di = NULL;
@@ -3716,7 +3716,7 @@ esh_free_dmainfo(sc, di)
 
 /* ------------------------- debugging functions --------------------------- */
 
-/* 
+/*
  * Print out status information about the NIC and the driver.
  */
 
@@ -3731,33 +3731,33 @@ eshstatus(sc)
 	/* XXX:   This looks pathetic, and should be improved! */
 
 	printf("%s:  status -- fail1 %x fail2 %x\n",
-	       sc->sc_dev.dv_xname, 
+	       sc->sc_dev.dv_xname,
 	       bus_space_read_4(iot, ioh, RR_RUNCODE_FAIL1),
 	       bus_space_read_4(iot, ioh, RR_RUNCODE_FAIL2));
 	printf("\tmisc host ctl %x  misc local ctl %x\n",
 	       bus_space_read_4(iot, ioh, RR_MISC_HOST_CTL),
 	       bus_space_read_4(iot, ioh, RR_MISC_LOCAL_CTL));
-	printf("\toperating mode %x  event producer %x\n", 
+	printf("\toperating mode %x  event producer %x\n",
 	       bus_space_read_4(iot, ioh, RR_MODE_AND_STATUS),
 	       bus_space_read_4(iot, ioh, RR_EVENT_PRODUCER));
-	printf("\tPC %x  max rings %x\n", 
+	printf("\tPC %x  max rings %x\n",
 	       bus_space_read_4(iot, ioh, RR_PROC_PC),
 	       bus_space_read_4(iot, ioh, RR_MAX_RECV_RINGS));
-	printf("\tHIPPI tx state %x  rx state %x\n", 
+	printf("\tHIPPI tx state %x  rx state %x\n",
 	       bus_space_read_4(iot, ioh, RR_TX_STATE),
 	       bus_space_read_4(iot, ioh, RR_RX_STATE));
-	printf("\tDMA write state %x  read state %x\n", 
+	printf("\tDMA write state %x  read state %x\n",
 	       bus_space_read_4(iot, ioh, RR_DMA_WRITE_STATE),
 	       bus_space_read_4(iot, ioh, RR_DMA_READ_STATE));
-	printf("\tDMA write addr %x%x  read addr %x%x\n", 
+	printf("\tDMA write addr %x%x  read addr %x%x\n",
 	       bus_space_read_4(iot, ioh, RR_WRITE_HOST),
 	       bus_space_read_4(iot, ioh, RR_WRITE_HOST + 4),
 	       bus_space_read_4(iot, ioh, RR_READ_HOST),
 	       bus_space_read_4(iot, ioh, RR_READ_HOST + 4));
 
-	for (i = 0; i < 64; i++) 
+	for (i = 0; i < 64; i++)
 		if (sc->sc_gen_info->ri_stats.rs_stats[i])
-			printf("stat %x is %x\n", i * 4, 
+			printf("stat %x is %x\n", i * 4,
 			       sc->sc_gen_info->ri_stats.rs_stats[i]);
 
 	return 0;

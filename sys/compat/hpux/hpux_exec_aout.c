@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec_aout.c,v 1.8.2.6 2005/02/09 15:16:28 skrll Exp $	*/
+/*	$NetBSD: hpux_exec_aout.c,v 1.8.2.7 2005/03/04 16:39:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.8.2.6 2005/02/09 15:16:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.8.2.7 2005/03/04 16:39:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.8.2.6 2005/02/09 15:16:28 skrll
 #include <machine/reg.h>
 
 #include <sys/sa.h>
-#include <sys/syscallargs.h>    
+#include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>
 #include <compat/hpux/hpux_util.h>

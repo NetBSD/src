@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.3.4.4 2005/02/15 21:33:13 skrll Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.3.4.5 2005/03/04 16:45:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -155,12 +155,21 @@ re_pci_probe(struct device *parent, struct cfdata *match, void *aux)
 			 * Temporarily map the I/O space
 			 * so we can read the chip ID register.
 			 */
+#ifdef RE_USEIOSPACE
 			if (pci_mapreg_map(pa, RTK_PCI_LOIO,
 			    PCI_MAPREG_TYPE_IO, 0, &rtk_btag,
 			    &rtk_bhandle, NULL, &bsize)) {
 				aprint_error("can't map i/o space\n");
 				return 0;
 			}
+#else
+			if (pci_mapreg_map(pa, RTK_PCI_LOMEM,
+			    PCI_MAPREG_TYPE_MEM, 0, &rtk_btag,
+			    &rtk_bhandle, NULL, &bsize)) {
+				aprint_error("can't map mem space\n");
+				return 0;
+			}
+#endif
 			hwrev = bus_space_read_4(rtk_btag, rtk_bhandle,
 			    RTK_TXCFG) & RTK_TXCFG_HWREV;
 			bus_space_unmap(rtk_btag, rtk_bhandle, bsize);
@@ -271,7 +280,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * mark the card enabled now.
 	 */
 	sc->sc_flags |= RTK_ENABLED;
-	
+
 	/* Hook interrupt last to avoid having to lock softc */
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
@@ -294,7 +303,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	re_attach(sc);
 
 	/*
-	 * Perform hardware diagnostic. 
+	 * Perform hardware diagnostic.
 	 * XXX: this diagnostic only makes sense for attachemnts with 64-bit
 	 * busses: PCI, but not CardBus.
 	 */
@@ -305,7 +314,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 
 		re_detach(sc);
-		
+
 		if (psc->sc_ih != NULL) {
 			pci_intr_disestablish(pc, psc->sc_ih);
 			psc->sc_ih = NULL;

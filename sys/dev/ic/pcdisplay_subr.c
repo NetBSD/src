@@ -1,21 +1,21 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.25.6.3 2004/09/21 13:28:07 skrll Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.25.6.4 2005/03/04 16:41:32 skrll Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.25.6.3 2004/09/21 13:28:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.25.6.4 2005/03/04 16:41:32 skrll Exp $");
 
 #include "opt_wsdisplay_compat.h" /* for WSDISPLAY_CHARFUNCS */
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
@@ -56,7 +56,7 @@ pcdisplay_cursor_init(scr, existing)
 
 	pcdisplay_6845_write(scr->hdl, curstart, 0x10);
 	pcdisplay_6845_write(scr->hdl, curend, 0x10);
-	
+
 	if (existing) {
 		/*
 		 * This is the first screen. At this point, scr->mem is NULL
@@ -108,7 +108,7 @@ pcdisplay_cursor(id, on, row, col)
 		else
 			scr->mem[off] = scr->cursortmp;
 	}
-		
+
 	scr->cursorrow = row;
 	scr->cursorcol = col;
 

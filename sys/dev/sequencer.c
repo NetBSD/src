@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.24.2.5 2005/02/04 11:45:09 skrll Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.24.2.6 2005/03/04 16:40:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.24.2.5 2005/02/04 11:45:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.24.2.6 2005/03/04 16:40:54 skrll Exp $");
 
 #include "sequencer.h"
 
@@ -299,7 +299,7 @@ seq_timeout(addr)
 		if (sc->async)
 			psignal(sc->async, SIGIO);
 	}
-		
+
 }
 
 void
@@ -351,7 +351,7 @@ seq_input_event(sc, cmd)
 {
 	struct sequencer_queue *q = &sc->inq;
 
-	DPRINTFN(2, ("seq_input_event: %02x %02x %02x %02x %02x %02x %02x %02x\n", 
+	DPRINTFN(2, ("seq_input_event: %02x %02x %02x %02x %02x %02x %02x %02x\n",
 		     cmd->arr[0], cmd->arr[1], cmd->arr[2], cmd->arr[3],
 		     cmd->arr[4], cmd->arr[5], cmd->arr[6], cmd->arr[7]));
 	if (SEQ_QFULL(q))
@@ -409,7 +409,7 @@ sequencerread(dev, uio, ioflag)
 	seq_event_rec ev;
 	int error, s;
 
-	DPRINTFN(20, ("sequencerread: %p, count=%d, ioflag=%x\n", 
+	DPRINTFN(20, ("sequencerread: %p, count=%d, ioflag=%x\n",
 		     sc, (int) uio->uio_resid, ioflag));
 
 	if (sc->mode == SEQ_OLD) {
@@ -559,7 +559,7 @@ sequencerioctl(dev, cmd, addr, flag, l)
 		break;
 
 	case SEQUENCER_OUTOFBAND:
-		DPRINTFN(3, ("sequencer_ioctl: OOB=%02x %02x %02x %02x %02x %02x %02x %02x\n", 
+		DPRINTFN(3, ("sequencer_ioctl: OOB=%02x %02x %02x %02x %02x %02x %02x %02x\n",
 			     *(u_char *)addr, *(u_char *)(addr+1),
 			     *(u_char *)(addr+2), *(u_char *)(addr+3),
 			     *(u_char *)(addr+4), *(u_char *)(addr+5),
@@ -802,7 +802,7 @@ seq_do_command(sc, b)
 			return (ENXIO);
 		return midiseq_putc(sc->devs[dev], b->arr[1]);
 	default:
-		DPRINTFN(-1,("seq_do_command: unimpl command %02x\n", 
+		DPRINTFN(-1,("seq_do_command: unimpl command %02x\n",
 			     SEQ_CMD(b)));
 		return (EINVAL);
 	}
@@ -825,7 +825,7 @@ seq_do_chnvoice(sc, b)
 	chan = SEQ_ECHAN(b);
 	note = SEQ_ENOTE(b);
 	parm = SEQ_EPARM(b);
-	DPRINTFN(2,("seq_do_chnvoice: cmd=%02x dev=%d chan=%d note=%d parm=%d\n", 
+	DPRINTFN(2,("seq_do_chnvoice: cmd=%02x dev=%d chan=%d note=%d parm=%d\n",
 		    cmd, dev, chan, note, parm));
 	voice = chan;
 	if (cmd == MIDI_NOTEON && parm == 0) {
@@ -834,7 +834,7 @@ seq_do_chnvoice(sc, b)
 	}
 	switch(cmd) {
 	case MIDI_NOTEON:
-		DPRINTFN(5, ("seq_do_chnvoice: noteon %p %d %d %d\n", 
+		DPRINTFN(5, ("seq_do_chnvoice: noteon %p %d %d %d\n",
 			     md, voice, note, parm));
 		error = midiseq_noteon(md, voice, note, parm);
 		break;
@@ -1080,7 +1080,7 @@ seq_to_new(ev, uio)
 	if (cmd >= 0x80) {
 		/* Fill the event record */
 		if (uio->uio_resid >= sizeof *ev - SEQOLD_CMDSIZE) {
-			error = uiomove(&ev->arr[SEQOLD_CMDSIZE], 
+			error = uiomove(&ev->arr[SEQOLD_CMDSIZE],
 					sizeof *ev - SEQOLD_CMDSIZE, uio);
 			if (error)
 				return error;
@@ -1149,7 +1149,7 @@ midiseq_in(md, msg, len)
 	seq_event_rec ev;
 	int status, chan;
 
-	DPRINTFN(2, ("midiseq_in: %p %02x %02x %02x\n", 
+	DPRINTFN(2, ("midiseq_in: %p %02x %02x %02x\n",
 		     md, msg[0], msg[1], msg[2]));
 
 	status = MIDI_GET_STATUS(msg[0]);
@@ -1173,7 +1173,7 @@ midiseq_in(md, msg, len)
 		SEQ_MK_CHN_COMMON(&ev, unit, status, chan, msg[1], 0, 0);
 		break;
 	case MIDI_PITCH_BEND:
-		SEQ_MK_CHN_COMMON(&ev, unit, status, chan, 0, 0, 
+		SEQ_MK_CHN_COMMON(&ev, unit, status, chan, 0, 0,
 				  (msg[1] & 0x7f) | ((msg[2] & 0x7f) << 7));
 		break;
 	default:
@@ -1258,7 +1258,7 @@ midiseq_noteon(md, chan, note, vel)
 {
 	u_char buf[3];
 
-	DPRINTFN(6, ("midiseq_noteon 0x%02x %d %d\n", 
+	DPRINTFN(6, ("midiseq_noteon 0x%02x %d %d\n",
 		     MIDI_NOTEON | chan, note, vel));
 	if (chan < 0 || chan > 15 ||
 	    note < 0 || note > 127)
@@ -1414,8 +1414,8 @@ midiseq_loadpatch(md, sysex, uio)
 		if (i != cc)
 			break;
 	}
-	/* Any leftover data in uio is rubbish; 
-	 * the SYSEX should be one write ending in SYSEX_END. 
+	/* Any leftover data in uio is rubbish;
+	 * the SYSEX should be one write ending in SYSEX_END.
 	 */
 	uio->uio_resid = 0;
 	c = MIDI_SYSEX_END;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.27.2.4 2004/11/28 11:30:03 skrll Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.27.2.5 2005/03/04 16:40:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.27.2.4 2004/11/28 11:30:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.27.2.5 2005/03/04 16:40:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ struct ultrix_getmnt_args {
 #define ULTRIX_NM_PGTHRESH 0x0080  /* set page threshold for exec */
 #define ULTRIX_NM_INT      0x0100  /* allow hard mount keyboard interrupts */
 #define ULTRIX_NM_NOAC     0x0200  /* don't cache attributes */
-									
+
 
 static void
 make_ultrix_mntent(struct statvfs *, struct ultrix_fs_data *);
@@ -401,7 +401,7 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 		ua.fspec = SCARG(uap, special);
 		memset(&ua.export, 0, sizeof(ua.export));
 		SCARG(&nuap, data) = usp;
-	
+
 		if ((error = copyout(&ua, SCARG(&nuap, data),
 				     sizeof ua)) !=0) {
 			return(error);

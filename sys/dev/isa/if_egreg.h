@@ -1,4 +1,4 @@
-/*	$NetBSD: if_egreg.h,v 1.3 1995/07/23 21:14:35 mycroft Exp $	*/
+/*	$NetBSD: if_egreg.h,v 1.3.66.1 2005/03/04 16:43:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley (dean@fsa.ca)
@@ -63,7 +63,7 @@
 
 /*
  * Host Status Register bits
- * EG_STAT_HRDY - Data Register ready 
+ * EG_STAT_HRDY - Data Register ready
  * EG_STAT_HCRE - Host Command Register empty
  * EG_STAT_ACRF - Adapter Command register full
  * EG_STAT_DIR  - Direction flag, 0 = host -> adapter, 1 = adapter -> host
@@ -83,7 +83,7 @@
 #define EG_STAT_ASF1 0x01
 
 #define	EG_PCB_NULL	0x00
-#define EG_PCB_ACCEPT	0x01 
+#define EG_PCB_ACCEPT	0x01
 #define EG_PCB_REJECT	0x02
 #define EG_PCB_DONE	0x03
 #define EG_PCB_STAT	0x03

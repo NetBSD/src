@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.88.2.3 2004/09/21 13:31:04 skrll Exp $ */
+/* $NetBSD: isp_pci.c,v 1.88.2.4 2005/03/04 16:45:21 skrll Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.88.2.3 2004/09/21 13:31:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.88.2.4 2005/03/04 16:45:21 skrll Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -76,7 +76,7 @@ static void isp_pci_wr_reg_1080(struct ispsoftc *, int, u_int16_t);
 	 !defined(ISP_DISABLE_2200_SUPPORT) && \
 	 !defined(ISP_DISABLE_1020_SUPPORT) && \
 	 !defined(ISP_DISABLE_1080_SUPPORT) && \
-	 !defined(ISP_DISABLE_12160_SUPPORT) 
+	 !defined(ISP_DISABLE_12160_SUPPORT)
 static int
 isp_pci_rd_isr(struct ispsoftc *, u_int16_t *, u_int16_t *, u_int16_t *);
 #endif
@@ -326,7 +326,7 @@ CFATTACH_DECL(isp_pci, sizeof (struct isp_pcisoftc),
     isp_pci_probe, isp_pci_attach, NULL, NULL);
 
 #ifdef	DEBUG
-const char vstring[] = 
+const char vstring[] =
     "Qlogic ISP Driver, NetBSD (pci) Platform Version %d.%d Core Version %d.%d";
 #endif
 
@@ -391,7 +391,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	ioh_valid = (pci_mapreg_map(pa, IO_MAP_REG,
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL) == 0);
-	
+
 	mem_type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, MEM_MAP_REG);
 	if (PCI_MAPREG_TYPE(mem_type) != PCI_MAPREG_TYPE_MEM) {
 		memh_valid = 0;
@@ -726,7 +726,7 @@ isp_pci_rd_debounced(struct ispsoftc *isp, int off, u_int16_t *rp)
 	 !defined(ISP_DISABLE_2200_SUPPORT) && \
 	 !defined(ISP_DISABLE_1020_SUPPORT) && \
 	 !defined(ISP_DISABLE_1080_SUPPORT) && \
-	 !defined(ISP_DISABLE_12160_SUPPORT) 
+	 !defined(ISP_DISABLE_12160_SUPPORT)
 static int
 isp_pci_rd_isr(struct ispsoftc *isp, u_int16_t *isrp,
     u_int16_t *semap, u_int16_t *mbp)
@@ -884,7 +884,7 @@ isp_pci_rd_reg_1080(struct ispsoftc *isp, int regoff)
 		BXW2(pcs, IspVirt2Off(isp, BIU_CONF1), tc);
 	} else if ((regoff & _BLK_REG_MASK) == DMA_BLOCK) {
 		oc = BXR2(pcs, IspVirt2Off(isp, BIU_CONF1));
-		BXW2(pcs, IspVirt2Off(isp, BIU_CONF1), 
+		BXW2(pcs, IspVirt2Off(isp, BIU_CONF1),
 		    oc | BIU_PCI1080_CONF1_DMA);
 	}
 	rv = BXR2(pcs, IspVirt2Off(isp, regoff));
@@ -915,7 +915,7 @@ isp_pci_wr_reg_1080(struct ispsoftc *isp, int regoff, u_int16_t val)
 		BXW2(pcs, IspVirt2Off(isp, BIU_CONF1), tc);
 	} else if ((regoff & _BLK_REG_MASK) == DMA_BLOCK) {
 		oc = BXR2(pcs, IspVirt2Off(isp, BIU_CONF1));
-		BXW2(pcs, IspVirt2Off(isp, BIU_CONF1), 
+		BXW2(pcs, IspVirt2Off(isp, BIU_CONF1),
 		    oc | BIU_PCI1080_CONF1_DMA);
 	}
 	BXW2(pcs, IspVirt2Off(isp, regoff), val);
@@ -1183,7 +1183,7 @@ isp_pci_intr(void *arg)
 
 	isp->isp_intcnt++;
 	if (ISP_READ_ISR(isp, &isr, &sema, &mbox) == 0) {
-		isp->isp_intbogus++; 
+		isp->isp_intbogus++;
 		return (0);
 	} else {
 		isp->isp_osinfo.onintstack = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.21.2.3 2004/09/21 13:25:42 skrll Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.21.2.4 2005/03/04 16:40:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.21.2.3 2004/09/21 13:25:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.21.2.4 2005/03/04 16:40:12 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.21.2.3 2004/09/21 13:25:42 skrll Ex
 #endif
 
 struct mach_iokit_devclass mach_ioroot_devclass = {
-	"(unknwon)", 
+	"(unknwon)",
 	{ NULL },
 	"<dict ID=\"0\"></dict>",
 	NULL,
@@ -95,11 +95,11 @@ mach_io_service_get_matching_services(args)
 {
 	mach_io_service_get_matching_services_request_t *req = args->smsg;
 	mach_io_service_get_matching_services_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
-	struct mach_iokit_devclass *mid; 
+	struct mach_iokit_devclass *mid;
 	struct mach_device_iterator *mdi;
 	size_t size;
 	int end_offset;
@@ -117,11 +117,11 @@ mach_io_service_get_matching_services(args)
 	mp->mp_data = NULL;
 	i = 0;
 	while ((mid = mach_iokit_devclasses[i++]) != NULL) {
-		if (memcmp(req->req_string, mid->mid_string, 
+		if (memcmp(req->req_string, mid->mid_string,
 		    req->req_size) == 0) {
 			mp->mp_datatype = MACH_MP_DEVICE_ITERATOR;
 
-			size = sizeof(*mdi) 
+			size = sizeof(*mdi)
 			    + sizeof(struct mach_device_iterator *);
 			mdi = malloc(size, M_EMULDATA, M_WAITOK);
 			mdi->mdi_devices[0] = mid;
@@ -150,7 +150,7 @@ mach_io_iterator_next(args)
 {
 	mach_io_iterator_next_request_t *req = args->smsg;
 	mach_io_iterator_next_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
@@ -176,7 +176,7 @@ mach_io_iterator_next(args)
 	mp->mp_data = mdi->mdi_devices[mdi->mdi_current++];
 
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
-	
+
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 	mach_add_port_desc(rep, mr->mr_name);
@@ -191,7 +191,7 @@ mach_io_service_open(args)
 {
 	mach_io_service_open_request_t *req = args->smsg;
 	mach_io_service_open_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
@@ -208,7 +208,7 @@ mach_io_service_open(args)
 		mp->mp_data = mr->mr_port->mp_data;
 	}
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
-	
+
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 	mach_add_port_desc(rep, mr->mr_name);
@@ -228,11 +228,11 @@ mach_io_connect_method_scalari_scalaro(args)
 	struct mach_iokit_devclass *mid;
 	int end_offset, outcount;
 
-	/* 
-	 * Sanity check req_incount 
-	 * the +1 gives us the last field of the message, req_outcount 
+	/*
+	 * Sanity check req_incount
+	 * the +1 gives us the last field of the message, req_outcount
 	 */
-	end_offset = req->req_incount + 
+	end_offset = req->req_incount +
 		     (sizeof(req->req_outcount) / sizeof(req->req_in[0]));
 	if (MACH_REQMSG_OVERFLOW(args, req->req_in[end_offset]))
 		return mach_msg_error(args, EINVAL);
@@ -245,7 +245,7 @@ mach_io_connect_method_scalari_scalaro(args)
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
-	
+
 	if (mr->mr_port->mp_datatype == MACH_MP_IOKIT_DEVCLASS) {
 		mid = mr->mr_port->mp_data;
 		if (mid->mid_connect_method_scalari_scalaro == NULL)
@@ -264,7 +264,7 @@ mach_io_connect_get_service(args)
 {
 	mach_io_connect_get_service_request_t *req = args->smsg;
 	mach_io_connect_get_service_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
@@ -282,7 +282,7 @@ mach_io_connect_get_service(args)
 	}
 	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
 
-	/* 
+	/*
 	 * XXX Bump the refcount to workaround an emulation bug
 	 * that causes Windowserver to release the port too early.
 	 */
@@ -302,7 +302,7 @@ mach_io_registry_entry_create_iterator(args)
 {
 	mach_io_registry_entry_create_iterator_request_t *req = args->smsg;
 	mach_io_registry_entry_create_iterator_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	mach_port_t mn;
@@ -314,7 +314,7 @@ mach_io_registry_entry_create_iterator(args)
 	size_t size;
 	int end_offset;
 
-	/* 
+	/*
 	 * req_planeoffset is not used.
 	 * Sanity check req_planecount
 	 */
@@ -339,19 +339,19 @@ mach_io_registry_entry_create_iterator(args)
 	mdi = malloc(size, M_EMULDATA, M_WAITOK);
 	mp->mp_data = mdi;
 
-	if (req->req_options & MACH_IOKIT_PARENT_ITERATOR) 
+	if (req->req_options & MACH_IOKIT_PARENT_ITERATOR)
 		index = mach_fill_parent_iterator(mdi, maxdev, 0, mid);
-	else 
+	else
 		index = mach_fill_child_iterator(mdi, maxdev, 0, mid);
 
 	/* XXX This is untested */
 	if (req->req_options & MACH_IOKIT_RECURSIVE_ITERATOR) {
 		for (midp = mdi->mdi_devices; *midp != NULL; midp++) {
-			if (req->req_options & MACH_IOKIT_PARENT_ITERATOR) 
-				index = mach_fill_parent_iterator(mdi, 
+			if (req->req_options & MACH_IOKIT_PARENT_ITERATOR)
+				index = mach_fill_parent_iterator(mdi,
 				    maxdev, index, *midp);
-			else 
-				index = mach_fill_child_iterator(mdi, 
+			else
+				index = mach_fill_child_iterator(mdi,
 				    maxdev, index, *midp);
 		}
 	}
@@ -378,10 +378,10 @@ mach_io_object_conforms_to(args)
 {
 	mach_io_object_conforms_to_request_t *req = args->smsg;
 	mach_io_object_conforms_to_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	int end_offset;
 
-	/* 
+	/*
 	 * req_classnameoffset is not used.
 	 * Sanity check req_classnamecount.
 	 */
@@ -409,31 +409,31 @@ mach_io_service_add_interest_notification(args)
 {
 	mach_io_service_add_interest_notification_request_t *req = args->smsg;
 	mach_io_service_add_interest_notification_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
 	int end_offset, refcount_offset;
 	int item_size, refitem_size, refcount;
 
-	/* 
+	/*
 	 * req_typeofinterestoffset is not used.
-	 * Sanity checks: first check refcount is not 
+	 * Sanity checks: first check refcount is not
 	 * outside the message. NB: it is word aligned
 	 */
 	refcount_offset = (req->req_typeofinterestcount & ~0x3UL) + 4;
-	if (MACH_REQMSG_OVERFLOW(args, 
+	if (MACH_REQMSG_OVERFLOW(args,
 	    req->req_typeofinterest[refcount_offset]))
 		return mach_msg_error(args, EINVAL);
 	refcount = req->req_typeofinterest[refcount_offset];
 
-	/* 
+	/*
 	 * Sanity check typeofinterestcount and refcount
 	 */
 	item_size = sizeof(req->req_typeofinterest[0]);
 	refitem_size = sizeof(req->req_ref[0]);
 	end_offset = req->req_typeofinterestcount +
-		     (sizeof(refcount) / item_size) + 
+		     (sizeof(refcount) / item_size) +
 		     (refcount * refitem_size / item_size);
 	if (MACH_REQMSG_OVERFLOW(args, req->req_typeofinterest[end_offset]))
 		return mach_msg_error(args, EINVAL);
@@ -460,7 +460,7 @@ mach_io_connect_set_notification_port(args)
 	mach_io_connect_set_notification_port_request_t *req = args->smsg;
 	mach_io_connect_set_notification_port_reply_t *rep = args->rmsg;
 	struct lwp *l = args->l;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	mach_port_t mnn, mn;
 	struct mach_right *mrn;
 	struct mach_right *mr;
@@ -472,7 +472,7 @@ mach_io_connect_set_notification_port(args)
 	mnn = req->req_port.name;
 	if ((mrn = mach_right_check(mnn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_msg_error(args, EINVAL);
-		
+
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_msg_error(args, EINVAL);
@@ -502,7 +502,7 @@ mach_io_registry_get_root_entry(args)
 {
 	mach_io_registry_get_root_entry_request_t *req = args->smsg;
 	mach_io_registry_get_root_entry_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
@@ -528,7 +528,7 @@ mach_io_registry_entry_get_child_iterator(args)
 {
 	mach_io_registry_entry_get_child_iterator_request_t *req = args->smsg;
 	mach_io_registry_entry_get_child_iterator_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
@@ -539,7 +539,7 @@ mach_io_registry_entry_get_child_iterator(args)
 	size_t size;
 	int end_offset;
 
-	/* 
+	/*
 	 * req_planeoffset is not used.
 	 * Sanity check req_planecount.
 	 */
@@ -582,14 +582,14 @@ mach_io_registry_entry_get_name_in_plane(args)
 {
 	mach_io_registry_entry_get_name_in_plane_request_t *req = args->smsg;
 	mach_io_registry_entry_get_name_in_plane_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct mach_right *mr;
 	mach_port_t mn;
 	struct mach_iokit_devclass *mid;
 	int end_offset;
 
-	/* 
+	/*
 	 * req_planeoffset is not used.
 	 * Sanity check req_planecount.
 	 */
@@ -623,13 +623,13 @@ mach_io_object_get_class(args)
 {
 	mach_io_object_get_class_request_t *req = args->smsg;
 	mach_io_object_get_class_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	char classname[] = "unknownClass";
 
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 
-	/* XXX Just return a dummy name for now */ 
+	/* XXX Just return a dummy name for now */
 	rep->rep_namecount = strlen(classname);
 	if (rep->rep_namecount >= 128)
 		rep->rep_namecount = 128;
@@ -644,14 +644,14 @@ int
 mach_io_registry_entry_get_location_in_plane(args)
 	struct mach_trap_args *args;
 {
-	mach_io_registry_entry_get_location_in_plane_request_t *req = 
+	mach_io_registry_entry_get_location_in_plane_request_t *req =
 	    args->smsg;
 	mach_io_registry_entry_get_location_in_plane_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	char location[] = "";
 	int end_offset;
 
-	/* 
+	/*
 	 * req_nameoffset is not used.
 	 * Sanity check req_namecount.
 	 */
@@ -662,7 +662,7 @@ mach_io_registry_entry_get_location_in_plane(args)
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 
-	/* XXX Just return a dummy name for now */ 
+	/* XXX Just return a dummy name for now */
 	rep->rep_locationcount = sizeof(location);
 	memcpy(&rep->rep_location, location, sizeof(location));
 
@@ -677,7 +677,7 @@ mach_io_registry_entry_get_properties(args)
 {
 	mach_io_registry_entry_get_properties_request_t *req = args->smsg;
 	mach_io_registry_entry_get_properties_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	int error;
 	void *uaddr;
@@ -689,8 +689,8 @@ mach_io_registry_entry_get_properties(args)
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
-	
-	if (mr->mr_port->mp_datatype != MACH_MP_IOKIT_DEVCLASS) 
+
+	if (mr->mr_port->mp_datatype != MACH_MP_IOKIT_DEVCLASS)
 		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 
 	mid = mr->mr_port->mp_data;
@@ -698,7 +698,7 @@ mach_io_registry_entry_get_properties(args)
 		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 	size = strlen(mid->mid_properties) + 1; /* Include trailing zero */
 
-	if ((error = mach_ool_copyout(l, 
+	if ((error = mach_ool_copyout(l,
 	    mid->mid_properties, &uaddr, size, MACH_OOL_TRACE)) != 0) {
 #ifdef DEBUG_MACH
 		printf("pid %d.%d: copyout iokit properties failed\n",
@@ -723,7 +723,7 @@ mach_io_registry_entry_get_property(args)
 {
 	mach_io_registry_entry_get_property_request_t *req = args->smsg;
 	mach_io_registry_entry_get_property_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	int error;
 	void *uaddr;
@@ -734,7 +734,7 @@ mach_io_registry_entry_get_property(args)
 	struct mach_iokit_property *mip;
 	int end_offset;
 
-	/* 
+	/*
 	 * req_property_nameoffset is not used.
 	 * Sanity check req_property_namecount.
 	 */
@@ -746,9 +746,9 @@ mach_io_registry_entry_get_property(args)
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
-	
+
 	/* Find the devclass information */
-	if (mr->mr_port->mp_datatype != MACH_MP_IOKIT_DEVCLASS) 
+	if (mr->mr_port->mp_datatype != MACH_MP_IOKIT_DEVCLASS)
 		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 
 	mid = mr->mr_port->mp_data;
@@ -756,8 +756,8 @@ mach_io_registry_entry_get_property(args)
 		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 
 	/* Lookup the property name */
-	for (mip = mid->mid_properties_array; mip->mip_name; mip++) 
-		if (memcmp(mip->mip_name, req->req_property_name, 
+	for (mip = mid->mid_properties_array; mip->mip_name; mip++)
+		if (memcmp(mip->mip_name, req->req_property_name,
 		    req->req_property_namecount) == 0)
 			break;
 
@@ -766,7 +766,7 @@ mach_io_registry_entry_get_property(args)
 	size = strlen(mip->mip_value) + 1; /* Include trailing zero */
 
 	/* And copyout its associated value */
-	if ((error = mach_ool_copyout(l, 
+	if ((error = mach_ool_copyout(l,
 	    (void *)mip->mip_value, &uaddr, size, MACH_OOL_TRACE)) != 0) {
 #ifdef DEBUG_MACH
 		printf("pid %d.%d: copyout iokit property failed\n",
@@ -791,7 +791,7 @@ mach_io_registry_entry_get_path(args)
 {
 	mach_io_registry_entry_get_path_request_t *req = args->smsg;
 	mach_io_registry_entry_get_path_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	char location[] = ":/GossamerPE/pci@80000000/AppleGracklePCI/"
 	    "ATY,264LT-G@11/.Display_Video_ATI_mach64-01018002/"
 	    "display0/AppleBacklightDisplay";
@@ -799,7 +799,7 @@ mach_io_registry_entry_get_path(args)
 	size_t len, plen;
 	int end_offset;
 
-	/* 
+	/*
 	 * req_offset is not used.
 	 * Sanity check req_count.
 	 */
@@ -807,8 +807,8 @@ mach_io_registry_entry_get_path(args)
 	if (MACH_REQMSG_OVERFLOW(args, req->req_plane[end_offset]))
 		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 
-	/* XXX Just return a dummy name for now */ 
-	len = req->req_count + strlen(location) - 1; 
+	/* XXX Just return a dummy name for now */
+	len = req->req_count + strlen(location) - 1;
 
 	/* Sanity check for len */
 	if (len > 512)
@@ -846,7 +846,7 @@ mach_io_connect_map_memory(args)
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
-	
+
 	if (mr->mr_port->mp_datatype == MACH_MP_IOKIT_DEVCLASS) {
 		mid = mr->mr_port->mp_data;
 		if (mid->mid_connect_map_memory == NULL)
@@ -865,7 +865,7 @@ mach_io_iterator_reset(args)
 {
 	mach_io_iterator_reset_request_t *req = args->smsg;
 	mach_io_iterator_reset_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	mach_port_t mn;
 	struct mach_right *mr;
@@ -874,7 +874,7 @@ mach_io_iterator_reset(args)
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
-	
+
 	if (mr->mr_port->mp_datatype != MACH_MP_DEVICE_ITERATOR)
 		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 
@@ -915,7 +915,7 @@ mach_io_connect_method_scalari_structo(args)
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
-	
+
 	if (mr->mr_port->mp_datatype == MACH_MP_IOKIT_DEVCLASS) {
 		mid = mr->mr_port->mp_data;
 		if (mid->mid_connect_method_scalari_structo == NULL)
@@ -954,7 +954,7 @@ mach_io_connect_method_structi_structo(args)
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
-	
+
 	if (mr->mr_port->mp_datatype == MACH_MP_IOKIT_DEVCLASS) {
 		mid = mr->mr_port->mp_data;
 		if (mid->mid_connect_method_structi_structo == NULL)
@@ -973,13 +973,13 @@ mach_io_connect_set_properties(args)
 {
 	mach_io_connect_set_properties_request_t *req = args->smsg;
 	mach_io_connect_set_properties_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 
 #ifdef DEBUG_MACH
 	uprintf("Unimplemented mach_io_connect_set_properties\n");
 #endif
 
-	*msglen = sizeof(*rep); 
+	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 
 	mach_set_trailer(rep, *msglen);
@@ -993,7 +993,7 @@ mach_io_service_close(args)
 {
 	mach_io_service_close_request_t *req = args->smsg;
 	mach_io_service_close_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 
 #ifdef DEBUG_MACH
 	uprintf("Unimplemented mach_io_service_close\n");
@@ -1015,7 +1015,7 @@ mach_io_connect_add_client(args)
 {
 	mach_io_connect_add_client_request_t *req = args->smsg;
 	mach_io_connect_add_client_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 
 #ifdef DEBUG_MACH
 	uprintf("Unimplemented mach_io_connect_add_client\n");
@@ -1060,7 +1060,7 @@ mach_io_connect_method_scalari_structi(args)
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
-	
+
 	if (mr->mr_port->mp_datatype == MACH_MP_IOKIT_DEVCLASS) {
 		mid = mr->mr_port->mp_data;
 		if (mid->mid_connect_method_scalari_structi == NULL)
@@ -1079,15 +1079,15 @@ mach_io_registry_entry_from_path(args)
 {
 	mach_io_registry_entry_from_path_request_t *req = args->smsg;
 	mach_io_registry_entry_from_path_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
-	struct mach_iokit_devclass *mid; 
+	struct mach_iokit_devclass *mid;
 	int i, len;
 	int end_offset;
 
-	/* 
+	/*
 	 * req_pathoffset is not used.
 	 * Sanity check req_pathcount.
 	 */
@@ -1107,11 +1107,11 @@ mach_io_registry_entry_from_path(args)
 	while ((mid = mach_iokit_devclasses[i++]) != NULL) {
 		len = strlen(mid->mid_name);
 #ifdef DEBUG_MACH
-		printf("trying \"%s\" vs \"%s\"\n", 
-		    &req->req_path[req->req_pathcount - 1 - len], 
+		printf("trying \"%s\" vs \"%s\"\n",
+		    &req->req_path[req->req_pathcount - 1 - len],
 		    mid->mid_name);
 #endif
-		if (memcmp(&req->req_path[req->req_pathcount - 1 - len], 
+		if (memcmp(&req->req_path[req->req_pathcount - 1 - len],
 		    mid->mid_name, len) == 0) {
 			mp->mp_datatype = MACH_MP_IOKIT_DEVCLASS;
 			mp->mp_data = mid;
@@ -1133,7 +1133,7 @@ mach_io_registry_entry_get_parent_iterator(args)
 {
 	mach_io_registry_entry_get_parent_iterator_request_t *req = args->smsg;
 	mach_io_registry_entry_get_parent_iterator_reply_t *rep = args->rmsg;
-	size_t *msglen = args->rsize; 
+	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct mach_port *mp;
 	struct mach_right *mr;
@@ -1144,16 +1144,16 @@ mach_io_registry_entry_get_parent_iterator(args)
 	size_t size;
 	int end_offset;
 
-	/* 
+	/*
 	 * req_offset is unused
-	 * Sanity check req_count 
+	 * Sanity check req_count
 	 */
 	end_offset = req->req_count;
 	if (MACH_REQMSG_OVERFLOW(args, req->req_plane[end_offset]))
 		return mach_msg_error(args, EINVAL);
 
 #ifdef DEBUG_MACH
-	printf("mach_io_registry_entry_get_parent_iterator: plane = %s\n", 
+	printf("mach_io_registry_entry_get_parent_iterator: plane = %s\n",
 	    req->req_plane);
 #endif
 
@@ -1161,7 +1161,7 @@ mach_io_registry_entry_get_parent_iterator(args)
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_EPERM);
 
-	if (mr->mr_port->mp_datatype != MACH_MP_IOKIT_DEVCLASS) 
+	if (mr->mr_port->mp_datatype != MACH_MP_IOKIT_DEVCLASS)
 		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 	mid = mr->mr_port->mp_data;
 
@@ -1187,15 +1187,15 @@ mach_io_registry_entry_get_parent_iterator(args)
 	return 0;
 }
 
-void 
+void
 mach_iokit_cleanup_notify(mr)
 	struct mach_right *mr;
 {
 	int i;
-	struct mach_iokit_devclass *mid; 
-	
+	struct mach_iokit_devclass *mid;
+
 	i = 0;
-	while ((mid = mach_iokit_devclasses[i++]) != NULL) 
+	while ((mid = mach_iokit_devclasses[i++]) != NULL)
 		if (mid->mid_notify == mr)
 			mid->mid_notify = NULL;
 

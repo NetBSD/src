@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.20.2.4 2005/02/04 11:46:08 skrll Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.20.2.5 2005/03/04 16:43:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.20.2.4 2005/02/04 11:46:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.20.2.5 2005/03/04 16:43:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,7 +436,7 @@ ec_attach(parent, self, aux)
 
 		sc->tx_page_start = ELINK2_TX_PAGE_OFFSET_16BIT;
 		sc->rec_page_start = ELINK2_RX_PAGE_OFFSET_16BIT;
-		sc->rec_page_stop = (memsize >> ED_PAGE_SHIFT) + 
+		sc->rec_page_stop = (memsize >> ED_PAGE_SHIFT) +
 		    sc->rec_page_start;
 		sc->mem_ring = sc->mem_start;
 	} else {
@@ -702,7 +702,7 @@ ec_write_mbuf(sc, m, buf)
 	if (esc->sc_16bitp)
 		bus_space_write_1(asict, asich, ELINK2_GACFR,
 		    ELINK2_GACFR_RSEL | ELINK2_GACFR_MBS0);
-	
+
 	return (savelen);
 }
 

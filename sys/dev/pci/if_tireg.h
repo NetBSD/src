@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.12.2.3 2004/09/21 13:31:03 skrll Exp $ */
+/* $NetBSD: if_tireg.h,v 1.12.2.4 2005/03/04 16:45:19 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -377,7 +377,7 @@
  * Even on the alpha, pci addresses are 32-bit quantities
  */
 
-#ifdef __64_bit_pci_addressing__ 
+#ifdef __64_bit_pci_addressing__
 typedef struct {
 	u_int64_t		ti_addr;
 } ti_hostaddr;
@@ -393,7 +393,7 @@ typedef struct {
 /*
  * Ring control block structure. The rules for the max_len field
  * are as follows:
- * 
+ *
  * For the send ring, max_len indicates the number of entries in the
  * ring (128, 256 or 512).
  *

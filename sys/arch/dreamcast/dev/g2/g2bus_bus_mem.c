@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus_bus_mem.c,v 1.7.2.3 2004/09/21 13:14:39 skrll Exp $	*/
+/*	$NetBSD: g2bus_bus_mem.c,v 1.7.2.4 2005/03/04 16:38:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: g2bus_bus_mem.c,v 1.7.2.3 2004/09/21 13:14:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2bus_bus_mem.c,v 1.7.2.4 2005/03/04 16:38:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -61,56 +61,56 @@ int	g2bus_bus_mem_map(void *, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 void	g2bus_bus_mem_unmap(void *, bus_space_handle_t, bus_size_t);
 
-u_int8_t g2bus_bus_mem_read_1(void *, bus_space_handle_t, bus_size_t);
-u_int16_t g2bus_bus_mem_read_2(void *, bus_space_handle_t, bus_size_t);
-u_int32_t g2bus_bus_mem_read_4(void *, bus_space_handle_t, bus_size_t);
+uint8_t g2bus_bus_mem_read_1(void *, bus_space_handle_t, bus_size_t);
+uint16_t g2bus_bus_mem_read_2(void *, bus_space_handle_t, bus_size_t);
+uint32_t g2bus_bus_mem_read_4(void *, bus_space_handle_t, bus_size_t);
 
 void	g2bus_bus_mem_write_1(void *, bus_space_handle_t, bus_size_t,
-	    u_int8_t);
+	    uint8_t);
 void	g2bus_bus_mem_write_2(void *, bus_space_handle_t, bus_size_t,
-	    u_int16_t);
+	    uint16_t);
 void	g2bus_bus_mem_write_4(void *, bus_space_handle_t, bus_size_t,
-	    u_int32_t);
+	    uint32_t);
 
 void	g2bus_bus_mem_read_region_1(void *, bus_space_handle_t, bus_size_t,
-	    u_int8_t *, bus_size_t);
+	    uint8_t *, bus_size_t);
 void	g2bus_bus_mem_read_region_2(void *, bus_space_handle_t, bus_size_t,
-	    u_int16_t *, bus_size_t);
+	    uint16_t *, bus_size_t);
 void	g2bus_bus_mem_read_region_4(void *, bus_space_handle_t, bus_size_t,
-	    u_int32_t *, bus_size_t);
+	    uint32_t *, bus_size_t);
 
 void	g2bus_bus_mem_write_region_1(void *, bus_space_handle_t, bus_size_t,
-	    const u_int8_t *, bus_size_t);
+	    const uint8_t *, bus_size_t);
 void	g2bus_bus_mem_write_region_2(void *, bus_space_handle_t, bus_size_t,
-	    const u_int16_t *, bus_size_t);
+	    const uint16_t *, bus_size_t);
 void	g2bus_bus_mem_write_region_4(void *, bus_space_handle_t, bus_size_t,
-	    const u_int32_t *, bus_size_t);
+	    const uint32_t *, bus_size_t);
 
 void	g2bus_bus_mem_set_region_4(void *, bus_space_handle_t, bus_size_t,
-	    u_int32_t, bus_size_t);
+	    uint32_t, bus_size_t);
 
-u_int8_t g2bus_sparse_bus_mem_read_1(void *, bus_space_handle_t, bus_size_t);
-u_int16_t g2bus_sparse_bus_mem_read_2(void *, bus_space_handle_t, bus_size_t);
-u_int32_t g2bus_sparse_bus_mem_read_4(void *, bus_space_handle_t, bus_size_t);
+uint8_t g2bus_sparse_bus_mem_read_1(void *, bus_space_handle_t, bus_size_t);
+uint16_t g2bus_sparse_bus_mem_read_2(void *, bus_space_handle_t, bus_size_t);
+uint32_t g2bus_sparse_bus_mem_read_4(void *, bus_space_handle_t, bus_size_t);
 
 void	g2bus_sparse_bus_mem_write_1(void *, bus_space_handle_t, bus_size_t,
-	    u_int8_t);
+	    uint8_t);
 void	g2bus_sparse_bus_mem_write_2(void *, bus_space_handle_t, bus_size_t,
-	    u_int16_t);
+	    uint16_t);
 void	g2bus_sparse_bus_mem_write_4(void *, bus_space_handle_t, bus_size_t,
-	    u_int32_t);
+	    uint32_t);
 
 void	g2bus_sparse_bus_mem_read_region_1(void *, bus_space_handle_t,
-	    bus_size_t, u_int8_t *, bus_size_t);
+	    bus_size_t, uint8_t *, bus_size_t);
 
 void	g2bus_sparse_bus_mem_write_region_1(void *, bus_space_handle_t,
-	    bus_size_t, const u_int8_t *, bus_size_t);
+	    bus_size_t, const uint8_t *, bus_size_t);
 
 void	g2bus_sparse_bus_mem_read_multi_1(void *, bus_space_handle_t,
-	    bus_size_t, u_int8_t *, bus_size_t);
+	    bus_size_t, uint8_t *, bus_size_t);
 
 void	g2bus_sparse_bus_mem_write_multi_1(void *, bus_space_handle_t,
-	    bus_size_t, const u_int8_t *, bus_size_t);
+	    bus_size_t, const uint8_t *, bus_size_t);
 
 void
 g2bus_bus_mem_init(struct g2bus_softc *sc)
@@ -149,7 +149,7 @@ g2bus_bus_mem_map(void *v, bus_addr_t addr, bus_size_t size, int flags,
 	KASSERT((addr & SH3_PHYS_MASK) == addr);
 	*shp = SH3_PHYS_TO_P2SEG(addr);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -172,7 +172,7 @@ g2bus_bus_mem_unmap(void *v, bus_space_handle_t sh, bus_size_t size)
 	do {								\
 		__s = _cpu_intr_suspend();				\
 		/* suspend any G2 DMA here... */			\
-		while ((*(__volatile u_int32_t *)0xa05f688c) & 0x20)	\
+		while ((*(__volatile uint32_t *)0xa05f688c) & 0x20)	\
 			;						\
 	} while (/*CONSTCOND*/0)
 
@@ -182,96 +182,96 @@ g2bus_bus_mem_unmap(void *v, bus_space_handle_t sh, bus_size_t size)
 		_cpu_intr_resume(__s);					\
 	} while (/*CONSTCOND*/0)
 
-u_int8_t
+uint8_t
 g2bus_bus_mem_read_1(void *v, bus_space_handle_t sh, bus_size_t off)
 {
 	G2LOCK_DECL;
-	u_int8_t rv;
+	uint8_t rv;
 
 	G2_LOCK();
 
-	rv = *(__volatile u_int8_t *)(sh + off);
+	rv = *(__volatile uint8_t *)(sh + off);
 
 	G2_UNLOCK();
 
-	return (rv);
+	return rv;
 }
 
-u_int16_t
+uint16_t
 g2bus_bus_mem_read_2(void *v, bus_space_handle_t sh, bus_size_t off)
 {
 	G2LOCK_DECL;
-	u_int16_t rv;
+	uint16_t rv;
 
 	G2_LOCK();
 
-	rv = *(__volatile u_int16_t *)(sh + off);
+	rv = *(__volatile uint16_t *)(sh + off);
 
 	G2_UNLOCK();
 
-	return (rv);
+	return rv;
 }
 
-u_int32_t
+uint32_t
 g2bus_bus_mem_read_4(void *v, bus_space_handle_t sh, bus_size_t off)
 {
 	G2LOCK_DECL;
-	u_int32_t rv;
+	uint32_t rv;
 
 	G2_LOCK();
 
-	rv = *(__volatile u_int32_t *)(sh + off);
+	rv = *(__volatile uint32_t *)(sh + off);
 
 	G2_UNLOCK();
 
-	return (rv);
+	return rv;
 }
 
 void
 g2bus_bus_mem_write_1(void *v, bus_space_handle_t sh, bus_size_t off,
-    u_int8_t val)
+    uint8_t val)
 {
 	G2LOCK_DECL;
 
 	G2_LOCK();
 
-	*(__volatile u_int8_t *)(sh + off) = val;
+	*(__volatile uint8_t *)(sh + off) = val;
 
 	G2_UNLOCK();
 }
 
 void
 g2bus_bus_mem_write_2(void *v, bus_space_handle_t sh, bus_size_t off,
-    u_int16_t val)
+    uint16_t val)
 {
 	G2LOCK_DECL;
 
 	G2_LOCK();
 
-	*(__volatile u_int16_t *)(sh + off) = val;
+	*(__volatile uint16_t *)(sh + off) = val;
 
 	G2_UNLOCK();
 }
 
 void
 g2bus_bus_mem_write_4(void *v, bus_space_handle_t sh, bus_size_t off,
-    u_int32_t val)
+    uint32_t val)
 {
 	G2LOCK_DECL;
 
 	G2_LOCK();
 
-	*(__volatile u_int32_t *)(sh + off) = val;
+	*(__volatile uint32_t *)(sh + off) = val;
 
 	G2_UNLOCK();
 }
 
 void
 g2bus_bus_mem_read_region_1(void *v, bus_space_handle_t sh, bus_size_t off,
-    u_int8_t *addr, bus_size_t len)
+    uint8_t *addr, bus_size_t len)
 {
 	G2LOCK_DECL;
-	__volatile const u_int8_t *baddr = (u_int8_t *)(sh + off);
+	__volatile const uint8_t *baddr = (uint8_t *)(sh + off);
 
 	G2_LOCK();
 
@@ -283,10 +283,10 @@ g2bus_bus_mem_read_region_1(void *v, bus_space_handle_t sh, bus_size_t off,
 
 void
 g2bus_bus_mem_read_region_2(void *v, bus_space_handle_t sh, bus_size_t off,
-    u_int16_t *addr, bus_size_t len)
+    uint16_t *addr, bus_size_t len)
 {
 	G2LOCK_DECL;
-	__volatile const u_int16_t *baddr = (u_int16_t *)(sh + off);
+	__volatile const uint16_t *baddr = (uint16_t *)(sh + off);
 
 	G2_LOCK();
 
@@ -298,10 +298,10 @@ g2bus_bus_mem_read_region_2(void *v, bus_space_handle_t sh, bus_size_t off,
 
 void
 g2bus_bus_mem_read_region_4(void *v, bus_space_handle_t sh, bus_size_t off,
-    u_int32_t *addr, bus_size_t len)
+    uint32_t *addr, bus_size_t len)
 {
 	G2LOCK_DECL;
-	__volatile const u_int32_t *baddr = (u_int32_t *)(sh + off);
+	__volatile const uint32_t *baddr = (uint32_t *)(sh + off);
 
 	G2_LOCK();
 
@@ -313,10 +313,10 @@ g2bus_bus_mem_read_region_4(void *v, bus_space_handle_t sh, bus_size_t off,
 
 void
 g2bus_bus_mem_write_region_1(void *v, bus_space_handle_t sh, bus_size_t off,
-    const u_int8_t *addr, bus_size_t len)
+    const uint8_t *addr, bus_size_t len)
 {
 	G2LOCK_DECL;
-	__volatile u_int8_t *baddr = (u_int8_t *)(sh + off);
+	__volatile uint8_t *baddr = (uint8_t *)(sh + off);
 
 	G2_LOCK();
 
@@ -328,10 +328,10 @@ g2bus_bus_mem_write_region_1(void *v, bus_space_handle_t sh, bus_size_t off,
 
 void
 g2bus_bus_mem_write_region_2(void *v, bus_space_handle_t sh, bus_size_t off,
-    const u_int16_t *addr, bus_size_t len)
+    const uint16_t *addr, bus_size_t len)
 {
 	G2LOCK_DECL;
-	__volatile u_int16_t *baddr = (u_int16_t *)(sh + off);
+	__volatile uint16_t *baddr = (uint16_t *)(sh + off);
 
 	G2_LOCK();
 
@@ -343,10 +343,10 @@ g2bus_bus_mem_write_region_2(void *v, bus_space_handle_t sh, bus_size_t off,
 
 void
 g2bus_bus_mem_write_region_4(void *v, bus_space_handle_t sh, bus_size_t off,
-    const u_int32_t *addr, bus_size_t len)
+    const uint32_t *addr, bus_size_t len)
 {
 	G2LOCK_DECL;
-	__volatile u_int32_t *baddr = (u_int32_t *)(sh + off);
+	__volatile uint32_t *baddr = (uint32_t *)(sh + off);
 
 	G2_LOCK();
 
@@ -358,10 +358,10 @@ g2bus_bus_mem_write_region_4(void *v, bus_space_handle_t sh, bus_size_t off,
 
 void
 g2bus_bus_mem_set_region_4(void *v, bus_space_handle_t sh, bus_size_t off,
-    u_int32_t val, bus_size_t len)
+    uint32_t val, bus_size_t len)
 {
 	G2LOCK_DECL;
-	__volatile u_int32_t *baddr = (u_int32_t *)(sh + off);
+	__volatile uint32_t *baddr = (uint32_t *)(sh + off);
 
 	G2_LOCK();
 
@@ -392,96 +392,96 @@ g2bus_set_bus_mem_sparse(bus_space_tag_t memt)
 	memt->dbs_wm_1 = g2bus_sparse_bus_mem_write_multi_1;
 }
 
-u_int8_t
+uint8_t
 g2bus_sparse_bus_mem_read_1(void *v, bus_space_handle_t sh, bus_size_t off)
 {
 	G2LOCK_DECL;
-	u_int8_t rv;
+	uint8_t rv;
 
 	G2_LOCK();
 
-	rv = *(__volatile u_int8_t *)(sh + (off * 4));
+	rv = *(__volatile uint8_t *)(sh + (off * 4));
 
 	G2_UNLOCK();
 
-	return (rv);
+	return rv;
 }
 
-u_int16_t
+uint16_t
 g2bus_sparse_bus_mem_read_2(void *v, bus_space_handle_t sh, bus_size_t off)
 {
 	G2LOCK_DECL;
-	u_int16_t rv;
+	uint16_t rv;
 
 	G2_LOCK();
 
-	rv = *(__volatile u_int16_t *)(sh + (off * 4));
+	rv = *(__volatile uint16_t *)(sh + (off * 4));
 
 	G2_UNLOCK();
 
-	return (rv);
+	return rv;
 }
 
-u_int32_t
+uint32_t
 g2bus_sparse_bus_mem_read_4(void *v, bus_space_handle_t sh, bus_size_t off)
 {
 	G2LOCK_DECL;
-	u_int32_t rv;
+	uint32_t rv;
 
 	G2_LOCK();
 
-	rv = *(__volatile u_int32_t *)(sh + (off * 4));
+	rv = *(__volatile uint32_t *)(sh + (off * 4));
 
 	G2_UNLOCK();
 
-	return (rv);
+	return rv;
 }
 
 void
 g2bus_sparse_bus_mem_write_1(void *v, bus_space_handle_t sh, bus_size_t off,
-    u_int8_t val)
+    uint8_t val)
 {
 	G2LOCK_DECL;
 
 	G2_LOCK();
 
-	*(__volatile u_int8_t *)(sh + (off * 4)) = val;
+	*(__volatile uint8_t *)(sh + (off * 4)) = val;
 
 	G2_UNLOCK();
 }
 
 void
 g2bus_sparse_bus_mem_write_2(void *v, bus_space_handle_t sh, bus_size_t off,
-    u_int16_t val)
+    uint16_t val)
 {
 	G2LOCK_DECL;
 
 	G2_LOCK();
 
-	*(__volatile u_int16_t *)(sh + (off * 4)) = val;
+	*(__volatile uint16_t *)(sh + (off * 4)) = val;
 
 	G2_UNLOCK();
 }
 
 void
 g2bus_sparse_bus_mem_write_4(void *v, bus_space_handle_t sh, bus_size_t off,
-    u_int32_t val)
+    uint32_t val)
 {
 	G2LOCK_DECL;
 
 	G2_LOCK();
 
-	*(__volatile u_int32_t *)(sh + (off * 4)) = val;
+	*(__volatile uint32_t *)(sh + (off * 4)) = val;
 
 	G2_UNLOCK();
 }
 
 void
 g2bus_sparse_bus_mem_read_region_1(void *v, bus_space_handle_t sh,
-    bus_size_t off, u_int8_t *addr, bus_size_t len)
+    bus_size_t off, uint8_t *addr, bus_size_t len)
 {
 	G2LOCK_DECL;
-	__volatile const u_int8_t *baddr = (u_int8_t *)(sh + (off * 4));
+	__volatile const uint8_t *baddr = (uint8_t *)(sh + (off * 4));
 
 	G2_LOCK();
 
@@ -495,10 +495,10 @@ g2bus_sparse_bus_mem_read_region_1(void *v, bus_space_handle_t sh,
 
 void
 g2bus_sparse_bus_mem_write_region_1(void *v, bus_space_handle_t sh,
-    bus_size_t off, const u_int8_t *addr, bus_size_t len)
+    bus_size_t off, const uint8_t *addr, bus_size_t len)
 {
 	G2LOCK_DECL;
-	__volatile u_int8_t *baddr = (u_int8_t *)(sh + (off * 4));
+	__volatile uint8_t *baddr = (uint8_t *)(sh + (off * 4));
 
 	G2_LOCK();
 
@@ -512,10 +512,10 @@ g2bus_sparse_bus_mem_write_region_1(void *v, bus_space_handle_t sh,
 
 void
 g2bus_sparse_bus_mem_read_multi_1(void *v, bus_space_handle_t sh,
-    bus_size_t off, u_int8_t *addr, bus_size_t len)
+    bus_size_t off, uint8_t *addr, bus_size_t len)
 {
 	G2LOCK_DECL;
-	__volatile const u_int8_t *baddr = (u_int8_t *)(sh + (off * 4));
+	__volatile const uint8_t *baddr = (uint8_t *)(sh + (off * 4));
 
 	G2_LOCK();
 
@@ -527,10 +527,10 @@ g2bus_sparse_bus_mem_read_multi_1(void *v, bus_space_handle_t sh,
 
 void
 g2bus_sparse_bus_mem_write_multi_1(void *v, bus_space_handle_t sh,
-    bus_size_t off, const u_int8_t *addr, bus_size_t len)
+    bus_size_t off, const uint8_t *addr, bus_size_t len)
 {
 	G2LOCK_DECL;
-	__volatile u_int8_t *baddr = (u_int8_t *)(sh + (off * 4));
+	__volatile uint8_t *baddr = (uint8_t *)(sh + (off * 4));
 
 	G2_LOCK();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.34.2.4 2004/12/18 09:31:58 skrll Exp $	*/
+/*	$NetBSD: wivar.h,v 1.34.2.5 2005/03/04 16:41:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -177,7 +177,7 @@ struct wi_node {
 };
 
 /* maximum false change-of-BSSID indications per second */
-#define	WI_MAX_FALSE_SYNS		10	
+#define	WI_MAX_FALSE_SYNS		10
 
 #define	WI_PRISM_DBM_OFFSET	100	/* XXX */
 

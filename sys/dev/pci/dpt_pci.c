@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_pci.c,v 1.14.2.3 2004/09/21 13:31:01 skrll Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.14.2.4 2005/03/04 16:45:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.14.2.3 2004/09/21 13:31:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.14.2.4 2005/03/04 16:45:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,13 +66,13 @@ static int
 dpt_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
-	
+
 	pa = (struct pci_attach_args *)aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DPT && 
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DPT &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DPT_SC_RAID)
 		return (1);
- 
+
 	return (0);
 }
 
@@ -94,12 +94,12 @@ dpt_pci_attach(struct device *parent, struct device *self, void *aux)
 	pc = pa->pa_pc;
 	aprint_normal(": ");
 
-	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot, 
+	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot,
 	    &ioh, NULL, NULL)) {
 		aprint_error("can't map i/o space\n");
 		return;
 	}
-	
+
 	/* Need to map in by 16 registers. */
 	if (bus_space_subregion(sc->sc_iot, ioh, 16, 16, &sc->sc_ioh)) {
 		aprint_error("can't map i/o subregion\n");
@@ -130,9 +130,9 @@ dpt_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Read the EATA configuration. */
 	if (dpt_readcfg(sc)) {
-		aprint_error("%s: readcfg failed - see dpt(4)\n", 
+		aprint_error("%s: readcfg failed - see dpt(4)\n",
 		    sc->sc_dv.dv_xname);
-		return;	
+		return;
 	}
 
 	sc->sc_bustype = SI_PCI_BUS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.12.2.4 2005/01/17 19:29:58 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.12.2.5 2005/03/04 16:38:48 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1400,6 +1400,7 @@ LEAF_NOPROFILE(MIPSX(TLBInvalidException))
 	srl	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
 	beq	k1, zero, outofworld		# No. Failing beyond. . .
+	nop					# - delay slot -
 	lw	k1, _C_LABEL(Sysmap)
 
 	sll	k0, k0, 2			# compute offset from index
@@ -1504,9 +1505,11 @@ LEAF_NOPROFILE(MIPSX(TLBMissException))
 	bne	k1, zero, 1f
 	nop
 	j	checkromwork
+	nop					# - delay slot -
 1:
 #else
 	beq	k1, zero, outofworld		# No. Failing beyond. . .
+	nop					# - delay slot -
 #endif
 	lw	k1, _C_LABEL(Sysmap)
 	srl	k0, k0, 1

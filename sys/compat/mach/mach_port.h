@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.25.2.2 2004/08/25 06:57:34 skrll Exp $ */
+/*	$NetBSD: mach_port.h,v 1.25.2.3 2005/03/04 16:40:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
     (MACH_PORT_TYPE_PORT_OR_DEAD|MACH_PORT_TYPE_PORT_SET)
 #define MACH_PORT_TYPE_REF_RIGHTS \
     (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_SEND_ONCE | MACH_PORT_TYPE_DEAD_NAME)
-	
+
 /* port_deallocate */
 
 typedef struct {
@@ -87,7 +87,7 @@ typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_ndr_record_t req_ndr;
 	mach_port_right_t req_right;
-} mach_port_allocate_request_t;  
+} mach_port_allocate_request_t;
 
 typedef struct {
 	mach_msg_header_t rep_msgh;
@@ -95,7 +95,7 @@ typedef struct {
 	mach_kern_return_t rep_retval;
 	mach_port_name_t rep_name;
 	mach_msg_trailer_t rep_trailer;
-} mach_port_allocate_reply_t;  
+} mach_port_allocate_reply_t;
 
 /* port_insert_right */
 
@@ -105,14 +105,14 @@ typedef struct {
 	mach_msg_port_descriptor_t req_poly;
 	mach_ndr_record_t req_ndr;
 	mach_port_name_t req_name;
-} mach_port_insert_right_request_t;  
+} mach_port_insert_right_request_t;
 
 typedef struct {
 	mach_msg_header_t rep_msgh;
 	mach_ndr_record_t rep_ndr;
 	mach_kern_return_t rep_retval;
 	mach_msg_trailer_t rep_trailer;
-} mach_port_insert_right_reply_t;  
+} mach_port_insert_right_reply_t;
 
 /* port_type */
 
@@ -120,7 +120,7 @@ typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_ndr_record_t req_ndr;
 	mach_port_name_t req_name;
-} mach_port_type_request_t;  
+} mach_port_type_request_t;
 
 typedef struct {
 	mach_msg_header_t rep_msgh;
@@ -128,7 +128,7 @@ typedef struct {
 	mach_kern_return_t rep_retval;
 	mach_port_type_t rep_ptype;
 	mach_msg_trailer_t rep_trailer;
-} mach_port_type_reply_t;  
+} mach_port_type_reply_t;
 
 /* port_set_attributes */
 
@@ -168,7 +168,7 @@ typedef struct {
 	mach_kern_return_t rep_retval;
 	mach_msg_trailer_t rep_trailer;
 } mach_port_set_attributes_reply_t;
-	
+
 /* port_get_attributes */
 
 #define MACH_PORT_QLIMIT_DEFAULT ((mach_port_msgcount_t) 5)
@@ -322,7 +322,7 @@ struct mach_right {
 };
 
 mach_port_t mach_right_newname(struct lwp *, mach_port_t);
-struct mach_right *mach_right_get(struct mach_port *, 
+struct mach_right *mach_right_get(struct mach_port *,
     struct lwp *, int, mach_port_t);
 void mach_right_put(struct mach_right *, int);
 void mach_right_put_shlocked(struct mach_right *, int);

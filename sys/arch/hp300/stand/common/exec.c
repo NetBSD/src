@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.1.16.3 2004/09/21 13:15:27 skrll Exp $ */
+/*	$NetBSD: exec.c,v 1.1.16.4 2005/03/04 16:38:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -44,10 +44,7 @@
 	(((x) + sizeof(u_long) - 1) & ~(sizeof(u_long) - 1))
 
 void
-exec_hp300(file, loadaddr, howto)
-	char *file;
-	u_long loadaddr;
-	int howto;
+exec_hp300(char *file, u_long loadaddr, int howto)
 {
 	u_long marks[MARK_MAX];
 	struct btinfo_magic *bt;

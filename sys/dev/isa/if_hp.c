@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.36.2.3 2004/09/21 13:29:44 skrll Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.36.2.4 2005/03/04 16:43:13 skrll Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.36.2.3 2004/09/21 13:29:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.36.2.4 2005/03/04 16:43:13 skrll Exp $");
 
 #include "hp.h"
 #if NHP > 0
@@ -173,7 +173,7 @@ struct hp_softc {
 
 #if NRND > 0
 	rndsource_element_t rnd_source;
-#endif	
+#endif
 }
         hp_softc[NHP];
 #define	ENBUFSIZE	(sizeof(struct ether_header) + ETHERMTU + 2 + ETHER_MIN_LEN)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.h,v 1.1.2.3 2004/09/21 13:28:04 skrll Exp $	*/
+/*	$NetBSD: mpt.h,v 1.1.2.4 2005/03/04 16:41:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -32,7 +32,7 @@
  * mpt.h:
  *
  * Generic definitions for LSI Fusion adapters.
- * 
+ *
  * Adapted from the FreeBSD "mpt" driver by Jason R. Thorpe for
  * Wasabi Systems, Inc.
  */

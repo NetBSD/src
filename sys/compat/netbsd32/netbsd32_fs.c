@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.14.2.6 2005/02/19 13:14:06 skrll Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.14.2.7 2005/03/04 16:40:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.14.2.6 2005/02/19 13:14:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.14.2.7 2005/03/04 16:40:20 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -59,9 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.14.2.6 2005/02/19 13:14:06 skrll E
 #include <compat/netbsd32/netbsd32_conv.h>
 
 
-static int dofilereadv32 __P((struct lwp *, int, struct file *, struct netbsd32_iovec *, 
+static int dofilereadv32 __P((struct lwp *, int, struct file *, struct netbsd32_iovec *,
 			      int, off_t *, int, register_t *));
-static int dofilewritev32 __P((struct lwp *, int, struct file *, struct netbsd32_iovec *, 
+static int dofilewritev32 __P((struct lwp *, int, struct file *, struct netbsd32_iovec *,
 			       int,  off_t *, int, register_t *));
 static int change_utimes32 __P((struct vnode *, netbsd32_timevalp_t, struct lwp *));
 
@@ -90,7 +90,7 @@ netbsd32_readv(l, v, retval)
 	FILE_USE(fp);
 
 	return (dofilereadv32(l, fd, fp,
-	    (struct netbsd32_iovec *)NETBSD32PTR64(SCARG(uap, iovp)), 
+	    (struct netbsd32_iovec *)NETBSD32PTR64(SCARG(uap, iovp)),
 	    SCARG(uap, iovcnt), &fp->f_offset, FOF_UPDATE_OFFSET, retval));
 }
 
@@ -608,7 +608,7 @@ netbsd32_futimes(l, v, retval)
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
-	error = change_utimes32((struct vnode *)fp->f_data, 
+	error = change_utimes32((struct vnode *)fp->f_data,
 				SCARG(uap, tptr), l);
 	FILE_UNUSE(fp, l);
 	return (error);
@@ -886,7 +886,7 @@ int
 getcwd_common __P((struct vnode *, struct vnode *,
 		   char **, char *, int, int, struct lwp *));
 
-int netbsd32___getcwd(l, v, retval) 
+int netbsd32___getcwd(l, v, retval)
 	struct lwp *l;
 	void   *v;
 	register_t *retval;

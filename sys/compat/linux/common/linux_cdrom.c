@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.17.2.3 2004/09/21 13:25:38 skrll Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.17.2.4 2005/03/04 16:40:02 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.17.2.3 2004/09/21 13:25:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.17.2.4 2005/03/04 16:40:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ linux_ioctl_cdrom(l, uap, retval)
 			       sizeof l_tocentry);
 		if (error)
 			break;
-	    
+
 		sg = stackgap_init(p, 0);
 		entry = stackgap_alloc(p, &sg, sizeof *entry);
 		t_toc_entry.address_format = l_tocentry.cdte_format;
@@ -201,7 +201,7 @@ linux_ioctl_cdrom(l, uap, retval)
 		error = copyin(entry, &t_entry, sizeof t_entry);
 		if (error)
 			break;
-	    
+
 		l_tocentry.cdte_adr = t_entry.addr_type;
 		l_tocentry.cdte_ctrl = t_entry.control;
 		if (bsd_to_linux_msf_lba(t_entry.addr_type, &t_entry.addr,
@@ -210,11 +210,11 @@ linux_ioctl_cdrom(l, uap, retval)
 			error = EINVAL;
 			break;
 		}
-		
+
 		error = copyout(&l_tocentry, SCARG(uap, data),
 			       sizeof l_tocentry);
 		break;
-		
+
 	case LINUX_CDROMVOLCTRL:
 		error = copyin(SCARG(uap, data), &l_volctrl, sizeof l_volctrl);
 		if (error)
@@ -264,12 +264,12 @@ linux_ioctl_cdrom(l, uap, retval)
 		error = copyin(info, &t_info, sizeof t_info);
 		if (error)
 			break;
-	    
+
 		l_subchnl.cdsc_audiostatus = t_info.header.audio_status;
 		l_subchnl.cdsc_adr = t_info.what.position.addr_type;
 		l_subchnl.cdsc_ctrl = t_info.what.position.control;
 		l_subchnl.cdsc_ind = t_info.what.position.index_number;
-	    
+
 		DPRINTF(("linux_ioctl: CDIOCREADSUBCHANNEL %d %d %d\n",
 			t_info.header.audio_status,
 			t_info.header.data_len[0],

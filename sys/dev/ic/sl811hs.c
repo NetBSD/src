@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.3.2.3 2004/09/21 13:28:08 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.3.2.4 2005/03/04 16:41:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.3.2.3 2004/09/21 13:28:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.3.2.4 2005/03/04 16:41:33 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -1260,7 +1260,7 @@ slhci_device_intr_start(usbd_xfer_handle xfer)
 
 	/* initialize callout */
 	usb_callout_init(sx->sx_callout_t);
-	usb_callout(sx->sx_callout_t, 
+	usb_callout(sx->sx_callout_t,
 		MS_TO_TICKS(pipe->endpoint->edesc->bInterval),
 		slhci_poll_device, sx);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.26.2.4 2004/09/21 13:25:13 skrll Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.26.2.5 2005/03/04 16:39:37 skrll Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.26.2.4 2004/09/21 13:25:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.26.2.5 2005/03/04 16:39:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ cvt_statfs(sp, buf, len)
 	ssfs.f_fname[0] = 0;
 	ssfs.f_fpack[0] = 0;
 	return copyout((caddr_t)&ssfs, buf, len);
-}	
+}
 
 static int
 cvt_statvfs(sp, buf, len)

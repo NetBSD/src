@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.53.2.5 2005/01/24 08:59:39 skrll Exp $	*/
+/*	$NetBSD: grf.c,v 1.53.2.6 2005/03/04 16:38:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.53.2.5 2005/01/24 08:59:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.53.2.6 2005/03/04 16:38:26 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -123,13 +123,13 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.53.2.5 2005/01/24 08:59:39 skrll Exp $");
 #define	iteoff(u,f)
 #endif /* NITE > 0 */
 
+#include "ioconf.h"
+
 static int	grfmatch(struct device *, struct cfdata *, void *);
 static void	grfattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(grf, sizeof(struct grf_softc),
     grfmatch, grfattach, NULL, NULL);
-
-extern struct cfdriver grf_cd;
 
 static dev_type_open(grfopen);
 static dev_type_close(grfclose);

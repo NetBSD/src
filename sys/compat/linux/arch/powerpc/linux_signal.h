@@ -1,4 +1,4 @@
-/* $NetBSD: linux_signal.h,v 1.5 2002/11/26 18:43:21 christos Exp $ */
+/* $NetBSD: linux_signal.h,v 1.5.6.1 2005/03/04 16:40:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,8 +39,8 @@
 #ifndef _POWERPC_LINUX_SIGNAL_H
 #define _POWERPC_LINUX_SIGNAL_H
 
-/* 
- * Everything is from Linux's include/asm-ppc/signal.h 
+/*
+ * Everything is from Linux's include/asm-ppc/signal.h
  */
 #define LINUX_SIGHUP	 1
 #define LINUX_SIGINT	 2

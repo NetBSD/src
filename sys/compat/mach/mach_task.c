@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.25.2.5 2004/11/12 16:24:02 skrll Exp $ */
+/*	$NetBSD: mach_task.c,v 1.25.2.6 2005/03/04 16:40:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.25.2.5 2004/11/12 16:24:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.25.2.6 2005/03/04 16:40:12 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,10 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.25.2.5 2004/11/12 16:24:02 skrll Exp
 
 #define ISSET(t, f)     ((t) & (f))
 
-static void 
+static void
 update_exception_port(struct mach_emuldata *, int exc, struct mach_port *);
 
-int 
+int
 mach_task_get_special_port(args)
 	struct mach_trap_args *args;
 {
@@ -101,7 +101,7 @@ mach_task_get_special_port(args)
 		break;
 
 	case MACH_TASK_BOOTSTRAP_PORT:
-		mr = mach_right_get(med->med_bootstrap, 
+		mr = mach_right_get(med->med_bootstrap,
 		    l, MACH_PORT_TYPE_SEND, 0);
 		break;
 
@@ -122,7 +122,7 @@ mach_task_get_special_port(args)
 	return 0;
 }
 
-int 
+int
 mach_ports_lookup(args)
 	struct mach_trap_args *args;
 {
@@ -138,7 +138,7 @@ mach_ports_lookup(args)
 	int error;
 	int count;
 
-	/* 
+	/*
 	 * This is some out of band data sent with the reply. In the
 	 * encountered situation, the out of band data has always been null
 	 * filled. We have to see more of this in order to fully understand
@@ -161,8 +161,7 @@ mach_ports_lookup(args)
 	 * On Darwin, the data seems always null...
 	 */
 	uaddr = NULL;
-	uaddr = NULL;
-	if ((error = mach_ool_copyout(l, &mnp[0], 
+	if ((error = mach_ool_copyout(l, &mnp[0],
 	    &uaddr, sizeof(mnp), MACH_OOL_TRACE)) != 0)
 		return mach_msg_error(args, error);
 
@@ -179,7 +178,7 @@ mach_ports_lookup(args)
 	return 0;
 }
 
-int 
+int
 mach_task_set_special_port(args)
 	struct mach_trap_args *args;
 {
@@ -244,7 +243,7 @@ mach_task_set_special_port(args)
 #ifdef DEBUG_DARWIN
 				printf("*** New bootstrap port %p, "
 				    "recv %p [%p]\n",
-				    mach_bootstrap_port, 
+				    mach_bootstrap_port,
 				    mach_bootstrap_port->mp_recv,
 				    mach_bootstrap_port->mp_recv->mr_sethead);
 #endif /* DEBUG_DARWIN */
@@ -300,7 +299,7 @@ mach_task_threads(args)
 	}
 
 	/* This will free mnp */
-	if ((error = mach_ool_copyout(l, mnp, &uaddr, 
+	if ((error = mach_ool_copyout(l, mnp, &uaddr,
 	    size, MACH_OOL_TRACE|MACH_OOL_FREE)) != 0)
 		return mach_msg_error(args, error);
 
@@ -368,13 +367,13 @@ mach_task_get_exception_ports(args)
 	return 0;
 }
 
-static void 
+static void
 update_exception_port(med, exc, mp)
 	struct mach_emuldata *med;
 	int exc;
 	struct mach_port *mp;
 {
-	if (med->med_exc[exc] != NULL) 
+	if (med->med_exc[exc] != NULL)
 		MACH_PORT_UNREF(med->med_exc[exc]);
 	med->med_exc[exc] = mp;
 	MACH_PORT_REF(mp);
@@ -403,7 +402,7 @@ mach_task_set_exception_ports(args)
 
 	mp = mr->mr_port;
 #ifdef DIAGNOSTIC
-	if ((mp->mp_datatype != MACH_MP_EXC_INFO) && 
+	if ((mp->mp_datatype != MACH_MP_EXC_INFO) &&
 	    (mp->mp_datatype != MACH_MP_NONE))
 		printf("mach_task_set_exception_ports: data exists\n");
 #endif
@@ -420,7 +419,7 @@ mach_task_set_exception_ports(args)
 		update_exception_port(med, MACH_EXC_BAD_ACCESS, mp);
 	if (req->req_mask & MACH_EXC_MASK_BAD_INSTRUCTION)
 		update_exception_port(med, MACH_EXC_BAD_INSTRUCTION, mp);
-	if (req->req_mask & MACH_EXC_MASK_ARITHMETIC) 
+	if (req->req_mask & MACH_EXC_MASK_ARITHMETIC)
 		update_exception_port(med, MACH_EXC_ARITHMETIC, mp);
 	if (req->req_mask & MACH_EXC_MASK_EMULATION)
 		update_exception_port(med, MACH_EXC_EMULATION, mp);
@@ -436,9 +435,9 @@ mach_task_set_exception_ports(args)
 		update_exception_port(med, MACH_EXC_RPC_ALERT, mp);
 
 #ifdef DEBUG_MACH
-	if (req->req_mask & (MACH_EXC_ARITHMETIC | 
-	    MACH_EXC_EMULATION | MACH_EXC_MASK_SYSCALL | 
-	    MACH_EXC_MASK_MACH_SYSCALL | MACH_EXC_RPC_ALERT)) 
+	if (req->req_mask & (MACH_EXC_ARITHMETIC |
+	    MACH_EXC_EMULATION | MACH_EXC_MASK_SYSCALL |
+	    MACH_EXC_MASK_MACH_SYSCALL | MACH_EXC_RPC_ALERT))
 		printf("mach_set_exception_ports: some exceptions are "
 		    "not supported (mask %x)\n", req->req_mask);
 #endif
@@ -465,7 +464,7 @@ mach_task_info(args)
 	struct proc *tp = tl->l_proc;
 
 	switch(req->req_flavor) {
-	case MACH_TASK_BASIC_INFO: {	
+	case MACH_TASK_BASIC_INFO: {
 		struct mach_task_basic_info *mtbi;
 		struct rusage *ru;
 
@@ -536,17 +535,17 @@ mach_task_info(args)
 	}
 
 	default:
-		uprintf("mach_task_info: unsupported flavor %d\n", 
+		uprintf("mach_task_info: unsupported flavor %d\n",
 		    req->req_flavor);
 		return mach_msg_error(args, EINVAL);
 	};
-	
+
 	mach_set_header(rep, req, *msglen);
 
 	rep->rep_count = count;
 
 	mach_set_trailer(rep, *msglen);
- 
+
 	return 0;
 }
 
@@ -561,10 +560,10 @@ mach_task_suspend(args)
 	struct lwp *lp;
 	struct mach_emuldata *med;
 	struct proc *tp = tl->l_proc;
-	
+
 	med = tp->p_emuldata;
 	med->med_suspend++; /* XXX Mach also has a per thread semaphore */
-		
+
 	LIST_FOREACH(lp, &tp->p_lwps, l_sibling) {
 		switch(lp->l_stat) {
 		case LSONPROC:
@@ -575,7 +574,7 @@ mach_task_suspend(args)
 		case LSDEAD:
 			break;
 		default:
-			return mach_msg_error(args, 0);	
+			return mach_msg_error(args, 0);
 			break;
 		}
 	}
@@ -608,7 +607,7 @@ mach_task_resume(args)
 	if (med->med_suspend > 0)
 		return mach_msg_error(args, 0); /* XXX error code */
 #endif
-		
+
 	/* XXX We should also wake up the stopped thread... */
 #ifdef DEBUG_MACH
 	printf("resuming pid %d\n", tp->p_pid);
@@ -668,22 +667,22 @@ mach_sys_task_for_pid(l, v, retval)
 	struct proc *t;
 	int error;
 
-	/* 
+	/*
 	 * target_tport is used because the task may be on
 	 * a different host. (target_tport, pid) is unique.
 	 * We don't support multiple-host configuration
 	 * yet, so this parameter should be useless.
 	 * However, we still validate it.
 	 */
-	if ((mr = mach_right_check(SCARG(uap, target_tport), 
+	if ((mr = mach_right_check(SCARG(uap, target_tport),
 	    l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return EPERM;
 
 	if ((t = pfind(SCARG(uap, pid))) == NULL)
 		return ESRCH;
-	
+
 	/* Allowed only if the UID match, if setuid, or if superuser */
-	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||  
+	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
 		ISSET(t->p_flag, P_SUGID)) &&
 		    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			    return (error);
@@ -698,11 +697,11 @@ mach_sys_task_for_pid(l, v, retval)
 
 	med = t->p_emuldata;
 
-	if ((mr = mach_right_get(med->med_kernel, l, 
+	if ((mr = mach_right_get(med->med_kernel, l,
 	    MACH_PORT_TYPE_SEND, 0)) == NULL)
 		return EINVAL;
 
-	if ((error = copyout(&mr->mr_name, SCARG(uap, t), 
+	if ((error = copyout(&mr->mr_name, SCARG(uap, t),
 	    sizeof(mr->mr_name))) != 0)
 		return error;
 

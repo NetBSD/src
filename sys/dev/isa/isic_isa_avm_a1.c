@@ -17,7 +17,7 @@
  *      without specific prior written permission.
  *   4. Altered versions must be plainly marked as such, and must not be
  *      misrepresented as being the original software and/or documentation.
- *   
+ *
  *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -35,14 +35,14 @@
  *	i4b_avm_a1.c - AVM A1/Fritz passive card driver for isdn4bsd
  *	------------------------------------------------------------
  *
- *	$Id: isic_isa_avm_a1.c,v 1.4.10.1 2005/02/04 11:46:09 skrll Exp $ 
+ *	$Id: isic_isa_avm_a1.c,v 1.4.10.2 2005/03/04 16:43:14 skrll Exp $
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_avm_a1.c,v 1.4.10.1 2005/02/04 11:46:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_avm_a1.c,v 1.4.10.2 2005/03/04 16:43:14 skrll Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_AVM_A1
@@ -119,7 +119,7 @@ static void avma1_write_fifo(struct isic_softc *sc, int what, const void *data, 
  *	AVM read fifo routines
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
-static void		
+static void
 avma1_read_fifo(void *buf, const void *base, size_t len)
 {
 	insb((int)base - 0x3e0, (u_char *)buf, (u_int)len);
@@ -201,19 +201,19 @@ isic_probe_avma1(struct isa_device *dev)
 	struct isic_softc *sc = &l1_sc[dev->id_unit];
 	u_char savebyte;
 	u_char byte;
-	
+
 	/* check max unit range */
-	
+
 	if(dev->id_unit >= ISIC_MAXUNIT)
 	{
 		printf("isic%d: Error, unit %d >= ISIC_MAXUNIT for AVM A1/Fritz!\n",
 				dev->id_unit, dev->id_unit);
-		return(0);	
-	}	
+		return(0);
+	}
 	sc->sc_unit = dev->id_unit;
 
 	/* check IRQ validity */
-	
+
 	switch(ffs(dev->id_irq)-1)
 	{
 		case 3:
@@ -229,13 +229,13 @@ isic_probe_avma1(struct isa_device *dev)
 		case 14:
 		case 15:
 			break;
-			
+
 		default:
 			printf("isic%d: Error, invalid IRQ [%d] specified for AVM A1/Fritz!\n",
 				dev->id_unit, ffs(dev->id_irq)-1);
 			return(0);
 			break;
-	}		
+	}
 	sc->sc_irq = dev->id_irq;
 
 	/* check if memory addr specified */
@@ -246,9 +246,9 @@ isic_probe_avma1(struct isa_device *dev)
 			dev->id_unit, (u_long)dev->id_maddr);
 		return(0);
 	}
-		
+
 	dev->id_msize = 0;
-	
+
 	/* check if we got an iobase */
 
 	switch(dev->id_iobase)
@@ -256,9 +256,9 @@ isic_probe_avma1(struct isa_device *dev)
 		case 0x200:
 		case 0x240:
 		case 0x300:
-		case 0x340:		
+		case 0x340:
 			break;
-			
+
 		default:
 			printf("isic%d: Error, invalid iobase 0x%x specified for AVM A1/Fritz!\n",
 				dev->id_unit, dev->id_iobase);
@@ -279,20 +279,20 @@ isic_probe_avma1(struct isa_device *dev)
 	sc->sc_cardtyp = CARD_TYPEP_AVMA1;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
 
 	/* setup ISAC and HSCX base addr */
-	
+
 	ISAC_BASE = (caddr_t)dev->id_iobase + 0x1400 - 0x20;
 
 	HSCX_A_BASE = (caddr_t)dev->id_iobase + 0x400 - 0x20;
 	HSCX_B_BASE = (caddr_t)dev->id_iobase + 0xc00 - 0x20;
 
-	/* 
+	/*
 	 * Read HSCX A/B VSTR.
 	 * Expected value for AVM A1 is 0x04 or 0x05 and for the
 	 * AVM Fritz!Card is 0x05 in the least significant bits.
@@ -301,7 +301,7 @@ isic_probe_avma1(struct isa_device *dev)
 	if( (((HSCX_READ(0, H_VSTR) & 0xf) != 0x5) &&
 	     ((HSCX_READ(0, H_VSTR) & 0xf) != 0x4))	||
             (((HSCX_READ(1, H_VSTR) & 0xf) != 0x5) &&
-	     ((HSCX_READ(1, H_VSTR) & 0xf) != 0x4)) )  
+	     ((HSCX_READ(1, H_VSTR) & 0xf) != 0x4)) )
 	{
 		printf("isic%d: HSCX VSTR test failed for AVM A1/Fritz\n",
 			dev->id_unit);
@@ -310,7 +310,7 @@ isic_probe_avma1(struct isa_device *dev)
 		printf("isic%d: HSC1: VSTR: %#x\n",
 			dev->id_unit, HSCX_READ(1, H_VSTR));
 		return (0);
-	}                   
+	}
 
 	/* AVM A1 or Fritz! control register bits:	*/
 	/*        read                write		*/
@@ -328,11 +328,11 @@ isic_probe_avma1(struct isa_device *dev)
 	 */
 
 	savebyte = inb(dev->id_iobase + AVM_CONF_REG);
-	
+
 	/* write low to test bit */
 
 	outb(dev->id_iobase + AVM_CONF_REG, 0x00);
-	
+
 	/* test bit and next higher and lower bit must be 0 */
 
 	if((byte = inb(dev->id_iobase + AVM_CONF_REG) & 0x38) != 0x00)
@@ -346,7 +346,7 @@ isic_probe_avma1(struct isa_device *dev)
 	/* write high to test bit */
 
 	outb(dev->id_iobase + AVM_CONF_REG, 0x10);
-	
+
 	/* test bit must be high, next higher and lower bit must be 0 */
 
 	if((byte = inb(dev->id_iobase + AVM_CONF_REG) & 0x38) != 0x10)
@@ -367,7 +367,7 @@ isic_probe_avma1(struct isic_attach_args *ia)
 {
 	u_int8_t savebyte, v1, v2;
 
-	/* 
+	/*
 	 * Read HSCX A/B VSTR.
 	 * Expected value for AVM A1 is 0x04 or 0x05 and for the
 	 * AVM Fritz!Card is 0x05 in the least significant bits.
@@ -394,11 +394,11 @@ isic_probe_avma1(struct isic_attach_args *ia)
 	 */
 
 	savebyte = bus_space_read_1(ia->ia_maps[0].t, ia->ia_maps[0].h, 0);
-	
+
 	/* write low to test bit */
 
 	bus_space_write_1(ia->ia_maps[0].t, ia->ia_maps[0].h, 0, 0);
-	
+
 	/* test bit and next higher and lower bit must be 0 */
 
 	if((bus_space_read_1(ia->ia_maps[0].t, ia->ia_maps[0].h, 0) & 0x38) != 0x00)
@@ -410,7 +410,7 @@ isic_probe_avma1(struct isic_attach_args *ia)
 	/* write high to test bit */
 
 	bus_space_write_1(ia->ia_maps[0].t, ia->ia_maps[0].h, 0, 0x10);
-	
+
 	/* test bit must be high, next higher and lower bit must be 0 */
 
 	if((bus_space_read_1(ia->ia_maps[0].t, ia->ia_maps[0].h, 0) & 0x38) != 0x10)
@@ -433,7 +433,7 @@ isic_attach_avma1(struct isa_device *dev)
 	struct isic_softc *sc = &l1_sc[dev->id_unit];
 
 	/* reset the HSCX and ISAC chips */
-	
+
 	outb(dev->id_iobase + AVM_CONF_REG, 0x00);
 	DELAY(SEC_DELAY / 10);
 
@@ -473,14 +473,14 @@ isic_attach_avma1(struct isic_softc *sc)
 	sc->writefifo = avma1_write_fifo;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
-	
+
 	/* reset the HSCX and ISAC chips */
-	
+
 	bus_space_write_1(t, h, 0, 0x00);
 	DELAY(SEC_DELAY / 10);
 

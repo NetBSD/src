@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pcireg.h,v 1.3 2000/01/04 06:31:39 chopps Exp $	*/
+/*	$NetBSD: if_ntwoc_pcireg.h,v 1.3.28.1 2005/03/04 16:45:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -104,7 +104,7 @@
 #define NTWOC_FECR_ETC1		0x0002	/* output clock port 1 */
 #define NTWOC_FECR_ETC0		0x0001	/* output clock port 0 */
 
-/* 
+/*
  * Daughter card for port.
  */
 #define NTWOC_FE_ID_V35		0x00
@@ -117,7 +117,7 @@
 #define NTWOC_FE_ID_NONE	0x07	/* empty, no card present */
 
 /*
- * ASIC Control defininitions 
+ * ASIC Control defininitions
  */
 
 /* Front End (Modem,etc) Control Register */

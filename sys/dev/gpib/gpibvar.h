@@ -1,4 +1,4 @@
-/*	$NetBSD: gpibvar.h,v 1.1 2003/06/02 03:45:42 gmcgarry Exp $	*/
+/*	$NetBSD: gpibvar.h,v 1.1.2.1 2005/03/04 16:41:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ typedef struct gpib_chipset_tag *gpib_chipset_tag_t;
  * An GPIB job queue entry.  Slave drivers have one of these used
  * to queue requests with the controller.
  */
-typedef void (*gpib_callback_t)(void *, int); 
+typedef void (*gpib_callback_t)(void *, int);
 struct gpibqueue {
 	TAILQ_ENTRY(gpibqueue) hq_list;	/* entry on queue */
 	void	*hq_softc;		/* slave's softc */

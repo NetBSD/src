@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.23.2.7 2005/01/24 08:59:39 skrll Exp $	*/
+/*	$NetBSD: mt.c,v 1.23.2.8 2005/03/04 16:38:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.23.2.7 2005/01/24 08:59:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.23.2.8 2005/03/04 16:38:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.23.2.7 2005/01/24 08:59:39 skrll Exp $");
 #include <hp300/dev/hpibvar.h>
 
 #include <hp300/dev/mtreg.h>
+
+#include "ioconf.h"
 
 static const struct mtinfo {
 	u_short	hwid;
@@ -139,8 +141,6 @@ static void	mtattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mt, sizeof(struct mt_softc),
     mtmatch, mtattach, NULL, NULL);
-
-extern struct cfdriver mt_cd;
 
 static dev_type_open(mtopen);
 static dev_type_close(mtclose);

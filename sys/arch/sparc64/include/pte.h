@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.12.2.3 2004/09/21 13:22:56 skrll Exp $ */
+/*	$NetBSD: pte.h,v 1.12.2.4 2005/03/04 16:39:11 skrll Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -170,14 +170,6 @@ void smp_tlb_flush_all __P((void));
 #define	PGSZ_4M			3
 
 #define	PGSZ_SHIFT		61
-
-/*
- * Why couldn't Sun pick better page sizes?
- *
- * Page sizes are 2**(12+(3*sz)), except for 8K which
- * is 2**12+1 instead of 2**12.
- */
-#define	PG_SZ(s)		(1<<(12+(s?(3*s):1)))
 #define	TLB_SZ(s)		(((uint64_t)(s))<<PGSZ_SHIFT)
 
 /* TLB data masks */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42.2.7 2005/02/15 21:32:50 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42.2.8 2005/03/04 16:38:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42.2.7 2005/02/15 21:32:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42.2.8 2005/03/04 16:38:59 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -156,6 +156,7 @@ int	safepri = PSL_LOWIPL;
 extern paddr_t avail_start, avail_end;
 extern int end, *esym;
 extern u_int lowram;
+extern u_int ctrl_led_phys;
 
 /* prototypes for local functions */
 static void identifycpu(void);
@@ -808,7 +809,8 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 static volatile u_char *dip_switch, *int_status;
 
 volatile u_char *idrom_addr, *ctrl_ast, *ctrl_int2;
-volatile u_char *lance_mem, *sccport0a;
+volatile u_char *ctrl_led, *sccport0a;
+uint32_t lance_mem_phys;
 
 #ifdef news1700
 static volatile u_char *ctrl_parity, *ctrl_parity_clr, *parity_vector;
@@ -878,8 +880,9 @@ news1700_init(void)
 	ctrl_ast	= (u_char *)IIOV(0xe1280000);
 	ctrl_int2	= (u_char *)IIOV(0xe1180000);
 
-	lance_mem	= (u_char *)IIOV(0xe0e00000);
 	sccport0a	= (u_char *)IIOV(0xe0d40002);
+	ctrl_led	= (u_char *)IIOV(ctrl_led_phys);
+	lance_mem_phys	= 0xe0e00000;
 
 	p = (u_char *)idrom_addr;
 	q = (u_char *)&idrom;
@@ -968,8 +971,9 @@ news1200_init(void)
 	ctrl_ast	= (u_char *)IIOV(0xe1100000);
 	ctrl_int2	= (u_char *)IIOV(0xe10c0000);
 
-	lance_mem	= (u_char *)IIOV(0xe1a00000);
 	sccport0a	= (u_char *)IIOV(0xe1780002);
+	ctrl_led	= (u_char *)IIOV(ctrl_led_phys);
+	lance_mem_phys	= 0xe1a00000;
 
 	p = (u_char *)idrom_addr;
 	q = (u_char *)&idrom;

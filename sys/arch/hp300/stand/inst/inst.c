@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.10.2.4 2005/01/17 19:29:28 skrll Exp $	*/
+/*	$NetBSD: inst.c,v 1.10.2.5 2005/03/04 16:38:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ struct	inst_command {
 #define NCMDS	(sizeof(inst_commands) / sizeof(inst_commands[0]))
 
 void
-main()
+main(void)
 {
 	int i;
 
@@ -155,7 +155,7 @@ main()
 }
 
 void
-gethelp()
+gethelp(void)
 {
 	int i;
 
@@ -170,7 +170,7 @@ gethelp()
  * Note, this assumes 512 byte sectors.
  */
 void
-dsklabel()
+dsklabel(void)
 {
 	struct disklabel *lp;
 	struct open_file *disk_ofp;
@@ -305,9 +305,7 @@ struct fsname_to_type {
 };
 
 void
-get_fstype(lp, partno)
-	struct disklabel *lp;
-	int partno;
+get_fstype(struct disklabel *lp, int partno)
 {
 	static int blocksize = 8192;	/* XXX */
 	struct partition *pp = &lp->d_partitions[partno];
@@ -387,8 +385,7 @@ get_fstype(lp, partno)
 }
 
 void
-disklabel_edit(lp)
-	struct disklabel *lp;
+disklabel_edit(struct disklabel *lp)
 {
 	int i;
 
@@ -451,8 +448,7 @@ disklabel_edit(lp)
 }
 
 void
-disklabel_show(lp)
-	struct disklabel *lp;
+disklabel_show(struct disklabel *lp)
 {
 	int i;
 	struct partition *pp;
@@ -503,10 +499,7 @@ disklabel_show(lp)
 }
 
 int
-disklabel_write(block, len, ofp)
-	char *block;
-	int len;
-	struct open_file *ofp;
+disklabel_write(char *block, int len, struct open_file *ofp)
 {
 	int error = 0;
 	size_t xfersize;
@@ -519,11 +512,7 @@ disklabel_write(block, len, ofp)
 }
 
 int
-opendisk(question, diskname, len, partition, fdp)
-	char *question, *diskname;
-	int len;
-	char partition;
-	int *fdp;
+opendisk(char *question, char *diskname, int len, char partition, int *fdp)
 {
 	char fulldiskname[64];
 	int i;
@@ -566,7 +555,7 @@ opendisk(question, diskname, len, partition, fdp)
  * of the specified disk.  Note, this assumes 512 byte sectors.
  */
 void
-miniroot()
+miniroot(void)
 {
 	int sfd, dfd, i, nblks;
 	char diskname[64], minirootname[128];
@@ -732,7 +721,7 @@ miniroot()
  * Boot the kernel from the miniroot image into single-user.
  */
 void
-bootmini()
+bootmini(void)
 {
 	char diskname[64], bootname[64];
 	int i;
@@ -770,7 +759,7 @@ bootmini()
  * Reset the system.
  */
 void
-resetsys()
+resetsys(void)
 {
 
 	call_req_reboot();
@@ -782,8 +771,7 @@ resetsys()
  * XXX Should have a generic atoi for libkern/libsa.
  */
 int
-a2int(cp)
-	char *cp;
+a2int(char *cp)
 {
 	int i = 0;
 

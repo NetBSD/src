@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.1.2.4 2004/11/02 07:52:10 skrll Exp $ */
+/* $NetBSD: if_txp.c,v 1.1.2.5 2005/03/04 16:45:19 skrll Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.1.2.4 2004/11/02 07:52:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.1.2.5 2005/03/04 16:45:19 skrll Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -764,18 +764,8 @@ txp_rx_reclaim(sc, r, dma)
 		m->m_pkthdr.csum_flags = sumflags;
 
 		if (rxd->rx_stat & htole32(RX_STAT_VLAN)) {
-			struct m_tag *mtag;
-
-			mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-					 M_NOWAIT);
-			if (!m) {
-				printf("%s: no mbuf for tag\n",
-				       sc->sc_dev.dv_xname);
-				m_freem(m);
-				goto next;
-			}
-			*(u_int *)(mtag + 1) = htons(rxd->rx_vlan >> 16);
-			m_tag_prepend(m, mtag);
+			VLAN_INPUT_TAG(ifp, m, htons(rxd->rx_vlan >> 16),
+			    continue);
 		}
 
 		(*ifp->if_input)(ifp, m);
@@ -845,7 +835,7 @@ txp_rxbuf_reclaim(sc)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxbufring_dma.dma_map,
 		    i * sizeof(struct txp_rxbuf_desc),
 		    sizeof(struct txp_rxbuf_desc), BUS_DMASYNC_POSTWRITE);
-		    
+
 		/* stash away pointer */
 		bcopy(&sd, (u_long *)&rbd->rb_vaddrlo, sizeof(sd));
 
@@ -1477,10 +1467,9 @@ txp_start(ifp)
 		if (++cnt >= (TX_ENTRIES - 4))
 			goto oactive;
 
-		mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL);
-		if (mtag)
+		if ((mtag = VLAN_OUTPUT_TAG(sc->sc_ethercom, m)))
 			txd->tx_pflags = TX_PFLAGS_VLAN |
-			  (htons(*(u_int *)(mtag + 1)) << TX_PFLAGS_VLANTAG_S);
+			  (htons(VLAN_TAG_VALUE(mtag)) << TX_PFLAGS_VLANTAG_S);
 
 		if (m->m_pkthdr.csum_flags & M_CSUM_IPv4)
 			txd->tx_pflags |= TX_PFLAGS_IPCKSUM;
@@ -1765,7 +1754,7 @@ txp_rsp_fixup(sc, rsp, dst)
 		sc->sc_rspring.lastwrite = ridx;
 		hv->hv_resp_read_idx = htole32(ridx);
 	}
-	
+
 	hv->hv_resp_read_idx = htole32(ridx);
 }
 

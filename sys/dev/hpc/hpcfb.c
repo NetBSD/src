@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.30.2.1 2005/01/24 08:59:40 skrll Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.30.2.2 2005/03/04 16:41:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,19 +37,19 @@
  */
 
 /*
- * jump scroll, scroll thread, multiscreen, virtual text vram 
+ * jump scroll, scroll thread, multiscreen, virtual text vram
  * and hpcfb_emulops functions
  * written by SATO Kazumi.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.30.2.1 2005/01/24 08:59:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.30.2.2 2005/03/04 16:41:15 skrll Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.30.2.1 2005/01/24 08:59:40 skrll Exp $";
+    "$NetBSD: hpcfb.c,v 1.30.2.2 2005/03/04 16:41:15 skrll Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ hpcfbattach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dc->dc_rinfo.ri_cols,sc->sc_dc->dc_rinfo.ri_rows);
 		/* Set video chip dependent CLUT if any. */
 		if (sc->sc_accessops->setclut)
-			sc->sc_accessops->setclut(sc->sc_accessctx, 
+			sc->sc_accessops->setclut(sc->sc_accessctx,
 			    &hpcfb_console_dc.dc_rinfo);
 	}
 	printf("\n");
@@ -368,10 +368,10 @@ hpcfb_thread(void *arg)
 	 */
 	for (;;) {
 		/* HPCFB_LOCK(sc); */
-		sc->sc_dc->dc_state |= HPCFB_DC_SCRTHREAD;	
+		sc->sc_dc->dc_state |= HPCFB_DC_SCRTHREAD;
 		if (!sc->sc_mapping) /* draw only EMUL mode */
 			hpcfb_update(sc->sc_dc);
-		sc->sc_dc->dc_state &= ~HPCFB_DC_SCRTHREAD;	
+		sc->sc_dc->dc_state &= ~HPCFB_DC_SCRTHREAD;
 		/* APM_UNLOCK(sc); */
 		(void) tsleep(sc, PWAIT, "hpcfb",  (8 * hz) / 7 / 10);
 	}
@@ -503,7 +503,7 @@ hpcfb_cmap_reorder(struct hpcfb_fbconf *fbconf, struct hpcfb_devconfig *dc)
 	int i, j, bg, fg, tmp;
 
 	/*
-	 * Set forground and background so that the screen 
+	 * Set forground and background so that the screen
 	 * looks black on white.
 	 * Normally, black = 00 and white = ff.
 	 * HPCFB_ACCESS_REVERSE means black = ff and white = 00.
@@ -564,9 +564,9 @@ hpcfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		wdf->depth = dc->dc_rinfo.ri_depth;
 		wdf->cmsize = 256;	/* XXXX */
 		return (0);
-	
+
 	case WSDISPLAYIO_SMODE:
-		if (*(int *)data == WSDISPLAYIO_MODE_EMUL){ 
+		if (*(int *)data == WSDISPLAYIO_MODE_EMUL){
 			if (sc->sc_mapping){
 				sc->sc_mapping = 0;
 				if (dc->dc_state&HPCFB_DC_DRAWING)
@@ -586,7 +586,7 @@ hpcfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		}
 		if (sc && sc->sc_accessops->iodone)
 			(*sc->sc_accessops->iodone)(sc->sc_accessctx);
-		return (0);	
+		return (0);
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
@@ -622,7 +622,7 @@ hpcfb_mmap(void *v, off_t offset, int prot)
 	return ((*sc->sc_accessops->mmap)(sc->sc_accessctx, offset, prot));
 }
 
-static void 
+static void
 hpcfb_power(int why, void *arg)
 {
 	struct hpcfb_softc *sc = arg;
@@ -708,7 +708,7 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	if (hpcfb_init(&sc->sc_fbconflist[0], dc) != 0)
 		return (EINVAL);
 	if (sc->sc_accessops->font) {
-		sc->sc_accessops->font(sc->sc_accessctx, 
+		sc->sc_accessops->font(sc->sc_accessctx,
 		    dc->dc_rinfo.ri_font);
 	}
 	/* Set video chip dependent CLUT if any. */
@@ -741,10 +741,10 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 		free(dc, M_DEVBUF);
 		return (ENOMEM);
 	}
-				
+
 	*curxp = 0;
 	*curyp = 0;
-	*cookiep = dc; 
+	*cookiep = dc;
 	hpcfb_allocattr(*cookiep, WSCOL_WHITE, WSCOL_BLACK, 0, attrp);
 	DPRINTF(("%s(%d): hpcfb_alloc_screen(): 0x%p\n",
 	    __FILE__, __LINE__, dc));
@@ -930,7 +930,7 @@ hpcfb_cursor_raw(cookie, on, row, col)
 		curwidth = ri->ri_font->fontwidth;
 		(*sc->sc_accessops->cursor)(sc->sc_accessctx,
 		    on, xoff, yoff, curwidth, curheight);
-	} else 
+	} else
 		rasops_emul.cursor(ri, on, row, col);
 	dc->dc_state &= ~HPCFB_DC_DRAWING;
 }
@@ -1012,7 +1012,7 @@ hpcfb_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		return;
 
 	dc->dc_state |= HPCFB_DC_DRAWING;
-	if (sc && sc->sc_accessops->putchar 
+	if (sc && sc->sc_accessops->putchar
 	    && (dc->dc_state&HPCFB_DC_CURRENT)) {
 		font = ri->ri_font;
 		yoff = row * ri->ri_font->fontheight;
@@ -1168,7 +1168,7 @@ hpcfb_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 		height = ri->ri_font->fontheight;
 		(*sc->sc_accessops->erase)(sc->sc_accessctx,
 		    xoff, yoff, height, width, attr);
-	} else 
+	} else
 		rasops_emul.erasecols(ri, row, startcol, ncols, attr);
 	dc->dc_state &= ~HPCFB_DC_DRAWING;
 #ifdef HPCFB_JUMP
@@ -1210,7 +1210,7 @@ hpcfb_tv_copyrows(struct hpcfb_devconfig *dc, int src, int dst, int num)
 #ifdef HPCFB_JUMP
 		hpcfb_check_update(dc);
 #endif /* HPCFB_JUMP */
-		return;	
+		return;
 	}
 
 	for (i = 0; i < num; i++) {
@@ -1310,19 +1310,19 @@ hpcfb_update(void *v)
 	/* callout_stop(&dc->dc_scroll_ch); */
 	dc->dc_state &= ~HPCFB_DC_SCROLLPENDING;
 	if (dc->dc_curx > 0 && dc->dc_cury > 0)
-		hpcfb_cursor_raw(dc, 0,  dc->dc_cury, dc->dc_curx); 
+		hpcfb_cursor_raw(dc, 0,  dc->dc_cury, dc->dc_curx);
 	if ((dc->dc_state&HPCFB_DC_UPDATEALL)) {
 		hpcfb_redraw(dc, 0, dc->dc_rows, 1);
 		dc->dc_state &= ~(HPCFB_DC_UPDATE|HPCFB_DC_UPDATEALL);
 	} else if ((dc->dc_state&HPCFB_DC_UPDATE)) {
-		hpcfb_redraw(dc, dc->dc_min_row, 
+		hpcfb_redraw(dc, dc->dc_min_row,
 		    dc->dc_max_row - dc->dc_min_row, 0);
 		dc->dc_state &= ~HPCFB_DC_UPDATE;
 	} else {
 		hpcfb_redraw(dc, dc->dc_scroll_dst, dc->dc_scroll_num, 0);
 	}
 	if (dc->dc_curx > 0 && dc->dc_cury > 0)
-		hpcfb_cursor_raw(dc, 1,  dc->dc_cury, dc->dc_curx); 
+		hpcfb_cursor_raw(dc, 1,  dc->dc_cury, dc->dc_curx);
 }
 
 void
@@ -1330,7 +1330,7 @@ hpcfb_do_scroll(void *v)
 {
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)v;
 
-	dc->dc_state |= HPCFB_DC_SCRTHREAD;	
+	dc->dc_state |= HPCFB_DC_SCRTHREAD;
 	if (dc->dc_state&(HPCFB_DC_DRAWING|HPCFB_DC_TDRAWING))
 		dc->dc_state |= HPCFB_DC_SCRDELAY;
 	else if (dc->dc_sc != NULL && dc->dc_sc->sc_thread)
@@ -1339,7 +1339,7 @@ hpcfb_do_scroll(void *v)
 		/* draw only EMUL mode */
 		hpcfb_update(v);
 	}
-	dc->dc_state &= ~HPCFB_DC_SCRTHREAD;	
+	dc->dc_state &= ~HPCFB_DC_SCRTHREAD;
 }
 
 void
@@ -1347,8 +1347,8 @@ hpcfb_check_update(void *v)
 {
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)v;
 
-	if (dc->dc_sc != NULL 
-	    && dc->dc_sc->sc_polling 
+	if (dc->dc_sc != NULL
+	    && dc->dc_sc->sc_polling
 	    && (dc->dc_state&HPCFB_DC_SCROLLPENDING)){
 		callout_stop(&dc->dc_scroll_ch);
 		dc->dc_state &= ~HPCFB_DC_SCRDELAY;
@@ -1414,12 +1414,12 @@ hpcfb_copyrows(void *cookie, int src, int dst, int num)
 		}
 		if (dc->dc_state&HPCFB_DC_UPDATE) {
 			dc->dc_state &= ~HPCFB_DC_UPDATE;
-			hpcfb_redraw(cookie, dc->dc_min_row, 
+			hpcfb_redraw(cookie, dc->dc_min_row,
 			    dc->dc_max_row - dc->dc_min_row, 0);
 			dc->dc_max_row = 0;
 			dc->dc_min_row = dc->dc_rows;
 			if (dc->dc_curx > 0 && dc->dc_cury > 0)
-				hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx); 
+				hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx);
 			return;
 		}
 #endif /* HPCFB_JUMP */
@@ -1495,7 +1495,7 @@ hpcfb_eraserows(void *cookie, int row, int nrow, long attr)
 		height = nrow * ri->ri_font->fontheight;
 		(*sc->sc_accessops->erase)(sc->sc_accessctx,
 		    0, yoff, height, width, attr);
-	} else 
+	} else
 		rasops_emul.eraserows(ri, row, nrow, attr);
 	dc->dc_state &= ~HPCFB_DC_DRAWING;
 #ifdef HPCFB_JUMP

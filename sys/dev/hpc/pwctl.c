@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl.c,v 1.11 2002/10/02 16:33:50 thorpej Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.11.6.1 2005/03/04 16:41:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.11 2002/10/02 16:33:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.11.6.1 2005/03/04 16:41:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ pwctl_attach(struct device *parent, struct device *self, void *aux)
 	struct hpcio_attach_args *haa = aux;
 	int *loc;
 	struct pwctl_softc *sc = (void*)self;
-    
+
 	loc = sc->sc_dev.dv_cfdata->cf_loc;
 	sc->sc_hc = (*haa->haa_getchip)(haa->haa_sc, loc[HPCIOIFCF_IOCHIP]);
 	sc->sc_port = loc[HPCIOIFCF_PORT];
@@ -178,7 +178,7 @@ pwctl_hardpower(void *ctx, int type, long id, void *msg)
 	int why =(int)msg;
 
 	VPRINTF(("pwctl hardpower: port %d %s: %s(%d)\n", sc->sc_port,
-	    why == PWR_RESUME? "resume" 
+	    why == PWR_RESUME? "resume"
 	    : why == PWR_SUSPEND? "suspend" : "standby",
 	    sc->sc_save == sc->sc_on ? "on": "off", sc->sc_save));
 

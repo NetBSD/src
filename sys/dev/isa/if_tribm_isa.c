@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tribm_isa.c,v 1.4.16.3 2005/02/04 11:46:09 skrll Exp $	*/
+/*	$NetBSD: if_tribm_isa.c,v 1.4.16.4 2005/03/04 16:43:14 skrll Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early */
 
@@ -21,7 +21,7 @@
  *    must display the following acknowledgement:
  *        This product includes software developed by The NetBSD
  *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.4.16.3 2005/02/04 11:46:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.4.16.4 2005/03/04 16:43:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

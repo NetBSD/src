@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.8.6.3 2004/09/21 13:25:27 skrll Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.8.6.4 2005/03/04 16:39:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  * Linux a.out format parameters
  */
 #define LINUX_M_MIPS		MID_MIPS
-#define LINUX_MID_MACHINE	LINUX_M_MIPS	
+#define LINUX_MID_MACHINE	LINUX_M_MIPS
 
 /*
  * Linux Elf32 format parameters

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.h,v 1.1.4.4 2004/09/21 13:24:59 skrll Exp $ */
+/*	$NetBSD: darwin_attr.h,v 1.1.4.5 2005/03/04 16:39:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ typedef u_int32_t darwin_fsobj_tag_t;
 typedef u_int32_t darwin_fsfile_type_t;
 typedef u_int32_t darwin_fsvolid_t;
 
-typedef struct darwin_fsobj_id {    
+typedef struct darwin_fsobj_id {
 	u_int32_t fid_objno;
 	u_int32_t fid_generation;
 } darwin_fsobj_id_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.24.6.1 2005/02/04 11:46:28 skrll Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.24.6.2 2005/03/04 16:43:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 /*
- * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org> and 
+ * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org> and
  * Matthias Drochner. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.24.6.1 2005/02/04 11:46:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.24.6.2 2005/03/04 16:43:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

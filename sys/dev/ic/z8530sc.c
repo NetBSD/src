@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.18.2.4 2005/02/04 11:45:28 skrll Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.18.2.5 2005/03/04 16:41:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.18.2.4 2005/02/04 11:45:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.18.2.5 2005/03/04 16:41:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ zs_iflush(cs)
 		}
 	}
 }
-	
+
 
 /*
  * Write the given register set to the given zs channel in the proper order.

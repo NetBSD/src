@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.39.2.4 2004/09/21 13:30:41 skrll Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.39.2.5 2005/03/04 16:44:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.39.2.4 2004/09/21 13:30:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.39.2.5 2005/03/04 16:44:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,7 +355,7 @@ nsphy_reset(struct mii_softc *sc)
 	 * is not yet complete.
 	 */
 	for (i = 0; i < 1000; i++) {
-		reg = PHY_READ(sc, MII_BMCR); 
+		reg = PHY_READ(sc, MII_BMCR);
 		if (reg && ((reg & BMCR_RESET) == 0))
 			break;
 		delay(2000);

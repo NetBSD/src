@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_termios.c,v 1.18.2.3 2004/09/21 13:26:03 skrll Exp $	 */
+/*	$NetBSD: svr4_termios.c,v 1.18.2.4 2005/03/04 16:40:30 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_termios.c,v 1.18.2.3 2004/09/21 13:26:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_termios.c,v 1.18.2.4 2005/03/04 16:40:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -77,9 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_termios.c,v 1.18.2.3 2004/09/21 13:26:03 skrll 
 
 static u_long bsd_to_svr4_speed __P((u_long, u_long));
 static u_long svr4_to_bsd_speed __P((u_long, u_long));
-static void svr4_to_bsd_termios __P((const struct svr4_termios *, 
+static void svr4_to_bsd_termios __P((const struct svr4_termios *,
 				     struct termios *, int));
-static void bsd_to_svr4_termios __P((const struct termios *, 
+static void bsd_to_svr4_termios __P((const struct termios *,
 				     struct svr4_termios *));
 static void svr4_termio_to_termios __P((const struct svr4_termio *,
 					struct svr4_termios *));

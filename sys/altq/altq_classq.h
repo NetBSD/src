@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_classq.h,v 1.3 2001/04/06 00:44:46 thorpej Exp $	*/
+/*	$NetBSD: altq_classq.h,v 1.3.22.1 2005/03/04 16:38:00 skrll Exp $	*/
 /*	$KAME: altq_classq.h,v 1.3 2000/07/25 10:12:29 kjc Exp $	*/
 
 /*
@@ -89,11 +89,11 @@ extern void		_flushq(class_queue_t *);
 /*
  * inlined versions
  */
-static __inline void 
+static __inline void
 _addq(class_queue_t *q, struct mbuf *m)
 {
         struct mbuf *m0;
-	
+
 	if ((m0 = qtail(q)) != NULL)
 		m->m_nextpkt = m0->m_nextpkt;
 	else
@@ -107,7 +107,7 @@ static __inline struct mbuf *
 _getq(class_queue_t *q)
 {
 	struct mbuf  *m, *m0;
-	
+
 	if ((m = qtail(q)) == NULL)
 		return (NULL);
 	if ((m0 = m->m_nextpkt) != m)
@@ -116,7 +116,7 @@ _getq(class_queue_t *q)
 		qtail(q) = NULL;
 	qlen(q)--;
 	m0->m_nextpkt = NULL;
-	return (m0); 
+	return (m0);
 }
 
 /* drop a packet at the tail of the queue */
@@ -132,7 +132,7 @@ _getq_tail(class_queue_t *q)
 		m0 = m0->m_nextpkt;
 	} while (m0 != m);
 	prev->m_nextpkt = m->m_nextpkt;
-	if (prev == m) 
+	if (prev == m)
 		qtail(q) = NULL;
 	else
 		qtail(q) = prev;
@@ -154,7 +154,7 @@ _getq_random(class_queue_t *q)
 		qtail(q) = NULL;
 	else {
 		struct mbuf *prev = NULL;
-		
+
 		n = random() % qlen(q) + 1;
 		for (i = 0; i < n; i++) {
 			prev = m;
@@ -173,14 +173,14 @@ static __inline void
 _removeq(class_queue_t *q, struct mbuf *m)
 {
 	struct mbuf *m0, *prev;
-	
+
 	m0 = qtail(q);
 	do {
 		prev = m0;
 		m0 = m0->m_nextpkt;
 	} while (m0 != m);
 	prev->m_nextpkt = m->m_nextpkt;
-	if (prev == m) 
+	if (prev == m)
 		qtail(q) = NULL;
 	else if (qtail(q) == m)
 		qtail(q) = prev;

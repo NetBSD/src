@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83905.c,v 1.1 2001/12/16 00:22:44 bjh21 Exp $	*/
+/*	$NetBSD: dp83905.c,v 1.1.20.1 2005/03/04 16:41:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -35,7 +35,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: dp83905.c,v 1.1 2001/12/16 00:22:44 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83905.c,v 1.1.20.1 2005/03/04 16:41:27 skrll Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -122,7 +122,7 @@ void dp83905_init_card(struct dp8390_softc *sc)
 		mcrb |= DP83905_MCRB_PHY_10_2;
 		bus_space_write_1(nict, nich, DP83905_MCRB, mcrb);
 		/*
-		 * seems that re-reading config B here is required to 
+		 * seems that re-reading config B here is required to
 	         * prevent the interface hanging when manually selecting.
 		 */
 		bus_space_read_1(nict, nich, DP83905_MCRB);
@@ -135,7 +135,7 @@ void dp83905_init_card(struct dp8390_softc *sc)
 		mcrb |= DP83905_MCRB_PHY_10_T;
 		bus_space_write_1(nict, nich, DP83905_MCRB, mcrb);
 		/*
-		 * seems that re-reading config B here is required to 
+		 * seems that re-reading config B here is required to
 	         * prevent the interface hanging when manually selecting.
 		 */
 		bus_space_read_1(nict, nich, DP83905_MCRB);
@@ -148,7 +148,7 @@ void dp83905_init_card(struct dp8390_softc *sc)
 		mcrb |= DP83905_MCRB_PHY_AUI;
 		bus_space_write_1(nict, nich, DP83905_MCRB, mcrb);
 		/*
-		 * seems that re-reading config B here is required to 
+		 * seems that re-reading config B here is required to
 	         * prevent the interface hanging when manually selecting.
 		 */
 		bus_space_read_1(nict, nich, DP83905_MCRB);

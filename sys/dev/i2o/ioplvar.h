@@ -1,4 +1,4 @@
-/*	$NetBSD: ioplvar.h,v 1.3 2002/05/04 16:43:26 ad Exp $	*/
+/*	$NetBSD: ioplvar.h,v 1.3.10.1 2005/03/04 16:41:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ struct iopl_softc {
 
 	struct ifmedia		sc_ifmedia;	/* ifmedia linkage */
 
-	/* 
+	/*
 	 * Parameter group buffers.  We retrieve only one parameter group at
 	 * a time.
 	 */

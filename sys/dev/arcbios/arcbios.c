@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.7.2.1 2004/10/19 15:56:44 skrll Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.7.2.2 2005/03/04 16:41:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.7.2.1 2004/10/19 15:56:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.7.2.2 2005/03/04 16:41:02 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -63,7 +63,7 @@ void	arcbios_fetch_system_identifier(struct arcbios_component *,
 	    struct arcbios_treewalk_context *);
 
 struct consdev arcbios_cn = {
-	NULL, NULL, arcbios_cngetc, arcbios_cnputc, nullcnpollc, 
+	NULL, NULL, arcbios_cngetc, arcbios_cnputc, nullcnpollc,
 	    NULL, NULL, NULL, NODEV, CN_NORMAL,
 };
 

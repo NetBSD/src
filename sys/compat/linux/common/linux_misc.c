@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.121.2.9 2004/11/14 08:15:43 skrll Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.121.2.10 2005/03/04 16:40:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 /*
  * These functions have been moved to multiarch to allow
- * selection of which machines include them to be 
+ * selection of which machines include them to be
  * determined by the individual files.linux_<arch> files.
  *
  * Function in multiarch:
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.121.2.9 2004/11/14 08:15:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.121.2.10 2005/03/04 16:40:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ const struct linux_mnttypes linux_fstypes[] = {
 	{ MOUNT_FDESC,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_PORTAL,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_NULL,		LINUX_DEFAULT_SUPER_MAGIC	},
-	{ MOUNT_OVERLAY,	LINUX_DEFAULT_SUPER_MAGIC	},	
+	{ MOUNT_OVERLAY,	LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_UMAP,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_KERNFS,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_PROCFS,		LINUX_PROC_SUPER_MAGIC		},
@@ -292,7 +292,7 @@ linux_sys_brk(l, v, retval)
 
 	if ((caddr_t) nbrk > vm->vm_daddr && sys_obreak(l, &oba, retval) == 0)
 		ed->s->p_break = (char*)nbrk;
-	else 
+	else
 		nbrk = ed->s->p_break;
 
 	retval[0] = (register_t)nbrk;
@@ -567,7 +567,7 @@ linux_to_bsd_mmap_args(cma, uap)
 	const struct linux_sys_mmap_args *uap;
 {
 	int flags = MAP_TRYFIXED, fl = SCARG(uap, flags);
-	
+
 	flags |= cvtto_bsd_mask(fl, LINUX_MAP_SHARED, MAP_SHARED);
 	flags |= cvtto_bsd_mask(fl, LINUX_MAP_PRIVATE, MAP_PRIVATE);
 	flags |= cvtto_bsd_mask(fl, LINUX_MAP_FIXED, MAP_FIXED);
@@ -1089,7 +1089,7 @@ linux_sys_setreuid16(l, v, retval)
 		syscallarg(int) euid;
 	} */ *uap = v;
 	struct sys_setreuid_args bsa;
-	
+
 	SCARG(&bsa, ruid) = ((linux_uid_t)SCARG(uap, ruid) == (linux_uid_t)-1) ?
 		(uid_t)-1 : SCARG(uap, ruid);
 	SCARG(&bsa, euid) = ((linux_uid_t)SCARG(uap, euid) == (linux_uid_t)-1) ?
@@ -1109,7 +1109,7 @@ linux_sys_setregid16(l, v, retval)
 		syscallarg(int) egid;
 	} */ *uap = v;
 	struct sys_setregid_args bsa;
-	
+
 	SCARG(&bsa, rgid) = ((linux_gid_t)SCARG(uap, rgid) == (linux_gid_t)-1) ?
 		(uid_t)-1 : SCARG(uap, rgid);
 	SCARG(&bsa, egid) = ((linux_gid_t)SCARG(uap, egid) == (linux_gid_t)-1) ?
@@ -1175,7 +1175,7 @@ linux_sys_getgroups16(l, v, retval)
 		syscallarg(linux_gid_t *) gidset;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	caddr_t sg; 
+	caddr_t sg;
 	int n, error, i;
 	struct sys_getgroups_args bsa;
 	gid_t *bset, *kbset;
@@ -1256,7 +1256,7 @@ linux_sys_setgroups16(l, v, retval)
 	SCARG(&bsa, gidsetsize) = n;
 	SCARG(&bsa, gidset) = bset;
 	error = sys_setgroups(l, &bsa, retval);
-	
+
 out:
 	if (lset != NULL)
 		free(lset, M_TEMP);
@@ -1398,18 +1398,18 @@ linux_sys_ptrace(l, v, retval)
 			 */
 			if (request == LINUX_PTRACE_CONT && SCARG(uap, addr)==0)
 				SCARG(&pta, addr) = (caddr_t) 1;
-			
+
 			error = sys_ptrace(l, &pta, retval);
-			if (error) 
+			if (error)
 				return error;
 			switch (request) {
 			case LINUX_PTRACE_PEEKTEXT:
 			case LINUX_PTRACE_PEEKDATA:
-				error = copyout (retval, 
+				error = copyout (retval,
 				    (caddr_t)SCARG(uap, data), sizeof *retval);
 				*retval = SCARG(uap, data);
 				break;
-			default:	
+			default:
 				break;
 			}
 			return error;

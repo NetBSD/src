@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.2.56.3 2004/09/21 13:15:27 skrll Exp $	*/
+/*	$NetBSD: hpib.c,v 1.2.56.4 2005/03/04 16:38:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -50,7 +50,7 @@ int	internalhpib = IIOV(DIO_IHPIBADDR);
 struct	hpib_softc hpib_softc[NHPIB];
 
 void
-hpibinit()
+hpibinit(void)
 {
 	extern struct hp_hw sc_table[];
 	struct hp_hw *hw;
@@ -75,8 +75,7 @@ hpibinit()
 }
 
 int
-hpibalive(unit)
-	int unit;
+hpibalive(int unit)
 {
 	if (unit >= NHPIB || hpib_softc[unit].sc_alive == 0)
 		return 0;
@@ -84,8 +83,7 @@ hpibalive(unit)
 }
 
 int
-hpibid(unit, slave)
-	int unit, slave;
+hpibid(int unit, int slave)
 {
 	short id;
 	int rv;
@@ -100,30 +98,25 @@ hpibid(unit, slave)
 }
 
 int
-hpibsend(unit, slave, sec, buf, cnt)
-	int unit, slave, sec;
-	char *buf;
-	int cnt;
+hpibsend(int unit, int slave, int sec, char *buf, int cnt)
 {
+
 	if (hpib_softc[unit].sc_type == HPIBC)
 		return (fhpibsend(unit, slave, sec, buf, cnt));
 	return nhpibsend(unit, slave, sec, buf, cnt);
 }
 
 int
-hpibrecv(unit, slave, sec, buf, cnt)
-	int unit, slave, sec;
-	char *buf;
-	int cnt;
+hpibrecv(int unit, int slave, int sec, char *buf, int cnt)
 {
+
 	if (hpib_softc[unit].sc_type == HPIBC)
 		return (fhpibrecv(unit, slave, sec, buf, cnt));
 	return nhpibrecv(unit, slave, sec, buf, cnt);
 }
 
 int
-hpibswait(unit, slave)
-	int unit, slave;
+hpibswait(int unit, int slave)
 {
 	int timo = 1000000;
 	int (*poll)(int);
@@ -142,10 +135,7 @@ hpibswait(unit, slave)
 }
 
 void
-hpibgo(unit, slave, sec, addr, count, flag)
-	int unit, slave, sec;
-	char *addr;
-	int count, flag;
+hpibgo(int unit, int slave, int sec, char *addr, int count, int flag)
 {
 
 	if (hpib_softc[unit].sc_type == HPIBC)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.20.2.5 2004/11/21 08:45:29 skrll Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.20.2.6 2005/03/04 16:40:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,11 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.20.2.5 2004/11/21 08:45:29 skrll Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_ptm.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.20.2.6 2005/03/04 16:40:03 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptm.h"
@@ -338,10 +334,10 @@ linux_termios_to_bsd_termios(lts, bts)
 		index = (index & ~LINUX_CBAUDEX) + LINUX_NSPEEDS - 1;
 	bts->c_ispeed = bts->c_ospeed = linux_speeds[index];
 	/*
-	 * A null c_ospeed causes NetBSD to hangup the terminal. 
+	 * A null c_ospeed causes NetBSD to hangup the terminal.
 	 * Linux does not do this, and it sets c_ospeed to zero
 	 * sometimes. If it is null, we store -1 in the kernel
-	 */ 
+	 */
 	if (bts->c_ospeed == 0)
 		bts->c_ospeed = -1;
 
@@ -439,10 +435,10 @@ bsd_termios_to_linux_termios(bts, lts)
 		}
 	}
 	/*
-	 * A null c_ospeed causes NetBSD to hangup the terminal. 
+	 * A null c_ospeed causes NetBSD to hangup the terminal.
 	 * Linux does not do this, and it sets c_ospeed to zero
 	 * sometimes. If it is null, we store -1 in the kernel
-	 */ 
+	 */
 	if (bts->c_ospeed == -1)
 		bts->c_ospeed = 0;
 	lts->c_cflag |= mask;
@@ -505,7 +501,7 @@ linux_ioctl_termios(l, uap, retval)
 	bsdioctl = fp->f_ops->fo_ioctl;
 	com = SCARG(uap, com);
 	retval[0] = 0;
-                
+
 	switch (com & 0xffff) {
 	case LINUX_TCGETS:
 		error = (*bsdioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, l);
@@ -721,7 +717,7 @@ linux_ioctl_termios(l, uap, retval)
 #ifndef NO_DEV_PTM
 		{
 			caddr_t sg = stackgap_init(l->l_proc, 0);
-			struct ptmget ptm, *ptmp = stackgap_alloc(l->l_proc, &sg, 
+			struct ptmget ptm, *ptmp = stackgap_alloc(l->l_proc, &sg,
 				sizeof(*ptmp));
 
 			SCARG(&ia, fd) = SCARG(uap, fd);

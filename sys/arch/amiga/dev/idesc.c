@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.53.2.4 2004/12/18 09:31:01 skrll Exp $ */
+/*	$NetBSD: idesc.c,v 1.53.2.5 2005/03/04 16:38:03 skrll Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.53.2.4 2004/12/18 09:31:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.53.2.5 2005/03/04 16:38:03 skrll Exp $");
 
 /*
  * A4000 IDE interface, emulating a SCSI controller
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.53.2.4 2004/12/18 09:31:01 skrll Exp $")
 #include <sys/reboot.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
+#include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_disk.h>
@@ -711,12 +712,12 @@ ide_scsidone(struct idec_softc *dev, int stat)
 int
 idegetsense(struct idec_softc *dev, struct scsipi_xfer *xs)
 {
-	struct scsipi_sense rqs;
+	struct scsi_request_sense rqs;
 	struct scsipi_periph *periph = xs->xs_periph;
 
 	if (dev->sc_cur->sc_flags & IDEF_ATAPI)
 		return (0);
-	rqs.opcode = REQUEST_SENSE;
+	rqs.opcode = SCSI_REQUEST_SENSE;
 	rqs.byte2 = periph->periph_lun << 5;
 #ifdef not_yet
 	rqs.length = xs->req_sense_length ? xs->req_sense_length :
@@ -960,8 +961,8 @@ ideicmd(struct idec_softc *dev, int target, void *cbuf, int clen, void *buf,
 	int nblks;
 	struct scsipi_inquiry_data *inqbuf;
 	struct {
-		struct scsipi_mode_header header;
-		struct scsi_blk_desc blk_desc;
+		struct scsi_mode_parameter_header_6 header;
+		struct scsi_general_block_descriptor blk_desc;
 		union scsi_disk_pages pages;
 	} *mdsnbuf;
 
@@ -985,10 +986,10 @@ ideicmd(struct idec_softc *dev, int target, void *cbuf, int clen, void *buf,
 		return (ide_atapi_icmd(dev, target, cbuf, clen, buf, len));
 	}
 
-	if (*((u_char *)cbuf) != REQUEST_SENSE)
+	if (*((u_char *)cbuf) != SCSI_REQUEST_SENSE)
 		ide->sc_error = 0;
 	switch (*((u_char *)cbuf)) {
-	case TEST_UNIT_READY:
+	case SCSI_TEST_UNIT_READY:
 		dev->sc_stat[0] = 0;
 		return (0);
 
@@ -1045,12 +1046,12 @@ ideicmd(struct idec_softc *dev, int target, void *cbuf, int clen, void *buf,
 			nblks = 256;
 		return (ideiwrite(ide, lba, buf, nblks));
 
-	case PREVENT_ALLOW:
+	case SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL:
 	case START_STOP:	/* and LOAD */
 		dev->sc_stat[0] = 0;
 		return (0);
 
-	case MODE_SENSE:
+	case SCSI_MODE_SENSE_6:
 		mdsnbuf = (void*) buf;
 		bzero(buf, *((u_char *)cbuf + 4));
 		switch (*((u_char *)cbuf + 2) & 0x3f) {
@@ -1072,7 +1073,7 @@ ideicmd(struct idec_softc *dev, int target, void *cbuf, int clen, void *buf,
 			return (-1);
 		}
 
-	case REQUEST_SENSE:
+	case SCSI_REQUEST_SENSE:
 		/* convert sc_error to SCSI sense */
 		bzero (buf, *((u_char *)cbuf + 4));
 		*((u_char *) buf) = 0x70;
@@ -1094,7 +1095,7 @@ ideicmd(struct idec_softc *dev, int target, void *cbuf, int clen, void *buf,
 	case SCSI_REASSIGN_BLOCKS:
 	case 0x10 /*WRITE_FILEMARKS*/:
 	case 0x11 /*SPACE*/:
-	case MODE_SELECT:
+	case SCSI_MODE_SELECT_6:
 	default:
 		printf ("ide: unhandled SCSI command %02x\n", *((u_char *)cbuf));
 		ide->sc_error = 0x04;
@@ -1317,7 +1318,7 @@ int ide_atapi_start(struct idec_softc *dev)
 		u_short *bf;
 		union {
 			struct scsipi_rw_10 rw_big;
-			struct scsipi_mode_sense_big md_big;
+			struct scsi_mode_sense_10 md_big;
 		} cmd;
 
 		/* Wait for cmd i/o phase */
@@ -1348,8 +1349,8 @@ int ide_atapi_start(struct idec_softc *dev)
 				cmd.rw_big.length[0] = 1;
 			bf = (u_short *)&cmd.rw_big;
 			break;
-		case MODE_SENSE:
-		case MODE_SELECT:
+		case SCSI_MODE_SENSE_6:
+		case SCSI_MODE_SELECT_6:
 			bzero((char *)&cmd, sizeof(cmd.md_big));
 			cmd.md_big.opcode = xs->cmd->opcode |= 0x40;
 			cmd.md_big.byte2 = xs->cmd->bytes[0];
@@ -1452,7 +1453,7 @@ ide_atapi_intr(struct idec_softc *dev)
 	int retries = 0;
 	union {
 		struct scsipi_rw_10 rw_big;
-		struct scsipi_mode_sense_big md_big;
+		struct scsi_mode_sense_10 md_big;
 	} cmd;
 
 	if (wait_for_unbusy(dev) < 0) {
@@ -1501,8 +1502,8 @@ again:
 				cmd.rw_big.length[0] = 1;
 			bf = (u_short *)&cmd.rw_big;
 			break;
-		case MODE_SENSE:
-		case MODE_SELECT:
+		case SCSI_MODE_SENSE_6:
+		case SCSI_MODE_SELECT_6:
 			bzero((char *)&cmd, sizeof(cmd.md_big));
 			cmd.md_big.opcode = xs->cmd->opcode |= 0x40;
 			cmd.md_big.byte2 = xs->cmd->bytes[0];
@@ -1580,7 +1581,7 @@ again:
 			if ((status & IDES_ERR) == 0)
 				xs->error = XS_SENSE;
 		} else if (status & IDES_ERR) {
-			struct scsipi_sense rqs;
+			struct scsi_request_sense rqs;
 
 #ifdef DEBUG_ATAPI
 			printf("ide_atapi_intr: error status %x err %x\n",
@@ -1589,7 +1590,7 @@ again:
 			xs->error = XS_SHORTSENSE;
 			xs->sense.atapi_sense = err;
 			ide->sc_flags |= IDEF_SENSE;
-			rqs.opcode = REQUEST_SENSE;
+			rqs.opcode = SCSI_REQUEST_SENSE;
 			rqs.byte2 = xs->xs_periph->periph_lun << 5;
 			rqs.length = sizeof(xs->sense.scsi_sense);
 			rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
@@ -1629,7 +1630,7 @@ ide_atapi_done(struct idec_softc *dev)
 		int atapi_sense = xs->sense.atapi_sense;
 
 		bzero((char *)&xs->sense.scsi_sense, sizeof(xs->sense.scsi_sense));
-		xs->sense.scsi_sense.error_code = 0x70;
+		xs->sense.scsi_sense.response_code = 0x70;
 		xs->sense.scsi_sense.flags = atapi_sense >> 4;
 		if (atapi_sense & 0x01)
 			xs->sense.scsi_sense.flags |= SSD_ILI;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.12 2002/05/30 12:06:43 drochner Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.12.6.1 2005/03/04 16:45:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.12 2002/05/30 12:06:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.12.6.1 2005/03/04 16:45:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ pci_mapreg_probe(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t *typep)
 {
 	pcireg_t address, mask;
 	int s;
-	
+
 	s = splhigh();
 	address = pci_conf_read(pc, tag, reg);
 	pci_conf_write(pc, tag, reg, 0xffffffff);

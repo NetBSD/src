@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.10.8.3 2004/09/21 13:13:19 skrll Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.10.8.4 2005/03/04 16:38:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -415,7 +415,7 @@ inittodr(time_t base)
 
 	if (!badbase) {
 		/*
-		 * See if we tained/lost two or more days; if
+		 * See if we gained/lost two or more days; if
 		 * so, assume something is amiss.
 		 */
 		deltat = time.tv_sec - base;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.27.2.6 2005/02/04 11:45:25 skrll Exp $ */
+/*	$NetBSD: gem.c,v 1.27.2.7 2005/03/04 16:41:28 skrll Exp $ */
 
 /*
  *
@@ -34,8 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.27.2.6 2005/02/04 11:45:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.27.2.7 2005/03/04 16:41:28 skrll Exp $");
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -58,6 +59,15 @@ __KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.27.2.6 2005/02/04 11:45:25 skrll Exp $");
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
+
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -241,6 +251,8 @@ gem_attach(sc, enaddr)
 	ifp->if_softc = sc;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx
+				| IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 	ifp->if_start = gem_start;
 	ifp->if_ioctl = gem_ioctl;
 	ifp->if_watchdog = gem_watchdog;
@@ -831,11 +843,18 @@ gem_init(struct ifnet *ifp)
 	/* Encode Receive Descriptor ring size: four possible values */
 	v = gem_ringsize(GEM_NRXDESC /*XXX*/);
 
+	/* Set receive h/w checksum offset */
+#ifdef INET
+	v |= (ETHER_HDR_LEN + sizeof(struct ip) +
+	      ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
+	        ETHER_VLAN_ENCAP_LEN : 0)) << GEM_RX_CONFIG_CXM_START_SHFT;
+#endif
+
 	/* Enable DMA */
 	bus_space_write_4(t, h, GEM_RX_CONFIG,
 		v|(GEM_THRSH_1024<<GEM_RX_CONFIG_FIFO_THRS_SHIFT)|
-		(2<<GEM_RX_CONFIG_FBOFF_SHFT)|GEM_RX_CONFIG_RXDMA_EN|
-		(0<<GEM_RX_CONFIG_CXM_START_SHFT));
+		(2<<GEM_RX_CONFIG_FBOFF_SHFT)|GEM_RX_CONFIG_RXDMA_EN);
+
 	/*
 	 * The following value is for an OFF Threshold of about 3/4 full
 	 * and an ON Threshold of 1/4 full.
@@ -853,7 +872,7 @@ gem_init(struct ifnet *ifp)
 
 	/* step 12. RX_MAC Configuration Register */
 	v = bus_space_read_4(t, h, GEM_MAC_RX_CONFIG);
-	v |= GEM_MAC_RX_ENABLE;
+	v |= GEM_MAC_RX_ENABLE | GEM_MAC_RX_STRIP_CRC;
 	bus_space_write_4(t, h, GEM_MAC_RX_CONFIG, v);
 
 	/* step 14. Issue Transmit Pending command */
@@ -1114,6 +1133,38 @@ gem_start(ifp)
 					sc->sc_txwin = 0;
 					flags |= GEM_TD_INTERRUPT_ME;
 				}
+
+#ifdef INET
+				/* h/w checksum */
+				if (ifp->if_csum_flags_tx & (M_CSUM_TCPv4 |
+				    M_CSUM_UDPv4) && m0->m_pkthdr.csum_flags &
+				    (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+					struct ether_header *eh;
+					uint16_t offset, start;
+
+					eh = mtod(m0, struct ether_header *);
+					switch (ntohs(eh->ether_type)) {
+					case ETHERTYPE_IP:
+						start = ETHER_HDR_LEN;
+						break;
+					case ETHERTYPE_VLAN:
+						start = ETHER_HDR_LEN +
+							ETHER_VLAN_ENCAP_LEN;
+						break;
+					default:
+						/* unsupported, drop it */
+						m_free(m0);
+						continue;
+					}
+					start += M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
+					offset = M_CSUM_DATA_IPv4_OFFSET(m0->m_pkthdr.csum_data) + start;
+					flags |= (start <<
+						  GEM_TD_CXSUM_STARTSHFT) |
+						 (offset <<
+						  GEM_TD_CXSUM_STUFFSHFT) |
+						 GEM_TD_CXSUM_ENABLE;
+				}
+#endif
 			}
 			if (seg == dmamap->dm_nsegs - 1) {
 				flags |= GEM_TD_END_OF_PACKET;
@@ -1339,7 +1390,6 @@ gem_rint(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h;
-	struct ether_header *eh;
 	struct gem_rxsoft *rxs;
 	struct mbuf *m;
 	u_int64_t rxstat;
@@ -1402,11 +1452,8 @@ gem_rint(sc)
 		}
 #endif
 
-		/*
-		 * No errors; receive the packet.  Note the Gem
-		 * includes the CRC with every packet.
-		 */
-		len = GEM_RD_BUFLEN(rxstat) - ETHER_CRC_LEN;
+		/* No errors; receive the packet. */
+		len = GEM_RD_BUFLEN(rxstat);
 
 		/*
 		 * Allocate a new mbuf cluster.  If that fails, we are
@@ -1424,7 +1471,6 @@ gem_rint(sc)
 		}
 		m->m_data += 2; /* We're already off by two */
 
-		eh = mtod(m, struct ether_header *);
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
@@ -1437,6 +1483,102 @@ gem_rint(sc)
 			bpf_mtap(ifp->if_bpf, m);
 #endif /* NPBFILTER > 0 */
 
+#ifdef INET
+		/* hardware checksum */
+		if (ifp->if_csum_flags_rx & (M_CSUM_UDPv4 | M_CSUM_TCPv4)) {
+			struct ether_header *eh;
+			struct ip *ip;
+			struct udphdr *uh;
+			int32_t hlen, pktlen;
+
+			if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) {
+				pktlen = m->m_pkthdr.len - ETHER_HDR_LEN -
+					 ETHER_VLAN_ENCAP_LEN;
+				eh = (struct ether_header *) mtod(m, caddr_t) +
+					ETHER_VLAN_ENCAP_LEN;
+			} else {
+				pktlen = m->m_pkthdr.len - ETHER_HDR_LEN;
+				eh = mtod(m, struct ether_header *);
+			}
+			if (ntohs(eh->ether_type) != ETHERTYPE_IP)
+				goto swcsum;
+			ip = (struct ip *) ((caddr_t)eh + ETHER_HDR_LEN);
+
+			/* IPv4 only */
+			if (ip->ip_v != IPVERSION)
+				goto swcsum;
+
+			hlen = ip->ip_hl << 2;
+			if (hlen < sizeof(struct ip))
+				goto swcsum;
+
+			/* too short, truncated, fragment */
+			if ((ntohs(ip->ip_len) < hlen) ||
+			    (ntohs(ip->ip_len) > pktlen) ||
+			    (ntohs(ip->ip_off) & (IP_MF | IP_OFFMASK)))
+				goto swcsum;
+
+			switch (ip->ip_p) {
+			case IPPROTO_TCP:
+				if (! (ifp->if_csum_flags_rx & M_CSUM_TCPv4))
+					goto swcsum;
+				if (pktlen < (hlen + sizeof(struct tcphdr)))
+					goto swcsum;
+				m->m_pkthdr.csum_flags = M_CSUM_TCPv4;
+				break;
+			case IPPROTO_UDP:
+				if (! (ifp->if_csum_flags_rx & M_CSUM_UDPv4))
+					goto swcsum;
+				if (pktlen < (hlen + sizeof(struct udphdr)))
+					goto swcsum;
+				uh = (struct udphdr *)((caddr_t)ip + hlen);
+				/* no checksum */
+				if (uh->uh_sum == 0)
+					goto swcsum;
+				m->m_pkthdr.csum_flags = M_CSUM_UDPv4;
+				break;
+			default:
+				goto swcsum;
+			}
+
+			/* the uncomplemented sum is expected */
+			m->m_pkthdr.csum_data = (~rxstat) & GEM_RD_CHECKSUM;
+
+			/* if the pkt had ip options, we have to deduct them */
+			if (hlen > sizeof(struct ip)) {
+				uint16_t *opts;
+				uint32_t optsum, temp;
+
+				optsum = 0;
+				temp = hlen - sizeof(struct ip);
+				opts = (uint16_t *) ((caddr_t) ip +
+					sizeof(struct ip));
+
+				while (temp > 1) {
+					optsum += ntohs(*opts++);
+					temp -= 2;
+				}
+				while (optsum >> 16)
+					optsum = (optsum >> 16) +
+						 (optsum & 0xffff);
+
+				/* Deduct ip opts sum from hwsum (rfc 1624). */
+				m->m_pkthdr.csum_data =
+					~((~m->m_pkthdr.csum_data) - ~optsum);
+
+				while (m->m_pkthdr.csum_data >> 16)
+					m->m_pkthdr.csum_data =
+						(m->m_pkthdr.csum_data >> 16) +
+						(m->m_pkthdr.csum_data &
+						 0xffff);
+			}
+
+			m->m_pkthdr.csum_flags |= M_CSUM_DATA |
+						  M_CSUM_NO_PSEUDOHDR;
+		} else
+swcsum:
+			m->m_pkthdr.csum_flags = 0;
+#endif
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
 	}

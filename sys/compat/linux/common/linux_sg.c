@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sg.c,v 1.1.2.3 2005/02/15 21:33:12 skrll Exp $ */
+/* $NetBSD: linux_sg.c,v 1.1.2.4 2005/03/04 16:40:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.1.2.3 2005/02/15 21:33:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.1.2.4 2005/03/04 16:40:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.1.2.3 2005/02/15 21:33:12 skrll Exp $
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
-#include <compat/linux/common/linux_ioctl.h> 
-#include <compat/linux/common/linux_signal.h> 
+#include <compat/linux/common/linux_ioctl.h>
+#include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_sg.h>
 
 #include <compat/linux/linux_syscallargs.h>
@@ -99,7 +99,7 @@ linux_ioctl_sg(struct lwp *l, struct linux_sys_ioctl_args *uap,
 			DPRINTF(("failed to copy in request data %d\n", error));
 			break;
 		}
-			
+
 #ifdef LINUX_SG_DEBUG
 		dump_sg_io(&lreq);
 #endif
@@ -135,7 +135,7 @@ linux_ioctl_sg(struct lwp *l, struct linux_sys_ioctl_args *uap,
 			DPRINTF(("failed to copy in cmd data %d\n", error));
 			break;
 		}
-		
+
 		req.timeout = lreq.timeout;
 		req.cmdlen = lreq.cmd_len;
 		req.datalen = lreq.dxfer_len;
@@ -258,8 +258,8 @@ bsd_to_linux_host_status(int bs)
 		return LINUX_DID_ERROR;
 	}
 }
-		
-	
+
+
 
 #ifdef LINUX_SG_DEBUG
 static void
@@ -283,7 +283,7 @@ static void
 dump_scsireq(struct scsireq *br)
 {
 	int i;
-	printf("bsdreq [flags=%lx, timeout=%lu, cmd=[ ", 
+	printf("bsdreq [flags=%lx, timeout=%lu, cmd=[ ",
 	    br->flags, br->timeout);
 	for (i = 0; i < sizeof(br->cmd) / sizeof(br->cmd[0]); i++)
 		printf("%.2u ", br->cmd[i]);

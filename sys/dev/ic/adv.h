@@ -1,9 +1,9 @@
-/*      $NetBSD: adv.h,v 1.8.22.4 2005/02/04 11:45:23 skrll Exp $        */
+/*      $NetBSD: adv.h,v 1.8.22.5 2005/03/04 16:41:23 skrll Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
  * Systems Inc. Narrow SCSI controllers
- * 
+ *
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -51,7 +51,7 @@ struct adv_ccb
 	ASC_SG_HEAD	sghead;
 	ASC_SCSI_Q	scsiq;
 
-	struct scsipi_sense_data scsi_sense;
+	struct scsi_sense_data scsi_sense;
 
 	struct callout ccb_watchdog;
 

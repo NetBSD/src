@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.6.20.4 2005/02/04 11:45:26 skrll Exp $ */
+/* $NetBSD: pckbcvar.h,v 1.6.20.5 2005/03/04 16:41:32 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -56,7 +56,7 @@ struct pckbc_rbuf_item {
  * external representation (pckbc_tag_t),
  * needed early for console operation
  */
-struct pckbc_internal { 
+struct pckbc_internal {
 	pckbport_tag_t t_pt;
 	bus_space_tag_t t_iot;
 	bus_space_handle_t t_ioh_d, t_ioh_c; /* data port, cmd port */

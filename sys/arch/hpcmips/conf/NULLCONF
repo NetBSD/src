@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: NULLCONF,v 1.17.6.4 2004/11/14 08:15:06 skrll Exp $
+# 	$NetBSD: NULLCONF,v 1.17.6.5 2005/03/04 16:38:36 skrll Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -23,6 +23,7 @@ options 	DEBUG_FIND_PCIC		# Debugging use XXX harmful don't define until read so
 makeoptions	DEFWARNINGS="no"	# override DEFWARNINGS?=yes
 
 file-system 	FFS		# fast filesystem with user and group quotas
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

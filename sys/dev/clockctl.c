@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.12.2.3 2004/09/21 13:26:24 skrll Exp $ */
+/*      $NetBSD: clockctl.c,v 1.12.2.4 2005/03/04 16:40:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.12.2.3 2004/09/21 13:26:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.12.2.4 2005/03/04 16:40:53 skrll Exp $");
 
 #include "opt_ntp.h"
 
@@ -77,36 +77,36 @@ clockctlioctl(dev, cmd, data, flags, l)
 	struct lwp *l;
 {
 	int error = 0;
-	
+
 	switch (cmd) {
 		case CLOCKCTL_SETTIMEOFDAY: {
 			struct sys_settimeofday_args *args =
 			    (struct sys_settimeofday_args *)data;
 
-			error = settimeofday1(SCARG(args, tv), 
+			error = settimeofday1(SCARG(args, tv),
 			    SCARG(args, tzp), l->l_proc);
 			if (error)
 				return (error);
 			break;
 		}
 		case CLOCKCTL_ADJTIME: {
-			struct sys_adjtime_args *args = 
+			struct sys_adjtime_args *args =
 			    (struct sys_adjtime_args *)data;
 
-			error = adjtime1(SCARG(args, delta), 
+			error = adjtime1(SCARG(args, delta),
 			    SCARG(args, olddelta), l->l_proc);
 			if (error)
-				return (error);	
+				return (error);
 			break;
 		}
 		case CLOCKCTL_CLOCK_SETTIME: {
-			struct sys_clock_settime_args *args = 
+			struct sys_clock_settime_args *args =
 			    (struct sys_clock_settime_args *)data;
 
-			error = clock_settime1(SCARG(args, clock_id), 
+			error = clock_settime1(SCARG(args, clock_id),
 			    SCARG(args, tp));
 			if (error)
-				return (error);	
+				return (error);
 			break;
 		}
 #ifdef NTP
@@ -115,7 +115,7 @@ clockctlioctl(dev, cmd, data, flags, l)
 			    (struct clockctl_ntp_adjtime_args *)data;
 			struct timex ntv;
 
-			error = copyin((caddr_t)SCARG(args,uas.tp), 
+			error = copyin((caddr_t)SCARG(args,uas.tp),
 			    (caddr_t)&ntv, sizeof(ntv));
 			if (error)
 				return (error);

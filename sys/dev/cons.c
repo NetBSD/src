@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.48.2.4 2004/09/21 13:26:24 skrll Exp $	*/
+/*	$NetBSD: cons.c,v 1.48.2.5 2005/03/04 16:40:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.48.2.4 2004/09/21 13:26:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.48.2.5 2005/03/04 16:40:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -159,7 +159,7 @@ cnopen(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 	return ((*cdev->d_open)(cndev, flag, mode, l));
 }
- 
+
 int
 cnclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
@@ -190,7 +190,7 @@ cnclose(dev_t dev, int flag, int mode, struct lwp *l)
 		return (0);
 	return ((*cdev->d_close)(dev, flag, mode, l));
 }
- 
+
 int
 cnread(dev_t dev, struct uio *uio, int flag)
 {
@@ -209,7 +209,7 @@ cnread(dev_t dev, struct uio *uio, int flag)
 		return error;
 	return ((*cdev->d_read)(dev, uio, flag));
 }
- 
+
 int
 cnwrite(dev_t dev, struct uio *uio, int flag)
 {
@@ -349,7 +349,7 @@ cnputc(int c)
 {
 
 	if (cn_tab == NULL)
-		return;			
+		return;
 
 	if (c) {
 		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
@@ -395,7 +395,7 @@ cnflush(void)
 		return;
 	(*cn_tab->cn_flush)(cn_tab->cn_dev);
 }
-  
+
 void
 cnhalt(void)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.25.16.4 2004/09/21 13:27:55 skrll Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.25.16.5 2005/03/04 16:41:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -158,7 +158,7 @@
 #define ELINK_W2_ADDR_1		0x01
 #define ELINK_W2_ADDR_0		0x00
 
-/* 
+/*
  * Window 3 registers.  Configuration and FIFO Management.
  */
 	/* Read */
@@ -221,15 +221,15 @@
 #define TX_CD_LOST		0x00
 
 /*
- * Window 7 registers. 
+ * Window 7 registers.
  * Address and length for a single bus-master DMA transfer.
  * Unused for elink3 cards.
- */     
+ */
 #define ELINK_W7_MASTER_ADDDRES	0x00
 #define ELINK_W7_RX_ERROR	0x04
-#define ELINK_W7_MASTER_LEN	0x06    
+#define ELINK_W7_MASTER_LEN	0x06
 #define ELINK_W7_RX_STATUS	0x08
-#define ELINK_W7_MASTER_STATUS	0x0c    
+#define ELINK_W7_MASTER_STATUS	0x0c
 
 /*
  * Register definitions.
@@ -399,7 +399,7 @@
  *       4-5:    ram speed
  *       6-7:    rom size
  *      8-15:   reserved
- *          
+ *
  *     16-17:   ram split (5:3, 3:1, or 1:1).
  *     18-19:   reserved
  *     20-22:   selected media type

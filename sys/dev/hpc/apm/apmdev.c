@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.1.2.5 2005/01/24 08:59:40 skrll Exp $ */
+/*	$NetBSD: apmdev.c,v 1.1.2.6 2005/03/04 16:41:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.1.2.5 2005/01/24 08:59:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.1.2.6 2005/03/04 16:41:15 skrll Exp $");
 
 #include "opt_apmdev.h"
 
@@ -564,7 +564,7 @@ apm_event_handle(struct apm_softc *sc, u_int event_code, u_int event_info)
 			default:
 				code = "reserved";
 				break;
-		}	
+		}
 		printf("APM: %s event code %x\n", code, event_code);
 	}
 }
@@ -574,7 +574,7 @@ apm_periodic_check(struct apm_softc *sc)
 {
 	int error;
 	u_int event_code, event_info;
-	
+
 
 	/*
 	 * tell the BIOS we're working on it, if asked to do a
@@ -778,7 +778,7 @@ apmdevopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (!apm_inited)
 		return ENXIO;
-	
+
 	DPRINTF(APMDEBUG_DEVICE,
 	    ("apmopen: pid %d flag %x mode %x\n", l->l_proc->p_pid, flag, mode));
 
@@ -911,7 +911,7 @@ apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			break;
 		}
 		break;
-		
+
 	default:
 		error = ENOTTY;
 	}
@@ -943,7 +943,7 @@ filt_apmrdetach(struct knote *kn)
 {
 	struct apm_softc *sc = kn->kn_hook;
 
-	APM_LOCK(sc); 
+	APM_LOCK(sc);
 	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	APM_UNLOCK(sc);
 }

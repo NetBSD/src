@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.11.2.1 2004/08/03 10:49:09 skrll Exp $ */
+/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.11.2.2 2005/03/04 16:45:21 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
@@ -32,7 +32,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.11.2.1 2004/08/03 10:49:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.11.2.2 2005/03/04 16:45:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -251,15 +251,15 @@ isic_attach_Eqs1pp(psc, pa)
 	sc->drv_command = elsa_cmd_req;
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp = CARD_TYPEP_ELSAQS1PCI;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	/* setup chip type = IPAC ! */
-	
+
 	sc->sc_ipac = 1;
 	sc->sc_bfifolen = IPAC_BFIFO_LEN;
 

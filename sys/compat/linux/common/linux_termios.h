@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.11 2002/01/14 23:14:43 bjh21 Exp $	*/
+/*	$NetBSD: linux_termios.h,v 1.11.16.1 2005/03/04 16:40:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ struct linux_winsize {
 };
 
 /*
- * LINUX_NCC is architecture dependent. It is now 
+ * LINUX_NCC is architecture dependent. It is now
  * defined in sys/compat/linux/<arch>/linux_termios.h
  */
 struct linux_termio {
@@ -83,9 +83,9 @@ struct linux_termios {
 	linux_cc_t	c_line;
 	linux_cc_t	c_cc[LINUX_NCCS];
 #ifdef LINUX_LARGE_STRUCT_TERMIOS
-	/* 
-    * Present on some linux ports but unused: 
-	 * However we must enable it, else it breaks ioctl 
+	/*
+    * Present on some linux ports but unused:
+	 * However we must enable it, else it breaks ioctl
 	 * definitions (the size does not match anymore)
     */
 	linux_speed_t	c_ispeed;

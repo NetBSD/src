@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.9.2.6 2004/11/12 16:24:02 skrll Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.9.2.7 2005/03/04 16:39:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.9.2.6 2004/11/12 16:24:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.9.2.7 2005/03/04 16:39:22 skrll Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -146,7 +146,7 @@ struct mach_iokit_devclass darwin_ioresources_devclass = {
 struct mach_iokit_devclass darwin_iohidsystem_devclass = {
 	"<dict ID=\"0\"><key>IOProviderClass</key>"
 	    "<string ID=\"1\">IOHIDSystem</string></dict>",
-	{ &darwin_ioresources_devclass, &darwin_iokbd_devclass, 
+	{ &darwin_ioresources_devclass, &darwin_iokbd_devclass,
 	    &darwin_iomouse_devclass, NULL },
 	darwin_iohidsystem_properties,
 	NULL,
@@ -172,7 +172,7 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 	printf("darwin_iohidsystem_connect_method_scalari_scalaro()\n");
 #endif
 	rep->rep_outcount = 0;
-	maxoutcount = req->req_in[req->req_incount]; 
+	maxoutcount = req->req_in[req->req_incount];
 
 	switch (req->req_selector) {
 	case DARWIN_IOHIDCREATESHMEM: {
@@ -197,9 +197,9 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 
 			darwin_iohidsystem_shmem = uao_create(memsize, 0);
 
-			error = uvm_map(kernel_map, &kvaddr, memsize, 
+			error = uvm_map(kernel_map, &kvaddr, memsize,
 			    darwin_iohidsystem_shmem, 0, PAGE_SIZE,
-			    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, 
+			    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
 			    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
 			if (error != 0) {
 				uao_detach(darwin_iohidsystem_shmem);
@@ -207,7 +207,7 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 				return mach_msg_error(args, error);
 			}
 
-			error = uvm_map_pageable(kernel_map, kvaddr, 
+			error = uvm_map_pageable(kernel_map, kvaddr,
 			    kvaddr + memsize, FALSE, 0);
 			if (error != 0) {
 				uao_detach(darwin_iohidsystem_shmem);
@@ -224,20 +224,20 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 			dita->dita_shmem = kvaddr;
 			dita->dita_done = 0;
 
-			kthread_create1(darwin_iohidsystem_thread, 
+			kthread_create1(darwin_iohidsystem_thread,
 			    (void *)dita, &dita_p, "iohidsystem");
 
 			dita->dita_l = LIST_FIRST(&dita_p->p_lwps);
 
-			/* 
+			/*
 			 * Make sure the thread got the informations
 			 * before exitting and destroying dita.
 			 */
 			while (!dita->dita_done)
-				(void)tsleep(&dita->dita_done, 
+				(void)tsleep(&dita->dita_done,
 				    PZERO, "iohid_done", 0);
 
-			ded->ded_hidsystem_finished = 
+			ded->ded_hidsystem_finished =
 			    dita->dita_hidsystem_finished;
 
 			free(dita, M_TEMP);
@@ -261,7 +261,7 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 	}
 
 	case DARWIN_IOHIDSETCURSORENABLE: {
-		/* Enable or disable the cursor */	
+		/* Enable or disable the cursor */
 		int enable;
 
 		enable = req->req_in[0];
@@ -280,7 +280,7 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 #ifdef DEBUG_DARWIN
 		printf("DARWIN_IOHIDPOSTEVENT: setcursor = %d, type = %d, "
 		    " location = (%d, %d), setflags = %x, flags = %x\n",
-		dne->dne_setcursor, dne->dne_type, dne->dne_location.x, 
+		dne->dne_setcursor, dne->dne_type, dne->dne_location.x,
 		dne->dne_location.y, dne->dne_setflags, dne->dne_flags);
 #endif
 		/* We don't support it yet */
@@ -319,7 +319,7 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 #endif
 	rep->rep_outcount = 0;
 	/* maxoutcount is word aligned */
-	maxoutcount = req->req_in[(req->req_incount & ~0x3UL) + 4]; 
+	maxoutcount = req->req_in[(req->req_incount & ~0x3UL) + 4];
 
 	switch (req->req_selector) {
 	case DARWIN_IOHIDSETMOUSELOCATION: {
@@ -331,8 +331,8 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 #ifdef DEBUG_DARWIN
 		printf("DARWIN_IOHIDSETMOUSELOCATION: %d,%d\n", pt->x, pt->y);
 #endif
-		/* 
-		 * Use the wsmux given by sysctl emul.darwin.iohidsystem_mux 
+		/*
+		 * Use the wsmux given by sysctl emul.darwin.iohidsystem_mux
 		 */
 		error = darwin_findwsmux(&dev, darwin_iohidsystem_mux);
 		if (error != 0)
@@ -343,15 +343,15 @@ darwin_iohidsystem_connect_method_structi_structo(args)
 
 		wsevt.type = WSCONS_EVENT_MOUSE_ABSOLUTE_X;
 		wsevt.value = pt->x;
-		if ((error = (wsmux->d_ioctl)(dev, 
+		if ((error = (wsmux->d_ioctl)(dev,
 		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  l)) != 0)
-			return mach_msg_error(args, error); 
+			return mach_msg_error(args, error);
 
 		wsevt.type = WSCONS_EVENT_MOUSE_ABSOLUTE_Y;
 		wsevt.value = pt->y;
-		if ((error = (wsmux->d_ioctl)(dev, 
+		if ((error = (wsmux->d_ioctl)(dev,
 		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0, l)) != 0)
-			return mach_msg_error(args, error); 
+			return mach_msg_error(args, error);
 
 		rep->rep_outcount = 0;
 		break;
@@ -390,14 +390,14 @@ darwin_iohidsystem_connect_map_memory(args)
 #endif
 	memsize = round_page(sizeof(struct darwin_iohidsystem_shmem));
 
-	if (darwin_iohidsystem_shmem == NULL) 
+	if (darwin_iohidsystem_shmem == NULL)
 		return mach_msg_error(args, ENOMEM);
 
 	uao_reference(darwin_iohidsystem_shmem);
 	pvaddr = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, memsize);
 
-	if ((error = uvm_map(&p->p_vmspace->vm_map, &pvaddr, 
-	    memsize, darwin_iohidsystem_shmem, 0, PAGE_SIZE, 
+	if ((error = uvm_map(&p->p_vmspace->vm_map, &pvaddr,
+	    memsize, darwin_iohidsystem_shmem, 0, PAGE_SIZE,
 	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
 	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0))) != 0)
 		return mach_msg_error(args, error);
@@ -435,7 +435,7 @@ darwin_iohidsystem_thread(args)
 	struct mach_right *mr;
 	struct lwp *l;
 	int finished = 0;
-	
+
 #ifdef DEBUG_DARWIN
 	printf("darwin_iohidsystem_thread: start\n");
 #endif
@@ -444,7 +444,7 @@ darwin_iohidsystem_thread(args)
 	l = dita->dita_l;
 	dita->dita_hidsystem_finished = &finished;
 
-	/* 
+	/*
 	 * Allow the parent to read dita_hidsystem_finished
 	 * and to get rid of dita. Once the parent is awaken,
 	 * it holds a reference to our on-stack finished flag,
@@ -456,11 +456,11 @@ darwin_iohidsystem_thread(args)
 
 	evg = (struct darwin_iohidsystem_evglobals *)&shmem->dis_evglobals;
 
-	/* 
-	 * Use the wsmux given by sysctl emul.darwin.iohidsystem_mux 
+	/*
+	 * Use the wsmux given by sysctl emul.darwin.iohidsystem_mux
 	 */
 	if ((error = darwin_findwsmux(&dev, darwin_iohidsystem_mux)) != 0)
-		goto out2;		
+		goto out2;
 
 	if ((wsmux = cdevsw_lookup(dev)) == NULL) {
 		error = ENXIO;
@@ -469,7 +469,7 @@ darwin_iohidsystem_thread(args)
 
 	if ((error = (wsmux->d_open)(dev, FREAD|FWRITE, 0, l)) != 0)
 		goto out2;
-	
+
 	while(!finished) {
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
@@ -492,7 +492,7 @@ darwin_iohidsystem_thread(args)
 		while (diei->diei_sem != 0)
 			tsleep((void *)&diei->diei_sem, PZERO, "iohid_lock", 1);
 
-		/* 
+		/*
 		 * No need to take the lock since we will not
 		 * yield control to the user process.
 		 */
@@ -509,7 +509,7 @@ darwin_iohidsystem_thread(args)
 		if (evg->evg_event_tail == DARWIN_IOHIDSYSTEM_EVENTQUEUE_LEN)
 			evg->evg_event_tail = 0;
 
-		/* 
+		/*
 		 * Send a I/O notification if the process
 		 * has consumed all available entries
 		 */
@@ -520,8 +520,8 @@ darwin_iohidsystem_thread(args)
 		}
 
 
-		/* 
-		 * If the queue is full, ie: the next event slot is not 
+		/*
+		 * If the queue is full, ie: the next event slot is not
 		 * yet consumed, sleep until the process consumes it.
 		 */
 		diei = &evg->evg_evqueue[evg->evg_event_tail];
@@ -533,7 +533,7 @@ darwin_iohidsystem_thread(args)
 
 out1:
 	(wsmux->d_close)(dev, FREAD|FWRITE, 0, l);
-	
+
 out2:
 	while (!finished)
 		tsleep((void *)&finished, PZERO, "iohid_exit", 0);
@@ -553,15 +553,15 @@ darwin_iohidsystem_shmeminit(kvaddr)
 	int i;
 
 	shmem = (struct darwin_iohidsystem_shmem *)kvaddr;
-	shmem->dis_global_offset = 
+	shmem->dis_global_offset =
 	    (size_t)&shmem->dis_evglobals - (size_t)&shmem->dis_global_offset;
-	shmem->dis_private_offset = 
+	shmem->dis_private_offset =
 	    shmem->dis_global_offset + sizeof(*evglobals);
 
 	evglobals = &shmem->dis_evglobals;
 	evglobals->evg_struct_size = sizeof(*evglobals);
 
-	for (i = 0; i < DARWIN_IOHIDSYSTEM_EVENTQUEUE_LEN; i++) 
+	for (i = 0; i < DARWIN_IOHIDSYSTEM_EVENTQUEUE_LEN; i++)
 		evglobals->evg_evqueue[i].diei_next = i + 1;
 	evglobals->
 	    evg_evqueue[DARWIN_IOHIDSYSTEM_EVENTQUEUE_LEN - 1].diei_next = 0;
@@ -681,11 +681,11 @@ darwin_wscons_to_iohidsystem(wsevt, hidevt)
 		hidevt->die_data.key.keycode = wsevt->value; /* Translate */
 		hidevt->die_data.key.keyboardtype = 0xcd; /* XXX */
 		break;
-		
+
 	default:
 
 #ifdef DEBUG_DARWIN
-		printf("Untranslated wsevt->type = %d, wsevt->value = %d\n", 
+		printf("Untranslated wsevt->type = %d, wsevt->value = %d\n",
 		    wsevt->type, wsevt->value);
 #endif
 		break;
@@ -694,7 +694,7 @@ darwin_wscons_to_iohidsystem(wsevt, hidevt)
 	return;
 }
 
-static void 
+static void
 mach_notify_iohidsystem(l, mr)
 	struct lwp *l;
 	struct mach_right *mr;
@@ -725,12 +725,12 @@ mach_notify_iohidsystem(l, mr)
 	if (KTRPOINT(l->l_proc, KTR_USER))
 		ktruser(l, "notify_iohidsystem", NULL, 0, 0);
 #endif
-	
+
 	mr->mr_refcount++;
 
-	/* 
+	/*
 	 * Call mach_message_get with a NULL lwp: the message is sent
-	 * by the kernel, not a userprocess. If we do not do that, 
+	 * by the kernel, not a userprocess. If we do not do that,
 	 * we crash because iohidsystem thread has p->p_emuldata == NULL.
 	 */
 	mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, NULL);
@@ -740,7 +740,7 @@ mach_notify_iohidsystem(l, mr)
 	    mp->mp_recv->mr_sethead);
 #endif
 	wakeup(mp->mp_recv->mr_sethead);
-	
+
 	return;
 }
 
@@ -749,12 +749,12 @@ darwin_iohidsystem_postfake(l)
 	struct lwp *l;
 {
 	const struct cdevsw *wsmux;
-	dev_t dev;	
+	dev_t dev;
 	int error;
 	struct wscons_event wsevt;
 
-	/* 
-	 * Use the wsmux given by sysctl emul.darwin.iohidsystem_mux 
+	/*
+	 * Use the wsmux given by sysctl emul.darwin.iohidsystem_mux
 	 */
 	if ((error = darwin_findwsmux(&dev, darwin_iohidsystem_mux)) != 0)
 		return;

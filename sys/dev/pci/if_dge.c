@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.5.2.6 2004/11/02 07:52:10 skrll Exp $ */
+/*	$NetBSD: if_dge.c,v 1.5.2.7 2005/03/04 16:45:18 skrll Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,14 +80,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.5.2.6 2004/11/02 07:52:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.5.2.7 2005/03/04 16:45:18 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/callout.h> 
+#include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -104,11 +104,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.5.2.6 2004/11/02 07:52:10 skrll Exp $")
 #endif
 
 #include <net/if.h>
-#include <net/if_dl.h> 
+#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
@@ -798,7 +798,7 @@ dge_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_3;
 	}
 
-#ifdef DGE_OFFBYONE_RXBUG 
+#ifdef DGE_OFFBYONE_RXBUG
 	if (dge_alloc_rcvmem(sc) != 0)
 		return; /* Already complained */
 #endif
@@ -1024,7 +1024,6 @@ dge_tx_cksum(struct dge_softc *sc, struct dge_txsoft *txs, uint8_t *fieldsp)
 	struct mbuf *m0 = txs->txs_mbuf;
 	struct dge_ctdes *t;
 	uint32_t ipcs, tucs;
-	struct ip *ip;
 	struct ether_header *eh;
 	int offset, iphl;
 	uint8_t fields = 0;
@@ -1037,12 +1036,10 @@ dge_tx_cksum(struct dge_softc *sc, struct dge_txsoft *txs, uint8_t *fieldsp)
 	eh = mtod(m0, struct ether_header *);
 	switch (htons(eh->ether_type)) {
 	case ETHERTYPE_IP:
-		iphl = sizeof(struct ip);
 		offset = ETHER_HDR_LEN;
 		break;
 
 	case ETHERTYPE_VLAN:
-		iphl = sizeof(struct ip);
 		offset = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 		break;
 
@@ -1054,17 +1051,7 @@ dge_tx_cksum(struct dge_softc *sc, struct dge_txsoft *txs, uint8_t *fieldsp)
 		return (0);
 	}
 
-	if (m0->m_len < (offset + iphl)) {
-		if ((txs->txs_mbuf = m_pullup(m0, offset + iphl)) == NULL) {
-			printf("%s: dge_tx_cksum: mbuf allocation failed, "
-			    "packet dropped\n", sc->sc_dev.dv_xname);
-			return (ENOMEM);
-		}
-		m0 = txs->txs_mbuf;
-	}
-
-	ip = (struct ip *) (mtod(m0, caddr_t) + offset);
-	iphl = ip->ip_hl << 2;
+	iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
 
 	/*
 	 * NOTE: Even if we're not using the IP or TCP/UDP checksum
@@ -1088,7 +1075,7 @@ dge_tx_cksum(struct dge_softc *sc, struct dge_txsoft *txs, uint8_t *fieldsp)
 		    DGE_TCPIP_IPCSE(offset + iphl - 1);
 	}
 	DPRINTF(DGE_DEBUG_CKSUM,
-	    ("%s: CKSUM: offset %d ipcs 0x%x\n", 
+	    ("%s: CKSUM: offset %d ipcs 0x%x\n",
 	    sc->sc_dev.dv_xname, offset, ipcs));
 
 	offset += iphl;
@@ -1097,8 +1084,8 @@ dge_tx_cksum(struct dge_softc *sc, struct dge_txsoft *txs, uint8_t *fieldsp)
 		DGE_EVCNT_INCR(&sc->sc_ev_txtusum);
 		fields |= TDESC_POPTS_TXSM;
 		tucs = DGE_TCPIP_TUCSS(offset) |
-		    DGE_TCPIP_TUCSO(offset + m0->m_pkthdr.csum_data) |
-		    DGE_TCPIP_TUCSE(0) /* rest of packet */;
+		   DGE_TCPIP_TUCSO(offset + M_CSUM_DATA_IPv4_OFFSET(m0->m_pkthdr.csum_data)) |
+		   DGE_TCPIP_TUCSE(0) /* rest of packet */;
 	} else if (__predict_true(sc->sc_txctx_tucs != 0xffffffff)) {
 		/* Use the cached value. */
 		tucs = sc->sc_txctx_tucs;
@@ -2012,7 +1999,7 @@ dge_init(struct ifnet *ifp)
 	 */
 	sc->sc_mchash_type = 0;
 
-	sc->sc_rctl = RCTL_RXEN | RCTL_RDMTS_12 | RCTL_RPDA_MC | 
+	sc->sc_rctl = RCTL_RXEN | RCTL_RDMTS_12 | RCTL_RPDA_MC |
 	    RCTL_CFF | RCTL_SECRC | RCTL_MO(sc->sc_mchash_type);
 
 #ifdef DGE_OFFBYONE_RXBUG
@@ -2041,7 +2028,7 @@ dge_init(struct ifnet *ifp)
 	dge_set_filter(sc);
 
 	/* ...all done! */
-	ifp->if_flags |= IFF_RUNNING; 
+	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
@@ -2348,7 +2335,7 @@ dge_eeprom_clockout(struct dge_softc *sc, int bit)
 	reg = CSR_READ(sc, DGE_EECD) & ~(EECD_DI|EECD_SK);
 	if (bit)
 		reg |= EECD_DI;
-	
+
 	CSR_WRITE(sc, DGE_EECD, reg);
 	delay(2);
 	CSR_WRITE(sc, DGE_EECD, reg|EECD_SK);
@@ -2395,7 +2382,7 @@ phwait(struct dge_softc *sc, int p, int r, int d, int type)
 
         CSR_WRITE(sc, DGE_MDIO,
 	    MDIO_PHY(p) | MDIO_REG(r) | MDIO_DEV(d) | type | MDIO_CMD);
-        for (i = 0; i < 10; i++) { 
+        for (i = 0; i < 10; i++) {
                 delay(10);
                 if (((mdic = CSR_READ(sc, DGE_MDIO)) & MDIO_CMD) == 0)
                         break;

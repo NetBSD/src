@@ -1,4 +1,4 @@
-/* $NetBSD: lcdkp_subr.c,v 1.2 2003/01/20 01:50:31 soren Exp $ */
+/* $NetBSD: lcdkp_subr.c,v 1.2.2.1 2005/03/04 16:41:30 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -27,12 +27,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Subroutines for simple one-port keypad.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcdkp_subr.c,v 1.2 2003/01/20 01:50:31 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcdkp_subr.c,v 1.2.2.1 2005/03/04 16:41:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ lcdkp_scan(sc, b)
 {
 	u_int8_t i;
 	u_int8_t c;
-       
+
 	c = lcdkp_dr_read(sc);
 	for (i = 0; i < sc->sc_knum; i++) {
 		if (sc->sc_kpad[i].x_keycode == c) {

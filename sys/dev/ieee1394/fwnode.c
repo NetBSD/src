@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.19 2003/01/01 00:10:19 thorpej Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.19.2.1 2005/03/04 16:43:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.19 2003/01/01 00:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.19.2.1 2005/03/04 16:43:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,7 +83,7 @@ int
 fwnode_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct ieee1394_attach_args *fwa = aux;
-	
+
 	if (strcmp(fwa->name, "fwnode") == 0)
 		return 1;
 	return 0;
@@ -96,11 +96,11 @@ fwnode_attach(struct device *parent, struct device *self, void *aux)
 	struct ieee1394_softc *psc = (struct ieee1394_softc *)parent;
 	struct ieee1394_attach_args *fwa = aux;
 	struct ieee1394_abuf *ab;
-	
+
 	ab = malloc(sizeof(struct ieee1394_abuf), M_1394DATA, M_WAITOK|M_ZERO);
 	ab->ab_data = malloc(4, M_1394DATA, M_WAITOK);
 	ab->ab_data[0] = 0;
-	
+
 	sc->sc_sc1394.sc1394_node_id = fwa->nodeid;
 	memcpy(sc->sc_sc1394.sc1394_guid, fwa->uid, 8);
 	sc->sc_sc1394.sc1394_callback.sc1394_read =
@@ -111,12 +111,12 @@ fwnode_attach(struct device *parent, struct device *self, void *aux)
 	    psc->sc1394_callback.sc1394_inreg;
 	sc->sc_sc1394.sc1394_callback.sc1394_unreg =
 	    psc->sc1394_callback.sc1394_unreg;
-	
+
 	/* XXX. Fix the fw code to use the generic routines. */
 	sc->sc_sc1394.sc1394_ifinreg = psc->sc1394_ifinreg;
 	sc->sc_sc1394.sc1394_ifoutput = psc->sc1394_ifoutput;
-	
-	printf(" Node %d: UID %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x\n", 
+
+	printf(" Node %d: UID %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x\n",
 	    sc->sc_sc1394.sc1394_node_id,
 	    sc->sc_sc1394.sc1394_guid[0], sc->sc_sc1394.sc1394_guid[1],
 	    sc->sc_sc1394.sc1394_guid[2], sc->sc_sc1394.sc1394_guid[3],
@@ -136,7 +136,7 @@ fwnode_detach(struct device *self, int flags)
 {
         struct fwnode_softc *sc = (struct fwnode_softc *)self;
 	struct device **children;
-	
+
 	if (sc->sc_children) {
 		children = sc->sc_children;
 		do {
@@ -144,11 +144,11 @@ fwnode_detach(struct device *self, int flags)
 		} while (*(++children));
 		free(sc->sc_children, M_DEVBUF);
 	}
-	
+
 	if (sc->sc_sc1394.sc1394_configrom &&
 	    sc->sc_sc1394.sc1394_configrom_len)
 		free(sc->sc_sc1394.sc1394_configrom, M_1394DATA);
-	
+
 	if (sc->sc_configrom)
 		p1212_free(sc->sc_configrom);
 	return 0;
@@ -166,7 +166,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 {
 	struct fwnode_softc *sc = (struct fwnode_softc *)ab->ab_req;
 	u_int32_t val;
-	
+
 	if (rcode != IEEE1394_RCODE_COMPLETE) {
 		DPRINTF(("Aborting configrom input, rcode: %d\n", rcode));
 #ifdef FWNODE_DEBUG
@@ -176,7 +176,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		free(ab, M_1394DATA);
 		return;
 	}
-	
+
 	if (ab->ab_cbarg)
 		panic("Got an invalid abuf on callback");
 
@@ -187,7 +187,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		free(ab->ab_data, M_1394DATA);
 		free(ab, M_1394DATA);
 		return;
-	} 
+	}
 	if (ab->ab_retlen % 4) {
 		DPRINTF(("%s: configrom read of invalid length: %d\n",
 		    sc->sc_sc1394.sc1394_dev.dv_xname, ab->ab_retlen));
@@ -195,7 +195,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		free(ab, M_1394DATA);
 		return;
 	}
-	
+
 	ab->ab_retlen = ab->ab_retlen / 4;
 	if (p1212_iscomplete(ab->ab_data, &ab->ab_retlen) == -1) {
 		DPRINTF(("%s: configrom parse error\n",
@@ -209,13 +209,13 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 	if (ab->ab_retlen < (ab->ab_length / 4))
 		panic("Configrom shrank during iscomplete check?");
 #endif
-	
+
 	if (ab->ab_retlen > (ab->ab_length / 4)) {
 
 		free(ab->ab_data, M_1394DATA);
-		ab->ab_data = malloc(ab->ab_retlen * 4, M_1394DATA, 
+		ab->ab_data = malloc(ab->ab_retlen * 4, M_1394DATA,
 		    M_WAITOK|M_ZERO);
-		
+
 		ab->ab_addr = CSR_BASE + CSR_CONFIG_ROM;
 		ab->ab_length = ab->ab_retlen * 4;
 		ab->ab_retlen = 0;
@@ -227,15 +227,15 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		sc->sc_sc1394.sc1394_configrom_len = ab->ab_retlen;
 		sc->sc_sc1394.sc1394_configrom = ab->ab_data;
 		ab->ab_data = NULL;
-		
+
 		free(ab, M_1394DATA);
-		
-		/* 
+
+		/*
 		 * Set P1212_ALLOW_DEPENDENT_INFO_OFFSET_TYPE and
 		 * P1212_ALLOW_DEPENDENT_INFO_IMMED_TYPE as some protocols
-		 * such as SBP2 need it. 
+		 * such as SBP2 need it.
 		 */
-		
+
 		val = P1212_ALLOW_DEPENDENT_INFO_OFFSET_TYPE;
 		val |= P1212_ALLOW_DEPENDENT_INFO_IMMED_TYPE;
 		val |= P1212_ALLOW_VENDOR_DIRECTORY_TYPE;
@@ -246,7 +246,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		    (sc->sc_configrom->len != IEEE1394_BUSINFO_LEN)) {
 #ifdef FWNODE_DEBUG
 			DPRINTF(("Parse error with config rom\n"));
-			fwnode_dump_rom(sc, sc->sc_sc1394.sc1394_configrom, 
+			fwnode_dump_rom(sc, sc->sc_sc1394.sc1394_configrom,
 				sc->sc_sc1394.sc1394_configrom_len);
 #endif
 			if (sc->sc_configrom)
@@ -256,7 +256,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 			sc->sc_sc1394.sc1394_configrom_len = 0;
 			return;
 		}
-		
+
 		val = htonl(IEEE1394_SIGNATURE);
 		if (memcmp(sc->sc_configrom->name, &val, 4)) {
 			DPRINTF(("Invalid signature found in bus info block: "
@@ -272,13 +272,13 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		sc->sc_sc1394.sc1394_link_speed =
 		    IEEE1394_GET_LINK_SPD(ntohl(sc->sc_configrom->data[0]));
 		printf("%s: Link Speed: %s, max_rec: %d bytes\n",
-		    sc->sc_sc1394.sc1394_dev.dv_xname, 
+		    sc->sc_sc1394.sc1394_dev.dv_xname,
 		    ieee1394_speeds[sc->sc_sc1394.sc1394_link_speed],
 		    IEEE1394_MAX_REC(sc->sc_sc1394.sc1394_max_receive));
 		sc->sc_children = p1212_match_units(&sc->sc_sc1394.sc1394_dev,
 			sc->sc_configrom->root, fwnode_print);
 #ifdef FWNODE_DEBUG
-		fwnode_dump_rom(sc, sc->sc_sc1394.sc1394_configrom, 
+		fwnode_dump_rom(sc, sc->sc_sc1394.sc1394_configrom,
 			sc->sc_sc1394.sc1394_configrom_len);
 		p1212_print(sc->sc_configrom->root);
 #endif
@@ -290,7 +290,7 @@ fwnode_print(void *aux, const char *pnp)
 {
 	if (pnp)
 		aprint_normal("Unknown device at %s", pnp);
-	
+
 	return UNCONF;
 }
 

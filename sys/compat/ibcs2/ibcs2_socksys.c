@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_socksys.c,v 1.10 2003/01/18 07:40:45 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_socksys.c,v 1.10.2.1 2005/03/04 16:39:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.10 2003/01/18 07:40:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.10.2.1 2005/03/04 16:39:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ ibcs2_socksys(l, v, retval)
 	struct ibcs2_socksys_args *uap = v;
 	int error;
 	int realargs[7]; /* 1 for command, 6 for recvfrom */
-      
+
 	/*
 	 * SOCKET should only be legal on /dev/socksys.
 	 * GETIPDOMAINNAME should only be legal on /dev/socksys ?
@@ -78,7 +78,7 @@ ibcs2_socksys(l, v, retval)
 	if (error)
 		return error;
 	DPRINTF(("ibcs2_socksys: %08x %08x %08x %08x %08x %08x %08x\n",
-	       realargs[0], realargs[1], realargs[2], realargs[3], 
+	       realargs[0], realargs[1], realargs[2], realargs[3],
 	       realargs[4], realargs[5], realargs[6]));
 	switch (realargs[0]) {
 	case SOCKSYS_ACCEPT:
@@ -134,7 +134,7 @@ ibcs2_socksys(l, v, retval)
 
 	default:
 		printf("socksys unknown %08x %08x %08x %08x %08x %08x %08x\n",
-		    realargs[0], realargs[1], realargs[2], realargs[3], 
+		    realargs[0], realargs[1], realargs[2], realargs[3],
                     realargs[4], realargs[5], realargs[6]);
 		return EINVAL;
 	}

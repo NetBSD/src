@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.5.16.3 2004/09/21 13:11:19 skrll Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.5.16.4 2005/03/04 16:38:00 skrll Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.9 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.5.16.3 2004/09/21 13:11:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.5.16.4 2005/03/04 16:38:00 skrll Exp $");
 
 #ident "@(#)rm_class.c  1.48     97/12/05 SMI"
 
@@ -190,8 +190,8 @@ static void	rmc_root_overlimit __P((struct rm_class *, struct rm_class *));
  * maxidle = maxidle * 2^RM_FILTER_GAIN * 8 / (1000 * nsecPerByte)
  * offtime = offtime * 8 / (1000 * nsecPerByte)
  *
- * When USE_HRTIME is employed, then maxidle and offtime become: 
- * 	maxidle = maxilde * (8.0 / nsecPerByte); 
+ * When USE_HRTIME is employed, then maxidle and offtime become:
+ * 	maxidle = maxilde * (8.0 / nsecPerByte);
  * 	offtime = offtime * (8.0 / nsecPerByte);
  */
 
@@ -529,7 +529,7 @@ rmc_depth_recompute(rm_class_t *cl)
 
 			p->depth_ = cdepth + 1;
 		}
-		
+
 		p = p->parent_;
 	}
 #else
@@ -545,7 +545,7 @@ rmc_depth_recompute(rm_class_t *cl)
 				t = t->next_;
 			}
 		} else
-			rmc_depth_compute(cl);	
+			rmc_depth_compute(cl);
 	}
 #endif
 }
@@ -571,7 +571,7 @@ rmc_delete_class(ifd, cl)
 
 	if (cl->sleeping_)
 		CALLOUT_STOP(&cl->callout_);
-	
+
 	s = splnet();
 	/*
 	 * Free packets in the packet queue.
@@ -699,7 +699,7 @@ rmc_init(ifq, ifd, nsecPerByte, restart, maxq, maxqueued, maxidle,
 	/*
 	 * Initialize the CBQ traciing/debug facility.
 	 */
-	CBQTRACEINIT();	
+	CBQTRACEINIT();
 
 	(void)memset(ifd, 0, sizeof (*ifd));
 	mtu = ifq->altq_ifp->if_mtu;
@@ -788,7 +788,7 @@ rmc_queue_packet(cl, m)
 			/*
 			 * the class is overlimit. if the class has
 			 * underlimit ancestors, set cutoff to the lowest
-			 * depth among them. 
+			 * depth among them.
 			 */
 			struct rm_class *borrow = cl->borrow_;
 
@@ -801,7 +801,7 @@ rmc_queue_packet(cl, m)
 				}
 				borrow = borrow->borrow_;
 			}
-		} 
+		}
 #else /* !ALTQ */
 		else if ((ifd->cutoff_ > 1) && cl->borrow_) {
 			if (TV_LT(&cl->borrow_->undertime_, &now)) {
@@ -809,7 +809,7 @@ rmc_queue_packet(cl, m)
 				CBQTRACE(rmc_queue_packet, "ffob",
 					 cl->borrow_->depth_);
 			}
-		} 
+		}
 #endif /* !ALTQ */
 	}
 
@@ -851,7 +851,7 @@ rmc_tl_satisfied(ifd, now)
 				if (!rmc_satisfied(p, now)) {
 					ifd->cutoff_ = p->depth_;
 					return;
-				} 
+				}
 				p = p->peer_;
 			} while (p != bp);
 		}
@@ -878,7 +878,7 @@ rmc_satisfied(cl, now)
 	if (cl->depth_ == 0) {
 		if (!cl->sleeping_ && (qlen(cl->q_) > cl->qthresh_))
 			return (0);
-		else 
+		else
 			return (1);
 	}
 	if (cl->children_ != NULL) {
@@ -945,7 +945,7 @@ rmc_under_limit(cl, now)
 			 */
 			if (cl != NULL) {
 				/* cutoff is taking effect, use this class as top. */
-				top = cl;	
+				top = cl;
 				CBQTRACE(rmc_under_limit, "ffou", ifd->cutoff_);
 			}
 			if (top != NULL && top->avgidle_ == top->minidle_)
@@ -1058,13 +1058,13 @@ _rmc_wrr_dequeue_next(ifd, op)
 			cl->bytes_alloc_ = 0;
 			cl = cl->peer_;
 		} while (cl != ifd->active_[cpri]);
-			
+
 		if (deficit == 1) {
 			/* first loop found an underlimit class with deficit */
 			/* Loop on same priority level, with new deficit.  */
 			deficit = 2;
 			goto _wrr_loop;
-		} 
+		}
 	}
 
 #ifdef ADJUST_CUTOFF
@@ -1371,7 +1371,7 @@ rmc_update_class_util(ifd)
 		avgidle = cl->avgidle_;
 		avgidle += idle - (avgidle >> RM_FILTER_GAIN);
 		cl->avgidle_ = avgidle;
-	
+
 		/* Are we overlimit ? */
 		if (avgidle <= 0) {
 			CBQTRACE(rmc_update_class_util, "milo", cl->stats_.handle);
@@ -1415,7 +1415,7 @@ rmc_update_class_util(ifd)
 #endif
 
 		cl = cl->parent_;
-	} 
+	}
 
 	/*
 	 * Check to see if cutoff needs to set to a new level.
@@ -1426,7 +1426,7 @@ rmc_update_class_util(ifd)
 		if ((qlen(cl->q_) <= 0) || TV_LT(nowp, &borrowed->undertime_)) {
 			rmc_tl_satisfied(ifd, nowp);
 			CBQTRACE(rmc_update_class_util, "broe", ifd->cutoff_);
-		} else { 
+		} else {
 			ifd->cutoff_ = borrowed->depth_;
 			CBQTRACE(rmc_update_class_util, "ffob", borrowed->depth_);
 		}
@@ -1437,7 +1437,7 @@ rmc_update_class_util(ifd)
 			rmc_tl_satisfied(ifd, &now);
 #endif
 			CBQTRACE(rmc_update_class_util, "broe", ifd->cutoff_);
-		} else { 
+		} else {
 			ifd->cutoff_ = borrowed->depth_;
 			CBQTRACE(rmc_update_class_util, "ffob", borrowed->depth_);
 		}
@@ -1479,10 +1479,10 @@ void rmc_dropall(cl)
     struct rm_class *cl;
 {
 	struct rm_ifdat *ifd = cl->ifdat_;
-    
+
 	if (!qempty(cl->q_)) {
 		_flushq(cl->q_);
-		
+
 		ifd->na_[cl->pri_]--;
 	}
 }
@@ -1562,7 +1562,7 @@ rmc_delay_action(cl, borrow)
 		 * short time so we have to wait for at least two ticks.
 		 * NOTE:  If there's no other traffic, we need the timer as
 		 * a 'backstop' to restart this class.
-		 */  
+		 */
 		if (delay > tick * 2) {
 #ifdef __FreeBSD__
 			/* FreeBSD rounds up the tick */
@@ -1642,11 +1642,11 @@ _rmc_addq(cl, m)
 	mbuf_t *m;
 {
 #ifdef ALTQ_RIO
-	if (q_is_rio(cl->q_)) 
+	if (q_is_rio(cl->q_))
 		return rio_addq((rio_t *)cl->red_, cl->q_, m, cl->pktattr_);
 #endif
 #ifdef ALTQ_RED
-	if (q_is_red(cl->q_)) 
+	if (q_is_red(cl->q_))
 		return red_addq(cl->red_, cl->q_, m, cl->pktattr_);
 #endif /* ALTQ_RED */
 
@@ -1733,7 +1733,7 @@ void cbqtrace_dump(counter)
 
 	counter = counter % NCBQTRACE;
 	p = (int *)&cbqtrace_buffer[counter];
-    
+
 	for (i=0; i<20; i++) {
 		printf("[0x%x] ", *p++);
 		printf("%s: ", rmc_funcname((void *)*p++));
@@ -1752,13 +1752,13 @@ void cbqtrace_dump(counter)
 #if defined(ALTQ_CBQ) || defined(ALTQ_RED) || defined(ALTQ_RIO) || defined(ALTQ_HFSC) || defined(ALTQ_PRIQ)
 #if !defined(__GNUC__) || defined(ALTQ_DEBUG)
 
-void 
+void
 _addq(q, m)
 	class_queue_t *q;
 	mbuf_t *m;
 {
         mbuf_t  *m0;
-	
+
 	if ((m0 = qtail(q)) != NULL)
 		m->m_nextpkt = m0->m_nextpkt;
 	else
@@ -1773,7 +1773,7 @@ _getq(q)
 	class_queue_t *q;
 {
 	mbuf_t  *m, *m0;
-	
+
 	if ((m = qtail(q)) == NULL)
 		return (NULL);
 	if ((m0 = m->m_nextpkt) != m)
@@ -1784,7 +1784,7 @@ _getq(q)
 	}
 	qlen(q)--;
 	m0->m_nextpkt = NULL;
-	return (m0); 
+	return (m0);
 }
 
 /* drop a packet at the tail of the queue */
@@ -1826,7 +1826,7 @@ _getq_random(q)
 		qtail(q) = NULL;
 	} else {
 		struct mbuf *prev = NULL;
-		
+
 		n = random() % qlen(q) + 1;
 		for (i = 0; i < n; i++) {
 			prev = m;
@@ -1847,14 +1847,14 @@ _removeq(q, m)
 	mbuf_t *m;
 {
 	mbuf_t *m0, *prev;
-	
+
 	m0 = qtail(q);
 	do {
 		prev = m0;
 		m0 = m0->m_nextpkt;
 	} while (m0 != m);
 	prev->m_nextpkt = m->m_nextpkt;
-	if (prev == m) 
+	if (prev == m)
 		qtail(q) = NULL;
 	else if (qtail(q) == m)
 		qtail(q) = prev;

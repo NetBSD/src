@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.37.2.6 2004/12/18 09:32:08 skrll Exp $	*/
+/*	$NetBSD: miivar.h,v 1.37.2.7 2005/03/04 16:44:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ struct mii_phy_funcs {
  */
 struct mii_softc {
 	struct device mii_dev;		/* generic device glue */
-	
+
 	LIST_ENTRY(mii_softc) mii_list;	/* entry on parent's PHY list */
 
 	u_int32_t mii_mpd_model;	/* the PHY's model (MII_MODEL())*/

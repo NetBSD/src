@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.9.6.5 2004/09/21 13:27:23 skrll Exp $	*/
+/*	$NetBSD: atareg.h,v 1.9.6.6 2005/03/04 16:41:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -342,7 +342,7 @@ struct ataparams {
 /* words 71-72 are ATAPI only */
     u_int16_t	atap_pkt_br;		/* 71: time (ns) to bus release */
     u_int16_t	atap_pkt_bsyclr;	/* 72: tme to clear BSY after service */
-    u_int16_t	__reserved4[2];	
+    u_int16_t	__reserved4[2];
     u_int16_t	atap_queuedepth;   	/* 75: */
 #define WDC_QUEUE_DEPTH_MASK 0x0F
     u_int16_t   atap_sata_caps;/* 76: */

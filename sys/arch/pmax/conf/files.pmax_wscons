@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax_wscons,v 1.1.4.4 2004/09/21 13:20:14 skrll Exp $
+#	$NetBSD: files.pmax_wscons,v 1.1.4.5 2005/03/04 16:39:01 skrll Exp $
 
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
@@ -8,7 +8,7 @@ include "dev/wsfont/files.wsfont"
 attach dz at ibus with dz_ibus
 file   arch/pmax/ibus/dz_ibus.c        dz_ibus
 
-device lkkbd: wskbddev
+device lkkbd: wskbddev, lkkbdmap
 attach lkkbd at dz with dzkbd
 file   dev/dec/dzkbd.c                 dzkbd needs-flag
 

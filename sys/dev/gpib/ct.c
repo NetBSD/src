@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.1.2.4 2004/11/02 07:51:30 skrll Exp $ */
+/*	$NetBSD: ct.c,v 1.1.2.5 2005/03/04 16:41:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.1.2.4 2004/11/02 07:51:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.1.2.5 2005/03/04 16:41:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,7 +487,7 @@ ctcommand(dev, cmd, cnt)
 			sc->sc_blkno = sc->sc_eofs[sc->sc_eofp];
 			sc->sc_eofp--;
 			DPRINTF(CDB_BSF, ("%s: backup eof pos %d blk %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_eofp, 
+			    sc->sc_dev.dv_xname, sc->sc_eofp,
 			    sc->sc_eofs[sc->sc_eofp]));
 		}
 		ctstrategy(bp);
@@ -619,7 +619,7 @@ mustio:
 			bp->b_resid = bp->b_bcount;
 			ctdone(sc, bp);
 			return;
-		}			
+		}
 		sc->sc_flags |= CTF_IO;
 		sc->sc_ioc.unit = CS80CMD_SUNIT(sc->sc_punit);
 		sc->sc_ioc.saddr = CS80CMD_SADDR;
@@ -635,7 +635,7 @@ mustio:
 			sc->sc_ioc.cmd = CS80CMD_WRITE;
 			sc->sc_flags |= (CTF_WRT | CTF_WRTTN);
 		}
-		(void) cs80send(sc->sc_dev.dv_parent, slave, punit, 
+		(void) cs80send(sc->sc_dev.dv_parent, slave, punit,
 		    CS80CMD_SCMD, &sc->sc_ioc, sizeof(sc->sc_ioc));
 	}
 	gpibawait(sc->sc_ic);
@@ -721,7 +721,7 @@ ctcallback(v, action)
 
 	DPRINTF(CDB_FOLLOW, ("ctcallback: v=%p, action=%d\n", v, action));
 
-	switch (action) {	
+	switch (action) {
 	case GPIBCBF_START:
 		ctstart(sc);
 		break;

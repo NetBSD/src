@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iokit.h,v 1.4.2.3 2004/09/21 13:24:59 skrll Exp $ */
+/*	$NetBSD: darwin_iokit.h,v 1.4.2.4 2005/03/04 16:39:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ typedef struct {
 	int16_t maxy;
 } darwin_iogbounds;
 
-#include <compat/darwin/darwin_iohidsystem.h> 
+#include <compat/darwin/darwin_iohidsystem.h>
 #include <compat/darwin/darwin_ioframebuffer.h>
 
 #define DARWIN_IOKIT_DEVCLASSES			\
@@ -70,5 +70,5 @@ typedef struct {
 	&darwin_iokbd_devclass,			\
 	&darwin_iomouse_devclass,		\
 	&darwin_ioresources_devclass,
-							
+
 #endif /* _DARWIN_IOKIT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.11.10.3 2004/09/21 13:14:48 skrll Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.11.10.4 2005/03/04 16:38:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.11.10.3 2004/09/21 13:14:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.11.10.4 2005/03/04 16:38:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,7 +373,7 @@ inittodr(time_t base)
 
 	if (!badbase) {
 		/*
-		 * See if we tained/lost two or more days; if
+		 * See if we gained/lost two or more days; if
 		 * so, assume something is amiss.
 		 */
 		deltat = time.tv_sec - base;

@@ -1,4 +1,4 @@
-# $NetBSD: files.mca,v 1.18.10.3 2004/09/21 13:30:17 skrll Exp $
+# $NetBSD: files.mca,v 1.18.10.4 2005/03/04 16:43:50 skrll Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.
@@ -40,7 +40,7 @@ file	dev/mca/com_mca.c		com_mca
 # Allied Telesis AT1720
 # device in sys/conf/files
 attach	ate at mca with ate_mca
-file	dev/mca/if_ate_mca.c		ate_mca	
+file	dev/mca/if_ate_mca.c		ate_mca
 
 # ESDI controllers & disks
 device	edc {[drive = -1]}

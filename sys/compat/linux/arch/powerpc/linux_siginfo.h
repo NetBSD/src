@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.1 2001/01/19 01:31:25 manu Exp $ */
+/*	$NetBSD: linux_siginfo.h,v 1.1.26.1 2005/03/04 16:40:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,8 +39,8 @@
 #ifndef _POWERPC_LINUX_SIGINFO_H
 #define _POWERPC_LINUX_SIGINFO_H
 
-/* 
- * Everything is from Linux's include/asm-ppc/siginfo.h 
+/*
+ * Everything is from Linux's include/asm-ppc/siginfo.h
  */
 typedef union linux_sigval {
 	int sival_int;

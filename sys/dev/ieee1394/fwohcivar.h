@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.20.6.3 2004/09/21 13:29:42 skrll Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.20.6.4 2005/03/04 16:43:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -361,7 +361,7 @@ struct fwohci_softc {
 	int sc_dying;
 	u_int32_t sc_intmask;
 	u_int32_t sc_iso;
-    
+
 	u_int8_t sc_csr[CSR_SB_END];
 
 	struct fwohci_uidtbl *sc_uidtbl;
@@ -369,7 +369,7 @@ struct fwohci_softc {
 	u_int8_t sc_rootid;			/* Phy ID of Root */
 	u_int8_t sc_irmid;			/* Phy ID of IRM */
 	u_int8_t sc_tlabel;			/* Transaction Label */
-	
+
 	LIST_HEAD(, ieee1394_softc) sc_nodelist;
 };
 

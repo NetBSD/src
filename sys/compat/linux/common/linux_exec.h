@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.29.2.4 2004/09/21 13:25:38 skrll Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.29.2.5 2005/03/04 16:40:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -82,13 +82,13 @@
 #define LINUX_ELF_AUX_ENTRIES	13	/* we push 13 parameters */
 #endif
 
-/* 
+/*
  * From Linux's include/linux/elf.h
  */
 #define LINUX_AT_UID		11	/* real uid */
 #define LINUX_AT_EUID		12	/* effective uid */
 #define LINUX_AT_GID		13	/* real gid */
-#define LINUX_AT_EGID		14	/* effective gid */ 
+#define LINUX_AT_EGID		14	/* effective gid */
 #define LINUX_AT_PLATFORM	15	/* CPU string for optimizations */
 #define LINUX_AT_HWCAP		16	/* arch dependent CPU capabilities */
 #define LINUX_AT_CLKTCK		17	/* frequency times() increments */

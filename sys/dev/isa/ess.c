@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.58.2.6 2005/01/17 19:31:11 skrll Exp $	*/
+/*	$NetBSD: ess.c,v 1.58.2.7 2005/03/04 16:43:13 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.58.2.6 2005/01/17 19:31:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.58.2.7 2005/03/04 16:43:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,7 +495,7 @@ ess_config_irq(struct ess_softc *sc)
 			break;
 #ifdef DIAGNOSTIC
 		default:
-			printf("ess_config_irq: configured irq %d not supported for Audio 1\n", 
+			printf("ess_config_irq: configured irq %d not supported for Audio 1\n",
 			       sc->sc_audio1.irq);
 			return;
 #endif
@@ -531,7 +531,7 @@ ess_config_irq(struct ess_softc *sc)
 			break;
 #ifdef DIAGNOSTIC
 		default:
-			printf("ess: configured irq %d not supported for Audio 1\n", 
+			printf("ess: configured irq %d not supported for Audio 1\n",
 			       sc->sc_audio1.irq);
 			return;
 #endif
@@ -575,7 +575,7 @@ ess_config_drq(struct ess_softc *sc)
 		break;
 #ifdef DIAGNOSTIC
 	default:
-		printf("ess_config_drq: configured DMA chan %d not supported for Audio 1\n", 
+		printf("ess_config_drq: configured DMA chan %d not supported for Audio 1\n",
 		       sc->sc_audio1.drq);
 		return;
 #endif
@@ -603,7 +603,7 @@ ess_config_drq(struct ess_softc *sc)
 		break;
 #ifdef DIAGNOSTIC
 	default:
-		printf("ess_config_drq: configured DMA chan %d not supported for Audio 2\n", 
+		printf("ess_config_drq: configured DMA chan %d not supported for Audio 2\n",
 		       sc->sc_audio2.drq);
 		return;
 #endif

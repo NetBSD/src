@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.69.2.5 2004/10/19 15:56:43 skrll Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.69.2.6 2005/03/04 16:40:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.69.2.5 2004/10/19 15:56:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.69.2.6 2005/03/04 16:40:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ linux_sys_alarm(l, v, retval)
 			retval[0]++;
 	} else {
 		retval[0] = 0;
-	} 
+	}
 
 	/*
 	 * alarm(0) just resets the timer.
@@ -249,7 +249,7 @@ linux_sys_time(l, v, retval)
 }
 
 /*
- * utime(). Do conversion to things that utimes() understands, 
+ * utime(). Do conversion to things that utimes() understands,
  * and pass it on.
  */
 int

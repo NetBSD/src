@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10.2.7 2005/02/15 21:32:51 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10.2.8 2005/03/04 16:39:02 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10.2.7 2005/02/15 21:32:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10.2.8 2005/03/04 16:39:02 skrll Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -2031,7 +2031,8 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 				    battable[va >> ADDR_SR_SHFT].batl;
 				register_t mask =
 				    (~(batu & BAT_BL) << 15) & ~0x1ffffL;
-				*pap = (batl & mask) | (va & ~mask);
+				if (pap)
+					*pap = (batl & mask) | (va & ~mask);
 				return TRUE;
 			}
 		} else {
@@ -2042,11 +2043,13 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 			    BAT601_VA_MATCH_P(batu, batl, va)) {
 				register_t mask =
 				    (~(batl & BAT601_BSM) << 17) & ~0x1ffffL;
-				*pap = (batl & mask) | (va & ~mask);
+				if (pap)
+					*pap = (batl & mask) | (va & ~mask);
 				return TRUE;
 			} else if (SR601_VALID_P(sr) &&
 				   SR601_PA_MATCH_P(sr, va)) {
-				*pap = va;
+				if (pap)
+					*pap = va;
 				return TRUE;
 			}
 		}
@@ -2057,7 +2060,9 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	pvo = pmap_pvo_find_va(pm, va & ~ADDR_POFF, NULL);
 	if (pvo != NULL) {
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
-		*pap = (pvo->pvo_pte.pte_lo & PTE_RPGN) | (va & ADDR_POFF);
+		if (pap)
+			*pap = (pvo->pvo_pte.pte_lo & PTE_RPGN)
+			    | (va & ADDR_POFF);
 	}
 	pmap_interrupts_restore(msr);
 	return pvo != NULL;

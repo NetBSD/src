@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.122.2.9 2005/02/07 08:36:33 skrll Exp $	*/
+/*	$NetBSD: tulip.c,v 1.122.2.10 2005/03/04 16:41:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,14 +43,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.9 2005/02/07 08:36:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.10 2005/03/04 16:41:34 skrll Exp $");
 
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
+#include <sys/systm.h>
 #include <sys/callout.h>
-#include <sys/mbuf.h>   
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -61,15 +61,15 @@ __KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.9 2005/02/07 08:36:33 skrll Exp $"
 #include <machine/endian.h>
 
 #include <uvm/uvm_extern.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -1527,7 +1527,7 @@ tlp_txintr(sc)
 
 		if (txstat & (TDSTAT_Tx_UF|TDSTAT_Tx_TO))
 			ifp->if_oerrors++;
-		
+
 		if (txstat & TDSTAT_Tx_EC)
 			ifp->if_collisions += 16;
 		else
@@ -2328,7 +2328,7 @@ tlp_read_srom(sc)
  *	Add a receive buffer to the indicated descriptor.
  */
 int
-tlp_add_rxbuf(sc, idx)	
+tlp_add_rxbuf(sc, idx)
 	struct tulip_softc *sc;
 	int idx;
 {
@@ -2664,7 +2664,7 @@ tlp_filter_setup(sc)
 		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 2);
 		ETHER_NEXT_MULTI(step, enm);
 	}
-	
+
 	if (ifp->if_flags & IFF_BROADCAST) {
 		/* ...and the broadcast address. */
 		cnt++;
@@ -2918,7 +2918,7 @@ tlp_al981_filter_setup(sc)
 	struct tulip_softc *sc;
 {
 	struct ethercom *ec = &sc->sc_ethercom;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if; 
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	u_int32_t hash, mchash[2];
@@ -3764,7 +3764,7 @@ const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 	  { 0,
 	    0,
 	    0 },
-	  
+
 	  { 0,
 	    0,
 	    0 },
@@ -4683,7 +4683,7 @@ tlp_2114x_isv_tmsw_init(sc)
 				free(tm, M_DEVBUF);
 				break;
 			}
-			
+
 			/* Get defaults. */
 			tlp_srom_media_info(sc, tsti, tm);
 
@@ -5118,7 +5118,7 @@ tlp_2114x_nway_get(sc, ifmr)
 
 	(void) tlp_2114x_nway_service(sc, MII_POLLSTAT);
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active; 
+	ifmr->ifm_active = sc->sc_mii.mii_media_active;
 }
 
 int
@@ -5139,8 +5139,8 @@ tlp_2114x_nway_statchg(self)
 
 	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE)
 		return;
-	
-	if ((ife = ifmedia_match(&mii->mii_media, mii->mii_media_active, 
+
+	if ((ife = ifmedia_match(&mii->mii_media, mii->mii_media_active,
 	    mii->mii_media.ifm_mask)) == NULL) {
 		printf("tlp_2114x_nway_statchg: no match for media 0x%x/0x%x\n",
 		    mii->mii_media_active, ~mii->mii_media.ifm_mask);
@@ -5346,7 +5346,7 @@ tlp_2114x_nway_status(sc)
 			/*
 			 * If the other side doesn't support NWAY, then the
 			 * best we can do is determine if we have a 10Mbps or
-			 * 100Mbps link. There's no way to know if the link 
+			 * 100Mbps link. There's no way to know if the link
 			 * is full or half duplex, so we default to half duplex
 			 * and hope that the user is clever enough to manually
 			 * change the media settings if we're wrong.
@@ -5537,7 +5537,7 @@ tlp_pnic_tmsw_get(sc, ifmr)
 		mii->mii_media_active = IFM_NONE;
 		tlp_pnic_nway_service(sc, MII_POLLSTAT);
 		ifmr->ifm_status = sc->sc_mii.mii_media_status;
-		ifmr->ifm_active = sc->sc_mii.mii_media_active; 
+		ifmr->ifm_active = sc->sc_mii.mii_media_active;
 	}
 }
 

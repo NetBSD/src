@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.2.2.3 2004/11/02 07:51:19 skrll Exp $	*/
+/*	$NetBSD: dk.c,v 1.2.2.4 2005/03/04 16:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.2.2.3 2004/11/02 07:51:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.2.2.4 2005/03/04 16:41:05 skrll Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -221,7 +221,7 @@ dkwedge_compute_pdev(const char *pname, dev_t *pdevp)
 	name = pname;
 	if ((pmaj = devsw_name2blk(name, devname, sizeof(devname))) == -1)
 		return (ENODEV);
-	
+
 	name += strlen(devname);
 	for (cp = name, punit = 0; *cp >= '0' && *cp <= '9'; cp++)
 		punit = (punit * 10) + (*cp - '0');
@@ -1035,7 +1035,7 @@ dkstart(struct dkwedge_softc *sc)
 
 		/* Instrumentation. */
 		disk_busy(&sc->sc_dk);
-		
+
 		nbp = pool_get(&bufpool, PR_NOWAIT);
 		if (nbp == NULL) {
 			/*
@@ -1130,7 +1130,7 @@ dkread(dev_t dev, struct uio *uio, int flags)
 
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
-	
+
 	return (physio(dkstrategy, NULL, dev, B_READ,
 		       sc->sc_parent->dk_driver->d_minphys, uio));
 }
@@ -1147,7 +1147,7 @@ dkwrite(dev_t dev, struct uio *uio, int flags)
 
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
-	
+
 	return (physio(dkstrategy, NULL, dev, B_WRITE,
 		       sc->sc_parent->dk_driver->d_minphys, uio));
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_errno.h,v 1.2.24.3 2004/09/21 13:25:27 skrll Exp $ */
+/* $NetBSD: linux_errno.h,v 1.2.24.4 2005/03/04 16:39:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _MIPS_LINUX_ERRNO_H
 
 /*
- * Linux/mips returns negative errors to userland  
+ * Linux/mips returns negative errors to userland
  * The libc makes the errno positive.
  */
 #define LINUX_SCERR_SIGN +
@@ -49,10 +49,10 @@
 
 /* Linux/mips switches EDEADLK and ENOMSG. */
 #undef LINUX_EDEADLK
-#define LINUX_EDEADLK		45		
+#define LINUX_EDEADLK		45
 #define LINUX_ENOMSG		35
 
-/* 
+/*
  * From Linux's include/asm-mips/errno.h
  */
 #define LINUX_EIDRM		36
@@ -148,7 +148,7 @@
 #define LINUX_ENOMEDIUM		159
 #define LINUX_EMEDIUMTYPE	160
 #define LINUX_EDQUOT		1133
-/* Biggest errno */			
+/* Biggest errno */
 #define LINUX_EMAXERRNO		1133
-			
+
 #endif /* !_MIPS_LINUX_ERRNO_H */

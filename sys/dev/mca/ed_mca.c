@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.22.2.8 2005/02/04 11:46:29 skrll Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.22.2.9 2005/03/04 16:43:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.22.2.8 2005/02/04 11:46:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.22.2.9 2005/03/04 16:43:50 skrll Exp $");
 
 #include "rnd.h"
 
@@ -607,7 +607,7 @@ edmcaioctl(dev, xfer, addr, flag, l)
 		strcpy(dkw->dkw_parent, ed->sc_dev.dv_xname);
 		return (dkwedge_add(dkw));
 	    }
-	
+
 	case DIOCDWEDGE:
 	    {
 	    	struct dkwedge_info *dkw = (void *) addr;
@@ -619,7 +619,7 @@ edmcaioctl(dev, xfer, addr, flag, l)
 		strcpy(dkw->dkw_parent, ed->sc_dev.dv_xname);
 		return (dkwedge_del(dkw));
 	    }
-	
+
 	case DIOCLWEDGES:
 	    {
 	    	struct dkwedge_list *dkwl = (void *) addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.66.2.5 2004/11/02 07:51:06 skrll Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.66.2.6 2005/03/04 16:39:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
+ * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp
  *
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  */
@@ -82,7 +82,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
+ * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp
  *
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  */
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.66.2.5 2004/11/02 07:51:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.66.2.6 2005/03/04 16:39:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ ibcs2_sys_ulimit(l, v, retval)
 #define IBCS2_SETFSIZE		2
 #define IBCS2_GETPSIZE		3
 #define IBCS2_GETDTABLESIZE	4
-	
+
 	switch (SCARG(uap, cmd)) {
 	case IBCS2_GETFSIZE:
 		*retval = p->p_rlimit[RLIMIT_FSIZE].rlim_cur;
@@ -699,9 +699,9 @@ ibcs2_sys_getgroups(l, v, retval)
 	gidsetsize = SCARG(uap, gidsetsize);
 	if (gidsetsize > NGROUPS_MAX)
 		return EINVAL;
-	
+
 	SCARG(&sa, gidsetsize) = gidsetsize;
-	
+
 	if (gidsetsize) {
 		SCARG(&sa, gidset) = stackgap_alloc(p, &sg, NGROUPS_MAX *
 						    sizeof(gid_t *));
@@ -742,13 +742,13 @@ ibcs2_sys_setgroups(l, v, retval)
 	gid_t gp[NGROUPS_MAX], *ngid;
 	caddr_t sg = stackgap_init(p, 0);
 
-	if (SCARG(uap, gidsetsize) > NGROUPS_MAX || 
+	if (SCARG(uap, gidsetsize) > NGROUPS_MAX ||
 	    SCARG(uap, gidsetsize) < 0 )
 		return EINVAL;
 	SCARG(&sa, gidsetsize) = SCARG(uap, gidsetsize);
-	
+
 	if (SCARG(&sa, gidsetsize)) {
-		error = copyin((caddr_t)SCARG(uap, gidset), (caddr_t)iset, 
+		error = copyin((caddr_t)SCARG(uap, gidset), (caddr_t)iset,
 		    sizeof(ibcs2_gid_t) * SCARG(uap, gidsetsize));
 		if (error)
 			return error;
@@ -913,19 +913,19 @@ ibcs2_sys_sysconf(l, v, retval)
 		*retval = SCARG(&ga, rlp)->rlim_cur;
 		return 0;
 	    }
-		
+
 	case IBCS2_SC_JOB_CONTROL:
 		mib[1] = KERN_JOB_CONTROL;
 		break;
-		
+
 	case IBCS2_SC_SAVED_IDS:
 		mib[1] = KERN_SAVED_IDS;
 		break;
-		
+
 	case IBCS2_SC_VERSION:
 		mib[1] = KERN_POSIX1;
 		break;
-		
+
 	case IBCS2_SC_PASS_MAX:
 		*retval = 128;		/* XXX - should we create PASS_MAX ? */
 		return 0;
@@ -933,7 +933,7 @@ ibcs2_sys_sysconf(l, v, retval)
 	case IBCS2_SC_XOPEN_VERSION:
 		*retval = 2;		/* XXX: What should that be? */
 		return 0;
-		
+
 	default:
 		return EINVAL;
 	}
@@ -1055,7 +1055,7 @@ ibcs2_sys_times(l, v, retval)
 
 	microtime(&t);
         *retval = CONVTCK(t);
-	
+
 	return copyout((caddr_t)&tms, (caddr_t)SCARG(uap, tp),
 		       sizeof(struct tms));
 }
@@ -1214,7 +1214,7 @@ ibcs2_sys_plock(l, v, retval)
 #define IBCS2_TEXTLOCK	2
 #define IBCS2_DATALOCK	4
 
-	
+
         if (suser(p->p_ucred, &p->p_acflag) != 0)
                 return EPERM;
 	switch(SCARG(uap, cmd)) {
@@ -1681,7 +1681,7 @@ ibcs2_sys_scoinfo(l, v, retval)
 
 #define X_LK_UNLCK  0
 #define X_LK_LOCK   1
-#define X_LK_NBLCK 20 
+#define X_LK_NBLCK 20
 #define X_LK_RLCK   3
 #define X_LK_NBRLCK 4
 #define X_LK_GETLK  5
@@ -1723,23 +1723,23 @@ xenix_sys_locking(l, v, retval)
 	flp = stackgap_alloc(p, &sg, sizeof(*flp));
 	flp->l_start = off;
 	switch SCARG(uap, blk) {
-	case X_LK_UNLCK:  
-		cmd = F_SETLK;  
-		flp->l_type = F_UNLCK; 
+	case X_LK_UNLCK:
+		cmd = F_SETLK;
+		flp->l_type = F_UNLCK;
 		break;
-	case X_LK_LOCK:   
-		cmd = F_SETLKW; 
-		flp->l_type = F_WRLCK; 
+	case X_LK_LOCK:
+		cmd = F_SETLKW;
+		flp->l_type = F_WRLCK;
 		break;
-	case X_LK_NBRLCK: 
-		cmd = F_SETLK;  
-		flp->l_type = F_RDLCK; 
+	case X_LK_NBRLCK:
+		cmd = F_SETLK;
+		flp->l_type = F_RDLCK;
 		break;
-	case X_LK_NBLCK:  
-		cmd = F_SETLK;  
-		flp->l_type = F_WRLCK; 
+	case X_LK_NBLCK:
+		cmd = F_SETLK;
+		flp->l_type = F_WRLCK;
 		break;
-	default: 
+	default:
 		return EINVAL;
 	}
 	flp->l_len = SCARG(uap, size);

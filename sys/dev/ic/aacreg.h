@@ -1,4 +1,4 @@
-/*	$NetBSD: aacreg.h,v 1.1.14.1 2005/02/15 21:33:12 skrll Exp $	*/
+/*	$NetBSD: aacreg.h,v 1.1.14.2 2005/03/04 16:41:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ struct aac_queue_table {
 } __attribute__ ((__packed__));
 
 /*
- * Adapter Init Structure: this is passed to the adapter with the 
+ * Adapter Init Structure: this is passed to the adapter with the
  * AAC_MONKER_INITSTRUCT command to point it at our control structures.
  */
 struct aac_adapter_init {
@@ -325,7 +325,7 @@ struct FsaRevision {
 #define	PLATFORM_BAT_OPT_NOTPRESENT	4	/* BATTERY OPTIONAL AND NOT PRESENT */
 #define	PLATFORM_BAT_NOT_SUPPORTED	5	/* BATTERY NOT SUPPORTED */
 
-/* 
+/*
  * Structure used to respond to a RequestAdapterInfo fib.
  */
 struct aac_adapter_info {
@@ -358,6 +358,7 @@ struct aac_adapter_info {
 #define	AAC_MONKER_INITSTRUCT	0x05
 #define	AAC_MONKER_SYNCFIB	0x0c
 #define	AAC_MONKER_GETKERNVER	0x11
+#define	AAC_MONKER_GETINFO	0x19
 
 /*
  * Command status values
@@ -558,7 +559,7 @@ struct aac_close_command {
 /*
  * The adapter can request the host print a message by setting the
  * DB_PRINTF flag in DOORBELL0.  The driver responds by collecting the
- * message from the printf buffer, clearing the DB_PRINTF flag in 
+ * message from the printf buffer, clearing the DB_PRINTF flag in
  * DOORBELL0 and setting it in DOORBELL1.
  * (ODBR and IDBR respectively for the i960Rx adapters)
  */

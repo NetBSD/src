@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.11.2.4 2004/09/24 10:53:18 skrll Exp $  
+	$NetBSD: syscalls.master,v 1.11.2.5 2005/03/04 16:39:53 skrll Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -8,7 +8,7 @@
 ; NetBSD mips COMPAT_LINUX system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
 ;
-; Expect problems with 
+; Expect problems with
 ;  48 signal: undefined in Linux???
 ;  86 uselib: needs a.out
 ;
@@ -147,7 +147,7 @@
 			    struct linux_old_sigaction *osa); }
 68	STD		{ int linux_sys_siggetmask(void); }
 69	STD		{ int linux_sys_sigsetmask(linux_old_sigset_t mask); }
-70	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); } 
+70	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 71	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
 72	STD		{ int linux_sys_sigsuspend(caddr_t restart, \
 			    int oldmask, int mask); }
@@ -208,10 +208,10 @@
 			    struct linux_stat *sp); }
 108	STD		{ int linux_sys_fstat(int fd, struct linux_stat *sp); }
 109	STD		{ int linux_sys_uname(struct linux_utsname *up); }
-110	UNIMPL		iopl	
+110	UNIMPL		iopl
 111	UNIMPL		vhangup
 112	UNIMPL		idle
-113	UNIMPL		vm86old 
+113	UNIMPL		vm86old
 114	STD		{ int linux_sys_wait4(int pid, int *status, \
 			    int options, struct rusage *rusage); }
 115	STD		{ int linux_sys_swapoff(const char *path); }
@@ -224,7 +224,7 @@
 121	STD		{ int linux_sys_setdomainname(char *domainname, \
 			    int len); }
 122	STD		{ int linux_sys_new_uname(struct linux_utsname *up); }
-123	UNIMPL		modify_ldt	
+123	UNIMPL		modify_ldt
 124	UNIMPL		adjtimex
 125	STD		{ int linux_sys_mprotect(const void *start, \
 			    unsigned long len, int prot); }

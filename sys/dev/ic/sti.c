@@ -1,4 +1,4 @@
-/* $NetBSD: sti.c,v 1.1.2.6 2005/02/09 15:16:28 skrll Exp $ */
+/* $NetBSD: sti.c,v 1.1.2.7 2005/03/04 16:41:33 skrll Exp $ */
 
 /*	$OpenBSD: sti.c,v 1.35 2003/12/16 06:07:13 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.1.2.6 2005/02/09 15:16:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.1.2.7 2005/03/04 16:41:33 skrll Exp $");
 
 #include "wsdisplay.h"
 
@@ -227,7 +227,7 @@ sti_attach_common(struct sti_softc *sc)
 		p = (u_int8_t *)sc->sc_code;
 		for (addr = dd->dd_pacode[STI_BEGIN], eaddr = addr + size * 4;
 		    addr < eaddr; addr += 4 )
-			*p++ = bus_space_read_4(sc->memt, sc->romh, addr) 
+			*p++ = bus_space_read_4(sc->memt, sc->romh, addr)
 			    & 0xff;
 
 	} else	/* STI_DEVTYPE4 */
@@ -321,8 +321,8 @@ sti_attach_common(struct sti_softc *sc)
 
 #ifdef STIDEBUG
 	printf("conf: bpp=%d planes=%d attr=%d\n"
-	    "crt=0x%x:0x%x:0x%x hw=0x%x:0x%x:0x%x\n", 
-	    cfg.bpp, cfg.planes, cfg.attributes, 
+	    "crt=0x%x:0x%x:0x%x hw=0x%x:0x%x:0x%x\n",
+	    cfg.bpp, cfg.planes, cfg.attributes,
 	    ecfg.crt_config[0], ecfg.crt_config[1], ecfg.crt_config[2],
 	    ecfg.crt_hw[0], ecfg.crt_hw[1], ecfg.crt_hw[2]);
 #endif
@@ -331,12 +331,12 @@ sti_attach_common(struct sti_softc *sc)
 	printf(": %s rev %d.%02d;%d, ID 0x%016llX\n"
 	    "%s: %dx%d frame buffer, %dx%dx%d display, offset %dx%d\n",
 	    cfg.name, dd->dd_grrev >> 4, dd->dd_grrev & 0xf, dd->dd_lrrev,
-	    *(u_int64_t *)dd->dd_grid, sc->sc_dev.dv_xname, cfg.fbwidth, 
-	    cfg.fbheight, cfg.width, cfg.height, cfg.bppu, cfg.owidth, 
+	    *(u_int64_t *)dd->dd_grid, sc->sc_dev.dv_xname, cfg.fbwidth,
+	    cfg.fbheight, cfg.width, cfg.height, cfg.bppu, cfg.owidth,
 	    cfg.oheight);
 
 	if ((error = sti_fetchfonts(sc, &cfg, dd->dd_fntaddr))) {
-		printf("%s: cannot fetch fonts (%d)\n", sc->sc_dev.dv_xname, 
+		printf("%s: cannot fetch fonts (%d)\n", sc->sc_dev.dv_xname,
 		    error);
 		return;
 	}
@@ -420,7 +420,7 @@ sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg, u_int32_t addr)
 			    (u_int32_t *)fp, sizeof(struct sti_font) / 4);
 
 		printf("%s: %dx%d font type %d, %d bpc, charset %d-%d\n",
-		    sc->sc_dev.dv_xname, fp->width, fp->height, fp->type, 
+		    sc->sc_dev.dv_xname, fp->width, fp->height, fp->type,
 		    fp->bpc, fp->first, fp->last);
 
 		size = sizeof(struct sti_font) +
@@ -516,7 +516,7 @@ sti_inqcfg(struct sti_softc *sc, struct sti_inqconfout *out)
 }
 
 void
-sti_bmove(struct sti_softc *sc, int x1, int y1, int x2, int y2, int h, int w, 
+sti_bmove(struct sti_softc *sc, int x1, int y1, int x2, int y2, int h, int w,
     enum sti_bmove_funcs f)
 {
 	struct {
@@ -554,7 +554,7 @@ sti_bmove(struct sti_softc *sc, int x1, int y1, int x2, int y2, int h, int w,
 	(*sc->blkmv)(&a.flags, &a.in, &a.out, &sc->sc_cfg);
 #ifdef STIDEBUG
 	if (a.out.errno)
-		printf("%s: blkmv returned %d\n", sc->sc_dev.dv_xname, 
+		printf("%s: blkmv returned %d\n", sc->sc_dev.dv_xname,
 		    a.out.errno);
 #endif
 }
@@ -688,7 +688,7 @@ sti_mmap(void *v, off_t offset, int prot)
 }
 
 int
-sti_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep, 
+sti_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
     int *cxp, int *cyp, long *defattr)
 {
 	struct sti_softc *sc = v;
@@ -730,7 +730,7 @@ sti_cursor(void *v, int on, int row, int col)
 	struct sti_softc *sc = v;
 	struct sti_font *fp = &sc->sc_curfont;
 
-	sti_bmove(sc, col * fp->width, row * fp->height, col * fp->width, 
+	sti_bmove(sc, col * fp->width, row * fp->height, col * fp->width,
 	    row * fp->height, fp->height, fp->width, bmf_invert);
 }
 
@@ -818,7 +818,7 @@ sti_erasecols(void *v, int row, int startcol, int ncols, long attr)
 	struct sti_font *fp = &sc->sc_curfont;
 
 	sti_bmove(sc, startcol * fp->width, row * fp->height,
-	    startcol * fp->width, row * fp->height, fp->height, 
+	    startcol * fp->width, row * fp->height, fp->height,
 	    ncols * fp->width, bmf_clear);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.2.56.3 2004/09/21 13:15:27 skrll Exp $	*/
+/*	$NetBSD: cons.c,v 1.2.56.4 2005/03/04 16:38:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -105,7 +105,7 @@ struct consdev *cn_tab;
 int noconsole;
 
 void
-cninit()
+cninit(void)
 {
 	struct consdev *cp;
 
@@ -140,7 +140,7 @@ cninit()
 }
 
 int
-cngetc()
+cngetc(void)
 {
 
 	/* Note: the dev_t arguments are not used! */
@@ -150,8 +150,7 @@ cngetc()
 }
 
 int
-cnputc(c)
-	int c;
+cnputc(int c)
 {
 
 	/* Note: the dev_t arguments are not used! */

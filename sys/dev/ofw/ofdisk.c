@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.27.2.5 2005/01/31 08:19:33 skrll Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.27.2.6 2005/03/04 16:44:59 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.27.2.5 2005/01/31 08:19:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.27.2.6 2005/03/04 16:44:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -104,7 +104,7 @@ ofdisk_match(struct device *parent, struct cfdata *match, void *aux)
 	struct ofbus_attach_args *oba = aux;
 	char type[8];
 	int l;
-	
+
 	if (strcmp(oba->oba_busname, "ofw"))
 		return (0);
 	if ((l = OF_getprop(oba->oba_phandle, "device_type", type,
@@ -155,7 +155,7 @@ ofdisk_open(dev_t dev, int flags, int fmt, struct lwp *lwp)
 	struct ofdisk_softc *of;
 	char path[256];
 	int error, l, part;
-	
+
 	if (unit >= ofdisk_cd.cd_ndevs)
 		return ENXIO;
 	if (!(of = ofdisk_cd.cd_devs[unit]))
@@ -252,7 +252,7 @@ ofdisk_close(dev_t dev, int flags, int fmt, struct lwp *l)
 		break;
 	}
 	of->sc_dk.dk_openmask = of->sc_dk.dk_copenmask | of->sc_dk.dk_bopenmask;
-	
+
 #ifdef	FIRMWORKSBUGS
 	/*
 	 * This is a hack to get the firmware to flush its buffers.
@@ -281,7 +281,7 @@ ofdisk_strategy(struct buf *bp)
 	bp->b_resid = 0;
 	if (bp->b_bcount == 0)
 		goto done;
-	
+
 	OF_io = bp->b_flags & B_READ ? OF_read : OF_write;
 
 	if (DISKPART(bp->b_dev) != RAW_PART) {
@@ -321,7 +321,7 @@ static void
 ofminphys(struct buf *bp)
 {
 	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(bp->b_dev)];
-	
+
 	if (bp->b_bcount > of->max_transfer)
 		bp->b_bcount = of->max_transfer;
 }
@@ -346,7 +346,7 @@ ofdisk_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
-	
+
 	switch (cmd) {
 	case DIOCGDINFO:
 		*(struct disklabel *)data = *of->sc_dk.dk_label;
@@ -359,13 +359,13 @@ ofdisk_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		return 0;
 #endif
-		
+
 	case DIOCGPART:
 		((struct partinfo *)data)->disklab = of->sc_dk.dk_label;
 		((struct partinfo *)data)->part =
 			&of->sc_dk.dk_label->d_partitions[DISKPART(dev)];
 		return 0;
-		
+
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
@@ -449,7 +449,7 @@ ofdisk_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		strcpy(dkw->dkw_parent, of->sc_dev.dv_xname);
 		return (dkwedge_del(dkw));
 	    }
-	
+
 	case DIOCLWEDGES:
 	    {
 	    	struct dkwedge_list *dkwl = (void *) data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.1.20.3 2004/09/21 13:30:59 skrll Exp $	*/
+/*	$NetBSD: memc.c,v 1.1.20.4 2005/03/04 16:44:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.1.20.3 2004/09/21 13:30:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.1.20.4 2005/03/04 16:44:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -409,7 +409,7 @@ memecc_attach(struct memc_softc *sc)
 	rv = memc_reg_read(sc, MEMECC_REG_DRAM_CONTROL);
 	rv &= ~(MEMECC_DRAM_CONTROL_NCEBEN |
 	        MEMECC_DRAM_CONTROL_NCEIEN |
-	        MEMECC_DRAM_CONTROL_SWAIT); 
+	        MEMECC_DRAM_CONTROL_SWAIT);
 	rv |= MEMECC_DRAM_CONTROL_RAMEN;
 	memc_reg_write(sc, MEMECC_REG_DRAM_CONTROL, rv);
 	rv = memc_reg_read(sc, MEMECC_REG_SCRUB_CONTROL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.11.2.5 2005/01/17 19:30:39 skrll Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.11.2.6 2005/03/04 16:41:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.11.2.5 2005/01/17 19:30:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.11.2.6 2005/03/04 16:41:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ cs4231_ebus_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unable to map registers\n");
 		return;
 	}
-	
+
 	/* XXX: map playback DMA registers (we just know where they are) */
 	if (bus_space_map(ea->ea_bustag,
 			  BUS_ADDR(0x14, 0x702000), /* XXX: magic num */

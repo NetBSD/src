@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.9 2003/06/29 01:20:50 thorpej Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.9.2.1 2005/03/04 16:45:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.9 2003/06/29 01:20:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.9.2.1 2005/03/04 16:45:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -598,7 +598,7 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
  * Enable interrupts.
  */
 void
-icp_pci_enable_intr(struct icp_softc *icp) 
+icp_pci_enable_intr(struct icp_softc *icp)
 {
 
 	switch (ICP_CLASS(icp)) {
@@ -760,7 +760,7 @@ icp_mpr_intr(struct icp_softc *icp, struct icp_intr_ctx *ctx)
 		    icp->icp_dpmemh, ICP_MPR_STATUS);
 	} else
 		ctx->cmd_status = ICP_S_OK;
-	
+
 	ctx->service = bus_space_read_2(icp->icp_dpmemt, icp->icp_dpmemh,
 	    ICP_MPR_SERVICE);
 	ctx->info = bus_space_read_4(icp->icp_dpmemt, icp->icp_dpmemh,

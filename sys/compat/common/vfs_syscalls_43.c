@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.24.2.5 2004/09/21 13:24:58 skrll Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.24.2.6 2005/03/04 16:39:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.24.2.5 2004/09/21 13:24:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.24.2.6 2005/03/04 16:39:22 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -229,7 +229,7 @@ compat_43_sys_fstat(struct lwp *l, void *v, register_t *retval)
 		    sizeof (oub));
 	}
 
-	
+
 	return (error);
 }
 
@@ -464,7 +464,7 @@ unionread:
 				lvp = NULL;
 			}
 		}
-		
+
 		if (lvp != NULLVP) {
 			error = VOP_OPEN(lvp, FREAD, fp->f_cred, l);
 			VOP_UNLOCK(lvp, 0);

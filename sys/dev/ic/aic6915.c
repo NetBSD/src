@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.9.2.5 2004/11/02 07:51:30 skrll Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.9.2.6 2005/03/04 16:41:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -42,13 +42,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.9.2.5 2004/11/02 07:51:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.9.2.6 2005/03/04 16:41:25 skrll Exp $");
 
 #include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/callout.h> 
+#include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.9.2.5 2004/11/02 07:51:30 skrll Exp $"
 
 #include <uvm/uvm_extern.h>
 
-#include <net/if.h> 
+#include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.9.2.5 2004/11/02 07:51:30 skrll Exp $"
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
- 
+
 #include <machine/bus.h>
 #include <machine/intr.h>
 
@@ -1349,7 +1349,7 @@ sf_set_filter(struct sf_softc *sc)
 		sf_set_filter_hash(sc, enm->enm_addrlo);
 		ETHER_NEXT_MULTI(step, enm);
 	}
-	
+
 	/*
 	 * Set "hash only multicast dest, match regardless of VLAN ID".
 	 */

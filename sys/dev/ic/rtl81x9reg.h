@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.6.24.4 2005/01/17 19:30:40 skrll Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.6.24.5 2005/03/04 16:41:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -371,7 +371,7 @@
 
 #define RTK_BUSFREQ_33MHZ	0x00
 #define RTK_BUSFREQ_66MHZ	0x01
-                                        
+
 #define RTK_BUSWIDTH_32BITS	0x00
 #define RTK_BUSWIDTH_64BITS	0x08
 
@@ -386,7 +386,7 @@
 
 /* C+ early transmit threshold */
 
-#define RTK_EARLYTXTHRESH_CNT	0x003F	/* byte count times 8 */ 
+#define RTK_EARLYTXTHRESH_CNT	0x003F	/* byte count times 8 */
 
 /*
  * Gigabit PHY access register (8169 only)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.9.6.4 2005/02/04 11:46:10 skrll Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.9.6.5 2005/03/04 16:43:16 skrll Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.9.6.4 2005/02/04 11:46:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.9.6.5 2005/03/04 16:43:16 skrll Exp $");
 
 #undef	TCICISADEBUG
 
@@ -294,7 +294,7 @@ tcic_isa_attach(parent, self, aux)
 	 * apparently missing a bit or more of address lines. (e.g.
 	 * CIRRUS_PD672X with Linksys EthernetCard ne2000 clone in TI
 	 * TravelMate 5000--not clear which is at fault)
-	 * 
+	 *
 	 * Add a kludge to detect 10 bit wide buses and deal with them,
 	 * and also a config file option to override the probe.
 	 */
@@ -376,7 +376,7 @@ tcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	return (ih);
 }
 
-void 
+void
 tcic_isa_chip_intr_disestablish(pch, ih)
 	pcmcia_chipset_handle_t pch;
 	void *ih;

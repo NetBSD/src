@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.1.2.4 2004/09/21 13:14:40 skrll Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.1.2.5 2005/03/04 16:38:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.1.2.4 2004/09/21 13:14:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.1.2.5 2005/03/04 16:38:14 skrll Exp $");
 
 #include "debug_kloader.h"
 
@@ -97,9 +97,9 @@ kloader_dreamcast_boot(struct kloader_bootinfo *kbi, struct kloader_page_tag *p)
 	SH4_TLB_DISABLE;
 
 	do {
-		u_int32_t *dst =(u_int32_t *)p->dst;
-		u_int32_t *src =(u_int32_t *)p->src;
-		u_int32_t sz = p->sz / sizeof (int);
+		uint32_t *dst =(uint32_t *)p->dst;
+		uint32_t *src =(uint32_t *)p->src;
+		uint32_t sz = p->sz / sizeof (int);
 		while (sz--)
 			*dst++ = *src++;
 	} while ((p = (struct kloader_page_tag *)p->next) != 0);

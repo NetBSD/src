@@ -1,8 +1,8 @@
 %{
-/*	$NetBSD: aicasm_macro_scan.l,v 1.1 2003/04/19 19:26:11 fvdl Exp $	*/
+/*	$NetBSD: aicasm_macro_scan.l,v 1.1.2.1 2005/03/04 16:43:50 skrll Exp $	*/
 
 /*
- * Sub-Lexical Analyzer for macro invokation in 
+ * Sub-Lexical Analyzer for macro invokation in
  * the Aic7xxx SCSI Host adapter sequencer assembler.
  *
  * Copyright (c) 2001 Adaptec Inc.
@@ -141,7 +141,7 @@ MCARG		[^(), \t]+
 				BEGIN ARGLIST;
 				return T_SYMBOL;
 			}
-.			{ 
+.			{
 				snprintf(buf, sizeof(buf), "Invalid character "
 					 "'%c'", yytext[0]);
 				stop(buf, EX_DATAERR);

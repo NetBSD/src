@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_misc.c,v 1.5 2003/01/22 12:58:22 rafal Exp $ */
+/*	$NetBSD: irix_misc.c,v 1.5.2.1 2005/03/04 16:39:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.5 2003/01/22 12:58:22 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.5.2.1 2005/03/04 16:39:38 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -62,24 +62,24 @@ __KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.5 2003/01/22 12:58:22 rafal Exp $");
 #include <compat/irix/irix_sysctl.h>
 #include <compat/irix/irix_syscallargs.h>
 
-/* 
+/*
  * This is copied from sys/compat/sunos/sunos_misc.c:sunos_sys_setpgrp()
  * Maybe consider moving this to sys/compat/common/compat_util.c?
  */
 int
 irix_sys_setpgrp(l, v, retval)
-	struct lwp *l; 
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct irix_sys_setpgrp_args /* { 
+	struct irix_sys_setpgrp_args /* {
 		syscallarg(int) pid;
 		syscallarg(int) pgid;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
- 
+
 	/*
-	 * difference to our setpgid call is to include backwards  
+	 * difference to our setpgid call is to include backwards
 	 * compatibility to pre-setsid() binaries. Do setsid()
 	 * instead of setpgid() in those cases where the process
 	 * tries to create a new session the old way.
@@ -104,17 +104,17 @@ irix_sys_uname(l, v, retval)
 	} */ *uap = v;
 	struct irix_utsname sut;
 	char irix_release[BUF_SIZE + 1];
-	
-	snprintf(irix_release, sizeof(irix_release), "%s.%s", 
+
+	snprintf(irix_release, sizeof(irix_release), "%s.%s",
 	    irix_si_osrel_maj, irix_si_osrel_min);
 	memset(&sut, 0, sizeof(sut));
 
 	strncpy(sut.sysname, irix_si_os_name, sizeof(sut.sysname));
 	sut.sysname[sizeof(sut.sysname) - 1] = '\0';
 
-	strncpy(sut.nodename, hostname, sizeof(sut.nodename)); 
+	strncpy(sut.nodename, hostname, sizeof(sut.nodename));
 	sut.nodename[sizeof(sut.nodename) - 1] = '\0';
- 
+
 	strncpy(sut.release, irix_release, sizeof(sut.release));
 	sut.release[sizeof(sut.release) - 1] = '\0';
 
@@ -140,7 +140,7 @@ irix_sys_utssys(l, v, retval)
 		syscallarg(int) sel;
 		syscallarg(void) a3;
 	} */ *uap = v;
- 
+
 	switch (SCARG(uap, sel)) {
 	case 0: {	/* uname(2)  */
 		struct irix_sys_uname_args ua;
@@ -151,7 +151,7 @@ irix_sys_utssys(l, v, retval)
 
 	default:
 		return(svr4_sys_utssys(l, v, retval));
-	break;	
+	break;
 	}
 
 	return 0;

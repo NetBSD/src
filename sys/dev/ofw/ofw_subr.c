@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.8.2.3 2004/09/21 13:31:00 skrll Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.8.2.4 2005/03/04 16:44:59 skrll Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.8.2.3 2004/09/21 13:31:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.8.2.4 2005/03/04 16:44:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ out:
 	if (allocated)
 		free(buf, M_TEMP);
 	return (rv);
-	
+
 }
 
 /*

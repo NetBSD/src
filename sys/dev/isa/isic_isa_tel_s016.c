@@ -1,7 +1,7 @@
 /*
  *   Copyright (c) 1996 Arne Helme. All rights reserved.
  *
- *   Copyright (c) 1996 Gary Jennejohn. All rights reserved. 
+ *   Copyright (c) 1996 Gary Jennejohn. All rights reserved.
  *
  *   Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
  *
@@ -19,7 +19,7 @@
  *      without specific prior written permission.
  *   4. Altered versions must be plainly marked as such, and must not be
  *      misrepresented as being the original software and/or documentation.
- *   
+ *
  *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -37,7 +37,7 @@
  *	isic - I4B Siemens ISDN Chipset Driver for Teles S0/16 and clones
  *	=================================================================
  *
- *	$Id: isic_isa_tel_s016.c,v 1.4.10.1 2005/02/04 11:46:09 skrll Exp $ 
+ *	$Id: isic_isa_tel_s016.c,v 1.4.10.2 2005/03/04 16:43:14 skrll Exp $
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
@@ -50,7 +50,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s016.c,v 1.4.10.1 2005/02/04 11:46:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s016.c,v 1.4.10.2 2005/03/04 16:43:14 skrll Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_TEL_S0_16
@@ -174,7 +174,7 @@ tels016_read_reg(struct isic_softc *sc,	int what, bus_size_t offs)
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
 
-static void		
+static void
 tels016_memcpyb(void *to, const void *from, size_t len)
 {
 	for(;len > 0; len--)
@@ -211,13 +211,13 @@ isic_probe_s016(struct isa_device *dev)
 	u_char byte;
 
 	/* check max unit range */
-	
+
 	if(dev->id_unit >= ISIC_MAXUNIT)
 	{
 		printf("isic%d: Error, unit %d >= ISIC_MAXUNIT for Teles S0/16!\n",
 				dev->id_unit, dev->id_unit);
-		return(0);	
-	}	
+		return(0);
+	}
 	sc->sc_unit = dev->id_unit;
 
 	/* check IRQ validity */
@@ -246,7 +246,7 @@ isic_probe_s016(struct isa_device *dev)
 			break;
 	}
 	sc->sc_port = dev->id_iobase;
-	
+
 	/* check if valid memory addr */
 
 	switch((unsigned int)kvtop(dev->id_maddr))
@@ -274,10 +274,10 @@ isic_probe_s016(struct isa_device *dev)
 				dev->id_unit, kvtop(dev->id_maddr));
 			return(0);
 			break;
-	}		
+	}
 	sc->sc_vmem_addr = (caddr_t) dev->id_maddr;
 	dev->id_msize = 0x1000;
-	
+
 	/* check card signature */
 
 	if((byte = inb(sc->sc_port)) != 0x51)
@@ -286,14 +286,14 @@ isic_probe_s016(struct isa_device *dev)
 			dev->id_unit, byte);
 		return(0);
 	}
-	
+
 	if((byte = inb(sc->sc_port + 1)) != 0x93)
 	{
 		printf("isic%d: Error, signature 2 0x%x != 0x93 for Teles S0/16!\n",
 			dev->id_unit, byte);
 		return(0);
 	}
-	
+
 	byte = inb(sc->sc_port + 2);
 
 	if((byte != 0x1e) && (byte != 0x1f))
@@ -313,22 +313,22 @@ isic_probe_s016(struct isa_device *dev)
 	sc->writefifo = tels016_memcpyb;
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp= CARD_TYPEP_16;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM1;
 
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
-	
+
 	/* setup ISAC base addr */
-	
+
 	ISAC_BASE = (caddr_t) ((dev->id_maddr) + 0x100);
 
 	/* setup HSCX base addr */
-	
+
 	HSCX_A_BASE = (caddr_t) ((dev->id_maddr) + 0x180);
 	HSCX_B_BASE = (caddr_t) ((dev->id_maddr) + 0x1c0);
 
@@ -383,11 +383,11 @@ isic_attach_s016(struct isic_softc *sc)
 	sc->writefifo = tels016_write_fifo;
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp= CARD_TYPEP_16;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM1;
 
 	sc->sc_ipac = 0;
@@ -425,7 +425,7 @@ isic_attach_s016(struct isic_softc *sc)
 	DELAY(SEC_DELAY / 5);
 
 	/* set card bit on */
-	
+
 	sc->sc_vmem_addr[0x80] = 1;
 	DELAY(SEC_DELAY / 5);
 
@@ -447,7 +447,7 @@ isic_attach_s016(struct isic_softc *sc)
 	DELAY(SEC_DELAY / 5);
 
 	/* set card bit on */
-	
+
 	bus_space_write_1(sc->sc_maps[1].t, sc->sc_maps[1].h, 0x80, 1);
 	DELAY(SEC_DELAY / 5);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: depcavar.h,v 1.1.28.3 2004/09/21 13:27:54 skrll Exp $	*/
+/*	$NetBSD: depcavar.h,v 1.1.28.4 2005/03/04 16:41:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -88,6 +88,6 @@ int	depca_readprom(bus_space_tag_t, bus_space_handle_t, u_int8_t *);
 int	depca_intredge(void *);
 
 void	depca_wrcsr(struct lance_softc *, u_int16_t, u_int16_t);
-u_int16_t depca_rdcsr(struct lance_softc *, u_int16_t);  
+u_int16_t depca_rdcsr(struct lance_softc *, u_int16_t);
 
 void	depca_attach(struct depca_softc *);

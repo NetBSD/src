@@ -1,4 +1,4 @@
-/* $NetBSD: if_tr_mca.c,v 1.10.6.1 2005/02/04 11:46:29 skrll Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.10.6.2 2005/03/04 16:43:50 skrll Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -17,12 +17,12 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD  
+ *      This product includes software developed by the NetBSD
  *      Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.10.6.1 2005/02/04 11:46:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.10.6.2 2005/03/04 16:43:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,30 +131,30 @@ tr_mca_attach(parent, self, aux)
 
 	/*
 	 * POS register 2: (adf pos0)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 * \___________/ \__ enable: 0=adapter disabled, 1=adapter enabled
 	 *       \__________ RAM addr: pos2&0xfe
-	 * 
+	 *
 	 * POS register 3: (adf pos1)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 * | \___/ | | | \__ port address: 1=0x0a24-0x0a27, 0=0x0a20-0x0a23
 	 * |   |   \ / \____ speed: 0=4Mbps, 1=16Mbps
 	 * |   |    \_______ RAM size: 00=8kb, 01=16kb, 10=32kb, 11=64kb
 	 * |   \____________ reserved: 010
 	 * \________________ irq component: 0=2, 1=3 (see also pos4)
-	 * 
+	 *
 	 * POS register 4: (adf pos2)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
 	 * \___________/ \__ interrupt controller: 0=1st, 1=2nd
 	 *       \__________ ROM address: pos4&0xfe
-	 * 
+	 *
 	 * POS register 5: (adf pos3)
-	 * 
+	 *
 	 * 7 6 5 4 3 2 1 0
-	 * | | \_____/ 
+	 * | | \_____/
 	 * | |    \_____ reserved: 0x0
 	 * | \__________ autosense: 0=off, 1=on
 	 * \____________ boot rom: 0=enabled, 1=disabled

@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.c,v 1.5.2.3 2004/09/21 13:27:57 skrll Exp $	*/
+/*	$NetBSD: icp_ioctl.c,v 1.5.2.4 2005/03/04 16:41:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -76,10 +76,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.5.2.3 2004/09/21 13:27:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.5.2.4 2005/03/04 16:41:28 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h> 
+#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/proc.h>

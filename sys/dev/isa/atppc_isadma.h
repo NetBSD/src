@@ -1,8 +1,8 @@
-/* $NetBSD: atppc_isadma.h,v 1.2.4.4 2004/09/21 13:29:43 skrll Exp $ */
+/* $NetBSD: atppc_isadma.h,v 1.2.4.5 2005/03/04 16:43:13 skrll Exp $ */
 
 /*-
- * Copyright (c) 2003 Bruce J.A. Nourish 
- * Copyright (c) 2003, 2004 Gary Thorpe <gathorpe@users.sourceforge.net> 
+ * Copyright (c) 2003 Bruce J.A. Nourish
+ * Copyright (c) 2003, 2004 Gary Thorpe <gathorpe@users.sourceforge.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,11 +30,11 @@
 
 /* atppc ISA DMA functions */
 int atppc_isadma_setup(struct atppc_softc *, isa_chipset_tag_t, int);
-int atppc_isadma_start(isa_chipset_tag_t, int, void *, u_int, 
+int atppc_isadma_start(isa_chipset_tag_t, int, void *, u_int,
 	u_int8_t);
 int atppc_isadma_finish(isa_chipset_tag_t, int);
 int atppc_isadma_abort(isa_chipset_tag_t, int);
-int atppc_isadma_malloc(isa_chipset_tag_t, int, caddr_t *, bus_addr_t *, 
+int atppc_isadma_malloc(isa_chipset_tag_t, int, caddr_t *, bus_addr_t *,
 	bus_size_t);
-void atppc_isadma_free(isa_chipset_tag_t, int, caddr_t *, bus_addr_t *, 
+void atppc_isadma_free(isa_chipset_tag_t, int, caddr_t *, bus_addr_t *,
 	bus_size_t);

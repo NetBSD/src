@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.4.2.5 2004/09/21 13:27:25 skrll Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.4.2.6 2005/03/04 16:41:05 skrll Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,15 +36,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.4.2.5 2004/09/21 13:27:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.4.2.6 2005/03/04 16:41:05 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.4.2.5 2004/09/21 13:27:25 skrll
 #include <sys/device.h>
 
 #include <machine/endian.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -62,12 +62,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.4.2.5 2004/09/21 13:27:25 skrll
 #include <net80211/ieee80211_compat.h>
 #include <net80211/ieee80211_var.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
 

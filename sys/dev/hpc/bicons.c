@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.6.6.3 2004/09/21 13:27:37 skrll Exp $	*/
+/*	$NetBSD: bicons.c,v 1.6.6.4 2005/03/04 16:41:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.6.6.3 2004/09/21 13:27:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bicons.c,v 1.6.6.4 2005/03/04 16:41:14 skrll Exp $");
 
 #define HALF_FONT
 
@@ -148,7 +148,7 @@ bicons_init(struct consdev *cndev)
 int
 biconscninit(struct consdev *cndev)
 {
-	int fb_index = -1; 
+	int fb_index = -1;
 
 	if (bootinfo->fb_addr == 0) {
 		/* Bootinfo don't have frame buffer address */
@@ -168,7 +168,7 @@ biconscninit(struct consdev *cndev)
 	fb_line_bytes = bootinfo->fb_line_bytes;
 	bicons_xpixel = bootinfo->fb_width;
 	bicons_ypixel = bootinfo->fb_height;
-	
+
 	fb_put_oxel = fb_table[fb_index].func;
 	fb_clear_byte = fb_table[fb_index].clear_byte;
 	fb_oxel_bytes = fb_table[fb_index].oxel_bytes;
@@ -292,7 +292,7 @@ draw_char(int x, int y, int c)
 {
 	int i;
 	u_int8_t *p;
-	
+
 	if (!fb_vram)
 		return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_inline.h,v 1.3.2.3 2004/09/21 13:27:52 skrll Exp $	*/
+/*	$NetBSD: aic7xxx_inline.h,v 1.3.2.4 2005/03/04 16:41:26 skrll Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -261,7 +261,7 @@ static __inline void	ahc_free_scb(struct ahc_softc *ahc, struct scb *scb);
 static __inline void	ahc_swap_with_next_hscb(struct ahc_softc *ahc,
 						struct scb *scb);
 static __inline void	ahc_queue_scb(struct ahc_softc *ahc, struct scb *scb);
-static __inline struct scsipi_sense_data *
+static __inline struct scsi_sense_data *
 			ahc_get_sense_buf(struct ahc_softc *ahc,
 					  struct scb *scb);
 static __inline uint32_t
@@ -382,7 +382,7 @@ ahc_get_scb(struct ahc_softc *ahc)
  */
 static __inline void
 ahc_free_scb(struct ahc_softc *ahc, struct scb *scb)
-{       
+{
 	struct hardware_scb *hscb;
 
 	hscb = scb->hscb;
@@ -481,7 +481,7 @@ ahc_queue_scb(struct ahc_softc *ahc, struct scb *scb)
 	}
 }
 
-static __inline struct scsipi_sense_data *
+static __inline struct scsi_sense_data *
 ahc_get_sense_buf(struct ahc_softc *ahc, struct scb *scb)
 {
 	int offset;
@@ -497,7 +497,7 @@ ahc_get_sense_bufaddr(struct ahc_softc *ahc, struct scb *scb)
 
 	offset = scb - ahc->scb_data->scbarray;
 	return (ahc->scb_data->sense_busaddr
-	      + (offset * sizeof(struct scsipi_sense_data)));
+	      + (offset * sizeof(struct scsi_sense_data)));
 }
 
 /************************** Interrupt Processing ******************************/

@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop.c,v 1.1.2.4 2005/01/17 19:30:40 skrll Exp $	*/
+/*	$NetBSD: oosiop.c,v 1.1.2.5 2005/03/04 16:41:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.1.2.4 2005/01/17 19:30:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.1.2.5 2005/03/04 16:41:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -519,7 +519,7 @@ oosiop_setup_dma(struct oosiop_softc *sc)
 	OOSIOP_SCRIPT_SYNC(sc, BUS_DMASYNC_POSTWRITE);
 
 	oosiop_fixup_select(sc, Ent_p_select, cb->id);
-	oosiop_fixup_jump(sc, Ent_p_datain_jump, xferbase + 
+	oosiop_fixup_jump(sc, Ent_p_datain_jump, xferbase +
 	    offsetof(struct oosiop_xfer, datain_scr[0]));
 	oosiop_fixup_jump(sc, Ent_p_dataout_jump, xferbase +
 	    offsetof(struct oosiop_xfer, dataout_scr[0]));
@@ -610,7 +610,7 @@ oosiop_phasemismatch(struct oosiop_softc *sc)
 		sstat1 = oosiop_read_1(sc, OOSIOP_SSTAT1);
 		if (sstat1 & OOSIOP_SSTAT1_OLF)
 			dbc++;
-		if ((sc->sc_tgt[cb->id].sxfer != 0) && 
+		if ((sc->sc_tgt[cb->id].sxfer != 0) &&
 		    (sstat1 & OOSIOP_SSTAT1_ORF) != 0)
 			dbc++;
 

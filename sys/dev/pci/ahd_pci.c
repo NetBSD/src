@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.2.2.4 2005/02/04 11:46:37 skrll Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.2.2.5 2005/03/04 16:45:15 skrll Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.2.2.4 2005/02/04 11:46:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.2.2.5 2005/03/04 16:45:15 skrll Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -159,7 +159,7 @@ struct ahd_pci_identity ahd_pci_ident_table [] =
 		"Adaptec 29320LP Ultra320 SCSI adapter",
 		ahd_aic7901A_setup
 	},
-	/* aic7902 based controllers */	
+	/* aic7902 based controllers */
 	{
 		ID_AHA_39320,
 		ID_ALL_MASK,
@@ -333,7 +333,7 @@ ahd_pci_attach(parent, self, aux)
 	pcireg_t	   	command;
 	int		   	error;
 	pcireg_t	   	subid;
-	uint16_t	   	subvendor; 
+	uint16_t	   	subvendor;
 	int                	pci_pwrmgmt_cap_reg;
 	int                	pci_pwrmgmt_csr_reg;
 	pcireg_t           	reg;
@@ -345,7 +345,7 @@ ahd_pci_attach(parent, self, aux)
 
 	ahd_set_name(ahd, ahd->sc_dev.dv_xname);
 	ahd->parent_dmat = pa->pa_dmat;
-	
+
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	entry = ahd_find_pci_device(pa->pa_id, subid);
@@ -436,7 +436,7 @@ ahd_pci_attach(parent, self, aux)
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 			memh_valid = (pci_mapreg_map(pa, AHD_PCI_MEMADDR,
-						     memtype, 0, &ahd->tags[0], 
+						     memtype, 0, &ahd->tags[0],
 						     &ahd->bshs[0],
 						     NULL, NULL) == 0);
 			if (memh_valid) {
@@ -449,7 +449,7 @@ ahd_pci_attach(parent, self, aux)
 					memh_valid = 0;
 			}
 			break;
-		default:	
+		default:
 			memh_valid = 0;
 			aprint_error("%s: unknown memory type: 0x%x\n",
 			       ahd_name(ahd), memtype);
@@ -470,13 +470,13 @@ ahd_pci_attach(parent, self, aux)
 	}
 
 	if (command & PCI_COMMAND_IO_ENABLE) {
-		/* First BAR */	  
+		/* First BAR */
 		ioh_valid = (pci_mapreg_map(pa, AHD_PCI_IOADDR,
 					    PCI_MAPREG_TYPE_IO, 0,
 					    &ahd->tags[0], &ahd->bshs[0],
 					    NULL, NULL) == 0);
 
-		/* 2nd BAR */	  
+		/* 2nd BAR */
 		ioh2_valid = (pci_mapreg_map(pa, AHD_PCI_IOADDR1,
 					     PCI_MAPREG_TYPE_IO, 0,
 					     &ahd->tags[1], &ahd->bshs[1],
@@ -487,7 +487,7 @@ ahd_pci_attach(parent, self, aux)
 			command &= ~PCI_COMMAND_MEM_ENABLE;
                         pci_conf_write(pa->pa_pc, pa->pa_tag,
                         	       PCI_COMMAND_STATUS_REG, command);
-		}		
+		}
 #ifdef AHD_DEBUG
 		printf("%s: doing io mapping tag0 0x%x, tag1 0x%x, "
 		    "shs0 0x%lx, shs1 0x%lx\n", ahd_name(ahd), ahd->tags[0],
@@ -541,14 +541,14 @@ ahd_pci_attach(parent, self, aux)
 		devconfig |= DACEN;
 		pci_conf_write(pa->pa_pc, pa->pa_tag, DEVCONFIG, devconfig);
 	}
-	
+
 	/* Ensure busmastering is enabled */
         reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
         pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 		       reg | PCI_COMMAND_MASTER_ENABLE);
 
 	ahd_softc_init(ahd);
-	
+
 	/*
 	 * Map the interrupt routines
 	 */
@@ -722,7 +722,7 @@ ahd_check_extport(struct ahd_softc *ahd)
 		/* Address is always in units of 16bit words */
 		start_addr = ((2 * sizeof(*sc))
 			    + (sizeof(vpd) * (ahd->channel - 'A'))) / 2;
-		
+
 		error = ahd_read_seeprom(ahd, (uint16_t *)&vpd,
 					 start_addr, sizeof(vpd)/2,
 					 /*bytestream*/TRUE);
@@ -850,7 +850,7 @@ ahd_configure_termination(struct ahd_softc *ahd, u_int adapter_control)
 	       ahd_name(ahd), (devconfig & STPWLEVEL) ? "on" : "off");
 #endif
 	pci_conf_write(bd->pc, bd->tag, DEVCONFIG, devconfig);
- 
+
 	/* Make sure current sensing is off. */
 	if ((ahd->flags & AHD_CURRENT_SENSING) != 0) {
 		(void)ahd_write_flexport(ahd, FLXADDR_ROMSTAT_CURSENSECTL, 0);
@@ -991,7 +991,7 @@ ahd_pci_intr(struct ahd_softc *ahd)
 	u_int			i;
 	u_int			reg;
 	struct ahd_pci_busdata 	*bd = ahd->bus_data;
-	
+
 	intstat = ahd_inb(ahd, INTSTAT);
 
 	if ((intstat & SPLTINT) != 0)
@@ -1015,7 +1015,7 @@ ahd_pci_intr(struct ahd_softc *ahd)
 
 	for (i = 0; i < 8; i++) {
 		u_int bit;
-	
+
 		if (i == 5)
 			continue;
 
@@ -1029,7 +1029,7 @@ ahd_pci_intr(struct ahd_softc *ahd)
 					s = "%s: Signaled Target Abort\n";
 				printf(s, ahd_name(ahd), pci_status_source[i]);
 			}
-		}	
+		}
 	}
 	pci_status1 = pci_conf_read(bd->pc, bd->tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(bd->pc, bd->tag, PCI_COMMAND_STATUS_REG , pci_status1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.h,v 1.5 2000/12/10 14:12:16 fvdl Exp $	*/
+/*	$NetBSD: linux_cdrom.h,v 1.5.24.1 2005/03/04 16:40:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,9 +70,9 @@
 #define LINUX_CDROM_DEBUG		0x5330
 #define LINUX_CDROM_GET_CAPABILITY	0x5331
 
-/* DVD-ROM Specific ioctls */              
+/* DVD-ROM Specific ioctls */
 #define	LINUX_DVD_READ_STRUCT	0x5390	/* Read structure */
-#define	LINUX_DVD_WRITE_STRUCT	0x5391	/* Write structure */ 
+#define	LINUX_DVD_WRITE_STRUCT	0x5391	/* Write structure */
 #define	LINUX_DVD_AUTH		0x5392	/* Authentication */
 
 struct linux_cdrom_blk {
@@ -95,7 +95,7 @@ struct linux_cdrom_ti {
 	u_char	cdti_trk1;	/* end track */
 	u_char	cdti_ind1;	/* end index */
 };
- 
+
 struct linux_cdrom_tochdr {
 	u_char	cdth_trk0;	/* start track */
 	u_char	cdth_trk1;	/* end track */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mly_tables.h,v 1.3 2003/03/31 03:35:02 perry Exp $	*/
+/*	$NetBSD: mly_tables.h,v 1.3.2.1 2005/03/04 16:45:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -305,7 +305,7 @@ static const struct mly_code_lookup mly_table_controllertype[] = {
 	{ "AcceleRAID 160",	0x20 },	/* Bobcat */
 	{ NULL,			0 },
 	{ "unknown adapter",	0 }
-};	
+};
 
 static const struct mly_code_lookup mly_table_oemname[] = {
 	{ "Mylex",		MLY_OEM_MYLEX },

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7.2.3 2004/10/12 06:00:41 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.7.2.4 2005/03/04 16:38:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.7.2.3 2004/10/12 06:00:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.7.2.4 2005/03/04 16:38:37 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -312,7 +312,7 @@ trap_kdebug(int type, int code, struct trapframe *frame)
 #define trap_kdebug(t, c, f)	(0)
 #endif	/* !KGDB && !DDB */
 
-#ifdef DIAGNOSTIC
+#if defined(DEBUG) || defined(USERTRACE)
 /*
  * These functions give a crude usermode backtrace.  They 
  * really only work when code has been compiled without 
@@ -400,7 +400,7 @@ user_backtrace(struct trapframe *tf, struct lwp *l, int type)
 	}
 	user_backtrace_raw(tf->tf_iioq_head, fp);
 }
-#endif /* DIAGNOSTIC */
+#endif /* DEBUG || USERTRACE */
 
 #ifdef DEBUG
 /*

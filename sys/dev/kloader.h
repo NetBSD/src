@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.1.2.4 2004/09/21 13:26:25 skrll Exp $	*/
+/*	$NetBSD: kloader.h,v 1.1.2.5 2005/03/04 16:40:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ struct kloader_bootinfo {
 	char **argv;
 
 	/* struct type boot argument */
-	struct bootinfo bootinfo;		
+	struct bootinfo bootinfo;
 
 	/* argv buffer */
 	char _argbuf[KLOADER_KERNELARGS_MAX];

@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.3.16.1 2005/02/04 11:45:26 skrll Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.3.16.2 2005/03/04 16:41:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.3.16.1 2005/02/04 11:45:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.3.16.2 2005/03/04 16:41:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -72,7 +72,7 @@ mm58167_attach(sc)
 	struct mm58167_softc *sc;
 {
 	struct todr_chip_handle *handle;
-	
+
 	printf(": mm58167");
 
 	handle = &sc->_mm58167_todr_handle;
@@ -151,7 +151,7 @@ mm58167_gettime(handle, tv)
 	/* convert the hardware date into a time: */
 	tv->tv_sec = clock_ymdhms_to_secs(&dt_hardware);
 	tv->tv_usec = 0;
-	
+
 	/*
 	 * Make a reasonable effort to see if a leap day has passed
 	 * that we need to account for.  This does the right thing
@@ -218,10 +218,10 @@ mm58167_gettime(handle, tv)
 	/*
 	 * If we had a leap day, adjust the value we will return, and
 	 * also update the hardware clock.
-	 */	
-	/* 
+	 */
+	/*
 	 * XXX - Since this update just writes back a corrected
-	 * version of what we read out above, we lose whatever 
+	 * version of what we read out above, we lose whatever
 	 * amount of time the clock has advanced since that read.
 	 * Use NTP to deal.
 	 */
@@ -249,12 +249,12 @@ mm58167_settime(handle, tv)
 	/* No interrupts while we're in the chip. */
 	s = splhigh();
 
-	/* 
+	/*
 	 * Issue a GO command to reset everything less significant
 	 * than the minutes to zero.
 	 */
 	mm58167_write(sc, mm58167_go, 0xFF);
-	
+
 	/* Load everything. */
 #define _MM58167_PUT(dt_f, mm_f) byte_value = TOBCD(dt_hardware.dt_f); mm58167_write(sc, mm_f, byte_value)
 	_MM58167_PUT(dt_mon, mm58167_mon);

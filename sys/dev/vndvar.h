@@ -1,6 +1,6 @@
-/*	$NetBSD: vndvar.h,v 1.11.2.3 2004/09/21 13:26:26 skrll Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.11.2.4 2005/03/04 16:40:54 skrll Exp $	*/
 
-/*-     
+/*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -16,13 +16,13 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:  
+ *    must display the following acknowledgement:
  *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors. 
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission. 
- *      
+ *    from this software without specific prior written permission.
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.16.6.4 2005/02/04 11:46:08 skrll Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.16.6.5 2005/03/04 16:43:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.16.6.4 2005/02/04 11:46:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.16.6.5 2005/03/04 16:43:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ com_multi_probe(parent, match, aux)
 	int iobase;
 	struct cfdata *cf = match;
 	struct commulti_attach_args *ca = aux;
- 
+
 	if (cf->cf_loc[COMMULTICF_SLAVE] != COMMULTICF_SLAVE_DEFAULT &&
 	    cf->cf_loc[COMMULTICF_SLAVE] != ca->ca_slave)
 		return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.1.60.4 2004/09/21 13:15:27 skrll Exp $	*/
+/*	$NetBSD: rd.c,v 1.1.60.5 2005/03/04 16:38:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -154,8 +154,7 @@ struct rdidentinfo rdidentinfo[] = {
 int numrdidentinfo = sizeof(rdidentinfo) / sizeof(rdidentinfo[0]);
 
 int
-rdinit(ctlr, unit)
-	int ctlr, unit;
+rdinit(int ctlr, int unit)
 {
 	struct rd_softc *rs = &rd_softc[ctlr][unit];
 
@@ -167,8 +166,7 @@ rdinit(ctlr, unit)
 }
 
 static void
-rdreset(ctlr, unit)
-	int ctlr, unit;
+rdreset(int ctlr, int unit)
 {
 	u_char stat;
 
@@ -184,8 +182,7 @@ rdreset(ctlr, unit)
 }
 
 static int
-rdident(ctlr, unit)
-	int ctlr, unit;
+rdident(int ctlr, int unit)
 {
 	struct rd_describe desc;
 	u_char stat, cmd[3];
@@ -250,8 +247,7 @@ rdident(ctlr, unit)
 char io_buf[MAXBSIZE];
 
 static int
-rdgetinfo(rs)
-	struct rd_softc *rs;
+rdgetinfo(struct rd_softc *rs)
 {
 	struct rdminilabel *pi = &rs->sc_pinfo;
 	struct disklabel *lp = &rdlabel;
@@ -325,8 +321,7 @@ rdopen(struct open_file *f, ...)
 }
 
 int
-rdclose(f)
-	struct open_file *f;
+rdclose(struct open_file *f)
 {
 	struct rd_softc *rs = f->f_devdata;
 
@@ -341,13 +336,8 @@ rdclose(f)
 }
 
 int
-rdstrategy(devdata, func, dblk, size, v_buf, rsize)
-	void *devdata;
-	int func;
-	daddr_t dblk;
-	size_t size;
-	void *v_buf;
-	size_t *rsize;
+rdstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *v_buf,
+    size_t *rsize)
 {
 	char *buf = v_buf;
 	struct rd_softc *rs = devdata;
@@ -394,9 +384,7 @@ retry:
 }
 
 static int
-rderror(ctlr, unit, part)
-	int ctlr, unit;
-	int part;
+rderror(int ctlr, int unit, int part)
 {
 	char stat;
 

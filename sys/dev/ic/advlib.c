@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.18.16.3 2004/09/21 13:27:46 skrll Exp $        */
+/*      $NetBSD: advlib.c,v 1.18.16.4 2005/03/04 16:41:23 skrll Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.18.16.3 2004/09/21 13:27:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.18.16.4 2005/03/04 16:41:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,18 +175,18 @@ static u_int16_t AscSetIsaDmaChannel(bus_space_tag_t, bus_space_handle_t,
 static u_int8_t AscGetIsaDmaSpeed(bus_space_tag_t, bus_space_handle_t);
 static u_int8_t AscSetIsaDmaSpeed(bus_space_tag_t, bus_space_handle_t,
 					u_int8_t);
-		
+
 /* Messages routines */
 static void AscHandleExtMsgIn(ASC_SOFTC *, u_int16_t, u_int8_t,
 					ASC_SCSI_BIT_ID_TYPE, int, u_int8_t);
 static u_int8_t AscMsgOutSDTR(ASC_SOFTC *, u_int8_t, u_int8_t);
-		
+
 /* SDTR routines */
 static void AscSetChipSDTR(bus_space_tag_t, bus_space_handle_t,
 					u_int8_t, u_int8_t);
 static u_int8_t AscCalSDTRData(ASC_SOFTC *, u_int8_t, u_int8_t);
 static u_int8_t AscGetSynPeriodIndex(ASC_SOFTC *, u_int8_t);
-		
+
 /* Queue routines */
 static int AscSendScsiQueue(ASC_SOFTC *, ASC_SCSI_Q *, u_int8_t);
 static int AscSgListToQueue(int);
@@ -205,21 +205,21 @@ static void AscCleanUpBusyQueue(bus_space_tag_t, bus_space_handle_t);
 static int _AscWaitQDone(bus_space_tag_t, bus_space_handle_t,
 					ASC_SCSI_Q *);
 static int AscCleanUpDiscQueue(bus_space_tag_t, bus_space_handle_t);
-		
+
 /* Abort and Reset CCB routines */
 static int AscRiscHaltedAbortCCB(ASC_SOFTC *, ADV_CCB *);
 static int AscRiscHaltedAbortTIX(ASC_SOFTC *, u_int8_t);
-		
+
 /* Error Handling routines */
 static int AscSetLibErrorCode(ASC_SOFTC *, u_int16_t);
-		
+
 /* Handle bugged borads routines */
 static int AscTagQueuingSafe(ASC_SCSI_INQUIRY *);
 static void AscAsyncFix(ASC_SOFTC *, u_int8_t, ASC_SCSI_INQUIRY *);
-		
+
 /* Miscellaneous routines */
 static int AscCompareString(u_char *, u_char *, int);
-		
+
 /* Device oriented routines */
 static int DvcEnterCritical(void);
 static void DvcLeaveCritical(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.39.2.8 2005/01/17 19:30:39 skrll Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.39.2.9 2005/03/04 16:41:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.39.2.8 2005/01/17 19:30:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.39.2.9 2005/03/04 16:41:02 skrll Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -122,7 +122,7 @@ static int	wdc_ata_bio_intr(struct ata_channel *, struct ata_xfer *,
 				 int);
 static void	wdc_ata_bio_kill_xfer(struct ata_channel *,
 				      struct ata_xfer *, int);
-static void	wdc_ata_bio_done(struct ata_channel *, struct ata_xfer *); 
+static void	wdc_ata_bio_done(struct ata_channel *, struct ata_xfer *);
 static int	wdc_ata_err(struct ata_drive_datas *, struct ata_bio *);
 #define WDC_ATA_NOERR 0x00 /* Drive doesn't report an error */
 #define WDC_ATA_RECOV 0x01 /* There was a recovered error */
@@ -246,7 +246,7 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			    0x20 | drvp->DMA_mode, WDSF_SET_MODE);
 		} else {
 			goto geometry;
-		}	
+		}
 		errstring = "dmamode";
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY, wait_flags))
 			goto ctrltimeout;
@@ -346,7 +346,7 @@ again:
 	if (xfer->c_skip == 0 || (ata_bio->flags & ATA_SINGLE) != 0) {
 		if (ata_bio->flags & ATA_SINGLE)
 			nblks = 1;
-		else 
+		else
 			nblks = xfer->c_bcount / ata_bio->lp->d_secsize;
 		/* Check for bad sectors and adjust transfer, if necessary. */
 		if ((ata_bio->lp->d_flags & D_BADSECT) != 0) {
@@ -399,7 +399,7 @@ again:
 	    		/* Init the DMA channel. */
 			if ((*wdc->dma_init)(wdc->dma_arg,
 			    chp->ch_channel, xfer->c_drive,
-			    (char *)xfer->c_databuf + xfer->c_skip, 
+			    (char *)xfer->c_databuf + xfer->c_skip,
 			    ata_bio->nbytes, dma_flags) != 0) {
 				ata_bio->error = ERR_DMA;
 				ata_bio->r_error = 0;
@@ -413,7 +413,7 @@ again:
 			    0, WDSD_IBM | (xfer->c_drive << 4));
 			switch(wdc_wait_for_ready(chp, ATA_DELAY, wait_flags)) {
 			case WDCWAIT_OK:
-				break;	
+				break;
 			case WDCWAIT_TOUT:
 				goto timeout;
 			case WDCWAIT_THR:
@@ -575,7 +575,7 @@ wdc_ata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	}
 	if (wdc->irqack)
 		wdc->irqack(chp);
-	
+
 	drv_err = wdc_ata_err(drvp, ata_bio);
 
 	/* If we were using DMA, Turn off the DMA channel and check for error */
@@ -694,7 +694,7 @@ wdc_ata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	int drive = xfer->c_drive;
 
 	ATADEBUG_PRINT(("wdc_ata_bio_done %s:%d:%d: flags 0x%x\n",
-	    atac->atac_dev.dv_xname, chp->ch_channel, xfer->c_drive, 
+	    atac->atac_dev.dv_xname, chp->ch_channel, xfer->c_drive,
 	    (u_int)xfer->c_flags),
 	    DEBUG_XFERS);
 

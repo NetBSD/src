@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.19.2.3 2004/09/21 13:27:57 skrll Exp $ 
+ *	$Id: isic.c,v 1.19.2.4 2005/03/04 16:41:29 skrll Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.19.2.3 2004/09/21 13:27:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.19.2.4 2005/03/04 16:41:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -107,14 +107,14 @@ isicintr(void *arg)
 			/* get hscx irq status from hscx b ista */
 			hscx_irq_stat =
 	 	    	    HSCX_READ(HSCX_CH_B, H_ISTA) & ~HSCX_B_IMASK;
-	
+
 			/* get isac irq status */
 			isac_irq_stat = ISAC_READ(I_ISTA);
-	
+
 			/* do as long as there are pending irqs in the chips */
 			if(!hscx_irq_stat && !isac_irq_stat)
 				break;
-	
+
 			if(hscx_irq_stat & (HSCX_ISTA_RME | HSCX_ISTA_RPF |
 					    HSCX_ISTA_RSC | HSCX_ISTA_XPR |
 					    HSCX_ISTA_TIN | HSCX_ISTA_EXB))
@@ -122,9 +122,9 @@ isicintr(void *arg)
 				isic_hscx_irq(sc, hscx_irq_stat,
 						HSCX_CH_B,
 						hscx_irq_stat & HSCX_ISTA_EXB);
-				was_hscx_irq = 1;			
+				was_hscx_irq = 1;
 			}
-			
+
 			if(hscx_irq_stat & (HSCX_ISTA_ICA | HSCX_ISTA_EXA))
 			{
 				isic_hscx_irq(sc,
@@ -133,7 +133,7 @@ isicintr(void *arg)
 				    hscx_irq_stat & HSCX_ISTA_EXA);
 				was_hscx_irq = 1;
 			}
-	
+
 			if(isac_irq_stat)
 			{
 				/* isac handler */
@@ -141,18 +141,18 @@ isicintr(void *arg)
 				was_isac_irq = 1;
 			}
 		}
-	
+
 		HSCX_WRITE(0, H_MASK, 0xff);
 		ISAC_WRITE(I_MASK, 0xff);
 		HSCX_WRITE(1, H_MASK, 0xff);
-	
+
 		if (sc->clearirq)
 		{
 			DELAY(80);
 			sc->clearirq(sc);
 		} else
 			DELAY(100);
-	
+
 		HSCX_WRITE(0, H_MASK, HSCX_A_IMASK);
 		ISAC_WRITE(I_MASK, ISAC_IMASK);
 		HSCX_WRITE(1, H_MASK, HSCX_B_IMASK);
@@ -167,18 +167,18 @@ isicintr(void *arg)
 		for(;;)
 		{
 			/* get global irq status */
-			
+
 			ipac_irq_stat = (IPAC_READ(IPAC_ISTA)) & 0x3f;
-			
+
 			/* check hscx a */
-			
+
 			if(ipac_irq_stat & (IPAC_ISTA_ICA | IPAC_ISTA_EXA))
 			{
 				/* HSCX A interrupt */
 				isic_hscx_irq(sc, HSCX_READ(HSCX_CH_A, H_ISTA),
 						HSCX_CH_A,
 						ipac_irq_stat & IPAC_ISTA_EXA);
-				was_ipac_irq = 1;			
+				was_ipac_irq = 1;
 			}
 			if(ipac_irq_stat & (IPAC_ISTA_ICB | IPAC_ISTA_EXB))
 			{
@@ -186,7 +186,7 @@ isicintr(void *arg)
 				isic_hscx_irq(sc, HSCX_READ(HSCX_CH_B, H_ISTA),
 						HSCX_CH_B,
 						ipac_irq_stat & IPAC_ISTA_EXB);
-				was_ipac_irq = 1;			
+				was_ipac_irq = 1;
 			}
 			if(ipac_irq_stat & IPAC_ISTA_ICD)
 			{
@@ -195,7 +195,7 @@ isicintr(void *arg)
 				if (isac_ista & 0xfe)
 					isic_isac_irq(sc, isac_ista & 0xfe);
 				if (isac_ista & 0x01) /* unexpected */
-					printf("%s: unexpected ipac timer2 irq\n", 
+					printf("%s: unexpected ipac timer2 irq\n",
 					    sc->sc_dev.dv_xname);
 				was_ipac_irq = 1;
 			}
@@ -205,7 +205,7 @@ isicintr(void *arg)
 				isic_isac_irq(sc, ISAC_ISTA_EXI);
 				was_ipac_irq = 1;
 			}
-	
+
 			/* do as long as there are pending irqs in the chip */
 			if(!ipac_irq_stat)
 				break;
@@ -223,7 +223,7 @@ isicintr(void *arg)
 #endif
 
 		return(was_ipac_irq);
-	}		
+	}
 }
 
 int

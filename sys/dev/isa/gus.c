@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.81.2.5 2005/01/17 19:31:11 skrll Exp $	*/
+/*	$NetBSD: gus.c,v 1.81.2.6 2005/03/04 16:43:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -17,10 +17,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD 
+ *        This product includes software developed by the NetBSD
  *	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
- *    contributors may be used to endorse or promote products derived 
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.81.2.5 2005/01/17 19:31:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.81.2.6 2005/03/04 16:43:13 skrll Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -1596,7 +1596,7 @@ gus_dmaout_dointr(struct gus_softc *sc)
 		 */
 		if (++sc->sc_bufcnt == 2) {
 			/*
-			 * XXX 
+			 * XXX
 			 * If we're too slow in reaction here,
 			 * the voice could be just approaching the
 			 * end of its run.  It should be set to stop,
@@ -2478,7 +2478,7 @@ gus_set_chan_addrs(struct gus_softc *sc)
 
 	/*
 	 * We use sc_nbufs * blocksize bytes of storage in the on-board GUS
-	 * ram. 
+	 * ram.
 	 * For mono, each of the sc_nbufs buffers is DMA'd to in one chunk,
 	 * and both left & right channels play the same buffer.
 	 *

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_ali.c,v 1.4.2.3 2004/09/21 13:31:00 skrll Exp $	*/
+/*	$NetBSD: agp_ali.c,v 1.4.2.4 2005/03/04 16:45:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.4.2.3 2004/09/21 13:31:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.4.2.4 2005/03/04 16:45:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -125,7 +125,7 @@ agp_ali_attach(struct device *parent, struct device *self, void *aux)
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_ALI_ATTBASE);
 	reg = (reg & 0xfff) | (gatt->ag_physical & ~0xfff);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, AGP_ALI_ATTBASE, reg);
-	
+
 	/* Enable the TLB. */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_ALI_TLBCTRL);
 	reg = (reg & ~0xff) | 0x10;

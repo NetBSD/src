@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tc.c,v 1.1.60.3 2004/09/21 13:15:27 skrll Exp $	*/
+/*	$NetBSD: ite_tc.c,v 1.1.60.4 2005/03/04 16:38:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -92,8 +92,7 @@
 void topcat_windowmove(struct ite_data *, int, int, int, int, int, int, int);
 
 void
-topcat_init(ip)
-	struct ite_data *ip;
+topcat_init(struct ite_data *ip)
 {
 	struct tcboxfb *regbase = (void *)ip->regbase;
 
@@ -149,10 +148,7 @@ topcat_init(ip)
 }
 
 void
-topcat_putc(ip, c, dy, dx, mode)
-	struct ite_data *ip;
-	int dy, dx;
-	int c, mode;
+topcat_putc(struct ite_data *ip, int dy, int dx, int c, int mode)
 {
 
 	topcat_windowmove(ip, charY(ip, c), charX(ip, c),
@@ -161,9 +157,7 @@ topcat_putc(ip, c, dy, dx, mode)
 }
 
 void
-topcat_cursor(ip, flag)
-	struct ite_data *ip;
-	int flag;
+topcat_cursor(struct ite_data *ip, int flag)
 {
 
 	if (flag == DRAW_CURSOR)
@@ -176,9 +170,7 @@ topcat_cursor(ip, flag)
 }
 
 void
-topcat_clear(ip, sy, sx, h, w)
-	struct ite_data *ip;
-	int sy, sx, h, w;
+topcat_clear(struct ite_data *ip, int sy, int sx, int h, int w)
 {
 
 	topcat_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
@@ -188,10 +180,7 @@ topcat_clear(ip, sy, sx, h, w)
 }
 
 void
-topcat_scroll(ip, sy, sx, count, dir)
-	struct ite_data *ip;
-	int sy, count;
-	int dir, sx;
+topcat_scroll(struct ite_data *ip, int sy, int count, int dir, int sx)
 {
 	int dy = sy - count;
 	int height = ip->rows - sy;
@@ -205,9 +194,8 @@ topcat_scroll(ip, sy, sx, count, dir)
 }
 
 void
-topcat_windowmove(ip, sy, sx, dy, dx, h, w, func)
-	struct ite_data *ip;
-	int sy, sx, dy, dx, h, w, func;
+topcat_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx,
+    int h, int w, int func)
 {
 	struct tcboxfb *rp = (void *)ip->regbase;
 	

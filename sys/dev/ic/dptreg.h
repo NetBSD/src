@@ -1,4 +1,4 @@
-/*	$NetBSD: dptreg.h,v 1.13.2.3 2004/09/21 13:27:55 skrll Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.13.2.4 2005/03/04 16:41:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -150,8 +150,8 @@ struct eata_ucp {
 #define CP_C4_IDENTIFY		0x80	/* Always true */
 
 /*
- * EATA status packet as returned by controller upon command completion.  It 
- * contains status, message info and a handle on the initiating CCB. 
+ * EATA status packet as returned by controller upon command completion.  It
+ * contains status, message info and a handle on the initiating CCB.
  */
 struct eata_sp {
 	u_int8_t	sp_hba_status;		/* Host adapter status */
@@ -165,8 +165,8 @@ struct eata_sp {
 	u_int8_t	sp_messages[9];
 } __attribute__ ((__packed__));
 
-/* 
- * HBA status as returned by status packet.  Bit 7 signals end of command. 
+/*
+ * HBA status as returned by status packet.  Bit 7 signals end of command.
  */
 #define SP_HBA_NO_ERROR		0x00    /* No error on command */
 #define SP_HBA_ERROR_SEL_TO	0x01    /* Device selection timeout */
@@ -277,7 +277,7 @@ struct eata_inquiry_data {
 	u_int8_t 	ei_response_format;
 	u_int8_t 	ei_additional_length;
 	u_int8_t 	ei_unused[2];
-	u_int8_t	ei_flags;	
+	u_int8_t	ei_flags;
 	char		ei_vendor[8];		/* Vendor, e.g: DPT, NEC */
 	char		ei_model[7];		/* Model number */
 	char		ei_suffix[9];		/* Model number suffix */

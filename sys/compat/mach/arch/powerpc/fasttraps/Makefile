@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.8.4 2004/09/21 13:25:52 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.8.5 2005/03/04 16:40:13 skrll Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -7,8 +7,8 @@ OBJS=	mach_fasttraps_sysent.c mach_fasttraps_syscalls.c \
 	mach_fasttraps_syscall.h mach_fasttraps_syscallargs.h
 
 ${OBJS}: ${DEP}
-	-mv -f mach_fasttraps_sysent.c mach_fasttraps_sysent.c.bak
-	-mv -f mach_fasttraps_syscalls.c mach_fasttraps_syscalls.c.bak
-	-mv -f mach_fasttraps_syscall.h mach_fasttraps_syscall.h.bak
-	-mv -f mach_fasttraps_syscallargs.h mach_fasttraps_syscallargs.h.bak
 	${HOST_SH} ../../../../../kern/makesyscalls.sh syscalls.conf syscalls.master
+
+all: ${OBJS}
+
+.include <bsd.kinc.mk>

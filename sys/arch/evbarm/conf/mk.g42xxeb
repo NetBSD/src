@@ -1,7 +1,7 @@
-#	$NetBSD: mk.g4250ebx,v 1.1 2003/01/03 02:16:26 thorpej Exp $
+#	$NetBSD: mk.g42xxeb,v 1.1.2.2 2005/03/04 16:38:14 skrll Exp $
 
-SYSTEM_FIRST_OBJ=	g4250ebx_start.o
-SYSTEM_FIRST_SFILE=	${THISARM}/g4250ebx/g4250ebx_start.S
+SYSTEM_FIRST_OBJ=	g42xxeb_start.o
+SYSTEM_FIRST_SFILE=	${THISARM}/g42xxeb/g42xxeb_start.S
 
 KERNEL_BASE_PHYS=0xa0200000
 KERNEL_BASE_VIRT=0xc0200000

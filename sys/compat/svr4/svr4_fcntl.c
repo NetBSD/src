@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.45.2.4 2004/09/21 13:26:00 skrll Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.45.2.5 2005/03/04 16:40:29 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.45.2.4 2004/09/21 13:26:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.45.2.5 2005/03/04 16:40:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,10 +459,10 @@ svr4_sys_llseek(l, v, retval)
 	SCARG(&ap, fd) = SCARG(uap, fd);
 
 #if BYTE_ORDER == BIG_ENDIAN
-	SCARG(&ap, offset) = (((long long) SCARG(uap, offset1)) << 32) | 
+	SCARG(&ap, offset) = (((long long) SCARG(uap, offset1)) << 32) |
 		SCARG(uap, offset2);
 #else
-	SCARG(&ap, offset) = (((long long) SCARG(uap, offset2)) << 32) | 
+	SCARG(&ap, offset) = (((long long) SCARG(uap, offset2)) << 32) |
 		SCARG(uap, offset1);
 #endif
 	SCARG(&ap, whence) = SCARG(uap, whence);
@@ -514,7 +514,7 @@ svr4_sys_pread(l, v, retval)
 int
 svr4_sys_pread64(l, v, retval)
 	struct lwp *l;
-	void *v; 
+	void *v;
 	register_t *retval;
 {
 
@@ -559,7 +559,7 @@ svr4_sys_pwrite(l, v, retval)
 int
 svr4_sys_pwrite64(l, v, retval)
 	struct lwp *l;
-	void *v; 
+	void *v;
 	register_t *retval;
 {
 	struct svr4_sys_pwrite64_args *uap = v;
@@ -698,7 +698,7 @@ svr4_sys_fcntl(l, v, retval)
 				struct flock		*flp, fl;
 				caddr_t sg = stackgap_init(p, 0);
 
-				flp = stackgap_alloc(p, &sg, 
+				flp = stackgap_alloc(p, &sg,
 				    sizeof(struct flock));
 				SCARG(&fa, arg) = (void *) flp;
 

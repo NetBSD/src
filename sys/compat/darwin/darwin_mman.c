@@ -1,6 +1,6 @@
 #undef DEBUG_DARWIN
 #undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.9.2.5 2004/11/02 07:51:06 skrll Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.9.2.6 2005/03/04 16:39:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.9.2.5 2004/11/02 07:51:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.9.2.6 2005/03/04 16:39:22 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.9.2.5 2004/11/02 07:51:06 skrll Ex
 #include <compat/darwin/darwin_syscallargs.h>
 
 int
-darwin_sys_load_shared_file(l, v, retval) 
+darwin_sys_load_shared_file(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
@@ -111,11 +111,11 @@ darwin_sys_load_shared_file(l, v, retval)
 		return error;
 
 #ifdef DEBUG_DARWIN
-	DPRINTF(("darwin_sys_load_shared_file: filename = %p ", 
+	DPRINTF(("darwin_sys_load_shared_file: filename = %p ",
 	    SCARG(uap, filename)));
-	DPRINTF(("addr = %p len = 0x%08lx base = %p ", 
+	DPRINTF(("addr = %p len = 0x%08lx base = %p ",
 	    SCARG(uap, addr), SCARG(uap, len), SCARG(uap, base)));
-	DPRINTF(("count = %d mappings = %p flags = %p ", 
+	DPRINTF(("count = %d mappings = %p flags = %p ",
 	    SCARG(uap, count), SCARG(uap, mappings), SCARG(uap, flags)));
 	DPRINTF(("*base = 0x%08lx *flags = %d filename=`%s'\n",
 	    base, flags, filename));
@@ -126,7 +126,7 @@ darwin_sys_load_shared_file(l, v, retval)
 	SCARG(&open_cup, mode) = 0;
 	if ((error = bsd_sys_open(l, &open_cup, &fdc)) != 0)
 		return error;
-	
+
 	fd = (int)fdc;
 	fdp = p->p_fd;
 	fp = fd_getfile(fdp, fd);
@@ -150,15 +150,15 @@ darwin_sys_load_shared_file(l, v, retval)
 
 	if ((error = copyin(SCARG(uap, mappings), mapp, maplen)) != 0)
 		goto bad2;
-	
+
 #ifdef DEBUG_DARWIN
 	for (i = 0; i < SCARG(uap, count); i++) {
-		DPRINTF(("mapp[%d].mapping_offset = 0x%08lx\n", 
+		DPRINTF(("mapp[%d].mapping_offset = 0x%08lx\n",
 		    i, mapp[i].mapping_offset));
 		DPRINTF(("mapp[%d].size = 0x%08lx\n", i, (long)mapp[i].size));
-		DPRINTF(("mapp[%d].file_offset = 0x%08lx\n", 
+		DPRINTF(("mapp[%d].file_offset = 0x%08lx\n",
 		    i, mapp[i].file_offset));
-		DPRINTF(("mapp[%d].protection = %d\n", 
+		DPRINTF(("mapp[%d].protection = %d\n",
 		    i, mapp[i].protection));
 		DPRINTF(("mapp[%d].cksum = %ld\n", i, mapp[i].cksum));
 	}
@@ -167,20 +167,20 @@ darwin_sys_load_shared_file(l, v, retval)
 	/* Check if we can load at the default addresses */
 	need_relocation = 0;
 	vm_map_lock(&p->p_vmspace->vm_map);
-	for (i = 0; i < SCARG(uap, count); i++) 
+	for (i = 0; i < SCARG(uap, count); i++)
 		if ((uvm_map_findspace(&p->p_vmspace->vm_map,
-		    base + mapp[i].mapping_offset, mapp[i].size, 
+		    base + mapp[i].mapping_offset, mapp[i].size,
 		    &uaddr, NULL, 0, 0, UVM_FLAG_FIXED)) == NULL)
-			need_relocation = 1;	
+			need_relocation = 1;
 	vm_map_unlock(&p->p_vmspace->vm_map);
 
 	/* If we cannot, we need a relocation */
 	if (need_relocation) {
 		DPRINTF(("Relocating\n"));
 		/* Compute the length of the region enclosing all sections */
-		max_addr = 0; 
+		max_addr = 0;
 		for (i = 0; i < SCARG(uap, count); i++) {
-			addr = (vaddr_t)(mapp[i].mapping_offset 
+			addr = (vaddr_t)(mapp[i].mapping_offset
 			    + base + mapp[i].size);
 			if (addr > max_addr)
 				max_addr = addr;
@@ -191,7 +191,7 @@ darwin_sys_load_shared_file(l, v, retval)
 
 		/* Find some place to map this region */
 		vm_map_lock(&p->p_vmspace->vm_map);
-		if ((uvm_map_findspace(&p->p_vmspace->vm_map, base, 
+		if ((uvm_map_findspace(&p->p_vmspace->vm_map, base,
 		    len, &uaddr, NULL, 0, PAGE_SIZE, 0)) == NULL) {
 			DPRINTF(("Impossible to find some space\n"));
 			vm_map_unlock(&p->p_vmspace->vm_map);
@@ -204,7 +204,7 @@ darwin_sys_load_shared_file(l, v, retval)
 		base = uaddr;
 		DPRINTF(("New base address: base = 0x%08lx\n", base));
 	}
-		
+
 	/* Do the actual mapping */
 	for (i = 0; i < SCARG(uap, count); i++) {
 		bzero(&evc, sizeof(evc));

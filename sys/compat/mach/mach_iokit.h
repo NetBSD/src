@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.17.2.3 2004/09/21 13:25:42 skrll Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.17.2.4 2005/03/04 16:40:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ typedef struct {
 } mach_io_service_get_matching_services_request_t;
 
 typedef struct {
-	mach_msg_header_t rep_msgh; 
+	mach_msg_header_t rep_msgh;
 	mach_msg_body_t rep_body;
 	mach_msg_port_descriptor_t rep_match;
 	mach_msg_trailer_t rep_trailer;
@@ -82,7 +82,7 @@ typedef struct {
 } mach_io_service_open_request_t;
 
 typedef struct {
-	mach_msg_header_t rep_msgh;	
+	mach_msg_header_t rep_msgh;
 	mach_msg_body_t rep_body;
 	mach_msg_port_descriptor_t rep_connect;
 	mach_msg_trailer_t rep_trailer;
@@ -507,7 +507,7 @@ typedef struct {
 	mach_msg_type_number_t req_offset;
 	mach_msg_type_number_t req_count;
 	char req_plane[0];
-} mach_io_registry_entry_get_parent_iterator_request_t; 
+} mach_io_registry_entry_get_parent_iterator_request_t;
 
 typedef struct {
 	mach_msg_header_t rep_msgh;
@@ -550,5 +550,5 @@ struct mach_iokit_devclass {
 extern struct mach_iokit_devclass mach_ioroot_devclass;
 
 void mach_iokit_cleanup_notify(struct mach_right *);
-	
+
 #endif /* _MACH_IOKIT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.9.6.4 2004/09/21 13:27:36 skrll Exp $	*/
+/*	$NetBSD: dz.c,v 1.9.6.5 2005/03/04 16:41:05 skrll Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.9.6.4 2004/09/21 13:27:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.9.6.5 2005/03/04 16:41:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,7 +298,7 @@ dzxint(void *arg)
 			DZ_WRITE_BYTE(dr_tbuf, ch);
 			DZ_BARRIER();
 			continue;
-		} 
+		}
 		/* Nothing to send; clear the scan bit */
 		/* Clear xmit scanner bit; dzstart may set it again */
 		tcr = DZ_READ_WORD(dr_tcrw);
@@ -387,7 +387,7 @@ dzclose(dev_t dev, int flag, int mode, struct lwp *l)
 	struct tty *tp;
 	int unit, line;
 
-	
+
 	unit = DZ_I2C(minor(dev));
 	line = DZ_PORT(minor(dev));
 	sc = dz_cd.cd_devs[unit];
@@ -727,13 +727,13 @@ dzscan(void *arg)
 
 			tp = sc->sc_dz[port].dz_tty;
 			bit = (1 << port);
-	
+
 			if ((DZ_READ_BYTE(dr_dcd) | sc->sc_dsr) & bit) {
 				if (!(tp->t_state & TS_CARR_ON))
 					(*tp->t_linesw->l_modem) (tp, 1);
 			} else if ((tp->t_state & TS_CARR_ON) &&
 			    (*tp->t_linesw->l_modem)(tp, 0) == 0) {
-				DZ_WRITE_BYTE(dr_tcr, 
+				DZ_WRITE_BYTE(dr_tcr,
 				    (DZ_READ_WORD(dr_tcrw) & 255) & ~bit);
 				DZ_BARRIER();
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.14.2.3 2004/09/21 13:25:27 skrll Exp $  */
+/*	$NetBSD: linux_exec.h,v 1.14.2.4 2005/03/04 16:40:02 skrll Exp $  */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  * Linux a.out format parameters
  */
 #define LINUX_M_POWERPC		MID_POWERPC
-#define LINUX_MID_MACHINE	LINUX_M_POWERPC	
+#define LINUX_MID_MACHINE	LINUX_M_POWERPC
 
 /*
  * Linux Elf32 format parameters
@@ -65,7 +65,7 @@
 
 #define LINUX_GCC_SIGNATURE 1
 /*
- * LINUX_ATEXIT_SIGNATURE enable the atexit_signature test. See 
+ * LINUX_ATEXIT_SIGNATURE enable the atexit_signature test. See
  * sys/compat/linux/common/linux_exec_elf32.c:linux_atexit_signature()
  */
 #define LINUX_ATEXIT_SIGNATURE	1

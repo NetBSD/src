@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.48.6.6 2005/02/06 08:59:23 skrll Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.48.6.7 2005/03/04 16:41:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #define	_DEV_IC_TULIPVAR_H_
 
 #include "rnd.h"
- 
+
 #include <sys/queue.h>
 #include <sys/callout.h>
 
