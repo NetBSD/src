@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1998/09/05 14:46:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1998/11/14 01:55:39 mrg Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -29,6 +29,7 @@ all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} bs=${SIZE} count=1
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	disklabel -W ${VND_CDEV}
 	newfs -m 0 -o space -i 4096 -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
