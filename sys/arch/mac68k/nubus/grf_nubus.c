@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.44 1998/05/07 23:42:59 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.45 1998/05/23 22:08:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -267,6 +267,11 @@ bad:
 		add_nubus_intr(na->slot, grfmv_intr_generic_write1, sc);
 		break;
 	case NUBUS_DRHW_RPC8XJ:
+		sc->cli_value = 0x66;
+		add_nubus_intr(na->slot, grfmv_intr_radius, sc);
+		break;
+	case NUBUS_DRHW_RPC24X:
+		sc->cli_value = 0x64;
 		add_nubus_intr(na->slot, grfmv_intr_radius, sc);
 		break;
 	case NUBUS_DRHW_RPC24XP:
@@ -406,12 +411,7 @@ grfmv_intr_radius(vsc)
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int8_t c;
 
-	/*
-	 * The value 0x66 was the observed value on one	card.  It is read
-	 * from the driver's information block, so this may not be sufficient.
-	 * Then again, we're not setting up any other interrupts...
-	 */
-	c = 0x66;
+	c = sc->cli_value;
 
 	c |= 0x80;
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0xd00403, c);
