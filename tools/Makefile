@@ -1,13 +1,10 @@
-#	$NetBSD: Makefile,v 1.44 2002/04/01 13:54:00 bjh21 Exp $
-
-# XXX Note: NO_DBSYM is a stopgap temporary variable for use
-# with the development of non-NetBSD hosting support.  This will go away.
+#	$NetBSD: Makefile,v 1.45 2002/04/01 22:03:46 thorpej Exp $
 
 .include <bsd.own.mk>
 
 # XXX We can't currently build the toolchain for x86-64.
 .if ${MACHINE_ARCH} != "x86_64"
-TOOLCHAIN_BITS= toolchain .WAIT ${NO_DBSYM:D:Udbsym} mdsetimage
+TOOLCHAIN_BITS= toolchain .WAIT dbsym mdsetimage
 .endif
 
 # Dependencies in SUBDIR below ordered to maximize parallel ability.
