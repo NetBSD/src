@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1 1996/10/04 00:18:58 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.2 1998/11/26 08:11:33 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,13 +31,17 @@
  */
 
 #ifdef __alpha__
-#define NLIST_ECOFF
-#define NLIST_ELF64
+#define	NLIST_ECOFF
+#define	NLIST_ELF64
 #else
-#define NLIST_AOUT
+#ifdef __powerpc__
+#define	NLIST_ELF32
+#else
+#define	NLIST_AOUT
 /* #define	NLIST_ECOFF */
 /* #define	NLIST_ELF32 */
 /* #define	NLIST_ELF64 */
+#endif
 #endif
 
 #ifdef NLIST_AOUT
