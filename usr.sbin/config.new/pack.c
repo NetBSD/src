@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
@@ -39,8 +39,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pack.c	5.2 (Berkeley) 4/18/93
- *	$Id: pack.c,v 1.2 1993/12/04 06:06:17 cgd Exp $
+ *	from: @(#)pack.c	8.1 (Berkeley) 6/6/93
+ *	$Id: pack.c,v 1.3 1994/06/22 10:44:20 pk Exp $
  */
 
 #include <sys/param.h>
