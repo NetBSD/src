@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.23 1999/01/14 18:45:45 castor Exp $	*/
+/*	$NetBSD: pmap.h,v 1.24 1999/01/18 02:11:07 castor Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -42,7 +42,7 @@
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
 
-#include <mips/cpuarch.h>	/* for KSEG0 below */
+#include <mips/cpuregs.h>	/* for KSEG0 below */
 
 /*
  * The user address space is 2Gb (0x0 - 0x80000000).
