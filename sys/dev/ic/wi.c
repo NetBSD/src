@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.155 2004/03/17 17:00:34 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.156 2004/03/17 17:19:13 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.155 2004/03/17 17:00:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.156 2004/03/17 17:19:13 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2647,7 +2647,7 @@ wi_read_rid(struct wi_softc *sc, int rid, void *buf, int *buflenp)
 		    sc->sc_dev.dv_xname, rid, le16toh(ltbuf[1]));
 		return EIO;
 	}
-	len = (le16toh(ltbuf[0]) - 1) * 2;	 /* already got rid */
+	len = max(0, le16toh(ltbuf[0]) - 1) * 2;	 /* already got rid */
 	if (*buflenp < len) {
 		printf("%s: record buffer is too small, "
 		    "rid=%x, size=%d, len=%d\n",
