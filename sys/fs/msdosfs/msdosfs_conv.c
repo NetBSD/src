@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.1 2002/12/26 12:31:34 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.2 2003/09/07 22:09:11 itojun Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.1 2002/12/26 12:31:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.2 2003/09/07 22:09:11 itojun Exp $");
 
 /*
  * System include files.
@@ -96,8 +96,9 @@ u_short lastdtime;
  * file timestamps. The passed in unix time is assumed to be in GMT.
  */
 void
-unix2dostime(tsp, ddp, dtp, dhp)
+unix2dostime(tsp, gmtoff, ddp, dtp, dhp)
 	struct timespec *tsp;
+	int gmtoff;
 	u_int16_t *ddp;
 	u_int16_t *dtp;
 	u_int8_t *dhp;
@@ -113,8 +114,7 @@ unix2dostime(tsp, ddp, dtp, dhp)
 	 * If the time from the last conversion is the same as now, then
 	 * skip the computations and use the saved result.
 	 */
-	t = tsp->tv_sec - (rtc_offset * 60)
-	     /* +- daylight savings time correction */ ;
+	t = tsp->tv_sec + gmtoff; /* time zone correction */
 	t &= ~1;
 	if (lasttime != t) {
 		lasttime = t;
@@ -177,10 +177,11 @@ u_long lastseconds;
  * not be too efficient.
  */
 void
-dos2unixtime(dd, dt, dh, tsp)
+dos2unixtime(dd, dt, dh, gmtoff, tsp)
 	u_int dd;
 	u_int dt;
 	u_int dh;
+	int gmtoff;
 	struct timespec *tsp;
 {
 	u_long seconds;
@@ -227,8 +228,8 @@ dos2unixtime(dd, dt, dh, tsp)
 		days += ((dd & DD_DAY_MASK) >> DD_DAY_SHIFT) - 1;
 		lastseconds = (days * 24 * 60 * 60) + SECONDSTO1980;
 	}
-	tsp->tv_sec = seconds + lastseconds + (rtc_offset * 60)
-	     /* -+ daylight savings time correction */ ;
+	tsp->tv_sec = seconds + lastseconds;
+	tsp->tv_sec -= gmtoff;	/* time zone correction */
 	tsp->tv_nsec = (dh % 100) * 10000000;
 }
 

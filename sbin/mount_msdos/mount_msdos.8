@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_msdos.8,v 1.27 2003/08/02 11:43:21 jdolecek Exp $
+.\" $NetBSD: mount_msdos.8,v 1.28 2003/09/07 22:09:11 itojun Exp $
 .\"
 .\" Copyright (c) 1993, 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -45,6 +45,7 @@
 .Op Fl g Ar gid
 .Op Fl m Ar mask
 .Op Fl M Ar mask
+.Op Fl t Ar gmtoff
 .Op Fl s
 .Op Fl l
 .Op Fl 9
@@ -113,6 +114,11 @@ in the file system. The value of
 is used if it is supplied and
 .Fl M
 is omitted. See description of previous option for details.
+.It Fl t Ar gmtoff
+Set the time zone offset (in seconds) from UTC to
+.Ar gmtoff ,
+with positive values indicating east of the Prime Meridian.
+If not set, the user's current time zone will be used.
 .It Fl s
 Force behaviour to
 ignore and not generate Win'95 long filenames.
