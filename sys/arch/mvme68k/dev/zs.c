@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.26 2000/11/21 11:41:37 scw Exp $	*/
+/*	$NetBSD: zs.c,v 1.27 2001/05/31 18:46:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -251,8 +251,12 @@ zshard_unshared(arg)
 
 	rval = zsc_intr_hard(zsc);
 
-	if ((zsc->zsc_cs[0]->cs_softreq) || (zsc->zsc_cs[1]->cs_softreq))
-		softintr_schedule(zsc->zsc_softintr_cookie);
+	if (rval) {
+		if ((zsc->zsc_cs[0]->cs_softreq) ||
+		    (zsc->zsc_cs[1]->cs_softreq))
+			softintr_schedule(zsc->zsc_softintr_cookie);
+		zsc->zsc_evcnt.ev_count++;
+	}
 
 	return (rval);
 }
@@ -273,12 +277,13 @@ zshard_shared(arg)
 	rval = 0;
 	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
 		zsc = zsc_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		rval |= zsc_intr_hard(zsc);
-		if ((zsc->zsc_cs[0]->cs_softreq) ||
-		    (zsc->zsc_cs[1]->cs_softreq))
-			softintr_schedule(zsc->zsc_softintr_cookie);
+		if (zsc != NULL && zsc_intr_hard(zsc)) {
+			if ((zsc->zsc_cs[0]->cs_softreq) ||
+			    (zsc->zsc_cs[1]->cs_softreq))
+				softintr_schedule(zsc->zsc_softintr_cookie);
+			zsc->zsc_evcnt.ev_count++;
+			rval++;
+		}
 	}
 	return (rval);
 }

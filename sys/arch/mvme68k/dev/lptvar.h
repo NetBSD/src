@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.4 2000/03/23 06:41:28 thorpej Exp $ */
+/*	$NetBSD: lptvar.h,v 1.5 2001/05/31 18:46:07 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@ struct lpt_softc {
 	int			sc_ipl;
 	u_char			sc_icr;
 	u_char			sc_laststatus;
+	struct evcnt		sc_evcnt;
 };
 
 

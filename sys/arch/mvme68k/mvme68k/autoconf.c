@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 2001/05/03 17:58:45 scw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 2001/05/31 18:46:09 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,6 +67,8 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#include <mvme68k/mvme68k/isr.h>
+
 #ifdef MVME147
 #include <mvme68k/dev/pccreg.h>
 #endif
@@ -86,6 +88,8 @@ cpu_configure()
 
 	booted_device = NULL;	/* set by device drivers (if found) */
 
+	/* Initialise interrupt handlers */
+	isrinit();
 	softintr_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcctwo.c,v 1.3 2000/11/24 09:36:41 scw Exp $	*/
+/*	$NetBSD: zs_pcctwo.c,v 1.4 2001/05/31 18:46:09 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -136,10 +136,13 @@ zsc_pcctwo_attach(parent, self, aux)
 	/* Do common parts of SCC configuration. */
 	zs_config(zsc, &zs, vector + PCCTWO_VECBASE, PCLK_162);
 
+	evcnt_attach_dynamic(&zsc->zsc_evcnt, EVCNT_TYPE_INTR,
+	    pcctwointr_evcnt(zs_level), "rs232", zsc->zsc_dev.dv_xname);
+
 	/*
 	 * Now safe to install interrupt handlers.
 	 */
-	pcctwointr_establish(vector++, zshard_unshared, zs_level, zsc);
+	pcctwointr_establish(vector++, zshard_unshared, zs_level, zsc, NULL);
 
 	/*
 	 * Set master interrupt enable.

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcc.c,v 1.3 2000/03/18 22:33:03 scw Exp $ */
+/*	$NetBSD: lpt_pcc.c,v 1.4 2001/05/31 18:46:07 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -134,10 +134,15 @@ lpt_pcc_attach(parent, self, args)
 	 */
 	lpt_attach_subr(sc);
 
+	/* Register the event counter */
+	evcnt_attach_dynamic(&sc->sc_evcnt, EVCNT_TYPE_INTR,
+	    pccintr_evcnt(sc->sc_ipl), "printer", sc->sc_dev.dv_xname);
+
 	/*
 	 * Hook into the printer interrupt
 	 */
-	pccintr_establish(PCCV_PRINTER, lpt_pcc_intr, sc->sc_ipl, sc);
+	pccintr_establish(PCCV_PRINTER, lpt_pcc_intr, sc->sc_ipl, sc,
+	    &sc->sc_evcnt);
 }
 
 /*
