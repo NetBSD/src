@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.19 1993/12/17 08:50:33 mycroft Exp $
+ *	$Id: cd.c,v 1.20 1993/12/23 09:35:51 cgd Exp $
  */
 
 #define SPLCD splbio
@@ -972,9 +972,14 @@ unsigned char	unit;
 	cd->disklabel.d_flags = D_REMOVABLE;
 
 	cd->disklabel.d_npartitions = 1;
-	 cd->disklabel.d_partitions[0].p_offset = 0;
-	 cd->disklabel.d_partitions[0].p_size = cd->params.disksize;
-	 cd->disklabel.d_partitions[0].p_fstype = 9;
+	cd->disklabel.d_partitions[0].p_offset = 0;
+	/*
+	 * remember that comparisons with the partition are done
+	 * assuming the blocks are DEV_BSIZE each, so fudge it.  
+	 */
+	cd->disklabel.d_partitions[0].p_size =
+	    cd->params.disksize * (cd->params.blksize / DEV_BSIZE);
+	cd->disklabel.d_partitions[0].p_fstype = 9;
 
 	cd->disklabel.d_magic = DISKMAGIC;
 	cd->disklabel.d_magic2 = DISKMAGIC;
