@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.7 2000/04/11 17:57:43 uch Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.7.4.1 2001/05/09 20:30:33 he Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
@@ -35,9 +35,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
-#define TAILQ_FOREACH(var, head, field)					\
-	for (var = TAILQ_FIRST(head); var; var = TAILQ_NEXT(var, field))
-#define	TAILQ_EMPTY(head) ((head)->tqh_first == NULL)
 
 #include <mips/cpuregs.h>
 #include <machine/bus.h>
