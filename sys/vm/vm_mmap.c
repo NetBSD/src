@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_mmap.c 1.3 90/01/21
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.14 1993/12/17 07:56:57 mycroft Exp $
+ *	$Id: vm_mmap.c,v 1.15 1993/12/20 12:40:13 cgd Exp $
  */
 
 /*
@@ -49,7 +49,7 @@
 #include <sys/filedesc.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
-#include <miscfs/specfs/specdev.h> /* XXX */
+#include <miscfs/specfs/specdev.h>
 #include <sys/file.h>
 #include <sys/mman.h>
 #include <sys/conf.h>
@@ -285,7 +285,7 @@ msync(p, uap, retval)
 	/*
 	 * Do not msync non-vnoded backed objects.
 	 */
-	if (object->internal || object->pager == NULL ||
+	if ((object->flags & OBJ_INTERNAL) || object->pager == NULL ||
 	    object->pager->pg_type != PG_VNODE) {
 		vm_object_unlock(object);
 		return(EINVAL);
@@ -485,7 +485,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		vp = (struct vnode *)handle;
 		if (vp->v_type == VCHR) {
 			type = PG_DEVICE;
-			handle = (caddr_t)vp->v_rdev;
+			handle = (caddr_t)(long)vp->v_rdev;
 		} else
 			type = PG_VNODE;
 	}
@@ -621,10 +621,10 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 			 * internal temporarily.
 			 */
 			if ((flags & MAP_COPY) == 0)
-				object->internal = TRUE;
+				object->flags |= OBJ_INTERNAL;
 			rv = vm_map_copy(map, tmap, *addr, size, off,
 					 FALSE, FALSE);
-			object->internal = FALSE;
+			object->flags &= ~OBJ_INTERNAL;
 			/*
 			 * (XXX)
 			 * My oh my, this only gets worse...
@@ -824,7 +824,10 @@ vm_allocate_with_pager(map, addr, size, fitit, pager, poffset, internal)
 		vm_object_enter(object, pager);
 	} else
 		vm_stat.hits++;
-	object->internal = internal;
+	if (internal)
+		object->flags |= OBJ_INTERNAL;
+	else
+		object->flags &= ~OBJ_INTERNAL;
 
 	result = vm_map_find(map, object, poffset, addr, size, fitit);
 	if (result != KERN_SUCCESS)

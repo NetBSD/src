@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_user.c	7.3 (Berkeley) 4/21/91
- *	$Id: vm_user.c,v 1.4 1993/12/17 07:57:21 mycroft Exp $
+ *	$Id: vm_user.c,v 1.5 1993/12/20 12:40:28 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

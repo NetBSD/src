@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1990 University of Utah.
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,8 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vnode_pager.c	7.5 (Berkeley) 4/20/91
- *	$Id: vnode_pager.c,v 1.4 1993/12/17 07:57:24 mycroft Exp $
+ *	from: @(#)vnode_pager.c	8.1 (Berkeley) 6/11/93
+ *	$Id: vnode_pager.c,v 1.5 1993/12/20 12:40:29 cgd Exp $
  */
 
 /*
@@ -48,17 +48,14 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/uio.h>
 #include <sys/mount.h>
 
-#include <vm/vm_param.h>
-#include <vm/lock.h>
-#include <vm/queue.h>
-#include <vm/vm_prot.h>
-#include <vm/vm_object.h>
+#include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vnode_pager.h>
 
@@ -74,7 +71,28 @@ int	vpagerdebug = 0x00;
 #define VDB_SIZE	0x20
 #endif
 
-void
+static vm_pager_t	 vnode_pager_alloc
+			    __P((caddr_t, vm_size_t, vm_prot_t, vm_offset_t));
+static void		 vnode_pager_dealloc __P((vm_pager_t));
+static int		 vnode_pager_getpage
+			    __P((vm_pager_t, vm_page_t, boolean_t));
+static boolean_t	 vnode_pager_haspage __P((vm_pager_t, vm_offset_t));
+static void		 vnode_pager_init __P((void));
+static int		 vnode_pager_io
+			    __P((vn_pager_t, vm_page_t, enum uio_rw));
+static boolean_t	 vnode_pager_putpage
+			    __P((vm_pager_t, vm_page_t, boolean_t));
+
+struct pagerops vnodepagerops = {
+	vnode_pager_init,
+	vnode_pager_alloc,
+	vnode_pager_dealloc,
+	vnode_pager_getpage,
+	vnode_pager_putpage,
+	vnode_pager_haspage
+};
+
+static void
 vnode_pager_init()
 {
 #ifdef DEBUG
@@ -88,11 +106,12 @@ vnode_pager_init()
  * Allocate (or lookup) pager for a vnode.
  * Handle is a vnode pointer.
  */
-vm_pager_t
-vnode_pager_alloc(handle, size, prot)
+static vm_pager_t
+vnode_pager_alloc(handle, size, prot, foff)
 	caddr_t handle;
 	vm_size_t size;
 	vm_prot_t prot;
+	vm_offset_t foff;
 {
 	register vm_pager_t pager;
 	register vn_pager_t vnp;
@@ -152,7 +171,7 @@ vnode_pager_alloc(handle, size, prot)
 		pager->pg_handle = handle;
 		pager->pg_type = PG_VNODE;
 		pager->pg_ops = &vnodepagerops;
-		pager->pg_data = (caddr_t)vnp;
+		pager->pg_data = vnp;
 		vp->v_vmdata = (caddr_t)pager;
 	} else {
 		/*
@@ -172,7 +191,7 @@ vnode_pager_alloc(handle, size, prot)
 	return(pager);
 }
 
-void
+static void
 vnode_pager_dealloc(pager)
 	vm_pager_t pager;
 {
@@ -198,6 +217,7 @@ vnode_pager_dealloc(pager)
 	free((caddr_t)pager, M_VMPAGER);
 }
 
+static int
 vnode_pager_getpage(pager, m, sync)
 	vm_pager_t pager;
 	vm_page_t m;
@@ -211,7 +231,7 @@ vnode_pager_getpage(pager, m, sync)
 	return(vnode_pager_io((vn_pager_t)pager->pg_data, m, UIO_READ));
 }
 
-boolean_t
+static boolean_t
 vnode_pager_putpage(pager, m, sync)
 	vm_pager_t pager;
 	vm_page_t m;
@@ -224,16 +244,16 @@ vnode_pager_putpage(pager, m, sync)
 		printf("vnode_pager_putpage(%x, %x)\n", pager, m);
 #endif
 	if (pager == NULL)
-		return;
+		return (FALSE);			/* ??? */
 	err = vnode_pager_io((vn_pager_t)pager->pg_data, m, UIO_WRITE);
 	if (err == VM_PAGER_OK) {
-		m->clean = TRUE;			/* XXX - wrong place */
+		m->flags |= PG_CLEAN;			/* XXX - wrong place */
 		pmap_clear_modify(VM_PAGE_TO_PHYS(m));	/* XXX - wrong place */
 	}
 	return(err);
 }
 
-boolean_t
+static boolean_t
 vnode_pager_haspage(pager, offset)
 	vm_pager_t pager;
 	vm_offset_t offset;
@@ -266,9 +286,15 @@ vnode_pager_haspage(pager, offset)
 	 *
 	 * Assumes that the vnode has whole page or nothing.
 	 */
+#ifdef notyet /* XXX */
+	err = VOP_BMAP(vnp->vnp_vp,
+		       offset / vnp->vnp_vp->v_mount->mnt_stat.f_iosize,
+		       (struct vnode **)0, &bn, NULL);
+#else /* notyet */
 	err = VOP_BMAP(vnp->vnp_vp,
 		       offset / vnp->vnp_vp->v_mount->mnt_stat.f_bsize,
 		       (struct vnode **)0, &bn);
+#endif /* notyet */
 	if (err) {
 #ifdef DEBUG
 		if (vpagerdebug & VDB_FAIL)
@@ -290,6 +316,7 @@ vnode_pager_haspage(pager, offset)
  * Note: this routine may be invoked as a result of a pager put
  * operation (possibly at object termination time), so we must be careful.
  */
+void
 vnode_pager_setsize(vp, nsize)
 	struct vnode *vp;
 	u_long nsize;
@@ -341,6 +368,7 @@ vnode_pager_setsize(vp, nsize)
 	vm_object_deallocate(object);
 }
 
+void
 vnode_pager_umount(mp)
 	register struct mount *mp;
 {
@@ -405,6 +433,7 @@ vnode_pager_uncache(vp)
 	return(uncached);
 }
 
+static int
 vnode_pager_io(vnp, m, rw)
 	register vn_pager_t vnp;
 	vm_page_t m;
@@ -474,8 +503,8 @@ vnode_pager_io(vnp, m, rw)
 		if (count == 0)
 			error = EINVAL;
 		else if (count != PAGE_SIZE && rw == UIO_READ)
-			bzero(kva + count, PAGE_SIZE - count);
+			bzero((void *)(kva + count), PAGE_SIZE - count);
 	}
 	vm_pager_unmap_page(kva);
-	return (error ? VM_PAGER_FAIL : VM_PAGER_OK);
+	return (error ? VM_PAGER_ERROR : VM_PAGER_OK);
 }
