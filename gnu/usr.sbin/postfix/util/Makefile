@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/12/24 19:47:53 perry Exp $
+#	$NetBSD: Makefile,v 1.10 2004/03/27 16:39:00 heas Exp $
 
 NOLINT=		# defined
 NOPIC=		# defined
@@ -38,7 +38,7 @@ SRCS	= alldig.c argv.c argv_split.c attr_print0.c attr_print64.c \
 	unix_connect.c unix_listen.c unix_trigger.c unsafe.c username.c \
 	valid_hostname.c vbuf.c vbuf_print.c vstream.c vstream_popen.c \
 	vstring.c vstring_vstream.c watchdog.c writable.c write_buf.c \
-	write_wait.c strcasecmp.c nvtable.c host_port.c
+	write_wait.c strcasecmp.c nvtable.c host_port.c sane_connect.c
 # IPv6
 #SRCS+=	get_port.c
 
