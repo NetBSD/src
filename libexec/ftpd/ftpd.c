@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.110 2000/11/15 04:07:07 itojun Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.111 2000/11/16 13:15:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.110 2000/11/15 04:07:07 itojun Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.111 2000/11/16 13:15:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,6 +172,8 @@ struct	passwd *pw;
 int	sflag;
 int	stru;			/* avoid C keyword */
 int	mode;
+int	dataport;		/* use specific data port */
+int	dopidfile;		/* maintain pid file */
 int	doutmp;			/* update utmp file */
 int	dowtmp;			/* update wtmp file */
 int	dropprivs;		/* if privileges should or have been dropped */
@@ -181,8 +183,8 @@ off_t	byte_count;
 static char ttyline[20];
 static struct utmp utmp;	/* for utmp */
 
-static char *anondir = NULL;
-static char confdir[MAXPATHLEN];
+static const char *anondir = NULL;
+static const char *confdir = NULL;
 
 #if defined(KERBEROS) || defined(KERBEROS5)
 int	has_ccache = 0;
@@ -236,31 +238,41 @@ main(int argc, char *argv[])
 #ifdef KERBEROS5
 	krb5_error_code	kerror;
 #endif
+	char		*p;
 
 	connections = 1;
 	debug = 0;
 	logging = 0;
 	pdata = -1;
 	sflag = 0;
+	dataport = 0;
+	dopidfile = 1;		/* default: DO use a pid file to count users */
 	doutmp = 0;		/* default: don't log to utmp */
 	dowtmp = 1;		/* default: DO log to wtmp */
 	dropprivs = 0;
 	mapped = 0;
 	usedefault = 1;
-	(void)strcpy(confdir, _DEFAULT_CONFDIR);
+	emailaddr = NULL;
 	hostname[0] = '\0';
 	homedir[0] = '\0';
 	gidcount = 0;
-
 	version = FTPD_VERSION;
-	while ((ch = getopt(argc, argv, "a:c:C:dh:Hlrst:T:u:UvV:W")) != -1) {
+
+	/*
+	 * LOG_NDELAY sets up the logging connection immediately,
+	 * necessary for anonymous ftp's that chroot and can't do it later.
+	 */
+	openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
+
+	while ((ch = getopt(argc, argv, "a:c:C:de:h:HlP:qQrst:T:uUvV:wW"))
+	    != -1) {
 		switch (ch) {
 		case 'a':
 			anondir = optarg;
 			break;
 
 		case 'c':
-			(void)strlcpy(confdir, optarg, sizeof(confdir));
+			confdir = optarg;
 			break;
 
 		case 'C':
@@ -271,6 +283,10 @@ main(int argc, char *argv[])
 		case 'd':
 		case 'v':		/* deprecated */
 			debug = 1;
+			break;
+
+		case 'e':
+			emailaddr = optarg;
 			break;
 
 		case 'h':
@@ -287,6 +303,24 @@ main(int argc, char *argv[])
 			logging++;	/* > 1 == extra logging */
 			break;
 
+		case 'P':
+			dataport = (int)strtol(optarg, &p, 10);
+			if (*p != '\0' || dataport < IPPORT_RESERVED ||
+			    dataport > IPPORT_ANONMAX) {
+				syslog(LOG_WARNING, "Invalid dataport %s",
+				    optarg);
+				dataport = 0;
+			}
+			break;
+
+		case 'q':
+			dopidfile = 1;
+			break;
+
+		case 'Q':
+			dopidfile = 0;
+			break;
+
 		case 'r':
 			dropprivs = 1;
 			break;
@@ -297,13 +331,17 @@ main(int argc, char *argv[])
 
 		case 't':
 		case 'T':
-		case 'u':
-			warnx("-%c has been deprecated in favour of ftpd.conf",
+			syslog(LOG_ERR,
+			    "-%c has been deprecated in favour of ftpd.conf",
 			    ch);
 			break;
 
-		case 'U':
+		case 'u':
 			doutmp = 1;
+			break;
+
+		case 'U':
+			doutmp = 0;
 			break;
 
 		case 'V':
@@ -313,6 +351,10 @@ main(int argc, char *argv[])
 				version = xstrdup(optarg);
 			break;
 
+		case 'w':
+			dowtmp = 1;
+			break;
+
 		case 'W':
 			dowtmp = 0;
 			break;
@@ -320,16 +362,13 @@ main(int argc, char *argv[])
 		default:
 			if (optopt == 'a' || optopt == 'C')
 				exit(1);
-			warnx("unknown flag -%c ignored", optopt);
+			syslog(LOG_ERR, "unknown flag -%c ignored", optopt);
 			break;
 		}
 	}
+	if (EMPTYSTR(confdir))
+		confdir = _DEFAULT_CONFDIR;
 
-	/*
-	 * LOG_NDELAY sets up the logging connection immediately,
-	 * necessary for anonymous ftp's that chroot and can't do it later.
-	 */
-	openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
 	memset((char *)&his_addr, 0, sizeof (his_addr));
 	addrlen = sizeof(his_addr.si_su);
 	if (getpeername(0, (struct sockaddr *)&his_addr.si_su, &addrlen) < 0) {
@@ -938,7 +977,9 @@ pass(const char *passwd)
 
 			/* parse ftpd.conf, setting up various parameters */
 	parse_conf(class);
-	count_users();
+	connections = 1;
+	if (dopidfile)
+		count_users();
 	if (curclass.limit != -1 && connections > curclass.limit) {
 		if (! EMPTYSTR(curclass.limitfile))
 			(void)display_file(conffilename(curclass.limitfile),
@@ -1090,9 +1131,11 @@ pass(const char *passwd)
 	}
 	(void) umask(curclass.umask);
 	goto cleanuppass;
+
  bad:
 			/* Forget all about it... */
 	end_login();
+
  cleanuppass:
 	if (class)
 		free(class);
@@ -1338,7 +1381,10 @@ getdatasock(const char *mode)
 			 * would be < IPPORT_RESERVED, use a random port
 			 * instead.
 			 */
-	port = ntohs(ctrl_addr.su_port) - 1;
+	if (dataport)
+		port = dataport;
+	else
+		port = ntohs(ctrl_addr.su_port) - 1;
 	if (dropprivs && port < IPPORT_RESERVED)
 		port = 0;		/* use random port */
 	data_source.su_port = htons(port);
@@ -1632,6 +1678,7 @@ static int
 receive_data(FILE *instr, FILE *outstr)
 {
 	int	c, bare_lfs, netfd, filefd, rval;
+	off_t	byteswritten;
 	char	buf[BUFSIZ];
 #ifdef __GNUC__
 	(void) &bare_lfs;
@@ -1640,8 +1687,18 @@ receive_data(FILE *instr, FILE *outstr)
 	bare_lfs = 0;
 	transflag = 1;
 	rval = -1;
+	byteswritten = 0;
 	if (setjmp(urgcatch))
 		goto cleanup_recv_data;
+
+#define FILESIZECHECK(x) \
+			do { \
+				if (curclass.maxfilesize != -1 && \
+				    (x) > curclass.maxfilesize) { \
+					errno = EFBIG; \
+					goto file_err; \
+				} \
+			} while (0)
 
 	switch (type) {
 
@@ -1662,8 +1719,9 @@ receive_data(FILE *instr, FILE *outstr)
 					if ((c = read(netfd, buf,
 					    MIN(sizeof(buf), bufrem))) <= 0)
 						goto recvdone;
+					FILESIZECHECK(byte_count + c);
 					if ((d = write(filefd, buf, c)) != c)
-						goto recvdone;
+						goto file_err;
 					(void) alarm(curclass.timeout);
 					bufrem -= c;
 					byte_count += c;
@@ -1679,6 +1737,7 @@ receive_data(FILE *instr, FILE *outstr)
 			}
 		} else {
 			while ((c = read(netfd, buf, sizeof(buf))) > 0) {
+				FILESIZECHECK(byte_count + c);
 				if (write(filefd, buf, c) != c)
 					goto file_err;
 				(void) alarm(curclass.timeout);
@@ -1723,13 +1782,17 @@ receive_data(FILE *instr, FILE *outstr)
 					total_bytes++;
 					if ((byte_count % 4096) == 0)
 						(void) alarm(curclass.timeout);
+					byteswritten++;
+					FILESIZECHECK(byteswritten);
 					(void) putc ('\r', outstr);
 					if (c == '\0' || c == EOF)
 						goto contin2;
 				}
 			}
+			byteswritten++;
+			FILESIZECHECK(byteswritten);
 			(void) putc(c, outstr);
-	contin2:	;
+ contin2:	;
 		}
 		(void) alarm(0);
 		fflush(outstr);
@@ -1750,6 +1813,7 @@ receive_data(FILE *instr, FILE *outstr)
 		reply(550, "Unimplemented TYPE %d in receive_data", type);
 		goto cleanup_recv_data;
 	}
+#undef FILESIZECHECK(x)
 
  data_err:
 	(void) alarm(0);
@@ -1925,7 +1989,7 @@ statcmd(void)
 		reply(0, "Class: %s, type: %s",
 		    curclass.classname, CURCLASSTYPE);
 		reply(0, "Check PORT/LPRT commands: %sabled",
-		    curclass.checkportcmd ? "en" : "dis");
+		    CURCLASS_FLAGS_ISSET(checkportcmd) ? "en" : "dis");
 		if (! EMPTYSTR(curclass.display))
 			reply(0, "Display file: %s", curclass.display);
 		if (! EMPTYSTR(curclass.notify))
@@ -1938,30 +2002,39 @@ statcmd(void)
 		else
 			reply(0, "Maximum connections: %d", curclass.limit);
 		if (curclass.limitfile)
-			reply(0, "Connection limit exceeded file: %s",
+			reply(0, "Connection limit exceeded message file: %s",
 			    curclass.limitfile);
 		if (! EMPTYSTR(curclass.chroot))
 			reply(0, "Chroot format: %s", curclass.chroot);
 		if (! EMPTYSTR(curclass.homedir))
 			reply(0, "Homedir format: %s", curclass.homedir);
+		if (curclass.maxfilesize == -1)
+			reply(0, "Maximum file size: unlimited");
+		else
+			reply(0, "Maximum file size: " LLF,
+			    (LLT)curclass.maxfilesize);
 		if (! EMPTYSTR(curclass.motd))
 			reply(0, "MotD file: %s", curclass.motd);
 		reply(0,
 	    "Modify commands (CHMOD, DELE, MKD, RMD, RNFR, UMASK): %sabled",
-		    curclass.modify ? "en" : "dis");
+		    CURCLASS_FLAGS_ISSET(modify) ? "en" : "dis");
 		reply(0, "Upload commands (APPE, STOR, STOU): %sabled",
-		    curclass.upload ? "en" : "dis");
+		    CURCLASS_FLAGS_ISSET(upload) ? "en" : "dis");
+		reply(0, "Sanitize file names: %sabled",
+		    CURCLASS_FLAGS_ISSET(sanenames) ? "en" : "dis");
+		reply(0, "PASV/LPSV/EPSV connections: %sabled",
+		    CURCLASS_FLAGS_ISSET(passive) ? "en" : "dis");
 		if (curclass.portmin && curclass.portmax)
 			reply(0, "PASV port range: %d - %d",
 			    curclass.portmin, curclass.portmax);
 		if (curclass.rateget)
-			reply(0, "Rate get limit: %d bytes/sec",
-			    curclass.rateget);
+			reply(0, "Rate get limit: " LLF " bytes/sec",
+			    (LLT)curclass.rateget);
 		else
 			reply(0, "Rate get limit: disabled");
 		if (curclass.rateput)
-			reply(0, "Rate put limit: %d bytes/sec",
-			    curclass.rateput);
+			reply(0, "Rate put limit: " LLF " bytes/sec",
+			    (LLT)curclass.rateput);
 		else
 			reply(0, "Rate put limit: disabled");
 		reply(0, "Umask: %.04o", curclass.umask);
@@ -2262,8 +2335,7 @@ long_passive(char *cmd, int pf)
 
 	if (pf != PF_UNSPEC && ctrl_addr.su_family != pf) {
 		/*
-		 * XXX
-		 * only EPRT/EPSV ready clients will understand this
+		 * XXX: only EPRT/EPSV ready clients will understand this
 		 */
 		if (strcmp(cmd, "EPSV") != 0)
 			reply(501, "Network protocol mismatch"); /*XXX*/
@@ -2364,7 +2436,7 @@ extended_port(const char *arg)
 		p = q;
 	}
 
-	/* some more sanity check */
+			/* some more sanity checks */
 	p = NULL;
 	(void)strtoul(result[2], &p, 10);
 	if (!*result[2] || *p)
@@ -2389,7 +2461,7 @@ extended_port(const char *arg)
 	memcpy(&data_dest, res->ai_addr, res->ai_addrlen);
 	if (his_addr.su_family == AF_INET6 &&
 	    data_dest.su_family == AF_INET6) {
-		/* XXX more sanity checks! */
+			/* XXX: more sanity checks! */
 		data_dest.su_scope_id = his_addr.su_scope_id;
 	}
 
@@ -2431,7 +2503,7 @@ epsv_protounsupp(const char *message)
 
 	proto = af2epsvproto(ctrl_addr.su_family);
 	if (proto < 0)
-		reply(501, "%s", message);	/*XXX*/
+		reply(501, "%s", message);	/* XXX */
 	else
 		reply(522, "%s, use (%d)", message, proto);
 }

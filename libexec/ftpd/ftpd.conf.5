@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.13 2000/11/07 06:58:08 lukem Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.14 2000/11/16 13:15:14 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 7, 2000
+.Dd November 16, 2000
 .Dt FTPD.CONF 5
 .Os
 .Sh NAME
@@ -58,7 +58,7 @@ This allows
 .Sq wildcard
 entries to define defaults, and then have class-specific overrides.
 .Pp
-A directive line has the format
+A directive line has the format:
 .Dl command class [arguments]
 .Pp
 A
@@ -211,7 +211,7 @@ Valid types are:
 (directory).
 .It Ar disable
 The name of file that will prevent conversion if it exists.
-A filename of
+A file name of
 .Dq Pa \&.
 will prevent this disabling action
 (i.e., the conversion is always permitted.)
@@ -295,6 +295,9 @@ for
 and
 .Sy CHROOT
 users.
+.It Sy maxfilesize Ar class Ar size
+Set the maximum size of an uploaded file to
+.Ar size .
 .It Sy maxtimeout Ar class Ar time
 Set the maximum timeout period that a client may request,
 defaulting to two hours.
@@ -392,6 +395,19 @@ to
 bytes per second,
 which is parsed as per
 .Sy rateget Ar rate .
+.It Sy sanenames Ar class Op Sy off
+If
+.Ar class
+is
+.Dq none
+or
+.Sy off
+is given, allow uploaded file names to contain any characters valid for a
+file name.
+Otherwise, only permit file names which don't start with a
+.Sq \&.
+and only comprise of characters from the set
+.Dq [-+,._A-Za-z0-9] .
 .It Sy template Ar class Op Ar refclass
 Define
 .Ar refclass

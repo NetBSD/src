@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.35 2000/11/15 02:32:30 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.36 2000/11/16 13:15:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.35 2000/11/15 02:32:30 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.36 2000/11/16 13:15:13 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -88,7 +88,6 @@ init_curclass(void)
 		free(conv);
 	}
 
-	curclass.checkportcmd = 1;
 	REASSIGN(curclass.chroot, NULL);
 	REASSIGN(curclass.classname, NULL);
 	curclass.conversions =	NULL;
@@ -96,13 +95,12 @@ init_curclass(void)
 	REASSIGN(curclass.homedir, NULL);
 	curclass.limit =	-1;		/* unlimited connections */
 	REASSIGN(curclass.limitfile, NULL);
+	curclass.maxfilesize =	-1;		/* unlimited file size */
 	curclass.maxrateget =	0;
 	curclass.maxrateput =	0;
 	curclass.maxtimeout =	7200;		/* 2 hours */
-	curclass.modify =	1;
 	REASSIGN(curclass.motd, xstrdup(_PATH_FTPLOGINMESG));
 	REASSIGN(curclass.notify, NULL);
-	curclass.passive =	1;
 	curclass.portmin =	0;
 	curclass.portmax =	0;
 	curclass.rateget =	0;
@@ -110,7 +108,12 @@ init_curclass(void)
 	curclass.timeout =	900;		/* 15 minutes */
 	    /* curclass.type is set elsewhere */
 	curclass.umask =	027;
-	curclass.upload =	1;
+
+	CURCLASS_FLAGS_SET(checkportcmd);
+	CURCLASS_FLAGS_SET(modify);
+	CURCLASS_FLAGS_SET(passive);
+	CURCLASS_FLAGS_CLR(sanenames);
+	CURCLASS_FLAGS_SET(upload);
 }
 
 /*
@@ -123,7 +126,8 @@ parse_conf(const char *findclass)
 	FILE		*f;
 	char		*buf, *p;
 	size_t		 len;
-	int		 none, match, rate;
+	LLT		 llval;
+	int		 none, match;
 	char		*endp;
 	char		*class, *word, *arg, *template;
 	const char	*infile;
@@ -134,7 +138,7 @@ parse_conf(const char *findclass)
 	init_curclass();
 	REASSIGN(curclass.classname, xstrdup(findclass));
 	if (strcasecmp(findclass, "guest") == 0) {
-		curclass.modify = 0;
+		CURCLASS_FLAGS_CLR(modify);
 		curclass.umask = 0707;
 	}
 
@@ -170,19 +174,29 @@ parse_conf(const char *findclass)
 		       strcasecmp(class, "all") == 0) )
 			continue;
 
+#define CONF_FLAG(x) \
+	do { \
+		if (none || \
+		    (!EMPTYSTR(arg) && strcasecmp(arg, "off") == 0)) \
+			CURCLASS_FLAGS_CLR(x); \
+		else \
+			CURCLASS_FLAGS_SET(x); \
+	} while (0)
+
+#define CONF_STRING(x) \
+	do { \
+		if (none || EMPTYSTR(arg)) \
+			arg = NULL; \
+		else \
+			arg = xstrdup(arg); \
+		REASSIGN(curclass.x, arg); \
+	} while (0)
+
 		if (strcasecmp(word, "checkportcmd") == 0) {
-			if (none ||
-			    (!EMPTYSTR(arg) && strcasecmp(arg, "off") == 0))
-				curclass.checkportcmd = 0;
-			else
-				curclass.checkportcmd = 1;
+			CONF_FLAG(checkportcmd);
 
 		} else if (strcasecmp(word, "chroot") == 0) {
-			if (none || EMPTYSTR(arg))
-				arg = NULL;
-			else
-				arg = xstrdup(arg);
-			REASSIGN(curclass.chroot, arg);
+			CONF_STRING(chroot);
 
 		} else if (strcasecmp(word, "classtype") == 0) {
 			if (!none && !EMPTYSTR(arg)) {
@@ -253,18 +267,22 @@ parse_conf(const char *findclass)
 			REASSIGN(conv->command, convcmd);
 
 		} else if (strcasecmp(word, "display") == 0) {
-			if (none || EMPTYSTR(arg))
-				arg = NULL;
-			else
-				arg = xstrdup(arg);
-			REASSIGN(curclass.display, arg);
+			CONF_STRING(display);
 
 		} else if (strcasecmp(word, "homedir") == 0) {
+			CONF_STRING(homedir);
+
+		} else if (strcasecmp(word, "maxfilesize") == 0) {
 			if (none || EMPTYSTR(arg))
-				arg = NULL;
-			else
-				arg = xstrdup(arg);
-			REASSIGN(curclass.homedir, arg);
+				continue;
+			llval = strsuftoll(arg);
+			if (llval == -1) {
+				syslog(LOG_WARNING,
+				    "%s line %d: invalid maxfilesize %s",
+				    infile, (int)line, arg);
+				continue;
+			}
+			curclass.maxfilesize = llval;
 
 		} else if (strcasecmp(word, "limit") == 0) {
 			int limit;
@@ -308,33 +326,16 @@ parse_conf(const char *findclass)
 			curclass.maxtimeout = timeout;
 
 		} else if (strcasecmp(word, "modify") == 0) {
-			if (none ||
-			    (!EMPTYSTR(arg) && strcasecmp(arg, "off") == 0))
-				curclass.modify = 0;
-			else
-				curclass.modify = 1;
+			CONF_FLAG(modify);
 
 		} else if (strcasecmp(word, "motd") == 0) {
-			if (none || EMPTYSTR(arg))
-				arg = NULL;
-			else
-				arg = xstrdup(arg);
-			REASSIGN(curclass.motd, arg);
-
+			CONF_STRING(motd);
 
 		} else if (strcasecmp(word, "notify") == 0) {
-			if (none || EMPTYSTR(arg))
-				arg = NULL;
-			else
-				arg = xstrdup(arg);
-			REASSIGN(curclass.notify, arg);
+			CONF_STRING(notify);
 
 		} else if (strcasecmp(word, "passive") == 0) {
-			if (none ||
-			    (!EMPTYSTR(arg) && strcasecmp(arg, "off") == 0))
-				curclass.passive = 0;
-			else
-				curclass.passive = 1;
+			CONF_FLAG(passive);
 
 		} else if (strcasecmp(word, "portrange") == 0) {
 			int minport, maxport;
@@ -383,28 +384,31 @@ parse_conf(const char *findclass)
 		} else if (strcasecmp(word, "rateget") == 0) {
 			if (none || EMPTYSTR(arg))
 				continue;
-			rate = strsuftoi(arg);
-			if (rate == -1) {
+			llval = strsuftoll(arg);
+			if (llval == -1) {
 				syslog(LOG_WARNING,
 				    "%s line %d: invalid rateget %s",
 				    infile, (int)line, arg);
 				continue;
 			}
-			curclass.maxrateget = rate;
-			curclass.rateget = rate;
+			curclass.maxrateget = llval;
+			curclass.rateget = llval;
 
 		} else if (strcasecmp(word, "rateput") == 0) {
 			if (none || EMPTYSTR(arg))
 				continue;
-			rate = strsuftoi(arg);
-			if (rate == -1) {
+			llval = strsuftoll(arg);
+			if (llval == -1) {
 				syslog(LOG_WARNING,
 				    "%s line %d: invalid rateput %s",
 				    infile, (int)line, arg);
 				continue;
 			}
-			curclass.maxrateput = rate;
-			curclass.rateput = rate;
+			curclass.maxrateput = llval;
+			curclass.rateput = llval;
+
+		} else if (strcasecmp(word, "sanenames") == 0) {
+			CONF_FLAG(sanenames);
 
 		} else if (strcasecmp(word, "timeout") == 0) {
 			if (none || EMPTYSTR(arg))
@@ -451,12 +455,9 @@ parse_conf(const char *findclass)
 			curclass.umask = umask;
 
 		} else if (strcasecmp(word, "upload") == 0) {
-			if (none ||
-			    (!EMPTYSTR(arg) && strcasecmp(arg, "off") == 0)) {
-				curclass.modify = 0;
-				curclass.upload = 0;
-			} else
-				curclass.upload = 1;
+			CONF_FLAG(upload);
+			if (! CURCLASS_FLAGS_ISSET(upload))
+				CURCLASS_FLAGS_CLR(modify);
 
 		} else {
 			syslog(LOG_WARNING,
@@ -547,8 +548,10 @@ display_file(const char *file, int code)
 	FILE   *f;
 	char   *buf, *p, *cwd;
 	size_t	len;
+	off_t	lastnum;
 	time_t	now;
 
+	lastnum = 0;
 	if (quietmessages)
 		return (0);
 
@@ -587,7 +590,9 @@ display_file(const char *file, int code)
 					break;
 
 				case 'E':
-						/* XXXX email address */
+					if (! EMPTYSTR(emailaddr))
+						cprintf(stdout, "%s",
+						    emailaddr);
 					break;
 
 				case 'L':
@@ -595,21 +600,33 @@ display_file(const char *file, int code)
 					break;
 
 				case 'M':
-					if (curclass.limit == -1)
+					if (curclass.limit == -1) {
 						cprintf(stdout, "unlimited");
-					else
+						lastnum = 0;
+					} else {
 						cprintf(stdout, "%d",
 						    curclass.limit);
+						lastnum = curclass.limit;
+					}
 					break;
 
 				case 'N':
-					if (connections > 0)
-						cprintf(stdout, "%d",
-						    connections);
+					cprintf(stdout, "%d", connections);
+					lastnum = connections;
 					break;
 
 				case 'R':
 					cprintf(stdout, "%s", remotehost);
+					break;
+
+				case 's':
+					if (lastnum != 1)
+						cprintf(stdout, "s");
+					break;
+
+				case 'S':
+					if (lastnum != 1)
+						cprintf(stdout, "S");
 					break;
 
 				case 'T':
@@ -810,19 +827,19 @@ do_conversion(const char *fname)
 }
 
 /*
- * Convert the string `arg' to an int, which may have an optional SI suffix
- * (`b', `k', `m', `g'). Returns the number for success, -1 otherwise.
+ * Convert the string `arg' to a long long, which may have an optional SI suffix
+ * (`b', `k', `m', `g', `t'). Returns the number for success, -1 otherwise.
  */
-int
-strsuftoi(const char *arg)
+LLT
+strsuftoll(const char *arg)
 {
 	char *cp;
-	long val;
+	LLT val;
 
 	if (!isdigit((unsigned char)arg[0]))
 		return (-1);
 
-	val = strtol(arg, &cp, 10);
+	val = STRTOLL(arg, &cp, 10);
 	if (cp != NULL) {
 		if (cp[0] != '\0' && cp[1] != '\0')
 			 return (-1);
@@ -839,11 +856,14 @@ strsuftoi(const char *arg)
 		case 'g':
 			val <<= 30;
 			break;
+		case 't':
+			val <<= 40;
+			break;
 		default:
 			return (-1);
 		}
 	}
-	if (val < 0 || val > INT_MAX)
+	if (val < 0)
 		return (-1);
 
 	return (val);

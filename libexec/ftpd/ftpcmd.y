@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.55 2000/11/15 02:32:30 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.56 2000/11/16 13:15:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.55 2000/11/15 02:32:30 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.56 2000/11/16 13:15:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,7 +165,7 @@ char	*fromname;
 %token	<s> ALL
 %token	<i> NUMBER
 
-%type	<i> check_login check_modify check_upload octal_number byte_size
+%type	<i> check_login octal_number byte_size
 %type	<i> struct_code mode_code type_code form_code decimal_integer
 %type	<s> pathstring pathname password username
 %type	<s> mechanism_name base64data prot_code
@@ -282,7 +282,7 @@ cmd
 	| PASV check_login CRLF
 		{
 			if ($2) {
-				if (curclass.passive)
+				if (CURCLASS_FLAGS_ISSET(passive))
 					passive();
 				else
 					reply(500, "PASV mode not available.");
@@ -398,28 +398,28 @@ cmd
 				free($4);
 		}
 
-	| STOR check_upload SP pathname CRLF
+	| STOR SP pathname CRLF
 		{
-			if ($2 && $4 != NULL)
-				store($4, "w", 0);
-			if ($4 != NULL)
-				free($4);
+			if (check_write($3, 1))
+				store($3, "w", 0);
+			if ($3 != NULL)
+				free($3);
 		}
 
-	| STOU check_upload SP pathname CRLF
+	| STOU SP pathname CRLF
 		{
-			if ($2 && $4 != NULL)
-				store($4, "w", 1);
-			if ($4 != NULL)
-				free($4);
+			if (check_write($3, 1))
+				store($3, "w", 1);
+			if ($3 != NULL)
+				free($3);
 		}
 		
-	| APPE check_upload SP pathname CRLF
+	| APPE SP pathname CRLF
 		{
-			if ($2 && $4 != NULL)
-				store($4, "a", 0);
-			if ($4 != NULL)
-				free($4);
+			if (check_write($3, 1))
+				store($3, "a", 0);
+			if ($3 != NULL)
+				free($3);
 		}
 
 	| ALLO check_login SP NUMBER CRLF
@@ -434,18 +434,19 @@ cmd
 				reply(202, "ALLO command ignored.");
 		}
 
-	| RNTO check_login SP pathname CRLF
+	| RNTO SP pathname CRLF
 		{
-			if ($2) {
+			if (check_write($3, 0)) {
 				if (fromname) {
-					renamecmd(fromname, $4);
+					renamecmd(fromname, $3);
 					free(fromname);
 					fromname = NULL;
 				} else {
 					reply(503, "Bad sequence of commands.");
 				}
 			}
-			free($4);
+			if ($3 != NULL)
+				free($3);
 		}
 
 	| ABOR check_login CRLF
@@ -454,28 +455,28 @@ cmd
 				reply(225, "ABOR command successful.");
 		}
 
-	| DELE check_modify SP pathname CRLF
+	| DELE SP pathname CRLF
 		{
-			if ($2 && $4 != NULL)
-				delete($4);
-			if ($4 != NULL)
-				free($4);
+			if (check_write($3, 0))
+				delete($3);
+			if ($3 != NULL)
+				free($3);
 		}
 
-	| RMD check_modify SP pathname CRLF
+	| RMD SP pathname CRLF
 		{
-			if ($2 && $4 != NULL)
-				removedir($4);
-			if ($4 != NULL)
-				free($4);
+			if (check_write($3, 0))
+				removedir($3);
+			if ($3 != NULL)
+				free($3);
 		}
 
-	| MKD check_modify SP pathname CRLF
+	| MKD SP pathname CRLF
 		{
-			if ($2 && $4 != NULL)
-				makedir($4);
-			if ($4 != NULL)
-				free($4);
+			if (check_write($3, 0))
+				makedir($3);
+			if ($3 != NULL)
+				free($3);
 		}
 
 	| PWD check_login CRLF
@@ -522,19 +523,19 @@ cmd
 			help(sitetab, NULL);
 		}
 
-	| SITE SP CHMOD check_modify SP octal_number SP pathname CRLF
+	| SITE SP CHMOD SP octal_number SP pathname CRLF
 		{
-			if ($4 && ($8 != NULL)) {
-				if ($6 > 0777)
+			if (check_write($7, 0)) {
+				if ($5 > 0777)
 					reply(501,
 				"CHMOD: Mode value must be between 0 and 0777");
-				else if (chmod($8, $6) < 0)
-					perror_reply(550, $8);
+				else if (chmod($7, $5) < 0)
+					perror_reply(550, $7);
 				else
 					reply(200, "CHMOD command successful.");
 			}
-			if ($8 != NULL)
-				free($8);
+			if ($7 != NULL)
+				free($7);
 		}
 
 	| SITE SP HELP SP STRING CRLF
@@ -572,30 +573,32 @@ cmd
 	| SITE SP RATEGET check_login CRLF
 		{
 			if ($4) {
-				reply(200, "Current RATEGET is %d bytes/sec",
-				    curclass.rateget);
+				reply(200,
+				    "Current RATEGET is " LLF " bytes/sec",
+				    (LLT)curclass.rateget);
 			}
 		}
 
 	| SITE SP RATEGET check_login SP STRING CRLF
 		{
 			char *p = $6;
-			int rate;
+			LLT rate;
 
 			if ($4) {
-				rate = strsuftoi(p);
+				rate = strsuftoll(p);
 				if (rate == -1)
 					reply(501, "Invalid RATEGET %s", p);
 				else if (curclass.maxrateget &&
 				    rate > curclass.maxrateget)
 					reply(501,
-				"RATEGET %d is larger than maximum RATEGET %d",
-					    rate, curclass.maxrateget);
+			"RATEGET " LLF " is larger than maximum RATEGET " LLF,
+					    (LLT)rate,
+					    (LLT)curclass.maxrateget);
 				else {
 					curclass.rateget = rate;
 					reply(200,
-					    "RATEGET set to %d bytes/sec",
-					    curclass.rateget);
+					    "RATEGET set to " LLF " bytes/sec",
+					    (LLT)curclass.rateget);
 				}
 			}
 			free($6);
@@ -604,30 +607,32 @@ cmd
 	| SITE SP RATEPUT check_login CRLF
 		{
 			if ($4) {
-				reply(200, "Current RATEPUT is %d bytes/sec",
-				    curclass.rateput);
+				reply(200,
+				    "Current RATEPUT is " LLF " bytes/sec",
+				    (LLT)curclass.rateput);
 			}
 		}
 
 	| SITE SP RATEPUT check_login SP STRING CRLF
 		{
 			char *p = $6;
-			int rate;
+			LLT rate;
 
 			if ($4) {
-				rate = strsuftoi(p);
+				rate = strsuftoll(p);
 				if (rate == -1)
 					reply(501, "Invalid RATEPUT %s", p);
 				else if (curclass.maxrateput &&
 				    rate > curclass.maxrateput)
 					reply(501,
-				"RATEPUT %d is larger than maximum RATEPUT %d",
-					    rate, curclass.maxrateput);
+			"RATEPUT " LLF " is larger than maximum RATEPUT " LLF,
+					    (LLT)rate,
+					    (LLT)curclass.maxrateput);
 				else {
 					curclass.rateput = rate;
 					reply(200,
-					    "RATEPUT set to %d bytes/sec",
-					    curclass.rateput);
+					    "RATEPUT set to " LLF " bytes/sec",
+					    (LLT)curclass.rateput);
 				}
 			}
 			free($6);
@@ -644,11 +649,11 @@ cmd
 			}
 		}
 
-	| SITE SP UMASK check_modify SP octal_number CRLF
+	| SITE SP UMASK check_login SP octal_number CRLF
 		{
 			int oldmask;
 
-			if ($4) {
+			if ($4 && CURCLASS_FLAGS_ISSET(modify)) {
 				if (($6 == -1) || ($6 > 0777)) {
 					reply(501, "Bad UMASK value");
 				} else {
@@ -854,21 +859,20 @@ rcmd
 		{
 			if ($2) {
 				fromname = NULL;
-				restart_point = $4; /* XXX $3 is only "int" */
+				restart_point = $4; /* XXX $4 is only "int" */
 				reply(350,
     "Restarting at " LLF ". Send STORE or RETRIEVE to initiate transfer.",
 				    (LLT)restart_point);
 			}
 		}
 
-	| RNFR check_modify SP pathname CRLF
+	| RNFR SP pathname CRLF
 		{
 			restart_point = (off_t) 0;
-			if ($2 && $4) {
-				fromname = renamefrom($4);
-			}
-			if ($4)
-				free($4);
+			if (check_write($3, 0))
+				fromname = renamefrom($3);
+			if ($3 != NULL)
+				free($3);
 		}
 	;
 
@@ -1151,45 +1155,6 @@ check_login
 		}
 	;
 
-check_modify
-	: /* empty */
-		{
-			if (logged_in) {
-				if (curclass.modify)
-					$$ = 1;
-				else {
-					reply(502,
-					"No permission to use this command.");
-					$$ = 0;
-					hasyyerrored = 1;
-				}
-			} else {
-				reply(530, "Please login with USER and PASS.");
-				$$ = 0;
-				hasyyerrored = 1;
-			}
-		}
-
-check_upload
-	: /* empty */
-		{
-			if (logged_in) {
-				if (curclass.upload)
-					$$ = 1;
-				else {
-					reply(502,
-					"No permission to use this command.");
-					$$ = 0;
-					hasyyerrored = 1;
-				}
-			} else {
-				reply(530, "Please login with USER and PASS.");
-				$$ = 0;
-				hasyyerrored = 1;
-			}
-		}
-
-
 %%
 
 #define	CMD	0	/* beginning of command */
@@ -1290,12 +1255,54 @@ struct tab sitetab[] = {
 	{ NULL,		0,     0,     0,	NULL }
 };
 
-static	void		help(struct tab *, const char *);
-static	void		port_check(const char *, int);
-static	void		toolong(int);
-static	int		yylex(void);
+static	int	check_write(const char *, int);
+static	void	help(struct tab *, const char *);
+static	void	port_check(const char *, int);
+static	void	toolong(int);
+static	int	yylex(void);
 
 extern int epsvall;
+
+/*
+ * Check if a filename is allowed to be modified (isupload == 0) or
+ * uploaded (isupload == 1), and if necessary, check the filename is `sane'.
+ */
+static int
+check_write(const char *file, int isupload)
+{
+	if (file == NULL)
+		return (0);
+	if (! logged_in) {
+		reply(530, "Please login with USER and PASS.");
+		return (0);
+	}
+		/* checking modify */
+	if (! isupload && ! CURCLASS_FLAGS_ISSET(modify)) {
+		reply(502, "No permission to use this command.");
+		return (0);
+	}
+		/* checking upload */
+	if (isupload && ! CURCLASS_FLAGS_ISSET(upload)) {
+		reply(502, "No permission to use this command.");
+		return (0);
+	}
+		/* checking sanenames */
+	if (CURCLASS_FLAGS_ISSET(sanenames)) {
+		const char *p;
+
+		if (file[0] == '.')
+			goto insane_name;
+		for (p = file; *p; p++) {
+			if (isalnum(*p) || *p == '-' || *p == '+' ||
+			    *p == ',' || *p == '.' || *p == '_')
+				continue;
+ insane_name:
+			reply(553, "File name `%s' not allowed.", file);
+			return (0);
+		}
+	}
+	return (1);
+}
 
 struct tab *
 lookup(struct tab *p, const char *cmd)
@@ -1750,7 +1757,7 @@ port_check(const char *cmd, int family)
 		goto port_check_fail;
 
 			/* be paranoid, if told so */
-	if (curclass.checkportcmd) {
+	if (CURCLASS_FLAGS_ISSET(checkportcmd)) {
 		if ((ntohs(data_dest.su_port) < IPPORT_RESERVED) ||
 		    (data_dest.su_len != his_addr.su_len))
 			goto port_check_fail;
