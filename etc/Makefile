@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.269 2004/01/05 04:05:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.270 2004/01/06 02:10:43 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -15,9 +15,10 @@
 #	${KERNSRCDIR}/arch/${MACHINE}/compile, but can be overridden.
 #   KERNCONFDIR is where the configuration files for kernels are found;
 #	default is ${KERNSRCDIR}/arch/${MACHINE}/conf but can be overridden.
+#   MKCRYPTO; if not `no', install crypto-related configuration
+#   MKSENDMAIL; if not `no', install sendmail configuration
+#   MKUNPRIVED; if not `no', allow non-root installs.
 #   MKUPDATE; if not `no', don't do a 'make clean' before kernel compile
-#   NO_SENDMAIL is normally undefined; if defined, it will not do a
-#	`make distribution' in the sendmail config file source directory.
 #
 # Targets:
 #    distribution: makes a full NetBSD distribution in DESTDIR. If
@@ -32,8 +33,7 @@
 #    release: a synonym for `snapshot'
 #
 
-# For NO_SENDMAIL, INSTPRIV, MKCRYPTO
-#
+# For MK* vars
 .include <bsd.own.mk>
 
 .include <bsd.sys.mk>		# for HOST_SH
@@ -322,8 +322,9 @@ install-etc-files: check_DESTDIR MAKEDEV
 .if (${MKCRYPTO} != "no")
 	(cd ${NETBSDSRCDIR}/usr.bin/ssh; ${MAKE} distribution)
 .endif
-.if !defined(NO_SENDMAIL) || ${NO_SENDMAIL} == "no"
+.if (${MKSENDMAIL} != "no")
 	(cd ${NETBSDSRCDIR}/gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
+.endif
 .endif
 
 
