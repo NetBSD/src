@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char tcp_rcsid[] = "$Id: tcp.c,v 1.2 1994/10/24 22:17:27 jtc Exp $";
+const char tcp_rcsid[] = "$Id: tcp.c,v 1.3 1995/06/03 22:26:24 mycroft Exp $";
 #endif
 
 #if HAVE_TCP
@@ -189,6 +189,7 @@ ftcp_open (qconn, ibaud, fwait)
      return if we have received a connection.  It would be more robust
      to respawn the server if it fails; someday.  */
   bzero ((pointer) &s, sizeof s);
+  s.sin_len = sizeof(struct sockaddr_in);
   s.sin_family = AF_INET;
   zport = qconn->qport->uuconf_u.uuconf_stcp.uuconf_zport;
   s.sin_port = itcp_port_number (zport);
@@ -408,6 +409,7 @@ ftcp_dial (qconn, puuconf, qsys, zphone, qdialer, ptdialer)
       return FALSE;
     }
 
+  s.sin_len = sizeof(struct sockaddr_in);
   s.sin_family = q->h_addrtype;
   memcpy (&s.sin_addr.s_addr, q->h_addr, (size_t) q->h_length);
   zport = qconn->qport->uuconf_u.uuconf_stcp.uuconf_zport;
