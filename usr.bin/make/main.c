@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 1996/03/11 13:45:33 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.27 1996/03/29 02:17:24 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.26 1996/03/11 13:45:33 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.27 1996/03/29 02:17:24 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -983,6 +983,22 @@ emalloc(len)
 	char *p;
 
 	if ((p = (char *) malloc(len)) == NULL)
+		enomem();
+	return(p);
+}
+
+/*
+ * erealloc --
+ *	realloc, but die on error.
+ */
+char *
+erealloc(ptr, size)
+	char *ptr;
+	size_t size;
+{
+	char *p;
+
+	if ((p = (char *) realloc(ptr, size)) == NULL)
 		enomem();
 	return(p);
 }
