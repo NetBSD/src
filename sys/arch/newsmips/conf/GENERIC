@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: GENERIC,v 1.12 1999/11/21 14:00:41 itojun Exp $
+# 	$NetBSD: GENERIC,v 1.13 1999/12/17 06:05:37 tsubai Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -103,15 +103,15 @@ hb0	at mainbus0
 
 mkclock0 at hb0 addr 0xbff407f8		# MK48T02 realtime clock
 
-le0	at hb0 addr 0xbff80000		# onboard LANCE ethernet
-#le1	at hb0 addr 0xb8c30000
+le0	at hb0 addr 0xbff80000 level 1	# built-in LANCE ethernet
+#le1	at hb0 addr 0xb8c30000 level 0
 
-kb0	at hb0 addr 0xbfd00000		# keyboard
-ms0	at hb0 addr 0xbfd00004		# mouse
+kb0	at hb0 addr 0xbfd00000 level 2	# keyboard
+ms0	at hb0 addr 0xbfd00004 level 2	# mouse
 
-zsc0	at hb0 addr 0xbfec0000		# onboard
-#zsc1	at hb0 addr 0xb8c40100
-#zsc2	at hb0 addr 0xb8c40104
+zsc0	at hb0 addr 0xbfec0000 level 1	# on-board
+zsc1	at hb0 addr 0xb8c40100 level 1	# expansion board
+zsc2	at hb0 addr 0xb8c40104 level 1
 zstty0	at zsc0 channel 0		# tty00
 zstty1	at zsc0 channel 1		# tty01
 #zstty2	at zsc1 channel 0		# tty02
@@ -119,10 +119,9 @@ zstty1	at zsc0 channel 1		# tty01
 #zstty4	at zsc2 channel 0		# tty04
 #zstty5	at zsc2 channel 1		# tty05
 
-fb0	at hb0 addr 0x88000000		# framebuffer
+fb0	at hb0 addr 0x88000000		# frame buffer
 
-sc0	at hb0 addr 0xbfe00100		# onboard cxd1185 SCSI controller
-
+sc0	at hb0 addr 0xbfe00100 level 0	# on-board cxd1185 SCSI controller
 scsibus0 at sc0
 
 sd*	at scsibus? target ? lun ?	# SCSI disks

@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.12 1999/12/17 03:21:12 tsubai Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.13 1999/12/17 06:05:40 tsubai Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -81,7 +81,19 @@ cxd1185_attach(parent, self, aux)
 {
 	struct sc_softc *sc = (void *)self;
 	struct sc_scb *scb;
-	int i;
+	int i, intlevel;
+
+	intlevel = sc->sc_dev.dv_cfdata->cf_level;
+	if (intlevel == -1) {
+#if 0
+		printf(": interrupt level not configured\n");
+		return;
+#else
+		printf(": interrupt level not configured; using");
+		intlevel = 0;
+#endif
+	}
+	printf(" level %d\n", intlevel);
 
 	if (sc_idenr & 0x08)
 		sc->scsi_1185AQ = 1;
@@ -113,8 +125,7 @@ cxd1185_attach(parent, self, aux)
 	cxd1185_init(sc);
 	DELAY(100000);
 
-	printf("\n");
-	hb_intr_establish(0, IPL_BIO, dma_intr, sc);
+	hb_intr_establish(intlevel, IPL_BIO, dma_intr, sc);
 
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 }
