@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.23 1999/04/11 04:04:11 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.24 1999/07/22 21:27:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1478,7 +1478,7 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			if ((ptmp->flags & (PG_BUSY|PG_RELEASED)) != 0) {
 				ptmp->flags |= PG_WANTED;
 				UVM_UNLOCK_AND_WAIT(ptmp,
-				    &uobj->vmobjlock, 0, "uvn_get",0);
+				    &uobj->vmobjlock, FALSE, "uvn_get",0);
 				simple_lock(&uobj->vmobjlock);
 				continue;	/* goto top of pps while loop */
 			}
