@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.9 2000/12/28 22:59:15 sommerfeld Exp $	*/
+/*	$NetBSD: puc.c,v 1.10 2001/01/03 15:13:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -270,6 +270,7 @@ puc_attach(parent, self, aux)
 		/* set up to configure the child device */
 		paa.port = i;
 		paa.type = sc->sc_desc->ports[i].type;
+		paa.flags = sc->sc_desc->ports[i].flags;
 		paa.pc = pa->pa_pc;
 		paa.intrhandle = intrhandle;
 		paa.a = sc->sc_bar_mappings[barindex].a;

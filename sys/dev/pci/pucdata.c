@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.10 2000/09/06 15:27:37 bouyer Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.11 2001/01/03 15:13:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -42,6 +42,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pucvar.h>
+#include <dev/ic/comreg.h>
 
 const struct puc_device_description puc_devices[] = {
 	/*
@@ -59,8 +60,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x10b5,	0x9050,	0xd84d,	0x6810	},
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
-		{ PUC_PORT_TYPE_LPT, 0x20, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x24, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x20, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x24, 0x00, 0x00 },
 	    },
 	},
 
@@ -79,8 +80,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x10b5,	0x9050,	0xd84d,	0x6808	},
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -109,7 +110,7 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1000,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -118,7 +119,7 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1001,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -127,7 +128,7 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1002,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -136,8 +137,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1010,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00, 0x00 },
 	    },
 	},
 
@@ -146,8 +147,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1011,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00, 0x00 },
 	    },
 	},
 
@@ -156,8 +157,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1012,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00, 0x00 },
 	    },
 	},
 
@@ -166,7 +167,7 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1020,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_LPT, 0x18, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
 	    },
 	},
 
@@ -175,8 +176,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1021,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_LPT, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x20, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x20, 0x00, 0x00 },
 	    },
 	},
 
@@ -185,8 +186,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1030,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -195,8 +196,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1031,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -205,8 +206,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1032,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -215,9 +216,9 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1034,	0,	0	},	/* XXX really? */
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x20, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x20, 0x00, 0x00 },
 	    },
 	},
 
@@ -226,9 +227,9 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1035,	0,	0	},	/* XXX really? */
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x20, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x20, 0x00, 0x00 },
 	    },
 	},
 
@@ -237,9 +238,9 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1036,	0,	0	},	/* XXX really? */
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x20, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x20, 0x00, 0x00 },
 	    },
 	},
 
@@ -248,10 +249,10 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1050,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x20, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x24, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x24, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -260,10 +261,10 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1051,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x20, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x24, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x24, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -272,10 +273,10 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x1052,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x20, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x24, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x24, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -288,7 +289,7 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2020,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_LPT, 0x10, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
 	    },
 	},
 
@@ -297,8 +298,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2021,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_LPT, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x18, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
 	    },
 	},
 
@@ -307,9 +308,9 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2040,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x14, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00, 0x00 },
 	    },
 	},
 
@@ -318,9 +319,9 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2041,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x14, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00, 0x00 },
 	    },
 	},
 
@@ -329,9 +330,9 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2042,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x14, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00, 0x00 },
 	    },
 	},
 
@@ -340,7 +341,7 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2000,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -349,7 +350,7 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2001,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -358,7 +359,7 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2002,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -367,8 +368,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2010,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x14, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
 	    },
 	},
 
@@ -377,8 +378,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2011,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x14, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
 	    },
 	},
 
@@ -387,8 +388,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2012,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x14, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
 	    },
 	},
 
@@ -397,8 +398,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2030,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -407,8 +408,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2031,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -417,8 +418,8 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2032,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -427,9 +428,9 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2060,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x18, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
 	    },
 	},
 
@@ -438,9 +439,9 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2061,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x18, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
 	    },
 	},
 
@@ -449,9 +450,9 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2062,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x00 },
-		{ PUC_PORT_TYPE_LPT, 0x18, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
 	    },
 	},
 
@@ -460,10 +461,10 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2050,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -472,10 +473,10 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2051,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -484,10 +485,10 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x131f,	0x2052,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -503,14 +504,40 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x10b5,	0x1076,	0x10b5,	0x1076	},
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x08 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x10 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x18 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x20 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x28 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x30 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x38 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ },
+	    },
+	},
+	/*
+	 * VScom PCI-800H. Uses 8 16950 UART, behind a PCI chips that offers
+	 * 4 com port on PCI device 0 and 4 on PCI device 1. PCI device 0 has
+	 * device ID 3 and PCI device 1 device ID 4. Uses a 14.7456 Mhz crystal
+	 * instead of the standart 1.8432Mhz.
+	 */
+	{   "VScom PCI-800H",
+	    {	0x14d2,	0xa003,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, 14745600 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, 14745600 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, 14745600 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, 14745600 },
+	    },
+	},
+	{   "VScom PCI-800H",
+	    {	0x14d2,	0xa004,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, 14745600 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, 14745600 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, 14745600 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, 14745600 },
 	    },
 	},
 
@@ -520,7 +547,7 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x1033,	0x0074,	0x1033,	0x8014	},
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -538,7 +565,7 @@ const struct puc_device_description puc_devices[] = {
 	    {	0x1407,	0x8000,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_LPT, 0x10, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
 	    },
 	},
 
