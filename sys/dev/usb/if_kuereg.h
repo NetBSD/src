@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.5 2000/03/02 12:37:51 augustss Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.6 2000/03/20 00:41:55 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -173,8 +173,6 @@ struct kue_softc {
 #endif
 #define GET_IFP(sc) (&(sc)->kue_ec.ec_if)
 #endif
-
-	u_int16_t		kue_xfer_flags;
 
 	usbd_device_handle	kue_udev;
 	usbd_interface_handle	kue_iface;
