@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.5 2001/11/13 07:11:12 lukem Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.6 2002/08/02 00:24:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.5 2001/11/13 07:11:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.6 2002/08/02 00:24:56 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -81,73 +81,6 @@ InitHdrNode(hdr, raidPtr, memChunkEnable)
 	(*hdr)->next = NULL;
 	return (0);
 }
-/******************************************************************************
- *
- * Transfer allocation list and mem chunks from one dag to another
- *
- *****************************************************************************/
-#if defined(__NetBSD__) && defined(_KERNEL)
-/* the function below is not used... so don't define it! */
-#else
-static void 
-TransferDagMemory(daga, dagb)
-	RF_DagHeader_t *daga;
-	RF_DagHeader_t *dagb;
-{
-	RF_AccessStripeMapHeader_t *end;
-	RF_AllocListElem_t *p;
-	int     i, memChunksXfrd = 0, xtraChunksXfrd = 0;
-
-	/* transfer allocList from dagb to daga */
-	for (p = dagb->allocList; p; p = p->next) {
-		for (i = 0; i < p->numPointers; i++) {
-			rf_AddToAllocList(daga->allocList, p->pointers[i], p->sizes[i]);
-			p->pointers[i] = NULL;
-			p->sizes[i] = 0;
-		}
-		p->numPointers = 0;
-	}
-
-	/* transfer chunks from dagb to daga */
-	while ((memChunksXfrd + xtraChunksXfrd < dagb->chunkIndex + dagb->xtraChunkIndex) && (daga->chunkIndex < RF_MAXCHUNKS)) {
-		/* stuff chunks into daga's memChunk array */
-		if (memChunksXfrd < dagb->chunkIndex) {
-			daga->memChunk[daga->chunkIndex++] = dagb->memChunk[memChunksXfrd];
-			dagb->memChunk[memChunksXfrd++] = NULL;
-		} else {
-			daga->memChunk[daga->xtraChunkIndex++] = dagb->xtraMemChunk[xtraChunksXfrd];
-			dagb->xtraMemChunk[xtraChunksXfrd++] = NULL;
-		}
-	}
-	/* use escape hatch to hold excess chunks */
-	while (memChunksXfrd + xtraChunksXfrd < dagb->chunkIndex + dagb->xtraChunkIndex) {
-		if (memChunksXfrd < dagb->chunkIndex) {
-			daga->xtraMemChunk[daga->xtraChunkIndex++] = dagb->memChunk[memChunksXfrd];
-			dagb->memChunk[memChunksXfrd++] = NULL;
-		} else {
-			daga->xtraMemChunk[daga->xtraChunkIndex++] = dagb->xtraMemChunk[xtraChunksXfrd];
-			dagb->xtraMemChunk[xtraChunksXfrd++] = NULL;
-		}
-	}
-	RF_ASSERT((memChunksXfrd == dagb->chunkIndex) && (xtraChunksXfrd == dagb->xtraChunkIndex));
-	RF_ASSERT(daga->chunkIndex <= RF_MAXCHUNKS);
-	RF_ASSERT(daga->xtraChunkIndex <= daga->xtraChunkCnt);
-	dagb->chunkIndex = 0;
-	dagb->xtraChunkIndex = 0;
-
-	/* transfer asmList from dagb to daga */
-	if (dagb->asmList) {
-		if (daga->asmList) {
-			end = daga->asmList;
-			while (end->next)
-				end = end->next;
-			end->next = dagb->asmList;
-		} else
-			daga->asmList = dagb->asmList;
-		dagb->asmList = NULL;
-	}
-}
-#endif				/* __NetBSD__ */
 
 /*****************************************************************************************
  *
