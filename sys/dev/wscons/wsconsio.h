@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.50 2002/04/07 09:25:47 hannken Exp $ */
+/* $NetBSD: wsconsio.h,v 1.51 2002/06/26 23:05:36 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -70,6 +70,7 @@ struct wscons_event {
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_Y	9	/* Y location */
 #define	WSCONS_EVENT_MOUSE_DELTA_Z	10	/* Z delta amount */
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_Z	11	/* Z location */
+#define	WSCONS_EVENT_SCREEN_SWITCH	12	/* New screen number */
 
 
 /*
@@ -374,6 +375,21 @@ struct wsdisplay_param {
 };
 #define	WSDISPLAYIO_GETPARAM	_IOWR('W', 82, struct wsdisplay_param)
 #define	WSDISPLAYIO_SETPARAM	_IOWR('W', 83, struct wsdisplay_param)
+
+#define	WSDISPLAYIO_GETACTIVESCREEN	_IOR('W', 84, int)
+
+/* Character functions */
+struct wsdisplay_char {
+	int row, col;
+	uint16_t letter;
+	uint8_t background, foreground;
+	char flags;
+};
+#define WSDISPLAY_CHAR_BRIGHT 1
+#define WSDISPLAY_CHAR_BLINK  2
+#define WSDISPLAYIO_GETWSCHAR	_IOWR('W', 85, struct wsdisplay_char)
+#define WSDISPLAYIO_PUTWSCHAR	_IOWR('W', 86, struct wsdisplay_char)
+
 
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */
