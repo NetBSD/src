@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.6 1998/03/01 02:23:25 fvdl Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.7 1998/08/25 04:52:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -99,7 +99,7 @@ lfs_seglock(fs, flags)
 	struct segment *sp;
 	int s;
 
-	if (fs->lfs_seglock)
+	if (fs->lfs_seglock) {
 		if (fs->lfs_lockpid == curproc->p_pid) {
 			++fs->lfs_seglock;
 			fs->lfs_sp->seg_flags |= flags;
@@ -107,6 +107,7 @@ lfs_seglock(fs, flags)
 		} else while (fs->lfs_seglock)
 			(void)tsleep(&fs->lfs_seglock, PRIBIO + 1,
 			    "lfs seglock", 0);
+	}
 
 	fs->lfs_seglock = 1;
 	fs->lfs_lockpid = curproc->p_pid;
