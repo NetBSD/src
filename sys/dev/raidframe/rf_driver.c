@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.97 2004/03/20 04:22:05 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.98 2004/03/21 21:08:08 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.97 2004/03/20 04:22:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.98 2004/03/21 21:08:08 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -619,6 +619,13 @@ rf_SetReconfiguredMode(RF_Raid_t *raidPtr, int col)
 int 
 rf_FailDisk(RF_Raid_t *raidPtr, int fcol, int initRecon)
 {
+
+	/* need to suspend IO's here -- if there are DAGs in flight
+	   and we pull the rug out from under ci_vp, Bad Things 
+	   can happen.  */
+
+	rf_SuspendNewRequestsAndWait(raidPtr);
+
 	RF_LOCK_MUTEX(raidPtr->mutex);
 	if (raidPtr->Disks[fcol].status != rf_ds_failed) {
 		/* must be failing something that is valid, or else it's
@@ -646,6 +653,10 @@ rf_FailDisk(RF_Raid_t *raidPtr, int fcol, int initRecon)
 
 	raidPtr->Disks[fcol].auto_configured = 0;
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	/* now we can allow IO to continue -- we'll be suspending it
+	   again in rf_ReconstructFailedDisk() if we have to.. */
+
+	rf_ResumeNewRequests(raidPtr);
 
 	if (initRecon)
 		rf_ReconstructFailedDisk(raidPtr, fcol);
