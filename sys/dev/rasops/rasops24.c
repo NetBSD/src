@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.7 1999/08/24 11:07:32 ad Exp $ */
+/* 	$NetBSD: rasops24.c,v 1.8 1999/08/25 08:45:25 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.7 1999/08/24 11:07:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.8 1999/08/25 08:45:25 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -557,9 +557,9 @@ rasops24_eraserows(cookie, row, num, attr)
 	int row, num;
 	long attr;
 {
-	struct rasops_info *ri;
+	int n9, n3, n1, cnt, stride, delta;
 	u_int32_t *dp, clr, stamp[3];
-	int n9, n3, n1, cnt, stride;
+	struct rasops_info *ri;
 	
 	/* 
 	 * If the color is gray, we can cheat and use the generic routines
@@ -600,8 +600,6 @@ rasops24_eraserows(cookie, row, num, attr)
 		stamp[2] = bswap32(stamp[2]);
 	}
 
-	dp = (int32_t *)(ri->ri_bits + row * ri->ri_yscale);
-
 	/* 
 	 * XXX the wsdisplay_emulops interface seems a little deficient in
 	 * that there is no way to clear the *entire* screen. We provide a 
@@ -611,9 +609,13 @@ rasops24_eraserows(cookie, row, num, attr)
 	if (num == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR) != 0) {
 		stride = ri->ri_stride;
 		num = ri->ri_height;
+		dp = (int32_t *)ri->ri_origbits;
+		delta = 0;
 	} else {
 		stride = ri->ri_emustride;
 		num *= ri->ri_font->fontheight;
+		dp = (int32_t *)(ri->ri_bits + row * ri->ri_yscale);
+		delta = ri->ri_delta;
 	}
 
 	n9 = stride / 36;
@@ -646,7 +648,7 @@ rasops24_eraserows(cookie, row, num, attr)
 		for (cnt = 0; cnt < n1; cnt++)
 			*dp++ = stamp[cnt];
 				
-		DELTA(dp, ri->ri_delta, int32_t *);
+		DELTA(dp, delta, int32_t *);
 	}
 }
 
