@@ -1,9 +1,10 @@
-#       $NetBSD: Makefile,v 1.80 2001/05/24 14:04:41 sommerfeld Exp $
+#       $NetBSD: Makefile,v 1.81 2001/06/02 19:12:59 jdolecek Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	access.9 arp.9 audio.9 bitmask_snprintf.9 bus_dma.9 bus_space.9 \
-	callout.9 cnmagic.9 copy.9 cpu_reboot.9 ctxsw.9 disk.9 disklabel.9 \
+	callout.9 cnmagic.9 cons.9 copy.9 cpu_reboot.9 ctxsw.9 disk.9 \
+	disklabel.9 \
 	dopowerhooks.9 doshutdownhooks.9 ethersubr.9 evcnt.9 \
 	extent.9 fetch.9 fork1.9 humanize_number.9 in4_cksum.9 inittodr.9 \
 	intro.9 ioctl.9 kprintf.9 linedisc.9 lock.9 log.9 malloc.9 mbuf.9 \
@@ -57,6 +58,8 @@ MLINKS+=callout.9 callout_init.9 callout.9 callout_reset.9 \
 	callout.9 callout_stop.9 callout.9 callout_active.9 \
 	callout.9 callout_pending.9 callout.9 callout_deactivate.9 \
 	callout.9 timeout.9 callout.9 untimeout.9
+MLINKS+=cons.9 cnbell.9 cons.9 cngetc.9 cons.9 cngetsn.9 cons.9 cnpollc.9 \
+	cons.9 cnputc.9
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
 	copy.9 copyinstr.9 copy.9 copyoutstr.9
 MLINKS+=ctxsw.9 cpu_switch.9 ctxsw.9 mi_switch.9
