@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.21 2001/01/11 14:00:11 minoura Exp $	*/
+/*	$NetBSD: mem.c,v 1.22 2001/01/11 14:24:04 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,7 +84,7 @@ mmclose(dev, flag, mode, p)
 	return (0);
 }
 
-static int isinram(vaddr_t);
+static int isinram(paddr_t);
 
 /*ARGSUSED*/
 int
@@ -127,7 +127,7 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 #ifndef DEBUG
 			/* allow reads only in RAM (except for DEBUG) */
-			if (!isinram(v)) {
+			if (!isinram((paddr_t) v)) {
 				error = EFAULT;
 				goto unlock;
 			}
@@ -223,14 +223,14 @@ mmmmap(dev, off, prot)
 	 * XXX could be extended to allow access to IO space but must
 	 * be very careful.
 	 */
-	if (!isinram ((vaddr_t) off))
+	if (!isinram ((paddr_t) off))
 		return (-1);
 	return (m68k_btop((u_int)off));
 }
 
 static int
 isinram(addr)
-	vaddr_t addr;
+	paddr_t addr;
 {
 	int i;
 
