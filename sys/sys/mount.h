@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.126 2005/01/02 16:08:30 thorpej Exp $	*/
+/*	$NetBSD: mount.h,v 1.127 2005/02/03 19:20:01 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -223,33 +223,33 @@ struct vnodeopv_desc;
 
 struct vfsops {
 	const char *vfs_name;
-	int	(*vfs_mount)	__P((struct mount *, const char *, void *,
-				    struct nameidata *, struct proc *));
-	int	(*vfs_start)	__P((struct mount *, int, struct proc *));
-	int	(*vfs_unmount)	__P((struct mount *, int, struct proc *));
-	int	(*vfs_root)	__P((struct mount *, struct vnode **));
-	int	(*vfs_quotactl)	__P((struct mount *, int, uid_t, void *,
-				    struct proc *));
-	int	(*vfs_statvfs)	__P((struct mount *, struct statvfs *,
-				    struct proc *));
-	int	(*vfs_sync)	__P((struct mount *, int, struct ucred *,
-				    struct proc *));
-	int	(*vfs_vget)	__P((struct mount *, ino_t, struct vnode **));
-	int	(*vfs_fhtovp)	__P((struct mount *, struct fid *,
-				    struct vnode **));
-	int	(*vfs_vptofh)	__P((struct vnode *, struct fid *));
-	void	(*vfs_init)	__P((void));
-	void	(*vfs_reinit)	__P((void));
-	void	(*vfs_done)	__P((void));
+	int	(*vfs_mount)	(struct mount *, const char *, void *,
+				    struct nameidata *, struct proc *);
+	int	(*vfs_start)	(struct mount *, int, struct proc *);
+	int	(*vfs_unmount)	(struct mount *, int, struct proc *);
+	int	(*vfs_root)	(struct mount *, struct vnode **);
+	int	(*vfs_quotactl)	(struct mount *, int, uid_t, void *,
+				    struct proc *);
+	int	(*vfs_statvfs)	(struct mount *, struct statvfs *,
+				    struct proc *);
+	int	(*vfs_sync)	(struct mount *, int, struct ucred *,
+				    struct proc *);
+	int	(*vfs_vget)	(struct mount *, ino_t, struct vnode **);
+	int	(*vfs_fhtovp)	(struct mount *, struct fid *,
+				    struct vnode **);
+	int	(*vfs_vptofh)	(struct vnode *, struct fid *);
+	void	(*vfs_init)	(void);
+	void	(*vfs_reinit)	(void);
+	void	(*vfs_done)	(void);
 	int	*vfs_wassysctl;			/* @@@ no longer useful */
-	int	(*vfs_mountroot) __P((void));
-	int	(*vfs_checkexp) __P((struct mount *, struct mbuf *, int *,
-				    struct ucred **));
-	int	(*vfs_snapshot)	__P((struct mount *, struct vnode *,
-				    struct timespec *));
-	int	(*vfs_extattrctl) __P((struct mount *, int,
+	int	(*vfs_mountroot)(void);
+	int	(*vfs_checkexp) (struct mount *, struct mbuf *, int *,
+				    struct ucred **);
+	int	(*vfs_snapshot)	(struct mount *, struct vnode *,
+				    struct timespec *);
+	int	(*vfs_extattrctl) (struct mount *, int,
 				    struct vnode *, int, const char *,
-				    struct proc *));
+				    struct proc *);
 	const struct vnodeopv_desc * const *vfs_opv_descs;
 	int	vfs_refcount;
 	LIST_ENTRY(vfsops) vfs_list;
@@ -328,28 +328,28 @@ MALLOC_DECLARE(M_MOUNT);
 /*
  * exported VFS interface (see vfssubr(9))
  */
-struct	mount *vfs_getvfs __P((fsid_t *));    /* return vfs given fsid */
+struct	mount *vfs_getvfs(fsid_t *);    /* return vfs given fsid */
 int	vfs_export			    /* process mount export info */
-	  __P((struct mount *, struct netexport *, struct export_args *));
+	 (struct mount *, struct netexport *, struct export_args *);
 #define	vfs_showexport(a, b, c)	(void)memset((b), 0, sizeof(*(b)))
 struct	netcred *vfs_export_lookup	    /* lookup host in fs export list */
-	  __P((struct mount *, struct netexport *, struct mbuf *));
+	 (struct mount *, struct netexport *, struct mbuf *);
 int	vfs_setpublicfs			    /* set publicly exported fs */
-	  __P((struct mount *, struct netexport *, struct export_args *));
-int	vfs_mountedon __P((struct vnode *));/* is a vfs mounted on vp */
-int	vfs_mountroot __P((void));
-void	vfs_shutdown __P((void));	    /* unmount and sync file systems */
-void	vfs_unmountall __P((struct proc *));	    /* unmount file systems */
-int 	vfs_busy __P((struct mount *, int, struct simplelock *));
-int	vfs_rootmountalloc __P((char *, char *, struct mount **));
-void	vfs_unbusy __P((struct mount *));
-int	vfs_attach __P((struct vfsops *));
-int	vfs_detach __P((struct vfsops *));
-void	vfs_reinit __P((void));
-struct vfsops *vfs_getopsbyname __P((const char *));
+	 (struct mount *, struct netexport *, struct export_args *);
+int	vfs_mountedon(struct vnode *);/* is a vfs mounted on vp */
+int	vfs_mountroot(void);
+void	vfs_shutdown(void);	    /* unmount and sync file systems */
+void	vfs_unmountall(struct proc *);	    /* unmount file systems */
+int 	vfs_busy(struct mount *, int, struct simplelock *);
+int	vfs_rootmountalloc(char *, char *, struct mount **);
+void	vfs_unbusy(struct mount *);
+int	vfs_attach(struct vfsops *);
+int	vfs_detach(struct vfsops *);
+void	vfs_reinit(void);
+struct vfsops *vfs_getopsbyname(const char *);
 
-int	vfs_stdextattrctl __P((struct mount *, int, struct vnode *,
-	    int, const char *, struct proc *));
+int	vfs_stdextattrctl(struct mount *, int, struct vnode *,
+	    int, const char *, struct proc *);
 
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
@@ -357,13 +357,13 @@ extern	int nvfssw;
 extern	struct nfs_public nfs_pub;
 extern	struct simplelock mountlist_slock;
 extern	struct simplelock spechash_slock;
-long	makefstype __P((const char *));
-int	dounmount __P((struct mount *, int, struct proc *));
-void	vfsinit __P((void));
-void	vfs_opv_init __P((const struct vnodeopv_desc * const *));
-void	vfs_opv_free __P((const struct vnodeopv_desc * const *));
+long	makefstype(const char *);
+int	dounmount(struct mount *, int, struct proc *);
+void	vfsinit(void);
+void	vfs_opv_init(const struct vnodeopv_desc * const *);
+void	vfs_opv_free(const struct vnodeopv_desc * const *);
 #ifdef DEBUG
-void	vfs_bufstats __P((void));
+void	vfs_bufstats(void);
 #endif
 
 LIST_HEAD(vfs_list_head, vfsops);
@@ -375,19 +375,19 @@ extern struct vfs_list_head vfs_list;
 
 __BEGIN_DECLS
 #ifdef __LIBC12_SOURCE__
-int	fstatfs __P((int, struct statfs12 *));
-int	getfsstat __P((struct statfs12 *, long, int));
-int	statfs __P((const char *, struct statfs12 *));
-int	getmntinfo __P((struct statfs12 **, int));
+int	fstatfs(int, struct statfs12 *);
+int	getfsstat(struct statfs12 *, long, int);
+int	statfs(const char *, struct statfs12 *);
+int	getmntinfo(struct statfs12 **, int);
 #endif
-int	getfh __P((const char *, fhandle_t *));
-int	mount __P((const char *, const char *, int, void *));
-int	unmount __P((const char *, int));
+int	getfh(const char *, fhandle_t *);
+int	mount(const char *, const char *, int, void *);
+int	unmount(const char *, int);
 #if defined(_NETBSD_SOURCE)
-int	fhopen __P((const fhandle_t *, int));
-int	fhstat __P((const fhandle_t *, struct stat *));
+int	fhopen(const fhandle_t *, int);
+int	fhstat(const fhandle_t *, struct stat *);
 #ifdef __LIBC12_SOURCE__
-int	fhstatfs __P((const fhandle_t *, struct statfs12 *));
+int	fhstatfs(const fhandle_t *, struct statfs12 *);
 #endif
 #endif /* _NETBSD_SOURCE */
 __END_DECLS
