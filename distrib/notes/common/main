@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.55 2000/05/03 17:09:13 itojun Exp $
+.\" $NetBSD: main,v 1.56 2000/05/05 19:05:29 itojun Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -580,13 +580,25 @@ Due to
 .Xr sendmail 8
 upgrade from 8.9.x to 8.10.x,
 .Pa /etc/sendmail.cf
-and
+is moved to 
+.Pa /etc/mail/sendmail.cf .
+Also, the default
+.Xr sendmail.cf 5
+refers different pathnames than before.
+For example,
 .Pa /etc/aliases
-are moved to
-.Pa /etc/mail/sendmail.cf
-and
-.Pa /etc/mail/aliases .
-You will need to move files from the prior location to the latter.
+is now located at
+.Pa /etc/mail/aliases ,
+.Pa /etc/sendmail.cw
+is now called
+.Pa /etc/mail/local-host-names ,
+and so forth.
+If you have customized
+.Xr sendmail.cf 5
+and friends, you will need to move files to new location.
+See
+.Pa /usr/share/sendmail/README
+for more information.
 .El
 .
 .Pp
