@@ -1,4 +1,4 @@
-.\"	$NetBSD: clone.2,v 1.8 2003/01/18 11:33:02 thorpej Exp $
+.\"	$NetBSD: clone.2,v 1.9 2003/03/31 03:02:22 perry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -106,7 +106,7 @@ is never shared between the parent and the child, even if
 .Dv CLONE_SIGHAND
 is set.
 .It Dv CLONE_VFORK
-Preserve the synchronization semanics of
+Preserve the synchronization semantics of
 .Xr vfork 2 ;
 the parent blocks until the child exits.
 .El
