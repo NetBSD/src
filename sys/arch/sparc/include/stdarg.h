@@ -39,10 +39,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stdarg.h	8.1 (Berkeley) 6/11/93
+ *	from: @(#)stdarg.h	8.2 (Berkeley) 9/27/93
+ *		from: Header: stdarg.h,v 1.9 93/09/27 21:12:38 torek Exp
  *
- * from: Header: stdarg.h,v 1.8 93/05/07 18:10:14 torek Exp 
- * $Id: stdarg.h,v 1.2 1993/10/11 02:28:30 deraadt Exp $
+ *	$Id: stdarg.h,v 1.3 1994/05/25 16:56:05 pk Exp $
  */
 
 /*
