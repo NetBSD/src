@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.69 2000/03/30 12:45:29 augustss Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.70 2000/05/05 17:52:38 matt Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -1078,8 +1078,8 @@ nextbyte:
 		case MSG_CMDCOMPLETE:
 			if (sc->sc_dleft < 0) {
 				sc_link = acb->xs->sc_link;
-				printf("%s: %d extra bytes from %d:%d\n",
-				    sc->sc_dev.dv_xname, -sc->sc_dleft,
+				printf("%s: %ld extra bytes from %d:%d\n",
+				    sc->sc_dev.dv_xname, (long) -sc->sc_dleft,
 				    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun);
 				acb->data_length = 0;
 			}
@@ -2030,7 +2030,7 @@ dophase:
 	case PH_DATAOUT:
 		if (sc->sc_state != AIC_CONNECTED)
 			break;
-		AIC_MISC(("dataout %d ", sc->sc_dleft));
+		AIC_MISC(("dataout %ld ", (long) sc->sc_dleft));
 		n = aic_dataout_pio(sc, sc->sc_dp, sc->sc_dleft);
 		sc->sc_dp += n;
 		sc->sc_dleft -= n;
@@ -2040,7 +2040,7 @@ dophase:
 	case PH_DATAIN:
 		if (sc->sc_state != AIC_CONNECTED)
 			break;
-		AIC_MISC(("datain %d ", sc->sc_dleft));
+		AIC_MISC(("datain %ld ", (long) sc->sc_dleft));
 		n = aic_datain_pio(sc, sc->sc_dp, sc->sc_dleft);
 		sc->sc_dp += n;
 		sc->sc_dleft -= n;
