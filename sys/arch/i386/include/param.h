@@ -34,12 +34,18 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)param.h	5.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.16 1994/03/09 07:59:02 mycroft Exp $
+ *	$Id: param.h,v 1.17 1994/04/03 18:54:21 mycroft Exp $
  */
 
 /*
  * Machine dependent constants for Intel 386.
  */
+
+#if defined(KERNEL) && defined(LOCORE)
+#include <machine/psl.h>
+#else
+#include <machine/cpu.h>
+#endif
 
 #define MACHINE		"i386"
 #define MACHINE_ARCH	"i386"
