@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.7 2004/01/17 21:05:40 bjh21 Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.8 2004/01/17 21:14:46 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.7 2004/01/17 21:05:40 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.8 2004/01/17 21:14:46 bjh21 Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -79,7 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.7 2004/01/17 21:05:40 bjh21 Exp $");
 #define	KBC_RESEND	0xFE	/* request the keyboard resend the last byte */
 #define KBC_SET_TMB	0xFA	/* What is this one ? */
 #define	KBC_SETDEFAULT	0xF6	/* resets keyboard to its power-on defaults */
-#define	KBC_DISABLE	0xF5	/* as per KBC_SETDEFAULT, but also disable key scanning */
+#define	KBC_DISABLE	0xF5	/* as per KBC_SETDEFAULT, but also disable key
+				   scanning */
 #define	KBC_ENABLE	0xF4	/* enable key scanning */
 #define	KBC_TYPEMATIC	0xF3	/* set typematic rate and delay */
 #define KBD_READID	0xF2	/* Read keyboard ID */
@@ -186,17 +187,17 @@ rpckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		/* check if we're allready in this state */
 		new_ledstate = rpckbd_led_encode(*(int *)data);
 		if (new_ledstate == sc->sc_ledstate)
-			return (0);
+			return 0;
 
 		sc->sc_ledstate = new_ledstate;
 		res = kbdcmd(sc, KBC_SETLEDS, 0);
 		res = kbdcmd(sc, sc->sc_ledstate, 0);
 		if (res == KBR_ACK)
-			return (0);
-		return (EIO);
+			return 0;
+		return EIO;
  	   case WSKBDIO_GETLEDS:
 		*(int *)data = rpckbd_led_decode(sc->sc_ledstate);
-		return (0);
+		return 0;
 	   case WSKBDIO_COMPLEXBELL:
 #define d ((struct wskbd_bell_data *)data)
 		/*
@@ -205,11 +206,11 @@ rpckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		 */
 		rpckbd_bell(d->pitch, d->period, d->volume);
 #undef d
-		return (0);
+		return 0;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	    case WSKBDIO_SETMODE:
 		sc->rawkbd = (*(int *)data == WSKBD_RAW);
-		return (0);
+		return 0;
 #endif
 	}
 	return EPASSTHROUGH;
@@ -226,24 +227,26 @@ rpckbd_enable(void *v, int on)
 
 	if (on) {
 		if (sc->sc_enabled)
-			return (EBUSY);
+			return EBUSY;
 		res = kbdcmd(sc, KBC_ENABLE, 0);
 		if (res != KBR_ACK) {
-			printf("rpckbd_enable: command error; got response %d\n", res);
-			return (EIO);
-		};
+			printf("rpckbd_enable: command error; "
+			    "got response %d\n", res);
+			return EIO;
+		}
 		sc->sc_enabled = 1;
 	} else {
 		if (sc->t_isconsole)
-			return (EBUSY);
+			return EBUSY;
 		res = kbdcmd(sc, KBC_DISABLE, 0);
 		if (res != KBR_ACK) {
-			printf("rpckbd_disable: command error; got response %d\n", res);
-			return (EIO);
-		};
+			printf("rpckbd_disable: command error; "
+			    "got response %d\n", res);
+			return EIO;
+		}
 		sc->sc_enabled = 0;
-	};
-	return (0);
+	}
+	return 0;
 }
 
 
@@ -282,10 +285,10 @@ rpckbd_reset(struct rpckbd_softc *sc)
 		    (KBD_CR_KDATAO | KBD_CR_KCLKO));
 		delay(200);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, KBD_CR, KBD_CR_ENABLE);
-	};
+	}
 	if (i == 0 || (bus_space_read_1(sc->sc_iot, sc->sc_ioh, KBD_STATUS)
 	    & KBD_ST_ENABLE) == 0)
-		return(1);
+		return 1;
 
 	kbd_flush_input(sc);
 	kbdcmd(sc, KBC_DISABLE, 0);
@@ -302,22 +305,22 @@ retry:
 			printf(" [retry]");
 			goto retry;
 		}
-	};
+	}
 	if (i == 0)
-		return(2);
+		return 2;
 
 	kbdcmd(sc, KBC_SETSCANTBL, 0);
 	kbdcmd(sc, KBD_SETSCAN_2, 0);
 	kbdcmd(sc, KBC_ENABLE, 0);
 
-	return (0);
+	return 0;
 
 #if 0
 	res = kbdcmd(sc, KBC_RESET, 1);
 	if (res != KBR_RSTDONE) {
 		printf(" : reset error, got 0x%02x ", res);
 		return 1;
-	};
+	}
 	return 0;	/* flag success */
 #endif
 }
@@ -328,7 +331,6 @@ rpckbd_set_leds(void *context, int leds)
 {
 	struct rpckbd_softc *sc = (struct rpckbd_softc *) context;
 	int res, new_ledstate;
-
 
 	/* check if we're allready in this state */
 	new_ledstate = rpckbd_led_encode(leds);
@@ -354,24 +356,25 @@ rpckbd_intr(void *context)
 	/* read the key code */
         data = bus_space_read_1(sc->sc_iot, sc->sc_ioh, KBD_DATA);
 
-	if (data == 0) return (1);
+	if (data == 0) return 1;
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (sc->rawkbd) {
 		wskbd_rawinput(sc->sc_wskbddev, (u_char *) &data, 1);
-		return (1);	/* claim interrupt */
+		return 1;	/* claim interrupt */
 	}
 #endif
 	if (rpckbd_decode(sc, data, &type, &key))
 		wskbd_input(sc->sc_wskbddev, type, key);
 
-	return (1);	/* claim interrupt */
+	return 1;	/* claim interrupt */
 }
 
 
 /* should really be renamed to attach using the normal attachment stuff */
 int
-rpckbd_init(struct device *self, int isconsole, vaddr_t data_port, vaddr_t cmd_port)
+rpckbd_init(struct device *self, int isconsole, vaddr_t data_port,
+    vaddr_t cmd_port)
 {
 	struct rpckbd_softc *sc = (struct rpckbd_softc *) self;
 	struct wskbddev_attach_args a;
@@ -407,10 +410,13 @@ rpckbd_cnattach(struct device *self)
 {
 	struct rpckbd_softc *sc = (struct rpckbd_softc *) self;
 
-	/* attach to wskbd ; the 2nd. arg. is a information pointer passed on to us */
+	/*
+	 * attach to wskbd ; the 2nd. arg. is a information pointer
+	 * passed on to us
+	 */
 	wskbd_cnattach(&rpckbd_consops, sc, &rpckbd_keymapdata);
 
-	return (0);	/* flag success */
+	return 0;	/* flag success */
 }
 
 
@@ -422,10 +428,14 @@ rpckbd_cngetc(void *v, u_int *type, int *data)
 
 	for (;;) {
 		/* wait for a receive event */
-		while ((bus_space_read_1(console_kbd.sc_iot, console_kbd.sc_ioh, KBD_STATUS) & KBD_ST_RXF) == 0) ;
+		while ((bus_space_read_1(console_kbd.sc_iot,
+			    console_kbd.sc_ioh, KBD_STATUS) &
+			   KBD_ST_RXF) == 0)
+			continue;
 		delay(10);
 
-		val = bus_space_read_1(console_kbd.sc_iot, console_kbd.sc_ioh, KBD_DATA);
+		val = bus_space_read_1(console_kbd.sc_iot, console_kbd.sc_ioh,
+		    KBD_DATA);
 		if (rpckbd_decode(sc, val, type, data))
 			return;
 	}
@@ -435,6 +445,7 @@ rpckbd_cngetc(void *v, u_int *type, int *data)
 void
 rpckbd_cnpollc(void *v, int on)
 {
+
 	/* switched on/off polling ... what to do ? */
 }
 
@@ -442,18 +453,20 @@ rpckbd_cnpollc(void *v, int on)
 void
 rpckbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
 {
+
 	/* dunno yet */
-};
+}
 
 
 void
 rpckbd_bell(int pitch, int period, int volume)
 {
+
 	/* dunno yet */
-#if NBEEP>0
+#if NBEEP > 0
 	sysbeep(pitch, period);
 #endif
-};
+}
 
 
 /* Code derived from the standard pckbd_decode driver */
@@ -469,35 +482,35 @@ rpckbd_decode(struct rpckbd_softc *id, int datain, u_int *type, int *dataout)
 	/* mark keyup flag */
 	if (datain == 0xf0) {
 		id->t_flags |= FLAG_KEYUP;
-		return (0);
-	};
+		return 0;
+	}
 
 	/* special code -> ignore */
 	if ((datain == 0xff) || (datain == 0x00)) {
 		id->t_flags = 0;
-		return (0);
-	};
+		return 0;
+	}
 
 	/* just note resend ... */
 	if (datain == KBR_RESEND) {
-/*		printf("rpckbd:resend\n"); */
+		/* printf("rpckbd:resend\n"); */
 		id->t_resend = 1;
-		return (0);
-	};
+		return 0;
+	}
 
 	/* just note ack code */
 	if (datain == KBR_ACK) {
-/*		printf("rpckbd:ack\n"); */
+		/* printf("rpckbd:ack\n"); */
 		id->t_ack = 1;
-		return (0);
-	};
+		return 0;
+	}
 
 	if (datain == KBR_EXTENDED0) {
 		id->t_flags |= FLAG_E0;
-		return(0);
+		return 0;
 	} else if (datain == KBR_EXTENDED1) {
 		id->t_flags |= FLAG_E1;
-		return(0);
+		return 0;
 	}
 
 	key = datain;
@@ -507,10 +520,10 @@ rpckbd_decode(struct rpckbd_softc *id, int datain, u_int *type, int *dataout)
 		id->t_flags &= ~FLAG_E0;
 		if (datain == 0x12) {
 			id->t_flags &= ~FLAG_KEYUP;
-			return (0);
-		};
+			return 0;
+		}
 		key |= 0x100;
-	};
+	}
 
 	/*              
 	 * process BREAK key (EXT1 0x14 0x77):
@@ -518,7 +531,7 @@ rpckbd_decode(struct rpckbd_softc *id, int datain, u_int *type, int *dataout)
 	 */
 	if ((id->t_flags & FLAG_E1) && (datain == 0x14)) {
 		id->t_flags |= FLAG_BREAKPRELUDE;
-		return(0);
+		return 0;
 	} else if ((id->t_flags & FLAG_BREAKPRELUDE) &&
 		   (datain == 0x77)) {
 		id->t_flags &= ~(FLAG_E1 | FLAG_BREAKPRELUDE);
@@ -538,7 +551,7 @@ rpckbd_decode(struct rpckbd_softc *id, int datain, u_int *type, int *dataout)
 	} else {
 		/* Always ignore typematic keys */
 		if (key == id->t_lastchar)
-			return(0);
+			return 0;
 		id->t_lastchar = key;
 		*type = WSCONS_EVENT_KEY_DOWN;
 #if 0
@@ -546,7 +559,7 @@ rpckbd_decode(struct rpckbd_softc *id, int datain, u_int *type, int *dataout)
 #endif
 	}
 	*dataout = key;
-	return(1);
+	return 1;
 }
 
 
@@ -560,8 +573,9 @@ rpckbd_led_decode(int code)
 	num    = (code & 2) ? 1:0;
 	caps   = (code & 4) ? 1:0;
 
-	return (scroll*WSKBD_LED_SCROLL) | (num*WSKBD_LED_NUM) | (caps*WSKBD_LED_CAPS);
-};
+	return (scroll * WSKBD_LED_SCROLL) |
+	    (num * WSKBD_LED_NUM) | (caps * WSKBD_LED_CAPS);
+}
 
 
 /* return kbd led byte for this wscons keyboard leds code */
@@ -575,7 +589,7 @@ rpckbd_led_encode(int code)
 	caps   = (code & WSKBD_LED_CAPS)   ? 1:0;
 	/* cant do compose :( */
 
-	return (caps<<2) | (num<<1) | (scroll<<0);
+	return (caps << 2) | (num << 1) | (scroll << 0);
 }
 
 
@@ -587,7 +601,8 @@ kbd_flush_input(struct rpckbd_softc *sc)
 	/* Loop round reading bytes while the receive buffer is not empty */
 
 	for (i = 0; i < 20; i++) {
-		if ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, KBD_STATUS) & KBD_ST_RXF) == 0)
+		if ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, KBD_STATUS) & 
+			KBD_ST_RXF) == 0)
 			break;
 		delay(100);
 		(void)bus_space_read_1(sc->sc_iot, sc->sc_ioh, KBD_DATA);
@@ -608,12 +623,14 @@ kbdcmd(struct rpckbd_softc *sc, u_char cmd, int eat_acks)
 		/* Wait for empty kbd transmit register */
 		 
 		for (i = 1000; i; i--) {
-			if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, KBD_STATUS) & KBD_ST_TXE)
+			if (bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+				KBD_STATUS) & KBD_ST_TXE)
 				break;
 			delay(200);
 		}
 		if (i == 0)
-			printf("%s: transmit not ready\n", sc->sc_device.dv_xname);
+			printf("%s: transmit not ready\n",
+			    sc->sc_device.dv_xname);
 
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, KBD_DATA, cmd);
 
@@ -622,7 +639,8 @@ kbdcmd(struct rpckbd_softc *sc, u_char cmd, int eat_acks)
 			/* Wait for full kbd receive register */
 
 			for (i = 0; i < 1000; i++) {
-				c = bus_space_read_1(sc->sc_iot, sc->sc_ioh, KBD_STATUS);
+				c = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+				    KBD_STATUS);
 				if ((c & KBD_ST_RXF) == KBD_ST_RXF)
 					break;
 				delay(100);
@@ -633,21 +651,21 @@ kbdcmd(struct rpckbd_softc *sc, u_char cmd, int eat_acks)
 			/* Get byte from kbd receive register */
 			c = bus_space_read_1(sc->sc_iot, sc->sc_ioh, KBD_DATA);
 			if ((c == KBR_ECHO) || (c == KBR_RSTDONE))
-				return (c);
+				return c;
 		} while ((c==KBR_ACK) && eat_acks);
 		if (c == KBR_ACK)
-			return (c);
+			return c;
 
 		/* Failed if we have more reties to go flush kbd */
 
 		if (retry) {
 			kbd_flush_input(sc);
 			printf(" [retry] ");
-		};
+		}
 	}
-	printf("%s: command failed, cmd = %02x, status = %02x\n", sc->sc_device.dv_xname, cmd, c);
-	return (1);
+	printf("%s: command failed, cmd = %02x, status = %02x\n",
+	    sc->sc_device.dv_xname, cmd, c);
+	return 1;
 }
 
 /* end of rpckbd.c */
-
