@@ -1,4 +1,4 @@
-# $NetBSD: stack,v 1.1 2000/06/08 03:15:40 jhawk Exp $
+# $NetBSD: stack,v 1.2 2000/06/08 14:42:11 jhawk Exp $
 
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -52,13 +52,13 @@
 #
 # due to limitations of gdb scripting.
 
-define stack
+define stacktrace
   set $frame=$arg0
   set $retaddr=$arg1
 
   while ($frame != 0)
     set $callpc = $retaddr
-    set $retaddr = *(long*)($frame+4)
+    set $retaddr = *(long*)($frame+sizeof(long*))
 
     set $inst=*(long*)$retaddr
     if (($inst & 0xff) == 0x59)
@@ -71,13 +71,13 @@ define stack
 	   set $narg = 5
     end
 
-    set $argp = $frame+8
+    set $argp = $frame+sizeof(long*)+sizeof(int)
     printf "  "
     output/a $callpc
     printf "("
     while ($narg != 0)
       printf "0x%lx", *(long*)$argp
-      set $argp = $argp+4
+      set $argp = $argp+sizeof(long*)
       set $narg = $narg-1
       if ($narg != 0)
 	printf ","
@@ -87,13 +87,22 @@ define stack
     output/a $retaddr
     printf " (frame at %#x)\n", $frame
 
-    set $frame=*(long*)($frame+0)
+    set $frame=*(long*)$frame
   end
 end
 
-document stack
-  ==> (gdb) stack FP IP
+document stacktrace
+  ==> (gdb) stacktrace FP IP
   print a backtrace of all stack frames, starting at frame pointer FP,
-  and instruction pointer IP. For the default trace, run:
-  "stack $ebp $eip"
+  and instruction pointer IP.
+end
+
+define stack
+  stacktrace $ebp $eip
+end
+
+document stack
+  => (gdb) stack
+  Print a backtrace of all strack frames, starting at the current $ebp
+  and $eip.
 end
