@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.14 2001/01/03 19:15:59 thorpej Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.15 2001/01/03 20:12:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.14 2001/01/03 19:15:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.15 2001/01/03 20:12:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,18 +242,18 @@ alpha_sgmap_dmamap_create(t, size, nsegments, maxsegsz, boundary,
 	int error;
 
 	error = _bus_dmamap_create(t, size, nsegments, maxsegsz,
-	    boundary, flags, dmamp);
+	    boundary, flags, &map);
 	if (error)
 		return (error);
 
-	map = *dmamp;
-
-	if (flags & BUS_DMA_ALLOCNOW) {
+	if (flags & BUS_DMA_ALLOCNOW)
 		error = alpha_sgmap_alloc(map, round_page(size),
 		    t->_sgmap, flags);
-		if (error)
-			alpha_sgmap_dmamap_destroy(t, map);
-	}
+
+	if (error == 0)
+		*dmamp = map;
+	else
+		alpha_sgmap_dmamap_destroy(t, map);
 
 	return (error);
 }
