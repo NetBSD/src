@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strchr.S,v 1.5 2005/02/04 18:12:52 drochner Exp $")
+	RCSID("$NetBSD: strchr.S,v 1.6 2005/02/06 18:36:32 christos Exp $")
 #endif
 
 #ifdef INDEX
@@ -17,7 +17,7 @@ ENTRY(strchr)
 	pushl	%esi
 	pushl	%ebx
 	movl	12(%esp),%eax
-	movl	16(%esp),%ecx
+	movzbl	16(%esp),%ecx
 
 	/*
 	 * Align to word boundary.
