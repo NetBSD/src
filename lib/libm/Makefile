@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.62 2004/07/01 17:33:16 drochner Exp $
+#  $NetBSD: Makefile,v 1.63 2004/07/01 19:08:21 drochner Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -51,7 +51,7 @@ USE_SHLIBDIR=	yes
 
 .if (${MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
-ARCH_SRCS = s_copysign.S s_copysignf.S
+ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
 .elif ((${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "x86_64"))
 .if (defined(I387_LIBM) || (${MACHINE_ARCH} == "x86_64"))
 .PATH:	${.CURDIR}/arch/i387
