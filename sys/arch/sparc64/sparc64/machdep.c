@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 1999/05/22 20:28:22 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.41 1999/05/25 23:14:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1532,7 +1532,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		addr = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, addr | cbit,
-			   VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
+			   VM_PROT_READ | VM_PROT_WRITE, TRUE,
+			   VM_PROT_READ | VM_PROT_WRITE);
 #if 0
 			if (flags & BUS_DMA_COHERENT)
 				/* XXX */;
