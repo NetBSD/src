@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.40 2002/07/04 14:37:12 junyoung Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.41 2002/07/04 17:15:28 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.40 2002/07/04 14:37:12 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.41 2002/07/04 17:15:28 junyoung Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -107,8 +107,8 @@ const u_char rasops_isgray[16] = {
 static void	rasops_copyrows __P((void *, int, int, int));
 static int	rasops_mapchar __P((void *, int, u_int *));
 static void	rasops_cursor __P((void *, int, int, int));
-static int	rasops_alloc_cattr __P((void *, int, int, int, long *));
-static int	rasops_alloc_mattr __P((void *, int, int, int, long *));
+static int	rasops_allocattr_color __P((void *, int, int, int, long *));
+static int	rasops_allocattr_mono __P((void *, int, int, int, long *));
 static void	rasops_do_cursor __P((struct rasops_info *));
 static void	rasops_init_devcmap __P((struct rasops_info *));
 
@@ -260,10 +260,10 @@ rasops_reconfig(ri, wantrows, wantcols)
 	ri->ri_do_cursor = rasops_do_cursor;
 
 	if (ri->ri_depth < 8 || (ri->ri_flg & RI_FORCEMONO) != 0) {
-		ri->ri_ops.allocattr = rasops_alloc_mattr;
+		ri->ri_ops.allocattr = rasops_allocattr_mono;
 		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_REVERSE;
 	} else {
-		ri->ri_ops.allocattr = rasops_alloc_cattr;
+		ri->ri_ops.allocattr = rasops_allocattr_color;
 		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	}
@@ -360,7 +360,7 @@ rasops_mapchar(cookie, c, cp)
  * Allocate a color attribute.
  */
 static int
-rasops_alloc_cattr(cookie, fg, bg, flg, attr)
+rasops_allocattr_color(cookie, fg, bg, flg, attr)
 	void *cookie;
 	int fg, bg, flg;
 	long *attr;
@@ -404,7 +404,7 @@ rasops_alloc_cattr(cookie, fg, bg, flg, attr)
  * Allocate a mono attribute.
  */
 static int
-rasops_alloc_mattr(cookie, fg, bg, flg, attr)
+rasops_allocattr_mono(cookie, fg, bg, flg, attr)
 	void *cookie;
 	int fg, bg, flg;
 	long *attr;
