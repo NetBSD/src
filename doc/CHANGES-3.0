@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.9 2005/03/20 14:39:48 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.10 2005/03/20 21:51:57 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -156,4 +156,14 @@ sys/arch/xen/i386/npx.c				1.4
 	linux/xen doesn't do it either). Now the "fputest" configure test from
 	pkgsrc/math/yorick works as expected.
 	[bouyer, ticket #35]
+
+sbin/sysctl/sysctl.c				1.99
+
+	Fix possible segmentation fault when retrieving descriptions.
+	[atatat, ticket #36]
+
+sys/arch/prep/conf/INSTALL			1.33
+
+	Add PLATFORM_IBM_6015 to INSTALL, as present in GENERIC.
+	[kleink, ticket #37]
 
