@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.1 2001/06/08 22:22:59 chris Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.2 2001/06/21 22:08:28 chris Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -42,57 +42,12 @@
  * Based on kate/boot/bootconfig.h
  */
 
-#include "opt_footbridge.h"
-
 typedef struct _PhysMem {
 	u_int address;
 	u_int pages;
 } PhysMem;
 
-#if defined(_KERNEL) && (defined(RISCPC) || defined(RC7500))
-
-#define DRAM_BLOCKS	4
-typedef struct _BootConfig {
-	u_int kernvirtualbase;
-	u_int kernphysicalbase;
-	u_int kernsize;
-	u_int argvirtualbase;
-	u_int argphysicalbase;
-	u_int argsize;
-	u_int scratchvirtualbase;
-	u_int scratchphysicalbase;
-	u_int scratchsize;
-
-	u_int display_start;
-	u_int display_size;
-	u_int width;
-	u_int height;
-	u_int log2_bpp;
-
-	PhysMem dram[DRAM_BLOCKS];
-	PhysMem vram[1];
-
-	u_int dramblocks;
-	u_int vramblocks;
-	u_int pagesize;
-	u_int drampages;
-	u_int vrampages;
-
-	char kernelname[80];
-
-	u_int framerate;
-	u_char machine_id[4];
-	u_int magic;
-	u_int display_phys;
-} BootConfig;
-
-#define OLD_BOOTCONFIG_MAGIC 0x42301068
-#define BOOTCONFIG_MAGIC     0x43112233
-
-extern BootConfig bootconfig;
-#endif	/* _KERNEL && (RISCPC || RC7500) */
-
-#if defined(_KERNEL) && defined(FOOTBRIDGE)
+#if defined(_KERNEL)
 
 #define	DRAM_BLOCKS	1
 
@@ -103,38 +58,7 @@ typedef struct _BootConfig {
 
 extern BootConfig bootconfig;
 #define MAX_BOOT_STRING 255
-#endif	/* _KERNEL && FOOTBRIDGE */
 
-#if defined(_KERNEL) && defined(OFW)
-/*
- * Currently several bootconfig structure members are used
- * in the arm32 generic part. This needs to be fixed.
- * In the mean time just define the fields required
- * to get the files to compile.
- * To solve this either
- * 1. fake a bootconfig structure as required
- * 2. provide a generic structure for this information
- *    (need to see the shark code first)
- * 3. move the dependant routines to the machine specific
- *    areas (e.g. move dumpsys() to *_machdep.c
- *
- * 1 is probably the simplest stop gap measure
- * 2 is the solution I plan on using.
- *
- * code affected: pmap.c stubs.c
- */
-
-#define DRAM_BLOCKS	33
-
-typedef struct _BootConfig {
-	PhysMem dram[DRAM_BLOCKS];
-	u_int dramblocks;
-} BootConfig;
-
-extern BootConfig bootconfig;
-#endif	/* _KERNEL && OFW */
-
-#ifdef _KERNEL
 #define BOOTOPT_TYPE_BOOLEAN		0
 #define BOOTOPT_TYPE_STRING		1
 #define BOOTOPT_TYPE_INT		2
