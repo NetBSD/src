@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.13 2002/11/19 06:53:17 junyoung Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.14 2002/11/19 12:58:15 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,13 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)strcasecmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcasecmp.c,v 1.13 2002/11/19 06:53:17 junyoung Exp $");
+__RCSID("$NetBSD: strcasecmp.c,v 1.14 2002/11/19 12:58:15 junyoung Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
-
 #include "namespace.h"
+#include <sys/types.h>
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
