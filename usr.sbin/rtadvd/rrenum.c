@@ -1,4 +1,4 @@
-/*	$NetBSD: rrenum.c,v 1.8 2002/05/21 14:29:52 itojun Exp $	*/
+/*	$NetBSD: rrenum.c,v 1.9 2002/05/29 14:40:31 itojun Exp $	*/
 /*	$KAME: rrenum.c,v 1.10 2001/01/21 15:32:16 itojun Exp $	*/
 
 /*
@@ -36,9 +36,6 @@
 #include <sys/sysctl.h>
 
 #include <net/if.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <net/if_var.h>
-#endif /* __FreeBSD__ >= 3 */
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
