@@ -1,5 +1,40 @@
-/*	$NetBSD: lfs.h,v 1.10 1998/09/11 21:27:12 pk Exp $	*/
+/*	$NetBSD: lfs.h,v 1.11 1999/03/10 00:20:00 perseant Exp $	*/
 
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Konrad E. Schroder <perseant@hhhh.org>.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,6 +69,63 @@
  *
  *	@(#)lfs.h	8.9 (Berkeley) 5/8/95
  */
+
+/*
+ * Compile-time options for LFS.
+ */
+#define LFS_EAGAIN_FAIL          /* markv fail with EAGAIN if ino is locked */
+#define LFS_CONSERVATIVE_LOCK    /* lock ifile ino in lfs_segwrite, if safe */
+
+#define LFS_TOGGLE_SB           /* toggle between first 2 sbs for checkpoint */
+#define LFS_TRACK_IOS           /* attempt to avoid cleaning segments not yet fully written to disk */
+#define LFS_USEDIROP            /* use VDIROP segregation */
+#define LFS_STINGY_CLEAN        /* write only cleaned inodes when cleaning */
+#define LFS_STINGY_BLOCKS       /* write only cleaned blocks when cleaning */
+#define LFS_CANNOT_ROLLFW       /* No roll-forward agent exists */
+
+/* #define DEBUG_LFS */              /* Intensive debugging of LFS subsystem */
+
+/* #define LFS_ATIME_IFILE */         /* Store atime in Ifile, don't push */
+/* #define LFS_HONOR_RDONLY */        /* Don't write blocks if mounted ro */
+
+/*
+ * Parameters and generic definitions
+ */
+#define BW_CLEAN 1
+#define MIN_FREE_SEGS 4
+
+#ifndef LFS_ATIME_IFILE
+# define LFS_ITIMES(ip, acc, mod, cre) FFS_ITIMES((ip),(acc),(mod),(cre))
+#else
+# define LFS_ITIMES(ip, acc, mod, cre) {                                \ 
+	struct buf *ibp;						\
+	IFILE *ifp;							\
+									\
+        if ((ip)->i_flag & IN_ACCESS) {                         	\
+	LFS_IENTRY(ifp, ip->i_lfs, ip->i_number, ibp);			\
+       		ifp->if_atime = (mod);					\
+       		VOP_BWRITE(bp);						\
+		(ip)->i_flag &= ~IN_ACCESS;				\
+        }                                                       	\
+        if ((ip)->i_flag & (IN_CHANGE | IN_UPDATE)) {       		\
+                (ip)->i_flag |= IN_MODIFIED;                            \
+                if ((ip)->i_flag & IN_UPDATE) {                         \
+                        (ip)->i_ffs_mtime = (mod)->tv_sec;		\
+                        (ip)->i_ffs_mtimensec = (mod)->tv_nsec;         \
+                        (ip)->i_modrev++;                               \
+                }                                                       \
+                if ((ip)->i_flag & IN_CHANGE) {                         \
+                        (ip)->i_ffs_ctime = (cre)->tv_sec;		\  
+                        (ip)->i_ffs_ctimensec = (cre)->tv_nsec;         \
+                }                                                       \
+                (ip)->i_flag &= ~(IN_CHANGE | IN_UPDATE);   		\
+        }                                                               \
+}
+#endif
+
+#define WRITEINPROG(vp) (vp->v_dirtyblkhd.lh_first && !(VTOI(vp)->i_flag & (IN_MODIFIED|IN_CLEANING)))
+
+/* Here begins the berkeley code */
 
 #define	LFS_LABELPAD	8192		/* LFS label size */
 #define	LFS_SBPAD	8192		/* LFS superblock size */
@@ -138,14 +230,22 @@ struct dlfs {
 
         int32_t   dlfs_maxsymlinklen; /* 184: max length of an internal symlink */
 
-#define	LFS_MIN_SBINTERVAL	5	/* minimum superblock segment spacing */
+#define	LFS_MIN_SBINTERVAL	5  /* minimum superblock segment spacing */
 #define LFS_MAXNUMSB            10 /* 188: superblock disk offsets */
         ufs_daddr_t       dlfs_sboffs[LFS_MAXNUMSB];
 
+	u_int32_t dlfs_nclean;    /* 228: Number of clean segments */
+	u_char	  dlfs_fsmnt[MNAMELEN];	 /* 232: name mounted on */
+	/* XXX this is 2 bytes only to pad to a quad boundary */
+	u_int16_t dlfs_clean;     /* 322: file system is clean flag */
+#define LFS_MAX_ACTIVE          10
 /* Checksum -- last valid disk field. */
-        u_int32_t dlfs_cksum;     /* 228: checksum for superblock checking */
-        int32_t   dlfs_pad[70];   /* 232: round to 512 bytes */
+        u_int32_t dlfs_cksum;     /* 324: checksum for superblock checking */
+        int8_t    dlfs_pad[181];  /* 328: round to 512 bytes */
 };
+
+/* Maximum number of io's we can have pending at once */
+#define LFS_THROTTLE  16 /* XXX should be better paramtrized - ? */
 
 /* In-memory super block. */
 struct lfs {
@@ -195,6 +295,9 @@ struct lfs {
 #define lfs_maxsymlinklen lfs_dlfs.dlfs_maxsymlinklen
 #define lfs_sboffs lfs_dlfs.dlfs_sboffs
 #define lfs_cksum lfs_dlfs.dlfs_cksum
+#define lfs_clean lfs_dlfs.dlfs_clean
+#define lfs_fsmnt lfs_dlfs.dlfs_fsmnt
+#define lfs_nclean lfs_dlfs.dlfs_nclean
 /* These fields are set at mount time and are meaningless on disk. */
 	struct segment *lfs_sp;		/* current segment being written */
 	struct vnode *lfs_ivnode;	/* vnode for the ifile */
@@ -206,10 +309,23 @@ struct lfs {
 	u_int32_t lfs_doifile;		/* Write ifile blocks on next write */
 	u_int32_t lfs_nactive;		/* Number of segments since last ckp */
 	int8_t	  lfs_fmod;		/* super block modified flag */
-	int8_t	  lfs_clean;		/* file system is clean flag */
 	int8_t	  lfs_ronly;		/* mounted read-only flag */
 	int8_t	  lfs_flags;		/* currently unused flag */
-	u_char	  lfs_fsmnt[MNAMELEN];	/* name mounted on */
+#ifdef LFS_TOGGLE_SB
+	u_int16_t lfs_activesb;         /* toggle between superblocks */
+#endif /* LFS_TOGGLE_SB */
+#ifdef LFS_TRACK_IOS
+	daddr_t   lfs_pending[LFS_THROTTLE]; /* daddrs of pending writes */
+#endif /* LFS_TRACK_IOS */
+#ifdef LFS_USEDIROP
+# define LFS_MAXDIROP 32
+	int       lfs_dirvcount;        /* number of VDIROP-marked vnodes */
+#endif /* LFS_USEDIROP */	
+#ifdef LFS_CANNOT_ROLLFW
+	daddr_t   lfs_sbactive;         /* disk address of in-progress sb write */
+#endif
+	struct vnode *lfs_flushvp;      /* vnode being flushed */
+	int       lfs_loanedbytes;      /* Temp. byte loans for removed inodes */
 };
 
 /*
@@ -240,6 +356,9 @@ struct ifile {
 #define	LFS_UNUSED_DADDR	0	/* out-of-band daddr */
 	ufs_daddr_t if_daddr;		/* inode disk address */
 	ino_t	  if_nextfree;		/* next-unallocated inode */
+#ifdef LFS_ATIME_IFILE
+	struct timespec if_atime;	/* Last access time */
+#endif
 };
 
 /*
@@ -353,17 +472,6 @@ struct segsum {
 	(SP) = (SEGUSE *)(BP)->b_data + ((IN) & ((F)->lfs_sepb - 1));	\
 }
 
-/* 
- * Determine if there is enough room currently available to write db
- * disk blocks.  We need enough blocks for the new blocks, the current,
- * inode blocks, a summary block, plus potentially the ifile inode and
- * the segment usage table, plus an ifile page.
- */
-#define LFS_FITS(fs, db)						\
-	((int32_t)((db + ((fs)->lfs_uinodes + INOPB((fs))) / 		\
-	INOPB((fs)) + fsbtodb(fs, 1) + LFS_SUMMARY_SIZE / DEV_BSIZE +	\
-	(fs)->lfs_segtabsz)) < (fs)->lfs_avail)
-
 /* Determine if a buffer belongs to the ifile */
 #define IS_IFILE(bp)	(VTOI(bp->b_vp)->i_number == LFS_IFILE_INUM)
 
@@ -413,8 +521,6 @@ struct segment {
 #define ISSPACE_XXX(F, BB)						\
 	((F)->lfs_bfree >= (BB))
 
-#define DOSTATS
-#ifdef DOSTATS
 /* Statistics Counters */
 struct lfs_stats {
 	u_int	segsused;
@@ -429,6 +535,6 @@ struct lfs_stats {
 	u_int	wait_exceeded;
 	u_int	write_exceeded;
 	u_int	flush_invoked;
+	u_int	vflush_invoked;
 };
 extern struct lfs_stats lfs_stats;
-#endif
