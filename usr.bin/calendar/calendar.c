@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)calendar.c	4.11 (Berkeley) 10/12/90";*/
-static char rcsid[] = "$Id: calendar.c,v 1.3 1994/01/05 13:13:00 cgd Exp $";
+static char rcsid[] = "$Id: calendar.c,v 1.4 1994/02/22 09:46:29 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -209,6 +209,8 @@ isnow(endp)
 			day = v2 ? v2 : 1;
 		}
 	}
+	if (flags&F_ISDAY)
+		day = tp->tm_mday + (((day - 1) - tp->tm_wday + 7) % 7);
 	day = cumdays[month] + day;
 
 	/* if today or today + offset days */
@@ -248,8 +250,10 @@ getfield(p, endp, flags)
 		*flags |= F_ISMONTH;
 	else if (val = getday(start))
 		*flags |= F_ISDAY;
-	else
+	else {
+		*p = savech;
 		return(0);
+	}
 	for (*p = savech; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p)
 		;
 	*endp = p;
