@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 1999/12/29 05:01:14 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 2000/02/16 15:32:03 tsutsui Exp $	*/
 
 /*
  *
@@ -74,15 +74,18 @@ extern volatile u_char *ctrl_int2;
 #define	SIR_CLOCK	1
 #define	NEXT_SIR	2
 
-#define	siroff(x)	ssir &= ~(x)
+#define	siron(x)	\
+	__asm __volatile ("orb %0,%1" : : "di" ((u_char)(x)), "g" (ssir))
+#define	siroff(x)	\
+	__asm __volatile ("andb %0,%1" : : "di" ((u_char)~(x)), "g" (ssir))
 #define	setsoftint(x)	do {				\
-				ssir |= (x);		\
+				siron(x);		\
 				*ctrl_int2 = 0xff;	\
 			} while (0)
 #define	setsoftnet()	setsoftint(1 << SIR_NET)
 #define	setsoftclock()	setsoftint(1 << SIR_CLOCK)
 
-u_char allocate_sir __P((void (*) __P((void *)), void *));
+u_char allocate_sir __P((void (*)(void *), void *));
 void init_sir __P((void));
 #endif /* _KERNEL */
 
