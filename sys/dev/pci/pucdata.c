@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.9 2000/02/08 16:26:23 bouyer Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.9.4.1 2000/09/06 16:54:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -558,6 +558,15 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
+	    },
+	},
+
+	/* Actiontec  56K PCI Master */
+	{   "Actiontec 56K PCI Master",
+	    {	0x11c1,	0x0480,	0x0, 	0x0	},
+	    {	0xffff,	0xffff,	0x0,	0x0	},
+	    {
+		{ PUC_PORT_TYPE_COM,	0x14,	0x00	},
 	    },
 	},
 
