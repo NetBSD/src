@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.167.2.3 1999/04/16 23:26:17 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.167.2.4 1999/04/29 14:41:58 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167.2.3 1999/04/16 23:26:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167.2.4 1999/04/29 14:41:58 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,6 +137,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167.2.3 1999/04/16 23:26:17 thorpej Ex
 #include <machine/rpb.h>
 #include <machine/prom.h>
 #include <machine/conf.h>
+#include <machine/ieeefp.h>
 
 #include <alpha/alpha/cpuvar.h>
 
@@ -1930,8 +1931,14 @@ setregs(p, pack, stack)
 	bzero(tfp->tf_regs, FRAME_SIZE * sizeof tfp->tf_regs[0]);
 #endif
 	bzero(&p->p_addr->u_pcb.pcb_fp, sizeof p->p_addr->u_pcb.pcb_fp);
-#define FP_RN 2 /* XXX */
-	p->p_addr->u_pcb.pcb_fp.fpr_cr = (long)FP_RN << 58;
+	p->p_addr->u_pcb.pcb_fp.fpr_cr =  FPCR_INED
+					| FPCR_UNFD
+					| FPCR_UNDZ
+					| FPCR_DYN(FP_RN)
+					| FPCR_OVFD
+					| FPCR_DZED
+					| FPCR_INVD
+					| FPCR_DNZ;
 	alpha_pal_wrusp(stack);
 	tfp->tf_regs[FRAME_PS] = ALPHA_PSL_USERSET;
 	tfp->tf_regs[FRAME_PC] = pack->ep_entry & ~3;
