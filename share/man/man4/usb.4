@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.37 2001/09/11 23:18:55 wiz Exp $
+.\" $NetBSD: usb.4,v 1.38 2001/11/16 17:08:13 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,11 +41,14 @@
 .Nm usb
 .Nd Universal Serial Bus driver
 .Sh SYNOPSIS
-.Cd "uhci*   at pci? dev ? function ?"
+.Cd "ehci*   at cardbus? dev ? function ?"
+.Cd "ehci*   at pci? dev ? function ?"
 .Cd "ohci*   at cardbus? dev ? function ?"
 .Cd "ohci*   at pci? dev ? function ?"
-.Cd "usb*    at uhci? flags X"
+.Cd "uhci*   at pci? dev ? function ?"
+.Cd "usb*    at ehci? flags X"
 .Cd "usb*    at ohci? flags X"
+.Cd "usb*    at uhci? flags X"
 .Cd "uhub*   at usb?"
 .Cd "uhub*   at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
 .Cd "XX*     at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
@@ -163,7 +166,9 @@ Handspring Visor driver.
 .Sh INTRODUCTION TO USB
 The
 .Tn USB
-is a 12 Mb/s serial bus (1.5 Mb/s for low speed devices).
+1.x is a 12 Mb/s serial bus with 1.5 Mb/s for low speed devices.
+.Tn USB
+2.x handles 480 Mb/s.
 Each
 .Tn USB
 has a host controller that is the master of the bus;
@@ -460,10 +465,13 @@ specifications can be found at:
 .Xr aue 4 ,
 .Xr cardbus 4 ,
 .Xr cue 4 ,
+.Xr ehci 4 ,
 .Xr kue 4 ,
 .Xr pci 4 ,
+.Xr ohci 4 ,
 .Xr uaudio 4 ,
 .Xr ugen 4 ,
+.Xr uhci 4 ,
 .Xr uhid 4 ,
 .Xr ukbd 4 ,
 .Xr ulpt 4 ,
