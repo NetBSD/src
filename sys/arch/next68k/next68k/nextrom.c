@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.3 1998/07/04 05:36:05 dbj Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.4 1998/07/11 07:06:17 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -38,7 +38,6 @@
 
 
 void    next68k_bootargs __P((unsigned char *args[]));
-void    dbj_message __P((char * s));
 
 int mon_getc(void);
 int mon_putc(int c);
@@ -153,6 +152,12 @@ next68k_bootargs(args)
         j++;
       }
     }
+
+		/* The NeXT ROM or something appears to reserve the very
+		 * top of memory
+		 */
+		RELOC(phys_seg_list[j-1].ps_end, vm_offset_t) -= 0x2000;
+		
     /* pmap is unhappy if it is not null terminated */
     for(;j<MAX_PHYS_SEGS;j++) {
       RELOC(phys_seg_list[j].ps_start, vm_offset_t) = 0;
