@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.120.2.4 2002/09/04 14:01:41 lukem Exp $	*/
+/*	$NetBSD: pmap.c,v 1.120.2.5 2003/10/14 09:59:02 tron Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -2020,8 +2020,6 @@ pmap_kremove(va, size)
 {
 	struct pmap *pm = pmap_kernel();
 	int64_t data;
-	vaddr_t flushva = va;
-	vsize_t flushsize = size;
 	int i, s, flush = 0;
 
 	ASSERT(va < INTSTACK || va > EINTSTACK);
@@ -2100,7 +2098,7 @@ pmap_kremove(va, size)
 #ifdef DEBUG
 		remove_stats.flushes ++;
 #endif
-		cache_flush_virt(flushva, flushsize);
+		blast_vcache();
 	}
 	simple_unlock(&pm->pm_lock);
 	splx(s);
@@ -2289,7 +2287,6 @@ pmap_remove(pm, va, endva)
 {
 	int i, s, flush=0;
 	int64_t data;
-	vaddr_t flushva = va;
 
 	/* 
 	 * In here we should check each pseg and if there are no more entries,
@@ -2383,7 +2380,7 @@ pmap_remove(pm, va, endva)
 #ifdef DEBUG
 		remove_stats.flushes ++;
 #endif
-		cache_flush_virt(flushva, endva - flushva);
+		blast_vcache();
 	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_REMOVE)
