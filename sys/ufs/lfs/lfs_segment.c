@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.6 1996/10/10 17:21:25 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.7 1996/10/12 21:58:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -230,7 +230,7 @@ lfs_segwrite(mp, flags)
 		clean = cip->clean;
 		brelse(bp);
 		if (clean <= 2) {
-			kprintf ("segs clean: %d\n", clean);
+			printf ("segs clean: %d\n", clean);
 			wakeup(&lfs_allclean_wakeup);
 			error = tsleep(&fs->lfs_avail, PRIBIO + 1,
 				       "lfs writer", 0);
@@ -452,7 +452,7 @@ lfs_writeinode(fs, sp, ip)
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes < sizeof(struct dinode)) {
 			/* XXX -- Change to a panic. */
-			kprintf("lfs: negative bytes (segment %d)\n",
+			printf("lfs: negative bytes (segment %d)\n",
 			    datosn(fs, daddr));
 			panic("negative bytes");
 		}
@@ -603,7 +603,7 @@ lfs_updatemeta(sp)
 			 * to get counted for the inode.
 			 */
 			if (bp->b_blkno == -1 && !(bp->b_flags & B_CACHE)) {
-kprintf ("Updatemeta allocating indirect block: shouldn't happen\n");
+printf ("Updatemeta allocating indirect block: shouldn't happen\n");
 				ip->i_blocks += btodb(fs->lfs_bsize);
 				fs->lfs_bfree -= btodb(fs->lfs_bsize);
 			}
@@ -618,7 +618,7 @@ kprintf ("Updatemeta allocating indirect block: shouldn't happen\n");
 #ifdef DIAGNOSTIC
 			if (sup->su_nbytes < fs->lfs_bsize) {
 				/* XXX -- Change to a panic. */
-				kprintf("lfs: negative bytes (segment %d)\n",
+				printf("lfs: negative bytes (segment %d)\n",
 				    datosn(fs, daddr));
 				panic ("Negative Bytes");
 			}

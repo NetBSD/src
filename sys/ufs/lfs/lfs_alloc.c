@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.5 1996/10/10 17:21:21 christos Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.6 1996/10/12 21:58:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -82,7 +82,7 @@ lfs_valloc(v)
 	fs = VTOI(ap->a_pvp)->i_lfs;
 	new_ino = fs->lfs_free;
 #ifdef ALLOCPRINT
-	kprintf("lfs_ialloc: allocate inode %d\n", new_ino);
+	printf("lfs_ialloc: allocate inode %d\n", new_ino);
 #endif
 
 	/*
