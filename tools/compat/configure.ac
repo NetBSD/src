@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.33 2002/12/16 00:35:00 thorpej Exp $
+#	$NetBSD: configure.ac,v 1.34 2003/03/13 04:30:39 thorpej Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -28,8 +28,8 @@ AC_CHECK_LIB(z, gzdopen,,
 # These are not necessarily required by the code, but they are not
 # currently conditionalized.
 AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/mtio.h sys/param.h \
-	sys/stat.h sys/time.h sys/types.h sys/utsname.h sys/wait.h \
-	assert.h ctype.h errno.h fcntl.h grp.h limits.h locale.h \
+	sys/socket.h sys/stat.h sys/time.h sys/types.h sys/utsname.h \
+	sys/wait.h assert.h ctype.h errno.h fcntl.h grp.h limits.h locale.h \
 	netdb.h pwd.h signal.h stdarg.h stdio.h stdlib.h string.h \
 	termios.h unistd.h,,
 	AC_MSG_ERROR([standard system header file not found]))
@@ -52,7 +52,7 @@ AC_CHECK_HEADERS(rpc/types.h getopt.h netconfig.h,,
 
 # Typedefs.
 AC_TYPE_SIZE_T
-AC_CHECK_TYPES([id_t, long long, u_quad_t])
+AC_CHECK_TYPES([id_t, long long, u_quad_t, socklen_t])
 
 dnl XXX - This is UGLY.  Need a better way to homogenize the bitsized types,
 dnl including use of compiler primitive types via AC_CHECK_SIZEOF.
