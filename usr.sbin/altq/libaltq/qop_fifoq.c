@@ -49,10 +49,10 @@
 #include "altq_qop.h"
 #include "qop_fifoq.h"
 
-static int fifoq_attach(struct ifinfo *ifinfo);
-static int fifoq_detach(struct ifinfo *ifinfo);
-static int fifoq_enable(struct ifinfo *ifinfo);
-static int fifoq_disable(struct ifinfo *ifinfo);
+static int fifoq_attach(struct ifinfo *);
+static int fifoq_detach(struct ifinfo *);
+static int fifoq_enable(struct ifinfo *);
+static int fifoq_disable(struct ifinfo *);
 
 #define FIFOQ_DEVICE	"/dev/altq/fifoq"
 

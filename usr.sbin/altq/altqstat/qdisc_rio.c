@@ -1,4 +1,4 @@
-/*	$KAME: qdisc_rio.c,v 1.2 2000/10/18 09:15:17 kjc Exp $	*/
+/*	$KAME: qdisc_rio.c,v 1.4 2001/08/15 12:51:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -57,7 +57,8 @@ rio_stat_loop(int fd, const char *ifname, int count, int interval)
 	int cnt = count;
 	
 	bzero(&rio_stats, sizeof(rio_stats));
-	strcpy(rio_stats.iface.rio_ifname, ifname);
+	strlcpy(rio_stats.iface.rio_ifname, ifname,
+		sizeof(rio_stats.iface.rio_ifname));
 
 	gettimeofday(&last_time, NULL);
 	last_time.tv_sec -= interval;
@@ -123,7 +124,7 @@ rio_stat_loop(int fd, const char *ifname, int count, int interval)
 
 		last_bytes[0] = rio_stats.q_stats[0].xmit_cnt.bytes;
 		last_bytes[1] = rio_stats.q_stats[1].xmit_cnt.bytes;
-		last_bytes[2] = rio_stats.q_stats[3].xmit_cnt.bytes;
+		last_bytes[2] = rio_stats.q_stats[2].xmit_cnt.bytes;
 		last_time = cur_time;
 		sleep(interval);
 	}

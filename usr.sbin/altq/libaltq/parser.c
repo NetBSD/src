@@ -1,4 +1,4 @@
-/*	$KAME: parser.c,v 1.5 2000/10/18 09:15:18 kjc Exp $	*/
+/*	$KAME: parser.c,v 1.10 2001/08/15 12:51:57 kjc Exp $	*/
 /*******************************************************************
 
   Copyright (c) 1996 by the University of Southern California
@@ -53,37 +53,33 @@
 /*
  * Forward & External Declarations
  */
-static int is_qdisc_name(const char *qname);
-static int qdisc_interface_parser(const char * qname, const char *ifname,
-				  int argc, char **argv);
-static int qdisc_class_parser(const char *qname, const char *ifname,
-			      const char *class_name, const char *parent_name,
-			      int argc, char **argv);
+static int is_qdisc_name(const char *);
+static int qdisc_interface_parser(const char *, const char *, int, char **);
+static int qdisc_class_parser(const char *, const char *, const char *,
+	const char *, int, char **);
 
-static int pfxcmp(const char *s1, const char *s2);
-static int next_word(char **cpp, char *b);
+static int pfxcmp(const char *, const char *);
+static int next_word(char **, char *);
 
-static int do_cmd(int op, char *cmdbuf);
-static int get_ifname(char **cpp, char **ifnamep);
-static int get_addr(char **cpp, struct in_addr *addr, struct in_addr *mask);
-static int get_port(const char *name, u_int16_t *port_no);
-static int get_proto(const char *name, int *proto_no);
-static int get_fltr_opts(char **cpp, char *fltr_name, int *ruleno);
-static int interface_parser(char *cmdbuf);
-static int class_parser(char *cmdbuf) ;
-static int filter_parser(char *cmdbuf);
+static int do_cmd(int, char *);
+static int get_ifname(char **, char **);
+static int get_addr(char **, struct in_addr *, struct in_addr *);
+static int get_port(const char *, u_int16_t *);
+static int get_proto(const char *, int *);
+static int get_fltr_opts(char **, char *, size_t, int *);
+static int interface_parser(char *);
+static int class_parser(char *) ;
+static int filter_parser(char *);
 #ifdef INET6
-static int filter6_parser(char *cmdbuf);
-static int get_ip6addr(char **cpp, struct in6_addr *addr,
-		       struct in6_addr *mask);
+static int filter6_parser(char *);
+static int get_ip6addr(char **, struct in6_addr *, struct in6_addr *);
 #endif
-static int ctl_parser(char *cmdbuf);
-static int delete_parser(char *cmdbuf);
-static int red_parser(char *cmdbuf);
-static int rio_parser(char *cmdbuf);
-static int conditioner_parser(char *cmdbuf);
-static int tc_action_parser(char *ifname, char **cpp,
-			    struct tc_action *action);
+static int ctl_parser(char *);
+static int delete_parser(char *);
+static int red_parser(char *);
+static int rio_parser(char *);
+static int conditioner_parser(char *);
+static int tc_action_parser(char *, char **, struct tc_action *);
 
 /*
  * Globals
@@ -173,13 +169,25 @@ qdisc_class_parser(const char *qname, const char *ifname,
 		   int argc, char **argv)
 {
 	struct qdisc_parser *qp;
-	
+	struct ifinfo	*ifinfo;
+
 	for (qp = qdisc_parser; qp->qname != NULL; qp++)
 		if (strncmp(qp->qname, qname, strlen(qp->qname)) == 0) {
 			if (qp->class_parser == NULL) {
 				LOG(LOG_ERR, 0,
-				    "class can't be specified for %s",
-				    qp->qname);
+				    "class can't be specified for %s", qp->qname);
+				return (0);
+			}
+			if ((ifinfo = ifname2ifinfo(ifname)) == NULL) {
+				LOG(LOG_ERR, 0,
+				    "no such interface, line %d\n", line_no);
+				return (0);
+			}
+			if (strncmp(ifinfo->qdisc->qname, qname,
+				    strlen(ifinfo->qdisc->qname)) != 0) {
+				LOG(LOG_ERR, 0,
+				    "qname doesn't match the interface, line %d\n",
+				    line_no);
 				return (0);
 			}
 			return (*qp->class_parser)(ifname, class_name,
@@ -429,7 +437,7 @@ get_ifname(char **cpp, char **ifnamep)
 			if (strcmp(w, ifnp->if_name) == 0) {
 				/* if_name found. advance the word pointer */
 				*cpp = ocp; 
-				strcpy(if_names[TNO], w);
+				strlcpy(if_names[TNO], w, sizeof(if_names[TNO]));
 				*ifnamep = if_names[TNO];
 				return (1);
 			}
@@ -522,7 +530,7 @@ get_proto(const char *name, int *proto_no)
 }
 
 static int
-get_fltr_opts(char **cpp, char *fltr_name, int *ruleno)
+get_fltr_opts(char **cpp, char *fltr_name, size_t len, int *ruleno)
 {
 	char w[128], *ocp;
 
@@ -531,7 +539,7 @@ get_fltr_opts(char **cpp, char *fltr_name, int *ruleno)
 		if (EQUAL(w, "name")) {
 			if (!next_word(&ocp, w))
 				return (0);
-			strcpy(fltr_name, w);
+			strlcpy(fltr_name, w, len);
 			*cpp = ocp;
 		} else if (EQUAL(w, "ruleno")) {
 			if (!next_word(&ocp, w))
@@ -568,7 +576,7 @@ interface_parser(char *cmdbuf)
 	ap = w;
 	while (next_word(&cp, ap)) {
 		if (is_qdisc_name(ap))
-			strcpy(qdisc_name, ap);
+			strlcpy(qdisc_name, ap, sizeof(qdisc_name));
 
 		argv[argc] = ap;
 		ap += strlen(ap) + 1;
@@ -682,7 +690,7 @@ filter_parser(char *cmdbuf)
 
 	fltr_name[0] = '\0';
 	ruleno = 0;
-	if (!get_fltr_opts(&cp, &fltr_name[0], &ruleno)) {
+	if (!get_fltr_opts(&cp, &fltr_name[0], sizeof(fltr_name), &ruleno)) {
 		LOG(LOG_ERR, 0,
 		    "bad filter option in %s, line %d\n",
 		    altqconfigfile, line_no);
@@ -818,7 +826,7 @@ filter6_parser(char *cmdbuf)
 
 	fltr_name[0] = '\0';
 	ruleno = 0;
-	if (!get_fltr_opts(&cp, &fltr_name[0], &ruleno)) {
+	if (!get_fltr_opts(&cp, &fltr_name[0], sizeof(fltr_name), &ruleno)) {
 		LOG(LOG_ERR, 0,
 		    "bad filter option in %s, line %d\n",
 		    altqconfigfile, line_no);

@@ -49,18 +49,18 @@
 #include "altq_qop.h"
 #include "qop_priq.h"
 
-static int qop_priq_enable_hook(struct ifinfo *ifinfo);
+static int qop_priq_enable_hook(struct ifinfo *);
 
-static int priq_attach(struct ifinfo *ifinfo);
-static int priq_detach(struct ifinfo *ifinfo);
-static int priq_clear(struct ifinfo *ifinfo);
-static int priq_enable(struct ifinfo *ifinfo);
-static int priq_disable(struct ifinfo *ifinfo);
-static int priq_add_class(struct classinfo *clinfo);
-static int priq_modify_class(struct classinfo *clinfo, void *arg);
-static int priq_delete_class(struct classinfo *clinfo);
-static int priq_add_filter(struct fltrinfo *fltrinfo);
-static int priq_delete_filter(struct fltrinfo *fltrinfo);
+static int priq_attach(struct ifinfo *);
+static int priq_detach(struct ifinfo *);
+static int priq_clear(struct ifinfo *);
+static int priq_enable(struct ifinfo *);
+static int priq_disable(struct ifinfo *);
+static int priq_add_class(struct classinfo *);
+static int priq_modify_class(struct classinfo *, void *);
+static int priq_delete_class(struct classinfo *);
+static int priq_add_filter(struct fltrinfo *);
+static int priq_delete_filter(struct fltrinfo *);
 
 #define PRIQ_DEVICE	"/dev/altq/priq"
 

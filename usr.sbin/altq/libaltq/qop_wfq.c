@@ -49,10 +49,10 @@
 #include "altq_qop.h"
 #include "qop_wfq.h"
 
-static int wfq_attach(struct ifinfo *ifinfo);
-static int wfq_detach(struct ifinfo *ifinfo);
-static int wfq_enable(struct ifinfo *ifinfo);
-static int wfq_disable(struct ifinfo *ifinfo);
+static int wfq_attach(struct ifinfo *);
+static int wfq_detach(struct ifinfo *);
+static int wfq_enable(struct ifinfo *);
+static int wfq_disable(struct ifinfo *);
 
 #define WFQ_DEVICE	"/dev/altq/wfq"
 

@@ -50,10 +50,10 @@
 #include "altq_qop.h"
 #include "qop_rio.h"
 
-static int rio_attach(struct ifinfo *ifinfo);
-static int rio_detach(struct ifinfo *ifinfo);
-static int rio_enable(struct ifinfo *ifinfo);
-static int rio_disable(struct ifinfo *ifinfo);
+static int rio_attach(struct ifinfo *);
+static int rio_detach(struct ifinfo *);
+static int rio_enable(struct ifinfo *);
+static int rio_disable(struct ifinfo *);
 
 #define RIO_DEVICE	"/dev/altq/rio"
 

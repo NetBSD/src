@@ -1,4 +1,4 @@
-/*	$KAME: qdisc_cbq.c,v 1.2 2000/10/18 09:15:16 kjc Exp $	*/
+/*	$KAME: qdisc_cbq.c,v 1.4 2001/08/15 12:51:58 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -67,7 +67,8 @@ cbq_stat_loop(int fd, const char *ifname, int count, int interval)
 	double			flow_bps, sec;
 	int cnt = count;
 
-	strcpy(get_stats.iface.cbq_ifacename, ifname);
+	strlcpy(get_stats.iface.cbq_ifacename, ifname,
+		sizeof(get_stats.iface.cbq_ifacename));
 	new = &stats1[0];
 	last = &stats2[0];
 
@@ -89,7 +90,7 @@ cbq_stat_loop(int fd, const char *ifname, int count, int interval)
 
 			if (sp->handle != clhandles[i]) {
 				quip_chandle2name(ifname, sp->handle,
-						  clnames[i]);
+						  clnames[i], sizeof(clnames[0]));
 				clhandles[i] = sp->handle;
 				continue;
 			}
