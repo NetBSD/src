@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.5 2000/01/16 15:35:06 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.6 2000/01/16 15:43:24 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -1206,9 +1206,12 @@ aue_rxeof(xfer, priv, status)
 	ifp->if_ipackets++;
 
 #if defined(__FreeBSD__)
+	m->m_pkthdr.rcvif = (struct ifnet *)&kue_qdat;
 	/* Put the packet on the special USB input queue. */
 	usb_ether_input(m);
+
 	return;
+
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	m->m_pkthdr.rcvif = ifp;
 
