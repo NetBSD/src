@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.168 2001/05/22 00:18:03 jhawk Exp $
+$NetBSD: usbdevs,v 1.169 2001/05/22 10:38:56 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -553,6 +553,7 @@ product HP 815C			0x0204	DeskJet 815C
 product HP 3300C		0x0205	ScanJet 3300C
 product HP CDW8200		0x0207	CD-Writer Plus 8200e
 product HP 810C			0x0304	DeskJet 810C/812C
+product HP 4300C		0x0305	Scanjet 4300C
 product HP G85XI		0x0311	OfficeJet G85xi
 product HP 5200C		0x0401	Scanjet 5200C
 product HP 830C			0x0404	DeskJet 830C
