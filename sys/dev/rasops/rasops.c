@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.29 2000/04/05 20:33:28 nathanw Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.30 2000/04/12 14:22:28 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.29 2000/04/05 20:33:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.30 2000/04/12 14:22:28 pk Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -97,8 +97,8 @@ const u_char rasops_cmap[256*3] = {
 };
 
 /* True if color is gray */
-const u_char rasops_isgray[16] = { 
-	1, 0, 0, 0, 
+const u_char rasops_isgray[16] = {
+	1, 0, 0, 0,
 	0, 0, 0, 1,
 	1, 0, 0, 0,
 	0, 0, 0, 1
@@ -122,11 +122,11 @@ rasops_init(ri, wantrows, wantcols)
 	int wantrows, wantcols;
 {
 
-#ifdef _KERNEL	
+#ifdef _KERNEL
 	/* Select a font if the caller doesn't care */
 	if (ri->ri_font == NULL) {
 		int cookie;
-		
+
 		wsfont_init();
 
 		/* Want 8 pixel wide, don't care about aestethics */
@@ -137,8 +137,8 @@ rasops_init(ri, wantrows, wantcols)
 			printf("rasops_init: font table is empty\n");
 			return (-1);
 		}
-		
-		if (wsfont_lock(cookie, &ri->ri_font, 
+
+		if (wsfont_lock(cookie, &ri->ri_font,
 		    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R) <= 0) {
 			printf("rasops_init: couldn't lock font\n");
 			return (-1);
@@ -147,7 +147,7 @@ rasops_init(ri, wantrows, wantcols)
 		ri->ri_wsfcookie = cookie;
 	}
 #endif
-	
+
 	/* This should never happen in reality... */
 #ifdef DEBUG
 	if ((int)ri->ri_bits & 3) {
@@ -163,7 +163,7 @@ rasops_init(ri, wantrows, wantcols)
 
 	if (rasops_reconfig(ri, wantrows, wantcols))
 		return (-1);
- 	
+ 
 	rasops_init_devcmap(ri);
 	return (0);
 }
@@ -177,39 +177,39 @@ rasops_reconfig(ri, wantrows, wantcols)
 	int wantrows, wantcols;
 {
 	int bpp, s;
-	
+
 	s = splhigh();
-		
+
 	if (ri->ri_font->fontwidth > 32 || ri->ri_font->fontwidth < 4)
 		panic("rasops_init: fontwidth assumptions botched!\n");
-	
+
 	/* Need this to frob the setup below */
 	bpp = (ri->ri_depth == 15 ? 16 : ri->ri_depth);
 
 	if ((ri->ri_flg & RI_CFGDONE) != 0)
 		ri->ri_bits = ri->ri_origbits;
-	
+
 	/* Don't care if the caller wants a hideously small console */
 	if (wantrows < 10)
 		wantrows = 10;
-		
+
 	if (wantcols < 20)
 		wantcols = 20;
-	
+
 	/* Now constrain what they get */
 	ri->ri_emuwidth = ri->ri_font->fontwidth * wantcols;
 	ri->ri_emuheight = ri->ri_font->fontheight * wantrows;
-	
+
 	if (ri->ri_emuwidth > ri->ri_width)
 		ri->ri_emuwidth = ri->ri_width;
-		
+
 	if (ri->ri_emuheight > ri->ri_height)
 		ri->ri_emuheight = ri->ri_height;
-	
+
 	/* Reduce width until aligned on a 32-bit boundary */
 	while ((ri->ri_emuwidth * bpp & 31) != 0)
 		ri->ri_emuwidth--;
-	
+
 	ri->ri_cols = ri->ri_emuwidth / ri->ri_font->fontwidth;
 	ri->ri_rows = ri->ri_emuheight / ri->ri_font->fontheight;
 	ri->ri_emustride = ri->ri_emuwidth * bpp >> 3;
@@ -217,35 +217,35 @@ rasops_reconfig(ri, wantrows, wantcols)
 	ri->ri_ccol = 0;
 	ri->ri_crow = 0;
 	ri->ri_pelbytes = bpp >> 3;
-	
+
 	ri->ri_xscale = (ri->ri_font->fontwidth * bpp) >> 3;
 	ri->ri_yscale = ri->ri_font->fontheight * ri->ri_stride;
 	ri->ri_fontscale = ri->ri_font->fontheight * ri->ri_font->stride;
 
-#ifdef DEBUG	
+#ifdef DEBUG
 	if ((ri->ri_delta & 3) != 0)
 		panic("rasops_init: ri_delta not aligned on 32-bit boundary");
-#endif	
+#endif
 	/* Clear the entire display */
 	if ((ri->ri_flg & RI_CLEAR) != 0)
 		memset(ri->ri_bits, 0, ri->ri_stride * ri->ri_height);
-	
-	/* Now centre our window if needs be */ 
+
+	/* Now centre our window if needs be */
 	ri->ri_origbits = ri->ri_bits;
-	
+
 	if ((ri->ri_flg & RI_CENTER) != 0) {
 		ri->ri_bits += ((ri->ri_stride - ri->ri_emustride) >> 1) & ~3;
-		ri->ri_bits += ((ri->ri_height - ri->ri_emuheight) >> 1) * 
+		ri->ri_bits += ((ri->ri_height - ri->ri_emuheight) >> 1) *
 		    ri->ri_stride;
-		
-		ri->ri_yorigin = (int)(ri->ri_bits - ri->ri_origbits) 
+
+		ri->ri_yorigin = (int)(ri->ri_bits - ri->ri_origbits)
 		   / ri->ri_stride;
-		ri->ri_xorigin = (((int)(ri->ri_bits - ri->ri_origbits) 
+		ri->ri_xorigin = (((int)(ri->ri_bits - ri->ri_origbits)
 		   % ri->ri_stride) * 8 / bpp);
 	} else
 		ri->ri_xorigin = ri->ri_yorigin = 0;
 
-	/*	
+	/*
 	 * Fill in defaults for operations set.  XXX this nukes private
 	 * routines used by accelerated fb drivers.
 	 */
@@ -256,13 +256,13 @@ rasops_reconfig(ri, wantrows, wantcols)
 	ri->ri_ops.eraserows = rasops_eraserows;
 	ri->ri_ops.cursor = rasops_cursor;
 	ri->ri_do_cursor = rasops_do_cursor;
-	
+
 	if (ri->ri_depth < 8 || (ri->ri_flg & RI_FORCEMONO) != 0) {
 		ri->ri_ops.alloc_attr = rasops_alloc_mattr;
 		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_REVERSE;
 	} else {
 		ri->ri_ops.alloc_attr = rasops_alloc_cattr;
-		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_HILIT | 
+		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	}
 
@@ -303,7 +303,7 @@ rasops_reconfig(ri, wantrows, wantcols)
 		splx(s);
 		return (-1);
 	}
-	
+
 	ri->ri_flg |= RI_CFGDONE;
 	splx(s);
 	return (0);
@@ -319,24 +319,24 @@ rasops_mapchar(cookie, c, cp)
 	u_int *cp;
 {
 	struct rasops_info *ri;
-	
+
 	ri = (struct rasops_info *)cookie;
 
-#ifdef DIAGNOSTIC	
+#ifdef DIAGNOSTIC
 	if (ri->ri_font == NULL)
 		panic("rasops_mapchar: no font selected\n");
-#endif		
-	
+#endif
+
 	if (c < ri->ri_font->firstchar) {
 		*cp = ' ';
 		return (0);
 	}
-	
+
 	if (c - ri->ri_font->firstchar >= ri->ri_font->numchars) {
 		*cp = ' ';
 		return (0);
 	}
-	
+
 	*cp = c;
 	return (5);
 }
@@ -372,9 +372,9 @@ rasops_alloc_cattr(cookie, fg, bg, flg, attr)
 
 	if ((flg & WSATTR_HILIT) != 0)
 		fg += 8;
-		
+
 	flg = ((flg & WSATTR_UNDERLINE) ? 1 : 0);
-	
+
 	if (rasops_isgray[fg])
 		flg |= 2;
 
@@ -423,13 +423,13 @@ rasops_copyrows(cookie, src, dst, num)
 	int32_t *sp, *dp, *srp, *drp;
 	struct rasops_info *ri;
 	int n8, n1, cnt, delta;
-	
+
 	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING
 	if (dst == src)
 		return;
-	
+
 	if (src < 0) {
 		num += src;
 		src = 0;
@@ -445,7 +445,7 @@ rasops_copyrows(cookie, src, dst, num)
 
 	if ((dst + num) > ri->ri_rows)
 		num = ri->ri_rows - dst;
-	
+
 	if (num <= 0)
 		return;
 #endif
@@ -453,7 +453,7 @@ rasops_copyrows(cookie, src, dst, num)
 	num *= ri->ri_font->fontheight;
 	n8 = ri->ri_emustride >> 5;
 	n1 = (ri->ri_emustride >> 2) & 7;
-	
+
 	if (dst < src) {
 		srp = (int32_t *)(ri->ri_bits + src * ri->ri_yscale);
 		drp = (int32_t *)(ri->ri_bits + dst * ri->ri_yscale);
@@ -465,7 +465,7 @@ rasops_copyrows(cookie, src, dst, num)
 		drp = (int32_t *)(ri->ri_bits + dst * ri->ri_stride);
 		delta = -ri->ri_stride;
 	}
-	
+
 	while (num--) {
 		dp = drp;
 		sp = srp;
@@ -484,7 +484,7 @@ rasops_copyrows(cookie, src, dst, num)
 			dp += 8;
 			sp += 8;
 		}
-			
+
 		for (cnt = n1; cnt; cnt--)
 			*dp++ = *sp++;
 	}
@@ -504,17 +504,17 @@ rasops_copycols(cookie, row, src, dst, num)
 	struct rasops_info *ri;
 	u_char *sp, *dp;
 	int height;
-	
+
 	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING
 	if (dst == src)
 		return;
-		
+
 	/* Catches < 0 case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
-	
+
 	if (src < 0) {
 		num += src;
 		src = 0;
@@ -530,18 +530,18 @@ rasops_copycols(cookie, row, src, dst, num)
 
 	if ((dst + num) > ri->ri_cols)
 		num = ri->ri_cols - dst;
-	
+
 	if (num <= 0)
 		return;
 #endif
-	
+
 	num *= ri->ri_xscale;
 	row *= ri->ri_yscale;
 	height = ri->ri_font->fontheight;
-	
+
 	sp = ri->ri_bits + row + src * ri->ri_xscale;
 	dp = ri->ri_bits + row + dst * ri->ri_xscale;
-	
+
 	while (height--) {
 		bcopy(sp, dp, num);
 		dp += ri->ri_stride;
@@ -558,12 +558,12 @@ rasops_cursor(cookie, on, row, col)
 	int on, row, col;
 {
 	struct rasops_info *ri;
-	
+
 	ri = (struct rasops_info *)cookie;
-	
+
 	/* Turn old cursor off */
 	if ((ri->ri_flg & RI_CURSOR) != 0)
-#ifdef RASOPS_CLIPPING		
+#ifdef RASOPS_CLIPPING
 		if ((ri->ri_flg & RI_CURSORCLIP) == 0)
 #endif
 			ri->ri_do_cursor(ri);
@@ -571,7 +571,7 @@ rasops_cursor(cookie, on, row, col)
 	/* Select new cursor */
 #ifdef RASOPS_CLIPPING
 	ri->ri_flg &= ~RI_CURSORCLIP;
-	
+
 	if (row < 0 || row >= ri->ri_rows)
 		ri->ri_flg |= RI_CURSORCLIP;
 	else if (col < 0 || col >= ri->ri_cols)
@@ -582,11 +582,11 @@ rasops_cursor(cookie, on, row, col)
 
 	if (on) {
 		ri->ri_flg |= RI_CURSOR;
-#ifdef RASOPS_CLIPPING		
+#ifdef RASOPS_CLIPPING
 		if ((ri->ri_flg & RI_CURSORCLIP) == 0)
 #endif
 			ri->ri_do_cursor(ri);
-	} else 
+	} else
 		ri->ri_flg &= ~RI_CURSOR;
 }
 
@@ -599,7 +599,7 @@ rasops_init_devcmap(ri)
 {
 	const u_char *p;
 	int i, c;
-	
+
 	switch (ri->ri_depth) {
 	case 1:
 		ri->ri_devcmap[0] = 0;
@@ -610,7 +610,7 @@ rasops_init_devcmap(ri)
 	case 2:
 		for (i = 1; i < 15; i++)
 			ri->ri_devcmap[i] = 0xaaaaaaaa;
-		
+
 		ri->ri_devcmap[0] = 0;
 		ri->ri_devcmap[8] = 0x55555555;
 		ri->ri_devcmap[15] = -1;
@@ -621,25 +621,25 @@ rasops_init_devcmap(ri)
 			ri->ri_devcmap[i] = i | (i<<8) | (i<<16) | (i<<24);
 		return;
 	}
-		
+
 	p = rasops_cmap;
-	
+
 	for (i = 0; i < 16; i++) {
 		if (ri->ri_rnum <= 8)
 			c = (*p >> (8 - ri->ri_rnum)) << ri->ri_rpos;
-		else 
+		else
 			c = (*p << (ri->ri_rnum - 8)) << ri->ri_rpos;
 		p++;
 
 		if (ri->ri_gnum <= 8)
 			c |= (*p >> (8 - ri->ri_gnum)) << ri->ri_gpos;
-		else 
+		else
 			c |= (*p << (ri->ri_gnum - 8)) << ri->ri_gpos;
 		p++;
 
 		if (ri->ri_bnum <= 8)
 			c |= (*p >> (8 - ri->ri_bnum)) << ri->ri_bpos;
-		else 
+		else
 			c |= (*p << (ri->ri_bnum - 8)) << ri->ri_bpos;
 		p++;
 
@@ -669,9 +669,9 @@ rasops_unpack_attr(attr, fg, bg, underline)
 	long attr;
 	int *fg, *bg, *underline;
 {
-	
-	*fg = ((u_int)attr >> 24) & 15;
-	*bg = ((u_int)attr >> 16) & 15;
+
+	*fg = ((u_int)attr >> 24) & 0xf;
+	*bg = ((u_int)attr >> 16) & 0xf;
 	if (underline != NULL)
 		*underline = (u_int)attr & 1;
 }
@@ -688,7 +688,7 @@ rasops_eraserows(cookie, row, num, attr)
 	struct rasops_info *ri;
 	int np, nw, cnt, delta;
 	int32_t *dp, clr;
-	
+
 	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING
@@ -699,19 +699,19 @@ rasops_eraserows(cookie, row, num, attr)
 
 	if ((row + num) > ri->ri_rows)
 		num = ri->ri_rows - row;
-	
+
 	if (num <= 0)
 		return;
 #endif
 
-	clr = ri->ri_devcmap[(attr >> 16) & 15];
+	clr = ri->ri_devcmap[(attr >> 16) & 0xf];
 
-	/* 
+	/*
 	 * XXX The wsdisplay_emulops interface seems a little deficient in
-	 * that there is no way to clear the *entire* screen. We provide a 
-	 * workaround here: if the entire console area is being cleared, and 
+	 * that there is no way to clear the *entire* screen. We provide a
+	 * workaround here: if the entire console area is being cleared, and
 	 * the RI_FULLCLEAR flag is set, clear the entire display.
-	 */ 
+	 */
 	if (num == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR) != 0) {
 		np = ri->ri_stride >> 5;
 		nw = (ri->ri_stride >> 2) & 7;
@@ -725,7 +725,7 @@ rasops_eraserows(cookie, row, num, attr)
 		dp = (int32_t *)(ri->ri_bits + row * ri->ri_yscale);
 		delta = ri->ri_delta;
 	}
-	
+
 	while (num--) {
 		for (cnt = np; cnt; cnt--) {
 			dp[0] = clr;
@@ -738,12 +738,12 @@ rasops_eraserows(cookie, row, num, attr)
 			dp[7] = clr;
 			dp += 8;
 		}
-		
+
 		for (cnt = nw; cnt; cnt--) {
 			*(int32_t *)dp = clr;
 			DELTA(dp, 4, int32_t *);
-		} 
-			
+		}
+
 		DELTA(dp, delta, int32_t *);
 	}
 }
@@ -758,26 +758,26 @@ rasops_do_cursor(ri)
 {
 	int full1, height, cnt, slop1, slop2, row, col;
 	u_char *dp, *rp;
-	
+
 	row = ri->ri_crow;
 	col = ri->ri_ccol;
-	
+
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
 	slop1 = (4 - ((long)rp & 3)) & 3;
-	
+
 	if (slop1 > ri->ri_xscale)
 		slop1 = ri->ri_xscale;
-	
+
 	slop2 = (ri->ri_xscale - slop1) & 3;
 	full1 = (ri->ri_xscale - slop1 - slop2) >> 2;
-	
+
 	if ((slop1 | slop2) == 0) {
 		/* A common case */
 		while (height--) {
 			dp = rp;
 			rp += ri->ri_stride;
-	
+
 			for (cnt = full1; cnt; cnt--) {
 				*(int32_t *)dp ^= ~0;
 				dp += 4;
@@ -788,7 +788,7 @@ rasops_do_cursor(ri)
 		while (height--) {
 			dp = rp;
 			rp += ri->ri_stride;
-	
+
 			if (slop1 & 1)
 				*dp++ ^= ~0;
 
@@ -796,7 +796,7 @@ rasops_do_cursor(ri)
 				*(int16_t *)dp ^= ~0;
 				dp += 2;
 			}
-	
+
 			for (cnt = full1; cnt; cnt--) {
 				*(int32_t *)dp ^= ~0;
 				dp += 4;
@@ -823,10 +823,10 @@ rasops_erasecols(cookie, row, col, num, attr)
 	int n8, height, cnt, slop1, slop2, clr;
 	struct rasops_info *ri;
 	int32_t *rp, *dp;
-	
+
 	ri = (struct rasops_info *)cookie;
-	
-#ifdef RASOPS_CLIPPING	
+
+#ifdef RASOPS_CLIPPING
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
 
@@ -837,16 +837,16 @@ rasops_erasecols(cookie, row, col, num, attr)
 
 	if ((col + num) > ri->ri_cols)
 		num = ri->ri_cols - col;
-	
+
 	if (num <= 0)
 		return;
 #endif
-		
+
 	num = num * ri->ri_xscale;
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 	height = ri->ri_font->fontheight;
-	clr = ri->ri_devcmap[(attr >> 16) & 15];
-	
+	clr = ri->ri_devcmap[(attr >> 16) & 0xf];
+
 	/* Don't bother using the full loop for <= 32 pels */
 	if (num <= 32) {
 		if (((num | ri->ri_xscale) & 3) == 0) {
@@ -856,14 +856,14 @@ rasops_erasecols(cookie, row, col, num, attr)
 			while (height--) {
 				dp = rp;
 				DELTA(rp, ri->ri_stride, int32_t *);
-		
+
 				for (cnt = num; cnt; cnt--)
 					*dp++ = clr;
 			}
 		} else if (((num | ri->ri_xscale) & 1) == 0) {
-			/* 
+			/*
 			 * Halfword aligned blt. This is needed so the
-			 * 15/16 bit ops can use this function. 
+			 * 15/16 bit ops can use this function.
 			 */
 			num >>= 1;
 
@@ -887,10 +887,10 @@ rasops_erasecols(cookie, row, col, num, attr)
 				}
 			}
 		}
-		
+
 		return;
 	}
-	
+
 	slop1 = (4 - ((long)rp & 3)) & 3;
 	slop2 = (num - slop1) & 3;
 	num -= slop1 + slop2;
@@ -900,7 +900,7 @@ rasops_erasecols(cookie, row, col, num, attr)
 	while (height--) {
 		dp = rp;
 		DELTA(rp, ri->ri_stride, int32_t *);
-	
+
 		/* Align span to 4 bytes */
 		if (slop1 & 1) {
 			*(u_char *)dp = clr;
@@ -911,7 +911,7 @@ rasops_erasecols(cookie, row, col, num, attr)
 			*(int16_t *)dp = clr;
 			DELTA(dp, 2, int32_t *);
 		}
-		
+
 		/* Write 32 bytes per loop */
 		for (cnt = n8; cnt; cnt--) {
 			dp[0] = clr;
@@ -924,12 +924,12 @@ rasops_erasecols(cookie, row, col, num, attr)
 			dp[7] = clr;
 			dp += 8;
 		}
-		
-		/* Write 4 bytes per loop */	
+
+		/* Write 4 bytes per loop */
 		for (cnt = num; cnt; cnt--)
 			*dp++ = clr;
-	
-		/* Write unaligned trailing slop */ 
+
+		/* Write unaligned trailing slop */
 		if (slop2 & 1) {
 			*(u_char *)dp = clr;
 			DELTA(dp, 1, int32_t *);
