@@ -1,4 +1,4 @@
-.\"	$NetBSD: dump.8,v 1.43 2001/12/14 14:43:33 bouyer Exp $
+.\"	$NetBSD: dump.8,v 1.44 2001/12/30 04:03:16 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	 Regents of the University of California.
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)dump.8	8.3 (Berkeley) 5/1/95
 .\"
-.Dd November 16, 2001
+.Dd December 30, 2001
 .Dt DUMP 8
 .Os
 .Sh NAME
@@ -43,17 +43,37 @@
 .Nd file system backup
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl 0123456789ceFlnStu
+.Op Fl 0123456789aceFlnStu
+.Bk -words
 .Op Fl B Ar records
+.Ek
+.Bk -words
 .Op Fl b Ar blocksize
+.Ek
+.Bk -words
 .Op Fl d Ar density
+.Ek
+.Bk -words
 .Op Fl f Ar file
+.Ek
+.Bk -words
 .Op Fl h Ar level
-.Op Fl k Ar read blocksize
+.Ek
+.Bk -words
+.Op Fl k Ar read-blocksize
+.Ek
+.Bk -words
 .Op Fl L Ar label
+.Ek
+.Bk -words
 .Op Fl r Ar cachesize
+.Ek
+.Bk -words
 .Op Fl s Ar feet
+.Ek
+.Bk -words
 .Op Fl T Ar date
+.Ek
 .Ar files-to-dump
 .Nm ""
 .Op Fl W Li \&| Fl w
@@ -75,6 +95,11 @@ A dump that is larger than the output medium is broken into
 multiple volumes.
 On most media the size is determined by writing until an
 end-of-media indication is returned.
+This can be enforced
+by using the
+.Fl a
+option.
+.Pp
 On media that cannot reliably return an end-of-media indication
 (such as some cartridge tape drives)
 each volume is of a fixed size;
@@ -118,6 +143,14 @@ tells dump to
 copy all files new or modified since the
 last dump of a lower level.
 The default level is 9.
+.It Fl a
+.Dq auto-size .
+Bypass all tape length considerations, and enforce writing
+until an end-of-media indication is returned.
+This fits best for most modern tape drives.
+Use of this option is particularly recommended when appending to an
+existing tape, or using a tape drive with hardware compression (where
+you can never be sure about the compression ratio).
 .It Fl B Ar records
 The number of kilobytes per volume, rounded
 down to a multiple of the blocksize.

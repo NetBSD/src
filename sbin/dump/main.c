@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.48 2001/12/25 12:06:26 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.49 2001/12/30 04:03:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.48 2001/12/25 12:06:26 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.49 2001/12/30 04:03:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,12 +140,16 @@ main(int argc, char *argv[])
 
 	obsolete(&argc, &argv);
 	while ((ch = getopt(argc, argv,
-	    "0123456789B:b:cd:eFf:h:k:lL:nr:s:StT:uWw")) != -1)
+	    "0123456789aB:b:cd:eFf:h:k:lL:nr:s:StT:uWw")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
 			level = ch;
+			break;
+
+		case 'a':		/* `auto-size', Write to EOM. */
+			unlimited = 1;
 			break;
 
 		case 'B':		/* blocks per output file */
@@ -336,7 +340,7 @@ main(int argc, char *argv[])
 
 	if (blocksperfile)
 		blocksperfile = blocksperfile / ntrec * ntrec; /* round down */
-	else {
+	else if (!unlimited) {
 		/*
 		 * Determine how to default tape size and density
 		 *
@@ -474,7 +478,7 @@ main(int argc, char *argv[])
 		anydirskipped = mapdirs(maxino, &tapesize);
 	}
 
-	if (pipeout) {
+	if (pipeout || unlimited) {
 		tapesize += 10;	/* 10 trailer blocks */
 		msg("estimated %ld tape blocks.\n", tapesize);
 	} else {
@@ -602,12 +606,13 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
+	const char *prog = getprogname();
 
-	(void)fprintf(stderr, "%s\n%s\n%s\n%s\n",
-"usage: dump [-0123456789ceFlnStu] [-B records] [-b blocksize] [-d density]",
-"            [-f file] [-h level] [-k read block size] [-L label]",
-"            [-r read cache size] [-s feet] [-T date] file system",
-"       dump [-W | -w]");
+	(void)fprintf(stderr,
+"usage: %s [-0123456789aceFlnStu] [-B records] [-b blocksize]\n"
+"            [-d density] [-f file] [-h level] [-k read-blocksize]\n"
+"            [-L label] [-r read-cache] [-s feet] [-T date] files-to-dump\n"
+"       %s [-W | -w]\n", prog, prog);
 	exit(X_STARTUP);
 }
 

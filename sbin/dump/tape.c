@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.35 2001/12/25 12:06:26 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.36 2001/12/30 04:03:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.35 2001/12/25 12:06:26 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.36 2001/12/30 04:03:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ alloctape(void)
 	 * repositioning after stopping, i.e, streaming mode, where the gap is
 	 * variable, 0.30" to 0.45".  The gap is maximal when the tape stops.
 	 */
-	if (blocksperfile == 0)
+	if (blocksperfile == 0 && !unlimited)
 		tenths = writesize / density +
 		    (cartridge ? 16 : density == 625 ? 5 : 8);
 	/*
@@ -351,7 +351,7 @@ flushtape(void)
 	asize += tenths;
 	blockswritten += ntrec;
 	blocksthisvol += ntrec;
-	if (!pipeout && (blocksperfile ?
+	if (!pipeout && !unlimited && (blocksperfile ?
 	    (blocksthisvol >= blocksperfile) : (asize > tsize))) {
 		close_rewind();
 		startnewtape(0);
