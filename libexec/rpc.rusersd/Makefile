@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1997/10/08 09:07:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 1997/10/22 06:01:19 lukem Exp $
 
 PROG =	rpc.rusersd
 SRCS =	rusersd.c rusers_proc.c
@@ -26,7 +26,7 @@ XLIBDIR=	/usr/X386/lib
 .endif
 
 .if defined(XINCDIR) && exists($(XINCDIR)/X11/extensions/xidle.h)
-CFLAGS+=	-I$(XINCDIR) -DXIDLE
+CPPFLAGS+=	-I$(XINCDIR) -DXIDLE
 LDADD+=		-L$(XLIBDIR) -lXext -lX11
 .endif
 
