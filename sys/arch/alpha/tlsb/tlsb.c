@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.19 1999/08/10 23:35:47 thorpej Exp $ */
+/* $NetBSD: tlsb.c,v 1.20 2001/04/20 18:03:27 thorpej Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.19 1999/08/10 23:35:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.20 2001/04/20 18:03:27 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.19 1999/08/10 23:35:47 thorpej Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/cpuvar.h>
 #include <machine/rpb.h>
 #include <machine/pte.h>
 #include <machine/alpha.h>
@@ -226,7 +227,7 @@ tlsbattach(parent, self, aux)
 			 */
 			printf("%s node %d: routing interrupts to %s\n",
 			  self->dv_xname, node,
-			  cpu_info[hwrpb->rpb_primary_cpu_id].ci_dev->dv_xname);
+			  cpu_info[hwrpb->rpb_primary_cpu_id].ci_softc->sc_dev.dv_xname);
 			TLSB_PUT_NODEREG(node, TLCPUMASK,
 			    (1UL << hwrpb->rpb_primary_cpu_id));
 #else
