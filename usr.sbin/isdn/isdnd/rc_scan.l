@@ -30,7 +30,7 @@
  *	i4b daemon - runtime configuration lexical analyzer
  *	---------------------------------------------------
  *
- *	$Id: rc_scan.l,v 1.4 2002/04/10 23:35:07 martin Exp $ 
+ *	$Id: rc_scan.l,v 1.5 2003/09/05 13:31:04 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -121,6 +121,7 @@ downtime			{ return DOWNTIME; }
 earlyhangup			{ return EARLYHANGUP; }
 entry				{ return ENTRY; }
 extcallattr			{ return EXTCALLATTR; }
+firmware			{ return FIRMWARE; }
 holidayfile			{ return HOLIDAYFILE; }
 idletime-incoming		{ return IDLETIME_IN; }
 idletime-outgoing		{ return IDLETIME_OUT; }
