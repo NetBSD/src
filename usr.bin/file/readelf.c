@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.8 2000/09/22 16:35:00 pooka Exp $	*/
+/*	$NetBSD: readelf.c,v 1.9 2000/11/23 23:21:15 pooka Exp $	*/
 
 #include "file.h"
 
@@ -18,9 +18,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: readelf.c,v 1.16 2000/08/05 18:18:50 christos Exp ")
+FILE_RCSID("@(#)Id: readelf.c,v 1.17 2000/08/05 19:00:12 christos Exp ")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.8 2000/09/22 16:35:00 pooka Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.9 2000/11/23 23:21:15 pooka Exp $");
 #endif
 #endif
 
