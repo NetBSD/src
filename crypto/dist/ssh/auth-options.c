@@ -10,13 +10,14 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-options.c,v 1.13 2001/02/09 13:38:07 markus Exp $");
+RCSID("$OpenBSD: auth-options.c,v 1.16 2001/03/18 12:07:52 markus Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
 #include "match.h"
 #include "log.h"
 #include "canohost.h"
+#include "channels.h"
 #include "auth-options.h"
 #include "servconf.h"
 
@@ -51,6 +52,7 @@ auth_clear_options(void)
 		xfree(forced_command);
 		forced_command = NULL;
 	}
+	channel_clear_permitted_opens();
 }
 
 /*
@@ -61,6 +63,7 @@ int
 auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 {
 	const char *cp;
+	int i;
 
 	/* reset options */
 	auth_clear_options();
@@ -99,7 +102,6 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 		}
 		cp = "command=\"";
 		if (strncasecmp(opts, cp, strlen(cp)) == 0) {
-			int i;
 			opts += strlen(cp);
 			forced_command = xmalloc(strlen(opts) + 1);
 			i = 0;
@@ -118,7 +120,9 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				    file, linenum);
 				packet_send_debug("%.100s, line %lu: missing end quote",
 				    file, linenum);
-				continue;
+				xfree(forced_command);
+				forced_command = NULL;
+				goto bad_option;
 			}
 			forced_command[i] = 0;
 			packet_send_debug("Forced command: %.900s", forced_command);
@@ -127,9 +131,9 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 		}
 		cp = "environment=\"";
 		if (strncasecmp(opts, cp, strlen(cp)) == 0) {
-			int i;
 			char *s;
 			struct envstring *new_envstring;
+
 			opts += strlen(cp);
 			s = xmalloc(strlen(opts) + 1);
 			i = 0;
@@ -148,7 +152,8 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				    file, linenum);
 				packet_send_debug("%.100s, line %lu: missing end quote",
 				    file, linenum);
-				continue;
+				xfree(s);
+				goto bad_option;
 			}
 			s[i] = 0;
 			packet_send_debug("Adding to environment: %.900s", s);
@@ -167,7 +172,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 			const char *remote_host = get_canonical_hostname(
 			    options.reverse_mapping_check);
 			char *patterns = xmalloc(strlen(opts) + 1);
-			int i;
+
 			opts += strlen(cp);
 			i = 0;
 			while (*opts) {
@@ -185,7 +190,8 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				    file, linenum);
 				packet_send_debug("%.100s, line %lu: missing end quote",
 				    file, linenum);
-				continue;
+				xfree(patterns);
+				goto bad_option;
 			}
 			patterns[i] = 0;
 			opts++;
@@ -212,6 +218,59 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 				return 0;
 			}
 			/* Host name matches. */
+			goto next_option;
+		}
+		cp = "permitopen=\"";
+		if (strncasecmp(opts, cp, strlen(cp)) == 0) {
+			u_short port;
+			char *c, *ep;
+			char *patterns = xmalloc(strlen(opts) + 1);
+
+			opts += strlen(cp);
+			i = 0;
+			while (*opts) {
+				if (*opts == '"')
+					break;
+				if (*opts == '\\' && opts[1] == '"') {
+					opts += 2;
+					patterns[i++] = '"';
+					continue;
+				}
+				patterns[i++] = *opts++;
+			}
+			if (!*opts) {
+				debug("%.100s, line %lu: missing end quote",
+				    file, linenum);
+				packet_send_debug("%.100s, line %lu: missing end quote",
+				    file, linenum);
+				xfree(patterns);
+				goto bad_option;
+			}
+			patterns[i] = 0;
+			opts++;
+			c = strchr(patterns, ':');
+			if (c == NULL) {
+				debug("%.100s, line %lu: permitopen: missing colon <%.100s>",
+				    file, linenum, patterns);
+				packet_send_debug("%.100s, line %lu: missing colon",
+				    file, linenum);
+				xfree(patterns);
+				goto bad_option;
+			}
+			*c = 0;
+			c++;
+			port = strtol(c, &ep, 0);
+			if (c == ep) {
+				debug("%.100s, line %lu: permitopen: missing port <%.100s>",
+				    file, linenum, patterns);
+				packet_send_debug("%.100s, line %lu: missing port",
+				    file, linenum);
+				xfree(patterns);
+				goto bad_option;
+			}
+			if (options.allow_tcp_forwarding)
+				channel_add_permitted_opens(patterns, port);
+			xfree(patterns);
 			goto next_option;
 		}
 next_option:
