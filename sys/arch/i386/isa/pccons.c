@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.77 1994/12/01 11:12:04 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.78 1994/12/13 13:42:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -653,7 +653,6 @@ pcstart(tp)
 	/*
 	 * We need to do this outside spl since it could be fairly
 	 * expensive and we don't want our serial ports to overflow.
-	 * The tty is locked, so it shouldn't get corrupted.
 	 */
 	cl = &tp->t_outq;
 	len = q_to_b(cl, buf, PCBURST);
@@ -667,12 +666,20 @@ pcstart(tp)
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)cl);
+			wakeup(cl);
 		}
 		selwakeup(&tp->t_wsel);
 	}
 out:
 	splx(s);
+}
+
+void
+pcstop(tp, flag)
+	struct tty *tp;
+	int flag;
+{
+
 }
 
 pccnprobe(cp)
