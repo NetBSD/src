@@ -1,4 +1,4 @@
-/*	$NetBSD: special.c,v 1.3 1997/01/09 20:18:31 tls Exp $	*/
+/*	$NetBSD: special.c,v 1.4 1997/10/18 12:52:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)special.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: special.c,v 1.3 1997/01/09 20:18:31 tls Exp $";
+__RCSID("$NetBSD: special.c,v 1.4 1997/10/18 12:52:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +62,7 @@ c_special(fd1, file1, skip1, fd2, file2, skip2)
 	FILE *fp1, *fp2;
 	int dfound;
 
+	dfound = 0;
 	if ((fp1 = fdopen(fd1, "r")) == NULL)
 		err(ERR_EXIT, "%s", file1);
 	if ((fp2 = fdopen(fd2, "r")) == NULL)
