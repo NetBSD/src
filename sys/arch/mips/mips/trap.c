@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40 1996/09/07 22:26:55 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.41 1996/09/18 11:16:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1126,10 +1126,18 @@ trapDump(msg)
 }
 #endif
 
-/*
- * forward declaration
- */
 static unsigned GetBranchDest __P((InstFmt *InstPtr));
+
+/*
+ * Compute destination of a branch instruction.
+ * XXX  Compute desination of r4000 squashed branches?
+ */
+static unsigned
+GetBranchDest(InstPtr)
+	InstFmt *InstPtr;
+{
+	return ((unsigned)InstPtr + 4 + ((short)InstPtr->IType.imm << 2));
+}
 
 /*
  * Return the resulting PC as if the branch was executed.
@@ -1145,13 +1153,8 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	unsigned retAddr;
 	int condition;
 
-#ifdef notyet	/*  Compute desination of r4000 squashed branches */
-#define GetBranchDest(InstPtr, inst) \
-	((unsigned)InstPtr + 4 + ((short)inst.IType.imm << 2))
-
 	inst.word = (instPC < MACH_CACHED_MEMORY_ADDR) ?
 		fuiword((caddr_t)instPC) : *(unsigned*)instPC;
-#endif
 #if 0
 	printf("regsPtr=%x PC=%x Inst=%x fpcCsr=%x\n", regsPtr, instPC,
 		inst.word, fpcCSR); /* XXX */
@@ -1275,12 +1278,6 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	return (retAddr);
 }
 
-static unsigned
-GetBranchDest(InstPtr)
-	InstFmt *InstPtr;
-{
-	return ((unsigned)InstPtr + 4 + ((short)InstPtr->IType.imm << 2));
-}
 
 /*
  * This routine is called by procxmt() to single step one instruction.
