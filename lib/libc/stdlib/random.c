@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.12 1998/07/26 11:28:40 mycroft Exp $	*/
+/*	$NetBSD: random.c,v 1.13 1998/09/09 12:27:32 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,19 +38,27 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.12 1998/07/26 11:28:40 mycroft Exp $");
+__RCSID("$NetBSD: random.c,v 1.13 1998/09/09 12:27:32 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "reentrant.h"
 
 #ifdef __weak_alias
 __weak_alias(initstate,_initstate);
 __weak_alias(random,_random);
 __weak_alias(setstate,_setstate);
 __weak_alias(srandom,_srandom);
+#endif
+
+static void srandom_unlocked __P((unsigned long));
+static long random_unlocked __P((void));
+
+#ifdef _REENT
+static mutex_t random_mutex = MUTEX_INITIALIZER;
 #endif
 
 /*
@@ -227,8 +235,8 @@ static long *end_ptr = &randtbl[DEG_3 + 1];
  * introduced by the L.C.R.N.G.  Note that the initialization of randtbl[]
  * for default usage relies on values produced by this routine.
  */
-void
-srandom(x)
+static void
+srandom_unlocked(x)
 	unsigned long x;
 {
 	int i;
@@ -242,8 +250,18 @@ srandom(x)
 		fptr = &state[rand_sep];
 		rptr = &state[0];
 		for (i = 0; i < 10 * rand_deg; i++)
-			(void)random();
+			(void)random_unlocked();
 	}
+}
+
+void
+srandom(x)
+	unsigned long x;
+{
+
+	mutex_lock(&random_mutex);
+	srandom_unlocked(x);
+	mutex_unlock(&random_mutex);
 }
 
 /*
@@ -278,6 +296,7 @@ initstate(seed, arg_state, n)
 	void *ostate = (void *)(&state[-1]);
 	long *long_arg_state = (long *) arg_state;
 
+	mutex_lock(&random_mutex);
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
 	else
@@ -286,6 +305,7 @@ initstate(seed, arg_state, n)
 		(void)fprintf(stderr,
 		    "random: not enough state (%ld bytes); ignored.\n",
 		    (long)n);
+		mutex_unlock(&random_mutex);
 		return(0);
 	}
 	if (n < BREAK_1) {
@@ -311,11 +331,12 @@ initstate(seed, arg_state, n)
 	}
 	state = (long *) (long_arg_state + 1); /* first location */
 	end_ptr = &state[rand_deg];	/* must set end_ptr before srandom */
-	srandom(seed);
+	srandom_unlocked(seed);
 	if (rand_type == TYPE_0)
 		long_arg_state[0] = rand_type;
 	else
 		long_arg_state[0] = MAX_TYPES * (rptr - state) + rand_type;
+	mutex_unlock(&random_mutex);
 	return((char *)ostate);
 }
 
@@ -347,6 +368,7 @@ setstate(arg_state)
 	int rear = (int)(new_state[0] / MAX_TYPES);
 	void *ostate = (void *)(&state[-1]);
 
+	mutex_lock(&random_mutex);
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
 	else
@@ -371,6 +393,7 @@ setstate(arg_state)
 		fptr = &state[(rear + rand_sep) % rand_deg];
 	}
 	end_ptr = &state[rand_deg];		/* set end_ptr too */
+	mutex_unlock(&random_mutex);
 	return((char *)ostate);
 }
 
@@ -391,8 +414,8 @@ setstate(arg_state)
  *
  * Returns a 31-bit random number.
  */
-long
-random()
+static long
+random_unlocked()
 {
 	long i;
 	long *f, *r;
@@ -418,4 +441,15 @@ random()
 		fptr = f; rptr = r;
 	}
 	return(i);
+}
+
+long
+random()
+{
+	long r;
+
+	mutex_lock(&random_mutex);
+	r = random_unlocked();
+	mutex_unlock(&random_mutex);
+	return (r);
 }
