@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.6 2002/10/07 10:39:27 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.7 2002/10/09 19:42:02 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -645,9 +645,9 @@ original.
 
 Package:	tar
 Version:	1.11.2
-Current Vers:	1.13
+Current Vers:	1.13/1.13.25
 Maintainer:	FSF
-Archive Site:	ftp://ftp.gnu.org/gnu/tar/
+Archive Site:	ftp://ftp.gnu.org/gnu/tar/, ftp://alpha.gnu.org/gnu/tar/
 Mailing List:	bug-tar@gnu.org
 Responsible:
 Notes:
