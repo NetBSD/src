@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.29 1996/02/26 23:17:06 mrg Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -914,7 +914,7 @@ ip_srcroute()
 	*(mtod(m, struct in_addr *)) = *p--;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
-		printf(" hops %lx", ntohl(mtod(m, struct in_addr *)->s_addr));
+		printf(" hops %x", ntohl(mtod(m, struct in_addr *)->s_addr));
 #endif
 
 	/*
@@ -934,7 +934,7 @@ ip_srcroute()
 	while (p >= ip_srcrt.route) {
 #ifdef DIAGNOSTIC
 		if (ipprintfs)
-			printf(" %lx", ntohl(q->s_addr));
+			printf(" %x", ntohl(q->s_addr));
 #endif
 		*q++ = *p--;
 	}
@@ -944,7 +944,7 @@ ip_srcroute()
 	*q = ip_srcrt.dst;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
-		printf(" %lx\n", ntohl(q->s_addr));
+		printf(" %x\n", ntohl(q->s_addr));
 #endif
 	return (m);
 }
@@ -1079,7 +1079,7 @@ ip_forward(m, srcrt)
 		    code = ICMP_REDIRECT_HOST;
 #ifdef DIAGNOSTIC
 		    if (ipprintfs)
-		        printf("redirect (%d) to %lx\n", code, (u_int32_t)dest);
+		        printf("redirect (%d) to %x\n", code, (u_int32_t)dest);
 #endif
 		}
 	}
