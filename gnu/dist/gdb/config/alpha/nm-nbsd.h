@@ -42,7 +42,3 @@ get_longjmp_target PARAMS ((CORE_ADDR *));
 /* NetBSD/alpha has shared libraries.  */
 
 #define GDB_TARGET_HAS_SHARED_LIBS
-
-/* Supply our own version of child_resume() in alphanbsd-nat.c */
-
-#define	CHILD_RESUME
