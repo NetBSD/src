@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.12 1997/01/16 04:51:29 mikel Exp $	*/
+/*	$NetBSD: compress.c,v 1.13 1997/09/15 10:58:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: compress.c,v 1.12 1997/01/16 04:51:29 mikel Exp $";
+__RCSID("$NetBSD: compress.c,v 1.13 1997/09/15 10:58:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ int	permission __P((char *));
 void	setfile __P((char *, struct stat *));
 void	usage __P((int));
 
+int	main __P((int, char *[]));
 extern FILE *zopen __P((const char *fname, const char *mode, int bits));
 
 int eval, force, verbose;
@@ -87,7 +88,7 @@ main(argc, argv)
 	int bits, cat, ch;
 	char *p, newname[MAXPATHLEN];
 
-	if ((p = rindex(argv[0], '/')) == NULL)
+	if ((p = strrchr(argv[0], '/')) == NULL)
 		p = argv[0];
 	else
 		++p;
@@ -153,7 +154,7 @@ main(argc, argv)
 				compress(*argv, "/dev/stdout", bits);
 				break;
 			}
-			if ((p = rindex(*argv, '.')) != NULL &&
+			if ((p = strrchr(*argv, '.')) != NULL &&
 			    !strcmp(p, ".Z")) {
 				cwarnx("%s: name already has trailing .Z",
 				    *argv);
@@ -172,7 +173,7 @@ main(argc, argv)
 			break;
 		case DECOMPRESS:
 			len = strlen(*argv);
-			if ((p = rindex(*argv, '.')) == NULL ||
+			if ((p = strrchr(*argv, '.')) == NULL ||
 			    strcmp(p, ".Z")) {
 				if (len > sizeof(newname) - 3) {
 					cwarnx("%s: name too long", *argv);
@@ -209,7 +210,7 @@ compress(in, out, bits)
 	char *in, *out;
 	int bits;
 {
-	register int nr;
+	int nr;
 	struct stat isb, sb;
 	FILE *ifp, *ofp;
 	int exists, isreg, oreg;
@@ -308,7 +309,7 @@ decompress(in, out, bits)
 	char *in, *out;
 	int bits;
 {
-	register int nr;
+	int nr;
 	struct stat sb;
 	FILE *ifp, *ofp;
 	int exists, isreg, oreg;
@@ -381,7 +382,7 @@ err:	if (ofp) {
 void
 setfile(name, fs)
 	char *name;
-	register struct stat *fs;
+	struct stat *fs;
 {
 	static struct timeval tv[2];
 
