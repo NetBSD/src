@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.6 2003/12/07 20:01:58 scw Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.7 2004/03/17 20:23:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -90,6 +90,10 @@ typedef struct {
 	__gregset_t	__gregs;
 	__fpregset_t	__fpregs;
 } mcontext_t;
+
+#define mcontext32_t mcontext_t
+#define	cpu_getmcontext32	cpu_getmcontext
+#define	cpu_setmcontext32	cpu_setmcontext
 
 #endif 	/* !__ASSEMBLER__ */
 
