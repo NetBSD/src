@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.25 1993/11/25 08:01:13 mycroft Exp $
+#	$Id: TEST,v 1.26 1993/11/26 10:50:36 mycroft Exp $
 #
 
 # standard options
@@ -103,12 +103,14 @@ fd* at fdc? drive ?
 #mcd0 at isa? port 0x300 irq 10		# Mitsumi
 
 #scsi
-aha0 at isa? port 0x330			# Adaptec 1542
+aha0 at isa? port 0x330			# Adaptec 1542, Bustek 545
 aha1 at isa? port 0x334
-#ahb0 at isa? port 0x330 drq 5		# Adaptec 1742
-#bt0 at isa? port 0x330 drq 5		# Bustec 742
-#bt1 at isa? port 0x334 drq ?
-#uha0 at isa? port 0x330 drq 5		# UltraStor 14f, 34f
+#ahb0 at isa? port 0x330		# Adaptec 1742
+#ahb1 at isa? port 0x334
+#bt0 at isa? port 0x330			# Bustek 742
+#bt1 at isa? port 0x334
+uha0 at isa? port 0x330			# UltraStor 14f, 34f
+uha1 at isa? port 0x334
 #wds0 at isa? port 0x350 drq 5		# WD 7000
 
 scsibus* at scsi?
