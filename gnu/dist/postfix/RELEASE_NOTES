@@ -1,3 +1,11 @@
+Major changes with postfix-19991231-pl08:
+=========================================
+
+Specify "body_checks = regexp:/etc/postfix/body_checks" for a quick
+and dirty emergency content filter that looks at non-header lines
+one line at a time (including MIME headers inside the message body).
+Details in conf/sample-filter.cf.
+
 Incompatible changes with postfix-19991231-pl07:
 ================================================
 

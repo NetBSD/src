@@ -3713,3 +3713,22 @@ Apologies for any names omitted.
 
 	Bugfix: Postfix would incorrectly reject domain names with
 	adjacent - characters. File: util/valid_hostname.c.
+
+20000520
+
+	Robustness: upon receipt of mail, map the mailer-daemon
+	sender address back into the magic null string. File:
+	cleanup/cleanup_envelope.c.
+
+20000524
+
+	Bugfix: the code for masquerade_exceptions was case sensitive.
+	Reported by Eduard Vopicka.  File: cleanup/cleanup_masquerade.c.
+
+20000528
+
+	Feature: specify "body_checks=regexp:/file/name" for a very
+	crude one line at a time message body content filter.  This
+	feature uses the same filtering syntax as the header_checks
+	feature.  File:  cleanup/cleanup_message.c. See also the
+	conf/sample-filter.cf file.

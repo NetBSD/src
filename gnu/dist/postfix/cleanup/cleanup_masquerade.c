@@ -99,7 +99,7 @@ void    cleanup_masquerade_external(VSTRING *addr, ARGV *masq_domains)
 	masq_except_table = htable_create(5);
 	ptr = saved_names = mystrdup(var_masq_exceptions);
 	while ((name = mystrtok(&ptr, ", \t\r\n")) != 0)
-	    htable_enter(masq_except_table, name, (char *) 0);
+	    htable_enter(masq_except_table, lowercase(name), (char *) 0);
 	myfree(saved_names);
     }
 
@@ -116,7 +116,7 @@ void    cleanup_masquerade_external(VSTRING *addr, ARGV *masq_domains)
      */
     if (masq_except_table) {
 	name = mystrndup(STR(addr), domain - 1 - STR(addr));
-	excluded = (htable_locate(masq_except_table, name) != 0);
+	excluded = (htable_locate(masq_except_table, lowercase(name)) != 0);
 	myfree(name);
 	if (excluded)
 	    return;

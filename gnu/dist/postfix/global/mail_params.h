@@ -661,6 +661,10 @@ extern int var_queue_minfree;
 #define DEF_HEADER_CHECKS	""
 extern char *var_header_checks;
 
+#define VAR_BODY_CHECKS		"body_checks"
+#define DEF_BODY_CHECKS		""
+extern char *var_body_checks;
+
  /*
   * Bounce service: truncate bounce message that exceed $bounce_size_limit.
   */

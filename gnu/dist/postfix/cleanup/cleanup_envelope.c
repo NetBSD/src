@@ -30,6 +30,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
+#endif
+
 /* Utility library. */
 
 #include <msg.h>
@@ -45,6 +49,8 @@
 #include <tok822.h>
 #include <mail_params.h>
 #include <ext_prop.h>
+#include <mail_addr.h>
+#include <canon_addr.h>
 
 /* Application-specific. */
 
@@ -106,6 +112,12 @@ void    cleanup_envelope(void)
 	    cleanup_fullname = mystrdup(STR(cleanup_inbuf));
 	} else if (type == REC_TYPE_FROM) {
 	    cleanup_rewrite_internal(clean_addr, STR(cleanup_inbuf));
+	    if (strncasecmp(STR(clean_addr), MAIL_ADDR_MAIL_DAEMON "@",
+			    sizeof(MAIL_ADDR_MAIL_DAEMON)) == 0) {
+		canon_addr_internal(cleanup_temp1, MAIL_ADDR_MAIL_DAEMON);
+		if (strcasecmp(STR(clean_addr), STR(cleanup_temp1)) == 0)
+		    vstring_strcpy(clean_addr, "");
+	    }
 	    if (cleanup_send_canon_maps)
 		cleanup_map11_internal(clean_addr, cleanup_send_canon_maps,
 				cleanup_ext_prop_mask & EXT_PROP_CANONICAL);
