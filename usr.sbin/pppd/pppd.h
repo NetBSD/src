@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: pppd.h,v 1.4 1993/11/10 01:34:32 paulus Exp $
+ * $Id: pppd.h,v 1.5 1994/05/08 12:16:30 paulus Exp $
  */
 
 /*
@@ -39,6 +39,9 @@
 #define MAXNAMELEN	256	/* max length of hostname or name for auth */
 #define MAXSECRETLEN	256	/* max length of password or secret */
 
+/*
+ * Global variables.
+ */
 extern int debug;		/* Debug flag */
 extern int ifunit;		/* Interface unit number */
 extern char ifname[];		/* Interface name */
@@ -46,7 +49,20 @@ extern int fd;			/* Device file descriptor */
 extern int s;			/* socket descriptor */
 extern char hostname[];		/* hostname */
 extern u_char outpacket_buf[];	/* buffer for outgoing packets */
+extern int phase;		/* See values below */
 
+/*
+ * Values for phase.
+ */
+#define PHASE_DEAD		0
+#define PHASE_ESTABLISH		1
+#define PHASE_AUTHENTICATE	2
+#define PHASE_NETWORK		3
+#define PHASE_TERMINATE		4
+
+/*
+ * Prototypes.
+ */
 void quit __ARGS((void));	/* Cleanup and exit */
 void timeout __ARGS((void (*)(), caddr_t, int));
 				/* Look-alike of kernel's timeout() */
