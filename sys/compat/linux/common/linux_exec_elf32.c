@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.4 1995/04/22 19:48:34 christos Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.5 1995/05/16 14:19:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -116,7 +116,7 @@ linux_copyargs(pack, arginfo, stack, argp)
 	sp = argp;
 
 	/* XXX don't copy them out, remap them! */
-	arginfo->ps_argvstr = dp; /* remember location of argv for later */
+	arginfo->ps_argvstr = cpp; /* remember location of argv for later */
 
 	for (; --argc >= 0; sp += len, dp += len)
 		if (copyout(&dp, cpp++, sizeof(dp)) ||
@@ -129,7 +129,7 @@ linux_copyargs(pack, arginfo, stack, argp)
 	if (copyout(&cpp, &stk[2], sizeof (cpp)))
 		return NULL;
 
-	arginfo->ps_envstr = dp; /* remember location of envp for later */
+	arginfo->ps_envstr = cpp; /* remember location of envp for later */
 
 	for (; --envc >= 0; sp += len, dp += len)
 		if (copyout(&dp, cpp++, sizeof(dp)) ||
