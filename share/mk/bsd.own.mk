@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.244 2002/01/01 01:17:32 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.245 2002/01/01 01:44:29 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -410,6 +410,12 @@ MKNLS:=		no
 MKBFD:=	no
 MKGDB:=	no
 MKGCC:=	no
+.endif
+
+# For now, if we're using GCC 3.x, we cannot built lint libraries
+# (GCC 3.x's C pre-processor lacks the necessary support).
+.if defined(HAVE_GCC3)
+MKLINT:=	no
 .endif
 
 .endif		# _BSD_OWN_MK_
