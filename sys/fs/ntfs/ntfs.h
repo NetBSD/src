@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.3 2003/04/09 16:18:56 jdolecek Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.4 2003/04/22 17:23:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -296,6 +296,7 @@ MALLOC_DECLARE(M_NTFSNTNODE);
 MALLOC_DECLARE(M_NTFSFNODE);
 MALLOC_DECLARE(M_NTFSDIR);
 MALLOC_DECLARE(M_NTFSNTHASH);
+MALLOC_DECLARE(M_NTFSNTVATTR);
 #endif
 
 #ifdef __NetBSD__
