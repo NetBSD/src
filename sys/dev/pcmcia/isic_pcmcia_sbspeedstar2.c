@@ -1,5 +1,5 @@
 /*
- *   Copyright (c) 1998 Martin Husemann. All rights reserved.
+ *   Copyright (c) 2001 Martin Husemann. All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions
@@ -30,225 +30,147 @@
  *
  *---------------------------------------------------------------------------
  *
- *	ELSA MicroLink ISDN/MC card specific routines
- *	---------------------------------------------
- *
- *	$Id: i4b_elsa_isdnmc.c,v 1.3 2001/02/17 15:00:49 martin Exp $
- *
- *      last edit-date: [Fri Jan  5 11:39:32 2001]
- *
- *	-mh	added support for elsa ISDN/mc
+ * Card format:
+ * 
+ * iobase + 0 : reset on (0x03), off (0x0)
+ * iobase + 1 : isac read/write
+ * iobase + 2 : hscx read/write ( offset 0-0x3f    hscx0 , 
+ *                                offset 0x40-0x7f hscx1 )
+ * iobase + 4 : address register
  *
  *---------------------------------------------------------------------------*/
 
-#include "opt_isicpcmcia.h"
-#ifdef ISICPCMCIA_ELSA_ISDNMC
+#include "opt_isicpcmcia.h"  
+#ifdef ISICPCMCIA_SBSPEEDSTAR2
+
+#define SBSS_RESET  0 /* reset on / off           */
+#define SBSS_ISAC   1 /* ISAC                     */
+#define SBSS_HSCX   2 /* HSCX0                    */
+#define SBSS_RW     4 /* indirect access register */
+
+#define SBSS_REGS   8 /* we use an area of 8 bytes for io */
 
 #include <sys/param.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <sys/ioccom.h>
-#else
-#include <sys/ioctl.h>
-#endif
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-
-#ifdef __FreeBSD__
-#include <machine/clock.h>
-#include <i386/isa/isa_device.h>
-#else
-#include <machine/bus.h>
 #include <sys/device.h>
-#endif
-
+#include <machine/bus.h>
 #include <sys/socket.h>
 #include <net/if.h>
-
-#if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
-#include <sys/callout.h>
-#endif
-
-#ifdef __FreeBSD__
-#include <machine/i4b_debug.h>
-#include <machine/i4b_ioctl.h>
-#else
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
-
-#include <dev/pcmcia/pcmciareg.h>
-#include <dev/pcmcia/pcmciavar.h>
-#endif
 
 #include <dev/ic/i4b_isicl1.h>
 #include <dev/ic/i4b_isac.h>
 #include <dev/ic/i4b_hscx.h>
 
-#include <dev/pcmcia/i4b_isic_pcmcia.h>
+#include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l1l2.h>
+#include <netisdn/i4b_mbuf.h>
+#include <dev/pcmcia/pcmciareg.h>
+#include <dev/pcmcia/pcmciavar.h>
 
-#ifndef __FreeBSD__
-/* PCMCIA support routines */
-static u_int8_t elsa_isdnmc_read_reg __P((struct l1_softc *sc, int what, bus_size_t offs));
-static void elsa_isdnmc_write_reg __P((struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void elsa_isdnmc_read_fifo __P((struct l1_softc *sc, int what, void *buf, size_t size));
-static void elsa_isdnmc_write_fifo __P((struct l1_softc *sc, int what, const void *data, size_t size));
-static void elsa_isdnmc_clrirq __P((struct l1_softc *sc));
-#endif
-
-/*
- * The ELSA MicroLink ISDN/MC uses one contigous IO region,
- * mapped by the pcmcia code.
- * The chip access is via three ports:
- */
-#define	ISAC_DATA	1	/* ISAC dataport at offset 1 */
-#define HSCX_DATA	2	/* HSCX dataport at offset 2 */
-#define ADDR_LATCH	4	/* address latch at offset 4 */
-
-/* This is very similar to the ELSA QuickStep 1000 (ISA) card */
-
-#ifdef __FreeBSD__
-static void
-elsa_isdnmc_clrirq(void *base)
-{
-}
-#else
-static void
-elsa_isdnmc_clrirq(struct l1_softc *sc)
-{
-	ISAC_WRITE(I_MASK, 0xff);
-	HSCX_WRITE(0, H_MASK, 0xff);
-	HSCX_WRITE(1, H_MASK, 0xff);
-	ISAC_WRITE(I_MASK, ISAC_IMASK);
-	HSCX_WRITE(0, H_MASK, HSCX_A_IMASK);
-	HSCX_WRITE(1, H_MASK, HSCX_B_IMASK);
-}
-#endif
+#include <dev/pcmcia/isic_pcmcia.h>
 
 /*---------------------------------------------------------------------------*
- *	read fifo routines
+ *      Sedlbauer SpeedStar ISAC get fifo routine
  *---------------------------------------------------------------------------*/
-#ifdef __FreeBSD__
-static void		
-elsa_isdnmc_read_fifo(void *buf, const void *base, size_t len)
-{
-}
-#else
+
 static void
-elsa_isdnmc_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+sws_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
 	switch (what) {
 		case ISIC_WHAT_ISAC:
-			bus_space_write_1(t, h, ADDR_LATCH, 0);
-			bus_space_read_multi_1(t, h, ISAC_DATA, buf, size);
+			bus_space_write_1(t, h, SBSS_RW, 0);
+			bus_space_read_multi_1(t, h, SBSS_ISAC, buf, size);
 			break;
 		case ISIC_WHAT_HSCXA:
-			bus_space_write_1(t, h, ADDR_LATCH, 0);
-			bus_space_read_multi_1(t, h, HSCX_DATA, buf, size);
+			bus_space_write_1(t, h, SBSS_RW, 0);
+			bus_space_read_multi_1(t, h, SBSS_HSCX, buf, size);
 			break;
 		case ISIC_WHAT_HSCXB:
-			bus_space_write_1(t, h, ADDR_LATCH, 0x40);
-			bus_space_read_multi_1(t, h, HSCX_DATA, buf, size);
+			bus_space_write_1(t, h, SBSS_RW, 0x40);
+			bus_space_read_multi_1(t, h, SBSS_HSCX, buf, size);
 			break;
 	}
 }
-#endif
 
 /*---------------------------------------------------------------------------*
- *	write fifo routines
+ *      Sedlbauer SpeedStar ISAC put fifo routine
  *---------------------------------------------------------------------------*/
-#ifdef __FreeBSD__
+
 static void
-elsa_isdnmc_write_fifo(void *base, const void *buf, size_t len)
-{
-}
-#else
-static void
-elsa_isdnmc_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+sws_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
 	switch (what) {
 		case ISIC_WHAT_ISAC:
-			bus_space_write_1(t, h, ADDR_LATCH, 0);
-			bus_space_write_multi_1(t, h, ISAC_DATA, (u_int8_t*)buf, size);
+			bus_space_write_1(t, h, SBSS_RW, 0);
+			bus_space_write_multi_1(t, h, SBSS_ISAC, (u_int8_t*)buf, size);
 			break;
 		case ISIC_WHAT_HSCXA:
-			bus_space_write_1(t, h, ADDR_LATCH, 0);
-			bus_space_write_multi_1(t, h, HSCX_DATA, (u_int8_t*)buf, size);
+			bus_space_write_1(t, h, SBSS_RW, 0);
+			bus_space_write_multi_1(t, h, SBSS_HSCX, (u_int8_t*)buf, size);
 			break;
 		case ISIC_WHAT_HSCXB:
-			bus_space_write_1(t, h, ADDR_LATCH, 0x40);
-			bus_space_write_multi_1(t, h, HSCX_DATA, (u_int8_t*)buf, size);
+			bus_space_write_1(t, h, SBSS_RW, 0x40);
+			bus_space_write_multi_1(t, h, SBSS_HSCX, (u_int8_t*)buf, size);
 			break;
 	}
 }
-#endif
 
 /*---------------------------------------------------------------------------*
- *	write register routines
+ *      Sedlbauer SpeedStar ISAC put register routine
  *---------------------------------------------------------------------------*/
-#ifdef __FreeBSD__
+
 static void
-elsa_isdnmc_write_reg(u_char *base, u_int offset, u_int v)
-{
-}
-#else
-static void
-elsa_isdnmc_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+sws_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
 	switch (what) {
 		case ISIC_WHAT_ISAC:
-			bus_space_write_1(t, h, ADDR_LATCH, offs);
-			bus_space_write_1(t, h, ISAC_DATA, data);
+			bus_space_write_1(t, h, SBSS_RW, offs);
+			bus_space_write_1(t, h, SBSS_ISAC, data);
 			break;
 		case ISIC_WHAT_HSCXA:
-			bus_space_write_1(t, h, ADDR_LATCH, offs);
-			bus_space_write_1(t, h, HSCX_DATA, data);
+			bus_space_write_1(t, h, SBSS_RW, offs);
+			bus_space_write_1(t, h, SBSS_HSCX, data);
 			break;
 		case ISIC_WHAT_HSCXB:
-			bus_space_write_1(t, h, ADDR_LATCH, 0x40+offs);
-			bus_space_write_1(t, h, HSCX_DATA, data);
+			bus_space_write_1(t, h, SBSS_RW, 0x40+offs);
+			bus_space_write_1(t, h, SBSS_HSCX, data);
 			break;
 	}
 }
-#endif
 
 /*---------------------------------------------------------------------------*
- *	read register routines
+ *	Sedlbauer SpeedStar ISAC get register routine
  *---------------------------------------------------------------------------*/
-#ifdef __FreeBSD__
-static u_char
-elsa_isdnmc_read_reg(u_char *base, u_int offset)
-{
-	return 0;
-}
-#else
+
 static u_int8_t
-elsa_isdnmc_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+sws_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
 	switch (what) {
 		case ISIC_WHAT_ISAC:
-			bus_space_write_1(t, h, ADDR_LATCH, offs);
-			return bus_space_read_1(t, h, ISAC_DATA);
+			bus_space_write_1(t, h, SBSS_RW, offs);
+			return bus_space_read_1(t, h, SBSS_ISAC);
 		case ISIC_WHAT_HSCXA:
-			bus_space_write_1(t, h, ADDR_LATCH, offs);
-			return bus_space_read_1(t, h, HSCX_DATA);
+			bus_space_write_1(t, h, SBSS_RW, offs);
+			return bus_space_read_1(t, h, SBSS_HSCX);
 		case ISIC_WHAT_HSCXB:
-			bus_space_write_1(t, h, ADDR_LATCH, 0x40+offs);
-			return bus_space_read_1(t, h, HSCX_DATA);
+			bus_space_write_1(t, h, SBSS_RW, 0x40+offs);
+			return bus_space_read_1(t, h, SBSS_HSCX);
 	}
 	return 0;
 }
-#endif
-
-#ifdef __FreeBSD__
-#else
 
 /*
  * XXX - one time only! Some of this has to go into an enable
@@ -256,12 +178,12 @@ elsa_isdnmc_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
  * could be removed an inserted again.
  */
 int
-isic_attach_elsaisdnmc(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)
+isic_attach_sbspeedstar2(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)
 {
-	struct l1_softc *sc = &psc->sc_isic;
+	struct l1_softc * sc = &psc->sc_isic;
 	bus_space_tag_t t;
 	bus_space_handle_t h;
-
+	
 	/* Validate config info */
 	if (cfe->num_memspace != 0)
 		printf(": unexpected number of memory spaces %d should be 0\n",
@@ -283,9 +205,6 @@ isic_attach_elsaisdnmc(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry *
 		return 0;
 	}
 
-	/* OK, this will work! */
-	sc->sc_cardtyp = CARD_TYPEP_ELSAMLIMC;
-
 	/* Setup bus space maps */
 	sc->sc_num_mappings = 1;
 	MALLOC_MAPS(sc);
@@ -299,13 +218,17 @@ isic_attach_elsaisdnmc(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry *
 	t = sc->sc_maps[0].t;
 	h = sc->sc_maps[0].h;
 
-	sc->clearirq = elsa_isdnmc_clrirq;
+	/* setup access routines */
 
-	sc->readreg = elsa_isdnmc_read_reg;
-	sc->writereg = elsa_isdnmc_write_reg;
+	sc->readreg   = sws_read_reg;
+	sc->writereg  = sws_write_reg;
 
-	sc->readfifo = elsa_isdnmc_read_fifo;
-	sc->writefifo = elsa_isdnmc_write_fifo;
+	sc->readfifo  = sws_read_fifo;
+	sc->writefifo = sws_write_fifo;
+
+	/* setup card type */
+	
+	sc->sc_cardtyp = CARD_TYPEP_SWS;
 
 	/* setup IOM bus type */
 	
@@ -314,8 +237,17 @@ isic_attach_elsaisdnmc(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry *
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
 
+	/* reset card */
+        {
+        	bus_space_tag_t t = sc->sc_maps[0].t;
+        	bus_space_handle_t h = sc->sc_maps[0].h;
+        	bus_space_write_1(t, h, SBSS_RESET, 0x3);
+		DELAY(SEC_DELAY / 5);
+		bus_space_write_1(t, h, SBSS_RESET, 0);
+		DELAY(SEC_DELAY / 5);
+	}
+
 	return 1;
 }
-#endif
 
-#endif /* ISICPCMCIA_ELSA_ISDNMC */
+#endif /* ISICPCMCIA_SBSPEEDSTAR2 */
