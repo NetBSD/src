@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.23 2002/06/08 18:06:09 martin Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.24 2002/06/17 07:47:33 martin Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.23 2002/06/08 18:06:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.24 2002/06/17 07:47:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,6 +172,16 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_CIS_ELSA_XI300_IEEE,
 	  PCMCIA_STR_ELSA_XI300_IEEE },
 
+	{ PCMCIA_VENDOR_ELSA,
+	  PCMCIA_PRODUCT_ELSA_XI325_IEEE,
+	  PCMCIA_CIS_ELSA_XI325_IEEE,
+	  PCMCIA_STR_ELSA_XI325_IEEE },
+
+	{ PCMCIA_VENDOR_ELSA,
+	  PCMCIA_PRODUCT_ELSA_XI800_IEEE,
+	  PCMCIA_CIS_ELSA_XI800_IEEE,
+	  PCMCIA_STR_ELSA_XI800_IEEE },
+
 	{ PCMCIA_VENDOR_COMPAQ,
 	  PCMCIA_PRODUCT_COMPAQ_NC5004,
 	  PCMCIA_CIS_COMPAQ_NC5004,
@@ -221,11 +231,6 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_GEMTEK_WLAN,
 	  PCMCIA_CIS_GEMTEK_WLAN,
 	  PCMCIA_STR_GEMTEK_WLAN },
-
-	{ PCMCIA_VENDOR_ELSA,
-	  PCMCIA_PRODUCT_ELSA_XI800_IEEE,
-	  PCMCIA_CIS_ELSA_XI800_IEEE,
-	  PCMCIA_STR_ELSA_XI800_IEEE },
 
 	{ PCMCIA_VENDOR_SIMPLETECH,
 	  PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24_ALT,
