@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.8 2002/07/05 18:45:22 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.9 2002/07/28 07:07:45 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -89,8 +89,7 @@ process_read_fpregs(p, regs)
 	}
 
 #ifdef PPC_HAVE_FPU
-	if (p == curcpu()->ci_fpuproc)
-		save_fpu(p);
+	save_fpu_proc(p);
 #endif
 	memcpy(regs, &pcb->pcb_fpu, sizeof (struct fpreg));
 
@@ -105,8 +104,7 @@ process_write_fpregs(p, regs)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
 #ifdef PPC_HAVE_FPU
-	if (p == curcpu()->ci_fpuproc)
-		curcpu()->ci_fpuproc = NULL;
+	save_fpu_proc(p);
 #endif
 
 	memcpy(&pcb->pcb_fpu, regs, sizeof(struct fpreg));
