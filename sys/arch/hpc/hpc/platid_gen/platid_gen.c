@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_gen.c,v 1.4 2001/09/27 16:31:24 uch Exp $	*/
+/*	$NetBSD: platid_gen.c,v 1.5 2003/04/23 03:45:07 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -193,7 +193,7 @@ main(int argc, char *argv[])
 }
 
 int
-table_getnum(char **table, char *s, int def, int opt)
+table_getnum(char **table, const char *s, int def, int opt)
 {
 	int num;
 
