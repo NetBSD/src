@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.34 1998/01/12 20:23:44 thorpej Exp $ */
+/*	$NetBSD: cgsix.c,v 1.35 1998/01/25 16:49:33 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -185,7 +185,7 @@ cgsixmatch(parent, cf, aux)
 		 * Check for a pfour framebuffer.  This is done somewhat
 		 * differently on the cgsix than other pfour framebuffers.
 		 */
-		bus_untmp();
+		obio_bus_untmp();
 		tmp = (caddr_t)mapdev(ra->ra_reg, TMPMAP_VA, CGSIX_FHC_OFFSET,
 				      NBPG);
 		if (probeget(tmp, 4) == -1)
