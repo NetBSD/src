@@ -35,8 +35,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.29 1993/06/15 21:56:58 mycroft Exp $
+ *	$Id: machdep.c,v 1.30 1993/06/18 02:03:42 brezak Exp $
  */
+
+#include "npx.h"
 
 #include <stddef.h>
 #include "param.h"
@@ -690,7 +692,7 @@ setregs(p, entry, stack)
 
 	p->p_addr->u_pcb.pcb_flags &= 0 /* FM_SYSCTRC */; /* no fp at all */
 	load_cr0(rcr0() | CR0_TS);	/* start emulating */
-#ifdef	NPX
+#if	NNPX > 0
 	npxinit(__INITIAL_NPXCW__);
 #endif
 }
