@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.9 2002/03/21 05:15:39 phil Exp $
+.\"	$NetBSD: menuc.1,v 1.9.2.1 2003/06/16 13:01:15 grant Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -436,7 +436,7 @@ init_main()
 default x=20, y=10, box, scrollable, exit;
 
 error action {
-   fprintf (stderr, "Example Menu: Could not initialize curses.\n");
+   fprintf (stderr, "Example Menu: Could not initialize curses.\en");
    exit(1);
 };
 
@@ -444,7 +444,7 @@ menu main, title "Main Menu", no exit, no shortcut;
    display action { init_main(); };
    option "Option 1",
       action (endwin) {
-        printf ("That was option 1!\n");
+        printf ("That was option 1!\en");
         sleep(3);
       };
    option "Sub Menu", sub menu othermenu;
