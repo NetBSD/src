@@ -14,7 +14,7 @@ main(argc, argv)
 	for (cp = "", i = 1; i < argc; cp = " ", i++) {
 		if (lstat(argv[i], &sb) < 0)
 			continue;
-		if ((sb.st_mode & S_IFMT) != S_IFREG)
+		if (!S_ISREG(sb.st_mode))
 			continue;
 		fd = open(argv[i], O_RDONLY);
 		if (fd < 0) {

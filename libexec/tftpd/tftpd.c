@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.9 1997/10/07 09:46:47 mrg Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.10 1997/10/19 18:17:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.9 1997/10/07 09:46:47 mrg Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.10 1997/10/19 18:17:27 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -421,7 +421,7 @@ validate_access(filep, mode)
 			return (EACCESS);
 		if (stat(filename, &stbuf) < 0)
 			return (errno == ENOENT ? ENOTFOUND : EACCESS);
-		if ((stbuf.st_mode & S_IFMT) != S_IFREG)
+		if (!S_ISREG(stbuf.st_mode))
 			return (ENOTFOUND);
 		if (mode == RRQ) {
 			if ((stbuf.st_mode & S_IROTH) == 0)
