@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.3 2001/01/09 08:06:22 garbled Exp $       */
+/*      $NetBSD: sushi.c,v 1.4 2001/01/09 09:41:41 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ main(int argc, char **argv)
 	raw();
 
 	if (mte == NULL)
-		navigate_menu(cqMenuHeadp, "sushi", 
+		navigate_menu(cqMenuHeadp, "sushi_topmenu", 
 		    catgets(catalog, 4, 5, "<C></5>Sushi\n\n"));
 	else
 		navigate_submenu(mte);

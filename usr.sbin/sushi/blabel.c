@@ -1,4 +1,4 @@
-/*      $NetBSD: blabel.c,v 1.1 2001/01/05 01:28:34 garbled Exp $       */
+/*      $NetBSD: blabel.c,v 1.2 2001/01/09 09:41:41 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ extern nl_catd catalog;
 extern struct winsize ws;
 extern char *lang_id;
 extern CDKSCREEN *cdkscreen;
+extern char **searchpaths;
 
 WINDOW *labelwin;
 
@@ -94,18 +95,24 @@ wrap_help(EObjectType cdktype, void *object, void *clientdata, chtype key)
 {
 	char buf[PATH_MAX+30];
 	struct stat sb;
+	char *p;
+	int rc, i;
 
-	if (lang_id == NULL)
-		sprintf(buf, "%s/%s", (char *)clientdata, HELPFILE);
-	else
-		sprintf(buf, "%s/%s.%s", (char *)clientdata, HELPFILE, lang_id);
-	if (stat(buf, &sb) == 0)
-		return((void)handle_help(buf));
-	else {
-		sprintf(buf, "%s/%s", (char *)clientdata, HELPFILE);
-		if (stat(buf, &sb) == 0)
-			return((void)handle_help(buf));
+	if (strcmp((char *)clientdata, "sushi_topmenu") == 0) {
+		for (i = 0, rc = -2, p = searchpaths[i]; p != NULL && rc == -2;
+		    i++) {
+			p = searchpaths[i];   
+			rc = simple_lang_handler(p, HELPFILE, handle_help);
+		}
+		if (rc != -2)
+			return;
+	} else {
+		rc = simple_lang_handler((char *)clientdata, HELPFILE,
+		    handle_help);
+		if (rc != -2)
+			return;
 	}
+	/* now do something meaningful */
 }
 
 /*ARGSUSED*/
