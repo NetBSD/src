@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.294 2001/01/17 20:56:48 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.295 2001/01/18 13:11:22 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -38,7 +38,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct pci_knowndev pci_knowndevs[] = {
+const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985,
 	    0,
