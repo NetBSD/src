@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfssubr.9,v 1.5 2003/10/22 07:12:43 hannken Exp $
+.\"     $NetBSD: vfssubr.9,v 1.6 2003/12/04 19:57:38 atatat Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,6 @@
 .Nm vfs_detach ,
 .Nm vfs_reinit ,
 .Nm vfs_getopsbyname ,
-.Nm vfs_sysctl ,
 .Nm vfs_write_suspend ,
 .Nm vfs_write_resume
 .Nd high-level interface to kernel file system interface
@@ -103,9 +102,6 @@
 .Fn vfs_reinit "void"
 .Ft struct vfsops *
 .Fn vfs_getopsbyname "const char *name"
-.Ft int
-.Fn vfs_sysctl "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" \
-"void *newp" "size_t newlen" "struct proc *p"
 .Ft int
 .Fn vfs_write_suspend "struct mount *mp"
 .Ft void
@@ -193,9 +189,6 @@ look up the vfs operations for that file system (see
 or return
 .Dv NULL
 if file system isn't present in the kernel.
-.It Fn vfs_sysctl "name" "namelen" "oldp" "oldlenp" "newp" "newlen" \
-"struct proc *p"
-Retrieve file system-specific information for the sysctl(3) function.
 .It Fn vfs_write_suspend "mp"
 Request a mounted file system to suspend write operations.
 All new write operations to the file system are stopped.
