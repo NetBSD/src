@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.2 1998/01/13 02:10:09 thorpej Exp $	*/
+/*	$NetBSD: todclock.c,v 1.3 1998/02/21 03:19:02 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -113,7 +113,9 @@ todclockmatch(parent, cf, aux)
 	if (strcmp(ta->ta_name, "todclock") != 0)
 		return(0);
 
-	return(1);
+	if (ta->ta_flags & TODCLOCK_FLAG_FAKE)
+		return(1);
+	return(2);
 }
 
 /*
@@ -190,6 +192,14 @@ resettodr()
 	if (!timeset)
 		return;
 
+	/* We need a todclock device and should always have one */
+	if (!todclock_sc)
+		panic("resettodr: No todclock device attached\n");
+
+	/* Abort early if there is not actually an RTC write routine */
+	if (todclock_sc->sc_rtc_write == NULL)
+		return;
+
 	sec = time.tv_sec;
 	sec -= rtc_offset * 60;
 	year = (sec / SECPER4YEARS) * 4;
@@ -238,9 +248,6 @@ resettodr()
 */
 
 	s = splclock();
-
-	if (!todclock_sc)
-		panic("resettod: No todclock device attached\n");
 	todclock_sc->sc_rtc_write(&rtc);
 	(void)splx(s);
 }
@@ -261,20 +268,30 @@ inittodr(base)
 	rtc_t rtc;
 
 	/*
-	 * We ignore the suggested time for now and go for the RTC
-	 * clock time stored in the CMOS RAM.
+	 * Default to the suggested time but replace that we one from an
+	 * RTC is we can.
 	 */
 
+	/* We expect a todclock device */
 	if (!todclock_sc)
-		panic("resettod: No todclock device attached\n");
+		panic("inittodr: No todclock device attached\n");
 
-	s = splclock();
-	if (todclock_sc->sc_rtc_read(&rtc)  == 0) {
+	/* Use the suggested time as a fall back */
+	time.tv_sec = base;
+	time.tv_usec = 0;
+
+	/* Can we read an RTC ? */
+	if (todclock_sc->sc_rtc_read) {
+		s = splclock();
+		if (todclock_sc->sc_rtc_read(&rtc) == 0) {
+			(void)splx(s);
+			return;
+		}
 		(void)splx(s);
+	} else
 		return;
-	}
-
-	(void)splx(s);
+			
+	/* Convert the rtc time into seconds */
 
 	n = rtc.rtc_sec + 60 * rtc.rtc_min + 3600 * rtc.rtc_hour;
 	n += (rtc.rtc_day - 1) * 3600 * 24;
