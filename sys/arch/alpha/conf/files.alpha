@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.119 2000/06/25 17:21:57 thorpej Exp $
+# $NetBSD: files.alpha,v 1.120 2000/07/04 02:22:10 nisimura Exp $
 #
 # alpha-specific configuration info
 
@@ -193,13 +193,12 @@ file	dev/dec/zskbd.c			zskbd		needs-flag
 # the TCDS ASIC
 device	tcds { chip = -1 }
 attach	tcds at tc
-file	arch/alpha/tc/tcds.c		tcds
+file	dev/tc/tcds.c			tcds
 
 # 53C[F]90 SCSI
 device	asc: scsi, ncr53c9x
 attach	asc at tcds with asc_tcds
-file	arch/alpha/tc/asc.c		asc
-file	arch/alpha/tc/tcds_dma.c	asc
+file	dev/tc/asc_tcds.c		asc_tcds
 
 # TC and baseboard ioasic Lance ethernet are in files.tc
 
