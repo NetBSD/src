@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.4 2000/01/25 00:19:30 nisimura Exp $ */
+/* $NetBSD: disksubr.c,v 1.5 2000/01/28 02:25:25 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -73,7 +73,7 @@
  *	magic		2			2
  *	cksum		2			2
  *
- * Magic number value and checksum calculation are identical.  Subtil
+ * Magic number value and checksum calculation are identical.  Subtle
  * difference is partition start address; UniOS/ISI maintains sector
  * numbers while SunOS label has cylinder number.
  *
@@ -84,7 +84,7 @@
  * writedisklabel fails when no BSD label is found.
  *
  * NetBSD/luna68k (1) creates UniOS/ISI label with BSD label
- * embedded at offset 64, (2) reads BSD label if found, (2) falls
+ * embedded at offset 64, (2) reads BSD label if found, (3) falls
  * back to reading UniOS/ISI label when no BSD label is found.  Plus,
  * (4) reads SunOS label if found in place of UniOS/ISI label.
  */
@@ -502,30 +502,3 @@ disklabel_bsd_to_om(lp, cp)
 
 	return (0);
 }
-
-#if 0
-/*
- * Search the bad sector table looking for the specified sector.
- * Return index if found.
- * Return -1 if not found.
- */
-int
-isbad(bt, cyl, trk, sec)
-	register struct dkbad *bt;
-	int cyl, trk, sec;
-{
-	register int i;
-	register long blk, bblk;
-
-	blk = ((long)cyl << 16) + (trk << 8) + sec;
-	for (i = 0; i < 126; i++) {
-		bblk = ((long)bt->bt_bad[i].bt_cyl << 16) +
-			bt->bt_bad[i].bt_trksec;
-		if (blk == bblk)
-			return (i);
-		if (blk < bblk || bblk < 0)
-			break;
-	}
-	return (-1);
-}
-#endif
