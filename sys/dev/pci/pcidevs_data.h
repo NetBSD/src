@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.431.2.17 2003/01/27 06:22:07 jmc Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431.2.18 2003/01/28 06:24:48 jmc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.428.2.19 2003/01/27 06:21:36 jmc Exp 
  */
 
 /*
@@ -866,6 +866,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Alteon",
 	    "ACEnic BCM5701 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC1000,
+	    0,
+	    "Altima",
+	    "AC1000 Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC1001,
+	    0,
+	    "Altima",
+	    "AC1001 Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC9100,
+	    0,
+	    "Altima",
+	    "AC9100 Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
@@ -1772,6 +1790,54 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Broadcom Corporation",
 	    "BCM5701 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5702 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702X,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5702X 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702FE,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5702FE 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5703 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703X,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5703X 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5704C,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5704C Gigabit Ethernet (1000BASE-T)",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5704S,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5704S Gigabit Ethernet (1000BASE-X)",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5705 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401,
@@ -6268,10 +6334,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SK-NET GE",
 	},
 	{
-	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_ALTIMA,
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9DX1,
 	    0,
 	    "Schneider & Koch",
-	    "SK-NET Altima Gigabit Ethernet",
+	    "SK-NET SK-9DX1 Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9D21,
@@ -10837,6 +10903,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_GLOBALSUN, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Global Sun Tech",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ALTIMA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Altima",
 	    NULL,
 	},
 	{
