@@ -1,10 +1,10 @@
-/*	$NetBSD: nd6_rtr.c,v 1.15 2000/03/21 11:34:25 itojun Exp $	*/
-/*	$KAME: nd6_rtr.c,v 1.27 2000/02/26 06:53:11 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.16 2000/06/13 02:54:11 itojun Exp $	*/
+/*	$KAME: nd6_rtr.c,v 1.39 2000/06/13 02:50:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -392,7 +392,7 @@ nd6_ra_input(m, off, icmp6len)
 	pfxlist_onlink_check();
     }
 
- freeit:
+freeit:
 	m_freem(m);
 }
 
@@ -665,7 +665,7 @@ defrtrlist_update(new)
 	/*
 	 * Insert the new router at the end of the Default Router List.
 	 * If there is no other router, install it anyway. Otherwise,
-	 * just continue to use the current default router. 
+	 * just continue to use the current default router.
 	 */
 	TAILQ_INSERT_TAIL(&nd_defrouter, n, dr_entry);
 	if (TAILQ_FIRST(&nd_defrouter) == n)
@@ -1235,23 +1235,13 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 		oia->ia_next = ia;
 	} else
 		in6_ifaddr = ia;
+	/* gain a refcnt for the link from in6_ifaddr */
 	IFAREF((struct ifaddr *)ia);
 
 	/* link to if_addrlist */
-	if (ifp->if_addrlist.tqh_first != NULL) {
-		TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
-			ifa_list);
-		IFAREF((struct ifaddr *)ia);
-	}
-#if 0
-	else {
-		/*
-		 * this should not be the case because there is at least one
-		 * link-local address(see the beginning of the function).
-		 */
-		TAILQ_INIT(&ifp->if_addrlist);
-	}
-#endif
+	TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
+	/* gain another refcnt for the link from if_addrlist */
+	IFAREF((struct ifaddr *)ia);
 
 	/* new address */
 	ia->ia_addr.sin6_len = sizeof(struct sockaddr_in6);
@@ -1463,7 +1453,7 @@ in6_init_address_ltimes(struct nd_prefix *new,
 /*
  * Delete all the routing table entries that use the specified gateway.
  * XXX: this function causes search through all entries of routing table, so
- * it shouldn't be called when acting as a router. 
+ * it shouldn't be called when acting as a router.
  */
 void
 rt6_flush(gateway, ifp)
