@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.3 1998/12/26 12:53:02 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.4 1998/12/30 17:46:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,6 @@
 #include <dev/usb/usbhid.h>
 
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
