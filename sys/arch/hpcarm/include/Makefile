@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2001/11/24 17:39:31 thorpej Exp $
+#	$NetBSD: Makefile,v 1.16 2001/11/26 20:41:44 thorpej Exp $
 
 KDIR=	/sys/arch/hpcarm/include
 INCSDIR= /usr/include/hpcarm
@@ -14,7 +14,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	intr.h ipkdb.h \
 	limits.h lock.h \
 	math.h \
-	param.h pcb.h pmap.h proc.h profile.h psl.h ptrace.h \
+	param.h pcb.h pmap.h proc.h profile.h ptrace.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h sysarch.h \
 	trap.h types.h \
