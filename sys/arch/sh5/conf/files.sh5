@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh5,v 1.1 2002/07/05 13:31:51 scw Exp $
+#	$NetBSD: files.sh5,v 1.2 2002/07/12 11:20:12 scw Exp $
 
 
 #
@@ -121,6 +121,8 @@ file	arch/sh5/sh5/vm_machdep.c
 file	dev/clock_subr.c
 file	dev/cons.c
 file	dev/cninit.c
+
+file	arch/sh5/sh5/procfs_machdep.c		procfs
 
 file	arch/sh5/sh5/in_cksum.c			inet
 file	netinet/in4_cksum.c			inet
