@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.1 1999/11/17 14:56:11 kleink Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.2 1999/11/22 13:26:59 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/mount.h>
