@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4 1999/06/30 16:34:19 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5 2000/01/21 18:49:52 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -70,6 +70,7 @@ cpumatch(parent, cf, aux)
 #define MPC603e		6
 #define MPC603ev	7
 #define MPC750		8
+#define MPC7400		12
 
 #define HID0_DOZE	0x00800000
 #define HID0_NAP	0x00400000
@@ -89,6 +90,7 @@ cpuattach(parent, self, aux)
 	case MPC603e:
 	case MPC603ev:
 	case MPC750:
+	case MPC7400:
 		/* Select DOZE power-save mode. */
 		__asm __volatile ("mfspr %0,1008" : "=r"(hid0));
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
@@ -96,7 +98,7 @@ cpuattach(parent, self, aux)
 		__asm __volatile ("mtspr 1008,%0" :: "r"(hid0));
 	}
 
-	if ((pvr >> 16) == MPC750)
+	if ((pvr >> 16) == MPC750 || (pvr >> 16) == MPC7400)
 		display_l2cr();
 	else if (OF_finddevice("/bandit/ohare") != -1)
 		ohare_init();
@@ -194,7 +196,7 @@ display_l2cr()
 		if (l2cr & L2CR_L2PE)
 			printf(" with parity");
 #endif
-		printf(" backside cache enabled");
+		printf(" backside cache");
 	}
 	printf("\n");
 }
