@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vnops.c,v 1.6 1993/08/02 23:00:04 mycroft Exp $
+ *	$Id: isofs_vnops.c,v 1.7 1993/09/03 04:37:58 cgd Exp $
  */
 #include "param.h"
 #include "systm.h"
@@ -21,6 +21,12 @@
 #include "iso.h"
 #include "isofs_node.h"
 #include "iso_rrip.h"
+
+#ifdef ISOFS_DEBUG
+#define DPRINTF(a) printf a
+#else
+#define DPRINTF(a)
+#endif
 
 /*
  * Open called.
@@ -250,14 +256,18 @@ isofs_readdir(vp, uio, cred, eofflagp)
 	iso_offset = uio->uio_offset;
 
 	entryoffsetinblock = iso_blkoff(imp, iso_offset);
+	DPRINTF(("isofs_readdir: iso_offset = %d, entryoff..=%d\n", 
+		 iso_offset, entryoffsetinblock));
 	if (entryoffsetinblock != 0) {
 		if (error = iso_blkatoff(ip, iso_offset, (char **)0, &bp))
 			return (error);
 	}
 
 	endsearch = ip->i_size;
+	DPRINTF(("isofs_readdir: endsearch = %d\n", endsearch));
 
 	while (iso_offset < endsearch && uio->uio_resid > 0) {
+	        DPRINTF(("isooff=%d, entryoff=%d\n", iso_offset, entryoffsetinblock));
 		/*
 		 * If offset is on a block boundary,
 		 * read the next directory block.
@@ -271,6 +281,7 @@ isofs_readdir(vp, uio, cred, eofflagp)
 						 (char **)0, &bp))
 				return (error);
 			entryoffsetinblock = 0;
+			DPRINTF(("new block at iso_offset = %d\n", iso_offset));
 		}
 		/*
 		 * Get pointer to next entry.
@@ -280,28 +291,36 @@ isofs_readdir(vp, uio, cred, eofflagp)
 			(bp->b_un.b_addr + entryoffsetinblock);
 
 		reclen = isonum_711 (ep->length);
+		DPRINTF(("isofs_readdir: reclen = %d\n", reclen));
 		if (reclen == 0) {
 			/* skip to next block, if any */
 			iso_offset = roundup (iso_offset,
 					      imp->logical_block_size);
+			DPRINTF(("isofs: skip to next block, if any\n"));
 			continue;
 		}
 
-		if (reclen < sizeof (struct iso_directory_record))
+		if (reclen < ISO_DIRECTORY_RECORD_SIZE) {
+		        DPRINTF(("isofs_readdir: reclen too small!\n"));
+			error = EINVAL;
 			/* illegal entry, stop */
 			break;
+		}
 
-/* 10 Aug 92*/	if (entryoffsetinblock + reclen -1 >= imp->logical_block_size)
+		if (entryoffsetinblock + reclen -1 >= imp->logical_block_size) {
+                        DPRINTF(("isofs_readdir: entryoffsetinblock + reclen - 1 > lbs\n"));
+			error = EINVAL;
 			/* illegal directory, so stop looking */
 			break;
+		}
 
 		dirent.d_fileno = isonum_733 (ep->extent);
 		dirent.d_namlen = isonum_711 (ep->name_len);
-
-		if (reclen < sizeof (struct iso_directory_record)
-		    + dirent.d_namlen)
+		if (reclen < ISO_DIRECTORY_RECORD_SIZE + dirent.d_namlen) {
+		        error = EINVAL;
 			/* illegal entry, stop */
 			break;
+	        }
 
 		/*
 		 *
@@ -318,13 +337,20 @@ isofs_readdir(vp, uio, cred, eofflagp)
 				break;
 			default:
 				switch ( imp->iso_ftype ) {
-					case ISO_FTYPE_RRIP:
-						isofs_rrip_getname( ep, dirent.d_name, &dirent.d_namlen );
-					break;
+					default:
+						DPRINTF(("isofs_readdir: unknown ftype %x\n",
+							 imp->iso_ftype));
+						/* default to iso */
+						/* FALLTHRU */
+
 					case ISO_FTYPE_9660:
+						DPRINTF(("isofs_readdir: 9660\n"));
 						isofntrans(ep->name, dirent.d_namlen, dirent.d_name, &dirent.d_namlen);
 					break;
-					default:
+
+					case ISO_FTYPE_RRIP:
+				                DPRINTF(("isofs_readdir: RRIP\n"));
+						isofs_rrip_getname( ep, dirent.d_name, &dirent.d_namlen );
 					break;
 				}
 				break;
@@ -332,6 +358,11 @@ isofs_readdir(vp, uio, cred, eofflagp)
 
 		dirent.d_name[dirent.d_namlen] = 0;
 		dirent.d_reclen = DIRSIZ (&dirent);
+
+		DPRINTF(("d_fileno = %d, d_namlen = %d, name = %s (0x%08x%08x)\n",
+			 dirent.d_fileno, dirent.d_namlen, dirent.d_name,
+			 *(unsigned long*)dirent.d_name, 
+			 *(unsigned long*)(dirent.d_name+4)));
 
 		if (uio->uio_resid < dirent.d_reclen)
 			break;
@@ -343,6 +374,7 @@ isofs_readdir(vp, uio, cred, eofflagp)
 		entryoffsetinblock += reclen;
 	}
 			
+	DPRINTF(("isofs_readdir: out of directory scan loop\n"));
 	if (bp)
 		brelse (bp);
 

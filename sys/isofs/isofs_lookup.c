@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lookup.c	7.33 (Berkeley) 5/19/91
- *	$Id: isofs_lookup.c,v 1.5 1993/07/19 13:40:03 cgd Exp $
+ *	$Id: isofs_lookup.c,v 1.6 1993/09/03 04:37:54 cgd Exp $
  */
 
 #include "param.h"
@@ -48,6 +48,12 @@
 #include "isofs_node.h"
 #include "iso_rrip.h"
 #include "isofs_rrip.h"
+
+#ifdef ISOFS_DEBUG
+#define DPRINTF(a) printf a
+#else
+#define DPRINTF(a)
+#endif
 
 struct	nchstats nchstats;
 
@@ -112,7 +118,7 @@ isofs_lookup(vdp, ndp, p)
 	int error;
 
 	int reclen;
-	int namelen;
+	short namelen;
 	char altname[251];
 	int i;
 
@@ -127,8 +133,10 @@ isofs_lookup(vdp, ndp, p)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((dp->iso_flags & 2) == 0)
+	if ((dp->iso_flags & 2) == 0) {
+	        DPRINTF(("isofs_lookup: iso_flags = %x, ENOTDIR\n", dp->iso_flags));
 		return (ENOTDIR);
+	}
 
 	/*
 	 * We now have a segment name to search for, and a directory to search.
@@ -235,6 +243,7 @@ searchloop:
 			(bp->b_un.b_addr + entryoffsetinblock);
 
 		reclen = isonum_711 (ep->length);
+		DPRINTF(("isofs_lookup: reclen = %d\n", reclen));
 		if (reclen == 0) {
 			/* skip to next block, if any */
 			ndp->ni_ufs.ufs_offset =
@@ -243,22 +252,31 @@ searchloop:
 			continue;
 		}
 
-		if (reclen < sizeof (struct iso_directory_record))
+		if (reclen < ISO_DIRECTORY_RECORD_SIZE) {
+		        DPRINTF(("isofs_lookup: reclen too small (<%d)\n",
+				 ISO_DIRECTORY_RECORD_SIZE));
 			/* illegal entry, stop */
 			break;
+		}
 
-/* 10 Aug 92*/	if (entryoffsetinblock + reclen -1 >= imp->logical_block_size)
+		if (entryoffsetinblock + reclen -1 >= imp->logical_block_size) {
+                        DPRINTF(("isofs_lookup: cross-block entry\n"));
 			/* entries are not allowed to cross boundaries */
 			break;
+	        }
 
 		/*
 		 * Check for a name match.
 		 */
 		namelen = isonum_711 (ep->name_len);
+		DPRINTF(("isofs_lookup: namelen = %d\n", namelen));
 
-		if (reclen < sizeof (struct iso_directory_record) + namelen)
+		if (reclen < ISO_DIRECTORY_RECORD_SIZE + namelen) {
+		        DPRINTF(("isofs_lookup: reclen < %d + %d\n",
+				 ISO_DIRECTORY_RECORD_SIZE, namelen));
 			/* illegal entry, stop */
 			break;
+	        }
 
 		if (namelen == 1
 		     && ((ndp->ni_namelen == 1
@@ -275,7 +293,15 @@ searchloop:
 			goto found;
 		} else {
 			switch ( imp->iso_ftype ) {
+				default:
+				DPRINTF(("isofs_lookup: unsupported ftype = %x\n",
+					 imp->iso_ftype));
+				/* default to iso-mode, any extension should support
+				   iso, not ? */
+				/* FALLTHRU */
+
 				case ISO_FTYPE_9660:
+				DPRINTF(("isofs_lookup: ftype == ISO\n"));
 				if( ( namelen  >= ndp->ni_namelen ) &&
 					    ( isofncmp( ndp->ni_ptr, ndp->ni_namelen, ep->name, namelen ) ) ) {
 						ndp->ni_ufs.ufs_ino = isonum_733 (ep->extent);
@@ -284,6 +310,7 @@ searchloop:
 					}
 					break;
 				case ISO_FTYPE_RRIP:
+				DPRINTF(("isofs_lookup: ftype == RRIP\n"));
 					isofs_rrip_getname( ep, altname, &namelen );
 					if ( ( namelen == ndp->ni_namelen ) &&
 					     ( !bcmp( ndp->ni_ptr, altname, ndp->ni_namelen ) ) ) {
@@ -291,8 +318,6 @@ searchloop:
 						brelse(bp);
 						goto found;
 					}
-					break;
-				default:
 					break;
 			}
 		}
