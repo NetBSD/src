@@ -3,7 +3,7 @@
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
-#endif
+#else
 
 #ifndef RCSID
 #define RCSID(msg) \
@@ -1434,3 +1434,4 @@ struct sockaddr_in;
 #define __STDC__ 0
 #endif
 
+#endif /* !HAVE_NBTOOL_CONFIG_H */
