@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.30 1994/04/15 23:36:38 cgd Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.31 1994/04/17 04:48:31 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -1234,7 +1234,7 @@ vm_offset_t		*maddr;
 
 	addr = (long)bucket.tqh_first;
 
-	while (addr != baddr) {
+	while (addr != NULL) {
 		if (kvm_read((void *) addr, &mem, sizeof (mem)) == -1) {
 			seterr("can't read vm_page");
 			return 0;
