@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.35 2003/04/18 01:31:34 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.36 2003/05/15 21:29:49 fvdl Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.35 2003/04/18 01:31:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.36 2003/05/15 21:29:49 fvdl Exp $");
 
 #include "opt_acpi.h"
 
@@ -232,6 +232,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	    ap->OemId, ap->OemTableId, ap->OemRevision,
 	    ap->AslCompilerId, ap->AslCompilerRevision);
 
+	sc->sc_quirks = acpi_find_quirks();
+
 	sc->sc_iot = aa->aa_iot;
 	sc->sc_memt = aa->aa_memt;
 	sc->sc_pc = aa->aa_pc;
@@ -305,7 +307,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	 * Fix up PCI devices.
 	 */
 #ifdef ACPI_PCI_FIXUP
-	acpi_pci_fixup(sc);
+	if ((sc->sc_quirks & (ACPI_QUIRK_BADPCI | ACPI_QUIRK_BADIRQ)) == 0)
+		acpi_pci_fixup(sc);
 #endif
  
 	/*
