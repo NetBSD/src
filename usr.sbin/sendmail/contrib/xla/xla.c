@@ -1,11 +1,15 @@
 /*
- * (C) Copyright 1993, Herve Schauer Consultants
+ * (C) Copyright 1993-94, Herve Schauer Consultants
  *
  * This module written by Christophe.Wolfhugel@hsc-sec.fr
  * is to be used under the same conditions and terms (and absence
  * or warranties) than the other modules of the Sendmail package.
  *
  * ABSOLUTELY NO WARRANTY. USE AT YOUR OWN RISKS.
+ *
+ * Version: 940417, applied a patch from Paul Graham <pjg@acsu.buffalo.edu>
+ *                  (lockfile syntax in xla.c did not reflect anymore the
+ *                  new one used by sendmail, now fine).
  *
  */
 
@@ -100,7 +104,7 @@ xla_zero()
 	XlaFname = NULL;
 	XlaNext  = 0;
 	XlaPid   = 0;
-	memset(&XlaRules[0], 0, sizeof(XLARULE) * MAXLARULES);
+	memset((char *) &XlaRules[0], 0, sizeof(XLARULE) * MAXLARULES);
 }
 
 
@@ -198,7 +202,7 @@ xla_create_file()
 		syserr("xla_create_file: open failed");
 		return;
 	}
-	if (!lockfile(fd, XlaFname, LOCK_EX)) {
+	if (!lockfile(fd, XlaFname, NULL, LOCK_EX)) {
 		close(fd);
 		XlaFname = NULL;
 		syserr("xla_create_file: can't set lock");
@@ -250,7 +254,7 @@ xla_smtp_ok()
 		syserr("xla_smtp_ok: open failed");
 		return(TRUE);
 	}
-	if (!lockfile(fd, XlaFname, LOCK_EX)) {
+	if (!lockfile(fd, XlaFname, NULL, LOCK_EX)) {
 		close(fd);
 		XlaFname = NULL;
 		syserr("xla_smtp_ok: can't set lock");
@@ -304,7 +308,7 @@ xla_host_ok(name)
 		return(TRUE);
 	}
 	XlaPid = getpid();
-	if (!lockfile(fd, XlaFname, LOCK_EX)) {
+	if (!lockfile(fd, XlaFname, NULL, LOCK_EX)) {
 		close(fd);
 		XlaFname = NULL;
 		syserr("xla_host_ok: can't set lock");
@@ -372,7 +376,7 @@ xla_noqueue_ok(name)
 		syserr("xla_noqueue_ok: open failed");
 		return(TRUE);
 	}
-	if (!lockfile(fd, XlaFname, LOCK_EX)) {
+	if (!lockfile(fd, XlaFname, NULL, LOCK_EX)) {
 		close(fd);
 		XlaFname = NULL;
 		syserr("xla_noqueue_ok: can't set lock");
@@ -441,7 +445,7 @@ xla_host_end(name)
 		syserr("xla_host_end: open failed");
 		return;
 	}
-	if (!lockfile(fd, XlaFname, LOCK_EX)) {
+	if (!lockfile(fd, XlaFname, NULL, LOCK_EX)) {
                 close(fd);
                 XlaFname = NULL;
 		syserr("xla_host_end: can't set lock");
@@ -502,7 +506,7 @@ xla_all_end()
 		syserr("xla_all_end: open failed");
                 return;
         }
-        if (!lockfile(fd, XlaFname, LOCK_EX)) {
+        if (!lockfile(fd, XlaFname, NULL, LOCK_EX)) {
                 close(fd);
                 XlaFname = NULL;
                 syserr("xla_all_end: can't set lock");
