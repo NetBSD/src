@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.173 2002/04/04 01:44:30 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.174 2002/05/20 22:50:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.173 2002/04/04 01:44:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.174 2002/05/20 22:50:57 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -422,6 +422,7 @@ getnewvnode(tag, mp, vops, vpp)
 	static int toggle;
 	struct vnode *vp;
 	int error = 0, tryalloc;
+	int s;
 
  try_again:
 	if (mp) {
@@ -512,7 +513,9 @@ getnewvnode(tag, mp, vops, vpp)
 		}
 		if (vp->v_usecount)
 			panic("free vnode isn't, vp %p", vp);
+		s = splbio();
 		TAILQ_REMOVE(listhd, vp, v_freelist);
+		splx(s);
 		/* see comment on why 0xdeadb is set at end of vgone (below) */
 		vp->v_freelist.tqe_prev = (struct vnode **)0xdeadb;
 		simple_unlock(&vnode_free_list_slock);
@@ -569,6 +572,8 @@ void
 ungetnewvnode(vp)
 	struct vnode *vp;
 {
+	int s;
+
 #ifdef DIAGNOSTIC
 	if (vp->v_usecount != 1)
 		panic("ungetnewvnode: busy vnode");
@@ -582,10 +587,12 @@ ungetnewvnode(vp)
 	 * Insert at head of LRU list
 	 */
 	simple_lock(&vnode_free_list_slock);
+	s = splbio();
 	if (vp->v_holdcnt > 0)
 		TAILQ_INSERT_HEAD(&vnode_hold_list, vp, v_freelist);
 	else
 		TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
+	splx(s);
 	simple_unlock(&vnode_free_list_slock); 
 	simple_unlock(&vp->v_interlock);
 }
@@ -1117,7 +1124,7 @@ vget(vp, flags)
 	struct vnode *vp;
 	int flags;
 {
-	int error;
+	int s, error;
 
 	/*
 	 * If the vnode is in the process of being cleaned out for
@@ -1139,10 +1146,12 @@ vget(vp, flags)
 	}
 	if (vp->v_usecount == 0) {
 		simple_lock(&vnode_free_list_slock);
+		s = splbio();
 		if (vp->v_holdcnt > 0)
 			TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
 		else
 			TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
+		splx(s);
 		simple_unlock(&vnode_free_list_slock);
 	}
 	vp->v_usecount++;
@@ -1172,12 +1181,14 @@ vget(vp, flags)
 			 * insert at tail of LRU list
 			 */
 			simple_lock(&vnode_free_list_slock);
+			s = splbio();
 			if (vp->v_holdcnt > 0)
 				TAILQ_INSERT_TAIL(&vnode_hold_list, vp,
 				    v_freelist);
 			else
 				TAILQ_INSERT_TAIL(&vnode_free_list, vp,
 				    v_freelist);
+			splx(s);
 			simple_unlock(&vnode_free_list_slock);
 			simple_unlock(&vp->v_interlock);
 		}
@@ -1194,6 +1205,7 @@ void
 vput(vp)
 	struct vnode *vp;
 {
+	int s;
 	struct proc *p = curproc;	/* XXX */
 
 #ifdef DIAGNOSTIC
@@ -1217,10 +1229,12 @@ vput(vp)
 	 * Insert at tail of LRU list.
 	 */
 	simple_lock(&vnode_free_list_slock);
+	s = splbio();
 	if (vp->v_holdcnt > 0)
 		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
 	else
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
+	splx(s);
 	simple_unlock(&vnode_free_list_slock);
 	if (vp->v_flag & VEXECMAP) {
 		uvmexp.execpages -= vp->v_uobj.uo_npages;
@@ -1239,6 +1253,7 @@ void
 vrele(vp)
 	struct vnode *vp;
 {
+	int s;
 	struct proc *p = curproc;	/* XXX */
 
 #ifdef DIAGNOSTIC
@@ -1261,10 +1276,12 @@ vrele(vp)
 	 * Insert at tail of LRU list.
 	 */
 	simple_lock(&vnode_free_list_slock);
+	s = splbio();
 	if (vp->v_holdcnt > 0)
 		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
 	else
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
+	splx(s);
 	simple_unlock(&vnode_free_list_slock);
 	if (vp->v_flag & VEXECMAP) {
 		uvmexp.execpages -= vp->v_uobj.uo_npages;
@@ -1283,6 +1300,7 @@ void
 vhold(vp)
 	struct vnode *vp;
 {
+	int s;
 
 	/*
 	 * If it is on the freelist and the hold count is currently
@@ -1301,8 +1319,10 @@ vhold(vp)
 	if ((vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb) &&
 	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
 		simple_lock(&vnode_free_list_slock);
+		s = splbio();
 		TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
 		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
+		splx(s);
 		simple_unlock(&vnode_free_list_slock);
 	}
 	vp->v_holdcnt++;
@@ -1316,6 +1336,7 @@ void
 holdrele(vp)
 	struct vnode *vp;
 {
+	int s;
 
 	simple_lock(&vp->v_interlock);
 	if (vp->v_holdcnt <= 0)
@@ -1339,8 +1360,10 @@ holdrele(vp)
 	if ((vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb) &&
 	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
 		simple_lock(&vnode_free_list_slock);
+		s = splbio();
 		TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
+		splx(s);
 		simple_unlock(&vnode_free_list_slock);
 	}
 	simple_unlock(&vp->v_interlock);
@@ -1468,7 +1491,7 @@ vclean(vp, flags, p)
 	int flags;
 	struct proc *p;
 {
-	int active;
+	int s, active;
 
 	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
 
@@ -1564,7 +1587,9 @@ vclean(vp, flags, p)
 			if (vp->v_holdcnt > 0)
 				panic("vclean: not clean, vp %p", vp);
 #endif
+			s = splbio();
 			TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
+			splx(s);
 			simple_unlock(&vnode_free_list_slock);
 		} else
 			simple_unlock(&vp->v_interlock);
@@ -1632,6 +1657,7 @@ vgonel(vp, p)
 	struct vnode *vp;
 	struct proc *p;
 {
+	int s;
 	struct vnode *vq;
 	struct vnode *vx;
 
@@ -1726,8 +1752,10 @@ vgonel(vp, p)
 			panic("vgonel: not clean, vp %p", vp);
 		if (vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb &&
 		    TAILQ_FIRST(&vnode_free_list) != vp) {
+			s = splbio();
 			TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
 			TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
+			splx(s);
 		}
 		simple_unlock(&vnode_free_list_slock);
 	}

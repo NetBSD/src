@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.75 2002/05/17 21:42:38 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.76 2002/05/20 22:50:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.75 2002/05/17 21:42:38 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.76 2002/05/20 22:50:58 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -2217,6 +2217,8 @@ lfs_vref(struct vnode *vp)
 void
 lfs_vunref(struct vnode *vp)
 {
+	int s;
+
 	/*
 	 * Analogous to lfs_vref, if the node is flushing, fake it.
 	 */
@@ -2242,10 +2244,12 @@ lfs_vunref(struct vnode *vp)
 	 * insert at tail of LRU list
 	 */
 	simple_lock(&vnode_free_list_slock);
+	s = splbio();
 	if (vp->v_holdcnt > 0)
 		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
 	else
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
+	splx(s);
 	simple_unlock(&vnode_free_list_slock);
 	simple_unlock(&vp->v_interlock);
 }
@@ -2261,6 +2265,8 @@ lfs_vunref(struct vnode *vp)
 void
 lfs_vunref_head(struct vnode *vp)
 {
+	int s;
+
 	simple_lock(&vp->v_interlock);
 #ifdef DIAGNOSTIC
 	if (vp->v_usecount == 0) {
@@ -2276,7 +2282,9 @@ lfs_vunref_head(struct vnode *vp)
 	 * insert at head of LRU list
 	 */
 	simple_lock(&vnode_free_list_slock);
+	s = splbio();
 	TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
+	splx(s);
 	simple_unlock(&vnode_free_list_slock);
 	simple_unlock(&vp->v_interlock);
 }
