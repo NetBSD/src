@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.57 2002/02/22 13:51:40 kleink Exp $	*/
+/*	$NetBSD: trap.c,v 1.58 2002/03/04 04:07:35 dbj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -422,7 +422,9 @@ brain_damage2:
 #endif
 #ifdef TRAP_PANICWAIT
 		printf("Press a key to panic.\n");
+		cnpollc(1);
 		cngetc();
+		cnpollc(0);
 #endif
 		panic("trap");
 	}
