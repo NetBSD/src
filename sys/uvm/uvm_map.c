@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.155 2004/01/30 11:56:39 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.156 2004/02/02 23:13:44 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.155 2004/01/30 11:56:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.156 2004/02/02 23:13:44 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3878,7 +3878,7 @@ struct uvm_kmapent_hdr {
 	int ukh_nused;
 	struct vm_map_entry *ukh_freelist;
 	struct vm_map *ukh_map;
-	struct vm_map_entry ukh_entries[];
+	struct vm_map_entry ukh_entries[0];
 };
 
 #define	UVM_KMAPENT_CHUNK				\
