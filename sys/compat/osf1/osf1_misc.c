@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_misc.c,v 1.5 1995/09/19 22:44:26 thorpej Exp $	*/
+/*	$NetBSD: osf1_misc.c,v 1.6 1995/10/07 06:27:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,24 +29,25 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/exec.h>
-#include <sys/file.h>
-#include <sys/filedesc.h>
+#include <sys/namei.h>
 #include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/filedesc.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
-#include <sys/namei.h>
-#include <sys/reboot.h>
+#include <sys/mount.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/stat.h>
-#include <vm/vm.h>
-
-#include <sys/mount.h>
+#include <sys/reboot.h>
 #include <sys/syscallargs.h>
+
 #include <compat/osf1/osf1_syscall.h>
 #include <compat/osf1/osf1_syscallargs.h>
+#include <compat/osf1/osf1_util.h>
+
+#include <vm/vm.h>
 
 #ifdef SYSCALL_DEBUG
 extern int scdebug;
@@ -75,17 +76,17 @@ struct emul emul_osf1 = {
 };
 
 int
-osf1_open(p, v, retval)
+osf1_sys_open(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_open_args /* {
+	struct osf1_sys_open_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	struct open_args /* {
+	struct sys_open_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 		syscallarg(int) mode;
@@ -102,11 +103,11 @@ osf1_open(p, v, retval)
 	SCARG(&a, flags) = SCARG(uap, flags);		/* XXX translate */
 	SCARG(&a, mode) = SCARG(uap, mode);
 
-	return open(p, &a, retval);
+	return sys_open(p, &a, retval);
 }
 
 int
-osf1_setsysinfo(p, v, retval)
+osf1_sys_setsysinfo(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
@@ -126,16 +127,16 @@ osf1_setsysinfo(p, v, retval)
 #define OSF1_RLIMIT_NOFILE	6		/* OSF1's RLIMIT_NOFILE */
 #define OSF1_RLIMIT_NLIMITS	8		/* Number of OSF1 rlimits */
 
-osf1_getrlimit(p, v, retval)
+osf1_sys_getrlimit(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_getrlimit_args /* { 
+	struct osf1_sys_getrlimit_args /* { 
 		syscallarg(u_int) which;
 		syscallarg(struct rlimit *) rlp;
 	} */ *uap = v;
-	struct getrlimit_args /* {
+	struct sys_getrlimit_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct rlimit *) rlp;
 	} */ a;
@@ -151,19 +152,19 @@ osf1_getrlimit(p, v, retval)
 		return (0);
 	SCARG(&a, rlp) = SCARG(uap, rlp);
 
-	return getrlimit(p, &a, retval);
+	return sys_getrlimit(p, &a, retval);
 }
 
-osf1_setrlimit(p, v, retval)
+osf1_sys_setrlimit(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_setrlimit_args /* {
+	struct osf1_sys_setrlimit_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct rlimit *) rlp;
 	} */ *uap = v;
-	struct setrlimit_args /* {
+	struct sys_setrlimit_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct rlimit *) rlp;
 	} */ a;
@@ -179,7 +180,7 @@ osf1_setrlimit(p, v, retval)
 		return (0);
 	SCARG(&a, rlp) = SCARG(uap, rlp);
 
-	return setrlimit(p, &a, retval);
+	return sys_setrlimit(p, &a, retval);
 }
 
 #define	OSF1_MAP_SHARED		0x001
@@ -193,12 +194,12 @@ osf1_setrlimit(p, v, retval)
 #define	OSF1_MAP_UNALIGNED	0x800
 
 int
-osf1_mmap(p, v, retval)
+osf1_sys_mmap(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_mmap_args /* {
+	struct osf1_sys_mmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
@@ -206,7 +207,7 @@ osf1_mmap(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(off_t) pos;  
 	} */ *uap = v;
-	struct mmap_args /* {
+	struct sys_mmap_args /* {
 		syscallarg(caddr_t) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
@@ -247,16 +248,16 @@ osf1_mmap(p, v, retval)
 	if (SCARG(uap, flags) & OSF1_MAP_UNALIGNED)
 		return (EINVAL);
 
-	return mmap(p, &a, retval);
+	return sys_mmap(p, &a, retval);
 }
 
 int
-osf1_usleep_thread(p, v, retval)
+osf1_sys_usleep_thread(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_usleep_thread_args /* {
+	struct osf1_sys_usleep_thread_args /* {
 		syscallarg(struct timeval *) sleep;
 		syscallarg(struct timeval *) slept;
 	} */ *uap = v;
@@ -286,87 +287,6 @@ osf1_usleep_thread(p, v, retval)
 	return (error);
 }
 
-#define	OSF1_SA_ONSTACK		0x00000001
-#define	OSF1_SA_RESTART		0x00000002
-#define	OSF1_SA_NOCLDSTOP	0x00000004
-#define	OSF1_SA_NODEFER		0x00000008
-#define	OSF1_SA_RESETHAND	0x00000010
-#define	OSF1_SA_NOCLDWAIT	0x00000020
-#define	OSF1_SA_SIGINFO		0x00000040
-
-static int
-copysigaction(osf, bsd)
-	struct sigaction *osf;
-	struct sigaction *bsd;
-{
-
-	bsd->sa_handler = osf->sa_handler;
-	bsd->sa_mask = osf->sa_mask;
-	bsd->sa_flags = 0;
-	if (osf->sa_flags & (OSF1_SA_NODEFER|OSF1_SA_RESETHAND|
-	    OSF1_SA_NOCLDWAIT|OSF1_SA_SIGINFO))
-		return (EINVAL);
-	if (osf->sa_flags & OSF1_SA_ONSTACK)
-		bsd->sa_flags |= SA_ONSTACK;
-	if (osf->sa_flags & OSF1_SA_RESTART)
-		bsd->sa_flags |= SA_RESTART;
-	if (osf->sa_flags & OSF1_SA_NOCLDSTOP)
-		bsd->sa_flags |= SA_NOCLDSTOP;
-}
-
-int
-osf1_sigaction(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sigaction_args /* {
-		syscallarg(int) signum;
-		syscallarg(struct sigaction *) nsa; 
-		syscallarg(struct sigaction *) osa;
-	} */ *uap = v;
-	struct sigaction_args /* {
-		syscallarg(int) signum;
-		syscallarg(struct sigaction *) nsa;
-		syscallarg(struct sigaction *) osa;
-	} */ a;
-	struct sigaction osf1_nsa, osf1_osa;
-	struct sigaction bsd_nsa, bsd_osa;
-	int error;
-	extern char sigcode[], esigcode[];
-#define	szsigcode	(esigcode - sigcode)
-
-	SCARG(&a, signum) = SCARG(uap, signum);
-	if (SCARG(uap, nsa) == NULL)
-		SCARG(&a, nsa) = NULL;
-	else {
-		if (error = copyin(SCARG(uap, nsa), &osf1_nsa, sizeof osf1_nsa))
-			return (error);
-		if (error = copysigaction(&osf1_nsa, &bsd_nsa))
-			return (error);
-		SCARG(&a, nsa) = (struct sigaction *)
-		    ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
-		if (error = copyout(&bsd_nsa, SCARG(&a, nsa), sizeof bsd_nsa))
-			return (error);
-	}
-	if (SCARG(uap, osa) == NULL)
-		SCARG(&a, osa) = NULL;
-	else {
-		if (error = copyin(SCARG(uap, osa), &osf1_osa, sizeof osf1_osa))
-			return (error);
-		if (error = copysigaction(&osf1_osa, &bsd_osa))
-			return (error);
-		SCARG(&a, osa) = (struct sigaction *)
-		    ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN +
-		    sizeof(struct sigaction));
-		if (error = copyout(&bsd_osa, SCARG(&a, osa), sizeof bsd_osa))
-			return (error);
-	}
-
-	/* XXX should return old sigaction, if requested. */
-	return sigaction(p, &a, retval);
-}
-
 struct osf1_stat {
 	int32_t		st_dev;
 	u_int32_t	st_ino;
@@ -392,12 +312,12 @@ struct osf1_stat {
  * Get file status; this version follows links.
  */
 /* ARGSUSED */
-osf1_stat(p, v, retval)
+osf1_sys_stat(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct osf1_stat_args /* {
+	register struct osf1_sys_stat_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct osf1_stat *) ub;
 	} */ *uap = v;
@@ -423,12 +343,12 @@ osf1_stat(p, v, retval)
  * Get file status; this version does not follow links.
  */
 /* ARGSUSED */
-osf1_lstat(p, v, retval)
+osf1_sys_lstat(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct osf1_lstat_args /* {
+	register struct osf1_sys_lstat_args /* {
 		syscallarg(char *) path;
 		syscallarg(struct osf1_stat *) ub;
 	} */ *uap = v;
@@ -453,12 +373,12 @@ osf1_lstat(p, v, retval)
 /*
  * Return status information about a file descriptor.
  */
-osf1_fstat(p, v, retval)
+osf1_sys_fstat(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct osf1_fstat_args /* {
+	register struct osf1_sys_fstat_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct osf1_stat *) sb;
 	} */ *uap = v;
@@ -524,23 +444,23 @@ cvtstat2osf1(st, ost)
 }
 
 int
-osf1_mknod(p, v, retval)
+osf1_sys_mknod(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_mknod_args /* {
+	struct osf1_sys_mknod_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) mode;
 		syscallarg(int) dev;
 	} */ *uap = v;
-	struct mknod_args a;
+	struct sys_mknod_args a;
 
 	SCARG(&a, path) = SCARG(uap, path);
 	SCARG(&a, mode) = SCARG(uap, mode);
 	SCARG(&a, dev) = osf2bsd_dev(SCARG(uap, dev));
 
-	return mknod(p, &a, retval);
+	return sys_mknod(p, &a, retval);
 }
 
 #define OSF1_F_DUPFD	0
@@ -555,17 +475,17 @@ osf1_mknod(p, v, retval)
 #define	OSF1_FSYNC	0x04000		/* XXX OSF1_O_SYNC */
 
 int
-osf1_fcntl(p, v, retval)
+osf1_sys_fcntl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_fcntl_args /* {
+	struct osf1_sys_fcntl_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
 	} */ *uap = v;
-	struct fcntl_args a;
+	struct sys_fcntl_args a;
 	long tmp;
 	int error;
 
@@ -610,7 +530,7 @@ osf1_fcntl(p, v, retval)
 		return (EINVAL);
 	}
 
-	error = fcntl(p, &a, retval);
+	error = sys_fcntl(p, &a, retval);
 
 	if (error)
 		return error;
@@ -625,17 +545,17 @@ osf1_fcntl(p, v, retval)
 }
 
 int
-osf1_socket(p, v, retval)
+osf1_sys_socket(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct osf1_socket_args /* {
+	register struct osf1_sys_socket_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
 	} */ *uap = v;
-	struct socket_args a;
+	struct sys_socket_args a;
 
 	if (SCARG(uap, type) > AF_LINK)
 		return (EINVAL);	/* XXX After AF_LINK, divergence. */
@@ -644,16 +564,16 @@ osf1_socket(p, v, retval)
 	SCARG(&a, type) = SCARG(uap, type);
 	SCARG(&a, protocol) = SCARG(uap, protocol);
 
-	return socket(p, &a, retval);
+	return sys_socket(p, &a, retval);
 }
 
 int
-osf1_sendto(p, v, retval)
+osf1_sys_sendto(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sendto_args /* {
+	register struct osf1_sys_sendto_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) buf;
 		syscallarg(size_t) len;
@@ -661,7 +581,7 @@ osf1_sendto(p, v, retval)
 		syscallarg(caddr_t) to;
 		syscallarg(int) tolen;
 	} */ *uap = v;
-	struct sendto_args a;
+	struct sys_sendto_args a;
 
 	if (SCARG(uap, flags) & ~0x7f)		/* unsupported flags */
 		return (EINVAL);
@@ -673,7 +593,7 @@ osf1_sendto(p, v, retval)
 	SCARG(&a, to) = SCARG(uap, to);
 	SCARG(&a, tolen) = SCARG(uap, tolen);
 
-	return sendto(p, &a, retval);
+	return sys_sendto(p, &a, retval);
 }
 
 #define	OSF1_RB_ASKNAME		0x001
@@ -687,15 +607,15 @@ osf1_sendto(p, v, retval)
 #define	OSF1_RB_ALLFLAGS	0x0ff		/* all of the above */
 
 int
-osf1_reboot(p, v, retval)
+osf1_sys_reboot(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_reboot_args /* {
+	struct osf1_sys_reboot_args /* {
 		syscallarg(int) opt;
 	} */ *uap = v;
-	struct reboot_args a;
+	struct sys_reboot_args a;
 
 	if (SCARG(uap, opt) & ~OSF1_RB_ALLFLAGS &&
 	    SCARG(uap, opt) & (OSF1_RB_ALTBOOT|OSF1_RB_UNIPROC))
@@ -715,28 +635,28 @@ osf1_reboot(p, v, retval)
 	if (SCARG(uap, opt) & OSF1_RB_DFLTROOT)
 		SCARG(&a, opt) |= RB_DFLTROOT;
 
-	return reboot(p, &a, retval);
+	return sys_reboot(p, &a, retval);
 }
 
 int
-osf1_lseek(p, v, retval)
+osf1_sys_lseek(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_lseek_args /* {  
+	struct osf1_sys_lseek_args /* {  
 		syscallarg(int) fd;  
 		syscallarg(off_t) offset;
 		syscallarg(int) whence;
 	} */ *uap = v;
-	struct lseek_args a;
+	struct sys_lseek_args a;
 
 	SCARG(&a, fd) = SCARG(uap, fd);
 	SCARG(&a, pad) = 0;
 	SCARG(&a, offset) = SCARG(uap, offset);
 	SCARG(&a, whence) = SCARG(uap, whence);
 
-	return lseek(p, &a, retval);
+	return sys_lseek(p, &a, retval);
 }
 
 /*
@@ -754,12 +674,12 @@ osf1_lseek(p, v, retval)
  *	    this function call.
  */
 int
-osf1_setuid(p, v, retval)
+osf1_sys_setuid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_setuid_args /* { 
+	struct osf1_sys_setuid_args /* { 
 		syscallargs(uid_t) uid;
 	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
@@ -790,12 +710,12 @@ osf1_setuid(p, v, retval)
  * setuid(), you'll get a correct description of setgid().
  */
 int
-osf1_setgid(p, v, retval)
+osf1_sys_setgid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_setgid_args /* {
+	struct osf1_sys_setgid_args /* {
 		syscallargs(gid_t) gid;
 	} */ *uap = v;
 	register struct pcred *pc = p->p_cred;
@@ -826,77 +746,22 @@ struct osf1_iovec {
 };
 
 int
-osf1_readv(p, v, retval)
+osf1_sys_readv(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_readv_args /* {
+	struct osf1_sys_readv_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct osf1_iovec *) iovp;
 		syscallarg(u_int) iovcnt;
 	} */ *uap = v;
-	struct readv_args /* {
+	struct sys_readv_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct iovec *) iovp;
 		syscallarg(u_int) iovcnt;
 	} */ a;
-	struct osf1_iovec *oio;
-	struct iovec *nio;
-	int error, i;
-	extern char sigcode[], esigcode[];
-
-	if (SCARG(uap, iovcnt) > (STACKGAPLEN / sizeof (struct iovec)))
-		return (EINVAL);
-
-	oio = (struct osf1_iovec *)
-	    malloc(SCARG(uap, iovcnt)*sizeof (struct osf1_iovec),
-	    M_TEMP, M_WAITOK);
-	nio = (struct iovec *) malloc(SCARG(uap, iovcnt)*sizeof (struct iovec),
-	    M_TEMP, M_WAITOK);
-
-	error = 0;
-	if (error = copyin(SCARG(uap, iovp), oio,
-	    SCARG(uap, iovcnt)*sizeof (struct osf1_iovec)))
-		goto punt;
-	for (i = 0; i < SCARG(uap, iovcnt); i++) {
-		nio[i].iov_base = oio[i].iov_base;
-		nio[i].iov_len = oio[i].iov_len;
-	}
-	if (error = copyout(nio,
-	    (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN),
-	    SCARG(uap, iovcnt)*sizeof (struct iovec)))
-		goto punt;
-
-	SCARG(&a, fd) = SCARG(uap, fd);
-	SCARG(&a, iovp) =
-	    (struct iovec *)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
-	SCARG(&a, iovcnt) = SCARG(uap, iovcnt);
-
-	error = readv(p, &a, retval);
-
-punt:
-	free(oio, M_TEMP);
-	free(nio, M_TEMP);
-	return (error);
-}
-
-int
-osf1_writev(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_writev_args /* {
-		syscallarg(int) fd;
-		syscallarg(struct osf1_iovec *) iovp;
-		syscallarg(u_int) iovcnt;
-	} */ *uap = v;
-	struct writev_args /* {
-		syscallarg(int) fd;
-		syscallarg(struct iovec *) iovp;
-		syscallarg(u_int) iovcnt;
-	} */ a;
+	struct emul *e = p->p_emul;
 	struct osf1_iovec *oio;
 	struct iovec *nio;
 	int error, i;
@@ -913,23 +778,76 @@ osf1_writev(p, v, retval)
 
 	error = 0;
 	if (error = copyin(SCARG(uap, iovp), oio,
-	    SCARG(uap, iovcnt)*sizeof (struct osf1_iovec)))
+	    SCARG(uap, iovcnt) * sizeof (struct osf1_iovec)))
 		goto punt;
 	for (i = 0; i < SCARG(uap, iovcnt); i++) {
 		nio[i].iov_base = oio[i].iov_base;
 		nio[i].iov_len = oio[i].iov_len;
 	}
-	if (error = copyout(nio,
-	    (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN),
-	    SCARG(uap, iovcnt)*sizeof (struct iovec)))
-		goto punt;
 
 	SCARG(&a, fd) = SCARG(uap, fd);
-	SCARG(&a, iovp) =
-	    (struct iovec *)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
+	SCARG(&a, iovp) = (struct iovec *)STACKGAPBASE;
 	SCARG(&a, iovcnt) = SCARG(uap, iovcnt);
 
-	error = writev(p, &a, retval);
+	if (error = copyout(nio, (caddr_t)SCARG(&a, iovp),
+	    SCARG(uap, iovcnt) * sizeof (struct iovec)))
+		goto punt;
+	error = sys_readv(p, &a, retval);
+
+punt:
+	free(oio, M_TEMP);
+	free(nio, M_TEMP);
+	return (error);
+}
+
+int
+osf1_sys_writev(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_writev_args /* {
+		syscallarg(int) fd;
+		syscallarg(struct osf1_iovec *) iovp;
+		syscallarg(u_int) iovcnt;
+	} */ *uap = v;
+	struct sys_writev_args /* {
+		syscallarg(int) fd;
+		syscallarg(struct iovec *) iovp;
+		syscallarg(u_int) iovcnt;
+	} */ a;
+	struct emul *e = p->p_emul;
+	struct osf1_iovec *oio;
+	struct iovec *nio;
+	int error, i;
+	extern char sigcode[], esigcode[];
+
+	if (SCARG(uap, iovcnt) > (STACKGAPLEN / sizeof (struct iovec)))
+		return (EINVAL);
+
+	oio = (struct osf1_iovec *)
+	    malloc(SCARG(uap, iovcnt)*sizeof (struct osf1_iovec),
+	    M_TEMP, M_WAITOK);
+	nio = (struct iovec *)malloc(SCARG(uap, iovcnt)*sizeof (struct iovec),
+	    M_TEMP, M_WAITOK);
+
+	error = 0;
+	if (error = copyin(SCARG(uap, iovp), oio,
+	    SCARG(uap, iovcnt) * sizeof (struct osf1_iovec)))
+		goto punt;
+	for (i = 0; i < SCARG(uap, iovcnt); i++) {
+		nio[i].iov_base = oio[i].iov_base;
+		nio[i].iov_len = oio[i].iov_len;
+	}
+
+	SCARG(&a, fd) = SCARG(uap, fd);
+	SCARG(&a, iovp) = (struct iovec *)STACKGAPBASE;
+	SCARG(&a, iovcnt) = SCARG(uap, iovcnt);
+
+	if (error = copyout(nio, (caddr_t)SCARG(&a, iovp),
+	    SCARG(uap, iovcnt) * sizeof (struct iovec)))
+		goto punt;
+	error = sys_writev(p, &a, retval);
 
 punt:
 	free(oio, M_TEMP);
@@ -939,50 +857,50 @@ punt:
 
 /* More of the stupid off_t padding! */
 int
-osf1_truncate(p, v, retval)
+osf1_sys_truncate(p, v, retval)
 	struct proc *p;
 	void *v;
-	register_t retval;
+	register_t *retval;
 {
-	struct osf1_truncate_args /* {
+	struct osf1_sys_truncate_args /* {
 		syscallarg(char *) path;
 		syscallarg(off_t) length;
 	} */ *uap = v;
-	struct truncate_args a;
+	struct sys_truncate_args a;
 
 	SCARG(&a, path) = SCARG(uap, path);
 	SCARG(&a, pad) = 0;
 	SCARG(&a, length) = SCARG(uap, length);
 
-	return truncate(p, &a, retval);
+	return sys_truncate(p, &a, retval);
 }
 
 int
-osf1_ftruncate(p, v, retval)
+osf1_sys_ftruncate(p, v, retval)
 	struct proc *p;
 	void *v;
-	register_t retval;
+	register_t *retval;
 {
-	struct osf1_ftruncate_args /* {
+	struct osf1_sys_ftruncate_args /* {
 		syscallarg(int) fd;
 		syscallarg(off_t) length;
 	} */ *uap = v;
-	struct ftruncate_args a;
+	struct sys_ftruncate_args a;
 
 	SCARG(&a, fd) = SCARG(uap, fd);
 	SCARG(&a, pad) = 0;
 	SCARG(&a, length) = SCARG(uap, length);
 
-	return ftruncate(p, &a, retval);
+	return sys_ftruncate(p, &a, retval);
 }
 
 int
-osf1_getsid(p, v, retval)
+osf1_sys_getsid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_getsid_args /* {  
+	struct osf1_sys_getsid_args /* {  
 		syscallarg(pid_t) pid;  
 	} */ *uap = v;
 	struct proc *t;
@@ -997,9 +915,9 @@ osf1_getsid(p, v, retval)
 }
 
 int
-osf1_getrusage(p, uap, retval)	/* XXX */
+osf1_getrusage(p, v, retval)	/* XXX */
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 
@@ -1007,9 +925,9 @@ osf1_getrusage(p, uap, retval)	/* XXX */
 }
 
 int
-osf1_madvise(p, uap, retval)	/* XXX */
+osf1_madvise(p, v, retval)	/* XXX */
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 

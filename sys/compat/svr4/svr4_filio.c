@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_filio.c,v 1.2 1994/11/18 02:53:44 christos Exp $	 */
+/*	$NetBSD: svr4_filio.c,v 1.3 1995/10/07 06:27:40 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -54,11 +54,11 @@
 
 int
 svr4_filioctl(fp, cmd, data, p, retval)
-	struct file 	*fp;
-	u_long		 cmd;
-	caddr_t		 data;
-	struct proc	*p;
-	register_t	*retval;
+	struct file *fp;
+	u_long cmd;
+	caddr_t data;
+	struct proc *p;
+	register_t *retval;
 {
 	struct filedesc *fdp = p->p_fd;
 	int error;

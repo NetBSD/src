@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.24 1995/04/22 19:42:55 christos Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.25 1995/10/07 06:28:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -439,13 +439,13 @@ lkmioctl(dev, cmd, data, flag)
  * Place holder for system call slots reserved for loadable modules.
  */
 int
-lkmnosys(p, uap, retval)
+sys_lkmnosys(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 
-	return (nosys(p, uap, retval));
+	return (sys_nosys(p, v, retval));
 }
 
 /*
@@ -526,7 +526,7 @@ _lkm_syscall(lkmtp, cmd)
 			 * Search the table looking for a slot...
 			 */
 			for (i = 0; i < SYS_MAXSYSCALL; i++)
-				if (sysent[i].sy_call == lkmnosys)
+				if (sysent[i].sy_call == sys_lkmnosys)
 					break;		/* found it! */
 			/* out of allocable slots? */
 			if (i == SYS_MAXSYSCALL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.28 1995/09/19 21:45:10 thorpej Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.29 1995/10/07 06:28:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -48,12 +48,12 @@
 
 /* ARGSUSED */
 int
-reboot(p, v, retval)
+sys_reboot(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct reboot_args /* {
+	struct sys_reboot_args /* {
 		syscallarg(int) opt;
 	} */ *uap = v;
 	int error;

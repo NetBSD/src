@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.24 1995/03/18 14:35:14 mycroft Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.25 1995/10/07 06:28:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -54,9 +54,9 @@
 #include <sys/ktrace.h>
 
 /* ARGSUSED */
-fork(p, uap, retval)
+sys_fork(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 
@@ -64,9 +64,9 @@ fork(p, uap, retval)
 }
 
 /* ARGSUSED */
-vfork(p, uap, retval)
+sys_vfork(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 

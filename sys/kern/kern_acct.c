@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.40 1995/09/19 21:44:53 thorpej Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.41 1995/10/07 06:28:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -95,12 +95,12 @@ int	acctchkfreq = 15;	/* frequency (in seconds) to check space */
  * previous implementation done by Mark Tinguely.
  */
 int
-acct(p, v, retval)
+sys_acct(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct acct_args /* {
+	struct sys_acct_args /* {
 		syscallarg(char *) path;
 	} */ *uap = v;
 	struct nameidata nd;

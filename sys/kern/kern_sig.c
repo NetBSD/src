@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.49 1995/10/06 16:12:05 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.50 1995/10/07 06:28:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -82,12 +82,12 @@ void stop __P((struct proc *p));
 	    ((signum) == SIGCONT && (q)->p_session == (p)->p_session))
 
 /* ARGSUSED */
-sigaction(p, v, retval)
+sys_sigaction(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sigaction_args /* {
+	register struct sys_sigaction_args /* {
 		syscallarg(int) signum;
 		syscallarg(struct sigaction *) nsa;
 		syscallarg(struct sigaction *) osa;
@@ -257,12 +257,12 @@ execsigs(p)
  * and return old mask as return value;
  * the library stub does the rest.
  */
-sigprocmask(p, v, retval)
+sys_sigprocmask(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sigprocmask_args /* {
+	struct sys_sigprocmask_args /* {
 		syscallarg(int) how;
 		syscallarg(sigset_t) mask;
 	} */ *uap = v;
@@ -293,9 +293,9 @@ sigprocmask(p, v, retval)
 }
 
 /* ARGSUSED */
-sigpending(p, uap, retval)
+sys_sigpending(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 
@@ -310,12 +310,12 @@ sigpending(p, uap, retval)
  */
 /* ARGSUSED */
 int
-sigsuspend(p, v, retval)
+sys_sigsuspend(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sigsuspend_args /* {
+	struct sys_sigsuspend_args /* {
 		syscallarg(int) mask;
 	} */ *uap = v;
 	register struct sigacts *ps = p->p_sigacts;
@@ -337,12 +337,12 @@ sigsuspend(p, v, retval)
 }
 
 /* ARGSUSED */
-sigaltstack(p, v, retval)
+sys_sigaltstack(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sigaltstack_args /* {
+	register struct sys_sigaltstack_args /* {
 		syscallarg(struct sigaltstack *) nss;
 		syscallarg(struct sigaltstack *) oss;
 	} */ *uap = v;
@@ -377,12 +377,12 @@ sigaltstack(p, v, retval)
 
 /* ARGSUSED */
 int
-kill(cp, v, retval)
+sys_kill(cp, v, retval)
 	register struct proc *cp;
 	void *v;
 	register_t *retval;
 {
-	register struct kill_args /* {
+	register struct sys_kill_args /* {
 		syscallarg(int) pid;
 		syscallarg(int) signum;
 	} */ *uap = v;
@@ -1126,9 +1126,9 @@ out:
  */
 /* ARGSUSED */
 int
-nosys(p, args, retval)
+sys_nosys(p, v, retval)
 	struct proc *p;
-	void *args;
+	void *v;
 	register_t *retval;
 {
 

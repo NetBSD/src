@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.8 1995/09/19 22:10:20 thorpej Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.9 1995/10/07 06:27:52 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -360,11 +360,11 @@ svr4_showioc(str, ioc)
 
 int
 svr4_streamioctl(fp, cmd, dat, p, retval)
-	struct file	*fp;
-	u_long		 cmd;
-	caddr_t		 dat;
-	struct proc	*p;
-	register_t	*retval;
+	struct file *fp;
+	u_long cmd;
+	caddr_t dat;
+	struct proc *p;
+	register_t *retval;
 {
 	struct svr4_strioctl	 ioc;
 	int			 error;
@@ -635,12 +635,12 @@ svr4_showmsg(str, fd, ctl, dat, flags)
 
 
 int
-svr4_putmsg(p, v, retval)
-	register struct proc			*p;
-	void					*v;
-	register_t				*retval;
+svr4_sys_putmsg(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
 {
-	struct svr4_putmsg_args *uap = v;
+	struct svr4_sys_putmsg_args *uap = v;
 	struct filedesc	*fdp = p->p_fd;
 	struct file	*fp;
 	struct svr4_strbuf dat, ctl;
@@ -721,12 +721,12 @@ svr4_putmsg(p, v, retval)
 	switch (st->s_cmd = sc.cmd) {
 	case SVR4_TI_CONNECT_REQUEST:	/* connect 	*/
 		{
-			struct connect_args co;
+			struct sys_connect_args co;
 
 			co.s = SCARG(uap, fd);
 			co.name = (caddr_t) sap;
 			co.namelen = (int) sizeof(sa);
-			return connect(p, &co, retval);
+			return sys_connect(p, &co, retval);
 		}
 
 	case SVR4_TI_SENDTO_REQUEST:	/* sendto 	*/
@@ -757,15 +757,15 @@ svr4_putmsg(p, v, retval)
 
 
 int
-svr4_getmsg(p, v, retval)
-	register struct proc			*p;
-	void					*v;
-	register_t				*retval;
+svr4_sys_getmsg(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
 {
-	struct svr4_getmsg_args *uap = v;
+	struct svr4_sys_getmsg_args *uap = v;
 	struct filedesc	*fdp = p->p_fd;
 	struct file	*fp;
-	struct getpeername_args ga;
+	struct sys_getpeername_args ga;
 	struct svr4_strbuf dat, ctl;
 	struct svr4_strmcmd sc;
 	struct svr4_netaddr *na;
@@ -861,7 +861,7 @@ svr4_getmsg(p, v, retval)
 		SCARG(&ga, asa) = (caddr_t) sap;
 		SCARG(&ga, alen) = flen;
 		
-		if ((error = getpeername(p, &ga, retval)) != 0) {
+		if ((error = sys_getpeername(p, &ga, retval)) != 0) {
 			DPRINTF(("getmsg: getpeername failed %d\n", error));
 			return error;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.20 1995/09/19 21:45:13 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.21 1995/10/07 06:28:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -62,12 +62,12 @@
  * Read system call.
  */
 /* ARGSUSED */
-read(p, v, retval)
+sys_read(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct read_args /* {
+	register struct sys_read_args /* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
 		syscallarg(u_int) nbyte;
@@ -120,12 +120,12 @@ read(p, v, retval)
 /*
  * Scatter read system call.
  */
-readv(p, v, retval)
+sys_readv(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct readv_args /* {
+	register struct sys_readv_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct iovec *) iovp;
 		syscallarg(u_int) iovcnt;
@@ -210,12 +210,12 @@ done:
 /*
  * Write system call
  */
-write(p, v, retval)
+sys_write(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct write_args /* {
+	register struct sys_write_args /* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
 		syscallarg(u_int) nbyte;
@@ -271,12 +271,12 @@ write(p, v, retval)
 /*
  * Gather write system call
  */
-writev(p, v, retval)
+sys_writev(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct writev_args /* {
+	register struct sys_writev_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct iovec *) iovp;
 		syscallarg(u_int) iovcnt;
@@ -365,12 +365,12 @@ done:
  * Ioctl system call
  */
 /* ARGSUSED */
-ioctl(p, v, retval)
+sys_ioctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct ioctl_args /* {
+	register struct sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
@@ -503,12 +503,12 @@ int	selwait, nselcoll;
 /*
  * Select system call.
  */
-select(p, v, retval)
+sys_select(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct select_args /* {
+	register struct sys_select_args /* {
 		syscallarg(u_int) nd;
 		syscallarg(fd_set *) in;
 		syscallarg(fd_set *) ou;

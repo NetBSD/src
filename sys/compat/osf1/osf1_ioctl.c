@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_ioctl.c,v 1.2 1995/09/19 22:44:25 thorpej Exp $	*/
+/*	$NetBSD: osf1_ioctl.c,v 1.3 1995/10/07 06:27:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -53,23 +53,25 @@ extern int scdebug;
 
 #define OSF1_IOCCMD(x)		((x) & 0xff)
 
-int osf1_ioctl_t	__P((struct proc *p, struct ioctl_args *nuap,
+int osf1_ioctl_i	__P((struct proc *p, struct sys_ioctl_args *nuap,
+			    register_t *retval, int cmd, int dir, int len));
+int osf1_ioctl_t	__P((struct proc *p, struct sys_ioctl_args *nuap,
 			    register_t *retval, int cmd, int dir, int len));
 
 int
-osf1_ioctl(p, v, retval)
+osf1_sys_ioctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_ioctl_args /* {
+	struct osf1_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
-	struct ioctl_args /* {
+	struct sys_ioctl_args /* {
 		syscallarg(int) fd;
-		syscallarg(int) com;
+		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ a;
 	int op, dir, group, cmd, len;
@@ -135,7 +137,7 @@ osf1_ioctl(p, v, retval)
 int
 osf1_ioctl_i(p, uap, retval, cmd, dir, len)
 	struct proc *p;
-	struct ioctl_args /* {
+	struct sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) com;
 		syscallarg(caddr_t) data;
@@ -167,13 +169,13 @@ osf1_ioctl_i(p, uap, retval, cmd, dir, len)
 		return (ENOTTY);
 	}
 
-	return ioctl(p, uap, retval);
+	return sys_ioctl(p, uap, retval);
 }
 
 int
 osf1_ioctl_t(p, uap, retval, cmd, dir, len)
 	struct proc *p;
-	struct ioctl_args /* {
+	struct sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) com;
 		syscallarg(caddr_t) data;
@@ -205,5 +207,5 @@ osf1_ioctl_t(p, uap, retval, cmd, dir, len)
 		return (ENOTTY);
 	}
 
-	return ioctl(p, uap, retval);
+	return sys_ioctl(p, uap, retval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.15 1995/09/19 21:45:22 thorpej Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.16 1995/10/07 06:28:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -65,12 +65,12 @@
 extern	struct fileops socketops;
 
 int
-socket(p, v, retval)
+sys_socket(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct socket_args /* {
+	register struct sys_socket_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
@@ -98,12 +98,12 @@ socket(p, v, retval)
 
 /* ARGSUSED */
 int
-bind(p, v, retval)
+sys_bind(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct bind_args /* {
+	register struct sys_bind_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) name;
 		syscallarg(int) namelen;
@@ -124,12 +124,12 @@ bind(p, v, retval)
 
 /* ARGSUSED */
 int
-listen(p, v, retval)
+sys_listen(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct listen_args /* {
+	register struct sys_listen_args /* {
 		syscallarg(int) s;
 		syscallarg(int) backlog;
 	} */ *uap = v;
@@ -142,12 +142,12 @@ listen(p, v, retval)
 }
 
 int
-accept(p, v, retval)
+sys_accept(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct accept_args /* {
+	register struct sys_accept_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) name;
 		syscallarg(int *) anamelen;
@@ -222,12 +222,12 @@ accept(p, v, retval)
 
 /* ARGSUSED */
 int
-connect(p, v, retval)
+sys_connect(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct connect_args /* {
+	register struct sys_connect_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) name;
 		syscallarg(int) namelen;
@@ -271,12 +271,12 @@ bad:
 }
 
 int
-socketpair(p, v, retval)
+sys_socketpair(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct socketpair_args /* {
+	register struct sys_socketpair_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
@@ -335,12 +335,12 @@ free1:
 }
 
 int
-sendto(p, v, retval)
+sys_sendto(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sendto_args /* {
+	register struct sys_sendto_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) buf;
 		syscallarg(size_t) len;
@@ -365,12 +365,12 @@ sendto(p, v, retval)
 }
 
 int
-sendmsg(p, v, retval)
+sys_sendmsg(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sendmsg_args /* {
+	register struct sys_sendmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) msg;
 		syscallarg(int) flags;
@@ -508,12 +508,12 @@ bad:
 }
 
 int
-recvfrom(p, v, retval)
+sys_recvfrom(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct recvfrom_args /* {
+	register struct sys_recvfrom_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) buf;
 		syscallarg(size_t) len;
@@ -543,12 +543,12 @@ recvfrom(p, v, retval)
 }
 
 int
-recvmsg(p, v, retval)
+sys_recvmsg(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct recvmsg_args /* {
+	register struct sys_recvmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(struct msghdr *) msg;
 		syscallarg(int) flags;
@@ -722,12 +722,12 @@ out:
 
 /* ARGSUSED */
 int
-shutdown(p, v, retval)
+sys_shutdown(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct shutdown_args /* {
+	register struct sys_shutdown_args /* {
 		syscallarg(int) s;
 		syscallarg(int) how;
 	} */ *uap = v;
@@ -741,12 +741,12 @@ shutdown(p, v, retval)
 
 /* ARGSUSED */
 int
-setsockopt(p, v, retval)
+sys_setsockopt(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct setsockopt_args /* {
+	register struct sys_setsockopt_args /* {
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) name;
@@ -778,12 +778,12 @@ setsockopt(p, v, retval)
 
 /* ARGSUSED */
 int
-getsockopt(p, v, retval)
+sys_getsockopt(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct getsockopt_args /* {
+	register struct sys_getsockopt_args /* {
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) name;
@@ -820,9 +820,9 @@ getsockopt(p, v, retval)
 
 /* ARGSUSED */
 int
-pipe(p, uap, retval)
+sys_pipe(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
 	register struct filedesc *fdp = p->p_fd;
@@ -869,12 +869,12 @@ free1:
  */
 /* ARGSUSED */
 int
-getsockname(p, v, retval)
+sys_getsockname(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct getsockname_args /* {
+	register struct sys_getsockname_args /* {
 		syscallarg(int) fdes;
 		syscallarg(caddr_t) asa;
 		syscallarg(int *) alen;
@@ -911,12 +911,12 @@ bad:
  */
 /* ARGSUSED */
 int
-getpeername(p, v, retval)
+sys_getpeername(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct getpeername_args /* {
+	register struct sys_getpeername_args /* {
 		syscallarg(int) fdes;
 		syscallarg(caddr_t) asa;
 		syscallarg(int *) alen;

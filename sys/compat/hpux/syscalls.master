@@ -1,225 +1,239 @@
-	$NetBSD: syscalls.master,v 1.7 1995/05/10 16:45:47 christos Exp $
+	$NetBSD: syscalls.master,v 1.8 1995/10/07 06:26:42 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
-; System call name/number master file (or rather, slave, from HPUX).
-; Processed to created hpux_sysent.c, hpux_syscalls.c and hpux_syscall.h.
 
-; Columns: number type nargs name altname/comments
+; NetBSD COMPAT_HPUX system call name/number "master" file.
+; (See syscalls.conf to see what it is processed into.)
+;
+; Fields: number type [type-dependent ...]
 ;	number	system call number, must be in order
-;	type	one of STD, OBSOL, UNIMPL, STD
-;	nargs	number of arguments
-;	name	name of syscall routine
-;	altname	name of system call if different
-;		for UNIMPL/OBSOL, name continues with comments
+;	type	one of STD, OBSOL, UNIMPL, NODEF, NOARGS, or one of
+;		the compatibility options defined in syscalls.conf.
+;
+; types:
+;	STD	always included
+;	OBSOL	obsolete, not included in system
+;	UNIMPL	unimplemented, not included in system
+;	NODEF	included, but don't define the syscall number
+;	NOARGS	included, but don't define the syscall args structure
+;
+; The compat options are defined in the syscalls.conf file, and the
+; compat option name is prefixed to the syscall name.  Other than
+; that, they're like NODEF (for 'compat' options), or STD (for
+; 'libcompat' options).
+;
+; The type-dependent arguments are as follows:
+; For STD, NODEF, NOARGS, and compat syscalls:
+;	{ pseudo-proto } [alias]
+; For other syscalls:
+;	[comment]
+;
+; #ifdef's, etc. may be included, and are copied to the output files.
+; #include's are copied to the syscall switch definition file only.
 
 #include <sys/param.h>
-#include <compat/hpux/hpux.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <compat/hpux/hpux.h>
 #include <compat/hpux/hpux_syscallargs.h>
 
-; types:
-;	STD	always included
-;	STD	included on COMPAT #ifdef
-;	LIBSTD included on COMPAT #ifdef, and placed in syscall.h
-;	OBSOL	obsolete, not included in system, only specifies name
-;	UNIMPL	not implemented, placeholder only
+0	NOARGS		{ int sys_nosys(void); } syscall
+1	NOARGS		{ int sys_exit(int rval); }
+2	STD		{ int hpux_sys_fork(void); }
+3	STD		{ int hpux_sys_read(int fd, char *buf, u_int nbyte); }
+4	STD		{ int hpux_sys_write(int fd, char *buf, u_int nbyte); }
+5	STD		{ int hpux_sys_open(char *path, int flags, int mode); }
+6	NOARGS		{ int sys_close(int fd); }
+7	STD		{ int hpux_sys_wait(int *status); }
+8	STD		{ int hpux_sys_creat(char *path, int mode); }
+9	NOARGS	 	{ int sys_link(char *path, char *link); }
+10	NOARGS		{ int sys_unlink(char *path); }
+11	STD		{ int hpux_sys_execv(char * path, char * * argp); }
+12	NOARGS		{ int sys_chdir(char *path); }
+13	COMPAT_HPUX_6X	{ int sys_time(time_t *t); }
+14	NOARGS		{ int sys_mknod(char *path, int mode, int dev); }
+15	NOARGS		{ int sys_chmod(char *path, int mode); }
+16	NOARGS		{ int sys_chown(char *path, int uid, int gid); }
+17	NOARGS		{ int sys_obreak(char *nsize); }
+18	COMPAT_HPUX_6X	{ int sys_stat(char *path, struct hpux_ostat *sb); }
+19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
+			    int whence); }
+20	NOARGS		{ pid_t sys_getpid(void); }
+21	UNIMPL		mount
+22	UNIMPL		umount
+23	NOARGS		{ int sys_setuid(uid_t uid); }
+24	NOARGS		{ uid_t sys_getuid(void); }
+25	COMPAT_HPUX_6X	{ int sys_stime(int time); }
+26	STD		{ int hpux_sys_ptrace(int req, int pid, int *addr, \
+			    int data); }
+27	COMPAT_HPUX_6X	{ int sys_alarm(int deltat); }
+28	COMPAT_HPUX_6X	{ int sys_fstat(int fd, struct hpux_ostat *sb); }
+29	COMPAT_HPUX_6X	{ int sys_pause(void); }
+30	COMPAT_HPUX_6X	{ int sys_utime(char *fname, time_t *tptr); }
+31	COMPAT_HPUX_6X	{ int sys_stty(int fd, caddr_t arg); }
+32	COMPAT_HPUX_6X	{ int sys_gtty(int fd, caddr_t arg); }
+33	NOARGS		{ int sys_access(char *path, int flags); }
+34	COMPAT_HPUX_6X	{ int sys_nice(int nval); }
+35	COMPAT_HPUX_6X	{ int sys_ftime(struct hpux_timeb *tp); }
+36	NOARGS		{ int sys_sync(void); }
+37	STD		{ int hpux_sys_kill(pid_t pid, int signo); }
+38	STD		{ int hpux_sys_stat(char *path, struct hpux_stat *sb); }
+39	COMPAT_HPUX_6X	{ int sys_setpgrp(void); }
+40	STD		{ int hpux_sys_lstat(char *path, struct hpux_stat *sb); }
+41	STD		{ int hpux_sys_dup(int fd); }
+42	NOARGS		{ int sys_pipe(void); }
+43	COMPAT_HPUX_6X	{ int sys_times(struct tms *tms); }
+44	NOARGS		{ int sys_profil(caddr_t samples, u_int size, \
+			    u_int offset, u_int scale); }
 
-; #ifdef's, etc. may be included, and are copied to the output files.
-0	NOARGS		{ int nosys(void); } syscall
-1	NOARGS		{ int exit(int rval); }
-2	STD		{ int hpux_fork(void); }
-3	STD		{ int hpux_read(int fd, char *buf, u_int nbyte); }
-4	STD		{ int hpux_write(int fd, char *buf, u_int nbyte); }
-5	STD		{ int hpux_open(char *path, int flags, int mode); }
-6	NOARGS		{ int close(int fd); }
-7	STD		{ int hpux_wait(int *status); }
-8	STD		{ int hpux_creat(char *path, int mode); }
-9	NOARGS	 	{ int link(char *path, char *link); }
-10	NOARGS		{ int unlink(char *path); }
-11	STD		{ int hpux_execv(char * path, char * * argp); }
-12	NOARGS		{ int chdir(char *path); }
-13	COMPAT_HPUX_6X	{ int time(time_t *t); }
-14	NOARGS		{ int mknod(char *path, int mode, int dev); }
-15	NOARGS		{ int chmod(char *path, int mode); }
-16	NOARGS		{ int chown(char *path, int uid, int gid); }
-17	NOARGS		{ int obreak(char *nsize); }
-18	COMPAT_HPUX_6X	{ int stat(char *path, struct hpux_ostat *sb); }
-19	NOARGS		{ long compat_43_lseek(int fd, long offset, \
-					       int whence); }
-20	NOARGS		{ pid_t getpid(void); }
-21	UNIMPL		hpux_mount
-22	UNIMPL		hpux_umount
-23	NOARGS		{ int setuid(uid_t uid); }
-24	NOARGS		{ uid_t getuid(void); }
-25	COMPAT_HPUX_6X	{ int stime(int time); }
-26	STD		{ int hpux_ptrace(int req, int pid, \
-					  int *addr, int data); }
-27	COMPAT_HPUX_6X	{ int alarm(int deltat); }
-28	COMPAT_HPUX_6X	{ int fstat(int fd, struct hpux_ostat *sb); }
-29	COMPAT_HPUX_6X	{ int pause(void); }
-30	COMPAT_HPUX_6X	{ int utime(char *fname, time_t *tptr); }
-31	COMPAT_HPUX_6X	{ int stty(int fd, caddr_t arg); }
-32	COMPAT_HPUX_6X	{ int gtty(int fd, caddr_t arg); }
-33	NOARGS		{ int access(char *path, int flags); }
-34	COMPAT_HPUX_6X	{ int nice(int nval); }
-35	COMPAT_HPUX_6X	{ int ftime(struct hpux_timeb *tp); }
-36	NOARGS		{ int sync(void); }
-37	STD		{ int hpux_kill(pid_t pid, int signo); }
-38	STD		{ int hpux_stat(char *path, struct hpux_stat *sb); }
-39	COMPAT_HPUX_6X	{ int setpgrp(void); }
-40	STD		{ int hpux_lstat(char *path, struct hpux_stat *sb); }
-41	STD		{ int hpux_dup(int fd); }
-42	NOARGS		{ int pipe(void); }
-43	COMPAT_HPUX_6X	{ int times(struct tms *tms); }
-44	NOARGS		{ int profil(caddr_t samples, u_int size, \
-				     u_int offset, u_int scale); }
-
-45	UNIMPL		hpux_ki_syscall
-46	NOARGS		{ int setgid(gid_t gid); }
-47	NOARGS		{ gid_t getgid(void); }
-48	COMPAT_HPUX_6X	{ int ssig(int signo, sig_t fun); }
+45	UNIMPL		ki_syscall
+46	NOARGS		{ int sys_setgid(gid_t gid); }
+47	NOARGS		{ gid_t sys_getgid(void); }
+48	COMPAT_HPUX_6X	{ int sys_ssig(int signo, sig_t fun); }
 49	UNIMPL		reserved for USG
 50	UNIMPL		reserved for USG
-51	UNIMPL		hpux_acct
-52	UNIMPL		nosys
-53	UNIMPL		nosys
-54	STD		{ int hpux_ioctl(int fd, int com, caddr_t data); }
-55	UNIMPL		hpux_reboot
-56	NOARGS		{ int symlink(char *path, char *link); }
-57	STD		{ int hpux_utssys(struct hpux_utsname *uts, \
+51	UNIMPL		acct
+52	UNIMPL
+53	UNIMPL
+54	STD		{ int hpux_sys_ioctl(int fd, int com, caddr_t data); }
+55	UNIMPL		reboot
+56	NOARGS		{ int sys_symlink(char *path, char *link); }
+57	STD		{ int hpux_sys_utssys(struct hpux_utsname *uts, \
 					  int dev, int request); }
-58	NOARGS		{ int readlink(char *path, char *buf, int count); }
-59	NOARGS		{ int execve(char *path, char * * argp, \
-				     char * * envp); }
-60	NOARGS		{ int umask(int newmask); }
-61	NOARGS		{ int chroot(char *path); }
-62	STD		{ int hpux_fcntl(int fd, int cmd, int arg); }
-63	STD		{ int hpux_ulimit(int cmd, int newlimit); }
-64	UNIMPL		nosys
-65	UNIMPL		nosys
-66	STD		{ int hpux_vfork(void); }
-67	NOARGS		{ int hpux_read(int fd, char *buf, u_int nbyte); } vread
-68	NOARGS		{ int hpux_write(int fd, char *buf, u_int nbyte); } vwrite
-69	UNIMPL		nosys
-70	UNIMPL		nosys
-71	STD		{ int hpux_mmap(caddr_t addr, int len, int prot, \
-					int flags, int fd, long pos); }
-72	UNIMPL		nosys
-73	NOARGS		{ int munmap(caddr_t addr, int len); }
-74	NOARGS		{ int mprotect(caddr_t addr, int len, int prot); }
-75	UNIMPL		nosys
-76	UNIMPL		nosys
-77	UNIMPL		nosys
-78	UNIMPL		nosys
-79	NOARGS		{ int getgroups(u_int gidsetsize, gid_t *gidset); }
-80	NOARGS		{ int setgroups(u_int gidsetsize, gid_t *gidset); }
-81	STD		{ int hpux_getpgrp2(pid_t pid); }
-82	STD		{ int hpux_setpgrp2(pid_t pid, pid_t pgid); }
-83	NOARGS		{ int setitimer(u_int which, struct itimerval *itv, \
-					struct itimerval *oitv); }
-84	STD		{ int hpux_wait3(int *status, int options, \
-					 int rusage); }
+58	NOARGS		{ int sys_readlink(char *path, char *buf, int count); }
+59	NOARGS		{ int sys_execve(char *path, char **argp, \
+			    char **envp); }
+60	NOARGS		{ int sys_umask(int newmask); }
+61	NOARGS		{ int sys_chroot(char *path); }
+62	STD		{ int hpux_sys_fcntl(int fd, int cmd, int arg); }
+63	STD		{ int hpux_sys_ulimit(int cmd, int newlimit); }
+64	UNIMPL
+65	UNIMPL
+66	STD		{ int hpux_sys_vfork(void); }
+67	NOARGS		{ int hpux_sys_read(int fd, char *buf, u_int nbyte); } vread
+68	NOARGS		{ int hpux_sys_write(int fd, char *buf, u_int nbyte); } vwrite
+69	UNIMPL
+70	UNIMPL
+71	STD		{ int hpux_sys_mmap(caddr_t addr, size_t len, \
+			    int prot, int flags, int fd, long pos); }
+72	UNIMPL
+73	NOARGS		{ int sys_munmap(caddr_t addr, size_t len); }
+74	NOARGS		{ int sys_mprotect(caddr_t addr, size_t len, \
+			    int prot); }
+75	UNIMPL
+76	UNIMPL
+77	UNIMPL
+78	UNIMPL
+79	NOARGS		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
+80	NOARGS		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
+81	STD		{ int hpux_sys_getpgrp2(pid_t pid); }
+82	STD		{ int hpux_sys_setpgrp2(pid_t pid, pid_t pgid); }
+83	NOARGS		{ int sys_setitimer(u_int which, \
+			    struct itimerval *itv, struct itimerval *oitv); }
+84	STD		{ int hpux_sys_wait3(int *status, int options, \
+			    int rusage); }
 85	UNIMPL		swapon
-86	NOARGS		{ int getitimer(u_int which, struct itimerval *itv); }
-87	UNIMPL		nosys
-88	UNIMPL		nosys
-89	UNIMPL		nosys
-90	NOARGS		{ int dup2(u_int from, u_int to); }
-91	UNIMPL		nosys
-92	STD		{ int hpux_fstat(int fd, struct hpux_stat *sb); }
-93	NOARGS		{ int select(u_int nd, fd_set *in, fd_set *ou, \
-				     fd_set *ex, struct timeval *tv); }
-94	UNIMPL		nosys
-95	NOARGS		{ int fsync(int fd); }
-96	UNIMPL		nosys
-97	UNIMPL		nosys
-98	UNIMPL		nosys
-99	UNIMPL		nosys
-100	UNIMPL		nosys
-101	UNIMPL		nosys
-102	UNIMPL		nosys
-103	NOARGS		{ int sigreturn(struct sigcontext *sigcntxp); }
-104	UNIMPL		nosys
-105	UNIMPL		nosys
-106	UNIMPL		nosys
-107	UNIMPL		nosys
-108	STD		{ int hpux_sigvec(int signo, struct sigvec *nsv, \
-					  struct sigvec *osv); }
-109	STD		{ int hpux_sigblock(int mask); }
-110	STD		{ int hpux_sigsetmask(int mask); }
-111	STD		{ int hpux_sigpause(int mask); }
-112	NOARGS		{ int compat_43_sigstack(struct sigstack *nss, \
-						 struct sigstack *oss); }
-113	UNIMPL		nosys
-114	UNIMPL		nosys
-115	UNIMPL		nosys
-116	NOARGS		{ int gettimeofday(struct timeval *tp); }
-117	UNIMPL		nosys
-118	UNIMPL		nosys
-119	UNIMPL		hpib_io_stub
-120	STD		{ int hpux_readv(int fd, struct iovec *iovp, \
-					 u_int iovcnt); }
-121	STD		{ int hpux_writev(int fd, struct iovec *iovp, \
-					  u_int iovcnt); }
-122	NOARGS		{ int settimeofday(struct timeval *tv, \
-					   struct timezone *tzp); }
-123	NOARGS		{ int fchown(int fd, int uid, int gid); }
-124	NOARGS		{ int fchmod(int fd, int mode); }
-125	UNIMPL		nosys	
-126	STD		{ int hpux_setresuid(uid_t r, uid_t e, uid_t s); }
-127	STD		{ int hpux_setresgid(gid_t r, gid_t e, gid_t s); }
-128	NOARGS		{ int rename(char *from, char *to); }
-129	NOARGS		{ int compat_43_truncate(char *path, long length); }
-130	NOARGS		{ int compat_43_ftruncate(int fd, long length); }
-131	UNIMPL		nosys
-132	STD		{ int hpux_sysconf(int name); }
-133	UNIMPL		nosys
-134	UNIMPL		nosys
-135	UNIMPL		nosys
-136	NOARGS		{ int mkdir(char *path, int mode); }
-137	NOARGS		{ int rmdir(char *path); }
-138	UNIMPL		nosys
-139	UNIMPL		nosys
-140	UNIMPL		nosys
-141	UNIMPL		nosys
-142	UNIMPL		nosys
-143	UNIMPL		nosys
-144	STD		{ int hpux_getrlimit(u_int which, \
-					     struct ogetrlimit *rlp); }
-145	STD		{ int hpux_setrlimit(u_int which, \
-					     struct ogetrlimit *rlp); }
-146	UNIMPL		nosys
-147	UNIMPL		nosys
-148	UNIMPL		nosys
-149	UNIMPL		nosys
-150	UNIMPL		nosys
-151	UNIMPL		hpux_privgrp
-152	STD		{ int hpux_rtprio(pid_t pid, int prio); }
-153	UNIMPL		hpux_plock
-154	STD		{ int hpux_netioctl(int call, int *args); }
-155	STD		{ int hpux_lockf(int fd, int func, long size); }
+86	NOARGS		{ int sys_getitimer(u_int which, \
+			    struct itimerval *itv); }
+87	UNIMPL
+88	UNIMPL
+89	UNIMPL
+90	NOARGS		{ int sys_dup2(u_int from, u_int to); }
+91	UNIMPL
+92	STD		{ int hpux_sys_fstat(int fd, struct hpux_stat *sb); }
+93	NOARGS		{ int sys_select(u_int nd, fd_set *in, fd_set *ou, \
+			    fd_set *ex, struct timeval *tv); }
+94	UNIMPL
+95	NOARGS		{ int sys_fsync(int fd); }
+96	UNIMPL
+97	UNIMPL
+98	UNIMPL
+99	UNIMPL
+100	UNIMPL
+101	UNIMPL
+102	UNIMPL
+103	NOARGS		{ int sys_sigreturn(struct sigcontext *sigcntxp); }
+104	UNIMPL
+105	UNIMPL
+106	UNIMPL
+107	UNIMPL
+108	STD		{ int hpux_sys_sigvec(int signo, struct sigvec *nsv, \
+			    struct sigvec *osv); }
+109	STD		{ int hpux_sys_sigblock(int mask); }
+110	STD		{ int hpux_sys_sigsetmask(int mask); }
+111	STD		{ int hpux_sys_sigpause(int mask); }
+112	NOARGS		{ int compat_43_sys_sigstack(struct sigstack *nss, \
+			    struct sigstack *oss); }
+113	UNIMPL
+114	UNIMPL
+115	UNIMPL
+116	NOARGS		{ int sys_gettimeofday(struct timeval *tp); }
+117	UNIMPL
+118	UNIMPL
+119	UNIMPL		io_stub
+120	STD		{ int hpux_sys_readv(int fd, struct iovec *iovp, \
+			    u_int iovcnt); }
+121	STD		{ int hpux_sys_writev(int fd, struct iovec *iovp, \
+			    u_int iovcnt); }
+122	NOARGS		{ int sys_settimeofday(struct timeval *tv, \
+			    struct timezone *tzp); }
+123	NOARGS		{ int sys_fchown(int fd, int uid, int gid); }
+124	NOARGS		{ int sys_fchmod(int fd, int mode); }
+125	UNIMPL
+126	STD		{ int hpux_sys_setresuid(uid_t r, uid_t e, uid_t s); }
+127	STD		{ int hpux_sys_setresgid(gid_t r, gid_t e, gid_t s); }
+128	NOARGS		{ int sys_rename(char *from, char *to); }
+129	NOARGS		{ int compat_43_sys_truncate(char *path, long length); }
+130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
+131	UNIMPL
+132	STD		{ int hpux_sys_sysconf(int name); }
+133	UNIMPL
+134	UNIMPL
+135	UNIMPL
+136	NOARGS		{ int sys_mkdir(char *path, int mode); }
+137	NOARGS		{ int sys_rmdir(char *path); }
+138	UNIMPL
+139	UNIMPL
+140	UNIMPL
+141	UNIMPL
+142	UNIMPL
+143	UNIMPL
+144	STD		{ int hpux_sys_getrlimit(u_int which, \
+			    struct ogetrlimit *rlp); }
+145	STD		{ int hpux_sys_setrlimit(u_int which, \
+			    struct ogetrlimit *rlp); }
+146	UNIMPL
+147	UNIMPL
+148	UNIMPL
+149	UNIMPL
+150	UNIMPL
+151	UNIMPL		privgrp
+152	STD		{ int hpux_sys_rtprio(pid_t pid, int prio); }
+153	UNIMPL		plock
+154	STD		{ int hpux_sys_netioctl(int call, int *args); }
+155	STD		{ int hpux_sys_lockf(int fd, int func, long size); }
 #ifdef SYSVSEM
-156	NOARGS		{ int semget(key_t key, int nsems, int semflg); }
-157	NOARGS		{ int __semctl(int semid, int semnum, int cmd, \
-				       union semun *arg); }
-158	NOARGS		{ int semop(int semid, struct sembuf *sops, \
-				    u_int nsops); }
+156	NOARGS		{ int sys_semget(key_t key, int nsems, int semflg); }
+157	NOARGS		{ int sys___semctl(int semid, int semnum, int cmd, \
+			    union semun *arg); }
+158	NOARGS		{ int sys_semop(int semid, struct sembuf *sops, \
+			    u_int nsops); }
 #else
 156	UNIMPL		semget
 157	UNIMPL		semctl
 158	UNIMPL		semop
 #endif
 #ifdef SYSVMSG
-159	NOARGS		{ int msgget(key_t key, int msgflg); }
-160	NOARGS		{ int msgctl(int msqid, int cmd, \
-				     struct msqid_ds *buf); }
-161	NOARGS		{ int msgsnd(int msqid, void *msgp, size_t msgsz, \
-				     int msgflg); }
-162	NOARGS		{ int msgrcv(int msqid, void *msgp, size_t msgsz, \
-				     long msgtyp, int msgflg); }
+159	NOARGS		{ int sys_msgget(key_t key, int msgflg); }
+160	NOARGS		{ int sys_msgctl(int msqid, int cmd, \
+			    struct msqid_ds *buf); }
+161	NOARGS		{ int sys_msgsnd(int msqid, void *msgp, size_t msgsz, \
+			    int msgflg); }
+162	NOARGS		{ int sys_msgrcv(int msqid, void *msgp, size_t msgsz, \
+			    long msgtyp, int msgflg); }
 #else
 159	UNIMPL		msgget
 160	UNIMPL		msgctl
@@ -227,42 +241,43 @@
 162	UNIMPL		msgrcv
 #endif
 #ifdef SYSVSHM
-163	NOARGS		{ int shmget(key_t key, int size, int shmflg); }
-164	STD		{ int hpux_shmctl(int shmid, int cmd, caddr_t buf); }
-165	NOARGS		{ int shmat(int shmid, void *shmaddr, int shmflg); }
-166	NOARGS		{ int shmdt(void *shmaddr); }
+163	NOARGS		{ int sys_shmget(key_t key, int size, int shmflg); }
+164	STD		{ int hpux_sys_shmctl(int shmid, int cmd, \
+			    caddr_t buf); }
+165	NOARGS		{ int sys_shmat(int shmid, void *shmaddr, int shmflg); }
+166	NOARGS		{ int sys_shmdt(void *shmaddr); }
 #else
 163	UNIMPL		shmget
 164	UNIMPL		shmctl
 165	UNIMPL		shmat
 166	UNIMPL		shmdt
 #endif
-167	STD		{ int hpux_advise(int arg); }
+167	STD		{ int hpux_sys_advise(int arg); }
 168	UNIMPL		nsp_init
 169	UNIMPL		cluster
 170	UNIMPL		mkrnod
-171	UNIMPL		nosys
+171	UNIMPL
 172	UNIMPL		unsp_open
-173	UNIMPL		nosys
-174	STD		{ int hpux_getcontext(char *buf, int len); }
-175	UNIMPL		nosys
-176	UNIMPL		nosys
-177	UNIMPL		nosys
+173	UNIMPL
+174	STD		{ int hpux_sys_getcontext(char *buf, int len); }
+175	UNIMPL
+176	UNIMPL
+177	UNIMPL
 178	UNIMPL		lsync
-179	UNIMPL		nosys
+179	UNIMPL
 180	UNIMPL		mysite
 181	UNIMPL		sitels
-182	UNIMPL		nosys
-183	UNIMPL		nosys
+182	UNIMPL
+183	UNIMPL
 184	UNIMPL		dskless_stats
-185	UNIMPL		nosys
+185	UNIMPL
 186	UNIMPL		setacl
 187	UNIMPL		fsetacl
 188	UNIMPL		getacl
 189	UNIMPL		fgetacl
-190	STD		{ int hpux_getaccess(char *path, uid_t uid, \
-					     int ngroups, gid_t *gidset, \
-					     void *label, void *privs); }
+190	STD		{ int hpux_sys_getaccess(char *path, uid_t uid, \
+			    int ngroups, gid_t *gidset, void *label, \
+			    void *privs); }
 191	UNIMPL		getaudid
 192	UNIMPL		setaudid
 193	UNIMPL		getaudproc
@@ -272,155 +287,153 @@
 197	UNIMPL		audwrite
 198	UNIMPL		audswitch
 199	UNIMPL		audctl
-200	STD		{ int hpux_waitpid(pid_t pid, int *status, \
-					   int options, \
-					   struct rusage *rusage); }
-201	UNIMPL		nosys
-202	UNIMPL		nosys
-203	UNIMPL		nosys
-204	UNIMPL		nosys
-205	UNIMPL		nosys
-206	UNIMPL		nosys
-207	UNIMPL		nosys
-208	UNIMPL		nosys
-209	UNIMPL		nosys
-210	UNIMPL		nosys
-211	UNIMPL		nosys
-212	UNIMPL		nosys
-213	UNIMPL		nosys
-214	UNIMPL		nosys
-215	UNIMPL		nosys
-216	UNIMPL		nosys
-217	UNIMPL		nosys
-218	UNIMPL		nosys
-219	UNIMPL		nosys
-220	UNIMPL		nosys
-221	UNIMPL		nosys
-222	UNIMPL		nosys
-223	UNIMPL		nosys
-224	UNIMPL		nosys
-225	NOARGS		{ int pathconf(char *path, int name); }
-226	NOARGS		{ int fpathconf(int fd, int name); }
-227	UNIMPL		nosys
-228	UNIMPL		nosys
-229	UNIMPL		hpux_async_daemon
-230	UNIMPL		hpux_nfs_fcntl
-231	NOARGS		{ int compat_43_getdirentries(int fd, char *buf, \
-						      u_int count, \
-						      long *basep); }
-232	NOARGS		{ int compat_09_getdomainname(char *domainname, \
-						      int len); }
-233	UNIMPL		hpux_nfs_getfh
-234	UNIMPL		hpux_vfsmount
-235	UNIMPL		hpux_nfs_svc
-236	NOARGS		{ int compat_09_setdomainname(char *domainname, \
-						      int len); }
-237	UNIMPL		hpux_statfs
-238	UNIMPL		hpux_fstatfs
-239	STD		{ int hpux_sigaction(int signo, \
-					     struct hpux_sigaction *nsa, \
-					     struct hpux_sigaction *osa); }
-240	STD		{ int hpux_sigprocmask(int how, hpux_sigset_t *set, \
-					       hpux_sigset_t *oset); }
-241	STD		{ int hpux_sigpending(hpux_sigset_t *set); }
-242	STD		{ int hpux_sigsuspend(hpux_sigset_t *set); }
-243	UNIMPL		hpux_fsctl
-244	UNIMPL		nosys
-245	UNIMPL		hpux_pstat
-246	UNIMPL		nosys
-247	UNIMPL		nosys
-248	UNIMPL		nosys
-249	UNIMPL		nosys
-250	UNIMPL		nosys
-251	UNIMPL		nosys
-252	UNIMPL		nosys
-253	UNIMPL		nosys
-254	UNIMPL		nosys
-255	UNIMPL		nosys
-256	UNIMPL		nosys
-257	UNIMPL		nosys
-258	UNIMPL		nosys
-259	UNIMPL		nosys
-260	UNIMPL		nosys
-261	UNIMPL		nosys
-262	UNIMPL		nosys
-263	UNIMPL		nosys
-264	UNIMPL		nosys
-265	UNIMPL		nosys
-266	UNIMPL		nosys
-267	UNIMPL		nosys
-268	NOARGS		{ int compat_43_getdtablesize(void); }
-269	UNIMPL		nosys
-270	UNIMPL		nosys
-271	UNIMPL		nosys
-272	NOARGS		{ int fchdir(int fd); }
-273	UNIMPL		nosys
-274	UNIMPL		nosys
-275	NOARGS		{ int compat_43_accept(int s, caddr_t name, \
-					       int *anamelen); }
-276	NOARGS		{ int bind(int s, caddr_t name, int namelen); }
-277	NOARGS		{ int connect(int s, caddr_t name, int namelen); }
-278	NOARGS		{ int compat_43_getpeername(int fdes, caddr_t asa, \
-						    int *alen); }
-279	NOARGS		{ int compat_43_getsockname(int fdec, caddr_t asa, \
-						    int *alen); }
-280	NOARGS		{ int getsockopt(int s, int level, int name, \
-					 caddr_t val, int *avalsize); }
-281	NOARGS		{ int listen(int s, int backlog); }
-282	NOARGS		{ int compat_43_recv(int s, caddr_t buf, int len, \
-					     int flags); }
-283	NOARGS		{ int compat_43_recvfrom(int s, caddr_t buf, \
-						 size_t len, int flags, \
-						 caddr_t from, \
-						 int *fromlenaddr); }
-284	NOARGS		{ int compat_43_recvmsg(int s, struct omsghdr *msg, \
-						int flags); }
-285	NOARGS		{ int compat_43_send(int s, caddr_t buf, int len, \
-					     int flags); }
-286	NOARGS		{ int compat_43_sendmsg(int s, caddr_t msg, \
-						int flags); }
-287	NOARGS		{ int sendto(int s, caddr_t buf, size_t len, \
-				     int flags, caddr_t to, int tolen); }
-288	STD		{ int hpux_setsockopt2(int s, int level, int name, \
-					       caddr_t val, int valsize); }
-289	NOARGS		{ int shutdown(int s, int how); }
-290	NOARGS		{ int socket(int domain, int type, int protocol); }
-291	NOARGS		{ int socketpair(int domain, int type, int protocol, \
-			    int *rsv); }
-292	UNIMPL		nosys
-293	UNIMPL		nosys
-294	UNIMPL		nosys
-295	UNIMPL		nosys
-296	UNIMPL		nosys
-297	UNIMPL		nosys
-298	UNIMPL		nosys
-299	UNIMPL		nosys
-300	UNIMPL		nosys
-301	UNIMPL		nosys
-302	UNIMPL		nosys
-303	UNIMPL		nosys
-304	UNIMPL		nosys
-305	UNIMPL		nosys
-306	UNIMPL		nosys
-307	UNIMPL		nosys
-308	UNIMPL		nosys
-309	UNIMPL		nosys
-310	UNIMPL		nosys
-311	UNIMPL		nosys
+200	STD		{ int hpux_sys_waitpid(pid_t pid, int *status, \
+			    int options, struct rusage *rusage); }
+201	UNIMPL
+202	UNIMPL
+203	UNIMPL
+204	UNIMPL
+205	UNIMPL
+206	UNIMPL
+207	UNIMPL
+208	UNIMPL
+209	UNIMPL
+210	UNIMPL
+211	UNIMPL
+212	UNIMPL
+213	UNIMPL
+214	UNIMPL
+215	UNIMPL
+216	UNIMPL
+217	UNIMPL
+218	UNIMPL
+219	UNIMPL
+220	UNIMPL
+221	UNIMPL
+222	UNIMPL
+223	UNIMPL
+224	UNIMPL
+225	NOARGS		{ int sys_pathconf(char *path, int name); }
+226	NOARGS		{ int sys_fpathconf(int fd, int name); }
+227	UNIMPL
+228	UNIMPL
+229	UNIMPL		async_daemon
+230	UNIMPL		nfs_fcntl
+231	NOARGS		{ int compat_43_sys_getdirentries(int fd, char *buf, \
+			    u_int count, long *basep); }
+232	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
+			    int len); }
+233	UNIMPL		nfs_getfh
+234	UNIMPL		vfsmount
+235	UNIMPL		nfs_svc
+236	NOARGS		{ int compat_09_sys_setdomainname(char *domainname, \
+			    int len); }
+237	UNIMPL		statfs
+238	UNIMPL		fstatfs
+239	STD		{ int hpux_sys_sigaction(int signo, \
+			    struct hpux_sigaction *nsa, \
+			    struct hpux_sigaction *osa); }
+240	STD		{ int hpux_sys_sigprocmask(int how, \
+			    hpux_sigset_t *set, hpux_sigset_t *oset); }
+241	STD		{ int hpux_sys_sigpending(hpux_sigset_t *set); }
+242	STD		{ int hpux_sys_sigsuspend(hpux_sigset_t *set); }
+243	UNIMPL		fsctl
+244	UNIMPL
+245	UNIMPL		pstat
+246	UNIMPL
+247	UNIMPL
+248	UNIMPL
+249	UNIMPL
+250	UNIMPL
+251	UNIMPL
+252	UNIMPL
+253	UNIMPL
+254	UNIMPL
+255	UNIMPL
+256	UNIMPL
+257	UNIMPL
+258	UNIMPL
+259	UNIMPL
+260	UNIMPL
+261	UNIMPL
+262	UNIMPL
+263	UNIMPL
+264	UNIMPL
+265	UNIMPL
+266	UNIMPL
+267	UNIMPL
+268	NOARGS		{ int compat_43_sys_getdtablesize(void); }
+269	UNIMPL
+270	UNIMPL
+271	UNIMPL
+272	NOARGS		{ int sys_fchdir(int fd); }
+273	UNIMPL
+274	UNIMPL
+275	NOARGS		{ int compat_43_sys_accept(int s, caddr_t name, \
+			    int *anamelen); }
+276	NOARGS		{ int sys_bind(int s, caddr_t name, int namelen); }
+277	NOARGS		{ int sys_connect(int s, caddr_t name, int namelen); }
+278	NOARGS		{ int compat_43_sys_getpeername(int fdes, caddr_t asa, \
+			    int *alen); }
+279	NOARGS		{ int compat_43_sys_getsockname(int fdec, caddr_t asa, \
+			    int *alen); }
+280	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
+			    caddr_t val, int *avalsize); }
+281	NOARGS		{ int sys_listen(int s, int backlog); }
+282	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
+			    int flags); }
+283	NOARGS		{ int compat_43_sys_recvfrom(int s, caddr_t buf, \
+			    size_t len, int flags, caddr_t from, \
+			    int *fromlenaddr); }
+284	NOARGS		{ int compat_43_sys_recvmsg(int s, \
+			    struct omsghdr *msg, int flags); }
+285	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
+			    int flags); }
+286	NOARGS		{ int compat_43_sys_sendmsg(int s, caddr_t msg, \
+			    int flags); }
+287	NOARGS		{ int sys_sendto(int s, caddr_t buf, size_t len, \
+			    int flags, caddr_t to, int tolen); }
+288	STD		{ int hpux_sys_setsockopt2(int s, int level, int name, \
+			    caddr_t val, int valsize); }
+289	NOARGS		{ int sys_shutdown(int s, int how); }
+290	NOARGS		{ int sys_socket(int domain, int type, int protocol); }
+291	NOARGS		{ int sys_socketpair(int domain, int type, \
+			    int protocol, int *rsv); }
+292	UNIMPL
+293	UNIMPL
+294	UNIMPL
+295	UNIMPL
+296	UNIMPL
+297	UNIMPL
+298	UNIMPL
+299	UNIMPL
+300	UNIMPL
+301	UNIMPL
+302	UNIMPL
+303	UNIMPL
+304	UNIMPL
+305	UNIMPL
+306	UNIMPL
+307	UNIMPL
+308	UNIMPL
+309	UNIMPL
+310	UNIMPL
+311	UNIMPL
 #ifdef SYSVSEM
-312	NOARGS		{ int __semctl(int semid, int semnum, int cmd, \
+312	NOARGS		{ int sys___semctl(int semid, int semnum, int cmd, \
 			    union semun *arg); } nsemctl
 #else
 312	UNIMPL		semctl
 #endif
 #ifdef SYSVMSG
-313	NOARGS		{ int msgctl(int msqid, int cmd, \
+313	NOARGS		{ int sys_msgctl(int msqid, int cmd, \
 			    struct msqid_ds *buf); } nmsgctl
 #else
 313	UNIMPL		msgctl
 #endif
 #ifdef SYSVSHM
-314	STD		{ int hpux_nshmctl(int shmid, int cmd, caddr_t buf); }
+314	STD		{ int hpux_sys_nshmctl(int shmid, int cmd, \
+			    caddr_t buf); }
 #else
 314	UNIMPL		shmctl
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.15 1995/09/19 22:56:42 thorpej Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.16 1995/10/07 06:25:42 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -385,12 +385,12 @@ svr4_sendsig(catcher, sig, mask, code)
  * sysi86
  */
 int
-svr4_sysarch(p, v, retval)
+svr4_sys_sysarch(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct svr4_sysarch_args *uap = v;
+	struct svr4_sys_sysarch_args *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 	int error;
 	*retval = 0;	/* XXX: What to do */
@@ -405,7 +405,7 @@ svr4_sysarch(p, v, retval)
 #ifdef USER_LDT
 		{
 			struct i386_set_ldt_args sa, *sap;
-			struct sysarch_args ua;
+			struct sys_sysarch_args ua;
 
 			struct svr4_ssd ssd;
 			union descriptor bsd;
@@ -463,7 +463,7 @@ svr4_sysarch(p, v, retval)
 				return error;
 			}
 
-			return sysarch(p, &ua, retval);
+			return sys_sysarch(p, &ua, retval);
 		}
 #endif
 

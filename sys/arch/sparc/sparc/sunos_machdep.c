@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.2 1995/09/19 22:59:05 thorpej Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.3 1995/10/07 06:26:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew Green
@@ -44,12 +44,12 @@
 #include <compat/sunos/sunos_syscallargs.h>
 
 int
-sunos_sigreturn(p, v, retval)
+sunos_sys_sigreturn(p, v, retval)
         register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sunos_sigreturn_args *uap = v;
+	struct sunos_sys_sigreturn_args *uap = v;
 
-	return (sigreturn(p, (struct sigreturn_args *)uap, retval));
+	return (sys_sigreturn(p, (struct sys_sigreturn_args *)uap, retval));
 }

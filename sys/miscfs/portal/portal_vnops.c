@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.13 1995/08/12 23:59:15 mycroft Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.14 1995/10/07 06:28:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,8 @@
 #include <sys/socketvar.h>
 #include <sys/un.h>
 #include <sys/unpcb.h>
+#include <sys/syscallargs.h>
+
 #include <miscfs/portal/portal.h>
 
 static int portal_fileid = PORTAL_ROOTFILEID+1;
@@ -70,14 +72,14 @@ portal_closefd(p, fd)
 	struct proc *p;
 	int fd;
 {
+	struct sys_close_args /* {
+		syscallarg(int) fd;
+	} */ ua;
+	register_t retval[2];
 	int error;
-	struct {
-		int fd;
-	} ua;
-	int rc;
 
-	ua.fd = fd;
-	error = close(p, &ua, &rc);
+	SCARG(&ua, fd) = fd;
+	error = sys_close(p, &ua, retval);
 	/*
 	 * We should never get an error, and there isn't anything
 	 * we could do if we got one, so just print a message.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.172 1995/09/19 22:56:40 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.173 1995/10/07 06:25:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -580,12 +580,12 @@ sendsig(catcher, sig, mask, code)
  * psl to gain improper privileges or to cause
  * a machine fault.
  */
-sigreturn(p, v, retval)
+sys_sigreturn(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sigreturn_args /* {
+	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp, context;

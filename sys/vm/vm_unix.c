@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_unix.c,v 1.17 1995/09/19 21:57:40 thorpej Exp $	*/
+/*	$NetBSD: vm_unix.c,v 1.18 1995/10/07 06:29:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,12 +59,12 @@
 
 /* ARGSUSED */
 int
-obreak(p, v, retval)
+sys_obreak(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct obreak_args /* {
+	struct sys_obreak_args /* {
 		syscallarg(char *) nsize;
 	} */ *uap = v;
 	register struct vmspace *vm = p->p_vmspace;
@@ -131,12 +131,12 @@ grow(p, sp)
 
 /* ARGSUSED */
 int
-ovadvise(p, v, retval)
+sys_ovadvise(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct ovadvise_args /* {
+	struct sys_ovadvise_args /* {
 		syscallarg(int) anom;
 	} */ *uap = v;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.15 1995/09/19 22:49:22 thorpej Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.16 1995/10/07 06:28:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,11 +79,14 @@
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/unistd.h>
+#include <sys/syscallargs.h>
+
+#include <compat/ultrix/ultrix_syscall.h>
+#include <compat/ultrix/ultrix_syscallargs.h>
 
 #include <netinet/in.h>
 
 #include <miscfs/specfs/specdev.h>
-#include <compat/ultrix/ultrix_syscall.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>
@@ -112,308 +115,108 @@ struct emul emul_ultrix = {
 
 #define GSI_PROG_ENV 1
 
-struct ultrix_getsysinfo_args {
-	unsigned	op;
-	char		*buffer;
-	unsigned	nbytes;
-	int		*start;
-	char		*arg;
-};
-
-ultrix_getsysinfo(p, v, retval)
+ultrix_sys_getsysinfo(p, v, retval)
 	struct proc *p;
 	void *v;
-	int *retval;
+	register_t *retval;
 {
-	struct ultrix_getsysinfo_args *uap = v;
+	struct ultrix_sys_getsysinfo_args *uap = v;
 	static short progenv = 0;
 
-	switch (uap->op) {
+	switch (SCARG(uap, op)) {
 		/* operations implemented: */
 	case GSI_PROG_ENV:
-		if (uap->nbytes < sizeof(short))
+		if (SCARG(uap, nbytes) < sizeof(short))
 			return EINVAL;
 		*retval = 1;
-		return(copyout(&progenv, uap->buffer, sizeof(short)));
+		return (copyout(&progenv, SCARG(uap, buffer), sizeof(short)));
 	default:
 		*retval = 0; /* info unavail */
 		return 0;
 	}
 }
 
-struct ultrix_setsysinfo_args {
-	unsigned	op;
-	char		*buffer;
-	unsigned	nbytes;
-	unsigned	arg;
-	unsigned	flag;
-};
-
-ultrix_setsysinfo(p, v, retval)
+ultrix_sys_setsysinfo(p, v, retval)
 	struct proc *p;
 	void *v;
-	int *retval;
+	register_t *retval;
 {
-	struct ultrix_setsysinfo_args *uap = v;
+	struct ultrix_sys_setsysinfo_args *uap = v;
 	*retval = 0;
 	return 0;
 }
 
-struct ultrix_waitpid_args {
-	int	pid;
-	int	*status;
-	int	options;
-	struct	rusage *rusage;
-};
-
-ultrix_waitpid(p, v, retval)
+ultrix_sys_waitpid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct ultrix_waitpid_args *uap = v;
+	struct ultrix_sys_waitpid_args *uap = v;
+	struct sys_wait4_args ua;
 
-	uap->rusage = 0;
-	return (wait4(p, uap, retval));
-}
-struct sun_wait4_args {
-	int	pid;
-	int	*status;
-	int	options;
-	struct	rusage *rusage;
-	int compat;
-};
-sun_wait4(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sun_wait4_args *uap = v;
+	SCARG(&ua, pid) = SCARG(uap, pid);
+	SCARG(&ua, status) = SCARG(uap, status);
+	SCARG(&ua, options) = SCARG(uap, options);
+	SCARG(&ua, rusage) = 0;
 
-	if (uap->pid == 0)
-		uap->pid = WAIT_ANY;
-	return (wait4(p, uap, retval));
+	return (sys_wait4(p, &ua, retval));
 }
 
-struct sun_wait3_args {
-	int	*status;
-	int	options;
-	struct	rusage *rusage;
-};
-
-sun_wait3(p, v, retval)
+ultrix_sys_wait3(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sun_wait3_args *uap = v;
-	struct sun_wait4_args ua;
+	struct ultrix_sys_wait3_args *uap = v;
+	struct sys_wait4_args ua;
 
-	if (uap == NULL)
-		panic("uap == NULL");
-	ua.pid = -1;
-	ua.status = uap->status;
-	ua.options = uap->options;
-	ua.rusage = uap->rusage;
+	SCARG(&ua, pid) = -1;
+	SCARG(&ua, status) = SCARG(uap, status);
+	SCARG(&ua, options) = SCARG(uap, options);
+	SCARG(&ua, rusage) = SCARG(uap, rusage);
 
-	return (wait4(p, &ua, retval));
+	return (sys_wait4(p, &ua, retval));
 }
 
-struct sun_creat_args {
-	char	*fname;
-	int	fmode;
-};
-sun_creat(p, v, retval)
+ultrix_sys_execv(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sun_creat_args *uap = v;
-	struct args {
-		char	*fname;
-		int	mode;
-		int	crtmode;
-	} openuap;
+	struct ultrix_sys_execv_args *uap = v;
+	struct sys_execve_args ouap;
 
-	openuap.fname = uap->fname;
-	openuap.crtmode = uap->fmode;
-	openuap.mode = O_WRONLY | O_CREAT | O_TRUNC;
-	return (open(p, &openuap, retval));
-}
+	SCARG(&ouap, path) = SCARG(uap, path);
+	SCARG(&ouap, argp) = SCARG(uap, argp);
+	SCARG(&ouap, envp) = NULL;
 
-struct sun_execv_args {
-	char	*fname;
-	char	**argp;
-	char	**envp;		/* pseudo */
-};
-sun_execv(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sun_execv_args *uap = v;
-
-	uap->envp = NULL;
-	return (execve(p, uap, retval));
-}
-
-struct sun_omsync_args {
-	caddr_t	addr;
-	int	len;
-	int	flags;
-};
-sun_omsync(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sun_omsync_args *uap = v;
-
-	if (uap->flags)
-		return (EINVAL);
-	return (msync(p, uap, retval));
-}
-
-struct sun_unmount_args {
-	char	*name;
-	int	flags;	/* pseudo */
-};
-sun_unmount(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sun_unmount_args *uap = v;
-
-	uap->flags = 0;
-	return (unmount(p, uap, retval));
-}
-
-#define	SUNM_RDONLY	0x01	/* mount fs read-only */
-#define	SUNM_NOSUID	0x02	/* mount fs with setuid disallowed */
-#define	SUNM_NEWTYPE	0x04	/* type is string (char *), not int */
-#define	SUNM_GRPID	0x08	/* (bsd semantics; ignored) */
-#define	SUNM_REMOUNT	0x10	/* update existing mount */
-#define	SUNM_NOSUB	0x20	/* prevent submounts (rejected) */
-#define	SUNM_MULTI	0x40	/* (ignored) */
-#define	SUNM_SYS5	0x80	/* Sys 5-specific semantics (rejected) */
-
-struct	sun_nfs_args {
-	struct	sockaddr_in *addr;	/* file server address */
-	caddr_t	fh;			/* file handle to be mounted */
-	int	flags;			/* flags */
-	int	wsize;			/* write size in bytes */
-	int	rsize;			/* read size in bytes */
-	int	timeo;			/* initial timeout in .1 secs */
-	int	retrans;		/* times to retry send */
-	char	*hostname;		/* server's hostname */
-	int	acregmin;		/* attr cache file min secs */
-	int	acregmax;		/* attr cache file max secs */
-	int	acdirmin;		/* attr cache dir min secs */
-	int	acdirmax;		/* attr cache dir max secs */
-	char	*netname;		/* server's netname */
-	struct	pathcnf *pathconf;	/* static pathconf kludge */
-};
-
-struct sun_mount_args {
-	char	*type;
-	char	*dir;
-	int	flags;
-	caddr_t	data;
-};
-sun_mount(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sun_mount_args *uap = v;
-	int oflags = uap->flags, nflags, error;
-	extern char sigcode[], esigcode[];
-	char fsname[MFSNAMELEN];
-
-#define	szsigcode	(esigcode - sigcode)
-
-	if (oflags & (SUNM_NOSUB | SUNM_SYS5))
-		return (EINVAL);
-	if ((oflags & SUNM_NEWTYPE) == 0)
-		return (EINVAL);
-	nflags = 0;
-	if (oflags & SUNM_RDONLY)
-		nflags |= MNT_RDONLY;
-	if (oflags & SUNM_NOSUID)
-		nflags |= MNT_NOSUID;
-	if (oflags & SUNM_REMOUNT)
-		nflags |= MNT_UPDATE;
-	uap->flags = nflags;
-
-	if (error = copyinstr((caddr_t)uap->type, fsname, sizeof fsname,
-	    (size_t *)0))
-		return (error);
-
-	if (strncmp(fsname, "4.2", sizeof fsname) == 0) {
-		uap->type = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
-		if (error = copyout("ufs", uap->type, sizeof("ufs")))
-			return (error);
-	} else if (strncmp(fsname, "nfs", sizeof fsname) == 0) {
-		struct sun_nfs_args sna;
-		struct sockaddr_in sain;
-		struct nfs_args na;
-		struct sockaddr sa;
-
-		if (error = copyin(uap->data, &sna, sizeof sna))
-			return (error);
-		if (error = copyin(sna.addr, &sain, sizeof sain))
-			return (error);
-		bcopy(&sain, &sa, sizeof sa);
-		sa.sa_len = sizeof(sain);
-		uap->data = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
-		na.addr = (struct sockaddr *)((int)uap->data + sizeof na);
-		na.sotype = SOCK_DGRAM;
-		na.proto = IPPROTO_UDP;
-		na.fh = (nfsv2fh_t *)sna.fh;
-		na.flags = sna.flags;
-		na.wsize = sna.wsize;
-		na.rsize = sna.rsize;
-		na.timeo = sna.timeo;
-		na.retrans = sna.retrans;
-		na.hostname = sna.hostname;
-
-		if (error = copyout(&sa, na.addr, sizeof sa))
-			return (error);
-		if (error = copyout(&na, uap->data, sizeof na))
-			return (error);
-	}
-	return (mount(p, uap, retval));
+	return (sys_execve(p, &ouap, retval));
 }
 
 #if defined(NFSCLIENT)
-async_daemon(p, uap, retval)
-      struct proc *p;
-      void *uap;
-      register_t *retval;
-{
-      struct nfssvc_args {
-              int flag;
-              caddr_t argp;
-      } args;
-
-      args.flag = NFSSVC_BIOD;
-      return nfssvc(p, &args, retval);
-}
-#endif /* NFSCLIENT */
-
-struct sun_sigpending_args {
-	int	*mask;
-};
-sun_sigpending(p, v, retval)
+async_daemon(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sun_sigpending_args *uap = v;
+	struct sys_nfssvc_args ouap;
+
+	SCARG(&ouap, flag) = NFSSVC_BIOD;
+	SCARG(&ouap, argp) = NULL;
+
+	return (sys_nfssvc(p, &ouap, retval));
+}
+#endif /* NFSCLIENT */
+
+ultrix_sys_sigpending(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ultrix_sys_sigpending_args *uap = v;
 	int mask = p->p_siglist & p->p_sigmask;
 
-	return (copyout((caddr_t)&mask, (caddr_t)uap->mask, sizeof(int)));
+	return (copyout((caddr_t)&mask, (caddr_t)SCARG(uap, mask), sizeof(int)));
 }
 
 #if 0
@@ -426,146 +229,15 @@ struct dirent {
 };
 #endif
 
-/*
- * Here is the sun layout.  (Compare the BSD layout in <sys/dirent.h>.)
- * We can assume big-endian, so the BSD d_type field is just the high
- * byte of the SunOS d_namlen field, after adjusting for the extra "long".
- */
-struct sun_dirent {
-	long	d_off;
-	u_long	d_fileno;
-	u_short	d_reclen;
-	u_short	d_namlen;
-	char	d_name[256];
-};
-
-/*
- * Read Sun-style directory entries.  We suck them into kernel space so
- * that they can be massaged before being copied out to user code.  Like
- * SunOS, we squish out `empty' entries.
- *
- * This is quite ugly, but what do you expect from compatibility code?
- */
-struct sun_getdents_args {
-	int	fd;
-	char	*buf;
-	int	nbytes;
-};
-sun_getdents(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct sun_getdents_args *uap = v;
-	register struct vnode *vp;
-	register caddr_t inp, buf;	/* BSD-format */
-	register int len, reclen;	/* BSD-format */
-	register caddr_t outp;		/* Sun-format */
-	register int resid;		/* Sun-format */
-	struct file *fp;
-	struct uio auio;
-	struct iovec aiov;
-	off_t off;			/* true file offset */
-	long soff;			/* Sun file offset */
-	int buflen, error, eofflag;
-#define	BSD_DIRENT(cp) ((struct dirent *)(cp))
-#define	SUN_RECLEN(reclen) (reclen + sizeof(long))
-
-	if ((error = getvnode(p->p_fd, uap->fd, &fp)) != 0)
-		return (error);
-	if ((fp->f_flag & FREAD) == 0)
-		return (EBADF);
-	vp = (struct vnode *)fp->f_data;
-	if (vp->v_type != VDIR)	/* XXX  vnode readdir op should do this */
-		return (EINVAL);
-	buflen = min(MAXBSIZE, uap->nbytes);
-	buf = malloc(buflen, M_TEMP, M_WAITOK);
-	VOP_LOCK(vp);
-	off = fp->f_offset;
-again:
-	aiov.iov_base = buf;
-	aiov.iov_len = buflen;
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = p;
-	auio.uio_resid = buflen;
-	auio.uio_offset = off;
-	/*
-	 * First we read into the malloc'ed buffer, then
-	 * we massage it into user space, one record at a time.
-	 */
-	if (error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, (u_long *)0,
-	    0))
-		goto out;
-	inp = buf;
-	outp = uap->buf;
-	resid = uap->nbytes;
-	if ((len = buflen - auio.uio_resid) == 0)
-		goto eof;
-	for (; len > 0; len -= reclen) {
-		reclen = ((struct dirent *)inp)->d_reclen;
-		if (reclen & 3)
-			panic("sun_getdents");
-		off += reclen;		/* each entry points to next */
-		if (BSD_DIRENT(inp)->d_fileno == 0) {
-			inp += reclen;	/* it is a hole; squish it out */
-			continue;
-		}
-		if (reclen > len || resid < SUN_RECLEN(reclen)) {
-			/* entry too big for buffer, so just stop */
-			outp++;
-			break;
-		}
-		/*
-		 * Massage in place to make a Sun-shaped dirent (otherwise
-		 * we have to worry about touching user memory outside of
-		 * the copyout() call).
-		 */
-		BSD_DIRENT(inp)->d_reclen = SUN_RECLEN(reclen);
-#if notdef
-		BSD_DIRENT(inp)->d_type = 0; 	/* 4.4 specific */
-#endif
-		soff = off;
-		if ((error = copyout((caddr_t)&soff, outp, sizeof soff)) != 0 ||
-		    (error = copyout(inp, outp + sizeof soff, reclen)) != 0)
-			goto out;
-		/* advance past this real entry */
-		inp += reclen;
-		/* advance output past Sun-shaped entry */
-		outp += SUN_RECLEN(reclen);
-		resid -= SUN_RECLEN(reclen);
-	}
-	/* if we squished out the whole block, try again */
-	if (outp == uap->buf)
-		goto again;
-	fp->f_offset = off;		/* update the vnode offset */
-eof:
-	*retval = uap->nbytes - resid;
-out:
-	VOP_UNLOCK(vp);
-	free(buf, M_TEMP);
-	return (error);
-}
-
 #define	SUN__MAP_NEW	0x80000000	/* if not, old mmap & cannot handle */
 
-struct sun_mmap_args {
-	caddr_t	addr;
-	size_t	len;
-	int	prot;
-	int	flags;
-	int	fd;
-	long	off;		/* not off_t! */
-	off_t	qoff;		/* created here and fed to mmap() */
-};
-sun_mmap(p, v, retval)
+ultrix_sys_mmap(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sun_mmap_args *uap = v;
+	register struct ultrix_sys_mmap_args *uap = v;
+	struct sys_mmap_args ouap;
 	register struct filedesc *fdp;
 	register struct file *fp;
 	register struct vnode *vp;
@@ -573,157 +245,81 @@ sun_mmap(p, v, retval)
 	/*
 	 * Verify the arguments.
 	 */
-	if (uap->prot & ~(PROT_READ|PROT_WRITE|PROT_EXEC))
+	if (SCARG(uap, prot) & ~(PROT_READ|PROT_WRITE|PROT_EXEC))
 		return (EINVAL);			/* XXX still needed? */
 
-	if ((uap->flags & SUN__MAP_NEW) == 0)
+	if ((SCARG(uap, flags) & SUN__MAP_NEW) == 0)
 		return (EINVAL);
-	uap->flags &= ~SUN__MAP_NEW;
 
-	if ((uap->flags & MAP_FIXED) == 0 &&
-		uap->addr != 0 &&
-		uap->addr < (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
-		uap->addr = (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
+	SCARG(&ouap, flags) = SCARG(uap, flags) & ~SUN__MAP_NEW;
+	SCARG(&ouap, addr) = SCARG(uap, addr);
+
+	if ((SCARG(&ouap, flags) & MAP_FIXED) == 0 &&
+	    SCARG(&ouap, addr) != 0 &&
+	    SCARG(&ouap, addr) < (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
+		SCARG(&ouap, addr) = (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
+
+	SCARG(&ouap, len) = SCARG(uap, len);
+	SCARG(&ouap, prot) = SCARG(uap, prot);
+	SCARG(&ouap, fd) = SCARG(uap, fd);
+	SCARG(&ouap, pos) = SCARG(uap, pos);
 
 	/*
 	 * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
 	 */
 	fdp = p->p_fd;
-	if ((unsigned)uap->fd < fdp->fd_nfiles &&			/*XXX*/
-	    (fp = fdp->fd_ofiles[uap->fd]) != NULL &&			/*XXX*/
+	if ((unsigned)SCARG(&ouap, fd) < fdp->fd_nfiles &&		/*XXX*/
+	    (fp = fdp->fd_ofiles[SCARG(&ouap, fd)]) != NULL &&		/*XXX*/
 	    fp->f_type == DTYPE_VNODE &&				/*XXX*/
 	    (vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
 	    iszerodev(vp->v_rdev)) {					/*XXX*/
-		uap->flags |= MAP_ANON;
-		uap->fd = -1;
+		SCARG(&ouap, flags) |= MAP_ANON;
+		SCARG(&ouap, fd) = -1;
 	}
 
-	uap->qoff = uap->off;
-	return (mmap(p, uap, retval));
+	return (sys_mmap(p, &ouap, retval));
 }
 
-#define	MC_SYNC		1
-#define	MC_LOCK		2
-#define	MC_UNLOCK	3
-#define	MC_ADVISE	4
-#define	MC_LOCKAS	5
-#define	MC_UNLOCKAS	6
-
-struct sun_mctl_args {
-	caddr_t	addr;
-	size_t	len;
-	int	func;
-	void	*arg;
-};
-sun_mctl(p, v, retval)
-	register struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct sun_mctl_args *uap = v;
-
-	switch (uap->func) {
-
-	case MC_ADVISE:		/* ignore for now */
-		return (0);
-
-	case MC_SYNC:		/* translate to msync */
-		return (msync(p, uap, retval));
-
-	default:
-		return (EINVAL);
-	}
-}
-
-struct sun_setsockopt_args {
-	int	s;
-	int	level;
-	int	name;
-	caddr_t	val;
-	int	valsize;
-};
-sun_setsockopt(p, v, retval)
+ultrix_sys_setsockopt(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sun_setsockopt_args *uap = v;
+	register struct ultrix_sys_setsockopt_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
 
-	if (error = getsock(p->p_fd, uap->s, &fp))
+	if (error = getsock(p->p_fd, SCARG(uap, s), &fp))
 		return (error);
 #define	SO_DONTLINGER (~SO_LINGER)
-	if (uap->name == SO_DONTLINGER) {
+	if (SCARG(uap, name) == SO_DONTLINGER) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if (m == NULL)
 			return (ENOBUFS);
 		mtod(m, struct linger *)->l_onoff = 0;
 		m->m_len = sizeof(struct linger);
-		return (sosetopt((struct socket *)fp->f_data, uap->level,
+		return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 		    SO_LINGER, m));
 	}
-	if (uap->valsize > MLEN)
+	if (SCARG(uap, valsize) > MLEN)
 		return (EINVAL);
-	if (uap->val) {
+	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if (m == NULL)
 			return (ENOBUFS);
-		if (error = copyin(uap->val, mtod(m, caddr_t),
-		    (u_int)uap->valsize)) {
+		if (error = copyin(SCARG(uap, val), mtod(m, caddr_t),
+		    (u_int)SCARG(uap, valsize))) {
 			(void) m_free(m);
 			return (error);
 		}
-		m->m_len = uap->valsize;
+		m->m_len = SCARG(uap, valsize);
 	}
-	return (sosetopt((struct socket *)fp->f_data, uap->level,
-	    uap->name, m));
+	return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
+	    SCARG(uap, name), m));
 }
 
-struct sun_fchroot_args {
-	int	fdes;
-};
-sun_fchroot(p, v, retval)
-	register struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct sun_fchroot_args *uap = v;
-	register struct filedesc *fdp = p->p_fd;
-	register struct vnode *vp;
-	struct file *fp;
-	int error;
-
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return (error);
-	if ((error = getvnode(fdp, uap->fdes, &fp)) != 0)
-		return (error);
-	vp = (struct vnode *)fp->f_data;
-	VOP_LOCK(vp);
-	if (vp->v_type != VDIR)
-		error = ENOTDIR;
-	else
-		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
-	VOP_UNLOCK(vp);
-	if (error)
-		return (error);
-	VREF(vp);
-	if (fdp->fd_rdir != NULL)
-		vrele(fdp->fd_rdir);
-	fdp->fd_rdir = vp;
-	return (0);
-}
-
-/*
- * XXX: This needs cleaning up.
- */
-sun_auditsys()
-{
-	return 0;
-}
-
-struct sun_utsname {
+struct ultrix_utsname {
 	char    sysname[9];
 	char    nodename[9];
 	char    nodeext[65-9];
@@ -732,16 +328,13 @@ struct sun_utsname {
 	char    machine[9];
 };
 
-struct sun_uname_args {
-	struct sun_utsname *name;
-};
-sun_uname(p, v, retval)
+ultrix_sys_uname(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sun_uname_args *uap = v;
-	struct sun_utsname sut;
+	struct ultrix_sys_uname_args *uap = v;
+	struct ultrix_utsname sut;
 	extern char ostype[], machine[], osrelease[];
 
 	bzero(&sut, sizeof(sut));
@@ -753,20 +346,17 @@ sun_uname(p, v, retval)
 	bcopy("1", sut.version, sizeof(sut.version) - 1);
 	bcopy(machine, sut.machine, sizeof(sut.machine) - 1);
 
-	return copyout((caddr_t)&sut, (caddr_t)uap->name, sizeof(struct sun_utsname));
+	return copyout((caddr_t)&sut, (caddr_t)SCARG(uap, name),
+	    sizeof(struct ultrix_utsname));
 }
 
-struct sun_setpgid_args {
-	int	pid;	/* target process id */
-	int	pgid;	/* target pgrp id */
-};
 int
-sun_setpgid(p, v, retval)
+ultrix_sys_setpgrp(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sun_setpgid_args *uap = v;
+	struct ultrix_sys_setpgrp_args *uap = v;
 
 	/*
 	 * difference to our setpgid call is to include backwards
@@ -774,37 +364,34 @@ sun_setpgid(p, v, retval)
 	 * instead of setpgid() in those cases where the process
 	 * tries to create a new session the old way.
 	 */
-	if (!uap->pgid && (!uap->pid || uap->pid == p->p_pid))
-		return setsid(p, uap, retval);
+	if (!SCARG(uap, pgid) &&
+	    (!SCARG(uap, pid) || SCARG(uap, pid) == p->p_pid))
+		return sys_setsid(p, uap, retval);
 	else
-		return setpgid(p, uap, retval);
+		return sys_setpgid(p, uap, retval);
 }
 
-struct sun_open_args {
-	char	*fname;
-	int	fmode;
-	int	crtmode;
-};
-sun_open(p, v, retval)
+ultrix_sys_open(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sun_open_args *uap = v;
+	struct ultrix_sys_open_args *uap = v;
 	int l, r;
-	int noctty = uap->fmode & 0x8000;
+	int noctty;
 	int ret;
 	
 	/* convert mode into NetBSD mode */
-	l = uap->fmode;
+	l = SCARG(uap, mode);
+	noctty = l & 0x8000;
 	r =	(l & (0x0001 | 0x0002 | 0x0008 | 0x0040 | 0x0200 | 0x0400 | 0x0800));
 	r |=	((l & (0x0004 | 0x1000 | 0x4000)) ? O_NONBLOCK : 0);
 	r |=	((l & 0x0080) ? O_SHLOCK : 0);
 	r |=	((l & 0x0100) ? O_EXLOCK : 0);
 	r |=	((l & 0x2000) ? O_FSYNC : 0);
 
-	uap->fmode = r;
-	ret = open(p, uap, retval);
+	SCARG(uap, flags) = r;
+	ret = sys_open(p, (struct sys_open_args *)uap, retval);
 
 	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
 		struct filedesc *fdp = p->p_fd;
@@ -812,106 +399,92 @@ sun_open(p, v, retval)
 
 		/* ignore any error, just give it a try */
 		if (fp->f_type == DTYPE_VNODE)
-			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t) 0, p);
+			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t)0, p);
 	}
 	return ret;
 }
 
 #if defined (NFSSERVER)
-struct nfssvc_args {
-	int	fd;
-	caddr_t mskval;
-	int msklen;
-	caddr_t mtchval;
-	int mtchlen;
-};
-struct sun_nfssvc_args {
-	int	fd;
-};
-sun_nfssvc(p, v, retval)
+ultrix_sys_nfssvc(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sun_nfssvc_args *uap = v;
-	struct nfssvc_args outuap;
+	struct ultrix_sys_nfssvc_args *uap = v;
+	struct emul *e = p->p_emul;
+	struct sys_nfssvc_args outuap;
 	struct sockaddr sa;
 	int error;
-	extern char sigcode[], esigcode[];
 
+#if 0
 	bzero(&outuap, sizeof outuap);
-	outuap.fd = uap->fd;
-	outuap.mskval = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
-	outuap.msklen = sizeof sa;
-	outuap.mtchval = outuap.mskval + sizeof sa;
-	outuap.mtchlen = sizeof sa;
+	SCARG(&outuap, fd) = SCARG(uap, fd);
+	SCARG(&outuap, mskval) = STACKGAPBASE;
+	SCARG(&outuap, msklen) = sizeof sa;
+	SCARG(&outuap, mtchval) = outuap.mskval + sizeof sa;
+	SCARG(&outuap, mtchlen) = sizeof sa;
 
 	bzero(&sa, sizeof sa);
-	if (error = copyout(&sa, outuap.mskval, outuap.msklen))
+	if (error = copyout(&sa, SCARG(&outuap, mskval), SCARG(&outuap, msklen)))
 		return (error);
-	if (error = copyout(&sa, outuap.mtchval, outuap.mtchlen))
+	if (error = copyout(&sa, SCARG(&outuap, mtchval), SCARG(&outuap, mtchlen)))
 		return (error);
 
 	return nfssvc(p, &outuap, retval);
+#else
+	return (ENOSYS);
+#endif
 }
 #endif /* NFSSERVER */
 
-struct sun_ustat {
+struct ultrix_ustat {
 	daddr_t	f_tfree;	/* total free */
 	ino_t	f_tinode;	/* total inodes free */
 	char	f_fname[6];	/* filsys name */
 	char	f_fpack[6];	/* filsys pack name */
 };
-struct sun_ustat_args {
-	int	dev;
-	struct	sun_ustat *buf;
-};
-sun_ustat(p, v, retval)
+
+ultrix_sys_ustat(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sun_ustat_args *uap = v;
-	struct sun_ustat us;
+	struct ultrix_sys_ustat_args *uap = v;
+	struct ultrix_ustat us;
 	int error;
 
 	bzero(&us, sizeof us);
 
 	/*
 	 * XXX: should set f_tfree and f_tinode at least
-	 * How do we translate dev -> fstat? (and then to sun_ustat)
+	 * How do we translate dev -> fstat? (and then to ultrix_ustat)
 	 */
 
-	if (error = copyout(&us, uap->buf, sizeof us))
+	if (error = copyout(&us, SCARG(uap, buf), sizeof us))
 		return (error);
 	return 0;
 }
 
-struct sun_quotactl_args {
-	int	cmd;
-	char	*special;
-	int	uid;
-	caddr_t	addr;
-};
-sun_quotactl(p, v, retval)
+ultrix_sys_quotactl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sun_quotactl_args *uap = v;
+	struct ultrix_sys_quotactl_args *uap = v;
 
 	return EINVAL;
 }
 
-sun_vhangup(p, uap, retval)
+ultrix_sys_vhangup(p, v, retval)
 	struct proc *p;
-	void *uap;
+	void *v;
 	register_t *retval;
 {
+
 	return 0;
 }
 
-struct sun_statfs {
+struct ultrix_statfs {
 	long	f_type;		/* type of info, zero for now */
 	long	f_bsize;	/* fundamental file system block size */
 	long	f_blocks;	/* total blocks in file system */
@@ -922,12 +495,13 @@ struct sun_statfs {
 	fsid_t	f_fsid;		/* file system id */
 	long	f_spare[7];	/* spare for later */
 };
+
 static
 sunstatfs(sp, buf)
 	struct statfs *sp;
 	caddr_t buf;
 {
-	struct sun_statfs ssfs;
+	struct ultrix_statfs ssfs;
 
 	bzero(&ssfs, sizeof ssfs);
 	ssfs.f_type = 0;
@@ -941,22 +515,18 @@ sunstatfs(sp, buf)
 	return copyout((caddr_t)&ssfs, buf, sizeof ssfs);
 }	
 
-struct sun_statfs_args {
-	char	*path;
-	struct	sun_statfs *buf;
-};
-sun_statfs(p, v, retval)
+ultrix_sys_statfs(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sun_statfs_args *uap = v;
+	struct ultrix_sys_statfs_args *uap = v;
 	register struct mount *mp;
 	register struct statfs *sp;
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, uap->path, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if (error = namei(&nd))
 		return (error);
 	mp = nd.ni_vp->v_mount;
@@ -965,44 +535,36 @@ sun_statfs(p, v, retval)
 	if (error = VFS_STATFS(mp, sp, p))
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	return sunstatfs(sp, (caddr_t)uap->buf);
+	return sunstatfs(sp, (caddr_t)SCARG(uap, buf));
 }
 
-struct sun_fstatfs_args {
-	int	fd;
-	struct	sun_statfs *buf;
-};
-sun_fstatfs(p, v, retval)
+ultrix_sys_fstatfs(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sun_fstatfs_args *uap = v;
+	struct ultrix_sys_fstatfs_args *uap = v;
 	struct file *fp;
 	struct mount *mp;
 	register struct statfs *sp;
 	int error;
 
-	if (error = getvnode(p->p_fd, uap->fd, &fp))
+	if (error = getvnode(p->p_fd, SCARG(uap, fd), &fp))
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
 	if (error = VFS_STATFS(mp, sp, p))
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	return sunstatfs(sp, (caddr_t)uap->buf);
+	return sunstatfs(sp, (caddr_t)SCARG(uap, buf));
 }
 
-struct sun_exportfs_args {
-	char	*path;
-	char	*ex;			/* struct sun_export * */
-};
-sun_exportfs(p, v, retval)
+ultrix_sys_exportfs(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sun_exportfs_args *uap = v;
+	struct ultrix_sys_exportfs_args *uap = v;
 
 	/*
 	 * XXX: should perhaps translate into a mount(2)
@@ -1011,91 +573,26 @@ sun_exportfs(p, v, retval)
 	return 0;
 }
 
-struct sun_mknod_args {
-	char	*fname;
-	int	fmode;
-	int	dev;
-};
-
-sun_mknod(p, v, retval)
+ultrix_sys_mknod(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sun_mknod_args *uap = v;
+	struct ultrix_sys_mknod_args *uap = v;
 
-	if (S_ISFIFO(uap->fmode))
-		return mkfifo(p, uap, retval);
+	if (S_ISFIFO(SCARG(uap, mode)))
+		return sys_mkfifo(p, uap, retval);
 
-	return mknod(p, uap, retval);
+	return sys_mknod(p, (struct sys_mknod_args *)uap, retval);
 }
 
-#define SUN_SC_ARG_MAX		1
-#define SUN_SC_CHILD_MAX	2
-#define SUN_SC_CLK_TCK		3
-#define SUN_SC_NGROUPS_MAX	4
-#define SUN_SC_OPEN_MAX		5
-#define SUN_SC_JOB_CONTROL	6
-#define SUN_SC_SAVED_IDS	7
-#define SUN_SC_VERSION		8
-
-struct sun_sysconf_args {
-	int	name;
-};
-
-sun_sysconf(p, v, retval)
+int
+ultrix_sys_sigcleanup(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sun_sysconf_args *uap = v;
-	extern int maxfiles;
+	struct ultrix_sys_sigcleanup_args *uap = v;
 
-	switch(uap->name) {
-	case SUN_SC_ARG_MAX:
-		*retval = ARG_MAX;
-		break;
-	case SUN_SC_CHILD_MAX:
-		*retval = maxproc;
-		break;
-	case SUN_SC_CLK_TCK:
-		*retval = 60;		/* should this be `hz', ie. 100? */
-		break;
-	case SUN_SC_NGROUPS_MAX:
-		*retval = NGROUPS_MAX;
-		break;
-	case SUN_SC_OPEN_MAX:
-		*retval = maxfiles;
-		break;
-	case SUN_SC_JOB_CONTROL:
-		*retval = 1;
-		break;
-	case SUN_SC_SAVED_IDS:
-#ifdef _POSIX_SAVED_IDS
-		*retval = 1;
-#else
-		*retval = 0;
-#endif
-		break;
-	case SUN_SC_VERSION:
-		*retval = 198808;
-		break;
-	default:
-		return EINVAL;
-	}
-	return 0;
-}
-
-struct ultrix_sigcleanup_args {
-	struct sigcontext *sigcntxp;
-};
-
-int ultrix_sigcleanup(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct ultrix_sigcleanup_args *uap = v;
-
-	sigreturn (p, (struct sigreturn_args *)uap, retval);
+	return sys_sigreturn(p, (struct sys_sigreturn_args *)uap, retval);
 }

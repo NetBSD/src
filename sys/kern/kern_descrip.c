@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.36 1995/09/19 21:44:55 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.37 1995/10/07 06:28:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -104,12 +104,12 @@ fd_unused(fdp, fd)
  * Duplicate a file descriptor.
  */
 /* ARGSUSED */
-dup(p, v, retval)
+sys_dup(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct dup_args /* {
+	struct sys_dup_args /* {
 		syscallarg(u_int) fd;
 	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
@@ -128,12 +128,12 @@ dup(p, v, retval)
  * Duplicate a file descriptor to a particular value.
  */
 /* ARGSUSED */
-dup2(p, v, retval)
+sys_dup2(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct dup2_args /* {
+	struct sys_dup2_args /* {
 		syscallarg(u_int) from;
 		syscallarg(u_int) to;
 	} */ *uap = v;
@@ -164,12 +164,12 @@ dup2(p, v, retval)
  * The file control system call.
  */
 /* ARGSUSED */
-fcntl(p, v, retval)
+sys_fcntl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct fcntl_args /* {
+	register struct sys_fcntl_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
@@ -359,12 +359,12 @@ fdrelease(p, fd)
  * Close a file descriptor.
  */
 /* ARGSUSED */
-close(p, v, retval)
+sys_close(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct close_args /* {
+	struct sys_close_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
@@ -379,12 +379,12 @@ close(p, v, retval)
  * Return status information about a file descriptor.
  */
 /* ARGSUSED */
-fstat(p, v, retval)
+sys_fstat(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct fstat_args /* {
+	register struct sys_fstat_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct stat *) sb;
 	} */ *uap = v;
@@ -421,12 +421,12 @@ fstat(p, v, retval)
  * Return pathconf information about a file descriptor.
  */
 /* ARGSUSED */
-fpathconf(p, v, retval)
+sys_fpathconf(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct fpathconf_args /* {
+	register struct sys_fpathconf_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) name;
 	} */ *uap = v;
@@ -747,12 +747,12 @@ closef(fp, p)
  * the entire file (l_whence = SEEK_SET, l_start = 0, l_len = 0).
  */
 /* ARGSUSED */
-flock(p, v, retval)
+sys_flock(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct flock_args /* {
+	register struct sys_flock_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) how;
 	} */ *uap = v;

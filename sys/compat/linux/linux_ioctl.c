@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.7 1995/09/19 22:37:30 thorpej Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.8 1995/10/07 06:27:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -121,7 +121,6 @@ linux_termio_to_bsd_termios(lt, bts)
 		bts->c_cflag = CS8;
 		break;
 	}
-
 	bts->c_cflag |= cvtto_bsd_mask(lt->c_cflag, LINUX_CSTOPB, CSTOPB);
 	bts->c_cflag |= cvtto_bsd_mask(lt->c_cflag, LINUX_CREAD, CREAD);
 	bts->c_cflag |= cvtto_bsd_mask(lt->c_cflag, LINUX_PARENB, PARENB);
@@ -441,12 +440,12 @@ bsd_termios_to_linux_termios(bts, lts)
  * work their and converting back the data afterwards.
  */
 int
-linux_ioctl(p, v, retval)
+linux_sys_ioctl(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct linux_ioctl_args /* {
+	register struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
@@ -459,7 +458,7 @@ linux_ioctl(p, v, retval)
 	struct linux_termio tmplt, *alt;
 	struct linux_termios tmplts, *alts;
 	struct termios tmpbts, *abts;
-	struct ioctl_args ia;
+	struct sys_ioctl_args ia;
 	int error, idat, *idatp;
 
 	fd = SCARG(&ia, fd) = SCARG(uap, fd);
@@ -482,7 +481,7 @@ linux_ioctl(p, v, retval)
 		SCARG(&ia, com) = TIOCGETA;
 		abts = stackgap_alloc(&sg, sizeof (*abts));
 		SCARG(&ia, data) = (caddr_t) abts;
-		if ((error = ioctl(p, &ia, retval)) != 0)
+		if ((error = sys_ioctl(p, &ia, retval)) != 0)
 			return error;
 		if ((error = copyin(abts, &tmpbts, sizeof tmpbts)))
 			return error;
@@ -516,12 +515,12 @@ linux_ioctl(p, v, retval)
 		if ((error = copyout(&tmpbts, abts, sizeof tmpbts)))
 			return error;
 		SCARG(&ia, data) = (caddr_t) abts;
-		return ioctl(p, &ia, retval);
+		return sys_ioctl(p, &ia, retval);
 	case LINUX_TCGETA:
 		SCARG(&ia, com) = TIOCGETA;
 		abts = stackgap_alloc(&sg, sizeof (*abts));
 		SCARG(&ia, data) = (caddr_t) abts;
-		if ((error = ioctl(p, &ia, retval)) != 0)
+		if ((error = sys_ioctl(p, &ia, retval)) != 0)
 			return error;
 		if ((error = copyin(abts, &tmpbts, sizeof tmpbts)))
 			return error;
@@ -555,7 +554,7 @@ linux_ioctl(p, v, retval)
 		if ((error = copyout(&tmpbts, abts, sizeof tmpbts)))
 			return error;
 		SCARG(&ia, data) = (caddr_t) abts;
-		return ioctl(p, &ia, retval);
+		return sys_ioctl(p, &ia, retval);
 	case LINUX_TIOCSETD:
 		if ((error = copyin(data, (caddr_t) &idat, sizeof idat)))
 			return error;
@@ -587,7 +586,7 @@ linux_ioctl(p, v, retval)
 		idatp = (int *) stackgap_alloc(&sg, sizeof (int));
 		SCARG(&ia, com) = TIOCGETD;
 		SCARG(&ia, data) = (caddr_t) idatp;
-		if ((error = ioctl(p, &ia, retval)))
+		if ((error = sys_ioctl(p, &ia, retval)))
 			return error;
 		if ((error = copyin(idatp, (caddr_t) &idat, sizeof (int))))
 			return error;
@@ -653,5 +652,5 @@ linux_ioctl(p, v, retval)
 		return linux_machdepioctl(p, uap, retval);
 	}
 
-	return ioctl(p, &ia, retval);
+	return sys_ioctl(p, &ia, retval);
 }

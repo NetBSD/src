@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.46 1995/07/03 16:58:38 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.47 1995/10/07 06:28:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1527,14 +1527,14 @@ vfs_shutdown()
 #endif
 
 		/* Sync before unmount, in case we hang on something. */
-		sync(&proc0, (void *)0, (int *)0);
+		sys_sync(&proc0, (void *)0, (int *)0);
 
 		/* Unmount file systems. */
 		vfs_unmountall();
 	}
 
 	/* Sync again after unmount, just in case. */
-	sync(&proc0, (void *)0, (int *)0);
+	sys_sync(&proc0, (void *)0, (int *)0);
 
 	/* Wait for sync to finish. */
 	for (iter = 0; iter < 20; iter++) {

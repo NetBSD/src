@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 1995/09/29 13:51:38 chopps Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58 1995/10/07 06:25:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -691,12 +691,13 @@ sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 /* ARGSUSED */
-sigreturn(p, v, retval)
+int
+sys_sigreturn(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sigreturn_args /* {
+	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp, context;

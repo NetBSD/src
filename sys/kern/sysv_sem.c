@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.23 1995/09/19 21:45:19 thorpej Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.24 1995/10/07 06:28:42 mycroft Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -68,12 +68,12 @@ semlock(p)
  */
 
 int
-semconfig(p, v, retval)
+sys_semconfig(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct semconfig_args /* {
+	struct sys_semconfig_args /* {
 		syscallarg(int) flag;
 	} */ *uap = v;
 	int eval = 0;
@@ -272,12 +272,12 @@ semundo_clear(semid, semnum)
 }
 
 int
-__semctl(p, v, retval)
+sys___semctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct __semctl_args /* {
+	register struct sys___semctl_args /* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
@@ -437,12 +437,12 @@ __semctl(p, v, retval)
 }
 
 int
-semget(p, v, retval)
+sys_semget(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct semget_args /* {
+	register struct sys_semget_args /* {
 		syscallarg(key_t) key;
 		syscallarg(int) nsems;
 		syscallarg(int) semflg;
@@ -551,12 +551,12 @@ found:
 }
 
 int
-semop(p, v, retval)
+sys_semop(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct semop_args /* {
+	register struct sys_semop_args /* {
 		syscallarg(int) semid;
 		syscallarg(struct sembuf *) sops;
 		syscallarg(u_int) nsops;

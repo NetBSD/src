@@ -48,12 +48,11 @@ struct ibcs2_socksys_args {
 };
 
 int
-ibcs2_socksys(p, v, retval)
+ibcs2_socksys(p, uap, retval)
 	register struct proc *p;
-	void *v;
-	int *retval;
+	register struct ibcs2_socksys_args *uap;
+	register_t *retval;
 {
-	register struct ibcs2_socksys_args *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	int error;
@@ -72,55 +71,55 @@ ibcs2_socksys(p, v, retval)
 	       realargs[4], realargs[5], realargs[6]));
 	switch (realargs[0]) {
 	case SOCKSYS_ACCEPT:
-		return accept(p, realargs+1, retval);
+		return sys_accept(p, realargs + 1, retval);
 	case SOCKSYS_BIND:
-		return bind(p, realargs+1, retval);
+		return sys_bind(p, realargs + 1, retval);
 	case SOCKSYS_CONNECT:
-		return connect(p, realargs+1, retval);
+		return sys_connect(p, realargs + 1, retval);
 	case SOCKSYS_GETPEERNAME:
-		return getpeername(p, realargs+1, retval);
+		return sys_getpeername(p, realargs + 1, retval);
 	case SOCKSYS_GETSOCKNAME:
-		return getsockname(p, realargs+1, retval);
+		return sys_getsockname(p, realargs + 1, retval);
 	case SOCKSYS_GETSOCKOPT:
-		return getsockopt(p, realargs+1, retval);
+		return sys_getsockopt(p, realargs + 1, retval);
 	case SOCKSYS_LISTEN:
-		return listen(p, realargs+1, retval);
+		return sys_listen(p, realargs + 1, retval);
 	case SOCKSYS_RECV:
 		realargs[5] = realargs[6] = 0;
 		/* FALLTHROUGH */
 	case SOCKSYS_RECVFROM:
-		return recvfrom(p, realargs+1, retval);
+		return sys_recvfrom(p, realargs + 1, retval);
 	case SOCKSYS_SEND:
 		realargs[5] = realargs[6] = 0;
 		/* FALLTHROUGH */
 	case SOCKSYS_SENDTO:
-		return sendto(p, realargs+1, retval);
+		return sys_sendto(p, realargs + 1, retval);
 	case SOCKSYS_SETSOCKOPT:
-		return setsockopt(p, realargs+1, retval);
+		return sys_setsockopt(p, realargs + 1, retval);
 	case SOCKSYS_SHUTDOWN:
-		return shutdown(p, realargs+1, retval);
+		return sys_shutdown(p, realargs + 1, retval);
 	case SOCKSYS_SOCKET:
-		return socket(p, realargs+1, retval);
+		return sys_socket(p, realargs + 1, retval);
 	case SOCKSYS_SELECT:
-		return select(p, realargs+1, retval);
+		return sys_select(p, realargs + 1, retval);
 	case SOCKSYS_GETIPDOMAIN:
-		return compat_09_getdomainname(p, realargs + 1, retval);
+		return compat_09_sys_getdomainname(p, realargs + 1, retval);
 	case SOCKSYS_SETIPDOMAIN:
-		return compat_09_setdomainname(p, realargs + 1, retval);
+		return compat_09_sys_setdomainname(p, realargs + 1, retval);
 	case SOCKSYS_ADJTIME:
-		return adjtime(p, realargs + 1, retval);
+		return sys_adjtime(p, realargs + 1, retval);
 	case SOCKSYS_SETREUID:
-		return compat_43_setreuid(p, realargs + 1, retval);
+		return compat_43_sys_setreuid(p, realargs + 1, retval);
 	case SOCKSYS_SETREGID:
-		return compat_43_setregid(p, realargs + 1, retval);
+		return compat_43_sys_setregid(p, realargs + 1, retval);
 	case SOCKSYS_GETTIME:
-		return gettimeofday(p, realargs + 1, retval);
+		return sys_gettimeofday(p, realargs + 1, retval);
 	case SOCKSYS_SETTIME:
-		return settimeofday(p, realargs + 1, retval);
+		return sys_settimeofday(p, realargs + 1, retval);
 	case SOCKSYS_GETITIMER:
-		return getitimer(p, realargs + 1, retval);
+		return sys_getitimer(p, realargs + 1, retval);
 	case SOCKSYS_SETITIMER:
-		return setitimer(p, realargs + 1, retval);
+		return sys_setitimer(p, realargs + 1, retval);
 
 	default:
 		printf("socksys unknown %08x %08x %08x %08x %08x %08x %08x\n",

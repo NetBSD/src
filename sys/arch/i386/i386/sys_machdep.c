@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.19 1995/09/19 22:56:44 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.20 1995/10/07 06:25:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -310,12 +310,12 @@ i386_set_ldt(p, args, retval)
 #endif	/* USER_LDT */
 
 int
-sysarch(p, v, retval)
+sys_sysarch(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sysarch_args /* {
+	struct sys_sysarch_args /* {
 		syscallarg(int) op;
 		syscallarg(char *) parms;
 	} */ *uap = v;
