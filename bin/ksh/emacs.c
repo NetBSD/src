@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.26 2004/10/28 20:15:37 dsl Exp $	*/
+/*	$NetBSD: emacs.c,v 1.27 2005/02/11 06:21:21 simonb Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -10,7 +10,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: emacs.c,v 1.26 2004/10/28 20:15:37 dsl Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.27 2005/02/11 06:21:21 simonb Exp $");
 #endif
 
 
@@ -1259,7 +1259,7 @@ x_yank(c)
 		killtp = KILLSIZE;
 	else
 		killtp = killsp;
-	killtp --;
+	killtp--;
 	if (killstack[killtp] == 0)  {
 		x_e_puts("\nnothing to yank");
 		x_redraw(-1);
