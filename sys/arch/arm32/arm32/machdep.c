@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 1998/06/02 20:41:49 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 1998/06/02 21:57:58 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -223,32 +223,6 @@ bootsync(void)
 
 	vfs_shutdown();
 }
-
-/*
- * Estimated loop for n microseconds
- */
-
-/* Need to re-write this to use the timers */
-
-/* One day soon I will actually do this */
-
-int delaycount = 50;
-
-void
-delay(n)
-	u_int n;
-{
-	u_int i;
-
-	if (n == 0) return;
-	while (--n > 0) {
-		if (cputype == ID_SA110)	/* XXX - Seriously gross hack */
-			for (i = delaycount; --i;);
-		else
-			for (i = 8; --i;);
-	}
-}
-
 
 /*
  * A few functions that are used to help construct the page tables
