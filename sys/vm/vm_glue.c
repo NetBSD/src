@@ -95,11 +95,9 @@ kernacc(addr, len, rw)
 	 * or worse, inconsistencies at the pmap level.  We only worry
 	 * about the buffer cache for now.
 	 */
-#ifdef notyet
 	if (!readbuffers && rv && (eaddr > (vm_offset_t)buffers &&
 		   saddr < (vm_offset_t)buffers + MAXBSIZE * nbuf))
 		rv = FALSE;
-#endif
 	return(rv == TRUE);
 }
 
