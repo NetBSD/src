@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2000/11/22 00:28:45 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.39 2000/11/22 00:30:11 bjh21 Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	compat_freebsd.8 compat_ibcs2.8 compat_linux.8 compat_osf1.8 \
@@ -10,7 +10,7 @@ MLINKS+=compat_svr4.8 compat_xenix.8
 MLINKS+=yp.8 nis.8
 MLINKS+=rc.8 rc.d.8
 MLINKS+=rc.8 rc.shutdown.8
-SUBDIR=	man8.alpha man8.amiga man8.arc man8.arm26 man8.arm32 man8.atari
+SUBDIR=	man8.alpha man8.amiga man8.arc man8.arm26 man8.arm32 man8.atari \
 	man8.bebox man8.hp300 man8.hpcmips man8.i386 man8.mac68k man8.mvme68k \
 	man8.next68k man8.pc532 man8.pmax man8.sparc man8.sparc64 \
 	man8.sun3 man8.vax man8.x68k
