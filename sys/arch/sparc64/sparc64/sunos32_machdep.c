@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.2 2001/02/05 13:13:47 mrg Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.3 2001/06/05 14:43:04 mrg Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -29,7 +29,9 @@
  * SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
