@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_socket.c	7.23 (Berkeley) 4/20/91
- *	$Id: nfs_socket.c,v 1.6 1993/09/03 23:57:29 jtc Exp $
+ *	$Id: nfs_socket.c,v 1.7 1993/09/06 21:25:20 mycroft Exp $
  */
 
 /*
@@ -1105,6 +1105,7 @@ nfs_rephead(siz, retxid, err, mrq, mbp, bposp)
  * To avoid retransmission attempts on STREAM sockets (in the future) make
  * sure to set the r_retry field to 0 (implies nm_retry == 0).
  */
+void
 nfs_timer()
 {
 	register struct nfsreq *rep;
