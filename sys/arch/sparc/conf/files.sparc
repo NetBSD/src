@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.126 2004/03/13 17:31:34 bjh21 Exp $
+#	$NetBSD: files.sparc,v 1.127 2004/03/17 18:10:51 matt Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -181,7 +181,7 @@ file	dev/sun/kbdsun.c		kbd_zs | kbd_tty # kbd middle layer
 
 # PC/AT keyboard at 8042 (pckbc) for Mr.Coffee
 attach kbd at pckbport with kbd_pckbport
-file	arch/sparc/dev/kbd_pckbport.c	kbd_pckbort	# kbd mid/lower layers
+file	arch/sparc/dev/kbd_pckbport.c	kbd_pckbport	# kbd mid/lower layers
 
 
 # sun (mouse systems) mouse at a serial port
