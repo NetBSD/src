@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.32 1995/03/08 00:52:59 cgd Exp $	*/
+/*	$NetBSD: systm.h,v 1.33 1995/03/08 02:48:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -133,11 +133,11 @@ void	bcopy __P((const void *from, void *to, u_int len));
 void	ovbcopy __P((const void *from, void *to, u_int len));
 void	bzero __P((void *buf, u_int len));
 
-int	copystr __P((void *kfaddr, void *kdaddr, u_int len, u_long *done));
-int	copyinstr __P((void *udaddr, void *kaddr, u_int len, u_long *done));
-int	copyoutstr __P((void *kaddr, void *udaddr, u_int len, u_long *done));
-int	copyin __P((void *udaddr, void *kaddr, u_int len));
-int	copyout __P((void *kaddr, void *udaddr, u_int len));
+int	copystr __P((void *kfaddr, void *kdaddr, size_t len, size_t *done));
+int	copyinstr __P((void *udaddr, void *kaddr, size_t len, size_t *done));
+int	copyoutstr __P((void *kaddr, void *udaddr, size_t len, size_t *done));
+int	copyin __P((void *udaddr, void *kaddr, size_t len));
+int	copyout __P((void *kaddr, void *udaddr, size_t len));
 
 int	fubyte __P((void *base));
 #ifdef notdef
