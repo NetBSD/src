@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,35 +32,46 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)main.c	5.16 (Berkeley) 3/27/91";*/
-static char rcsid[] = "$Id: main.c,v 1.7 1994/04/28 22:12:30 pk Exp $";
+/*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
+static char rcsid[] = "$Id: main.c,v 1.8 1994/08/17 20:10:37 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/termios.h>
 #include <sys/ioctl.h>
+#include <sys/resource.h>
 #include <sys/utsname.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <time.h>
 #include <ctype.h>
+#include <fcntl.h>
 #include <setjmp.h>
-#include <syslog.h>
-#include <unistd.h>
-#include <ctype.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
+#include <time.h>
+#include <unistd.h>
+
 #include "gettytab.h"
 #include "pathnames.h"
+#include "extern.h"
 
-struct termios tmode;
+/*
+ * Set the amount of running time that getty should accumulate
+ * before deciding that something is wrong and exit.
+ */
+#define GETTY_TIMEOUT	60 /* seconds */
+
+struct termios tmode, omode;
 
 int crmod, digit, lower, upper;
 
@@ -124,14 +135,36 @@ interrupt()
 	longjmp(intrupt, 1);
 }
 
+/*
+ * Action to take when getty is running too long.
+ */
+void
+timeoverrun(signo)
+	int signo;
+{
+
+	syslog(LOG_ERR, "getty exiting due to excessive running time\n");
+	exit(1);
+}
+
+static int	getname __P((void));
+static void	oflush __P((void));
+static void	prompt __P((void));
+static void	putchr __P((int));
+static void	putf __P((char *));
+static void	putpad __P((char *));
+static void	puts __P((char *));
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	extern	char **environ;
+	extern char **environ;
 	char *tname;
 	long allflags;
 	int repcnt = 0;
+	struct rlimit limit;
 
 	signal(SIGINT, SIG_IGN);
 /*
@@ -142,6 +175,15 @@ main(argc, argv)
 	if (hostname[0] == '\0')
 		strcpy(hostname, "Amnesiac");
 	uname(&kerninfo);
+
+	/*
+	 * Limit running time to deal with broken or dead lines.
+	 */
+	(void)signal(SIGXCPU, timeoverrun);
+	limit.rlim_max = RLIM_INFINITY;
+	limit.rlim_cur = GETTY_TIMEOUT;
+	(void)setrlimit(RLIMIT_CPU, &limit);
+
 	/*
 	 * The following is a work around for vhangup interactions
 	 * which cause great problems getting window systems started.
@@ -181,6 +223,7 @@ main(argc, argv)
 		syslog(LOG_ERR, "%s: %m", ttyn);
 		exit(1);
 	}
+	omode = tmode;
 
 	gettable("default", defent);
 	gendefaults();
@@ -188,12 +231,13 @@ main(argc, argv)
 	if (argc > 1)
 		tname = argv[1];
 	for (;;) {
-		int off = 0;
+		int off;
 
 		gettable(tname, tabent);
 		if (OPset || EPset || APset)
 			APset++, OPset++, EPset++;
 		setdefaults();
+		off = 0;
 		ioctl(0, TIOCFLUSH, &off);	/* clear out the crap */
 		ioctl(0, FIONBIO, &off);	/* turn off non-blocking mode */
 		ioctl(0, FIOASYNC, &off);	/* ditto for async mode */
@@ -267,6 +311,10 @@ main(argc, argv)
 			for (i = 0; environ[i] != (char *)0; i++)
 				env[i] = environ[i];
 			makeenv(&env[i]);
+
+			limit.rlim_max = RLIM_INFINITY;
+			limit.rlim_cur = RLIM_INFINITY;
+			(void)setrlimit(RLIMIT_CPU, &limit);
 			execle(LO, "login", "-p", name, (char *) 0, env);
 			syslog(LOG_ERR, "%s: %m", LO);
 			exit(1);
@@ -279,6 +327,7 @@ main(argc, argv)
 	}
 }
 
+static int
 getname()
 {
 	register int c;
@@ -365,6 +414,7 @@ short	tmspc10[] = {
 	0, 2000, 1333, 909, 743, 666, 500, 333, 166, 83, 55, 41, 20, 10, 5, 15
 };
 
+static void
 putpad(s)
 	register char *s;
 {
@@ -406,6 +456,7 @@ putpad(s)
 		putchr(*PC);
 }
 
+static void
 puts(s)
 	register char *s;
 {
@@ -416,7 +467,9 @@ puts(s)
 char	outbuf[OBUFSIZ];
 int	obufcnt = 0;
 
+static void
 putchr(cc)
+	int cc;
 {
 	char c;
 
@@ -434,6 +487,7 @@ putchr(cc)
 		write(STDOUT_FILENO, &c, 1);
 }
 
+static void
 oflush()
 {
 	if (obufcnt)
@@ -441,6 +495,7 @@ oflush()
 	obufcnt = 0;
 }
 
+static void
 prompt()
 {
 
@@ -449,6 +504,7 @@ prompt()
 		putchr('\n');
 }
 
+static void
 putf(cp)
 	register char *cp;
 {
@@ -464,7 +520,7 @@ putf(cp)
 		switch (*++cp) {
 
 		case 't':
-			slash = rindex(ttyn, '/');
+			slash = strrchr(ttyn, '/');
 			if (slash == (char *) 0)
 				puts(ttyn);
 			else

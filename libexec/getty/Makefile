@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.12 (Berkeley) 1/21/91
-#	$Id: Makefile,v 1.4 1994/03/09 04:59:55 cgd Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
+#	$Id: Makefile,v 1.5 1994/08/17 20:10:27 pk Exp $
 
 PROG=	getty
 SRCS=	main.c init.c subr.c
