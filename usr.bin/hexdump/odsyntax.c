@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.20 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.21 2004/10/30 17:43:02 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: odsyntax.c,v 1.20 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: odsyntax.c,v 1.21 2004/10/30 17:43:02 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -226,7 +226,7 @@ posixtypes(type_string)
 			nbytes = 1;
 			break;
 		case 'f':
-			if (isupper(*type_string)) {
+			if (isupper((unsigned char)*type_string)) {
 				switch(*type_string) {
 				case 'F':
 					nbytes = sizeof(float);
@@ -243,7 +243,7 @@ posixtypes(type_string)
 					usage();
 				}
 				type_string++;
-			} else if (isdigit(*type_string)) {
+			} else if (isdigit((unsigned char)*type_string)) {
 				nbytes = strtol(type_string, &tmp, 10);
 				type_string = tmp;
 			} else
@@ -253,7 +253,7 @@ posixtypes(type_string)
 		case 'o':
 		case 'u':
 		case 'x':
-			if (isupper(*type_string)) {
+			if (isupper((unsigned char)*type_string)) {
 				switch(*type_string) {
 				case 'C':
 					nbytes = sizeof(char);
@@ -273,7 +273,7 @@ posixtypes(type_string)
 					usage();
 				}
 				type_string++;
-			} else if (isdigit(*type_string)) {
+			} else if (isdigit((unsigned char)*type_string)) {
 				nbytes = strtol(type_string, &tmp, 10);
 				type_string = tmp;
 			} else
