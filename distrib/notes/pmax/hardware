@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.9 1999/10/06 22:37:29 ad Exp $	
+.\"	$NetBSD: hardware,v 1.10 2000/03/13 22:37:13 soren Exp $	
 .
 NetBSD/pmax \*V runs on the following classes of machines:
 .Bl -bullet -compact
@@ -19,7 +19,7 @@ DECstation 5000/240 and DECsystem 5900, also known as
 .Em 3MAXPLUS
 .It
 DECstation 5000/50, 5000/150, 5000/260 (and DECsystem 5900-260) \- R4000
-and R4400 variants of the the
+and R4400 variants of the
 .Em MAXINE, 3MIN No and Em 3MAXPLUS
 .El
 .Pp

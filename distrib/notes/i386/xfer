@@ -1,4 +1,4 @@
-.\" $NetBSD: xfer,v 1.16 1999/02/01 16:16:09 he Exp $	
+.\" $NetBSD: xfer,v 1.17 2000/03/13 22:37:13 soren Exp $	
 .\"(
 .Pp
 Installation is supported from several media types, including:
@@ -137,7 +137,7 @@ server and resetting its mount daemon (mountd).
 (Both of these actions will probably require superuser
 privileges on the server.)
 .It
-You need to know the the numeric IP address of the
+You need to know the numeric IP address of the
 .Tn NFS
 server,
 and, if the server is not on a network directly connected to
