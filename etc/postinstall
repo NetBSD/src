@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.82 2004/08/30 02:46:07 augustss Exp $
+# $NetBSD: postinstall,v 1.83 2004/08/30 04:57:39 lukem Exp $
 #
 # Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -252,7 +252,7 @@ rcconf_is_set()
 		for f in \
 		    ${DEST_DIR}/etc/rc.conf \
 		    ${DEST_DIR}/etc/rc.conf.d/${_rcis_name}; do
-			[ -f "${f}" ] && . "${f}";
+			[ -f "${f}" ] && . "${f}"
 		done
 		eval echo -n \"\${${_rcis_var}}\" 1>&3
 		if eval "[ -n \"\${${_rcis_var}}\" \
@@ -419,6 +419,40 @@ function checklib(results, line, regex) {
 #}'
 	
 	)
+}
+
+# modify_file op srcfile scratchfile awkprog
+#	apply awkprog to srcfile sending output to scratchfile, and
+#	if appropriate replace srcfile with scratchfile.
+#
+modify_file()
+{
+	[ $# -eq 4 ] || err 2 "USAGE: modify_file op file scratch awkprog"
+
+	_mfop=$1
+	_mffile=$2
+	_mfscratch=$3
+	_mfprog=$4
+	_mffailed=0
+
+	awk "${_mfprog}" < "${_mffile}" > "${_mfscratch}"
+	if ! cmp -s "${_mffile}" "${_mfscratch}"; then
+		diff "${_mffile}" "${_mfscratch}" > "${_mfscratch}.diffs"
+		if [ "${_mfop}" = "check" ]; then
+			msg "${_mffile} needs the following changes:"
+			_mffailed=1
+		elif ! rm -f "${_mffile}" ||
+		     ! cp -f "${_mfscratch}" "${_mffile}"; then
+			msg "${_mffile} changes not applied:"
+			_mffailed=1
+		else
+			msg "${_mffile} changes applied:"
+		fi
+		while read _line; do
+			msg "	${_line}"
+		done < "${_mfscratch}.diffs"
+	fi
+	return ${_mffailed}
 }
 
 
@@ -626,34 +660,18 @@ do_ssh()
 	    ${DEST_DIR}/etc/sshd.conf ; do
 		if [ -f "${f}" ]; then
 			sshdconf=${f}
-			break;
+			break
 		fi
 	done
 	if [ -n "${sshdconf}" ]; then
-		awk '
+		modify_file ${op} "${sshdconf}" "${SCRATCHDIR}/sshdconf" '
 			$1 ~ /^[Hh][Oo][Ss][Tt][Kk][Ee][Yy]$/ &&
 			$2 ~ /^\/etc\/+ssh_host(_[dr]sa)?_key$/ {
 				sub(/\/etc\/+/, "/etc/ssh/");
 			}
 			{ print }
-		' < ${sshdconf} > ${SCRATCHDIR}/sshd_config
-		if ! cmp -s ${sshdconf} ${SCRATCHDIR}/sshd_config; then
-			diff ${sshdconf} ${SCRATCHDIR}/sshd_config > \
-				${SCRATCHDIR}/sshd_config.diffs
-			if [ "${op}" = "check" ]; then
-				msg "${sshdconf} needs the following changes:"
-				failed=1
-			elif ! rm -f ${sshdconf} ||
-			     ! cp -f ${SCRATCHDIR}/sshd_config ${sshdconf}; then
-				msg "${sshdconf} changes not applied:"
-				failed=1
-			else
-				msg "${sshdconf} changes applied:"
-			fi
-			while read _line; do
-				msg "	${_line}"
-			done < ${SCRATCHDIR}/sshd_config.diffs
-		fi
+		'
+		failed=$(( ${failed} + $? ))
 	fi
 
 	if ! find_file_in_dirlist moduli "moduli" \
@@ -707,12 +725,21 @@ do_x11()
 		ld=/etc/X11/${d}
 		td=${DEST_DIR}${ld}
 		if [ -h ${sd} ]; then
-			continue;
+			continue
 		elif [ -d ${sd} ]; then
-			msg "Migrate ${sd} to ${td}${_notfixed}"
+			tdfiles=$(find ${td} \! -type d)
+			if [ -n "${tdfiles}" ]; then
+				msg "${sd} exists yet ${td} already" \
+				    "contains files${_notfixed}"
+			else
+				msg "Migrate ${sd} to ${td}${_notfixed}"
+			fi
 			failed=1
 		elif [ -e ${sd} ]; then
 			msg "Unexpected file ${sd}${_notfixed}"
+			continue
+		else
+			continue
 		fi
 	done
 
@@ -1002,40 +1029,15 @@ additem hosts "/etc/hosts being up to date"
 do_hosts()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_hosts  fix|check"
-	op=$1
 
-	failed=0
-	h=${DEST_DIR}/etc/hosts
-	if ! grep ^127 $h | sed 's/^[^ 	]*//' | grep '\.' > /dev/null; then
-		msg "/etc/hosts entry for localhost (ipv4) missing dotted alias"
-
-		if [ "${op}" = "fix" ]; then
-			if ! sed 's/^\(127.*\)$/\1 localhost./' < $h \
-			    > ${SCRATCHDIR}/hosts ||
-			    ! mv ${SCRATCHDIR}/hosts $h; then
-				msg "Can't update /etc/hosts"
-				failed=1
-			fi
-		else
-			failed=1
-		fi
-	fi
-	if ! grep ^::1 $h | sed 's/^[^ 	]*//' | grep '\.' > /dev/null; then
-		msg "/etc/hosts entry for localhost (ipv6) missing dotted alias"
-
-		if [ "${op}" = "fix" ]; then
-			if ! sed 's/^\(::1.*\)$/\1 localhost./' < $h \
-			    > ${SCRATCHDIR}/hosts ||
-			    ! mv ${SCRATCHDIR}/hosts $h; then
-				msg "Can't update /etc/hosts"
-				failed=1
-			fi
-		else
-			failed=1
-		fi
-	fi
-
-	return ${failed}
+	modify_file "$1" ${DEST_DIR}/etc/hosts ${SCRATCHDIR}/hosts '
+		/^(127\.0\.0\.1|::1)[ 	]+[^\.]*$/ {
+			print $0, "localhost."
+			next
+		}
+		{ print }
+	'
+	return $?
 }
 
 
