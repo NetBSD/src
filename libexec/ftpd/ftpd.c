@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.59 1998/09/07 08:15:25 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.60 1998/09/07 08:17:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.59 1998/09/07 08:15:25 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.60 1998/09/07 08:17:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.59 1998/09/07 08:15:25 lukem Exp $");
 #define FALSE	0
 #endif
 
-const char version[] = "Version: 7.03";
+const char version[] = "Version: 7.1.0";
 
 struct	sockaddr_in ctrl_addr;
 struct	sockaddr_in data_source;
