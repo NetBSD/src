@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/11/08 07:30:00 tron Exp $
+#	$NetBSD: Makefile,v 1.13 2001/11/19 05:31:00 jmc Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -84,3 +84,4 @@ clean cleandir distclean:
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
 .include <bsd.sys.mk>
+.include <bsd.prog.mk>
