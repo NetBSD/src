@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.176 1999/11/12 12:04:38 is Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.177 1999/11/17 00:09:48 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.169 1999/11/12 12:03:32 is Exp 
+ *	NetBSD: pcidevs,v 1.170 1999/11/17 00:09:17 augustss Exp 
  */
 
 /*
@@ -833,6 +833,7 @@
 
 /* Creative Labs products */
 #define	PCI_PRODUCT_CREATIVELABS_SBLIVE	0x0002		/* SBLive! EMU 10000 */
+#define	PCI_PRODUCT_CREATIVELABS_SBJOY	0x7002		/* PCI Gameport Joystick */
 
 /* Cyclades products */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMY_1	0x0100		/* Cyclom-Y below 1M */
