@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.47.4.8 2001/06/07 16:17:50 he Exp $
+.\"	$NetBSD: sysctl.8,v 1.47.4.9 2003/03/15 21:17:46 he Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -328,6 +328,7 @@ privilege can change the value.
 .It user.posix2_version	integer	no
 .It user.re_dup_max	integer	no
 .It vfs.generic.usermount	integer	yes
+.It vfs.nfs.iothreads	integer	yes
 .It vm.loadavg	struct	no
 .El
 .Sh EXAMPLES
