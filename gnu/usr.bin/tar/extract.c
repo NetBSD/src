@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: extract.c,v 1.7 1997/02/07 03:58:45 mikel Exp $";
+static char rcsid[] = "$NetBSD: extract.c,v 1.8 1997/10/08 22:55:31 enami Exp $";
 #endif /* not lint */
 
 /*
@@ -504,8 +504,8 @@ extract_archive ()
 		  */
       if (we_are_root || f_do_chown)
 	{
-	  if (chown (skipcrud + current_file_name,
-		     hstat.st_uid, hstat.st_gid) < 0)
+	  if (lchown (skipcrud + current_file_name,
+		      hstat.st_uid, hstat.st_gid) < 0)
 	    {
 	      msg_perror ("cannot chown file %s to uid %d gid %d",
 			  skipcrud + current_file_name,
@@ -522,6 +522,7 @@ extract_archive ()
        */
       if (!f_modified)
 	{
+#ifndef __NetBSD__
 	  /* fixme if f_gnudump should set ctime too, but how? */
 	  if (f_gnudump)
 	    acc_upd_times.actime = hstat.st_atime;
@@ -530,6 +531,19 @@ extract_archive ()
 	  acc_upd_times.modtime = hstat.st_mtime;	/* Mod'd */
 	  if (utime (skipcrud + current_file_name,
 		     &acc_upd_times) < 0)
+#else
+	  struct timeval tv[2];
+
+	  /* fixme if f_gnudump should set ctime too, but how? */
+	  if (f_gnudump)
+	    tv[0].tv_sec = hstat.st_atime;
+	  else
+	    tv[0].tv_sec = now;	/* Accessed now */
+	  tv[0].tv_usec = 0;
+	  tv[1].tv_sec = hstat.st_mtime;	/* Mod'd */
+	  tv[1].tv_usec = 0;
+	  if (lutimes (skipcrud + current_file_name, tv) < 0)
+#endif
 	    {
 	      msg_perror ("couldn't change access and modification times of %s", skipcrud + current_file_name);
 	    }
@@ -554,8 +568,8 @@ extract_archive ()
       if ((!f_keep)
 	  || (hstat.st_mode & (S_ISUID | S_ISGID | S_ISVTX)))
 	{
-	  if (chmod (skipcrud + current_file_name,
-		     notumask & (int) hstat.st_mode) < 0)
+	  if (lchmod (skipcrud + current_file_name,
+		      notumask & (int) hstat.st_mode) < 0)
 	    {
 	      msg_perror ("cannot change mode of file %s to 0%o",
 			  skipcrud + current_file_name,
@@ -611,7 +625,7 @@ extract_archive ()
 		       skipcrud + current_file_name);
       /* FIXME, don't worry uid, gid, etc... */
       if (check == 0)
-	break;
+	goto set_filestat;
       if (make_dirs (current_file_name + skipcrud))
 	goto again_symlink;
       msg_perror ("Could not create symlink to %s",
