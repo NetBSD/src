@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.30 1998/08/15 03:02:46 mycroft Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.31 1998/12/21 20:56:06 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -592,7 +592,7 @@ pci_conf_print_type0(pc, tag, regs)
 
 	printf("    Cardbus CIS Pointer: 0x%08x\n", regs[o2i(0x28)]);
 
-	rval = regs[o2i(0x2c)];
+	rval = regs[o2i(PCI_SUBSYS_ID_REG)];
 	printf("    Subsystem vendor ID: 0x%04x\n", PCI_VENDOR(rval));
 	printf("    Subsystem ID: 0x%04x\n", PCI_PRODUCT(rval));
 
