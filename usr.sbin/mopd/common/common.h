@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.4 1998/02/07 00:03:19 cgd Exp $	*/
+/*	$NetBSD: common.h,v 1.5 2002/02/18 22:00:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: common.h,v 1.4 1998/02/07 00:03:19 cgd Exp $
+ *	$NetBSD: common.h,v 1.5 2002/02/18 22:00:36 thorpej Exp $
  *
  */
 
@@ -71,6 +71,12 @@ struct if_info {
 #define DL_STATUS_SENT_MLD	 2
 #define DL_STATUS_SENT_PLT	 3
 
+typedef enum {
+	IMAGE_TYPE_MOP,			/* MOP image */
+	IMAGE_TYPE_AOUT,		/* a.out image */
+	IMAGE_TYPE_ELF32		/* Elf32 image */
+} mopd_imagetype;
+
 struct dllist {
 	u_char		status;		/* Status byte			*/
 	struct if_info *ii;		/* interface pointer		*/
@@ -83,7 +89,24 @@ struct dllist {
 	u_int32_t	xferaddr;	/* Transfer Address		*/
 	u_int32_t	nloadaddr;	/* Next Load Address		*/
 	off_t		lseek;		/* Seek before last read	*/
-	int		aout;		/* Is it an a.out file		*/
+	mopd_imagetype	image_type;	/* what type of image is it?	*/
+
+	/* For Elf32 files */
+	int		e_nsec;		/* number of program sections	*/
+#define	SEC_MAX	4
+	struct {
+		off_t s_foff;		/* file offset of section	*/
+		u_int32_t s_vaddr;	/* virtual address of section	*/
+		u_int32_t s_fsize;	/* file size of section		*/
+		u_int32_t s_msize;	/* memory size of section	*/
+		u_int32_t s_pad;	/* padding until next section	*/
+		u_int32_t s_loff;	/* logical offset into image	*/
+	} e_sections[SEC_MAX];		/* program sections		*/
+	u_int32_t	e_curpos;	/* current logical position	*/
+	int		e_cursec;	/* current section */
+
+	/* For a.out files */
+	int		a_mid;		/* Machine ID			*/
 	u_int32_t	a_text;		/* Size of text segment		*/
 	u_int32_t	a_text_fill;	/* Size of text segment fill	*/
 	u_int32_t	a_data;		/* Size of data segment		*/
