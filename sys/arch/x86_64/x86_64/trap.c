@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3 2002/02/14 07:08:20 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.4 2002/05/26 00:23:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -356,7 +356,7 @@ copyfault:
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (type == T_PAGEFLT && va >= KERNBASE)
+		if (type == T_PAGEFLT && va >= VM_MIN_KERNEL_ADDRESS)
 			map = kernel_map;
 		else
 			map = &vm->vm_map;

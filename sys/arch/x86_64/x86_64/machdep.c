@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2002/03/26 15:02:42 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2002/05/26 00:23:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
-void	init_x86_64 __P((paddr_t));
+void	init_x86_64 __P((vaddr_t));
 
 /*
  * Machine-dependent startup code
@@ -1130,7 +1130,7 @@ init_x86_64(first_avail)
 	 * Call pmap initialization to make new kernel address space.
 	 * We must do this before loading pages into the VM system.
 	 */
-	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
+	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
 
 	/*
 	 * Check to see if we have a memory map from the BIOS (passed
@@ -1444,6 +1444,8 @@ init_x86_64(first_avail)
 			printf("WARNING: %ld bytes not available for msgbuf "
 			    "in last cluster (%ld used)\n", reqsz, sz);
 	}
+
+	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
