@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc.c,v 1.2 1997/08/12 16:34:11 gwr Exp $	*/
+/*	$NetBSD: kvm_powerpc.c,v 1.3 1997/09/19 04:00:23 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -36,6 +36,8 @@
  */
 
 #include <sys/param.h>
+
+#include <vm/vm.h>
 
 #include <db.h>
 #include <limits.h>
