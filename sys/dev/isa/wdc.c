@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.6.2.1 1997/10/27 20:02:03 mellon Exp $ */
+/*	$NetBSD: wdc.c,v 1.6.2.2 1997/11/06 22:18:32 mellon Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -33,9 +33,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#undef ATAPI_DEBUG_WDC
-#define WDDEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +124,7 @@ int		wdc_atapi_send_command_packet __P((struct scsipi_xfer *sc_xfer));
 #define MAX_SIZE MAXPHYS /* XXX */
 #endif
 
-#ifdef ATAPI_DEBUG
+#ifdef ATAPI_DEBUG2
 static int wdc_nxfer;
 #endif
 
@@ -240,7 +237,7 @@ wdcattach(parent, self, aux)
 	wdc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, wdcintr, wdc);
 
-#ifdef ATAPI_DEBUG
+#ifdef ATAPI_DEBUG2
 	wdc_nxfer = 0;
 #endif
 
@@ -269,12 +266,6 @@ wdcattach(parent, self, aux)
 	for (drive = 0; drive < 2; drive++) {
 		/* if a disk is already present, skip */
 		if ((wdc->sc_drives_mask & (1 << drive)) != 0) {
-			continue;
-		}
-		/* test for ATAPI signature on this drive */
-		outb(wdc->sc_iobase+wd_sdh, WDSD_IBM | (drive << 4));
-		if (inb(wdc->sc_iobase+ wd_cyl_lo) == 0x14 &&
-			inb(wdc->sc_iobase + wd_cyl_hi) == 0xeb) {
 			continue;
 		}
 		/* controller active while autoconf */
@@ -313,6 +304,12 @@ wdcattach(parent, self, aux)
 		outb(wdc->sc_iobase+wd_sdh, WDSD_IBM | 0x10); /* slave */
 	else
 		outb(wdc->sc_iobase+wd_sdh, WDSD_IBM); /* master */
+	/*
+	 * Reset controller. The probe, with some combinations of ATA/ATAPI
+	 * device keep it in a mostly working, but strange state (with busy
+	 * led on)
+	 */
+	wdcreset(wdc, VERBOSE);
 }
 
 /*
@@ -346,7 +343,7 @@ wdcstart(wdc)
 		 * This is a kluge.  See comments in wd_get_parms().
 		 */
 		if ((wdc->sc_flags & WDCF_WANTED) != 0) {
-#ifdef ATAPI_DEBUG_WDC
+#ifdef ATAPI_DEBUG2
 			printf("WDCF_WANTED\n");
 #endif
 			wdc->sc_flags &= ~WDCF_WANTED;
@@ -625,6 +622,7 @@ wdc_ata_intr(wdc,xfer)
 		return 0;
 	}
 
+	wdc->sc_flags &= ~WDCF_IRQ_WAIT;
 	untimeout(wdctimeout, wdc);
 
 	/* Is it not a transfer, but a control operation? */
@@ -973,7 +971,6 @@ wdcintr(arg)
 
 	WDDEBUG_PRINT(("wdcintr\n"));
 
-	wdc->sc_flags &= ~WDCF_IRQ_WAIT;
 	xfer = wdc->sc_xfer.tqh_first;
 #if NATAPIBUS > 0 && NWD > 0
 	if (xfer->c_flags & C_ATAPI) {
@@ -1049,8 +1046,9 @@ wdcunwedge(wdc)
 
 	/* Schedule recalibrate for all drives on this controller. */
 	for (unit = 0; unit < 2; unit++) {
-		if (!wdc->d_link[unit]) continue;
-		if (wdc->d_link[unit]->sc_state > RECAL)
+		if (!wdc->d_link[unit])
+			wdccommandshort(wdc, unit, ATAPI_SOFT_RESET);
+		else if (wdc->d_link[unit]->sc_state > RECAL)
 			wdc->d_link[unit]->sc_state = RECAL;
 	}
 
@@ -1124,14 +1122,19 @@ wdctimeout(arg)
 	void *arg;
 {
 	struct wdc_softc *wdc = (struct wdc_softc *)arg;
+	struct wdc_xfer *xfer = wdc->sc_xfer.tqh_first;
 	int s;
 
 	WDDEBUG_PRINT(("wdctimeout\n"));
 
 	s = splbio();
 	if ((wdc->sc_flags & WDCF_IRQ_WAIT) != 0) {
-		wdc->sc_flags &= ~WDCF_IRQ_WAIT;
 		wdcerror(wdc, "lost interrupt");
+		printf("\ttype: %s\n", (xfer->c_flags & C_ATAPI) ? "atapi":"ata");
+		printf("\tc_bcount: %d\n", xfer->c_bcount);
+		printf("\tc_skip: %d\n", xfer->c_skip);
+		wdcintr(wdc);
+		wdc->sc_flags &= ~WDCF_IRQ_WAIT;
 		wdcunwedge(wdc);
 	} else
 		wdcerror(wdc, "missing untimeout");
@@ -1261,7 +1264,7 @@ wdc_get_xfer(flags)
 #endif
 	} else {
 		splx(s);
-#ifdef ATAPI_DEBUG
+#ifdef ATAPI_DEBUG2
 		printf("wdc:making xfer %d\n",wdc_nxfer);
 #endif
 		xfer = malloc(sizeof(*xfer), M_DEVBUF,
@@ -1272,7 +1275,7 @@ wdc_get_xfer(flags)
 #ifdef DIAGNOSTIC
 		xfer->c_flags &= ~C_INUSE;
 #endif
-#ifdef ATAPI_DEBUG
+#ifdef ATAPI_DEBUG2
 		wdc_nxfer++;
 #endif
 	}
@@ -1386,7 +1389,6 @@ wdc_atapi_start(wdc, xfer)
 		0, 0, 0) != 0) {
 		printf("wdc_atapi_start: can't send atapi paket command\n");
 		sc_xfer->error = XS_DRIVER_STUFFUP;
-		wdc->sc_flags |= WDCF_IRQ_WAIT;
 		wdc_atapi_done(wdc, xfer);
 		return;
 	}
@@ -1532,7 +1534,7 @@ wdc_atapi_send_command_packet(sc_xfer)
 	struct wdc_softc *wdc = (void*)sc_link->adapter_softc;
 	struct wdc_xfer *xfer;
 	int flags = sc_xfer->flags;
-	
+
 	if (flags & SCSI_POLL) {   /* should use the queue and wdc_atapi_start */
 		struct wdc_xfer xfer_s;
 		int i, s;
@@ -1606,6 +1608,7 @@ wdc_atapi_send_command_packet(sc_xfer)
 #ifdef ATAPI_DEBUG_WDC
 		printf("Wait for data i/o phase: i = %d\n", i);
 #endif
+		wdc->sc_flags |= WDCF_IRQ_WAIT;
 		while ((sc_xfer->flags & ITSDONE) == 0) {
 			wdc_atapi_intr(wdc, xfer);
 			for (i = 2000; i > 0; --i)
@@ -1703,7 +1706,6 @@ again:
 		}
 #endif
 
-		wdc->sc_flags |= WDCF_IRQ_WAIT;
 		outsw(wdc->sc_iobase + wd_data, sc_xfer->cmd,
 		    sc_xfer->cmdlen/ sizeof (short));
 		return 1;
@@ -1718,7 +1720,6 @@ again:
 			sc_xfer->error = XS_DRIVER_STUFFUP;
 			return 0;
 		}
-		wdc->sc_flags |= WDCF_IRQ_WAIT;
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: write only "
 			    "%d of %d requested bytes\n", xfer->c_bcount, len);
@@ -1727,15 +1728,15 @@ again:
 			    xfer->c_bcount / sizeof(short));
 			for (i = xfer->c_bcount; i < len; i += sizeof(short))
 				outw(wdc->sc_iobase + wd_data, 0);
+			xfer->c_skip += xfer->c_bcount;
 			xfer->c_bcount = 0;
-			return 1;
 		} else {
 			outsw(wdc->sc_iobase + wd_data,
 			    xfer->databuf + xfer->c_skip, len / sizeof(short));
 			xfer->c_skip += len;
 			xfer->c_bcount -= len;
-			return 1;
 		}
+		return 1;
 	
 	case PHASE_DATAIN:
 		/* Read data */
@@ -1747,7 +1748,6 @@ again:
 			sc_xfer->error = XS_DRIVER_STUFFUP;
 			return 0;
 		}
-		wdc->sc_flags |= WDCF_IRQ_WAIT;
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: reading only "
 			    "%d of %d bytes\n", xfer->c_bcount, len);
@@ -1755,15 +1755,15 @@ again:
 			    xfer->databuf + xfer->c_skip,
 			    xfer->c_bcount / sizeof(short));
 			wdcbit_bucket(wdc, len - xfer->c_bcount);
+			xfer->c_skip += xfer->c_bcount;
 			xfer->c_bcount = 0;
-			return 1;
 		} else {
 			insw(wdc->sc_iobase + wd_data,
 			    xfer->databuf + xfer->c_skip, len / sizeof(short));
 			xfer->c_skip += len;
 			xfer->c_bcount -=len;
-			return 1;
 		}
+		return 1;
 
 	case PHASE_ABORTED:
 	case PHASE_COMPLETED:
@@ -1818,6 +1818,7 @@ wdc_atapi_done(wdc, xfer)
 	printf("wdc_atapi_done: flags 0x%x\n", (u_int)xfer->c_flags);
 #endif
 	sc_xfer->resid = xfer->c_bcount;
+	wdc->sc_flags &= ~WDCF_IRQ_WAIT;
 
 	/* remove this command from xfer queue */
 	wdc->sc_errors = 0;
@@ -1841,9 +1842,10 @@ wdc_atapi_done(wdc, xfer)
 #endif
 		wdcstart(wdc);
 	    splx(s);
-	} else
+	} else {
 		wdc->sc_flags &= ~(WDCF_SINGLE | WDCF_ERROR | WDCF_ACTIVE);
-
+		sc_xfer->flags |= ITSDONE;
+	}
 }
 
 #endif /* NATAPIBUS > 0 */
