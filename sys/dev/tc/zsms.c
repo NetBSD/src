@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.6 2000/01/08 02:57:22 takemura Exp $	*/
+/*	$NetBSD: zsms.c,v 1.1 2000/07/05 02:48:50 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
