@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.4 2004/01/25 00:28:01 bjh21 Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.5 2004/01/25 00:41:02 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.4 2004/01/25 00:28:01 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.5 2004/01/25 00:41:02 bjh21 Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h" 
@@ -181,11 +181,11 @@ ppbus_set_mode(struct device * dev, int mode, int options)
 	if(bus->sc_mode == mode)
 		return error;
 
-	/* Do necessary negociations */
+	/* Do necessary negotiations */
 	if(bus->sc_use_ieee == PPBUS_ENABLE_IEEE) { 
-		/* Cannot negociate standard mode */
+		/* Cannot negotiate standard mode */
 		if(!(mode & (PPBUS_FAST | PPBUS_COMPATIBLE))) {
- 			error = ppbus_1284_negociate(dev, mode, options);
+ 			error = ppbus_1284_negotiate(dev, mode, options);
 		}
 		/* Termination is unnecessary for standard<->fast */
 		else if(!(bus->sc_mode & (PPBUS_FAST | PPBUS_COMPATIBLE))) {
@@ -612,7 +612,7 @@ ppbus_scan_bus(struct device * dev)
 
 	/* Try IEEE1284 modes, one device only (no IEEE1284.3 support) */
 
-	error = ppbus_1284_negociate(dev, PPBUS_NIBBLE, 0);
+	error = ppbus_1284_negotiate(dev, PPBUS_NIBBLE, 0);
 	if(!(error)) 
 		printf("/NIBBLE");
 	else if((bus->sc_1284_state == PPBUS_ERROR) && (bus->sc_1284_error == 
@@ -620,22 +620,22 @@ ppbus_scan_bus(struct device * dev)
 		goto end_scan;
 	ppbus_1284_terminate(dev);
 
-	error = ppbus_1284_negociate(dev, PPBUS_PS2, 0);
+	error = ppbus_1284_negotiate(dev, PPBUS_PS2, 0);
 	if(!(error))
 		printf("/PS2");
 	ppbus_1284_terminate(dev);
 
-	error = ppbus_1284_negociate(dev, PPBUS_ECP, 0);
+	error = ppbus_1284_negotiate(dev, PPBUS_ECP, 0);
 	if(!(error)) 
 		printf("/ECP");
 	ppbus_1284_terminate(dev);
 	
-	error = ppbus_1284_negociate(dev, PPBUS_ECP, PPBUS_USE_RLE);
+	error = ppbus_1284_negotiate(dev, PPBUS_ECP, PPBUS_USE_RLE);
 	if(!(error))
 		printf("/ECP_RLE");
 	ppbus_1284_terminate(dev);
 	
-	error = ppbus_1284_negociate(dev, PPBUS_EPP, 0);
+	error = ppbus_1284_negotiate(dev, PPBUS_EPP, 0);
 	if(!(error))
 		printf("/EPP");
 	ppbus_1284_terminate(dev);

@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.h,v 1.2 2004/01/21 00:33:37 bjh21 Exp $ */
+/* $NetBSD: ppbus_conf.h,v 1.3 2004/01/25 00:41:02 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -103,7 +103,7 @@ struct ppbus_softc {
 	u_int32_t sc_1284_state;	/* current IEEE1284 state */
 	u_int32_t sc_1284_error;	/* last IEEE1284 error */
 
-	/* Use IEEE 1284 negociations in mode changes and direction changes */
+	/* Use IEEE 1284 negotiations in mode changes and direction changes */
 	u_int32_t sc_use_ieee;
 
 /* PPBUS mode masks defined in ppbus_var.h. */
