@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.16 1998/10/03 19:47:54 eeh Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.17 1999/05/05 20:01:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -214,16 +214,19 @@ hpux_sys_setsockopt(p, v, retval)
 	struct mbuf *m = NULL;
 	int tmp, error;
 
+	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)))
 		return (error);
-	if (SCARG(uap, valsize) > MLEN)
-		return (EINVAL);
+	if (SCARG(uap, valsize) > MLEN) {
+		error = EINVAL;
+		goto out;
+	}
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if ((error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 		    (u_int)SCARG(uap, valsize)))) {
 			(void) m_free(m);
-			return (error);
+			goto out;
 		}
 		if (SCARG(uap, name) == SO_LINGER) {
 			tmp = *mtod(m, int *);
@@ -238,8 +241,12 @@ hpux_sys_setsockopt(p, v, retval)
 		mtod(m, struct linger *)->l_onoff = 0;
 		m->m_len = sizeof(struct linger);
 	}
-	return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
-	    SCARG(uap, name), m));
+
+	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
+	    SCARG(uap, name), m);
+ out:
+	FILE_UNUSE(fp);
+	return (error);
 }
 
 /* ARGSUSED */
@@ -254,21 +261,28 @@ hpux_sys_setsockopt2(p, v, retval)
 	struct mbuf *m = NULL;
 	int error;
 
+	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)))
 		return (error);
-	if (SCARG(uap, valsize) > MLEN)
-		return (EINVAL);
+	if (SCARG(uap, valsize) > MLEN) {
+		error = EINVAL;
+		goto out;
+	}
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if ((error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 		    (u_int)SCARG(uap, valsize)))) {
 			(void) m_free(m);
-			return (error);
+			goto out;
 		}
 		socksetsize(SCARG(uap, valsize), m);
 	}
-	return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
-	    SCARG(uap, name), m));
+
+	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
+	    SCARG(uap, name), m);
+ out:
+	FILE_UNUSE(fp);
+	return (error);
 }
 
 int
@@ -282,12 +296,13 @@ hpux_sys_getsockopt(p, v, retval)
 	struct mbuf *m = NULL;
 	int valsize, error;
 
+	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)))
 		return (error);
 	if (SCARG(uap, val)) {
 		if ((error = copyin((caddr_t)SCARG(uap, avalsize),
 		    (caddr_t)&valsize, sizeof (valsize))))
-			return (error);
+			goto out;
 	} else
 		valsize = 0;
 	if ((error = sogetopt((struct socket *)fp->f_data, SCARG(uap, level),
@@ -296,7 +311,8 @@ hpux_sys_getsockopt(p, v, retval)
 	if (SCARG(uap, val) && valsize && m != NULL) {
 		if (SCARG(uap, name) == SO_LINGER) {
 			if (mtod(m, struct linger *)->l_onoff)
-				*mtod(m, int *) = mtod(m, struct linger *)->l_linger;
+				*mtod(m, int *) =
+				    mtod(m, struct linger *)->l_linger;
 			else
 				*mtod(m, int *) = 0;
 			m->m_len = sizeof(int);
@@ -309,8 +325,10 @@ hpux_sys_getsockopt(p, v, retval)
 			error = copyout((caddr_t)&valsize,
 			    (caddr_t)SCARG(uap, avalsize), sizeof (valsize));
 	}
-bad:
+ bad:
 	if (m != NULL)
 		(void) m_free(m);
+ out:
+	FILE_UNUSE(fp);
 	return (error);
 }

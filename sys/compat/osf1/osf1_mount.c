@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.14 1999/05/05 01:51:34 cgd Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.15 1999/05/05 20:01:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -64,6 +64,7 @@
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
@@ -117,16 +118,20 @@ osf1_sys_fstatfs(p, v, retval)
 	struct osf1_statfs osfs;
 	int error;
 
+	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)))
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
 	if ((error = VFS_STATFS(mp, sp, p)))
-		return (error);
+		goto out;
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	osf1_cvt_statfs_from_native(sp, &osfs);
-	return copyout(&osfs, SCARG(uap, buf), min(sizeof osfs,
+	error = copyout(&osfs, SCARG(uap, buf), min(sizeof osfs,
 	    SCARG(uap, len)));
+ out:
+	FILE_UNUSE(fp, p);
+	return (error);
 }
 
 int

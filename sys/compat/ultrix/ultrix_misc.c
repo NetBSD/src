@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.50 1999/02/09 20:32:46 christos Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.51 1999/05/05 20:01:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -374,6 +374,7 @@ ultrix_sys_setsockopt(p, v, retval)
 	struct mbuf *m = NULL;
 	int error;
 
+	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp))  != 0)
 		return (error);
 #define	SO_DONTLINGER (~SO_LINGER)
@@ -381,8 +382,8 @@ ultrix_sys_setsockopt(p, v, retval)
 		m = m_get(M_WAIT, MT_SOOPTS);
 		mtod(m, struct linger *)->l_onoff = 0;
 		m->m_len = sizeof(struct linger);
-		return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
-		    SO_LINGER, m));
+		error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
+		    SO_LINGER, m);
 	}
 	if (SCARG(uap, level) == IPPROTO_IP) {
 #define		EMUL_IP_MULTICAST_IF		2
@@ -403,20 +404,25 @@ ultrix_sys_setsockopt(p, v, retval)
 			    ipoptxlat[SCARG(uap, name) - EMUL_IP_MULTICAST_IF];
 		}
 	}
-	if (SCARG(uap, valsize) > MLEN)
-		return (EINVAL);
+	if (SCARG(uap, valsize) > MLEN) {
+		error = EINVAL;
+		goto out;
+	}
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 		    (u_int)SCARG(uap, valsize));
 		if (error) {
 			(void) m_free(m);
-			return (error);
+			goto out;
 		}
 		m->m_len = SCARG(uap, valsize);
 	}
-	return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
-	    SCARG(uap, name), m));
+	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
+	    SCARG(uap, name), m);
+ out:
+	FILE_UNUSE(fp, p);
+	return (error);
 }
 
 struct ultrix_utsname {

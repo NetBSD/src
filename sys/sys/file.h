@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.18 1998/08/31 23:55:38 thorpej Exp $	*/
+/*	$NetBSD: file.h,v 1.19 1999/05/05 20:01:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -76,7 +76,38 @@ struct file {
 	} *f_ops;
 	off_t	f_offset;
 	caddr_t	f_data;		/* vnode or socket */
+	int	f_iflags;	/* internal flags */
+	int	f_usecount;	/* number active users */
 };
+
+#define	FIF_WANTCLOSE		0x01	/* a close is waiting for usecount */
+
+#ifdef DIAGNOSTIC
+#define	FILE_USE_CHECK(fp, str)						\
+do {									\
+	if ((fp)->f_usecount < 0)					\
+		panic(str);						\
+} while (0)
+#else
+#define	FILE_USE_CHECK(fp, str)		/* nothing */
+#endif
+
+#define	FILE_USE(fp)							\
+do {									\
+	(fp)->f_usecount++;						\
+	FILE_USE_CHECK((fp), "f_usecount overflow");			\
+} while (0)
+
+#define	FILE_UNUSE(fp, p)						\
+do {									\
+	if ((fp)->f_iflags & FIF_WANTCLOSE) {				\
+		/* Will drop usecount. */				\
+		(void) closef((fp), (p));				\
+	} else {							\
+		(fp)->f_usecount--;					\
+		FILE_USE_CHECK((fp), "f_usecount underflow");		\
+	}								\
+} while (0)
 
 /*
  * Flags for fo_read and fo_write.

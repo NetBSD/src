@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.100 1999/03/22 17:30:37 sommerfe Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.101 1999/05/05 20:01:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -491,15 +491,20 @@ sunos_sys_getdents(p, v, retval)
 	off_t *cookiebuf, *cookie;
 	int ncookies;
 
+	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
-	if ((fp->f_flag & FREAD) == 0)
-		return (EBADF);
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto out1;
+	}
 
 	vp = (struct vnode *)fp->f_data;
-	if (vp->v_type != VDIR)
-		return (EINVAL);
+	if (vp->v_type != VDIR) {
+		error = EINVAL;
+		goto out1;
+	}
 
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
@@ -582,6 +587,8 @@ out:
 	VOP_UNLOCK(vp, 0);
 	free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
+ out1:
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -673,6 +680,7 @@ sunos_sys_setsockopt(p, v, retval)
 	struct mbuf *m = NULL;
 	int error;
 
+	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 #define	SO_DONTLINGER (~SO_LINGER)
@@ -680,8 +688,9 @@ sunos_sys_setsockopt(p, v, retval)
 		m = m_get(M_WAIT, MT_SOOPTS);
 		mtod(m, struct linger *)->l_onoff = 0;
 		m->m_len = sizeof(struct linger);
-		return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
-		    SO_LINGER, m));
+		error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
+		    SO_LINGER, m);
+		goto out;
 	}
 	if (SCARG(uap, level) == IPPROTO_IP) {
 #define		SUNOS_IP_MULTICAST_IF		2
@@ -702,20 +711,25 @@ sunos_sys_setsockopt(p, v, retval)
 			    ipoptxlat[SCARG(uap, name) - SUNOS_IP_MULTICAST_IF];
 		}
 	}
-	if (SCARG(uap, valsize) > MLEN)
-		return (EINVAL);
+	if (SCARG(uap, valsize) > MLEN) {
+		error = EINVAL;
+		goto out;
+	}
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 		    (u_int)SCARG(uap, valsize));
 		if (error) {
 			(void) m_free(m);
-			return (error);
+			goto out;
 		}
 		m->m_len = SCARG(uap, valsize);
 	}
-	return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
-	    SCARG(uap, name), m));
+	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
+	    SCARG(uap, name), m);
+ out:
+	FILE_UNUSE(fp, p);
+	return (error);
 }
 
 /*
@@ -964,14 +978,18 @@ sunos_sys_fstatfs(p, v, retval)
 	register struct statfs *sp;
 	int error;
 
+	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
 	if ((error = VFS_STATFS(mp, sp, p)) != 0)
-		return (error);
+		goto out;
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	return sunstatfs(sp, (caddr_t)SCARG(uap, buf));
+	error = sunstatfs(sp, (caddr_t)SCARG(uap, buf));
+ out:
+	FILE_UNUSE(fp, p);
+	return (error);
 }
 
 int

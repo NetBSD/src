@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.53 1999/02/09 20:37:19 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.54 1999/05/05 20:01:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -548,18 +548,23 @@ linux_sys_getdents(p, v, retval)
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
+	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
-	if ((fp->f_flag & FREAD) == 0)
-		return (EBADF);
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto out1;
+	}
 
 	vp = (struct vnode *)fp->f_data;
-	if (vp->v_type != VDIR)
-		return (EINVAL);
+	if (vp->v_type != VDIR) {
+		error = EINVAL;
+		goto out1;
+	}
 
 	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
-		return error;
+		goto out1;
 
 	nbytes = SCARG(uap, count);
 	if (nbytes == 1) {	/* emulating old, broken behaviour */
@@ -666,6 +671,8 @@ out:
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
+ out1:
+	FILE_UNUSE(fp, p);
 	return error;
 }
 

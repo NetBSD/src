@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.40 1999/02/09 20:22:37 christos Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.41 1999/05/05 20:01:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -368,13 +368,18 @@ ibcs2_sys_getdents(p, v, retval)
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
+	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	if ((fp->f_flag & FREAD) == 0)
-		return (EBADF);
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto out1;
+	}
 	vp = (struct vnode *)fp->f_data;
-	if (vp->v_type != VDIR)
-		return (EINVAL);
+	if (vp->v_type != VDIR) {
+		error = EINVAL;
+		goto out1;
+	}
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -455,6 +460,8 @@ out:
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
+ out1:
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -487,17 +494,22 @@ ibcs2_sys_read(p, v, retval)
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
+	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0) {
 		if (error == EINVAL)
 			return sys_read(p, uap, retval);
 		else
 			return error;
 	}
-	if ((fp->f_flag & FREAD) == 0)
-		return (EBADF);
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto out1;
+	}
 	vp = (struct vnode *)fp->f_data;
-	if (vp->v_type != VDIR)
+	if (vp->v_type != VDIR) {
+		FILE_UNUSE(fp, p);
 		return sys_read(p, uap, retval);
+	}
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -576,6 +588,8 @@ out:
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
+ out1:
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
