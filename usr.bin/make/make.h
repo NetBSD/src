@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.21 1998/11/11 19:37:06 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.22 1999/09/15 02:56:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -80,6 +80,7 @@
 #endif
 #include "sprite.h"
 #include "lst.h"
+#include "hash.h"
 #include "config.h"
 #include "buf.h"
 
@@ -159,7 +160,7 @@ typedef struct GNode {
     Lst	    	    successors;	/* Nodes that must be made after this one */
     Lst	    	    preds;  	/* Nodes that must be made before this one */
 
-    Lst             context;   	/* The local variables */
+    Hash_Table      context;	/* The local variables */
     Lst             commands;  	/* Creation commands */
 
     struct _Suff    *suffix;	/* Suffix for the node (determined by
