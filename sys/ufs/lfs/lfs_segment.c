@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.45 2000/05/19 04:34:44 thorpej Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.46 2000/05/27 00:19:53 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -419,7 +419,7 @@ lfs_writevnodes(fs, mp, sp, op)
 				lfs_vunref(vp);
 				continue;
 			}
-		} else {
+		} else if (vp != fs->lfs_ivnode) {
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			needs_unlock = 1;
 		}
@@ -1025,8 +1025,6 @@ lfs_updatemeta(sp)
 			if(vp != fs->lfs_ivnode && (ooff == 0 || ooff == UNASSIGNED)) {
 #ifdef DEBUG_LFS
 				printf("lfs_updatemeta[1]: warning: writing ino %d lbn %d at 0x%x, was 0x%x\n", ip->i_number, lbn, off, ooff);
-#else
-				;
 #endif
 			} else
 				ip->i_ffs_db[lbn] = off;
@@ -1036,8 +1034,6 @@ lfs_updatemeta(sp)
 			if(vp != fs->lfs_ivnode && (ooff == 0 || ooff == UNASSIGNED)) {
 #ifdef DEBUG_LFS
 				printf("lfs_updatemeta[2]: warning: writing ino %d lbn %d at 0x%x, was 0x%x\n", ip->i_number, lbn, off, ooff);
-#else
-				;
 #endif
 			} else
 				ip->i_ffs_ib[a[0].in_off] = off;
@@ -1082,8 +1078,6 @@ lfs_updatemeta(sp)
 			if(vp != fs->lfs_ivnode && (ooff == 0 || ooff == UNASSIGNED)) {
 #ifdef DEBUG_LFS
 				printf("lfs_updatemeta[3]: warning: writing ino %d lbn %d at 0x%x, was 0x%x\n", ip->i_number, lbn, off, ooff);
-#else
-				;
 #endif
 				brelse(bp);
 			} else {

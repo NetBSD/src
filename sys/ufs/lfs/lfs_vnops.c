@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.36 2000/05/13 23:43:15 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.37 2000/05/27 00:19:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -277,7 +277,7 @@ lfs_fsync(v)
 	} */ *ap = v;
 	
 	return (VOP_UPDATE(ap->a_vp, NULL, NULL,
-			   (ap->a_flags & FSYNC_WAIT) != 0 ? UPDATE_WAIT : 0)); /* XXX */
+			   (ap->a_flags & FSYNC_WAIT) != 0 ? UPDATE_WAIT : 0));
 }
 
 /*
@@ -315,7 +315,7 @@ static int lfs_set_dirop(fs)
 #ifdef DEBUG_LFS
 			printf("lfs_set_dirop: sleeping with dirops=%d, dirvcount=%d\n",fs->lfs_dirops,lfs_dirvcount); 
 #endif
-			if((error=tsleep(&lfs_dirvcount, PCATCH|PUSER, "lfs_maxdirop", 0))!=0)
+			if((error = tsleep(&lfs_dirvcount, PCATCH|PUSER, "lfs_maxdirop", 0)) !=0)
 				return error;
 		}							
 	}								
@@ -328,17 +328,30 @@ static int lfs_set_dirop(fs)
 #define	SET_ENDOP(fs,vp,str) {						\
 	--(fs)->lfs_dirops;						\
 	if (!(fs)->lfs_dirops) {					\
+		if ((fs)->lfs_nadirop)					\
+			panic("no dirops but nadirop=%d\n", (fs)->lfs_nadirop);\
 		wakeup(&(fs)->lfs_writer);				\
 		lfs_check((vp),LFS_UNUSED_LBN,0);			\
 	}								\
 }
 
 #define	MARK_VNODE(dvp)  do {                                           \
-        if(!((dvp)->v_flag & VDIROP)) {					\
+        if (!((dvp)->v_flag & VDIROP)) {				\
                 lfs_vref(dvp);						\
 		++lfs_dirvcount;					\
 	}								\
         (dvp)->v_flag |= VDIROP;					\
+	if (!(VTOI(dvp)->i_flag & IN_ADIROP)) {				\
+		++VTOI(dvp)->i_lfs->lfs_nadirop;			\
+	}								\
+	VTOI(dvp)->i_flag |= IN_ADIROP;					\
+} while(0)
+
+#define UNMARK_VNODE(vp) do {						\
+	if (VTOI(vp)->i_flag & IN_ADIROP) {				\
+		--VTOI(vp)->i_lfs->lfs_nadirop;				\
+	}								\
+	VTOI(vp)->i_flag &= ~IN_ADIROP;					\
 } while(0)
 
 int
@@ -352,16 +365,19 @@ lfs_symlink(v)
 		struct vattr *a_vap;
 		char *a_target;
 	} */ *ap = v;
-	int ret;
+	int error;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0) {
+	if ((error = SET_DIROP(VTOI(ap->a_dvp)->i_lfs)) != 0) {
 		vput(ap->a_dvp);
-		return ret;
+		return error;
 	}
 	MARK_VNODE(ap->a_dvp);
-	ret = ufs_symlink(ap);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"symilnk");
-	return (ret);
+	error = ufs_symlink(ap);
+	UNMARK_VNODE(ap->a_dvp);
+	if (error == 0)
+		UNMARK_VNODE(*(ap->a_vpp));
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"symlink");
+	return (error);
 }
 
 int
@@ -379,13 +395,16 @@ lfs_mknod(v)
         struct inode *ip;
         int error;
 
-	if((error=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0) {
+	if ((error = SET_DIROP(VTOI(ap->a_dvp)->i_lfs)) != 0) {
 		vput(ap->a_dvp);
 		return error;
 	}
 	MARK_VNODE(ap->a_dvp);
 	error = ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
             ap->a_dvp, vpp, ap->a_cnp);
+	UNMARK_VNODE(ap->a_dvp);
+        if (error == 0)
+                UNMARK_VNODE(*(ap->a_vpp));
 
 	/* Either way we're done with the dirop at this point */
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"mknod");
@@ -441,16 +460,19 @@ lfs_create(v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
-	int ret;
+	int error;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0) {
+	if((error = SET_DIROP(VTOI(ap->a_dvp)->i_lfs)) != 0) {
 		vput(ap->a_dvp);
-		return ret;
+		return error;
 	}
 	MARK_VNODE(ap->a_dvp);
-	ret = ufs_create(ap);
+	error = ufs_create(ap);
+	UNMARK_VNODE(ap->a_dvp);
+        if (error == 0)
+                UNMARK_VNODE(*(ap->a_vpp));
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"create");
-	return (ret);
+	return (error);
 }
 
 int
@@ -462,15 +484,16 @@ lfs_whiteout(v)
 		struct componentname *a_cnp;
 		int a_flags;
 	} */ *ap = v;
-	int ret;
+	int error;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+	if ((error = SET_DIROP(VTOI(ap->a_dvp)->i_lfs)) != 0)
 		/* XXX no unlock here? */
-		return ret;
+		return error;
 	MARK_VNODE(ap->a_dvp);
-	ret = ufs_whiteout(ap);
+	error = ufs_whiteout(ap);
+	UNMARK_VNODE(ap->a_dvp);
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"whiteout");
-	return (ret);
+	return (error);
 }
 
 int
@@ -483,16 +506,19 @@ lfs_mkdir(v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
-	int ret;
+	int error;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0) {
+	if((error = SET_DIROP(VTOI(ap->a_dvp)->i_lfs)) != 0) {
 		vput(ap->a_dvp);
-		return ret;
+		return error;
 	}
 	MARK_VNODE(ap->a_dvp);
-	ret = ufs_mkdir(ap);
+	error = ufs_mkdir(ap);
+	UNMARK_VNODE(ap->a_dvp);
+        if (error == 0)
+                UNMARK_VNODE(*(ap->a_vpp));
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"mkdir");
-	return (ret);
+	return (error);
 }
 
 int
@@ -505,23 +531,25 @@ lfs_remove(v)
 		struct componentname *a_cnp;
 	} */ *ap = v;
 	struct vnode *dvp, *vp;
-	int ret;
+	int error;
 
 	dvp = ap->a_dvp;
 	vp = ap->a_vp;
-	if((ret=SET_DIROP(VTOI(dvp)->i_lfs))!=0) {
+	if ((error = SET_DIROP(VTOI(dvp)->i_lfs)) != 0) {
 		if (dvp == vp)
 			vrele(vp);
 		else
 			vput(vp);
 		vput(dvp);
-		return ret;
+		return error;
 	}
 	MARK_VNODE(dvp);
 	MARK_VNODE(vp);
-	ret = ufs_remove(ap);
+	error = ufs_remove(ap);
+	UNMARK_VNODE(dvp);
+	UNMARK_VNODE(vp);
 	SET_ENDOP(VTOI(dvp)->i_lfs,dvp,"remove");
-	return (ret);
+	return (error);
 }
 
 int
@@ -534,20 +562,22 @@ lfs_rmdir(v)
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	int ret;
+	int error;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0) {
+	if ((error = SET_DIROP(VTOI(ap->a_dvp)->i_lfs)) != 0) {
 		vrele(ap->a_dvp);
 		if (ap->a_vp->v_mountedhere != NULL)
 			VOP_UNLOCK(ap->a_dvp, 0);
 		vput(ap->a_vp);
-		return ret;
+		return error;
 	}
 	MARK_VNODE(ap->a_dvp);
 	MARK_VNODE(ap->a_vp);
-	ret = ufs_rmdir(ap);
+	error = ufs_rmdir(ap);
+	UNMARK_VNODE(ap->a_dvp);
+	UNMARK_VNODE(ap->a_vp);
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"rmdir");
-	return (ret);
+	return (error);
 }
 
 int
@@ -559,16 +589,17 @@ lfs_link(v)
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	int ret;
+	int error;
 
-	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0) {
+	if ((error = SET_DIROP(VTOI(ap->a_dvp)->i_lfs)) != 0) {
 		vput(ap->a_dvp);
-		return ret;
+		return error;
 	}
 	MARK_VNODE(ap->a_dvp);
-	ret = ufs_link(ap);
+	error = ufs_link(ap);
+	UNMARK_VNODE(ap->a_dvp);
 	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"link");
-	return (ret);
+	return (error);
 }
 
 int
@@ -611,6 +642,8 @@ lfs_rename(v)
 	MARK_VNODE(fdvp);
 	MARK_VNODE(tdvp);
 	error = ufs_rename(ap);
+	UNMARK_VNODE(fdvp);
+	UNMARK_VNODE(tdvp);
 	SET_ENDOP(fs,fdvp,"rename");
 	return (error);
 

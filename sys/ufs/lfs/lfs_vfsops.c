@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.51 2000/05/19 04:34:45 thorpej Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.52 2000/05/27 00:19:53 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -434,6 +434,7 @@ lfs_mountfs(devvp, mp, p)
 	fs->lfs_doifile = 0;
 	fs->lfs_writer = 0;
 	fs->lfs_dirops = 0;
+	fs->lfs_nadirop = 0;
 	fs->lfs_seglock = 0;
 	lockinit(&fs->lfs_freelock, PINOD, "lfs_freelock", 0, 0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.22 2000/05/13 23:43:14 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.23 2000/05/27 00:19:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -300,6 +300,7 @@ struct lfs {
 	struct vnode *lfs_unlockvp;     /* being inactivated in lfs_segunlock */
 	u_int32_t lfs_diropwait;	/* # procs waiting on dirop flush */
 	struct lock lfs_freelock;
+	int       lfs_nadirop;		/* number of active dirop nodes */
 };
 
 /*

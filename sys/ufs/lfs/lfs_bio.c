@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.19 2000/05/19 04:34:44 thorpej Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.20 2000/05/27 00:19:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -358,24 +358,39 @@ lfs_check(vp, blkno, flags)
 {
 	int error;
 	struct lfs *fs;
+	struct inode *ip;
 	extern int lfs_dirvcount;
 
 	error = 0;
+	ip = VTOI(vp);
 	
 	/* If out of buffers, wait on writer */
 	/* XXX KS - if it's the Ifile, we're probably the cleaner! */
-	if (VTOI(vp)->i_number == LFS_IFILE_INUM)
+	if (ip->i_number == LFS_IFILE_INUM)
+		return 0;
+	/* If we're being called from inside a dirop, don't sleep */
+	if (ip->i_flag & IN_ADIROP)
 		return 0;
 
-	/* If dirops are active, can't flush.  Wait for SET_ENDOP */
-	fs = VTOI(vp)->i_lfs;
-	if (fs->lfs_dirops)
-		return 0;
+	fs = ip->i_lfs;
 
-	if (locked_queue_count > LFS_MAX_BUFS
-	    || locked_queue_bytes > LFS_MAX_BYTES
-	    || lfs_dirvcount > LFS_MAXDIROP
-	    || fs->lfs_diropwait > 0)
+	/*
+	 * If we would flush below, but dirops are active, sleep.
+	 * Note that a dirop cannot ever reach this code!
+	 */
+	while (fs->lfs_dirops > 0 &&
+	       (locked_queue_count > LFS_MAX_BUFS ||
+                locked_queue_bytes > LFS_MAX_BYTES ||
+                lfs_dirvcount > LFS_MAXDIROP || fs->lfs_diropwait > 0))
+	{
+		++fs->lfs_diropwait;
+		tsleep(&fs->lfs_writer, PRIBIO+1, "bufdirop", 0);
+		--fs->lfs_diropwait;
+	}
+
+	if (locked_queue_count > LFS_MAX_BUFS ||
+	    locked_queue_bytes > LFS_MAX_BYTES ||
+	    lfs_dirvcount > LFS_MAXDIROP || fs->lfs_diropwait > 0)
 	{
 		++fs->lfs_writer;
 		lfs_flush(fs, flags);
@@ -399,8 +414,8 @@ lfs_check(vp, blkno, flags)
 		 * inodes were locked.  Try flushing again to keep us from
 		 * blocking indefinitely.
 		 */
-		if (locked_queue_count > LFS_MAX_BUFS
-		    || locked_queue_bytes > LFS_MAX_BYTES)
+		if (locked_queue_count > LFS_MAX_BUFS ||
+		    locked_queue_bytes > LFS_MAX_BYTES)
 		{
 			++fs->lfs_writer;
 			lfs_flush(fs, flags);
