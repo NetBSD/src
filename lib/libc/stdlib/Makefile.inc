@@ -1,26 +1,28 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
-#	$Id: Makefile.inc,v 1.7 1993/10/07 19:53:35 brezak Exp $
+#	$Id: Makefile.inc,v 1.8 1993/10/08 00:08:12 jtc Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE}/stdlib ${.CURDIR}/stdlib
 
-SRCS+=	abort.c atexit.c atoi.c atof.c atol.c bsearch.c calloc.c div.c exit.c \
-	getenv.c getopt.c heapsort.c labs.c ldiv.c malloc.c multibyte.c \
+SRCS+=	abort.c atexit.c atoi.c atol.c bsearch.c calloc.c div.c exit.c \
+	getenv.c getopt.c heapsort.c ldiv.c malloc.c multibyte.c \
 	putenv.c qsort.c radixsort.c rand.c random.c setenv.c strtod.c \
 	strtol.c strtoul.c system.c \
 	_rand48.c drand48.c erand48.c jrand48.c lcong48.c lrand48.c \
 	mrand48.c nrand48.c seed48.c srand48.c
 
 .if   (${MACHINE} == "hp300")
-SRCS+=	abs.s atof.c
+SRCS+=	abs.s labs.c atof.c
 .elif (${MACHINE} == "i386")
-SRCS+=	abs.s
+SRCS+=	abs.s labs.s atof.c
 .elif (${MACHINE} == "pc532")
-SRCS+=	abs.s atof.c
+SRCS+=	abs.s labs.c atof.c
 .elif (${MACHINE} == "tahoe")
-SRCS+=	abs.s atof.s
+SRCS+=	abs.s labs.c atof.s
 .elif (${MACHINE} == "vax")
-SRCS+=	abs.s atof.s
+SRCS+=	abs.s labs.c atof.s
+.else
+SRCS+=	abs.c labs.c atof.c
 .endif
 
 MAN3+=	abort.0 abs.0 alloca.0 atexit.0 atof.0 atoi.0 atol.0 bsearch.0 \
