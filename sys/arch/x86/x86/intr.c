@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13 2003/11/17 22:20:00 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.14 2004/02/20 18:04:06 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13 2003/11/17 22:20:00 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.14 2004/02/20 18:04:06 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -233,6 +233,8 @@ intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
 
 	LIST_FOREACH(iebp, &intr_extra_buses, list) {
 		if (iebp->bus == bus) {
+			if (iebp->pci_bridge_tag == NULL)
+				return ENOENT;
 			*pci_bridge_tag = *iebp->pci_bridge_tag;
 			*pci_chipset_tag = iebp->pci_chipset_tag;
 			return 0;
