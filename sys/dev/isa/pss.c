@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.61 2002/09/27 20:38:47 thorpej Exp $	*/
+/*	$NetBSD: pss.c,v 1.62 2002/10/02 02:09:20 thorpej Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.61 2002/09/27 20:38:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.62 2002/10/02 02:09:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,22 +257,18 @@ static u_char wss_interrupt_bits[16] = {
 /* ditto for WSS DMA channel */
 static u_char wss_dma_bits[4] = {1, 2, 0, 3};
 
-const struct cfattach pss_ca = {
-	sizeof(struct pss_softc), pssprobe, pssattach
-};
+CFATTACH_DECL(pss, sizeof(struct pss_softc),
+	pssprobe, pssattach, NULL, NULL);
 
-const struct cfattach sp_ca = {
-	sizeof(struct ad1848_isa_softc), spprobe, spattach
-};
+CFATTACH_DECL(sp, sizeof(struct sp_softc),
+	spprobe, spattach, NULL, NULL);
 
 #ifdef notyet
-const struct cfattach mpu_ca = {
-	sizeof(struct mpu_softc), mpuprobe, mpuattach
-};
+CFATTACH_DECL(mpu, sizeof(struct mpu_softc),
+	mpuprobe, mpuattach, NULL, NULL);
 
-const struct cfattach pcd_ca = {
-	sizeof(struct pcd_softc), pcdprobe, pcdattach
-};
+CFATTACH_DECL(pcd, sizeof(struct pcd_softc),
+	pcdprobe, pcdattach, NULL, NULL);
 
 #endif
 

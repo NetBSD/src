@@ -1,4 +1,4 @@
-/* $NetBSD: sf16fmr2.c,v 1.6 2002/09/27 20:38:51 thorpej Exp $ */
+/* $NetBSD: sf16fmr2.c,v 1.7 2002/10/02 02:09:20 thorpej Exp $ */
 /* $OpenBSD: sf16fmr2.c,v 1.3 2001/12/18 18:48:08 mickey Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
@@ -105,9 +105,8 @@ struct sf2r_softc {
 	struct tea5757_t	tea;
 };
 
-const struct cfattach sf2r_ca = {
-	sizeof(struct sf2r_softc), sf2r_probe, sf2r_attach
-};
+CFATTACH_DECL(sf2r, sizeof(struct sf2r_softc),
+	sf2r_probe, sf2r_attach, NULL, NULL);
 
 void	sf2r_set_mute(struct sf2r_softc *);
 int	sf2r_find(bus_space_tag_t, bus_space_handle_t);
