@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.7 1997/10/18 07:05:31 lukem Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.7.2.1 1997/11/28 09:33:31 mellon Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedbm.c,v 1.7 1997/10/18 07:05:31 lukem Exp $");
+__RCSID("$NetBSD: makedbm.c,v 1.7.2.1 1997/11/28 09:33:31 mellon Exp $");
 #endif
 
 #include <sys/param.h>
@@ -58,7 +58,7 @@ extern	char *__progname;		/* from crt0.o */
 
 int	main __P((int, char *[]));
 void	usage __P((void));
-void	add_record __P((DBM *, char *, char *, int));
+int	add_record __P((DBM *, char *, char *, int));
 char	*file_date __P((char *));
 void	list_database __P((char *));
 void	create_database __P((char *, char *, char *, char *,
@@ -151,7 +151,7 @@ main(argc, argv)
 	exit(0);
 }
 
-void
+int
 add_record(db, str1, str2, check)
 	DBM *db;
 	char *str1, *str2;
@@ -167,14 +167,17 @@ add_record(db, str1, str2, check)
 		val = ypdb_fetch(db, key);
 
 		if (val.dptr != NULL)
-			return;	/* already there */
+			return 0;	/* already there */
 	}
 	val.dptr = str2;
 	val.dsize = strlen(str2);
 	status = ypdb_store(db, key, val, YPDB_INSERT);
 
-	if (status != 0)
-		errx(1, "can't store `%s %s'", str1, str2);
+	if (status != 0) {
+		warnx("can't store `%s %s'", str1, str2);
+		return -1;
+	}
+	return 0;
 }
 
 char *
@@ -217,11 +220,13 @@ list_database(database)
 				/* workround trailing \0 in aliases.db */
 		if (key.dptr[key.dsize - 1] == '\0')
 			key.dsize--;
-		if (val.dptr[val.dsize - 1] == '\0')
-			val.dsize--;
-		printf("%*.*s %*.*s\n",
-		    key.dsize, key.dsize, key.dptr,
-		    val.dsize, val.dsize, val.dptr);
+		printf("%*.*s", key.dsize, key.dsize, key.dptr);
+		if (val.dsize > 0) {
+			if (val.dptr[val.dsize - 1] == '\0')
+				val.dsize--;
+			printf(" %*.*s", val.dsize, val.dsize, val.dptr);
+		}
+		printf("\n");
 		key = ypdb_nextkey(db);
 	}
 
@@ -236,10 +241,9 @@ create_database(infile, database, yp_input_file, yp_output_file,
 	int bflag, lflag, sflag;
 {
 	FILE *data_file;
-	char data_line[4096];	/* XXX: DB bsize = 4096 in ypdb.c */
 	char myname[MAXHOSTNAMELEN];
 	int line_no = 0;
-	int len;
+	size_t len;
 	char *p, *k, *v, *slash;
 	DBM *new_db;
 	static char mapname[] = "ypdbXXXXXX";
@@ -260,7 +264,7 @@ create_database(infile, database, yp_input_file, yp_output_file,
 	}
 
 	if (strlen(database) + strlen(YPDB_SUFFIX) > MAXPATHLEN)
-		errx(1, "file name `%s' too long\n", database);
+		errx(1, "file name `%s' too long", database);
 
 	snprintf(db_outfile, sizeof(db_outfile), "%s%s", database, YPDB_SUFFIX);
 
@@ -268,7 +272,7 @@ create_database(infile, database, yp_input_file, yp_output_file,
 	if (slash != NULL)
 		slash[1] = '\0';	/* truncate to dir */
 	else
-		*database = '\0';	/* elminate */
+		*database = '\0';	/* eliminate */
 
 	/* NOTE: database is now directory where map goes ! */
 
@@ -286,69 +290,81 @@ create_database(infile, database, yp_input_file, yp_output_file,
 	if (new_db == NULL)
 		err(1, "can't create temp database `%s'", db_tempname);
 
-	while (read_line(data_file, data_line, sizeof(data_line))) {
-		line_no++;
-		len = strlen(data_line);
+	while ((p = read_line(data_file, &len, &line_no)) != NULL) {
+		while (*p && isspace(*p))	/* skip leading whitespace */
+			p++;
 
-		/* Check if we have the whole line */
+		if (! *p)
+			continue;
 
-		if (data_line[len - 1] != '\n')
-			warnx("%s: line %d too long", infile, line_no);
-		else
-			data_line[len - 1] = '\0';
-
-		p = (char *)&data_line;
-
-		k = p;		/* save start of key */
-		while (!isspace(*p)) {	/* find first "space" */
-			/*
-			 * Convert to lower case if forcing.
-			 */
+		k = p;				/* save start of key */
+		while (*p && !isspace(*p)) {	/* find whitespace */
+				/* Convert to lower case if forcing. */
 			if (lflag && isupper(*p))
 				*p = tolower(*p);
 			p++;
 		}
-		while (isspace(*p))	/* replace space with <NUL> */
-			*p++ = '\0';
+		if (! *p)
+			v = "";			/* no value found - use "" */
+		else {
+			while (isspace(*p))	/* replace space with <NUL> */
+				*p++ = '\0';
+			v = p;			/* save start of value */
+		}
 
-		v = p;			/* save start of value */
-
-		while (*p != '\0')	/* find end of string */
-			p++;
-
-		add_record(new_db, k, v, TRUE);	/* save record */
+		if (add_record(new_db, k, v, TRUE)) {    /* save record */
+bad_record:
+			ypdb_close(new_db);
+			unlink(db_mapname);
+			errx(1, "error adding record for line %d", line_no);
+		}
 	}
 
 	if (strcmp(infile, "-") != 0)
 		(void) fclose(data_file);
 
-	add_record(new_db, YP_LAST_KEY, file_date(infile), FALSE);
+	if (add_record(new_db, YP_LAST_KEY, file_date(infile), FALSE))
+		goto bad_record;
 
-	if (yp_input_file)
-		add_record(new_db, YP_INPUT_KEY, yp_input_file, FALSE);
-
-	if (yp_output_file)
-		add_record(new_db, YP_OUTPUT_KEY, yp_output_file, FALSE);
-
-	if (yp_master_name)
-		add_record(new_db, YP_MASTER_KEY, yp_master_name, FALSE);
-	else {
-		localhostname(myname, sizeof(myname) - 1);
-		add_record(new_db, YP_MASTER_KEY, myname, FALSE);
+	if (yp_input_file) {
+		if (add_record(new_db, YP_INPUT_KEY, yp_input_file, FALSE))
+			goto bad_record;
 	}
 
-	if (yp_domain_name)
-		add_record(new_db, YP_DOMAIN_KEY, yp_domain_name, FALSE);
+	if (yp_output_file) {
+		if (add_record(new_db, YP_OUTPUT_KEY, yp_output_file, FALSE))
+			goto bad_record;
+	}
 
-	if (bflag)
-		add_record(new_db, YP_INTERDOMAIN_KEY, empty_str, FALSE);
+	if (yp_master_name) {
+		if (add_record(new_db, YP_MASTER_KEY, yp_master_name, FALSE))
+			goto bad_record;
+	} else {
+		localhostname(myname, sizeof(myname) - 1);
+		if (add_record(new_db, YP_MASTER_KEY, myname, FALSE))
+			goto bad_record;
+	}
 
-	if (sflag)
-		add_record(new_db, YP_SECURE_KEY, empty_str, FALSE);
+	if (yp_domain_name) {
+		if (add_record(new_db, YP_DOMAIN_KEY, yp_domain_name, FALSE))
+			goto bad_record;
+	}
+
+	if (bflag) {
+		if (add_record(new_db, YP_INTERDOMAIN_KEY, empty_str, FALSE))
+			goto bad_record;
+	}
+
+	if (sflag) {
+		if (add_record(new_db, YP_SECURE_KEY, empty_str, FALSE))
+			goto bad_record;
+	}
 
 	ypdb_close(new_db);
-	if (rename(db_mapname, db_outfile) < 0)
+	if (rename(db_mapname, db_outfile) < 0) {
+		unlink(db_mapname);
 		err(1, "rename `%s' -> `%s'", db_mapname, db_outfile);
+	}
 }
 
 void
