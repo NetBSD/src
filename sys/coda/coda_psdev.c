@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.23 2003/01/06 13:05:09 wiz Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.24 2003/01/24 18:51:53 jdolecek Exp $	*/
 
 /*
  * 
@@ -43,16 +43,18 @@
  * University.  Contributers include David Steere, James Kistler, and
  * M. Satyanarayanan.  */
 
-/* These routines define the psuedo device for communication between
+/* These routines define the pseudo device for communication between
  * Coda's Venus and Minicache in Mach 2.6. They used to be in cfs_subr.c, 
  * but I moved them to make it easier to port the Minicache without 
  * porting coda. -- DCS 10/12/94
+ *
+ * Following code depends on file-system CODA.
  */
 
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.23 2003/01/06 13:05:09 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.24 2003/01/24 18:51:53 jdolecek Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
