@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_hb.c,v 1.4 2000/03/06 21:36:10 thorpej Exp $	*/
+/*	$NetBSD: zs_hb.c,v 1.4.24.1 2003/06/24 10:01:10 grant Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -322,9 +322,16 @@ static int
 zshard_hb(arg)
 	void *arg;
 {
-	(void) *(volatile u_char *)SCCVECT;
+	int rv;
 
-	return zshard(arg);
+	(void) *(volatile u_char *)SCCVECT;
+	rv = zshard(arg);
+
+	/* XXX news3400 sometimes losts zs interrupt */
+	if (rv)
+		zshard(arg);
+
+	return rv;
 }
 
 /*
