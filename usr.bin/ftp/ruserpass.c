@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.14.2.1 1997/11/18 01:02:05 mellon Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.14.2.1 1997/11/18 01:02:05 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,10 +148,10 @@ next:
 
 		case LOGIN:
 			if (token())
-				if (*aname == 0) {
-					*aname = malloc((unsigned)
-					    strlen(tokval) + 1);
-					(void)strcpy(*aname, tokval);
+				if (*aname == NULL) {
+					*aname = strdup(tokval);
+					if (*aname == NULL)
+						err(1, "can't strdup *aname");
 				} else {
 					if (strcmp(*aname, tokval))
 						goto next;
@@ -165,9 +165,10 @@ next:
 	warnx("Remove password or make file unreadable by others.");
 				goto bad;
 			}
-			if (token() && *apass == 0) {
-				*apass = malloc((unsigned) strlen(tokval) + 1);
-				(void)strcpy(*apass, tokval);
+			if (token() && *apass == NULL) {
+				*apass = strdup(tokval);
+				if (*apass == NULL)
+					err(1, "can't strdup *apass");
 			}
 			break;
 		case ACCOUNT:
@@ -177,9 +178,10 @@ next:
 	warnx("Remove account or make file unreadable by others.");
 				goto bad;
 			}
-			if (token() && *aacct == 0) {
-				*aacct = malloc((unsigned) strlen(tokval) + 1);
-				(void)strcpy(*aacct, tokval);
+			if (token() && *aacct == NULL) {
+				*aacct = strdup(tokval);
+				if (*aacct == NULL)
+					err(1, "can't strdup *aacct");
 			}
 			break;
 		case MACDEF:
