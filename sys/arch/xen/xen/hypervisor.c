@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.10 2005/03/10 22:10:11 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.11 2005/03/11 15:50:25 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.10 2005/03/10 22:10:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.11 2005/03/11 15:50:25 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,8 +136,10 @@ union hypervisor_attach_cookie {
  * This is set when the ISA bus is attached.  If it's not set by the
  * time it's checked below, then mainbus attempts to attach an ISA. 
  */   
+#ifdef DOM0OPS
 int     isa_has_been_seen;
 struct  x86_isa_chipset x86_isa_chipset;
+#endif
 
 /*
  * Probe for the hypervisor; always succeeds.
