@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7 1996/07/11 03:53:33 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.8 1996/07/11 05:31:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -113,7 +113,7 @@ trap(type, code, v, framep)
 	cnt.v_trap++;
 	p = curproc;
 	ucode = 0;
-	if ((framep->tf_af.af_ps & ALPHA_PSL_USERMODE) != 0) {
+	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0) {
 		type |= T_USER;
 		sticks = p->p_sticks;
 		p->p_md.md_tf = framep;
@@ -130,7 +130,7 @@ trap(type, code, v, framep)
 dopanic:
 		printf("trap type %ld, code = 0x%lx, v = 0x%lx\n", type,
 		    code, v);
-		printf("pc = 0x%lx\n", framep->tf_af.af_pc);
+		printf("pc = 0x%lx\n", framep->tf_regs[FRAME_PC]);
 		printf("curproc = 0x%lx\n", curproc);
 		if (curproc != NULL)
 			printf("curproc->p_pid = 0x%d\n", curproc->p_pid);
@@ -164,7 +164,7 @@ dopanic:
 		if (p == NULL || p->p_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
 		else {
-			framep->tf_af.af_pc = (u_int64_t)p->p_addr->u_pcb.pcb_onfault;
+			framep->tf_regs[FRAME_PC] = (u_int64_t)p->p_addr->u_pcb.pcb_onfault;
 			p->p_addr->u_pcb.pcb_onfault = NULL;
 		}
 		goto out;
@@ -198,7 +198,7 @@ sigfpe:		i = SIGFPE;
 		goto out;
 
 	case T_GENTRAP|T_USER:
-		if (framep->tf_af.af_a0 == -2)		/* weird! */
+		if (framep->tf_regs[FRAME_A0] == -2)		/* weird! */
 			goto sigfpe;
 	case T_BPT|T_USER:
 	case T_BUGCHK|T_USER:
@@ -227,7 +227,7 @@ sigfpe:		i = SIGFPE;
 		/* if it was caused by fuswintr or suswintr, just punt. */
 		if ((type & T_USER) == 0 && p != NULL &&
 		    p->p_addr->u_pcb.pcb_onfault == (caddr_t)fswintrberr) {
-			framep->tf_af.af_pc = (u_int64_t)p->p_addr->u_pcb.pcb_onfault;
+			framep->tf_regs[FRAME_PC] = (u_int64_t)p->p_addr->u_pcb.pcb_onfault;
 			p->p_addr->u_pcb.pcb_onfault = NULL;
 			goto out;
 		}
@@ -263,7 +263,7 @@ sigfpe:		i = SIGFPE;
 #ifdef VMFAULT_TRACE
 		printf("vm_fault(0x%lx (pmap 0x%lx), 0x%lx (0x%lx), 0x%lx, %d) -> 0x%lx at pc 0x%lx\n",
 		    map, map == kernel_map ? pmap_kernel() : &vm->vm_pmap,
-		    va, v, ftype, FALSE, rv, framep->tf_af.af_pc);
+		    va, v, ftype, FALSE, rv, framep->tf_regs[FRAME_PC]);
 #endif
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -284,10 +284,10 @@ sigfpe:		i = SIGFPE;
 		}
 		if (rv == KERN_SUCCESS)
 			goto out;
-		if ((framep->tf_af.af_ps & ALPHA_PSL_USERMODE) == 0) {
+		if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0) {
 			if (p != NULL &&
 			    p->p_addr->u_pcb.pcb_onfault != NULL) {
-				framep->tf_af.af_pc =
+				framep->tf_regs[FRAME_PC] =
 				    (u_int64_t)p->p_addr->u_pcb.pcb_onfault;
 				p->p_addr->u_pcb.pcb_onfault = NULL;
 				goto out;
@@ -316,7 +316,7 @@ sigfpe:		i = SIGFPE;
 out:
 	if ((type & T_USER) == 0)
 		return;
-	userret(p, framep->tf_af.af_pc, sticks);
+	userret(p, framep->tf_regs[FRAME_PC], sticks);
 }
 
 /*
@@ -350,13 +350,13 @@ syscall(code, framep)
 #endif
 
 #if notdef				/* can't happen, ever. */
-	if ((framep->tf_af.af_ps & ALPHA_PSL_USERMODE) == 0) {
+	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0) {
 		panic("syscall");
 #endif
 	cnt.v_syscall++;
 	p = curproc;
 	p->p_md.md_tf = framep;
-	opc = framep->tf_af.af_pc - 4;
+	opc = framep->tf_regs[FRAME_PC] - 4;
 	sticks = p->p_sticks;
 
 	callp = p->p_emul->e_sysent;
@@ -368,7 +368,7 @@ syscall(code, framep)
 		switch (code) {
 		case OSF1_SYS_syscall:
 			/* OSF/1 syscall() */
-			code = framep->tf_af.af_a0;
+			code = framep->tf_regs[FRAME_A0];
 			hidden = 1;
 			break;
 		default:
@@ -383,7 +383,7 @@ syscall(code, framep)
 		 * syscall() and __syscall() are handled the same on
 		 * the alpha, as everything is 64-bit aligned, anyway.
 		 */
-		code = framep->tf_af.af_a0;
+		code = framep->tf_regs[FRAME_A0];
 		hidden = 1;
 		break;
 	default:
@@ -410,11 +410,11 @@ syscall(code, framep)
 	case 4:	
 		args[3] = framep->tf_regs[FRAME_A3];
 	case 3:	
-		args[2] = framep->tf_af.af_a2;
+		args[2] = framep->tf_regs[FRAME_A2];
 	case 2:	
-		args[1] = framep->tf_af.af_a1;
+		args[1] = framep->tf_regs[FRAME_A1];
 	case 1:	
-		args[0] = framep->tf_af.af_a0;
+		args[0] = framep->tf_regs[FRAME_A0];
 	case 0:
 		break;
 	}
@@ -438,7 +438,7 @@ syscall(code, framep)
 		framep->tf_regs[FRAME_A3] = 0;
 		break;
 	case ERESTART:
-		framep->tf_af.af_pc = opc;
+		framep->tf_regs[FRAME_PC] = opc;
 		break;
 	case EJUSTRETURN:
 		break;
@@ -457,7 +457,7 @@ syscall(code, framep)
 	scdebug_ret(p, code, error, rval);
 #endif
 
-	userret(p, framep->tf_af.af_pc, sticks);
+	userret(p, framep->tf_regs[FRAME_PC], sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
@@ -476,7 +476,7 @@ child_return(p)
 	 * Return values in the frame set by cpu_fork().
 	 */
 
-	userret(p, p->p_md.md_tf->tf_af.af_pc, 0);
+	userret(p, p->p_md.md_tf->tf_regs[FRAME_PC], 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
