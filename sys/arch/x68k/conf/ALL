@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.23 1998/09/07 14:11:08 minoura Exp $
+#	$NetBSD: ALL,v 1.24 1998/12/16 14:10:38 minoura Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -128,6 +128,8 @@ options 	COMPAT_12	# NetBSD 1.2 binary compatibility
 options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 options 	COMPAT_M68K4K	# NetBSD/m68k4k binaries
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility; broken
+options 	COMPAT_LINUX	# Linux/m68k binary compatibility
+options 	EXEC_ELF32	# 32-bit ELF executables (Linux)
 
 ## File systems.
 file-system	FFS		# Berkeley Fast Filesystem
@@ -243,6 +245,10 @@ pseudo-device	vnd	4
 
 pseudo-device	ccd	4
 
+## RAIDframe disk driver: software RAID driver.  See raid(4).
+
+pseudo-device	raid	4
+
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
 
@@ -260,6 +266,9 @@ pseudo-device	ppp		2
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
 pseudo-device	tun		4
+
+## Generic L3 over IP tunnel
+#pseudo-device	gre		2	# generic L3 over IP tunnel
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
