@@ -1,9 +1,9 @@
-# $NetBSD: shl.mi,v 1.161.2.3 2003/01/06 04:54:59 jmc Exp $
+# $NetBSD: shl.mi,v 1.161.2.4 2003/06/19 00:32:29 grant Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./usr/lib/libamu.so.2.1			base-amd-shlib
 ./usr/lib/libasn1.so.6.0		base-krb5-shlib
 ./usr/lib/libbz2.so.1.0			base-sys-shlib
-./usr/lib/libc.so.12.83.1		base-sys-shlib
+./usr/lib/libc.so.12.83.2		base-sys-shlib
 ./usr/lib/libcdk.so.1.0			base-sys-shlib
 ./usr/lib/libcom_err.so.4.1		base-krb5-shlib
 ./usr/lib/libcrypt.so.0.0		base-sys-shlib
