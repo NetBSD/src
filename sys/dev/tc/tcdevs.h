@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs.h,v 1.13 1999/09/18 01:46:25 ad Exp $	*/
+/*	$NetBSD: tcdevs.h,v 1.14 1999/09/26 09:20:04 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.11 1999/09/18 01:46:01 ad Exp 
+ *	NetBSD: tcdevs,v 1.12 1999/09/26 09:18:53 mrg Exp 
  */
 
 /*
@@ -40,6 +40,9 @@
 
 #define	TC_DEVICE_AV01B_AA	"lofi"
 #define	TC_DESCRIPTION_AV01B_AA	"DecAudio \"LoFi\" audio/isdn"
+
+#define	TC_DEVICE_AV300_AA	"???"
+#define	TC_DESCRIPTION_AV300_AA	"Video capture option card"
 
 #define	TC_DEVICE_DGLTA_FA	"otto"
 #define	TC_DESCRIPTION_DGLTA_FA	"DGLTA ATM"
@@ -106,6 +109,9 @@
 
 #define	TC_DEVICE_PMAZC_AA	"tcds"
 #define	TC_DESCRIPTION_PMAZC_AA	"53c94 TCDS Fast SCSI option card"
+
+#define	TC_DEVICE_PMTNV_AA	"???"
+#define	TC_DESCRIPTION_PMTNV_AA	"Non-volatile RAM option card"
 
 #define	TC_DEVICE_T1D4PKT	"ds"
 #define	TC_DESCRIPTION_T1D4PKT	"DECWRL Turbochannel T1"
