@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mac68k,v 1.1.2.2 2002/05/30 07:14:46 gehenna Exp $
+#	$NetBSD: majors.mac68k,v 1.1.2.3 2002/07/14 18:37:04 gehenna Exp $
 #
 # Device majors for mac68k
 #
@@ -46,3 +46,4 @@ device-major	wsdisplay	char 46			wsdisplay
 device-major	vcoda		char 47			vcoda
 device-major	clockctl	char 48			clockctl
 device-major	wd		char 49  block 22	wd
+device-major	systrace	char 50			systrace

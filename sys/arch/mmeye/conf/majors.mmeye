@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mmeye,v 1.1.2.2 2002/05/30 07:14:47 gehenna Exp $
+#	$NetBSD: majors.mmeye,v 1.1.2.3 2002/07/14 18:37:19 gehenna Exp $
 #
 # Device majors for mmeye
 #
@@ -41,3 +41,4 @@ device-major	raid		char 49  block 18	raid
 device-major	esh		char 50			esh
 device-major	wdog		char 51			wdog
 device-major	clockctl	char 52			clockctl
+device-major	systrace	char 53			systrace

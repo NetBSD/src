@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2002/02/27 21:02:26 scw Exp $
+#	$NetBSD: Makefile,v 1.1.10.1 2002/07/14 18:37:22 gehenna Exp $
 
-SUBDIR= libsa boot
+SUBDIR= libsa .WAIT boot
 
 .include <bsd.subdir.mk>
