@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.4 2003/06/12 21:46:04 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.5 2003/06/26 01:45:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -53,10 +53,14 @@
  * comment in the i386 pthread_switch.S file.
  */
 
-#define	STACK_SWITCH(pt, tmp)						\
+#define	STACK_SWITCH(pt, tmp, z)					\
+	ldr	tmp, [pt, #(PT_TRAPUC)]				;	\
+	teq	tmp, #0x00000000				;	\
+	bne	1f						;	\
 	ldr	tmp, [pt, #(PT_UC)]				;	\
-	sub	sp, tmp, #(STACKSPACE)
-
+1:	sub	sp, tmp, #(STACKSPACE)				;	\
+	mov	z, #00000000					;	\
+	str	z, [pt, #(PT_TRAPUC)]
 
 /*    
  * void
@@ -107,10 +111,10 @@ ENTRY(pthread__switch)
 	/* Get back r0-r2 */
 	ldmfd	sp, {r0-r2}
 
-	/* Side-effect: r4 = next->pt_uc */
-	STACK_SWITCH(r1, r4)
-
 	str	r5, [r0, #(PT_UC)]	/* self->pt_uc = &context */
+
+	/* Side-effect: r4 = next->pt_uc */
+	STACK_SWITCH(r1, r4, r3)
 
 	/* NOTE: we can no longer recover registers stored on the stack */
 
@@ -142,7 +146,7 @@ ENTRY_NP(pthread__switch_return_point)
  */
 pthread__switch_away:
 	/* Side-effect: r3 = r1->pt_uc */
-	STACK_SWITCH(r1, r3)
+	STACK_SWITCH(r1, r3, r14)
 
 	/*
 	 * If we're invoked from the switch-to-next provisions of
@@ -178,7 +182,7 @@ ENTRY(pthread__upcall_switch)
 	str	r3, [r1, #(PT_SPINLOCKS)]
 
 	/* Side-effect: r7 = next->pt_uc */
-	STACK_SWITCH(r1, r7)
+	STACK_SWITCH(r1, r7, r2)
 
 	/* Check if the upcall code was preempted and continued to here. */
 	ldr	r3, [r0, #(PT_NEXT)]
@@ -264,7 +268,6 @@ ENTRY(pthread__locked_switch)
 	str	r3, [r1, #(PT_SPINLOCKS)]
 
 	mov	r3, sp			/* r3 = &context */
-	str	r3, [r0, #(PT_UC)]	/* self->pt_uc = &context */
 
 	/* Save r0-r2, r4-r5, lr */
 	stmfd	sp!, {r0-r2, r4-r5, lr}
@@ -291,13 +294,15 @@ ENTRY(pthread__locked_switch)
 
 	/* Edit the context to make it continue below, rather than here */
 	add	r0, pc, #locked_return_point - . - 8
-	str	r0, [r3, #(_REG_PC)]
+	str	r0, [r5, #(_REG_PC)]
 
 	/* Get back r0-r2 */
 	ldmfd	sp, {r0-r2}
 
+	str	r5, [r0, #(PT_UC)]	/* self->pt_uc = &context */
+
 	/* Side-effect: r4 = next->pt_uc */
-	STACK_SWITCH(r1, r4)
+	STACK_SWITCH(r1, r4, r3)
 
 	/* NOTE: we can no longer recover registers stored on the stack */
 
@@ -324,13 +329,6 @@ ENTRY(pthread__locked_switch)
 	ldr	r4, [r0, #(PT_SPINLOCKS)]
 	sub	r4, r4, #1
 	str	r4, [r0, #(PT_SPINLOCKS)]
-
-	/*
-	 * Save the context we previously stored in self->pt_uc; that
-	 * was overwritten when we were preempted and continued, so we
-	 * need to put it someplace.
-	 */
-	str	r5, [r0, #(PT_SLEEPUC)]
 
 	mov	r0, r1			/* from = next */
 	mov	r1, r3			/* to = self->pt_next */
