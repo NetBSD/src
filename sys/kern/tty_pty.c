@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.24 1994/10/30 21:48:01 cgd Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.25 1994/12/13 19:59:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -263,15 +263,15 @@ ptcwakeup(tp, flag)
 	}
 }
 
+int ptcopen __P((dev_t, int, int, struct proc *, struct file *));
+
 /*ARGSUSED*/
-#ifdef __STDC__
-ptcopen(dev_t dev, int flag, int devtype, struct proc *p)
-#else
-ptcopen(dev, flag, devtype, p)
+int
+ptcopen(dev, flag, devtype, p, fp)
 	dev_t dev;
 	int flag, devtype;
 	struct proc *p;
-#endif
+	struct file *fp;
 {
 	register struct tty *tp;
 	struct pt_ioctl *pti;
@@ -294,6 +294,7 @@ ptcopen(dev, flag, devtype, p)
 	return (0);
 }
 
+int
 ptcclose(dev)
 	dev_t dev;
 {
