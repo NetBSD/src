@@ -1,10 +1,10 @@
-.\" $Id: units.1,v 1.4 1994/04/01 08:49:59 cgd Exp $
+.\" $Id: units.1,v 1.5 1994/07/16 05:23:46 jtc Exp $
 .TH UNITS 1  "14 July 1993"
 .SH NAME
 units - conversion program
 .SH SYNTAX
 .B units
-[-f filename] [-q] [to-unit from-unit]
+[-f filename] [-qv] [from-unit to-unit]
 .SH SUMMARY
 .TP 4
 .B -f filename
@@ -14,6 +14,10 @@ Specifies the name of the units data file to load.
 .B -q 
 Suppresses prompting of the user for units and the display of statistics
 about the number of units loaded.
+.LP
+.TP 4
+.B -v 
+Prints the version number.
 .LP
 .TP 4
 .B from-unit to-unit
