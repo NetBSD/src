@@ -32,7 +32,7 @@
 */
 /*
  *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.4 1994/03/02 00:16:45 briggs Exp $
+ *	$Id: genassym.c,v 1.5 1994/04/18 02:58:39 briggs Exp $
  */
 
 #include "sys/param.h"
@@ -80,10 +80,6 @@ main()
 	printf("#define\tV_SYSCALL %d\n", &vm->v_syscall);
 	printf("#define\tV_INTR %d\n", &vm->v_intr);
 	printf("#define\tV_SOFT %d\n", &vm->v_soft);
-	printf("#define\tV_PDMA %d\n", &vm->v_pdma);
-	printf("#define\tV_FAULTS %d\n", &vm->v_faults);
-	printf("#define\tV_PGREC %d\n", &vm->v_pgrec);
-	printf("#define\tV_FASTPGREC %d\n", &vm->v_fastpgrec);
 	printf("#define\tUPAGES %d\n", UPAGES);
 	printf("#define\tHIGHPAGES %d\n", HIGHPAGES);
 	printf("#define\tP1PAGES %d\n", P1PAGES);
