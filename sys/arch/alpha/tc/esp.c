@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.24 1996/11/16 23:17:18 pk Exp $	*/
+/*	$NetBSD: esp.c,v 1.25 1996/11/27 21:38:35 pk Exp $	*/
 
 #ifdef __sparc__
 #define	SPARC_DRIVER
@@ -1609,7 +1609,12 @@ espintr(sc)
 		 * change is expected.
 		 */
 		if (DMA_ISACTIVE(sc->sc_dma)) {
-			DMA_INTR(sc->sc_dma);
+			int r = DMA_INTR(sc->sc_dma);
+			if (r == -1) {
+				printf("%s: DMA error; resetting\n",
+					sc->sc_dev.dv_xname);
+				esp_init(sc, 1);
+			}
 			/* If DMA active here, then go back to work... */
 			if (DMA_ISACTIVE(sc->sc_dma))
 				return 1;
@@ -2081,6 +2086,13 @@ esp_abort(sc, ecb)
 		 */
 		if (sc->sc_state == ESP_CONNECTED)
 			esp_sched_msgout(SEND_ABORT);
+
+		/*
+		 * Reschedule timeout. First, cancel a queued timeout (if any)
+		 * in case someone decides to call esp_abort() from elsewhere.
+		 */
+		untimeout(esp_timeout, ecb);
+		timeout(esp_timeout, ecb, (ecb->timeout * hz) / 1000);
 	} else {
 		esp_dequeue(sc, ecb);
 		TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
