@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/12/23 10:23:07 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2004/01/02 06:24:24 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ PROG=	XFree86
 BINMODE=4711
 
 MAN=	XFree86.1
-# XF86Config.5
+MAN=	XF86Config.5
 
 
 .PATH:  ${X11SRCDIR.xc}/programs/Xserver/hw/xfree86
@@ -40,6 +40,8 @@ DPADD=	${DPADD.hw/xfree86/xf86} ${DPADD.hw/xfree86/xf86config} \
 LDADD+=	-li386
 DPADD+=	${LIBI386}
 .endif
+
+SYMLINKS=       ${X11BINDIR}/XFree86 ${X11BINDIR}/X
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
