@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.345 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.346 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -74,8 +74,6 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 		[sjg 20040701]
 	libc: Add strcasestr(3), case insensitive version of strstr(3).
 		[junyoung 20040703]
-	geodeide(4): Added driver for the AMD Geode CS5530A IDE controller
-		[bouyer 20040709]
 	libm: Add C99 functions round(3) and roundf(3). [junyoung 20040710]
 	texinfo(1): upgraded to 4.7.  [wiz 20040713]
 	libc: Add wordexp(3) which performs shell-style word expansions.
