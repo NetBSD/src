@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ze.c,v 1.4 1999/08/07 18:30:36 ragge Exp $	*/
+/*	$NetBSD: if_ze.c,v 1.5 1999/08/23 19:09:27 ragge Exp $	*/
 /*
  * Copyright (c) 1998 James R. Maynard III.  All rights reserved.
  *
@@ -45,8 +45,9 @@
 #include <lib/libsa/netif.h>
 #include <lib/libsa/stand.h>
 
-#include <if/if_zereg.h>
+#include <dev/ic/sgecreg.h>
 
+#include "arch/vax/include/sid.h"
 
 int ze_probe(), ze_match(), ze_get(), ze_put();
 void ze_init(), ze_end();
@@ -115,9 +116,15 @@ ze_init(desc, machdep_hint)
 	}
 
 	/* Get our Ethernet address */
-	nisa_rom = (u_long *)0x20084000;
-	for (i=0; i<ETHER_ADDR_LEN; i++)
-		ze_myaddr[i] = (nisa_rom[i] & 0x0000ff00) >> 8;
+	if (vax_boardtype == VAX_BTYP_49) {
+		nisa_rom = (u_long *)0x27800000;
+		for (i=0; i<ETHER_ADDR_LEN; i++)
+			ze_myaddr[i] = nisa_rom[i] & 0377;
+	} else {
+		nisa_rom = (u_long *)0x20084000;
+		for (i=0; i<ETHER_ADDR_LEN; i++)
+			ze_myaddr[i] = (nisa_rom[i] & 0x0000ff00) >> 8;
+	}
 	bcopy(ze_myaddr,desc->myea,ETHER_ADDR_LEN);
 
 	/* initialize SGEC operating mode */
