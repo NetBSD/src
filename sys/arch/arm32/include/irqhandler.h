@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.20 2001/07/10 00:09:44 bjh21 Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.21 2001/07/10 00:41:12 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -44,7 +44,7 @@
 #define _ARM32_IRQHANDLER_H_
 
 #if defined(_KERNEL_OPT)
-#include "opt_cputypes.h"
+#include "iomd.h"
 #endif
 
 #ifndef _LOCORE
@@ -58,7 +58,7 @@
  * Shortly to be replaced with system specific interrupt tables and handling
  */
 
-#if defined(RISCPC) || defined(CPU_ARM7500)
+#if NIOMD > 0
 
 /* Only for ARM7500 : */
 
@@ -154,7 +154,7 @@
 
 #endif	/* RISCPC */
 
-#endif	/* RISPC || CPU_ARM7500 */
+#endif	/* NIOMD > 0 */
 
 #ifdef  OFWGENCFG
 /* These are just made up for now!  -JJK */
