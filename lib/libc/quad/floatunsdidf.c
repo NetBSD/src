@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)floatunsdidf.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: floatunsdidf.c,v 1.1 1993/09/16 06:05:59 mycroft Exp $";
+static char *rcsid = "$Id: floatunsdidf.c,v 1.2 1994/10/19 03:09:52 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -54,7 +54,7 @@ __floatunsdidf(x)
 	union uu u;
 
 	u.uq = x;
-	d = (double)u.ul[H] * ((1 << (LONG_BITS - 2)) * 4.0);
+	d = (double)u.ul[H] * (((long)1 << (LONG_BITS - 2)) * 4.0);
 	d += u.ul[L];
 	return (d);
 }

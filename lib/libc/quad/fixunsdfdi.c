@@ -37,12 +37,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fixunsdfdi.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: fixunsdfdi.c,v 1.1 1993/09/16 06:05:55 mycroft Exp $";
+static char *rcsid = "$Id: fixunsdfdi.c,v 1.2 1994/10/19 03:09:47 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
 
-#define	ONE_FOURTH	(1 << (LONG_BITS - 2))
+#define	ONE_FOURTH	((long)1 << (LONG_BITS - 2))
 #define	ONE_HALF	(ONE_FOURTH * 2.0)
 #define	ONE		(ONE_FOURTH * 4.0)
 
