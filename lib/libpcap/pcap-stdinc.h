@@ -1,5 +1,5 @@
-.\" $NetBSD: pcap-stdinc.h,v 1.1.1.1 2004/09/19 21:31:46 dyoung Exp $
-.\
+/*	$NetBSD: pcap-stdinc.h,v 1.1.1.2 2004/09/19 21:57:55 dyoung Exp $	*/
+
 /*
  * Copyright (c) 2002 - 2003
  * NetGroup, Politecnico di Torino (Italy)
