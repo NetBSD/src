@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.44 2002/05/02 17:03:58 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.45 2002/05/16 20:59:37 itojun Exp $
 /bin/rcorder
 /dev/i4b
 /dev/i4bctl
@@ -187,6 +187,7 @@
 /usr/share/zoneinfo/GMT8
 /usr/share/zoneinfo/GMT9
 /usr/share/zoneinfo/Moscow
+/var/empty
 /var/games/save
 /var/named
 /var/named/dev

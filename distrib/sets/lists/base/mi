@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.321 2002/05/14 23:26:24 itojun Exp $
+# $NetBSD: mi,v 1.322 2002/05/16 20:59:37 itojun Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -2387,12 +2387,12 @@
 ./var/chroot/ntpd/var			base-ntp-root
 ./var/chroot/ntpd/var/db		base-ntp-root
 ./var/chroot/ntpd/var/run		base-ntp-root
+./var/chroot/sshd			base-sys-root
 ./var/crash			base-sys-root
 ./var/cron			base-cron-root
 ./var/cron/tabs			base-cron-root
 ./var/db			base-sys-root
 ./var/db/ns			base-sys-root
-./var/empty			base-sys-root
 ./var/games			base-games-root
 ./var/games/hackdir		base-games-root
 ./var/games/hackdir/save	base-games-root

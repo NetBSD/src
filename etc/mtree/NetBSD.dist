@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.190 2002/05/14 23:26:24 itojun Exp $
+#	$NetBSD: NetBSD.dist,v 1.191 2002/05/16 20:59:36 itojun Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -772,6 +772,7 @@
 ./var/chroot/ntpd/var
 ./var/chroot/ntpd/var/db	mode=0775 gname=ntpd
 ./var/chroot/ntpd/var/run	mode=0775 gname=ntpd
+./var/chroot/sshd		mode=0755
 ./var/crash			mode=0770
 ./var/cron
 ./var/cron/tabs			mode=0700
@@ -783,7 +784,6 @@
 ./var/games/larn		uname=games gname=games mode=0775
 ./var/games/phantasia		uname=games gname=games mode=0775
 ./var/games/sail		uname=games gname=games mode=0775
-./var/empty			mode=0755
 ./var/heimdal
 ./var/log
 ./var/log/rdist
