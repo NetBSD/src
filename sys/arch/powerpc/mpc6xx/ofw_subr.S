@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.2 2002/07/24 06:04:43 chs Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.3 2002/09/16 02:07:24 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,7 +53,17 @@ GLOBAL(ofwsprg0save)
  * Called by start to save the initial OFW state so we can restore it
  * when call back to OFW.
  */
-ENTRY(ofwinit)
+ENTRY_NOPROFILE(ofwinit)
+#ifdef	FIRMWORKSBUGS
+	mfmsr	0
+	andi.	0,0,PSL_IR|PSL_DR
+	beq	1f
+
+	mflr	30
+	bl	_C_LABEL(ofwr_init)
+	mtlr	30
+1:
+#endif
 	lis	8,openfirmware_entry@ha
 	stw	5,openfirmware_entry@l(8) /* save client interface handler*/
 
@@ -70,14 +80,6 @@ ENTRY(ofwinit)
         mfsprg  0,3
        	stw	0,4(9)
 
-#ifdef	FIRMWORKSBUGS
-	mfmsr	0
-	andi.	0,0,PSL_IR|PSL_DR
-	beq	1f
-
-	b	_C_LABEL(ofwr_init)	/* do a tail call */
-1:
-#endif
 	blr
 
 /*
@@ -148,7 +150,7 @@ ENTRY(openfirmware)
 	blrl				/* call Open Firmware */
 
 #ifdef MULTIPROCESSOR
-	lis	4,ofwsprg0save@ha	/* return saved sprg0 (curcpu) */
+	lis	4,ofwsprg0save@ha	/* restore saved sprg0 (curcpu) */
 	addi	4,4,ofwsprg0save@l
 	lwz	5,0(4)
 	mtsprg	0,5
