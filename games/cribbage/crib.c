@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.8 1997/10/10 12:32:24 lukem Exp $	*/
+/*	$NetBSD: crib.c,v 1.9 1997/10/11 02:44:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,11 +43,12 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: crib.c,v 1.8 1997/10/10 12:32:24 lukem Exp $");
+__RCSID("$NetBSD: crib.c,v 1.9 1997/10/11 02:44:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <curses.h>
+#include <err.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -134,11 +135,8 @@ main(argc, argv)
 		(void) fclose(f);
 	}
 	bye();
-	if (!f) {
-		(void) fprintf(stderr, "\ncribbage: can't open %s.\n",
-		    _PATH_LOG);
-		exit(1);
-	}
+	if (!f)
+		errx(1, "can't open %s", _PATH_LOG);
 	exit(0);
 }
 
