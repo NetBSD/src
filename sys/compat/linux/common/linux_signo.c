@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signo.c,v 1.2 2002/03/31 22:40:19 christos Exp $	*/
+/*	$NetBSD: linux_signo.c,v 1.3 2002/04/03 17:18:21 christos Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signo.c,v 1.2 2002/03/31 22:40:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signo.c,v 1.3 2002/04/03 17:18:21 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_signo.c,v 1.2 2002/03/31 22:40:19 christos Exp
 #endif
 
 /* Note: linux_to_native_signo[] is in <arch>/linux_sigarray.c */
+#ifdef LINUX_SIGHUP
 const int native_to_linux_signo[] = {
 	0,			/* 0 */
 	LINUX_SIGHUP,		/* 1 */
@@ -119,6 +120,9 @@ const int native_to_linux_signo[] = {
 	LINUX_SIGRTMIN + 29,	/* 62 */
 	LINUX_SIGRTMIN + 30,	/* 63 */
 };
+#else
+const int native_to_linux_signo[NSIG];
+#endif
 
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_sigarray.c>
