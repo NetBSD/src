@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ypclnt.h,v 1.3 1993/08/02 17:49:21 mycroft Exp $
+ *	$Id: ypclnt.h,v 1.4 1994/01/06 14:48:47 deraadt Exp $
  */
 
 #ifndef _YPCLNT_H_
@@ -63,6 +63,7 @@ struct ypall_callback {
 };
 
 int	yp_bind		__P((char *dom));
+struct dom_binding;
 int	_yp_dobind	__P((char *dom, struct dom_binding **ypdb));
 void	yp_unbind	__P((char *dom));
 int	yp_get_default_domain __P((char **domp));
