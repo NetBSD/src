@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwovar.h,v 1.2 2000/03/18 22:33:03 scw Exp $	*/
+/*	$NetBSD: pcctwovar.h,v 1.3 2000/09/06 19:51:44 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ struct pcctwo_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_bust;	/* PCCChip2's register tag */
 	bus_space_handle_t	sc_bush;	/* PCCChip2's register handle */
+	int			*sc_vec2icsr;	/* Translate vector to ICSR */
 };
 
 extern struct pcctwo_softc *sys_pcctwo;

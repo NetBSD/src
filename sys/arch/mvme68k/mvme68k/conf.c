@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.20 2000/03/18 22:33:06 scw Exp $	*/
+/*	$NetBSD: conf.c,v 1.21 2000/09/06 19:51:44 scw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -298,6 +298,12 @@ chrtoblk(dev)
 #include "zsc_pcc.h"
 cons_decl(zsc_pcc);
 
+#define zsc_pcctwocnpollc	nullcnpollc
+#define zsc_pcctwocngetc	zsc_pcccngetc
+#define zsc_pcctwocnputc	zsc_pcccnputc
+#include "zsc_pcctwo.h"
+cons_decl(zsc_pcctwo);
+
 #define clmpcccnpollc		nullcnpollc
 #include "clmpcc_pcctwo.h"
 cons_decl(clmpcc);
@@ -306,6 +312,9 @@ cons_decl(clmpcc);
 struct	consdev constab[] = {
 #if NZSC_PCC > 0
 	cons_init(zsc_pcc),
+#endif
+#if NZSC_PCCTWO > 0
+	cons_init(zsc_pcctwo),
 #endif
 #if NCLMPCC_PCCTWO > 0
 	cons_init(clmpcc),

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.3 2000/03/18 22:33:03 scw Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.4 2000/09/06 19:51:43 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * PCCchip2 Driver
+ * PCCchip2 and MCchip Driver
  */
 
 #include <sys/param.h>
@@ -45,6 +45,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/cpu.h>
 #include <machine/bus.h>
 
 #include <mvme68k/mvme68k/isr.h>
@@ -67,7 +68,7 @@ struct cfattach pcctwo_ca = {
 extern struct cfdriver pcctwo_cd;
 
 /*
- * Global Pointer to the PCCChip2's soft state
+ * Global Pointer to the PCCChip2/MCchip soft state, and chip ID
  */
 struct pcctwo_softc *sys_pcctwo;
 
@@ -80,9 +81,18 @@ struct pcctwo_device {
 };
 
 /*
+ * Macroes to make life easy when converting vector offset to interrupt
+ * control register, and how to initialise the ICSR.
+ */
+#define VEC2ICSR(r,v)		((r) | (((v) | PCCTWO_ICR_IEN) << 8))
+#define VEC2ICSR_REG(x)		((x) & 0xff)
+#define VEC2ICSR_INIT(x)	((x) >> 8)
+
+#if defined(MVME167) || defined(MVME177)
+/*
  * Devices that live on the PCCchip2, attached in this order.
  */
-struct pcctwo_device pcctwo_devices[] = {
+static struct pcctwo_device pcctwo_devices[] = {
 	{"clock", PCCTWO_RTC_OFF},
 	{"clmpcc", PCCTWO_SCC_OFF},
 	{"ie", PCCTWO_IE_OFF},
@@ -92,6 +102,62 @@ struct pcctwo_device pcctwo_devices[] = {
 	{NULL, 0}
 };
 
+static int pcctwo_vec2icsr_1x7[] = {
+	VEC2ICSR(PCC2REG_PRT_BUSY_ICSR,  PCCTWO_ICR_EDGE | PCCTWO_ICR_ICLR),
+	VEC2ICSR(PCC2REG_PRT_PE_ICSR,    PCCTWO_ICR_EDGE | PCCTWO_ICR_ICLR),
+	VEC2ICSR(PCC2REG_PRT_SEL_ICSR,   PCCTWO_ICR_EDGE | PCCTWO_ICR_ICLR),
+	VEC2ICSR(PCC2REG_PRT_FAULT_ICSR, PCCTWO_ICR_EDGE | PCCTWO_ICR_ICLR),
+	VEC2ICSR(PCC2REG_PRT_ACK_ICSR,   PCCTWO_ICR_EDGE | PCCTWO_ICR_ICLR),
+	VEC2ICSR(PCC2REG_SCSI_ICSR,      0),
+	VEC2ICSR(PCC2REG_ETH_ICSR,       PCCTWO_ICR_EDGE | PCCTWO_ICR_ICLR),
+	VEC2ICSR(PCC2REG_ETH_ICSR,       PCCTWO_ICR_EDGE | PCCTWO_ICR_ICLR),
+	VEC2ICSR(PCC2REG_TIMER2_ICSR,    PCCTWO_ICR_ICLR),
+	VEC2ICSR(PCC2REG_TIMER1_ICSR,    PCCTWO_ICR_ICLR),
+	VEC2ICSR(PCC2REG_GPIO_ICSR,      PCCTWO_ICR_EDGE | PCCTWO_ICR_ICLR),
+	-1,
+	VEC2ICSR(PCC2REG_SCC_RX_ICSR,    0),
+	VEC2ICSR(PCC2REG_SCC_MODEM_ICSR, 0),
+	VEC2ICSR(PCC2REG_SCC_TX_ICSR,    0),
+	VEC2ICSR(PCC2REG_SCC_RX_ICSR,    0)
+};
+#endif
+
+#ifdef MVME162
+/*
+ * Devices that live on the MCchip, attached in this order.
+ */
+static struct pcctwo_device mcchip_devices[] = {
+	{"clock", PCCTWO_RTC_OFF},
+	{"zsc", MCCHIP_ZS0_OFF},
+	{"zsc", MCCHIP_ZS1_OFF},
+	{"ie", PCCTWO_IE_OFF},
+	{"ncrsc", PCCTWO_NCRSC_OFF},
+	{"nvram", PCCTWO_NVRAM_OFF},
+	{NULL, 0}
+};
+
+static int pcctwo_vec2icsr_1x2[] = {
+	-1,
+	-1,
+	-1,
+	VEC2ICSR(MCCHIPREG_TIMER4_ICSR, PCCTWO_ICR_ICLR),
+	VEC2ICSR(MCCHIPREG_TIMER3_ICSR, PCCTWO_ICR_ICLR),
+	VEC2ICSR(PCC2REG_SCSI_ICSR,     0),
+	VEC2ICSR(PCC2REG_ETH_ICSR,      PCCTWO_ICR_EDGE | PCCTWO_ICR_ICLR),
+	VEC2ICSR(PCC2REG_ETH_ICSR,      PCCTWO_ICR_EDGE | PCCTWO_ICR_ICLR),
+	VEC2ICSR(PCC2REG_TIMER2_ICSR,   PCCTWO_ICR_ICLR),
+	VEC2ICSR(PCC2REG_TIMER1_ICSR,   PCCTWO_ICR_ICLR),
+	-1,
+	VEC2ICSR(MCCHIPREG_PARERR_ICSR, PCCTWO_ICR_ICLR),
+	VEC2ICSR(MCCHIPREG_SCC_ICSR,    0),
+	VEC2ICSR(MCCHIPREG_SCC_ICSR,    0),
+	VEC2ICSR(MCCHIPREG_ABORT_ICSR,  PCCTWO_ICR_ICLR),
+	-1
+};
+
+static int pcctwoabortintr(void *);
+#endif
+
 /* ARGSUSED */
 int
 pcctwomatch(parent, cf, args)
@@ -100,20 +166,34 @@ pcctwomatch(parent, cf, args)
 	void *args;
 {
 	struct mainbus_attach_args *ma;
+	bus_space_handle_t bh;
+	u_int8_t cid;
 
 	ma = args;
 
-	/*
-	 * Note: We don't need to check we're running on a 'machineid'
-	 * which contains a PCCChip2, since "mainbus_attach" already
-	 * deals with it.
-	 */
-
-	/* Only attach one PCCchip2. */
-	if (sys_pcctwo)
+	/* There can be only one. */
+	if (sys_pcctwo || strcmp(ma->ma_name, pcctwo_cd.cd_name))
 		return (0);
 
-	return (strcmp(ma->ma_name, pcctwo_cd.cd_name) == 0);
+	/*
+	 * Grab the Chip's ID
+	 */
+	bus_space_map(ma->ma_bust, PCCTWO_REG_OFF + ma->ma_offset,
+	    PCC2REG_SIZE, 0, &bh);
+	cid = bus_space_read_1(ma->ma_bust, bh, PCC2REG_CHIP_ID);
+	bus_space_unmap(ma->ma_bust, bh, PCC2REG_SIZE);
+
+#if defined(MVME167) || defined(MVME177)
+	if ((machineid == MVME_167 || machineid == MVME_177) &&
+	    cid == PCCTWO_CHIP_ID_PCC2)
+		return (1);
+#endif
+#ifdef MVME162
+	if (machineid == MVME_162 && cid == PCCTWO_CHIP_ID_MCCHIP)
+		return (1);
+#endif
+
+	return (0);
 }
 
 /* ARGSUSED */
@@ -126,7 +206,8 @@ pcctwoattach(parent, self, args)
 	struct mainbus_attach_args *ma;
 	struct pcctwo_softc *sc;
 	struct pcctwo_attach_args npa;
-	int i;
+	struct pcctwo_device *pd;
+	u_int8_t cid;
 
 	ma = args;
 	sc = sys_pcctwo = (struct pcctwo_softc *) self;
@@ -135,12 +216,6 @@ pcctwoattach(parent, self, args)
 	sc->sc_bust = ma->ma_bust;
 	bus_space_map(sc->sc_bust, PCCTWO_REG_OFF + ma->ma_offset,
 	    PCC2REG_SIZE, 0, &sc->sc_bush);
-
-	/*
-	 * Announce ourselves to the world in general
-	 */
-	printf(": Peripheral Channel Controller (PCCchip2), Rev %d\n",
-	    pcc2_reg_read(sc, PCC2REG_CHIP_REVISION));
 
 	/*
 	 * Fix up the vector base for PCCChip2 Interrupts
@@ -153,18 +228,48 @@ pcctwoattach(parent, self, args)
 	pcc2_reg_write(sc, PCC2REG_GENERAL_CONTROL,
 	    pcc2_reg_read(sc, PCC2REG_GENERAL_CONTROL) | PCCTWO_GEN_CTRL_MIEN);
 
+	/* What are we? */
+	cid = pcc2_reg_read(sc, PCC2REG_CHIP_ID);
+
+	/*
+	 * Announce ourselves to the world in general
+	 */
+#if defined(MVME167) || defined(MVME177)
+	if (cid == PCCTWO_CHIP_ID_PCC2) {
+		printf(": Peripheral Channel Controller (PCCchip2), Rev %d\n",
+		    pcc2_reg_read(sc, PCC2REG_CHIP_REVISION));
+		pd = pcctwo_devices;
+		sc->sc_vec2icsr = pcctwo_vec2icsr_1x7;
+	} else
+#endif
+#ifdef MVME162
+	if (cid == PCCTWO_CHIP_ID_MCCHIP) {
+		printf(": Memory Controller ASIC (MCchip), Rev %d\n",
+		    pcc2_reg_read(sc, PCC2REG_CHIP_REVISION));
+		pd = mcchip_devices;
+		sc->sc_vec2icsr = pcctwo_vec2icsr_1x2;
+
+		pcctwointr_establish(MCCHIPV_ABORT, pcctwoabortintr, 7, NULL);
+	} else
+#endif
+	{
+		/* This is one of those "Can't Happen" things ... */
+		panic("pcctwoattach: unsupported ASIC!");
+	}
+
 	/*
 	 * Attach configured children.
 	 */
-	for (i = 0; pcctwo_devices[i].pcc_name != NULL; ++i) {
+	while (pd->pcc_name != NULL) {
 		/*
 		 * Note that IPL is filled in by match function.
 		 */
-		npa.pa_name = pcctwo_devices[i].pcc_name;
+		npa.pa_name = pd->pcc_name;
 		npa.pa_ipl = -1;
 		npa.pa_dmat = ma->ma_dmat;
 		npa.pa_bust = ma->ma_bust;
-		npa.pa_offset = pcctwo_devices[i].pcc_offset + ma->ma_offset;
+		npa.pa_offset = pd->pcc_offset + ma->ma_offset;
+		pd++;
 
 		/* Attach the device if configured. */
 		(void) config_found(self, &npa, pcctwoprint);
@@ -199,6 +304,7 @@ pcctwointr_establish(vec, hand, lvl, arg)
 	int (*hand) __P((void *)), lvl;
 	void *arg;
 {
+	int vec2icsr;
 
 #ifdef DEBUG
 	if (vec < 0 || vec >= PCCTWOV_MAX) {
@@ -209,9 +315,21 @@ pcctwointr_establish(vec, hand, lvl, arg)
 		printf("pcctwo: illegal interrupt level: %d\n", lvl);
 		panic("pcctwointr_establish");
 	}
+	if (sys_pcctwo->sc_vec2icsr[vec] == -1) {
+		printf("pcctwo: unsupported vector: %d\n", vec);
+		panic("pcctwointr_establish");
+	}
 #endif
 
+	vec2icsr = sys_pcctwo->sc_vec2icsr[vec];
+	pcc2_reg_write(sys_pcctwo, VEC2ICSR_REG(vec2icsr), 0);
+
+	/* Hook the interrupt */
 	isrlink_vectored(hand, arg, lvl, vec + PCCTWO_VECBASE);
+
+	/* Enable it in hardware */
+	pcc2_reg_write(sys_pcctwo, VEC2ICSR_REG(vec2icsr),
+	    VEC2ICSR_INIT(vec2icsr) | lvl);
 }
 
 void
@@ -224,7 +342,26 @@ pcctwointr_disestablish(vec)
 		printf("pcctwo: illegal vector offset: 0x%x\n", vec);
 		panic("pcctwointr_disestablish");
 	}
+	if (sys_pcctwo->sc_vec2icsr[vec] == -1) {
+		printf("pcctwo: unsupported vector: %d\n", vec);
+		panic("pcctwointr_establish");
+	}
 #endif
+
+	/* Disable it in hardware */
+	pcc2_reg_write(sys_pcctwo, sys_pcctwo->sc_vec2icsr[vec], 0);
 
 	isrunlink_vectored(vec + PCCTWO_VECBASE);
 }
+
+#ifdef MVME162
+static int
+pcctwoabortintr(void *frame)
+{
+
+	pcc2_reg_write(sys_pcctwo, MCCHIPREG_ABORT_ICSR, PCCTWO_ICR_ICLR |
+	    pcc2_reg_read(sys_pcctwo, MCCHIPREG_ABORT_ICSR));
+
+	return (nmihand(frame));
+}
+#endif

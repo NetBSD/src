@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.4 2000/07/20 20:40:38 scw Exp $ */
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.5 2000/09/06 19:51:43 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,8 @@ clmpcc_pcctwo_match(parent, cf, aux)
 
 	pa = aux;
 
-	if (strcmp(pa->pa_name, clmpcc_cd.cd_name))
+	if (strcmp(pa->pa_name, clmpcc_cd.cd_name) ||
+	    (machineid != MVME_167 && machineid != MVME_177))
 		return (0);
 
 	pa->pa_ipl = cf->pcctwocf_ipl;
@@ -140,12 +141,6 @@ clmpcc_pcctwo_attach(parent, self, aux)
 	pcctwointr_establish(PCCTWOV_SCC_RX_EXCEP, clmpcc_rxintr, level, sc);
 	pcctwointr_establish(PCCTWOV_SCC_TX, clmpcc_txintr, level, sc);
 	pcctwointr_establish(PCCTWOV_SCC_MODEM, clmpcc_mdintr, level, sc);
-
-	/* Enable the interrupts */
-	pcc2_reg_write(sys_pcctwo, PCC2REG_SCC_MODEM_ICSR,
-	    level | PCCTWO_ICR_IEN);
-	pcc2_reg_write(sys_pcctwo, PCC2REG_SCC_RX_ICSR, level | PCCTWO_ICR_IEN);
-	pcc2_reg_write(sys_pcctwo, PCC2REG_SCC_TX_ICSR, level | PCCTWO_ICR_IEN);
 }
 
 void
@@ -236,7 +231,7 @@ clmpcccnprobe(cp)
 {
 	int maj;
 
-	if (machineid == MVME_147) {
+	if (machineid != MVME_167 && machineid != MVME_177) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}

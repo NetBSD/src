@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcctwo.c,v 1.3 2000/03/18 22:33:03 scw Exp $ */
+/*	$NetBSD: lpt_pcctwo.c,v 1.4 2000/09/06 19:51:43 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/device.h>
 #include <sys/syslog.h>
 
+#include <machine/cpu.h>
 #include <machine/bus.h>
 
 #include <mvme68k/dev/lptvar.h>
@@ -93,7 +94,8 @@ lpt_pcctwo_match(parent, cf, args)
 
 	pa = args;
 
-	if (strcmp(pa->pa_name, lpt_cd.cd_name))
+	if (strcmp(pa->pa_name, lpt_cd.cd_name) ||
+	    (machineid != MVME_167 && machineid != MVME_177))
 		return (0);
 
 	pa->pa_ipl = cf->pcctwocf_ipl;

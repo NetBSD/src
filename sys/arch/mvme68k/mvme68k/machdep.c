@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2000/08/20 17:07:44 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 2000/09/06 19:51:45 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -193,11 +193,7 @@ void	mvme68k_init __P((void));
 void	mvme147_init __P((void));
 #endif
 
-#ifdef MVME162
-void	mvme162_init __P((void));
-#endif
-
-#ifdef MVME167
+#if defined(MVME162) || defined(MVME167)
 #include <mvme68k/dev/pcctworeg.h>
 void	mvme167_init __P((void));
 #endif
@@ -240,13 +236,13 @@ mvme68k_init()
 		mvme147_init();
 		break;
 #endif
-#ifdef MVME162
-	case MVME_162:
-		mvme162_init();
-		break;
-#endif
 #ifdef MVME167
 	case MVME_167:
+#endif
+#ifdef MVME162
+	case MVME_162:
+#endif
+#if defined(MVME167) || defined(MVME162)
 		mvme167_init();
 		break;
 #endif
@@ -312,21 +308,9 @@ mvme147_init()
 }
 #endif /* MVME147 */
 
-#ifdef MVME162
+#if defined(MVME167) || defined(MVME162)
 /*
- * MVME-162 specific initialization.
- */
-void
-mvme162_init()
-{
-
-	/* XXX implement XXX */
-}
-#endif /* MVME162 */
-
-#ifdef MVME167
-/*
- * MVME-167 specific initializaion.
+ * MVME-167 and MVME-162 specific initializaion.
  *
  * XXX Still needs to be bus_spaced XXX
  */

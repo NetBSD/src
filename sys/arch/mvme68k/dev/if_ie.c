@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.6 2000/07/25 20:52:27 scw Exp $ */
+/*	$NetBSD: if_ie.c,v 1.7 2000/09/06 19:51:43 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ static void ie_write_16 __P((struct ie_softc *, int, u_int16_t));
 static void ie_write_24 __P((struct ie_softc *, int, int));
 
 /*
- * i82596 Support Routines for MVME1[67]7 Boards
+ * i82596 Support Routines for MVME1[67][27] Boards
  */
 static void
 ie_reset(sc, why)
@@ -339,8 +339,5 @@ ie_pcctwo_attach(parent, self, args)
 	i82586_attach(sc, "onboard", ethaddr, NULL, 0, 0);
 
 	/* Finally, hook the hardware interrupt */
-	pcc2_reg_write(sys_pcctwo, PCC2REG_ETH_ICSR, 0);
 	pcctwointr_establish(PCCTWOV_LANC_IRQ, i82586_intr, pa->pa_ipl, sc);
-	pcc2_reg_write(sys_pcctwo, PCC2REG_ETH_ICSR,
-	    pa->pa_ipl | PCCTWO_ICR_ICLR | PCCTWO_ICR_EDGE);
 }
