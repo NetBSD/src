@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.39 1999/09/26 02:15:42 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.40 1999/09/26 05:33:31 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -505,3 +505,13 @@ sys/dev/raidframe/rf_states.c			1.7
   Add a more reasonable throttling mechanism to the RAIDframe code.
   Increases write performance, and helps prevent the I/O routines from
   using too much kernel memory.
+
+sys/sys/disklabel_mbr.h				1.4
+
+  Correct NTFS partition type.
+
+usr.sbin/mbrlabel/mbrlabel.c			1.6
+sys/sys/disklabel_mbr.h				1.5
+
+  Correct handling of extended partitions within extended partitions, and
+  add support for Linux extended partitions.
