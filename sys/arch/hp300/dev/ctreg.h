@@ -1,4 +1,4 @@
-/*	$NetBSD: ctreg.h,v 1.4 1994/10/26 07:23:29 cgd Exp $	*/
+/*	$NetBSD: ctreg.h,v 1.4.2.1 1996/02/12 19:30:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -165,7 +165,7 @@ struct ct_describe {
 #define	C_SSM		0x3e
 #define	C_WFM		0x49
 #define	C_UNLOAD	0x4a
-#define	C_REL		0x140
+#define	C_REL		0xc0
 
 #define	C_CMD		0x05
 #define	C_EXEC		0x0e
