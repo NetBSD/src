@@ -34,55 +34,9 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_we.c	7.3 (Berkeley) 5/21/91
- *	$Id: if_we.c,v 1.10 1993/05/20 10:40:48 deraadt Exp $
+ *	$Id: if_we.c,v 1.11 1993/08/03 05:06:26 mycroft Exp $
  */
 
-/*
- * Modification history
- *
- * 8/28/89 - Initial version(if_wd.c), Tim L Tucker
- *
- * 92.09.19 - Changes to allow multiple we interfaces in one box.
- *          Allowed interupt handler to look at unit other than 0
- *
- * BPF Packet Filter Support added by Marc Frajola, 12/30/92
- * Input & other routines re-written by David Greenman, 1/2/93
- * BPF trailer support added by David Greenman, 1/7/93
- *
- * $Log: if_we.c,v $
- * Revision 1.10  1993/05/20 10:40:48  deraadt
- * we driver prints same ethernet address message as other drivers
- *
- * Revision 1.9  1993/05/18  18:19:01  cgd
- * make kernel select interface be one-stop shopping & clean it all up.
- *
- * Revision 1.8  1993/05/01  19:12:45  mycroft
- * Fix error in last change.  B-P
- *
- * Revision 1.7  1993/04/30  23:48:35  mycroft
- * Move bpfattach() call into weattach().
- *
- * Revision 1.6  1993/04/29  09:33:21  mycroft
- * Fix total bogosity in the receiver code.
- *
- * Revision 1.5  1993/04/10  15:58:56  glass
- * Fixed so they are useable when compiled with options NS.  Not that I know
- * anyone who will.....
- *
- * Revision 1.4  1993/04/08  08:26:54  deraadt
- * dmesg output at boottime now tries to print out information as
- * soon as it is available. The output looks much more like Sunos.
- *
- * Revision 1.3  1993/03/24  23:54:19  cgd
- * brought in drivers from David Greenman's (davidg@implode.rain.com)
- * BPF package
- *
- * Revision 1.2  93/02/18  17:21:57  davidg
- * Bugs in mbuf cluster allocation fixed
- * Problem with nfs wanting mbufs aligned on longword boundries fixed
- * 
- */
- 
 #include "we.h"
 #if	NWE > 0
 /*
