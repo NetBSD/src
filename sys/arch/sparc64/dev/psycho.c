@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.37 2001/09/24 23:49:32 eeh Exp $	*/
+/*	$NetBSD: psycho.c,v 1.38 2001/09/26 20:53:11 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -190,7 +190,7 @@ psycho_match(parent, match, aux)
 	void		*aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	char *model = getpropstring(ma->ma_node, "model");
+	char *model = PROM_getpropstring(ma->ma_node, "model");
 	int i;
 
 	/* match on a name of "pci" and a sabre or a psycho */
@@ -199,7 +199,7 @@ psycho_match(parent, match, aux)
 			if (strcmp(model, psycho_names[i].p_name) == 0)
 				return (1);
 
-		model = getpropstring(ma->ma_node, "compatible");
+		model = PROM_getpropstring(ma->ma_node, "compatible");
 		for (i=0; psycho_names[i].p_name; i++)
 			if (strcmp(model, psycho_names[i].p_name) == 0)
 				return (1);
@@ -233,7 +233,7 @@ psycho_attach(parent, self, aux)
 	u_int64_t csr;
 	int psycho_br[2], n, i;
 	struct pci_ctl *pci_ctl;
-	char *model = getpropstring(ma->ma_node, "model");
+	char *model = PROM_getpropstring(ma->ma_node, "model");
 
 	printf("\n");
 
@@ -250,7 +250,7 @@ psycho_attach(parent, self, aux)
 			goto found;
 		}
 
-	model = getpropstring(ma->ma_node, "compatible");
+	model = PROM_getpropstring(ma->ma_node, "compatible");
 	for (i=0; psycho_names[i].p_name; i++)
 		if (strcmp(model, psycho_names[i].p_name) == 0) {
 			sc->sc_mode = psycho_names[i].p_type;
@@ -555,7 +555,7 @@ psycho_get_bus_range(node, brp)
 {
 	int n;
 
-	if (getprop(node, "bus-range", sizeof(*brp), &n, (void **)&brp))
+	if (PROM_getprop(node, "bus-range", sizeof(*brp), &n, (void **)&brp))
 		panic("could not get psycho bus-range");
 	if (n != 2)
 		panic("broken psycho bus-range");
@@ -569,7 +569,7 @@ psycho_get_ranges(node, rp, np)
 	int *np;
 {
 
-	if (getprop(node, "ranges", sizeof(**rp), np, (void **)rp))
+	if (PROM_getprop(node, "ranges", sizeof(**rp), np, (void **)rp))
 		panic("could not get psycho ranges");
 	DPRINTF(PDB_PROM, ("psycho debug: got `ranges' for node %08x: %d entries\n", node, *np));
 }
@@ -700,7 +700,7 @@ psycho_iommu_init(sc, tsbsize)
 	is->is_bustag = sc->sc_bustag;
 	is->is_iommu = &sc->sc_regs->psy_iommu;
 
-	if (getproplen(sc->sc_node, "no-streaming-cache") < 0)
+	if (PROM_getproplen(sc->sc_node, "no-streaming-cache") < 0)
 		is->is_sb = 0;
 	else
 		is->is_sb = &sc->sc_regs->psy_iommu_strbuf;
@@ -713,7 +713,7 @@ psycho_iommu_init(sc, tsbsize)
 	 * We could query the `#virtual-dma-size-cells' and
 	 * `#virtual-dma-addr-cells' and DTRT, but I'm lazy.
 	 */
-	if (!getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem, 
+	if (!PROM_getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem, 
 		(void **)&vdma)) {
 		/* Damn.  Gotta use these values. */
 		iobase = vdma[0];

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
+/*	$NetBSD: zs.c,v 1.30 2001/09/26 20:53:12 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@ zs_attach_mainbus(parent, self, aux)
 	}
 	zsc->zsc_bustag = sa->sa_bustag;
 	zsc->zsc_dmatag = sa->sa_dmatag;
-	zsc->zsc_promunit = getpropint(sa->sa_node, "slave", -2);
+	zsc->zsc_promunit = PROM_getpropint(sa->sa_node, "slave", -2);
 	zsc->zsc_node = sa->sa_node;
 	zs_attach(zsc, zsaddr[zs_unit], sa->sa_pri);
 }
@@ -369,7 +369,7 @@ zs_attach(zsc, zsd, pri)
 		 */
 		if (child 
 		    && (child->dv_cfdata->cf_driver == &zstty_cd) 
-		    && (getproplen(zsc->zsc_node, "keyboard") == 0)) {
+		    && (PROM_getproplen(zsc->zsc_node, "keyboard") == 0)) {
 			struct kbd_ms_tty_attach_args kma;
 			struct zstty_softc {	
 				/* The following are the only fields we need here */

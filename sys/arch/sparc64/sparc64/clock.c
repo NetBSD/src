@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.42 2001/09/26 20:53:12 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -404,7 +404,7 @@ clockattach(node, bt, bh)
 	struct idprom *idp;
 	int h;
 
-	model = getpropstring(node, "model");
+	model = PROM_getpropstring(node, "model");
 
 #ifdef DIAGNOSTIC
 	if (model == NULL)
@@ -484,7 +484,7 @@ clockattach_rtc(parent, self, aux)
 		return;
 	}
 
-	model = getpropstring(ea->ea_node, "model");
+	model = PROM_getpropstring(ea->ea_node, "model");
 #ifdef DIAGNOSTIC
 	if (model == NULL)
 		panic("clockattach_rtc: no model property");
@@ -636,7 +636,7 @@ myetheraddr(cp)
 		int node, n;
 
 		node = findroot();
-		if (getprop(node, "idprom", sizeof *idp, &n, (void **)&idp) ||
+		if (PROM_getprop(node, "idprom", sizeof *idp, &n, (void **)&idp) ||
 		    n != 1) {
 			printf("\nmyetheraddr: clock not setup yet, "
 			       "and no idprom property in /\n");

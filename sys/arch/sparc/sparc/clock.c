@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.80 2001/08/02 18:06:22 matt Exp $ */
+/*	$NetBSD: clock.c,v 1.81 2001/09/26 20:53:07 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -531,7 +531,7 @@ clockattach(node, bt, bh)
 	if (CPU_ISSUN4)
 		model = "mk48t02";	/* Hard-coded sun4 clock */
 	else if (node != 0)
-		model = getpropstring(node, "model");
+		model = PROM_getpropstring(node, "model");
 	else
 		panic("clockattach: node == 0");
 

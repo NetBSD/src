@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.19 2001/09/19 18:10:34 thorpej Exp $ */
+/*	$NetBSD: fb.c,v 1.20 2001/09/26 20:53:10 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -203,9 +203,9 @@ fb_setsize(fb, depth, def_width, def_height, node)
 	struct fbdevice *fb;
 	int depth, def_width, def_height, node;
 {
-	fb->fb_type.fb_width = getpropint(node, "width", def_width);
-	fb->fb_type.fb_height = getpropint(node, "height", def_height);
-	fb->fb_linebytes = getpropint(node, "linebytes",
+	fb->fb_type.fb_width = PROM_getpropint(node, "width", def_width);
+	fb->fb_type.fb_height = PROM_getpropint(node, "height", def_height);
+	fb->fb_linebytes = PROM_getpropint(node, "linebytes",
 				     (fb->fb_type.fb_width * depth) / 8);
 }
 
@@ -262,8 +262,8 @@ fbrcons_init(fb)
 	maxcol = 0;
 
 #if !defined(RASTERCONS_FULLSCREEN)
-	maxcol = a2int(getpropstring(optionsnode, "screen-#columns"), 80);
-	maxrow = a2int(getpropstring(optionsnode, "screen-#rows"), 34);
+	maxcol = a2int(PROM_getpropstring(optionsnode, "screen-#columns"), 80);
+	maxrow = a2int(PROM_getpropstring(optionsnode, "screen-#rows"), 34);
 #endif /* !RASTERCONS_FULLSCREEN */
 	/* 
 	 * XXX until somebody actually sets the colormap after a call to 

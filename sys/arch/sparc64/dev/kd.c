@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.17 2001/09/19 18:10:34 thorpej Exp $	*/
+/*	$NetBSD: kd.c,v 1.18 2001/09/26 20:53:10 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -138,14 +138,14 @@ kd_init(kd)
 	}
 
 	if (kd->rows == 0 &&
-	    (prop = getpropstring(optionsnode, "screen-#rows"))) {
+	    (prop = PROM_getpropstring(optionsnode, "screen-#rows"))) {
 		i = 0;
 		while (*prop != '\0')
 			i = i * 10 + *prop++ - '0';
 		kd->rows = (unsigned short)i;
 	}
 	if (kd->cols == 0 &&
-	    (prop = getpropstring(optionsnode, "screen-#columns"))) {
+	    (prop = PROM_getpropstring(optionsnode, "screen-#columns"))) {
 		i = 0;
 		while (*prop != '\0')
 			i = i * 10 + *prop++ - '0';
