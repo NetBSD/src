@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.10 2001/11/23 19:36:50 thorpej Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.11 2001/11/27 01:12:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -45,7 +45,7 @@
 #include <sys/device.h>
 
 #include <machine/bus.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <arm/cpufunc.h>
 #include <arm/arm32/katelib.h>
 #include <hpcarm/sa11x0/sa11x0_reg.h> 

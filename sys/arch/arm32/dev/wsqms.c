@@ -1,4 +1,4 @@
-/* $NetBSD: wsqms.c,v 1.1 2001/04/14 19:22:44 reinoud Exp $ */
+/* $NetBSD: wsqms.c,v 1.2 2001/11/27 01:06:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -53,7 +53,7 @@
 #include <sys/systm.h>
 
 #include <machine/bus.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
  
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsksymdef.h>

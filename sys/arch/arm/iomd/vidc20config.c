@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.3 2001/11/22 18:34:34 thorpej Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.4 2001/11/27 01:03:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -52,7 +52,7 @@
 #include <arm/iomd/vidc.h>
 #include <arm/arm32/katelib.h>
 #include <machine/bootconfig.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 
 #include <sys/systm.h>
 #include <sys/device.h>
