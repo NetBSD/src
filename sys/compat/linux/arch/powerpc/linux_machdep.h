@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.2 2001/04/12 19:32:35 manu Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.3 2001/05/27 21:11:12 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,9 @@
  * Needed for sigcontext 
  */
 struct linux_pt_regs {
+#define lpt_regs_fixreg_begin lgpr[0]
 	unsigned long lgpr[32];  
+#define lpt_regs_fixreg_end lgpr[31]
 	unsigned long lnip;
 	unsigned long lmsr;
 	unsigned long lorig_gpr3;	/* Used for restarting system calls */
