@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.45 1999/03/31 12:19:57 bouyer Exp $	
+.\"	$NetBSD: hardware,v 1.45.2.1 1999/04/12 16:11:38 bouyer Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -106,6 +106,7 @@ Supported devices include:
 		3COM 3c509, 3c579, 3c59X, and 3c90X (including 3c905B)
 		3COM 3c589
 		Digital DC21x4x-based PCI Ethernet adapters, including:
+			ASUS PCI-DEC100TX+
 			Cogent EM1X0, EM960 (a.k.a. Adaptec ANA-69XX)
 			Cogent EM964 [b]
 			Cogent EM4XX [b]
@@ -113,6 +114,7 @@ Supported devices include:
 			DANPEX EN-9400P3
 			Digital Celebris GL, GLST on-board ethernet
 			Digital (DEC) PCI Ethernet/Fast Ethernet adapters (all)
+			DLINK DFE500-TX
 			JCIS Condor JC1260
 			Linksys PCI Fast Ethernet
 			SMC EtherPower 10, 10/100 (PCI only!)
