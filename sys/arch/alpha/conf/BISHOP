@@ -1,4 +1,4 @@
-#	$NetBSD: BISHOP,v 1.4 1998/04/24 18:18:41 thorpej Exp $
+#	$NetBSD: BISHOP,v 1.5 1998/05/04 04:38:28 thorpej Exp $
 #
 # Kernel for bishop.nas.nasa.gov and ripley.nas.nasa.gov (AlphaStation 500
 # and AlphaStation 600, respectively).
@@ -13,8 +13,6 @@ options 	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
 
 # Standard system options
 options 	KTRACE			# System call tracing support
-options 	UVM			# new VM system
-options 	PMAP_NEW		# new pmap interface
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
