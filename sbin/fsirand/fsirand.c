@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.17 2001/11/16 04:25:43 lukem Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.18 2001/11/16 14:33:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.17 2001/11/16 04:25:43 lukem Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.18 2001/11/16 14:33:37 lukem Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -57,7 +57,6 @@ __RCSID("$NetBSD: fsirand.c,v 1.17 2001/11/16 04:25:43 lukem Exp $");
 #include <unistd.h>
 #include <util.h>
 
-#include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_bswap.h>
 
 #include <ufs/ffs/fs.h>
