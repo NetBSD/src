@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.19 1995/07/27 23:49:45 ghudson Exp $	*/
+/*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: ping.c,v 1.19 1995/07/27 23:49:45 ghudson Exp $";
+static char rcsid[] = "$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -518,7 +518,8 @@ pr_pack(buf, cc, from)
 	static int old_rrlen;
 	static char old_rr[MAX_IPOPTLEN];
 	struct ip *ip;
-	struct timeval tv, *tp;
+	struct timeval tv, tp;
+	char *pkttime;
 	double triptime;
 	int hlen, dupflag;
 
@@ -543,11 +544,12 @@ pr_pack(buf, cc, from)
 		++nreceived;
 		if (timing) {
 #ifndef icmp_data
-			tp = (struct timeval *)&icp->icmp_ip;
+			pkttime = (char *)&icp->icmp_ip;
 #else
-			tp = (struct timeval *)icp->icmp_data;
+			pkttime = (char *)icp->icmp_data;
 #endif
-			timersub(&tv, tp, &tv);
+			memcpy(&tp, pkttime, sizeof (tp));
+			timersub(&tv, &tp, &tv);
 			triptime = ((double)tv.tv_sec) * 1000.0 +
 			    ((double)tv.tv_usec) / 1000.0;
 			tsum += triptime;
@@ -581,9 +583,10 @@ pr_pack(buf, cc, from)
 			if (dupflag)
 				(void)printf(" (DUP!)");
 			/* check the data */
-			cp = (u_char*)&icp->icmp_data[8];
-			dp = &outpack[8 + sizeof(struct timeval)];
-			for (i = 8; i < datalen; ++i, ++cp, ++dp) {
+			cp = (u_char*)&icp->icmp_data[sizeof (struct timeval)];
+			dp = &outpack[8 + sizeof (struct timeval)];
+			for (i = 8 + sizeof(struct timeval); i < datalen;
+			    ++i, ++cp, ++dp) {
 				if (*cp != *dp) {
 	(void)printf("\nwrong data byte #%d should be 0x%x but was 0x%x",
 	    i, *dp, *cp);
@@ -845,7 +848,8 @@ pr_icmph(icp)
 			(void)printf("Redirect, Bad Code: %d", icp->icmp_code);
 			break;
 		}
-		(void)printf("(New addr: 0x%08lx)\n", icp->icmp_gwaddr.s_addr);
+		(void)printf("(New addr: 0x%08lx)\n",
+		    (u_long)icp->icmp_gwaddr.s_addr);
 #ifndef icmp_data
 		pr_retip(&icp->icmp_ip);
 #else
