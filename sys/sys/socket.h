@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.63 2001/10/16 19:47:44 kleink Exp $	*/
+/*	$NetBSD: socket.h,v 1.64 2001/10/22 17:53:44 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -531,6 +531,7 @@ ssize_t	sendto __P((int, const void *,
 ssize_t	sendmsg __P((int, const struct msghdr *, int));
 int	setsockopt __P((int, int, int, const void *, socklen_t));
 int	shutdown __P((int, int));
+int	sockatmark __P((int));
 int	socket __P((int, int, int));
 int	socketpair __P((int, int, int, int *));
 __END_DECLS
