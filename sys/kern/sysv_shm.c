@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.72 2003/12/05 22:09:56 jdolecek Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.73 2003/12/06 01:53:14 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.72 2003/12/05 22:09:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.73 2003/12/06 01:53:14 simonb Exp $");
 
 #define SYSVSHM
 
@@ -205,7 +205,9 @@ shm_delete_mapping(vm, shmmap_s, shmmap_se)
 	segnum = IPCID_TO_IX(shmmap_se->shmid);
 #ifdef DEBUG
 	if (segnum < 0 || segnum >= shminfo.shmmni)
-		panic("shm_delete_mapping: vmspace %p state %p entry %p - entry segment ID bad (%d)", vm, shmmap_s, shmmap_se, segnum);
+		panic("shm_delete_mapping: vmspace %p state %p entry %p - "
+		    "entry segment ID bad (%d)",
+		    vm, shmmap_s, shmmap_se, segnum);
 #endif
 	shmseg = &shmsegs[segnum];
 	size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
