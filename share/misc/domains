@@ -1,6 +1,6 @@
-# $NetBSD: domains,v 1.5 2003/03/02 20:13:23 jhawk Exp $
+# $NetBSD: domains,v 1.6 2004/11/17 15:05:29 wiz Exp $
 # ISO 3166 country codes, from http://www.iana.org/cctld/cctld-whois.htm
-# Latest change: 26-Nov-2001
+# Last update: 17-Nov-2004
 #
 ac Ascension Island
 ad Andorra
@@ -18,6 +18,7 @@ as American Samoa
 at Austria
 au Australia
 aw Aruba
+ax Aland Islands
 az Azerbaijan
 ba Bosnia and Herzegovina
 bb Barbados
@@ -40,7 +41,7 @@ by Belarus
 bz Belize
 ca Canada
 cc Cocos (Keeling) Islands
-cd Congo, Democratic Republic of the
+cd Congo, The Democratic Republic of the
 cf Central African Republic
 cg Congo, Republic of
 ch Switzerland
@@ -51,8 +52,9 @@ cm Cameroon
 cn China
 co Colombia
 cr Costa Rica
+cs Serbia and Montenegro
 cu Cuba
-cv Cap Verde
+cv Cape Verde
 cx Christmas Island
 cy Cyprus
 cz Czech Republic
@@ -71,11 +73,12 @@ es Spain
 et Ethiopia
 fi Finland
 fj Fiji
-fk Falkland Islands (Malvina)
+fk Falkland Islands (Malvinas)
 fm Micronesia, Federal State of
 fo Faroe Islands
 fr France
 ga Gabon
+gb United Kingdom
 gd Grenada
 ge Georgia
 gf French Guiana
@@ -106,7 +109,7 @@ im Isle of Man
 in India
 io British Indian Ocean Territory
 iq Iraq
-ir Iran (Islamic Republic of)
+ir Iran, Islamic Republic of
 is Iceland
 it Italy
 je Jersey
@@ -140,7 +143,7 @@ mc Monaco
 md Moldova, Republic of
 mg Madagascar
 mh Marshall Islands
-mk Macedonia, Former Yugoslav Republic
+mk Macedonia, The Former Yugoslav Republic of
 ml Mali
 mm Myanmar
 mn Mongolia
@@ -176,10 +179,10 @@ pg Papua New Guinea
 ph Philippines
 pk Pakistan
 pl Poland
-pm St. Pierre and Miquelon
+pm Saint Pierre and Miquelon
 pn Pitcairn Island
 pr Puerto Rico
-ps Palestinian Territories
+ps Palestinian Territory, Occupied
 pt Portugal
 pw Palau
 py Paraguay
@@ -194,7 +197,7 @@ sc Seychelles
 sd Sudan
 se Sweden
 sg Singapore
-sh St. Helena
+sh Saint Helena
 si Slovenia
 sj Svalbard and Jan Mayen Islands
 sk Slovak Republic
@@ -214,6 +217,7 @@ tg Togo
 th Thailand
 tj Tajikistan
 tk Tokelau
+tl Timor-Leste
 tm Turkmenistan
 tn Tunisia
 to Tonga
@@ -226,15 +230,15 @@ tz Tanzania
 ua Ukraine
 ug Uganda
 uk United Kingdom
-um US Minor Outlying Islands
+um United States Minor Outlying Islands
 us United States
 uy Uruguay
 uz Uzbekistan
-va Holy See (City Vatican State)
+va Holy See (Vatican City State)
 vc Saint Vincent and the Grenadines
 ve Venezuela
-vg Virgin Islands (British)
-vi Virgin Islands (USA)
+vg Virgin Islands, British
+vi Virgin Islands, U.S.
 vn Vietnam
 vu Vanuatu
 wf Wallis and Futuna Islands
