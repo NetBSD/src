@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.55 1999/11/27 01:19:31 simonb Exp $
+# 	$NetBSD: GENERIC,v 1.56 1999/11/27 01:31:47 simonb Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
@@ -158,7 +158,7 @@ mfb*	at	tc? slot ? offset ?	# PMAG-A MX Monochrome Framebuffer
 cfb*	at	tc? slot ? offset ?	# PMAG-B CX Color Framebuffer
 #tfb*	at	tc? slot ? offset ?	# PMAG-RO TX True Color Framebuffer
 sfb*	at	tc? slot ? offset ?	# PMAGB-B HX Smart Framebuffer
-px*	at	tc? slot ? offset ?	# PMAG-C PX family
+px0	at	tc? slot ? offset ?	# PMAG-C PX family
 #sfbp*	at	tc? slot ? offset ?	# PMAGD HX+ Smart Framebuffer
 xcfb*	at	tc? slot ? offset ?	# PMAG-DV Color Framebuffer at MAXINE
 asc*	at	tc? slot ? offset ?	# PMAZ-A single channel SCSI
