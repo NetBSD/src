@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/25 06:58:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2002/10/01 03:40:32 itojun Exp $
 #	from: Id: Makefile,v 1.5 1993/06/24 05:11:16 deering Exp
 
-.PATH: ${.CURDIR}/../mrouted
-CPPFLAGS+= -I${.CURDIR}/../mrouted
+.include <bsd.own.mk>
+
+.PATH: ${NETBSDSRCDIR}/gnu/dist/mrouted
+CPPFLAGS+= -I${NETBSDSRCDIR}/gnu/dist/mrouted
 
 PROG=	mrinfo
 SRCS=	igmp.c inet.c kern.c mrinfo.c
