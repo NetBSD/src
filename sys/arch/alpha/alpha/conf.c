@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.30 1998/03/02 08:04:04 ross Exp $ */
+/* $NetBSD: conf.c,v 1.31 1998/03/24 05:13:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.30 1998/03/02 08:04:04 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.31 1998/03/24 05:13:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,7 @@ cdev_decl(satlink);
 
 #include "a12dc.h"
 #include "scc.h"
+#include "zstty.h"
 
 #include "se.h"
 #include "rnd.h"
@@ -180,7 +181,11 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NST,st),		/* 12: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 13: SCSI CD-ROM */
 	cdev_ch_init(NCH,ch),		/* 14: SCSI autochanger */
+#if NZSTTY > 0
+	cdev_tty_init(NZSTTY,zs),	/* 15: SCC 8530 serial port tty */
+#else
 	cdev_tty_init(NSCC,scc),	/* 15: scc 8530 serial interface */
+#endif
 	cdev_lkm_init(NLKM,lkm),	/* 16: loadable module driver */
 	cdev_lkm_dummy(),		/* 17 */
 	cdev_lkm_dummy(),		/* 18 */
