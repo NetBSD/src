@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.42 2002/09/20 04:12:42 lukem Exp $	*/
+/*	$NetBSD: lpd.c,v 1.43 2002/09/24 13:31:33 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.42 2002/09/20 04:12:42 lukem Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.43 2002/09/24 13:31:33 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -785,6 +785,13 @@ socksetup(int af, int options, const char *port, int *nfds)
 			    sizeof(on)) < 0) {
 				syslog(LOG_ERR,
 				    "setsockopt (SO_REUSEPORT): %m");
+				close(s);
+				continue;
+			}
+			if (r->ai_family == AF_INET6 && setsockopt(s,
+			    IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) < 0) {
+				syslog(LOG_ERR,
+				    "setsockopt (IPV6_V6ONLY): %m");
 				close(s);
 				continue;
 			}
