@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,17 +30,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)proc.h	7.1 (Berkeley) 5/15/91
- *	$Id: proc.h,v 1.3 1994/05/05 10:12:24 mycroft Exp $
+ *	from: @(#)proc.h	8.1 (Berkeley) 6/10/93
+ *	$Id: proc.h,v 1.4 1994/05/23 06:21:45 mycroft Exp $
  */
 
 /*
  * Machine-dependent part of the proc structure for hp300.
  */
 struct mdproc {
-	int	md_flags;		/* machine-dependent flags */
 	int	*md_regs;		/* registers on current frame */
+	int	md_flags;		/* machine-dependent flags */
 };
 
 /* md_flags */
 #define	MDP_AST		0x0001	/* async trap pending */
+#define	MDP_HPUXTRACE	0x0004	/* being traced by HP-UX process */
+#define	MDP_HPUXMMAP	0x0008	/* VA space is multiply mapped */
+#define MDP_CCBDATA	0x0010	/* copyback caching of data (68040) */
+#define MDP_CCBSTACK	0x0020	/* copyback caching of stack (68040) */
