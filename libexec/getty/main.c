@@ -39,13 +39,14 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.16 (Berkeley) 3/27/91";*/
-static char rcsid[] = "$Id: main.c,v 1.2 1993/08/01 18:30:22 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.3 1993/08/29 22:47:03 mycroft Exp $";
 #endif /* not lint */
 
 #define USE_OLD_TTY
 
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <sgtty.h>
@@ -75,6 +76,7 @@ struct	ltchars ltc = {
 int crmod, digit, lower, upper;
 
 char	hostname[MAXHOSTNAMELEN];
+struct	utsname kerninfo;
 char	name[16];
 char	dev[] = _PATH_DEV;
 char	ttyn[32];
@@ -152,6 +154,7 @@ main(argc, argv)
 	gethostname(hostname, sizeof(hostname));
 	if (hostname[0] == '\0')
 		strcpy(hostname, "Amnesiac");
+	uname(&kerninfo);
 	/*
 	 * The following is a work around for vhangup interactions
 	 * which cause great problems getting window systems started.
@@ -488,6 +491,22 @@ putf(cp)
 			(void)time(&t);
 			(void)strftime(db, sizeof(db), fmt, localtime(&t));
 			puts(db);
+			break;
+
+		case 's':
+			puts(kerninfo.sysname);
+			break;
+
+		case 'm':
+			puts(kerninfo.machine);
+			break;
+
+		case 'r':
+			puts(kerninfo.release);
+			break;
+
+		case 'v':
+			puts(kerninfo.version);
 			break;
 		}
 
