@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolver.3,v 1.6 1996/02/02 15:22:37 mrg Exp $
+.\"	$NetBSD: resolver.3,v 1.7 1996/11/09 08:30:56 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,14 +51,14 @@
 .Fd #include <arpa/nameser.h>
 .Fd #include <resolv.h>
 .Fo res_query
-.Fa "char *dname"
+.Fa "const char *dname"
 .Fa "int class"
 .Fa "int type"
 .Fa "u_char *answer"
 .Fa "int anslen"
 .Fc
 .Fo res_search
-.Fa "char *dname"
+.Fa "const char *dname"
 .Fa "int class"
 .Fa "int type"
 .Fa "u_char *answer"
@@ -66,33 +66,33 @@
 .Fc
 .Fo res_mkquery
 .Fa "int op"
-.Fa "char *dname"
+.Fa "const char *dname"
 .Fa "int class"
 .Fa "int type"
-.Fa "char *data"
+.Fa "const char *data"
 .Fa "int datalen"
 .Fa "struct rrec *newrr"
 .Fa "char *buf"
 .Fa "int buflen"
 .Fc
 .Fo res_send
-.Fa "char *msg"
+.Fa "const u_char *msg"
 .Fa "int msglen"
-.Fa "char *answer"
+.Fa "u_char *answer"
 .Fa "int anslen"
 .Fc
 .Fn res_init 
 .Fo dn_comp
-.Fa "char *exp_dn"
-.Fa "char *comp_dn"
+.Fa "const char *exp_dn"
+.Fa "u_char *comp_dn"
 .Fa "int length"
-.Fa "char **dnptrs"
-.Fa "char **lastdnptr"
+.Fa "u_char **dnptrs"
+.Fa "u_char **lastdnptr"
 .Fc
 .Fo dn_expand
-.Fa "u_char *msg"
-.Fa "u_char *eomorig"
-.Fa "u_char *comp_dn"
+.Fa "const u_char *msg"
+.Fa "const u_char *eomorig"
+.Fa "const u_char *comp_dn"
 .Fa "u_char *exp_dn"
 .Fa "int length"
 .Fc
