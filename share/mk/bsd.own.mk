@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.306 2002/08/27 14:46:14 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.307 2002/08/28 09:57:10 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -240,7 +240,7 @@ _LIBSODIR?=	${LIBDIR}
 .if ${MKDYNAMICROOT} == "no"
 SHLINKDIR?=	/usr/libexec
 .else
-SHLINKDIR?=	/lib
+SHLINKDIR?=	/libexec
 .endif
 LINTLIBDIR?=	/usr/libdata/lint
 LIBGRP?=	${BINGRP}
