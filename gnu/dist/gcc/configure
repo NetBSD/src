@@ -2304,7 +2304,7 @@ for machine in $build $host $target; do
  		fi
 		;;
 	alpha*-*-netbsd*)
-		tm_file="${tm_file} alpha/elf.h alpha/netbsd.h alpha/netbsdl-elf.h"
+		tm_file=alpha/netbsd.h
 		xm_file=alpha/xm-netbsd.h
 		target_cpu_default="MASK_GAS"
 		tmake_file="alpha/t-crtbe"
