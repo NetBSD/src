@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.35 1999/06/17 00:22:43 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36 1999/06/26 09:09:52 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -350,7 +350,6 @@ vmapbuf(bp, len)
 {
 	vaddr_t faddr, taddr, off;
 	paddr_t fpa;
-	pt_entry_t *tpte;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -371,13 +370,13 @@ vmapbuf(bp, len)
 	 * where we we just allocated (TLB will be flushed when our
 	 * mapping is removed).
 	 */
-	tpte = PTE_BASE + ns532_btop(taddr);
 	while (len) {
 		fpa = pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 				   faddr);
-		*tpte = fpa | PG_RW | PG_V;
-		tpte++;
+		pmap_enter(vm_map_pmap(phys_map), taddr, fpa,
+			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	}
 }
