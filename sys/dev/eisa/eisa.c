@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.32 2004/04/22 00:17:10 itojun Exp $	*/
+/*	$NetBSD: eisa.c,v 1.33 2004/08/23 05:50:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.32 2004/04/22 00:17:10 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.33 2004/08/23 05:50:02 thorpej Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -53,17 +53,17 @@ __KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.32 2004/04/22 00:17:10 itojun Exp $");
 #include <dev/eisa/eisavar.h>
 #include <dev/eisa/eisadevs.h>
 
-int	eisamatch(struct device *, struct cfdata *, void *);
-void	eisaattach(struct device *, struct device *, void *);
+static int	eisamatch(struct device *, struct cfdata *, void *);
+static void	eisaattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(eisa, sizeof(struct device),
     eisamatch, eisaattach, NULL, NULL);
 
-int	eisasubmatch(struct device *, struct cfdata *, void *);
-int	eisaprint(void *, const char *);
-void	eisa_devinfo(const char *, char *, size_t);
+static int	eisasubmatch(struct device *, struct cfdata *, void *);
+static int	eisaprint(void *, const char *);
+static void	eisa_devinfo(const char *, char *, size_t);
 
-int
+static int
 eisamatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct eisabus_attach_args *eba = aux;
@@ -76,7 +76,7 @@ eisamatch(struct device *parent, struct cfdata *cf, void *aux)
 	return (1);
 }
 
-int
+static int
 eisaprint(void *aux, const char *pnp)
 {
 	struct eisa_attach_args *ea = aux;
@@ -90,7 +90,7 @@ eisaprint(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-int
+static int
 eisasubmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
@@ -101,7 +101,7 @@ eisasubmatch(struct device *parent, struct cfdata *cf, void *aux)
 	return (config_match(parent, cf, aux));
 }
 
-void
+static void
 eisaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct eisabus_attach_args *eba = aux;
