@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.40 2002/11/28 23:46:15 itojun Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.41 2002/11/29 01:34:55 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.40 2002/11/28 23:46:15 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.41 2002/11/29 01:34:55 itojun Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -215,13 +215,44 @@ linux_sys_socket(p, v, retval)
 		syscallarg(int) protocol;
 	} */ *uap = v;
 	struct sys_socket_args bsa;
+	int s;
 
 	SCARG(&bsa, protocol) = SCARG(uap, protocol);
 	SCARG(&bsa, type) = SCARG(uap, type);
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
-	return sys_socket(p, &bsa, retval);
+	s = sys_socket(p, &bsa, retval);
+
+#ifdef INET6
+	/*
+	 * Linux AF_INET6 socket has IPV6_V6ONLY setsockopt set to 0 by default.
+	 * XXX interaction with native sysctl net.inet6.ip6.v6only?
+	 */
+	if (SCARG(&bsa, domain) == PF_INET6) {
+		struct sys_setsockopt_args bsoa;
+		struct sys_close_args bca;
+		caddr_t sg;
+		const int off = 0;
+
+		SCARG(&bsoa, s) = s;
+		SCARG(&bsoa, level) = IPPROTO_IPV6;
+		SCARG(&bsoa, name) = IPV6_V6ONLY;
+		sg = stackgap_init(p, 0);
+		SCARG(&bsoa, val) = stackgap_alloc(p, &sg, sizeof(off));
+		SCARG(&bsoa, valsize) = sizeof(off);
+		/* LINTED const cast */
+		if (copyout(&off, (void *)SCARG(&bsoa, val), sizeof(off)) ||
+		    sys_setsockopt(p, &bsoa, retval)) {
+			SCARG(&bca, fd) = s;
+			sys_close(p, &bca, retval);
+			*retval = -1;
+			return (EINVAL);	/*XXX*/
+		}
+	}
+#endif
+
+	return s;
 }
 
 int
