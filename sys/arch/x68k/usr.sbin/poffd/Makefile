@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 1996/05/05 12:17:20 oki Exp $
+#	$NetBSD: Makefile,v 1.2 1997/06/22 07:09:11 mrg Exp $
 
 PROG=	poffd
-MAN=	poffd.8 pow.4
-MANSUBDIR=	/x68k
+NOMAN=	yes
 #BINOWN=	root
 #BINGRP=	operator
 #BINMODE=4550

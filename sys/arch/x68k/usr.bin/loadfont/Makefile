@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 1996/05/05 12:17:17 oki Exp $
+#	$NetBSD: Makefile,v 1.2 1997/06/22 07:09:02 mrg Exp $
 
 PROG=loadfont
+NOMAN=	yes
 
 .include <bsd.prog.mk>
