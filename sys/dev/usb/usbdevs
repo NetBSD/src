@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.394 2005/01/23 01:25:04 elric Exp $
+$NetBSD: usbdevs,v 1.395 2005/01/24 01:21:31 joff Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -598,7 +598,7 @@ product ATMEL BW002		0x7605	BW002 Wireless adapter
 product ATMEL BW002		0x7605	BW002
 product ATMEL WL1130		0x7613	WL-1130
 product ATMEL AT76C505A		0x7614	AT76C505A
-product ATMEL DWL_120		0x7603	DWL-120
+product ATMEL AT76C503A		0x7603	AT76C503A
 
 /* Audio-Technica products */
 product AUDIOTECHNICA ATCHA4USB	0x0009	ATC-HA4USB USB headphone
@@ -615,6 +615,7 @@ product AVISION 1200U		0x0268	1200U scanner
 /* Belkin products */
 /*product BELKIN F5U111		0x????	F5U111 Ethernet adapter*/
 product BELKIN2 F5U002		0x0002	F5U002 Parallel printer adapter
+product BELKIN F5D6050		0x0050	F5D6050 802.11b Wireless adapter
 product BELKIN F5U103		0x0103	F5U103 Serial adapter
 product BELKIN F5U109		0x0109	F5U109 Serial adapter
 product BELKIN F5U409		0x0409	F5U409 Serial
