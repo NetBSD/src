@@ -1,3 +1,4 @@
+./dev/mouse
 ./sbin/binpatch
 ./usr/lib/libc.so.12.17
 ./usr/lib/libamu.so.0.0
@@ -40,5 +41,6 @@
 ./usr/sbin/screenblank
 ./usr/sbin/videomode
 ./usr/share/keymaps/amiga/din.map
+./usr/share/keymaps/amiga/fr.map
 ./usr/share/keymaps/amiga/sw.map
 ./usr/share/keymaps/amiga/us.map
