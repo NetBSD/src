@@ -154,11 +154,11 @@ typedef struct AcpiFatalInfo
  * Types specific to the OS service interfaces
  */
 
-typedef UINT32 
+typedef UINT32
 (ACPI_SYSTEM_XFACE *OSD_HANDLER) (
     void                    *Context);
 
-typedef void 
+typedef void
 (ACPI_SYSTEM_XFACE *OSD_EXECUTION_CALLBACK) (
     void                    *Context);
 
@@ -209,7 +209,7 @@ ACPI_STATUS
 AcpiOsWaitSemaphore (
     ACPI_HANDLE             Handle,
     UINT32                  Units,
-    UINT32                  Timeout);
+    UINT16                  Timeout);
 
 ACPI_STATUS
 AcpiOsSignalSemaphore (
@@ -296,7 +296,6 @@ AcpiOsReadPort (
     void                    *Value,
     UINT32                  Width);
 
-
 ACPI_STATUS
 AcpiOsWritePort (
     ACPI_IO_ADDRESS         Address,
@@ -313,7 +312,6 @@ AcpiOsReadMemory (
     ACPI_PHYSICAL_ADDRESS   Address,
     void                    *Value,
     UINT32                  Width);
-
 
 ACPI_STATUS
 AcpiOsWriteMemory (
@@ -333,7 +331,6 @@ AcpiOsReadPciConfiguration (
     void                    *Value,
     UINT32                  Width);
 
-
 ACPI_STATUS
 AcpiOsWritePciConfiguration (
     ACPI_PCI_ID             *PciId,
@@ -341,6 +338,14 @@ AcpiOsWritePciConfiguration (
     ACPI_INTEGER            Value,
     UINT32                  Width);
 
+/*
+ * Interim function needed for PCI IRQ routing
+ */
+void
+AcpiOsDerivePciId(
+    ACPI_HANDLE	            rhandle,
+    ACPI_HANDLE             chandle,
+    ACPI_PCI_ID	            **PciId);
 
 /*
  * Miscellaneous
@@ -350,7 +355,6 @@ BOOLEAN
 AcpiOsReadable (
     void                    *Pointer,
     UINT32                  Length);
-
 
 BOOLEAN
 AcpiOsWritable (
@@ -379,6 +383,10 @@ void
 AcpiOsVprintf (
     const NATIVE_CHAR       *Format,
     va_list                 Args);
+
+void
+AcpiOsRedirectOutput (
+    void                    *Destination);
 
 
 /*

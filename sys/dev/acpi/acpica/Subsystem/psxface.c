@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psxface - Parser external interfaces
- *              $Revision: 1.1.1.2 $
+ *              $Revision: 1.1.1.3 $
  *
  *****************************************************************************/
 
@@ -120,7 +120,6 @@
 #include "acparser.h"
 #include "acdispat.h"
 #include "acinterp.h"
-#include "amlcode.h"
 #include "acnamesp.h"
 
 
@@ -205,7 +204,7 @@ AcpiPsxExecute (
 
     /* Create and init a Root Node */
 
-    Op = AcpiPsAllocOp (AML_SCOPE_OP);
+    Op = AcpiPsCreateScopeOp ();
     if (!Op)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
@@ -249,7 +248,7 @@ AcpiPsxExecute (
 
     /* Create and init a Root Node */
 
-    Op = AcpiPsAllocOp (AML_SCOPE_OP);
+    Op = AcpiPsCreateScopeOp ();
     if (!Op)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);

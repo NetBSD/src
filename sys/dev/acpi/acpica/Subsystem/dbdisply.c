@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbdisply - debug display commands
- *              $Revision: 1.1.1.2 $
+ *              $Revision: 1.1.1.3 $
  *
  ******************************************************************************/
 
@@ -124,10 +124,10 @@
 #include "acdebug.h"
 
 
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 
 
-#define _COMPONENT          ACPI_DEBUGGER
+#define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbdisply")
 
 
@@ -358,7 +358,7 @@ DumpNte:
 
     else
     {
-        AcpiOsPrintf ("Object (%p) Pathname:  %s\n", Node, RetBuf.Pointer);
+        AcpiOsPrintf ("Object (%p) Pathname:  %s\n", Node, (char *) RetBuf.Pointer);
     }
 
     if (!AcpiOsReadable (Node, sizeof (ACPI_NAMESPACE_NODE)))
@@ -407,7 +407,13 @@ AcpiDbDecodeInternalObject (
 
     if (!ObjDesc)
     {
-        AcpiOsPrintf (" Uninitialized\n");
+        AcpiOsPrintf (" Uninitialized");
+        return;
+    }
+
+    if (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) != ACPI_DESC_TYPE_OPERAND)
+    {
+        AcpiOsPrintf (" %p", ObjDesc);
         return;
     }
 
@@ -447,11 +453,46 @@ AcpiDbDecodeInternalObject (
         }
         break;
 
-    
+
     default:
-        /* No additional display for other types */
+
+        AcpiOsPrintf (" %p", ObjDesc);
         break;
     }
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDbDecodeNode
+ *
+ * PARAMETERS:  Node        - Object to be displayed
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Short display of a namespace node
+ *
+ ******************************************************************************/
+
+void
+AcpiDbDecodeNode (
+    ACPI_NAMESPACE_NODE     *Node)
+{
+
+
+    AcpiOsPrintf ("<Node>            Name %4.4s",
+        Node->Name.Ascii);
+
+    if (Node->Flags & ANOBJ_METHOD_ARG)
+    {
+        AcpiOsPrintf (" [Method Arg]");
+    }
+    if (Node->Flags & ANOBJ_METHOD_LOCAL)
+    {
+        AcpiOsPrintf (" [Method Local]");
+    }
+
+    AcpiDbDecodeInternalObject (AcpiNsGetAttachedObject (Node));
 }
 
 
@@ -496,27 +537,16 @@ AcpiDbDisplayInternalObject (
 
     case ACPI_DESC_TYPE_NAMED:
 
-        AcpiOsPrintf ("<Node>            Name %4.4s Type-%s",
-                        ((ACPI_NAMESPACE_NODE *)ObjDesc)->Name.Ascii,
-                        AcpiUtGetTypeName (((ACPI_NAMESPACE_NODE *) ObjDesc)->Type));
-
-        if (((ACPI_NAMESPACE_NODE *) ObjDesc)->Flags & ANOBJ_METHOD_ARG)
-        {
-            AcpiOsPrintf (" [Method Arg]");
-        }
-        if (((ACPI_NAMESPACE_NODE *) ObjDesc)->Flags & ANOBJ_METHOD_LOCAL)
-        {
-            AcpiOsPrintf (" [Method Local]");
-        }
+        AcpiDbDecodeNode ((ACPI_NAMESPACE_NODE *) ObjDesc);
         break;
 
 
     case ACPI_DESC_TYPE_OPERAND:
 
         Type = ACPI_GET_OBJECT_TYPE (ObjDesc);
-        if (Type > INTERNAL_TYPE_MAX)
+        if (Type > ACPI_TYPE_LOCAL_MAX)
         {
-            AcpiOsPrintf (" Type %hX [Invalid Type]", Type);
+            AcpiOsPrintf (" Type %X [Invalid Type]", (UINT32) Type);
             return;
         }
 
@@ -524,10 +554,12 @@ AcpiDbDisplayInternalObject (
 
         switch (ACPI_GET_OBJECT_TYPE (ObjDesc))
         {
-        case INTERNAL_TYPE_REFERENCE:
+        case ACPI_TYPE_LOCAL_REFERENCE:
+
             switch (ObjDesc->Reference.Opcode)
             {
             case AML_LOCAL_OP:
+
                 AcpiOsPrintf ("[Local%d] ", ObjDesc->Reference.Offset);
                 if (WalkState)
                 {
@@ -537,7 +569,9 @@ AcpiDbDisplayInternalObject (
                 }
                 break;
 
+
             case AML_ARG_OP:
+
                 AcpiOsPrintf ("[Arg%d]   ", ObjDesc->Reference.Offset);
                 if (WalkState)
                 {
@@ -547,24 +581,59 @@ AcpiDbDisplayInternalObject (
                 }
                 break;
 
+
             case AML_DEBUG_OP:
+
                 AcpiOsPrintf ("[Debug]  ");
                 break;
 
+
             case AML_INDEX_OP:
-                AcpiOsPrintf ("[Index]           ");
-                AcpiDbDecodeInternalObject (ObjDesc->Reference.Object);
+
+                AcpiOsPrintf ("[Index]          ");
+                if (!ObjDesc->Reference.Where)
+                {
+                    AcpiOsPrintf ("Uninitialized WHERE ptr");
+                }
+                else
+                {
+                    AcpiDbDecodeInternalObject (*(ObjDesc->Reference.Where));
+                }
                 break;
+
+
+            case AML_REF_OF_OP:
+
+                AcpiOsPrintf ("[RefOf]          ");
+
+                /* Reference can be to a Node or an Operand object */
+
+                switch (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc->Reference.Object))
+                {
+                case ACPI_DESC_TYPE_NAMED:
+                    AcpiDbDecodeNode (ObjDesc->Reference.Object);
+                    break;
+
+                case ACPI_DESC_TYPE_OPERAND:
+                    AcpiDbDecodeInternalObject (ObjDesc->Reference.Object);
+                    break;
+
+                default:
+                    break;
+                }
+                break;
+
 
             default:
-                AcpiOsPrintf ("Unknown Reference opcode %X\n", 
+
+                AcpiOsPrintf ("Unknown Reference opcode %X\n",
                     ObjDesc->Reference.Opcode);
                 break;
-
             }
             break;
 
         default:
+
             AcpiOsPrintf ("<Obj> ");
             AcpiOsPrintf ("           ");
             AcpiDbDecodeInternalObject (ObjDesc);
@@ -726,7 +795,7 @@ AcpiDbDisplayLocals (void)
     Node = WalkState->MethodNode;
     AcpiOsPrintf ("Local Variables for method [%4.4s]:\n", Node->Name.Ascii);
 
-    for (i = 0; i < MTH_NUM_LOCALS; i++)
+    for (i = 0; i < ACPI_METHOD_NUM_LOCALS; i++)
     {
         ObjDesc = WalkState->LocalVariables[i].Object;
         AcpiOsPrintf ("Local%d: ", i);
@@ -774,7 +843,7 @@ AcpiDbDisplayArguments (void)
     AcpiOsPrintf ("Method [%4.4s] has %X arguments, max concurrency = %X\n",
             Node->Name.Ascii, NumArgs, Concurrency);
 
-    for (i = 0; i < NumArgs; i++)
+    for (i = 0; i < ACPI_METHOD_NUM_ARGS; i++)
     {
         ObjDesc = WalkState->Arguments[i].Object;
         AcpiOsPrintf ("Arg%d: ", i);
@@ -936,5 +1005,5 @@ AcpiDbDisplayArgumentObject (
     AcpiDbDisplayInternalObject (ObjDesc, WalkState);
 }
 
-#endif /* ENABLE_DEBUGGER */
+#endif /* ACPI_DEBUGGER */
 

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evxfevnt - External Interfaces, ACPI event disable/enable
- *              $Revision: 1.1.1.2 $
+ *              $Revision: 1.1.1.3 $
  *
  *****************************************************************************/
 
@@ -145,19 +145,17 @@ AcpiEnable (void)
     ACPI_FUNCTION_TRACE ("AcpiEnable");
 
 
-    /* Make sure we have ACPI tables */
+    /* Make sure we have the FADT*/
 
-    if (!AcpiGbl_DSDT)
+    if (!AcpiGbl_FADT)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_WARN, "No ACPI tables present!\n"));
+        ACPI_DEBUG_PRINT ((ACPI_DB_WARN, "No FADT information present!\n"));
         return_ACPI_STATUS (AE_NO_ACPI_TABLES);
     }
 
-    AcpiGbl_OriginalMode = AcpiHwGetMode ();
-
-    if (AcpiGbl_OriginalMode == ACPI_SYS_MODE_ACPI)
+    if (AcpiHwGetMode() == ACPI_SYS_MODE_ACPI)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_OK, "Already in ACPI mode.\n"));
+        ACPI_DEBUG_PRINT ((ACPI_DB_INIT, "System is already in ACPI mode\n"));
     }
     else
     {
@@ -166,11 +164,11 @@ AcpiEnable (void)
         Status = AcpiHwSetMode (ACPI_SYS_MODE_ACPI);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_FATAL, "Could not transition to ACPI mode.\n"));
+            ACPI_REPORT_ERROR (("Could not transition to ACPI mode.\n"));
             return_ACPI_STATUS (Status);
         }
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_OK, "Transition to ACPI mode successful\n"));
+        ACPI_DEBUG_PRINT ((ACPI_DB_INIT, "Transition to ACPI mode successful\n"));
     }
 
     return_ACPI_STATUS (Status);
@@ -185,8 +183,7 @@ AcpiEnable (void)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Returns the system to original ACPI/legacy mode, and
- *              uninstalls the SCI interrupt handler.
+ * DESCRIPTION: Transfers the system into LEGACY mode.
  *
  ******************************************************************************/
 
@@ -198,22 +195,31 @@ AcpiDisable (void)
 
     ACPI_FUNCTION_TRACE ("AcpiDisable");
 
-
-    if (AcpiHwGetMode () != AcpiGbl_OriginalMode)
+    if (!AcpiGbl_FADT)
     {
-        /* Restore original mode  */
-
-        Status = AcpiHwSetMode (AcpiGbl_OriginalMode);
-        if (ACPI_FAILURE (Status))
-        {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unable to transition to original mode"));
-            return_ACPI_STATUS (Status);
-        }
+        ACPI_DEBUG_PRINT ((ACPI_DB_WARN, "No FADT information present!\n"));
+        return_ACPI_STATUS (AE_NO_ACPI_TABLES);
     }
 
-    /* Unload the SCI interrupt handler  */
+    if (AcpiHwGetMode() == ACPI_SYS_MODE_LEGACY)
+    {
+        ACPI_DEBUG_PRINT ((ACPI_DB_INIT, "System is already in legacy (non-ACPI) mode\n"));
+    }
+    else
+    {
+        /* Transition to LEGACY mode */
 
-    Status = AcpiEvRemoveSciHandler ();
+        Status = AcpiHwSetMode (ACPI_SYS_MODE_LEGACY);
+
+        if (ACPI_FAILURE (Status))
+        {
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not exit ACPI mode to legacy mode"));
+            return_ACPI_STATUS (Status);
+        }
+
+        ACPI_DEBUG_PRINT ((ACPI_DB_INIT, "ACPI mode disabled\n"));
+    }
+
     return_ACPI_STATUS (Status);
 }
 

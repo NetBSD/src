@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg3 - AML execution - opcodes with 3 arguments
- *              $Revision: 1.1.1.1 $
+ *              $Revision: 1.1.1.2 $
  *
  *****************************************************************************/
 
@@ -327,7 +327,10 @@ Cleanup:
 
     /* Set the return object and exit */
 
-    WalkState->ResultObj = ReturnDesc;
+    if (!WalkState->ResultObj)
+    {
+        WalkState->ResultObj = ReturnDesc;
+    }
     return_ACPI_STATUS (Status);
 }
 

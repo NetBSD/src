@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utmisc - common utility procedures
- *              $Revision: 1.1.1.2 $
+ *              $Revision: 1.1.1.3 $
  *
  ******************************************************************************/
 
@@ -119,12 +119,106 @@
 
 #include "acpi.h"
 #include "acnamesp.h"
-#include "amlcode.h"
-#include "acinterp.h"
 
 
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utmisc")
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtPrintString
+ *
+ * PARAMETERS:  String          - Null terminated ASCII string
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Dump an ASCII string with support for ACPI-defined escape
+ *              sequences.
+ *
+ ******************************************************************************/
+
+void
+AcpiUtPrintString (
+    char                    *String,
+    UINT8                   MaxLength)
+{
+    UINT32                  i;
+
+
+    if (!String)
+    {
+        AcpiOsPrintf ("<\"NULL STRING PTR\">");
+        return;
+    }
+
+    AcpiOsPrintf ("\"");
+    for (i = 0; String[i] && (i < MaxLength); i++)
+    {
+        /* Escape sequences */
+
+        switch (String[i])
+        {
+        case 0x07:
+            AcpiOsPrintf ("\\a");        /* BELL */
+            break;
+
+        case 0x08:
+            AcpiOsPrintf ("\\b");       /* BACKSPACE */
+            break;
+
+        case 0x0C:
+            AcpiOsPrintf ("\\f");       /* FORMFEED */
+            break;
+
+        case 0x0A:
+            AcpiOsPrintf ("\\n");       /* LINEFEED */
+            break;
+
+        case 0x0D:
+            AcpiOsPrintf ("\\r");       /* CARRIAGE RETURN*/
+            break;
+
+        case 0x09:
+            AcpiOsPrintf ("\\t");       /* HORIZONTAL TAB */
+            break;
+
+        case 0x0B:
+            AcpiOsPrintf ("\\v");       /* VERTICAL TAB */
+            break;
+
+        case '\'':                      /* Single Quote */
+        case '\"':                      /* Double Quote */
+        case '\\':                      /* Backslash */
+            AcpiOsPrintf ("\\%c", (int) String[i]);
+            break;
+
+        default:
+
+            /* Check for printable character or hex escape */
+
+            if (ACPI_IS_PRINT (String[i]))
+            {
+                /* This is a normal character */
+
+                AcpiOsPrintf ("%c", (int) String[i]);
+            }
+            else
+            {
+                /* All others will be Hex escapes */
+
+                AcpiOsPrintf ("\\x%2.2X", (INT32) String[i]);
+            }
+            break;
+        }
+    }
+    AcpiOsPrintf ("\"");
+
+    if (i == MaxLength && String[i])
+    {
+        AcpiOsPrintf ("...");
+    }
+}
 
 
 /*******************************************************************************
@@ -201,49 +295,76 @@ AcpiUtSetIntegerWidth (
 }
 
 
-
-#ifdef ACPI_DEBUG
+#ifdef ACPI_DEBUG_OUTPUT
 /*******************************************************************************
  *
  * FUNCTION:    AcpiUtDisplayInitPathname
  *
  * PARAMETERS:  ObjHandle           - Handle whose pathname will be displayed
- *              Path                - Additional path string to be appended
+ *              Path                - Additional path string to be appended.
+ *                                      (NULL if no extra path)
  *
  * RETURN:      ACPI_STATUS
  *
- * DESCRIPTION: Display full pathnbame of an object, DEBUG ONLY
+ * DESCRIPTION: Display full pathname of an object, DEBUG ONLY
  *
  ******************************************************************************/
 
 void
 AcpiUtDisplayInitPathname (
-    ACPI_HANDLE             ObjHandle,
+    UINT8                   Type,
+    ACPI_NAMESPACE_NODE     *ObjHandle,
     char                    *Path)
 {
     ACPI_STATUS             Status;
     ACPI_BUFFER             Buffer;
 
 
-    ACPI_FUNCTION_NAME ("UtDisplayInitPathname");
+    ACPI_FUNCTION_ENTRY ();
 
+
+    /* Only print the path if the appropriate debug level is enabled */
+
+    if (!(AcpiDbgLevel & ACPI_LV_INIT_NAMES))
+    {
+        return;
+    }
+
+    /* Get the full pathname to the node */
 
     Buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-
     Status = AcpiNsHandleToPathname (ObjHandle, &Buffer);
-    if (ACPI_SUCCESS (Status))
+    if (ACPI_FAILURE (Status))
     {
-        if (Path)
-        {
-            ACPI_DEBUG_PRINT ((ACPI_DB_INIT, "%s.%s\n", (char *) Buffer.Pointer, Path));
-        }
-        else
-        {
-            ACPI_DEBUG_PRINT ((ACPI_DB_INIT, "%s\n", (char *) Buffer.Pointer));
-        }
-
-        ACPI_MEM_FREE (Buffer.Pointer);
+        return;
     }
+
+    /* Print what we're doing */
+
+    switch (Type)
+    {
+    case ACPI_TYPE_METHOD:
+        AcpiOsPrintf ("Executing    ");
+        break;
+
+    default:
+        AcpiOsPrintf ("Initializing ");
+        break;
+    }
+
+    /* Print the object type and pathname */
+
+    AcpiOsPrintf ("%-12s  %s", AcpiUtGetTypeName (Type), (char *) Buffer.Pointer);
+
+    /* Extra path is used to append names like _STA, _INI, etc. */
+
+    if (Path)
+    {
+        AcpiOsPrintf (".%s", Path);
+    }
+    AcpiOsPrintf ("\n");
+
+    ACPI_MEM_FREE (Buffer.Pointer);
 }
 #endif
 
@@ -506,7 +627,6 @@ AcpiUtStrupr (
         String++;
     }
 
-
     return (SrcString);
 }
 
@@ -610,7 +730,6 @@ AcpiUtCreateMutex (
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-
     if (!AcpiGbl_AcpiMutexInfo[MutexId].Mutex)
     {
         Status = AcpiOsCreateSemaphore (1, 1,
@@ -650,7 +769,6 @@ AcpiUtDeleteMutex (
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-
     Status = AcpiOsDeleteSemaphore (AcpiGbl_AcpiMutexInfo[MutexId].Mutex);
 
     AcpiGbl_AcpiMutexInfo[MutexId].Mutex = NULL;
@@ -689,7 +807,6 @@ AcpiUtAcquireMutex (
         return (AE_BAD_PARAMETER);
     }
 
-
     ThisThreadId = AcpiOsGetThreadId ();
 
     /*
@@ -720,13 +837,12 @@ AcpiUtAcquireMutex (
         }
     }
 
-
     ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX,
                 "Thread %X attempting to acquire Mutex [%s]\n",
                 ThisThreadId, AcpiUtGetMutexName (MutexId)));
 
     Status = AcpiOsWaitSemaphore (AcpiGbl_AcpiMutexInfo[MutexId].Mutex,
-                                    1, WAIT_FOREVER);
+                                    1, ACPI_WAIT_FOREVER);
     if (ACPI_SUCCESS (Status))
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX, "Thread %X acquired Mutex [%s]\n",
@@ -735,7 +851,6 @@ AcpiUtAcquireMutex (
         AcpiGbl_AcpiMutexInfo[MutexId].UseCount++;
         AcpiGbl_AcpiMutexInfo[MutexId].OwnerId = ThisThreadId;
     }
-
     else
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Thread %X could not acquire Mutex [%s] %s\n",
@@ -781,7 +896,6 @@ AcpiUtReleaseMutex (
         return (AE_BAD_PARAMETER);
     }
 
-
     /*
      * Mutex must be acquired in order to release it!
      */
@@ -793,7 +907,6 @@ AcpiUtReleaseMutex (
 
         return (AE_NOT_ACQUIRED);
     }
-
 
     /*
      * Deadlock prevention.  Check if this thread owns any mutexes of value
@@ -817,7 +930,6 @@ AcpiUtReleaseMutex (
             return (AE_RELEASE_DEADLOCK);
         }
     }
-
 
     /* Mark unlocked FIRST */
 
@@ -880,7 +992,6 @@ AcpiUtCreateUpdateStateAndPush (
         return (AE_NO_MEMORY);
     }
 
-
     AcpiUtPushGenericState (StateList, State);
     return (AE_OK);
 }
@@ -918,7 +1029,6 @@ AcpiUtCreatePkgStateAndPush (
     {
         return (AE_NO_MEMORY);
     }
-
 
     AcpiUtPushGenericState (StateList, State);
     return (AE_OK);
@@ -1188,7 +1298,6 @@ AcpiUtCreateControlState (
         return_PTR (NULL);
     }
 
-
     /* Init fields specific to the control struct */
 
     State->Common.DataType  = ACPI_DESC_TYPE_STATE_CONTROL;
@@ -1285,6 +1394,8 @@ AcpiUtWalkPackageTree (
 
     while (State)
     {
+        /* Get one element of the package */
+
         ThisIndex     = State->Pkg.Index;
         ThisSourceObj = (ACPI_OPERAND_OBJECT *)
                         State->Pkg.SourceObject->Package.Elements[ThisIndex];
@@ -1391,6 +1502,7 @@ AcpiUtGenerateChecksum (
 {
     UINT32                  i;
     signed char             Sum = 0;
+
 
     for (i = 0; i < Length; i++)
     {
@@ -1535,5 +1647,6 @@ AcpiUtReportInfo (
 
     AcpiOsPrintf ("%8s-%04d: *** Info: ", ModuleName, LineNumber);
 }
+
 
 

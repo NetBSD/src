@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utalloc - local cache and memory allocation routines
- *              $Revision: 1.1.1.2 $
+ *              $Revision: 1.1.1.3 $
  *
  *****************************************************************************/
 
@@ -1105,12 +1105,12 @@ AcpiUtDumpAllocations (
 
     if (!NumOutstanding)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_OK,
+        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
             "No outstanding allocations.\n"));
     }
     else
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_OK,
+        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
             "%d(%X) Outstanding allocations\n",
             NumOutstanding, NumOutstanding));
     }

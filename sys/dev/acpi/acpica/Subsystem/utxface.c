@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utxface - External interfaces for "global" ACPI functions
- *              $Revision: 1.1.1.2 $
+ *              $Revision: 1.1.1.3 $
  *
  *****************************************************************************/
 
@@ -260,6 +260,8 @@ AcpiEnableSubsystem (
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[Init] Going into ACPI mode\n"));
 
+        AcpiGbl_OriginalMode = AcpiHwGetMode();
+
         Status = AcpiEnable ();
         if (ACPI_FAILURE (Status))
         {
@@ -297,6 +299,31 @@ AcpiEnableSubsystem (
             return_ACPI_STATUS (Status);
         }
     }
+
+    return_ACPI_STATUS (Status);
+}
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiInitializeObjects
+ *
+ * PARAMETERS:  Flags           - Init/enable Options
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Completes namespace initialization by initializing device
+ *              objects and executing AML code for Regions, buffers, etc.
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiInitializeObjects (
+    UINT32                  Flags)
+{
+    ACPI_STATUS             Status = AE_OK;
+
+
+    ACPI_FUNCTION_TRACE ("AcpiInitializeObjects");
 
     /*
      * Initialize all device objects in the namespace
@@ -376,7 +403,7 @@ AcpiTerminate (void)
     AcpiUtMutexTerminate ();
 
 
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 
     /* Shut down the debugger */
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rscalc - Calculate stream and list lengths
- *              $Revision: 1.1.1.2 $
+ *              $Revision: 1.1.1.3 $
  *
  ******************************************************************************/
 
@@ -891,7 +891,7 @@ AcpiRsGetPciRoutingTableLength (
         for (TableIndex = 0; TableIndex < 4 && !NameFound; TableIndex++)
         {
             if ((ACPI_TYPE_STRING == ACPI_GET_OBJECT_TYPE (*SubObjectList)) ||
-                ((INTERNAL_TYPE_REFERENCE == ACPI_GET_OBJECT_TYPE (*SubObjectList)) &&
+                ((ACPI_TYPE_LOCAL_REFERENCE == ACPI_GET_OBJECT_TYPE (*SubObjectList)) &&
                     ((*SubObjectList)->Reference.Opcode == AML_INT_NAMEPATH_OP)))
             {
                 NameFound = TRUE;
@@ -915,10 +915,10 @@ AcpiRsGetPciRoutingTableLength (
             if (ACPI_GET_OBJECT_TYPE (*SubObjectList) == ACPI_TYPE_STRING)
             {
                 /*
-                 * The length String.Length field includes the
-                 * terminating NULL
+                 * The length String.Length field does not include the
+                 * terminating NULL, add 1
                  */
-                TempSizeNeeded += (*SubObjectList)->String.Length;
+                TempSizeNeeded += ((*SubObjectList)->String.Length + 1);
             }
             else
             {

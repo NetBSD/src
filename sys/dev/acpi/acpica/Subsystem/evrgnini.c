@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evrgnini- ACPI AddressSpace (OpRegion) init
- *              $Revision: 1.1.1.2 $
+ *              $Revision: 1.1.1.3 $
  *
  *****************************************************************************/
 
@@ -303,7 +303,7 @@ AcpiEvPciConfigRegionSetup (
     Status = AcpiUtEvaluateNumericObject (METHOD_NAME__ADR, Node, &Temp);
 
     /*
-     * The default is zero, and since the allocation above zeroed 
+     * The default is zero, and since the allocation above zeroed
      * the data, just do nothing on failure.
      */
     if (ACPI_SUCCESS (Status))
@@ -379,6 +379,11 @@ AcpiEvPciConfigRegionSetup (
     {
         PciId->Bus = ACPI_LOWORD (Temp);
     }
+
+    /*
+     * Complete this device's PciId
+     */
+    AcpiOsDerivePciId (Node, RegionObj->Region.Node, &PciId);
 
     *RegionContext = PciId;
     return_ACPI_STATUS (AE_OK);

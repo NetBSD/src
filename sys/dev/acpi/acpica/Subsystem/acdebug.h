@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acdebug.h - ACPI/AML debugger
- *       $Revision: 1.1.1.2 $
+ *       $Revision: 1.1.1.3 $
  *
  *****************************************************************************/
 
@@ -119,7 +119,6 @@
 
 
 #define ACPI_DEBUG_BUFFER_SIZE  4196
-
 
 typedef struct CommandInfo
 {
@@ -276,44 +275,6 @@ AcpiDbWalkForSpecificObjects (
     void                    **ReturnValue);
 
 
-
-/*
- * dbdisasm - AML disassembler
- */
-
-void
-AcpiDbDisplayOp (
-    ACPI_WALK_STATE         *WalkState,
-    ACPI_PARSE_OBJECT       *Origin,
-    UINT32                  NumOpcodes);
-
-void
-AcpiDbDisplayNamestring (
-    NATIVE_CHAR             *Name);
-
-void
-AcpiDbDisplayPath (
-    ACPI_PARSE_OBJECT       *Op);
-
-void
-AcpiDbDisplayOpcode (
-    ACPI_WALK_STATE         *WalkState,
-    ACPI_PARSE_OBJECT       *Op);
-
-void
-AcpiDbDecodeInternalObject (
-    ACPI_OPERAND_OBJECT     *ObjDesc);
-
-UINT32
-AcpiDbBlockType (
-    ACPI_PARSE_OBJECT       *Op);
-
-ACPI_STATUS
-AcpiPsDisplayObjectPathname (
-    ACPI_WALK_STATE         *WalkState,
-    ACPI_PARSE_OBJECT       *Op);
-
-
 /*
  * dbdisply - debug display commands
  */
@@ -326,6 +287,10 @@ void
 AcpiDbDecodeAndDisplayObject (
     NATIVE_CHAR             *Target,
     NATIVE_CHAR             *OutputType);
+
+void
+AcpiDbDecodeNode (
+    ACPI_NAMESPACE_NODE     *Node);
 
 void
 AcpiDbDisplayResultObject (
@@ -369,6 +334,10 @@ AcpiDbDumpParserDescriptor (
 void *
 AcpiDbGetPointer (
     void                    *Target);
+
+void
+AcpiDbDecodeInternalObject (
+    ACPI_OPERAND_OBJECT     *ObjDesc);
 
 
 /*

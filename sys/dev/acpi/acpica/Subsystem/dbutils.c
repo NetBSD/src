@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbutils - AML debugger utilities
- *              $Revision: 1.1.1.2 $
+ *              $Revision: 1.1.1.3 $
  *
  ******************************************************************************/
 
@@ -123,9 +123,9 @@
 #include "acdispat.h"
 
 
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 
-#define _COMPONENT          ACPI_DEBUGGER
+#define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbutils")
 
 
@@ -261,7 +261,7 @@ AcpiDbDumpObject (
         break;
 
 
-    case INTERNAL_TYPE_REFERENCE:
+    case ACPI_TYPE_LOCAL_REFERENCE:
 
         AcpiOsPrintf ("[Object Reference] = %p\n", ObjDesc->Reference.Handle);
         break;
@@ -486,6 +486,6 @@ AcpiDbLocalNsLookup (
 }
 
 
-#endif /* ENABLE_DEBUGGER */
+#endif /* ACPI_DEBUGGER */
 
 

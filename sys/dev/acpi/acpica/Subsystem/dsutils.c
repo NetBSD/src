@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dsutils - Dispatcher utilities
- *              $Revision: 1.1.1.2 $
+ *              $Revision: 1.1.1.3 $
  *
  ******************************************************************************/
 
@@ -127,6 +127,7 @@
 #define _COMPONENT          ACPI_DISPATCHER
         ACPI_MODULE_NAME    ("dsutils")
 
+#ifndef ACPI_NO_METHOD_EXECUTION
 
 /*******************************************************************************
  *
@@ -340,6 +341,89 @@ AcpiDsDeleteResultIfNotUsed (
 
 /*******************************************************************************
  *
+ * FUNCTION:    AcpiDsResolveOperands
+ *
+ * PARAMETERS:  WalkState           - Current walk state with operands on stack
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Resolve all operands to their values.  Used to prepare
+ *              arguments to a control method invocation (a call from one
+ *              method to another.)
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiDsResolveOperands (
+    ACPI_WALK_STATE         *WalkState)
+{
+    UINT32                  i;
+    ACPI_STATUS             Status = AE_OK;
+
+
+    ACPI_FUNCTION_TRACE_PTR ("DsResolveOperands", WalkState);
+
+
+    /*
+     * Attempt to resolve each of the valid operands
+     * Method arguments are passed by value, not by reference
+     */
+    for (i = 0; i < WalkState->NumOperands; i++)
+    {
+        Status = AcpiExResolveToValue (&WalkState->Operands[i], WalkState);
+        if (ACPI_FAILURE (Status))
+        {
+            break;
+        }
+    }
+
+    return_ACPI_STATUS (Status);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDsClearOperands
+ *
+ * PARAMETERS:  WalkState           - Current walk state with operands on stack
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Clear all operands on the current walk state operand stack.
+ *
+ ******************************************************************************/
+
+void
+AcpiDsClearOperands (
+    ACPI_WALK_STATE         *WalkState)
+{
+    UINT32                  i;
+
+
+    ACPI_FUNCTION_TRACE_PTR ("AcpiDsClearOperands", WalkState);
+
+
+    /*
+     * Remove a reference on each operand on the stack
+     */
+    for (i = 0; i < WalkState->NumOperands; i++)
+    {
+        /*
+         * Remove a reference to all operands, including both
+         * "Arguments" and "Targets".
+         */
+        AcpiUtRemoveReference (WalkState->Operands[i]);
+        WalkState->Operands[i] = NULL;
+    }
+
+    WalkState->NumOperands = 0;
+    return_VOID;
+}
+#endif
+
+
+/*******************************************************************************
+ *
  * FUNCTION:    AcpiDsCreateOperand
  *
  * PARAMETERS:  WalkState
@@ -361,7 +445,6 @@ AcpiDsCreateOperand (
     UINT32                  ArgIndex)
 {
     ACPI_STATUS             Status = AE_OK;
-    ACPI_STATUS             Status2;
     NATIVE_CHAR             *NameString;
     UINT32                  NameLength;
     ACPI_OPERAND_OBJECT     *ObjDesc;
@@ -369,7 +452,6 @@ AcpiDsCreateOperand (
     UINT16                  Opcode;
     ACPI_INTERPRETER_MODE   InterpreterMode;
     const ACPI_OPCODE_INFO  *OpInfo;
-    char                    *Name;
 
 
     ACPI_FUNCTION_TRACE_PTR ("DsCreateOperand", Arg);
@@ -452,16 +534,12 @@ AcpiDsCreateOperand (
                  * very serious error at this point
                  */
                 Status = AE_AML_NAME_NOT_FOUND;
-
-                Name = NULL;
-                Status2 = AcpiNsExternalizeName (ACPI_UINT32_MAX, NameString, NULL, &Name);
-                if (ACPI_SUCCESS (Status2))
-                {
-                    ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-                            "Object name [%s] was not found in namespace\n", Name));
-                    ACPI_MEM_FREE (Name);
-                }
             }
+        }
+
+        if (ACPI_FAILURE (Status))
+        {
+            ACPI_REPORT_NSERROR (NameString, Status);
         }
 
         /* Free the namestring created above */
@@ -511,7 +589,7 @@ AcpiDsCreateOperand (
         /* Get the object type of the argument */
 
         OpInfo = AcpiPsGetOpcodeInfo (Opcode);
-        if (OpInfo->ObjectType == INTERNAL_TYPE_INVALID)
+        if (OpInfo->ObjectType == ACPI_TYPE_INVALID)
         {
             return_ACPI_STATUS (AE_NOT_IMPLEMENTED);
         }
@@ -639,45 +717,4 @@ Cleanup:
     return_ACPI_STATUS (Status);
 }
 
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiDsResolveOperands
- *
- * PARAMETERS:  WalkState           - Current walk state with operands on stack
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Resolve all operands to their values.  Used to prepare
- *              arguments to a control method invocation (a call from one
- *              method to another.)
- *
- ******************************************************************************/
-
-ACPI_STATUS
-AcpiDsResolveOperands (
-    ACPI_WALK_STATE         *WalkState)
-{
-    UINT32                  i;
-    ACPI_STATUS             Status = AE_OK;
-
-
-    ACPI_FUNCTION_TRACE_PTR ("DsResolveOperands", WalkState);
-
-
-    /*
-     * Attempt to resolve each of the valid operands
-     * Method arguments are passed by value, not by reference
-     */
-    for (i = 0; i < WalkState->NumOperands; i++)
-    {
-        Status = AcpiExResolveToValue (&WalkState->Operands[i], WalkState);
-        if (ACPI_FAILURE (Status))
-        {
-            break;
-        }
-    }
-
-    return_ACPI_STATUS (Status);
-}
 

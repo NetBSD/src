@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evregion - ACPI AddressSpace (OpRegion) handler dispatch
- *              $Revision: 1.1.1.2 $
+ *              $Revision: 1.1.1.3 $
  *
  *****************************************************************************/
 
@@ -124,7 +124,6 @@
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evregion")
-
 
 
 /*******************************************************************************
@@ -274,7 +273,7 @@ AcpiEvExecuteRegMethod (
     /*
      *  Execute the method, no return value
      */
-    ACPI_DEBUG_EXEC(AcpiUtDisplayInitPathname (RegionObj2->Extra.Method_REG, "  [Method]"));
+    ACPI_DEBUG_EXEC(AcpiUtDisplayInitPathname (ACPI_TYPE_METHOD, RegionObj2->Extra.Method_REG, NULL));
     Status = AcpiNsEvaluateByHandle (RegionObj2->Extra.Method_REG, Params, NULL);
 
     AcpiUtRemoveReference (Params[1]);

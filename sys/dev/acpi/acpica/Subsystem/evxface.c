@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evxface - External interfaces for ACPI events
- *              $Revision: 1.1.1.2 $
+ *              $Revision: 1.1.1.3 $
  *
  *****************************************************************************/
 
@@ -124,7 +124,6 @@
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evxface")
-
 
 
 /*******************************************************************************
@@ -411,7 +410,7 @@ AcpiInstallNotifyHandler (
 
         /* Install the handler */
 
-        NotifyObj = AcpiUtCreateInternalObject (INTERNAL_TYPE_NOTIFY);
+        NotifyObj = AcpiUtCreateInternalObject (ACPI_TYPE_LOCAL_NOTIFY);
         if (!NotifyObj)
         {
             Status = AE_NO_MEMORY;
@@ -757,7 +756,7 @@ Cleanup:
 
 ACPI_STATUS
 AcpiAcquireGlobalLock (
-    UINT32                  Timeout,
+    UINT16                  Timeout,
     UINT32                  *Handle)
 {
     ACPI_STATUS             Status;

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exnames - interpreter/scanner name load/execute
- *              $Revision: 1.1.1.2 $
+ *              $Revision: 1.1.1.3 $
  *
  *****************************************************************************/
 
@@ -354,9 +354,9 @@ AcpiExGetNameString (
     ACPI_FUNCTION_TRACE_PTR ("ExGetNameString", AmlAddress);
 
 
-    if (INTERNAL_TYPE_REGION_FIELD == DataType   ||
-        INTERNAL_TYPE_BANK_FIELD == DataType     ||
-        INTERNAL_TYPE_INDEX_FIELD == DataType)
+    if (ACPI_TYPE_LOCAL_REGION_FIELD == DataType   ||
+        ACPI_TYPE_LOCAL_BANK_FIELD == DataType     ||
+        ACPI_TYPE_LOCAL_INDEX_FIELD == DataType)
     {
         /* Disallow prefixes for types associated with FieldUnit names */
 
