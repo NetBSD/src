@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.1 1998/03/25 03:57:54 jonathan Exp $	*/
+/*	$NetBSD: dec_maxine.c,v 1.2 1998/03/25 06:22:19 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.1 1998/03/25 03:57:54 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.2 1998/03/25 06:22:19 jonathan Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -88,6 +88,11 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.1 1998/03/25 03:57:54 jonathan Exp 
 
 #include <mips/mips_param.h>		/* hokey spl()s */
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
+
+/* all these to get ioasic_base */
+#include <sys/device.h>			/* struct cfdata for.. */
+#include <dev/tc/tcvar.h>		/* tc type definitions for.. */
+#include <dev/tc/ioasicvar.h>		/* ioasic_base */
 
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/asic.h>

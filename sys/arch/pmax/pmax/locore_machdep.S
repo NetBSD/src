@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.4 1997/06/15 16:57:57 mhitch Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.5 1998/03/25 06:22:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,9 +59,10 @@
  */
 
 #include <mips/asm.h>
+#include "opt_dec_3100.h"
 
 	.set	noreorder
-#ifdef DS3100
+#ifdef DEC_3100
 /*
  * Copy data to a DMA buffer padded with 16 bits of data, 16
  * bits of padding per 32bit word (e.g., for pmin/pmax  sii (and lance) DMA).
@@ -134,7 +135,7 @@ LEAF(CopyFromBuffer)
 	j	ra
 	nop
 END(CopyFromBuffer)
-#endif /* DS3100 */
+#endif /* DEC_3100 */
 
 /*
  * Interrupt counters for vmstat.
