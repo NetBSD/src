@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.2 2000/04/18 22:15:55 jdc Exp $	*/
+/*	$NetBSD: copywin.c,v 1.3 2000/04/20 13:12:14 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -91,7 +91,7 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin, int sminrow,
 				&dstwin->lines[y - dstwin->begy]->line[startx - dstwin->begx],
 				&srcwin->lines[y - srcwin->begy]->line[startx - srcwin->begx],
 				(size_t) x * __LDATASIZE);
-			__touchline(dstwin, y, (int) (startx - dstwin->begx),
+			__touchline(dstwin, y - dstwin->begy, (int) (startx - dstwin->begx),
 				    (int) (endx - dstwin->begx), 0);
 		}
 		return (OK);
