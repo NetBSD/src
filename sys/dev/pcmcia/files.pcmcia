@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.14 1999/01/01 19:30:03 christos Exp $
+#	$NetBSD: files.pcmcia,v 1.14.2.1 2000/05/11 09:12:58 he Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -63,3 +63,9 @@ file	dev/pcmcia/pcmcom.c			pcmcom | com_pcmcom needs-flag
 device	cnw: arp, ether, ifnet
 attach	cnw at pcmcia
 file	dev/pcmcia/if_cnw.c			cnw
+
+# Lucent WaveLan IEEE (802.11)
+device wi: arp, ether, ifnet
+attach wi at pcmcia
+file	dev/pcmcia/if_wi.c			wi
+
