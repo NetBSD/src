@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_eso.c,v 1.1 1999/08/03 00:27:27 augustss Exp $	*/
+/*	$NetBSD: mpu_eso.c,v 1.2 1999/08/14 22:42:16 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ mpu_eso_attach(parent, self, aux)
 
 	sc->ioh = esc->sc_mpu_ioh;
 	sc->iot = esc->sc_mpu_iot;
-	sc->model = "ESS MPU-401 MIDI UART";
+	sc->model = "ESO MPU-401 MIDI UART";
 
 	mpu_attach(sc);
 }
