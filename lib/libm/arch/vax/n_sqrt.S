@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sqrt.S,v 1.6 2003/08/07 16:44:45 agc Exp $	*/
+/*	$NetBSD: n_sqrt.S,v 1.6.2.1 2004/05/15 13:46:37 tron Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -115,4 +115,10 @@ nonpos:
 negarg:
 	pushl	$EDOM
 	calls	$1,_C_LABEL(infnan)	# generate the reserved op fault
+	ret
+
+ENTRY(sqrtf, 0)
+	cvtfd	4(%ap),-(%sp)
+	calls	$2,_C_LABEL(sqrt)
+	cvtdf	%r0,%r0
 	ret
