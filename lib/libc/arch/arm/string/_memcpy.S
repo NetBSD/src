@@ -1,4 +1,4 @@
-/*	$NetBSD: _memcpy.S,v 1.5 2003/10/09 09:37:56 ichiro Exp $	*/
+/*	$NetBSD: _memcpy.S,v 1.6 2003/10/09 09:44:25 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ ENTRY(_memcpy)
 	stmdb	sp!, {r4, r5}
 
 .Lmemcpy_fsrcul1loop16:
-#ifdef __ARMEB__
+#if BYTE_ORDER == BIG_ENDIAN
 	mov	r3, lr, lsl #8
 	ldmia	r1!, {r4, r5, r12, lr}
 	orr	r3, r3, r4, lsr #24
@@ -206,7 +206,7 @@ ENTRY(_memcpy)
 	blt	.Lmemcpy_fsrcul1l4
 
 .Lmemcpy_fsrcul1loop4:
-#ifdef __ARMEB__
+#if BYTE_ORDER == BIG_ENDIAN
 	mov	r12, lr, lsl #8
 	ldr	lr, [r1], #4
 	orr	r12, r12, lr, lsr #24
@@ -230,7 +230,7 @@ ENTRY(_memcpy)
 	stmdb	sp!, {r4, r5}
 
 .Lmemcpy_fsrcul2loop16:
-#ifdef __ARMEB__
+#if BYTE_ORDER == BIG_ENDIAN
 	mov	r3, lr, lsl #16
 	ldmia	r1!, {r4, r5, r12, lr}
 	orr	r3, r3, r4, lsr #16
@@ -259,7 +259,7 @@ ENTRY(_memcpy)
 	blt	.Lmemcpy_fsrcul2l4
 
 .Lmemcpy_fsrcul2loop4:
-#ifdef __ARMEB__
+#if BYTE_ORDER == BIG_ENDIAN
 	mov	r12, lr, lsl #16
 	ldr	lr, [r1], #4
 	orr	r12, r12, lr, lsr #16
@@ -283,7 +283,7 @@ ENTRY(_memcpy)
 	stmdb	sp!, {r4, r5}
 
 .Lmemcpy_fsrcul3loop16:
-#ifdef __ARMEB__
+#if BYTE_ORDER == BIG_ENDIAN
 	mov	r3, lr, lsl #24
 	ldmia	r1!, {r4, r5, r12, lr}
 	orr	r3, r3, r4, lsr #8
@@ -312,7 +312,7 @@ ENTRY(_memcpy)
 	blt	.Lmemcpy_fsrcul3l4
 
 .Lmemcpy_fsrcul3loop4:
-#ifdef __ARMEB__
+#if BYTE_ORDER == BIG_ENDIAN
 	mov	r12, lr, lsl #24
 	ldr	lr, [r1], #4
 	orr	r12, r12, lr, lsr #8
@@ -423,7 +423,7 @@ ENTRY(_memcpy)
 	stmdb	sp!, {r4, r5, lr}
 
 .Lmemcpy_bsrcul3loop16:
-#ifdef __ARMEB__
+#if BYTE_ORDER == BIG_ENDIAN
 	mov	lr, r3, lsr #8
 	ldmdb	r1!, {r3-r5, r12}
 	orr	lr, lr, r12, lsl #24
@@ -452,7 +452,7 @@ ENTRY(_memcpy)
 	blt	.Lmemcpy_bsrcul3l4
 
 .Lmemcpy_bsrcul3loop4:
-#ifdef __ARMEB__
+#if BYTE_ORDER == BIG_ENDIAN
 	mov	r12, r3, lsr #8
 	ldr	r3, [r1, #-4]!
 	orr	r12, r12, r3, lsl #24
@@ -476,7 +476,7 @@ ENTRY(_memcpy)
 	stmdb	sp!, {r4, r5, lr}
 
 .Lmemcpy_bsrcul2loop16:
-#ifdef __ARMEB__
+#if BYTE_ORDER == BIG_ENDIAN
 	mov	lr, r3, lsr #16
 	ldmdb	r1!, {r3-r5, r12}
 	orr	lr, lr, r12, lsl #16
@@ -505,7 +505,7 @@ ENTRY(_memcpy)
 	blt	.Lmemcpy_bsrcul2l4
 
 .Lmemcpy_bsrcul2loop4:
-#ifdef __ARMEB__
+#if BYTE_ORDER == BIG_ENDIAN
 	mov	r12, r3, lsr #16
 	ldr	r3, [r1, #-4]!
 	orr	r12, r12, r3, lsl #16
@@ -529,7 +529,7 @@ ENTRY(_memcpy)
 	stmdb	sp!, {r4, r5, lr}
 
 .Lmemcpy_bsrcul1loop32:
-#ifdef __ARMEB__
+#if BYTE_ORDER == BIG_ENDIAN
 	mov	lr, r3, lsr #24
 	ldmdb	r1!, {r3-r5, r12}
 	orr	lr, lr, r12, lsl #8
@@ -558,7 +558,7 @@ ENTRY(_memcpy)
 	blt	.Lmemcpy_bsrcul1l4
 
 .Lmemcpy_bsrcul1loop4:
-#ifdef __ARMEB__
+#if BYTE_ORDER == BIG_ENDIAN
 	mov	r12, r3, lsr #24
 	ldr	r3, [r1, #-4]!
 	orr	r12, r12, r3, lsl #8
