@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.13 1998/05/21 20:44:02 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.14 1998/05/24 21:40:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -607,6 +607,7 @@ pdq_process_command_responses(
 
     PDQ_ASSERT(cbp->pdqcb_command_request != ci->ci_request_completion);
 
+    PDQ_OS_CMDRSP_POSTSYNC(pdq, PDQ_SIZE_COMMAND_RESPONSE);
     rspgen = (const pdq_response_generic_t *) ci->ci_response_bufstart;
     PDQ_ASSERT(rspgen->generic_status == PDQR_SUCCESS);
     PDQ_PRINTF(("PDQ Process Command Response: %s completed (status=%d)\n",
@@ -903,7 +904,7 @@ pdq_queue_transmit_data(
 
 #if defined(PDQ_BUS_DMA)
     map = M_GETCTX(pdu, bus_dmamap_t);
-    if ((freecnt = tx->tx_free - 1) > map->dm_nsegs) {
+    if ((freecnt = tx->tx_free - 1) >= map->dm_nsegs) {
 	int idx;
 	for (idx = 0; idx < map->dm_nsegs; idx++) {
 	    /*
@@ -1021,6 +1022,7 @@ pdq_flush_transmitter(
 
     tx->tx_free = PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_transmits);
     cbp->pdqcb_transmits = tx->tx_completion = tx->tx_producer;
+    PDQ_OS_CONSUMER_PRESYNC(pdq);
 
     PDQ_DO_TYPE2_PRODUCER(pdq);
 }
@@ -1151,6 +1153,7 @@ pdq_stop(
     pdq->pdq_cbp->pdqcb_unsolicited_event = 0;
     pdq->pdq_cbp->pdqcb_command_response = 0;
     pdq->pdq_cbp->pdqcb_command_request = 0;
+    PDQ_OS_CONSUMER_PRESYNC(pdq);
 
     /*
      * Reset the producer and completion indexes to 0.
@@ -1248,6 +1251,7 @@ pdq_stop(
 	 * Now wait (up to 100ms) for the command(s) to finish.
 	 */
 	for (cnt = 0; cnt < 1000; cnt++) {
+	    PDQ_OS_CONSUMER_POSTSYNC(pdq);
 	    pdq_process_command_responses(pdq);
 	    if (pdq->pdq_command_info.ci_response_producer == pdq->pdq_command_info.ci_response_completion)
 		break;
@@ -1458,6 +1462,7 @@ pdq_initialize(
 {
     pdq_t *pdq;
     pdq_state_t state;
+    pdq_descriptor_block_t *dbp;
 #if !defined(PDQ_BUS_DMA)
     const pdq_uint32_t contig_bytes = (sizeof(pdq_descriptor_block_t) * 2) - PDQ_OS_PAGESIZE;
     pdq_uint8_t *p;
@@ -1548,21 +1553,22 @@ pdq_initialize(
 	PDQ_OS_MEMFREE(pdq, sizeof(pdq_t));
 	return NULL;
     }
+    dbp = pdq->pdq_dbp;
 
-    pdq->pdq_cbp = (volatile pdq_consumer_block_t *) &pdq->pdq_dbp->pdqdb_consumer;
+    pdq->pdq_cbp = (volatile pdq_consumer_block_t *) &dbp->pdqdb_consumer;
     pdq->pdq_pa_consumer_block = PDQ_DB_BUSPA(pdq, pdq->pdq_cbp);
-    pdq->pdq_command_info.ci_request_bufstart = (pdq_uint8_t *) pdq->pdq_dbp->pdqdb_command_pool;
-    pdq->pdq_command_info.ci_response_bufstart = (pdq_uint8_t *) pdq->pdq_dbp->pdqdb_command_pool + sizeof(pdq->pdq_dbp->pdqdb_command_pool) - PDQ_SIZE_COMMAND_RESPONSE;
-    pdq->pdq_rx_info.rx_buffers = (void *) pdq->pdq_dbp->pdqdb_receive_buffers;
+    pdq->pdq_command_info.ci_request_bufstart = (pdq_uint8_t *) dbp->pdqdb_command_pool;
+    pdq->pdq_command_info.ci_response_bufstart = (pdq_uint8_t *) dbp->pdqdb_command_pool + sizeof(dbp->pdqdb_command_pool) - PDQ_SIZE_COMMAND_RESPONSE;
+    pdq->pdq_rx_info.rx_buffers = (void *) dbp->pdqdb_receive_buffers;
 
-    pdq->pdq_host_smt_info.rx_buffers = (void *) pdq->pdq_dbp->pdqdb_host_smt_buffers;
+    pdq->pdq_host_smt_info.rx_buffers = (void *) dbp->pdqdb_host_smt_buffers;
 
-    PDQ_PRINTF(("\nPDQ Descriptor Block = " PDQ_OS_PTR_FMT " (PA = 0x%x)\n", pdq->pdq_dbp, pdq->pdq_pa_descriptor_block));
-    PDQ_PRINTF(("    Recieve Queue          = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_receives));
-    PDQ_PRINTF(("    Transmit Queue         = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_transmits));
-    PDQ_PRINTF(("    Host SMT Queue         = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_host_smt));
-    PDQ_PRINTF(("    Command Response Queue = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_command_responses));
-    PDQ_PRINTF(("    Command Request Queue  = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_command_requests));
+    PDQ_PRINTF(("\nPDQ Descriptor Block = " PDQ_OS_PTR_FMT " (PA = 0x%x)\n", dbp, pdq->pdq_pa_descriptor_block));
+    PDQ_PRINTF(("    Recieve Queue          = " PDQ_OS_PTR_FMT "\n", dbp->pdqdb_receives));
+    PDQ_PRINTF(("    Transmit Queue         = " PDQ_OS_PTR_FMT "\n", dbp->pdqdb_transmits));
+    PDQ_PRINTF(("    Host SMT Queue         = " PDQ_OS_PTR_FMT "\n", dbp->pdqdb_host_smt));
+    PDQ_PRINTF(("    Command Response Queue = " PDQ_OS_PTR_FMT "\n", dbp->pdqdb_command_responses));
+    PDQ_PRINTF(("    Command Request Queue  = " PDQ_OS_PTR_FMT "\n", dbp->pdqdb_command_requests));
     PDQ_PRINTF(("PDQ Consumer Block = " PDQ_OS_PTR_FMT "\n", pdq->pdq_cbp));
 
     /*
@@ -1571,7 +1577,7 @@ pdq_initialize(
      * block, command pool, and buffer pointers for the receive
      * host_smt rings.
      */
-    PDQ_OS_MEMZERO(pdq->pdq_dbp, sizeof(*pdq->pdq_dbp));
+    PDQ_OS_MEMZERO(dbp, sizeof(*dbp));
 
     /*
      * Initialize the CSR references.
@@ -1613,12 +1619,12 @@ pdq_initialize(
      * Initialize the command information block
      */
     pdq->pdq_command_info.ci_pa_request_bufstart = PDQ_DB_BUSPA(pdq, pdq->pdq_command_info.ci_request_bufstart);
-    pdq->pdq_command_info.ci_pa_request_descriptors = PDQ_DB_BUSPA(pdq, pdq->pdq_dbp->pdqdb_command_requests);
+    pdq->pdq_command_info.ci_pa_request_descriptors = PDQ_DB_BUSPA(pdq, dbp->pdqdb_command_requests);
     PDQ_PRINTF(("PDQ Command Buffer = " PDQ_OS_PTR_FMT " (PA=0x%x)\n",
 		pdq->pdq_command_info.ci_request_bufstart,
 		pdq->pdq_command_info.ci_pa_request_bufstart));
-    for (idx = 0; idx < sizeof(pdq->pdq_dbp->pdqdb_command_requests)/sizeof(pdq->pdq_dbp->pdqdb_command_requests[0]); idx++) {
-	pdq_txdesc_t *txd = &pdq->pdq_dbp->pdqdb_command_requests[idx];
+    for (idx = 0; idx < sizeof(dbp->pdqdb_command_requests)/sizeof(dbp->pdqdb_command_requests[0]); idx++) {
+	pdq_txdesc_t *txd = &dbp->pdqdb_command_requests[idx];
 
 	txd->txd_pa_lo = pdq->pdq_command_info.ci_pa_request_bufstart;
 	txd->txd_eop = txd->txd_sop = 1;
@@ -1626,9 +1632,9 @@ pdq_initialize(
     }
 
     pdq->pdq_command_info.ci_pa_response_bufstart = PDQ_DB_BUSPA(pdq, pdq->pdq_command_info.ci_response_bufstart);
-    pdq->pdq_command_info.ci_pa_response_descriptors = PDQ_DB_BUSPA(pdq, pdq->pdq_dbp->pdqdb_command_responses);
-    for (idx = 0; idx < sizeof(pdq->pdq_dbp->pdqdb_command_responses)/sizeof(pdq->pdq_dbp->pdqdb_command_responses[0]); idx++) {
-	pdq_rxdesc_t *rxd = &pdq->pdq_dbp->pdqdb_command_responses[idx];
+    pdq->pdq_command_info.ci_pa_response_descriptors = PDQ_DB_BUSPA(pdq, dbp->pdqdb_command_responses);
+    for (idx = 0; idx < sizeof(dbp->pdqdb_command_responses)/sizeof(dbp->pdqdb_command_responses[0]); idx++) {
+	pdq_rxdesc_t *rxd = &dbp->pdqdb_command_responses[idx];
 
 	rxd->rxd_pa_lo = pdq->pdq_command_info.ci_pa_response_bufstart;
 	rxd->rxd_sop = 1;
@@ -1636,19 +1642,19 @@ pdq_initialize(
 	rxd->rxd_seg_len_lo = 0;
 	rxd->rxd_seg_len_hi = PDQ_SIZE_COMMAND_RESPONSE / 16;
     }
-    PDQ_OS_DESC_PRESYNC(pdq, pdq->pdq_dbp->pdqdb_command_responses,
-			sizeof(pdq->pdq_dbp->pdqdb_command_responses));
+    PDQ_OS_DESC_PRESYNC(pdq, dbp->pdqdb_command_responses,
+			sizeof(dbp->pdqdb_command_responses));
 
     /*
      * Initialize the unsolicited event information block
      */
     pdq->pdq_unsolicited_info.ui_free = PDQ_NUM_UNSOLICITED_EVENTS;
-    pdq->pdq_unsolicited_info.ui_pa_descriptors = PDQ_DB_BUSPA(pdq, pdq->pdq_dbp->pdqdb_unsolicited_events);
+    pdq->pdq_unsolicited_info.ui_pa_descriptors = PDQ_DB_BUSPA(pdq, dbp->pdqdb_unsolicited_events);
     PDQ_PRINTF(("PDQ Unsolicit Event Buffer = " PDQ_OS_PTR_FMT " (PA=0x%x)\n",
 		pdq->pdq_unsolicited_info.ui_events,
 		pdq->pdq_unsolicited_info.ui_pa_bufstart));
-    for (idx = 0; idx < sizeof(pdq->pdq_dbp->pdqdb_unsolicited_events)/sizeof(pdq->pdq_dbp->pdqdb_unsolicited_events[0]); idx++) {
-	pdq_rxdesc_t *rxd = &pdq->pdq_dbp->pdqdb_unsolicited_events[idx];
+    for (idx = 0; idx < sizeof(dbp->pdqdb_unsolicited_events)/sizeof(dbp->pdqdb_unsolicited_events[0]); idx++) {
+	pdq_rxdesc_t *rxd = &dbp->pdqdb_unsolicited_events[idx];
 	pdq_unsolicited_event_t *event = &pdq->pdq_unsolicited_info.ui_events[idx & (PDQ_NUM_UNSOLICITED_EVENTS-1)];
 
 	rxd->rxd_sop = 1;
@@ -1659,31 +1665,31 @@ pdq_initialize(
 	rxd->rxd_pa_hi = 0;
 	PDQ_OS_UNSOL_EVENT_PRESYNC(pdq, event);
     }
-    PDQ_OS_DESC_PRESYNC(pdq, pdq->pdq_dbp->pdqdb_unsolicited_events,
-			sizeof(pdq->pdq_dbp->pdqdb_unsolicited_events));
+    PDQ_OS_DESC_PRESYNC(pdq, dbp->pdqdb_unsolicited_events,
+			sizeof(dbp->pdqdb_unsolicited_events));
 
     /*
      * Initialize the receive information blocks (normal and SMT).
      */
-    pdq->pdq_rx_info.rx_free = PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_receives);
+    pdq->pdq_rx_info.rx_free = PDQ_RING_MASK(dbp->pdqdb_receives);
     pdq->pdq_rx_info.rx_target = pdq->pdq_rx_info.rx_free - PDQ_RX_SEGCNT * 8;
-    pdq->pdq_rx_info.rx_pa_descriptors = PDQ_DB_BUSPA(pdq, pdq->pdq_dbp->pdqdb_receives);
+    pdq->pdq_rx_info.rx_pa_descriptors = PDQ_DB_BUSPA(pdq, dbp->pdqdb_receives);
 
-    pdq->pdq_host_smt_info.rx_free = PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_host_smt);
+    pdq->pdq_host_smt_info.rx_free = PDQ_RING_MASK(dbp->pdqdb_host_smt);
     pdq->pdq_host_smt_info.rx_target = pdq->pdq_host_smt_info.rx_free - PDQ_RX_SEGCNT * 3;
-    pdq->pdq_host_smt_info.rx_pa_descriptors = PDQ_DB_BUSPA(pdq, pdq->pdq_dbp->pdqdb_host_smt);
+    pdq->pdq_host_smt_info.rx_pa_descriptors = PDQ_DB_BUSPA(pdq, dbp->pdqdb_host_smt);
 
     /*
      * Initialize the transmit information block.
      */
-    pdq->pdq_dbp->pdqdb_tx_hdr[0] = PDQ_FDDI_PH0;
-    pdq->pdq_dbp->pdqdb_tx_hdr[1] = PDQ_FDDI_PH1;
-    pdq->pdq_dbp->pdqdb_tx_hdr[2] = PDQ_FDDI_PH2;
-    pdq->pdq_tx_info.tx_free = PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_transmits);
-    pdq->pdq_tx_info.tx_hdrdesc.txd_seg_len = sizeof(pdq->pdq_dbp->pdqdb_tx_hdr);
+    dbp->pdqdb_tx_hdr[0] = PDQ_FDDI_PH0;
+    dbp->pdqdb_tx_hdr[1] = PDQ_FDDI_PH1;
+    dbp->pdqdb_tx_hdr[2] = PDQ_FDDI_PH2;
+    pdq->pdq_tx_info.tx_free = PDQ_RING_MASK(dbp->pdqdb_transmits);
+    pdq->pdq_tx_info.tx_hdrdesc.txd_seg_len = 3;
     pdq->pdq_tx_info.tx_hdrdesc.txd_sop = 1;
-    pdq->pdq_tx_info.tx_hdrdesc.txd_pa_lo = PDQ_DB_BUSPA(pdq, pdq->pdq_dbp->pdqdb_tx_hdr);
-    pdq->pdq_tx_info.tx_pa_descriptors = PDQ_DB_BUSPA(pdq, pdq->pdq_dbp->pdqdb_transmits);
+    pdq->pdq_tx_info.tx_hdrdesc.txd_pa_lo = PDQ_DB_BUSPA(pdq, dbp->pdqdb_tx_hdr);
+    pdq->pdq_tx_info.tx_pa_descriptors = PDQ_DB_BUSPA(pdq, dbp->pdqdb_transmits);
 
     state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_status));
     PDQ_PRINTF(("PDQ Adapter State = %s\n", pdq_adapter_states[state]));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.17 1998/05/21 20:44:02 matt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.18 1998/05/24 21:40:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -217,7 +217,7 @@ typedef bus_addr_t pdq_bus_memoffset_t;
 	pdq_os_databuf_sync((pdq)->pdq_os_ctx, (b), (o), (l), \
 			    BUS_DMASYNC_POSTREAD)
 #define	PDQ_OS_DATABUF_ALLOC(pdq, b)	((void)((b) = pdq_os_databuf_alloc((pdq)->pdq_os_ctx)))
-#define	PDQ_OS_DATABUF_FREE(pdq, b)	pdq_os_databuf_free((pdq)->pdq_os_ctx, b)
+#define	PDQ_OS_DATABUF_FREE(pdq, b)	pdq_os_databuf_free((pdq)->pdq_os_ctx, (b))
 #define PDQ_OS_DATABUF_BUSPA(pdq, b)	(M_GETCTX((b), bus_dmamap_t)->dm_segs[0].ds_addr + 0)
 struct _pdq_os_ctx_t;
 extern void pdq_os_descriptor_block_sync(struct _pdq_os_ctx_t *osctx, size_t offset,
@@ -228,7 +228,8 @@ extern struct mbuf *pdq_os_databuf_alloc(struct _pdq_os_ctx_t *osctx);
 extern void pdq_os_databuf_sync(struct _pdq_os_ctx_t *osctx, struct mbuf *b,
 				size_t offset, size_t length, int ops);
 extern void pdq_os_databuf_free(struct _pdq_os_ctx_t *osctx, struct mbuf *m);
-#define M_HASDMAMAP		M_LINK2
+#define M_HASTXDMAMAP		M_LINK1
+#define M_HASRXDMAMAP		M_LINK2
 #endif
 
 #define	PDQ_CSR_WRITE(csr, name, data)		PDQ_OS_IOWR_32((csr)->csr_bus, (csr)->csr_base, (csr)->name, data)
@@ -339,6 +340,7 @@ typedef struct _pdq_os_ctx_t {
 #endif
      bus_dmamap_t sc_dbmap;		/* DMA map for descriptor block */
      bus_dmamap_t sc_uimap;		/* DMA map for unsolicited events */
+     bus_dmamap_t sc_cbmap;		/* DMA map for consumer block */
 #endif
 } pdq_softc_t;
 
