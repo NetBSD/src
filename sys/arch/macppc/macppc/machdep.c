@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 1998/06/05 12:22:45 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 1998/06/12 20:58:57 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -427,6 +427,7 @@ cpu_startup()
 	 */
 	sz = MAXBSIZE * nbuf;
 #if defined(UVM)
+	minaddr = 0;
 	if (uvm_map(kernel_map, (vm_offset_t *)&minaddr, round_page(sz),
 		NULL, UVM_UNKNOWN_OFFSET,
 		UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
