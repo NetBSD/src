@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.194 2003/04/22 13:11:23 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.195 2003/05/16 14:01:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,8 +82,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.194 2003/04/22 13:11:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.195 2003/05/16 14:01:56 christos Exp $");
 
+#include "opt_inet.h"
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -115,8 +116,12 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.194 2003/04/22 13:11:23 christos Exp 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
 
+#include <netinet/in.h>
+
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
+
+#include <netinet/in.h>
 
 #include <sys/sysctl.h>
 
@@ -2121,6 +2126,42 @@ vfs_mountedon(vp)
 	return (error);
 }
 
+static int
+sacheck(struct sockaddr *sa)
+{
+	switch (sa->sa_family) {
+#ifdef INET
+	case AF_INET: {
+		struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+		char *p = (char *)sin->sin_zero;
+		size_t i;
+
+		if (sin->sin_len != sizeof(*sin))
+			return -1;
+		if (sin->sin_port != 0)
+			return -1;
+		for (i = 0; i < sizeof(sin->sin_zero); i++)
+			if (*p++ != '\0')
+				return -1;
+		return 0;
+	}
+#endif
+#ifdef INET6
+	case AF_INET6: {
+		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
+
+		if (sin6->sin6_len != sizeof(*sin6))
+			return -1;
+		if (sin6->sin6_port != 0)
+			return -1;
+		return 0;
+	}
+#endif
+	default:
+		return -1;
+	}
+}
+
 /*
  * Build hash lists of net addresses and hang them off the mount point.
  * Called by ufs_mount() to set up the lists of export addresses.
@@ -2134,7 +2175,6 @@ vfs_hang_addrlist(mp, nep, argp)
 	struct netcred *np, *enp;
 	struct radix_node_head *rnh;
 	int i;
-	struct radix_node *rn;
 	struct sockaddr *saddr, *smask = 0;
 	struct domain *dom;
 	int error;
@@ -2150,7 +2190,7 @@ vfs_hang_addrlist(mp, nep, argp)
 		return (0);
 	}
 
-	if (argp->ex_addrlen > MLEN)
+	if (argp->ex_addrlen > MLEN || argp->ex_masklen > MLEN)
 		return (EINVAL);
 
 	i = sizeof(struct netcred) + argp->ex_addrlen + argp->ex_masklen;
@@ -2162,6 +2202,8 @@ vfs_hang_addrlist(mp, nep, argp)
 		goto out;
 	if (saddr->sa_len > argp->ex_addrlen)
 		saddr->sa_len = argp->ex_addrlen;
+	if (sacheck(saddr) == -1)
+		return EINVAL;
 	if (argp->ex_masklen) {
 		smask = (struct sockaddr *)((caddr_t)saddr + argp->ex_addrlen);
 		error = copyin(argp->ex_mask, (caddr_t)smask, argp->ex_masklen);
@@ -2169,6 +2211,10 @@ vfs_hang_addrlist(mp, nep, argp)
 			goto out;
 		if (smask->sa_len > argp->ex_masklen)
 			smask->sa_len = argp->ex_masklen;
+		if (smask->sa_family != saddr->sa_family)
+			return EINVAL;
+		if (sacheck(smask) == -1)
+			return EINVAL;
 	}
 	i = saddr->sa_family;
 	if ((rnh = nep->ne_rtable[i]) == 0) {
@@ -2187,38 +2233,37 @@ vfs_hang_addrlist(mp, nep, argp)
 			goto out;
 		}
 	}
-	rn = (*rnh->rnh_addaddr)((caddr_t)saddr, (caddr_t)smask, rnh,
-		np->netc_rnodes);
-	if (rn == 0 || np != (struct netcred *)rn) { /* already exists */
-		if (rn == 0) {
+
+	enp = (struct netcred *)(*rnh->rnh_addaddr)(saddr, smask, rnh,
+	    np->netc_rnodes);
+	if (enp != np) {
+		if (enp == NULL) {
 			enp = (struct netcred *)(*rnh->rnh_lookup)(saddr,
-				smask, rnh);
-			if (enp == 0) {
+			    smask, rnh);
+			if (enp == NULL) {
 				error = EPERM;
 				goto out;
 			}
-		} else 
-			enp = (struct netcred *)rn;
+		} else
+			enp->netc_refcnt++;
 
-		if (enp->netc_exflags != argp->ex_flags ||
-		    enp->netc_anon.cr_uid != argp->ex_anon.cr_uid ||
-		    enp->netc_anon.cr_gid != argp->ex_anon.cr_gid ||
-		    enp->netc_anon.cr_ngroups !=
-		    			(uint32_t) argp->ex_anon.cr_ngroups ||
-		    memcmp(&enp->netc_anon.cr_groups, &argp->ex_anon.cr_groups,
-			enp->netc_anon.cr_ngroups))
-				error = EPERM;
-		else
-			error = 0;
-		goto out;
-	}
+		goto check;
+	} else
+		enp->netc_refcnt = 1;
+
 	np->netc_exflags = argp->ex_flags;
 	crcvt(&np->netc_anon, &argp->ex_anon);
 	np->netc_anon.cr_ref = 1;
-	return (0);
+	return 0;
+check:
+	if (enp->netc_exflags != argp->ex_flags ||
+	    crcmp(&enp->netc_anon, &argp->ex_anon) != 0)
+		error = EPERM;
+	else
+		error = 0;
 out:
 	free(np, M_NETADDR);
-	return (error);
+	return error;
 }
 
 /* ARGSUSED */
@@ -2228,9 +2273,11 @@ vfs_free_netcred(rn, w)
 	void *w;
 {
 	struct radix_node_head *rnh = (struct radix_node_head *)w;
+	struct netcred *np = (struct netcred *)(void *)rn;
 
 	(*rnh->rnh_deladdr)(rn->rn_key, rn->rn_mask, rnh);
-	free((caddr_t)rn, M_NETADDR);
+	if (--(np->netc_refcnt) <= 0)
+		free(np, M_NETADDR);
 	return (0);
 }
 
