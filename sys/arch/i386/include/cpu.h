@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28 1995/05/05 03:42:02 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.29 1995/06/28 02:55:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,12 +52,10 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_exec(p)		/* nothing */
-#define	cpu_swapin(p)		/* nothing */
-#define	cpu_wait(p)		/* nothing */
+#define	cpu_swapin(p)			/* nothing */
+#define	cpu_wait(p)			/* nothing */
 #define	cpu_set_init_frame(p,frame)	(p->p_md.md_regs = frame)
-#define	BROKEN_SWAP
-#define	cpu_swapout(p)		panic("cpu_swapout: can't get here");
+#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*
  * Arguments to hardclock, softclock and statclock
