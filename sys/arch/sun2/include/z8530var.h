@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.1 2001/04/06 13:13:05 fredette Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.2 2001/06/27 19:01:14 fredette Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -45,13 +45,17 @@
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
 
-#include <dev/sun/zsvar.h>
-
 /* Zilog Serial hardware interrupts (hard-wired at 6) */
-#define splzs()         spl6()
 #define ZSHARD_PRI	6
 /* 0x18 is the base of the autovectored interrupt vectors */
 #define	ZS_INIT_IVECT	(0x18 + ZSHARD_PRI)
 
 #define	ZS_DELAY()	delay(2)
 
+/*
+ * On a Sun2, the keyboard is always on zs1 channel 0,
+ * and the mouse is always on zs1 channel 1.
+ */
+#define	zs_peripheral_type(promunit, node, channel) ((promunit) == 1 ? ((channel) == 0 ? ZS_PERIPHERAL_SUNKBD : ZS_PERIPHERAL_SUNMS) : ZS_PERIPHERAL_UNKNOWN)
+
+#include <dev/sun/zsvar.h>
