@@ -1,10 +1,9 @@
-# $Id: Makefile,v 1.1 1994/05/24 06:48:08 deraadt Exp $
+# $Id: Makefile,v 1.2 1994/12/22 12:30:58 cgd Exp $
 
 PROG= skeyinit
 BINOWN=root
 BINMODE=4555
 CFLAGS+= -I${.CURDIR}/../../lib/libskey
-MAN1= skeyinit.0
 DPADD=	${LIBCRYPT} ${LIBSKEY}
 LDADD=	-lcrypt -lskey
 
