@@ -1,4 +1,4 @@
-	$NetBSD: xfer,v 1.3 1998/01/09 18:47:18 perry Exp $	
+	$NetBSD: xfer,v 1.4 1998/11/16 00:59:38 simonb Exp $	
 
 First-time installation on a bare machine is not supported, because most
 DECstations do not have any suitable load device.  Some versions of
@@ -19,6 +19,7 @@ Installation is supported from several media types, including:
 	NFS partitions
 	FTP
 	Tape
+	CD-ROM
 
 The steps necessary to prepare the distribution sets
 for installation depend on which method of installation
