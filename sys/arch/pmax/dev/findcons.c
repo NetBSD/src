@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.16 1999/09/03 06:12:28 nisimura Exp $	*/
+/*	$NetBSD: findcons.c,v 1.17 1999/09/03 10:19:40 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.16 1999/09/03 06:12:28 nisimura Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.17 1999/09/03 10:19:40 nisimura Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ find_screen(crtslot)
 		break;
 
 	case DS_MAXINE:
-		if (xcfb_screen(crtslot))
+		if (crtslot == 3 && xcfb_screen(crtslot))
 			return (1);
 
 	/*FALLTHROUGH*/
