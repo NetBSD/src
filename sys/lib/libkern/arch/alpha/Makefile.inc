@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.8 1996/08/21 19:18:47 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.9 1996/08/27 00:44:24 cgd Exp $
 
 SRCS+=	__main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
 	bcmp.c bzero.S ffs.S strcat.c strcmp.c strcpy.c strlen.c strncmp.c \
 	strncpy.c scanc.c skpc.c htonl.S htons.S ntohl.S ntohs.S \
-	random.c strncasecmp.c
+	random.c strncasecmp.c __assert.c
 
 # `source' files built from m4 source
 SRCS+=	__divqu.S __divq.S __divlu.S __divl.S
