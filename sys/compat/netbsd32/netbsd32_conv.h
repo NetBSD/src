@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.2 2004/04/21 01:05:36 christos Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.3 2004/04/21 11:50:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -256,8 +256,7 @@ netbsd32_from_statvfs(sbp, sb32p)
 	struct statvfs *sbp;
 	struct netbsd32_statfs *sb32p;
 {
-	sb32p->f_type = sbp->f_type;
-	sb32p->f_flags = sbp->f_flags;
+	sb32p->f_flags = sbp->f_flag;
 	sb32p->f_bsize = (netbsd32_long)sbp->f_bsize;
 	sb32p->f_iosize = (netbsd32_long)sbp->f_iosize;
 	sb32p->f_blocks = (netbsd32_long)sbp->f_blocks;
