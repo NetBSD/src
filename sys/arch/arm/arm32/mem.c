@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3 2002/01/05 00:46:33 chris Exp $	*/
+/*	$NetBSD: mem.c,v 1.4 2002/01/05 17:02:22 chris Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,9 @@
  * Memory special file
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.4 2002/01/05 17:02:22 chris Exp $");
+
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
@@ -52,6 +55,7 @@
 #include <sys/fcntl.h>
 
 #include <machine/cpu.h>
+#include <arm/conf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -61,9 +65,10 @@ int physlock;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
+mmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 	switch (minor(dev)) {
 	default:
@@ -74,9 +79,10 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
+mmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
