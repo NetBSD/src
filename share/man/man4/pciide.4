@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.19.2.1 2000/06/27 14:59:56 bouyer Exp $
+.\"	$NetBSD: pciide.4,v 1.19.2.2 2000/07/07 12:15:42 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -39,6 +39,7 @@
 .Cd "pciide* at pci? dev ? function ? flags 0x0000"
 .Cd "pciide* at pnpbios? index ?"
 .Cd "options PCIIDE_CMD064x_DISABLE"
+.Cd "options PCIIDE_AMD756_ENABLEDMA"
 .Sh DESCRIPTION
 The
 .Nm pciide
@@ -85,10 +86,19 @@ properly, this can cause a machine hang.
 .Sh BUGS
 There's no way to reliably know if a PCI064x controller is enabled or not.
 If the driver finds a PCI064x, it will assume it is enabled unless the
-PCIIDE_CMD064x_DISABLE is specified in the kernel config file.
+PCIIDE_CMD064x_DISABLE option is specified in the kernel config file.
 This will be a problem only if the controller has been disabled in the BIOS
 and another controller has been installed and uses the ISA legacy I/O ports
 and interrupts.
+.Pp
+The AMD756 chip revision D2 has a bug affecting DMA (but not Ultra-DMA)
+modes.  The workaround documented by AMD is to not use DMA on any drive which
+does not support Ultra-DMA modes.  This does not appear to be necessary on all
+drives, the PCIIDE_AMD756_ENABLEDMA option can be used to force multiword DMA
+on the buggy revisions.  Multiword DMA eventually be disabled on a per-drive
+basis with config flags, see
+.Xr wd 4 .
+The bug, if triggered, will cause a total system hang.
 .Pp
 The timings used for the PIO and DMA modes for controllers listed above
 are for a PCI bus running at 30 or 33 Mhz (except the OPTi controller,
