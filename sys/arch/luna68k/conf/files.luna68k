@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.luna68k,v 1.1 2000/01/05 08:48:54 nisimura Exp $
+#	$NetBSD: files.luna68k,v 1.2 2000/03/15 16:57:13 oster Exp $
 #
 maxpartitions 8
 maxusers 2 8 64
@@ -62,6 +62,9 @@ major	{cd = 4}	# SCSI CD-ROM
 # Memory Disk for boot tape
 file arch/luna68k/dev/md_root.c		memory_disk_hooks
 major	{md = 7}	# Memory disk (for mini-kernel)
+
+# RAIDframe
+major	{md = 14}
 
 # "Workstation Console" glue.
 include "dev/wscons/files.wscons"

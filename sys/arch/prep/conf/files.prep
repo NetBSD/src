@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.1 2000/02/29 15:21:25 nonaka Exp $
+#	$NetBSD: files.prep,v 1.2 2000/03/15 16:57:14 oster Exp $
 #
 # prep-specific configuration info
 #
@@ -35,6 +35,11 @@ major	{wd = 0}
 #
 file	arch/prep/prep/md_root.c	memory_disk_hooks
 major	{md = 17}
+
+#
+# RAIDframe
+#
+major	{md = 18}
 
 #
 # System bus types
