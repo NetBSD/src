@@ -29,7 +29,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: rstat_proc.c,v 1.7 1994/04/15 03:21:24 cgd Exp $";
+static char rcsid[] = "$Id: rstat_proc.c,v 1.8 1994/05/14 22:12:06 cgd Exp $";
 #endif
 
 /*
@@ -59,6 +59,12 @@ static char rcsid[] = "$Id: rstat_proc.c,v 1.7 1994/04/15 03:21:24 cgd Exp $";
 #undef FSHIFT			 /* Use protocol's shift and scale values */
 #undef FSCALE
 #undef DK_NDRIVE
+#undef CPUSTATES
+#undef if_ipackets
+#undef if_ierrors
+#undef if_opackets
+#undef if_oerrors
+#undef if_collisions
 #include <rpcsvc/rstat.h>
 
 struct nlist nl[] = {
@@ -281,11 +287,11 @@ updatestat()
 			syslog(LOG_ERR, "rstat: can't read ifnet from kmem\n");
 			exit(1);
 		}
-		stats_all.s1.if_ipackets += ifnet.if_ipackets;
-		stats_all.s1.if_opackets += ifnet.if_opackets;
-		stats_all.s1.if_ierrors += ifnet.if_ierrors;
-		stats_all.s1.if_oerrors += ifnet.if_oerrors;
-		stats_all.s1.if_collisions += ifnet.if_collisions;
+		stats_all.s1.if_ipackets += ifnet.if_data.ifi_ipackets;
+		stats_all.s1.if_opackets += ifnet.if_data.ifi_opackets;
+		stats_all.s1.if_ierrors += ifnet.if_data.ifi_ierrors;
+		stats_all.s1.if_oerrors += ifnet.if_data.ifi_oerrors;
+		stats_all.s1.if_collisions += ifnet.if_data.ifi_collisions;
 		off = (int) ifnet.if_next;
 	}
 	gettimeofday((struct timeval *)&stats_all.s3.curtime,
