@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/01/07 09:03:21 martin Exp $
+#	$NetBSD: Makefile,v 1.3 2001/01/10 18:11:05 thorpej Exp $
 
 PROG	=	isdnd
 SRCS	=	rc_parse.y rc_scan.l main.c rc_config.c log.c curses.c	\
@@ -6,10 +6,10 @@ SRCS	=	rc_parse.y rc_scan.l main.c rc_config.c log.c curses.c	\
 		exec.c dial.c monitor.c pcause.c controller.c alias.c	\
 		holiday.c
 
-COPTS	+=	-I${.CURDIR}/../isdnmonitor -I${.CURDIR}/../isdntel -I${.OBJDIR}
+CPPFLAGS+=	-I${.CURDIR}/../isdnmonitor -I${.CURDIR}/../isdntel -I${.OBJDIR}
 
 # compile debug support
-COPTS	+=	-DDEBUG
+CPPFLAGS+=	-DDEBUG
 
 MAN      =	isdnd.8 isdnd.rc.5 isdnd.rates.5 isdnd.acct.5
 
@@ -20,14 +20,14 @@ CLEANFILES+=	y.tab.h
 .include <bsd.prog.mk>
 
 .if !defined(I4B_WITHOUT_CURSES)
-COPTS	+=	-DUSE_CURSES
+CPPFLAGS+=	-DUSE_CURSES
 LDADD   +=      -lcurses
 LDADD   += 	-ltermlib
 .endif
 
 .if defined(I4B_EXTERNAL_MONITOR)
-COPTS	+=	-DI4B_EXTERNAL_MONITOR
+CPPFLAGS+=	-DI4B_EXTERNAL_MONITOR
 .if defined(I4B_NOTCPIP_MONITOR)
-COPTS	+=	-DI4B_NOTCPIP_MONITOR
+CPPFLAGS+=	-DI4B_NOTCPIP_MONITOR
 .endif
 .endif
