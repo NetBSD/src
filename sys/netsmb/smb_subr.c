@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.5 2003/02/15 23:02:30 jdolecek Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.6 2003/02/18 10:09:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -230,8 +230,8 @@ smb_maperror(int eclass, int eno)
 		    case ERRbadfile:
 		    case ERRbadpath:
 		    case ERRremcd:
-		    case 66:		/* nt returns it when share not available */
-		    case 67:		/* observed from nt4sp6 when sharename wrong */
+		    case ERRbaddevice:	/* nt returns it when share not available */
+		    case ERRbadnetname:	/* observed from nt4sp6 when sharename wrong */
 			return ENOENT;
 		    case ERRnofids:
 			return EMFILE;
@@ -260,11 +260,11 @@ smb_maperror(int eclass, int eno)
 			return EDEADLK;
 		    case ERRfilexists:
 			return EEXIST;
-		    case 123:		/* dunno what is it, but samba maps as noent */
+		    case ERRinvname:	/* dunno what is it, but samba maps as noent */
 			return ENOENT;
-		    case 145:		/* samba */
+		    case ERRdirnempty:	/* samba */
 			return ENOTEMPTY;
-		    case 183:
+		    case ERReexists:
 			return EEXIST;
 		}
 		break;
@@ -281,7 +281,7 @@ smb_maperror(int eclass, int eno)
 		    case ERRinvnetname:
 			SMBERROR("NetBIOS name is invalid\n");
 			return EAUTH;
-		    case 3:		/* reserved and returned */
+		    case ERRsrvbaddevice:	/* reserved and returned */
 			return EIO;
 		    case 2239:		/* NT: account exists but disabled */
 			return EPERM;
