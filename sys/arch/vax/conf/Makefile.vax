@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.63 2001/11/16 00:23:04 atatat Exp $
+#	$NetBSD: Makefile.vax,v 1.64 2001/11/20 12:56:42 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -12,7 +12,7 @@
 #	/sys/arch/vax/conf/Makefile.vax
 # after which config should be rerun for all machines of that type.
 #
-# To specify debugging, add the config line: makeoptions DEBUG="-g" 
+# To specify debugging, add the config line: makeoptions DEBUG="-g"
 # A better way is to specify -g only for a few files.
 #
 #	makeoptions DEBUGLIST="uvm* trap if_*"
@@ -38,13 +38,13 @@ COPTS?=		-O2
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 
-HAVE_EGCS!=	${CC} --version | egrep "^(2\.8|2\.9[0-4]|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.8|2\.9[0-4]|egcs)" ; echo
 .if (${HAVE_EGCS} != "")
 CFLAGS+=	-mno-pic
 .endif
 
 ##
-## (3) libkern and compat 
+## (3) libkern and compat
 ##
 KERN_AS=	obj
 
@@ -73,7 +73,7 @@ LINKFLAGS_NORMAL=	-S
 ## (6) port specific target dependencies
 ##
 
-# depend on CPU configuration 
+# depend on CPU configuration
 tmscp.o ts.o uba.o uda.o clock.o emulate.o intvec.o: Makefile
 sbi.o subr.o: Makefile
 

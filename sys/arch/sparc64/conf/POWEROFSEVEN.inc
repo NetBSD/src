@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.5 2001/11/20 08:43:36 lukem Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.6 2001/11/20 12:56:39 lukem Exp $
 #
 # from: $NetBSD: POWEROFSEVEN32,v 1.10 2001/08/25 15:04:26 mrg Exp
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
@@ -14,7 +14,7 @@ maxusers	64
 
 # Options for variants of the Sun SPARC architecure.
 # We currently support three architecture types; at least one is required.
-options		SUN4U		# sun4u - UltraSPARC
+options 	SUN4U		# sun4u - UltraSPARC
 
 ## System options specific to the sparc machine type
 
@@ -84,7 +84,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-makeoptions 	DEBUG="-g"
+makeoptions	DEBUG="-g"
 options 	AUDIO_DEBUG
 
 
@@ -160,7 +160,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP         # FFS soft updates support.
+#options 	SOFTDEP		# FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -302,7 +302,7 @@ ms0	at com?					# mouse
 
 # PCI IDE.
 pciide* at pci ? dev ? function ? flags 0x0000
-wd*     at pciide? channel ? drive ? flags 0x0000
+wd*	at pciide? channel ? drive ? flags 0x0000
 atapibus* at pciide? channel ?
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
@@ -413,7 +413,7 @@ pseudo-device	ipfilter
 ## /dev/audio support (`audiocs' plus `audio')
 ##
 #audiocs*	at sbus? slot ? offset ?		# SUNW,CS4231
-audiocs*	at ebus?                		# SUNW,CS4231
+audiocs*	at ebus?				# SUNW,CS4231
 audio*		at audiocs?
 
 

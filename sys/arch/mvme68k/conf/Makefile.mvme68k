@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.53 2001/10/26 06:45:38 jmc Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.54 2001/11/20 12:56:33 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -43,7 +43,7 @@ MVME68K=$S/arch/mvme68k
 
 # Override CPP defaults entirely, so cross-compilation works.
 # Keep -nostdinc before all -I flags, similar for -undef ...
-HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Dmvme68k
 .if empty(IDENT:M-DMVME172) && empty(IDENT:M-DMVME177)
@@ -62,7 +62,7 @@ CMACHFLAGS=	-m68020-60 -Wa,-m68030 -Wa,-m68851
 CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
-# XXX always get it right.  --thorpej 
+# XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
 .if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
@@ -208,14 +208,14 @@ dependall: depend all
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
- 
-# depend on network or filesystem configuration 
-uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on network or filesystem configuration
+uipc_proto.o vfs_conf.o: Makefile
 
 # depend on maxusers
 machdep.o: Makefile
 
-# depend on CPU configuration 
+# depend on CPU configuration
 locore.o pmap.o sys_machdep.o trap.o: Makefile
 
 

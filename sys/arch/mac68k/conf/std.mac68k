@@ -1,11 +1,11 @@
-#	$NetBSD: std.mac68k,v 1.25 2000/06/22 20:27:53 fvdl Exp $
+#	$NetBSD: std.mac68k,v 1.26 2001/11/20 12:56:32 lukem Exp $
 #
 # standard Macintosh information.
 # roughly copied from std.sparc 14 Oct 1993.
 
 machine	mac68k m68k
 
-options HZ=60			# mac clock runs at 60hz
+options 	HZ=60			# mac clock runs at 60hz
 
 # Executable support
 options 	EXEC_AOUT	# a.out binary support

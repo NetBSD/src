@@ -1,4 +1,4 @@
-#	$NetBSD: VME167,v 1.13 2001/07/27 18:40:27 scw Exp $
+#	$NetBSD: VME167,v 1.14 2001/11/20 12:56:33 lukem Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -18,7 +18,7 @@ options 	KTRACE
 options 	COMPAT_43
 
 file-system 	FFS
-file-system 	NFS	
+file-system 	NFS
 file-system 	KERNFS
 file-system 	MFS
 file-system 	CD9660
@@ -30,10 +30,10 @@ file-system 	CD9660
 
 # Networking options
 options 	INET
-#options        GATEWAY         # IP packet forwarding
-#options        ISO             # OSI networking
-#options        TPIP
-#options        EON
+#options 	GATEWAY		# IP packet forwarding
+#options 	ISO		# OSI networking
+#options 	TPIP
+#options 	EON
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out

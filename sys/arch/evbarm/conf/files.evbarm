@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.5 2001/11/14 23:47:51 thorpej Exp $
+#	$NetBSD: files.evbarm,v 1.6 2001/11/20 12:56:25 lukem Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -22,7 +22,7 @@ major	{wd = 16}
 
 # Memory disk driver
 file	arch/arm32/dev/md_hooks.c		md & memory_disk_hooks
-major   {md = 18}
+major	{md = 18}
 
 # RAIDframe
 major	{raid = 71}
@@ -32,8 +32,8 @@ major	{raid = 71}
 #
 
 include "dev/scsipi/files.scsipi"
-major   {sd = 24}
-major   {cd = 26}
+major	{sd = 24}
+major	{cd = 26}
 
 # Generic MD files
 file	arch/evbarm/evbarm/autoconf.c

@@ -1,4 +1,4 @@
-#	$NetBSD: KZSH401,v 1.9 2001/01/03 23:49:22 itojun Exp $
+#	$NetBSD: KZSH401,v 1.10 2001/11/20 12:56:26 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -18,43 +18,43 @@ maxusers	16		# estimated number of users
 
 # CPU support
 options 	SH7750
-options		SH4
-options		SH4_PCMCIA
+options 	SH4
+options 	SH4_PCMCIA
 options 	EVBSH4
 options 	MMEYE
 #options 	MMEYE_NEW_INT
 #options 	MMEYE_NO_CACHE
-options		PCLOCK=33333300		# 33.3333MHz
-options		IOM_ROM_BEGIN=0x00000000
-options		IOM_ROM_SIZE=0x00100000	#  1MB
-options		IOM_RAM_BEGIN=0x88000000
-options		IOM_RAM_SIZE=0x01000000	# 16MB
-options		INITTODR_ALWAYS_USE_RTC
-options		BRAINS
-options		USE_RTCCLK
-options		SYNC_CLOCK_TO_RTC
+options 	PCLOCK=33333300			# 33.3333MHz
+options 	IOM_ROM_BEGIN=0x00000000
+options 	IOM_ROM_SIZE=0x00100000		# 1MB
+options 	IOM_RAM_BEGIN=0x88000000
+options 	IOM_RAM_SIZE=0x01000000		# 16MB
+options 	INITTODR_ALWAYS_USE_RTC
+options 	BRAINS
+options 	USE_RTCCLK
+options 	SYNC_CLOCK_TO_RTC
 
-options		BSC_BCR1_VAL	=0x8000000c
-options		BSC_BCR2_VAL	=0xb538
-options		BSC_WCR1_VAL	=0x00010111
-options		BSC_WCR2_VAL	=0x108a2520
-options		BSC_WCR3_VAL	=0x00000000
-options		BSC_MCR_VAL	=0x10192194
-#options		BSC_PCR_VAL	=0x08eb
-options		BSC_RTCSR_VAL	=0xa510
-#options		BSC_RTCNT_VAL	=0xa500
-options		BSC_RTCOR_VAL	=0xa541
-options		BSC_RFCR_VAL	=0xa400
-options		FRQCR_VAL	=0x0e13
-options		BSC_SDMR2_VAL	=0xff90008c
+options 	BSC_BCR1_VAL	=0x8000000c
+options 	BSC_BCR2_VAL	=0xb538
+options 	BSC_WCR1_VAL	=0x00010111
+options 	BSC_WCR2_VAL	=0x108a2520
+options 	BSC_WCR3_VAL	=0x00000000
+options 	BSC_MCR_VAL	=0x10192194
+#options 	BSC_PCR_VAL	=0x08eb
+options 	BSC_RTCSR_VAL	=0xa510
+#options 	BSC_RTCNT_VAL	=0xa500
+options 	BSC_RTCOR_VAL	=0xa541
+options 	BSC_RFCR_VAL	=0xa400
+options 	FRQCR_VAL	=0x0e13
+options 	BSC_SDMR2_VAL	=0xff90008c
 
-options		LED_ADDR=0xa8000000
+options 	LED_ADDR=0xa8000000
 
 # Standard system options
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 #options 	INSECURE	# disable kernel security levels
 
-options		RTC_OFFSET=-540
+options 	RTC_OFFSET=-540
 options 	HZ=64		# clock interrupt generates every 1/HZ sec
 #options 	NTP		# NTP phase/frequency locked loop
 
@@ -72,7 +72,7 @@ options 	HZ=64		# clock interrupt generates every 1/HZ sec
 #makeoptions	DEBUG="-g"	# compile full symbol table
 #options 	SYSCALL_DEBUG
 #options 	UVMHIST
-#options	UVMHIST_PRINT
+#options 	UVMHIST_PRINT
 
 # Compatibility options
 options 	COMPAT_13	# NetBSD 1.3
@@ -119,7 +119,7 @@ shb*	at mainbus?
 
 # Serial Devices
 
-options	SCIFCN_SPEED=19200
+options 	SCIFCN_SPEED=19200
 scif0 at shb? port 0xffe80000 irq 12
 
 #com0	at shb? port 0xa4000000 irq 11

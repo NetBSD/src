@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.7 2001/11/13 17:54:53 augustss Exp $
+#	$NetBSD: WALNUT,v 1.8 2001/11/20 12:56:42 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -12,7 +12,7 @@ maxusers	32
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
 
-# Options for necessary to use MD 
+# Options for necessary to use MD
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
@@ -101,7 +101,7 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 options 	NMBCLUSTERS=1024
-options		NEW_PIPE
+options 	NEW_PIPE
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
@@ -134,9 +134,9 @@ com1	at mainbus? addr 0xef600400 irq 1 # UIC IRQ 1
 # Ethernet Media Access Controller
 emac0	at mainbus? addr 0xef600800 irq 15 # UIC IRQ 15
 
-# RTC 
+# RTC
 dsrtc0	at mainbus? addr 0xf0000000
- 
+
 # time-of-day device via rtc device
 todclock0 at dsrtc?
 
@@ -224,16 +224,16 @@ cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
-pckbc0          at mainbus?
-pckbd*          at pckbc?
-wskbd*          at pckbd? console ?
-pms*            at pckbc?
-wsmouse*        at pms? mux 0
-pmsi*           at pckbc?
-wsmouse*        at pmsi? mux 0
+pckbc0		at mainbus?
+pckbd*		at pckbc?
+wskbd*		at pckbd? console ?
+pms*		at pckbc?
+wsmouse*	at pms? mux 0
+pmsi*		at pckbc?
+wsmouse*	at pmsi? mux 0
 
-vga*            at pci? dev ? function ?
-wsdisplay*      at vga? console ?
+vga*		at pci? dev ? function ?
+wsdisplay*	at vga? console ?
 
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices

@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.15 2001/09/03 01:50:01 matt Exp $
+#	$NetBSD: files.netwinder,v 1.16 2001/11/20 12:56:34 lukem Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -55,7 +55,7 @@ file	arch/arm32/isa/joy_isapnp.c		joy_isapnp
 
 # Memory disk driver
 file	arch/arm32/dev/md_hooks.c		md & memory_disk_hooks
-major   {md = 18}
+major	{md = 18}
 
 # RAIDframe
 major	{raid = 71}
@@ -69,8 +69,8 @@ file	arch/arm32/dev/todclock.c		todclock	needs-count
 #
 
 include "dev/scsipi/files.scsipi"
-major   {sd = 24}
-major   {cd = 26}
+major	{sd = 24}
+major	{cd = 26}
 
 # Generic MD files
 file	arch/netwinder/netwinder/autoconf.c

@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.20 2001/06/20 14:35:23 nonaka Exp $
+#	$NetBSD: files.prep,v 1.21 2001/11/20 12:56:37 lukem Exp $
 #
 # prep-specific configuration info
 #
@@ -7,11 +7,11 @@ maxpartitions 8
 maxusers 2 8 64
 
 # IBM
-file    arch/prep/prep/ibm_machdep.c
-file    arch/prep/prep/ibm_6050.c
-file    arch/prep/prep/ibm_7248.c
+file	arch/prep/prep/ibm_machdep.c
+file	arch/prep/prep/ibm_6050.c
+file	arch/prep/prep/ibm_7248.c
 
-file    arch/prep/prep/platform.c
+file	arch/prep/prep/platform.c
 
 file	arch/prep/prep/autoconf.c
 file	arch/prep/prep/bus_space.c
@@ -161,13 +161,13 @@ attach	fd at fdc
 major	{fd = 2}
 
 # Game adapter (joystick)
-device  joy
+device	joy
 file	arch/prep/isa/joy.c		joy needs-flag
 
-attach  joy at isa with joy_isa
+attach	joy at isa with joy_isa
 file	arch/prep/isa/joy_isa.c		joy_isa
 
-device  paud { }: audio, isadma, ad1848, auconv
+device	paud { }: audio, isadma, ad1848, auconv
 attach	paud at isa with paud_isa
 file	arch/prep/isa/paud_isa.c	paud_isa
 

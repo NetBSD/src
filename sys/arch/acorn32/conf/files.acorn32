@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.1 2001/10/05 22:27:47 reinoud Exp $
+#	$NetBSD: files.acorn32,v 1.2 2001/11/20 12:56:18 lukem Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -47,24 +47,24 @@ file	arch/acorn32/mainbus/wdc_pioc.c		wdc_pioc
 device	lpt
 file	dev/ic/lpt.c				lpt		needs-flag
 
-attach  lpt at pioc with lpt_pioc
-file    arch/acorn32/mainbus/lpt_pioc.c		lpt_pioc	needs-flag
+attach	lpt at pioc with lpt_pioc
+file	arch/acorn32/mainbus/lpt_pioc.c		lpt_pioc	needs-flag
 
 # Standard NetBSD fd driver
-device  fdc {drive = -1}
+device	fdc {drive = -1}
 attach	fdc at pioc
-device  fd: disk
+device	fd: disk
 attach	fd at fdc
-file    arch/acorn32/mainbus/fd.c			fdc needs-flag
-major   {fd = 17}
+file	arch/acorn32/mainbus/fd.c			fdc needs-flag
+major	{fd = 17}
 
 # Standard serial driver
 attach	com at pioc with com_pioc
-file    arch/acorn32/mainbus/com_pioc.c		com_pioc
+file	arch/acorn32/mainbus/com_pioc.c		com_pioc
 
 # Memory disk driver
 file	arch/acorn32/dev/md_hooks.c		md & memory_disk_hooks
-major   {md = 18}
+major	{md = 18}
 
 # RAIDframe
 major	{raid = 71}
@@ -102,16 +102,16 @@ file	arch/arm/iomd/todclock.c		todclock	needs-count
 
 # IOMD mouse devices
 # clock device
-device  clock
+device	clock
 attach	clock at iomd
 file	arch/arm/iomd/iomd_clock.c		iomd
 
 # quadmouse device
-device  qms
-file    arch/arm/iomd/qms.c			qms needs-flag
+device	qms
+file	arch/arm/iomd/qms.c			qms needs-flag
 
 attach	qms at iomd with qms_iomd
-file    arch/arm/iomd/qms_iomd.c		qms_iomd
+file	arch/arm/iomd/qms_iomd.c		qms_iomd
 
 # PS/2 mouse device
 device	opms: tty
@@ -140,16 +140,16 @@ include "dev/wsfont/files.wsfont"
 device	wsqms : wsmousedev
 file	arch/arm/iomd/wsqms.c			wsqms needs-flag
 
-attach wsqms at iomd with wsqms_iomd  
+attach wsqms at iomd with wsqms_iomd
 file	arch/arm/iomd/wsqms_iomd.c		wsqms_iomd
 
 # RPC wscons keyboard driver
 device rpckbd : wskbddev
-file   arch/arm/iomd/rpckbd.c			rpckbd  needs-flag
-file   arch/acorn32/dev/wskbdmap_mfii.c		rpckbd
+file	arch/arm/iomd/rpckbd.c			rpckbd needs-flag
+file	arch/acorn32/dev/wskbdmap_mfii.c	rpckbd
 
 attach rpckbd at iomd with rpckbd_iomd
-file   arch/arm/iomd/rpckbd_iomd.c		rpckbd_iomd
+file	arch/arm/iomd/rpckbd_iomd.c		rpckbd_iomd
 
 # VIDC device
 # parent to vidcconsole, vidcaudio, beep
@@ -211,8 +211,8 @@ file	arch/acorn32/podulebus/if_ie.c		ie
 #
 
 include "dev/scsipi/files.scsipi"
-major   {sd = 24}
-major   {cd = 26}
+major	{sd = 24}
+major	{cd = 26}
 
 #
 # Miscelanious podulebus devices not moved yet to dev/podules
@@ -223,7 +223,7 @@ define	sbic
 file	arch/acorn32/podulebus/sbic.c		sbic
 
 # Acorn SCSI I specific layer for sbic
-device  asc: scsi, sbic, podloader
+device	asc: scsi, sbic, podloader
 attach	asc at podulebus
 file	arch/acorn32/podulebus/asc.c		asc needs-flag
 
@@ -282,19 +282,19 @@ file	arch/acorn32/podulebus/amps.c		amps
 # VIDC console stuff (old)
 #
 
-device  vidcconsole   
-attach  vidcconsole at vidc   
+device	vidcconsole
+attach	vidcconsole at vidc
 file	arch/arm/iomd/console/vidcconsole.c	vidcconsole needs-count
 file	arch/arm/iomd/console/consinit.c	vidc needs-count
-device  vt: tty
-attach  vt at vidc
+device	vt: tty
+attach	vt at vidc
 
 file	dev/cninit.c				vt
-file    arch/arm/iomd/console/console.c	vt needs-count
-file    arch/arm/iomd/console/vidcrender.c	vt
+file	arch/arm/iomd/console/console.c		vt needs-count
+file	arch/arm/iomd/console/vidcrender.c	vt
 file	arch/arm/iomd/console/vidc_mc.S	vt
-file    arch/arm/iomd/console/vidc.c		vt
-file    arch/arm/iomd/console/vt220.c		vt
+file	arch/arm/iomd/console/vidc.c		vt
+file	arch/arm/iomd/console/vt220.c		vt
 file	arch/arm/iomd/console/debugconsole.c 	vt
 file	arch/arm/iomd/console/dumb.c 		vt
 
@@ -313,7 +313,7 @@ file	arch/arm32/fpe-arm/armfpe.s		armfpe
 
 # RiscPC specific files
 file	arch/acorn32/acorn32/rpc_machdep.c	riscpc
-file    arch/acorn32/acorn32/rpc_kbd_map.c	riscpc & kbd
+file	arch/acorn32/acorn32/rpc_kbd_map.c	riscpc & kbd
 
 device	sysbeep
 attach	sysbeep at vidc with sysbeep_vidc
