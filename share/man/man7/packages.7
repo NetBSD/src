@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.5 1998/07/06 15:31:53 agc Exp $
+.\"	$NetBSD: packages.7,v 1.6 1998/07/26 22:20:23 tv Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -21,9 +21,10 @@ and individual packages.
 This section documents variables that typically apply to all packages.
 .Bl -tag -indent XXXXXXXX -width XXXXXXXX
 .It ONLY_FOR_ARCHS
-If set, it lists the
+If set, it lists the values of MACHINE_ARCH (basic
 .Nx
-ports that the package will build under.
+CPU types) that the package will build under.
+It can be a glob-style wildcard.
 .It ARCH
 The architecture, as returned by
 .Dq uname -m .
