@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.83 1998/10/03 14:29:03 drochner Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.84 1998/11/13 17:12:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -219,7 +219,7 @@ siginit(p)
 	sigemptyset(&contsigmask);
 	sigemptyset(&stopsigmask);
 	sigemptyset(&sigcantmask);
-	for (signum = 0; signum < NSIG; signum++) {
+	for (signum = 1; signum <= NSIG; signum++) {
 		prop = sigprop[signum];
 		if (prop & SA_CONT)
 			sigaddset(&contsigmask, signum);
@@ -259,7 +259,7 @@ execsigs(p)
 	 * through p_sigmask (unless they were caught,
 	 * and are now ignored by default).
 	 */
-	for (signum = 0; signum < NSIG; signum++) {
+	for (signum = 1; signum <= NSIG; signum++) {
 		if (sigismember(&p->p_sigcatch, signum)) {
 			prop = sigprop[signum];
 			if (prop & SA_IGNORE) {
