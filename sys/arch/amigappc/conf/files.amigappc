@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.7 2001/12/01 14:13:49 aymeric Exp $
+#	$NetBSD: files.amigappc,v 1.8 2001/12/04 11:51:39 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -23,6 +23,8 @@ defflag	opt_retina.h		RETINA_SPEED_HACK
 
 defflag				BB060STUPIDROM
 defflag				P5PPC68KBOARD
+
+defflag				LEV6_DEFER
 
 device	mainbus {}
 attach	mainbus at root
