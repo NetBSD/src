@@ -92,11 +92,11 @@ Boston, MA 02111-1307, USA.  */
 #undef LINK_SPEC
 #define	LINK_SPEC \
  "%{assert*} \
-  %{R*} %{static:-Bstatic} %{!static:-Bdynamic} \
-  %{G*} %{EB} %{EL} %{mips1} %{mips2} %{mips3} \
-  %{shared:-shared} \
+  %{EL:-m elf32lmip} \
+  %{EB:-m elf32bmip} \
+  %{R*} %{G*} %{EB} %{EL} %{mips1} %{mips2} %{mips3} \
+  %{shared} %{v} \
   %{bestGnum} %{call_shared} %{no_archive} %{exact_version} \
-  %{!shared: %{!non_shared: %{!call_shared: -non_shared}}} \
   %{!shared: \
     -dc -dp \
     %{!nostdlib:%{!r*:%{!e*:-e __start}}} \
