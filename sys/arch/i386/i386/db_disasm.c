@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.12 1998/03/31 08:16:28 thorpej Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.13 1998/05/24 12:04:23 drochner Exp $	*/
 
 /* 
  * Mach Operating System
@@ -1316,12 +1316,6 @@ db_disasm(loc, altfmt)
 		}
 	}
 
-	if (altfmt == 0 && (inst == 0xe9 || inst == 0xeb)) {
-		/*
-		 * GAS pads to longword boundary after unconditional jumps.
-		 */
-		loc = (loc + (4-1)) & ~(4-1);
-	}
 	db_printf("\n");
 	return (loc);
 }
