@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.7 1997/12/20 19:15:52 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.8 1998/01/21 10:12:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.7 1997/12/20 19:15:52 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.8 1998/01/21 10:12:22 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -169,7 +169,7 @@ read_preread(el)
 	if (chrs > 0) {
 	    buf[chrs] = '\0';
 	    el->el_chared.c_macro.nline = strdup(buf);
-	    el_push(el->el_chared.c_macro.nline);
+	    el_push(el, el->el_chared.c_macro.nline);
 	}
     }
 #endif  /* FIONREAD */
@@ -337,6 +337,9 @@ el_gets(el, nread)
     el_action_t  cmdnum = 0;
     int     num;		/* how many chars we have read at NL */
     char    ch;
+#ifdef FIONREAD
+    c_macro_t *ma = &el->el_chared.c_macro;
+#endif /* FIONREAD */
 
     if (el->el_flags & HANDLE_SIGNALS)
 	sig_set(el);
