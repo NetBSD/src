@@ -231,7 +231,7 @@ VPATH=@srcdir@
 top_builddir=@top_builddir@
 
 # the program to create directory hierarchies
-mkinstalldirs=$(top_srcdir)/mkinstalldirs
+mkinstalldirs=sh $(top_srcdir)/mkinstalldirs
 
 PURIFY=purify
 PURIFYCCFLAGS=
