@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.69 2001/07/02 15:25:34 itojun Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.70 2001/07/25 23:28:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -182,6 +182,9 @@ in_pcballoc(so, v)
 	struct inpcbtable *table = v;
 	struct inpcb *inp;
 	int s;
+#ifdef IPSEC
+	int error;
+#endif
 
 	inp = pool_get(&inpcb_pool, PR_NOWAIT);
 	if (inp == NULL)
@@ -190,6 +193,13 @@ in_pcballoc(so, v)
 	inp->inp_table = table;
 	inp->inp_socket = so;
 	inp->inp_errormtu = -1;
+#ifdef IPSEC
+	error = ipsec_init_policy(so, &inp->inp_sp);
+	if (error != 0) {
+		pool_put(&inpcb_pool, inp);
+		return error;
+	}
+#endif
 	so->so_pcb = inp;
 	s = splnet();
 	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);

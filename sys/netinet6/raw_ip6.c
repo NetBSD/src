@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.34 2001/07/23 19:29:53 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.35 2001/07/25 23:28:03 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -629,13 +629,6 @@ rip6_usrreq(so, req, m, nam, control, p)
 		in6p = sotoin6pcb(so);
 		in6p->in6p_ip6.ip6_nxt = (long)nam;
 		in6p->in6p_cksum = -1;
-#ifdef IPSEC
-		error = ipsec_init_policy(so, &in6p->in6p_sp);
-		if (error != 0) {
-			in6_pcbdetach(in6p);
-			break;
-		}
-#endif /*IPSEC*/
 		
 		MALLOC(in6p->in6p_icmp6filt, struct icmp6_filter *,
 			sizeof(struct icmp6_filter), M_PCB, M_NOWAIT);

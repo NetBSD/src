@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.38 2001/07/02 15:25:35 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.39 2001/07/25 23:28:03 itojun Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -114,6 +114,9 @@ in6_pcballoc(so, head)
 	struct in6pcb *head;
 {
 	struct in6pcb *in6p;
+#ifdef IPSEC
+	int error;
+#endif
 
 	MALLOC(in6p, struct in6pcb *, sizeof(*in6p), M_PCB, M_NOWAIT);
 	if (in6p == NULL)
@@ -123,6 +126,13 @@ in6_pcballoc(so, head)
 	in6p->in6p_socket = so;
 	in6p->in6p_hops = -1;	/* use kernel default */
 	in6p->in6p_icmp6filt = NULL;
+#ifdef IPSEC
+	error = ipsec_init_policy(so, &in6p->in6p_sp);
+	if (error != 0) {
+		FREE(in6p, M_PCB);
+		return error;
+	}
+#endif /*IPSEC*/
 	in6p->in6p_next = head->in6p_next;
 	head->in6p_next = in6p;
 	in6p->in6p_prev = head;
