@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.1.1.1 1996/02/29 11:35:46 leo Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.2 1998/07/22 12:49:42 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -32,6 +32,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include <sys/disklabel.h>
 #include <machine/ahdilabel.h>
