@@ -77,3 +77,5 @@ Things to do ....
 
 	-- symlinks for /tmp (/tmp -> /var/tmp or some such)
 	   Or configure tmp on   mfs.
+
+	-- Add support for SLIP (for pc532) and/or PPP.
