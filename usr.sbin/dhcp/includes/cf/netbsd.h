@@ -85,6 +85,7 @@ extern int h_errno;
 #define GET_TIME(x)	time ((x))
 
 #define HAVE_SA_LEN
+#define HAVE_MKSTEMP
 
 #if defined (USE_DEFAULT_NETWORK)
 #  define USE_BPF

@@ -109,6 +109,10 @@
 #  include "cf/cygwin32.h"
 #endif
 
+#ifdef NeXT
+#  include "cf/nextstep.h"
+#endif
+
 /* Porting::
 
    If you add a new network API, and have it set up so that it can be
