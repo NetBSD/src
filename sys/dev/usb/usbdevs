@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.334 2003/07/30 04:49:12 gehenna Exp $
+$NetBSD: usbdevs,v 1.335 2003/08/08 07:52:41 wulf Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1300,6 +1300,7 @@ product SIGMATEL IRDA		0x4200	IrDA
 
 /* SIIG products */
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
+product SIIG UISDMC2S		0x0200	MULTICARDREADER
 product SIIG MULTICARDREADER	0x0201	MULTICARDREADER
 
 /* Silicon Portals Inc. */
