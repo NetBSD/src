@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.133.2.1 1998/11/09 06:06:29 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.133.2.2 1999/02/25 03:50:30 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -7393,4 +7393,18 @@ void print_all_pmegs(void);
 void
 print_all_pmegs()
 {
+	struct mmuentry *me;
+	int i;
+
+	i = 0;
+	for (me = TAILQ_FIRST(&kernel_pmap_store.pm_seglist);
+	     me;
+	     me = TAILQ_NEXT(me, me_pmchain)) {
+
+		printf("va 0x%08x cookie %d\n",
+		       ((int)me->me_vreg << 24) +
+		       ((int)me->me_vseg << 18), me->me_cookie);
+		i++;
+	}
+	printf("total kernel pmegs: %d\n", i);
 }
