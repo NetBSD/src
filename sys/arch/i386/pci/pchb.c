@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.7 1997/08/03 23:42:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -84,7 +84,10 @@ pchbmatch(parent, match, aux)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_PCMC:
 		case PCI_PRODUCT_INTEL_82437:
+		case PCI_PRODUCT_INTEL_82437MX:
+		case PCI_PRODUCT_INTEL_82439:
 		case PCI_PRODUCT_INTEL_82440FX:
+		case PCI_PRODUCT_INTEL_82430VX:
 		case PCI_PRODUCT_INTEL_CDC:
 		case PCI_PRODUCT_INTEL_PCI450_PB:
 		case PCI_PRODUCT_INTEL_PCI450_MC:
@@ -102,6 +105,54 @@ pchbmatch(parent, match, aux)
 		case PCI_PRODUCT_ACC_2188:
 			return (1);
 		}
+		break;
+	case PCI_VENDOR_ACER:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_ACER_M1435:
+			return (1);
+		}
+		break;
+	case PCI_VENDOR_ALI:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_ALI_M1445:
+		case PCI_PRODUCT_ALI_M1451:
+		case PCI_PRODUCT_ALI_M1461:
+			return (1);
+		}
+		break;
+	case PCI_VENDOR_COMPAQ:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_COMPAQ_TRIFLEX1:
+		case PCI_PRODUCT_COMPAQ_TRIFLEX2:
+		case PCI_PRODUCT_COMPAQ_TRIFLEX4:
+			return (1);
+		}
+		break;
+	case PCI_VENDOR_NEXGEN:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_NEXGEN_NX82C501:
+			return (1);
+		}
+		break;
+	case PCI_VENDOR_NKK:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_NKK_NDR4600:
+			return (1);
+		}
+		break;
+	case PCI_VENDOR_TOSHIBA:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_TOSHIBA_R4X00:
+			return (1);
+		}
+		break;
+	case PCI_VENDOR_VIATECH:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_VIATECH_VT82C570M:
+		case PCI_PRODUCT_VIATECH_VT82C595:
+			return (1);
+		}
+		break;
 	}
 
 	return (0);
