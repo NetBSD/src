@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.61 2002/06/07 04:07:55 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.62 2002/06/07 04:18:11 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.61 2002/06/07 04:07:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.62 2002/06/07 04:18:11 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -363,7 +363,7 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCSIFINFO_FLAGS:
 		if (!privileged)
 			return(EPERM);
-		/* FALLTHORUGH */
+		/* FALLTHROUGH */
 	case OSIOCGIFINFO_IN6:
 	case SIOCGIFINFO_IN6:
 	case SIOCGDRLST_IN6:
@@ -391,7 +391,7 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCDLIFADDR:
 		if (!privileged)
 			return(EPERM);
-		/* FALLTHORUGH */
+		/* FALLTHROUGH */
 	case SIOCGLIFADDR:
 		return in6_lifaddr_ioctl(so, cmd, data, ifp, p);
 	}
@@ -539,7 +539,7 @@ in6_control(so, cmd, data, ifp, p)
 
 	case SIOCGIFADDR_IN6:
 		/* This interface is basically deprecated. use SIOCGIFCONF. */
-		/* FALLTHORUGH */
+		/* FALLTHROUGH */
 	case SIOCGIFAFLAG_IN6:
 	case SIOCGIFNETMASK_IN6:
 	case SIOCGIFDSTADDR_IN6:
