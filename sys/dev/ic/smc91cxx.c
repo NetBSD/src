@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.1.2.7 1997/09/29 21:17:35 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.1.2.8 1997/10/06 16:26:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -283,6 +283,14 @@ smc91cxx_set_media(sc, media)
 	bus_space_handle_t bsh = sc->sc_bsh;
 	u_int16_t tmp;
 
+	/*
+	 * If the interface is not currently powered on, just return.
+	 * When it is enabled later, smc91cxx_init() will properly set
+	 * up the media for us.
+	 */
+	if (sc->sc_enabled == 0)
+		return (0);
+
 	if (IFM_TYPE(media) != IFM_ETHER)
 		return (EINVAL);
 
@@ -318,6 +326,12 @@ smc91cxx_mediastatus(ifp, ifmr)
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	u_int16_t tmp;
+
+	if (sc->sc_enabled == 0) {
+		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
+		ifmr->ifm_status = 0;
+		return;
+	}
 
 	SMC_SELECT_BANK(sc, 1);
 	tmp = bus_space_read_2(bst, bsh, CONFIG_REG_W);
@@ -1063,10 +1077,7 @@ smc91cxx_ioctl(ifp, cmd, data)
 
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		if (sc->sc_enabled)
-			error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		else
-			error = EIO;
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.32.4.6 1997/09/29 20:34:00 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.32.4.7 1997/10/06 16:26:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -167,7 +167,7 @@ struct mbuf *epget __P((struct ep_softc *, int));
 void	epmbuffill __P((void *));
 void	epmbufempty __P((struct ep_softc *));
 void	epsetfilter __P((struct ep_softc *));
-int	epsetmedia __P((struct ep_softc *, int epmedium));
+void	epsetmedia __P((struct ep_softc *, int epmedium));
 
 int	epenable __P((struct ep_softc *));
 void	epdisable __P((struct ep_softc *));
@@ -639,7 +639,16 @@ ep_media_change(ifp)
 {
 	register struct ep_softc *sc = ifp->if_softc;
 
-	return	epsetmedia(sc, sc->sc_media.ifm_cur->ifm_data);
+	/*
+	 * If the interface is not currently powered on, just return.
+	 * When it is enabled later, epinit() will properly set up the
+	 * media for us.
+	 */
+	if (sc->enabled == 0)
+		return (0);
+
+	epsetmedia(sc, sc->sc_media.ifm_cur->ifm_data);
+	return (0);
 }
 
 /*
@@ -649,7 +658,7 @@ ep_media_change(ifp)
  * For 3c509-generation cards (3c509/3c579/3c589/3c509B),
  *	update media field in w0_address_config, and power on selected xcvr.
  */
-int
+void
 epsetmedia(sc, medium)
 	register struct ep_softc *sc;
 	int medium;
@@ -750,7 +759,6 @@ epsetmedia(sc, medium)
 	}
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
-	return (0);
 }
 
 /*
@@ -767,6 +775,12 @@ ep_media_status(ifp, req)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int config1;
 	u_int ep_mediastatus;
+
+	if (sc->enabled == 0) {
+		req->ifm_active = IFM_ETHER|IFM_NONE;
+		req->ifm_status = 0;
+		return;
+	}
 
 	/* XXX read from softc when we start autosensing media */
 	req->ifm_active = sc->sc_media.ifm_cur->ifm_media;
@@ -808,7 +822,6 @@ ep_media_status(ifp, req)
 	/* XXX look for softc heartbeat for other chips or media */
 
 	GO_WINDOW(1);
-	return;
 }
 
 
@@ -1471,10 +1484,7 @@ epioctl(ifp, cmd, data)
 
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		if (sc->enabled)
-			error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		else
-			error = EIO;
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	case SIOCSIFFLAGS:
