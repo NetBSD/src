@@ -1,4 +1,4 @@
-/*	$NetBSD: getwd.c,v 1.8 1998/06/08 09:38:07 lukem Exp $	*/
+/*	$NetBSD: getwd.c,v 1.9 1998/11/14 16:40:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getwd.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: getwd.c,v 1.8 1998/06/08 09:38:07 lukem Exp $");
+__RCSID("$NetBSD: getwd.c,v 1.9 1998/11/14 16:40:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,8 +49,10 @@ __RCSID("$NetBSD: getwd.c,v 1.8 1998/06/08 09:38:07 lukem Exp $");
 #include <stdio.h>
 #include <string.h>
 
+#ifndef lint
 __warn_references(getwd,
     "warning: getwd() possibly used unsafely, consider using getcwd()");
+#endif
 
 char *
 getwd(buf)
