@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.25 2002/03/31 22:21:04 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.26 2002/07/04 23:32:08 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -498,8 +498,7 @@ svr4_getsiginfo(si, sig, code, addr)
 #endif
 
 void
-svr4_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+svr4_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -509,6 +508,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	struct svr4_sigframe *fp, frame;
 	int onstack;
 	vaddr_t oldsp, newsp, addr;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = (struct trapframe64 *)p->p_md.md_tf;
 	oldsp = tf->tf_out[6] + STACK_OFFSET;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.114 2002/03/16 20:43:56 christos Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.115 2002/07/04 23:32:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.114 2002/03/16 20:43:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.115 2002/07/04 23:32:12 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -1335,7 +1335,8 @@ sunos_sys_sigvec(p, v, retval)
 	}
 	error = sigaction1(p, SCARG(uap, signum),
 			   SCARG(uap, nsv) ? &nsa : 0,
-			   SCARG(uap, osv) ? &osa : 0);
+			   SCARG(uap, osv) ? &osa : 0,
+			   NULL, 0);
 	if (error != 0)
 		return (error);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.16 2002/07/04 01:50:40 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.17 2002/07/04 23:32:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,17 +76,18 @@ int sigpid = 0;
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
 	struct sigframe *fp, kf;
 	struct frame *frame;
 	short ft;
 	int onstack, fsize;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
@@ -112,7 +113,22 @@ sendsig(catcher, sig, mask, code)
 #endif
 
 	/* Build stack frame for signal trampoline. */
-	kf.sf_ra = (int)p->p_sigctx.ps_sigcode;
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		kf.sf_ra = (int)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		kf.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
+
 	kf.sf_signum = sig;
 	kf.sf_code = code;
 	kf.sf_scp = &fp->sf_sc;
