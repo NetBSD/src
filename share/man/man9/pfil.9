@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfil.9,v 1.17 2002/02/13 08:18:48 ross Exp $
+.\"	$NetBSD: pfil.9,v 1.18 2002/07/16 00:36:45 lha Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -48,6 +48,8 @@
 .Fn pfil_head_register "struct pfil_head *head"
 .Ft int
 .Fn pfil_head_unregister "struct pfil_head *head"
+.Ft struct pfil_head *
+.Fn pfil_head_get "int af" "u_long dlt"
 .Ft struct packet_filter_hook *
 .Fn pfil_hook_get "int dir" "struct pfil_head *head"
 .Ft void
