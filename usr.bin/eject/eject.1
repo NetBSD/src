@@ -1,4 +1,4 @@
-.\" $NetBSD: eject.1,v 1.10 2001/10/06 18:51:04 wiz Exp $
+.\" $NetBSD: eject.1,v 1.11 2002/10/02 15:53:47 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,29 +59,28 @@ in the drive if this operation is supported by the hardware.
 The
 .Ar device
 argument specifies a device either by its full path name
-.Po identified by a \&
+.Po
+identified by a
 .Pa /dev/
 prefix
 .Pc ,
 or by one of the built-in nicknames.
-If the medium contains a filesystem that is currently mounted,
+If the medium contains a file system that is currently mounted,
 .Nm
-will attempt to unmount the filesystem before ejecting.
+will attempt to unmount the file system before ejecting.
 .Pp
 The following options are available:
 .Bl -tag -width xxx
 .It Fl d
 Deprecated.
 .It Fl f
-Force the eject operation without attempting to unmount any filesystems first.
+Force the eject operation without attempting to unmount any file systems first.
 .It Fl l
 Load media in the drive (only supported for the cdrom device type).
 .It Fl L
 Lock the media into the drive (but see
 .Sx BUGS
 below).
-.It Fl U
-Unlock the media from the drive.
 .It Fl n
 List the built-in nicknames on standard output.
 .It Fl t Ar device-type
@@ -95,6 +94,8 @@ or
 .Sy tape .
 This option is necessary when ejecting a device for which no built-in
 knowledge is available.
+.It Fl U
+Unlock the media from the drive.
 .It Fl v
 Display some of the actions taken on standard output.
 .El
