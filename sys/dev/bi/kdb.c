@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.22 2000/06/26 14:21:09 mrg Exp $ */
+/*	$NetBSD: kdb.c,v 1.23 2000/06/28 17:09:41 mrg Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -48,7 +48,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #ifdef __vax__
 #include <machine/pte.h>
