@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36.2.7 2000/12/13 15:50:04 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.2.8 2000/12/16 19:40:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -234,7 +234,7 @@ ncr53c9x_attach(sc)
 	adapt->adapt_dev = &sc->sc_dev;
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = 256;
-	adapt->adapt_max_periph = 32;
+	adapt->adapt_max_periph = 256;
 	adapt->adapt_ioctl = ncr53c9x_ioctl;
 	/* adapt_request initialized by front-end */
 	/* adapt_minphys initialized by front-end */
@@ -436,9 +436,8 @@ ncr53c9x_init(sc, doreset)
 		struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[r];
 /* XXX - config flags per target: low bits: no reselect; high bits: no synch */
 
-		ti->flags = ((sc->sc_cfflags & (1<<(r+16))) ? T_TAGOFF : 0) |
-			((sc->sc_minsync && !(sc->sc_cfflags & (1<<(r+8))))
-			 ? T_SYNCHOFF : 0) |
+		ti->flags = ((sc->sc_minsync && !(sc->sc_cfflags & (1<<(r+8))))
+			 ? 0 : T_SYNCHOFF) |
 			((sc->sc_cfflags & (1<<r)) ? T_RSELECTOFF : 0) |
 			T_NEED_TO_RESET;
 #ifdef DEBUG
@@ -864,10 +863,14 @@ ncr53c9x_scsipi_request(chan, req, arg)
 		ti->period = 0;
 		ti->offset = 0;
 
+		if ((sc->sc_cfflags & (1<<(xm->xm_target+16))) == 0 &&
+		    (xm->xm_mode & PERIPH_CAP_TQING))
+			ti->flags &= ~T_TAGOFF;
+		else
+			ti->flags |= T_TAGOFF;
+
 		if ((xm->xm_mode & PERIPH_CAP_SYNC) != 0 &&
-		    sc->sc_minsync != 0 &&
-		    (sc->sc_cfflags &
-		     (1 << (xm->xm_target + 8))) == 0) {
+		    (ti->flags & T_SYNCHOFF) == 0) {
 			ti->flags |= T_NEGOTIATE;
 			ti->period = sc->sc_minsync;
 		}
@@ -901,6 +904,8 @@ ncr53c9x_update_xfer_mode(sc, target)
 		xm.xm_period = ti->period;
 		xm.xm_offset = ti->offset;
 	}
+	if ((ti->flags & (T_RSELECTOFF|T_TAGOFF)) == 0)
+		xm.xm_mode |= PERIPH_CAP_TQING;
 
 	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_XFER_MODE, &xm);
 }
@@ -944,37 +949,12 @@ ncr53c9x_ioctl(chan, cmd, arg, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct ncr53c9x_softc *sc = (void *)chan->chan_adapter->adapt_dev;
+	/* struct ncr53c9x_softc *sc = (void *)chan->chan_adapter->adapt_dev; */
 	int s, error = 0;
 
 	s = splbio();
 
 	switch (cmd) {
-	case SCBUSACCEL: {
-		struct scbusaccel_args *sp = (struct scbusaccel_args *)arg;
-		struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sp->sa_target];
-
-		if (sp->sa_lun != 0)
-			break;
-
-		if ((sp->sa_flags & SC_ACCEL_SYNC) != 0) {
-			/* If this adapter can't do sync; drop it */
-			if (sc->sc_minsync == 0)
-				break;
-
-			/*
-			 * Check whether target is already clamped at
-			 * non-sync operation on user request.
-			 */
-			if ((ti->flags & T_SYNCHOFF) != 0)
-				break;
-
-			printf("%s: target %d: sync negotiation\n",
-					sc->sc_dev.dv_xname, sp->sa_target);
-			ti->flags |= T_NEGOTIATE;
-		}
-		break;
-	}
 	default:
 		error = ENOTTY;
 		break;
@@ -1155,17 +1135,6 @@ ncr53c9x_done(sc, ecb)
 
 	callout_stop(&ecb->xs->xs_callout);
 
-	if (ecb->stat == SCSI_QUEUE_FULL) {
-		/* 
-		 * Set current throttle -- we should reset 
-		 * this periodically 
-		 */
-		periph->periph_openings = li->used - 1;
-		printf("\n%s: QFULL -- throttling to %d commands\n",
-		    sc->sc_dev.dv_xname, periph->periph_openings);
-
-	}
-
 	/*
 	 * Now, if we've come here with no error code, i.e. we've kept the
 	 * initial XS_NOERROR, and the status code signals that we should
@@ -1187,6 +1156,10 @@ ncr53c9x_done(sc, ecb)
 			return;
 		} else {
 			xs->resid = ecb->dleft;
+		}
+		if (xs->status == SCSI_QUEUE_FULL) {
+			printf("queue full\n");
+			xs->error = XS_BUSY;
 		}
 	}
 
