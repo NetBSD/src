@@ -1,4 +1,4 @@
-/*	$NetBSD: getyx.c,v 1.3 2000/04/24 14:09:43 blymn Exp $	*/
+/*	$NetBSD: getyx.c,v 1.4 2001/10/14 12:36:09 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,13 +38,47 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getyx.c,v 1.3 2000/04/24 14:09:43 blymn Exp $");
+__RCSID("$NetBSD: getyx.c,v 1.4 2001/10/14 12:36:09 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
 
 #include "curses.h"
 #include "curses_private.h"
+
+/*
+ * getpary --
+ *      Get the y postion of the window relative to the parent window
+ * return -1 if not a subwindow.
+ */
+int
+getpary(WINDOW *win)
+{
+	if (win == NULL)
+		return -1;
+
+	if (win->orig == NULL)
+		return -1;
+
+	return (win->begy - win->orig->begy);
+}
+
+/*
+ * getparx --
+ *      Get the x postion of the window relative to the parent window
+ * return -1 if not a subwindow.
+ */
+int
+getparx(WINDOW *win)
+{
+	if (win == NULL)
+		return -1;
+
+	if (win->orig == NULL)
+		return -1;
+
+	return (win->begx - win->orig->begx);
+}
 
 /*
  * getcury --
