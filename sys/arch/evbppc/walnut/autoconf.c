@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2003/07/15 01:37:37 lukem Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2004/10/23 17:07:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2003/07/15 01:37:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2004/10/23 17:07:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -43,9 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2003/07/15 01:37:37 lukem Exp $");
 
 #include <powerpc/ibm4xx/dcr405gp.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
-
-struct device *booted_device;
-int booted_partition;
 
 /*
  * List of port-specific devices to attach to the processor local bus.
