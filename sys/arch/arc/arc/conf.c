@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 2000/02/22 11:25:57 soda Exp $	*/
+/*	$NetBSD: conf.c,v 1.17 2000/03/03 12:29:57 soda Exp $	*/
 /*	$OpenBSD: conf.c,v 1.27 1999/08/12 13:06:33 niklas Exp $ */
 
 /*
@@ -54,20 +54,25 @@
  *	Block devices.
  */
 
-#include "vnd.h"
-bdev_decl(vnd);
-bdev_decl(sw);
 #include "sd.h"
 bdev_decl(sd);
+bdev_decl(sw);
+#include "vnd.h"
+bdev_decl(vnd);
 #include "cd.h"
 bdev_decl(cd);
-#include "fdc.h"
-bdev_decl(fd);
 #include "wd.h"
 bdev_decl(wd);
+#include "st.h"
+bdev_decl(st);
 #include "ccd.h"
+bdev_decl(ccd);
+#include "fdc.h"
+bdev_decl(fd);
 #include "md.h"
 bdev_decl(md);
+#include "raid.h"
+bdev_decl(raid);
 
 struct bdevsw	bdevsw[] =
 {
@@ -76,11 +81,11 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NVND,vnd),	/* 2: vnode disk */
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
 	bdev_disk_init(NWD,wd),		/* 4: ST506/ESDI/IDE disk */
-	bdev_notdef(),			/* 5: */
+	bdev_tape_init(NST,st),		/* 5: SCSI tape */
 	bdev_disk_init(NCCD,ccd),	/* 6: concatenated disk */
 	bdev_disk_init(NFDC,fd),	/* 7: Floppy disk */
 	bdev_disk_init(NMD,md),		/* 8: memory disk */
-	bdev_notdef(),			/* 9: */
+	bdev_disk_init(NRAID,raid),	/* 9: RAIDframe disk driver */
 	bdev_notdef(),			/* 10: */
 	bdev_notdef(),			/* 11: */
 	bdev_notdef(),			/* 12: */
@@ -136,39 +141,48 @@ cdev_decl(pts);
 cdev_decl(ptc);
 cdev_decl(log);
 cdev_decl(fd);
-#include "st.h"
+cdev_decl(cd);
+cdev_decl(sd);
 cdev_decl(st);
-#include "fdc.h"
-bdev_decl(fd);
 cdev_decl(vnd);
-cdev_decl(md);
 #include "bpfilter.h"
 cdev_decl(bpf);
-#include "com.h"
-cdev_decl(com);
-#include "lpt.h"
-cdev_decl(lpt);
-cdev_decl(sd);
+#include "fdc.h"
+bdev_decl(fd);
 #include "pc.h"
 cdev_decl(pc);
 cdev_decl(opms);
-cdev_decl(cd);
-#include "ch.h"
-#include "ss.h"
-#include "uk.h"
-cdev_decl(uk);
+#include "lpt.h"
+cdev_decl(lpt);
+#include "com.h"
+cdev_decl(com);
 cdev_decl(wd);
-#include "joy.h"
-cdev_decl(joy);
-
-/* open, close, read, ioctl */
-#include "ipfilter.h"
-cdev_decl(ipl);
-
-#include "rnd.h"
-
 #include "scsibus.h"
 cdev_decl(scsibus);
+cdev_decl(md);
+cdev_decl(ccd);
+cdev_decl(raid);
+#include "tun.h"
+cdev_decl(tun);
+#include "joy.h"
+cdev_decl(joy);
+#include "wsdisplay.h"
+cdev_decl(wsdisplay);
+#include "wsmux.h"
+cdev_decl(wsmux);
+#include "wskbd.h"
+cdev_decl(wskbd);
+#include "wsmouse.h"
+cdev_decl(wsmouse);
+#include "ipfilter.h"
+cdev_decl(ipl);
+#include "uk.h"
+cdev_decl(uk);
+#include "rnd.h"
+#include "ss.h"
+cdev_decl(ss);
+#include "ch.h"
+cdev_decl(ch);
 
 struct cdevsw	cdevsw[] =
 {
@@ -192,17 +206,19 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NCOM,com),	/* 17: 16C450 serial interface */
 	cdev_disk_init(NWD,wd),		/* 18: ST506/ESDI/IDE disk */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 19: SCSI bus */
-	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
-	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
+	cdev_notdef(),			/* 20: */
+	cdev_notdef(),			/* 21: */
 	cdev_disk_init(NMD,md),		/* 22: memory disk */
 	cdev_disk_init(NCCD,ccd),       /* 23: concatenated disk */
-	cdev_notdef(),			/* 24: */
-	cdev_notdef(),			/* 25: */
+	cdev_disk_init(NRAID,raid),	/* 24: RAIDframe disk driver */
+	cdev_bpftun_init(NTUN,tun),	/* 25: network tunnel */
 	cdev_joy_init(NJOY,joy),	/* 26: joystick */
-	cdev_notdef(),			/* 27: */
-	cdev_notdef(),			/* 28: */
-	cdev_notdef(),			/* 29: */
-	cdev_notdef(),			/* 30: */
+	cdev_wsdisplay_init(NWSDISPLAY,
+			    wsdisplay), /* 27: frame buffers, etc. */
+	cdev_mouse_init(NWSMUX, wsmux),	/* 28: ws multiplexor */
+	cdev_mouse_init(NWSKBD, wskbd),	/* 29: keyboards */
+	cdev_mouse_init(NWSMOUSE,
+	    wsmouse),			/* 30: mice */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 31: IP filter log */
 	cdev_uk_init(NUK,uk),		/* 32: unknown SCSI */
 	cdev_rnd_init(NRND,rnd),	/* 33: random source pseudo-device */
@@ -289,7 +305,7 @@ static int chrtoblktbl[] =  {
 	/* 21 */	NODEV,
 	/* 22 */	8,		/* md */
 	/* 23 */	6,		/* ccd */
-	/* 24 */	NODEV,
+	/* 24 */	9,		/* raid */
 	/* 25 */	NODEV,
 	/* 26 */	NODEV,
 	/* 27 */	NODEV,
