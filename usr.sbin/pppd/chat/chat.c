@@ -13,7 +13,8 @@
  *		(614)451-1883
  */
 
-static char sccs_id[] = "@(#)chat.c	1.7";
+/*static char sccs_id[] = "@(#)chat.c	1.7";*/
+static char rcsid[] = "$Id: chat.c,v 1.2 1993/08/16 00:47:33 mycroft Exp $";
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -24,7 +25,7 @@ static char sccs_id[] = "@(#)chat.c	1.7";
 #include <varargs.h>
 #include <syslog.h>
 
-#ifdef __386BSD__
+#ifdef __NetBSD__
 #define TERMIOS
 #define SIGHAND_TYPE	__sighandler_t
 #else

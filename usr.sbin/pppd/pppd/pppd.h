@@ -308,7 +308,7 @@ extern int errno;
     } }
 
 
-#ifdef __386BSD__ /* BSD >= 44 ? */
+#ifdef __NetBSD__ /* BSD >= 44 ? */
 #define SET_SA_FAMILY(addr, family)		\
     bzero((char *) &(addr), sizeof(addr));	\
     addr.sa_family = (family); 			\
