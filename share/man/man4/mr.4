@@ -1,4 +1,4 @@
-.\"	$NetBSD: mr.4,v 1.1 2002/01/01 22:09:42 augustss Exp $
+.\"	$NetBSD: mr.4,v 1.2 2002/01/01 22:34:06 augustss Exp $
 .\"	$OpenBSD: mr.4,v 1.2 2001/12/05 11:27:44 mickey Exp $
 .\"	$RuOBSD: mr.4,v 1.3 2001/10/26 05:38:43 form Exp $
 .\"
@@ -32,7 +32,7 @@
 .Nm mr
 .Nd Guillemot Maxi Radio FM 2000 FM radio device driver
 .Sh SYNOPSIS
-.Cd "mr*   at pci?"
+.Cd "mr*    at pci? dev ? function ?"
 .Cd "radio* at mr?"
 .Sh DESCRIPTION
 The
@@ -45,7 +45,7 @@ audio output to mono, perform hardware signal search, and have an internal
 AFC.
 .Sh SEE ALSO
 .Xr pci 4 ,
-.Xr radio 4 .
+.Xr radio 4
 .Sh AUTHORS
 The
 .Nm
