@@ -37,18 +37,14 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$NetBSD: SYS.h,v 1.12 2002/01/14 00:55:56 thorpej Exp $
+ *	$NetBSD: SYS.h,v 1.13 2002/05/26 11:48:04 wiz Exp $
  */
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
 #include <machine/trap.h>
 
-#ifdef __STDC__
 #define _CAT(x,y) x##y
-#else
-#define _CAT(x,y) x/**/y
-#endif
 
 #ifdef __ELF__
 #define CERROR		_C_LABEL(__cerror)
