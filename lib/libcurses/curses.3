@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.20 2000/04/22 13:29:01 blymn Exp $
+.\"	$NetBSD: curses.3,v 1.21 2000/04/22 14:32:44 blymn Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -226,6 +226,7 @@ as changed
 .Em ch
 .It underend()	end underscore mode
 .It underscore()	start underscore mode
+.It ungetch(ch)		Put character back onto input queue.
 .It waddch(win,ch)	add char to
 .Em win
 .It waddstr(win,str)	add string to
