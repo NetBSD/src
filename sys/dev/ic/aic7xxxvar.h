@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.27 2001/04/25 17:53:31 bouyer Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.28 2001/04/30 03:45:36 lukem Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -178,7 +178,7 @@ typedef enum {
 	AHC_NEWEEPROM_FMT	= 0x4000,
 	AHC_RESOURCE_SHORTAGE	= 0x8000,
 	AHC_TQINFIFO_BLOCKED	= 0x10000,/* Blocked waiting for ATIOs */
-	AHC_INT50_SPEEDFLEX	= 0x20000,/*
+	AHC_INT50_SPEEDFLEX	= 0x20000 /*
 					   * Internal 50pin connector
 					   * sits behind an aic3860
 					   */
