@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.4 1995/02/27 12:54:33 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2000/09/05 16:28:31 thorpej Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # gmon sources
-.PATH: ${.CURDIR}/gmon
+.PATH: ${.CURDIR}/gmon ${ARCHDIR}/gmon
+
+.-include "${ARCHDIR}/gmon/Makefile.inc"
 
 SRCS+=	gmon.c mcount.c
 MAN+=	moncontrol.3
