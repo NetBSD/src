@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)misc.h	8.1 (Berkeley) 6/4/93
- *	$Id: misc.h,v 1.3 1994/02/25 02:53:04 cgd Exp $
+ *	$NetBSD: misc.h,v 1.4 1996/02/24 01:15:27 jtk Exp $
  */
 
 extern char *UserNameRequested;
