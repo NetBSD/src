@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.25 1999/01/16 01:40:30 abs Exp $
+#	$NetBSD: MAKEDEV,v 1.26 1999/09/18 00:23:39 hubertf Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -35,6 +35,13 @@
 #
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
 #
+###########################################################################
+#
+#   PLEASE RUN "cd ../share/man/man8 ; perl5 MAKEDEV2manpage.pl"
+#   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
+#
+###########################################################################
+#
 # Device "make" file.  Valid arguments:
 #	std	standard devices
 #	local	configuration specific devices
@@ -48,18 +55,16 @@
 #	raid*	RAIDframe disk driver
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
-# Printers:
-# Call units:
 # Special purpose devices:
-#	bwtwo*
-#	cgtwo*
-#	cgfour*
+#	bwtwo*	monochromatic frame buffer
+#	cgtwo*	8-bit VME bus color frame buffer
+#	cgfour*	8-bit color frame buffer
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
 #	md*	memory pseudo-disk
 #	random	Random number generator
-#	scsibus* SCSI busses
+#	scsibus* SCSI busses, see scsictl(8), scsi(4)
 
 # XXX - Keep /usr/etc so SunOS can find chown
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/etc

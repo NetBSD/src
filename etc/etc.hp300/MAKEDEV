@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.27 1999/01/16 01:40:28 abs Exp $
+#	$NetBSD: MAKEDEV,v 1.28 1999/09/18 00:23:36 hubertf Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -35,6 +35,13 @@
 #
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
 #
+###########################################################################
+#
+#   PLEASE RUN "cd ../share/man/man8 ; perl5 MAKEDEV2manpage.pl"
+#   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
+#
+###########################################################################
+#
 # Device "make" file.  Valid arguments:
 #	std	standard devices
 #	local	configuration specific devices
@@ -54,8 +61,6 @@
 #	apci*	HP400     4 port serial mux interface
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
-# Printers:
-# Call units:
 # Special purpose devices:
 #	fd	file descriptors
 #	grf*	raw interface to HP300 graphics devices
@@ -64,9 +69,9 @@
 #	bpf*	packet filter
 #	tun*	network tunnel driver
 #	lkm	loadable kernel modules interface
-#	ipl	ip filter control
+#	ipl	IPilter control
 #	random	Random number generator
-#	scsibus* SCSI busses
+#	scsibus* SCSI busses, see scsictl(8), scsi(4)
 #
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
