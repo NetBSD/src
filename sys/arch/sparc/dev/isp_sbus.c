@@ -1,5 +1,5 @@
-/* $NetBSD: isp_sbus.c,v 1.12 1998/07/20 21:18:38 thorpej Exp $ */
-/* $Id: isp_sbus.c,v 1.12 1998/07/20 21:18:38 thorpej Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.13 1998/07/29 18:44:23 pk Exp $ */
+/* $Id: isp_sbus.c,v 1.13 1998/07/29 18:44:23 pk Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -140,8 +140,8 @@ isp_sbus_attach(parent, self, aux)
 	sbc->sbus_pri = sa->sa_pri;
 	sbc->sbus_mdvec = mdvec;
 
-	if (sa->sa_promvaddr) {
-		sbc->sbus_reg = (volatile u_char *) sa->sa_promvaddr;
+	if (sa->sa_npromvaddrs != 0) {
+		sbc->sbus_reg = (volatile u_char *) sa->sa_promvaddrs[0];
 	} else {
 		bus_space_handle_t bh;
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
