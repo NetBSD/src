@@ -1,4 +1,4 @@
-/*	$NetBSD: getbsize.c,v 1.8 1996/01/22 16:34:08 mycroft Exp $	*/
+/*	$NetBSD: getbsize.c,v 1.9 1997/07/13 18:59:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,14 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getbsize.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getbsize.c,v 1.8 1996/01/22 16:34:08 mycroft Exp $";
+__RCSID("$NetBSD: getbsize.c,v 1.9 1997/07/13 18:59:34 christos Exp $");
 #endif
 #endif /* not lint */
 
+#include "namespace.h"
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -88,24 +90,25 @@ getbsize(headerlenp, blocksizep)
 			mul = 1;
 			break;
 		default:
-fmterr:			_warnx("%s: unknown blocksize", p);
+fmterr:			warnx("%s: unknown blocksize", p);
 			n = 512;
 			mul = 1;
+			max = 0;
 			break;
 		}
 		if (n > max) {
-			_warnx("maximum blocksize is %dG", MAXB / GB);
+			warnx("maximum blocksize is %ldG", MAXB / GB);
 			n = max;
 		}
 		if ((blocksize = n * mul) < 512) {
-underflow:		_warnx("%s: minimum blocksize is 512", p);
+underflow:		warnx("%s: minimum blocksize is 512", p);
 			form = "";
 			blocksize = n = 512;
 		}
 	} else
 		blocksize = n = 512;
 
-	*headerlenp = snprintf(header, sizeof(header), "%d%s-blocks", n, form);
+	*headerlenp = snprintf(header, sizeof(header), "%ld%s-blocks", n, form);
 	*blocksizep = blocksize;
 	return (header);
 }
