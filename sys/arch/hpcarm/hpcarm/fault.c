@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.7 2001/06/19 13:42:17 wiz Exp $	*/
+/*	$NetBSD: fault.c,v 1.8 2001/06/29 02:40:28 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -70,9 +70,9 @@
 extern int pmap_debug_level;
 #endif	/* PMAP_DEBUG */
 
-int pmap_modified_emulation __P((pmap_t, vm_offset_t));
-int pmap_handled_emulation __P((pmap_t, vm_offset_t));
-pt_entry_t *pmap_pte __P((pmap_t pmap, vm_offset_t va));
+int pmap_modified_emulation __P((pmap_t, vaddr_t));
+int pmap_handled_emulation __P((pmap_t, vaddr_t));
+pt_entry_t *pmap_pte __P((pmap_t pmap, vaddr_t va));
 int cowfault __P((vaddr_t));
 
 int fetchuserword __P((u_int address, u_int *location));
@@ -328,14 +328,14 @@ copyfault:
 	 * the page and possibly the page table page.
 	 */
 	{
-		register vm_offset_t va;
+		register vaddr_t va;
 		register struct vmspace *vm = p->p_vmspace;
 		register struct vm_map *map;
 		int rv;
 		vm_prot_t ftype;
 		extern struct vm_map *kernel_map;
 
-		va = trunc_page((vm_offset_t)fault_address);
+		va = trunc_page((vaddr_t)fault_address);
 
 #ifdef PMAP_DEBUG
 		if (pmap_debug_level >= 0)
@@ -570,7 +570,7 @@ prefetch_abort_handler(frame)
 
 	/* Is the page already mapped ? */
 	/* This is debugging for rev K SA110 silicon */
-	pte = pmap_pte(p->p_vmspace->vm_map.pmap, (vm_offset_t)fault_pc);
+	pte = pmap_pte(p->p_vmspace->vm_map.pmap, (vaddr_t)fault_pc);
 	if (pte && *pte != 0) {
 		if (kernel_debug & 1) {
 			printf("prefetch_abort: page is already mapped - pte=%p *pte=%08x\n",
@@ -604,7 +604,7 @@ prefetch_abort_handler(frame)
 			disassemble(fault_pc);
 			printf("return addr=%08x", frame->tf_pc);
 			pte = pmap_pte(p->p_vmspace->vm_map.pmap,
-			    (vm_offset_t)fault_pc);
+			    (vaddr_t)fault_pc);
 			if (pte)
 				printf(" pte=%p *pte=%08x\n", pte, *pte);
 			else
