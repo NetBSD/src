@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.25.6.1 1999/06/28 06:37:08 itojun Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.25.6.2 1999/11/30 13:36:02 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993

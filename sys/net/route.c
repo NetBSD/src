@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.24.6.1 1999/06/28 06:36:57 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.24.6.2 1999/11/30 13:35:15 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -167,18 +167,6 @@ rtalloc(ro)
 		return;				 /* XXX */
 	ro->ro_rt = rtalloc1(&ro->ro_dst, 1);
 }
-
-#if 1
-/* for INET6 */
-void
-rtcalloc(ro)
-	register struct route *ro;
-{
-	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
-		return;				 /* XXX */
-	ro->ro_rt = rtalloc1(&ro->ro_dst, 0);
-}
-#endif
 
 struct rtentry *
 rtalloc1(dst, report)
@@ -592,7 +580,9 @@ rtinit(ifa, cmd, flags)
 	dst = flags & RTF_HOST ? ifa->ifa_dstaddr : ifa->ifa_addr;
 	if (cmd == RTM_DELETE) {
 		if ((flags & RTF_HOST) == 0 && ifa->ifa_netmask) {
-			m = m_get(M_WAIT, MT_SONAME);
+			m = m_get(M_DONTWAIT, MT_SONAME);
+			if (m == NULL)
+				return(ENOBUFS);
 			deldst = mtod(m, struct sockaddr *);
 			rt_maskedcopy(dst, deldst, ifa->ifa_netmask);
 			dst = deldst;

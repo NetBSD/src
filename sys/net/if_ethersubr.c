@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.41.6.1 1999/06/28 06:36:55 itojun Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.41.6.2 1999/11/30 13:35:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -106,6 +106,7 @@
 #endif
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
+#include <netinet6/in6_ifattach.h>
 #endif
 
 #ifdef NS
@@ -176,6 +177,9 @@ ether_output(ifp, m0, dst, rt0)
 #ifdef NETATALK
 	struct at_ifaddr *aa;
 #endif /* NETATALK */
+#ifdef ALTQ
+	struct pr_hdr pr_hdr;
+#endif
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -212,6 +216,14 @@ ether_output(ifp, m0, dst, rt0)
 			    time.tv_sec < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
+#ifdef ALTQ
+	/*
+	 * save a pointer to the protocol level header before adding
+	 * link headers.
+	 */
+	pr_hdr.ph_family = dst->sa_family;
+	pr_hdr.ph_hdr = mtod(m, caddr_t);
+#endif /* ALTQ */
 	switch (dst->sa_family) {
 
 #ifdef INET
@@ -259,13 +271,16 @@ ether_output(ifp, m0, dst, rt0)
 #endif
 #ifdef INET6
 	case AF_INET6:
-#ifdef NEWIP6OUTPUT
-		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst))
-			return(0); /* it must be impossible, but... */
-#else
+#ifdef OLDIP6OUTPUT
 		if (!nd6_resolve(ifp, rt, m, dst, (u_char *)edst))
 			return(0);	/* if not yet resolves */
-#endif /* NEWIP6OUTPUT */
+#else
+		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst)){
+			/* this must be impossible, so we bark */
+			printf("nd6_storelladdr failed\n");
+			return(0);
+		}
+#endif /* OLDIP6OUTPUT */
 		etype = htons(ETHERTYPE_IPV6);
 		break;
 #endif
@@ -294,7 +309,7 @@ ether_output(ifp, m0, dst, rt0)
 		if (aa->aa_flags & AFA_PHASE2) {
 			struct llc llc;
 
-			M_PREPEND(m, sizeof(struct llc), M_WAIT);
+			M_PREPEND(m, sizeof(struct llc), M_DONTWAIT);
 			llc.llc_dsap = llc.llc_ssap = LLC_SNAP_LSAP;
 			llc.llc_control = LLC_UI;
 			bcopy(at_org_code, llc.llc_snap_org_code,
@@ -455,6 +470,22 @@ ether_output(ifp, m0, dst, rt0)
 	else
 	 	bcopy(LLADDR(ifp->if_sadl), (caddr_t)eh->ether_shost,
 		    sizeof(eh->ether_shost));
+#ifdef ALTQ
+	if (ALTQ_IS_ON(ifp)) {
+	        s = splimp();
+		error = (*ifp->if_altqenqueue)(ifp, m, &pr_hdr, ALTEQ_NORMAL);
+		splx(s);
+		if (error) {
+			IF_DROP(&ifp->if_snd);
+		}
+		else {
+		    ifp->if_obytes += m->m_pkthdr.len;
+		    if (m->m_flags & M_MCAST)
+		    	ifp->if_omcasts++;
+		}
+		return (error);
+	}
+#endif /* ALTQ */
 	s = splimp();
 	/*
 	 * Queue message on interface, and start output if interface
@@ -462,11 +493,17 @@ ether_output(ifp, m0, dst, rt0)
 	 */
 	if (IF_QFULL(&ifp->if_snd)) {
 		IF_DROP(&ifp->if_snd);
+#ifdef ALTQ_ACCOUNT
+		ALTQ_ACCOUNTING(ifp, m, &pr_hdr, ALTEQ_ACCDROP);
+#endif
 		splx(s);
 		senderr(ENOBUFS);
 	}
 	ifp->if_obytes += m->m_pkthdr.len;
 	IF_ENQUEUE(&ifp->if_snd, m);
+#ifdef ALTQ_ACCOUNT
+	ALTQ_ACCOUNTING(ifp, m, &pr_hdr, ALTEQ_ACCOK);
+#endif
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	splx(s);
@@ -757,6 +794,9 @@ ether_ifattach(ifp, lla)
 	}
 	LIST_INIT(&((struct ethercom *)ifp)->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
+#ifdef INET6
+	in6_ifattach_getifid(ifp);
+#endif
 }
 
 u_char	ether_ipmulticast_min[6] = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 };
@@ -814,7 +854,7 @@ ether_addmulti(ifr, ec)
 	case AF_INET6:
 		sin6 = (struct sockaddr_in6 *)
 			&(((struct in6_ifreq *)ifr)->ifr_addr);
-		if (IN6_IS_ADDR_ANY(&sin6->sin6_addr)) {
+		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 			/*
 			 * An IP6 address of 0 means listen to all
 			 * of the Ethernet multicast address used for IP6.
@@ -926,7 +966,7 @@ ether_delmulti(ifr, ec)
 #ifdef INET6
 	case AF_INET6:
 		sin6 = (struct sockaddr_in6 *)&(ifr->ifr_addr);
-		if (IN6_IS_ADDR_ANY(&sin6->sin6_addr)) {
+		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 			/*
 			 * An IP6 address of all 0 means stop listening
 			 * to the range of Ethernet multicast addresses used

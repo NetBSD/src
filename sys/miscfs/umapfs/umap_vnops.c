@@ -1,3 +1,5 @@
+/*	$NetBSD: umap_vnops.c,v 1.13.6.1 1999/11/30 13:34:55 itojun Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,24 +52,70 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <miscfs/umapfs/umap.h>
+#include <miscfs/genfs/genfs.h>
 
 
 int umap_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
+
+int	umap_bypass	__P((void *));
+int	umap_getattr	__P((void *));
+int	umap_inactive	__P((void *));
+int	umap_reclaim	__P((void *));
+int	umap_print	__P((void *));
+int	umap_rename	__P((void *));
+int	umap_strategy	__P((void *));
+int	umap_bwrite	__P((void *));
+int	umap_lock	__P((void *));
+int	umap_unlock	__P((void *));
+int	umap_open	__P((void *));
+int	umap_fsync	__P((void *));
+
+/*
+ * Global vfs data structures
+ */
+/*
+ * XXX - strategy, bwrite are hand coded currently.  They should
+ * go away with a merged buffer/block cache.
+ *
+ */
+int (**umap_vnodeop_p) __P((void *));
+struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
+	{ &vop_default_desc, umap_bypass },
+
+	{ &vop_getattr_desc, umap_getattr },
+	{ &vop_lock_desc, umap_lock },
+	{ &vop_unlock_desc, umap_unlock },
+	{ &vop_fsync_desc, umap_fsync },
+	{ &vop_inactive_desc, umap_inactive },
+	{ &vop_reclaim_desc, umap_reclaim },
+	{ &vop_print_desc, umap_print },
+
+	{ &vop_open_desc, umap_open }, /* mount option handling */
+
+	{ &vop_rename_desc, umap_rename },
+
+	{ &vop_strategy_desc, umap_strategy },
+	{ &vop_bwrite_desc, umap_bwrite },
+
+	{ (struct vnodeop_desc*) NULL, (int(*) __P((void *))) NULL }
+};
+struct vnodeopv_desc umapfs_vnodeop_opv_desc =
+	{ &umap_vnodeop_p, umap_vnodeop_entries };
 
 /*
  * This is the 10-Apr-92 bypass routine.
  * See null_vnops.c:null_bypass for more details.
  */ 
 int
-umap_bypass(ap)
+umap_bypass(v)
+	void *v;
+{
 	struct vop_generic_args /* {
 		struct vnodeop_desc *a_desc;
 		<other random data follows, presumably>
-	} */ *ap;
-{
-	extern int (**umap_vnodeop_p)();  /* not extern, really "forward" */
+	} */ *ap = v;
 	struct ucred **credpp = 0, *credp = 0;
-	struct ucred *savecredp, *savecompcredp = 0;
+	struct ucred *savecredp = 0, *savecompcredp = 0;
 	struct ucred *compcredp = 0;
 	struct vnode **this_vp_p;
 	int error;
@@ -80,7 +128,7 @@ umap_bypass(ap)
 	struct componentname **compnamepp = 0;
 
 	if (umap_bug_bypass)
-		printf ("umap_bypass: %s\n", descp->vdesc_name);
+		printf("umap_bypass: %s\n", descp->vdesc_name);
 
 #ifdef SAFETY
 	/*
@@ -113,7 +161,7 @@ umap_bypass(ap)
 		 * that aren't.  (Must map first vp or vclean fails.)
 		 */
 
-		if (i && (*this_vp_p)->v_op != umap_vnodeop_p) {
+		if (i && ((*this_vp_p)==NULL || (*this_vp_p)->v_op != umap_vnodeop_p)) {
 			old_vps[i] = NULL;
 		} else {
 			old_vps[i] = *this_vp_p;
@@ -135,8 +183,9 @@ umap_bypass(ap)
 
 		/* Save old values */
 
-		savecredp = (*credpp);
-		(*credpp) = crdup(savecredp);
+		savecredp = *credpp;
+		if (savecredp != NOCRED)
+			*credpp = crdup(savecredp);
 		credp = *credpp;
 
 		if (umap_bug_bypass && credp->cr_uid != 0)
@@ -161,9 +210,10 @@ umap_bypass(ap)
 		compnamepp = VOPARG_OFFSETTO(struct componentname**, 
 		    descp->vdesc_componentname_offset, ap);
 
+		savecompcredp = (*compnamepp)->cn_cred;
+		if (savecompcredp != NOCRED)
+			(*compnamepp)->cn_cred = crdup(savecompcredp);
 		compcredp = (*compnamepp)->cn_cred;
-		savecompcredp = compcredp;
-		compcredp = (*compnamepp)->cn_cred = crdup(savecompcredp);
 
 		if (umap_bug_bypass && compcredp->cr_uid != 0)
 			printf("umap_bypass: component credit user was %d, group %d\n", 
@@ -222,50 +272,122 @@ umap_bypass(ap)
 	if (descp->vdesc_cred_offset != VDESC_NO_OFFSET) {
 		if (umap_bug_bypass && credp && credp->cr_uid != 0)
 			printf("umap_bypass: returning-user was %d\n",
-					credp->cr_uid);
+			    credp->cr_uid);
 
-		crfree(credp);
-		(*credpp) = savecredp;
-		if (umap_bug_bypass && credpp && (*credpp)->cr_uid != 0)
-		 	printf("umap_bypass: returning-user now %d\n\n", 
-			    (*credpp)->cr_uid);
+		if (savecredp != NOCRED) {
+			crfree(credp);
+			*credpp = savecredp;
+			if (umap_bug_bypass && credpp && (*credpp)->cr_uid != 0)
+			 	printf("umap_bypass: returning-user now %d\n\n", 
+				    savecredp->cr_uid);
+		}
 	}
 
 	if (descp->vdesc_componentname_offset != VDESC_NO_OFFSET) {
 		if (umap_bug_bypass && compcredp && compcredp->cr_uid != 0)
-		printf("umap_bypass: returning-component-user was %d\n", 
-				compcredp->cr_uid);
+			printf("umap_bypass: returning-component-user was %d\n", 
+			    compcredp->cr_uid);
 
-		crfree(compcredp);
-		(*compnamepp)->cn_cred = savecompcredp;
-		if (umap_bug_bypass && credpp && (*credpp)->cr_uid != 0)
-		 	printf("umap_bypass: returning-component-user now %d\n", 
-					compcredp->cr_uid);
+		if (savecompcredp != NOCRED) {
+			crfree(compcredp);
+			(*compnamepp)->cn_cred = savecompcredp;
+			if (umap_bug_bypass && credpp && (*credpp)->cr_uid != 0)
+			 	printf("umap_bypass: returning-component-user now %d\n", 
+				    savecompcredp->cr_uid);
+		}
 	}
 
 	return (error);
 }
 
+/*
+ * We need to process our own vnode lock and then clear the
+ * interlock flag as it applies only to our vnode, not the
+ * vnodes below us on the stack.
+ */
+int
+umap_lock(v)
+	void *v;
+{
+	struct vop_lock_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+		struct proc *a_p;
+	} */ *ap = v;
+
+	genfs_nolock(ap);
+	if ((ap->a_flags & LK_TYPE_MASK) == LK_DRAIN)
+		return (0);
+	ap->a_flags &= ~LK_INTERLOCK;
+	return (umap_bypass(ap));
+}
+
+/*
+ * We need to process our own vnode unlock and then clear the
+ * interlock flag as it applies only to our vnode, not the
+ * vnodes below us on the stack.
+ */
+int
+umap_unlock(v)
+	void *v;
+{
+	struct vop_unlock_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+		struct proc *a_p;
+	} */ *ap = v;
+
+	genfs_nounlock(ap);
+	ap->a_flags &= ~LK_INTERLOCK;
+	return (umap_bypass(ap));
+}
+
+/*
+ * If vinvalbuf is calling us, it's a "shallow fsync" -- don't bother
+ * syncing the underlying vnodes, since (a) they'll be fsync'ed when
+ * reclaimed and (b) we could deadlock if they're locked; otherwise,
+ * pass it through to the underlying layer.
+ */
+
+int
+umap_fsync(v)
+	void *v;
+{
+	struct vop_fsync_args /* {
+		struct vnode *a_vp;
+		struct ucred *a_cred;
+		int  a_flags;
+		struct proc *a_p;
+	} */ *ap = v;
+
+	if (ap->a_flags & FSYNC_RECLAIM)
+		return 0;
+
+	return (umap_bypass(ap));
+}
 
 /*
  *  We handle getattr to change the fsid.
  */
 int
-umap_getattr(ap)
+umap_getattr(v)
+	void *v;
+{
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
 		struct proc *a_p;
-	} */ *ap;
-{
-	short uid, gid;
+	} */ *ap = v;
+	uid_t uid;
+	gid_t gid;
 	int error, tmpid, nentries, gnentries;
-	u_long (*mapdata)[2], (*gmapdata)[2];
+	u_long (*mapdata)[2];
+	u_long (*gmapdata)[2];
 	struct vnode **vp1p;
 	struct vnodeop_desc *descp = ap->a_desc;
 
-	if (error = umap_bypass(ap))
+	if ((error = umap_bypass(ap)) != 0)
 		return (error);
 	/* Requires that arguments be restored. */
 	ap->a_vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsid.val[0];
@@ -301,7 +423,6 @@ umap_getattr(ap)
 	tmpid = umap_reverse_findid(uid, mapdata, nentries);
 
 	if (tmpid != -1) {
-
 		ap->a_vap->va_uid = (uid_t) tmpid;
 		if (umap_bug_bypass)
 			printf("umap_getattr: original uid = %d\n", uid);
@@ -313,7 +434,6 @@ umap_getattr(ap)
 	tmpid = umap_reverse_findid(gid, gmapdata, gnentries);
 
 	if (tmpid != -1) {
-
 		ap->a_vap->va_gid = (gid_t) tmpid;
 		if (umap_bug_bypass)
 			printf("umap_getattr: original gid = %d\n", gid);
@@ -323,54 +443,34 @@ umap_getattr(ap)
 	return (0);
 }
 
-/*
- * We need to process our own vnode lock and then clear the
- * interlock flag as it applies only to our vnode, not the
- * vnodes below us on the stack.
- */
+/* 
+ * We must handle open to be able to catch MNT_NODEV and friends.
+ */   
 int
-umap_lock(ap)
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap;
+umap_open(v)
+        void *v;
 {
+        struct vop_open_args *ap = v;
+        struct vnode *vp = ap->a_vp;
+        enum vtype lower_type = UMAPVPTOLOWERVP(vp)->v_type;
 
-	vop_nolock(ap);
-	if ((ap->a_flags & LK_TYPE_MASK) == LK_DRAIN)
-		return (0);
-	ap->a_flags &= ~LK_INTERLOCK;
-	return (null_bypass(ap));
+
+        if (((lower_type == VBLK) || (lower_type == VCHR)) &&
+            (vp->v_mount->mnt_flag & MNT_NODEV))
+                return ENXIO;
+
+        return umap_bypass(ap);
 }
 
-/*
- * We need to process our own vnode unlock and then clear the
- * interlock flag as it applies only to our vnode, not the
- * vnodes below us on the stack.
- */
+/*ARGSUSED*/
 int
-umap_unlock(ap)
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap;
+umap_inactive(v)
+	void *v;
 {
-	struct vnode *vp = ap->a_vp;
-
-	vop_nounlock(ap);
-	ap->a_flags &= ~LK_INTERLOCK;
-	return (null_bypass(ap));
-}
-
-int
-umap_inactive(ap)
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 	/*
 	 * Do nothing (and _don't_ bypass).
 	 * Wait to vrele lowervp until reclaim,
@@ -378,16 +478,17 @@ umap_inactive(ap)
 	 * cache and reusable.
 	 *
 	 */
-	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
+	VOP_UNLOCK(ap->a_vp, 0);
 	return (0);
 }
 
 int
-umap_reclaim(ap)
+umap_reclaim(v)
+	void *v;
+{
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct umap_node *xp = VTOUMAP(vp);
 	struct vnode *lowervp = xp->umap_lowervp;
@@ -402,11 +503,12 @@ umap_reclaim(ap)
 }
 
 int
-umap_strategy(ap)
+umap_strategy(v)
+	void *v;
+{
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct buf *bp = ap->a_bp;
 	int error;
 	struct vnode *savedvp;
@@ -422,11 +524,12 @@ umap_strategy(ap)
 }
 
 int
-umap_bwrite(ap)
+umap_bwrite(v)
+	void *v;
+{
 	struct vop_bwrite_args /* {
 		struct buf *a_bp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct buf *bp = ap->a_bp;
 	int error;
 	struct vnode *savedvp;
@@ -443,18 +546,22 @@ umap_bwrite(ap)
 
 
 int
-umap_print(ap)
+umap_print(v)
+	void *v;
+{
 	struct vop_print_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	printf("\ttag VT_UMAPFS, vp=%x, lowervp=%x\n", vp, UMAPVPTOLOWERVP(vp));
+	printf("\ttag VT_UMAPFS, vp=%p, lowervp=%p\n", vp,
+	    UMAPVPTOLOWERVP(vp));
 	return (0);
 }
 
 int
-umap_rename(ap)
+umap_rename(v)
+	void *v;
+{
 	struct vop_rename_args  /* {
 		struct vnode *a_fdvp;
 		struct vnode *a_fvp;
@@ -462,8 +569,7 @@ umap_rename(ap)
 		struct vnode *a_tdvp;
 		struct vnode *a_tvp;
 		struct componentname *a_tcnp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	int error;
 	struct componentname *compnamep;
 	struct ucred *compcredp, *savecompcredp;
@@ -503,31 +609,3 @@ umap_rename(ap)
 
 	return error;
 }
-
-/*
- * Global vfs data structures
- */
-/*
- * XXX - strategy, bwrite are hand coded currently.  They should
- * go away with a merged buffer/block cache.
- *
- */
-int (**umap_vnodeop_p)();
-struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
-	{ &vop_default_desc, umap_bypass },
-
-	{ &vop_getattr_desc, umap_getattr },
-	{ &vop_lock_desc, umap_lock },
-	{ &vop_unlock_desc, umap_unlock },
-	{ &vop_inactive_desc, umap_inactive },
-	{ &vop_reclaim_desc, umap_reclaim },
-	{ &vop_print_desc, umap_print },
-	{ &vop_rename_desc, umap_rename },
-
-	{ &vop_strategy_desc, umap_strategy },
-	{ &vop_bwrite_desc, umap_bwrite },
-
-	{ (struct vnodeop_desc*) NULL, (int(*)()) NULL }
-};
-struct vnodeopv_desc umap_vnodeop_opv_desc =
-	{ &umap_vnodeop_p, umap_vnodeop_entries };

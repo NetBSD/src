@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.36.10.2 1999/07/06 11:02:47 itojun Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.36.10.3 1999/11/30 13:35:34 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.11.24.2 1999/07/06 11:03:07 itojun Exp $	*/
+/*	$NetBSD: domain.h,v 1.11.24.3 1999/11/30 13:36:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

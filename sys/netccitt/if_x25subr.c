@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.20.12.1 1999/06/28 06:36:57 itojun Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.20.12.2 1999/11/30 13:35:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

@@ -1,3 +1,5 @@
+/*	$NetBSD: param.h,v 1.56.2.2.4.1 1999/11/30 13:36:18 itojun Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,15 +40,52 @@
  *	@(#)param.h	8.3 (Berkeley) 4/4/95
  */
 
+#ifndef _SYS_PARAM_H_
+#define _SYS_PARAM_H_
+
+/*
+ * Historic BSD #defines -- probably will remain untouched for all time.
+ */
 #define	BSD	199506		/* System version (year & month). */
 #define BSD4_3	1
 #define BSD4_4	1
+
+/*
+ *	#define __NetBSD_Version__ MMmmrrpp00
+ *
+ *	M = major version
+ *	m = minor version
+ *	r = release ["",A-Z but numeric]
+ *	p = patchlevel
+ *
+ *	So:
+ *	     NetBSD-1.2D  = 102040000
+ *	And:
+ *	     NetBSD-1.2.1 = 102000100
+ *
+ */
+
+#define __NetBSD_Version__  104000100	/* NetBSD 1.4.1 */
+
+/*
+ * Historical NetBSD #define
+ *
+ * NetBSD 1.4 was the last release for which this value was incremented.
+ * The value is now permanently fixed at 199905. It will never be
+ * changed again.
+ *
+ * New code must use __NetBSD_Version__ instead, and should not even
+ * count on NetBSD being defined.
+ *
+ */
+
+#define NetBSD	199905		/* NetBSD version (year & month). */
 
 #ifndef NULL
 #define	NULL	0
 #endif
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #include <sys/types.h>
 #endif
 
@@ -60,24 +99,40 @@
 #include <sys/syslimits.h>
 
 #define	MAXCOMLEN	16		/* max command name remembered */
-#define	MAXINTERP	32		/* max interpreter file name length */
-#define	MAXLOGNAME	12		/* max login name length */
-#define	MAXUPRC		CHILD_MAX	/* max simultaneous processes */
+#define	MAXINTERP	64		/* max interpreter file name length */
+#define	MAXLOGNAME	16		/* max login name length */
 #define	NCARGS		ARG_MAX		/* max bytes for an exec function */
 #define	NGROUPS		NGROUPS_MAX	/* max number groups */
 #define	NOFILE		OPEN_MAX	/* max open files per process */
 #define	NOGROUP		65535		/* marker for empty group set member */
 #define MAXHOSTNAMELEN	256		/* max hostname size */
 
+#ifndef MAXUPRC				/* max simultaneous processes */
+#define MAXUPRC		CHILD_MAX	/* POSIX 1003.1-compliant default */
+#else
+#if (MAXUPRC - 0) < CHILD_MAX
+#error MAXUPRC less than CHILD_MAX.  See options(4) for details.
+#endif /* (MAXUPRC - 0) < CHILD_MAX */
+#endif /* !defined(MAXUPRC) */
+
 /* More types and definitions used throughout the kernel. */
-#ifdef KERNEL
+#ifdef _KERNEL
 #include <sys/cdefs.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/ucred.h>
 #include <sys/uio.h>
+#ifndef NPROC
+#define	NPROC (20 + 16 * MAXUSERS)
 #endif
+#ifndef NTEXT
+#define	NTEXT (80 + NPROC / 8)			/* actually the object cache */
+#endif
+#ifndef NVNODE
+#define	NVNODE (NPROC + NTEXT + 100)
+#endif
+#endif /* _KERNEL */
 
 /* Signals. */
 #include <sys/signal.h>
@@ -106,8 +161,6 @@
 #define	PRIMASK	0x0ff
 #define	PCATCH	0x100		/* OR'd with pri for tsleep to check signals */
 
-#define	NZERO	0		/* default "nice" */
-
 #define	NBPW	sizeof(int)	/* number of bytes per word (integer) */
 
 #define	CMASK	022		/* default file mask: S_IWGRP|S_IWOTH */
@@ -116,7 +169,7 @@
 /*
  * Clustering of hardware pages on machines with ridiculously small
  * page sizes is done here.  The paging subsystem deals with units of
- * CLSIZE pte's describing NBPG (from machine/machparam.h) pages each.
+ * CLSIZE pte's describing NBPG (from machine/param.h) pages each.
  */
 #define	CLBYTES		(CLSIZE*NBPG)
 #define	CLOFSET		(CLSIZE*NBPG-1)	/* for clusters, like PGOFSET */
@@ -147,13 +200,15 @@
  * smaller units (fragments) only in the last direct block.  MAXBSIZE
  * primarily determines the size of buffers in the buffer pool.  It may be
  * made larger without any effect on existing file systems; however making
- * it smaller make make some file systems unmountable.
+ * it smaller may make some file systems unmountable.
  */
+#ifndef MAXBSIZE				/* XXX */
 #define	MAXBSIZE	MAXPHYS
+#endif
 #define MAXFRAG 	8
 
 /*
- * MAXPATHLEN defines the longest permissable path length after expanding
+ * MAXPATHLEN defines the longest permissible path length after expanding
  * symbolic links. It is used to allocate a temporary buffer from the buffer
  * pool in which to do the name expansion, hence should be a power of two,
  * and must be less than or equal to MAXBSIZE.  MAXSYMLINKS defines the
@@ -162,7 +217,7 @@
  * infinite loops reasonably quickly.
  */
 #define	MAXPATHLEN	PATH_MAX
-#define MAXSYMLINKS	8
+#define MAXSYMLINKS	32
 
 /* Bit map related macros. */
 #define	setbit(a,i)	((a)[(i)/NBBY] |= 1<<((i)%NBBY))
@@ -178,7 +233,7 @@
 #define powerof2(x)	((((x)-1)&(x))==0)
 
 /* Macros for min/max. */
-#ifndef KERNEL
+#ifndef _KERNEL
 #define	MIN(a,b) (((a)<(b))?(a):(b))
 #define	MAX(a,b) (((a)>(b))?(a):(b))
 #endif
@@ -214,3 +269,5 @@
  */
 #define	FSHIFT	11		/* bits to right of fixed binary point */
 #define FSCALE	(1<<FSHIFT)
+
+#endif /* !_SYS_PARAM_H_ */

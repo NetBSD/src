@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.29.2.1.4.2 1999/07/06 11:02:44 itojun Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.29.2.1.4.3 1999/11/30 13:35:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,6 +69,7 @@
 #include "opt_iso.h"			/* ISO TP tunneled over IP */
 #include "opt_ns.h"			/* NSIP: XNS tunneled over IP */
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -194,14 +195,14 @@ struct protosw inetsw[] = {
 #endif /* IPSEC */
 #if NGIF > 0
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
-  in_gif_input,	0,	 	0,		0,
-  0,	  
+  in_gif_input,	rip_output, 	0,		rip_ctloutput,
+  rip_usrreq,	/*XXX*/
   0,		0,		0,		0,
 },
 #ifdef INET6
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
-  in_gif_input,	0,	 	0,		0,
-  0,	  
+  in_gif_input,	rip_output, 	0,		rip_ctloutput,
+  rip_usrreq,	/*XXX*/
   0,		0,		0,		0,
 },
 #endif /* INET6 */

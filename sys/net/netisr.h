@@ -1,4 +1,4 @@
-/*	$NetBSD: netisr.h,v 1.17.12.2 1999/07/06 11:02:40 itojun Exp $	*/
+/*	$NetBSD: netisr.h,v 1.17.12.3 1999/11/30 13:35:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.58.6.2 1999/07/06 11:02:46 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.58.6.3 1999/11/30 13:35:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,6 +102,7 @@
  */
 
 #include "opt_pfil_hooks.h"
+#include "opt_ipsec.h"
 #include "opt_mrouting.h"
 
 #include <sys/param.h>
@@ -394,6 +395,7 @@ ip_output(m0, va_alist)
 	} else
 		m->m_flags &= ~M_BCAST;
 
+sendit:
 #ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for output packets.
@@ -412,14 +414,13 @@ ip_output(m0, va_alist)
 			ip = mtod(m, struct ip *);
 		}
 #endif /* PFIL_HOOKS */
-sendit:
 
 #ifdef IPSEC
 	/* get SP for this packet */
 	if (so == NULL)
-		sp = ipsec4_getpolicybyaddr(m, flags, &error);
+		sp = ipsec4_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND, flags, &error);
 	else
-		sp = ipsec4_getpolicybysock(m, so, &error);
+		sp = ipsec4_getpolicybysock(m, IPSEC_DIR_OUTBOUND, so, &error);
 
 	if (sp == NULL) {
 		ipsecstat.out_inval++;
@@ -537,6 +538,19 @@ skip_ipsec:
 	 * If small enough for mtu of path, can just send directly.
 	 */
 	if ((u_int16_t)ip->ip_len <= mtu) {
+#if IFA_STATS
+		/*
+		 * search for the source address structure to
+		 * maintain output statistics.
+		 */
+		bzero((caddr_t*) &src, sizeof(src));
+		src.sin_family = AF_INET;
+		src.sin_addr.s_addr = ip->ip_src.s_addr;
+		src.sin_len = sizeof(src);
+		ia = ifatoia(ifa_ifwithladdr(sintosa(&src)));
+		if (ia)
+			ia->ia_ifa.ifa_data.ifad_outbytes += ntohs(ip->ip_len);
+#endif
 		HTONS(ip->ip_len);
 		HTONS(ip->ip_off);
 		ip->ip_sum = 0;
@@ -647,10 +661,25 @@ sendorfree:
 	for (m = m0; m; m = m0) {
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
-		if (error == 0)
+		if (error == 0) {
+#if IFA_STATS
+			/*
+			 * search for the source address structure to
+			 * maintain output statistics.
+			 */
+			bzero((caddr_t*) &src, sizeof(src));
+			src.sin_family = AF_INET;
+			src.sin_addr.s_addr = ip->ip_src.s_addr;
+			src.sin_len = sizeof(src);
+			ia = ifatoia(ifa_ifwithladdr(sintosa(&src)));
+			if (ia) {
+				ia->ia_ifa.ifa_data.ifad_outbytes +=
+					ntohs(ip->ip_len);
+			}
+#endif
 			error = (*ifp->if_output)(ifp, m, sintosa(dst),
 			    ro->ro_rt);
-		else
+		} else
 			m_freem(m);
 	}
 
@@ -662,19 +691,6 @@ done:
 		RTFREE(ro->ro_rt);
 		ro->ro_rt = 0;
 	}
-#if IFA_STATS
-	if (error == 0) {
-		/* search for the source address structure to maintain output
-		 * statistics. */
-		bzero((caddr_t*) &src, sizeof(src));
-		src.sin_family = AF_INET;
-		src.sin_addr.s_addr = ip->ip_src.s_addr;
-		src.sin_len = sizeof(src);
-		ia = ifatoia(ifa_ifwithladdr(sintosa(&src)));
-		if (ia)
-			ia->ia_ifa.ifa_data.ifad_outbytes += ntohs(ip->ip_len);
-	}
-#endif
 
 #ifdef IPSEC
 	if (sp != NULL) {
@@ -907,9 +923,8 @@ ip_ctloutput(op, so, level, optname, mp)
 
 #ifdef IPSEC
 		case IP_IPSEC_POLICY:
-		    {
+		{
 			caddr_t req = NULL;
-			int len = 0;
 			int priv = 0;
 #ifdef __NetBSD__
 			if (p == 0 || suser(p->p_ucred, &p->p_acflag))
@@ -919,12 +934,9 @@ ip_ctloutput(op, so, level, optname, mp)
 #else
 			priv = (in6p->in6p_socket->so_state & SS_PRIV);
 #endif
-			if (m != 0) {
+			if (m != 0)
 				req = mtod(m, caddr_t);
-				len = m->m_len;
-			}
-			error = ipsec_set_policy(&inp->inp_sp,
-			                         optname, req, len, priv);
+			error = ipsec4_set_policy(inp, optname, req, priv);
 			break;
 		    }
 #endif /*IPSEC*/
@@ -996,8 +1008,14 @@ ip_ctloutput(op, so, level, optname, mp)
 
 #ifdef IPSEC
 		case IP_IPSEC_POLICY:
-			error = ipsec_get_policy(inp->inp_sp, mp);
+		{
+			caddr_t req = NULL;
+
+			if (m != 0)
+				req = mtod(m, caddr_t);
+			error = ipsec4_get_policy(inp, req, mp);
 			break;
+		}
 #endif /*IPSEC*/
 
 		case IP_MULTICAST_IF:
