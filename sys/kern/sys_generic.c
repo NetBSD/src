@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.70 2003/02/23 14:37:34 pk Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.71 2003/03/22 14:13:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.70 2003/02/23 14:37:34 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.71 2003/03/22 14:13:06 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 
@@ -999,8 +999,7 @@ selwakeup(sip)
 	p = pfind(sip->sel_pid);
 	sip->sel_pid = 0;
 	if (p != NULL) {
-		for (l = LIST_FIRST(&p->p_lwps); l != NULL;
-		     l = LIST_NEXT(l, l_sibling)) {
+		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			SCHED_LOCK(s);
 			if (l->l_wchan == (caddr_t)&selwait) {
 				if (l->l_stat == LSSLEEP)
