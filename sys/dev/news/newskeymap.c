@@ -1,4 +1,4 @@
-/*	$NetBSD: newskeymap.c,v 1.2 2000/11/20 14:55:15 tsutsui Exp $	*/
+/*	$NetBSD: newskeymap.c,v 1.1 2001/01/25 13:13:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
