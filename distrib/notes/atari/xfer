@@ -12,11 +12,11 @@ If you are using NetBSD/atari to make the floppies, you should use
 the command dd(1) to write the raw floppy images (.fs files) to
 the disk. To write onto fd0 use:
 
-	dd if=miniroot-12.fs.1 of=/dev/rfd0b bs=9b
+	dd if=miniroot-13.fs.1 of=/dev/rfd0b bs=9b
 
 If you are using TOS to make the floppies, grab the 'rawwrite' utility
 from the "atari/utils" directory and issue the command:
-	rawwrite miniroot-12.fs
+	rawwrite miniroot-13.fs
 
 This will create the boot-floppy on the floppy in drive a. The floppies
 should be pre-formatted on 720Kb for both the 'dd' and 'rawwrite' commands
