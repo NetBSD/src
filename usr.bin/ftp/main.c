@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 1999/03/08 04:36:13 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.39 1999/03/22 07:36:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.38 1999/03/08 04:36:13 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.39 1999/03/22 07:36:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,6 @@ main(argc, argv)
 	long port;
 	struct passwd *pw = NULL;
 	char *cp, *ep, homedir[MAXPATHLEN];
-	char *outfile = NULL;
 	int dumbterm;
 
 	sp = getservbyname("ftp", "tcp");
@@ -124,6 +123,8 @@ main(argc, argv)
 	verbose = 0;
 	progress = 0;
 	gatemode = 0;
+	outfile = NULL;
+	restartautofetch = 0;
 #ifndef SMALL
 	editing = 0;
 	el = NULL;
@@ -186,7 +187,7 @@ main(argc, argv)
 #endif
 	}
 
-	while ((ch = getopt(argc, argv, "Aadefgino:pP:r:tvV")) != -1) {
+	while ((ch = getopt(argc, argv, "Aadefgino:pP:r:RtvV")) != -1) {
 		switch (ch) {
 		case 'A':
 			activefallback = 0;
@@ -245,9 +246,12 @@ main(argc, argv)
 
 		case 'r':
 			retry_connect = strtol(optarg, &ep, 10);
-			if (retry_connect < 1 || retry_connect > MAX_IN_PORT_T
-			    || *ep != '\0')
+			if (retry_connect < 1 || *ep != '\0')
 				errx(1, "bad retry value: %s", optarg);
+			break;
+
+		case 'R':
+			restartautofetch = 1;
 			break;
 
 		case 't':
@@ -299,7 +303,7 @@ main(argc, argv)
 
 	if (argc > 0) {
 		if (strchr(argv[0], ':') != NULL) {
-			rval = auto_fetch(argc, argv, outfile);
+			rval = auto_fetch(argc, argv);
 			if (rval >= 0)		/* -1 == connected and cd-ed */
 				exit(rval);
 		} else {
@@ -747,9 +751,9 @@ usage()
 	(void)fprintf(stderr,
 "usage: %s [-AadeginptvV] [-r retry] [-P port] [host [port]]\n"
 "       %s [-f] [-o outfile] file:///file\n"
-"       %s [-f] [-o outfile] ftp://[user[:pass]@]host[:port]/path[/]\n"
+"       %s [-fR] [-o outfile] ftp://[user[:pass]@]host[:port]/path[/]\n"
 "       %s [-f] [-o outfile] http://host[:port]/path\n"
-"       %s [-f] [-o outfile] host:path[/]\n",
+"       %s [-fR] [-o outfile] host:path[/]\n",
 	    __progname, __progname, __progname, __progname, __progname);
 	exit(1);
 }
