@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)defs.h	5.10 (Berkeley) 2/28/91
- *	$Id: defs.h,v 1.5 1994/04/13 04:29:54 cgd Exp $
+ *	from: @(#)defs.h	8.1 (Berkeley) 6/5/93
+ *	$Id: defs.h,v 1.6 1994/05/13 08:04:34 mycroft Exp $
  */
 
 /*
@@ -69,11 +69,15 @@
 struct	sockaddr_in addr;	/* address of daemon's socket */
 
 int	s;			/* source and sink of all data */
+int	r;			/* routing socket */
+pid_t	pid;			/* process id for identifying messages */
+uid_t	uid;			/* user id for identifying messages */
+int	seqno;			/* sequence number for identifying messages */
 int	kmem;
 int	supplier;		/* process should supply updates */
 int	install;		/* if 1 call kernel */
 int	lookforinterfaces;	/* if 1 probe kernel for new up interfaces */
-int	performnlist;		/* if 1 check if /netbsd has changed */
+int	performnlist;		/* if 1 check if /vmunix has changed */
 int	externalinterfaces;	/* # of remote and local interfaces */
 struct	timeval now;		/* current idea of time */
 struct	timeval lastbcast;	/* last time all/changes broadcast */
@@ -89,6 +93,12 @@ struct	servent *sp;
 
 struct	in_addr inet_makeaddr();
 int	inet_addr();
+int	inet_maskof();
 int	sndmsg();
 int	supply();
 int	cleanup();
+
+int	rtioctl();
+#define ADD 1
+#define DELETE 2
+#define CHANGE 3

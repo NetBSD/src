@@ -1,16 +1,15 @@
-#	from: @(#)Makefile	5.6 (Berkeley) 6/27/91
-#	$Id: Makefile,v 1.6 1993/08/01 05:26:30 mycroft Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
+#	$Id: Makefile,v 1.7 1994/05/13 08:02:16 mycroft Exp $
 
 PROG=	route
 MAN8=	route.0
-SRCS=	route.c
 SRCS=	route.c ccitt_addr.c
 CFLAGS+=-I.
 CLEANFILES+=keywords.h
 BINOWN=	root
 BINMODE=4555
 
-all route depend lint tags: keywords.h
+all: route ${MAN8}
 
 keywords.h: keywords
 	sed -e '/^#/d' -e '/^$$/d' ${.CURDIR}/keywords > _keywords.tmp
@@ -23,3 +22,5 @@ keywords.h: keywords
 	rm -f _keywords.tmp
 
 .include <bsd.prog.mk>
+
+route .depend lint tags: keywords.h
