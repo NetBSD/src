@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.h,v 1.3 1997/10/16 23:24:56 lukem Exp $	*/
+/*	$NetBSD: pf.h,v 1.4 2001/01/16 02:50:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: pf.h,v 1.3 1997/10/16 23:24:56 lukem Exp $
+ *	$NetBSD: pf.h,v 1.4 2001/01/16 02:50:31 cgd Exp $
  *
  */
 
@@ -45,4 +45,4 @@ int	pfRead     __P((int, u_char *, int));
 int	pfWrite    __P((int, u_char *, int, int));
 __END_DECLS
 
-#endif _PF_H_
+#endif /* _PF_H_ */

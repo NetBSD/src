@@ -1,4 +1,4 @@
-/*	$NetBSD: print.h,v 1.3 1997/10/16 23:25:00 lukem Exp $	*/
+/*	$NetBSD: print.h,v 1.4 2001/01/16 02:50:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: print.h,v 1.3 1997/10/16 23:25:00 lukem Exp $
+ *	$NetBSD: print.h,v 1.4 2001/01/16 02:50:31 cgd Exp $
  *
  */
 
@@ -48,4 +48,4 @@ void	mopPrintInfo      __P((FILE *, u_char *, int *, u_short,
 			       u_char, int));
 __END_DECLS
 
-#endif _PRINT_H_
+#endif /* _PRINT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: def.monst.h,v 1.4 1997/10/19 16:57:07 christos Exp $	*/
+/*	$NetBSD: def.monst.h,v 1.5 2001/01/16 02:50:28 cgd Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -38,7 +38,7 @@ struct monst {
 	Bitfield(mnamelth,6);	/* length of name (following mxlth) */
 #ifndef NOWORM
 	Bitfield(wormno,5);	/* at most 31 worms on any level */
-#endif NOWORM
+#endif /* NOWORM */
 	unsigned mtrapseen;	/* bitmap of traps we've been trapped in */
 	long mlstmv;	/* prevent two moves at once */
 	struct obj *minvent;

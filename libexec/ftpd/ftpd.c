@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.119 2001/01/10 00:20:49 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.120 2001/01/16 02:50:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.119 2001/01/10 00:20:49 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.120 2001/01/16 02:50:29 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -1841,7 +1841,7 @@ receive_data(FILE *instr, FILE *outstr)
 		reply(550, "Unimplemented TYPE %d in receive_data", type);
 		goto cleanup_recv_data;
 	}
-#undef FILESIZECHECK(x)
+#undef FILESIZECHECK
 
  data_err:
 	(void) alarm(0);
