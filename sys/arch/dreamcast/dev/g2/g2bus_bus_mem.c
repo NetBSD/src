@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus_bus_mem.c,v 1.4 2002/02/19 17:21:19 uch Exp $	*/
+/*	$NetBSD: g2bus_bus_mem.c,v 1.5 2002/03/03 14:31:29 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,7 +53,6 @@
 
 #include <machine/cpu.h> 
 #include <machine/bus.h>
-#include <machine/cpufunc.h>
 
 #include <dreamcast/dev/g2/g2busvar.h>
 

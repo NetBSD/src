@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.2 2002/02/17 20:58:04 uch Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.3 2002/03/03 14:31:26 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <sh3/cpufunc.h>
 #include <sh3/cache.h>
 #include <sh3/cache_sh4.h>
 
