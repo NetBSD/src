@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.11 2002/08/18 04:12:42 briggs Exp $
+#	$NetBSD: IQ80321,v 1.12 2002/08/29 02:25:22 thorpej Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -23,7 +23,6 @@ options 	CPU_XSCALE_80321	# Support the XScale core
 makeoptions	COPTS="-O2 -mcpu=xscale"
 
 # Architecture options
-options 	PERFCTRS
 options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
 #options 	HZ=512
 
@@ -71,7 +70,6 @@ options 	INET6		# IPV6
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
-options 	SOSEND_LOAN
 
 options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
@@ -124,6 +122,7 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 
 # Development and Debugging options
 
+options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internally consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
