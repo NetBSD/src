@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.15 2000/10/14 22:27:43 lukem Exp $
+.\"	$NetBSD: whatis,v 1.16 2002/06/29 23:54:06 lukem Exp $
 .
 .Nx \*V
 is the sixth major release of
@@ -14,7 +14,8 @@ Serial console support on the Quadra 900/950.
 wscons integration.
 .bullet)
 .Pp
-There is still a lot of work to be done and help is welcomed. Please jump in!
+There is still a lot of work to be done and help is welcomed.
+Please jump in!
 .Nx \*V
 on \*M is, as usual, also fully backward compatible with old
 .Nx*M
