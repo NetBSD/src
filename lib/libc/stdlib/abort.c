@@ -1,4 +1,4 @@
-/*	$NetBSD: abort.c,v 1.6 1995/12/28 08:51:57 thorpej Exp $	*/
+/*	$NetBSD: abort.c,v 1.7 1996/10/24 20:45:55 jtc Exp $	*/
 
 /*
  * Copyright (c) 1985 Regents of the University of California.
@@ -37,13 +37,16 @@
 #if 0
 static char *sccsid = "from: @(#)abort.c	5.11 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: abort.c,v 1.6 1995/12/28 08:51:57 thorpej Exp $";
+static char *rcsid = "$NetBSD: abort.c,v 1.7 1996/10/24 20:45:55 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+void (*__cleanup)();
+static int aborting = 0;
 
 void
 abort()
@@ -57,6 +60,22 @@ abort()
 	 */
 	sigdelset(&mask, SIGABRT);
 	(void)sigprocmask(SIG_SETMASK, &mask, (sigset_t *)NULL);
+
+	/* 
+	 * POSIX.1 requires that stdio buffers be flushed on abort.
+	 * We ensure the cleanup routines are only called once in
+	 * case the user calls abort() in a SIGABRT handler.
+	 *
+	 * XXX Other libc's do atexit processing on abort.  Is this
+	 * something we should be doing too?
+	 */
+	if (!aborting) {
+		aborting = 1;
+
+		if (__cleanup)
+			(*__cleanup)();
+	}
+
 	(void)kill(getpid(), SIGABRT);
 
 	/*
