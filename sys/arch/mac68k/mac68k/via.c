@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.33 1995/09/18 03:15:43 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.34 1995/09/28 04:11:18 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -284,12 +284,11 @@ enable_nubus_intr(void)
 void
 via2_nubus_intr(int bit)
 {
-	register int	i, mask, ints, cnt=0;
+	register int	i, mask, ints;
 
 try_again:
 	via2_reg(vIFR) = V2IF_SLOTINT;
 	if (ints = ((~via2_reg(vBufA)) & nubus_intr_mask)) {
-		cnt = 0;
 		mask = (1 << 5);
 		i = 6;
 		while (i--) {
@@ -299,10 +298,7 @@ try_again:
 			mask >>= 1;
 		}
 	} else {
-		delay(7);
-		if (cnt++ >= 2) {
-			return;
-		}
+		return;
 	}
 	goto try_again;
 }
@@ -310,12 +306,11 @@ try_again:
 void
 rbv_nubus_intr(int bit)
 {
-	register int	i, mask, ints, cnt=0;;
+	register int	i, mask, ints;
 
 try_again:
 	via2_reg(rIFR) = V2IF_SLOTINT;
 	if (ints = ((~via2_reg(rBufA)) & via2_reg(rSlotInt))) {
-		cnt = 0;
 		mask = (1 << 5);
 		i = 6;
 		while (i--) {
@@ -325,9 +320,7 @@ try_again:
 			mask >>= 1;
 		}
 	} else {
-		delay(7);
-		if (cnt++ >= 2)
-			return;
+		return;
 	}
 	goto try_again;
 }
