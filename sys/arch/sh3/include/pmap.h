@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6 2000/09/28 14:03:38 is Exp $	*/
+/*	$NetBSD: pmap.h,v 1.7 2001/02/02 02:28:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -279,6 +279,10 @@ struct pv_head {
 	struct pv_entry *pvh_list;	/* head of list (locked by pvh_lock) */
 };
 
+/* These are kept in the vm_physseg array. */
+#define	PGA_REFERENCED	0x01		/* page is referenced */
+#define	PGA_MODIFIED	0x02		/* page is modified */
+
 struct pv_entry {			/* locked by its list's pvh_lock */
 	struct pv_entry *pv_next;	/* next entry */
 	struct pmap *pv_pmap;		/* the pmap */
@@ -364,15 +368,10 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 #define	pmap_update()			tlbflush()
 #endif
 
-#define pmap_clear_modify(pg)		pmap_change_attrs(pg, 0, PG_M)
-#define pmap_clear_reference(pg)	pmap_change_attrs(pg, 0, PG_U)
+#define	pmap_is_referenced(pg)		pmap_test_attrs(pg, PGA_REFERENCED)
+#define	pmap_is_modified(pg)		pmap_test_attrs(pg, PGA_MODIFIED)
+
 #define pmap_copy(DP,SP,D,L,S)		pmap_transfer(DP,SP,D,L,S, FALSE)
-#define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
-#ifdef notyet
-#define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
-#else
-#define pmap_is_referenced(pg)		1
-#endif
 #define pmap_move(DP,SP,D,L,S)		pmap_transfer(DP,SP,D,L,S, TRUE)
 #define pmap_phys_address(ppn)		sh3_ptob(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
@@ -386,7 +385,6 @@ void		pmap_activate __P((struct proc *));
 void		pmap_bootstrap __P((vaddr_t));
 boolean_t	pmap_change_attrs __P((struct vm_page *, int, int));
 void		pmap_deactivate __P((struct proc *));
-static void	pmap_page_protect __P((struct vm_page *, vm_prot_t));
 void		pmap_page_remove  __P((struct vm_page *));
 static void	pmap_protect __P((struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t));
@@ -457,29 +455,6 @@ pmap_update_2pg(va, vb)
 	pmap_update_pg(va);
 	pmap_update_pg(vb);
 #endif
-}
-
-/*
- * pmap_page_protect: change the protection of all recorded mappings
- *	of a managed page
- *
- * => this function is a frontend for pmap_page_remove/pmap_change_attrs
- * => we only have to worry about making the page more protected.
- *	unprotecting a page is done on-demand at fault time.
- */
-
-__inline static void
-pmap_page_protect(pg, prot)
-	struct vm_page *pg;
-	vm_prot_t prot;
-{
-	if ((prot & VM_PROT_WRITE) == 0) {
-		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
-			(void) pmap_change_attrs(pg, PG_RO, PG_RW);
-		} else {
-			pmap_page_remove(pg);
-		}
-	}
 }
 
 /*
