@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36 1996/12/17 21:11:45 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37 1997/01/24 00:09:35 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -61,8 +61,7 @@
 #include <machine/reg.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
-
-#include "machdep.h"
+#include <machine/machdep.h>
 
 extern int fpu_type;
 
