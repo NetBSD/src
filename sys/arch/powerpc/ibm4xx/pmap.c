@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2001/09/10 21:19:38 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 2001/09/11 04:35:43 eeh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -309,14 +309,14 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	 * kernel space so it's in the locked TTE.
 	 */
 	kernmap = (caddr_t)kernelend;
-	kernelend += KERNMAP_SIZE*sizeof(struct pte);
+//	kernelend += KERNMAP_SIZE*sizeof(struct pte);
 
 	/*
 	 * Initialize kernel page table.
 	 */
-	memset(kernmap, 0, KERNMAP_SIZE*sizeof(struct pte));
+//	memset(kernmap, 0, KERNMAP_SIZE*sizeof(struct pte));
 	for (i = 0; i < STSZ; i++) {
-		pmap_kernel()->pm_ptbl[i] = (u_int *)(kernmap + i*NBPG);
+		pmap_kernel()->pm_ptbl[i] = 0; // (u_int *)(kernmap + i*NBPG);
 	}
 	ctxbusy[0] = ctxbusy[1] = pmap_kernel();
 
@@ -543,6 +543,96 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 	*end = (vaddr_t) VM_MAX_KERNEL_ADDRESS;
 #endif
 }
+
+#ifdef PMAP_GROWKERNEL
+/*
+ * Preallocate kernel page tables to a specified VA.
+ * This simply loops through the first TTE for each
+ * page table from the beginning of the kernel pmap, 
+ * reads the entry, and if the result is
+ * zero (either invalid entry or no page table) it stores
+ * a zero there, populating page tables in the process.
+ * This is not the most efficient technique but i don't
+ * expect it to be called that often.
+ */
+extern struct vm_page *vm_page_alloc1 __P((void));
+extern void vm_page_free1 __P((struct vm_page *));
+
+vaddr_t kbreak = VM_MIN_KERNEL_ADDRESS;
+
+vaddr_t 
+pmap_growkernel(maxkvaddr)
+        vaddr_t maxkvaddr; 
+{
+	int s;
+	int seg;
+	paddr_t pg;
+	struct pmap *pm = pmap_kernel();
+	
+	s = splvm();
+
+	/* Align with the start of a page table */
+	for (kbreak &= ~(PTMAP-1); kbreak < maxkvaddr;
+	     kbreak += PTMAP) {
+		seg = STIDX(kbreak);
+
+		if (pte_find(pm, kbreak)) continue;
+ 
+		if (uvm.page_init_done) {
+			pg = (paddr_t)VM_PAGE_TO_PHYS(vm_page_alloc1());
+		} else {
+			if (!uvm_page_physget(&pg))
+				panic("pmap_growkernel: no memory");
+		}
+		if (!pg) panic("pmap_growkernel: no pages");
+		pmap_zero_page((paddr_t)pg);
+
+		/* XXX This is based on all phymem being addressable */
+		pm->pm_ptbl[seg] = (u_int *)pg;
+	}
+	splx(s);
+	return (kbreak);
+}
+
+/*
+ *	vm_page_alloc1:
+ *
+ *	Allocate and return a memory cell with no associated object.
+ */
+struct vm_page *
+vm_page_alloc1()
+{
+	struct vm_page *pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+	if (pg) {
+		pg->wire_count = 1;	/* no mappings yet */
+		pg->flags &= ~PG_BUSY;	/* never busy */
+	}
+	return pg;
+}
+
+/*
+ *	vm_page_free1:
+ *
+ *	Returns the given page to the free list,
+ *	disassociating it with any VM object.
+ *
+ *	Object and page must be locked prior to entry.
+ */
+void
+vm_page_free1(mem)
+	struct vm_page *mem;
+{
+	if (mem->flags != (PG_CLEAN|PG_FAKE)) {
+		printf("Freeing invalid page %p\n", mem);
+		printf("pa = %llx\n", (unsigned long long)VM_PAGE_TO_PHYS(mem));
+		Debugger();
+		return;
+	}
+	mem->flags |= PG_BUSY;
+	mem->wire_count = 0;
+	uvm_pagefree(mem);
+}
+#endif
 
 /*
  * Create and return a physical map.
@@ -1478,6 +1568,7 @@ ctx_free(struct pmap *pm)
 	ctxbusy[oldctx] = NULL;
 	ctx_flush(oldctx);
 }
+
 
 #ifdef DEBUG
 /*
