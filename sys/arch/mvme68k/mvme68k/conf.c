@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 1997/10/16 23:39:16 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 1998/10/10 02:00:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -133,6 +133,9 @@ cdev_decl(lpt);
 #include "ipfilter.h" 
 #include "rnd.h"
 
+#include "scsibus.h"
+cdev_decl(scsibus);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -171,6 +174,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scanner_init(NSS,ss),	/* 33: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 34: SCSI unknown */
 	cdev_rnd_init(NRND,rnd),	/* 35: random source pseudo-device */
+	cdev_scsibus_init(NSCSIBUS,scsibus) /* 36: SCSI bus */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
@@ -247,6 +251,7 @@ static int chrtoblktbl[] = {
 	/* 33 */	NODEV,
 	/* 34 */	NODEV,
 	/* 35 */	NODEV,
+	/* 36 */	NODEV,
 };
 
 /*

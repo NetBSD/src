@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.49 1998/07/03 22:25:35 mhitch Exp $	*/
+/*	$NetBSD: conf.c,v 1.50 1998/10/10 02:00:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -101,6 +101,7 @@ dev_decl(filedesc,open);
 #include "tun.h"
 #include "ipfilter.h"
 #include "rnd.h"
+#include "scsibus.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -148,6 +149,7 @@ struct cdevsw	cdevsw[] =
 	cdev_audio_init(NAUDIO,audio),	/* 41: cc audio interface */
 	cdev_rnd_init(NRND,rnd),	/* 42: random source pseudo-device */
 	cdev_disk_init(NMD,md),		/* 43: memory disk */
+	cdev_scsibus_init(NSCSIBUS,scsibus), /* 44: SCSI bus */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -254,6 +256,7 @@ static int chrtoblktab[] = {
  	/* 41 */	NODEV,
  	/* 42 */	NODEV,
 	/* 43 */	15,		/* md */
+	/* 44 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 1998/02/18 13:48:30 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 1998/10/10 02:00:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -113,6 +113,7 @@ dev_t	swapdev = makedev(4, 0);
 #define fbpoll seltrue
 #include "ipfilter.h"
 #include "rnd.h"
+#include "scsibus.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -189,6 +190,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 70: */
 	cdev_notdef(),			/* 71: */
 	cdev_notdef(),			/* 72: */
+	cdev_scsibus_init(NSCSIBUS,scsibus), /* 73: SCSI bus */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -291,6 +293,7 @@ static int chrtoblktbl[] =  {
 	/* 70 */	NODEV,
 	/* 71 */	NODEV,
 	/* 72 */	NODEV,
+	/* 73 */	NODEV,
 };
 
 /*

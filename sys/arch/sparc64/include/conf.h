@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.2 1998/09/05 15:28:09 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.3 1998/10/10 02:00:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -96,3 +96,5 @@ cdev_decl(sw);
 
 bdev_decl(md);
 cdev_decl(md);
+
+cdev_decl(scsibus);

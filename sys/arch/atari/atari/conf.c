@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.35 1998/08/18 07:45:02 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.36 1998/10/10 02:00:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -206,6 +206,7 @@ cdev_decl(i4btel);
 #include "view.h"
 #include "zs.h"
 #include "leo.h"
+#include "scsibus.h"
 
 cdev_decl(bpf);
 cdev_decl(ccd);
@@ -244,6 +245,7 @@ cdev_decl(wd);
 cdev_decl(zs);
 cdev_decl(et);
 cdev_decl(leo);
+cdev_decl(scsibus);
 
 struct cdevsw	cdevsw[] =
 {
@@ -305,6 +307,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 47 */
 	cdev_notdef(),			/* 48 */
 #endif /* __I4B_IS_INTEGRATED */
+	cdev_scsibus_init(NSCSIBUS,scsibus), /* 49: SCSI bus */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -408,6 +411,15 @@ static int chrtoblktab[] = {
 	/* 38 */	NODEV,
 	/* 39 */	NODEV,
 	/* 40 */	NODEV,
+	/* 41 */	NODEV,
+	/* 42 */	NODEV,
+	/* 43 */	NODEV,
+	/* 44 */	NODEV,
+	/* 45 */	NODEV,
+	/* 46 */	NODEV,
+	/* 47 */	NODEV,
+	/* 48 */	NODEV,
+	/* 49 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.44 1997/10/13 03:59:18 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.45 1998/10/10 02:00:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -104,6 +104,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "uk.h"
 #include "zsc.h"
 #include "zstty.h"
+#include "scsibus.h"
 
 cdev_decl(adb);
 cdev_decl(asc);
@@ -137,6 +138,7 @@ cdev_decl(uk);
 cdev_decl(vnd);
 cdev_decl(zs);
 cdev_decl(zsc);
+cdev_decl(scsibus);
 
 dev_decl(filedesc,open);
 
@@ -181,6 +183,7 @@ struct cdevsw	cdevsw[] =
 	cdev_audio_init(NASC,asc),	/* 36: ASC audio device */
 	cdev_se_init(NSE, se),		/* 37: SCSI ethernet */
 	cdev_rnd_init(NRND, rnd),	/* 38: random source pseudo-device */
+	cdev_scsibus_init(NSCSIBUS,scsibus), /* 39: SCSI bus */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -261,6 +264,7 @@ static int chrtoblktab[] = {
 	/* 36 */	NODEV,
 	/* 37 */	NODEV,
 	/* 38 */	NODEV,
+	/* 39 */	NODEV,
 };
 
 dev_t

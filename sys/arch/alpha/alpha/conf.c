@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.32 1998/04/15 20:48:52 drochner Exp $ */
+/* $NetBSD: conf.c,v 1.33 1998/10/10 02:00:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.32 1998/04/15 20:48:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.33 1998/10/10 02:00:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,6 +166,9 @@ cdev_decl(wsmouse);
 #include "spkr.h"
 cdev_decl(spkr);
 
+#include "scsibus.h"
+cdev_decl(scsibus);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -220,6 +223,7 @@ struct cdevsw	cdevsw[] =
 	cdev_rnd_init(NRND,rnd),	/* 39: random source pseudo-device */
 	cdev_tty_init(NA12DC,a12dc),	/* 40: Avalon A12 detached console */
 	cdev_spkr_init(NSPKR,spkr),	/* 41: PC speaker */
+	cdev_scsibus_init(NSCSIBUS,scsibus), /* 42: SCSI bus */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -299,6 +303,11 @@ static int chrtoblktbl[] = {
 	/* 35 */	NODEV,
 	/* 36 */	4,		/* wd */
 	/* 37 */	NODEV,
+	/* 38 */	NODEV,
+	/* 39 */	NODEV,
+	/* 40 */	NODEV,
+	/* 41 */	NODEV,
+	/* 42 */	NODEV,
 };
 
 /*

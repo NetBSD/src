@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.34 1998/10/06 02:41:22 mark Exp $	*/
+/*	$NetBSD: conf.c,v 1.35 1998/10/10 02:00:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -182,6 +182,7 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmouse.h"
+#include "scsibus.h"
 
 /* Character devices */
 
@@ -273,6 +274,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 67: reserved */
 	cdev_lkm_dummy(),		/* 68: reserved */
 	cdev_lkm_dummy(),		/* 69: reserved */
+	cdev_scsibus_init(NSCSIBUS,scsibus), /* 70: SCSI bus */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -384,6 +386,7 @@ static int chrtoblktbl[] = {
     /* 67 */	    NODEV,
     /* 68 */	    NODEV,
     /* 69 */	    NODEV,
+    /* 70 */	    NODEV,
 };
 
 /*

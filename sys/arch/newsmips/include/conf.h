@@ -14,3 +14,5 @@ cdev_decl(zs);
 cdev_decl(fb);
 cdev_decl(bmcn);
 cdev_decl(ms);
+
+cdev_decl(scsibus);

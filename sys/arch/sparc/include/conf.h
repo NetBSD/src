@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.12 1998/09/21 21:13:52 pk Exp $	*/
+/*	$NetBSD: conf.h,v 1.13 1998/10/10 02:00:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -101,3 +101,5 @@ cdev_decl(mtty);
 cdev_decl(mbpp);
 
 cdev_decl(bpp);
+
+cdev_decl(scsibus);
