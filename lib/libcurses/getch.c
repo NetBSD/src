@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.37 2002/10/22 12:07:20 blymn Exp $	*/
+/*	$NetBSD: getch.c,v 1.38 2002/12/23 12:11:38 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.37 2002/10/22 12:07:20 blymn Exp $");
+__RCSID("$NetBSD: getch.c,v 1.38 2002/12/23 12:11:38 jdc Exp $");
 #endif
 #endif					/* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: getch.c,v 1.37 2002/10/22 12:07:20 blymn Exp $");
 #include "curses.h"
 #include "curses_private.h"
 
-#define DEFAULT_DELAY 2			/* default delay for timeout() */
+#define DEFAULT_DELAY 3			/* default delay for timeout() */
 
 /*
  * Keyboard input handler.  Do this by snarfing
