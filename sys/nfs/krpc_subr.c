@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.12 1996/02/18 11:53:36 fvdl Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.13 1996/06/07 00:48:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -471,13 +471,16 @@ xdr_string_encode(str, len)
 	dlen = (len + 3) & ~3;
 	mlen = dlen + 4;
 
+	if (mlen > MCLBYTES)		/* If too big, we just can't do it. */
+		return (NULL);
+
 	m = m_get(M_WAIT, MT_DATA);
 	if (mlen > MLEN) {
-		if (mlen > MCLBYTES)
-			return(NULL);
 		MCLGET(m, M_WAIT);
-		if (m == NULL)
-			return NULL;
+		if ((m->m_flags & M_EXT) == 0) {
+			(void) m_free(m);	/* There can be only one. */
+			return (NULL);
+		}
 	}
 	xs = mtod(m, struct xdr_string *);
 	m->m_len = mlen;
