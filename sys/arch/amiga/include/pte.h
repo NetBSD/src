@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.10 1994/10/26 02:06:33 cgd Exp $	*/
+/*	$NetBSD: pte.h,v 1.11 1994/12/03 12:26:50 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,10 +51,12 @@
 struct pte {
 	u_int pte;
 };
+typedef u_int pt_entry_t;
 
 struct ste {
 	u_int ste;
 };
+typedef u_int st_entry_t;
 
 #define	PT_ENTRY_NULL	((u_int *) 0)
 #define	ST_ENTRY_NULL	((u_int *) 0)
