@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.90 1999/07/06 12:23:20 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.91 1999/07/09 22:57:18 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -103,6 +103,7 @@
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
+#include "opt_ipsec.h"
 #include "opt_mrouting.h"
 
 #include <sys/param.h>

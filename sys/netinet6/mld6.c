@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.4 1999/07/04 02:01:15 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.5 1999/07/09 22:57:29 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -70,6 +70,7 @@
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 #endif
 
 #include <sys/param.h>

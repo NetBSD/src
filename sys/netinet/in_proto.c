@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.32 1999/07/01 08:12:50 itojun Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.33 1999/07/09 22:57:18 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,6 +69,7 @@
 #include "opt_iso.h"			/* ISO TP tunneled over IP */
 #include "opt_ns.h"			/* NSIP: XNS tunneled over IP */
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/socket.h>
