@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.20 1997/09/02 12:40:24 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.21 1997/09/02 19:39:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -183,7 +183,7 @@ static long
 #define	CHIP_S_MEM_EX_STORE_SIZE(v)	(sizeof __C(CHIP,_smem_ex_storage))
 #endif
 
-bus_space_tag_t
+void
 __C(CHIP,_bus_mem_init)(t, v)
 	bus_space_tag_t t;
 	void *v;
@@ -339,8 +339,6 @@ __C(CHIP,_bus_mem_init)(t, v)
         extent_print(sex);
 #endif
         CHIP_S_MEM_EXTENT(v) = sex;
-
-	return (t);
 }
 
 static int	__C(CHIP,_xlate_addr_to_dense_handle) __P((void *,
