@@ -1,0 +1,5 @@
+# $NetBSD: md.sparc64,v 1.1 2001/08/19 14:18:02 mrg Exp $
+./usr/X11R6/bin/constype
+./usr/X11R6/bin/kbd_mode
+./usr/X11R6/man/cat1/constype.0
+./usr/X11R6/man/cat1/kbd_mode.0
