@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.2 2001/04/05 02:08:01 simonb Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.3 2001/04/05 13:52:59 itojun Exp $	*/
 
 /*
  * ntp_control.c - respond to control messages and send async traps
@@ -1831,7 +1831,7 @@ ctl_getitem(
 					if (cp < reqend)
 						cp++;
 					*tp = '\0';
-					while (isspace((int)(*(tp-1))))
+					while (tp > buf && isspace((int)(*(tp-1))))
 						*(--tp) = '\0';
 					reqpt = cp;
 					*data = buf;
