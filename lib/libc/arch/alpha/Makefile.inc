@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.10 1999/01/15 13:31:15 bouyer Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2002/01/27 21:59:18 thorpej Exp $
+
+# XXX Build with -mieee for now.
+COPTS+=	-mieee
 
 KMINCLUDES=
 KMSRCS=	divrem.m4 \
