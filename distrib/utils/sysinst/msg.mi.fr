@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.1.2.9 1998/11/23 07:22:29 cgd Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.1.2.10 1998/11/26 02:56:54 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -298,7 +298,8 @@ redémarrer depuis le disque dur. Suivez les instructions du document
 d'installation (INSTALL en anglais) pour finir de configurer votre ordinateur.
 
 Vous devez au minimum éditer /etc/rc.conf pour votre environnement local
-et mettre RC_CONFIGURED à `YES' avant de pouvoir démarrer en multi-utilisateur.
+et mettre RC_CONFIGURED à `YES' avant de pouvoir démarrer en
+multi-utilisateur.
 }
 
 message unpackcomplete
@@ -307,7 +308,8 @@ document d'installation (INSTALL en anglais) pour finir de reconfigurer votre
 ordinateur. Votre ancien /etc a été sauvegardé sous /etc.old .
 
 Vous devez au minimum éditer /etc/rc.conf pour votre environnement local
-et mettre RC_CONFIGURED à `YES' avant de pouvoir démarrer en multi-utilisateur.
+et mettre RC_CONFIGURED à `YES' avant de pouvoir démarrer en
+multi-utilisateur.
 }
 
 message upgrcomplete
@@ -318,7 +320,8 @@ document d'installation (INSTALL en anglais) afin de reconfigurer votre
 ordinateur.
 
 Vous devez au minimum éditer /etc/rc.conf pour votre environnement local
-et mettre RC_CONFIGURED à `YES' avant de pouvoir démarrer en multi-utilisateur.
+et mettre RC_CONFIGURED à `YES' avant de pouvoir démarrer en
+multi-utilisateur.
 }
 
 message distmedium
@@ -499,8 +502,8 @@ message distdir
 {Quel répertoire dois je utiliser pour %s ?}
 
 message verboseextract
-{Pendant la procédure d'extraction des fichiers, voulez vous voir leur nom
-apparaître au fur et à mesure qu'ils seront extraits ?
+{Pendant la procédure d'extraction des fichiers, voulez vous voir leur
+nom apparaître au fur et à mesure qu'ils seront extraits ?
 } 
 
 message badls
