@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.13 1999/07/03 13:25:21 kleink Exp $	*/
+/*	$NetBSD: netdb.h,v 1.14 1999/12/12 10:49:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -234,6 +234,12 @@ struct addrinfo {
 #define	NI_NAMEREQD	0x00000004
 #define	NI_NUMERICSERV	0x00000008
 #define	NI_DGRAM	0x00000010
+#define NI_WITHSCOPEID	0x00000020	/*KAME extension*/
+
+/*
+ * Scope delimit character
+ */
+#define SCOPE_DELIMITER '@'		/*KAME extension*/
 #endif /* !_XOPEN_SOURCE */
 
 __BEGIN_DECLS
