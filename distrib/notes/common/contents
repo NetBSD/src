@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.44 2002/03/29 21:29:31 bjh21 Exp $
+.\"	$NetBSD: contents,v 1.45 2002/04/07 02:56:46 shin Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,12 +53,12 @@ conventions for indicating italic and bold display.
 .	(tag instkernel/ -compact
 .		It Pa kernel/
 .		(tag netbsd.INSTALL_LAPTOP.gz -compact
-.			It Pa netbsd.GENERIC.gz
+.			It Pa netbsd-GENERIC.gz
 A gzipped
 .Nx
 kernel containing code for everything supported in this release.
 .if r_hpcmips \{\
-This kernel runs on Vr41xx CPU only.
+This kernel runs on Vr41xx and TX3922 CPU only.
 .\}
 .
 .if r_amiga \{\
@@ -75,10 +75,8 @@ four megabytes of RAM.
 .\}
 .
 .if r_hpcmips \{\
-.			It Pa netbsd.TX3912.gz
+.			It Pa netbsd-TX3912.gz
 A kernel for TX3912 machines.
-.			It Pa netbsd.TX3922.gz
-A kernel for TX3922 machines.
 .\}
 .
 .if r_i386 \{\
@@ -615,8 +613,7 @@ use.
 .
 .if r_hpcmips \{\
 .It Sy xserver
-The Xhpc server which supports 256 and 65536 colors, with man pages
-.Em  ( experimental ) .
+The Xhpc server which supports 256 and 65536 colors, with man pages.
 .br
 .Em 2.0 MB gzipped, 6.0 MB uncompressed
 .\}
@@ -925,7 +922,7 @@ in the
 subdirectory of the
 .Nx \*V
 distribution tree. These kernels are generally named something like
-.Pa netbsd.GENERIC.gz
+.Pa netbsd-GENERIC.gz
 or some other suitable name. Please note that these kernels are simply
 gzipped and are not in tar archives.
 .Pp
@@ -945,7 +942,13 @@ follows:
 .(tag pbsdboot1.exe
 .It Pa netbsd.gz
 .Nx*M
-kernel with system installer (sysinst). This kernel runs on Vr41xx CPU only.
+kernel with system installer (sysinst). This kernel runs on Vr41xx and
+TX3922 CPU only.
+.br
+.Em 1.98 MB gzipped, 6.7 MB uncompressed
+.It Pa netbsd.TX3912.gz
+.Nx*M
+kernel with system installer (sysinst). This kernel runs on TX3912 CPU only.
 .br
 .Em 1.98 MB gzipped, 6.7 MB uncompressed
 .It Pa pbsdboot.exe
