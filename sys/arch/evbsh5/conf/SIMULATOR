@@ -1,0 +1,61 @@
+#	$NetBSD: SIMULATOR,v 1.1 2002/07/05 13:31:37 scw Exp $
+
+# NetBSD/sh5 on the simple `chess' based simulator.
+#
+# This won't get to single-user, but it serves as a useful way to debug
+# startup code.
+
+include 	"arch/evbsh5/conf/std.evbsh5.el"
+
+maxusers	2
+
+options 	INCLUDE_CONFIG_FILE
+
+#ident		"SIMULATOR-$Revision: 1.1 $"
+
+options 	CPU_STB1
+options 	SIMULATED_CLOCK
+
+options 	DIAGNOSTIC
+options 	DEBUG
+#options 	DDB
+
+options 	KTRACE
+
+file-system 	FFS
+file-system 	NFS
+file-system 	KERNFS
+file-system 	MFS
+
+options 	SOFTDEP
+
+options 	INET
+options 	INET6
+
+config netbsd	root on ? type ?
+
+options 	NFS_BOOT_DHCP
+
+pseudo-device	loop
+pseudo-device	bpfilter
+pseudo-device	pty
+pseudo-device	rnd
+
+# The mainbus to which all devices attach
+mainbus0	at root
+
+#
+# The SuperHyway bus is the main interconnect between the constituent
+# "modules" which make up an SH-5 system
+#
+superhyway0	at mainbus0
+
+#
+# Only the CPU module exists on the simulator.
+#
+cpu0		at superhyway0 pport 0x0d	# A single CPU
+
+#
+# The DTF debug interface.
+#
+dtfcons0	at mainbus0
