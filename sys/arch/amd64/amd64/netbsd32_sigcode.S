@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sigcode.S,v 1.4 2004/03/25 18:33:17 drochner Exp $	*/
+/*	$NetBSD: netbsd32_sigcode.S,v 1.5 2004/03/26 18:44:36 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -40,10 +40,8 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-#include "opt_compat_netbsd.h"
-
 /*
- * Signal trampoline; copied to top of user stack.
+ * Signal trampoline for 1.6 compatibility; copied to top of user stack.
  */
 
 NENTRY(netbsd32_sigcode)
@@ -56,14 +54,13 @@ NENTRY(netbsd32_sigcode)
 	leal	12(%esp),%eax		# get pointer to sigcontext
 	movl	%eax,4(%esp)		# put it in the argument slot
 					# fake return address already there
-	movl	$SYS___sigreturn14,%eax
+	movl	$SYS_compat_16___sigreturn14,%eax
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
 	.globl	_C_LABEL(netbsd32_esigcode)
 _C_LABEL(netbsd32_esigcode):
 
-#ifdef COMPAT_16
 /*
  * There is no NetBSD-1.6 compatibility for native code.
  * COMPAT_16 is useful for i386 emulation (COMPAT_NETBSD32) only.
@@ -71,4 +68,3 @@ _C_LABEL(netbsd32_esigcode):
 	.globl _C_LABEL(sigcode), _C_LABEL(esigcode)
 	.set _C_LABEL(sigcode),0
 	.set _C_LABEL(esigcode),0
-#endif
