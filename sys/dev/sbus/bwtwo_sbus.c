@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.2 2001/09/24 23:49:33 eeh Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.3 2001/09/26 20:53:14 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -190,7 +190,7 @@ bwtwoattach_sbus(parent, self, args)
 	sc->sc_pixeloffset = BWREG_MEM;
 
 	isconsole = fb_is_console(node);
-	name = getpropstring(node, "model");
+	name = PROM_getpropstring(node, "model");
 
 	/* Assume `bwtwo at sbus' only happens at sun4c's */
 	sc->sc_get_video = bwtwo_get_video;

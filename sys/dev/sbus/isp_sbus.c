@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.45 2001/09/01 07:12:25 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.46 2001/09/26 20:53:14 eeh Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -179,7 +179,7 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sbc->sbus_node = sa->sa_node;
 
-	freq = getpropint(sa->sa_node, "clock-frequency", 0);
+	freq = PROM_getpropint(sa->sa_node, "clock-frequency", 0);
 	if (freq) {
 		/*
 		 * Convert from HZ to MHz, rounding up.
@@ -200,7 +200,7 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	sbusburst = ((struct sbus_softc *)parent)->sc_burst;
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1;
-	ispburst = getpropint(sa->sa_node, "burst-sizes", -1);
+	ispburst = PROM_getpropint(sa->sa_node, "burst-sizes", -1);
 	if (ispburst == -1) {
 		ispburst = sbusburst;
 	}
