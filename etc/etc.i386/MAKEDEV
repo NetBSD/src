@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.70 1998/08/07 00:00:56 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.71 1998/08/13 12:44:11 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -114,6 +114,7 @@ all)
 	sh $0 speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm local satlink0
 	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8
 	sh $0 usbs
+	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	;;
 
 floppy)
