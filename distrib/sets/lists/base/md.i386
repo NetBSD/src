@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.58 2000/01/07 11:55:46 abs Exp $
+# $NetBSD: md.i386,v 1.59 2000/01/19 06:10:10 mycroft Exp $
 ./dev/audio
 ./dev/audioctl
 ./dev/mixer
@@ -27,6 +27,7 @@
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o
 ./usr/mdec/biosboot.sym
+./usr/mdec/biosboot_com0.sym
 ./usr/mdec/dosboot.com
 ./usr/mdec/installboot
 ./usr/mdec/mbr
