@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.56 2002/11/25 12:13:03 agc Exp $	*/
+/*	$NetBSD: jobs.c,v 1.57 2003/01/27 12:54:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.56 2002/11/25 12:13:03 agc Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.57 2003/01/27 12:54:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,10 +148,10 @@ setjobctl(int on)
 	if (on) {
 #if defined(FIOCLEX) || defined(FD_CLOEXEC)
 		int err;
+		int i;
 		if (ttyfd != -1)
 			close(ttyfd);
 		if ((ttyfd = open("/dev/tty", O_RDWR)) == -1) {
-			int i;
 			for (i = 0; i < 3; i++) {
 				if (isatty(i) && (ttyfd = dup(i)) != -1)
 					break;
@@ -159,10 +159,20 @@ setjobctl(int on)
 			if (i == 3)
 				goto out;
 		}
+		/* Move to a high fd */
+		for (i = 10; i > 2; i--) {
+			if ((err = fcntl(ttyfd, F_DUPFD, (1 << i) - 1)) != -1)
+				break;
+		}
+		if (err != -1) {
+			close(ttyfd);
+			ttyfd = err;
+		}
 #ifdef FIOCLEX
 		err = ioctl(ttyfd, FIOCLEX, 0);
 #elif FD_CLOEXEC
-		err = fcntl(ttyfd, FD_CLOEXEC, 1);
+		err = fcntl(ttyfd, FD_SETFD,
+		    fcntl(ttyfd, F_GETFD, 0) | FD_CLOEXEC);
 #endif
 		if (err == -1) {
 			close(ttyfd);
