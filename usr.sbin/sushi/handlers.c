@@ -1,4 +1,4 @@
-/*      $NetBSD: handlers.c,v 1.1 2001/01/05 01:28:36 garbled Exp $       */
+/*      $NetBSD: handlers.c,v 1.2 2001/01/09 21:38:53 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -261,4 +261,14 @@ handle_endpoint(char *path)
 
 	bailout("%s: %s", catgets(catalog, 1, 6, "empty endpoint"), path);
 	return(0);
+}
+
+void
+nohelp(void)
+{
+	char *mesg[2];
+
+	mesg[0] = catgets(catalog, 3, 10,
+	    "No help is available for this screen.");
+	popupLabel(cdkscreen, mesg, 1);
 }

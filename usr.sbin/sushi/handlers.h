@@ -1,4 +1,4 @@
-/*      $NetBSD: handlers.h,v 1.2 2001/01/05 18:57:25 thorpej Exp $       */
+/*      $NetBSD: handlers.h,v 1.3 2001/01/09 21:38:53 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@ int handle_func(char *path);
 int handle_script(char *path);
 int handle_endpoint(char *path);
 int simple_lang_handler(char *path, char *file, int(* handler)(char *));
+void nohelp(void);
 
 #define INDEXFILE	"index"
 #define PREFORMFILE	"preform"
