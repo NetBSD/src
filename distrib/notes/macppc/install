@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.8 2000/11/04 06:08:34 mbw Exp $
+.\"	$NetBSD: install,v 1.9 2001/04/16 20:42:43 mbw Exp $
 .
 .Ss2 Booting the installer
 .
@@ -72,7 +72,8 @@ is the partition.
 .(bullet
 .Em Floppy disk
 .br
-(Open Firmware 1.x, Open Firmware 2.0.x)
+(Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open 
+Firmware 2.4)
 .Pp
 The floppy disk has a
 .Sq partition zero
@@ -205,12 +206,14 @@ are usually SCSI ID 0.
 Here are some examples of what you might use to boot from such a drive:
 .Pp
 .Dl 0 > Ic "boot scsi/sd@0:9,ofwboot.xcf scsi/sd@0:10,netbsd"
-.Dl 0 > Ic "boot ide0/disk@0:7,ofwboot.xcf ide0/disk@0:9,ofwboot.xcf"
+.Dl 0 > Ic "boot ide0/disk@0:7,ofwboot.xcf ide0/disk@0:9,netbsd"
 .Dl 0 > Ic "boot hd:8,ofwboot.xcf ultra1:3,netbsd"
 .bullet)
 .
 .Ss2 Common Problems and Error Messages
-See the
+.
+This is a brief list of some of the Open Firmware problems you may run 
+into.  See the
 .Nx*M
 FAQ for a thorough list.
 .Lk http://www.netbsd.org/Ports/macppc/faq.html
@@ -283,7 +286,7 @@ may have turned down the brightness of the backlight.  Use the buttons to
 turn your brightness back up.
 .Pp
 Otherwise, you need a serial console. See the section entitled
-.Sx Getting to the Open Firmware Prompt
+.Sx Getting to the Open Firmware Prompt on Older Models
 .It
 Grey screen with flashing question mark
 .Pp
@@ -323,6 +326,14 @@ Plug the USB keyboard directly into the computer (i.e. not through a hub)
 See
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#pciide-lost-interrupt
 .bullet)
+.
+.Ss2 Milestone
+.
+If you've reached this point, then you must've gotten the 
+.Nx 
+installer to boot.  Congratulations!  That was the hard part.  From now 
+through the rest of this document, there should be no more Open Firmware 
+specific problems, so read everything because it applies to all models.
 .
 .so ../common/sysinst
 .
