@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.17 2004/03/24 16:46:28 drochner Exp $	 */
+/*	$NetBSD: pcio.c,v 1.18 2004/08/15 22:04:45 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -75,6 +75,10 @@ getcomaddr(idx)
 	int idx;
 {
 	short addr;
+#ifdef CONSADDR
+	if (CONSADDR != 0)
+		return CONSADDR;
+#endif
 	/* read in BIOS data area */
 	pvbcopy((void *)(0x400 + 2 * idx), &addr, 2);
 	return(addr);
@@ -151,7 +155,7 @@ ok:
 	    case CONSDEV_COM1KBD:
 	    case CONSDEV_COM2KBD:
 	    case CONSDEV_COM3KBD:
-		iodev = dev - 4;
+		iodev = dev - CONSDEV_COM0KBD + CONSDEV_COM0;
 		i = iodev - CONSDEV_COM0;
 		btinfo_console.addr = getcomaddr(i);
 		if(!btinfo_console.addr)
