@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.94 2003/07/24 14:17:49 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.95 2003/08/02 18:49:12 lukem Exp $
 ./usr/bin/genclass
 ./usr/bin/gettextize
 ./usr/include/bfd
@@ -529,7 +529,6 @@
 ./usr/include/g++/typemacros.h
 ./usr/include/g++/values.h
 ./usr/include/history.h
-./usr/include/kerberosIV/des.h
 ./usr/include/kerberosIV/kafs.h
 ./usr/include/kerberosIV/ktypes.h
 ./usr/include/krb5/asn1.h
