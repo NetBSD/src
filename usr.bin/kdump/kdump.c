@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.19 1997/10/20 04:21:22 lukem Exp $	*/
+/*	$NetBSD: kdump.c,v 1.20 1998/03/30 02:26:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.19 1997/10/20 04:21:22 lukem Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.20 1998/03/30 02:26:07 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -448,7 +448,7 @@ ktrgenio(ktr, len)
 	int col = 0;
 	int width;
 	char visbuf[5];
-	static screenwidth = 0;
+	static int screenwidth = 0;
 
 	if (screenwidth == 0) {
 		struct winsize ws;

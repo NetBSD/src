@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.6 1997/10/19 14:06:35 mrg Exp $	*/
+/*	$NetBSD: io.c,v 1.7 1998/03/30 02:25:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.6 1997/10/19 14:06:35 mrg Exp $");
+__RCSID("$NetBSD: io.c,v 1.7 1998/03/30 02:25:33 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: io.c,v 1.6 1997/10/19 14:06:35 mrg Exp $");
 
 
 int     comment_open;
-static  paren_target;
+static  int paren_target;
 
 void
 dump_line()
