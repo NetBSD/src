@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.14 2004/05/09 09:00:05 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.15 2004/05/25 04:33:59 atatat Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.14 2004/05/09 09:00:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.15 2004/05/25 04:33:59 atatat Exp $");
 #endif
 
 /*
@@ -978,7 +978,8 @@ SYSCTL_SETUP(sysctl_ieee80211, "sysctl ieee80211 subtree setup")
 	/* control debugging printfs */
 	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
-	    "debug", NULL, sysctl_ieee80211_verify, 0, &ieee80211_debug, 0,
+	    "debug", SYSCTL_DESCR("Enable IEEE 802.11 debugging output"),
+	    sysctl_ieee80211_verify, 0, &ieee80211_debug, 0,
 	    CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
@@ -989,7 +990,8 @@ SYSCTL_SETUP(sysctl_ieee80211, "sysctl ieee80211 subtree setup")
 	/* control inactivity timer */
 	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
-	    "maxinact", NULL, sysctl_ieee80211_verify, 0, &ieee80211_inact_max,
+	    "maxinact", SYSCTL_DESCR("Station inactivity timeout"),
+	    sysctl_ieee80211_verify, 0, &ieee80211_inact_max,
 	    0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
