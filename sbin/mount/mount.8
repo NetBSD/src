@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.8,v 1.27 2000/07/07 09:25:36 fair Exp $
+.\"	$NetBSD: mount.8,v 1.28 2000/07/07 17:58:37 he Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -334,8 +334,7 @@ The "noauto" directive in
 can be used to make it easy to manually mount and unmount removeable
 media using just the mountpoint filename, with an entry like this:
 .Pp
-.Dl
-/dev/cd0a  /cdrom  cd9660 ro,noauto 0 0
+.Dl /dev/cd0a  /cdrom  cd9660 ro,noauto 0 0
 .Pp
 That would allow a simple command like
 .Qq mount /cdrom
