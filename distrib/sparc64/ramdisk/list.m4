@@ -1,4 +1,4 @@
-#	$NetBSD: list.m4,v 1.3 2000/11/13 23:08:41 eeh Exp $
+#	$NetBSD: list.m4,v 1.4 2000/11/16 13:04:21 mrg Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -106,6 +106,9 @@ COPY	termcap.mini		usr/share/misc/termcap
 
 # the disktab explanation file
 COPY	disktab.preinstall		etc/disktab.preinstall
+
+# zoneinfo files
+COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 #the lists of obsolete files used by sysinst
 COPY dist/base_obsolete dist/base_obsolete
