@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83 2002/04/09 19:37:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.84 2002/04/09 19:44:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2002/04/09 19:37:16 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2002/04/09 19:44:22 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2659,18 +2659,18 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 #endif
 		npte |= pte_cache_mode;
 		if (flags & VM_PROT_WRITE) {
-			npte |= L2_TYPE_S | L2_S_PROT_W;
+			npte |= L2_S_PROTO | L2_S_PROT_W;
 			pg->mdpage.pvh_attrs |= PVF_REF | PVF_MOD;
 		} else if (flags & VM_PROT_ALL) {
-			npte |= L2_TYPE_S;
+			npte |= L2_S_PROTO;
 			pg->mdpage.pvh_attrs |= PVF_REF;
 		} else
 			npte |= L2_TYPE_INV;
 	} else {
 		if (prot & VM_PROT_WRITE)
-			npte |= L2_TYPE_S | L2_S_PROT_W;
+			npte |= L2_S_PROTO | L2_S_PROT_W;
 		else if (prot & VM_PROT_ALL)
-			npte |= L2_TYPE_S;
+			npte |= L2_S_PROTO;
 		else
 			npte |= L2_TYPE_INV;
 	}
@@ -3172,7 +3172,7 @@ pmap_modified_emulation(struct pmap *pmap, vaddr_t va)
 	 * that we can write to this page.
 	 */
 	ptes[arm_btop(va)] =
-	    (ptes[arm_btop(va)] & ~L2_TYPE_MASK) | L2_TYPE_S | L2_S_PROT_W;
+	    (ptes[arm_btop(va)] & ~L2_TYPE_MASK) | L2_S_PROTO | L2_S_PROT_W;
 	PDEBUG(0, printf("->(%08x)\n", ptes[arm_btop(va)]));
 
 	simple_unlock(&pg->mdpage.pvh_slock);
@@ -3230,7 +3230,7 @@ pmap_handled_emulation(struct pmap *pmap, vaddr_t va)
 	    va, ptes[arm_btop(va)]));
 	pg->mdpage.pvh_attrs |= PVF_REF;
 
-	ptes[arm_btop(va)] = (ptes[arm_btop(va)] & ~L2_TYPE_MASK) | L2_TYPE_S;
+	ptes[arm_btop(va)] = (ptes[arm_btop(va)] & ~L2_TYPE_MASK) | L2_S_PROTO;
 	PDEBUG(0, printf("->(%08x)\n", ptes[arm_btop(va)]));
 
 	simple_unlock(&pg->mdpage.pvh_slock);
