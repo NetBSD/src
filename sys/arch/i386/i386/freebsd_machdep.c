@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.12 1996/10/13 03:19:42 christos Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.13 1997/10/16 04:23:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -44,16 +44,15 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/user.h>
 #include <sys/mount.h>
-
-#include <vm/vm.h>
 
 #include <machine/cpufunc.h>
 #include <machine/npx.h>
 #include <machine/reg.h>
 #include <machine/vm86.h>
+#include <machine/vmparam.h>
 #include <machine/freebsd_machdep.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>

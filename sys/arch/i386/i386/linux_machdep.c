@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.33 1996/10/29 02:19:25 sommerfe Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.34 1997/10/16 04:23:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -50,7 +50,6 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #include <sys/filedesc.h>
 
@@ -68,6 +67,7 @@
 #include <machine/specialreg.h>
 #include <machine/sysarch.h>
 #include <machine/vm86.h>
+#include <machine/vmparam.h>
 #include <machine/linux_machdep.h>
 
 /*
