@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.1 1998/07/19 17:28:17 christos Exp $
+$NetBSD: pcmciadevs,v 1.2 1998/07/20 07:33:54 christos Exp $
 
 /*
  * Copyright (c) 1998, Christos Zoulas
@@ -98,6 +98,5 @@ product PLANET SMARTCOM2000	{ "PCMCIA", "UE2212", NULL, NULL } Planet SmartCOM 2
 product DLINK DE650		{ "D-Link", "DE-650", NULL, NULL } D-Link DE-650
 product RPTI EP401		{ "RPTI", "EP401&spEthernet&spNE2000&spCompatible", NULL, NULL } RPTI EP401
 product ACCTON EN2212		{ "ACCTON", "EN2212", NULL, NULL } Accton EN2212
-product DIGITAL DEPCMBA		{ "DIGITAL", "DEPCM-XX", NULL, NULL } Digital DEPCM-BA
 product YEDATA EXTERNAL_FDD	{ "Y-E&spDATA", "External&spFDD", NULL, NULL } Y-E DATA External FDD
 product DIGITAL DEPCMXX		{ "DIGITAL", "DEPCM-XX", NULL, NULL } DEC DEPCM-BA
