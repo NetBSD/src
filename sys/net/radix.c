@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.26 2005/01/23 18:41:56 matt Exp $	*/
+/*	$NetBSD: radix.c,v 1.27 2005/01/24 04:46:49 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,11 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.26 2005/01/23 18:41:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.27 2005/01/24 04:46:49 enami Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
 #ifdef	_KERNEL
+#include "opt_inet.h"
+
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #define	M_DONTWAIT M_NOWAIT
@@ -943,11 +945,18 @@ rn_init()
 {
 	char *cp, *cplim;
 #ifdef _KERNEL
-	struct domain *dom;
+	static int initialized;
+	__link_set_decl(domains, struct domain);
+	struct domain *const *dpp;
 
-	DOMAIN_FOREACH(dom)
-		if (dom->dom_maxrtkey > max_keylen)
-			max_keylen = dom->dom_maxrtkey;
+	if (initialized)
+		return;
+	initialized = 1;
+
+	__link_set_foreach(dpp, domains) {
+		if ((*dpp)->dom_maxrtkey > max_keylen)
+			max_keylen = (*dpp)->dom_maxrtkey;
+	}
 #ifdef INET
 	encap_setkeylen();
 #endif
