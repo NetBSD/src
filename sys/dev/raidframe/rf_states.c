@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.13 2000/01/09 00:00:18 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.13.4.1 2000/10/16 22:42:48 tv Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -445,7 +445,7 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t * desc)
 		/* failed to create a dag */
 		/* this happens when there are too many faults or incomplete
 		 * dag libraries */
-		printf("[Failed to create a DAG\n]");
+		printf("[Failed to create a DAG]\n");
 		RF_PANIC();
 	} else {
 		/* bind dags to desc */
