@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.24 2003/12/31 15:06:24 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.25 2003/12/31 15:40:31 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.24 2003/12/31 15:06:24 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.25 2003/12/31 15:40:31 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -110,45 +110,44 @@ struct vidcaudio_softc {
 	int	sc_pcountdown;
 };
 
-int  vidcaudio_probe(struct device *, struct cfdata *, void *);
-void vidcaudio_attach(struct device *, struct device *, void *);
-int  vidcaudio_open(void *, int);
-void vidcaudio_close(void *);
+static int  vidcaudio_probe(struct device *, struct cfdata *, void *);
+static void vidcaudio_attach(struct device *, struct device *, void *);
+static int  vidcaudio_open(void *, int);
+static void vidcaudio_close(void *);
 
-int vidcaudio_intr(void *);
-int vidcaudio_dma_program(vaddr_t, vaddr_t, void (*)(void *), void *);
-void vidcaudio_rate(int);
-void vidcaudio_ctrl(int);
-void vidcaudio_stereo(int, int);
-void mulaw_to_vidc(void *, u_char *, int);
-void mulaw_to_vidc_stereo(void *, u_char *, int);
+static int vidcaudio_intr(void *);
+static void vidcaudio_rate(int);
+static void vidcaudio_ctrl(int);
+static void vidcaudio_stereo(int, int);
+static void mulaw_to_vidc(void *, u_char *, int);
+static void mulaw_to_vidc_stereo(void *, u_char *, int);
 
 CFATTACH_DECL(vidcaudio, sizeof(struct vidcaudio_softc),
     vidcaudio_probe, vidcaudio_attach, NULL, NULL);
 
-int    vidcaudio_query_encoding(void *, struct audio_encoding *);
-int    vidcaudio_set_params(void *, int, int, struct audio_params *,
+static int    vidcaudio_query_encoding(void *, struct audio_encoding *);
+static int    vidcaudio_set_params(void *, int, int, struct audio_params *,
     struct audio_params *);
-int    vidcaudio_round_blocksize(void *, int);
-int    vidcaudio_trigger_output(void *, void *, void *, int, void (*)(void *),
-    void *, struct audio_params *);
-int    vidcaudio_trigger_input(void *, void *, void *, int, void (*)(void *),
-    void *, struct audio_params *);
-int    vidcaudio_halt_output(void *);
-int    vidcaudio_halt_input(void *);
-int    vidcaudio_getdev(void *, struct audio_device *);
-int    vidcaudio_set_port(void *, mixer_ctrl_t *);
-int    vidcaudio_get_port(void *, mixer_ctrl_t *);
-int    vidcaudio_query_devinfo(void *, mixer_devinfo_t *);
-int    vidcaudio_get_props(void *);
+static int    vidcaudio_round_blocksize(void *, int);
+static int    vidcaudio_trigger_output(void *, void *, void *, int,
+    void (*)(void *), void *, struct audio_params *);
+static int    vidcaudio_trigger_input(void *, void *, void *, int,
+    void (*)(void *), void *, struct audio_params *);
+static int    vidcaudio_halt_output(void *);
+static int    vidcaudio_halt_input(void *);
+static int    vidcaudio_getdev(void *, struct audio_device *);
+static int    vidcaudio_set_port(void *, mixer_ctrl_t *);
+static int    vidcaudio_get_port(void *, mixer_ctrl_t *);
+static int    vidcaudio_query_devinfo(void *, mixer_devinfo_t *);
+static int    vidcaudio_get_props(void *);
 
-struct audio_device vidcaudio_device = {
+static struct audio_device vidcaudio_device = {
 	"ARM VIDC",
 	"",
 	"vidcaudio"
 };
 
-struct audio_hw_if vidcaudio_hw_if = {
+static struct audio_hw_if vidcaudio_hw_if = {
 	vidcaudio_open,
 	vidcaudio_close,
 	NULL,
@@ -186,7 +185,7 @@ vidcaudio_beep_generate(void)
 }
 
 
-int
+static int
 vidcaudio_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	int id;
@@ -206,7 +205,7 @@ vidcaudio_probe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 
-void
+static void
 vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vidcaudio_softc *sc = (void *)self;
@@ -247,7 +246,7 @@ vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 	audio_attach_mi(&vidcaudio_hw_if, sc, self);
 }
 
-int
+static int
 vidcaudio_open(void *addr, int flags)
 {
 
@@ -257,7 +256,7 @@ vidcaudio_open(void *addr, int flags)
 	return 0;
 }
  
-void
+static void
 vidcaudio_close(void *addr)
 {
 
@@ -270,7 +269,7 @@ vidcaudio_close(void *addr)
  * Interface to the generic audio driver
  */
 
-int
+static int
 vidcaudio_query_encoding(void *addr, struct audio_encoding *fp)
 {
 	struct vidcaudio_softc *sc = addr;
@@ -303,7 +302,7 @@ vidcaudio_query_encoding(void *addr, struct audio_encoding *fp)
 
 #define MULAW_TO_VIDC(m) (~(m) << 1 | (m) >> 7)
 
-void
+static void
 mulaw_to_vidc(void *v, u_char *p, int cc)
 {
 
@@ -313,7 +312,7 @@ mulaw_to_vidc(void *v, u_char *p, int cc)
 	}
 }
 
-void
+static void
 mulaw_to_vidc_stereo(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
@@ -327,7 +326,7 @@ mulaw_to_vidc_stereo(void *v, u_char *p, int cc)
 	}
 }
 
-int
+static int
 vidcaudio_set_params(void *addr, int setmode, int usemode,
     struct audio_params *p, struct audio_params *r)
 {
@@ -404,7 +403,7 @@ vidcaudio_set_params(void *addr, int setmode, int usemode,
 	return 0;
 }
 
-int
+static int
 vidcaudio_round_blocksize(void *addr, int wantblk)
 {
 	int blk;
@@ -421,7 +420,7 @@ vidcaudio_round_blocksize(void *addr, int wantblk)
 	return blk;
 }
 
-int
+static int
 vidcaudio_trigger_output(void *addr, void *start, void *end, int blksize,
     void (*intr)(void *), void *arg, struct audio_params *params)
 {
@@ -455,7 +454,7 @@ vidcaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	return 0;
 }
 
-int
+static int
 vidcaudio_trigger_input(void *addr, void *start, void *end, int blksize,
     void (*intr)(void *), void *arg, struct audio_params *params)
 {
@@ -463,7 +462,7 @@ vidcaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	return ENODEV;
 }
 
-int
+static int
 vidcaudio_halt_output(void *addr)
 {
 	struct vidcaudio_softc *sc = addr;
@@ -476,14 +475,14 @@ vidcaudio_halt_output(void *addr)
 	return 0;
 }
 
-int
+static int
 vidcaudio_halt_input(void *addr)
 {
 
 	return ENODEV;
 }
 
-int
+static int
 vidcaudio_getdev(void *addr, struct audio_device *retp)
 {
 
@@ -492,48 +491,49 @@ vidcaudio_getdev(void *addr, struct audio_device *retp)
 }
 
 
-int
+static int
 vidcaudio_set_port(void *addr, mixer_ctrl_t *cp)
 {
 
 	return EINVAL;
 }
 
-int
+static int
 vidcaudio_get_port(void *addr, mixer_ctrl_t *cp)
 {
 
 	return EINVAL;
 }
 
-int
+static int
 vidcaudio_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 
 	return ENXIO;
 }
 
-int
+static int
 vidcaudio_get_props(void *addr)
 {
 
 	return 0;
 }
-void
+
+static void
 vidcaudio_rate(int rate)
 {
 
 	WriteWord(vidc_base, VIDC_SFR | rate);
 }
 
-void
+static void
 vidcaudio_ctrl(int ctrl)
 {
 
 	WriteWord(vidc_base, VIDC_SCR | ctrl);
 }
 
-void
+static void
 vidcaudio_stereo(int channel, int position)
 {
 
@@ -541,7 +541,7 @@ vidcaudio_stereo(int channel, int position)
 	WriteWord(vidc_base, channel | position);
 }
 
-int
+static int
 vidcaudio_intr(void *arg)
 {
 	struct vidcaudio_softc *sc = arg;
