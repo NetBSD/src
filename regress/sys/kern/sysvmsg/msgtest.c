@@ -1,4 +1,4 @@
-/*	$NetBSD: msgtest.c,v 1.3 1999/08/24 22:36:33 thorpej Exp $	*/
+/*	$NetBSD: msgtest.c,v 1.4 1999/08/24 23:03:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -268,7 +268,7 @@ print_msqid_ds(mp, mode)
 	printf("PERM: uid %d, gid %d, cuid %d, cgid %d, mode 0%o\n",
 	    mp->msg_perm.uid, mp->msg_perm.gid,
 	    mp->msg_perm.cuid, mp->msg_perm.cgid,
-	    mp->msg_perm.mode);
+	    mp->msg_perm.mode & 0777);
 
 	printf("qnum %lu, qbytes %lu, lspid %d, lrpid %d\n",
 	    mp->msg_qnum, (u_long)mp->msg_qbytes, mp->msg_lspid,
@@ -288,7 +288,7 @@ print_msqid_ds(mp, mode)
 	if (mp->msg_perm.gid != gid || mp->msg_perm.cgid != gid)
 		errx(1, "gid mismatch");
 
-	if (mp->msg_perm.mode != mode)
+	if ((mp->msg_perm.mode & 0777) != mode)
 		errx(1, "mode mismatch");
 }
 
