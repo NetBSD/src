@@ -1,4 +1,4 @@
-# $NetBSD: md.vax,v 1.10 2000/06/20 01:28:37 minoura Exp $
+# $NetBSD: md.vax,v 1.11 2000/09/13 07:08:26 matt Exp $
 ./boot
 ./pcs750.bin
 ./sbin/ldconfig
@@ -24,6 +24,7 @@
 ./usr/mdec/boot
 ./usr/mdec/boot.mop
 ./usr/mdec/hpboot
+./usr/mdec/installboot
 ./usr/mdec/raboot
 ./usr/mdec/rdboot
 ./usr/mdec/sdboot
