@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.2 1993/05/22 07:59:47 cgd Exp $
+ *	$Id: disksubr.c,v 1.3 1994/01/11 16:35:44 mycroft Exp $
  */
 
 #include "param.h"
@@ -41,7 +41,7 @@
 #include "disklabel.h"
 #include "syslog.h"
 
-/* encoding of disk minor numbers, should be elsewhere... */
+/* XXX encoding of disk minor numbers, should be elsewhere... */
 #define dkunit(dev)		(minor(dev) >> 3)
 #define dkpart(dev)		(minor(dev) & 7)
 #define dkminor(unit, part)	(((unit) << 3) | (part))
@@ -64,7 +64,7 @@
  * Returns null on success and an error string on failure.
  */
 char *
-cpu_readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	int (*strat)();
 	register struct disklabel *lp;
@@ -214,7 +214,7 @@ done:
  * Check new disk label for sensibility
  * before setting it.
  */
-cpu_setdisklabel(olp, nlp, openmask, osdep)
+setdisklabel(olp, nlp, openmask, osdep)
 	register struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *osdep;
@@ -270,9 +270,9 @@ cpu_setdisklabel(olp, nlp, openmask, osdep)
 /*
  * Write disk label back to device after modification.
  */
-cpu_writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	int (*strat)();
+	void (*strat)();
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
