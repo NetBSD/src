@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.19 1997/08/12 22:47:18 thorpej Exp $	*/
+/*	$NetBSD: procfs.h,v 1.20 1997/08/27 08:52:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -113,7 +113,7 @@ int procfs_domem __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct
 int procfs_doctl __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
 int procfs_dostatus __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
 
-int procfs_checkioperm __P((struct proc *t, struct proc *p));
+int procfs_checkioperm __P((struct proc *p, struct proc *t));
 
 /* functions to check whether or not files should be displayed */
 int procfs_validfile __P((struct proc *));
