@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.4 2001/03/04 19:05:56 matt Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.5 2001/11/22 18:34:30 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -41,7 +41,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
