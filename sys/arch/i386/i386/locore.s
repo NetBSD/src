@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.98 1994/11/14 23:35:48 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.99 1994/12/02 03:02:49 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -170,10 +170,6 @@ tmpstk:
 	.text
 	.globl	start
 start:	movw	$0x1234,0x472			# warm boot
-	/* Skip over BIOS variables. */
-	jmp	1f
-	.org	0x500
-1:
 
 	/*
 	 * Load parameters from stack (howto, bootdev, unit, cyloffset, esym).
