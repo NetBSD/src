@@ -1,4 +1,4 @@
-.\" $NetBSD: pam_unix.8,v 1.4 2005/02/26 15:16:27 thorpej Exp $
+.\" $NetBSD: pam_unix.8,v 1.5 2005/02/26 15:33:24 thorpej Exp $
 .\" Copyright (c) 2001 Mark R V Murray
 .\" All rights reserved.
 .\" Copyright (c) 2001 Networks Associates Technology, Inc.
@@ -121,17 +121,21 @@ for the entity being authenticated,
 then this option
 will forgo password prompting,
 and silently allow authentication to succeed.
-.It Cm local_pass
-Use only the local password database,
-even if NIS is in use.
-This will cause an authentication failure
-if the system is configured
-to only use NIS.
-.It Cm nis_pass
-Use only the NIS password database.
-This will cause an authentication failure
-if the system is not configured
-to use NIS.
+.\" XXX This is not currently implemented.  It's debatable whether or not
+.\" XXX it should be.
+.\" .It Cm passwd_db Ns = Ns Ar name 
+.\" Use only the specified password database.
+.\" Valid password database names are:
+.\" .Bl -tag -width files
+.\" .It files
+.\" local password file
+.\" .It nis
+.\" NIS password database
+.\" .El
+.\" .Pp
+.\" If the user does not exist in the specified password database or if the
+.\" system is not configured to use the specified password database, an
+.\" authentication failure will occur.
 .El
 .Ss Ux Ss Account Management Module
 The
@@ -173,14 +177,15 @@ suppress warning messages to the user.
 These messages include
 reasons why the user's
 authentication attempt was declined.
-.It Cm local_pass
-forces the password module
-to change a local password
-in favour of a NIS one.
-.It Cm nis_pass
-forces the password module
-to change a NIS password
-in favour of a local one.
+.It Cm passwd_db Ns = Ns Ar name 
+Change the user's password only the specified password database.
+Valid password database names are:
+.Bl -tag -width files
+.It files
+local password file
+.It nis
+NIS password database
+.El
 .El
 .Sh FILES
 .Bl -tag -width ".Pa /etc/master.passwd" -compact
