@@ -31,6 +31,8 @@
 #include "sym_ids.h"
 #include "demangle.h"
 
+#include <stdlib.h>
+
 const char *whoami;
 const char *function_mapping_file;
 const char *a_out_name = A_OUTNAME;
