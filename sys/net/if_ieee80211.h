@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.5 2000/07/21 04:47:40 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.6 2000/12/12 04:03:38 thorpej Exp $	*/
 
 
 #ifndef _NET_IF_IEEE80211_H_
@@ -132,5 +132,14 @@ struct ieee80211_nwkey {
 };
 #define	SIOCS80211NWKEY		 _IOW('i', 232, struct ieee80211_nwkey)
 #define	SIOCG80211NWKEY		_IOWR('i', 233, struct ieee80211_nwkey)
+
+/* power management parameters */
+struct ieee80211_power {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	int		i_enabled;		/* 1 == on, 0 == off */
+	int		i_maxsleep;		/* max sleep in ms */
+};
+#define	SIOCS80211POWER		 _IOW('i', 234, struct ieee80211_power)
+#define	SIOCG80211POWER		_IOWR('i', 235, struct ieee80211_power)
 
 #endif /* !_NET_IF_IEEE80211_H_ */
