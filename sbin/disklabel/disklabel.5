@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.5,v 1.20 2002/09/28 00:47:25 dbj Exp $
+.\"	$NetBSD: disklabel.5,v 1.21 2002/10/02 11:05:56 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,13 +55,13 @@ and may be changed later with the
 program.
 This information is used by the system disk driver and by the bootstrap
 program to determine how to program the drive
-and where to find the filesystems on the disk partitions.
-Additional information is used by the filesystem in order
-to use the disk most efficiently and to locate important filesystem information.
+and where to find the file systems on the disk partitions.
+Additional information is used by the file system in order
+to use the disk most efficiently and to locate important file system information.
 The description of each partition contains an identifier for the partition
-type (standard filesystem, swap area, etc.).
-The filesystem updates the in-core copy of the label if it contains
-incomplete information about the filesystem.
+type (standard file system, swap area, etc.).
+The file system updates the in-core copy of the label if it contains
+incomplete information about the file system.
 .Pp
 The label is located in sector number
 .Dv LABELSECTOR
@@ -114,10 +114,10 @@ is
 
 /*
  * Each disk has a label which includes information about the hardware
- * disk geometry, filesystem partitions, and drive specific information.
+ * disk geometry, file system partitions, and drive specific information.
  * The location of the label, as well as the number of partitions the
  * label can describe and the number of the "whole disk" (raw)
- * paritition are machine dependent.
+ * partition are machine dependent.
  */
 #include \*[Lt]machine/disklabel.h\*[Gt]
 
@@ -213,16 +213,16 @@ struct disklabel {
 	u_int32_t d_magic2;		/* the magic number (again) */
 	u_int16_t d_checksum;		/* xor of data incl. partitions */
 
-			/* filesystem and partition information: */
+			/* file system and partition information: */
 	u_int16_t d_npartitions;	/* number of partitions in following */
 	u_int32_t d_bbsize;		/* size of boot area at sn0, bytes */
 	u_int32_t d_sbsize;		/* max size of fs superblock, bytes */
 	struct	partition {		/* the partition table */
 		u_int32_t p_size;	/* number of sectors in partition */
 		u_int32_t p_offset;	/* starting sector */
-		u_int32_t p_fsize;	/* filesystem basic fragment size */
-		u_int8_t p_fstype;	/* filesystem type, see below */
-		u_int8_t p_frag;	/* filesystem fragments per block */
+		u_int32_t p_fsize;	/* file system basic fragment size */
+		u_int8_t p_fstype;	/* file system type, see below */
+		u_int8_t p_frag;	/* file system fragments per block */
 		union {
 			u_int16_t cpg;	/* UFS: FS cylinders per group */
 			u_int16_t sgs;	/* LFS: FS segment shift */
@@ -287,7 +287,7 @@ static const char *const dktypenames[] = {
 
 /*
  * Filesystem type and version.
- * Used to interpret other filesystem-specific
+ * Used to interpret other file system-specific
  * per-partition information.
  */
 #define	FS_UNUSED	0	/* unused */
