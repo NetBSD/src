@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fereg.h,v 1.4 2002/09/28 17:22:50 tsutsui Exp $	*/
+/*	$NetBSD: if_fereg.h,v 1.5 2002/09/28 18:19:09 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -81,17 +81,3 @@
 /* Extra bits in FMV3 register.  Always 0?  */
 #define FE_FMV3_EXTRA_MASK	0x7F
 #define FE_FMV3_EXTRA_VALUE	0x00
-
-/*
- * EEPROM allocation of AT1700/RE2000.
- */
-#define FE_ATI_EEP_ADDR		0x08	/* Station address.  (8-13)	*/
-#define	FE_ATI_EEP_MEDIA	0x18	/* Media type.			*/
-#define	FE_ATI_EEP_MAGIC	0x19	/* XXX Magic.			*/
-#define FE_ATI_EEP_MODEL	0x1e	/* Hardware type.		*/
-#define	FE_ATI_EEP_REVISION	0x1f	/* Hardware revision.		*/
-
-#define FE_ATI_MODEL_AT1700T	0x00
-#define FE_ATI_MODEL_AT1700BT	0x01
-#define FE_ATI_MODEL_AT1700FT	0x02
-#define FE_ATI_MODEL_AT1700AT	0x03
