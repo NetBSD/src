@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.2 2000/07/22 08:53:35 takemura Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.3 2000/07/30 04:41:15 takemura Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -31,7 +31,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <dev/apm/apmvar.h>
+#include <arch/hpcmips/dev/apm/apmvar.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>

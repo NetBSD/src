@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.60 2000/07/27 17:53:37 mason Exp $
+# 	$NetBSD: GENERIC,v 1.61 2000/07/30 04:41:18 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.60 $"
+#ident 		"GENERIC-$Revision: 1.61 $"
 
 maxusers	8
 
@@ -99,8 +99,8 @@ options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 # temporally power management
-hpcapm0	at mainbus0			# pseudo power management
-apm0	at hpcapm0			# pseudo APM
+hpcapm0	at mainbus0			# power management
+apmdev0	at hpcapm0			# APM
 
 vrip*	at mainbus0
 vrcmu*	at vrip? addr 0x0b000060 size 0x20
@@ -115,8 +115,8 @@ vrpmu*	at vrip? addr 0x0b0000a0 size 0x20 intr 1 # power switch
 vrdsu*	at vrip? addr 0x0b0000e0 size 0x08
 vrpiu*	at vrip? addr 0x0b000120 size 0x1a0 intr 5
 
-#mqvideo0 at vrip? addr 0x0a000000 size 0x800000	# MQ200 video controller
-#hpcfb*		at	mqvideo?
+mqvideo0 at vrip? addr 0x0a000000 size 0x800000	# MQ200 video controller
+hpcfb*		at	mqvideo?
 
 # Workstation Console attachments
 bivideo0	at	mainbus0
