@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.17 2001/09/18 05:09:37 simonb Exp $	*/
+/*	$NetBSD: execvp.c,v 1.18 2001/09/19 01:07:19 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execvp.c,v 1.17 2001/09/18 05:09:37 simonb Exp $");
+__RCSID("$NetBSD: execvp.c,v 1.18 2001/09/19 01:07:19 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,24 +70,22 @@ execvp(name, argv)
 	const char **memp;
 	int cnt;
 	size_t lp, ln;
-	char *p;
 	int eacces = 0;
 	unsigned int etxtbsy = 0;
-	char *cur, *path, buf[PATH_MAX];
-	const char *bp;
+	char buf[PATH_MAX];
+	const char *bp, *path, *p;
 
 	_DIAGASSERT(name != NULL);
 
 	/* "" is not a valid filename; check this before traversing PATH. */
 	if (name[0] == '\0') {
 		errno = ENOENT;
-		path = NULL;
 		goto done;
 	}
 	/* If it's an absolute or relative path name, it's easy. */
 	if (strchr(name, '/')) {
 		bp = name;
-		cur = path = NULL;
+		path = "";
 		goto retry;
 	}
 	bp = buf;
@@ -95,21 +93,21 @@ execvp(name, argv)
 	/* Get the path we're searching. */
 	if (!(path = getenv("PATH")))
 		path = _PATH_DEFPATH;
-	cur = alloca(strlen(path) + 1);
-	strcpy(cur, path);
-	path = cur;
 
-	while ((p = strsep(&cur, ":")) != NULL) {
+	ln = strlen(name);
+	do {
+		/* Find the end of this path element. */
+		for (p = path; *path != 0 && *path != ':'; path++)
+			continue;
 		/*
 		 * It's a SHELL path -- double, leading and trailing colons
 		 * mean the current directory.
 		 */
-		if (!*p) {
+		if (p == path) {
 			p = ".";
 			lp = 1;
 		} else
-			lp = strlen(p);
-		ln = strlen(name);
+			lp = path - p;
 
 		/*
 		 * If the path is too long complain.  This is a possible
@@ -154,7 +152,7 @@ retry:		rwlock_rdlock(&__environ_lock);
 		default:
 			goto done;
 		}
-	}
+	} while (*path++ == ':');	/* Otherwise, *path was NUL */
 	if (eacces)
 		errno = EACCES;
 	else if (!errno)
