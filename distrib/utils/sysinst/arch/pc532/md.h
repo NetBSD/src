@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.12 2003/05/21 10:05:27 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.13 2003/05/30 11:56:28 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,14 +44,9 @@
 #define XNEEDMB 50
 
 /* Size of boot partition */
+#define	PART_BOOT D
+#define BOOT_HIGH
 #define BOOT_SIZE 80
-
-/* Disk names. */
-EXTERN	char *disk_names[]
-#ifdef MAIN
-= {"sd", NULL}
-#endif
-;
 
 /*
  * Machine-specific command to write a new label to a disk.

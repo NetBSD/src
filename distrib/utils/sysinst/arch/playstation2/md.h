@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 2003/05/21 10:05:27 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.7 2003/05/30 11:56:28 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -78,17 +78,6 @@ EXTERN distinfo dist_list[]
     {"text",		1, "Text tools   : "},
     { NULL,		0, NULL }
 }
-#endif
-;
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- *
- * On playstation2, we allow "wd" for IDE disk.
- */
-EXTERN	char *disk_names[]
-#ifdef MAIN
-= {"wd", NULL}
 #endif
 ;
 

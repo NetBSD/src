@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.8 2003/05/21 10:05:23 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.9 2003/05/30 11:56:25 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,17 +82,6 @@ EXTERN distinfo dist_list[]
     {"xmisc",		1, "X11 Misc.    : "},
     { NULL,		0, NULL }
 }
-#endif
-;
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- *
- * On  bebox, we allow "wd"  ST-506/IDE disks and  "sd" scsi disks.
- */
-EXTERN	char *disk_names[]
-#ifdef MAIN
-= {"wd", "sd", NULL}
 #endif
 ;
 
