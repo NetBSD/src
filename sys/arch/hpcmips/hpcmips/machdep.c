@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 2001/03/25 15:15:18 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2001/03/30 15:59:17 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2001/03/25 15:15:18 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2001/03/30 15:59:17 uch Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -681,8 +681,7 @@ haltsys:
 /*
  * Return the best possible estimate of the time in the timeval to
  * which tvp points.  We guarantee that the time will be greater than
- * the value obtained by a previous call.  Some models of DECstations
- * provide a high resolution timer circuit.
+ * the value obtained by a previous call.
  */
 void
 microtime(tvp)
@@ -708,7 +707,6 @@ microtime(tvp)
 	splx(s);
 }
 
-
 int
 initcpu()
 {
@@ -719,7 +717,7 @@ initcpu()
 	 * clear  any memory errors, reset any pending interrupts.
 	 */
 
-	(*platform.bus_reset)();	/* XXX_cf_alpha */
+	(*platform.bus_reset)();
 
 	return i;
 }
@@ -797,7 +795,7 @@ cpu_intr(status, cause, pc, ipending)
 }
 
 /*
- * Wait "n" microseconds. (scsi code needs this).
+ * Wait "n" microseconds.
  */
 void
 delay(n)
