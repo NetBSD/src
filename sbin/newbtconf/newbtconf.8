@@ -1,4 +1,4 @@
-.\"     $NetBSD: newbtconf.8,v 1.8 2002/02/08 01:30:45 ross Exp $
+.\"     $NetBSD: newbtconf.8,v 1.9 2002/10/01 14:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Darren Reed.  All rights reserved.
 .\"
@@ -52,7 +52,7 @@ symbolic links which are adjusted with each boot to point to the appropriate
 file for the desired run-time environment.
 This is accomplished by directing all of the symbolic links through a
 directory which itself is a symbolic link
-.Pa ( /etc/etc.current ) ,
+.Pq Pa /etc/etc.current ,
 to the destination files.
 At each bootup, the selection made changes which directory
 .Pa /etc/etc.current
@@ -93,7 +93,9 @@ and
 to the directory
 .Pa /etc/etc.network .
 The following files are all moved into
-that directory and symbolic links put in their place, in /etc, pointing to
+that directory and symbolic links put in their place, in
+.Pa /etc ,
+pointing to
 .Pa /etc/etc.current/\*[Lt]filename\*[Gt] :
 .Bd -literal -offset indent
 /etc/defaultdomain
@@ -152,12 +154,15 @@ Upon rebooting, we should see:
 Which configuration [network] ?
 .Ed
 .Pp
-To setup the system for booting into the "nonet" configuration, the files
-in
+To setup the system for booting into the
+.Dq nonet
+configuration, the files in
 .Pa /etc/etc.nonet
 need be edited.
 .Pp
-If you wanted to make "nonet" the default configuration when booting, you
+If you wanted to make
+.Dq nonet
+the default configuration when booting, you
 would need delete the symbolic link
 .Pa /etc/etc.default
 and create a new symbolic link (with the same name) to
@@ -182,10 +187,12 @@ net_interfaces=NO
 .Ed
 .Pp
 Of course other networking services, such as NTP, routed, etc, are all
-expected to be "NO".
-In general, the only settings which should be "YES" are syslogd and
-update, with perhaps cron (if your cron scripts don't need the network)
-and screenblank/wscons (if applicable).
+expected to be
+.Dq NO .
+In general, the only settings which should be
+.Dq YES
+are syslogd and update, with perhaps cron (if your cron scripts don't
+need the network) and screenblank/wscons (if applicable).
 Other actions such as deleting any NFS mounts from
 .Pa /etc/etc.nonet/fstab
 would also need to be undertaken.
@@ -221,9 +228,11 @@ The
 program first appeared in
 .Nx 1.5 .
 .Sh AUTHORS
-This shell script was written by Darren Reed \*[Lt]darrenr@netbsd.org\*[Gt] with
-initial input from Matthew Green \*[Lt]mrg@netbsd.org\*[Gt] on how to approach this
-problem.
+This shell script was written by Darren Reed
+.Aq darrenr@netbsd.org
+with initial input from Matthew Green
+.Aq mrg@netbsd.org
+on how to approach this problem.
 .Sh BUGS
 It presently does not display a count down timer whilst waiting for input
 to select which configuration and nor does it abort said timer when a key
