@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.22.4.1 2005/01/31 12:25:33 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.22.4.2 2005/02/02 09:55:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.22.4.1 2005/01/31 12:25:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.22.4.2 2005/02/02 09:55:30 yamt Exp $");
 
 #include "locators.h"
 
@@ -1282,7 +1282,7 @@ mbus_dmamem_unmap(void *v, caddr_t kva, size_t size)
 		return;
 
 	size = round_page(size);
-	pmap_kremove(kva, size);
+	pmap_kremove((vaddr_t)kva, size);
 	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
 }
