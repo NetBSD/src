@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.54 2003/08/24 17:52:33 chs Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.55 2003/10/23 03:03:20 provos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,6 +36,8 @@
 
 #ifndef _VMPARAM_H_
 #define _VMPARAM_H_
+
+#include <sys/tree.h>
 
 /*
  * Machine dependent constants for 386.
@@ -143,7 +145,8 @@ struct pv_entry;
 
 struct pv_head {
 	struct simplelock pvh_lock;	/* locks every pv on this list */
-	struct pv_entry *pvh_list;	/* head of list (locked by pvh_lock) */
+	SPLAY_HEAD(pvtree, pv_entry) pvh_root;
+					/* head of list (locked by pvh_lock) */
 };
 
 struct vm_page_md {
