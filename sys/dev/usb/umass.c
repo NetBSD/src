@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.76 2001/12/14 08:58:49 gehenna Exp $	*/
+/*	$NetBSD: umass.c,v 1.77 2001/12/15 00:26:14 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.76 2001/12/14 08:58:49 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.77 2001/12/15 00:26:14 augustss Exp $");
 
 #include "atapibus.h"
 
@@ -350,6 +350,17 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 		 * signature.
 		 */
 		sc->quirks |= WRONG_CSWSIG;
+	}
+
+	if (UGETW(dd->idVendor) == USB_VENDOR_SCANLOGIC &&
+	    UGETW(dd->idProduct) == USB_PRODUCT_SCANLOGIC_SL11R) {
+		/*
+		 * ScanLogic SL11R IDE adapter claims to support
+		 * SCSI, but really needs UFI.
+		 * Note also that these devices need firmware > 0.71
+		 */
+		sc->cmd_proto &= ~CPROTO_SCSI;
+		sc->cmd_proto |= CPROTO_UFI;
 	}
 
 	id = usbd_get_interface_descriptor(iface);
