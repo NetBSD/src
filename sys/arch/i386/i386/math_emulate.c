@@ -1,7 +1,7 @@
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
  *
- *	$Id: math_emulate.c,v 1.6 1994/01/27 18:01:47 ws Exp $
+ *	$Id: math_emulate.c,v 1.7 1994/03/09 07:37:08 mycroft Exp $
  */
 
 /*
@@ -36,20 +36,19 @@
  * hide most of the 387-specific things here.
  */
 
-#include "machine/cpu.h"
-#include "machine/psl.h"
-#include "machine/reg.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/acct.h>
+#include <sys/kernel.h>
+#include <sys/signal.h>
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "user.h"
-#include "acct.h"
-#include "kernel.h"
-#include "signal.h"
+#include <machine/cpu.h>
+#include <machine/reg.h>
 
 #define __ALIGNED_TEMP_REAL 1
-#include "i386/i386/math_emu.h"
+#include <i386/i386/math_emu.h>
 
 #define bswapw(x) __asm__("xchgb %%al,%%ah":"=a" (x):"0" ((short)x))
 #define ST(x) (*__st((x)))
