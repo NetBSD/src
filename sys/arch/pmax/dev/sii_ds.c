@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.12 2000/01/10 03:24:34 simonb Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.13 2000/03/04 05:42:56 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -88,6 +88,13 @@ sii_ds_attach(parent, self, aux)
 {
 	struct ibus_attach_args *ia = aux;
 	struct siisoftc *sc = (struct siisoftc *) self;
+/* XXX Hook for dk_establish() to determine boot device */
+	extern int booted_slot;
+	extern struct device *booted_controller;
+
+	if (booted_slot == 0)	/* ??? */
+		booted_controller = self;
+/* XXX */
 
 	sc->sc_regs = (SIIRegs *)MIPS_PHYS_TO_KSEG1(ia->ia_addr);
 
