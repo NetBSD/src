@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.98 2003/08/16 18:09:14 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.99 2003/10/09 13:23:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.98 2003/08/16 18:09:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.99 2003/10/09 13:23:33 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -147,7 +147,7 @@ int nfsrtton = 0;
 struct nfsrtt nfsrtt;
 struct nfsreqhead nfs_reqq;
 
-struct callout nfs_timer_ch = CALLOUT_INITIALIZER;
+struct callout nfs_timer_ch = CALLOUT_INITIALIZER_SETFUNC(nfs_timer, NULL);
 
 /*
  * Initialize sockets and congestion for a new NFS connection.
@@ -1488,7 +1488,7 @@ nfs_timer(arg)
 	}
 #endif /* NFSSERVER */
 	splx(s);
-	callout_reset(&nfs_timer_ch, nfs_ticks, nfs_timer, NULL);
+	callout_schedule(&nfs_timer_ch, nfs_ticks);
 }
 
 /*ARGSUSED*/
