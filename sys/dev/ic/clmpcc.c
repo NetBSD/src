@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.1 1999/02/13 17:05:19 scw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.2 1999/02/20 00:27:29 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -70,11 +70,14 @@
 #endif
 
 
+#define	splserial()	spl4()
+
 static int	clmpcc_init	__P((struct clmpcc_softc *sc));
 static void	clmpcc_shutdown	__P((struct clmpcc_chan *));
 static int	clmpcc_speed	__P((struct clmpcc_softc *, speed_t,
 					int *, int *));
 static int	clmpcc_param	__P((struct tty *, struct termios *));
+static void	clmpcc_set_params __P((struct clmpcc_chan *));
 static void	clmpcc_start	__P((struct tty *));
 static int 	clmpcc_modem_control	__P((struct clmpcc_chan *, int, int));
 
@@ -99,7 +102,6 @@ extern struct cfdriver clmpcc_cd;
 
 /*
  * Make this an option variable one can patch.
- * But be warned:  this must be a power of 2!
  */
 u_int clmpcc_ibuf_size = CLMPCC_RING_SIZE;
 
@@ -228,11 +230,19 @@ clmpcc_enable_transmitter(ch)
 	struct clmpcc_chan *ch;
 {
 	u_int old;
+	int s;
 
 	old = clmpcc_select_channel(ch->ch_sc, ch->ch_car);
 
+	s = splserial();
+
 	clmpcc_wrreg(ch->ch_sc, CLMPCC_REG_IER,
 		clmpcc_rdreg(ch->ch_sc, CLMPCC_REG_IER) | CLMPCC_IER_TX_EMPTY);
+
+	CLR(ch->ch_flags, CLMPCC_FLG_START);
+	SET(ch->ch_tty->t_state, TS_BUSY);
+
+	splx(s);
 
 	clmpcc_select_channel(ch->ch_sc, old);
 }
@@ -807,11 +817,9 @@ clmpcc_param(tp, t)
 {
 	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(tp->t_dev)];
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
+	u_char cor;
 	int oclk, obpr;
 	int iclk, ibpr;
-	int oldch;
-	int cor;
-	int ier;
 	int s;
 
 	/* Check requested parameters. */
@@ -820,14 +828,6 @@ clmpcc_param(tp, t)
 
 	if ( t->c_ispeed && clmpcc_speed(sc, t->c_ispeed, &iclk, &ibpr) < 0 )
 		return EINVAL;
-
-	oldch = clmpcc_select_channel(sc, ch->ch_car);
-
-	s = splhigh();
-	/* Disable channel interrupt while we do all this */
-	ier = clmpcc_rdreg(sc, CLMPCC_REG_IER);
-	clmpcc_wrreg(sc, CLMPCC_REG_IER, 0);
-	splx(s);
 
 	/*
 	 * For the console, always force CLOCAL and !HUPCL, so that the port
@@ -839,17 +839,25 @@ clmpcc_param(tp, t)
 		CLR(t->c_cflag, HUPCL);
 	}
 
+	CLR(ch->ch_flags, CLMPCC_FLG_UPDATE_PARMS);
+
 	/* If ospeed it zero, hangup the line */
 	clmpcc_modem_control(ch, TIOCM_DTR, t->c_ospeed == 0 ? DMBIC : DMBIS);
 
 	if ( t->c_ospeed ) {
-		clmpcc_wrreg(sc, CLMPCC_REG_TCOR, CLMPCC_TCOR_CLK(oclk));
-		clmpcc_wrreg(sc, CLMPCC_REG_TBPR, obpr);
+		ch->ch_tcor = CLMPCC_TCOR_CLK(oclk);
+		ch->ch_tbpr = obpr;
+	} else {
+		ch->ch_tcor = 0;
+		ch->ch_tbpr = 0;
 	}
 
 	if ( t->c_ispeed ) {
-		clmpcc_wrreg(sc, CLMPCC_REG_RCOR, CLMPCC_RCOR_CLK(iclk));
-		clmpcc_wrreg(sc, CLMPCC_REG_RBPR, ibpr);
+		ch->ch_rcor = CLMPCC_RCOR_CLK(iclk);
+		ch->ch_rbpr = ibpr;
+	} else {
+		ch->ch_rcor = 0;
+		ch->ch_rbpr = 0;
 	}
 
 	/* Work out value to use for COR1 */
@@ -881,65 +889,80 @@ clmpcc_param(tp, t)
 		break;
 	}
 
-	clmpcc_wrreg(sc, CLMPCC_REG_COR1, cor);
+	ch->ch_cor1 = cor;
 
 	/*
 	 * The only interesting bit in COR2 is 'CTS Automatic Enable'
 	 * when hardware flow control is in effect.
 	 */
-	cor = ISSET(t->c_cflag, CRTSCTS) ? CLMPCC_COR2_CtsAE : 0;
-	clmpcc_wrreg(sc, CLMPCC_REG_COR2, cor);
+	ch->ch_cor2 = ISSET(t->c_cflag, CRTSCTS) ? CLMPCC_COR2_CtsAE : 0;
 
 	/* COR3 needs to be set to the number of stop bits... */
-	cor = ISSET(t->c_cflag, CSTOPB) ? CLMPCC_COR3_STOP_2 :
-					  CLMPCC_COR3_STOP_1;
-	clmpcc_wrreg(sc, CLMPCC_REG_COR3, cor);
+	ch->ch_cor3 = ISSET(t->c_cflag, CSTOPB) ? CLMPCC_COR3_STOP_2 :
+						  CLMPCC_COR3_STOP_1;
 
 	/*
 	 * COR4 contains the FIFO threshold setting.
 	 * We adjust the threshold depending on the input speed...
 	 */
-	cor = clmpcc_rdreg(sc, CLMPCC_REG_COR4) & ~CLMPCC_COR4_FIFO_MASK;
 	if ( t->c_ispeed <= 1200 )
-		ch->ch_fifo = CLMPCC_COR4_FIFO_LOW;
+		ch->ch_cor4 = CLMPCC_COR4_FIFO_LOW;
 	else if ( t->c_ispeed <= 19200 )
-		ch->ch_fifo = CLMPCC_COR4_FIFO_MED;
+		ch->ch_cor4 = CLMPCC_COR4_FIFO_MED;
 	else
-		ch->ch_fifo = CLMPCC_COR4_FIFO_HIGH;
-	clmpcc_wrreg(sc, CLMPCC_REG_COR4, cor | ch->ch_fifo);
-
-	/* This ensure the new fifo threshold causes an initial interrupt */
-	ier |= CLMPCC_IER_RET;
-	CLR(ch->ch_flags, CLMPCC_FLG_FIFO_CLEAR);
+		ch->ch_cor4 = CLMPCC_COR4_FIFO_HIGH;
 
 	/*
 	 * If chip is used with CTS and DTR swapped, we can enable
 	 * automatic hardware flow control.
 	 */
-	cor = clmpcc_rdreg(sc, CLMPCC_REG_COR5) & ~CLMPCC_COR5_FLOW_MASK;
 	if ( sc->sc_swaprtsdtr && ISSET(t->c_cflag, CRTSCTS) )
-		cor |= CLMPCC_COR5_FLOW_NORM;
-	clmpcc_wrreg(sc, CLMPCC_REG_COR5, cor);
+		ch->ch_cor5 = CLMPCC_COR5_FLOW_NORM;
+	else
+		ch->ch_cor5 = 0;
 
-	/* The chip needs to be told that registers have changed... */
-	clmpcc_channel_cmd(sc, ch->ch_car, CLMPCC_CCR_T0_INIT |
-					   CLMPCC_CCR_T0_RX_EN |
-					   CLMPCC_CCR_T0_TX_EN);
-
-	/* Restore channel interrupts */
-	clmpcc_wrreg(sc, CLMPCC_REG_IER, ier);
-
-	/*
-	 * Update the tty layer's idea of the carrier bit, in case we changed
-	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that by
-	 * explicit request.
-	 */
-	cor = clmpcc_rd_msvr(sc) & CLMPCC_MSVR_CD;
-	(void) (*linesw[tp->t_line].l_modem)(tp, cor != 0);
-
-	clmpcc_select_channel(sc, oldch);
+	s = splserial();
+	if ( ISCLR(ch->ch_tty->t_state, TS_BUSY) ) {
+		u_char oldch;
+		oldch = clmpcc_select_channel(sc, ch->ch_car);
+		clmpcc_set_params(ch);
+		clmpcc_select_channel(sc, oldch);
+	} else
+		SET(ch->ch_flags, CLMPCC_FLG_UPDATE_PARMS);
+	splx(s);
 
 	return 0;
+}
+
+static void
+clmpcc_set_params(ch)
+	struct clmpcc_chan *ch;
+{
+	struct clmpcc_softc *sc = ch->ch_sc;
+	u_char cor;
+
+	if ( ch->ch_tcor && ch->ch_tbpr ) {
+		clmpcc_wrreg(sc, CLMPCC_REG_TCOR, ch->ch_tcor);
+		clmpcc_wrreg(sc, CLMPCC_REG_TBPR, ch->ch_tbpr);
+	}
+
+	if ( ch->ch_rcor && ch->ch_rbpr ) {
+		clmpcc_wrreg(sc, CLMPCC_REG_RCOR, ch->ch_rcor);
+		clmpcc_wrreg(sc, CLMPCC_REG_RBPR, ch->ch_rbpr);
+	}
+
+	clmpcc_wrreg(sc, CLMPCC_REG_COR1, ch->ch_cor1);
+	clmpcc_wrreg(sc, CLMPCC_REG_COR2, ch->ch_cor2);
+	clmpcc_wrreg(sc, CLMPCC_REG_COR3, ch->ch_cor3);
+
+	cor = clmpcc_rdreg(sc, CLMPCC_REG_COR4);
+	clmpcc_wrreg(sc, CLMPCC_REG_COR4, cor & CLMPCC_COR4_FIFO_MASK);
+	cor = clmpcc_rdreg(sc, CLMPCC_REG_IER);
+	clmpcc_wrreg(sc, CLMPCC_REG_IER, cor & ~CLMPCC_IER_RET);
+	SET(ch->ch_flags, CLMPCC_FLG_FIFO_CLEAR);
+
+	cor = clmpcc_rdreg(sc, CLMPCC_REG_COR5) & ~CLMPCC_COR5_FLOW_MASK;
+	clmpcc_wrreg(sc, CLMPCC_REG_COR5, cor | ch->ch_cor5);
 }
 
 static void
@@ -952,7 +975,8 @@ clmpcc_start(tp)
 
 	s = spltty();
 
-	if ( ISCLR(tp->t_state, TS_TTSTOP | TS_TIMEOUT | TS_BUSY) ) {
+	if ( ISCLR(tp->t_state, TS_TTSTOP | TS_TIMEOUT | TS_BUSY) &&
+	     ISCLR(ch->ch_flags, CLMPCC_FLG_STOP) ) {
 		if ( tp->t_outq.c_cc <= tp->t_lowat ) {
 			if ( ISSET(tp->t_state, TS_ASLEEP) ) {
 				CLR(tp->t_state, TS_ASLEEP);
@@ -968,6 +992,7 @@ clmpcc_start(tp)
 	}
 
 out:
+	CLR(ch->ch_flags, CLMPCC_FLG_START);
 	splx(s);
 }
 
@@ -1009,9 +1034,9 @@ clmpcc_rxintr(arg)
 	struct clmpcc_chan *ch;
 	u_int8_t *put, *end, rxd;
 	u_char errstat;
-	u_int fc, tc;
-	int risr;
-	int rir;
+	u_char fc, tc;
+	u_char risr;
+	u_char rir;
 #ifdef DDB
 	int saw_break = 0;
 #endif
@@ -1126,7 +1151,7 @@ rx_done:
 			 * and enable receive timeout interrupts.
 			 */
 			reg = clmpcc_rdreg(sc, CLMPCC_REG_COR4);
-			reg = (reg & ~CLMPCC_COR4_FIFO_MASK) | ch->ch_fifo;
+			reg = (reg & ~CLMPCC_COR4_FIFO_MASK) | ch->ch_cor4;
 			clmpcc_wrreg(sc, CLMPCC_REG_COR4, reg);
 			reg = clmpcc_rdreg(sc, CLMPCC_REG_IER);
 			clmpcc_wrreg(sc, CLMPCC_REG_IER, reg | CLMPCC_IER_RET);
@@ -1162,8 +1187,8 @@ clmpcc_txintr(arg)
 	struct clmpcc_softc *sc = (struct clmpcc_softc *)arg;
 	struct clmpcc_chan *ch;
 	struct tty *tp;
-	int ftc, oftc;
-	int tir;
+	u_char ftc, oftc;
+	u_char tir;
 
 	/* Tx interrupt active? */
 	tir = clmpcc_rdreg(sc, CLMPCC_REG_TIR);
@@ -1177,16 +1202,27 @@ clmpcc_txintr(arg)
 
 	/* Get pointer to interrupting channel's data structure */
 	ch = &sc->sc_chans[tir & CLMPCC_TIR_TCN_MASK];
+	tp = ch->ch_tty;
 
 	/* Dummy read of the interrupt status register */
 	(void) clmpcc_rdreg(sc, CLMPCC_REG_TISR);
 
 	ftc = oftc = clmpcc_rdreg(sc, CLMPCC_REG_TFTC);
 
+	/* Handle a delayed parameter change */
+	if ( ISSET(ch->ch_flags, CLMPCC_FLG_UPDATE_PARMS) ) {
+		clmpcc_set_params(ch);
+		CLR(ch->ch_flags, CLMPCC_FLG_UPDATE_PARMS);
+		SET(ch->ch_flags, CLMPCC_FLG_NEED_INIT);
+		SET(ch->ch_flags, CLMPCC_FLG_START);
+		goto tx_done;
+	}
+
 	/* Stop transmitting if CLMPCC_FLG_STOP is set */
-	tp = ch->ch_tty;
 	if ( ISSET(ch->ch_flags, CLMPCC_FLG_STOP) )
 		goto tx_done;
+
+	CLR(ch->ch_flags, CLMPCC_FLG_UPDATE_PARMS);
 
 	if ( tp->t_outq.c_cc > 0 ) {
 		SET(tp->t_state, TS_BUSY);
@@ -1215,7 +1251,8 @@ clmpcc_txintr(arg)
 	if ( tp->t_outq.c_cc == 0 ) {
 tx_done:
 		/*
-		 * No data to send or requested to stop.
+		 * No data to send, requested to stop or waiting for
+		 * an INIT following a parameter change.
 		 * Disable transmit interrupt
 		 */
 		clmpcc_wrreg(ch->ch_sc, CLMPCC_REG_IER,
@@ -1227,6 +1264,11 @@ tx_done:
 
 	if ( tp->t_outq.c_cc <= tp->t_lowat )
 		SET(ch->ch_flags, CLMPCC_FLG_START);
+
+	if ( ISSET(ch->ch_flags, CLMPCC_FLG_START) && ! sc->sc_soft_running ) {
+		sc->sc_soft_running = 1;
+		(sc->sc_softhook)(sc);
+	}
 
 	if ( ftc != oftc )
 		clmpcc_wrreg(sc, CLMPCC_REG_TEOIR, 0);
@@ -1244,7 +1286,7 @@ clmpcc_mdintr(arg)
 	void *arg;
 {
 	struct clmpcc_softc *sc = (struct clmpcc_softc *)arg;
-	int mir;
+	u_char mir;
 
 	/* Modem status interrupt active? */
 	mir = clmpcc_rdreg(sc, CLMPCC_REG_MIR);
@@ -1279,31 +1321,58 @@ clmpcc_softintr(arg)
 {
 	struct clmpcc_softc *sc = (struct clmpcc_softc *)arg;
 	struct clmpcc_chan *ch;
+	struct tty *tp;
 	int (*rint) __P((int, struct tty *));
 	u_char *get;
+	u_char reg;
 	u_int c;
 	int chan;
 
 	sc->sc_soft_running = 0;
 
+
 	/* Handle Modem state changes too... */
 
 	for (chan = 0; chan < CLMPCC_NUM_CHANS; chan++) {
 		ch = &sc->sc_chans[chan];
+		tp = ch->ch_tty;
+
 		get = ch->ch_ibuf_rd;
-		rint = linesw[ch->ch_tty->t_line].l_rint;
+		rint = linesw[tp->t_line].l_rint;
 
 		/* Squirt buffered incoming data into the tty layer */
 		while ( get != ch->ch_ibuf_wr ) {
-			c = *get++;
-			c |= ((u_int)*get++) << 8;
-			(rint)(c, ch->ch_tty);
+			c = get[0];
+			c |= ((u_int)get[1]) << 8;
+			if ( (rint)(c, tp) == -1 ) {
+			    ch->ch_ibuf_rd = ch->ch_ibuf_wr;
+			    break;
+			}
 
+			get += 2;
 			if ( get == ch->ch_ibuf_end )
 				get = ch->ch_ibuf;
 
 			ch->ch_ibuf_rd = get;
 		}
+
+		if ( ISSET(ch->ch_flags, CLMPCC_FLG_NEED_INIT) ) {
+			clmpcc_channel_cmd(sc, ch->ch_car, CLMPCC_CCR_T0_INIT |
+							   CLMPCC_CCR_T0_RX_EN |
+					   		   CLMPCC_CCR_T0_TX_EN);
+			CLR(ch->ch_flags, CLMPCC_FLG_NEED_INIT);
+
+			/*
+			 * Update the tty layer's idea of the carrier bit,
+			 * in case we changed CLOCAL or MDMBUF. We don't
+			 * hang up here; we only do that by explicit request.
+			 */
+			reg = clmpcc_rd_msvr(sc) & CLMPCC_MSVR_CD;
+			(void) (*linesw[tp->t_line].l_modem)(tp, reg != 0);
+		}
+
+		if ( ISSET(ch->ch_flags, CLMPCC_FLG_START) )
+			(*linesw[tp->t_line].l_start)(tp);
 	}
 
 	return 0;
