@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.15 2002/02/01 04:35:30 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.16 2002/02/13 15:15:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.15 2002/02/01 04:35:30 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.16 2002/02/13 15:15:23 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -124,12 +124,17 @@ __RCSID("$NetBSD: cmds.c,v 1.15 2002/02/01 04:35:30 lukem Exp $");
 
 #include "extern.h"
 
+typedef enum {
+	FE_MLSD		= 1<<0,		/* if op is MLSD (MLST otherwise ) */
+	FE_ISCURDIR	= 1<<1,		/* if name is the current directory */
+} factflag_t;
+
 typedef struct {
 	const char	*path;		/* full pathname */
 	const char	*display;	/* name to display */
 	struct stat	*stat;		/* stat of path */
 	struct stat	*pdirstat;	/* stat of path's parent dir */
-	int		 iscurdir;	/* nonzero if name is the current dir */
+	factflag_t	 flags;		/* flags */
 } factelem;
 
 static void	ack(const char *);
@@ -253,7 +258,9 @@ mlsd(const char *path)
 	if (dout == NULL)
 		return;
 
+	memset(&f, 0, sizeof(f));
 	f.stat = &sb;
+	f.flags |= FE_MLSD;
 	while ((dp = readdir(dirp)) != NULL) {
 		snprintf(name, sizeof(name), "%s/%s", path, dp->d_name);
 		if (ISDOTDIR(dp->d_name)) {	/* special case curdir: */
@@ -261,7 +268,7 @@ mlsd(const char *path)
 				continue;
 			f.pdirstat = NULL;	/*   require stat of parent */
 			f.display = path;	/*   set name to real name */
-			f.iscurdir = 1;		/*   flag name is curdir */
+			f.flags |= FE_ISCURDIR; /*   flag name is curdir */
 		} else {
 			if (ISDOTDOTDIR(dp->d_name)) {
 				if (! hastypefact)
@@ -270,7 +277,7 @@ mlsd(const char *path)
 			} else
 				f.pdirstat = &pdirstat;	/* cache parent stat */
 			f.display = dp->d_name;
-			f.iscurdir = 0;
+			f.flags &= ~FE_ISCURDIR;
 		}
 		if (stat(name, &sb) == -1)
 			continue;
@@ -301,11 +308,11 @@ mlst(const char *path)
 		return;
 	}
 	reply(-250, "MLST %s", path);
+	memset(&f, 0, sizeof(f));
 	f.path = path;
 	f.display = path;
 	f.stat = &sb;
 	f.pdirstat = NULL;
-	f.iscurdir = 0;
 	CPUTC(' ', stdout);
 	mlsname(stdout, &f);
 	reply(250, "End");
@@ -725,12 +732,16 @@ fact_type(const char *fact, FILE *fd, factelem *fe)
 	cprintf(fd, "%s=", fact);
 	switch (fe->stat->st_mode & S_IFMT) {
 	case S_IFDIR:
-		if (fe->iscurdir || ISDOTDIR(fe->display))
-			cprintf(fd, "cdir");
-		else if (ISDOTDOTDIR(fe->display))
-			cprintf(fd, "pdir");
-		else
+		if (fe->flags & FE_MLSD) {
+			if ((fe->flags & FE_ISCURDIR) || ISDOTDIR(fe->display))
+				cprintf(fd, "cdir");
+			else if (ISDOTDOTDIR(fe->display))
+				cprintf(fd, "pdir");
+			else
+				cprintf(fd, "dir");
+		} else {
 			cprintf(fd, "dir");
+		}
 		break;
 	case S_IFREG:
 		cprintf(fd, "file");
@@ -785,13 +796,23 @@ matchgroup(gid_t gid)
 static void
 mlsname(FILE *fp, factelem *fe)
 {
-	int i;
+	char realfile[MAXPATHLEN];
+	int i, userf;
 
 	for (i = 0; i < FACTTABSIZE; i++) {
 		if (facttab[i].enabled)
 			(facttab[i].display)(facttab[i].name, fp, fe);
 	}
-	cprintf(fp, " %s\r\n", fe->display);
+	if ((fe->flags & FE_MLSD) &&
+	    !(fe->flags & FE_ISCURDIR) && !ISDOTDIR(fe->display)) {
+			/* if MLSD and not "." entry, display as-is */
+		userf = 0;
+	} else {
+			/* if MLST, or MLSD and "." entry, realpath(3) it */
+		if (realpath(fe->display, realfile) != NULL)
+			userf = 1;
+	}
+	cprintf(fp, " %s\r\n", userf ? realfile : fe->display);
 }
 
 static void
