@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.17 2003/04/07 19:35:39 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.18 2003/10/25 18:33:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.17 2003/04/07 19:35:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.18 2003/10/25 18:33:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1154,10 +1154,12 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 		fxsz = 64;
 		recsz = next ? next : fxsz + size;
 		break;
-#ifdef DIAGNOSTIC
 	default:
+#ifdef DIAGNOSTIC
 		panic("smbfs_findnextLM2: unexpected info level %d\n",
 		    ctx->f_infolevel);
+#else
+		return EINVAL;
 #endif
 	}
 	nmlen = min(size, SMB_MAXFNAMELEN);
