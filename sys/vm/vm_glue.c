@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.49 1995/12/21 04:44:27 mycroft Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.50 1996/02/04 02:10:14 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -179,14 +179,10 @@ vslock(addr, len)
 }
 
 void
-vsunlock(addr, len, dirtied)
+vsunlock(addr, len)
 	caddr_t	addr;
 	u_int	len;
-	int dirtied;
 {
-#ifdef	lint
-	dirtied++;
-#endif
 	vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
 			round_page(addr+len), TRUE);
 }
