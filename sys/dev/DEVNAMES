@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.129 2003/02/18 14:20:11 augustss Exp $
+#	$NetBSD: DEVNAMES,v 1.130 2003/03/04 13:29:12 soren Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -408,9 +408,7 @@ grackle			macppc
 grf			amiga
 grf			amigappc
 grf			hp300
-grf			macppc
 grf			x68k
-grfati			macppc
 grfb			atari		Attribute
 grfb			x68k		Attribute
 grfbus			amiga		Attribute
@@ -428,7 +426,6 @@ grfcv			amigappc
 grfcv3d			amiga
 grfcv3d			amigappc
 grfdev			hp300		Attribute
-grfdev			macppc		Attribute
 grfet			amiga
 grfet			amigappc
 grfet			atari
@@ -546,7 +543,6 @@ ite			amiga
 ite			amigappc
 ite			atari
 ite			hp300
-ite			macppc
 ite			x68k
 ivsc			amiga
 ivsc			amigappc
