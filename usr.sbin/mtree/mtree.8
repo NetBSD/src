@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.13 2000/10/05 20:16:02 wennmach Exp $
+.\"	$NetBSD: mtree.8,v 1.14 2000/11/07 05:47:15 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -235,7 +235,9 @@ characters (``['', ``]'', ``?'' or ``*''), in which case files
 in the hierarchy will be associated with the first pattern that
 they match.
 .Nm
-uses strsvis(3) (in VIS_CSTYLE format) to encode file names containing
+uses
+.Xr strsvis 3
+(in VIS_CSTYLE format) to encode file names containing
 non-printable characters. Whitespace characters are encoded as
 ``\es'' (space), ``\et'' (tab), and ``\en'' (new line).
 ``#'' characters in file names are escaped by a preceding backslash (``\e'')
