@@ -1,4 +1,4 @@
-/*      $NetBSD: ruserpass.c,v 1.6 1995/09/08 01:06:43 tls Exp $      */
+/*      $NetBSD: ruserpass.c,v 1.7 1996/11/25 05:13:27 lukem Exp $      */
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -113,7 +113,7 @@ next:
 				continue;
 			/*
 			 * Allow match either for user's input host name
-			 * or official hostname.  Also allow match of 
+			 * or official hostname.  Also allow match of
 			 * incompletely-specified host in local domain.
 			 */
 			if (strcasecmp(host, tokval) == 0)
@@ -137,7 +137,7 @@ next:
 
 		case LOGIN:
 			if (token())
-				if (*aname == 0) { 
+				if (*aname == 0) {
 					*aname = malloc((unsigned) strlen(tokval) + 1);
 					(void) strcpy(*aname, tokval);
 				} else {

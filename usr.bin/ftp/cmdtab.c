@@ -1,4 +1,4 @@
-/*      $NetBSD: cmdtab.c,v 1.6 1995/09/08 01:06:10 tls Exp $      */
+/*      $NetBSD: cmdtab.c,v 1.7 1996/11/25 05:13:20 lukem Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmdtab.c,v 1.6 1995/09/08 01:06:10 tls Exp $";
+static char rcsid[] = "$NetBSD: cmdtab.c,v 1.7 1996/11/25 05:13:20 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ char	disconhelp[] =	"terminate ftp session";
 char	domachelp[] = 	"execute macro";
 char	formhelp[] =	"set file transfer format";
 char	globhelp[] =	"toggle metacharacter expansion of local file names";
-char	hashhelp[] =	"toggle printing `#' for each buffer transferred";
+char	hashhelp[] =	"toggle printing `#' marks; specify number to set size";
 char	helphelp[] =	"print local help information";
 char	idlehelp[] =	"get (set) idle timer on remote side";
 char	lcdhelp[] =	"change local working directory";
@@ -135,6 +135,7 @@ struct cmd cmdtab[] = {
 	{ "dir",	dirhelp,	1,	1,	1,	ls },
 	{ "disconnect",	disconhelp,	0,	1,	1,	disconnect },
 	{ "form",	formhelp,	0,	1,	1,	setform },
+	{ "ftp",	connecthelp,	0,	0,	1,	setpeer },
 	{ "get",	receivehelp,	1,	1,	1,	get },
 	{ "glob",	globhelp,	0,	0,	0,	setglob },
 	{ "hash",	hashhelp,	0,	0,	0,	sethash },
