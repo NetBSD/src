@@ -33,12 +33,13 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)setruid.c	5.5 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: setruid.c,v 1.5 1994/04/24 01:06:46 mycroft Exp $";
+static char *rcsid = "$Id: setruid.c,v 1.6 1994/07/21 17:13:39 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <stdio.h>
+#include <sys/types.h>
 #include <unistd.h>
-#include <sys/uio.h>
+
+__warn_references(setruid, "warning: this program uses setruid(), which is deprecated.");
 
 int
 #ifdef __STDC__
@@ -48,21 +49,5 @@ setruid(ruid)
 	int ruid;
 #endif
 {
-	static int warned;
-	static char w[] =
-	    ": warning: this program uses setruid(), which is deprecated.\r\n";
-
-	if (!warned) {
-		struct iovec iov[2];
-		extern char *__progname;	/* in crt0 */
-
-		iov[0].iov_base = __progname;
-		iov[0].iov_len = strlen(__progname);
-		iov[1].iov_base = w;
-		iov[1].iov_len = sizeof(w) - 1;
-		(void) writev(STDERR_FILENO, iov, 2);
-		warned = 1;
-	}
-
 	return (__setreuid(ruid, -1));
 }

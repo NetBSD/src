@@ -33,12 +33,13 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)setrgid.c	5.5 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: setrgid.c,v 1.4 1994/04/24 01:06:45 mycroft Exp $";
+static char *rcsid = "$Id: setrgid.c,v 1.5 1994/07/21 17:13:38 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <stdio.h>
+#include <sys/types.h>
 #include <unistd.h>
-#include <sys/uio.h>
+
+__warn_references(setrgid, "warning: this program uses setrgid(), which is deprecated.");
 
 int
 #ifdef __STDC__
@@ -48,21 +49,5 @@ setrgid(rgid)
 	int rgid;
 #endif
 {
-	static int warned;
-	static char w[] =
-	    ": warning: this program uses setrgid(), which is deprecated.\r\n";
-
-	if (!warned) {
-		struct iovec iov[2];
-		extern char *__progname;	/* in crt0 */
-
-		iov[0].iov_base = __progname;
-		iov[0].iov_len = strlen(__progname);
-		iov[1].iov_base = w;
-		iov[1].iov_len = sizeof(w) - 1;
-		(void) writev(STDERR_FILENO, iov, 2);
-		warned = 1;
-	}
-
 	return (__setregid(rgid, -1));
 }
