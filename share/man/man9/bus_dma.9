@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.18 2001/09/03 00:29:35 uwe Exp $
+.\" $NetBSD: bus_dma.9,v 1.19 2001/09/03 00:37:54 uwe Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,7 +89,7 @@
 "size_t size" "caddr_t *kvap" "int flags"
 .Ft void
 .Fn bus_dmamem_unmap "bus_dma_tag_t tag" "caddr_t kva" "size_t size"
-.Ft int
+.Ft paddr_t
 .Fn bus_dmamem_mmap "bus_dma_tag_t tag" "bus_dma_segment_t *segs" \
 "int nsegs" "off_t off" "int prot" "int flags"
 .Sh DESCRIPTION
