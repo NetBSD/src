@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165.2.10 2002/06/24 22:06:04 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.165.2.11 2002/07/02 21:25:12 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.10 2002/06/24 22:06:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.11 2002/07/02 21:25:12 gmcgarry Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -146,7 +146,6 @@ child_return(arg)
 	void *arg;
 {
 	struct lwp *l = arg;
-	struct proc *p = l->l_proc;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 
 	frame->f_regs[V0] = 0;
@@ -154,8 +153,8 @@ child_return(arg)
 	frame->f_regs[A3] = 0;
 	userret(l);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
+	if (KTRPOINT(l->l_proc, KTR_SYSRET))
+		ktrsysret(l->l_proc, SYS_fork, 0, 0);
 #endif
 }
 
