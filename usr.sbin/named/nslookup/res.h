@@ -55,7 +55,7 @@
 
 /*
  *	@(#)res.h	5.10 (Berkeley) 6/1/90
- *	$Id: res.h,v 1.2 1997/04/13 10:52:18 mrg Exp $
+ *	$Id: res.h,v 1.2.2.1 1998/10/29 19:50:02 cgd Exp $
  */
 
 /*
@@ -117,6 +117,7 @@ typedef int Boolean;
  */
 
 #define NAME_LEN 256
+#define NAME_LEN_STR "%255s"	/* for scanf formats */
 
 
 /*
