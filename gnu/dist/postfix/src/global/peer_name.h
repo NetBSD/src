@@ -22,6 +22,9 @@ typedef struct {
 #define PEER_TYPE_UNKNOWN	0
 #define PEER_TYPE_INET		1
 #define PEER_TYPE_LOCAL		2
+#ifdef INET6
+#define PEER_TYPE_INET6		3
+#endif
 
 extern PEER_NAME *peer_name(int);
 

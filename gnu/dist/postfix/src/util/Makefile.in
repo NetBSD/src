@@ -5,6 +5,7 @@ SRCS	= argv.c argv_split.c attr.c basename.c binhash.c chroot_uid.c \
 	dict_nisplus.c dict_open.c dir_forest.c doze.c environ.c \
 	events.c exec_command.c fifo_listen.c fifo_trigger.c file_limit.c \
 	find_inet.c fsspace.c fullname.c get_domainname.c get_hostname.c \
+	get_port.c \
 	htable.c inet_addr_host.c inet_addr_list.c inet_addr_local.c \
 	inet_connect.c inet_listen.c inet_trigger.c inet_util.c \
 	line_wrap.c lowercase.c lstat_as.c mac_parse.c make_dirs.c \
@@ -30,6 +31,7 @@ OBJS	= argv.o argv_split.o attr.o basename.o binhash.o chroot_uid.o \
 	dict_nisplus.o dict_open.o dir_forest.o doze.o environ.o \
 	events.o exec_command.o fifo_listen.o fifo_trigger.o file_limit.o \
 	find_inet.o fsspace.o fullname.o get_domainname.o get_hostname.o \
+	get_port.o \
 	htable.o inet_addr_host.o inet_addr_list.o inet_addr_local.o \
 	inet_connect.o inet_listen.o inet_trigger.o inet_util.o \
 	line_wrap.o lowercase.o lstat_as.o mac_parse.o make_dirs.o \
@@ -53,6 +55,7 @@ HDRS	= argv.h attr.h binhash.h chroot_uid.h connect.h dict.h dict_db.h \
 	dict_dbm.h dict_env.h dict_ht.h dict_ldap.h dict_mysql.h \
 	dict_ni.h dict_nis.h dict_nisplus.h dir_forest.h events.h \
 	exec_command.h find_inet.h fsspace.h fullname.h get_domainname.h \
+	get_port.h \
 	get_hostname.h htable.h inet_addr_host.h inet_addr_list.h \
 	inet_addr_local.h inet_util.h iostuff.h line_wrap.h listen.h lstat_as.h \
 	mac_parse.h make_dirs.h match_list.h match_ops.h msg.h msg_output.h \
@@ -589,6 +592,7 @@ get_domainname.o: sys_defs.h
 get_domainname.o: mymalloc.h
 get_domainname.o: get_hostname.h
 get_domainname.o: get_domainname.h
+get_port.o: sys_defs.h
 get_hostname.o: get_hostname.c
 get_hostname.o: sys_defs.h
 get_hostname.o: mymalloc.h
@@ -698,6 +702,7 @@ match_list.o: vstring_vstream.h
 match_list.o: stringops.h
 match_list.o: argv.h
 match_list.o: dict.h
+match_list.o: inet_util.h
 match_list.o: match_list.h
 match_ops.o: match_ops.c
 match_ops.o: sys_defs.h

@@ -47,6 +47,13 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef INET6
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#endif
+
 /* Utility library. */
 
 #include "msg.h"
@@ -103,7 +110,23 @@ int     valid_hostname(const char *name, int gripe)
 		    msg_warn("%s: misplaced hyphen: %.100s", myname, name);
 		return (0);
 	    }
-	} else {
+	}
+#ifdef INET6
+	else if (ch == ':') {
+	    struct addrinfo hints, *res;
+
+	    memset(&hints, 0, sizeof(hints));
+	    hints.ai_family = AF_INET6;
+	    hints.ai_socktype = SOCK_STREAM;	/*dummy*/
+	    hints.ai_flags = AI_NUMERICHOST;
+	    if (getaddrinfo(name, "0", &hints, &res) == 0) {
+		freeaddrinfo(res);
+		return 1;
+	    } else
+		return 0;
+	}
+#endif
+	else {
 	    if (gripe)
 		msg_warn("%s: invalid character %d(decimal): %.100s",
 			 myname, ch, name);
@@ -135,6 +158,9 @@ int     valid_hostaddr(const char *addr, int gripe)
     int     byte_count = 0;
     int     byte_val = 0;
     int     ch;
+#ifdef INET6
+    struct addrinfo hints, *res;
+#endif
 
 #define BYTES_NEEDED	4
 
@@ -146,6 +172,17 @@ int     valid_hostaddr(const char *addr, int gripe)
 	    msg_warn("%s: empty address", myname);
 	return (0);
     }
+
+#ifdef INET6
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET6;
+    hints.ai_socktype = SOCK_STREAM;	/*dummy*/
+    hints.ai_flags = AI_NUMERICHOST;
+    if (getaddrinfo(addr, "0", &hints, &res) == 0) {
+	freeaddrinfo(res);
+	return 1;
+    }
+#endif
 
     /*
      * Scary code to avoid sscanf() overflow nasties.
