@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.37 2002/11/17 08:32:44 chs Exp $
+.\"	$NetBSD: uvm.9,v 1.38 2003/03/09 18:28:59 manu Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -145,9 +145,8 @@ establishes a valid mapping in map
 which must be unlocked.
 The new mapping has size
 .Fa size ,
-which must be in
-.Dv PAGE_SIZE
-units.
+which must a multiple of 
+.Dv PAGE_SIZE .
 The
 .Fa uobj
 and
