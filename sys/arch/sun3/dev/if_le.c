@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.21 1995/05/24 20:49:38 gwr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.22 1995/06/27 14:34:32 gwr Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -297,10 +297,6 @@ leinit(sc)
 	int s;
 	register int timo;
 	u_long a;
-
-	/* Address not known. */
-	if (!ifp->if_addrlist)
-		return;
 
 	s = splimp();
 
