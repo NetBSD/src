@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.9 2001/02/22 18:38:00 uch Exp $	*/
+/*	$NetBSD: mq200.c,v 1.10 2001/02/27 08:54:18 sato Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -78,6 +78,12 @@ static int	mq200_hardpower __P((void *, int, long, void *));
 static int	mq200_fbinit __P((struct hpcfb_fbconf *));
 static int	mq200_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 static paddr_t	mq200_mmap __P((void *, off_t offset, int));
+static void	mq200_update_powerstate __P((struct mq200_softc *, int));
+void	mq200_get_backlight __P((struct mq200_softc *));
+void	mq200_init_brightness __P((struct mq200_softc *));
+void	mq200_init_contrast __P((struct mq200_softc *));
+void	mq200_set_brightness __P((struct mq200_softc *, int));
+void	mq200_set_contrast __P((struct mq200_softc *, int));
 
 /*
  * static variables
@@ -137,7 +143,7 @@ mq200_attach(sc)
 		sc->sc_dev.dv_xname, (u_long)bootinfo->fb_addr);
 	
 	/* Add a power hook to power saving */
-	sc->sc_powerstate = MQ200_POWERSTATE_D0;
+	sc->sc_mq200pwstate = MQ200_POWERSTATE_D0;
 	sc->sc_powerhook = powerhook_establish(mq200_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
@@ -151,6 +157,13 @@ mq200_attach(sc)
 	if (sc->sc_hardpowerhook == NULL)
 		printf("%s: WARNING: unable to establish hard power hook\n",
 			sc->sc_dev.dv_xname);
+
+	/* initialize backlight brightness and lcd contrast */
+	sc->sc_brightness = sc->sc_contrast =
+	sc->sc_max_brightness = sc->sc_max_contrast = -1;
+	mq200_init_brightness(sc);
+	mq200_init_contrast(sc);
+	mq200_get_backlight(sc);
 
 	if (console && hpcfb_cnattach(&sc->sc_fbconf) != 0) {
 		panic("mq200_attach: can't init fb console");
@@ -176,6 +189,23 @@ mq200_attach(sc)
 #endif /* NBIVIDEO > 0 */
 }
 
+static void
+mq200_update_powerstate(sc, updates)
+	struct mq200_softc *sc;
+	int updates;
+{
+	if (updates & PWRSTAT_LCD)
+		config_hook_call(CONFIG_HOOK_POWERCONTROL,
+		    CONFIG_HOOK_POWERCONTROL_LCD,
+		    (void*)!(sc->sc_powerstate & PWRSTAT_SUSPEND));
+
+	if (updates & PWRSTAT_BACKLIGHT)
+		config_hook_call(CONFIG_HOOK_POWERCONTROL,
+		    CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
+		    (void*)(!(sc->sc_powerstate & PWRSTAT_SUSPEND) &&
+			     (sc->sc_powerstate & PWRSTAT_BACKLIGHT)));
+}
+
 static void 
 mq200_power(why, arg)
 	int why;
@@ -186,19 +216,25 @@ mq200_power(why, arg)
 
 	switch (why) {
 	case PWR_SUSPEND:
-		sc->sc_powerstate = MQ200_POWERSTATE_D2;
+		sc->sc_powerstate |= PWRSTAT_SUSPEND;
+		mq200_update_powerstate(sc, PWRSTAT_ALL);
+		sc->sc_mq200pwstate = MQ200_POWERSTATE_D2;
 		break;
 	case PWR_STANDBY:
-		sc->sc_powerstate = MQ200_POWERSTATE_D3;
+		sc->sc_powerstate |= PWRSTAT_SUSPEND;
+		mq200_update_powerstate(sc, PWRSTAT_ALL);
+		sc->sc_mq200pwstate = MQ200_POWERSTATE_D3;
 		break;
 	case PWR_RESUME:
-		sc->sc_powerstate = MQ200_POWERSTATE_D0;
+		sc->sc_powerstate &= ~PWRSTAT_SUSPEND;
+		mq200_update_powerstate(sc, PWRSTAT_ALL);
+		sc->sc_mq200pwstate = MQ200_POWERSTATE_D0;
 		break;
 	}
 
-	printf("MQ200_PMCSR=%08x\n", sc->sc_powerstate);
+	printf("MQ200_PMCSR=%08x\n", sc->sc_mq200pwstate);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			  MQ200_PMCSR, sc->sc_powerstate);
+			  MQ200_PMCSR, sc->sc_mq200pwstate);
 #endif
 }
 
@@ -214,18 +250,24 @@ mq200_hardpower(ctx, type, id, msg)
 
 	switch (why) {
 	case PWR_SUSPEND:
-		sc->sc_powerstate = MQ200_POWERSTATE_D2;
+		sc->sc_powerstate |= PWRSTAT_SUSPEND;
+		mq200_update_powerstate(sc, PWRSTAT_ALL);
+		sc->sc_mq200pwstate = MQ200_POWERSTATE_D2;
 		break;
 	case PWR_STANDBY:
-		sc->sc_powerstate = MQ200_POWERSTATE_D3;
+		sc->sc_powerstate |= PWRSTAT_SUSPEND;
+		mq200_update_powerstate(sc, PWRSTAT_ALL);
+		sc->sc_mq200pwstate = MQ200_POWERSTATE_D3;
 		break;
 	case PWR_RESUME:
-		sc->sc_powerstate = MQ200_POWERSTATE_D0;
+		sc->sc_powerstate &= ~PWRSTAT_SUSPEND;
+		mq200_update_powerstate(sc, PWRSTAT_ALL);
+		sc->sc_mq200pwstate = MQ200_POWERSTATE_D0;
 		break;
 	}
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			  MQ200_PMCSR, sc->sc_powerstate);
+			  MQ200_PMCSR, sc->sc_mq200pwstate);
 
 	/*
 	 * you should wait until the
@@ -236,7 +278,7 @@ mq200_hardpower(ctx, type, id, msg)
 		do {
 			tmp = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 					       MQ200_PMCSR);
-		} while ((tmp & 0x3) != (sc->sc_powerstate & 0x3));
+		} while ((tmp & 0x3) != (sc->sc_mq200pwstate & 0x3));
 		delay(100000); /* XXX */
 	}
 
@@ -419,13 +461,50 @@ mq200_ioctl(v, cmd, data, flag, p)
 		dispparam = (struct wsdisplay_param*)data;
 		switch (dispparam->param) {
 		case WSDISPLAYIO_PARAM_BACKLIGHT:
-			VPRINTF(("mq200_ioctl: GETPARAM:BACKLIGHT\n"));
-			return (EINVAL);
+			VPRINTF(("mq200_ioctl: GETPARAM:BACKLIGHT call\n"));
+			if (sc->sc_max_brightness == -1)
+				mq200_init_brightness(sc);
+			mq200_get_backlight(sc);
+			dispparam->min = 0;
+			dispparam->max = 1;
+			if (sc->sc_max_brightness > 0)
+				dispparam->curval = sc->sc_brightness > 0? 1: 0;
+			else
+				dispparam->curval =
+				    (sc->sc_powerstate&PWRSTAT_BACKLIGHT) ? 1 : 0;
+			VPRINTF(("mq200_ioctl: GETPARAM:BACKLIGHT:%d\n",
+				dispparam->curval));
+			return 0;
+			break;
 		case WSDISPLAYIO_PARAM_CONTRAST:
-			VPRINTF(("mq200_ioctl: GETPARAM:CONTRAST\n"));
-			return (EINVAL);
+			VPRINTF(("mq200_ioctl: GETPARAM:CONTRAST call\n"));
+			if (sc->sc_max_contrast == -1)
+				mq200_init_contrast(sc);
+			if (sc->sc_max_contrast > 0) {
+				dispparam->min = 0;
+				dispparam->max = sc->sc_max_contrast;
+				dispparam->curval = sc->sc_contrast;
+				VPRINTF(("mq200_ioctl: GETPARAM:CONTRAST max=%d, current=%d\n", sc->sc_max_contrast, sc->sc_contrast));
+				return 0;
+			} else {
+				VPRINTF(("mq200_ioctl: GETPARAM:CONTRAST ret\n"));
+				return (EINVAL);
+			}
+			break;	
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
-			VPRINTF(("mq200_ioctl: GETPARAM:BRIGHTNESS\n"));
+			VPRINTF(("mq200_ioctl: GETPARAM:BRIGHTNESS call\n"));
+			if (sc->sc_max_brightness == -1)
+				mq200_init_brightness(sc);
+			if (sc->sc_max_brightness > 0) {
+				dispparam->min = 0;
+				dispparam->max = sc->sc_max_brightness;
+				dispparam->curval = sc->sc_brightness;
+				VPRINTF(("mq200_ioctl: GETPARAM:BRIGHTNESS max=%d, current=%d\n", sc->sc_max_brightness, sc->sc_brightness));
+				return 0;
+			} else {
+				VPRINTF(("mq200_ioctl: GETPARAM:BRIGHTNESS ret\n"));
+				return (EINVAL);
+			}
 			return (EINVAL);
 		default:
 			return (EINVAL);
@@ -436,14 +515,70 @@ mq200_ioctl(v, cmd, data, flag, p)
 		dispparam = (struct wsdisplay_param*)data;
 		switch (dispparam->param) {
 		case WSDISPLAYIO_PARAM_BACKLIGHT:
-			VPRINTF(("mq200_ioctl: GETPARAM:BACKLIGHT\n"));
-			return (EINVAL);
+			VPRINTF(("mq200_ioctl: SETPARAM:BACKLIGHT call\n"));
+			if (dispparam->curval < 0 ||
+			    1 < dispparam->curval)
+				return (EINVAL);
+			if (sc->sc_max_brightness == -1)
+				mq200_init_brightness(sc);
+			VPRINTF(("mq200_ioctl: SETPARAM:max brightness=%d\n", sc->sc_max_brightness));
+			if (sc->sc_max_brightness > 0) { /* dimmer */
+				if (dispparam->curval == 0){
+					sc->sc_brightness_save = sc->sc_brightness;
+					mq200_set_brightness(sc, 0);	/* min */
+				} else {
+					if (sc->sc_brightness_save == 0)
+						sc->sc_brightness_save = sc->sc_max_brightness;
+					mq200_set_brightness(sc, sc->sc_brightness_save);
+				}
+				VPRINTF(("mq200_ioctl: SETPARAM:BACKLIGHT: brightness=%d\n", sc->sc_brightness));
+			} else { /* off */
+				if (dispparam->curval == 0)
+					sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
+				else
+					sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
+				VPRINTF(("mq200_ioctl: SETPARAM:BACKLIGHT: powerstate %d\n",
+						(sc->sc_powerstate & PWRSTAT_BACKLIGHT)?1:0));
+				mq200_update_powerstate(sc, PWRSTAT_BACKLIGHT);
+				VPRINTF(("mq200_ioctl: SETPARAM:BACKLIGHT:%d\n",
+					(sc->sc_powerstate & PWRSTAT_BACKLIGHT)?1:0));
+			}
+			return 0;
+			break;
 		case WSDISPLAYIO_PARAM_CONTRAST:
-			VPRINTF(("mq200_ioctl: GETPARAM:CONTRAST\n"));
-			return (EINVAL);
+			VPRINTF(("mq200_ioctl: SETPARAM:CONTRAST call\n"));
+			if (sc->sc_max_contrast == -1)
+				mq200_init_contrast(sc);
+			if (dispparam->curval < 0 ||
+			    sc->sc_max_contrast < dispparam->curval)
+				return (EINVAL);
+			if (sc->sc_max_contrast > 0) {
+				int org = sc->sc_contrast;
+				mq200_set_contrast(sc, dispparam->curval);	
+				VPRINTF(("mq200_ioctl: SETPARAM:CONTRAST org=%d, current=%d\n", org, sc->sc_contrast));
+				return 0;
+			} else {
+				VPRINTF(("mq200_ioctl: SETPARAM:CONTRAST ret\n"));
+				return (EINVAL);
+			}
+			break;
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
-			VPRINTF(("mq200_ioctl: GETPARAM:BRIGHTNESS\n"));
-			return (EINVAL);
+			VPRINTF(("mq200_ioctl: SETPARAM:BRIGHTNESS call\n"));
+			if (sc->sc_max_brightness == -1)
+				mq200_init_brightness(sc);
+			if (dispparam->curval < 0 ||
+			    sc->sc_max_brightness < dispparam->curval)
+				return (EINVAL);
+			if (sc->sc_max_brightness > 0) {
+				int org = sc->sc_brightness;
+				mq200_set_brightness(sc, dispparam->curval);	
+				VPRINTF(("mq200_ioctl: SETPARAM:BRIGHTNESS org=%d, current=%d\n", org, sc->sc_brightness));
+				return 0;
+			} else {
+				VPRINTF(("mq200_ioctl: SETPARAM:BRIGHTNESS ret\n"));
+				return (EINVAL);
+			}
+			break;
 		default:
 			return (EINVAL);
 		}
@@ -513,4 +648,89 @@ mq200_mmap(ctx, offset, prot)
 		return -1;
 
 	return mips_btop(sc->sc_baseaddr + offset);
+}
+
+
+void
+mq200_get_backlight(sc)
+	struct mq200_softc *sc;
+{
+	int val = -1;
+
+	if (sc->sc_max_brightness < 0) {
+		if (config_hook_call(CONFIG_HOOK_GET, 
+		     CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
+			if (val == 0)
+				sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
+			else
+				sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
+		}
+	}
+}
+
+void
+mq200_init_brightness(sc)
+	struct mq200_softc *sc;
+{
+	int val = -1;
+
+	VPRINTF(("mq200_init_brightness\n"));
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
+		sc->sc_brightness_save = sc->sc_brightness = val;
+	}
+	val = -1;
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_BRIGHTNESS_MAX, &val) != -1) {
+		sc->sc_max_brightness = val;
+	}
+	return;
+}
+
+
+void
+mq200_init_contrast(sc)
+	struct mq200_softc *sc;
+{
+	int val = -1;
+
+	VPRINTF(("mq200_init_contrast\n"));
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_CONTRAST, &val) != -1) {
+		sc->sc_contrast = val;
+	}
+	val = -1;
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_CONTRAST_MAX, &val) != -1) {
+		sc->sc_max_contrast = val;
+	}
+	return;
+}
+
+void
+mq200_set_brightness(sc, val)
+	struct mq200_softc *sc;
+	int val;
+{
+	sc->sc_brightness = val;
+
+	config_hook_call(CONFIG_HOOK_SET, CONFIG_HOOK_BRIGHTNESS, &val);
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
+		sc->sc_brightness = val;
+	}
+}
+
+void
+mq200_set_contrast(sc, val)
+	struct mq200_softc *sc;
+	int val;
+{
+	sc->sc_contrast = val;
+
+	config_hook_call(CONFIG_HOOK_SET, CONFIG_HOOK_CONTRAST, &val);
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_CONTRAST, &val) != -1) {
+		sc->sc_contrast = val;
+	}
 }
