@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_nbsd.c,v 1.2 1999/05/12 22:55:14 explorer Exp $	*/
+/*	$NetBSD: if_lmc_nbsd.c,v 1.3 2000/05/03 21:08:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -125,7 +125,6 @@
 #if NPCI > 0
 #include <pci/pcivar.h>
 #include <pci/dc21040reg.h>
-#define INCLUDE_PATH_PREFIX "pci/"
 #endif
 #endif /* __FreeBSD__ */
 
@@ -136,8 +135,6 @@
 #include <i386/isa/dma.h>
 #include <i386/isa/isavar.h>
 #include <i386/pci/pci.h>
-
-#define	INCLUDE_PATH_PREFIX	"i386/pci/"
 #endif /* __bsdi__ */
 
 #if defined(__NetBSD__)
@@ -148,21 +145,23 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/ic/dc21040reg.h>
-#define	INCLUDE_PATH_PREFIX	"dev/pci/"
 #endif /* __NetBSD__ */
 
 /*
- * Sigh.  Every OS puts these in different places.  NetBSD and FreeBSD use
- * a C preprocessor that allows this hack, but BSDI does not.  Grr.
+ * Sigh.  Every OS puts these in different places.
  */
-#if defined(__NetBSD__) || defined(__FreeBSD__)
-#include INCLUDE_PATH_PREFIX "if_lmc_types.h"
-#include INCLUDE_PATH_PREFIX "if_lmcioctl.h"
-#include INCLUDE_PATH_PREFIX "if_lmcvar.h"
+#if defined(__NetBSD__)
+#include <dev/pci/if_lmc_types.h>
+#include <dev/pci/if_lmcioctl.h>
+#include <dev/pci/if_lmcvar.h>  
+#elif defined(__FreeBSD__)
+#include "pci/if_lmc_types.h"
+#include "pci/if_lmcioctl.h"
+#include "pci/if_lmcvar.h"
 #else /* BSDI */
 #include "i386/pci/if_lmctypes.h"
 #include "i386/pci/if_lmcioctl.h"
-#include "i386/pci/if_lmcvar.h"
+#include "i386/pci/if_lmcvar.h" 
 #endif
 
 /*
