@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.101 1999/01/16 11:27:40 drochner Exp $
+$NetBSD: pcidevs,v 1.102 1999/01/28 04:31:33 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -989,6 +989,7 @@ product S3 968_1	0x88f1	86C968-1 (\"Vision968\")
 product S3 968_2	0x88f2	86C968-2 (\"Vision968\")
 product S3 968_3	0x88f3	86C968-3 (\"Vision968\")
 product S3 TRIO64V2_DX	0x8901	Trio64V2/DX
+product S3 TRIO3D	0x8904	86C365 Trio3D
 product S3 VIRGE_DX	0x8a01	ViRGE/DX
 product	S3 SONICVIBES	0xca00	SonicVibes
 
