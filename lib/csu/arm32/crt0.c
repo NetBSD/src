@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.6 1998/07/25 04:34:12 mycroft Exp $	*/
+/*	$NetBSD: crt0.c,v 1.7 1998/08/05 03:59:43 mark Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -41,36 +41,39 @@
 	__syscall(SYS_mmap, (addr), (len), (prot), (flags),	\
 	(fd), 0, (off_t)(off)) 
 
-extern void	start __P((void)) asm("start");
+void	__start __P((int, char *[], char *[], struct ps_strings *));
+
+__asm("
+	.text
+	.align	0
+	.global	start
+start:
+	/* Get ps_strings pointer from kernel */
+	teq	r10, #0
+	moveq	r3, r0
+	movne	r3, #0
+
+	/* Get argc, argv, and envp from stack */
+	ldr	r0, [sp, #0x0000]
+	add	r1, sp, #0x0004
+	add	r2, r1, r0, lsl #2
+	add	r2, r2, #0x0004
+
+	b	___start	
+");
 
 void
-start(void)
+__start(argc, argv, envp, ps_strings)
+	int argc;
+	char *argv[];
+	char *envp[];
+	struct ps_strings *ps_strings;		/* NetBSD extension */
 {
-	struct kframe {
-		int	kargc;
-		char	*kargv[1];	/* size depends on kargc */
-		char	kargstr[1];	/* size varies */
-		char	kenvstr[1];	/* size varies */
-	};
 
-	/*
-	 *	ALL REGISTER VARIABLES!!!
-	 */
+ 	environ = envp;
 
-	struct kframe *kfp;
-	char **targv;
-	char **argv;
-	int *ptr;
-    
-	/* just above the saved frame pointer */
-
-	__asm("mov %0, ip" : "=r" (kfp) );
-
-	for (argv = targv = &kfp->kargv[0]; *targv++; /* void */)
-		/* void */ ;
-	if (targv >= (char **)(*argv))
-		--targv;
-	environ = targv;
+	if (ps_strings != (struct ps_strings *)0)
+		__ps_strings = ps_strings;
 
 	if (argv[0])
 		if ((__progname = _strrchr(argv[0], '/')) == NULL)
@@ -95,7 +98,7 @@ start(void)
 
 __asm("__callmain:");		/* Defined for the benefit of debuggers */
 
-	exit(main(kfp->kargc, argv, environ));
+	exit(main(argc, argv, envp));
 }
 
 #ifndef ntohl
