@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.6 1999/02/09 20:34:17 christos Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.7 1999/04/23 05:56:28 cgd Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -18,10 +18,10 @@
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
 
-static void bsd_to_osf1_sigaction __P((const struct sigaction13 *bsa, 
+static void bsd_to_osf1_sigaction __P((const struct sigaction *bsa, 
 				       struct osf1_sigaction *osa));
 static void osf1_to_bsd_sigaction __P((const struct osf1_sigaction *osa,
-				       struct sigaction13 *bsa));
+				       struct sigaction *bsa));
 
 #define	osf1_sigmask(n)		(1 << ((n) - 1))
 #define osf1_sigemptyset(s)	memset((s), 0, sizeof(*(s)))
@@ -222,8 +222,8 @@ osf1_sys_sigaction(p, v, retval)
 		syscallarg(struct osf1_sigaction *) osa;
 	} */ *uap = v;
 	struct osf1_sigaction *nosa, *oosa, tmposa;
-	struct sigaction13 *nbsa, *obsa, tmpbsa;
-	struct compat_13_sys_sigaction_args sa;
+	struct sigaction *nbsa, *obsa, tmpbsa;
+	struct sys___sigaction14_args sa;
 	caddr_t sg;
 	int error;
 
@@ -250,7 +250,7 @@ osf1_sys_sigaction(p, v, retval)
 	SCARG(&sa, nsa) = nbsa;
 	SCARG(&sa, osa) = obsa;
 
-	if ((error = compat_13_sys_sigaction(p, &sa, retval)) != 0)
+	if ((error = sys___sigaction14(p, &sa, retval)) != 0)
 		return error;
 
 	if (oosa != NULL) {
