@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.65 2002/01/06 17:01:25 wiz Exp $
+.\"	$NetBSD: pci.4,v 1.66 2002/04/22 21:05:19 ad Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -122,6 +122,8 @@ interfaces.
 .Bl -tag -width pcdisplay -offset indent
 .It cac
 Compaq array controllers.
+.It icp
+ICP Vortex GDT and Intel Storage RAID controllers.
 .It mlx
 Mylex DAC960 and DEC SWXCR RAID controllers.
 .It pciide
@@ -354,6 +356,7 @@ VGA graphics boards.
 .Xr fxp 4 ,
 .Xr gsip 4 ,
 .Xr hme 4 ,
+.Xr icp 4 ,
 .Xr iha 4 ,
 .Xr intro 4 ,
 .Xr iop 4 ,

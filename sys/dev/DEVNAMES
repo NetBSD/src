@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.109 2002/04/22 12:43:50 augustss Exp $
+#	$NetBSD: DEVNAMES,v 1.110 2002/04/22 21:05:22 ad Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -462,6 +462,8 @@ i8042			arm32		Attribute
 i82586			MI		Attribute
 ibus			pmax
 ibus			vax
+icp			MI
+icpsp			MI
 ics2101			MI		Attribute
 icside			arm32
 icsphy			MI		

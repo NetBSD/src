@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.193 2002/04/18 12:54:14 wiz Exp $
+#	$NetBSD: INSTALL,v 1.194 2002/04/22 21:05:23 ad Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -370,13 +370,18 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 # RAID controllers and devices
 cac*	at eisa? slot ?			# Compaq EISA array controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 mlx*	at eisa? slot ?			# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 
 ld*	at cac? unit ?			# logical disk devices
+ld*	at icp? unit ?
 ld*	at twe? unit ?
 ld*	at mlx? unit ?
+
+icpsp*	at icp? unit ?			# SCSI pass-through
+scsibus* at icpsp?
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.

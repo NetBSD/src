@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.486 2002/04/18 12:54:13 wiz Exp $
+# $NetBSD: GENERIC,v 1.487 2002/04/22 21:05:22 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.486 $"
+#ident 		"GENERIC-$Revision: 1.487 $"
 
 maxusers	32		# estimated number of users
 
@@ -513,13 +513,18 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # RAID controllers and devices
 cac*	at eisa? slot ?			# Compaq EISA array controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 mlx*	at eisa? slot ?			# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 
 ld*	at cac? unit ?			# logical disk devices
+ld*	at icp? unit ?
 ld*	at twe? unit ?
 ld*	at mlx? unit ?
+
+icpsp*	at icp? unit ?			# SCSI pass-through
+scsibus* at icpsp?
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
