@@ -1,7 +1,7 @@
-/*	$NetBSD: tx3912video.c,v 1.4 1999/12/23 16:56:16 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.5 2000/01/03 18:29:04 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -97,22 +97,23 @@ tx3912video_attach(parent, self, aux)
 	struct fb_attach_args fba;
 	txreg_t reg;
 
-	printf("\n");
 	sc->sc_fbaddr = framebuffer;
 	sc->sc_fbsize = framebuffersize;
-	printf("TMPR3912 video module [");
+
+	printf(": ");
 	tx3912video_fbdepth(tc, 1);
-	printf("] frame buffer: 0x%08x-0x%08x", sc->sc_fbaddr, 
+	printf(", frame buffer 0x%08x-0x%08x", sc->sc_fbaddr, 
 	       sc->sc_fbaddr + sc->sc_fbsize);
 	
+	printf("\n");
+
 	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) {
-		printf("disabled.");
+		printf("%s: power off\n", sc->sc_dev.dv_xname);
 		reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
 		reg &= ~(TX3912_VIDEOCTRL1_DISPON |
 			 TX3912_VIDEOCTRL1_ENVID);
 		tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);
 	}
-	printf("\n");
 
 	/* Attach frame buffer device */
 #if NFB > 0
