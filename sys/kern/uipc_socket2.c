@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.45 2002/07/03 21:39:41 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.46 2002/08/22 20:56:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.45 2002/07/03 21:39:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.46 2002/08/22 20:56:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -757,6 +757,8 @@ sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 		    (eor == 0 ||
 		     (((o = m->m_next) || (o = n)) &&
 		      o->m_type == m->m_type))) {
+			if (sb->sb_lastrecord == m)
+				sb->sb_lastrecord = m->m_next;
 			m = m_free(m);
 			continue;
 		}
