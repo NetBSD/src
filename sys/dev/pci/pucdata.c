@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.26 2002/04/11 13:53:56 hannken Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.27 2002/05/13 09:19:57 hannken Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.26 2002/04/11 13:53:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.27 2002/05/13 09:19:57 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -769,6 +769,15 @@ const struct puc_device_description puc_devices[] = {
 	/* Oxford Semiconductor OX16PCI954 PCI Parallel port */
 	{   "Qxford Semiconductor OX16PCI954 Parallel port",
 	    {	0x1415,	0x9513,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	/* NetMos 1P PCI : 1P */
+	{   "NetMos NM9805 1284 Printer port",
+	    {	0x9710,	0x9805,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
