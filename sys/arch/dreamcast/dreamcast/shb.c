@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.5 2001/04/24 19:43:23 marcus Exp $	*/
+/*	$NetBSD: shb.c,v 1.6 2002/02/19 17:21:19 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -431,7 +431,7 @@ intrhandler(p1, p2, p3, p4, frame)
 		return 1;
 	}
 
-	enable_ext_intr();
+	_cpu_intr_resume(0);
 	while (ih) {
 		if (ih->ih_arg)
 			(*ih->ih_fun)(ih->ih_arg);
@@ -439,7 +439,7 @@ intrhandler(p1, p2, p3, p4, frame)
 			(*ih->ih_fun)(&frame);
 		ih = ih->ih_next;
 	}
-	disable_ext_intr();
+	_cpu_intr_suspend();
 
 	cpl = ocpl;
 

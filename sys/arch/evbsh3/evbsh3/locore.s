@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.35 2002/02/17 20:53:03 uch Exp $	*/
+/*	$NetBSD: locore.s,v 1.36 2002/02/19 17:21:19 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -1569,26 +1569,6 @@ XXL_astpending:		.long	_C_LABEL(astpending)
 XXLT_ASTFLT:		.long	T_ASTFLT
 XXL_trap:		.long	_C_LABEL(trap)
 XL_check_ipending:	.long	_C_LABEL(check_ipending)
-
-ENTRY(enable_interrupt)
-	INTR_ENABLE
-	rts
-	nop
-
-ENTRY(disable_interrupt)
-	INTR_DISABLE
-	rts
-	nop
-
-ENTRY(enable_ext_intr)
-	INTR_ENABLE
-	rts
-	nop
-
-ENTRY(disable_ext_intr)
-	INTR_DISABLE
-	rts
-	nop
 
 NENTRY(Xspllower)
 	sts.l	pr, @-r15
