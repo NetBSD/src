@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.33 1994/02/25 23:09:26 hpeyerl Exp $
+ *	$Id: if_ed.c,v 1.34 1994/03/02 03:40:46 mycroft Exp $
  */
 
 #include "ed.h"
@@ -156,8 +156,8 @@ static u_short ed_790_intr_mask[] = {
 	0,
 	IRQ9,
 	IRQ3,
-	IRQ4,
 	IRQ5,
+	IRQ7,
 	IRQ10,
 	IRQ11,
 	IRQ15
