@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.592 2004/01/16 17:02:05 perry Exp $
+# $NetBSD: GENERIC,v 1.593 2004/02/25 18:50:01 perry Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.592 $"
+#ident 		"GENERIC-$Revision: 1.593 $"
 
 maxusers	32		# estimated number of users
 
@@ -275,7 +275,7 @@ cpu* at mainbus?
 #acpi0 		at mainbus0
 #options 	ACPI_PCI_FIXUP		# PCI interrupt routing via ACPI
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
-#options	ACPICA_PEDANTIC		# force strict conformance to the Spec.
+#options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 
 # ACPI devices
 #acpiacad* 	at acpi?		# ACPI AC Adapter
@@ -326,7 +326,7 @@ cpu* at mainbus?
 #fdc*		at pnpbios? index ?	# floppy controller
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
-#pciide*	at pnpbios? index ?
+#pciide* 	at pnpbios? index ?
 
 # PCI bus support
 pci*	at mainbus? bus ?
@@ -368,8 +368,8 @@ isa0	at pceb?
 isa0	at pcib?
 
 # PCMCIA bus support
-pcmcia*	at pcic? controller ? socket ?
-pcmcia*	at tcic? controller ? socket ?
+pcmcia* at pcic? controller ? socket ?
+pcmcia* at tcic? controller ? socket ?
 
 # MCA bus support
 mca0	at mainbus?
@@ -384,7 +384,7 @@ tcic0	at isa? port 0x240 iomem 0xd0000 iosiz 0x10000
 pcic0	at pci? dev? function ?
 
 # ISA Plug-and-Play bus support
-isapnp0	at isa?
+isapnp0 at isa?
 
 # ISA Plug-and-Play PCMCIA controllers
 pcic*	at isapnp?
@@ -448,7 +448,7 @@ com*	at isapnp?			# Modems and serial boards
 # PCMCIA serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
 
-pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
+pcmcom* at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
@@ -802,23 +802,23 @@ le*	at mca? slot ?			# SKNET Personal/MC2+
 
 # MII/PHY support
 acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
-amhphy*	at mii? phy ?			# AMD 79c901 Ethernet PHYs
-bmtphy*	at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
-brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
+amhphy* at mii? phy ?			# AMD 79c901 Ethernet PHYs
+bmtphy* at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
+brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 gentbi* at mii? phy ?			# Generic Ten-Bit 1000BASE-[CLS]X PHYs
 glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
+icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
-lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
-makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
-nsphyter* at mii? phy ?			# NS83843 PHYs
-pnaphy*	at mii? phy ?			# generic HomePNA PHYs
+nsphyter* at mii? phy ? 		# NS83843 PHYs
+pnaphy* at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
@@ -913,10 +913,10 @@ ucom*	at uftdi? portno ?
 umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
 ucom*	at umct? portno ?
 
-uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
+uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ?
 
-uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
+uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
 
 # Diamond Multimedia Rio 500
@@ -972,7 +972,7 @@ clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
-emuxki*	at pci? dev ? function ?	# Creative SBLive! and PCI512
+emuxki* at pci? dev ? function ?	# Creative SBLive! and PCI512
 esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
@@ -983,7 +983,7 @@ yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
 
 # ISA Plug-and-Play audio devices
 ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
-guspnp*	at isapnp?			# Gravis Ultra Sound PnP audio
+guspnp* at isapnp?			# Gravis Ultra Sound PnP audio
 sb*	at isapnp?			# SoundBlaster-compatible audio
 wss*	at isapnp?			# Windows Sound System
 ym*	at isapnp?			# Yamaha OPL3-SA3 audio
@@ -1087,7 +1087,7 @@ ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
 # Joysticks
 
-#joy*		at pnpbios? index ?	# Game port
+#joy*	at pnpbios? index ?	# Game port
 
 # ISA Plug-and-Play joysticks
 joy*	at isapnp?			# Game ports (usually on audio cards)
@@ -1154,7 +1154,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
