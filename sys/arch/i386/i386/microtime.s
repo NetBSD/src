@@ -30,12 +30,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: microtime.s,v 1.6 1994/05/03 20:30:26 mycroft Exp $
+ *	$Id: microtime.s,v 1.7 1994/05/03 20:35:08 mycroft Exp $
  */
 
 #include <machine/asm.h>
 #include <i386/isa/isareg.h>
 #include <i386/isa/timerreg.h>
+#include <i386/isa/icu.h>
 
 /*
  * Use a higher resolution version of microtime if HZ is not
