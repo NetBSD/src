@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14 1998/04/21 20:12:17 matthias Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.15 2000/01/18 19:46:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -50,8 +50,6 @@
 
 #include <machine/autoconf.h>
 
-#define	b_cylin	b_resid
-
 /*
  * Attempt to read a disk label from a device
  * using the indicated stategy routine.
@@ -83,7 +81,7 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = LABELSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "I/O error";
@@ -240,7 +238,7 @@ bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	bp->b_cylinder = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
 	return(1);
 
 bad:
