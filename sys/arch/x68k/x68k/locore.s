@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.74 2004/03/04 19:53:46 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.75 2004/12/15 05:03:23 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1235,7 +1235,7 @@ ENTRY_NOPROFILE(doboot)
 	movl	#CACHE_OFF,%d0
 #if defined(M68040) || defined(M68060)
 	movl	_C_LABEL(mmutype),%d2	| d2 = mmutype
-	addl	#-MMU_68040,%d2		| 68040?
+	addl	#(-1 * MMU_68040),%d2		| 68040?
 	jne	Ldoboot0		| no, skip
 	.word	0xf4f8			| cpusha bc - push and invalidate caches
 	nop
