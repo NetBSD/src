@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.12 2002/05/04 17:51:52 bouyer Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.13 2002/08/29 16:43:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -393,6 +393,17 @@ static const struct scf_period dt_scf_period[] __attribute__((__unused__)) = {
 #define SCNTL4_U3EN	0x80
 
 #define SIOP_DFBC	0xf0 /* DMA fifo byte count, RO */
+
+#define SIOP_AIPCNTL0	0xbe	/* AIP Control 0, 1010-only */
+#define AIPCNTL0_ERRLIVE 0x04	/* AIP error status, live */
+#define AIPCNTL0_ERR	0x02	/* AIP error status, latched */
+#define AIPCNTL0_PARITYERRs 0x01 /* Parity error */
+
+#define SIOP_AIPCNTL1	0xbf	/* AIP Control 1, 1010-only */
+#define AIPCNTL1_DIS	0x08	/* disable AIP generation, 1010-66 only */
+#define AIPCNTL1_RSETERR 0x04	/* reset AIP error 1010-66 only */
+#define AIPCNTL1_FB	0x02	/* force bad AIP value 1010-66 only */
+#define AIPCNTL1_RSET	0x01	/* reset AIP sequence value 1010-66 only */
 
 /*
  * Non-volatile configuration settings stored in the EEPROM.  There
