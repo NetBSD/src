@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.26 1995/06/27 14:36:20 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.27 1995/06/28 04:31:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -77,7 +77,7 @@
 
 #include <dev/cons.h>
 
-#include <dev/ic/z8530.h>
+#include <dev/ic/z8530reg.h>
 #include <sun3/dev/zsvar.h>
 
 /*

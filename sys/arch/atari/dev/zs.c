@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.6 1995/05/28 19:50:26 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.7 1995/06/28 04:30:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -69,7 +69,7 @@
 #include <machine/scu.h>
 #include <machine/mfp.h>
 
-#include <dev/ic/z8530.h>
+#include <dev/ic/z8530reg.h>
 #include <atari/dev/zsvar.h>
 #include "zs.h"
 #if NZS > 1
