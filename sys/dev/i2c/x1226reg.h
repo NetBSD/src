@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226reg.h,v 1.1 2003/10/06 18:02:02 shige Exp $	*/
+/*	$NetBSD: x1226reg.h,v 1.2 2004/02/04 12:03:07 shige Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -64,7 +64,7 @@
 #define	X1226_REG_MN		0x31	/* bcd inute (0-59) */
 #define	X1226_REG_SC		0x30	/* bcd econd (0-59) */
 #define	X1226_REG_RTC_BASE	0x30
-#define	X1226_REG_RTC_SIZE	(X1226_REG_Y2K - X1226_REG_RTC_BASE)
+#define	X1226_REG_RTC_SIZE	((X1226_REG_Y2K - X1226_REG_RTC_BASE) + 1)
 /* Watchdog RTC registers mask */
 #define	X1226_REG_Y2K_MASK	0x39
 #define	X1226_REG_DW_MASK	0x07
