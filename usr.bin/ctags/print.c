@@ -1,6 +1,8 @@
+/*	$NetBSD: print.c,v 1.3 1995/03/26 20:14:10 glass Exp $	*/
+
 /*
- * Copyright (c) 1987 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,41 +34,46 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)print.c	5.4 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: print.c,v 1.2 1993/08/01 18:17:04 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)print.c	8.3 (Berkeley) 4/2/94";
+#else 
+static char rcsid[] = "$NetBSD: print.c,v 1.3 1995/03/26 20:14:10 glass Exp $";
+#endif
 #endif /* not lint */
 
-#include <unistd.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ctags.h"
+#include <unistd.h>
 
-extern char	searchar;		/* ex search character */
+#include "ctags.h"
 
 /*
  * getline --
  *	get the line the token of interest occurred on,
  *	prepare it for printing.
  */
+void
 getline()
 {
-	register long	saveftell;
-	register int	c,
-			cnt;
-	register char	*cp;
+	long	saveftell;
+	int	c;
+	int	cnt;
+	char	*cp;
 
 	saveftell = ftell(inf);
-	(void)fseek(inf,lineftell,L_SET);
+	(void)fseek(inf, lineftell, L_SET);
 	if (xflag)
-		for (cp = lbuf;GETC(!=,'\n');*cp++ = c);
+		for (cp = lbuf; GETC(!=, '\n'); *cp++ = c)
+			continue;
 	/*
 	 * do all processing here, so we don't step through the
 	 * line more than once; means you don't call this routine
 	 * unless you're sure you've got a keeper.
 	 */
-	else for (cnt = 0,cp = lbuf;GETC(!=,EOF) && cnt < ENDLINE;++cnt) {
-		if (c == (int)'\\') {		/* backslashes */
+	else for (cnt = 0, cp = lbuf; GETC(!=, EOF) && cnt < ENDLINE; ++cnt) {
+		if (c == '\\') {		/* backslashes */
 			if (cnt > ENDLINE - 2)
 				break;
 			*cp++ = '\\'; *cp++ = '\\';
@@ -78,7 +85,7 @@ getline()
 			*cp++ = '\\'; *cp++ = c;
 			++cnt;
 		}
-		else if (c == (int)'\n') {	/* end of keep */
+		else if (c == '\n') {	/* end of keep */
 			*cp++ = '$';		/* can find whole line */
 			break;
 		}
@@ -86,30 +93,29 @@ getline()
 			*cp++ = c;
 	}
 	*cp = EOS;
-	(void)fseek(inf,saveftell,L_SET);
+	(void)fseek(inf, saveftell, L_SET);
 }
 
 /*
  * put_entries --
  *	write out the tags
  */
+void
 put_entries(node)
-	register NODE	*node;
+	NODE	*node;
 {
-	extern FILE	*outf;		/* ioptr for tags file */
-	extern int	vflag;		/* -v: vgrind style output */
 
 	if (node->left)
 		put_entries(node->left);
 	if (vflag)
 		printf("%s %s %d\n",
-		    node->entry,node->file,(node->lno + 63) / 64);
+		    node->entry, node->file, (node->lno + 63) / 64);
 	else if (xflag)
 		printf("%-16s%4d %-16s %s\n",
-		    node->entry,node->lno,node->file,node->pat);
+		    node->entry, node->lno, node->file, node->pat);
 	else
-		fprintf(outf,"%s\t%s\t%c^%s%c\n",
-		    node->entry,node->file,searchar,node->pat,searchar);
+		fprintf(outf, "%s\t%s\t%c^%s%c\n",
+		    node->entry, node->file, searchar, node->pat, searchar);
 	if (node->right)
 		put_entries(node->right);
 }
