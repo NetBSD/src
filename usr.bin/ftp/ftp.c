@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.46 1999/06/29 10:43:18 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.47 1999/07/02 05:41:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.46 1999/06/29 10:43:18 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.47 1999/07/02 05:41:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -793,8 +793,8 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 	sig_t oldinti, oldintr, oldintp;
 	int c, d;
 	volatile int is_retr, tcrflag, bare_lfs;
-	size_t bufsize;
-	char *buf;
+	static size_t bufsize;
+	static char *buf;
 	volatile off_t hashbytes;
 	struct stat st;
 	time_t mtime;
