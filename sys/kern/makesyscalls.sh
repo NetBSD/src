@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.42 2000/12/09 05:41:12 mycroft Exp $
+#	$NetBSD: makesyscalls.sh,v 1.43 2000/12/12 17:32:45 jdolecek Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -269,6 +269,10 @@ function parseline() {
 	} else {
 		funcalias=""
 		end=NF
+	}
+	if ($f ~ /^[a-z0-9_]*$/) {	# allow syscall alias
+		funcalias=$f
+		f++
 	}
 	if ($f != "{")
 		parserr($f, "{")
