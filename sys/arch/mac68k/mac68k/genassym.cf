@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.19 2000/06/29 08:15:12 mrg Exp $
+#	$NetBSD: genassym.cf,v 1.20 2000/11/21 13:54:15 tsutsui Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -153,6 +153,10 @@ define	FR_SP			offsetof(struct frame, f_regs[15])
 define	FR_HW			offsetof(struct frame, f_sr)
 define	FR_ADJ			offsetof(struct frame, f_stackadj)
 define	FR_SIZE			sizeof(struct trapframe)
+
+# FP frame offsets
+define	FPF_REGS		offsetof(struct fpframe, fpf_regs[0])
+define	FPF_FPCR		offsetof(struct fpframe, fpf_fpcr)
 
 # system calls
 define	SYS_exit		SYS_exit
