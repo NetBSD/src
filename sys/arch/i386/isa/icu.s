@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.15 1993/11/11 01:45:14 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.16 1993/11/11 02:16:21 mycroft Exp $
  */
 
 /*
@@ -96,7 +96,6 @@ vec:
 
 	ALIGN_TEXT
 INTRLOCAL(unpend_v):
-	COUNT_EVENT(_intrcnt_spl, 0)
 	bsfl    %eax,%eax               # slow, but not worth optimizing
 	btrl    %eax,_ipending
 	jnc     INTRLOCAL(unpend_v_next) # some intr cleared the in-memory bit
@@ -117,7 +116,6 @@ INTRLOCAL(unpend_v_next):
  */
 	ALIGN_TEXT
 doreti:
-	COUNT_EVENT(_intrcnt_spl, 1)
 	popl	%eax			# get previous priority
 /*
  * Now interrupt frame is a trap frame!
@@ -174,7 +172,6 @@ INTRLOCAL(none_to_unpend):
 test_clock:
 	btrl	$SIR_CLOCK,_sir
 	jnc	test_ast
-	COUNT_EVENT(_intrcnt_spl, 9)
 	FASTSPL_VARMASK(_astmask)
 	call	_softclock
 	FASTSPL($0)
@@ -184,10 +181,8 @@ test_ast:
 	testb   $SEL_RPL_MASK,TF_CS(%esp)
 					# to non-kernel (i.e., user)?
 	jz	2f			# nope, leave
-	COUNT_EVENT(_intrcnt_spl, 10)
 	call	_trap
 2:
-	COUNT_EVENT(_intrcnt_spl, 11)
 	INTRFASTEXIT
 
 /*
@@ -200,7 +195,6 @@ test_ast:
 	.globl _splnone
 	ALIGN_TEXT
 _splnone:
-	COUNT_EVENT(_intrcnt_spl, 19)
 in_splnone:
 	movl	_cpl,%eax
 	pushl	%eax
@@ -231,11 +225,9 @@ INTRLOCAL(over_net_stuff_for_splnone):
 	.globl _splx
 	ALIGN_TEXT
 _splx:
-	COUNT_EVENT(_intrcnt_spl, 22)
 	movl	4(%esp),%eax	# new priority
 	testl	%eax,%eax
 	jz	in_splnone	# going to "zero level" is special
-	COUNT_EVENT(_intrcnt_spl, 23)
 	pushl	_cpl
 	movl	%eax,_cpl	# set new priority
 	notl	%eax
@@ -246,7 +238,6 @@ _splx:
 
 	ALIGN_TEXT
 INTRLOCAL(unpend_V):
-	COUNT_EVENT(_intrcnt_spl, 24)
 	bsfl    %eax,%eax
 	btrl    %eax,_ipending
 	jnc     INTRLOCAL(unpend_V_next)

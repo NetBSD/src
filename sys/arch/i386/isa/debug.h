@@ -1,4 +1,4 @@
-/*	$Id: debug.h,v 1.4.2.1 1993/10/09 10:31:16 mycroft Exp $ */
+/*	$Id: debug.h,v 1.4.2.2 1993/11/11 02:16:35 mycroft Exp $ */
 
 /* #define	SHOW_A_LOT */
 
@@ -8,24 +8,18 @@
 #define INTRLOCAL(label) L/**/label
 #endif /* INTR_DEBUG */
 
+#ifdef BDB
 #define	BDBTRAP(name) \
 	ss ; \
 	cmpb	$0,_bdb_exists ; \
-	je	1f ; \
+	jz	1f ; \
 	testb	$SEL_RPL_MASK,4(%esp) ; \
-	jne	1f ; \
+	jnz	1f ; \
 	ss ; \
 bdb_/**/name/**/_ljmp: ; \
 	ljmp	$0,$0 ; \
 1:
-
-#ifdef INTR_DEBUG
-#define	COUNT_EVENT(group, event)	incl	(group) + (event) * 4
-#else /* not INTR_DEBUG */
-#define	COUNT_EVENT(group, event)
-#endif /* INTR_DEBUG */
-
-#define	COUNT_INTR(group, event)	incl	(group) + (event) * 4
+#endif
 
 	.data
 	.globl	_bdb_exists
