@@ -25,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: dmareg.h,v 1.3 1994/10/02 22:00:17 deraadt Exp $
+ *	$Id: dmareg.h,v 1.4 1994/10/28 16:50:59 deraadt Exp $
  */
 
 struct dma_regs {
@@ -60,7 +60,7 @@ struct dma_regs {
 #define   DMAREV_PLUS		0x90000000	/* 'DMA+' */
 #define   DMAREV_2		0xa0000000	/* 'DMA2' */
 
-	volatile u_long		addr;
+	volatile caddr_t	addr;
 #define DMA_D_ADDR		0x01		/* DMA ADDR (in u_longs) */
 
 	volatile u_long		bcnt;		/* DMA COUNT (in u_longs) */
