@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.yppasswdd.c,v 1.5 2000/12/08 21:09:37 tron Exp $	*/
+/*	$NetBSD: rpc.yppasswdd.c,v 1.6 2000/12/08 21:24:16 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.5 2000/12/08 21:09:37 tron Exp $");
+__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.6 2000/12/08 21:24:16 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: rpc.yppasswdd.c,v 1.5 2000/12/08 21:09:37 tron Exp $");
 
 extern	char *__progname;		/* from crt0.s */
 
-int	noshell, nogecos, nopw, domake;
+int	noshell, nogecos, nopw;
 char	make_arg[_POSIX2_LINE_MAX] = "make";
 
 int	main(int, char *[]);
@@ -84,7 +84,6 @@ main(int argc, char *argv[])
 		else if (strcmp("m", arg) == 0) {
 			int len;
 
-			domake = 1;
 			len = strlen(make_arg);
 			i++;
 			for (; i < argc; i++) {
