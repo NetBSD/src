@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.58 2001/05/01 14:02:56 enami Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.59 2001/05/01 19:36:57 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -221,6 +221,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	 * init the page queues and page queue locks
 	 */
 
+	uvmexp.ncolors = VM_PGCOLOR_BUCKETS;
 	for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
 		for (color = 0; color < VM_PGCOLOR_BUCKETS; color++) {
 			for (i = 0; i < PGFL_NQUEUES; i++) {
