@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.7 1999/02/22 11:01:43 simonb Exp $	*/
+/*	$NetBSD: start.S,v 1.8 1999/03/13 11:20:55 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,6 @@
  *	v 1.1 90/02/16 16:19:39 shirriff Exp  SPRITE (DECWRL)
  */
 
-#include <mips/regdef.h>
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 #include <machine/dec_prom.h>
