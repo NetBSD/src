@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.60 1996/11/12 21:06:21 cgd Exp $	*/
+/*	$NetBSD: esp.c,v 1.61 1996/11/16 23:14:58 pk Exp $	*/
 
 #ifdef __sparc__
 #define	SPARC_DRIVER
@@ -1118,7 +1118,7 @@ esp_msgin(sc)
 {
 	register int v;
 
-	ESP_TRACE(("[esp_msgin(curmsglen:%ld)] ", sc->sc_imlen));
+	ESP_TRACE(("[esp_msgin(curmsglen:%ld)] ", (long)sc->sc_imlen));
 
 	if ((ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) == 0) {
 		printf("%s: msgin: no msg byte available\n",
@@ -1210,7 +1210,7 @@ gotit:
 			if (sc->sc_dleft < 0) {
 				struct scsi_link *sc_link = ecb->xs->sc_link;
 				printf("%s: %ld extra bytes from %d:%d\n",
-				    sc->sc_dev.dv_xname, -sc->sc_dleft,
+				    sc->sc_dev.dv_xname, -(long)sc->sc_dleft,
 				    sc_link->target, sc_link->lun);
 				sc->sc_dleft = 0;
 			}
@@ -1994,7 +1994,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 			}
 			break;
 		case DATA_OUT_PHASE:
-			ESP_PHASE(("DATA_OUT_PHASE [%ld] ",  sc->sc_dleft));
+			ESP_PHASE(("DATA_OUT_PHASE [%ld] ",(long)sc->sc_dleft));
 			ESPCMD(sc, ESPCMD_FLUSH);
 			size = min(sc->sc_dleft, sc->sc_maxxfer);
 			DMA_SETUP(sc->sc_dma, &sc->sc_dp, &sc->sc_dleft,
@@ -2105,7 +2105,7 @@ esp_timeout(arg)
 		sc->sc_dev.dv_xname,
 		ecb, ecb->flags, ecb->dleft, ecb->stat,
 		sc->sc_state, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase,
-		sc->sc_dleft, sc->sc_msgpriq, sc->sc_msgout,
+		(long)sc->sc_dleft, sc->sc_msgpriq, sc->sc_msgout,
 		DMA_ISACTIVE(sc->sc_dma) ? "DMA active" : "");
 #if ESP_DEBUG > 0
 	printf("TRACE: %s.", ecb->trace);
