@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.48 2003/07/28 08:59:52 lukem Exp $
+#	$NetBSD: bsd.dep.mk,v 1.49 2003/07/28 15:07:16 lukem Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -17,60 +17,48 @@ MKDEP?=		mkdep
 .if defined(SRCS)
 __acpp_flags=	-traditional-cpp
 .NOPATH:	.depend
-SRCS_C=	${SRCS:M*.c} ${DPSRCS:M*.c}
-DEPS_C=	${SRCS_C:C/(.*)/\1.dep/g:S/^.dep$//}
-SRCS_M=	${SRCS:M*.m} ${DPSRCS:M*.m}
-DEPS_M=	${SRCS_M:C/(.*)/\1.dep/g:S/^.dep$//}
-SRCS_S=	${SRCS:M*.[sS]} ${DPSRCS:M*.[sS]}
-DEPS_S=	${SRCS_S:C/(.*)/\1.dep/g:S/^.dep$//}
-SRCS_X=	${SRCS:M*.C} ${DPSRCS:M*.C} \
-	${SRCS:M*.cc} ${DPSRCS:M*.cc} \
-	${SRCS:M*.cpp} ${DPSRCS:M*.cpp} \
-	${SRCS:M*.cxx} ${DPSRCS:M*.cxx}
-DEPS_X=	${SRCS_X:C/(.*)/\1.dep/g:S/^.dep$//}
 
-CLEANDEPEND+=${DEPS_C} ${DEPS_M} ${DEPS_S} ${DEPS_X}
+DEPENDSRCS.src=	${SRCS:M*.c}	${DPSRCS:M*.c}		\
+		${SRCS:M*.m}	${DPSRCS:M*.m}		\
+		${SRCS:M*.[sS]}	${DPSRCS:M*.[sS]}	\
+		${SRCS:M*.C}	${DPSRCS:M*.C}		\
+		${SRCS:M*.cc}	${DPSRCS:M*.cc}		\
+		${SRCS:M*.cpp}	${DPSRCS:M*.cpp}	\
+		${SRCS:M*.cxx}	${DPSRCS:M*.cxx}
+DEPENDSRCS.dep=	${DEPENDSRCS.src:C/(.*)/\1.dep/g:S/^.dep$//}
+DEPENDSRCS=	.depend ${DEPENDSRCS.dep}
 
-.depend: ${SRCS} ${DPSRCS} ${DEPS_C} ${DEPS_M} ${DEPS_S} ${DEPS_X}
+.depend: ${SRCS} ${DPSRCS} ${DEPENDSRCS.dep}
 	@rm -f .depend
-	cat ${.ALLSRC:M*.dep} > .depend
+	cat ${DEPENDSRCS.dep} > .depend
 
-.for F in ${DEPS_C:O:u}
-.NOPATH: ${F}
-${F}: ${F:R}
+.SUFFIXES: .c .c.dep .m .m.m.dep .s .s.s.dep .S .S.S.dep
+.SUFFIXES: .C .C.C.dep .cc .cc.cc.dep .cpp .cpp.cpp.dep .cxx .cxx.cxx.dep
+
+.c.c.dep:
 	${MKDEP} -a -f ${.TARGET} ${MKDEPFLAGS} ${CFLAGS:M-[ID]*} ${CPPFLAGS} \
-	    ${CPPFLAGS.${.ALLSRC:T}} ${.ALLSRC}
-.endfor
+	    ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
-.for F in ${DEPS_M:O:u}
-.NOPATH: ${F}
-${F}: ${F:R}
+.m.m.dep:
 	${MKDEP} -a -f ${.TARGET} ${MKDEPFLAGS} ${OBJCFLAGS:M-[ID]*} \
-	    ${CPPFLAGS} ${CPPFLAGS.${.ALLSRC:T}} ${.ALLSRC}
-.endfor
+	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
-.for F in ${DEPS_S:O:u}
-.NOPATH: ${F}
-${F}: ${F:R}
+.s.s.dep .S.S.dep:
 	${MKDEP} -a -f ${.TARGET} ${MKDEPFLAGS} ${AFLAGS:M-[ID]*} ${CPPFLAGS} \
-	    ${CPPFLAGS.${.ALLSRC:T}} ${__acpp_flags} ${AINC} ${.ALLSRC}
-.endfor
+	    ${CPPFLAGS.${.IMPSRC:T}} ${__acpp_flags} ${AINC} ${.IMPSRC}
 
-.for F in ${DEPS_X:O:u}
-.NOPATH: ${F}
-${F}: ${F:R}
+.C.C.dep .cc.cc.dep .cpp.cpp.dep .cxx.cxx.dep:
 	${MKDEP} -a -f ${.TARGET} ${MKDEPFLAGS} ${CXXFLAGS:M-[ID]*} \
 	    ${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} \
 	    ${DESTDIR}/usr/include/g++} \
-	    ${CPPFLAGS} ${CPPFLAGS.${.ALLSRC:T}} ${.ALLSRC}
-.endfor
+	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
 .endif # defined(SRCS)
 
 ##### Clean rules
 cleandepend:
 .if defined(SRCS)
-	rm -f .depend ${.CURDIR}/tags ${CLEANDEPEND}
+	rm -f ${DEPENDSRCS} ${.CURDIR}/tags ${CLEANDEPEND}
 .endif
 
 ##### Custom rules
