@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.7 1996/02/22 10:11:23 leo Exp $	*/
+/*	$NetBSD: grf.c,v 1.8 1996/03/17 01:26:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -100,26 +100,31 @@ static void grf_viewsync __P((struct grf_softc *));
 static int  grf_mode __P((struct grf_softc *, int, void *, int, int));
 
 int grfbusprint __P((void *auxp, char *));
-int grfbusmatch __P((struct device *, struct cfdata *, void *));
+int grfbusmatch __P((struct device *, void *, void *));
 void grfbusattach __P((struct device *, struct device *, void *));
 
 void grfattach __P((struct device *, struct device *, void *));
-int grfmatch __P((struct device *, struct cfdata *, void *));
+int grfmatch __P((struct device *, void *, void *));
 int grfprint __P((void *, char *));
 /*
  * pointers to grf drivers device structs 
  */
 struct grf_softc *grfsp[NGRF];
 
-
-struct cfdriver grfbuscd = {
-	NULL, "grfbus", (cfmatch_t)grfbusmatch, grfbusattach, DV_DULL,
-	sizeof(struct device)
+struct cfattach grfbus_ca = {
+	sizeof(struct device), grfbusmatch, grfbusattach
 };
 
-struct cfdriver grfcd = {
-	NULL, "grf", (cfmatch_t)grfmatch, grfattach, DV_DULL,
-	sizeof(struct grf_softc), NULL, 0
+struct cfdriver grfbus_cd = {
+	NULL, "grfbus", DV_DULL, sizeof(struct device)
+};
+
+struct cfattach grf_ca = {
+	sizeof(struct grf_softc), grfmatch, grfattach
+};
+
+struct cfdriver grf_cd = {
+	NULL, "grf", DV_DULL, NULL, 0
 };
 
 /*
@@ -129,12 +134,13 @@ static struct cfdata *cfdata_gbus  = NULL;
 static struct cfdata *cfdata_grf   = NULL;
 
 int
-grfbusmatch(pdp, cfp, auxp)
+grfbusmatch(pdp, match, auxp)
 struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+void		*match, *auxp;
 {
-	if(strcmp(auxp, grfbuscd.cd_name))
+	struct cfdata *cfp = match;
+
+	if(strcmp(auxp, grfbus_cd.cd_name))
 		return(0);
 
 	if((atari_realconfig == 0) || (cfdata_gbus == NULL)) {
@@ -196,12 +202,12 @@ char  *name;
 
 
 int
-grfmatch(pdp, cfp, auxp)
+grfmatch(pdp, match, auxp)
 struct device	*pdp;
-struct cfdata	*cfp;
-void	*auxp;
+void	*match, *auxp;
 {
 	int	unit = *(int*)auxp;
+	struct cfdata *cfp = match;
 
 	/*
 	 * Match only on unit indicated by grfbus attach.

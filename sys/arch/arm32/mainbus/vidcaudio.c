@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.2 1996/03/06 23:24:52 mark Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.3 1996/03/17 01:24:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -132,10 +132,12 @@ int vidcaudio_rate	__P((int rate));
 void vidcaudio_shutdown	__P((void));
 int vidcaudio_hw_attach	__P((struct vidcaudio_softc *sc));
 
+struct cfattach vidcaudio_ca = {
+	sizeof(struct vidcaudio_softc), vidcaudio_probe, vidcaudio_attach
+};
 
-struct cfdriver vidcaudiocd = {
-	NULL, "vidcaudio", vidcaudio_probe, vidcaudio_attach,
-	    DV_DULL, sizeof(struct vidcaudio_softc)
+struct cfdriver vidcaudio_cd = {
+	NULL, "vidcaudio", DV_DULL
 };
 
 
@@ -247,10 +249,10 @@ vidcaudio_open(dev, flags)
 	printf("DEBUG: vidcaudio_open called\n");
 #endif
 
-	if (unit >= vidcaudiocd.cd_ndevs)
+	if (unit >= vidcaudio_cd.cd_ndevs)
 		return ENODEV;
 
-	sc = vidcaudiocd.cd_devs[unit];
+	sc = vidcaudio_cd.cd_devs[unit];
 
 	if (!sc)
 		return ENXIO;

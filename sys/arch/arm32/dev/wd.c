@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.3 1996/03/06 23:31:05 mark Exp $	*/
+/*	$NetBSD: wd.c,v 1.4 1996/03/17 01:24:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -143,15 +143,23 @@ struct wdc_softc {
 int wdcprobe __P((struct device *, void *, void *));
 void wdcattach __P((struct device *, struct device *, void *));
 
-struct cfdriver wdccd = {
-	NULL, "wdc", wdcprobe, wdcattach, DV_DULL, sizeof(struct wdc_softc)
+struct cfattach wdc_ca = {
+	sizeof(struct wdc_softc), wdcprobe, wdcattach
+};
+
+struct cfdriver wdc_cd = {
+	NULL, "wdc", DV_DULL
 };
 
 int wdprobe __P((struct device *, void *, void *));
 void wdattach __P((struct device *, struct device *, void *));
 
-struct cfdriver wdcd = {
-	NULL, "wd", wdprobe, wdattach, DV_DISK, sizeof(struct wd_softc)
+struct cfattach wd_ca = {
+	sizeof(struct wd_softc), wdprobe, wdattach
+};
+
+struct cfdriver wd_cd = {
+	NULL, "wd", DV_DISK
 };
 
 void wdgetdisklabel __P((struct wd_softc *));
@@ -360,7 +368,7 @@ void
 wdstrategy(bp)
 	struct buf *bp;
 {
-	struct wd_softc *wd = wdcd.cd_devs[WDUNIT(bp->b_dev)];
+	struct wd_softc *wd = wd_cd.cd_devs[WDUNIT(bp->b_dev)];
 	int s;
     
 	/* Valid request?  */
@@ -898,9 +906,9 @@ wdopen(dev, flag, fmt)
 	int error;
     
 	unit = WDUNIT(dev);
-	if (unit >= wdcd.cd_ndevs)
+	if (unit >= wd_cd.cd_ndevs)
 		return ENXIO;
-	wd = wdcd.cd_devs[unit];
+	wd = wd_cd.cd_devs[unit];
 	if (wd == 0)
 		return ENXIO;
     
@@ -972,7 +980,7 @@ wdclose(dev, flag, fmt)
 	dev_t dev;
 	int flag, fmt;
 {
-	struct wd_softc *wd = wdcd.cd_devs[WDUNIT(dev)];
+	struct wd_softc *wd = wd_cd.cd_devs[WDUNIT(dev)];
 	int part = WDPART(dev);
 	int error;
     
@@ -1317,7 +1325,7 @@ wdioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct wd_softc *wd = wdcd.cd_devs[WDUNIT(dev)];
+	struct wd_softc *wd = wd_cd.cd_devs[WDUNIT(dev)];
 	int error;
     
 	if ((wd->sc_flags & WDF_LOADED) == 0)
@@ -1433,7 +1441,7 @@ wdsize(dev)
     
 	if (wdopen(dev, 0, S_IFBLK) != 0)
 		return -1;
-	wd = wdcd.cd_devs[WDUNIT(dev)];
+	wd = wd_cd.cd_devs[WDUNIT(dev)];
 	part = WDPART(dev);
 	if (wd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
@@ -1472,9 +1480,9 @@ wddump(dev, blkno, va, size)
 	wddoingadump = 1;
 
 	unit = WDUNIT(dev);
-	if (unit >= wdcd.cd_ndevs)
+	if (unit >= wd_cd.cd_ndevs)
 		return ENXIO;
-	wd = wdcd.cd_devs[unit];
+	wd = wd_cd.cd_devs[unit];
 	if (wd == 0)
 		return ENXIO;
 
@@ -1668,8 +1676,8 @@ wdcunwedge(wdc)
 	(void) wdcreset(wdc);
 
 	/* Schedule recalibrate for all drives on this controller. */
-	for (unit = 0; unit < wdcd.cd_ndevs; unit++) {
-		struct wd_softc *wd = wdcd.cd_devs[unit];
+	for (unit = 0; unit < wd_cd.cd_ndevs; unit++) {
+		struct wd_softc *wd = wd_cd.cd_devs[unit];
 		if (!wd || (void *)wd->sc_dev.dv_parent != wdc)
 			continue;
 		if (wd->sc_state > RECAL)

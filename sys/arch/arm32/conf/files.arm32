@@ -5,95 +5,120 @@
 maxpartitions	8
 maxusers 2 8 64
 
-device mainbus at root { [base = -1], [dack = -1], [irq = -1] }
+device mainbus { [base = -1], [dack = -1], [irq = -1] }
+attach mainbus at root
 file	arch/arm32/mainbus/mainbus.c		mainbus
 
-device hydrabus at mainbus { [slot = -1] }
+device hydrabus { [slot = -1] }
+attach hydrabus at mainbus
 file	arch/arm32/mainbus/exp/hydra.c			hydrabus needs-flag
 file	arch/arm32/mainbus/exp/hydraboot.S		hydrabus
 
-device cpu at mainbus, hydrabus
+device cpu
+attach cpu at mainbus, hydrabus
 file	arch/arm32/mainbus/cpu.c			cpu needs-flag
 major	{cpu = 38}
 
 #Standard NetBSD wd driver
-device  wdc at mainbus {drive = -1}
-device  wd at wdc: disk
+device  wdc {drive = -1}
+attach	wdc at mainbus
+device  wd: disk
+attach	wd at wdc
 file    arch/arm32/mainbus/wd.c			wdc needs-flag
 major   {wd = 16}
 
 #Hacked NetBSD wd driver with cd and atapi support - nasty hack atm
-#device  wdc at mainbus {drive = -1}
-#device  wd at wdc: disk
+#device  wdc {drive = -1}
+#attach  wdc at mainbus
+#device  wd: disk
+#attach  wd at wdc
 #file    arch/arm32/mainbus/exp/wd.c		wdc needs-flag
 #major   {wd = 16}
 
-device  atapi at mainbus: disk
+device  atapi: disk
+attach	atapi at mainbus
 file    arch/arm32/mainbus/exp/atapi.c		atapi needs-flag
 
-device  wcd at mainbus: disk
+device  wcd: disk
+attach	wcd at mainbus
 file    arch/arm32/mainbus/exp/wcd.c		wcd needs-flag
 major   {wcd = 20}
 
 #Standard NetBSD fd driver
-device  fdc at mainbus {drive = -1}
-device  fd at fdc: disk
+device  fdc {drive = -1}
+attach	fdc at mainbus
+device  fd: disk
+attach	fd at fdc
 file    arch/arm32/mainbus/fd.c			fdc needs-flag
 major   {fd = 17}
 
 # RAM disk driver
-device	rd at mainbus
+device	rd
+attach	rd at mainbus
 file	dev/ramdisk.c				rd needs-count
 file	arch/arm32/dev/rd_hooks.c		rd ramdisk_hooks
 major   {rd = 18}
 
 # Old ramdisc driver
-#device	rd at mainbus
+#device	rd
+#attach rd at mainbus
 #file    arch/arm32/mainbus/old/ramdisk.c	rd needs-flag
 #major   {rd = 18}
 
-device  lpt at mainbus :tty, ether, ifnet
+device  lpt: tty, ether, ifnet
+attach	lpt at mainbus
 file    arch/arm32/mainbus/lpt.c		lpt needs-flag
 major   {lpt = 8}
 
-device  com at mainbus :tty
+device  com: tty
+attach	com at mainbus
 file    arch/arm32/mainbus/com.c		com needs-flag
 major   {com = 12}
 
-device  quadmouse at mainbus :tty
+device  quadmouse: tty
+attach	quadmouse at mainbus
 file    arch/arm32/mainbus/qmouse.c		quadmouse needs-flag
 major   {quadmouse = 9}
 
-device	beep at mainbus
+device	beep
+attach	beep at mainbus
 file    arch/arm32/mainbus/beep.c			beep needs-flag
 major   {beep = 10}
 
-device	audio at mainbus :audio
+device	audio: audio
+attach	audio at mainbus
 file	arch/arm32/mainbus/vidcaudio.c		vidcaudio needs-flag
 major   {audio = 36}
 
-device	kbd at mainbus
+device	kbd
+attach	kbd at mainbus
 file    arch/arm32/mainbus/kbd.c			kbd needs-flag
 major   {kbd = 11}
 
-device podulebus at root { [slot = -1] }
+device podulebus { [slot = -1] }
+attach podulebus at root
 file	arch/arm32/podulebus/podulebus.c		podulebus
 
-device ea at podulebus : ether, ifnet
+device ea: ether, ifnet
+attach ea at podulebus
 file	arch/arm32/podulebus/if_ea.c		ea
 
-device eb at podulebus : ether, ifnet
+device eb: ether, ifnet
+attach eb at podulebus
 file	arch/arm32/podulebus/if_eb.c		eb
 
-device eh at podulebus : ether, ifnet
+device eh: ether, ifnet
+attach eh at podulebus
 file	arch/arm32/podulebus/if_eh.c		eh
 
-device ie at podulebus : ether, ifnet
+device ie: ether, ifnet
+attach ie at podulebus
 file	arch/arm32/podulebus/if_ie.c		ie
 
 #define	kgdb
 
-#device kie at podule: kgdb
+#device kie: kgdb
+#attach kie at podule
 #file	arch/arm32/podulebus/kgdb_ie.c		kie
 
 #file	arch/arm32/arm32/kgdb_glue.c			kgdb
@@ -115,7 +140,8 @@ define	sbic
 file	arch/arm32/podulebus/sbic.c		sbic
 
 # Acorn SCSI I specific layer for sbic
-device  asc at podulebus: scsi, sbic
+device  asc: scsi, sbic
+attach	asc at podulebus
 file	arch/arm32/podulebus/asc.c		asc
 
 # Generic fas216 + esp216 driver
@@ -123,10 +149,12 @@ define	sfas
 file	arch/arm32/podulebus/sfas.c	sfas
 
 # Cumana specific layer for sfas
-device	csc at podulebus: scsi, sfas
+device	csc: scsi, sfas
+attach	csc at podulebus
 file	arch/arm32/podulebus/exp/csc.c	csc
 
-device	ptsc at podulebus: scsi, sfas
+device	ptsc: scsi, sfas
+attach	ptsc at podulebus
 file	arch/arm32/podulebus/ptsc.c	ptsc
 
 # Generic NCR driver
@@ -134,12 +162,15 @@ define	ncr
 file	arch/arm32/podulebus/ncr5380sbc.c	ncr
 
 # Oak specific layer for ncr
-device	oak at podulebus: scsi, ncr
+device	oak: scsi, ncr
+attach	oak at podulebus
 file	arch/arm32/podulebus/oak.c	oak
 
-device  vidcvideo at mainbus
+device  vidcvideo
+attach	vidcvideo at mainbus
 major	{vidcvideo = 37}
-device  vt at mainbus: tty
+device  vt: tty
+attach	vt at mainbus
 file    arch/arm32/dev/console/console.c	vt needs-count
 file    arch/arm32/dev/console/vidcconsole.c	vt needs-count
 file	arch/arm32/dev/console/vidc_mc.S	vt needs-count

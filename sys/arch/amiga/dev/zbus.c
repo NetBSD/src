@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.15 1996/03/06 20:13:32 is Exp $	*/
+/*	$NetBSD: zbus.c,v 1.16 1996/03/17 01:17:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -152,7 +152,7 @@ static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 
 void zbusattach __P((struct device *, struct device *, void *));
 int zbusprint __P((void *, char *));
-int zbusmatch __P((struct device *, struct cfdata *,void *));
+int zbusmatch __P((struct device *, void *, void *));
 caddr_t zbusmap __P((caddr_t, u_int));
 static char *aconflookup __P((int, int));
 
@@ -176,20 +176,25 @@ aconflookup(mid, pid)
 /* 
  * mainbus driver 
  */
-struct cfdriver zbuscd = {
-	NULL, "zbus", (cfmatch_t)zbusmatch, zbusattach, 
-	DV_DULL, sizeof(struct device), NULL, 0
+
+struct cfattach zbus_ca = {
+	sizeof(struct device), zbusmatch, zbusattach
+};
+
+struct cfdriver zbus_cd = {
+	NULL, "zbus", DV_DULL, NULL, 0
 };
 
 static struct cfdata *early_cfdata;
 
 /*ARGSUSED*/
 int
-zbusmatch(pdp, cfp, auxp)
+zbusmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cfp = match;
+
 	if (matchname(auxp, "zbus") == 0)
 		return(0);
 	if (amiga_realconfig == 0)

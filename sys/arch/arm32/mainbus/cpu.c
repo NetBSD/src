@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2 1996/02/22 22:56:16 mark Exp $ */
+/* $NetBSD: cpu.c,v 1.3 1996/03/17 01:24:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,7 +41,7 @@
  * Created      : 10/10/95
  * Last updated : 10/10/95
  *
- *    $Id: cpu.c,v 1.2 1996/02/22 22:56:16 mark Exp $
+ *    $Id: cpu.c,v 1.3 1996/03/17 01:24:28 thorpej Exp $
  */
 
 #include <sys/param.h>
@@ -126,10 +126,12 @@ cpuattach(parent, self, aux)
 	identify_master_cpu(CPU_MASTER);
 }
 
+struct cfattach cpu_ca = {
+	sizeof(struct cpu_softc), cpumatch, cpuattach
+};
 
-struct cfdriver cpucd = {
-	NULL, "cpu", cpumatch, cpuattach, DV_DULL,
-	    sizeof(struct cpu_softc), 1
+struct cfdriver cpu_cd = {
+	NULL, "cpu", DV_DULL, 1
 };
 
 
@@ -432,10 +434,10 @@ cpuopen(dev, flag, mode, p)
 	int s;
     
     	unit = minor(dev);
-	if (unit >= cpucd.cd_ndevs)
+	if (unit >= cpu_cd.cd_ndevs)
 		return(ENXIO);
 
-	sc = cpucd.cd_devs[unit];
+	sc = cpu_cd.cd_devs[unit];
 	if (!sc) return(ENXIO);
 
 	s = splhigh();
@@ -463,7 +465,7 @@ cpuclose(dev, flag, mode, p)
 	int s;
 
 	unit = minor(dev);
-	sc = cpucd.cd_devs[unit];
+	sc = cpu_cd.cd_devs[unit];
 
 	if (sc->sc_open == 0) return(ENXIO);
     
@@ -487,7 +489,7 @@ cpuioctl(dev, cmd, data, flag, p)
 	int unit;
 
 	unit = minor(dev);
-	sc = cpucd.cd_devs[unit];
+	sc = cpu_cd.cd_devs[unit];
 
 	switch (cmd) {
 	default:

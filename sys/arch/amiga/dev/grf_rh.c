@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.11 1996/03/06 20:13:28 is Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.12 1996/03/17 01:17:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -1417,21 +1417,24 @@ static struct MonDef *current_mon;
 int  rh_mode     __P((struct grf_softc *, int, void *, int, int));
 void grfrhattach __P((struct device *, struct device *, void *));
 int  grfrhprint  __P((void *, char *));
-int  grfrhmatch  __P((struct device *, struct cfdata *, void *));
+int  grfrhmatch  __P((struct device *, void *, void *));
 
-struct cfdriver grfrhcd = {
-	NULL, "grfrh", (cfmatch_t)grfrhmatch, grfrhattach,
-	DV_DULL, sizeof(struct grf_softc), NULL, 0
+struct cfdriver grfrh_ca = {
+	sizeof(struct grf_softc), grfrhmatch, grfrhattach
+};
+
+struct cfdriver grfrh_cd = {
+	NULL, "grfrh", DV_DULL, NULL, 0
 };
 
 static struct cfdata *cfdata;
 
 int
-grfrhmatch(pdp, cfp, auxp)
+grfrhmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cfp = match;
 #ifdef RETINACONSOLE
 	static int rhconunit = -1;
 #endif

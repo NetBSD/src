@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.15 1996/02/22 10:11:21 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.16 1996/03/17 01:26:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -221,20 +221,25 @@ extern __inline__ u_char read_dmastat(void)
 /*
  * Autoconfig stuff....
  */
-static int	fdcmatch __P((struct device *, struct cfdata *, void *));
+static int	fdcmatch __P((struct device *, void *, void *));
 static int	fdcprint __P((void *, char *));
 static void	fdcattach __P((struct device *, struct device *, void *));
 
-struct cfdriver fdccd = {
-	NULL, "fdc", (cfmatch_t)fdcmatch, fdcattach, DV_DULL,
-	sizeof(struct device), NULL, 0 };
+struct cfattach fdc_ca = {
+	sizeof(struct device), fdcmatch, fdcattach
+};
+
+struct cfdriver fdc_cd = {
+	NULL, "fdc", DV_DULL, NULL, 0
+};
 
 static int
-fdcmatch(pdp, cfp, auxp)
+fdcmatch(pdp, match, auxp)
 struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+void		*match, *auxp;
 {
+	struct cfdata *cfp = match;
+
 	if(strcmp("fdc", auxp) || cfp->cf_unit != 0)
 		return(0);
 	return(1);
@@ -245,8 +250,7 @@ fdcattach(pdp, dp, auxp)
 struct device	*pdp, *dp;
 void		*auxp;
 {
-	extern struct cfdriver fdcd;
-
+	extern struct cfdriver fd_cd;
 	struct fd_softc	fdsoftc;
 	int		i, nfound, first_found;
 
@@ -280,7 +284,7 @@ void		*auxp;
 		 */
 		fdselect(first_found, 0, FLP_DD);
 		fd_state = FLP_MON;
-		timeout((FPV)fdmotoroff, (void*)getsoftc(fdcd, first_found),
+		timeout((FPV)fdmotoroff, (void*)getsoftc(fd_cd, first_found),
 					 			FLP_MONDELAY);
 
 		/*
@@ -300,20 +304,23 @@ char	*pnp;
 	return(UNCONF);
 }
 
-static int	fdmatch __P((struct device *, struct cfdata *, void *));
+static int	fdmatch __P((struct device *, void *, void *));
 static void	fdattach __P((struct device *, struct device *, void *));
 	   void fdstrategy __P((struct buf *));
 struct dkdriver fddkdriver = { fdstrategy };
 
-struct cfdriver fdcd = {
-	NULL, "fd", (cfmatch_t)fdmatch, fdattach, DV_DISK,
-	sizeof(struct fd_softc), NULL, 0 };
+struct cfattach fd_ca = {
+	sizeof(struct fd_softc), fdmatch, fdattach
+};
+
+struct cfdriver fd_cd = {
+	NULL, "fd", DV_DISK, NULL, 0
+};
 
 static int
-fdmatch(pdp, cfp, auxp)
+fdmatch(pdp, match, auxp)
 struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
+void		*match, *auxp;
 {
 	return(1);
 }
@@ -347,7 +354,7 @@ struct proc	*p;
 {
 	struct fd_softc *sc;
 
-	sc = getsoftc(fdcd, DISKUNIT(dev));
+	sc = getsoftc(fd_cd, DISKUNIT(dev));
 
 	if((sc->flags & FLPF_HAVELAB) == 0)
 		return(EBADF);
@@ -399,7 +406,7 @@ struct proc	*proc;
 	if(DISKPART(dev) >= NR_TYPES)
 		return(ENXIO);
 
-	if((sc = getsoftc(fdcd, DISKUNIT(dev))) == NULL)
+	if((sc = getsoftc(fd_cd, DISKUNIT(dev))) == NULL)
 		return(ENXIO);
 
 	/*
@@ -491,7 +498,7 @@ struct proc	*proc;
 {
 	struct fd_softc	*sc;
 
-	sc = getsoftc(fdcd, DISKUNIT(dev));
+	sc = getsoftc(fd_cd, DISKUNIT(dev));
 	free_stmem(sc->bounceb);
 	sc->flags = 0;
 	nopens--;
@@ -510,7 +517,7 @@ struct buf	*bp;
 	struct disklabel *lp;
 	int		 sps;
 
-	sc = getsoftc(fdcd, DISKUNIT(bp->b_dev));
+	sc = getsoftc(fd_cd, DISKUNIT(bp->b_dev));
 
 #ifdef FLP_DEBUG
 	printf("fdstrategy: 0x%x\n", bp);
@@ -684,9 +691,9 @@ register struct fd_softc	*sc;
 	 * Find a new transaction on round-robin basis.
 	 */
 	for(i = sc->unit + 1; ;i++) {
-		if(i >= fdcd.cd_ndevs)
+		if(i >= fd_cd.cd_ndevs)
 			i = 0;
-		if((sc1 = fdcd.cd_devs[i]) == NULL)
+		if((sc1 = fd_cd.cd_devs[i]) == NULL)
 			continue;
 		if(sc1->bufq.b_actf)
 			break;
@@ -1148,7 +1155,7 @@ struct buf	*bp;
 	struct fd_softc	*sc;
 	int		sec, toff, tsz;
 
-	if((sc = getsoftc(fdcd, DISKUNIT(bp->b_dev))) == NULL)
+	if((sc = getsoftc(fd_cd, DISKUNIT(bp->b_dev))) == NULL)
 		panic("fdminphys: couldn't get softc");
 
 	sec  = bp->b_blkno % (sc->nsectors * sc->nheads);

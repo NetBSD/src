@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.2 1996/03/06 23:57:02 mark Exp $ */
+/* $NetBSD: if_eb.c,v 1.3 1996/03/17 01:24:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -165,8 +165,12 @@ void ebattach __P((struct device *, struct device *, void *));
 
 /* driver structure for autoconf */
 
-struct cfdriver ebcd = {
-	NULL, "eb", ebprobe, ebattach, DV_IFNET, sizeof(struct eb_softc)
+struct cfattach eb_ca = {
+	sizeof(struct eb_softc), ebprobe, ebattach
+};
+
+struct cfdriver eb_cd = {
+	NULL, "eb", DV_IFNET
 };
 
 #if 0
@@ -334,7 +338,7 @@ ebattach(parent, self, aux)
 	/* Initialise ifnet structure. */
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = ebcd.cd_name;
+	ifp->if_name = eb_cd.cd_name;
 	ifp->if_start = eb_start;
 	ifp->if_ioctl = eb_ioctl;
 	ifp->if_watchdog = eb_watchdog;
@@ -959,7 +963,7 @@ static void
 eb_start(ifp)
 	struct ifnet *ifp;
 {
-	struct eb_softc *sc = ebcd.cd_devs[ifp->if_unit];
+	struct eb_softc *sc = eb_cd.cd_devs[ifp->if_unit];
 	int s;
 
 	s = splimp();
@@ -1452,7 +1456,7 @@ eb_ioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct eb_softc *sc = ebcd.cd_devs[ifp->if_unit];
+	struct eb_softc *sc = eb_cd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 /*	struct ifreq *ifr = (struct ifreq *)data;*/
 	int s, error = 0;
@@ -1553,7 +1557,7 @@ static void
 eb_watchdog(unit)
 	int unit;
 {
-	struct eb_softc *sc = ebcd.cd_devs[unit];
+	struct eb_softc *sc = eb_cd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	sc->sc_arpcom.ac_if.if_oerrors++;

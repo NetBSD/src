@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.2 1996/03/06 23:56:59 mark Exp $ */
+/* $NetBSD: if_ea.c,v 1.3 1996/03/17 01:24:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -164,8 +164,12 @@ void eaattach __P((struct device *, struct device *, void *));
 
 /* driver structure for autoconf */
 
-struct cfdriver eacd = {
-	NULL, "ea", eaprobe, eaattach, DV_IFNET, sizeof(struct ea_softc)
+struct cfattach ea_ca = {
+	sizeof(struct ea_softc), eaprobe, eaattach
+};
+
+struct cfdriver ea_cd = {
+	NULL, "ea", DV_IFNET
 };
 
 #if 0
@@ -332,7 +336,7 @@ eaattach(parent, self, aux)
 	/* Initialise ifnet structure. */
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = eacd.cd_name;
+	ifp->if_name = ea_cd.cd_name;
 	ifp->if_start = ea_start;
 	ifp->if_ioctl = ea_ioctl;
 	ifp->if_watchdog = ea_watchdog;
@@ -940,7 +944,7 @@ static void
 ea_start(ifp)
 	struct ifnet *ifp;
 {
-	struct ea_softc *sc = eacd.cd_devs[ifp->if_unit];
+	struct ea_softc *sc = ea_cd.cd_devs[ifp->if_unit];
 	int s;
 
 	s = splimp();
@@ -1433,7 +1437,7 @@ ea_ioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ea_softc *sc = eacd.cd_devs[ifp->if_unit];
+	struct ea_softc *sc = ea_cd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 /*	struct ifreq *ifr = (struct ifreq *)data;*/
 	int s, error = 0;
@@ -1534,7 +1538,7 @@ static void
 ea_watchdog(unit)
 	int unit;
 {
-	struct ea_softc *sc = eacd.cd_devs[unit];
+	struct ea_softc *sc = ea_cd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	sc->sc_arpcom.ac_if.if_oerrors++;

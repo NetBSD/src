@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.2 1996/03/13 20:28:50 mark Exp $ */
+/* $NetBSD: asc.c,v 1.3 1996/03/17 01:24:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -60,7 +60,7 @@
 
 int ascprint __P((void *auxp, char *));
 void ascattach __P((struct device *, struct device *, void *));
-int ascmatch __P((struct device *, struct cfdata *, void *));
+int ascmatch __P((struct device *, void *, void *));
 
 void asc_enintr __P((struct sbic_softc *));
 void asc_dmastop __P((struct sbic_softc *));
@@ -91,9 +91,13 @@ struct scsi_device asc_scsidev = {
 int	asc_dmadebug = 0;
 #endif
 
-struct cfdriver asccd = {
-	NULL, "asc", (cfmatch_t)ascmatch, ascattach, 
-	DV_DULL, sizeof(struct asc_softc), NULL, 0 };
+struct cfattach asc_ca = {
+	sizeof(struct asc_softc), ascmatch, ascattach
+};
+
+struct cfdriver asc_cd = {
+	NULL, "asc", DV_DULL, NULL, 0
+};
 
 u_long scsi_nosync;
 int shift_nosync;
@@ -105,10 +109,9 @@ extern char *boot_args;
 #endif
 
 int
-ascmatch(pdp, cdp, auxp)
+ascmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cdp;
-	void *auxp;
+	void *match, *auxp;
 {
 	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
 	int podule;

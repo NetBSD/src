@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.25 1996/01/28 19:48:39 chopps Exp $	*/
+/*	$NetBSD: fd.c,v 1.26 1996/03/17 01:17:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -149,8 +149,8 @@ struct fdcargs {
 	int unit;
 };
 
-int fdmatch __P((struct device *, struct cfdata *, void *));
-int fdcmatch __P((struct device *, struct cfdata *, void *));
+int fdmatch __P((struct device *, void *, void *));
+int fdcmatch __P((struct device *, void *, void *));
 int fdcprint __P((void *, char *));
 void fdcattach __P((struct device *, struct device *, void *));
 void fdattach __P((struct device *, struct device *, void *));
@@ -190,13 +190,20 @@ struct fdtype fdtype[] = {
 };
 int nfdtype = sizeof(fdtype) / sizeof(*fdtype);
 
-struct cfdriver fdcd = {
-	NULL, "fd", (cfmatch_t)fdmatch, fdattach, DV_DISK,
-	sizeof(struct fd_softc), NULL, 0 };
+struct cfattach fd_ca = {
+	sizeof(struct fd_softc), fdmatch, fdattach
 
-struct cfdriver fdccd = {
-	NULL, "fdc", (cfmatch_t)fdcmatch, fdcattach, DV_DULL,
-	sizeof(struct device), NULL, 0 };
+struct cfdriver fd_cd = {
+	NULL, "fd", DV_DISK, NULL, 0
+};
+
+struct cfattach fdc_ca = {
+	sizeof(struct device), fdcmatch, fdcattach
+};
+
+struct cfdriver fdc_cd = {
+	NULL, "fdc", DV_DULL, NULL, 0
+};
 
 /*
  * all hw access through macros, this helps to hide the active low
@@ -256,11 +263,12 @@ struct cfdriver fdccd = {
 
 
 int
-fdcmatch(pdp, cfp, auxp)
+fdcmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cfp = match;
+
 	if (matchname("fdc", auxp) == 0 || cfp->cf_unit != 0)
 		return(0);
 	if ((fdc_dmap = alloc_chipmem(DMABUFSZ)) == NULL) {
@@ -305,11 +313,12 @@ fdcprint(auxp, pnp)
 
 /*ARGSUSED*/
 int
-fdmatch(pdp, cfp, auxp)
+fdmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cfp = match;
+
 #define cf_unit	cf_loc[0]
 	struct fdcargs *fdap;
 
@@ -381,7 +390,7 @@ Fdopen(dev, flags, devtype, p)
 	if (FDPART(dev) >= FDMAXPARTS)
 		return(ENXIO);
 
-	if ((sc = getsoftc(fdcd, FDUNIT(dev))) == NULL)
+	if ((sc = getsoftc(fd_cd, FDUNIT(dev))) == NULL)
 		return(ENXIO);
 	if (sc->flags & FDF_NOTRACK0)
 		return(ENXIO);
@@ -457,7 +466,7 @@ fdclose(dev, flags, devtype, p)
 #ifdef FDDEBUG
 	printf("fdclose()\n");
 #endif
-	sc = getsoftc(fdcd, FDUNIT(dev));
+	sc = getsoftc(fd_cd, FDUNIT(dev));
 	s = splbio();
 	if (sc->flags & FDF_MOTORON) {
 		sc->flags |= FDF_WMOTOROFF;
@@ -482,7 +491,7 @@ fdioctl(dev, cmd, addr, flag, p)
 	void *data;
 	int error, wlab;
 
-	sc = getsoftc(fdcd, FDUNIT(dev));
+	sc = getsoftc(fd_cd, FDUNIT(dev));
 
 	if ((sc->flags & FDF_HAVELABEL) == 0)
 		return(EBADF);
@@ -581,7 +590,7 @@ fdstrategy(bp)
 
 	unit = FDUNIT(bp->b_dev);
 	part = FDPART(bp->b_dev);
-	sc = getsoftc(fdcd, unit);
+	sc = getsoftc(fd_cd, unit);
 
 #ifdef FDDEBUG
 	printf("fdstrategy: 0x%x\n", bp);
@@ -1530,11 +1539,11 @@ fdfindwork(unit)
 	for (i = unit + 1; last == 0; i++) {
 		if (i == unit)
 			last = 1;
-		if (i >= fdcd.cd_ndevs) {
+		if (i >= fd_cd.cd_ndevs) {
 			i = -1;
 			continue;
 		}
-		if ((sc = fdcd.cd_devs[i]) == NULL)
+		if ((sc = fd_cd.cd_devs[i]) == NULL)
 			continue;
 
 		/*
@@ -1579,7 +1588,7 @@ fdminphys(bp)
 	struct fd_softc *sc;
 	int trk, sec, toff, tsz;
 
-	if ((sc = getsoftc(fdcd, FDUNIT(bp->b_dev))) == NULL)
+	if ((sc = getsoftc(fd_cd, FDUNIT(bp->b_dev))) == NULL)
 		panic("fdminphys: couldn't get softc");
 
 	trk = bp->b_blkno / sc->nsectors;

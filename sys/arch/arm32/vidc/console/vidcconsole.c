@@ -1,4 +1,4 @@
-/* $NetBSD: vidcconsole.c,v 1.4 1996/03/16 00:17:54 thorpej Exp $ */
+/* $NetBSD: vidcconsole.c,v 1.5 1996/03/17 01:24:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Robert Black
@@ -1635,9 +1635,12 @@ vidcvideo_attach(parent, self, aux)
 	printf ( ": vidc 20\n" );
 }
 
-struct cfdriver vidcvideocd = {
-	NULL, "vidcvideo", vidcvideo_probe, vidcvideo_attach,
-	    DV_DULL, sizeof ( struct vidcvideo_softc )
+struct cfattach vidcvideo_ca = {
+	sizeof (struct vidcvideo_softc), vidcvideo_probe, vidcvideo_attach
+};
+
+struct cfdriver vidcvideo_cd = {
+	NULL, "vidcvideo", DV_DULL
 };
 
 int
@@ -1652,9 +1655,9 @@ vidcvideoopen(dev, flags, fmt, p)
 	int unit = minor(dev);
 	int s;
 
-	if ( unit >= vidcvideocd.cd_ndevs )
+	if ( unit >= vidcvideo_cd.cd_ndevs )
 		return ENXIO;
-	sc = vidcvideocd.cd_devs[unit];
+	sc = vidcvideo_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -1690,9 +1693,9 @@ vidcvideoclose(dev, flags, fmt, p)
 	int unit = minor(dev);
 	int s;
 
-	if ( unit >= vidcvideocd.cd_ndevs )
+	if ( unit >= vidcvideo_cd.cd_ndevs )
 		return ENXIO;
-	sc = vidcvideocd.cd_devs[unit];
+	sc = vidcvideo_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.1 1996/01/31 23:25:58 mark Exp $ */
+/* $NetBSD: if_ie.c,v 1.2 1996/03/17 01:24:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -44,7 +44,7 @@
  * Created      : 26/06/95
  * Last updated : 26/06/95
  *
- *    $Id: if_ie.c,v 1.1 1996/01/31 23:25:58 mark Exp $
+ *    $Id: if_ie.c,v 1.2 1996/03/17 01:24:49 thorpej Exp $
  */
 
 /*
@@ -175,7 +175,9 @@ static int command_and_wait ( struct ie_softc *sc, u_short cmd,
 			      struct ie_sys_ctl_block *pscb,
 			      void *pcmd, int ocmd, int scmd, int mask );
 
-struct cfdriver iecd;
+struct cfattach ie_ca;
+
+struct cfdriver ie_cd;
 
 /* Let's go! */
 
@@ -427,7 +429,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 	/* Fill in my application form to attach to the inet system */
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = iecd.cd_name;
+	ifp->if_name = ie_cd.cd_name;
 	ifp->if_start = iestart;
 	ifp->if_ioctl = ieioctl;
 	ifp->if_watchdog = iewatchdog;
@@ -473,7 +475,11 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
  * Our cfdriver structure for the autoconfig system to chew on
  */
 
-struct cfdriver iecd = {
+struct cfattach ie_ca = {
+	sizeof(struct ie_softc), ieprobe, ieattach
+};
+
+struct cfdriver ie_cd = {
     NULL, "ie", ieprobe, ieattach, DV_DULL,
         sizeof(struct ie_softc), NULL, 0
 };
@@ -568,7 +574,7 @@ static void iezero ( struct ie_softc *sc, u_long p, int size )
 
 int ieioctl ( struct ifnet *ifp, u_long cmd, caddr_t data )
 {
-    struct ie_softc *sc = iecd.cd_devs[ifp->if_unit];
+    struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
     struct ifaddr *ifa = (struct ifaddr *)data;
 /*    struct ifreq *ifr = (struct ifreq *)data;*/
     int s;
@@ -656,7 +662,7 @@ void iereset( struct ie_softc *sc )
 
 void iewatchdog ( int unit )
 {
-    struct ie_softc *sc = iecd.cd_devs[unit];
+    struct ie_softc *sc = ie_cd.cd_devs[unit];
 
     /* WOOF WOOF */
     log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname );
@@ -1406,7 +1412,7 @@ void iexmit ( struct ie_softc *sc )
 
 void iestart( struct ifnet *ifp )
 {
-	struct ie_softc *sc = iecd.cd_devs[ifp->if_unit];
+	struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
 	struct mbuf *m0, *m;
 	u_char *buffer;
 	u_short len;

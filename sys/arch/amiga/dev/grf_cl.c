@@ -1,4 +1,4 @@
-/*      $NetBSD: grf_cl.c,v 1.6 1996/03/05 18:08:33 is Exp $        */
+/*      $NetBSD: grf_cl.c,v 1.7 1996/03/17 01:17:11 thorpej Exp $        */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -97,7 +97,7 @@ static int cl_blank __P((struct grf_softc * gp, int * on));
 
 void grfclattach __P((struct device *, struct device *, void *));
 int grfclprint __P((void *, char *));
-int grfclmatch __P((struct device *, struct cfdata *, void *));
+int grfclmatch __P((struct device *, void *, void *));
 void cl_memset __P((unsigned char *d, unsigned char c, int l));
 
 /* Graphics display definitions.
@@ -162,18 +162,21 @@ static unsigned char cl_imageptr[8 * 64], cl_maskptr[8 * 64];
 static unsigned char cl_sprred[2], cl_sprgreen[2], cl_sprblue[2];
 
 /* standard driver stuff */
-struct cfdriver grfclcd = {
-	NULL, "grfcl", (cfmatch_t) grfclmatch, grfclattach,
-	DV_DULL, sizeof(struct grf_softc), NULL, 0
+struct cfattac grfcl_ca = {
+	sizeof(struct grf_softc), grfclmatch, grfclattach
+};
+
+struct cfdriver grfcl_cd = {
+	NULL, "grfcl", DV_DULL, NULL, 0
 };
 static struct cfdata *cfdata;
 
 int
-grfclmatch(pdp, cfp, auxp)
+grfclmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void   *auxp;
+	void   *match, *auxp;
 {
+	struct cfdata *cfp = match;
 	struct zbus_args *zap;
 	static int regprod, fbprod;
 

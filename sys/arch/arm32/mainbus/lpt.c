@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.3 1996/03/06 23:31:03 mark Exp $ */
+/* $NetBSD: lpt.c,v 1.4 1996/03/17 01:24:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -49,7 +49,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from:$NetBSD: lpt.c,v 1.3 1996/03/06 23:31:03 mark Exp $
+ *	from:$NetBSD: lpt.c,v 1.4 1996/03/17 01:24:33 thorpej Exp $
  */
 
 /*
@@ -184,8 +184,12 @@ static void plipstart(struct ifnet *);
 static int plipintr(struct lpt_softc *);
 #endif
 
-struct cfdriver lptcd = {
-	NULL, "lpt", lptprobe, lptattach, DV_TTY, sizeof(struct lpt_softc)
+struct cfattach lpt_ca = {
+	sizeof(struct lpt_softc), lptprobe, lptattach
+};
+
+struct cfdriver lpt_cd = {
+	NULL, "lpt", DV_TTY
 };
 
 #define	LPTUNIT(s)	(minor(s) & 0x1f)
@@ -347,9 +351,9 @@ lptopen(dev, flag)
 	int error;
 	int spin;
 
-	if (unit >= lptcd.cd_ndevs)
+	if (unit >= lpt_cd.cd_ndevs)
 		return ENXIO;
-	sc = lptcd.cd_devs[unit];
+	sc = lpt_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 
@@ -456,7 +460,7 @@ lptclose(dev, flag)
 	int flag;
 {
 	int unit = LPTUNIT(dev);
-	struct lpt_softc *sc = lptcd.cd_devs[unit];
+	struct lpt_softc *sc = lpt_cd.cd_devs[unit];
 	int iobase = sc->sc_iobase;
 
 	if (sc->sc_count)
@@ -543,7 +547,7 @@ lptwrite(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
-	struct lpt_softc *sc = lptcd.cd_devs[LPTUNIT(dev)];
+	struct lpt_softc *sc = lpt_cd.cd_devs[LPTUNIT(dev)];
 	size_t n;
 	int error = 0;
 
@@ -692,7 +696,7 @@ static int
 plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct proc *p = curproc;
-	struct lpt_softc *sc = (struct lpt_softc *) lptcd.cd_devs[ifp->if_unit];
+	struct lpt_softc *sc = (struct lpt_softc *) lpt_cd.cd_devs[ifp->if_unit];
 	unsigned int iobase = sc->sc_iobase;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data; 
@@ -1139,7 +1143,7 @@ pliptransmit(unsigned int iobase, u_char *buf, int len)
 static void
 plipstart(struct ifnet *ifp)
 {
-	struct lpt_softc *sc = (struct lpt_softc *) lptcd.cd_devs[ifp->if_unit];
+	struct lpt_softc *sc = (struct lpt_softc *) lpt_cd.cd_devs[ifp->if_unit];
 	unsigned int iobase = sc->sc_iobase;
 	struct mbuf *m0, *m;
 	u_char minibuf[4], cksum;

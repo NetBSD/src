@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.4 1996/03/13 20:52:35 mark Exp $ */
+/* $NetBSD: if_eh.c,v 1.5 1996/03/17 01:24:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -173,9 +173,12 @@ int  ehstop		__P((struct eh_softc *sc));
 int  ehintr		__P((void *arg));
 void eh_shutdown	__P((void *arg));
 
-struct cfdriver ehcd = {
-	NULL, "eh", ehprobe, ehattach, DV_DULL,
-	    sizeof(struct eh_softc), NULL, 0
+struct cfattach eh_ca = {
+	sizeof(struct eh_softc), ehprobe, ehattach
+};
+
+struct cfdriver eh_cd = {
+	NULL, "eh", DV_DULL, NULL, 0
 };
 
 /****************************************************************************/
@@ -391,7 +394,7 @@ ehattach(parent, self, aux)
 	/* Fill in my application form to attach to the networking system */
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = ehcd.cd_name;
+	ifp->if_name = eh_cd.cd_name;
 	ifp->if_start = ehstart;
 	ifp->if_ioctl = ehioctl;
 	ifp->if_watchdog = ehwatchdog;
@@ -460,7 +463,7 @@ void
 ehstart(ifp)
 	struct ifnet *ifp;
 {
-	struct eh_softc *sc = ehcd.cd_devs[ifp->if_unit];
+	struct eh_softc *sc = eh_cd.cd_devs[ifp->if_unit];
 	int cur;
 	struct mbuf *m0, *m;
 	int nextbuf;
@@ -546,7 +549,7 @@ ehioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct eh_softc *sc = ehcd.cd_devs[ifp->if_unit];
+	struct eh_softc *sc = eh_cd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splimp ();
 	int error = 0;
@@ -595,7 +598,7 @@ void
 ehwatchdog(unit)
 	int unit;
 {
-	struct eh_softc *sc = ehcd.cd_devs[unit];
+	struct eh_softc *sc = eh_cd.cd_devs[unit];
 
 	log (LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname );
 	sc->sc_arpcom.ac_if.if_oerrors++;

@@ -1,4 +1,4 @@
-/* $NetBSD: ptsc.c,v 1.1 1996/01/31 23:26:30 mark Exp $ */
+/* $NetBSD: ptsc.c,v 1.2 1996/03/17 01:24:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -61,7 +61,7 @@
 
 int  ptscprint  __P((void *auxp, char *));
 void ptscattach __P((struct device *, struct device *, void *));
-int  ptscmatch  __P((struct device *, struct cfdata *, void *));
+int  ptscmatch  __P((struct device *, void *, void *));
 int ptsc_scsicmd __P((struct scsi_xfer *));
 
 struct scsi_adapter ptsc_scsiswitch = {
@@ -78,10 +78,13 @@ struct scsi_device ptsc_scsidev = {
 	NULL,		/* Use default done routine */
 };
 
+struct cfattach ptsc_ca = {
+	sizeof(struct ptsc_softc), ptscmatch, ptscattach
+};
 
-struct cfdriver ptsccd = {
-	NULL, "ptsc", (cfmatch_t)ptscmatch, ptscattach, 
-	DV_DULL, sizeof(struct ptsc_softc), NULL, 0 };
+struct cfdriver ptsc_cd = {
+	NULL, "ptsc", DV_DULL, NULL, 0
+};
 
 int ptsc_intr		 __P((struct sfas_softc *dev));
 int ptsc_setup_dma	 __P((struct sfas_softc *sc, void *ptr, int len,
@@ -95,10 +98,9 @@ void ptsc_led		 __P((struct sfas_softc *sc, int mode));
  * if we are a Power-tec SCSI-2 card
  */
 int
-ptscmatch(pdp, cdp, auxp)
+ptscmatch(pdp, match, auxp)
 	struct device	*pdp;
-	struct cfdata	*cdp;
-	void		*auxp;
+	void		*match, *auxp;
 {
 	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
 	int podule;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.12 1996/03/04 19:49:11 is Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.13 1996/03/17 01:17:20 thorpej Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -428,11 +428,15 @@ int ul_mode __P((struct grf_softc *, int, void *, int , int));
 
 void grfulattach __P((struct device *, struct device *, void *));
 int grfulprint __P((void *, char *));
-int grfulmatch __P((struct device *, struct cfdata *, void *));
+int grfulmatch __P((struct device *, void *, void *));
  
+struct cfattach grful_ca = {
+	sizeof(struct grf_ul_softc), grfulmatch, grfulattach
+};
+
 struct cfdriver grfulcd = {
-	NULL, "grful", (cfmatch_t)grfulmatch, grfulattach, 
-	DV_DULL, sizeof(struct grf_ul_softc), NULL, 0 };
+	NULL, "grful", DV_DULL, NULL, 0
+};
 
 /*
  * only used in console init
@@ -444,11 +448,11 @@ static struct cfdata *cfdata;
  * tricky regarding the console.
  */
 int 
-grfulmatch(pdp, cfp, auxp)
+grfulmatch(pdp, match, auxp)
 	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+	void *match, *auxp;
 {
+	struct cfdata *cfp = match;
 #ifdef ULOWELLCONSOLE
 	static int ulconunit = -1;
 #endif
