@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.641 2004/01/03 12:40:26 lukem Exp $
+# $NetBSD: mi,v 1.642 2004/01/03 13:50:27 lukem Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -144,7 +144,7 @@
 ./usr/share/man/cat1/gzexe.0			man-util-catman
 ./usr/share/man/cat1/gzip.0			man-util-catman
 ./usr/share/man/cat1/head.0			man-util-catman
-./usr/share/man/cat1/hesinfo.0			man-hesiod-catman
+./usr/share/man/cat1/hesinfo.0			man-hesiod-catman	hesiod
 ./usr/share/man/cat1/hexdump.0			man-util-catman
 ./usr/share/man/cat1/history.0			man-util-catman
 ./usr/share/man/cat1/host.0			man-netutil-catman
@@ -2191,7 +2191,7 @@
 ./usr/share/man/man1/gzexe.1			man-util-man
 ./usr/share/man/man1/gzip.1			man-util-man
 ./usr/share/man/man1/head.1			man-util-man
-./usr/share/man/man1/hesinfo.1			man-hesiod-man
+./usr/share/man/man1/hesinfo.1			man-hesiod-man	hesiod
 ./usr/share/man/man1/hexdump.1			man-util-man
 ./usr/share/man/man1/history.1			man-util-man
 ./usr/share/man/man1/host.1			man-netutil-man
