@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.1.2.1 2004/12/13 17:52:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.1.2.2 2005/01/18 14:16:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,6 +480,8 @@ void ctrl_if_resume(void)
         op.cmd = EVTCHNOP_bind_interdomain;
         op.u.bind_interdomain.dom1 = DOMID_SELF;
         op.u.bind_interdomain.dom2 = DOMID_SELF;
+	op.u.bind_interdomain.port1 = 0;
+	op.u.bind_interdomain.port2 = 0;
         if ( HYPERVISOR_event_channel_op(&op) != 0 )
 		panic("EVTCHNOP_bind_interdomain");
         xen_start_info.domain_controller_evtchn = op.u.bind_interdomain.port1;
@@ -493,7 +495,7 @@ void ctrl_if_resume(void)
     ctrl_if_evtchn = xen_start_info.domain_controller_evtchn;
     ctrl_if_irq    = bind_evtchn_to_irq(ctrl_if_evtchn);
 
-    event_set_handler(ctrl_if_irq, &ctrl_if_interrupt, NULL, IPL_HIGH);
+    event_set_handler(ctrl_if_irq, &ctrl_if_interrupt, NULL, IPL_HIGH + 2);
     hypervisor_enable_irq(ctrl_if_irq);
 }
 
