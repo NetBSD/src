@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.1 2003/01/19 19:07:31 matt Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.2 2003/01/20 00:24:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,17 +39,18 @@
 #include "SYS.h"
 
 ENTRY(swapcontext, 0)
+	clrl	%r0			/* assume getcontext succeeds */
 	chmk	$SYS_getcontext		/* getcontext(oucp) */
 	jcc	1f
-	jmp	CERROR+2		/* badness happened */
+	jmp	CERROR+2		/* something bad happened */
 
-1:	movl	4(%ap),%r0
-	movl	$5,%r1			/* size of callframe (in LW) */
-	bbc	$13,6(%fp),2f		/* was this a CALLG? */
+1:	movl	4(%ap),%r0		/* get oucp */
 	addl3	(%ap),$(5+1),%r1	/* size of callframe + arglist (LW) */
-2:	movl	8(%fp),(12*4)(%r0)	/* restore AP */
-	moval	(%sp)[%r1],(13*4)(%r0)	/* restore SP */
-	movq	12(%fp),(14*4)(%r0)	/* restore FP + PC */
+	bbs	$13,6(%fp),2f		/* was this a CALLG? */
+	movl	$5,%r1			/* size of callframe (in LW) */
+2:	movl	8(%fp),(36+12*4)(%r0)		/* restore AP */
+	moval	(%sp)[%r1],(36+13*4)(%r0)	/* restore SP */
+	movq	12(%fp),(36+14*4)(%r0)		/* restore FP + PC */
 
 	pushl	8(%ap)
 	calls	$1,_C_LABEL(setcontext) /* setcontext(ucp) */
