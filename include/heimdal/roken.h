@@ -6,7 +6,7 @@
 
 /* -*- C -*- */
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken.h,v 1.3 2001/02/04 18:05:00 christos Exp $ */
+/* $Id: roken.h,v 1.4 2001/02/11 17:55:16 assar Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,6 +72,7 @@
 
 #include <roken-common.h>
 
+ROKEN_CPP_START
 
 
 
@@ -213,9 +214,12 @@ struct hostent* roken_gethostbyaddr(const void*, size_t, int);
 
 #define roken_openlog(a,b,c) openlog(a,b,c)
 
+#define roken_getsockname(a,b,c) getsockname(a,b,c)
+
 void set_progname(char *argv0);
 const char *get_progname(void);
 
-#define ROKEN_VERSION 0.3a
+ROKEN_CPP_END
+#define ROKEN_VERSION 0.3e
 
 #endif /* __ROKEN_H__ */
