@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.132 1997/02/11 07:37:46 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.133 1997/02/14 06:10:53 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -217,6 +217,9 @@ static	iomem_malloc_safe;
 static void	identifycpu __P((void));
 static u_long	get_physical __P((u_int, u_long *));
 void		dumpsys __P((void));
+
+int		bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
+		    int, bus_space_handle_t *));
 
 /*
  * Console initialization: called early on from main,
@@ -2931,7 +2934,6 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 	int cacheable;
 	bus_space_handle_t *bshp;
 {
-	vm_offset_t va;
 	u_long pa, endpa;
 	int error;
 
@@ -2952,26 +2954,99 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 		panic("bus_space_map: overflow");
 #endif
 
-	va = kmem_alloc_pageable(kernel_map, endpa - pa);
-	if (va == 0) {
+	error = bus_mem_add_mapping(bpa, size, cacheable, bshp);
+	if (error) {
 		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
 		    (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
 			printf("bus_space_map: pa 0x%lx, size 0x%lx\n",
 			    bpa, size);
 			printf("bus_space_map: can't free region\n");
 		}
-		return 1;
 	}
+
+	return (error);
+}
+
+int
+bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
+    bpap, bshp)
+	bus_space_tag_t t;
+	bus_addr_t rstart, rend;
+	bus_size_t size, alignment, boundary;
+	int cacheable;
+	bus_addr_t *bpap;
+	bus_space_handle_t *bshp;
+{
+	u_long bpa;
+	int error;
+
+	/*
+	 * Sanity check the allocation against the extent's boundaries.
+	 */
+	if (rstart < iomem_ex->ex_start || rend > iomem_ex->ex_end)
+		panic("bus_space_alloc: bad region start/end");
+
+	/*
+	 * Do the requested allocation.
+	 */
+	error = extent_alloc_subregion(iomem_ex, rstart, rend, size, alignment,
+	    boundary, EX_NOWAIT | (iomem_malloc_safe ?  EX_MALLOCOK : 0),
+	    &bpa);
+
+	if (error)
+		return (error);
+
+	/*
+	 * For memory space, map the bus physical address to
+	 * a kernel virtual address.
+	 */
+	error = bus_mem_add_mapping(bpa, size, cacheable, bshp);
+	if (error) {
+		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
+		    (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
+			printf("bus_space_alloc: pa 0x%lx, size 0x%lx\n",
+			    bpa, size);
+			printf("bus_space_alloc: can't free region\n");
+		}
+	}
+
+	*bpap = bpa;
+
+	return (error);
+}
+
+int
+bus_mem_add_mapping(bpa, size, cacheable, bshp)
+	bus_addr_t bpa;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
+{
+	u_long pa, endpa;
+	vm_offset_t va;
+
+	pa = mac68k_trunc_page(bpa);
+	endpa = mac68k_round_page((bpa + size) - 1);
+
+#ifdef DIAGNOSTIC
+	if (endpa <= pa)
+		panic("bus_mem_add_mapping: overflow");
+#endif
+
+	va = kmem_alloc_pageable(kernel_map, endpa - pa);
+	if (va == 0)
+		return (ENOMEM);
 
 	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
-	for(; pa < endpa; pa += NBPG, va += NBPG) {
-		pmap_enter(pmap_kernel(), (vm_offset_t)va, pa,
-				VM_PROT_READ|VM_PROT_WRITE, TRUE);
+	for (; pa < endpa; pa += NBPG, va += NBPG) {
+		pmap_enter(pmap_kernel(), va, pa,
+		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
 		if (!cacheable)
 			pmap_changebit(pa, PG_CI, TRUE);
 	}
-	return (0);
+ 
+	return 0;
 }
 
 void
@@ -3004,6 +3079,16 @@ bus_space_unmap(t, bsh, size)
 		    bpa, size);
 		printf("bus_space_unmap: can't free region\n");
 	}
+}
+
+void    
+bus_space_free(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+	/* bus_space_unmap() does all that we need to do. */
+	bus_space_unmap(t, bsh, size);
 }
 
 int
