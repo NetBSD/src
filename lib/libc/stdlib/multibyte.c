@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.c,v 1.8 1999/09/20 04:39:40 lukem Exp $	*/
+/*	$NetBSD: multibyte.c,v 1.9 2000/04/01 19:42:57 erh Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "from: @(#)multibyte.c	5.1 (Berkeley) 2/18/91";
 #else
-__RCSID("$NetBSD: multibyte.c,v 1.8 1999/09/20 04:39:40 lukem Exp $");
+__RCSID("$NetBSD: multibyte.c,v 1.9 2000/04/01 19:42:57 erh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -106,15 +106,22 @@ mbstowcs(pwcs, s, n)
 {
 	int count = 0;
 
-	_DIAGASSERT(pwcs != NULL);
 	_DIAGASSERT(s != NULL);
 
 	if (n != 0) {
-		do {
-			if ((*pwcs++ = (wchar_t) *s++) == 0)
-				break;
-			count++;
-		} while (--n != 0);
+		if (pwcs != NULL) {
+			do {
+				if ((*pwcs++ = (wchar_t) *s++) == 0)
+					break;
+				count++;
+			} while (--n != 0);
+		} else {
+			do {
+				if (((wchar_t)*s++) == 0)
+					break;
+				count++;
+			} while (--n != 0);
+		}
 	}
 	
 	return count;
@@ -129,10 +136,15 @@ wcstombs(s, pwcs, n)
 {
 	int count = 0;
 
-	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(pwcs != NULL);
-	if (s == NULL || pwcs == NULL)
+	if (pwcs == NULL)
 		return (0);
+
+	if (s == NULL) {
+		while (*pwcs++ != 0)
+			count++;
+		return(count);
+	}
 
 	if (n != 0) {
 		do {
