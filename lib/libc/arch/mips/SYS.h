@@ -1,3 +1,5 @@
+/*	$NetBSD: SYS.h,v 1.4 1996/09/16 18:10:36 jonathan Exp $ */
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	8.1 (Berkeley) 6/4/93
- *      $Id: SYS.h,v 1.3 1994/12/15 17:24:44 mycroft Exp $ 
  */
 
 #include <sys/syscall.h>
