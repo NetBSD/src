@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.8 1996/06/07 01:39:10 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	w
