@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.62 2003/02/25 20:35:40 thorpej Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.63 2003/03/02 04:34:31 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.62 2003/02/25 20:35:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.63 2003/03/02 04:34:31 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,6 +371,12 @@ lfs_availwait(struct lfs *fs, int fsb)
 	int error;
 	CLEANERINFO *cip;
 	struct buf *cbp;
+
+	/* Push cleaner blocks through regardless */
+	if (fs->lfs_seglock &&
+	    fs->lfs_lockpid == curproc->p_pid &&
+	    fs->lfs_sp->seg_flags & (SEGM_CLEAN | SEGM_FORCE_CKP))
+		return 0;
 
 	while (!lfs_fits(fs, fsb)) {
 		/*

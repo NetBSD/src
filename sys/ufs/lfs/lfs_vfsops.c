@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.101 2003/03/01 11:20:21 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.102 2003/03/02 04:34:31 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.101 2003/03/01 11:20:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.102 2003/03/02 04:34:31 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1128,6 +1128,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	VREF(vp);
 
 	/* Set up segment usage flags for the autocleaner. */
+	fs->lfs_nactive = 0;
 	fs->lfs_suflags = (u_int32_t **)malloc(2 * sizeof(u_int32_t *),
 						M_SEGMENT, M_WAITOK);
 	fs->lfs_suflags[0] = (u_int32_t *)malloc(fs->lfs_nseg * sizeof(u_int32_t),
@@ -1136,21 +1137,30 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 						 M_SEGMENT, M_WAITOK);
 	memset(fs->lfs_suflags[1], 0, fs->lfs_nseg * sizeof(u_int32_t));
 	for (i = 0; i < fs->lfs_nseg; i++) {
+		int changed;
+
 		LFS_SEGENTRY(sup, fs, i, bp);
-		if (!ronly && sup->su_nbytes == 0 &&
-		    !(sup->su_flags & SEGUSE_EMPTY)) {
-			sup->su_flags |= SEGUSE_EMPTY;
-			fs->lfs_suflags[0][i] = sup->su_flags;
-			LFS_WRITESEGENTRY(sup, fs, i, bp);
-		} else if (!ronly && !(sup->su_nbytes == 0) &&
-			 (sup->su_flags & SEGUSE_EMPTY)) {
-			sup->su_flags &= ~SEGUSE_EMPTY;
-			fs->lfs_suflags[0][i] = sup->su_flags;
-			LFS_WRITESEGENTRY(sup, fs, i, bp);
-		} else {
-			fs->lfs_suflags[0][i] = sup->su_flags;
-			brelse(bp);
+		changed = 0;
+		if (!ronly) {
+			if (sup->su_nbytes == 0 &&
+			    !(sup->su_flags & SEGUSE_EMPTY)) {
+				sup->su_flags |= SEGUSE_EMPTY;
+				++changed;
+			} else if (!(sup->su_nbytes == 0) &&
+				   (sup->su_flags & SEGUSE_EMPTY)) {
+				sup->su_flags &= ~SEGUSE_EMPTY;
+				++changed;
+			}
+			if (sup->su_flags & SEGUSE_ACTIVE) {
+				sup->su_flags &= ~SEGUSE_ACTIVE;
+				++changed;
+			}
 		}
+		fs->lfs_suflags[0][i] = sup->su_flags;
+		if (changed)
+			LFS_WRITESEGENTRY(sup, fs, i, bp);
+		else
+			brelse(bp);
 	}
 
 	/*
@@ -1291,6 +1301,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	 */
 	LFS_SEGENTRY(sup, fs, dtosn(fs, fs->lfs_offset), bp); 
 	sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
+	fs->lfs_nactive++;
 	LFS_WRITESEGENTRY(sup, fs, dtosn(fs, fs->lfs_offset), bp);  /* Ifile */
 
 	/* Now that roll-forward is done, unlock the Ifile */
