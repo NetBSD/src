@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.9 1999/11/03 14:09:53 enami Exp $
+# 	$NetBSD: GENERIC,v 1.10 1999/11/03 14:55:53 enami Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -171,12 +171,12 @@ scsibus* at aic?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
 pseudo-device	loop		1	# network loopback
-pseudo-device   ppp              2      # serial-line IP ports
+pseudo-device	ppp		2	# serial-line IP ports
 pseudo-device	pty		64	# pseudo ptys
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd		4	# virtual disk ick
-pseudo-device   ccd             4       # concatenated disks
+pseudo-device	ccd		4	# concatenated disks
 
 pseudo-device	biconsdev	1	# build-in console device
