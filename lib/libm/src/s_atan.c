@@ -1,4 +1,3 @@
-
 /* @(#)s_atan.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -9,8 +8,11 @@
  * software is freely granted, provided that this notice 
  * is preserved.
  * ====================================================
- *
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: s_atan.c,v 1.3 1994/02/18 02:26:13 jtc Exp $";
+#endif
 
 /* atan(x)
  * Method

@@ -1,4 +1,3 @@
-
 /* @(#)s_expm1.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -10,6 +9,10 @@
  * is preserved.
  * ====================================================
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: s_expm1.c,v 1.3 1994/02/18 02:26:25 jtc Exp $";
+#endif
 
 /* expm1(x)
  * Returns exp(x)-1, the exponential of x minus 1.

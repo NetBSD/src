@@ -1,4 +1,3 @@
-
 /* @(#)e_gamma_r.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -9,8 +8,11 @@
  * software is freely granted, provided that this notice 
  * is preserved.
  * ====================================================
- *
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: e_gamma_r.c,v 1.3 1994/02/18 02:25:13 jtc Exp $";
+#endif
 
 /* __ieee754_gamma_r(x, signgamp)
  * Reentrant version of the logarithm of the Gamma function 
