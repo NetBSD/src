@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.12 1996/05/01 23:22:16 cgd Exp $
+#	$NetBSD: ALPHA,v 1.13 1996/05/20 01:37:18 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -108,6 +108,7 @@ esp1	at	tcds? slot ?
 cfb*	at	tc? slot ? offset ?
 sfb*	at	tc? slot ? offset ?
 le*	at	tc? slot ? offset ?
+fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 
 # PCI host bus adapter support
 apecs*	at	mainbus?
@@ -128,6 +129,7 @@ pcivga*	at	pci?
 ppb*	at	pci?
 sio*	at	pci?
 tga*	at	pci?
+fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI cards
 
 # ISA/EISA bus support
 isa*	at	pceb?
@@ -142,6 +144,9 @@ com0	at	isa? port 0x3f8 irq 4		# standard serial ports
 com1	at	isa? port 0x2f8 irq 3
 lpt0	at	isa? port 0x3bc irq 7		# standard parallel port
 #wss0	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+
+# EISA devices
+fea*	at	eisa? slot ?			# DEC DEFEA FDDI cards
 
 # SCSI bus support
 scsibus* at	esp?
