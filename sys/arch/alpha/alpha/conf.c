@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.44 2000/02/22 17:46:49 mjacob Exp $ */
+/* $NetBSD: conf.c,v 1.45 2000/02/22 21:12:03 tls Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.44 2000/02/22 17:46:49 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.45 2000/02/22 21:12:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,8 @@ cdev_decl(ms);
 cdev_decl(lpt);
 cdev_decl(md);
 cdev_decl(raid);
+#include "ses.h"
+cdev_decl(ses);
 #include "ss.h"
 cdev_decl(ss);
 #include "uk.h"
@@ -319,6 +321,8 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_mouse_init(NWSMUX, wsmux),	/* 56: ws multiplexor */
 	cdev_tty_init(NUCOM, ucom),	/* 57: USB tty */
+	cdev_ses_init(NSES,ses),	/* 58: SCSI SES/SAF-TE */
+	
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
