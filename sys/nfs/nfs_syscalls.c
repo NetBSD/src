@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.36 1999/06/29 22:18:48 wrstuden Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.37 2000/03/30 02:43:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -81,8 +81,6 @@
 #include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
 
-void	nfsrv_zapsock	__P((struct nfssvc_sock *));
-
 /* Global defs. */
 extern int32_t (*nfsrv3_procs[NFS_NPROCS]) __P((struct nfsrv_descript *,
 						struct nfssvc_sock *,
@@ -101,7 +99,6 @@ static int nfs_numnfsd = 0;
 static int notstarted = 1;
 static int modify_flag = 0;
 static struct nfsdrt nfsdrt;
-extern struct nfs_public nfs_pub;
 #endif
 
 #define	TRUE	1
