@@ -1,7 +1,7 @@
 #
 # DUALITY (mycroft's hp370 test machine)
 #
-#	$Id: DUALITY,v 1.12 1994/07/05 17:11:21 mycroft Exp $
+#	$Id: DUALITY,v 1.12.2.1 1994/08/17 20:16:37 mycroft Exp $
 #
 machine		"hp300"
 cpu		"HP320"
@@ -31,7 +31,7 @@ options		"COMPAT_NOMID"
 options		"COMPAT_09"
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
-options		"COMPAT_HPUX"
+#options	"COMPAT_HPUX"
 
 options		FFS,QUOTA
 options		LFS
