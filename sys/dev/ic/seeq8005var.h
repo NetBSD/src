@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005var.h,v 1.4 2001/06/25 11:38:28 bjh21 Exp $ */
+/* $NetBSD: seeq8005var.h,v 1.4.2.1 2002/01/10 19:55:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -37,6 +37,11 @@
 #define _SEEQ8005VAR_H_
 
 #include <net/if_media.h>
+
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 /* Enumerate the possible cip variants */
 enum seeq_variant {
@@ -80,6 +85,9 @@ struct seeq8005_softc {
 	enum seeq_variant sc_variant;	/* Chip variant */
 	int sc_flags;
 #define SF_8BIT		0x01
+#if NRND > 0
+	rndsource_element_t rnd_source;
+#endif
 };
 
 extern void seeq8005_attach(struct seeq8005_softc *, const u_int8_t *, int *,

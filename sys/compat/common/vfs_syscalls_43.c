@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.19 2001/06/14 20:32:41 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.19.2.1 2002/01/10 19:51:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)vfs_syscalls.c	8.28 (Berkeley) 12/10/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.19.2.1 2002/01/10 19:51:01 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"

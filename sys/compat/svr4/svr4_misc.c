@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.91 2001/05/06 04:32:08 ross Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.91.2.1 2002/01/10 19:52:17 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  * SVR4 system calls that are implemented differently in BSD are
  * handled here.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.91.2.1 2002/01/10 19:52:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -668,7 +671,11 @@ svr4_sys_sysconfig(p, v, retval)
 		*retval = 0;	/* No delaytimer support */
 		break;
 	case SVR4_CONFIG_MQ_OPEN_MAX:
+#ifdef SYSVMSG
 		*retval = msginfo.msgmni;
+#else
+		*retval = 0;
+#endif
 		break;
 	case SVR4_CONFIG_MQ_PRIO_MAX:
 		*retval = 0;	/* XXX: Don't know */
@@ -677,10 +684,18 @@ svr4_sys_sysconfig(p, v, retval)
 		*retval = 0;
 		break;
 	case SVR4_CONFIG_SEM_NSEMS_MAX:
+#ifdef SYSVSEM
 		*retval = seminfo.semmni;
+#else
+		*retval = 0;
+#endif
 		break;
 	case SVR4_CONFIG_SEM_VALUE_MAX:
+#ifdef SYSVSEM
 		*retval = seminfo.semvmx;
+#else
+		*retval = 0;
+#endif
 		break;
 	case SVR4_CONFIG_SIGQUEUE_MAX:
 		*retval = 0;	/* XXX: Don't know */
@@ -1132,7 +1147,8 @@ svr4_setinfo(p, st, s)
 	}
 
 	DPRINTF(("siginfo [pid %ld signo %d code %d errno %d status %d]\n",
-		 i.si_pid, i.si_signo, i.si_code, i.si_errno, i.si_status));
+		(long) i.si_pid,
+		i.si_signo, i.si_code, i.si_errno, i.si_status));
 
 	return copyout(&i, s, sizeof(i));
 }

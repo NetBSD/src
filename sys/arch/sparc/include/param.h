@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.48 2001/05/30 12:28:50 mrg Exp $ */
+/*	$NetBSD: param.h,v 1.48.2.1 2002/01/10 19:48:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,9 @@
 #define	MACHINE_ARCH	"sparc"
 #define	MID_MACHINE	MID_SPARC
 
+#ifdef _KERNEL_OPT
+#include "opt_sparc_arch.h"
+#endif
 #ifdef _KERNEL				/* XXX */
 #ifndef _LOCORE				/* XXX */
 #include <machine/cpu.h>		/* XXX */
@@ -170,6 +173,24 @@ extern int cputyp;
 extern void	delay __P((unsigned int));
 #define	DELAY(n)	delay(n)
 #endif /* _LOCORE */
+
+
+/*
+ * microSPARC-IIep is a sun4m but with an integrated PCI controller.
+ * In a lot of places (like pmap &c) we want it to be treated as SUN4M.
+ * But since various low-level things are done very differently from
+ * normal sparcs (and since for now it requires a relocated kernel
+ * anyway), the MSIIEP kernels are not supposed to support any other
+ * system.  So insist on SUN4M defined and SUN4 and SUN4C not defined.
+ */
+#if defined(MSIIEP)
+#if defined(SUN4) || defined(SUN4C)
+#error "microSPARC-IIep kernels cannot support sun4 or sun4c"
+#endif
+#if !defined(SUN4M)
+#error "microSPARC-IIep kernel must have 'options SUN4M'"
+#endif
+#endif /* MSIIEP */
 
 /*
  * Shorthand CPU-type macros. Enumerate all eight cases.

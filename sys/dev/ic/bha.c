@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.44.2.2 2001/08/25 06:16:13 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.44.2.3 2002/01/10 19:54:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -52,9 +52,11 @@
  * functioning of this software in any circumstances.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.44.2.3 2002/01/10 19:54:16 thorpej Exp $");
+
 #include "opt_ddb.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>

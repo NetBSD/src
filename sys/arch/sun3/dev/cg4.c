@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.21.4.1 2001/09/13 01:14:48 thorpej Exp $	*/
+/*	$NetBSD: cg4.c,v 1.21.4.2 2002/01/10 19:49:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/idprom.h>
 #include <machine/pmap.h>
 

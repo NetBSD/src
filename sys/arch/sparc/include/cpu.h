@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.44 2001/06/14 22:56:58 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.44.2.1 2002/01/10 19:48:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,12 +63,14 @@
  * Exported definitions unique to SPARC cpu support.
  */
 
-#if !defined(_LKM)
+#if !defined(_LKM) && defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_sparc_arch.h"
 #endif
 
 #include <machine/psl.h>
+#include <machine/intr.h>
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/intreg.h>
 
@@ -117,18 +119,6 @@ extern int eintstack[];
 #define	CLKF_INTR(framep)	((framep)->fp < (u_int)eintstack)
 #endif
 
-/*
- * Software interrupt request `register'.
- */
-extern union sir {
-	int	sir_any;
-	char	sir_which[4];
-} sir;
-
-#define SIR_NET		0
-#define SIR_CLOCK	1
-#define SIR_SERIAL	2
-
 #if defined(SUN4M)
 extern void	raise __P((int, int));
 #if !(defined(SUN4) || defined(SUN4C))
@@ -140,9 +130,10 @@ extern void	raise __P((int, int));
 #define setsoftint()	ienab_bis(IE_L1)
 #endif /* SUN4M */
 
-#define setsoftnet()	(sir.sir_which[SIR_NET] = 1, setsoftint())
-#define setsoftclock()	(sir.sir_which[SIR_CLOCK] = 1, setsoftint())
-#define setsoftserial()	(sir.sir_which[SIR_SERIAL] = 1, setsoftint())
+void	softintr_init __P((void));
+void	*softnet_cookie;
+
+#define setsoftnet()	softintr_schedule(softnet_cookie);
 
 extern int	want_ast;
 
@@ -190,6 +181,7 @@ extern struct intrhand {
 } *intrhand[15];
 
 void	intr_establish __P((int level, struct intrhand *));
+void	intr_disestablish __P((int level, struct intrhand *));
 
 /*
  * intr_fasttrap() is a lot like intr_establish, but is used for ``fast''
@@ -211,7 +203,6 @@ caddr_t	reserve_dumppages __P((caddr_t));
 /* clock.c */
 struct timeval;
 void	lo_microtime __P((struct timeval *));
-int	statintr __P((void *));
 int	clockintr __P((void *));/* level 10 (clock) interrupt code */
 int	statintr __P((void *));	/* level 14 (statclock) interrupt code */
 /* locore.s */
@@ -230,8 +221,6 @@ int	xldcontrolb __P((caddr_t, struct pcb *));
 void	copywords __P((const void *, void *, size_t));
 void	qcopy __P((const void *, void *, size_t));
 void	qzero __P((void *, size_t));
-/* locore2.c */
-void	remrunqueue __P((struct proc *));
 /* trap.c */
 void	kill_user_windows __P((struct proc *));
 int	rwindow_save __P((struct proc *));
@@ -262,6 +251,8 @@ int emulinstr __P((int, struct trapframe *));
 void mp_pause_cpus __P((void));
 void mp_resume_cpus __P((void));
 void mp_halt_cpus __P((void));
+/* msiiep.c */
+void msiiep_swap_endian __P((int));
 
 /*
  *

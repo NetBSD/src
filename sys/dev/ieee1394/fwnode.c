@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.5 2001/05/14 05:46:41 jmc Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.5.4.1 2002/01/10 19:55:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,8 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.5.4.1 2002/01/10 19:55:14 thorpej Exp $");
+
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>

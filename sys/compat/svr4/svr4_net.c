@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.26.2.1 2001/07/10 13:58:51 lukem Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.26.2.2 2002/01/10 19:52:18 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Emulate /dev/{udp,tcp,...}
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.26.2.2 2002/01/10 19:52:18 thorpej Exp $");
 
 #define COMPAT_SVR4 1
 

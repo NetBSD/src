@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.49.2.1 2001/08/03 04:12:11 lukem Exp $ */
+/*	$NetBSD: scn.c,v 1.49.2.2 2002/01/10 19:47:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -688,7 +688,7 @@ scnprobe(parent, cf, aux)
 	int mr1;
 	register volatile u_char *ch_base;
 
-	/* The pc532 doesn't have more then 8 lines. */
+	/* The pc532 doesn't have more than 8 lines. */
 	if (unit >= 8) return(0);
 
 	/* Now some black magic that should detect a scc26x2 channel. */

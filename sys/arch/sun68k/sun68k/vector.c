@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.c,v 1.1 2001/06/14 13:08:11 fredette Exp $	*/
+/*	$NetBSD: vector.c,v 1.1.2.1 2002/01/10 19:49:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
  */
 
 #include "opt_compat_netbsd.h"
+#include "opt_compat_sunos.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +95,7 @@ void *vector_table[NVECTORS] = {
 	_isr_autovec,			/* 30: level 6 interrupt autovector */
 	_isr_autovec,			/* 31: level 7 interrupt autovector */
 	trap0,				/* 32: syscalls */
-#ifdef COMPAT_13
+#if defined(COMPAT_13) || defined(COMPAT_SUNOS)
 	trap1,				/* 33: compat_13_sigreturn */
 #else
 	illinst,

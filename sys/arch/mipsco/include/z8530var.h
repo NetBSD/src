@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.3 2001/03/31 00:08:34 wdk Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.3.2.1 2002/01/10 19:46:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -80,3 +80,8 @@ void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 
 /* Zilog Serial hardware interrupts (level 0) */
 #define splzs()		spltty()
+
+#if defined(_KERNEL) && defined(KGDB)
+void zs_kgdb_init __P((void));
+void zskgdb __P((struct zs_chanstate *));
+#endif

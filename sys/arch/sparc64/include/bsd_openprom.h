@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.2 2000/03/13 23:52:34 soren Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.2.8.1 2002/01/10 19:49:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,6 +37,10 @@
  *
  *	@(#)bsd_openprom.h	8.1 (Berkeley) 6/11/93
  */
+
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
 
 /*
  * Sun4m support by Aaron Brown, Harvard University.

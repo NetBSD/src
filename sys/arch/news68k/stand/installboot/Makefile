@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2001/01/30 14:11:00 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2002/01/10 19:46:57 thorpej Exp $
 
 PROG= installboot
-SRCS= installboot.c loadfile.c
-MKMAN= no
+SRCS= installboot.c byteorder.c loadfile.c loadfile_aout.c loadfile_elf32.c
+NOMAN= # defined
 WARNS?= 1
 
 S= ${.CURDIR}/../../../..

@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.5 2001/07/08 16:32:20 abs Exp $
+# 	$NetBSD: RC3230,v 1.5.2.1 2002/01/10 19:46:17 thorpej Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -16,14 +16,14 @@ options 	SYSVSHM			# System V shared memory
 #options 	LKM			# loadable kernel modules
 #options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
-options		HZ=25
+options 	HZ=25
 
 # Debugging options
 #options 	DDB			# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-options		KGDB			#,DEBUG_KGDB
-options		KGDBDEV=0x0100		# KGDB port (this is serial0)
-options		KGDBRATE=19200		# KGDB Baud Rate (default=19200)
+options 	KGDB			#,DEBUG_KGDB
+options 	KGDB_DEV=0x0100		# KGDB port (this is serial0)
+options 	KGDB_DEVRATE=19200	# KGDB Baud Rate (default=19200)
 makeoptions	DEBUG="-g"		# Build kernel with debug symbols
 
 #options 	DEBUG			# extra kernel debugging support

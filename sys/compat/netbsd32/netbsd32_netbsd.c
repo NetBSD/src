@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.60 2001/06/19 00:36:21 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.60.2.1 2002/01/10 19:51:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.60.2.1 2002/01/10 19:51:56 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -120,6 +123,7 @@ const struct emul emul_netbsd32 = {
 	trapsignal,
 	netbsd32_sigcode,
 	netbsd32_esigcode,
+	netbsd32_setregs,
 	NULL,
 	NULL,
 	NULL,

@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.13 2001/07/08 16:32:24 abs Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.13.2.1 2002/01/10 19:48:42 thorpej Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -26,8 +26,8 @@ options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 options 	RASTERCONSOLE		# fast rasterop console
 options 	FONT_GALLANT12x22	# the console font
 options 	FONT_BOLD8x16		# a somewhat smaller font
-#options	RASTERCONSOLE_FGCOL=WSCOL_BLACK
-#options	RASTERCONSOLE_BGCOL=WSCOL_WHITE
+#options 	RASTERCONSOLE_FGCOL=WSCOL_BLACK
+#options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 
 #### System options that are the same for all ports
 
@@ -70,18 +70,18 @@ options 	LKM
 #options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
 
 ## You may also use gdb, on another computer connected to this machine over
-## a serial port.  Both KGDBDEV and KGDBRATE should be specified; KGDBDEV is
-## a dev_t encoded device number of the serial port to use.
+## a serial port.  Both KGDB_DEV and KGDB_DEVRATE should be specified;
+## KGDB_DEV is a dev_t encoded device number of the serial port to use.
 ## (0xc01 = ttya, 0xc02 = ttyb.)
-#options 	KGDB		# support for kernel gdb
-#options 	KGDBDEV=0xc01	# kgdb device number (this sample is `ttyb')
-#options 	KGDBRATE=38400	# baud rate
+#options 	KGDB			# support for kernel gdb
+#options 	KGDB_DEV=0xc01		# kgdb device number (this is `ttyb')
+#options 	KGDB_DEVRATE=38400	# baud rate
 
 
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-#makeoptions 	DEBUG="-g"
+#makeoptions	DEBUG="-g"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.18 2001/07/08 18:06:46 wiz Exp $	*/
+/*	$NetBSD: fd.c,v 1.18.2.1 2002/01/10 19:55:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,9 @@
  *  dufault@hda.com (Peter Dufault)
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.18.2.1 2002/01/10 19:55:23 thorpej Exp $");
+
 #include "rnd.h"
 #include "opt_ddb.h"
 
@@ -100,7 +103,7 @@
  */
 #if !defined(alpha) && !defined(algor) && !defined(atari) && \
     !defined(bebox) && !defined(i386) && !defined(prep) && \
-    !defined(sandpoint)
+    !defined(sandpoint) && !defined(x86_64)
 #error platform not supported by this driver, yet
 #endif
 

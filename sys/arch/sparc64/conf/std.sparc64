@@ -1,10 +1,11 @@
-#	$NetBSD: std.sparc64,v 1.8 2000/06/22 20:27:57 fvdl Exp $
+#	$NetBSD: std.sparc64,v 1.8.4.1 2002/01/10 19:49:13 thorpej Exp $
 
 #
-# Mandatory NetBSD/sparc kernel options.
+# Mandatory NetBSD/sparc64 kernel options when building either 32-bit or
+# 64-bit kernels.  Additional mandatory options for 64-bit kernels are
+# picked up by also including "std.sparc64-64".
 #
 
 machine		sparc64		# Machine architecture; required by config(8)
-makeoptions	MACHINE=sparc64
 
 options 	EXEC_SCRIPT	# execve(2) support for scripts

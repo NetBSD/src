@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.6 2000/08/14 14:26:03 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.6.4.1 2002/01/10 19:53:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * EISA bus front-end for the Digital Semiconductor ``Tulip'' (21x4x)
  * Ethernet controller family driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.6.4.1 2002/01/10 19:53:53 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

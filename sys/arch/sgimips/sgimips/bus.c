@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.9.2.1 2001/09/13 01:14:31 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.9.2.2 2002/01/10 19:48:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 
 #include <mips/cpuregs.h>
 #include <mips/locore.h>
+#include <mips/cache.h>
 
 static int	_bus_dmamap_load_buffer(bus_dmamap_t, void *, bus_size_t,
 				struct proc *, int, vaddr_t *, int *, int);
@@ -677,7 +678,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		MachFlushDCache(addr + offset, minlen);
 #endif
 #if 1
-		mips3_HitFlushDCache(map->dm_segs[i]._ds_vaddr + offset, len);
+		mips_dcache_wbinv_range(map->dm_segs[i]._ds_vaddr + offset, len);
 #endif
 #if 0
 		MachFlushCache();

@@ -1,9 +1,9 @@
-#	$NetBSD: files.sh3,v 1.12.2.1 2001/08/25 06:15:51 thorpej Exp $
+#	$NetBSD: files.sh3,v 1.12.2.2 2002/01/10 19:48:37 thorpej Exp $
 #
 # new style config file for sh3 architecture
 #
 
-defopt	PCLOCK
+defparam PCLOCK
 
 file	arch/sh3/sh3/db_disasm.c	ddb
 file	arch/sh3/sh3/db_interface.c	ddb

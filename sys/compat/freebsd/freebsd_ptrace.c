@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.3 2000/12/01 12:28:31 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.3.4.1 2002/01/10 19:51:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -40,6 +40,9 @@
  *
  *	from: @(#)sys_process.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.3.4.1 2002/01/10 19:51:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: prompatch.c,v 1.1 2001/06/21 03:13:05 uwe Exp $ */
+/*	$NetBSD: prompatch.c,v 1.1.2.1 2002/01/10 19:49:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -52,15 +52,54 @@ struct prom_patch {
 };
 
 
+/*
+ * Patches for JavaStation 1 with OBP 2.x
+ */
+static struct patch_entry patch_js1_obp2[] = {
 
 /*
- * Patches for JavaStation 1 with OBP 3.* (OpenFirmware).
+ * Give "su" (com port) "interrupts" property.
+ */
+{ "su: adding \"interrupts\"",
+	"\" /obio/su\" open-dev"
+	" d# 13 \" interrupts\" integer-attribute"
+	" close-dev"
+},
+
+/*
+ * TODO: Create "8042" (pckbc) node.
+ *       Delete "zs"
+ */
+
+{ NULL, NULL }
+};
+
+
+/*
+ * Patches for JavaStation 1 with OBP 3.x
+ */
+static struct patch_entry patch_js1_obp3[] = {
+
+/*
+ * Give "su" (com port) "interrupts" property.
+ */
+{ "su: adding \"interrupts\"",
+	"\" /obio/su\" select-dev"
+	" d# 13 \" interrupts\" integer-attribute"
+	" device-end"
+},
+
+{ NULL, NULL }
+};
+
+/*
+ * Patches for JavaStation 1 with OpenFirmware.
  * PROM in these machines is crippled in many ways.
  */
-static struct patch_entry patch_js1_of[] = {
+static struct patch_entry patch_js1_ofw[] = {
 
 /*
- * JS1/OF has no cpu node in the device tree.  Create one to save us a
+ * JS1/OFW has no cpu node in the device tree.  Create one to save us a
  * _lot_ of headache in cpu.c and mainbus_attach.  Mostly copied from
  * OBP2.  While clock-frequency is usually at the root node, add it
  * here for brevity as kernel checks cpu node for this property anyway.
@@ -128,12 +167,14 @@ static struct patch_entry patch_js1_of[] = {
 },
     
 { NULL, NULL }
-}; /* patch_js1_of */
+}; /* patch_js1_ofw */
 
 
 
 static struct prom_patch prom_patch_tab[] = {
-	{ "SUNW,JDM1", PROM_OPENFIRM, patch_js1_of },
+	{ "SUNW,JavaStation-1", PROM_OBP_V2,	patch_js1_obp2	},
+	{ "SUNW,JavaStation-1", PROM_OBP_V3,	patch_js1_obp3	},
+	{ "SUNW,JDM1",		PROM_OPENFIRM,	patch_js1_ofw	},
 	{ NULL, 0, NULL }
 };
 
@@ -141,8 +182,7 @@ static struct prom_patch prom_patch_tab[] = {
 /*
  * Check if this machine needs tweaks to its PROM.  It's simpler to
  * fix PROM than to invent workarounds in the kernel code.  We do this
- * patching in the secondary boot to avoid wasting space in the
- * kernel.
+ * patching in the secondary boot to avoid wasting space in the kernel.
  */
 void
 prom_patch(void)
@@ -151,7 +191,10 @@ prom_patch(void)
 	char *propval;
 	struct prom_patch *p;
 
-	propval = getpropstringA(prom_findroot(), "name",
+	if (prom_version() == PROM_OLDMON)
+		return;		/* don't bother - no forth in this */
+
+	propval = PROM_getpropstringA(prom_findroot(), "name",
 				 namebuf, sizeof(namebuf));
 	if (propval == NULL)
 		return;
@@ -160,9 +203,24 @@ prom_patch(void)
 		if (p->promvers == prom_version()
 		    && strcmp(p->name, namebuf) == 0) {
 			struct patch_entry *e;
+			const char *promstr = "???";
 
-			printf("Patching PROM v%d for %s\n",
-			       p->promvers, p->name);
+			switch (prom_version()) {
+			case PROM_OBP_V0:
+				promstr = "OBP0";
+				break;
+			case PROM_OBP_V2:
+				promstr = "OBP2";
+				break;
+			case PROM_OBP_V3:
+				promstr = "OBP3";
+				break;
+			case PROM_OPENFIRM:
+				promstr = "OFW";
+				break;
+			}
+
+			printf("Patching %s for %s\n", promstr, p->name);
 			for (e = p->patches; e->message != NULL; ++e) {
 				printf("%s", e->message);
 				prom_interpret(e->patch);

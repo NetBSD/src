@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.1 2001/06/24 02:13:37 simonb Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.1.2.1 2002/01/10 19:48:00 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -95,6 +95,4 @@ com_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	com_attach_subr(sc);
 
 	intr_establish(irq, IST_LEVEL, IPL_SERIAL, comintr, sc);
-
-	return;
 }

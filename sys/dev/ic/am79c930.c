@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930.c,v 1.6 2000/07/04 14:16:21 onoe Exp $ */
+/* $NetBSD: am79c930.c,v 1.6.6.1 2002/01/10 19:54:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -59,6 +59,9 @@
  * start isr
  * end isr
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: am79c930.c,v 1.6.6.1 2002/01/10 19:54:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

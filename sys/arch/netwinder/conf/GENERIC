@@ -1,9 +1,24 @@
-#	$NetBSD: GENERIC,v 1.5.2.2 2001/09/13 01:14:05 thorpej Exp $
+# $NetBSD: GENERIC,v 1.5.2.3 2002/01/10 19:46:41 thorpej Exp $
 #
-#	GENERIC -- Netwinder Architecture Kernel
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
 #
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
-include	"arch/netwinder/conf/std.netwinder"
+include		"arch/netwinder/conf/std.netwinder"
 
 # estimated number of users
 
@@ -93,10 +108,10 @@ options 	COMPAT_14	# NetBSD 1.4 compatibility.
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -123,7 +138,7 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internally consistency checks
-#options  	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
@@ -224,7 +239,8 @@ pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter
-#pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices

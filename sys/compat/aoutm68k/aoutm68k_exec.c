@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_exec.c,v 1.6 2001/06/18 02:00:52 christos Exp $	*/
+/*	$NetBSD: aoutm68k_exec.c,v 1.6.2.1 2002/01/10 19:50:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_exec.c,v 1.6.2.1 2002/01/10 19:50:56 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -73,6 +76,7 @@ struct emul emul_netbsd_aoutm68k = {
 	trapsignal,
 	sigcode,
 	esigcode,
+	setregs,
 	NULL,
 	NULL,
 	NULL,

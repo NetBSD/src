@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.86.2.1 2001/08/25 06:16:02 thorpej Exp $
+#       $NetBSD: files.vax,v 1.86.2.2 2002/01/10 19:50:01 thorpej Exp $
 #
 # new style config file for vax architecture
 #
@@ -16,13 +16,13 @@ device	cpu
 device	mem
 device	mba { drive = -1 }
 
-defopt	opt_cputype.h	VAX780 VAX750 VAX730
-        VAX8200 VAX8800 VAX8600 VAX610
-	VAX6200 VAX6300 VAX6400 VAX6500 VAX6600
-	VAX410 VAX43 VAX46 VAX48 VAX49 VAX53
-	VAX630 VAX650 VAX660 VAX670 VAX680 VAXANY
+defflag	opt_cputype.h	VAX780 VAX750 VAX730
+			VAX8200 VAX8800 VAX8600 VAX610
+			VAX6200 VAX6300 VAX6400 VAX6500 VAX6600
+			VAX410 VAX43 VAX46 VAX48 VAX49 VAX53
+			VAX630 VAX650 VAX660 VAX670 VAX680 VAXANY
 
-defopt	opt_emulate.h	NO_INSN_EMULATE
+defflag	opt_emulate.h	NO_INSN_EMULATE
 
 defpseudo	leds
 file	arch/vax/vsa/leds.c		leds			needs-flag
@@ -61,7 +61,7 @@ device	vsbus { csr }
 attach	vsbus at mainbus
 file	arch/vax/vsa/vsbus.c		vsbus
 file	arch/vax/vsa/vsbus_dma.c	vsbus & (vax46 | vax48 | vax49 |
-					         vax53 | vaxany)
+						vax53 | vaxany)
 
 device	ibus { }
 attach	ibus at mainbus
@@ -80,9 +80,9 @@ attach	mba at sbi with mba_sbi
 attach	mba at cmi with mba_cmi
 file	arch/vax/mba/mba.c		mba needs-flag
 
-device  hp: disk
-attach  hp at mba
-file    arch/vax/mba/hp.c		hp needs-flag
+device	hp: disk
+attach	hp at mba
+file	arch/vax/mba/hp.c		hp needs-flag
 major	{hp = 0}
 
 device	ht: tape
@@ -171,7 +171,7 @@ include "dev/scsipi/files.scsipi"
 major	{ sd = 20 }
 major	{ cd = 22 }
 
-# builtin NCR5380 SCSI-controller on VAXstation 
+# builtin NCR5380 SCSI-controller on VAXstation
 device	si: scsi, ncr5380sbc
 attach	si at vsbus with si_vsbus
 file	arch/vax/vsa/ncr.c		si_vsbus
@@ -190,7 +190,7 @@ device	asc: scsi, ncr53c9x
 attach	asc at vsbus with asc_vsbus
 file	arch/vax/vsa/asc_vsbus.c	asc_vsbus
 
-device	lkkbd: wskbddev 
+device	lkkbd: wskbddev
 attach	lkkbd at dz with dzkbd
 file	dev/dec/dzkbd.c			dzkbd needs-flag
 
@@ -381,20 +381,20 @@ include "compat/ultrix/files.ultrix"
 include "compat/vax1k/files.vax1k"
 
 # Dom h{ra f}r vara kvar s} l{nge f}r vi se vilka vi beh|ver...
-#arch/vax/vax/dkbad.c         standard
-#arch/vax/vax/ka730.c         standard
-#arch/vax/vax/iidr.o          optional ii
-#arch/vax/vax/iidrsys.o       optional ii
-#arch/vax/vax/iidr_glob.o     optional ii
-#arch/vax/if/if_css.c         optional css imp device-driver
-#arch/vax/if/if_dp.c          optional dp device-driver
-#arch/vax/if/if_ddn.c         optional ddn device-driver
-#arch/vax/if/if_dmv.c         optional dmv device-driver
-#arch/vax/if/if_ec.c          optional ec device-driver
-#arch/vax/if/if_en.c          optional en device-driver
-#arch/vax/if/if_ex.c          optional ex device-driver
-#arch/vax/if/if_hdh.c         optional hdh device-driver
-#arch/vax/if/if_hy.c          optional hy device-driver
-#arch/vax/if/if_pcl.c         optional pcl device-driver
-#arch/vax/if/if_vv.c          optional vv device-driver
-#arch/vax/if/raw_hy.c         optional hy device-driver
+#arch/vax/vax/dkbad.c		standard
+#arch/vax/vax/ka730.c		standard
+#arch/vax/vax/iidr.o		optional ii
+#arch/vax/vax/iidrsys.o		optional ii
+#arch/vax/vax/iidr_glob.o	optional ii
+#arch/vax/if/if_css.c		optional css imp device-driver
+#arch/vax/if/if_dp.c		optional dp device-driver
+#arch/vax/if/if_ddn.c		optional ddn device-driver
+#arch/vax/if/if_dmv.c		optional dmv device-driver
+#arch/vax/if/if_ec.c		optional ec device-driver
+#arch/vax/if/if_en.c		optional en device-driver
+#arch/vax/if/if_ex.c		optional ex device-driver
+#arch/vax/if/if_hdh.c		optional hdh device-driver
+#arch/vax/if/if_hy.c		optional hy device-driver
+#arch/vax/if/if_pcl.c		optional pcl device-driver
+#arch/vax/if/if_vv.c		optional vv device-driver
+#arch/vax/if/raw_hy.c		optional hy device-driver

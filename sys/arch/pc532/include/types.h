@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.25 2001/04/28 15:41:32 kleink Exp $	*/
+/*	$NetBSD: types.h,v 1.25.2.1 2002/01/10 19:47:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,7 +57,7 @@ typedef unsigned long	vsize_t;
 
 typedef int		register_t;
 
-#define __BROKEN_CONFIG_UNIT_USAGE
-#define	__BROKEN_DK_ESTABLISH
+#define	__BROKEN_CONFIG_UNIT_USAGE
+#define	__HAVE_DEVICE_REGISTER
 
 #endif	/* _MACHTYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.33 2001/04/25 17:53:34 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.33.2.1 2002/01/10 19:54:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -92,7 +92,8 @@
 #define	NCR_VARIANT_FAS216		7
 #define	NCR_VARIANT_AM53C974		8
 #define	NCR_VARIANT_FAS366		9
-#define	NCR_VARIANT_MAX			10
+#define	NCR_VARIANT_NCR53C90_86C01	10
+#define	NCR_VARIANT_MAX			11
 
 /*
  * ECB. Holds additional information for each SCSI command Comments: We
@@ -410,7 +411,7 @@ struct ncr53c9x_softc {
 #ifdef NCR53C9X_DEBUG
 #define	NCRCMD(sc, cmd) do {						\
 	if ((ncr53c9x_debug & NCR_SHOWCCMDS) != 0)			\
-		printf("<cmd:0x%x %d>", (unsigned)cmd, __LINE__);	\
+		printf("<CMD:0x%x %d>", (unsigned)cmd, __LINE__);	\
 	sc->sc_lastcmd = cmd;						\
 	NCR_WRITE_REG(sc, NCR_CMD, cmd);				\
 } while (0)

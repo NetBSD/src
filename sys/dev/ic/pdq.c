@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.31 2001/06/13 10:46:03 wiz Exp $	*/
+/*	$NetBSD: pdq.c,v 1.31.2.1 2002/01/10 19:54:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -38,6 +38,9 @@
  * However, it is expected that the PDQ_CSR_WRITE macro will cause a 
  * flushing of the write buffers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.31.2.1 2002/01/10 19:54:58 thorpej Exp $");
 
 #define	PDQ_HWSUPPORT	/* for pdq.h */
 
@@ -1013,9 +1016,13 @@ pdq_queue_transmit_data(
      * Everything went fine.  Finish it up.
      */
     tx->tx_descriptor_count[tx->tx_producer] = tx->tx_free - freecnt;
-    if (PDQ_RX_FC_OFFSET != PDQ_OS_HDR_OFFSET)
+    if (PDQ_RX_FC_OFFSET != PDQ_OS_HDR_OFFSET) {
 	dbp->pdqdb_transmits[tx->tx_producer].txd_sop = 1;
+	PDQ_OS_DESC_PRESYNC(pdq, &dbp->pdqdb_transmits[tx->tx_producer],
+	    sizeof(pdq_txdesc_t));
+    }
     eop->txd_eop = 1;
+    PDQ_OS_DESC_PRESYNC(pdq, eop, sizeof(pdq_txdesc_t));
     PDQ_OS_DATABUF_ENQUEUE(&tx->tx_txq, pdu);
     tx->tx_producer = producer;
     tx->tx_free = freecnt;

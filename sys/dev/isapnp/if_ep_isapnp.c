@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.20.2.1 2001/08/03 04:13:12 lukem Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.20.2.2 2002/01/10 19:55:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ep_isapnp.c,v 1.20.2.2 2002/01/10 19:55:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

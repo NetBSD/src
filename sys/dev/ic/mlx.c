@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.10.2.2 2001/08/25 06:16:16 thorpej Exp $	*/
+/*	$NetBSD: mlx.c,v 1.10.2.3 2002/01/10 19:54:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@
  * o Test and enable channel pause.
  * o SCSI pass-through.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.10.2.3 2002/01/10 19:54:51 thorpej Exp $");
 
 #include "ld.h"
 
@@ -316,7 +319,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 	memset(mlx->mlx_sgls, 0, size);
 
 	/*
-	 * Allocate and initalize the CCBs.
+	 * Allocate and initialize the CCBs.
 	 */
 	mc = malloc(sizeof(*mc) * MLX_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
 	mlx->mlx_ccbs = mc;

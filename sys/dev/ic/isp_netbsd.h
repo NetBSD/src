@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.45.2.1 2001/09/13 01:15:40 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.45.2.2 2002/01/10 19:54:42 thorpej Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -73,6 +73,7 @@
 #include <sys/user.h>
 #include <sys/kthread.h>
 
+#include <machine/bus.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -83,19 +84,31 @@
 
 #include "opt_isp.h"
 
+/*
+ * Efficiency- get rid of SBus code && tests unless we need them.
+ */
+#if	defined(__sparcv9__ ) || defined(__sparc__)
+#define	ISP_SBUS_SUPPORTED	1
+#else
+#define	ISP_SBUS_SUPPORTED	0
+#endif
 
 #define	ISP_PLATFORM_VERSION_MAJOR	2
-#define	ISP_PLATFORM_VERSION_MINOR	0
+#define	ISP_PLATFORM_VERSION_MINOR	1
 
 struct isposinfo {
 	struct device		_dev;
 	struct scsipi_channel	_chan;
 	struct scsipi_channel	_chan_b;
 	struct scsipi_adapter   _adapter;
-	int	splsaved;
-	int	mboxwaiting;
-	u_int32_t	islocked;
-	u_int32_t	onintstack;
+	bus_dma_tag_t		dmatag;
+	bus_dmamap_t		rqdmap;
+	bus_dmamap_t		rsdmap;
+	bus_dmamap_t		scdmap;	/* FC only */
+	int			splsaved;
+	int			mboxwaiting;
+	u_int32_t		islocked;
+	u_int32_t		onintstack;
 	unsigned int		: 26,
 		loop_checked	: 1,
 		mbox_wanted	: 1,
@@ -109,9 +122,14 @@ struct isposinfo {
 #define	wwn_seed	un._wwn
 #define	discovered	un._discovered
 	} un;
-	u_int32_t threadwork;
-	struct proc *thread;
+	u_int32_t		threadwork;
+	struct proc *		thread;
 };
+#define	isp_dmatag		isp_osinfo.dmatag
+#define	isp_rqdmap		isp_osinfo.rqdmap
+#define	isp_rsdmap		isp_osinfo.rsdmap
+#define	isp_scdmap		isp_osinfo.scdmap
+
 #define	ISP_MUSTPOLL(isp)	\
 	(isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints)
 
@@ -144,11 +162,46 @@ struct isposinfo {
 
 #define	MAXISPREQUEST(isp)	256
 
-#ifdef	__alpha__
-#define	MEMORYBARRIER(isp, type, offset, size)	alpha_mb()
-#else
-#define	MEMORYBARRIER(isp, type, offset, size)
-#endif
+
+#define	MEMORYBARRIER(isp, type, offset, size)			\
+switch (type) {							\
+case SYNC_REQUEST:						\
+{								\
+	off_t off = (off_t) offset * QENTRY_LEN;		\
+	bus_dmamap_sync(isp->isp_dmatag, isp->isp_rqdmap,	\
+	    off, size, BUS_DMASYNC_PREWRITE);			\
+	break;							\
+}								\
+case SYNC_RESULT:						\
+{								\
+	off_t off = (off_t) offset * QENTRY_LEN;		\
+	off += ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp));		\
+	bus_dmamap_sync(isp->isp_dmatag, isp->isp_rsdmap,	\
+	    off, size, BUS_DMASYNC_POSTREAD);			\
+	break;							\
+}								\
+case SYNC_SFORDEV:						\
+{								\
+	off_t off =						\
+	    ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)) +		\
+	    ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp)) + offset;	\
+	bus_dmamap_sync(isp->isp_dmatag, isp->isp_scdmap,	\
+	    off, size, BUS_DMASYNC_PREWRITE);			\
+	break;							\
+}								\
+case SYNC_SFORCPU:						\
+{								\
+	off_t off =						\
+	    ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)) +		\
+	    ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp)) + offset;	\
+	bus_dmamap_sync(isp->isp_dmatag, isp->isp_scdmap,	\
+	    off, size, BUS_DMASYNC_POSTREAD);			\
+	break;							\
+}								\
+case SYNC_REG:							\
+default:							\
+	break;							\
+}
 
 #define	MBOX_ACQUIRE(isp)						\
 	if (isp->isp_osinfo.onintstack) {				\
@@ -250,21 +303,36 @@ struct isposinfo {
 #define	ISP_PORTWWN(isp)	FCPARAM(isp)->isp_portwwn
 
 #if	_BYTE_ORDER == _BIG_ENDIAN
-#define	ISP_SWIZZLE_REQUEST		isp_swizzle_request
-#define	ISP_UNSWIZZLE_RESPONSE		isp_unswizzle_response
-#define	ISP_SWIZZLE_ICB			isp_swizzle_icb
-#define	ISP_UNSWIZZLE_AND_COPY_PDBP	isp_unswizzle_and_copy_pdbp
-#define	ISP_SWIZZLE_SNS_REQ		isp_swizzle_sns_req
-#define	ISP_UNSWIZZLE_SNS_RSP		isp_unswizzle_sns_rsp
+#ifdef	ISP_SBUS_SUPPORTED
+#define	ISP_IOXPUT_8(isp, s, d)		*(d) = s
+#define	ISP_IOXPUT_16(isp, s, d)				\
+	*(d) = (isp->isp_bustype == ISP_BT_SBUS)? s : bswap16(s)
+#define	ISP_IOXPUT_32(isp, s, d)				\
+	*(d) = (isp->isp_bustype == ISP_BT_SBUS)? s : bswap32(s)
+
+#define	ISP_IOXGET_8(isp, s, d)		d = (*((u_int8_t *)s))
+#define	ISP_IOXGET_16(isp, s, d)				\
+	d = (isp->isp_bustype == ISP_BT_SBUS)?			\
+	*((u_int16_t *)s) : bswap16(*((u_int16_t *)s))
+#define	ISP_IOXGET_32(isp, s, d)				\
+	d = (isp->isp_bustype == ISP_BT_SBUS)?			\
+	*((u_int32_t *)s) : bswap32(*((u_int32_t *)s))
+#else
+#define	ISP_IOXPUT_8(isp, s, d)		*(d) = s
+#define	ISP_IOXPUT_16(isp, s, d)	*(d) = bswap16(s)
+#define	ISP_IOXPUT_32(isp, s, d)	*(d) = bswap32(s)
+#define	ISP_IOXGET_8(isp, s, d)		d = (*((u_int8_t *)s))
+#define	ISP_IOXGET_16(isp, s, d)	d = bswap16(*((u_int16_t *)s))
+#define	ISP_IOXGET_32(isp, s, d)	d = bswap32(*((u_int32_t *)s))
+#endif
 #define	ISP_SWIZZLE_NVRAM_WORD(isp, rp)	*rp = bswap16(*rp)
 #else
-#define	ISP_SWIZZLE_REQUEST(a, b)
-#define	ISP_UNSWIZZLE_RESPONSE(a, b, c)
-#define	ISP_SWIZZLE_ICB(a, b)
-#define	ISP_UNSWIZZLE_AND_COPY_PDBP(isp, dest, src)	\
-	if((void *)src != (void *)dest) memcpy(dest, src, sizeof (isp_pdb_t))
-#define	ISP_SWIZZLE_SNS_REQ(a, b)
-#define	ISP_UNSWIZZLE_SNS_RSP(a, b, c)
+#define	ISP_IOXPUT_8(isp, s, d)		*(d) = s
+#define	ISP_IOXPUT_16(isp, s, d)	*(d) = s
+#define	ISP_IOXPUT_32(isp, s, d)	*(d) = s
+#define	ISP_IOXGET_8(isp, s, d)		d = *(s)
+#define	ISP_IOXGET_16(isp, s, d)	d = *(s)
+#define	ISP_IOXGET_32(isp, s, d)	d = *(s)
 #define	ISP_SWIZZLE_NVRAM_WORD(isp, rp)
 #endif
 
@@ -298,15 +366,6 @@ static INLINE char *strncat(char *, const char *, size_t);
 static INLINE u_int64_t
 isp_microtime_sub(struct timeval *, struct timeval *);
 static void isp_wait_complete(struct ispsoftc *);
-#if	_BYTE_ORDER == _BIG_ENDIAN
-static INLINE void isp_swizzle_request(struct ispsoftc *, ispreq_t *);
-static INLINE void isp_unswizzle_response(struct ispsoftc *, void *, u_int16_t);
-static INLINE void isp_swizzle_icb(struct ispsoftc *, isp_icb_t *);
-static INLINE void
-isp_unswizzle_and_copy_pdbp(struct ispsoftc *, isp_pdb_t *, void *);
-static INLINE void isp_swizzle_sns_req(struct ispsoftc *, sns_screq_t *);
-static INLINE void isp_unswizzle_sns_rsp(struct ispsoftc *, sns_scrsp_t *, int);
-#endif
 
 /*
  * Driver wide data...
@@ -448,181 +507,6 @@ isp_wait_complete(struct ispsoftc *isp)
 	}
 }
 
-#if	_BYTE_ORDER == _BIG_ENDIAN
-static INLINE void
-isp_swizzle_request(struct ispsoftc *isp, ispreq_t *rq)
-{
-	if (IS_FC(isp)) {
-		ispreqt2_t *tq = (ispreqt2_t *) rq;
-		tq->req_handle = bswap32(tq->req_handle);
-		tq->req_scclun = bswap16(tq->req_scclun);
-		tq->req_flags = bswap16(tq->req_flags);
-		tq->req_time = bswap16(tq->req_time);
-		tq->req_totalcnt = bswap32(tq->req_totalcnt);
-	} else if (isp->isp_bustype == ISP_BT_SBUS) {
-		_ISP_SWAP8(rq->req_header.rqs_entry_count,
-		    rq->req_header.rqs_entry_type);
-		_ISP_SWAP8(rq->req_header.rqs_flags, rq->req_header.rqs_seqno);
-		_ISP_SWAP8(rq->req_target, rq->req_lun_trn);
-	} else {
-		rq->req_handle = bswap32(rq->req_handle);
-		rq->req_cdblen = bswap16(rq->req_cdblen);
-		rq->req_flags = bswap16(rq->req_flags);
-		rq->req_time = bswap16(rq->req_time);
-	}
-}
-
-static INLINE void
-isp_unswizzle_response(struct ispsoftc *isp, void *rp, u_int16_t optr)
-{
-	ispstatusreq_t *sp = rp;
-	MEMORYBARRIER(isp, SYNC_RESPONSE, optr * QENTRY_LEN, QENTRY_LEN);
-	if (isp->isp_bustype == ISP_BT_SBUS) {
-		_ISP_SWAP8(sp->req_header.rqs_entry_count,
-		    sp->req_header.rqs_entry_type);
-		_ISP_SWAP8(sp->req_header.rqs_flags, sp->req_header.rqs_seqno);
-	} else switch (sp->req_header.rqs_entry_type) {
-	case RQSTYPE_RESPONSE:
-		sp->req_handle = bswap32(sp->req_handle);
-		sp->req_scsi_status = bswap16(sp->req_scsi_status);
-		sp->req_completion_status = bswap16(sp->req_completion_status);
-		sp->req_state_flags = bswap16(sp->req_state_flags);
-		sp->req_status_flags = bswap16(sp->req_status_flags);
-		sp->req_time = bswap16(sp->req_time);
-		sp->req_sense_len = bswap16(sp->req_sense_len);
-		sp->req_resid = bswap32(sp->req_resid);
-		break;
-	default:
-		break;
-	}
-}
-
-static INLINE void
-isp_swizzle_icb(struct ispsoftc *isp, isp_icb_t *icbp)
-{
-	_ISP_SWAP8(icbp->icb_version, icbp->_reserved0);
-	_ISP_SWAP8(icbp->icb_retry_count, icbp->icb_retry_delay);
-	_ISP_SWAP8(icbp->icb_iqdevtype, icbp->icb_logintime);
-	_ISP_SWAP8(icbp->icb_ccnt, icbp->icb_icnt);
-	_ISP_SWAP8(icbp->icb_racctimer, icbp->icb_idelaytimer);
-	icbp->icb_fwoptions = bswap16(icbp->icb_fwoptions);
-	icbp->icb_maxfrmlen = bswap16(icbp->icb_maxfrmlen);
-	icbp->icb_maxalloc = bswap16(icbp->icb_maxalloc);
-	icbp->icb_execthrottle = bswap16(icbp->icb_execthrottle);
-	icbp->icb_hardaddr = bswap16(icbp->icb_hardaddr);
-	icbp->icb_rqstout = bswap16(icbp->icb_rqstout);
-	icbp->icb_rspnsin = bswap16(icbp->icb_rspnsin);
-	icbp->icb_rqstqlen = bswap16(icbp->icb_rqstqlen);
-	icbp->icb_rsltqlen = bswap16(icbp->icb_rsltqlen);
-	icbp->icb_lunenables = bswap16(icbp->icb_lunenables);
-	icbp->icb_lunetimeout = bswap16(icbp->icb_lunetimeout);
-	icbp->icb_xfwoptions = bswap16(icbp->icb_xfwoptions);
-	icbp->icb_zfwoptions = bswap16(icbp->icb_zfwoptions);
-	icbp->icb_rqstaddr[0] = bswap16(icbp->icb_rqstaddr[0]);
-	icbp->icb_rqstaddr[1] = bswap16(icbp->icb_rqstaddr[1]);
-	icbp->icb_rqstaddr[2] = bswap16(icbp->icb_rqstaddr[2]);
-	icbp->icb_rqstaddr[3] = bswap16(icbp->icb_rqstaddr[3]);
-	icbp->icb_respaddr[0] = bswap16(icbp->icb_respaddr[0]);
-	icbp->icb_respaddr[1] = bswap16(icbp->icb_respaddr[1]);
-	icbp->icb_respaddr[2] = bswap16(icbp->icb_respaddr[2]);
-	icbp->icb_respaddr[3] = bswap16(icbp->icb_respaddr[3]);
-}
-
-static INLINE void
-isp_unswizzle_and_copy_pdbp(struct ispsoftc *isp, isp_pdb_t *dst, void *src)
-{
-	isp_pdb_t *pdbp = src;
-	dst->pdb_options = bswap16(pdbp->pdb_options);
-	dst->pdb_mstate = pdbp->pdb_sstate;
-	dst->pdb_sstate = pdbp->pdb_mstate;
-	dst->pdb_hardaddr_bits[0] = pdbp->pdb_hardaddr_bits[0];
-	dst->pdb_hardaddr_bits[1] = pdbp->pdb_hardaddr_bits[1];
-	dst->pdb_hardaddr_bits[2] = pdbp->pdb_hardaddr_bits[2];
-	dst->pdb_hardaddr_bits[3] = pdbp->pdb_hardaddr_bits[3];
-	dst->pdb_portid_bits[0] = pdbp->pdb_portid_bits[0];
-	dst->pdb_portid_bits[1] = pdbp->pdb_portid_bits[1];
-	dst->pdb_portid_bits[2] = pdbp->pdb_portid_bits[2];
-	dst->pdb_portid_bits[3] = pdbp->pdb_portid_bits[3];
-	dst->pdb_nodename[0] = pdbp->pdb_nodename[0];
-	dst->pdb_nodename[1] = pdbp->pdb_nodename[1];
-	dst->pdb_nodename[2] = pdbp->pdb_nodename[2];
-	dst->pdb_nodename[3] = pdbp->pdb_nodename[3];
-	dst->pdb_nodename[4] = pdbp->pdb_nodename[4];
-	dst->pdb_nodename[5] = pdbp->pdb_nodename[5];
-	dst->pdb_nodename[6] = pdbp->pdb_nodename[6];
-	dst->pdb_nodename[7] = pdbp->pdb_nodename[7];
-	dst->pdb_portname[0] = pdbp->pdb_portname[0];
-	dst->pdb_portname[1] = pdbp->pdb_portname[1];
-	dst->pdb_portname[2] = pdbp->pdb_portname[2];
-	dst->pdb_portname[3] = pdbp->pdb_portname[3];
-	dst->pdb_portname[4] = pdbp->pdb_portname[4];
-	dst->pdb_portname[5] = pdbp->pdb_portname[5];
-	dst->pdb_portname[6] = pdbp->pdb_portname[6];
-	dst->pdb_portname[7] = pdbp->pdb_portname[7];
-	dst->pdb_execthrottle = bswap16(pdbp->pdb_execthrottle);
-	dst->pdb_exec_count = bswap16(pdbp->pdb_exec_count);
-	dst->pdb_resalloc = bswap16(pdbp->pdb_resalloc);
-	dst->pdb_curalloc = bswap16(pdbp->pdb_curalloc);
-	dst->pdb_qhead = bswap16(pdbp->pdb_qhead);
-	dst->pdb_qtail = bswap16(pdbp->pdb_qtail);
-	dst->pdb_tl_next = bswap16(pdbp->pdb_tl_next);
-	dst->pdb_tl_last = bswap16(pdbp->pdb_tl_last);
-	dst->pdb_features = bswap16(pdbp->pdb_features);
-	dst->pdb_pconcurrnt = bswap16(pdbp->pdb_pconcurrnt);
-	dst->pdb_roi = bswap16(pdbp->pdb_roi);
-	dst->pdb_rdsiz = bswap16(pdbp->pdb_rdsiz);
-	dst->pdb_ncseq = bswap16(pdbp->pdb_ncseq);
-	dst->pdb_noseq = bswap16(pdbp->pdb_noseq);
-	dst->pdb_labrtflg = bswap16(pdbp->pdb_labrtflg);
-	dst->pdb_lstopflg = bswap16(pdbp->pdb_lstopflg);
-	dst->pdb_sqhead = bswap16(pdbp->pdb_sqhead);
-	dst->pdb_sqtail = bswap16(pdbp->pdb_sqtail);
-	dst->pdb_ptimer = bswap16(pdbp->pdb_ptimer);
-	dst->pdb_nxt_seqid = bswap16(pdbp->pdb_nxt_seqid);
-	dst->pdb_fcount = bswap16(pdbp->pdb_fcount);
-	dst->pdb_prli_len = bswap16(pdbp->pdb_prli_len);
-	dst->pdb_prli_svc0 = bswap16(pdbp->pdb_prli_svc0);
-	dst->pdb_prli_svc3 = bswap16(pdbp->pdb_prli_svc3);
-	dst->pdb_loopid = bswap16(pdbp->pdb_loopid);
-	dst->pdb_il_ptr = bswap16(pdbp->pdb_il_ptr);
-	dst->pdb_sl_ptr = bswap16(pdbp->pdb_sl_ptr);
-	dst->pdb_retry_count = pdbp->pdb_retry_delay;
-	dst->pdb_retry_delay = pdbp->pdb_retry_count;
-	dst->pdb_target = pdbp->pdb_initiator;
-	dst->pdb_initiator = pdbp->pdb_target;
-}
-
-static INLINE void
-isp_swizzle_sns_req(struct ispsoftc *isp, sns_screq_t *reqp)
-{
-	u_int16_t index, nwords = reqp->snscb_sblen;
-	reqp->snscb_rblen = bswap16(reqp->snscb_rblen);
-	reqp->snscb_addr[0] = bswap16(reqp->snscb_addr[0]);
-	reqp->snscb_addr[1] = bswap16(reqp->snscb_addr[1]);
-	reqp->snscb_addr[2] = bswap16(reqp->snscb_addr[2]);
-	reqp->snscb_addr[3] = bswap16(reqp->snscb_addr[3]);
-	reqp->snscb_sblen = bswap16(reqp->snscb_sblen);
-	for (index = 0; index < nwords; index++) {
-		reqp->snscb_data[index] = bswap16(reqp->snscb_data[index]);
-	}
-}
-
-static INLINE void
-isp_unswizzle_sns_rsp(struct ispsoftc *isp, sns_scrsp_t *resp, int nwords)
-{
-	int index;
-	/*
-	 * Don't even think about asking. This. Is. So. Lame.
-	 */
-	if (IS_2200(isp) &&
-	    ISP_FW_REVX(isp->isp_fwrev) == ISP_FW_REV(2, 1, 26)) {
-		nwords = 128;
-	}
-	for (index = 0; index < nwords; index++) {
-		resp->snscb_data[index] = bswap16(resp->snscb_data[index]);
-	}
-}
-#endif
 
 /*
  * Common inline functions

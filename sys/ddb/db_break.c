@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.c,v 1.15 2001/06/02 18:09:24 chs Exp $	*/
+/*	$NetBSD: db_break.c,v 1.15.2.1 2002/01/10 19:52:37 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,6 +32,10 @@
 /*
  * Breakpoints.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_break.c,v 1.15.2.1 2002/01/10 19:52:37 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/proc.h>
 

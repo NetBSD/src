@@ -1,4 +1,4 @@
-/* $NetBSD: vsxxx.c,v 1.2 2000/01/08 02:57:22 takemura Exp $ */
+/* $NetBSD: vsxxx.c,v 1.2.10.1 2002/01/10 19:53:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -30,9 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.2 2000/01/08 02:57:22 takemura Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.2.10.1 2002/01/10 19:53:49 thorpej Exp $");
 
 /*
  * Common machinary for VSXXX mice and tablet

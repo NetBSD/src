@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.48.2.1 2001/08/03 04:12:28 lukem Exp $ */
+/*	$NetBSD: autoconf.c,v 1.48.2.2 2002/01/10 19:49:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -81,6 +81,7 @@
 #include <sparc64/sparc64/timerreg.h>
 
 #include <dev/ata/atavar.h>
+#include <dev/ata/wdvar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/sbus/sbusvar.h>
 
@@ -721,7 +722,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			portid = -1;
 		ma.ma_upaid = portid;
 
-		if (getprop(node, "reg", sizeof(*ma.ma_reg), 
+		if (PROM_getprop(node, "reg", sizeof(*ma.ma_reg), 
 			     &ma.ma_nreg, (void**)&ma.ma_reg) != 0)
 			continue;
 #ifdef DEBUG
@@ -734,7 +735,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				printf(" no reg\n");
 		}
 #endif
-		rv = getprop(node, "interrupts", sizeof(*ma.ma_interrupts), 
+		rv = PROM_getprop(node, "interrupts", sizeof(*ma.ma_interrupts), 
 			&ma.ma_ninterrupts, (void**)&ma.ma_interrupts);
 		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
@@ -749,7 +750,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				printf(" no interrupts\n");
 		}
 #endif
-		rv = getprop(node, "address", sizeof(*ma.ma_address), 
+		rv = PROM_getprop(node, "address", sizeof(*ma.ma_address), 
 			&ma.ma_naddress, (void**)&ma.ma_address);
 		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
@@ -784,7 +785,7 @@ struct cfattach mainbus_ca = {
 };
 
 int
-getprop(node, name, size, nitem, bufp)
+PROM_getprop(node, name, size, nitem, bufp)
 	int	node;
 	char	*name;
 	size_t	size;
@@ -795,7 +796,7 @@ getprop(node, name, size, nitem, bufp)
 	long	len;
 
 	*nitem = 0;
-	len = getproplen(node, name);
+	len = PROM_getproplen(node, name);
 	if (len <= 0)
 		return (ENOENT);
 
@@ -821,7 +822,7 @@ getprop(node, name, size, nitem, bufp)
  * Internal form of proplen().  Returns the property length.
  */
 long
-getproplen(node, name)
+PROM_getproplen(node, name)
 	int node;
 	char *name;
 {
@@ -834,25 +835,25 @@ getproplen(node, name)
  * subsequent calls.
  */
 char *
-getpropstring(node, name)
+PROM_getpropstring(node, name)
 	int node;
 	char *name;
 {
 	static char stringbuf[32];
 
-	return (getpropstringA(node, name, stringbuf));
+	return (PROM_getpropstringA(node, name, stringbuf));
 }
 
-/* Alternative getpropstring(), where caller provides the buffer */
+/* Alternative PROM_getpropstring(), where caller provides the buffer */
 char *
-getpropstringA(node, name, buffer)
+PROM_getpropstringA(node, name, buffer)
 	int node;
 	char *name;
 	char *buffer;
 {
 	int blen;
 
-	if (getprop(node, name, 1, &blen, (void **)&buffer) != 0)
+	if (PROM_getprop(node, name, 1, &blen, (void **)&buffer) != 0)
 		blen = 0;
 
 	buffer[blen] = '\0';	/* usually unnecessary */
@@ -864,7 +865,7 @@ getpropstringA(node, name, buffer)
  * The return value is the property, or the default if there was none.
  */
 int
-getpropint(node, name, deflt)
+PROM_getpropint(node, name, deflt)
 	int node;
 	char *name;
 	int deflt;
@@ -910,18 +911,6 @@ node_has_property(node, prop)	/* returns 1 if node has given property */
 }
 
 #ifdef RASTERCONSOLE
-/* Pass a string to the FORTH PROM to be interpreted */
-void
-rominterpret(s)
-	register char *s;
-{
-
-	if (promvec->pv_romvec_vers < 2)
-		promvec->pv_fortheval.v0_eval(strlen(s), s);
-	else
-		promvec->pv_fortheval.v2_eval(s);
-}
-
 /*
  * Try to figure out where the PROM stores the cursor row & column
  * variables.  Returns nonzero on error.
@@ -930,26 +919,20 @@ int
 romgetcursoraddr(rowp, colp)
 	register int **rowp, **colp;
 {
-	char buf[100];
+	cell_t row = NULL, col = NULL;
 
+	OF_interpret("stdout @ is my-self addr line# addr column# ", 0, 2,
+		&col, &row);
 	/*
-	 * line# and column# are global in older proms (rom vector < 2)
-	 * and in some newer proms.  They are local in version 2.9.  The
-	 * correct cutoff point is unknown, as yet; we use 2.9 here.
+	 * We are running on a 64-bit machine, so these things point to
+	 * 64-bit values.  To convert them to pointers to integers, add
+	 * 4 to the address.
 	 */
-	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020009)
-		sprintf(buf,
-		    "' line# >body >user %lx ! ' column# >body >user %lx !",
-		    (u_long)rowp, (u_long)colp);
-	else
-		sprintf(buf,
-		    "stdout @ is my-self addr line# %lx ! addr column# %lx !",
-		    (u_long)rowp, (u_long)colp);
-	*rowp = *colp = NULL;
-	rominterpret(buf);
-	return (*rowp == NULL || *colp == NULL);
+	*rowp = (int *)(row+4);
+	*colp = (int *)(col+4);
+	return (row == NULL || col == NULL);
 }
-#endif
+#endif /* RASTERCONSOLE */
 
 void
 callrom()
@@ -1278,9 +1261,9 @@ device_register(dev, aux)
 		}
 	} else if (strcmp("wd", dvname) == 0) {
 		/* IDE disks. */
-		struct ata_atapi_attach *aa = aux;
+		struct ata_device *adev = aux;
 
-		if (aa->aa_channel == bp->val[0]) {
+		if (adev->adev_channel == bp->val[0]) {
 			nail_bootdev(dev, bp);
 			DPRINTF(ACDB_BOOTDEV, ("\t-- found wd disk %s\n",
 			    dev->dv_xname));

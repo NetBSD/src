@@ -1,4 +1,4 @@
-/* $NetBSD: lk201_ws.c,v 1.2 1998/10/22 17:55:20 drochner Exp $ */
+/* $NetBSD: lk201_ws.c,v 1.2.26.1 2002/01/10 19:53:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,6 +32,9 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lk201_ws.c,v 1.2.26.1 2002/01/10 19:53:48 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 
@@ -61,6 +64,7 @@ lk201_init(lks)
 
 	send(lks, LK_CL_ENABLE);
 	send(lks, LK_PARAM_VOLUME(3));
+	lks->kcvol = (8 - 3) * 100 / 8;
 
 	lks->bellvol = -1; /* not yet set */
 
@@ -175,4 +179,25 @@ lk201_set_leds(lks, leds)
 	send(lks, (0x80 | (newleds & 0x0f)));
 
 	lks->leds_state = leds;
+}
+
+void
+lk201_set_keyclick(lks, vol)
+	struct lk201_state *lks;
+	int vol;
+{
+	unsigned int newvol;
+
+	if (vol == 0)
+		send(lks, LK_CL_DISABLE);
+	else {
+		newvol = 8 - vol * 8 / 100;
+		if (newvol > 7)
+			newvol = 7;
+
+		send(lks, LK_CL_ENABLE);
+		send(lks, LK_PARAM_VOLUME(newvol));
+	}
+
+	lks->kcvol = vol;
 }

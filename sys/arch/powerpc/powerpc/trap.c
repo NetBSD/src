@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.50.2.2 2001/09/13 01:14:24 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.50.2.3 2002/01/10 19:48:08 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,8 +66,8 @@
 #ifndef MULTIPROCESSOR
 volatile int astpending;
 volatile int want_resched;
-#endif
 extern int intr_depth;
+#endif
 
 void *syscall = NULL;	/* XXX dummy symbol for emul_netbsd */
 
@@ -385,7 +385,7 @@ syscall_bad:
 			    "(SSR1=%#x)\n",
 			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
 		}
-		if (frame->srr1 & 0x0002000)
+		if (frame->srr1 & 0x00020000)	/* Bit 14 is set if trap */
 			trapsignal(p, SIGTRAP, EXC_PGM);
 		else
 			trapsignal(p, SIGILL, EXC_PGM);

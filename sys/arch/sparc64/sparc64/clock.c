@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39.4.1 2001/08/03 04:12:28 lukem Exp $ */
+/*	$NetBSD: clock.c,v 1.39.4.2 2002/01/10 19:49:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,7 +90,7 @@
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
-#include <sparc64/dev/ebusreg.h>
+#include <dev/ebus/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
 
 extern u_int64_t cpu_clockrate;
@@ -404,7 +404,7 @@ clockattach(node, bt, bh)
 	struct idprom *idp;
 	int h;
 
-	model = getpropstring(node, "model");
+	model = PROM_getpropstring(node, "model");
 
 #ifdef DIAGNOSTIC
 	if (model == NULL)
@@ -451,9 +451,10 @@ rtc_read_reg(bus_space_tag_t bt, bus_space_handle_t bh, int reg)
 	return (bus_space_read_1(bt, bh, RTC_DATA));
 }
 void 
-rtc_write_reg(bus_space_tag_t bt, bus_space_handle_t bh, int reg, u_int8_t val) {
+rtc_write_reg(bus_space_tag_t bt, bus_space_handle_t bh, int reg, u_int8_t val)
+{
 	bus_space_write_1(bt, bh, RTC_ADDR, reg);
-	bus_space_write_1(bt, bh, RTC_DATA, reg);
+	bus_space_write_1(bt, bh, RTC_DATA, val);
 }
 
 /* ARGSUSED */
@@ -484,7 +485,7 @@ clockattach_rtc(parent, self, aux)
 		return;
 	}
 
-	model = getpropstring(ea->ea_node, "model");
+	model = PROM_getpropstring(ea->ea_node, "model");
 #ifdef DIAGNOSTIC
 	if (model == NULL)
 		panic("clockattach_rtc: no model property");
@@ -636,7 +637,7 @@ myetheraddr(cp)
 		int node, n;
 
 		node = findroot();
-		if (getprop(node, "idprom", sizeof *idp, &n, (void **)&idp) ||
+		if (PROM_getprop(node, "idprom", sizeof *idp, &n, (void **)&idp) ||
 		    n != 1) {
 			printf("\nmyetheraddr: clock not setup yet, "
 			       "and no idprom property in /\n");

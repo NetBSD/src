@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.10 2001/06/20 02:40:14 briggs Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.10.2.1 2002/01/10 19:48:02 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -64,12 +64,11 @@ db_regs_t	ddb_regs;		/* register state */
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->iar)
 
-#define	BKPT_INST	0x7C810808	/* breakpoint instruction */
+#define	BKPT_ASM	"trap"				/* should match BKPT_INST */
+#define	BKPT_INST	0x7fe00008	/* breakpoint instruction */
 
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
-
-#define	FIXUP_PC_AFTER_BREAK(regs)	((regs)->iar -= 4)
 
 #define SR_SINGLESTEP	0x400
 #define	db_clear_single_step(regs)	((regs)->msr &= ~SR_SINGLESTEP)
@@ -114,7 +113,7 @@ db_regs_t	ddb_regs;		/* register state */
  */
 typedef long	kgdb_reg_t;
 #define KGDB_NUMREGS	220	/* Treat all registers as 4-byte */
-#define KGDB_BUFLEN	512
+#define KGDB_BUFLEN	(2*KGDB_NUMREGS*sizeof(kgdb_reg_t)+1)
 #define KGDB_PPC_PC_REG		96	/* first UISA SP register */
 #define KGDB_PPC_MSR_REG	97
 #define KGDB_PPC_CR_REG		98

@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_isa.c,v 1.4 2000/02/26 05:11:27 thorpej Exp $	*/
+/*	$NetBSD: opl_isa.c,v 1.4.8.1 2002/01/10 19:55:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.4.8.1 2002/01/10 19:55:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,14 +80,29 @@ opl_isa_match(parent, match, aux)
 	struct opl_softc sc;
 	int r;
 
+	if (ia->ia_nio < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+
 	memset(&sc, 0, sizeof sc);
 	sc.iot = ia->ia_iot;
-	if (bus_space_map(sc.iot, ia->ia_iobase, OPL_SIZE, 0, &sc.ioh))
+	if (bus_space_map(sc.iot, ia->ia_io[0].ir_addr, OPL_SIZE, 0, &sc.ioh))
 		return (0);
 	r = opl_find(&sc);
         bus_space_unmap(sc.iot, sc.ioh, OPL_SIZE);
-	if (r != 0)
-		ia->ia_iosize = OPL_SIZE;
+	if (r != 0) {
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = OPL_SIZE;
+
+		ia->ia_nirq = 0;
+		ia->ia_niomem = 0;
+		ia->ia_ndrq = 0;
+	}
 	return (r);
 }
 
@@ -99,7 +117,8 @@ opl_isa_attach(parent, self, aux)
 
 	sc->iot = ia->ia_iot;
 
-	if (bus_space_map(sc->iot, ia->ia_iobase, OPL_SIZE, 0, &sc->ioh)) {
+	if (bus_space_map(sc->iot, ia->ia_io[0].ir_addr, OPL_SIZE,
+	    0, &sc->ioh)) {
 		printf("opl_isa_attach: bus_space_map failed\n");
 		return;
 	}

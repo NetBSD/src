@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.6 2000/11/21 00:37:54 jdolecek Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.6.4.1 2002/01/10 19:51:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -39,6 +39,9 @@
  * This module only works on machines with NBPG == 4096.  It's not clear
  * that making it work on other machines is worth the trouble.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.6.4.1 2002/01/10 19:51:50 thorpej Exp $");
 
 #if !defined(__m68k__)
 #error YOU GOTTA BE KIDDING!
@@ -150,7 +153,7 @@ exec_m68k4k_prep_zmagic(p, epp)
 #endif
 		return ETXTBSY;
 	}
-	vn_marktext(epp->ep_vp);
+	epp->ep_vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,

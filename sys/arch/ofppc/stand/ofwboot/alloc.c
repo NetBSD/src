@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.3 1998/02/22 07:42:31 mycroft Exp $	*/
+/*	$NetBSD: alloc.c,v 1.3.28.1 2002/01/10 19:47:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -130,7 +130,9 @@ alloc(size)
 	unsigned size;
 {
 	struct ml *f, *bestf;
+#ifndef ALLOC_FIRST_FIT
 	unsigned bestsize = 0xffffffff;	/* greater than any real size */
+#endif
 	char *help;
 	int failed;
 
@@ -194,7 +196,9 @@ alloc(size)
 	/* we take the best fit */
 	f = bestf;
 
+#ifndef ALLOC_FIRST_FIT
  found:
+#endif
 	/* remove from freelist */
 	LIST_REMOVE(f, list);
 	help = (char *)f;

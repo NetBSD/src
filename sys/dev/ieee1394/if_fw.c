@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.10 2001/07/02 10:46:03 onoe Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.10.2.1 2002/01/10 19:55:16 thorpej Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -38,12 +38,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.10.2.1 2002/01/10 19:55:16 thorpej Exp $");
+
 #include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.124.2.3 2001/09/13 01:14:42 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.124.2.4 2002/01/10 19:49:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -74,6 +74,7 @@
 #undef	SCHED_DEBUG
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 
@@ -4196,7 +4197,6 @@ ret_from_intr_vector:
  *       IRQ# = %tt - 0x40
  */
 
-	.comm	_C_LABEL(intrhand), 15 * PTRSZ	! intrhand[0..14]; 0 => error
 	.globl _C_LABEL(sparc_interrupt)	! This is for interrupt debugging
 _C_LABEL(sparc_interrupt):
 #ifdef TRAPS_USE_IG

@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.11.4.3 2001/09/12 00:47:21 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.11.4.4 2002/01/10 19:55:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * which the user then reads from, and provide an ioctl interface to
  * reset the card, etc.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.11.4.4 2002/01/10 19:55:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,13 +123,21 @@ satlinkprobe(parent, match, aux)
 	bus_space_handle_t ioh;
 	int rv = 0;
 
-	/* Don't allow wildcarding of iobase or drq. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_nio < 1)
 		return (0);
-	if (ia->ia_drq == ISACF_DRQ_DEFAULT)
+	if (ia->ia_ndrq < 1)
 		return (0);
 
-	if (bus_space_map(iot, ia->ia_iobase, SATLINK_IOSIZE, 0, &ioh))
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	/* Don't allow wildcarding of iobase or drq. */
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+	if (ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
+		return (0);
+
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, SATLINK_IOSIZE, 0, &ioh))
 		return (0);
 
 	/*
@@ -134,8 +145,14 @@ satlinkprobe(parent, match, aux)
 	 */
 
 	rv = 1;
-	ia->ia_iosize = SATLINK_IOSIZE;
-	ia->ia_msize = 0;
+
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = SATLINK_IOSIZE;
+
+	ia->ia_ndrq = 1;
+
+	ia->ia_nirq = 0;
+	ia->ia_niomem = 0;
 
 	bus_space_unmap(iot, ioh, SATLINK_IOSIZE);
 	return (rv);
@@ -155,7 +172,7 @@ satlinkattach(parent, self, aux)
 	printf("\n");
 
 	/* Map the card. */
-	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, SATLINK_IOSIZE, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -163,7 +180,7 @@ satlinkattach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_ic = ia->ia_ic;
-	sc->sc_drq = ia->ia_drq;
+	sc->sc_drq = ia->ia_drq[0].ir_drq;
 
 	/* Reset the card. */
 	bus_space_write_1(iot, ioh, SATLINK_COMMAND, SATLINK_CMD_RESET);

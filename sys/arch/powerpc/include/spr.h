@@ -62,6 +62,8 @@
 #define   MPC8240		  0x0081
 #define   MPC7450		  0x8000
 #define   MPC7410		  0x800c
+#define   IBM405GP		  0x4011
+#define   IBM405L		  0x4161
 #define	SPR_IBAT0U		0x210	/* .68 Instruction BAT Reg 0 Upper */
 #define	SPR_IBAT0L		0x211	/* .68 Instruction BAT Reg 0 Lower */
 #define	SPR_IBAT1U		0x212	/* .68 Instruction BAT Reg 1 Upper */
@@ -138,7 +140,7 @@
 #define	  TSR_ENW		  0x80000000 /* Enable Next Watchdog */
 #define	  TSR_WIS		  0x40000000 /* Watchdog Interrupt Status */
 #define	  TSR_WRS_MASK		  0x30000000 /* Watchdog Reset Status */
-#define	  TSR_WRS_NONE		  0x00000000 /* No watchdog reset has occured */
+#define	  TSR_WRS_NONE		  0x00000000 /* No watchdog reset has occurred */
 #define	  TSR_WRS_CORE		  0x10000000 /* Core reset was forced by the watchdog */
 #define	  TSR_WRS_CHIP		  0x20000000 /* Chip reset was forced by the watchdog */
 #define	  TSR_WRS_SYSTEM	  0x30000000 /* System reset was forced by the watchdog */
@@ -168,6 +170,21 @@
 #define	SPR_SRR2		0x3de	/* 4.. Save/Restore Register 2 */
 #define	SPR_SRR3		0x3df	/* 4.. Save/Restore Register 3 */
 #define	SPR_DBSR		0x3f0	/* 4.. Debug Status Register */
+#define	  DBSR_IC		  0x80000000 /* Instruction completion debug event */
+#define	  DBSR_BT		  0x40000000 /* Branch Taken debug event */
+#define	  DBSR_EDE		  0x20000000 /* Exception debug event */
+#define	  DBSR_TIE		  0x10000000 /* Trap Instruction debug event */
+#define	  DBSR_UDE		  0x08000000 /* Unconditional debug event */
+#define	  DBSR_IA1		  0x04000000 /* IAC1 debug event */
+#define	  DBSR_IA2		  0x02000000 /* IAC2 debug event */
+#define	  DBSR_DR1		  0x01000000 /* DAC1 Read debug event */
+#define	  DBSR_DW1		  0x00800000 /* DAC1 Write debug event */
+#define	  DBSR_DR2		  0x00400000 /* DAC2 Read debug event */
+#define	  DBSR_DW2		  0x00200000 /* DAC2 Write debug event */
+#define	  DBSR_IDE		  0x00100000 /* Imprecise debug event */
+#define	  DBSR_IA3		  0x00080000 /* IAC3 debug event */
+#define	  DBSR_IA4		  0x00040000 /* IAC4 debug event */
+#define	  DBSR_MRR		  0x00000300 /* Most recent reset */
 #define	SPR_HID0		0x3f0	/* ..8 Hardware Implementation Register 0 */
 #define	SPR_HID1		0x3f1	/* ..8 Hardware Implementation Register 1 */
 #define	SPR_DBCR0		0x3f2	/* 4.. Debug Control Register 0 */

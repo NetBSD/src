@@ -1,15 +1,15 @@
-# $NetBSD: std.mmeye,v 1.6 2001/01/03 18:14:45 itojun Exp $
+# $NetBSD: std.mmeye,v 1.6.4.1 2002/01/10 19:46:26 thorpej Exp $
 #
 # standard, required NetBSD/mmeye 'options'
 
 machine mmeye sh3
 
-options		IOM_ROM_BEGIN=0x00000000
-options		IOM_RAM_SIZE=0x01000000	# 16MB
-options		IOM_RAM_BEGIN=0x8c000000
-options		IOM_ROM_SIZE=0x00200000	#  2MB
+options 	IOM_ROM_BEGIN=0x00000000
+options 	IOM_RAM_SIZE=0x01000000		# 16MB
+options 	IOM_RAM_BEGIN=0x8c000000
+options 	IOM_ROM_SIZE=0x00200000		# 2MB
 
-options EXEC_SCRIPT	# exec #! scripts
+options 	EXEC_SCRIPT			# exec #! scripts
 
 makeoptions	ENDIAN="-EB"
-makeoptions 	LDSCRIPTBASE="sh.x"	# for big endian
+makeoptions	LDSCRIPTBASE="sh.x"		# for big endian

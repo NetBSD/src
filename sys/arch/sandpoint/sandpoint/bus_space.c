@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 2001/06/10 03:16:31 briggs Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.1.4.1 2002/01/10 19:48:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 
 #include <machine/bus.h>
 
+static paddr_t sandpoint_memio_mmap (bus_space_tag_t, bus_addr_t, off_t, int,
+	int);
 static int sandpoint_memio_map (bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	bus_space_handle_t *);
 static void sandpoint_memio_unmap (bus_space_tag_t, bus_space_handle_t, bus_size_t);
@@ -55,21 +57,25 @@ static void sandpoint_memio_free (bus_space_tag_t, bus_space_handle_t, bus_size_
 
 const struct powerpc_bus_space sandpoint_io_bs_tag = {
 	SANDPOINT_BUS_SPACE_IO, 0xfe000000, 0x00000000, 0xfec00000,
+	sandpoint_memio_mmap,
 	sandpoint_memio_map, sandpoint_memio_unmap, sandpoint_memio_alloc,
 	sandpoint_memio_free
 };
 const struct powerpc_bus_space sandpoint_isa_io_bs_tag = {
 	SANDPOINT_BUS_SPACE_IO, 0xfe000000, 0x00000000, 0xfe010000,
+	sandpoint_memio_mmap,
 	sandpoint_memio_map, sandpoint_memio_unmap, sandpoint_memio_alloc,
 	sandpoint_memio_free
 };
 const struct powerpc_bus_space sandpoint_mem_bs_tag = {
 	SANDPOINT_BUS_SPACE_MEM, 0x00000000, 0x80000000, 0xfe000000,
+	sandpoint_memio_mmap,
 	sandpoint_memio_map, sandpoint_memio_unmap, sandpoint_memio_alloc,
 	sandpoint_memio_free
 };
 const struct powerpc_bus_space sandpoint_isa_mem_bs_tag = {
 	SANDPOINT_BUS_SPACE_MEM, 0x00000000, 0xfd000000, 0xfe000000,
+	sandpoint_memio_mmap,
 	sandpoint_memio_map, sandpoint_memio_unmap, sandpoint_memio_alloc,
 	sandpoint_memio_free
 };
@@ -102,6 +108,16 @@ sandpoint_bus_space_mallocok(void)
 {
 
 	ioport_malloc_safe = 1;
+}
+
+static paddr_t
+sandpoint_memio_mmap(t, bpa, offset, prot, flags)
+	bus_space_tag_t t;
+	bus_addr_t bpa;
+	off_t offset;
+	int prot, flags;
+{
+	return ((bpa + offset) >> PGSHIFT);
 }
 
 static int

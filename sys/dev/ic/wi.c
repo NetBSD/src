@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.21.2.2 2001/08/25 06:16:18 thorpej Exp $	*/
+/*	$NetBSD: wi.c,v 1.21.2.3 2002/01/10 19:55:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -68,6 +68,9 @@
  * FreeBSD driver ported to NetBSD by Bill Sommerfeld in the back of the
  * Oslo IETF plenary meeting.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.21.2.3 2002/01/10 19:55:10 thorpej Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -295,6 +298,9 @@ static void wi_rxeof(sc)
 		return;
 	}
 
+	/*
+	 * Drop undecryptable or packets with receive errors here
+	 */
 	if (le16toh(rx_frame.wi_status) & WI_STAT_ERRSTAT) {
 		ifp->if_ierrors++;
 		return;
@@ -418,8 +424,6 @@ void wi_inquire(xsc)
 		return;
 
 	wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_COUNTERS);
-
-	return;
 }
 
 void wi_update_stats(sc)
@@ -438,28 +442,65 @@ void wi_update_stats(sc)
 
 	wi_read_data(sc, id, 0, (char *)&gen, 4);
 
-	if (gen.wi_type != WI_INFO_COUNTERS)
-		return;
+	switch (gen.wi_type) {
+	case WI_INFO_COUNTERS:
+		/* some card versions have a larger stats structure */
+		len = (gen.wi_len - 1 < sizeof(sc->wi_stats) / 4) ?
+			gen.wi_len - 1 : sizeof(sc->wi_stats) / 4;
+		ptr = (u_int32_t *)&sc->wi_stats;
 
-	/* some card versions have a larger stats structure */
-	len = (gen.wi_len - 1 < sizeof(sc->wi_stats) / 4) ?
-		gen.wi_len - 1 : sizeof(sc->wi_stats) / 4;
-	ptr = (u_int32_t *)&sc->wi_stats;
-
-	for (i = 0; i < len; i++) {
-		t = CSR_READ_2(sc, WI_DATA1);
+		for (i = 0; i < len; i++) {
+			t = CSR_READ_2(sc, WI_DATA1);
 #ifdef WI_HERMES_STATS_WAR
-		if (t > 0xF000)
-			t = ~t & 0xFFFF;
+			if (t > 0xF000)
+				t = ~t & 0xFFFF;
 #endif
-		ptr[i] += t;
+			ptr[i] += t;
+		}
+
+		ifp->if_collisions = sc->wi_stats.wi_tx_single_retries +
+			sc->wi_stats.wi_tx_multi_retries +
+			sc->wi_stats.wi_tx_retry_limit;
+		break;
+
+	case WI_INFO_LINK_STAT: {
+		static char *msg[] = {
+			"connected",
+			"disconnected",
+			"AP change",
+			"AP out of range",
+			"AP in range"
+		};
+
+		if (gen.wi_len != 2) {
+#ifdef WI_DEBUG
+			printf("WI_INFO_LINK_STAT: len=%d\n", gen.wi_len);
+#endif
+			break;
+		}
+		t = CSR_READ_2(sc, WI_DATA1);
+		if ((t < 1) || (t > 5)) {
+#ifdef WI_DEBUG
+			printf("WI_INFO_LINK_STAT: status %d\n", t);
+#endif
+			break;
+		}
+		printf("%s: %s\n", sc->sc_dev.dv_xname, msg[t - 1]);
+		break;
+		}
+
+	default:
+#if 0
+		printf("Got info type: %04x\n", gen.wi_type);
+#endif
+		for (i = 0; i < gen.wi_len; i++) {
+			t = CSR_READ_2(sc, WI_DATA1);
+#if 0
+			printf("[0x%02x] = 0x%04x\n", i, t);
+#endif
+		}
+		break;
 	}
-
-	ifp->if_collisions = sc->wi_stats.wi_tx_single_retries +
-	    sc->wi_stats.wi_tx_multi_retries +
-	    sc->wi_stats.wi_tx_retry_limit;
-
-	return;
 }
 
 int wi_intr(arg)
@@ -580,6 +621,20 @@ wi_reset(sc)
 
 	/* Calibrate timer. */
 	WI_SETVAL(WI_RID_TICK_TIME, 8);
+
+	return;
+}
+
+void
+wi_pci_reset(sc)
+	struct wi_softc		*sc;
+{
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			  WI_PCI_COR, WI_PCI_SOFT_RESET);
+	DELAY(100*1000); /* 100 m sec */
+
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, WI_PCI_COR, 0x0);
+	DELAY(100*1000); /* 100 m sec */
 
 	return;
 }
@@ -932,7 +987,7 @@ static void wi_setmulti(sc)
 allmulti:
 		ifp->if_flags |= IFF_ALLMULTI;
 		memset((char *)&mcast, 0, sizeof(mcast));
-		mcast.wi_type = WI_RID_MCAST;
+		mcast.wi_type = WI_RID_MCAST_LIST;
 		mcast.wi_len = ((ETHER_ADDR_LEN / 2) * 16) + 1;
 
 		wi_write_record(sc, (struct wi_ltv_gen *)&mcast);
@@ -955,7 +1010,7 @@ allmulti:
 	}
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
-	mcast.wi_type = WI_RID_MCAST;
+	mcast.wi_type = WI_RID_MCAST_LIST;
 	mcast.wi_len = ((ETHER_ADDR_LEN / 2) * i) + 1;
 	wi_write_record(sc, (struct wi_ltv_gen *)&mcast);
 }
@@ -1661,7 +1716,7 @@ wi_get_id(sc)
 
 	/* getting chip identity */
 	memset(&ver, 0, sizeof(ver));
-	ver.wi_type = WI_RID_CARDID;
+	ver.wi_type = WI_RID_CARD_ID;
 	ver.wi_len = 5;
 	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
 	printf("%s: using ", sc->sc_dev.dv_xname);
@@ -1698,6 +1753,10 @@ wi_get_id(sc)
 		printf("RF:PRISM2.5 MAC:ISL3873");
 		sc->sc_prism2 = 1;
 		break;
+	case WI_NIC_3874A:
+		printf("RF:PRISM2.5 MAC:ISL3874A(PCI)");
+		sc->sc_prism2 = 1;
+		break;
 	default:
 		printf("Lucent chip or unknown chip\n");
 		sc->sc_prism2 = 0;
@@ -1707,7 +1766,7 @@ wi_get_id(sc)
 	if (sc->sc_prism2) {
 		/* try to get prism2 firm version */
 		memset(&ver, 0, sizeof(ver));
-		ver.wi_type = WI_RID_IDENT;
+		ver.wi_type = WI_RID_STA_IDENTITY;
 		ver.wi_len = 5;
 		wi_read_record(sc, (struct wi_ltv_gen *)&ver);
 		LE16TOH(ver.wi_ver[1]);

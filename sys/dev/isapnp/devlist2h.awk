@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.4 1999/04/06 23:03:44 augustss Exp $
+#	$NetBSD: devlist2h.awk,v 1.4.16.1 2002/01/10 19:55:49 thorpej Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -104,6 +104,7 @@ function checkdecl() {
 		printf("\tconst struct isapnp_matchinfo *devcompat;\n") > hfile
 		printf("\tint ncompat;\n") > hfile
 		printf("};\n\n") > hfile
+		printf("\n#include <sys/cdefs.h>\n__KERNEL_RCSID(0, \"\$NetBSD\$\");\n\n") > cfile
 		printf("#include <sys/param.h>\n") > cfile
 		printf("#include <dev/isapnp/isapnpdevs.h>\n\n") > cfile
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.4.2.1 2001/08/03 04:13:00 lukem Exp $ */
+/*	$NetBSD: iha.c,v 1.4.2.2 2002/01/10 19:54:35 thorpej Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -47,6 +47,9 @@
  * $OpenBSD: iha.c,v 1.3 2001/02/20 00:47:33 krw Exp $
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.4.2.2 2002/01/10 19:54:35 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -71,7 +74,7 @@
  * SCSI Rate Table, indexed by FLAG_SCSI_RATE field of
  * tcs flags.
  */
-static const u_int8_t iha_rate_tbl[8] = {
+static const u_int8_t iha_rate_tbl[] = {
 	/* fast 20		  */
 	/* nanosecond divide by 4 */
 	12,	/* 50ns,  20M	  */
@@ -83,6 +86,7 @@ static const u_int8_t iha_rate_tbl[8] = {
 	50,	/* 200ns, 5M	  */
 	62	/* 250ns, 4M	  */
 };
+#define IHA_MAX_PERIOD	62
 
 #ifdef notused
 static u_int16_t eeprom_default[EEPROM_SIZE] = {
@@ -223,9 +227,9 @@ static int  iha_resel(struct iha_softc *);
 
 static void iha_abort_xs(struct iha_softc *, struct scsipi_xfer *, u_int8_t);
 
-static void iha_minphys(struct buf *);
 void iha_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t,
     void *arg);
+void iha_update_xfer_mode(struct iha_softc *, int);
 
 /*
  * iha_intr - the interrupt service routine for the iha driver
@@ -274,7 +278,7 @@ iha_scsipi_request(chan, req, arg)
 	struct scsipi_periph *periph;
 	struct iha_scsi_req_q *scb;
 	struct iha_softc *sc;
-	int error, flags, s;
+	int error, s;
 
 	sc = (struct iha_softc *)chan->chan_adapter->adapt_dev;
 
@@ -282,7 +286,6 @@ iha_scsipi_request(chan, req, arg)
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
 		periph = xs->xs_periph;
-		flags = xs->xs_control;
 
 		if (xs->cmdlen > sizeof(struct scsi_generic) ||
 		    periph->periph_target >= IHA_MAX_TARGETS) {
@@ -308,24 +311,26 @@ iha_scsipi_request(chan, req, arg)
 		scb->target = periph->periph_target;
 		scb->lun = periph->periph_lun;
 		scb->tcs = &sc->sc_tcs[scb->target];
-		scb->flags = xs->xs_control; /* XXX */
 		scb->scb_id = MSG_IDENTIFY(periph->periph_lun,
 		    (xs->xs_control & XS_CTL_REQSENSE) == 0);
 
 		scb->xs = xs;
-		scb->timeout = xs->timeout;
 		scb->cmdlen = xs->cmdlen;
 		memcpy(&scb->cmd, xs->cmd, xs->cmdlen);
-
 		scb->buflen = xs->datalen;
+		scb->flags = 0;
+		if (xs->xs_control & XS_CTL_DATA_OUT)
+			scb->flags |= FLAG_DATAOUT;
+		if (xs->xs_control & XS_CTL_DATA_IN)
+			scb->flags |= FLAG_DATAIN;
 
-		if (scb->buflen > 0) {
+		if (scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) {
 			error = bus_dmamap_load(sc->sc_dmat, scb->dmap,
 			    xs->data, scb->buflen, NULL,
 			    ((xs->xs_control & XS_CTL_NOSLEEP) ?
 			     BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
 			    BUS_DMA_STREAMING |
-			    ((xs->xs_control & XS_CTL_DATA_IN) ?
+			    ((scb->flags & FLAG_DATAIN) ?
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 
 			if (error) {
@@ -338,7 +343,7 @@ iha_scsipi_request(chan, req, arg)
 			}
 			bus_dmamap_sync(sc->sc_dmat, scb->dmap,
 			    0, scb->dmap->dm_mapsize,
-			    (xs->xs_control & XS_CTL_DATA_IN) ?
+			    (scb->flags & FLAG_DATAIN) ?
 			    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 		}
 
@@ -349,7 +354,30 @@ iha_scsipi_request(chan, req, arg)
 		return; /* XXX */
 
 	case ADAPTER_REQ_SET_XFER_MODE:
-		return; /* XXX */
+		{
+			struct tcs *tcs;
+			struct scsipi_xfer_mode *xm = arg;
+
+			tcs = &sc->sc_tcs[xm->xm_target];
+
+			if ((xm->xm_mode & PERIPH_CAP_WIDE16) != 0 &&
+			    (tcs->flags & FLAG_NO_WIDE) == 0)
+				tcs->flags &= ~(FLAG_WIDE_DONE|FLAG_SYNC_DONE);
+
+			if ((xm->xm_mode & PERIPH_CAP_SYNC) != 0 &&
+			    (tcs->flags & FLAG_NO_SYNC) == 0)
+				tcs->flags &= ~FLAG_SYNC_DONE;
+
+			/*
+			 * If we're not going to negotiate, send the
+			 * notification now, since it won't happen later.
+			 */
+			if ((tcs->flags & (FLAG_WIDE_DONE|FLAG_SYNC_DONE)) ==
+			    (FLAG_WIDE_DONE|FLAG_SYNC_DONE))
+				iha_update_xfer_mode(sc, xm->xm_target);
+
+			return;
+		}
 	}
 }
 
@@ -386,23 +414,21 @@ iha_attach(sc)
 	}
 
 	sc->sc_scb = malloc(sizeof(struct iha_scsi_req_q) * IHA_MAX_SCB,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (sc->sc_scb == NULL) {
 		printf(": cannot allocate SCB\n");
 		return;
 	}
-	memset(sc->sc_scb, 0, sizeof(struct iha_scsi_req_q) * IHA_MAX_SCB);
 
 	for (i = 0, scb = sc->sc_scb; i < IHA_MAX_SCB; i++, scb++) {
 		scb->scb_tagid = i;
 		scb->sgoffset = IHA_SG_SIZE * i;
-		scb->sglist = &sc->sc_sglist[i].sg_element[0];
+		scb->sglist = sc->sc_sglist + IHA_MAX_SG_ENTRIES * i;
 		scb->sg_addr =
 		    sc->sc_dmamap->dm_segs[0].ds_addr + scb->sgoffset;
 
 		error = bus_dmamap_create(sc->sc_dmat,
-		    (IHA_MAX_SG_ENTRIES - 1) * PAGE_SIZE, IHA_MAX_SG_ENTRIES,
-		    (IHA_MAX_SG_ENTRIES - 1) * PAGE_SIZE, 0,
+		    MAXPHYS, IHA_MAX_SG_ENTRIES, MAXPHYS, 0,
 		    BUS_DMA_NOWAIT, &scb->dmap);
 
 		if (error != 0) {
@@ -467,7 +493,7 @@ iha_attach(sc)
 	sc->sc_adapter.adapt_openings = IHA_MAX_SCB;
 	sc->sc_adapter.adapt_max_periph = IHA_MAX_SCB;
 	sc->sc_adapter.adapt_ioctl = NULL;
-	sc->sc_adapter.adapt_minphys = iha_minphys;
+	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = iha_scsipi_request;
 
 	/*
@@ -484,22 +510,6 @@ iha_attach(sc)
 	 * Now try to attach all the sub devices.
 	 */
 	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
-}
-
-/*
- * iha_minphys - reduce bp->b_bcount to something less than
- *		 or equal to the largest I/O possible through
- *		 the adapter. Called from higher layers
- *		 via sc->sc_adapter.scsi_minphys.
- */
-static void
-iha_minphys(bp)
-	struct buf *bp;
-{
-	if (bp->b_bcount > ((IHA_MAX_SG_ENTRIES - 1) * PAGE_SIZE))
-		bp->b_bcount = ((IHA_MAX_SG_ENTRIES - 1) * PAGE_SIZE);
-
-	minphys(bp);
 }
 
 /*
@@ -545,24 +555,10 @@ iha_append_free_scb(sc, scb)
 	scb->ta_stat  = SCSI_OK;
 
 	scb->nextstat = 0;
-	scb->sg_index = 0;
-	scb->sg_max = 0;
-	scb->flags = 0;
-	scb->target = 0;
-	scb->lun = 0;
-	scb->buflen = 0;
-	scb->sg_size = 0;
-	scb->cmdlen = 0;
-	scb->scb_id = 0;
 	scb->scb_tagmsg = 0;
-	scb->timeout = 0;
-	scb->bufaddr = 0;
 
 	scb->xs = NULL;
 	scb->tcs = NULL;
-
-	memset(scb->cmd, 0, sizeof(scb->cmd));
-	memset(scb->sglist, 0, sizeof(scb->sglist));
 
 	/*
 	 * scb_tagid, sg_addr, sglist
@@ -630,7 +626,7 @@ iha_find_pend_scb(sc)
 
 	else
 		TAILQ_FOREACH(scb, &sc->sc_pendscb, chain) {
-			if ((scb->flags & XS_CTL_RESET) != 0)
+			if ((scb->xs->xs_control & XS_CTL_RESET) != 0)
 				/* ALWAYS willing to reset a device */
 				break;
 
@@ -846,8 +842,7 @@ iha_push_sense_request(sc, scb)
 	ss->length = sizeof(struct scsipi_sense_data);
 	ss->control = 0;
 
-	scb->flags &= ~(FLAG_SG | XS_CTL_DATA_OUT);
-	scb->flags |= FLAG_RSENS | XS_CTL_DATA_IN;
+	scb->flags = FLAG_RSENS | FLAG_DATAIN;
 
 	scb->scb_id &= ~MSG_IDENTIFY_DISCFLAG;
 
@@ -966,7 +961,7 @@ iha_scsi(sc)
 	/* program HBA's SCSI ID & target SCSI ID */
 	bus_space_write_1(iot, ioh, TUL_SID, (sc->sc_id << 4) | scb->target);
 
-	if ((scb->flags & XS_CTL_RESET) == 0) {
+	if ((scb->xs->xs_control & XS_CTL_RESET) == 0) {
 		bus_space_write_1(iot, ioh, TUL_SYNCM, tcs->syncm);
 
 		if ((tcs->flags & FLAG_NO_NEG_SYNC) == 0 ||
@@ -984,8 +979,9 @@ iha_scsi(sc)
 		scb->nextstat = 8;
 	}
 
-	if ((scb->flags & XS_CTL_POLL) != 0) {
-		for (; scb->timeout > 0; scb->timeout--) {
+	if ((scb->xs->xs_control & XS_CTL_POLL) != 0) {
+		int timeout;
+		for (timeout = scb->xs->timeout; timeout > 0; timeout--) {
 			if (iha_wait(sc, NO_OP) == -1)
 				break;
 			if (iha_next_state(sc) == -1)
@@ -1000,7 +996,7 @@ iha_scsi(sc)
 		 *
 		 * Conversely, xs->error has not been set yet
 		 */
-		if (scb->timeout == 0)
+		if (timeout == 0)
 			iha_timeout(scb);
 	}
 }
@@ -1302,8 +1298,8 @@ iha_state_4(sc)
 {
 	struct iha_scsi_req_q *scb = sc->sc_actscb;
 
-	if ((scb->flags & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) ==
-	    (XS_CTL_DATA_IN | XS_CTL_DATA_OUT))
+	if ((scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) ==
+	    (FLAG_DATAIN | FLAG_DATAOUT))
 		return (6); /* Both dir flags set => NO xfer was requested */
 
 	for (;;) {
@@ -1312,8 +1308,7 @@ iha_state_4(sc)
 
 		switch (sc->sc_phase) {
 		case PHASE_STATUS_IN:
-			if ((scb->flags & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT))
-			    != 0)
+			if ((scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) != 0)
 				scb->ha_stat = iha_data_over_run(scb);
 			if ((iha_status_msg(sc)) == -1)
 				return (-1);
@@ -1340,10 +1335,10 @@ iha_state_4(sc)
 			break;
 
 		case PHASE_DATA_IN:
-			return (iha_xfer_data(sc, scb, XS_CTL_DATA_IN));
+			return (iha_xfer_data(sc, scb, FLAG_DATAIN));
 
 		case PHASE_DATA_OUT:
-			return (iha_xfer_data(sc, scb, XS_CTL_DATA_OUT));
+			return (iha_xfer_data(sc, scb, FLAG_DATAOUT));
 
 		default:
 			iha_bad_seq(sc);
@@ -1565,28 +1560,29 @@ iha_xfer_data(sc, scb, direction)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int32_t xferlen;
-	u_int8_t xfertype;
+	u_int8_t xfercmd;
 
-	if ((scb->flags & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) != direction)
+	if ((scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) != direction)
 		return (6); /* wrong direction, abandon I/O */
 
 	bus_space_write_4(iot, ioh, TUL_STCNT0, scb->buflen);
 
-	if ((scb->flags & FLAG_SG) == 0) {
-		xferlen = scb->buflen;
-		xfertype = (direction == XS_CTL_DATA_IN) ? ST_X_IN : ST_X_OUT;
+	xfercmd = STRXFR;
+	if (direction == FLAG_DATAIN)
+		xfercmd |= XDIR;
 
-	} else {
+	if (scb->flags & FLAG_SG) {
 		xferlen = scb->sg_size * sizeof(struct iha_sg_element);
-		xfertype = (direction == XS_CTL_DATA_IN) ? ST_SG_IN : ST_SG_OUT;
-	}
+		xfercmd |= SGXFR;
+	} else
+		xferlen = scb->buflen;
 
 	bus_space_write_4(iot, ioh, TUL_DXC,  xferlen);
 	bus_space_write_4(iot, ioh, TUL_DXPA, scb->bufaddr);
-	bus_space_write_1(iot, ioh, TUL_DCMD, xfertype);
+	bus_space_write_1(iot, ioh, TUL_DCMD, xfercmd);
 
 	bus_space_write_1(iot, ioh, TUL_SCMD,
-	    (direction == XS_CTL_DATA_IN) ? XF_DMA_IN : XF_DMA_OUT);
+	    (direction == FLAG_DATAIN) ? XF_DMA_IN : XF_DMA_OUT);
 
 	scb->nextstat = 5;
 
@@ -1601,7 +1597,7 @@ iha_xpad_in(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct iha_scsi_req_q *scb = sc->sc_actscb;
 
-	if ((scb->flags & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) != 0)
+	if ((scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) != 0)
 		scb->ha_stat = HOST_DO_DU;
 
 	for (;;) {
@@ -1633,7 +1629,7 @@ iha_xpad_out(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct iha_scsi_req_q *scb = sc->sc_actscb;
 
-	if ((scb->flags & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) != 0)
+	if ((scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) != 0)
 		scb->ha_stat = HOST_DO_DU;
 
 	for (;;) {
@@ -2025,13 +2021,16 @@ iha_msgin_extended(sc)
 		flags = sc->sc_actscb->tcs->flags;
 
 		if ((flags & FLAG_NO_WIDE) != 0)
-			sc->sc_msg[2] = 0;	/* Offer async xfers only    */
+			/* Offer 8bit xfers only */
+			sc->sc_msg[2] = MSG_EXT_WDTR_BUS_8_BIT;
 
-		else if (sc->sc_msg[2] > 2)	/* BAD MSG: 2 is max  value  */
+		else if (sc->sc_msg[2] > MSG_EXT_WDTR_BUS_32_BIT)
+			/* BAD MSG */
 			return (iha_msgout_reject(sc));
 
-		else if (sc->sc_msg[2] == 2)	/* a request for 32 bit xfers*/
-			sc->sc_msg[2] = 1;	/* Offer 16 instead	     */
+		else if (sc->sc_msg[2] == MSG_EXT_WDTR_BUS_32_BIT)
+			/* Offer 16bit instead */
+			sc->sc_msg[2] = MSG_EXT_WDTR_BUS_16_BIT;
 
 		else {
 			iha_wide_done(sc);
@@ -2069,29 +2068,31 @@ iha_msgin_sdtr(sc)
 
 	default_period = iha_rate_tbl[flags & FLAG_SCSI_RATE];
 
-	if (sc->sc_msg[3] == 0) /* target offered async only. Accept it. */
+	if (sc->sc_msg[3] == 0)
+		/* target offered async only. Accept it. */
 		return (0);
 
 	newoffer = 0;
 
 	if ((flags & FLAG_NO_SYNC) != 0) {
 		sc->sc_msg[3] = 0;
-		newoffer   = 1;
+		newoffer = 1;
 	}
 
 	if (sc->sc_msg[3] > IHA_MAX_OFFSET) {
 		sc->sc_msg[3] = IHA_MAX_OFFSET;
-		newoffer   = 1;
+		newoffer = 1;
 	}
 
 	if (sc->sc_msg[2] < default_period) {
 		sc->sc_msg[2] = default_period;
-		newoffer   = 1;
+		newoffer = 1;
 	}
 
-	if (sc->sc_msg[2] >= 59) { /* XXX magic */
+	if (sc->sc_msg[2] > IHA_MAX_PERIOD) {
+		/* Use async */
 		sc->sc_msg[3] = 0;
-		newoffer   = 1;
+		newoffer = 1;
 	}
 
 	return (newoffer);
@@ -2184,13 +2185,13 @@ static int
 iha_msgout_sdtr(sc)
 	struct iha_softc *sc;
 {
-	int rateindex;
+	struct tcs *tcs = sc->sc_actscb->tcs;
 
-	rateindex = sc->sc_actscb->tcs->flags & FLAG_SCSI_RATE;
+	tcs->flags |= FLAG_SYNC_DONE;
 
 	sc->sc_msg[0] = MSG_EXT_SDTR_LEN;
 	sc->sc_msg[1] = MSG_EXT_SDTR;
-	sc->sc_msg[2] = iha_rate_tbl[rateindex];
+	sc->sc_msg[2] = iha_rate_tbl[tcs->flags & FLAG_SCSI_RATE];
 	sc->sc_msg[3] = IHA_MAX_OFFSET; /* REQ/ACK */
 
 	return (iha_msgout_extended(sc));
@@ -2215,6 +2216,8 @@ iha_wide_done(sc)
 	tcs->flags &= ~FLAG_SYNC_DONE;
 	tcs->flags |=  FLAG_WIDE_DONE;
 
+	iha_update_xfer_mode(sc, sc->sc_actscb->target);
+
 	bus_space_write_1(iot, ioh, TUL_SCONFIG0, tcs->sconfig0);
 	bus_space_write_1(iot, ioh, TUL_SYNCM, tcs->syncm);
 }
@@ -2228,26 +2231,26 @@ iha_sync_done(sc)
 	struct tcs *tcs = sc->sc_actscb->tcs;
 	int i;
 
-	if ((tcs->flags & FLAG_SYNC_DONE) == 0) {
-		tcs->period = sc->sc_msg[2];
-		tcs->offset = sc->sc_msg[3];
-		if (tcs->offset != 0) {
-			tcs->syncm |= tcs->offset;
+	tcs->period = sc->sc_msg[2];
+	tcs->offset = sc->sc_msg[3];
+	if (tcs->offset != 0) {
+		tcs->syncm |= tcs->offset;
 
-			/* pick the highest possible rate */
-			for (i = 0; i < 8; i++)
-				if (iha_rate_tbl[i] >= tcs->period)
-					break;
+		/* pick the highest possible rate */
+		for (i = 0; i < sizeof(iha_rate_tbl); i++)
+			if (iha_rate_tbl[i] >= tcs->period)
+				break;
 
-			tcs->syncm |= (i << 4);
-			tcs->sconfig0 |= ALTPD;
-		}
-
-		tcs->flags |= FLAG_SYNC_DONE;
-
-		bus_space_write_1(iot, ioh, TUL_SCONFIG0, tcs->sconfig0);
-		bus_space_write_1(iot, ioh, TUL_SYNCM, tcs->syncm);
+		tcs->syncm |= (i << 4);
+		tcs->sconfig0 |= ALTPD;
 	}
+
+	tcs->flags |= FLAG_SYNC_DONE;
+
+	iha_update_xfer_mode(sc, sc->sc_actscb->target);
+
+	bus_space_write_1(iot, ioh, TUL_SCONFIG0, tcs->sconfig0);
+	bus_space_write_1(iot, ioh, TUL_SYNCM, tcs->syncm);
 }
 
 void
@@ -2404,10 +2407,10 @@ iha_done_scb(sc, scb)
 		/* Cancel the timeout. */
 		callout_stop(&xs->xs_callout);
 
-		if (xs->datalen > 0) {
+		if (scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) {
 			bus_dmamap_sync(sc->sc_dmat, scb->dmap,
 			    0, scb->dmap->dm_mapsize,
-			    (xs->xs_control & XS_CTL_DATA_IN) ?
+			    (scb->flags & FLAG_DATAIN) ?
 			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, scb->dmap);
 		}
@@ -2441,7 +2444,7 @@ iha_done_scb(sc, scb)
 
 				if ((scb->flags & FLAG_RSENS) != 0 ||
 				    iha_push_sense_request(sc, scb) != 0) {
-					scb->flags &= FLAG_RSENS;
+					scb->flags &= ~FLAG_RSENS;
 					printf("%s: request sense failed\n",
 					    sc->sc_dev.dv_xname);
 					xs->error = XS_DRIVER_STUFFUP;
@@ -2537,8 +2540,9 @@ iha_exec_scb(sc, scb)
 		    scb->sgoffset, IHA_SG_SIZE,
 		    BUS_DMASYNC_PREWRITE);
 
-		scb->flags |= FLAG_SG; /* XXX */
+		scb->flags |= FLAG_SG;
 		scb->sg_size = scb->sg_max = nseg;
+		scb->sg_index = 0;
 
 		scb->bufaddr = scb->sg_addr;
 	} else
@@ -2555,7 +2559,8 @@ iha_exec_scb(sc, scb)
 
 	s = splbio();
 
-	if (((scb->flags & XS_RESET) != 0) || (scb->cmd[0] == REQUEST_SENSE))
+	if (((scb->xs->xs_control & XS_RESET) != 0) ||
+	    (scb->cmd[0] == REQUEST_SENSE))
 		iha_push_pend_scb(sc, scb);   /* Insert SCB at head of Pend */
 	else
 		iha_append_pend_scb(sc, scb); /* Append SCB to tail of Pend */
@@ -2876,3 +2881,29 @@ iha_reset_tcs(tcs, config0)
 	tcs->syncm = 0;
 	tcs->sconfig0 = config0;
 }
+
+void
+iha_update_xfer_mode(sc, target)
+	struct iha_softc *sc;
+	int target;
+{
+	struct tcs *tcs = &sc->sc_tcs[target];
+	struct scsipi_xfer_mode xm;
+
+	xm.xm_target = target;
+	xm.xm_mode = 0;
+	xm.xm_period = 0;
+	xm.xm_offset = 0;
+
+	if (tcs->syncm & PERIOD_WIDE_SCSI)
+		xm.xm_mode |= PERIPH_CAP_WIDE16;
+
+	if (tcs->period) {
+		xm.xm_mode |= PERIPH_CAP_SYNC;
+		xm.xm_period = tcs->period;
+		xm.xm_offset = tcs->offset;
+	}
+
+	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_XFER_MODE, &xm);
+}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.4 2001/06/27 03:31:42 fredette Exp $	*/
+/*	$NetBSD: machdep.h,v 1.4.2.1 2002/01/10 19:49:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -69,7 +69,7 @@ extern int fputype;
 
 extern label_t *nofault;
 
-extern vm_offset_t vmmap;	/* XXX - See mem.c */
+extern vaddr_t vmmap;	/* XXX - See mem.c */
 
 void	clock_init  __P((void));
 void	cninit __P((void));
@@ -109,12 +109,12 @@ void	zs_init __P((void));
 struct sun2_kcore_hdr;
 
 /* Kernel virtual address space available: */
-extern vm_offset_t virtual_avail, virtual_end;
+extern vaddr_t virtual_avail, virtual_end;
 /* Physical address space available: */
-extern vm_offset_t avail_start, avail_end;
+extern paddr_t avail_start, avail_end;
 
 /* pmap.c */
-void	pmap_bootstrap __P((vm_offset_t nextva));
+void	pmap_bootstrap __P((vaddr_t nextva));
 void	pmap_kcore_hdr __P((struct sun2_kcore_hdr *));
 void	pmap_get_pagemap __P((int *pt, int off));
 

@@ -27,11 +27,14 @@
  *	i4b_usr_sti.c - USRobotics Sportster ISDN TA intern (Tina-pp)
  *	-------------------------------------------------------------
  *
- *	$Id: isic_isa_usr_sti.c,v 1.2 2001/02/20 22:24:38 martin Exp $ 
+ *	$Id: isic_isa_usr_sti.c,v 1.2.6.1 2002/01/10 19:55:34 thorpej Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_usr_sti.c,v 1.2.6.1 2002/01/10 19:55:34 thorpej Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_USR_STI

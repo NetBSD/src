@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_ap.c,v 1.1 2000/10/12 03:15:59 onoe Exp $	*/
+/*	$NetBSD: if_tlp_ap.c,v 1.1.6.1 2002/01/10 19:46:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,7 +52,8 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/locore.h>
+
+#include <mips/cache.h>
 
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii_bitbang.h>
@@ -164,10 +165,10 @@ tlp_ap_attach(parent, self, aux)
 	/*
 	 * Initialize bus specific parameters.
 	 */
-	if (mips_L2CacheLSize > 0)
-		sc->sc_cacheline = mips_L2CacheLSize / 4;
-	else if (mips_L1DCacheLSize > 0)
-		sc->sc_cacheline = mips_L1DCacheLSize / 4;
+	if (mips_sdcache_line_size > 0)
+		sc->sc_cacheline = mips_sdcache_line_size / 4;
+	else if (mips_pdcache_line_size > 0)
+		sc->sc_cacheline = mips_pdcache_line_size / 4;
 	else
 		sc->sc_cacheline = 4;
 	sc->sc_maxburst = sc->sc_cacheline;		/* XXX */

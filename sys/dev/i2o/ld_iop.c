@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.7.2.1 2001/08/25 06:16:11 thorpej Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.7.2.2 2002/01/10 19:54:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * devices.  Currently, this doesn't handle anything more complex than
  * fixed direct-access devices.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.7.2.2 2002/01/10 19:54:02 thorpej Exp $");
 
 #include "opt_i2o.h"
 #include "rnd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.70.4.1 2001/08/03 04:13:10 lukem Exp $	*/
+/*	$NetBSD: mcd.c,v 1.70.4.2 2002/01/10 19:55:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -55,7 +55,9 @@
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.70.4.2 2002/01/10 19:55:35 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -233,7 +235,7 @@ mcdattach(parent, self, aux)
 	struct mcd_mbox mbx;
 
 	/* Map i/o space */
-	if (bus_space_map(iot, ia->ia_iobase, MCD_NPORT, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, MCD_NPORT, 0, &ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -272,8 +274,8 @@ mcdattach(parent, self, aux)
 
 	mcd_soft_reset(sc);
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_BIO, mcdintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_BIO, mcdintr, sc);
 }
 
 /*
@@ -951,12 +953,22 @@ mcdprobe(parent, match, aux)
 	bus_space_handle_t ioh;
 	int rv;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
 		return (0);
 
 	/* Map i/o space */
-	if (bus_space_map(iot, ia->ia_iobase, MCD_NPORT, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, MCD_NPORT, 0, &ioh))
 		return 0;
 
 	sc.debug = 0;
@@ -967,8 +979,13 @@ mcdprobe(parent, match, aux)
 	bus_space_unmap(iot, ioh, MCD_NPORT);
 
 	if (rv)	{
-		ia->ia_iosize = MCD_NPORT;
-		ia->ia_msize = 0;
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_addr = MCD_NPORT;
+
+		ia->ia_nirq = 1;
+
+		ia->ia_niomem = 0;
+		ia->ia_ndrq = 0;
 	}
 
 	return (rv);

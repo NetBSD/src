@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_resource.c,v 1.2 1999/05/05 01:51:35 cgd Exp $ */
+/* $NetBSD: osf1_resource.c,v 1.2.20.1 2002/01/10 19:52:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.2.20.1 2002/01/10 19:52:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

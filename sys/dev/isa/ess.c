@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.53 2001/01/06 22:50:02 nathanw Exp $	*/
+/*	$NetBSD: ess.c,v 1.53.4.1 2002/01/10 19:55:22 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -64,6 +64,9 @@
 **	ESS1788 support by Nathan J. Williams and Charles M. Hannum.
 **--
 */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.53.4.1 2002/01/10 19:55:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,6 +234,7 @@ struct audio_hw_if ess_1788_hw_if = {
 	ess_1788_get_props,
 	ess_audio1_trigger_output,
 	ess_audio1_trigger_input,
+	NULL,
 };
 
 struct audio_hw_if ess_1888_hw_if = {
@@ -260,6 +264,7 @@ struct audio_hw_if ess_1888_hw_if = {
 	ess_1888_get_props,
 	ess_audio2_trigger_output,
 	ess_audio1_trigger_input,
+	NULL,
 };
 
 #ifdef AUDIO_DEBUG

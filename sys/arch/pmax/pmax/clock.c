@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.31 2000/06/04 19:14:54 cgd Exp $ */
+/* $NetBSD: clock.c,v 1.31.6.1 2002/01/10 19:47:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,15 +44,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31 2000/06/04 19:14:54 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31.6.1 2002/01/10 19:47:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
 #include <dev/clock_subr.h>
-
-#include <machine/clock_machdep.h>
 
 #include <dev/dec/clockvar.h>
 
@@ -113,20 +111,6 @@ cpu_initclocks()
 	if (clockfns == NULL)
 		panic("cpu_initclocks: no clock attached");
 
-	hz = CLOCK_RATE;	/* 256 Hz clock */
-	tick = 1000000 / hz;	/* number of microseconds between interrupts */
-	tickfix = 1000000 - (hz * tick);
-#ifdef NTP
-	fixtick = tickfix;
-#endif
-	if (tickfix) {
-		int ftp;
-
-		ftp = min(ffs(tickfix), ffs(hz));
-		tickfix >>= (ftp - 1);
-		tickfixinterval = hz >> (ftp - 1);
-        }
-
 	/*
 	 * Establish the clock interrupt; it's a special case.
 	 *
@@ -144,6 +128,23 @@ cpu_initclocks()
 	 * Get the clock started.
 	 */
 	(*clockfns->cf_init)(clockdev);
+
+	/*
+	 * Set hz-related variables after the clock is initialised in
+	 * case the initialisation routines adjusted hz.
+	 */
+	tick = 1000000 / hz;	/* number of microseconds between interrupts */
+	tickfix = 1000000 - (hz * tick);
+#ifdef NTP
+	fixtick = tickfix;
+#endif
+	if (tickfix) {
+		int ftp;
+
+		ftp = min(ffs(tickfix), ffs(hz));
+		tickfix >>= (ftp - 1);
+		tickfixinterval = hz >> (ftp - 1);
+        }
 }
 
 /*

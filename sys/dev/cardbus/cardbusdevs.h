@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusdevs.h,v 1.16 2001/06/20 05:39:36 ichiro Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.16.2.1 2002/01/10 19:53:44 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -56,6 +56,7 @@
 #define	CARDBUS_VENDOR_IODATA	0x10fc		/* IO Data */
 #define	CARDBUS_VENDOR_ACCTON	0x1113		/* Accton Technology */
 #define	CARDBUS_VENDOR_XIRCOM	0x115d		/* Xircom */
+#define	CARDBUS_VENDOR_DLINK	0x1186		/* D-Link Systems */
 #define	CARDBUS_VENDOR_COREGA	0x1259		/* Corega */
 #define	CARDBUS_VENDOR_ALLIEDTELESYN	0x1259		/* Allied Telesyn International */
 #define	CARDBUS_VENDOR_ABOCOM	0x13d1		/* AboCom Systems */
@@ -106,6 +107,9 @@
 /* this is the device id `indicating 21143 driver compatibility' */
 #define	CARDBUS_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 Fast Ethernet Controller (21143) */
 #define	CARDBUS_PRODUCT_XIRCOM_MODEM56	0x0103		/* 56k Modem */
+
+/* D-Link products */
+#define	CARDBUS_PRODUCT_DLINK_DFE_690TXD	0x1340		/* DFE-690TXD 10/100 Ethernet */
 
 /* Corega products */
 #define	CARDBUS_PRODUCT_COREGA_CB_TXD	0xa117		/* FEther CB-TXD 10/100 Ethernet */

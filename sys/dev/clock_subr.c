@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.6 2001/07/07 17:04:02 thorpej Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.6.2.1 2002/01/10 19:52:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,6 +47,9 @@
  * (seconds since 1/1/1970) and yr/mo/day/hr/min/sec
  * Derived from arch/hp300/hp300/clock.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.6.2.1 2002/01/10 19:52:46 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

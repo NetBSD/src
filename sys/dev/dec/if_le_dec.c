@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_dec.c,v 1.11 2001/05/30 11:46:34 mrg Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.11.2.1 2002/01/10 19:53:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jonathan Stone. All rights reserved.
@@ -39,6 +39,9 @@
  *
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_le_dec.c,v 1.11.2.1 2002/01/10 19:53:48 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

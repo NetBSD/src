@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac3.c,v 1.1 2000/10/30 10:07:35 tsubai Exp $	*/
+/*	$NetBSD: dmac3.c,v 1.1.6.1 2002/01/10 19:46:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -37,6 +37,8 @@
 
 #include <newsmips/apbus/apbusvar.h>
 #include <newsmips/apbus/dmac3reg.h>
+
+#include <mips/cache.h>
 
 #define DMA_BURST
 #define DMA_APAD_OFF
@@ -163,7 +165,7 @@ dmac3_start(sc, addr, len, direction)
 	p = sc->sc_dmamap;
 	for (v = start; v < end; v += NBPG) {
 		pa = kvtophys(v);
-		MachFlushDCache(MIPS_PHYS_TO_KSEG0(pa), NBPG);
+		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(pa), NBPG);
 		*p++ = 0;
 		*p++ = (pa >> PGSHIFT) | 0xc0000000;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24.2.2 2001/09/13 01:14:32 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24.2.3 2002/01/10 19:48:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -965,38 +965,20 @@ pmap_alloc_pvpage(pmap, mode)
 	 * if not, try to allocate one.
 	 */
 
-	s = splvm();   /* must protect kmem_map/kmem_object with splvm! */
 	if (pv_cachedva == NULL) {
-		pv_cachedva = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
-		    NBPG, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
+		s = splvm();   /* must protect kmem_map with splvm! */
+		pv_cachedva = uvm_km_kmemalloc(kmem_map, NULL, NBPG,
+		    UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
+		splx(s);
 		if (pv_cachedva == NULL) {
-			splx(s);
 			goto steal_one;
 		}
 	}
-
-	/*
-	 * we have a VA, now let's try and allocate a page in the object
-	 * note: we are still holding splvm to protect kmem_object
-	 */
-
-	if (!simple_lock_try(&uvmexp.kmem_object->vmobjlock)) {
-		splx(s);
-		goto steal_one;
-	}
-
-	pg = uvm_pagealloc(uvmexp.kmem_object, pv_cachedva -
-			   vm_map_min(kernel_map),
-			   NULL, UVM_PGA_USERESERVE);
-	if (pg)
-		pg->flags &= ~PG_BUSY;	/* never busy */
-
-	simple_unlock(&uvmexp.kmem_object->vmobjlock);
-	splx(s);
-	/* splvm now dropped */
-
+	pg = uvm_pagealloc(NULL, pv_cachedva - vm_map_min(kernel_map), NULL,
+	    UVM_PGA_USERESERVE);
 	if (pg == NULL)
 		goto steal_one;
+	pg->flags &= ~PG_BUSY;	/* never busy */
 
 	/*
 	 * add a mapping for our new pv_page and free its entrys (save one!)
@@ -1007,7 +989,7 @@ pmap_alloc_pvpage(pmap, mode)
 
 	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
 	pmap_update(pmap_kernel());
-	pvpage = (struct pv_page *) pv_cachedva;
+	pvpage = (struct pv_page *)pv_cachedva;
 	pv_cachedva = NULL;
 	return(pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
 
@@ -1247,9 +1229,6 @@ pmap_free_pvs(pmap, pvs)
  * => assume caller is holding the pvalloc_lock and that
  *	there is a page on the pv_unusedpgs list
  * => if we can't get a lock on the kmem_map we try again later
- * => note: analysis of MI kmem_map usage [i.e. malloc/free] shows
- *	that if we can lock the kmem_map then we are not already
- *	holding kmem_object's lock.
  */
 
 static void
@@ -1261,18 +1240,17 @@ pmap_free_pvpage()
 	struct pv_page *pvp;
 
 	s = splvm(); /* protect kmem_map */
-
-	pvp = pv_unusedpgs.tqh_first;
+	pvp = TAILQ_FIRST(&pv_unusedpgs);
 
 	/*
 	 * note: watch out for pv_initpage which is allocated out of
 	 * kernel_map rather than kmem_map.
 	 */
+
 	if (pvp == pv_initpage)
 		map = kernel_map;
 	else
 		map = kmem_map;
-
 	if (vm_map_lock_try(map)) {
 
 		/* remove pvp from pv_unusedpgs */
@@ -1289,7 +1267,6 @@ pmap_free_pvpage()
 
 		pv_nfpvents -= PVE_PER_PVPAGE;  /* update free count */
 	}
-
 	if (pvp == pv_initpage)
 		/* no more initpage, we've freed it */
 		pv_initpage = NULL;
@@ -1761,18 +1738,21 @@ pmap_extract(pmap, va, pap)
 	vaddr_t va;
 	paddr_t *pap;
 {
-	paddr_t retval;
-	pt_entry_t *ptes;
+	pt_entry_t *ptes, pte;
 
-	if (pmap->pm_pdir[pdei(va)]) {
-		ptes = pmap_map_ptes(pmap);
-		retval = (paddr_t)(ptes[sh3_btop(va)] & PG_FRAME);
-		pmap_unmap_ptes(pmap);
-		if (pap != NULL)
-			*pap = retval | (va & ~PG_FRAME);
-		return (TRUE);
+	if (pmap->pm_pdir[pdei(va)] == 0) {
+		return (FALSE);
 	}
-	return (FALSE);
+	ptes = pmap_map_ptes(pmap);
+	pte = ptes[sh3_btop(va)];
+	pmap_unmap_ptes(pmap);
+	if ((pte & PG_V) == 0) {
+		return (FALSE);
+	}
+	if (pap != NULL) {
+		*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
+	}
+	return (TRUE);
 }
 
 
@@ -2252,18 +2232,6 @@ pmap_page_remove(pg)
 #endif
 
 		opte = ptes[sh3_btop(pve->pv_va)];
-#if 1 /* XXX Work-around for kern/12554. */
-		if (opte & PG_W) {
-#ifdef DEBUG
-			printf("pmap_page_remove: wired mapping for "
-			    "0x%lx (wire count %d) not removed\n",
-			    VM_PAGE_TO_PHYS(pg), pg->wire_count);
-#endif
-			prevptr = &pve->pv_next;
-			pmap_unmap_ptes(pve->pv_pmap);	/* unlocks pmap */
-			continue;
-		}
-#endif /* kern/12554 */
 		ptes[sh3_btop(pve->pv_va)] = 0;			/* zap! */
 
 		if (opte & PG_W)
@@ -2432,16 +2400,6 @@ pmap_changebit(struct pv_head *pvh, pt_entry_t set, pt_entry_t mask)
 	pt_entry_t *ptes, npte;
 
 	for (pve = pvh->pvh_list; pve != NULL; pve = pve->pv_next) {
-		/*
-		 * XXX Don't write protect pager mappings.
-		 */
-		if (pve->pv_pmap == pmap_kernel() &&
-/* XXX */	    (mask == ~(PG_RW))) {
-			if (pve->pv_va >= uvm.pager_sva &&
-			    pve->pv_va < uvm.pager_eva)
-				continue;
-		}
-
 		ptes = pmap_map_ptes(pve->pv_pmap);		/* locks pmap */
 		npte = (ptes[sh3_btop(pve->pv_va)] | set) & mask;
 		if (ptes[sh3_btop(pve->pv_va)] != npte) {
@@ -3192,7 +3150,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 		ptp = pmap_get_ptp(pmap, pdei(va), FALSE);
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
-				return ENOMEM;
+				error = ENOMEM;
+				goto out;
 			}
 			panic("pmap_enter: get ptp failed");
 		}

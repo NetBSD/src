@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.5 2000/10/16 03:18:04 erh Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.5.4.1 2002/01/10 19:51:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.5.4.1 2002/01/10 19:51:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

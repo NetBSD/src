@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.7 2001/07/08 21:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.7.2.1 2002/01/10 19:48:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -59,9 +59,6 @@
 #include <net/bpf.h>
 #endif 
 
-/* XXXrkb: cheap hack until parents pass in DMA tags */
-#define _SGIMIPS_BUS_DMA_PRIVATE
-
 #include <machine/bus.h>
 #include <machine/intr.h>
 
@@ -79,19 +76,18 @@
 /*
  * Short TODO list:
  *	(1) Do counters for bad-RX packets.
- *	(2) Inherit DMA tag via config machinery, don't hard-code it.
- *	(3) Allow multi-segment transmits, instead of copying to a single,
+ *	(2) Allow multi-segment transmits, instead of copying to a single,
  *	    contiguous mbuf.
- *	(4) Verify sq_stop() turns off enough stuff; I was still getting
+ *	(3) Verify sq_stop() turns off enough stuff; I was still getting
  *	    seeq interrupts after sq_stop().
- *	(5) Fix up printfs in driver (most should only fire ifdef SQ_DEBUG
+ *	(4) Fix up printfs in driver (most should only fire ifdef SQ_DEBUG
  *	    or something similar.
- *	(6) Implement EDLC modes: especially packet auto-pad and simplex
+ *	(5) Implement EDLC modes: especially packet auto-pad and simplex
  *	    mode.
- *	(7) Should the driver filter out its own transmissions in non-EDLC
+ *	(6) Should the driver filter out its own transmissions in non-EDLC
  *	    mode?
- *	(8) Multicast support -- multicast filter, address management, ...
- *	(9) Deal with RB0 (recv buffer overflow) on reception.  Will need
+ *	(7) Multicast support -- multicast filter, address management, ...
+ *	(8) Deal with RB0 (recv buffer overflow) on reception.  Will need
  *	    to figure out if RB0 is read-only as stated in one spot in the
  *	    HPC spec or read-write (ie, is the 'write a one to clear it')
  *	    the correct thing?
@@ -154,10 +150,14 @@ struct cfattach sq_ca = {
 };
 
 static int
-sq_match(struct device *parent, struct cfdata *match, void *aux)
+sq_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	/* XXX! */
-	return 1;
+	struct hpc_attach_args *ha = aux;
+
+	if (strcmp(ha->ha_name, cf->cf_driver->cd_name) == 0)
+		return (1);
+
+	return (0);
 }
 
 static void
@@ -169,26 +169,25 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	struct hpc_attach_args *haa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if; 
 
-	sc->sc_hpct = haa->ha_iot;
-	if ((err = bus_space_subregion(haa->ha_iot, haa->ha_ioh,
-				       HPC_ENET_REGS, 
+	sc->sc_hpct = haa->ha_st;
+	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
+				       haa->ha_dmaoff, 
 				       HPC_ENET_REGS_SIZE,
 				       &sc->sc_hpch)) != 0) {
 		printf(": unable to map HPC DMA registers, error = %d\n", err);
 		goto fail_0;
 	}
 
-	sc->sc_regt = haa->ha_iot;
-	if ((err = bus_space_subregion(haa->ha_iot, haa->ha_ioh,
-				       HPC_ENET_DEVREGS, 
+	sc->sc_regt = haa->ha_st;
+	if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
+				       haa->ha_devoff, 
 				       HPC_ENET_DEVREGS_SIZE,
 				       &sc->sc_regh)) != 0) {
 		printf(": unable to map Seeq registers, error = %d\n", err);
 		goto fail_0;
 	}
 
-	/* XXXrkb: should be inherited from parent bus, but works for now */
-	sc->sc_dmat = &sgimips_default_bus_dma_tag;
+	sc->sc_dmat = haa->ha_dmat;
 
 	if ((err = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct sq_control), 
 				    PAGE_SIZE, PAGE_SIZE, &sc->sc_cdseg, 
@@ -259,7 +258,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_6;
 	}
 
-	if ((cpu_intr_establish(3, IPL_NET, sq_intr, sc)) == NULL) {
+	if ((cpu_intr_establish(haa->ha_irq, IPL_NET, sq_intr, sc)) == NULL) {
 		printf(": unable to establish interrupt!\n");
 		goto fail_6;
 	}

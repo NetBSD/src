@@ -1,4 +1,4 @@
-/* $NetBSD: bt463.c,v 1.3.6.1 2001/08/25 06:16:14 thorpej Exp $ */
+/* $NetBSD: bt463.c,v 1.3.6.2 2002/01/10 19:54:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,9 @@
   *	 NetBSD: tga_bt463.c,v 1.5 2000/03/04 10:27:59 elric Exp 
   */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.3.6.2 2002/01/10 19:54:17 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -131,6 +134,7 @@ struct ramdac_funcs bt463_funcsstruct = {
 	bt463_check_curcmap,
 	bt463_set_curcmap,
 	bt463_get_curcmap,
+	NULL,
 };
 
 /*
@@ -269,7 +273,7 @@ bt463_init(rc)
 
 	BTWREG(data, BT463_IREG_COMMAND_0, 0x40);
 	BTWREG(data, BT463_IREG_COMMAND_1, 0x48);
-	BTWREG(data, BT463_IREG_COMMAND_2, 0xC0);
+	BTWREG(data, BT463_IREG_COMMAND_2, 0x40);
 
 	/*
 	 * Initialize the read mask.
@@ -292,7 +296,7 @@ bt463_init(rc)
 	BTWREG(data, BT463_IREG_TEST, 0);
 
 	/*
-	 * Initalize the RAMDAC info struct to hold all of our
+	 * Initialize the RAMDAC info struct to hold all of our
 	 * data, and fill it in.
 	 */
 	data->changed = DATA_ALL_CHANGED;

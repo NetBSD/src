@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.9.8.1 2001/08/03 04:12:27 lukem Exp $ */
+/*	$NetBSD: autoconf.h,v 1.9.8.2 2002/01/10 19:49:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -126,16 +126,16 @@ struct mainbus_attach_args {
 /*
  * length; the others convert or make some other guarantee.
  */
-long	getproplen __P((int node, char *name));
-int	getprop __P((int, char *, size_t, int *, void **));
-char	*getpropstring __P((int node, char *name));
-int	getpropint __P((int node, char *name, int deflt));
+long	PROM_getproplen __P((int node, char *name));
+int	PROM_getprop __P((int, char *, size_t, int *, void **));
+char	*PROM_getpropstring __P((int node, char *name));
+int	PROM_getpropint __P((int node, char *name, int deflt));
 
 /* Frequently used options node */
 extern int optionsnode;
 
 	/* new interfaces: */
-char	*getpropstringA __P((int, char *, char *));
+char	*PROM_getpropstringA __P((int, char *, char *));
 
 /*
  * The matchbyname function is useful in drivers that are matched
@@ -175,6 +175,7 @@ int	nextsibling __P((int));
 void	callrom __P((void));
 struct device *getdevunit __P((char *, int));
 void	*findzs __P((int));
+void	rominterpret __P((char *));
 int	romgetcursoraddr __P((int **, int **));
 int	findroot __P((void));
 int	findnode __P((int, const char *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink.c,v 1.13 2000/03/30 12:45:32 augustss Exp $	*/
+/*	$NetBSD: elink.c,v 1.13.8.1 2002/01/10 19:55:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Common code for dealing with 3COM ethernet cards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: elink.c,v 1.13.8.1 2002/01/10 19:55:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

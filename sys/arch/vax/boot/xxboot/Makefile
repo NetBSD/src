@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/05/03 05:23:29 matt Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2002/01/10 19:50:00 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -18,7 +18,7 @@ CPPFLAGS+=-D_STANDALONE -DLIBSA_NO_FD_CHECKING -DLIBSA_NO_RAW_ACCESS \
 	-DLIBSA_NO_FS_SYMLINK -DLIBSA_NO_FS_CLOSE \
 	-DLIBSA_NO_FS_WRITE -DLIBSA_NO_FS_SEEK
 BINDIR=	/usr/mdec
-NOMAN=	1
+NOMAN=	# defined
 
 CFLAGS=	-Os
 

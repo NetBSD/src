@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.26.2.1 2001/08/03 04:13:08 lukem Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.26.2.2 2002/01/10 19:55:26 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -30,6 +30,9 @@
  * software, nor does the author assume any responsibility for damages
  * incurred with its use.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.26.2.2 2002/01/10 19:55:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,15 +112,23 @@ ate_match(parent, match, aux)
 	int i, iobase, irq, rv = 0;
 	u_int8_t myea[ETHER_ADDR_LEN];
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/* Disallow wildcarded values. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
 		return (0);
 
 	/*
 	 * See if the sepcified address is valid for MB86965A JLI mode.
 	 */
 	for (i = 0; i < NATE_IOMAP; i++)
-		if (ate_iomap[i] == ia->ia_iobase)
+		if (ate_iomap[i] == ia->ia_io[0].ir_addr)
 			break;
 	if (i == NATE_IOMAP) {
 #ifdef ATE_DEBUG
@@ -127,10 +138,10 @@ ate_match(parent, match, aux)
 	}
 
 	/* Map i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, ATE_NPORTS, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, ATE_NPORTS, 0, &ioh)) {
 #ifdef ATE_DEBUG
 		printf("ate_match: couldn't map iospace 0x%x\n",
-		    ia->ia_iobase);
+		    ia->ia_io[0].ir_addr);
 #endif
 		return (0);
 	}
@@ -142,7 +153,7 @@ ate_match(parent, match, aux)
 		goto out;
 	}
 
-	if (iobase != ia->ia_iobase) {
+	if (iobase != ia->ia_io[0].ir_addr) {
 #ifdef ATE_DEBUG
 		printf("ate_match: unexpected iobase in board: 0x%x\n",
 		    ia->ia_iobase);
@@ -157,18 +168,24 @@ ate_match(parent, match, aux)
 		goto out;
 	}
 
-	if (ia->ia_irq != ISACF_IRQ_DEFAULT) {
-		if (ia->ia_irq != irq) {
+	if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT) {
+		if (ia->ia_irq[0].ir_irq != irq) {
 			printf("ate_match: irq mismatch; "
 			    "kernel configured %d != board configured %d\n",
-			    ia->ia_irq, irq);
+			    ia->ia_irq[0].ir_irq, irq);
 			goto out;
 		}
 	} else
-		ia->ia_irq = irq;
+		ia->ia_irq[0].ir_irq = irq;
 
-	ia->ia_iosize = ATE_NPORTS;
-	ia->ia_msize = 0;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = ATE_NPORTS;
+
+	ia->ia_nirq = 1;
+
+	ia->ia_niomem = 0;
+	ia->ia_ndrq = 0;
+
 	rv = 1;
 
  out:
@@ -262,7 +279,7 @@ ate_find(iot, ioh, iobase, irq)
 	 * We are now almost sure we have an AT1700 at the given
 	 * address.  So, read EEPROM through 86965.  We have to write
 	 * into LSI registers to read from EEPROM.  I want to avoid it
-	 * at this stage, but I cannot test the presense of the chip
+	 * at this stage, but I cannot test the presence of the chip
 	 * any further without reading EEPROM.  FIXME.
 	 */
 	ate_read_eeprom(iot, ioh, eeprom);
@@ -370,7 +387,7 @@ ate_attach(parent, self, aux)
 	printf("\n");
 
 	/* Map i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, ATE_NPORTS, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, ATE_NPORTS, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -416,8 +433,8 @@ ate_attach(parent, self, aux)
 	mb86960_config(sc, NULL, 0, 0);
 
 	/* Establish the interrupt handler. */
-	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_NET, mb86960_intr, sc);
+	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_NET, mb86960_intr, sc);
 	if (isc->sc_ih == NULL)
 		printf("%s: couldn't establish interrupt handler\n",
 		    sc->sc_dev.dv_xname);

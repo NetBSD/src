@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.57 1999/02/18 17:27:39 mycroft Exp $	*/
+/*	$NetBSD: wss.c,v 1.57.22.1 2002/01/10 19:55:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -34,6 +34,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.57.22.1 2002/01/10 19:55:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +111,7 @@ struct audio_hw_if wss_hw_if = {
 	ad1848_isa_get_props,
 	ad1848_isa_trigger_output,
 	ad1848_isa_trigger_input,
+	NULL,
 };
 
 /*

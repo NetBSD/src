@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.11.4.1 2001/08/03 04:12:40 lukem Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.11.4.2 2002/01/10 19:50:54 thorpej Exp $	*/
 
 /*
  * 
@@ -44,6 +44,9 @@
  * M. Satyanarayanan.  
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.11.4.2 2002/01/10 19:50:54 thorpej Exp $");
+
 #ifdef	_LKM
 #define	NVCODA 4
 #else
@@ -71,7 +74,7 @@
 int codadebug = 0;
 
 int coda_vfsop_print_entry = 0;
-#define ENTRY if(coda_vfsop_print_entry) myprintf(("Entered %s\n",__FUNCTION__))
+#define ENTRY if(coda_vfsop_print_entry) myprintf(("Entered %s\n",__func__))
 
 struct vnode *coda_ctlvp;
 struct coda_mntinfo coda_mnttbl[NVCODA]; /* indexed by minor device number */
@@ -109,9 +112,8 @@ struct vfsops coda_vfsops = {
 	eopnotsupp,
     (int (*) (struct vnode *, struct fid *)) eopnotsupp,
     coda_init,
-#ifdef __NetBSD__
+    NULL,
     coda_done,
-#endif
     coda_sysctl,
     (int (*)(void)) eopnotsupp,
     (int (*)(struct mount *, struct mbuf *, int *, struct ucred **))
@@ -538,13 +540,11 @@ coda_init(void)
     ENTRY;
 }
 
-#ifdef __NetBSD__
 void
 coda_done(void)
 {
     ENTRY;
 }
-#endif
 
 int
 coda_sysctl(name, namelen, oldp, oldlp, newp, newl, p)

@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.1 2001/06/19 00:20:12 fvdl Exp $	*/
+/*	$NetBSD: segments.h,v 1.1.2.1 2002/01/10 19:50:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -99,18 +99,18 @@
  * Below is used for TSS and LDT.
  */
 struct sys_segment_descriptor {
-	u_int64_t sd_lolimit:16;	/* segment extent (lsb) */
-	u_int64_t sd_lobase:24;		/* segment base address (lsb) */
-	u_int64_t sd_type:5;		/* segment type */
-	u_int64_t sd_dpl:2;		/* segment descriptor priority level */
-	u_int64_t sd_p:1;		/* segment descriptor present */
-	u_int64_t sd_hilimit:4;		/* segment extent (msb) */
-	u_int64_t sd_xx1:3;		/* avl, long and def32 (not used) */
-	u_int64_t sd_gran:1;		/* limit granularity (byte/page) */
-	u_int64_t sd_hibase:40;		/* segment base address (msb) */
-	u_int64_t sd_xx2:8;		/* reserved */
-	u_int64_t sd_zero:5;		/* must be zero */
-	u_int64_t sd_xx3:19;		/* reserved */
+/*BITFIELDTYPE*/ u_int64_t sd_lolimit:16;/* segment extent (lsb) */
+/*BITFIELDTYPE*/ u_int64_t sd_lobase:24;/* segment base address (lsb) */
+/*BITFIELDTYPE*/ u_int64_t sd_type:5;	/* segment type */
+/*BITFIELDTYPE*/ u_int64_t sd_dpl:2;	/* segment descriptor priority level */
+/*BITFIELDTYPE*/ u_int64_t sd_p:1;	/* segment descriptor present */
+/*BITFIELDTYPE*/ u_int64_t sd_hilimit:4;/* segment extent (msb) */
+/*BITFIELDTYPE*/ u_int64_t sd_xx1:3;	/* avl, long and def32 (not used) */
+/*BITFIELDTYPE*/ u_int64_t sd_gran:1;	/* limit granularity (byte/page) */
+/*BITFIELDTYPE*/ u_int64_t sd_hibase:40;/* segment base address (msb) */
+/*BITFIELDTYPE*/ u_int64_t sd_xx2:8;	/* reserved */
+/*BITFIELDTYPE*/ u_int64_t sd_zero:5;	/* must be zero */
+/*BITFIELDTYPE*/ u_int64_t sd_xx3:19;	/* reserved */
 } __attribute__((packed));
 
 /*
@@ -134,17 +134,17 @@ struct mem_segment_descriptor {
  * Gate descriptors (e.g. indirect descriptors)
  */
 struct gate_descriptor {
-	u_int64_t gd_looffset:16;	/* gate offset (lsb) */
-	u_int64_t gd_selector:16;	/* gate segment selector */
-	u_int64_t gd_ist:3;		/* IST select */
-	u_int64_t gd_xx1:5;		/* reserved */
-	u_int64_t gd_type:5;		/* segment type */
-	u_int64_t gd_dpl:2;		/* segment descriptor priority level */
-	u_int64_t gd_p:1;		/* segment descriptor present */
-	u_int64_t gd_hioffset:48;	/* gate offset (msb) */
-	u_int64_t gd_xx2:8;		/* reserved */
-	u_int64_t gd_zero:5;		/* must be zero */
-	u_int64_t gd_xx3:19;		/* reserved */
+/*BITFIELDTYPE*/ u_int64_t gd_looffset:16;/* gate offset (lsb) */
+/*BITFIELDTYPE*/ u_int64_t gd_selector:16;/* gate segment selector */
+/*BITFIELDTYPE*/ u_int64_t gd_ist:3;	/* IST select */
+/*BITFIELDTYPE*/ u_int64_t gd_xx1:5;	/* reserved */
+/*BITFIELDTYPE*/ u_int64_t gd_type:5;	/* segment type */
+/*BITFIELDTYPE*/ u_int64_t gd_dpl:2;	/* segment descriptor priority level */
+/*BITFIELDTYPE*/ u_int64_t gd_p:1;	/* segment descriptor present */
+/*BITFIELDTYPE*/ u_int64_t gd_hioffset:48;/* gate offset (msb) */
+/*BITFIELDTYPE*/ u_int64_t gd_xx2:8;	/* reserved */
+/*BITFIELDTYPE*/ u_int64_t gd_zero:5;	/* must be zero */
+/*BITFIELDTYPE*/ u_int64_t gd_xx3:19;	/* reserved */
 } __attribute__((packed));
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.36.2.1 2001/08/03 04:12:21 lukem Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.36.2.2 2002/01/10 19:48:57 thorpej Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_ddb.h"
+#include "opt_sparc_arch.h"
 #endif
 
 #include <sys/device.h>

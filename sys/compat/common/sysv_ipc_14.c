@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc_14.c,v 1.1 1999/08/25 04:47:12 thorpej Exp $	*/
+/*	$NetBSD: sysv_ipc_14.c,v 1.1.16.1 2002/01/10 19:51:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc_14.c,v 1.1.16.1 2002/01/10 19:51:00 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/ipc.h>

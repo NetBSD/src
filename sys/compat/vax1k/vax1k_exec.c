@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.2.4.1 2001/09/13 01:15:28 thorpej Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.2.4.2 2002/01/10 19:52:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -38,6 +38,9 @@
  * (via vn_rdwr) as OMAGIC binaries and executed. This will use a little
  * bit more memory, but otherwise won't affect the execution speed.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.2.4.2 2002/01/10 19:52:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

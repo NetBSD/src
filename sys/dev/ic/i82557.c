@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.57.2.2 2001/08/25 06:16:15 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.57.2.3 2002/01/10 19:54:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,6 +71,9 @@
  * Device driver for the Intel i82557 fast Ethernet controller,
  * and its successors, the i82558 and i82559.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.57.2.3 2002/01/10 19:54:33 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1179,7 +1182,7 @@ fxp_tick(void *arg)
 	    le32toh(sp->rx_rnr_errors) +
 	    le32toh(sp->rx_overrun_errors);
 	/*
-	 * If any transmit underruns occured, bump up the transmit
+	 * If any transmit underruns occurred, bump up the transmit
 	 * threshold by another 512 bytes (64 * 8).
 	 */
 	if (sp->tx_underruns) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16.2.2 2001/09/13 01:14:33 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16.2.3 2002/01/10 19:48:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -119,7 +119,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcb->kr15 = (int)p2->p_addr + USPACE - sizeof(struct trapframe);
 
 	/* convert r15, kr15 to physical address , because tlb miss must not
-	   be occured when accessing kernel stack */
+	   occur when accessing kernel stack */
         pcb->kr15 = SH3_PHYS_TO_P1SEG(SH3_P2SEG_TO_PHYS(vtophys(pcb->kr15)));
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.70 2000/12/19 01:09:15 mjl Exp $	*/
+/*	$NetBSD: sb.c,v 1.70.4.1 2002/01/10 19:55:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.70.4.1 2002/01/10 19:55:42 thorpej Exp $");
 
 #include "midi.h"
 
@@ -110,6 +113,7 @@ struct audio_hw_if sb_hw_if = {
 	sbdsp_get_props,
 	sbdsp_trigger_output,
 	sbdsp_trigger_input,
+	0,
 };
 
 /*

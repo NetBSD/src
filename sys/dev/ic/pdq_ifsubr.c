@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.35.2.1 2001/08/03 04:13:03 lukem Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.35.2.2 2002/01/10 19:54:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,6 +33,9 @@
  *	This module provide bus independent BSD specific O/S functions.
  *	(ie. it provides an ifnet interface to the rest of the system)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.35.2.2 2002/01/10 19:54:59 thorpej Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -639,8 +642,8 @@ pdq_os_memalloc_contig(
     if (!not_ok) {
 	steps = 8;
 	pdq->pdq_unsolicited_info.ui_pa_bufstart = sc->sc_uimap->dm_segs[0].ds_addr;
-	cb_segs[0].ds_addr = db_segs[0].ds_addr +
-		 offsetof(pdq_descriptor_block_t, pdqdb_consumer);
+	cb_segs[0] = db_segs[0];
+	cb_segs[0].ds_addr += offsetof(pdq_descriptor_block_t, pdqdb_consumer);
 	cb_segs[0].ds_len = sizeof(pdq_consumer_block_t);
 	not_ok = bus_dmamem_map(sc->sc_dmatag, cb_segs, 1,
 				sizeof(*pdq->pdq_cbp), (caddr_t *) &pdq->pdq_cbp,

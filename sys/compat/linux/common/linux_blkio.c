@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_blkio.c,v 1.4 2001/06/14 20:32:43 thorpej Exp $	*/
+/*	$NetBSD: linux_blkio.c,v 1.4.2.1 2002/01/10 19:51:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_blkio.c,v 1.4.2.1 2002/01/10 19:51:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

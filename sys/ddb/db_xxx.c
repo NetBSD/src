@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.11.4.2 2001/09/13 01:15:33 thorpej Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.11.4.3 2002/01/10 19:52:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,6 +39,9 @@
  * Miscellaneous DDB functions that are intimate (xxx) with various
  * data structures and functions used by the kernel (proc, callout).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.11.4.3 2002/01/10 19:52:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +113,7 @@ db_show_all_procs(addr, haddr, count, modif)
 	int i;
 	char *mode;
 	struct proc *p, *pp;
-	struct timeval tv[3];
+	struct timeval tv[2];
 	const struct proclist_desc *pd;
     
 	if (modif[0] == 0)
@@ -144,11 +147,12 @@ db_show_all_procs(addr, haddr, count, modif)
 
 	/* XXX LOCKING XXX */
 	pd = proclists;
- loop:
-	for (p = LIST_FIRST(pd->pd_list); p != NULL;
-	     p = LIST_NEXT(p, p_list)) {
-		pp = p->p_pptr;
-		if (p->p_stat) {
+	for (pd = proclists; pd->pd_list != NULL; pd++) {
+		LIST_FOREACH(p, pd->pd_list, p_list) {
+			pp = p->p_pptr;
+			if (p->p_stat == 0) {
+				continue;
+			}
 
 			db_printf("%c%-10d", " >"[curproc == p], p->p_pid);
 
@@ -170,13 +174,13 @@ db_show_all_procs(addr, haddr, count, modif)
 			case 'w':
 				db_printf("%10s %8s %4d", p->p_comm,
 				    p->p_emul->e_name,p->p_priority);
-				calcru(p, tv+0, tv+1, tv+2);
-				for(i = 0; i < 2; ++i) {
+				calcru(p, &tv[0], &tv[1], NULL);
+				for (i = 0; i < 2; ++i) {
 					db_printf("%4ld.%1ld",
 					    (long)tv[i].tv_sec,
 					    (long)tv[i].tv_usec/100000);
 				}
-				if(p->p_wchan && p->p_wmesg) {
+				if (p->p_wchan && p->p_wmesg) {
 					db_printf(" %-12s", p->p_wmesg);
 					db_printsym((db_expr_t)p->p_wchan,
 					    DB_STGY_XTRN, db_printf);
@@ -187,9 +191,6 @@ db_show_all_procs(addr, haddr, count, modif)
 			}
 		}
 	}
-	pd++;
-	if (pd->pd_list != NULL)
-		goto loop;
 }
 
 void

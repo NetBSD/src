@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2var.h,v 1.1 1999/03/23 20:04:14 bad Exp $	*/
+/*	$NetBSD: tcic2var.h,v 1.1.22.1 2002/01/10 19:55:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -168,7 +168,7 @@ int	tcic_chip_mem_alloc __P((pcmcia_chipset_handle_t, bus_size_t,
 void	tcic_chip_mem_free __P((pcmcia_chipset_handle_t,
 	    struct pcmcia_mem_handle *));
 int	tcic_chip_mem_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
-	    bus_size_t, struct pcmcia_mem_handle *, bus_addr_t *, int *));
+	    bus_size_t, struct pcmcia_mem_handle *, bus_size_t *, int *));
 void	tcic_chip_mem_unmap __P((pcmcia_chipset_handle_t, int));
 
 int	tcic_chip_io_alloc __P((pcmcia_chipset_handle_t, bus_addr_t,

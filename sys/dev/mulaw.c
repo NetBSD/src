@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.15 2001/01/18 20:28:20 jdolecek Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.15.4.1 2002/01/10 19:52:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -34,12 +34,15 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.15.4.1 2002/01/10 19:52:49 thorpej Exp $");
+
 #include <sys/types.h>
 #include <sys/audioio.h>
 #include <dev/mulaw.h>
 
 /*
- * This table converts a (8 bit) mulaw value two a 16 bit value.
+ * This table converts a (8 bit) mulaw value to a 16 bit value.
  * The 16 bits are represented as an array of two bytes for easier access
  * to the individual bytes.
  */
@@ -248,10 +251,7 @@ static const u_char lintoalaw[256] = {
 };
 
 void
-mulaw_to_ulinear8(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+mulaw_to_ulinear8(void *v, u_char *p, int cc)
 {
 	/* Use the 16 bit table for 8 bits too. */
 	while (--cc >= 0) {
@@ -261,10 +261,7 @@ mulaw_to_ulinear8(v, p, cc)
 }
 
 void
-mulaw_to_slinear8(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+mulaw_to_slinear8(void *v, u_char *p, int cc)
 {
 	/* Use the 16 bit table for 8 bits too. */
 	while (--cc >= 0) {
@@ -274,10 +271,7 @@ mulaw_to_slinear8(v, p, cc)
 }
 
 void
-mulaw_to_ulinear16_le(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+mulaw_to_ulinear16_le(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -292,10 +286,7 @@ mulaw_to_ulinear16_le(v, p, cc)
 }
 
 void
-mulaw_to_ulinear16_be(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+mulaw_to_ulinear16_be(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -310,10 +301,7 @@ mulaw_to_ulinear16_be(v, p, cc)
 }
 
 void
-mulaw_to_slinear16_le(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+mulaw_to_slinear16_le(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -328,10 +316,7 @@ mulaw_to_slinear16_le(v, p, cc)
 }
 
 void
-mulaw_to_slinear16_be(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+mulaw_to_slinear16_be(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -346,10 +331,7 @@ mulaw_to_slinear16_be(v, p, cc)
 }
 
 void
-ulinear8_to_mulaw(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+ulinear8_to_mulaw(void *v, u_char *p, int cc)
 {
 	while (--cc >= 0) {
 		*p = lintomulaw[*p];
@@ -358,10 +340,7 @@ ulinear8_to_mulaw(v, p, cc)
 }
 
 void
-slinear8_to_mulaw(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+slinear8_to_mulaw(void *v, u_char *p, int cc)
 {
 	while (--cc >= 0) {
 		*p = lintomulaw[*p ^ 0x80];
@@ -370,10 +349,7 @@ slinear8_to_mulaw(v, p, cc)
 }
 
 void
-alaw_to_ulinear8(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+alaw_to_ulinear8(void *v, u_char *p, int cc)
 {
 	/* Use the 16 bit table for 8 bits too. */
 	while (--cc >= 0) {
@@ -383,10 +359,7 @@ alaw_to_ulinear8(v, p, cc)
 }
 
 void
-alaw_to_slinear8(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+alaw_to_slinear8(void *v, u_char *p, int cc)
 {
 	/* Use the 16 bit table for 8 bits too. */
 	while (--cc >= 0) {
@@ -396,10 +369,7 @@ alaw_to_slinear8(v, p, cc)
 }
 
 void
-alaw_to_ulinear16_le(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+alaw_to_ulinear16_le(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -414,10 +384,7 @@ alaw_to_ulinear16_le(v, p, cc)
 }
 
 void
-alaw_to_ulinear16_be(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+alaw_to_ulinear16_be(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -432,10 +399,7 @@ alaw_to_ulinear16_be(v, p, cc)
 }
 
 void
-alaw_to_slinear16_le(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+alaw_to_slinear16_le(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -450,10 +414,7 @@ alaw_to_slinear16_le(v, p, cc)
 }
 
 void
-alaw_to_slinear16_be(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+alaw_to_slinear16_be(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -468,10 +429,7 @@ alaw_to_slinear16_be(v, p, cc)
 }
 
 void
-ulinear8_to_alaw(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+ulinear8_to_alaw(void *v, u_char *p, int cc)
 {
 	while (--cc >= 0) {
 		*p = lintoalaw[*p];
@@ -480,10 +438,7 @@ ulinear8_to_alaw(v, p, cc)
 }
 
 void
-slinear8_to_alaw(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+slinear8_to_alaw(void *v, u_char *p, int cc)
 {
 	while (--cc >= 0) {
 		*p = lintoalaw[*p ^ 0x80];

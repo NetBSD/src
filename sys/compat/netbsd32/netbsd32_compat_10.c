@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_10.c,v 1.10 2001/05/30 11:37:28 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_10.c,v 1.10.2.1 2002/01/10 19:51:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.10.2.1 2002/01/10 19:51:53 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"

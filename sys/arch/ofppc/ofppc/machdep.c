@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65.2.3 2001/09/13 01:14:13 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65.2.4 2002/01/10 19:47:13 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -55,11 +55,18 @@
 
 #include <net/netisr.h>
 
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+
+#include <dev/ofw/openfirm.h>
+
 #include <machine/autoconf.h>
 #include <machine/bat.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
+
+#include <machine/platform.h>
 
 #include <dev/cons.h>
 
@@ -87,29 +94,24 @@ vaddr_t msgbuf_vaddr;
 
 int	lcsplx(int);			/* called from locore.S */
 
-static int fake_spl __P((void));
-static int fake_splx __P((int));
-static void fake_setsoft __P((void));
+static int fake_spl __P((int));
+static void fake_splx __P((int));
+static void fake_setsoft __P((int));
 static void fake_clock_return __P((struct clockframe *, int));
-static void fake_irq_establish __P((int, int, void (*)(void *), void *));
+static void *fake_intr_establish __P((int, int, int, int (*)(void *), void *));
+static void fake_intr_disestablish __P((void *));
 
 struct machvec machine_interface = {
 	fake_spl,
 	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
 	fake_splx,
 	fake_setsoft,
-	fake_setsoft,
 	fake_clock_return,
-	fake_irq_establish,
+	fake_intr_establish,
+	fake_intr_disestablish,
 };
+
+void	ofppc_bootstrap_console(void);
 
 void
 initppc(startkernel, endkernel, args)
@@ -126,30 +128,16 @@ initppc(startkernel, endkernel, args)
 	extern int tlbdsmiss, tlbdsmsize;
 #ifdef DDB
 	extern int ddblow, ddbsize;
-	/* extern void *startsym, *endsym; */
+	extern void *startsym, *endsym;
 #endif
 #ifdef IPKDB
 	extern int ipkdblow, ipkdbsize;
 #endif
 	int exc, scratch;
 
-	proc0.p_addr = proc0paddr;
-	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
+	/* Initialize the bootstrap console. */
+	ofppc_bootstrap_console();
 
-	curpcb = &proc0paddr->u_pcb;
-
-	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
-
-	/*
-	 * i386 port says, that this shouldn't be here,
-	 * but I really think the console should be initialized
-	 * as early as possible.
-	 */
-	consinit();
-
-#ifdef	__notyet__		/* Needs some rethinking regarding real/virtual OFW */
-	OF_set_callback(callback);
-#endif
 	/*
 	 * Initialize BAT registers to unmapped to not generate
 	 * overlapping mappings below.
@@ -181,6 +169,23 @@ initppc(startkernel, endkernel, args)
 	/* DBAT0 used similar */
 	asm volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
+
+	/*
+	 * Initialize the platform structure.  This may add entries
+	 * to the BAT table.
+	 */
+	platform_init();
+
+	proc0.p_addr = proc0paddr;
+	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
+
+	curpcb = &proc0paddr->u_pcb;
+
+	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
+
+#ifdef __notyet__	/* Needs some rethinking regarding real/virtual OFW */
+	OF_set_callback(callback);
+#endif
 
 	/*
 	 * Set up trap vectors
@@ -238,6 +243,12 @@ initppc(startkernel, endkernel, args)
 		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 
 	/*
+	 * Now that translation is enabled (and we can access bus space),
+	 * initialize the console.
+	 */
+	(*platform.cons_init)();
+
+	/*
 	 * Parse arg string.
 	 */
 	bootpath = args;
@@ -246,18 +257,6 @@ initppc(startkernel, endkernel, args)
 		for(*args++ = 0; *args; args++)
 			BOOT_FLAG(*args, boothowto);
 	}
-
-#ifdef DDB
-	/* ddb_init((int)(endsym - startsym), startsym, endsym); */
-#endif
-#ifdef IPKDB
-	/*
-	 * Now trap to IPKDB
-	 */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif
 
 	/*
 	 * Set the page size.
@@ -268,6 +267,20 @@ initppc(startkernel, endkernel, args)
 	 * Initialize pmap module.
 	 */
 	pmap_bootstrap(startkernel, endkernel);
+
+#ifdef DDB
+	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
+#ifdef IPKDB
+	/*
+	 * Now trap to IPKDB
+	 */
+	ipkdb_init();
+	if (boothowto & RB_KDB)
+		ipkdb_connect(0);
+#endif
 }
 
 /*
@@ -417,15 +430,6 @@ cpu_startup()
 	bufinit();
 
 	/*
-	 * For now, use soft spl handling.
-	 */
-	{
-		extern struct machvec soft_machvec;
-
-		machine_interface = soft_machvec;
-	}
-
-	/*
 	 * Now allow hardware interrupts.
 	 */
 	{
@@ -437,19 +441,67 @@ cpu_startup()
 	}
 }
 
-/*
- * consinit
- * Initialize system console.
- */
 void
 consinit()
 {
-	static int initted;
 
-	if (initted)
-		return;
-	initted = 1;
-	cninit();
+	/* Nothing to do; console is already initialized. */
+}
+
+int	ofppc_cngetc(dev_t);
+void	ofppc_cnputc(dev_t, int);
+
+struct consdev ofppc_bootcons = {
+	NULL, NULL, ofppc_cngetc, ofppc_cnputc, nullcnpollc, NULL,
+	    makedev(0,0), 1,
+};
+
+int	ofppc_stdin_ihandle, ofppc_stdout_ihandle;
+int	ofppc_stdin_phandle, ofppc_stdout_phandle;
+
+void
+ofppc_bootstrap_console(void)
+{
+	int chosen;
+	char data[4];
+
+	chosen = OF_finddevice("/chosen");
+
+	if (OF_getprop(chosen, "stdin", data, sizeof(data)) != sizeof(int))
+		goto nocons;
+	ofppc_stdin_ihandle = of_decode_int(data);
+	ofppc_stdin_phandle = OF_instance_to_package(ofppc_stdin_ihandle);
+
+	if (OF_getprop(chosen, "stdout", data, sizeof(data)) != sizeof(int))
+		goto nocons;
+	ofppc_stdout_ihandle = of_decode_int(data);
+	ofppc_stdout_phandle = OF_instance_to_package(ofppc_stdout_ihandle);
+
+	cn_tab = &ofppc_bootcons;
+
+ nocons:
+	return;
+}
+
+int
+ofppc_cngetc(dev_t dev)
+{
+	u_char ch = '\0';
+	int l;
+
+	while ((l = OF_read(ofppc_stdin_ihandle, &ch, 1)) != 1)
+		if (l != -2 && l != 0)
+			return (-1);
+
+	return (ch);
+}
+
+void
+ofppc_cnputc(dev_t dev, int c)
+{
+	char ch = c;
+
+	OF_write(ofppc_stdout_ihandle, &ch, 1);
 }
 
 /*
@@ -559,14 +611,14 @@ int
 lcsplx(int ipl)
 {
 
-	return (splx(ipl));
+	return (_spllower(ipl));
 }
 
 /*
  * Initial Machine Interface.
  */
 static int
-fake_spl()
+fake_spl(int new)
 {
 	int scratch;
 
@@ -576,16 +628,17 @@ fake_spl()
 }
 
 static void
-fake_setsoft()
+fake_setsoft(int ipl)
 {
 	/* Do nothing */
 }
 
-static int
+static void
 fake_splx(new)
 	int new;
 {
-	return (fake_spl());
+
+	(void) fake_spl(0);
 }
 
 static void
@@ -596,11 +649,20 @@ fake_clock_return(frame, nticks)
 	/* Do nothing */
 }
 
-static void
-fake_irq_establish(irq, level, handler, arg)
-	int irq, level;
-	void (*handler) __P((void *));
+static void *
+fake_intr_establish(irq, level, ist, handler, arg)
+	int irq, level, ist;
+	int (*handler) __P((void *));
 	void *arg;
 {
-	panic("fake_irq_establish");
+
+	panic("fake_intr_establish");
+}
+
+static void
+fake_intr_disestablish(cookie)
+	void *cookie;
+{
+
+	panic("fake_intr_disestablish");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.5 1998/08/21 14:52:29 tsubai Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.5.26.1 2002/01/10 19:47:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,8 +66,9 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/locore.h>
 #include <machine/machConst.h>
+
+#include <mips/cache.h>
 
 #include <newsmips/dev/screg_1185.h>
 #include <newsmips/dev/scsireg.h>
@@ -909,7 +910,7 @@ sc_discon(sc)
 	register VOLATILE int dummy;
 
 	/*
-	 * Signal reflection on BSY is occured.
+	 * Signal reflection on BSY has occurred.
 	 *	Not Bus Free Phase, ignore.
 	 *
 	 *	But, CXD1185Q reset INIT bit of sc_statr.
@@ -1784,13 +1785,15 @@ clean_k2dcache(scb)
 	int i, pages;
 
 	pa = kvtophys((vaddr_t)scb->msgbuf);
-	MachFlushDCache(MIPS_PHYS_TO_KSEG0(pa), sizeof(scb->msgbuf));
+	mips_dcache_wbinv_range_index(MIPS_PHYS_TO_KSEG0(pa),
+	    sizeof(scb->msgbuf));
 
 	if (MACH_IS_USPACE(scb->sc_cpoint))
 		panic("clean_k2dcache: user address is not supported");
 
 	if (MACH_IS_CACHED(scb->sc_cpoint)) {
-		MachFlushDCache((vaddr_t)scb->sc_cpoint, scb->sc_ctrnscnt);
+		mips_dcache_wbinv_range_index((vaddr_t)scb->sc_cpoint,
+		    scb->sc_ctrnscnt);
 		return;
 	}
 
@@ -1798,7 +1801,8 @@ clean_k2dcache(scb)
 		pages = sc_map->mp_pages;
 		for (i = 0; i < pages; i++) {
 			pa = sc_map->mp_addr[i] << PGSHIFT;
-			MachFlushDCache(MIPS_PHYS_TO_KSEG0(pa), NBPG);
+			mips_dcache_wbinv_range_index(MIPS_PHYS_TO_KSEG0(pa),
+			    NBPG);
 		}
 	}
 }

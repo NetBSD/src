@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.186.2.2 2001/09/13 01:15:37 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.186.2.3 2002/01/10 19:54:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -76,9 +76,11 @@
  * Supports automatic hardware flow control on StarTech ST16C650A UART
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.186.2.3 2002/01/10 19:54:19 thorpej Exp $");
+
 #include "opt_com.h"
 #include "opt_ddb.h"
-#include "opt_ddbparam.h"
 #include "opt_kgdb.h"
 
 #include "rnd.h"
@@ -110,7 +112,6 @@
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <sys/types.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/timepps.h>
@@ -2036,7 +2037,7 @@ comintr(arg)
 	put = sc->sc_rbput;
 	cc = sc->sc_rbavail;
 
-	do {
+again:	do {
 		u_char	msr, delta;
 
 		lsr = bus_space_read_1(iot, ioh, com_lsr);
@@ -2114,7 +2115,6 @@ comintr(arg)
 				bus_space_write_1(iot, ioh, com_ier, 0);
 				delay(10);
 				bus_space_write_1(iot, ioh, com_ier,sc->sc_ier);
-				iir = IIR_NOPEND;
 				continue;
 			}
 		}
@@ -2187,7 +2187,8 @@ comintr(arg)
 
 			sc->sc_st_check = 1;
 		}
-	} while (!ISSET((iir = bus_space_read_1(iot, ioh, com_iir)), IIR_NOPEND));
+	} while (ISSET((iir = bus_space_read_1(iot, ioh, com_iir)), IIR_RXRDY)
+	    || ((iir & IIR_IMASK) == 0));
 
 	/*
 	 * Done handling any receive interrupts. See if data can be
@@ -2228,6 +2229,10 @@ comintr(arg)
 			}
 		}
 	}
+
+	if (!ISSET((iir = bus_space_read_1(iot, ioh, com_iir)), IIR_NOPEND))
+		goto again;
+
 	COM_UNLOCK(sc);
 
 	/* Wake up the poller. */
@@ -2448,6 +2453,13 @@ com_kgdb_attach(iot, iobase, rate, frequency, cflag)
 	res = cominit(iot, iobase, rate, frequency, cflag, &com_kgdb_ioh);
 	if (res)
 		return (res);
+
+	/*
+	 * XXXfvdl this shouldn't be needed, but the cn_magic goo
+	 * expects this to be initialized
+	 */
+	cn_init_magic(&com_cnm_state);
+	cn_set_magic("\047\001");
 
 	kgdb_attach(com_kgdb_getc, com_kgdb_putc, NULL);
 	kgdb_dev = 123; /* unneeded, only to satisfy some tests */

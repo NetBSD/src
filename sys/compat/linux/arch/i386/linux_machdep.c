@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.65.2.1 2001/08/03 04:12:42 lukem Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.65.2.2 2002/01/10 19:51:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.65.2.2 2002/01/10 19:51:27 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"

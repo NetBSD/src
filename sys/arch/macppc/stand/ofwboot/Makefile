@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.4.1 2001/08/03 04:11:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.20.4.2 2002/01/10 19:45:55 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -15,21 +15,20 @@ DBG=		-Os -mmultiple
 .PATH:		${S}/arch/powerpc/powerpc
 SRCS+=		ofwmagic.S
 
-MKMAN=		no
+NOMAN=		# defined
 STRIPFLAG=
 BINMODE=	444
-OBJCOPY?=	objcopy
 
 .if !defined(FIXCOFF)
-.ifnmake(print-objdir)
-FIXCOFFDIR!=	cd ${.CURDIR}/../fixcoff; ${MAKE} print-objdir
+.include <bsd.own.mk>
+
+FIXCOFFDIR!=	cd ${.CURDIR}/../fixcoff && ${PRINTOBJDIR}
 FIXCOFF=	${FIXCOFFDIR}/fixcoff
 FIXCOFFTARG=	${FIXCOFF}
 
 ${FIXCOFF}:
 	(cd ${.CURDIR}/../fixcoff; ${MAKE})
 
-.endif
 .else
 FIXCOFFTARG=
 .endif
@@ -42,7 +41,7 @@ RELOC=		600000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c ${PROG}.elf ${PROG}.mrg ${PROG}.xcf
+CLEANFILES+=	vers.c ${PROG}.elf ${PROG}.mrg ${PROG}.xcf machine powerpc
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC}

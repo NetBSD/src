@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.19.2.1 2001/08/03 04:12:56 lukem Exp $	*/
+/*	$NetBSD: an.c,v 1.19.2.2 2002/01/10 19:54:13 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -89,6 +89,9 @@
  * Ported to NetBSD from FreeBSD by Atsushi Onoe at the San Diego
  * IETF meeting.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.19.2.2 2002/01/10 19:54:13 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

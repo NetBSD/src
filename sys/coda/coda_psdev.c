@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.16.2.2 2001/09/08 19:01:26 thorpej Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.16.2.3 2002/01/10 19:50:53 thorpej Exp $	*/
 
 /*
  * 
@@ -51,6 +51,9 @@
 
 /* These routines are the device entry points for Venus. */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.16.2.3 2002/01/10 19:50:53 thorpej Exp $");
+
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
 #ifdef	_LKM
@@ -89,7 +92,7 @@ int coda_pcatch = PCATCH;
 #else
 #endif
 
-#define ENTRY if(coda_psdev_print_entry) myprintf(("Entered %s\n",__FUNCTION__))
+#define ENTRY if(coda_psdev_print_entry) myprintf(("Entered %s\n",__func__))
 
 void vcodaattach(int n);
 

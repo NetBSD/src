@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.11 2001/06/14 20:32:42 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.11.2.1 2002/01/10 19:51:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.11.2.1 2002/01/10 19:51:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

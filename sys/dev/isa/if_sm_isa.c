@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_isa.c,v 1.7 2001/07/08 17:55:50 thorpej Exp $	*/
+/*	$NetBSD: if_sm_isa.c,v 1.7.2.1 2002/01/10 19:55:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.7.2.1 2002/01/10 19:55:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,14 +93,22 @@ sm_isa_match(parent, match, aux)
 	int rv = 0;
 	extern const char *smc91cxx_idstrs[];
 
-	/* Disallow wildcarded values. */
-	if (ia->ia_irq == -1)
+	if (ia->ia_nio < 1)
 		return (0);
-	if (ia->ia_iobase == -1)
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	/* Disallow wildcarded values. */
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
 		return (0);
 
 	/* Map i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, SMC_IOSIZE, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, SMC_IOSIZE, 0, &ioh))
 		return (0);
 
 	/* Check that high byte of BANK_SELECT is what we expect. */
@@ -120,7 +131,7 @@ sm_isa_match(parent, match, aux)
 	 */
 	bus_space_write_2(iot, ioh, BANK_SELECT_REG_W, 1);
 	tmp = bus_space_read_2(iot, ioh, BASE_ADDR_REG_W);
-	if (ia->ia_iobase != ((tmp >> 3) & 0x3e0))
+	if (ia->ia_io[0].ir_addr != ((tmp >> 3) & 0x3e0))
 		goto out;
 
 	/*
@@ -135,7 +146,14 @@ sm_isa_match(parent, match, aux)
 	/*
 	 * Assume we have an SMC91Cxx.
 	 */
-	ia->ia_iosize = SMC_IOSIZE;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = SMC_IOSIZE;
+
+	ia->ia_nirq = 1;
+
+	ia->ia_niomem = 0;
+	ia->ia_ndrq = 0;
+
 	rv = 1;
 
  out:
@@ -157,7 +175,7 @@ sm_isa_attach(parent, self, aux)
 	printf("\n");
 
 	/* Map i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, SMC_IOSIZE, 0, &ioh))
 		panic("sm_isa_attach: can't map i/o space");
 
 	sc->sc_bst = iot;
@@ -172,8 +190,8 @@ sm_isa_attach(parent, self, aux)
 	smc91cxx_attach(sc, NULL);
 
 	/* Establish the interrupt handler. */
-	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_NET, smc91cxx_intr, sc);
+	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_NET, smc91cxx_intr, sc);
 	if (isc->sc_ih == NULL)
 		printf("%s: couldn't establish interrupt handler\n",
 		    sc->sc_dev.dv_xname);

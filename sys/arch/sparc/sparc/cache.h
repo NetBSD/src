@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.22 2000/06/06 07:56:40 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.22.6.1 2002/01/10 19:48:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -45,6 +45,10 @@
 
 #ifndef SPARC_CACHE_H
 #define SPARC_CACHE_H
+
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
 
 /*
  * Sun-4 and Sun-4c virtual address cache.
@@ -128,6 +132,7 @@ enum vactype { VAC_UNKNOWN, VAC_NONE, VAC_WRITETHROUGH, VAC_WRITEBACK };
 
 extern int cache_alias_dist;		/* */
 extern int cache_alias_bits;
+extern u_long dvma_cachealign;
 
 /* Optimize cache alias macros on single architecture kernels */
 #if defined(SUN4) && !defined(SUN4C) && !defined(SUN4M)

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.163 2001/06/02 18:09:15 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.163.2.1 2002/01/10 19:46:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163 2001/06/02 18:09:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163.2.1 2002/01/10 19:46:14 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163 2001/06/02 18:09:15 chs Exp $");
 #include <sys/ktrace.h>
 #endif
 
+#include <mips/cache.h>
 #include <mips/locore.h>
 #include <mips/mips_opcode.h>
 
@@ -190,8 +191,13 @@ trap(status, cause, vaddr, opc, frame)
 		type |= T_USER;
 
 	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV)) {
-		if (type != T_BREAK)
+		if (type != T_BREAK) {
+#ifdef IPL_ICU_MASK
+			spllowersofthigh();
+#else
 			_splset((status & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+#endif
+		}
 	}
 
 	switch (type) {
@@ -312,7 +318,7 @@ trap(status, cause, vaddr, opc, frame)
 		 * It is an error for the kernel to access user space except
 		 * through the copyin/copyout routines.
 		 */
-		if (p->p_addr->u_pcb.pcb_onfault == NULL)
+		if (p == NULL || p->p_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
 		/* check for fuswintr() or suswintr() getting a page fault */
 		if (p->p_addr->u_pcb.pcb_onfault == (caddr_t)fswintrberr) {
@@ -404,7 +410,7 @@ trap(status, cause, vaddr, opc, frame)
 	case T_ADDR_ERR_ST:	/* misaligned access */
 	case T_BUS_ERR_LD_ST:	/* BERR asserted to cpu */
 	copyfault:
-		if (p->p_addr->u_pcb.pcb_onfault == NULL)
+		if (p == NULL || p->p_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
 		frame->tf_epc = (int)p->p_addr->u_pcb.pcb_onfault;
 		return; /* KERN */
@@ -478,7 +484,8 @@ trap(status, cause, vaddr, opc, frame)
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 			}
 		}
-		MachFlushCache();
+		mips_icache_sync_all();		/* XXXJRT -- necessary? */
+		mips_dcache_wbinv_all();	/* XXXJRT -- necessary? */
 
 		if (rv < 0)
 			printf("Warning: can't restore instruction at 0x%x: 0x%x\n",
@@ -488,7 +495,14 @@ trap(status, cause, vaddr, opc, frame)
 		break; /* SIGNAL */
 	    }
 	case T_RES_INST+T_USER:
+#if defined(MIPS3_5900) && defined(SOFTFLOAT)
+		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
+		userret(p);
+		return; /* GEN */
+#else
 		sig = SIGILL;
+		break; /* SIGNAL */
+#endif
 		break; /* SIGNAL */
 	case T_COP_UNUSABLE+T_USER:
 #if defined(NOFPU) && !defined(SOFTFLOAT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.9.14.1 2001/08/03 04:12:40 lukem Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.9.14.2 2002/01/10 19:50:53 thorpej Exp $	*/
 
 /*
  * 
@@ -75,6 +75,9 @@
  * 4.	I wonder if this name cache could be replace by the vnode name cache.
  *	The latter has no zapping functions, so probably not.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.9.14.2 2002/01/10 19:50:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.30 2001/06/13 18:17:39 bjh21 Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.30.2.1 2002/01/10 19:55:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@ struct wdc_softc { /* Per controller state */
 #define WDC_CAPABILITY_IRQACK 0x0400 /* callback to ack interrupt */
 #define WDC_CAPABILITY_SINGLE_DRIVE 0x0800 /* Don't probe second drive */
 #define WDC_CAPABILITY_NOIRQ  0x1000	/* Controller never interrupts */
+#define WDC_CAPABILITY_SELECT  0x2000	/* Controller selects target */
 	u_int8_t      PIO_cap; /* highest PIO mode supported */
 	u_int8_t      DMA_cap; /* highest DMA mode supported */
 	u_int8_t      UDMA_cap; /* highest UDMA mode supported */
@@ -134,6 +135,9 @@ struct wdc_softc { /* Per controller state */
 	/* if WDC_CAPABILITY_MODE set in 'cap' */
 	void 		(*set_modes) __P((struct channel_softc *));
 
+	/* if WDC_CAPABILITY_SELECT set in 'cap' */
+	void		(*select) __P((struct channel_softc *,int));
+
 	/* if WDC_CAPABILITY_IRQACK set in 'cap' */
 	void		(*irqack) __P((struct channel_softc *));
 };
@@ -160,6 +164,7 @@ struct wdc_xfer {
 	void *databuf;
 	int c_bcount;      /* byte count left */
 	int c_skip;        /* bytes already transferred */
+	int c_dscpoll;	   /* counter for dsc polling (ATAPI) */
 	TAILQ_ENTRY(wdc_xfer) c_xferchain;
 	void (*c_start) __P((struct channel_softc *, struct wdc_xfer *));
 	int  (*c_intr)  __P((struct channel_softc *, struct wdc_xfer *, int));
@@ -193,12 +198,18 @@ void  wdccommand __P((struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
 	                  u_int8_t, u_int8_t, u_int8_t, u_int8_t));
 void   wdccommandshort __P((struct channel_softc *, int, int));
 void  wdctimeout	__P((void *arg));
+void wdc_reset_channel __P((struct ata_drive_datas *));
+int wdc_exec_command __P((struct ata_drive_datas *, struct wdc_command*));
+#define WDC_COMPLETE 0x01
+#define WDC_QUEUED   0x02
+#define WDC_TRY_AGAIN 0x03
 
 int	wdc_addref __P((struct channel_softc *));
 void	wdc_delref __P((struct channel_softc *));
 void	wdc_kill_pending __P((struct channel_softc *));
 
 void	wdc_print_modes (struct channel_softc *);
+void	wdc_probe_caps __P((struct ata_drive_datas*));
 
 /*	
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write

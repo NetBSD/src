@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2001/06/27 02:48:32 fredette Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.1 2002/01/10 19:49:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -153,6 +153,8 @@ extern struct sun68k_bus_space_tag mainbus_space_tag;
 
 	ma.ma_bustag = &mainbus_space_tag;
 	ma.ma_dmatag = &mainbus_dma_tag;
+	ma.ma_paddr = LOCATOR_FORBIDDEN;
+	ma.ma_pri = LOCATOR_FORBIDDEN;
 
 	/* Find all `early' mainbus buses */
 	for (cpp = special; *cpp != NULL; cpp++) {
@@ -228,7 +230,6 @@ int sun68k_bus_search(parent, cf, aux)
 		BAD_LOCATOR( ma_loc, what); \
 	else \
 		ma. ma_loc = cf->cf_loc
-	ma.ma_paddr = LOCATOR_REQUIRED;
 	CHECK_LOCATOR(ma_paddr, cf_paddr, "address");
 	CHECK_LOCATOR(ma_pri, cf_intpri, "ipl");
 

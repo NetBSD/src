@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.23 2001/07/07 16:13:47 thorpej Exp $	*/
+/*	$NetBSD: cy.c,v 1.23.2.1 2002/01/10 19:54:22 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -15,7 +15,9 @@
  * can be enabled by defining CY_DEBUG1
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.23.2.1 2002/01/10 19:54:22 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.34 2000/07/27 20:08:47 bouyer Exp $	*/
+/*	$NetBSD: boca.c,v 1.34.4.1 2002/01/10 19:55:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,6 +32,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.34.4.1 2002/01/10 19:55:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,10 +84,9 @@ bocaprobe(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	int i, rv = 1;
+	int i, iobase, rv = 1;
 
 	/*
 	 * Do the normal com probe for the first UART and assume
@@ -93,8 +95,18 @@ bocaprobe(parent, self, aux)
 	 * XXX Needs more robustness.
 	 */
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
 		return (0);
 
 	/* if the first port is in use as console, then it. */
@@ -111,7 +123,7 @@ bocaprobe(parent, self, aux)
 		goto out;
 
 checkmappings:
-	for (i = 1; i < NSLAVES; i++) {
+	for (i = 1, iobase = ia->ia_io[0].ir_addr; i < NSLAVES; i++) {
 		iobase += COM_NPORTS;
 
 		if (com_is_console(iot, iobase, 0))
@@ -125,8 +137,15 @@ checkmappings:
 	}
 
 out:
-	if (rv)
-		ia->ia_iosize = NSLAVES * COM_NPORTS;
+	if (rv) {
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = NSLAVES * COM_NPORTS;
+
+		ia->ia_nirq = 1;
+
+		ia->ia_niomem = 0;
+		ia->ia_ndrq = 0;
+	}
 	return (rv);
 }
 
@@ -157,7 +176,7 @@ bocaattach(parent, self, aux)
 	printf("\n");
 
 	sc->sc_iot = ia->ia_iot;
-	sc->sc_iobase = ia->ia_iobase;
+	sc->sc_iobase = ia->ia_io[0].ir_addr;
 
 	for (i = 0; i < NSLAVES; i++) {
 		iobase = sc->sc_iobase + i * COM_NPORTS;
@@ -183,8 +202,8 @@ bocaattach(parent, self, aux)
 			sc->sc_alive |= 1 << i;
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_SERIAL, bocaintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_SERIAL, bocaintr, sc);
 	callout_init(&sc->fixup);
 	callout_reset(&sc->fixup, hz/10, boca_fixup, sc);
 }

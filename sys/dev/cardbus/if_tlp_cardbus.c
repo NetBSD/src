@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.27.2.1 2001/08/03 04:12:52 lukem Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.27.2.2 2002/01/10 19:53:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * CardBus bus front-end for the Digital Semiconductor ``Tulip'' (21x4x)
  * Ethernet controller family driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.27.2.2 2002/01/10 19:53:47 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

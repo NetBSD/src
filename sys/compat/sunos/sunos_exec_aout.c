@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec_aout.c,v 1.1 2000/12/01 19:23:10 jdolecek Exp $	*/
+/*	$NetBSD: sunos_exec_aout.c,v 1.1.6.1 2002/01/10 19:52:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.1.6.1 2002/01/10 19:52:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +72,7 @@ exec_sunos_aout_makecmds(p, epp)
 	struct sunos_exec *sunmag = epp->ep_hdr;
 	int error = ENOEXEC;
 
-	if(sunmag->a_machtype != SUNOS_M_NATIVE)
+	if (!SUNOS_M_NATIVE(sunmag->a_machtype))
 		return (ENOEXEC);
 
 	switch (sunmag->a_magic) {
@@ -87,13 +90,13 @@ exec_sunos_aout_makecmds(p, epp)
 }
 
 /*
- * the code below is only needed for sun3 emulation.
+ * the code below is only needed for sun2/sun3 emulation.
  */
 #ifndef __sparc__
 
 /* suns keep data seg aligned to SEGSIZ because of sun custom mmu */
 #define SEGSIZ		0x20000
-#define SUNOS_N_TXTADDR(x,m)	__LDPGSZ
+#define SUNOS_N_TXTADDR(x,m)	0x2000
 #define SUNOS_N_DATADDR(x,m)	(((m)==OMAGIC) ? \
 	(SUNOS_N_TXTADDR(x,m) + (x).a_text) : \
 	(SEGSIZ + ((SUNOS_N_TXTADDR(x,m) + (x).a_text - 1) & ~(SEGSIZ-1))))
@@ -137,7 +140,7 @@ sunos_exec_aout_prep_zmagic(p, epp)
 #endif
 		return ETXTBSY;
 	}
-	vn_marktext(epp->ep_vp);
+	epp->ep_vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,

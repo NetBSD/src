@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.21 2001/05/30 15:24:39 lukem Exp $	*/
+/*	$NetBSD: com.c,v 1.21.2.1 2002/01/10 19:50:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ cdev_decl(com);
 
 static int comprobe1 __P((int));
 static void comdiag __P((void *));
-static int comintr __P((void *));
+int comintr __P((void *));
 static void compollin __P((void *));
 static int comparam __P((struct tty *, struct termios *));
 static void comstart __P((struct tty *));
@@ -1068,7 +1068,7 @@ out:
 	callout_reset(&com_poll_ch, 1, compollin, NULL);
 }
 
-static int
+int
 comintr(arg)
 	void *arg;
 {
@@ -1118,7 +1118,9 @@ comintr(arg)
 						     sc->sc_mcr);
 					}
 				}
+#ifdef DDB
 			next:
+#endif
 				lsr = inb(pio(iobase , com_lsr));
 			} while (ISSET(lsr, LSR_RXRDY));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.h,v 1.6 1999/11/27 10:10:02 mrg Exp $ */
+/*	$NetBSD: idprom.h,v 1.6.8.1 2002/01/10 19:48:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -30,6 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
 
 /*
  * ID prom format.  The ``host id'' is set up by taking the machine

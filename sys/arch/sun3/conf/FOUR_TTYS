@@ -1,4 +1,4 @@
-#	$NetBSD: FOUR_TTYS,v 1.26 2001/07/08 16:32:25 abs Exp $
+#	$NetBSD: FOUR_TTYS,v 1.26.2.1 2002/01/10 19:49:42 thorpej Exp $
 
 # FOUR_TTYS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # like GENERIC but both zs chips are used as ttys
@@ -25,9 +25,9 @@ options 	LKM		# loadable kernel modules
 # Which kernel debugger?  Uncomment either this:
 options 	DDB
 # ... or these for KGDB (gdb remote target)
-#makeoptions DEBUG="-g"		# debugging symbols for gdb
+#makeoptions	DEBUG="-g"	# debugging symbols for gdb
 #options 	KGDB
-#options 	KGDBDEV=0x0C01	# ttya=0C00 ttyb=0C01
+#options 	KGDB_DEV=0x0C01	# ttya=0C00 ttyb=0C01
 
 # Other debugging options
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
@@ -119,7 +119,7 @@ zstty3	at zsc0 channel 1 flags 1 # ttyd
 
 # Intel Ethernet (onboard, or VME)
 ie0 at obio0 addr 0x0C0000 ipl 3
-ie1 at vme2  addr 0xe88000 ipl 3 vect 0x75
+ie1 at vme2 addr 0xe88000 ipl 3 vect 0x75
 
 # Lance Ethernet (only onboard)
 le0 at obio0 addr 0x120000 ipl 3
@@ -135,8 +135,8 @@ options 	LANCE_REVC_BUG
 # Sun3 "si" SCSI controller (NCR 5380)
 # See GENERIC for the flags description.
 si0 at obio0 addr 0x140000 ipl 2
-si0 at vme2  addr 0x200000 ipl 2 vect 0x40
-si1 at vme2  addr 0x204000 ipl 2 vect 0x41
+si0 at vme2 addr 0x200000 ipl 2 vect 0x40
+si1 at vme2 addr 0x204000 ipl 2 vect 0x41
 
 # Xylogics 450/451 controllers (VME A16/D16)
 xyc0 at vme0 addr 0xee40 ipl 2 vect 0x48

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.20 2000/03/30 11:31:27 augustss Exp $	*/
+/*	$NetBSD: db_run.c,v 1.20.8.1 2002/01/10 19:52:41 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,6 +32,9 @@
 /*
  * Commands to run process.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.20.8.1 2002/01/10 19:52:41 thorpej Exp $");
 
 #include "opt_ddb.h"
 

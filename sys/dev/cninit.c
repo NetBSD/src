@@ -1,4 +1,4 @@
-/*	$NetBSD: cninit.c,v 1.3 1998/06/21 22:36:46 tv Exp $	*/
+/*	$NetBSD: cninit.c,v 1.3.28.1 2002/01/10 19:52:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)cons.c	8.2 (Berkeley) 1/12/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.3.28.1 2002/01/10 19:52:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

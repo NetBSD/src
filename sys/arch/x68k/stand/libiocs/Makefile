@@ -1,14 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 2000/10/19 16:17:41 minoura Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2002/01/10 19:50:33 thorpej Exp $
 
 LIB=	iocs
 
-MKLINT=no
-MKPROFILE=no
-MKPIC=no
-
-.if defined(DESTDIR)
-CPPFLAGS+= -nostdinc -idirafter ${DESTDIR}/usr/include
-.endif
+NOLINT=# defined
+NOPROFILE=# defined
+NOPIC=# defined
 
 AWK?=	awk
 
@@ -63,4 +59,6 @@ ${ASM}: ${.CURDIR}/iocs.h ${MAKECALL}
 # only needed during build
 libinstall::
 
+.include <bsd.own.mk>
+.undef DESTDIR
 .include <bsd.lib.mk>

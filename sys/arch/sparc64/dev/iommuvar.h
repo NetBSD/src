@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.6.4.1 2001/08/03 04:12:26 lukem Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.6.4.2 2002/01/10 19:49:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -44,12 +44,12 @@ struct iommu_state {
 
 	paddr_t			is_flushpa;	/* used to flush the SBUS */
 	/* Needs to be volatile or egcs optimizes away loads */
-	volatile int64_t	is_flush;
+	volatile int64_t	is_flush[2];
 
 	/* copies of our parents state, to allow us to be self contained */
 	bus_space_tag_t		is_bustag;	/* our bus tag */
 	struct iommureg		*is_iommu;	/* IOMMU registers */
-	struct iommu_strbuf	*is_sb;		/* streaming buffer */
+	struct iommu_strbuf	*is_sb[2];	/* streaming buffer(s) */
 };
 
 /* interfaces for PCI/SBUS code */
@@ -57,6 +57,7 @@ void	iommu_init __P((char *, struct iommu_state *, int, u_int32_t));
 void	iommu_reset __P((struct iommu_state *));
 void    iommu_enter __P((struct iommu_state *, vaddr_t, int64_t, int));
 void    iommu_remove __P((struct iommu_state *, vaddr_t, size_t));
+paddr_t iommu_extract __P((struct iommu_state *, vaddr_t));
 
 int	iommu_dvmamap_load __P((bus_dma_tag_t, struct iommu_state *,
 	    bus_dmamap_t, void *, bus_size_t, struct proc *, int));

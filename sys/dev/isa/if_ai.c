@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.10.2.1 2001/08/03 04:13:08 lukem Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.10.2.2 2002/01/10 19:55:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.10.2.2 2002/01/10 19:55:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,11 +245,20 @@ ai_match(parent, cf, aux)
 	struct isa_attach_args * const ia = aux;
 	struct ai_softc asc;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_niomem < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
 
 	/* Punt if wildcarded port, IRQ or memory address */
-	if (ia->ia_irq == ISACF_IRQ_DEFAULT ||
-	    ia->ia_maddr == ISACF_IOMEM_DEFAULT  ||
-            ia->ia_iobase == ISACF_PORT_DEFAULT) {
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT ||
+	    ia->ia_iomem[0].ir_addr == ISACF_IRQ_DEFAULT ||
+	    ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
 		DPRINTF((
 		 "ai_match: wildcarded IRQ, IOAddr, or memAddr, skipping\n"));
 		return (0);
@@ -258,7 +270,7 @@ ai_match(parent, cf, aux)
 	 * This probe is horribly bad, but I have no info on this card other
 	 * than the former driver, and it was just as bad!
 	 */
-	if (bus_space_map(iot, ia->ia_iobase,
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr,
 			  AI_IOSIZE, 0, &ioh) != 0) {
 
 		DPRINTF(("ai_match: cannot map %d IO ports @ 0x%x\n",
@@ -284,15 +296,15 @@ ai_match(parent, cf, aux)
 	asc.sc_regt = iot;
 	asc.sc_regh = ioh;
 
-	if ((memsize = ai_find_mem_size(&asc,ia->ia_memt,ia->ia_maddr)) == 0) {
+	if ((memsize = ai_find_mem_size(&asc, ia->ia_memt,
+	     ia->ia_iomem[0].ir_addr)) == 0) {
 		DPRINTF(("ai_match: cannot size memory of board @ 0x%x\n",
-			 ia->ia_iobase));
+			 ia->ia_io[0].ir_addr));
 		goto out;
 	}
 
-	if (!ia->ia_msize)
-		ia->ia_msize = memsize;
-	else if (ia->ia_msize != memsize) {
+	if (ia->ia_iomem[0].ir_size != 0 &&
+	    ia->ia_iomem[0].ir_size != memsize) {
 		DPRINTF((
 		   "ai_match: memsize of board @ 0x%x doesn't match config\n",
 		   ia->ia_iobase));
@@ -300,8 +312,17 @@ ai_match(parent, cf, aux)
 	}
 
 	rv = 1;
-	ia->ia_msize = memsize;
-	ia->ia_iosize = AI_IOSIZE;
+
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = AI_IOSIZE;
+
+	ia->ia_niomem = 1;
+	ia->ia_iomem[0].ir_size = memsize;
+
+	ia->ia_nirq = 1;
+
+	ia->ia_ndrq = 0;
+
 	DPRINTF(("ai_match: found board @ 0x%x\n", ia->ia_iobase));
 
 out:
@@ -324,20 +345,22 @@ ai_attach(parent, self, aux)
 	u_int8_t ethaddr[ETHER_ADDR_LEN];
 	char name[80];
 
-	if (bus_space_map(ia->ia_iot, ia->ia_iobase,
-			  ia->ia_iosize, 0, &ioh) != 0) {
+	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr,
+			  ia->ia_io[0].ir_size, 0, &ioh) != 0) {
 		DPRINTF(("\n%s: can't map i/o space 0x%x-0x%x\n",
 			 sc->sc_dev.dv_xname,
-		         ia->ia_iobase, ia->ia_iobase + ia->ia_iosize - 1));
+		         ia->ia_io[0].ir_addr, ia->ia_io[0].ir_addr +
+		         ia->ia_io[0].ir_size - 1));
 		return;
 	}
 
-	if (bus_space_map(ia->ia_memt, ia->ia_maddr,
-			  ia->ia_msize, 0, &memh) != 0) {
+	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr,
+			  ia->ia_iomem[0].ir_size, 0, &memh) != 0) {
 		DPRINTF(("\n%s: can't map iomem space 0x%x-0x%x\n",
 			 sc->sc_dev.dv_xname,
-			 ia->ia_maddr, ia->ia_maddr + ia->ia_msize - 1));
-		bus_space_unmap(ia->ia_iot, ioh, ia->ia_iosize);
+			 ia->ia_iomem[0].ir_addr, ia->ia_iomem[0].ir_addr +
+			 ia->ia_iomem[0].ir_size - 1));
+		bus_space_unmap(ia->ia_iot, ioh, ia->ia_io[0].ir_size);
 		return;
 	}
 
@@ -366,7 +389,7 @@ ai_attach(parent, self, aux)
 	sc->bh = memh;
 
 	/* Map i/o space. */
-	sc->sc_msize = ia->ia_msize;
+	sc->sc_msize = ia->ia_iomem[0].ir_size;
 	sc->sc_maddr = (void *)memh;
 	sc->sc_iobase = (char *)sc->sc_maddr + sc->sc_msize - (1 << 24);
 
@@ -382,7 +405,8 @@ ai_attach(parent, self, aux)
 	bus_space_set_region_1(sc->bt, sc->bh, 0, 0, sc->sc_msize);
 
 	/* set card to 16-bit bus mode */
-	bus_space_write_1(sc->bt, sc->bh, IE_SCP_BUS_USE((u_long)sc->scp), 0);
+	bus_space_write_1(sc->bt, sc->bh, IE_SCP_BUS_USE((u_long)sc->scp), 
+			  IE_SYSBUS_16BIT);
 
 	/* set up pointers to key structures */
 	ai_write_24(sc, IE_SCP_ISCP((u_long)sc->scp), (u_long) sc->iscp);
@@ -395,8 +419,8 @@ ai_attach(parent, self, aux)
 	if (!i82586_proberam(sc)) {
 		DPRINTF(("\n%s: can't talk to i82586!\n",
 			sc->sc_dev.dv_xname));
-		bus_space_unmap(ia->ia_iot, ioh, ia->ia_iosize);
-		bus_space_unmap(ia->ia_memt, memh, ia->ia_msize);
+		bus_space_unmap(ia->ia_iot, ioh, ia->ia_io[0].ir_size);
+		bus_space_unmap(ia->ia_memt, memh, ia->ia_iomem[0].ir_size);
 		return;
 	}
 
@@ -408,8 +432,8 @@ ai_attach(parent, self, aux)
 
 	i82586_attach(sc, name, ethaddr, NULL, 0, 0);
 
-	asc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-					IPL_NET, i82586_intr, sc);
+	asc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_NET, i82586_intr, sc);
 	if (asc->sc_ih == NULL) {
 		DPRINTF(("\n%s: can't establish interrupt\n",
 			sc->sc_dev.dv_xname));
@@ -472,7 +496,8 @@ check_ie_present(sc, memt, memh, size)
 	bus_space_set_region_1(memt, memh, sc->scb, 0, IE_SCB_SZ);
 
 	/* set card to 16-bit bus mode */
-	bus_space_write_1(sc->bt, sc->bh, IE_SCP_BUS_USE((u_long)sc->scp), 0);
+	bus_space_write_1(sc->bt, sc->bh, IE_SCP_BUS_USE((u_long)sc->scp),
+			  IE_SYSBUS_16BIT);
 
 	/* set up pointers to key structures */
 	ai_write_24(sc, IE_SCP_ISCP((u_long)sc->scp), (u_long) sc->iscp);

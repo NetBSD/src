@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 2001/06/24 01:15:41 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.2.2.1 2002/01/10 19:50:14 thorpej Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#undef NOCACHE
+#undef PPC_4XX_NOCACHE
 
 #include "opt_ddb.h"
 #include "fs_kernfs.h"
@@ -179,7 +179,7 @@ __start:
  *
  */
 __start_cpu0:
-#ifdef NOCACHE
+#ifdef PPC_4XX_NOCACHE
 	/* Disable all caches for physical addresses */
 	li	0,0
 #else
@@ -218,7 +218,7 @@ __start_cpu0:
 	sync
 
 	li	0,0
-#ifdef NOCACHE
+#ifdef PPC_4XX_NOCACHE
 	li	4,TLB_EX|TLB_WR|TLB_I /* |TLB_W */
 #else
 	li	4,TLB_EX|TLB_WR /* |TLB_W */
@@ -232,7 +232,7 @@ __start_cpu0:
 	li	0,1
 	lis	4,0x01000000@h
 	ori	3,4,0
-#ifdef NOCACHE
+#ifdef PPC_4XX_NOCACHE
 	addi	4,4,TLB_EX|TLB_WR|TLB_I /* |TLB_W */
 #else
 	addi	4,4,TLB_EX|TLB_WR /* |TLB_W */
@@ -353,7 +353,7 @@ ENTRY(cpu_switch)
 	bl	_C_LABEL(lcsplx)
 	stw	3,PCB_SPL(31)		/* save spl */
 
-	wrteei	0			/* disable interrupts while  manipulating runque */
+	wrteei	0			/* disable interrupts while manipulating runque */
 	
 /* Find a new process */
 	lis	8,_C_LABEL(sched_whichqs)@ha
@@ -509,16 +509,6 @@ _C_LABEL(setfault):
 	stw	2,8(3)
 	stmw	12,12(3)
 	xor	3,3,3
-	blr
-
-	.globl	_C_LABEL(enable_intr)
-_C_LABEL(enable_intr):
-	wrteei	1
-	blr
-
-	.globl	_C_LABEL(disable_intr)
-_C_LABEL(disable_intr):
-	wrteei	0
 	blr
 
 	.globl	_C_LABEL(ppc4xx_reset)

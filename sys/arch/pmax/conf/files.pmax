@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.92.4.2 2001/09/13 01:14:16 thorpej Exp $
+#	$NetBSD: files.pmax,v 1.92.4.3 2002/01/10 19:47:47 thorpej Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -17,15 +17,15 @@ attach cpu at mainbus
 file arch/pmax/pmax/cpu.c		cpu
 
 # Model support option headers
-defopt 	DEC_3100	# DECstation 2100, 3100 (kn01)
-defopt 	DEC_5100	# DECsystem 5100 (kn230)
-defopt 	DEC_3MAX	# DECstation 5000/200 (kn02)
-defopt 	DEC_3MIN	# DECstation 5000/1xx (kn02ba), 5000/150 (kn04)
-defopt 	DEC_MAXINE	# Personal DECstation 5000/xx (kn02ca)
-defopt 	DEC_3MAXPLUS	# DECstation 5000/240 (kn03), 5000/260 (kn05)
-defopt	DEC_5800	# DECsystem 5800 isis (kn5800) XMI
-defopt	DEC_5400	# DECsystem 5400 mipsfair (kn210) Qbus
-defopt	DEC_5500	# DECsystem 5500 mipsfair2 (kn220) Qbus
+defflag	DEC_3100	# DECstation 2100, 3100 (kn01)
+defflag	DEC_5100	# DECsystem 5100 (kn230)
+defflag	DEC_3MAX	# DECstation 5000/200 (kn02)
+defflag	DEC_3MIN	# DECstation 5000/1xx (kn02ba), 5000/150 (kn04)
+defflag	DEC_MAXINE	# Personal DECstation 5000/xx (kn02ca)
+defflag	DEC_3MAXPLUS	# DECstation 5000/240 (kn03), 5000/260 (kn05)
+defflag	DEC_5800	# DECsystem 5800 isis (kn5800) XMI
+defflag	DEC_5400	# DECsystem 5400 mipsfair (kn210) Qbus
+defflag	DEC_5500	# DECsystem 5500 mipsfair2 (kn220) Qbus
 
 # Model dependent files
 file	arch/pmax/pmax/dec_3100.c	dec_3100	# DS3100, pmax
@@ -100,18 +100,12 @@ major { md = 17 }
 major { raid = 32 }
 
 
-# MI SCSI driver; to be moved into dev/tc/ replacing existings, eventually.
-#
-device	asc: ncr53c9x,scsi
-attach	asc at tc with asc_pmaz
-file	arch/pmax/tc/asc_pmaz.c		asc_pmaz
+# asc attachment at ioasic?
 attach	asc at ioasic with asc_ioasic
 file	arch/pmax/tc/asc_ioasic.c	asc_ioasic
-attach	asc at tcds with asc_tcds
-file	dev/tc/asc_tcds.c		asc_tcds
 
 # sii: kn01 SCSI interface
-device	sii: ncr53c9x,scsi
+device	sii: scsi
 file	arch/pmax/dev/sii.c		sii needs-flag
 attach	sii at ibus with sii_ds
 file	arch/pmax/dev/sii_ds.c		sii_ds
@@ -135,11 +129,11 @@ file	arch/pmax/dev/dtop.c		dtop needs-flag
 #   TC and IOASIC attachment and files in sys/dev/tc/files.tc
 
 attach le at ibus with le_pmax:		le24, le_dec_subr
-file	dev/tc/if_le_ibus.c		le_pmax
+file	arch/pmax/ibus/if_le_ibus.c	le_pmax
 
 
 # Raster operations for rcons. This isn't in the rcons section, since
-# it depends on fb devices for configuration glue. 
+# it depends on fb devices for configuration glue.
 include "dev/rasops/files.rasops"
 
 

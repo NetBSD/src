@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.5.4.1 2001/08/03 04:12:13 lukem Exp $
+$NetBSD: version,v 1.5.4.2 2002/01/10 19:47:56 thorpej Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -11,3 +11,4 @@ is taken as the current.
 	added.
 1.3:	Add support for booting off RAIDframe RAID1 mirrors.
 1.4:	loadfile() update:  ELF symbols no longer need backward seeks.
+1.5:	loadfile() update to avoid backwards seeks for ELF Program Headers.

@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
+/*	$NetBSD: hme.c,v 1.21.2.1 2002/01/10 19:54:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * HME Ethernet module driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.21.2.1 2002/01/10 19:54:31 thorpej Exp $");
 
 #define HMEDEBUG
 
@@ -183,7 +186,7 @@ hme_config(sc)
 	 * Also, apparently, the buffers must extend to a DMA burst
 	 * boundary beyond the maximum packet size.
 	 */
-#define _HME_NDESC	32
+#define _HME_NDESC	128
 #define _HME_BUFSZ	1600
 
 	/* Note: the # of descriptors must be a multiple of 16 */
@@ -240,7 +243,8 @@ hme_config(sc)
 	}
 	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
-	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
+	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_enaddr));
 
 	/* Initialize ifnet structure. */
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.12 2001/01/18 20:28:18 jdolecek Exp $	*/
+/*	$NetBSD: opl.c,v 1.12.4.1 2002/01/10 19:54:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * The OPL3 (YMF262) manual can be found at
  * ftp://ftp.yamahayst.com/Fax_Back_Doc/sound/YMF262.PDF
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.12.4.1 2002/01/10 19:54:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,9 +170,37 @@ opl_attach(sc)
 
 	opl_reset(sc);
 
-	printf(": model OPL%d\n", sc->model);
+	printf(": model OPL%d", sc->model);
 
-	midi_attach_mi(&midisyn_hw_if, &sc->syn, &sc->mididev.dev);
+	/* Set up panpot */
+	for (i = 0; i < MIDI_MAX_CHANS; i++)
+		sc->pan[i] = OPL_VOICE_TO_LEFT | OPL_VOICE_TO_RIGHT;
+	sc->panl = OPL_VOICE_TO_LEFT;
+	sc->panr = OPL_VOICE_TO_RIGHT;
+	if (sc->model == OPL_3 &&
+	    sc->mididev.dev.dv_cfdata->cf_flags & OPL_FLAGS_SWAP_LR) {
+		sc->panl = OPL_VOICE_TO_RIGHT;
+		sc->panr = OPL_VOICE_TO_LEFT;
+		printf(": LR swapped");
+	}
+
+	printf("\n");
+
+	sc->sc_mididev =
+	    midi_attach_mi(&midisyn_hw_if, &sc->syn, &sc->mididev.dev);
+}
+
+int
+opl_detach(sc, flags)
+	struct opl_softc *sc;
+	int flags;
+{
+	int rv = 0;
+
+	if (sc->sc_mididev != NULL)
+		rv = config_detach(sc->sc_mididev, flags);
+
+	return(rv);
 }
 
 static void
@@ -443,6 +474,7 @@ oplsyn_noteon(ms, voice, freq, vel)
 	u_int32_t block_fnum;
 	int mult;
 	int c_mult, m_mult;
+	u_int32_t chan;
 	u_int8_t chars0, chars1, ksl0, ksl1, fbc;
 	u_int8_t r20m, r20c, r40m, r40c, rA0, rB0;
 	u_int8_t vol0, vol1;
@@ -463,7 +495,8 @@ oplsyn_noteon(ms, voice, freq, vel)
 
 	v = &sc->voices[voice];
 	
-	p = &opl2_instrs[MS_GETPGM(ms, voice)];
+	chan = MS_GETCHAN(&ms->voices[voice]);
+	p = &opl2_instrs[ms->pgms[chan]];
 	v->patch = p;
 	opl_load_patch(sc, voice);
 
@@ -510,8 +543,7 @@ oplsyn_noteon(ms, voice, freq, vel)
 	fbc = p->ops[OO_FB_CONN];
 	if (sc->model == OPL_3) {
 		fbc &= ~OPL_STEREO_BITS;
-		/* XXX use pan */
-		fbc |= OPL_VOICE_TO_LEFT | OPL_VOICE_TO_RIGHT;
+		fbc |= sc->pan[chan];
 	}
 	opl_set_ch_reg(sc, OPL_FEEDBACK_CONNECTION, voice, fbc);
 
@@ -556,14 +588,20 @@ oplsyn_keypressure(ms, voice, note, vel)
 }
 
 void
-oplsyn_ctlchange(ms, voice, parm, w14)
+oplsyn_ctlchange(ms, chan, parm, w14)
 	midisyn *ms;
-	u_int32_t voice, parm, w14;
+	u_int32_t chan, parm, w14;
 {
-#ifdef AUDIO_DEBUG
 	struct opl_softc *sc = ms->data;
-	DPRINTFN(1, ("oplsyn_ctlchange: %p %d\n", sc, voice));
-#endif
+
+	DPRINTFN(1, ("oplsyn_ctlchange: %p %d\n", sc, chan));
+	switch (parm) {
+	case MIDI_CTRL_PAN_MSB:
+		sc->pan[chan] =
+		    (w14 <= OPL_MIDI_CENTER_MAX ? sc->panl : 0) |
+		    (w14 >= OPL_MIDI_CENTER_MIN ? sc->panr : 0);
+		break;
+	}
 }
 
 /* PROGRAM CHANGE midi event: */

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.43.2.2 2001/09/13 01:14:20 thorpej Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.43.2.3 2002/01/10 19:47:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.43.2.2 2001/09/13 01:14:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.43.2.3 2002/01/10 19:47:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ dec_3maxplus_init()
 }
 
 /*
- * Initalize the memory system and I/O buses.
+ * Initialize the memory system and I/O buses.
  */
 static void
 dec_3maxplus_bus_reset()

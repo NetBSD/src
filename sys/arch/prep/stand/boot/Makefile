@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2001/06/19 11:56:28 nonaka Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2002/01/10 19:48:16 thorpej Exp $
+
+NOMAN= # defined
+
+.include <bsd.own.mk>
 
 COMMON= ${.CURDIR}/../common
-.ifnmake(print-objdir)
-COMMONOBJ!=	cd ${COMMON}; ${MAKE} print-objdir
-.endif
+COMMONOBJ!=	cd ${COMMON} && ${PRINTOBJDIR}
 
 .PATH: ${.CURDIR}/../boot ${COMMONOBJ}
 
@@ -33,7 +35,6 @@ CPPFLAGS+= -DCONS_SERIAL -DCOMSPEED=9600 -DCOMPORT=0x3f8
 .endif
 
 OBJDUMP?= objdump
-MKMAN= no
 STRIPFLAG=
 BINMODE= 444
 

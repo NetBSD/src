@@ -1,9 +1,8 @@
-#	$NetBSD: TEAL,v 1.2.2.1 2001/08/25 06:15:48 thorpej Exp $
+#	$NetBSD: TEAL,v 1.2.2.2 2002/01/10 19:48:23 thorpej Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
 
-makeoptions 	TEXTADDR=0x88002000	# Indy/Indigo2
-#makeoptions 	TEXTADDR=0x88069000	# Indy/Indigo2 Symmon
+makeoptions	TEXTADDR=0x88069000	# Indy/Indigo2
 
 maxusers	32
 
@@ -25,11 +24,11 @@ options 	DDB_HISTORY_SIZE=100
 options 	DEBUG
 options 	DIAGNOSTIC
 
-#options	KGDB
-#options	KGDBDEV=0x2301		# KGDB port - this is Serial(1)
-#options	KGDBRATE=19200		# KGDB Baud Rate
+#options 	KGDB
+#options 	KGDB_DEV=0x2301		# KGDB port - this is Serial(1)
+#options 	KGDB_DEVRATE=19200	# KGDB Baud Rate
 
-#makeoptions 	DEBUG="-g"
+#makeoptions	DEBUG="-g"
 
 file-system	FFS
 file-system	NFS
@@ -47,7 +46,7 @@ options 	SCSIVERBOSE
 options 	NFS_BOOT_DHCP
 #options 	NFS_BOOT_BOOTPARAM
 
-options		IP22
+options 	IP22
 
 config		netbsd		root on ? type ?
 
@@ -61,15 +60,16 @@ eisa0 		at imc0
 hpc0 		at gio? addr 0x1fb80000
 hpc1 		at gio? addr 0x1fb00000
 hpc2 		at gio? addr 0x1f980000
-sq0 		at hpc0
-wdsc0 		at hpc0
-dsclock0	at hpc0 offset 0x60000
+
+sq* 		at hpc0 offset ?
+wdsc* 		at hpc0 offset ?
+dsclock*	at hpc0 offset ?
 
 #
 # As always, the zs chip is wired funny, so channel 1 is actually the
 # first serial port and channel 0 is the second.
 #
-zsc0 		at hpc0 # pbus0 device ?
+zsc* 		at hpc0 offset ? # pbus0 device ?
 zstty*		at zsc? channel ?
 
 #pbus0 		at hpc0
@@ -86,3 +86,4 @@ pseudo-device	loop
 pseudo-device	pty
 pseudo-device	bpfilter	8
 #pseudo-device	md		1
+pseudo-device	rnd			# /dev/random and in-kernel generator

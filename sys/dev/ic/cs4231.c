@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.4 2000/06/16 11:47:35 pk Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.4.6.1 2002/01/10 19:54:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.4.6.1 2002/01/10 19:54:20 thorpej Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -161,7 +164,8 @@ struct audio_hw_if audiocs_hw_if = {
         0,
 	cs4231_get_props,
 	cs4231_trigger_output,
-	cs4231_trigger_input
+	cs4231_trigger_input,
+	NULL,
 };
 
 

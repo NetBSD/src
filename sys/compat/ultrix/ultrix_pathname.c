@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.12 2001/06/14 20:32:46 thorpej Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.12.2.1 2002/01/10 19:52:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,9 @@
  * etc) used by emul processes at their `normal' pathnames, without
  * polluting, or conflicting with, the native filesysten namespace.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.12.2.1 2002/01/10 19:52:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

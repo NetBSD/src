@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.33.2.2 2001/09/13 01:14:40 thorpej Exp $	*/
+/*	$NetBSD: psycho.c,v 1.33.2.3 2002/01/10 19:49:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -96,8 +96,7 @@ static void psycho_iommu_init __P((struct psycho_softc *, int));
  * bus space and bus dma support for UltraSPARC `psycho'.  note that most
  * of the bus dma support is provided by the iommu dvma controller.
  */
-static int psycho_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-				int, bus_space_handle_t *));
+static paddr_t psycho_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
 static int _psycho_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 				bus_size_t, int, vaddr_t,
 				bus_space_handle_t *));
@@ -191,7 +190,7 @@ psycho_match(parent, match, aux)
 	void		*aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	char *model = getpropstring(ma->ma_node, "model");
+	char *model = PROM_getpropstring(ma->ma_node, "model");
 	int i;
 
 	/* match on a name of "pci" and a sabre or a psycho */
@@ -200,7 +199,7 @@ psycho_match(parent, match, aux)
 			if (strcmp(model, psycho_names[i].p_name) == 0)
 				return (1);
 
-		model = getpropstring(ma->ma_node, "compatible");
+		model = PROM_getpropstring(ma->ma_node, "compatible");
 		for (i=0; psycho_names[i].p_name; i++)
 			if (strcmp(model, psycho_names[i].p_name) == 0)
 				return (1);
@@ -234,7 +233,7 @@ psycho_attach(parent, self, aux)
 	u_int64_t csr;
 	int psycho_br[2], n, i;
 	struct pci_ctl *pci_ctl;
-	char *model = getpropstring(ma->ma_node, "model");
+	char *model = PROM_getpropstring(ma->ma_node, "model");
 
 	printf("\n");
 
@@ -251,7 +250,7 @@ psycho_attach(parent, self, aux)
 			goto found;
 		}
 
-	model = getpropstring(ma->ma_node, "compatible");
+	model = PROM_getpropstring(ma->ma_node, "compatible");
 	for (i=0; psycho_names[i].p_name; i++)
 		if (strcmp(model, psycho_names[i].p_name) == 0) {
 			sc->sc_mode = psycho_names[i].p_type;
@@ -456,6 +455,17 @@ found:
 		 *
 		 * For the moment, 32KB should be more than enough.
 		 */
+		sc->sc_is = malloc(sizeof(struct iommu_state),
+			M_DEVBUF, M_NOWAIT);
+		if (sc->sc_is == NULL)
+			panic("psycho_attach: malloc iommu_state");
+
+
+		sc->sc_is->is_sb[0] = 0;
+		sc->sc_is->is_sb[1] = 0;
+		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") >= 0)
+			sc->sc_is->is_sb[0] = &pci_ctl->pci_strbuf;
+
 		psycho_iommu_init(sc, 2);
 
 		sc->sc_configtag = psycho_alloc_config_tag(sc->sc_psycho_this);
@@ -473,6 +483,10 @@ found:
 		sc->sc_is = osc->sc_is;
 		sc->sc_configtag = osc->sc_configtag;
 		sc->sc_configaddr = osc->sc_configaddr;
+
+		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") >= 0)
+			sc->sc_is->is_sb[1] = &pci_ctl->pci_strbuf;
+		iommu_reset(sc->sc_is);
 	}
 
 	/*
@@ -556,7 +570,7 @@ psycho_get_bus_range(node, brp)
 {
 	int n;
 
-	if (getprop(node, "bus-range", sizeof(*brp), &n, (void **)&brp))
+	if (PROM_getprop(node, "bus-range", sizeof(*brp), &n, (void **)&brp))
 		panic("could not get psycho bus-range");
 	if (n != 2)
 		panic("broken psycho bus-range");
@@ -570,7 +584,7 @@ psycho_get_ranges(node, rp, np)
 	int *np;
 {
 
-	if (getprop(node, "ranges", sizeof(**rp), np, (void **)rp))
+	if (PROM_getprop(node, "ranges", sizeof(**rp), np, (void **)rp))
 		panic("could not get psycho ranges");
 	DPRINTF(PDB_PROM, ("psycho debug: got `ranges' for node %08x: %d entries\n", node, *np));
 }
@@ -585,14 +599,18 @@ psycho_ue(arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
 	struct psychoreg *regs = sc->sc_regs;
+	long long afsr = regs->psy_ue_afsr;
+	long long afar = regs->psy_ue_afar;
+	char bits[128];
 
 	/*
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
-
-	panic("%s: uncorrectable DMA error AFAR %llx AFSR %llx\n",
-		sc->sc_dev.dv_xname, 
-		(long long)regs->psy_ue_afar, (long long)regs->psy_ue_afsr);
+	panic("%s: uncorrectable DMA error AFAR %llx pa %llx AFSR %llx:\n%s",
+		sc->sc_dev.dv_xname, afar, 
+		(long long)iommu_extract(sc->sc_is, (vaddr_t)afar), afsr,
+		bitmask_snprintf(afsr, PSYCHO_UE_AFSR_BITS,
+			bits, sizeof(bits)));
 	return (1);
 }
 static int 
@@ -682,25 +700,14 @@ psycho_iommu_init(sc, tsbsize)
 	int tsbsize;
 {
 	char *name;
-	struct iommu_state *is;
+	struct iommu_state *is = sc->sc_is;
 	u_int32_t iobase = -1;
 	int *vdma = NULL;
 	int nitem;
 
-	is = malloc(sizeof(struct iommu_state), M_DEVBUF, M_NOWAIT);
-	if (is == NULL)
-		panic("psycho_iommu_init: malloc is");
-
-	sc->sc_is = is;
-
 	/* punch in our copies */
 	is->is_bustag = sc->sc_bustag;
 	is->is_iommu = &sc->sc_regs->psy_iommu;
-
-	if (getproplen(sc->sc_node, "no-streaming-cache") < 0)
-		is->is_sb = 0;
-	else
-		is->is_sb = &sc->sc_regs->psy_iommu_strbuf;
 
 	/*
 	 * Separate the men from the boys.  Get the `virtual-dma'
@@ -710,7 +717,7 @@ psycho_iommu_init(sc, tsbsize)
 	 * We could query the `#virtual-dma-size-cells' and
 	 * `#virtual-dma-addr-cells' and DTRT, but I'm lazy.
 	 */
-	if (!getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem, 
+	if (!PROM_getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem, 
 		(void **)&vdma)) {
 		/* Damn.  Gotta use these values. */
 		iobase = vdma[0];
@@ -867,13 +874,13 @@ _psycho_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	return (EINVAL);
 }
 
-static int
-psycho_bus_mmap(t, btype, paddr, flags, hp)
+static paddr_t
+psycho_bus_mmap(t, paddr, off, prot, flags)
 	bus_space_tag_t t;
-	bus_type_t btype;
 	bus_addr_t paddr;
+	off_t off;
+	int prot;
 	int flags;
-	bus_space_handle_t *hp;
 {
 	bus_addr_t offset = paddr;
 	struct psycho_pbm *pp = t->cookie;
@@ -882,7 +889,8 @@ psycho_bus_mmap(t, btype, paddr, flags, hp)
 
 	ss = get_childspace(t->type);
 
-	DPRINTF(PDB_BUSMAP, ("_psycho_bus_mmap: type %d flags %d pa %qx\n", btype, flags, (unsigned long long)paddr));
+	DPRINTF(PDB_BUSMAP, ("_psycho_bus_mmap: prot %x flags %d pa %qx\n", 
+		prot, flags, (unsigned long long)paddr));
 
 	for (i = 0; i < pp->pp_nrange; i++) {
 		bus_addr_t paddr;
@@ -892,11 +900,12 @@ psycho_bus_mmap(t, btype, paddr, flags, hp)
 
 		paddr = pp->pp_range[i].phys_lo + offset;
 		paddr |= ((bus_addr_t)pp->pp_range[i].phys_hi<<32);
-		DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_mmap: mapping paddr space %lx offset %lx paddr %qx\n",
+		DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_mmap: mapping paddr "
+			"space %lx offset %lx paddr %qx\n",
 			       (long)ss, (long)offset,
 			       (unsigned long long)paddr));
-		return (bus_space_mmap(sc->sc_bustag, 0, paddr,
-				       flags, hp));
+		return (bus_space_mmap(sc->sc_bustag, paddr, off,
+				       prot, flags));
 	}
 
 	return (-1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1.2.1 2001/08/03 04:12:34 lukem Exp $	*/
+/*	$NetBSD: bus.h,v 1.1.2.2 2002/01/10 19:49:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -116,12 +116,13 @@ struct sun68k_bus_space_tag {
 				bus_size_t,		/*size*/
 				int));			/*flags*/
 
-	int	(*sun68k_bus_mmap) __P((
+	paddr_t	(*sun68k_bus_mmap) __P((
 				bus_space_tag_t,
 				bus_type_t,		/**/
 				bus_addr_t,		/**/
-				int,			/*flags*/
-				bus_space_handle_t *));
+				off_t,			/*offset*/
+				int,			/*prot*/
+				int));			/*flags*/
 
 	void	*(*sun68k_intr_establish) __P((
 				bus_space_tag_t,
@@ -197,12 +198,19 @@ static void	bus_space_barrier __P((
 				bus_size_t,
 				bus_size_t,
 				int));
-static int	bus_space_mmap __P((
+static paddr_t	bus_space_mmap __P((
 				bus_space_tag_t,
-				bus_type_t,		/**/
 				bus_addr_t,		/**/
-				int,			/*flags*/
-				bus_space_handle_t *));
+				off_t,			/*offset*/
+				int,			/*prot*/
+				int));			/*flags*/
+static paddr_t	bus_space_mmap2 __P((
+				bus_space_tag_t,
+				bus_type_t,
+				bus_addr_t,		/**/
+				off_t,			/*offset*/
+				int,			/*prot*/
+				int));			/*flags*/
 static void	*bus_intr_establish __P((
 				bus_space_tag_t,
 				int,			/*bus-specific intr*/
@@ -274,15 +282,27 @@ bus_space_subregion(t, h, o, s, hp)
 	_BS_CALL(t, sun68k_bus_subregion)(t, h, o, s, hp);
 }
 
-__inline__ int
-bus_space_mmap(t, bt, a, f, hp)
+__inline__ paddr_t
+bus_space_mmap(t, a, o, p, f)
+	bus_space_tag_t	t;
+	bus_addr_t	a;
+	off_t		o;
+	int		p;
+	int		f;
+{
+	_BS_CALL(t, sun68k_bus_mmap)(t, 0, a, o, p, f);
+}
+
+__inline__ paddr_t
+bus_space_mmap2(t, bt, a, o, p, f)
 	bus_space_tag_t	t;
 	bus_type_t	bt;
 	bus_addr_t	a;
+	off_t		o;
+	int		p;
 	int		f;
-	bus_space_handle_t *hp;
 {
-	_BS_CALL(t, sun68k_bus_mmap)(t, bt, a, f, hp);
+	_BS_CALL(t, sun68k_bus_mmap)(t, bt, a, o, p, f);
 }
 
 __inline__ void *

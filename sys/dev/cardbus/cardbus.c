@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.35 2001/07/06 18:05:25 mcr Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.35.2.1 2002/01/10 19:53:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -32,9 +32,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.35.2.1 2002/01/10 19:53:43 thorpej Exp $");
+
 #include "opt_cardbus.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -42,6 +44,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/reboot.h>		/* for AB_* needed by bootverbose */
 
 #include <machine/bus.h>
 
@@ -122,8 +125,10 @@ cardbusattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_lattimer = cba->cba_lattimer;
 
 	printf(": bus %d device %d", sc->sc_bus, sc->sc_device);
-	printf(" cacheline 0x%x, lattimer 0x%x\n", sc->sc_cacheline,
-	    sc->sc_lattimer);
+	if (bootverbose)
+		printf(" cacheline 0x%x, lattimer 0x%x", sc->sc_cacheline,
+		       sc->sc_lattimer);
+	printf("\n");
 
 	sc->sc_iot = cba->cba_iot;	/* CardBus I/O space tag */
 	sc->sc_memt = cba->cba_memt;	/* CardBus MEM space tag */
@@ -282,9 +287,6 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 static void
 parse_tuple(u_int8_t *tuple, int len, void *data)
 {
-#ifdef CARDBUS_DEBUG
-	static const char __func__[] = "parse_tuple";
-#endif
 	struct cardbus_cis_info *cis = data;
 	char *p;
 	int i, bar_index;
@@ -527,6 +529,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 #endif
 
 		ca.ca_tag = tag;
+		ca.ca_bus = sc->sc_bus;
 		ca.ca_device = sc->sc_device;
 		ca.ca_function = function;
 		ca.ca_id = id;
@@ -598,10 +601,12 @@ cardbusprint(void *aux, const char *pnp)
 				printf(", ");
 			printf("%s", ca->ca_cis.cis1_info[i]);
 		}
-		if (i)
-			printf(" ");
-		printf("(manufacturer 0x%x, product 0x%x)",
-		    ca->ca_cis.manufacturer, ca->ca_cis.product);
+		if (bootverbose) {
+			if (i)
+				printf(" ");
+			printf("(manufacturer 0x%x, product 0x%x)",
+			       ca->ca_cis.manufacturer, ca->ca_cis.product);
+		}
 		printf(" %s at %s", devinfo, pnp);
 	}
 	printf(" dev %d function %d", ca->ca_device, ca->ca_function);

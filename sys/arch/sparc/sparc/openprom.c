@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.10 1999/02/14 12:48:03 pk Exp $ */
+/*	$NetBSD: openprom.c,v 1.10.22.1 2002/01/10 19:49:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,7 @@
  *
  *	@(#)openprom.c	8.1 (Berkeley) 6/11/93
  */
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +179,7 @@ openpromioctl(dev, cmd, data, flags, p)
 			break;
 		value = malloc(len, M_TEMP, M_WAITOK);
 		s = splhigh();
-		error = getprop(node, name, 1, &len, (void **)&value);
+		error = PROM_getprop(node, name, 1, &len, (void **)&value);
 		splx(s);
 		if (error != 0)
 			break;

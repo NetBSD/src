@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_time.c,v 1.3 2001/06/28 01:48:23 dmcmahill Exp $ */
+/* $NetBSD: osf1_time.c,v 1.3.2.1 2002/01/10 19:52:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.3.2.1 2002/01/10 19:52:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

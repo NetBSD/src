@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.c,v 1.1 2000/07/25 22:33:02 pk Exp $ */
+/*	$NetBSD: intersil7170.c,v 1.1.6.1 2002/01/10 19:54:36 thorpej Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,6 +38,9 @@
 /*
  * Intersil 7170 time-of-day chip subroutines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.1.6.1 2002/01/10 19:54:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

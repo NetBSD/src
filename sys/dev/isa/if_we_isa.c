@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_isa.c,v 1.3 2001/07/08 17:55:50 thorpej Exp $	*/
+/*	$NetBSD: if_we_isa.c,v 1.3.2.1 2002/01/10 19:55:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@
  * and the SMC Elite Ultra (8216).
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.3.2.1 2002/01/10 19:55:32 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -105,7 +108,7 @@ static const int we_584_irq[] = {
 #define	NWE_584_IRQ	(sizeof(we_584_irq) / sizeof(we_584_irq[0]))
 
 static const int we_790_irq[] = {
-	IRQUNK, 9, 3, 5, 7, 10, 11, 15,
+	ISACF_IRQ_DEFAULT, 9, 3, 5, 7, 10, 11, 15,
 };
 #define	NWE_790_IRQ	(sizeof(we_790_irq) / sizeof(we_790_irq[0]))
 
@@ -159,16 +162,26 @@ we_isa_probe(parent, cf, aux)
 
 	asich_valid = memh_valid = 0;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_niomem < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/* Disallow wildcarded i/o addresses. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
 		return (0);
 
 	/* Disallow wildcarded mem address. */
-	if (ia->ia_maddr == ISACF_IOMEM_DEFAULT)
+	if (ia->ia_iomem[0].ir_addr == ISACF_IOMEM_DEFAULT)
 		return (0);
 
 	/* Attempt to map the device. */
-	if (bus_space_map(asict, ia->ia_iobase, WE_NPORTS, 0, &asich))
+	if (bus_space_map(asict, ia->ia_io[0].ir_addr, WE_NPORTS, 0, &asich))
 		goto out;
 	asich_valid = 1;
 
@@ -220,11 +233,11 @@ we_isa_probe(parent, cf, aux)
 		goto out;
 
 	/* Allow user to override probed value. */
-	if (ia->ia_msize)
-		memsize = ia->ia_msize;
+	if (ia->ia_iomem[0].ir_size)
+		memsize = ia->ia_iomem[0].ir_size;
 
 	/* Attempt to map the memory space. */
-	if (bus_space_map(memt, ia->ia_maddr, memsize, 0, &memh))
+	if (bus_space_map(memt, ia->ia_iomem[0].ir_addr, memsize, 0, &memh))
 		goto out;
 	memh_valid = 1;
 
@@ -246,27 +259,37 @@ we_isa_probe(parent, cf, aux)
 		bus_space_write_1(asict, asich, WE790_HWR,
 		    hwr & ~WE790_HWR_SWH);
 
-		if (ia->ia_irq != IRQUNK && ia->ia_irq != we_790_irq[i])
-			printf("%s%d: overriding IRQ %d to %d\n",
-			    we_cd.cd_name, cf->cf_unit, ia->ia_irq,
+		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		    ia->ia_irq[0].ir_irq != we_790_irq[i])
+			printf("%s%d: overriding configured IRQ %d to %d\n",
+			    we_cd.cd_name, cf->cf_unit, ia->ia_irq[0].ir_irq,
 			    we_790_irq[i]);
-		ia->ia_irq = we_790_irq[i];
+		ia->ia_irq[0].ir_irq = we_790_irq[i];
 	} else if (type & WE_SOFTCONFIG) {
 		/* Assemble together the encoded interrupt number. */
 		i = (bus_space_read_1(asict, asich, WE_ICR) & WE_ICR_IR2) |
 		    ((bus_space_read_1(asict, asich, WE_IRR) &
 		      (WE_IRR_IR0 | WE_IRR_IR1)) >> 5);
 
-		if (ia->ia_irq != IRQUNK && ia->ia_irq != we_584_irq[i])
-			printf("%s%d: overriding IRQ %d to %d\n",
-			    we_cd.cd_name, cf->cf_unit, ia->ia_irq,
+		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		    ia->ia_irq[0].ir_irq != we_584_irq[i])
+			printf("%s%d: overriding configured IRQ %d to %d\n",
+			    we_cd.cd_name, cf->cf_unit, ia->ia_irq[0].ir_irq,
 			    we_584_irq[i]);
-		ia->ia_irq = we_584_irq[i];
+		ia->ia_irq[0].ir_irq = we_584_irq[i];
 	}
 
 	/* So, we say we've found it! */
-	ia->ia_iosize = WE_NPORTS;
-	ia->ia_msize = memsize;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = WE_NPORTS;
+
+	ia->ia_niomem = 1;
+	ia->ia_iomem[0].ir_size = memsize;
+
+	ia->ia_nirq = 1;
+
+	ia->ia_ndrq = 0;
+
 	rv = 1;
 
  out:
@@ -295,7 +318,7 @@ we_isa_attach(parent, self, aux)
 	memt = ia->ia_memt;
 
 	/* Map the device. */
-	if (bus_space_map(asict, ia->ia_iobase, WE_NPORTS, 0, &asich)) {
+	if (bus_space_map(asict, ia->ia_io[0].ir_addr, WE_NPORTS, 0, &asich)) {
 		printf("%s: can't map nic i/o space\n",
 		    sc->sc_dev.dv_xname);
 		return;
@@ -319,7 +342,8 @@ we_isa_attach(parent, self, aux)
 	 * Map memory space.  Note we use the size that might have
 	 * been overridden by the user.
 	 */
-	if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize, 0, &memh)) {
+	if (bus_space_map(memt, ia->ia_iomem[0].ir_addr,
+	    ia->ia_iomem[0].ir_size, 0, &memh)) {
 		printf("%s: can't map shared memory\n",
 		    sc->sc_dev.dv_xname);
 		return;
@@ -334,8 +358,8 @@ we_isa_attach(parent, self, aux)
 	sc->sc_buft = memt;
 	sc->sc_bufh = memh;
 
-	wsc->sc_maddr = ia->ia_maddr;
-	sc->mem_size = ia->ia_msize;
+	wsc->sc_maddr = ia->ia_iomem[0].ir_addr;
+	sc->mem_size = ia->ia_iomem[0].ir_size;
 
 	/* Interface is always enabled. */
 	sc->sc_enabled = 1;
@@ -353,15 +377,15 @@ we_isa_attach(parent, self, aux)
 	else if (wsc->sc_type & WE_SOFTCONFIG)
 		bus_space_write_1(asict, asich, WE_IRR,
 		    bus_space_read_1(asict, asich, WE_IRR) | WE_IRR_IEN);
-	else if (ia->ia_irq == IRQUNK) {
+	else if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
 		printf("%s: can't wildcard IRQ on a %s\n",
 		    sc->sc_dev.dv_xname, typestr);
 		return;
 	}
 
 	/* Establish interrupt handler. */
-	wsc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_NET, dp8390_intr, sc);
+	wsc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_NET, dp8390_intr, sc);
 	if (wsc->sc_ih == NULL)
 		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
 }

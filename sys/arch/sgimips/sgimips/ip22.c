@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.5 2001/06/14 01:15:35 rafal Exp $	*/
+/*	$NetBSD: ip22.c,v 1.5.4.1 2002/01/10 19:48:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -41,11 +41,18 @@
 #include <machine/machtype.h>
 #include <mips/locore.h>
 
+#include <mips/cache.h>
+
 static struct evcnt mips_int5_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
 
 static u_int32_t iocwrite;	/* IOC write register: read-only */
 static u_int32_t iocreset;	/* IOC reset register: read-only */
+
+static unsigned long last_clk_intr;
+
+static unsigned long ticks_per_hz;
+static unsigned long ticks_per_usec;
 
 
 void		ip22_init(void);
@@ -55,7 +62,14 @@ int		ip22_local1_intr(void);
 int 		ip22_mappable_intr(void *);
 void 		ip22_intr(u_int, u_int, u_int, u_int);
 void		ip22_intr_establish(int, int, int (*)(void *), void *);
+
+unsigned long 	ip22_clkread(void);
 unsigned long	ip22_cal_timer(u_int32_t, u_int32_t);
+
+/* ip22_cache.S */
+extern void	ip22_sdcache_do_wbinv(vaddr_t, vaddr_t);
+extern void	ip22_sdcache_enable(void);
+extern void	ip22_sdcache_disable(void);
 
 void 
 ip22_init(void)
@@ -159,7 +173,10 @@ ip22_init(void)
 	printf("CPU clock speed = %lu.%02luMhz\n", cps / (1000000 / hz), 
 						(cps % (1000000 / hz) / 100));
 
-	platform.ticks_per_hz = cps;
+	platform.clkread = ip22_clkread;
+
+	ticks_per_hz = cps;
+	ticks_per_usec = cps * hz / 1000000;
 
 	evcnt_attach_static(&mips_int5_evcnt);
 }
@@ -178,15 +195,14 @@ ip22_intr(status, cause, pc, ipending)
 	u_int32_t pc;
 	u_int32_t ipending;
 {
-	unsigned long cycles;
 	struct clockframe cf;
 
 	/* Tickle Indy/I2 MC watchdog timer */ 
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00014) = 0;
 
 	if (ipending & MIPS_INT_MASK_5) {
-		cycles = mips3_cp0_count_read();
-		mips3_cp0_compare_write(cycles + platform.ticks_per_hz);
+		last_clk_intr = mips3_cp0_count_read();
+		mips3_cp0_compare_write(last_clk_intr + ticks_per_hz);
 
 		cf.pc = pc;
 		cf.sr = status;
@@ -375,6 +391,15 @@ ip22_intr_establish(level, ipl, handler, arg)
 }
 
 unsigned long
+ip22_clkread(void)
+{
+	unsigned long diff =  mips3_cp0_count_read();
+
+	diff -= last_clk_intr;
+	return (diff / ticks_per_usec);
+}
+
+unsigned long
 ip22_cal_timer(u_int32_t tctrl, u_int32_t tcount)
 {
 	int s;
@@ -415,6 +440,23 @@ ip22_cal_timer(u_int32_t tctrl, u_int32_t tcount)
 	splx(s);
 
 	return (endctr - startctr) / roundtime * roundtime;
+}
+
+void	ip22_cache_init(struct device *);
+
+void
+ip22_cache_init(struct device *self)
+{
+
+	/*
+	 * If we don't have an R4000-style cache, then initialize the
+	 * IP22 SysAD L2 cache.
+	 */
+	if (mips_sdcache_line_size == 0) {
+		/* XXX */
+		printf("%s: disabling IP22 SysAD L2 cache\n", self->dv_xname);
+		ip22_sdcache_disable();
+	}
 }
 
 #endif	/* IP22 */

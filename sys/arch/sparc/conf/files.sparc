@@ -1,7 +1,14 @@
-#	$NetBSD: files.sparc,v 1.102 2001/06/08 04:49:45 mrg Exp $
+#	$NetBSD: files.sparc,v 1.102.2.1 2002/01/10 19:48:43 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
+
+defflag	opt_sparc_arch.h	SUN4
+defflag	opt_sparc_arch.h	SUN4_MMU3L
+defflag	opt_sparc_arch.h	SUN4C
+defflag	opt_sparc_arch.h	SUN4M
+defflag	opt_sparc_arch.h	SUN4U
+defflag	opt_sparc_arch.h	MSIIEP
 
 # maxpartitions must be first item in files.${ARCH}
 maxpartitions 8
@@ -10,6 +17,21 @@ maxusers 2 8 1024
 
 device mainbus {}
 attach mainbus at root
+
+include "dev/i2o/files.i2o"
+include "dev/pci/files.pci"
+device msiiep: pcibus
+attach msiiep at mainbus
+file	arch/sparc/sparc/msiiep.c		msiiep
+file	arch/sparc/sparc/pci_machdep.c		msiiep
+
+device ebus {[addr = -1]}: pcibus
+attach ebus at pci
+file	arch/sparc/dev/ebus.c			ebus
+
+device rtc
+attach rtc at ebus with rtc_ebus
+file	arch/sparc/dev/rtc.c			rtc_ebus
 
 device iommu {}
 attach iommu at mainbus
@@ -31,7 +53,7 @@ attach auxreg at mainbus with auxreg_mainbus
 attach auxreg at obio with auxreg_obio
 file	arch/sparc/sparc/auxreg.c
 
-defopt BLINK
+defflag	BLINK
 
 device auxiotwo
 attach auxiotwo at obio with auxiotwo_obio
@@ -194,6 +216,9 @@ file	arch/sparc/dev/if_ie_obio.c	ie_obio
 
 attach com at obio with com_obio
 file	arch/sparc/dev/com_obio.c	com_obio
+
+attach com at ebus with com_ebus
+file	arch/sparc/dev/com_ebus.c	com_ebus
 
 device sw: scsi, ncr5380sbc
 attach sw at obio

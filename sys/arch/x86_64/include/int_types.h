@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.1 2001/06/19 00:20:11 fvdl Exp $	*/
+/*	$NetBSD: int_types.h,v 1.1.2.1 2002/01/10 19:50:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,6 +52,8 @@ typedef	int			__int32_t;
 typedef	unsigned int	       __uint32_t;
 typedef	long int		__int64_t;
 typedef	unsigned long int	__uint64_t;
+
+#define	__BIT_TYPES_DEFINED__
 
 /* 7.18.1.4 Integer types capable of holding object pointers */
 

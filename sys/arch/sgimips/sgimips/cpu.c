@@ -1,7 +1,8 @@
-/*	$NetBSD: cpu.c,v 1.5 2001/07/08 23:59:32 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5.2.1 2002/01/10 19:48:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
+ * Copyright (c) 2001 Jason R. Thorpe.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -32,14 +33,21 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_machtypes.h"
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+
+#include <mips/cache.h>
 
 #include <machine/cpu.h>
 #include <machine/locore.h>
 #include <machine/autoconf.h>
 #include <machine/machtype.h>
+
+#include <dev/arcbios/arcbios.h>
+#include <dev/arcbios/arcbiosvar.h>
 
 static int	cpu_match(struct device *, struct cfdata *, void *);
 static void	cpu_attach(struct device *, struct device *, void *);
@@ -47,6 +55,29 @@ static void	cpu_attach(struct device *, struct device *, void *);
 struct cfattach cpu_ca = {
 	sizeof(struct device), cpu_match, cpu_attach
 };
+
+static void
+sgimips_find_l2cache(struct arcbios_component *comp,
+    struct arcbios_treewalk_context *atc)
+{
+	struct device *self = atc->atc_cookie;
+
+	if (comp->Class != COMPONENT_CLASS_CacheClass)
+		return;
+
+	switch (comp->Type) {
+	case COMPONENT_TYPE_SecondaryICache:
+		panic("%s: split L2 cache", self->dv_xname);
+	case COMPONENT_TYPE_SecondaryDCache:
+	case COMPONENT_TYPE_SecondaryCache:
+		mips_sdcache_size = COMPONENT_KEY_Cache_CacheSize(comp->Key);
+		mips_sdcache_line_size =
+		    COMPONENT_KEY_Cache_LineSize(comp->Key);
+		/* XXX */
+		mips_sdcache_ways = 1;
+		break;
+	}
+}
 
 static int
 cpu_match(parent, match, aux)
@@ -63,57 +94,21 @@ cpu_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	u_int32_t config;
-
-	switch (mach_type) {
-	case MACH_SGI_IP22:
-		mips_L2CacheSize = 1024 * 1024;		/* XXX Indy */
-		break;
-
-	case MACH_SGI_IP32:
-		mips_L2CacheSize = 512 * 1024;		/* XXX O2 */
-		break;
-	}
-
-#if 1	/* XXX XXX XXX */
-	config = mips3_cp0_config_read();
-	config &= ~MIPS3_CONFIG_SC;
-	mips3_cp0_config_write(config);
-#endif
+	/*
+	 * Walk the ARCBIOS device tree to find the L2 cache.
+	 *
+	 * XXX We should be walking the tree to attach the CPUs,
+	 * XXX etc, but we don't currently do that.
+	 */
+	arcbios_tree_walk(sgimips_find_l2cache, self);
 
 	printf(": ");
 	cpu_identify();
 
+#ifdef IP22
 	if (mach_type == MACH_SGI_IP22) {		/* XXX Indy */
-		unsigned long tmp1, tmp2, tmp3;
-
-		printf("%s: disabling IP22 SysAD L2 cache\n", self->dv_xname);
-
-	        __asm__ __volatile__("
-                .set noreorder
-                .set mips3
-                li      %0, 0x1
-                dsll    %0, 31
-                lui     %1, 0x9000
-                dsll32  %1, 0
-                or      %0, %1, %0
-                mfc0    %2, $12
-                nop; nop; nop; nop;
-                li      %1, 0x80
-                mtc0    %1, $12
-                nop; nop; nop; nop;
-                sh      $0, 0(%0)
-                mtc0    $0, $12
-                nop; nop; nop; nop;  
-                mtc0    %2, $12 
-                nop; nop; nop; nop;
-                .set mips2
-                .set reorder
-        	" : "=r" (tmp1), "=r" (tmp2), "=r" (tmp3));
+		extern void ip22_cache_init(struct device *);
+		ip22_cache_init(self);
 	}
-
-#if 0
-	mips_L2CacheSize = 0;
-	mips_L2CachePresent = 0;
 #endif
 }

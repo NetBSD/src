@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.70.4.1 2001/08/03 04:13:08 lukem Exp $	*/
+/*	$NetBSD: gus.c,v 1.70.4.1 2001/08/03 04:13:08 lukem Exp	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -93,6 +93,9 @@
  * "C" is an optional combiner.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.70.4.2 2002/01/10 19:55:24 thorpej Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -450,11 +453,13 @@ struct cfattach gus_ca = {
  */
 
 static const int gus_irq_map[] = {
-	IRQUNK, IRQUNK, 1, 3, IRQUNK, 2, IRQUNK, 4, IRQUNK, 1, IRQUNK, 5, 6,
-	IRQUNK, IRQUNK, 7
+	ISACF_IRQ_DEFAULT, ISACF_IRQ_DEFAULT, 1, 3, ISACF_IRQ_DEFAULT, 2,
+	ISACF_IRQ_DEFAULT, 4, ISACF_IRQ_DEFAULT, 1, ISACF_IRQ_DEFAULT, 5,
+	6, ISACF_IRQ_DEFAULT, ISACF_IRQ_DEFAULT, 7
 };
 static const int gus_drq_map[] = {
-	DRQUNK, 1, DRQUNK, 2, DRQUNK, 3, 4, 5
+	ISACF_DRQ_DEFAULT, 1, ISACF_DRQ_DEFAULT, 2, ISACF_DRQ_DEFAULT, 3,
+	4, 5
 };
 
 /*
@@ -613,6 +618,9 @@ struct audio_hw_if gus_hw_if = {
 	ad1848_isa_round_buffersize, 
 	ad1848_isa_mappage, 
 	gus_get_props,
+	NULL,
+	NULL,
+	NULL,
 };
 
 static struct audio_hw_if gusmax_hw_if = {
@@ -648,6 +656,9 @@ static struct audio_hw_if gusmax_hw_if = {
 	ad1848_isa_round_buffersize, 
 	ad1848_isa_mappage, 
 	gusmax_get_props,
+	NULL,
+	NULL,
+	NULL,
 };
 
 /*
@@ -670,8 +681,23 @@ gusprobe(parent, match, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
-	int recdrq = ia->ia_drq2;
+	int iobase, recdrq;
+
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+	if (ia->ia_ndrq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	iobase = ia->ia_io[0].ir_addr;
+	if (ia->ia_ndrq > 1)
+		recdrq = ia->ia_drq[1].ir_drq;
+	else
+		recdrq = ISACF_DRQ_DEFAULT;
 
 	/*
 	 * Before we do anything else, make sure requested IRQ and DRQ are
@@ -679,25 +705,30 @@ gusprobe(parent, match, aux)
 	 */
 
 	/* XXX range check before indexing!! */
-	if (ia->ia_irq == IRQUNK || gus_irq_map[ia->ia_irq] == IRQUNK) {
-		printf("gus: invalid irq %d, card not probed\n", ia->ia_irq);
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT ||
+	    gus_irq_map[ia->ia_irq[0].ir_irq] == ISACF_IRQ_DEFAULT) {
+		printf("gus: invalid irq %d, card not probed\n",
+		    ia->ia_irq[0].ir_irq);
 		return 0;
 	}
 
-	if (ia->ia_drq == DRQUNK || gus_drq_map[ia->ia_drq] == DRQUNK) {
-		printf("gus: invalid drq %d, card not probed\n", ia->ia_drq);
+	if (ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT ||
+	    gus_drq_map[ia->ia_drq[0].ir_drq] == ISACF_DRQ_DEFAULT) {
+		printf("gus: invalid drq %d, card not probed\n",
+		    ia->ia_drq[0].ir_drq);
 		return 0;
 	}
 
-	if (recdrq != DRQUNK) {
-		if (recdrq > 7 || gus_drq_map[recdrq] == DRQUNK) {
-		   printf("gus: invalid second DMA channel (%d), card not probed\n", recdrq);
+	if (recdrq != ISACF_DRQ_DEFAULT) {
+		if (recdrq > 7 || gus_drq_map[recdrq] == ISACF_DRQ_DEFAULT) {
+		   printf("gus: invalid second DMA channel (%d), card not "
+		       "probed\n", recdrq);
 		   return 0;
 	        }
 	} else
-		recdrq = ia->ia_drq;
+		recdrq = ia->ia_drq[0].ir_drq;
 
-	if (iobase == IOBASEUNK) {
+	if (iobase == ISACF_PORT_DEFAULT) {
 		int i;
 		for(i = 0; i < gus_addrs; i++)
 			if (gus_test_iobase(ia->ia_iot, gus_base_addrs[i])) {
@@ -709,12 +740,20 @@ gusprobe(parent, match, aux)
 			return 0;
 
 done:
-	if ((ia->ia_drq    != -1 && !isa_drq_isfree(ia->ia_ic, ia->ia_drq)) ||
-	    (recdrq != -1 && !isa_drq_isfree(ia->ia_ic, recdrq)))
+	if (!isa_drq_isfree(ia->ia_ic, ia->ia_drq[0].ir_drq) ||
+	    (recdrq != ia->ia_drq[0].ir_drq &&
+	     !isa_drq_isfree(ia->ia_ic, recdrq)))
 		return 0;
 
-	ia->ia_iobase = iobase;
-	ia->ia_iosize = GUS_NPORT1;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_addr = iobase;
+	ia->ia_io[0].ir_size = GUS_NPORT1;
+
+	ia->ia_nirq = 1;
+	ia->ia_ndrq = (recdrq != ia->ia_drq[0].ir_drq) ? 2 : 1;
+
+	ia->ia_niomem = 0;
+
 	return 1;
 }
 
@@ -814,7 +853,7 @@ gusattach(parent, self, aux)
 
 	sc->sc_iot = iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
-	iobase = ia->ia_iobase;
+	iobase = ia->ia_io[0].ir_addr;
 
 	/* Map i/o space */
 	if (bus_space_map(iot, iobase, GUS_NPORT1, 0, &ioh1))
@@ -835,9 +874,10 @@ gusattach(parent, self, aux)
 	sc->sc_ioh4 = ioh4;
 
 	sc->sc_iobase = iobase;
-	sc->sc_irq = ia->ia_irq;
-	sc->sc_playdrq = ia->ia_drq;
-	sc->sc_recdrq = ia->ia_drq2;
+	sc->sc_irq = ia->ia_irq[0].ir_irq;
+	sc->sc_playdrq = ia->ia_drq[0].ir_drq;
+	sc->sc_recdrq = (ia->ia_ndrq == 2) ?
+	    ia->ia_drq[1].ir_drq : ia->ia_drq[0].ir_drq;
 
 	/*
 	 * Figure out our board rev, and see if we need to initialize the
@@ -868,7 +908,8 @@ gusattach(parent, self, aux)
 
 	m = GUSMASK_LINE_IN|GUSMASK_LINE_OUT;		/* disable all */
 
-	c = ((unsigned char) gus_irq_map[ia->ia_irq]) | GUSMASK_BOTH_RQ;
+	c = ((unsigned char) gus_irq_map[ia->ia_irq[0].ir_irq]) |
+	    GUSMASK_BOTH_RQ;
 
 	if (sc->sc_recdrq == sc->sc_playdrq)
 		d = (unsigned char) (gus_drq_map[sc->sc_playdrq] |
@@ -1006,8 +1047,8 @@ gusattach(parent, self, aux)
 	/* XXX we shouldn't have to use splgus == splclock, nor should
 	 * we use IPL_CLOCK.
 	 */
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_AUDIO, gusintr, sc /* sc->sc_gusdsp */);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_AUDIO, gusintr, sc /* sc->sc_gusdsp */);
 
 	/*
 	 * Set some default values

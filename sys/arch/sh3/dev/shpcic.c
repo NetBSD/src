@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.4 2000/06/29 07:44:02 mrg Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.4.4.1 2002/01/10 19:48:38 thorpej Exp $	*/
 
 #define	SHPCICDEBUG
 
@@ -721,7 +721,7 @@ shpcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	bus_addr_t card_addr;
 	bus_size_t size;
 	struct pcmcia_mem_handle *pcmhp;
-	bus_addr_t *offsetp;
+	bus_size_t *offsetp;
 	int *windowp;
 {
 	struct shpcic_handle *h = (struct shpcic_handle *) pch;

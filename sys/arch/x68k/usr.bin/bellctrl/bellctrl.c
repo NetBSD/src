@@ -1,4 +1,4 @@
-/*	$NetBSD: bellctrl.c,v 1.2 1996/08/30 17:46:06 thorpej Exp $	*/
+/*	$NetBSD: bellctrl.c,v 1.2.44.1 2002/01/10 19:50:41 thorpej Exp $	*/
 
 /*
  * bellctrl - OPM bell controller (for NetBSD/X680x0)
@@ -171,7 +171,7 @@ int flag;
     int fd;
 
     if (flag) {
-	bcopy(&bell_voice, &voice, sizeof(bell_voice));
+	memcpy(&voice, &bell_voice, sizeof(bell_voice));
     } else {
 	if ((fd = open(path, 0)) >= 0) {
 	    if (read(fd, &voice, sizeof(voice)) != sizeof(voice)) {

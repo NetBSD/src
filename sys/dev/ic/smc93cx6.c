@@ -1,4 +1,4 @@
-/*	$NetBSD: smc93cx6.c,v 1.7.2.1 2001/08/25 06:16:17 thorpej Exp $	*/
+/*	$NetBSD: smc93cx6.c,v 1.7.2.2 2002/01/10 19:55:04 thorpej Exp $	*/
 
 /*
  * Interface for the 93C66/56/46/26/06 serial eeprom parts.
@@ -56,6 +56,9 @@
  *   bit to be sent from the chip.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smc93cx6.c,v 1.7.2.2 2002/01/10 19:55:04 thorpej Exp $");
 
 #ifndef __NetBSD__
 #include "opt_aic7xxx.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.15 2000/02/07 22:07:32 thorpej Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.15.8.1 2002/01/10 19:55:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.15.8.1 2002/01/10 19:55:50 thorpej Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -106,6 +109,9 @@ static struct audio_hw_if guspnp_hw_if = {
 	iw_round_buffersize,
 	iw_mappage,
 	iw_get_props,
+	NULL,
+	NULL,
+	NULL,
 };
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.1.4.2 2001/09/13 01:14:23 thorpej Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.1.4.3 2002/01/10 19:48:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -68,8 +68,20 @@ cpu_attach_common(struct device *self, int id)
 #ifdef MULTIPROCESSOR
 	ci = &cpu_info[id];
 #else
+	/*
+	 * If this isn't the primary CPU, print an error message
+	 * and just bail out.
+	 */
+	if (id != 0) {
+		printf(": ID %d\n", id);
+		printf("%s: processor off-line; multiprocessor support "
+		    "not present in kernel\n", self->dv_xname);
+		return (NULL);
+	}
+
 	ci = &cpu_info_store;
 #endif
+
 	ci->ci_cpuid = id;
 	ci->ci_intrdepth = -1;
 	ci->ci_dev = self;
@@ -94,7 +106,7 @@ cpu_attach_common(struct device *self, int id)
 			printf(": more than %d cpus?\n", CPU_MAXNUM);
 			panic("cpuattach");
 		}
-#ifdef MULTIPROCESSOR
+#ifndef MULTIPROCESSOR
 		printf(" not configured\n");
 		return NULL;
 #endif
@@ -112,6 +124,7 @@ cpu_attach_common(struct device *self, int id)
 	case MPC603:
 	case MPC603e:
 	case MPC603ev:
+	case MPC604ev:
 	case MPC750:
 	case MPC7400:
 	case MPC7410:
@@ -247,7 +260,6 @@ cpu_identify(char *str, size_t len)
 	for (cp = models; cp->name != NULL; cp++) {
 		if (cp->version == vers)
 			break;
-		cp++;
 	}
 
 	if (str == NULL) {

@@ -1,11 +1,4 @@
-/*	$NetBSD: uha.c,v 1.28.2.1 2001/08/03 04:13:06 lukem Exp $	*/
-
-#undef UHADEBUG
-#ifdef DDB
-#define	integrate
-#else
-#define	integrate	static inline
-#endif
+/*	$NetBSD: uha.c,v 1.28.2.2 2002/01/10 19:55:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +59,16 @@
  * slight mod to make work with 34F as well: Wed Jun  2 18:05:48 WST 1993
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.28.2.2 2002/01/10 19:55:07 thorpej Exp $");
+
+#undef UHADEBUG
+#ifdef DDB
+#define	integrate
+#else
+#define	integrate	static inline
+#endif
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

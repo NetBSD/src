@@ -11,7 +11,7 @@ SECTIONS
   {
     *(.text)
     *(.strings)
-     _etext = . ; 
+     _etext = . ;
   }  > ram
   .tors :
   {
@@ -25,18 +25,18 @@ SECTIONS
   .data :
   {
     *(.data)
-     _edata = . ; 
+     _edata = . ;
   }  > ram
   .bss :
   {
-     _bss_start = . ; 
+     _bss_start = . ;
     *(.bss)
     *(COMMON)
-     _end = . ;  
+     _end = . ;
   }  > uram
   .stack   :
   {
-     _stack = . ; 
+     _stack = . ;
     *(.stack)
   }  > uram
   .stab 0 (NOLOAD) :

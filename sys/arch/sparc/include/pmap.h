@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.57.2.1 2001/09/13 01:14:35 thorpej Exp $ */
+/*	$NetBSD: pmap.h,v 1.57.2.2 2002/01/10 19:48:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -45,6 +45,10 @@
 
 #ifndef	_SPARC_PMAP_H_
 #define _SPARC_PMAP_H_
+
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
 
 #include <machine/pte.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_skey.c,v 1.2 2000/11/06 14:11:40 itojun Exp $	*/
+/*	$NetBSD: bf_skey.c,v 1.2.6.1 2002/01/10 19:52:33 thorpej Exp $	*/
 /*	$KAME: bf_skey.c,v 1.5 2000/11/06 13:58:08 itojun Exp $	*/
 
 /* crypto/bf/bf_skey.c */
@@ -58,6 +58,9 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bf_skey.c,v 1.2.6.1 2002/01/10 19:52:33 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>

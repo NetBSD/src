@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.27.2.1 2001/09/13 01:14:36 thorpej Exp $ */
+/*	$NetBSD: mem.c,v 1.27.2.2 2002/01/10 19:49:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
 /*
  * Memory special file
  */
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>

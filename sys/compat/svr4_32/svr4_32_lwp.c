@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_lwp.c,v 1.2 2001/02/11 01:10:24 eeh Exp $	*/
+/*	$NetBSD: svr4_32_lwp.c,v 1.2.6.1 2002/01/10 19:52:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_lwp.c,v 1.2.6.1 2002/01/10 19:52:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

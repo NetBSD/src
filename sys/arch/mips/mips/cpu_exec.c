@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.27 2001/07/07 14:20:59 simonb Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.27.2.1 2002/01/10 19:46:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,6 +40,7 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
+#include "opt_execfmt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +114,7 @@ cpu_exec_aout_makecmds(p, epp)
 #endif
 		return ETXTBSY;
 	}
-	vn_marktext(epp->ep_vp);
+	epp->ep_vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, hdr->a_text,
@@ -133,6 +134,7 @@ cpu_exec_aout_makecmds(p, epp)
 #endif
 }
 
+#ifdef EXEC_ECOFF
 void
 cpu_exec_ecoff_setregs(p, epp, stack)
 	struct proc *p;
@@ -142,7 +144,6 @@ cpu_exec_ecoff_setregs(p, epp, stack)
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 	struct frame *f = (struct frame *)p->p_md.md_regs;
 
-	setregs(p, epp, stack);
 	f->f_regs[GP] = (register_t)execp->a.gp_value;
 }
 
@@ -161,6 +162,7 @@ cpu_exec_ecoff_probe(p, epp)
 	/* NetBSD/mips does not have native ECOFF binaries. */
 	return ENOEXEC;
 }
+#endif /* EXEC_ECOFF */
 
 /*
  * mips_elf_makecmds (p, epp)
@@ -217,7 +219,7 @@ mips_elf_makecmds (p, epp)
 #endif
 		return ETXTBSY;
 	}
-	vn_marktext(epp->ep_vp);
+	epp->ep_vp->v_flag |= VTEXT;
 
 	epp->ep_taddr = 0;
 	epp->ep_tsize = 0;

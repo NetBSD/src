@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.7.2.2 2001/09/13 01:14:46 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.7.2.3 2002/01/10 19:49:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -48,6 +48,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_kgdb.h"
+#include "opt_lockdebug.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -69,15 +70,15 @@ ASGLOBAL(start)
 | boot loader loads us exactly where we are linked, so we don't have
 | to worry about writing position independent code or moving the 
 | kernel around.
-	movw	#PSL_HIGHIPL, %sr	| no interrupts
-	moveq	#FC_CONTROL, %d0	| make movs access "control"
-	movc	%d0, %sfc		| space where the sun2 designers
-	movc	%d0, %dfc		| put all the "useful" stuff
+	movw	#PSL_HIGHIPL,%sr	| no interrupts
+	moveq	#FC_CONTROL,%d0		| make movs access "control"
+	movc	%d0,%sfc		| space where the sun2 designers
+	movc	%d0,%dfc		| put all the "useful" stuff
 
 | Set context zero and stay there until pmap_bootstrap.
-	moveq	#0, %d0
-	movsb	%d0, CONTEXT_REG
-	movsb	%d0, SCONTEXT_REG
+	moveq	#0,%d0
+	movsb	%d0,CONTEXT_REG
+	movsb	%d0,SCONTEXT_REG
 
 | Jump around the g0 and g4 entry points.
 	jra	L_high_code
@@ -108,15 +109,15 @@ L_high_code:
 | Do bootstrap stuff needed before main() gets called.
 | Make sure the initial frame pointer is zero so that
 | the backtrace algorithm used by KGDB terminates nicely.
-	lea	_ASM_LABEL(tmpstk), %sp
+	lea	_ASM_LABEL(tmpstk),%sp
 	movl	#0,%a6
 	jsr	_C_LABEL(_bootstrap)	| See locore2.c
 
 | Now that _bootstrap() is done using the PROM functions,
-| we can safely set the sfc/dfc to something != FC_CONTROL
-	moveq	#FC_USERD, %d0		| make movs access "user data"
-	movc	%d0, %sfc		| space for copyin/copyout
-	movc	%d0, %dfc
+| we can safely set the %sfc/dfc to something != FC_CONTROL
+	moveq	#FC_USERD,%d0		| make movs access "user data"
+	movc	%d0,%sfc		| space for copyin/copyout
+	movc	%d0,%dfc
 
 | Setup process zero user/kernel stacks.
 	movl	_C_LABEL(proc0paddr),%a1 | get proc0 pcb addr
@@ -144,7 +145,7 @@ L_high_code:
 	movw	#PSL_USER,%sp@-		| tf_sr for user mode
 	clrl	%sp@-			| tf_stackadj
 	lea	%sp@(-64),%sp		| tf_regs[16]
-	movl	%sp,%a1			| a1=trapframe
+	movl	%sp,%a1			| %a1=trapframe
 	lea	_C_LABEL(proc0),%a0	| proc0.p_md.md_regs = 
 	movl	%a1,%a0@(P_MDREGS)	|   trapframe
 	movl	%a2,%a1@(FR_SP)		| a2 == usp (from above)
@@ -223,13 +224,13 @@ GLOBAL(addrerr)
  */
 sun2_mmu_specific:
 	clrl %d0			| make sure top bits are cleard too
-	movl %d1, %sp@-			| save d1
-	movc %sfc, %d1			| save sfc to d1
-	moveq #FC_CONTROL, %d0		| sfc = FC_CONTROL
-	movc %d0, %sfc
-	movsw BUSERR_REG, %d0		| get value of bus error register
-	movc %d1, %sfc			| restore sfc
-	movl %sp@+, %d1			| restore d1
+	movl %d1,%sp@-			| save %d1
+	movc %sfc,%d1			| save %sfc to %d1
+	moveq #FC_CONTROL,%d0		| %sfc = FC_CONTROL
+	movc %d0,%sfc
+	movsw BUSERR_REG,%d0		| get value of bus error register
+	movc %d1,%sfc			| restore %sfc
+	movl %sp@+,%d1			| restore %d1
 #ifdef	DEBUG
 	movw %d0, _C_LABEL(buserr_reg)	| save bus error register value
 #endif
@@ -285,7 +286,7 @@ GLOBAL(badtrap)
 	moveml	#0xFFFF,%sp@-		| save std frame regs
 	jbsr	_C_LABEL(straytrap)	| report
 	moveml	%sp@+,#0xFFFF		| restore regs
-	addql	#4, %sp			| stack adjust count
+	addql	#4,%sp			| stack adjust count
 	jra	_ASM_LABEL(rei)		| all done
 
 /*
@@ -308,7 +309,7 @@ GLOBAL(trap0)
 /*
  * Trap 12 is the entry point for the cachectl "syscall"
  *	cachectl(command, addr, length)
- * command in d0, addr in a1, length in d1
+ * command in %d0, addr in %a1, length in %d1
  */
 GLOBAL(trap12)
 	jra	_ASM_LABEL(rei)		| all done
@@ -350,7 +351,7 @@ GLOBAL(trap15)
 	jra	_ASM_LABEL(fault)	| no, user-mode fault
 
 ASLOCAL(kbrkpt)
-	| Kernel-mode breakpoint or trace trap. (d0=trap_type)
+	| Kernel-mode breakpoint or trace trap. (%d0=trap_type)
 	| Save the system sp rather than the user sp.
 	movw	#PSL_HIGHIPL,%sr	| lock out interrupts
 	lea	%sp@(FR_SIZE),%a6	| Save stack pointer
@@ -362,8 +363,8 @@ ASLOCAL(kbrkpt)
 	cmpl	#_ASM_LABEL(tmpstk),%d1
 	jls	Lbrkpt2 		| already on tmpstk
 	| Copy frame to the temporary stack
-	movl	%sp,%a0			| a0=src
-	lea	_ASM_LABEL(tmpstk)-96,%a1	| a1=dst
+	movl	%sp,%a0			| %a0=src
+	lea	_ASM_LABEL(tmpstk)-96,%a1	| %a1=dst
 	movl	%a1,%sp			| sp=new frame
 	moveq	#FR_SIZE,%d1
 Lbrkpt1:
@@ -376,7 +377,7 @@ Lbrkpt2:
 	| Do not call trap() to handle it, so that we can
 	| set breakpoints in trap() if we want.  We know
 	| the trap type is either T_TRACE or T_BREAKPOINT.
-	movl	%d0,%sp@-			| push trap type
+	movl	%d0,%sp@-		| push trap type
 	jbsr	_C_LABEL(trap_kdebug)
 	addql	#4,%sp			| pop args
 
@@ -414,7 +415,7 @@ Lbrkpt2:
  * for which the CPU provides the vector=0x18+level.
  * These are installed in the interrupt vector table.
  */
-#ifdef	__ELF__
+#ifdef __ELF__
 	.align	4
 #else
 	.align	2
@@ -426,7 +427,7 @@ GLOBAL(_isr_autovec)
 	jra	_ASM_LABEL(rei)
 
 /* clock: see clock.c */
-#ifdef	__ELF__
+#ifdef __ELF__
 	.align	4
 #else
 	.align	2
@@ -438,7 +439,7 @@ GLOBAL(_isr_clock)
 	jra	_ASM_LABEL(rei)
 
 | Handler for all vectored interrupts (i.e. VME interrupts)
-#ifdef	__ELF__
+#ifdef __ELF__
 	.align	4
 #else
 	.align	2
@@ -502,7 +503,7 @@ Lrei1:
 	movw	#PSL_LOWIPL,%sr		| lower SPL
 	clrl	%sp@-			| stack adjust
 	moveml	#0xFFFF,%sp@-		| save all registers
-	movl	%usp,%a1			| including
+	movl	%usp,%a1		| including
 	movl	%a1,%sp@(FR_SP)		|    the users SP
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
@@ -511,7 +512,7 @@ Lrei1:
 	lea	%sp@(12),%sp		| pop value args
 	movl	%sp@(FR_SP),%a0		| restore user SP
 	movl	%a0,%usp		|   from save area
-	movw	%sp@(FR_ADJ),%d0		| need to adjust stack?
+	movw	%sp@(FR_ADJ),%d0	| need to adjust stack?
 	jne	Laststkadj		| yes, go to it
 	moveml	%sp@+,#0x7FFF		| no, restore most user regs
 	addql	#8,%sp			| toss SP and stack adjust
@@ -541,6 +542,12 @@ Ldorte:
  * Use common m68k sigcode.
  */
 #include <m68k/m68k/sigcode.s>
+#ifdef COMPAT_SUNOS
+#include <m68k/m68k/sunos_sigcode.s>
+#endif
+#ifdef COMPAT_SVR4
+#include <m68k/m68k/svr4_sigcode.s>
+#endif
 
 	.text
 
@@ -586,8 +593,12 @@ ENTRY(switch_exit)
 	/* Schedule the vmspace and stack to be freed. */
 	movl	%a0,%sp@-		| exit2(p)
 	jbsr	_C_LABEL(exit2)
+	lea	%sp@(4),%sp		| pop args
 
-	/* Don't pop the proc; pass it to cpu_switch(). */
+#if defined(LOCKDEBUG)
+	/* Acquire sched_lock */
+	jbsr	_C_LABEL(sched_lock_idle)
+#endif
 
 	jra	_C_LABEL(cpu_switch)
 
@@ -595,19 +606,20 @@ ENTRY(switch_exit)
  * When no processes are on the runq, cpu_switch() branches to idle
  * to wait for something to come ready.
  */
-	.data
-GLOBAL(Idle_count)
-	.long	0
-	.text
-
 Lidle:
+#if defined(LOCKDEBUG)
+	/* Release sched_lock */
+	jbsr	_C_LABEL(sched_unlock_idle)
+#endif
 	stop	#PSL_LOWIPL
 GLOBAL(_Idle)				| See clock.c
 	movw	#PSL_HIGHIPL,%sr
-	addql	#1, _C_LABEL(Idle_count)
-	tstl	_C_LABEL(sched_whichqs)
+#if defined(LOCKDEBUG)
+	/* Acquire sched_lock */
+	jbsr	_C_LABEL(sched_lock_idle)
+#endif
+	movl	_C_LABEL(sched_whichqs),%d0
 	jeq	Lidle
-	movw	#PSL_LOWIPL,%sr
 	jra	Lsw1
 
 Lbadsw:
@@ -618,68 +630,52 @@ Lbadsw:
 /*
  * cpu_switch()
  * Hacked for sun3
- * XXX - Arg 1 is a proc pointer (curproc) but this doesn't use it.
- * XXX - Sould we use p->p_addr instead of curpcb? -gwr
  */
 ENTRY(cpu_switch)
-	movl	_C_LABEL(curpcb),%a1	| current pcb
-	movw	%sr,%a1@(PCB_PS)	| save sr before changing ipl
+	movl	_C_LABEL(curpcb),%a0	| current pcb
+	movw	%sr,%a0@(PCB_PS)	| save sr before changing ipl
 #ifdef notyet
 	movl	_C_LABEL(curproc),%sp@-	| remember last proc running
 #endif
 	clrl	_C_LABEL(curproc)
 
-Lsw1:
 	/*
 	 * Find the highest-priority queue that isn't empty,
 	 * then take the first proc from that queue.
 	 */
-	clrl	%d0
-	lea	_C_LABEL(sched_whichqs),%a0
-	movl	%a0@,%d1
-Lswchk:
-	btst	%d0,%d1
-	jne	Lswfnd
-	addqb	#1,%d0
-	cmpb	#32,%d0
-	jne	Lswchk
-	jra	_C_LABEL(_Idle)
-Lswfnd:
-	movw	#PSL_HIGHIPL,%sr	| lock out interrupts
-	movl	%a0@,%d1		| and check again...
-	bclr	%d0,%d1
-	jeq	Lsw1			| proc moved, rescan
-	movl	%d1,%a0@		| update whichqs
-	moveq	#1,%d1			| double check for higher priority
-	lsll	%d0,%d1			| process (which may have snuck in
-	subql	#1,%d1			| while we were finding this one)
-	andl	%a0@,%d1
-	jeq	Lswok			| no one got in, continue
-	movl	%a0@,%d1
-	bset	%d0,%d1			| otherwise put this one back
-	movl	%d1,%a0@
-	jra	Lsw1			| and rescan
-Lswok:
-	movl	%d0,%d1
+	movl	_C_LABEL(sched_whichqs),%d0
+	jeq	Lidle
+Lsw1:
+	/*
+	 * Interrupts are blocked, sched_lock is held.  If
+	 * we come here via Idle, %d0 contains the contents
+	 * of a non-zero sched_whichqs.
+	 */
+	moveq	#31,%d1
+1:	lsrl	#1,%d0
+	dbcs	%d1,1b
+	eorib	#31,%d1
+
+	movl	%d1,%d0
 	lslb	#3,%d1			| convert queue number to index
 	addl	#_C_LABEL(sched_qs),%d1	| locate queue (q)
 	movl	%d1,%a1
-	cmpl	%a1@(P_FORW),%a1	| anyone on queue?
+	movl	%a1@(P_FORW),%a0	| p = q->p_forw
+	cmpal	%d1,%a0			| anyone on queue?
 	jeq	Lbadsw			| no, panic
-	movl	%a1@(P_FORW),%a0		| p = q->p_forw
 #ifdef DIAGNOSTIC
 	tstl	%a0@(P_WCHAN)
 	jne	Lbadsw
 	cmpb	#SRUN,%a0@(P_STAT)
 	jne	Lbadsw
 #endif
-	movl	%a0@(P_FORW),%a1@(P_FORW) | q->p_forw = p->p_forw
-	movl	%a0@(P_FORW),%a1	| q = p->p_forw
-	movl	%a0@(P_BACK),%a1@(P_BACK) | q->p_back = p->p_back
-	cmpl	%a0@(P_FORW),%d1	| anyone left on queue?
-	jeq	Lsw2			| no, skip
+	movl	%a0@(P_FORW),%a1@(P_FORW)	| q->p_forw = p->p_forw
+	movl	%a0@(P_FORW),%a1		| n = p->p_forw
+	movl	%a0@(P_BACK),%a1@(P_BACK)	| n->p_back = q
+	cmpal	%d1,%a1			| anyone left on queue?
+	jne	Lsw2			| yes, skip
 	movl	_C_LABEL(sched_whichqs),%d1
-	bset	%d0,%d1			| yes, reset bit
+	bclr	%d0,%d1			| no, clear bit
 	movl	%d1,_C_LABEL(sched_whichqs)
 Lsw2:
 	/* p->p_cpu initialized in fork1() for single-processor */
@@ -703,12 +699,24 @@ Lsw2:
 	 * Now that we have saved all the registers that must be
 	 * preserved, we are free to use those registers until
 	 * we load the registers for the switched-to process.
-	 * In this section, keep:  a0=curproc, a1=curpcb
+	 * In this section, keep:  %a0=curproc, %a1=curpcb
 	 */
 
 	clrl	%a0@(P_BACK)		| clear back link
 	movl	%a0@(P_ADDR),%a1	| get p_addr
 	movl	%a1,_C_LABEL(curpcb)
+
+#if defined(LOCKDEBUG)
+	/*
+	 * Done mucking with the run queues, release the
+	 * scheduler lock, but keep interrupts out.
+	 */
+	movl	%a0,%sp@-		| not args...
+	movl	%a1,%sp@-		| ...just saving
+	jbsr	_C_LABEL(sched_unlock_idle)
+	movl	%sp@+,%a1
+	movl	%sp@+,%a0
+#endif
 
 	/*
 	 * Load the new VM context (new MMU root pointer)
@@ -717,8 +725,10 @@ Lsw2:
 #ifdef DIAGNOSTIC
 | XXX fredette - tstl with an address register EA not supported
 | on the 68010, too lazy to fix this instance now.
-|	tstl	%a2			| vm == VM_MAP_NULL?
-|	jeq	Lbadsw			| panic
+#if 0
+	tstl	%a2			| vm == VM_MAP_NULL?
+	jeq	Lbadsw			| panic
+#endif
 #endif
 	/*
 	 * Call _pmap_switch().
@@ -732,7 +742,7 @@ Lsw2:
 
 	/*
 	 * Reload the registers for the new process.
-	 * After this point we can only use d0,d1,a0,a1
+	 * After this point we can only use %d0,%d1,%a0,%a1
 	 */
 	moveml	%a1@(PCB_REGS),#0xFCFC	| reload registers
 	movl	%a1@(PCB_USP),%a0
@@ -858,7 +868,7 @@ ENTRY(m68881_restore)
 GLOBAL(_delay)
 	| %d0 = arg = (usecs << 8)
 	movl	%sp@(4),%d0
-	| d1 = delay_divisor;
+	| %d1 = delay_divisor;
 	movl	_C_LABEL(delay_divisor),%d1
 
 	/*
@@ -868,7 +878,7 @@ GLOBAL(_delay)
 	 * operations and that the loop will run from a single cache
 	 * half-line.
 	 */
-#ifdef	__ELF__
+#ifdef __ELF__
 	.align	8
 #else
 	.align	3

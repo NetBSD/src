@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.52 2001/06/18 02:00:53 christos Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.52.2.1 2002/01/10 19:51:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.52.2.1 2002/01/10 19:51:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +127,7 @@ const struct emul emul_linux = {
 	linux_trapsignal,
 	linux_sigcode,
 	linux_esigcode,
+	linux_setregs,
 	linux_e_proc_exec,
 	linux_e_proc_fork,
 	linux_e_proc_exit,

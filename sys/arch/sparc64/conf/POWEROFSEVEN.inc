@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.1.4.2 2001/09/13 01:14:39 thorpej Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.1.4.3 2002/01/10 19:49:12 thorpej Exp $
 #
 # from: $NetBSD: POWEROFSEVEN32,v 1.10 2001/08/25 15:04:26 mrg Exp
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
@@ -14,9 +14,7 @@ maxusers	64
 
 # Options for variants of the Sun SPARC architecure.
 # We currently support three architecture types; at least one is required.
-options		SUN4U		# sun4u - UltraSPARC
-#options 	LOCKDEBUG
-#options 	_LP64		# we're using a 64-bit compiler
+options 	SUN4U		# sun4u - UltraSPARC
 
 ## System options specific to the sparc machine type
 
@@ -24,6 +22,8 @@ options		SUN4U		# sun4u - UltraSPARC
 ## for headless (no framebuffer) machines.
 # XXX broken on sparc64
 #options 	RASTERCONSOLE		# fast rasterop console
+
+options 	BLINK			# Blink the system LED
 
 #### System options that are the same for all ports
 
@@ -73,28 +73,29 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DDB_ONPANIC		# see also sysctl(8): `ddb.onpanic'
 
 ## You may also use gdb, on another computer connected to this machine over
-## a serial port.  Both KGDBDEV and KGDBRATE should be specified; KGDBDEV is
-## a dev_t encoded device number of the serial port to use.
+## a serial port.  Both KGDB_DEV and KGDB_DEVRATE should be specified;
+## KGDB_DEV is a dev_t encoded device number of the serial port to use.
 ## (0xc01 = ttya, 0xc02 = ttyb.)
-#options 	KGDB		# support for kernel gdb
-#options 	KGDBDEV=0xc01	# kgdb device number (this sample is `ttyb')
-#options 	KGDBRATE=38400	# baud rate
+#options 	KGDB			# support for kernel gdb
+#options 	KGDB_DEV=0xc01		# kgdb device number (this is `ttyb')
+#options 	KGDB_DEVRATE=38400	# baud rate
 
 
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-makeoptions 	DEBUG="-g"
+makeoptions	DEBUG="-g"
+options 	AUDIO_DEBUG
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
 ## cause the kernel to panic if corruption of internal data structures
 ## is detected.
-options 	DIAGNOSTIC	# extra kernel sanity checking
+#options 	DIAGNOSTIC	# extra kernel sanity checking
 
 ## Enable (possibly expensive) debugging code that may also display messages
 ## on the system console
-options 	DEBUG
+#options 	DEBUG
 
 ## Make SCSI/PCI error messages more verbose when explaining their meanings.
 options 	SCSIVERBOSE
@@ -136,7 +137,6 @@ options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 #options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	EXEC_ELF32	# Exec module for 32 bit ELF binaries.
-#options 	EXEC_ELF64	# Exec module for 64 bit ELF binaries. -- 64-bit only
 #options 	EXEC_AOUT	# execve(2) support for a.out binaries
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -145,7 +145,7 @@ options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
-#file-system	NULLFS		# NULL layered filesystem
+file-system	NULLFS		# NULL layered filesystem
 file-system	MFS		# memory-based filesystem
 #file-system	FDESC		# user file descriptor filesystem
 #file-system	UMAPFS		# uid/gid remapping filesystem
@@ -160,13 +160,13 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP         # FFS soft updates support.
+#options 	SOFTDEP		# FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
-options 	INET6		# IPV6
-options 	IPSEC		# IP security
-options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
@@ -283,26 +283,26 @@ ms0	at com?					# mouse
 #scsibus* at fas?
 
 ## GLM support
-siop*	at pci? dev ? function ?			# 53C875 "glm" compatible
-scsibus* at siop?
+#siop*	at pci? dev ? function ?			# 53C875 "glm" compatible
+#scsibus* at siop?
 
 # PCI SCSI cards
-ahc*	at pci? dev ? function ?
-scsibus* at ahc?
+#ahc*	at pci? dev ? function ?
+#scsibus* at ahc?
 
 ## These entries find devices on all SCSI busses and assign
 ## unit numbers dynamically.
-sd*	at scsibus? target ? lun ?		# SCSI disks
-st*	at scsibus? target ? lun ?		# SCSI tapes
-cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
-ch*	at scsibus? target ? lun ?		# SCSI changer devices
-ss*	at scsibus? target ? lun ?		# SCSI scanners
-ses*	at scsibus? target ? lun ?		# SCSI SES/SAF-TE devices
-uk*	at scsibus? target ? lun ?		# unknown SCSI
+#sd*	at scsibus? target ? lun ?		# SCSI disks
+#st*	at scsibus? target ? lun ?		# SCSI tapes
+#cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
+#ch*	at scsibus? target ? lun ?		# SCSI changer devices
+#ss*	at scsibus? target ? lun ?		# SCSI scanners
+#ses*	at scsibus? target ? lun ?		# SCSI SES/SAF-TE devices
+#uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 # PCI IDE.
 pciide* at pci ? dev ? function ? flags 0x0000
-wd*     at pciide? channel ? drive ? flags 0x0000
+wd*	at pciide? channel ? drive ? flags 0x0000
 atapibus* at pciide? channel ?
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
@@ -370,14 +370,14 @@ options 	TLP_MATCH_21140
 options 	TLP_MATCH_21142
 
 # MII/PHY support
-exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
-inphy*	at mii? phy ?			# Intel 82555 PHYs
-lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+#exphy*	at mii? phy ?			# 3Com internal PHYs
+#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+#inphy*	at mii? phy ?			# Intel 82555 PHYs
+#lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
-qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
-sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
-tlphy*	at mii? phy ?			# ThunderLAN PHYs
+#qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+#sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+#tlphy*	at mii? phy ?			# ThunderLAN PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 ## Loopback network interface; required
@@ -413,8 +413,8 @@ pseudo-device	ipfilter
 ## /dev/audio support (`audiocs' plus `audio')
 ##
 #audiocs*	at sbus? slot ? offset ?		# SUNW,CS4231
-#audiocs*	at ebus?                		# SUNW,CS4231
-#audio*		at audiocs?
+audiocs*	at ebus?				# SUNW,CS4231
+audio*		at audiocs?
 
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.5 2000/08/03 18:32:08 eeh Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.5.4.1 2002/01/10 19:48:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,10 @@
  * FPU subroutines: `explode' the machine's `packed binary' format numbers
  * into our internal format.
  */
+
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/systm.h>

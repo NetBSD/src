@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.1 2000/12/01 19:17:41 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.1.6.1 2002/01/10 19:51:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -33,6 +33,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.1.6.1 2002/01/10 19:51:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,7 +454,7 @@ n	 */
 #endif
 		return ETXTBSY;
 	}
-	vn_marktext(epp->ep_vp);
+	epp->ep_vp->v_flag |= VTEXT;
 #endif
 	
 	/* DPRINTF(("VMCMD: addr %x size %d offset %d\n", epp->ep_taddr,

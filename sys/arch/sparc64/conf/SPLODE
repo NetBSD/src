@@ -1,10 +1,10 @@
-# 	$NetBSD: SPLODE,v 1.1.2.2 2001/08/25 06:15:54 thorpej Exp $
+# 	$NetBSD: SPLODE,v 1.1.2.3 2002/01/10 19:49:13 thorpej Exp $
 #
 # Configuration for Ultra1, 32 bit mode.
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.1.2.2 $"
+#ident 		"GENERIC-$Revision: 1.1.2.3 $"
 
 maxusers	64
 
@@ -15,7 +15,6 @@ maxusers	64
 # We currently support three architecture types; at least one is required.
 options 	SUN4U		# sun4u - UltraSPARC
 #options 	LOCKDEBUG
-#options 	_LP64		# we're using a 64-bit compiler
 
 ## System options specific to the sparc machine type
 
@@ -76,18 +75,18 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DDB_ONPANIC		# see also sysctl(8): `ddb.onpanic'
 
 ## You may also use gdb, on another computer connected to this machine over
-## a serial port.  Both KGDBDEV and KGDBRATE should be specified; KGDBDEV is
-## a dev_t encoded device number of the serial port to use.
+## a serial port.  Both KGDB_DEV and KGDB_DEVRATE should be specified;
+## KGDB_DEV is a dev_t encoded device number of the serial port to use.
 ## (0xc01 = ttya, 0xc02 = ttyb.)
-#options 	KGDB		# support for kernel gdb
-#options 	KGDBDEV=0xc01	# kgdb device number (this sample is `ttyb')
-#options 	KGDBRATE=38400	# baud rate
+#options 	KGDB			# support for kernel gdb
+#options 	KGDB_DEV=0xc01		# kgdb device number (this is `ttyb')
+#options 	KGDB_DEVRATE=38400	# baud rate
 
 
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-#makeoptions 	DEBUG="-g"
+#makeoptions	DEBUG="-g"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -141,7 +140,6 @@ options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility -- 64-bit only
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
-#options 	EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries. -- 64-bit only
 #options 	SYSCALL_DEBUG
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -166,7 +164,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -203,8 +201,8 @@ sbus0	at mainbus0				# Ultra 1
 #upa0	at mainbus0				# Ultra 1E, Ultra 2, Ex0000
 #psycho*	at mainbus0				# Darwin, Ultra5
 #pci*	at psycho?
-#pci*	at simba?
-#simba*	at pci? dev ? function ?		# `APB' support.
+#pci*	at ppb?
+#ppb*	at pci? dev ? function ?		# `APB' support.
 #ebus*	at pci?					# ebus devices
 
 #### Standard system devices -- all required for a given architecture
@@ -293,7 +291,7 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 # PCI IDE.
 #pciide* at pci ? dev ? function ? flags 0x0000
-#wd*     at pciide? channel ? drive ? flags 0x0000
+#wd*	at pciide? channel ? drive ? flags 0x0000
 #atapibus* at pciide? channel ?
 
 #cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives

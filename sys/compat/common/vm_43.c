@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.6 2000/06/28 15:39:25 mrg Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.6.4.1 2002/01/10 19:51:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,9 @@
 /*
  * Mapped file (mmap) interface to VM
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.6.4.1 2002/01/10 19:51:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

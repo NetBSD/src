@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.39.2.2 2001/09/13 01:15:24 thorpej Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.39.2.3 2002/01/10 19:51:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Functions in multiarch:
  *	linux_sys_llseek	: linux_llseek.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.39.2.3 2002/01/10 19:51:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -768,7 +771,8 @@ linux_sys_lchown16(p, v, retval)
 	return sys___posix_lchown(p, &bla, retval);
 }
 #endif /* __i386__ || __m68k__ */
-#if defined (__i386__) || defined (__m68k__) || defined (__powerpc__)
+#if defined (__i386__) || defined (__m68k__) || \
+    defined (__powerpc__) || defined (__mips__)
 int
 linux_sys_chown(p, v, retval)
 	struct proc *p;
@@ -804,7 +808,7 @@ linux_sys_lchown(p, v, retval)
 
 	return sys___posix_lchown(p, uap, retval);
 }
-#endif /* __i386__ || __m68k__ || __powerpc__ */
+#endif /* __i386__ || __m68k__ || __powerpc__ || __mips__ */
 
 int
 linux_sys_rename(p, v, retval)

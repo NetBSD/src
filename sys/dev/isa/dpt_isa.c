@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_isa.c,v 1.5 2001/04/25 17:53:35 bouyer Exp $	*/
+/*	$NetBSD: dpt_isa.c,v 1.5.2.1 2002/01/10 19:55:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -30,6 +30,9 @@
 /*
  * ISA front-end for DPT EATA SCSI driver. 
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.5.2.1 2002/01/10 19:55:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,19 +94,28 @@ dpt_isa_wait(bus_space_handle_t ioh, bus_space_tag_t iot, u_int8_t mask,
 static int
 dpt_isa_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct isa_attach_args *ia;
+	struct isa_attach_args *ia = aux;
 	int i;
 
-	ia = aux;
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+	if (ia->ia_ndrq < 1)
+		return (0);
 
-	if (ia->ia_iobase != ISACF_PORT_DEFAULT) 
-		return (dpt_isa_probe(ia, ia->ia_iobase));
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
 
-	for (i = 0; dpt_isa_iobases[i] != 0; i++)
+	if (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT) 
+		return (dpt_isa_probe(ia, ia->ia_io[0].ir_addr));
+
+	for (i = 0; dpt_isa_iobases[i] != 0; i++) {
 		if (dpt_isa_probe(ia, dpt_isa_iobases[i])) {
-			ia->ia_iobase = dpt_isa_iobases[i];
+			ia->ia_io[0].ir_addr = dpt_isa_iobases[i];
 			return (1);
 		}
+	}
 
 	return (0);
 }
@@ -117,7 +129,7 @@ dpt_isa_probe(struct isa_attach_args *ia, int iobase)
 	struct eata_cfg ec;
 	bus_space_handle_t ioh;
 	bus_space_tag_t iot;
-	int i, j, stat;
+	int i, j, stat, irq, drq;
 	u_int16_t *p;
 
 	iot = ia->ia_iot;
@@ -200,25 +212,34 @@ dpt_isa_probe(struct isa_attach_args *ia, int iobase)
 	 * configuration, use that value.  If the HBA told us, use that
 	 * value.  Otherwise, puke.
 	 */
-	if (ia->ia_drq == -1) {
+	if ((drq = ia->ia_drq[0].ir_drq) == ISACF_DRQ_DEFAULT) {
 		int dmanum = ((ec.ec_feat1 & EC_F1_DMA_NUM_MASK) >> 
 		    EC_F1_DMA_NUM_SHIFT);
 	
 		if ((ec.ec_feat0 & EC_F0_DMA_NUM_VALID) == 0 || dmanum > 3)
 			goto bad;
-		ia->ia_drq = "\0\7\6\5"[dmanum];
+		drq = "\0\7\6\5"[dmanum];
 	}
 
 	/* 
 	 * Which IRQ to use: if it was hardwired in the kernel configuration, 
 	 * use that value.  Otherwise, use what the HBA told us.
 	 */
-	if (ia->ia_irq == -1)
-		ia->ia_irq = ((ec.ec_feat1 & EC_F1_IRQ_NUM_MASK) >> 
+	if ((irq = ia->ia_irq[0].ir_irq) == ISACF_IRQ_DEFAULT)
+		irq = ((ec.ec_feat1 & EC_F1_IRQ_NUM_MASK) >>
 		    EC_F1_IRQ_NUM_SHIFT);
 
-	ia->ia_msize = 0;
-	ia->ia_iosize = DPT_ISA_IOSIZE;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = DPT_ISA_IOSIZE;
+
+	ia->ia_nirq = 1;
+	ia->ia_irq[0].ir_irq = irq;
+
+	ia->ia_ndrq = 1;
+	ia->ia_drq[0].ir_drq = drq;
+
+	ia->ia_niomem = 0;
+
 	bus_space_unmap(iot, ioh, DPT_ISA_IOSIZE);
 	return (1);
  bad:
@@ -247,8 +268,8 @@ dpt_isa_attach(struct device *parent, struct device *self, void *aux)
 	
 	printf(": ");
 
-	if ((error = bus_space_map(iot, ia->ia_iobase, DPT_ISA_IOSIZE, 0, 
-	    &ioh)) != 0) {
+	if ((error = bus_space_map(iot, ia->ia_io[0].ir_addr, DPT_ISA_IOSIZE,
+	     0, &ioh)) != 0) {
 		printf("can't map i/o space, error = %d\n", error);
 		return;
 	}
@@ -257,14 +278,14 @@ dpt_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ia->ia_dmat;
 
-	if ((error = isa_dmacascade(ic, ia->ia_drq)) != 0) {
+	if ((error = isa_dmacascade(ic, ia->ia_drq[0].ir_drq)) != 0) {
 		printf("unable to cascade DRQ, error = %d\n", error);
 		return;
 	}
 
 	/* Establish the interrupt. */
-	sc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
-	    dpt_intr, sc);
+	sc->sc_ih = isa_intr_establish(ic, ia->ia_irq[0].ir_irq, IST_EDGE,
+	    IPL_BIO, dpt_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("can't establish interrupt\n");
 		return;

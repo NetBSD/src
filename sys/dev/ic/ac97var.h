@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.4 2001/05/07 08:15:41 lukem Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.4.2.1 2002/01/10 19:54:02 thorpej Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -33,6 +33,11 @@ struct ac97_codec_if;
 /* 
  * This is the interface used to attach the AC97 compliant CODEC.
  */
+enum ac97_host_flags {
+	AC97_HOST_DONT_READ = 0x1,
+	AC97_HOST_SWAPPED_CHANNELS = 0x2	/* l/r is reversed */
+};
+
 struct ac97_host_if {
 	void  *arg;
 
@@ -40,11 +45,6 @@ struct ac97_host_if {
 	int (*read)(void *arg, u_int8_t reg, u_int16_t *val);
 	int (*write)(void *arg, u_int8_t reg, u_int16_t val);
 	void (*reset)(void *arg);
-
-	enum ac97_host_flags {
-		AC97_HOST_DONT_READ = 0x1,
-		AC97_HOST_SWAPPED_CHANNELS = 0x2	/* l/r is reversed */
-	};
 
 	enum ac97_host_flags (*flags)(void *arg);
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24.2.2 2001/09/13 01:14:07 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24.2.3 2002/01/10 19:46:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -193,9 +193,8 @@ news68k_init()
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa((vaddr_t)msgbufaddr + i * NBPG,
+		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE)
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 }

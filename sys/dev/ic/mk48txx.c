@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.7 2001/04/08 17:05:10 tsutsui Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.7.2.1 2002/01/10 19:54:51 thorpej Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,6 +39,9 @@
  * Mostek MK48T02, MK48T08, MK48T59 time-of-day chip subroutines.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.7.2.1 2002/01/10 19:54:51 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
@@ -74,6 +77,7 @@ struct {
 } mk48txx_models[] = {
 	{ "mk48t02", MK48T02_CLKSZ, MK48T02_CLKOFF, 0 },
 	{ "mk48t08", MK48T08_CLKSZ, MK48T08_CLKOFF, 0 },
+	{ "mk48t18", MK48T18_CLKSZ, MK48T18_CLKOFF, 0 },
 	{ "mk48t59", MK48T59_CLKSZ, MK48T59_CLKOFF, MK48TXX_EXT_REGISTERS },
 };
 

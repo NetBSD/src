@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.6.2.2 2001/09/13 01:14:06 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.6.2.3 2002/01/10 19:46:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -63,8 +63,7 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>
-#include <machine/pte.h>
-#include <machine/undefined.h>
+#include <arm/undefined.h>
 
 #include <machine/netwinder_boot.h>
 #include <arm/footbridge/dc21285mem.h>
@@ -175,10 +174,7 @@ void process_kernel_args	__P((char *));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
-void zero_page_readonly		__P((void));
-void zero_page_readwrite	__P((void));
 extern void configure		__P((void));
-extern void db_machine_init	__P((void));
 extern void parse_mi_bootargs	__P((char *args));
 extern void dumpsys		__P((void));
 
@@ -790,11 +786,10 @@ initarm(bootinfo)
 #endif
 
 #ifdef DDB
-	printf("ddb: ");
 	db_machine_init();
-#if 0
-	ddb_init(end[0], end + 1, esym);
-#endif
+
+	/* Firmware doesn't load symbols. */
+	ddb_init(0, NULL, NULL);
 
 	if (boothowto & RB_KDB)
 		Debugger();

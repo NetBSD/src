@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.1 1998/12/15 19:25:40 itohy Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.1.22.1 2002/01/10 19:51:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -83,4 +83,7 @@
 #define LINUX_LOCK_NB		4
 #define LINUX_LOCK_UN		8
 
+#define LINUX_F_GETLK64		12
+#define LINUX_F_SETLK64		13
+#define LINUX_F_SETLKW64	14
 #endif /* !_M68K_LINUX_FCNTL_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec_aout.c,v 1.1 2000/12/01 19:15:12 jdolecek Exp $	*/
+/*	$NetBSD: hpux_exec_aout.c,v 1.1.6.1 2002/01/10 19:51:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -68,6 +68,9 @@
  * Glue for exec'ing HP-UX executables and the HP-UX execv() system call.
  * Based on sys/kern/exec_aout.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.1.6.1 2002/01/10 19:51:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +197,7 @@ exec_hpux_prep_zmagic(p, epp)
 	if ((execp->ha_text != 0 || execp->ha_data != 0) &&
 	    epp->ep_vp->v_writecount != 0)
 		return (ETXTBSY);
-	vn_marktext(epp->ep_vp);
+	epp->ep_vp->v_flag |= VTEXT;
 
 	/*
 	 * HP-UX ZMAGIC executables need to have their segment

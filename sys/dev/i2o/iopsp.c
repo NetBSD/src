@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.8.2.1 2001/08/25 06:16:11 thorpej Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.8.2.2 2002/01/10 19:54:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Raw SCSI device support for I2O.  IOPs present SCSI devices individually;
  * we group them by controlling port.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.8.2.2 2002/01/10 19:54:01 thorpej Exp $");
 
 #include "opt_i2o.h"
 

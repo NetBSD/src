@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.25.2.1 2001/08/03 04:12:40 lukem Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.25.2.2 2002/01/10 19:50:54 thorpej Exp $	*/
 
 /*
  * 
@@ -52,6 +52,9 @@ symlink
  * University.  Contributers include David Steere, James Kistler, and
  * M. Satyanarayanan.  
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.25.2.2 2002/01/10 19:50:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +110,7 @@ static int coda_lockdebug = 0;
  *   coda_init is called at boot time.
  */
 
-#define ENTRY if(coda_vnop_print_entry) myprintf(("Entered %s\n",__FUNCTION__))
+#define ENTRY if(coda_vnop_print_entry) myprintf(("Entered %s\n",__func__))
 
 /* Definition of the vnode operation vector */
 
@@ -1810,7 +1813,7 @@ coda_reclaim(v)
     }
     cache_purge(vp);
     coda_free(VTOC(vp));
-    VTOC(vp) = NULL;
+    SET_VTOC(vp) = NULL;
     return (0);
 }
 
@@ -2046,6 +2049,8 @@ coda_putpages(v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+
+	simple_unlock(&vp->v_interlock);
 
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {

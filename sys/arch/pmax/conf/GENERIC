@@ -1,11 +1,26 @@
+# $NetBSD: GENERIC,v 1.88.2.2 2002/01/10 19:47:46 thorpej Exp $
 #
-# 	$NetBSD: GENERIC,v 1.88.2.1 2001/09/13 01:14:16 thorpej Exp $
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
 #
-# Distribution kernel (any model) kernel config file
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
 #
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
 include		"arch/pmax/conf/std.pmax"
 
-#ident		"GENERIC-$Revision: 1.88.2.1 $"
+#ident		"GENERIC-$Revision: 1.88.2.2 $"
 
 maxusers	64
 
@@ -31,15 +46,15 @@ options 	DDB			# in-kernel debugger
 options 	DDB_ONPANIC=0		# don't enter debugger on panic
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
-options 	"COMPAT_43"		# compatibility with 4.3BSD binaries
+options 	COMPAT_43		# compatibility with 4.3BSD binaries
 options 	KTRACE			# system call tracing support
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -50,8 +65,8 @@ options 	LKM			# loadable kernel modules
 
 # Old 4.4BSD/pmax kgdb options
 #options 	KGDB			# support for kernel gdb
-#options 	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
-#options 	"KGDBDEV=15*256+0"	# device for kernel gdb
+#options 	KGDB_DEVRATE=19200	# kernel gdb port rate (default 9600)
+#options 	KGDB_DEV="15*256+0"	# device for kernel gdb
 
 options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
@@ -75,7 +90,7 @@ file-system	UNION
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 # VNODE_OP_NOINLINE will produce smaller and possibly slightly faster kernels
 #options 	VNODE_OP_NOINLINE	# don't inline vnode op calls
 
@@ -118,7 +133,7 @@ options 	FONT_LUCIDA16x29	# Font for px devices
 options 	COMPAT_ULTRIX	# Ultrix compatibility
 #options 	EXEC_AOUT	# Old NetBSD/pmax a.out compatibility
 options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
-options 	"HZ=256"	# RTC rate required
+options 	HZ=256		# RTC rate required
 
 options 	NFS_BOOT_DHCP	# superset of BOOTP
 
@@ -182,7 +197,7 @@ scsibus* at asc?
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tapes
-cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs 
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?	# SCSI changer devices
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# unknown SCSI
@@ -194,6 +209,7 @@ uk*	at scsibus? target ? lun ?	# unknown SCSI
 pseudo-device	loop		 1	# network loopback
 pseudo-device	sl		 4	# serial-line IP ports
 pseudo-device	ppp		 2	# serial-line IP ports
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT

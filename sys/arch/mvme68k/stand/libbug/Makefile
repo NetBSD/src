@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.12 2000/12/05 21:54:33 scw Exp $
+#	$NetBSD: Makefile,v 1.12.4.1 2002/01/10 19:46:37 thorpej Exp $
 
 LIB=bug
 
-MKPIC= no
-MKLINT= no
-MKPROFILE= no
+NOPIC= # defined
+NOLINT= # defined
+NOPROFILE= # defined
 
 S=${.CURDIR}/../../../..
 DIR_SA=$S/lib/libsa
@@ -26,4 +26,6 @@ bugstart.o: bugstart.s
 
 all realall: lib${LIB}.a bugstart.o
 
+.include <bsd.own.mk>
+.undef DESTDIR
 .include <bsd.lib.mk>

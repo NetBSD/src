@@ -10,7 +10,7 @@ SECTIONS
   {
     *(.text)
     *(.strings)
-     _etext = . ; 
+     _etext = . ;
   }  > ram
   .tors :
   {
@@ -24,18 +24,18 @@ SECTIONS
   .data :
   {
     *(.data)
-     _edata = . ; 
+     _edata = . ;
   }  > ram
   .bss :
   {
-     _bss_start = . ; 
+     _bss_start = . ;
     *(.bss)
     *(COMMON)
-     _end = . ;  
+     _end = . ;
   }  > ram
   .stack   :
   {
-     _stack = . ; 
+     _stack = . ;
     *(.stack)
   }  > ram
   .stab 0 (NOLOAD) :

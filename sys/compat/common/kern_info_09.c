@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.8 2000/07/14 07:12:47 thorpej Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.8.4.1 2002/01/10 19:50:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)subr_xxx.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.8.4.1 2002/01/10 19:50:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.9 2000/06/28 16:39:27 mrg Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.9.4.1 2002/01/10 19:55:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -30,8 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.9.4.1 2002/01/10 19:55:51 thorpej Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -178,7 +179,7 @@ pcic_isapnp_attach(parent, self, aux)
 	if (ipa->ipa_nirq > 0)
 		sc->irq = ipa->ipa_irq[0].num;
 	else
-		sc->irq = IRQUNK;
+		sc->irq = ISACF_IRQ_DEFAULT;
 
 	printf("\n");
 

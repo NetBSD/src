@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.9 2001/06/30 20:17:47 mrg Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.9.2.1 2002/01/10 19:48:59 thorpej Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -89,6 +89,7 @@
 
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
+#include "opt_sparc_arch.h"
 
 #ifdef KGDB
 

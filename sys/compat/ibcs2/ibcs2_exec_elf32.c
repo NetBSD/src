@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_elf32.c,v 1.1.6.1 2001/08/03 04:12:41 lukem Exp $	*/
+/*	$NetBSD: ibcs2_exec_elf32.c,v 1.1.6.2 2002/01/10 19:51:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -33,6 +33,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_elf32.c,v 1.1.6.2 2002/01/10 19:51:12 thorpej Exp $");
 
 #define ELFSIZE		32
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stream.c,v 1.6.2.1 2001/08/25 06:16:06 thorpej Exp $	 */
+/*	$NetBSD: svr4_32_stream.c,v 1.6.2.2 2002/01/10 19:52:25 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -42,6 +42,10 @@
  *
  * ToDo: The state machine for getmsg needs re-thinking
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stream.c,v 1.6.2.2 2002/01/10 19:52:25 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.2.4.2 2001/09/13 01:15:20 thorpej Exp $ */
+/*	$NetBSD: linux_types.h,v 1.2.4.3 2002/01/10 19:51:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,8 +74,8 @@ typedef unsigned char linux_cc_t;
 typedef unsigned int linux_speed_t;
 typedef unsigned int linux_tcflag_t;
 #else
-typedef unsigned long speed_t;
-typedef unsigned long tcflag_t;
+typedef unsigned long linux_speed_t;
+typedef unsigned long linux_tcflag_t;
 #endif
 
 /* 
@@ -167,7 +167,7 @@ struct linux_stat64 {
 	unsigned long 	lreserved0;
 	linux_time_t	lst_mtime;
 	unsigned long 	lreserved1;
-	linux_time_t	 lst_ctime;
+	linux_time_t	lst_ctime;
 	unsigned long 	lreserved2;
 	unsigned long	lst_blksize;
 	long long 	lst_blocks;
@@ -199,7 +199,7 @@ struct linux_stat {
 	long		lst_blocks;
 	char		lst_fstype[16];
 	long		lst_pad4[8];
-	unsigned int	lst_flags
+	unsigned int	lst_flags;
 	unsigned int	lst_gen;
 };
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.25 2001/07/01 12:16:25 mrg Exp $	*/
+/*	$NetBSD: db_output.c,v 1.25.2.1 2002/01/10 19:52:40 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -29,6 +29,10 @@
 /*
  * Printf and character output for debugger.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.25.2.1 2002/01/10 19:52:40 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 

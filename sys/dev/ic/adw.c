@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.32.2.2 2001/09/13 01:15:36 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.32.2.3 2002/01/10 19:54:05 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -37,7 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.32.2.3 2002/01/10 19:54:05 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>

@@ -1,11 +1,26 @@
-#	$NetBSD: GENERIC,v 1.18.2.1 2001/09/13 01:14:13 thorpej Exp $
+# $NetBSD: GENERIC,v 1.18.2.2 2002/01/10 19:47:18 thorpej Exp $
 #
-# GENERIC: generic kernel for most machines
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
 #
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
-include	"arch/pc532/conf/std.pc532"
+include		"arch/pc532/conf/std.pc532"
 
-#ident 		"GENERIC-$Revision: 1.18.2.1 $"
+#ident 		"GENERIC-$Revision: 1.18.2.2 $"
 
 maxusers	8			# estimated number of users
 
@@ -17,10 +32,10 @@ options 	KTRACE			# system call tracing, a la ktrace(1)
 #options 	ACCOUNTING		# process accounting
 #options 	SYSVMSG			# System V message queues
 #options 	SYSVSEM			# System V semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024
 options 	LKM			# loadable kernel modules
@@ -30,7 +45,7 @@ options 	PFIL_HOOKS		# pfil(9) packet filter hooks
 options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_13	# NetBSD 1.3,
-options		COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -44,7 +59,7 @@ file-system	NFS			# Network File System client
 options 	NFSSERVER		# Network File System server
 #options 	QUOTA			# file system quotas
 #options 	FFS_EI			# FFS Endian Independant support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP			# FFS soft updates support.
 
 # networking options
 #options 	GATEWAY		# packet forwarding
@@ -70,16 +85,17 @@ se* at scsibus0 target ? lun ?		# Cabletron EA412/EA419
 uk* at scsibus? target ? lun ?		# All the things we don't know
 
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	loop 1			# loopback network
-pseudo-device	vnd 2			# vnode devices
-pseudo-device	bpfilter 4		# packet filter
-pseudo-device	sl 1			# compressed SLIP
-pseudo-device	ppp 1			# Point-to-Point Protocol
-pseudo-device	tun 1			# network tunneling
+pseudo-device	loop		1	# loopback network
+pseudo-device	vnd		2	# vnode devices
+pseudo-device	bpfilter	4	# packet filter
+pseudo-device	sl		1	# compressed SLIP
+pseudo-device	ppp		1	# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+pseudo-device	tun		1	# network tunneling
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
-#pseudo-device	bridge			# simple inter-network bridging
-pseudo-device	ccd 4			# Concatenated Disk Driver
-pseudo-device   rnd                     # kernel random number generator
+pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	ccd		4	# Concatenated Disk Driver
+pseudo-device	rnd			# kernel random number generator

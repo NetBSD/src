@@ -1,30 +1,45 @@
-#	$NetBSD: GENERIC,v 1.89.2.1 2001/09/13 01:15:05 thorpej Exp $
+# $NetBSD: GENERIC,v 1.89.2.2 2002/01/10 19:50:00 thorpej Exp $
 #
-# GENERIC VAX configuration file; all supported devices.
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
 #
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.89.2.1 $"
+#ident 		"GENERIC-$Revision: 1.89.2.2 $"
 
 # Here are all different supported CPU types listed.
-#options 	"VAX8800"	# VAX 8500, 8530, 8550, 8700, 8800
-options 	"VAX8600"
-options 	"VAX8200"
-#options 	"VAX6400"
-options 	"VAX780"
-options 	"VAX750"
-options 	"VAX630"	# MV II
-options 	"VAX650"	# MV III, 3300, 3400, 3500, 3600, 3800, 3900
-options 	"VAX660"	# VAX 4000/200
-options 	"VAX670"	# VAX 4000/300
-options 	"VAX680"	# VAX 4000/[45]00
-options 	"VAX410"	# VS 2000
-options 	"VAX43"		# VS 3100/76
-options 	"VAX46"		# VS 4000/60
-options 	"VAX48"		# VS 4000 VLC
-options 	"VAX49"		# VS 4000/90
-options 	"VAX53"		# VAX 4000/10[058], MicroVAX 3100/m96
+#options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
+options 	VAX8600
+options 	VAX8200
+#options 	VAX6400
+options 	VAX780
+options 	VAX750
+options 	VAX630		# MV II
+options 	VAX650		# MV III, 3300, 3400, 3500, 3600, 3800, 3900
+options 	VAX660		# VAX 4000/200
+options 	VAX670		# VAX 4000/300
+options 	VAX680		# VAX 4000/[45]00
+options 	VAX410		# VS 2000
+options 	VAX43		# VS 3100/76
+options 	VAX46		# VS 4000/60
+options 	VAX48		# VS 4000 VLC
+options 	VAX49		# VS 4000/90
+options 	VAX53		# VAX 4000/10[058], MicroVAX 3100/m96
 
 # Max users on system; this is just a hint
 maxusers	8
@@ -41,7 +56,7 @@ options 	SCSIVERBOSE		# Verbose SCSI errors
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
-options		NTP		# NTP kernel support
+options 	NTP		# NTP kernel support
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
@@ -76,7 +91,7 @@ file-system 	CD9660
 
 options 	QUOTA
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER
 options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
 options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
@@ -89,10 +104,10 @@ options 	FONT_QVSS8x15
 # System V shared memory & semaphores support.
 options 	SYSVMSG
 options 	SYSVSEM
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
@@ -114,7 +129,7 @@ options 	COMPAT_IBCS2	# DEC SVR.3 compatilibity
 options 	LKM
 
 # Kernel(s) to compile
-config          netbsd root on ? type ?
+config		netbsd root on ? type ?
 
 mainbus0	at root
 
@@ -122,7 +137,7 @@ mainbus0	at root
 abus0		at mainbus0		# Master bus on VAX 8600
 sbi0		at mainbus0		# SBI, master bus on 11/780.
 cmi0		at mainbus0		# 11/750 internal bus.
-bi0		at mainbus0		# VAX 8200 
+bi0		at mainbus0		# VAX 8200
 vsbus0		at mainbus0		# All VAXstations
 ibus0		at mainbus0		# All MicroVAX
 #nbi0		at mainbus0		# VAX 8800
@@ -227,12 +242,13 @@ wskbd*		at lkkbd? console ?
 lkms0		at dz0 line 1
 wsmouse*	at lkms?
 
-pseudo-device   loop	1
-pseudo-device   pty			# pseudo-terminals
+pseudo-device	loop	1
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter 8		# Not supported by de yet.
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 #pseudo-device	sl	2
 #pseudo-device	ppp	2
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun	2
 #pseudo-device	gre	2		# generic L3 over IP tunnel
 pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.shbus,v 1.5.8.1 2001/08/25 06:15:34 thorpej Exp $
+#	$NetBSD: files.shbus,v 1.5.8.2 2002/01/10 19:46:25 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -41,9 +41,9 @@ file	arch/mmeye/mmeye/com_sh.c		com_sh
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
-defopt	PCIC_SHB_ALLOC_IOBASE
-defopt	PCIC_SHB_ALLOC_IOSIZE
-defopt	PCIC_SHB_INTR_ALLOC_MASK
+defparam	PCIC_SHB_ALLOC_IOBASE
+defparam	PCIC_SHB_ALLOC_IOSIZE
+defparam	PCIC_SHB_INTR_ALLOC_MASK
 
 device	shpcic: pcmciabus
 file	arch/sh3/dev/shpcic.c			shpcic

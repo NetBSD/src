@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.69.2.2 2001/08/25 06:15:59 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.69.2.3 2002/01/10 19:49:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -174,6 +174,8 @@ int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/
 __asm(".align 64");
 struct	fpstate64 initfpstate = {
 	{ ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
+	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
+	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0 }
 };
 
@@ -709,6 +711,10 @@ badtrap:
 		trapsignal(p, SIGILL, 0);	/* XXX code?? */
 		break;
 
+	case T_PRIVACT:
+		trapsignal(p, SIGILL, 0);
+		break;
+
 	case T_FPDISABLED: {
 		struct fpstate64 *fs = p->p_md.md_fpstate;
 
@@ -776,8 +782,6 @@ badtrap:
 		}
 		
 #define fmt64(x)	(u_int)((x)>>32), (u_int)((x))
-		printf("Alignment error: dsfsr=%08x:%08x dsfar=%x:%x isfsr=%08x:%08x pc=%lx\n",
-		       fmt64(dsfsr), fmt64(dsfar), fmt64(isfsr), pc);
 		printf("Alignment error: pid=%d comm=%s dsfsr=%08x:%08x dsfar=%x:%x isfsr=%08x:%08x pc=%lx\n",
 		       p->p_pid, p->p_comm, fmt64(dsfsr), fmt64(dsfar), fmt64(isfsr), pc);
 	}

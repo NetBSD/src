@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.110 2001/06/14 20:32:45 thorpej Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.110.2.1 2002/01/10 19:52:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,8 @@
  * handled here.
  */
 
-#define COMPAT_SUNOS 1
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.110.2.1 2002/01/10 19:52:10 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -729,6 +730,68 @@ sunos_sys_setsockopt(p, v, retval)
  out:
 	FILE_UNUSE(fp, p);
 	return (error);
+}
+
+static __inline__ int sunos_sys_socket_common(struct proc *, register_t *,
+					      int type);
+static __inline__ int
+sunos_sys_socket_common(p, retval, type)
+	struct proc *p;
+	register_t *retval;
+	int type;
+{
+	struct socket *so;
+	struct file *fp;
+	int error, fd;
+
+	/* getsock() will use the descriptor for us */
+	fd = (int)*retval;
+	if ((error = getsock(p->p_fd, fd, &fp)) == 0) {
+		so = (struct socket *)fp->f_data;
+		if (type == SOCK_DGRAM)
+			so->so_options |= SO_BROADCAST;
+	}
+	FILE_UNUSE(fp, p);
+	return (error);
+}
+
+int
+sunos_sys_socket(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sunos_sys_socket_args /* {
+		syscallarg(int) domain;
+		syscallarg(int) type;
+		syscallarg(int) protocol;
+	} */ *uap = v;
+	int error;
+
+	error = sys_socket(p, v, retval);
+	if (error)
+		return (error);
+	return sunos_sys_socket_common(p, retval, SCARG(uap, type));
+}
+
+int
+sunos_sys_socketpair(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sunos_sys_socketpair_args /* {
+		syscallarg(int) domain;
+		syscallarg(int) type;
+		syscallarg(int) protocol;
+		syscallarg(int *) rsv;
+	} */ *uap = v;
+	int error;
+
+	error = sys_socketpair(p, v, retval);
+	if (error)
+		return (error);
+	return sunos_sys_socket_common(p, retval, SCARG(uap, type));
 }
 
 /*

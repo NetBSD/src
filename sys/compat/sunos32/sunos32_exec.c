@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.c,v 1.7 2001/06/18 02:00:54 christos Exp $	 */
+/*	$NetBSD: sunos32_exec.c,v 1.7.2.1 2002/01/10 19:52:13 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -28,6 +28,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.7.2.1 2002/01/10 19:52:13 thorpej Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #endif
@@ -38,6 +41,7 @@
 
 #include <compat/sunos32/sunos32.h>
 #include <compat/sunos32/sunos32_syscall.h>
+#include <compat/sunos32/sunos32_exec.h>
 
 extern int nsunos32_sysent;
 extern struct sysent sunos32_sysent[];
@@ -64,6 +68,7 @@ struct emul emul_sunos = {
 	trapsignal,
 	sunos_sigcode,
 	sunos_esigcode,
+	sunos32_setregs,
 	NULL,
 	NULL,
 	NULL,

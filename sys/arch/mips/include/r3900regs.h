@@ -1,4 +1,4 @@
-/*	$NetBSD: r3900regs.h,v 1.4 2000/08/24 05:31:59 uch Exp $ */
+/*	$NetBSD: r3900regs.h,v 1.4.6.1 2002/01/10 19:46:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -56,11 +56,13 @@
  *	R3900 don't have PE, CM, PZ, SwC and IsC.
  */
 #define R3900_SR_NMI		0x00100000 /* r3k PE position */
+#if 0
 #undef MIPS1_PARITY_ERR
 #undef MIPS1_CACHE_MISS
 #undef MIPS1_PARITY_ZERO
 #undef MIPS1_SWAP_CACHES
 #undef MIPS1_ISOL_CACHES
+#endif
 
 /*
  *	[context register]

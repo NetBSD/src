@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tv.c,v 1.5 1998/08/06 14:08:54 minoura Exp $	*/
+/*	$NetBSD: grf_tv.c,v 1.5.28.1 2002/01/10 19:50:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -163,24 +163,24 @@ cc_mode(gp, cmd, data)
 		/* XXX */
 		switch (gp->g_sw->gd_hwid) {
 		case GID_HRCCATSEYE:
-			bcopy("HP98550", fi->name, 8);
+			memcpy(fi->name, "HP98550", 8);
 			break;
 		case GID_LRCATSEYE:
-			bcopy("HP98549", fi->name, 8);
+			memcpy(fi->name, "HP98549", 8);
 			break;
 		case GID_HRMCATSEYE:
-			bcopy("HP98548", fi->name, 8);
+			memcpy(fi->name, "HP98548", 8);
 			break;
 		case GID_TOPCAT:
 			switch (gi->gd_colors) {
 			case 64:
-				bcopy("HP98547", fi->name, 8);
+				memcpy(fi->name, "HP98547", 8);
 				break;
 			case 16:
-				bcopy("HP98545", fi->name, 8);
+				memcpy(fi->name, "HP98545", 8);
 				break;
 			case 2:
-				bcopy("HP98544", fi->name, 8);
+				memcpy(fi->name, "HP98544", 8);
 				break;
 			}
 			break;

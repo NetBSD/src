@@ -1,4 +1,4 @@
-# $NetBSD: files.hpc,v 1.1.2.1 2001/08/25 06:15:49 thorpej Exp $	
+# $NetBSD: files.hpc,v 1.1.2.2 2002/01/10 19:48:25 thorpej Exp $	
 
 device sq: arp, ether, ifnet
 attach sq at hpc
@@ -16,7 +16,9 @@ file arch/sgimips/hpc/wdsc.c		wdsc
 
 device  dsclock
 attach  dsclock at hpc
-file arch/sgimips/hpc/ds1286.c
+file arch/sgimips/hpc/dsclock_hpc.c
 
 attach zsc at hpc with zsc_hpc
 
+attach pckbc at hpc with pckbc_hpc
+file arch/sgimips/hpc/pckbc_hpc.c      pckbc_hpc

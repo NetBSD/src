@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.95.2.1 2001/08/03 04:12:59 lukem Exp $	*/
+/*	$NetBSD: elink3.c,v 1.95.2.2 2002/01/10 19:54:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.95.2.2 2002/01/10 19:54:27 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -284,7 +287,7 @@ ep_finish_reset(iot, ioh)
 
 	for (i = 0; i < 10000; i++) {
 		if ((bus_space_read_2(iot, ioh, ELINK_STATUS) &
-		    S_COMMAND_IN_PROGRESS) == 0)
+		    COMMAND_IN_PROGRESS) == 0)
 			break;
 		DELAY(10);
 	}
@@ -324,7 +327,7 @@ ep_discard_rxtop(iot, ioh)
 	 */
 	for (i = 0; i < 8000; i++) {
 		if ((bus_space_read_2(iot, ioh, ELINK_STATUS) &
-		    S_COMMAND_IN_PROGRESS) == 0)
+		    COMMAND_IN_PROGRESS) == 0)
 		    return;
 	}
 
@@ -611,7 +614,7 @@ ep_509_probemedia(sc)
 	 */
 	port = ep_read_eeprom(sc, EEPROM_ADDR_CFG) >> 14;
 
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	for (epm = ep_509_media; epm->epm_name != NULL; epm++) {
 		if (ep_w0_config & epm->epm_mpbit) {
@@ -678,7 +681,7 @@ ep_vortex_probemedia(sc)
 		return;
 	}
 
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	for (epm = ep_vortex_media; epm->epm_name != NULL; epm++) {
 		if (reset_options & epm->epm_mpbit) {
@@ -830,14 +833,12 @@ epinit(ifp)
 
 	/* Enable interrupts. */
 	bus_space_write_2(iot, ioh, ELINK_COMMAND,
-	    SET_RD_0_MASK | S_CARD_FAILURE | S_RX_COMPLETE | S_TX_COMPLETE |
-	    S_TX_AVAIL);
+	    SET_RD_0_MASK | WATCHED_INTERRUPTS);
 	bus_space_write_2(iot, ioh, ELINK_COMMAND,
-	    SET_INTR_MASK | S_CARD_FAILURE | S_RX_COMPLETE | S_TX_COMPLETE |
-	    S_TX_AVAIL);
+	    SET_INTR_MASK | WATCHED_INTERRUPTS);
 
 	/*
-	 * Attempt to get rid of any stray interrupts that occured during
+	 * Attempt to get rid of any stray interrupts that occurred during
 	 * configuration.  On the i386 this isn't possible because one may
 	 * already be queued.  However, a single stray interrupt is
 	 * unimportant.
@@ -1132,7 +1133,7 @@ epstart(ifp)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m, *m0;
 	int sh, len, pad;
-	bus_addr_t txreg;
+	bus_size_t txreg;
 
 	/* Don't transmit if interface is busy or not running */
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
@@ -1277,7 +1278,7 @@ readcheck:
 		/* We received a complete packet. */
 		u_int16_t status = bus_space_read_2(iot, ioh, ELINK_STATUS);
 
-		if ((status & S_INTR_LATCH) == 0) {
+		if ((status & INTR_LATCH) == 0) {
 			/*
 			 * No interrupt, read the packet and continue
 			 * Is  this supposed to happen? Is my motherboard 
@@ -1412,17 +1413,15 @@ epintr(arg)
 	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (0);
 
-	for (;;) {
-		bus_space_write_2(iot, ioh, ELINK_COMMAND, C_INTR_LATCH);
 
+	for (;;) {
 		status = bus_space_read_2(iot, ioh, ELINK_STATUS);
 
-		if ((status & (S_TX_COMPLETE | S_TX_AVAIL |
-			       S_RX_COMPLETE | S_CARD_FAILURE)) == 0) {
-			if ((status & S_INTR_LATCH) == 0) {
+		if ((status & WATCHED_INTERRUPTS) == 0) {
+			if ((status & INTR_LATCH) == 0) {
 #if 0
-				printf("%s: intr latch cleared %d\n",
-				       sc->sc_dev.dv_xname, status);
+				printf("%s: intr latch cleared\n",
+				       sc->sc_dev.dv_xname);
 #endif
 				break;
 			}
@@ -1437,33 +1436,26 @@ epintr(arg)
 		 * interrupts occasionally.
 		 */
 		bus_space_write_2(iot, ioh, ELINK_COMMAND, ACK_INTR |
-				  (status & (C_INTR_LATCH |
-					     C_CARD_FAILURE |
-					     C_TX_COMPLETE |
-					     C_TX_AVAIL |
-					     C_RX_COMPLETE |
-					     C_RX_EARLY |
-					     C_INT_RQD |
-					     C_UPD_STATS)));
+		    (status & (INTR_LATCH | ALL_INTERRUPTS)));
 
 #if 0
 		status = bus_space_read_2(iot, ioh, ELINK_STATUS);
 
 		printf("%s: intr%s%s%s%s\n", sc->sc_dev.dv_xname,
-		       (status & S_RX_COMPLETE)?" RX_COMPLETE":"",
-		       (status & S_TX_COMPLETE)?" TX_COMPLETE":"",
-		       (status & S_TX_AVAIL)?" TX_AVAIL":"",
-		       (status & S_CARD_FAILURE)?" CARD_FAILURE":"");
+		       (status & RX_COMPLETE)?" RX_COMPLETE":"",
+		       (status & TX_COMPLETE)?" TX_COMPLETE":"",
+		       (status & TX_AVAIL)?" TX_AVAIL":"",
+		       (status & CARD_FAILURE)?" CARD_FAILURE":"");
 #endif
 
-		if (status & S_RX_COMPLETE) {
+		if (status & RX_COMPLETE) {
 			epread(sc);
 		}
-		if (status & S_TX_AVAIL) {
+		if (status & TX_AVAIL) {
 			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 			epstart(&sc->sc_ethercom.ec_if);
 		}
-		if (status & S_CARD_FAILURE) {
+		if (status & CARD_FAILURE) {
 			printf("%s: adapter failure (%x)\n",
 			    sc->sc_dev.dv_xname, status);
 #if 1
@@ -1473,7 +1465,7 @@ epintr(arg)
 #endif
 			return (1);
 		}
-		if (status & S_TX_COMPLETE) {
+		if (status & TX_COMPLETE) {
 			eptxstat(sc);
 			epstart(ifp);
 		}
@@ -1600,7 +1592,7 @@ epget(sc, totlen)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
-	bus_addr_t rxreg;
+	bus_size_t rxreg;
 	int len, remaining;
 	int s;
 	caddr_t newdata;
@@ -1833,7 +1825,7 @@ epstop(ifp, disable)
 	ep_reset_cmd(sc, ELINK_COMMAND, RX_RESET);
 	ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
 
-	bus_space_write_2(iot, ioh, ELINK_COMMAND, C_INTR_LATCH);
+	bus_space_write_2(iot, ioh, ELINK_COMMAND, ACK_INTR | INTR_LATCH);
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_RD_0_MASK);
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_INTR_MASK);
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_RX_FILTER);
@@ -1903,7 +1895,7 @@ epbusyeeprom(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	bus_addr_t eecmd;
+	bus_size_t eecmd;
 	int i = 100, j;
 	uint16_t busybit;
 
@@ -1947,7 +1939,7 @@ ep_read_eeprom(sc, offset)
 	struct ep_softc *sc;
 	u_int16_t offset;
 {
-	bus_addr_t eecmd, eedata;
+	bus_size_t eecmd, eedata;
 	u_int16_t readcmd;
 
 	if (sc->ep_chipset == ELINK_CHIPSET_CORKSCREW) {

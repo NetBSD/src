@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.9 2001/06/13 06:01:50 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.9.2.1 2002/01/10 19:48:05 thorpej Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
 
 #include <sys/param.h>
@@ -715,7 +715,8 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 		LI = LI << 8;
 		LI = LI >> 6;
 		LI += loc;
-		pstr += sprintf(pstr, "0x%x ", LI);
+		db_symstr(pstr, LI, DB_STGY_ANY);
+		pstr += strlen(pstr);
 		func &= ~Op_LI;
 	}
 	switch (func & Op_SIMM) {
@@ -724,13 +725,16 @@ disasm_fields(const struct opcode *popcode, instr_t instr, vaddr_t loc,
 		IMM = extract_field(instr, 31 - 31, 16);
 		if (IMM & 0x8000) {
 			pstr += sprintf(pstr, "-");
+			IMM = 0x10000-IMM;
 		}
-			/* no break */
 		func &= ~Op_SIMM;
+		goto common;
 	case Op_UIMM:
 		IMM = extract_field(instr, 31 - 31, 16);
-		pstr += sprintf(pstr, "0x%x, ", IMM);
 		func &= ~Op_UIMM;
+		goto common;
+	common:
+		pstr += sprintf(pstr, "0x%x", IMM);
 		break;
 	default:
 	}

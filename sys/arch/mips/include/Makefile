@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2001/04/15 17:13:12 kleink Exp $
+#	$NetBSD: Makefile,v 1.19.2.1 2002/01/10 19:45:58 thorpej Exp $
 
 KDIR=	/sys/arch/mips/include
 INCSDIR= /usr/include/mips
