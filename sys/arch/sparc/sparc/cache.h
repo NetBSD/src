@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.2 1994/11/20 20:54:04 deraadt Exp $ */
+/*	$NetBSD: cache.h,v 1.3 1994/12/14 06:59:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,16 +104,36 @@ extern enum vactype vactype;	/* XXX  move into cacheinfo struct */
  * pages.  (In a few cases this might be faster anyway, but we do it
  * only when forced.)
  *
- * THE CURRENT VM CODE DOES NOT ALLOW US TO SPECIFY PREFERRED VIRTUAL
- * ADDRESSES ... THIS MUST BE FIXED!
+ * The Sun4, since it has an 8K pagesize instead of 4K, needs to check
+ * bits that are one position higher.
  */
 
-#define	CACHE_ALIAS_DISTANCE	(256 * 1024)	/* 256 kbytes */
+#define	CACHE_ALIAS_DIST_SUN4	0x20000
+#define	CACHE_ALIAS_DIST_SUN4C	0x10000
+
+#define	CACHE_ALIAS_BITS_SUN4	0x1e000
+#define	CACHE_ALIAS_BITS_SUN4C	0xf000
+
+#if defined(SUN4) && defined(SUN4C)
+#define	CACHE_ALIAS_DIST	((cputyp == CPU_SUN4) ? CACHE_ALIAS_DIST_SUN4 : \
+				    CACHE_ALIAS_DITS_SUN4C)
+#define	CACHE_ALIAS_BITS	((cputyp == CPU_SUN4) ? CACHE_ALIAS_BITS_SUN4 : \
+				    CACHE_ALIAS_BITS_SUN4C)
+#else
+#if defined(SUN4)
+#define	CACHE_ALIAS_DIST	CACHE_ALIAS_DIST_SUN4
+#define	CACHE_ALIAS_BITS	CACHE_ALIAS_BITS_SUN4
+#endif
+#if defined(SUN4C)
+#define	CACHE_ALIAS_DIST	CACHE_ALIAS_DIST_SUN4C
+#define	CACHE_ALIAS_BITS	CACHE_ALIAS_BITS_SUN4C
+#endif
+#endif
 
 /*
  * True iff a1 and a2 are `bad' aliases (will cause cache duplication).
  */
-#define	BADALIAS(a1, a2) (((int)(a1) ^ (int)(a2)) & 0xf000)
+#define	BADALIAS(a1, a2) (((int)(a1) ^ (int)(a2)) & CACHE_ALIAS_BITS)
 
 /*
  * Routines for dealing with the cache.
