@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.42 1999/12/18 05:51:34 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.43 1999/12/21 12:52:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.42 1999/12/18 05:51:34 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.43 1999/12/21 12:52:18 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2003,11 +2003,8 @@ opts(command)
 		return;
 	}
 
-	if (ep != NULL && *ep != '\0') {
-		if (c->options != NULL)
-			free(c->options);
-		c->options = xstrdup(ep);
-	}
+	if (ep != NULL && *ep != '\0')
+		REASSIGN(c->options, xstrdup(ep));
 	if (c->options != NULL)
 		reply(200, "Options for %s are '%s'.", c->name, c->options);
 	else
