@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.8 2002/01/13 11:59:23 aymeric Exp $	*/
+/*	$NetBSD: version.h,v 1.9 2002/02/11 19:52:00 pooka Exp $	*/
 
 #define	VI_VERSION \
-    "Version 1.79nb5 (10/23/96) The CSRG, University of California, Berkeley."
+    "Version 1.79nb6 (10/23/96) The CSRG, University of California, Berkeley."
