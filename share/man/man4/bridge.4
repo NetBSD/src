@@ -1,4 +1,4 @@
-.\"	$NetBSD: bridge.4,v 1.1 2001/08/17 22:20:35 thorpej Exp $
+.\"	$NetBSD: bridge.4,v 1.2 2001/09/11 17:54:20 wiz Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
-.\" 
+.\"
 .Dd August 17, 2001
 .Dt BRIDGE 4
 .Os
@@ -76,6 +76,11 @@ The
 .Nm
 driver implements the IEEE 802.1D Spanning Tree protocol (STP).  Spanning
 Tree is used to detect and remove loops in a network topology.
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 1.6 .
 .Sh AUTHORS
 The
 .Nm bridge
@@ -90,11 +95,6 @@ This version of the
 driver has been heavily modified from the original version by
 .An Jason R. Thorpe
 .Aq thorpej@wasabisystems.com .
-.Sh HISTORY
-The
-.Nm
-driver first appeared in
-.Nx 1.6 .
 .Sh BUGS
 The
 .Nm
