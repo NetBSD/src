@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.2 2003/02/01 06:23:41 thorpej Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.3 2003/04/16 21:44:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.2 2003/02/01 06:23:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.3 2003/04/16 21:44:19 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -159,7 +159,6 @@ filecore_mount(mp, path, data, ndp, p)
 {
 	struct vnode *devvp;
 	struct filecore_args args;
-	size_t size;
 	int error;
 	struct filecore_mnt *fcmp = NULL;
 	
@@ -233,12 +232,8 @@ filecore_mount(mp, path, data, ndp, p)
 		return error;
 	}
 	fcmp = VFSTOFILECORE(mp);
-	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
-	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
-	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
-	    &size);
-	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
-	return 0;
+	return set_statfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+	    mp, p);
 }
 
 /*
@@ -484,11 +479,7 @@ filecore_statfs(mp, sbp, p)
 	sbp->f_bavail = 0; /* blocks free for non superuser */
 	sbp->f_files =  0; /* total files */
 	sbp->f_ffree = 0; /* free file nodes */
-	if (sbp != &mp->mnt_stat) {
-		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
-		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	copy_statfs_info(sbp, mp);
 	return 0;
 }
 

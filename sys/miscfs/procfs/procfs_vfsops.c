@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.44 2003/01/03 13:21:18 christos Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.45 2003/04/16 21:44:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.44 2003/01/03 13:21:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.45 2003/04/16 21:44:24 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -98,7 +98,6 @@ procfs_mount(mp, path, data, ndp, p)
 	struct nameidata *ndp;
 	struct proc *p;
 {
-	size_t size;
 	struct procfsmount *pmnt;
 	struct procfs_args args;
 	int error;
@@ -137,15 +136,12 @@ procfs_mount(mp, path, data, ndp, p)
 	mp->mnt_data = pmnt;
 	vfs_getnewfsid(mp);
 
-	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN, &size);
-	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
-	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
-	memcpy(mp->mnt_stat.f_mntfromname, "procfs", sizeof("procfs"));
-
+	error = set_statfs_info(path, UIO_USERSPACE, "procfs", UIO_SYSSPACE,
+	    mp, p);
 	pmnt->pmnt_exechook = exechook_establish(procfs_revoke_vnodes, mp);
 	pmnt->pmnt_flags = args.flags;
 
-	return (0);
+	return error;
 }
 
 /*
@@ -216,12 +212,7 @@ procfs_statfs(mp, sbp, p)
 #else
 	sbp->f_type = 0;
 #endif
-	if (sbp != &mp->mnt_stat) {
-		memcpy(&sbp->f_fsid, &mp->mnt_stat.f_fsid, sizeof(sbp->f_fsid));
-		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
-		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	copy_statfs_info(sbp, mp);
 	return (0);
 }
 
