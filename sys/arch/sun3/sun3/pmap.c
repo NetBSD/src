@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.76 1997/10/30 00:59:46 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77 1997/10/30 20:14:45 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -151,7 +151,6 @@ static vm_offset_t avail_next;
 /* This is where we map a PMEG without a context. */
 static vm_offset_t temp_seg_va;
 
-/* XXX - Why do we need this? */
 #define	managed(pa)	(((pa) >= avail_start) && ((pa) < avail_end))
 
 
@@ -159,19 +158,33 @@ static vm_offset_t temp_seg_va;
 #define	NUSEG	(NSEGMAP-NKSEG)
 
 /*
- * locking issues:
- *
+ * locking issues:  These used to do spl* stuff.
+ * XXX: Use these for reentrance detection?
  */
+#define PMAP_LOCK() 	(void)/XXX
+#define PMAP_UNLOCK()	(void)/XXX
 
 /*
- * Note that PMAP_LOCK is used in routines called at splnet() and
+ * Note that splpmap() is used in routines called at splnet() and
  * MUST NOT lower the priority.  For this reason we arrange that:
  *    splimp = max(splnet,splbio)
  * Would splvm() be more natural here? (same level as splimp).
  */
+
 #define splpmap splimp
-#define PMAP_LOCK() s = splpmap()
-#define PMAP_UNLOCK() splx(s)
+
+#ifdef	PMAP_DEBUG
+#define	CHECK_SPL() do { \
+	if ((getsr() & PSL_IPL) < PSL_IPL4) \
+		panic("pmap: bad spl, line %d", __LINE__); \
+} while (0)
+#else	/* PMAP_DEBUG */
+#define	CHECK_SPL() (void)0
+#endif	/* PMAP_DEBUG */
+
+/*
+ * Local convenience stuff for TAILQs
+ */
 
 #define TAILQ_EMPTY(headp) \
 		!((headp)->tqh_first)
@@ -447,15 +460,6 @@ int pmap_db_watchva = -1;
 int pmap_db_watchpmeg = -1;
 #endif	/* PMAP_DEBUG */
 
-#ifdef	PMAP_DEBUG
-#define	CHECK_SPL() do { \
-	if ((getsr() & PSL_IPL) < PSL_IPL4) \
-		panic("pmap: bad spl, line %d", __LINE__); \
-} while (0)
-#else	/* PMAP_DEBUG */
-#define	CHECK_SPL() (void)0
-#endif	/* PMAP_DEBUG */
-
 static void
 context_allocate(pmap)
 	pmap_t pmap;
@@ -463,7 +467,8 @@ context_allocate(pmap)
 	context_t context;
 	int s;
 
-	PMAP_LOCK();
+	s = splpmap();
+
 #ifdef	PMAP_DEBUG
 	if (pmap_debug & PMD_CONTEXT)
 		printf("context_allocate: for pmap %p\n", pmap);
@@ -504,7 +509,7 @@ context_allocate(pmap)
 	 * XXX - Need to reload wired pmegs though...
 	 */
 
-	PMAP_UNLOCK();
+	splx(s);
 }
 
 static void
@@ -516,7 +521,7 @@ context_free(pmap)		/* :) */
 	context_t contextp;
 	vm_offset_t va;
 
-	PMAP_LOCK();
+	s = splpmap();
 
 	ctxnum = pmap->pm_ctxnum;
 #ifdef	PMAP_DEBUG
@@ -570,7 +575,7 @@ context_free(pmap)		/* :) */
 	if (pmap_debug & PMD_CONTEXT)
 		printf("context_free: pmap %p context removed\n", pmap);
 #endif
-	PMAP_UNLOCK();
+	splx(s);
 }
 
 static void
@@ -1191,9 +1196,9 @@ pv_syncflags(head)
 	if (head->pv_pmap == NULL)
 		return;
 
-	PMAP_LOCK();
-	saved_ctx = get_context();
+	s = splpmap();
 
+	saved_ctx = get_context();
 	for (pv = head; pv != NULL; pv = pv->pv_next) {
 		pmap = pv->pv_pmap;
 		va = pv->pv_va;
@@ -1265,11 +1270,9 @@ pv_syncflags(head)
 			set_pte_pmeg(sme, VA_PTE_NUM(va), pte);
 		}
 	}
-
 	set_context(saved_ctx);
 
-	PMAP_UNLOCK();
-	return;
+	splx(s);
 }
 
 
@@ -2001,7 +2004,7 @@ pmap_page_protect(pa, prot)
 {
 	int s;
 
-	PMAP_LOCK();
+	s = splpmap();
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug & PMD_PROTECT)
@@ -2023,7 +2026,7 @@ pmap_page_protect(pa, prot)
 		pv_remove_all(pa);
 	}
 
-	PMAP_UNLOCK();
+	splx(s);
 }
 
 /*
@@ -2245,7 +2248,7 @@ pmap_remove1(pmap, sva, eva)
 	int old_ctx;
 	boolean_t in_ctx;
 
-	PMAP_LOCK();
+	s = splpmap();
 
 #ifdef	DIAGNOSTIC
 	if (m68k_trunc_seg(sva) != m68k_trunc_seg(eva-NBPG))
@@ -2295,8 +2298,7 @@ pmap_remove1(pmap, sva, eva)
 		}
 	}
 
-	PMAP_UNLOCK();
-	return;
+	splx(s);
 }
 
 /*
@@ -2396,7 +2398,7 @@ pmap_enter_kernel(va, pa, prot, wired, new_pte)
 	seg_va = m68k_trunc_seg(va);
 	do_pv = TRUE;
 
-	PMAP_LOCK();
+	s = splpmap();
 
 	sme = get_segmap(va);
 	if (sme == SEGINV) {
@@ -2492,7 +2494,7 @@ pmap_enter_kernel(va, pa, prot, wired, new_pte)
 	set_pte(va, new_pte);
 	pmegp->pmeg_vpages++;
 
-	PMAP_UNLOCK();
+	splx(s);
 }
 
 
@@ -2536,7 +2538,7 @@ pmap_enter_user(pmap, va, pa, prot, wired, new_pte)
 	seg_va = m68k_trunc_seg(va);
 	do_pv = TRUE;
 
-	PMAP_LOCK();
+	s = splpmap();
 
 	/*
 	 * Make sure the current context is correct.
@@ -2688,9 +2690,9 @@ pmap_enter_user(pmap, va, pa, prot, wired, new_pte)
 	/* cache flush done above */
 	set_pte(va, new_pte);
 	pmegp->pmeg_vpages++;
-
 	set_context(old_ctx);
-	PMAP_UNLOCK();
+
+	splx(s);
 }
 
 /*
@@ -2749,7 +2751,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 *   be in the mmu either.
 	 *
 	 */
-	PMAP_LOCK();
+	s = splpmap();
 	if (pmap == kernel_pmap) {
 		/* This can be called recursively through malloc. */
 		pte_proto |= PG_SYSTEM;
@@ -2757,7 +2759,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	} else {
 		pmap_enter_user(pmap, va, pa, prot, wired, pte_proto);
 	}
-	PMAP_UNLOCK();
+	splx(s);
 }
 
 
@@ -2847,7 +2849,7 @@ int pmap_fault_reload(pmap, va, ftype)
 	if (ftype & VM_PROT_WRITE)
 		chkpte |= PG_WRITE;
 
-	PMAP_LOCK();
+	s = splpmap();
 
 	rv = 0;
 	sme = get_segmap(seg_va);
@@ -2865,7 +2867,7 @@ int pmap_fault_reload(pmap, va, ftype)
 		}
 	}
 
-	PMAP_UNLOCK();
+	splx(s);
 	return (0);
 }
 
@@ -3031,7 +3033,7 @@ pmap_change_wiring(pmap, va, wired)
 	ptenum = VA_PTE_NUM(va);
 	wiremask = 1 << ptenum;
 
-	PMAP_LOCK();
+	s = splpmap();
 
 	sme = get_segmap(va);
 	if (sme == SEGINV)
@@ -3041,7 +3043,8 @@ pmap_change_wiring(pmap, va, wired)
 		pmegp->pmeg_wired |= wiremask;
 	else
 		pmegp->pmeg_wired &= ~wiremask;
-	PMAP_UNLOCK();
+
+	splx(s);
 }
 
 /*
@@ -3077,7 +3080,7 @@ pmap_extract(pmap, va)
 	vm_offset_t pa;
 
 	pte = 0;
-	PMAP_LOCK();
+	s = splpmap();
 	if (pmap == kernel_pmap) {
 		sme = get_segmap(va);
 		if (sme != SEGINV)
@@ -3090,7 +3093,7 @@ pmap_extract(pmap, va)
 			pte = get_pte_pmeg(sme, ptenum);
 		}
 	}
-	PMAP_UNLOCK();
+	splx(s);
 	if ((pte & PG_VALID) == 0) {
 		printf("pmap_extract: invalid va=0x%lx\n", va);
 		Debugger();
@@ -3302,7 +3305,7 @@ pmap_protect1(pmap, sva, eva)
 	int old_ctx;
 	boolean_t in_ctx;
 
-	PMAP_LOCK();
+	s = splpmap();
 
 #ifdef	PMAP_DEBUG
 	if ((pmap_debug & PMD_PROTECT) ||
@@ -3350,8 +3353,7 @@ pmap_protect1(pmap, sva, eva)
 		}
 	}
 
-	PMAP_UNLOCK();
-	return;
+	splx(s);
 }
 
 /*
@@ -3493,11 +3495,12 @@ pmap_copy_page(src, dst)
 	int pte;
 	int s;
 
+	s = splpmap();
+
 #ifdef	PMAP_DEBUG
 	if (pmap_debug & PMD_COW)
 		printf("pmap_copy_page: 0x%lx -> 0x%lx\n", src, dst);
 #endif
-	PMAP_LOCK();
 
 	if (tmp_vpages_inuse)
 		panic("pmap_copy_page: vpages inuse");
@@ -3514,7 +3517,8 @@ pmap_copy_page(src, dst)
 	set_pte(tmp_vpages[0], PG_INVAL);
 
 	tmp_vpages_inuse--;
-	PMAP_UNLOCK();
+
+	splx(s);
 }
 
 /*
@@ -3530,11 +3534,12 @@ pmap_zero_page(pa)
 	int pte;
 	int s;
 
+	s = splpmap();
+
 #ifdef	PMAP_DEBUG
 	if (pmap_debug & PMD_COW)
 		printf("pmap_zero_page: 0x%lx\n", pa);
 #endif
-	PMAP_LOCK();
 
 	if (tmp_vpages_inuse)
 		panic("pmap_zero_page: vpages inuse");
@@ -3548,7 +3553,8 @@ pmap_zero_page(pa)
 	set_pte(tmp_vpages[0], PG_INVAL);
 
 	tmp_vpages_inuse--;
-	PMAP_UNLOCK();
+
+	splx(s);
 }
 
 /*
