@@ -86,7 +86,7 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /entry:"wWinMainCRTStartup" /debug /machine:MIPS /subsystem:$(CESubsystem)
 # SUBTRACT BASE LINK32 /pdb:none /nodefaultlib
-# ADD LINK32 commctrl.lib coredll.lib libsa.lib /nologo /incremental:no /debug /machine:MIPS /libpath:"../libsa/WMIPSDbg" /subsystem:$(CESubsystem)
+# ADD LINK32 commctrl.lib coredll.lib libsa.lib winsock.lib /nologo /incremental:no /debug /machine:MIPS /libpath:"../libsa/WMIPSDbg" /subsystem:$(CESubsystem)
 # SUBTRACT LINK32 /verbose /profile /pdb:none /map /nodefaultlib
 PFILE=pfile.exe
 # ADD BASE PFILE COPY
@@ -428,6 +428,68 @@ SOURCE=.\res\pbsdboot.rc
 # End Source File
 # Begin Source File
 
+SOURCE=.\platid.c
+
+!IF  "$(CFG)" == "pbsdboot - Win32 (WCE MIPS) Release"
+
+!ELSEIF  "$(CFG)" == "pbsdboot - Win32 (WCE MIPS) Debug"
+
+DEP_CPP_PLATI=\
+	"..\..\..\..\lib\libkern\libkern.h"\
+	"..\..\..\..\sys\bswap.h"\
+	"..\..\..\..\sys\cdefs.h"\
+	"..\..\..\..\sys\cdefs_aout.h"\
+	"..\..\..\..\sys\cdefs_elf.h"\
+	"..\..\..\..\sys\endian.h"\
+	"..\..\..\..\sys\systm.h"\
+	"..\..\..\..\sys\types.h"\
+	"..\..\..\mips\include\ansi.h"\
+	"..\..\..\mips\include\bswap.h"\
+	"..\..\..\mips\include\cdefs.h"\
+	"..\..\..\mips\include\endian.h"\
+	"..\..\hpcmips\platid.c"\
+	"..\..\include\ansi.h"\
+	"..\..\include\cdefs.h"\
+	"..\..\include\endian.h"\
+	"..\..\include\platid.h"\
+	"..\..\include\platid_generated.h"\
+	"..\include\machine\ansi.h"\
+	"..\include\machine\bswap.h"\
+	"..\include\machine\cdefs.h"\
+	"..\include\machine\endian.h"\
+	"..\include\machine\platid.h"\
+	"..\include\machine\types.h"\
+	"..\include\mips\ansi.h"\
+	"..\include\mips\cdefs.h"\
+	"..\include\mips\endian.h"\
+	"..\include\mips\types.h"\
+	"..\libsa\compat.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\platid_mask.c
+
+!IF  "$(CFG)" == "pbsdboot - Win32 (WCE MIPS) Release"
+
+!ELSEIF  "$(CFG)" == "pbsdboot - Win32 (WCE MIPS) Debug"
+
+DEP_CPP_PLATID=\
+	"..\..\hpcmips\platid_mask.c"\
+	"..\..\include\platid.h"\
+	"..\..\include\platid_generated.h"\
+	"..\include\machine\platid.h"\
+	"..\libsa\compat.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
 SOURCE=.\preference.c
 
 !IF  "$(CFG)" == "pbsdboot - Win32 (WCE MIPS) Release"
@@ -560,12 +622,14 @@ DEP_CPP_SYSTE=\
 	"..\..\include\endian.h"\
 	"..\..\include\platid.h"\
 	"..\..\include\platid_generated.h"\
+	"..\..\include\platid_mask.h"\
 	"..\include\machine\ansi.h"\
 	"..\include\machine\bootinfo.h"\
 	"..\include\machine\bswap.h"\
 	"..\include\machine\cdefs.h"\
 	"..\include\machine\endian.h"\
 	"..\include\machine\platid.h"\
+	"..\include\machine\platid_mask.h"\
 	"..\include\machine\types.h"\
 	"..\include\mips\ansi.h"\
 	"..\include\mips\cdefs.h"\
