@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.15 1993/10/27 16:43:51 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.16 1993/10/27 17:23:13 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -415,8 +415,10 @@ fdstrategy(bp)
 		goto bad;
 	}
  	bp->b_cylin = (blkno / (type->sectrac * type->heads)) * type->step;
+#ifdef DEBUG
 	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d nblks %d\n",
 	       bp->b_blkno, bp->b_bcount, blkno, bp->b_cylin, nblks);
+#endif
 	dp = &(fdc->sc_head);
 	s = splbio();
 	disksort(dp, bp);
