@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.17 2002/10/01 03:27:02 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.18 2002/10/01 09:28:10 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.17 2002/10/01 03:27:02 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.18 2002/10/01 09:28:10 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -82,8 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.17 2002/10/01 03:27:02 onoe E
 #ifdef IEEE80211_DEBUG
 int ieee80211_debug = 0;
 #define	DPRINTF(X)	if (ieee80211_debug) printf X
+#define	DPRINTF2(X)	if (ieee80211_debug>1) printf X
 #else
 #define	DPRINTF(X)
+#define	DPRINTF2(X)
 #endif
 
 static int ieee80211_send_prreq(struct ieee80211com *,
@@ -255,7 +257,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 		case IEEE80211_M_STA:
 			ni = &ic->ic_bss;
 			if (!IEEE80211_ADDR_EQ(wh->i_addr2, ni->ni_bssid)) {
-				DPRINTF(("ieee80211_input: other bss %s\n",
+				DPRINTF2(("ieee80211_input: other bss %s\n",
 				    ether_sprintf(wh->i_addr2)));
 				/* not interested in */
 				goto out;
@@ -271,13 +273,13 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 			if (!IEEE80211_ADDR_EQ(bssid, ic->ic_bss.ni_bssid) &&
 			    !IEEE80211_ADDR_EQ(bssid, ifp->if_broadcastaddr)) {
 				/* not interested in */
-				DPRINTF(("ieee80211_input: other bss %s\n",
+				DPRINTF2(("ieee80211_input: other bss %s\n",
 				    ether_sprintf(wh->i_addr3)));
 				goto out;
 			}
 			ni = ieee80211_find_node(ic, wh->i_addr2);
 			if (ni == NULL) {
-				DPRINTF(("ieee80211_input: unknown src %s\n",
+				DPRINTF2(("ieee80211_input: unknown src %s\n",
 				    ether_sprintf(wh->i_addr2)));
 				ni = &ic->ic_bss;	/* XXX allocate? */
 			}
@@ -1173,6 +1175,7 @@ ieee80211_alloc_node(struct ieee80211com *ic, u_int8_t *macaddr, int copy)
 {
 	struct ieee80211_node *ni;
 	int hash;
+	int s;
 
 	ni = malloc(sizeof(struct ieee80211_node) + ic->ic_bss_privlen,
 	    M_DEVBUF, M_NOWAIT);
@@ -1190,8 +1193,10 @@ ieee80211_alloc_node(struct ieee80211com *ic, u_int8_t *macaddr, int copy)
 		ni->ni_private = NULL;
 
 	hash = IEEE80211_NODE_HASH(macaddr);
+	s = splnet();
 	TAILQ_INSERT_TAIL(&ic->ic_node, ni, ni_list);
 	LIST_INSERT_HEAD(&ic->ic_hash[hash], ni, ni_hash);
+	splx(s);
 	ic->ic_inact_timer = IEEE80211_INACT_WAIT;
 	return ni;
 }
@@ -1201,21 +1206,27 @@ ieee80211_find_node(struct ieee80211com *ic, u_int8_t *macaddr)
 {
 	struct ieee80211_node *ni;
 	int hash;
+	int s;
 
 	hash = IEEE80211_NODE_HASH(macaddr);
+	s = splnet();
 	LIST_FOREACH(ni, &ic->ic_hash[hash], ni_hash) {
 		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr))
 			break;
 	}
+	splx(s);
 	return ni;
 }
 
 void
 ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
+	int s;
 
+	s = splnet();
 	TAILQ_REMOVE(&ic->ic_node, ni, ni_list);
 	LIST_REMOVE(ni, ni_hash);
+	splx(s);
 	free(ni, M_DEVBUF);
 	if (TAILQ_EMPTY(&ic->ic_node))
 		ic->ic_inact_timer = 0;
@@ -1927,12 +1938,22 @@ ieee80211_recv_asreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		return;
 	}
 	ni = ieee80211_find_node(ic, wh->i_addr2);
-	if (ni == NULL)
+	if (ni == NULL) {
+		DPRINTF(("ieee80211_recv_asreq: not authenticated for %s\n",
+		    ether_sprintf(wh->i_addr2)));
+		if ((ni = ieee80211_alloc_node(ic, wh->i_addr2, 1)) == NULL)
+			return;
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_ASSOC_NOT_AUTHED);
+		ieee80211_free_node(ic, ni);
 		return;
+	}
 	if ((capinfo & IEEE80211_CAPINFO_ESS) == 0 ||
 	    (capinfo & IEEE80211_CAPINFO_PRIVACY) !=
 	    ((ic->ic_flags & IEEE80211_F_WEPON) ?
 	     IEEE80211_CAPINFO_PRIVACY : 0)) {
+		DPRINTF(("ieee80211_recv_asreq: capability unmatch %x for %s\n",
+		    capinfo, ether_sprintf(wh->i_addr2)));
 		ni->ni_associd = 0;
 		IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_CAPINFO);
 		return;
@@ -1943,6 +1964,8 @@ ieee80211_recv_asreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	ieee80211_fix_rate(ic, ni, IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE |
 	    IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
 	if (ni->ni_nrate == 0) {
+		DPRINTF(("ieee80211_recv_asreq: rate unmatch for %s\n",
+		    ether_sprintf(wh->i_addr2)));
 		ni->ni_associd = 0;
 		IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_BASIC_RATE);
 		return;
