@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mca.c,v 1.2 2001/03/31 09:50:14 jdolecek Exp $	*/
+/*	$NetBSD: com_mca.c,v 1.3 2001/04/20 10:03:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -108,7 +108,9 @@ struct com_mca_softc {
 int com_mca_probe __P((struct device *, struct cfdata *, void *));
 void com_mca_attach __P((struct device *, struct device *, void *));
 void com_mca_cleanup __P((void *));
+
 static int ibm_modem_getcfg __P((struct mca_attach_args *, int *, int *));
+static int neocom1_getcfg __P((struct mca_attach_args *, int *, int *));
 
 struct cfattach com_mca_ca = {
 	sizeof(struct com_mca_softc), com_mca_probe, com_mca_attach
@@ -121,6 +123,8 @@ static const struct com_mca_product {
 					/* get device i/o base and irq */
 } com_mca_products[] = {
 	{ MCA_PRODUCT_IBM_MOD,	"IBM Internal Modem",	ibm_modem_getcfg },
+	{ MCA_PRODUCT_NEOCOM1,	"NeoTecH Single RS-232 Async. Adapter, SM110",
+		neocom1_getcfg },
 	{ 0,			NULL,			NULL },
 };
 
@@ -172,12 +176,6 @@ com_mca_attach(parent, self, aux)
 		return;
 	}	
 
-	printf(" slot %d i/o %#x-%#x irq %d: %s\n", ma->ma_slot + 1,
-		iobase, iobase + COM_NPORTS - 1,
-		irq, cpp->cp_name);
-
-	printf("%s", sc->sc_dev.dv_xname);
-
 	if (bus_space_map(ma->ma_iot, iobase, COM_NPORTS, 0, &sc->sc_ioh)) {
 		printf(": can't map i/o space\n");
 		return;
@@ -187,7 +185,12 @@ com_mca_attach(parent, self, aux)
 	sc->sc_iot = ma->ma_iot;
 	sc->sc_iobase = iobase;
 
+	printf(" slot %d i/o %#x-%#x irq %d", ma->ma_slot + 1,
+		iobase, iobase + COM_NPORTS - 1, irq);
+
 	com_attach_subr(sc);
+
+	printf("%s: %s\n", sc->sc_dev.dv_xname, cpp->cp_name);
 
 	isc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_SERIAL,
 			comintr, sc);
@@ -257,6 +260,44 @@ ibm_modem_getcfg(ma, iobasep, irqp)
 
 	*iobasep = MCA_SERIAL[snum].iobase;
 	*irqp = MCA_SERIAL[snum].irq;
+
+	return (0);
+}
+
+/*
+ * Get configuration for NeoTecH Single RS-232 Async. Adapter, SM110.
+ */
+static int
+neocom1_getcfg(ma, iobasep, irqp)
+	struct mca_attach_args *ma;
+	int *iobasep, *irqp;
+{
+	int pos2, pos3, pos4;
+	static const int neotech_irq[] = { 12, 9, 4, 3 };
+
+	pos2 = mca_conf_read(ma->ma_mc, ma->ma_slot, 2);
+	pos3 = mca_conf_read(ma->ma_mc, ma->ma_slot, 3);
+	pos4 = mca_conf_read(ma->ma_mc, ma->ma_slot, 4);
+
+	/*
+	 * POS register 2: (adf pos0)
+	 * 7 6 5 4 3 2 1 0
+	 *     1     \_/ \__ enable: 0=adapter disabled, 1=adapter enabled
+	 *             \____ IRQ: 11=3 10=4 01=9 00=12
+	 *
+	 * POS register 3: (adf pos1)
+	 * 7 6 5 4 3 2 1 0
+	 * \______/
+	 *        \_________ I/O Address: bits 7-3
+	 *
+	 * POS register 4: (adf pos2)
+	 * 7 6 5 4 3 2 1 0
+	 * \_____________/
+	 *               \__ I/O Address: bits 15-8
+	 */ 
+	
+	*iobasep = (pos4 << 8) | (pos3 & 0xf8);
+	*irqp = neotech_irq[(pos2 & 0x06) >> 1];
 
 	return (0);
 }
