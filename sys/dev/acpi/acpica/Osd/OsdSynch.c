@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSynch.c,v 1.2 2001/11/13 13:01:58 lukem Exp $	*/
+/*	$NetBSD: OsdSynch.c,v 1.3 2002/06/15 18:02:43 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.2 2001/11/13 13:01:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.3 2002/06/15 18:02:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.2 2001/11/13 13:01:58 lukem Exp $");
 #include <dev/acpi/acpica.h>
 
 #define	_COMPONENT	ACPI_OS_SERVICES
-MODULE_NAME("SYNCH")
+ACPI_MODULE_NAME("SYNCH")
 
 /*
  * Simple counting semaphore implemented using a mutex.  This is
@@ -103,7 +103,7 @@ AcpiOsCreateSemaphore(UINT32 MaxUnits, UINT32 InitialUnits,
 {
 	struct acpi_semaphore *as;
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	if (OutHandle == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
@@ -136,7 +136,7 @@ AcpiOsDeleteSemaphore(ACPI_HANDLE Handle)
 {
 	struct acpi_semaphore *as = (void *) Handle;
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	if (as == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
@@ -166,7 +166,7 @@ AcpiOsWaitSemaphore(ACPI_HANDLE Handle, UINT32 Units, UINT32 Timeout)
 	 * would adjust the amount of time left after being awakened.
 	 */
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	if (as == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
@@ -219,7 +219,7 @@ AcpiOsSignalSemaphore(ACPI_HANDLE Handle, UINT32 Units)
 {
 	struct acpi_semaphore *as = (void *) Handle;
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	if (as == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);

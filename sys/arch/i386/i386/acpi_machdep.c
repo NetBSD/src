@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.2 2001/11/15 07:03:28 lukem Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.3 2002/06/15 18:01:05 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.2 2001/11/15 07:03:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.3 2002/06/15 18:01:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ acpi_md_OsTerminate(void)
 }
 
 ACPI_STATUS
-acpi_md_OsGetRootPointer(UINT32 Flags, ACPI_PHYSICAL_ADDRESS *PhysicalAddress)
+acpi_md_OsGetRootPointer(UINT32 Flags, ACPI_POINTER *PhysicalAddress)
 {
 
 	return (AcpiFindRootPointer(Flags, PhysicalAddress));

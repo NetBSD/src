@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.3 2002/06/01 23:50:56 lukem Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.4 2002/06/15 18:03:42 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.3 2002/06/01 23:50:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.4 2002/06/15 18:03:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.3 2002/06/01 23:50:56 lukem Exp 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
-#define	_COMPONENT	ACPI_BUS
-MODULE_NAME("RESOURCE")
+#define	_COMPONENT	ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME("RESOURCE")
 
 /*
  * acpi_resource_parse:
@@ -101,7 +101,7 @@ acpi_resource_parse(struct device *dev, struct acpi_devnode *ad,
 	void *context;
 	int i;
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	/*
 	 * XXX Note, this means we only get devices that are currently

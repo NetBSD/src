@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.7 2002/03/24 03:32:14 sommerfeld Exp $	*/
+/*	$NetBSD: acpi.c,v 1.8 2002/06/15 18:03:41 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.7 2002/03/24 03:32:14 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.8 2002/06/15 18:03:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -558,7 +558,7 @@ acpi_fixed_power_button_handler(void *context)
 
 	printf("%s: fixed power button pressed\n", sc->sc_dev.dv_xname);
 
-	return (INTERRUPT_HANDLED);
+	return (ACPI_INTERRUPT_HANDLED);
 }
 
 /*
@@ -575,7 +575,7 @@ acpi_fixed_sleep_button_handler(void *context)
 
 	printf("%s: fixed sleep button pressed\n", sc->sc_dev.dv_xname);
 
-	return (INTERRUPT_HANDLED);
+	return (ACPI_INTERRUPT_HANDLED);
 }
 
 /*****************************************************************************
@@ -703,9 +703,10 @@ acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
 	if (rv != AE_BUFFER_OVERFLOW)
 		return (rv);
 
-	buf->Pointer = AcpiOsCallocate(buf->Length);
+	buf->Pointer = AcpiOsAllocate(buf->Length);
 	if (buf->Pointer == NULL)
 		return (AE_NO_MEMORY);
+	memset(buf->Pointer, 0, buf->Length);
 
 	return ((*getit)(handle, buf));
 }

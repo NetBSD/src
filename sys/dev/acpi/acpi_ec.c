@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.3 2001/11/13 13:01:57 lukem Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.4 2002/06/15 18:03:41 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.3 2001/11/13 13:01:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.4 2002/06/15 18:03:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,11 +183,12 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.3 2001/11/13 13:01:57 lukem Exp $");
 #include <machine/bus.h>
 
 #include <dev/acpi/acpica.h>
+#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_ecreg.h>
 
-#define _COMPONENT	ACPI_EC
-MODULE_NAME("EC")
+#define _COMPONENT	ACPI_EC_COMPONENT
+ACPI_MODULE_NAME("EC")
 
 struct acpi_ec_softc {
 	struct device	sc_dev;		/* base device glue */
@@ -223,12 +224,14 @@ struct acpi_ec_softc {
 #define	EC_CSR_WRITE(sc, v)						\
 	bus_space_write_1((sc)->sc_csr_st, (sc)->sc_csr_sh, 0, (v))
 
+static UINT32 glk;			/* XXX XXX XXX */
+
 static __inline ACPI_STATUS
 EcLock(struct acpi_ec_softc *sc)
 {
 	ACPI_STATUS status;
 
-	status = AcpiAcquireGlobalLock();
+	status = AcpiAcquireGlobalLock(EC_LOCK_TIMEOUT, &glk);
 	if (status == AE_OK)
 		(sc)->sc_flags |= EC_F_LOCKED;
 	return (status);
@@ -239,7 +242,7 @@ EcUnlock(struct acpi_ec_softc *sc)
 {
 
 	(sc)->sc_flags &= ~EC_F_LOCKED;
-	AcpiReleaseGlobalLock();
+	AcpiReleaseGlobalLock(glk);
 }
 
 static __inline int
@@ -260,7 +263,8 @@ static ACPI_STATUS	EcSpaceSetup(ACPI_HANDLE Region, UINT32 Function,
 			    void *Context, void **return_Context);
 static ACPI_STATUS	EcSpaceHandler(UINT32 Function,
 			    ACPI_PHYSICAL_ADDRESS Address, UINT32 width,
-			    UINT32 *Value, void *Context, void *RegionContext);
+			    ACPI_INTEGER *Value, void *Context,
+			    void *RegionContext);
 
 static ACPI_STATUS	EcWaitEvent(struct acpi_ec_softc *sc, EC_EVENT Event);
 static ACPI_STATUS	EcQuery(struct acpi_ec_softc *sc, UINT8 *Data);
@@ -310,7 +314,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_io *io0, *io1;
 	ACPI_STATUS rv;
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	printf(": ACPI Embedded Controller\n");
 
@@ -402,7 +406,7 @@ EcGpeQueryHandler(void *Context)
 	ACPI_STATUS Status;
 	char qxx[5];
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	for (;;) {
 		/*
@@ -455,7 +459,7 @@ EcGpeQueryHandler(void *Context)
 	/* I know I request Level trigger cleanup */
 	if (AcpiClearEvent(sc->sc_gpebit, ACPI_EVENT_GPE) != AE_OK)
 		printf("%s: AcpiClearEvent failed\n", sc->sc_dev.dv_xname);
-	if (AcpiEnableEvent(sc->sc_gpebit, ACPI_EVENT_GPE) != AE_OK)
+	if (AcpiEnableEvent(sc->sc_gpebit, ACPI_EVENT_GPE, 0) != AE_OK)
 		printf("%s: AcpiEnableEvent failed\n", sc->sc_dev.dv_xname);
 
 	return_VOID;
@@ -496,7 +500,7 @@ EcSpaceSetup(ACPI_HANDLE Region, UINT32 Function, void *Context,
     void **RegionContext)
 {
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	/*
 	 * Just pass the context through, there's nothing to do here.
@@ -508,27 +512,27 @@ EcSpaceSetup(ACPI_HANDLE Region, UINT32 Function, void *Context,
 
 static ACPI_STATUS
 EcSpaceHandler(UINT32 Function, ACPI_PHYSICAL_ADDRESS Address, UINT32 width,
-    UINT32 *Value, void *Context, void *RegionContext)
+    ACPI_INTEGER *Value, void *Context, void *RegionContext)
 {
 	struct acpi_ec_softc *sc = Context;
 	ACPI_STATUS Status = AE_OK;
 	EC_REQUEST EcRequest;
 	int i;
 
-	FUNCTION_TRACE_U32(__FUNCTION__, (UINT32)Address);
+	ACPI_FUNCTION_TRACE_U32(__FUNCTION__, (UINT32)Address);
 
 	if ((Address > 0xFF) || (width % 8 != 0) || (Value == NULL) ||
 	    (Context == NULL))
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
 
 	switch (Function) {
-	case ACPI_READ_ADR_SPACE:
+	case ACPI_READ:
 		EcRequest.Command = EC_COMMAND_READ;
 		EcRequest.Address = Address;
 		(*Value) = 0;
 		break;
 
-	case ACPI_WRITE_ADR_SPACE:
+	case ACPI_WRITE:
 		EcRequest.Command = EC_COMMAND_WRITE;
 		EcRequest.Address = Address;
 		break;
@@ -544,7 +548,7 @@ EcSpaceHandler(UINT32 Function, ACPI_PHYSICAL_ADDRESS Address, UINT32 width,
 	 */
 	(*Value) = 0;
 	for (i = 0; i < width; i += 8) {
-		if (Function == ACPI_READ_ADR_SPACE)
+		if (Function == ACPI_READ)
 			EcRequest.Data = 0;
 		else
 			EcRequest.Data = (UINT8)((*Value) >> i);
@@ -566,7 +570,7 @@ EcWaitEventIntr(struct acpi_ec_softc *sc, EC_EVENT Event)
 	EC_STATUS EcStatus;
 	int i;
 
-	FUNCTION_TRACE_U32(__FUNCTION__, (UINT32)Event);
+	ACPI_FUNCTION_TRACE_U32(__FUNCTION__, (UINT32)Event);
 
 	/* XXX Need better test for "yes, you have interrupts". */
 	if (cold)
@@ -711,7 +715,7 @@ EcTransaction(struct acpi_ec_softc *sc, EC_REQUEST *EcRequest)
 	if (AcpiClearEvent(sc->sc_gpebit, ACPI_EVENT_GPE) != AE_OK)
 		printf("%s: EcRequest: unable to clear EC GPE\n",
 		    sc->sc_dev.dv_xname);
-	if (AcpiEnableEvent(sc->sc_gpebit, ACPI_EVENT_GPE) != AE_OK)
+	if (AcpiEnableEvent(sc->sc_gpebit, ACPI_EVENT_GPE, 0) != AE_OK)
 		printf("%s: EcRequest: unable to reenable EC GPE\n",
 		    sc->sc_dev.dv_xname);
 
