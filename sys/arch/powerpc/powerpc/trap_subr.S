@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.27 2002/08/02 03:46:45 chs Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.28 2002/08/06 06:21:58 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -347,7 +347,6 @@ _C_LABEL(decrsize) = .-_C_LABEL(decrint)
  * (Code essentially from the 603e User Manual, Chapter 5, but
  * corrected a lot.)
  */
-
 	.globl	_C_LABEL(tlbimiss),_C_LABEL(tlbimsize)
 _C_LABEL(tlbimiss):
 #ifdef PMAPDEBUG
@@ -566,7 +565,7 @@ _C_LABEL(ddblow):
 	addi	1,1,ddbstk+INTSTK@l
 	bla	ddbtrap
 _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
-#endif	/* DDB | KGDB */
+#endif	/* DDB || KGDB */
 
 #ifdef IPKDB
 #define	ipkdbsave	0xde0		/* primary save area for IPKDB */
@@ -734,13 +733,13 @@ s_trap:
 
 k_trap:
 	FRAME_SETUP(tempsave)
+trapagain:
 /* Now we can recover interrupts again: */
 	mfmsr	7
 	ori	7,7,(PSL_EE|PSL_ME|PSL_RI)@l
 	mtmsr	7
 	isync
 /* Call C trap code: */
-trapagain:
 	addi	3,1,8
 	bl	_C_LABEL(trap)
 	.globl	trapexit
@@ -839,7 +838,7 @@ s_dsitrap:
 	mfctr	31			/* & CTR */
 	mfdar	3
 s_pte_spill:
-	bl	_C_LABEL(pmap_pte_spill)	/* try a spill */
+	bl	_C_LABEL(pmap_pte_spill) /* try a spill */
 	or.	3,3,3
 	mtctr	31			/* restore CTR */
 	mtlr	30			/* and trap type */
@@ -1016,7 +1015,7 @@ decrintr:
 	bl	_C_LABEL(decr_intr)
 	b	intr_exit
 
-#if defined(DDB)
+#ifdef DDB
 /*
  * Deliberate entry to ddbtrap
  */
@@ -1171,7 +1170,7 @@ _C_LABEL(ipkdbsbyte):
 	stw	5,0(9)			/* restore previous fault handler */
 	dcbst	0,9			/* and flush data... */
 	sync
-	icbi	0,9			/* and instruction caches */	
+	icbi	0,9			/* and instruction caches */
 	blr
 #endif	/* IPKDB */
 	.globl	_C_LABEL(trapend)
