@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.97 2001/08/14 11:57:26 mrg Exp $	*/
+/*	$NetBSD: tulip.c,v 1.98 2001/08/20 11:57:34 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -600,7 +600,7 @@ tlp_detach(sc)
 	int i;
 
 	/*
-	 * Suceed now if there isn't any work to do.
+	 * Succeed now if there isn't any work to do.
 	 */
 	if ((sc->sc_flags & TULIPF_ATTACHED) == 0)
 		return (0);
