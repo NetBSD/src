@@ -1,4 +1,4 @@
-/*	$NetBSD: whereis.c,v 1.16 2004/04/01 22:14:48 christos Exp $	*/
+/*	$NetBSD: whereis.c,v 1.17 2004/05/23 02:24:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)whereis.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: whereis.c,v 1.16 2004/04/01 22:14:48 christos Exp $");
+__RCSID("$NetBSD: whereis.c,v 1.17 2004/05/23 02:24:06 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -122,6 +122,9 @@ main(int argc, char *argv[])
 				if (strlen(t) == 0)
 					t = ".";
 			(void)snprintf(path, sizeof(path), "%s/%s", t, *argv);
+			len = snprintf(path, sizeof(path), "%s/%s", t, *argv);
+			if (len >= sizeof(path))
+				continue;
 			if (stat(path, &sb) == -1)
 				continue;
 			if (!S_ISREG(sb.st_mode))
