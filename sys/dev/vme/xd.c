@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.17 1999/07/28 10:03:02 drochner Exp $	*/
+/*	$NetBSD: xd.c,v 1.18 2000/01/21 23:41:45 thorpej Exp $	*/
 
 /*
  *
@@ -246,25 +246,31 @@ bdev_decl(xd);
 cdev_decl(xd);
 
 /* XXX - think about this more.. xd_machdep? */
-void	md_setup __P((void));
+void xdc_md_setup __P((void));
 int	XDC_DELAY;
-#ifdef __sparc__
+
+#if defined(sparc)
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
-void	md_setup()
+void xdc_md_setup()
 {
 	if (CPU_ISSUN4 && cpuinfo.cpu_type == CPUTYP_4_300)
 		XDC_DELAY = XDC_DELAY_4_300;
 	else
 		XDC_DELAY = XDC_DELAY_SPARC;
 }
-#endif
-#ifdef __sun3__
-void	md_setup()
+#elif defined(sun3)
+void xdc_md_setup()
 {
 	XDC_DELAY = XDC_DELAY_SUN3;
 }
+#else
+void xdc_md_setup()
+{
+	XDC_DELAY = 0;
+}
 #endif
+
 /*
  * cfattach's: device driver interface to autoconfig
  */
@@ -430,7 +436,7 @@ xdcattach(parent, self, aux)
 	int			rseg;
 	vme_mapresc_t resc;
 
-	md_setup();
+	xdc_md_setup();
 
 	/* get addressing and intr level stuff from autoconfig and load it
 	 * into our xdc_softc. */
@@ -519,9 +525,7 @@ xdcattach(parent, self, aux)
 
 	/* init queue of waiting bufs */
 
-	xdc->sc_wq.b_active = 0;
-	xdc->sc_wq.b_actf = 0;
-	xdc->sc_wq.b_actb = &xdc->sc_wq.b_actf;
+	BUFQ_INIT(&xdc->sc_wq);
 
 	/*
 	 * section 7 of the manual tells us how to init the controller:
@@ -1110,7 +1114,6 @@ xdstrategy(bp)
 {
 	struct xd_softc *xd;
 	struct xdc_softc *parent;
-	struct buf *wq;
 	int     s, unit;
 	struct xdc_attach_args xa;
 
@@ -1167,7 +1170,7 @@ xdstrategy(bp)
 
 	/* first, give jobs in front of us a chance */
 	parent = xd->parent;
-	while (parent->nfree > 0 && parent->sc_wq.b_actf)
+	while (parent->nfree > 0 && BUFQ_FIRST(&parent->sc_wq) != NULL)
 		if (xdc_startbuf(parent, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -1176,11 +1179,7 @@ xdstrategy(bp)
 	 */
 
 	if (parent->nfree == 0) {
-		wq = &xd->parent->sc_wq;
-		bp->b_actf = 0;
-		bp->b_actb = wq->b_actb;
-		*wq->b_actb = bp;
-		wq->b_actb = &bp->b_actf;
+		BUFQ_INSERT_TAIL(&parent->sc_wq, bp);
 		splx(s);
 		return;
 	}
@@ -1232,7 +1231,7 @@ xdcintr(v)
 
 	/* fill up any remaining iorq's with queue'd buffers */
 
-	while (xdcsc->nfree > 0 && xdcsc->sc_wq.b_actf)
+	while (xdcsc->nfree > 0 && BUFQ_FIRST(&xdcsc->sc_wq) != NULL)
 		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -1459,7 +1458,6 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	int     rqno, partno;
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
-	struct buf *wq;
 	u_long  block;
 /*	caddr_t dbuf;*/
 	int error;
@@ -1473,15 +1471,10 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	/* get buf */
 
 	if (bp == NULL) {
-		bp = xdcsc->sc_wq.b_actf;
-		if (!bp)
+		bp = BUFQ_FIRST(&xdcsc->sc_wq);
+		if (bp == NULL)
 			panic("xdc_startbuf bp");
-		wq = bp->b_actf;
-		if (wq)
-			wq->b_actb = bp->b_actb;
-		else
-			xdcsc->sc_wq.b_actb = bp->b_actb;
-		*bp->b_actb = wq;
+		BUFQ_REMOVE(&xdcsc->sc_wq, bp);
 		xdsc = xdcsc->sc_drives[DISKUNIT(bp->b_dev)];
 	}
 	partno = DISKPART(bp->b_dev);
@@ -1509,11 +1502,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 		printf("%s: warning: cannot load DMA map\n",
 			xdcsc->sc_dev.dv_xname);
 		XDC_FREE(xdcsc, rqno);
-		wq = &xdcsc->sc_wq;	/* put at end of queue */
-		bp->b_actf = 0;
-		bp->b_actb = wq->b_actb;
-		*wq->b_actb = bp;
-		wq->b_actb = &bp->b_actf;
+		BUFQ_INSERT_TAIL(&xdcsc->sc_wq, bp);
 		return (XD_ERR_FAIL);	/* XXX: need some sort of
 					 * call-back scheme here? */
 	}
@@ -1719,7 +1708,7 @@ xdc_piodriver(xdcsc, iorqno, freeone)
 	/* now that we've drained everything, start up any bufs that have
 	 * queued */
 
-	while (xdcsc->nfree > 0 && xdcsc->sc_wq.b_actf)
+	while (xdcsc->nfree > 0 && BUFQ_FIRST(&xdcsc->sc_wq) != NULL)
 		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
 			break;
 
