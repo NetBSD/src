@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_core.c,v 1.19 2002/03/14 05:18:10 itojun Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.20 2002/11/02 07:30:59 perry Exp $	*/
 /*	$KAME: ipcomp_core.c,v 1.25 2001/07/26 06:53:17 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.19 2002/03/14 05:18:10 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.20 2002/11/02 07:30:59 perry Exp $");
 
 #include "opt_inet.h"
 
@@ -164,7 +164,7 @@ do { \
 								\
 	zs.next_out = mtod(n, u_int8_t *);			\
 	zs.avail_out = n->m_len;				\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 	for (mprev = m; mprev && mprev->m_next != md; mprev = mprev->m_next)
 		;

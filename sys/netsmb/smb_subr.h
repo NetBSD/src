@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.2 2002/01/04 02:39:45 deberg Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.3 2002/11/02 07:33:08 perry Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -118,14 +118,14 @@ void m_dumpm(struct mbuf *m);
 #define ithrow(t)	do {						\
 				if ((_tval = (int)(t)) != 0)		\
 					goto _catchlab;			\
-			} while (0)
+			} while (/*CONSTCOND*/ 0)
 
 #define ierror(t,e)	do {						\
 				if (t) {				\
 					_tval = e;			\
 					goto _catchlab;			\
 				}					\
-			} while (0)
+			} while (/*CONSTCOND*/ 0)
 
 typedef u_int16_t	smb_unichar;
 typedef	smb_unichar	*smb_uniptr;

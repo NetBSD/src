@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.79 2002/10/07 00:40:15 dan Exp $	*/
+/*	$NetBSD: key.c,v 1.80 2002/11/02 07:32:08 perry Exp $	*/
 /*	$KAME: key.c,v 1.249 2002/06/14 14:46:22 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.79 2002/10/07 00:40:15 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.80 2002/11/02 07:32:08 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -222,7 +222,7 @@ do {\
 			curelm = LIST_NEXT(curelm, field);\
 		LIST_INSERT_AFTER(curelm, elm, field);\
 	}\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define KEY_CHKSASTATE(head, sav, name) \
 do { \
@@ -231,7 +231,7 @@ do { \
 			(name), (head), (sav)));			\
 		continue;						\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define KEY_CHKSPDIR(head, sp, name) \
 do { \
@@ -240,7 +240,7 @@ do { \
 			"anyway continue.\n",				\
 			(name), (head), (sp)));				\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #if 1
 #define KMALLOC(p, t, n)                                                     \
@@ -253,13 +253,13 @@ do { \
 	((p) = (t)malloc((unsigned long)(n), M_SECA, M_NOWAIT));             \
 	printf("%s %d: %p <- KMALLOC(%s, %d)\n",                             \
 		__FILE__, __LINE__, (p), #t, n);                             \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define KFREE(p)                                                             \
 	do {                                                                 \
 		printf("%s %d: %p -> KFREE()\n", __FILE__, __LINE__, (p));   \
 		free((caddr_t)(p), M_SECA);                                  \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 #endif
 
 /*
@@ -274,7 +274,7 @@ do { \
 	(idx)->ul_proto = (ulp);                                             \
 	bcopy((s), &(idx)->src, ((struct sockaddr *)(s))->sa_len);           \
 	bcopy((d), &(idx)->dst, ((struct sockaddr *)(d))->sa_len);           \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * set parameters into secasindex buffer.
@@ -288,7 +288,7 @@ do { \
 	(idx)->reqid = (r);                                                  \
 	bcopy((s), &(idx)->src, ((struct sockaddr *)(s))->sa_len);           \
 	bcopy((d), &(idx)->dst, ((struct sockaddr *)(d))->sa_len);           \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /* key statistics */
 struct _keystat {

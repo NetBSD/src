@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.38 2002/09/23 05:51:15 simonb Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.39 2002/11/02 07:30:57 perry Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.38 2002/09/23 05:51:15 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.39 2002/11/02 07:30:57 perry Exp $");
 
 #include "opt_inet.h"
 
@@ -181,7 +181,7 @@ static int pim6;
 	if (rt == NULL) { \
 		mrt6stat.mrt6s_mfc_misses++; \
 	} \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 /*
  * Macros to compute elapsed time efficiently
@@ -203,7 +203,7 @@ static int pim6;
 			  delta += (1000000 * xxs); \
 	       } \
 	    } \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define TV_LT(a, b) (((a).tv_usec < (b).tv_usec && \
 	      (a).tv_sec <= (b).tv_sec) || (a).tv_sec < (b).tv_sec)
@@ -1257,7 +1257,7 @@ ip6_mdq(m, ifp, rt)
 		    register_send((ip6), (mifp), (m));		\
 		else						\
 		    phyint_send((ip6), (mifp), (m));		\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 	/*
 	 * Don't forward if it didn't arrive from the parent mif
