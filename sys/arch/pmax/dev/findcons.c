@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.20 1999/11/19 02:16:06 simonb Exp $	*/
+/*	$NetBSD: findcons.c,v 1.21 1999/12/08 02:56:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.20 1999/11/19 02:16:06 simonb Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.21 1999/12/08 02:56:17 simonb Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,6 @@ integrate int	scc_serial	__P((int prom_slot));
 int	find_kbd	__P((int prom_slot));
 int	find_screen	__P((int prom_slot));
 int	find_serial	__P((int prom_slot));
-void	consinit	__P((void));
 
 extern struct consdev promcd;
 
