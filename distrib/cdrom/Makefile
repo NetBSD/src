@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2002/09/29 07:23:15 lukem Exp $
+# $NetBSD: Makefile,v 1.9 2002/09/29 14:29:19 lukem Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -30,7 +30,7 @@ all:
 CD_RELEASE?=
 CD_SIZE?=		650000
 RELEASENAME?=		NetBSD-${CD_RELEASE}
-MKISOFS_ARGS=		-f -A "NetBSD ${CD_RELEASE}" \
+MKISOFS_ARGS=		-A "NetBSD ${CD_RELEASE}" \
 			-hide-rr-moved -m Split -m cdrom
 #			-hide-list ${.CURDIR}/hide-iso.lst
 
@@ -80,7 +80,7 @@ VAX_IBOOT?=	${INSTALLBOOT} -m vax -o sunsum,append
 MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${PRINTOBJDIR}
 .endif
 
-RSYNC_SITE?=	rsync://rsync.netbsd.org/NetBSD/
+RSYNC_SITE?=	rsync://rsync.netbsd.org/NetBSD/${RELEASENAME}/
 RSYNC_ARGS?=	-va --delete
 RSYNC_EXCLUDE+=	--exclude=/* --exclude=Split --exclude=cdrom
 
@@ -89,8 +89,6 @@ STAGEDIR?=	${.OBJDIR}/staging
 IMAGEDIR?=	${.OBJDIR}
 EXTFILEDIR?=	${.OBJDIR}/extfiles
 EASTER_EGG?=	/dev/null
-
-RELEASE_SUBDIR?=${RELEASENAME}
 
 ##### MACHINE_ARCH for possible shared sets for each port #####
 
@@ -121,19 +119,18 @@ MACHINE_ARCH.x68k=	m68k
 ##### Fetched directories from FTP server #####
 
 .if defined(ALL_PORTS) && !empty(ALL_PORTS)
-RSYNC_INCLUDE+=		--include "/${RELEASENAME}/" \
-			--include "/${RELEASENAME}/shared/"
-RSYNC_EXCLUDE+=		--exclude "/${RELEASENAME}/[a-z]*" \
-			--exclude "/${RELEASENAME}/shared/[a-z]*/"
+RSYNC_INCLUDE+=		--include "/shared/"
+RSYNC_EXCLUDE+=		--exclude "/[a-z]*" \
+			--exclude "/shared/[a-z]*/"
 .endif
 
-.for port in ${ALL_PORTS}
-RSYNC_INCLUDE+=		--include "/${RELEASENAME}/${port}/"
+.for port in ${ALL_PORTS}			# {
+RSYNC_INCLUDE+=		--include "/${port}/"
 .if defined(MACHINE_ARCH.${port})
-RSYNC_INCLUDE+=		--include "/${RELEASENAME}/${MACHINE_ARCH.${port}}/" \
-			--include "/${RELEASENAME}/shared/${MACHINE_ARCH.${port}}/"
+RSYNC_INCLUDE+=		--include "/${MACHINE_ARCH.${port}}/" \
+			--include "/shared/${MACHINE_ARCH.${port}}/"
 .endif
-.endfor
+.endfor						# }
 
 ##### Boot info and additional options for various platforms #####
 
@@ -145,7 +142,7 @@ MKISOFS_ARGS+=		-P "${PUBLISHER}"
 MKISOFS_ARGS+=		-p "${PREPARER}"
 .endif
 
-.for image in ${CD_IMAGES}
+.for image in ${CD_IMAGES}			# {
 ports:=${BASE_PORTS.${image}}
 
 .if !defined(VOLID.${image}) && !target(.BEGIN)
@@ -155,6 +152,9 @@ ports:=${BASE_PORTS.${image}}
 .endif
 
 MKISOFS_ARGS.${image}=	-V "${VOLID.${image}}"
+
+pathlist.${image}:=${STAGEDIR}/${image}.pathlist
+MKISOFS_ARGS.${image}+=	-graft-points -path-list ${pathlist.${image}}
 
 .if defined(ABSTRACT.${image})
 MKISOFS_ARGS.${image}+=	-abstract ${ABSTRACT.${image}}
@@ -167,13 +167,13 @@ INTFILES.${image}?=
 INTDIRS.${image}?=
 ADDFILES.${image}?=
 
-.for port in ${ports}
+.for port in ${ports}					# {
 EXTFILES+=		${EXTFILES.${port}}
 INTFILES.${image}+=	${INTFILES.${port}}
 INTDIRS.${image}+=	${INTDIRS.${port}}
 ADDFILES.${image}+=	${ADDFILES.${port}}
 MKISOFS_ARGS.${image}+=	${MKISOFS_ARGS.${port}}
-.endfor
+.endfor							# }
 
 # i386
 
@@ -194,7 +194,7 @@ MKISOFS_ARGS.${image}+=	-apple --macbin -map ${.CURDIR}/hfsmap.lst
 # Sun (sparc, sparc64, sun3)
 
 SUN_BOOT_ARGS.${image}:=
-.if !empty(ports:Msparc*) || !empty(ports:Msun3*)
+.if !empty(ports:Msparc*) || !empty(ports:Msun3*)	# {
 SUN_BOOT.123:=	/dev/null
 SUN_BOOT.4:=	/dev/null
 SUN_BOOT.5:=	/dev/null
@@ -203,36 +203,36 @@ SUN_BOOT.5:=	/dev/null
 SUN_BOOT.123:=	${BOOTFILE.sparc}
 .endif
 
-.if !empty(ports:Msun3)
+.if !empty(ports:Msun3)					# {
 .if !defined(BOOTFILE.sun3x)
 # NetBSD >= 1.4; sun3 and sun3x are the same
 SUN_BOOT.5:=	${BOOTFILE.sun3}
 .endif
 SUN_BOOT.4:=	${BOOTFILE.sun3}
-.endif
+.endif							# }
 
 .if !empty(ports:Msun3x) && defined(BOOTFILE.sun3x)
 # NetBSD < 1.4; sun3 and sun3x are separate
 SUN_BOOT.5:=	${BOOTFILE.sun3x}
 .endif
 
-.if !empty(ports:Msparc64)
+.if !empty(ports:Msparc64)				# {
 .if (${SUN_BOOT.5} != "/dev/null")
 # add warning
 SUN_BOOT.5:=	${SUN_BOOT.5} ${BOOTFILE.sparc64}
 .else
 SUN_BOOT.5:=	${BOOTFILE.sparc64}
 .endif
-.endif
+.endif							# }
 
 SUN_BOOT_ARGS.${image}:= ${SUN_BOOT.123} ${SUN_BOOT.123} ${SUN_BOOT.123} ${SUN_BOOT.4} ${SUN_BOOT.5}
 
 .if empty(SUN_BOOT_ARGS.${image}:N/dev/null)
 SUN_BOOT_ARGS.${image}:=
 .endif
-.endif
+.endif							# }
 
-.endfor
+.endfor		# image in ${CD_IMAGES}		# }
 
 ##### Additional options for host OS's #####
 
@@ -262,11 +262,11 @@ MKISOFS_ARGS+=		-hide-joliet-trans-tbl
 USE-FILE: .USE
 	@if [ ! -r $@ ]; then case $> in \
 		/*,link) \
-			echo "ln -sf ${>:S/,link$//} $@"; \
-			ln -sf ${>:S/,link$//} $@;; \
+			echo "cp ${>:S/,link$//} $@"; \
+			cp ${>:S/,link$//} $@;; \
 		*,link) \
-			echo "ln -sf `pwd -P`/${>:S/,link$//} $@"; \
-			ln -sf `pwd -P`/${>:S/,link$//} $@;; \
+			echo "cp `pwd -P`/${>:S/,link$//} $@"; \
+			cp `pwd -P`/${>:S/,link$//} $@;; \
 		*.tgz,*) \
 			echo "Extracting: $> --> $@..."; \
 			tar --fast-read -xzOf ${>:C/,.*$//} ${>:C/^.*,//} >$@;; \
@@ -276,41 +276,39 @@ USE-FILE: .USE
 
 ##### Makefile rules #####
 
-.for image in ${CD_IMAGES}
+.for image in ${CD_IMAGES}			# {
 all: ${IMAGEDIR}/${image}.iso
 
 stage-${image}:
 	mkdir -p ${STAGEDIR}/${image} ${EXTFILEDIR}
+	rm -f ${pathlist.${image}}
 .if defined(BASE_PORTS.${image}) && !empty(BASE_PORTS.${image})
-.if !empty(RELEASE_SUBDIR)
-	mkdir -p ${STAGEDIR}/${image}/${RELEASE_SUBDIR}
-.endif
 .for dir in ${INTDIRS.${image}}
 	mkdir -p ${STAGEDIR}/${image}/${dir}
 .endfor
 .for arch in ${BASE_PORTS.${image}}
-	ln -sf `cd ${DISTRIBDIR} && pwd -P`/${RELEASENAME}/${arch} ${STAGEDIR}/${image}/${RELEASE_SUBDIR}/
+	echo "${arch}=${DISTRIBDIR}/${arch}" >> ${STAGEDIR}/${image}.pathlist
 .endfor
 .endif
 
 extfileprep:
-.for file in ${EXTFILES}
+.for file in ${EXTFILES}			# {
 extfileprep: ${EXTFILEDIR}/${file:C/:.*$//}
-${EXTFILEDIR}/${file:C/:.*$//}: ${DISTRIBDIR}/${RELEASENAME}/${file:C/^.*://} USE-FILE
-${DISTRIBDIR}/${RELEASENAME}/${file:C/^.*://}: .PHONY
-.endfor
+${EXTFILEDIR}/${file:C/:.*$//}: ${DISTRIBDIR}/${file:C/^.*://} USE-FILE
+${DISTRIBDIR}/${file:C/^.*://}: .PHONY
+.endfor						# }
 
 fileprep-${image}:
-.for file in ${INTFILES.${image}}
+.for file in ${INTFILES.${image}}		# {
 fileprep-${image}: ${STAGEDIR}/${image}/${file:C/:.*$//}
-${STAGEDIR}/${image}/${file:C/:.*$//}: ${DISTRIBDIR}/${RELEASENAME}/${file:C/^.*://} USE-FILE
-${DISTRIBDIR}/${RELEASENAME}/${file:C/^.*://}: .PHONY
-.endfor
-.for file in ${ADDFILES.${image}}
+${STAGEDIR}/${image}/${file:C/:.*$//}: ${DISTRIBDIR}/${file:C/^.*://} USE-FILE
+${DISTRIBDIR}/${file:C/^.*://}: .PHONY
+.endfor						# }
+.for file in ${ADDFILES.${image}}		# {
 fileprep-${image}: ${STAGEDIR}/${image}/${file:C/:.*$//}
 ${STAGEDIR}/${image}/${file:C/:.*$//}: ${file:C/^.*://} USE-FILE
 ${file:C/^.*://}: .PHONY
-.endfor
+.endfor						# }
 
 # Size the CD image.  This is done via the following formula:
 # 1. Size the image produced by mkisofs.
@@ -350,7 +348,7 @@ size-${image}: stage-${image} extfileprep fileprep-${image}
 
 # Actually build the image with all the bootstrap goo....
 
-${IMAGEDIR}/${image}.iso: fetch size-${image}
+${IMAGEDIR}/${image}.iso: size-${image}
 .if defined(LOG_MKISOFS)
 	cd ${STAGEDIR}/${image} && ${MKISOFS} -o $@ ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} -v -v . >${IMAGEDIR}/${image}.iso.log 2>&1
 .else
@@ -379,14 +377,12 @@ ${IMAGEDIR}/${image}.iso: fetch size-${image}
 	dd if=/dev/zero bs=512 count=$$(($$(($$newsize - $$size)) / 512)) >>$@ 2>/dev/null
 	dd if=${EASTER_EGG} bs=32768 count=1 conv=sync >>$@ 2>/dev/null
 
-.endfor
+.endfor		# image in ${CD_IMAGES}		# }
 
 fetch:
-.if !defined(NO_FETCH)
 	@mkdir -p ${DISTRIBDIR}
 	@echo Fetching distributions....
-	@${RSYNC} ${RSYNC_INCLUDE} ${RSYNC_ARGS} ${RSYNC_EXCLUDE} ${RSYNC_SITE} ${DISTRIBDIR}
-.endif
+	${RSYNC} ${RSYNC_INCLUDE} ${RSYNC_ARGS} ${RSYNC_EXCLUDE} ${RSYNC_SITE}/ ${DISTRIBDIR}/
 
 clean: cleanstagedir cleanimages
 cleandir distclean: cleandistribdir
