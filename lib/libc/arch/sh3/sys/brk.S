@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.6 2000/12/16 01:40:38 tsubai Exp $	*/
+/*	$NetBSD: brk.S,v 1.7 2001/05/11 19:58:08 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: brk.S,v 1.6 2000/12/16 01:40:38 tsubai Exp $")
+	RCSID("$NetBSD: brk.S,v 1.7 2001/05/11 19:58:08 msaitoh Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -82,5 +82,3 @@ Lminbrk:	.long	_C_LABEL(__minbrk)
 LSYS_break:	.long	SYS_break
 Lcurbrk:	.long	curbrk
 Lcerror:	.long	cerror
-	
-

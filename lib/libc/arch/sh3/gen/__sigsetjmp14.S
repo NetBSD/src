@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigsetjmp14.S,v 1.3 2001/02/14 11:32:44 msaitoh Exp $	*/
+/*	$NetBSD: __sigsetjmp14.S,v 1.4 2001/05/11 19:58:07 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: __sigsetjmp14.S,v 1.3 2001/02/14 11:32:44 msaitoh Exp $")
+	RCSID("$NetBSD: __sigsetjmp14.S,v 1.4 2001/05/11 19:58:07 msaitoh Exp $")
 #endif
 
 ENTRY(__sigsetjmp14)
@@ -51,9 +51,9 @@ ENTRY(__sigsetjmp14)
 	mov.l	r4, @-r15
 	mov.l	r5, @-r15
 	mov	r4, r6
-	mov	#1, r4		! SIG_BLOCK
+	mov	#1, r4		/* SIG_BLOCK */
 	mov	#0, r5
-	add	#4*10, r6	! &sigmask
+	add	#4*10, r6	/* &sigmask */
 
 	mov.l	L__sigprocmask14, r0
 	jsr	@r0
@@ -88,8 +88,8 @@ ENTRY(__siglongjmp14)
 	mov.l	r4, @-r15
 	mov.l	r5, @-r15
 	mov	r4, r5
-	mov	#3, r4		! SIG_SETMASK
-	add	#4*10, r5	! &sigmask
+	mov	#3, r4		/* SIG_SETMASK */
+	add	#4*10, r5	/* &sigmask */
 	mov	#0, r6
 	mov.l	L__sigprocmask14, r0
 	jsr	@r0
