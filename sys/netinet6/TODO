@@ -1,5 +1,5 @@
 KAME/NetBSD integration TODOs
-$NetBSD: TODO,v 1.6 1999/12/13 17:15:18 itojun Exp $
+$NetBSD: TODO,v 1.7 2000/01/05 13:19:36 itojun Exp $
 Jun-ichiro itojun Hagino <itojun@itojun.org>
 
 
@@ -44,10 +44,14 @@ separate inpcb/in6pcb.
 Mapped address is now supported well.  We may want a way to disable it
 (setsockopt) as mapped address is just to ease transition.
 
+setsockopt and sysctl are now being tested.
+
 * tcp4/6 wildcard bind
 
 Mapped address is now supported well.  We may want a way to disable it
 (setsockopt) as mapped address is just to ease transition.
+
+setsockopt and sysctl are now being tested.
 
 * net/if_types.h
 
@@ -78,6 +82,11 @@ bytes)
 KAME team is doing experiments with m_pulldown().  will migrate to m_pulldown()
 after stabilization.
 
+* ipsec socket pointer
+
+We currently reuse m_pkthdr.rcvif for ipsec socket pointer, and ipf and
+other code does not like this.
+
 * gre/ipip compatibility
 
 Hope I did not break any of these...  Could someone check?
@@ -98,7 +107,9 @@ KAME codebase includes several routing daemons, like route6d or bgpd (which
 does RIPng and BGP4+, respectively).  Should we put these into
 /usr/src/usr.sbin, or should we treat those as third-party code (pkgsrc)?
 
-* IPv6-support in resolvers
+pim6dd license issue should be clarified.
+
+* IPv6-support in resolvers and libraries
 
 Dual stack resolver code is from KAME.  The change may not be compatible with
 future bind8 code, so we may have to merge future bind8 carefully.
@@ -111,6 +122,7 @@ However, it needs a total rewrite of gethostby{name,addr}.
 It will make future upgrade to bind8x really harder.
 
 rcmd() and iruserok() must be extended to support multiple address families.
+Experiments in KAME but still unclear about API (no standard).
 
 * -DINET6, -DIPSEC
 
@@ -118,6 +130,11 @@ Where should we define -DINET6?  Should it be global option like
 EXPORTABLE_SYSTEM=1 (in /etc/mk.conf), or local option defined somewhere?
 (some people may need a binary tree with no IPv6 support at all, for
 smaller footprint)
+
+At this moment -DINET6 is placed in each of leaf directory Makefiles,
+and there's no global option for enabling/disabling userland IPv6/IPsec
+support.  Since we ship single binary tree we want to ship them enabled
+by default.
 
 * if index
 
