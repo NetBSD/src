@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.29 1999/07/05 12:08:09 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.30 1999/07/06 06:10:04 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -25,13 +25,13 @@
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
@@ -74,12 +74,12 @@ message installusure
 {Vous avez choisi d'installer NetBSD sur votre disque dur. Ceci va changer les
 informations contenues sur votre disque dur. Vous devriez faire une sauvegarde
 complète de celui ci avant de continuer la procédure d'installation. Cette
-procédure va réaliser les actions suivantes :
-	a) Partitionner votre disque dur.
-	b) Créer de nouveaux systèmes de fichier BSD.
+procédure va réaliser les actions suivantes : 
+	a) Partitionner votre disque dur. 
+	b) Créer de nouveaux systèmes de fichier BSD. 
 	c) Installer les différents composants.
 
-(Après avoir indiqué les informations sur les partitions mais avant de 
+(Après avoir indiqué les informations sur les partitions mais avant de
 modifier votre disque, vous aurez la possibilité de quitter cette procédure.)
 On continue ?
 }
@@ -87,9 +87,9 @@ On continue ?
 message upgradeusure
 {D'accord, mettons à jour NetBSD sur votre disque dur. Comme d'habitude, cela
 va changer les informations contenues sur votre disque dur. Vous devriez faire
-une sauvegarde complète de celui ci avant de continuer la procédure de mise à 
+une sauvegarde complète de celui ci avant de continuer la procédure de mise à
 jour. Voulez vous vraiment mettre à jour NetBSD ?
-(Ceci est le dernier avertissement avant que cette procédure ne commence à 
+(Ceci est le dernier avertissement avant que cette procédure ne commence à
 modifier votre disque.)
 }
 
@@ -136,8 +136,8 @@ message pleasemountroot
 {Le système de fichiers racine n'est pas monté. SVP, montez le.
 
 Votre disque de destination %s contient aussi le système de fichiers racine.
-J'ai besoin de savoir si je suis entrain de m'exécuter hors de la racine de 
-destination (%sa), ou hors d'une racine alternative (disons %sb, 
+J'ai besoin de savoir si je suis entrain de m'exécuter hors de la racine de
+destination (%sa), ou hors d'une racine alternative (disons %sb,
 votre partition de swap).
 Je ne peux pas le savoir tant que vous ne montez pas la racine de destination.
 
@@ -183,10 +183,10 @@ message megname
 message layout
 {NetBSD utilise un disklabel BSD pour séparer la portion du disque réservée à
 NetBSD en de multiples partitions BSD. Vous devez maintenant paramétrer le
-disklabel BSD. Vous avez différent choix:
+disklabel BSD. Vous avez différent choix: 
 -- Standard : les partitions sont calculées par ce programme. 
 -- Standard avec X : le double de swap plus la taille des binaires X. 
--- Personnalisée : vous choisissez la taille des partitions. 
+-- Personnalisée : vous choisissez la taille des partitions.
 
 La taille allouée pour NetBSD sur votre disque est de %.2f Megaoctets. 
 L'installation standard requière au moins %.2f Megaoctets. 
@@ -537,7 +537,7 @@ message distdir
 message verboseextract
 {Pendant la procédure d'extraction des fichiers, voulez vous voir leur
 nom apparaître au fur et à mesure qu'ils seront extraits ?
-} 
+}
 
 message badls
 {Impossible d'exécuter /bin/ls. Cette erreur n'aurait pas du arriver.
@@ -689,12 +689,12 @@ message fdremount
 
 Réessayer en inserrant la disquette contenant le fichier %s.
 
-Ne plus charger d'autre fichiers depuis la disquette et interrompre le 
+Ne plus charger d'autre fichiers depuis la disquette et interrompre le
 processus
 }
 
 message mntnetconfig
-{Est ce que les informations réseau correspondent bien à cette machine en 
+{Est ce que les informations réseau correspondent bien à cette machine en
 utilisation normale et désirez vous l'enregistrer sous /etc ?}
 
 message cur_distsets

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.4 1999/07/04 09:41:03 cgd Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.5 1999/07/06 06:10:05 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -25,13 +25,13 @@
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
@@ -65,8 +65,8 @@ message dlgeom
 {Votre disque a déjà un label BSD. Ce label montre une géométrie différente
 de la géométrie réelle du disque. Les deux géométrie sont :
 
-disklabel:	%d cylindres, %d têtes, %d secteurs
-géom réelle:	%d cylindres, %d têtes, %d secteurs
+disklabel:	%d cylindres, %d têtes, %d secteurs 
+géom réelle:	%d cylindres, %d têtes, %d secteurs 
 }
 
 message nobiosgeom
@@ -201,7 +201,7 @@ message dobootblks
 message askfsroot
 {Je vais vous demander la taille et le point de montage de quelque partitions.
 
-Et tout d'abord la partition racine. Il vous reste %d %s de libre sur votre 
+Et tout d'abord la partition racine. Il vous reste %d %s de libre sur votre
 disque.
 Taille de la partition racine ? }
 
@@ -216,7 +216,7 @@ message otherparts
 }
 
 message askfspart
-{La partition suivante est /dev/%s%c . Il vous reste %d %s de libre sur votre 
+{La partition suivante est /dev/%s%c . Il vous reste %d %s de libre sur votre
 disque.
 Taille de la partition ? }
 
