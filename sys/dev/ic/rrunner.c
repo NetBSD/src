@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.24 2001/06/19 13:45:56 wiz Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.25 2001/07/07 15:59:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -407,7 +407,7 @@ eshconfig(sc)
 
 	bus_space_write_4(iot, ioh, RR_MISC_LOCAL_CTL, misc_local_ctl);
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = eshstart;
 	ifp->if_ioctl = eshioctl;
@@ -693,7 +693,7 @@ bad_init:
 /*
  * Code to handle the Framing Protocol (FP) interface to the esh.
  * This will allow us to write directly to the wire, with no
- * intervening bcopy's to slow us down.
+ * intervening memcpy's to slow us down.
  */
 
 int 
@@ -3039,9 +3039,8 @@ eshioctl(ifp, cmd, data)
 				ina->x_host = *(union ns_host *)
 					LLADDR(ifp->if_sadl);
 			else
-				bcopy(ina->x_host.c_host,
-				      LLADDR(ifp->if_sadl),
-				      ifp->if_addrlen);
+				memcpy(LLADDR(ifp->if_sadl),
+				    ina->x_host.c_host, ifp->if_addrlen);
 				/* Set new address. */
 			eshinit(sc);
 			break;
