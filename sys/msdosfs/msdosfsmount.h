@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.10 1995/07/24 06:38:52 leo Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.11 1995/09/09 19:38:12 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -70,7 +70,6 @@ struct msdosfsmount {
 	u_long pm_cnshift;	/* shift file offset right this amount to get a cluster number */
 	u_long pm_crbomask;	/* and a file offset with this mask to get cluster rel offset */
 	u_long pm_bpcluster;	/* bytes per cluster */
-	u_long pm_depclust;	/* directory entries per cluster */
 	u_long pm_fmod;		/* ~0 if fs is modified, this can rollover to 0	*/
 	u_long pm_fatblocksize;	/* size of fat blocks in bytes */
 	u_long pm_fatblocksec;	/* size of fat blocks in sectors */
@@ -88,24 +87,6 @@ struct msdosfsmount {
 
 /* Number of bits in one pm_inusemap item: */
 #define	N_INUSEBITS	(8 * sizeof(u_int))
-
-/*
- * How to compute pm_cnshift and pm_crbomask.
- * 
- * pm_crbomask = (pm_SectPerClust * pm_BytesPerSect) - 1 
- * if (bytesperclust == * 0) 
- * 	return EBADBLKSZ; 
- * bit = 1; 
- * for (i = 0; i < 32; i++) { 
- *	if (bit & bytesperclust) { 
- *		if (bit ^ bytesperclust) 
- *			return EBADBLKSZ; 
- *		pm_cnshift = * i; 
- *		break; 
- *	} 
- *	bit <<= 1; 
- * }
- */
 
 /*
  * Shorthand for fields in the bpb contained in the msdosfsmount structure.
@@ -133,13 +114,13 @@ struct msdosfsmount {
  * Map a filesystem relative block number back into a cluster number.
  */
 #define	bntocn(pmp, bn) \
-	((((bn) - pmp->pm_firstcluster)/ (pmp)->pm_SectPerClust) + CLUST_FIRST)
+	((((bn) - pmp->pm_firstcluster) / (pmp)->pm_SectPerClust) + CLUST_FIRST)
 
 /*
  * Calculate block number for directory entry in root dir, offset dirofs
  */
 #define	roottobn(pmp, dirofs) \
-	(((dirofs) / (pmp)->pm_depclust) * (pmp)->pm_SectPerClust \
+	(((dirofs) / (pmp)->pm_bpcluster) * (pmp)->pm_SectPerClust \
 	+ (pmp)->pm_rootdirblk)
 
 /*
@@ -155,8 +136,8 @@ struct msdosfsmount {
  * Convert pointer to buffer -> pointer to direntry
  */
 #define	bptoep(pmp, bp, dirofs) \
-	((struct direntry *)((bp)->b_data)	\
-	 + (dirofs) % (pmp)->pm_depclust)
+	((struct direntry *)(((bp)->b_data)	\
+	 + ((dirofs) & (pmp)->pm_crbomask)))
 
 
 /*
