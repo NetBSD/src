@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.43 1999/11/18 18:23:44 joda Exp $
+# $NetBSD: shl.mi,v 1.44 1999/11/23 11:20:29 blymn Exp $
 ./usr/lib/libamu.so.1.1
 ./usr/lib/libbfd.so.3.0
 ./usr/lib/libbz2.so.0.0
@@ -11,6 +11,7 @@
 ./usr/lib/libipsec.so.0.0
 ./usr/lib/libkvm.so.5.0
 ./usr/lib/libm.so.0.1
+./usr/lib/libmenu.so.0.0
 ./usr/lib/libntp.so.0.0
 ./usr/lib/libobjc.so.0.0
 ./usr/lib/libossaudio.so.0.0
