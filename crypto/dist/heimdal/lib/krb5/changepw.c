@@ -34,7 +34,7 @@
 #include <krb5_locl.h>
 
 __RCSID("$Heimdal: changepw.c,v 1.37 2002/09/03 16:14:34 nectar Exp $"
-        "$NetBSD: changepw.c,v 1.7 2002/09/12 13:19:13 joda Exp $");
+        "$NetBSD: changepw.c,v 1.8 2002/09/20 22:05:59 mycroft Exp $");
 
 static krb5_error_code
 send_request (krb5_context context,
@@ -300,8 +300,12 @@ krb5_change_password (krb5_context	context,
 	    }
 
 	    for (i = 0; !done && i < 5; ++i) {
+#ifdef HAVE_POLL
+		struct pollfd set[1];
+#else
 		fd_set fdset;
 		struct timeval tv;
+#endif
 
 		if (!replied) {
 		    replied = 0;
@@ -317,6 +321,12 @@ krb5_change_password (krb5_context	context,
 		    }
 		}
 	    
+#ifdef HAVE_POLL
+		set[0].fd = sock;
+		set[0].events = POLLIN;
+
+		ret = poll (set, 1, (1 + (1 << i)) * 1000);
+#else
 		if (sock >= FD_SETSIZE) {
 		    krb5_set_error_string(context, "fd %d too large", sock);
 		    ret = ERANGE;
@@ -330,6 +340,7 @@ krb5_change_password (krb5_context	context,
 		tv.tv_sec  = 1 + (1 << i);
 
 		ret = select (sock + 1, &fdset, NULL, NULL, &tv);
+#endif
 		if (ret < 0 && errno != EINTR) {
 		    close(sock);
 		    goto out;
