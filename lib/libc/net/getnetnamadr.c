@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.30 2004/05/21 02:30:03 christos Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.31 2004/05/23 16:54:13 christos Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.30 2004/05/21 02:30:03 christos Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.31 2004/05/23 16:54:13 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -322,11 +322,8 @@ _dns_getnetbyaddr(void *rv, void *cb_data, va_list ap)
 		return NS_NOTFOUND;
 	}
 	res = __res_get_state();
-	if ((res->options & RES_INIT) == 0 && res_ninit(res) == -1) {
-		h_errno = NETDB_INTERNAL;
-		__res_put_state(res);
+	if (res == NULL)
 		return NS_NOTFOUND;
-	}
 	anslen = res_nquery(res, qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
 	if (anslen < 0) {
 		free(buf);
@@ -429,12 +426,8 @@ _dns_getnetbyname(void *rv, void *cb_data, va_list ap)
 		return NS_NOTFOUND;
 	}
 	res = __res_get_state();
-	if ((res->options & RES_INIT) == 0 && res_ninit(res) == -1) {
-		h_errno = NETDB_INTERNAL;
-		__res_put_state(res);
+	if (res == NULL)
 		return NS_NOTFOUND;
-	}
-
 	anslen = res_nsearch(res, qbuf, C_IN, T_PTR, buf->buf,
 	    sizeof(buf->buf));
 	if (anslen < 0) {
