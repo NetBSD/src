@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.16 1996/02/08 03:05:34 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.17 1996/02/16 02:25:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -140,6 +140,7 @@ void	audiostartr __P((struct audio_softc *));
 void	audiostartp __P((struct audio_softc *));
 void	audio_rint __P((struct audio_softc *));
 void	audio_pint __P((struct audio_softc *));
+void	audio_rpint __P((struct audio_softc *));
 
 int	audio_calc_blksize __P((struct audio_softc *));
 void	audio_silence_fill __P((struct audio_softc *, u_char *, int));
@@ -1216,9 +1217,8 @@ audiostartp(sc)
     
 	if (sc->pr.nblk > 0) {
 		u_char *hp = sc->pr.hp;
-		sc->sc_silence = 0;
 		if (rval = sc->hw_if->start_output(sc->hw_hdl, hp, sc->sc_blksize,
-		    				   audio_pint, (void *)sc)) {
+		    				   audio_rpint, (void *)sc)) {
 		    	DPRINTF(("audiostartp: failed: %d\n", rval));
 		}
 		else {
@@ -1229,6 +1229,19 @@ audiostartp(sc)
 			sc->pr.hp = hp;
 		}
 	}
+}
+
+/*
+ * Use this routine as DMA callback if we played user data.  We need to
+ * account for user data and silence separately.
+ */
+void
+audio_rpint(sc)
+	struct audio_softc *sc;
+{
+
+	sc->pr.nblk--;
+	audio_pint(sc);		/* 'twas a real audio block */
 }
 
 /*
@@ -1253,8 +1266,6 @@ audio_pint(sc)
 	 * always fails and the output is always silence after the
 	 * first block.
 	 */
-	if (!sc->sc_silence)
-		cb->nblk--;
 	if (cb->nblk > 0) {
 		hp = cb->hp;
 		if (cb->cb_pause) {
@@ -1271,7 +1282,7 @@ audio_pint(sc)
 		    	Dprintf("audio_pint: hp=0x%x cc=%d\n", hp, cc);
 #endif
 		    if (err = hw->start_output(sc->hw_hdl, hp, cc,
-					       audio_pint, (void *)sc)) {
+					       audio_rpint, (void *)sc)) {
 			    DPRINTF(("audio_pint restart failed: %d\n", err));
 			    audio_clear(sc);
 		    }
@@ -1293,7 +1304,6 @@ audio_pint(sc)
 		    Dprintf("audio_pint: drops=%d auzero %d 0x%x\n", cb->cb_drops, cc, *(int *)auzero_block);
 #endif
  psilence:
-		sc->sc_silence = 1;
 		if (err = hw->start_output(sc->hw_hdl,
 		    			   auzero_block, cc,
 					   audio_pint, (void *)sc)) {
