@@ -1,4 +1,4 @@
-/*	$NetBSD: tscroll.c,v 1.7 2000/04/15 23:01:47 jdc Exp $	*/
+/*	$NetBSD: tscroll.c,v 1.8 2000/04/17 12:25:46 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)tscroll.c	8.4 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: tscroll.c,v 1.7 2000/04/15 23:01:47 jdc Exp $");
+__RCSID("$NetBSD: tscroll.c,v 1.8 2000/04/17 12:25:46 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -243,5 +243,5 @@ __parse_cap (cap, va_alist)
 	return (result);
 
 err:	va_end (ap);
-	return ("\0");
+	return ((char *) "\0");
 }

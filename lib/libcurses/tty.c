@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.15 2000/04/15 13:17:05 blymn Exp $	*/
+/*	$NetBSD: tty.c,v 1.16 2000/04/17 12:25:46 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.15 2000/04/15 13:17:05 blymn Exp $");
+__RCSID("$NetBSD: tty.c,v 1.16 2000/04/17 12:25:46 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: tty.c,v 1.15 2000/04/15 13:17:05 blymn Exp $");
 #include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
 
 #include "curses.h"
 #include "curses_private.h"
