@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.25 1998/02/19 07:06:59 thorpej Exp $
+#	$NetBSD: Makefile,v 1.26 1998/02/19 17:22:31 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
-.if	(${MACHNIE_ARCH} != "mips")
+.if	(${MACHINE_ARCH} != "mips")
 LIB=	kvm
 CPPFLAGS+=-DLIBC_SCCS
 
