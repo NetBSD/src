@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.7 1999/09/14 00:55:38 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.8 1999/09/14 05:52:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1486,13 +1486,16 @@ tlp_init(sc)
 	 */
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_WB89C840F:
+	    {
 		/* XXX Do this with stream writes? */
+		bus_addr_t cpa = TULIP_CSR_OFFSET(sc, CSR_WINB_CPA0);
+
 		for (i = 0; i < ETHER_ADDR_LEN; i++) {
 			bus_space_write_1(sc->sc_st, sc->sc_sh,
-			    (CSR_WINB_CPA0 >> sc->sc_regshift) + i,
-			    LLADDR(ifp->if_sadl)[i]);
+			    cpa + i, LLADDR(ifp->if_sadl)[i]);
 		}
 		break;
+	    }
 
 	default:
 		/* Nothing. */
