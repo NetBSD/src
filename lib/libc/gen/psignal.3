@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)psignal.3	6.2 (Berkeley) 4/19/91
-.\"	$Id: psignal.3,v 1.2 1993/07/30 08:38:08 mycroft Exp $
+.\"	$Id: psignal.3,v 1.3 1993/08/06 20:56:36 mycroft Exp $
 .\"
 .Dd April 19, 1991
 .Dt PSIGNAL 3
@@ -44,6 +44,7 @@
 .Ft void
 .Fn psignal "unsigned sig" "const char *s"
 .Vt extern char *sys_siglist[];
+.Vt extern char *sys_signame[];
 .Sh DESCRIPTION
 The
 .Fn psignal
@@ -64,13 +65,18 @@ prior to the message string.
 The signal number should be from among those found in
 .Aq Pa signal.h .
 .Pp
-The message strings can be accessed directly
-using the external character array
-.Va sys_siglist .
-The defined variable
+The message strings can be accessed directly using the external array
+.Va sys_siglist ,
+indexed by recognized signal numbers.  The external array
+.Va sys_signame
+is used similarly and contains short, lower-case abbreviations for signals
+which are useful for recognizing signal names in user input.  The defined
+variable
 .Dv NSIG
-contains a count of the messages in
-.Va sys_siglist .
+contains a count of the strings in
+.Va sys_siglist
+and
+.Va sys_signame .
 .Sh SEE ALSO
 .Xr sigaction 2 ,
 .Xr perror 3
