@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.2 2002/12/28 07:37:51 matt Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.3 2002/12/28 18:59:52 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.2 2002/12/28 07:37:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.3 2002/12/28 18:59:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_io *dspio, *oplio;
 	struct acpi_irq *irq;
 	struct acpi_drq *playdrq, *recdrq;
+	struct audio_attach_args arg;
 	ACPI_STATUS rv;
 
 	printf(": NeoMagic 256AV audio\n");
@@ -174,21 +175,6 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* XXX */
-	printf("%s: deferring audio attachment\n",
-	    sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
-	config_interrupts((struct device *)sc, wss_acpi_config_interrupts);
-}
-
-/*
- * XXX
- */
-void
-wss_acpi_config_interrupts(struct device *dev)
-{
-	struct wss_softc *sc = (struct wss_softc *)dev;
-	struct audio_attach_args arg;
-
 	printf("%s", sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
 	/* Attach our wss device */
 	wssattach(sc);
@@ -196,5 +182,5 @@ wss_acpi_config_interrupts(struct device *dev)
 	arg.type = AUDIODEV_TYPE_OPL;
 	arg.hwif = 0;
 	arg.hdl = 0;
-	config_found(dev, &arg, audioprint);
+	config_found(self, &arg, audioprint);
 }
