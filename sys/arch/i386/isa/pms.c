@@ -42,9 +42,6 @@
  *  - 13 June 1993
  */
 
-/* define this if you're using 386BSD rather than NetBSD */
-/* #define 386BSD_KERNEL */
-
 #include "pms.h"
 
 #if NPMS > 0
@@ -57,7 +54,7 @@
 #include "ioctl.h"
 #include "tty.h"
 #include "file.h"
-#ifndef 386BSD_KERNEL
+#ifdef NetBSD
 #include "select.h"
 #endif
 #include "proc.h"
@@ -109,10 +106,10 @@ struct ringbuf {
 
 static struct pms_softc {	/* Driver status information */
 	struct ringbuf inq;	/* Input queue */
-#ifdef 386BSD_KERNEL
-	pid_t	rsel;		/* Process selecting for Input */
-#else
+#ifdef NetBSD
 	struct selinfo rsel;
+#else
+	pid_t	rsel;		/* Process selecting for Input */
 #endif
 	unsigned char state;	/* Mouse driver state */
 	unsigned char status;	/* Mouse button status */
@@ -209,11 +206,11 @@ int pmsopen(dev_t dev, int flag, int fmt, struct proc *p)
 	/* Initialize state */
 
 	sc->state |= OPEN;
-#ifdef 386BSD_KERNEL
-	sc->rsel = 0;
-#else
+#ifdef NetBSD
 	sc->rsel.si_pid = 0;
 	sc->rsel.si_coll = 0;
+#else
+	sc->rsel = 0;
 #endif
 	sc->status = 0;
 	sc->button = 0;
@@ -287,7 +284,7 @@ int pmsread(dev_t dev, struct uio *uio, int flag)
 			return(EWOULDBLOCK);
 		}
 		sc->state |= ASLP;
-		error = tsleep(sc, PZERO | PCATCH, "pmsrea", 0);
+		error = tsleep((caddr_t)sc, PZERO | PCATCH, "pmsrea", 0);
 		if (error != 0) {
 			splx(s);
 			return(error);
@@ -448,15 +445,15 @@ void pmsintr(unit)
 
 			if (sc->state & ASLP) {
 				sc->state &= ~ASLP;
-				wakeup(sc);
+				wakeup((caddr_t)sc);
 			}
-#ifdef 386BSD_KERNEL
+#ifdef NetBSD
+			selwakeup(&sc->rsel);
+#else
 			if (sc->rsel) {
-				selwakeup(&sc->rsel, 0);
+				selwakeup(sc->rsel, 0);
 				sc->rsel = 0;
 			}
-#else
-			selwakeup(&sc->rsel);
 #endif
 		}
 
@@ -480,10 +477,10 @@ int pmsselect(dev_t dev, int rw, struct proc *p)
 	if (sc->inq.count)
 		ret = 1;
 	else {
-#ifdef 386BSD_KERNEL
-		sc->rsel = p->p_pid;
-#else
+#ifdef NetBSD
 		selrecord(p, &sc->rsel);
+#else
+		sc->rsel = p->p_pid;
 #endif
 		ret = 0;
 	}
