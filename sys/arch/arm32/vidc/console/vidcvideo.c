@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcvideo.c,v 1.2 1998/01/13 02:10:49 thorpej Exp $	*/
+/*	$NetBSD: vidcvideo.c,v 1.3 1998/01/21 22:51:38 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -78,6 +78,8 @@ extern int physcon_major;
 extern struct vconsole *vconsole_default;
 extern videomemory_t videomemory;
 extern struct render_engine vidcconsole;
+
+struct vconsole *vconsole_spawn_re	__P((dev_t dev, struct vconsole *vc));
 
 struct vidcvideo_softc {
 	struct device device;

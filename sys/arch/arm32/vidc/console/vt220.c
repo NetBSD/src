@@ -1,4 +1,4 @@
-/*	$NetBSD: vt220.c,v 1.10 1997/10/14 11:49:21 mark Exp $	*/
+/*	$NetBSD: vt220.c,v 1.11 1998/01/21 22:51:39 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -101,6 +101,9 @@ int do_render __P(( char /*c*/, struct vconsole */*vc*/ ));
 void do_render_noscroll __P(( char /*c*/, struct vconsole */*vc*/ ));
 void do_scrollcheck __P(( struct vconsole */*vc*/ ));
 void vt_ris __P((struct vconsole */*vc*/));
+#if defined(DIAGNOSTIC) && NQMS > 0
+void qms_console_freeze __P((void));	/* XXX */
+#endif /* DIAGNOSTIC && NQMS */
 
 void
 clr_params(cdata)
