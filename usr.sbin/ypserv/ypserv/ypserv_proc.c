@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_proc.c,v 1.7 1999/01/22 02:36:13 thorpej Exp $	*/
+/*	$NetBSD: ypserv_proc.c,v 1.8 2000/12/09 22:39:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,14 +33,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_proc.c,v 1.7 1999/01/22 02:36:13 thorpej Exp $");
+__RCSID("$NetBSD: ypserv_proc.c,v 1.8 2000/12/09 22:39:12 thorpej Exp $");
 #endif
 
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/param.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
+#include <netdb.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <stdio.h>
@@ -68,6 +68,18 @@ static const char *False = "FALSE";
 #else
 #define	YPLOG(x)	/* nothing */
 #endif
+
+static int
+securecheck(struct sockaddr *caller)
+{
+	char sbuf[NI_MAXSERV];
+
+	if (getnameinfo(caller, caller->sa_len, NULL, 0, sbuf, sizeof(sbuf),
+	    NI_NUMERICSERV))
+		return (1);
+
+	return (atoi(sbuf) >= IPPORT_RESERVED);
+}
 
 void *
 ypproc_null_2_svc(argp, rqstp)
@@ -147,7 +159,7 @@ ypproc_match_2_svc(argp, rqstp)
         struct svc_req *rqstp;
 {
 	static struct ypresp_val res;
-	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
 	struct ypreq_key *k = argp;
 	int secure;
 
@@ -163,7 +175,7 @@ ypproc_match_2_svc(argp, rqstp)
 	    "key %.*s", clientstr, TORF(secure), k->domain, k->map,
 	    k->keydat.dsize, k->keydat.dptr));
 
-	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED))
+	if (secure && securecheck(caller))
 		res.status = YP_YPERR;
 	else
 		res = ypdb_get_record(k->domain, k->map, k->keydat, FALSE);
@@ -177,7 +189,7 @@ ypproc_first_2_svc(argp, rqstp)
         struct svc_req *rqstp;
 {
 	static struct ypresp_key_val res;
-	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
 	struct ypreq_nokey *k = argp;
 	int secure;
 
@@ -192,7 +204,7 @@ ypproc_first_2_svc(argp, rqstp)
 	    "first_2: request from %.500s, secure %s, domain %s, map %s",
 	    clientstr, TORF(secure), k->domain, k->map));
 
-	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED))
+	if (secure && securecheck(caller))
 		res.status = YP_YPERR;
 	else
 		res = ypdb_get_first(k->domain, k->map, FALSE);
@@ -206,7 +218,7 @@ ypproc_next_2_svc(argp, rqstp)
         struct svc_req *rqstp;
 {
 	static struct ypresp_key_val res;
-	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
 	struct ypreq_key *k = argp;
 	int secure;
 
@@ -222,7 +234,7 @@ ypproc_next_2_svc(argp, rqstp)
 	    "key %.*s", clientstr, TORF(secure), k->domain, k->map,
 	    k->keydat.dsize, k->keydat.dptr));
 
-	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED))
+	if (secure && securecheck(caller))
 		res.status = YP_YPERR;
 	else
 		res = ypdb_get_next(k->domain, k->map, k->keydat, FALSE);
@@ -236,12 +248,12 @@ ypproc_xfr_2_svc(argp, rqstp)
         struct svc_req *rqstp;
 {
 	static struct ypresp_xfr res;
-	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
 	struct ypreq_xfr *ypx = argp;
 	char tid[11], prog[11], port[11];
+	char hbuf[NI_MAXHOST];
 	char ypxfr_proc[] = YPXFR_PROC;
 	pid_t pid;
-	char *ipadd;
 
 	memset(&res, 0, sizeof(res));
 
@@ -252,7 +264,7 @@ ypproc_xfr_2_svc(argp, rqstp)
 
 	if (_yp_invalid_domain(ypx->map_parms.domain) ||
 	    _yp_invalid_map(ypx->map_parms.map) ||
-	    ntohs(caller->sin_port) >= IPPORT_RESERVED) {
+	    securecheck(caller)) {
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return (NULL);
 	}
@@ -266,12 +278,12 @@ ypproc_xfr_2_svc(argp, rqstp)
 		snprintf(tid, sizeof(tid), "%d", ypx->transid);
 		snprintf(prog, sizeof(prog), "%d", ypx->proto);
 		snprintf(port, sizeof(port), "%d", ypx->port);
-		ipadd = inet_ntoa(caller->sin_addr);
-		if (ipadd == NULL)
+		if (getnameinfo(caller, caller->sa_len, hbuf, sizeof(hbuf),
+		    NULL, 0, NI_NUMERICHOST))
 			_exit(1);	/* XXX report error ? */
 
 		execl(ypxfr_proc, "ypxfr", "-d", ypx->map_parms.domain,
-		    "-C", tid, prog, ipadd, port, ypx->map_parms.map, NULL);
+		    "-C", tid, prog, hbuf, port, ypx->map_parms.map, NULL);
 		_exit(1);		/* XXX report error? */
 	}
 
@@ -288,7 +300,7 @@ ypproc_clear_2_svc(argp, rqstp)
         struct svc_req *rqstp;
 {
 	static char res;
-	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
 #ifdef OPTIMIZE_DB
 	const char *optdbstr = True;
 #else
@@ -299,7 +311,7 @@ ypproc_clear_2_svc(argp, rqstp)
 	    "clear_2: request from %.500s, optimize_db %s",
 	    clientstr, optdbstr));
 
-	if (ntohs(caller->sin_port) >= IPPORT_RESERVED) {
+	if (securecheck(caller)) {
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return (NULL);
 	}
@@ -318,7 +330,7 @@ ypproc_all_2_svc(argp, rqstp)
         struct svc_req *rqstp;
 {
 	static struct ypresp_all res;
-	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
 	struct ypreq_nokey *k = argp;
 	pid_t pid;
 	int secure;
@@ -336,7 +348,7 @@ ypproc_all_2_svc(argp, rqstp)
 
 	memset(&res, 0, sizeof(res));
 
-	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED)) {
+	if (secure && securecheck(caller)) {
 		res.ypresp_all_u.val.status = YP_YPERR;
 		return (&res);
 	}
@@ -367,7 +379,7 @@ ypproc_master_2_svc(argp, rqstp)
 {
 	static struct ypresp_master res;
 	static char *nopeer = "";
-	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
 	struct ypreq_nokey *k = argp;
 	int secure;
 
@@ -382,7 +394,7 @@ ypproc_master_2_svc(argp, rqstp)
 	    "master_2: request from %.500s, secure %s, domain %s, map %s",
 	    clientstr, TORF(secure), k->domain, k->map));
 
-	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED))
+	if (secure && securecheck(caller))
 		res.status = YP_YPERR;
 	else
 		res = ypdb_get_master(k->domain, k->map);
@@ -410,7 +422,7 @@ ypproc_order_2_svc(argp, rqstp)
         struct svc_req *rqstp;
 {
 	static struct ypresp_order res;
-	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
 	struct ypreq_nokey *k = argp;
 	int secure;
 
@@ -425,7 +437,7 @@ ypproc_order_2_svc(argp, rqstp)
 	    "order_2: request from %.500s, secure %s, domain %s, map %s",
 	    clientstr, TORF(secure), k->domain, k->map));
 
-	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED))
+	if (secure && securecheck(caller))
 		res.status = YP_YPERR;
 	else if (_yp_invalid_map(k->map))
 		res.status = YP_NOMAP;
