@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 2003/03/13 13:44:19 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29 2003/03/19 11:37:58 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -130,7 +130,7 @@
 #define pmap_debugger()	panic("")
 #else
 #include <machine/db_machdep.h>
-#define	pmap_debugger() asm volatile("trapa r63");
+#define	pmap_debugger() asm volatile("brk");
 int validate_kipt(int);
 #endif
 #endif
