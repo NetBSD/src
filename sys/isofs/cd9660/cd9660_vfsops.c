@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.27 1998/02/18 07:05:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -62,6 +62,21 @@
 #include <isofs/cd9660/iso_rrip.h>
 #include <isofs/cd9660/cd9660_node.h>
 
+extern struct vnodeopv_desc cd9660_vnodeop_opv_desc;
+extern struct vnodeopv_desc cd9660_specop_opv_desc;
+#ifdef FIFO
+extern struct vnodeopv_desc cd9660_fifoop_opv_desc;
+#endif
+
+struct vnodeopv_desc *cd9660_vnodeopv_descs[] = {
+	&cd9660_vnodeop_opv_desc,
+	&cd9660_specop_opv_desc,
+#ifdef FIFO
+	&cd9660_fifoop_opv_desc,
+#endif
+	NULL,
+};
+
 struct vfsops cd9660_vfsops = {
 	MOUNT_CD9660,
 	cd9660_mount,
@@ -76,6 +91,7 @@ struct vfsops cd9660_vfsops = {
 	cd9660_vptofh,
 	cd9660_init,
 	cd9660_mountroot,
+	cd9660_vnodeopv_descs,
 };
 
 /*

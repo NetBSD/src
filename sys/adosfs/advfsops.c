@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.26 1997/07/08 09:11:29 kleink Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.27 1998/02/18 07:05:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -748,6 +748,14 @@ adosfs_init()
 /*
  * vfs generic function call table
  */
+
+extern struct vnodeopv_desc adosfs_vnodeop_opv_desc; 
+
+struct vnodeopv_desc *adosfs_vnodeopv_descs[] = {
+	&adosfs_vnodeop_opv_desc,
+	NULL,
+};
+
 struct vfsops adosfs_vfsops = {
 	MOUNT_ADOSFS,
 	adosfs_mount,
@@ -761,4 +769,6 @@ struct vfsops adosfs_vfsops = {
 	adosfs_fhtovp,                  
 	adosfs_vptofh,                  
 	adosfs_init,                    
-};           
+	NULL,				/* vfs_mountroot */
+	adosfs_vnodeopv_descs,
+};

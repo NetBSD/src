@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.26 1996/12/22 10:10:27 cgd Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.27 1998/02/18 07:05:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -245,6 +245,13 @@ procfs_init()
 {
 }
 
+extern struct vnodeopv_desc procfs_vnodeop_opv_desc;
+
+struct vnodeopv_desc *procfs_vnodeopv_descs[] = {
+	&procfs_vnodeop_opv_desc,
+	NULL,
+};
+
 struct vfsops procfs_vfsops = {
 	MOUNT_PROCFS,
 	procfs_mount,
@@ -258,4 +265,6 @@ struct vfsops procfs_vfsops = {
 	procfs_fhtovp,
 	procfs_vptofh,
 	procfs_init,
+	NULL,				/* vfs_mountroot */
+	procfs_vnodeopv_descs,
 };

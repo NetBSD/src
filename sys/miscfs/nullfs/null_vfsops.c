@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.17 1997/10/06 09:32:33 thorpej Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.18 1998/02/18 07:05:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -367,6 +367,13 @@ nullfs_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
+extern struct vnodeopv_desc nullfs_vnodeop_opv_desc;
+
+struct vnodeopv_desc *nullfs_vnodeopv_descs[] = {
+	&nullfs_vnodeop_opv_desc,
+	NULL,
+};
+
 struct vfsops nullfs_vfsops = {
 	MOUNT_NULL,
 	nullfs_mount,
@@ -380,4 +387,6 @@ struct vfsops nullfs_vfsops = {
 	nullfs_fhtovp,
 	nullfs_vptofh,
 	nullfs_init,
+	NULL,				/* vfs_mountroot */
+	nullfs_vnodeopv_descs,
 };

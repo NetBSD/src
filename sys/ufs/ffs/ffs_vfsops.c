@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.31 1997/10/16 18:29:11 mjacob Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.32 1998/02/18 07:05:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -68,6 +68,21 @@ extern struct lock ufs_hashlock;
 
 int ffs_sbupdate __P((struct ufsmount *, int));
 
+extern struct vnodeopv_desc ffs_vnodeop_opv_desc;
+extern struct vnodeopv_desc ffs_specop_opv_desc;
+#ifdef FIFO
+extern struct vnodeopv_desc ffs_fifoop_opv_desc;
+#endif  
+
+struct vnodeopv_desc *ffs_vnodeopv_descs[] = {
+	&ffs_vnodeop_opv_desc,
+	&ffs_specop_opv_desc,
+#ifdef FIFO
+	&ffs_fifoop_opv_desc,
+#endif
+	NULL,
+};
+
 struct vfsops ffs_vfsops = {
 	MOUNT_FFS,
 	ffs_mount,
@@ -82,6 +97,7 @@ struct vfsops ffs_vfsops = {
 	ffs_vptofh,
 	ffs_init,
 	ffs_mountroot,
+	ffs_vnodeopv_descs,
 };
 
 /*
