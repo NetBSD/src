@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
- *	$Id: isa.h,v 1.7 1993/06/06 04:16:44 cgd Exp $
+ *	$Id: isa.h,v 1.8 1993/06/13 12:55:47 andrew Exp $
  */
 
 /*
@@ -83,7 +83,12 @@ int isa_irq_pending __P((struct isa_device *dvp));
 #define IO_WD1		0x1f0		/* Primary Fixed Disk Controller */
 #define IO_GAME		0x200		/* Game Controller */
 
-					/* 0x208 - 0x277 Open */
+					/* 0x208 - 0x237 Open */
+
+#define IO_BMS2		0x238		/* secondary InPort Bus Mouse */
+#define IO_BMS1		0x23c		/* primary InPort Bus Mouse */
+
+					/* 0x240 - 0x277 Open */
 
 #define IO_LPT2		0x278		/* Parallel Port #2 */
 
