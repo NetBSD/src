@@ -1,4 +1,4 @@
-/*	$NetBSD: lsu_cac.c,v 1.1 2000/10/19 14:06:02 ad Exp $	*/
+/*	$NetBSD$	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 #include <machine/bus.h>
 
-#include <dev/lsu/lsuvar.h>
+#include <dev/lsuvar.h>
 
 #include <dev/ic/cacreg.h>
 #include <dev/ic/cacvar.h>
@@ -67,7 +67,7 @@ struct lsu_cac_softc {
 };
 
 static void	lsu_cac_attach(struct device *, struct device *, void *);
-static void	lsu_cac_done(struct cac_ccb *, int);
+static void	lsu_cac_done(struct device *, void *, int);
 static int	lsu_cac_dump(struct lsu_softc *, void *, int, int);
 static int	lsu_cac_match(struct device *, struct cfdata *, void *);
 static int	lsu_cac_start(struct lsu_softc *, struct buf *);
@@ -90,15 +90,17 @@ lsu_cac_attach(struct device *parent, struct device *self, void *aux)
 	struct cac_attach_args *caca;
 	struct lsu_softc *lsu;
 	struct lsu_cac_softc *sc;
+	struct cac_softc *cac;
 	const char *type;
 
 	sc = (struct lsu_cac_softc *)self;
 	lsu = &sc->sc_lsu;
 	caca = (struct cac_attach_args *)aux;
 	sc->sc_hwunit = caca->caca_unit;
+	cac = (struct cac_softc *)parent;
 
-	if (cac_cmd((struct cac_softc *)parent, CAC_CMD_GET_LOG_DRV_INFO, 
-	    &dinfo, sizeof(dinfo), sc->sc_hwunit, 0, CAC_CCB_DATA_IN, NULL)) {
+	if (cac_cmd(cac, CAC_CMD_GET_LOG_DRV_INFO, &dinfo, sizeof(dinfo),
+	    sc->sc_hwunit, 0, CAC_CCB_DATA_IN, NULL)) {
 		printf("%s: CMD_GET_LOG_DRV_INFO failed\n", self->dv_xname);
 		return;
 	}
@@ -108,6 +110,7 @@ lsu_cac_attach(struct device *parent, struct device *self, void *aux)
 	lsu->sc_nsectors = CAC_GET1(dinfo.nsectors);
 	lsu->sc_secsize = CAC_GET2(dinfo.secsize);
 	lsu->sc_maxxfer = CAC_MAX_XFER;
+	lsu->sc_maxqueuecnt = CAC_MAX_CCBS / cac->sc_nunits;	/* XXX */
 	lsu->sc_secperunit = lsu->sc_ncylinders * lsu->sc_nheads *
 	    lsu->sc_nsectors;
 	lsu->sc_start = lsu_cac_start;
@@ -178,11 +181,11 @@ lsu_cac_dump(struct lsu_softc *lsu, void *data, int blkno, int blkcnt)
 }
 
 static void
-lsu_cac_done(struct cac_ccb *ccb, int error)
+lsu_cac_done(struct device *dv, void *context, int error)
 {
 	struct buf *bp;
 
-	bp = ccb->ccb_context.cc_context;
+	bp = context;
 
 	if (error) {
 		bp->b_flags |= B_ERROR;
@@ -191,5 +194,5 @@ lsu_cac_done(struct cac_ccb *ccb, int error)
 	} else
 		bp->b_resid = 0;
 
-	lsudone((struct lsu_softc *)ccb->ccb_context.cc_dv, bp);
+	lsudone((struct lsu_softc *)dv, bp);
 }
