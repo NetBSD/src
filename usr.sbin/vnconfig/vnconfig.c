@@ -41,6 +41,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -74,7 +76,7 @@ int verbose = 0;
 char *configfile;
 char *pname;
 
-char *malloc(), *rawdevice(), *rindex();
+char *rawdevice __P((char *));
 
 main(argc, argv)
 	char **argv;
