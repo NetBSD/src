@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.69 2003/11/23 06:06:24 simonb Exp $
+#	$NetBSD: services,v 1.70 2003/11/23 23:28:03 simonb Exp $
 #
 # Network services, Internet style
 #
@@ -127,12 +127,16 @@ nip		376/tcp				# Amiga Envoy Net Inquiry Prot.
 nip		376/udp				# Amiga Envoy Net Inquiry Prot.
 ldap		389/tcp			# Lightweight Directory Access Protocol
 ldap		389/udp			# Lightweight Directory Access Protocol
+imsp		406/tcp			# Interactive Mail Support Protocol
+imsp		406/udp			# Interactive Mail Support Protocol
 microsoft-ds	445/tcp			# Microsoft-DS
 microsoft-ds	445/udp			# Microsoft-DS
 isakmp		500/tcp			# IPsec Key Management (ISAKMP/Oakley)
 isakmp		500/udp			# IPsec Key Management (ISAKMP/Oakley)
 ripng		521/tcp			# RIP for IPv6
 ripng		521/udp			# RIP for IPv6
+acap		674/tcp		# Application Configuration Access Protocol
+acap		674/udp		# Application Configuration Access Protocol
 silc		706/tcp			# Secure Internet Live Conferencing
 silc		706/udp			# Secure Internet Live Conferencing
 
@@ -287,10 +291,13 @@ supfiledbg	1127/tcp		# SUP debugging
 # other common ports
 #
 swat		901/tcp			# Samba Web Administration Tool
+sieve		2000/tcp		# RFC3028
+lmtp		2003/tcp		# Local Mail Transfer Protocol
 nfs		2049/udp	nfsd	# Sun NFS
 nfs		2049/tcp	nfsd	# Sun NFS
 suucp		4031/tcp		# UUCP over SSL
 suucp		4031/udp		# UUCP over SSL
+fud		4201/udp		# Cyrus IMAP finger-like service
 X11		6000/tcp		# X Window System
 ircd		6667/tcp		# Often used IRC port (also see 194)
 sstp-2		9801/tcp		# Sakura Script Transfer Protocol-2
