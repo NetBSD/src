@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.564 2003/05/08 07:14:11 uebayasi Exp $
+#	$NetBSD: mi,v 1.565 2003/05/08 07:30:20 uebayasi Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -5671,6 +5671,15 @@
 ./usr/share/man/man3/longname.3		comp-c-man
 ./usr/share/man/man3/lrand48.3		comp-c-man
 ./usr/share/man/man3/lsearch.3		comp-c-man
+./usr/share/man/man3/magic_buffer.3	comp-c-man
+./usr/share/man/man3/magic_check.3	comp-c-man
+./usr/share/man/man3/magic_close.3	comp-c-man
+./usr/share/man/man3/magic_compile.3	comp-c-man
+./usr/share/man/man3/magic_error.3	comp-c-man
+./usr/share/man/man3/magic_file.3	comp-c-man
+./usr/share/man/man3/magic_load.3	comp-c-man
+./usr/share/man/man3/magic_open.3	comp-c-man
+./usr/share/man/man3/magic_setflags.3	comp-c-man
 ./usr/share/man/man3/makecontext.3		comp-c-man
 ./usr/share/man/man3/malloc.3		comp-c-man
 ./usr/share/man/man3/math.3		comp-c-man
