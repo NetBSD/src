@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.11 1998/08/25 20:59:38 ross Exp $	*/
+/*	$NetBSD: last.c,v 1.12 1998/12/19 17:38:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.11 1998/08/25 20:59:38 ross Exp $");
+__RCSID("$NetBSD: last.c,v 1.12 1998/12/19 17:38:39 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -212,10 +212,10 @@ wtmp()
 				if (want(bp, NO)) {
 					ct = ctime(&bp->ut_time);
 				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s \n",
-					    UT_NAMESIZE, UT_NAMESIZE,
-					    bp->ut_name, UT_LINESIZE,
-					    UT_LINESIZE, bp->ut_line,
-					    UT_HOSTSIZE, UT_HOSTSIZE,
+					    (int)UT_NAMESIZE, (int)UT_NAMESIZE,
+					    bp->ut_name, (int)UT_LINESIZE,
+					    (int)UT_LINESIZE, bp->ut_line,
+					    (int)UT_HOSTSIZE, (int)UT_HOSTSIZE,
 					    bp->ut_host, ct, timesize,
 				            timesize, ct + 11);
 					if (maxrec != -1 && !--maxrec)
@@ -232,9 +232,12 @@ wtmp()
 				if (want(bp, NO)) {
 					ct = ctime(&bp->ut_time);
 				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s \n",
-				    UT_NAMESIZE, UT_NAMESIZE, bp->ut_name,
-				    UT_LINESIZE, UT_LINESIZE, bp->ut_line,
-				    UT_HOSTSIZE, UT_HOSTSIZE, bp->ut_host,
+				    (int)UT_NAMESIZE, (int)UT_NAMESIZE,
+				    bp->ut_name,
+				    (int)UT_LINESIZE, (int)UT_LINESIZE,
+				    bp->ut_line,
+				    (int)UT_HOSTSIZE, (int)UT_HOSTSIZE,
+				    bp->ut_host,
 				    ct, timesize, timesize, ct + 11);
 					if (maxrec && !--maxrec)
 						return;
@@ -254,9 +257,9 @@ wtmp()
 			if (bp->ut_name[0] && want(bp, YES)) {
 				ct = ctime(&bp->ut_time);
 				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s ",
-				UT_NAMESIZE, UT_NAMESIZE, bp->ut_name,
-				UT_LINESIZE, UT_LINESIZE, bp->ut_line,
-				UT_HOSTSIZE, UT_HOSTSIZE, bp->ut_host,
+				(int)UT_NAMESIZE, (int)UT_NAMESIZE, bp->ut_name,
+				(int)UT_LINESIZE, (int)UT_LINESIZE, bp->ut_line,
+				(int)UT_HOSTSIZE, (int)UT_HOSTSIZE, bp->ut_host,
 				ct, timesize, timesize, ct + 11);
 				if (!T->logout)
 					puts("  still logged in");
