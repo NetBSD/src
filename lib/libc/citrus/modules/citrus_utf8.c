@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf8.c,v 1.11 2004/12/21 11:25:43 yamt Exp $	*/
+/*	$NetBSD: citrus_utf8.c,v 1.12 2005/03/11 23:32:03 christos Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf8.c,v 1.11 2004/12/21 11:25:43 yamt Exp $");
+__RCSID("$NetBSD: citrus_utf8.c,v 1.12 2005/03/11 23:32:03 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -200,7 +200,6 @@ _citrus_UTF8_mbrtowc_priv(_UTF8EncodingInfo *ei, wchar_t *pwc, const char **s,
 	int chlenbak;
 
 	_DIAGASSERT(nresult != 0);
-	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(psenc != NULL);
 
@@ -293,7 +292,6 @@ _citrus_UTF8_wcrtomb_priv(_UTF8EncodingInfo *ei, char *s, size_t n, wchar_t wc,
 	int cnt, i, ret;
 	wchar_t c;
 
-	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(s != NULL);
 
@@ -370,10 +368,7 @@ static int
 _citrus_UTF8_encoding_module_init(_UTF8EncodingInfo * __restrict ei,
 				  const void * __restrict var, size_t lenvar)
 {
-	_DIAGASSERT(ei != NULL);
-
 	_UTF8_init_count();
-	memset((void *)ei, 0, sizeof(*ei));
 
 	return 0;
 }
