@@ -1,3 +1,5 @@
+/*	$NetBSD: syscallargs.h,v 1.52 1998/01/09 06:09:55 thorpej Exp $	*/
+
 /*
  * System call argument lists.
  *
