@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.7 2002/10/02 03:31:59 thorpej Exp $	*/
+/*	$NetBSD: rapide.c,v 1.8 2003/02/04 23:40:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -60,7 +60,7 @@
  * A structure is used to hold the information about the addressing etc.
  * An array of these structures holds the information for the primary and
  * secondary connectors. This needs to be extended to hold this information
- * for both issues. Then the indexing of this structures will utilise the
+ * for both issues. Then the indexing of these structures will use the
  * card version number.
  *
  * Opps just noticed a mistake. The interrupt request register is different
