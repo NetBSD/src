@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.10 1995/06/24 20:36:28 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.11 1995/08/14 01:38:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -53,6 +53,7 @@
 #include <sys/syscallargs.h>
 
 #include <compat/linux/linux_types.h>
+#include <compat/linux/linux_signal.h>
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
 
