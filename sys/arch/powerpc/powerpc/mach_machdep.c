@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.2 2002/11/14 19:44:36 christos Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.3 2002/11/15 21:48:06 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.2 2002/11/14 19:44:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.3 2002/11/15 21:48:06 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.2 2002/11/14 19:44:36 christos Ex
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
+
+#include <uvm/uvm_extern.h>
 
 void mach_trap __P((struct trapframe *));
 
