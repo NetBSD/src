@@ -37,7 +37,7 @@
  *
  *      from: Utah Hdr: ite.c 1.1 90/07/09
  *      from: @(#)ite.c 7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.20 1994/06/13 08:12:58 chopps Exp $
+ *	$Id: ite.c,v 1.21 1994/06/16 14:28:51 chopps Exp $
  */
 
 /*
@@ -172,7 +172,7 @@ iteattach(pdp, dp, auxp)
 		splx(s);
 
 		iteinit(gp->g_itedev);
-		printf(" rows %d cols %d", ip->rows, ip->cols);
+		printf(": rows %d cols %d", ip->rows, ip->cols);
 		printf(" repeat at (%d/100)s next at (%d/100)s\n",
 		    start_repeat_timeo, next_repeat_timeo);
 

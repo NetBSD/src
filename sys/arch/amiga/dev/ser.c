@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ser.c	7.12 (Berkeley) 6/27/91
- *	$Id: ser.c,v 1.19 1994/06/04 11:59:15 chopps Exp $
+ *	$Id: ser.c,v 1.20 1994/06/16 14:28:55 chopps Exp $
  */
 /*
  * XXX This file needs major cleanup it will never ervice more than one
@@ -214,7 +214,7 @@ serattach(pdp, dp, auxp)
 	if (0 == serconsole)
 		serconsinit = 0;
 	if (dp)
-		printf(" input fifo %d output fifo %d\n", SERIBUF_SIZE,
+		printf(": input fifo %d output fifo %d\n", SERIBUF_SIZE,
 		    SEROBUF_SIZE);
 }
 
