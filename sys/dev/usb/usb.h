@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.54 2001/11/17 01:49:53 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.55 2001/11/20 13:46:09 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -273,6 +273,10 @@ typedef struct {
 
 /* Hub specific request */
 #define UR_GET_BUS_STATE	0x02
+#define UR_CLEAR_TT_BUFFER	0x08
+#define UR_RESET_TT		0x09
+#define UR_GET_TT_STATE		0x0a
+#define UR_STOP_TT		0x0b
 
 /* Hub features */
 #define UHF_C_HUB_LOCAL_POWER	0
@@ -289,21 +293,29 @@ typedef struct {
 #define UHF_C_PORT_SUSPEND	18
 #define UHF_C_PORT_OVER_CURRENT	19
 #define UHF_C_PORT_RESET	20
+#define UHF_PORT_TEST		21
+#define UHF_PORT_INDICATOR	22
 
 typedef struct {
 	uByte		bDescLength;
 	uByte		bDescriptorType;
 	uByte		bNbrPorts;
 	uWord		wHubCharacteristics;
-#define UHD_PWR			0x03
-#define UHD_PWR_GANGED		0x00
-#define UHD_PWR_INDIVIDUAL	0x01
-#define UHD_PWR_NO_SWITCH	0x02
-#define UHD_COMPOUND		0x04
-#define UHD_OC			0x18
-#define UHD_OC_GLOBAL		0x00
-#define UHD_OC_INDIVIDUAL	0x08
-#define UHD_OC_NONE		0x10
+#define UHD_PWR			0x0003
+#define  UHD_PWR_GANGED		0x0000
+#define  UHD_PWR_INDIVIDUAL	0x0001
+#define  UHD_PWR_NO_SWITCH	0x0002
+#define UHD_COMPOUND		0x0004
+#define UHD_OC			0x0018
+#define  UHD_OC_GLOBAL		0x0000
+#define  UHD_OC_INDIVIDUAL	0x0008
+#define  UHD_OC_NONE		0x0010
+#define UHD_TT_THINK		0x0060
+#define  UHD_TT_THINK_8		0x0000
+#define  UHD_TT_THINK_16	0x0020
+#define  UHD_TT_THINK_24	0x0040
+#define  UHD_TT_THINK_32	0x0060
+#define UHD_PORT_IND		0x0080
 	uByte		bPwrOn2PwrGood;	/* delay in 2 ms units */
 #define UHD_PWRON_FACTOR 2
 	uByte		bHubContrCurrent;
@@ -352,6 +364,9 @@ typedef struct {
 #define UPS_RESET			0x0010
 #define UPS_PORT_POWER			0x0100
 #define UPS_LOW_SPEED			0x0200
+#define UPS_HIGH_SPEED			0x0400
+#define UPS_PORT_TEST			0x0800
+#define UPS_PORT_INDICATOR		0x1000
 	uWord		wPortChange;
 #define UPS_C_CONNECT_STATUS		0x0001
 #define UPS_C_PORT_ENABLED		0x0002
@@ -366,6 +381,9 @@ typedef struct {
 #define UDCLASS_HID		0x00
 #define UDCLASS_HUB		0x09
 #define  UDSUBCLASS_HUB		0
+#define  UDPROTO_FSHUB		0
+#define  UDPROTO_HSHUBSTT	1
+#define  UDPROTO_HSHUBMTT	2
 #define UDCLASS_MASS		0x00
 
 /* Interface class codes */
@@ -412,6 +430,9 @@ typedef struct {
 
 #define UICLASS_HUB		0x09
 #define  UISUBCLASS_HUB		0
+#define  UIPROTO_FSHUB		0
+#define  UIPROTO_HSHUBSTT	0 /* Yes, same as previous */
+#define  UIPROTO_HSHUBMTT	1
 
 #define UICLASS_CDC_DATA	0x0a
 #define  UISUBCLASS_DATA		0
