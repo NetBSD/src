@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.162 2005/03/19 23:46:03 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.163 2005/03/20 00:02:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.162 2005/03/19 23:46:03 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.163 2005/03/20 00:02:58 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,9 +97,6 @@ __RCSID("$NetBSD: ifconfig.c,v 1.162 2005/03/19 23:46:03 thorpej Exp $");
 
 #include <netdb.h>
 
-#define EON
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
 #include <sys/protosw.h>
 
 #include <ctype.h>
@@ -117,6 +114,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.162 2005/03/19 23:46:03 thorpej Exp $");
 
 #ifndef INET_ONLY
 #include "af_atalk.h"
+#include "af_iso.h"
 #include "af_ns.h"
 #endif /* ! INET_ONLY */
 
@@ -133,8 +131,6 @@ struct	in6_ifreq	ifr6;
 struct	in6_ifreq	in6_ridreq;
 struct	in6_aliasreq	in6_addreq;
 #endif
-struct	iso_ifreq	iso_ridreq;
-struct	iso_aliasreq	iso_addreq;
 struct	sockaddr_in	netmask;
 
 char	name[30];
@@ -144,7 +140,6 @@ u_long	metric, mtu;
 int	clearaddr, s;
 int	newaddr = -1;
 int	conflicting = 0;
-int	nsellength = 1;
 int	af;
 int	aflag, bflag, Cflag, dflag, lflag, mflag, sflag, uflag, vflag, zflag;
 #ifdef INET6
@@ -167,8 +162,6 @@ void 	setifmetric(const char *, int);
 void 	setifmtu(const char *, int);
 void 	setifnetmask(const char *, int);
 void	setifprefixlen(const char *, int);
-void 	setnsellength(const char *, int);
-void 	setsnpaoffset(const char *, int);
 #ifdef INET6
 void 	setia6flags(const char *, int);
 void	setia6pltime(const char *, int);
@@ -183,7 +176,6 @@ void	unsetmediaopt(const char *, int);
 void	setmediainst(const char *, int);
 void	clone_create(const char *, int);
 void	clone_destroy(const char *, int);
-void	fixnsel(struct sockaddr_iso *);
 int	main(int, char *[]);
 
 /*
@@ -311,7 +303,6 @@ const struct cmd {
 	{ 0,		0,		0,		setifdstaddr },
 };
 
-void 	adjust_nsellength(void);
 int	getinfo(struct ifreq *);
 int	carrier(void);
 void	printall(const char *);
@@ -340,8 +331,6 @@ void	in6_status(int);
 void 	in6_getaddr(const char *, int);
 void 	in6_getprefix(const char *, int);
 #endif
-void 	iso_status(int);
-void 	iso_getaddr(const char *, int);
 
 /* Known address families */
 const struct afswtch afs[] = {
@@ -1824,62 +1813,6 @@ in6_status(int force)
 }
 #endif /*INET6*/
 
-#ifndef INET_ONLY
-
-void
-iso_status(int force)
-{
-	struct sockaddr_iso *siso;
-	struct iso_ifreq isoifr;
-
-	getsock(AF_ISO);
-	if (s < 0) {
-		if (errno == EPROTONOSUPPORT)
-			return;
-		err(EXIT_FAILURE, "socket");
-	}
-	(void) memset(&isoifr, 0, sizeof(isoifr));
-	(void) strncpy(isoifr.ifr_name, name, sizeof(isoifr.ifr_name));
-	if (ioctl(s, SIOCGIFADDR_ISO, &isoifr) == -1) {
-		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
-			if (!force)
-				return;
-			(void) memset(&isoifr.ifr_Addr, 0,
-			    sizeof(isoifr.ifr_Addr));
-		} else
-			warn("SIOCGIFADDR_ISO");
-	}
-	(void) strncpy(isoifr.ifr_name, name, sizeof isoifr.ifr_name);
-	siso = &isoifr.ifr_Addr;
-	printf("\tiso %s ", iso_ntoa(&siso->siso_addr));
-	if (ioctl(s, SIOCGIFNETMASK_ISO, &isoifr) == -1) {
-		if (errno == EADDRNOTAVAIL)
-			memset(&isoifr.ifr_Addr, 0, sizeof(isoifr.ifr_Addr));
-		else
-			warn("SIOCGIFNETMASK_ISO");
-	} else {
-		if (siso->siso_len > offsetof(struct sockaddr_iso, siso_addr))
-			siso->siso_addr.isoa_len = siso->siso_len
-			    - offsetof(struct sockaddr_iso, siso_addr);
-		printf("\n\t\tnetmask %s ", iso_ntoa(&siso->siso_addr));
-	}
-	if (flags & IFF_POINTOPOINT) {
-		if (ioctl(s, SIOCGIFDSTADDR_ISO, &isoifr) == -1) {
-			if (errno == EADDRNOTAVAIL)
-			    memset(&isoifr.ifr_Addr, 0,
-				sizeof(isoifr.ifr_Addr));
-			else
-			    warn("SIOCGIFDSTADDR_ISO");
-		}
-		(void) strncpy(isoifr.ifr_name, name, sizeof (isoifr.ifr_name));
-		siso = &isoifr.ifr_Addr;
-		printf("--> %s ", iso_ntoa(&siso->siso_addr));
-	}
-	printf("\n");
-}
-
-#endif	/* INET_ONLY */
-
 #define SIN(x) ((struct sockaddr_in *) &(x))
 struct sockaddr_in *sintab[] = {
     SIN(ridreq.ifr_addr), SIN(in_addreq.ifra_addr),
@@ -2055,61 +1988,6 @@ prefix(void *val, int size)
 	return (plen);
 }
 #endif /*INET6*/
-
-#ifndef INET_ONLY
-#define SISO(x) ((struct sockaddr_iso *) &(x))
-struct sockaddr_iso *sisotab[] = {
-    SISO(iso_ridreq.ifr_Addr), SISO(iso_addreq.ifra_addr),
-    SISO(iso_addreq.ifra_mask), SISO(iso_addreq.ifra_dstaddr)};
-
-void
-iso_getaddr(const char *addr, int which)
-{
-	struct sockaddr_iso *siso = sisotab[which];
-	siso->siso_addr = *iso_addr(addr);
-
-	if (which == MASK) {
-		siso->siso_len = TSEL(siso) - (char *)(siso);
-		siso->siso_nlen = 0;
-	} else {
-		siso->siso_len = sizeof(*siso);
-		siso->siso_family = AF_ISO;
-	}
-}
-
-void
-setsnpaoffset(const char *val, int d)
-{
-	iso_addreq.ifra_snpaoffset = atoi(val);
-}
-
-void
-setnsellength(const char *val, int d)
-{
-	nsellength = atoi(val);
-	if (nsellength < 0)
-		errx(EXIT_FAILURE, "Negative NSEL length is absurd");
-	if (afp == 0 || afp->af_af != AF_ISO)
-		errx(EXIT_FAILURE, "Setting NSEL length valid only for iso");
-}
-
-void
-fixnsel(struct sockaddr_iso *siso)
-{
-	if (siso->siso_family == 0)
-		return;
-	siso->siso_tlen = nsellength;
-}
-
-void
-adjust_nsellength(void)
-{
-	fixnsel(sisotab[RIDADDR]);
-	fixnsel(sisotab[ADDR]);
-	fixnsel(sisotab[DSTADDR]);
-}
-
-#endif	/* INET_ONLY */
 
 void
 usage(void)
