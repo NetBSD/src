@@ -1,4 +1,6 @@
-/*	$NetBSD: oboe.c,v 1.9 2002/10/23 09:13:33 jdolecek Exp $	*/
+/*	$NetBSD: oboe.c,v 1.10 2002/11/26 03:25:51 fvdl Exp $	*/
+
+/*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
