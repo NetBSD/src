@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.63 1998/08/21 18:51:58 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.64 1998/09/07 19:50:17 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -435,14 +435,15 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		 */
 		i = ((ptsize >> PGSHIFT) + 1) * (NPTEPG / SG4_LEV3SIZE);
 		sg = &((u_int *)(RELOC(Sysseg_pa, u_int)))[SG4_LEV1SIZE];
+		if (loadbase != 0)
+			/* start of next L2 table */
+			shadow_pt = &sg[roundup(i, SG4_LEV2SIZE)];
 		esg = &sg[i];
 		sg_proto = ptpa | SG_U | SG_RW | SG_V;
 		while (sg < esg) {
 			*sg++ = sg_proto;
 			sg_proto += (SG4_LEV3SIZE * sizeof (st_entry_t));
 		}
-		if (loadbase != 0)
-			shadow_pt = esg;	/* start of next L2 table */
 		/*
 		 * Initialize level 1 descriptors.  We need:
 		 *	roundup(num, SG4_LEV2SIZE) / SG4_LEVEL2SIZE
