@@ -1,4 +1,4 @@
-/*	$NetBSD: mdprologue.S,v 1.7 1998/01/05 22:00:42 cgd Exp $	*/
+/*	$NetBSD: mdprologue.S,v 1.8 2001/11/21 19:14:23 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -81,7 +81,7 @@ ENTRY_NOPROFILE(binder_entry)
 	/* 
 	 * Now we have to 0x200-align the text segment.
 	 * We know that the a.out header is 0x20 bytes long.
-	 * The code so far is less then 0x1e0 bytes. So we
+	 * The code so far is less than 0x1e0 bytes. So we
 	 * advance "." to address 0x1e0.
 	 */
 
