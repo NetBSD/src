@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.12 2003/01/01 01:40:27 thorpej Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.13 2003/03/24 03:32:08 imp Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -44,6 +44,8 @@
 #include <hpcmips/vr/vrc4173bcuvar.h>
 #include <hpcmips/vr/vrc4173icureg.h>
 #include <hpcmips/vr/vrc4173cmureg.h>
+
+#include "locators.h"
 
 #ifdef VRC4173BCU_DEBUG
 #define DPRINTF_ENABLE
