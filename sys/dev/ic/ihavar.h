@@ -1,4 +1,4 @@
-/*	$NetBSD: ihavar.h,v 1.1 2001/06/03 13:43:47 tsutsui Exp $ */
+/*	$NetBSD: ihavar.h,v 1.2 2001/06/09 13:43:02 tsutsui Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -115,9 +115,6 @@ struct iha_scsi_req_q {
 	struct iha_sg_element *sglist;
 	bus_size_t sgoffset;		/* xfer buf offset              */
 
-	int senselen;			/* Sense Data Allocation Length	*/
-	u_int32_t senseaddr;		/* Sense Data PhysicalAddress	*/
-
 	int sg_size;			/* # of valid entries in sg_list */
 	u_int32_t sg_addr;		/* SGList Physical Address	*/
 
@@ -159,7 +156,7 @@ struct tcs {
 struct iha_softc {
 	struct device sc_dev;
 
-	bus_space_tag_t	sc_iot;
+	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
 	bus_dma_tag_t sc_dmat;
