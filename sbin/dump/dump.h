@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.9 1995/03/18 14:54:57 cgd Exp $	*/
+/*	$NetBSD: dump.h,v 1.10 1997/04/10 05:36:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -81,6 +81,7 @@ int	notify;		/* notify operator flag */
 int	blockswritten;	/* number of blocks written on current tape */
 int	tapeno;		/* current tape number */
 time_t	tstart_writing;	/* when started writing the first tape block */
+int	xferrate;	/* averaged transfer rate of all volumes */
 struct	fs *sblock;	/* the file system super block */
 char	sblock_buf[MAXBSIZE];
 long	dev_bsize;	/* block size of underlying disk device */
@@ -99,10 +100,11 @@ void	msgtail __P((const char *fmt, ...));
 int	query __P((char *question));
 void	quit __P((const char *fmt, ...));
 void	set_operators __P((void));
+time_t	do_stats __P((void));
 void	timeest __P((void));
 time_t	unctime __P((char *str));
 
-/* mapping rouintes */
+/* mapping routines */
 struct	dinode;
 long	blockest __P((struct dinode *dp));
 int	mapfiles __P((ino_t maxino, long *tapesize));

@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.5 1997/01/16 22:00:30 perry Exp $	*/
+/*	$NetBSD: optr.c,v 1.6 1997/04/10 05:36:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$NetBSD: optr.c,v 1.5 1997/01/16 22:00:30 perry Exp $";
+static char rcsid[] = "$NetBSD: optr.c,v 1.6 1997/04/10 05:36:25 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -525,7 +525,8 @@ lastdump(arg)
 		    sizeof(dtwalk->dd_name)) == 0)
 			continue;
 		date = (char *)ctime(&dtwalk->dd_ddate);
-		date[16] = '\0';	/* blast away seconds and year */
+		date[24] = '\0';
+		strcpy(date + 16, date + 19);	/* blast away seconds */
 		lastname = dtwalk->dd_name;
 		dt = fstabsearch(dtwalk->dd_name);
 		dumpme = (dt != NULL &&
