@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEX7750,v 1.15 2002/04/12 08:10:56 gmcgarry Exp $
+#	$NetBSD: COMPUTEX7750,v 1.16 2002/04/22 08:24:02 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -24,8 +24,6 @@ options 	IOM_ROM_BEGIN=0x00000000
 options 	IOM_ROM_SIZE=0x00100000		# 1MB
 options 	IOM_RAM_BEGIN=0x8c000000
 options 	IOM_RAM_SIZE=0x02000000		# 32MB
-
-options 	TEXT_START_ADDR=0x88010000
 
 options 	BSC_BCR1_VAL	=0x0000000c
 options 	BSC_BCR2_VAL	=0xff34
