@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.45 1999/01/13 23:06:28 sommerfe Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.46 1999/01/15 22:02:59 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -369,7 +369,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		if ((curp->sym_offset + i) < curp->sym_size) {
 			lkm_state = LKMS_LOADING;
 #ifdef DEBUG
-			printf( "LKM: LMLOADSYMS (loading @ %d of %d, i = %d)\n",
+			printf( "LKM: LMLOADSYMS (loading @ %ld of %ld, i = %d)\n",
 			curp->sym_offset, curp->sym_size, i);
 #endif	/* DEBUG*/
 		}
