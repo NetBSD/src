@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.6 2002/01/28 18:29:51 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.7 2002/02/04 23:59:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <sys/lock.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
+#include <sys/savar.h>
 #include <sys/types.h>
 #include <sys/ucontext.h>
 #include <sys/resourcevar.h>
@@ -484,6 +485,19 @@ lwp_exit(struct lwp *l)
 		DPRINTF(("lwp_exit: %d.%d calling exit1()\n",
 		    p->p_pid, l->l_lid));
 		exit1(l, 0); 
+	}
+
+	if (l->l_flag & L_SA) {
+		/* Recycle, don't exit */
+		SCHED_LOCK(s);
+		p->p_nrlwps--;
+		sa_putcachelwp(p, l);
+		mi_switch(l, NULL);
+		/* NOTREACHED; this LWP shouldn't be run again unless
+                 * cpu_setfunc() has been called on it. 
+		 */
+		panic("lwp_exit: %d.%d returned from the dead!", p->p_pid, 
+		    l->l_lid);
 	}
 
 	s = proclist_lock_write();
