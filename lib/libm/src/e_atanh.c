@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_atanh.c,v 1.3 1994/02/18 02:24:56 jtc Exp $";
+static char rcsid[] = "$Id: e_atanh.c,v 1.4 1994/03/03 17:04:09 jtc Exp $";
 #endif
 
 /* __ieee754_atanh(x)
@@ -33,6 +33,13 @@ static char rcsid[] = "$Id: e_atanh.c,v 1.3 1994/02/18 02:24:56 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
 
 #ifdef __STDC__
 static const double one = 1.0, huge = 1e300;
@@ -50,9 +57,9 @@ static double zero = 0.0;
 #endif
 {
 	double t;
-	int hx,n0,ix;
+	int hx,ix;
 	unsigned lx;
-	n0 = ((*(int*)&one)>>29)^1;
+
 	hx = *(n0+(int*)&x);		/* high word */
 	lx = *(1-n0+(int*)&x);		/* low word */
 	ix = hx&0x7fffffff;

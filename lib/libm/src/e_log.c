@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_log.c,v 1.3 1994/02/18 02:25:33 jtc Exp $";
+static char rcsid[] = "$Id: e_log.c,v 1.4 1994/03/03 17:04:18 jtc Exp $";
 #endif
 
 /* __ieee754_log(x)
@@ -66,6 +66,13 @@ static char rcsid[] = "$Id: e_log.c,v 1.3 1994/02/18 02:25:33 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
 
 #ifdef __STDC__
 static const double
@@ -93,10 +100,9 @@ static double zero   =  0.0;
 #endif
 {
 	double hfsq,f,s,z,R,w,t1,t2,dk;
-	int k,hx,n0,i,j;
+	int k,hx,i,j;
 	unsigned lx;
 
-	n0 = (*((int*)&two54)>>30)^1;	/* high word index */
 	hx = *(n0+(int*)&x);		/* high word of x */
 	lx = *(1-n0+(int*)&x);		/* low  word of x */
 

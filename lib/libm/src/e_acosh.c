@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_acosh.c,v 1.3 1994/02/18 02:24:48 jtc Exp $";
+static char rcsid[] = "$Id: e_acosh.c,v 1.4 1994/03/03 17:04:05 jtc Exp $";
 #endif
 
 /* __ieee754_acosh(x)
@@ -29,6 +29,13 @@ static char rcsid[] = "$Id: e_acosh.c,v 1.3 1994/02/18 02:24:48 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
 
 #ifdef __STDC__
 static const double 
@@ -46,8 +53,8 @@ ln2	= 6.93147180559945286227e-01;  /* 0x3FE62E42, 0xFEFA39EF */
 #endif
 {	
 	double t;
-	int n0,hx;
-	n0 = ((*(int*)&one)>>29)^1;
+	int hx;
+
 	hx = *(n0+(int*)&x);
 	if(hx<0x3ff00000) {		/* x < 1 */
 	    return (x-x)/(x-x);

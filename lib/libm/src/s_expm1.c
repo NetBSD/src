@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_expm1.c,v 1.3 1994/02/18 02:26:25 jtc Exp $";
+static char rcsid[] = "$Id: s_expm1.c,v 1.4 1994/03/03 17:04:33 jtc Exp $";
 #endif
 
 /* expm1(x)
@@ -110,6 +110,13 @@ static char rcsid[] = "$Id: s_expm1.c,v 1.3 1994/02/18 02:26:25 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
 
 #ifdef __STDC__
 static const double
@@ -138,10 +145,9 @@ Q5  =  -2.01099218183624371326e-07; /* BE8AFDB7 6E09C32D */
 #endif
 {
 	double y,hi,lo,c,t,e,hxs,hfx,r1;
-	int k,xsb,n0;
+	int k,xsb;
 	unsigned hx;
 
-	n0 = ((*(int*)&one)>>29)^1;	/* high word index */
 	hx  = *(n0+(unsigned*)&x);	/* high word of x */
 	xsb = hx&0x80000000;		/* sign bit of x */
 	if(xsb==0) y=x; else y= -x;	/* y = |x| */

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_j1.c,v 1.3 1994/02/18 02:25:22 jtc Exp $";
+static char rcsid[] = "$Id: e_j1.c,v 1.4 1994/03/03 17:04:15 jtc Exp $";
 #endif
 
 /* __ieee754_j1(x), __ieee754_y1(x)
@@ -61,6 +61,12 @@ static char rcsid[] = "$Id: e_j1.c,v 1.3 1994/02/18 02:25:22 jtc Exp $";
 
 #include <math.h>
 
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
+
 #ifdef __STDC__
 static double pone(double), qone(double);
 #else
@@ -97,9 +103,8 @@ static double zero    = 0.0;
 #endif
 {
 	double z, s,c,ss,cc,r,u,v,y;
-	int n0,hx,ix;
+	int hx,ix;
 
-	n0 = ((*(int*)&one)>>29)^1;
 	hx = *(n0+(int*)&x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x7ff00000) return one/x;
@@ -167,9 +172,8 @@ static double V0[5] = {
 #endif
 {
 	double z, s,c,ss,cc,u,v;
-	int n0,hx,ix,lx;
+	int hx,ix,lx;
 
-        n0 = 1^((*(int*)&one)>>29);
         hx = *(n0+(int*)&x);
         ix = 0x7fffffff&hx;
         lx = *(1-n0+(int*)&x);

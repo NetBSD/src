@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_atan2.c,v 1.3 1994/02/18 02:24:53 jtc Exp $";
+static char rcsid[] = "$Id: e_atan2.c,v 1.4 1994/03/03 17:04:07 jtc Exp $";
 #endif
 
 /* __ieee754_atan2(y,x)
@@ -42,6 +42,13 @@ static char rcsid[] = "$Id: e_atan2.c,v 1.3 1994/02/18 02:24:53 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
 
 #ifdef __STDC__
 static const double 
@@ -50,7 +57,6 @@ static double
 #endif
 tiny  = 1.0e-300,
 zero  = 0.0,
-one   = 1.0,
 pi_o_4  = 7.8539816339744827900E-01, /* 0x3FE921FB, 0x54442D18 */
 pi_o_2  = 1.5707963267948965580E+00, /* 0x3FF921FB, 0x54442D18 */
 pi      = 3.1415926535897931160E+00, /* 0x400921FB, 0x54442D18 */
@@ -64,10 +70,9 @@ pi_lo   = 1.2246467991473531772E-16; /* 0x3CA1A626, 0x33145C07 */
 #endif
 {  
 	double z;
-	int k,m,hx,hy,ix,iy,n0;
+	int k,m,hx,hy,ix,iy;
 	unsigned lx,ly;
 
-	n0 = ((*(int*)&one)>>29)^1;	/* high word index */
 	hx = *(n0+(int*)&x); ix = hx&0x7fffffff;
 	lx = *(1-n0+(int*)&x);
 	hy = *(n0+(int*)&y); iy = hy&0x7fffffff;
