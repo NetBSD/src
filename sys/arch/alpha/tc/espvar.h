@@ -1,4 +1,8 @@
-/*	$NetBSD: espvar.h,v 1.6 1996/09/27 19:36:36 mycroft Exp $	*/
+/*	$NetBSD: espvar.h,v 1.7 1996/09/27 21:37:18 thorpej Exp $	*/
+
+#if defined(__sparc__) && !defined(SPARC_DRIVER)
+#define	SPARC_DRIVER
+#endif
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -269,6 +273,18 @@ struct esp_softc {
 #define INVALID_PHASE		0x101	/* Re/Selection valid, but no REQ yet */
 #define PSEUDO_PHASE		0x100	/* "pseudo" bit */
 
+/*
+ * Macros to read and write the chip's registers.
+ */
+#ifdef SPARC_DRIVER
+#define	ESP_READ_REG(sc, reg)			\
+	((sc)->sc_reg[(reg) * 4])
+#define	ESP_WRITE_REG(sc, reg, val)		\
+	do {					\
+		u_char v = (val);		\
+		(sc)->sc_reg[(reg) * 4] = v;	\
+	} while (0)
+#else /* ! SPARC_DRIVER */
 #if 1
 static inline u_char
 ESP_READ_REG(sc, reg)
@@ -291,6 +307,7 @@ ESP_READ_REG(sc, reg)
 		(sc)->sc_reg[(reg) * 2] = v;	\
 		alpha_mb();			\
 	} while (0)
+#endif /* SPARC_DRIVER */
 
 #ifdef ESP_DEBUG
 #define	ESPCMD(sc, cmd) do {				\
