@@ -1,12 +1,19 @@
 #
-#	$NetBSD: ttys,v 1.1 2000/03/19 22:10:56 soren Exp $
+#	$NetBSD: ttys,v 1.2 2000/03/29 15:58:42 soren Exp $
 #
 # name	getty				type	status		comments
 
+# In normal operation, getty on the 'console' pseudo-device is disabled, and
+# is enabled for the correct 'real' device (e.g. one of the serial ports).
+# If the console is marked insecure, single-user requires the root password.
+
+# Console pseudo-device
 console	"/usr/libexec/getty std.115200"	vt100	off secure
 
+# Serial console port
 tty00	"/usr/libexec/getty std.115200"	vt100	on secure
 
+# Pseudo terminals
 ttyp0	none				network
 ttyp1	none				network
 ttyp2	none				network
