@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2000/08/21 02:06:32 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.8 2000/08/22 19:46:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -85,6 +85,7 @@ extern void		_clrsoftintr(int);
 #define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
 
 #define	splsched()	splhigh()
+#define	spllock()	splhigh()
 
 extern unsigned int	intrcnt[];
 #define SOFTCLOCK_INTR	0
