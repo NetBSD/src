@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.256 1997/09/27 10:55:48 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.257 1997/10/06 20:38:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -313,15 +313,6 @@ cpu_startup()
 	extern int biostramp_image_size;
 	extern u_char biostramp_image[];
 #endif
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
-			avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	printf(version);
 	identifycpu();
@@ -1551,6 +1542,15 @@ init386(first_avail)
 
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
+
+	/*
+	 * Initialize error message buffer (at end of core).
+	 */
+	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
+	for (x = 0; x < btoc(MSGBUFSIZE); x++)
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + x * NBPG,
+		    avail_end + x * NBPG, VM_PROT_ALL, TRUE);
+	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 #ifdef DDB
 	ddb_init();
