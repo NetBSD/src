@@ -1,4 +1,4 @@
-# $NetBSD: defs.mk,v 1.2 2003/11/10 21:48:48 matt Exp $
+# $NetBSD: defs.mk,v 1.2.2.1 2004/04/06 04:33:48 jmc Exp $
 G_GDB_OBJS=\
 annotate.o \
 arch-utils.o \
@@ -145,9 +145,11 @@ valprint.o \
 values.o \
 varobj.o \
 version.o \
-wrapper.o
+wrapper.o \
+${G_SIM_OBS}
 
-G_SIM_OBJS=
+G_SIM_OBS = remote-sim.o
+
 
 G_BFD_CPPFLAGS=\
 	-DDEFAULT_VECTOR=bfd_elf32_powerpc_vec \
