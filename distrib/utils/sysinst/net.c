@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.8.2.5 1997/11/10 19:23:19 thorpej Exp $	*/
+/*	$NetBSD: net.c,v 1.8.2.6 1997/11/11 00:47:31 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -232,6 +232,7 @@ get_via_ftp (void)
 			endwin();
 		} else 
 			list++;
+
 	}
 	puts (CL); /* Just to make sure. */
 	wrefresh (stdscr);
@@ -263,7 +264,7 @@ get_via_nfs(void)
 	}
 
 	/* return location, don't clean... */
-	strcpy (dist_dir, "/mnt2");
+	strcpy (ext_dir, "/mnt2");
 	clean_dist_dir = 0;
 	mnt2_mounted = 1;
 	return 1;
