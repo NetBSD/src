@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.7 1997/02/24 23:18:12 fvdl Exp $ */
+/* $NetBSD: param.h,v 1.8 1997/06/03 23:48:36 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -120,12 +120,12 @@
 #define	ctob(x)	((x) << PGSHIFT)
 
 /* bytes to pages */
-#define	btoc(x)	(((unsigned)(x) + PGOFSET) >> PGSHIFT)
+#define	btoc(x)	(((x) + PGOFSET) >> PGSHIFT)
 
 #define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
-	((unsigned)(bytes) >> DEV_BSHIFT)
+	((bytes) >> DEV_BSHIFT)
 #define	dbtob(db)			/* calculates (db * DEV_BSIZE) */ \
-	((unsigned)(db) << DEV_BSHIFT)
+	((db) << DEV_BSHIFT)
 
 /*
  * Map a ``block device block'' to a file system block.
