@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.67 1997/04/17 00:12:08 thorpej Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.68 1997/06/19 20:54:48 pk Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -201,11 +201,7 @@ vsunlock(addr, len)
  * after cpu_fork returns in the child process.  We do nothing here
  * after cpu_fork returns.
  */
-#ifdef __FORK_BRAINDAMAGE
-int
-#else
 void
-#endif
 vm_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
@@ -275,16 +271,6 @@ vm_fork(p1, p2)
 	}
 #endif
 
-#ifdef __FORK_BRAINDAMAGE
-	/*
-	 * cpu_fork will copy and update the kernel stack and pcb,
-	 * and make the child ready to run.  It marks the child
-	 * so that it can return differently than the parent.
-	 * It returns twice, once in the parent process and
-	 * once in the child.
-	 */
-	return (cpu_fork(p1, p2));
-#else
 	/*
 	 * cpu_fork will copy and update the kernel stack and pcb,
 	 * and make the child ready to run.  The child will exit
@@ -292,7 +278,6 @@ vm_fork(p1, p2)
 	 * not return here.
 	 */
 	cpu_fork(p1, p2);
-#endif
 }
 
 /*
