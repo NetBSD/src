@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.195 1996/03/30 07:37:32 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.196 1996/04/11 07:47:33 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1992 Terrence R. Lambert.
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -557,9 +557,8 @@ sendsig(catcher, sig, mask, code)
 		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_eflags = tf->tf_eflags;
-		SETFLAGS(frame.sf_sc.sc_eflags, VM86_EFLAGS(p),
-			 VM86_FLAGMASK(p)|PSL_VIF);
+		frame.sf_sc.sc_eflags = get_vflags(p);
+		tf->tf_eflags &= ~PSL_VM;
 	} else
 #endif
 	{
@@ -599,9 +598,6 @@ sendsig(catcher, sig, mask, code)
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-#ifdef VM86
-	tf->tf_eflags &= ~PSL_VM;
-#endif
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
@@ -640,22 +636,6 @@ sys_sigreturn(p, v, retval)
 		return (EFAULT);
 
 	/*
-	 * Check for security violations.  If we're returning to protected
-	 * mode, the CPU will validate the segment registers automatically
-	 * and generate a trap on violations.  We handle the trap, rather
-	 * than doing all of the checking here.
-	 */
-	if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(context.sc_cs, context.sc_eflags))
-		return (EINVAL);
-
-	if (context.sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = context.sc_mask & ~sigcantmask;
-
-	/*
 	 * Restore signal context.
 	 */
 #ifdef VM86
@@ -664,12 +644,20 @@ sys_sigreturn(p, v, retval)
 		tf->tf_vm86_fs = context.sc_fs;
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
-		tf->tf_eflags = context.sc_eflags;
-		SETFLAGS(VM86_EFLAGS(p), context.sc_eflags,
-			 VM86_FLAGMASK(p)|PSL_VIF);
+		set_vflags(p, context.sc_eflags);
 	} else
 #endif
 	{
+		/*
+		 * Check for security violations.  If we're returning to
+		 * protected mode, the CPU will validate the segment registers
+		 * automatically and generate a trap on violations.  We handle
+		 * the trap, rather than doing all of the checking here.
+		 */
+		if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+		    !USERMODE(context.sc_cs, context.sc_eflags))
+			return (EINVAL);
+
 		/* %fs and %gs were restored by the trampoline. */
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
@@ -686,6 +674,12 @@ sys_sigreturn(p, v, retval)
 	tf->tf_cs = context.sc_cs;
 	tf->tf_esp = context.sc_esp;
 	tf->tf_ss = context.sc_ss;
+
+	if (context.sc_onstack & 01)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	return (EJUSTRETURN);
 }
