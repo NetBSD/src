@@ -3,9 +3,9 @@
 # Client Makefiles define DEVICE and FONTFILES and provide rules for
 #	individual font files
 
-.include "../../Makefile.fontdir"
+.include "../../Makefile.cfg"
 
-DEVICEDIR?=	$(FONTDIR)/dev$(DEVICE)
+DEVICEDIR?=	$(fontdir)/dev$(DEVICE)
 FONTOWN?=	bin
 FONTGRP?=	bin
 FONTMODE?=	444
@@ -19,48 +19,42 @@ all:	$(FONTFILES)
 obj:
 .else
 obj:
-	@cd ${.CURDIR}; \
-	here=`pwd`; subdir=`echo $$here | sed 's,^/usr/src/,,'`; \
-	if test $$here != $$subdir ; then \
-		rm -rf obj; \
-		dest=/usr/obj/$$subdir ; \
-		echo "$$here -> $$dest"; ln -s $$dest obj; \
-		if test -d /usr/obj -a ! -d $$dest; then \
-			mkdir -p $$dest; \
-		else \
-			true; \
-		fi; \
+	@cd ${.CURDIR}; rm -rf obj; \
+	here=`pwd`; dest=/usr/obj/`echo $$here | sed 's,/usr/src/,,'`; \
+	echo "$$here -> $$dest"; ln -s $$dest obj; \
+	if test -d /usr/obj -a ! -d $$dest; then \
+		mkdir -p $$dest; \
 	else \
-		true ; \
-		dest=$$here/obj ; \
-		/bin/rm -f $$dest 2> /dev/null || true; \
-		echo "making $$here/obj" ; \
-		if test ! -d obj ; then \
-			mkdir $$here/obj; \
-		fi ; \
+		true; \
 	fi;
 .endif
 .endif
 
 .if !target(clean)
-CLEANFILES+=	$(FONTFILES)
+clean:
+	-rm -f $(FONTFILES)
+.endif
 
-clean cleandir:
-	-rm -f $(CLEANFILES)
+.if !target(cleandir)
+cleandir:
+	-rm -f $(FONTFILES)
+	cd ${.CURDIR}; rm -rf obj;
 .endif
 
 .if !target(install)
 install:
-	@if [ ! -d "${DESTDIR}${DEVICEDIR}" ]; then \
-                /bin/rm -f ${DESTDIR}${DEVICEDIR} ; \
-                mkdir -p ${DESTDIR}${DEVICEDIR} ; \
-                chown root.wheel ${DESTDIR}${DEVICEDIR} ; \
-                chmod 755 ${DESTDIR}${DEVICEDIR} ; \
-        else \
-                true ; \
-        fi
+	-if test ! -d $(DESTDIR)$(DEVICEDIR); then \
+		install -d -o $(BINOWN) -g $(BINGRP) -m 755 \
+			$(DESTDIR)$(DEVICEDIR); \
+	fi
+	-if test -d $(.CURDIR)/generate; then \
+		if test ! -d $(DESTDIR)$(DEVICEDIR)/generate; then \
+			install -d -o $(BINOWN) -g $(BINGRP) -m 755 \
+				$(DESTDIR)$(DEVICEDIR)/generate; \
+		fi; \
+	fi
 	-for f in $(FONTFILES); do \
 		install -c -o $(FONTOWN) -g $(FONTGRP) -m $(FONTMODE) $$f \
-			$(DESTDIR)$(DEVICEDIR); \
+			$(DESTDIR)$(DEVICEDIR)/$$f; \
 	done
 .endif
