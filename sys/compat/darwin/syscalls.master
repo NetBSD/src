@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 2002/12/24 12:15:46 manu Exp $
+	$NetBSD: syscalls.master,v 1.10 2002/12/26 14:41:06 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -515,7 +515,7 @@
 328	UNIMPL		__pthread_kill
 329	UNIMPL		pthread_sigmask
 330	UNIMPL		sigwait
-331	UNIMPL
+331	STD		{ void darwin_sys_pthread_exit(void *value_ptr); }
 332	UNIMPL
 333	UNIMPL
 334	UNIMPL
