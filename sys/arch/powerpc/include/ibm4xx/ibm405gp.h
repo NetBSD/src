@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.h,v 1.8 2002/08/13 05:43:25 simonb Exp $	*/
+/*	$NetBSD: ibm405gp.h,v 1.9 2003/09/23 15:19:05 shige Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -57,6 +57,11 @@
 /* PCI I/O - PCI I/O accesses from 8MB to 64MB-1 (56MB) */
 #define	IBM405GP_PCI_IO_HIGH_START	0xe8800000
 #define	IBM405GP_PCI_IO_HIGH_END	0xebffffff
+
+/* PCI I/O - PLB side of PCI I/O address space */
+#define	IBM405GP_PLB_PCI_IO_START	0xe8000000
+/* PCI I/O - PCI side of PCI I/O address space */
+#define	IBM405GP_PCI_PCI_IO_START	0x00000000
 
 #define	IBM405GP_PCIC0_BASE		0xeec00000
 
