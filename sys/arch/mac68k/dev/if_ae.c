@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.23 1995/04/16 00:14:54 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.24 1995/04/19 04:43:36 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -715,7 +715,7 @@ ae_rint(sc)
 	u_char boundary, current;
 	u_short len;
 	u_char nlen;
-	struct ed_ring packet_hdr;
+	struct ae_ring packet_hdr;
 	caddr_t packet_ptr;
 
 loop:
@@ -746,7 +746,7 @@ loop:
 		 * The byte count includes a 4 byte header that was added by
 		 * the NIC.
 		 */
-		packet_hdr = *(struct ed_ring *)packet_ptr;
+		packet_hdr = *(struct ae_ring *)packet_ptr;
 		packet_hdr.count =
 		    ((packet_hdr.count >> 8) & 0xff) |
 		    ((packet_hdr.count & 0xff) << 8);
@@ -792,8 +792,8 @@ loop:
 		    packet_hdr.next_packet >= sc->rec_page_start &&
 		    packet_hdr.next_packet < sc->rec_page_stop) {
 			/* Go get packet. */
-			ae_get_packet(sc, packet_ptr + sizeof(struct ed_ring),
-			    len - sizeof(struct ed_ring));
+			ae_get_packet(sc, packet_ptr + sizeof(struct ae_ring),
+			    len - sizeof(struct ae_ring));
 			++sc->sc_arpcom.ac_if.if_ipackets;
 		} else {
 			/* Really BAD.  The ring pointers are corrupted. */
@@ -1341,7 +1341,7 @@ ae_put(sc, m, buf)
 {
 	u_char *data, savebyte[2];
 	int len, wantbyte;
-	u_short totlen;
+	u_short totlen=0;
 
 	wantbyte = 0;
 
