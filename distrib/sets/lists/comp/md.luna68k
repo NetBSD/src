@@ -1,4 +1,4 @@
-# $NetBSD: md.luna68k,v 1.5 2001/04/14 22:53:35 kleink Exp $
+# $NetBSD: md.luna68k,v 1.6 2001/04/15 15:33:09 kleink Exp $
 ./usr/include/luna68k	comp-c-include
 ./usr/include/luna68k/_G_config.h	comp-c-include
 ./usr/include/luna68k/ansi.h	comp-c-include
@@ -19,6 +19,7 @@
 ./usr/include/luna68k/ieeefp.h	comp-c-include
 ./usr/include/luna68k/intr.h	comp-c-include
 ./usr/include/luna68k/int_const.h	comp-c-include
+./usr/include/luna68k/int_limits.h	comp-c-include
 ./usr/include/luna68k/int_mwgwtypes.h	comp-c-include
 ./usr/include/luna68k/int_types.h	comp-c-include
 ./usr/include/luna68k/kcore.h	comp-c-include
