@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 1996 Paul Kranenburg
+ * Copyright (c) 1996
+ * 	The President and Fellows of Harvard University. All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -10,6 +13,7 @@
  * must display the following acknowledgement:
  *	This product includes software developed by the University of
  *	California, Lawrence Berkeley Laboratory.
+ *	This product includes software developed by Harvard University.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,6 +27,8 @@
  *    must display the following acknowledgement:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
+ *	This product includes software developed by Harvard University.
+ *	This product includes software developed by Paul Kranenburg.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -43,10 +49,11 @@
  */
 
 #include "assym.h"
+#include <machine/param.h>
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/timerreg.h>
-#ifdef notyet
 #include <sparc/sparc/vaddrs.h>
+#ifdef notyet
 #include <sparc/dev/zsreg.h>
 #endif
 #include <machine/ctlreg.h>
@@ -71,7 +78,7 @@
 #endif
 
 /* use as needed to align things on longword boundaries */
-#define	ALIGN	.align 4
+#define	_ALIGN	.align 4
 
 /*
  * CCFSZ (C Compiler Frame SiZe) is the size of a stack frame required if
@@ -172,7 +179,7 @@ _kgdb_stack:
 	.globl	_cpcb
 _cpcb:	.word	_u0
 
-/* 
+/*
  * _cputyp is the current cpu type, used to distinguish between
  * the many variations of different sun4* machines. It contains
  * the value CPU_SUN4, CPU_SUN4C, or CPU_SUN4M.
@@ -180,6 +187,23 @@ _cpcb:	.word	_u0
 	.globl	_cputyp
 _cputyp:
 	.word	1
+/*
+ * _cpumod is the current cpu model, used to distinguish between variants
+ * in the Sun4 and Sun4M families. See /sys/arch/sparc/include/param.h for
+ * possible values.
+ */
+	.globl	_cpumod
+_cpumod:
+	.word	1
+/*
+ * _mmumod is the current mmu model, used to distinguish between the
+ * various implementations of the SRMMU in the sun4m family of machines.
+ * See /sys/arch/sparc/include/param.h for possible values.
+ */
+	.globl	_mmumod
+_mmumod:
+	.word	0
+
 #if defined(SUN4C) || defined(SUN4M)
 _cputypval:
 	.asciz	"sun4c"
@@ -187,7 +211,7 @@ _cputypval:
 _cputypvar:
 	.asciz	"compatible"
 _cputypvallen = _cputypvar - _cputypval
-	ALIGN
+	_ALIGN
 #endif
 
 /*
@@ -196,11 +220,15 @@ _cputypvallen = _cputypvar - _cputypval
  */
 	.globl	_pgshift, _nbpg, _pgofset
 _pgshift:
-	.word	1
+	.word	0
 _nbpg:
-	.word	1
+	.word	0
 _pgofset:
-	.word	1
+	.word	0
+
+	.globl	_trapbase
+_trapbase:
+	.word	0
 
 #if defined(SUN4M)
 _mapme:
@@ -221,7 +249,7 @@ sun4_notsup:
 	! before we halt. Sick, eh?
 	.asciz	"NetBSD/sparc: this kernel does not support the sun4\n\r \b"
 #endif
-	ALIGN
+	_ALIGN
 
 	.text
 
@@ -246,6 +274,10 @@ _msgbuf = KERNBASE
  * boot process, so that we can handle NMIs (parity errors) halfway
  * sensibly during boot.  We use virtual address f8002000 (`page 2')
  * for this, wasting a page of physical memory.
+ *
+ * This doesn't work for the Sun4M, which can have 5 or more pages of
+ * registers. Thus we use a reserved piece of the virtual address space, set
+ * up in bootstrap().
  */
 IE_reg_addr = KERNBASE + 8192		! this page not used; points to IEreg
 
@@ -285,13 +317,19 @@ IE_reg_addr = KERNBASE + 8192		! this page not used; points to IEreg
 	mov (type), %l3; b label; mov %psr, %l0; nop
 
 	/* hardware interrupts (can be linked or made `fast') */
-#define	HARDINT(lev) \
-	mov (lev), %l3; b _sparc_interrupt; mov %psr, %l0; nop
+#define	HARDINT44C(lev) \
+	mov (lev), %l3; b _sparc_interrupt44c; mov %psr, %l0; nop
+
+	/* hardware interrupts (can be linked or made `fast') */
+#define	HARDINT4M(lev) \
+	mov (lev), %l3; b _sparc_interrupt4m; mov %psr, %l0; nop
 
 	/* software interrupts (may not be made direct, sorry---but you
 	   should not be using them trivially anyway) */
-#define	SOFTINT(lev, bit) \
-	mov (lev), %l3; mov (bit), %l4; b softintr; mov %psr, %l0
+#define	SOFTINT44C(lev, bit) \
+	mov (lev), %l3; mov (bit), %l4; b softintr_sun44c; mov %psr, %l0
+
+	/* There's no SOFTINT4M(): both hard and soft vector the same way */
 
 	/* traps that just call trap() */
 #define	TRAP(type)	VTRAP(type, slowtrap)
@@ -318,16 +356,20 @@ IE_reg_addr = KERNBASE + 8192		! this page not used; points to IEreg
 #ifdef notyet
 #define	ZS_INTERRUPT	b zshard; mov %psr, %l0; nop; nop
 #else
-#define	ZS_INTERRUPT	HARDINT(12)
+#define	ZS_INTERRUPT44C	HARDINT44C(12)
+#define	ZS_INTERRUPT4M	HARDINT4M(12)
 #endif
 
 	.globl	start
-	.globl	_trapbase
 start:
-_trapbase:
-/* trap 0 is special since we cannot receive it */
+/*
+ * Put sun4 traptable first, since it needs the most stringent aligment (8192)
+ */
+#if defined(SUN4)
+trapbase_sun4:
+	/* trap 0 is special since we cannot receive it */
 	b dostart; nop; nop; nop	! 00 = reset (fake)
-	VTRAP(T_TEXTFAULT, memfault)	! 01 = instr. fetch fault
+	VTRAP(T_TEXTFAULT, memfault_sun4)	! 01 = instr. fetch fault
 	TRAP(T_ILLINST)			! 02 = illegal instruction
 	TRAP(T_PRIVINST)		! 03 = privileged instruction
 	TRAP(T_FPDISABLED)		! 04 = fp instr, but EF bit off in psr
@@ -335,7 +377,7 @@ _trapbase:
 	WINDOW_UF			! 06 = window underflow
 	TRAP(T_ALIGN)			! 07 = address alignment error
 	VTRAP(T_FPE, fp_exception)	! 08 = fp exception
-	VTRAP(T_DATAFAULT, memfault)	! 09 = data fetch fault
+	VTRAP(T_DATAFAULT, memfault_sun4)	! 09 = data fetch fault
 	TRAP(T_TAGOF)			! 0a = tag overflow
 	UTRAP(0x0b)
 	UTRAP(0x0c)
@@ -343,21 +385,21 @@ _trapbase:
 	UTRAP(0x0e)
 	UTRAP(0x0f)
 	UTRAP(0x10)
-	SOFTINT(1, IE_L1)		! 11 = level 1 interrupt
-	HARDINT(2)			! 12 = level 2 interrupt
-	HARDINT(3)			! 13 = level 3 interrupt
-	SOFTINT(4, IE_L4)		! 14 = level 4 interrupt
-	HARDINT(5)			! 15 = level 5 interrupt
-	SOFTINT(6, IE_L6)		! 16 = level 6 interrupt
-	HARDINT(7)			! 17 = level 7 interrupt
-	HARDINT(8)			! 18 = level 8 interrupt
-	HARDINT(9)			! 19 = level 9 interrupt
-	HARDINT(10)			! 1a = level 10 interrupt
-	HARDINT(11)			! 1b = level 11 interrupt
-	ZS_INTERRUPT			! 1c = level 12 (zs) interrupt
-	HARDINT(13)			! 1d = level 13 interrupt
-	HARDINT(14)			! 1e = level 14 interrupt
-	VTRAP(15, nmi)			! 1f = nonmaskable interrupt
+	SOFTINT44C(1, IE_L1)		! 11 = level 1 interrupt
+	HARDINT44C(2)			! 12 = level 2 interrupt
+	HARDINT44C(3)			! 13 = level 3 interrupt
+	SOFTINT44C(4, IE_L4)		! 14 = level 4 interrupt
+	HARDINT44C(5)			! 15 = level 5 interrupt
+	SOFTINT44C(6, IE_L6)		! 16 = level 6 interrupt
+	HARDINT44C(7)			! 17 = level 7 interrupt
+	HARDINT44C(8)			! 18 = level 8 interrupt
+	HARDINT44C(9)			! 19 = level 9 interrupt
+	HARDINT44C(10)			! 1a = level 10 interrupt
+	HARDINT44C(11)			! 1b = level 11 interrupt
+	ZS_INTERRUPT44C			! 1c = level 12 (zs) interrupt
+	HARDINT44C(13)			! 1d = level 13 interrupt
+	HARDINT44C(14)			! 1e = level 14 interrupt
+	VTRAP(15, nmi_sun4)		! 1f = nonmaskable interrupt
 	UTRAP(0x20)
 	UTRAP(0x21)
 	UTRAP(0x22)
@@ -582,13 +624,539 @@ _trapbase:
 	STRAP(0xfd)
 	STRAP(0xfe)
 	STRAP(0xff)
+#endif
+
+#if defined(SUN4C)
+trapbase_sun4c:
+/* trap 0 is special since we cannot receive it */
+	b dostart; nop; nop; nop	! 00 = reset (fake)
+	VTRAP(T_TEXTFAULT, memfault_sun4c)	! 01 = instr. fetch fault
+	TRAP(T_ILLINST)			! 02 = illegal instruction
+	TRAP(T_PRIVINST)		! 03 = privileged instruction
+	TRAP(T_FPDISABLED)		! 04 = fp instr, but EF bit off in psr
+	WINDOW_OF			! 05 = window overflow
+	WINDOW_UF			! 06 = window underflow
+	TRAP(T_ALIGN)			! 07 = address alignment error
+	VTRAP(T_FPE, fp_exception)	! 08 = fp exception
+	VTRAP(T_DATAFAULT, memfault_sun4c)	! 09 = data fetch fault
+	TRAP(T_TAGOF)			! 0a = tag overflow
+	UTRAP(0x0b)
+	UTRAP(0x0c)
+	UTRAP(0x0d)
+	UTRAP(0x0e)
+	UTRAP(0x0f)
+	UTRAP(0x10)
+	SOFTINT44C(1, IE_L1)		! 11 = level 1 interrupt
+	HARDINT44C(2)			! 12 = level 2 interrupt
+	HARDINT44C(3)			! 13 = level 3 interrupt
+	SOFTINT44C(4, IE_L4)		! 14 = level 4 interrupt
+	HARDINT44C(5)			! 15 = level 5 interrupt
+	SOFTINT44C(6, IE_L6)		! 16 = level 6 interrupt
+	HARDINT44C(7)			! 17 = level 7 interrupt
+	HARDINT44C(8)			! 18 = level 8 interrupt
+	HARDINT44C(9)			! 19 = level 9 interrupt
+	HARDINT44C(10)			! 1a = level 10 interrupt
+	HARDINT44C(11)			! 1b = level 11 interrupt
+	ZS_INTERRUPT44C			! 1c = level 12 (zs) interrupt
+	HARDINT44C(13)			! 1d = level 13 interrupt
+	HARDINT44C(14)			! 1e = level 14 interrupt
+	VTRAP(15, nmi_sun4c)		! 1f = nonmaskable interrupt
+	UTRAP(0x20)
+	UTRAP(0x21)
+	UTRAP(0x22)
+	UTRAP(0x23)
+	TRAP(T_CPDISABLED)	! 24 = coprocessor instr, EC bit off in psr
+	UTRAP(0x25)
+	UTRAP(0x26)
+	UTRAP(0x27)
+	TRAP(T_CPEXCEPTION)	! 28 = coprocessor exception
+	UTRAP(0x29)
+	UTRAP(0x2a)
+	UTRAP(0x2b)
+	UTRAP(0x2c)
+	UTRAP(0x2d)
+	UTRAP(0x2e)
+	UTRAP(0x2f)
+	UTRAP(0x30)
+	UTRAP(0x31)
+	UTRAP(0x32)
+	UTRAP(0x33)
+	UTRAP(0x34)
+	UTRAP(0x35)
+	UTRAP(0x36)
+	UTRAP(0x37)
+	UTRAP(0x38)
+	UTRAP(0x39)
+	UTRAP(0x3a)
+	UTRAP(0x3b)
+	UTRAP(0x3c)
+	UTRAP(0x3d)
+	UTRAP(0x3e)
+	UTRAP(0x3f)
+	UTRAP(0x40)
+	UTRAP(0x41)
+	UTRAP(0x42)
+	UTRAP(0x43)
+	UTRAP(0x44)
+	UTRAP(0x45)
+	UTRAP(0x46)
+	UTRAP(0x47)
+	UTRAP(0x48)
+	UTRAP(0x49)
+	UTRAP(0x4a)
+	UTRAP(0x4b)
+	UTRAP(0x4c)
+	UTRAP(0x4d)
+	UTRAP(0x4e)
+	UTRAP(0x4f)
+	UTRAP(0x50)
+	UTRAP(0x51)
+	UTRAP(0x52)
+	UTRAP(0x53)
+	UTRAP(0x54)
+	UTRAP(0x55)
+	UTRAP(0x56)
+	UTRAP(0x57)
+	UTRAP(0x58)
+	UTRAP(0x59)
+	UTRAP(0x5a)
+	UTRAP(0x5b)
+	UTRAP(0x5c)
+	UTRAP(0x5d)
+	UTRAP(0x5e)
+	UTRAP(0x5f)
+	UTRAP(0x60)
+	UTRAP(0x61)
+	UTRAP(0x62)
+	UTRAP(0x63)
+	UTRAP(0x64)
+	UTRAP(0x65)
+	UTRAP(0x66)
+	UTRAP(0x67)
+	UTRAP(0x68)
+	UTRAP(0x69)
+	UTRAP(0x6a)
+	UTRAP(0x6b)
+	UTRAP(0x6c)
+	UTRAP(0x6d)
+	UTRAP(0x6e)
+	UTRAP(0x6f)
+	UTRAP(0x70)
+	UTRAP(0x71)
+	UTRAP(0x72)
+	UTRAP(0x73)
+	UTRAP(0x74)
+	UTRAP(0x75)
+	UTRAP(0x76)
+	UTRAP(0x77)
+	UTRAP(0x78)
+	UTRAP(0x79)
+	UTRAP(0x7a)
+	UTRAP(0x7b)
+	UTRAP(0x7c)
+	UTRAP(0x7d)
+	UTRAP(0x7e)
+	UTRAP(0x7f)
+	SYSCALL			! 80 = sun syscall
+	BPT			! 81 = pseudo breakpoint instruction
+	TRAP(T_DIV0)		! 82 = divide by zero
+	TRAP(T_FLUSHWIN)	! 83 = flush windows
+	TRAP(T_CLEANWIN)	! 84 = provide clean windows
+	TRAP(T_RANGECHECK)	! 85 = ???
+	TRAP(T_FIXALIGN)	! 86 = fix up unaligned accesses
+	TRAP(T_INTOF)		! 87 = integer overflow
+	SYSCALL			! 88 = svr4 syscall
+	SYSCALL			! 89 = bsd syscall
+	BPT_KGDB_EXEC		! 8a = enter kernel gdb on kernel startup
+	STRAP(0x8b)
+	STRAP(0x8c)
+	STRAP(0x8d)
+	STRAP(0x8e)
+	STRAP(0x8f)
+	STRAP(0x90)
+	STRAP(0x91)
+	STRAP(0x92)
+	STRAP(0x93)
+	STRAP(0x94)
+	STRAP(0x95)
+	STRAP(0x96)
+	STRAP(0x97)
+	STRAP(0x98)
+	STRAP(0x99)
+	STRAP(0x9a)
+	STRAP(0x9b)
+	STRAP(0x9c)
+	STRAP(0x9d)
+	STRAP(0x9e)
+	STRAP(0x9f)
+	STRAP(0xa0)
+	STRAP(0xa1)
+	STRAP(0xa2)
+	STRAP(0xa3)
+	STRAP(0xa4)
+	STRAP(0xa5)
+	STRAP(0xa6)
+	STRAP(0xa7)
+	STRAP(0xa8)
+	STRAP(0xa9)
+	STRAP(0xaa)
+	STRAP(0xab)
+	STRAP(0xac)
+	STRAP(0xad)
+	STRAP(0xae)
+	STRAP(0xaf)
+	STRAP(0xb0)
+	STRAP(0xb1)
+	STRAP(0xb2)
+	STRAP(0xb3)
+	STRAP(0xb4)
+	STRAP(0xb5)
+	STRAP(0xb6)
+	STRAP(0xb7)
+	STRAP(0xb8)
+	STRAP(0xb9)
+	STRAP(0xba)
+	STRAP(0xbb)
+	STRAP(0xbc)
+	STRAP(0xbd)
+	STRAP(0xbe)
+	STRAP(0xbf)
+	STRAP(0xc0)
+	STRAP(0xc1)
+	STRAP(0xc2)
+	STRAP(0xc3)
+	STRAP(0xc4)
+	STRAP(0xc5)
+	STRAP(0xc6)
+	STRAP(0xc7)
+	STRAP(0xc8)
+	STRAP(0xc9)
+	STRAP(0xca)
+	STRAP(0xcb)
+	STRAP(0xcc)
+	STRAP(0xcd)
+	STRAP(0xce)
+	STRAP(0xcf)
+	STRAP(0xd0)
+	STRAP(0xd1)
+	STRAP(0xd2)
+	STRAP(0xd3)
+	STRAP(0xd4)
+	STRAP(0xd5)
+	STRAP(0xd6)
+	STRAP(0xd7)
+	STRAP(0xd8)
+	STRAP(0xd9)
+	STRAP(0xda)
+	STRAP(0xdb)
+	STRAP(0xdc)
+	STRAP(0xdd)
+	STRAP(0xde)
+	STRAP(0xdf)
+	STRAP(0xe0)
+	STRAP(0xe1)
+	STRAP(0xe2)
+	STRAP(0xe3)
+	STRAP(0xe4)
+	STRAP(0xe5)
+	STRAP(0xe6)
+	STRAP(0xe7)
+	STRAP(0xe8)
+	STRAP(0xe9)
+	STRAP(0xea)
+	STRAP(0xeb)
+	STRAP(0xec)
+	STRAP(0xed)
+	STRAP(0xee)
+	STRAP(0xef)
+	STRAP(0xf0)
+	STRAP(0xf1)
+	STRAP(0xf2)
+	STRAP(0xf3)
+	STRAP(0xf4)
+	STRAP(0xf5)
+	STRAP(0xf6)
+	STRAP(0xf7)
+	STRAP(0xf8)
+	STRAP(0xf9)
+	STRAP(0xfa)
+	STRAP(0xfb)
+	STRAP(0xfc)
+	STRAP(0xfd)
+	STRAP(0xfe)
+	STRAP(0xff)
+#endif
+
+#if defined(SUN4M)
+trapbase_sun4m:
+/* trap 0 is special since we cannot receive it */
+	b dostart; nop; nop; nop	! 00 = reset (fake)
+	VTRAP(T_TEXTFAULT, memfault_sun4m)	! 01 = instr. fetch fault
+	TRAP(T_ILLINST)			! 02 = illegal instruction
+	TRAP(T_PRIVINST)		! 03 = privileged instruction
+	TRAP(T_FPDISABLED)		! 04 = fp instr, but EF bit off in psr
+	WINDOW_OF			! 05 = window overflow
+	WINDOW_UF			! 06 = window underflow
+	TRAP(T_ALIGN)			! 07 = address alignment error
+	VTRAP(T_FPE, fp_exception)	! 08 = fp exception
+	VTRAP(T_DATAFAULT, memfault_sun4m)	! 09 = data fetch fault
+	TRAP(T_TAGOF)			! 0a = tag overflow
+	UTRAP(0x0b)
+	UTRAP(0x0c)
+	UTRAP(0x0d)
+	UTRAP(0x0e)
+	UTRAP(0x0f)
+	UTRAP(0x10)
+	HARDINT4M(1)			! 11 = level 1 interrupt
+	HARDINT4M(2)			! 12 = level 2 interrupt
+	HARDINT4M(3)			! 13 = level 3 interrupt
+	HARDINT4M(4)			! 14 = level 4 interrupt
+	HARDINT4M(5)			! 15 = level 5 interrupt
+	HARDINT4M(6)			! 16 = level 6 interrupt
+	HARDINT4M(7)			! 17 = level 7 interrupt
+	HARDINT4M(8)			! 18 = level 8 interrupt
+	HARDINT4M(9)			! 19 = level 9 interrupt
+	HARDINT4M(10)			! 1a = level 10 interrupt
+	HARDINT4M(11)			! 1b = level 11 interrupt
+	ZS_INTERRUPT4M			! 1c = level 12 (zs) interrupt
+	HARDINT4M(13)			! 1d = level 13 interrupt
+	HARDINT4M(14)			! 1e = level 14 interrupt
+	VTRAP(15, nmi_sun4m)		! 1f = nonmaskable interrupt
+	UTRAP(0x20)
+	UTRAP(0x21)
+	UTRAP(0x22)
+	UTRAP(0x23)
+	TRAP(T_CPDISABLED)	! 24 = coprocessor instr, EC bit off in psr
+	UTRAP(0x25)
+	UTRAP(0x26)
+	UTRAP(0x27)
+	TRAP(T_CPEXCEPTION)	! 28 = coprocessor exception
+	UTRAP(0x29)
+	UTRAP(0x2a)
+	VTRAP(T_STOREBUFFAULT, memfault_sun4m) ! 2b = SuperSPARC store buffer fault
+	UTRAP(0x2c)
+	UTRAP(0x2d)
+	UTRAP(0x2e)
+	UTRAP(0x2f)
+	UTRAP(0x30)
+	UTRAP(0x31)
+	UTRAP(0x32)
+	UTRAP(0x33)
+	UTRAP(0x34)
+	UTRAP(0x35)
+	UTRAP(0x36)
+	UTRAP(0x37)
+	UTRAP(0x38)
+	UTRAP(0x39)
+	UTRAP(0x3a)
+	UTRAP(0x3b)
+	UTRAP(0x3c)
+	UTRAP(0x3d)
+	UTRAP(0x3e)
+	UTRAP(0x3f)
+	UTRAP(0x40)
+	UTRAP(0x41)
+	UTRAP(0x42)
+	UTRAP(0x43)
+	UTRAP(0x44)
+	UTRAP(0x45)
+	UTRAP(0x46)
+	UTRAP(0x47)
+	UTRAP(0x48)
+	UTRAP(0x49)
+	UTRAP(0x4a)
+	UTRAP(0x4b)
+	UTRAP(0x4c)
+	UTRAP(0x4d)
+	UTRAP(0x4e)
+	UTRAP(0x4f)
+	UTRAP(0x50)
+	UTRAP(0x51)
+	UTRAP(0x52)
+	UTRAP(0x53)
+	UTRAP(0x54)
+	UTRAP(0x55)
+	UTRAP(0x56)
+	UTRAP(0x57)
+	UTRAP(0x58)
+	UTRAP(0x59)
+	UTRAP(0x5a)
+	UTRAP(0x5b)
+	UTRAP(0x5c)
+	UTRAP(0x5d)
+	UTRAP(0x5e)
+	UTRAP(0x5f)
+	UTRAP(0x60)
+	UTRAP(0x61)
+	UTRAP(0x62)
+	UTRAP(0x63)
+	UTRAP(0x64)
+	UTRAP(0x65)
+	UTRAP(0x66)
+	UTRAP(0x67)
+	UTRAP(0x68)
+	UTRAP(0x69)
+	UTRAP(0x6a)
+	UTRAP(0x6b)
+	UTRAP(0x6c)
+	UTRAP(0x6d)
+	UTRAP(0x6e)
+	UTRAP(0x6f)
+	UTRAP(0x70)
+	UTRAP(0x71)
+	UTRAP(0x72)
+	UTRAP(0x73)
+	UTRAP(0x74)
+	UTRAP(0x75)
+	UTRAP(0x76)
+	UTRAP(0x77)
+	UTRAP(0x78)
+	UTRAP(0x79)
+	UTRAP(0x7a)
+	UTRAP(0x7b)
+	UTRAP(0x7c)
+	UTRAP(0x7d)
+	UTRAP(0x7e)
+	UTRAP(0x7f)
+	SYSCALL			! 80 = sun syscall
+	BPT			! 81 = pseudo breakpoint instruction
+	TRAP(T_DIV0)		! 82 = divide by zero
+	TRAP(T_FLUSHWIN)	! 83 = flush windows
+	TRAP(T_CLEANWIN)	! 84 = provide clean windows
+	TRAP(T_RANGECHECK)	! 85 = ???
+	TRAP(T_FIXALIGN)	! 86 = fix up unaligned accesses
+	TRAP(T_INTOF)		! 87 = integer overflow
+	SYSCALL			! 88 = svr4 syscall
+	SYSCALL			! 89 = bsd syscall
+	BPT_KGDB_EXEC		! 8a = enter kernel gdb on kernel startup
+	STRAP(0x8b)
+	STRAP(0x8c)
+	STRAP(0x8d)
+	STRAP(0x8e)
+	STRAP(0x8f)
+	STRAP(0x90)
+	STRAP(0x91)
+	STRAP(0x92)
+	STRAP(0x93)
+	STRAP(0x94)
+	STRAP(0x95)
+	STRAP(0x96)
+	STRAP(0x97)
+	STRAP(0x98)
+	STRAP(0x99)
+	STRAP(0x9a)
+	STRAP(0x9b)
+	STRAP(0x9c)
+	STRAP(0x9d)
+	STRAP(0x9e)
+	STRAP(0x9f)
+	STRAP(0xa0)
+	STRAP(0xa1)
+	STRAP(0xa2)
+	STRAP(0xa3)
+	STRAP(0xa4)
+	STRAP(0xa5)
+	STRAP(0xa6)
+	STRAP(0xa7)
+	STRAP(0xa8)
+	STRAP(0xa9)
+	STRAP(0xaa)
+	STRAP(0xab)
+	STRAP(0xac)
+	STRAP(0xad)
+	STRAP(0xae)
+	STRAP(0xaf)
+	STRAP(0xb0)
+	STRAP(0xb1)
+	STRAP(0xb2)
+	STRAP(0xb3)
+	STRAP(0xb4)
+	STRAP(0xb5)
+	STRAP(0xb6)
+	STRAP(0xb7)
+	STRAP(0xb8)
+	STRAP(0xb9)
+	STRAP(0xba)
+	STRAP(0xbb)
+	STRAP(0xbc)
+	STRAP(0xbd)
+	STRAP(0xbe)
+	STRAP(0xbf)
+	STRAP(0xc0)
+	STRAP(0xc1)
+	STRAP(0xc2)
+	STRAP(0xc3)
+	STRAP(0xc4)
+	STRAP(0xc5)
+	STRAP(0xc6)
+	STRAP(0xc7)
+	STRAP(0xc8)
+	STRAP(0xc9)
+	STRAP(0xca)
+	STRAP(0xcb)
+	STRAP(0xcc)
+	STRAP(0xcd)
+	STRAP(0xce)
+	STRAP(0xcf)
+	STRAP(0xd0)
+	STRAP(0xd1)
+	STRAP(0xd2)
+	STRAP(0xd3)
+	STRAP(0xd4)
+	STRAP(0xd5)
+	STRAP(0xd6)
+	STRAP(0xd7)
+	STRAP(0xd8)
+	STRAP(0xd9)
+	STRAP(0xda)
+	STRAP(0xdb)
+	STRAP(0xdc)
+	STRAP(0xdd)
+	STRAP(0xde)
+	STRAP(0xdf)
+	STRAP(0xe0)
+	STRAP(0xe1)
+	STRAP(0xe2)
+	STRAP(0xe3)
+	STRAP(0xe4)
+	STRAP(0xe5)
+	STRAP(0xe6)
+	STRAP(0xe7)
+	STRAP(0xe8)
+	STRAP(0xe9)
+	STRAP(0xea)
+	STRAP(0xeb)
+	STRAP(0xec)
+	STRAP(0xed)
+	STRAP(0xee)
+	STRAP(0xef)
+	STRAP(0xf0)
+	STRAP(0xf1)
+	STRAP(0xf2)
+	STRAP(0xf3)
+	STRAP(0xf4)
+	STRAP(0xf5)
+	STRAP(0xf6)
+	STRAP(0xf7)
+	STRAP(0xf8)
+	STRAP(0xf9)
+	STRAP(0xfa)
+	STRAP(0xfb)
+	STRAP(0xfc)
+	STRAP(0xfd)
+	STRAP(0xfe)
+	STRAP(0xff)
+#endif
 
 /*
- * pad the trap table to max page size
- * trap table size is 0x100 * 4instr * 4byte/instr = 4096 bytes
- * need to .skip 4096 to pad to page size
+ * Pad the trap table to max page size.
+ * Trap table size is 0x100 * 4instr * 4byte/instr = 4096 bytes;
+ * need to .skip 4096 to pad to page size iff. the number of trap tables
+ * defined above is odd.
  */
+#if defined(SUN4) + defined(SUN4C) + defined(SUN4M) - 2 == 0
 	.skip	4096
+#endif
 
 #ifdef DEBUG
 /*
@@ -606,7 +1174,7 @@ _redstack:
 	.text
 Lpanic_red:
 	.asciz	"stack overflow"
-	ALIGN
+	_ALIGN
 
 	/* set stack pointer redzone to base+minstack; alters base */
 #define	SET_SP_REDZONE(base, tmp) \
@@ -650,7 +1218,6 @@ Lpanic_red:
 #define	CHECK_SP_REDZONE(t1, t2)
 #endif
 
-#if defined(SUN4) || defined(SUN4C)
 /*
  * The window code must verify user stack addresses before using them.
  * A user stack pointer is invalid if:
@@ -672,8 +1239,9 @@ Lpanic_red:
  * The code below also assumes that PTE_OF_ADDR is safe in a delay
  * slot; it is, at it merely sets its `pte' register to a temporary value.
  */
+#if defined(SUN4) || defined(SUN4C)
 	/* input: addr, output: pte; aux: bad address label */
-#define	PTE_OF_ADDR(addr, pte, bad, page_offset) \
+#define	PTE_OF_ADDR4_4C(addr, pte, bad, page_offset) \
 	sra	addr, PG_VSHIFT, pte; \
 	cmp	pte, -1; \
 	be,a	1f; andn addr, page_offset, pte; \
@@ -683,18 +1251,84 @@ Lpanic_red:
 1:
 
 	/* input: pte; output: condition codes */
-#define	CMP_PTE_USER_READ(pte) \
+#define	CMP_PTE_USER_READ4_4C(pte) \
 	lda	[pte] ASI_PTE, pte; \
 	srl	pte, PG_PROTSHIFT, pte; \
 	andn	pte, (PG_W >> PG_PROTSHIFT), pte; \
 	cmp	pte, PG_PROTUREAD
 
 	/* input: pte; output: condition codes */
-#define	CMP_PTE_USER_WRITE(pte) \
+#define	CMP_PTE_USER_WRITE4_4C(pte) \
 	lda	[pte] ASI_PTE, pte; \
 	srl	pte, PG_PROTSHIFT, pte; \
 	cmp	pte, PG_PROTUWRITE
 #endif
+
+/*
+ * The Sun4M does not have the memory hole that the 4C does. Thus all
+ * we need to do here is clear the page offset from addr.
+ */
+#if defined(SUN4M)
+#define	PTE_OF_ADDR4M(addr, pte, bad, page_offset) \
+	andn	addr, page_offset, pte
+
+#define CMP_PTE_USER_READ4M(pte) \
+	or	pte, ASI_SRMMUFP_L3, pte; \
+	lda	[pte] ASI_SRMMUFP, pte; \
+	and	pte, 0x1f, pte; \
+	cmp	pte, (SRMMU_TEPTE | PPROT_RX_RX)
+
+#define CMP_PTE_USER_WRITE4M(pte) \
+	or	pte, ASI_SRMMUFP_L3, pte; \
+	lda	[pte] ASI_SRMMUFP, pte; \
+	and	pte, 0x1f, pte; \
+	cmp	pte, (SRMMU_TEPTE | PPROT_RWX_RWX)
+#endif /* 4m */
+
+#if defined(SUN4M) && !(defined(SUN4C) || defined(SUN4))
+#define PTE_OF_ADDR			PTE_OF_ADDR4M
+#define CMP_PTE_USER_WRITE(pte,tmp)	CMP_PTE_USER_WRITE4M(pte)
+#define CMP_PTE_USER_READ(pte,tmp)	CMP_PTE_USER_READ4M(pte)
+#elif (defined(SUN4C) || defined(SUN4)) && !defined(SUN4M)
+#define PTE_OF_ADDR			PTE_OF_ADDR4_4C
+#define CMP_PTE_USER_WRITE(pte,tmp)	CMP_PTE_USER_WRITE4_4C(pte)
+#define CMP_PTE_USER_READ(pte,tmp)	CMP_PTE_USER_READ4_4C(pte)
+#else /* both defined, ugh */
+#define	PTE_OF_ADDR(addr, pte, bad, page_offset) \
+	sethi	%hi(_cputyp), pte; \
+	ld	[pte + %lo(_cputyp)], pte; \
+	cmp	pte, CPU_SUN4M; \
+	bne	2f; nop; \
+	PTE_OF_ADDR4M(addr, pte, bad, page_offset); \
+	b,a	3f; \
+2: \
+	PTE_OF_ADDR4_4C(addr, pte, bad, page_offset); \
+3:
+
+#define CMP_PTE_USER_READ(pte, tmp) \
+	sethi	%hi(_cputyp), tmp; \
+	ld	[tmp + %lo(_cputyp)], tmp; \
+	cmp	tmp, CPU_SUN4M; \
+	bne	1f; nop; \
+	CMP_PTE_USER_READ4M(pte); \
+	b,a	2f; \
+1: \
+	CMP_PTE_USER_READ4_4C(pte); \
+2:
+
+#define CMP_PTE_USER_WRITE(pte, tmp) \
+	sethi	%hi(_cputyp), tmp; \
+	ld	[tmp + %lo(_cputyp)], tmp; \
+	cmp	tmp, CPU_SUN4M; \
+	bne	1f; nop; \
+	CMP_PTE_USER_WRITE4M(pte); \
+	b,a	2f; \
+1: \
+	CMP_PTE_USER_WRITE4_4C(pte); \
+2:
+
+#endif
+
 
 /*
  * The calculations in PTE_OF_ADDR and CMP_PTE_USER_* are rather slow:
@@ -964,16 +1598,17 @@ ctw_user:
 	sethi	%hi(_pgofset), %g6	! trash %g6=curpcb
 	ld	[%g6 + %lo(_pgofset)], %g6
 	PTE_OF_ADDR(%sp, %g7, ctw_invalid, %g6)
-	CMP_PTE_USER_WRITE(%g7)		! likewise if not writable
+	CMP_PTE_USER_WRITE(%g7, %g5)		! likewise if not writable
 	bne	ctw_invalid
 	 EMPTY
+	/* Note side-effect of SLT_IF_1PAGE_RW: decrements %g6 by 62 */
 	SLT_IF_1PAGE_RW(%sp, %g7, %g6)
 	bl,a	ctw_merge		! all ok if only 1
 	 std	%l0, [%sp]
 	add	%sp, 7*8, %g5		! check last addr too
-	add	%g6, 62, %g6
+	add	%g6, 62, %g6		! restore %g6 to `pgofset'
 	PTE_OF_ADDR(%g5, %g7, ctw_invalid, %g6)
-	CMP_PTE_USER_WRITE(%g7)
+	CMP_PTE_USER_WRITE(%g7, %g6)
 	be,a	ctw_merge		! all ok: store <l0,l1> and merge
 	 std	%l0, [%sp]
 
@@ -1064,29 +1699,16 @@ ctw_invalid:
  *	%l4 = %y, until we call mem_access_fault (then onto trapframe)
  *	%l5 = IE_reg_addr, if async mem error
  *
- * We know about the layout of the error registers here.
- *	addr	reg
- *	----	---
- *	a	AC_SYNC_ERR
- *	a+4	AC_SYNC_VA
- *	a+8	AC_ASYNC_ERR
- *	a+12	AC_ASYNC_VA
  */
-memfault:
+
+#if defined(SUN4)
+memfault_sun4:
 	TRAP_SETUP(-CCFSZ-80)
 	INCR(_cnt+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
 
 	st	%g1, [%sp + CCFSZ + 20]	! save g1
 	rd	%y, %l4			! save y
 
-#if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
-	sethi	%hi(_cputyp), %o0	! what cpu are we running on?
-	ld	[%o0 + %lo(_cputyp)], %o0
-	cmp	%o0, CPU_SUN4
-	bne	9f
-	 nop
-#endif
-#if defined(SUN4)
 	/*
 	 * registers:
 	 * memerr.ctrl	= memory error control reg., error if 0x80 set
@@ -1107,7 +1729,7 @@ memfault:
 					! as I got some parity errors and the
 					! correct bits were not on?
 	std	%g6, [%sp + CCFSZ + 40]
-	bz,a	xnormal_mem_fault	! no, just a regular fault
+	bz,a	0f			! no, just a regular fault
 	 wr	%l0, PSR_ET, %psr	! (and reenable traps)
 
 	/* memory error = death for now XXX */
@@ -1118,7 +1740,7 @@ memfault:
 	call	_callrom
 	 nop
 
-xnormal_mem_fault:
+0:
 	/*
 	 * have to make SUN4 emulate SUN4C.   4C code expects
 	 * SER in %o1 and the offending VA in %o2, everything else is ok.
@@ -1139,12 +1761,28 @@ xnormal_mem_fault:
 !	or	%lo(SER_WRITE), %o5, %o5! not necessary since %lo is zero
 	or	%o5, %o1, %o1		! set SER_WRITE
 #if defined(SUN4C) || defined(SUN4M)
-	ba	normal_mem_fault
-	 nop				! XXX make efficient later
+	ba,a	normal_mem_fault
+	 !!nop				! XXX make efficient later
 #endif /* SUN4C || SUN4M */
 #endif /* SUN4 */
-9:
-#if defined(SUN4C) || defined(SUN4M)
+
+memfault_sun4c:
+#if defined(SUN4C)
+	TRAP_SETUP(-CCFSZ-80)
+	INCR(_cnt+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+
+	st	%g1, [%sp + CCFSZ + 20]	! save g1
+	rd	%y, %l4			! save y
+
+	/*
+	 * We know about the layout of the error registers here.
+	 *	addr	reg
+	 *	----	---
+	 *	a	AC_SYNC_ERR
+	 *	a+4	AC_SYNC_VA
+	 *	a+8	AC_ASYNC_ERR
+	 *	a+12	AC_ASYNC_VA
+	 */
 
 #if AC_SYNC_ERR + 4 != AC_SYNC_VA || \
     AC_SYNC_ERR + 8 != AC_ASYNC_ERR || AC_SYNC_ERR + 12 != AC_ASYNC_VA
@@ -1224,7 +1862,69 @@ xnormal_mem_fault:
 	b	return_from_trap
 	 wr	%l0, 0, %psr
 	/* NOTREACHED */
-#endif /* SUN4C || SUN4M */
+#endif /* SUN4C */
+
+#if defined(SUN4M)
+memfault_sun4m:
+	TRAP_SETUP(-CCFSZ-80)
+	INCR(_cnt+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
+
+	st	%g1, [%sp + CCFSZ + 20]	! save g1
+	rd	%y, %l4			! save y
+
+	set	SRMMU_SFADDR, %o0
+	std	%g2, [%sp + CCFSZ + 24]	! save g2, g3
+	lda	[%o0] ASI_SRMMU, %o2	! sync virt addr; must be read first
+	set	SRMMU_SFSTAT, %o0
+	lda	[%o0] ASI_SRMMU, %o1	! get sync fault status register
+	std	%g4, [%sp + CCFSZ + 32]	! (sneak g4,g5 in here)
+
+	/* Now test for a HyperSPARC. If we have one, get the async status */
+	sethi	%hi(_mmumod), %o3	! get MMU model
+	ld	[%o3 + %lo(_mmumod)], %o3
+	cmp	%o3, SUN4M_MMU_HS	! is it hypersparc?
+	std	%g6, [%sp + CCFSZ + 40]	! sneak in g6, g7
+	be	1f			! yup, skip ahead
+
+	 clr	%o3			! clear %o3 and %o4, not hypersparc
+	b	2f
+	 clr	%o4
+1:
+	set	SRMMU_AFSTAT, %o3	! must read status before fault on HS
+	lda	[%o3] ASI_SRMMU, %o3	! get async fault status
+	set	SRMMU_AFADDR, %o4
+	lda	[%o4] ASI_SRMMU, %o4	! get async fault address
+2:
+	wr	%l0, PSR_ET, %psr	! reenable traps
+
+	/* Finish stackframe, call C trap handler */
+	std	%l0, [%sp + CCFSZ + 0]	! set tf.tf_psr, tf.tf_pc
+	mov	%l3, %o0		! (argument: type)
+	st	%l2, [%sp + CCFSZ + 8]	! set tf.tf_npc
+	st	%l4, [%sp + CCFSZ + 12]	! set tf.tf_y
+	std	%i0, [%sp + CCFSZ + 48]	! tf.tf_out[0], etc
+	std	%i2, [%sp + CCFSZ + 56]
+	std	%i4, [%sp + CCFSZ + 64]
+	std	%i6, [%sp + CCFSZ + 72]
+	call	_mem_access_fault4m	! mem_access_fault(type, sfsr, sfva,
+					!		afsr, afva, &tf);
+	 add	%sp, CCFSZ, %o5		! (argument: &tf)
+
+	ldd	[%sp + CCFSZ + 0], %l0	! load new values
+	ldd	[%sp + CCFSZ + 8], %l2
+	wr	%l3, 0, %y
+	ld	[%sp + CCFSZ + 20], %g1
+	ldd	[%sp + CCFSZ + 24], %g2
+	ldd	[%sp + CCFSZ + 32], %g4
+	ldd	[%sp + CCFSZ + 40], %g6
+	ldd	[%sp + CCFSZ + 48], %i0
+	ldd	[%sp + CCFSZ + 56], %i2
+	ldd	[%sp + CCFSZ + 64], %i4
+	ldd	[%sp + CCFSZ + 72], %i6
+
+	b	return_from_trap	! go return
+	 wr	%l0, 0, %psr		! (but first disable traps again)
+#endif /* SUN4M */
 
 normal_mem_fault:
 	/*
@@ -1599,7 +2299,7 @@ return_from_syscall:
  *     represents one or many requests)
  * (3) we never announce a stray interrupt (because of (1), another
  *     interrupt request can come in while we're in the handler.  If
- *     the handler deal with everything for both the original & the
+ *     the handler deals with everything for both the original & the
  *     new request, we'll erroneously report a stray interrupt when
  *     we take the software interrupt for the new request.
  *
@@ -1620,11 +2320,13 @@ return_from_syscall:
  * this contains the psr, pc, npc, and interrupt level.
  */
 	.comm	_intrhand, 15 * 8	! intrhand[0..14]; 0 => error
-softintr:
+softintr_sun44c:
 	sethi	%hi(IE_reg_addr), %l6
 	ldub	[%l6 + %lo(IE_reg_addr)], %l5
 	andn	%l5, %l4, %l5
 	stb	%l5, [%l6 + %lo(IE_reg_addr)]
+
+softintr_common:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
 	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
@@ -1668,10 +2370,31 @@ softintr:
 	 wr	%l0, 0, %psr
 
 	/*
-	 * _sparc_interrupt is exported for paranoia checking (see intr.c).
+	 * _sparc_interrupt{44c,4m} is exported for paranoia checking
+	 * (see intr.c).
 	 */
-	.globl	_sparc_interrupt
-_sparc_interrupt:
+#if defined(SUN4M)
+	.globl	_sparc_interrupt4m
+_sparc_interrupt4m:
+	mov	1, %l4
+	sethi	%hi(ICR_PI_PEND), %l5
+	ld	[%l5 + %lo(ICR_PI_PEND)], %l5
+	sll	%l4, %l3, %l4
+	andcc	%l5, %l4, %g0
+	bne	_sparc_interrupt_common
+	 nop
+
+	! a soft interrupt; clear bit in interrupt-pending register
+	! XXX - this is CPU0's register set.
+	sethi	%hi(ICR_PI_CLR), %l6
+	sll	%l4, 16, %l5
+	st	%l5, [%l6 + %lo(ICR_PI_CLR)]
+	b,a	softintr_common
+#endif
+
+	.globl	_sparc_interrupt44c
+_sparc_interrupt44c:
+_sparc_interrupt_common:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
 	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
@@ -1758,7 +2481,9 @@ zshard:
  * except that we already know the problem is not a `normal' fault,
  * and that we must be extra-careful with interrupt enables.
  */
-nmi:
+
+#if defined(SUN4)
+nmi_sun4:
 	INTR_SETUP(-CCFSZ-80)
 	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
 	/*
@@ -1767,7 +2492,33 @@ nmi:
 	 */
 	sethi	%hi(IE_reg_addr), %o0
 	ldub	[%o0 + %lo(IE_reg_addr)], %o1
-	andn	%o1, IE_ALLIE, %o1
+	andn	%o0, IE_ALLIE, %o1
+	stb	%o1, [%o0 + %lo(IE_reg_addr)]
+	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
+
+	std	%g2, [%sp + CCFSZ + 0]	! save g2, g3
+	rd	%y, %l4			! save y
+
+	std	%g4, [%sp + CCFSZ + 8]	! save g4, g5
+	mov	%g1, %l5		! save g1, g6, g7
+	mov	%g6, %l6
+	mov	%g7, %l7
+#if defined(SUN4C) || defined(SUN4M)
+	b,a	nmi_common
+#endif /* SUN4C || SUN4M */
+#endif
+
+#if defined(SUN4C)
+nmi_sun4c:
+	INTR_SETUP(-CCFSZ-80)
+	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+	/*
+	 * Level 15 interrupts are nonmaskable, so with traps off,
+	 * disable all interrupts to prevent recursion.
+	 */
+	sethi	%hi(IE_reg_addr), %o0
+	ldub	[%o0 + %lo(IE_reg_addr)], %o1
+	andn	%o0, IE_ALLIE, %o1
 	stb	%o1, [%o0 + %lo(IE_reg_addr)]
 	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
 
@@ -1775,25 +2526,6 @@ nmi:
 	rd	%y, %l4			! save y
 
 	! must read the sync error register too.
-#if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
-	sethi	%hi(_cputyp), %o0	! what cpu are we running on?
-	ld	[%o0 + %lo(_cputyp)], %o0
-	cmp	%o0, CPU_SUN4
-	bne	1f
-	 nop
-#endif
-#if defined(SUN4)
-	std	%g4, [%sp + CCFSZ + 8]	! save g4, g5
-	mov	%g1, %l5		! save g1, g6, g7
-	mov	%g6, %l6
-	mov	%g7, %l7
-#if defined(SUN4C) || defined(SUN4M)
-	b	2f
-	 nop
-#endif /* SUN4C || SUN4M */
-#endif /* SUN4 */
-1:
-#if defined(SUN4C) || defined(SUN4M)
 	set	AC_SYNC_ERR, %o0
 	lda	[%o0] ASI_CONTROL, %o1	! sync err reg
 	inc	4, %o0
@@ -1806,8 +2538,12 @@ nmi:
 	lda	[%o0] ASI_CONTROL, %o3	! async err reg
 	inc	4, %o0
 	lda	[%o0] ASI_CONTROL, %o4	! async virt addr
-#endif /* SUN4C || SUN4M */
-2:
+#if defined(SUN4M)
+	!!b,a	nmi_common
+#endif /* SUN4M */
+#endif /* SUN4C */
+
+nmi_common:
 	! and call C code
 	call	_memerr			! memerr(0, ser, sva, aer, ava)
 	clr	%o0
@@ -1827,6 +2563,84 @@ nmi:
 	b	return_from_trap
 	 wr	%l4, 0, %y		! restore y
 
+#if defined(SUN4M)
+nmi_sun4m:
+	INTR_SETUP(-CCFSZ-80)
+	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
+	/*
+	 * Level 15 interrupts are nonmaskable, so with traps off,
+	 * disable all interrupts to prevent recursion.
+	 */
+	sethi	%hi(ICR_SI_SET), %o0
+	set	SINTR_MA, %o1
+	st	%o1, [%o0 + %lo(ICR_SI_SET)]
+
+	/* Now clear the NMI */
+
+	sethi	%hi(ICR_PI_CLR), %o0
+	set	PINTR_IC, %o1
+	st	%o1, [%o0 + %lo(ICR_PI_CLR)]
+
+	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
+
+	std	%g2, [%sp + CCFSZ + 0]	! save g2, g3
+	rd	%y, %l4			! save y
+
+	! now read sync error registers
+	set	SRMMU_SFADDR, %o0
+	lda	[%o0] ASI_SRMMU, %o2	! sync virt addr
+	set	SRMMU_SFSTAT, %o0
+	lda	[%o0] ASI_SRMMU, %o1	! sync err reg
+	std	%g4, [%sp + CCFSZ + 8]	! save g4,g5
+
+	/* Now test for a HyperSPARC. If we have one, get the async status */
+
+	sethi	%hi(_mmumod), %o3	! get MMU model
+	ld	[%o3 + %lo(_mmumod)], %o3
+	cmp	%o3, SUN4M_MMU_HS	! is it hypersparc?
+	be	1f			! yup, skip ahead
+
+	 clr	%o3			! clear %o3 and %o4, not hypersparc
+	b	2f
+	 clr	%o4
+1:
+	set	SRMMU_AFSTAT, %o3	! read status first on hypersparc
+	lda	[%o3] ASI_SRMMU, %o3	! get async fault status
+	set	SRMMU_AFADDR, %o4
+	lda	[%o4] ASI_SRMMU, %o4	! get async fault address
+2:
+	/* Finish stackframe, call C trap handler */
+	mov	%g1, %l5		! save g1,g6,g7
+	mov	%g6, %l6
+	mov	%g7, %l7
+	clr	%o5
+
+	call	_memerr4m		! memerr4m(0, sfsr, sfva, afsr, afva)
+	 clr	%o0
+
+	mov	%l5, %g1		! restore g1 through g7
+	ldd	[%sp + CCFSZ + 0], %g2
+	ldd	[%sp + CCFSZ + 8], %g4
+	wr	%l0, 0, %psr		! re-disable traps
+	mov	%l6, %g6
+	mov	%l7, %g7
+
+	! enable interrupts again (safe, we disabled traps again above)
+	sethi	%hi(ICR_SI_CLR), %o0
+	set	SINTR_MA, %o1
+	st	%o1, [%o0 + %lo(ICR_SI_CLR)]
+
+	b	return_from_trap
+	 wr	%l4, 0, %y		! restore y
+#endif /* SUN4M */
+
+#ifdef GPROF
+	.globl	window_of, winof_user
+	.globl	window_uf, winuf_user, winuf_ok, winuf_invalid
+	.globl	return_from_trap, rft_kernel, rft_user, rft_invalid
+	.globl	softtrap, slowtrap
+	.globl	clean_trap_window, syscall
+#endif
 
 /*
  * Window overflow trap handler.
@@ -2001,7 +2815,7 @@ winuf_user:
 	sethi	%hi(_pgofset), %l4
 	ld	[%l4 + %lo(_pgofset)], %l4
 	PTE_OF_ADDR(%sp, %l7, winuf_invalid, %l4)
-	CMP_PTE_USER_READ(%l7)		! if first page not readable,
+	CMP_PTE_USER_READ(%l7, %l5)	! if first page not readable,
 	bne	winuf_invalid		! it is invalid
 	 EMPTY
 	SLT_IF_1PAGE_RW(%sp, %l7, %l4)	! first page is readable
@@ -2010,7 +2824,7 @@ winuf_user:
 	add	%sp, 7*8, %l5
 	add     %l4, 62, %l4
 	PTE_OF_ADDR(%l5, %l7, winuf_invalid, %l4)
-	CMP_PTE_USER_READ(%l7)		! check second page too
+	CMP_PTE_USER_READ(%l7, %l5)	! check second page too
 	be,a	winuf_ok		! enter window X and goto ok
 	 restore %g0, 1, %l1		! (and then set %l1 to 1)
 
@@ -2032,12 +2846,7 @@ winuf_invalid:
 	 * only window, and it is a user window).
 	 */
 	save	%g0, %g0, %g0		! back to R
-#ifdef SUN_AS	/* this gives `as' mild heartburn */
 	save	%g0, 1, %l4		! back to T, then %l4 = 1
-#else
-	save	%g0, %g0, %g0		! back to T
-	mov	1, %l4			! and set %l4 = 1
-#endif
 	sethi	%hi(_cpcb), %l6
 	ld	[%l6 + %lo(_cpcb)], %l6
 	st	%l4, [%l6 + PCB_UW]	! pcb_uw = 1
@@ -2230,7 +3039,7 @@ rft_user:
 	sethi	%hi(_pgofset), %l3
 	ld	[%l3 + %lo(_pgofset)], %l3
 	PTE_OF_ADDR(%fp, %l7, rft_invalid, %l3)
-	CMP_PTE_USER_READ(%l7)		! try first page
+	CMP_PTE_USER_READ(%l7, %l5)	! try first page
 	bne	rft_invalid		! no good
 	 EMPTY
 	SLT_IF_1PAGE_RW(%fp, %l7, %l3)
@@ -2239,7 +3048,7 @@ rft_user:
 	add	%fp, 7*8, %l5
 	add	%l3, 62, %l3
 	PTE_OF_ADDR(%l5, %l7, rft_invalid, %l3)
-	CMP_PTE_USER_READ(%l7)		! check 2nd page too
+	CMP_PTE_USER_READ(%l7, %l5)	! check 2nd page too
 	be,a	rft_user_ok
 	 wr	%g0, 0, %wim
 
@@ -2516,6 +3325,7 @@ dostart:
 
 is_sun4m:
 #if defined(SUN4M)
+	set	trapbase_sun4m, %g6
 	mov	SUN4CM_PGSHIFT, %g5
 	b	start_havetype
 	 mov	CPU_SUN4M, %g4
@@ -2531,6 +3341,7 @@ is_sun4m:
 #endif
 is_sun4c:
 #if defined(SUN4C)
+	set	trapbase_sun4c, %g6
 	mov	SUN4CM_PGSHIFT, %g5
 
 	set	AC_CONTEXT, %g1		! paranoia: set context to kernel
@@ -2564,6 +3375,7 @@ is_sun4c:
 #endif
 is_sun4:
 #if defined(SUN4)
+	set	trapbase_sun4, %g6
 	mov	SUN4_PGSHIFT, %g5
 
 	set	AC_CONTEXT, %g1		! paranoia: set context to kernel
@@ -2644,8 +3456,8 @@ start_havetype:
 	stb	%l1, [%l0]
 	b	startmap_done
 	 nop
-#endif /* SUN4C */
 1:
+#endif /* SUN4C */
 #if defined(SUN4)
 	cmp	%g4, CPU_SUN4
 	bne	2f
@@ -2672,6 +3484,7 @@ no_3mmu:
 	 add	%l3, %l0, %l0		! (and lowva += segsz)
 
 remap_done:
+
 	/*
 	 * Now map the interrupt enable register and clear any interrupts,
 	 * enabling NMIs.  Note that we will not take NMIs until we change
@@ -2689,8 +3502,8 @@ remap_done:
 	nop; nop			! paranoia
 	stb	%l1, [%l0]
 	b,a	startmap_done
-#endif /* SUN4 */
 2:
+#endif /* SUN4 */
 #if defined(SUN4M)
 	cmp	%g4, CPU_SUN4M		! skip for sun4m!
 	bne	3f
@@ -2757,10 +3570,10 @@ remap_notvik:
 	srl	%l1, 22, %o2		! note: 22 == RGSHIFT - 2
 	add	%o1, %o2, %o1
 	sta	%l4, [%o1] ASI_BYPASS
-	b,a	startmap_done	
+	!b,a	startmap_done
 
-#endif /* SUN4M */
 3:
+#endif /* SUN4M */
 	! botch! We should blow up.
 
 startmap_done:
@@ -2808,6 +3621,10 @@ startmap_done:
 	wr	%l0, PSR_ET, %psr
 	nop; nop; nop
 
+	/* Export actual trapbase */
+	sethi	%hi(_trapbase), %o0
+	st	%g6, [%o0+%lo(_trapbase)]
+
 	/*
 	 * Step 2: clear BSS.  This may just be paranoia; the boot
 	 * loader might already do it for us; but what the hell.
@@ -2838,7 +3655,7 @@ startmap_done:
 	call	init_tables
 	 st	%o0, [%o1 + %lo(_nwindows)]
 
-#ifdef SUN4
+#if defined(SUN4)
 	/*
 	 * Some sun4 models have fewer than 8 windows. For extra
 	 * speed, we do not need to save/restore those windows
@@ -2860,9 +3677,9 @@ noplab:	 nop
 	/*
 	 * Step 4: change the trap base register, now that our trap handlers
 	 * will function (they need the tables we just set up).
+	 * This depends on the fact that bzero does not use %g6.
 	 */
-	set	_trapbase, %l0
-	wr	%l0, 0, %tbr
+	wr	%g6, 0, %tbr
 	nop; nop; nop			! paranoia
 
 
@@ -3123,7 +3940,7 @@ _svr4_esigcode:
 
 /*
  * Primitives
- */ 
+ */
 
 #ifdef GPROF
 	.globl	mcount
@@ -3171,7 +3988,7 @@ ENTRY(copyinstr)
 	call	_panic
 	 or	%lo(2f), %o0, %o0
 2:	.asciz	"copyinstr"
-	ALIGN
+	_ALIGN
 
 /*
  * copyoutstr(fromaddr, toaddr, maxlength, &lencopied)
@@ -3199,7 +4016,7 @@ ENTRY(copyoutstr)
 	call	_panic
 	 or	%lo(2f), %o0, %o0
 2:	.asciz	"copyoutstr"
-	ALIGN
+	_ALIGN
 
 Lcsdocopy:
 !	sethi	%hi(_cpcb), %o4		! (done earlier)
@@ -3279,10 +4096,10 @@ ENTRY(copystr)
 	 or	%lo(5f), %o0, %o0
 5:
 	.asciz	"copystr"
-	ALIGN
+	_ALIGN
 #endif
 
-/* 
+/*
  * Copyin(src, dst, len)
  *
  * Copy specified amount of data from user space into the kernel.
@@ -3480,7 +4297,7 @@ ENTRY(switchexit)
 
 /*
  * When no processes are on the runq, switch
- * idles here watiing for something to come ready.
+ * idles here waiting for something to come ready.
  * The registers are set up as noted above.
  */
 	.globl	idle
@@ -3509,7 +4326,7 @@ Lsw_panic_srun:
 1:	.asciz	"switch rq"
 2:	.asciz	"switch wchan"
 3:	.asciz	"switch SRUN"
-	ALIGN
+	_ALIGN
 
 /*
  * cpu_switch() picks a process to run and runs it, saving the current
@@ -3563,7 +4380,7 @@ ENTRY(cpu_switch)
 	st	%g0, [%g7 + %lo(_curproc)]	! curproc = NULL;
 	wr	%g1, 0, %psr			! (void) spl0();
 	nop; nop; nop				! paranoia
-	wr	%g1, PIL_CLOCK <<8 , %psr	! (void) splclock();
+	wr	%g1, PIL_CLOCK << 8 , %psr	! (void) splclock();
 
 Lsw_scan:
 	nop; nop; nop				! paranoia
@@ -3742,7 +4559,7 @@ Lsw_load:
 	ld	[%o3 + VM_PMAP_CTX], %o0! if (vm->vm_pmap.pm_ctx != NULL)
 	tst	%o0
 	bnz,a	Lsw_havectx		!	goto havecontext;
-	 ld	[%o3 + VM_PMAP_CTXNUM], %o0
+	 ld	[%o3 + VM_PMAP_CTXNUM], %o0	! load context number
 
 	/* p does not have a context: call ctx_alloc to get one */
 	save	%sp, -CCFSZ, %sp
@@ -3753,26 +4570,24 @@ Lsw_load:
 
 	/* p does have a context: just switch to it */
 Lsw_havectx:
-!	ld	[%o3 + VM_PMAP_CTXNUM], %o0	! (done in delay slot)
+	! context is in %o0
 #if (defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
 	sethi	%hi(_cputyp), %o1	! what cpu are we running on?
 	ld	[%o1 + %lo(_cputyp)], %o1
 	cmp	%o1, CPU_SUN4M
-	bne	1f
+	be	1f
 	 nop
 #endif
 #if defined(SUN4) || defined(SUN4C)
 	set	AC_CONTEXT, %o1
-	stba	%o0, [%o1] ASI_CONTROL	! setcontext(vm->vm_pmap.pm_ctxnum);
 	retl
-	 nop
+	 stba	%o0, [%o1] ASI_CONTROL	! setcontext(vm->vm_pmap.pm_ctxnum);
 #endif
 1:
 #if defined(SUN4M)
 	set	SRMMU_CXR, %o1
-	stba	%o0, [%o1] ASI_SRMMU	! setcontext(vm->vm_pmap.pm_ctxnum);
 	retl
-	 nop
+	 sta	%o0, [%o1] ASI_SRMMU	! setcontext(vm->vm_pmap.pm_ctxnum);
 #endif
 
 Lsw_sameproc:
@@ -4569,10 +5384,36 @@ ENTRY(loadfpstate)
  * ienab_bic(bic) int bic;
  *
  * Set and clear bits in the interrupt register.
+ */
+
+#if defined(SUN4M) && (defined(SUN4) || defined(SUN4C))
+ENTRY(ienab_bis)
+	sethi	%hi(_cputyp), %o1
+	ld	[%o1 + %lo(_cputyp)], %o1
+	cmp	%o1, CPU_SUN4M
+	be,a	_ienab_bis_4m
+	 nop
+	b,a	_ienab_bis_4c
+
+ENTRY(ienab_bic)
+	sethi	%hi(_cputyp), %o1
+	ld	[%o1 + %lo(_cputyp)], %o1
+	cmp	%o1, CPU_SUN4M
+	be,a	_ienab_bic_4m
+	 nop
+	b,a	_ienab_bic_4c
+#endif
+
+#if defined(SUN4) || defined(SUN4C)
+/*
  * Since there are no read-modify-write instructions for this,
  * and one of the interrupts is nonmaskable, we must disable traps.
  */
+#if defined(SUN4M)
+ENTRY(ienab_bis_4c)
+#else
 ENTRY(ienab_bis)
+#endif
 	! %o0 = bits to set
 	rd	%psr, %o2
 	wr	%o2, PSR_ET, %psr	! disable traps
@@ -4586,7 +5427,11 @@ ENTRY(ienab_bis)
 	retl
 	 nop
 
+#if defined(SUN4M)
+ENTRY(ienab_bic_4c)
+#else
 ENTRY(ienab_bic)
+#endif
 	! %o0 = bits to clear
 	rd	%psr, %o2
 	wr	%o2, PSR_ET, %psr	! disable traps
@@ -4599,6 +5444,47 @@ ENTRY(ienab_bic)
 	nop
 	retl
 	 nop
+#endif
+
+#if defined(SUN4M)
+/*
+ * sun4m has separate registers for clearing/setting the interrupt mask.
+ */
+#if defined(SUN4) || defined(SUN4C)
+ENTRY(ienab_bis_4m)
+#else
+ENTRY(ienab_bis)
+#endif
+	set	ICR_SI_SET, %o1
+	retl
+	 st	%o0, [%o1]
+
+#if defined(SUN4) || defined(SUN4C)
+ENTRY(ienab_bic_4m)
+#else
+ENTRY(ienab_bic)
+#endif
+	set	ICR_SI_CLR, %o1
+	retl
+	 st	%o0, [%o1]
+
+/*
+ * raise(cpu, level)
+ */
+ENTRY(raise)
+	! *(ICR_PI_SET + cpu*_MAXNBPG) = PINTR_SINTRLEV(level)
+	sethi	%hi(1 << 16), %o2
+	sll	%o2, %o1, %o2
+	set	ICR_PI_SET, %o1
+	set	_MAXNBPG, %o3
+1:
+	subcc	%o0, 1, %o0
+	bpos,a	1b
+	 add	%o1, %o3, %o1
+	retl
+	 st	%o2, [%o1]
+
+#endif /* SUN4M */
 
 /*
  * ffs(), using table lookup.
@@ -4738,33 +5624,49 @@ ENTRY(microtime)
 #endif
 	sethi	%hi(_time), %g2
 	sethi	%hi(TIMERREG_VA), %g3
+
+/* blech, sun4m has microsecond counter at a different location */
+#if (defined(SUN4) || defined(SUN4C)) && !defined(SUN4M)
+#define r_aardvark	%lo(TIMERREG_VA)
+#elif !(defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
+#define r_aardvark	%lo(TIMERREG_VA) + 4
+#else
+	sethi	%hi(_cputyp), %g4
+	ld	[%g4 + %lo(_cputyp)], %g4
+	or	%g3, %lo(TIMERREG_VA), %g3
+	cmp	%g4, CPU_SUN4M
+	be,a	1f
+	 add	%g3, 4, %g3
 1:
+#define r_aardvark	0
+#endif
+2:
 	ldd	[%g2+%lo(_time)], %o2		! time.tv_sec & time.tv_usec
-	ld	[%g3+%lo(TIMERREG_VA)], %o4	! usec counter
+	ld	[%g3+r_aardvark], %o4		! usec counter
 	ldd	[%g2+%lo(_time)], %g4		! see if time values changed
 	cmp	%g4, %o2
-	bne	1b				! if time.tv_sec changed
+	bne	2b				! if time.tv_sec changed
 	 cmp	%g5, %o3
-	bne	1b				! if time.tv_usec changed
+	bne	2b				! if time.tv_usec changed
 	 tst	%o4
 
-	bpos	2f				! reached limit?
+	bpos	3f				! reached limit?
 	 srl	%o4, TMR_SHIFT, %o4		! convert counter to usec
 	sethi	%hi(_tick), %g4			! bump usec by 1 tick
 	ld	[%g4+%lo(_tick)], %o1
 	set	TMR_MASK, %g5
 	add	%o1, %o3, %o3
 	and	%o4, %g5, %o4
-2:
+3:
 	add	%o4, %o3, %o3
 	set	1000000, %g5			! normalize usec value
 	cmp	%o3, %g5
-	bl,a	3f
+	bl,a	4f
 	 st	%o2, [%o0]			! (should be able to std here)
 	add	%o2, 1, %o2			! overflow
 	sub	%o3, %g5, %o3
 	st	%o2, [%o0]			! (should be able to std here)
-3:
+4:
 	retl
 	 st	%o3, [%o0+4]
 
@@ -4805,7 +5707,7 @@ ENTRY(setjmp)
 
 Lpanic_ljmp:
 	.asciz	"longjmp botch"
-	ALIGN
+	_ALIGN
 
 ENTRY(longjmp)
 	addcc	%o1, %g0, %g6	! compute v ? v : 1 in a global register
@@ -4834,7 +5736,7 @@ Llongjmpbotch:
 	bge,a	3f
 	 mov	%o2, %sp	! it is OK, put it in place
 	b,a	Llongjmpbotch
-3: 
+3:
 	jmp	%o3 + 8		! success, return %g6
 	 mov	%g6, %o0
 
@@ -4871,7 +5773,7 @@ _intrnames:
 	.asciz	"lev13"
 	.asciz	"prof"
 _eintrnames:
-	ALIGN
+	_ALIGN
 _intrcnt:
 	.skip	4*15
 _eintrcnt:
