@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.39 1997/02/27 01:30:05 thorpej Exp $ */
+/*	$NetBSD: dma.c,v 1.40 1997/03/10 23:01:40 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -44,6 +44,8 @@
 
 #include <sparc/autoconf.h>
 #include <sparc/cpu.h>
+
+#include <sparc/sparc/cpuvar.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -528,7 +530,7 @@ espdmaintr(sc)
 		trans, resid));
 
 	if (csr & D_WRITE)
-		cache_flush(*sc->sc_dmaaddr, trans);
+		cpuinfo.cache_flush(*sc->sc_dmaaddr, trans);
 
 	if (CPU_ISSUN4M && sc->sc_dvmakaddr)
 		dvma_mapout((vm_offset_t)sc->sc_dvmakaddr,

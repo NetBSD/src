@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.33 1997/02/26 22:29:11 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.34 1997/03/10 23:01:43 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@
 #include <machine/pmap.h>
 
 #include <sparc/sparc/vaddrs.h>
+#include <sparc/sparc/cpuvar.h>
 
 #ifndef DDB
 #define	Debugger()
@@ -288,13 +289,15 @@ si_match(parent, cf, aux)
 	switch (ca->ca_bustype) {
 	case BUS_VME16:
 		/* AFAIK, the `si' can only exist on the vmes. */
-		if (strcmp(ra->ra_name, "si") || cpumod == SUN4_100)
+		if (strcmp(ra->ra_name, "si") ||
+		    cpuinfo.cpu_type == CPUTYP_4_100)
 			return (0);
 		break;
 
 	case BUS_OBIO:
 		/* AFAIK, an `sw' can only exist on the obio. */
-		if (strcmp(ra->ra_name, "sw") || cpumod != SUN4_100)
+		if (strcmp(ra->ra_name, "sw") ||
+		    cpuinfo.cpu_type != CPUTYP_4_100)
 			return (0);
 		break;
 
