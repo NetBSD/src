@@ -9,7 +9,7 @@
 /*
  * 3COM Etherlink 3C501 device driver
  *
- *	$Id: if_el.c,v 1.4 1994/03/02 16:23:23 mycroft Exp $
+ *	$Id: if_el.c,v 1.5 1994/03/03 15:30:27 mycroft Exp $
  */
 
 /*
@@ -96,6 +96,7 @@ static void el_stop __P((struct el_softc *));
 static int el_xmit __P((struct el_softc *, int));
 static inline void elread __P((struct el_softc *, caddr_t, int));
 static struct mbuf *elget __P((caddr_t, int, int, struct ifnet *));
+static inline void el_hardreset __P((struct el_softc *));
 
 /* isa_driver structure for autoconf */
 struct isa_driver eldriver = {
@@ -265,6 +266,25 @@ el_stop(sc)
 }
 
 /*
+ * Do a hardware reset of the board, and upload the ethernet address again in
+ * case the board forgets.
+ */
+static inline void
+el_hardreset(sc)
+	struct el_softc *sc;
+{
+	u_short iobase = sc->sc_iobase;
+	int i;
+
+	outb(iobase+EL_AC, EL_AC_RESET);
+	DELAY(5);
+	outb(iobase+EL_AC, 0);
+
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		outb(iobase+i, sc->sc_arpcom.ac_enaddr[i]);
+}
+
+/*
  * Initialize interface.
  */
 static int
@@ -282,10 +302,7 @@ el_init(sc)
 	s = splimp();
 
 	/* First, reset the board. */
-	dprintf(("Resetting board...\n"));
-	outb(iobase+EL_AC, EL_AC_RESET);
-	DELAY(5);
-	outb(iobase+EL_AC, 0);
+	el_hardreset(sc);
 
 	/* Configure rx. */
 	dprintf(("Configuring rx...\n"));
@@ -487,9 +504,7 @@ elintr(unit)
 		/* If there's an overflow, reinit the board. */
 		if ((rxstat & EL_RXS_NOFLOW) == 0) {
 			dprintf(("overflow.\n"));
-			outb(iobase+EL_AC, EL_AC_RESET);
-			DELAY(5);
-			outb(iobase+EL_AC, 0);
+			el_hardreset(sc);
 			/* Put board back into receive mode. */
 			if (sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC)
 				outb(iobase+EL_RXC, EL_RXC_AGF | EL_RXC_DSHORT | EL_RXC_DDRIB | EL_RXC_DOFLOW | EL_RXC_PROMISC);
