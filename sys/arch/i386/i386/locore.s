@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.168 1997/09/09 21:42:38 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.169 1997/09/20 14:01:26 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -61,6 +61,7 @@
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/trap.h>
+#include <machine/bootinfo.h>
 
 /*
  * override user-land alignment before including asm.h
@@ -149,8 +150,9 @@
 	.data
 
 	.globl	_cpu,_cpu_id,_cpu_vendor,_cpuid_level,_cpu_feature
-	.globl	_cold,_esym,_boothowto,_bootdev,_atdevbase
-	.globl	_cyloffset,_proc0paddr,_curpcb,_PTDpaddr,_biosbasemem
+	.globl	_cold,_esym,_boothowto,_bootinfo,_atdevbase
+	.globl	_bootdev
+	.globl	_proc0paddr,_curpcb,_PTDpaddr,_biosbasemem
 	.globl	_biosextmem,_dynamic_gdt
 _cpu:		.long	0	# are we 386, 386sx, or 486, or Pentium, or..
 _cpu_id:	.long	0	# saved from `cpuid' instruction
@@ -160,7 +162,6 @@ _cpu_vendor:	.space	16	# vendor string returned by `cpuid' instruction
 _cold:		.long	1	# cold till we are not
 _esym:		.long	0	# ptr to end of syms
 _atdevbase:	.long	0	# location of start of iomem in virtual
-_cyloffset:	.long	0
 _proc0paddr:	.long	0
 _PTDpaddr:	.long	0	# paddr of PTD, for libkvm
 #ifndef BIOSBASEMEM
@@ -188,7 +189,7 @@ tmpstk:
 start:	movw	$0x1234,0x472			# warm boot
 
 	/*
-	 * Load parameters from stack (howto, bootdev, unit, cyloffset, esym).
+	 * Load parameters from stack (howto, bootdev, unit, bootinfo, esym).
 	 * note: (%esp) is return address of boot
 	 * (If we want to hold onto /boot, it's physical %esp up to _end.)
 	 */
@@ -197,7 +198,36 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl	8(%esp),%eax
 	movl	%eax,RELOC(_bootdev)
 	movl	12(%esp),%eax
-	movl	%eax,RELOC(_cyloffset)
+
+	testl	%eax, %eax
+	jz	1f
+	movl	(%eax), %ebx		/* number of entries */
+	movl	$RELOC(_bootinfo), %edx
+	movl	%ebx, (%edx)
+	addl	$4, %edx
+2:
+	testl	%ebx, %ebx
+	jz	1f
+	addl	$4, %eax
+	movl	(%eax), %ecx		/* address of entry */
+	pushl	%eax
+	pushl	(%ecx)		/* len */
+	pushl	%edx
+	addl	(%ecx), %edx		/* update dest pointer */
+	cmpl	$RELOC(_bootinfo + BOOTINFO_MAXSIZE), %edx
+	jg	2f
+	pushl	%ecx
+	call	_bcopy
+	addl	$12, %esp
+	popl	%eax
+	subl	$1, %ebx
+	jmp	2b
+2:	/* cleanup for overflow case */
+	addl	$12, %esp
+	movl	$RELOC(_bootinfo), %edx
+	subl	%ebx, (%edx)		/* correct number of entries */
+1:
+
  	movl	16(%esp),%eax
 	testl	%eax,%eax
 	jz	1f
