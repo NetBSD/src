@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.1.1 1997/01/14 20:57:08 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2 1997/01/14 21:01:33 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -757,67 +757,6 @@ pmap_alloc_etc()
 void
 pmap_bootstrap_copyprom()
 {
-#if 0	/* XXX - Just history... */
-	/*
-	 * XXX - This method makes DVMA difficult, because
-	 * the PROM only provides PTEs for 1M of DVMA space.
-	 * That's OK for boot programs, but not a VM system.
-	 */
-	int a_idx;
-	mmu_long_dte_t *mon_atbl;
-
-	/*
-	 * Copy the last entry (PROM monitor and DVMA mappings)
-	 * so our level-A table will use the PROM level-B table.
-	 */
-	mon_atbl = (mmu_long_dte_t *) mon_crp.paddr;
-	a_idx = MMU_TIA(VM_MAX_KERNEL_ADDRESS);
-	kernAbase[a_idx].attr.raw = mon_atbl[a_idx].attr.raw;
-	kernAbase[a_idx].addr.raw = mon_atbl[a_idx].addr.raw;
-
-#endif
-#if 0	/* XXX - More history... */
-	/*
-	 * XXX - This method is OK with our DVMA implementation,
-	 * but causes pmap_extract() to be ignorant of the PROM
-	 * mappings.  Maybe that's OK.  If not, we should just
-	 * copy the PTEs (level-C) from the PROM. -gwr
-	 */
-	mmu_long_dte_t *mon_atbl;
-	mmu_short_dte_t *mon_btbl;
-	mmu_short_dte_t *our_btbl;
-	int a_idx, b_idx;
-
-	/*
-	 * Copy parts of the level-B table from the PROM for
-	 * mappings that the PROM cares about.
-	 */
-	mon_atbl = (mmu_long_dte_t *) mon_crp.paddr;
-	a_idx = MMU_TIA(MON_KDB_START);
-	mon_btbl = (mmu_short_dte_t *) mon_atbl[a_idx].addr.raw;
-
-	/* Temporary use of b_idx to find our level-B table. */
-	b_idx = MMU_B_TBL_SIZE * (a_idx - MMU_TIA(KERNBASE));
-	our_btbl = &kernBbase[b_idx];
-
-	/*
-	 * Preserve both the kadb and monitor mappings (2MB).
-	 * We could have started at MONSTART, but this costs
-	 * us nothing, and might be useful someday...
-	 */
-	for (b_idx = MMU_TIB(MON_KDB_START);
-		 b_idx < MMU_TIB(MONEND); b_idx++)
-		our_btbl[b_idx].attr.raw = mon_btbl[b_idx].attr.raw;
-
-	/*
-	 * Preserve the monitor's DVMA map for now (1MB).
-	 * Later, we might want to kill this mapping so we
-	 * can have all of the DVMA space (16MB).
-	 */
-	for (b_idx = MMU_TIB(MON_DVMA_BASE);
-		 b_idx < MMU_B_TBL_SIZE; b_idx++)
-		our_btbl[b_idx].attr.raw = mon_btbl[b_idx].attr.raw;
-#endif
 	MachMonRomVector *romp;
 	int *mon_ctbl;
 	mmu_short_pte_t *kpte;
