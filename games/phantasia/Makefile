@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2000/04/24 15:15:05 pk Exp $
+#	$NetBSD: Makefile,v 1.21 2000/06/20 16:07:04 matt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>		# for UNPRIVILEGED
@@ -12,18 +12,18 @@ HIDEGAME=hidegame
 SETGIDGAME=yes
 USETBL=
 MAN=	phantasia.6
-CLEANFILES+=map setup setup.o host_phantglobs.o
+CLEANFILES+=map setup setup.lo host_phantglobs.lo
 
 realall: setup phantasia
 
-setup: host_phantglobs.o setup.o monsters.asc ${LIBM} 
-	${HOST_LINK.c} host_phantglobs.o setup.o -o ${.TARGET} -lm
+setup: host_phantglobs.lo setup.lo monsters.asc ${LIBM} 
+	${HOST_LINK.c} host_phantglobs.lo setup.lo -o ${.TARGET} -lm
 
-host_phantglobs.o: ${.CURDIR}/phantglobs.c
-	${HOST_COMPILE.c} -o host_phantglobs.o ${.CURDIR}/phantglobs.c
+host_phantglobs.lo: ${.CURDIR}/phantglobs.c
+	${HOST_COMPILE.c} -o host_phantglobs.lo ${.CURDIR}/phantglobs.c
 
-setup.o: ${.CURDIR}/setup.c
-	${HOST_COMPILE.c} ${.CURDIR}/setup.c
+setup.lo: ${.CURDIR}/setup.c
+	${HOST_COMPILE.c} -o setup.lo ${.CURDIR}/setup.c
 
 afterinstall:
 	DESTDIR=${DESTDIR} ./setup -m ${.CURDIR}/monsters.asc
