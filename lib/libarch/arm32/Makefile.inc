@@ -1,6 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.6 2001/07/14 03:17:44 matt Exp $
+# $NetBSD: Makefile.inc,v 1.7 2001/07/28 19:17:11 bjh21 Exp $
 
-.if (${MACHINE_ARCH} == "arm32") || (${MACHINE_ARCH} == "arm")
+.include <bsd.own.mk>
+
+.if (${MACHINE_CPU} == "arm")
 SRCS+=	arm32_sync_icache.c arm32_drain_writebuf.c
 .endif
 
