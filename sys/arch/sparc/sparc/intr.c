@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.52 2001/06/08 09:51:40 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.53 2001/07/07 21:23:53 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -170,6 +170,10 @@ int	(*sbuserr_handler) __P((void));
 int	(*vmeerr_handler) __P((void));
 int	(*moduleerr_handler) __P((void));
 
+#if defined(MULTIPROCESSOR)
+volatile int nmi_hard_wait = 0;
+struct simplelock nmihard_lock = SIMPLELOCK_INITIALIZER;
+#endif
 
 void
 nmi_hard()
@@ -190,13 +194,28 @@ nmi_hard()
 			(afsr & AFSR_AFA) >> AFSR_AFA_RSHIFT, afva);
 	}
 
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Increase nmi_hard_wait.  If we aren't the master, loop while this
+	 * variable is non-zero.  If we are the master, loop while this
+	 * variable is less then the number of cpus.
+	 */
+	simple_lock(&nmihard_lock);
+	nmi_hard_wait++;
+	simple_unlock(&nmihard_lock);
+
 	if (cpuinfo.master == 0) {
-		/*
-		 * For now, just return.
-		 * Should wait on damage analysis done by the master.
-		 */
+		while (nmi_hard_wait)
+			;
 		return;
+	} else {
+		int n = 0;
+
+		while (nmi_hard_wait < ncpu)
+			if (n++ > 100000)
+				panic("nmi_hard: SMP botch.");
 	}
+#endif
 
 	/*
 	 * Examine pending system interrupts.
@@ -226,6 +245,15 @@ nmi_hard()
 			fatal |= (*moduleerr_handler)();
 	}
 
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Tell everyone else we've finished dealing with the hard NMI.
+	 */
+	simple_lock(&nmihard_lock);
+	nmi_hard_wait = 0;
+	simple_unlock(&nmihard_lock);
+#endif
+
 	if (fatal)
 		panic("nmi");
 }
@@ -237,13 +265,13 @@ nmi_soft(tf)
 
 #ifdef MULTIPROCESSOR
 	switch (cpuinfo.msg.tag) {
-	case XPMSG_SAVEFPU: {
+	case XPMSG_SAVEFPU:
 		savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
 		cpuinfo.fpproc->p_md.md_fpumid = -1;
 		cpuinfo.fpproc = NULL;
-		}
 		break;
-	case XPMSG_PAUSECPU: {
+	case XPMSG_PAUSECPU:
+	    {
 #if defined(DDB)
 		db_regs_t regs;
 
@@ -253,53 +281,117 @@ nmi_soft(tf)
 #endif
 		cpuinfo.flags |= CPUFLG_PAUSED|CPUFLG_GOTMSG;
 		while (cpuinfo.flags & CPUFLG_PAUSED)
-			cpuinfo.cache_flush((caddr_t)&cpuinfo.flags, sizeof(cpuinfo.flags));
+			cpuinfo.cache_flush((caddr_t)&cpuinfo.flags,
+			    sizeof(cpuinfo.flags));
 #if defined(DDB)
 		cpuinfo.ci_ddb_regs = 0;
 #endif
 		return;
-		}
-	case XPMSG_VCACHE_FLUSH_PAGE: {
+	    }
+#if 0	/* notyet; see also cpu.c */
+	case XPMSG_FUNC:
+	    {
+		struct xpmsg_func *p = &cpuinfo.msg.u.xpmsg_func;
+
+		p->retval = (*p->func)(p->arg0, p->arg1, p->arg2, p->arg3); 
+		break;
+	    }
+#endif
+	case XPMSG_VCACHE_FLUSH_PAGE:
+	    {
 		struct xpmsg_flush_page *p = &cpuinfo.msg.u.xpmsg_flush_page;
 		int ctx = getcontext();
+
 		setcontext(p->ctx);
 		cpuinfo.sp_vcache_flush_page(p->va);
 		setcontext(ctx);
-		}
 		break;
-	case XPMSG_VCACHE_FLUSH_SEGMENT: {
+	    }
+	case XPMSG_VCACHE_FLUSH_SEGMENT:
+	    {
 		struct xpmsg_flush_segment *p = &cpuinfo.msg.u.xpmsg_flush_segment;
 		int ctx = getcontext();
+
 		setcontext(p->ctx);
 		cpuinfo.sp_vcache_flush_segment(p->vr, p->vs);
 		setcontext(ctx);
-		}
 		break;
-	case XPMSG_VCACHE_FLUSH_REGION: {
+	    }
+	case XPMSG_VCACHE_FLUSH_REGION:
+	    {
 		struct xpmsg_flush_region *p = &cpuinfo.msg.u.xpmsg_flush_region;
 		int ctx = getcontext();
+
 		setcontext(p->ctx);
 		cpuinfo.sp_vcache_flush_region(p->vr);
 		setcontext(ctx);
-		}
 		break;
-	case XPMSG_VCACHE_FLUSH_CONTEXT: {
+	    }
+	case XPMSG_VCACHE_FLUSH_CONTEXT:
+	    {
 		struct xpmsg_flush_context *p = &cpuinfo.msg.u.xpmsg_flush_context;
 		int ctx = getcontext();
+
 		setcontext(p->ctx);
 		cpuinfo.sp_vcache_flush_context();
 		setcontext(ctx);
-		}
 		break;
-	case XPMSG_VCACHE_FLUSH_RANGE: {
+	    }
+	case XPMSG_VCACHE_FLUSH_RANGE:
+	    {
 		struct xpmsg_flush_range *p = &cpuinfo.msg.u.xpmsg_flush_range;
 		int ctx = getcontext();
+
 		setcontext(p->ctx);
 		cpuinfo.sp_cache_flush(p->va, p->size);
 		setcontext(ctx);
-		}
+		break;
+	    }
+	case XPMSG_DEMAP_TLB_PAGE:
+	    {
+		struct xpmsg_flush_page *p = &cpuinfo.msg.u.xpmsg_flush_page;
+		int ctx = getcontext();
+
+		setcontext(p->ctx);
+		tlb_flush_page_real(p->va);
+		setcontext(ctx);
+		break;
+	    }
+	case XPMSG_DEMAP_TLB_SEGMENT:
+	    {
+		struct xpmsg_flush_segment *p = &cpuinfo.msg.u.xpmsg_flush_segment;
+		int ctx = getcontext();
+
+		setcontext(p->ctx);
+		tlb_flush_segment_real(p->vr, p->vs);
+		setcontext(ctx);
+		break;
+	    }
+	case XPMSG_DEMAP_TLB_REGION:
+	    {
+		struct xpmsg_flush_region *p = &cpuinfo.msg.u.xpmsg_flush_region;
+		int ctx = getcontext();
+
+		setcontext(p->ctx);
+		tlb_flush_region_real(p->vr);
+		setcontext(ctx);
+		break;
+	    }
+	case XPMSG_DEMAP_TLB_CONTEXT:
+	    {
+		struct xpmsg_flush_context *p = &cpuinfo.msg.u.xpmsg_flush_context;
+		int ctx = getcontext();
+
+		setcontext(p->ctx);
+		tlb_flush_context_real();
+		setcontext(ctx);
+		break;
+	    }
+	case XPMSG_DEMAP_TLB_ALL:
+		tlb_flush_all_real();
 		break;
 	}
+	cpuinfo.flags |= CPUFLG_GOTMSG;
 #endif
 }
 #endif
