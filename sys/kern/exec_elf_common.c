@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf_common.c,v 1.7 1998/09/12 17:20:02 christos Exp $	*/
+/*	$NetBSD: exec_elf_common.c,v 1.8 1998/10/03 20:39:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 #include <machine/reg.h>
 
 #ifdef COMPAT_LINUX
-#include <compat/linux/linux_exec.h>
+#include <compat/linux/common/linux_exec.h>
 #endif
 
 #ifdef COMPAT_SVR4
