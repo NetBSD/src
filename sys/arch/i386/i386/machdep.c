@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.25 2001/06/18 03:33:29 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.26 2001/06/24 19:29:52 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1695,7 +1695,8 @@ sys___sigreturn14(p, v, retval)
 		    !USERMODE(context.sc_cs, context.sc_eflags))
 			return (EINVAL);
 
-		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_gs = context.sc_gs;
+		tf->tf_fs = context.sc_fs;
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
 		tf->tf_eflags = context.sc_eflags;
