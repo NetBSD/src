@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.176 2004/05/25 20:42:41 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.177 2004/05/27 02:09:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.176 2004/05/25 20:42:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.177 2004/05/27 02:09:26 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1856,8 +1856,8 @@ wdccommand(struct wdc_channel *chp, u_int8_t drive, u_int8_t command,
 	/* Select drive, head, and addressing mode. */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
 	    WDSD_IBM | (drive << 4) | head);
-	/* Load parameters. wd_features(ATA/ATAPI) = wd_precomp(ST506) */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_precomp], 0,
+	/* Load parameters into the wd_features register. */
+	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_features], 0,
 	    precomp);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_cyl_lo], 0, cylin);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_cyl_hi],
