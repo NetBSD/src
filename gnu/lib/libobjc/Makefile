@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.15 2001/12/12 01:48:58 tv Exp $
+#	$NetBSD: Makefile,v 1.16 2001/12/12 23:00:50 thorpej Exp $
 
 REQUIRETOOLS=	yes
+NOLINT=		# defined
 
 .include <bsd.own.mk>
 
 LIB=		objc
-NOLINT=		# defined
 
 .if defined(USE_NEW_TOOLCHAIN)
 
