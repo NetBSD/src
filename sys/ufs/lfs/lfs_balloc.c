@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.7 1998/03/03 09:02:51 drochner Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.8 1998/06/08 04:27:51 scottr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)lfs_balloc.c	8.4 (Berkeley) 5/8/95
  */
+
+#include "opt_quota.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>

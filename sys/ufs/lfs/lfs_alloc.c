@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.11 1998/03/01 02:23:23 fvdl Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.12 1998/06/08 04:27:51 scottr Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)lfs_alloc.c	8.4 (Berkeley) 1/4/94
  */
+
+#include "opt_quota.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

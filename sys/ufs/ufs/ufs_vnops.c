@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.39 1998/05/08 18:31:13 kleink Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.40 1998/06/08 04:27:52 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -40,6 +40,7 @@
  *	@(#)ufs_vnops.c	8.28 (Berkeley) 7/31/95
  */
 
+#include "opt_quota.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>

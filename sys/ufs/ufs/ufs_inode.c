@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.10 1998/03/01 02:23:37 fvdl Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.11 1998/06/08 04:27:52 scottr Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)ufs_inode.c	8.9 (Berkeley) 5/14/95
  */
+
+#include "opt_quota.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
