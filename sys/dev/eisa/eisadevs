@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.20 2000/09/01 17:19:25 ad Exp $
+$NetBSD: eisadevs,v 1.21 2000/10/19 15:28:50 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -83,6 +83,7 @@ product BUS 6301	Bt763E Ethernet
 /* Compaq products */
 product	CPQ 4001	IDA array controller
 product CPQ 4002	IDA-2 array controller
+product CPQ 4010	IEAS array controller
 product CPQ 4020	SMART array controller
 product CPQ 4030	SMART-2/E array controller
 product CPQ 6101	NetFlex-2 ENET-TR
