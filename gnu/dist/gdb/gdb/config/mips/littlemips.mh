@@ -1,3 +1,0 @@
-# Host: Little-endian MIPS machine such as DECstation.
-NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o core-aout.o
-XM_FILE= xm-mips.h

@@ -1,9 +1,0 @@
-The help API of sushi simply consists of a file of formatted text that will
-be presented to the user in a help box (much like the one you are reading now).
-The helpfile may be the only file in the directory, such as a tutotial, or
-if there are other items in the directory, it is accessed by the F1 key when
-the user requests help in a menu or form.
-
-It is suggested that the file be formatted for an 80 column screen.
-
-$NetBSD: help,v 1.1 2001/01/05 02:06:55 garbled Exp $

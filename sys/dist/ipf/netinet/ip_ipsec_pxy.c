@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipsec_pxy.c,v 1.1.1.1 2004/12/31 11:30:43 martti Exp $	*/
+/*	$NetBSD: ip_ipsec_pxy.c,v 1.1 2004/10/01 15:26:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2001-2003 by Darren Reed
@@ -11,6 +11,9 @@
  * Id: ip_ipsec_pxy.c,v 2.20.2.3 2004/06/07 14:20:05 darrenr Exp
  *
  */
+
+__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.1 2004/10/01 15:26:00 christos Exp $");
+
 #define	IPF_IPSEC_PROXY
 
 
