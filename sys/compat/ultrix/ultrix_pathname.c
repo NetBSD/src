@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.21 2004/04/21 05:20:27 simonb Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.22 2004/04/21 07:05:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.21 2004/04/21 05:20:27 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.22 2004/04/21 07:05:07 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,13 +77,10 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.21 2004/04/21 05:20:27 simonb 
 #include <compat/ultrix/ultrix_syscallargs.h>
 #include <compat/common/compat_util.h>
 
-static int ultrixstatfs __P((struct statvfs *sp, caddr_t buf));
+static int ultrixstatfs(struct statvfs *, caddr_t);
 
 int
-ultrix_sys_creat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_creat(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_creat_args *uap = v;
 	struct sys_open_args ap;
@@ -101,10 +98,7 @@ ultrix_sys_creat(l, v, retval)
 
 
 int
-ultrix_sys_access(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_access(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_access_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -115,10 +109,7 @@ ultrix_sys_access(l, v, retval)
 }
 
 int
-ultrix_sys_stat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_stat(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_stat_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -129,10 +120,7 @@ ultrix_sys_stat(l, v, retval)
 }
 
 int
-ultrix_sys_lstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_lstat(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_lstat_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -143,10 +131,7 @@ ultrix_sys_lstat(l, v, retval)
 }
 
 int
-ultrix_sys_execv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_execv(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_execv_args /* {
 		syscallarg(const char *) path;
@@ -167,10 +152,7 @@ ultrix_sys_execv(l, v, retval)
 }
 
 int
-ultrix_sys_execve(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_execve(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_execve_args /* {
 		syscallarg(const char *) path;
@@ -192,10 +174,7 @@ ultrix_sys_execve(l, v, retval)
 }
 
 int
-ultrix_sys_open(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_open(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_open_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -254,9 +233,7 @@ struct ultrix_statfs {
  *  block units to DEV_BSIZE necessary? 
  */
 static int
-ultrixstatfs(sp, buf)
-	struct statvfs *sp;
-	caddr_t buf;
+ultrixstatfs(struct statvfs *sp, caddr_t buf)
 {
 	struct ultrix_statfs ssfs;
 
@@ -274,10 +251,7 @@ ultrixstatfs(sp, buf)
 
 
 int
-ultrix_sys_statfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_statfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_statfs_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -308,10 +282,7 @@ ultrix_sys_statfs(l, v, retval)
  * it goes here anyway.
  */
 int
-ultrix_sys_fstatfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_fstatfs_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -335,10 +306,7 @@ ultrix_sys_fstatfs(l, v, retval)
 }
 
 int
-ultrix_sys_mknod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_mknod(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_mknod_args *uap = v;
 	struct proc *p = l->l_proc;

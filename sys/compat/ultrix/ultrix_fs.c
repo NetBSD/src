@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.28 2004/04/21 05:20:27 simonb Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.29 2004/04/21 07:05:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.28 2004/04/21 05:20:27 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.29 2004/04/21 07:05:07 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,16 +151,14 @@ struct ultrix_getmnt_args {
 									
 
 static void
-make_ultrix_mntent __P(( struct statvfs *sp, struct ultrix_fs_data *tem));
+make_ultrix_mntent(struct statvfs *, struct ultrix_fs_data *);
 
 /*
  * Construct an Ultrix getmnt() ultrix_fs_data from the native NetBSD
  * struct statfs.
  */
 static void
-make_ultrix_mntent(sp, tem)
-	struct statvfs *sp;
-	struct ultrix_fs_data *tem;
+make_ultrix_mntent(struct statvfs *sp, struct ultrix_fs_data *tem)
 {
 
 	memset(tem, 0, sizeof (*tem));
@@ -204,10 +202,7 @@ make_ultrix_mntent(sp, tem)
 }
 
 int
-ultrix_sys_getmnt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_getmnt(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_getmnt_args *uap = v;
 	struct proc *p = l->l_proc;
@@ -348,10 +343,7 @@ struct ultrix_ufs_args {
 };
 
 int
-ultrix_sys_mount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_mount_args *uap = v;
 	struct proc *p = l->l_proc;
