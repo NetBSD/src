@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.14 2003/06/29 22:29:00 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.15 2003/09/26 18:09:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -70,13 +70,6 @@ struct netbsd32_sigcontext13 {
 	int	sc_g1;			/* %g1 to restore */
 	int	sc_o0;			/* %o0 to restore */
 };
-
-struct exec_package;
-void netbsd32_setregs (struct lwp *l, struct exec_package *pack, u_long stack);
-int netbsd32_sigreturn (struct proc *p, void *v, register_t *retval);
-void netbsd32_sendsig (int sig, sigset_t *mask, u_long code);
-
-extern char netbsd32_esigcode[], netbsd32_sigcode[];
 
 /*
  * Need to plug into get sparc specific ioctl's.
