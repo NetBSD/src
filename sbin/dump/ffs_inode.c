@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.13 2003/08/07 10:04:14 agc Exp $ */
+/*	$NetBSD: ffs_inode.c,v 1.14 2004/03/21 20:30:38 dsl Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ffs_inode.c,v 1.13 2003/08/07 10:04:14 agc Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.14 2004/03/21 20:30:38 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -78,7 +78,9 @@ fs_read_sblock(char *superblock)
 	int ns = 0;
 
 	sblock = (struct fs *)superblock;
-	for (i = 0; i < sblock_try[i] != -1; i++) {
+	for (i = 0; ; i++) {
+		if (sblock_try[i] == -1)
+			quit("can't find superblock\n");
 		rawread(sblock_try[i], (char *)superblock, MAXBSIZE);
 
 		switch(sblock->fs_magic) {
@@ -86,22 +88,24 @@ fs_read_sblock(char *superblock)
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/
 		case FS_UFS1_MAGIC:
-			goto found;
+			break;
 		case FS_UFS2_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/
 		case FS_UFS1_MAGIC_SWAPPED:
 			ns = 1;
 			ffs_sb_swap(sblock, sblock);
-			goto found;
+			break;
                 default:
                         continue;
                 }
+		if (!is_ufs2 && sblock_try[i] == SBLOCK_UFS2)
+			continue;
+		if (sblock->fs_old_flags & FS_FLAGS_UPDATED
+		    && sblock_try[i] != sblock->fs_sblockloc)
+			continue;
+		break;
         }
-	quit("can't find superblock\n");
-found:
-	if (is_ufs2 && sblock_try[i] != sblock->fs_sblockloc)
-		quit("bad superblock\n");
 	return 0;
 }
 
