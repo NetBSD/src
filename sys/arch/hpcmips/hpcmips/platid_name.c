@@ -1,4 +1,4 @@
-/* $Id: platid_name.c,v 1.1 2000/02/06 08:47:07 takemura Exp $ */
+/* $Id: platid_name.c,v 1.2 2000/02/06 14:02:43 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -232,7 +232,7 @@ struct platid_name platid_name_table[] = {
 	  "IBM WorkPad" },
 	{ &platid_mask_MACH_IBM_WORKPAD_Z50,
 	  "IBM WorkPad z50" },
-	{ &platid_mask_MACH_IBM_WORKPAD_Z5026011AU,
+	{ &platid_mask_MACH_IBM_WORKPAD_26011AU,
 	  "IBM WorkPad z50 2601 1AU" },
 };
 platid_name_table_size = 97;
