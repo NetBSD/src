@@ -1,10 +1,10 @@
-#	$Id: Makefile,v 1.4 1993/08/02 17:50:37 mycroft Exp $
+#	$Id: Makefile,v 1.5 1994/01/28 00:30:52 cgd Exp $
 
 PROG =	rpc.rstatd
 SRCS =	rstatd.c rstat_proc.c
 MAN8 =	rpc.rstatd.0
 
-DPADD=	${LIBRPCSVC} ${LIBUTIL}
-LDADD=	-lrpcsvc -lutil
+DPADD=	${LIBRPCSVC} ${LIBKVM}
+LDADD=	-lrpcsvc -lc -lkvm	# XXX (for getloadavg())
 
 .include <bsd.prog.mk>
