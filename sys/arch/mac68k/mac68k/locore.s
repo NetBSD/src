@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.140 2003/01/17 23:21:40 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.141 2003/04/08 22:57:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1475,7 +1475,7 @@ get_pte_fail10:
 GLOBAL(sanity_check)
 	.long	0x18621862	| this is our stack overflow checker.
 
-	.space	4 * NBPG
+	.space	4 * PAGE_SIZE
 ASLOCAL(tmpstk)
 
 GLOBAL(machineid)
