@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.15 2001/12/05 10:54:51 simonb Exp $ */
+/* $NetBSD: mcclock.c,v 1.16 2005/02/04 02:10:36 perry Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.15 2001/12/05 10:54:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.16 2005/02/04 02:10:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,9 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.15 2001/12/05 10:54:51 simonb Exp $");
 #endif
 
 
-void	mcclock_init __P((struct device *));
-void	mcclock_get __P((struct device *, time_t, struct clocktime *));
-void	mcclock_set __P((struct device *, struct clocktime *));
+void	mcclock_init(struct device *);
+void	mcclock_get(struct device *, time_t, struct clocktime *);
+void	mcclock_set(struct device *, struct clocktime *);
 
 const struct clockfns mcclock_clockfns = {
 	mcclock_init, mcclock_get, mcclock_set,

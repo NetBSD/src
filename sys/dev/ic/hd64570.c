@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.27 2004/04/22 00:17:11 itojun Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.28 2005/02/04 02:10:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.27 2004/04/22 00:17:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.28 2005/02/04 02:10:36 perry Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -169,11 +169,11 @@ static	void sca_port_starttx(sca_port_t *);
 static	void sca_port_up(sca_port_t *);
 static	void sca_port_down(sca_port_t *);
 
-static	int sca_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-			    struct rtentry *));
-static	int sca_ioctl __P((struct ifnet *, u_long, caddr_t));
-static	void sca_start __P((struct ifnet *));
-static	void sca_watchdog __P((struct ifnet *));
+static	int sca_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+			    struct rtentry *);
+static	int sca_ioctl(struct ifnet *, u_long, caddr_t);
+static	void sca_start(struct ifnet *);
+static	void sca_watchdog(struct ifnet *);
 
 static struct mbuf *sca_mbuf_alloc(struct sca_softc *, caddr_t, u_int);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.9 2003/01/31 00:07:40 thorpej Exp $ */
+/* $NetBSD: btvmeii.c,v 1.10 2005/02/04 02:10:45 perry Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.9 2003/01/31 00:07:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.10 2005/02/04 02:10:45 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,36 +54,36 @@ __KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.9 2003/01/31 00:07:40 thorpej Exp $");
 
 #include <dev/pci/universe_pci_var.h>
 
-static int b3_2706_match __P((struct device *, struct cfdata *, void *));
-static void b3_2706_attach __P((struct device *, struct device *, void *));
+static int b3_2706_match(struct device *, struct cfdata *, void *);
+static void b3_2706_attach(struct device *, struct device *, void *);
 
 /* exported via tag structs */
-int b3_2706_map_vme __P((void *, vme_addr_t, vme_size_t,
+int b3_2706_map_vme(void *, vme_addr_t, vme_size_t,
 		      vme_am_t, vme_datasize_t, vme_swap_t,
-		      bus_space_tag_t *, bus_space_handle_t *, vme_mapresc_t*));
-void b3_2706_unmap_vme __P((void *, vme_mapresc_t));
+		      bus_space_tag_t *, bus_space_handle_t *, vme_mapresc_t*);
+void b3_2706_unmap_vme(void *, vme_mapresc_t);
 
-int b3_2706_vme_probe __P((void *, vme_addr_t, vme_size_t, vme_am_t,
+int b3_2706_vme_probe(void *, vme_addr_t, vme_size_t, vme_am_t,
 			vme_datasize_t,
 			int (*)(void *, bus_space_tag_t, bus_space_handle_t),
-			void *));
+			void *);
 
-int b3_2706_map_vmeint __P((void *, int, int, vme_intr_handle_t *));
-void *b3_2706_establish_vmeint __P((void *, vme_intr_handle_t, int,
-				 int (*)(void *), void *));
-void b3_2706_disestablish_vmeint __P((void *, void *));
-void b3_2706_vmeint __P((void *, int, int));
+int b3_2706_map_vmeint(void *, int, int, vme_intr_handle_t *);
+void *b3_2706_establish_vmeint(void *, vme_intr_handle_t, int,
+				 int (*)(void *), void *);
+void b3_2706_disestablish_vmeint(void *, void *);
+void b3_2706_vmeint(void *, int, int);
 
-int b3_2706_dmamap_create __P((void *, vme_size_t,
+int b3_2706_dmamap_create(void *, vme_size_t,
 			    vme_am_t, vme_datasize_t, vme_swap_t,
 			    int, vme_size_t, vme_addr_t,
-			    int, bus_dmamap_t *));
-void b3_2706_dmamap_destroy __P((void *, bus_dmamap_t));
+			    int, bus_dmamap_t *);
+void b3_2706_dmamap_destroy(void *, bus_dmamap_t);
 
-int b3_2706_dmamem_alloc __P((void *, vme_size_t,
+int b3_2706_dmamem_alloc(void *, vme_size_t,
 			      vme_am_t, vme_datasize_t, vme_swap_t,
-			      bus_dma_segment_t *, int, int *, int));
-void b3_2706_dmamem_free __P((void *, bus_dma_segment_t *, int));
+			      bus_dma_segment_t *, int, int *, int);
+void b3_2706_dmamem_free(void *, bus_dma_segment_t *, int);
 
 struct b3_2706_vmemaprescs {
 	int wnd;
@@ -94,7 +94,7 @@ struct b3_2706_vmemaprescs {
 
 struct b3_2706_vmeintrhand {
 	TAILQ_ENTRY(b3_2706_vmeintrhand) ih_next;
-	int (*ih_fun) __P((void*));
+	int (*ih_fun)(void*);
 	void *ih_arg;
 	int ih_level;
 	int ih_vector;
@@ -391,7 +391,7 @@ b3_2706_vme_probe(vsc, addr, len, am, datasize, callback, cbarg)
 	vme_size_t len;
 	vme_am_t am;
 	vme_datasize_t datasize;
-	int (*callback) __P((void *, bus_space_tag_t, bus_space_handle_t));
+	int (*callback)(void *, bus_space_tag_t, bus_space_handle_t);
 	void *cbarg;
 {
 	bus_space_tag_t tag;
@@ -460,7 +460,7 @@ b3_2706_establish_vmeint(vsc, handle, prior, func, arg)
 	void *vsc;
 	vme_intr_handle_t handle;
 	int prior;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 {
 	struct b3_2706_vmeintrhand *ih;

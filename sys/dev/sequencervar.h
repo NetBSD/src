@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.7 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.8 2005/02/04 02:10:35 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ struct sequencer_softc {
 	u_long	input_stamp;
 };
 
-void seq_event_intr __P((void *, seq_event_rec *));
+void seq_event_intr(void *, seq_event_rec *);
 
 #define SEQUENCERUNIT(d) ((d) & 0x7f)
 #define SEQ_IS_OLD(d) ((d) & 0x80)

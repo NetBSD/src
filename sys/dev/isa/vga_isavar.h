@@ -1,4 +1,4 @@
-/* $NetBSD: vga_isavar.h,v 1.1 1998/03/22 15:14:36 drochner Exp $ */
+/* $NetBSD: vga_isavar.h,v 1.2 2005/02/04 02:10:41 perry Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -27,4 +27,4 @@
  * rights to redistribute these changes.
  */
 
-int	vga_isa_cnattach __P((bus_space_tag_t, bus_space_tag_t));
+int	vga_isa_cnattach(bus_space_tag_t, bus_space_tag_t);

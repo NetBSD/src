@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_op.c,v 1.12 2003/08/07 16:31:20 agc Exp $ */
+/*	$NetBSD: raster_op.c,v 1.13 2005/02/04 02:10:47 perry Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raster_op.c,v 1.12 2003/08/07 16:31:20 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raster_op.c,v 1.13 2005/02/04 02:10:47 perry Exp $");
 
 #include <sys/types.h>
 #ifdef _KERNEL
@@ -547,9 +547,9 @@ static u_int32_t twobytemask[2] = { 0x0000ffff, 0xffff0000 };
 
 /* Forward routines. */
 
-static int raster_blit __P((struct raster *, u_int32_t *, int, int, int,
-			    struct raster *, u_int32_t *, int, int, int,
-			    int, int));
+static int raster_blit(struct raster *, u_int32_t *, int, int, int,
+			struct raster *, u_int32_t *, int, int, int,
+			int, int);
 
 /* Raster operations.  */
 

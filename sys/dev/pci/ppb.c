@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.29 2004/08/30 15:05:20 drochner Exp $	*/
+/*	$NetBSD: ppb.c,v 1.30 2005/02/04 02:10:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.29 2004/08/30 15:05:20 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.30 2005/02/04 02:10:45 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,8 @@ struct ppb_softc {
 	pcitag_t sc_tag;		/* ...and tag. */
 };
 
-int	ppbmatch __P((struct device *, struct cfdata *, void *));
-void	ppbattach __P((struct device *, struct device *, void *));
+int	ppbmatch(struct device *, struct cfdata *, void *);
+void	ppbattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ppb, sizeof(struct ppb_softc),
     ppbmatch, ppbattach, NULL, NULL);

@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.15 2001/04/25 17:53:29 bouyer Exp $        */
+/*      $NetBSD: adwlib.h,v 1.16 2005/02/04 02:10:36 perry Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -1057,13 +1057,13 @@ do {									\
  * Adv Library functions available to drivers.
  */
 
-int	AdwInitFromEEPROM __P((ADW_SOFTC *));
-int	AdwInitDriver __P((ADW_SOFTC *));
-int	AdwExeScsiQueue __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
-int	AdwISR __P((ADW_SOFTC *));
-void	AdwResetChip __P((bus_space_tag_t, bus_space_handle_t));
-int	AdwSendIdleCmd __P((ADW_SOFTC *, u_int16_t, u_int32_t));
-int	AdwResetSCSIBus __P((ADW_SOFTC *));
-int	AdwResetCCB __P((ADW_SOFTC *));
+int	AdwInitFromEEPROM(ADW_SOFTC *);
+int	AdwInitDriver(ADW_SOFTC *);
+int	AdwExeScsiQueue(ADW_SOFTC *, ADW_SCSI_REQ_Q *);
+int	AdwISR(ADW_SOFTC *);
+void	AdwResetChip(bus_space_tag_t, bus_space_handle_t);
+int	AdwSendIdleCmd(ADW_SOFTC *, u_int16_t, u_int32_t);
+int	AdwResetSCSIBus(ADW_SOFTC *);
+int	AdwResetCCB(ADW_SOFTC *);
 
 #endif	/* _ADVANSYS_WIDE_LIBRARY_H_ */
