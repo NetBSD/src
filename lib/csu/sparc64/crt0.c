@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.4 1999/03/08 10:49:08 kleink Exp $	*/
+/*	$NetBSD: crt0.c,v 1.5 1999/03/13 03:42:33 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -90,8 +90,8 @@ extern unsigned char _etext, _eprol;
 #endif /* MCRT0 */
 
 /*
- * _start needs to gather up argc, argv, env_p, ps_strings, the termination
- * routine passed in %g1 and call __start to finish up the startup processing.
+ * __start needs to gather up argc, argv, env_p, ps_strings, the termination
+ * routine passed in %g1 and call ___start to finish up the startup processing.
  *
  * NB: We are violating the ELF spec by passing a pointer to the ps strings in %g1
  *	instead of a termination routine.
@@ -104,8 +104,10 @@ __data_start:					! Start of data section
 	.align 4
 	.global start
 	.global _start
+	.global __start
 start:
 _start:
+__start:
 	setx	__data_start, %o0, %g4		! Point %g4 to start of data section
 	clr	%g4				! egcs thinks this is zero. XXX
 	clr	%fp
@@ -116,12 +118,12 @@ _start:
 	mov	%g1, %o3			! ps_strings XXXX
 ");
 
-void __start __P((char **, void (*cleanup) __P((void)), const Obj_Entry *,
+void ___start __P((char **, void (*cleanup) __P((void)), const Obj_Entry *,
 		struct ps_strings *));
 int main __P((int, char **, char **));
 
 void
-__start(sp, cleanup, obj, ps_strings)
+___start(sp, cleanup, obj, ps_strings)
 	char **sp;
 	void (*cleanup) __P((void));		/* from shared loader */
 	const Obj_Entry *obj;			/* from shared loader */
@@ -164,7 +166,7 @@ __start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.4 1999/03/08 10:49:08 kleink Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.5 1999/03/13 03:42:33 eeh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
