@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2002/12/08 20:20:05 thorpej Exp $
+#	$NetBSD: Makefile,v 1.23 2003/02/07 01:52:53 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -53,7 +53,7 @@ native: .native/.configure_done
 			gdb_cv_printf_has_long_double=yes \
 			gdb_cv_printf_has_long_long=yes \
 			gdb_cv_scanf_has_long_double=yes \
-			sh ${DIST}/configure \
+			sh ${GNUHOSTDIST}/configure \
 			--build=`${.CURDIR}/../../gnu/dist/toolchain/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
 			--target=${MACHINE_GNU_PLATFORM}) && \
