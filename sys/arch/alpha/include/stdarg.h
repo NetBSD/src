@@ -1,4 +1,4 @@
-/* $NetBSD: stdarg.h,v 1.15 2005/01/02 21:55:59 christos Exp $ */
+/* $NetBSD: stdarg.h,v 1.16 2005/01/02 22:00:14 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,9 +40,9 @@
 typedef _BSD_VA_LIST_	va_list;
 
 #ifdef __lint__
-#define	va_start(a, l)			(a) = (va_list)(void *)&(l)
-#define	va_arg(a, t)			((a) ? 0 : 0)
-#define	va_end(a)			/* nothing */
+#define	va_start(a, l)		((a).__base = (void *)&(l), (a).__offset = 0)
+#define	va_arg(a, t)		((a).__base ? 0 : 0)
+#define	va_end(a)		/* nothing */
 #else /* !__lint__ */
 #if __GNUC_PREREQ__(2, 96)
 #define	va_start(ap, last)	__builtin_stdarg_start((ap), (last))
