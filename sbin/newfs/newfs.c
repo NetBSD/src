@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.79 2004/03/07 00:17:04 dsl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.80 2004/03/07 12:26:38 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.79 2004/03/07 00:17:04 dsl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.80 2004/03/07 12:26:38 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,7 +243,13 @@ main(int argc, char *argv[])
 	Fflag = Iflag = Zflag = 0;
 	if (strstr(getprogname(), "mfs")) {
 		mfs = 1;
-		Nflag++;
+	} else {
+		/* Undocumented, for ease of testing */
+		if (!strcmp(argv[1], "-mfs")) {
+			argv++;
+			argc--;
+			mfs = 1;
+		}
 	}
 
 	opstring = mfs ?
@@ -402,7 +408,12 @@ main(int argc, char *argv[])
 		if (sectorsize == 0)
 			sectorsize = DFL_SECSIZE;
 
-		if (!mfs) {	/* creating image in a regular file */
+		if (mfs) {
+			/* Default filesystem size to that of supplied device */
+			if (fssize == 0)
+				stat(special, &sb);
+		} else {
+			/* creating image in a regular file */
 			int fl;
 			if (Nflag)
 				fl = O_RDONLY;
