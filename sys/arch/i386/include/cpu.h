@@ -34,20 +34,21 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.11 1993/09/11 00:16:40 jtc Exp $
+ *	$Id: cpu.h,v 1.12 1993/12/17 00:10:49 mycroft Exp $
  */
 
 /*
  * Definitions unique to i386 cpu support.
  */
-#include "machine/frame.h"
-#include "machine/segments.h"
+#include <machine/psl.h>
+#include <machine/frame.h>
+#include <machine/segments.h>
 
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
+#define	COPY_SIGCODE	/* copy sigcode above user stack in exec */
 
 #define	cpu_exec(p)	/* nothing */
 
@@ -55,36 +56,49 @@
  * Arguments to hardclock, softclock and gatherstats
  * encapsulate the previous machine state in an opaque
  * clockframe; for now, use generic intrframe.
+ *
+ * XXX intrframe has a lot of gunk we don't need.
  */
 typedef struct intrframe clockframe;
 
 #define	CLKF_USERMODE(framep)	(ISPL((framep)->if_cs) == SEL_UPL)
 #define	CLKF_BASEPRI(framep)	((framep)->if_ppl == 0)
 #define	CLKF_PC(framep)		((framep)->if_eip)
+#define	CLKF_INTR(framep)	(0)	/* XXX should have an interrupt stack */
+
+/*
+ * Software interrupt request `register'.
+ */
+int	sir;
+
+#define	SIR_AST		0
+#define	SIR_NET		1
+#define	SIR_CLOCK	2
+
+#define	softintr(n)	(sir |= 1 << (n))
+#define	setsoftnet()	softintr(SIR_NET)
+#define	setsoftclock()	softintr(SIR_CLOCK)
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched()	{ want_resched++; aston(); }
+int	want_resched;	/* resched() was called */
+#define	need_resched()	(want_resched = 1, softintr(SIR_AST))
 
 /*
- * Give a profiling tick to the current process from the softclock
- * interrupt.  On tahoe, request an ast to send us through trap(),
- * marking the proc as needing a profiling tick.
+ * Give a profiling tick to the current process when the user profiling
+ * buffer pages are invalid.  On the i386, request an ast to send us
+ * through trap(), marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	{ (p)->p_flag |= SOWEUPC; aston(); }
+#define	profile_tick(p, framep)	((p)->p_flag |= SOWEUPC, softintr(SIR_AST))
+#define	need_proftick(p)	((p)->p_flag |= SOWEUPC, softintr(SIR_AST))
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston()
-
-#define aston() (astpending++)
-
-int	astpending;		/* need to trap before returning to user mode */
-int	want_resched;		/* resched() was called */
+#define	signotify(p)	softintr(SIR_AST)
 
 /*
  * pull in #defines for kinds of processors
