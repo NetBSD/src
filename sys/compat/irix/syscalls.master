@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.16 2001/12/26 11:04:20 manu Exp $
+	$NetBSD: syscalls.master,v 1.17 2001/12/27 11:07:24 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -213,9 +213,11 @@
 111	UNIMPL		setdomainname
 112	UNIMPL		truncate
 113	UNIMPL		ftruncate
-114	UNIMPL		rename
-115	UNIMPL		symlink
-116	UNIMPL		readlink
+114	NOARGS		{ int sys_rename(const char *from, const char *to); }
+115	NOARGS		{ int sys_symlink(const char *path, \
+			    const char *link); }
+116	NOARGS		{ int sys_readlink(const char *path, char *buf, \
+			    size_t count); }
 117	UNIMPL		lstat
 118	UNIMPL
 119	UNIMPL		nfs_svc
