@@ -38,7 +38,7 @@
  * from: Utah $Hdr: st.c 1.8 90/10/14$
  *
  *      @(#)st.c	7.3 (Berkeley) 5/4/91
- *	$Id: st.c,v 1.12 1994/02/14 18:22:58 chopps Exp $
+ *	$Id: st.c,v 1.13 1994/02/20 21:15:46 chopps Exp $
  */
 
 /*
@@ -317,6 +317,7 @@ struct st_tape_parm {
 	{"VIPER 150",	9,	MT_ISVIPER1,	14, 36, 12, 12},
 	{"Python 27216", 12,	MT_ISPYTHON,	14, 36, 12, 12},
 	{"Python 25501", 12,	MT_ISPYTHON,	14, 36, 12, 12},
+	{"Python 25601", 12,    MT_ISPYTHON,    14, 36, 12, 12},	 
 	{"HP35450A",	8,	MT_ISHPDAT,	14, 36, 12, 12},
 	{"5150ES",	6,	MT_ISWANGTEK,	14, 36, 12, 12},
 	{"CP150",	5,	MT_ISCALIPER,	14, 36, 12, 12},
