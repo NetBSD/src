@@ -1,4 +1,4 @@
-.\"	$NetBSD: nl.1,v 1.6 2002/02/08 01:36:29 ross Exp $
+.\"	$NetBSD: nl.1,v 1.7 2002/09/26 01:28:22 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,7 +81,7 @@ utility reads lines from the named
 .Ar file
 or the standard input if the
 .Ar file
-argument is ommitted,
+argument is omitted,
 applies a configurable line numbering filter operation and writes the result
 to the standard output.
 .Pp
@@ -89,11 +89,13 @@ The
 .Nm
 utility treats the text it reads in terms of logical pages.
 Unless specified otherwise, line numbering is reset at the start of each
-logical page.  A logical page consists of a header, a body and a footer
-section; empty sections are valid.  Different line numbering options are
-independently available for header, body and footer sections.
+logical page.
+A logical page consists of a header, a body and a footer section; empty
+sections are valid.
+Different line numbering options are independently available for header,
+body and footer sections.
 .Pp
-The starts of logical page sections are signalled by input lines containing
+The starts of logical page sections are signaled by input lines containing
 nothing but one of the following sequences of delimiter characters:
 .Pp
 .Bd -unfilled -offset indent
@@ -105,7 +107,7 @@ nothing but one of the following sequences of delimiter characters:
 .El
 .Ed
 .Pp
-If the input does not contain any logical page section signalling directives,
+If the input does not contain any logical page section signaling directives,
 the text being read is assumed to consist of a single logical page body.
 .Pp
 The following options are available:
@@ -133,9 +135,9 @@ The default
 for logical page body lines is t.
 .It Fl d Ar delim
 Specify the delimiter characters used to indicate the start of a logical
-page section in the input file.  At most two characters may be specified;
-if only one character is specified, the first character is replaced and the
-second character remains unchanged.
+page section in the input file.
+At most two characters may be specified; if only one character is specified,
+the first character is replaced and the second character remains unchanged.
 The default
 .Ar delim
 characters are ``\e:''.
