@@ -264,7 +264,7 @@ const_section ()					\
       else								\
 	data_section ();						\
     }									\
-  if (*tree_code_type[(int) TREE_CODE (T)] == 'c')			\
+  if (TREE_CODE_CLASS (TREE_CODE (T)) == 'c')				\
     {									\
       if ((TREE_CODE (T) == STRING_CST && flag_writable_strings))	\
 	data_section ();						\
@@ -304,9 +304,9 @@ const_section ()					\
 
 /* The following definitions are used in libgcc2.c with the __main
    function.  The _SHR symbol is used when the sharable image library
-   for libg++ is used - this is picked up automatically by the linker
-   and this symbol points to the start of the __CTOR_LIST__ from libg++.
-   If libg++ is not being used, then __CTOR_LIST_SHR__ occurs just after
+   for the C++ library is used - this is picked up automatically by the linker
+   and this symbol points to the start of __CTOR_LIST__ from the C++ library.
+   If the C++ library is not used, then __CTOR_LIST_SHR__ occurs just after
    __CTOR_LIST__, and essentially points to the same list as __CTOR_LIST.  */
 
 #ifdef L__main
@@ -357,3 +357,13 @@ do {									\
 } while (0)
 
 #endif /* L__main */
+
+/* Specify the list of include file directories.  */
+#define INCLUDE_DEFAULTS \
+{									\
+  { "GNU_GXX_INCLUDE:", "G++", 1, 1 },					\
+  { "GNU_CC_INCLUDE:", "GCC", 0, 0 },	/* GNU includes */		\
+  { "SYS$SYSROOT:[SYSLIB.]", 0, 0, 0 }, /* VAX-11 "C" includes */	\
+  { ".", 0, 0, 1 },		/* Make normal VMS filespecs work.  */	\
+  { 0, 0, 0, 0 }							\
+}
