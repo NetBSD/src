@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.36 1996/02/04 02:15:25 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.37 1996/02/09 01:19:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -115,11 +115,15 @@ exit1(p, rv)
 	MALLOC(p->p_ru, struct rusage *, sizeof(struct rusage),
 		M_ZOMBIE, M_WAITOK);
 	/*
-	 * If parent is waiting for us to exit or exec,
-	 * P_PPWAIT is set; we will wakeup the parent below.
+	 * If parent is waiting for us to exit or exec, P_PPWAIT is set; we
+	 * wake up the parent early to avoid deadlock.
 	 */
-	p->p_flag &= ~(P_TRACED | P_PPWAIT);
 	p->p_flag |= P_WEXIT;
+	p->p_flag &= ~P_TRACED;
+	if (p->p_flag & P_PPWAIT) {
+		p->p_flag &= ~P_PPWAIT;
+		wakeup((caddr_t)p->p_pptr);
+	}
 	p->p_sigignore = ~0;
 	p->p_siglist = 0;
 	untimeout(realitexpire, (caddr_t)p);
@@ -206,7 +210,7 @@ exit1(p, rv)
 
 	q = p->p_children.lh_first;
 	if (q)		/* only need this if any child is S_ZOMB */
-		wakeup((caddr_t) initproc);
+		wakeup((caddr_t)initproc);
 	for (; q != 0; q = nq) {
 		nq = q->p_sibling.le_next;
 		proc_reparent(q, initproc);
