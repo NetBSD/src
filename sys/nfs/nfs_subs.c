@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.100 2002/01/26 02:52:20 chs Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.101 2002/02/28 21:38:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.100 2002/01/26 02:52:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.101 2002/02/28 21:38:08 fvdl Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1561,6 +1561,8 @@ nfs_loadattrcache(vpp, fp, vaper)
 	int32_t rdev;
 	struct nfsnode *np;
 	extern int (**spec_nfsv2nodeop_p) __P((void *));
+	uid_t uid;
+	gid_t gid;
 
 	if (v3) {
 		vtyp = nfsv3tov_type(fp->fa_type);
@@ -1582,6 +1584,8 @@ nfs_loadattrcache(vpp, fp, vaper)
 		if (vtyp == VCHR && rdev == 0xffffffff)
 			vtyp = VFIFO;
 	}
+
+	vmode &= ALLPERMS;
 
 	/*
 	 * If v_type == VNON it is a new node, so fill in the v_type,
@@ -1628,9 +1632,19 @@ nfs_loadattrcache(vpp, fp, vaper)
 		}
 		np->n_mtime = mtime.tv_sec;
 	}
+	uid = fxdr_unsigned(uid_t, fp->fa_uid);
+	gid = fxdr_unsigned(gid_t, fp->fa_gid);
 	vap = np->n_vattr;
+
+	/*
+	 * Invalidate access cache if uid, gid or mode changed.
+	 */
+	if (np->n_accstamp != -1 &&
+	    (gid != vap->va_gid || uid != vap->va_uid || vmode != vap->va_mode))
+		np->n_accstamp = -1;
+
 	vap->va_type = vtyp;
-	vap->va_mode = vmode & ALLPERMS;
+	vap->va_mode = vmode;
 	vap->va_rdev = (dev_t)rdev;
 	vap->va_mtime = mtime;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
@@ -1651,8 +1665,8 @@ nfs_loadattrcache(vpp, fp, vaper)
 	}
 	if (v3) {
 		vap->va_nlink = fxdr_unsigned(u_short, fp->fa_nlink);
-		vap->va_uid = fxdr_unsigned(uid_t, fp->fa_uid);
-		vap->va_gid = fxdr_unsigned(gid_t, fp->fa_gid);
+		vap->va_uid = uid;
+		vap->va_gid = gid;
 		vap->va_size = fxdr_hyper(&fp->fa3_size);
 		vap->va_bytes = fxdr_hyper(&fp->fa3_used);
 		vap->va_fileid = fxdr_unsigned(int32_t,
@@ -1663,8 +1677,8 @@ nfs_loadattrcache(vpp, fp, vaper)
 		vap->va_filerev = 0;
 	} else {
 		vap->va_nlink = fxdr_unsigned(u_short, fp->fa_nlink);
-		vap->va_uid = fxdr_unsigned(uid_t, fp->fa_uid);
-		vap->va_gid = fxdr_unsigned(gid_t, fp->fa_gid);
+		vap->va_uid = uid;
+		vap->va_gid = gid;
 		vap->va_size = fxdr_unsigned(u_int32_t, fp->fa2_size);
 		vap->va_bytes = fxdr_unsigned(int32_t, fp->fa2_blocks)
 		    * NFS_FABLKSIZE;
