@@ -1,4 +1,4 @@
-/*      $NetBSD: ixm1200_pci.c,v 1.1 2002/07/15 17:13:32 ichiro Exp $ */
+/*      $NetBSD: ixm1200_pci.c,v 1.2 2002/07/21 22:16:58 ichiro Exp $ */
 /*
  * Copyright (c) 2002
  *      Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -61,6 +61,10 @@ void *ixm1200_pci_intr_establish(void *, pci_intr_handle_t, int,
 	int (*func)(void *), void *);
 void ixm1200_pci_intr_disestablish(void *, void *);
 
+#ifdef PCI_DEBUG
+extern void ixp12x0_pci_decompose_tag();
+#endif
+
 void
 ixm1200_pci_init(pc, cookie)
 	pci_chipset_tag_t pc;
@@ -86,7 +90,7 @@ ixm1200_pci_intr_map(pa, ihp)
 	pcitag_t intrtag = pa->pa_intrtag;
 	int bus, device, function;
 
-	ixp12x0_pci_decompose_tag(pcv, intrtag, &bus, &device, &function);
+	ixp12x0_pci_decompose_tag(v, intrtag, &bus, &device, &function);
 	printf("ixm1200_pci_intr_map: v=%p, tag=%08lx intrpin=%d line=%d dev=%d\n",
 		v, intrtag, pin, line, device);
 #else
