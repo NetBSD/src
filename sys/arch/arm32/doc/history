@@ -1,4 +1,4 @@
-#	$NetBSD: history,v 1.6 2001/06/19 13:45:52 wiz Exp $
+#	$NetBSD: history,v 1.7 2001/10/17 23:58:35 reinoud Exp $
 
 3135	- fixed mode selection on boot
 	- page up/down, insert and delete now generate the correct codes in
@@ -456,3 +456,5 @@
 NetBSD/arm32 source code is now merged in to the NetBSD source tree.
 All code changes are now logged via CVS and are available from the
 NetBSD source-changes mailing list.
+
+18/10/2001 moving Acorn machines out of arch/arm32 into own arch/acorn32.
