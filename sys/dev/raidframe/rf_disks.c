@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.44 2003/06/29 22:30:32 fvdl Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.45 2003/10/21 00:22:04 fvdl Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.44 2003/06/29 22:30:32 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.45 2003/10/21 00:22:04 fvdl Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -629,7 +629,7 @@ rf_ConfigureDisk(raidPtr, buf, diskPtr, row, col)
 	diskPtr->status = rf_ds_optimal;
 
 	raidPtr->raid_cinfo[row][col].ci_vp = NULL;
-	raidPtr->raid_cinfo[row][col].ci_dev = NULL;
+	raidPtr->raid_cinfo[row][col].ci_dev = 0;
 
 	error = raidlookup(diskPtr->devname, proc, &vp);
 	if (error) {

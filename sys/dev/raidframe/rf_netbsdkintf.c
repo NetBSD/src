@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.162 2003/08/07 16:31:19 agc Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.163 2003/10/21 00:22:04 fvdl Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.162 2003/08/07 16:31:19 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.163 2003/10/21 00:22:04 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -3161,7 +3161,7 @@ rf_create_configuration(ac,config,raidPtr)
 	}
 
 	for(i=0;i<RF_MAXDBGV;i++) {
-		config->debugVars[i][0] = NULL;
+		config->debugVars[i][0] = 0;
 	}
 }
 
