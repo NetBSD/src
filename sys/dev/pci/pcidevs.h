@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.584 2003/10/18 18:53:09 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.585 2003/10/22 11:31:18 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.586 2003/10/18 18:51:29 matt Exp 
+ *	NetBSD: pcidevs,v 1.587 2003/10/22 11:30:52 fvdl Exp 
  */
 
 /*
@@ -1951,6 +1951,14 @@
 #define	PCI_PRODUCT_NVIDIA_RIVATNT2M64	0x002d		/* RIVA TNT2 Model 64 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_ATA133	0x0065		/* nForce2 ATA133 IDE */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AC	0x006a		/* nForce2 MCP-T AC-97 */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_PCHB	0x00d1		/* nForce3 Host-PCI bridge */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_PCIB	0x00d0		/* nForce3 PCI-ISA bridge */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_SMBUS	0x00d4		/* nForce3 SMBus controller */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_ATA133	0x00d5		/* nForce3 ATA133 IDE */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_OHCI	0x00d7		/* nForce3 USB Host Controller */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_EHCI	0x00d8		/* nForce3 USB2 Host Controller */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_MCPT_AC	0x00da		/* nForce3 MCP-T AC-97 */
+#define	PCI_PRODUCT_NVIDIA_NFORCE3_PPB	0x00dd		/* nforce3 PCI-PCI bridge */
 #define	PCI_PRODUCT_NVIDIA_ALADDINTNT2	0x00a0		/* Aladdin TNT2 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE256	0x0100		/* GeForce 256 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCEDDR	0x0101		/* GeForce DDR */
@@ -2055,6 +2063,7 @@
 #define	PCI_PRODUCT_PROMISE_MBULTRA133	0x1275		/* Ultra133/ATA Bus Master IDE Accelerator (MB) */
 #define	PCI_PRODUCT_PROMISE_SATA150TX2PLUSO	0x3375		/* Serial ATA/150 TX2 Controller plus one parallel IDE bus */
 #define	PCI_PRODUCT_PROMISE_SATA150TX2PLUS	0x3376		/* Serial ATA/150 TX2plus Bus Master IDE Accelerator */
+#define	PCI_PRODUCT_PROMISE_SATA150FT378	0x3373		/* FastTrak 378 Serial ATA/150 Controller */
 #define	PCI_PRODUCT_PROMISE_SATA150TX4	0x3318		/* Serial ATA/150 TX4 Controller */
 #define	PCI_PRODUCT_PROMISE_ULTRA100	0x4d30		/* Ultra100/ATA Bus Master IDE Accelerator */
 #define	PCI_PRODUCT_PROMISE_ULTRA33	0x4d33		/* Ultra33/ATA Bus Master IDE Accelerator */
@@ -2089,6 +2098,7 @@
 #define	PCI_PRODUCT_REALTEK_RT8129	0x8129		/* 8129 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8139B	0x8138		/* 8139B 10/100 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 10/100 Ethernet */
+#define	PCI_PRODUCT_REALTEK_RT8169	0x8169		/* 8169 10/100/1000 Ethernet */
 
 /* RICOH products */
 #define	PCI_PRODUCT_RICOH_Rx5C465	0x0465		/* 5C465 PCI-CardBus bridge */

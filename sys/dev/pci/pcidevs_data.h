@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.582 2003/10/18 18:53:09 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.583 2003/10/22 11:31:18 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.586 2003/10/18 18:51:29 matt Exp 
+ *	NetBSD: pcidevs,v 1.587 2003/10/22 11:30:52 fvdl Exp 
  */
 
 /*
@@ -6400,6 +6400,54 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "nForce2 MCP-T AC-97",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PCHB,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce3 Host-PCI bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PCIB,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce3 PCI-ISA bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_SMBUS,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce3 SMBus controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_ATA133,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce3 ATA133 IDE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_OHCI,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce3 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_EHCI,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce3 USB2 Host Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_MCPT_AC,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce3 MCP-T AC-97",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PPB,
+	    0,
+	    "Nvidia Corporation",
+	    "nforce3 PCI-PCI bridge",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_ALADDINTNT2,
 	    0,
 	    "Nvidia Corporation",
@@ -6904,6 +6952,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Serial ATA/150 TX2plus Bus Master IDE Accelerator",
 	},
 	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_SATA150FT378,
+	    0,
+	    "Promise Technology",
+	    "FastTrak 378 Serial ATA/150 Controller",
+	},
+	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_SATA150TX4,
 	    0,
 	    "Promise Technology",
@@ -7046,6 +7100,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Realtek Semiconductor",
 	    "8139 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
+	    0,
+	    "Realtek Semiconductor",
+	    "8169 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C465,
