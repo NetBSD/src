@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.26 2001/02/05 12:26:08 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.27 2001/02/12 17:41:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -965,6 +965,9 @@ genfs_putpages(v)
 		return error;
 	}
 
+	if (vp->v_uvm.u_size > 2147483648LL)
+		vp->v_flag |= 0x10000;
+
 	error = error2 = 0;
 	npages = ap->a_count;
 	fs_bshift = vp->v_mount->mnt_fs_bshift;
@@ -1042,6 +1045,10 @@ genfs_putpages(v)
 				       dev_bshift);
 		UVMHIST_LOG(ubchist, "vp %p offset 0x%x bcount 0x%x blkno 0x%x",
 			    vp, offset, bp->b_bcount, bp->b_blkno);
+		if (vp->v_flag & 0x10000)
+			printf("vp %p offset 0x%llx bcount 0x%lx blkno 0x%x",
+			    vp, (unsigned long long)offset, bp->b_bcount,
+			    bp->b_blkno);
 		VOP_STRATEGY(bp);
 	}
 	if (skipbytes) {
