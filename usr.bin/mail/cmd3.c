@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.10 1998/10/08 17:36:55 wsanchez Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.11 1999/02/09 04:51:30 dean Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.10 1998/10/08 17:36:55 wsanchez Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.11 1999/02/09 04:51:30 dean Exp $");
 #endif
 #endif /* not lint */
 
@@ -431,7 +431,9 @@ unset(v)
 	errs = 0;
 	for (ap = arglist; *ap != NOSTR; ap++) {
 		if ((vp2 = lookup(*ap)) == NOVAR) {
-			if (!sourcing) {
+			if (getenv(*ap)) {
+				unsetenv(*ap);
+			} else if (!sourcing) {
 				printf("\"%s\": undefined variable\n", *ap);
 				errs++;
 			}
