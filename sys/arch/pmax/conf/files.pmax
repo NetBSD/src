@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.21 1995/08/29 10:12:48 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.22 1995/09/18 03:09:05 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -33,11 +33,6 @@ file	arch/pmax/tc/asic.c		ioasic
 # Real-time clock (not optional)
 device	clock at ioasic,tc,mainbus 
 file	arch/pmax/pmax/clock.c		clock
-
-# Config for Ted Lemon's changes to console driver:
-# use some bogus device till changes to framebuffer code are committed.
-device	fb at mainbus
-file	arch/pmax/dev/foo.c		fb needs-count
 
 
 #
@@ -93,6 +88,7 @@ file	arch/pmax/tc/if_le.c		le needs-flag
 # 3100 (pmax) onboard framebuffer
 device pm at mainbus
 file	arch/pmax/dev/pm.c		pm needs-count
+file	arch/pmax/dev/bt478.c			pm
 
 ########################################################################
 # Turbochannel options.
@@ -114,6 +110,7 @@ file	arch/pmax/tc/scc.c		scc	needs-count
 # MAXINE onboard framebuffer
 device	xcfb at tc
 file	arch/pmax/dev/xcfb.c 		xcfb needs-count
+file	arch/pmax/dev/ims332.c		xcfb
 
 # DECWRL 45Mbit T3 interface
 device	tt at tc
@@ -139,9 +136,10 @@ file	arch/pmax/stand/libsa/callvec.c
 file	arch/pmax/pmax/elf.c
 file	arch/pmax/pmax/mainbus.c
 
-# fb.c is standard for now, until the redirectable FB console is finished.
-file	arch/pmax/dev/fb.c
-file	arch/pmax/pmax/cons.c
+# Use the old 4.4bsd pmax glass-tty console driver, until we move to
+# sun/ansi rcons and/or the Alpha-style console pseudo-device hierarchy.
+file	arch/pmax/pmax/cpu_cons.c
+file	dev/cons.c
 
 file	netinet/in_cksum.c
 file	netns/ns_cksum.c			ns
@@ -150,11 +148,39 @@ file	compat/ultrix/ultrix_misc.c		compat_ultrix
 file	compat/ultrix/ultrix_syscalls.c		compat_ultrix
 file	compat/ultrix/ultrix_sysent.c		compat_ultrix
 
-# Ted Lemon's not-quite-finished-as-yet redirectabe FB console driver.
-# Don't configure  one until the rcons code is merged!
-device	rcons	at mainbus
-file	arch/pmax/dev/rcons.c			rcons	needs-count
-file	arch/pmax/pmax/cpu_cons.c		rcons
+
+## Support code for LK-201 keyboards, mice, and qvss ring buffers
+file	arch/pmax/dev/lk201.c		pm or cfb or sfb or mfb or xcfb
+file	arch/pmax/dev/qvss_compat.c	fb
+
+
+# VDAC/RAMDAC support for framebuffers. Other  devices supported by
+# NetBSD  may use the same chips, too.
+file	arch/pmax/dev/bt459.c			cfb or sfb
+
+#
+# Pseudo-device driver for framebuffers.  All user-level requests,
+# including open(), go through the fb driver, which presents a consistent
+# interface to all framebuffers.  Configure as many units as you
+# have framebuffers.  Provides qvss-style interface compatible with
+# X11R5 servers.
+#
+pseudo-device	fb
+file	arch/pmax/dev/fb.c		fb needs-count
+
+#
+# Pseudo-driver for vt100-style  glass-tty console on framebuffer.
+# Only one unit (for a single console deviec) is supported
+pseudo-device	rcons
+file	arch/pmax/dev/rcons.c			rcons	needs-flag
+
+file	arch/sparc/rcons/raster_op.c		rcons
+#file	arch/pmax/rcons/rcons_kern.c		rcons
+file	arch/sparc/rcons/rcons_kern.c		rcons
+file	arch/sparc/rcons/rcons_subr.c		rcons
+file	arch/sparc/rcons/raster_text.c		rcons
+file	arch/pmax/dev/font.c			rcons
+
 
 # Glue for old-style config
 file	arch/pmax/pmax/conf-glue.c
