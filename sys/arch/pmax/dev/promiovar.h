@@ -1,4 +1,4 @@
-/*	$NetBSD: promio.c,v 1.22 1998/03/24 08:31:34 jonathan Exp $	*/
+/*	$NetBSD: promiovar.h,v 1.1 1998/03/24 08:31:34 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,108 +42,6 @@
  *	@(#)cons.c	8.2 (Berkeley) 1/11/94
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promio.c,v 1.22 1998/03/24 08:31:34 jonathan Exp $");
-
-#include <sys/param.h>
-#include <sys/device.h>
-#include <dev/cons.h>
-
-#include <pmax/stand/dec_prom.h>
-#include <pmax/dev/promiovar.h>
-
-
-static int  romgetc	__P ((dev_t));
-static void romputc	__P ((dev_t, int));
-static void rompollc	__P((dev_t, int));
-
-/*
- * Default consdev, for errors or warnings before
- * consinit runs: use the PROM.
- */
-struct consdev promcd = {
-	(void (*)(struct consdev *))0,		/* probe */
-	(void (*)(struct consdev *))0,		/* init */
-	(int  (*)(dev_t))     romgetc,		/* getc */
-	(void (*)(dev_t, int))romputc,		/* putc */
-	(void (*)(dev_t, int))rompollc,		/* pollc */
-	makedev (0, 0),
-	CN_DEAD,
-};
-
-/*
- * Get character from ROM console.
- */
-static int
-romgetc(dev)
-	dev_t dev;
-{
-	int s = splhigh ();
-	int chr;
-	chr = (*callv->_getchar)();
-	splx (s);
-	return chr;
-}
-
-
-/*
- * Print a character on ROM console.
- */
-static void
-romputc (dev, c)
-	dev_t dev;
-	register int c;
-{
-	int s;
-	s = splhigh();
-	(*callv->_printf)("%c", c);
-	splx(s);
-}
-
-
-/*
- * Toggle polling. Not implemented in NetBSD.
- */
-static void
-rompollc (dev, c)
-	dev_t dev;
-	register int c;
-{
-	return;
-}
-
-
-
-/*
- * Call back to the PROM to find out what devices it is using
- * as console.
- * Encoding is idiosyncratic; see DECstation Owners Guide.
- */
-void
-prom_findcons(kbdslot, crtslot, prom_using_screen)
-	int *kbdslot;
-	int *crtslot;
-	int *prom_using_screen;
-{
-	register char *oscon = 0;	/* PROM osconsole string */
-
-	/*
-	 * Get and parse the "osconsole" environment variable.
-	 */
-	*crtslot = *kbdslot = -1;
-	oscon = (*callv->_getenv)("osconsole");
-	if (oscon && *oscon >= '0' && *oscon <= '9') {
-		*kbdslot = *oscon - '0';
-		*prom_using_screen = 0;
-		while (*++oscon) {
-			if (*oscon == ',')
-				*prom_using_screen = 1;
-			else if (*prom_using_screen &&
-			    *oscon >= '0' && *oscon <= '9') {
-				*crtslot = *kbdslot;
-				*kbdslot = *oscon - '0';
-				break;
-			}
-		}
-	}
-}
+struct consdev;
+extern struct consdev promcd;
+void prom_findcons __P((int *kbdslot, int *crtslot, int *prom_using_screen));
