@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.9 1999/03/03 18:06:52 christos Exp $	*/
+/*	$NetBSD: pax.c,v 1.10 1999/08/24 07:57:07 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.9 1999/03/03 18:06:52 christos Exp $");
+__RCSID("$NetBSD: pax.c,v 1.10 1999/08/24 07:57:07 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,7 @@ int	tflag;			/* restore access time after read */
 int	uflag;			/* ignore older modification time files */
 int	vflag;			/* produce verbose output */
 int	zflag;			/* use gzip */
+int	Aflag;			/* honor absolute path */
 int	Dflag;			/* same as uflag except inode change time */
 int	Hflag;			/* follow command line symlinks (write only) */
 int	Lflag;			/* follow symlinks when writing */

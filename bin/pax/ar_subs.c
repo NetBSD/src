@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.11 1999/03/03 18:06:52 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.12 1999/08/24 07:57:06 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.11 1999/03/03 18:06:52 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.12 1999/08/24 07:57:06 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,6 +112,9 @@ list()
 	 * step through the archive until the format says it is done
 	 */
 	while (next_head(arcn) == 0) {
+		if (arcn->name[0] == '/' && !check_Aflag()) {
+			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
+		}
 		/*
 		 * check for pattern, and user specified options match.
 		 * When all patterns are matched we are done.
@@ -197,6 +200,9 @@ extract()
 	 */
 	while (next_head(arcn) == 0) {
 
+		if (arcn->name[0] == '/' && !check_Aflag()) {
+			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
+		}
 		/*
 		 * check for pattern, and user specified options match. When
 		 * all the patterns are matched we are done
@@ -435,6 +441,9 @@ wr_archive(arcn, is_app)
 			}
 		}
 
+		if (arcn->name[0] == '/' && !check_Aflag()) {
+			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
+		}
 		/*
 		 * Now modify the name as requested by the user
 		 */
