@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.6 2002/03/05 12:28:35 mrg Exp $	*/
+/*	$NetBSD: os.c,v 1.7 2002/03/05 12:54:34 simonb Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -66,7 +66,6 @@ extern int sigs;
 #if !HAVE_STRERROR
 static char *strerror __P((int));
 #endif
-static long get_maxlong __P((void));
 
 /*
  * Like read() system call, but is deliberately interruptible.
