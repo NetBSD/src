@@ -1,4 +1,4 @@
-/*	$NetBSD: rain.c,v 1.7 1995/04/29 00:51:04 mycroft Exp $	*/
+/*	$NetBSD: rain.c,v 1.8 1997/10/12 01:12:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: rain.c,v 1.7 1995/04/29 00:51:04 mycroft Exp $";
+__RCSID("$NetBSD: rain.c,v 1.8 1997/10/12 01:12:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,51 +53,49 @@ static char rcsid[] = "$NetBSD: rain.c,v 1.7 1995/04/29 00:51:04 mycroft Exp $";
  */
 
 #include <sys/types.h>
-#include <stdio.h>
-#include <termios.h>
+#include <sys/ioctl.h>
+#include <curses.h>
+#include <err.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <termios.h>
 
 #define	cursor(c, r)	tputs(tgoto(CM, c, r), 1, fputchar)
 
 static struct termios sg, old_tty;
 
 void	fputchar __P((int));
-char	*LL, *TE, *tgoto();
+int	main __P((int, char **));
+void	onsig __P((int));
 
+
+char	*LL, *TE;
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern speed_t ospeed;
 	extern char *UP;
-	register int x, y, j;
-	register char *CM, *BC, *DN, *ND, *term;
-	char *TI, *tcp, *mp, tcb[100],
-		*malloc(), *getenv(), *strcpy(), *tgetstr();
-	long cols, lines, random();
+	int x, y, j;
+	char *CM, *BC, *DN, *ND, *term;
+	char *TI, *tcp, *mp, tcb[100];
+	long cols, lines;
 	int xpos[5], ypos[5];
-	static void onsig();
 #ifdef TIOCGWINSZ
 	struct winsize ws;
 #endif
 
-	if (!(term = getenv("TERM"))) {
-		fprintf(stderr, "%s: TERM: parameter not set\n", *argv);
-		exit(1);
-	}
-	if (!(mp = malloc((u_int)1024))) {
-		fprintf(stderr, "%s: out of space.\n", *argv);
-		exit(1);
-	}
-	if (tgetent(mp, term) <= 0) {
-		fprintf(stderr, "%s: %s: unknown terminal type\n", *argv, term);
-		exit(1);
-	}
+	if (!(term = getenv("TERM")))
+		errx(1, "TERM: parameter not set");
+	if (!(mp = malloc((u_int)1024)))
+		errx(1, "out of space");
+	if (tgetent(mp, term) <= 0)
+		errx(1, "unknown terminal type `%s'", term);
 	tcp = tcb;
-	if (!(CM = tgetstr("cm", &tcp))) {
-		fprintf(stderr, "%s: terminal not capable of cursor motion\n", *argv);
-		exit(1);
-	}
+	if (!(CM = tgetstr("cm", &tcp)))
+		errx(1, "terminal not capable of cursor motion");
 	if (!(BC = tgetstr("bc", &tcp)))
 		BC = "\b";
 	if (!(DN = tgetstr("dn", &tcp)))
@@ -137,7 +135,6 @@ main(argc, argv)
 	(void)signal(SIGTERM, onsig);
 	tcgetattr(1, &sg);
 	old_tty = sg;
-	ospeed = cfgetospeed(&sg);
 	sg.c_iflag &= ~ICRNL;
 	sg.c_oflag &= ~ONLCR;
 	sg.c_lflag &= ~ECHO;
@@ -219,8 +216,9 @@ main(argc, argv)
 	}
 }
 
-static void
-onsig()
+void
+onsig(dummy)
+	int dummy;
 {
 	tputs(LL, 1, fputchar);
 	if (TE)
