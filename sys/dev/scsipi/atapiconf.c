@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.9.2.3 1998/09/11 16:23:13 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.9.2.4 1998/09/20 20:13:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -293,7 +293,6 @@ atapi_probedev(atapi, target)
 			drvp->drv_softc = config_attach(&atapi->sc_dev, cf,
 			    &sa, atapibusprint);
 			wdc_probe_caps(drvp);
-			/* drvp->drive_flags &= ~DRIVE_DMA; XXX */
 			return;
 		} else {
 			atapibusprint(&sa, atapi->sc_dev.dv_xname);
