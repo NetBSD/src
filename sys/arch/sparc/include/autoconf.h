@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.35 2002/08/25 16:05:42 thorpej Exp $ */
+/*	$NetBSD: autoconf.h,v 1.36 2003/02/18 13:36:51 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -171,30 +171,12 @@ int	matchbyname __P((struct device *, struct cfdata *cf, void *aux));
  */
 char	*clockfreq __P((int freq));
 
-/*
- * Memory description arrays.  Shared between pmap.c and autoconf.c; no
- * one else should use this (except maybe mem.c, e.g., if we fix the VM to
- * handle discontiguous physical memory).
- */
-struct memarr {
-	paddr_t	addr;
-	psize_t	len;
-};
-int	makememarr(struct memarr *, int max, int which);
-#define	MEMARR_AVAILPHYS	0
-#define	MEMARR_TOTALPHYS	1
-
 /* Openprom V2 style boot path */
 struct bootpath {
 	char	name[16];	/* name of this node */
 	int	val[3];		/* up to three optional values */
 	struct device *dev;	/* device that recognised this component */
 };
-
-#if 0
-struct bootpath	*bootpath_store __P((int, struct bootpath *));
-#endif
-int		sd_crazymap __P((int));
 
 /* Parse a disk string into a dev_t, return device struct pointer */
 struct	device *parsedisk __P((char *, int, int, dev_t *));
