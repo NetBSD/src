@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.55 1998/10/06 00:20:45 matt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.56 1998/12/18 21:38:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ struct tcpcb {
 #define	TF_WILL_SACK	0x0800		/* try to use SACK */
 #define	TF_CANT_TXSACK	0x1000		/* other side said I could not SACK */
 #define	TF_IGNR_RXSACK	0x2000		/* ignore received SACK blocks */
+#define	TF_REASSEMBLING	0x4000		/* we're busy reassembling */
 
 
 	struct	tcpiphdr *t_template;	/* skeletal packet for transmit */
@@ -176,6 +177,67 @@ struct tcpcb {
 /* SACK stuff */
 	struct ipqehead timeq;		/* time sequenced queue (for SACK) */
 };
+
+#ifdef _KERNEL
+/*
+ * TCP reassembly queue locks.
+ */
+static __inline int tcp_reass_lock_try __P((struct tcpcb *))
+	__attribute__((__unused__));
+static __inline void tcp_reass_unlock __P((struct tcpcb *))
+	__attribute__((__unused__));
+
+static __inline int
+tcp_reass_lock_try(tp)
+	struct tcpcb *tp;
+{
+	int s;
+
+	s = splimp();
+	if (tp->t_flags & TF_REASSEMBLING) {
+		splx(s);
+		return (0);
+	}
+	tp->t_flags |= TF_REASSEMBLING;
+	splx(s);
+	return (1);
+}
+
+static __inline void
+tcp_reass_unlock(tp)
+	struct tcpcb *tp;
+{
+	int s;
+
+	s = splimp();
+	tp->t_flags &= ~TF_REASSEMBLING;
+	splx(s);
+}
+
+#ifdef DIAGNOSTIC
+#define	TCP_REASS_LOCK(tp)						\
+do {									\
+	if (tcp_reass_lock_try(tp) == 0) {				\
+		printf("%s:%d: tcpcb %p reass already locked\n",	\
+		    __FILE__, __LINE__, tp);				\
+		panic("tcp_reass_lock");				\
+	}								\
+} while (0)
+#define	TCP_REASS_LOCK_CHECK(tp)					\
+do {									\
+	if (((tp)->t_flags & TF_REASSEMBLING) == 0) {			\
+		printf("%s:%d: tcpcb %p reass lock not held\n",		\
+		    __FILE__, __LINE__, tp);				\
+		panic("tcp reass lock check");				\
+	}								\
+} while (0)
+#else
+#define	TCP_REASS_LOCK(tp)	(void) tcp_reass_lock_try((tp))
+#define	TCP_REASS_LOCK_CHECK(tp) /* nothing */
+#endif
+
+#define	TCP_REASS_UNLOCK(tp)	tcp_reass_unlock((tp))
+#endif /* _KERNEL */
 
 /*
  * Queue for delayed ACK processing.

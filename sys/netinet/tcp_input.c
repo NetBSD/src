@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.71 1998/10/08 01:19:26 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.72 1998/12/18 21:38:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -148,6 +148,7 @@ do { \
  * when segments are out of order (so fast retransmit can work).
  */
 #define	TCP_REASS(tp, ti, m, so, flags) { \
+	TCP_REASS_LOCK((tp)); \
 	if ((ti)->ti_seq == (tp)->rcv_nxt && \
 	    (tp)->segq.lh_first == NULL && \
 	    (tp)->t_state == TCPS_ESTABLISHED) { \
@@ -162,6 +163,7 @@ do { \
 		(flags) = tcp_reass((tp), (ti), (m)); \
 		tp->t_flags |= TF_ACKNOW; \
 	} \
+	TCP_REASS_UNLOCK((tp)); \
 }
 
 int
@@ -177,6 +179,8 @@ tcp_reass(tp, ti, m)
 	unsigned pkt_len;
 	u_long rcvpartdupbyte = 0;
 	u_long rcvoobyte;
+
+	TCP_REASS_LOCK_CHECK(tp);
 
 	/*
 	 * Call with ti==0 after become established to
@@ -858,8 +862,10 @@ after_listen:
 				tp->snd_scale = tp->requested_s_scale;
 				tp->rcv_scale = tp->request_r_scale;
 			}
+			TCP_REASS_LOCK(tp);
 			(void) tcp_reass(tp, (struct tcpiphdr *)0,
 				(struct mbuf *)0);
+			TCP_REASS_UNLOCK(tp);
 			/*
 			 * if we didn't have to retransmit the SYN,
 			 * use its rtt as our initial srtt & rtt var.
@@ -1124,7 +1130,9 @@ after_listen:
 			tp->snd_scale = tp->requested_s_scale;
 			tp->rcv_scale = tp->request_r_scale;
 		}
+		TCP_REASS_LOCK(tp);
 		(void) tcp_reass(tp, (struct tcpiphdr *)0, (struct mbuf *)0);
+		TCP_REASS_UNLOCK(tp);
 		tp->snd_wl1 = ti->ti_seq - 1;
 		/* fall into ... */
 
