@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5 1998/05/28 08:19:49 sakamoto Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6 1998/06/05 11:27:10 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
@@ -39,6 +42,10 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
 
 #include <machine/pcb.h>
 #include <machine/powerpc.h>
@@ -181,6 +188,40 @@ ptematch(ptp, sr, va, which)
 		    | (((u_int)va >> ADDR_API_SHFT) & PTE_API)
 		    | which);
 }
+
+#if defined(MACHINE_NEW_NONCONTIG)
+static __inline struct pv_entry *
+pa_to_pv(pa)
+	vm_offset_t pa;
+{
+	int bank, pg;
+
+	bank = vm_physseg_find(atop(pa), &pg);
+	if (bank == -1) {
+#ifdef DIAGNOSTIC
+		panic("pa_to_pv (pa = 0x%x)", pa);
+#endif
+		return NULL;
+	}
+	return &vm_physmem[bank].pmseg.pvent[pg];
+}
+
+static __inline char *
+pa_to_attr(pa)
+	vm_offset_t pa;
+{
+	int bank, pg;
+
+	bank = vm_physseg_find(atop(pa), &pg);
+	if (bank == -1) {
+#ifdef DIAGNOSTIC
+		panic("pa_to_attrib (pa = 0x%x)", pa);
+#endif
+		return NULL;
+	}
+	return &vm_physmem[bank].pmseg.attrs[pg];
+}
+#endif
 
 /*
  * Try to insert page table entry *pt into the ptable at idx.
@@ -454,6 +495,17 @@ pmap_bootstrap(kernelstart, kernelend)
 		bcopy(mp + 1, mp, (cnt - (mp - avail)) * sizeof *mp);
 #endif
 
+#if defined(MACHINE_NEW_NONCONTIG)
+	for (mp = avail; mp->size; mp++)
+#if defined(UVM)
+		uvm_page_physload(atop(mp->start), atop(mp->start + mp->size),
+			atop(mp->start), atop(mp->start + mp->size));
+#else
+		vm_page_physload(atop(mp->start), atop(mp->start + mp->size),
+			atop(mp->start), atop(mp->start + mp->size));
+#endif
+#endif
+
 	/*
 	 * Initialize kernel pmap and hardware.
 	 */
@@ -473,12 +525,6 @@ pmap_bootstrap(kernelstart, kernelend)
 		      :: "r"((u_int)ptable | (ptab_mask >> 10)));
 	tlbia();
 	nextavail = avail->start;
-
-#if defined(MACHINE_NEW_NONCONTIG)
-	for (mp = avail; mp->size; mp++)
-		vm_page_physload(atop(mp->start), atop(mp->start + mp->size),
-				 atop(mp->start), atop(mp->start + mp->size));
-#endif
 }
 
 /*
@@ -517,10 +563,20 @@ pmap_init()
 	vm_size_t sz;
 	vm_offset_t addr;
 	int i, s;
-	
+#if defined(MACHINE_NEW_NONCONTIG)
+	int bank;
+	char *attr;
+#endif
+
 	sz = (vm_size_t)((sizeof(struct pv_entry) + 1) * npgs);
 	sz = round_page(sz);
+#if defined(UVM)
+	/* XXXCDC: ABSOLUTELY WRONG!   uvm_km_zalloc() _CAN_
+		return 0 if out of VM */
+	addr = (vm_offset_t)uvm_km_zalloc(kernel_map, sz);
+#else
 	addr = (vm_offset_t)kmem_alloc(kernel_map, sz);
+#endif
 	s = splimp();
 	pv = pv_table = (struct pv_entry *)addr;
 	for (i = npgs; --i >= 0;)
@@ -528,6 +584,19 @@ pmap_init()
 	LIST_INIT(&pv_page_freelist);
 	pmap_attrib = (char *)pv;
 	bzero(pv, npgs);
+
+#if defined(MACHINE_NEW_NONCONTIG)
+	pv = pv_table;
+	attr = pmap_attrib;
+	for (bank = 0; bank < vm_nphysseg; bank++) {
+		sz = vm_physmem[bank].end - vm_physmem[bank].start;
+		vm_physmem[bank].pmseg.pvent = pv;
+		vm_physmem[bank].pmseg.attrs = attr;
+		pv += sz;
+		attr += sz;
+	}
+#endif
+
 	pmap_initialized = 1;
 	splx(s);
 }
@@ -535,6 +604,7 @@ pmap_init()
 /*
  * Return the index of the given page in terms of pmap_next_page() calls.
  */
+#if !defined(MACHINE_NEW_NONCONTIG)
 int
 pmap_page_index(pa)
 	vm_offset_t pa;
@@ -551,6 +621,7 @@ pmap_page_index(pa)
 	}
 	return -1;
 }
+#endif
 
 /*
  * How much virtual space is available to the kernel?
@@ -566,6 +637,7 @@ pmap_virtual_space(start, end)
 	*end = *start + SEGMENT_LENGTH;
 }
 
+#if !defined(MACHINE_NEW_NONCONTIG)
 /*
  * Return the number of possible page indices returned
  * from pmap_page_index for any page provided by pmap_next_page.
@@ -597,6 +669,7 @@ pmap_next_page(paddr)
 	nextavail += NBPG;
 	return TRUE;
 }
+#endif
 
 /*
  * Create and return a physical map.
@@ -759,8 +832,13 @@ pmap_alloc_pv()
 	int i;
 	
 	if (pv_nfree == 0) {
+#if defined(UVM)
+		if (!(pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, NBPG)))
+			panic("pmap_alloc_pv: uvm_km_zalloc() failed");
+#else
 		if (!(pvp = (struct pv_page *)kmem_alloc(kernel_map, NBPG)))
 			panic("pmap_alloc_pv: kmem_alloc() failed");
+#endif
 		pv_pcnt++;
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
 		for (i = NPVPPG - 2; --i >= 0; pv++)
@@ -799,7 +877,11 @@ pmap_free_pv(pv)
 		pv_nfree -= NPVPPG - 1;
 		pv_pcnt--;
 		LIST_REMOVE(pvp, pvp_pgi.pgi_list);
+#if defined(UVM)
+		uvm_km_free(kernel_map, (vm_offset_t)pvp, NBPG);
+#else
 		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+#endif
 		break;
 	}
 }
@@ -824,7 +906,11 @@ poalloc()
 		 * Since we cannot use maps for potable allocation,
 		 * we have to steal some memory from the VM system.			XXX
 		 */
+#if defined(UVM)
+		mem = uvm_pagealloc(NULL, 0, NULL);
+#else
 		mem = vm_page_alloc(NULL, NULL);
+#endif
 		po_pcnt++;
 		pop = (struct po_page *)VM_PAGE_TO_PHYS(mem);
 		pop->pop_pgi.pgi_page = mem;
@@ -860,7 +946,11 @@ pofree(po, freepage)
 		po_nfree -= NPOPPG - 1;
 		po_pcnt--;
 		LIST_REMOVE(pop, pop_pgi.pgi_list);
+#if defined(UVM)
+		uvm_pagefree(pop->pop_pgi.pgi_page);
+#else
 		vm_page_free(pop->pop_pgi.pgi_page);
+#endif
 		return;
 	case 1:
 		LIST_INSERT_HEAD(&po_page_freelist, pop, pop_pgi.pgi_list);
@@ -875,10 +965,9 @@ pofree(po, freepage)
  * This returns whether this is the first mapping of a page.
  */
 static inline int
-pmap_enter_pv(pteidx, va, pind)
+pmap_enter_pv(pteidx, va, pa)
 	int pteidx;
-	vm_offset_t va;
-	u_int pind;
+	vm_offset_t va, pa;
 {
 	struct pv_entry *pv, *npv;
 	int s, first;
@@ -888,7 +977,7 @@ pmap_enter_pv(pteidx, va, pind)
 
 	s = splimp();
 
-	pv = &pv_table[pind];
+	pv = pa_to_pv(pa);
 	if (first = pv->pv_idx == -1) {
 		/*
 		 * No entries yet, use header as the first entry.
@@ -912,26 +1001,26 @@ pmap_enter_pv(pteidx, va, pind)
 }
 
 static void
-pmap_remove_pv(pteidx, va, pind, pte)
+pmap_remove_pv(pteidx, va, pa, pte)
 	int pteidx;
-	vm_offset_t va;
-	int pind;
+	vm_offset_t va, pa;
 	struct pte *pte;
 {
 	struct pv_entry *pv, *npv;
-
-	if (pind < 0)
-		return;
+	char *attr;
 
 	/*
 	 * First transfer reference/change bits to cache.
 	 */
-	pmap_attrib[pind] |= (pte->pte_lo & (PTE_REF | PTE_CHG)) >> ATTRSHFT;
+	attr = pa_to_attr(pa);
+	if (attr == NULL)
+		return;
+	*attr |= (pte->pte_lo & (PTE_REF | PTE_CHG)) >> ATTRSHFT;
 	
 	/*
 	 * Remove from the PV table.
 	 */
-	pv = &pv_table[pind];
+	pv = pa_to_pv(pa);
 	
 	/*
 	 * If it is the first entry on the list, it is actually
@@ -975,12 +1064,15 @@ pmap_enter(pm, va, pa, prot, wired)
 	int idx, i, s;
 	pte_t pte;
 	struct pte_ovfl *po;
+	int managed;
+#if !defined(MACHINE_NEW_NONCONTIG)
 	struct mem_region *mp;
+#endif
 
 	/*
 	 * Have to remove any existing mapping first.
 	 */
-	pmap_remove(pm, va, va + NBPG - 1);
+	pmap_remove(pm, va, va + NBPG);
 
 	/*
 	 * Compute the HTAB index.
@@ -994,12 +1086,22 @@ pmap_enter(pm, va, pa, prot, wired)
 	pte.pte_hi = ((sr & SR_VSID) << PTE_VSID_SHFT)
 		| ((va & ADDR_PIDX) >> ADDR_API_SHFT);
 	pte.pte_lo = (pa & PTE_RPGN) | PTE_M | PTE_I | PTE_G;
+
+	managed = 0;
+#if defined(MACHINE_NEW_NONCONTIG)
+	if (vm_physseg_find(atop(pa), NULL) != -1) {
+		managed = 1;
+		pte.pte_lo &= ~(PTE_I | PTE_G);
+	}
+#else
 	for (mp = mem; mp->size; mp++) {
 		if (pa >= mp->start && pa < mp->start + mp->size) {
+			managed = 1;
 			pte.pte_lo &= ~(PTE_I | PTE_G);
 			break;
 		}
 	}
+#endif
 	if (prot & VM_PROT_WRITE)
 		pte.pte_lo |= PTE_RW;
 	else
@@ -1008,8 +1110,8 @@ pmap_enter(pm, va, pa, prot, wired)
 	/*
 	 * Now record mapping for later back-translation.
 	 */
-	if (pmap_initialized && (i = pmap_page_index(pa)) != -1)
-		if (pmap_enter_pv(idx, va, i)) {
+	if (pmap_initialized && managed)
+		if (pmap_enter_pv(idx, va, pa)) {
 			/* 
 			 * Flush the real memory from the cache.
 			 */
@@ -1048,13 +1150,13 @@ pmap_remove(pm, va, endva)
 	sr_t sr;
 	pte_t *ptp;
 	struct pte_ovfl *po, *npo;
-	
+
 	s = splimp();
 	while (va < endva) {
 		idx = pteidx(sr = ptesr(pm->pm_sr, va), va);
 		for (ptp = ptable + idx * 8, i = 8; --i >= 0; ptp++)
 			if (ptematch(ptp, sr, va, PTE_VALID)) {
-				pmap_remove_pv(idx, va, pmap_page_index(ptp->pte_lo), ptp);
+				pmap_remove_pv(idx, va, ptp->pte_lo, ptp);
 				ptp->pte_hi &= ~PTE_VALID;
 				asm volatile ("sync");
 				tlbie(va);
@@ -1062,7 +1164,7 @@ pmap_remove(pm, va, endva)
 			}
 		for (ptp = ptable + (idx ^ ptab_mask) * 8, i = 8; --i >= 0; ptp++)
 			if (ptematch(ptp, sr, va, PTE_VALID | PTE_HID)) {
-				pmap_remove_pv(idx, va, pmap_page_index(ptp->pte_lo), ptp);
+				pmap_remove_pv(idx, va, ptp->pte_lo, ptp);
 				ptp->pte_hi &= ~PTE_VALID;
 				asm volatile ("sync");
 				tlbie(va);
@@ -1071,7 +1173,7 @@ pmap_remove(pm, va, endva)
 		for (po = potable[idx].lh_first; po; po = npo) {
 			npo = po->po_list.le_next;
 			if (ptematch(&po->po_pte, sr, va, 0)) {
-				pmap_remove_pv(idx, va, pmap_page_index(po->po_pte.pte_lo),
+				pmap_remove_pv(idx, va, po->po_pte.pte_lo,
 					       &po->po_pte);
 				LIST_REMOVE(po, po_list);
 				pofree(po, 1);
@@ -1173,18 +1275,19 @@ ptemodify(pa, mask, val)
 	pte_t *ptp;
 	struct pte_ovfl *po;
 	int i, s;
-	
-	i = pmap_page_index(pa);
-	if (i < 0)
-		return;
+	char *attr;
 
 	/*
 	 * First modify bits in cache.
 	 */
-	pmap_attrib[i] &= ~mask >> ATTRSHFT;
-	pmap_attrib[i] |= val >> ATTRSHFT;
+	attr = pa_to_attr(pa);
+	if (attr == NULL)
+		return;
+
+	*attr &= ~mask >> ATTRSHFT;
+	*attr |= val >> ATTRSHFT;
 	
-	pv = pv_table + i;
+	pv = pa_to_pv(pa);
 	if (pv->pv_idx < 0)
 		return;
 
@@ -1232,19 +1335,19 @@ ptebits(pa, bit)
 	pte_t *ptp;
 	struct pte_ovfl *po;
 	int i, s, bits = 0;
-
-	i = pmap_page_index(pa);
-	if (i < 0)
-		return 0;
+	char *attr;
 
 	/*
 	 * First try the cache.
 	 */
-	bits |= (pmap_attrib[i] << ATTRSHFT) & bit;
+	attr = pa_to_attr(pa);
+	if (attr == NULL)
+		return 0;
+	bits |= (*attr << ATTRSHFT) & bit;
 	if (bits == bit)
 		return bits;
 
-	pv = pv_table + i;
+	pv = pa_to_pv(pa);
 	if (pv->pv_idx < 0)
 		return 0;
 	
@@ -1295,26 +1398,27 @@ pmap_page_protect(pa, prot)
 	vm_offset_t va;
 	pte_t *ptp;
 	struct pte_ovfl *po, *npo;
-	int i, s, pind, idx;
-	
+	int i, s, idx;
+	struct pv_entry *pv;
+
 	pa &= ~ADDR_POFF;
 	if (prot & VM_PROT_READ) {
 		ptemodify(pa, PTE_PP, PTE_RO);
 		return;
 	}
 
-	pind = pmap_page_index(pa);
-	if (pind < 0)
+	pv = pa_to_pv(pa);
+	if (pv == NULL)
 		return;
 
 	s = splimp();
-	while (pv_table[pind].pv_idx >= 0) {
-		idx = pv_table[pind].pv_idx;
-		va = pv_table[pind].pv_va;
+	while (pv->pv_idx >= 0) {
+		idx = pv->pv_idx;
+		va = pv->pv_va;
 		for (ptp = ptable + idx * 8, i = 8; --i >= 0; ptp++)
 			if ((ptp->pte_hi & PTE_VALID)
 			    && (ptp->pte_lo & PTE_RPGN) == pa) {
-				pmap_remove_pv(idx, va, pind, ptp);
+				pmap_remove_pv(idx, va, pa, ptp);
 				ptp->pte_hi &= ~PTE_VALID;
 				asm volatile ("sync");
 				tlbie(va);
@@ -1324,7 +1428,7 @@ pmap_page_protect(pa, prot)
 		for (ptp = ptable + (idx ^ ptab_mask) * 8, i = 8; --i >= 0; ptp++)
 			if ((ptp->pte_hi & PTE_VALID)
 			    && (ptp->pte_lo & PTE_RPGN) == pa) {
-				pmap_remove_pv(idx, va, pind, ptp);
+				pmap_remove_pv(idx, va, pa, ptp);
 				ptp->pte_hi &= ~PTE_VALID;
 				asm volatile ("sync");
 				tlbie(va);
@@ -1334,7 +1438,7 @@ pmap_page_protect(pa, prot)
 		for (po = potable[idx].lh_first; po; po = npo) {
 			npo = po->po_list.le_next;
 			if ((po->po_pte.pte_lo & PTE_RPGN) == pa) {
-				pmap_remove_pv(idx, va, pind, &po->po_pte);
+				pmap_remove_pv(idx, va, pa, &po->po_pte);
 				LIST_REMOVE(po, po_list);
 				pofree(po, 1);
 				goto next;
