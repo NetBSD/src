@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.53 1997/12/15 11:18:41 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.54 1998/02/19 00:55:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -27,6 +27,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include "fs_nfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

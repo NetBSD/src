@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.5 1998/02/18 06:35:46 mrg Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.6 1998/02/19 00:55:04 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -49,6 +49,7 @@
  * from: Id: uvm_vnode.c,v 1.1.2.26 1998/02/02 20:38:07 chuck Exp
  */
 
+#include "fs_nfs.h"
 #include "opt_uvmhist.h"
 
 /*
