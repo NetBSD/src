@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
+/*	$NetBSD: stat.h,v 1.21 1996/10/10 14:34:37 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -146,12 +146,10 @@ struct stat {
 #define	S_ISCHR(m)	((m & 0170000) == 0020000)	/* char special */
 #define	S_ISBLK(m)	((m & 0170000) == 0060000)	/* block special */
 #define	S_ISREG(m)	((m & 0170000) == 0100000)	/* regular file */
-#define	S_ISFIFO(m)	((m & 0170000) == 0010000 || \
-			 (m & 0170000) == 0140000)	/* fifo or socket */
+#define	S_ISFIFO(m)	((m & 0170000) == 0010000)	/* fifo */
 #ifndef _POSIX_SOURCE
 #define	S_ISLNK(m)	((m & 0170000) == 0120000)	/* symbolic link */
-#define	S_ISSOCK(m)	((m & 0170000) == 0010000 || \
-			 (m & 0170000) == 0140000)	/* fifo or socket */
+#define	S_ISSOCK(m)	((m & 0170000) == 0140000)	/* socket */
 #define	S_ISWHT(m)	((m & 0170000) == 0160000)	/* whiteout */
 #endif
 
