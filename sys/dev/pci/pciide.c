@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.135 2001/11/15 20:48:17 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.136 2001/11/21 17:33:28 wiz Exp $	*/
 
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.135 2001/11/15 20:48:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.136 2001/11/21 17:33:28 wiz Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -2454,7 +2454,7 @@ cmd0643_9_chip_map(sc, pa)
 				sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 				sc->sc_wdcdev.UDMA_cap = 2;
 #endif
-				/* explicitely disable UDMA */
+				/* explicitly disable UDMA */
 				pciide_pci_write(sc->sc_pc, sc->sc_tag,
 				    CMD_UDMATIM(0), 0);
 				pciide_pci_write(sc->sc_pc, sc->sc_tag,
