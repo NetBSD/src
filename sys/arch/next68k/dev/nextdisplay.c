@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.9 2002/09/11 01:46:32 mycroft Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.10 2002/09/11 07:06:17 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -146,6 +146,7 @@ nextdisplay_match(parent, match, aux)
 	if ((rom_machine_type == NeXT_WARP9)
 	    || (rom_machine_type == NeXT_X15)
 	    || (rom_machine_type == NeXT_WARP9C)
+	    || (rom_machine_type == NeXT_TURBO_MONO)
 	    || (rom_machine_type == NeXT_TURBO_COLOR))
 		return (1);
 	else 
