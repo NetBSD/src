@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.1.1.1.2.8 2001/12/09 18:30:18 he Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.1.1.1.2.9 2002/09/04 04:26:52 itojun Exp $	*/
 /*	$KAME: esp_core.c,v 1.50 2000/11/02 12:27:38 itojun Exp $	*/
 
 /*
@@ -170,18 +170,36 @@ esp_algorithm_lookup(idx)
 }
 
 int
+esp_max_padbound()
+{
+	int idx;
+	static int padbound = 0;
+
+	if (padbound)
+		return padbound;
+
+	for (idx = 0; idx < sizeof(esp_algorithms)/sizeof(esp_algorithms[0]);
+	     idx++) {
+		if (esp_algorithms[idx].padbound > padbound)
+			padbound = esp_algorithms[idx].padbound;
+	}
+	return padbound;
+}
+
+int
 esp_max_ivlen()
 {
 	int idx;
-	int ivlen;
+	static int ivlen = 0;
 
-	ivlen = 0;
+	if (ivlen)
+		return ivlen;
+
 	for (idx = 0; idx < sizeof(esp_algorithms)/sizeof(esp_algorithms[0]);
 	     idx++) {
 		if (esp_algorithms[idx].ivlenval > ivlen)
 			ivlen = esp_algorithms[idx].ivlenval;
 	}
-
 	return ivlen;
 }
 
