@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.398 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.399 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -36,7 +36,7 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		[christos 20040421]
 	kernel: Add a POOL_INIT macro to declare and automatically
 		initialise resource pools.  [simonb 20040425]
-	postfix: Postfix 2.1.0 imported.  [heas 20040427]
+	postfix(1): Postfix 2.1.0 imported.  [heas 20040427]
 	i386: Add support for Enhanced SpeedStep Technology, from
 		Michael Eriksson on port-i386.  [lukem 20040430]
 	heimdal: import version 0.6.2.  [lha 20040508]
@@ -57,12 +57,12 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	uep(4):	Added driver for eGalax USB touchpanel controller
 		[tsarna 20040524]
 	ptm(4): pty/98 pty multiplexor device [christos 20040526]
-	postfix: Postfix 2.1.1 imported. [heas 20040531]
+	postfix(1): Postfix 2.1.1 imported. [heas 20040531]
 	XFree86: support absolute mouse positioning events on i386
 		and other platforms using the same mouse code
 		[tsarna 20040603]
 	hp700: Add FFS/LFS primary bootstrap (xxboot).  [itohy 20040615]
-	racoon: upgraded to 20040617 [itojun 20040617]
+	racoon(8): upgraded to 20040617 [itojun 20040617]
 	pf(4): PF from OpenBSD 3.5 imported [itojun 20040622]
 	powerpc: Implement MPC601 support. [kleink 20040626]
 	prep: Add IBM RS/6000 40P 7020-001 platform support. [kleink 20040626]
@@ -73,7 +73,7 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	texinfo(1): upgraded to 4.7.  [wiz 20040713]
 	libc: Add wordexp(3) which performs shell-style word expansions.
 		[seb 20040713]
-	sendmail: The sendmail daemon will now start by default if the
+	sendmail(8): The sendmail daemon will now start by default if the
 		rc.d script determines a need for it.  [atatat 20040715]
 	mtree(8): Implement -M to permit merging of specfile entries that
 		have different types.  [lukem 20040722]
@@ -86,7 +86,7 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		dynamically after boot.  [jmmv 20040728]
 	wsconsctl(4): Add support to change console colors and kernel colors
 		dynamically after boot.  [jmmv 20040728]
-	postfix: Postfix 2.1.4 imported.  [heas 20040728]
+	postfix(1): Postfix 2.1.4 imported.  [heas 20040728]
 	vga(4): Add support to change console border color.  [jmmv 20040729]
 	wscons(4): Add support to change console border color.  [jmmv 20040729]
 	wsconsctl(4): Add support to change console border color.
@@ -146,7 +146,7 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		Fixed all the fallout. [dsl 20041104]
 	bind: Bind-9.3.0 imported. [christos 20041106]
 	ptyfs: New pseudo-terminal filesystem [christos 20041111]
-	postfix: Postfix 2.1.5 imported.  [heas 20041113]
+	postfix(1): Postfix 2.1.5 imported.  [heas 20041113]
 	pf(4): PF from OpenBSD 3.6 imported [yamt 20041114]
 	syslogd: Numerous improvements, most from FreeBSD. [thorpej 20041118]
 	kernel: CD9660 Joliet Unicode file names encoded into UTF-8, thus full
