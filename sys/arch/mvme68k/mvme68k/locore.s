@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.82 2001/06/10 17:31:38 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.83 2001/06/11 11:24:40 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1148,7 +1148,7 @@ ENTRY_NOPROFILE(intrhand_autovec)	/* Levels 0 through 7 */
 	movl	%sp@(26),%d0
 	movl	%d0,%sp@-		| push exception vector
 	jbsr	_C_LABEL(isrdispatch_autovec) | call dispatcher
-	addql	#4,%sp
+	addql	#8,%sp
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)		| all done
 
