@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.14 1994/06/29 06:43:10 cgd Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.15 1994/11/03 20:24:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -54,10 +54,6 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-
-#if defined(i386) && !defined(NEWCONFIG)
-#include <i386/isa/isa_device.h>
-#endif
 
 #include "st.h"
 #include "sd.h"
@@ -325,7 +321,7 @@ scsi_probe_bus(bus, targ, lun)
 }
 
 int
-#ifndef i386
+#ifndef CONFIG_INDIRECT
 scsi_targmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -340,23 +336,11 @@ scsi_targmatch(parent, self, aux)
 #endif
 	struct scsi_link *sc_link = aux;
 	char *devname = sc_link->fordriver;
-#if !defined(i386) || defined(NEWCONFIG)
 
-#define	cf_target cf_loc[0]
-#define	cf_lun cf_loc[1]
-	if (cf->cf_target != -1 && cf->cf_target != sc_link->target)
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != sc_link->target)
 		return 0;
-	if (cf->cf_lun != -1 && cf->cf_lun != sc_link->lun)
+	if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != sc_link->lun)
 		return 0;
-#undef cf_target
-#undef cf_lun
-#else
-	struct isa_device *id = (void *)cf->cf_loc;
-
-	if (id->id_physid != -1 &&
-	    id->id_physid != ((sc_link->target << 3) | sc_link->lun))
-		return 0;
-#endif
 	if (strcmp(cf->cf_driver->cd_name, devname))
 		return 0;
 

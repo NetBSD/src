@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.13 1994/10/30 21:49:23 cgd Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.14 1994/11/03 20:24:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -242,10 +242,10 @@ struct scsi_xfer {
 #define XS_SWTIMEOUT	0x04	/* The Timeout reported was caught by SW  */
 #define XS_BUSY		0x08	/* The device busy, try again later?	  */
 
-#if !defined(i386) || defined(NEWCONFIG)
+#ifndef CONFIG_INDIRECT
 int scsi_targmatch __P((struct device *, struct cfdata *, void *));
 #else
-int scsi_targmatch();
+int scsi_targmatch __P((struct device *, struct device *, void *));
 #endif
 
 struct scsi_xfer *get_xs __P((struct scsi_link *, int));
