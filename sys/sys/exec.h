@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.65 1997/09/11 23:02:35 mycroft Exp $	*/
+/*	$NetBSD: exec.h,v 1.66 1997/12/03 20:02:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -71,13 +71,7 @@ struct ps_strings {
  * Below the PS_STRINGS and sigtramp, we may require a gap on the stack
  * (used to copyin/copyout various emulation data structures).
  */
-#if defined(COMPAT_SUNOS) || defined(COMPAT_ULTRIX) || \
-    defined(COMPAT_IBCS2) || defined(COMPAT_SVR4) || defined(COMPAT_OSF1) || \
-    defined(COMPAT_LINUX) || defined(COMPAT_FREEBSD) || defined(COMPAT_HPUX)
 #define	STACKGAPLEN	400	/* plenty enough for now */
-#else
-#define	STACKGAPLEN	0
-#endif
 #define	STACKGAPBASE_UNALIGNED	\
 	((caddr_t)PS_STRINGS - szsigcode - STACKGAPLEN)
 #define	STACKGAPBASE		\
