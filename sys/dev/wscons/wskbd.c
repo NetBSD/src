@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.56 2001/11/07 13:36:43 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.57 2001/11/10 17:14:52 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.56 2001/11/07 13:36:43 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.57 2001/11/10 17:14:52 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -409,7 +409,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 		printf(": console keyboard");
 
 #if NWSDISPLAY > 0
-		sc->sc_base.me_dispdv = wsdisplay_set_console_kbd(&sc->sc_base);
+		wsdisplay_set_console_kbd(&sc->sc_base); /* sets me_dispv */
 		if (sc->sc_base.me_dispdv != NULL)
 			printf(", using %s", sc->sc_base.me_dispdv->dv_xname);
 #endif
