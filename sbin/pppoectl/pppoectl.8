@@ -1,4 +1,4 @@
-.\" $NetBSD: pppoectl.8,v 1.9 2002/03/04 00:44:35 wiz Exp $
+.\" $NetBSD: pppoectl.8,v 1.10 2002/03/16 17:03:42 martin Exp $
 .\" Copyright (C) 1997 by Joerg Wunsch, Dresden
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\" From: spppcontrol.1,v 1.1.1.1 1997/10/11 11:30:30 joerg Exp
 .\"
-.\" $Id: pppoectl.8,v 1.9 2002/03/04 00:44:35 wiz Exp $
+.\" $Id: pppoectl.8,v 1.10 2002/03/16 17:03:42 martin Exp $
 .\"
 .\" last edit-date: [Thu Aug 31 10:47:33 2000]
 .\"
@@ -34,8 +34,8 @@
 .Dt PPPOECTL 8
 .Sh NAME
 .Nm pppoectl ,
-.Nm ispppcontrol
-.Nd "display or set parameters for an pppoe or isdn ppp (isp) interface"
+.Nm ipppcontrol
+.Nd "display or set parameters for an pppoe or isdn ppp (ippp) interface"
 .Sh SYNOPSIS
 .Nm
 .Op Fl v
@@ -80,7 +80,7 @@ Typically, not both the access concentrator name and the service name are
 specified.
 .Pp
 The
-.Xr i4bisppp 4
+.Xr ippp 4
 or the
 .Xr pppoe 4
 drivers require a number of additional arguments or optional
@@ -250,14 +250,14 @@ option.
 .El
 .Sh EXAMPLES
 .Bd -literal
-# ispppcontrol isp0
-isp0:	phase=dead
+# ipppctl ippp0
+ippp0:	phase=dead
 	myauthproto=chap myauthname="uriah"
 	hisauthproto=chap hisauthname="ifb-gw" norechallenge
 	lcp timeout: 3.000 s
 .Ed
 .Pp
-Display the settings for isp0.  The interface is currently in
+Display the settings for ippp0.  The interface is currently in
 .Em dead
 phase, i. e. the LCP layer is down, and no traffic is possible.  Both
 ends of the connection use the CHAP protocol, my end tells remote the
@@ -270,7 +270,7 @@ challenges will be transmitted.  There are supposedly some known CHAP
 secrets for both ends of the link which are not being shown.
 .Pp
 .Bd -literal
-# ispppcontrol isp0 \e
+# ipppctl ippp0 \e
 	authproto=chap \e
 	myauthname=uriah myauthsecret='some secret' \e
 	hisauthname=ifb-gw hisauthsecret='another' \e
@@ -305,7 +305,7 @@ ifconfig pppoe0 0.0.0.0 0.0.0.1 up
 .Ed
 .Sh SEE ALSO
 .Xr netstat 1 ,
-.Xr i4bisppp 4 ,
+.Xr ippp 4 ,
 .Xr pppoe 4 ,
 .Xr ifconfig 8 ,
 .Xr ifwatchd 8
