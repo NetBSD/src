@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.33 1994/08/13 08:42:33 pk Exp $
+ *	$Id: ld.c,v 1.34 1994/08/21 15:18:44 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -345,9 +345,6 @@ main(argc, argv)
 
 	/* Create the symbols `etext', `edata' and `end'.  */
 	symtab_init(relocatable_output);
-
-	/* Prepare for the run-time linking support. */
-	init_rrs();
 
 	/*
 	 * Determine whether to count the header as part of the text size,
@@ -2761,11 +2758,11 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 					    "symbol %s claims RRS in %s%s\n",
 					    sp->name, get_file_name(entry),
 					    (sp->so_defined == (N_TEXT+N_EXT) &&
-					    sp->jmpslot_offset != -1)?
+					    sp->flags & GS_HASJMPSLOT)?
 						" (JMPSLOT)":"");
 				}
 				if (sp->so_defined == (N_TEXT+N_EXT) &&
-				    sp->jmpslot_offset != -1) {
+				    sp->flags & GS_HASJMPSLOT) {
 					/*
 					 * Claim a jmpslot if one was allocated.
 					 *
