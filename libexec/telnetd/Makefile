@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1999/02/12 05:30:11 dean Exp $
+#	$NetBSD: Makefile,v 1.19 1999/06/07 00:53:11 thorpej Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -7,7 +7,8 @@ MAN=	telnetd.8
 
 # XXX Keep telnetd(8) and libtelnet from getting out of sync during the build
 # XXX process.
-.if !exists(${.CURDIR}/../../domestic/libexec/telnetd) || \
+.if (!exists(${.CURDIR}/../../domestic/libexec/telnetd) && \
+     !exists(${.CURDIR}/../../crypto-us/libexec/telnetd)) || \
     defined(EXPORTABLE_SYSTEM) || \
     make (obj) || make(clean) || make(cleandir) || make(distclean)
 
