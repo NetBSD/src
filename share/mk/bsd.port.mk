@@ -2,7 +2,7 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.13.2.3 1997/11/07 23:51:08 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.13.2.4 1997/11/07 23:54:47 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -244,7 +244,9 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  example, if your port has "man/man1/foo.1" and
 #				  "man/mann/bar.n", set "MAN1=foo.1" and "MANN=bar.n".
 #				  The available sections chars are "123456789LN".
-# MANPREFIX		- The directory prefix for ${MAN<sect>} (default: ${PREFIX}).
+# CAT<sect>     - The same as MAN<sect>, only for formatted manpages.
+# MANPREFIX		 -The directory prefix for ${MAN<sect>} (default: ${PREFIX}).
+# CATPREFIX     - The directory prefix for ${CAT<sect>} (default: ${PREFIX}).
 #
 # Default targets and their behaviors:
 #
