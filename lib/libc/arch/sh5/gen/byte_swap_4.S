@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.3 2002/07/10 12:42:28 scw Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.4 2003/03/26 11:59:36 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,4 +45,5 @@ ENTRY(bswap32)
 	ptabs/l	r18, tr0
 	byterev	r2, r2
 	shlri	r2, 32, r2
+	add.l	r2, r63, r2
 	blink	tr0, r63
