@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.70 2003/03/16 08:09:58 matt Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.71 2003/07/13 12:39:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -458,7 +458,8 @@ struct cfdata cfdata[] = {\n\
 			state = "NORM";
 		}
 		if (i->i_locoff >= 0) {
-			(void)sprintf(locbuf, "loc+%3d", i->i_locoff);
+			(void)snprintf(locbuf, sizeof(locbuf), "loc+%3d",
+			    i->i_locoff);
 			loc = locbuf;
 		} else
 			loc = "loc";
