@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.18.2.6 2000/01/15 17:50:44 he Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.18.2.7 2000/01/15 17:55:11 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ lfs_valloc(v)
 #else
 	brelse(bp);
 #endif
-	
+
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
 	if (fs->lfs_free == LFS_UNUSED_INUM) {
 		vp = fs->lfs_ivnode;
@@ -296,24 +296,27 @@ lfs_vfree(v)
 	struct buf *bp;
 	struct ifile *ifp;
 	struct inode *ip;
+	struct vnode *vp;
 	struct lfs *fs;
 	ufs_daddr_t old_iaddr;
 	ino_t ino;
 	int already_locked;
+	extern int lfs_dirvcount;
 	
 	/* Get the inode number and file system. */
-	ip = VTOI(ap->a_pvp);
+	vp = ap->a_pvp;
+	ip = VTOI(vp);
 	fs = ip->i_lfs;
 	ino = ip->i_number;
 	
 	/* If we already hold ufs_hashlock, don't panic, just do it anyway */
 	already_locked = lockstatus(&ufs_hashlock) && ufs_hashlock.lk_lockholder == curproc->p_pid;
-	while(WRITEINPROG(ap->a_pvp)
+	while(WRITEINPROG(vp)
 	      || fs->lfs_seglock
 	      || (!already_locked && lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0)))
 	{
-		if (WRITEINPROG(ap->a_pvp)) {
-			tsleep(ap->a_pvp, (PRIBIO+1), "lfs_vfree", 0);
+		if (WRITEINPROG(vp)) {
+			tsleep(vp, (PRIBIO+1), "lfs_vfree", 0);
 		}
 		if (fs->lfs_seglock) {
 			if (fs->lfs_lockpid == curproc->p_pid) {
@@ -324,6 +327,13 @@ lfs_vfree(v)
 		}
 	}
 	
+	if(vp->v_flag & VDIROP) {
+		--lfs_dirvcount;
+		vp->v_flag &= ~VDIROP;
+		wakeup(&lfs_dirvcount);
+		lfs_vunref(vp);
+	}
+
 	if (ip->i_flag & IN_CLEANING) {
 		--fs->lfs_uinodes;
 	}
