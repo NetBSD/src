@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.387 2001/07/28 14:43:13 bjh21 Exp $
+# $NetBSD: mi,v 1.388 2001/07/29 08:02:31 scw Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -712,6 +712,7 @@
 ./usr/share/man/cat4/mvme68k/lpt.0		man-sys-catman
 ./usr/share/man/cat4/mvme68k/mainbus.0		man-sys-catman
 ./usr/share/man/cat4/mvme68k/mem.0		man-sys-catman
+./usr/share/man/cat4/mvme68k/memc.0		man-sys-catman
 ./usr/share/man/cat4/mvme68k/ncrsc.0		man-sys-catman
 ./usr/share/man/cat4/mvme68k/pcc.0		man-sys-catman
 ./usr/share/man/cat4/mvme68k/pcctwo.0		man-sys-catman
@@ -2269,6 +2270,7 @@
 ./usr/share/man/man4/mvme68k/lpt.4		man-sys-man
 ./usr/share/man/man4/mvme68k/mainbus.4		man-sys-man
 ./usr/share/man/man4/mvme68k/mem.4		man-sys-man
+./usr/share/man/man4/mvme68k/memc.4		man-sys-man
 ./usr/share/man/man4/mvme68k/ncrsc.4		man-sys-man
 ./usr/share/man/man4/mvme68k/pcc.4		man-sys-man
 ./usr/share/man/man4/mvme68k/pcctwo.4		man-sys-man
