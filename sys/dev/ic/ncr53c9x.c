@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.15.2.2 1997/08/27 23:30:54 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.15.2.3 1997/09/01 20:22:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -443,8 +443,6 @@ ncr53c9x_select(sc, ecb)
 	if ((ecb->xs->flags & SCSI_POLL) == 0)
 		timeout(ncr53c9x_timeout, ecb,
 		    (ecb->timeout * hz) / 1000);
-
-	NCRCMD(sc, NCRCMD_FLUSH);
 
 	/*
 	 * The docs say the target register is never reset, and I
@@ -1398,7 +1396,16 @@ ncr53c9x_intr(sc)
 
 			if (sc->sc_espintr & NCRINTR_ILL) {
 				if (sc->sc_flags & NCR_EXPECT_ILLCMD) {
-printf("%s: ILL: ESP100 work-around activated\n", sc->sc_dev.dv_xname);
+					/*
+					 * Eat away "Illegal command" interrupt
+					 * on a ESP100 caused by a re-selection
+					 * while we were trying to select
+					 * another target.
+					 */
+#ifdef DEBUG
+					printf("%s: ESP100 work-around activated\n",
+						sc->sc_dev.dv_xname);
+#endif
 					sc->sc_flags &= ~NCR_EXPECT_ILLCMD;
 					continue;
 				}
@@ -1639,8 +1646,15 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 				/* Handle identify message */
 				ncr53c9x_msgin(sc);
 				if (nfifo != 2) {
+					/*
+					 * Note: this should not happen
+					 * with `dmaselect' on.
+					 */
 					sc->sc_flags |= NCR_EXPECT_ILLCMD;
 					NCRCMD(sc, NCRCMD_FLUSH);
+				} else if (ncr53c9x_dmaselect &&
+					   sc->sc_rev == NCR_VARIANT_ESP100) {
+					sc->sc_flags |= NCR_EXPECT_ILLCMD;
 				}
 
 				if (sc->sc_state != NCR_CONNECTED) {

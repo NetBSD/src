@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.28.2.1 1997/08/23 07:13:22 thorpej Exp $	*/
+/*	$NetBSD: isadma.c,v 1.28.2.2 1997/09/01 20:26:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -272,6 +272,8 @@ isa_dmastart(isadev, chan, addr, nbytes, p, flags, busdmaflags)
 	}
 
 	dmam = sc->sc_dmamaps[chan];
+	if (dmam == NULL)
+		panic("isa_dmastart: no DMA map for chan %d\n", chan);
 
 	error = bus_dmamap_load(sc->sc_dmat, dmam, addr, nbytes,
 	    p, busdmaflags);
