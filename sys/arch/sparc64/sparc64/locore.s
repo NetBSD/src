@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.177 2003/05/18 22:11:32 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.178 2003/07/08 22:09:26 cdi Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -1547,61 +1547,79 @@ _C_LABEL(trap_trace_end):
 
 	.text
 traceit:
-	set	trap_trace, %g2
-	lduw	[%g2+TRACEDIS], %g4
-	brnz,pn	%g4, 1f
-	 lduw	[%g2+TRACEPTR], %g3
+	set	trap_trace, %g2		! see db_interface.c
+	lduw	[%g2+TRACEDIS], %g4	! tracing disabled flag
+	brnz,pn	%g4, 9f			! return if disabled
+	 lduw	[%g2+TRACEPTR], %g3	! current offset into the trap_trace
+
 	rdpr	%tl, %g4
 	rdpr	%tt, %g5
 	set	CURLWP, %g6
 	cmp	%g4, 1
-	sllx	%g4, 13, %g4
-	bnz,a,pt	%icc, 3f
-	 clr	%g6
-	cmp	%g5, 0x68
-	bnz,a,pt	%icc, 3f
-	 clr	%g6
-	cmp	%g5, 0x64
-	bnz,a,pt	%icc, 3f
-	 clr	%g6
-	cmp	%g5, 0x6c
-	bnz,a,pt	%icc, 3f
-	 clr	%g6
-	LDPTR	[%g6], %g6
-3:
-	or	%g4, %g5, %g4
-	mov	%g0, %g5
-	brz,pn	%g6, 2f
-	 andncc	%g3, (TRACESIZ-1), %g0	! At end of buffer? wrap
-	LDPTR	[%g6+P_PID], %g5	! Load PID XXX that's not pid anymore
+	sllx	%g4, 13, %g4	! collect .tl bit-field in %g4
 
-	set	CPCB, %g6	! Load up nsaved
+	!! CURLWP is not pertinent for nested traps (TL > 1)
+	bne,a,pt %icc, 0f
+	 clr	%g6
+
+	!! CURLWP is not pertinent to fast MMU miss/prot traps
+	cmp	%g5, T_FDMMU_MISS
+	bne,a,pt %icc, 0f
+	 clr	%g6
+	cmp	%g5, T_FIMMU_MISS
+	bne,a,pt %icc, 0f
+	 clr	%g6
+	cmp	%g5, T_FDMMU_PROT
+	bne,a,pt %icc, 0f
+	 clr	%g6
+
+	!! ok, CURLWP is pertinent, load it
+	LDPTR	[%g6], %g6
+0:
+
+	bset	%g5, %g4	! collect .tt bit-field in %g4
+
+	!! if curlwp is pertinent, find its pid
+	clr	%g5
+	brz,pn	%g6, 0f		! curlwp == NULL?
+	 btst	(TRACESIZ-1), %g3	! reached the end of trap_trace[]?
+	LDPTR	[%g6+P_PID], %g5	! load pid. XXX: that's not pid anymore
+
+	!! load up nsaved
+	set	CPCB, %g6
 	LDPTR	[%g6], %g6
 	ldub	[%g6 + PCB_NSAVED], %g6
 	sllx	%g6, 9, %g6
-	or	%g6, %g4, %g4
-2:
+	bset	%g6, %g4	! collect .ns bit-field in %g4
+0:
+	! btst	(TRACESIZ-1), %g3
+	movnz	%icc, %g0, %g3	! may be wrap to the beginning of trap_trace[]
 
-	movnz	%icc, %g0, %g3		! Wrap buffer if needed
+	!! %g2 - trap_trace
+	!! %g3 - trap_trace_ptr (offset from trap_trace)
+	!! %g4 - collected .tl, .ns and .tt bit-fields
+	!! %g5 - pid
+
 	rdpr	%tstate, %g6
-	rdpr	%tpc, %g7
-	sth	%g4, [%g2+%g3]
+	sth	%g4, [%g2+%g3]		! traptrace.tl, .ns and .tt bit-fields
+	rdpr	%tpc, %g4		! %g4 is now free, can reuse
 	inc	2, %g3
-	sth	%g5, [%g2+%g3]
+	sth	%g5, [%g2+%g3]		! traptrace.pid
+	mov	TLB_TAG_ACCESS, %g5	! %g5 is now free, can reuse
 	inc	2, %g3
-	stw	%g6, [%g2+%g3]
+	stw	%g6, [%g2+%g3]		! traptrace.tstate
+	ldxa	[%g5] ASI_DMMU, %g5
 	inc	4, %g3
-	stw	%sp, [%g2+%g3]
+	stw	%sp, [%g2+%g3]		! traptrace.tsp
 	inc	4, %g3
-	stw	%g7, [%g2+%g3]
+	stw	%g4, [%g2+%g3]		! traptrace.tpc
 	inc	4, %g3
-	mov	TLB_TAG_ACCESS, %g7
-	ldxa	[%g7] ASI_DMMU, %g7
-	stw	%g7, [%g2+%g3]
+	stw	%g5, [%g2+%g3]		! traptrace.tfault
 	inc	4, %g3
-1:
-	jmpl	%g1, %g0
-	 stw	%g3, [%g2+TRACEPTR]
+9:
+	jmp	%g1			! return to processing the trap
+	 stw	%g3, [%g2+TRACEPTR]	! update trap_trace_ptr
+
 traceitwin:
 	set	trap_trace, %l2
 	lduw	[%l2+TRACEDIS], %l4
