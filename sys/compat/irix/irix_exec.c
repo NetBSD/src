@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.9 2002/01/07 22:05:03 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.10 2002/01/07 23:12:30 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.9 2002/01/07 22:05:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10 2002/01/07 23:12:30 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.9 2002/01/07 22:05:03 manu Exp $");
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/malloc.h>
+
+#include <machine/regnum.h>
 
 #include <compat/common/compat_util.h>
 
@@ -91,7 +93,7 @@ const struct emul emul_irix_o32 = {
 	trapsignal,
 	irix_sigcode,
 	irix_esigcode,
-	setregs_o32,
+	setregs,
 	NULL,
 	NULL,
 	NULL,
