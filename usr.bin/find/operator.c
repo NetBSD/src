@@ -1,4 +1,4 @@
-/*	$NetBSD: operator.c,v 1.6 1998/02/21 22:47:21 christos Exp $	*/
+/*	$NetBSD: operator.c,v 1.7 1999/01/02 02:34:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)operator.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: operator.c,v 1.6 1998/02/21 22:47:21 christos Exp $");
+__RCSID("$NetBSD: operator.c,v 1.7 1999/01/02 02:34:15 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,7 @@ not_squish(plan)
 			int notlevel = 1;
 
 			node = yanknode(&plan);
-			while (node->type == N_NOT) {
+			while (node != NULL && node->type == N_NOT) {
 				++notlevel;
 				node = yanknode(&plan);
 			}
@@ -207,6 +207,8 @@ not_squish(plan)
 				errx(1, "!: no following expression");
 			if (node->type == N_OR)
 				errx(1, "!: nothing between ! and -o");
+			if (node->type == N_EXPR)
+				node = not_squish(node);
 			if (notlevel % 2 != 1)
 				next = node;
 			else
