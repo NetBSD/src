@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.39 2000/05/27 19:42:06 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.39.2.1 2000/06/25 20:23:36 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
+#include "opt_tlp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h> 
