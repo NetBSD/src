@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ns.h	4.33 (Berkeley) 8/23/90
- *	$Id: ns.h,v 1.2 1993/08/01 17:57:26 mycroft Exp $
+ *	$Id: ns.h,v 1.3 1995/08/24 17:04:40 ragge Exp $
  */
 
 /*
@@ -274,11 +274,6 @@ extern int nzones;			/* number of zones in use */
 
 extern int forward_only;		/* true on slave server */
 #endif /* XFER */
-
-#ifdef vax
-extern u_short htons(), ntohs();
-extern u_long htonl(), ntohl();
-#endif
 
 #define MAX_XFER_TIME         60 * 60 * 2  /* max seconds for an xfer */
 #define XFER_TIME_FUDGE	      10           /* MAX_XFER_TIME fudge */
