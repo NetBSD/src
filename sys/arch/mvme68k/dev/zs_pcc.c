@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.8 2000/03/18 22:33:05 scw Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.9 2000/07/23 20:50:21 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -93,12 +93,6 @@ zsc_pcc_match(parent, cf, aux)
 	void *aux;
 {
 	struct pcc_attach_args *pa = aux;
-	int unit;
-
-	/* XXX This is bogus; should fix this. */
-	unit = cf->cf_unit;
-	if (unit < 0 || unit >= NZSC)
-		return (0);
 
 	if (strcmp(pa->pa_name, zsc_cd.cd_name))
 		return (0);
