@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.73 2001/04/13 23:30:21 thorpej Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.74 2001/05/14 19:50:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -311,8 +311,8 @@ arp_drain()
 		return;
 	}
 	
-	for (la = llinfo_arp.lh_first; la != 0; la = nla) {
-		nla = la->la_list.le_next;
+	for (la = LIST_FIRST(&llinfo_arp); la != 0; la = nla) {
+		nla = LIST_NEXT(la, la_list);
 
 		mold = la->la_hold;
 		la->la_hold = 0;
@@ -347,10 +347,10 @@ arptimer(arg)
 	}
 
 	callout_reset(&arptimer_ch, arpt_prune * hz, arptimer, NULL);
-	for (la = llinfo_arp.lh_first; la != 0; la = nla) {
+	for (la = LIST_FIRST(&llinfo_arp); la != 0; la = nla) {
 		struct rtentry *rt = la->la_rt;
 
-		nla = la->la_list.le_next;
+		nla = LIST_NEXT(la, la_list);
 		if (rt->rt_expire && rt->rt_expire <= time.tv_sec)
 			arptfree(la); /* timer has expired; clear */
 	}
