@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.117 1999/11/27 00:25:15 mycroft Exp $ */
+/* $NetBSD: pmap.c,v 1.118 1999/11/28 19:53:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 1999/11/27 00:25:15 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 1999/11/28 19:53:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -708,6 +708,14 @@ do {									\
 #endif
 
 /*
+ * PMAP_STAT_{INCR,DECR}:
+ *
+ *	Increment or decrement a pmap statistic.
+ */
+#define	PMAP_STAT_INCR(s, v)	alpha_atomic_add_q((unsigned long *)(&(s)), (v))
+#define	PMAP_STAT_DECR(s, v)	alpha_atomic_sub_q((unsigned long *)(&(s)), (v))
+
+/*
  * pmap_bootstrap:
  *
  *	Bootstrap the system to run with virtual memory.
@@ -1164,7 +1172,7 @@ void
 pmap_destroy(pmap)
 	pmap_t pmap;
 {
-	int ps, refs;
+	int refs;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -1173,9 +1181,9 @@ pmap_destroy(pmap)
 	if (pmap == NULL)
 		return;
 
-	PMAP_LOCK(pmap, ps);
+	PMAP_LOCK(pmap);
 	refs = --pmap->pm_count;
-	PMAP_UNLOCK(pmap, ps);
+	PMAP_UNLOCK(pmap);
 
 	if (refs > 0)
 		return;
@@ -1220,18 +1228,21 @@ void
 pmap_reference(pmap)
 	pmap_t	pmap;
 {
-	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_reference(%p)\n", pmap);
 #endif
 	if (pmap != NULL) {
-		PMAP_LOCK(pmap, ps);
+		PMAP_LOCK(pmap);
 		pmap->pm_count++;
-		PMAP_UNLOCK(pmap, ps);
+		PMAP_UNLOCK(pmap);
 	}
 }
+
+/* XXX testing purposes, for now.  --thorpej */
+void	pmap_remove_old __P((pmap_t, vaddr_t, vaddr_t));
+int	pmap_remove_new = 0;
 
 /*
  * pmap_remove:			[ INTERFACE ]
@@ -1240,9 +1251,6 @@ pmap_reference(pmap)
  *
  *	It is assumed that the start and end are properly
  *	rounded to the page size.
- *
- *	XXX This routine could be optimized with regard to its
- *	handling of level 3 PTEs.
  */
 void
 pmap_remove(pmap, sva, eva)
@@ -1250,9 +1258,169 @@ pmap_remove(pmap, sva, eva)
 	vaddr_t sva, eva;
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte;
+	pt_entry_t *saved_l1pte, *saved_l2pte, *saved_l3pte;
+	vaddr_t l1eva, l2eva, vptva;
 	boolean_t needisync = FALSE;
 	long cpu_id = alpha_pal_whami();
-	int ps;
+
+#ifdef DEBUG
+	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
+		printf("pmap_remove(%p, %lx, %lx)\n", pmap, sva, eva);
+#endif
+
+	if (pmap == NULL)
+		return;
+
+	/* XXX testing purposes, for now. --thorpej */
+	if (pmap_remove_new == 0)
+		pmap_remove_old(pmap, sva, eva);
+
+	/*
+	 * If this is the kernel pmap, we can use a faster method
+	 * for accessing the PTEs (since the PT pages are always
+	 * resident).
+	 *
+	 * Note that this routine should NEVER be called from an
+	 * interrupt context; pmap_kremove() is used for that.
+	 */
+	if (pmap == pmap_kernel()) {
+		PMAP_MAP_TO_HEAD_LOCK();
+		PMAP_LOCK(pmap);
+
+		while (sva < eva) {
+			l3pte = PMAP_KERNEL_PTE(sva);
+			if (pmap_pte_v(l3pte)) {
+#ifdef DIAGNOSTIC
+				if (PAGE_IS_MANAGED(pmap_pte_pa(l3pte)) &&
+				    pmap_pte_pv(l3pte) == 0)
+					panic("pmap_remove: managed page "
+					    "without PG_PVLIST for 0x%lx",
+					    sva);
+#endif
+				needisync |= pmap_remove_mapping(pmap, sva,
+				    l3pte, TRUE, cpu_id, NULL);
+			}
+			sva += PAGE_SIZE;
+		}
+
+		PMAP_UNLOCK(pmap);
+		PMAP_MAP_TO_HEAD_UNLOCK();
+
+		if (needisync) {
+			alpha_pal_imb();
+#if defined(MULTIPROCESSOR) && 0
+			alpha_broadcast_ipi(ALPHA_IPI_IMB);
+#endif
+		}
+		return;
+	}
+
+#ifdef DIAGNOSTIC
+	if (sva > VM_MAXUSER_ADDRESS || eva > VM_MAXUSER_ADDRESS)
+		panic("pmap_remove: (0x%lx - 0x%lx) user pmap, kernel "
+		    "address range", sva, eva);
+#endif
+
+	PMAP_MAP_TO_HEAD_LOCK();
+	PMAP_LOCK(pmap);
+
+	/*
+	 * If we're already referencing the kernel_lev1map, there
+	 * is no work for us to do.
+	 */
+	if (pmap->pm_lev1map == kernel_lev1map)
+		goto out;
+
+	saved_l1pte = l1pte = pmap_l1pte(pmap, sva);
+
+	/*
+	 * Add a reference to the L1 table to it won't get
+	 * removed from under us.
+	 */
+	pmap_physpage_addref(saved_l1pte);
+
+	for (; sva < eva; sva = l1eva, l1pte++) {
+		l1eva = alpha_trunc_l1seg(sva) + ALPHA_L1SEG_SIZE;
+		if (pmap_pte_v(l1pte)) {
+			saved_l2pte = l2pte = pmap_l2pte(pmap, sva, l1pte);
+
+			/*
+			 * Add a reference to the L2 table so it won't
+			 * get removed from under us.
+			 */
+			pmap_physpage_addref(saved_l2pte);
+
+			for (; sva < l1eva && sva < eva; sva = l2eva, l2pte++) {
+				l2eva =
+				    alpha_trunc_l2seg(sva) + ALPHA_L2SEG_SIZE;
+				if (pmap_pte_v(l2pte)) {
+					saved_l3pte = l3pte =
+					    pmap_l3pte(pmap, sva, l2pte);
+
+					/*
+					 * Add a reference to the L3 table so
+					 * it won't get removed from under us.
+					 */
+					pmap_physpage_addref(saved_l3pte);
+
+					/*
+					 * Remember this sva; if the L3 table
+					 * gets removed, we need to invalidate
+					 * the VPT TLB entry for it.
+					 */
+					vptva = sva;
+
+					for (; sva < l2eva && sva < eva;
+					     sva += PAGE_SIZE, l3pte++) {
+						if (pmap_pte_v(l3pte)) {
+							needisync |=
+							    pmap_remove_mapping(
+								pmap, sva,
+								l3pte, TRUE,
+								cpu_id, NULL);
+						}
+					}
+
+					/*
+					 * Remove the reference to the L3
+					 * table that we added above.  This
+					 * may free the L3 table.
+					 */
+					pmap_l3pt_delref(pmap, vptva,
+					    saved_l3pte, cpu_id, NULL);
+				}
+			}
+
+			/*
+			 * Remove the reference to the L2 table that we
+			 * added above.  This may free the L2 table.
+			 */
+			pmap_l2pt_delref(pmap, l1pte, saved_l2pte, cpu_id);
+		}
+	}
+
+	/*
+	 * Remove the reference to the L1 table that we added above.
+	 * This may free the L1 table.
+	 */
+	pmap_l1pt_delref(pmap, saved_l1pte, cpu_id);
+
+	if (needisync)
+		alpha_pal_imb();
+
+ out:
+	PMAP_UNLOCK(pmap);
+	PMAP_MAP_TO_HEAD_UNLOCK();
+}
+
+void
+pmap_remove_old(pmap, sva, eva)
+	pmap_t pmap;
+	vaddr_t sva, eva;
+{
+	pt_entry_t *l1pte, *l2pte, *l3pte;
+	boolean_t needisync = FALSE;
+	long cpu_id = alpha_pal_whami();
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
@@ -1272,7 +1440,7 @@ pmap_remove(pmap, sva, eva)
 	 */
 	if (pmap == pmap_kernel()) {
 		PMAP_MAP_TO_HEAD_LOCK();
-		PMAP_LOCK(pmap, ps);
+		PMAP_LOCK(pmap);
 
 		while (sva < eva) {
 			l3pte = PMAP_KERNEL_PTE(sva);
@@ -1290,7 +1458,7 @@ pmap_remove(pmap, sva, eva)
 			sva += PAGE_SIZE;
 		}
 
-		PMAP_UNLOCK(pmap, ps);
+		PMAP_UNLOCK(pmap);
 		PMAP_MAP_TO_HEAD_UNLOCK();
 
 		if (needisync) {
@@ -1309,7 +1477,7 @@ pmap_remove(pmap, sva, eva)
 #endif
 
 	PMAP_MAP_TO_HEAD_LOCK();
-	PMAP_LOCK(pmap, ps);
+	PMAP_LOCK(pmap);
 
 	while (sva < eva) {
 		/*
@@ -1343,7 +1511,7 @@ pmap_remove(pmap, sva, eva)
 	if (needisync)
 		alpha_pal_imb();
 
-	PMAP_UNLOCK(pmap, ps);
+	PMAP_UNLOCK(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 }
 
@@ -1363,7 +1531,6 @@ pmap_page_protect(pg, prot)
 	boolean_t needisync = FALSE;
 	long cpu_id = alpha_pal_whami();
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	int ps;
 
 #ifdef DEBUG
 	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
@@ -1403,10 +1570,8 @@ pmap_page_protect(pg, prot)
 	PMAP_HEAD_TO_MAP_LOCK();
 	simple_lock(&pvh->pvh_slock);
 	for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL; pv = nextpv) {
-		struct pmap *pmap = pv->pv_pmap;
-
 		nextpv = LIST_NEXT(pv, pv_list);
-		PMAP_LOCK(pmap, ps);
+		PMAP_LOCK(pv->pv_pmap);
 #ifdef DEBUG
 		if (pmap_pte_v(pmap_l2pte(pv->pv_pmap, pv->pv_va, NULL)) == 0 ||
 		    pmap_pte_pa(pv->pv_pte) != pa)
@@ -1425,7 +1590,7 @@ pmap_page_protect(pg, prot)
 			}
 		}
 #endif
-		PMAP_UNLOCK(pmap, ps);
+		PMAP_UNLOCK(pv->pv_pmap);
 	}
 
 	if (needisync)
@@ -1452,7 +1617,6 @@ pmap_protect(pmap, sva, eva, prot)
 	boolean_t hadasm;
 	vaddr_t l1eva, l2eva;
 	long cpu_id = alpha_pal_whami();
-	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT))
@@ -1471,7 +1635,7 @@ pmap_protect(pmap, sva, eva, prot)
 	if (prot & VM_PROT_WRITE)
 		return;
 
-	PMAP_LOCK(pmap, ps);
+	PMAP_LOCK(pmap);
 
 	bits = pte_prot(pmap, prot);
 	isactive = PMAP_ISACTIVE(pmap);
@@ -1520,7 +1684,7 @@ pmap_protect(pmap, sva, eva, prot)
 #endif
 	}
 
-	PMAP_UNLOCK(pmap, ps);
+	PMAP_UNLOCK(pmap);
 }
 
 /*
@@ -1554,7 +1718,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	boolean_t isactive;
 	boolean_t wired;
 	long cpu_id = alpha_pal_whami();
-	int ps, error;
+	int error;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1570,7 +1734,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	wired = (flags & PMAP_WIRED) != 0;
 
 	PMAP_MAP_TO_HEAD_LOCK();
-	PMAP_LOCK(pmap, ps);
+	PMAP_LOCK(pmap);
 
 	if (pmap == pmap_kernel()) {
 #ifdef DIAGNOSTIC
@@ -1712,9 +1876,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 			 * Adjust the wiring count.
 			 */
 			if (wired)
-				pmap->pm_stats.wired_count++;
+				PMAP_STAT_INCR(pmap->pm_stats.wired_count, 1);
 			else
-				pmap->pm_stats.wired_count--;
+				PMAP_STAT_DECR(pmap->pm_stats.wired_count, 1);
 		}
 
 		/*
@@ -1760,9 +1924,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 	/*
 	 * Increment counters.
 	 */
-	pmap->pm_stats.resident_count++;
+	PMAP_STAT_INCR(pmap->pm_stats.resident_count, 1);
 	if (wired)
-		pmap->pm_stats.wired_count++;
+		PMAP_STAT_INCR(pmap->pm_stats.wired_count, 1);
 
  validate:
 	/*
@@ -1834,7 +1998,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 #endif
 	}
 
-	PMAP_UNLOCK(pmap, ps);
+	PMAP_UNLOCK(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 	
 	return (KERN_SUCCESS);
@@ -1858,7 +2022,6 @@ pmap_kenter_pa(va, pa, prot)
 	long cpu_id = alpha_pal_whami();
 	boolean_t needisync = FALSE;
 	pmap_t pmap = pmap_kernel();
-	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1876,17 +2039,10 @@ pmap_kenter_pa(va, pa, prot)
 
 	pte = PMAP_KERNEL_PTE(va);
 
-	/*
-	 * Update stats; must lock the kernel pmap to do this.
-	 */
-	PMAP_LOCK(pmap, ps);
-
 	if (pmap_pte_v(pte) == 0)
-		pmap->pm_stats.resident_count++;
+		PMAP_STAT_INCR(pmap->pm_stats.resident_count, 1);
 	if (pmap_pte_w(pte) == 0)
-		pmap->pm_stats.wired_count++;
-
-	PMAP_UNLOCK(pmap, ps);
+		PMAP_STAT_DECR(pmap->pm_stats.wired_count, 1);
 
 	if ((prot & VM_PROT_EXECUTE) != 0 || pmap_pte_exec(pte))
 		needisync = TRUE;
@@ -1962,7 +2118,6 @@ pmap_kremove(va, size)
 	boolean_t needisync = FALSE;
 	long cpu_id = alpha_pal_whami();
 	pmap_t pmap = pmap_kernel();
-	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1974,8 +2129,6 @@ pmap_kremove(va, size)
 	if (va < VM_MIN_KERNEL_ADDRESS)
 		panic("pmap_kremove: user address");
 #endif
-
-	PMAP_LOCK(pmap, ps);
 
 	for (; size != 0; size -= PAGE_SIZE, va += PAGE_SIZE) {
 		pte = PMAP_KERNEL_PTE(va);
@@ -1995,12 +2148,10 @@ pmap_kremove(va, size)
 			pmap_tlb_shootdown(pmap, va, PG_ASM);
 #endif
 			/* Update stats. */
-			pmap->pm_stats.resident_count--;
-			pmap->pm_stats.wired_count--;
+			PMAP_STAT_DECR(pmap->pm_stats.resident_count, 1);
+			PMAP_STAT_DECR(pmap->pm_stats.wired_count, 1);
 		}
 	}
-
-	PMAP_UNLOCK(pmap, ps);
 
 	if (needisync) {
 		alpha_pal_imb();
@@ -2023,7 +2174,6 @@ pmap_unwire(pmap, va)
 	vaddr_t		va;
 {
 	pt_entry_t *pte;
-	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2032,7 +2182,7 @@ pmap_unwire(pmap, va)
 	if (pmap == NULL)
 		return;
 
-	PMAP_LOCK(pmap, ps);
+	PMAP_LOCK(pmap);
 
 	pte = pmap_l3pte(pmap, va, NULL);
 #ifdef DIAGNOSTIC
@@ -2047,7 +2197,7 @@ pmap_unwire(pmap, va)
 	 */
 	if (pmap_pte_w_chg(pte, 0)) {
 		pmap_pte_set_w(pte, FALSE);
-		pmap->pm_stats.wired_count--;
+		PMAP_STAT_DECR(pmap->pm_stats.wired_count, 1);
 	}
 #ifdef DIAGNOSTIC
 	else {
@@ -2056,7 +2206,7 @@ pmap_unwire(pmap, va)
 	}
 #endif
 
-	PMAP_UNLOCK(pmap, ps);
+	PMAP_UNLOCK(pmap);
 }
 
 /*
@@ -2072,7 +2222,6 @@ pmap_extract(pmap, va, pap)
 	paddr_t *pap;
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte;
-	int ps;
 	paddr_t pa;
 	boolean_t rv = FALSE;
 
@@ -2080,7 +2229,7 @@ pmap_extract(pmap, va, pap)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_extract(%p, %lx) -> ", pmap, va);
 #endif
-	PMAP_LOCK(pmap, ps);
+	PMAP_LOCK(pmap);
 
 	l1pte = pmap_l1pte(pmap, va);
 	if (pmap_pte_v(l1pte) == 0)
@@ -2100,7 +2249,7 @@ pmap_extract(pmap, va, pap)
 	rv = TRUE;
 
  out:
-	PMAP_UNLOCK(pmap, ps);
+	PMAP_UNLOCK(pmap);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		if (rv)
@@ -2202,7 +2351,6 @@ pmap_activate(p)
 {
 	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
 	long cpu_id = alpha_pal_whami();
-	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2222,7 +2370,7 @@ pmap_activate(p)
 	TAILQ_INSERT_TAIL(&pmap_all_pmaps, pmap, pm_list);
 	simple_unlock(&pmap_all_pmaps_slock);
 
-	PMAP_LOCK(pmap, ps);
+	PMAP_LOCK(pmap);
 
 	/*
 	 * Allocate an ASN.
@@ -2231,7 +2379,7 @@ pmap_activate(p)
 
 	PMAP_ACTIVATE(pmap, p, cpu_id);
 
-	PMAP_UNLOCK(pmap, ps);
+	PMAP_UNLOCK(pmap);
 }
 
 /*
@@ -2575,8 +2723,8 @@ pmap_remove_mapping(pmap, va, pte, dolock, cpu_id, prmt)
 	 * Update statistics
 	 */
 	if (pmap_pte_w(pte))
-		pmap->pm_stats.wired_count--;
-	pmap->pm_stats.resident_count--;
+		PMAP_STAT_DECR(pmap->pm_stats.wired_count, 1);
+	PMAP_STAT_DECR(pmap->pm_stats.resident_count, 1);
 
 	/*
 	 * Invalidate the PTE after saving the reference modify info.
@@ -2646,7 +2794,6 @@ pmap_changebit(pa, set, mask, cpu_id)
 	vaddr_t va;
 	boolean_t hadasm, isactive;
 	boolean_t needisync = FALSE;
-	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_BITS)
@@ -2673,7 +2820,7 @@ pmap_changebit(pa, set, mask, cpu_id)
 				continue;
 		}
 
-		PMAP_LOCK(pv->pv_pmap, ps);
+		PMAP_LOCK(pv->pv_pmap);
 
 		pte = pv->pv_pte;
 		npte = (*pte | set) & mask;
@@ -2689,7 +2836,7 @@ pmap_changebit(pa, set, mask, cpu_id)
 			    hadasm ? PG_ASM : 0);
 #endif
 		}
-		PMAP_UNLOCK(pv->pv_pmap, ps);
+		PMAP_UNLOCK(pv->pv_pmap);
 	}
 
 	if (needisync) {
@@ -2717,7 +2864,6 @@ pmap_emulate_reference(p, v, user, write)
 	struct pv_head *pvh;
 	boolean_t didlock = FALSE;
 	long cpu_id = alpha_pal_whami();
-	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2742,7 +2888,7 @@ pmap_emulate_reference(p, v, user, write)
 		if (p->p_vmspace == NULL)
 			panic("pmap_emulate_reference: bad p_vmspace");
 #endif
-		PMAP_LOCK(p->p_vmspace->vm_map.pmap, ps);
+		PMAP_LOCK(p->p_vmspace->vm_map.pmap);
 		didlock = TRUE;
 		pte = pmap_l3pte(p->p_vmspace->vm_map.pmap, v, NULL);
 		/*
@@ -2785,7 +2931,7 @@ pmap_emulate_reference(p, v, user, write)
 	 * it now.
 	 */
 	if (didlock)
-		PMAP_UNLOCK(p->p_vmspace->vm_map.pmap, ps);
+		PMAP_UNLOCK(p->p_vmspace->vm_map.pmap);
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -3489,7 +3635,7 @@ pmap_ptpage_steal(pmap, usage, pap)
 {
 	struct pv_head *pvh;
 	pmap_t spmap;
-	int ps, l1idx, l2idx, l3idx;
+	int l1idx, l2idx, l3idx;
 	pt_entry_t *lev2map, *lev3map;
 	vaddr_t va;
 	paddr_t pa;
@@ -3521,9 +3667,9 @@ pmap_ptpage_steal(pmap, usage, pap)
 		if (spmap == pmap_kernel() || spmap == pmap)
 			continue;
 
-		PMAP_LOCK(spmap, ps);
+		PMAP_LOCK(spmap);
 		if (spmap->pm_lev1map == kernel_lev1map) {
-			PMAP_UNLOCK(spmap, ps);
+			PMAP_UNLOCK(spmap);
 			continue;
 		}
 
@@ -3566,7 +3712,7 @@ pmap_ptpage_steal(pmap, usage, pap)
 		 * Didn't find something we could steal in this
 		 * pmap, try the next one.
 		 */
-		PMAP_UNLOCK(spmap, ps);
+		PMAP_UNLOCK(spmap);
 		continue;
 
  found_one:
@@ -3592,7 +3738,7 @@ pmap_ptpage_steal(pmap, usage, pap)
 			}
 		}
 
-		PMAP_UNLOCK(spmap, ps);
+		PMAP_UNLOCK(spmap);
 
 		if (needisync) {
 			alpha_pal_imb();
