@@ -1,4 +1,4 @@
-/*	$NetBSD: vt220.c,v 1.4 2004/01/17 22:52:42 bjh21 Exp $	*/
+/*	$NetBSD: vt220.c,v 1.5 2004/03/13 18:48:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vt220.c,v 1.4 2004/01/17 22:52:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vt220.c,v 1.5 2004/03/13 18:48:26 bjh21 Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,10 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: vt220.c,v 1.4 2004/01/17 22:52:42 bjh21 Exp $");
 
 #include <arm/iomd/vidc.h>
 #include <arm/iomd/console/vt220.h>
-
-#ifdef DIAGNOSTIC
-#include "qms.h"
-#endif
 
 static char vt220_name[] = "vt100";
 
@@ -114,9 +110,6 @@ int mapped_cls(struct vconsole *);
 void do_scrollup(struct vconsole *);
 void do_scrolldown(struct vconsole *);
 void vt_ris(struct vconsole *);
-#if defined(DIAGNOSTIC) && NQMS > 0
-void qms_console_freeze(void);	/* XXX */
-#endif /* DIAGNOSTIC && NQMS */
 
 void clr_params(struct vt220_info *);
 void respond(struct vconsole *);
@@ -1349,10 +1342,6 @@ TERMTYPE_PUTSTRING(string, length, vc)
 
     if ( ( c == 0x0a ) || ( c== 0x0d ) )
 	cdata->flags &= ~F_LASTCHAR;
-
-#if defined(DIAGNOSTIC) && NQMS > 0
-	qms_console_freeze();
-#endif /* DIAGNOSTIC && NQMS */
 
 /* Always process characters in the range of 0x00 to 0x1f */
 
