@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.506 2004/11/12 05:07:04 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.507 2004/11/12 05:08:22 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7869,3 +7869,13 @@ bin/pax/buf_subs.c				1.25
 	fd can be -1 or -2 for the gnu long name/link hack. So check for >= 0
 	instead of -1 if we need to flush.
 	[christos, ticket #922]
+
+sys/arch/amiga/dev/ite_cl.c			1.7
+
+	The gcc3 compiler optimized away writing character data to the Cirrus 
+	chip, which results in a blank display - making it rather difficult 
+	to do an install or upgrade when using a Cirrus-based display.  
+	Change the pointer used to write the character and attribute to 
+	volatile. The console screen now shows data and is usable.
+
+	[mhitch, ticket #923]
