@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.25 2002/09/13 04:09:49 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.26 2002/09/13 16:03:20 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -49,15 +49,17 @@ _rtld_bind_mips(a0, a1, a2, a3)
 	const Obj_Entry *obj = (Obj_Entry *)(u[1] & 0x7fffffff);
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
+	Elf_Addr new_value;
 
 	def = _rtld_find_symdef(a0, obj, &defobj, true);
-	if (def) {
-		u[obj->local_gotno + a0 - obj->gotsym] = (Elf_Addr)
-		    (def->st_value + defobj->relocbase);
-		return((caddr_t)(def->st_value + defobj->relocbase));
-	}
+	if (def == NULL)
+		return(NULL);	/* XXX */
 
-	return(NULL);	/* XXX */
+	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
+	rdbg(("bind now/fixup in %s --> new=%p",
+	    defobj->strtab + def->st_name, (void *)new_value));
+	u[obj->local_gotno + a0 - obj->gotsym] = new_value;
+	return ((caddr_t)new_value);
 }
 
 void
@@ -140,8 +142,7 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 		if (sym->st_shndx == SHN_UNDEF ||
 		    sym->st_shndx == SHN_COMMON)
 			*got = sym->st_value + relocbase;
-		else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
-		    *got != sym->st_value)
+		else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC)
 			*got += relocbase;
 		else if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
 		    ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
@@ -253,14 +254,17 @@ _rtld_relocate_nonplt_objects(obj, self)
 		rdbg((" doing got %d sym %p (%s, %x)", i - obj->gotsym, sym,
 		    sym->st_name + obj->strtab, *got));
 
-		def = _rtld_find_symdef(i, obj, &defobj, true);
-		if (def == NULL)
-			return -1;
-		if (sym->st_shndx == SHN_UNDEF ||
-		    sym->st_shndx == SHN_COMMON)
+		if (sym->st_shndx == SHN_UNDEF &&
+		    ELF_ST_BIND(sym->st_info) != STB_WEAK &&
+		    ELF_ST_TYPE(sym->st_info) == STT_FUNC)
+			*got = sym->st_value + (Elf_Addr)obj->relocbase;
+		else if (sym->st_shndx == SHN_UNDEF ||
+		    sym->st_shndx == SHN_COMMON) {
+			def = _rtld_find_symdef(i, obj, &defobj, true);
+			if (def == NULL)
+				return -1;
 			*got = def->st_value + (Elf_Addr)defobj->relocbase;
-		else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
-		    *got != sym->st_value)
+		} else if (ELF_ST_TYPE(sym->st_info) == STT_FUNC)
 			*got += (Elf_Addr)obj->relocbase;
 		else if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
 		    ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
@@ -268,8 +272,12 @@ _rtld_relocate_nonplt_objects(obj, self)
 				*got = sym->st_value +
 				    (Elf_Addr)obj->relocbase;
 			/* else SGI stuff ignored */
-		} else
+		} else {
+			def = _rtld_find_symdef(i, obj, &defobj, true);
+			if (def == NULL)
+				return -1;
 			*got = def->st_value + (Elf_Addr)defobj->relocbase;
+		}
 		++sym;
 		++got;
 	}
@@ -281,18 +289,4 @@ int
 _rtld_relocate_plt_lazy(obj)
 	const Obj_Entry *obj;
 {
-	const Elf_Rel *rel;
-
-	if (!obj->isdynamic)
-		return 0;
-
-	for (rel = obj->pltrel; rel < obj->pltrellim; rel++) {
-		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
-
-		/* Just relocate the GOT slots pointing into the PLT */
-		*where += (Elf_Addr)obj->relocbase;
-		rdbg(("fixup !main in %s --> %p", obj->path, (void *)*where));
-	}
-
-	return 0;
 }
