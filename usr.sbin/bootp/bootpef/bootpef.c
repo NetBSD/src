@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpef.c,v 1.5 2002/07/13 23:58:30 wiz Exp $");
+__RCSID("$NetBSD: bootpef.c,v 1.6 2004/11/17 13:21:09 hira Exp $");
 #endif
 
 
@@ -116,7 +116,8 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	   "usage:  $s [ -c chdir ] [-d level] [-f configfile] [host...]\n");
+	    "usage: %s [-c chdir] [-d level] [-f configfile] [host ...]\n",
+	    getprogname());
 	fprintf(stderr, "\t -c n\tset current directory\n");
 	fprintf(stderr, "\t -d n\tset debug level\n");
 	fprintf(stderr, "\t -f n\tconfig file name\n");
