@@ -1,8 +1,8 @@
-/* $NetBSD: s3c2xx0_intr.c,v 1.4 2003/07/15 00:24:49 lukem Exp $ */
+/* $NetBSD: s3c2xx0_intr.c,v 1.5 2003/07/30 18:25:50 bsh Exp $ */
 
 /*
- * Copyright (c) 2002 Fujitsu Component Limited
- * Copyright (c) 2002 Genetec Corporation
+ * Copyright (c) 2002, 2003 Fujitsu Component Limited
+ * Copyright (c) 2002, 2003 Genetec Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.4 2003/07/15 00:24:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.5 2003/07/30 18:25:50 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,96 +160,61 @@ static void
 init_interrupt_masks(void)
 {
 	int i;
-	s3c2xx0_imask[IPL_NONE] = 0xffffffff;
 
-	for (i = IPL_BIO; i < IPL_SOFTSERIAL; ++i)
-		s3c2xx0_imask[i] = SI_TO_IRQBIT(SI_SOFTSERIAL);
-	for (; i < NIPL; ++i)
-		s3c2xx0_imask[i] = 0;
+	s3c2xx0_imask[IPL_NONE] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
+		SI_TO_IRQBIT(SI_SOFTNET) | SI_TO_IRQBIT(SI_SOFTCLOCK) |
+		SI_TO_IRQBIT(SI_SOFT);
 
-	/*
-	 * Initialize the soft interrupt masks to block themselves.
-	 */
-	s3c2xx0_imask[IPL_SOFT] = ~SI_TO_IRQBIT(SI_SOFT);
-	s3c2xx0_imask[IPL_SOFTCLOCK] = ~SI_TO_IRQBIT(SI_SOFTCLOCK);
-	s3c2xx0_imask[IPL_SOFTNET] = ~SI_TO_IRQBIT(SI_SOFTNET);
+	s3c2xx0_imask[IPL_SOFT] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
+		SI_TO_IRQBIT(SI_SOFTNET) | SI_TO_IRQBIT(SI_SOFTCLOCK);
 
 	/*
 	 * splsoftclock() is the only interface that users of the
 	 * generic software interrupt facility have to block their
 	 * soft intrs, so splsoftclock() must also block IPL_SOFT.
 	 */
-	s3c2xx0_imask[IPL_SOFTCLOCK] &= s3c2xx0_imask[IPL_SOFT];
+	s3c2xx0_imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
+		SI_TO_IRQBIT(SI_SOFTNET);
 
 	/*
 	 * splsoftnet() must also block splsoftclock(), since we don't
 	 * want timer-driven network events to occur while we're
 	 * processing incoming packets.
 	 */
-	s3c2xx0_imask[IPL_SOFTNET] &= s3c2xx0_imask[IPL_SOFTCLOCK];
+	s3c2xx0_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTSERIAL);
 
+	for (i = IPL_BIO; i < IPL_SOFTSERIAL; ++i)
+		s3c2xx0_imask[i] = SI_TO_IRQBIT(SI_SOFTSERIAL);
+	for (; i < NIPL; ++i)
+		s3c2xx0_imask[i] = 0;
 }
 
 
-/*
- * Disable/enable interrupts.
- * This is for S3C2XX0's intergrated UART, which can't disable tx/rx
- * interrupts without disabling tx/rx by means of UART regsiters.
- */
 void
-s3c2xx0_mask_interrupts(int mask)
-{
-	int save = disable_interrupts(I32_bit);
-	int i;
-
-	for (i = 0; i < NIPL - 1; ++i)
-		s3c2xx0_imask[i] &= ~mask;
-
-	intr_mask = s3c2xx0_imask[current_spl_level];
-	*s3c2xx0_intr_mask_reg = intr_mask;
-
-	restore_interrupts(save);
-}
-
-void
-s3c2xx0_unmask_interrupts(int mask)
-{
-	int save = disable_interrupts(I32_bit);
-	int i;
-
-	for (i = 0; i < ICU_LEN; ++i) {
-		if ((mask & (1 << i)) == 0)
-			continue;
-		s3c2xx0_update_intr_masks(i, s3c2xx0_ilevel[i]);
-	}
-
-	intr_mask = s3c2xx0_imask[current_spl_level];
-	*s3c2xx0_intr_mask_reg = intr_mask;
-
-	restore_interrupts(save);
-}
-
-void
-s3c2xx0_do_pending(void)
+s3c2xx0_do_pending(int enable_int)
 {
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
-	int oldirqstate, spl_save;
+	int oldirqstate, irqstate, spl_save;
 
 	if (__cpu_simple_lock_try(&processing) == 0)
 		return;
 
 	spl_save = current_spl_level;
 
-	oldirqstate = disable_interrupts(I32_bit);
+	oldirqstate = irqstate = disable_interrupts(I32_bit);
+
+	if (enable_int)
+		irqstate &= ~I32_bit;
+
 
 #define	DO_SOFTINT(si,ipl)						\
-	if ((softint_pending & intr_mask) & SI_TO_IRQBIT(si)) {	\
+	if ((softint_pending & intr_mask) & SI_TO_IRQBIT(si)) {		\
 		softint_pending &= ~SI_TO_IRQBIT(si);			\
                 __raise(ipl);                                           \
-		restore_interrupts(oldirqstate);			\
+		restore_interrupts(irqstate);				\
 		softintr_dispatch(si);					\
-		oldirqstate = disable_interrupts(I32_bit);		\
-		s3c2xx0_setipl(spl_save);					\
+		disable_interrupts(I32_bit);				\
+		s3c2xx0_setipl(spl_save);				\
 	}
 
 	do {
@@ -297,24 +262,28 @@ s3c2xx0_intr_init(struct s3c2xx0_intr_dispatch * dispatch_table, int icu_len)
 	_splraise(IPL_SERIAL);
 	enable_interrupts(I32_bit);
 }
+
 #undef splx
 void
 splx(int ipl)
 {
 	s3c2xx0_splx(ipl);
 }
+
 #undef _splraise
 int
 _splraise(int ipl)
 {
 	return s3c2xx0_splraise(ipl);
 }
+
 #undef _spllower
 int
 _spllower(int ipl)
 {
 	return s3c2xx0_spllower(ipl);
 }
+
 #undef _setsoftintr
 void
 _setsoftintr(int si)

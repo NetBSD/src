@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_intr.c,v 1.5 2003/07/15 00:24:48 lukem Exp $ */
+/* $NetBSD: s3c2800_intr.c,v 1.6 2003/07/30 18:25:50 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_intr.c,v 1.5 2003/07/15 00:24:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_intr.c,v 1.6 2003/07/30 18:25:50 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,8 @@ struct s3c2xx0_intr_dispatch handler[ICU_LEN];
 __volatile int softint_pending;
 
 __volatile int current_spl_level;
-__volatile int intr_mask;
+__volatile int intr_mask;    /* XXX: does this need to be volatile? */
+__volatile int global_intr_mask = 0; /* mask some interrupts at all spl level */
 
 /* interrupt masks for each level */
 int s3c2xx0_imask[NIPL];
@@ -101,36 +102,38 @@ s3c2800_irq_handler(struct clockframe *frame)
 
 	saved_spl_level = current_spl_level;
 
-	/* get pending IRQs */
-	irqbits = icreg(INTCTL_IRQPND) & ICU_INT_HWMASK;
+	while ((irqbits = icreg(INTCTL_IRQPND) & ICU_INT_HWMASK) != 0) {
 
-	for (irqno = 0; irqbits; ++irqno) {
-		if ((irqbits & (1 << irqno)) == 0)
-			continue;
+		for (irqno = ICU_LEN-1; irqno >= 0; --irqno)
+			if (irqbits & (1<<irqno))
+				break;
+
+		if (irqno < 0)
+			break;
+
 		/* raise spl to stop interrupts of lower priorities */
 		if (saved_spl_level < handler[irqno].level)
 			s3c2xx0_setipl(handler[irqno].level);
 
 		/* clear pending bit */
 		icreg(INTCTL_SRCPND) = PENDING_CLEAR_MASK & (1 << irqno);
-#ifdef notyet
-		/* Enable interrupt */
-#endif
+
+		enable_interrupts(I32_bit); /* allow nested interrupts */
+
 		(*handler[irqno].func) (
 		    handler[irqno].cookie == 0
 		    ? frame : handler[irqno].cookie);
-#ifdef notyet
-		/* Disable interrupt */
-#endif
 
-		irqbits &= ~(1 << irqno);
+		disable_interrupts(I32_bit);
+
+		/* restore spl to that was when this interrupt happen */
+		s3c2xx0_setipl(saved_spl_level);
 	}
 
-	/* restore spl to that was when this interrupt happen */
-	s3c2xx0_setipl(saved_spl_level);
 
 	if (softint_pending & intr_mask)
-		s3c2xx0_do_pending();
+		s3c2xx0_do_pending(1);
+
 }
 
 static const u_char s3c2800_ist[] = {
@@ -181,8 +184,7 @@ s3c2800_intr_establish(int irqno, int level, int type,
 				  GPIO_EXTINTR, reg);
 	}
 
-	intr_mask = s3c2xx0_imask[current_spl_level];
-	*s3c2xx0_intr_mask_reg = intr_mask;
+	s3c2xx0_setipl(current_spl_level);
 
 	restore_interrupts(save);
 
