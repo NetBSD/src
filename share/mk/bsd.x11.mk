@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.16 2004/01/01 07:02:27 rtr Exp $
+#	$NetBSD: bsd.x11.mk,v 1.17 2004/01/01 09:30:31 rtr Exp $
 
 .include <bsd.init.mk>
 
@@ -132,7 +132,7 @@ cleanx11man:
 
 .SUFFIXES:	.man .1 .3 .4 .5 .7
 
-.man.1 .man.3 .man4 .man5 .man.7:
+.man.1 .man.3 .man.4 .man.5 .man.7:
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
 	${CPP} -undef -traditional \
