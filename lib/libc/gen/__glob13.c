@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.9 1998/12/01 20:14:04 thorpej Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.10 1999/02/07 12:19:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.9 1998/12/01 20:14:04 thorpej Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.10 1999/02/07 12:19:37 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -377,7 +377,7 @@ globtilde(pattern, patbuf, pglob)
 	*d = EOS;
 	d = (char *)(void *)patbuf;
 
-	if (d == EOS) {
+	if (*d == EOS) {
 		/* 
 		 * handle a plain ~ or ~/ by expanding $HOME 
 		 * first and then trying the password file
