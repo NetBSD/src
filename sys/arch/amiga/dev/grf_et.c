@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.11 1998/01/12 10:39:36 thorpej Exp $	*/
+/*	$NetBSD: grf_et.c,v 1.12 1999/03/25 23:19:59 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -34,6 +34,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "opt_amigacons.h"
 #include "grfet.h"
 #if NGRFET > 0
 

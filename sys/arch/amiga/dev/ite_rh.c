@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rh.c,v 1.7 1996/04/23 22:53:05 veego Exp $	*/
+/*	$NetBSD: ite_rh.c,v 1.8 1999/03/25 23:19:59 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -30,6 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "opt_retina.h"
 #include "grfrh.h"
 #if NGRFRH > 0
 
