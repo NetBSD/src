@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 1997/05/26 02:25:58 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 1997/05/26 06:21:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -886,7 +886,7 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
@@ -1022,7 +1022,7 @@ sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
-		printf("sendsig(%d): sig %d ssp %x usp %x scp %x\n",
+		printf("sendsig(%d): sig %d ssp %p usp %p scp %p\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc);
 #endif
 	/*
@@ -1110,7 +1110,7 @@ sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	regs = p->p_md.md_regs;
 	/*
@@ -1121,7 +1121,7 @@ sys_sigreturn(p, v, retval)
 	if (error || ksc.sc_regs[ZERO] != 0xACEDBADE) {
 #ifdef DEBUG
 		if (!(sigdebug & SDB_FOLLOW))
-			printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+			printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 		printf("  old sp %x ra %x pc %x\n",
 			regs[SP], regs[RA], regs[PC]);
 		printf("  new sp %x ra %x pc %x err %d z %x\n",
@@ -1206,7 +1206,7 @@ dumpsys()
 		cpu_dumpconf();
 	if (dumplo < 0)
 		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 	printf("dump ");
 	/*
 	 * XXX
@@ -1683,7 +1683,7 @@ kmin_enable_intr(slotno, handler, sc, on)
 	}
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
-	printf("3MIN: imask %x, %sabling slot %d, sc %x addr 0x%x\n",
+	printf("3MIN: imask %lx, %sabling slot %d, sc %p handler %p\n",
 	       kmin_tc3_imask, (on? "en" : "dis"), slotno, sc, handler);
 #endif
 
