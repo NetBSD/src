@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.37 2000/07/20 18:14:47 jeffs Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.38 2000/08/24 05:32:00 uch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1273,12 +1273,20 @@ END(mips1_wbflush)
 #else /* !ENABLE_MIPS_TX3900 */
 /*
  *	The differences between R3900 and R3000.
- *	1. Cache system
- *		TX3912 I-cache 4KB/16B direct mapped
- *		       D-cache 1KB/4B 2-way sa
- *		TX3922 I-cache 16KB/16B 2-way sa
+ *	1. Cache system 
+ *		Physical-index physical-tag	
+ *		line-size 4words (fixed)
+ *		refil-size 4/8/16/32 words (set in config register)
+ *		TX3912 
+ *		       Write-through
+ *		       I-cache 4KB/16B direct mapped (256line)
+ *		       D-cache 1KB/4B 2-way sa (128line)
+ *		       Cache snoop	
+ *		TX3922
+ *		       Write-through/write-back (set in config register)
+ *		       I-cache 16KB/16B 2-way sa 
  *		       D-cache 8KB/16B 2-way sa
- *		(mips/mips/locore_mips1.S)
+ *		       Cache snoop	
  *
  *	2. Coprocessor1
  *	2.1	cache operation.
@@ -1293,8 +1301,9 @@ END(mips1_wbflush)
  *		kseg2 0xff000000-0xfffeffff is reserved.
  *		(mips/include/vmparam.h)
  *
- * If defined both MIPS1 and ENABLE_MIPS_TX3900, it generates kernel for
+ *  + If defined both MIPS1 and ENABLE_MIPS_TX3900, it generates kernel for
  * R3900. If defined MIPS1 only, No R3900 feature include.
+ *  + R3920 core has write-back mode. but it is always disabled in NetBSD.
  */
 
 /*
@@ -1305,14 +1314,14 @@ LEAF(mips1_ConfigCache)
 	li	t1, R3900_CONFIG_ICS_MASK
 	and	t1, t1, t0
 	srl	t1, t1, R3900_CONFIG_ICS_SHIFT
-	li	t2, R3900_MIN_CACHE_SIZE
+	li	t2, R3900_C_SIZE_MIN
 	sllv	t1, t2, t1
 	sw	t1, _C_LABEL(mips_L1ICacheSize)
 
 	li	t1, R3900_CONFIG_DCS_MASK
 	and	t1, t1, t0
 	srl	t1, t1, R3900_CONFIG_DCS_SHIFT
-	li	t2, R3900_MIN_CACHE_SIZE
+	li	t2, R3900_C_SIZE_MIN
 	sllv	t1, t2, t1
 	sw	t1, _C_LABEL(mips_L1DCacheSize)
 
@@ -1321,30 +1330,50 @@ LEAF(mips1_ConfigCache)
 END(mips1_ConfigCache)
 
 /*
- * R3900 2-way set-associative, line size 4byte(3900)/16byte(3920)
- *	void mips1_FlushDCache(vaddr_t addr, vsize_t len)
+ *	void mips1_FlushDCache(vaddr_t addr, vsize_t len)	
  */
+#ifdef TX392X	
 LEAF(mips1_FlushDCache)
-	lw	t0, mips_L1DCacheLSize
-	addu	a1, a1, a0			# compute ending address
-1:
+	beq	a1, zero, 2f
+	addu	a1, a0, a1			# Compute end address + 1
 	.set	push
 	.set	mips3
-	cache	R3900_CACHE_D_INDEX_WRITEBACK_INVALIDATE, 0(a0)
-	.set	pop
-	addu	a0, a0, t0
-	bne	a0, a1, 1b
+1:
+	cache	R3920_C_HINV_D, 0(a0)		# write-through mode
+	addiu	a0, a0, R3920_C_LSIZE_D		# next index
+	bltu	a0, a1, 1b
 	nop
-
+	.set	pop
+2:
 	j	ra
 	nop
 END(mips1_FlushDCache)
+#endif /* TX392X */
+#ifdef TX391X	
+LEAF(mips1_FlushDCache)
+	beq	a1, zero, 2f
+	addu	a1, a0, a1			# Compute end address + 1
+	.set	push
+	.set	mips3
+1:
+	cache	R3900_C_HINV_D, 0(a0)
+	addiu	a0, a0, R3900_C_LSIZE_D		# next index
+	bltu	a0, a1, 1b
+	nop
+	.set	pop
+2:
+	j	ra
+	nop
+END(mips1_FlushDCache)
+#endif /* TX391X */
 
 /*
- * R3900 direct-mapped/2-way set-associative line size 16byte
  *	void mips1_FlushICache(vaddr_t addr, vsize_t len)
  */
+#ifdef TX392X	
 LEAF(mips1_FlushICache)
+	beq	a1, zero, 4f
+	lw	t3, mips_L1ICacheSize	
 	mfc0	t0, MIPS_COP_0_STATUS		# Save SR
 	nop
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts.
@@ -1355,46 +1384,145 @@ LEAF(mips1_FlushICache)
 	and	t1, t1, t2
 	nop
 	mtc0	t1, R3900_COP_0_CONFIG
-	j	2f	# stop streaming
+	j	1f				# stop streaming
 	nop
-2:
-	# Flush I-cache
-	addu	a1, 127
-	srl	a1, a1, 7	# Number of unrolled loops
-3:
+1:	
+	addu	a1, a1, a0			# compute ending address
 	.set	push
 	.set	mips3
-	cache	R3900_CACHE_I_INDEX_INVALIDATE, 0(a0)
-	cache	R3900_CACHE_I_INDEX_INVALIDATE, 16(a0)
-	cache	R3900_CACHE_I_INDEX_INVALIDATE, 32(a0)
-	cache	R3900_CACHE_I_INDEX_INVALIDATE, 48(a0)
-	cache	R3900_CACHE_I_INDEX_INVALIDATE, 64(a0)
-	cache	R3900_CACHE_I_INDEX_INVALIDATE, 80(a0)
-	cache	R3900_CACHE_I_INDEX_INVALIDATE, 96(a0)
-	cache	R3900_CACHE_I_INDEX_INVALIDATE, 112(a0)
+3:
+	cache	R3920_C_HINV_I, 0(a0)		# HitInvalidateICache
+	addiu	a0, a0, R3920_C_LSIZE_I
+	bltu	a0, a1, 3b
+	nop
 	.set	pop
+	# Enable I-cache
+	nop
+	mtc0	t2, R3900_COP_0_CONFIG
+	nop
+	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts
+4:
+	j	ra				# return and run cached
+	nop
+END(mips1_FlushICache)
+#endif /* TX392X */
+#ifdef TX391X	
+/* R3900 don't have HitInvalidate for I-cache. so use IndexInvalidate */
+LEAF(mips1_FlushICache)
+	beq	a1, zero, 5f
+	lw	t3, mips_L1ICacheSize	
+	mfc0	t0, MIPS_COP_0_STATUS		# Save SR
+	nop
+	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts.
+	nop
+	# Disable I-cache
+	li	t1, ~R3900_CONFIG_ICE
+	mfc0	t2, R3900_COP_0_CONFIG
+	and	t1, t1, t2
+	nop
+	mtc0	t1, R3900_COP_0_CONFIG
+	j	1f	# stop streaming
+	nop
+1:
+
+	blt	a1, t3, 3f
+	addu	a1, a1, a0			# compute ending address 
+	
+	# Invalidate area size >= Cache size : invalidate whole I-cache 
+	srl	a1, t3, 4	# compute number of cache lines (direct-map)
+	.set	push
+	.set	mips3
+2:
 	addu	a1, -1
-	bne	a1, zero, 3b
-	addu	a0, 128
+	cache	R3900_C_IINV_I, 0(a0)
+	bne	a1, zero, 2b
+	addu	a0, a0, R3900_C_LSIZE_I
+	.set	pop
+	j	5f
+	nop
+	
+3:	# Invalidate area size < Cache size
+	.set	push
+	.set	mips3
+4:
+	cache	R3900_C_IINV_I, 0(a0)
+	addiu	a0, a0, R3900_C_LSIZE_I
+	bltu	a0, a1, 4b
+	nop
+	.set	pop
 
 	# Enable I-cache
 	nop
 	mtc0	t2, R3900_COP_0_CONFIG
 	nop
 	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts
+5:
 	j	ra				# return and run cached
 	nop
 END(mips1_FlushICache)
-
+#endif /* TX391X */
 /*
- *
  *	void mips_FlushCache(void)
+ */
+#ifdef TX392X	
+/*
+ * Although runing on write-through mode, use IndexWritebackInvalidate op.
+ * Because R3920 don't have IndexInvalidate op for D-cache,
  */
 LEAF(mips1_FlushCache)
 	lw	t1, mips_L1ICacheSize
 	lw	t2, mips_L1DCacheSize
-#	lw	t3, mips_L1ICacheLSize
-#	lw	t4, mips_L1DCacheLSize
+	mfc0	t7, MIPS_COP_0_STATUS		# Save SR
+	nop
+	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts.
+	nop
+	srl	t1, 1				# 2-way I-cache
+	srl	t2, 1				# 2-way	D-cache
+	# Disable I-cache
+	li	t5, ~R3900_CONFIG_ICE
+	mfc0	t6, R3900_COP_0_CONFIG
+	and	t5, t5, t6
+	nop
+	mtc0	t5, R3900_COP_0_CONFIG
+	j	2f				# stop streaming
+	nop
+2:	# Invalidate I-cache
+	li	t0, MIPS_KSEG0_START
+	addu	t1, t0, t1			# End address
+	.set push
+	.set mips3
+3:	
+	cache R3920_C_IINV_I, 0(t0)		# invalidate both way of index
+	bne	t0, t1, 3b
+	addu	t0, t0, R3920_C_LSIZE_I
+
+	# Invalidate D-cache
+	li	t0, MIPS_KSEG0_START
+	addu	t1, t0, t2			# End address
+4:	
+	# write-back invalidate both way of index	
+	cache R3920_C_IWBINV_D, 0(t0)		# invalidate both way of index
+	bne	t0, t1, 4b
+	addiu	t0, t0, R3920_C_LSIZE_D
+	.set pop	
+	
+	# Enable I-cache
+	nop
+	mtc0	t6, R3900_COP_0_CONFIG
+	nop
+	mtc0	t7, MIPS_COP_0_STATUS		# enable interrupts
+	j	ra				# return and run cached
+	nop
+END(mips1_FlushCache)
+#endif /* TX392X */
+#ifdef TX391X	
+/*	R3900 don't have IndexInvalidate op for D-cache. To flush
+ *	D-cache, use dummy_buffer.
+ */
+LEAF(mips1_FlushCache)
+	lw	t1, mips_L1ICacheSize
+	lw	t2, mips_L1DCacheSize
+	srl	t2, 1				# 2-way	D-cache	
 	nop
 	mfc0	t7, MIPS_COP_0_STATUS		# Save SR
 	nop
@@ -1408,33 +1536,25 @@ LEAF(mips1_FlushCache)
 	mtc0	t5, R3900_COP_0_CONFIG
 	j	2f	# stop streaming
 	nop
-2:
-	# Flush cache
+2:	# Invalidate I-cache
+	
 	li	t0, MIPS_KSEG0_START
-	addu	t1, t0, t1		# End address
-	subu	t1, t1, 128
-3:
+	addu	t1, t0, t1			# End address
 	.set push
 	.set mips3
-	cache R3900_CACHE_I_INDEX_INVALIDATE, 0(t0)
-	cache R3900_CACHE_I_INDEX_INVALIDATE, 16(t0)
-	cache R3900_CACHE_I_INDEX_INVALIDATE, 32(t0)
-	cache R3900_CACHE_I_INDEX_INVALIDATE, 48(t0)
-	cache R3900_CACHE_I_INDEX_INVALIDATE, 64(t0)
-	cache R3900_CACHE_I_INDEX_INVALIDATE, 80(t0)
-	cache R3900_CACHE_I_INDEX_INVALIDATE, 96(t0)
-	cache R3900_CACHE_I_INDEX_INVALIDATE, 112(t0)
-	.set pop
+3:	
+	cache R3900_C_IINV_I, 0(t0)
 	bne	t0, t1, 3b
-	addu	t0, t0, 128
-
-	# Flush D-cache
+	addu	t0, t0, R3900_C_LSIZE_I
+	.set pop
+	
+	# Invalidate D-cache
 	la	t0, dummy_buffer
-	addu	t1, t0, t2		# End address
+	addu	t1, t0, t2			# End address
 4:
 	lw	t2, 0(t0)
 	bne	t1, t0, 4b
-	addu	t0, t0, 4
+	addu	t0, t0, R3900_C_LSIZE_D
 
 	# Enable I-cache
 	nop
@@ -1444,16 +1564,14 @@ LEAF(mips1_FlushCache)
 	j	ra				# return and run cached
 	nop
 END(mips1_FlushCache)
+	.comm dummy_buffer, R3900_C_SIZE_MAX
+#endif /* TX391X */
 
 LEAF(mips1_wbflush)
-	nop
-	sync
-	nop
+	sync	
 	j	ra
 	nop
 END(mips1_wbflush)
-
-	.comm dummy_buffer, R3900_MAX_DCACHE_SIZE
 
 #endif /* !ENABLE_MIPS_TX3900 */
 /*
