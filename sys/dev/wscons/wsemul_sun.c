@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.3 1998/05/14 20:49:57 drochner Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.4 1998/05/19 18:47:13 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsemul_sun.c,v 1.3 1998/05/14 20:49:57 drochner Exp $";
+    "$NetBSD: wsemul_sun.c,v 1.4 1998/05/19 18:47:13 drochner Exp $";
 
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
@@ -129,7 +129,7 @@ wsemul_sun_cnattach(type, cookie, ccol, crow, defattr)
 	edp->ncols = type->ncols;
 	edp->crow = crow;
 	edp->ccol = ccol;
-	edp->defattr = defattr;
+	edp->curattr = edp->defattr = defattr;
 #if defined(WS_KERNEL_FG) || defined(WS_KERNEL_BG) || \
   defined(WS_KERNEL_COLATTR) || defined(WS_KERNEL_MONOATTR)
 #ifndef WS_KERNEL_FG
