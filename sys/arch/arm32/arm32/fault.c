@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.45 2000/06/29 08:52:58 mrg Exp $	*/
+/*	$NetBSD: fault.c,v 1.46 2000/11/21 06:30:05 chs Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -145,6 +145,7 @@ data_abort_handler(frame)
 	int user;
 	u_quad_t sticks = 0;
 	int error;
+	void *onfault;
 
 	/*
 	 * Must get fault address and status from the CPU before
@@ -180,8 +181,10 @@ data_abort_handler(frame)
 
 	/* fusubailout is used by [fs]uswintr to avoid page faulting */
 	if (pcb->pcb_onfault
-	    && ((fault_code != FAULT_TRANS_S && fault_code != FAULT_TRANS_P)
+	    && ((fault_code != FAULT_TRANS_S && fault_code != FAULT_TRANS_P &&
+		 fault_code != FAULT_PERM_S && fault_code != FAULT_PERM_P)
 	        || pcb->pcb_onfault == fusubailout)) {
+
 copyfault:
 #ifdef DEBUG
 		printf("Using pcb_onfault=%p addr=%08x st=%08x p=%p\n",
@@ -418,7 +421,10 @@ copyfault:
 		}
 #endif	/* DIAGNOSTIC */
 
+		onfault = pcb->pcb_onfault;
+		pcb->pcb_onfault = NULL;
 		rv = uvm_fault(map, va, 0, ftype);
+		pcb->pcb_onfault = onfault;
 		if (rv == KERN_SUCCESS)
 			goto out;
 
