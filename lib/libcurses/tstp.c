@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.24 2001/12/02 09:14:23 blymn Exp $	*/
+/*	$NetBSD: tstp.c,v 1.25 2002/01/02 10:38:29 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.24 2001/12/02 09:14:23 blymn Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.25 2002/01/02 10:38:29 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -132,7 +132,7 @@ __stopwin(void)
 
 	if (__tc_mo != NULL)
 		(void) tputs(__tc_mo, 0, __cputchar);
-	
+
 	if ((curscr != NULL) && (curscr->flags & __KEYPAD))
 		(void) tputs(__tc_ke, 0, __cputchar);
 	(void) tputs(__tc_ve, 0, __cputchar);
@@ -172,7 +172,7 @@ __restartwin(void)
 
 	/* Reset cursor visibility */
 	__restore_cursor_vis();
-	
+
 	/* Restart the screen. */
 	__startwin(_cursesi_screen);
 

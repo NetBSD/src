@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.8 2001/11/04 14:04:27 lukem Exp $	*/
+/*	$NetBSD: copywin.c,v 1.9 2002/01/02 10:38:27 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: copywin.c,v 1.8 2001/11/04 14:04:27 lukem Exp $");
+__RCSID("$NetBSD: copywin.c,v 1.9 2002/01/02 10:38:27 blymn Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -53,7 +53,7 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin, int sminrow,
 {
 	int starty, startx, endy, endx, x, y, y1, y2, smaxrow, smaxcol;
 	__LDATA *sp, *end;
-	
+
 	smaxrow = min(sminrow + dmaxrow - dminrow, srcwin->maxy);
 	smaxcol = min(smincol + dmaxcol - dmincol, srcwin->maxx);
 	starty = max(sminrow, dminrow);
@@ -62,7 +62,7 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin, int sminrow,
 	endx = min(smincol + smaxcol, dmincol + dmaxcol);
 	if (starty >= endy || startx >= endx)
 		return (OK);
-	
+
 #ifdef DEBUG
 	if (dooverlay == TRUE) {
 		__CTRACE("copywin overlay mode: from (%d,%d) to (%d,%d)\n",
@@ -71,7 +71,7 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin, int sminrow,
 		__CTRACE("copywin overwrite mode: from (%d,%d) to (%d,%d)\n",
 			 starty, startx, endy, endx);
 	}
-	
+
 #endif
 	y1 = starty - sminrow;
 	y2 = starty - dminrow;
