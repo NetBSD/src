@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.33 2002/03/29 08:56:31 manu Exp $
+.\"	$NetBSD: uvm.9,v 1.34 2002/06/02 14:59:11 drochner Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -619,11 +619,18 @@ power-of-two notation.  If
 .Fa boundary
 is non-zero, no segment of the list may cross this power-of-two
 boundary, relative to zero.
-The
 .Fa nsegs
-and
+is the maximum number of physically contigous segments. If
 .Fa waitok
-arguments are currently ignored.
+is non-zero, the function may sleep until enough memory is available.
+(It also may give up in some situations, so a non-zero
+.Fa waitok
+does not imply that
+.Fn uvm_pglistalloc
+cannot return an error.) The allocated memory is returned in the
+.Fa rlist
+list; the caller has to provide storage only, the list is initialized by
+.Fn uvm_pglistalloc .
 .Pp
 .Fn uvm_pglistfree
 frees the list of pages pointed to by
