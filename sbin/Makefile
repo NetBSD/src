@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.68 2000/06/13 15:15:21 itojun Exp $
+#	$NetBSD: Makefile,v 1.69 2000/10/30 21:31:49 jdolecek Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -11,24 +11,17 @@ SUBDIR=	atactl badsect bim ccdconfig disklabel dmesg edlabel fastboot fdisk \
 	ttyflags umount wsconsctl
 
 # support for various file systems
-SUBDIR+= mount_ados
-SUBDIR+= mount_cd9660
-SUBDIR+= mount_ext2fs	fsck_ext2fs
-SUBDIR+= mount_fdesc
-SUBDIR+= mount_filecore
-SUBDIR+= mount_ffs	newfs fsck_ffs fsdb dump restore clri tunefs
-SUBDIR+= mount_kernfs
-SUBDIR+= mount_lfs	newfs_lfs fsck_lfs dump_lfs
-# mount_mfs -> newfs
-SUBDIR+= mount_msdos	newfs_msdos fsck_msdos
-SUBDIR+= mount_nfs
-SUBDIR+= mount_ntfs
-SUBDIR+= mount_null
-SUBDIR+= mount_overlay
+SUBDIR+= fsck_ext2fs
+SUBDIR+= newfs fsck_ffs fsdb dump restore clri tunefs
+SUBDIR+= newfs_lfs fsck_lfs dump_lfs
+SUBDIR+= newfs_msdos fsck_msdos
 SUBDIR+= mount_portal
-SUBDIR+= mount_procfs
-SUBDIR+= mount_umap
-SUBDIR+= mount_union
+
+# following is now build into mount(8) now (see mount/Makefile)
+# SUBDIR+= mount_ados mount_cd9660 mount_ext2fs mount_fdesc mount_filecore \
+#	   mount_ffs mount_kernfs mount_lfs mount_msdos mount_nfs 	\
+#	   mount_ntfs mount_null mount_overlay mount_procfs mount_umap	\
+#	   mount_union
 
 # IPv6
 SUBDIR+= ping6 rtsol
