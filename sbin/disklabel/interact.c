@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.20 2002/06/29 15:24:03 grant Exp $	*/
+/*	$NetBSD: interact.c,v 1.21 2003/10/20 13:20:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.20 2002/06/29 15:24:03 grant Exp $");
+__RCSID("$NetBSD: interact.c,v 1.21 2003/10/20 13:20:20 pooka Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -59,7 +59,7 @@ static void	cmd_name(struct disklabel *, char *, int);
 static int	runcmd(struct disklabel *, char *, int);
 static int	getinput(const char *, const char *, const char *, char *);
 static int	alphacmp(const void *, const void *);
-static void	defnum(struct disklabel *, char *, int);
+static void	defnum(struct disklabel *, char *, uint32_t);
 static void	dumpnames(const char *, const char * const *, size_t);
 static int	getnum(struct disklabel *, char *, int);
 
@@ -663,10 +663,10 @@ dumpnames(const char *prompt, const char * const *olist, size_t numentries)
 
 
 static void
-defnum(struct disklabel *lp, char *buf, int size)
+defnum(struct disklabel *lp, char *buf, uint32_t size)
 {
 
-	(void) snprintf(buf, BUFSIZ, "%gc, %ds, %gM",
+	(void) snprintf(buf, BUFSIZ, "%gc, %us, %gM",
 	    size / (float) lp->d_secpercyl,
 	    size, size  * (lp->d_secsize / (float) (1024 * 1024)));
 }
