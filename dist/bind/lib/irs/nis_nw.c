@@ -1,4 +1,4 @@
-/*	$NetBSD: nis_nw.c,v 1.1.1.1 1999/11/20 18:54:10 veego Exp $	*/
+/*	$NetBSD: nis_nw.c,v 1.1.1.1.8.1 2002/07/01 17:13:27 he Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: nis_nw.c,v 1.15 1999/01/18 07:46:58 vixie Exp";
+static const char rcsid[] = "Id: nis_nw.c,v 1.16 2001/05/29 05:49:15 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Imports */
@@ -189,6 +189,7 @@ static struct nwent *
 nw_byname(struct irs_nw *this, const char *name, int af) {
 	struct pvt *pvt = (struct pvt *)this->private;
 	int r;
+	char *tmp;
 	
 	if (init(this) == -1)
 		return (NULL);
@@ -199,8 +200,9 @@ nw_byname(struct irs_nw *this, const char *name, int af) {
 		return (NULL);
 	}
 	nisfree(pvt, do_val);
-	r = yp_match(pvt->nis_domain, networks_byname, (char *)name,
-		     strlen(name), &pvt->curval_data, &pvt->curval_len);
+	DE_CONST(name, tmp);
+	r = yp_match(pvt->nis_domain, networks_byname, tmp,
+		     strlen(tmp), &pvt->curval_data, &pvt->curval_len);
 	if (r != 0) {
 		RES_SET_H_ERRNO(pvt->res, HOST_NOT_FOUND);
 		return (NULL);
