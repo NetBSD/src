@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.78 1995/07/23 21:26:48 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.79 1995/07/24 02:02:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -105,17 +105,18 @@ struct cfdriver epcd = {
 int epintr __P((void *));
 static void epxstat __P((struct ep_softc *));
 static int epstatus __P((struct ep_softc *));
-static void epinit __P((struct ep_softc *));
-static int epioctl __P((struct ifnet *, u_long, caddr_t));
-static void epstart __P((struct ifnet *));
-static void epwatchdog __P((int));
-static void epreset __P((struct ep_softc *));
-static void epread __P((struct ep_softc *));
-static void epmbuffill __P((struct ep_softc *));
-static void epmbufempty __P((struct ep_softc *));
-static void epstop __P((struct ep_softc *));
-static void epsetfilter __P((struct ep_softc *sc));
-static void epsetlink __P((struct ep_softc *sc));
+void epinit __P((struct ep_softc *));
+int epioctl __P((struct ifnet *, u_long, caddr_t));
+void epstart __P((struct ifnet *));
+void epwatchdog __P((int));
+void epreset __P((struct ep_softc *));
+void epread __P((struct ep_softc *));
+struct mbuf *epget __P((struct ep_softc *, int));
+void epmbuffill __P((struct ep_softc *));
+void epmbufempty __P((struct ep_softc *));
+void epstop __P((struct ep_softc *));
+void epsetfilter __P((struct ep_softc *sc));
+void epsetlink __P((struct ep_softc *sc));
 
 static u_short epreadeeprom __P((int id_port, int offset));
 static int epbusyeeprom __P((struct ep_softc *));
@@ -345,7 +346,7 @@ epattach(parent, self, aux)
  * The order in here seems important. Otherwise we may not receive
  * interrupts. ?!
  */
-static void
+void
 epinit(sc)
 	register struct ep_softc *sc;
 {
@@ -399,7 +400,7 @@ epinit(sc)
 	epstart(ifp);
 }
 
-static void
+void
 epsetfilter(sc)
 	register struct ep_softc *sc;
 {
@@ -412,7 +413,7 @@ epsetfilter(sc)
 	    ((ifp->if_flags & IFF_PROMISC) ? FIL_PROMISC : 0 ));
 }
 
-static void
+void
 epsetlink(sc)
 	register struct ep_softc *sc;
 {
@@ -445,7 +446,7 @@ epsetlink(sc)
  * Start outputting on the interface.
  * Always called as splimp().
  */
-static void
+void
 epstart(ifp)
 	struct ifnet *ifp;
 {
@@ -714,24 +715,23 @@ epintr(arg)
 	return (ret);
 }
 
-static void
+void
 epread(sc)
 	register struct ep_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf *m;
 	struct ether_header *eh;
-	struct mbuf *mcur, *m, *m0;
-	u_short totlen, mlen, save_totlen;
-	int sh;
+	int len;
 
-	totlen = inw(BASE + EP_W1_RX_STATUS);
+	len = inw(BASE + EP_W1_RX_STATUS);
+
 again:
-	m0 = 0;
-
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG) {
-		int err = totlen & ERR_MASK;
+	if (ifp->if_flags & IFF_DEBUG) {
+		int err = len & ERR_MASK;
 		char *s = NULL;
 
-		if (totlen & ERR_INCOMPLETE)
+		if (len & ERR_INCOMPLETE)
 			s = "incomplete packet";
 		else if (err == ERR_OVERRUN)
 			s = "packet overrun";
@@ -750,126 +750,54 @@ again:
 			printf("%s: %s\n", sc->sc_dev.dv_xname, s);
 	}
 
-	if (totlen & ERR_INCOMPLETE)
+	if (len & ERR_INCOMPLETE)
 		return;
 
-	if (totlen & ERR_RX) {
-		++sc->sc_arpcom.ac_if.if_ierrors;
+	if (len & ERR_RX) {
+		++ifp->if_ierrors;
 		goto abort;
 	}
 
-	save_totlen = totlen &= RX_BYTES_MASK;	/* Lower 11 bits = RX bytes. */
+	len &= RX_BYTES_MASK;	/* Lower 11 bits = RX bytes. */
 
-	m = sc->mb[sc->next_mb];
-	sc->mb[sc->next_mb] = NULL;
-
+	/* Pull packet off interface. */
+	m = epget(sc, len);
 	if (m == 0) {
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == 0)
-			goto abort;
-	} else {
-		/* Convert one of our saved mbuf's. */
-		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
-		m->m_data = m->m_pktdat;
-		m->m_flags = M_PKTHDR;
+		ifp->if_ierrors++;
+		goto abort;
 	}
 
-	m0 = m;
-#define EROUND  ((sizeof(struct ether_header) + 3) & ~3)
-#define EOFF    (EROUND - sizeof(struct ether_header))
-	m0->m_data += EOFF;
+	++ifp->if_ipackets;
 
-	/*
-	 * We read the packet at splhigh() so that an interrupt from another
-	 * device doesn't cause the card's buffer to overflow while we're
-	 * reading it.  We may still lose packets at other times.
-	 */
-	sh = splhigh();
-
-	/* Read what should be the header. */
-	insw(BASE + EP_W1_RX_PIO_RD_1,
-	    mtod(m0, caddr_t), sizeof(struct ether_header) / 2);
-	m0->m_len = sizeof(struct ether_header);
-	totlen -= sizeof(struct ether_header);
-	eh = mtod(m0, struct ether_header *);
-
-	/* Read packet data. */
-	while (totlen > 0) {
-		mlen = min(totlen, M_TRAILINGSPACE(m));
-		if (mlen < 4) {
-			/* not enough room in this mbuf */
-			mcur = m;
-			m = sc->mb[sc->next_mb];
-			sc->mb[sc->next_mb] = 0;
-			if (m == 0) {
-				MGET(m, M_DONTWAIT, MT_DATA);
-				if (m == 0) {
-					splx(sh);
-					goto abort;
-				}
-			} else {
-				timeout(epmbuffill, sc, 1);
-				sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
-			}
-			if (totlen >= MINCLSIZE)
-				MCLGET(m, M_DONTWAIT);
-			m->m_len = 0;
-			mcur->m_next = m;
-			mlen = min(totlen, M_TRAILINGSPACE(m));
-		}
-		if (sc->bus32bit) {
-			if (mlen > 3) {
-				mlen &= ~3;
-				insl(BASE + EP_W1_RX_PIO_RD_1,
-				     mtod(m, caddr_t) + m->m_len, mlen / 4);
-			} else
-				insb(BASE + EP_W1_RX_PIO_RD_1,
-				     mtod(m, caddr_t) + m->m_len, mlen);
-		} else {
-			if (mlen > 1) {
-				mlen &= ~1;
-				insw(BASE + EP_W1_RX_PIO_RD_1,
-				     mtod(m, caddr_t) + m->m_len, mlen / 2);
-			} else
-				*(mtod(m, caddr_t) + m->m_len) =
-				    inb(BASE + EP_W1_RX_PIO_RD_1);
-		}
-		m->m_len += mlen;
-		totlen -= mlen;
-	}
-
-	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
-	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
-		;
-
-	splx(sh);
-
-	m0->m_pkthdr.len = save_totlen;
-	m0->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
-
-	++sc->sc_arpcom.ac_if.if_ipackets;
+	/* We assume the header fit entirely in one mbuf. */
+	eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
-	if (sc->sc_arpcom.ac_if.if_bpf) {
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
+	/*
+	 * Check if there's a BPF listener on this interface.
+	 * If so, hand off the raw packet to BPF.
+	 */
+	if (ifp->if_bpf) {
+		bpf_mtap(ifp->if_bpf, m);
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
 		 * there are no BPF listeners.  And if we are in promiscuous
 		 * mode, we have to check if this packet is really ours.
 		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 &&
+		if ((ifp->if_flags & IFF_PROMISC) &&
+		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
 		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
-			 sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m0);
+			    sizeof(eh->ether_dhost)) != 0) {
+			m_freem(m);
 			return;
 		}
 	}
 #endif
 
-	m_adj(m0, sizeof(struct ether_header));
-	ether_input(&sc->sc_arpcom.ac_if, eh, m0);
+	/* We assume the header fit entirely in one mbuf. */
+	m_adj(m, sizeof(struct ether_header));
+	ether_input(ifp, eh, m);
 
 	/*
 	 * In periods of high traffic we can actually receive enough
@@ -888,10 +816,10 @@ again:
 	 * I'll modify epread() so that it can handle RX_EARLY interrupts.
 	 */
 	if (epstatus(sc)) {
-		totlen = inw(BASE + EP_W1_RX_STATUS);
+		len = inw(BASE + EP_W1_RX_STATUS);
 		/* Check if we are stuck and reset [see XXX comment] */
-		if (totlen & ERR_INCOMPLETE) {
-			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+		if (len & ERR_INCOMPLETE) {
+			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: adapter reset\n",
 				       sc->sc_dev.dv_xname);
 			epreset(sc);
@@ -906,24 +834,114 @@ abort:
 	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
 	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
 		;
-	if (m0)
-		m_freem(m0);
 }
 
-static int
-epioctl(ifp, command, data)
+struct mbuf *
+epget(sc, totlen)
+	struct ep_softc *sc;
+	int totlen;
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf *top, **mp, *m;
+	int len;
+	int sh;
+
+	/* We're going to use at least one mbuf. */
+	timeout(epmbuffill, sc, 1);
+
+	m = sc->mb[sc->next_mb];
+	sc->mb[sc->next_mb] = 0;
+	if (m == 0) {
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == 0)
+			return 0;
+	} else {
+		/* Convert one of our saved mbuf's. */
+		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
+		m->m_data = m->m_pktdat;
+		m->m_flags = M_PKTHDR;
+	}
+	m->m_pkthdr.rcvif = ifp;
+	m->m_pkthdr.len = totlen;
+	len = MHLEN;
+	top = 0;
+	mp = &top;
+
+	/*
+	 * We read the packet at splhigh() so that an interrupt from another
+	 * device doesn't cause the card's buffer to overflow while we're
+	 * reading it.  We may still lose packets at other times.
+	 */
+	sh = splhigh();
+
+	while (totlen > 0) {
+		if (top) {
+			m = sc->mb[sc->next_mb];
+			sc->mb[sc->next_mb] = 0;
+			if (m == 0) {
+				MGET(m, M_DONTWAIT, MT_DATA);
+				if (m == 0) {
+					splx(sh);
+					m_freem(top);
+					return 0;
+				}
+			} else {
+				sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
+			}
+			len = MLEN;
+		}
+		if (totlen >= MINCLSIZE) {
+			MCLGET(m, M_DONTWAIT);
+			if (m->m_flag & M_EXT)
+				len = MCLBYTES;
+		}
+		len = min(totlen, len);
+		if (sc->bus32bit) {
+			if (len > 3) {
+				len &= ~3;
+				insl(BASE + EP_W1_RX_PIO_RD_1,
+				     mtod(m, caddr_t) + m->m_len, len / 4);
+			} else
+				insb(BASE + EP_W1_RX_PIO_RD_1,
+				     mtod(m, caddr_t) + m->m_len, len);
+		} else {
+			if (len > 1) {
+				len &= ~1;
+				insw(BASE + EP_W1_RX_PIO_RD_1,
+				     mtod(m, caddr_t) + m->m_len, len / 2);
+			} else
+				*(mtod(m, caddr_t) + m->m_len) =
+				    inb(BASE + EP_W1_RX_PIO_RD_1);
+		}
+		m->m_len = len;
+		totlen -= mlen;
+		*mp = m;
+		mp = &m->m_next;
+	}
+
+	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
+	while (inw(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
+		;
+
+	splx(sh);
+
+	return top;
+}
+
+int
+epioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	u_long command;
+	u_long cmd;
 	caddr_t data;
 {
 	struct ep_softc *sc = epcd.cd_devs[ifp->if_unit];
-	register struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splimp();
 
-	switch (command) {
+	switch (cmd) {
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -987,8 +1005,7 @@ epioctl(ifp, command, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		/* Update our multicast list. */
-		error = (command == SIOCADDMULTI) ?
+		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_arpcom) :
 		    ether_delmulti(ifr, &sc->sc_arpcom);
 
@@ -1004,13 +1021,14 @@ epioctl(ifp, command, data)
 
 	default:
 		error = EINVAL;
+		break;
 	}
 
 	splx(s);
 	return (error);
 }
 
-static void
+void
 epreset(sc)
 	struct ep_softc *sc;
 {
@@ -1022,18 +1040,19 @@ epreset(sc)
 	splx(s);
 }
 
-static void
+void
 epwatchdog(unit)
 	int unit;
 {
-	register struct ep_softc *sc = epcd.cd_devs[unit];
+	struct ep_softc *sc = epcd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	++sc->sc_arpcom.ac_if.if_oerrors;
+
 	epreset(sc);
-	return;
 }
 
-static void
+void
 epstop(sc)
 	register struct ep_softc *sc;
 {
@@ -1108,7 +1127,7 @@ epbusyeeprom(sc)
 	return (0);
 }
 
-static void
+void
 epmbuffill(sc)
 	struct ep_softc *sc;
 {
@@ -1127,7 +1146,7 @@ epmbuffill(sc)
 	splx(s);
 }
 
-static void
+void
 epmbufempty(sc)
 	struct ep_softc *sc;
 {
