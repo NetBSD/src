@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.15 2001/09/27 03:24:06 itojun Exp $	*/
+/*	$NetBSD: ssh.c,v 1.16 2001/10/02 00:39:14 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.144 2001/09/24 03:38:58 stevesk Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.145 2001/09/28 15:46:29 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -614,10 +614,10 @@ again:
 	} else  {
 		snprintf(buf, sizeof buf, "%.100s/%.100s", pw->pw_dir,
 		    _PATH_SSH_USER_CONFFILE);
-
-		/* Read systemwide configuration file. */
-		(void)read_config_file(_PATH_HOST_CONFIG_FILE, host, &options);
 		(void)read_config_file(buf, host, &options);
+
+		/* Read systemwide configuration file after use config. */
+		(void)read_config_file(_PATH_HOST_CONFIG_FILE, host, &options);
 	}
 
 	/* Fill configuration defaults. */
