@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.2 2002/06/18 13:41:40 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.3 2002/06/18 13:58:47 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -214,9 +214,6 @@ Trace device, see
 . El
 .It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
-. El
-.It clockctl clock control for non root users
-. Bl -tag -width 0123456789 -compact
 . It Ar audio#
 Audio devices, see
 .Xr \&audio 4
@@ -226,6 +223,9 @@ Berkeley packet filter devices, see
 . It Ar ch#
 SCSI media changer, see
 .Xr \&ch 4
+. It Ar clockctl
+Clock control for non root users, see
+.Xr \&clockctl 4
 . It Ar fd
 File descriptors (/dev/fd/*), see
 .Xr \&fd 4
