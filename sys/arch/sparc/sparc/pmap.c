@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 1995/04/13 14:38:11 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.44 1995/04/19 20:59:29 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -2793,7 +2793,8 @@ pmap_page_protect(pa, prot)
 		if (nleft) {
 			setpte(pteva, 0);
 #ifdef PMAP_PTESYNC
-			sp->sg_pte[VA_VPG(pteva)] = 0;
+			if (sp->sg_pte != NULL)
+				sp->sg_pte[VA_VPG(pteva)] = 0;
 #endif
 		} else {
 			if (pm == pmap_kernel()) {
