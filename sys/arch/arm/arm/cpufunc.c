@@ -1,6 +1,7 @@
-/*	$NetBSD: cpufunc.c,v 1.8 2001/06/03 13:38:14 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.9 2001/06/03 18:32:33 chris Exp $	*/
 
 /*
+ * arm7tdmi support code Copyright (c) 2001 John Fremlin
  * arm8 support code Copyright (c) 1997 ARM Limited
  * arm8 support code Copyright (c) 1997 Causality Limited
  * Copyright (c) 1997 Mark Brinicombe.
@@ -269,6 +270,76 @@ struct cpu_functions arm7_cpufuncs = {
 };
 #endif	/* CPU_ARM7 */
 
+#ifdef CPU_ARM7TDMI
+struct cpu_functions arm7tdmi_cpufuncs = {
+	/* CPU functions */
+	
+	cpufunc_id,			/* id			 */
+
+	/* MMU functions */
+
+	cpufunc_control,		/* control		*/
+	cpufunc_domains,		/* domain		*/
+	arm7tdmi_setttb,			/* setttb		*/
+	cpufunc_faultstatus,		/* faultstatus		*/
+	cpufunc_faultaddress,		/* faultaddress		*/
+
+	/* TLB functions */
+
+	arm7tdmi_tlb_flushID,		/* tlb_flushID		*/
+	arm7tdmi_tlb_flushID_SE,		/* tlb_flushID_SE	*/
+	arm7tdmi_tlb_flushID,		/* tlb_flushI		*/
+	arm7tdmi_tlb_flushID_SE,		/* tlb_flushI_SE	*/
+	arm7tdmi_tlb_flushID,		/* tlb_flushD		*/
+	arm7tdmi_tlb_flushID_SE,		/* tlb_flushD_SE	*/
+
+	/* Cache functions */
+
+	arm7tdmi_cache_flushID,		/* cache_flushID	*/
+	(void *)arm7tdmi_cache_flushID,	/* cache_flushID_SE	*/
+	arm7tdmi_cache_flushID,		/* cache_flushI		*/
+	(void *)arm7tdmi_cache_flushID,	/* cache_flushI_SE	*/
+	arm7tdmi_cache_flushID,		/* cache_flushD		*/
+	(void *)arm7tdmi_cache_flushID,	/* cache_flushD_SE	*/
+
+	cpufunc_nullop,			/* cache_cleanID	s*/
+	(void *)cpufunc_nullop,		/* cache_cleanID_E	s*/
+	cpufunc_nullop,			/* cache_cleanD		s*/
+	(void *)cpufunc_nullop,		/* cache_cleanD_E	*/
+
+	arm7tdmi_cache_flushID,		/* cache_purgeID	s*/
+	(void *)arm7tdmi_cache_flushID,	/* cache_purgeID_E	s*/
+	arm7tdmi_cache_flushID,		/* cache_purgeD		s*/
+	(void *)arm7tdmi_cache_flushID,	/* cache_purgeD_E	s*/
+
+	/* Other functions */
+
+	cpufunc_nullop,			/* flush_prefetchbuf	*/
+	cpufunc_nullop,			/* drain_writebuf	*/
+	cpufunc_nullop,			/* flush_brnchtgt_C	*/
+	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
+
+	(void *)cpufunc_nullop,		/* sleep		*/
+
+	/* Soft functions */
+
+	cpufunc_nullop,			/* cache_syncI		*/
+	(void *)cpufunc_nullop,		/* cache_cleanID_rng	*/
+	(void *)cpufunc_nullop,		/* cache_cleanD_rng	*/
+	(void *)arm7tdmi_cache_flushID,	/* cache_purgeID_rng	*/
+	(void *)arm7tdmi_cache_flushID,	/* cache_purgeD_rng	*/
+	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
+
+	arm7_dataabt_fixup,		/* dataabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
+
+	arm7tdmi_context_switch,		/* context_switch	*/
+
+	arm7tdmi_setup			/* cpu setup		*/
+
+};
+#endif	/* CPU_ARM7TDMI */
+
 #ifdef CPU_ARM8
 struct cpu_functions arm8_cpufuncs = {
 	/* CPU functions */
@@ -452,6 +523,15 @@ set_cpufuncs()
 		return 0;
 	}
 #endif	/* CPU_ARM7 */
+#ifdef CPU_ARM7TDMI
+	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
+	    CPU_ID_IS7(cputype) &&
+	    (cputype & CPU_ID_7ARCH_MASK) == CPU_ID_7ARCH_V4T) {
+		cpufuncs = arm7tdmi_cpufuncs;
+		cpu_reset_needs_v4_MMU_disable = 0;
+		return 0;
+	}
+#endif	
 #ifdef CPU_ARM8
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
 	    (cputype & 0x0000f000) == 0x00008000) {
@@ -471,7 +551,7 @@ set_cpufuncs()
 	/*
 	 * Bzzzz. And the answer was ...
 	 */
-/*	panic("No support for this CPU type (%08x) in kernel\n", cputype);*/
+/*	panic("No support for this CPU type (%08x) in kernel", cputype);*/
 	return(ARCHITECTURE_NOT_PRESENT);
 }
 
@@ -501,19 +581,19 @@ cpufunc_null_fixup(arg)
 	return(ABORT_FIXUP_OK);
 }
 
-#if defined(CPU_ARM6) || defined(CPU_ARM7)
+#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI)
 #ifdef DEBUG_FAULT_CORRECTION
 extern int pmap_debug_level;
 #endif
 #endif
 
 #if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3) || \
-    defined(CPU_ARM6) || defined(CPU_ARM7)
+    defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI)
 /*
  * "Early" data abort fixup.
  *
  * For ARM2, ARM2as, ARM3 and ARM6 (in early-abort mode).  Also used
- * indirectly by ARM6 (in late-abort mode) and ARM7.
+ * indirectly by ARM6 (in late-abort mode) and ARM7[TDMI].
  *
  * In early aborts, we may have to fix up LDM, STM, LDC and STC.
  */
@@ -672,7 +752,8 @@ early_abort_fixup(arg)
 }
 #endif	/* CPU_ARM2/250/3/6/7 */
 
-#if (defined(CPU_ARM6) && defined(ARM6_LATE_ABORT)) || defined(CPU_ARM7)
+#if (defined(CPU_ARM6) && defined(ARM6_LATE_ABORT)) || defined(CPU_ARM7) || \
+	defined(CPU_ARM7TDMI)
 /*
  * "Late" (base updated) data abort fixup
  *
@@ -863,14 +944,14 @@ late_abort_fixup(arg)
 
 	return early_abort_fixup(arg);
 }
-#endif	/* CPU_ARM6(LATE)/7 */
+#endif	/* CPU_ARM6(LATE)/7/7TDMI */
 
 /*
  * CPU Setup code
  */
 
-#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM8) || \
- 	defined(CPU_SA110)
+#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) || \
+	defined(CPU_ARM8) || defined(CPU_SA110)
 int cpuctrl;
 
 #define IGN	0
@@ -911,9 +992,10 @@ parse_cpu_options(args, optlist, cpuctrl)
 	}
 	return(cpuctrl);
 }
-#endif
+#endif /* CPU_ARM6 || CPU_ARM7 || CPU_ARM7TDMI || CPU_ARM8 || CPU_SA110 */
 
-#if defined (CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM8)
+#if defined (CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) \
+	|| defined(CPU_ARM8)
 struct cpu_option arm678_options[] = {
 #ifdef COMPAT_12
 	{ "nocache",		IGN, BIC, CPU_CONTROL_IDC_ENABLE },
@@ -926,7 +1008,7 @@ struct cpu_option arm678_options[] = {
 	{ NULL,			IGN, IGN, 0 }
 };
 
-#endif	/* CPU_ARM6 || CPU_ARM7 || CPU_ARM8 */
+#endif	/* CPU_ARM6 || CPU_ARM7 || CPU_ARM7TDMI || CPU_ARM8 */
 
 #ifdef CPU_ARM6
 struct cpu_option arm6_options[] = {
@@ -1007,6 +1089,38 @@ arm7_setup(args)
 	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_ARM7 */
+
+#ifdef CPU_ARM7TDMI
+struct cpu_option arm7tdmi_options[] = {
+	{ "arm7.cache",		BIC, OR,  CPU_CONTROL_IDC_ENABLE },
+	{ "arm7.nocache",	OR,  BIC, CPU_CONTROL_IDC_ENABLE },
+	{ "arm7.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
+	{ "arm7.nowritebuf",	OR,  BIC, CPU_CONTROL_WBUF_ENABLE },
+#ifdef COMPAT_12
+	{ "fpaclk2",		BIC, OR,  CPU_CONTROL_CPCLK },
+#endif	/* COMPAT_12 */
+	{ "arm700.fpaclk",	BIC, OR,  CPU_CONTROL_CPCLK },
+	{ NULL,			IGN, IGN, 0 }
+};
+
+void
+arm7tdmi_setup(args)
+	char *args;
+{
+	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
+		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
+		 | CPU_CONTROL_IDC_ENABLE | CPU_CONTROL_WBUF_ENABLE;
+
+	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
+	cpuctrl = parse_cpu_options(args, arm7tdmi_options, cpuctrl);
+
+	/* Clear out the cache */
+	cpu_cache_purgeID();
+
+	/* Set the control register */    
+	cpu_control(0xffffffff, cpuctrl);
+}
+#endif	/* CPU_ARM7TDMI */
 
 #ifdef CPU_ARM8
 struct cpu_option arm8_options[] = {

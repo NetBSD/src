@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 2001/05/13 13:53:08 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3 2001/06/03 18:32:34 chris Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -294,7 +294,7 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM3",	"CPU_ARM3" },	/* CPU_CLASS_ARM3 */
 	{ "ARM6",	"CPU_ARM6" },	/* CPU_CLASS_ARM6 */
 	{ "ARM7",	"CPU_ARM7" },	/* CPU_CLASS_ARM7 */
-	{ "ARM7TDMI",	NULL },		/* CPU_CLASS_ARM7TDMI */
+	{ "ARM7TDMI",	"CPU_ARM7TDMI" },/* CPU_CLASS_ARM7TDMI */
 	{ "ARM8",	"CPU_ARM8" },	/* CPU_CLASS_ARM8 */
 	{ "ARM9TDMI",	NULL },		/* CPU_CLASS_ARM9TDMI */
 	{ "ARM9E-S",	NULL },		/* CPU_CLASS_ARM9ES */
@@ -340,6 +340,7 @@ identify_arm_cpu(dv, cpu_number)
 	switch (cpu->cpu_class) {
 	case CPU_CLASS_ARM6:
 	case CPU_CLASS_ARM7:
+	case CPU_CLASS_ARM7TDMI:
 	case CPU_CLASS_ARM8:
 		if ((cpu->cpu_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
 			strcat(cpu->cpu_model, " IDC disabled");
@@ -390,6 +391,9 @@ identify_arm_cpu(dv, cpu_number)
 #ifdef CPU_ARM7
 	case CPU_CLASS_ARM7:
 #endif
+#ifdef CPU_ARM7TDMI
+	case CPU_CLASS_ARM7TDMI:
+#endif		
 #ifdef CPU_ARM8
 	case CPU_CLASS_ARM8:
 #endif

@@ -1,6 +1,7 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.2 2001/06/02 19:01:03 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.3 2001/06/03 18:32:33 chris Exp $	*/
 
 /*
+ * arm7tdmi support code Copyright (c) 2001 John Fremlin
  * arm8 support code Copyright (c) 1997 ARM Limited
  * arm8 support code Copyright (c) 1997 Causality Limited
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -186,6 +187,25 @@ ENTRY(arm67_setttb)
 	mov	pc, lr
 #endif	/* CPU_ARM6 || CPU_ARM7 */
 
+#ifdef CPU_ARM7TDMI
+	
+ENTRY(arm7tdmi_setttb)
+	mov	r1,r0 /* store the ttb in a safe place */
+	mov	r2,lr /* ditto with lr */
+	
+	bl	_C_LABEL(arm7tdmi_cache_flushID)
+	
+	/* Write the TTB */
+	mcr	p15, 0, r1, c2, c0, 0
+
+	/* If we have updated the TTB we must flush the TLB */
+	bl	_C_LABEL(arm7tdmi_tlb_flushID)
+	/* For good measure we will flush the IDC as well */
+	bl	_C_LABEL(arm7tdmi_cache_flushID)
+
+	mov	pc, r2
+#endif	/* CPU_7TDMI */
+	
 #ifdef CPU_ARM8
 ENTRY(arm8_setttb)
 	/* We need to clean and flush the cache as it uses virtual
@@ -274,6 +294,16 @@ ENTRY(arm67_tlb_purge)
 	mov	pc, lr
 #endif	/* CPU_ARM6 || CPU_ARM7 */
 
+#ifdef CPU_ARM7TDMI
+ENTRY(arm7tdmi_tlb_flushID)
+	mov	r0,#0
+	mcr	p15, 0, r0, c8, c7, 0
+	mov	pc,lr
+	
+ENTRY(arm7tdmi_tlb_flushID_SE)
+	mcr	p15, 0, r0, c8, c7, 1
+	mov	pc,lr		
+#endif	
 #ifdef CPU_ARM8
 ENTRY(arm8_tlb_flushID)
 	mcr	15, 0, r0, c8, c7, 0		/* flush I+D tlb */
@@ -323,6 +353,18 @@ ENTRY(arm67_cache_flush)
 	mov	pc, lr
 #endif	/* CPU_ARM6 || CPU_ARM7 */
 
+#ifdef CPU_ARM7TDMI
+ENTRY(arm7tdmi_cache_flushID)
+	mov	r0, #0
+	
+	mcr	p15, 0, r0, c7, c7, 0
+	/* Make sure that the pipeline is emptied */
+	mov	r0, r0
+	mov	r0, r0
+
+	mov	pc,lr
+#endif	
+	
 #ifdef CPU_ARM8
 ENTRY(arm8_cache_flushID)
 	mcr	15, 0, r0, c7, c7, 0		/* flush I+D cache */
@@ -775,6 +817,10 @@ ENTRY(arm67_context_switch)
 	mov     pc, lr
 #endif
 
+#ifdef CPU_ARM7TDMI
+ENTRY(arm7tdmi_context_switch)
+	b arm7tdmi_setttb
+#endif	
 #ifdef CPU_ARM8
 ENTRY(arm8_context_switch)
 	/* Switch the memory to the new process */
