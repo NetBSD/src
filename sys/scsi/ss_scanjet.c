@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.5 1996/05/11 22:21:51 mycroft Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -64,6 +64,10 @@ int scanjet_ctl_write __P((struct ss_softc *, char *, u_int, int));
 int scanjet_ctl_read __P((struct ss_softc *, char *, u_int, int));
 int scanjet_set_window __P((struct ss_softc *));
 int scanjet_compute_sizes __P((struct ss_softc *));
+/* Maybe move to libkern? */
+__inline static int atoi __P((const char *));
+__inline static char *strchr __P((const char *, char));
+
 
 /*
  * structure for the special handlers
@@ -422,7 +426,7 @@ scanjet_set_window(ss)
 /* atoi() and strchr() are from /sys/arch/amiga/dev/ite.c
    and are only used in scanjet_compute_sizes */
 
-inline static int
+__inline static int
 atoi(cp)
 	const char *cp;
 {
@@ -434,7 +438,7 @@ atoi(cp)
 	return (n);
 }
 
-inline static char *
+__inline static char *
 strchr(cp, ch)
 	const char *cp;
 	char ch;
