@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.56 1999/11/18 23:32:32 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.57 1999/11/24 23:14:39 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -564,8 +564,8 @@ usbd_set_config_index(dev, index, msg)
 			usbd_free_iface_data(dev, ifcidx);
 		free(dev->ifaces, M_USB);
 		free(dev->cdesc, M_USB);
-		dev->ifaces = 0;
-		dev->cdesc = 0;
+		dev->ifaces = NULL;
+		dev->cdesc = NULL;
 		dev->config = 0;
 	}
 
@@ -771,7 +771,7 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	dv = USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print, usbd_submatch);
 	if (dv) {
 		dev->subdevs = malloc(2 * sizeof dv, M_USB, M_NOWAIT);
-		if (dev->subdevs == 0)
+		if (dev->subdevs == NULL)
 			return (USBD_NOMEM);
 		dev->subdevs[0] = dv;
 		dev->subdevs[1] = 0;
@@ -807,7 +807,7 @@ usbd_probe_and_attach(parent, dev, port, addr)
 		uaa.ifaces = ifaces;
 		uaa.nifaces = nifaces;
 		dev->subdevs = malloc((nifaces+1) * sizeof dv, M_USB,M_NOWAIT);
-		if (dev->subdevs == 0) {
+		if (dev->subdevs == NULL) {
 #if defined(__FreeBSD__)
 			device_delete_child(parent, bdev);
 #endif
@@ -1223,24 +1223,15 @@ usb_disconnect_port(up, parent)
 		    up, dev, up->portno));
 
 #ifdef DIAGNOSTIC
-	if (!dev) {
+	if (dev == NULL) {
 		printf("usb_disconnect_port: no device\n");
 		return;
 	}
 #endif
 
-	if (!dev->cdesc) {
-		/* Partially attached device, just drop it. */
-		dev->bus->devices[dev->address] = 0;
-		up->device = 0;
-		return;
-	}
-
 	if (dev->subdevs != NULL) {
+		DPRINTFN(3,("usb_disconnect_port: disconnect subdevs\n"));
 		for (i = 0; dev->subdevs[i]; i++) {
-			if (!dev->subdevs[i])	/* skip empty elements */
-				continue;
-
 			printf("%s: at %s", USBDEVPTRNAME(dev->subdevs[i]), 
 			       hubname);
 			if (up->portno != 0)
@@ -1257,8 +1248,8 @@ usb_disconnect_port(up, parent)
 	}
 
 	usbd_add_event(USB_EVENT_DETACH, dev);
-	dev->bus->devices[dev->address] = 0;
-	up->device = 0;
+	dev->bus->devices[dev->address] = NULL;
+	up->device = NULL;
 	usb_free_device(dev);
 }
 
