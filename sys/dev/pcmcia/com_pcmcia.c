@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.16 1998/11/19 00:01:30 thorpej Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.17 1998/11/19 00:04:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -282,7 +282,7 @@ found:
 	sc->enable = com_pcmcia_enable;
 	sc->disable = com_pcmcia_disable;
 	
-	printf(": serial device");
+	printf(": serial device\n%s", sc->sc_dev.dv_xname);
 
 	com_attach_subr(sc);
 
