@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.65 2000/03/30 12:45:27 augustss Exp $	*/
+/*	$NetBSD: vnd.c,v 1.65.4.1 2000/09/13 02:18:33 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -314,7 +314,8 @@ vndstrategy(bp)
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd = &vnd_softc[unit];
 	struct vndxfer *vnx;
-	int s, bn, bsize, resid;
+	int s, bsize, resid;
+	off_t bn;
 	caddr_t addr;
 	int sz, flags, error, wlabel;
 	struct disklabel *lp;
@@ -428,8 +429,8 @@ vndstrategy(bp)
 			sz = resid;
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
-			printf("vndstrategy: vp %p/%p bn 0x%x/0x%x sz 0x%x\n",
-			    vnd->sc_vp, vp, bn, nbn, sz);
+			printf("vndstrategy: vp %p/%p bn 0x%qx/0x%x sz 0x%x\n",
+			    vnd->sc_vp, vp, (long long)bn, nbn, sz);
 #endif
 
 		s = splbio();
