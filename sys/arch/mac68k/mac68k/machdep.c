@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 1995/08/16 05:17:31 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 1995/08/24 04:25:07 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1167,7 +1167,10 @@ nmihand(frame)
 		return;
 /*	regdump(&frame, 128);
 	dumptrace(); */
-	panic("Panic switch: PC is 0x%x.\n", frame.f_pc);
+#if DDB
+	printf("Panic switch: PC is 0x%x.\n", frame.f_pc);
+	Debugger();
+#endif
 	nmihanddeep = 0;
 }
 
