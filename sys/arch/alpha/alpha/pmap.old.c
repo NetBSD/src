@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.58 1998/03/18 19:21:50 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.59 1998/03/18 19:27:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.58 1998/03/18 19:21:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.59 1998/03/18 19:27:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,6 +368,25 @@ void	pmap_free_physpage __P((vm_offset_t));
 #ifdef DEBUG
 void	pmap_pvdump __P((vm_offset_t));
 #endif
+
+/*
+ * active_pmap:
+ *
+ *	Check to see if a pmap is active.
+ */
+#define	active_pmap(pm)							\
+	((pm) == pmap_kernel() ||					\
+	 curproc == NULL ||						\
+	 (pm) == curproc->p_vmspace->vm_map.pmap)
+
+/*
+ * active_user_pmap:
+ *
+ *	Check to see if a pmap is an active user pmap.
+ */
+#define	active_user_pmap(pm)						\
+	(curproc != NULL &&						\
+	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
 /*
  * PMAP_ACTIVATE:
