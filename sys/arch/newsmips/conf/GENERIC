@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.28 2000/10/04 08:26:42 tsubai Exp $
+# 	$NetBSD: GENERIC,v 1.29 2000/10/12 03:18:41 onoe Exp $
 #
 #	GENERIC kernel for RISC-NEWS
 
 include		"arch/newsmips/conf/std.newsmips"
 
-#ident 		"GENERIC-$Revision: 1.28 $"
+#ident 		"GENERIC-$Revision: 1.29 $"
 
 maxusers	16
 
@@ -101,6 +101,7 @@ le0	at hb0 addr 0xbff80000 level 1	# built-in LANCE ethernet
 le1	at hb0 addr 0xb8c30000 level 0
 
 sn*	at ap?				# SONIC Ethernet
+tlp*	at ap?
 
 kb0	at hb0 addr 0xbfd00000 level 2	# keyboard
 ms0	at hb0 addr 0xbfd00004 level 2	# mouse
