@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.46 1996/03/25 20:46:56 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.47 1996/03/26 01:30:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -717,7 +717,7 @@ configure()
 		rr.rr_iospace = BUS_OBIO;
 		rr.rr_paddr = (void *)memregcf->cf_loc[0];
 		rr.rr_len = NBPG;
-		par_err_reg = (int *)bus_map(&rr, NBPG, BUS_OBIO);
+		par_err_reg = (u_int *)bus_map(&rr, NBPG, BUS_OBIO);
 		if (par_err_reg == NULL)
 			panic("configure: ROM hasn't mapped memreg!");
 	}
