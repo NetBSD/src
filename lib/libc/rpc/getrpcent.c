@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcent.c,v 1.19 2004/08/02 18:59:09 ginsbach Exp $	*/
+/*	$NetBSD: getrpcent.c,v 1.20 2004/08/05 03:06:37 ginsbach Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char *sccsid = "@(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: getrpcent.c,v 1.19 2004/08/02 18:59:09 ginsbach Exp $");
+__RCSID("$NetBSD: getrpcent.c,v 1.20 2004/08/05 03:06:37 ginsbach Exp $");
 #endif
 #endif
 
@@ -78,14 +78,14 @@ static struct rpcdata {
 	char	line[BUFSIZ+1];
 } *rpcdata;
 
-static	struct rpcent *interpret __P((char *val, size_t len));
+static	struct rpcent *interpret(char *val, size_t len);
 
 #define	RPCDB	"/etc/rpc"
 
-static struct rpcdata *_rpcdata __P((void));
+static struct rpcdata *_rpcdata(void);
 
 static struct rpcdata *
-_rpcdata()
+_rpcdata(void)
 {
 	struct rpcdata *d = rpcdata;
 
@@ -97,8 +97,7 @@ _rpcdata()
 }
 
 struct rpcent *
-getrpcbynumber(number)
-	int number;
+getrpcbynumber(int number)
 {
 	struct rpcent *rpc;
 
@@ -112,8 +111,7 @@ getrpcbynumber(number)
 }
 
 struct rpcent *
-getrpcbyname(name)
-	char *name;
+getrpcbyname(char *name)
 {
 	struct rpcent *rpc;
 	char **rp;
@@ -135,8 +133,7 @@ found:
 }
 
 void
-setrpcent(f)
-	int f;
+setrpcent(int f)
 {
 	struct rpcdata *d = _rpcdata();
 
@@ -150,7 +147,7 @@ setrpcent(f)
 }
 
 void
-endrpcent()
+endrpcent(void)
 {
 	struct rpcdata *d = _rpcdata();
 
@@ -163,7 +160,7 @@ endrpcent()
 }
 
 struct rpcent *
-getrpcent()
+getrpcent(void)
 {
 	struct rpcdata *d = _rpcdata();
 
@@ -177,9 +174,7 @@ getrpcent()
 }
 
 static struct rpcent *
-interpret(val, len)
-	char *val;
-	size_t len;
+interpret(char *val, size_t len)
 {
 	struct rpcdata *d = _rpcdata();
 	char *p;
