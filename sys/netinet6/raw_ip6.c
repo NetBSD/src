@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.58 2003/08/22 22:00:41 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.59 2003/09/04 09:17:08 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.58 2003/08/22 22:00:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.59 2003/09/04 09:17:08 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -105,7 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.58 2003/08/22 22:00:41 itojun Exp $");
 #include <net/if_faith.h>
 #endif
 
-struct	in6pcb rawin6pcb;
+extern struct inpcbtable rawcbtable;
+struct	inpcbtable raw6cbtable;
 #define ifatoia6(ifa)	((struct in6_ifaddr *)(ifa))
 
 /*
@@ -121,7 +122,7 @@ void
 rip6_init()
 {
 
-	rawin6pcb.in6p_next = rawin6pcb.in6p_prev = &rawin6pcb;
+	in6_pcbinit(&raw6cbtable, 1, 1);
 }
 
 /*
@@ -136,6 +137,7 @@ rip6_input(mp, offp, proto)
 {
 	struct mbuf *m = *mp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+	struct inpcb_hdr *inph;
 	struct in6pcb *in6p;
 	struct in6pcb *last = NULL;
 	struct sockaddr_in6 rip6src;
@@ -168,9 +170,10 @@ rip6_input(mp, offp, proto)
 	/* KAME hack: recover scopeid */
 	(void)in6_recoverscope(&rip6src, &ip6->ip6_src, m->m_pkthdr.rcvif);
 
-	for (in6p = rawin6pcb.in6p_next;
-	     in6p != &rawin6pcb; in6p = in6p->in6p_next)
-	{
+	CIRCLEQ_FOREACH(inph, &raw6cbtable.inpt_queue, inph_queue) {
+		in6p = (struct in6pcb *)inph;
+		if (in6p->in6p_af != AF_INET6)
+			continue;
 		if (in6p->in6p_ip6.ip6_nxt &&
 		    in6p->in6p_ip6.ip6_nxt != proto)
 			continue;
@@ -321,7 +324,7 @@ rip6_ctlinput(cmd, sa, d)
 		 * from icmp6_notify_error()
 		 */
 		in6p = NULL;
-		in6p = in6_pcblookup_connect(&rawin6pcb, &sa6->sin6_addr, 0,
+		in6p = in6_pcblookup_connect(&raw6cbtable, &sa6->sin6_addr, 0,
 		    (struct in6_addr *)&sa6_src->sin6_addr, 0, 0);
 #if 0
 		if (!in6p) {
@@ -332,7 +335,7 @@ rip6_ctlinput(cmd, sa, d)
 			 * We should at least check if the local
 			 * address (= s) is really ours.
 			 */
-			in6p = in6_pcblookup_bind(&rawin6pcb,
+			in6p = in6_pcblookup_bind(&raw6cbtable,
 			    &sa6->sin6_addr, 0, 0))
 		}
 #endif
@@ -359,7 +362,7 @@ rip6_ctlinput(cmd, sa, d)
 		 */
 	}
 
-	(void) in6_pcbnotify(&rawin6pcb, sa, 0,
+	(void) in6_pcbnotify(&raw6cbtable, sa, 0,
 	    (struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
 }
 
@@ -605,9 +608,9 @@ rip6_usrreq(so, req, m, nam, control, p)
 		    (struct ifnet *)control, p));
 
 	if (req == PRU_PURGEIF) {
-		in6_pcbpurgeif0(&rawin6pcb, (struct ifnet *)control);
+		in6_pcbpurgeif0(&raw6cbtable, (struct ifnet *)control);
 		in6_purgeif((struct ifnet *)control);
-		in6_pcbpurgeif(&rawin6pcb, (struct ifnet *)control);
+		in6_pcbpurgeif(&raw6cbtable, (struct ifnet *)control);
 		return (0);
 	}
 
@@ -624,7 +627,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 			splx(s);
 			break;
 		}
-		if ((error = in6_pcballoc(so, &rawin6pcb)) != 0)
+		if ((error = in6_pcballoc(so, &raw6cbtable)) != 0)
 		{
 			splx(s);
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.180 2003/08/22 22:49:34 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.181 2003/09/04 09:16:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.180 2003/08/22 22:49:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.181 2003/09/04 09:16:59 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -988,12 +988,12 @@ findpcb:
 			bzero(&d, sizeof(d));
 			d.s6_addr16[5] = htons(0xffff);
 			bcopy(&ip->ip_dst, &d.s6_addr32[3], sizeof(ip->ip_dst));
-			in6p = in6_pcblookup_connect(&tcb6, &s, th->th_sport,
-				&d, th->th_dport, 0);
+			in6p = in6_pcblookup_connect(&tcbtable, &s,
+			    th->th_sport, &d, th->th_dport, 0);
 			if (in6p == 0) {
 				++tcpstat.tcps_pcbhashmiss;
-				in6p = in6_pcblookup_bind(&tcb6, &d,
-					th->th_dport, 0);
+				in6p = in6_pcblookup_bind(&tcbtable, &d,
+				    th->th_dport, 0);
 			}
 		}
 #endif
@@ -1035,11 +1035,11 @@ findpcb:
 #else
 		faith = 0;
 #endif
-		in6p = in6_pcblookup_connect(&tcb6, &ip6->ip6_src, th->th_sport,
-			&ip6->ip6_dst, th->th_dport, faith);
+		in6p = in6_pcblookup_connect(&tcbtable, &ip6->ip6_src,
+		    th->th_sport, &ip6->ip6_dst, th->th_dport, faith);
 		if (in6p == NULL) {
 			++tcpstat.tcps_pcbhashmiss;
-			in6p = in6_pcblookup_bind(&tcb6, &ip6->ip6_dst,
+			in6p = in6_pcblookup_bind(&tcbtable, &ip6->ip6_dst,
 				th->th_dport, faith);
 		}
 		if (in6p == NULL) {
@@ -3193,6 +3193,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 				in6p->in6p_flags |= IN6P_IPV6_V6ONLY;
 			else
 				in6p->in6p_flags &= ~IN6P_IPV6_V6ONLY;
+			in6_pcbstate(in6p, IN6P_BOUND);
 		}
 #endif
 		break;
@@ -3206,6 +3207,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 			in6p->in6p_flowinfo = ip6->ip6_flow & IPV6_FLOWINFO_MASK;
 			/*inp->inp_options = ip6_srcroute();*/ /* soon. */
 #endif
+			in6_pcbstate(in6p, IN6P_BOUND);
 		}
 		break;
 #endif

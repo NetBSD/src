@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.82 2003/08/07 16:33:19 agc Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.83 2003/09/04 09:17:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.82 2003/08/07 16:33:19 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.83 2003/09/04 09:17:02 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -214,9 +214,9 @@ tcp_usrreq(so, req, m, nam, control, p)
 #endif
 #ifdef INET6
 		case PF_INET6:
-			in6_pcbpurgeif0(&tcb6, (struct ifnet *)control);
+			in6_pcbpurgeif0(&tcbtable, (struct ifnet *)control);
 			in6_purgeif((struct ifnet *)control);
-			in6_pcbpurgeif(&tcb6, (struct ifnet *)control);
+			in6_pcbpurgeif(&tcbtable, (struct ifnet *)control);
 			break;
 #endif
 		default:
@@ -789,7 +789,7 @@ tcp_attach(so)
 #endif
 #ifdef INET6
 	case PF_INET6:
-		error = in6_pcballoc(so, &tcb6);
+		error = in6_pcballoc(so, &tcbtable);
 		if (error)
 			return (error);
 		inp = NULL;
