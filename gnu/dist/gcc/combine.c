@@ -1,5 +1,5 @@
 /* Optimize by combining instructions for GNU compiler.
-   Copyright (C) 1987, 88, 92-97, 1998 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 92-98, 1999 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -3060,103 +3060,154 @@ subst (x, from, to, in_dest, unique_copy)
   if (COMBINE_RTX_EQUAL_P (x, to))
     return to;
 
-  len = GET_RTX_LENGTH (code);
-  fmt = GET_RTX_FORMAT (code);
+  /* Parallel asm_operands need special attention because all of the
+     inputs are shared across the arms.  Furthermore, unsharing the
+     rtl results in recognition failures.  Failure to handle this case
+     specially can result in circular rtl.
 
-  /* We don't need to process a SET_DEST that is a register, CC0, or PC, so
-     set up to skip this common case.  All other cases where we want to
-     suppress replacing something inside a SET_SRC are handled via the
-     IN_DEST operand.  */
-  if (code == SET
-      && (GET_CODE (SET_DEST (x)) == REG
-        || GET_CODE (SET_DEST (x)) == CC0
-        || GET_CODE (SET_DEST (x)) == PC))
-    fmt = "ie";
+     Solve this by doing a normal pass across the first entry of the
+     parallel, and only processing the SET_DESTs of the subsequent
+     entries.  Ug.  */
 
-  /* Get the mode of operand 0 in case X is now a SIGN_EXTEND of a
-     constant.  */
-  if (fmt[0] == 'e')
-    op0_mode = GET_MODE (XEXP (x, 0));
-
-  for (i = 0; i < len; i++)
+  if (code == PARALLEL
+      && GET_CODE (XVECEXP (x, 0, 0)) == SET
+      && GET_CODE (SET_SRC (XVECEXP (x, 0, 0))) == ASM_OPERANDS)
     {
-      if (fmt[i] == 'E')
+      new = subst (XVECEXP (x, 0, 0), from, to, 0, unique_copy);
+
+      /* If this substitution failed, this whole thing fails.  */
+      if (GET_CODE (new) == CLOBBER
+	  && XEXP (new, 0) == const0_rtx)
+	return new;
+
+      SUBST (XVECEXP (x, 0, 0), new);
+
+      for (i = XVECLEN (x, 0) - 1; i >= 1; i--)
 	{
-	  register int j;
-	  for (j = XVECLEN (x, i) - 1; j >= 0; j--)
+	  rtx dest = SET_DEST (XVECEXP (x, 0, i));
+	  
+	  if (GET_CODE (dest) != REG
+	      && GET_CODE (dest) != CC0
+	      && GET_CODE (dest) != PC)
 	    {
-	      if (COMBINE_RTX_EQUAL_P (XVECEXP (x, i, j), from))
+	      new = subst (dest, from, to, 0, unique_copy);
+
+	      /* If this substitution failed, this whole thing fails.  */
+	      if (GET_CODE (new) == CLOBBER
+		  && XEXP (new, 0) == const0_rtx)
+		return new;
+
+	      SUBST (SET_DEST (XVECEXP (x, 0, i)), new);
+	    }
+	}
+    }
+  else
+    {
+      len = GET_RTX_LENGTH (code);
+      fmt = GET_RTX_FORMAT (code);
+
+      /* We don't need to process a SET_DEST that is a register, CC0,
+	 or PC, so set up to skip this common case.  All other cases
+	 where we want to suppress replacing something inside a
+	 SET_SRC are handled via the IN_DEST operand.  */
+      if (code == SET
+	  && (GET_CODE (SET_DEST (x)) == REG
+	      || GET_CODE (SET_DEST (x)) == CC0
+	      || GET_CODE (SET_DEST (x)) == PC))
+	fmt = "ie";
+
+      /* Get the mode of operand 0 in case X is now a SIGN_EXTEND of a
+	 constant.  */
+      if (fmt[0] == 'e')
+	op0_mode = GET_MODE (XEXP (x, 0));
+
+      for (i = 0; i < len; i++)
+	{
+	  if (fmt[i] == 'E')
+	    {
+	      register int j;
+	      for (j = XVECLEN (x, i) - 1; j >= 0; j--)
 		{
+		  if (COMBINE_RTX_EQUAL_P (XVECEXP (x, i, j), from))
+		    {
+		      new = (unique_copy && n_occurrences
+			     ? copy_rtx (to) : to);
+		      n_occurrences++;
+		    }
+		  else
+		    {
+		      new = subst (XVECEXP (x, i, j), from, to, 0,
+				   unique_copy);
+
+		      /* If this substitution failed, this whole thing
+			 fails.  */
+		      if (GET_CODE (new) == CLOBBER
+			  && XEXP (new, 0) == const0_rtx)
+			return new;
+		    }
+
+		  SUBST (XVECEXP (x, i, j), new);
+		}
+	    }
+	  else if (fmt[i] == 'e')
+	    {
+	      if (COMBINE_RTX_EQUAL_P (XEXP (x, i), from))
+		{
+		  /* In general, don't install a subreg involving two
+		     modes not tieable.  It can worsen register
+		     allocation, and can even make invalid reload
+		     insns, since the reg inside may need to be copied
+		     from in the outside mode, and that may be invalid
+		     if it is an fp reg copied in integer mode.
+
+		     We allow two exceptions to this: It is valid if
+		     it is inside another SUBREG and the mode of that
+		     SUBREG and the mode of the inside of TO is
+		     tieable and it is valid if X is a SET that copies
+		     FROM to CC0.  */
+
+		  if (GET_CODE (to) == SUBREG
+		      && ! MODES_TIEABLE_P (GET_MODE (to),
+					    GET_MODE (SUBREG_REG (to)))
+		      && ! (code == SUBREG
+			    && MODES_TIEABLE_P (GET_MODE (x),
+						GET_MODE (SUBREG_REG (to))))
+#ifdef HAVE_cc0
+		      && ! (code == SET && i == 1 && XEXP (x, 0) == cc0_rtx)
+#endif
+		      )
+		    return gen_rtx_CLOBBER (VOIDmode, const0_rtx);
+
 		  new = (unique_copy && n_occurrences ? copy_rtx (to) : to);
 		  n_occurrences++;
 		}
 	      else
-		{
-		  new = subst (XVECEXP (x, i, j), from, to, 0, unique_copy);
+		/* If we are in a SET_DEST, suppress most cases unless we
+		   have gone inside a MEM, in which case we want to
+		   simplify the address.  We assume here that things that
+		   are actually part of the destination have their inner
+		   parts in the first expression.  This is true for SUBREG, 
+		   STRICT_LOW_PART, and ZERO_EXTRACT, which are the only
+		   things aside from REG and MEM that should appear in a
+		   SET_DEST.  */
+		new = subst (XEXP (x, i), from, to,
+			     (((in_dest
+				&& (code == SUBREG || code == STRICT_LOW_PART
+				    || code == ZERO_EXTRACT))
+			       || code == SET)
+			      && i == 0), unique_copy);
 
-		  /* If this substitution failed, this whole thing fails.  */
-		  if (GET_CODE (new) == CLOBBER && XEXP (new, 0) == const0_rtx)
-		    return new;
-		}
+	      /* If we found that we will have to reject this combination,
+		 indicate that by returning the CLOBBER ourselves, rather than
+		 an expression containing it.  This will speed things up as
+		 well as prevent accidents where two CLOBBERs are considered
+		 to be equal, thus producing an incorrect simplification.  */
 
-	      SUBST (XVECEXP (x, i, j), new);
+	      if (GET_CODE (new) == CLOBBER && XEXP (new, 0) == const0_rtx)
+		return new;
+
+	      SUBST (XEXP (x, i), new);
 	    }
-	}
-      else if (fmt[i] == 'e')
-	{
-	  if (COMBINE_RTX_EQUAL_P (XEXP (x, i), from))
-	    {
-	      /* In general, don't install a subreg involving two modes not
-		 tieable.  It can worsen register allocation, and can even
-		 make invalid reload insns, since the reg inside may need to
-		 be copied from in the outside mode, and that may be invalid
-		 if it is an fp reg copied in integer mode.
-
-		 We allow two exceptions to this: It is valid if it is inside
-		 another SUBREG and the mode of that SUBREG and the mode of
-		 the inside of TO is tieable and it is valid if X is a SET
-		 that copies FROM to CC0.  */
-	      if (GET_CODE (to) == SUBREG
-		  && ! MODES_TIEABLE_P (GET_MODE (to),
-					GET_MODE (SUBREG_REG (to)))
-		  && ! (code == SUBREG
-			&& MODES_TIEABLE_P (GET_MODE (x),
-					    GET_MODE (SUBREG_REG (to))))
-#ifdef HAVE_cc0
-		  && ! (code == SET && i == 1 && XEXP (x, 0) == cc0_rtx)
-#endif
-		  )
-		return gen_rtx_CLOBBER (VOIDmode, const0_rtx);
-
-	      new = (unique_copy && n_occurrences ? copy_rtx (to) : to);
-	      n_occurrences++;
-	    }
-	  else
-	    /* If we are in a SET_DEST, suppress most cases unless we
-	       have gone inside a MEM, in which case we want to
-	       simplify the address.  We assume here that things that
-	       are actually part of the destination have their inner
-	       parts in the first expression.  This is true for SUBREG, 
-	       STRICT_LOW_PART, and ZERO_EXTRACT, which are the only
-	       things aside from REG and MEM that should appear in a
-	       SET_DEST.  */
-	    new = subst (XEXP (x, i), from, to,
-			 (((in_dest
-			    && (code == SUBREG || code == STRICT_LOW_PART
-				|| code == ZERO_EXTRACT))
-			   || code == SET)
-			  && i == 0), unique_copy);
-
-	  /* If we found that we will have to reject this combination,
-	     indicate that by returning the CLOBBER ourselves, rather than
-	     an expression containing it.  This will speed things up as
-	     well as prevent accidents where two CLOBBERs are considered
-	     to be equal, thus producing an incorrect simplification.  */
-
-	  if (GET_CODE (new) == CLOBBER && XEXP (new, 0) == const0_rtx)
-	    return new;
-
-	  SUBST (XEXP (x, i), new);
 	}
     }
 
@@ -7943,13 +7994,15 @@ num_sign_bit_copies (x, mode)
 	 is known to be positive, the number of sign bit copies is the
 	 same as that of the input.  Finally, if the input has just one bit
 	 that might be nonzero, all the bits are copies of the sign bit.  */
+      num0 = num_sign_bit_copies (XEXP (x, 0), mode);
+      if (bitwidth > HOST_BITS_PER_WIDE_INT)
+	return num0 > 1 ? num0 - 1 : 1;
+
       nonzero = nonzero_bits (XEXP (x, 0), mode);
       if (nonzero == 1)
 	return bitwidth;
 
-      num0 = num_sign_bit_copies (XEXP (x, 0), mode);
       if (num0 > 1
-	  && bitwidth <= HOST_BITS_PER_WIDE_INT
 	  && (((HOST_WIDE_INT) 1 << (bitwidth - 1)) & nonzero))
 	num0--;
 
@@ -7993,19 +8046,27 @@ num_sign_bit_copies (x, mode)
 
       result = bitwidth - (bitwidth - num0) - (bitwidth - num1);
       if (result > 0
-	  && bitwidth <= HOST_BITS_PER_WIDE_INT
-	  && ((nonzero_bits (XEXP (x, 0), mode)
-	       & ((HOST_WIDE_INT) 1 << (bitwidth - 1))) != 0)
-	  && ((nonzero_bits (XEXP (x, 1), mode)
-	      & ((HOST_WIDE_INT) 1 << (bitwidth - 1))) != 0))
+	  && (bitwidth > HOST_BITS_PER_WIDE_INT
+	      || (((nonzero_bits (XEXP (x, 0), mode)
+		    & ((HOST_WIDE_INT) 1 << (bitwidth - 1))) != 0)
+		  && ((nonzero_bits (XEXP (x, 1), mode)
+		       & ((HOST_WIDE_INT) 1 << (bitwidth - 1))) != 0))))
 	result--;
 
       return MAX (1, result);
 
     case UDIV:
-      /* The result must be <= the first operand.  */
-      return num_sign_bit_copies (XEXP (x, 0), mode);
-
+      /* The result must be <= the first operand.  If the first operand
+         has the high bit set, we know nothing about the number of sign
+         bit copies.  */
+      if (bitwidth > HOST_BITS_PER_WIDE_INT)
+	return 1;
+      else if ((nonzero_bits (XEXP (x, 0), mode)
+		& ((HOST_WIDE_INT) 1 << (bitwidth - 1))) != 0)
+	return 1;
+      else
+	return num_sign_bit_copies (XEXP (x, 0), mode);
+				    
     case UMOD:
       /* The result must be <= the scond operand.  */
       return num_sign_bit_copies (XEXP (x, 1), mode);
@@ -8016,20 +8077,20 @@ num_sign_bit_copies (x, mode)
 	 to add 1.  */
       result = num_sign_bit_copies (XEXP (x, 0), mode);
       if (result > 1
-	  && bitwidth <= HOST_BITS_PER_WIDE_INT
-	  && (nonzero_bits (XEXP (x, 1), mode)
-	      & ((HOST_WIDE_INT) 1 << (bitwidth - 1))) != 0)
-	result --;
+	  && (bitwidth > HOST_BITS_PER_WIDE_INT
+	      || (nonzero_bits (XEXP (x, 1), mode)
+		  & ((HOST_WIDE_INT) 1 << (bitwidth - 1))) != 0))
+	result--;
 
       return result;
 
     case MOD:
       result = num_sign_bit_copies (XEXP (x, 1), mode);
       if (result > 1
-	  && bitwidth <= HOST_BITS_PER_WIDE_INT
-	  && (nonzero_bits (XEXP (x, 1), mode)
-	      & ((HOST_WIDE_INT) 1 << (bitwidth - 1))) != 0)
-	result --;
+	  && (bitwidth > HOST_BITS_PER_WIDE_INT
+	      || (nonzero_bits (XEXP (x, 1), mode)
+		  & ((HOST_WIDE_INT) 1 << (bitwidth - 1))) != 0))
+	result--;
 
       return result;
 

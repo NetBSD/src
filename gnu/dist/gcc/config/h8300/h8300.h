@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler. 
    Hitachi H8/300 version generating coff 
-   Copyright (C) 1992, 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93-98, 1999 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain (sac@cygnus.com),
    Jim Wilson (wilson@cygnus.com), and Doug Evans (dje@cygnus.com).
 
@@ -1117,7 +1117,7 @@ readonly_data() 						\
     }						\
 }						 
 
-#define TINY_DATA_NAME_P(NAME) (*(NAME) == '*')
+#define TINY_DATA_NAME_P(NAME) (*(NAME) == '&')
 
 /* If we are referencing a function that is supposed to be called
    through the function vector, the SYMBOL_REF_FLAG in the rtl
@@ -1138,7 +1138,7 @@ readonly_data() 						\
 /* Store the user-specified part of SYMBOL_NAME in VAR.
    This is sort of inverse to ENCODE_SECTION_INFO.  */
 #define STRIP_NAME_ENCODING(VAR,SYMBOL_NAME) \
-  (VAR) = (SYMBOL_NAME) + ((SYMBOL_NAME)[0] == '*' || (SYMBOL_NAME)[0] == '@');
+  (VAR) = (SYMBOL_NAME) + ((SYMBOL_NAME)[0] == '*' || (SYMBOL_NAME)[0] == '@' || (SYMBOL_NAME)[0] == '&') 
 
 /* How to refer to registers in assembler output.
    This sequence is indexed by compiler's hard-register-number (see above).  */
@@ -1185,6 +1185,9 @@ readonly_data() 						\
 
 #define ASM_OUTPUT_LABEL(FILE, NAME)	\
   do { assemble_name (FILE, NAME); fputs (":\n", FILE); } while (0)
+
+#define ASM_OUTPUT_LABELREF(FILE,NAME)  \
+  asm_fprintf ((FILE), "%U%s", (NAME) + (TINY_DATA_NAME_P (NAME) ? 1 : 0))
 
 #define ASM_OUTPUT_EXTERNAL(FILE, DECL, NAME) 
 

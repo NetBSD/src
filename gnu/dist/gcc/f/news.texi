@@ -1,11 +1,11 @@
-@c Copyright (C) 1995-1997 Free Software Foundation, Inc.
+@c Copyright (C) 1995-1999 Free Software Foundation, Inc.
 @c This is part of the G77 manual.
 @c For copying conditions, see the file g77.texi.
 
 @c The text of this file appears in the file BUGS
 @c in the G77 distribution, as well as in the G77 manual.
 
-@c 1998-11-03
+@c 1999-03-11
 
 @ifclear NEWSONLY
 @node News
@@ -57,6 +57,34 @@ to help clarify how they differ from other versions,
 though this can make getting a complete picture
 of what a particular @code{egcs} version contains
 somewhat more difficult.
+
+An online, ``live'' version of this document
+(derived directly from the up-to-date mainline version
+of @code{g77} within @code{egcs})
+is available at
+@uref{http://egcs.cygnus.com/onlinedocs/g77_news.html}.
+
+@heading In 0.5.24 and @code{egcs} 1.1.2 (versus 0.5.23 and 1.1.1):
+@itemize @bullet
+@item
+Fix the @code{IDate} Intrinsic (VXT)
+so the returned year is in the documented, non-Y2K-compliant range
+of 0--99,
+instead of being returned as 100 in the year 2000.
+
+@item
+Fix the @samp{Date_and_Time} intrinsic (in @code{libg2c})
+to return the milliseconds value properly
+in @var{Values}(8).
+
+@item
+Fix the @samp{LStat} intrinsic (in @code{libg2c})
+to return device-ID information properly
+in @var{SArray}(7).
+
+@item
+Improve documentation.
+@end itemize
 
 @heading In 0.5.24 and @code{egcs} 1.1.1 (versus 0.5.23 and 1.1):
 @itemize @bullet
@@ -293,6 +321,10 @@ containing specification statements such as
 @samp{INTEGER(KIND=7) PTR}.
 
 @item
+@code{g77} no longer crashes when compiling code
+such as @samp{J = SIGNAL(1, 2)}.
+
+@item
 @code{g77} now treats @samp{%LOC(@var{expr})} and
 @samp{LOC(@var{expr})} as ``ordinary'' expressions
 when they are used as arguments in procedure calls.
@@ -354,10 +386,17 @@ version 0.5.22 of @code{g77}, due to using the
 it to fix a few bugs and improve performance in a
 few cases.
 
+@ifset last-up-date
 @xref{Actual Bugs,,Actual Bugs We Haven't Fixed Yet},
-available in plain-text format in @code{gcc/f/BUGS},
 for information on the known bugs in this version,
 including the regressions.
+@end ifset
+
+@ifset NEWSONLY
+See @file{egcs/gcc/f/BUGS},
+for information on the known bugs in this version,
+including the regressions.
+@end ifset
 
 Features that have been dropped from this version
 of @code{g77} due to their being implemented
@@ -736,10 +775,17 @@ due to using the
 it to fix a few bugs and improve performance in a
 few cases.
 
+@ifset last-up-date
 @xref{Actual Bugs,,Actual Bugs We Haven't Fixed Yet},
-available in plain-text format in @code{gcc/f/BUGS},
 for information on the known bugs in this version,
 including the regressions.
+@end ifset
+
+@ifset NEWSONLY
+See @file{egcs/gcc/f/BUGS},
+for information on the known bugs in this version,
+including the regressions.
+@end ifset
 
 Features that have been dropped from this version
 of @code{g77} due to their being implemented

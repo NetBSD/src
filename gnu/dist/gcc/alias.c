@@ -942,9 +942,15 @@ true_dependence (mem, mem_mode, x, varies)
 
      If either memory reference is a variable structure the other is a
      fixed scalar and there is no aliasing.  */
-  if ((MEM_IN_STRUCT_P (mem) && varies (mem_addr))
-      || (MEM_IN_STRUCT_P (x) && varies (x_addr)))
-    return 0;
+
+  /* Disabled by default for egcs 1.1.x as alias analysis isn't good
+     enough yet to discover all cases where this doesn't apply.  */
+  if (flag_structure_noalias)
+    {
+      if ((MEM_IN_STRUCT_P (mem) && varies (mem_addr))
+	  || (MEM_IN_STRUCT_P (x) && varies (x_addr)))
+	return 0;
+    }
 
   return 1;
 }
@@ -1174,7 +1180,8 @@ init_alias_analysis ()
 		  && (((note = find_reg_note (insn, REG_EQUAL, 0)) != 0
 		       && REG_N_SETS (REGNO (SET_DEST (set))) == 1)
 		      || (note = find_reg_note (insn, REG_EQUIV, NULL_RTX)) != 0)
-		  && GET_CODE (XEXP (note, 0)) != EXPR_LIST)
+		  && GET_CODE (XEXP (note, 0)) != EXPR_LIST
+		  && ! reg_overlap_mentioned_p (SET_DEST (set), XEXP (note, 0)))
 		{
 		  int regno = REGNO (SET_DEST (set));
 		  reg_known_value[regno] = XEXP (note, 0);
