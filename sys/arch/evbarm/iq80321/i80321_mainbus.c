@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_mainbus.c,v 1.8 2003/02/06 03:17:49 briggs Exp $	*/
+/*	$NetBSD: i80321_mainbus.c,v 1.9 2003/04/29 01:11:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -123,7 +123,8 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	/* Some boards are always considered "host". */
 	sc->sc_is_host = 1;		/* XXX */
 
-	printf(": i80321 I/O Processor, acting as PCI %s\n",
+	aprint_naive(": i80321 I/O Processor\n");
+	aprint_normal(": i80321 I/O Processor, acting as PCI %s\n",
 	    sc->sc_is_host ? "host" : "slave");
 
 	i80321_sdram_bounds(sc->sc_st, sc->sc_mcu_sh, &memstart, &memsize);
