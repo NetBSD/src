@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.12 2001/11/06 06:40:44 simonb Exp $	*/
+/*	$NetBSD: quota.h,v 1.13 2002/12/01 00:12:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -216,4 +216,4 @@ int quotactl __P((const char *, int , int, void *));
 __END_DECLS
 #endif /* _KERNEL */
 
-#endif /* _UFS_UFS_QUOTA_H_ */
+#endif /* !_UFS_UFS_QUOTA_H_ */

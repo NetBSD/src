@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.28 2001/12/18 10:57:23 fvdl Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.29 2002/12/01 00:12:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,6 +34,9 @@
  *
  *	@(#)ufs_extern.h	8.10 (Berkeley) 5/14/95
  */
+
+#ifndef _UFS_UFS_EXTERN_H_
+#define _UFS_UFS_EXTERN_H_
 
 struct buf;
 struct componentname;
@@ -180,3 +183,5 @@ void  softdep_change_linkcnt __P((struct inode *));
 void  softdep_releasefile __P((struct inode *));
 
 __END_DECLS
+
+#endif /* !_UFS_UFS_EXTERN_H_ */

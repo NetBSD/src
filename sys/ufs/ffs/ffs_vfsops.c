@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.104 2002/11/24 11:09:13 scw Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.105 2002/12/01 00:12:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.104 2002/11/24 11:09:13 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.105 2002/12/01 00:12:09 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -83,9 +83,9 @@ int ffs_initcount = 0;
 
 extern struct lock ufs_hashlock;
 
-extern struct vnodeopv_desc ffs_vnodeop_opv_desc;
-extern struct vnodeopv_desc ffs_specop_opv_desc;
-extern struct vnodeopv_desc ffs_fifoop_opv_desc;
+extern const struct vnodeopv_desc ffs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc ffs_specop_opv_desc;
+extern const struct vnodeopv_desc ffs_fifoop_opv_desc;
 
 const struct vnodeopv_desc * const ffs_vnodeopv_descs[] = {
 	&ffs_vnodeop_opv_desc,

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.30 2002/11/26 01:23:31 yamt Exp $	*/
+/*	$NetBSD: inode.h,v 1.31 2002/12/01 00:12:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)inode.h	8.9 (Berkeley) 5/14/95
  */
+
+#ifndef _UFS_UFS_INODE_H_
+#define _UFS_UFS_INODE_H_
 
 #include <sys/vnode.h>
 #include <ufs/ufs/dinode.h>
@@ -251,3 +254,5 @@ struct ufid {
 	int32_t	  ufid_gen;	/* Generation number. */
 };
 #endif /* _KERNEL */
+
+#endif /* !_UFS_UFS_INODE_H_ */

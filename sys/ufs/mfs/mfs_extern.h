@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.12 2001/09/15 16:13:06 chs Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.13 2002/12/01 00:12:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)mfs_extern.h	8.4 (Berkeley) 3/30/95
  */
+
+#ifndef _UFS_MFS_MFS_EXTERN_H_
+#define _UFS_MFS_MFS_EXTERN_H_
 
 struct buf;
 struct mount;
@@ -71,3 +74,5 @@ int	mfs_reclaim	__P((void *));
 int	mfs_print	__P((void *));
 
 __END_DECLS
+
+#endif /* !_UFS_MFS_MFS_EXTERN_H_ */
