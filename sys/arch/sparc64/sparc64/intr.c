@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.37 2000/12/04 20:40:07 fvdl Exp $ */
+/*	$NetBSD: intr.c,v 1.38 2001/01/15 20:19:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,7 +72,6 @@ struct intrhand *intrlev[MAXINTNUM];
 void	strayintr __P((const struct trapframe64 *, int));
 int	softintr __P((void *));
 int	softnet __P((void *));
-int	send_softclock __P((void *));
 int	intr_list_handler __P((void *));
 
 /*
@@ -160,20 +159,8 @@ softnet(fp)
 	return (1);
 }
 
-/* 
- * Damn softclock doesn't return a value.
- */
-int
-send_softclock(fp)
-	void *fp;
-{
-	softclock();
-	return 1;
-}
-
 struct intrhand soft01intr = { softintr, NULL, 1 };
 struct intrhand soft01net = { softnet, NULL, 1 };
-struct intrhand soft01clock = { send_softclock, NULL, 1 };
 
 #if 1
 void 
@@ -183,10 +170,6 @@ setsoftint() {
 void 
 setsoftnet() {
 	send_softint(-1, IPL_SOFTNET, &soft01net);
-}
-void 
-setsoftclock() {
-	send_softint(-1, IPL_SOFTCLOCK, &soft01clock);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2001/01/14 23:50:29 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2001/01/15 20:19:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -97,9 +97,6 @@ struct intrhand {
 	int	ih_irq;
 };
 
-/*
-void setsoftclock __P((void));
-*/
 void clearsoftclock __P((void));
 int  splsoftclock __P((void));
 /*
@@ -232,7 +229,6 @@ softintr(ipl)
 #define	spl0()		spllower(0)
 
 /*
-#define	setsoftclock()	softintr(SIR_CLOCK)
 #define	setsoftnet()	softintr(SIR_NET)
 #define	setsoftserial()	softintr(SIR_SERIAL)
 */
