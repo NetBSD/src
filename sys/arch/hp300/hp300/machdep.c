@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.28 1994/04/18 23:33:34 mycroft Exp $
+ *	$Id: machdep.c,v 1.29 1994/04/24 06:14:02 mycroft Exp $
  */
 
 #include "param.h"
@@ -327,7 +327,7 @@ again:
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(vm_page_free_count));
+	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 	/*
@@ -929,7 +929,7 @@ boot(howto)
 		savectx(curproc->p_addr, 0);
 
 	boothowto = howto;
-	if ((howto&RB_NOSYNC) == 0 && waittime < 0 && bfreelist[0].b_forw) {
+	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
 		register struct buf *bp;
 		int iter, nbusy;
 
