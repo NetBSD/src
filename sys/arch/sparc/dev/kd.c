@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.14 2000/08/22 21:28:36 pk Exp $	*/
+/*	$NetBSD: kd.c,v 1.15 2000/10/12 21:26:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -460,6 +460,16 @@ cons_attach_input(cc, cn)
 	cc->cc_upstream = kd_cons_input;
 }
 
+void kd_attach_input(struct cons_channel *);
+void
+kd_attach_input(cc)
+	struct cons_channel *cc;
+{
+	struct kd_softc *kd = &kd_softc;
+
+	kd->kd_in = cc;
+	cc->cc_upstream = kd_cons_input;
+}
 
 /*
  * Default PROM-based console input stream
