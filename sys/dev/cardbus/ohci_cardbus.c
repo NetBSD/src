@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.7 2000/04/27 15:26:44 augustss Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.8 2001/05/09 12:07:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/queue.h>
 
 #include <machine/bus.h>
 
@@ -68,9 +67,9 @@
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
 
-int	ohci_cardbus_match __P((struct device *, struct cfdata *, void *));
-void	ohci_cardbus_attach __P((struct device *, struct device *, void *));
-int	ohci_cardbus_detach __P((device_ptr_t, int));
+int	ohci_cardbus_match(struct device *, struct cfdata *, void *);
+void	ohci_cardbus_attach(struct device *, struct device *, void *);
+int	ohci_cardbus_detach(device_ptr_t, int);
 
 struct ohci_cardbus_softc {
 	ohci_softc_t		sc;
@@ -91,12 +90,9 @@ struct cfattach ohci_cardbus_ca = {
 #define cardbus_devinfo pci_devinfo
 
 int
-ohci_cardbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ohci_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct cardbus_attach_args *ca = (struct cardbus_attach_args *) aux;
+	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 
 	if (CARDBUS_CLASS(ca->ca_class) == CARDBUS_CLASS_SERIALBUS &&
 	    CARDBUS_SUBCLASS(ca->ca_class) == CARDBUS_SUBCLASS_SERIALBUS_USB &&
@@ -107,10 +103,7 @@ ohci_cardbus_match(parent, match, aux)
 }
 
 void
-ohci_cardbus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+ohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ohci_cardbus_softc *sc = (struct ohci_cardbus_softc *)self;
 	struct cardbus_attach_args *ca = aux;
@@ -121,7 +114,7 @@ ohci_cardbus_attach(parent, self, aux)
 	char devinfo[256];
 	usbd_status r;
 	char *vendor;
-	char *devname = sc->sc.sc_bus.bdev.dv_xname;
+	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
 
 	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo,
