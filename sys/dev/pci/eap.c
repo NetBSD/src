@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.4 1998/05/02 08:21:10 mycroft Exp $	*/
+/*	$NetBSD: eap.c,v 1.5 1998/05/06 19:21:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -6,8 +6,9 @@
  *
  * Author:      Lennart Augustsson <augustss@cs.chalmers.se>
  *
- * Debugging &  Andreas Gustafsson <gson@araneus.fi>
- *    testing:  Chuck Cranor       <chuck@maria.wustl.edu>
+ * Debugging:   Andreas Gustafsson <gson@araneus.fi>
+ *		Charles Hannum     <mycroft@netbsd.org>
+ * Testing:     Chuck Cranor       <chuck@maria.wustl.edu>
  *              Phil Nelson        <phil@cs.wwu.edu>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -214,10 +215,8 @@ struct        cfdriver eap_cd = {
 #define AK_NPORTS 16
 
 #define VOL_TO_ATT5(v) (0x1f - ((v) >> 3))
-/*#define VOL_TO_GAIN5(v) ((v) >> 3)*/
-#define VOL_TO_GAIN5(v) VOL_TO_ATT5(v)/* why is it called gain? */
+#define VOL_TO_GAIN5(v) VOL_TO_ATT5(v)
 #define ATT5_TO_VOL(v) ((0x1f - (v)) << 3)
-/*#define GAIN5_TO_VOL(v) ((v) << 3)*/
 #define GAIN5_TO_VOL(v) ATT5_TO_VOL(v)
 #define VOL_0DB 200
 
@@ -387,7 +386,6 @@ eap_write_codec(sc, a, d)
 		DPRINTFN(5,("eap: codec %d prog: icss=0x%08x\n", a, icss));
 	} while(icss & EAP_CWRIP);
 	EWRITE4(sc, EAP_CODEC, EAP_SET_CODEC(a, d));
-	/* delay(1000); */
 }
 
 void
@@ -456,18 +454,6 @@ eap_attach(parent, self, aux)
 			AK_M_AUX_L | AK_M_AUX_R |
 			AK_M_VOICE_L | AK_M_VOICE_R |
 			AK_M_MONO2 | AK_M_MONO1);
-#if 0
-	eap_write_codec(sc, AK_IN_MIXER1_L,
-			AK_M_FM_L | AK_M_LINE_L | AK_M_CD_L | AK_M_MIC);
-	eap_write_codec(sc, AK_IN_MIXER1_R,
-			AK_M_FM_R | AK_M_LINE_R | AK_M_CD_R | AK_M_MIC);
-	eap_write_codec(sc, AK_IN_MIXER2_L,
-			AK_M_TMIC | AK_M_TMONO1 | AK_M_TMONO2 | AK_M2_AUX_L |
-			AK_M_VOICE | AK_M2_MONO1 | AK_M2_MONO2);
-	eap_write_codec(sc, AK_IN_MIXER2_R,
-			AK_M_TMIC | AK_M_TMONO1 | AK_M_TMONO2 | AK_M2_AUX_R |
-			AK_M_VOICE | AK_M2_MONO1 | AK_M2_MONO2);
-#endif
 	ctl.type = AUDIO_MIXER_VALUE;
 	ctl.un.value.num_channels = 1;
 	for (ctl.dev = EAP_MASTER_VOL; ctl.dev < EAP_MIC_VOL; ctl.dev++) {
@@ -710,7 +696,6 @@ eap_set_params(addr, setmode, usemode, p, r)
         if (p->sample_rate < 4000 || p->sample_rate > 50000)
         	return (EINVAL);
 
-        /* XXX should sampsize be *2 if stereo? */
 	sc->sc_sampsize = p->precision / 8 * p->channels; /* bytes / sample */
         p->sw_code = pswcode;
         r->sw_code = rswcode;
@@ -750,7 +735,8 @@ eap_dma_init_input(addr, buf, cc)
 	struct eap_softc *sc = addr;
 	struct eap_dma *p;
 
-	DPRINTF(("eap_dma_init_input: dma start loop input addr=%p cc=%d\n", buf, cc));
+	DPRINTF(("eap_dma_init_input: dma start loop input addr=%p cc=%d\n", 
+		 buf, cc));
         for (p = sc->sc_dmas; p && KERNADDR(p) != buf; p = p->next)
 		;
 	if (!p) {
@@ -1051,8 +1037,6 @@ eap_mixer_get_port(addr, cp)
 	}
 	return (0);
 }
-
-#define AudioNaux	"aux"
 
 int
 eap_query_devinfo(addr, dip)
