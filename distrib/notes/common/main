@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.36 2001/06/10 19:13:33 he Exp $
+.\"	$NetBSD: main,v 1.61.2.37 2001/06/16 21:24:55 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,6 +98,59 @@ You are reading the
 .Em \*[format]
 version.
 .
+.if r_i386 \{
+.Ss "Quick install notes for the impatient"
+.Pp
+This section contains some brief and incomplete notes
+describing what you need to install
+.Nx \*V
+on an i386-architecture machine.
+.Bl -bullet
+.It
+Fetch the appropriate pair of boot floppy images from the
+.Pa installation/floppy/
+directory.
+Most people will need the
+.Pa boot1.fs
+and
+.Pa boot2.fs
+images, or possibly (but not necessarily)
+.Pa bootlap1.fs
+and
+.Pa bootlap2.fs
+if installing on a laptop.
+.It
+Write the floppy images directly to a pair of floppies, these will
+be used to boot the installation kernel, which contains all the tools
+required to install
+.Nx .
+The
+.Ic rawrite.exe
+MS-DOS program in the
+.Pa utilities/
+directory may be of help if writing a raw image is otherwise
+problematical.
+.It
+You can let the installation program fetch the binary sets
+itself using ftp.
+There are several other methods to get the binary sets.
+You will at a minimum need the
+.Pa base.tgz
+install set and one of the kernel sets, typically
+.Pa kern.tgz
+from the
+.Pa binary/sets/
+directory.
+In a typical workstation installation you will probably want
+all the installation sets.
+.It
+For third-party programs which are not part of the base
+.Nx
+distribution, you will want to explore the
+.Ic pkgsrc
+system with its more than 2100 program packages.
+.El
+.\}
 .Ss "What is NetBSD?"
 .Pp
 .
