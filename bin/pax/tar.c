@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.47.2.2 2004/04/19 03:39:04 jmc Exp $	*/
+/*	$NetBSD: tar.c,v 1.47.2.3 2004/04/21 04:20:12 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.47.2.2 2004/04/19 03:39:04 jmc Exp $");
+__RCSID("$NetBSD: tar.c,v 1.47.2.3 2004/04/21 04:20:12 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ tar_endwr(void)
 off_t
 tar_endrd(void)
 {
-	return((off_t)BLKMULT);
+	return((off_t)(NULLCNT*BLKMULT));
 }
 
 /*
@@ -178,12 +178,14 @@ tar_trail(char *buf, int in_resync, int *cnt)
 	 */
 	if (!in_resync) {
 		++*cnt;
+#if 0
 		/*
 		 * old GNU tar (up through 1.13) only writes one block of
 		 * trailers, so we pretend we got another
 		 */
 		if (is_gnutar)
 			++*cnt;
+#endif
 		if (*cnt >= NULLCNT)
 			return(0);
 	}
@@ -811,9 +813,10 @@ ustar_rd(ARCHD *arcn, char *buf)
 
 	if (hd->typeflag != LONGLINKTYPE && hd->typeflag != LONGNAMETYPE) {
 		arcn->nlen = expandname(dest, sizeof(arcn->name) - cnt,
-		    &gnu_name_string, hd->name, sizeof(hd->name));
-		arcn->ln_nlen = expandname(arcn->ln_name, sizeof(arcn->ln_name),
-		    &gnu_link_string, hd->linkname, sizeof(hd->linkname));
+		    &gnu_name_string, hd->name, sizeof(hd->name)) + cnt;
+		arcn->ln_nlen = expandname(arcn->ln_name,
+		    sizeof(arcn->ln_name), &gnu_link_string, hd->linkname,
+		    sizeof(hd->linkname));
 	}
 
 	/*
@@ -1289,18 +1292,18 @@ tar_gnutar_exclude_one(const char *line, size_t len)
 	}
 	/* don't need the .*\/ ones if we start with /, i guess */
 	if (line[0] != '/') {
-		snprintf(rabuf, sizeof rabuf, "/.*\\/%s$//", sbuf);
+		(void)snprintf(rabuf, sizeof rabuf, "/.*\\/%s$//", sbuf);
 		if (rep_add(rabuf) < 0)
 			return (-1);
-		snprintf(rabuf, sizeof rabuf, "/.*\\/%s\\/.*//", sbuf);
+		(void)snprintf(rabuf, sizeof rabuf, "/.*\\/%s\\/.*//", sbuf);
 		if (rep_add(rabuf) < 0)
 			return (-1);
 	}
 
-	snprintf(rabuf, sizeof rabuf, "/^%s$//", sbuf);
+	(void)snprintf(rabuf, sizeof rabuf, "/^%s$//", sbuf);
 	if (rep_add(rabuf) < 0)
 		return (-1);
-	snprintf(rabuf, sizeof rabuf, "/^%s\\/.*//", sbuf);
+	(void)snprintf(rabuf, sizeof rabuf, "/^%s\\/.*//", sbuf);
 	if (rep_add(rabuf) < 0)
 		return (-1);
 
