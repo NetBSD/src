@@ -33,8 +33,9 @@
 
 #ifndef lint
 char copyright[] =
-"@(#) Copyright (c) 1980, 1987, 1988, 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+"Copyright (c) 1989,1990,1991,1992 William F. Jolitz. All rights reserved.\n\
+Copyright (c) 1980, 1987, 1988, 1991 The Regents of the University\n\
+of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
@@ -387,11 +388,7 @@ main(argc, argv)
 	if (!quietlog) {
 		struct stat st;
 
-		printf("%s%s",
-			"386BSD Release 0.1 by William and Lynne Jolitz.\n",
-"Copyright (c) 1989,1990,1991,1992 William F. Jolitz. All rights reserved.\n\
-Based in part on work by the 386BSD User Community and the\n\
-BSD Networking Software, Release 2 by UCB EECS Department.\n");
+		printf("%s\n", copyright);
 
 		motd();
 		(void)sprintf(tbuf, "%s/%s", _PATH_MAILDIR, pwd->pw_name);
