@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.8 1998/01/09 08:07:36 perry Exp $	*/
+/*	$NetBSD: ex.c,v 1.9 2000/10/11 19:28:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -2308,7 +2308,7 @@ ex_badaddr(sp, cp, ba, nret)
 		if (lno != 0) {
 			msgq(sp, M_ERR,
 			    "102|Illegal address: only %lu lines in the file",
-			    lno);
+			    (u_long) lno);
 			break;
 		}
 		/* FALLTHROUGH */
