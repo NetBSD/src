@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.10 1995/03/18 14:55:36 cgd Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.11 1995/10/04 23:11:19 ghudson Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fdisk.c,v 1.10 1995/03/18 14:55:36 cgd Exp $";
+static char rcsid[] = "$NetBSD: fdisk.c,v 1.11 1995/10/04 23:11:19 ghudson Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -165,6 +165,10 @@ void	usage __P((void));
 void	print_s0 __P((int));
 void	print_part __P((int));
 void	init_sector0 __P((int));
+void	intuit_translated_geometry __P((void));
+int	try_heads __P((quad_t, quad_t, quad_t, quad_t, quad_t, quad_t, quad_t,
+		       quad_t));
+int	try_sectors __P((quad_t, quad_t, quad_t, quad_t, quad_t));
 void	change_part __P((int));
 void	print_params __P((void));
 void	change_active __P((int));
@@ -224,14 +228,16 @@ main(argc, argv)
 	if (open_disk(a_flag || i_flag || u_flag) < 0)
 		exit(1);
 
+	if (read_s0())
+		init_sector0(1);
+
+	intuit_translated_geometry();
+
 	printf("******* Working on device %s *******\n", disk);
 	if (u_flag)
 		get_params_to_use();
 	else
 		print_params();
-
-	if (read_s0())
-		init_sector0(1);
 
 	printf("Warning: BIOS sector numbering starts with sector 1\n");
 	printf("Information from DOS bootblock is:\n");
@@ -322,6 +328,114 @@ init_sector0(start)
 	    &partp->dp_scyl, &partp->dp_shd, &partp->dp_ssect);
 	dos(partp->dp_start + partp->dp_size - 1,
 	    &partp->dp_ecyl, &partp->dp_ehd, &partp->dp_esect);
+}
+
+/* Prerequisite: the disklabel parameters and master boot record must
+ *		 have been read (i.e. dos_* and mboot are meaningful).
+ * Specification: modifies dos_cylinders, dos_heads, dos_sectors, and
+ *		  dos_cylindersectors to be consistent with what the
+ *		  partition table is using, if we can find a geometry
+ *		  which is consistent with all partition table entries.
+ *		  We may get the number of cylinders slightly wrong (in
+ *		  the conservative direction).  The idea is to be able
+ *		  to create a NetBSD partition on a disk we don't know
+ *		  the translated geometry of.
+ * This whole routine should be replaced with a kernel interface to get
+ * the BIOS geometry (which in turn requires modifications to the i386
+ * boot loader to pass in the BIOS geometry for each disk). */
+void
+intuit_translated_geometry()
+{
+	int cylinders = -1, heads = -1, sectors = -1, i, j;
+	int c1, h1, s1, c2, h2, s2;
+	long a1, a2;
+	quad_t num, denom;
+
+	/* Try to deduce the number of heads from two different mappings. */
+	for (i = 0; i < NDOSPART * 2; i++) {
+		if (get_mapping(i, &c1, &h1, &s1, &a1) < 0)
+			continue;
+		for (j = 0; j < 8; j++) {
+			if (get_mapping(j, &c2, &h2, &s2, &a2) < 0)
+				continue;
+			num = (quad_t)h1*(a2-s2) - h2*(a1-s1);
+			denom = (quad_t)c2*(a1-s1) - c1*(a2-s2);
+			if (denom != 0 && num % denom == 0) {
+				heads = num / denom;
+				break;
+			}
+		}
+		if (heads != -1)	
+			break;
+	}
+
+	if (heads == -1)
+		return;
+
+	/* Now figure out the number of sectors from a single mapping. */
+	for (i = 0; i < NDOSPART * 2; i++) {
+		if (get_mapping(i, &c1, &h1, &s1, &a1) < 0)
+			continue;
+		num = a1 - s1;
+		denom = c1 * heads + h1;
+		if (denom != 0 && num % denom == 0) {
+			sectors = num / denom;
+			break;
+		}
+	}
+
+	if (sectors == -1)
+		return;
+
+	/* Estimate the number of cylinders. */
+	cylinders = dos_cylinders * dos_cylindersectors / heads / sectors;
+
+	/* Now verify consistency with each of the partition table entries.
+	 * Be willing to shove cylinders up a little bit to make things work,
+	 * but translation mismatches are fatal. */
+	for (i = 0; i < NDOSPART * 2; i++) {
+		if (get_mapping(i, &c1, &h1, &s1, &a1) < 0)
+			continue;
+		if (sectors * (c1 * heads + h1) + s1 != a1)
+			return;
+		if (c1 >= cylinders)
+			cylinders = c1 + 1;
+	}
+
+	/* Everything checks out.  Reset the geometry to use for further
+	 * calculations. */
+	dos_cylinders = cylinders;
+	dos_heads = heads;
+	dos_sectors = sectors;
+	dos_cylindersectors = heads * sectors;
+}
+
+/* For the purposes of intuit_translated_geometry(), treat the partition
+ * table as a list of eight mapping between (cylinder, head, sector)
+ * triplets and absolute sectors.  Get the relevant geometry triplet and
+ * absolute sectors for a given entry, or return -1 if it isn't present.
+ * Note: for simplicity, the returned sector is 0-based. */
+int
+get_mapping(i, cylinder, head, sector, absolute)
+	int i, *cylinder, *head, *sector;
+	long *absolute;
+{
+	struct dos_partition *part = &mboot.parts[i / 2];
+
+	if (part->dp_typ == 0)
+		return -1;
+	if (i % 2 == 0) {
+		*cylinder = DPCYL(part->dp_scyl, part->dp_ssect);
+		*head = part->dp_shd;
+		*sector = DPSECT(part->dp_ssect) - 1;
+		*absolute = part->dp_start;
+	} else {
+		*cylinder = DPCYL(part->dp_ecyl, part->dp_esect);
+		*head = part->dp_ehd;
+		*sector = DPSECT(part->dp_esect) - 1;
+		*absolute = part->dp_start + part->dp_size - 1;
+	}
+	return 0;
 }
 
 void
