@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.29 1997/07/02 14:53:00 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.30 1997/07/06 21:18:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -201,9 +201,6 @@ hypersparc_cache_enable()
 	pcr |= (HYPERSPARC_PCR_CE | HYPERSPARC_PCR_CM);
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 	CACHEINFO.c_enabled = 1;
-
-	/* HyperSPARC uses phys. tagged cache */
-	CACHEINFO.c_vactype = VAC_NONE;
 
 	/* XXX: should add support */
 	if (CACHEINFO.c_hwflush)

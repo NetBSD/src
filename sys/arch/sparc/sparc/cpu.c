@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.44 1997/07/02 14:52:59 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.45 1997/07/06 21:18:27 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -304,12 +304,7 @@ void cpumatch_unknown __P((struct cpu_softc *, struct module_info *, int));
 void cpumatch_sun4 __P((struct cpu_softc *, struct module_info *, int));
 void cpumatch_sun4c __P((struct cpu_softc *, struct module_info *, int));
 void cpumatch_viking __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_ms1 __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_ms2 __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_swift __P((struct cpu_softc *, struct module_info *, int));
 void cpumatch_hypersparc __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_cypress __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_turbosparc __P((struct cpu_softc *, struct module_info *, int));
 
 void getcacheinfo_sun4 __P((struct cpu_softc *, int node));
 void getcacheinfo_sun4c __P((struct cpu_softc *, int node));
@@ -317,6 +312,7 @@ void getcacheinfo_obp __P((struct cpu_softc *, int node));
 
 void sun4_hotfix __P((struct cpu_softc *));
 void viking_hotfix __P((struct cpu_softc *));
+void turbosparc_hotfix __P((struct cpu_softc *));
 
 void ms1_mmu_enable __P((void));
 void viking_mmu_enable __P((void));
@@ -331,6 +327,8 @@ void hypersparc_get_fltstatus __P((void));
 void cypress_get_fltstatus __P((void));
 
 struct module_info module_unknown = {
+	CPUTYP_UNKNOWN,
+	VAC_UNKNOWN,
 	cpumatch_unknown
 };
 
@@ -349,6 +347,8 @@ cpumatch_unknown(sc, mp, node)
 
 #if defined(SUN4)
 struct module_info module_sun4 = {
+	CPUTYP_UNKNOWN,
+	VAC_WRITETHROUGH,
 	cpumatch_sun4,
 	getcacheinfo_sun4,
 	sun4_hotfix,
@@ -469,6 +469,8 @@ cpumatch_sun4(sc, mp, node)
 
 #if defined(SUN4C)
 struct module_info module_sun4c = {
+	CPUTYP_UNKNOWN,
+	VAC_WRITETHROUGH,
 	cpumatch_sun4c,
 	getcacheinfo_sun4c,
 	sun4_hotfix,
@@ -570,12 +572,9 @@ getcacheinfo_obp(sc, node)
 		return;
 
 	/*
-	 * Determine the Sun4m cache organization
+	 * Determine the Sun4m cache organization.
 	 */
 	ci->c_physical = node_has_property(node, "cache-physical?");
-	if (ci->c_physical == 0 &&
-	    ci->c_vactype == VAC_NONE)
-		ci->c_vactype = VAC_WRITETHROUGH; /*???*/
 
 	if (getpropint(node, "ncaches", 1) == 2)
 		ci->c_split = 1;
@@ -664,7 +663,9 @@ getcacheinfo_obp(sc, node)
 
 /* TI Microsparc I */
 struct module_info module_ms1 = {
-	cpumatch_ms1,
+	CPUTYP_MS1,
+	VAC_NONE,
+	0,
 	getcacheinfo_obp,
 	0,
 	ms1_mmu_enable,
@@ -680,22 +681,15 @@ struct module_info module_ms1 = {
 };
 
 void
-cpumatch_ms1(sc, mp, node)
-	struct cpu_softc *sc;
-	struct module_info *mp;
-	int	node;
-{
-	sc->cpu_type = CPUTYP_MS1;
-}
-
-void
 ms1_mmu_enable()
 {
 }
 
 /* TI Microsparc II */
 struct module_info module_ms2 = {		/* UNTESTED */
-	cpumatch_ms2,
+	CPUTYP_MS2,
+	VAC_WRITETHROUGH,
+	0,
 	getcacheinfo_obp,
 	0,
 	0,
@@ -710,18 +704,11 @@ struct module_info module_ms2 = {		/* UNTESTED */
 	noop_pcache_flush_line
 };
 
-void
-cpumatch_ms2(sc, mp, node)
-	struct cpu_softc *sc;
-	struct module_info *mp;
-	int	node;
-{
-	sc->cpu_type = CPUTYP_MS2;
-}
-
 
 struct module_info module_swift = {		/* UNTESTED */
-	cpumatch_swift,
+	CPUTYP_MS2,
+	VAC_WRITETHROUGH,
+	0,
 	getcacheinfo_obp,
 	0,
 	0,
@@ -737,20 +724,13 @@ struct module_info module_swift = {		/* UNTESTED */
 };
 
 void
-cpumatch_swift(sc, mp, node)
-	struct cpu_softc *sc;
-	struct module_info *mp;
-	int	node;
-{
-	sc->cpu_type = CPUTYP_MS2;
-}
-
-void
 swift_mmu_enable()
 {
 }
 
 struct module_info module_viking = {		/* UNTESTED */
+	CPUTYP_UNKNOWN,		/* set in cpumatch() */
+	VAC_NONE,
 	cpumatch_viking,
 	getcacheinfo_obp,
 	viking_hotfix,
@@ -819,6 +799,8 @@ viking_mmu_enable()
 
 /* ROSS Hypersparc */
 struct module_info module_hypersparc = {		/* UNTESTED */
+	CPUTYP_UNKNOWN,
+	VAC_NONE,
 	cpumatch_hypersparc,
 	getcacheinfo_obp,
 	0,
@@ -857,7 +839,9 @@ hypersparc_mmu_enable()
 
 /* Cypress 605 */
 struct module_info module_cypress = {		/* UNTESTED */
-	cpumatch_cypress,
+	CPUTYP_CYPRESS,
+	VAC_WRITEBACK,
+	0,
 	getcacheinfo_obp,
 	0,
 	0,
@@ -872,23 +856,13 @@ struct module_info module_cypress = {		/* UNTESTED */
 	srmmu_pcache_flush_line
 };
 
-void
-cpumatch_cypress(sc, mp, node)
-	struct cpu_softc *sc;
-	struct module_info *mp;
-	int	node;
-{
-	sc->cpu_type = CPUTYP_CYPRESS;
-	if (node)
-		/* Put in write-thru mode for now */
-		sc->cacheinfo.c_vactype = VAC_WRITEBACK;
-}
-
 /* Fujitsu Turbosparc */
 struct module_info module_turbosparc = {	/* UNTESTED */
-	cpumatch_turbosparc,
-	getcacheinfo_obp,
+	CPUTYP_MS2,
+	VAC_WRITEBACK,
 	0,
+	getcacheinfo_obp,
+	turbosparc_hotfix,
 	0,
 	turbosparc_cache_enable,
 	256,
@@ -902,14 +876,11 @@ struct module_info module_turbosparc = {	/* UNTESTED */
 };
 
 void
-cpumatch_turbosparc(sc, mp, node)
+turbosparc_hotfix(sc)
 	struct cpu_softc *sc;
-	struct module_info *mp;
-	int	node;
 {
-	sc->cpu_type = CPUTYP_MS2;
+	/* Turn off uS2 emulation bit */
 }
-
 #endif /* SUN4M */
 
 
@@ -975,12 +946,25 @@ getcpuinfo(sc, node)
 	 */
 	if (sc->master) {
 		i = getpsr();
-		cpu_impl = IU_IMPL(i);
-		cpu_vers = IU_VERS(i);
+		if (node == 0 ||
+		    (cpu_impl =
+		     getpropint(node, "psr-implementation", -1) == -1))
+			cpu_impl = IU_IMPL(i);
+
+		if (node == 0 ||
+		    (cpu_vers = getpropint(node, "psr-version", -1) == -1))
+			cpu_vers = IU_VERS(i);
+
 		if (CPU_ISSUN4M) {
 			i = lda(SRMMU_PCR, ASI_SRMMU);
-			mmu_impl = SRMMU_IMPL(i);
-			mmu_vers = SRMMU_VERS(i);
+			if (node == 0 ||
+			    (mmu_impl =
+			     getpropint(node, "implementation", -1)) == -1)
+				mmu_impl = SRMMU_IMPL(i);
+
+			if (node == 0 ||
+			    (mmu_vers = getpropint(node, "version", -1)) == -1)
+				mmu_vers = SRMMU_VERS(i);
 		} else {
 			mmu_impl = ANY;
 			mmu_vers = ANY;
@@ -990,10 +974,10 @@ getcpuinfo(sc, node)
 		 * Get CPU version/implementation from ROM. If not
 		 * available, assume same as boot CPU.
 		 */
-		cpu_impl = getpropint(node, "cpu-implementation", -1);
+		cpu_impl = getpropint(node, "psr-implementation", -1);
 		if (cpu_impl == -1)
 			cpu_impl = cpuinfo.cpu_impl;
-		cpu_vers = getpropint(node, "cpu-version", -1);
+		cpu_vers = getpropint(node, "psr-version", -1);
 		if (cpu_vers == -1)
 			cpu_vers = cpuinfo.cpu_vers;
 
@@ -1031,6 +1015,12 @@ getcpuinfo(sc, node)
 
 		if (sc->mmu_ncontext == 0)
 			sc->mmu_ncontext = mp->minfo->ncontext;
+
+		if (sc->cpu_type == 0)
+			sc->cpu_type = mp->minfo->cpu_type;
+
+		if (sc->cacheinfo.c_vactype == VAC_UNKNOWN)
+			sc->cacheinfo.c_vactype = mp->minfo->vactype;
 
 		mp->minfo->getcacheinfo(sc, node);
 
