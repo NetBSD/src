@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.7 1999/11/14 12:33:11 takemura Exp $	*/
+/*	$NetBSD: fb.c,v 1.8 1999/11/25 16:40:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -65,9 +65,9 @@
 #define USE_RASTERCONS
  */
 static const char _copyright[] __attribute__ ((unused)) =
-    "Copyright (c) 19999 Shin Takemura.  All rights reserved.";
+    "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: fb.c,v 1.7 1999/11/14 12:33:11 takemura Exp $";
+    "$Id: fb.c,v 1.8 1999/11/25 16:40:19 ad Exp $";
 
 
 #include <sys/param.h>
