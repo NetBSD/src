@@ -1,6 +1,7 @@
-/*	$NetBSD: vm_machdep.c,v 1.41 2001/09/10 21:19:27 chris Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.42 2002/05/14 02:34:15 eeh Exp $ */
 
 /*
+ * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
  * Copyright (c) 1996
  *	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1992, 1993
@@ -385,7 +386,52 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
 	chdr->c_cpusize = sizeof(md_core);
 
-	md_core.md_tf = *p->p_md.md_tf;
+	/* Copy important fields over. */
+	md_core.md_tf.tf_tstate = p->p_md.md_tf->tf_tstate;
+	md_core.md_tf.tf_pc = p->p_md.md_tf->tf_pc;
+	md_core.md_tf.tf_npc = p->p_md.md_tf->tf_npc;
+	md_core.md_tf.tf_y = p->p_md.md_tf->tf_y;
+	md_core.md_tf.tf_tt = p->p_md.md_tf->tf_tt;
+	md_core.md_tf.tf_pil = p->p_md.md_tf->tf_pil;
+	md_core.md_tf.tf_oldpil = p->p_md.md_tf->tf_oldpil;
+
+	md_core.md_tf.tf_global[0] = p->p_md.md_tf->tf_global[0];
+	md_core.md_tf.tf_global[1] = p->p_md.md_tf->tf_global[1];
+	md_core.md_tf.tf_global[2] = p->p_md.md_tf->tf_global[2];
+	md_core.md_tf.tf_global[3] = p->p_md.md_tf->tf_global[3];
+	md_core.md_tf.tf_global[4] = p->p_md.md_tf->tf_global[4];
+	md_core.md_tf.tf_global[5] = p->p_md.md_tf->tf_global[5];
+	md_core.md_tf.tf_global[6] = p->p_md.md_tf->tf_global[6];
+	md_core.md_tf.tf_global[7] = p->p_md.md_tf->tf_global[7];
+
+	md_core.md_tf.tf_out[0] = p->p_md.md_tf->tf_out[0];
+	md_core.md_tf.tf_out[1] = p->p_md.md_tf->tf_out[1];
+	md_core.md_tf.tf_out[2] = p->p_md.md_tf->tf_out[2];
+	md_core.md_tf.tf_out[3] = p->p_md.md_tf->tf_out[3];
+	md_core.md_tf.tf_out[4] = p->p_md.md_tf->tf_out[4];
+	md_core.md_tf.tf_out[5] = p->p_md.md_tf->tf_out[5];
+	md_core.md_tf.tf_out[6] = p->p_md.md_tf->tf_out[6];
+	md_core.md_tf.tf_out[7] = p->p_md.md_tf->tf_out[7];
+
+#ifdef DEBUG
+	md_core.md_tf.tf_local[0] = p->p_md.md_tf->tf_local[0];
+	md_core.md_tf.tf_local[1] = p->p_md.md_tf->tf_local[1];
+	md_core.md_tf.tf_local[2] = p->p_md.md_tf->tf_local[2];
+	md_core.md_tf.tf_local[3] = p->p_md.md_tf->tf_local[3];
+	md_core.md_tf.tf_local[4] = p->p_md.md_tf->tf_local[4];
+	md_core.md_tf.tf_local[5] = p->p_md.md_tf->tf_local[5];
+	md_core.md_tf.tf_local[6] = p->p_md.md_tf->tf_local[6];
+	md_core.md_tf.tf_local[7] = p->p_md.md_tf->tf_local[7];
+
+	md_core.md_tf.tf_in[0] = p->p_md.md_tf->tf_in[0];
+	md_core.md_tf.tf_in[1] = p->p_md.md_tf->tf_in[1];
+	md_core.md_tf.tf_in[2] = p->p_md.md_tf->tf_in[2];
+	md_core.md_tf.tf_in[3] = p->p_md.md_tf->tf_in[3];
+	md_core.md_tf.tf_in[4] = p->p_md.md_tf->tf_in[4];
+	md_core.md_tf.tf_in[5] = p->p_md.md_tf->tf_in[5];
+	md_core.md_tf.tf_in[6] = p->p_md.md_tf->tf_in[6];
+	md_core.md_tf.tf_in[7] = p->p_md.md_tf->tf_in[7];
+#endif
 	if (p->p_md.md_fpstate) {
 		if (p == fpproc) {
 			savefpstate(p->p_md.md_fpstate);

@@ -1,6 +1,7 @@
-/*	$NetBSD: trap.c,v 1.76 2002/02/14 07:08:16 chs Exp $ */
+/*	$NetBSD: trap.c,v 1.77 2002/05/14 02:34:14 eeh Exp $ */
 
 /*
+ * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
  * Copyright (c) 1996
  *	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1992, 1993
@@ -389,9 +390,8 @@ print_trapframe(tf)
 
 	printf("Trapframe %p:\ttstate: %lx\tpc: %lx\tnpc: %lx\n",
 	       tf, (u_long)tf->tf_tstate, (u_long)tf->tf_pc, (u_long)tf->tf_npc);
-	printf("fault: %p\tkstack: %p\ty: %x\t", 
-	       (void *)(u_long)tf->tf_fault, (void *)(u_long)tf->tf_kstack,
-	       (int)tf->tf_y);
+	printf("fault: %p\ty: %x\t", 
+	       (void *)(u_long)tf->tf_fault, (int)tf->tf_y);
 	printf("pil: %d\toldpil: %d\ttt: %x\tGlobals:\n", 
 	       (int)tf->tf_pil, (int)tf->tf_oldpil, (int)tf->tf_tt);
 	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
@@ -404,6 +404,7 @@ print_trapframe(tf)
 	       (u_int)(tf->tf_global[5]>>32), (u_int)tf->tf_global[5],
 	       (u_int)(tf->tf_global[6]>>32), (u_int)tf->tf_global[6],
 	       (u_int)(tf->tf_global[7]>>32), (u_int)tf->tf_global[7]);
+#ifdef DEBUG
 	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
 	       (u_int)(tf->tf_out[0]>>32), (u_int)tf->tf_out[0],
 	       (u_int)(tf->tf_out[1]>>32), (u_int)tf->tf_out[1],
@@ -414,6 +415,7 @@ print_trapframe(tf)
 	       (u_int)(tf->tf_out[5]>>32), (u_int)tf->tf_out[5],
 	       (u_int)(tf->tf_out[6]>>32), (u_int)tf->tf_out[6],
 	       (u_int)(tf->tf_out[7]>>32), (u_int)tf->tf_out[7]);
+#endif
 
 }
 #endif
