@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.7 1994/11/20 20:53:26 deraadt Exp $ */
+/*	$NetBSD: pte.h,v 1.8 1995/04/13 13:48:46 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,23 +56,40 @@
  * 64 (sun4c) PTEs.
  */
 typedef u_short pmeg_t;		/* 9 bits needed per Sun-4 segmap entry */
+/*
+ * Region maps contain `smeg' (Segment Entry Group) numbers.
+ * An SMEG is simply an index that names a group of 64 PMEGs
+ */
+typedef u_char smeg_t;		/* 6 bits needed per Sun-4 regmap entry */
 #endif
 
 /*
  * Address translation works as follows:
  *
+ * (for sun4c and 2-level sun4)
  *	1. test va<31:29> -- these must be 000 or 111 (or you get a fault)
  *	2. concatenate context_reg<2:0> and va<29:18> to get a 15 bit number;
- *	   use this to index the segment maps, yeilding a 7 or 9 bit value.
+ *	   use this to index the segment maps, yielding a 7 or 9 bit value.
+ * (for 3-level sun4)
+ *	1. concatenate context_reg<3:0> and va<31:24> to get a 8 bit number;
+ *	   use this to index the region maps, yielding a 10 bit value.
+ *	2. take the value from (1) above and concatenate va<17:12> to
+ *	   get a `segment map entry' index.  This gives a 9 bit value.
  * (for sun4c)
  *	3. take the value from (2) above and concatenate va<17:12> to
  *	   get a `page map entry' index.  This gives a 32-bit PTE.
  * (for sun4)
- *	3. take the value from (2) above and concatenate va<17:13> to
+ *	3. take the value from (2 or 3) above and concatenate va<17:13> to
  *	   get a `page map entry' index.  This gives a 32-bit PTE.
  *
  * In other words:
  *
+ *	struct sun4_3_levelmmu_virtual_addr {
+ *		u_int	va_reg:8,	(virtual region)
+ *			va_seg:6,	(virtual segment)
+ *			va_pg:5,	(virtual page within segment)
+ *			va_off:13;	(offset within page)
+ *	};
  *	struct sun4_virtual_addr {
  *		u_int	:2,		(required to be the same as bit 29)
  *			va_seg:12,	(virtual segment)
@@ -88,12 +105,17 @@ typedef u_short pmeg_t;		/* 9 bits needed per Sun-4 segmap entry */
  *
  * Then, given any `va':
  *
+ *	extern smeg_t regmap[16][1<<8];		(3-level MMU only)
  *	extern pmeg_t segmap[8][1<<12];		([16][1<<12] for sun4)
  *	extern int ptetable[128][1<<6];		([512][1<<5] for sun4)
  *
  * (the above being in the hardware, accessed as Alternate Address Spaces)
  *
- *	physseg = segmap[curr_ctx][va.va_seg];
+ *	if (mmu_3l)
+ *		physreg = regmap[curr_ctx][va.va_reg];
+ *		physseg = segmap[physreg][va.va_seg];
+ *	else
+ *		physseg = segmap[curr_ctx][va.va_seg];
  *	pte = ptetable[physseg][va.va_pg];
  *	if (!(pte & PG_V)) TRAP();
  *	if (writing && !pte.pg_w) TRAP();
@@ -104,6 +126,19 @@ typedef u_short pmeg_t;		/* 9 bits needed per Sun-4 segmap entry */
  *	ptetable[physseg][va.va_pg] = pte;
  *	physadr = ((pte & PG_PFNUM) << PGSHIFT) | va.va_off;
  */
+
+#if defined(MMU_3L) && !defined(SUN4)
+#error "configuration error"
+#endif
+
+#if defined(MMU_3L)
+extern int mmu_3l;
+#endif
+
+#define	NBPRG	(1 << 24)	/* bytes per segment */
+#define	RGSHIFT	24		/* log2(NBPSG) */
+#define	RGOFSET	(NBPRG - 1)	/* mask for segment offset */
+#define NSEGRG	(NBPRG / NBPSG)	/* segments per region */
 
 #define	NBPSG	(1 << 18)	/* bytes per segment */
 #define	SGSHIFT	18		/* log2(NBPSG) */
@@ -117,18 +152,34 @@ extern int nptesg;
 #define	NPTESG	(NBPSG / NBPG)
 #endif
 
+/* virtual address to virtual region number */
+#define	VA_VREG(va)	(((unsigned int)(va) >> RGSHIFT) & 255)
+
 /* virtual address to virtual segment number */
-#define	VA_VSEG(va)	(((int)(va) >> SGSHIFT) & 0xfff)
+#define	VA_VSEG(va)	(((unsigned int)(va) >> SGSHIFT) & 63)
 
 /* virtual address to virtual page number, for Sun-4 and Sun-4c */
 #define	VA_SUN4_VPG(va)		(((int)(va) >> 13) & 31)
 #define	VA_SUN4C_VPG(va)	(((int)(va) >> 12) & 63)
 
+/* truncate virtual address to region base */
+#define	VA_ROUNDDOWNTOREG(va)	((int)(va) & ~RGOFSET)
+
 /* truncate virtual address to segment base */
 #define	VA_ROUNDDOWNTOSEG(va)	((int)(va) & ~SGOFSET)
 
-/* virtual segment to virtual address (must sign extend!) */
-#define	VSTOVA(vseg)	(((int)(vseg) << 20) >> 2)
+/* virtual segment to virtual address (must sign extend on holy MMUs!) */
+#if defined(MMU_3L)
+#define	VRTOVA(vr)	(mmu_3l			\
+	? ((int)(vr) << RGSHIFT)		\
+	: (((int)(vr) << (RGSHIFT+2)) >> 2))
+#define	VSTOVA(vr,vs)	(mmu_3l				\
+	? (((int)vr << RGSHIFT) + ((int)vs << SGSHIFT))	\
+	: ((((int)vr << (RGSHIFT+2)) >> 2) + ((int)vs << SGSHIFT)))
+#else
+#define	VRTOVA(vr)	(((int)vr << (RGSHIFT+2)) >> 2)
+#define	VSTOVA(vr,vs)	((((int)vr << (RGSHIFT+2)) >> 2) + ((int)vs << SGSHIFT))
+#endif
 
 #if defined(SUN4) && defined(SUN4C)
 #define VA_VPG(va)	(cputyp==CPU_SUN4C ? VA_SUN4C_VPG(va) : VA_SUN4_VPG(va))
