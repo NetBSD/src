@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.41 2000/10/10 19:58:42 he Exp $	*/
+/*	$NetBSD: hil.c,v 1.42 2001/04/12 18:22:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1278,7 +1278,7 @@ kbdcninit()
  * Recoginize and clear keyboard generated NMIs.
  * Returns 1 if it was ours, 0 otherwise.  Note that we cannot use
  * send_hil_cmd() to issue the clear NMI command as that would actually
- * lower the priority to splimp() and it doesn't wait for the completion
+ * lower the priority to splvm() and it doesn't wait for the completion
  * of the command.  Either of these conditions could result in the
  * interrupt reoccuring.  Note that we issue the CNMT command twice.
  * This seems to be needed, once is not always enough!?!
@@ -1619,7 +1619,7 @@ hildevno(dev)
 /*
  * Send a command to the 8042 with zero or more bytes of data.
  * If rdata is non-null, wait for and return a byte of data.
- * We run at splimp() to make the transaction as atomic as
+ * We run at splvm() to make the transaction as atomic as
  * possible without blocking the clock (is this necessary?)
  */
 void
@@ -1629,7 +1629,7 @@ send_hil_cmd(hildevice, cmd, data, dlen, rdata)
 	u_char *rdata;
 {
 	u_char status;
-	int s = splimp();
+	int s = splvm();
 
 	HILWAIT(hildevice);
 	WRITEHILCMD(hildevice, cmd);
@@ -1656,7 +1656,7 @@ send_hil_cmd(hildevice, cmd, data, dlen, rdata)
  * internally generated poll commands.
  *
  * splhigh is extremely conservative but insures atomic operation,
- * splimp (clock only interrupts) seems to be good enough in practice.
+ * splvm (clock only interrupts) seems to be good enough in practice.
  */
 void
 send_hildev_cmd(hilp, device, cmd)
@@ -1665,7 +1665,7 @@ send_hildev_cmd(hilp, device, cmd)
 {
 	struct hil_dev *hildevice = hilp->hl_addr;
 	u_char status, c;
-	int s = splimp();
+	int s = splvm();
 
 	polloff(hildevice);
 
