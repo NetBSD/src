@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.12 1998/05/08 18:18:29 fair Exp $	*/
+/*	$NetBSD: paths.h,v 1.13 1999/03/26 07:27:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -53,10 +53,12 @@
 #define	_PATH_STDPATH \
 	"/usr/bin:/bin:/usr/sbin:/sbin:/usr/pkg/bin:/usr/pkg/sbin:/usr/local/bin:/usr/local/sbin"
 
+#define	_PATH_AUDIO	"/dev/audio0"
+#define	_PATH_AUDIOCTL	"/dev/audioctl0"
 #define	_PATH_BSHELL	"/bin/sh"
 #define	_PATH_CONSOLE	"/dev/console"
 #define	_PATH_CSHELL	"/bin/csh"
-#define _PATH_DEFTAPE	"/dev/nrst0"
+#define	_PATH_DEFTAPE	"/dev/nrst0"
 #define	_PATH_DEVDB	"/var/run/dev.db"
 #define	_PATH_DEVNULL	"/dev/null"
 #define	_PATH_DRUM	"/dev/drum"
@@ -67,8 +69,11 @@
 #define	_PATH_MAN	"/usr/share/man"
 #define	_PATH_MEM	"/dev/mem"
 #define	_PATH_NOLOGIN	"/etc/nologin"
+#define	_PATH_OAUDIO	"/dev/audio"
+#define	_PATH_OAUDIOCTL	"/dev/audioctl"
 #define	_PATH_SENDMAIL	"/usr/sbin/sendmail"
 #define	_PATH_SHELLS	"/etc/shells"
+#define	_PATH_SOUND	"/dev/sound0"
 #define	_PATH_TTY	"/dev/tty"
 #define	_PATH_UNIX	"/netbsd"
 #define	_PATH_VI	"/usr/bin/vi"
