@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3 1999/07/08 18:11:02 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.4 1999/08/03 19:45:47 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -749,3 +749,28 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 
 	return (0);
 }
+
+/*
+ * "generic" DMA struct, nothing special.
+ */
+struct vax_bus_dma_tag vax_bus_dma_tag = {
+	NULL,
+	0, 
+	0,
+	0,
+	0,
+	0,
+	_bus_dmamap_create,
+	_bus_dmamap_destroy,
+	_bus_dmamap_load,
+	_bus_dmamap_load_mbuf,
+	_bus_dmamap_load_uio,
+	_bus_dmamap_load_raw,
+	_bus_dmamap_unload,
+	_bus_dmamap_sync,
+	_bus_dmamem_alloc,
+	_bus_dmamem_free,
+	_bus_dmamem_map,
+	_bus_dmamem_unmap,
+	_bus_dmamem_mmap,
+};
