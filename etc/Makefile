@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.187 2001/10/26 06:45:33 jmc Exp $
+#	$NetBSD: Makefile,v 1.188 2001/10/29 01:19:19 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -186,19 +186,20 @@ distribution: distrib-dirs
 		    ${DESTDIR}/root/.profile; \
 		${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 644 dot.shrc \
 		    ${DESTDIR}/root/.shrc; \
-		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
-		ln ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
-		ln ${DESTDIR}/root/.profile ${DESTDIR}/.profile)
+		${INSTALL} ${INSTPRIV} -l h \
+			${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
+		${INSTALL} ${INSTPRIV} -l h \
+			${DESTDIR}/root/.profile ${DESTDIR}/.profile)
 	(cd defaults; ${MAKE} install)
 	(cd mtree; ${MAKE} install)
 	(cd namedb; \
 		${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
 		    ${NAMEDB} ${DESTDIR}/etc/namedb)
 	(cd rc.d; ${MAKE} install)
-	/bin/rm -f ${DESTDIR}/etc/localtime
-	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
-	/bin/rm -f ${DESTDIR}/etc/rmt
-	ln -s /usr/sbin/rmt ${DESTDIR}/etc/rmt
+	${INSTALL} ${INSTPRIV} -l s -o root -g wheel -m 755 \
+		${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
+	${INSTALL} ${INSTPRIV} -l s -o root -g wheel -m 755 \
+		/usr/sbin/rmt ${DESTDIR}/etc/rmt
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g operator -m 664 /dev/null \
 		${DESTDIR}/etc/dumpdates
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g operator -m 600 /dev/null \
@@ -274,8 +275,9 @@ distribution: distrib-dirs
 
 distrib-dirs:
 	${INSTALL} ${INSTPRIV} -d -o root -g wheel -m 755 ${DESTDIR}
-	${MTREE} -def mtree/NetBSD.dist -p ${DESTDIR}/ -U
-	cd ${DESTDIR}/; rm -f sys; ln -s usr/src/sys sys
+	${MTREE} -def mtree/NetBSD.dist -p ${DESTDIR}/ -U ${UNPRIVILEGED:D-W}
+	${INSTALL} ${INSTPRIV} -l s -o root -g wheel -m 755 \
+		usr/src/sys ${DESTDIR}/sys
 
 .if !defined(RELEASEDIR)
 __warnreleasedir: .USE
