@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.67 1995/01/29 07:36:58 cgd Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.68 1995/02/19 18:05:45 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1531,9 +1531,9 @@ loop:
 		if (len != packet_hdr.count) {
 			printf("%s: length does not match next packet pointer\n",
 			    sc->sc_dev.dv_xname);
-			printf("%s: len %04x nlen %04x start %02x curr %02x next %02x stop %02x\n",
+			printf("%s: len %04x nlen %04x start %02x first %02x curr %02x next %02x stop %02x\n",
 			    sc->sc_dev.dv_xname, packet_hdr.count, len,
-			    sc->rec_page_start, sc->next_packet,
+			    sc->rec_page_start, sc->next_packet, current,
 			    packet_hdr.next_packet, sc->rec_page_stop);
 		}
 #endif
