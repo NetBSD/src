@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.15 2002/09/13 15:56:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.16 2002/09/18 06:24:35 lukem Exp $
 
 .ifndef HOSTPROG
-.include <bsd.obj.mk>
+.include <bsd.own.mk>
 .endif
 
 PROG=	makewhatis
