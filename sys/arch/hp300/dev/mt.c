@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.9 1997/10/04 10:00:17 thorpej Exp $	*/
+/*	$NetBSD: mt.c,v 1.10 1998/01/12 18:31:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -133,9 +133,7 @@ struct cfattach mt_ca = {
 	sizeof(struct mt_softc), mtmatch, mtattach
 };
 
-struct cfdriver mt_cd = {
-	NULL, "mt", DV_TAPE
-};
+extern struct cfdriver mt_cd;
 
 int	mtident __P((struct mt_softc *, struct hpibbus_attach_args *));
 void	mtustart __P((struct mt_softc *));

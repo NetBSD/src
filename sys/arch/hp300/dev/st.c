@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.23 1997/10/04 10:00:38 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.24 1998/01/12 18:31:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -224,9 +224,7 @@ struct cfattach st_ca = {
 	sizeof(struct st_softc), stmatch, stattach
 };
 
-struct cfdriver st_cd = {
-	NULL, "st", DV_TAPE
-};
+extern struct cfdriver st_cd;
 
 static int
 stmatch(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.35 1997/10/04 10:00:35 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.36 1998/01/12 18:31:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -114,9 +114,7 @@ struct cfattach sd_ca = {
 	sizeof(struct sd_softc), sdmatch, sdattach
 };
 
-struct cfdriver sd_cd = {
-	NULL, "sd", DV_DISK
-};
+extern struct cfdriver sd_cd;
 
 #ifdef DEBUG
 int sddebug = 1;

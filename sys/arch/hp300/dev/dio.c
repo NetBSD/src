@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.11 1998/01/11 21:53:04 thorpej Exp $	*/
+/*	$NetBSD: dio.c,v 1.12 1998/01/12 18:30:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,10 +71,6 @@ int	diosubmatch __P((struct device *, struct cfdata *, void *));
 
 struct cfattach dio_ca = {
 	sizeof(struct device), diomatch, dioattach
-};
-
-struct cfdriver dio_cd = {
-	NULL, "dio", DV_DULL
 };
 
 int

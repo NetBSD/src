@@ -1,4 +1,4 @@
-/*	$NetBSD: hp300spu.h,v 1.3 1997/10/09 08:58:45 jtc Exp $	*/
+/*	$NetBSD: hp300spu.h,v 1.4 1998/01/12 18:31:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -85,18 +85,7 @@ extern	int mmuid;		/* MMU id */
 /*
  * Pull in user-defined SPU configuration options.
  */
-#include "opt_hp320.h"
-#include "opt_hp330.h"
-#include "opt_hp340.h"
-#include "opt_hp345.h"
-#include "opt_hp350.h"
-#include "opt_hp360.h"
-#include "opt_hp370.h"
-#include "opt_hp375.h"
-#include "opt_hp380.h"
-#include "opt_hp400.h"
-#include "opt_hp425.h"
-#include "opt_hp433.h"
+#include "opt_spuconf.h"
 
 /*
  * CPU configuration.

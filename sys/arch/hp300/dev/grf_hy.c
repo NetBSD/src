@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.10 1997/10/04 10:00:02 thorpej Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.11 1998/01/12 18:30:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -126,10 +126,6 @@ void	hypercninit __P((struct consdev *cp));
 
 struct cfattach hyper_dio_ca = {
 	sizeof(struct grfdev_softc), hyper_dio_match, hyper_dio_attach
-};
-
-struct cfdriver hyper_cd = {
-	NULL, "hyper", DV_DULL
 };
 
 /* Hyperion grf switch */

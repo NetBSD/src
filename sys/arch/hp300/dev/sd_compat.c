@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_compat.c,v 1.6 1997/03/31 07:40:06 scottr Exp $	*/
+/*	$NetBSD: sd_compat.c,v 1.7 1998/01/12 18:31:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,12 +78,13 @@ struct partition sddefaultpart[] = {
 };
 int sdnumdefaultpart = sizeof(sddefaultpart)/sizeof(sddefaultpart[0]);
 
+extern struct cfdriver sd_cd;
+
 void
 sdmakedisklabel(unit, lp)
 	int unit;
 	struct disklabel *lp;
 {
-	extern struct cfdriver sd_cd;
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
 	struct partition *pi, *dpi;
 	int dcount;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_dv.c,v 1.13 1998/01/11 21:56:13 thorpej Exp $	*/
+/*	$NetBSD: grf_dv.c,v 1.14 1998/01/12 18:30:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -129,10 +129,6 @@ struct cfattach dvbox_intio_ca = {
 
 struct cfattach dvbox_dio_ca = {
 	sizeof(struct grfdev_softc), dvbox_dio_match, dvbox_dio_attach
-};
-
-struct cfdriver dvbox_cd = {
-	NULL, "dvbox", DV_DULL
 };
 
 /* DaVinci grf switch */

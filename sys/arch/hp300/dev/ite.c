@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.39 1997/10/04 10:00:15 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.40 1998/01/12 18:31:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -127,9 +127,7 @@ struct cfattach ite_ca = {
 	sizeof(struct ite_softc), itematch, iteattach
 };
 
-struct cfdriver ite_cd = {
-	NULL, "ite", DV_TTY
-};
+extern struct cfdriver ite_cd;
 
 /*
  * Terminal emulator state information, statically allocated

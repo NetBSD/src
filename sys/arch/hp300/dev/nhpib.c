@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.18 1997/10/04 10:00:20 thorpej Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.19 1998/01/12 18:31:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -154,10 +154,6 @@ void	nhpibattach __P((struct device *, struct device *, void *));
 
 struct cfattach nhpib_ca = {
 	sizeof(struct nhpib_softc), nhpibmatch, nhpibattach
-};
-
-struct cfdriver nhpib_cd = {
-	NULL, "nhpib", DV_DULL
 };
 
 int

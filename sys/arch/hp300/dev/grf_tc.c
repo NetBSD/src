@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.13 1998/01/11 21:56:15 thorpej Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.14 1998/01/12 18:30:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -130,10 +130,6 @@ struct cfattach topcat_intio_ca = {
 
 struct cfattach topcat_dio_ca = {
 	sizeof(struct grfdev_softc), topcat_dio_match, topcat_dio_attach
-};
-
-struct cfdriver topcat_cd = {
-	NULL, "topcat", DV_DULL
 };
 
 /* Topcat (bobcat) grf switch */

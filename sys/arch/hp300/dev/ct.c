@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.22 1997/10/04 09:59:40 thorpej Exp $	*/
+/*	$NetBSD: ct.c,v 1.23 1998/01/12 18:30:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -150,9 +150,7 @@ struct cfattach ct_ca = {
 	sizeof(struct ct_softc), ctmatch, ctattach
 };
 
-struct cfdriver ct_cd = {
-	NULL, "ct", DV_TAPE
-};
+extern struct cfdriver ct_cd;
 
 int	ctident __P((struct device *, struct ct_softc *,
 	    struct hpibbus_attach_args *));

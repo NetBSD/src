@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_compat.c,v 1.7 1997/03/31 07:40:01 scottr Exp $	*/
+/*	$NetBSD: rd_compat.c,v 1.8 1998/01/12 18:31:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -255,12 +255,13 @@ struct rdcompatinfo {
 };
 int nrdcompatinfo = sizeof(rdcompatinfo) / sizeof(rdcompatinfo[0]);
 
+extern struct cfdriver rd_cd;
+
 void
 rdmakedisklabel(unit, lp)
 	int unit;
 	struct disklabel *lp;
 {
-	extern struct cfdriver rd_cd;
 	struct rd_softc *rs = rd_cd.cd_devs[unit];
 	struct rdcompatinfo *ci = &rdcompatinfo[rs->sc_type];
 	struct rdidentinfo *ri = &rdidentinfo[rs->sc_type];

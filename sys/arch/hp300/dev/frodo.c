@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.3 1998/01/11 21:55:08 thorpej Exp $	*/
+/*	$NetBSD: frodo.c,v 1.4 1998/01/12 18:30:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -112,10 +112,6 @@ void	frodo_imask __P((struct frodo_softc *, u_int16_t, u_int16_t));
 
 struct cfattach frodo_ca = {
 	sizeof(struct frodo_softc), frodomatch, frodoattach
-};
-
-struct cfdriver frodo_cd = {
-	NULL, "frodo", DV_DULL
 };
 
 struct frodo_attach_args frodo_subdevs[] = {
