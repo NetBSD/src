@@ -1,10 +1,12 @@
-/*	$NetBSD: main.c,v 1.1.1.1 1997/03/14 02:40:31 perry Exp $	*/
+/*	$NetBSD: main.c,v 1.2 1997/03/14 06:56:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
  * 	Matthias Drochner.  All rights reserved.
  * Copyright (c) 1996, 1997
  * 	Perry E. Metzger.  All rights reserved.
+ * Copyright (c) 1997
+ *	Jason R. Thorpe.  All rights reserved
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,7 +35,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 
@@ -55,7 +56,7 @@ extern int boot_biosdev;
 
 extern char version[];
 
-static char *names[] = {
+char *names[] = {
     "netbsd", "netbsd.gz",
     "netbsd.old", "netbsd.old.gz",
     "onetbsd", "onetbsd.gz",
@@ -76,301 +77,305 @@ static char *default_devname;
 static int default_unit, default_partition;
 static char *default_filename;
 
+void	command_help __P((char *));
+void	command_ls __P((char *));
+void	command_quit __P((char *));
+void	command_boot __P((char *));
+
+struct bootblk_command {
+	const char *c_name;
+	void (*c_fn) __P((char *));
+} commands[] = {
+	{ "help",	command_help },
+	{ "?",		command_help },
+	{ "ls",		command_ls },
+	{ "quit",	command_quit },
+	{ "boot",	command_boot },
+	{ NULL,		NULL },
+};
+
 int
 parsebootfile(fname, fsname, devname, unit, partition, file)
-const char *fname;
-char **fsname; /* out */
-char **devname; /* out */
-unsigned int *unit, *partition; /* out */
-const char **file; /* out */
+	const char *fname;
+	char **fsname; /* out */
+	char **devname; /* out */
+	unsigned int *unit, *partition; /* out */
+	const char **file; /* out */
 {
-    const char *col, *help;
+	const char *col, *help;
 
-    *fsname = "ufs";
-    *devname = default_devname;
-    *unit = default_unit;
-    *partition = default_partition;
-    *file = default_filename;
+	*fsname = "ufs";
+	*devname = default_devname;
+	*unit = default_unit;
+	*partition = default_partition;
+	*file = default_filename;
 
-    if(!fname) return(0);
+	if (fname == NULL)
+		return(0);
 
-    if((col = strchr(fname, ':'))) { /* device given */
-	static char savedevname[MAXDEVNAME+1];
-	int devlen;
-	unsigned int u = 0, p = 0;
-	int i = 0;
+	if((col = strchr(fname, ':'))) {	/* device given */
+		static char savedevname[MAXDEVNAME+1];
+		int devlen;
+		unsigned int u = 0, p = 0;
+		int i = 0;
 
-	devlen = col - fname;
-	if(devlen > MAXDEVNAME)
-	    return(EINVAL);
+		devlen = col - fname;
+		if (devlen > MAXDEVNAME)
+			return(EINVAL);
 
 #define isvalidname(c) ((c) >= 'a' && (c) <= 'z')
-	if(!isvalidname(fname[i]))
-	    return(EINVAL);
-	do {
-	    savedevname[i] = fname[i];
-	    i++;
-	} while(isvalidname(fname[i]));
-	savedevname[i] = '\0';
+		if (!isvalidname(fname[i]))
+			return(EINVAL);
+		do {
+			savedevname[i] = fname[i];
+			i++;
+		} while (isvalidname(fname[i]));
+		savedevname[i] = '\0';
 
 #define isnum(c) ((c) >= '0' && (c) <= '9')
-	if(i < devlen) {
-	    if(!isnum(fname[i]))
-		return(EUNIT);
-	    do {
-		u *= 10;
-		u += fname[i++] - '0';
-	    } while(isnum(fname[i]));
-	}
+		if (i < devlen) {
+			if (!isnum(fname[i]))
+				return(EUNIT);
+			do {
+				u *= 10;
+				u += fname[i++] - '0';
+			} while (isnum(fname[i]));
+		}
 
 #define isvalidpart(c) ((c) >= 'a' && (c) <= 'z')
-	if(i < devlen) {
-	    if(!isvalidpart(fname[i]))
-		return(EPART);
-	    p = fname[i++] - 'a';
+		if (i < devlen) {
+			if (!isvalidpart(fname[i]))
+				return(EPART);
+			p = fname[i++] - 'a';
+		}
+
+		if (i != devlen)
+			return(ENXIO);
+
+		*devname = savedevname;
+		*unit = u;
+		*partition = p;
+		help = col + 1;
+	} else
+		help = fname;
+
+	if (*help)
+		*file = help;
+
+	return(0);
+}
+
+void
+print_bootsel(filename, howto)
+	char *filename;
+	int howto;
+{
+	char *fsname, *devname;
+	int unit, partition;
+	const char *file;
+
+	if (parsebootfile(filename, &fsname, &devname, &unit,
+	    &partition, &file) == 0) {
+		printf("booting %s%d%c:%s", devname, unit,
+		    'a' + partition, file);
+		if (howto)
+			printf("(howto 0x%x)", howto);
+		printf("\n");
 	}
-
-	if(i != devlen)
-	    return(ENXIO);
-
-	*devname = savedevname;
-	*unit = u;
-	*partition = p;
-	help = col + 1;
-    } else
-	help = fname;
-
-    if(*help) *file = help;
-
-    return(0);
 }
 
-static void
-print_bootsel(filename)
-char *filename;
-{
-    char *fsname, *devname;
-    int unit, partition;
-    const char *file;
-
-    if(!parsebootfile(filename, &fsname, &devname, &unit, &partition, &file))
-	printf("booting %s%d%c:%s\n", devname, unit,
-	       'a' + partition, file);
-}
-
-static void
+void
 bootit(filename, howto, tell)
-const char *filename;
-int howto, tell;
+	const char *filename;
+	int howto, tell;
 {
-  if(tell)
-      print_bootsel(filename);
 
-  if(exec_netbsd(filename, 0, howto, 0, consdev) < 0)
-      printf("boot: %s\n", strerror(errno));
-  else
-      printf("boot returned\n");
-}
+	if (tell)
+		print_bootsel(filename, howto);
 
-static void helpme()
-{
-  printf("commands are:\n"
-	 "boot [xdNx:][filename] [-adrs]\n"
-	 "     (ex. \"sd0a:netbsd.old -s\"\n"
-	 "xd[N[x]]:\n"
-	 "ls [path]\n"
-	 "help|?\n"
-	 "quit\n");
+	if (exec_netbsd(filename, 0, howto, 0, consdev) < 0)
+		printf("boot: %s\n", strerror(errno));
+	else
+		printf("boot returned\n");
 }
 
 /*
  * chops the head from the arguments and returns the arguments if any,
  * or possibly an empty string.
  */
-static char *
+char *
 gettrailer(arg)
-char *arg;
+	char *arg;
 {
-  char *options;
+	char *options;
 
-  if ((options = strchr(arg, ' ')) == NULL)
-    options = "";
-  else
-    *options++ = '\0';
-  /* trim leading blanks */
-  while (*options && *options == ' ')
-      options++;
+	if ((options = strchr(arg, ' ')) == NULL)
+		return ("");
+	else
+		*options++ = '\0';
 
-  return(options);
+	/* trim leading blanks */
+	while (*options && *options == ' ')
+		options++;
+
+	return (options);
 }
 
-
-static int
+int
 parseopts(opts, howto)
-char *opts;
-int *howto;
+	char *opts;
+	int *howto;
 {
-  int tmpopt = 0;
+	int r, tmpopt = 0;
 
-  opts++; /* skip - */
-  while (*opts && *opts != ' ') {
-    tmpopt |= netbsd_opt(*opts);
-    if(tmpopt == -1) {
-      printf("-%c: unknown flag\n", *opts);
-      helpme();
-      return(0);
-    }
-    opts++;
-  }
-  *howto = tmpopt;
-  return(1);
+	opts++; 	/* skip - */
+	while (*opts && *opts != ' ') {
+		r = netbsd_opt(*opts);
+		if (r == -1) {
+			printf("-%c: unknown flag\n", *opts);
+			command_help(NULL);
+			return(0);
+		}
+		tmpopt |= r;
+		opts++;
+	}
+
+	*howto = tmpopt;
+	return(1);
 }
 
-static int
+int
 parseboot(arg, filename, howto)
-char *arg;
-char **filename;
-int *howto;
+	char *arg;
+	char **filename;
+	int *howto;
 {
-  char *opts = NULL;
+	char *opts = NULL;
 
-  *filename = 0;
-  *howto = 0;
+	*filename = 0;
+	*howto = 0;
 
-  /* if there were no arguments */
-  if (!*arg)
-    return(1);
+	/* if there were no arguments */
+	if (!*arg)
+		return(1);
 
-  /* format is... */
-  /*[[xxNx:]filename] [-adrs]*/
+	/* format is... */
+	/* [[xxNx:]filename] [-adrs] */
 
-  /* check for just args */
-  if (arg[0] == '-'){
-    opts = arg;
-  } else { /* at least a file name */
-    *filename = arg;
+	/* check for just args */
+	if (arg[0] == '-')
+		opts = arg;
+	else {
+		/* there's a file name */
+		*filename = arg;
 
-    opts = gettrailer(arg);
-    if (!*opts)
-      opts = NULL;
-    else if (*opts != '-') {
-      printf("invalid arguments\n");
-      helpme();
-      return(0);
-    }
-  }
-  /* at this point, we have dealt with filenames. */
+		opts = gettrailer(arg);
+		if (!*opts)
+			opts = NULL;
+		else if (*opts != '-') {
+			printf("invalid arguments\n");
+			command_help(NULL);
+			return(0);
+		}
+	}
 
-  /* now, deal with options */
-  if (opts) {
-    if (!parseopts(opts, howto))
-      return(0);
-  }
+	/* at this point, we have dealt with filenames. */
 
-  return(1);
+	/* now, deal with options */
+	if (opts) {
+		if (parseopts(opts, howto) == 0)
+			return(0);
+	}
+
+	return(1);
 }
 
-static void
+void
 docommand(arg)
-char *arg;
+	char *arg;
 {
-  char *options;
+	char *options;
+	int i;
 
-  options = gettrailer(arg);
+	options = gettrailer(arg);
 
-  if ((strcmp("help", arg) == 0) ||
-      (strcmp("?", arg) == 0)) {
-    helpme();
-    return;
-  }
-  if (strcmp("ls", arg) == 0){
-      char *help = default_filename;
-      default_filename = "/";
-      ls(options);
-      default_filename = help;
-      return;
-  }
-  if (strcmp("quit", arg) == 0){
-    printf("Exiting... goodbye...\n");
-    exit(0);
-  }
-  if (strcmp("boot", arg) == 0){
-      char *filename;
-      int howto;
-      if(parseboot(options, &filename, &howto))
-	  bootit(filename, howto, 1);
-      return;
-  }
+	for (i = 0; commands[i].c_name != NULL; i++) {
+		if (strcmp(arg, commands[i].c_name) == 0) {
+			(*commands[i].c_fn)(options);
+			return;
+		}
+	}
+
 #ifdef MATTHIAS
-  if (strchr(arg, ':')) { /* DOS-like(!) change drive */
-      static char savedevname[MAXDEVNAME + 1];
-      char *fsname, *devname;
-      const char *file; /* dummy */
-      if(!parsebootfile(arg, &fsname, &devname, &default_unit,
-			&default_partition, &file)) {
-	  /* put to own static storage */
-	  strncpy(savedevname, devname, MAXDEVNAME + 1);
-	  default_devname = savedevname;
-	  return;
-      }
-  }
+	if (strchr(arg, ':')) { /* DOS-like(!) change drive */
+		static char savedevname[MAXDEVNAME + 1];
+		char *fsname, *devname;
+		const char *file; /* dummy */
+
+		if (!parsebootfile(arg, &fsname, &devname, &default_unit,
+		    &default_partition, &file)) {
+			/* put to own static storage */
+			strncpy(savedevname, devname, MAXDEVNAME + 1);
+			default_devname = savedevname;
+			return;
+		}
+	}
 #endif
-  printf("unknown command\n");
-  helpme();
+	printf("unknown command\n");
+	command_help(NULL);
 }
 
-void bootmenu()
+void
+bootmenu()
 {
-  printf("\ntype \"?\" or \"help\" for help.\n");
-  for(;;) {
-    char input[80];
+	char input[80];
 
-    input[0] = '\0';
-    printf("> ");
-    gets(input);
-
-    docommand(input);
-  }
+	printf("\ntype \"?\" or \"help\" for help.\n");
+	for (;;) {
+		input[0] = '\0';
+		printf("> ");
+		gets(input);
+		docommand(input);
+	}
 }
 
-static int
+int
 awaitkey(timeout, tell)
-int timeout, tell;
+	int timeout, tell;
 {
-  int i;
+	int i;
 
-  i = timeout * POLL_FREQ;
+	i = timeout * POLL_FREQ;
 
-  while (i--) {
-    if(iskey()) {
-      /* flush input buffer */
-      while(iskey())
-	getchar(); 
+	while (i--) {
+		if (iskey()) {
+			/* flush input buffer */
+			while (iskey())
+				getchar(); 
+			return(1);
+		}
+		delay(1000000 / POLL_FREQ);
+		if (tell && (i % POLL_FREQ) == 0)
+			printf("%d\b", i/POLL_FREQ);
+	}
+	if (tell)
+		printf("0\n");
 
-      return(1);
-    }
-    delay(1000000 / POLL_FREQ);
-    if (tell && !(i % POLL_FREQ))
-      printf("%d\b", i/POLL_FREQ);
-  }
-  if (tell) printf("0\n");
-  return(0);
+	return(0);
 }
 
-static void
+void
 print_banner(void)
 {
-  printf("\n"
-	 ">> NetBSD BOOT: %d/%d k [%s]\n"
+
+	printf("\n" ">> NetBSD BOOT: %d/%d k [%s]\n"
 #ifndef MATTHIAS
-	 "use hd1a:netbsd to boot sd0 when wd0 is also installed\n"
-	 "press any key for boot menu\n",
+	    "use hd1a:netbsd to boot sd0 when wd0 is also installed\n"
+	    "press any key for boot menu\n",
 #else
-	 "use hd1a:netbsd to boot sd0 when wd0 is also installed\n",
+	    "use hd1a:netbsd to boot sd0 when wd0 is also installed\n",
 #endif
-	 getbasemem(),
-	 getextmem(),
-	 version);
+	    getbasemem(), getextmem(), version);
 }
 
 
@@ -379,62 +384,109 @@ print_banner(void)
  * hosted environment...
  */
 void
-main(void)
+main()
 {
-    int currname;
+	int currname;
 
-    consdev = initio(CONSDEV_PC);
-    gateA20();
+	consdev = initio(CONSDEV_PC);
+	gateA20();
 
-    print_banner();
+	print_banner();
 
-    /* try to set default device to what BIOS tells us */
-    bios2dev(boot_biosdev, &default_devname, &default_unit);
-    default_partition = 0;
+	/* try to set default device to what BIOS tells us */
+	bios2dev(boot_biosdev, &default_devname, &default_unit);
+	default_partition = 0;
 
-    /* if the user types "boot" without filename */
-    default_filename = DEFFILENAME;
+	/* if the user types "boot" without filename */
+	default_filename = DEFFILENAME;
 
-    currname = 0;
-    for(;;) {
+	currname = 0;
+	for (;;) {
 #ifndef MATTHIAS
-	print_bootsel(0);
-	printf("starting in %d\b", TIMEOUT);
+		print_bootsel(0, 0);
+		printf("starting in %d\b", TIMEOUT);
 
-	if(awaitkey(TIMEOUT, 1))
-	    bootmenu(); /* does not return */
+		if (awaitkey(TIMEOUT, 1))
+			bootmenu(); /* does not return */
 
-	/*
-	 * try pairs of names[] entries, foo and foo.gz
-	 */
-	/* don't print "booting..." again for first try */
-	bootit(names[currname], 0, currname != 0);
-	/* since it failed, try switching bootfile. */
-	currname = ++currname % NUMNAMES;
+		/*
+		 * try pairs of names[] entries, foo and foo.gz
+		 */
+		/* don't print "booting..." again for first try */
+		bootit(names[currname], 0, currname != 0);
+		/* since it failed, try switching bootfile. */
+		currname = ++currname % NUMNAMES;
 
-	/* now try the second of a pair, presumably the .gz
-	   version. */
-	/* XXX duped code sucks. */
-	/* don't print "booting..." again for first try */
-	bootit(names[currname], 0, currname != 0);
-	/* since it failed, try switching bootfile. */
-	currname = ++currname % NUMNAMES;
+		/* now try the second of a pair, presumably the .gz
+		   version. */
+		/* XXX duped code sucks. */
+		/* don't print "booting..." again for first try */
+		bootit(names[currname], 0, currname != 0);
+		/* since it failed, try switching bootfile. */
+		currname = ++currname % NUMNAMES;
 #else
-	print_bootsel(0);
-	printf("press any key for boot menu\n"
-	       "starting in %d\b", TIMEOUT);
+		print_bootsel(0, 0);
+		printf("press any key for boot menu\n"
+		    "starting in %d\b", TIMEOUT);
 
-	if(awaitkey(TIMEOUT, 1))
-	    bootmenu(); /* does not return */
+		if (awaitkey(TIMEOUT, 1))
+			bootmenu(); /* does not return */
 
-	/* try every names[] entry once */
-	do {
-	    /* dont't print "booting..." again for first try */
-	    bootit(names[currname], 0, currname != 0);
+		/* try every names[] entry once */
+		do {
+			/* dont't print "booting..." again for first try */
+			bootit(names[currname], 0, currname != 0);
 
-	    /* since it failed, try switching bootfile. */
-	    currname = ++currname % NUMNAMES;
-	} while(currname);
+			/* since it failed, try switching bootfile. */
+			currname = ++currname % NUMNAMES;
+		} while(currname);
 #endif
-    }
+	}
+}
+
+/* ARGSUSED */
+void
+command_help(arg)
+	char *arg;
+{
+
+	printf("commands are:\n"
+	    "boot [xdNx:][filename] [-adrs]\n"
+	    "     (ex. \"sd0a:netbsd.old -s\"\n"
+	    "xd[N[x]]:\n"
+	    "ls [path]\n"
+	    "help|?\n"
+	    "quit\n");
+}
+
+void
+command_ls(arg)
+	char *arg;
+{
+	char *save = default_filename;
+
+	default_filename = "/";
+	ls(arg);
+	default_filename = save;
+}
+
+/* ARGSUSED */
+void
+command_quit(arg)
+	char *arg;
+{
+
+	printf("Exiting... goodbye...\n");
+	exit(0);
+}
+
+void
+command_boot(arg)
+	char *arg;
+{
+	char *filename;
+	int howto;
+
+	if (parseboot(arg, &filename, &howto))
+		bootit(filename, howto, 1);
 }
