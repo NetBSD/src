@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.99 2002/03/11 15:29:22 enami Exp $ */
+/* $NetBSD: vmstat.c,v 1.100 2002/03/13 11:02:11 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.99 2002/03/11 15:29:22 enami Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.100 2002/03/13 11:02:11 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -1154,18 +1154,6 @@ dopool(int verbose)
 	printf("\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
 	    inuse, total, (double)(100 * inuse) / total);
 }
-
-#ifndef PCG_NOBJECTS
-/* The pool cache group. */
-#define	PCG_NOBJECTS		16
-struct pool_cache_group {
-	TAILQ_ENTRY(pool_cache_group)
-		pcg_list;	/* link in the pool cache's group list */
-	u_int	pcg_avail;	/* # available objects */
-				/* pointers to the objects */
-	void	*pcg_objects[PCG_NOBJECTS];
-};
-#endif
 
 void
 dopoolcache(struct pool *pp, int verbose)
