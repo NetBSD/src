@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.4 2003/04/16 01:37:41 briggs Exp $ */
+/* $NetBSD: i386.c,v 1.5 2003/04/18 14:16:42 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.4 2003/04/16 01:37:41 briggs Exp $");
+__RCSID("$NetBSD: i386.c,v 1.5 2003/04/18 14:16:42 bjh21 Exp $");
 #endif /* __RCSID && !__lint */
 
 #if HAVE_CONFIG_H
@@ -49,12 +49,12 @@ __RCSID("$NetBSD: i386.c,v 1.4 2003/04/16 01:37:41 briggs Exp $");
 
 #include <assert.h>
 #include <err.h>
+#include <md5.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/md5.h>
 
 #include "installboot.h"
 
