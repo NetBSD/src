@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.10 2002/08/19 13:54:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2002/09/18 06:24:35 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
-.include <bsd.obj.mk>
+.include <bsd.own.mk>
 
 PROG=	tftpd
 SRCS=	tftpd.c tftpsubs.c

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.12 2002/08/19 13:54:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2002/09/18 06:24:33 lukem Exp $
 
-.include <bsd.obj.mk>
+.include <bsd.own.mk>
 
 PROG=	atrun
 BINDIR=	/usr/libexec

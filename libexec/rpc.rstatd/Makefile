@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.18 2002/08/19 13:54:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 2002/09/18 06:24:35 lukem Exp $
 
-.include <bsd.obj.mk>
+.include <bsd.own.mk>
 
 PROG =	rpc.rstatd
 .PATH: ${NETBSDSRCDIR}/usr.bin/vmstat
