@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.13 1997/12/10 23:09:31 pk Exp $	*/
+/*	$NetBSD: db_run.c,v 1.14 1998/04/03 19:45:12 pk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -38,9 +38,18 @@
 #include <machine/db_machdep.h>
 
 #include <ddb/db_run.h>
-#include <ddb/db_lex.h>
-#include <ddb/db_break.h>
 #include <ddb/db_access.h>
+#include <ddb/db_break.h>
+
+#ifdef	SOFTWARE_SSTEP
+static void	db_set_temp_breakpoint __P((db_breakpoint_t, db_addr_t));
+static void	db_delete_temp_breakpoint __P((db_breakpoint_t));
+static struct	db_breakpoint	db_not_taken_bkpt;
+static struct	db_breakpoint	db_taken_bkpt;
+#endif
+
+#if defined(DDB)
+#include <ddb/db_lex.h>
 #include <ddb/db_watch.h>
 #include <ddb/db_output.h>
 #include <ddb/db_sym.h>
@@ -59,11 +68,6 @@ boolean_t	db_sstep_print;
 int		db_loop_count;
 int		db_call_depth;
 
-#ifdef	SOFTWARE_SSTEP
-db_breakpoint_t	db_not_taken_bkpt = 0;
-db_breakpoint_t	db_taken_bkpt = 0;
-#endif
-
 boolean_t
 db_stop_at_pc(regs, is_breakpoint)
 	db_regs_t *regs;
@@ -80,8 +84,7 @@ db_stop_at_pc(regs, is_breakpoint)
 	 * say it's not really a breakpoint so that
 	 * we don't skip over the real instruction.
 	 */
-	if ((db_taken_bkpt != NULL && db_taken_bkpt->address == pc) ||
-	    (db_not_taken_bkpt != NULL && db_not_taken_bkpt->address == pc))
+	if (db_taken_bkpt.address == pc || db_not_taken_bkpt.address == pc)
 		*is_breakpoint = FALSE;
 #endif
 
@@ -240,109 +243,6 @@ db_single_step(regs)
 	}
 }
 
-#ifdef SOFTWARE_SSTEP
-/*
- *	Software implementation of single-stepping.
- *	If your machine does not have a trace mode
- *	similar to the vax or sun ones you can use
- *	this implementation, done for the mips.
- *	Just define the above conditional and provide
- *	the functions/macros defined below.
- *
- * boolean_t inst_branch(int inst)
- * boolean_t inst_call(int inst)
- *	returns TRUE if the instruction might branch
- *
- * boolean_t inst_unconditional_flow_transfer(int inst)
- *	returns TRUE if the instruction is an unconditional
- *	transter of flow (i.e. unconditional branch)
- *
- * db_addr_t branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
- *	returns the target address of the branch
- *
- * db_addr_t next_instr_address(db_addr_t pc, boolean_t bd)
- *	returns the address of the first instruction following the
- *	one at "pc", which is either in the taken path of the branch
- *	(bd == TRUE) or not.  This is for machines (e.g. mips) with
- *	branch delays.
- *
- *	A single-step may involve at most 2 breakpoints -
- *	one for branch-not-taken and one for branch taken.
- *	If one of these addresses does not already have a breakpoint,
- *	we allocate a breakpoint and save it here.
- *	These breakpoints are deleted on return.
- */			
-
-void
-db_set_single_step(regs)
-	register db_regs_t *regs;
-{
-	db_addr_t pc = PC_REGS(regs), brpc = pc;
-	boolean_t unconditional;
-	unsigned int inst;
-
-	/*
-	 *	User was stopped at pc, e.g. the instruction
-	 *	at pc was not executed.
-	 */
-	inst = db_get_value(pc, sizeof(int), FALSE);
-	if (inst_branch(inst) || inst_call(inst)) {
-		brpc = branch_taken(inst, pc, regs);
-		if (brpc != pc) {	/* self-branches are hopeless */
-			db_taken_bkpt = db_set_temp_breakpoint(brpc);
-		} else
-			db_taken_bkpt = 0;
-		pc = next_instr_address(pc, TRUE);
-	}
-
-	/*
-	 *	Check if this control flow instruction is an
-	 *	unconditional transfer.
-	 */
-	unconditional = inst_unconditional_flow_transfer(inst);
-
-	pc = next_instr_address(pc, FALSE);
-
-	/*
-	 *	We only set the sequential breakpoint if previous
-	 *	instruction was not an unconditional change of flow
-	 *	control.  If the previous instruction is an
-	 *	unconditional change of flow control, setting a
-	 *	breakpoint in the next sequential location may set
-	 *	a breakpoint in data or in another routine, which
-	 *	could screw up in either the program or the debugger.
-	 *	(Consider, for instance, that the next sequential
-	 *	instruction is the start of a routine needed by the
-	 *	debugger.)
-	 *
-	 *	Also, don't set both the taken and not-taken breakpoints
-	 *	in the same place even if the MD code would otherwise
-	 *	have us do so.
-	 */
-	if (unconditional == FALSE &&
-	    db_find_breakpoint_here(pc) == 0 &&
-	    pc != brpc)
-		db_not_taken_bkpt = db_set_temp_breakpoint(pc);
-	else
-		db_not_taken_bkpt = 0;
-}
-
-void
-db_clear_single_step(regs)
-	db_regs_t *regs;
-{
-
-	if (db_taken_bkpt != 0) {
-	    db_delete_temp_breakpoint(db_taken_bkpt);
-	    db_taken_bkpt = 0;
-	}
-	if (db_not_taken_bkpt != 0) {
-	    db_delete_temp_breakpoint(db_not_taken_bkpt);
-	    db_not_taken_bkpt = 0;
-	}
-}
-
-#endif /* SOFTWARE_SSTEP */
 
 extern int	db_cmd_loop_done;
 
@@ -438,3 +338,134 @@ db_continue_cmd(addr, have_addr, count, modif)
 
 	db_cmd_loop_done = 1;
 }
+#endif /* DDB */
+
+#ifdef SOFTWARE_SSTEP
+/*
+ *	Software implementation of single-stepping.
+ *	If your machine does not have a trace mode
+ *	similar to the vax or sun ones you can use
+ *	this implementation, done for the mips.
+ *	Just define the above conditional and provide
+ *	the functions/macros defined below.
+ *
+ * boolean_t inst_branch(int inst)
+ * boolean_t inst_call(int inst)
+ *	returns TRUE if the instruction might branch
+ *
+ * boolean_t inst_unconditional_flow_transfer(int inst)
+ *	returns TRUE if the instruction is an unconditional
+ *	transter of flow (i.e. unconditional branch)
+ *
+ * db_addr_t branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
+ *	returns the target address of the branch
+ *
+ * db_addr_t next_instr_address(db_addr_t pc, boolean_t bd)
+ *	returns the address of the first instruction following the
+ *	one at "pc", which is either in the taken path of the branch
+ *	(bd == TRUE) or not.  This is for machines (e.g. mips) with
+ *	branch delays.
+ *
+ *	A single-step may involve at most 2 breakpoints -
+ *	one for branch-not-taken and one for branch taken.
+ *	If one of these addresses does not already have a breakpoint,
+ *	we allocate a breakpoint and save it here.
+ *	These breakpoints are deleted on return.
+ */			
+
+#if !defined(DDB)
+/* XXX - don't check for existing breakpoints in KGDB-only case */
+#define db_find_breakpoint_here(pc)	(0)
+#endif
+
+void
+db_set_single_step(regs)
+	register db_regs_t *regs;
+{
+	db_addr_t pc = PC_REGS(regs), brpc = pc;
+	boolean_t unconditional;
+	unsigned int inst;
+
+	/*
+	 *	User was stopped at pc, e.g. the instruction
+	 *	at pc was not executed.
+	 */
+	inst = db_get_value(pc, sizeof(int), FALSE);
+	if (inst_branch(inst) || inst_call(inst)) {
+		brpc = branch_taken(inst, pc, regs);
+		if (brpc != pc) {	/* self-branches are hopeless */
+			db_set_temp_breakpoint(&db_taken_bkpt, brpc);
+		} else
+			db_taken_bkpt.address = 0;
+		pc = next_instr_address(pc, TRUE);
+	}
+
+	/*
+	 *	Check if this control flow instruction is an
+	 *	unconditional transfer.
+	 */
+	unconditional = inst_unconditional_flow_transfer(inst);
+
+	pc = next_instr_address(pc, FALSE);
+
+	/*
+	 *	We only set the sequential breakpoint if previous
+	 *	instruction was not an unconditional change of flow
+	 *	control.  If the previous instruction is an
+	 *	unconditional change of flow control, setting a
+	 *	breakpoint in the next sequential location may set
+	 *	a breakpoint in data or in another routine, which
+	 *	could screw up in either the program or the debugger.
+	 *	(Consider, for instance, that the next sequential
+	 *	instruction is the start of a routine needed by the
+	 *	debugger.)
+	 *
+	 *	Also, don't set both the taken and not-taken breakpoints
+	 *	in the same place even if the MD code would otherwise
+	 *	have us do so.
+	 */
+	if (unconditional == FALSE &&
+	    db_find_breakpoint_here(pc) == 0 &&
+	    pc != brpc)
+		db_set_temp_breakpoint(&db_not_taken_bkpt, pc);
+	else
+		db_not_taken_bkpt.address = 0;
+}
+
+void
+db_clear_single_step(regs)
+	db_regs_t *regs;
+{
+
+	if (db_taken_bkpt.address != 0)
+		db_delete_temp_breakpoint(&db_taken_bkpt);
+
+	if (db_not_taken_bkpt.address != 0)
+		db_delete_temp_breakpoint(&db_not_taken_bkpt);
+}
+
+void
+db_set_temp_breakpoint(bkpt, addr)
+	db_breakpoint_t	bkpt;
+	db_addr_t	addr;
+{
+
+	bkpt->map = NULL;
+	bkpt->address = addr;
+	/* bkpt->flags = BKPT_TEMP;	- this is not used */
+	bkpt->init_count = 1;
+	bkpt->count = 1;
+
+	bkpt->bkpt_inst = db_get_value(bkpt->address, BKPT_SIZE, FALSE);
+	db_put_value(bkpt->address, BKPT_SIZE, BKPT_SET(bkpt->bkpt_inst));
+}
+
+void
+db_delete_temp_breakpoint(bkpt)
+	db_breakpoint_t	bkpt;
+{
+	db_put_value(bkpt->address, BKPT_SIZE, bkpt->bkpt_inst);
+	bkpt->address = 0;
+}
+
+#endif /* SOFTWARE_SSTEP */
