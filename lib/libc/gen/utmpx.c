@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.13 2002/09/28 01:43:24 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.14 2002/10/25 20:42:02 wiz Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.13 2002/09/28 01:43:24 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.14 2002/10/25 20:42:02 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: utmpx.c,v 1.13 2002/09/28 01:43:24 christos Exp $");
 #include <sys/time.h>
 #include <sys/stat.h>
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -140,6 +141,8 @@ struct utmpx *
 getutxid(const struct utmpx *utx)
 {
 
+	_DIAGASSERT(utx != NULL);
+
 	if (utx->ut_type == EMPTY)
 		return NULL;
 
@@ -185,6 +188,8 @@ struct utmpx *
 getutxline(const struct utmpx *utx)
 {
 
+	_DIAGASSERT(utx != NULL);
+
 	do {
 		switch (ut.ut_type) {
 		case EMPTY:
@@ -208,6 +213,8 @@ pututxline(const struct utmpx *utx)
 {
 	struct utmpx temp, *u = NULL;
 	int gotlock = 0;
+
+	_DIAGASSERT(utx != NULL);
 
 	if (strcmp(_PATH_UTMPX, utfile) == 0 && geteuid() != 0)
 		return utmp_update(utx);
@@ -263,6 +270,8 @@ utmp_update(const struct utmpx *utx)
 	pid_t pid;
 	int status;
 
+	_DIAGASSERT(utx != NULL);
+
 	(void)strvisx(buf, (const char *)(const void *)utx, sizeof(*utx),
 	    VIS_WHITE);
 	switch (pid = fork()) {
@@ -289,7 +298,12 @@ utmp_update(const struct utmpx *utx)
 int
 updwtmpx(const char *file, const struct utmpx *utx)
 {
-	int fd = open(file, O_WRONLY|O_APPEND|O_EXLOCK);
+	int fd;
+
+	_DIAGASSERT(file != NULL);
+	_DIAGASSERT(utx != NULL);
+
+	fd = open(file, O_WRONLY|O_APPEND|O_EXLOCK);
 
 	if (fd == -1) {
 		if ((fd = open(file, O_CREAT|O_WRONLY|O_EXLOCK, 0644)) == -1)
@@ -311,7 +325,11 @@ updwtmpx(const char *file, const struct utmpx *utx)
 int
 utmpxname(const char *fname)
 {
-	size_t len = strlen(fname);
+	size_t len;
+
+	_DIAGASSERT(fname != NULL);
+
+	len = strlen(fname);
 
 	if (len >= sizeof(utfile))
 		return 0;
@@ -330,6 +348,9 @@ void
 getutmp(const struct utmpx *ux, struct utmp *u)
 {
 
+	_DIAGASSERT(ux != NULL);
+	_DIAGASSERT(u != NULL);
+
 	(void)memcpy(u->ut_name, ux->ut_name, sizeof(u->ut_name));
 	(void)memcpy(u->ut_line, ux->ut_line, sizeof(u->ut_line));
 	(void)memcpy(u->ut_host, ux->ut_host, sizeof(u->ut_host));
@@ -339,6 +360,9 @@ getutmp(const struct utmpx *ux, struct utmp *u)
 void
 getutmpx(const struct utmp *u, struct utmpx *ux)
 {
+
+	_DIAGASSERT(ux != NULL);
+	_DIAGASSERT(u != NULL);
 
 	(void)memcpy(ux->ut_name, u->ut_name, sizeof(u->ut_name));
 	(void)memcpy(ux->ut_line, u->ut_line, sizeof(u->ut_line));
@@ -356,7 +380,11 @@ getutmpx(const struct utmp *u, struct utmpx *ux)
 int
 lastlogxname(const char *fname)
 {
-	size_t len = strlen(fname);
+	size_t len;
+
+	_DIAGASSERT(fname != NULL);
+
+	len = strlen(fname);
 
 	if (len >= sizeof(llfile))
 		return 0;
@@ -373,7 +401,11 @@ struct lastlogx *
 getlastlogx(uid_t uid, struct lastlogx *ll)
 {
 	DBT key, data;
-	DB *db = dbopen(llfile, O_RDONLY|O_SHLOCK, 0, DB_HASH, NULL);
+	DB *db;
+
+	_DIAGASSERT(ll != NULL);
+
+	db = dbopen(llfile, O_RDONLY|O_SHLOCK, 0, DB_HASH, NULL);
 
 	if (db == NULL)
 		return NULL;
@@ -407,7 +439,12 @@ updlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 {
 	DBT key, data;
 	int error = 0;
-	DB *db = dbopen(fname, O_RDWR|O_CREAT|O_EXLOCK, 0, DB_HASH, NULL);
+	DB *db;
+
+	_DIAGASSERT(fname != NULL);
+	_DIAGASSERT(ll != NULL);
+
+	db = dbopen(fname, O_RDWR|O_CREAT|O_EXLOCK, 0, DB_HASH, NULL);
 
 	if (db == NULL)
 		return -1;
