@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 1999/10/15 12:24:36 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58 1999/11/10 05:23:18 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1034,7 +1034,7 @@ cninit()
 	struct consdev *cp;
 	int l, node;
 	int stdout;
-	int akbd_ih;
+	int akbd_ih, akbd;
 	char type[16];
 
 	l = OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
@@ -1087,13 +1087,20 @@ cninit()
 		 * So, test "`adb-kbd-ihandle" method and use the value if
 		 * it succeeded.
 		 */
-		if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd_ih)
-		    != -1) {
-			int akbd;
-
-			if ((akbd = OF_instance_to_package(akbd_ih)) != -1)
-				node = akbd;
+#if NUKBD > 0
+		if (OF_call_method("`usb-kbd-ihandle", stdin, 0, 1, &akbd_ih)
+		    != -1 && (akbd = OF_instance_to_package(akbd_ih)) != -1) {
+			stdin = akbd_ih;
+			node = akbd;
 		}
+#endif
+#if NAKBD > 0
+		if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd_ih)
+		    != -1 && (akbd = OF_instance_to_package(akbd_ih)) != -1) {
+			stdin = akbd_ih;
+			node = akbd;
+		}
+#endif
 
 		node = OF_parent(node);
 		bzero(type, sizeof(type));
@@ -1105,8 +1112,8 @@ cninit()
 		}
 
 		if (strcmp(type, "adb") == 0) {
-			printf("console keyboard type: ADB\n");
 #if NAKBD > 0
+			printf("console keyboard type: ADB\n");
 			akbd_cnattach();
 #else
 			panic("akbd support not in kernel");
