@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.30 1993/12/13 12:48:44 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.31 1994/02/01 04:57:45 mycroft Exp $
  */
 
 /*
@@ -548,7 +548,7 @@ pcintr(sc)
 	if (polling)
 		return 1;
 	do {
-		cp = sget(&pc_state[unit], 1);
+		cp = sget(&pc_state[unit]);
 		if (!tp || (tp->t_state & TS_ISOPEN) == 0)
 			return 1;
 		if (cp)
@@ -1447,14 +1447,12 @@ static Scan_def	scan_codes[] =
 };
 
 /*
- *   sget(ps, noblock):  get  characters  from  the  keyboard.  If
- *   noblock  ==  0  wait  until a key is gotten. Otherwise return a
- *    if no characters are present 0.
+ *   sget(ps): get characters from the keyboard.  If none are present,
+ *    return NULL.
  */
 static char *
-sget(ps, noblock)
+sget(ps)
 	struct pc_state *ps;
-	int noblock;
 {
 	u_char dt;
 	static u_char extended = 0, shift_state = 0;
@@ -1742,7 +1740,7 @@ pccngetc(dev)
 		/* wait for byte */
 		while ((inb(KBSTATP) & KBS_DIB) == 0);
 		/* see if it's worthwhile */
-		cp = sget(ps, 0);
+		cp = sget(ps);
 	} while (!cp);
 	polling = oldpolling;
 	if (*cp == '\r')
