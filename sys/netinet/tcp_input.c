@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.48 1998/04/03 07:54:01 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.49 1998/04/03 08:02:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1592,8 +1592,7 @@ u_int32_t syn_hash1, syn_hash2;
 
 #define SYN_HASH(sa, sp, dp) \
 	((((sa)->s_addr^syn_hash1)*(((((u_int32_t)(dp))<<16) + \
-				     ((u_int32_t)(sp)))^syn_hash2)) \
-	 & 0x7fffffff)
+				     ((u_int32_t)(sp)))^syn_hash2)))
 
 #define	eptosp(ep, e, s)	((struct s *)((char *)(ep) - \
 			    ((char *)(&((struct s *)0)->e) - (char *)0)))
@@ -1918,7 +1917,7 @@ syn_cache_get(so, m)
 		tp->rcv_scale = sc->sc_request_r_scale;
 		tp->t_flags |= TF_RCVD_SCALE;
 	}
-	if (sc->sc_tstmp)
+	if (sc->sc_flags & SCF_TIMESTAMP)
 		tp->t_flags |= TF_RCVD_TSTMP;
 
 	tp->t_template = tcp_template(tp);
@@ -2122,7 +2121,8 @@ syn_cache_add(so, m, optp, optlen, oi)
 	sc->sc_iss = tcp_new_iss(sc, sizeof(struct syn_cache), 0);
 	sc->sc_peermaxseg = oi->maxseg;
 	sc->sc_ourmaxseg = tcp_mss_to_advertise(tp);
-	sc->sc_tstmp = (tcp_do_rfc1323 && (tb.t_flags & TF_RCVD_TSTMP)) ? 1 : 0;
+	if (tcp_do_rfc1323 && (tb.t_flags & TF_RCVD_TSTMP))
+		sc->sc_flags |= SCF_TIMESTAMP;
 	if ((tb.t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
 	    (TF_RCVD_SCALE|TF_REQ_SCALE)) {
 		sc->sc_requested_s_scale = tb.requested_s_scale;
@@ -2162,7 +2162,7 @@ syn_cache_respond(sc, m, ti, win, ts)
 	 * space for them, move up the fixed header to make space.
 	 */
 	optlen = 4 + (sc->sc_request_r_scale != 15 ? 4 : 0) +
-	    (sc->sc_tstmp ? TCPOLEN_TSTAMP_APPA : 0);
+	    ((sc->sc_flags & SCF_TIMESTAMP) ? TCPOLEN_TSTAMP_APPA : 0);
 	if (optlen > M_TRAILINGSPACE(m)) {
 		if (M_LEADINGSPACE(m) >= optlen) {
 			m->m_data -= optlen;
@@ -2194,7 +2194,7 @@ syn_cache_respond(sc, m, ti, win, ts)
 		optlen += 4;
 	}
 
-	if (sc->sc_tstmp) {
+	if (sc->sc_flags & SCF_TIMESTAMP) {
 		u_int32_t *lp = (u_int32_t *)(optp + optlen);
 		/* Form timestamp option as shown in appendix A of RFC 1323. */
 		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
