@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.8 2003/10/19 17:45:35 cl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.9 2004/03/03 20:27:53 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8 2003/10/19 17:45:35 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.9 2004/03/03 20:27:53 drochner Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8 2003/10/19 17:45:35 cl Exp $");
 #define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
 #define	fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
 #define fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
+#define ldmxcsr(addr)		__asm("ldmxcsr %0" : : "m" (*addr))
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
@@ -195,17 +196,17 @@ x86fpflags_to_ksiginfo(u_int32_t flags)
 		FPE_FLTRES, /* bit 1 - denormal operand */
 		FPE_FLTDIV, /* bit 2 - divide by zero	*/
 		FPE_FLTOVF, /* bit 3 - fp overflow	*/
-		FPE_FLTUND, /* bit 4 - fp underflow	*/ 
+		FPE_FLTUND, /* bit 4 - fp underflow	*/
 		FPE_FLTRES, /* bit 5 - fp precision	*/
 		FPE_FLTINV, /* bit 6 - stack fault	*/
 	};
-					     
-	for(i=0;i < sizeof(x86fp_ksiginfo_table)/sizeof(int); i++) {
+
+	for (i=0;i < sizeof(x86fp_ksiginfo_table)/sizeof(int); i++) {
 		if (flags & (1 << i))
-			return(x86fp_ksiginfo_table[i]);
+			return (x86fp_ksiginfo_table[i]);
 	}
 	/* punt if flags not set */
-	return(0);
+	return (FPE_FLTINV);
 }
 
 /*
@@ -219,6 +220,7 @@ void
 fpudna(struct cpu_info *ci)
 {
 	u_int16_t cw;
+	u_int32_t mxcsr;
 	struct lwp *l;
 	int s;
 
@@ -239,14 +241,10 @@ fpudna(struct cpu_info *ci)
 	 * Initialize the FPU state to clear any exceptions.  If someone else
 	 * was using the FPU, save their state.
 	 */
-	if (ci->ci_fpcurlwp != 0 && ci->ci_fpcurlwp != l) 
+	KDASSERT(ci->ci_fpcurlwp != l);
+	if (ci->ci_fpcurlwp != 0)
 		fpusave_cpu(ci, 1);
-	else {
-		clts();
-		fninit();
-		fwait();
-		stts();
-	}
+
 	splx(s);
 
 	KDASSERT(ci->ci_fpcurlwp == NULL);
@@ -266,8 +264,11 @@ fpudna(struct cpu_info *ci)
 	splx(s);
 
 	if ((l->l_md.md_flags & MDP_USEDFPU) == 0) {
+		fninit();
 		cw = l->l_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_fcw;
 		fldcw(&cw);
+		mxcsr = l->l_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_mxcsr;
+		ldmxcsr(&mxcsr);
 		l->l_md.md_flags |= MDP_USEDFPU;
 	} else
 		fxrstor(&l->l_addr->u_pcb.pcb_savefpu);
