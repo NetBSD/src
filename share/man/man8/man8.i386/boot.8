@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.8 1998/02/25 12:30:13 drochner Exp $
+.\"	$NetBSD: boot.8,v 1.9 1999/05/07 14:00:39 drochner Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,10 @@ known as hard disk controller 1, drive 0).
 The
 .Nx
 bootblocks are loaded and started either by the BIOS, or by
-a boot selector program (such as OS-BS, BOOTEASY, or the OS/2 Boot Menu)
+a boot selector program (such as OS-BS, BOOTEASY, the OS/2 Boot Menu or
+.Nx 's
+boot-selecting master boot record - see
+.Xr mbr 8 ).
 .Pp
 Once running, a prompt similar to the following will appear.
 .Bd -unfilled -offset indent
@@ -79,7 +82,10 @@ on partition
 .Dq a
 of the
 .Nx
-MBR partition of the first non-SCSI hard disk.)
+MBR partition of the first hard disk known to the BIOS [which is
+appearently an IDE or similar device - see the
+.Em BUGS
+section].)
 .Pp
 The default disk will be set to the disk that the boot loader was
 loaded from.
@@ -135,7 +141,8 @@ boot block (installed).
 .Xr installboot 8 ,
 .Xr reboot 8 ,
 .Xr shutdown 8 ,
-.Xr dosboot 8
+.Xr dosboot 8 ,
+.Xr mbr 8
 .Sh BUGS
 Hard disks are always accessed by BIOS functions. Unit numbers are
 BIOS device numbers which might differ from numbering in the
@@ -146,4 +153,11 @@ into
 and
 .Dq wd
 devices at the bootloader level is meaningless and exists for
-historical reasons.
+historical reasons. (This is less a bug of the bootloader code than
+a shortcoming of the PC architecture.)
+The default disk device's name printed in the starting message
+is derived from the
+.Dq type
+field of the
+.Nx
+disklabel (if it is a hard disk).
