@@ -44,7 +44,7 @@ that are compiled with the
 .B \-pg
 option of
 .BR cc ( 1 ) ,
-.BR pc ( 1 ) ,
+.BR c++ ( 1 ) ,
 and
 .BR f77 ( 1 ) .
 The
@@ -77,9 +77,7 @@ Cycles are also shown, with an entry for the cycle as a whole and
 a listing of the members of the cycle and their contributions to the
 time and call counts of the cycle.
 .PP
-Second, a flat profile is given,
-similar to that provided by
-.BR prof ( 1 )  .
+Second, a flat profile is given.
 This listing gives the total execution times, the call counts,
 the time in milliseconds the call spent in the routine itself, and
 the time in milliseconds the call spent in the routine itself including
@@ -207,10 +205,12 @@ gmon.out	dynamic call graph and profile.
 .br
 gmon.sum summarized dynamic call graph and profile.
 .SH SEE ALSO
-.BR monitor ( 3 ) ,
+.BR moncontrol ( 3 ) ,
+.BR monstartup ( 3 ) ,
 .BR profil ( 2 ) ,
 .BR cc ( 1 ) ,
-.BR prof ( 1 )
+.BR c++ ( 1 ) ,
+.BR f77 ( 1 )
 .sp
 ``An Execution Profiler for Modular Programs'',
 by S. Graham, P. Kessler, M. McKusick;
