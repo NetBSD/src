@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.3 1997/10/14 09:20:34 mark Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.4 1999/01/22 14:14:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -35,16 +35,18 @@
  *	from: @(#)stdarg.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _STDARG_H_
-#define	_STDARG_H_
+#ifndef _ARM32_STDARG_H_
+#define	_ARM32_STDARG_H_
 
-typedef char *va_list;
+#include <machine/ansi.h>
 
-#define	__va_promote(type) \
-	(((sizeof(type) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
+typedef _BSD_VA_LIST_	va_list;
+
+#define	__va_size(type) \
+	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
 #define	va_start(ap, last) \
-	(ap = ((char *)&(last) + __va_promote(last)))
+	((ap) = (va_list)__builtin_next_arg(last))
 
 #ifdef _KERNEL
 #define	va_arg(ap, type) \
@@ -57,4 +59,4 @@ typedef char *va_list;
 
 #define	va_end(ap)
 
-#endif /* !_STDARG_H_ */
+#endif /* !_ARM32_STDARG_H_ */
