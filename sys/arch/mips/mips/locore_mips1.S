@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.18 2000/02/18 00:15:15 mycroft Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.19 2000/02/18 03:46:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -269,17 +269,18 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	addu	sp, sp, KERNFRAME_SIZ
 #ifdef DDB
 	la	k0, _C_LABEL(kdbaux)
-	REG_L	s0, SF_REG_S0(k0)
-	REG_L	s1, SF_REG_S1(k0)
-	REG_L	s2, SF_REG_S2(k0)
-	REG_L	s3, SF_REG_S3(k0)
-	REG_L	s4, SF_REG_S4(k0)
-	REG_L	s5, SF_REG_S5(k0)
-	REG_L	s6, SF_REG_S6(k0)
-	REG_L	s7, SF_REG_S7(k0)
-	REG_L	sp, SF_REG_SP(k0)
-	REG_L	s8, SF_REG_S8(k0)
-	REG_L	gp, SF_REG_RA(k0)
+	lw	s0, SF_REG_S0(k0)
+	lw	s1, SF_REG_S1(k0)
+	lw	s2, SF_REG_S2(k0)
+	lw	s3, SF_REG_S3(k0)
+	lw	s4, SF_REG_S4(k0)
+	lw	s5, SF_REG_S5(k0)
+	lw	s6, SF_REG_S6(k0)
+	lw	s7, SF_REG_S7(k0)
+	lw	sp, SF_REG_SP(k0)
+	lw	s8, SF_REG_S8(k0)
+	lw	gp, SF_REG_RA(k0)
+	nop					# R3000 load delay slot
 #endif
 	j	k0				# return to interrupted point
 	rfe
