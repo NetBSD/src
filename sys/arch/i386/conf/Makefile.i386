@@ -1,5 +1,7 @@
 # Copyright 1990 W. Jolitz
-# @(#)Makefile.i386	7.1 5/10/91
+# from @(#)Makefile.i386	7.1 5/10/91
+# $Id: Makefile.i386,v 1.9 1993/05/07 08:33:27 cgd Exp $
+#
 # Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:

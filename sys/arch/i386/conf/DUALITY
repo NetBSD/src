@@ -1,6 +1,8 @@
 #
 # DUALITY -- Mycroft's 486 box
 #
+#	$Id: DUALITY,v 1.7 1993/05/07 08:33:12 cgd Exp $
+#
 
 machine		"i386"
 cpu		"i486"

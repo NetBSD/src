@@ -1,6 +1,8 @@
 #
 # Distribution Floppy
 #
+#	$Id: SMALL,v 1.6 1993/05/07 08:33:33 cgd Exp $
+#
 machine		"i386"
 cpu		"i386"
 ident		SMALL

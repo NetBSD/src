@@ -2,6 +2,8 @@
 # GENERICAHA_DDB -- Generic ISA machine, w/non-EISA scsi controller support
 #		    and the kernel debugger.
 #
+#	$Id: GENERICAHA_DDB,v 1.4 1993/05/07 08:33:17 cgd Exp $
+#
 
 machine		"i386"
 cpu		"i386"
