@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.53 2002/12/09 16:13:58 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.54 2002/12/10 12:04:51 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -173,85 +173,75 @@ extern int foundfpu;		/* true => we have an FPU */
  * argument, or with a pointer to a clockframe if ih_arg is NULL.
  */
 extern struct intrhand {
-	int	(*ih_fun) __P((void *));
+	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	struct	intrhand *ih_next;
 	int	ih_classipl;
 } *intrhand[15];
 
-void	intr_establish __P((int level, int classipl, struct intrhand *));
-void	intr_disestablish __P((int level, struct intrhand *));
+void	intr_establish(int level, int classipl, struct intrhand *,
+			void (*fastvec)(void));
+void	intr_disestablish(int level, struct intrhand *);
 
-/*
- * intr_fasttrap() is a lot like intr_establish, but is used for ``fast''
- * interrupt vectors (vectors that are not shared and are handled in the
- * trap window).  Such functions must be written in assembly.
- */
-void	intr_fasttrap __P((int level, void (*vec)(void)));
-
-void	intr_lock_kernel __P((void));
-void	intr_unlock_kernel __P((void));
+void	intr_lock_kernel(void);
+void	intr_unlock_kernel(void);
 
 /* disksubr.c */
 struct dkbad;
-int isbad __P((struct dkbad *bt, int, int, int));
+int isbad(struct dkbad *bt, int, int, int);
 /* machdep.c */
-int	ldcontrolb __P((caddr_t));
-void	dumpconf __P((void));
-caddr_t	reserve_dumppages __P((caddr_t));
+int	ldcontrolb(caddr_t);
+void	dumpconf(void);
+caddr_t	reserve_dumppages(caddr_t);
 /* clock.c */
 struct timeval;
-void	lo_microtime __P((struct timeval *));
-int	clockintr __P((void *));/* level 10 (clock) interrupt code */
-int	statintr __P((void *));	/* level 14 (statclock) interrupt code */
+void	lo_microtime(struct timeval *);
 /* locore.s */
 struct fpstate;
-void	savefpstate __P((struct fpstate *));
-void	loadfpstate __P((struct fpstate *));
-int	probeget __P((caddr_t, int));
-void	write_all_windows __P((void));
-void	write_user_windows __P((void));
-void 	proc_trampoline __P((void));
-void	switchexit __P((struct proc *));
+void	savefpstate(struct fpstate *);
+void	loadfpstate(struct fpstate *);
+int	probeget(caddr_t, int);
+void	write_all_windows(void);
+void	write_user_windows(void);
+void 	proc_trampoline(void);
+void	switchexit(struct proc *);
 struct pcb;
-void	snapshot __P((struct pcb *));
-struct frame *getfp __P((void));
-int	xldcontrolb __P((caddr_t, struct pcb *));
-void	copywords __P((const void *, void *, size_t));
-void	qcopy __P((const void *, void *, size_t));
-void	qzero __P((void *, size_t));
+void	snapshot(struct pcb *);
+struct frame *getfp(void);
+int	xldcontrolb(caddr_t, struct pcb *);
+void	copywords(const void *, void *, size_t);
+void	qcopy(const void *, void *, size_t);
+void	qzero(void *, size_t);
 /* trap.c */
-void	kill_user_windows __P((struct proc *));
-int	rwindow_save __P((struct proc *));
-/* amd7930intr.s */
-void	amd7930_trap __P((void));
+void	kill_user_windows(struct proc *);
+int	rwindow_save(struct proc *);
 /* cons.c */
-int	cnrom __P((void));
+int	cnrom(void);
 /* zs.c */
-void zsconsole __P((struct tty *, int, int, void (**)(struct tty *, int)));
+void zsconsole(struct tty *, int, int, void (**)(struct tty *, int));
 #ifdef KGDB
-void zs_kgdb_init __P((void));
+void zs_kgdb_init(void);
 #endif
 /* fb.c */
-void	fb_unblank __P((void));
+void	fb_unblank(void);
 /* cache.c */
-void cache_flush __P((caddr_t, u_int));
+void cache_flush(caddr_t, u_int);
 /* kgdb_stub.c */
 #ifdef KGDB
-void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
-void kgdb_connect __P((int));
-void kgdb_panic __P((void));
+void kgdb_attach(int (*)(void *), void (*)(void *, int), void *);
+void kgdb_connect(int);
+void kgdb_panic(void);
 #endif
 /* emul.c */
 struct trapframe;
-int fixalign __P((struct proc *, struct trapframe *));
-int emulinstr __P((int, struct trapframe *));
+int fixalign(struct proc *, struct trapframe *);
+int emulinstr(int, struct trapframe *);
 /* cpu.c */
-void mp_pause_cpus __P((void));
-void mp_resume_cpus __P((void));
-void mp_halt_cpus __P((void));
+void mp_pause_cpus(void);
+void mp_resume_cpus(void);
+void mp_halt_cpus(void);
 /* msiiep.c */
-void msiiep_swap_endian __P((int));
+void msiiep_swap_endian(int);
 
 /*
  *
