@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.10 1999/11/12 20:45:46 kleink Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.11 2000/04/06 12:17:27 mrg Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +83,6 @@ svr4_setregs(p, epp, stack)
 
 #ifdef DEBUG
 #include <sparc64/sparc64/sigdebug.h>
-void Debugger __P((void));
 #endif
 
 #ifdef DEBUG_SVR4
@@ -199,7 +200,7 @@ svr4_getmcontext(p, mc, flags)
 #ifdef DEBUG_SVR4
 	svr4_printmcontext("getmcontext", mc);
 #endif
-	return (void *)tf->tf_out[6];
+	return (void *)(u_long)tf->tf_out[6];
 }
 
 
@@ -492,7 +493,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	 * Build the argument list for the signal handler.
 	 */
 	svr4_getcontext(p, &frame.sf_uc, mask);
-	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t) tf->tf_pc);
+	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t)(u_long)tf->tf_pc);
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = frame.sf_si.si_signo;
