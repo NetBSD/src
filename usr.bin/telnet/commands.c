@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.43 2000/06/22 06:47:48 thorpej Exp $	*/
+/*	$NetBSD: commands.c,v 1.44 2001/01/03 12:41:00 mjl Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.43 2000/06/22 06:47:48 thorpej Exp $");
+__RCSID("$NetBSD: commands.c,v 1.44 2001/01/03 12:41:00 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -2830,12 +2830,12 @@ cmdrc(m1, m2)
     int gotmachine = 0;
     int l1 = strlen(m1);
     int l2 = strlen(m2);
-    char m1save[64];
+    char m1save[MAXHOSTNAMELEN + 1];
 
     if (skiprc)
 	return;
 
-    strcpy(m1save, m1);
+    strlcpy(m1save, m1, sizeof(m1save));
     m1 = m1save;
 
     if (rcname == 0) {
