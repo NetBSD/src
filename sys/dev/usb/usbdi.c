@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.7 1998/07/29 20:50:12 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.8 1998/08/01 18:16:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -898,7 +898,7 @@ usbd_sync_transfer_cb(reqh)
 	usbd_request_handle reqh;
 {
 	usbd_transfer_cb(reqh);
-	if (!usbd_use_polling)
+	if (!reqh->pipe->device->bus->use_polling)
 		wakeup(reqh);
 }
 
@@ -916,7 +916,7 @@ usbd_sync_transfer(reqh)
 		return (r);
 	s = splusb();
 	if (!reqh->done) {
-		if (usbd_use_polling)
+		if (reqh->pipe->device->bus->use_polling)
 			panic("usbd_sync_transfer: not done\n");
 		tsleep(reqh, PRIBIO, "usbsyn", 0);
 	}
@@ -1039,4 +1039,12 @@ usbd_dopoll(iface)
 	usbd_interface_handle iface;
 {
 	iface->device->bus->do_poll(iface->device->bus);
+}
+
+void
+usbd_set_polling(iface, on)
+	usbd_interface_handle iface;
+	int on;
+{
+	iface->device->bus->use_polling = on;
 }
