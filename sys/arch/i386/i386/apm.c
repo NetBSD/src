@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.59 2001/01/29 19:26:36 chuck Exp $ */
+/*	$NetBSD: apm.c,v 1.60 2001/03/24 02:07:54 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -114,6 +114,8 @@ struct apm_softc {
 	int	event_count;
 	int	event_ptr;
 	int	sc_power_state;
+	int 	sc_err_count;
+	int	sc_err_type;
 	struct proc *sc_thread;
 	struct lock sc_lock;
 	struct	apm_event_info event_list[APM_NEVENTS];
@@ -149,7 +151,7 @@ static int	apm_event_handle __P((struct apm_softc *, struct bioscallregs *));
 static int	apm_get_event __P((struct bioscallregs *));
 static int	apm_get_powstat __P((struct bioscallregs *));
 static void	apm_get_powstate __P((u_int));
-static void	apm_periodic_check __P((struct apm_softc *));
+static int	apm_periodic_check __P((struct apm_softc *));
 static void	apm_create_thread __P((void *));
 static void	apm_thread __P((void *));
 static void	apm_perror __P((const char *, struct bioscallregs *, ...))
@@ -735,7 +737,7 @@ apm_get_event(regs)
 	return (apmcall(APM_GET_PM_EVENT, regs));
 }
 
-static void
+static int
 apm_periodic_check(sc)
 	struct apm_softc *sc;
 {
@@ -756,10 +758,26 @@ apm_periodic_check(sc)
 	 */
 	while (1) {
 		if (apm_get_event(&regs) != 0) {	/* out of events? */
-			if (APM_ERR_CODE(&regs) != APM_ERR_NOEVENTS)
+			if (APM_ERR_CODE(&regs) != APM_ERR_NOEVENTS) {
 				apm_perror("get event", &regs);
+				if (sc->sc_err_type == regs.AX) {
+				     	if (sc->sc_err_count++ >=
+					    APM_ERR_LIMIT) {
+						printf(
+			"apm: Last error 0x%x occurred %d times; giving up.\n",
+						    sc->sc_err_type,
+						    APM_ERR_LIMIT);
+						return -1;
+					}
+				} else {
+					sc->sc_err_count = 0;
+					sc->sc_err_type = regs.AX;
+				}
+			}
 			break;
 		}
+		sc->sc_err_type = 0;
+		sc->sc_err_count = 0;
 		if (!apm_event_handle(sc, & regs)) {
 			DPRINTF(APMDEBUG_EVENTS | APMDEBUG_ANOM,
 			  ("apm_periodic_check: duplicate event (break)\n"));
@@ -777,6 +795,7 @@ apm_periodic_check(sc)
 
 	/* reset for next loop */
 	apm_suspend_now = apm_standby_now = 0;
+	return 0;
 }
 
 static void
@@ -1128,6 +1147,8 @@ apmattach(parent, self, aux)
 	apminfo.apm_code16_seg_len = regs.SI_HI;
 	apminfo.apm_data_seg_len = regs.DI;
 
+	apmsc->sc_err_type = 0;
+	apmsc->sc_err_count = 0;
 
 	if (apm_force_64k_segments) {
 		apminfo.apm_code32_seg_len = 65536;
@@ -1436,7 +1457,7 @@ apmattach(parent, self, aux)
 	apmsc->sc_power_state = PWR_RESUME;
 
 	/* Do an initial check. */
-	apm_periodic_check(apmsc);
+	(void)apm_periodic_check(apmsc);
 
 	/*
 	 * Create a kernel thread to periodically check for APM events,
@@ -1494,14 +1515,17 @@ apm_thread(arg)
 	void *arg;
 {
 	struct apm_softc *apmsc = arg;
+	int error;
 
 	/*
 	 * Loop forever, doing a periodic check for APM events.
 	 */
 	for (;;) {
 		APM_LOCK(apmsc);
-		apm_periodic_check(apmsc);
+		error = apm_periodic_check(apmsc);
 		APM_UNLOCK(apmsc);
+		if (error != 0)
+			kthread_exit(0);
 		(void) tsleep(apmsc, PWAIT, "apmev",  (8 * hz) / 7);
 	}
 }
