@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.121 2000/09/19 23:26:26 bjh21 Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.122 2000/10/02 04:28:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1358,10 +1358,14 @@ again:
 		if (fmode & O_EXCL) {
 			*tl = txdr_unsigned(NFSV3CREATE_EXCLUSIVE);
 			nfsm_build(tl, u_int32_t *, NFSX_V3CREATEVERF);
+#ifdef INET
 			if (in_ifaddr.tqh_first)
 				*tl++ = in_ifaddr.tqh_first->ia_addr.sin_addr.s_addr;
 			else
 				*tl++ = create_verf;
+#else
+			*tl++ = create_verf;
+#endif
 			*tl = ++create_verf;
 		} else {
 			*tl = txdr_unsigned(NFSV3CREATE_UNCHECKED);
