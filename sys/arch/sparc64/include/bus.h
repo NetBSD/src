@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.21 2000/07/09 20:57:51 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.22 2000/07/13 06:23:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -183,8 +183,6 @@ struct sparc_bus_space_tag {
 
 /*
  * Bus space function prototypes.
- * In bus_space_map2(), supply a special virtual address only if you
- * get it from ../sparc/vaddrs.h.
  */
 static int	bus_space_map __P((
 				bus_space_tag_t,
