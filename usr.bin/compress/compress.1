@@ -34,15 +34,16 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)compress.1	8.2 (Berkeley) 4/18/94
-.\"	$Id: compress.1,v 1.3 1994/06/13 14:48:22 cgd Exp $
+.\"	$Id: compress.1,v 1.4 1994/10/17 21:43:16 cgd Exp $
 .\"
 .Dd April 18, 1994
 .Dt COMPRESS 1
 .Os BSD 4.3
 .Sh NAME
 .Nm compress ,
-.Nm uncompress ,
-.Nm zcat
+.\".Nm uncompress ,
+.Nm uncompress
+.\".Nm zcat
 .Nd compress and expand data
 .Sh SYNOPSIS
 .Nm compress
@@ -52,8 +53,8 @@
 .Nm uncompress
 .Op Fl cfv
 .Op Ar 
-.Nm zcat
-.Op Ar
+.\".Nm zcat
+.\".Op Ar
 .Sh DESCRIPTION
 .Nm Compress
 reduces the size of the named files using adaptive Lempel-Ziv coding.
@@ -73,10 +74,10 @@ restores the compressed files to their original form, renaming the
 files by deleting the
 .Dq .Z
 extension.
-.Pp
-.Nm Zcat
-is an alias for
-.Dq "uncompress -c" .
+.\".Pp
+.\".Nm Zcat
+.\"is an alias for
+.\".Dq "uncompress -c" .
 .Pp
 If renaming the files would cause files to be overwritten and the standard
 input device is a terminal, the user is prompted (on the standard error
@@ -158,6 +159,7 @@ The
 .Nm compress
 utility exits 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
+.Xr zcat 1
 .Rs
 .%A Welch, Terry A.
 .%D June, 1984
