@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.43 1999/05/25 20:30:09 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.44 1999/05/26 00:36:53 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2164,7 +2164,14 @@ uvm_map_pageable(map, start, end, new_pageable)
 		if (rv) {
 			entry->wired_count--;
 		} else if (entry->wired_count == 1) {
-			rv = uvm_fault_wire(map, entry->start, entry->end);
+			/*
+			 * XXXTHORPEJ: VM_PROT_NONE.  What about COW
+			 * entries?  Should we enter with max_protection
+			 * so that we're guaranteed not even mod/ref
+			 * emulation faults will occur?
+			 */
+			rv = uvm_fault_wire(map, entry->start, entry->end,
+			    VM_PROT_NONE);
 			if (rv) {
 				failed = entry->start;
 				entry->wired_count--;
