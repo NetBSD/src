@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.186 2004/01/04 19:37:01 jdolecek Exp $	*/
+/*	$NetBSD: locore.s,v 1.187 2004/01/06 09:38:19 petrov Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -111,6 +111,7 @@
 #define	CURLWP	(CPUINFO_VA+CI_CURLWP)
 #define CPCB	(CPUINFO_VA+CI_CPCB)
 #define	FPLWP	(CPUINFO_VA+CI_FPLWP)
+#define	IDLE_U  (CPUINFO_VA+CI_IDLE_U)
 
 /* Let us use same syntax as C code */
 #define Debugger()	ta	1; nop
@@ -399,8 +400,8 @@ _C_LABEL(data_start):					! Start of data segment
  * process 0's kernel stack can quietly overrun into it during bootup, if
  * we feel like doing that).
  */
-	.globl	_C_LABEL(idle_u)
-_C_LABEL(idle_u):
+	.globl	_C_LABEL(__idle_u)
+_C_LABEL(__idle_u):
 	.space	USPACE
 
 /*
@@ -4720,7 +4721,7 @@ return_from_trap:
 	btst	TSTATE_PRIV, %g1		! returning to userland?
 	CHKPT(%g4, %g7, 6)
 	bz,pt	%icc, rft_user
-	 sethi	%hi(_C_LABEL(want_ast)), %g7	! first instr of rft_user
+	 sethi	%hi(CPUINFO_VA+CI_WANT_AST), %g7	! first instr of rft_user
 
 /*
  * Return from trap, to kernel.
@@ -4816,8 +4817,8 @@ rft_wcnt:	.word 0
 	.text
 
 rft_user:
-!	sethi	%hi(_C_LABEL(want_ast)), %g7	! (done above)
-	lduw	[%g7 + %lo(_C_LABEL(want_ast))], %g7! want AST trap?
+!	sethi	%hi(CPUINFO_VA+CI_WANT_AST), %g7	! (done above)
+	lduw	[%g7 + %lo(CPUINFO_VA+CI_WANT_AST)], %g7! want AST trap?
 	brnz,pn	%g7, softtrap			! yes, re-enter trap with type T_AST
 	 mov	T_AST, %g4
 
@@ -4986,7 +4987,7 @@ rft_user:
 	tst	%g5
 	tnz	%icc, 1; nop			! Debugger if we still have saved windows
 	bne,a	rft_user			! Try starting over again
-	 sethi	%hi(_C_LABEL(want_ast)), %g7
+	 sethi	%hi(CPUINFO_VA+CI_WANT_AST), %g7
 #endif
 	/*
 	 * Set up our return trapframe so we can recover if we trap from here
@@ -5905,7 +5906,7 @@ _C_LABEL(cpu_initialize):
 	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
 	membar	#Sync				! We may need more membar #Sync in here
 	flush	%o5
-1:	
+1:
 !!! Make sure our stack's OK.
 	flushw
 	sethi	%hi(CPUINFO_VA+CI_INITSTACK), %l0
@@ -5968,7 +5969,6 @@ _C_LABEL(cpu_initialize):
 
 	call	%o1				! Call routine
 	 clr	%o0				! our frame arg is ignored
-	NOTREACHED
 
 	set	1f, %o0				! Main should never come back here
 	call	_C_LABEL(panic)
@@ -5978,6 +5978,286 @@ _C_LABEL(cpu_initialize):
 	.asciz	"main() returned\r\n"
 	_ALIGN
 	.text
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Register usage in this section:
+	 *
+	 *	%g2 = cpu_args
+	 *	%l0 = ktext (also KERNBASE)
+	 *	%l1 = ektext
+	 *	%l2 = ktextp/TTE Data for text w/o low bits
+	 *	%l3 = kdata (also DATA_START)
+	 *	%l4 = ekdata
+	 *	%l5 = kdatap/TTE Data for data w/o low bits
+	 *	%l6 = 4MB
+	 *	%l7 = 4MB-1
+	 *	%o0-%o5 = tmp
+	 */
+ENTRY(cpu_mp_startup)
+	wrpr    %g0, 0, %cleanwin
+	wrpr	%g0, 13, %pil
+	wrpr	%g0, PSTATE_INTR|PSTATE_PEF, %pstate
+	wr	%o0, FPRS_FEF, %fprs		! Turn on FPU
+
+	wrpr	%g0, 0, %tl			! Make sure we're not in NUCLEUS mode
+
+	flushw
+
+	/*
+	 * This code copied to preallocated 'claimed' memory 2-page block.
+	 * cpu_args are at the beginning of that block
+	 */
+	rd	%pc, %g2			! cpu_args are at the beginning of this page
+	andn	%g2, 0xfff, %g2			! they should be smaller the half page
+
+	/* map kernel text, data and cpuinfo_va, all locked*/
+	sethi	%hi(KERNBASE), %l0		! Find our xlation
+	sethi	%hi(DATA_START), %l3
+
+	ldx	[%g2 + CBA_KTEXTP], %l2
+	ldx	[%g2 + CBA_KDATAP], %l5
+
+	LDPTR	[%g2 + CBA_EKTEXT], %l1
+	LDPTR	[%g2 + CBA_EKDATA], %l4
+
+	sethi	%hi(0xe0000000), %o0		! V=1|SZ=11|NFO=0|IE=0
+	sllx	%o0, 32, %o0			! Shift it into place
+
+	sethi	%hi(0x400000), %l6		! Create a 4MB mask
+	add	%l6, -1, %l7
+
+	mov	-1, %o1				! Create a nice mask
+	sllx	%o1, 41, %o1			! Mask off high bits
+	or	%o1, 0xfff, %o1			! We can just load this in 12 (of 13) bits
+
+	andn	%l2, %o1, %l2			! Mask the phys page number
+	andn	%l5, %o1, %l5			! Mask the phys page number
+
+	or	%l2, %o0, %l2			! Now take care of the high bits
+	or	%l5, %o0, %l5			! Now take care of the high bits
+
+	/*
+	 * XXX Demap kernel text/data from DTLB, probably not needed
+	 */
+	mov	%l0, %o0			! Demap all of kernel dmmu text segment
+	mov	%l3, %o1
+	set	0x2000, %o2			! 8K page size
+	add	%l1, %l7, %o5			! Extend to 4MB boundary
+	andn	%o5, %l7, %o5
+0:
+	stxa	%o0, [%o0] ASI_DMMU_DEMAP	! Demap text segment
+	membar	#Sync
+	cmp	%o0, %o5
+	bleu	0b
+	 add	%o0, %o2, %o0
+
+	add	%l4, %l7, %o5			! Extend to 4MB boundary
+	andn	%o5, %l7, %o5
+0:	
+	stxa	%o1, [%o1] ASI_DMMU_DEMAP	! Demap data segment
+	membar	#Sync
+	cmp	%o1, %o5
+	bleu	0b
+	 add	%o1, %o2, %o1
+
+	set	(1<<14)-8, %o0			! Clear out DCACHE
+1:
+	stxa	%g0, [%o0] ASI_DCACHE_TAG	! clear DCACHE line
+	membar	#Sync
+	brnz,pt	%o0, 1b
+	 dec	8, %o0
+
+	/*
+	 * Now map kernel text/data, first map data segment into the DMMU.
+	 */
+	set	TLB_TAG_ACCESS, %o0		! Now map it back in with a locked TTE
+	mov	%l3, %o1
+#ifdef NO_VCACHE
+	! And low bits:	L=1|CP=1|CV=0(ugh)|E=0|P=1|W=1|G=0
+	or	%l5, TTE_L|TTE_CP|TTE_P|TTE_W, %o2
+#else
+	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1|G=0
+	or	%l5, TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W, %o2
+#endif
+	set	1f, %o5
+2:	
+	stxa	%o1, [%o0] ASI_DMMU		! Set VA for DSEG
+	membar	#Sync				! We may need more membar #Sync in here
+	stxa	%o2, [%g0] ASI_DMMU_DATA_IN	! Store TTE for DSEG
+	membar	#Sync				! We may need more membar #Sync in here
+!	flush	%o5				! Make IMMU see this too
+1:
+	add	%o1, %l6, %o1			! increment VA
+	cmp	%o1, %l4			! Next 4MB mapping....
+	blu,pt	%xcc, 2b
+	 add	%o2, %l6, %o2			! Increment tag
+
+	/*
+	 * Next map the text segment into the DMMU so we can get at RODATA.
+	 */
+	mov	%l0, %o1
+#ifdef NO_VCACHE
+	! And low bits:	L=1|CP=1|CV=0(ugh)|E=0|P=1|W=0|G=0
+	or	%l2, TTE_L|TTE_CP|TTE_P, %o2
+#else
+	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
+	or	%l2, TTE_L|TTE_CP|TTE_CV|TTE_P, %o2
+#endif
+2:	
+	stxa	%o1, [%o0] ASI_DMMU		! Set VA for DSEG
+	membar	#Sync				! We may need more membar #Sync in here
+	stxa	%o2, [%g0] ASI_DMMU_DATA_IN	! Store TTE for DSEG
+	membar	#Sync				! We may need more membar #Sync in here
+	flush	%o5				! Make IMMU see this too
+	add	%o1, %l6, %o1			! increment VA
+	cmp	%o1, %l1			! Next 4MB mapping....
+	blu,pt	%xcc, 2b
+	 add	%o2, %l6, %o2			! Increment tag
+	
+	!!
+	!!  Now, map in the kernel text as context==0
+	!!
+	set	TLB_TAG_ACCESS, %o0
+	mov	%l0, %o1			! Context = 0
+#ifdef NO_VCACHE
+	! And low bits:	L=1|CP=1|CV=0(ugh)|E=0|P=1|W=1|G=0
+	or	%l2, TTE_L|TTE_CP|TTE_P, %o2
+#else
+	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1|G=0
+	or	%l2, TTE_L|TTE_CP|TTE_CV|TTE_P, %o2
+#endif
+2:	
+	stxa	%o1, [%o0] ASI_IMMU		! Make IMMU point to it
+	membar	#Sync				! We may need more membar #Sync in here
+	stxa	%o2, [%g0] ASI_IMMU_DATA_IN	! Store it
+	membar	#Sync				! We may need more membar #Sync in here
+	flush	%o5				! Make IMMU see this too
+	add	%o1, %l6, %o1			! increment VA
+	cmp	%o1, %l1			! Next 4MB mapping....
+	blu,pt	%xcc, 2b
+	 add	%o2, %l6, %o2			! Increment tag
+
+	/*
+	 * Get pointer to our cpu_info struct
+	 */
+	ldx	[%g2 + CBA_CPUINFO], %l1	! Load the interrupt stack's PA
+
+	sethi	%hi(0xa0000000), %l2		! V=1|SZ=01|NFO=0|IE=0
+	sllx	%l2, 32, %l2			! Shift it into place
+
+	mov	-1, %l3				! Create a nice mask
+	sllx	%l3, 41, %l4			! Mask off high bits
+	or	%l4, 0xfff, %l4			! We can just load this in 12 (of 13) bits
+
+	andn	%l1, %l4, %l1			! Mask the phys page number
+
+	or	%l2, %l1, %l1			! Now take care of the high bits
+#ifdef NO_VCACHE
+	or	%l1, TTE_L|TTE_CP|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=0|E=0|P=1|W=0|G=0
+#else
+	or	%l1, TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
+#endif
+
+	!!
+	!!  Now, map in the interrupt stack as context==0
+	!!
+	set	TLB_TAG_ACCESS, %l5
+	set	1f, %o5
+	set	INTSTACK, %l0
+	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
+	membar	#Sync				! We may need more membar #Sync in here
+	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
+	membar	#Sync				! We may need more membar #Sync in here
+	flush	%o5
+	flush	%l0
+1:
+
+	!!
+	!! Set 0 as primary context XXX
+	!!
+	mov	CTX_PRIMARY, %o0
+	stxa	%g0, [%o0] ASI_DMMU
+	flush	%o5
+
+!!! Make sure our stack's OK. 
+	LDPTR	[%g2 + %lo(CBA_INITSTACK)], %l0
+!	sethi   %hi(EINTSTACK), %l0
+ 	add	%l0, -CC64FSZ-80-BIAS, %l0	! via syscall(boot_me_up) or somesuch
+	mov	%l0, %sp
+
+#if 0
+	wrpr	%g0, 0, %canrestore
+	wrpr	%g0, 0, %otherwin
+	rdpr	%ver, %l7
+	and	%l7, CWP, %l7
+	wrpr	%l7, 0, %cleanwin
+	dec	1, %l7					! NWINDOWS-1-1
+	wrpr	%l7, %cansave
+	clr	%fp			! End of stack.
+#endif
+
+	/*
+	 * install our TSB pointers
+	 */
+	sethi	%hi(0x1fff), %l2
+	set	_C_LABEL(tsb_dmmu), %l0
+	LDPTR	[%l0], %l0
+	set	_C_LABEL(tsbsize), %l1
+	or	%l2, %lo(0x1fff), %l2
+	ld	[%l1], %l1
+	andn	%l0, %l2, %l0			! Mask off size and split bits
+	or	%l0, %l1, %l0			! Make a TSB pointer
+	set	TSB, %l2
+	stxa	%l0, [%l2] ASI_DMMU		! Install data TSB pointer
+	membar	#Sync
+
+	sethi	%hi(0x1fff), %l2
+	set	_C_LABEL(tsb_immu), %l0
+	LDPTR	[%l0], %l0
+	set	_C_LABEL(tsbsize), %l1
+	or	%l2, %lo(0x1fff), %l2
+	ld	[%l1], %l1
+	andn	%l0, %l2, %l0			! Mask off size and split bits
+	or	%l0, %l1, %l0			! Make a TSB pointer
+	set	TSB, %l2
+	stxa	%l0, [%l2] ASI_IMMU		! Install instruction TSB pointer
+	membar	#Sync
+
+	/* set trap table */
+	set	_C_LABEL(trapbase), %l1
+	set	_C_LABEL(prom_set_trap_table), %l0
+	jmpl	%l0, %o7
+	 mov	%l1, %o0
+	wrpr	%l1, 0, %tba			! Make sure the PROM didn't foul up.
+	wrpr	%g0, WSTATE_KERN, %wstate
+
+	set	_C_LABEL(mp_main), %l1
+	jmpl	%l1, %o7
+	 clr %g4
+
+	set	_C_LABEL(idle), %l1
+	jmpl	%l1, %g0
+	 nop
+
+	NOTREACHED
+
+#if 0
+	/*
+	 * XXX this funcltion is relocated so all calls from here has to be PIC.
+	 */
+	set	1f, %o0				! Main should never come back here
+	call	_C_LABEL(panic)
+	 nop
+	.data
+1:
+	.asciz	"mp_main() returned\r\n"
+	_ALIGN
+	.text
+#endif
+	.globl cpu_mp_startup_end
+cpu_mp_startup_end:
+#endif
 
 /*
  * openfirmware(cell* param);
@@ -7426,22 +7706,21 @@ ENTRY(switchexit)
 	 * destroy it.  Call it any sooner and the register windows
 	 * go bye-bye.
 	 */
-	set	_C_LABEL(idle_u), %l1
-	sethi	%hi(CPCB), %l6
 #if 0
-	/* Get rid of the stack	*/
-	rdpr	%ver, %o0
-	wrpr	%g0, 0, %canrestore	! Fixup window state regs
-	and	%o0, 0x0f, %o0
-	wrpr	%g0, 0, %otherwin
-	wrpr	%g0, %o0, %cleanwin	! kernel don't care, but user does
-	dec	1, %o0			! What happens if we don't subtract 2?
-	wrpr	%g0, %o0, %cansave
-	flushw						! DEBUG
+	XXXPETR
+	set	_C_LABEL(idle_u), %l1
 #endif
+	sethi	%hi(IDLE_U), %l1
+	LDPTR	[%l1 + %lo(IDLE_U)], %l1
+	sethi	%hi(CPCB), %l6
 
 	STPTR	%l1, [%l6 + %lo(CPCB)]	! cpcb = &idle_u
+#if 0
+	XXXPETR
 	set	_C_LABEL(idle_u) + USPACE - CC64FSZ, %o0	! set new %sp
+#endif
+	set	USPACE - CC64FSZ, %o0	! set new %sp
+	add	%l1, %o0, %o0
 #ifdef _LP64
 	sub	%o0, BIAS, %sp		! Maybe this should be a save?
 #else
@@ -7457,7 +7736,9 @@ ENTRY(switchexit)
 	clr	%fp			! End of stack.
 #ifdef DEBUG
 	flushw						! DEBUG
-	set	_C_LABEL(idle_u), %l6
+	sethi	%hi(IDLE_U), %l6
+	LDPTR	[%l1 + %lo(IDLE_U)], %l6
+!	set	_C_LABEL(idle_u), %l6
 	SET_SP_REDZONE(%l6, %l5)
 #endif
 

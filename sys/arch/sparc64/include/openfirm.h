@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.9 2001/10/05 21:52:43 eeh Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.10 2004/01/06 09:38:19 petrov Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,9 @@
  * Prototypes for additional OpenFirmware Interface Routines
  */
 
+#ifndef _SPARC64_OPENFIRM_H_
+#define _SPARC64_OPENFIRM_H_
+
 #include <dev/ofw/openfirm.h>
 
 /* All cells are 8 byte slots */
@@ -60,3 +63,6 @@ int OF_interpret (char *, int, int, ...);
 int OF_milliseconds (void);
 int OF_searchprop (int node, char *prop, void *buf, int buflen);
 int OF_mapintr(int node, int *interrupt, int validlen, int buflen);
+void* OF_claim __P((void*, u_int, u_int));
+
+#endif /* _SPARC64_OPENFIRM_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.31 2003/10/26 08:05:26 christos Exp $
+#	$NetBSD: genassym.cf,v 1.32 2004/01/06 09:38:19 petrov Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -172,6 +172,20 @@ define	CI_UPAID	offsetof(struct cpu_info, ci_upaid)
 define	CI_SPINUP	offsetof(struct cpu_info, ci_spinup)
 define	CI_INITSTACK	offsetof(struct cpu_info, ci_initstack)
 define	CI_PADDR	offsetof(struct cpu_info, ci_paddr)
+define	CI_WANT_AST	offsetof(struct cpu_info, ci_want_ast)
+define	CI_IDLE_U	offsetof(struct cpu_info, ci_idle_u)
+define	CI_EINTRSTACK	offsetof(struct cpu_info, ci_eintstack)
+
+# CPU boot arguments structure
+define	CBA_NODE	offsetof(struct cpu_bootargs, cb_node)
+define	CBA_INITSTACK	offsetof(struct cpu_bootargs, cb_initstack)
+define	CBA_KTEXT	offsetof(struct cpu_bootargs, cb_ktext)
+define	CBA_KTEXTP	offsetof(struct cpu_bootargs, cb_ktextp)
+define	CBA_EKTEXT	offsetof(struct cpu_bootargs, cb_ektext)
+define	CBA_KDATA	offsetof(struct cpu_bootargs, cb_kdata)
+define	CBA_KDATAP	offsetof(struct cpu_bootargs, cb_kdatap)
+define	CBA_EKDATA	offsetof(struct cpu_bootargs, cb_ekdata)
+define	CBA_CPUINFO	offsetof(struct cpu_bootargs, cb_cpuinfo)
 
 # FPU state
 define	FS_REGS		offsetof(struct fpstate64, fs_regs)

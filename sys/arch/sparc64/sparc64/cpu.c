@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.32 2003/11/15 05:24:03 petrov Exp $ */
+/*	$NetBSD: cpu.c,v 1.33 2004/01/06 09:38:19 petrov Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32 2003/11/15 05:24:03 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33 2004/01/06 09:38:19 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32 2003/11/15 05:24:03 petrov Exp $");
 #include <machine/reg.h>
 #include <machine/trap.h>
 #include <machine/pmap.h>
+#include <machine/sparc64.h>
+#include <machine/openfirm.h>
 
 #include <sparc64/sparc64/cache.h>
 
@@ -75,7 +77,12 @@ struct cacheinfo cacheinfo;
 struct cpu_info cpu_info_store;
 
 /* Linked list of all CPUs in system. */
+int ncpus = 0;
 struct cpu_info *cpus = NULL;
+
+struct cpu_bootargs *cpu_args;	/* allocated very earlt in pmap_bootstrap. */
+
+static struct cpu_info * alloc_cpuinfo(u_int);
 
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -120,86 +127,73 @@ static char *iu_vendor[16] = {
 };
 #endif
 
-/*
- * Overhead involved in firing up a new CPU:
- * 
- *	Allocate a cpuinfo/interrupt stack
- *	Map that into the kernel
- *	Initialize the cpuinfo
- *	Return the TLB entry for the cpuinfo.
- */
-uint64_t
-cpu_init(pa, cpu_num)
-	paddr_t pa;
-	int cpu_num;
+
+struct cpu_info *
+alloc_cpuinfo(cpu_node)
+	u_int cpu_node;
 {
-	struct cpu_info *ci;
-	uint64_t pagesize;
-	uint64_t pte;
-	struct vm_page *pg;
-	psize_t size;
-	vaddr_t va;
-	struct pglist pglist;
-	int error;
+	paddr_t pa0, pa;
+	vaddr_t va, va0;
+	vsize_t sz = 8*PAGE_SIZE;
+	int portid;
+	struct cpu_info *cpi, *ci;
+	extern paddr_t cpu0paddr;
 
-	size = PAGE_SIZE; /* XXXX 8K, 64K, 512K, or 4MB */
-	if ((error = uvm_pglistalloc(size, (paddr_t)0, (paddr_t)-1,
-		(paddr_t)size, (paddr_t)0, &pglist, 1, 0)) != 0)
-		panic("cpu_start: no memory, error %d", error);
+	/*
+	 * Check for UPAID in the cpus list.
+	 */
+	if (OF_getprop(cpu_node, "upa-portid", &portid, sizeof(portid)) <= 0)
+		panic("alloc_cpuinfo: upa-portid");
 
-	va = uvm_km_valloc(kernel_map, size);
-	if (va == 0)
-		panic("cpu_start: no memory");
+	for (cpi = cpus; cpi != NULL; cpi = cpi->ci_next)
+		if (cpi->ci_upaid == portid)
+			return cpi;
 
-	switch (size) {
-#define K	*1024
-	case 8 K:
-		pagesize = TLB_8K;
-		break;
-	case 64 K:
-		pagesize = TLB_64K;
-		break;
-	case 512 K:
-		pagesize = TLB_512K;
-		break;
-	case 4 K K:
-		pagesize = TLB_4M;
-		break;
-	default:
-		pagesize = 0; /* XXX: gcc */
-		panic("cpu_start: stack size %x not a machine page size",
-			(unsigned)size);
-	}
-	pg = TAILQ_FIRST(&pglist);
-	pa = VM_PAGE_TO_PHYS(pg);
-	pte = TSB_DATA(0 /* global */,
-		pagesize,
-		pa,
-		1 /* priv */,
-		1 /* Write */,
-		1 /* Cacheable */,
-		1 /* ALIAS -- Disable D$ */,
-		1 /* valid */,
-		0 /* IE */);
+	/* Allocate the aligned VA and determine the size. */
+	va = uvm_km_valloc_align(kernel_map, 8 * PAGE_SIZE, 8 * PAGE_SIZE);
+	if (!va)
+		panic("alloc_cpuinfo: no virtual space");
+	va0 = va;
 
-	/* Map the pages */
-	for (; pg != NULL; pg = TAILQ_NEXT(pg, pageq)) {
-		pa = VM_PAGE_TO_PHYS(pg);
-		pmap_zero_page(pa);
-		pmap_kenter_pa(va, pa | PMAP_NVC, VM_PROT_READ | VM_PROT_WRITE);
-		va += PAGE_SIZE;
-	}
+	pa0 = cpu0paddr;
+	cpu0paddr += 8*PAGE_SIZE;
+
+	for (pa = pa0; pa < cpu0paddr; pa += PAGE_SIZE, va += PAGE_SIZE)
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 
-	if (!cpus)
-		cpus = (struct cpu_info *)va;
-	else {
-		for (ci = cpus; ci->ci_next; ci = ci->ci_next)
-			;
-		ci->ci_next = (struct cpu_info *)va;
-	}
+	cpi = (struct cpu_info*)(va0 + CPUINFO_VA - INTSTACK);
 
-	return (pte | TLB_L);
+	memset((void *)va0, 0, sz);
+
+	/*
+	 * Initialize cpuinfo structure.
+	 *
+	 * Arrange pcb, idle stack and interrupt stack in the same
+	 * way as is done for the boot cpu in locore.
+	 */
+	cpi->ci_next = NULL;
+	cpi->ci_curlwp = &lwp0;
+	cpi->ci_number = portid;
+	cpi->ci_cpuid = portid;
+	cpi->ci_upaid = portid;
+	cpi->ci_fplwp = NULL;
+	cpi->ci_spinup = NULL;						/* XXX */
+	cpi->ci_eintstack = (void *)(EINTSTACK); 			/* XXX */
+	cpi->ci_idle_u = (struct pcb *)(CPUINFO_VA + 2*PAGE_SIZE); 	/* XXX */
+	cpi->ci_cpcb = cpi->ci_idle_u /* (struct pcb *)va0 */;		/* XXX */
+	cpi->ci_initstack = (void *)((vaddr_t)cpi->ci_idle_u + 2*PAGE_SIZE); /* XXX */
+	cpi->ci_paddr = pa0;
+	cpi->ci_self = cpi;
+	cpi->ci_node = cpu_node;
+
+	/*
+	 * Finally, add itself to the list of active cpus.
+	 */
+	for (ci = cpus; ci->ci_next != NULL; ci = ci->ci_next)
+		;
+	ci->ci_next = cpi;
+	return (cpi);
 }
 
 int
@@ -360,15 +354,118 @@ cpu_attach(parent, dev, aux)
 	 * Now that we know the size of the largest cache on this CPU,
 	 * re-color our pages.
 	 */
-	uvm_page_recolor(atop(bigcache));
+	uvm_page_recolor(atop(bigcache)); /* XXX */
+
+	/*
+	 * Allocate cpu_info structure if needed and save cache information
+	 * in there.
+	 */
+	alloc_cpuinfo((u_int)node);
 }
 
 #if defined(MULTIPROCESSOR)
 /*
  * Start secondary processors in motion.
  */
+extern vaddr_t ktext;
+extern paddr_t ktextp;
+extern vaddr_t ektext;
+extern vaddr_t kdata;
+extern paddr_t kdatap;
+extern vaddr_t ekdata;
+
+extern void cpu_mp_startup_end(void *);
+
+__volatile int	cpu_go_smp = 0;
+
 void
 cpu_boot_secondary_processors()
 {
+	int pstate;
+	struct cpu_info *ci;
+	int i;
+	vaddr_t mp_start;
+	int     mp_start_size;
+
+	cpu_args->cb_ktext = ktext;
+	cpu_args->cb_ktextp = ktextp;
+	cpu_args->cb_ektext = ektext;
+
+	cpu_args->cb_kdata = kdata;
+	cpu_args->cb_kdatap = kdatap;
+	cpu_args->cb_ekdata = ekdata;
+
+	mp_start = ((vaddr_t)cpu_args + sizeof(*cpu_args)+ 0x0f) & ~0x0f;
+	mp_start_size = (vaddr_t)cpu_mp_startup_end - (vaddr_t)cpu_mp_startup;
+	memcpy((void *)mp_start, cpu_mp_startup, mp_start_size);
+
+	mp_start_size = mp_start_size >> 3;
+	for (i = 0; i < mp_start_size; i++)
+		flush(mp_start + (i << 3));
+
+#ifdef DEBUG
+	printf("cpu_args @ %p\n", cpu_args);
+	printf("ktext %lx, ktextp %lx, ektext %lx\n",
+	       cpu_args->cb_ktext, cpu_args->cb_ktextp,cpu_args->cb_ektext);
+	printf("kdata %lx, kdatap %lx, ekdata %lx\n",
+	       cpu_args->cb_kdata, cpu_args->cb_kdatap, cpu_args->cb_ekdata);
+	printf("mp_start %lx, mp_start_size 0x%x\n",
+	       mp_start, mp_start_size);
+#endif
+
+	printf("cpu0: booting secondary processors:");
+
+	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+		if (ci->ci_upaid == CPU_UPAID)
+			continue;
+
+		cpu_args->cb_node = ci->ci_node;
+		cpu_args->cb_flags = 0;
+		cpu_args->cb_cpuinfo =  ci->ci_paddr;
+		cpu_args->cb_initstack = ci->ci_initstack;
+		membar_storeload();
+
+#ifdef DEBUG
+		printf("node %x. cpuinfo %lx, initstack %p\n",
+		       cpu_args->cb_node, cpu_args->cb_cpuinfo,
+		       cpu_args->cb_initstack);
+#endif
+
+		/* Disable interrupts and start another cpu. */
+		pstate = getpstate();
+		setpstate(PSTATE_KERN);
+
+		prom_startcpu(ci->ci_node, (void *)mp_start, 0);
+
+		for (i = 0; i < 100; i++) {
+			if (cpu_args->cb_flags == 1)
+				break;
+			delay(10000);
+		}
+		setpstate(pstate);
+
+		printf(" cpu%d (%x)", ci->ci_upaid, cpu_args->cb_flags);
+	}
+
+	printf("\n");
+}
+
+/* XXX */
+void mp_main(void);
+void
+mp_main()
+{
+
+	cpu_args->cb_flags = 1;
+	membar_storeload();
+
+#if 1
+	printf("mp_main: started\n");
+#endif
+
+	while (!cpu_go_smp)
+		;
+
+	printf("mp_main: ...\n");
 }
 #endif /* MULTIPROCESSOR */

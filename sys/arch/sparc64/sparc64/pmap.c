@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.151 2003/12/03 17:58:47 petrov Exp $	*/
+/*	$NetBSD: pmap.c,v 1.152 2004/01/06 09:38:20 petrov Exp $	*/
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.151 2003/12/03 17:58:47 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.152 2004/01/06 09:38:20 petrov Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.151 2003/12/03 17:58:47 petrov Exp $");
 #include <machine/ctlreg.h>
 #include <machine/openfirm.h>
 #include <machine/kcore.h>
+#include <machine/cpu.h>
 
 #include "cache.h"
 
@@ -71,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.151 2003/12/03 17:58:47 petrov Exp $");
 #define	MEG		(1<<20) /* 1MB */
 #define	KB		(1<<10)	/* 1KB */
 
-paddr_t cpu0paddr;/* XXXXXXXXXXXXXXXX */
+paddr_t cpu0paddr;		/* contigious phys memory preallocated for cpus */
 
 /* These routines are in assembly to allow access thru physical mappings */
 extern int64_t pseg_get __P((struct pmap *, vaddr_t));
@@ -127,14 +128,12 @@ void	pmap_enter_pv __P((struct pmap *, vaddr_t, paddr_t, struct vm_page *,
 			   pv_entry_t));
 void	pmap_page_cache __P((struct pmap *, paddr_t, int));
 
+void pmap_alloc_bootargs(void);
 /*
  * First and last managed physical addresses.
  * XXX only used for dumping the system.
  */
 paddr_t	vm_first_phys, vm_num_phys;
-
-u_int64_t first_phys_addr;
-#define pa_index(pa)		atop((pa) - first_phys_addr)
 
 /*
  * Here's the CPU TSB stuff.  It's allocated in pmap_bootstrap.
@@ -163,7 +162,7 @@ paddr_t ekdatap;
 
 static int npgs;
 static u_int nextavail;
-static struct mem_region memlist[8]; /* Pick a random size here */
+static struct mem_region memlist[32]; /* Pick a random size here */
 
 vaddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
 
@@ -454,6 +453,23 @@ pmap_calculate_colors() {
 	return (maxcolor);
 }
 
+void
+pmap_alloc_bootargs()
+{
+/*	extern struct cpu_bootargs *cpu_args; */
+	char *v;
+
+	v = OF_claim(NULL, 2*PAGE_SIZE, PAGE_SIZE);
+	if ((v == NULL) || (v == (void*)-1))
+		panic("Can't claim a page of memory.");
+
+	memset(v, 0, 2*PAGE_SIZE);
+
+	cpu_args = (struct cpu_bootargs*)v;
+
+	cpu_args->cb_initstack = v + 2*PAGE_SIZE;
+}
+
 /*
  * This is called during bootstrap, before the system is really initialized.
  *
@@ -498,6 +514,9 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #endif
 
 	BDPRINTF(PDB_BOOT, ("Entered pmap_bootstrap.\r\n"));
+
+	pmap_alloc_bootargs();
+
 	/*
 	 * set machine page size
 	 */
@@ -606,12 +625,8 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	if (ekdata < mp1->start)
 		ekdata = mp1->start;
 
-#if 1
-#define	valloc(name, type, num) (name) = (type *)firstaddr; firstaddr += (num)
-#else
-#define	valloc(name, type, num) (name) = (type *)firstaddr; firstaddr = \
-	(vaddr_t)((name)+(num))
-#endif
+#define	valloc(name, type, sz) (name) = (type *)firstaddr; \
+			firstaddr += (sz); firstaddr = (firstaddr + 0xf) & ~0xf;
 
 	/*
 	 * Since we can't always give the loader the hint to align us on a 4MB
@@ -906,7 +921,7 @@ remap_data:
 	/*
 	 * Allocate a 64MB page for the cpu_info structure now.
 	 */
-	if ((cpu0paddr = prom_alloc_phys(8*PAGE_SIZE, 8*PAGE_SIZE)) == 0 ) {
+	if ((cpu0paddr = prom_alloc_phys(8 * PAGE_SIZE * ncpus, 8 * PAGE_SIZE)) == 0 ) {
 		prom_printf("Cannot allocate new cpu_info\r\n");
 		OF_exit();
 	}
@@ -978,10 +993,6 @@ remap_data:
 	BDPRINTF(PDB_BOOT1, ("firstaddr after TSB=%lx\r\n", (u_long)firstaddr));
 	BDPRINTF(PDB_BOOT1, ("TSB allocated at %p/%p size %08x\r\n",
 	    tsb_dmmu, tsb_immu, TSBSIZE));
-
-	first_phys_addr = mem->start;
-	BDPRINTF(PDB_BOOT1, ("firstaddr after pmap=%08lx\r\n", 
-		(u_long)firstaddr));
 
 	/*
 	 * Page align all regions.  
@@ -1325,16 +1336,21 @@ remap_data:
 
 		/* Initialize our cpu_info structure */
 		memset((void*)intstk, 0, 8*PAGE_SIZE);
-		cpus->ci_next = NULL; /* Redundant, I know. */
+		cpus->ci_next = NULL;
 		cpus->ci_curlwp = &lwp0;
 		cpus->ci_cpcb = (struct pcb *)u0[0]; /* Need better source */
+		cpus->ci_flags = CPUF_PRIMARY;
 		cpus->ci_upaid = CPU_UPAID;
-		cpus->ci_number = cpus->ci_upaid; /* How do we figure this out? */
+		cpus->ci_number = 0;
 		cpus->ci_cpuid = cpus->ci_upaid;
 		cpus->ci_fplwp = NULL;
 		cpus->ci_spinup = main; /* Call main when we're running. */
 		cpus->ci_initstack = (void *)u0[1];
 		cpus->ci_paddr = cpu0paddr;
+		cpus->ci_eintstack = (void *)EINTSTACK;
+		cpus->ci_idle_u = (struct pcb *)(CPUINFO_VA + 2 * PAGE_SIZE);
+
+		cpu0paddr += 64*KB;
 
 		/* The rest will be done at CPU attach time. */
 		BDPRINTF(PDB_BOOT1, 
@@ -1372,11 +1388,11 @@ pmap_init()
 	size = sizeof(struct pv_entry) * physmem;
 	if (uvm_pglistalloc((psize_t)size, (paddr_t)0, (paddr_t)-1,
 		(paddr_t)PAGE_SIZE, (paddr_t)0, &pglist, 1, 0) != 0)
-		panic("cpu_start: no memory");
+		panic("pmap_init: no memory");
 
 	va = uvm_km_valloc(kernel_map, size);
 	if (va == 0)
-		panic("cpu_start: no memory");
+		panic("pmap_init: no memory");
 
 	/* Map the pages */
 	TAILQ_FOREACH(pg, &pglist, pageq) {

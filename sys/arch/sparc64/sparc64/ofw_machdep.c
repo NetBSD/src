@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.19 2003/10/21 08:38:04 petrov Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.20 2004/01/06 09:38:20 petrov Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.19 2003/10/21 08:38:04 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.20 2004/01/06 09:38:20 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -273,7 +273,7 @@ prom_free_virt(vaddr, len)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_claim_virt: cannot get mmuh\r\n");
+		prom_printf("prom_free_virt: cannot get mmuh\r\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -308,7 +308,7 @@ prom_unmap_virt(vaddr, len)
 	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
-		prom_printf("prom_claim_virt: cannot get mmuh\r\n");
+		prom_printf("prom_unmap_virt: cannot get mmuh\r\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -436,7 +436,7 @@ prom_claim_phys(phys, len)
 	} args;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
-		prom_printf("prom_alloc_phys: cannot get memh\r\n");
+		prom_printf("prom_claim_phys: cannot get memh\r\n");
 		return -1;
 	}
 	args.name = ADR2CELL(&"call-method");
@@ -560,6 +560,30 @@ prom_get_msgbuf(len, align)
 	{ int i; for (i=0; i<200000000; i++); }
 	return addr; /* Kluge till we go 64-bit */
 }
+
+#ifdef MULTIPROCESSOR
+void
+prom_startcpu(u_int cpu, void *func, u_long arg)
+{
+        static struct {
+                cell_t  name;
+                cell_t  nargs;
+                cell_t  nreturns;
+                cell_t  cpu;
+                cell_t  func;
+                cell_t  arg;
+        } args;
+
+	args.name = ADR2CELL(&"SUNW,start-cpu");
+	args.nargs = 3;
+	args.nreturns = 0;
+        args.cpu = cpu;
+        args.func = (cell_t)func;
+        args.arg = (cell_t)arg;
+
+        openfirmware(&args);
+}
+#endif
 
 /* 
  * Low-level prom I/O routines.

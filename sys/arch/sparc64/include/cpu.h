@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41 2004/01/04 11:33:31 jdolecek Exp $ */
+/*	$NetBSD: cpu.h,v 1.42 2004/01/06 09:38:19 petrov Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,6 +93,17 @@
  */
 
 struct cpu_info {
+	/*
+	 * SPARC cpu_info structures live at two VAs: one global
+	 * VA (so each CPU can access any other CPU's cpu_info)
+	 * and an alias VA CPUINFO_VA which is the same on each
+	 * CPU and maps to that CPU's cpu_info.  Since the alias
+	 * CPUINFO_VA is how we locate our cpu_info, we have to
+	 * self-reference the global VA so that we can return it
+	 * in the curcpu() macro.
+	 */
+	struct cpu_info * __volatile ci_self;
+
 	/* Most important fields first */
 	struct lwp		*ci_curlwp;
 	struct pcb		*ci_cpcb;
@@ -120,15 +131,56 @@ struct cpu_info {
 	void			(*ci_spinup) __P((void));
 	void			*ci_initstack;
 	paddr_t			ci_paddr;
+
+	/* CPU PROM information. */
+	u_int			ci_node;
+
+	int			ci_flags;
+	int			ci_want_ast;
+	int			ci_want_resched;
+
+	void			*ci_eintstack;
+	struct pcb		*ci_idle_u;
 };
 
+#define CPUF_PRIMARY	1
+
+/*
+ * CPU boot arguments. Used by secondary CPUs at the bootstrap time.
+ */
+struct cpu_bootargs {
+	u_int	cb_node;	/* PROM CPU node */
+	__volatile int cb_flags;
+
+	vaddr_t cb_ktext;
+	paddr_t cb_ktextp;
+	vaddr_t cb_ektext;
+
+	vaddr_t cb_kdata;
+	paddr_t cb_kdatap;
+	vaddr_t cb_ekdata;
+
+	paddr_t	cb_cpuinfo;
+
+	void	*cb_initstack;
+};
+
+extern struct cpu_bootargs *cpu_args;
+
+extern int ncpus;
 extern struct cpu_info *cpus;
 
 #define	curcpu()	((struct cpu_info *)CPUINFO_VA)
 
+#define	cpu_number()	(curcpu()->ci_number)
+#define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
+
 #define curlwp		curcpu()->ci_curlwp
 #define fplwp		curcpu()->ci_fplwp
 #define curpcb		curcpu()->ci_cpcb
+
+#define want_ast	curcpu()->ci_want_ast
+#define want_resched	curcpu()->ci_want_resched
 
 /*
  * definitions of cpu-dependent requirements
@@ -136,20 +188,14 @@ extern struct cpu_info *cpus;
  */
 #define	cpu_swapin(p)	/* nothing */
 #define	cpu_swapout(p)	/* nothing */
-#if 1
-#define cpu_number()	0
-#else
-#define	cpu_number()	(curcpu()->ci_number)
-#endif
+#define	cpu_wait(p)	/* nothing */
 
 /* This really should be somewhere else. */
 #define	cpu_proc_fork(p1, p2)	/* nothing */
 
 #if defined(MULTIPROCESSOR)
+void	cpu_mp_startup __P((void));
 void	cpu_boot_secondary_processors __P((void));
-#define	CPU_IS_PRIMARY(ci)	(1) /* XXX */
-#else
-#define	CPU_IS_PRIMARY(ci)	(1)
 #endif
 
 /*
@@ -205,36 +251,16 @@ struct clockframe {
 			((vaddr_t)(framep)->t.tf_out[6] >		\
 				(vaddr_t)INTSTACK))))
 
-/*
- * Software interrupt request `register'.
- */
-#ifdef DEPRECATED
-union sir {
-	int	sir_any;
-	char	sir_which[4];
-} sir;
-
-#define SIR_NET		0
-#define SIR_CLOCK	1
-#endif
 
 extern struct intrhand soft01intr, soft01net, soft01clock;
 
-#if 0
-#define setsoftint()	send_softint(-1, IPL_SOFTINT, &soft01intr)
-#define setsoftnet()	send_softint(-1, IPL_SOFTNET, &soft01net)
-#else
 void setsoftint __P((void));
 void setsoftnet __P((void));
-#endif
-
-int	want_ast;
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-int	want_resched;		/* resched() was called */
 #define	need_resched(ci)	(want_resched = 1, want_ast = 1)
 
 /*
@@ -273,8 +299,9 @@ extern struct intrhand *intrlev[MAXINTNUM];
 void	intr_establish __P((int level, struct intrhand *));
 
 /* cpu.c */
-paddr_t cpu_alloc __P((void));
-u_int64_t cpu_init __P((paddr_t, int));
+paddr_t	cpu_alloc	__P((void));
+void	cpu_start	__P((int));
+
 /* disksubr.c */
 struct dkbad;
 int isbad __P((struct dkbad *bt, int, int, int));
@@ -293,13 +320,10 @@ void	savefpstate __P((struct fpstate64 *));
 void	loadfpstate __P((struct fpstate64 *));
 u_int64_t	probeget __P((paddr_t, int, int));
 int	probeset __P((paddr_t, int, int, u_int64_t));
-#if 0
-void	write_all_windows __P((void));
-void	write_user_windows __P((void));
-#else
+
 #define	 write_all_windows() __asm __volatile("flushw" : : )
 #define	 write_user_windows() __asm __volatile("flushw" : : )
-#endif
+
 void 	proc_trampoline __P((void));
 struct pcb;
 void	snapshot __P((struct pcb *));
@@ -314,8 +338,6 @@ void	remrq __P((struct proc *));
 /* trap.c */
 void	kill_user_windows __P((struct lwp *));
 int	rwindow_save __P((struct lwp *));
-/* amd7930intr.s */
-void	amd7930_trap __P((void));
 /* cons.c */
 int	cnrom __P((void));
 /* zs.c */
@@ -353,9 +375,6 @@ struct trapvec {
 	int	tv_instr[8];		/* the eight instructions */
 };
 extern struct trapvec *trapbase;	/* the 256 vectors */
-
-extern void wzero __P((void *, u_int));
-extern void wcopy __P((const void *, void *, u_int));
 
 #endif /* _KERNEL */
 #endif /* _CPU_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.86 2003/12/14 05:16:30 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.87 2004/01/06 09:38:19 petrov Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.86 2003/12/14 05:16:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.87 2004/01/06 09:38:19 petrov Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -119,6 +119,7 @@ int	st_crazymap __P((int));
 void	sync_crash __P((void));
 int	mainbus_match __P((struct device *, struct cfdata *, void *));
 static	void mainbus_attach __P((struct device *, struct device *, void *));
+static  void get_ncpus(void);
 
 struct	bootpath bootpath[8];
 int	nbootpath;
@@ -193,6 +194,25 @@ str2hex(str, vp)
 	return (str);
 }
 
+
+static void
+get_ncpus()
+{
+	int node;
+	char buf[32];
+
+	node = findroot();
+
+	ncpus = 0;
+	for (node = OF_child(node); node; node = OF_peer(node)) {
+		if (OF_getprop(node, "device_type", buf, sizeof(buf)) <= 0)
+			continue;
+		if (strcmp(buf, "cpu") != 0)
+			continue;
+		ncpus++;
+	}
+}
+
 /*
  * locore.s code calls bootstrap() just before calling main().
  *
@@ -236,6 +256,7 @@ bootstrap(nctx)
 #endif
 #endif
 
+	get_ncpus();
 	pmap_bootstrap(KERNBASE, (u_long)&end, nctx);
 }
 
@@ -624,6 +645,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	 * EEPROM contains the Ethernet address for the LANCE chip.
 	 * If the device cannot be located or configured, panic.
 	 */
+	if (ncpus == 0)
+		panic("None of the CPUs found");
 
 	node = findroot();
 
@@ -642,10 +665,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_node = node;
 		ma.ma_name = "cpu";
 		config_found(dev, &ma, mbprint);
-		break;
 	}
-	if (node == 0)
-		panic("None of the CPUs found");
 
 	node = findroot();	/* re-init root node */
 

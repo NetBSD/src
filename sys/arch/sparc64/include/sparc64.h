@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.h,v 1.4 2003/12/08 00:52:48 petrov Exp $	*/
+/*	$NetBSD: sparc64.h,v 1.5 2004/01/06 09:38:19 petrov Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -49,6 +49,8 @@ u_int64_t prom_alloc_phys (int , int);
 u_int64_t prom_claim_phys (paddr_t, int);
 int prom_free_phys (paddr_t, int);
 u_int64_t prom_get_msgbuf (int, int);
+
+void prom_startcpu(u_int, void *, u_long);
 
 /*
  * Debug
