@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.78 2003/09/19 22:51:05 christos Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.79 2003/09/25 21:59:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.78 2003/09/19 22:51:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.79 2003/09/25 21:59:18 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -301,8 +301,8 @@ ktrpsig(p, sig, action, mask, ksi)
 	struct proc *p;
 	int sig;
 	sig_t action;
-	sigset_t *mask;
-	ksiginfo_t *ksi;
+	const sigset_t *mask;
+	const ksiginfo_t *ksi;
 {
 	struct ktr_header kth;
 	struct {

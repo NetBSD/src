@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.159 2003/09/23 17:59:48 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.160 2003/09/25 21:59:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.159 2003/09/23 17:59:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.160 2003/09/25 21:59:18 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -84,8 +84,9 @@ static void	child_psignal(struct proc *, int);
 static void	proc_stop(struct proc *);
 static int	build_corename(struct proc *, char [MAXPATHLEN]);
 static void	ksiginfo_exithook(struct proc *, void *);
-static void	ksiginfo_put(struct proc *, ksiginfo_t *);
+static void	ksiginfo_put(struct proc *, const ksiginfo_t *);
 static ksiginfo_t *ksiginfo_get(struct proc *, int);
+static void	kpsignal2(struct proc *, const ksiginfo_t *, int);
 
 sigset_t	contsigmask, stopsigmask, sigcantmask;
 
@@ -132,7 +133,7 @@ ksiginfo_get(struct proc *p, int signo)
  * or for non RT signals with non-existing entries.
  */
 static void
-ksiginfo_put(struct proc *p, ksiginfo_t *ksi)
+ksiginfo_put(struct proc *p, const ksiginfo_t *ksi)
 {
 	ksiginfo_t *kp;
 	struct sigaction *sa = &SIGACTION_PS(p->p_sigacts, ksi->ksi_signo);
@@ -738,7 +739,7 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 		if (!CANSIGNAL(cp, pc, p, SCARG(uap, signum)))
 			return (EPERM);
 		if (SCARG(uap, signum))
-			kpsignal(p, &ksi, NULL);
+			kpsignal2(p, &ksi, 1);
 		return (0);
 	}
 	switch (SCARG(uap, pid)) {
@@ -778,7 +779,7 @@ killpg1(struct proc *cp, ksiginfo_t *ksi, int pgid, int all)
 				continue;
 			nfound++;
 			if (signum)
-				kpsignal(p, ksi, NULL);
+				kpsignal2(p, ksi, 1);
 		}
 		proclist_unlock_read();
 	} else {
@@ -798,7 +799,7 @@ killpg1(struct proc *cp, ksiginfo_t *ksi, int pgid, int all)
 				continue;
 			nfound++;
 			if (signum && P_ZOMBIE(p) == 0)
-				kpsignal(p, ksi, NULL);
+				kpsignal2(p, ksi, 1);
 		}
 	}
 	return (nfound ? 0 : ESRCH);
@@ -855,7 +856,7 @@ kpgsignal(struct pgrp *pgrp, ksiginfo_t *ksi, void *data, int checkctty)
  * Otherwise, post it normally.
  */
 #ifndef __HAVE_SIGINFO
-void _trapsignal(struct lwp *, ksiginfo_t *);
+void _trapsignal(struct lwp *, const ksiginfo_t *);
 void
 trapsignal(struct lwp *l, int signum, u_long code)
 {
@@ -869,7 +870,7 @@ trapsignal(struct lwp *l, int signum, u_long code)
 #endif
 
 void
-trapsignal(struct lwp *l, ksiginfo_t *ksi)
+trapsignal(struct lwp *l, const ksiginfo_t *ksi)
 {
 	struct proc	*p;
 	struct sigacts	*ps;
@@ -902,7 +903,7 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 		/* XXX for core dump/debugger */
 		p->p_sigctx.ps_signo = ksi->ksi_signo;
 		p->p_sigctx.ps_code = ksi->ksi_trap;
-		kpsignal(p, ksi, NULL);
+		kpsignal2(p, ksi, 1);
 	}
 }
 
@@ -922,7 +923,7 @@ child_psignal(struct proc *p, int dolock)
 	ksi.ksi_status = p->p_xstat;
 	ksi.ksi_utime = p->p_stats->p_ru.ru_utime.tv_sec;
 	ksi.ksi_stime = p->p_stats->p_ru.ru_stime.tv_sec;
-	kpsignal1(p->p_pptr, &ksi, NULL, dolock);
+	kpsignal2(p->p_pptr, &ksi, dolock);
 }
 
 /*
@@ -946,30 +947,12 @@ psignal1(struct proc *p, int signum, int dolock)
     ksiginfo_t ksi;
     memset(&ksi, 0, sizeof(ksi));
     ksi.ksi_signo = signum;
-    kpsignal1(p, &ksi, NULL, dolock);
+    kpsignal2(p, &ksi, dolock);
 }
 
 void
-kpsignal1(struct proc *p, ksiginfo_t *ksi, void *data,
-	int dolock)		/* XXXSMP: works, but icky */
+kpsignal1(struct proc *p, ksiginfo_t *ksi, void *data, int dolock)
 {
-	struct lwp *l, *suspended;
-	int	s = 0, prop, allsusp;
-	sig_t	action;
-	int	signum = ksi->ksi_signo;
-
-#ifdef DIAGNOSTIC
-	if (signum <= 0 || signum >= NSIG)
-		panic("psignal signal number %d", signum);
-
-
-	/* XXXSMP: works, but icky */
-	if (dolock)
-		SCHED_ASSERT_UNLOCKED();
-	else
-		SCHED_ASSERT_LOCKED();
-#endif
-
 	if (data) {
 		size_t fd;
 		struct filedesc *fdp = p->p_fd;
@@ -983,6 +966,28 @@ kpsignal1(struct proc *p, ksiginfo_t *ksi, void *data,
 			}
 		}
 	}
+	kpsignal2(p, ksi, dolock);
+}
+
+static void 
+kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
+{
+	struct lwp *l, *suspended;
+	int	s = 0, prop, allsusp;
+	sig_t	action;
+	int	signum = ksi->ksi_signo;
+
+#ifdef DIAGNOSTIC
+	if (signum <= 0 || signum >= NSIG)
+		panic("psignal signal number %d", signum);
+
+	/* XXXSMP: works, but icky */
+	if (dolock)
+		SCHED_ASSERT_UNLOCKED();
+	else
+		SCHED_ASSERT_LOCKED();
+#endif
+
 
 	/*
 	 * Notify any interested parties in the signal.
@@ -1276,7 +1281,7 @@ kpsignal1(struct proc *p, ksiginfo_t *ksi, void *data,
 }
 
 void
-kpsendsig(struct lwp *l, ksiginfo_t *ksi, sigset_t *mask)
+kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct proc *p = l->l_proc;
 	struct lwp *le, *li;
