@@ -1,3 +1,5 @@
+/*	$NetBSD: gencons.h,v 1.2 1994/11/25 15:28:26 ragge Exp $ */
+
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -27,7 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: gencons.h,v 1.1 1994/11/25 15:25:49 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */
