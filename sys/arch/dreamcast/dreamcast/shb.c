@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.2 2001/01/15 20:19:53 thorpej Exp $	*/
+/*	$NetBSD: shb.c,v 1.3 2001/01/31 18:44:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -387,6 +387,8 @@ intrhandler(p1, p2, p3, p4, frame)
 	int ocpl;
 
 #if 0
+	if(frame.tf_trapno != 0x420 && frame.tf_trapno != 0xf1f &&
+	   frame.tf_trapno != 0xf1e)
 	printf("intr_handler:int_no %x spc %x ssr %x r15 %x curproc %x\n",
 	       frame.tf_trapno, frame.tf_spc, frame.tf_ssr, frame.tf_r15,
 	       (int)curproc);
@@ -559,6 +561,7 @@ mask_irq(irq)
 		SHREG_IPRE &= ~((15)<<12);
 		break;
 #endif
+
 	default:
 		if (irq < SHB_MAX_HARDINTR)
 			printf("masked unknown irq(%d)!\n", irq);
@@ -611,6 +614,7 @@ unmask_irq(irq)
 		SHREG_IPRE |= ((15 - irq)<<12);
 		break;
 #endif
+
 	default:
 		if (irq < SHB_MAX_HARDINTR)
 			printf("unmasked unknown irq(%d)!\n", irq);
@@ -645,6 +649,10 @@ mask_irq(irq)
 		SHREG_IPRE &= ~((15)<<12);
 		break;
 #endif
+	 case 11:
+   	  *(volatile unsigned int *)(void *)(0xa05f6924) &= ~(1<<3);
+	  break;
+
 	default:
 		if (irq < SHB_MAX_HARDINTR)
 			printf("masked unknown irq(%d)!\n", irq);
@@ -680,6 +688,10 @@ unmask_irq(irq)
 		SHREG_IPRE |= ((15 - irq)<<12);
 		break;
 #endif
+	 case 11:
+   	  *(volatile unsigned int *)(void *)(0xa05f6924) |= (1<<3);
+	  break;
+
 	default:
 		if (irq < SHB_MAX_HARDINTR)
 			printf("unmasked unknown irq(%d)!\n", irq);
