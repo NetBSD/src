@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.615.2.6 2004/07/05 22:30:49 he Exp $
+$NetBSD: pcidevs,v 1.615.2.7 2004/07/23 21:58:08 he Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2384,6 +2384,7 @@ product SIS 730			0x0730	SiS 730 Host Bridge
 product SIS 733			0x0733	SiS 733 Host Bridge
 product SIS 735			0x0735	SiS 735 Host Bridge
 product SIS 740			0x0740	SiS 740 Host Bridge
+product SIS 741			0x0741	SiS 741 Host Bridge
 product SIS 745			0x0745	SiS 745 Host Bridge
 product SIS 746			0x0746	SiS 746 Host Bridge
 product SIS 748			0x0748	SiS 748 Host Bridge
