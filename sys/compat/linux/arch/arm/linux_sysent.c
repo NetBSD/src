@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.3 2002/01/23 15:55:51 bjh21 Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.4 2002/01/23 16:14:45 bjh21 Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.3 2002/01/23 15:55:51 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.4 2002/01/23 16:14:45 bjh21 Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -29,7 +29,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.3 2002/01/23 15:55:51 bjh21 Exp $
 
 struct sysent linux_sysent[] = {
 	{ 0, 0, 0,
-	    sys_nosys },			/* 0 = unimplemented */
+	    linux_sys_nosys },			/* 0 = unimplemented */
 	{ 1, s(struct sys_exit_args), 0,
 	    sys_exit },				/* 1 = exit */
 	{ 0, 0, 0,
@@ -63,17 +63,17 @@ struct sysent linux_sysent[] = {
 	{ 3, s(struct linux_sys_lchown16_args), 0,
 	    linux_sys_lchown16 },		/* 16 = lchown16 */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 17 = obsolete break */
+	    linux_sys_nosys },			/* 17 = obsolete break */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 18 = obsolete ostat */
+	    linux_sys_nosys },			/* 18 = obsolete ostat */
 	{ 3, s(struct compat_43_sys_lseek_args), 0,
 	    compat_43_sys_lseek },		/* 19 = lseek */
 	{ 0, 0, SYCALL_MPSAFE | 0,
 	    sys_getpid },			/* 20 = getpid */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 21 = unimplemented mount */
+	    linux_sys_nosys },			/* 21 = unimplemented mount */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 22 = obsolete umount */
+	    linux_sys_nosys },			/* 22 = obsolete umount */
 	{ 1, s(struct sys_setuid_args), 0,
 	    sys_setuid },			/* 23 = setuid */
 	{ 0, 0, 0,
@@ -85,21 +85,21 @@ struct sysent linux_sysent[] = {
 	{ 1, s(struct linux_sys_alarm_args), 0,
 	    linux_sys_alarm },			/* 27 = alarm */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 28 = obsolete ofstat */
+	    linux_sys_nosys },			/* 28 = obsolete ofstat */
 	{ 0, 0, 0,
 	    linux_sys_pause },			/* 29 = pause */
 	{ 2, s(struct linux_sys_utime_args), 0,
 	    linux_sys_utime },			/* 30 = utime */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 31 = obsolete stty */
+	    linux_sys_nosys },			/* 31 = obsolete stty */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 32 = obsolete gtty */
+	    linux_sys_nosys },			/* 32 = obsolete gtty */
 	{ 2, s(struct linux_sys_access_args), 0,
 	    linux_sys_access },			/* 33 = access */
 	{ 1, s(struct linux_sys_nice_args), 0,
 	    linux_sys_nice },			/* 34 = nice */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 35 = obsolete ftime */
+	    linux_sys_nosys },			/* 35 = obsolete ftime */
 	{ 0, 0, 0,
 	    sys_sync },				/* 36 = sync */
 	{ 2, s(struct linux_sys_kill_args), 0,
@@ -117,7 +117,7 @@ struct sysent linux_sysent[] = {
 	{ 1, s(struct linux_sys_times_args), 0,
 	    linux_sys_times },			/* 43 = times */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 44 = obsolete prof */
+	    linux_sys_nosys },			/* 44 = obsolete prof */
 	{ 1, s(struct linux_sys_brk_args), 0,
 	    linux_sys_brk },			/* 45 = brk */
 	{ 1, s(struct sys_setgid_args), 0,
@@ -133,19 +133,19 @@ struct sysent linux_sysent[] = {
 	{ 1, s(struct sys_acct_args), 0,
 	    sys_acct },				/* 51 = acct */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 52 = unimplemented umount */
+	    linux_sys_nosys },			/* 52 = unimplemented umount */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 53 = obsolete lock */
+	    linux_sys_nosys },			/* 53 = obsolete lock */
 	{ 3, s(struct linux_sys_ioctl_args), 0,
 	    linux_sys_ioctl },			/* 54 = ioctl */
 	{ 3, s(struct linux_sys_fcntl_args), 0,
 	    linux_sys_fcntl },			/* 55 = fcntl */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 56 = obsolete mpx */
+	    linux_sys_nosys },			/* 56 = obsolete mpx */
 	{ 2, s(struct sys_setpgid_args), 0,
 	    sys_setpgid },			/* 57 = setpgid */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 58 = obsolete ulimit */
+	    linux_sys_nosys },			/* 58 = obsolete ulimit */
 	{ 1, s(struct linux_sys_oldolduname_args), 0,
 	    linux_sys_oldolduname },		/* 59 = oldolduname */
 	{ 1, s(struct sys_umask_args), 0,
@@ -153,7 +153,7 @@ struct sysent linux_sysent[] = {
 	{ 1, s(struct sys_chroot_args), 0,
 	    sys_chroot },			/* 61 = chroot */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 62 = unimplemented ustat */
+	    linux_sys_nosys },			/* 62 = unimplemented ustat */
 	{ 2, s(struct sys_dup2_args), 0,
 	    sys_dup2 },				/* 63 = dup2 */
 	{ 0, 0, 0,
@@ -205,7 +205,7 @@ struct sysent linux_sysent[] = {
 	    linux_sys_uselib },			/* 86 = uselib */
 #else
 	{ 0, 0, 0,
-	    sys_nosys },			/* 86 = excluded uselib */
+	    linux_sys_nosys },			/* 86 = excluded uselib */
 #endif
 	{ 1, s(struct linux_sys_swapon_args), 0,
 	    linux_sys_swapon },			/* 87 = swapon */
@@ -236,11 +236,11 @@ struct sysent linux_sysent[] = {
 	{ 2, s(struct linux_sys_fstatfs_args), 0,
 	    linux_sys_fstatfs },		/* 100 = fstatfs */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 101 = unimplemented */
+	    linux_sys_nosys },			/* 101 = unimplemented */
 	{ 2, s(struct linux_sys_socketcall_args), 0,
 	    linux_sys_socketcall },		/* 102 = socketcall */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 103 = unimplemented syslog */
+	    linux_sys_nosys },			/* 103 = unimplemented syslog */
 	{ 3, s(struct sys_setitimer_args), 0,
 	    sys_setitimer },			/* 104 = setitimer */
 	{ 2, s(struct sys_getitimer_args), 0,
@@ -254,13 +254,13 @@ struct sysent linux_sysent[] = {
 	{ 1, s(struct linux_sys_olduname_args), 0,
 	    linux_sys_olduname },		/* 109 = olduname */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 110 = unimplemented */
+	    linux_sys_nosys },			/* 110 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 111 = unimplemented vhangup */
+	    linux_sys_nosys },			/* 111 = unimplemented vhangup */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 112 = unimplemented idle */
+	    linux_sys_nosys },			/* 112 = unimplemented idle */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 113 = unimplemented syscall */
+	    linux_sys_nosys },			/* 113 = unimplemented syscall */
 	{ 4, s(struct linux_sys_wait4_args), 0,
 	    linux_sys_wait4 },			/* 114 = wait4 */
 	{ 1, s(struct linux_sys_swapoff_args), 0,
@@ -280,35 +280,35 @@ struct sysent linux_sysent[] = {
 	{ 1, s(struct linux_sys_uname_args), 0,
 	    linux_sys_uname },			/* 122 = uname */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 123 = unimplemented modify_ldt */
+	    linux_sys_nosys },			/* 123 = unimplemented modify_ldt */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 124 = unimplemented adjtimex */
+	    linux_sys_nosys },			/* 124 = unimplemented adjtimex */
 	{ 3, s(struct sys_mprotect_args), 0,
 	    sys_mprotect },			/* 125 = mprotect */
 	{ 3, s(struct linux_sys_sigprocmask_args), 0,
 	    linux_sys_sigprocmask },		/* 126 = sigprocmask */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 127 = unimplemented create_module */
+	    linux_sys_nosys },			/* 127 = unimplemented create_module */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 128 = unimplemented init_module */
+	    linux_sys_nosys },			/* 128 = unimplemented init_module */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 129 = unimplemented delete_module */
+	    linux_sys_nosys },			/* 129 = unimplemented delete_module */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 130 = unimplemented get_kernel_syms */
+	    linux_sys_nosys },			/* 130 = unimplemented get_kernel_syms */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 131 = unimplemented quotactl */
+	    linux_sys_nosys },			/* 131 = unimplemented quotactl */
 	{ 1, s(struct linux_sys_getpgid_args), 0,
 	    linux_sys_getpgid },		/* 132 = getpgid */
 	{ 1, s(struct sys_fchdir_args), 0,
 	    sys_fchdir },			/* 133 = fchdir */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 134 = unimplemented bdflush */
+	    linux_sys_nosys },			/* 134 = unimplemented bdflush */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 135 = unimplemented sysfs */
+	    linux_sys_nosys },			/* 135 = unimplemented sysfs */
 	{ 1, s(struct linux_sys_personality_args), 0,
 	    linux_sys_personality },		/* 136 = personality */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 137 = unimplemented afs_syscall */
+	    linux_sys_nosys },			/* 137 = unimplemented afs_syscall */
 	{ 1, s(struct linux_sys_setfsuid_args), 0,
 	    linux_sys_setfsuid },		/* 138 = setfsuid */
 	{ 0, 0, 0,
@@ -356,7 +356,7 @@ struct sysent linux_sysent[] = {
 	{ 1, s(struct linux_sys_sched_get_priority_min_args), 0,
 	    linux_sys_sched_get_priority_min },	/* 160 = sched_get_priority_min */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 161 = unimplemented sched_rr_get_interval */
+	    linux_sys_nosys },			/* 161 = unimplemented sched_rr_get_interval */
 	{ 2, s(struct sys_nanosleep_args), 0,
 	    sys_nanosleep },			/* 162 = nanosleep */
 	{ 4, s(struct linux_sys_mremap_args), 0,
@@ -366,21 +366,21 @@ struct sysent linux_sysent[] = {
 	{ 3, s(struct linux_sys_getresuid_args), 0,
 	    linux_sys_getresuid },		/* 165 = getresuid */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 166 = unimplemented */
+	    linux_sys_nosys },			/* 166 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 167 = unimplemented query_module */
+	    linux_sys_nosys },			/* 167 = unimplemented query_module */
 	{ 3, s(struct sys_poll_args), 0,
 	    sys_poll },				/* 168 = poll */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 169 = unimplemented nfsservctl */
+	    linux_sys_nosys },			/* 169 = unimplemented nfsservctl */
 	{ 3, s(struct linux_sys_setresgid_args), 0,
 	    linux_sys_setresgid },		/* 170 = setresgid */
 	{ 3, s(struct linux_sys_getresgid_args), 0,
 	    linux_sys_getresgid },		/* 171 = getresgid */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 172 = unimplemented prctl */
+	    linux_sys_nosys },			/* 172 = unimplemented prctl */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 173 = unimplemented rt_sigreturn */
+	    linux_sys_nosys },			/* 173 = unimplemented rt_sigreturn */
 	{ 4, s(struct linux_sys_rt_sigaction_args), 0,
 	    linux_sys_rt_sigaction },		/* 174 = rt_sigaction */
 	{ 4, s(struct linux_sys_rt_sigprocmask_args), 0,
@@ -388,7 +388,7 @@ struct sysent linux_sysent[] = {
 	{ 2, s(struct linux_sys_rt_sigpending_args), 0,
 	    linux_sys_rt_sigpending },		/* 176 = rt_sigpending */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 177 = unimplemented rt_sigtimedwait */
+	    linux_sys_nosys },			/* 177 = unimplemented rt_sigtimedwait */
 	{ 3, s(struct linux_sys_rt_queueinfo_args), 0,
 	    linux_sys_rt_queueinfo },		/* 178 = rt_queueinfo */
 	{ 2, s(struct linux_sys_rt_sigsuspend_args), 0,
@@ -402,23 +402,23 @@ struct sysent linux_sysent[] = {
 	{ 2, s(struct sys___getcwd_args), 0,
 	    sys___getcwd },			/* 183 = __getcwd */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 184 = unimplemented capget */
+	    linux_sys_nosys },			/* 184 = unimplemented capget */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 185 = unimplemented capset */
+	    linux_sys_nosys },			/* 185 = unimplemented capset */
 	{ 2, s(struct linux_sys_sigaltstack_args), 0,
 	    linux_sys_sigaltstack },		/* 186 = sigaltstack */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 187 = unimplemented sendfile */
+	    linux_sys_nosys },			/* 187 = unimplemented sendfile */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 188 = unimplemented getpmsg */
+	    linux_sys_nosys },			/* 188 = unimplemented getpmsg */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 189 = unimplemented putpmsg */
+	    linux_sys_nosys },			/* 189 = unimplemented putpmsg */
 	{ 0, 0, 0,
 	    sys___vfork14 },			/* 190 = vfork */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 191 = unimplemented getrlimit */
+	    linux_sys_nosys },			/* 191 = unimplemented getrlimit */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 192 = unimplemented mmap2 */
+	    linux_sys_nosys },			/* 192 = unimplemented mmap2 */
 	{ 2, s(struct linux_sys_truncate64_args), 0,
 	    linux_sys_truncate64 },		/* 193 = truncate64 */
 	{ 2, s(struct sys_ftruncate_args), 0,
@@ -468,594 +468,594 @@ struct sysent linux_sysent[] = {
 	{ 0, 0, 0,
 	    linux_sys_getfsuid },		/* 216 = getfsuid32 */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 217 = unimplemented getdents64 */
+	    linux_sys_nosys },			/* 217 = unimplemented getdents64 */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 218 = unimplemented pivot_root */
+	    linux_sys_nosys },			/* 218 = unimplemented pivot_root */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 219 = unimplemented mincore */
+	    linux_sys_nosys },			/* 219 = unimplemented mincore */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 220 = unimplemented madvise */
+	    linux_sys_nosys },			/* 220 = unimplemented madvise */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 221 = unimplemented fcntl64 */
+	    linux_sys_nosys },			/* 221 = unimplemented fcntl64 */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 222 = unimplemented */
+	    linux_sys_nosys },			/* 222 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 223 = unimplemented */
+	    linux_sys_nosys },			/* 223 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 224 = unimplemented */
+	    linux_sys_nosys },			/* 224 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 225 = unimplemented */
+	    linux_sys_nosys },			/* 225 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 226 = unimplemented */
+	    linux_sys_nosys },			/* 226 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 227 = unimplemented */
+	    linux_sys_nosys },			/* 227 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 228 = unimplemented */
+	    linux_sys_nosys },			/* 228 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 229 = unimplemented */
+	    linux_sys_nosys },			/* 229 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 230 = unimplemented */
+	    linux_sys_nosys },			/* 230 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 231 = unimplemented */
+	    linux_sys_nosys },			/* 231 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 232 = unimplemented */
+	    linux_sys_nosys },			/* 232 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 233 = unimplemented */
+	    linux_sys_nosys },			/* 233 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 234 = unimplemented */
+	    linux_sys_nosys },			/* 234 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 235 = unimplemented */
+	    linux_sys_nosys },			/* 235 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 236 = unimplemented */
+	    linux_sys_nosys },			/* 236 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 237 = unimplemented */
+	    linux_sys_nosys },			/* 237 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 238 = unimplemented */
+	    linux_sys_nosys },			/* 238 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 239 = unimplemented */
+	    linux_sys_nosys },			/* 239 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 240 = unimplemented */
+	    linux_sys_nosys },			/* 240 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 241 = unimplemented */
+	    linux_sys_nosys },			/* 241 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 242 = unimplemented */
+	    linux_sys_nosys },			/* 242 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 243 = unimplemented */
+	    linux_sys_nosys },			/* 243 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 244 = unimplemented */
+	    linux_sys_nosys },			/* 244 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 245 = unimplemented */
+	    linux_sys_nosys },			/* 245 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 246 = unimplemented */
+	    linux_sys_nosys },			/* 246 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 247 = unimplemented */
+	    linux_sys_nosys },			/* 247 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 248 = unimplemented */
+	    linux_sys_nosys },			/* 248 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 249 = unimplemented */
+	    linux_sys_nosys },			/* 249 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 250 = unimplemented */
+	    linux_sys_nosys },			/* 250 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 251 = unimplemented */
+	    linux_sys_nosys },			/* 251 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 252 = unimplemented */
+	    linux_sys_nosys },			/* 252 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 253 = unimplemented */
+	    linux_sys_nosys },			/* 253 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 254 = unimplemented */
+	    linux_sys_nosys },			/* 254 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 255 = unimplemented */
+	    linux_sys_nosys },			/* 255 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 256 = unimplemented */
+	    linux_sys_nosys },			/* 256 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 257 = unimplemented breakpoint */
+	    linux_sys_nosys },			/* 257 = unimplemented breakpoint */
 	{ 2, s(struct linux_sys_cacheflush_args), 0,
 	    linux_sys_cacheflush },		/* 258 = cacheflush */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 259 = unimplemented usr26 */
+	    linux_sys_nosys },			/* 259 = unimplemented usr26 */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 260 = unimplemented usr32 */
+	    linux_sys_nosys },			/* 260 = unimplemented usr32 */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 261 = filler */
+	    linux_sys_nosys },			/* 261 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 262 = filler */
+	    linux_sys_nosys },			/* 262 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 263 = filler */
+	    linux_sys_nosys },			/* 263 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 264 = filler */
+	    linux_sys_nosys },			/* 264 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 265 = filler */
+	    linux_sys_nosys },			/* 265 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 266 = filler */
+	    linux_sys_nosys },			/* 266 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 267 = filler */
+	    linux_sys_nosys },			/* 267 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 268 = filler */
+	    linux_sys_nosys },			/* 268 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 269 = filler */
+	    linux_sys_nosys },			/* 269 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 270 = filler */
+	    linux_sys_nosys },			/* 270 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 271 = filler */
+	    linux_sys_nosys },			/* 271 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 272 = filler */
+	    linux_sys_nosys },			/* 272 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 273 = filler */
+	    linux_sys_nosys },			/* 273 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 274 = filler */
+	    linux_sys_nosys },			/* 274 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 275 = filler */
+	    linux_sys_nosys },			/* 275 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 276 = filler */
+	    linux_sys_nosys },			/* 276 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 277 = filler */
+	    linux_sys_nosys },			/* 277 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 278 = filler */
+	    linux_sys_nosys },			/* 278 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 279 = filler */
+	    linux_sys_nosys },			/* 279 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 280 = filler */
+	    linux_sys_nosys },			/* 280 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 281 = filler */
+	    linux_sys_nosys },			/* 281 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 282 = filler */
+	    linux_sys_nosys },			/* 282 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 283 = filler */
+	    linux_sys_nosys },			/* 283 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 284 = filler */
+	    linux_sys_nosys },			/* 284 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 285 = filler */
+	    linux_sys_nosys },			/* 285 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 286 = filler */
+	    linux_sys_nosys },			/* 286 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 287 = filler */
+	    linux_sys_nosys },			/* 287 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 288 = filler */
+	    linux_sys_nosys },			/* 288 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 289 = filler */
+	    linux_sys_nosys },			/* 289 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 290 = filler */
+	    linux_sys_nosys },			/* 290 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 291 = filler */
+	    linux_sys_nosys },			/* 291 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 292 = filler */
+	    linux_sys_nosys },			/* 292 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 293 = filler */
+	    linux_sys_nosys },			/* 293 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 294 = filler */
+	    linux_sys_nosys },			/* 294 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 295 = filler */
+	    linux_sys_nosys },			/* 295 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 296 = filler */
+	    linux_sys_nosys },			/* 296 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 297 = filler */
+	    linux_sys_nosys },			/* 297 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 298 = filler */
+	    linux_sys_nosys },			/* 298 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 299 = filler */
+	    linux_sys_nosys },			/* 299 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 300 = filler */
+	    linux_sys_nosys },			/* 300 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 301 = filler */
+	    linux_sys_nosys },			/* 301 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 302 = filler */
+	    linux_sys_nosys },			/* 302 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 303 = filler */
+	    linux_sys_nosys },			/* 303 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 304 = filler */
+	    linux_sys_nosys },			/* 304 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 305 = filler */
+	    linux_sys_nosys },			/* 305 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 306 = filler */
+	    linux_sys_nosys },			/* 306 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 307 = filler */
+	    linux_sys_nosys },			/* 307 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 308 = filler */
+	    linux_sys_nosys },			/* 308 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 309 = filler */
+	    linux_sys_nosys },			/* 309 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 310 = filler */
+	    linux_sys_nosys },			/* 310 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 311 = filler */
+	    linux_sys_nosys },			/* 311 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 312 = filler */
+	    linux_sys_nosys },			/* 312 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 313 = filler */
+	    linux_sys_nosys },			/* 313 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 314 = filler */
+	    linux_sys_nosys },			/* 314 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 315 = filler */
+	    linux_sys_nosys },			/* 315 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 316 = filler */
+	    linux_sys_nosys },			/* 316 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 317 = filler */
+	    linux_sys_nosys },			/* 317 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 318 = filler */
+	    linux_sys_nosys },			/* 318 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 319 = filler */
+	    linux_sys_nosys },			/* 319 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 320 = filler */
+	    linux_sys_nosys },			/* 320 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 321 = filler */
+	    linux_sys_nosys },			/* 321 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 322 = filler */
+	    linux_sys_nosys },			/* 322 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 323 = filler */
+	    linux_sys_nosys },			/* 323 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 324 = filler */
+	    linux_sys_nosys },			/* 324 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 325 = filler */
+	    linux_sys_nosys },			/* 325 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 326 = filler */
+	    linux_sys_nosys },			/* 326 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 327 = filler */
+	    linux_sys_nosys },			/* 327 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 328 = filler */
+	    linux_sys_nosys },			/* 328 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 329 = filler */
+	    linux_sys_nosys },			/* 329 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 330 = filler */
+	    linux_sys_nosys },			/* 330 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 331 = filler */
+	    linux_sys_nosys },			/* 331 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 332 = filler */
+	    linux_sys_nosys },			/* 332 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 333 = filler */
+	    linux_sys_nosys },			/* 333 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 334 = filler */
+	    linux_sys_nosys },			/* 334 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 335 = filler */
+	    linux_sys_nosys },			/* 335 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 336 = filler */
+	    linux_sys_nosys },			/* 336 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 337 = filler */
+	    linux_sys_nosys },			/* 337 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 338 = filler */
+	    linux_sys_nosys },			/* 338 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 339 = filler */
+	    linux_sys_nosys },			/* 339 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 340 = filler */
+	    linux_sys_nosys },			/* 340 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 341 = filler */
+	    linux_sys_nosys },			/* 341 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 342 = filler */
+	    linux_sys_nosys },			/* 342 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 343 = filler */
+	    linux_sys_nosys },			/* 343 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 344 = filler */
+	    linux_sys_nosys },			/* 344 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 345 = filler */
+	    linux_sys_nosys },			/* 345 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 346 = filler */
+	    linux_sys_nosys },			/* 346 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 347 = filler */
+	    linux_sys_nosys },			/* 347 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 348 = filler */
+	    linux_sys_nosys },			/* 348 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 349 = filler */
+	    linux_sys_nosys },			/* 349 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 350 = filler */
+	    linux_sys_nosys },			/* 350 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 351 = filler */
+	    linux_sys_nosys },			/* 351 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 352 = filler */
+	    linux_sys_nosys },			/* 352 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 353 = filler */
+	    linux_sys_nosys },			/* 353 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 354 = filler */
+	    linux_sys_nosys },			/* 354 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 355 = filler */
+	    linux_sys_nosys },			/* 355 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 356 = filler */
+	    linux_sys_nosys },			/* 356 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 357 = filler */
+	    linux_sys_nosys },			/* 357 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 358 = filler */
+	    linux_sys_nosys },			/* 358 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 359 = filler */
+	    linux_sys_nosys },			/* 359 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 360 = filler */
+	    linux_sys_nosys },			/* 360 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 361 = filler */
+	    linux_sys_nosys },			/* 361 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 362 = filler */
+	    linux_sys_nosys },			/* 362 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 363 = filler */
+	    linux_sys_nosys },			/* 363 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 364 = filler */
+	    linux_sys_nosys },			/* 364 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 365 = filler */
+	    linux_sys_nosys },			/* 365 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 366 = filler */
+	    linux_sys_nosys },			/* 366 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 367 = filler */
+	    linux_sys_nosys },			/* 367 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 368 = filler */
+	    linux_sys_nosys },			/* 368 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 369 = filler */
+	    linux_sys_nosys },			/* 369 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 370 = filler */
+	    linux_sys_nosys },			/* 370 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 371 = filler */
+	    linux_sys_nosys },			/* 371 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 372 = filler */
+	    linux_sys_nosys },			/* 372 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 373 = filler */
+	    linux_sys_nosys },			/* 373 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 374 = filler */
+	    linux_sys_nosys },			/* 374 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 375 = filler */
+	    linux_sys_nosys },			/* 375 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 376 = filler */
+	    linux_sys_nosys },			/* 376 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 377 = filler */
+	    linux_sys_nosys },			/* 377 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 378 = filler */
+	    linux_sys_nosys },			/* 378 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 379 = filler */
+	    linux_sys_nosys },			/* 379 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 380 = filler */
+	    linux_sys_nosys },			/* 380 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 381 = filler */
+	    linux_sys_nosys },			/* 381 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 382 = filler */
+	    linux_sys_nosys },			/* 382 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 383 = filler */
+	    linux_sys_nosys },			/* 383 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 384 = filler */
+	    linux_sys_nosys },			/* 384 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 385 = filler */
+	    linux_sys_nosys },			/* 385 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 386 = filler */
+	    linux_sys_nosys },			/* 386 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 387 = filler */
+	    linux_sys_nosys },			/* 387 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 388 = filler */
+	    linux_sys_nosys },			/* 388 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 389 = filler */
+	    linux_sys_nosys },			/* 389 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 390 = filler */
+	    linux_sys_nosys },			/* 390 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 391 = filler */
+	    linux_sys_nosys },			/* 391 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 392 = filler */
+	    linux_sys_nosys },			/* 392 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 393 = filler */
+	    linux_sys_nosys },			/* 393 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 394 = filler */
+	    linux_sys_nosys },			/* 394 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 395 = filler */
+	    linux_sys_nosys },			/* 395 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 396 = filler */
+	    linux_sys_nosys },			/* 396 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 397 = filler */
+	    linux_sys_nosys },			/* 397 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 398 = filler */
+	    linux_sys_nosys },			/* 398 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 399 = filler */
+	    linux_sys_nosys },			/* 399 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 400 = filler */
+	    linux_sys_nosys },			/* 400 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 401 = filler */
+	    linux_sys_nosys },			/* 401 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 402 = filler */
+	    linux_sys_nosys },			/* 402 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 403 = filler */
+	    linux_sys_nosys },			/* 403 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 404 = filler */
+	    linux_sys_nosys },			/* 404 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 405 = filler */
+	    linux_sys_nosys },			/* 405 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 406 = filler */
+	    linux_sys_nosys },			/* 406 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 407 = filler */
+	    linux_sys_nosys },			/* 407 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 408 = filler */
+	    linux_sys_nosys },			/* 408 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 409 = filler */
+	    linux_sys_nosys },			/* 409 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 410 = filler */
+	    linux_sys_nosys },			/* 410 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 411 = filler */
+	    linux_sys_nosys },			/* 411 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 412 = filler */
+	    linux_sys_nosys },			/* 412 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 413 = filler */
+	    linux_sys_nosys },			/* 413 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 414 = filler */
+	    linux_sys_nosys },			/* 414 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 415 = filler */
+	    linux_sys_nosys },			/* 415 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 416 = filler */
+	    linux_sys_nosys },			/* 416 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 417 = filler */
+	    linux_sys_nosys },			/* 417 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 418 = filler */
+	    linux_sys_nosys },			/* 418 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 419 = filler */
+	    linux_sys_nosys },			/* 419 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 420 = filler */
+	    linux_sys_nosys },			/* 420 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 421 = filler */
+	    linux_sys_nosys },			/* 421 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 422 = filler */
+	    linux_sys_nosys },			/* 422 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 423 = filler */
+	    linux_sys_nosys },			/* 423 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 424 = filler */
+	    linux_sys_nosys },			/* 424 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 425 = filler */
+	    linux_sys_nosys },			/* 425 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 426 = filler */
+	    linux_sys_nosys },			/* 426 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 427 = filler */
+	    linux_sys_nosys },			/* 427 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 428 = filler */
+	    linux_sys_nosys },			/* 428 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 429 = filler */
+	    linux_sys_nosys },			/* 429 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 430 = filler */
+	    linux_sys_nosys },			/* 430 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 431 = filler */
+	    linux_sys_nosys },			/* 431 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 432 = filler */
+	    linux_sys_nosys },			/* 432 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 433 = filler */
+	    linux_sys_nosys },			/* 433 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 434 = filler */
+	    linux_sys_nosys },			/* 434 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 435 = filler */
+	    linux_sys_nosys },			/* 435 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 436 = filler */
+	    linux_sys_nosys },			/* 436 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 437 = filler */
+	    linux_sys_nosys },			/* 437 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 438 = filler */
+	    linux_sys_nosys },			/* 438 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 439 = filler */
+	    linux_sys_nosys },			/* 439 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 440 = filler */
+	    linux_sys_nosys },			/* 440 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 441 = filler */
+	    linux_sys_nosys },			/* 441 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 442 = filler */
+	    linux_sys_nosys },			/* 442 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 443 = filler */
+	    linux_sys_nosys },			/* 443 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 444 = filler */
+	    linux_sys_nosys },			/* 444 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 445 = filler */
+	    linux_sys_nosys },			/* 445 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 446 = filler */
+	    linux_sys_nosys },			/* 446 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 447 = filler */
+	    linux_sys_nosys },			/* 447 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 448 = filler */
+	    linux_sys_nosys },			/* 448 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 449 = filler */
+	    linux_sys_nosys },			/* 449 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 450 = filler */
+	    linux_sys_nosys },			/* 450 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 451 = filler */
+	    linux_sys_nosys },			/* 451 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 452 = filler */
+	    linux_sys_nosys },			/* 452 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 453 = filler */
+	    linux_sys_nosys },			/* 453 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 454 = filler */
+	    linux_sys_nosys },			/* 454 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 455 = filler */
+	    linux_sys_nosys },			/* 455 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 456 = filler */
+	    linux_sys_nosys },			/* 456 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 457 = filler */
+	    linux_sys_nosys },			/* 457 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 458 = filler */
+	    linux_sys_nosys },			/* 458 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 459 = filler */
+	    linux_sys_nosys },			/* 459 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 460 = filler */
+	    linux_sys_nosys },			/* 460 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 461 = filler */
+	    linux_sys_nosys },			/* 461 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 462 = filler */
+	    linux_sys_nosys },			/* 462 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 463 = filler */
+	    linux_sys_nosys },			/* 463 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 464 = filler */
+	    linux_sys_nosys },			/* 464 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 465 = filler */
+	    linux_sys_nosys },			/* 465 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 466 = filler */
+	    linux_sys_nosys },			/* 466 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 467 = filler */
+	    linux_sys_nosys },			/* 467 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 468 = filler */
+	    linux_sys_nosys },			/* 468 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 469 = filler */
+	    linux_sys_nosys },			/* 469 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 470 = filler */
+	    linux_sys_nosys },			/* 470 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 471 = filler */
+	    linux_sys_nosys },			/* 471 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 472 = filler */
+	    linux_sys_nosys },			/* 472 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 473 = filler */
+	    linux_sys_nosys },			/* 473 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 474 = filler */
+	    linux_sys_nosys },			/* 474 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 475 = filler */
+	    linux_sys_nosys },			/* 475 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 476 = filler */
+	    linux_sys_nosys },			/* 476 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 477 = filler */
+	    linux_sys_nosys },			/* 477 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 478 = filler */
+	    linux_sys_nosys },			/* 478 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 479 = filler */
+	    linux_sys_nosys },			/* 479 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 480 = filler */
+	    linux_sys_nosys },			/* 480 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 481 = filler */
+	    linux_sys_nosys },			/* 481 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 482 = filler */
+	    linux_sys_nosys },			/* 482 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 483 = filler */
+	    linux_sys_nosys },			/* 483 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 484 = filler */
+	    linux_sys_nosys },			/* 484 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 485 = filler */
+	    linux_sys_nosys },			/* 485 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 486 = filler */
+	    linux_sys_nosys },			/* 486 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 487 = filler */
+	    linux_sys_nosys },			/* 487 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 488 = filler */
+	    linux_sys_nosys },			/* 488 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 489 = filler */
+	    linux_sys_nosys },			/* 489 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 490 = filler */
+	    linux_sys_nosys },			/* 490 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 491 = filler */
+	    linux_sys_nosys },			/* 491 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 492 = filler */
+	    linux_sys_nosys },			/* 492 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 493 = filler */
+	    linux_sys_nosys },			/* 493 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 494 = filler */
+	    linux_sys_nosys },			/* 494 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 495 = filler */
+	    linux_sys_nosys },			/* 495 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 496 = filler */
+	    linux_sys_nosys },			/* 496 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 497 = filler */
+	    linux_sys_nosys },			/* 497 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 498 = filler */
+	    linux_sys_nosys },			/* 498 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 499 = filler */
+	    linux_sys_nosys },			/* 499 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 500 = filler */
+	    linux_sys_nosys },			/* 500 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 501 = filler */
+	    linux_sys_nosys },			/* 501 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 502 = filler */
+	    linux_sys_nosys },			/* 502 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 503 = filler */
+	    linux_sys_nosys },			/* 503 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 504 = filler */
+	    linux_sys_nosys },			/* 504 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 505 = filler */
+	    linux_sys_nosys },			/* 505 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 506 = filler */
+	    linux_sys_nosys },			/* 506 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 507 = filler */
+	    linux_sys_nosys },			/* 507 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 508 = filler */
+	    linux_sys_nosys },			/* 508 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 509 = filler */
+	    linux_sys_nosys },			/* 509 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 510 = filler */
+	    linux_sys_nosys },			/* 510 = filler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 511 = filler */
+	    linux_sys_nosys },			/* 511 = filler */
 };
 
