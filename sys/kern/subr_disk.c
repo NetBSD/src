@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.56 2003/12/06 01:21:23 he Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.57 2003/12/06 17:23:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.56 2003/12/06 01:21:23 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.57 2003/12/06 17:23:22 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -496,10 +496,13 @@ buf_inorder(struct buf *bp, struct buf *bq, int sortby)
 	if (bp == NULL || bq == NULL)
 		return (bq == NULL);
 
-	if (sortby == BUFQ_SORT_CYLINDER && bp->b_cylinder < bq->b_cylinder)
-		return 1;
-
-	return (bp->b_rawblkno < bq->b_rawblkno);
+	if (sortby == BUFQ_SORT_CYLINDER) {
+		if (bp->b_cylinder != bq->b_cylinder)
+			return bp->b_cylinder < bq->b_cylinder;
+		else
+			return bp->b_rawblkno < bq->b_rawblkno;
+	} else
+		return bp->b_rawblkno < bq->b_rawblkno;
 }
 
 
