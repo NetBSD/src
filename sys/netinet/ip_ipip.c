@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.10 2000/04/19 06:30:55 itojun Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.11 2000/12/12 18:00:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -210,8 +210,7 @@ ipipattach(count)
 
 		if_attach(&sc->sc_if);
 #if NBPFILTER > 0
-		bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_NULL,
-		    sc->sc_if.if_hdrlen);
+		bpfattach(&sc->sc_if, DLT_NULL, sc->sc_if.if_hdrlen);
 #endif
 	}
 }

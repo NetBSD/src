@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.6 2000/10/02 03:52:10 itojun Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.7 2000/12/12 18:00:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -35,6 +35,8 @@
 
 #include "opt_inet.h"
 
+#include "bpfilter.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -54,6 +56,10 @@
 #include <net/if_llc.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 #include <net/if_hippi.h>
 
@@ -356,4 +362,8 @@ hippi_ifattach(ifp, lla)
 		sdl->sdl_alen = ifp->if_addrlen;
 		bcopy((caddr_t)lla, LLADDR(sdl), ifp->if_addrlen);
 	}
+
+#if NBPFILTER > 0
+	bpfattach(ifp, DLT_HIPPI, sizeof(struct hippi_header));
+#endif
 }

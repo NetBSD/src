@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.11 2000/03/23 07:03:25 thorpej Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.12 2000/12/12 18:00:27 thorpej Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -77,7 +77,6 @@ struct ppp_softc {
 	struct	mbuf *sc_npqueue;	/* output packets not to be sent yet */
 	struct	mbuf **sc_npqtail;	/* ptr to last next ptr in npqueue */
 	struct	pppstat sc_stats;	/* count of bytes/pkts sent/rcvd */
-	caddr_t	sc_bpf;			/* hook for BPF */
 	enum	NPmode sc_npmode[NUM_NP]; /* what to do with each NP */
 	struct	compressor *sc_xcomp;	/* transmit compressor */
 	void	*sc_xc_state;		/* transmit compressor state */

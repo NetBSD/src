@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.10 2000/12/08 02:24:07 augustss Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.11 2000/12/12 18:00:25 thorpej Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -318,7 +318,7 @@ USB_ATTACH(upl)
 	if_attach(ifp);
 
 #if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, 0);
+	bpfattach(ifp, DLT_EN10MB, 0);
 #endif
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, USBDEVNAME(sc->sc_dev),
