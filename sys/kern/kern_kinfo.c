@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
- *	$Id: kern_kinfo.c,v 1.6.2.2 1993/08/02 23:49:31 cgd Exp $
+ *	$Id: kern_kinfo.c,v 1.6.2.3 1993/08/03 01:38:15 cgd Exp $
  */
 
 #include "param.h"
@@ -245,11 +245,11 @@ fill_eproc(p, ep)
 		ep->e_vm.vm_ssize = 0;
 		/* ep->e_vm.vm_pmap = ???; XXX */
 	} else {
-		ep->e_vm.vm_rssize = vm->vm_rssize;
-		ep->e_vm.vm_tsize = vm->vm_tsize;
-		ep->e_vm.vm_dsize = vm->vm_dsize;
-		ep->e_vm.vm_ssize = vm->vm_ssize;
-		ep->e_vm.vm_pmap = vm->vm_pmap;
+		ep->e_vm.vm_rssize = p->p_vmspace->vm_rssize;
+		ep->e_vm.vm_tsize = p->p_vmspace->vm_tsize;
+		ep->e_vm.vm_dsize = p->p_vmspace->vm_dsize;
+		ep->e_vm.vm_ssize = p->p_vmspace->vm_ssize;
+		ep->e_vm.vm_pmap = p->p_vmspace->vm_pmap;
 	}
 	if (p->p_pptr)
 		ep->e_ppid = p->p_pptr->p_pid;
