@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.29 2002/09/19 20:56:43 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.30 2002/09/26 19:46:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.29 2002/09/19 20:56:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.30 2002/09/26 19:46:53 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1059,7 +1059,7 @@ psendsig(struct lwp *l, int sig, sigset_t *mask, u_long code)
 		else
 			li = l;
 
-		sa_upcall(l, SA_UPCALL_SIGNAL, le, li, 
+		sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li, 
 			    sizeof(siginfo_t), si);
 		return;
 	}
