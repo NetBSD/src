@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.10 2002/04/02 18:08:28 atatat Exp $	*/
+/*	$NetBSD: units.c,v 1.11 2002/08/31 07:26:17 kristerw Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -711,8 +711,8 @@ main(int argc, char **argv)
 				if (!quiet)
 					printf("You have: ");
 				if (!fgets(havestr, 80, stdin)) {
-					if (!quiet);
-					putchar('\n');
+					if (!quiet)
+						putchar('\n');
 					exit(0);
 				}
 			} while (addunit(&have, havestr, 0) ||
