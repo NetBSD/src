@@ -1,7 +1,7 @@
 #
 # GENERICAHA -- Generic machine w/aha driver -- distribution floppy
 #
-#	$Id: GENERICAHA,v 1.25 1993/08/29 01:54:22 mycroft Exp $
+#	$Id: GENERICAHA,v 1.26 1993/08/30 07:07:58 deraadt Exp $
 #
 
 machine		"i386"
@@ -10,6 +10,7 @@ cpu		"I486_CPU"
 ident		GENERICAHA
 timezone	8 dst
 maxusers	10
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET,ISOFS,NFSCLIENT
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
@@ -78,7 +79,3 @@ pseudo-device	loop
 pseudo-device	pty	32
 pseudo-device	sl	1
 pseudo-device	speaker
-
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager

@@ -1,7 +1,7 @@
 #
 # DUALITY -- Mycroft's 486 box
 #
-#	$Id: DUALITY,v 1.12 1993/06/14 15:29:55 mycroft Exp $
+#	$Id: DUALITY,v 1.13 1993/08/30 07:07:57 deraadt Exp $
 #
 
 machine		"i386"
@@ -9,7 +9,7 @@ cpu		"I486_CPU"
 ident		DUALITY
 timezone	5 dst
 maxusers	16
-options		INET,NFSCLIENT
+options		SWAPPAGER,VNODEPAGER,DEVPAGERoptions		INET,NFSCLIENT
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		XSERVER,UCONSOLE
@@ -47,7 +47,3 @@ pseudo-device	ether
 pseudo-device	sl	1
 pseudo-device	log
 pseudo-device	pty	32
-
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager

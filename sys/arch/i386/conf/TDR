@@ -1,13 +1,14 @@
 #
 # Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.17 1993/08/26 09:52:16 deraadt Exp $
+#	$Id: TDR,v 1.18 1993/08/30 07:08:03 deraadt Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
 ident		TDR
 timezone	7 dst
 maxusers	10
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET,NFSSERVER,NFSCLIENT,GATEWAY
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
@@ -16,7 +17,7 @@ options 	DDB
 options		"COMPAT_NOMID"
 options		"DUMMY_NOPS"
 
-config		netbsd	root on wd0 swap on wd0
+config		netbsd	at 0xfe100000 root on wd0 swap on wd0
 
 controller	isa0
 controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
@@ -42,7 +43,3 @@ pseudo-device	ppp	2
 pseudo-device	log
 pseudo-device	pty	32
 pseudo-device	bpfilter 4
-
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager

@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.17 1993/08/29 01:54:25 mycroft Exp $
+#	$Id: ALL,v 1.18 1993/08/30 07:07:54 deraadt Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -10,6 +10,7 @@ ident		ALL
 timezone	8 dst
 maxusers	30
 
+options	SWAPPAGER,VNODEPAGER,DEVPAGER
 options KTRACE
 options FIFO
 #options SYSVSHM		broken
@@ -97,9 +98,6 @@ device ec0 at isa? port 0x250 net irq 9 iomem 0xd8000 iosiz 8192 vector ecintr
 #pseudo-devices
 pseudo-device pty32
 #pseudo-device tb2	was never ported to 4.4
-pseudo-device devpager
-pseudo-device swappager
-pseudo-device vnodepager
 pseudo-device bpfilter3
 pseudo-device loop
 pseudo-device sl

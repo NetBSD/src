@@ -1,7 +1,7 @@
 #
 #	SERVER -- an NFS server
 #
-#	$Id: SERVER,v 1.10 1993/08/29 01:54:24 mycroft Exp $
+#	$Id: SERVER,v 1.11 1993/08/30 07:08:01 deraadt Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -9,6 +9,7 @@ cpu		"I486_CPU"
 ident		SERVER
 timezone	8 dst
 maxusers	10
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET,MFS,NFSSERVER
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
@@ -37,7 +38,3 @@ pseudo-device	ether
 #pseudo-device	sl	2
 pseudo-device	log
 pseudo-device	pty	32
-
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager

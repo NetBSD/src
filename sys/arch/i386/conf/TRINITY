@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.18 1993/08/07 08:03:55 cgd Exp $
+#	$Id: TRINITY,v 1.19 1993/08/30 07:08:04 deraadt Exp $
 #
 
 machine		"i386"
@@ -9,6 +9,7 @@ cpu		"I386_CPU"
 ident		TRINITY
 timezone	5 dst
 maxusers	16
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET,NFSCLIENT,NFSSERVER
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
@@ -55,7 +56,3 @@ pseudo-device	ether
 pseudo-device	bpfilter 4
 pseudo-device	log
 pseudo-device	pty	32
-
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager

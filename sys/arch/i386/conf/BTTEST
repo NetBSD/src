@@ -1,7 +1,7 @@
 #
 #	SCSITEST -- Generic ISA machine -- scsi test kernel
 #
-#	$Id: BTTEST,v 1.14 1993/06/06 04:15:31 cgd Exp $
+#	$Id: BTTEST,v 1.15 1993/08/30 07:07:56 deraadt Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -9,6 +9,7 @@ cpu		"I486_CPU"
 ident		SCSITEST
 timezone	8 dst
 maxusers	10
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET,ISOFS,NFSSERVER,NSCLIENT
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
@@ -54,7 +55,3 @@ pseudo-device	ether
 pseudo-device	sl	2
 pseudo-device	log
 pseudo-device	pty	4
-
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager
