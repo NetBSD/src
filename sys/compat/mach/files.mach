@@ -1,4 +1,4 @@
-#	$NetBSD: files.mach,v 1.10 2002/12/12 23:18:20 manu Exp $
+#	$NetBSD: files.mach,v 1.11 2003/02/04 22:47:41 manu Exp $
 #
 # Config file description for machine-independent Mach compat code.
 # Included by ports that need it.
@@ -11,6 +11,7 @@ file	compat/mach/mach_clock.c	compat_mach | compat_darwin
 file	compat/mach/mach_errno.c	compat_mach | compat_darwin
 file	compat/mach/mach_exec.c		compat_mach | compat_darwin
 file	compat/mach/mach_host.c		compat_mach | compat_darwin
+file	compat/mach/mach_iokit.c	compat_mach | compat_darwin
 file	compat/mach/mach_misc.c		compat_mach | compat_darwin
 file	compat/mach/mach_message.c	compat_mach | compat_darwin
 file	compat/mach/mach_namemap.c	compat_mach | compat_darwin

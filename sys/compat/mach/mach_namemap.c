@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_namemap.c,v 1.13 2003/02/02 19:07:18 manu Exp $ */
+/*	$NetBSD: mach_namemap.c,v 1.14 2003/02/04 22:47:42 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.13 2003/02/02 19:07:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.14 2003/02/04 22:47:42 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.13 2003/02/02 19:07:18 manu Exp $
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_bootstrap.h>
+#include <compat/mach/mach_iokit.h>
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_host.h>
 #include <compat/mach/mach_port.h>
@@ -61,6 +62,8 @@ struct mach_subsystem_namemap mach_namemap[] = {
 /*	{ 403, mach_boostrap_register, "boostrap_register" }, */
  	{ 404, mach_bootstrap_look_up, "bootstrap_look_up" }, 
 	{ 1000, mach_clock_get_time, "clock_get_time" },
+	{ 2804, mach_io_service_get_matching_services, 
+	    "io_service_get_matching_services" },
 	{ 3201, mach_port_type, "port_type" },
 	{ 3204, mach_port_allocate, "port_allocate" },
 	{ 3205, mach_port_destroy, "port_destroy" },
