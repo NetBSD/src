@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.h,v 1.6 2000/09/10 15:45:47 sato Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.7 2000/10/03 03:08:33 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -63,6 +63,7 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define CONFIG_HOOK_POWERCONTROL_LCDLIGHT	4
 #define CONFIG_HOOK_POWERCONTROL_LCD		5
 #define CONFIG_HOOK_POWERCONTROL_SPEAKER	6
+#define CONFIG_HOOK_POWERCONTROL_LED		7
 
 #define CONFIG_HOOK_BUTTONEVENT		1
 #define CONFIG_HOOK_BUTTONEVENT_POWER		0
@@ -89,6 +90,8 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define CONFIG_HOOK_PMEVENT_STANDBYREQ		0
 #define CONFIG_HOOK_PMEVENT_SUSPENDREQ		1
 #define CONFIG_HOOK_PMEVENT_HARDPOWER		2
+#define CONFIG_HOOK_PMEVENT_BATTERY		3
+#define CONFIG_HOOK_PMEVENT_AC			4
 
 #define CONFIG_HOOK_NTYPES 		3
 
@@ -103,6 +106,7 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define PWCTL_LCDLIGHT	CONFIG_HOOK_POWERCONTROL_LCDLIGHT
 #define PWCTL_LCD	CONFIG_HOOK_POWERCONTROL_LCD
 #define PWCTL_SPEAKER	CONFIG_HOOK_POWERCONTROL_SPEAKER
+#define PWCTL_LED	CONFIG_HOOK_POWERCONTROL_LED
 #define BTN_POWER	CONFIG_HOOK_BUTTONEVENT_POWER
 #define BTN_OK		CONFIG_HOOK_BUTTONEVENT_OK
 #define BTN_CANCEL	CONFIG_HOOK_BUTTONEVENT_CANCEL
@@ -124,4 +128,37 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define BTN_LIGHT_DN	CONFIG_HOOK_BUTTONEVENT_LIGHT_DOWN
 #endif /* CONFIG_HOOK_DEFINE_NICKNAME */
 
+/*
+ * POWERCONTROL value
+ */
+#define PWCTL_ON	((void *)1)
+#define PWCTL_OFF	((void *)0)
+
+/*
+ * POWERCTONROL_LED value
+ */
+#define PWCTL_LED_OFF		PWCTL_OFF
+#define PWCTL_LED_ON		PWCTL_ON
+#define PWCTL_LED_FLASH		((void *)2)	/* flash 100msec */
+#define PWCTL_LED_FLASH2	((void *)3)	/* flash 200msec */
+#define PWCTL_LED_FLASH5	((void *)4)	/* flash 500msec */
+#define PWCTL_LED_BLINK		((void *)5)	/* blink 1sec interval */
+#define PWCTL_LED_BLINK2	((void *)6)	/* blink 2sec interval */
+
+/*
+ * PMEVENT_AC event value
+ */
+#define PMEVENT_AC_OFF		((void *)0)
+#define PMEVENT_AC_ON_CHARGE	((void *)1)
+#define PMEVENT_AC_ON_NOCHARGE	((void *)2)
+
+/*
+ * PMEVENT_BATTERY event value
+ */
+#define PMEVENT_BATT_CRITICAL	((void *)0)
+#define PMEVENT_BATT_LOW	((void *)1)
+#define PMEVENT_BATT_1BY4	((void *)2)
+#define PMEVENT_BATT_HALF	((void *)3)
+#define PMEVENT_BATT_3BY4	((void *)4)
+#define PMEVENT_BATT_FULL	((void *)5)
 #endif /* _CONFIG_HOOK_H_ */
