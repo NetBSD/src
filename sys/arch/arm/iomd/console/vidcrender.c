@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.1 2001/10/05 22:27:45 reinoud Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.2 2001/10/17 23:28:20 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -162,49 +162,14 @@ irqhandler_t flash_ih;
 /* The table of modes is separately compiled */
 extern struct vidc_mode vidcmodes[];
 #else /* HARDCODEDMODES */
-#ifdef RC7500
-static struct vidc_mode vidcmodes[] = {
-	{31500,/**/48,  84, 30, 640,  30, 0,/**/3, 28, 0, 480, 0, 9,/**/0,/**/3},
-	{36000,/**/72,  84, 34, 800,  34, 0,/**/2, 22, 0, 600, 0, 1,/**/0,/**/3},
-};
-#else /* RC7500 */
+
 /* We have a hard compiled table of modes and a list of definable modes */
 static struct vidc_mode vidcmodes[] = {
 	{32500,/**/52,  64, 30, 640,  30, 14,/**/3, 28, 0, 480, 0, 9,/**/0,/**/3},
 	{65000,/**/128, 36, 60, 1024, 60 ,36,/**/6, 29, 0, 768, 0, 3,/**/0,/**/3},
 };
-#endif /* RC7500 */
 #endif /* HARDCODEDMODES */
 
-#ifdef RC7500
-struct vfreq {
-	u_int frqcon;
-	int freq;
-};
-
-static struct vfreq vfreq[] = {
-	{ VIDFREQ_25_18, 25175},
-	{ VIDFREQ_25_18, 25180},
-	{ VIDFREQ_28_32, 28320},
-	{ VIDFREQ_31_50, 31500},
-	{ VIDFREQ_36_00, 36000},
-	{ VIDFREQ_40_00, 40000},
-	{ VIDFREQ_44_90, 44900},
-	{ VIDFREQ_50_00, 50000},
-	{ VIDFREQ_65_00, 65000},
-	{ VIDFREQ_72_00, 72000},
-	{ VIDFREQ_75_00, 75000},
-	{ VIDFREQ_77_00, 77000},
-	{ VIDFREQ_80_00, 80000},
-	{ VIDFREQ_94_50, 94500},
-	{ VIDFREQ_110_0, 110000},
-	{ VIDFREQ_120_0, 120000},
-	{ VIDFREQ_130_0, 130000}
-};
-
-#define NFREQ	(sizeof (vfreq) / sizeof(struct vfreq))
-u_int vfreqcon = 0;
-#else /* RC7500 */
 
 struct fsyn {
 	int r, v, f;
@@ -223,7 +188,7 @@ static struct fsyn fsyn_pref[] = {
 	{ 12, 35, 70000 },
 	{ 0,   0, 00000 }
 };
-#endif /* RC7500 */
+
 
 /*#define mod(x)	(((x) > 0) ? (x) : (-x))*/
 
@@ -336,11 +301,9 @@ vidcrender_mode(vc, mode)
 {    
 	register int acc;
 	int bpp_mask;
-#ifndef RC7500
         int ereg;
 
 	int best_r, best_v, best_match;
-#endif
 
 /*
  * Find out what bit mask we need to or with the vidc20 control register
@@ -357,29 +320,6 @@ vidcrender_mode(vc, mode)
 	newmode = *mode;
 	vidc_currentmode = &newmode;
 
-#ifdef RC7500
-	{
-		int i;
-		int old, new;
-		u_int nfreq;
-
-		old = vfreq[0].freq;
-		nfreq = vfreq[0].frqcon;
-		for (i = 0; i < (NFREQ - 1); i++) {
-			new = vfreq[i].freq - mode->pixel_rate;
-			if (new < 0)
-				new = -new;
-			if (new < old) {
-				nfreq = vfreq[i].frqcon;
-				old = new;
-			}
-			if (new == 0)
-				break;
-		}
-		nfreq |= (vfreqcon & 0xf0);
-		vfreqcon = nfreq;
-	}
-#else /* RC7500 */
     /* Program the VCO Look up a preferred value before choosing one */
 	{
 		int least_error = mod(fsyn_pref[0].f - vidc_currentmode->pixel_rate);
@@ -425,30 +365,10 @@ vidcrender_mode(vc, mode)
 /*
 	printf ( "best_v = %d  best_r = %d best_f = %d\n", best_v, best_r, best_match );
 */
-#endif /* RC7500 */
 
 	if (vc==vconsole_current) {
-#ifdef RC7500
-		outb(FREQCON, vfreqcon);
-		/*
-		 * Need to program the control register first.
-		 */
-		if (dispsize>1024*1024) {
-			if (vidc_currentmode->hder>=800)
-				vidc_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
-			else
-				vidc_write(VIDC_CONREG, 6<<8 | bpp_mask<<5);
-		} else {
-			vidc_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
-		}
-
-		/*
-		 * We don't use VIDC_FSYNREG.  Program it low.
-		 */
-		vidc_write(VIDC_FSYNREG, 0x2020);
-#else /* RC7500 */
 		vidc_write(VIDC_FSYNREG, (best_v-1)<<8 | (best_r-1)<<0);
-#endif /* RC7500 */
+
 		acc=0;
 		acc+=vidc_currentmode->hswr;	vidc_write(VIDC_HSWR, (acc - 8 ) & (~1));
 		acc+=vidc_currentmode->hbsr;	vidc_write(VIDC_HBSR, (acc - 12) & (~1));
@@ -465,13 +385,6 @@ vidcrender_mode(vc, mode)
 		acc+=vidc_currentmode->vber;	vidc_write(VIDC_VBER, (acc - 1));
 		acc+=vidc_currentmode->vcr;	vidc_write(VIDC_VCR,  (acc - 1));
 
-#ifdef RC7500
-		vidc_write(VIDC_DCTL, vidc_currentmode->hder>>2 | 1<<16 | 1<<12);
-		if (vidc_currentmode->hder>=800)
-			vidc_write(VIDC_EREG, 0x41<<12);
-		else
-			vidc_write(VIDC_EREG, 0x51<<12);
-#else
 		IOMD_WRITE_WORD(IOMD_FSIZE, vidc_currentmode->vcr
 		    + vidc_currentmode->vswr
 		    + vidc_currentmode->vber
@@ -496,7 +409,6 @@ vidcrender_mode(vc, mode)
 		} else {
 			vidc_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
 		}
-#endif
 	}
 
 	R_DATA->mode = *vidc_currentmode;
@@ -975,15 +887,6 @@ void
 vidcrender_cls(vc)
 	struct vconsole *vc;
 {
-#ifdef RC7500
-	dispstart = dispbase;
-	dispend = dispstart+dispsize;
-    
-	IOMD_WRITE_WORD(IOMD_VIDINIT, dispstart-ptov);
-	IOMD_WRITE_WORD(IOMD_VIDSTART, dispstart-ptov);
-	IOMD_WRITE_WORD(IOMD_VIDEND, (dispend-transfersize)-ptov);
-#endif
-    
 	vidcrendermc_cls ( (char *)dispstart, (char *)dispstart+R_DATA->screensize, R_DATA->backfillcolour );
     /*
 	memset((char *)dispstart,
@@ -1216,16 +1119,13 @@ int
 vidcrender_cursorintr(arg)
 	void *arg;
 {
-#ifndef RC7500
 	struct vconsole *vc = arg;
-#endif
 	if ( cursor_flash==0 )
 		return 0;
 
 	/*
 	 * We don't need this.
 	 */
-#ifndef RC7500
 	if (vconsole_blankcounter >= 0)
 		vconsole_blankcounter--;
 
@@ -1233,7 +1133,6 @@ vidcrender_cursorintr(arg)
 		vconsole_blankcounter=vconsole_blankinit;
 		vidcrender_blank ( vc, BLANK_OFF );
 	}
-#endif
 
 	cursorcounter--;
 	if (cursorcounter<=0) {
@@ -1548,11 +1447,7 @@ vidcrender_blank(vc, type)
 
 	switch (type) {
 	case 0:
-#ifdef RC7500
-		vidc_write(VIDC_EREG, 0x51<<12);
-#else
     		vidc_write(VIDC_EREG, ereg);
-#endif
 		break;
 		
 	case 1: /* not implemented yet */
