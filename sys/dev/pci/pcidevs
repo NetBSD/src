@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.516 2003/03/25 18:28:15 tsubai Exp $
+$NetBSD: pcidevs,v 1.517 2003/03/29 20:49:03 jdc Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -518,6 +518,7 @@ vendor KOFAX		0x1296	Kofax Image Products
 vendor ALTEON		0x12ae	Alteon
 vendor RISCOM		0x12aa	RISCom
 vendor USR		0x12b9	US Robotics (3Com)
+vendor USR2		0x16ec	US Robotics
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
 vendor RAINBOW		0x12de	Rainbow Technologies
@@ -2261,6 +2262,7 @@ product ULSI US201	0x0201	US201
 /* US Robotics products */
 product USR 3C2884A	0x1007	56K Voice Internal PCI Modem (WinModem)
 product USR 3CP5609	0x1008	3CP5609 PCI 16550 Modem
+product USR2 2415	0x3685	Wireless PCI-PCMCIA adapter
 
 /* V3 Semiconductor products */
 product V3 V292PBC	0x0292	V292PBC AMD290x0 Host-PCI Bridge
