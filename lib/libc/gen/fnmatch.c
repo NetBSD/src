@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)fnmatch.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: fnmatch.c,v 1.7 1993/11/09 18:22:09 jtc Exp $";
+static char *rcsid = "$Id: fnmatch.c,v 1.8 1993/11/11 03:21:24 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -55,6 +55,7 @@ fnmatch(pattern, string, flags)
 	register const char *pattern, *string;
 	int flags;
 {
+	const char *stringstart = string;
 	register char c;
 	char test;
 
@@ -63,15 +64,24 @@ fnmatch(pattern, string, flags)
 		case EOS:
 			return (*string == EOS ? 0 : FNM_NOMATCH);
 		case '?':
-			if ((test = *string++) == EOS ||
-			    test == '/' && flags & FNM_PATHNAME)
+			if (*string == EOS)
 				return (FNM_NOMATCH);
+			if (*string == '/' && (flags & FNM_PATHNAME))
+				return (FNM_NOMATCH);
+			if (*string == '.' && (flags & FNM_PERIOD) &&
+			    (string == stringstart || ((flags & FNM_PATHNAME) && *(string - 1) == '/')))
+				return (FNM_NOMATCH);
+			++string;
 			break;
 		case '*':
 			c = *pattern;
 			/* Collapse multiple stars. */
 			while (c == '*')
 				c = *++pattern;
+
+			if (*string == '.' && (flags & FNM_PERIOD) &&
+			    (string == stringstart || ((flags & FNM_PATHNAME) && *(string - 1) == '/')))
+				return (FNM_NOMATCH);
 
 			/* Optimize for pattern with * at end or before /. */
 			if (c == EOS)
@@ -88,7 +98,7 @@ fnmatch(pattern, string, flags)
 
 			/* General case, use recursion. */
 			while ((test = *string) != EOS) {
-				if (!fnmatch(pattern, string, flags))
+				if (!fnmatch(pattern, string, flags & ~FNM_PERIOD))
 					return (0);
 				if (test == '/' && flags & FNM_PATHNAME)
 					break;
@@ -96,11 +106,13 @@ fnmatch(pattern, string, flags)
 			}
 			return (FNM_NOMATCH);
 		case '[':
-			if ((test = *string++) == EOS ||
-			    test == '/' && flags & FNM_PATHNAME)
+			if (*string == EOS)
 				return (FNM_NOMATCH);
-			if ((pattern = rangematch(pattern, test, flags)) == NULL)
+			if (*string == '/' && flags & FNM_PATHNAME)
 				return (FNM_NOMATCH);
+			if ((pattern = rangematch(pattern, *string, flags)) == NULL)
+				return (FNM_NOMATCH);
+			++string;
 			break;
 		case '\\':
 			if (!(flags & FNM_NOESCAPE)) {

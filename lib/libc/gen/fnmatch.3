@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fnmatch.3	8.1 (Berkeley) 6/9/93
-.\"	$Id: fnmatch.3,v 1.6 1993/11/09 18:22:05 jtc Exp $
+.\"	$Id: fnmatch.3,v 1.7 1993/11/11 03:21:21 jtc Exp $
 .\"
 .Dd June 9, 1993
 .Dt FNMATCH 3
@@ -95,7 +95,6 @@ Additionally, if
 .Dv FNM_PATHNAME
 is set,
 a period is ``leading'' if it immediately follows a slash.
-.Em "This flag is not currently implemented."
 .El
 .Sh RETURN VALUES
 The
@@ -121,10 +120,6 @@ The
 .Fn fnmatch
 function first appeared in 4.4BSD.
 .Sh BUGS
-The
-.Dv FNM_PERIOD
-flag is not implemented.
-.Pp
 The pattern
 .Ql *
 matches the empty string, even if
