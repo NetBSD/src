@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1995/05/11 22:00:50 cgd Exp $
+#	$NetBSD: Makefile,v 1.10 1996/10/18 02:49:35 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	quiz
@@ -11,7 +11,7 @@ CATS=	africa america areas arith asia babies bard chinese collectives \
 HIDEGAME=hidegame
 
 beforeinstall:
-	(cd ${.CURDIR}/datfiles; install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    ${CATS} ${DESTDIR}/usr/share/games/quiz.db)
+	(cd ${.CURDIR}/datfiles; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} \
+	    -m 444 ${CATS} ${DESTDIR}/usr/share/games/quiz.db)
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1995/04/22 07:34:00 cgd Exp $
+#	$NetBSD: Makefile,v 1.9 1996/10/18 02:48:24 thorpej Exp $
 #	@(#)Makefile	5.12 (Berkeley) 5/30/93
 
 # EXTRA
@@ -63,8 +63,7 @@ LDADD=	-ltermcap -lcompat
 HIDEGAME=hidegame
 
 beforeinstall:
-	(cd ${.CURDIR}/datfiles; install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    larnmaze larnopts larn.help \
-	    ${DESTDIR}/usr/share/games/larn)
+	(cd ${.CURDIR}/datfiles; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} \
+	    -m 444 larnmaze larnopts larn.help ${DESTDIR}/usr/share/games/larn)
 
 .include <bsd.prog.mk>
