@@ -1,4 +1,4 @@
-/*	$NetBSD: device.c,v 1.2 1997/03/25 03:07:06 thorpej Exp $	*/
+/*	$NetBSD: device.c,v 1.3 1997/10/16 23:24:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -29,28 +29,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: device.c,v 1.2 1997/03/25 03:07:06 thorpej Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: device.c,v 1.3 1997/10/16 23:24:28 lukem Exp $");
 #endif
 
 #include "os.h"
-#include "common/common.h"
-#include "common/mopdef.h"
+#include "common.h"
+#include "device.h"
+#include "mopdef.h"
+#include "pf.h"
 
 struct	if_info *iflist;		/* Interface List		*/
 
-void mopReadDL();
-void mopReadRC();
-#ifdef NO__P
-int  mopOpenDL(/* struct if_info *, int */);
-int  mopOpenRC(/* struct if_info *, int */);
-#else
-int  mopOpenDL(struct if_info *, int);
-int  mopOpenRC(struct if_info *, int);
-#endif
-int pfTrans();
-int pfInit();
-int pfWrite();
+void	deviceOpen __P((char *, u_short, int));
 
 #ifdef	DEV_NEW_CONF
 /*
@@ -95,7 +87,7 @@ deviceEthAddr(ifname, eaddr)
 		    sdl->sdl_alen != 6)
 			continue;
 		if (!strncmp(ifr->ifr_name, ifname, sizeof(ifr->ifr_name))) {
-			bcopy((caddr_t)LLADDR(sdl), (caddr_t)eaddr, 6);
+			memmove((caddr_t)eaddr, (caddr_t)LLADDR(sdl), 6);
 			return;
 		}
 	}
@@ -144,7 +136,7 @@ deviceOpen(ifname, proto, trans)
 		p->iopen   = tmp.iopen;
 		p->write   = pfWrite;
 		p->read    = tmp.read;
-		bzero((char *)p->eaddr,sizeof(p->eaddr));
+		memset((char *)p->eaddr, 0, sizeof(p->eaddr));
 		p->fd      = tmp.fd;
 
 #ifdef	DEV_NEW_CONF
