@@ -1,5 +1,5 @@
-.\"	$NetBSD: setkey.8,v 1.5 2000/10/03 21:48:33 itojun Exp $
-.\"     $KAME: setkey.8,v 1.31 2000/08/29 07:32:48 itojun Exp $
+.\"	$NetBSD: setkey.8,v 1.6 2000/10/15 13:43:51 itojun Exp $
+.\"     $KAME: setkey.8,v 1.32 2000/10/15 13:42:36 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -108,11 +108,9 @@ Loop forever with short output on
 .Fl D .
 .It Fl v
 Be verbose.
+The program will dump messages exchanged on
 .Dv PF_KEY
-socket
-.Po
-including messages sent from other processes
-.Pc .
+socket, including messages sent from other processes to the kernel.
 .El
 .Pp
 Operations have the following grammar. Note that lines starting with
