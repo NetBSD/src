@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 1998/01/23 19:01:17 cgd Exp $
+#	$NetBSD: Makefile,v 1.40 1998/02/22 06:54:38 mycroft Exp $
 
 LIB=	kern
 NOPIC=
@@ -32,6 +32,33 @@ CLEANFILES+= lib${LIB}.o lib${LIB}.po
 # mcount cannot be compiled with profiling
 mcount.po: mcount.o
 	cp mcount.o mcount.po
+
+# if no machine specific memcpy(3), build one out of bcopy(3).
+.if empty(SRCS:Mmemcpy.S)
+OBJS+=	memcpy.o
+memcpy.o: bcopy.c
+	@echo ${COMPILE.c:Q} -DMEMCOPY ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DMEMCOPY ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+memcpy.po: bcopy.c
+	@echo ${COMPILE.c:Q} -DMEMCOPY -pg ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DMEMCOPY -pg ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+memcpy.so: bcopy.c
+	@echo ${COMPILE.c:Q} -DMEMCOPY ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}
+	@${COMPILE.c} -DMEMCOPY ${CPICFLAGS} ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+LOBJS+= memcpy.ln
+memcpy.ln: bcopy.c
+	${LINT} -DMEMCOPY ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i -o ${.TARGET} \
+	    ${.ALLSRC}
+.endif
 
 # if no machine specific strchr(3), build one out of index(3).
 .if empty(SRCS:Mstrchr.S)
