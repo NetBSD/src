@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.18.2.1 2004/07/15 20:17:31 he Exp $
+#	$NetBSD: ADI_BRH,v 1.18.2.1.2.1 2005/04/02 21:30:57 he Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -173,6 +173,7 @@ artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 
 atabus* 	at ata? channel ?
