@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.16 1997/05/12 01:52:27 jtk Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.17 1997/09/15 05:31:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.16 1997/05/12 01:52:27 jtk Exp $";
+__RCSID("$NetBSD: mount_nfs.c,v 1.17 1997/09/15 05:31:36 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,8 +189,9 @@ int	getnfsargs __P((char *, struct nfs_args *));
 #ifdef ISO
 struct	iso_addr *iso_addr __P((const char *));
 #endif
+int	main __P((int, char *[]));
 void	set_rpc_maxgrouplist __P((int));
-__dead	void usage __P((void));
+void	usage __P((void));
 int	xdr_dir __P((XDR *, char *));
 int	xdr_fh __P((XDR *, struct nfhret *));
 
@@ -199,13 +200,12 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int c;
-	register struct nfs_args *nfsargsp;
+	int c;
+	struct nfs_args *nfsargsp;
 	struct nfs_args nfsargs;
 	struct nfsd_cargs ncd;
 	int mntflags, altflags, i, nfssvc_flag, num;
 	char *name, *p, *spec;
-	int error = 0;
 #ifdef NFSKERB
 	uid_t last_ruid;
 
@@ -226,7 +226,7 @@ main(argc, argv)
 	nfsargs = nfsdefargs;
 	nfsargsp = &nfsargs;
 	while ((c = getopt(argc, argv,
-	    "23a:bcCdD:g:I:iKL:lm:o:PpqR:r:sTt:w:x:U")) != EOF)
+	    "23a:bcCdD:g:I:iKL:lm:o:PpqR:r:sTt:w:x:U")) != -1)
 		switch (c) {
 		case '3':
 			if (force2)
@@ -435,7 +435,7 @@ main(argc, argv)
 		err(1, "%s", name);
 	if (nfsargsp->flags & (NFSMNT_NQNFS | NFSMNT_KERB)) {
 		if ((opflags & ISBGRND) == 0) {
-			if (i = fork()) {
+			if ((i = fork()) != 0) {
 				if (i == -1)
 					err(1, "nqnfs 1");
 				exit(0);
@@ -506,7 +506,7 @@ main(argc, argv)
 			    kin.t2 = htonl(ktv.tv_usec);
 			    kin.w1 = htonl(NFS_KERBTTL);
 			    kin.w2 = htonl(NFS_KERBTTL - 1);
-			    bzero((caddr_t)kivec, sizeof (kivec));
+			    memset((caddr_t)kivec, 0, sizeof (kivec));
 
 			    /*
 			     * Encrypt kin in CBC mode using the session
@@ -539,7 +539,7 @@ getnfsargs(spec, nfsargsp)
 	char *spec;
 	struct nfs_args *nfsargsp;
 {
-	register CLIENT *clp;
+	CLIENT *clp;
 	struct hostent *hp;
 	static struct sockaddr_in saddr;
 #ifdef ISO
@@ -554,7 +554,7 @@ getnfsargs(spec, nfsargsp)
 #ifdef NFSKERB
 	char *cp;
 #endif
-	u_short tport;
+	u_short tport = 0;
 	static struct nfhret nfhret;
 	static char nam[MNAMELEN + 1];
 
@@ -701,7 +701,7 @@ tryagain:
 		if (--retrycnt > 0) {
 			if (opflags & BGRND) {
 				opflags &= ~BGRND;
-				if (i = fork()) {
+				if ((i = fork()) != 0) {
 					if (i == -1)
 						err(1, "nqnfs 2");
 					exit(0);
@@ -754,9 +754,9 @@ xdr_dir(xdrsp, dirp)
 int
 xdr_fh(xdrsp, np)
 	XDR *xdrsp;
-	register struct nfhret *np;
+	struct nfhret *np;
 {
-	register int i;
+	int i;
 	long auth, authcnt, authfnd = 0;
 
 	if (!xdr_u_long(xdrsp, &np->stat))
@@ -793,7 +793,7 @@ xdr_fh(xdrsp, np)
 	return (0);
 }
 
-__dead void
+void
 usage()
 {
 	(void)fprintf(stderr, "usage: mount_nfs %s\n%s\n%s\n%s\n",

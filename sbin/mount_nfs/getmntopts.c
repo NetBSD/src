@@ -31,8 +31,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)getmntopts.c	8.3 (Berkeley) 3/29/95";
+#else
+__RCSID("$NetBSD: getmntopts.c,v 1.2 1997/09/15 05:31:35 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,7 +67,7 @@ getmntopts(options, m0, flagp, altflagp)
 
 	/* Copy option string, since it is about to be torn asunder... */
 	if ((optbuf = strdup(options)) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 
 	for (opt = optbuf; (opt = strtok(opt, ",")) != NULL; opt = NULL) {
 		/* Check for "no" prefix. */
