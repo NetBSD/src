@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -20,7 +20,7 @@
 #ifdef _DEFINE
 # define EXTERN
 # ifndef lint
-static char SmailId[] =	"@(#)Id: sendmail.h,v 8.517.4.28 2000/07/18 02:24:44 gshapiro Exp";
+static char SmailId[] =	"@(#)Id: sendmail.h,v 8.517.4.50 2001/02/22 18:56:24 gshapiro Exp";
 # endif /* ! lint */
 #else /* _DEFINE */
 # define EXTERN extern
@@ -152,6 +152,9 @@ static char SmailId[] =	"@(#)Id: sendmail.h,v 8.517.4.28 2000/07/18 02:24:44 gsh
 #ifndef INT32SZ
 # define INT32SZ	4		/* size of a 32 bit integer in bytes */
 #endif /* ! INT32SZ */
+#ifndef INADDR_LOOPBACK
+# define INADDR_LOOPBACK	0x7f000001	/* loopback address */
+#endif /* ! INADDR_LOOPBACK */
 
 /*
 **  Error return from inet_addr(3), in case not defined in /usr/include.
@@ -226,14 +229,14 @@ typedef struct address ADDRESS;
 #define QS_QUEUEUP	3		/* save address in queue */
 #define QS_VERIFIED	4		/* verified, but not expanded */
 #define QS_DONTSEND	5		/* don't send to this address */
-#define QS_EXPANDED	6		/* expanded */
-#define QS_SENDER	7		/* message sender (MeToo) */
-#define QS_CLONED	8		/* addr cloned to a split envelope */
-#define QS_DISCARDED	9		/* recipient discarded (EF_DISCARD) */
-#define QS_REPLACED	10		/* maplocaluser()/UserDB replaced */
-#define QS_REMOVED	11		/* removed (removefromlist()) */
-#define QS_DUPLICATE	12		/* duplicate suppressed */
-#define QS_INCLUDED	13		/* :include: delivery */
+#define QS_EXPANDED	6		/* QS_DONTSEND: expanded */
+#define QS_SENDER	7		/* QS_DONTSEND: message sender (MeToo) */
+#define QS_CLONED	8		/* QS_DONTSEND: addr cloned to split envelope */
+#define QS_DISCARDED	9		/* QS_DONTSEND: rcpt discarded (EF_DISCARD) */
+#define QS_REPLACED	10		/* QS_DONTSEND: maplocaluser()/UserDB replaced */
+#define QS_REMOVED	11		/* QS_DONTSEND: removed (removefromlist()) */
+#define QS_DUPLICATE	12		/* QS_DONTSEND: duplicate suppressed */
+#define QS_INCLUDED	13		/* QS_DONTSEND: :include: delivery */
 
 /* address state testing primitives */
 #define QS_IS_OK(s)		((s) == QS_OK)
@@ -459,6 +462,8 @@ MCI
 #else /* STARTTLS */
 #define MCIF_EXTENS	(MCIF_EXPN | MCIF_SIZE | MCIF_8BITMIME | MCIF_DSN | MCIF_8BITOK | MCIF_AUTH | MCIF_ENHSTAT)
 #endif /* STARTTLS */
+#define MCIF_ONLY_EHLO	0x10000000	/* use only EHLO in smtpinit */
+
 
 /* states */
 #define MCIS_CLOSED	0		/* no traffic on this connection */
@@ -542,6 +547,7 @@ extern struct hdrinfo	HdrInfo[];
 #define CHHDR_DEF	0x0001	/* default header */
 #define CHHDR_CHECK	0x0002	/* call ruleset for header */
 #define CHHDR_USER	0x0004	/* header from user */
+#define CHHDR_QUEUE	0x0008	/* header from qf file */
 
 /* functions */
 extern void	addheader __P((char *, char *, int, HDR **));
@@ -589,6 +595,12 @@ struct envelope
 	char		**e_fromdomain;	/* the domain part of the sender */
 	ADDRESS		*e_sendqueue;	/* list of message recipients */
 	ADDRESS		*e_errorqueue;	/* the queue for error responses */
+
+	/*
+	**  Overflow detection is based on < 0, so don't change this
+	**  to unsigned.  We don't use unsigned and == ULONG_MAX because
+	**  some libc's don't have strtoul(), see mail_esmtp_args().
+	*/
 	long		e_msgsize;	/* size of the message in bytes */
 	long		e_flags;	/* flags, see below */
 	int		e_nrcpts;	/* number of recipients */
@@ -620,7 +632,7 @@ struct envelope
 	int		e_ntries;	/* number of delivery attempts */
 	dev_t		e_dfdev;	/* df file's device, for crash recov */
 	ino_t		e_dfino;	/* df file's ino, for crash recovery */
-	char		*e_macro[256];	/* macro definitions */
+	char		*e_macro[MAXMACROID + 1]; /* macro definitions */
 	char		*e_if_macros[2]; /* HACK: incoming interface info */
 	char		*e_auth_param;
 	TIMERS		e_timers;	/* per job timers */
@@ -656,6 +668,7 @@ struct envelope
 #define EF_IS_MIME	0x0400000L	/* really is a MIME message */
 #define EF_DONT_MIME	0x0800000L	/* never MIME this message */
 #define EF_DISCARD	0x1000000L	/* discard the message */
+#define EF_TOOBIG	0x2000000L	/* message is too big */
 
 /* values for e_if_macros */
 #define EIF_ADDR	0		/* ${if_addr} */
@@ -768,7 +781,7 @@ extern void	expand __P((char *, char *, size_t, ENVELOPE *));
 extern int	macid __P((char *, char **));
 extern char	*macname __P((int));
 extern char	*macvalue __P((int, ENVELOPE *));
-extern int	rscheck __P((char *, char *, char *, ENVELOPE *, bool, bool, int));
+extern int	rscheck __P((char *, char *, char *, ENVELOPE *, bool, bool, int, char *));
 extern void	setclass __P((int, char *));
 extern int	strtorwset __P((char *, char **, int));
 extern void	translate_dollars __P((char *));
@@ -868,7 +881,6 @@ MAP
 #define MF_DEFER	0x00080000	/* don't lookup map in defer mode */
 #define MF_SINGLEMATCH	0x00100000	/* successful only if match one key */
 #define MF_NOREWRITE	0x00200000	/* don't rewrite result, return as-is */
-#define MF_SHARED	0x00400000	/* map connection is shared */
 
 #define DYNOPENMAP(map) if (!bitset(MF_OPEN, (map)->map_mflags)) \
 	{	\
@@ -1368,6 +1380,7 @@ struct milter
 # define SMFS_OPEN		'O'	/* connected to remote milter filter */
 # define SMFS_INMSG		'M'	/* currently servicing a message */
 # define SMFS_DONE		'D'	/* done with current message */
+# define SMFS_CLOSABLE		'Q'	/* done with current connection */
 # define SMFS_ERROR		'E'	/* error state */
 # define SMFS_READY		'R'	/* ready for action */
 
@@ -1421,17 +1434,22 @@ struct termescape
 */
 
 /* d_flags, see daemon.c */
-/* generic rule: lower case: required, upper case: No */
+/* general rule: lower case: required, upper case: No */
 #define D_AUTHREQ	'a'	/* authentication required */
 #define D_BINDIF	'b'	/* use if_addr for outgoing connection */
 #define D_CANONREQ	'c'	/* canonification required (cf) */
 #define D_IFNHELO	'h'	/* use if name for HELO */
 #define D_FQMAIL	'f'	/* fq sender address required (cf) */
+#if _FFR_TLS_CLT1
+#define D_CLTNOTLS	'S'	/* don't use STARTTLS in client */
+#endif /* _FFR_TLS_CLT1 */
 #define D_FQRCPT	'r'	/* fq recipient address required (cf) */
 #define D_UNQUALOK	'u'	/* unqualified address is ok (cf) */
 #define D_NOCANON	'C'	/* no canonification (cf) */
 #define D_NOETRN	'E'	/* no ETRN (MSA) */
 #define D_ETRNONLY	((char)0x01)	/* allow only ETRN (disk low) */
+#define D_OPTIONAL	'O'	/* optional socket */
+#define D_DISABLE	((char)0x02)	/* optional socket disabled */
 
 /* Flags for submitmode */
 #define SUBMIT_UNKNOWN	0x0000	/* unknown agent type */
@@ -1664,6 +1682,7 @@ EXTERN bool	IgnoreHostStatus;	/* ignore long term host status files */
 EXTERN bool	IgnrDot;	/* don't let dot end messages */
 EXTERN bool	InChild;	/* true if running in an SMTP subprocess */
 EXTERN bool	LogUsrErrs;	/* syslog user errors (e.g., SMTP RCPT cmd) */
+EXTERN bool	MapOpenErr;	/* error opening a non-optional map */
 EXTERN bool	MatchGecos;	/* look for user names in gecos field */
 EXTERN bool	MeToo;		/* send to the sender also */
 EXTERN bool	NoAlias;	/* suppress aliasing */
@@ -1679,6 +1698,9 @@ EXTERN bool	SingleThreadDelivery;	/* single thread hosts on delivery */
 EXTERN bool	SuperSafe;	/* be extra careful, even if expensive */
 EXTERN bool	SuprErrs;	/* set if we are suppressing errors */
 EXTERN bool	TryNullMXList;	/* if we are the best MX, try host directly */
+#if _FFR_WORKAROUND_BROKEN_NAMESERVERS
+EXTERN bool	WorkAroundBrokenAAAA;	/* some nameservers return SERVFAIL on AAAA queries */
+#endif /* _FFR_WORKAROUND_BROKEN_NAMESERVERS */
 EXTERN bool	UseErrorsTo;	/* use Errors-To: header (back compat) */
 EXTERN bool	UseHesiod;	/* using Hesiod -- interpret Hesiod errors */
 EXTERN bool	UseNameServer;	/* using DNS -- interpret h_errno & MX RRs */
@@ -1859,11 +1881,11 @@ extern void	apps_ssl_info_cb __P((SSL *, int , int));
 extern bool	inittls __P((SSL_CTX **, u_long, bool, char *, char *, char *, char *, char *));
 extern bool	initclttls __P((void));
 extern bool	initsrvtls __P((void));
-extern int	tls_get_info __P((SSL *, ENVELOPE *, bool, char *));
+extern int	tls_get_info __P((SSL *, ENVELOPE *, bool, char *, bool));
 extern int	endtls __P((SSL *, char *));
 extern int	endtlsclt __P((MCI *));
 extern void	tlslogerr __P((void));
-extern void	tls_rand_init __P((char *, int));
+extern bool	tls_rand_init __P((char *, int));
 #endif /* STARTTLS */
 
 /* Transcript file */
@@ -2033,7 +2055,6 @@ extern void	queueup_macros __P((int, FILE *, ENVELOPE *));
 extern SIGFUNC_DECL	quiesce __P((int));
 extern void	readcf __P((char *, bool, ENVELOPE *));
 extern SIGFUNC_DECL	reapchild __P((int));
-extern bool	refuseconnections __P((char *, ENVELOPE *, int));
 extern int	releasesignal __P((int));
 extern void	resetlimits __P((void));
 extern bool	rfc822_string __P((char *));
@@ -2051,7 +2072,7 @@ extern void	setuserenv __P((const char *, const char *));
 extern void	settime __P((ENVELOPE *));
 extern char	*sfgets __P((char *, int, FILE *, time_t, char *));
 extern char	*shortenstring __P((const char *, int));
-extern void	shorten_hostname __P((char []));
+extern char	*shorten_hostname __P((char []));
 extern bool	shorten_rfc822_string __P((char *, size_t));
 extern SIGFUNC_DECL	sigusr1 __P((int));
 extern SIGFUNC_DECL	sighup __P((int));
