@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.147 2001/12/01 00:05:04 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.148 2001/12/07 11:26:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.147 2001/12/01 00:05:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.148 2001/12/07 11:26:30 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.147 2001/12/01 00:05:04 bouyer Exp $");
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
+#include <sys/vnode.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_tape.h>
@@ -85,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.147 2001/12/01 00:05:04 bouyer Exp $");
 #define STMODE(z)	( minor(z)       & 0x03)
 #define STDSTY(z)	((minor(z) >> 2) & 0x03)
 #define STUNIT(z)	((minor(z) >> 4)       )
+#define STNMINOR	16
 
 #define NORMAL_MODE	0
 #define NOREW_MODE	1
@@ -383,6 +385,74 @@ stattach(parent, st, aux)
 	rnd_attach_source(&st->rnd_source, st->sc_dev.dv_xname,
 			  RND_TYPE_TAPE, 0);
 #endif
+}
+
+int
+stactivate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		/*
+		 * Nothing to do; we key off the device's DVF_ACTIVE.
+		 */
+		break;
+	}
+	return (rv);
+}
+
+int
+stdetach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct st_softc *st = (struct st_softc *)self;
+	struct buf *bp;
+	int s, bmaj, cmaj, mn;
+
+	/* locate the major number */
+	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
+		if (bdevsw[bmaj].d_open == stopen)
+			break;
+	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
+		if (cdevsw[cmaj].d_open == stopen)
+			break;
+
+	s = splbio();
+
+	/* Kill off any queued buffers. */
+	while ((bp = BUFQ_FIRST(&st->buf_queue)) != NULL) {
+		BUFQ_REMOVE(&st->buf_queue, bp);
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+	}
+
+	/* Kill off any pending commands. */
+	scsipi_kill_pending(st->sc_periph);
+
+	splx(s);
+
+	/* Nuke the vnodes for any open instances */
+	mn = STUNIT(self->dv_unit);
+	vdevgone(bmaj, mn, mn+STNMINOR-1, VBLK);
+	vdevgone(cmaj, mn, mn+STNMINOR-1, VCHR);
+
+
+#if NRND > 0
+	/* Unhook the entropy source. */
+	rnd_detach_source(&st->rnd_source);
+#endif
+
+	return (0);
 }
 
 /*
