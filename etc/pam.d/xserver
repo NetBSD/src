@@ -1,10 +1,10 @@
-# $NetBSD: xserver,v 1.2 2005/03/03 04:21:51 christos Exp $
+# $NetBSD: xserver,v 1.2.2.1 2005/03/19 17:51:05 tron Exp $
 #
 # PAM configuration for the "X Windows Server"
 #
 
 # auth
-auth		sufficient	pam_self.so
+auth		required	pam_self.so
 
 # account
 account		include		system
