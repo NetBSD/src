@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.8 2002/07/19 23:55:01 itojun Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.9 2002/07/20 00:03:08 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.8 2002/07/19 23:55:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.9 2002/07/20 00:03:08 itojun Exp $");
 
 #include "opt_systrace.h"
 
@@ -684,8 +684,9 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 		error = systrace_msg_ask(fst, strp, code, callp->sy_argsize, v);
 		DPRINTF(("policy permit, syscall %d error %d\n", code, error));
 
-		/* We might have detached by now for some reason */
+		/* lock has been released in systrace_msg_ask() */
 		fst = NULL;
+		/* We might have detached by now for some reason */
 		if (!error && (strp = p->p_systrace) != NULL) {
 			/* XXX - do I need to lock here? */
 			if (strp->answer == SYSTR_POLICY_NEVER)
