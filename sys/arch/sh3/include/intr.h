@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 1999/12/27 10:50:41 msaitoh Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2000/02/24 19:01:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -154,7 +154,12 @@ static __inline void
 softintr(mask)
 	register int mask;
 {
+	extern void enable_interrupt(void);	/* XXX */
+	extern void disable_interrupt(void);
+
+	disable_interrupt();
 	ipending |= (1 << mask);
+	enable_interrupt();
 }
 
 #define	setsoftast()	(astpending = 1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.3 2000/02/21 20:38:49 erh Exp $	*/
+/*	$NetBSD: shb.c,v 1.4 2000/02/24 19:01:25 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -209,7 +209,7 @@ intr_calculatemasks()
 
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
-		register int levels = 0;
+		int levels = 0;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			levels |= 1 << q->ih_level;
 		intrlevel[irq] = levels;
@@ -217,7 +217,7 @@ intr_calculatemasks()
 
 	/* Then figure out which IRQs use each level. */
 	for (level = 0; level < NIPL; level++) {
-		register int irqs = 0;
+		int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
@@ -275,7 +275,7 @@ intr_calculatemasks()
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
-		register int irqs = 1 << irq;
+		int irqs = 1 << irq;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
 		intrmask[irq] = irqs;
@@ -284,7 +284,7 @@ intr_calculatemasks()
 #ifdef	TODO
 	/* Lastly, determine which IRQs are actually in use. */
 	{
-		register int irqs = 0;
+		int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrhand[irq])
 				irqs |= 1 << irq;
@@ -392,7 +392,7 @@ intrhandler(p1, p2, p3, p4, frame)
 	int p1, p2, p3, p4; /* dummy param */
 	struct trapframe frame;
 {
-        unsigned int irl;
+	unsigned int irl;
 	struct intrhand *ih;
 	unsigned int irq_num;
 	int ocpl;
@@ -421,9 +421,6 @@ intrhandler(p1, p2, p3, p4, frame)
 
 	ocpl = cpl;
 	cpl |= intrmask[irq_num];
-#ifdef	TODO
-	enable_ext_intr();
-#endif
 	ih = intrhand[irq_num];
 	if (ih == NULL) {
 
@@ -435,6 +432,7 @@ intrhandler(p1, p2, p3, p4, frame)
 #endif
 		return 1;
 	}
+	enable_ext_intr();
 	while (ih) {
 		if (ih->ih_arg)
 			(*ih->ih_fun)(ih->ih_arg);
@@ -442,6 +440,7 @@ intrhandler(p1, p2, p3, p4, frame)
 			(*ih->ih_fun)(&frame);
 		ih = ih->ih_next;
 	}
+	disable_ext_intr();
 
 	cpl = ocpl;
 
@@ -468,11 +467,26 @@ check_ipending(p1, p2, p3, p4, frame)
 	if (ir == 0)
 		return 0;
 
+#if 0
 	mask = 1;
 	for (i = 0; i < MASK_LEN; i++, mask <<= 1) {
 		if (ir & mask)
 			break;
 	}
+#else
+	mask = 1 << IRQ_LOW;
+	for (i = IRQ_LOW; i <= IRQ_HIGH; i++, mask <<= 1) {
+		if (ir & mask)
+			break;
+	}
+	if (IRQ_HIGH < i) {
+		mask = 1 << SIR_LOW;
+		for (i = SIR_LOW; i <= SIR_HIGH; i++, mask <<= 1) {
+			if (ir & mask)
+				break;
+		}
+	}
+#endif
 
 	if ((mask & ipending) == 0)
 		goto restart;
@@ -564,8 +578,12 @@ void nsintr __P((void));
 void
 Xsoftnet(void)
 {
-        unsigned long ni = netisr;
-        netisr = 0;
+	int s, ni;
+
+	s = splhigh();
+	ni = netisr;
+	netisr = 0;
+	splx(s);
 
 #define DONETISR(bit, fn) do {		\
 	if (ni & (1 << bit))		\
@@ -584,7 +602,7 @@ Xsoftclock(void)
         softclock();
 }
 
-#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
+#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < SHB_MAX_HARDINTR && (x) != 2)
 
 int
 sh_intr_alloc(mask, type, irq)
