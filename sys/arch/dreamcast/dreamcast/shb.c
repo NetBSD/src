@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.3 2001/01/31 18:44:07 thorpej Exp $	*/
+/*	$NetBSD: shb.c,v 1.4 2001/02/20 00:03:53 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -649,6 +649,11 @@ mask_irq(irq)
 		SHREG_IPRE &= ~((15)<<12);
 		break;
 #endif
+
+	 case 9:
+	  *(volatile unsigned int *)(void *)(0xa05f6934) &= ~1;
+	  break;
+
 	 case 11:
    	  *(volatile unsigned int *)(void *)(0xa05f6924) &= ~(1<<3);
 	  break;
@@ -688,6 +693,10 @@ unmask_irq(irq)
 		SHREG_IPRE |= ((15 - irq)<<12);
 		break;
 #endif
+	 case 9:
+	  *(volatile unsigned int *)(void *)(0xa05f6934) |= 1;
+	  break;
+
 	 case 11:
    	  *(volatile unsigned int *)(void *)(0xa05f6924) |= (1<<3);
 	  break;
