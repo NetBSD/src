@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.517 2003/01/19 19:26:46 thorpej Exp $
+#	$NetBSD: mi,v 1.518 2003/01/21 02:07:53 christos Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -674,6 +674,7 @@
 ./usr/include/sa.h			comp-c-include
 ./usr/include/sched.h			comp-c-include
 ./usr/include/search.h			comp-c-include
+./usr/include/semaphore.h		comp-c-include
 ./usr/include/setjmp.h			comp-c-include
 ./usr/include/sgtty.h			comp-c-include
 ./usr/include/sha1.h			comp-c-include
@@ -746,6 +747,7 @@
 ./usr/include/sys/kcore.h		comp-c-include
 ./usr/include/sys/kernel.h		comp-c-include
 ./usr/include/sys/kgdb.h		comp-c-include
+./usr/include/sys/ksem.h		comp-c-include
 ./usr/include/sys/ktrace.h		comp-c-include
 ./usr/include/sys/lkm.h			comp-c-include
 ./usr/include/sys/localedef.h		comp-c-include
