@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.23 2004/03/15 23:25:09 uwe Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.24 2004/03/17 04:24:16 uwe Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -631,7 +631,6 @@ static const keysym_t jornada6x0_de_keydesc[] = {
     KC(208), KS_Cmd_BrightnessDown, KS_Down,
 };
 
-#if 0 /* XXX: not yet: need to add platform id to hpcboot */
 /* French (ABF) */
 static const keysym_t jornada6x0_fr_keydesc[] = {
 /*  pos      normal          shifted        altgr	*/
@@ -661,7 +660,6 @@ static const keysym_t jornada6x0_fr_keydesc[] = {
     KC(205), KS_Cmd_ContrastUp,     KS_Right,
     KC(208), KS_Cmd_BrightnessDown, KS_Down,
 };
-#endif
 
 const int jornada6x0_special_keymap[] = {
 	[KEY_SPECIAL_OFF]	= 88,
@@ -862,12 +860,12 @@ const struct hpckbd_keymap_table {
 		CMDMAP(jornada6x0_us_keydesc),
 		KB_US },
 	/* European English (ABB) */
-	{	&platid_mask_MACH_HP_JORNADA_680HU,
+	{	&platid_mask_MACH_HP_JORNADA_680EU,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
 		CMDMAP(jornada6x0_intl_keydesc),
 		KB_US },
-	{	&platid_mask_MACH_HP_JORNADA_690HU,
+	{	&platid_mask_MACH_HP_JORNADA_690EU,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
 		CMDMAP(jornada6x0_intl_keydesc),
@@ -883,7 +881,6 @@ const struct hpckbd_keymap_table {
 		jornada6x0_special_keymap,
  		CMDMAP(jornada6x0_de_keydesc),
 		KB_DE },
-#if 0 /* XXX: not yet: need to add platform id to hpcboot */
 	/* French (ABF) */
 	{	&platid_mask_MACH_HP_JORNADA_680FR,
 		jornada6x0_intl_keytrans,
@@ -895,7 +892,6 @@ const struct hpckbd_keymap_table {
 		jornada6x0_special_keymap,
  		CMDMAP(jornada6x0_fr_keydesc),
 		KB_FR },
-#endif
 	/*
 	 * HP 620LX
 	 */
