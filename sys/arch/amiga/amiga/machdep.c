@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 1995/04/10 13:08:28 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 1995/04/19 12:54:32 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1028,6 +1028,11 @@ bootsync(void)
 		if (panicstr == 0)
 			vnode_pager_umount(NULL);
 		sync(&proc0, (void *)NULL, (int *)NULL);
+		/*
+		 * unmount filesystems
+		 */
+		if (panicstr == 0)
+			vfs_unmountall();
 
 		for (iter = 0; iter < 20; iter++) {
 			nbusy = 0;
