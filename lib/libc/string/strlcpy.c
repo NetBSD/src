@@ -1,5 +1,5 @@
-/*	$NetBSD: strlcpy.c,v 1.6 2001/01/03 14:33:02 lukem Exp $	*/
-/*	from OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp 	*/
+/*	$NetBSD: strlcpy.c,v 1.7 2001/01/13 04:19:54 itojun Exp $	*/
+/*	$OpenBSD: strlcpy.c,v 1.4 1999/05/01 18:56:41 millert Exp $ 	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcpy.c,v 1.6 2001/01/03 14:33:02 lukem Exp $");
+__RCSID("$NetBSD: strlcpy.c,v 1.7 2001/01/13 04:19:54 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
