@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.6 2003/04/20 19:31:29 bjh21 Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.7 2003/04/20 22:23:59 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -112,9 +112,6 @@ kdoprnt(void (*put)(int), const char *fmt, va_list ap)
 		}
 		lflag = 0;
 reswitch:	switch (ch = *fmt++) {
-		case '\0':
-			/* XXX print the last format character? */
-			return;
 		case 'l':
 			lflag = 1;
 			goto reswitch;
@@ -180,6 +177,8 @@ reswitch:	switch (ch = *fmt++) {
 			put('%');
 			if (lflag)
 				put('l');
+			if (ch == '\0')
+				return;
 			put(ch);
 		}
 	}
