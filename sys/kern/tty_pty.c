@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.43 2000/03/30 09:27:13 augustss Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.44 2000/07/14 12:10:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -577,7 +577,7 @@ ptyioctl(dev, cmd, data, flag, p)
 	struct pt_softc *pti = &pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
 	u_char *cc = tp->t_cc;
-	int stop, error;
+	int stop, error, sig;
 
 	/*
 	 * IF CONTROLLER STTY THEN MUST FLUSH TO PREVENT A HANG.
@@ -667,12 +667,13 @@ ptyioctl(dev, cmd, data, flag, p)
 			break;
 
 		case TIOCSIG:
-			if (*(unsigned int *)data >= NSIG)
-				return(EINVAL);
+			sig = (int)*data;
+			if (sig <= 0 || sig >= NSIG)
+				return (EINVAL);
 			if (!ISSET(tp->t_lflag, NOFLSH))
 				ttyflush(tp, FREAD|FWRITE);
-			pgsignal(tp->t_pgrp, *(unsigned int *)data, 1);
-			if ((*(unsigned int *)data == SIGINFO) &&
+			pgsignal(tp->t_pgrp, sig, 1);
+			if ((sig == SIGINFO) &&
 			    (!ISSET(tp->t_lflag, NOKERNINFO)))
 				ttyinfo(tp);
 			return(0);
