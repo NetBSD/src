@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.31 1998/01/11 21:42:44 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.32 1998/01/12 18:29:48 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -8,18 +8,8 @@ maxpartitions 8
 maxusers 2 8 64
 
 # SPU configuration options.
-defopt	HP320
-defopt	HP330
-defopt	HP340
-defopt	HP345
-defopt	HP350
-defopt	HP360
-defopt	HP370
-defopt	HP375
-defopt	HP380
-defopt	HP400
-defopt	HP425
-defopt	HP433
+defopt	opt_spuconf.h HP320 HP330 HP340 HP345 HP350 HP360 HP370
+	HP375 HP380 HP400 HP425 HP433
 
 # Misc. options.
 defopt	USELEDS		# make the lights twinkle
@@ -31,14 +21,14 @@ defopt	USELEDS		# make the lights twinkle
 # Mainbus
 #
 
-device	mainbus { }
+device	mainbus class dull { }
 attach	mainbus at root
 
 #
 # Internal i/o space
 #
 
-device	intio { }
+device	intio class dull { }
 attach	intio at mainbus
 file	arch/hp300/dev/intio.c		intio
 
@@ -46,7 +36,7 @@ file	arch/hp300/dev/intio.c		intio
 # DIO bus
 #
 
-device	dio { scode = -1 }
+device	dio class dull { scode = -1 }
 attach	dio at mainbus
 file	arch/hp300/dev/dio.c		dio
 
@@ -55,12 +45,12 @@ file	arch/hp300/dev/dio.c		dio
 #
 
 # Apollo Utilility Chip (a.k.a. "Frodo") found on 4xx workstations
-device	frodo { offset = -1 }
+device	frodo class dull { offset = -1 }
 attach	frodo at intio
 file	arch/hp300/dev/frodo.c		frodo
 
 # Apollo APCI 8250-like UARTs
-device	apci
+device	apci class tty
 attach	apci at frodo
 file	arch/hp300/dev/apci.c		apci needs-flag
 
@@ -68,29 +58,29 @@ file	arch/hp300/dev/apci.c		apci needs-flag
 define	grfdev { }
 
 # Frame buffer devices
-device	dvbox: grfdev
+device	dvbox class dull: grfdev
 file	arch/hp300/dev/grf_dv.c		dvbox needs-flag
 
-device	gbox: grfdev
+device	gbox class dull: grfdev
 file	arch/hp300/dev/grf_gb.c		gbox needs-flag
 
-device	hyper: grfdev
+device	hyper class dull: grfdev
 file	arch/hp300/dev/grf_hy.c		hyper needs-flag
 
-device	rbox: grfdev
+device	rbox class dull: grfdev
 file	arch/hp300/dev/grf_rb.c		rbox needs-flag
 
-device	topcat: grfdev
+device	topcat class dull: grfdev
 file	arch/hp300/dev/grf_tc.c		topcat needs-flag
 
 # `grf' framebuffer abstraction
-device	grf { }
+device	grf class dull { }
 attach	grf at grfdev
 file	arch/hp300/dev/grf.c		grf needs-flag
 file	arch/hp300/dev/grf_subr.c	grf
 
 # Internal Terminal Emulator
-device	ite
+device	ite class tty
 attach	ite at grf
 file	arch/hp300/dev/ite.c		ite needs-flag
 file	arch/hp300/dev/ite_subr.c	ite
@@ -113,12 +103,12 @@ attach	rbox at dio with rbox_dio
 attach	topcat at dio with topcat_dio
 
 # DCA serial interface
-device	dca: tty
+device	dca class tty: tty
 attach	dca at dio
 file	arch/hp300/dev/dca.c		dca needs-flag
 
 # DCM serial interface
-device	dcm: tty
+device	dcm class tty: tty
 attach	dcm at dio
 file	arch/hp300/dev/dcm.c		dcm needs-flag
 
@@ -129,57 +119,57 @@ file	arch/hp300/dev/if_le.c		le
 # HP-IB interfaces
 define	hpibdev { }
 
-device	nhpib: hpibdev
+device	nhpib class dull: hpibdev
 attach	nhpib at dio
 file	arch/hp300/dev/nhpib.c		nhpib
 
-device	fhpib: hpibdev
+device	fhpib class dull: hpibdev
 attach	fhpib at dio
 file	arch/hp300/dev/fhpib.c		fhpib
 
 # HP-IB bus layer
-device	hpibbus { slave = -1, punit = -1 }
+device	hpibbus class dull { slave = -1, punit = -1 }
 attach	hpibbus at hpibdev
 file	arch/hp300/dev/hpib.c		hpibbus
 
 # HP-IB devices
-device	ct: tape
+device	ct class tape: tape
 attach	ct at hpibbus
 file	arch/hp300/dev/ct.c		ct needs-flag
 major	{ct = 0}
 
-device	mt: tape
+device	mt class tape: tape
 attach	mt at hpibbus
 file	arch/hp300/dev/mt.c		mt needs-flag
 major	{mt = 1}
 
-device	rd: disk
+device	rd class disk: disk
 attach	rd at hpibbus
 file	arch/hp300/dev/rd.c		rd needs-flag
 file	arch/hp300/dev/rd_compat.c	rd		# XXX
 major	{rd = 2}
 
-device	ppi
+device	ppi class dull
 attach	ppi at hpibbus
 file	arch/hp300/dev/ppi.c		ppi needs-flag
 
 # Old HP SCSI layer
-device	oscsi { target = -1, lun = -1 }
+device	oscsi class dull { target = -1, lun = -1 }
 attach	oscsi at dio
 file	arch/hp300/dev/scsi.c		oscsi
 
 # Old HP SCSI devices
-device	sd: disk
+device	sd class disk: disk
 attach	sd at oscsi
 file	arch/hp300/dev/sd.c		sd needs-flag
 file	arch/hp300/dev/sd_compat.c	sd		# XXX
 major	{sd = 4}
 
-device	st: tape
+device	st class tape: tape
 attach	st at oscsi
 file	arch/hp300/dev/st.c		st needs-flag
 
-device	ac
+device	ac class dull
 attach	ac at oscsi
 file	arch/hp300/dev/ac.c		ac needs-flag
 
