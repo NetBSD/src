@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)options.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: options.c,v 1.9 1994/12/04 07:12:26 cgd Exp $";
+static char *rcsid = "$Id: options.c,v 1.10 1994/12/05 19:07:46 cgd Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -83,8 +83,9 @@ STATIC void minus_o();
 
 void
 procargs(argc, argv)
+	int argc;
 	char **argv;
-	{
+{
 	int i;
 
 	argptr = argv;
@@ -133,7 +134,9 @@ optschanged()
  */
 
 STATIC void
-options(cmdline) {
+options(cmdline) 
+	int cmdline;
+{
 	register char *p;
 	int val;
 	int c;
@@ -234,6 +237,7 @@ setoption(flag, val)
 
 #ifdef mkinit
 INCLUDE "options.h"
+INCLUDE "extern.h"
 
 SHELLPROC {
 	int i;
@@ -295,7 +299,11 @@ freeparam(param)
  * The shift builtin command.
  */
 
-shiftcmd(argc, argv)  char **argv; {
+int
+shiftcmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	int n;
 	char **ap1, **ap2;
 
@@ -323,7 +331,11 @@ shiftcmd(argc, argv)  char **argv; {
  * The set command builtin.
  */
 
-setcmd(argc, argv)  char **argv; {
+int
+setcmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	if (argc == 1)
 		return showvarscmd(argc, argv);
 	INTOFF;
@@ -344,7 +356,11 @@ setcmd(argc, argv)  char **argv; {
  * then it's the first time getopts has been called.
  */
 
-getoptscmd(argc, argv)  char **argv; {
+int
+getoptscmd(argc, argv)
+	int argc;
+	char **argv; 
+{
 	register char *p, *q;
 	char c;
 	char s[10];

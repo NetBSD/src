@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)error.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: error.c,v 1.9 1994/12/04 07:12:08 cgd Exp $";
+static char *rcsid = "$Id: error.c,v 1.10 1994/12/05 19:07:35 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -240,7 +240,10 @@ STATIC const struct errname errormsg[] = {
  */
 
 char *
-errmsg(e, action) {
+errmsg(e, action) 
+	int e;
+	int action;
+{
 	struct errname const *ep;
 	static char buf[12];
 
