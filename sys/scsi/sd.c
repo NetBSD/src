@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.21 1994/01/25 08:56:45 deraadt Exp $
+ *	$Id: sd.c,v 1.22 1994/02/06 10:05:50 mycroft Exp $
  */
 
 #include "sd.h"
@@ -480,7 +480,7 @@ sdstart(int unit)
 
 	dp = &(sd_data[unit]->sdbuf);
 	if ((bp = dp->b_actf) != NULL)	/* yes, an assign */
-		dp->b_actf = bp->av_forw;
+		dp->b_actf = bp->b_actf;
 	else
 		return;
 
