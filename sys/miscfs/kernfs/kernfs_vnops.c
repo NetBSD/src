@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.69 2000/07/14 07:21:50 thorpej Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.70 2000/08/03 03:41:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -638,8 +638,7 @@ kernfs_readdir(v)
 	if (ap->a_ncookies) {
 		nc = uio->uio_resid / UIO_MX;
 		nc = min(nc, (nkern_targets - i));
-		MALLOC(cookies, off_t *, nc * sizeof(off_t), M_TEMP,
-		    M_WAITOK);
+		cookies = malloc(nc * sizeof(off_t), M_TEMP, M_WAITOK);
 		*ap->a_cookies = cookies;
 	}
 
@@ -672,7 +671,7 @@ kernfs_readdir(v)
 
 	if (ap->a_ncookies) {
 		if (error) {
-			FREE(*ap->a_cookies, M_TEMP);
+			free(*ap->a_cookies, M_TEMP);
 			*ap->a_ncookies = 0;
 			*ap->a_cookies = NULL;
 		} else
