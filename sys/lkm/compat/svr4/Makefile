@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 1996/08/28 06:17:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1997/10/26 21:58:37 lukem Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/svr4 $S/arch/${MACHINE}/${MACHINE}
 
-CFLAGS+= -DCOMPAT_SVR4
+CPPFLAGS+= -DCOMPAT_SVR4
 NOMAN=	yep
 KMOD=	compat_svr4
 SRCS=	svr4_error.c svr4_exec.c svr4_fcntl.c svr4_filio.c svr4_ioctl.c \
