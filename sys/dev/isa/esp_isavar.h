@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.4 1999/02/19 16:15:06 mycroft Exp $	*/
+/*	$NetBSD: esp_isavar.h,v 1.1 2000/03/18 21:49:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Allen Briggs.
@@ -60,7 +60,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct esp_softc {
+struct esp_isa_softc {
 	struct ncr53c9x_softc	sc_ncr53c9x;	/* glue to MI code */
 
 	int		sc_active;		/* Pseudo-DMA state vars */
@@ -82,7 +82,7 @@ struct esp_softc {
 #endif
 };
 
-struct esp_probe_data {
+struct esp_isa_probe_data {
 	int sc_irq;
 	int sc_isncr;
 	int sc_rev;
@@ -95,23 +95,23 @@ struct esp_probe_data {
 
 #define ESP_ISA_IOSIZE  16
 
-int	esp_find  __P((bus_space_tag_t, bus_space_handle_t,
-	    struct esp_probe_data *));
-void    esp_init __P((struct esp_softc *, struct esp_probe_data *));
+int	esp_isa_find  __P((bus_space_tag_t, bus_space_handle_t,
+	    struct esp_isa_probe_data *));
+void    esp_isa_init __P((struct esp_isa_softc *, struct esp_isa_probe_data *));
 
 #ifdef ESP_DEBUG
-extern int esp_debug;
+extern int esp_isa_debug;
 
 #define ESP_SHOWTRAC    0x01
 #define ESP_SHOWREGS    0x02
 #define ESP_SHOWMISC    0x04
 
 #define ESP_TRACE(str)  \
-        do {if (esp_debug & ESP_SHOWTRAC) printf str;} while (0)
+        do {if (esp_isa_debug & ESP_SHOWTRAC) printf str;} while (0)
 #define ESP_REGS(str)  \
-        do {if (esp_debug & ESP_SHOWREGS) printf str;} while (0)
+        do {if (esp_isa_debug & ESP_SHOWREGS) printf str;} while (0)
 #define ESP_MISC(str)  \
-        do {if (esp_debug & ESP_SHOWMISC) printf str;} while (0)
+        do {if (esp_isa_debug & ESP_SHOWMISC) printf str;} while (0)
 #else
 #define ESP_TRACE(str)
 #define ESP_REGS(str)
