@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.49 2002/05/12 23:06:28 matt Exp $	*/
+/*	$NetBSD: buf.h,v 1.50 2002/07/16 18:03:19 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -91,6 +91,8 @@
 LIST_HEAD(workhead, worklist);
 
 /*
+ * XXX This interface will be removed in the near future!
+ *
  * Device driver buffer queue.
  */
 struct buf_queue {
@@ -143,6 +145,46 @@ do {									\
 		(bufq)->bq_barrier = TAILQ_PREV((bp), bufq_head, b_actq); \
 	TAILQ_REMOVE(&(bufq)->bq_head, (bp), b_actq);			\
 } while (/*CONSTCOND*/0)
+#endif /* _KERNEL */
+
+/*
+ * XXX End of to be removed interface!
+ */
+
+/*
+ * Device driver buffer queue.
+ */
+struct bufq_state {
+	void (*bq_put)(struct bufq_state *, struct buf *);
+	struct buf *(*bq_get)(struct bufq_state *, int);
+	void *bq_private;
+	int bq_flags;			/* Flags from bufq_init() */
+};
+
+#ifdef _KERNEL
+
+/*
+ * Flags for bufq_init.
+ */
+#define BUFQ_SORT_RAWBLOCK	0x0001	/* Sort by b_rawblkno */
+#define BUFQ_SORT_CYLINDER	0x0002	/* Sort by b_cylinder, b_rawblkno */
+
+#define BUFQ_FCFS		0x0010	/* First-come first-serve */
+#define BUFQ_DISKSORT		0x0020	/* Min seek sort */
+#define BUFQ_READ_PRIO		0x0030	/* Min seek and read priority */
+
+#define BUFQ_SORT_MASK		0x000f
+#define BUFQ_METHOD_MASK	0x00f0
+
+void	bufq_init(struct bufq_state *, int);
+
+#define BUFQ_PUT(bufq, bp) \
+	(*(bufq)->bq_put)((bufq), (bp))	/* Put buffer in queue */
+#define BUFQ_GET(bufq) \
+	(*(bufq)->bq_get)((bufq), 1)	/* Get and remove buffer from queue */
+#define BUFQ_PEEK(bufq) \
+	(*(bufq)->bq_get)((bufq), 0)	/* Get buffer from queue */
+
 #endif /* _KERNEL */
 
 /*
