@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.8 1998/07/06 02:33:25 mark Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.9 1998/07/06 02:40:42 mark Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -42,7 +42,9 @@
  *
  * Created      : 30/01/97
  */
+
 #include "opt_compat_netbsd.h"
+#include "opt_pmap_debug.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

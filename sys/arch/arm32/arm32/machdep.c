@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 1998/07/03 21:32:43 hubertf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 1998/07/06 02:40:42 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -45,6 +45,7 @@
  * Created      : 17/09/94
  */
 
+#include "opt_pmap_debug.h"
 #include "opt_uvm.h"
 
 #include <sys/types.h>
