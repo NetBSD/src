@@ -1,4 +1,4 @@
-/*	$NetBSD: stdethers.c,v 1.11 1998/06/11 14:50:47 kleink Exp $	*/
+/*	$NetBSD: stdethers.c,v 1.12 1999/01/17 06:56:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdethers.c,v 1.11 1998/06/11 14:50:47 kleink Exp $");
+__RCSID("$NetBSD: stdethers.c,v 1.12 1999/01/17 06:56:51 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@ main(argc, argv)
 	FILE	*data_file;
 	size_t	 line_no;
 	size_t	 len;
-	char	*fname, *p, *h;
+	char	*fname, *p;
 	char	 hostname[MAXHOSTNAMELEN + 1];
 
 	if (argc > 2)
@@ -89,10 +89,6 @@ main(argc, argv)
 	    free(p)) {
 		if (len == 0)
 			continue;
-
-		h = strchr(p, '#');
-		if (h != NULL)
-			*h = '\0';
 
 		if (ether_line(p, &eth_addr, hostname) == 0)
 			printf("%s\t%s\n", ether_ntoa(&eth_addr), hostname);
