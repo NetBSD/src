@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.10 1999/03/26 23:41:34 mycroft Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.11 1999/07/08 18:08:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -369,8 +369,7 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	 */
 
 	/* Double map the SCP */
-	pa = pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr);
-	if (pa == 0)
+	if (pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr, &pa) == FALSE)
 		panic("ie pmap_extract");
 
 	pmap_enter(pmap_kernel(), trunc_page(IEOB_ADBASE+IE_SCP_ADDR),

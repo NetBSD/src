@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.2 1999/06/20 00:59:54 ragge Exp $ */
+/* $NetBSD: sgmap.c,v 1.3 1999/07/08 18:11:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -241,12 +241,10 @@ vax_sgmap_load(t, map, buf, buflen, p, flags, sgmap)
 		 * Get the physical address for this segment.
 		 */
 		if (p != NULL)
-			pa = pmap_extract(p->p_vmspace->vm_map.pmap, va);
+			(void) pmap_extract(p->p_vmspace->vm_map.pmap, va, &pa);
 		else
 			pa = kvtophys(va);
 
-		if (pa == 0)
-			panic("vax_sgmap_load");
 		/*
 		 * Load the current PTE with this page.
 		 */

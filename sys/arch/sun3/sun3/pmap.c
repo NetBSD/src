@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113 1999/06/17 19:23:28 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.114 1999/07/08 18:11:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -2863,13 +2863,14 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
  *		with the given map/virtual_address pair.
  *	Returns zero if VA not valid.
  */
-vm_offset_t
-pmap_extract(pmap, va)
+boolean_t
+pmap_extract(pmap, va, pap)
 	pmap_t	pmap;
 	vm_offset_t va;
+	paddr_t *pap;
 {
 	int s, sme, segnum, ptenum, pte;
-	vm_offset_t pa;
+	paddr_t pa;
 
 	pte = 0;
 	s = splpmap();
@@ -2895,7 +2896,7 @@ pmap_extract(pmap, va)
 		db_printf("pmap_extract: invalid va=0x%lx\n", va);
 		Debugger();
 #endif
-		pte = 0;
+		return (FALSE);
 	}
 	pa = PG_PA(pte);
 #ifdef	DIAGNOSTIC
@@ -2903,7 +2904,9 @@ pmap_extract(pmap, va)
 		panic("pmap_extract: not main mem, va=0x%lx\n", va);
 	}
 #endif
-	return (pa);
+	if (pap != NULL)
+		*pap = pa;
+	return (TRUE);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho_bus.c,v 1.2 1999/06/07 05:28:03 eeh Exp $	*/
+/*	$NetBSD: psycho_bus.c,v 1.3 1999/07/08 18:09:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -743,7 +743,7 @@ psycho_dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * Get the physical address for this page.
 		 */
-		if ((curaddr = (bus_addr_t)pmap_extract(pmap, (vaddr_t)vaddr)) == NULL) {
+		if (pmap_extract(pmap, (vaddr_t)vaddr, &curaddr) == FALSE) {
 			bus_dmamap_unload(t, map);
 			return (-1);
 		}
