@@ -12,13 +12,14 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series
  *   and the 3Com 3c503
  *
- *	$Id: if_ed.c,v 1.6 1993/08/26 00:27:05 cgd Exp $
+ *	$Id: if_ed.c,v 1.7 1993/09/04 00:02:48 jtc Exp $
  */
  
 #include "ed.h"
 #if	NED > 0
 
 #include "param.h"
+#include "systm.h"
 #include "errno.h"
 #include "ioctl.h"
 #include "mbuf.h"
