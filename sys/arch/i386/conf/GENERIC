@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.145 1998/04/03 04:35:05 enami Exp $
+#	$NetBSD: GENERIC,v 1.146 1998/04/16 22:01:42 drochner Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -194,6 +194,8 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #vt0	at isa? port 0x60 irq 1		# PCVT console driver
 
+pcppi0	at isa?
+sysbeep0	at pcppi?
 
 # Serial Devices
 
@@ -363,7 +365,12 @@ fmv0	at isa? port 0x2a0 irq ?		# FMV-180 series
 ix0	at isa? port 0x300 irq 10		# EtherExpress/16
 iy0	at isa? port 0x360 irq ?		# EtherExpress PRO 10 ISA
 lc0	at isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
-#le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
+#depca0	at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5	# DEPCA
+#le*	at depca?
+nele0	at isa? port 0x320 irq 10 drq 7		# NE2100
+le*	at nele?
+bicc0	at isa? port 0x320 irq 10 drq 7		# BICC IsoLan
+le*	at bicc?
 ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 ne1	at isa? port 0x300 irq 10
 sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
@@ -401,8 +408,7 @@ audio*	at sp?
 audio*	at wss?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
-#spkr0	at pc? port 0x61		# PC speaker
-#spkr0	at vt? port 0x61		# PC speaker
+#spkr0	at pcppi?		# PC speaker
 
 
 # Mice

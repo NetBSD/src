@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.29 1998/03/22 18:18:45 drochner Exp $
+#	$NetBSD: HOMEWORLD,v 1.30 1998/04/16 22:01:42 drochner Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -119,6 +119,9 @@ npx0	at isa? port 0xf0 irq 13	# math coprocessor
 pc0	at isa? port 0x60 irq 1		# generic PC console device
 #vt0	at isa? port 0x60 irq 1
 
+#pcppi0	at isa?
+#sysbeep0	at pcppi?
+
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 com2	at isa? port 0x3e8 irq 5
@@ -202,7 +205,12 @@ ne0	at isa? port 0x300 irq 9		# NE2000 ethernet
 #ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 #ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 #ie1	at isa? port 0x300 irq 10		# EtherExpress
-#le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
+#depca0	at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5	# DEPCA
+#le*	at depca?
+#nele0	at isa? port 0x320 irq 10 drq 7		# NE2100
+#le*	at nele?
+#bicc0	at isa? port 0x320 irq 10 drq 7		# BICC IsoLan
+#le*	at bicc?
 #ep*	at eisa? slot ?				# 3C579 ethernet cards
 #fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 #le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
@@ -222,7 +230,7 @@ ne0	at isa? port 0x300 irq 9		# NE2000 ethernet
 #audio*	at pas0
 #gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
 #audio*	at gus0
-#spkr0	at pc? port 0x61
+#spkr0	at pcppi?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
