@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.3 2000/01/09 17:25:42 joda Exp $	
+.\"	$NetBSD: legal.common,v 1.4 2000/03/06 04:55:33 hubertf Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -109,6 +109,9 @@ and Leo Weppelman.
 This product includes software developed by Gordon W. Ross.
 
 This product includes software developed by Herb Peyerl.
+
+This product includes software developed by Hubert Feyrer for
+the NetBSD Project.
 
 This product includes software developed by Ian W. Dall.
 
