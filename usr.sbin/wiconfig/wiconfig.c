@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.33 2004/01/23 02:32:52 wrstuden Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.34 2004/08/25 18:29:28 wrstuden Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.33 2004/01/23 02:32:52 wrstuden Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.34 2004/08/25 18:29:28 wrstuden Exp $");
 #endif
 
 struct wi_table {
@@ -793,7 +793,7 @@ usage()
 	    "[-oD] [-s station name]\n"
 	    "       [-a access point density]\n"
 	    "       [-m MAC address] [-d max data length] [-r RTS threshold]\n"
-	    "       [-M 0|1] [-R 1|3] [-g fragmentation threshold]\n"
+	    "       [-M 0|1] [-R 1|3] [-A 1|2] [-g fragmentation threshold]\n"
 	    ,
 	    getprogname());
 	exit(1);
