@@ -37,6 +37,7 @@ port-sgimips
 port-sh3
 port-sparc
 port-sparc64
+port-sun2
 port-sun3
 port-vax
 port-x68k
