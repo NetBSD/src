@@ -123,6 +123,7 @@ HPPA:
 	HPPA running HP-UX 9.05 (1.9)
 	HPPA running HP-UX 10.01 (1.7)
 	HPPA running HP-UX 10.20 (1.10.7)
+	HPPA running HP-UX 11.11 (1.11.13) (footnote 12)
 	HPPA 2.0 running HP-UX 10.20 (1.10.9) (footnote 13)
 	NextSTEP 3.3 (1.7)
 i386 family:
@@ -246,7 +247,7 @@ VAX:
     Need to `configure --without-gssapi' unless you have installed Kerberos 5
     libraries on the system yourself.  For some reason Apple ships OS X with
     the Kerberos 5 headers installed and not the libraries, which confuses the
-    current configure script.  Some Sun and BSD boxes hace similar problems.
+    current configure script.  Some HP, BSD, & Sun boxes have similar problems.
 
 (footnote 13)
     A build under HP PA-RISC 2.0 will probably not run under PA-RISC 1.1
@@ -262,7 +263,7 @@ Building from source code under Unix:
     automatically aren't included in the generated Makefiles unless you run
     configure with --enable-maintainer-mode.
 
-    The CVS Makefiles and configure script were built using Automake 1.7.5 and
+    The CVS Makefiles and configure script were built using Automake 1.7.9 and
     Autoconf 2.58, respectively.
 
     There is a known bug in Autoconf 2.57 that will prevent the configure
@@ -455,7 +456,11 @@ Building from source code under Windows NT/95/98/2000:
 
 You may find interesting information in windows-NT/README.
 
-1) Using Microsoft Visual C++ 5.x, open the project `cvsnt.dsp',
+* Using Microsoft Visual C++ 5.x (this is currently broken - someone with
+  MVC++ 5.x needs to regenerate the project files, but the builds using `nmake'
+  below will work).
+
+1) Using Microsoft Visual C++ 5.x, open the project `cvsnt.dsw',
    in the top directory of the CVS distribution.  If you have an older
    version of Visual C++, take a look at windows-NT/README.
 2) Choose "Build cvs.exe" from the "Project" menu.
@@ -470,7 +475,7 @@ following also works:
 
 * Using the Cygwin development environment <http://cygwin.com>, Windows clients
   and servers can be built using the instructions for building on UNIX.  For
-  deploying the CVS server on Windows NT, see the `cygrunserv' executable that
+  deploying the CVS server on Windows NT, see the `cygrunsrv' executable that
   comes with Cygwin.
 
 * You might also try <http://wincvs.org> & <http://www.cvsnt.org>.
@@ -490,19 +495,5 @@ For older versions of Mac OS, you might try <http://wincvs.org>.
 For a Java client, see jCVS (which is a separate package from CVS
 itself, but which might be preferable to the Macintosh port mentioned
 above, for example).
-
-                                  **** ****
-
-Builds are breaking on some systems (notably,
-BSD/OS thor.sdrc.com 4.0.1 BSDI BSD/OS 4.0.1 Kernel #3: Thu Mar  9 11:29:16 EST 2000
-) due to Automake's dependency tracking code.  The work around for this is to
-comile without it by passing the '--disable-dependency-tracking' option to
-configure:
-
-	$ ./configure --disable-dependency-tracking
-
-This will allow a compile but make will no longer be tracking header
-dependencies.  This means that if you make any changes to header files you may
-have to run 'make clean' before running a 'make' to get everything to compile.
 
 -------------------------------------------------------------------------------

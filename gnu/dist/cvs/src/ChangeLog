@@ -1,3 +1,621 @@
+2004-04-11  Derek Price  <derek@ximbiot.com>
+
+	* client.c (call_in_directory): Check paths the server sends us to make
+	sure they are within a sandbox the user requested be updated.
+	(is_valid_client_path, path_list_prefixed): New functions.
+
+2004-04-11  Derek Price  <derek@ximbiot.com>
+
+	* modules.c (do_module): Don't allow up-level references in paths to
+	step out of the repository.
+	* sanity.sh (multiroot3): Update tests and add a few more.
+
+2004-04-07  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (parseroot): Replace hard path with $HOME.
+
+2004-04-07  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (parseroot): s/oberon/$username/.
+
+2004-04-07  Derek Price  <derek@ximbiot.com>
+
+	* client.c (start_tcp_server): Use xstrdup rather than
+	xmalloc(strlen)/strcpy.
+
+2004-04-07  Derek Price  <derek@ximbiot.com>
+
+	* root.c (parse_cvsroot): Ignore method options.
+	* sanity.sh (parseroot): Verify that method options are ignored.
+
+2004-04-06  Derek Price  <derek@ximbiot.com>
+
+	* root.h (cvsroot_t): Move username, password, hostname, port inside
+	CLIENT_SUPPORT ifdefs.
+	* buffer.c, root.c, server.c: Add #ifdefs as necessary so that this
+        will compile without client support and the root.h change.  Some
+	gratuitous restyling.
+
+2004-04-06  Derek Price  <derek@ximbiot.com>
+
+	* log.c, tag.c: Gratuitous restyling.
+
+2004-04-04  Derek Price  <derek@ximbiot.com>
+
+	* filesubr.c (isabsolute): Move...
+	* subr.c: ...here and use new ISABSOLUTE macro.
+
+2004-04-04  Derek Price  <derek@ximbiot.com>
+
+	* client.c (send_file_names): Cast out an unneeded const to avoid a
+	warning.
+
+2004-04-03  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* client.c (send_file_names): Remove unused variables.
+
+2004-04-02  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (client): Honor $keep.
+
+2004-04-02  Derek Price  <derek@ximbiot.com>
+
+	* log.c, patch.c, rcs.c: Gratuitous restyling.
+
+2004-04-02  Derek Price  <derek@ximbiot.com>
+
+	* import.c (import): Use ISDIRSEP rather than testing paths against `/'
+	directly.  Some gratuitos reformatting.
+
+2004-04-02  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh: Note the effectiveness of `tail -f check.log' in providing
+	running status.
+
+2004-04-02  Derek Price  <derek@ximbiot.com>
+
+	* client.c (send_file_names): Move code which calculates and sends
+	Max-dotdot...
+	(send_max_dotdot): ...to this new function.
+	(send_files): Call send_max_dotdot.
+	* sanity.sh (files-14): Expect .. in paths to work now.
+	(status): Add a few new tests using `..'.
+
+2004-04-01  Derek Price  <derek@ximbiot.com>
+
+	* lock.c: Gratuitous restyling.
+
+2004-04-01  Derek Price  <derek@ximbiot.com>
+
+	* cvs.h, server.c: Gratuitous restyling.
+	* run.c (run_exec): Ditto, plus call cvs_flush{out,err}() instead of
+	flushing stderr & stdout directly.
+
+2004-03-29  Derek Price  <derek@ximbiot.com>
+
+	* server.c: Gratuitous restyling.
+
+2004-03-29  Derek Price  <derek@ximbiot.com>
+
+	* login.c: Gratuitous restyling.
+
+2004-03-22  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (toplevel): Remove FIXME type comment and unneeded
+	Emtptydir removal.
+
+2004-03-22  Derek Price  <derek@ximbiot.com>
+
+	* update.c: Some minor style cleanup.
+
+2004-03-22  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (top-level): Don't match most of the assertion since this
+	string is often system dependent.
+	(Thanks to Larry Jones <lawrence.jones@ugsplm.com>.)
+
+2004-03-22  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (top-level): Don't match the assertion's line number.
+
+2004-03-22  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (top-level): New test to confirm assertion failure.
+
+2004-03-22  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh: Only verify argument to -f when -f was passed.  Check for
+	$TMPDIR/cvsXXXXXX temp files after each test.
+
+2004-03-22  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh: Verify that the argument to -f is really a test.
+
+2004-03-20  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* cvs.h: Change command_name to cvs_command_name to avoid conflict
+	on HP-UX (incredibly, it declares a global command_name in prot.h,
+	which is included from shadow.h, which we include in server.c).
+	Change all references.
+
+	* subr.c (previous_rev): Fix == vs = typo.
+
+	* buffer.h: Add prototype for buf_empty.
+
+	* add.c (add): Remove unused variable.
+
+2004-03-20  Derek Price  <derek@ximbiot.com>
+
+	* add.c (add, add_directory, build_entry), admin.c (admin_dirproc),
+	checkin.c (Checkin), checkout.c (safe_location, build_dirs_and_chdir),
+	client.c (add_prune_candidate, send_repository, send_a_repository,
+	send_to_server, start_rsh_server, send_arg, send_modified,
+	send_ignproc, send_filesdone_proc, send_dirent_proc,
+	send_dirleave_proc, client_notify), commit.c (check_direntproc,
+	check_filesdoneproc, checkaddfile, commit_direntproc,
+	commit_dirleaveproc, lock_RCS, precommit_proc, find_data,
+	find_dirent_proc, find_ignproc, find_filesdoneproc), create_adm.c
+	(Create_Admin), cvsrc.c (read_cvsrc), diff.c (diff_dirproc,
+	diff_filesdoneproc, diff_dirleaveproc), edit.c (onoff_filesdoneproc,
+	mark_up_to_date, editor_set, notify_proc_args, notify_proc, notify_do,
+	notify_check), entries.c (Scratch_Entry, Register, WriteTag),
+	expand_path.c (expand_variable, expand_path), fileattr.c
+	(fileattr_startdir), filesubr.c (mkdir_if_needed, xchmod,
+	last_component), history.c (history_write), ignore.c (ignore_directory,
+	ignore_files), import.c (get_comment, add_rcs_file, expand_at_signs),xi
+	lock.c (lock_filesdoneproc), log.c (log_dirproc), logmsg.c
+	(logfile_write, rcsinfo_proc, update_logfile_proc, editinfo_proc,
+	verifymsg_proc, do_editor, do_verify, Update_Logfile), main.c (main
+	program_name, program_path, command_name), parseinfo.c (Parse_Info),
+	patch.c (patch_dirproc), rcs.c (RCS_getdatebranch, rcs_lockfilename,
+	RCS_parse, RCS_setattic, RCS_getversion, RCS_gettag, RCS_getbranch,
+	RCS_getdate, RCS_datecmp, RCS_getrevtime, RCS_setexpand,
+	expand_keywords, RCS_checkout, RCS_addbranch, RCS_checkin, RCS_lock,
+	RCS_cmp_file, RCS_deltas, rcs_lockfilename, make_file_label),
+	rcscmds.c (RCS_output_diff_options, call_diff, RCS_merge,
+	RCS_exec_rcsdiff, diff_exec), recurse.c (start_recursion, do_recursion,
+	do_file_proc), remove.c (remove_dirproc), repos.c (Name_Repository,
+	Short_Repository), root.c (Name_Root, Create_Root), run.c
+	(piped_child), server.c (output_dir, server_register,
+	server_checked_in, server_update_entries, server_copy_file,
+	server_set_entstat, server_clear_entstat, server_set_sticky,
+	server_template, cvs_output_tagged), status.c (status_dirproc), subr.c
+	(make_message_rcslegal), tag.c (pretag_proc, tag_dirproc,
+	check_fileproc, check_filesdoneproc, tag_fileproc, val_direntproc),
+	update.c (update_dirent_proc, update_dirleave_proc, update_ignproc,
+	update_filesdone_proc, isemptydir), vers_ts.c (time_stamp_server,
+	time_stamp), watch.c (watch_modify_watchers, addremove_filesdoneproc),
+	zlib.c (read_and_gzip): Make most string args const, mainly in the
+	interest of preserving repository & updatedir but including some
+	collateral damage.  Update a few functions to comply with new
+	requirement.  Some style fixes.
+	* client.h, cvs.h, edit.h, fileattr.h, rcs.h, server.h, update.h,
+	watch.h: Update prototypes to match.
+
+2004-03-20  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (conflicts2): s/cvs/$testcvs/.
+
+2004-03-20  Derek Price  <derek@ximbiot.com>
+
+	* add.c (add): Correct longstanding resurrection bugs.  Remove FIXME
+	comment to this effect.  Set mode and Entries timestamps of resurrected
+	files correctly.
+	* sanity.sh (basica, binfiles, conflicts2, recase, resurrection,
+	update-p): Update tests to compensate.  Remove FIXCVS comments.
+
+2004-03-19  Mark D. Baushke  <mdb@cvshome.org>
+
+	* server.c (gserver_authenticate_connection): Handle large
+	GSSAPI packets dynamically.
+	(Bug report from Douglas Engert <DEEngert@anl.gov>)
+
+2004-03-19  Derek Price  <derek@ximbiot.com>
+
+	* cvs.h (pathname_levels, previous_rev): Remove leading underscore from
+	prototype arguments to avoid potential conflicts with implementations.
+
+2004-03-18  Derek Price  <derek@ximbiot.com>
+
+	* cvs.h (pathname_levels): Make string argument const.
+	* subr.c (pathname_levels): Simplify function.
+
+2004-03-17  Derek Price  <derek@ximbiot.com>
+
+	* subr.c (pathname_levels): Get it right this time.
+
+2004-03-17  Derek Price  <derek@ximbiot.com>
+
+	* subr.c (pathname_levels): Remove incorrect assertion and just
+	return 0 when pathname is NULL.
+
+2004-03-17  Derek Price  <derek@ximbiot.com>
+
+	* subr.c (pathname_levels): Use ISDIRSEP() instead of strchr('/')
+	and remove FIXME comment to that effect.
+
+2004-03-16  Derek Price  <derek@ximbiot.com>
+
+	* main.c (main): Update the --version Copyright (c) string to
+	include 2004.
+
+2004-03-15  Mark D. Baushke  <mdb@cvshome.org>
+
+	* release.c (release): Add missing xmalloc of update_cmd.
+
+2004-03-15  Derek Price  <derek@ximbiot.com>
+
+	* release.c (release): Enable authentication and encryption for a child
+	update process when necessary.
+	(Original patch from Dan Russell <russelld@aol.net> via Hal Mahaffey
+	<HMahaffey@aol.com>.)
+
+2004-03-14  Derek Price  <derek@ximbiot.com>
+
+	* add.c (add): Only call server_updated() when we actual have a new
+	resurrected file for the client.
+
+2004-03-14  Derek Price  <derek@ximbiot.com>
+
+	* cvs.h (previous_rev, write_letter): New prototypes.
+	(struct file_info): Move to before the write_letter prototype.
+	* add.c (add): Allow resurrection of files which used to exist on a
+	branch.
+	* subr.c (previous_rev): New function.
+	* update.c: Consolidate like pragmas.
+	 (write_letter): Remove prototype.  Remove static declaration.
+	* sanity.sh (resurrection): New tests.
+
+2004-03-14  Derek Price  <derek@ximbiot.com>
+
+	* commit.c (remove_file): Print the actual previous revision instead of
+	a branch number.
+	* sanity.sh: Update to match.
+
+2004-03-14  Derek Price  <derek@ximbiot.com>
+
+	* rcs.c (RCS_cmp_file): Print the actual name of the file we failed to
+	open in the error message.
+
+2004-03-14  Derek Price  <derek@ximbiot.com>
+
+	* diff.c (diff_fileproc): Allow diffing of new files against arbitrary
+	revisions instead of assuming that there is no RCS archive file.
+
+2004-03-03  Derek Price  <derek@ximbiot.com>
+
+	* import.c (import): Check that the module name specified by the user
+	does not contain `CVS' as a directory name.
+	* ignore.c (ign_add): Never cease ignoring "CVS" - it is a reserved
+	name.
+	(Original patch from Dan Peterson <dbpete@aol.com>.)
+
+	* sanity.sh (import-CVS): New tests for the above.
+
+2004-02-29  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* import.c (expand_at_signs): Change type of len to size_t.
+	* subr.c (resolve_symlink): Move declaration of newname inside
+	#ifdef, clean up coding style.
+	* zlib.c (gunzip_and_write): Fix up potential overlow problems.
+	(read_and_gzip): Add explicit casts to placate paranoid compilers.
+
+2004-02-28  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* sanity.sh (join6): New tests for previous fix.
+
+	* update.c (join_file): One more fix to avoid dereferencing NULL.
+	(Reported by Steve McIntyre <steve@einval.com>.)
+	* sanity.sh (join6): New tests for above.
+
+2004-02-25  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* update.c (join_file): Fix optimization to avoid dereferencing NULL.
+	(Reported by Steve McIntyre <steve@einval.com>.)
+
+2004-02-25  Derek Price  <derek@ximbiot.com>
+
+	* buffer.c (buf_empty): New function.
+	* server.c (server): Check for unread data in buffer before closing.
+
+2004-02-25  Derek Price  <derek@ximbiot.com>
+
+	* release.c (release): Restore the initial directory before and after
+	calling various sections of code that expect it to prevent corruption
+	of CVS/Entries files on release of a subdir and tell unedit() what to
+	release.
+	* sanity.sh: Add test case for release.c fix.
+	(Original patch from Matthew Ogilvie  <mmo9317bd@mailcan.com>.)
+
+	* client.c (last_entries): Move global variable...
+	(call_in_directory): ...here (now a local variable).  Remove test that
+	always evaluates to true.
+	(last_dir_name): Remove unused global variable.
+
+2004-02-24  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* filesubr.c (xresolvepath): Fix crash in error case.
+	(Reported by Reinhard Zierke <zierke@informatik.uni-hamburg.de>.)
+
+2004-02-24  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (crerepos): Minor stylistic changes to previous change.
+
+2004-02-24  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (crerepos): Fix it so that it ignores the user's
+	.cvsrc file (.cvsrc "checkout -r" used to cause the "rm -r 1"
+	command to print warnings and wait for input).
+	(Original patch from Matthew Ogilvie  <mmo9317bd@mailcan.com>.)
+
+	* sanity.sh (reposmv, parseroot, devcom3, binwrap3):
+	s/_SAVED\>/_save/ for consistency.
+
+2004-02-20  Derek Price  <derek@ximbiot.com>
+
+	* subr.c (set_nonblock_fd): Move back to...
+	* server.c: ...here.
+	* cvs.h: Remove protos for the above two functions.
+	* buffer.c (stdio_buffer_shutdown): Remove unexessary and possibly
+	dangerous check for unread data on a pipe with a nonblock read.
+
+2004-02-20  Derek Price  <derek@ximbiot.com>
+
+	* ChangeLog, commit.c, filesubr.c, rcs.c, root.c, sanity.sh, subr.c,
+	update.c: Remove VIM editor commands.
+
+2004-02-20  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* hash.h (struct node): Change data from char * to void *, change
+	all callers.
+
+2004-02-19  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* login.c (password_entry_operation): Initialize line.
+
+2004-02-19  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (crerepos): Correct comment.
+
+2004-02-19  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (crerepos): Don't create directories named `tmp' in
+	$TESTDIR to avoid conflicts with the default value of $TMPDIR.
+
+2004-02-19  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (directory_cmp): Use $TESTDIR for temporary files, like the
+	dotest functions.
+
+2004-02-19  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh: No longer allow user override of $tmp.  Set $TMPDIR to a
+	directory under $TESTDIR, as for $HOME, but still allowing for user
+	override.  Check for cvs-serv* directories under $TMPDIR rather than
+	$tmp at the end of the script.
+
+2004-02-17  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh: Check for $PWD != $TESTDIR after each set of tests rather
+	than once at the end.  Check that there are no cvs-serv* directories in
+	$tmp after each set of remote tests.
+
+2004-02-17  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh: Don't check for an empty $TESTDIR - if $TESTDIR was empty
+	then the preceding call to mkdir would have failed anyhow.
+
+2004-02-17  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* log.c (rlog_proc): Fix (harmless) uninitialized variable.
+
+	* sanity.sh (basicc): Add tests pointing out defective handling
+	of the Entries file.
+
+2004-02-17  Derek Price  <derek@ximbiot.com>
+
+	* checkout.c (build_dir_and_chdir): Expand header comment.
+
+2004-02-15  Mark D. Baushke  <mdb@cvshome.org>
+
+	* annotate.c (rannotate_proc): Plug a memory leak.
+	* log.c (log_fileproc): Ditto.
+	* tag.c (tag_fileproc): Ditto.
+	* update.c (checkout_file): Ditto.
+	* server.c (server_updated): Do not buf_free (filebuf) here.
+	
+2004-02-13  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* rcs.c (locate_rcs): Remove unused variables.
+
+2004-02-12  Mark D. Baushke  <mdb@cvshome.org>
+
+	* lock.c (readers_exist): Plug a memory leak.
+
+2004-02-12  Mark D. Baushke  <mdb@cvshome.org>
+
+	* server.c (do_cvs_command): Plug a memory leak.
+
+2004-02-12  Derek Price  <derek@ximbiot.com>
+
+	* modules.c: Reformat comment and line to fit in 80 chars.
+
+2004-02-12  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* modules.c (_do_module): Rename to my_module to avoid reserved name.
+	* stack.c (_push, _pop, _unshift, _shift): Rename to do_*.
+
+2004-02-11  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* root.c (parse_cvsroot): Set hostname in fork mode for error messages.
+	* buffer.c (stdio_buffer_shutdown): Undo previous change.
+
+2004-02-11  Mark D. Baushke  <mdb@cvshome.org>
+
+	* buffer.c (buf_free): Plug a memory leak.
+	* commit.c (checkaddfile): Ditto.
+
+	* server.c (fd_buffer_shutdown): Avoid a double free().
+
+	* parseinfo.c (parse_config): Fix comments.
+
+2004-02-11  Derek Price  <derek@ximbiot.com>
+
+	* buffer.c (stdio_buffer_shutdown): Add logic to avoid attempting to
+	print current_parsed_root->hostname when using the fork method.
+
+2004-02-11  Derek Price  <derek@ximbiot.com>
+
+	* server.c (do_cvs_command): Simplify stream & pipe closing.
+	(Suggestion from Eric Siegerman <erics@telepres.com>.)
+
+	* cvs.h, subr.c (set_block_fd): Remove this unnecessary function.
+
+2004-02-11  Derek Price  <derek@ximbiot.com>
+
+	* checkout.c (checkout_proc): s/is_absolute/isabsolute/.
+
+2004-02-11  Derek Price  <derek@ximbiot.com>
+
+	* checkout.c (checkout_proc): Remove unneeded variable and enclosing
+	block.
+	* modules.c (_do_modules): Minor whitespace change.
+
+2004-02-10  Derek Price  <derek@ximbiot.com>
+
+	* server.c (do_cvs_command): s/FIXCVS/FIXME/ in comment.
+	(set_block_fd, set_nonblock_fd): Move to...
+	* subr.c: ...here.
+	* cvs.h: Add protos for the above two functions.
+	* buffer.c (stdio_buffer_shutdown): Replace fgetc() which checked for
+	unread data on a pipe with a nonblock read.
+
+2004-02-10  Derek Price  <derek@ximbiot.com>
+
+	* server.c (do_cvs_command): Have the server child close all the pipes
+	but the flow control pipe and wait on an EOF on the flow control pipe
+	from the parent when done to avoid a race condition that could
+	otherwise generate a SIGPIPE for the parent before the SIGCHILD when
+	the other pipes were so full after a child exited that the parent
+	attempted to write a stop byte to the flow control pipe.
+	(Original report from <jesse_off@stchome.com>.)
+
+2004-02-10  Derek Price  <derek@ximbiot.com>
+
+	* buffer.c (stdio_buffer_shutdown): Add a helpful comment.
+
+2004-02-09  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (co-d): Update comments and tests to reflect the current
+	state of my side of my discussion with Larry Jones on how these
+	commands should behave.
+
+2004-02-09  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (emptydir): Add two new tests for how modules -d behaves
+	when a directory already exists in the user's workspace.
+	(emptydir): Add --keep functionality.
+
+2004-02-09  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (co-d): New test to prove `co -d' failure case.
+
+2004-02-05  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (recase): Fix typo that creeped in somehow between my last
+	test run and my commit.
+
+2004-02-04  Derek Price  <derek@ximbiot.com>
+
+	* stack.c (shift, shift_string): Make sure these functions return their
+	result.
+
+2004-02-04  Derek Price  <derek@ximbiot.com>
+
+	* modules.c (do_modules): Move content to and make this function a
+	wrapper for...
+	(_do_modules): ...this new function which can watch for infinite loops
+	in alias modules.
+	* stack.c (_push, _pop, _unshift, _shift, push_string, pop_string,
+	unshift_string, shift_string): New
+	functions.
+	* stack.h (push_string, pop_string, unshift_string, shift_string: New
+	prototypes.
+	* sanity.sh (modules): Add check for nested alias loops.
+
+2004-02-04  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (recase): Update test names and comments for clarity and
+	consistency.
+
+2004-02-03  Derek Price  <derek@ximbiot.com>
+
+	Preserve the case of checked out directories in a path as well as file
+	names for client communication with the server.
+
+	* Makefile.am (cvs_SOURCES): Add stack.c & stack.h.
+	* stack.c, stack.h: New files.
+	* cvs.h: Include stack.h.
+	* client.c (send_file_names): Preserve the case of directories in a
+	path as well as file names for communication with the server.
+
+	* Makefile.in: Regenerated.
+
+2004-02-02  Derek Price  <derek@ximbiot.com>
+
+	* sanity.sh (join-rm): New test for issue #104 & #159.
+
+2004-02-02  Derek Price  <derek@ximbiot.com>
+
+	Continue removal from server of handling of case insensitive clients.
+
+	* cvs.h: Remove extern declaration of ign_case.
+	* ignore.c (ign_case): Remove declaration.
+	(ign_name): Remove support for ign_case.
+	* server.c (serve_case): Ditto.
+	(requests): No longer support the "Case" request.
+	* rcs.c (locate_rcs): Remove reference to GLOBAL in function header
+	comment.
+
+2004-02-02  Derek Price  <derek@ximbiot.com>
+
+	* add.c, client.c, cvs.h, rcs.c, subr.c: Remove server support for case
+	insensitivity.
+
+2004-01-25  Derek Price  <derek@ximbiot.com>
+
+	* server.c (kserver_authenticate_connection): Fix call to
+	switch_to_user().
+	(Original patch from Alexey Mahotkin <alexm@hsys.msk.ru>.)
+
+2004-01-22  Derek Price  <derek@ximbiot.com>
+
+	* modules.c (do_module): Strip trailing slashes before checking for
+	infinite alias loops.
+	* sanity.sh (modules): Tests for response to infinite alias loops.
+
+2004-01-17  Mark D. Baushke  <mdb@cvshome.org>
+
+	* logmsg.c (do_verify): Eliminate double-free bug.
+	(Original patch from Gerald Combs.)
+
+2004-01-07  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* checkout.c (safe_location): Remove unused variable(s).
+	* lock.c (lock_tree_for_write): Ditto.
+	* rcs.c (RCS_checkin): Ditto.
+	* subr.c (compare_revnums): Ditto.
+	* tag.c (tag_check_valid): Ditto.
+	* mkmodules.c (init): Initialize err and return it rather than 0.
+	* server.c (do_cvs_command): Only define and set max_command_fd if
+	we're actually going to use it.
+
+2004-01-01  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* zlib.c (read_and_gzip, gunzip_and_write): Fix potential buffer
+	overruns, use names for magic numbers.
+	(Original patch from Jeff Downs <heydowns@borg.com>.)
+
 2003-12-18  Derek Price  <derek@ximbiot.com>
 
 	* server.c (switch_to_user): SysLog attempts to root from pserver.

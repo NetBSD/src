@@ -1,3 +1,9 @@
+2004-01-30  Derek Price  <derek@ximbiot.com>
+
+	Close issue #155.
+	* log_accum.in: Remove unused variables.
+	(Patch from (Ville Skyttä <scop@cvshome.org>.)
+
 2003-10-14  Derek Price  <derek@ximbiot.com>
 
 	Port to pedantic POSIX 1003.1-2001 hosts, such as Debian GNU/Linux
