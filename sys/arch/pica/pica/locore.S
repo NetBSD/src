@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 1997/06/23 00:04:06 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 1998/02/05 04:19:42 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,9 @@
 #define START_FRAME	((4 * 4) + 4 + 4)
 
 	.globl	start
+	.globl	_C_LABEL(kernel_text)
 start:
+_C_LABEL(kernel_text):
 	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts
 	mtc0	zero, MIPS_COP_0_CAUSE_REG	# Clear soft interrupts
 
