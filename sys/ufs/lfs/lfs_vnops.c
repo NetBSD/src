@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.30 1999/11/05 20:14:56 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.31 1999/11/06 20:33:06 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -293,20 +293,21 @@ lfs_fsync(v)
  */
 #define	SET_DIROP(fs) lfs_set_dirop(fs)
 static int lfs_set_dirop __P((struct lfs *));
+extern int lfs_dirvcount;
 
 static int lfs_set_dirop(fs)
 	struct lfs *fs;
 {
 	int error;
 
-	while (fs->lfs_writer || fs->lfs_dirvcount>LFS_MAXDIROP) {
+	while (fs->lfs_writer || lfs_dirvcount>LFS_MAXDIROP) {
 		if(fs->lfs_writer)
 			tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_dirop", 0);
-		if(fs->lfs_dirvcount > LFS_MAXDIROP) {		
+		if(lfs_dirvcount > LFS_MAXDIROP) {		
 #ifdef DEBUG_LFS
-			printf("(dirvcount=%d)\n",fs->lfs_dirvcount); 
+			printf("(dirvcount=%d)\n",lfs_dirvcount); 
 #endif
-			if((error=tsleep(&fs->lfs_dirvcount, PCATCH|PUSER, "lfs_maxdirop", 0))!=0)
+			if((error=tsleep(&lfs_dirvcount, PCATCH|PUSER, "lfs_maxdirop", 0))!=0)
 				return error;
 		}							
 	}								
@@ -327,7 +328,7 @@ static int lfs_set_dirop(fs)
 #define	MARK_VNODE(dvp)  do {                                           \
         if(!((dvp)->v_flag & VDIROP)) {					\
                 lfs_vref(dvp);						\
-		++VTOI((dvp))->i_lfs->lfs_dirvcount;			\
+		++lfs_dirvcount;					\
 	}								\
         (dvp)->v_flag |= VDIROP;					\
 } while(0)
