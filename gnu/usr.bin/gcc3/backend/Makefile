@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2003/11/16 16:24:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2003/12/07 19:56:59 scw Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -47,6 +47,12 @@ CPPFLAGS.print-rtl1.c=		-DGENERATOR_FILE
 # XXX
 .if ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m68000"
 COPTS.ra-colorize.c=		-O0
+.endif
+
+# XXX
+.if ${MACHINE_CPU} == "sh5"
+NOGCCERROR=			# defined
+COPTS.reload1.c=		-O1
 .endif
 
 # Headers that host objects depend on (except gen*rtl*)
