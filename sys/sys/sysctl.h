@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.110 2004/03/24 15:34:55 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.111 2004/03/24 16:55:49 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -958,6 +958,7 @@ int	sysctl_destroyv(struct sysctlnode *, ...);
  */
 void	sysctl_dump(const struct sysctlnode *);
 void	sysctl_free(struct sysctlnode *);
+void	sysctl_teardown(struct sysctllog **);
 
 /*
  * simple interface similar to old interface for in-kernel consumption
