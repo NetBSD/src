@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.85 1997/10/03 07:17:39 lukem Exp $
+#	$NetBSD: Makefile.i386,v 1.86 1997/10/20 00:43:21 fvdl Exp $
 
 # Makefile for NetBSD
 #
@@ -40,7 +40,7 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 CWARNFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-z -Ttext F8100000 -e start
+LINKFLAGS=	-z -Ttext F0100000 -e start
 STRIPFLAGS=	-d
 
 ### find out what to use for libkern
