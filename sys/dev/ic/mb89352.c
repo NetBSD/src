@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.27 2004/08/07 07:17:09 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.28 2004/08/07 20:04:44 mycroft Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.27 2004/08/07 07:17:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.28 2004/08/07 20:04:44 mycroft Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -1028,8 +1028,8 @@ nextbyte:
 		case MSG_CMDCOMPLETE:
 			if (sc->sc_dleft < 0) {
 				periph = acb->xs->xs_periph;
-				printf("%s: %d extra bytes from %d:%d\n",
-				    sc->sc_dev.dv_xname, -sc->sc_dleft,
+				printf("%s: %ld extra bytes from %d:%d\n",
+				    sc->sc_dev.dv_xname, (long)-sc->sc_dleft,
 				    periph->periph_target, periph->periph_lun);
 				sc->sc_dleft = 0;
 			}
