@@ -1,4 +1,4 @@
-/*	$NetBSD: strpct.c,v 1.4 1999/03/19 12:58:55 christos Exp $	*/
+/* $NetBSD: strpct.c,v 1.5 2001/09/14 14:04:01 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,20 +47,18 @@
  */
 
 #include <sys/types.h>
-#include <limits.h>
 
+#include <limits.h>
 #include <stdio.h>
 
-char	*strpct __P((u_long, u_long, u_int));
+char *strpct(u_long, u_long, u_int);
 
 char *
-strpct(numerator, denominator, digits)
-	u_long  numerator, denominator;
-	u_int   digits;
+strpct(u_long numerator, u_long denominator, u_int digits)
 {
-	int i;
-	u_long result, factor;
 	static char percent[32];
+	u_long factor, result;
+	int i;
 
 	/* I should check for digit overflow here, too XXX */
 	factor = 100L;

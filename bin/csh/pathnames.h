@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.6 1995/03/21 09:03:13 cgd Exp $	*/
+/* $NetBSD: pathnames.h,v 1.7 2001/09/14 14:04:00 wiz Exp $ */
 
 /*
  * Copyright (c) 1988, 1993
@@ -35,9 +35,14 @@
  *	@(#)pathnames.h	8.1 (Berkeley) 5/31/93
  */
 
+#ifndef _PATHNAMES_H_
+#define _PATHNAMES_H_
+
 #define	_PATH_BIN		"/bin"
 #define	_PATH_DOTCSHRC		"/etc/csh.cshrc"
 #define	_PATH_DOTLOGIN		"/etc/csh.login"
 #define	_PATH_DOTLOGOUT		"/etc/csh.logout"
 #define	_PATH_LOGIN		"/usr/bin/login"
 #define	_PATH_USRBIN		"/usr/bin"
+
+#endif /* !_PATHNAMES_H_ */

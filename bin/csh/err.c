@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.14 2000/05/31 22:48:45 christos Exp $	*/
+/* $NetBSD: err.c,v 1.15 2001/09/14 14:04:00 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,13 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: err.c,v 1.14 2000/05/31 22:48:45 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.15 2001/09/14 14:04:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+
 #include <stdlib.h>
 #include <unistd.h>
+
 #if __STDC__
 # include <stdarg.h>
 #else
@@ -54,7 +56,7 @@ __RCSID("$NetBSD: err.c,v 1.14 2000/05/31 22:48:45 christos Exp $");
 #include "csh.h"
 #include "extern.h"
 
-char   *seterr = NULL;	/* Holds last error if there was one */
+char *seterr = NULL;	/* Holds last error if there was one */
 
 #define ERR_FLAGS	0xf0000000
 #define ERR_NAME	0x10000000
@@ -297,12 +299,12 @@ void
 seterror(int id, ...)
 #else
 seterror(id, va_alist)
-     int id;
-     va_dcl
+    int id;
+    va_dcl
 #endif
 {
     if (seterr == 0) {
-	char    berr[BUFSIZE];
+	char berr[BUFSIZE];
 	va_list va;
 
 #if __STDC__
@@ -312,7 +314,7 @@ seterror(id, va_alist)
 #endif
 	if (id < 0 || id > sizeof(errorlist) / sizeof(errorlist[0]))
 	    id = ERR_INVALID;
-	(void) vsnprintf(berr, sizeof(berr), errorlist[id], va);
+	(void)vsnprintf(berr, sizeof(berr), errorlist[id], va);
 	va_end(va);
 
 	seterr = strsave(berr);
@@ -342,14 +344,15 @@ void
 stderror(int id, ...)
 #else
 stderror(id, va_alist)
-    int     id;
+    int id;
     va_dcl
 #endif
 {
     va_list va;
     Char **v;
-    int     flags = id & ERR_FLAGS;
+    int flags;
 
+    flags = id & ERR_FLAGS;
     id &= ~ERR_FLAGS;
 
     if ((flags & ERR_OLD) && seterr == NULL)
@@ -358,27 +361,27 @@ stderror(id, va_alist)
     if (id < 0 || id > sizeof(errorlist) / sizeof(errorlist[0]))
 	id = ERR_INVALID;
 
-    (void) fflush(cshout);
-    (void) fflush(csherr);
+    (void)fflush(cshout);
+    (void)fflush(csherr);
     haderr = 1;			/* Now to diagnostic output */
     timflg = 0;			/* This isn't otherwise reset */
 
 
     if (!(flags & ERR_SILENT)) {
 	if (flags & ERR_NAME)
-	    (void) fprintf(csherr, "%s: ", bname);
+	    (void)fprintf(csherr, "%s: ", bname);
 	if ((flags & ERR_OLD))
 	    /* Old error. */
-	    (void) fprintf(csherr, "%s.\n", seterr);
+	    (void)fprintf(csherr, "%s.\n", seterr);
 	else {
 #if __STDC__
 	    va_start(va, id);
 #else
 	    va_start(va);
 #endif
-	    (void) vfprintf(csherr, errorlist[id], va);
+	    (void)vfprintf(csherr, errorlist[id], va);
 	    va_end(va);
-	    (void) fprintf(csherr, ".\n");
+	    (void)fprintf(csherr, ".\n");
 	}
     }
 
@@ -392,8 +395,8 @@ stderror(id, va_alist)
     if ((v = gargv) != NULL)
 	gargv = 0, blkfree(v);
 
-    (void) fflush(cshout);
-    (void) fflush(csherr);
+    (void)fflush(cshout);
+    (void)fflush(csherr);
     didfds = 0;			/* Forget about 0,1,2 */
     /*
      * Go away if -e or we are a child shell
@@ -409,6 +412,6 @@ stderror(id, va_alist)
 
     set(STRstatus, Strsave(STR1));
     if (tpgrp > 0)
-	(void) tcsetpgrp(FSHTTY, tpgrp);
+	(void)tcsetpgrp(FSHTTY, tpgrp);
     reset();			/* Unwind */
 }
