@@ -1,4 +1,4 @@
-/*	$NetBSD: bpb.h,v 1.2 2003/10/08 04:11:43 lukem Exp $	*/
+/*	$NetBSD: bpb.h,v 1.3 2004/06/30 03:43:14 christos Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -113,22 +113,27 @@ struct bpb_a {
  * use the macros for the big-endian case.
  */
 #include <machine/endian.h>
-#if (BYTE_ORDER == LITTLE_ENDIAN) && defined(UNALIGNED_ACCESS)
-#define	getushort(x)	*((u_int16_t *)(x))
-#define	getulong(x)	*((u_int32_t *)(x))
-#define	putushort(p, v)	(*((u_int16_t *)(p)) = (v))
-#define	putulong(p, v)	(*((u_int32_t *)(p)) = (v))
+#ifdef __STDC__
+#define __ICAST(q,a,x)	((q u_int ## a ## _t *)(q void *)(x))
 #else
-#define getushort(x)	(((u_int8_t *)(x))[0] + (((u_int8_t *)(x))[1] << 8))
-#define getulong(x)	(((u_int8_t *)(x))[0] + (((u_int8_t *)(x))[1] << 8) \
-			 + (((u_int8_t *)(x))[2] << 16)	\
-			 + (((u_int8_t *)(x))[3] << 24))
-#define putushort(p, v)	(((u_int8_t *)(p))[0] = (v),	\
-			 ((u_int8_t *)(p))[1] = (v) >> 8)
-#define putulong(p, v)	(((u_int8_t *)(p))[0] = (v),	\
-			 ((u_int8_t *)(p))[1] = (v) >> 8, \
-			 ((u_int8_t *)(p))[2] = (v) >> 16,\
-			 ((u_int8_t *)(p))[3] = (v) >> 24)
+#define __ICAST(q,a,x)	((q u_int/**/a/**/_t *)(q void *)(x))
+#endif
+#if (BYTE_ORDER == LITTLE_ENDIAN) && defined(UNALIGNED_ACCESS)
+#define	getushort(x)	*__ICAST(const,16,x)
+#define	getulong(x)	*__ICAST(const,32,x)
+#define	putushort(p, v)	(void)(*__ICAST(,16,p) = (v))
+#define	putulong(p, v)	(void)(*__ICAST(,32,p) = (v))
+#else
+#define getushort(x)	(__ICAST(const,8,x)[0] + (__ICAST(const,8,x)[1] << 8))
+#define getulong(x)	(__ICAST(const,8,x)[0] + (__ICAST(const,8,x)[1] << 8) \
+			 + (__ICAST(const,8,x)[2] << 16)	\
+			 + (__ICAST(const,8,x)[3] << 24))
+#define putushort(p, v)	(__ICAST(,8,p)[0] = (v),	\
+			 __ICAST(,8,p)[1] = (v) >> 8)
+#define putulong(p, v)	(__ICAST(,8,p)[0] = (v),	\
+			 __ICAST(,8,p)[1] = (v) >> 8, \
+			 __ICAST(,8,p)[2] = (v) >> 16,\
+			 __ICAST(,8,p)[3] = (v) >> 24)
 #endif
 
 /*
