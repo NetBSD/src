@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbsh5,v 1.1.2.3 2002/07/16 01:43:35 gehenna Exp $
+#	$NetBSD: files.evbsh5,v 1.1.2.4 2002/08/30 00:19:40 gehenna Exp $
 
 # Config file for SuperH CAYMAN SH5 Evaluation Board
 
@@ -16,8 +16,11 @@ device	sysfpga { }
 attach	sysfpga at femi
 file	arch/evbsh5/dev/sysfpga.c		sysfpga
 
-device	superio: isabus
+device	superio {[offset=-1], [irq=-1]}: isabus
 attach	superio at sysfpga
 file	arch/evbsh5/dev/superio.c		superio
 
-include	"arch/sh5/conf/majors.sh5"
+attach	sm at superio with sm_superio
+file	arch/evbsh5/dev/if_sm_superio.c		sm_superio	needs-flag
+
+include "arch/sh5/conf/majors.sh5"

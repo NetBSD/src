@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.7 2002/04/05 16:58:02 thorpej Exp $	*/
+/*	$NetBSD: esc.c,v 1.7.2.1 2002/08/30 00:18:44 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: esc.c,v 1.7 2002/04/05 16:58:02 thorpej Exp $");
+__RCSID("$NetBSD: esc.c,v 1.7.2.1 2002/08/30 00:18:44 gehenna Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -221,6 +221,7 @@ escinitialize(dev)
  */
 	pte = vtopte((vaddr_t) dev->sc_bump_va);
 	*pte &= ~L2_C;
+	PTE_SYNC(pte);
 	cpu_tlb_flushD();
 	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, NBPG);
 

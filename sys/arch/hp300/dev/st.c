@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.31.4.1 2002/05/17 15:40:58 gehenna Exp $	*/
+/*	$NetBSD: st.c,v 1.31.4.2 2002/08/30 00:19:43 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.31.4.1 2002/05/17 15:40:58 gehenna Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.31.4.2 2002/08/30 00:19:43 gehenna Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,7 +272,7 @@ stattach(parent, self, aux)
 
 	printf("\n");
 
-	BUFQ_INIT(&sc->sc_tab);
+	bufq_alloc(&sc->sc_tab, BUFQ_FCFS);
 
 	memset(vendor, 0, sizeof(vendor));
 	memset(product, 0, sizeof(product));
@@ -708,7 +708,7 @@ ststrategy(bp)
 	sc = st_cd.cd_devs[unit];
 
 	s = splbio();
-	BUFQ_INSERT_TAIL(&sc->sc_tab, bp);
+	BUFQ_PUT(&sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		stustart(unit);
@@ -742,7 +742,7 @@ stgo(arg)
 {
 	struct st_softc *sc = arg;
 	struct scsi_fmt_cdb *cmd;
-	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
+	struct buf *bp = BUFQ_PEEK(&sc->sc_tab);
 	int pad, stat;
 	long nblks;
 
@@ -825,10 +825,10 @@ stfinish(sc, bp)
 {
 
 	sc->sc_errcnt = 0;
-	BUFQ_REMOVE(&sc->sc_tab, bp);
+	(void)BUFQ_GET(&sc->sc_tab);
 	biodone(bp);
 	scsifree(sc->sc_dev.dv_parent, &sc->sc_sq);
-	if (BUFQ_FIRST(&sc->sc_tab) != NULL)
+	if (BUFQ_PEEK(&sc->sc_tab) != NULL)
 		stustart(sc->sc_dev.dv_unit);
 	else
 		sc->sc_active = 0;
@@ -951,7 +951,7 @@ stintr(arg, stat)
 {
 	struct st_softc *sc = arg;
 	struct st_xsense *xp = &sc->sc_sense;
-	struct buf *bp = BUFQ_FIRST(&sc->sc_tab);
+	struct buf *bp = BUFQ_PEEK(&sc->sc_tab);
 
 #ifdef DEBUG
 	if (bp == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.8.2.2 2002/06/06 03:00:32 gehenna Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.8.2.3 2002/08/30 00:19:29 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -72,7 +72,6 @@ const struct cdevsw gdrom_cdevsw = {
 struct gdrom_softc {
 	struct device sc_dv;	/* generic device info; must come first */
 	struct disk dkdev;	/* generic disk info */
-	struct buf_queue bufq;	/* queue pending I/O operations */
 	struct buf curbuf;	/* state of current I/O operation */
 
 	int is_open, is_busy;
@@ -382,8 +381,6 @@ gdromattach(struct device *parent, struct device *self, void *aux)
 	u_int32_t p, x;
 
 	sc = (struct gdrom_softc *)self;
-
-	BUFQ_INIT(&sc->bufq);
 
 	printf(": SH4 IRL 9\n");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.22.2.1 2002/07/16 01:38:08 gehenna Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.22.2.2 2002/08/30 00:19:34 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -645,7 +645,7 @@ initarm(void *arg)
 	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
@@ -661,7 +661,7 @@ initarm(void *arg)
 		    PTE_BASE + ((KERNEL_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_KERNEL + loop].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	}
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
@@ -669,13 +669,13 @@ initarm(void *arg)
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; loop++)
 		pmap_map_entry(l1pagetable,
 		    PTE_BASE + ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map the vector page. */
 #if 1
@@ -788,6 +788,13 @@ initarm(void *arg)
 	/* Initialise the undefined instruction handlers */
 	printf("undefined ");
 	undefined_init();
+
+	/* Load memory into UVM. */
+	printf("page ");
+	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
+	    atop(physical_freestart), atop(physical_freeend),
+	    VM_FREELIST_DEFAULT);
 
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.28.4.1 2002/05/17 15:40:59 gehenna Exp $	*/
+/*	$NetBSD: ct.c,v 1.28.4.2 2002/08/30 00:19:42 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.28.4.1 2002/05/17 15:40:59 gehenna Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.28.4.2 2002/08/30 00:19:42 gehenna Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ struct	ct_softc {
 	struct	ct_ulcmd sc_ul;
 	struct	ct_wfmcmd sc_wfm;
 	struct	ct_clearcmd sc_clear;
-	struct	buf_queue sc_tab;
+	struct	bufq_state sc_tab;
 	int	sc_active;
 	struct	buf *sc_bp;
 	struct	buf sc_bufstore;	/* XXX */
@@ -240,7 +240,7 @@ ctattach(parent, self, aux)
 	sc->sc_slave = ha->ha_slave;
 	sc->sc_punit = ha->ha_punit;
 
-	BUFQ_INIT(&sc->sc_tab);
+	bufq_alloc(&sc->sc_tab, BUFQ_FCFS);
 
 	/* Initialize hpib job queue entry. */
 	sc->sc_hq.hq_softc = sc;
@@ -519,7 +519,7 @@ ctstrategy(bp)
 	sc = ct_cd.cd_devs[unit];
 
 	s = splbio();
-	BUFQ_INSERT_TAIL(&sc->sc_tab, bp);
+	BUFQ_PUT(&sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		ctustart(sc);
@@ -533,7 +533,7 @@ ctustart(sc)
 {
 	struct buf *bp;
 
-	bp = BUFQ_FIRST(&sc->sc_tab);
+	bp = BUFQ_PEEK(&sc->sc_tab);
 	sc->sc_addr = bp->b_data;
 	sc->sc_resid = bp->b_bcount;
 	if (hpibreq(sc->sc_dev.dv_parent, &sc->sc_hq))
@@ -551,7 +551,7 @@ ctstart(arg)
 	ctlr = sc->sc_dev.dv_parent->dv_unit;
 	slave = sc->sc_slave;
 
-	bp = BUFQ_FIRST(&sc->sc_tab);
+	bp = BUFQ_PEEK(&sc->sc_tab);
 	if ((sc->sc_flags & CTF_CMD) && sc->sc_bp == bp) {
 		switch(sc->sc_cmd) {
 		case MTFSF:
@@ -662,7 +662,7 @@ ctgo(arg)
 	struct buf *bp;
 	int rw;
 
-	bp = BUFQ_FIRST(&sc->sc_tab);
+	bp = BUFQ_PEEK(&sc->sc_tab);
 	rw = bp->b_flags & B_READ;
 	hpibgo(sc->sc_dev.dv_parent->dv_unit, sc->sc_slave, C_EXEC,
 	    sc->sc_addr, sc->sc_resid, rw, rw != 0);
@@ -758,7 +758,7 @@ ctintr(arg)
 	slave = sc->sc_slave;
 	unit = sc->sc_dev.dv_unit;
 
-	bp = BUFQ_FIRST(&sc->sc_tab);
+	bp = BUFQ_PEEK(&sc->sc_tab);
 	if (bp == NULL) {
 		printf("%s: bp == NULL\n", sc->sc_dev.dv_xname);
 		return;
@@ -895,10 +895,10 @@ ctdone(sc, bp)
 	struct buf *bp;
 {
 
-	BUFQ_REMOVE(&sc->sc_tab, bp);
+	(void)BUFQ_GET(&sc->sc_tab);
 	biodone(bp);
 	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
-	if (BUFQ_FIRST(&sc->sc_tab) == NULL) {
+	if (BUFQ_PEEK(&sc->sc_tab) == NULL) {
 		sc->sc_active = 0;
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 2002/04/03 23:33:29 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16.2.1 2002/08/30 00:19:09 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,6 +45,7 @@
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
+#include "opt_perfctrs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +53,7 @@
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
+#include <sys/pmc.h>
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/syslog.h>
@@ -72,7 +74,7 @@ extern pv_addr_t systempage;
 int process_read_regs	__P((struct proc *p, struct reg *regs));
 int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
 
-void	switch_exit	__P((struct proc *p));
+void	switch_exit	__P((struct proc *p, struct proc *p0));
 extern void proc_trampoline	__P((void));
 
 /*
@@ -123,6 +125,15 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	if (p1 == curproc) {
 		/* Sync the PCB before we copy it. */
 		savectx(curpcb);
+	}
+#endif
+
+#if defined(PERFCTRS)
+	if (PMC_ENABLED(p1))
+		pmc_md_fork(p1, p2);
+	else {
+		p2->p_md.pmc_enabled = 0;
+		p2->p_md.pmc_state = NULL;
 	}
 #endif
 
@@ -218,7 +229,7 @@ cpu_exit(p)
 	}
 #endif	/* STACKCHECKS */
 	uvmexp.swtch++;
-	switch_exit(p);
+	switch_exit(p, &proc0);
 }
 
 
@@ -280,7 +291,8 @@ pagemove(from, to, size)
 	caddr_t from, to;
 	size_t size;
 {
-	register pt_entry_t *fpte, *tpte;
+	pt_entry_t *fpte, *tpte;
+	size_t ptecnt = size >> PAGE_SHIFT;
 
 	if (size % NBPG)
 		panic("pagemove: size=%08lx", (u_long) size);
@@ -308,6 +320,8 @@ pagemove(from, to, size)
 		*fpte++ = 0;
 		size -= NBPG;
 	}
+	PTE_SYNC_RANGE(vtopte((vaddr_t)from), ptecnt);
+	PTE_SYNC_RANGE(vtopte((vaddr_t)to), ptecnt);
 	//cpu_tlb_flushD();
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.11.2.1 2002/07/16 00:55:30 gehenna Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.11.2.2 2002/08/30 00:19:14 gehenna Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.11.2.1 2002/07/16 00:55:30 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.11.2.2 2002/08/30 00:19:14 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -766,7 +766,7 @@ get_cmap(sc, p)
 {
 	u_int index = p->index, count = p->count;
 
-	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
+	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_WRITE) ||

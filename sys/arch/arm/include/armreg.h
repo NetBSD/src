@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.18.2.2 2002/07/16 00:55:27 gehenna Exp $	*/
+/*	$NetBSD: armreg.h,v 1.18.2.3 2002/08/30 00:19:10 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -195,6 +195,8 @@
 #define CPU_ID_PXA210B		0x69052920 /* 3rd version Core */
 #define	CPU_ID_80321_400	0x69052420
 #define	CPU_ID_80321_600	0x69052430
+#define	CPU_ID_80321_400_B0	0x69052c20
+#define	CPU_ID_80321_600_B0	0x69052c30
 
 /* ARM3-specific coprocessor 15 registers */
 #define ARM3_CP15_FLUSH		1

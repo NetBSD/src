@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.44.2.4 2002/07/21 13:00:27 gehenna Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.44.2.5 2002/08/30 00:19:01 gehenna Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -47,9 +47,11 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
+#include "opt_perfctrs.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/pmc.h>
 #include <sys/systm.h>
 #include <machine/cpu.h>
 #include <machine/bootconfig.h>
@@ -74,6 +76,10 @@
 #include <arm/xscale/xscalereg.h>
 #endif
 
+#if defined(PERFCTRS)
+struct arm_pmc_funcs *arm_pmc;
+#endif
+
 /* PRIMARY CACHE VARIABLES */
 int	arm_picache_size;
 int	arm_picache_line_size;
@@ -88,6 +94,9 @@ int	arm_pcache_unified;
 
 int	arm_dcache_align;
 int	arm_dcache_align_mask;
+
+/* 1 == use cpu_sleep(), 0 == don't */
+int cpu_do_powersave;
 
 #ifdef CPU_ARM3
 struct cpu_functions arm3_cpufuncs = {
@@ -821,6 +830,10 @@ set_cpufuncs()
 	cputype = cpufunc_id();
 	cputype &= CPU_ID_CPU_MASK;
 
+	/*
+	 * NOTE: cpu_do_powersave defaults to off.  If we encounter a
+	 * CPU type where we want to use it by default, then we set it.
+	 */
 
 #ifdef CPU_ARM3
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
@@ -897,6 +910,10 @@ set_cpufuncs()
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		get_cachetype_table();
 		pmap_pte_init_generic();
+
+		/* Use powersave on this CPU. */
+		cpu_do_powersave = 1;
+
 		return 0;
 	}
 #endif	/* CPU_SA1100 */
@@ -906,6 +923,10 @@ set_cpufuncs()
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		get_cachetype_table();
 		pmap_pte_init_generic();
+
+		/* Use powersave on this CPU. */
+		cpu_do_powersave = 1;
+
 		return 0;
 	}
 #endif	/* CPU_SA1110 */
@@ -955,6 +976,9 @@ set_cpufuncs()
 			: "r" (BCUCTL_E0|BCUCTL_E1|BCUCTL_EV));
 
 		cpufuncs = xscale_cpufuncs;
+#if defined(PERFCTRS)
+		xscale_pmu_init();
+#endif
 
 		/*
 		 * i80200 errata: Step-A0 and A1 have a bug where
@@ -973,7 +997,8 @@ set_cpufuncs()
 	}
 #endif /* CPU_XSCALE_80200 */
 #ifdef CPU_XSCALE_80321
-	if (cputype == CPU_ID_80321_400 || cputype == CPU_ID_80321_600) {
+	if (cputype == CPU_ID_80321_400 || cputype == CPU_ID_80321_600 ||
+	    cputype == CPU_ID_80321_400_B0 || cputype == CPU_ID_80321_600_B0) {
 		i80321_icu_init();
 
 		/*
@@ -989,6 +1014,9 @@ set_cpufuncs()
 			       PMNC_CC_IF));
 
 		cpufuncs = xscale_cpufuncs;
+#if defined(PERFCTRS)
+		xscale_pmu_init();
+#endif
 
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
@@ -1000,10 +1028,17 @@ set_cpufuncs()
 	if (cputype == CPU_ID_PXA250A || cputype == CPU_ID_PXA210A ||
 	    cputype == CPU_ID_PXA250B || cputype == CPU_ID_PXA210B) {
 		cpufuncs = xscale_cpufuncs;
+#if defined(PERFCTRS)
+		xscale_pmu_init();
+#endif
 
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
 		pmap_pte_init_xscale();
+
+		/* Use powersave on this CPU. */
+		cpu_do_powersave = 1;
+
 		return 0;
 	}
 #endif /* CPU_XSCALE_PXA2X0 */
@@ -1470,6 +1505,10 @@ arm6_setup(args)
 	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
 	cpuctrl = parse_cpu_options(args, arm6_options, cpuctrl);
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1511,6 +1550,10 @@ arm7_setup(args)
 	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
 	cpuctrl = parse_cpu_options(args, arm7_options, cpuctrl);
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1545,6 +1588,10 @@ arm7tdmi_setup(args)
 
 	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
 	cpuctrl = parse_cpu_options(args, arm7tdmi_options, cpuctrl);
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -1589,6 +1636,10 @@ arm8_setup(args)
 
 	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
 	cpuctrl = parse_cpu_options(args, arm8_options, cpuctrl);
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
 
 	/* Get clock configuration */
 	clocktest = arm8_clock_config(0, 0) & 0x0f;
@@ -1667,6 +1718,10 @@ arm9_setup(args)
 
 	cpuctrl = parse_cpu_options(args, arm9_options, cpuctrl);
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1713,6 +1768,10 @@ sa110_setup(args)
 		 | CPU_CONTROL_CPCLK;
 
 	cpuctrl = parse_cpu_options(args, sa110_options, cpuctrl);
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -1767,6 +1826,10 @@ sa11x0_setup(args)
 
 	cpuctrl = parse_cpu_options(args, sa11x0_options, cpuctrl);
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1807,6 +1870,10 @@ ixp12x0_setup(args)
 
 	cpuctrl = parse_cpu_options(args, ixp12x0_options, cpuctrl);
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1838,6 +1905,7 @@ void
 xscale_setup(args)
 	char *args;
 {
+	uint32_t auxctl;
 	int cpuctrl, cpuctrlmask;
 
 	/*
@@ -1849,7 +1917,8 @@ xscale_setup(args)
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
 		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
-		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_LABT_ENABLE;
+		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_LABT_ENABLE
+		 | CPU_CONTROL_BPRD_ENABLE;
 	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
 		 | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
@@ -1859,6 +1928,10 @@ xscale_setup(args)
 		 | CPU_CONTROL_CPCLK;
 
 	cpuctrl = parse_cpu_options(args, xscale_options, cpuctrl);
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -1871,13 +1944,15 @@ xscale_setup(args)
 /*	cpu_control(cpuctrlmask, cpuctrl);*/
 	cpu_control(0xffffffff, cpuctrl);
 
-#if 0
-	/*
-	 * XXX FIXME
-	 * Disable write buffer coalescing, PT ECC, and set
-	 * the mini-cache to write-back/read-allocate.
-	 */
-	__asm ("mcr p15, 0, %0, c1, c0, 1" :: "r" (0));
+	/* Make sure write coalescing is turned on */
+	__asm __volatile("mrc p15, 0, %0, c1, c0, 1"
+		: "=r" (auxctl));
+#if XSCALE_NO_COALESCE_WRITES
+	auxctl |= XSCALE_AUXCTL_K;
+#else
+	auxctl &= ~XSCALE_AUXCTL_K;
 #endif
+	__asm __volatile("mcr p15, 0, %0, c1, c0, 1"
+		: : "r" (auxctl));
 }
 #endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 */

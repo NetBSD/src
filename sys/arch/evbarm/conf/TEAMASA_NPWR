@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.15.2.1 2002/07/14 17:46:07 gehenna Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.15.2.2 2002/08/30 00:19:30 gehenna Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -22,11 +22,13 @@ options 	NTP		# NTP phase/frequency locked loop
 
 # For StrongARM systems
 options 	CPU_XSCALE_80200	# Support the XScale core
-makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
-#makeoptions	COPTS="-O2 -march=armv5 -mtune=xscale"
+makeoptions	COPTS="-O2 -mcpu=xscale"
 options 	XSCALE_CCLKCFG=7	# 600MHz
 
 # Architecture options
+options 	PERFCTRS
+options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
+options 	XSCALE_NO_COALESCE_WRITES
 
 # File systems
 
@@ -72,6 +74,7 @@ options 	INET6		# IPV6
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+options 	SOSEND_LOAN
 
 options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
@@ -193,6 +196,7 @@ pseudo-device	raid		4	# RAIDframe devices
 # network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter
 pseudo-device	loop			# network loopback
+pseudo-device	kttcp
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.29.8.1 2002/05/17 15:41:02 gehenna Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.29.8.2 2002/08/30 00:19:23 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -240,7 +240,7 @@ struct fd_softc {
 
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int		sc_ops;		/* I/O ops since last switch */
-	struct buf_queue sc_q;		/* pending I/O requests */
+	struct bufq_state sc_q;		/* pending I/O requests */
 	int		sc_active;	/* number of active I/O operations */
 };
 
@@ -503,7 +503,7 @@ fdattach(parent, self, aux)
 	else
 		printf(": density unknown\n");
 
-	BUFQ_INIT(&fd->sc_q);
+	bufq_alloc(&fd->sc_q, BUFQ_DISKSORT|BUFQ_SORT_CYLINDER);
 	fd->sc_cylin      = -1;
 	fd->sc_drive      = drive;
 	fd->sc_deftype    = type;
@@ -616,7 +616,7 @@ fdstrategy(bp)
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	disksort_cylinder(&fd->sc_q, bp);
+	BUFQ_PUT(&fd->sc_q, bp);
 	callout_stop(&fd->sc_motoroff_ch);		/* a good idea */
 	if (fd->sc_active == 0)
 		fdstart(fd);
@@ -669,17 +669,17 @@ fdfinish(fd, bp)
 	 * another drive is waiting to be serviced, since there is a long motor
 	 * startup delay whenever we switch.
 	 */
+	(void)BUFQ_GET(&fd->sc_q);
 	if (fd->sc_drivechain.tqe_next && ++fd->sc_ops >= 8) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
-		if (BUFQ_NEXT(bp) != NULL)
+		if (BUFQ_PEEK(&fd->sc_q) != NULL)
 			TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
 		else
 			fd->sc_active = 0;
 	}
 	bp->b_resid = fd->sc_bcount;
 	fd->sc_skip = 0;
-	BUFQ_REMOVE(&fd->sc_q, bp);
 
 	biodone(bp);
 	/* turn off motor 5s from now */
@@ -911,7 +911,7 @@ fdctimeout(arg)
 	s = splbio();
 	fdcstatus(&fd->sc_dev, 0, "timeout");
 
-	if (BUFQ_FIRST(&fd->sc_q) != NULL)
+	if (BUFQ_PEEK(&fd->sc_q) != NULL)
 		fdc->sc_state++;
 	else
 		fdc->sc_state = DEVIDLE;
@@ -956,7 +956,7 @@ loop:
 	}
 
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
-	bp = BUFQ_FIRST(&fd->sc_q);
+	bp = BUFQ_PEEK(&fd->sc_q);
 	if (bp == NULL) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
@@ -1244,7 +1244,7 @@ fdcretry(fdc)
 	struct buf *bp;
 
 	fd = fdc->sc_drives.tqh_first;
-	bp = BUFQ_FIRST(&fd->sc_q);
+	bp = BUFQ_PEEK(&fd->sc_q);
 
 	if (fd->sc_opts & FDOPT_NORETRY)
 	    goto fail;

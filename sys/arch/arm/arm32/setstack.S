@@ -1,4 +1,4 @@
-/*	$NetBSD: setstack.S,v 1.1 2001/07/28 13:28:03 chris Exp $	*/
+/*	$NetBSD: setstack.S,v 1.1.16.1 2002/08/30 00:19:09 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -59,7 +59,7 @@
  */
 
 ENTRY(set_stackptr)
-        mrs	r3, cpsr_all		/* Switch to the appropriate mode */
+        mrs	r3, cpsr		/* Switch to the appropriate mode */
 	bic	r2, r3, #(PSR_MODE)
 	orr	r2, r2, r0
         msr	cpsr_all, r2
@@ -78,7 +78,7 @@ ENTRY(set_stackptr)
  */
 
 ENTRY(get_stackptr)
-        mrs	r3, cpsr_all		/* Switch to the appropriate mode */
+        mrs	r3, cpsr		/* Switch to the appropriate mode */
 	bic	r2, r3, #(PSR_MODE)
 	orr	r2, r2, r0
         msr	cpsr_all, r2

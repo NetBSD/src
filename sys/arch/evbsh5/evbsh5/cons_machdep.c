@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_machdep.c,v 1.1.2.2 2002/07/16 00:41:03 gehenna Exp $	*/
+/*	$NetBSD: cons_machdep.c,v 1.1.2.3 2002/08/30 00:19:41 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -60,6 +60,12 @@
 
 #include <dev/cons.h>
 
+#ifdef DDB
+#include <sys/boot_flag.h>
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+#endif
+
 #if NCOM > 0
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -73,6 +79,7 @@ static bus_addr_t comaddr;
 
 
 #if NSCIF > 0
+#include <sh5/dev/pbridgereg.h>
 #include <sh5/dev/scifreg.h>
 #include <sh5/dev/scifvar.h>
 
@@ -110,13 +117,16 @@ consinit(void)
 	cninit();
 
 #ifdef DDB
+#if 0
 	{
 		extern int end;
 		extern int *esym;
 
-		ddb_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
-		    (void *)&end, esym);
+		ddb_init((int)esym - (int)&end, (void *)&end, esym);
 	}
+#else
+	ddb_init(0, NULL, NULL);
+#endif
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

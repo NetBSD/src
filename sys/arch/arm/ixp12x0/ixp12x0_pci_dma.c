@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_pci_dma.c,v 1.1.2.2 2002/07/21 13:00:31 gehenna Exp $ */
+/*	$NetBSD: ixp12x0_pci_dma.c,v 1.1.2.3 2002/08/30 00:19:15 gehenna Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -51,14 +51,14 @@ ixp12x0_pci_dma_init(bus_dma_tag_t dmat, void *cookie)
 
 	dmat->_dmamap_create = _bus_dmamap_create;
 	dmat->_dmamap_destroy = _bus_dmamap_destroy;
-	dmat->_dmamap_load = _bus_dmamap_load;			/* XXX */
-	dmat->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;	/* XXX */
-	dmat->_dmamap_load_uio = _bus_dmamap_load_uio;	/* XXX */
-	dmat->_dmamap_load_raw = _bus_dmamap_load_raw;	/* XXX */
+	dmat->_dmamap_load = _bus_dmamap_load;
+	dmat->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
+	dmat->_dmamap_load_uio = _bus_dmamap_load_uio;
+	dmat->_dmamap_load_raw = _bus_dmamap_load_raw;
 	dmat->_dmamap_unload = _bus_dmamap_unload;
-	dmat->_dmamap_sync = _bus_dmamap_sync;
-
-	dmat->_dmamem_alloc = _bus_dmamem_alloc;		/* XXX */
+	dmat->_dmamap_sync_pre = _bus_dmamap_sync;
+	dmat->_dmamap_sync_post = NULL;
+	dmat->_dmamem_alloc = _bus_dmamem_alloc;
 	dmat->_dmamem_free = _bus_dmamem_free;
 	dmat->_dmamem_map = _bus_dmamem_map;
 	dmat->_dmamem_unmap = _bus_dmamem_unmap;

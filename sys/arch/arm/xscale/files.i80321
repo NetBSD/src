@@ -1,4 +1,4 @@
-#	$NetBSD: files.i80321,v 1.2 2002/04/12 19:02:30 thorpej Exp $
+#	$NetBSD: files.i80321,v 1.2.2.1 2002/08/30 00:19:16 gehenna Exp $
 #
 # Configuration info for Intel i80321 XScale I/O Processor support
 #
@@ -8,9 +8,21 @@ file	arch/arm/xscale/i80321_irq.S
 file	arch/arm/xscale/i80321_mcu.c
 file	arch/arm/xscale/i80321_timer.c
 
-device	iopxs: pcibus, bus_space_generic
+file	arch/arm/xscale/xscale_pmc.c		perfctrs
+
+device	iopxs {}: pcibus, bus_space_generic
 # Board-specific front-end provides attachment.
 file	arch/arm/xscale/i80321.c		iopxs
 file	arch/arm/xscale/i80321_pci.c		iopxs
-file	arch/arm/xscale/i80321_pci_dma.c	iopxs
 file	arch/arm/xscale/i80321_space.c		iopxs
+
+# Application Accelerator Unit
+device	iopaau: dmover_service
+attach	iopaau at iopxs
+file	arch/arm/xscale/i80321_aau.c		iopaau
+file	arch/arm/xscale/iopaau.c		iopaau
+
+# Watchdog timer
+device	iopwdog: sysmon_wdog
+attach	iopwdog at iopxs
+file	arch/arm/xscale/i80321_wdog.c		iopwdog

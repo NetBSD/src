@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.53 2002/04/12 21:52:48 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.53.2.1 2002/08/30 00:19:13 gehenna Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -159,7 +159,8 @@ typedef struct pv_addr {
 #define	PVF_REF		0x02		/* page is referenced */
 #define	PVF_WIRED	0x04		/* mapping is wired */
 #define	PVF_WRITE	0x08		/* mapping is writable */
-#define	PVF_NC		0x10		/* mapping is non-cacheable */
+#define	PVF_EXEC	0x10		/* mapping is executable */
+#define	PVF_NC		0x20		/* mapping is non-cacheable */
 
 /*
  * Commonly referenced structures
@@ -222,6 +223,19 @@ extern vaddr_t	pmap_curmaxkvaddr;
  * Useful macros and constants 
  */
 
+/*
+ * While the ARM MMU's L1 descriptors describe a 1M "section", each
+ * one pointing to a 1K L2 table, NetBSD's VM system allocates the
+ * page tables in 4K chunks, and thus we describe 4M "super sections".
+ *
+ * We'll lift terminology from another architecture and refer to this as
+ * the "page directory" size.
+ */
+#define	PD_SIZE		(L1_S_SIZE * 4)		/* 4M */
+#define	PD_OFFSET	(PD_SIZE - 1)
+#define	PD_FRAME	(~PD_OFFSET)
+#define	PD_SHIFT	22
+
 /* Virtual address to page table entry */
 #define vtopte(va) \
 	(((pt_entry_t *)PTE_BASE) + arm_btop((vaddr_t) (va)))
@@ -229,6 +243,16 @@ extern vaddr_t	pmap_curmaxkvaddr;
 /* Virtual address to physical address */
 #define vtophys(va) \
 	((*vtopte(va) & L2_S_FRAME) | ((vaddr_t) (va) & L2_S_OFFSET))
+
+#define	PTE_SYNC(pte) \
+	cpu_dcache_wb_range((vaddr_t)(pte), sizeof(pt_entry_t))
+#define	PTE_FLUSH(pte) \
+	cpu_dcache_wbinv_range((vaddr_t)(pte), sizeof(pt_entry_t))
+
+#define	PTE_SYNC_RANGE(pte, cnt) \
+	cpu_dcache_wb_range((vaddr_t)(pte), (cnt) << 2) /* * sizeof(...) */
+#define	PTE_FLUSH_RANGE(pte) \
+	cpu_dcache_wbinv_range((vaddr_t)(pte), (cnt) << 2) /* * sizeof(...) */
 
 #define	l1pte_valid(pde)	((pde) != 0)
 #define	l1pte_section_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_S)

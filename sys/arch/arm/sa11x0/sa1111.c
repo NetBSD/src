@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.3.12.1 2002/07/21 13:00:32 gehenna Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.3.12.2 2002/08/30 00:19:16 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -217,11 +217,12 @@ sacc_intr(arg)
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTSTATCLR1);
 	DPRINTF(("sacc_intr_dispatch: %x %x\n", intstat.lo, intstat.hi));
 
+	/* clear SA1110's GPIO intr status */
+	bus_space_write_4(sc->sc_piot, sc->sc_gpioh,
+			  SAGPIO_EDR, sc->sc_gpiomask);
+
 	for(i = 0, mask = 1; i < 32; i++, mask <<= 1)
 		if (intstat.lo & mask) {
-			/* clear SA1110's GPIO intr status */
-			bus_space_write_4(sc->sc_piot, sc->sc_gpioh,
-					  SAGPIO_EDR, sc->sc_gpiomask);
 			/*
 			 * Clear intr status before calling intr handlers.
 			 * This cause stray interrupts, but clearing
@@ -237,9 +238,6 @@ sacc_intr(arg)
 		}
 	for(i = 0, mask = 1; i < SACCIC_LEN - 32; i++, mask <<= 1)
 		if (intstat.hi & mask) {
-			/* clear SA1110's GPIO intr status */
-			bus_space_write_4(sc->sc_piot, sc->sc_gpioh,
-					  SAGPIO_EDR, sc->sc_gpiomask);
 			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 					  SACCIC_INTSTATCLR1, 1 << i);
 #ifdef hpcarm
