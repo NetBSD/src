@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.4 2001/03/13 23:56:49 bjh21 Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.5 2001/05/02 19:10:29 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -342,9 +342,14 @@ static struct undefined_handler db_uh;
 void
 db_machine_init()
 {
+#ifndef __ELF__
 	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 	int len;
+#endif
 
+#ifdef __ELF__
+	printf("[ ELF symbol tables not supported ]\n");
+#else
 	/*
 	 * The boot loader currently loads the kernel with the a.out
 	 * header still attached.
@@ -363,6 +368,7 @@ db_machine_init()
 		len = *((u_int *)esym);
 		esym += (len + (sizeof(u_int) - 1)) & ~(sizeof(u_int) - 1);
 	}
+#endif
 
 	/*
 	 * We get called before malloc() is available, so supply a static
