@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.63 2002/03/19 22:17:30 lukem Exp $
+.\"	$NetBSD: make.1,v 1.64 2002/08/19 11:14:23 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -194,7 +194,7 @@ option).
 .It Fl n
 Display the commands that would have been executed, but do not
 actually execute them unless the target depends on the .MAKE special
-source (see below)
+source (see below).
 .It Fl N
 Display the commands which would have been executed, but do not
 actually execute any of them; useful for debugging top-level makefiles
@@ -461,7 +461,7 @@ was executed.
 .It Va .MAKE
 The name that
 .Nm
-was executed with
+was executed with.
 .It Ev MAKEFLAGS
 The environment variable
 .Ql Ev MAKEFLAGS
@@ -696,7 +696,7 @@ words may be replaced. Otherwise
 is the substring of
 .Ar old_string
 to be replaced in
-.Ar new_string
+.Ar new_string .
 .It Cm @ Ar temp Cm @ Xo
 .No Ar string Cm @
 .Xc
@@ -905,7 +905,7 @@ The
 may be any one of the following:
 .Bl -tag -width "Cm XX"
 .It Cm \&|\&|
-logical OR
+Logical OR.
 .It Cm \&\*[Am]\*[Am]
 Logical
 .Tn AND ;
