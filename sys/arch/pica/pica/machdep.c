@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 1998/02/23 20:05:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 1998/02/25 23:30:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,7 +55,6 @@
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/clist.h>
 #include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -65,19 +64,11 @@
 #include <sys/tty.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
 
 #include <vm/vm_kern.h>
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
@@ -115,22 +106,6 @@ char	cpu_model[30];
 
 vm_map_t buffer_map;
 
-/*
- * Declare these as initialized data so we can patch them.
- */
-int	nswbuf = 0;
-#ifdef	NBUF
-int	nbuf = NBUF;
-#else
-int	nbuf = 0;
-#endif
-#ifdef	BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
-#endif
-
-caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
 int	memcfg;			/* memory config register */
@@ -141,7 +116,7 @@ int	ncpu = 1;		/* At least one cpu in the system */
 int	isa_io_base;		/* Base address of ISA io port space */
 int	isa_mem_base;		/* Base address of ISA memory space */
 
-phys_ram_seg_t mem_clusters[1];	/* XXX VM_PHYSSEG_MAX */
+phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 /*
@@ -196,9 +171,6 @@ extern void stacktrace __P((void)); /*XXX*/
  */
 int	safepri = PSL_LOWIPL;
 
-struct	user *proc0paddr;
-struct	proc nullproc;		/* for use by swtch_exit() */
-
 extern void mips_vector_init  __P((void));
 
 
@@ -216,15 +188,15 @@ mach_init(argc, argv, code)
 {
 	register char *cp;
 	register int i;
-	register unsigned firstaddr;
-	register caddr_t v;
-	caddr_t start;
 	struct tlb tlb;
+	u_long first, last;
+	caddr_t kernend, v;
+	vm_size_t size;
 	extern char edata[], end[];
 
 	/* clear the BSS segment in NetBSD code */
-	v = (caddr_t)pica_round_page(end);
-	bzero(edata, v - edata);
+	kernend = (caddr_t)pica_round_page(end);
+	bzero(edata, kernend - edata);
 
 	/*
 	 * Set the VM page size.
@@ -316,9 +288,17 @@ mach_init(argc, argv, code)
 	 */
 	if (boothowto & RB_MINIROOT) {
 		boothowto |= RB_DFLTROOT;
-		v += mfs_initminiroot(v);
+		kernend += round_page(mfs_initminiroot(kernend));
 	}
 #endif
+
+	/*
+	 * Init the mapping for u page(s) for proc0, pm_tlbpid 1.
+	 * This also initializes nullproc for switch_exit().
+	 */
+	mips_init_proc0(kernend);
+
+	kernend += 2 * UPAGES * PAGE_SIZE;
 
 	/*
 	 * Now its time to abandon the BIOS and be self supplying.
@@ -366,51 +346,6 @@ mach_init(argc, argv, code)
 	tlb.tlb_lo0 = vad_to_pfn(PICA_P_ISA_IO) | MIPS3_PG_IOPAGE;
 	tlb.tlb_lo1 = vad_to_pfn(PICA_P_ISA_MEM) | MIPS3_PG_IOPAGE;
 	mips3_TLBWriteIndexedVPS(5, &tlb);
-	
-	/*
-	 * Init mapping for u page(s) for proc[0], pm_tlbpid 1.
-	 */
-	v = (caddr_t) (((int)v+3) & -4);
-	start = v;
-	curproc->p_addr = proc0paddr = (struct user *)v;
-	curproc->p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
-	firstaddr = MIPS_KSEG0_TO_PHYS(v);
-	for (i = 0; i < UPAGES; i+=2) {
-		tlb.tlb_mask = MIPS3_PG_SIZE_4K;
-		tlb.tlb_hi = mips3_vad_to_vpn((UADDR + (i << PGSHIFT))) | 1;
-		tlb.tlb_lo0 = vad_to_pfn(firstaddr) |
-			(MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED);
-		tlb.tlb_lo1 = vad_to_pfn(firstaddr + NBPG) |
-			(MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED);
-		curproc->p_md.md_upte[i] = tlb.tlb_lo0;
-		curproc->p_md.md_upte[i+1] = tlb.tlb_lo1;
-		mips3_TLBWriteIndexedVPS(i,&tlb);
-		firstaddr += NBPG * 2;
-	}
-	v += UPAGES * NBPG;
-	v = (caddr_t) (((int)v+3) & -4);
-	MachSetPID(1);
-
-	/*
-	 * init nullproc for swtch_exit().
-	 * init mapping for u page(s), pm_tlbpid 0
-	 * This could be used for an idle process.
-	 */
-	nullproc.p_addr = (struct user *)v;
-	nullproc.p_md.md_regs = nullproc.p_addr->u_pcb.pcb_regs;
-	bcopy("nullproc", nullproc.p_comm, sizeof("nullproc"));
-	firstaddr = MIPS_KSEG0_TO_PHYS(v);
-	for (i = 0; i < UPAGES; i+=2) {
-		nullproc.p_md.md_upte[i] = vad_to_pfn(firstaddr) |
-			(MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED);
-		nullproc.p_md.md_upte[i+1] = vad_to_pfn(firstaddr + NBPG) |
-			(MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED);
-		firstaddr += NBPG * 2;
-	}
-	v += UPAGES * NBPG;
-
-	/* clear pages for u areas */
-	bzero(start, v - start);
 
 	/* check what model platform we are running on */
 	switch (cputype) {
@@ -457,7 +392,7 @@ mach_init(argc, argv, code)
 		break;
 
 	default:
-		physmem = btoc((u_int)v - KERNBASE);
+		physmem = btoc((vm_offset_t)kernend - MIPS_KSEG0_START);
 		cp = (char *)MIPS_PHYS_TO_KSEG0(physmem << PGSHIFT);
 		while (cp < (char *)MIPS_MAX_MEM_ADDR) {
 			if (badaddr(cp, 4))
@@ -490,78 +425,32 @@ mach_init(argc, argv, code)
 	mem_cluster_cnt = 1;
 
 	/*
+	 * Load the rest of the pages into the VM system.
+	 */
+	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
+	last = mem_clusters[0].start + mem_clusters[0].size;
+	vm_page_physload(atop(first), atop(last), atop(first), atop(last));
+
+	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-	maxmem -= btoc(MSGBUFSIZE);
-	msgbufaddr = (caddr_t)(MIPS_PHYS_TO_KSEG0(maxmem << PGSHIFT));
-	initmsgbuf(msgbufaddr, pica_round_page(MSGBUFSIZE));
+	mips_init_msgbuf();
 
 	/*
-	 * Allocate space for system data structures.
-	 * The first available kernel virtual address is in "v".
-	 * As pages of kernel virtual memory are allocated, "v" is incremented.
-	 *
-	 * These data structures are allocated here instead of cpu_startup()
-	 * because physical memory is directly addressable. We don't have
-	 * to map these into virtual address space.
+	 * Allocate space for system data structures.  These data structures
+	 * are allocated here instead of cpu_startup() because physical
+	 * memory is directly addressable.  We don't have to map these into
+	 * virtual address space.
 	 */
-	start = v;
-
-#define	valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)((name)+(num))
-#define	valloclim(name, type, num, lim) \
-	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
-	valloc(callout, struct callout, ncallout);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-
-	/*
-	 * Determine how many buffers to allocate.
-	 * We allocate more buffer space than the BSD standard of
-	 * using 10% of memory for the first 2 Meg, 5% of remaining.
-	 * We just allocate a flat 10%. Ensure a minimum of 16 buffers.
-	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
-	 */
-	if (bufpages == 0)
-		bufpages = physmem / 10 / CLSIZE;
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
-	valloc(swbuf, struct buf, nswbuf);
-	valloc(buf, struct buf, nbuf);
-
-	/*
-	 * Clear allocated memory.
-	 */
-	bzero(start, v - start);
+	size = (vm_size_t)allocsys(0);
+	v = (caddr_t)pmap_steal_memory(size, NULL, NULL); 
+	if ((allocsys(v) - v) != size)
+		panic("mach_init: table size inconsistency");
 
 	/*
 	 * Initialize the virtual memory system.
 	 */
-	pmap_bootstrap((vm_offset_t)v);
+	pmap_bootstrap();
 }
 
 /*
