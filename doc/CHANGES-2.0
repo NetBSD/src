@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.440 2004/09/11 13:28:43 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.441 2004/09/11 18:09:36 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7288,3 +7288,8 @@ sys/dev/pci/amr.c				1.21
 	Fixes PR#26834, patch from that PR.
 	[he, ticket #826]
 
+sys/sys/mbuf.h					1.92
+
+	Add m_length().  Needed to make the tree compile again after
+	ticket #831.
+	[bouyer, ticket #839]
