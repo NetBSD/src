@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.7 2002/03/16 17:03:43 martin Exp $ 
+ *	$Id: rc_config.c,v 1.8 2002/03/17 20:57:24 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -62,6 +62,7 @@ static void check_config(void);
 static void print_config(void);
 static void parse_valid(int entrycount, char *dt);
 static void clear_config(void);
+static int lookup_l4_driver(const char *name);
 
 static int nregexpr = 0;
 static int nregprog = 0;
@@ -263,9 +264,6 @@ set_isppp_auth(int entry)
 	struct spppauthcfg spcfg;
 	int s;
 	int doioctl = 0;
-
-	if(cep->usrdevicename != BDRV_ISPPP)
-		return;
 
 	if(cep->ppp_expect_auth == AUTH_UNDEF 
 	   && cep->ppp_send_auth == AUTH_UNDEF)
@@ -1075,21 +1073,8 @@ cfg_setval(int keyword)
 
 		case USRDEVICENAME:
 			DBGL(DL_RCCF, (log(LL_DBG, "entry %d: usrdevicename = %s", entrycount, yylval.str)));
-			if(!strcmp(yylval.str, "bchan"))
-				cfg_entry_tab[entrycount].usrdevicename = BDRV_RBCH;
-			else if(!strcmp(yylval.str, "tel"))
-				cfg_entry_tab[entrycount].usrdevicename = BDRV_TEL;
-			else if(!strcmp(yylval.str, "irip"))
-				cfg_entry_tab[entrycount].usrdevicename = BDRV_IPR;
-			else if(!strcmp(yylval.str, "ippp"))
-				cfg_entry_tab[entrycount].usrdevicename = BDRV_ISPPP;
-#ifdef __bsdi__
-			else if(!strcmp(yylval.str, "ibc"))
-				cfg_entry_tab[entrycount].usrdevicename = BDRV_IBC;
-#endif
-			else if(!strcmp(yylval.str, "ing"))
-				cfg_entry_tab[entrycount].usrdevicename = BDRV_ING;
-			else
+			cfg_entry_tab[entrycount].usrdevicename = lookup_l4_driver(yylval.str);
+			if (cfg_entry_tab[entrycount].usrdevicename < 0)
 			{
 				log(LL_ERR, "ERROR parsing config file: unknown parameter for keyword \"usrdevicename\" at line %d!", lineno);
 				config_error_flag++;
@@ -1306,15 +1291,9 @@ check_config(void)
 			}
 		}
 
-		if (cep->usrdevicename == BDRV_ISPPP) {
-			/*
-			 * Special treatement for ispp devices.
-			 * XXX - might want to create ispX here when we make
-			 *       them cloning.
-			 */
-			/* For now just set authentication configuration */
+		if(cep->ppp_expect_auth != AUTH_UNDEF 
+		   || cep->ppp_send_auth == AUTH_UNDEF)
 			set_isppp_auth(i);
-		}
 	}
 	if(error)
 	{
@@ -1555,32 +1534,27 @@ print_config(void)
 
 		fprintf(PFILE, "b1protocol            = %s\n", cep->b1protocol ? "hdlc\t\t# B-channel layer 1 protocol is HDLC" : "raw\t\t# No B-channel layer 1 protocol used");
 
-		if(!(cep->usrdevicename == BDRV_TEL))
+		fprintf(PFILE, "direction             = ");
+		switch(cep->inout)
 		{
-			fprintf(PFILE, "direction             = ");
-			switch(cep->inout)
-			{
-				case DIR_INONLY:
-					fprintf(PFILE, "in\t\t# only incoming connections allowed\n");
-					break;
-				case DIR_OUTONLY:
-					fprintf(PFILE, "out\t\t# only outgoing connections allowed\n");
-					break;
-				case DIR_INOUT:
-					fprintf(PFILE, "inout\t\t# incoming and outgoing connections allowed\n");
-					break;
-			}
+			case DIR_INONLY:
+				fprintf(PFILE, "in\t\t# only incoming connections allowed\n");
+				break;
+			case DIR_OUTONLY:
+				fprintf(PFILE, "out\t\t# only outgoing connections allowed\n");
+				break;
+			case DIR_INOUT:
+				fprintf(PFILE, "inout\t\t# incoming and outgoing connections allowed\n");
+				break;
 		}
 		
-		if(!((cep->usrdevicename == BDRV_TEL) || (cep->inout == DIR_INONLY)))
+		if(cep->remote_numbers_count > 1)
 		{
-			if(cep->remote_numbers_count > 1)
-			{
-				for(j=0; j<cep->remote_numbers_count; j++)
-					fprintf(PFILE, "remote-phone-dialout  = %s\t\t# telephone number %d for dialing out to remote\n", cep->remote_numbers[j].number, j+1);
+			for(j=0; j<cep->remote_numbers_count; j++)
+				fprintf(PFILE, "remote-phone-dialout  = %s\t\t# telephone number %d for dialing out to remote\n", cep->remote_numbers[j].number, j+1);
 
 				fprintf(PFILE, "remdial-handling      = ");
-		
+	
 				switch(cep->remote_numbers_handling)
 				{
 					case RNH_NEXT:
@@ -1593,10 +1567,6 @@ print_config(void)
 						fprintf(PFILE, "first\t\t# always start with first number for new dial\n");
 						break;
 				}
-			}
-			else
-			{
-				fprintf(PFILE, "remote-phone-dialout  = %s\t\t# telephone number for dialing out to remote\n", cep->remote_numbers[0].number);
 			}
 
 			fprintf(PFILE, "local-phone-dialout   = %s\t\t# show this number to remote when dialling out\n", cep->local_phone_dialout);
@@ -1633,7 +1603,6 @@ print_config(void)
 			}
 		}
 
-		if(cep->usrdevicename == BDRV_ISPPP)
 		{
 			char *s;
 			switch(cep->ppp_expect_auth)
@@ -1691,7 +1660,6 @@ print_config(void)
 			}
 		}
 
-		if(!((cep->inout == DIR_INONLY) || (cep->usrdevicename == BDRV_TEL)))
 		{
 			char *s;
 			fprintf(PFILE, "idletime-outgoing     = %d\t\t# outgoing call idle timeout\n", cep->idle_time_out);
@@ -1715,7 +1683,6 @@ print_config(void)
 		if(!(cep->inout == DIR_OUTONLY))
 			fprintf(PFILE, "idletime-incoming     = %d\t\t# incoming call idle timeout\n", cep->idle_time_in);
 
-		if(!(cep->usrdevicename == BDRV_TEL))
 		{		
 	 		fprintf(PFILE, "unitlengthsrc         = ");
 			switch(cep->unitlengthsrc)
@@ -1744,13 +1711,11 @@ print_config(void)
 
 		}
 		
-		if(cep->usrdevicename == BDRV_TEL)
 		{
 			fprintf(PFILE, "answerprog            = %s\t\t# program used to answer incoming telephone calls\n", cep->answerprog);
 			fprintf(PFILE, "alert                 = %d\t\t# number of seconds to wait before accepting a call\n", cep->alert);
 		}
 
-		if(!(cep->usrdevicename == BDRV_TEL))
 		{		
 			if(cep->dialin_reaction == REACT_CALLBACK)
 				fprintf(PFILE, "callbackwait          = %d\t\t# i am waiting this time before calling back remote\n", cep->callbackwait);
@@ -1771,9 +1736,36 @@ print_config(void)
 					fprintf(PFILE, "downtime              = %d\t\t# time device is switched off\n", cep->downtime);
 				}
 			}
-		}		
 	}
 	fprintf(PFILE, "\n");	
 }
 
-/* EOF */
+#define MAX_L4_DRIVERS	30
+char driver_names[MAX_L4_DRIVERS][L4DRIVER_NAME_SIZ];
+
+/*---------------------------------------------------------------------------*
+ *	return b channel driver type name string
+ *---------------------------------------------------------------------------*/
+char *
+bdrivername(int drivertype)
+{
+	if (drivertype < 0) return "unknown";
+	return (driver_names[drivertype]);
+}
+
+static int
+lookup_l4_driver(const char *name)
+{
+	msg_l4driver_lookup_t query;
+	int e;
+
+	memset(&query, 0, sizeof query);
+	strncpy(query.name, name, sizeof query.name);
+	e = ioctl(isdnfd, I4B_L4DRIVER_LOOKUP, &query);
+	if (e != 0) return -1;
+	if (query.driver_id >= 0 && query.driver_id < MAX_L4_DRIVERS) {
+		strncpy(driver_names[query.driver_id], name, L4DRIVER_NAME_SIZ);
+	}
+	return query.driver_id;
+}
+
