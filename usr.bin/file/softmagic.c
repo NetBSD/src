@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.28 2002/06/14 19:05:19 wiz Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.29 2002/07/09 14:59:55 pooka Exp $	*/
 
 /*
  * softmagic - interpret variable magic from MAGIC
@@ -27,22 +27,20 @@
  * 4. This notice may not be removed or altered.
  */
 
-#include <stdio.h>
+#include "file.h"
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <time.h>
-#include <sys/types.h>
 #include <regex.h>
 
-#include "file.h"
 
 #include <sys/cdefs.h>
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: softmagic.c,v 1.48 2002/05/16 18:45:56 christos Exp ")
+FILE_RCSID("@(#)Id: softmagic.c,v 1.51 2002/07/03 18:26:38 christos Exp ")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.28 2002/06/14 19:05:19 wiz Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.29 2002/07/09 14:59:55 pooka Exp $");
 #endif
 #endif	/* lint */
 
