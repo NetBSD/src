@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.2 2003/10/11 17:40:15 thorpej Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.3 2003/10/22 11:32:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -111,6 +111,11 @@ static const struct pciide_product_desc pciide_promise_products[] =  {
 	{ PCI_PRODUCT_PROMISE_SATA150TX2PLUS,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  "Promise Serial ATA/150 TX2plus Bus Master IDE Accelerator",
+	  pdc202xx_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_SATA150FT378,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  "Promise FastTrak 378 Serial ATA/150 Bus Master IDE Controller",
 	  pdc202xx_chip_map,
 	},
 	{ 0,
