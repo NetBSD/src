@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.71 2000/07/05 22:25:45 perseant Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.72 2000/07/22 15:26:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1884,8 +1884,7 @@ ufs_advlock(v)
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);
 
-	return (lf_advlock(&ip->i_lockf, ip->i_ffs_size, ap->a_id, ap->a_op,
-	    ap->a_fl, ap->a_flags));
+	return lf_advlock(ap, &ip->i_lockf, ip->i_ffs_size);
 }
 
 /*
