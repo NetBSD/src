@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.73 2002/04/01 13:30:24 bjh21 Exp $
+#	$NetBSD: bsd.sys.mk,v 1.74 2002/04/03 05:32:58 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -66,16 +66,17 @@ CKSUM?=		cksum
 CONFIG?=	config
 CRUNCHGEN?=	crunchgen
 GROFF?=		groff
-OBJCOPY?=	objcopy
-RPCGEN?=	rpcgen
-STRIP?=		strip
+INSTALLBOOT?=	installboot
 MAKEFS?=	makefs
 MDSETIMAGE?=	mdsetimage
-MKLOCALE?=	mklocale
 MKDEP?=		mkdep
+MKLOCALE?=	mklocale
 MTREE?=		mtree
+OBJCOPY?=	objcopy
 PAX?=		pax
 PWD_MKDB?=	pwd_mkdb
+RPCGEN?=	rpcgen
+STRIP?=		strip
 
 .SUFFIXES:	.m .o .ln .lo
 
