@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.h,v 1.6 1995/03/26 20:24:09 jtc Exp $	*/
+/*	$NetBSD: exec_ecoff.h,v 1.7 1995/06/16 02:07:56 mellon Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -83,19 +83,19 @@ struct ecoff_scnhdr {		/* needed for size info */
         (((value) + by - 1) & ~(by - 1))
 
 #define ECOFF_BLOCK_ALIGN(eap, value) \
-        (eap->ea_magic == ECOFF_ZMAGIC ? ECOFF_ROUND(value, ECOFF_LDPGSZ) : \
+        ((eap)->ea_magic == ECOFF_ZMAGIC ? ECOFF_ROUND(value, ECOFF_LDPGSZ) : \
 	 value)
 
 #define ECOFF_TXTOFF(efp, eap) \
-        (eap->ea_magic == ECOFF_ZMAGIC ? 0 : \
-	 ECOFF_ROUND(ECOFF_HDR_SIZE + efp->ef_nsecs * \
+        ((eap)->ea_magic == ECOFF_ZMAGIC ? 0 : \
+	 ECOFF_ROUND(ECOFF_HDR_SIZE + (efp)->ef_nsecs * \
 		     sizeof(struct ecoff_scnhdr),ECOFF_SEGMENT_ALIGNMENT(eap)))
 
 #define ECOFF_DATOFF(efp, eap) \
-        (ECOFF_BLOCK_ALIGN(eap, ECOFF_TXTOFF(efp, eap) + eap->ea_tsize))
+        (ECOFF_BLOCK_ALIGN(eap, ECOFF_TXTOFF(efp, eap) + (eap)->ea_tsize))
 
 #define ECOFF_SEGMENT_ALIGN(eap, value) \
-        (ECOFF_ROUND(value, (eap->ea_magic == ECOFF_ZMAGIC ? ECOFF_LDPGSZ : \
+        (ECOFF_ROUND(value, ((eap)->ea_magic == ECOFF_ZMAGIC ? ECOFF_LDPGSZ : \
          ECOFF_SEGMENT_ALIGNMENT(eap))))
 
 #ifdef _KERNEL
