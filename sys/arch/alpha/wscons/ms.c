@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.3 1996/11/13 21:13:40 cgd Exp $ */
+/* $NetBSD: ms.c,v 1.4 1997/04/06 20:09:06 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,8 @@
 /*
  * Mouse driver.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/conf.h>

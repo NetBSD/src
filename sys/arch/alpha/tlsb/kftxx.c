@@ -1,4 +1,4 @@
-/*	$NetBSD: kftxx.c,v 1.2 1997/03/12 21:10:41 cgd Exp $	*/
+/* $NetBSD: kftxx.c,v 1.3 1997/04/06 20:09:14 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -28,7 +28,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 /*
@@ -37,6 +36,8 @@
  *
  * i.e., handler for all TLSB I/O nodes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>

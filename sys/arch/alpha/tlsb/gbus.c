@@ -1,4 +1,4 @@
-/*	$NetBSD: gbus.c,v 1.2 1997/03/12 21:10:35 cgd Exp $	*/
+/* $NetBSD: gbus.c,v 1.3 1997/04/06 20:09:13 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -34,6 +34,8 @@
  * Autoconfiguration and support routines for the Gbus: the internal
  * bus on AlphaServer CPU modules.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons_emul.c,v 1.7 1996/11/19 05:23:13 cgd Exp $	*/
+/* $NetBSD: wscons_emul.c,v 1.8 1997/04/06 20:09:09 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,6 +30,8 @@
 /*
  * Console emulator for a 'generic' ANSI X3.64 console.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
