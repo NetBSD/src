@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.20 2004/07/21 14:17:22 tshiozak Exp $	*/
+/*	$NetBSD: catopen.c,v 1.21 2004/07/21 20:27:46 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,9 +52,14 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../citrus/citrus_namespace.h"
-#include "../citrus/citrus_region.h"
-#include "../citrus/citrus_lookup.h"
+#ifdef CITRUS
+#include <citrus/citrus_namespace.h>
+#include <citrus/citrus_region.h>
+#include <citrus/citrus_lookup.h>
+#else
+#include <locale/aliasname_local.h>
+#define _lookup_alias(p, a, b, s, c)	__unaliasname((p), (a), (b), (s))
+#endif
 
 #define NLS_ALIAS_DB "/usr/share/nls/nls.alias"
 

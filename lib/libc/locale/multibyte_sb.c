@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte_sb.c,v 1.4 2003/08/07 16:43:04 agc Exp $	*/
+/*	$NetBSD: multibyte_sb.c,v 1.5 2004/07/21 20:27:46 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char *sccsid = "from: @(#)multibyte.c	5.1 (Berkeley) 2/18/91";
 #else
-__RCSID("$NetBSD: multibyte_sb.c,v 1.4 2003/08/07 16:43:04 agc Exp $");
+__RCSID("$NetBSD: multibyte_sb.c,v 1.5 2004/07/21 20:27:46 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ mbrlen(s, n, ps)
 	if (s == NULL || *s == '\0')
 		return 0;
 	if (n == 0)
-		return -1;
+		return (size_t)-1;
 	return 1;
 }
 
@@ -102,7 +102,7 @@ mbrtowc(pwc, s, n, ps)
 	if (s == NULL)
 		return 0;
 	if (n == 0)
-		return -1;
+		return (size_t)-1;
 	if (pwc)
 		*pwc = (wchar_t) *s;
 	return (*s != '\0');
@@ -182,7 +182,7 @@ mbsrtowcs(pwcs, s, n, ps)
 			} while (--n != 0);
 		}
 	}
-	
+
 	return count;
 }
 

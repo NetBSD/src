@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.46 2004/07/21 18:51:30 tshiozak Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.47 2004/07/21 20:27:46 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.46 2004/07/21 18:51:30 tshiozak Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.47 2004/07/21 20:27:46 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,10 +64,16 @@ __RCSID("$NetBSD: setlocale.c,v 1.46 2004/07/21 18:51:30 tshiozak Exp $");
 #include "ctypeio.h"
 #endif
 
+#ifdef CITRUS
 #include <citrus/citrus_namespace.h>
 #include <citrus/citrus_region.h>
 #include <citrus/citrus_lookup.h>
 #include <citrus/citrus_bcs.h>
+#else
+#include <locale/aliasname_local.h>
+#define _lookup_alias(p, a, b, s, c)	__unaliasname((p), (a), (b), (s))
+#define _bcs_strcasecmp(a, b)		strcasecmp((a), (b))
+#endif
 
 #define _LOCALE_ALIAS_NAME	"locale.alias"
 #define _LOCALE_SYM_FORCE	"/force"
