@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_hx.c,v 1.3 2004/11/13 18:44:43 he Exp $	*/
+/*	$NetBSD: ipft_hx.c,v 1.4 2004/11/13 19:16:10 he Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -113,7 +113,7 @@ int	cnt, *dir;
 				if (t < (char *)ip)
 					putchar('\t');
 				while (t < (char *)ip) {
-					if (isprint(*t) && isascii(*t))
+					if (ISPRINT(*t) && ISASCII(*t))
 						putchar(*t);
 					else
 						putchar('.');
@@ -135,7 +135,7 @@ register char	*src, *dst;
 	char	c;
 
 	while ((c = *src++)) {
-		if (isspace(c)) {
+		if (ISSPACE(c)) {
 			if (state) {
 				dst++;
 				state = 0;
@@ -143,7 +143,7 @@ register char	*src, *dst;
 			continue;
 		} else if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') ||
 			   (c >= 'A' && c <= 'F')) {
-			c = isdigit(c) ? (c - '0') : (toupper(c) - 55);
+			c = ISDIGIT(c) ? (c - '0') : (TOUPPER(c) - 55);
 			if (state == 0) {
 				*dst = (c << 4);
 				state++;

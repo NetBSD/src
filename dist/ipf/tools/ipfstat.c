@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.6 2004/07/23 05:39:04 martti Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.7 2004/11/13 19:16:10 he Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1372,8 +1372,8 @@ int topclosed;
 			if (c == ERR)
 				continue;
 
-			if (isalpha(c) && isupper(c))
-				c = tolower(c);
+			if (ISALPHA(c) && ISUPPER(c))
+				c = TOLOWER(c);
 			if (c == 'l') {
 				redraw = 1;
 			} else if (c == 'q') {

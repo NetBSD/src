@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.1 2004/10/01 15:25:59 christos Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.2 2004/11/13 19:14:48 he Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1488,6 +1488,22 @@ extern	char	*fr_getifname __P((struct ifnet *, char *));
 #ifndef ASSERT
 # define	ASSERT(x)
 #endif
+
+/*
+ * Because the ctype(3) posix definition, if used "safely" in code everywhere,
+ * would mean all normal code that walks through strings needed casts.  Yuck.
+ */
+#define	ISALNUM(x)	isalnum((u_char)(x))
+#define	ISALPHA(x)	isalpha((u_char)(x))
+#define	ISASCII(x)	isascii((u_char)(x))
+#define	ISDIGIT(x)	isdigit((u_char)(x))
+#define	ISPRINT(x)	isprint((u_char)(x))
+#define	ISSPACE(x)	isspace((u_char)(x))
+#define	ISUPPER(x)	isupper((u_char)(x))
+#define	ISXDIGIT(x)	isxdigit((u_char)(x))
+#define	ISLOWER(x)	islower((u_char)(x))
+#define	TOUPPER(x)	toupper((u_char)(x))
+#define	TOLOWER(x)	tolower((u_char)(x))
 
 /*
  * If mutexes aren't being used, turn all the mutex functions into null-ops.

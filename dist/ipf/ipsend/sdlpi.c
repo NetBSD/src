@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlpi.c,v 1.3 2004/03/28 09:00:56 martti Exp $	*/
+/*	$NetBSD: sdlpi.c,v 1.4 2004/11/13 19:16:10 he Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed. (from tcplog)
@@ -70,7 +70,7 @@ int	tout;
 	(void) strncat(devname, device, sizeof(devname) - strlen(devname));
 
 	s = devname + 5;
-	while (*s && !isdigit(*s))
+	while (*s && !ISDIGIT(*s))
 		s++;
 	if (!*s)
 	    {
