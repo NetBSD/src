@@ -1,10 +1,10 @@
-# $NetBSD: FOURMEG,v 1.1 2000/07/19 16:39:30 bjh21 Exp $
+# $NetBSD: FOURMEG,v 1.2 2000/07/19 19:41:48 bjh21 Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
 include "arch/arm26/conf/std.arm26"
 
-maxusers 8
+maxusers 2
 
 # CPU support
 options 	CPU_ARM2
@@ -137,8 +137,8 @@ ea*		at podulebus0 slot ?	# Acorn/Atomwide Ether3
 #dtide*		at podulebus0 slot ?	# D.T. Software IDE interface
 #wd*		at dtide? channel ? drive ?
 
-asc*		at podulebus0 slot ?	# Acorn SCSI card (AKA30, AKA31)
-scsibus*	at asc?
+#asc*		at podulebus0 slot ?	# Acorn SCSI card (AKA30, AKA31)
+#scsibus*	at asc?
 
 arcvideo0	at root			# On-board video
 wsdisplay0	at arcvideo0
