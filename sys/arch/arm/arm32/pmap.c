@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.116 2002/09/05 18:34:00 jdolecek Exp $	*/
+/*	$NetBSD: pmap.c,v 1.117 2002/09/22 07:56:57 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2002/09/05 18:34:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2002/09/22 07:56:57 chs Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -301,7 +301,7 @@ struct l1pt {
 static void pmap_free_l1pt __P((struct l1pt *));
 static int pmap_allocpagedir __P((struct pmap *));
 static int pmap_clean_page __P((struct pv_entry *, boolean_t));
-static void pmap_remove_all __P((struct vm_page *));
+static void pmap_page_remove __P((struct vm_page *));
 
 static struct vm_page	*pmap_alloc_ptp __P((struct pmap *, vaddr_t));
 static struct vm_page	*pmap_get_ptp __P((struct pmap *, vaddr_t));
@@ -2509,7 +2509,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 }
 
 /*
- * Routine:	pmap_remove_all
+ * Routine:	pmap_page_remove
  * Function:
  *		Removes this physical page from
  *		all physical maps in which it resides.
@@ -2517,13 +2517,13 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
  */
 
 static void
-pmap_remove_all(struct vm_page *pg)
+pmap_page_remove(struct vm_page *pg)
 {
 	struct pv_entry *pv, *npv;
 	struct pmap *pmap;
 	pt_entry_t *pte, *ptes;
 
-	PDEBUG(0, printf("pmap_remove_all: pa=%lx ", VM_PAGE_TO_PHYS(pg)));
+	PDEBUG(0, printf("pmap_page_remove: pa=%lx ", VM_PAGE_TO_PHYS(pg)));
 
 	/* set vm_page => pmap locking */
 	PMAP_HEAD_TO_MAP_LOCK();
@@ -2550,7 +2550,7 @@ pmap_remove_all(struct vm_page *pg)
 		if (pmap_pde_page(pmap_pde(pmap, pv->pv_va)) == 0 ||
 		    pmap_pte_v(pte) == 0 ||
 		    pmap_pte_pa(pte) != VM_PAGE_TO_PHYS(pg))
-			panic("pmap_remove_all: bad mapping");
+			panic("pmap_page_remove: bad mapping");
 #endif	/* DEBUG */
 
 		/*
@@ -3026,7 +3026,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		break;
 
 	default:
-		pmap_remove_all(pg);
+		pmap_page_remove(pg);
 		break;
 	}
 }
