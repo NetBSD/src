@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.9 1997/09/02 13:19:40 thorpej Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.10 1997/09/02 20:10:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.9 1997/09/02 13:19:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.10 1997/09/02 20:10:30 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,7 +88,7 @@ void
 pci_eb164_pickintr(ccp)
 	struct cia_config *ccp;
 {
-	bus_space_tag_t iot = ccp->cc_iot;
+	bus_space_tag_t iot = &ccp->cc_iot;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
 	int i;
 
