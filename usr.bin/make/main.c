@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 1995/11/08 02:30:58 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.23 1995/11/22 17:40:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.22 1995/11/08 02:30:58 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.23 1995/11/22 17:40:14 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -442,7 +442,7 @@ main(argc, argv)
 	 * MACHINE_ARCH is always known at compile time.
 	 */
     	if (!machine) {
-	    if (uname(&utsname)) {
+	    if (uname(&utsname) == -1) {
 		    perror("make: uname");
 		    exit(2);
 	    }
