@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1.1.1 1998/06/20 04:58:53 eeh Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 1998/07/30 00:27:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -42,7 +42,9 @@
  *	[promdev[{:|,}partition]]/[filename] [flags]
  */
 
+#ifndef ELFSIZE
 #define	ELFSIZE		32		/* We use 32-bit ELF. */
+#endif
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
