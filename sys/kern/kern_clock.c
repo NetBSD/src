@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.35 1996/07/12 22:00:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -946,20 +946,6 @@ statclock(frame)
 			cp_time[CP_IDLE]++;
 	}
 	pscnt = psdiv;
-
-	/*
-	 * XXX Support old-style instrumentation for now.
-	 *
-	 * We maintain statistics shown by user-level statistics
-	 * programs:  the amount of time in each cpu state, and
-	 * the amount of time each of DK_NDRIVE ``drives'' is busy.
-	 *
-	 * XXX	should either run linked list of drives, or (better)
-	 *	grab timestamps in the start & done code.
-	 */
-	for (i = 0; i < DK_NDRIVE; i++)
-		if (dk_busy & (1 << i))
-			dk_time[i]++;
 
 	/*
 	 * We adjust the priority of the current process.  The priority of
