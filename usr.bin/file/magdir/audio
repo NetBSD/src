@@ -174,3 +174,15 @@
 # Imago Orpheus module (audio/x-imf)
 60	string		IM10		Imago Orpheus module sound data -
 >0	string		>\0		"%s"
+
+# Scream Tracker sample files <collver1@attbi.com>
+76	string		SCRS		Scream Tracker Sample
+>0	byte		1		sample
+>0	byte		2		adlib melody
+>0	byte		>2		adlib drum
+>31	byte		&2		stereo
+>31	byte		^2		mono
+>31	byte		&4		16bit little endian
+>31	byte		^4		8bit
+>30	byte		0		unpacked
+>30	byte		1		packed
