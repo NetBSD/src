@@ -1,4 +1,43 @@
-/*	$NetBSD: linux_termios.h,v 1.2 1998/01/05 17:51:32 perry Exp $	*/
+/*	$NetBSD: linux_termios.h,v 1.3 1998/10/01 01:52:59 erh Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Eric Haszlakiewicz.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef _I386_LINUX_TERMIOS_H
+#define _I386_LINUX_TERMIOS_H
 
 #define LINUX_TCGETS		_LINUX_IO('T', 1)
 #define LINUX_TCSETS		_LINUX_IO('T', 2)
@@ -51,31 +90,7 @@
 #define LINUX_TIOCSERGSTRUCT	_LINUX_IO('T', 88)
 #define LINUX_TIOCSERGETLSR	_LINUX_IO('T', 89)
 
-
-#define LINUX_NCC 8
-struct linux_termio {
-	unsigned short c_iflag;
-	unsigned short c_oflag;
-	unsigned short c_cflag;
-	unsigned short c_lflag;
-	unsigned char c_line;
-	unsigned char c_cc[LINUX_NCC];
-};
-
-typedef unsigned char linux_cc_t;
-typedef unsigned long linux_tcflag_t;
-
-#define LINUX_NCCS 19
-struct linux_termios {
-	linux_tcflag_t c_iflag;
-	linux_tcflag_t c_oflag;
-	linux_tcflag_t c_cflag;
-	linux_tcflag_t c_lflag;
-	linux_cc_t c_line;
-	linux_cc_t c_cc[LINUX_NCCS];
-};
-
-/* Just in old style linux_termio struct */
+/* linux_termios c_cc chars: */
 #define LINUX_VINTR 0
 #define LINUX_VQUIT 1
 #define LINUX_VERASE 2
@@ -84,8 +99,6 @@ struct linux_termios {
 #define LINUX_VTIME 5
 #define LINUX_VMIN 6
 #define LINUX_VSWTC 7
-
-/* In the termios struct too */
 #define LINUX_VSTART 8
 #define LINUX_VSTOP 9
 #define LINUX_VSUSP 10
@@ -95,6 +108,18 @@ struct linux_termios {
 #define LINUX_VWERASE 14
 #define LINUX_VLNEXT 15
 #define LINUX_VEOL2 16
+
+/* Old style linux_termio */
+#define	LINUX_OLD_VINTR		LINUX_VINTR
+#define	LINUX_OLD_VQUIT		LINUX_VQUIT
+#define	LINUX_OLD_VERASE	LINUX_VERASE
+#define	LINUX_OLD_VKILL		LINUX_VKILL
+#define	LINUX_OLD_VEOF		LINUX_VEOF
+#define	LINUX_OLD_VMIN		LINUX_VMIN
+#define	LINUX_OLD_VEOL		LINUX_VEOL
+#define	LINUX_OLD_VTIME		LINUX_VTIME
+#define	LINUX_OLD_VEOL2		LINUX_VEOL2
+#define	LINUX_OLD_VSWTC		LINUX_VSWTC
 
 /* Linux c_iflag masks */
 #define LINUX_IGNBRK	0x0000001
@@ -149,7 +174,7 @@ struct linux_termios {
 /* Linux c_cflag bit masks */
 
 #define LINUX_NSPEEDS   16
-#define LINUX_NXSPEEDS   2
+#define LINUX_NXSPEEDS   3	/* XXX Add B460800, NXSPEEDS=4 */
 
 #define LINUX_CBAUD	0x0000100f
 
@@ -207,34 +232,4 @@ struct linux_termios {
 #define LINUX_PENDIN	0x00002000
 #define LINUX_IEXTEN	0x00008000
 
-/* Linux modem line defines.. not sure if they'll be used */
-#define LINUX_TIOCM_LE		0x0001
-#define LINUX_TIOCM_DTR		0x0002
-#define LINUX_TIOCM_RTS		0x0004
-#define LINUX_TIOCM_ST		0x0008
-#define LINUX_TIOCM_SR		0x0010
-#define LINUX_TIOCM_CTS		0x0020
-#define LINUX_TIOCM_CAR		0x0040
-#define LINUX_TIOCM_RNG		0x0080
-#define LINUX_TIOCM_DSR		0x0100
-#define LINUX_TIOCM_CD		LINUX_TIOCM_CAR
-#define LINUX_TIOCM_RI 		LINUX_TIOCM_RNG
-
-#define	LINUX_TCIFLUSH		0
-#define	LINUX_TCOFLUSH		1
-#define	LINUX_TCIOFLUSH		2
-
-#define	LINUX_TCOOFF		0
-#define	LINUX_TCOON		1
-#define	LINUX_TCIOFF		2
-#define	LINUX_TCION		3
-
-#define	LINUX_TCSANOW		0
-#define	LINUX_TCSADRAIN		1
-#define	LINUX_TCSAFLUSH		2
-
-/* Linux line disciplines */
-#define LINUX_N_TTY		0
-#define LINUX_N_SLIP		1
-#define LINUX_N_MOUSE		2
-#define LINUX_N_PPP		3
+#endif /* !_I386_LINUX_TERMIOS_H */
