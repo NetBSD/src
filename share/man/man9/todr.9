@@ -1,4 +1,4 @@
-.\" $NetBSD: todr.9,v 1.7 2003/07/18 21:51:30 thorpej Exp $
+.\" $NetBSD: todr.9,v 1.8 2003/08/07 09:41:14 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,12 +38,12 @@
 .Dt TODR 9
 .Os
 .Sh NAME
-.Nm todr_attach
-.Nm todr_gettime
-.Nm todr_settime
-.Nm todr_getcal
-.Nm todr_setcal
-.Nm clock_ymdhms_to_secs
+.Nm todr_attach ,
+.Nm todr_gettime ,
+.Nm todr_settime ,
+.Nm todr_getcal ,
+.Nm todr_setcal ,
+.Nm clock_ymdhms_to_secs ,
 .Nm clock_secs_to_ymdhms
 .Nd time-of-day clock support
 .Sh SYNOPSIS
@@ -145,8 +145,8 @@ and
 .Fn clock_ymdhms_to_secs
 functions never fail.
 .Sh SEE ALSO
-.Xr mk48txx 4 ,
 .Xr intersil7170 4 ,
+.Xr mk48txx 4 ,
 .Xr inittodr 9 ,
 .Xr resettodr 9 ,
 .Xr time 9
