@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.33 2004/07/17 18:32:23 wiz Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.34 2004/11/15 20:45:52 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.33 2004/07/17 18:32:23 wiz Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.34 2004/11/15 20:45:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,7 @@ __RCSID("$NetBSD: rlogind.c,v 1.33 2004/07/17 18:32:23 wiz Exp $");
 #include <signal.h>
 #include <termios.h>
 #include <poll.h>
+#include <vis.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -123,13 +124,13 @@ int	log_success = 0;
 
 struct	passwd *pwd;
 
-void	doit __P((int, struct sockaddr *));
+void	doit __P((int, struct sockaddr_storage *));
 int	control __P((int, char *, int));
 void	protocol __P((int, int));
 void	cleanup __P((int));
-void	fatal __P((int, char *, int));
+void	fatal __P((int, const char *, int));
 int	do_rlogin __P((struct sockaddr *, char *));
-void	getstr __P((char *, int, char *));
+void	getstr __P((char *, int, const char *));
 void	setup_term __P((int));
 #if 0
 int	do_krb_login __P((union sockunion *));
@@ -149,7 +150,8 @@ main(argc, argv)
 	char *argv[];
 {
 	struct sockaddr_storage from;
-	int ch, fromlen, on;
+	int ch, on;
+	socklen_t fromlen = sizeof(from);
 
 	openlog("rlogind", LOG_PID, LOG_AUTH);
 
@@ -176,31 +178,29 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	fromlen = sizeof (from); /* xxx */
 	if (getpeername(0, (struct sockaddr *)&from, &fromlen) < 0) {
 		syslog(LOG_ERR,"Can't get peer name of remote host: %m");
 		fatal(STDERR_FILENO, "Can't get peer name of remote host", 1);
 	}
 #ifdef INET6
-	if (((struct sockaddr *)&from)->sa_family == AF_INET6 &&
+	if (from.ss_family == AF_INET6 &&
 	    IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)&from)->sin6_addr) &&
 	    sizeof(struct sockaddr_in) <= sizeof(from)) {
-		struct sockaddr_in sin;
+		struct sockaddr_in sin4;
 		struct sockaddr_in6 *sin6;
 		const int off = sizeof(struct sockaddr_in6) -
 		    sizeof(struct sockaddr_in);
 
 		sin6 = (struct sockaddr_in6 *)&from;
-		memset(&sin, 0, sizeof(sin));
-		sin.sin_family = AF_INET;
-		sin.sin_len = sizeof(struct sockaddr_in);
-		memcpy(&sin.sin_addr, &sin6->sin6_addr.s6_addr[off],
-		    sizeof(sin.sin_addr));
-		memcpy(&from, &sin, sizeof(sin));
-		fromlen = sin.sin_len;
+		memset(&sin4, 0, sizeof(sin4));
+		sin4.sin_family = AF_INET;
+		sin4.sin_len = sizeof(struct sockaddr_in);
+		memcpy(&sin4.sin_addr, &sin6->sin6_addr.s6_addr[off],
+		    sizeof(sin4.sin_addr));
+		memcpy(&from, &sin4, sizeof(sin4));
 	}
 #else
-	if (((struct sockaddr *)&from)->sa_family == AF_INET6 &&
+	if (from.ss_family == AF_INET6 &&
 	    IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)&from)->sin6_addr)) {
 		char hbuf[NI_MAXHOST];
 		if (getnameinfo((struct sockaddr *)&from, fromlen, hbuf,
@@ -217,13 +217,13 @@ main(argc, argv)
 	    setsockopt(0, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof (on)) < 0)
 		syslog(LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m");
 #if defined(IP_TOS)
-	if (((struct sockaddr *)&from)->sa_family == AF_INET) {
+	if (from.ss_family == AF_INET) {
 		on = IPTOS_LOWDELAY;
 		if (setsockopt(0, IPPROTO_IP, IP_TOS, (char *)&on, sizeof(int)) < 0)
 			syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
 	}
 #endif
-	doit(0, (struct sockaddr *)&from);
+	doit(0, &from);
 	/* NOTREACHED */
 #ifdef __GNUC__
 	exit(0);
@@ -241,20 +241,23 @@ struct winsize win = { 0, 0, 0, 0 };
 void
 doit(f, fromp)
 	int f;
-	struct sockaddr *fromp;
+	struct sockaddr_storage *fromp;
 {
 	int master, pid, on = 1;
 	int authenticated = 0;
 	char *hostname;
 	char hostnamebuf[2 * MAXHOSTNAMELEN + 1];
+	char hostaddrbuf[sizeof(*fromp) * 4 + 1];
 	char c;
 	char naddr[NI_MAXHOST];
 	char saddr[NI_MAXHOST];
 	char raddr[NI_MAXHOST];
-	int af = fromp->sa_family;
+	int af = fromp->ss_family;
 	u_int16_t *portp;
 	struct addrinfo hints, *res, *res0;
 	int gaierror;
+	socklen_t fromlen = fromp->ss_len > sizeof(*fromp)
+	    ? sizeof(*fromp) : fromp->ss_len;
 #ifdef NI_WITHSCOPEID
 	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV | NI_WITHSCOPEID;
 #else
@@ -281,13 +284,13 @@ doit(f, fromp)
 		syslog(LOG_ERR, "malformed \"from\" address (af %d)\n", af);
 		exit(1);
 	}
-	if (getnameinfo((struct sockaddr *)fromp, fromp->sa_len,
+	if (getnameinfo((struct sockaddr *)fromp, fromlen,
 		    naddr, sizeof(naddr), NULL, 0, niflags) != 0) {
 		syslog(LOG_ERR, "malformed \"from\" address (af %d)\n", af);
 		exit(1);
 	}
 
-	if (getnameinfo((struct sockaddr *)fromp, fromp->sa_len,
+	if (getnameinfo((struct sockaddr *)fromp, fromlen,
 		    saddr, sizeof(saddr), NULL, 0, NI_NAMEREQD) == 0) {
 		/*
 		 * If name returned by getnameinfo is in our domain,
@@ -300,7 +303,7 @@ doit(f, fromp)
 		if (check_all || local_domain(saddr)) {
 			strlcpy(hostnamebuf, saddr, sizeof(hostnamebuf));
 			memset(&hints, 0, sizeof(hints));
-			hints.ai_family = fromp->sa_family;
+			hints.ai_family = fromp->ss_family;
 			hints.ai_socktype = SOCK_STREAM;
 			hints.ai_flags = AI_CANONNAME;
 			gaierror = getaddrinfo(hostnamebuf, "0", &hints, &res0);
@@ -311,9 +314,9 @@ doit(f, fromp)
 				hostname = naddr;
 			} else {
 				for (res = res0; res; res = res->ai_next) {
-					if (res->ai_family != fromp->sa_family)
+					if (res->ai_family != fromp->ss_family)
 						continue;
-					if (res->ai_addrlen != fromp->sa_len)
+					if (res->ai_addrlen != fromp->ss_len)
 						continue;
 					if (getnameinfo(res->ai_addr,
 						res->ai_addrlen,
@@ -352,7 +355,7 @@ doit(f, fromp)
 		fatal(f, "Permission denied", 0);
 	}
 #ifdef IP_OPTIONS
-	if (fromp->sa_family == AF_INET) {
+	if (fromp->ss_family == AF_INET) {
 		u_char optbuf[BUFSIZ/3], *cp;
 		char lbuf[BUFSIZ], *lp, *ep;
 		int optsize = sizeof(optbuf), ipproto;
@@ -380,7 +383,7 @@ doit(f, fromp)
 		}
 	}
 #endif
-	if (do_rlogin(fromp, hostname) == 0)
+	if (do_rlogin((struct sockaddr *)fromp, hostname) == 0)
 		authenticated++;
 	if (confirmed == 0) {
 		write(f, "", 1);
@@ -399,12 +402,16 @@ doit(f, fromp)
 		if (f > 2)	/* f should always be 0, but... */
 			(void) close(f);
 		setup_term(0);
+		(void)strvisx(hostaddrbuf, (const char *)(const void *)fromp,
+		    fromlen, VIS_WHITE);
 		if (authenticated)
 			execl(_PATH_LOGIN, "login", "-p",
-			    "-h", hostname, "-f", "--", lusername, (char *)0);
+			    "-h", hostname, "-a", hostaddrbuf,
+			    "-f", "--", lusername, (char *)0);
 		else
 			execl(_PATH_LOGIN, "login", "-p",
-			    "-h", hostname, "--", lusername, (char *)0);
+			    "-h", hostname, "-a", hostaddrbuf,
+			    "--", lusername, (char *)0);
 		fatal(STDERR_FILENO, _PATH_LOGIN, 1);
 		/*NOTREACHED*/
 	}
@@ -455,7 +462,7 @@ protocol(f, p)
 	char pibuf[1024+1], fibuf[1024], *pbp = NULL, *fbp = NULL;
 					/* XXX gcc above */
 	int pcc = 0, fcc = 0;
-	int cc, n;
+	int cc, nfd;
 	char cntl;
 	struct pollfd set[2];
 
@@ -481,12 +488,12 @@ protocol(f, p)
 			else
 				set[0].events |= POLLIN;
 		}
-		if ((n = poll(set, 2, INFTIM)) < 0) {
+		if ((nfd = poll(set, 2, INFTIM)) < 0) {
 			if (errno == EINTR)
 				continue;
 			fatal(f, "poll", 1);
 		}
-		if (n == 0) {
+		if (nfd == 0) {
 			/* shouldn't happen... */
 			sleep(5);
 			continue;
@@ -597,7 +604,7 @@ cleanup(signo)
 void
 fatal(f, msg, syserr)
 	int f;
-	char *msg;
+	const char *msg;
 	int syserr;
 {
 	int len;
@@ -661,7 +668,7 @@ void
 getstr(buf, cnt, errmsg)
 	char *buf;
 	int cnt;
-	char *errmsg;
+	const char *errmsg;
 {
 	char c;
 
