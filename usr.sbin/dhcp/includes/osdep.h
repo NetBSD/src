@@ -119,10 +119,10 @@
 #  include "cf/cygwin32.h"
 #endif
 
-#ifdef NeXT
-# ifdef __APPLE__
-#  include "cf/rhapsody.h"
-# else
+#ifdef __APPLE__
+# include "cf/rhapsody.h"
+#else
+# if defined (NeXT)
 #  include "cf/nextstep.h"
 # endif
 #endif
