@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.10 2004/01/13 23:37:30 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.10.2.1 2004/08/03 16:54:45 jmc Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.13 2003/11/09 23:36:46 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.10 2004/01/13 23:37:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.10.2.1 2004/08/03 16:54:45 jmc Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -691,7 +691,34 @@ ieee80211_lookup_node(struct ieee80211com *ic,
 	hash = IEEE80211_NODE_HASH(macaddr);
 	ieee80211_node_critsec_begin(ic, s);
 	LIST_FOREACH(ni, &ic->ic_hash[hash], ni_hash) {
-		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr) && ni->ni_chan == chan) {
+		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr) && 
+		    ni->ni_chan == chan) {
+			ieee80211_node_incref(ni);/* mark referenced */
+			break;
+		}
+	}
+	ieee80211_node_critsec_end(ic, s);
+	return ni;
+}
+
+/*
+ * Like find but search based on the channel and ssid too.
+ */
+struct ieee80211_node *
+ieee80211_lookup_node_for_beacon(struct ieee80211com *ic,
+	u_int8_t *macaddr, struct ieee80211_channel *chan, char *ssid)
+{
+	struct ieee80211_node *ni;
+	int hash;
+	ieee80211_node_critsec_decl(s);
+
+	hash = IEEE80211_NODE_HASH(macaddr);
+	ieee80211_node_critsec_begin(ic, s);
+	LIST_FOREACH(ni, &ic->ic_hash[hash], ni_hash) {
+		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr) && 
+		    ni->ni_chan == chan &&
+		    (ssid[1] == 0 || (ssid[1] == ni->ni_esslen &&
+		     !memcmp(ssid + 2, ni->ni_essid, ssid[1])))) {
 			ieee80211_node_incref(ni);/* mark referenced */
 			break;
 		}
