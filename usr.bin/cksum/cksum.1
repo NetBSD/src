@@ -1,4 +1,4 @@
-.\"	$NetBSD: cksum.1,v 1.13 1999/03/22 18:16:35 garbled Exp $
+.\"	$NetBSD: cksum.1,v 1.13.10.1 2001/04/26 13:15:19 he Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -104,12 +104,12 @@ Use historic algorithms instead of the (superior) default one.
 .Pp
 Algorithm 1 is the algorithm used by historic
 .Bx
-systems as the 
+systems as the
 .Xr sum 1
 algorithm and by historic
 .At V
 systems as the
-.Xr sum
+.Xr sum 1
 algorithm when using the
 .Fl r
 option.
@@ -120,7 +120,7 @@ Algorithm 2 is the algorithm used by historic
 .At V
 systems as the
 default
-.Xr sum
+.Xr sum 1
 algorithm.
 This is a 32-bit checksum, and is defined as follows:
 .Bd -unfilled -offset indent
@@ -213,7 +213,7 @@ article.
 .Sh STANDARDS
 The
 .Nm
-utility is expected to conform to 
+utility is expected to conform to
 .St -p1003.2-92 .
 .Sh HISTORY
 The
