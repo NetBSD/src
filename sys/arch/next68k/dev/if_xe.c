@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.2 1998/07/05 00:51:12 jonathan Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.3 1999/02/13 09:44:50 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -155,9 +155,9 @@ xe_attach(parent, self, aux)
 
   mb8795_config(sc);
 
-  isrlink_autovec(xe_tint, sc, NEXT_I_IPL(NEXT_I_ENETX), 0);
+  isrlink_autovec(xe_tint, sc, NEXT_I_IPL(NEXT_I_ENETX), 1);
   INTR_ENABLE(NEXT_I_ENETX);
-  isrlink_autovec(xe_rint, sc, NEXT_I_IPL(NEXT_I_ENETR), 0);
+  isrlink_autovec(xe_rint, sc, NEXT_I_IPL(NEXT_I_ENETR), 1);
   INTR_ENABLE(NEXT_I_ENETR);
 
   {
