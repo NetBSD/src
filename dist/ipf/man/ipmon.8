@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipmon.8,v 1.12 2003/01/04 01:18:02 wiz Exp $
+.\"	$NetBSD: ipmon.8,v 1.13 2004/01/28 20:13:35 kleink Exp $
 .\"
 .TH ipmon 8
 .SH NAME
@@ -45,7 +45,7 @@ long).
 .LP
 3. The name of the interface the packet was processed on, e.g., \fBwe1\fP.
 .LP
-4. The group and rule number of the rule, e.g., \fB@0:17\fP. These can be
+4. The rule number and group of the rule, e.g., \fB@0:17\fP. These can be
 viewed with \fBipfstat -n\fP.
 .LP
 5. The action: \fBp\fP for passed, \fBb\fP for blocked, \fBS\fP for a short
