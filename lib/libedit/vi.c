@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.16 2003/03/10 11:09:25 dsl Exp $	*/
+/*	$NetBSD: vi.c,v 1.17 2003/06/04 20:14:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.16 2003/03/10 11:09:25 dsl Exp $");
+__RCSID("$NetBSD: vi.c,v 1.17 2003/06/04 20:14:05 matt Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -612,20 +612,32 @@ protected el_action_t
 vi_list_or_eof(EditLine *el, int c)
 {
 
-#ifdef notyet
-	if (el->el_line.cursor == el->el_line.lastchar &&
-	    el->el_line.cursor == el->el_line.buffer) {
-#endif
-		term_overwrite(el, STReof, 4);	/* then do a EOF */
-		term__flush();
-		return (CC_EOF);
-#ifdef notyet
+	if (el->el_line.cursor == el->el_line.lastchar) {
+		if (el->el_line.cursor == el->el_line.buffer) {
+			term_overwrite(el, STReof, 4);	/* then do a EOF */
+			term__flush();
+			return (CC_EOF);
+		} else {
+			/*
+			 * Here we could list completions, but it is an
+			 * error right now
+			 */
+			term_beep(el);
+			return (CC_ERROR);
+		}
 	} else {
+#ifdef notyet
 		re_goto_bottom(el);
 		*el->el_line.lastchar = '\0';	/* just in case */
 		return (CC_LIST_CHOICES);
-	}
+#else
+		/*
+		 * Just complain for now.
+		 */
+		term_beep(el);
+		return (CC_ERROR);
 #endif
+	}
 }
 
 
