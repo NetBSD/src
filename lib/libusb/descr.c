@@ -1,4 +1,4 @@
-/*	$NetBSD: descr.c,v 1.3 1999/05/12 00:37:43 augustss Exp $	*/
+/*	$NetBSD: descr.c,v 1.4 1999/07/02 15:46:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -36,7 +36,7 @@
 #include "usb.h"
 #include "usbvar.h"
 
-report_desc_t 
+report_desc_t
 hid_get_report_desc(fd)
 	int fd;
 {

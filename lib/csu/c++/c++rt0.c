@@ -1,4 +1,4 @@
-/*	$NetBSD: c++rt0.c,v 1.8 1998/09/05 13:25:07 pk Exp $	*/
+/*	$NetBSD: c++rt0.c,v 1.9 1999/07/02 15:53:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __dtors()
 {
 	unsigned long i = (unsigned long) __DTOR_LIST__[0];
 	void (**p)(void) = __DTOR_LIST__ + i;
- 
+
 	while (i--)
 		(**p--)();
 }

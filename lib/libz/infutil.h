@@ -1,8 +1,8 @@
-/* $NetBSD: infutil.h,v 1.3 1998/11/01 20:33:27 tron Exp $ */
+/* $NetBSD: infutil.h,v 1.4 1999/07/02 15:51:40 simonb Exp $ */
 
 /* infutil.h -- types and macros common to blocks and codes
  * Copyright (C) 1995-1998 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* WARNING: this file should *not* be used by applications. It is
@@ -43,7 +43,7 @@ struct inflate_blocks_state {
       inflate_huft *tb;         /* bit length decoding tree */
     } trees;            /* if DTREE, decoding info for trees */
     struct {
-      inflate_codes_statef 
+      inflate_codes_statef
          *codes;
     } decode;           /* if CODES, current state */
   } sub;                /* submode */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.6 1998/12/09 14:35:03 christos Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.7 1999/07/02 15:49:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fparseln.c,v 1.6 1998/12/09 14:35:03 christos Exp $");
+__RCSID("$NetBSD: fparseln.c,v 1.7 1999/07/02 15:49:12 simonb Exp $");
 #endif
 
 #include <stdio.h>
@@ -122,14 +122,14 @@ fparseln(fp, size, lineno, str, flags)
 		}
 
 		if (s && nl) { 		/* Check and eliminate newlines */
-			cp = &ptr[s - 1]; 
+			cp = &ptr[s - 1];
 
 			if (*cp == nl)
 				s--;	/* forget newline */
 		}
 
 		if (s && con) {		/* Check and eliminate continuations */
-			cp = &ptr[s - 1]; 
+			cp = &ptr[s - 1];
 
 			if (*cp == con && !isescaped(ptr, cp, esc)) {
 				s--;	/* forget escape */
@@ -167,7 +167,7 @@ fparseln(fp, size, lineno, str, flags)
 				skipesc += (flags & FPARSELN_UNESCCOMM);
 			if (cp[1] == con)
 				skipesc += (flags & FPARSELN_UNESCCONT);
-			if (cp[1] == esc) 
+			if (cp[1] == esc)
 				skipesc += (flags & FPARSELN_UNESCESC);
 			if (cp[1] != com && cp[1] != con && cp[1] != esc)
 				skipesc = (flags & FPARSELN_UNESCREST);
@@ -206,7 +206,7 @@ main(argc, argv)
 	return 0;
 }
 
-/* 
+/*
 
 # This is a test
 line 1
