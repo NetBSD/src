@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.3 1997/02/06 21:17:05 gwr Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.4 1997/06/26 01:27:01 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -72,4 +72,10 @@ db_regs_t	ddb_regs;	/* register state */
 
 /* Prototypes */
 void	kdb_trap __P((struct trapframe *));
+
+/*
+ * We use a.out symbols in DDB.
+ */
+#define	DB_AOUT_SYMBOLS
+
 #endif	/* _VAX_DB_MACHDEP_H_ */
