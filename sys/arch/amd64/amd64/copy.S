@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
+/*	$NetBSD: copy.S,v 1.1.8.1 2005/03/16 11:49:52 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -207,6 +207,7 @@ ENTRY(copyoutstr)
 	 */
 	movq	$VM_MAXUSER_ADDRESS,%rax
 	subq	%rdi,%rax
+	jc	_C_LABEL(copystr_efault)
 	cmpq	%rdx,%rax
 	jae	1f
 	movq	%rax,%rdx
@@ -248,6 +249,7 @@ ENTRY(copyinstr)
 	 */
 	movq	$VM_MAXUSER_ADDRESS,%rax
 	subq	%rsi,%rax
+	jc	_C_LABEL(copystr_efault)
 	cmpq	%rdx,%rax
 	jae	1f
 	movq	%rax,%rdx
