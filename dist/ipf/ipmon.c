@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.12 2002/05/30 18:10:27 thorpej Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.13 2002/07/01 13:56:53 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -670,10 +670,12 @@ int	blen;
 	struct	tm	*tm;
 	int	res, i, len;
 	char	*proto;
+	time_t  ipl_time;
 
 	nl = (struct natlog *)((char *)ipl + IPLOG_SIZE);
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
-	tm = localtime((time_t *)&ipl->ipl_sec);
+	ipl_time = (time_t) ipl->ipl_time.tv_sec;
+	tm = localtime(&ipl_time);
 	len = sizeof(line);
 	if (!(opts & OPT_SYSLOG)) {
 		(void) strftime(t, len, "%d/%m/%Y ", tm);
@@ -683,7 +685,7 @@ int	blen;
 	}
 	(void) strftime(t, len, "%T", tm);
 	t += strlen(t);
-	(void) sprintf(t, ".%-.6ld @%hd ", ipl->ipl_usec, nl->nl_rule + 1);
+	(void) sprintf(t, ".%-.6ld @%hd ", ipl->ipl_time.tv_usec, nl->nl_rule + 1);
 	t += strlen(t);
 
 	if (nl->nl_type == NL_NEWMAP)
@@ -744,10 +746,12 @@ int	blen;
 	char	*t = line, *proto;
 	struct	tm	*tm;
 	int	res, i, len;
+	time_t  ipl_time;
 
 	sl = (struct ipslog *)((char *)ipl + IPLOG_SIZE);
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
-	tm = localtime((time_t *)&ipl->ipl_sec);
+	ipl_time = (time_t) ipl->ipl_time.tv_sec;
+	tm = localtime(&ipl_time);
 	len = sizeof(line);
 	if (!(opts & OPT_SYSLOG)) {
 		(void) strftime(t, len, "%d/%m/%Y ", tm);
@@ -757,7 +761,7 @@ int	blen;
 	}
 	(void) strftime(t, len, "%T", tm);
 	t += strlen(t);
-	(void) sprintf(t, ".%-.6ld ", ipl->ipl_usec);
+	(void) sprintf(t, ".%-.6ld ", ipl->ipl_time.tv_usec);
 	t += strlen(t);
 
 	if (sl->isl_type == ISL_NEW)
@@ -893,6 +897,7 @@ int	blen;
 #ifdef	USE_INET6
 	ip6_t *ip6;
 #endif
+	time_t  ipl_time;
 
 	ipl = (iplog_t *)buf;
 	ipf = (ipflog_t *)((char *)buf + IPLOG_SIZE);
@@ -901,7 +906,8 @@ int	blen;
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	t = line;
 	*t = '\0';
-	tm = localtime((time_t *)&ipl->ipl_sec);
+	ipl_time = (time_t) ipl->ipl_time.tv_sec;
+	tm = localtime(&ipl_time);
 #ifdef	linux
 	if (v == 4)
 		ip->ip_len = ntohs(ip->ip_len);
@@ -916,7 +922,7 @@ int	blen;
 	}
 	(void) strftime(t, len, "%T", tm);
 	t += strlen(t);
-	(void) sprintf(t, ".%-.6ld ", ipl->ipl_usec);
+	(void) sprintf(t, ".%-.6ld ", ipl->ipl_time.tv_usec);
 	t += strlen(t);
 	if (ipl->ipl_count > 1) {
 		(void) sprintf(t, "%dx ", ipl->ipl_count);
