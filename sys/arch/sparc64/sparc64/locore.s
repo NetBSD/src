@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.46 1999/10/11 01:57:45 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.47 1999/11/06 20:28:37 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -6116,11 +6116,6 @@ ENTRY(getfp)
  */
 ENTRY(copyinstr)
 	! %o0 = fromaddr, %o1 = toaddr, %o2 = maxlen, %o3 = &lencopied
-#ifdef DIAGNOSTIC
-	tst	%o2			! kernel should never give maxlen <= 0
-	ble	1f
-	 EMPTY
-#endif
 #ifdef NOTDEF_DEBUG
 	save	%sp, -CC64FSZ, %sp
 	set	8f, %o0
@@ -6135,7 +6130,11 @@ ENTRY(copyinstr)
 	_ALIGN
 9:	
 #endif
-	sethi	%hi(_C_LABEL(cpcb)), %o4		! (first instr of copy)
+	brgz,pt	%o2, 1f					! Make sure len is valid
+	 sethi	%hi(_C_LABEL(cpcb)), %o4		! (first instr of copy)
+	retl
+	 mov	ENAMETOOLONG, %o0
+1:	
 	LDPTR	[%o4 + %lo(_C_LABEL(cpcb))], %o4	! catch faults
 	set	Lcsfault, %o5
 	membar	#Sync
@@ -6152,15 +6151,9 @@ ENTRY(copyinstr)
 	deccc	%o2			!	if (--len > 0) {
 	bg,pt	%icc, 0b		!		fromaddr++;
 	 inc	%o0			!		goto loop;
-	ba,pt	%xcc,Lcsdone		!	}
+	ba,pt	%xcc, Lcsdone		!	}
 	 mov	ENAMETOOLONG, %o0	!	error = ENAMETOOLONG;
 	NOTREACHED
-1:
-	sethi	%hi(2f), %o0
-	call	_C_LABEL(panic)
-	 or	%lo(2f), %o0, %o0
-2:	.asciz	"copyinstr"
-	_ALIGN
 
 /*
  * copyoutstr(fromaddr, toaddr, maxlength, &lencopied)
@@ -6170,11 +6163,6 @@ ENTRY(copyinstr)
  */
 ENTRY(copyoutstr)
 	! %o0 = fromaddr, %o1 = toaddr, %o2 = maxlen, %o3 = &lencopied
-#ifdef DIAGNOSTIC
-	tst	%o2
-	ble	2f
-	 EMPTY
-#endif
 #ifdef NOTDEF_DEBUG
 	save	%sp, -CC64FSZ, %sp
 	set	8f, %o0
@@ -6189,7 +6177,11 @@ ENTRY(copyoutstr)
 	_ALIGN
 9:	
 #endif
-	sethi	%hi(_C_LABEL(cpcb)), %o4		! (first instr of copy)
+	brgz,pt	%o2, 1f					! Make sure len is valid
+	 sethi	%hi(_C_LABEL(cpcb)), %o4		! (first instr of copy)
+	retl
+	 mov	ENAMETOOLONG, %o0
+1:	
 	LDPTR	[%o4 + %lo(_C_LABEL(cpcb))], %o4	! catch faults
 	set	Lcsfault, %o5
 	membar	#Sync
@@ -6231,14 +6223,6 @@ Lcsfault:
 	b	Lcsdone			! error = EFAULT;
 	 mov	EFAULT, %o0		! goto ret;
 
-2:
-	sethi	%hi(3f), %o0
-	call	_C_LABEL(panic)
-	 or	%lo(3f), %o0, %o0
-3:	.asciz	"copyoutstr"
-	_ALIGN
-
-
 /*
  * copystr(fromaddr, toaddr, maxlength, &lencopied)
  *
@@ -6247,12 +6231,10 @@ Lcsfault:
  * it does not seem that way to the C compiler.)
  */
 ENTRY(copystr)
-#ifdef DIAGNOSTIC
-	tst	%o2			! 	if (maxlength <= 0)
-	ble	4f			!		panic(...);
-	 EMPTY
-#endif
-	mov	%o1, %o5		!	to0 = to;
+	brgz,pt	%o2, 0f	! Make sure len is valid
+	 mov	%o1, %o5		!	to0 = to;
+	retl
+	 mov	ENAMETOOLONG, %o0
 0:					! loop:
 	ldsb	[%o0], %o4		!	c = *from;
 	tst	%o4
