@@ -1,4 +1,4 @@
-.\"	$NetBSD: ncr.4,v 1.7 1999/03/16 01:19:17 garbled Exp $
+.\"	$NetBSD: ncr.4,v 1.8 1999/07/16 20:26:57 hwr Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -88,7 +88,7 @@ supports fast transfers, in which case it's 10000 (10MHz).
 .It Cd options SCSI_NCR_MAX_WIDE=integer
 Specifies the maximum
 .Tn SCSI
-bus width, in bytes.
+bus width, with 0 meaning 8 bits and 1 meaning 16 bits.
 Defaults to 1 on chips that support wide
 .Tn SCSI ,
 0 otherwise.
