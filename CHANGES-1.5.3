@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.11 2001/11/24 22:12:57 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.12 2001/11/25 20:47:45 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -146,10 +146,6 @@ sys/arch/evbsh3/evbsh3/locore.s			1.27,1.31-1.33 via patch
 
   Fix LDTLB handling bug, add missing _C_LABEL(), and a small
   optimization.
-
-sys/arch/mmeye/mmeye/locore.s			1.22
-
-  Fix LDTLB handling bug.
 
 sys/uvm/uvm_map.c				1.104 via patch
 sys/vm/vm_map.h					patch (uvm_map.h 1.30)
@@ -494,7 +490,7 @@ usr.bin/vmstat/vmstat.c				1.82
 
 games/wargames/wargames.sh			1.4
 
-  If we are going to quote the move, do so correctly.
+  If we are going to quote the movie, do so correctly.
 
 usr.sbin/faithd/faithd.c			1.14 partial via patch
 
@@ -549,3 +545,175 @@ sbin/fsck_ffs/utilities.c			1.28-1.30
    o fix byte swapping bug
    o pass5: check alternate superblocks for consistency with in-core master
    o fix usage message
+
+sys/ufs/ffs/ffs_bswap.c				1.9-1.10
+
+  Offset should be endian independent.  Some cosmetic changes.
+
+sys/ufs/ffs/ffs_vfsops.c			1.76,1.78
+
+  In ffs_reload(), copy fs_ronly to the new superblock too.
+  Clear fs_fmod on rw->ro transition.
+
+sys/ufs/ffs/fs.h				1.13
+sys/ufs/ufs/quota.h				1.9
+sbin/fsck_ffs/main.c				1.39
+usr.sbin/dumpfs/dumpfs.c			1.22-1.24
+
+  Use int32_t for on-disk time_t representation.
+  Convert %q_ to %ll_ in print formats.
+
+sys/ufs/ffs/ffs_alloc.c				1.42
+
+  Change ffs_dirpref() to be less pathological.
+
+sys/ufs/ffs/ffs_vfsops.c			1.82
+
+  Correctly refer to fs_clean in error message.
+
+sys/ufs/ufs/dinode.h				1.13
+
+  Multiple include protection.
+
+sys/ufs/ffs/fs.h				1.14-1.15
+
+  Mark a few fields as unused.  Multiple include protection.
+  Also typo corrections.
+
+sys/lib/libkern/scanc.c				1.6
+sys/ufs/ffs/ffs_alloc.c				1.45
+
+  Fix scanc() arguments.
+
+usr.sbin/dumpfs/dumpfs.c			1.26
+
+  Call ffs_sb_swap() with ns=1.
+
+sbin/badsect/badsect.c				1.20
+sbin/clri/clri.c				1.14
+sbin/dump/ffs_inode.c				1.7
+sbin/fsck_ffs/fsck.h				1.27
+sbin/fsck_ffs/pass5.c				1.27
+sbin/fsck_ffs/setup.c				1.45
+sbin/fsirand/fsirand.c				1.14
+sbin/newfs/mkfs.c				1.51
+sbin/tunefs/tunefs.c				1.21
+usr.sbin/dumpfs/dumpfs.c			1.27
+usr.sbin/quotacheck/quotacheck.c		1.22
+sys/ufs/ffs/ffs_bswap.c				1.11
+sys/ufs/ffs/ffs_extern.h			1.19
+sys/ufs/ffs/ffs_vfsops.c			1.83
+
+  Call ffs_sb_swap() with the correct arguments.  Fixes problems
+  with using other-endian file systems.
+
+sbin/newfs/extern.h				1.5
+sbin/newfs/mkfs.c				1.53
+sbin/newfs/newfs.c				1.46
+usr.sbin/dumpfs/dumpfs.c			1.28
+sys/ufs/ffs/fs.h				1.16
+
+  Replace unused fs_headswitch/trkseek with fs_id.
+
+sys/ufs/ffs/fs.h				1.17
+
+  Prevent 32-bit overflows by converting to 64-bit quantities in
+  appropriate places.
+
+sbin/fsck_ffs/setup.c				1.46
+sbin/fsck_ffs/utilities.c			1.32
+sbin/newfs/mkfs.c				1.54
+usr.sbin/dumpfs/dumpfs.c			1.29
+sys/ufs/ffs/ffs_vfsops.c			1.84
+sys/ufs/ffs/fs.h				1.18
+
+  Change fs_csp[] from being a fixed size to being an array sized
+  as required.  This allows file systems with more than about 15500
+  cylinder groups (on 32-bit systems) to be used.
+
+sbin/fsck_ffs/setup.c				1.47
+sys/ufs/ffs/ffs_bswap.c				1.12
+sys/ufs/ffs/fs.h				1.19
+
+  Deprecate unused fs_fscktime.
+
+sbin/tunefs/tunefs.8				1.23-1.25
+sbin/tunefs/tunefs.c				1.22-1.23
+
+  Add ``-F'' option, and rename ``-t'' option to ``-k''.
+
+sbin/fsck_ffs/setup.c				1.49
+sbin/newfs/extern.h				1.6
+sbin/newfs/mkfs.c				1.55
+sbin/newfs/newfs.8				1.33 via patch
+sbin/newfs/newfs.c				1.47 via patch
+sbin/tunefs/tunefs.8				1.26
+sbin/tunefs/tunefs.c				1.24
+usr.sbin/dumpfs/dumpfs.c			1.30
+sys/ufs/ffs/ffs_alloc.c				1.50
+sys/ufs/ffs/ffs_bswap.c				1.13
+sys/ufs/ffs/ffs_vfsops.c			1.85
+sys/ufs/ffs/fs.h				1.20
+
+  Pull in enhanced ffs_dirpref() algorithm, which provides a
+  substantial performance improvement through better locality
+  between parent/child directories and their files, and by easing
+  the pressure on the buffer cache for metadata operations.
+
+sys/ufs/ffs/ffs_alloc.c				1.52
+sys/ufs/ffs/fs.h				1.21
+
+  Mark fs_cgrotor as unused.
+
+sys/ufs/ffs/ffs_bswap.c				1.14
+
+  A few ffs_sb_swap() fixes.
+
+sbin/newfs/mkfs.c				1.52,1.56-1.57
+
+  Improve calcipg() calculations, and fix error reporting.
+
+sys/arch/i386/i386/svr4_machdep.c		1.56
+
+  Fix one more place where we explicitly need to restore %fs/%gs.
+
+usr.bin/jot/jot.c				1.6-1.8
+
+  Check the format string more thoroughly before use.  Fixes PR#12316
+  and PR#14253.
+
+sys/arch/mmeye/mmeye/locore.s			1.22 via patch
+sys/arch/sh3/sh3/trap.c				1.28 via patch
+
+  Fix LDTLB handling bug.
+
+bin/sh/parser.c					1.48
+
+  Prevent alias expansion where it is unwanted, as in case labels.
+
+share/misc/bsd-family-tree			1.10
+
+  Update to reflect current reality.
+
+lib/libc/rpc/rpcb_clnt.c			1.10
+
+  Close socket correctly in three places.  Fixes various problems
+  such as inetd not reloading correctly.  Fixes PR#14454, PR#12651,
+  and PR#13657.
+
+usr.sbin/rtsold/rtsold.c			1.7
+usr.sbin/rtsold/rtsold.8			1.8-1.10 via patch
+
+  Add ``-a'' flag to automtically find an interface to use to query
+  for router solicitations.
+
+usr.sbin/vnconfig/vnconfig.c			1.23
+
+  Try to open the file before configuring a vnode device, so that we
+  avoid silly error messages when the file cannot be opened for some
+  reason.  Fixes PR#12445.
+
+gnu/usr/bin/send-pr/categories			1.35
+
+  Add a new category ``toolchain'' since building of NetBSD-current
+  from 1.5.x is supposed to work.
