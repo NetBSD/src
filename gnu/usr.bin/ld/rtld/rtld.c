@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.62 1998/05/30 18:28:31 kleink Exp $	*/
+/*	$NetBSD: rtld.c,v 1.62.2.1 1998/06/10 22:20:30 tv Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -860,6 +860,12 @@ reloc_map(smp)
 
 			sym = stringbase + p->nz_strx;
 
+#if defined(__arm32__) && 1 /* XXX MAGIC! */
+if (r->r_baserel && r->r_length == 2) {
+	relocation = 0;
+/* NOTE("patching\n"); XXX */
+	}
+#endif
 			np = lookup(sym, smp, &src_map, 0/*XXX-jumpslots!*/);
 			if (np == NULL)
 				errx(1, "Undefined symbol \"%s\" in %s:%s\n",
@@ -944,7 +950,15 @@ call_map(smp, sym)
 
 	np = lookup(sym, smp, &src_map, 1);
 	if (np)
+#ifdef __arm32__
+#if defined(__arm32__) && 1
+		(*(void (*) __P((u_int)))(src_map->som_addr + np->nz_value))((u_int)src_map->som_addr);
+#else
+		(*(void (*) __P((u_int)))(src_map->som_addr + np->nz_value))((u_int)0);
+#endif
+#else
 		(*(void (*) __P((void)))(src_map->som_addr + np->nz_value))();
+#endif
 }
 
 /*
