@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.26 2004/08/19 20:58:24 christos Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.27 2004/08/20 07:46:21 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.26 2004/08/19 20:58:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.27 2004/08/20 07:46:21 tron Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -187,7 +187,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #if NBPFILTER > 0
 	/* XXX: emulate DLT_EN10MB */
 	if (ifp->if_bpf)
-		bpf_mtap_et(ifp->if_bpf, etype, m);
+		bpf_mtap_et(ifp->if_bpf, etype, m0);
 #endif
 	myaddr = (struct ieee1394_hwaddr *)LLADDR(ifp->if_sadl);
 	if ((ifp->if_flags & IFF_SIMPLEX) &&
