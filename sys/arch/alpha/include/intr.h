@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.43 2001/04/15 23:07:35 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.44 2001/04/15 23:26:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,12 +114,16 @@
 
 #ifdef	_KERNEL
 
+/* Simulated software interrupt register. */
+extern __volatile unsigned long ssir;
+
 /* IPL-lowering/restoring macros */
 void	spl0(void);
+
 static __inline void
 splx(int s)
 {
-	if (s == ALPHA_PSL_IPL_0)
+	if (s == ALPHA_PSL_IPL_0 && ssir != 0)
 		spl0();
 	else
 		alpha_pal_swpipl(s);
@@ -203,11 +207,6 @@ struct alpha_shared_intr {
 #define	ALPHA_SHARED_INTR_DISABLE(asi, num)				\
 	((asi)[num].intr_maxstrays != 0 &&				\
 	 (asi)[num].intr_nstrays == (asi)[num].intr_maxstrays)
-
-/*
- * simulated software interrupt register
- */
-extern unsigned long ssir;
 
 #define	setsoft(x)	atomic_setbits_ulong(&ssir, 1 << (x))
 
