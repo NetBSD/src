@@ -1,4 +1,4 @@
-/*	$NetBSD: getNAME.c,v 1.13 1998/04/10 22:32:45 fair Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.14 1998/05/21 23:21:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, Christos Zoulas
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.13 1998/04/10 22:32:45 fair Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.14 1998/05/21 23:21:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,9 +51,11 @@ __RCSID("$NetBSD: getNAME.c,v 1.13 1998/04/10 22:32:45 fair Exp $");
  *	-t	for building toc
  *	-i	for building intro entries
  *	-w	for querying type of manual source
+ *	-v	verbose
  *	other	apropos database
  */
 #include <err.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,6 +64,7 @@ __RCSID("$NetBSD: getNAME.c,v 1.13 1998/04/10 22:32:45 fair Exp $");
 static int tocrc;
 static int intro;
 static int typeflag;
+static int verbose;
 
 #define SLOP 10	/* strlen(" () - ") < 10 */
 
@@ -89,13 +92,16 @@ main(argc, argv)
 {
 	int ch;
 
-	while ((ch = getopt(argc, argv, "itw")) != -1)
+	while ((ch = getopt(argc, argv, "itvw")) != -1)
 		switch (ch) {
 		case 'i':
 			intro = 1;
 			break;
 		case 't':
 			tocrc = 1;
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		case 'w':
 			typeflag = 1;
@@ -145,6 +151,8 @@ getfrom(pathname)
 		if (line[1] == 'D' && line[2] == 't')
 			return newman(pathname, name);
 	}
+	if (verbose)
+		warnx("missing .TH or .Dt section in `%s'", pathname);
 }
 
 static void
@@ -160,14 +168,29 @@ oldman(pathname, name)
 		return;
 	}
 	for (;;) {
-		if ((line = fgetln(stdin, &len)) == NULL)
+		if ((line = fgetln(stdin, &len)) == NULL) {
+			if (verbose)
+				warnx("missing .SH section in `%s'", pathname);
 			return;
+		}
 		if (line[0] != '.')
 			continue;
 		if (line[1] == 'S' && line[2] == 'H')
 			break;
 		if (line[1] == 's' && line[2] == 'h')
 			break;
+	}
+
+	for (s = &line[3]; s < &line[len] && 
+	    (isspace((unsigned char) *s) || *s == '"' || *s == '\''); s++)
+		continue;
+	if (s == &line[len]) {
+		warnx("missing argument to .SH in `%s'", pathname);
+		return;
+	}
+	if (strncasecmp(s, "name", 4) != 0) {
+		warnx("first .SH section is not \"NAME\" in `%s'", pathname);
+		return;
 	}
 
 	if (tocrc)
@@ -236,7 +259,7 @@ static void
 newman(pathname, name)
 	char *pathname, *name;
 {
-	char *line, *ext;
+	char *line, *ext, *s;
 	size_t len, i, extlen;
 	size_t curlen = 0;
 
@@ -245,12 +268,26 @@ newman(pathname, name)
 		return;
 	}
 	for (;;) {
-		if ((line = fgetln(stdin, &len)) == NULL)
+		if ((line = fgetln(stdin, &len)) == NULL) {
+			if (verbose)
+				warnx("missing .Sh section in `%s'", pathname);
 			return;
+		}
 		if (line[0] != '.')
 			continue;
 		if (line[1] == 'S' && line[2] == 'h')
 			break;
+	}
+
+	for (s = &line[3]; s < &line[len] && isspace((unsigned char) *s); s++)
+		continue;
+	if (s == &line[len]) {
+		warnx("missing argument to .Sh in `%s'", pathname);
+		return;
+	}
+	if (strncasecmp(s, "name", 4) != 0) {
+		warnx("first .Sh section is not \"NAME\" in `%s'", pathname);
+		return;
 	}
 
 	if (tocrc)
