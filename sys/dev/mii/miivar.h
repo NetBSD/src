@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.11 1999/11/04 00:22:08 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.12 1999/11/12 18:13:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@ typedef	int (*mii_downcall_t) __P((struct mii_softc *, struct mii_data *, int));
 #define	MII_TICK	1	/* once-per-second tick */
 #define	MII_MEDIACHG	2	/* user changed media; perform the switch */
 #define	MII_POLLSTAT	3	/* user requested media status; fill it in */
+#define	MII_DOWN	4	/* interface is down */
 
 /*
  * Each PHY driver's softc has one of these as the first member.
@@ -187,12 +188,14 @@ struct mii_media {
 int	mii_mediachg __P((struct mii_data *));
 void	mii_tick __P((struct mii_data *));
 void	mii_pollstat __P((struct mii_data *));
+void	mii_down __P((struct mii_data *));
 void	mii_phy_probe __P((struct device *, struct mii_data *, int, int, int));
 void	mii_add_media __P((struct mii_softc *));
 
 void	mii_phy_setmedia __P((struct mii_softc *));
 int	mii_phy_auto __P((struct mii_softc *, int));
 void	mii_phy_reset __P((struct mii_softc *));
+void	mii_phy_down __P((struct mii_softc *));
 
 void	ukphy_status __P((struct mii_softc *));
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.19 1999/11/03 22:30:32 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.20 1999/11/12 18:13:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -294,6 +294,10 @@ tlphy_service(self, mii, cmd)
 		if (tlphy_auto(sc, 0) == EJUSTRETURN)
 			return (0);
 		break;
+
+	case MII_DOWN:
+		mii_phy_down(&sc->sc_mii);
+		return (0);
 	}
 
 	/* Update the media status. */

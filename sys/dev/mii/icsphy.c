@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.11 1999/11/03 22:30:32 thorpej Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.12 1999/11/12 18:13:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -215,6 +215,10 @@ icsphy_service(sc, mii, cmd)
 		 * kicked; it continues in the background.
 		 */
 		break;
+
+	case MII_DOWN:
+		mii_phy_down(sc);
+		return (0);
 	}
 
 	/* Update the media status. */

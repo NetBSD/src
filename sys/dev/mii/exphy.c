@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.17 1999/11/03 22:30:32 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.18 1999/11/12 18:12:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -214,6 +214,10 @@ exphy_service(sc, mii, cmd)
 		 * kicked; it continues in the background.
 		 */
 		break;
+
+	case MII_DOWN:
+		mii_phy_down(sc);
+		return (0);
 	}
 
 	/* Update the media status. */
