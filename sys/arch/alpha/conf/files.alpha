@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.95 1998/10/05 00:49:15 matt Exp $
+# $NetBSD: files.alpha,v 1.96 1998/10/05 05:55:35 ross Exp $
 #
 # alpha-specific configuration info
 
@@ -444,7 +444,7 @@ include "compat/osf1/files.osf1"
 
 # Linux Binary Compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
-include "compat/linux/alpha/files.linux_alpha"
+include "compat/linux/arch/alpha/files.linux_alpha"
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
