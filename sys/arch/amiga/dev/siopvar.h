@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.18 1999/03/26 22:50:26 mhitch Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.18.8.1 2000/11/20 19:58:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -135,8 +135,8 @@ struct	siop_softc {
 	u_short	sc_sist;
 #endif
 	u_long	sc_intcode;
-	struct	scsipi_link sc_link;	/* proto for sub devices */
 	struct	scsipi_adapter sc_adapter;
+	struct	scsipi_channel sc_channel;
 	u_long	sc_scriptspa;		/* physical address of scripts */
 	siop_regmap_p	sc_siopp;	/* the SIOP */
 	u_long	sc_active;		/* number of active I/O's */
@@ -217,7 +217,8 @@ struct	siop_softc {
 
 #ifdef ARCH_720
 void siopng_minphys __P((struct buf *bp));
-int siopng_scsicmd __P((struct scsipi_xfer *));
+void siopng_scsipi_request __P((struct scsipi_channel *,
+			scsipi_adapter_req_t, void *));
 void siopnginitialize __P((struct siop_softc *));
 void siopngintr __P((struct siop_softc *));
 void siopng_dump_registers __P((struct siop_softc *));
@@ -228,7 +229,8 @@ void siopng_dump __P((struct siop_softc *));
 #else
 
 void siop_minphys __P((struct buf *bp));
-int siop_scsicmd __P((struct scsipi_xfer *));
+void siop_scsipi_request __P((struct scsipi_channel *,
+			scsipi_adapter_req_t, void *));
 void siopinitialize __P((struct siop_softc *));
 void siopintr __P((struct siop_softc *));
 void siop_dump_registers __P((struct siop_softc *));

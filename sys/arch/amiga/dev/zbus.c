@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.41 1999/09/25 21:47:11 is Exp $	*/
+/*	$NetBSD: zbus.c,v 1.41.2.1 2000/11/20 19:58:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -160,10 +160,15 @@ static struct aconfdata aconftab[] = {
 	{ "apssc",	8738,	35 },	/* Apollo '060 scsi */
 	/* KATO development */
 	{ "aumld",	2145,	128 },	/* Melody MPEG layer 2 audio board */
+	/* Individual Computers Jens Schoenfeld */
+	{ "buddha",	4626,	0 },
+	{ "X-serve",	4626,	23 },	/* X-serve Ethernet */
 	/* VMC Harald Frank */
 	{ "blst",	5001,	1},	/* ISDN Blaster */
 	{ "hyper4",	5001,	2},	/* Hypercom4-Zbus */
-	{ "hyper3",	5001,	3}	/* Hypercom3-Zbus */
+	{ "hyper3Z",	5001,	3},	/* Hypercom3-Zbus */
+	{ "hyper4+",	5001,	6},	/* Hypercom4+ */
+	{ "hyper3+",	5001,	7}	/* Hypercom3+ */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
@@ -362,6 +367,15 @@ zbusmap (pa, size)
 	nextkva += size;
 	if (nextkva > ZBUSADDR + ZBUSAVAIL)
 		panic("allocating too much Zorro I/O address space");
+#if defined(__powerpc__)
+/*
+ * XXX we use direct constant mapping, so no need for:
+ * physaccess((caddr_t)kva, (caddr_t)pa, size, PTE_RW|PTE_I);
+ */
+#elif defined(__m68k__)
 	physaccess((caddr_t)kva, (caddr_t)pa, size, PG_RW|PG_CI);
+#else
+ERROR no support for this target cpu yet.
+#endif
 	return((caddr_t)kva);
 }

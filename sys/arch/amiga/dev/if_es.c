@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.23 1999/05/18 23:52:52 thorpej Exp $	*/
+/*	$NetBSD: if_es.c,v 1.23.2.1 2000/11/20 19:58:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -188,8 +188,8 @@ esattach(parent, self, aux)
 	ifp->if_ioctl = esioctl;
 	ifp->if_start = esstart;
 	ifp->if_watchdog = eswatchdog;
-	/* XXX IFF_MULTICAST */
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
+	    IFF_MULTICAST;
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -279,8 +279,8 @@ esinit(sc)
 	smc->b0.bsr = BSR_BANK0;	/* Select bank 0 */
 	smc->b0.mcr = SWAP(0x0020);	/* reserve 8K for transmit buffers */
 	smc->b0.tcr = TCR_PAD_EN | (TCR_TXENA + TCR_MON_CSN);
-	smc->b0.rcr = RCR_FILT_CAR | RCR_STRIP_CRC | RCR_RXEN;
-	/* XXX add multicast/promiscuous flags */
+	smc->b0.rcr = RCR_FILT_CAR | RCR_STRIP_CRC | RCR_RXEN | RCR_ALLMUL;
+	/* XXX add promiscuous flags */
 	smc->b2.bsr = BSR_BANK2;	/* Select bank 2 */
 	smc->b2.msk = sc->sc_intctl = MSK_RX_OVRN | MSK_RX;
 
@@ -537,7 +537,6 @@ esrint(sc)
 #endif
 	struct ifnet *ifp;
 	struct mbuf *top, **mp, *m;
-	struct ether_header *eh;
 #ifdef USEPKTBUF
 	u_char *b, pktbuf[1530];
 #endif
@@ -708,28 +707,13 @@ esrint(sc)
 	while (smc->b2.mmucr & MMUCR_BUSY)
 		;
 #endif
-	eh = mtod(top, struct ether_header *);
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, top);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((sc->sc_ethercom.ec_if.if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-			    sizeof(eh->ether_dhost)) != 0) {
-			m_freem(top);
-			return;
-		}
-	}
 #endif
 	(*ifp->if_input)(ifp, top);
 #ifdef ESDEBUG

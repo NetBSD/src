@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.3 1999/03/14 22:42:12 is Exp $	*/
+/*	$NetBSD: a34kbbc.c,v 1.3.8.1 2000/11/20 19:58:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,11 +73,14 @@ a34kbbc_match(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
+	static int a34kbbc_matched = 0;
+
 	if (!matchname("a34kbbc", auxp))
 		return(0);
 
-	if (cfp->cf_unit)
-		return(0);	/* only one of us please */
+	/* Allow only once instance. */
+	if (a34kbbc_matched)
+		return(0);
 
 	if (!(is_a3000() || is_a4000()))
 		return(0);
@@ -86,6 +89,7 @@ a34kbbc_match(pdp, cfp, auxp)
 	if (a34kugettod(0) == 0)
 		return(0);
 
+	a34kbbc_matched = 1;
 	return(1);
 }
 
@@ -127,15 +131,18 @@ a34kugettod(tvp)
 	dt.dt_year  = rt->year1   * 10 + rt->year2;
 
 	dt.dt_year += CLOCK_BASE_YEAR;
-
 	/* let it run again.. */
 	rt->control1 = A3CONTROL1_FREE_CLOCK;
+
+	if (dt.dt_year < STARTOFTIME)
+		dt.dt_year += 100;
+
 
 	if ((dt.dt_hour > 23) ||
 	    (dt.dt_wday > 6) || 
 	    (dt.dt_day  > 31) || 
 	    (dt.dt_mon  > 12) ||
-	    (dt.dt_year < STARTOFTIME) || (dt.dt_year > 2036))
+	    /* (dt.dt_year < STARTOFTIME) || */ (dt.dt_year > 2036))
 		return (0);
 
 	secs = clock_ymdhms_to_secs(&dt);
@@ -163,9 +170,8 @@ a34kusettod(tvp)
 		return (0);
 
 	clock_secs_to_ymdhms(secs, &dt);
-	dt.dt_year -= CLOCK_BASE_YEAR;
 
-	rt->control1 = A3CONTROL1_HOLD_CLOCK;
+	rt->control1 = A3CONTROL1_HOLD_CLOCK;		/* implies mode 0 */
 	rt->second1 = dt.dt_sec / 10;
 	rt->second2 = dt.dt_sec % 10;
 	rt->minute1 = dt.dt_min / 10;
@@ -177,9 +183,11 @@ a34kusettod(tvp)
 	rt->day2    = dt.dt_day % 10;
 	rt->month1  = dt.dt_mon / 10;
 	rt->month2  = dt.dt_mon % 10;
-	rt->year1   = dt.dt_year / 10;
+	rt->year1   = (dt.dt_year / 10) % 10;
 	rt->year2   = dt.dt_year % 10;
-	rt->control1 = A3CONTROL1_FREE_CLOCK;
+	rt->control1 = A3CONTROL1_HOLD_CLOCK | 1;	/* mode 1 registers */
+	rt->leapyear = dt.dt_year; 		/* XXX implicit % 4 */
+	rt->control1 = A3CONTROL1_FREE_CLOCK;		/* implies mode 1 */
 
 	return (1);
 }

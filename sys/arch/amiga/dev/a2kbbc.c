@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.7 1999/03/28 21:39:59 is Exp $	*/
+/*	$NetBSD: a2kbbc.c,v 1.7.8.1 2000/11/20 19:58:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,11 +73,14 @@ a2kbbc_match(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
+	static int a2kbbc_matched = 0;
+
 	if (!matchname("a2kbbc", auxp))
 		return (0);
 
-	if (cfp->cf_unit != 0)
-		return (0);	/* only one of us please */
+	/* Allow only one instance. */
+	if (a2kbbc_matched)
+		return (0);
 
 	if (/* is_a1200() || */ is_a3000() || is_a4000() 
 #ifdef DRACO
@@ -90,6 +93,7 @@ a2kbbc_match(pdp, cfp, auxp)
 	if (a2kugettod(0) == 0)
 		return (0);
 
+	a2kbbc_matched = 1;
 	return (1);
 }
 
@@ -169,11 +173,13 @@ a2kugettod(tvp)
 	rt->control1 &= ~A2CONTROL1_HOLD;
 
 	dt.dt_year += CLOCK_BASE_YEAR;
+	if (dt.dt_year < STARTOFTIME)
+		dt.dt_year += 100;
 
 	if ((dt.dt_hour > 23) ||
 	    (dt.dt_day  > 31) || 
 	    (dt.dt_mon  > 12) ||
-	    (dt.dt_year < STARTOFTIME) || (dt.dt_year > 2036))
+	    /* (dt.dt_year < STARTOFTIME) || */ (dt.dt_year > 2036))
 		return (0);
   
 	secs = clock_ymdhms_to_secs(&dt);
@@ -203,7 +209,6 @@ a2kusettod(tvp)
 		return (0);
 
 	clock_secs_to_ymdhms(secs, &dt);
-	dt.dt_year -= CLOCK_BASE_YEAR;
 
 	/*
 	 * hold clock
@@ -235,7 +240,7 @@ a2kusettod(tvp)
 	rt->day2    = dt.dt_day % 10;
 	rt->month1  = dt.dt_mon / 10;
 	rt->month2  = dt.dt_mon % 10;
-	rt->year1   = dt.dt_year / 10;
+	rt->year1   = (dt.dt_year / 10) % 10;
 	rt->year2   = dt.dt_year % 10;
 	rt->weekday = dt.dt_wday;
 

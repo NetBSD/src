@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.26 1999/03/24 05:50:53 mrg Exp $	*/
+/*	$NetBSD: grf_cc.c,v 1.26.8.1 2000/11/20 19:58:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -43,7 +43,6 @@
 #include <sys/queue.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <vm/vm_param.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/color.h>	/* DEBUG */
 #include <amiga/amiga/device.h>
@@ -57,8 +56,6 @@
 
 #include <sys/conf.h>
 #include <machine/conf.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

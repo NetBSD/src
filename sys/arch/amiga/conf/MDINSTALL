@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.2 1999/05/17 20:08:22 is Exp $
+#	$NetBSD: MDINSTALL,v 1.2.2.1 2000/11/20 19:58:25 bouyer Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -50,7 +50,6 @@ file-system 	KERNFS		# kernel data-structure filesystem
 # Support for various kernel options
 #
 options 	KTRACE		# system call tracing support
-options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
 options 	UCONSOLE	# anyone can redirect a virtual console
 #options 	INSECURE	# allow, among other insecure stuff, LKM 
 				# loading in multi-user mode.
@@ -266,7 +265,7 @@ pseudo-device	sl		1	# SLIP network interfaces
 pseudo-device	ppp		1	# PPP network interfaces
 
 pseudo-device	view		10	# views
-pseudo-device	pty		16	# pseudo ptys
+pseudo-device	pty			# pseudo-terminals
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11 1999/04/19 21:22:56 kleink Exp $
+#	$NetBSD: genassym.cf,v 1.11.2.1 2000/11/20 19:58:19 bouyer Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -44,8 +44,6 @@ include <sys/mbuf.h>
 include <sys/msgbuf.h>
 include <sys/syscall.h>
 include <sys/user.h>
-
-include <vm/vm.h>
 
 include <uvm/uvm_extern.h>
 
@@ -110,6 +108,7 @@ define	P_MD		offsetof(struct proc, p_md)
 define	P_PID		offsetof(struct proc, p_pid)
 define	MD_REGS		offsetof(struct mdproc, md_regs)
 define	SRUN		SRUN
+define	SONPROC		SONPROC
 
 # interrupt/fault metering
 define	UVMEXP_INTRS	offsetof(struct uvmexp, intrs)

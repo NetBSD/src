@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.21 1999/09/30 22:59:53 thorpej Exp $	*/
+/*	$NetBSD: sci.c,v 1.21.2.1 2000/11/20 19:58:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -52,9 +52,7 @@
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
+#include <uvm/uvm_extern.h>
 #include <machine/pmap.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
@@ -70,8 +68,6 @@
 #define	SCI_CMD_WAIT	50000	/* wait per step of 'immediate' cmds */
 #define	SCI_DATA_WAIT	50000	/* wait per data in/out step */
 #define	SCI_INIT_WAIT	50000	/* wait per step (both) during init */
-
-#define	b_cylin		b_resid
 
 int  sciicmd __P((struct sci_softc *, int, void *, int, void *, int,u_char));
 int  scigo __P((struct sci_softc *, struct scsipi_xfer *));
@@ -119,50 +115,57 @@ sci_minphys(bp)
  * so I will too.  I could plug it in, however so could they
  * in scsi_scsipi_cmd().
  */
-int
-sci_scsicmd(xs)
-	struct scsipi_xfer *xs;
+void
+sci_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg; 
 {
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
 	struct sci_pending *pendp;
-	struct sci_softc *dev;
-	struct scsipi_link *slp;
+	struct sci_softc *dev = (void *)chan->chan_adapter->adapt_dev;
 	int flags, s;
 
-	slp = xs->sc_link;
-	dev = slp->adapter_softc;
-	flags = xs->xs_control;
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
+		flags = xs->xs_control;
 
-	if (flags & XS_CTL_DATA_UIO)
+		if (flags & XS_CTL_DATA_UIO)
 		panic("sci: scsi data uio requested");
 
-	if (dev->sc_xs && flags & XS_CTL_POLL)
-		panic("sci_scsicmd: busy");
+		if (dev->sc_xs && flags & XS_CTL_POLL)
+			panic("sci_scsicmd: busy");
 
-	s = splbio();
-	pendp = &dev->sc_xsstore[slp->scsipi_scsi.target][slp->scsipi_scsi.lun];
-	if (pendp->xs) {
+#ifdef DIAGNOSTIC
+		/*
+		 * This should never happen as we track the resources
+		 * in the mid-layer.
+		 */
+		if (dev->sc_xs) {
+			scsipi_printaddr(periph);
+			printf("unable to allocate scb\n");
+			panic("sea_scsipi_request");
+		}
+#endif
+
+		dev->sc_xs = xs;
 		splx(s);
-		return(TRY_AGAIN_LATER);
-	}
 
-	if (dev->sc_xs) {
-		pendp->xs = xs;
-		TAILQ_INSERT_TAIL(&dev->sc_xslist, pendp, link);
-		splx(s);
-		return(SUCCESSFULLY_QUEUED);
-	}
-	pendp->xs = NULL;
-	dev->sc_xs = xs;
-	splx(s);
+		/*
+		 * nothing is pending do it now.
+		 */
+		sci_donextcmd(dev);
 
-	/*
-	 * nothing is pending do it now.
-	 */
-	sci_donextcmd(dev);
+		return;
 
-	if (flags & XS_CTL_POLL)
-		return(COMPLETE);
-	return(SUCCESSFULLY_QUEUED);
+	case ADAPTER_REQ_GROW_RESOURCES:
+		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+		return;
 }
 
 /*
@@ -173,11 +176,11 @@ sci_donextcmd(dev)
 	struct sci_softc *dev;
 {
 	struct scsipi_xfer *xs;
-	struct scsipi_link *slp;
+	struct scsipi_periph *periph;
 	int flags, phase, stat;
 
 	xs = dev->sc_xs;
-	slp = xs->sc_link;
+	periph = xs->xs_periph;
 	flags = xs->xs_control;
 
 	if (flags & XS_CTL_DATA_IN)
@@ -191,9 +194,9 @@ sci_donextcmd(dev)
 		scireset(dev);
 
 	dev->sc_stat[0] = -1;
-	xs->cmd->bytes[0] |= slp->scsipi_scsi.lun << 5;
+	xs->cmd->bytes[0] |= periph->periph_lun << 5;
 	if (phase == STATUS_PHASE || flags & XS_CTL_POLL)
-		stat = sciicmd(dev, slp->scsipi_scsi.target, xs->cmd, xs->cmdlen,
+		stat = sciicmd(dev, periph->periph_target, xs->cmd, xs->cmdlen,
 		    xs->data, xs->datalen, phase);
 	else if (scigo(dev, xs) == 0)
 		return;
@@ -208,9 +211,7 @@ sci_scsidone(dev, stat)
 	struct sci_softc *dev;
 	int stat;
 {
-	struct sci_pending *pendp;
 	struct scsipi_xfer *xs;
-	int s, donext;
 
 	xs = dev->sc_xs;
 #ifdef DIAGNOSTIC
@@ -249,22 +250,8 @@ sci_scsidone(dev, stat)
 	 * grab next command before scsipi_done()
 	 * this way no single device can hog scsi resources.
 	 */
-	s = splbio();
-	pendp = dev->sc_xslist.tqh_first;
-	if (pendp == NULL) {
-		donext = 0;
-		dev->sc_xs = NULL;
-	} else {
-		donext = 1;
-		TAILQ_REMOVE(&dev->sc_xslist, pendp, link);
-		dev->sc_xs = pendp->xs;
-		pendp->xs = NULL;
-	}
-	splx(s);
 	scsipi_done(xs);
 
-	if (donext)
-		sci_donextcmd(dev);
 }
 
 int
@@ -273,12 +260,12 @@ scigetsense(dev, xs)
 	struct scsipi_xfer *xs;
 {
 	struct scsipi_sense rqs;
-	struct scsipi_link *slp;
+	struct scsipi_periph *periph;
 
-	slp = xs->sc_link;
+	periph = xs->xs_periph;
 
 	rqs.opcode = REQUEST_SENSE;
-	rqs.byte2 = slp->scsipi_scsi.lun << 5;
+	rqs.byte2 = periph->periph_lun << 5;
 #ifdef not_yet
 	rqs.length = xs->req_sense_length ? xs->req_sense_length :
 	    sizeof(xs->sense.scsi_sense);
@@ -288,7 +275,7 @@ scigetsense(dev, xs)
 
 	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
 
-	return(sciicmd(dev, slp->scsipi_scsi.target, &rqs, sizeof(rqs),
+	return(sciicmd(dev, periph->periph_target, &rqs, sizeof(rqs),
 		&xs->sense.scsi_sense,
 	    rqs.length, DATA_IN_PHASE));
 }
@@ -647,7 +634,7 @@ scigo(dev, xs)
 	int count, target;
 	u_char phase, *addr;
 
-	target = xs->sc_link->scsipi_scsi.target;
+	target = xs->xs_periph->periph_target;
 	count = xs->datalen;
 	addr = xs->data;
 

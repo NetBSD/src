@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.40 1998/01/12 10:39:26 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.40.14.1 2000/11/20 19:58:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,6 +33,7 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
@@ -68,7 +69,6 @@ enum fd_parttypes {
 #define FDBBSIZE	(8192)
 #define FDSBSIZE	(8192)
 
-#define b_cylin	b_resid
 #define FDUNIT(dev)	DISKUNIT(dev)
 #define FDPART(dev)	DISKPART(dev)
 #define FDMAKEDEV(m, u, p)	MAKEDISKDEV((m), (u), (p))
@@ -142,7 +142,10 @@ struct fdtype {
 struct fd_softc {
 	struct device sc_dv;	/* generic device info; must come first */
 	struct disk dkdev;	/* generic disk info */
-	struct buf bufq;	/* queue of buf's */
+	struct buf_queue bufq;	/* queue pending I/O operations */
+	struct buf curbuf;	/* state of current I/O operation */
+	struct callout calibrate_ch;
+	struct callout motor_ch;
 	struct fdtype *type;
 	void *cachep;		/* cached track data (write through) */
 	int cachetrk;		/* cahced track -1 for none */
@@ -310,13 +313,17 @@ fdcmatch(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
+	static int fdc_matched = 0;
 
-	if (matchname("fdc", auxp) == 0 || cfp->cf_unit != 0)
+	/* Allow only once instance. */
+	if (matchname("fdc", auxp) == 0 || fdc_matched)
 		return(0);
 	if ((fdc_dmap = alloc_chipmem(DMABUFSZ)) == NULL) {
 		printf("fdc: unable to allocate dma buffer\n");
 		return(0);
 	}
+
+	fdc_matched = 1;
 	return(1);
 }
 
@@ -362,15 +369,14 @@ fdmatch(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
-
-#define cf_unit	cf_loc[FDCCF_UNIT]
 	struct fdcargs *fdap;
 
 	fdap = auxp;
-	if (cfp->cf_unit == fdap->unit || cfp->cf_unit == FDCCF_UNIT_DEFAULT)
+	if (cfp->cf_loc[FDCCF_UNIT] == fdap->unit ||
+	    cfp->cf_loc[FDCCF_UNIT] == FDCCF_UNIT_DEFAULT)
 		return(1);
+
 	return(0);
-#undef cf_unit
 }
 
 void
@@ -384,6 +390,10 @@ fdattach(pdp, dp, auxp)
 
 	ap = auxp;
 	sc = (struct fd_softc *)dp;
+
+	BUFQ_INIT(&sc->bufq);
+	callout_init(&sc->calibrate_ch);
+	callout_init(&sc->motor_ch);
 
 	sc->curcyl = sc->cachetrk = -1;
 	sc->openpart = -1;
@@ -660,7 +670,6 @@ fdstrategy(bp)
 {
 	struct disklabel *lp;
 	struct fd_softc *sc;
-	struct buf *dp;
 	int unit, part, s;
 
 	unit = FDUNIT(bp->b_dev);
@@ -688,12 +697,13 @@ fdstrategy(bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
+	bp->b_rawblkno = bp->b_blkno;
+
 	/*
 	 * queue the buf and kick the low level code
 	 */
 	s = splbio();
-	dp = &sc->bufq;
-	disksort(dp, bp);
+	disksort_cylinder(&sc->bufq, bp);
 	fdstart(sc);
 	splx(s);
 	return;
@@ -813,7 +823,7 @@ fdgetdisklabel(sc, dev)
 	bp = (void *)geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 	bp->b_blkno = 0;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = FDSECSIZE;
 	bp->b_flags = B_BUSY | B_READ;
 	fdstrategy(bp);
@@ -889,10 +899,10 @@ fdsetdisklabel(sc, lp)
 	 * make sure selected partition is within bounds
 	 * XXX on the second check, its to handle a bug in
 	 * XXX the cluster routines as they require mutliples
-	 * XXX of CLBYTES currently
+	 * XXX of NBPG currently
 	 */
 	if ((pp->p_offset + pp->p_size >= lp->d_secperunit) ||
-	    (pp->p_frag * pp->p_fsize % CLBYTES))
+	    (pp->p_frag * pp->p_fsize % NBPG))
 		return(EINVAL);
 done:
 	bcopy(lp, clp, sizeof(struct disklabel));
@@ -923,7 +933,7 @@ fdputdisklabel(sc, dev)
 	bp = (void *)geteblk((int)lp->d_secsize);
 	bp->b_dev = FDMAKEDEV(major(dev), FDUNIT(dev), RAW_PART);
 	bp->b_blkno = 0;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = FDSECSIZE;
 	bp->b_flags = B_BUSY | B_READ;
 	fdstrategy(bp);
@@ -935,7 +945,7 @@ fdputdisklabel(sc, dev)
 	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	bcopy(lp, dlp, sizeof(struct disklabel));
 	bp->b_blkno = 0;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_flags = B_WRITE;
 	fdstrategy(bp);
 	error = biowait(bp);
@@ -1207,8 +1217,8 @@ fdstart(sc)
 	/*
 	 * get next buf if there.
 	 */
-	dp = &sc->bufq;
-	if ((bp = dp->b_actf) == NULL) {
+	dp = &sc->curbuf;
+	if ((bp = BUFQ_FIRST(&sc->bufq)) == NULL) {
 #ifdef FDDEBUG
 		printf("  nothing to do\n");
 #endif
@@ -1241,15 +1251,15 @@ printf("fdstart: disk changed\n");
 		for (;;) {
 			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
-			if (bp->b_actf == NULL)
+			if (BUFQ_NEXT(bp) == NULL)
 				break;
 			biodone(bp);
-			bp = bp->b_actf;
+			bp = BUFQ_NEXT(bp);
 		}
 		/*
 		 * do fddone() on last buf to allow other units to start.
 		 */
-		dp->b_actf = bp;
+		BUFQ_INSERT_HEAD(&sc->bufq, bp);
 		fddone(sc);
 		return;
 	}
@@ -1325,8 +1335,8 @@ fdcont(sc)
 	struct buf *dp, *bp;
 	int trk, write;
 
-	dp = &sc->bufq;
-	bp = dp->b_actf;
+	dp = &sc->curbuf;
+	bp = BUFQ_FIRST(&sc->bufq);
 	dp->b_data += (dp->b_bcount - bp->b_resid);
 	dp->b_blkno += (dp->b_bcount - bp->b_resid) / FDSECSIZE;
 	dp->b_bcount = bp->b_resid;
@@ -1463,11 +1473,11 @@ fdcalibrate(arg)
 	 * trk++, trk, trk++, trk, trk++, trk, trk++, trk and dma
 	 */
 	if (loopcnt < 8)
-		timeout(fdcalibrate, sc, hz / 8);
+		callout_reset(&sc->calibrate_ch, hz / 8, fdcalibrate, sc);
 	else {
 		loopcnt = 0;
 		fdc_indma = NULL;
-		timeout(fdmotoroff, sc, 3 * hz / 2);
+		callout_reset(&sc->motor_ch, 3 * hz / 2, fdmotoroff, sc);
 		fddmastart(sc, sc->cachetrk);
 	}
 }
@@ -1481,7 +1491,7 @@ fddmadone(sc, timeo)
 	printf("fddmadone: unit %d, timeo %d\n", sc->hwunit, timeo);
 #endif
 	fdc_indma = NULL;
-	untimeout(fdmotoroff, sc);
+	callout_stop(&sc->motor_ch);
 	FDDMASTOP;
 
 	/*
@@ -1497,7 +1507,7 @@ fddmadone(sc, timeo)
 		/*
 		 * motor runs for 1.5 seconds after last dma
 		 */
-		timeout(fdmotoroff, sc, 3 * hz / 2);
+		callout_reset(&sc->motor_ch, 3 * hz / 2, fdmotoroff, sc);
 	}
 	if (sc->flags & FDF_DIRTY) {
 		/*
@@ -1545,7 +1555,7 @@ fddmadone(sc, timeo)
 			/*
 			 * this will be restarted at end of calibrate loop.
 			 */
-			untimeout(fdmotoroff, sc);
+			callout_stop(&sc->motor_ch);
 			fdcalibrate(sc);
 			return;
 		}
@@ -1571,8 +1581,8 @@ fddone(sc)
 	if (sc->flags & FDF_MOTOROFF)
 		goto nobuf;
 
-	dp = &sc->bufq;
-	if ((bp = dp->b_actf) == NULL)
+	dp = &sc->curbuf;
+	if ((bp = BUFQ_FIRST(&sc->bufq)) == NULL)
 		panic ("fddone");
 	/*
 	 * check for an error that may have occured
@@ -1612,7 +1622,7 @@ fddone(sc)
 	/*
 	 * remove from queue.
 	 */
-	dp->b_actf = bp->b_actf;
+	BUFQ_REMOVE(&sc->bufq, bp);
 
 	disk_unbusy(&sc->dkdev, (bp->b_bcount - bp->b_resid));
 
@@ -1658,7 +1668,7 @@ fdfindwork(unit)
 		 * and it has no buf's queued do it now
 		 */
 		if (sc->flags & FDF_MOTOROFF) {
-			if (sc->bufq.b_actf == NULL)
+			if (BUFQ_FIRST(&sc->bufq) == NULL)
 				fdmotoroff(sc);
 			else {
 				/*
@@ -1678,7 +1688,7 @@ fdfindwork(unit)
 		 * if we have no start unit and the current unit has
 		 * io waiting choose this unit to start.
 		 */
-		if (ssc == NULL && sc->bufq.b_actf)
+		if (ssc == NULL && BUFQ_FIRST(&sc->bufq) != NULL)
 			ssc = sc;
 	}
 	if (ssc)

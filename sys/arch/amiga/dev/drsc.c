@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.15 1998/12/05 19:43:34 mjacob Exp $	*/
+/*	$NetBSD: drsc.c,v 1.15.10.1 2000/11/20 19:58:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -52,20 +52,14 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/amiga/drcustom.h>
 
+#include <machine/cpu.h>	/* is_xxx(), */
+
 void drscattach __P((struct device *, struct device *, void *));
 int drscmatch __P((struct device *, struct cfdata *, void *));
 int drsc_dmaintr __P((struct siop_softc *));
 #ifdef DEBUG
 void drsc_dump __P((void));
 #endif
-
-struct scsipi_device drsc_scsidev = {
-	NULL,		/* use default error handler */
-	NULL,		/* do not have a start functio */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default done routine */
-};
-
 
 #ifdef DEBUG
 #endif
@@ -87,9 +81,14 @@ drscmatch(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
-	if (is_draco() && matchname(auxp, "drsc") && (cfp->cf_unit == 0))
-		return(1);
-	return(0);
+	static int drsc_matched = 0;
+
+	/* Allow only one instance. */
+	if (!is_draco() || !matchname(auxp, "drsc") || drsc_matched)
+		return (0);
+
+	drsc_matched = 1;
+	return(1);
 }
 
 void
@@ -97,15 +96,16 @@ drscattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	struct siop_softc *sc;
+	struct siop_softc *sc = (struct siop_softc *)dp;
 	struct zbus_args *zap;
 	siop_regmap_p rp;
+	struct scsipi_adapter *adapt = &sc->sc_adapter;
+	struct scsipi_channel *chan = &sc->sc_channel;
 
 	printf("\n");
 
 	zap = auxp;
 
-	sc = (struct siop_softc *)dp;
 	sc->sc_siopp = rp = (siop_regmap_p)(DRCCADDR+NBPG*DRSCSIPG);
 
 	/*
@@ -116,18 +116,27 @@ drscattach(pdp, dp, auxp)
 
 	alloc_sicallback();
 
-	sc->sc_adapter.scsipi_cmd = siop_scsicmd;
-	sc->sc_adapter.scsipi_minphys = siop_minphys;
+	/*
+	 * Fill in the scsipi_adapter.
+	 */
+	memset(adapt, 0, sizeof(*adapt));
+	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_nchannels = 1;
+	adapt->adapt_openings = 7;
+	adapt->adapt_max_periph = 1;
+	adapt->adapt_request = siop_scsipi_request;
+	adapt->adapt_minphys = siop_minphys;
 
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &drsc_scsidev;
-	sc->sc_link.openings = 2;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
+	/*
+	 * Fill in the scsipi_channel.
+	 */
+	memset(chan, 0, sizeof(*chan));
+	chan->chan_adapter = adapt;
+	chan->chan_bustype = &scsi_bustype;
+	chan->chan_channel = 0;
+	chan->chan_ntargets = 8;
+	chan->chan_nluns = 8;
+	chan->chan_id = 7;
 
 	siopinitialize(sc);
 
@@ -144,7 +153,7 @@ drscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, scsiprint);
+	config_found(dp, chan, scsiprint);
 }
 
 /*

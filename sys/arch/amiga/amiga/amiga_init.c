@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.67.2.1 1999/10/20 22:01:48 thorpej Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.67.2.2 2000/11/20 19:58:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
@@ -51,8 +51,6 @@
 #include <sys/dkbad.h>
 #include <sys/reboot.h>
 #include <sys/exec.h>
-#include <vm/pmap.h>
-#include <machine/vmparam.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/cc.h>
@@ -60,6 +58,7 @@
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/drcustom.h>
+#include <amiga/amiga/gayle.h>
 #include <amiga/amiga/memlist.h>
 #include <amiga/dev/zbusvar.h>
 
@@ -380,7 +379,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	} else
 #endif
 	ptextra = NCHIPMEMPG + NCIAPG + NZTWOROMPG + RELOC(NZTWOMEMPG, u_int) +
-	    btoc(RELOC(ZBUSAVAIL, u_int));
+	    btoc(RELOC(ZBUSAVAIL, u_int)) + NPCMCIAPG;
 	/*
 	 * if kernel shadow mapping will overlap any initial mapping
 	 * of Zorro I/O space or the page table map, we need to

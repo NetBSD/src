@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.24 1999/03/04 20:45:01 is Exp $	*/
+/*	$NetBSD: aucc.c,v 1.24.8.1 2000/11/20 19:58:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -269,14 +269,17 @@ auccmatch(pdp, cfp, aux)
 	struct cfdata *cfp;
 	void *aux;
 {
-	if (matchname((char *)aux, "aucc") &&
-#ifdef DRACO
-	    !is_draco() &&
-#endif
-	    (cfp->cf_unit == 0))
-		return 1;
+	static int aucc_matched = 0;
 
-	return 0;
+	if (!matchname((char *)aux, "aucc") ||
+#ifdef DRACO
+	    is_draco() ||
+#endif
+	    aucc_matched)
+		return 0;
+
+	aucc_matched = 1;
+	return 1;
 }
 
 /*
@@ -1283,7 +1286,7 @@ aucc_decode_slinear16sw_1ch(dmap, p, i)
 	int i;
 {
 	u_char *ch0 = dmap[0];
-	u_char *ch3 = dmap[3];
+	u_char *ch3 = dmap[1];	/* XXX should be 3 */
 
 	while (i--) {
 		*ch3++ = *p++ >> 2;
