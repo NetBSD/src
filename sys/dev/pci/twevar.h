@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.7 2001/03/04 17:50:52 ad Exp $	*/
+/*	$NetBSD: twevar.h,v 1.8 2001/09/20 22:09:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,6 +78,13 @@ struct twe_context {
 	struct	device	*tx_dv;
 };
 
+/* Temporary buffer. */
+struct twe_buf {
+	bus_dma_segment_t	tb_segs[TWE_MAX_SEGS];
+	int			tb_rseg;
+	caddr_t			tb_vaddr;
+};
+
 /* Command control block. */
 struct twe_ccb {
 	union {
@@ -89,9 +96,9 @@ struct twe_ccb {
 	int		ccb_flags;
 	void		*ccb_data;
 	int		ccb_datasize;
-	vaddr_t		ccb_abuf;
 	bus_dmamap_t	ccb_dmamap_xfer;
 	struct twe_context ccb_tx;
+	struct twe_buf *ccb_buf;
 };
 #define	TWE_CCB_DATA_IN		0x01	/* Map describes inbound xfer */
 #define	TWE_CCB_DATA_OUT	0x02	/* Map describes outbound xfer */
