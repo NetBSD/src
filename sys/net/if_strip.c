@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.7 1996/10/13 02:11:05 christos Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.8 1996/10/25 22:15:54 cgd Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -821,7 +821,7 @@ stripoutput(ifp, m, dst, rt)
 	bcopy((caddr_t)"SIP0", (caddr_t)&shp->starmode_type,
 		sizeof(shp->starmode_type));
 
- 	bcopy((caddr_t)dldst, (caddr_t)shp->starmode_addr,
+ 	bcopy((const char *)dldst, (caddr_t)shp->starmode_addr,
 		sizeof (shp->starmode_addr));
 
 
@@ -1396,7 +1396,7 @@ strip_proberadio(sc, tp)
 	if (sc->sc_if.if_flags & IFF_DEBUG)
 		addlog("%s: attempting to probe radio\n", sc->sc_if.if_xname);
 
-	overflow = b_to_q((ttychar_t *)strip_probestr, 2, &tp->t_outq);
+	overflow = b_to_q((const ttychar_t *)strip_probestr, 2, &tp->t_outq);
 	if (overflow == 0) {
 		if (sc->sc_if.if_flags & IFF_DEBUG)
 			addlog("%s:: sent probe  to radio\n",
