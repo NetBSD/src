@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.9 2001/05/30 15:24:32 lukem Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.10 2001/06/20 02:01:56 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -281,7 +281,7 @@ zstty_attach(parent, self, aux)
 		DELAY(20000);
 		cn_tab->cn_dev = dev;
 	} else
-#ifdef KGDB
+#ifdef KGDB_needs_support_in_zs_c
 	if (zs_check_kgdb(cs, dev)) {
 		/*
 		 * Allow kgdb to "take over" this port.  Returns true
