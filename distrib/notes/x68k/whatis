@@ -1,5 +1,11 @@
-.\" $NetBSD: whatis,v 1.4 1999/01/13 07:30:10 ross Exp $	
+.\" $NetBSD: whatis,v 1.5 1999/04/01 14:10:04 minoura Exp $	
 .Nx \*V
-is the second public release of
+is the third public major release of
 .Nx
 for the x68k platform.
+.Pp
+In addition to above port-independent improvements, many device drivers
+are reorganized, and some of them now utilize the machine-independent
+backend.
+.Pp
+Also the boot program is improved to load the kernel from any hard drives.
