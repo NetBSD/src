@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.10 1997/10/17 05:24:32 mrg Exp $	*/
+/*	$NetBSD: spec.c,v 1.11 1997/10/17 11:46:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -33,23 +33,26 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: spec.c,v 1.10 1997/10/17 05:24:32 mrg Exp $";
+__RCSID("$NetBSD: spec.c,v 1.11 1997/10/17 11:46:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fts.h>
-#include <pwd.h>
-#include <grp.h>
-#include <errno.h>
-#include <unistd.h>
-#include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
+#include <fts.h>
+#include <grp.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "mtree.h"
 #include "extern.h"
 
@@ -61,14 +64,15 @@ static void	 unset __P((char *, NODE *));
 NODE *
 spec()
 {
-	register NODE *centry, *last;
-	register char *p;
+	NODE *centry, *last;
+	char *p;
 	NODE ginfo, *root;
 	int c_cur, c_next;
 	char buf[2048];
 
 	root = NULL;
-	bzero(&ginfo, sizeof(ginfo));
+	centry = last = NULL;
+	memset(&ginfo, 0, sizeof(ginfo));
 	c_cur = c_next = 0;
 	for (lineno = 1; fgets(buf, sizeof(buf), stdin);
 	    ++lineno, c_cur = c_next, c_next = 0) {
@@ -77,7 +81,7 @@ spec()
 			continue;
 
 		/* Find end of line. */
-		if ((p = index(buf, '\n')) == NULL)
+		if ((p = strchr(buf, '\n')) == NULL)
 			err("line %d too long", lineno);
 
 		/* See if next line is continuation line. */
@@ -122,7 +126,7 @@ spec()
 				continue;
 			}
 
-		if (index(p, '/'))
+		if (strchr(p, '/'))
 			err("slash character in file name");
 
 		if (!strcmp(p, "..")) {
@@ -167,16 +171,17 @@ noparent:		err("no parent node");
 static void
 set(t, ip)
 	char *t;
-	register NODE *ip;
+	NODE *ip;
 {
-	register int type;
-	register char *kw, *val;
+	int type;
+	char *kw, *val;
 	struct group *gr;
 	struct passwd *pw;
 	mode_t *m;
 	int value;
 	char *ep;
 
+	val = NULL;
 	for (; (kw = strtok(t, "= \t\n")) != NULL; t = NULL) {
 		ip->flags |= type = parsekey(kw, &value);
 		if (value && (val = strtok(NULL, " \t\n")) == NULL)
@@ -278,9 +283,9 @@ set(t, ip)
 static void
 unset(t, ip)
 	char *t;
-	register NODE *ip;
+	NODE *ip;
 {
-	register char *p;
+	char *p;
 
 	while ((p = strtok(t, "\n\t ")) != NULL)
 		ip->flags &= ~parsekey(p, NULL);
