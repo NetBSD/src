@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.13 2002/06/08 20:06:44 itojun Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.14 2002/08/26 14:25:01 itojun Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.13 2002/06/08 20:06:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.14 2002/08/26 14:25:01 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -335,9 +335,10 @@ in6_selecthlim(in6p, ifp)
  * Find an empty port and set it to the specified PCB.
  */
 int
-in6_pcbsetport(laddr, in6p)
+in6_pcbsetport(laddr, in6p, p)
 	struct in6_addr *laddr;
 	struct in6pcb *in6p;
+	struct proc *p;
 {
 	struct socket *so = in6p->in6p_socket;
 	struct in6pcb *head = in6p->in6p_head;
@@ -354,8 +355,6 @@ in6_pcbsetport(laddr, in6p)
 
 	if (in6p->in6p_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-		struct proc *p = curproc;		/* XXX */
-
 		if (p == 0 || (suser(p->p_ucred, &p->p_acflag) != 0))
 			return (EACCES);
 #endif
