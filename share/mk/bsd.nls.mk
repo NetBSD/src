@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.31 2001/11/02 05:21:51 tv Exp $
+#	$NetBSD: bsd.nls.mk,v 1.32 2001/11/02 18:10:00 tv Exp $
 
 .include <bsd.init.mk>
 
@@ -41,14 +41,13 @@ ${DESTDIR}${NLSDIR}:
 	@if [ ! -d ${.TARGET} ] || [ -h ${.TARGET} ] ; then \
 		echo creating ${.TARGET}; \
 		/bin/rm -rf ${.TARGET}; \
-		${INSTALL} ${INSTPRIV} -d -o ${NLSOWN} -g ${NLSGRP} -m 755 \
-		    ${.TARGET}; \
+		${INSTALL_DIR} -o ${NLSOWN} -g ${NLSGRP} -m 755 ${.TARGET}; \
 	fi
 
 __nlsinstall: .USE
-	${INSTALL} ${INSTPRIV} -d -o ${NLSOWN} -g ${NLSGRP} ${.TARGET:H}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${NLSOWN} \
-	    -g ${NLSGRP} -m ${NLSMODE} ${.ALLSRC} ${.TARGET}
+	${INSTALL_DIR} -o ${NLSOWN} -g ${NLSGRP} ${.TARGET:H}
+	${INSTALL_FILE} -o ${NLSOWN} -g ${NLSGRP} -m ${NLSMODE} \
+		${.ALLSRC} ${.TARGET}
 
 .for F in ${NLSALL:O:u}
 _F:=		${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat # installed path

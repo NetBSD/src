@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.138 2001/11/02 05:21:51 tv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.139 2001/11/02 18:10:00 tv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -167,8 +167,8 @@ proginstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
 .endif
 
 __proginstall: .USE
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${STRIPFLAG} ${INSTPRIV} \
-	    -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${.ALLSRC} ${.TARGET}
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+		${STRIPFLAG} ${.ALLSRC} ${.TARGET}
 
 .if !defined(BUILD) && !make(all) && !make(${PROG})
 ${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
@@ -193,7 +193,7 @@ scriptsinstall:: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRI
 .endif
 
 __scriptinstall: .USE
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} \
+	${INSTALL_FILE} \
 	    -o ${SCRIPTSOWN_${.ALLSRC:T}:U${SCRIPTSOWN}} \
 	    -g ${SCRIPTSGRP_${.ALLSRC:T}:U${SCRIPTSGRP}} \
 	    -m ${SCRIPTSMODE_${.ALLSRC:T}:U${SCRIPTSMODE}} \
