@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.94 2000/06/30 16:33:17 joda Exp $
+$NetBSD: pcmciadevs,v 1.95 2000/07/18 14:48:10 onoe Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -252,6 +252,7 @@ vendor EXP			-1	EXP Computer Inc
 vendor ICOM			-1	ICOM Inc
 vendor BILLIONTON		-1	Billionton Systems Inc.
 vendor AMD			-1	AMD
+vendor INTERSIL			-1	Intersil
 
 product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
@@ -291,3 +292,4 @@ product ICOM SL200		{ "Icom", "SL-200", NULL, NULL } Icom SL-200
 product XIRCOM CFE_10		{ "Xircom", "CompactCard&spEthernet", "CFE-10", "1.00" } Xircom CompactCard CFE-10
 product BILLIONTON LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL } Billionton Systems Inc. LNT-10TN NE2000 Compatible Card
 product NDC ND5100_E		{ "NDC", "Ethernet", "A", NULL } Sohoware ND5100E NE2000 Compatible Card
+product INTERSIL PRISM2		{ "INTERSIL", "HFA384x/IEEE", "Version 01.02", NULL} Intersil Prism II
