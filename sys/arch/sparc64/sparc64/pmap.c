@@ -1,8 +1,6 @@
-/*	$NetBSD: pmap.c,v 1.70 2000/08/01 00:40:20 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71 2000/08/02 22:25:45 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
-#undef	BOOT_DEBUG
-#undef	BOOT1_DEBUG
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -315,8 +313,8 @@ struct {
 #define	PDB_ALIAS	0x8000
 #define PDB_EXTRACT	0x10000
 #define	PDB_BOOT	0x20000
-#define	PDB_BOOT1	0x20000
-int	pmapdebug = 0/*PDB_ALIAS|PDB_CTX_ALLOC|PDB_CTX_STEAL|PDB_EXTRACT|PDB_CREATE|PDB_DESTROY|PDB_CHANGEPROT|PDB_ENTER|PDB_REMOVE|PDB_DEMAP|*/;
+#define	PDB_BOOT1	0x40000
+int	pmapdebug = 0;
 /* Number of H/W pages stolen for page tables */
 int	pmap_pages_stolen = 0;
 
@@ -475,7 +473,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	/* 
 	 * Get hold or the message buffer.
 	 */
-	msgbufp = (struct kern_msgbuf *)MSGBUF_VA;
+	msgbufp = (struct kern_msgbuf *)(vaddr_t)MSGBUF_VA;
 /* XXXXX -- increase msgbufsiz for uvmhist printing */
 	msgbufsiz = 4*NBPG /* round_page(sizeof(struct msgbuf)) */;
 	BDPRINTF(PDB_BOOT, ("Trying to allocate msgbuf at %lx, size %lx\r\n", 
