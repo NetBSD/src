@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.8 2002/05/09 00:41:06 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.9 2002/05/09 01:00:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -114,26 +114,17 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
  * Transmit descriptor list size.  Due to errata, we can only have
  * 256 hardware descriptors in the ring.  We tell the upper layers
  * that they can queue a lot of packets, and we go ahead and mange
- * up to 32 of them at a time.  We allow up to 16 DMA segments per
+ * up to 64 of them at a time.  We allow up to 16 DMA segments per
  * packet.
  */
 #define	WM_NTXSEGS		16
 #define	WM_IFQUEUELEN		256
-#define	WM_TXQUEUELEN		32
+#define	WM_TXQUEUELEN		64
 #define	WM_TXQUEUELEN_MASK	(WM_TXQUEUELEN - 1)
 #define	WM_NTXDESC		256
 #define	WM_NTXDESC_MASK		(WM_NTXDESC - 1)
 #define	WM_NEXTTX(x)		(((x) + 1) & WM_NTXDESC_MASK)
 #define	WM_NEXTTXS(x)		(((x) + 1) & WM_TXQUEUELEN_MASK)
-
-/*
- * The interrupt mitigation feature of the Wiseman is pretty cool -- as
- * long as you're transmitting, you don't have to take an interrupt at
- * all.  However, we force an interrupt to happen every N + 1 packets
- * in order to kick us in a reasonable amount of time when we run out
- * of descriptors.
- */
-#define	WM_TXINTR_MASK		7
 
 /*
  * Receive descriptor list size.  We have one Rx buffer for normal
@@ -1022,7 +1013,6 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 
 		sc->sc_txnext = WM_NEXTTX(sc->sc_txnext);
 		txs->txs_ndesc++;
-		sc->sc_txwin++;
 	}
 
 	*cmdp = WTX_CMD_DEXT | WTC_DTYP_D;
@@ -1203,8 +1193,6 @@ wm_start(struct ifnet *ifp)
 			    cksumfields;
 			lasttx = nexttx;
 
-			sc->sc_txwin++;
-
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: TX: desc %d: low 0x%08x, len 0x%04x\n",
 			    sc->sc_dev.dv_xname, nexttx,
@@ -1219,7 +1207,7 @@ wm_start(struct ifnet *ifp)
 		 */
 		sc->sc_txdescs[lasttx].wtx_cmdlen |=
 		    htole32(WTX_CMD_EOP | WTX_CMD_IFCS | WTX_CMD_RS);
-		if (sc->sc_txwin >= (WM_NTXDESC * 2 / 3)) {
+		if (++sc->sc_txwin >= (WM_TXQUEUELEN * 2 / 3)) {
 			WM_EVCNT_INCR(&sc->sc_ev_txforceintr);
 			sc->sc_txdescs[lasttx].wtx_cmdlen &=
 			    htole32(~WTX_CMD_IDE);
@@ -1501,10 +1489,10 @@ wm_txintr(struct wm_softc *sc)
 	 * If there are no more pending transmissions, cancel the watchdog
 	 * timer.
 	 */
-	if (sc->sc_txsfree == WM_TXQUEUELEN)
+	if (sc->sc_txsfree == WM_TXQUEUELEN) {
 		ifp->if_timer = 0;
-	if (sc->sc_txfree == WM_NTXDESC)
 		sc->sc_txwin = 0;
+	}
 }
 
 /*
