@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.44 2000/09/19 22:14:42 fvdl Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.45 2000/10/23 07:18:27 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -951,13 +951,7 @@ nfssvc_iod(p)
 		error = tsleep((caddr_t)&nfs_iodwant[myiod],
 			PWAIT | PCATCH, "nfsidl", 0);
 	    }
-	    if (error) {
-		if (nmp)
-		    nmp->nm_bufqiods--;
-		nfs_iodmount[myiod] = NULL;
-		break;
-	    }
-	    while ((bp = nmp->nm_bufq.tqh_first) != NULL) {
+	    while (nmp != NULL && (bp = nmp->nm_bufq.tqh_first) != NULL) {
 		/* Take one off the front of the list */
 		TAILQ_REMOVE(&nmp->nm_bufq, bp, b_freelist);
 		nmp->nm_bufqlen--;
@@ -979,8 +973,15 @@ nfssvc_iod(p)
 		    break;
 		}
 	    }
+	    if (error) {
+		    break;
+	    }
 	}
 	p->p_holdcnt--;
+	if (nmp)
+		nmp->nm_bufqiods--;
+	nfs_iodwant[myiod] = NULL;
+	nfs_iodmount[myiod] = NULL;
 	nfs_asyncdaemon[myiod] = NULL;
 	nfs_numasync--;
 
