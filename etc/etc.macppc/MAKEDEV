@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.40 2001/09/14 21:15:03 nathanw Exp $
+#	$NetBSD: MAKEDEV,v 1.41 2001/09/16 07:31:07 manu Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -94,6 +94,7 @@
 #	openfirm OpenFirmware queries
 #	random	random number generator
 #	lkm	loadable kernel modules interface
+#	clockctl clock control for non root users
 #	audio*	audio devices
 #	tun*	network tunnel driver
 #	scsibus* SCSI busses
@@ -121,7 +122,7 @@ all)
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 tun0 tun1 ipl usbs ttyCZ0 ttyCY0 audio openfirm
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
-	sh $0 lkm nvram local raid0 raid1 raid2 raid3
+	sh $0 lkm nvram clockctl local raid0 raid1 raid2 raid3
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 isdn
 	sh $0 pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
@@ -551,6 +552,12 @@ lkm)
 	chmod 640 lkm
 	;;
 
+clockctl)
+	rm -f clockctl
+	mknod clockctl c 61 0
+	chown root.daemon clockctl
+	chmod 660 clockctl
+	;;
 random)
 	rm -f random urandom
 	mknod random c 24 0
