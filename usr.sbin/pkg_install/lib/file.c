@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.29 1999/08/19 14:12:35 agc Exp $	*/
+/*	$NetBSD: file.c,v 1.30 1999/08/20 09:20:20 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.29 1999/08/19 14:12:35 agc Exp $");
+__RCSID("$NetBSD: file.c,v 1.30 1999/08/20 09:20:20 agc Exp $");
 #endif
 #endif
 
@@ -545,37 +545,6 @@ move_file(char *dir, char *fname, char *to)
     if (vsystem(cmd)) {
 	cleanup(0);
 	errx(2, "could not perform '%s'", cmd);
-    }
-}
-
-/*
- * Copy a hierarchy (possibly from dir) to the current directory, or
- * if "to" is TRUE, from the current directory to a location someplace
- * else.
- *
- * Though slower, using tar to copy preserves symlinks and everything
- * without me having to write some big hairy routine to do it.
- */
-void
-copy_hierarchy(char *dir, char *fname, Boolean to)
-{
-    char cmd[FILENAME_MAX * 3];
-
-    if (!to) {
-	/* If absolute path, use it */
-	if (*fname == '/')
-	    dir = "/";
-	(void) snprintf(cmd, sizeof(cmd), "%s cf - -C %s %s | %s xpf -",
- 		 TAR_CMD, dir, fname, TAR_CMD);
-    } else
-	(void) snprintf(cmd, sizeof(cmd), "%s cf - %s | %s xpf - -C %s",
- 		 TAR_CMD, fname, dir, TAR_CMD);
-#ifdef DEBUG
-    printf("Using '%s' to copy trees.\n", cmd);
-#endif
-    if (system(cmd)) {
-	cleanup(0);
-	errx(2, "copy_file: could not perform '%s'", cmd);
     }
 }
 
