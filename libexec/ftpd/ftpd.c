@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.25 1997/06/18 19:05:50 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.26 1997/06/21 04:38:54 mellon Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.25 1997/06/18 19:05:50 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.26 1997/06/21 04:38:54 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,6 +192,10 @@ static struct passwd *
 static char	*sgetsave __P((char *));
 
 int main __P((int, char *[], char **));
+
+#if defined (KERBEROS)
+int  klogin __P((struct passwd *, char *, char *, char *));
+#endif
 
 static char *
 curdir()
