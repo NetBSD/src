@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.1 1999/01/25 02:20:58 msaitoh Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.2 1999/01/28 21:18:00 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -103,7 +103,7 @@ procfs_domap(curp, p, pfs, uio)
 		if (UVM_ET_ISSUBMAP(entry))
 			continue;
 #else
-		if (entry->is_a_map || entry->is_sub_map))
+		if (entry->is_a_map || entry->is_sub_map)
 			continue;
 #endif
 
@@ -116,7 +116,11 @@ procfs_domap(curp, p, pfs, uio)
 		    "0x%lx 0x%lx %s%s%s %s%s%s %s %s %d %d %d\n",
 #else
 		sprintf(mebuffer,
+#if defined(UVM)
 		    "0x%lx 0x%lx %s%s%s %s%s%s %s %s %d %d %d\n",
+#else
+		    "0x%lx 0x%lx %s%s%s %s%s%s %s %s %d %d\n",
+#endif
 #endif
 			entry->start, entry->end,
 
@@ -134,7 +138,11 @@ procfs_domap(curp, p, pfs, uio)
 			(entry->copy_on_write) ? "COW" : "NCOW",
 			(entry->needs_copy) ? "NC" : "NNC",
 #endif
-		    entry->inheritance, entry->wired_count, entry->advice);
+		    entry->inheritance, entry->wired_count
+#if defined(UVM)
+			, entry->advice
+#endif
+			);
 
 
 		len = strlen(mebuffer);
