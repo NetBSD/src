@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibmnws,v 1.1 2003/10/19 03:33:49 matt Exp $
+#	$NetBSD: files.ibmnws,v 1.2 2004/02/14 14:00:22 bjh21 Exp $
 #
 # ibmnws-specific configuration info
 #
@@ -94,17 +94,6 @@ file	arch/prep/isa/isapnp_machdep.c		isapnp
 # clock
 #
 # No RTC on the IBM NetStations
-
-# attribute used to represent the "keyboard controller"
-# XXX should be a real device
-define pckbcport { [irq = -1], [port = -1] }
-
-# PC console support a la "pccons"
-device	pc: tty, pckbcport
-attach	pc at isa
-device	pcconskbd
-attach	pcconskbd at pckbc
-file	arch/prep/isa/pccons.c			pc | pcconskbd needs-flag
 
 include "dev/pckbc/files.pckbc"
 
