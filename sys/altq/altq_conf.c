@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.3 2000/12/14 18:07:30 thorpej Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.4 2000/12/14 23:50:43 thorpej Exp $	*/
 /*	$KAME: altq_conf.c,v 1.10 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ static struct altqsw altqsw[] = {				/* minor */
  */
 int	naltqsw = sizeof (altqsw) / sizeof (altqsw[0]);
 
-#ifndef __OpenBSD__
+#if !defined(__NetBSD__) && defined(__OpenBSD__)
 static	d_open_t	altqopen;
 static	d_close_t	altqclose;
 static	d_ioctl_t	altqioctl;
@@ -168,14 +168,6 @@ void	altqattach __P((int));
 
 #if defined(__FreeBSD__)
 #define	CDEV_MAJOR 96		/* FreeBSD official number */
-#elif defined(__NetBSD__)
-#if defined(__i386__)
-#define	CDEV_MAJOR 75		/* NetBSD i386 (not official) */
-#elif defined(__alpha__)
-#define	CDEV_MAJOR 62		/* NetBSD alpha (not official) */
-#else
-#error arch not supported
-#endif
 #elif defined(__OpenBSD__)
 #if defined(__i386__)
 #define	CDEV_MAJOR 67		/* OpenBSD i386 (not official) */
@@ -198,15 +190,13 @@ static struct cdevsw altq_cdevsw =
 	  altqioctl,	seltrue,	nommap,		nostrategy,	
 	  "altq",	CDEV_MAJOR,	nodump,		nopsize,  0,  -1 };
 #endif
-#elif defined(__NetBSD__)
-static struct cdevsw altq_cdevsw = cdev__oci_init(1,altq);
 #elif defined(__OpenBSD__)
 static struct cdevsw altq_cdevsw = {
 	altqopen, altqclose, 0, 0, altqioctl, 0,
 	0, 0, 0, 0 };
 #endif
 
-#if !defined(__OpenBSD__)
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 static
 #endif
 int
@@ -225,7 +215,7 @@ altqopen(dev, flag, fmt, p)
 	return ENXIO;
 }
 
-#if !defined(__OpenBSD__)
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 static
 #endif
 int
@@ -244,7 +234,7 @@ altqclose(dev, flag, fmt, p)
 	return ENXIO;
 }
 
-#if !defined(__OpenBSD__)
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 static
 #endif
 int
@@ -306,7 +296,9 @@ altqioctl(dev, cmd, addr, flag, p)
 }
 
 
+#if !defined(__NetBSD__)
 static int altq_devsw_installed = 0;
+#endif
 
 #ifdef __FreeBSD__
 #if (__FreeBSD_version < 400000)
@@ -359,7 +351,7 @@ altq_drvinit(unused)
 
 SYSINIT(altqdev,SI_SUB_DRIVERS,SI_ORDER_MIDDLE+CDEV_MAJOR,altq_drvinit,NULL)
 
-#elif defined(__NetBSD__)||defined(__OpenBSD__)
+#elif defined(__OpenBSD__)
 
 void
 altqattach(int unused)
@@ -372,6 +364,8 @@ altqattach(int unused)
 		printf("altq: major number is %d\n", CDEV_MAJOR);
 	}
 }
+#elif defined(__NetBSD__)
+/* NetBSD requires no altqattach() */
 #else
 #error altqattach()??
 #endif
