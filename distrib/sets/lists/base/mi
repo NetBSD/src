@@ -743,6 +743,7 @@
 ./usr/share/groff_font/devlatin1
 ./usr/share/groff_font/devps
 ./usr/share/groff_font/devps/generate
+./usr/share/info
 ./usr/share/keymaps
 ./usr/share/keymaps/amiga
 ./usr/share/keymaps/atari
