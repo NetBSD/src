@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.27 2001/04/25 16:30:03 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.28 2001/05/05 14:20:05 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2001/04/25 16:30:03 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2001/05/05 14:20:05 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -147,6 +147,7 @@ struct pmap {
 	int	pm_count;	/* Reference count */
 	int	pm_flags;
 #define PM_ACTIVE 0x00000001
+	struct	pmap_statistics pm_stats;
 	struct	pv_entry *pm_entries[1024];
 };
 
@@ -370,14 +371,29 @@ pmap_destroy(pmap_t pmap)
 	UVMHIST_CALLED(pmaphist);
 	if (--pmap->pm_count > 0)
 		return;
+	KASSERT((pmap->pm_flags & PM_ACTIVE) == 0);
+	KASSERT(pmap->pm_stats.resident_count == 0);
+	KASSERT(pmap->pm_stats.wired_count == 0);
 #ifdef DIAGNOSTIC
-	if (pmap->pm_flags & PM_ACTIVE)
-		panic("pmap_destroy: pmap is active");
 	for (i = 0; i < 1024; i++)
 		if (pmap->pm_entries[i] != NULL)
 			panic("pmap_destroy: pmap isn't empty");
 #endif
 	pool_put(pmap_pool, pmap);
+}
+
+long
+_pmap_resident_count(pmap_t pmap)
+{
+
+	return pmap->pm_stats.resident_count;
+}
+
+long
+_pmap_wired_count(pmap_t pmap)
+{
+
+	return pmap->pm_stats.wired_count;
 }
 
 void
@@ -437,6 +453,8 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	if (pmap == NULL) return;
 	pv = pmap->pm_entries[atop(va)];
 	if (pv == NULL) return;
+	if ((pv->pv_vflags & PV_WIRED) == 0) return;
+	pmap->pm_stats.wired_count--;
 	pv->pv_vflags &= ~PV_WIRED;
 }
 
@@ -526,6 +544,7 @@ pv_get(pmap_t pmap, int ppn, int lpn)
 	pv = &pv_table[ppn];
 	if (pv->pv_pmap == NULL) {
 		UVMHIST_LOG(pmaphist, "<-- head (pv=%p)", pv, 0, 0, 0);
+		pmap->pm_stats.resident_count++;
 		return pv;
 	}
 	/* If this mapping exists already, use that. */
@@ -539,6 +558,7 @@ pv_get(pmap_t pmap, int ppn, int lpn)
 	pv = pv_alloc();
 	pv->pv_next = pv_table[ppn].pv_next;
 	pv_table[ppn].pv_next = pv;
+	pmap->pm_stats.resident_count++;
 	UVMHIST_LOG(pmaphist, "<-- new (pv=%p)", pv, 0, 0, 0);
 	return pv;
 }
@@ -572,7 +592,7 @@ pv_release(pmap_t pmap, int ppn, int lpn)
 			pv_free(npv);
 		} else {
 			UVMHIST_LOG(pmaphist, "pv=%p; empty", pv, 0, 0, 0);
-			pv->pv_pmap = NULL;
+			bzero(pv, sizeof(*pv));
 		}
 	} else {
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
@@ -586,6 +606,7 @@ pv_release(pmap_t pmap, int ppn, int lpn)
 		pv_free(npv);
 	}
 	pmap->pm_entries[lpn] = NULL;
+	pmap->pm_stats.resident_count--;
 }
 
 
@@ -630,6 +651,8 @@ pmap_enter1(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags,
 
 	/* Make a note */
 	pv = pv_get(pmap, ppn, lpn);
+	if (pv->pv_vflags & PV_WIRED)
+		pmap->pm_stats.wired_count--;
 	ppv = &pv_table[ppn];
 	pv->pv_pmap = pmap;
 	pv->pv_ppn = ppn;
@@ -637,8 +660,9 @@ pmap_enter1(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags,
 	pv->pv_prot = prot;
 	pv->pv_vflags = 0;
 	/* pv->pv_pflags = 0; */
-	if (flags & PMAP_WIRED)
+	if (flags & PMAP_WIRED) {
 		pv->pv_vflags |= PV_WIRED;
+	}
 	if (unmanaged)
 		pv->pv_vflags |= PV_UNMANAGED;
 	if (flags & VM_PROT_WRITE)
@@ -647,6 +671,8 @@ pmap_enter1(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags,
 		ppv->pv_pflags |= PV_REFERENCED;
 	pmap_update_page(ppn);
 	pmap->pm_entries[lpn] = pv;
+	if (pv->pv_vflags & PV_WIRED)
+		pmap->pm_stats.wired_count++;
 	splx(s);
 	/* Poke the MEMC */
 	if (pmap->pm_flags & PM_ACTIVE)
@@ -676,6 +702,8 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 				cpu_cache_flush();
 			}
 			pmap->pm_entries[lpn] = NULL;
+			if (pv->pv_vflags & PV_WIRED)
+				pmap->pm_stats.wired_count--;
 			pv_release(pmap, pv->pv_ppn, lpn);
 		}
 	}
@@ -871,6 +899,8 @@ pmap_page_protect(struct vm_page *page, vm_prot_t prot)
 			if (pv != &pv_table[ppn])
 				npv = pv->pv_next;
 			pv->pv_pmap->pm_entries[pv->pv_lpn] = NULL;
+			if (pv->pv_vflags & PV_WIRED)
+				pv->pv_pmap->pm_stats.wired_count--;
 			pv_release(pv->pv_pmap, ppn, pv->pv_lpn);
 			pv = npv;
 		}
@@ -1031,8 +1061,10 @@ pmap_dump(struct pmap *pmap)
 	int pflags;
 
 	db_printf("PMAP %p:\n", pmap);
-	db_printf("\tcount = %d, flags = %d\n",
-		  pmap->pm_count, pmap->pm_flags);
+	db_printf("\tcount = %d, flags = %d, "
+	    "resident_count = %ld, wired_count = %ld\n",
+	    pmap->pm_count, pmap->pm_flags,
+	    pmap->pm_stats.resident_count, pmap->pm_stats.wired_count);
 	for (i = 0; i < 1024; i++)
 		if ((pv = pmap->pm_entries[i]) != NULL) {
 			db_printf("\t%03d->%p: ", i, pv);
