@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.15.2.2 1997/02/19 18:19:17 is Exp $ */
+/*	$NetBSD: arp.c,v 1.15.2.3 1997/03/10 20:26:06 is Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$NetBSD: arp.c,v 1.15.2.2 1997/02/19 18:19:17 is Exp $";
+static char *rcsid = "$NetBSD: arp.c,v 1.15.2.3 1997/03/10 20:26:06 is Exp $";
 #endif /* not lint */
 
 /*
@@ -62,7 +62,7 @@ static char *rcsid = "$NetBSD: arp.c,v 1.15.2.2 1997/02/19 18:19:17 is Exp $";
 #include <net/if_types.h>
 #include <net/route.h>
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #include <arpa/inet.h>
 
 #include <err.h>
