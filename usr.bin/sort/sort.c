@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.34 2003/08/07 11:32:34 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.35 2004/02/15 14:22:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.34 2003/08/07 11:32:34 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.35 2004/02/15 14:22:55 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -107,8 +107,6 @@ u_char d_mask[NBINS];		/* flags for rec_d, field_d, <blank> */
  */
 u_char ascii[NBINS], Rascii[NBINS], RFtable[NBINS], Ftable[NBINS];
 int SINGL_FLD = 0, SEP_FLAG = 0, UNIQUE = 0;
-struct coldesc clist[(ND+1)*2];
-int ncols = 0;
 
 /*
  * Default to stable sort.
@@ -116,7 +114,6 @@ int ncols = 0;
 int stable_sort = 1;
 
 static char toutpath[MAXPATHLEN];
-static struct field fldtab[ND+2];
 
 const char *tmpdir;	/* where temporary files should be put */
 
@@ -135,7 +132,8 @@ main(argc, argv)
 	int ch, i, stdinflag = 0, tmp = 0;
 	char cflag = 0, mflag = 0;
 	char *outfile, *outpath = 0;
-	struct field *ftpos;
+	struct field *fldtab, *ftpos;
+	size_t fldtab_sz = 2;
 	struct filelist filelist;
 	FILE *outfp = NULL;
 	struct rlimit rl;
@@ -152,9 +150,12 @@ main(argc, argv)
 	d_mask[REC_D = '\n'] = REC_D_F;
 	SINGL_FLD = SEP_FLAG = 0;
 	d_mask['\t'] = d_mask[' '] = BLANK | FLD_D;
+
+	fldtab = malloc(fldtab_sz*sizeof(*fldtab));
 	ftpos = fldtab;
 
 	fixit(&argc, argv);
+
 	if (!(tmpdir = getenv("TMPDIR")))
 		tmpdir = _PATH_TMP;
 
@@ -180,6 +181,9 @@ main(argc, argv)
 			PANIC = 0;
 			break;
 		case 'k':
+			fldtab_sz++;
+			fldtab = realloc(fldtab, fldtab_sz*sizeof(*fldtab));
+
 			setfield(optarg, ++ftpos, fldtab->flags);
 			break;
 		case 'm':

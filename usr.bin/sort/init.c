@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.11 2004/02/15 14:19:22 jdolecek Exp $	*/
+/*	$NetBSD: init.c,v 1.12 2004/02/15 14:22:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.11 2004/02/15 14:19:22 jdolecek Exp $");
+__RCSID("$NetBSD: init.c,v 1.12 2004/02/15 14:22:55 jdolecek Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -89,6 +89,12 @@ u_char gweights[NBINS];
 static u_char alltable[NBINS], dtable[NBINS], itable[NBINS];
 
 /*
+ * parsed key options
+ */
+struct coldesc *clist=NULL;
+int ncols = 0;
+
+/*
  * clist (list of columns which correspond to one or more icol or tcol)
  * is in increasing order of columns.
  * Fields are kept in increasing order of fields.
@@ -102,6 +108,10 @@ insertcol(field)
 	struct field *field;
 {
 	int i;
+
+	/* Make space for new item */
+	clist = realloc(clist, (ncols+1) * sizeof(*clist));
+
 	for (i = 0; i < ncols; i++)
 		if (field->icol.num <= clist[i].num)
 			break;
@@ -184,11 +194,7 @@ setfield(pos, cur_fld, gflag)
 	struct field *cur_fld;
 	int gflag;
 {
-	static int nfields = 0;
 	int tmp;
-
-	if (++nfields == ND)
-		errx(2, "too many sort keys. (Limit is %d)", ND-1);
 
 	cur_fld->weights = ascii;
 	cur_fld->mask = alltable;
