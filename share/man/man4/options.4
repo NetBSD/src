@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.31 1997/10/28 01:01:08 mrg Exp $
+.\"	$NetBSD: options.4,v 1.32 1997/11/09 01:02:06 wrstuden Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -751,6 +751,14 @@ Include support for OSI tunneling over IP.
 Include support for the X.25 protocol stack.
 The state of this code is currently unknown, and probably contains
 bugs.
+.It Cd options NETATALK
+Include support for the Appletalk protocol stack. The kernel provides
+provision for the
+.Em Datagram Delivery Protocol (DDP),
+providing SOCK_DGRAM support and Appletalk routing. This stack is used by the 
+.Em Netatalk
+package, which adds support for Appletalk server services via user libraries
+and applications.
 .It Cd options IPNOPRIVPORTS
 Normally, only root can bind a socket descriptor to a so-called
 .Dq privileged
