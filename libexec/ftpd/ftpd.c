@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.55 1998/07/27 01:55:23 mycroft Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.56 1998/09/05 17:00:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.55 1998/07/27 01:55:23 mycroft Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.56 1998/09/05 17:00:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -391,14 +391,13 @@ static char *
 sgetsave(s)
 	const char *s;
 {
-	char *new = malloc((unsigned) strlen(s) + 1);
+	char *new = strdup(s);
 
 	if (new == NULL) {
 		perror_reply(421, "Local resource failure: malloc");
 		dologout(1);
 		/* NOTREACHED */
 	}
-	(void) strcpy(new, s);
 	return (new);
 }
 
