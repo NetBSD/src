@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.7 1993/06/02 04:16:15 cgd Exp $
+ *	$Id: cpu.h,v 1.8 1993/06/03 01:31:15 cgd Exp $
  */
 
 /*
@@ -110,5 +110,6 @@ struct cpu_nameclass {
 
 #ifdef KERNEL
 extern int cpu;
+extern int cpu_class;
 extern struct cpu_nameclass i386_cpus[];
 #endif
