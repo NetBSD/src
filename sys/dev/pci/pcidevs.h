@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.675 2004/12/16 00:30:31 heas Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.676 2004/12/18 11:55:02 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.674 2004/12/16 00:29:06 heas Exp 
+ *	NetBSD: pcidevs,v 1.675 2004/12/18 11:54:03 xtraeme Exp 
  */
 
 /*
@@ -946,7 +946,9 @@
 
 /* ATI products */
 #define	PCI_PRODUCT_ATI_RADEON_A3	0x4136		/* Radeon Mobility A3 */
+#define	PCI_PRODUCT_ATI_RADEON_9600_XT	0x4152		/* Radeon 9600 XT */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
+#define	PCI_PRODUCT_ATI_RADEON_9600_XT_S	0x4172		/* Radeon 9600 XT Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_IGP_320M	0x4336		/* Radeon IGP 320M */
 #define	PCI_PRODUCT_ATI_RADEON_M6_U2	0x4337		/* Radeon Mobility M6 */
 #define	PCI_PRODUCT_ATI_IXP_AUDIO_200	0x4341		/* IXP AC'97 Audio Controller */
