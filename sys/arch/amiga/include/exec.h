@@ -24,10 +24,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.6 1994/04/10 02:06:39 chopps Exp $
+ *	$Id: exec.h,v 1.7 1994/04/10 02:28:24 chopps Exp $
  */
-#ifndef _MACHINE_EXEC_H
-#define _MACHINE_EXEC_H
+#ifndef _MACHINE_EXEC_H_
+#define _MACHINE_EXEC_H_
 
 #define __LDPGSZ	8192
 
@@ -45,4 +45,4 @@ struct relocation_info_m68k {
 };
 #define relocation_info	relocation_info_m68k
 
-#endif  /* _MACHINE_EXEC_H */
+#endif  /* _MACHINE_EXEC_H_ */

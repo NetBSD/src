@@ -38,10 +38,10 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	@(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.8 1994/04/10 02:06:34 chopps Exp $
+ *	$Id: cpu.h,v 1.9 1994/04/10 02:28:17 chopps Exp $
  */
-#ifndef _MACHINE_CPU_H
-#define _MACHINE_CPU_H
+#ifndef _MACHINE_CPU_H_
+#define _MACHINE_CPU_H_
 
 /*
  * Exported definitions unique to amiga/68k cpu support.
@@ -280,4 +280,4 @@ extern	int machineid, mmutype, cpu040;
 #define	CACHE40_ON	(IC40_ENABLE|DC40_ENABLE)
 #define	CACHE40_OFF	0x00000000
 
-#endif /* !_MACHINE_CPU_H */
+#endif /* !_MACHINE_CPU_H_ */

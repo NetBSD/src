@@ -1,8 +1,8 @@
 /*
- *	$Id: trap.h,v 1.5 1994/04/10 02:06:53 chopps Exp $
+ *	$Id: trap.h,v 1.6 1994/04/10 02:28:38 chopps Exp $
  */
-#ifndef _MACHINE_TRAP_H
-#define _MACHINE_TRAP_H
+#ifndef _MACHINE_TRAP_H_
+#define _MACHINE_TRAP_H_
 
 #include <m68k/trap.h>
 
