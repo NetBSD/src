@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.71 1999/10/05 00:54:08 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.72 1999/10/05 01:16:14 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Luke Mewburn.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Luke Mewburn.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.71 1999/10/05 00:54:08 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.72 1999/10/05 01:16:14 lukem Exp $");
 #endif /* not lint */
 
 /*

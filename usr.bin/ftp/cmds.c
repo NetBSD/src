@@ -1,15 +1,15 @@
-/*	$NetBSD: cmds.c,v 1.69 1999/10/05 00:54:07 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.70 1999/10/05 01:16:11 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Luke Mewburn.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Luke Mewburn.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.69 1999/10/05 00:54:07 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.70 1999/10/05 01:16:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
