@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.21 2001/03/17 11:21:51 pooka Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.22 2001/03/27 00:49:12 pooka Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -34,6 +34,7 @@
 #include <errno.h>
 #ifdef QUICK
 #include <fcntl.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #endif
@@ -44,7 +45,7 @@
 #if 0
 FILE_RCSID("@(#)Id: apprentice.c,v 1.34 2001/03/11 20:29:16 christos Exp ")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.21 2001/03/17 11:21:51 pooka Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.22 2001/03/27 00:49:12 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -822,7 +823,7 @@ apprentice_map(magicp, nmagicp, fn, action)
 	if (version != VERSIONNO) {
 		(void)fprintf(stderr, 
 		    "%s: version mismatch (%d != %d) in `%s'\n",
-		    progname, version, VERSION, dbname);
+		    progname, version, VERSIONNO, dbname);
 		goto error;
 	}
 	*nmagicp = (st.st_size / sizeof(struct magic)) - 1;
