@@ -1,8 +1,8 @@
-/*	$NetBSD: uvm_page.h,v 1.25 2001/05/16 00:16:01 ross Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.26 2001/05/25 04:06:16 chs Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * Copyright (c) 1991, 1993, The Regents of the University of California.  
+ * Copyright (c) 1991, 1993, The Regents of the University of California.
  *
  * All rights reserved.
  *
@@ -20,7 +20,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and 
+ *      Washington University, the University of California, Berkeley and
  *      its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -44,17 +44,17 @@
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
  * All rights reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -159,7 +159,7 @@ struct vm_page {
 /*
  * locking rules:
  *   PG_ ==> locked by object lock
- *   PQ_ ==> lock by page queue lock 
+ *   PQ_ ==> lock by page queue lock
  *   PQ_FREE is locked by free queue lock and is mutex with all other PQs
  *
  * PG_ZERO is used to indicate that a page has been pre-zero'd.  This flag
@@ -232,7 +232,7 @@ extern boolean_t vm_page_zero_enable;
 /*
  *	Each pageable resident page falls into one of three lists:
  *
- *	free	
+ *	free
  *		Available for allocation now.
  *	inactive
  *		Not referenced in any map, but still has an
@@ -262,7 +262,7 @@ extern int vm_nphysseg;
 
 #ifdef UVM_PAGE_INLINE
 #define PAGE_INLINE static __inline
-#else 
+#else
 #define PAGE_INLINE /* nothing */
 #endif /* UVM_PAGE_INLINE */
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: uvm_mmap.c,v 1.50 2001/03/15 06:10:57 chs Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.51 2001/05/25 04:06:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * Copyright (c) 1991, 1993 The Regents of the University of California.  
+ * Copyright (c) 1991, 1993 The Regents of the University of California.
  * Copyright (c) 1988 University of Utah.
- * 
+ *
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -22,7 +22,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by the Charles D. Cranor,
- *	Washington University, University of California, Berkeley and 
+ *	Washington University, University of California, Berkeley and
  *	its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -327,7 +327,7 @@ sys_mmap(p, v, retval)
 		return (EINVAL);			/* don't allow wrap */
 
 	/*
-	 * now check (MAP_FIXED) or get (!MAP_FIXED) the "addr" 
+	 * now check (MAP_FIXED) or get (!MAP_FIXED) the "addr"
 	 */
 
 	if (flags & MAP_FIXED) {
@@ -404,7 +404,7 @@ sys_mmap(p, v, retval)
 				flags |= MAP_PRIVATE;	/* for a file */
 		}
 
-		/* 
+		/*
 		 * MAP_PRIVATE device mappings don't make sense (and aren't
 		 * supported anyway).  However, some programs rely on this,
 		 * so just change it to MAP_SHARED.
@@ -561,7 +561,7 @@ sys___msync13(p, v, retval)
 
 	if (size == 0) {
 		vm_map_entry_t entry;
-		
+
 		vm_map_lock_read(map);
 		rv = uvm_map_lookup_entry(map, addr, &entry);
 		if (rv == TRUE) {
@@ -615,7 +615,7 @@ sys_munmap(p, v, retval)
 
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
-	
+
 	/*
 	 * align the address to a page boundary and adjust the size accordingly.
 	 */
@@ -643,7 +643,7 @@ sys_munmap(p, v, retval)
 	map = &p->p_vmspace->vm_map;
 
 	/*
-	 * interesting system call semantic: make sure entire range is 
+	 * interesting system call semantic: make sure entire range is
 	 * allocated before allowing an unmap.
 	 */
 
@@ -722,7 +722,7 @@ sys_minherit(p, v, retval)
 	vsize_t size, pageoff;
 	vm_inherit_t inherit;
 	int error;
-	
+
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
 	inherit = SCARG(uap, inherit);
@@ -762,7 +762,7 @@ sys_madvise(p, v, retval)
 	vaddr_t addr;
 	vsize_t size, pageoff;
 	int advice, error;
-	
+
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
 	advice = SCARG(uap, behav);
@@ -880,7 +880,7 @@ sys_mlock(p, v, retval)
 	addr -= pageoff;
 	size += pageoff;
 	size = (vsize_t)round_page(size);
-	
+
 	/* disallow wrap-around. */
 	if (addr + size < addr)
 		return (EINVAL);
@@ -1093,7 +1093,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			uvmflag |= UVM_FLAG_COPYONW;
 	}
 
-	uvmflag = UVM_MAPFLAG(prot, maxprot, 
+	uvmflag = UVM_MAPFLAG(prot, maxprot,
 			(flags & MAP_SHARED) ? UVM_INH_SHARE : UVM_INH_COPY,
 			advice, uvmflag);
 	error = uvm_map(map, addr, size, uobj, foff, 0, uvmflag);
