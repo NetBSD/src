@@ -140,6 +140,10 @@
 ./usr/share/man/cat1/mkdep.0
 ./usr/share/man/cat1/mkdir.0
 ./usr/share/man/cat1/mkfifo.0
+./usr/share/man/cat1/mopa.out.0
+./usr/share/man/cat1/mopchk.0
+./usr/share/man/cat1/mopprobe.0
+./usr/share/man/cat1/moptrace.0
 ./usr/share/man/cat1/more.0
 ./usr/share/man/cat1/mset.0
 ./usr/share/man/cat1/msgs.0
@@ -517,6 +521,7 @@
 ./usr/share/man/cat8/modload.0
 ./usr/share/man/cat8/modstat.0
 ./usr/share/man/cat8/modunload.0
+./usr/share/man/cat8/mopd.0
 ./usr/share/man/cat8/mount.0
 ./usr/share/man/cat8/mount_ados.0
 ./usr/share/man/cat8/mount_cd9660.0
@@ -653,6 +658,10 @@
 ./usr/share/man/cat8/zdump.0
 ./usr/share/man/cat8/zic.0
 ./usr/share/man/cat9/access.0
+./usr/share/man/cat9/arp.0
+./usr/share/man/cat9/arp_ifinit.0
+./usr/share/man/cat9/arpintr.0
+./usr/share/man/cat9/arpresolve.0
 ./usr/share/man/cat9/boot.0
 ./usr/share/man/cat9/boottime.0
 ./usr/share/man/cat9/bounds_check_with_label.0
