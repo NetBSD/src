@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.4 2003/11/28 19:02:25 chs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.5 2004/03/26 14:11:01 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.4 2003/11/28 19:02:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.5 2004/03/26 14:11:01 drochner Exp $");
 
 #include <sys/param.h>       
 #include <sys/systm.h>
@@ -88,6 +88,9 @@ paddr_t fpu_cur_uspace;
 
 /* In locore.S, this swaps states in and out of the FPU. */
 void hppa_fpu_swap(struct user *, struct user *);
+
+/* XXX see trap.c */
+void hppa_trapsignal_hack(struct lwp *, int, u_long);
 
 #ifdef FPEMUL
 /*
@@ -384,7 +387,7 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l)
 	case 0x09:
 	case 0x0b:
 		if (hppa_fpu_ls(frame, l) != 0)
-			trapsignal(l, SIGSEGV, frame->tf_iioq_head);
+			hppa_trapsignal_hack(l, SIGSEGV, frame->tf_iioq_head);
 		return;
 	case 0x0c:
 		exception = decode_0c(inst, class, sub, fpregs);
@@ -404,7 +407,7 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l)
         }
 
 	if (exception)
-		trapsignal(l, (exception & UNIMPLEMENTEDEXCEPTION) ?
+		hppa_trapsignal_hack(l, (exception & UNIMPLEMENTEDEXCEPTION) ?
 			SIGILL : SIGFPE, frame->tf_iioq_head);
 }
 
