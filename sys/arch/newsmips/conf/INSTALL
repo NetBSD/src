@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.19 2003/10/24 15:58:31 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.20 2003/10/25 04:07:28 tsutsui Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -61,7 +61,7 @@ cpu0	at mainbus0
 hb0	at mainbus0			# Hyper-bus
 ap0	at mainbus0			# APbus
 
-mkclock0 at hb0 addr 0xbff407f8		# MK48T02 realtime clock
+mkclock0 at hb0 addr 0xbff40000		# MK48T02 realtime clock
 mkclock0 at ap?
 
 le0	at hb0 addr 0xbff80000 level 1	# built-in LANCE ethernet
