@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.57 2002/10/23 09:11:44 jdolecek Exp $ */
+/*	$NetBSD: scn.c,v 1.58 2002/11/21 00:23:24 simonb Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -94,6 +94,8 @@ int     scnhwiflow __P((struct tty *, int));
 
 CFATTACH_DECL(scn, sizeof(struct scn_softc),
     scnprobe, scnattach, NULL, NULL);
+
+extern struct cfdriver scn_cd;
 
 dev_type_open(scnopen);
 dev_type_close(scnclose);
