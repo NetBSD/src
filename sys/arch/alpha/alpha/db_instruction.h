@@ -1,4 +1,4 @@
-/* $NetBSD: db_instruction.h,v 1.1 1997/09/06 02:00:49 thorpej Exp $ */
+/* $NetBSD: db_instruction.h,v 1.2 1997/09/16 06:52:48 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -159,9 +159,11 @@ typedef union {
 					/* 1..7 reserved */
 #define	op_lda		0x08
 #define	op_ldah		0x09
-					/* reserved */
+#define	op_ldbu		0x0a
 #define	op_ldq_u	0x0b
-					/* c..e reserved */
+#define	op_ldwu		0x0c
+#define	op_stw		0x0d
+#define	op_stb		0x0e
 #define	op_stq_u	0x0f
 
 #define	op_arit		0x10		/* see ARIT sub-table */
@@ -295,8 +297,10 @@ typedef union {
 #define	op_cmovlt	0x44
 #define	op_cmovge	0x46
 #define	op_xornot	0x48	/* eqv */
+#define	op_amask	0x61
 #define	op_cmovle	0x64
 #define	op_cmovgt	0x66
+#define	op_implver	0x6c
 
 		/* BIT, "function" opcodes (bits 5..11)  */
 
