@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.155 1999/08/16 22:27:10 augustss Exp $
+# $NetBSD: mi,v 1.156 1999/08/16 23:31:53 augustss Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -495,6 +495,7 @@
 ./usr/share/man/cat4/wdc.0
 ./usr/share/man/cat4/wds.0
 ./usr/share/man/cat4/we.0
+./usr/share/man/cat4/wi.0
 ./usr/share/man/cat4/wscons.0
 ./usr/share/man/cat4/wsdisplay.0
 ./usr/share/man/cat4/wskbd.0
@@ -1635,6 +1636,7 @@
 ./usr/share/man/man4/wdc.4
 ./usr/share/man/man4/wds.4
 ./usr/share/man/man4/we.4
+./usr/share/man/man4/wi.4
 ./usr/share/man/man4/wscons.4
 ./usr/share/man/man4/wsdisplay.4
 ./usr/share/man/man4/wskbd.4
