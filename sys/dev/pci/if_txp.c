@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.1 2003/07/01 20:08:51 drochner Exp $ */
+/* $NetBSD: if_txp.c,v 1.2 2003/07/07 15:18:24 drochner Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -132,22 +132,50 @@ void txp_rxbuf_reclaim(struct txp_softc *);
 void txp_rx_reclaim(struct txp_softc *, struct txp_rx_ring *,
     struct txp_dma_alloc *);
 
-struct cfattach txp_ca = {
-	"txp", {0}, sizeof(struct txp_softc), txp_probe, txp_attach,
+CFATTACH_DECL(txp, sizeof(struct txp_softc), txp_probe, txp_attach,
+	      NULL, NULL);
+
+const struct txp_pci_match {
+	int vid, did, flags;
+} txp_devices[] = {
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990, 0 },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990TX95, 0 },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990TX97, 0 },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990SVR95, TXP_SERVERVERSION },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990SVR97, TXP_SERVERVERSION },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C990B, TXP_USESUBSYSTEM },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C990BSVR, TXP_SERVERVERSION },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990FX, TXP_USESUBSYSTEM },
 };
 
-const struct pci_matchid {
-	int vid, did;
-} txp_devices[] = {
-	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990 },
-	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990TX95 },
-	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990TX97 },
-	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990SVR95 },
-	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990SVR97 },
-	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C990B },
-	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C990BSVR },
-	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990FX },
+static const struct txp_pci_match *txp_pcilookup(pcireg_t);
+
+static const struct {
+	u_int16_t mask, value;
+	int flags;
+} txp_subsysinfo[] = {
+	{0xf000, 0x2000, TXP_SERVERVERSION},
+	{0x0100, 0x0100, TXP_FIBER},
+#if 0 /* information from 3com header, unused */
+	{0x0010, 0x0010, /* secured firmware */},
+	{0x0003, 0x0000, /* variable DES */},
+	{0x0003, 0x0001, /* single DES - "95" */},
+	{0x0003, 0x0002, /* triple DES - "97" */},
+#endif
 };
+
+static const struct txp_pci_match *
+txp_pcilookup(id)
+	pcireg_t id;
+{
+	int i;
+
+	for (i = 0; i < sizeof(txp_devices) / sizeof(txp_devices[0]); i++)
+		if ((PCI_VENDOR(id) == txp_devices[i].vid) &&
+		    (PCI_PRODUCT(id) == txp_devices[i].did))
+			return (&txp_devices[i]);
+	return (0);
+}
 
 int
 txp_probe(parent, match, aux)
@@ -156,11 +184,8 @@ txp_probe(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	int i;
 
-	for (i = 0; i < sizeof(txp_devices) / sizeof(txp_devices[0]); i++)
-		if ((PCI_VENDOR(pa->pa_id) == txp_devices[i].vid) &&
-		    (PCI_PRODUCT(pa->pa_id) == txp_devices[i].did))
+	if (txp_pcilookup(pa->pa_id))
 			return (1);
 	return (0);
 }
@@ -180,8 +205,31 @@ txp_attach(parent, self, aux)
 	u_int16_t p1;
 	u_int32_t p2;
 	u_char enaddr[6];
+	const struct txp_pci_match *pcimatch;
+	u_int16_t subsys;
+	int i, flags;
+	char devinfo[256];
 
 	sc->sc_cold = 1;
+
+	pcimatch = txp_pcilookup(pa->pa_id);
+	flags = pcimatch->flags;
+	if (pcimatch->flags & TXP_USESUBSYSTEM) {
+		subsys = PCI_PRODUCT(pci_conf_read(pc, pa->pa_tag,
+						   PCI_SUBSYS_ID_REG));
+		for (i = 0;
+		     i < sizeof(txp_subsysinfo)/sizeof(txp_subsysinfo[0]);
+		     i++)
+			if ((subsys & txp_subsysinfo[i].mask) ==
+			    txp_subsysinfo[i].value)
+				flags |= txp_subsysinfo[i].flags;
+	}
+	sc->sc_flags = flags;
+
+	pci_devinfo(pa->pa_id, 0, 0, devinfo);
+#define TXP_EXTRAINFO ((flags & (TXP_USESUBSYSTEM|TXP_SERVERVERSION)) == \
+  (TXP_USESUBSYSTEM|TXP_SERVERVERSION) ? " (SVR)" : "")
+	printf(": %s%s\n%s", devinfo, TXP_EXTRAINFO, sc->sc_dev.dv_xname);
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
@@ -219,7 +267,7 @@ txp_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s", intrstr);
+	printf(": interrupting at %s\n", intrstr);
 
 	if (txp_chip_init(sc))
 		return;
@@ -249,16 +297,32 @@ txp_attach(parent, self, aux)
 	enaddr[4] = ((u_int8_t *)&p2)[1];
 	enaddr[5] = ((u_int8_t *)&p2)[0];
 
-	printf(" address %s\n", ether_sprintf(enaddr));
+	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	       ether_sprintf(enaddr));
 	sc->sc_cold = 0;
 
 	ifmedia_init(&sc->sc_ifmedia, 0, txp_ifmedia_upd, txp_ifmedia_sts);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX|IFM_HDX, 0, NULL);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
+	if (flags & TXP_FIBER) {
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_FX,
+			    0, NULL);
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_FX|IFM_HDX,
+			    0, NULL);
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_FX|IFM_FDX,
+			    0, NULL);
+	} else {
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T,
+			    0, NULL);
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T|IFM_HDX,
+			    0, NULL);
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T|IFM_FDX,
+			    0, NULL);
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX,
+			    0, NULL);
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX|IFM_HDX,
+			    0, NULL);
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX|IFM_FDX,
+			    0, NULL);
+	}
 	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
 
 	sc->sc_xcvr = TXP_XCVR_AUTO;
@@ -602,9 +666,7 @@ txp_rx_reclaim(sc, r, dma)
 	struct mbuf *m;
 	struct txp_swdesc *sd;
 	u_int32_t roff, woff;
-#if 0
 	int sumflags = 0;
-#endif
 	int idx;
 
 	roff = le32toh(*r->r_roff);
@@ -676,24 +738,22 @@ txp_rx_reclaim(sc, r, dma)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-#if 0
 		if (rxd->rx_stat & htole32(RX_STAT_IPCKSUMBAD))
-			sumflags |= M_IPV4_CSUM_IN_BAD;
+			sumflags |= (M_CSUM_IPv4|M_CSUM_IPv4_BAD);
 		else if (rxd->rx_stat & htole32(RX_STAT_IPCKSUMGOOD))
-			sumflags |= M_IPV4_CSUM_IN_OK;
+			sumflags |= M_CSUM_IPv4;
 
 		if (rxd->rx_stat & htole32(RX_STAT_TCPCKSUMBAD))
-			sumflags |= M_TCP_CSUM_IN_BAD;
+			sumflags |= (M_CSUM_TCPv4|M_CSUM_TCP_UDP_BAD);
 		else if (rxd->rx_stat & htole32(RX_STAT_TCPCKSUMGOOD))
-			sumflags |= M_TCP_CSUM_IN_OK;
+			sumflags |= M_CSUM_TCPv4;
 
 		if (rxd->rx_stat & htole32(RX_STAT_UDPCKSUMBAD))
-			sumflags |= M_UDP_CSUM_IN_BAD;
+			sumflags |= (M_CSUM_UDPv4|M_CSUM_TCP_UDP_BAD);
 		else if (rxd->rx_stat & htole32(RX_STAT_UDPCKSUMGOOD))
-			sumflags |= M_UDP_CSUM_IN_OK;
+			sumflags |= M_CSUM_UDPv4;
 
-		m->m_pkthdr.csum = sumflags;
-#endif
+		m->m_pkthdr.csum_flags = sumflags;
 
 #if NVLAN > 0
 		if (rxd->rx_stat & htole32(RX_STAT_VLAN)) {
@@ -1412,17 +1472,15 @@ txp_start(ifp)
 		}
 #endif
 
-#if 0
-		if (m->m_pkthdr.csum & M_IPV4_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_CSUM_IPv4)
 			txd->tx_pflags |= TX_PFLAGS_IPCKSUM;
 #ifdef TRY_TX_TCP_CSUM
-		if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_CSUM_TCPv4)
 			txd->tx_pflags |= TX_PFLAGS_TCPCKSUM;
 #endif
 #ifdef TRY_TX_UDP_CSUM
-		if (m->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_CSUM_UDPv4)
 			txd->tx_pflags |= TX_PFLAGS_UDPCKSUM;
-#endif
 #endif
 
 		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
@@ -1759,7 +1817,8 @@ txp_ifmedia_upd(ifp)
 			new_xcvr = TXP_XCVR_10_FDX;
 		else
 			new_xcvr = TXP_XCVR_10_HDX;
-	} else if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_TX) {
+	} else if ((IFM_SUBTYPE(ifm->ifm_media) == IFM_100_TX) ||
+		   (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_FX)) {
 		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
 			new_xcvr = TXP_XCVR_100_FDX;
 		else
@@ -1819,7 +1878,7 @@ txp_ifmedia_sts(ifp, ifmr)
 	if (bmcr & BMCR_LOOP)
 		ifmr->ifm_active |= IFM_LOOP;
 
-	if (bmcr & BMCR_AUTOEN) {
+	if (!(sc->sc_flags & TXP_FIBER) && (bmcr & BMCR_AUTOEN)) {
 		if ((bmsr & BMSR_ACOMP) == 0) {
 			ifmr->ifm_active |= IFM_NONE;
 			return;
