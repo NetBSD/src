@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.4 2002/09/24 10:29:29 jdolecek Exp $
+.\"	$NetBSD: kqueue.2,v 1.5 2002/09/24 11:38:16 jdolecek Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -310,7 +310,7 @@ returning.
 .El
 .It EVFILT_WRITE
 Takes a descriptor as the identifier, and returns whenever
-it is possible to write to the descriptor.  For sockets, pipes
+it is possible to write to the descriptor.  For sockets, pipes,
 fifos and ttys,
 .Va data
 will contain the amount of space remaining in the write buffer.
