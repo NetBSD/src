@@ -1,4 +1,4 @@
-/*	$NetBSD: dol.c,v 1.14.2.1 2000/11/01 03:51:28 tv Exp $	*/
+/*	$NetBSD: dol.c,v 1.14.2.2 2000/11/05 22:38:42 tv Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dol.c,v 1.14.2.1 2000/11/01 03:51:28 tv Exp $");
+__RCSID("$NetBSD: dol.c,v 1.14.2.2 2000/11/05 22:38:42 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -862,7 +862,7 @@ again:
 	    if (unlink(tmp) == -1) {
 		(void) gettimeofday(&tv, NULL);
 		shtemp = Strspl(STRtmpsh, putn((((int)tv.tv_sec) ^ 
-		    ((int)tv.tv_usec) ^ ((int)doldol)) & 0x00ffffff));
+		    ((int)tv.tv_usec) ^ ((int)getpid())) & 0x00ffffff));
 	    }
 	    goto again;
 	}
