@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.154 2001/12/23 09:11:05 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.155 2001/12/29 08:32:06 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.154 2001/12/23 09:10:39 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.155 2001/12/29 08:31:01 ichiro Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -307,6 +307,9 @@
 #define	PCMCIA_CIS_IBM_WIRELESS_LAN_ENTRY	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IBM_WIRELESS_LAN_ENTRY	0x0032
 #define	PCMCIA_STR_IBM_WIRELESS_LAN_ENTRY	"IBM Wireless LAN Entry"
+#define	PCMCIA_CIS_IBM_SMART_CAPTURE_II	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_IBM_SMART_CAPTURE_II	0x003c
+#define	PCMCIA_STR_IBM_SMART_CAPTURE_II	"IBM Smart Capture Card II"
 #define	PCMCIA_CIS_IBM_ETHERJET	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IBM_ETHERJET	0x003f
 #define	PCMCIA_STR_IBM_ETHERJET	"IBM EtherJet Ethernet"
