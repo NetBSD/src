@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.13 2000/02/21 13:46:05 shin Exp $	*/
+/*	$NetBSD: vr.c,v 1.14 2000/02/25 11:20:20 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -194,6 +194,10 @@ vr_find_dram(addr, end)
 		page = (void *)MIPS_PHYS_TO_KSEG1(addr);
 		if (badaddr(page, 4))
 			goto bad;
+
+		/* stop memory probing at first memory image */
+		if (bcmp(page, (void *)MIPS_PHYS_TO_KSEG0(0), 128) == 0)
+			return;
 
 		*(volatile int *)(page+0) = 0xa5a5a5a5;
 		*(volatile int *)(page+4) = 0x5a5a5a5a;
