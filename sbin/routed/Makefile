@@ -1,12 +1,12 @@
 #	@(#)Makefile	8.1 (Berkeley) 6/19/93
 
 PROG=	routed
-SRCS=	af.c if.c input.c main.c output.c startup.c tables.c timer.c \
-	trace.c inet.c
+SRCS=	if.c input.c main.c output.c parms.c radix.c rdisc.c table.c trace.c
 MAN8=	routed.0
-#SUBDIR=	query trace
+SUBDIR=	rtquery
 DPADD=	${LIBCOMPAT}
 LDADD=	-lcompat
+COPTS=	-g -DDEBUG
 
 .include <bsd.prog.mk>
 
