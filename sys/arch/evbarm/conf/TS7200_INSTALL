@@ -1,0 +1,8 @@
+#	$NetBSD: TS7200_INSTALL,v 1.1 2004/12/23 04:35:01 joff Exp $
+#
+#	IQ80310_INSTALL -- IQ80310 kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/TS7200"
+include "arch/evbarm/conf/INSTALL"
