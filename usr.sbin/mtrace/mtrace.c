@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.34 2003/09/23 10:50:51 itojun Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.35 2004/10/30 14:31:45 dsl Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.34 2003/09/23 10:50:51 itojun Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.35 2004/10/30 14:31:45 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -197,7 +197,7 @@ host_addr(char *name)
     for (i = sizeof(buf) - 7; i > 0; --i) {
 	if (*ip == '.') --dots;
 	else if (*ip == '\0') break;
-	else if (!isdigit(*ip)) dots = 0;  /* Not numeric, don't add zeroes */
+	else if (!isdigit((unsigned char)*ip)) dots = 0;  /* Not numeric, don't add zeroes */
 	*op++ = *ip++;
     }
     for (i = 0; i < dots; ++i) {
@@ -1170,13 +1170,13 @@ main(int argc, char **argv)
 	do {
 	    char c = *p++;
 	    char *arg = (char *) 0;
-	    if (isdigit(*p)) {
+	    if (isdigit((unsigned char)*p)) {
 		arg = p;
 		p = "";
 	    } else if (argc > 0) arg = argv[0];
 	    switch (c) {
 	      case 'd':			/* Unlisted debug print option */
-		if (arg && isdigit(*arg)) {
+		if (arg && isdigit((unsigned char)*arg)) {
 		    debug = atoi(arg);
 		    if (debug < 0) debug = 0;
 		    if (debug > 3) debug = 3;
@@ -1203,7 +1203,7 @@ main(int argc, char **argv)
 		numstats = 0;
 		break;
 	      case 'w':			/* Time to wait for packet arrival */
-		if (arg && isdigit(*arg)) {
+		if (arg && isdigit((unsigned char)*arg)) {
 		    timeout = atoi(arg);
 		    if (timeout < 1) timeout = 1;
 		    if (arg == argv[0]) argv++, argc--;
@@ -1211,7 +1211,7 @@ main(int argc, char **argv)
 		} else
 		    goto usage;
 	      case 'm':			/* Max number of hops to trace */
-		if (arg && isdigit(*arg)) {
+		if (arg && isdigit((unsigned char)*arg)) {
 		    qno = atoi(arg);
 		    if (qno > MAXHOPS) qno = MAXHOPS;
 		    else if (qno < 1) qno = 0;
@@ -1220,7 +1220,7 @@ main(int argc, char **argv)
 		} else
 		    goto usage;
 	      case 'q':			/* Number of query retries */
-		if (arg && isdigit(*arg)) {
+		if (arg && isdigit((unsigned char)*arg)) {
 		    nqueries = atoi(arg);
 		    if (nqueries < 1) nqueries = 1;
 		    if (arg == argv[0]) argv++, argc--;
@@ -1234,7 +1234,7 @@ main(int argc, char **argv)
 		} else
 		    goto usage;
 	      case 't':			/* TTL for query packet */
-		if (arg && isdigit(*arg)) {
+		if (arg && isdigit((unsigned char)*arg)) {
 		    qttl = atoi(arg);
 		    if (qttl < 1) qttl = 1;
 		    rttl = qttl;
@@ -1255,7 +1255,7 @@ main(int argc, char **argv)
 		} else
 		    goto usage;
 	      case 'S':			/* Stat accumulation interval */
-		if (arg && isdigit(*arg)) {
+		if (arg && isdigit((unsigned char)*arg)) {
 		    statint = atoi(arg);
 		    if (statint < 1) statint = 1;
 		    if (arg == argv[0]) argv++, argc--;
