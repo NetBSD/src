@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.10 1997/06/22 07:42:54 jonathan Exp $	*/
+/*	$NetBSD: fp.S,v 1.11 1999/01/15 01:23:12 castor Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,14 +37,10 @@
  *
  *	@(#)fp.s	8.1 (Berkeley) 6/10/93
  */
+#include <machine/cdefs.h>
 
-/*
- * Standard header stuff.
- */
-
-#include <mips/regdef.h>
 #include <mips/asm.h>
-#include <mips/cpuregs.h>
+#include <mips/cpuarch.h>
 
 #include "assym.h"
 
@@ -97,9 +93,9 @@
  *
  *----------------------------------------------------------------------------
  */
-NON_LEAF(MachEmulateFP, STAND_FRAME_SIZE, ra)
-	subu	sp, sp, STAND_FRAME_SIZE
-	sw	ra, STAND_RA_OFFSET(sp)
+NESTED(MachEmulateFP, CALLFRAME_SIZ, ra)
+	subu	sp, sp, CALLFRAME_SIZ
+	sw	ra, CALLFRAME_RA(sp)
 /*
  * Decode the FMT field (bits 24-21) and FUNCTION field (bits 5-0).
  */
@@ -2250,8 +2246,8 @@ result_fs_d:					# result is FS
 	jal	_C_LABEL(set_fd_d)		# save result (in t0,t1,t2,t3)
 
 done:
-	lw	ra, STAND_RA_OFFSET(sp)
-	addu	sp, sp, STAND_FRAME_SIZE
+	lw	ra, CALLFRAME_RA(sp)
+	addu	sp, sp, CALLFRAME_SIZ
 	j	ra
 END(MachEmulateFP)
 
@@ -2463,7 +2459,7 @@ get_ft_s_done:
  *
  *----------------------------------------------------------------------------
  */
-ALEAF(get_fs_s)
+ALIAS(get_fs_s)
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, get_fs_s_tbl(a3)		# switch on register number
@@ -2682,7 +2678,7 @@ get_ft_d_done:
  *
  *----------------------------------------------------------------------------
  */
-ALEAF(get_fs_d)
+ALIAS(get_fs_d)
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, get_fs_d_tbl(a3)		# switch on register number
@@ -3197,7 +3193,7 @@ LEAF(set_fd_s)
 	sll	t1, t1, 23			# position exponent
 	or	t2, t2, t0
 	or	t2, t2, t1
-ALEAF(set_fd_word)
+ALIAS(set_fd_word)
 	srl	a3, a0, 7 - 2			# get FD field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FT field
 	lw	a3, set_fd_s_tbl(a3)		# switch on register number

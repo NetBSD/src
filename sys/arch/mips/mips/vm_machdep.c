@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.32 1999/01/06 04:11:30 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33 1999/01/15 01:23:15 castor Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.32 1999/01/06 04:11:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.33 1999/01/15 01:23:15 castor Exp $");
 
 #include "opt_uvm.h"
 
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.32 1999/01/06 04:11:30 nisimura Exp
 /* XXX will be declared in mips/include/cpu.h XXX */
 extern struct proc *fpcurproc;
 
-extern paddr_t kvtophys __P((vaddr_t kva));	/* XXX */
+extern paddr_t kvtophys __P((vaddr_t));	/* XXX */
 
 /*
  * cpu_fork() now returns just once.
@@ -82,17 +82,12 @@ cpu_fork(p1, p2)
 	struct proc *p1, *p2;
 {
 	struct pcb *pcb;
+	struct frame *f;
 	pt_entry_t *pte;
 	int i, x;
 
-	p2->p_md.md_regs = p2->p_addr->u_pcb.pcb_regs;
-	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
-	x = (CPUISMIPS3) ? (MIPS3_PG_G|MIPS3_PG_RO|MIPS3_PG_WIRED) : MIPS1_PG_G;
-	pte = kvtopte(p2->p_addr);
-	for (i = 0; i < UPAGES; i++)
-		p2->p_md.md_upte[i] = pte[i].pt_entry &~ x;
-
 #ifdef MIPS3
+	/* ? make sense ? */
 	if (CPUISMIPS3)
 		mips3_HitFlushDCache((vaddr_t)p2->p_addr, USPACE);
 #endif
@@ -108,16 +103,43 @@ cpu_fork(p1, p2)
 		panic("cpu_fork: curproc");
 #endif
 
+	/* Copy pcb from proc p1 to p2. */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
+
+	/*
+	 * Create the child's kernel stack, from scratch.
+	 * Pick a stack pointer, leaving room for a trapframe;
+	 * copy trapframe from parent so return to user mode
+	 * will be to right address, with correct registers.
+	 */
 	pcb = &p2->p_addr->u_pcb;
+	f = (struct frame *)((int)pcb + USPACE) - 1;
+	memcpy(f, p1->p_md.md_regs, sizeof(struct frame));
+	memset(((caddr_t) f) - 24, 0, 24);
+
+	p2->p_md.md_regs = (void *)f;
+	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
+	x = (CPUISMIPS3) ? (MIPS3_PG_G|MIPS3_PG_RO|MIPS3_PG_WIRED) : MIPS1_PG_G;
+	pte = kvtopte(p2->p_addr);
+	for (i = 0; i < UPAGES; i++)
+		p2->p_md.md_upte[i] = pte[i].pt_entry &~ x;
+
+	/*
+	 * Arrange for continuation at child_return(), which
+	 * will return to user process soon.
+	 */
 	pcb->pcb_segtab = (void *)p2->p_vmspace->vm_map.pmap->pm_segtab;
 	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
-	pcb->pcb_context[8] = (int)pcb + USPACE;	/* SP */
-	pcb->pcb_context[8] = (int)KERNELSTACK;		/* SP */ /* XXX */
+	pcb->pcb_context[8] = (int)f - 24;		/* SP */
 	pcb->pcb_context[0] = (int)child_return;	/* S0 */
 	pcb->pcb_context[1] = (int)p2;			/* S1 */
 }
 
+/*
+ * Arrange for in-kernel execution of a process to continue at the
+ * named pc, as if the code at that address were called as a function
+ * with argument, the current process's process pointer.
+ */
 void
 cpu_set_kpc(p, pc, arg)
 	struct proc *p;
@@ -158,14 +180,16 @@ cpu_swapin(p)
  * cpu_exit is called as the last action during exit.
  *
  * We clean up a little and then call switch_exit() with the old proc as an
- * argument.  switch_exit() first switches to nullproc's PCB and stack,
+ * argument.  switch_exit() first switches to proc0's PCB and stack,
  * schedules the dead proc's vmspace and stack to be freed, then jumps
- * into the middle of cpu_switch(), as if it were switching from nullproc.
+ * into the middle of cpu_switch(), as if it were switching from proc0.
  */
 void
 cpu_exit(p)
 	struct proc *p;
 {
+	extern void switch_exit __P((struct proc *));
+
 	if (fpcurproc == p)
 		fpcurproc = (struct proc *)0;
 
@@ -221,7 +245,7 @@ cpu_coredump(p, vp, cred, chdr)
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cpustate,
 			(off_t)chdr->c_cpusize,
-	    		(off_t)(chdr->c_hdrsize + chdr->c_seghdrsize),
+			(off_t)(chdr->c_hdrsize + chdr->c_seghdrsize),
 			UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT,
 			cred, NULL, p);
 
@@ -343,46 +367,27 @@ vunmapbuf(bp, len)
 	bp->b_saveaddr = NULL;
 }
 
-/*XXX*/
-
 /*
  * Map a (kernel) virtual address to a physical address.
- * There are four cases: 
- * A kseg0 kernel "virtual address" for the   cached physical address space;
- * A kseg1 kernel "virtual address" for the uncached physical address space;
- * A kseg2 normal kernel "virtual address" for the kernel stack or
- *   "u area".  These ARE NOT necessarily in sysmap, since processes 0
- *    and 1 are handcrafted before the sysmap is set up.
- * A kseg2 normal kernel "virtual address" mapped via the TLB, which
- *   IS NOT in Sysmap (eg., an mbuf).
- * The first two are so cheap they could just be macros. The last two
- * overlap, so we must check for UADDR pages first.
  *
- * XXX the double-mapped u-area holding the current process's kernel stack
- * and u-area at a fixed address should be fixed.
+ * MIPS processor has 3 distinct kernel address ranges:
+ *
+ * - kseg0 kernel "virtual address" for the   cached physical address space.
+ * - kseg1 kernel "virtual address" for the uncached physical address space.
+ * - kseg2 normal kernel "virtual address" mapped via the TLB.
  */
 paddr_t
-kvtophys(vaddr_t kva)
+kvtophys(kva)
+	vaddr_t kva;
 {
 	pt_entry_t *pte;
 	paddr_t phys;
 
-        if (kva >= MIPS_KSEG0_START && kva < MIPS_KSEG1_START)
-	{
-		return (MIPS_KSEG0_TO_PHYS(kva));
-	}
-	else if (kva >= MIPS_KSEG1_START && kva < MIPS_KSEG2_START) {
-		return (MIPS_KSEG1_TO_PHYS(kva));
-	}
-	else if (kva >= UADDR && kva < KERNELSTACK) {
-		int upage = (kva - UADDR) >> PGSHIFT;
+	if (kva >= MIPS_KSEG2_START) {
+		if (kva >= VM_MAX_KERNEL_ADDRESS)
+			goto overrun;
 
-		pte = (pt_entry_t *)&curproc->p_md.md_upte[upage];
-		phys = pfn_to_vad(pte->pt_entry) | (kva & PGOFSET);
-	}
-	else if (kva >= MIPS_KSEG2_START /*&& kva < VM_MAX_KERNEL_ADDRESS*/) {
 		pte = kvtopte(kva);
-
 		if ((pte - Sysmap) > Sysmapsize)  {
 			printf("oops: Sysmap overrun, max %d index %d\n",
 			       Sysmapsize, pte - Sysmap);
@@ -391,16 +396,19 @@ kvtophys(vaddr_t kva)
 			printf("kvtophys: pte not valid for %lx\n", kva);
 		}
 		phys = pfn_to_vad(pte->pt_entry) | (kva & PGOFSET);
-#ifdef DEBUG_VIRTUAL_TO_PHYSICAL
-		printf("kvtophys: kv %p, phys %x", kva, phys);
-#endif
+		return phys;
 	}
-	else {
-		printf("Virtual address %lx: cannot map to physical\n",
-		       kva);
-                phys = 0;
-		/*panic("non-kernel address to kvtophys\n");*/
-		return(kva); /* XXX -- while debugging ASC */
-        }
-        return(phys);
+	if (kva >= MIPS_KSEG1_START)
+		return MIPS_KSEG0_TO_PHYS(kva);
+
+	if (kva >= MIPS_KSEG0_START)
+		return MIPS_KSEG0_TO_PHYS(kva);
+
+overrun:
+#ifdef DDB
+	printf("Virtual address %lx: cannot map to physical\n", kva);
+	Debugger();
+#else
+	panic("Virtual address %lx: cannot map to physical\n", kva);
+#endif
 }
