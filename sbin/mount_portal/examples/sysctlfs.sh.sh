@@ -1,8 +1,8 @@
 #!/bin/sh
-## $NetBSD: sysctlfs.sh.sh,v 1.1 2001/12/11 15:35:53 bgrayson Exp $
+## $NetBSD: sysctlfs.sh.sh,v 1.2 2003/07/26 19:46:33 salo Exp $
 ##  Fast hack at a sysctl filesystem.  The path can be either in
 ##  dot-style (kern.mbuf.msize) or in slash-style (kern/mbuf/msize).
-##  Hacked as an example by Brian Grayson (bgrayson@netbsd.org) in Sep 1999.
+##  Hacked as an example by Brian Grayson (bgrayson@NetBSD.org) in Sep 1999.
 for path in $*; do
   ##  First, change any slashes into dots.
   path=`echo $path | tr '/' '.'`
