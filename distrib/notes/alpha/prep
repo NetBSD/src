@@ -1,9 +1,0 @@
-	$NetBSD: prep,v 1.3 1998/01/09 18:45:36 perry Exp $	
-
-There's no particular preparation necessary before installing NetBSD
-on your Alpha, except to make sure that if you have any data on
-your disks that you want to keep, you should back it up before
-starting. Note that NetBSD/alpha does not support having more than
-one operating system on a single disk, although it's fine to have
-multiple operating systems on your machine if you have a separate
-disk for NetBSD.
