@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.11 2001/05/30 15:24:27 lukem Exp $ */
+/* $NetBSD: dec_6600.c,v 1.12 2001/06/05 04:53:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.11 2001/05/30 15:24:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.12 2001/06/05 04:53:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ dec_6600_cons_init()
 	tsp = tsp_init(0, tsp_console_hose);
 
 	switch (ctb->ctb_term_type) {
-	case 2: 
+	case CTB_PRINTERPORT: 
 		/* serial console ... */
 		assert(CTB_TURBOSLOT_HOSE(ctbslot) == 0);
 		/* XXX */
@@ -139,7 +139,7 @@ dec_6600_cons_init()
 			break;
 		}
 
-	case 3:
+	case CTB_GRAPHICS:
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
