@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.5 1996/02/22 04:06:03 gwr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.6 1996/02/28 01:44:17 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -87,9 +87,6 @@
 
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
-
-static int	ncr5380_wait_req __P((struct ncr5380_softc *));
-static int	ncr5380_wait_not_req __P((struct ncr5380_softc *));
 
 static void	ncr5380_sched __P((struct ncr5380_softc *));
 static void	ncr5380_done __P((struct ncr5380_softc *));
