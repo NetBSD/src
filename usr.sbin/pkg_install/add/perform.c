@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.8 1997/10/18 11:05:38 lukem Exp $	*/
+/*	$NetBSD: perform.c,v 1.8.2.1 1998/05/05 08:54:56 mycroft Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.8 1997/10/18 11:05:38 lukem Exp $");
+__RCSID("$NetBSD: perform.c,v 1.8.2.1 1998/05/05 08:54:56 mycroft Exp $");
 #endif
 #endif
 
@@ -264,13 +264,13 @@ pkg_do(char *pkg)
 		else if ((cp = fileGetURL(pkg, p->name)) != NULL) {
 		    if (Verbose)
 			printf("Finished loading %s over FTP.\n", p->name);
-		    if (!fexists("+CONTENTS")) {
-			warnx("autoloaded package %s has no +CONTENTS file?",
-				p->name);
+		    if (!fexists(CONTENTS_FNAME)) {
+			warnx("autoloaded package %s has no %s file?",
+				p->name, CONTENTS_FNAME);
 			if (!Force)
 			    ++code;
 		    }
-		    else if (vsystem("(pwd; cat +CONTENTS) | pkg_add %s-S", Verbose ? "-v " : "")) {
+		    else if (vsystem("(pwd; cat %s) | pkg_add %s-S", CONTENTS_FNAME, Verbose ? "-v " : "")) {
 			warnx("pkg_add of dependency `%s' failed%s",
 				p->name, Force ? " (proceeding anyway)" : "!");
 			if (!Force)
