@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.2 2001/06/08 22:22:59 chris Exp $
+#	$NetBSD: GENERIC,v 1.3 2001/06/12 08:27:08 chris Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -102,7 +102,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 # Device options
 
-options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 #options 	MEMORY_DISK_SIZE=0	# Size in blocks
 #options 	MINIROOTSIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
