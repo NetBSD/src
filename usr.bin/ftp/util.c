@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.10 1997/07/20 09:46:03 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.11 1997/07/21 14:03:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.10 1997/07/20 09:46:03 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.11 1997/07/21 14:03:49 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -453,9 +453,17 @@ remotesize(file, noisy)
 	size = -1;
 	if (debug == 0)
 		verbose = -1;
-	if (command("SIZE %s", file) == COMPLETE)
-		sscanf(reply_string, "%*s %qd", &size);
-	else if (noisy && debug == 0)
+	if (command("SIZE %s", file) == COMPLETE) {
+		char *cp, *ep;
+
+		cp = strchr(reply_string, ' ');
+		if (cp != NULL) {
+			cp++;
+			size = strtoq(cp, &ep, 10);
+			if (*ep != '\0' && !isspace(*ep))
+				size = -1;
+		}
+	} else if (noisy && debug == 0)
 		puts(reply_string);
 	verbose = overbose;
 	return (size);
@@ -582,7 +590,7 @@ progressmeter(flag)
 		abbrevsize >>= 10;
 	}
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-	    " %5qd %c%c ", abbrevsize, prefixes[i],
+	    " %5qd %c%c ", (long long)abbrevsize, prefixes[i],
 	    prefixes[i] == ' ' ? ' ' : 'B');
 
 	timersub(&now, &lastupdate, &wait);
@@ -661,7 +669,7 @@ ptransfer(siginfo)
 		meg = 1;
 	(void)snprintf(buf, sizeof(buf),
 	    "%qd byte%s %s in %.2f seconds (%.2f %sB/s)\n",
-	    bytes, bytes == 1 ? "" : "s", direction, elapsed,
+	    (long long)bytes, bytes == 1 ? "" : "s", direction, elapsed,
 	    bs / (1024.0 * (meg ? 1024.0 : 1.0)), meg ? "M" : "K");
 	if (siginfo && bytes > 0 && elapsed > 0.0 && filesize >= 0
 	    && bytes + restart_point <= filesize) {
