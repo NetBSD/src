@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.83 2000/07/06 00:50:49 onoe Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.84 2000/07/06 08:20:51 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.83 2000/07/06 00:50:49 onoe Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.84 2000/07/06 08:20:51 onoe Exp $");
 #endif
 #endif /* not lint */
 
@@ -1101,9 +1101,10 @@ setifnwid(val, d)
 	if (val[0] == '0' && (val[1] == 'x' || val[1] == 'X')) {
 		val += 2;
 		p = nwid.i_nwid;
-		while (isxdigit(val[0]) && isxdigit(val[1])) {
+		while (isxdigit((u_char)val[0]) && isxdigit((u_char)val[1])) {
 #define	tohex(x)	(isdigit(x) ? (x) - '0' : tolower(x) - 'a' + 10)
-			*p++ = (tohex(val[0]) << 4) | tohex(val[1]);
+			*p++ = (tohex((u_char)val[0]) << 4) |
+			    tohex((u_char)val[1]);
 #undef tohex
 			val += 2;
 		}
