@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.2 2001/02/27 20:23:13 reinoud Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.3 2001/03/20 12:50:08 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -252,7 +252,7 @@ vidcrender_coldinit(vc)
 	/* Try to determine the current mode */
 	vidc_initialmode.hder = bootconfig.width+1;
 	vidc_initialmode.vder = bootconfig.height+1;
-	vidc_initialmode.bitsperpixel = 1 << bootconfig.bitsperpixel;
+	vidc_initialmode.log2_bpp = bootconfig.log2_bpp;
 
 	dispbase = vmem_base = dispstart = videomemory.vidm_vbase;
 	phys_base = videomemory.vidm_pbase;
@@ -301,7 +301,7 @@ vidcrender_coldinit(vc)
 	}
 
 	/* vidc_currentmode = &vidcmodes[0]; */
-	vidc_currentmode->bitsperpixel = 1 << bootconfig.bitsperpixel;
+	vidc_currentmode->log2_bpp = bootconfig.log2_bpp;
 
 	if (vc)
 		R_DATA->flash = R_DATA->cursor_flash = 0;
@@ -333,8 +333,6 @@ vidcrender_mode(vc, mode)
 {    
 	register int acc;
 	int bpp_mask;
-        int log_bpp;
-        int tmp_bpp;
 #ifndef RC7500
         int ereg;
 
@@ -347,14 +345,7 @@ vidcrender_mode(vc, mode)
  * log_bpp is log base 2 of the number of bits per pixel.
  */
 
-	tmp_bpp = mode->bitsperpixel;
-	if (tmp_bpp < 1 || tmp_bpp > 32)
-		tmp_bpp = 8; /* Set 8 bpp if we get asked for something silly */
-
-	for (log_bpp = 0; tmp_bpp != 1; tmp_bpp >>= 1)
-		log_bpp++;
-
-	bpp_mask = bpp_mask_table[log_bpp];
+	bpp_mask = bpp_mask_table[mode->log2_bpp];
 
 /*
 	printf ( "res = (%d, %d) rate = %d\n", mode->hder, mode->vder, mode->pixel_rate );
@@ -506,8 +497,8 @@ vidcrender_mode(vc, mode)
 	}
 
 	R_DATA->mode = *vidc_currentmode;
-	R_DATA->screensize = R_DATA->XRES * R_DATA->YRES * R_DATA->BITSPERPIXEL/8;
-	R_DATA->pixelsperbyte = 8 / R_DATA->BITSPERPIXEL;
+	R_DATA->screensize = R_DATA->XRES * R_DATA->YRES * (1 << R_DATA->mode.log2_bpp)/8;
+	R_DATA->pixelsperbyte = 8 / (1 << R_DATA->mode.log2_bpp);
 	R_DATA->frontporch = MODE.hswr + MODE.hbsr + MODE.hdsr;
 	R_DATA->topporch = MODE.vswr + MODE.vbsr + MODE.vdsr;
 	R_DATA->bytes_per_line = R_DATA->XRES *
@@ -587,7 +578,7 @@ vidcrender_init(vc)
     
 	new = (struct vidc_info *)vc->r_data;
 
-	R_DATA->text_colours = 1 << R_DATA->BITSPERPIXEL;
+	R_DATA->text_colours = 1 << (1 << R_DATA->mode.log2_bpp);	/* real number of colours */
 	if (R_DATA->text_colours > 8) R_DATA->text_colours = 8;
     
 #ifdef INVERSE_CONSOLE
@@ -609,9 +600,9 @@ vidcrender_init(vc)
 
 	for (loop = 0; loop < R_DATA->pixelsperbyte; ++loop) {
 		R_DATA->forefillcolour |= (R_DATA->forecolour <<
-		    loop * R_DATA->BITSPERPIXEL);
+		    loop * (1 << R_DATA->mode.log2_bpp));
 		R_DATA->backfillcolour |= (R_DATA->backcolour <<
-		    loop * R_DATA->BITSPERPIXEL);
+		    loop * (1 << R_DATA->mode.log2_bpp));
 	}
 
 	R_DATA->fast_render = R_DATA->forecolour | (R_DATA->backcolour<<8) | (R_DATA->font->pixel_height<<16);
@@ -1401,13 +1392,13 @@ vidcrender_setfgcol(vc, col)
 	R_DATA->forecolour += col;
     
 /*TODO
-	if ( R_DATA->forecolour >> 1<<R_DATA->BITSPERPIXEL )
+	if ( R_DATA->forecolour >> 1<<R_DATA->NUMCOLOURS )
 		R_DATA->forecolour>>1;
 */
 
 	for (loop = 0; loop < R_DATA->pixelsperbyte; ++loop) {
 		R_DATA->forefillcolour |= (R_DATA->forecolour <<
-		    loop * R_DATA->BITSPERPIXEL);
+		    loop * (1 << R_DATA->mode.log2_bpp));
 	}
 	R_DATA->fast_render = R_DATA->forecolour | (R_DATA->backcolour<<8) | (R_DATA->font->pixel_height<<16);
 	return 0;
@@ -1428,13 +1419,13 @@ vidcrender_setbgcol(vc, col)
 	R_DATA->backfillcolour = 0;
 	R_DATA->backcolour += col;
  /*TODO   
-	if ( R_DATA->backcolour >> 1<<R_DATA->BITSPERPIXEL )
+	if ( R_DATA->backcolour >> 1<<R_DATA->NUMCOLOURS )
 		R_DATA->backcolour>>1;
 */
 
 	for (loop = 0; loop < R_DATA->pixelsperbyte; ++loop) {
 		R_DATA->backfillcolour |= (R_DATA->backcolour <<
-		    loop * R_DATA->BITSPERPIXEL);
+		    loop * (1 << R_DATA->mode.log2_bpp));
 	}
 	return 0;
 }
@@ -1475,7 +1466,7 @@ vidcrender_sgr(vc, type)
     switch(type)
     {
         case 0: /* Normal */
-	    if (R_DATA->BITSPERPIXEL == 8)
+	    if ((1 << R_DATA->mode.log2_bpp) == 8)
       	    {
         	R_DATA->n_forecolour = COLOUR_WHITE_8;
         	R_DATA->n_backcolour = COLOUR_BLACK_8;
@@ -1625,7 +1616,7 @@ int vidcrender_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
 		inf->videomemory = videomemory;
 		inf->width = R_DATA->mode.hder;
 		inf->height = R_DATA->mode.vder;
-		inf->bpp = R_DATA->mode.bitsperpixel;
+		inf->bpp    = (1 << R_DATA->mode.log2_bpp);	/* XXX */
 		return 0;
 	}
 	case CONSOLE_PALETTE:
