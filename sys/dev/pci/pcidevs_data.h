@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.234 2000/06/07 19:53:18 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.235 2000/06/09 00:21:08 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.230 2000/06/07 19:52:07 ad Exp 
+ *	NetBSD: pcidevs,v 1.231 2000/06/09 00:20:18 augustss Exp 
  */
 
 /*
@@ -3586,6 +3586,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Fast Infrared Type O",
 	},
 	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE_I7,
+	    0,
+	    "Trident Microsystems",
+	    "CyberBlade i7",
+	},
+	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9320,
 	    0,
 	    "Trident Microsystems",
@@ -3820,6 +3826,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT8371 (Apollo KX133) Host Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501_MVP4,
+	    0,
+	    "VIA Technologies",
+	    "VT8501 MVP4 System Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C505,
 	    0,
 	    "VIA Technologies",
@@ -3974,6 +3986,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT8371 (Apollo KX133) PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501AGP,
+	    0,
+	    "VIA Technologies",
+	    "VT8501 PCI-AGP",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP,
