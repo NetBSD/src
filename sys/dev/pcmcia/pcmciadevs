@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.124 2001/05/14 01:41:16 ichiro Exp $
+$NetBSD: pcmciadevs,v 1.125 2001/05/16 12:57:27 ichiro Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -74,6 +74,7 @@ vendor FARALLON			0x0200  Farallon Communications
 vendor TELECOMDEVICE		0x021b  Telecom Device
 vendor NOKIA			0x023d	Nokia Communications
 vendor SAMSUNG			0x0250	Samsung
+vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
 vendor IODATA2			0x028a	I-O DATA
 vendor LASAT			0x3401	Lasat Communications A/S
 vendor LEXARMEDIA		0x4e01	Lexar Media
@@ -280,6 +281,9 @@ product MACNICA ME1_JEIDA	0x3300	MACNICA ME1 for JEIDA
 
 /* EMTAC */
 product EMTAC WLAN		0x0002	EMTAC A2424i 11Mbps WLAN Card
+
+/* BUFFALO */
+product BUFFALO WLI_PCM_S11	0x0305	BUFFALO AirStation 11Mbps WLAN
 
 /* Cards we know only by their cis */
 vendor PREMAX			-1 	Premax
