@@ -1,0 +1,42 @@
+# $KAME: racoon.conf.sample-gssapi,v 1.2 2000/12/17 21:17:54 sakane Exp $
+
+# sample configuration for GSSAPI authentication (basically, kerberos).
+# doc/README.gssapi gives some idea on how to configure it.
+# TODO: more documentation.
+
+#listen {
+#	strict_address;
+#}
+
+remote anonymous {
+	exchange_mode main;
+	#exchange_mode aggressive;
+
+	# specify the identifier type
+	my_identifier fqdn "foo.kame.net";
+
+	lifetime time 1 min;
+	lifetime byte 100 MB;
+
+	proposal {
+		encryption_algorithm blowfish;
+		hash_algorithm sha1;
+		#authentication_method pre_shared_key;
+		authentication_method gssapi_krb;
+		gssapi_id "ike/myidentification";
+
+		dh_group 1;
+	}
+}
+
+sainfo anonymous {
+	my_identifier fqdn "foo.kame.net";
+
+	lifetime time 30 min;
+	lifetime byte 50MB;
+
+	encryption_algorithm blowfish;
+	authentication_algorithm hmac_sha1;
+	compression_algorithm deflate;
+}
+
