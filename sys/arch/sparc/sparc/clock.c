@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.54 1997/09/27 18:01:30 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.54.2.1 1997/11/20 03:18:50 mellon Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,6 +138,9 @@ struct cfattach oclock_ca = {
 struct cfdriver oclock_cd = {
 	NULL, "oclock", DV_DULL
 };
+
+static struct intrhand level10 = { clockintr };
+static struct intrhand level14 = { statintr };
 
 /*
  * Sun 4 machines use the old-style (a'la Sun 3) EEPROM.  On the
@@ -565,7 +568,9 @@ timerattach(parent, self, aux)
 
 	printf(" delay constant %d\n", timerblurb);
 
-	/* should link interrupt handlers here, rather than compiled-in? */
+	/* link interrupt handlers */
+	intr_establish(10, &level10);
+	intr_establish(14, &level14);
 }
 
 /*
