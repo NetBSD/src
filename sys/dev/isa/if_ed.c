@@ -20,12 +20,36 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.9 1993/10/01 02:01:43 davidg Exp $
+ * $Id: if_ed.c,v 1.10 1993/10/23 04:59:41 davidg Exp $
  */
 
 /*
  * Modification history
  *
+ * Revision 2.11  1993/10/23  04:21:03  davidg
+ * Novell probe changed to be invasive because of too many complaints
+ * about some clone boards not being reset properly and thus not
+ * found on a warmboot. Yuck.
+ *
+ * Revision 2.10  1993/10/23  04:07:12  davidg
+ * increment output errors if the device times out (done via watchdog)
+ *
+ * Revision 2.9  1993/10/23  04:01:45  davidg
+ * increment input error counter if a packet with a bad length is
+ * detected.
+ *
+ * Revision 2.8  1993/10/15  10:59:56  davidg
+ * increase maximum time to wait for transmit DMA to complete to 120us.
+ * call ed_reset() if the time limit is reached instead of trying
+ * to abort the remote DMA.
+ *
+ * Revision 2.7  1993/10/15  10:49:10  davidg
+ * minor change to way the mbuf pointer temp variable is assigned in
+ * ed_start (slightly improves code readability)
+ *
+ * Revision 2.6  93/10/02  01:12:20  davidg
+ * use ETHER_ADDR_LEN in NE probe rather than '6'.
+ * 
  * Revision 2.5  93/09/30  17:44:14  davidg
  * patch from vak@zebub.msk.su (Serge V.Vakulenko) to work around
  * a hardware bug in cheap WD clone boards where the PROM checksum
@@ -798,6 +822,7 @@ ed_probe_Novell(isa_dev)
 	/* Reset the board */
 	tmp = inb(sc->asic_addr + ED_NOVELL_RESET);
 
+#if 0
 	/*
 	 * This total and completely screwy thing is to work around braindamage
 	 *	in some NE compatible boards. Why it works, I have *no* idea.
@@ -805,27 +830,32 @@ ed_probe_Novell(isa_dev)
 	 *	will lock up the ISA bus if they see an inb first. Weird.
 	 */
 	outb(0x84, 0);
+#endif
+
+	/*
+	 * I don't know if this is necessary; probably cruft leftover from
+	 *	Clarkson packet driver code. Doesn't do a thing on the boards
+	 *	I've tested. -DG [note that a outb(0x84, 0) seems to work
+	 *	here, and is non-invasive...but some boards don't seem to reset
+	 *	and I don't have complete documentation on what the 'right'
+	 *	thing to do is...so we do the invasive thing for now. Yuck.]
+	 */
+	outb(sc->asic_addr + ED_NOVELL_RESET, tmp);
+	DELAY(5000);
+
+	/*
+	 * This is needed because some NE clones apparently don't reset the
+	 *	NIC properly (or the NIC chip doesn't reset fully on power-up)
+	 * XXX - this makes the probe invasive! ...Done against my better
+	 *	judgement. -DLG
+	 */
+	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STP);
+
 	DELAY(5000);
 
 	/* Make sure that we really have an 8390 based board */
 	if (!ed_probe_generic8390(sc))
 		return(0);
-
-#if 0
-	/*
-	 * I don't know if this is necessary; probably cruft leftover from
-	 *	Clarkson packet driver code. Doesn't do a thing on the boards
-	 *	I've tested. -DG
-	 */
-	outb(sc->asic_addr + ED_NOVELL_RESET, tmp);
-	DELAY(5000);
-#endif
-
-	/*
-	 * This is needed because some NE clones apparently don't reset the
-	 *	NIC properly (or the NIC chip doesn't reset fully on power-up)
-	 */
-	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STP);
 
 	sc->vendor = ED_VENDOR_NOVELL;
 	sc->mem_shared = 0;
@@ -916,7 +946,7 @@ ed_probe_Novell(isa_dev)
 	sc->mem_ring = sc->mem_start + sc->txb_cnt * ED_PAGE_SIZE * ED_TXBUF_SIZE;
 
 	ed_pio_readmem(sc, 0, romdata, 16);
-	for (n = 0; n < 6; n++)
+	for (n = 0; n < ETHER_ADDR_LEN; n++)
 		sc->arpcom.ac_enaddr[n] = romdata[n*(sc->isa16bit+1)];
 
 	/* clear any pending interrupts that might have occurred above */
@@ -1070,7 +1100,10 @@ int
 ed_watchdog(unit)
 	int unit;
 {
+	struct ed_softc *sc = &ed_softc[unit];
+
 	log(LOG_ERR, "ed%d: device timeout\n", unit);
+	++sc->arpcom.ac_if.if_oerrors;
 
 	ed_reset(unit);
 }
@@ -1336,6 +1369,8 @@ outloop:
 	 * Copy the mbuf chain into the transmit buffer
 	 */
 
+	m0 = m;
+
 	/* txb_new points to next open buffer slot */
 	buffer = sc->mem_start + (sc->txb_new * ED_TXBUF_SIZE * ED_PAGE_SIZE);
 
@@ -1367,7 +1402,7 @@ outloop:
 			}
 		}
 
-		for (len = 0, m0 = m; m != 0; m = m->m_next) {
+		for (len = 0; m != 0; m = m->m_next) {
 			bcopy(mtod(m, caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
       	 		len += m->m_len;
@@ -1388,7 +1423,7 @@ outloop:
 			}
 		}
 	} else {
-		len = ed_pio_write_mbufs(sc, m0 = m, buffer);
+		len = ed_pio_write_mbufs(sc, m, buffer);
 	}
 		
 	sc->txb_len[sc->txb_new] = MAX(len, ETHER_MIN_LEN);
@@ -1538,6 +1573,7 @@ ed_rint(unit)
 			log(LOG_ERR,
 				"ed%d: NIC memory corrupt - invalid packet length %d\n",
 				unit, len);
+			++sc->arpcom.ac_if.if_ierrors;
 			ed_reset(unit);
 			return;
 		}
@@ -2108,7 +2144,7 @@ ed_pio_writemem(sc,src,dst,len)
 	unsigned short dst;
 	unsigned short len;
 {
-	int maxwait=20; /* about 25us */
+	int maxwait=100; /* about 120us */
 
 	/* select page 0 registers */
 	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
@@ -2154,7 +2190,7 @@ ed_pio_write_mbufs(sc,m,dst)
 	unsigned short len, mb_offset;
 	struct mbuf *mp;
 	unsigned char residual[2];
-	int maxwait=20; /* about 25us */
+	int maxwait=100; /* about 120us */
 
 	/* First, count up the total number of bytes to copy */
 	for (len = 0, mp = m; mp; mp = mp->m_next)
@@ -2239,10 +2275,7 @@ ed_pio_write_mbufs(sc,m,dst)
 	if (!maxwait) {
 		log(LOG_WARNING, "ed%d: remote transmit DMA failed to complete\n",
 			sc->arpcom.ac_if.if_unit);
-		/* attempt to abort the remote DMA */
-		outb(sc->nic_addr + ED_P0_RBCR0, 0);
-		outb(sc->nic_addr + ED_P0_RBCR1, 0);
-		outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
+		ed_reset(sc->arpcom.ac_if.if_unit);
 	}
 
 	return(len);
