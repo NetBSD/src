@@ -1143,7 +1143,7 @@ trapbase_sun4m:
  * need to .skip 4096 to pad to page size iff. the number of trap tables
  * defined above is odd.
  */
-#if defined(SUN4) + defined(SUN4C) + defined(SUN4M) - 2 == 0
+#if (defined(SUN4) + defined(SUN4C) + defined(SUN4M)) % 2 == 1
 	.skip	4096
 #endif
 
