@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/06/18 00:37:25 itojun Exp $
+#	$NetBSD: Makefile,v 1.13 2002/09/18 01:45:49 chs Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -59,10 +59,10 @@ LIBSA=		${SALIB}
 .PHONY: vers.c
 vers.c: version
 	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "ofppc" ${NEWVERSWHAT}
-	
+
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -s -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG}.elf \
+	${LD} -s -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG}.X \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${OBJCOPY} -O binary ${PROG}.elf ${PROG}
+	mv -f ${PROG}.X ${PROG}
 
 .include <bsd.prog.mk>
