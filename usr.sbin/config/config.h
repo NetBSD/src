@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.41 1999/01/21 13:10:08 pk Exp $	*/
+/*	$NetBSD: config.h,v 1.41.2.1 2000/10/19 15:28:35 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,7 @@
 #else /* ...STDC */
 #define	__P(protos)	()		/* traditional C preprocessor */    
 #endif /* ...STDC */
+#define __attribute__(x)
 #endif /* ...BSD */
 
 #if __STDC__
@@ -410,10 +411,14 @@ void	initsem __P((void));
 void	*emalloc __P((size_t));
 void	*erealloc __P((void *, size_t));
 char	*sourcepath __P((const char *));
-void	warn __P((const char *, ...));			/* immediate warns */
-void	error __P((const char *, ...));			/* immediate errs */
-void	xerror __P((const char *, int, const char *, ...)); /* delayed errs */
-__dead void panic __P((const char *, ...));
+void	warn __P((const char *, ...))			/* immediate warns */
+	__attribute__((__format__(__printf__, 1, 2)));
+void	error __P((const char *, ...))			/* immediate errs */
+	__attribute__((__format__(__printf__, 1, 2)));
+void	xerror __P((const char *, int, const char *, ...)) /* delayed errs */
+	__attribute__((__format__(__printf__, 3, 4)));
+__dead void panic __P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 struct nvlist *newnv __P((const char *, const char *, void *, int,
 	    struct nvlist *));
 void	nvfree __P((struct nvlist *));
