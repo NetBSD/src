@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/11/03 02:13:20 isaki Exp $
+#	$NetBSD: Makefile,v 1.2 2002/12/21 15:54:50 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -14,7 +14,7 @@ CLEANFILES+=	${archive}.tar.gz ${MEMBER_${archive}}
 realall:
 .for archive in ${ARCHIVES}
 	${UUDECODE} ${.CURDIR}/${archive}.uue
-	${PAX} -zrvpp -f ${archive}.tar.gz
+	${PAX} -O -zrvpp -f ${archive}.tar.gz
 .endfor
 
 release:

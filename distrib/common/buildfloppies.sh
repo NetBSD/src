@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: buildfloppies.sh,v 1.3 2002/05/04 01:34:37 lukem Exp $
+# $NetBSD: buildfloppies.sh,v 1.4 2002/12/21 15:54:49 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -100,7 +100,7 @@ rm -f ${floppybase}?${suffix}
 #	create tar file
 #
 dd if=/dev/zero of=${floppy} bs=8k count=1 2>/dev/null
-${PAX} -w ${files} >> ${floppy} || exit 1
+${PAX} -O -w ${files} >> ${floppy} || exit 1
 	# XXX: use pax metafile and set perms?
 if [ -n "$instboot" ]; then
 	instboot=$( echo $instboot | sed -e s/@IMAGE@/${floppy}/ )
