@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.10 1997/05/28 02:49:06 thorpej Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.11 1997/07/05 05:52:41 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -15,8 +15,13 @@
 
 #include <sys/param.h>
 
-#if defined(__FreeBSD__) && (__FreeBSD__ > 1)
-# include <osreldate.h>
+/*
+ * Post NetBSD 1.2 has the PFIL interface for packet filters.  This turns
+ * on those hooks.  We don't need any special mods with this!
+ */
+#if (defined(NetBSD) && (NetBSD > 199609) && (NetBSD <= 1991011)) || \
+    (defined(NetBSD1_2) && NetBSD1_2 > 1)
+# define NETBSD_PF
 #endif
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -50,6 +55,7 @@
 #include <netinet/ip_compat.h>
 #include <netinet/ip_fil.h>
 
+
 #if !defined(VOP_LEASE) && defined(LEASE_CHECK)
 #define	VOP_LEASE	LEASE_CHECK
 #endif
@@ -58,13 +64,28 @@
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
 
+#ifdef NETBSD_PF
+#include <net/pfil.h>
+#endif
+
+#ifndef IPFILTER_LOG
+# ifdef NETBSD_PF
+# define iplread enodev
+# else
+# define	iplread	nodev
+# endif
+#endif
+
+
 extern	int	lkmenodev __P((void));
 
-
+int	xxxinit __P((struct lkm_table *, int, int));
 static	int	ipl_unload __P((void));
 static	int	ipl_load __P((void));
 static	int	ipl_remove __P((void));
-int	if_ipl_lkmentry __P((struct lkm_table *, int, int));
+static	int	iplaction __P((struct lkm_table *, int));
+static	char	*ipf_devfiles[] = { IPL_NAME, IPL_NAT, IPL_STATE, IPL_AUTH,
+				    NULL };
 
 
 #if (defined(NetBSD1_0) && (NetBSD1_0 > 1)) || \
@@ -121,7 +142,7 @@ int cmd;
 			return EEXIST;
 
 		for (i = 0; i < nchrdev; i++)
-			if (cdevsw[i].d_open == (void *)lkmenodev ||
+			if (cdevsw[i].d_open == (dev_type_open((*)))lkmenodev ||
 			    cdevsw[i].d_open == iplopen)
 				break;
 		if (i == nchrdev) {
@@ -136,10 +157,11 @@ int cmd;
 #endif
 		return ipl_load();
 	case LKM_E_UNLOAD :
-#ifdef DEBUG
-		printf("IP Filter: unloaded from slot %d\n", ipl_major);
-#endif
-		return ipl_unload();
+		err = ipl_unload();
+		if (!err)
+			printf("IP Filter: unloaded from slot %d\n",
+				ipl_major);
+		return err;
 	case LKM_E_STAT :
 		break;
 	default:
@@ -152,33 +174,20 @@ int cmd;
 
 static int ipl_remove()
 {
+	char *name;
 	struct nameidata nd;
-	int error;
+	int error, i;
 
-	NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, IPL_NAME, curproc);
-	if ((error = namei(&nd)))
-		return (error);
-	VOP_LEASE(nd.ni_vp, curproc, curproc->p_ucred, LEASE_WRITE);
-	VOP_LOCK(nd.ni_vp);
-	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
-	(void) VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
-
-	NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, IPNAT_NAME, curproc);
-	if ((error = namei(&nd)))
-		return (error);
-	VOP_LEASE(nd.ni_vp, curproc, curproc->p_ucred, LEASE_WRITE);
-	VOP_LOCK(nd.ni_vp);
-	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
-	(void) VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
-
-	NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, IPSTATE_NAME, curproc);
-	if ((error = namei(&nd)))
-		return (error);
-	VOP_LEASE(nd.ni_vp, curproc, curproc->p_ucred, LEASE_WRITE);
-	VOP_LOCK(nd.ni_vp);
-	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
-	(void) VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
-	return (0);
+        for (i = 0; (name = ipf_devfiles[i]); i++) {
+		NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, name, curproc);
+		if ((error = namei(&nd)))
+			return (error);
+		VOP_LEASE(nd.ni_vp, curproc, curproc->p_ucred, LEASE_WRITE);
+		VOP_LOCK(nd.ni_vp);
+		VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
+		(void) VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+	}
+	return 0;
 }
 
 
@@ -202,71 +211,31 @@ static int ipl_load()
 {
 	struct nameidata nd;
 	struct vattr vattr;
-	int error, fmode = S_IFCHR|0600;
+	int error = 0, fmode = S_IFCHR|0600, i;
+	char *name;
 
-	(void) ipl_remove();
-	error = 0;
-
-	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, IPL_NAME, curproc);
-	if ((error = namei(&nd)))
-		return error;
-	if (nd.ni_vp != NULL) {
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		if (nd.ni_dvp == nd.ni_vp)
-			vrele(nd.ni_dvp);
-		else
-			vput(nd.ni_dvp);
-		vrele(nd.ni_vp);
-		return (EEXIST);
+	for (i = 0; (name = ipf_devfiles[i]); i++) {
+		NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, name, curproc);
+		if ((error = namei(&nd)))
+			return error;
+		if (nd.ni_vp != NULL) {
+			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+			if (nd.ni_dvp == nd.ni_vp)
+				vrele(nd.ni_dvp);
+			else
+				vput(nd.ni_dvp);
+			vrele(nd.ni_vp);
+			return (EEXIST);
+		}
+		VATTR_NULL(&vattr);
+		vattr.va_type = VCHR;
+		vattr.va_mode = (fmode & 07777);
+		vattr.va_rdev = (ipl_major << 8) | i;
+		VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
+		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
+		if (error)
+			return error;
 	}
-	VATTR_NULL(&vattr);
-	vattr.va_type = VCHR;
-	vattr.va_mode = (fmode & 07777);
-	vattr.va_rdev = ipl_major<<8;
-	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
-	error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
-	if (error)
-		return error;
-
-	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, IPNAT_NAME, curproc);
-	if ((error = namei(&nd)))
-		return error;
-	if (nd.ni_vp != NULL) {
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		if (nd.ni_dvp == nd.ni_vp)
-			vrele(nd.ni_dvp);
-		else
-			vput(nd.ni_dvp);
-		vrele(nd.ni_vp);
-		return (EEXIST);
-	}
-	VATTR_NULL(&vattr);
-	vattr.va_type = VCHR;
-	vattr.va_mode = (fmode & 07777);
-	vattr.va_rdev = (ipl_major<<8)|1;
-	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
-	error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
-	if (error)
-		return error;
-
-	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, IPSTATE_NAME, curproc);
-	if ((error = namei(&nd)))
-		return error;
-	if (nd.ni_vp != NULL) {
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		if (nd.ni_dvp == nd.ni_vp)
-			vrele(nd.ni_dvp);
-		else
-			vput(nd.ni_dvp);
-		vrele(nd.ni_vp);
-		return (EEXIST);
-	}
-	VATTR_NULL(&vattr);
-	vattr.va_type = VCHR;
-	vattr.va_mode = (fmode & 07777);
-	vattr.va_rdev = (ipl_major<<8)|2;
-	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
-	error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	return error;
 }
 
