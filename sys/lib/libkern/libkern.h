@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.49 2003/08/07 16:32:08 agc Exp $	*/
+/*	$NetBSD: libkern.h,v 1.50 2003/08/13 11:34:24 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -229,7 +229,7 @@ void	 bzero __P((void *, size_t));
 void	*memcpy __P((void *, const void *, size_t));
 int	 memcmp __P((const void *, const void *, size_t));
 void	*memset __P((void *, int, size_t));
-#if __GNUC_PREREQ__(2, 95)
+#if __GNUC_PREREQ__(2, 95) && !defined(__vax__)
 #define	memcpy(d, s, l)		__builtin_memcpy(d, s, l)
 #define	memcmp(a, b, l)		__builtin_memcmp(a, b, l)
 #define	memset(d, v, l)		__builtin_memset(d, v, l)
