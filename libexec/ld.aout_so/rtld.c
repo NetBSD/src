@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.80 2001/03/19 03:54:22 itohy Exp $	*/
+/*	$NetBSD: rtld.c,v 1.81 2001/06/21 21:19:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -214,6 +214,7 @@ static struct nzlist	*lookup __P((	const char *, struct so_map *,
 static inline struct rt_symbol	*lookup_rts __P((const char *));
 static struct rt_symbol	*enter_rts __P((const char *, long, int, caddr_t,
 						long, struct so_map *));
+static void 		clear_rts __P((struct rt_symbol *));
 static void		maphints __P((void));
 static void		unmaphints __P((void));
 static int		hash_string __P((const char *));
@@ -754,6 +755,7 @@ unmap_object(smp)
 	struct so_map	*smp;
 {
 	struct so_map *p, **pp;
+	struct rt_symbol *rtsp, *rtp;
 
 	/* remove from link map list */
 	pp = &link_map_head;
@@ -774,6 +776,22 @@ unmap_object(smp)
 
 	/* unmap from address space */
 	(void)munmap(smp->som_addr, LM_PRIVATE(smp)->spd_size);
+
+	/* remove any globals from the global list that reference this smp */
+	while (rt_symbol_head->rt_smp == smp) {
+		rtp = rt_symbol_head;
+		rt_symbol_head = rtp->rt_next;
+		clear_rts(rtp);
+	}
+
+	for (rtsp = rt_symbol_head; (rtp = rtsp->rt_next) != NULL;) {
+		if (rtp->rt_smp == smp) {
+			rtsp->rt_next = rtp->rt_next;
+			clear_rts(rtp);
+		} else {
+			rtsp->rt_next = rtsp->rt_next;
+		}
+	}
 }
 
 void
@@ -1065,6 +1083,27 @@ enter_rts(name, value, type, srcaddr, size, smp)
 	return rtsp;
 }
 
+static void
+clear_rts(rtp)
+	struct rt_symbol *rtp;
+{
+	struct rt_symbol *lrt;
+	int hashval = hash_string(rtp->rt_sp->nz_name) % RTC_TABSIZE;
+
+	if (rtp == rt_symtab[hashval]) {
+		rt_symtab[hashval] = rtp->rt_next;
+	} else {
+		for (lrt = rt_symtab[hashval]; lrt->rt_link;
+		    lrt = lrt->rt_link) {
+			if (lrt->rt_link == rtp) {
+				lrt->rt_link = rtp->rt_link->rt_link;
+			}
+		}
+	}
+	free(rtp->rt_sp);
+	free(rtp);
+}
+
 
 /*
  * Lookup NAME in the link maps. The link map producing a definition
@@ -1247,7 +1286,7 @@ __dladdr(addr, dli)
 				dli->dli_fname = 0;
 				dli->dli_fbase = 0;
 				dli->dli_sname = rtsp->rt_sp->nz_name;
-				dli->dli_saddr = addr;
+				dli->dli_saddr = (void *)addr;
 				return (1);
 			}
 	}
