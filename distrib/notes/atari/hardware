@@ -1,8 +1,9 @@
-.\"	$NetBSD: hardware,v 1.10 1999/01/13 07:30:03 ross Exp $	
+.\"	$NetBSD: hardware,v 1.11 1999/04/06 12:33:38 leo Exp $	
 NetBSD/atari \*V runs on a TT030, Falcon and Hades. An FPU is not required.
-The minimum amount of RAM required is 4Mb. On the Hades, only the et4000-PCI
-card is supported in the _VER release. When another video card is present,
-you can use NetBSD only with a serial console.
+The minimum amount of RAM required is 4Mb. On the Hades, only the Tseng PCI
+VGA cards (et4000/et6000/et6100) are supported in the \*V release. When
+an unsupported video card is present, you can use NetBSD with a serial console
+only.
 .Pp
 Here is a table of recommended HD partition sizes for a full install:
 .Bd -literal -offset indent
@@ -50,7 +51,7 @@ The Falcon FX memory expansion
 .	It
 The atari mouse
 .	It
-A 3-button mouse
+A 3-button mouse (see build description in the FAQ!)
 .	It
 The parallel printer
 .	It
@@ -60,7 +61,13 @@ IDE interface on both Falcon and Hades
 .	It
 The serial interface on the first 68901 UART (modem1)
 .	It
-ET4000-PCI (VGA) on the Hades.
+ET4000/ET6000/ET6100-PCI (VGA) on the Hades.
+.	It
+ISA-bus devices (Hades only)
+.	Bl -hyphen
+.		It
+Teles S0/16.3-ISA ISDN adapter (with I4B)
+.	El
 .El
 .Pp
 If it's not on this list, there is no support for it in this release.
