@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.1 2003/10/13 09:37:45 jdolecek Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.2 2003/10/15 19:43:00 jdolecek Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,6 +36,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+
+# Script to generate platform MAKEDEV script from MI template, MD
+# MAKEDEV.conf and MD/MI major lists
+#
+# Uses environment variables MACHINE/MACHINE_ARCH to select
+# appropriate files, and NETBSDSRCDIR to get root of source tree.
 
 BEGIN {
 	# top of source tree, used to find major number list in kernel
@@ -80,6 +86,24 @@ BEGIN {
 		}
 	}
 
+	# read MD config file, and determine disk partitions
+	# and MD device list
+	cfgfile = "etc." machine "/MAKEDEV.conf"
+	MDDEV = 0		# MD device targets
+	MKDISK = ""		# routine to create disk devices
+	while (getline < cfgfile) {
+		if ($1 ~ "^DISKPARTITIONS=") {
+			sub(".*=[ \t]*", "")
+			MKDISK = "makedisk_p" $0
+		} else if (MDDEV) {
+			if (MDDEV == 1)
+				MDDEV = $0
+			else
+				MDDEV = MDDEV "\n" $0
+		} else if ($1 ~ "^MD_DEVICES=")
+			MDDEV = 1
+	}
+
 	# initially no substitutions
 	devsubst = 0
 	deventry = ""
@@ -96,6 +120,9 @@ BEGIN {
 }
 
 {
+	sub("^%MD_DEVICES%", MDDEV)
+	sub("%MKDISK%", MKDISK)
+
 	# if device substitutions are not active, do nothing more
 	if (!devsubst) {
 		print
