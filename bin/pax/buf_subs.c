@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.23.2.1 2004/06/18 09:07:20 tron Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.23.2.2 2004/11/12 05:04:07 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.23.2.1 2004/06/18 09:07:20 tron Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.23.2.2 2004/11/12 05:04:07 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -745,7 +745,7 @@ rd_wrfile(ARCHD *arcn, int ofd, off_t *left)
 	 * written. just closing with the file offset moved forward may not put
 	 * a hole at the end of the file.
 	 */
-	if (ofd != -1 && isem && (arcn->sb.st_size > 0L))
+	if (ofd >= 0 && isem && (arcn->sb.st_size > 0L))
 		file_flush(ofd, fnm, isem);
 
 	/*
