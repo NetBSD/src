@@ -1,4 +1,4 @@
-#	$NetBSD: files.s3c2410,v 1.1 2003/07/31 19:49:41 bsh Exp $
+#	$NetBSD: files.s3c2410,v 1.2 2003/08/05 11:29:00 bsh Exp $
 #
 # Configuration info for Samsung S3C2410
 #
@@ -13,4 +13,8 @@ file	arch/arm/s3c2xx0/s3c2410.c
 
 # UART
 file	arch/arm/s3c2xx0/sscom_s3c2410.c	sscom
+
+# OHCI USB controller
+attach	ohci at ssio with ohci_ssio
+file	arch/arm/s3c2xx0/ohci_s3c24x0.c		ohci_ssio
 
