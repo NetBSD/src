@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.16 2000/01/25 06:36:17 chopps Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.17 2000/02/10 09:01:52 chopps Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -392,7 +392,8 @@ pcmcia_scan_cis(dev, fct, arg)
 					longlink_addr *= 2;
 
 				pcmcia_chip_mem_map(pct, pch, longlink_common ?
-				    PCMCIA_MEM_COMMON : PCMCIA_MEM_ATTR,
+				    (PCMCIA_WIDTH_MEM8 | PCMCIA_MEM_COMMON) :
+				    PCMCIA_MEM_ATTR,
 				    longlink_addr, PCMCIA_CIS_SIZE,
 				    &pcmh, &tuple.ptr, &window);
 
@@ -412,7 +413,8 @@ pcmcia_scan_cis(dev, fct, arg)
 
 				pcmcia_chip_mem_map(pct, pch,
 				    mfc[mfc_index].common ?
-				    PCMCIA_MEM_COMMON : PCMCIA_MEM_ATTR,
+				    ( PCMCIA_WIDTH_MEM8 | PCMCIA_MEM_COMMON )
+				    : PCMCIA_MEM_ATTR,
 				    mfc[mfc_index].addr, PCMCIA_CIS_SIZE,
 				    &pcmh, &tuple.ptr, &window);
 
