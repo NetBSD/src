@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.5 1996/02/28 21:04:18 thorpej Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.6 1998/02/17 11:38:27 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,11 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: tn3270.c,v 1.5 1996/02/28 21:04:18 thorpej Exp $";
+static char rcsid[] = "$NetBSD: tn3270.c,v 1.6 1998/02/17 11:38:27 kleink Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/time.h>
 #include <arpa/telnet.h>
 
 #include "general.h"
