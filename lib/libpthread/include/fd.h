@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $Id: fd.h,v 1.3 1994/02/07 22:02:29 proven Exp $ $provenid: fd.h,v 1.17 1994/02/07 03:31:54 proven Exp $
+ * $Id: fd.h,v 1.4 1997/10/08 00:33:40 christos Exp $ $provenid: fd.h,v 1.17 1994/02/07 03:31:54 proven Exp $
  *
  * Description : Basic fd header.
  *
@@ -55,19 +55,20 @@ enum fd_type {
 #define FD_WRITE			0x2
 #define FD_RDWR				(FD_READ | FD_WRITE)
 
-struct fd_ops {
-	int 					(*write)();
-	int 					(*read)();
-	int						(*close)();
-	int						(*fcntl)();
-	int						(*writev)();
-	int						(*readv)();
-	int						(*seek)();
-};
-
+struct iovec;
 union fd_data {
 	void 					*ptr;
 	int						i;
+};
+
+struct fd_ops {
+	ssize_t (*write) __P((union fd_data, int, const void *, size_t));
+	ssize_t (*read) __P((union fd_data, int, void *, size_t));
+	int (*close) __P((union fd_data, int ));
+	int (*fcntl) __P((union fd_data, int, int, ...));
+	int (*writev) __P((union fd_data, int, const struct iovec *, int));
+	int (*readv) __P((union fd_data, int, const struct iovec *, int));
+	off_t (*seek) __P((union fd_data, int, off_t, int));
 };
 
 struct fd_table_entry {
