@@ -1,25 +1,25 @@
 /*
- *	$Id: ite_rt.c,v 1.5 1994/02/11 07:01:50 chopps Exp $
+ *	$Id: ite_rt.c,v 1.6 1994/02/13 21:10:47 chopps Exp $
  */
 
 #include "ite.h"
 #if NITE > 0
 
-#include "param.h"
-#include "conf.h"
-#include "proc.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "systm.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/systm.h>
 
-#include "itevar.h"
+#include <amiga/dev/itevar.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 /* XXX */
-#include "grfioctl.h"
-#include "grfvar.h"
-#include "grf_rtreg.h"
+#include <amiga/dev/grfioctl.h>
+#include <amiga/dev/grfvar.h>
+#include <amiga/dev/grf_rtreg.h>
 
 void retina_init(struct ite_softc *ip)
 {

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siop.c	7.5 (Berkeley) 5/4/91
- *	$Id: siop.c,v 1.3 1994/02/11 07:02:18 chopps Exp $
+ *	$Id: siop.c,v 1.4 1994/02/13 21:11:03 chopps Exp $
  *
  * MULTICONTROLLER support only working for multiple controllers of the 
  * same kind at the moment !! 
@@ -51,24 +51,24 @@
 #if NSIOP > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/siop.c,v 1.3 1994/02/11 07:02:18 chopps Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/siop.c,v 1.4 1994/02/13 21:11:03 chopps Exp $";
 #endif
 
 /* need to know if any tapes have been configured */
 #include "st.h"
  
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "device.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <amiga/dev/device.h>
 
-#include "scsidefs.h"
-#include "siopvar.h"
-#include "siopreg.h"
+#include <amiga/dev/scsidefs.h>
+#include <amiga/dev/siopvar.h>
+#include <amiga/dev/siopreg.h>
 
-#include "../amiga/custom.h"
+#include <amiga/amiga/custom.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 extern u_int	kvtop();
 
