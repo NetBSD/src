@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.25 2004/01/20 16:40:11 jmmv Exp $
+#	$NetBSD: bsd.x11.mk,v 1.26 2004/01/25 02:15:51 rtr Exp $
 
 .include <bsd.init.mk>
 
@@ -56,6 +56,7 @@ X11FLAGS.SERVER+=	-DXINPUT -DXFreeXDGA -DXF86VIDMODE
     ${MACHINE_ARCH} == "x86_64"
 #	ServerDefines
 X11FLAGS.SERVER+=	-D_XSERVER64
+X11FLAGS.EXTENSION+=	-D__GLX_ALIGN64
 .endif
 
 .if ${MACHINE} == "amd64"	|| \
