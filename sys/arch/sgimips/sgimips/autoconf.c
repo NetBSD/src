@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2003/01/03 06:24:18 rafal Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 2003/01/19 22:33:20 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -89,7 +89,7 @@ cpu_configure()
 	    mask |= ((1UL << 20) | (1UL << 26));
 	    *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_MASK) = mask;
 	    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_PCI_FLUSH_W) = 0xffffffff;
-	    *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK) = 0x300710ULL;
+	    *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK) = 0x30ff10ULL;
 
 	    aprint_debug("CRM_MASK: %llx, MACEISA_MASK (%x) %llx\n", 
 	      *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK),
@@ -199,7 +199,7 @@ device_register(dev, aux)
 	 * Handle SCSI boot device definitions
 	 * wdsc -- IP22/24
 	 * ahc -- IP32
-		 */
+	 */
 	if ( (scsiboot && strcmp(name, "wdsc") == 0) ||
 	     (scsiboot && strcmp(name, "ahc") == 0) ) {
 		if (dev->dv_unit == booted_slot)
