@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.61 2003/11/04 19:09:39 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.62 2003/11/07 06:03:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.61 2003/11/04 19:09:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.62 2003/11/07 06:03:52 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -857,7 +857,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_bus_speed = (sc->sc_flags & WM_F_PCIX) ? 120
 								      : 66;
 		} else if (sc->sc_flags & WM_F_PCIX) {
-			switch (STATUS_PCIXSPD(reg)) {
+			switch (reg & STATUS_PCIXSPD_MASK) {
 			case STATUS_PCIXSPD_50_66:
 				sc->sc_bus_speed = 66;
 				break;
@@ -870,7 +870,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 			default:
 				aprint_error(
 				    "%s: unknown PCIXSPD %d; assuming 66MHz\n",
-				    sc->sc_dev.dv_xname, STATUS_PCIXSPD(reg));
+				    sc->sc_dev.dv_xname,
+				    reg & STATUS_PCIXSPD_MASK);
 				sc->sc_bus_speed = 66;
 			}
 		} else
