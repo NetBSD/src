@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.4 1995/03/21 09:04:06 cgd Exp $	*/
+/*	$NetBSD: dd.c,v 1.5 1995/10/08 23:01:24 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: dd.c,v 1.4 1995/03/21 09:04:06 cgd Exp $";
+static char rcsid[] = "$NetBSD: dd.c,v 1.5 1995/10/08 23:01:24 gwr Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,11 @@ setup()
 	 * table that does both at once.  If just converting case, use the
 	 * built-in tables.
 	 */
-	if (ddflags & (C_LCASE|C_UCASE))
+	if (ddflags & (C_LCASE|C_UCASE)) {
+#ifdef	NO_CONV
+		/* Should not get here, but just in case... */
+		errx(1, "case conv and -DNO_CONV");
+#else	/* NO_CONV */
 		if (ddflags & C_ASCII)
 			if (ddflags & C_LCASE) {
 				for (cnt = 0; cnt < 0377; ++cnt)
@@ -201,6 +205,9 @@ setup()
 			}
 		else
 			ctab = ddflags & C_LCASE ? u2l : l2u;
+#endif	/* NO_CONV */
+	}
+
 	(void)time(&st.start);			/* Statistics timestamp. */
 }
 
