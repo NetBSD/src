@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.h,v 1.2 2002/04/28 17:21:59 manu Exp $ */
+/*	$NetBSD: irix_prctl.h,v 1.3 2002/06/05 17:27:11 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 #define IRIX_PR_THREAD_CTL	21
 #define IRIX_PR_LASTSHEXIT	22
 
+/* sproc flags */
 #define IRIX_PR_SPROC		0x00000001
 #define IRIX_PR_SFDS		0x00000002
 #define IRIX_PR_SDIR		0x00000004
@@ -74,5 +75,20 @@
 #define IRIX_PR_NOLIBC		0x02000000
 #define IRIX_PR_EVENT		0x04000000
 
+/* offset between parent and children stack when IRIX_PR_SADDR is used */
 #define IRIX_SPROC_STACK_OFFSET	0x04000000
+
+/* blockproc constants */
+#define IRIX_PR_MAXBLOCKCNT	10000
+#define IRIX_PR_MINBLOCKCNT	-10000
+
+/* This is undocumented */
+#define IRIX_PROCBLK_BLOCK	0
+#define IRIX_PROCBLK_UNBLOCK	1
+#define IRIX_PROCBLK_COUNT	2
+#define IRIX_PROCBLK_BLOCKALL	3
+#define IRIX_PROCBLK_UNBLOCKALL	4
+#define IRIX_PROCBLK_COUNTALL	5
+#define IRIX_PROCBLK_ONLYONE	-3
+
 #endif /* _IRIX_IRIX_PRCTL_H_ */
