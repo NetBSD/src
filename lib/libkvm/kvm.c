@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.25 1994/02/14 04:34:44 chopps Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.26 1994/02/14 13:46:01 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -141,35 +141,52 @@ static struct nlist nl[] = {
 #define X_VM_PAGE_HASH_MASK	6
 	{ "_page_shift" },
 #define X_PAGE_SHIFT	7
+
+#if defined(m68k)
+#define	X_DEADKERNEL	8
+#endif
+
+#if defined(i386)
+#define	X_DEADKERNEL	8
+#endif
+
+#if defined(sparc)
+	{ "_pmap_dtos" },
+#define	X_PMAP_DTOS	8
+#define	X_DEADKERNEL	9
+#endif
+
 	/*
 	 * everything here and down, only if a dead kernel
 	 */
 	{ "_Sysmap" },
-#define	X_SYSMAP	8
-#define	X_DEADKERNEL	X_SYSMAP
+#define	X_SYSMAP	(X_DEADKERNEL + 0)
 	{ "_Syssize" },
-#define	X_SYSSIZE	9
+#define	X_SYSSIZE	(X_DEADKERNEL + 1)
 	{ "_allproc" },
-#define X_ALLPROC	10
+#define X_ALLPROC	(X_DEADKERNEL + 2)
 	{ "_zombproc" },
-#define X_ZOMBPROC	11
+#define X_ZOMBPROC	(X_DEADKERNEL + 3)
 	{ "_nproc" },
-#define	X_NPROC		12
-#define	X_LAST		12
+#define	X_NPROC		(X_DEADKERNEL + 4)
+#define	X_LAST		(X_DEADKERNEL + 5)
+
 #if defined(m68k)
 	{ "_Sysseg" },
-#define	X_SYSSEG	(X_LAST+1)
+#define	X_SYSSEG	(X_LAST+0)
 	{ "_lowram" },
-#define	X_LOWRAM	(X_LAST+2)
+#define	X_LOWRAM	(X_LAST+1)
 #if defined(amiga)
 	{ "_cpu040" },
-#define X_CPU040	(X_LAST+3)
+#define X_CPU040	(X_LAST+2)
 #endif
 #endif
+
 #if defined(i386)
 	{ "_IdlePTD" },
-#define	X_IdlePTD	(X_LAST+1)
+#define	X_IdlePTD	(X_LAST+0)
 #endif
+
 	{ "" },
 };
 
@@ -179,6 +196,9 @@ static int getkvars(), kvm_doprocs(), kvm_init();
 static int vatosw();
 static int pager_get();
 static int findpage();
+#if defined(sparc)
+static vm_offset_t phys2realphys();
+#endif
 
 /*
  * returns 	0 if files were opened now,
@@ -649,7 +669,7 @@ kvm_getu(p)
 				(void) lseek(mem, maddr + i * NBPG, 0);
 				if (read(mem,
 				    (char *)user.upages[i], NBPG) != NBPG) {
-					seterr(
+					setsyserr(
 					    "can't read u for pid %d from %s",
 					    p->p_pid, swapf);
 					return NULL;
@@ -658,7 +678,7 @@ kvm_getu(p)
 				(void) lseek(swap, swb.offset + i * NBPG, 0);
 				if (read(swap,
 				    (char *)user.upages[i], NBPG) != NBPG) {
-					seterr(
+					setsyserr(
 					    "can't read u for pid %d from %s",
 					    p->p_pid, swapf);
 					return NULL;
@@ -674,7 +694,7 @@ kvm_getu(p)
 	for (i = 0; i < UPAGES; i++) {
 		klseek(kmem, (long)up, 0);
 		if (read(kmem, user.upages[i], CLBYTES) != CLBYTES) {
-			seterr("cant read page %x of u of pid %d from %s",
+			setsyserr("cant read page %x of u of pid %d from %s",
 			    up, p->p_pid, kmemf);
 			return(NULL);
 		}
@@ -708,26 +728,29 @@ kvm_procread(p, addr, buf, len)
 			return 0;
 
 		if (memaddr) {
+#if defined(sparc)
+			memaddr = phys2realphys(memaddr);
+#endif
 			if (lseek(mem, memaddr, 0) == -1) {
-				seterr("kvm_procread: lseek mem");
+				setsyserr("kvm_procread: lseek mem");
 				return 0;
 			}
 			len = read(mem, bouncebuf, CLBYTES);
 			if (len == -1 || len < CLBYTES) {
 				last_pid = -1;
-				seterr("kvm_procread: read mem");
+				setsyserr("kvm_procread: read mem");
 				return 0;
 			}
 		} else {
 			swaddr = swb.offset;
 			if (lseek(swap, swaddr, 0) == -1) {
-				seterr("kvm_procread: lseek swap");
+				setsyserr("kvm_procread: lseek swap");
 				return 0;
 			}
 			len = read(swap, bouncebuf, CLBYTES);
 			if (len == -1 || len < CLBYTES) {
 				last_pid = -1;
-				seterr("kvm_procread: read swap");
+				setsyserr("kvm_procread: read swap");
 				return 0;
 			}
 		}
@@ -956,15 +979,21 @@ getkvars()
 	return (0);
 }
 
+int
 kvm_read(loc, buf, len)
 	void *loc;
 	void *buf;
 {
+	int n;
+
 	if (kvmfilesopen == 0 && kvm_openfiles(NULL, NULL, NULL) == -1)
 		return (-1);
 	klseek(kmem, (off_t) loc, 0);
-	if (read(kmem, buf, len) != len) {
-		seterr("error reading kmem at %x", loc);
+	if ((n = read(kmem, buf, len)) != len) {
+		if (n == -1)
+			setsyserr("error reading kmem at %#x", loc);
+		else
+			seterr("short read on kmem at %#x", loc);
 		return (-1);
 	}
 	return (len);
@@ -1011,7 +1040,7 @@ Vtophys(loc)
 	}
 	newloc = (newloc - (off_t)ptob(lowram)) + (loc & PGOFSET);
 #endif
-#ifdef i386
+#if defined(i386)
 	struct pde pde;
 	struct pte pte;
 	int p;
@@ -1061,7 +1090,7 @@ struct swapblk	*swb;
 	for (i = 0; ; i++) {
 		/* Weed through map entries until vaddr in range */
 		if (kvm_read((void *) addr, &vm_entry, sizeof(vm_entry)) == -1) {
-			setsyserr("vatosw: read vm_map_entry");
+			seterr("vatosw: can't read vm_map_entry");
 			return 0;
 		}
 #ifdef DEBUG
@@ -1073,9 +1102,6 @@ struct swapblk	*swb;
 			if (vm_entry.object.vm_object != 0)
 				break;
 			else {
-#ifdef DEBUG
-				fprintf(stderr, "vatosw: no object\n");
-#endif
 				seterr("vatosw: no object\n");
 				return 0;
 			}
@@ -1103,7 +1129,7 @@ struct swapblk	*swb;
 	addr = (long)vm_entry.object.vm_object;
 	while (1) {
 		if (kvm_read((void *) addr, &vm_object, sizeof (vm_object)) == -1) {
-			setsyserr("vatosw: read vm_object");
+			seterr("vatosw: can't read vm_object");
 			return 0;
 		}
 
@@ -1149,7 +1175,7 @@ struct swapblk	*swb;
 
 	/* Find address in swap space */
 	if (kvm_read(object->pager, &pager, sizeof (pager)) == -1) {
-		setsyserr("pager_get: read pager");
+		seterr("pager_get: can't read pager");
 		return 0;
 	}
 	if (pager.pg_type != PG_SWAP) {
@@ -1159,7 +1185,7 @@ struct swapblk	*swb;
 
 	/* Get swap pager data */
 	if (kvm_read(pager.pg_data, &swpager, sizeof (swpager)) == -1) {
-		setsyserr("pager_get: read swpager");
+		seterr("pager_get: can't read swpager");
 		return 0;
 	}
 
@@ -1169,7 +1195,7 @@ struct swapblk	*swb;
 	if (kvm_read((void *) swpager.sw_blocks +
 			(off/dbtob(swpager.sw_bsize)) * sizeof swblock,
 			&swblock, sizeof (swblock)) == -1) {
-		setsyserr("pager_get: read swblock");
+		seterr("pager_get: can't read swblock");
 		return 0;
 	}
 
@@ -1221,6 +1247,48 @@ vm_offset_t		*maddr;
 	return -1;
 }
 
+#if defined(sparc)
+/*
+ * This comes from the bowels of pmap.c
+ */
+#define MAXMEM 	(128 * 1024 * 1024)	/* no more than 128 MB phys mem */
+#define NPGBANK	16			/* 2^4 pages per bank (64K / bank) */
+#define	BSHIFT	4			/* log2(NPGBANK) */
+#define BOFFSET	(NPGBANK - 1)
+#define BTSIZE 	(MAXMEM / NBPG / NPGBANK)
+
+static int	pmap_dtos[BTSIZE];		/* dense to sparse */
+static int	pmap_stod[BTSIZE];		/* sparse to dense */
+
+#define	HWTOSW(pg) (pmap_stod[(pg) >> BSHIFT] | ((pg) & BOFFSET))
+#define	SWTOHW(pg) (pmap_dtos[(pg) >> BSHIFT] | ((pg) & BOFFSET))
+/* -- */
+
+static int pmap_dtos_valid;
+
+/*
+ * Translate a VM physical address to a hardware physical address.
+ */
+static vm_offset_t
+phys2realphys(memaddr)
+vm_offset_t memaddr;
+{
+	if (nl[X_PMAP_DTOS].n_value == 0)
+		/* This is possibly a sun4 */
+		return memaddr;
+
+	if (!pmap_dtos_valid) {
+		if (kvm_read((void *)nl[X_PMAP_DTOS].n_value,
+					pmap_dtos, sizeof (pmap_dtos)) == -1) {
+			seterr("can't read pmap_dtos table");
+			return -1;
+		}
+		pmap_dtos_valid = 1;
+	}
+	return (SWTOHW(atop(memaddr)) << PGSHIFT) | (memaddr & PGOFSET);
+}
+#endif
+
 #include <varargs.h>
 static char errbuf[_POSIX2_LINE_MAX];
 
@@ -1235,7 +1303,7 @@ seterr(va_alist)
 	fmt = va_arg(ap, char *);
 	(void) vsnprintf(errbuf, _POSIX2_LINE_MAX, fmt, ap);
 #ifdef DEBUG
-	(void) printf("%s", errbuf);
+	(void) fprintf(stderr, "%s\n", errbuf);
 #endif
 	va_end(ap);
 }
@@ -1255,7 +1323,7 @@ setsyserr(va_alist)
 	(void) snprintf(cp, _POSIX2_LINE_MAX - (cp - errbuf), ": %s",
 			strerror(errno));
 #ifdef DEBUG
-	(void) printf("%s", errbuf);
+	(void) fprintf(stderr, "%s\n", errbuf);
 #endif
 	va_end(ap);
 }
