@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.12 1997/06/06 23:15:01 mellon Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: if_devar.h,v 1.12 1997/06/06 23:15:01 mellon Exp $
+ * Id: if_devar.h,v 1.23 1997/06/03 18:51:16 thomas Exp
  */
 
 #if !defined(_DEVAR_H)
