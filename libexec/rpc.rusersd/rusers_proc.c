@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusers_proc.c,v 1.11 1995/07/09 00:30:15 pk Exp $";
+static char rcsid[] = "$Id: rusers_proc.c,v 1.12 1995/12/14 21:58:33 thorpej Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -156,9 +156,9 @@ getidle(tty, display)
 #if !defined(i386)
 		kbd_idle = getidle("kbd", NULL);
 #else
-#if __GNUC__ >= 2
-#warning i386 console hack here
-#endif
+		/*
+		 * XXX Icky i386 console hack.
+		 */
 		kbd_idle = getidle("vga", NULL);
 #endif
 		mouse_idle = getidle("mouse", NULL);
