@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.24 2003/07/15 02:43:25 lukem Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.25 2003/10/27 22:16:04 fredb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.24 2003/07/15 02:43:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.25 2003/10/27 22:16:04 fredb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -660,6 +660,7 @@ fdopen(dev, flags, devType, proc)
 	iwm_softc_t *iwm = iwm_cd.cd_devs[0];
 #endif
 	info = NULL;		/* XXX shut up egcs */
+	fd = NULL;		/* XXX shut up gcc3 */
 
 	/*
 	 * See <device.h> for struct cfdriver, <disklabel.h> for
@@ -1018,6 +1019,8 @@ fdstrategy(bp)
 
 	err = 0;
 	done = 0;
+	sectSize = 0;		/* XXX shut up gcc3 */
+	fd = NULL;		/* XXX shut up gcc3 */
 
 	fdUnit = minor(bp->b_dev) / MAXPARTITIONS;
 	if (TRACE_STRAT) {
