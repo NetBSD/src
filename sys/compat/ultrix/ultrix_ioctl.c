@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.9 1997/05/05 22:21:18 jonathan Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.10 1997/05/25 10:38:00 jonathan Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -110,6 +110,10 @@ static u_long s2btab[] = {
  (emul_cc) ? (emul_cc) : _POSIX_VDISABLE;
 
 
+static void stios2btios __P((struct emul_termios *, struct termios *));
+static void btios2stios __P((struct termios *, struct emul_termios *));
+static void stios2stio __P((struct emul_termios *, struct emul_termio *));
+static void stio2stios __P((struct emul_termio *, struct emul_termios *));
 
 /*
  * these two conversion functions have mostly been done
@@ -444,7 +448,7 @@ ultrix_sys_ioctl(p, v, retval)
 	struct ultrix_sys_ioctl_args *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
-	register int (*ctl)();
+	register int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
 	int error;
 
 	if ( (unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
