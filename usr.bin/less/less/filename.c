@@ -1,5 +1,7 @@
+/*	$NetBSD: filename.c,v 1.1.1.2 1997/04/22 13:45:16 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,12 +33,21 @@
  */
 
 #include "less.h"
-#include "pathname.h"
-#if MSOFTC
+#if MSDOS_COMPILER
 #include <dos.h>
+#if MSDOS_COMPILER==WIN32C
+#include <dir.h>
+#endif
+#endif
+#ifdef _OSK
+#include <rbf.h>
+#ifndef _OSK_MWC32
+#include <modes.h>
+#endif
 #endif
 
 extern int force_open;
+extern int secure;
 extern IFILE curr_ifile;
 extern IFILE old_ifile;
 
@@ -61,11 +72,7 @@ dirfile(dirname, filename)
 					sizeof(char));
 	if (pathname == NULL)
 		return (NULL);
-#if MSOFTC || OS2
-	sprintf(pathname, "%s\\%s", dirname, filename);
-#else
-	sprintf(pathname, "%s/%s", dirname, filename);
-#endif
+	sprintf(pathname, "%s%s%s", dirname, PATHNAME_SEP, filename);
 	/*
 	 * Make sure the file exists.
 	 */
@@ -76,7 +83,7 @@ dirfile(dirname, filename)
 		pathname = NULL;
 	} else
 	{
-		close (f);
+		close(f);
 	}
 	return (pathname);
 }
@@ -93,18 +100,18 @@ homefile(filename)
 	/*
 	 * Try $HOME/filename.
 	 */
-	pathname = dirfile(getenv("HOME"), filename);
+	pathname = dirfile(lgetenv("HOME"), filename);
 	if (pathname != NULL)
 		return (pathname);
 #if OS2
 	/*
 	 * Try $INIT/filename.
 	 */
-	pathname = dirfile(getenv("INIT"), filename);
+	pathname = dirfile(lgetenv("INIT"), filename);
 	if (pathname != NULL)
 		return (pathname);
 #endif
-#if MSOFTC || OS2
+#if MSDOS_COMPILER || OS2
 	/*
 	 * Look for the file anywhere on search path.
 	 */
@@ -118,25 +125,10 @@ homefile(filename)
 }
 
 /*
- * Find out where the help file is.
- */
-	public char *
-find_helpfile()
-{
-	register char *helpfile;
-	
-	if ((helpfile = getenv("LESSHELP")) != NULL)
-		return (save(helpfile));
-#if MSOFTC || OS2
-	return (homefile(_MORE_PATH_HELP));
-#else
-	return (save(_MORE_PATH_HELP));
-#endif
-}
-
-/*
  * Expand a string, substituting any "%" with the current filename,
  * and any "#" with the previous filename.
+ * But a string of N "%"s is just replaced with N-1 "%"s.
+ * Likewise for a string of N "#"s.
  * {{ This is a lot of work just to support % and #. }}
  */
 	public char *
@@ -146,6 +138,11 @@ fexpand(s)
 	register char *fr, *to;
 	register int n;
 	register char *e;
+	IFILE ifile;
+
+#define	fchar_ifile(c) \
+	((c) == '%' ? curr_ifile : \
+	 (c) == '#' ? old_ifile : NULL_IFILE)
 
 	/*
 	 * Make one pass to see how big a buffer we 
@@ -157,20 +154,28 @@ fexpand(s)
 		switch (*fr)
 		{
 		case '%':
-			if (curr_ifile == NULL_IFILE)
-			{
-				/* error("No current file", NULL_PARG); */
-				return (save(s));
-			}
-			n += strlen(get_filename(curr_ifile));
-			break;
 		case '#':
-			if (old_ifile == NULL_IFILE)
+			if (fr > s && fr[-1] == *fr)
 			{
-				/* error("No previous file", NULL_PARG); */
-				return (save(s));
+				/*
+				 * Second (or later) char in a string
+				 * of identical chars.  Treat as normal.
+				 */
+				n++;
+			} else if (fr[1] != *fr)
+			{
+				/*
+				 * Single char (not repeated).  Treat specially.
+				 */
+				ifile = fchar_ifile(*fr);
+				if (ifile == NULL_IFILE)
+					return (save(s));
+				n += strlen(get_filename(ifile));
 			}
-			n += strlen(get_filename(old_ifile));
+			/*
+			 * Else it is the first char in a string of
+			 * identical chars.  Just discard it.
+			 */
 			break;
 		default:
 			n++;
@@ -189,12 +194,16 @@ fexpand(s)
 		switch (*fr)
 		{
 		case '%':
-			strcpy(to, get_filename(curr_ifile));
-			to += strlen(to);
-			break;
 		case '#':
-			strcpy(to, get_filename(old_ifile));
-			to += strlen(to);
+			if (fr > s && fr[-1] == *fr)
+			{
+				*to++ = *fr;
+			} else if (fr[1] != *fr)
+			{
+				ifile = fchar_ifile(*fr);
+				strcpy(to, get_filename(ifile));
+				to += strlen(to);
+			}
 			break;
 		default:
 			*to++ = *fr;
@@ -216,10 +225,13 @@ fcomplete(s)
 	char *s;
 {
 	char *fpat;
+
+	if (secure)
+		return (NULL);
 	/*
 	 * Complete the filename "s" by globbing "s*".
 	 */
-#if MSOFTC
+#if MSDOS_COMPILER
 	/*
 	 * But in DOS, we have to glob "s*.*".
 	 * But if the final component of the filename already has
@@ -227,20 +239,22 @@ fcomplete(s)
 	 * (Thus, "FILE" is globbed as "FILE*.*", 
 	 *  but "FILE.A" is globbed as "FILE.A*").
 	 */
-	char *slash;
-	for (slash = s+strlen(s)-1;  slash > s;  slash--)
-		if (*slash == '/' || *slash == '\\')
-			break;
-	fpat = (char *) ecalloc(strlen(s)+4, sizeof(char));
-	if (strchr(slash, '.') == NULL)
-		sprintf(fpat, "%s*.*", s);
-	else
-		sprintf(fpat, "%s*", s);
+	{
+		char *slash;
+		for (slash = s+strlen(s)-1;  slash > s;  slash--)
+			if (*slash = *PATHNAME_SEP || *slash == '/')
+				break;
+		fpat = (char *) ecalloc(strlen(s)+4, sizeof(char));
+		if (strchr(slash, '.') == NULL)
+			sprintf(fpat, "%s*.*", s);
+		else
+			sprintf(fpat, "%s*", s);
+	}
 #else
 	fpat = (char *) ecalloc(strlen(s)+2, sizeof(char));
 	sprintf(fpat, "%s*", s);
 #endif
-	s = glob(fpat);
+	s = lglob(fpat);
 	if (strcmp(s,fpat) == 0)
 	{
 		/*
@@ -350,7 +364,6 @@ shellcmd(cmd, s1, s2)
 	char *s2;
 {
 	char *scmd;
-	char *scmd2;
 	char *shell;
 	FILE *fd;
 	int len;
@@ -361,12 +374,13 @@ shellcmd(cmd, s1, s2)
 	scmd = (char *) ecalloc(len, sizeof(char));
 	sprintf(scmd, cmd, s1, s2);
 #if HAVE_SHELL
-	shell = getenv("SHELL");
+	shell = lgetenv("SHELL");
 	if (shell != NULL && *shell != '\0')
 	{
 		/*
 		 * Read the output of <$SHELL -c "cmd">.
 		 */
+		char *scmd2;
 		scmd2 = (char *) ecalloc(strlen(shell) + strlen(scmd) + 7,
 					sizeof(char));
 		sprintf(scmd2, "%s -c \"%s\"", shell, scmd);
@@ -383,12 +397,15 @@ shellcmd(cmd, s1, s2)
  * Expand a filename, doing any shell-level substitutions.
  */
 	public char *
-glob(filename)
+lglob(filename)
 	char *filename;
 {
 	char *gfilename;
 
 	filename = fexpand(filename);
+
+	if (secure)
+		return (filename);
 #if OS2
 {
 	char **list;
@@ -398,7 +415,7 @@ glob(filename)
 	list = _fnexplode(filename);
 	if (list == NULL)
 		return (filename);
-	length = 0;
+	length = 1; /* Room for trailing null byte */
 	for (cnt = 0;  list[cnt] != NULL;  cnt++)
 	  	length += strlen(list[cnt]) + 1;
 	gfilename = (char *) ecalloc(length, sizeof(char));
@@ -412,11 +429,26 @@ glob(filename)
 #else
 {
 	FILE *fd;
+	char *s;
 
 	/*
 	 * We get the shell to expand the filename for us by passing
 	 * an "echo" command to the shell and reading its output.
 	 */
+
+	/*
+	 * Certain characters will cause problems if passed to the shell,
+	 * so we disallow them.
+	 * {{ This presumes too much knowlege about the shell, but not
+	 *    doing this can cause serious problems.  For example, do 
+	 *    "!;TAB" when the first file in the dir is named "rm". }}
+	 */
+	for (s = filename;  *s != '\0';  s++)
+	{
+		if (*s == ';' || *s == '\'' || *s == '\"' || *s == '\\')
+			return (filename);
+	}
+
 	fd = shellcmd("echo %s", filename, (char*)NULL);
 	if (fd == NULL)
 	{
@@ -451,11 +483,15 @@ open_altfile(filename, pf, pfd)
 {
 	char *lessopen;
 	char *gfilename;
-	int returnfd = 0;
 	FILE *fd;
+#if HAVE_FILENO
+	int returnfd = 0;
+#endif
 	
+	if (secure)
+		return (NULL);
 	ch_ungetchar(-1);
-	if ((lessopen = getenv("LESSOPEN")) == NULL)
+	if ((lessopen = lgetenv("LESSOPEN")) == NULL)
 		return (NULL);
 	if (strcmp(filename, "-") == 0)
 		return (NULL);
@@ -465,8 +501,13 @@ open_altfile(filename, pf, pfd)
 		 * If LESSOPEN starts with a |, it indicates 
 		 * a "pipe preprocessor".
 		 */
+#if HAVE_FILENO
 		lessopen++;
 		returnfd = 1;
+#else
+		error("LESSOPEN pipe is not supported", NULL_PARG);
+		return (NULL);
+#endif
 	}
 	fd = shellcmd(lessopen, filename, (char*)NULL);
 	if (fd == NULL)
@@ -476,9 +517,9 @@ open_altfile(filename, pf, pfd)
 		 */
 		return (NULL);
 	}
+#if HAVE_FILENO
 	if (returnfd)
 	{
-#if HAVE_FILENO
 		int f;
 		char c;
 
@@ -499,11 +540,8 @@ open_altfile(filename, pf, pfd)
 		*pfd = (void *) fd;
 		*pf = f;
 		return (save("-"));
-#else
-		error("LESSOPEN pipe is not supported", NULL_PARG);
-		return (NULL);
-#endif
 	}
+#endif
 	gfilename = readfd(fd);
 	pclose(fd);
 	if (*gfilename == '\0')
@@ -526,43 +564,77 @@ close_altfile(altfilename, filename, pipefd)
 	char *lessclose;
 	FILE *fd;
 	
+	if (secure)
+		return;
 	if (pipefd != NULL)
 		pclose((FILE*) pipefd);
-	if ((lessclose = getenv("LESSCLOSE")) == NULL)
+	if ((lessclose = lgetenv("LESSCLOSE")) == NULL)
 	     	return;
 	fd = shellcmd(lessclose, filename, altfilename);
 	pclose(fd);
 }
 		
 #else
-#if MSOFTC
+#if MSDOS_COMPILER
 
+/*
+ * Define macros for the MS-DOS "find file" interfaces.
+ */
+#if MSDOS_COMPILER==WIN32C
+
+#define	FIND_FIRST(filename,fndp)	findfirst(filename, fndp, ~0)
+#define	FIND_NEXT(fndp)			findnext(fndp)
+#define	FND_NAME			ff_name
+#define	DECLARE_FIND(fnd,drive,dir,fname,ext) \
+					struct ffblk fnd;	\
+					char drive[MAXDRIVE];	\
+					char dir[MAXDIR];	\
+					char fname[MAXFILE];	\
+					char ext[MAXEXT];	
+
+#else
+
+#define	FIND_FIRST(filename,fndp)	_dos_findfirst(filename, ~0, fndp)
+#define	FIND_NEXT(fndp)			_dos_findnext(fndp)
+#define	FND_NAME			name
+#define	DECLARE_FIND(fnd,drive,dir,fname,ext) \
+					struct find_t fnd;	\
+					char drive[_MAX_DRIVE];	\
+					char dir[_MAX_DIR];	\
+					char fname[_MAX_FNAME];	\
+					char ext[_MAX_EXT];	
+
+#endif
+	
 	public char *
-glob(filename)
+lglob(filename)
 	char *filename;
 {
 	register char *gfilename;
 	register char *p;
 	register int len;
 	register int n;
-	struct find_t fnd;
-	char drive[_MAX_DRIVE];
-	char dir[_MAX_DIR];
-	char fname[_MAX_FNAME];
-	char ext[_MAX_EXT];
+	DECLARE_FIND(fnd,drive,dir,fname,ext)
 	
 	filename = fexpand(filename);
-	if (_dos_findfirst(filename, ~0, &fnd) != 0)
+
+	if (secure)
 		return (filename);
-		
+
+	if (FIND_FIRST(filename, &fnd) != 0)
+		return (filename);
+
 	_splitpath(filename, drive, dir, fname, ext);
 	len = 100;
 	gfilename = (char *) ecalloc(len, sizeof(char));
 	p = gfilename;
 	do {
-		n = strlen(drive) + strlen(dir) + strlen(fnd.name);
+		n = strlen(drive) + strlen(dir) + strlen(fnd.FND_NAME);
 		while (p - gfilename + n+2 >= len)
 		{
+			/*
+			 * No room in current buffer.  Allocate a bigger one.
+			 */
 			len *= 2;
 			*p = '\0';
 			p = (char *) ecalloc(len, sizeof(char));
@@ -571,15 +643,18 @@ glob(filename)
 			gfilename = p;
 			p = gfilename + strlen(gfilename);
 		}
-		sprintf(p, "%s%s%s", drive, dir, fnd.name);
+		sprintf(p, "%s%s%s", drive, dir, fnd.FND_NAME);
 		p += n;
 		*p++ = ' ';
-	} while (_dos_findnext(&fnd) == 0);
-	
+	} while (FIND_NEXT(&fnd) == 0);
+
+	/*
+	 * Overwrite the final trailing space with a null terminator.
+	 */
 	*--p = '\0';
 	return (gfilename);
 }
-	
+
 	public char *
 open_altfile(filename)
 	char *filename;
@@ -597,7 +672,7 @@ close_altfile(altfilename, filename)
 #else
 
 	public char *
-glob(filename)
+lglob(filename)
 	char *filename;
 {
 	return (fexpand(filename));
@@ -692,6 +767,49 @@ filesize(f)
 }
 
 #else
+#ifdef _OSK
+
+	public char *
+bad_file(filename)
+	char *filename;
+{
+	register int f;
+	register char *m;
+
+	if ((f = open(filename, S_IREAD | S_IFDIR)) >= 0)
+	{
+		static char is_dir[] = " is a directory";
+		close(f);
+		if (force_open)
+			return (NULL);
+		m = (char *) ecalloc(strlen(filename) + sizeof(is_dir),
+			sizeof(char));
+		strcpy(m, filename);
+		strcat(m, is_dir);
+		return (m);
+	}
+	if ((f = open(filename, S_IREAD)) < 0)
+		return (errno_message(filename));
+	close(f);
+	return (NULL);
+}
+
+	public POSITION
+filesize(f)
+	int f;
+{
+	long size;
+
+	if ((size = (long)_gs_size(f)) < 0)
+		/*
+		 * Can't stat; try seeking to the end.
+		 */
+		return (seek_filesize(f));
+
+	return ((POSITION) size);
+}
+
+#else
 
 /*
  * If we have no way to find out, just say the file is good.
@@ -713,4 +831,5 @@ filesize(f)
 	return (seek_filesize(f));
 }
 
+#endif
 #endif
