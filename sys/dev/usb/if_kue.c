@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.24 2000/03/27 12:33:54 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.25 2000/03/27 22:44:01 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -1086,13 +1086,14 @@ kue_send(sc, m, idx)
 	c->kue_buf[0] = (u_int8_t)m->m_pkthdr.len;
 	c->kue_buf[1] = (u_int8_t)(m->m_pkthdr.len >> 8);
 
-	/* XXX 10000 */
 	usbd_setup_xfer(c->kue_xfer, sc->kue_ep[KUE_ENDPT_TX],
-	    c, c->kue_buf, total_len, USBD_NO_COPY, 10000, kue_txeof);
+	    c, c->kue_buf, total_len, USBD_NO_COPY, USBD_DEFAULT_TIMEOUT, kue_txeof);
 
 	/* Transmit */
 	err = usbd_transfer(c->kue_xfer);
 	if (err != USBD_IN_PROGRESS) {
+		DPRINTF(("%s: kue_send err=%s\n", USBDEVNAME(sc->kue_dev),
+			 usbd_errstr(err)));
 		kue_stop(sc);
 		return (EIO);
 	}
