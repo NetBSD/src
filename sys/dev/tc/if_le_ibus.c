@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.12 1999/11/15 05:25:58 nisimura Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.13 1999/11/15 09:54:43 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -115,8 +115,7 @@ le_pmax_attach(parent, self, aux)
 
 	dec_le_common_attach(&lesc->sc_am7990, cp);
 
-	/* XXX more thought about ia->ia_cookie */
-	ibus_intr_establish((void*)ia->ia_cookie, TC_IPL_NET,
+	ibus_intr_establish(parent, (void*)ia->ia_cookie, IPL_NET,
 			  am7990_intr, sc);
 }
 
