@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.3 2000/08/30 23:51:53 jhawk Exp $
+# $NetBSD: Makefile,v 1.4 2000/12/30 17:21:44 sommerfeld Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/krb4/lib/kadm
 
@@ -7,7 +10,7 @@ MKLINT= no
 
 LIB=	kadm
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${MAKE} print-objdir
+COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
 
 kadm_err.c kadm_err.h: kadm_err.et
 	${COMPILEET}/compile_et ${DIST}/krb4/lib/kadm/kadm_err.et
@@ -28,7 +31,7 @@ INCSDIR= /usr/include/kerberosIV
 INCS=	kadm.h					\
 	kadm_err.h
 
-LIBKRBINC!=	cd ${.CURDIR}/../libkrb && ${MAKE} print-objdir
+LIBKRBINC!=	cd ${.CURDIR}/../libkrb && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/krb4/lib/kadm			\
