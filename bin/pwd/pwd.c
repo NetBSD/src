@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.c,v 1.7 1995/03/21 09:08:18 cgd Exp $	*/
+/*	$NetBSD: pwd.c,v 1.8 1997/07/20 20:39:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)pwd.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$NetBSD: pwd.c,v 1.7 1995/03/21 09:08:18 cgd Exp $";
+__RCSID("$NetBSD: pwd.c,v 1.8 1997/07/20 20:39:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ static char rcsid[] = "$NetBSD: pwd.c,v 1.7 1995/03/21 09:08:18 cgd Exp $";
 #include <unistd.h>
 
 void usage __P((void));
+int  main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -84,7 +85,7 @@ main(argc, argv)
 		usage();
 
 	if ((p = getcwd(NULL, 0)) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 	(void)printf("%s\n", p);
 	exit(0);
 }
