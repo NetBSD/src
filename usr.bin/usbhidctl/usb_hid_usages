@@ -1,4 +1,4 @@
-# $NetBSD: usb_hid_usages,v 1.4 1999/02/15 04:54:37 hubertf Exp $
+# $NetBSD: usb_hid_usages,v 1.5 1999/05/08 14:56:21 augustss Exp $
 #
 # USB HID usage table
 # Syntax:
@@ -18,6 +18,7 @@
 	0x05	Game Pad
 	0x06	Keyboard
 	0x07	Keypad
+	0x08	Multi-axis Controller
 	0x30	X
 	0x31	Y
 	0x32	Z
@@ -27,7 +28,7 @@
 	0x36	Slider
 	0x37	Dial
 	0x38	Wheel
-	0x39	Hat switch
+	0x39	Hat Switch
 	0x3A	Counted Buffer
 	0x3B	Byte Count
 	0x3C	Motion Wakeup
@@ -45,13 +46,17 @@
 	0x84	System Context Menu
 	0x85	System Main Menu
 	0x86	System App Menu
-	0x87	System Help Menu
+	0x87	System Menu Help
 	0x88	System Menu Exit
 	0x89	System Menu Select
 	0x8A	System Menu Right
 	0x8B	System Menu Left
 	0x8C	System Menu Up
 	0x8D	System Menu Down
+	0x90	D-pad Up
+	0x91	D-pad Down
+	0x92	D-pad Right
+	0x93	D-pad Left
 
 2	Simulation Controls
 	0x00	Undefined
@@ -77,7 +82,7 @@
 	0xB0	Aileron
 	0xB1	Aileron Trim
 	0xB2	Anti-Torque Control
-	0xB3	Auto-pilot enable
+	0xB3	Auto-pilot Enable
 	0xB4	Chaff Release
 	0xB5	Collective Control
 	0xB6	Dive Brake
@@ -149,18 +154,18 @@
 	0x57	7 Iron
 	0x58	8 Iron
 	0x59	9 Iron
-	0x59	10 Iron
-	0x5A	11 Iron
-	0x5B	Sand Wedge
-	0x5C	Loft Wedge
-	0x5D	Power Wedge
-	0x5E	1 Wood
-	0x5F	3 Wood
-	0x60	5 Wood
-	0x61	7 Wood
-	0x62	9 Wood
+	0x5A	10 Iron
+	0x5B	11 Iron
+	0x5C	Sand Wedge
+	0x5D	Loft Wedge
+	0x5E	Power Wedge
+	0x5F	1 Wood
+	0x60	3 Wood
+	0x61	5 Wood
+	0x62	7 Wood
+	0x63	9 Wood
 
-5	Gaming Controls
+5	Game Controls
 	0x00	Undefined
 	0x01	3D Game Controller
 	0x02	Pinball Device 
@@ -188,12 +193,14 @@
 	0x34	Gun Burst
 	0x35	Gun Automatic
 	0x36	Gun Safety
+	0x37	Gamepad Fire/Jump
+	0x39	Gamepad Trigger
 
-6	Keyboard
+7	Keyboard
 	0x00	Reserved (no event indicated)
 	0x01	Keyboard ErrorRollOver
 	0x02	Keyboard POSTFail
-	0x03	Keyboard ErrorUndefine
+	0x03	Keyboard ErrorUndefined
 	0x04	Keyboard a and A
 	0x05	Keyboard b and B
 	0x06	Keyboard c and C
@@ -325,15 +332,15 @@
 	0x84	Keyboard Locking Scroll Lock
 	0x85	Keypad Comma
 	0x86	Keypad Equal Sign
-	0x87	Keyboard Kanji1
-	0x88	Keyboard Kanji2
-	0x89	Keyboard Kanji3
-	0x8A	Keyboard Kanji4
-	0x8B	Keyboard Kanji5
-	0x8C	Keyboard Kanji6
-	0x8D	Keyboard Kanji7
-	0x8E	Keyboard Kanji8
-	0x8F	Keyboard Kanji9
+	0x87	Keyboard International1
+	0x88	Keyboard International2
+	0x89	Keyboard International3
+	0x8A	Keyboard International4
+	0x8B	Keyboard International5
+	0x8C	Keyboard International6
+	0x8D	Keyboard International7
+	0x8E	Keyboard International8
+	0x8F	Keyboard International9
 	0x90	Keyboard LANG1
 	0x91	Keyboard LANG2
 	0x92	Keyboard LANG3
@@ -380,7 +387,7 @@
 	0x0C	Low Cut Filter
 	0x0D	Equalizer Enable
 	0x0E	Sound Field On
-	0x0F	Surround field On
+	0x0F	Surround Field On
 	0x10	Repeat
 	0x11	Stereo
 	0x12	Sampling Rate Detect
@@ -441,17 +448,19 @@
 	0x49	Green
 	0x4A	Amber
 	0x4B	Generic Indicator
+	0x4C	System Suspend
+	0x4D	External Power Connected
 	0x4C-FFFF	Reserved
 
 9	Button
-	0x00	No Buttons Pressed
+	0x00	No Button Pressed
 	*	Button %d
 
-10	Ordinals
+10	Ordinal
 	0x00	Unused
 	*	Instance %d
 
-11	Telephony Devices
+11	Telephony
 	0x00	Unassigned
 	0x01	Phone
 	0x02	Answering Machine
@@ -516,10 +525,11 @@
 	0xBE	Phone Key C
 	0xBF	Phone Key D
 
-12	Consumer Devices
+12	Consumer
 	0x00	Unassigned
 	0x01	Consumer Control
 	0x02	Numeric Key Pad
+	0x03	Programmable Buttons
 	0x20	+10
 	0x21	+100
 	0x22	AM/PM
@@ -576,6 +586,7 @@
 	0x9B	Media Select Call
 	0x9C	Channel Increment
 	0x9D	Channel Decrement
+	0x9E	Media Select SAP
 	0xA0	VCR Plus
 	0xA1	Once
 	0xA2	Daily
@@ -591,7 +602,7 @@
 	0xB7	Stop
 	0xB8	Eject
 	0xB9	Random Play
-	0xBA	Select Disc
+	0xBA	Select DisC
 	0xBB	Enter Disc
 	0xBC	Repeat
 	0xBD	Tracking
@@ -635,8 +646,113 @@
 	0x106	Security Enable
 	0x107	Fire Alarm
 	0x108	Police Alarm
+	0x150	Balance Right
+	0x151	Balance Left
+	0x152	Bass Increment
+	0x153	Bass Decrement
+	0x154	Treble Increment
+	0x155	Treble Decrement
+	0x160	Speaker System
+	0x161	Channel Left
+	0x162	Channel Right
+	0x163	Channel Center
+	0x164	Channel Front
+	0x165	Channel Center Front
+	0x166	Channel Side
+	0x167	Channel Surround
+	0x168	Channel Low Frequency Enhancement
+	0x169	Channel Top
+	0x16A	Channel Unknown
+	0x170	Sub-channel
+	0x171	Sub-channel Increment
+	0x172	Sub-channel Decrement
+	0x173	Alternate Audio Increment
+	0x174	Alternate Audio Decrement
+	0x180	Application Launch Buttons
+	0x181	AL Launch Button Configuration Tool
+	0x182	AL Programmable Button Configuration
+	0x183	AL Consumer Control Configuration
+	0x184	AL Word Processor
+	0x185	AL Text Editor
+	0x186	AL Spreadsheet
+	0x187	AL Graphics Editor
+	0x188	AL Presentation App
+	0x189	AL Database App
+	0x18A	AL Email Reader
+	0x18B	AL Newsreader
+	0x18C	AL Voicemail
+	0x18D	AL Contacts/Address Book
+	0x18E	AL Calendar/Schedule
+	0x18F	AL Task/Project Manager
+	0x190	AL Log/Journal/Timecard
+	0x191	AL Checkbook/Finance
+	0x192	AL Calculator
+	0x193	AL A/V Capture/Playback
+	0x194	AL Local Machine Browser
+	0x195	AL LAN/WAN Browser
+	0x196	AL Internet Browser
+	0x197	AL Remote Networking/ISP Connect
+	0x198	AL Network Conference
+	0x199	AL Network Chat
+	0x19A	AL Telephony/Dialer
+	0x19B	AL Logon
+	0x19C	AL Logoff
+	0x19D	AL Logon/Logoff
+	0x19E	AL Terminal Lock/Screensaver
+	0x19F	AL Control Panel
+	0x1A0	AL Command Line Processor/Run
+	0x1A1	AL Process/Task Manager
+	0x1A2	AL Select Tast/Application
+	0x1A3	AL Next Task/Application
+	0x1A4	AL Previous Task/Application
+	0x1A5	AL Preemptive Halt Task/Application
+	0x200	Generic GUI Application Controls
+	0x201	AC New
+	0x202	AC Open
+	0x203	AC Close
+	0x204	AC Exit
+	0x205	AC Maximize
+	0x206	AC Minimize
+	0x207	AC Save
+	0x208	AC Print
+	0x209	AC Properties
+	0x21A	AC Undo
+	0x21B	AC Copy
+	0x21C	AC Cut
+	0x21D	AC Paste
+	0x21E	AC Select All
+	0x21F	AC Find
+	0x220	AC Find and Replace
+	0x221	AC Search
+	0x222	AC Go To
+	0x223	AC Home
+	0x224	AC Back
+	0x225	AC Forward
+	0x226	AC Stop
+	0x227	AC Refresh
+	0x228	AC Previous Link
+	0x229	AC Next Link
+	0x22A	AC Bookmarks
+	0x22B	AC History
+	0x22C	AC Subscriptions
+	0x22D	AC Zoom In
+	0x22E	AC Zoom Out
+	0x22F	AC Zoom
+	0x230	AC Full Screen View
+	0x231	AC Normal View
+	0x232	AC View Toggle
+	0x233	AC Scroll Up
+	0x234	AC Scroll Down
+	0x235	AC Scroll
+	0x236	AC Pan Left
+	0x237	AC Pan Right
+	0x238	AC Pan
+	0x239	AC New Window
+	0x23A	AC Tile Horizontally
+	0x23B	AC Tile Vertically
+	0x23C	AC Format
 
-13	Digitizers
+13	Digitizer
 	0x00	Undefined
 	0x01	Digitizer
 	0x02	Pen
@@ -677,6 +793,8 @@
 	0x44	Barrel Switch
 	0x45	Eraser
 	0x46	Tablet Pick
+
+15	Physical Interface Device
 
 16	Unicode
 	*	Unicode Char u%04x
@@ -944,3 +1062,11 @@
 	0xF1	ChargerSpecRef
 	0xF2	Level2
 	0xF3	Level3
+
+140	Bar Code Scanner
+
+141	Scale Device
+
+144	Camera Control
+
+145	Arcade Device
