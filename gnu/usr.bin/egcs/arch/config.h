@@ -1,5 +1,4 @@
-/*	$NetBSD: config.h,v 1.2 1998/08/16 23:35:21 tv Exp $	*/
+/*	$NetBSD: config.h,v 1.3 1998/08/17 03:47:50 tv Exp $	*/
 
 #include "auto-host.h"
-/* Store references to xm files in config2.h. */
-#include "config2.h"
+#include "tconfig.h"
