@@ -1,11 +1,14 @@
-#	$NetBSD: files.mips,v 1.27 2000/07/17 07:04:19 jeffs Exp $
+#	$NetBSD: files.mips,v 1.28 2000/10/04 21:31:06 cgd Exp $
 #
 
-defopt 	opt_cputype.h		NOTYET	# MIPS1	MIPS3	MIPS4	NOFPU
-					# MIPS3_4100	MIPS3_5200
+defopt 	opt_cputype.h		NOTYET	# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
+					# MIPS32 MIPS64
+					# MIPS3_4100
+					# MIPS3_5200
 					# ENABLE_MIPS_TX3900
 					# ENABLE_MIPS_R4700
 					# ENABLE_MIPS_R3NKK
+					# NOFPU
 defopt	opt_mips_cache.h		MIPS3_L2CACHE_ABSENT
 					MIPS3_L2CACHE_PRESENT
 file	arch/mips/mips/db_disasm.c	ddb
