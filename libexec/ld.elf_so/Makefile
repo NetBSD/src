@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2000/11/10 21:31:30 mycroft Exp $
+#	$NetBSD: Makefile,v 1.35 2001/01/14 09:16:47 christos Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -40,8 +40,9 @@ STRIPFLAG=
 
 .PATH: $M
 
-${PROG}: ${OBJS} ${DPADD}
+${PROG}: .NOTMAIN ${SRCS:S/.c/.o/g} ${DPADD}
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
+
 .endif
 
 MKMAN=	no
