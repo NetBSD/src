@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.1 2001/07/17 06:03:43 fvdl Exp $	*/
+/*	$NetBSD: __clone.S,v 1.2 2001/07/17 23:13:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -44,6 +44,9 @@ WEAK_ALIAS(clone, __clone)
 #endif
 	.text
 
+/*
+ * int clone(int (*fn)(void *), void *stack, int flags, void *arg);
+ */
 ENTRY(__clone)
 	pushl	%ebp
 
@@ -62,8 +65,7 @@ ENTRY(__clone)
 	 */
 	movl	20(%esp),%ecx
 	movl	%ecx,-4(%eax)	/* argument */
-	leal	-8(%eax),%eax	/* sp points to return address */
-	movl	$1f,(%eax)	/* return address */
+	leal	-4(%eax),%eax	/* sp points to arg */
 
 	pushl	%eax		/* stack */
 	pushl	20(%esp)	/* flags */
@@ -73,8 +75,8 @@ ENTRY(__clone)
 	jc	4f
 	cmpl	$0,%eax
 	jne	2f		/* we're the parent */
-	jmp	*%ebp		/* this is the clone, jump to the function */
-1:
+	call	*%ebp		/* this is the clone, call the function */
+
 	pushl	%eax		/* clone does _exit(func(arg)); */
 #ifdef PIC
 	PIC_PROLOGUE
