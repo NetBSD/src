@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.25 1996/06/02 14:48:23 mycroft Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.26 1996/06/13 05:08:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -538,6 +538,7 @@ sys_select(p, v, retval)
 		syscallarg(struct timeval *) tv;
 	} */ *uap = v;
 	caddr_t bits;
+	char smallbits[howmany(FD_SETSIZE, NFDBITS) * sizeof(fd_mask) * 6];
 	struct timeval atv;
 	int s, ncoll, error = 0, timo;
 	u_int ni;
@@ -550,7 +551,7 @@ sys_select(p, v, retval)
 	if (SCARG(uap, nd) > FD_SETSIZE)
 		bits = malloc(ni * 6, M_TEMP, M_WAITOK);
 	else
-		bits = alloca(ni * 6);
+		bits = smallbits;
 
 #define	getbits(name, x) \
 	if (SCARG(uap, name)) { \
