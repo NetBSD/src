@@ -1,4 +1,4 @@
-/* $NetBSD: mkdir.c,v 1.26 2002/02/19 06:30:12 enami Exp $ */
+/* $NetBSD: mkdir.c,v 1.27 2002/11/24 23:40:07 chs Exp $ */
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.26 2002/02/19 06:30:12 enami Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.27 2002/11/24 23:40:07 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,43 +148,58 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 {
 	struct stat sb;
 	char *slash;
-	int done;
+	int done, rv;
 
 	done = 0;
 	slash = path;
 
-	while (!done) {
+	for (;;) {
 		slash += strspn(slash, "/");
 		slash += strcspn(slash, "/");
 
 		done = (*slash == '\0');
 		*slash = '\0';
 
-		if (stat(path, &sb)) {
-			if (errno != ENOENT ||
-			    mkdir(path, done ? mode : dir_mode)) {
-				warn("%s", path);
-				return (-1);
-			}
-			/*
-			 * The mkdir() and umask() calls both honor only the
-			 * file permission bits, so if you try to set a mode
-			 * including the sticky, setuid, setgid bits you lose
-			 * them. So chmod().
-			 */
-			if (done && (mode & ~(S_IRWXU|S_IRWXG|S_IRWXU)) != 0 &&
-			    chmod(path, mode) == -1) {
-				warn("%s", path);
-				return (-1);
-			}
-		} else if (!S_ISDIR(sb.st_mode)) {
-			warnx("%s: %s", path, strerror(ENOTDIR));
+		rv = mkdir(path, done ? mode : dir_mode);
+		if (rv < 0 && errno != EEXIST) {
+			warn("%s", path);
 			return (-1);
 		}
-
+		if (done) {
+			break;
+		}
 		*slash = '/';
 	}
 
+	/*
+	 * Check for the final component being something other than
+	 * a directory.
+	 */
+
+	if (rv < 0) {
+		if (stat(path, &sb) < 0) {
+			warn("stat %s failed", path);
+			return (-1);
+		}
+		if (!S_ISDIR(sb.st_mode)) {
+			errno = ENOTDIR;
+			warn("%s", path);
+			return (-1);
+		}
+	}
+
+	/*
+	 * The mkdir() and umask() calls both honor only the
+	 * file permission bits, so if you try to set a mode
+	 * including the sticky, setuid, setgid bits you lose
+	 * them. So chmod().
+	 */
+
+	if ((mode & ~(S_IRWXU|S_IRWXG|S_IRWXU)) != 0 &&
+	    chmod(path, mode) == -1) {
+		warn("%s", path);
+		return (-1);
+	}
 	return (0);
 }
 
