@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.1 1999/03/25 03:52:12 simonb Exp $
+#	$NetBSD: newvers.sh,v 1.2 1999/03/25 03:56:00 simonb Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,10 @@
 u=${USER-root} h=`hostname` t=`date`
 r=`awk '/^Version:/ { print $2 } ' $1`
 
-echo "char bootprog_name[] = \"NetBSD/pmax ${2}\";" > vers.c
+: ${MAKE=make}
+machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | $MAKE -s -f-`}
+
+echo "char bootprog_name[] = \"NetBSD/${machine} ${2}\";" > vers.c
 echo "char bootprog_rev[] = \"${r}\";" >> vers.c
 echo "char bootprog_date[] = \"${t}\";" >> vers.c
 echo "char bootprog_maker[] = \"${u}@${h}\";" >> vers.c
