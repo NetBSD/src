@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.26 2004/02/13 11:36:09 wiz Exp $
+#	$NetBSD: NC_WSCONS,v 1.27 2004/03/13 17:59:00 bjh21 Exp $
 #
 #	NC - with wscons
 #
@@ -177,6 +177,17 @@ wsdisplay*	at vidcvideo? console ?	# display itself
 rpckbd*		at iomd?		# based on old `kbd' driver
 wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
 
+#iomdkbc*	at iomd?
+#pckbd*		at iomdkbc? slot ?
+#options 	PCKBD_LAYOUT=KB_UK
+pms*		at iomdkbc? slot ?
+
+#wskbd*		at pckbd?
+wsmouse*	at pms?
+
+#wsqms*		at iomd?		# ws quadmouse driver
+#wsmouse*	at wsqms?		# wsmouse on ws quadmouse
+
 pseudo-device	wsmux
 
 
@@ -185,7 +196,7 @@ pseudo-device	wsmux
 # vidcconsole PS2 mouse at IOMD
 #vidcconsole0	at vidc?		# display + vt100 emulation
 #kbd*		at iomd?		# PS/2 keyboard for vidcconsole
-opms*		at iomd?		# PS/2 mouse
+#opms*		at iomd?		# PS/2 mouse
 
 # generic VT console device
 #vt0	at vidc?

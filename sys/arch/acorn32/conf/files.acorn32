@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.22 2004/01/22 13:25:51 bjh21 Exp $
+#	$NetBSD: files.acorn32,v 1.23 2004/03/13 17:59:00 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -199,6 +199,10 @@ file	arch/acorn32/eb7500atx/eb7500atx_machdep.c	rsbus
 #
 include "dev/i2o/files.i2o"
 
+#
+# MI PC keyboard port drivers
+#
+include "dev/pckbport/files.pckbport"
 
 #
 # maybe we will use these later one time :
