@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping.8,v 1.27 1999/03/07 11:02:08 mycroft Exp $
+.\"	$NetBSD: ping.8,v 1.28 1999/04/29 21:53:08 mjl Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -174,16 +174,6 @@ when finished.
 .It Fl Q
 Do not display responses such as Network Unreachable ICMP messages
 concerning the ECHO_REQUESTs sent.
-.It Fl R
-Record route.
-Includes the
-.Tn RECORD_ROUTE
-option in the
-.Tn ECHO_REQUEST
-packet and displays
-the route buffer on returned packets.
-Note that the IP header is only large enough for nine such routes.
-Many hosts ignore or discard this option.
 .It Fl r
 Bypass the normal routing tables and send directly to a host on an attached
 network.
