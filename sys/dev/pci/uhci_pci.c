@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.12 1999/10/12 11:21:24 augustss Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.13 1999/11/20 00:57:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ uhci_pci_attach(parent, self, aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
-	char *typestr, *vendor;
+	char *vendor;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	char devinfo[256];
 	usbd_status r;
@@ -145,16 +145,18 @@ uhci_pci_attach(parent, self, aux)
 
 	switch(pci_conf_read(pc, pa->pa_tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
-		typestr = "pre 1.0";
+		sc->sc.sc_bus.usbrev = USBREV_PRE_1_0;
 		break;
 	case PCI_USBREV_1_0:
-		typestr = "1.0";
+		sc->sc.sc_bus.usbrev = USBREV_1_0;
+		break;
+	case PCI_USBREV_1_1:
+		sc->sc.sc_bus.usbrev = USBREV_1_1;
 		break;
 	default:
-		typestr = "unknown";
+		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
 		break;
 	}
-	printf("%s: USB version %s\n", devname, typestr);
 
 	/* Figure out vendor for root hub descriptor. */
 	vendor = pci_findvendor(pa->pa_id);

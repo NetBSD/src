@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.30 1999/11/18 23:32:30 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.31 1999/11/20 00:57:09 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -164,6 +164,8 @@ static int usb_get_next_event __P((struct usb_event *));
 extern int cold;
 #endif
 
+static const char *usbrev_str[] = USBREV_STR;
+
 USB_DECLARE_DRIVER(usb);
 
 USB_MATCH(usb)
@@ -182,6 +184,7 @@ USB_ATTACH(usb)
 #endif
 	usbd_device_handle dev;
 	usbd_status err;
+	int usbrev;
 	
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	printf("\n");
@@ -190,13 +193,23 @@ USB_ATTACH(usb)
 #endif
 
 	DPRINTF(("usbd_attach\n"));
+
 	usbd_init();
 	sc->sc_bus = aux;
 	sc->sc_bus->usbctl = sc;
 	sc->sc_port.power = USB_MAX_POWER;
+
+	usbrev = sc->sc_bus->usbrev;
+	printf("%s: USB revision %s", USBDEVNAME(sc->sc_dev),
+	       usbrev_str[usbrev]);
+	if (usbrev != USBREV_1_0 && usbrev != USBREV_1_1) {
+		printf(", not supported\n");
+		USB_ATTACH_ERROR_RETURN;
+	} else
+		printf("\n");
+
 	err = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0, 0, 0,
 		  &sc->sc_port);
-
 	if (!err) {
 		dev = sc->sc_port.device;
 		if (dev->hub == NULL) {
