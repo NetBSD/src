@@ -1,7 +1,7 @@
-/*	$NetBSD: extern.h,v 1.1 2001/02/04 17:30:37 ad Exp $	*/
+/*	$NetBSD: extern.h,v 1.2 2001/02/06 12:53:49 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
