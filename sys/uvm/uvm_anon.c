@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.22 2002/09/21 06:16:07 chs Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.23 2003/08/11 16:44:35 pk Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.22 2002/09/21 06:16:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.23 2003/08/11 16:44:35 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -510,7 +510,8 @@ anon_pagein(anon)
 
 	pg = anon->u.an_page;
 	uobj = pg->uobject;
-	uvm_swap_free(anon->an_swslot, 1);
+	if (anon->an_swslot > 0)
+		uvm_swap_free(anon->an_swslot, 1);
 	anon->an_swslot = 0;
 	pg->flags &= ~(PG_CLEAN);
 
