@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.91 1998/05/31 23:25:42 thorpej Exp $
+#	$NetBSD: Makefile.i386,v 1.92 1998/06/07 03:01:06 enami Exp $
 
 # Makefile for NetBSD
 #
@@ -42,7 +42,7 @@ S!=	cd ../../../..; pwd
 .endif
 I386=	$S/arch/i386
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Di386
@@ -173,14 +173,14 @@ depend: .depend
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
- 
-# depend on network or filesystem configuration 
-uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on network or filesystem configuration
+uipc_proto.o vfs_conf.o: Makefile
 
 # depend on maxusers
 machdep.o: Makefile
 
-# depend on CPU configuration 
+# depend on CPU configuration
 locore.o machdep.o: Makefile
 
 
