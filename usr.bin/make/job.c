@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.77 2003/07/14 18:19:12 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.78 2003/07/15 05:38:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.77 2003/07/14 18:19:12 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.78 2003/07/15 05:38:24 itojun Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.77 2003/07/14 18:19:12 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.78 2003/07/15 05:38:24 itojun Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1879,7 +1879,7 @@ JobStart(GNode *gn, int flags, Job *previous)
 	}
 
 	JobSigLock(&mask);
-	(void)strcpy(tfile, TMPPAT);
+	(void)strlcpy(tfile, sizeof(tfile), TMPPAT);
 	if ((tfd = mkstemp(tfile)) == -1)
 	    Punt("Could not create temporary file %s", strerror(errno));
 	(void) eunlink(tfile);
@@ -2050,7 +2050,7 @@ JobStart(GNode *gn, int flags, Job *previous)
 	} else {
 	    (void) fprintf(stdout, "Remaking `%s'\n", gn->name);
   	    (void) fflush(stdout);
-	    (void) strcpy(job->outFile, TMPPAT);
+	    (void) strlcpy(job->outFile, TMPPAT, sizeof(job->outFile));
 	    job->outFd = mkstemp(job->outFile);
 	    (void) fcntl(job->outFd, F_SETFD, 1);
 	}
