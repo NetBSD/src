@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc64,v 1.5 2002/10/16 17:52:09 petrov Exp $
+#	$NetBSD: majors.sparc64,v 1.6 2002/11/24 20:58:07 martin Exp $
 #
 # Device majors for sparc64
 #
@@ -32,6 +32,7 @@ device-major	bwtwo		char 27			bwtwo
 device-major	kbd		char 29			kbd | sunkbd
 
 device-major	com		char 36			com
+device-major	lpt		char 37			lpt
 
 device-major	svr4_net	char 43			compat_svr4
 
