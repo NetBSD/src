@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.4 (Berkeley) 2/21/91
-#	$NetBSD: Makefile,v 1.10 1998/07/28 18:53:41 thorpej Exp $
+#	$NetBSD: Makefile,v 1.11 1998/12/09 14:44:03 christos Exp $
 
 .if	(${MACHINE_ARCH} != "alpha") && \
 	(${MACHINE_ARCH} != "powerpc")
@@ -13,6 +13,7 @@ CPPFLAGS+=-I. -I$(.CURDIR) -I$(.CURDIR)/../common -I$(.CURDIR)/../arch \
 	-DGPLUSPLUS_INCLUDE_DIR=\"/usr/include/g++\"
 LDADD+=	-lgnumalloc
 DPADD+=	${LIBGNUMALLOC}
+CPPFLAGS+=-DLINTCOMMENT
 
 .PATH:		$(.CURDIR)/../common
 .endif
