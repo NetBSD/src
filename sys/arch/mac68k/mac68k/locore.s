@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.61 1996/05/08 01:08:48 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.62 1996/05/08 15:13:22 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -611,6 +611,12 @@ _lev4intr:
 	addql	#4,sp
 	rte			| return from exception
 
+/* 
+ * We could tweak rtclock_intr and gain 12 cycles on the 020 and 030 by
+ * saving the status register directly to the stack, but this would lose
+ * badly on the 040.  Aligning the stack takes 10 more cycles than this
+ * code does, so it's a good compromise.
+ */
 	.globl _rtclock_intr
 
 _rtclock_intr:
