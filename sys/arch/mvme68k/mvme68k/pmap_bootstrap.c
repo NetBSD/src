@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.11 1999/02/14 17:54:30 scw Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.12 1999/09/18 09:37:35 scw Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -111,7 +111,7 @@ pmap_bootstrap(nextpa, firstpa)
 	paddr_t nextpa;
 	paddr_t firstpa;
 {
-	paddr_t kstpa, kptpa, eiiopa, iiopa, kptmpa, lkptpa, p0upa;
+	paddr_t kstpa, kptpa, eiiopa, iiopa, kptmpa, lkptpa, p0upa, ebuff;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
@@ -168,8 +168,8 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += NBPG;
 	p0upa = nextpa;
 	nextpa += USPACE;
-	ether_data_buff = (void *)nextpa;
-	nextpa += ether_data_buff_size;
+	ebuff = nextpa;
+	nextpa += RELOC(ether_data_buff_size, u_long);
 
 	/*
 	 * Clear all PTEs to zero
@@ -360,7 +360,7 @@ pmap_bootstrap(nextpa, firstpa)
 	/*
 	 * Un-cache the ethernet data buffer
 	 */
-	pte = &((u_int *)kptpa)[m68k_btop(ether_data_buff)];
+	pte = &((u_int *)kptpa)[m68k_btop(ebuff)];
 	for (i = 0; i < ETHER_DATA_BUFF_PAGES; i++)
 		pte[i] |= PG_CI;
 
@@ -420,6 +420,11 @@ pmap_bootstrap(nextpa, firstpa)
 	 * proc struct p_addr field later.
 	 */
 	RELOC(proc0paddr, char *) = (char *)(p0upa - firstpa);
+
+	/*
+	 * Fix up the ethernet data buffer address
+	 */
+	RELOC(ether_data_buff, void *) = (void *)(ebuff - firstpa);
 
 	/*
 	 * Initialize the mem_clusters[] array for the crash dump
