@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.9.4.15 2002/04/11 22:38:09 he Exp $
+.\"	$NetBSD: postinstall,v 1.9.4.16 2002/04/11 22:59:29 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -280,7 +280,9 @@ usually in the
 subdir.  You can install them with the following commands:
 .Pp
 .Bd -unfilled
-.Ic # export\ PKG_PATH='ftp://ftp.netbsd.org/pub/NetBSD/packages/\*V/\*M/All;ftp://ftp.netbsd.org/pub/NetBSD/packages/1.5/\*M/All'
+.Ic # export\ PKG_PATH=\e
+.Ic ftp://ftp.netbsd.org/pub/NetBSD/packages/\*V/\*M/All\e;\e
+.Ic ftp://ftp.netbsd.org/pub/NetBSD/packages/1.5/\*M/All
 .Ic # pkg_add -v tcsh
 .Ic # pkg_add -v cvs
 .Ic # pkg_add -v apache
