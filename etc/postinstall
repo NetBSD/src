@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.8 2002/04/29 12:05:45 lukem Exp $
+# $NetBSD: postinstall,v 1.9 2002/05/06 03:02:59 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -290,7 +290,7 @@ do_periodic()
 #
 #	ssh
 #
-additem ssh "ssh configuration file relocation"
+additem ssh "ssh configuration file update"
 do_ssh()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_ssh  fix|check"
@@ -382,6 +382,28 @@ do_ssh()
 	return ${failed}
 }
 
+#
+#	wscons
+#
+additem wscons "wscons configuration file update"
+do_wscons()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_ssh  fix|check"
+	op=$1
+
+	[ -f ${DEST_ETC}/wscons.conf ] || return 0
+
+	failed=0
+	while read _type _arg1 _rest; do
+		if [ "$_type" = "mux" -a "$_arg1" = "1" ]; then
+			msg \
+		"Obsolete wscons.conf(5) entry \""$_type $_arg1"\" found."
+			failed=1
+		fi
+	done < ${DEST_ETC}/wscons.conf
+
+	return ${failed}
+}
 
 
 #
