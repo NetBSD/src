@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.18 1997/03/30 19:51:57 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.19 1997/04/01 13:31:39 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -54,6 +54,7 @@
 #define    NUBUS_DRHW_TFB	0x0001
 #define    NUBUS_DRHW_WVC	0x0006
 #define    NUBUS_DRHW_M2HRVC	0x0013
+#define    NUBUS_DRHW_CB264	0x013B
 #define    NUBUS_DRHW_MICRON	0x0146
 
 /* False DrHW values for video cards masquerading as other cards */
