@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.70 2002/03/25 04:51:20 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71 2002/03/25 17:33:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2002/03/25 04:51:20 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2002/03/25 17:33:26 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1819,14 +1819,13 @@ void
 pmap_zero_page(phys)
 	paddr_t phys;
 {
-	struct vm_page *pg;
+#ifdef DEBUG
+	struct vm_page *pg = PHYS_TO_VM_PAGE(phys);
 
-	/* Get an entry for this page, and clean it it. */
-	pg = PHYS_TO_VM_PAGE(phys);
-	simple_lock(&pg->mdpage.pvh_slock);
-	pmap_clean_page(pg->mdpage.pvh_list, FALSE);
-	simple_unlock(&pg->mdpage.pvh_slock);
-	
+	if (pg->mdpage.pvh_list != NULL)
+		panic("pmap_zero_page: page has mappings");
+#endif
+
 	/*
 	 * Hook in the page, zero it, and purge the cache for that
 	 * zeroed page. Invalidate the TLB as needed.
@@ -1846,17 +1845,16 @@ pmap_zero_page(phys)
  */
 boolean_t
 pmap_pageidlezero(phys)
-    paddr_t phys;
+	paddr_t phys;
 {
 	int i, *ptr;
 	boolean_t rv = TRUE;
-	
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	struct vm_page *pg;
 	
 	pg = PHYS_TO_VM_PAGE(phys);
 	if (pg->mdpage.pvh_list != NULL)
-		panic("pmap_pageidlezero: zeroing mapped page\n");
+		panic("pmap_pageidlezero: page has mappings");
 #endif
 	
 	/*
@@ -1899,38 +1897,39 @@ pmap_pageidlezero(phys)
  * pmap_zero_page also applies here.
  */
 void
-pmap_copy_page(src, dest)
+pmap_copy_page(src, dst)
 	paddr_t src;
-	paddr_t dest;
+	paddr_t dst;
 {
-	struct vm_page *src_pg, *dest_pg;
-	boolean_t cleanedcache;
-	
-	/* Get PV entries for the pages, and clean them if needed. */
-	src_pg = PHYS_TO_VM_PAGE(src);
-	
-	simple_lock(&src_pg->mdpage.pvh_slock);
-	cleanedcache = pmap_clean_page(src_pg->mdpage.pvh_list, TRUE);
-	simple_unlock(&src_pg->mdpage.pvh_slock);
+	struct vm_page *src_pg = PHYS_TO_VM_PAGE(src);
+#ifdef DEBUG
+	struct vm_page *dst_pg = PHYS_TO_VM_PAGE(dst);
 
-	if (cleanedcache == 0) { 
-		dest_pg = PHYS_TO_VM_PAGE(dest);
-		simple_lock(&dest_pg->mdpage.pvh_slock);
-		pmap_clean_page(dest_pg->mdpage.pvh_list, FALSE);
-		simple_unlock(&dest_pg->mdpage.pvh_slock);
-	}
+	if (dst_pg->mdpage.pvh_list != NULL)
+		panic("pmap_copy_page: dst page has mappings");
+#endif
+
+	/*
+	 * Clean the source page.  Hold the source page's lock for
+	 * the duration of the copy so that no other mappings can
+	 * be created while we have a potentially aliased mapping.
+	 */
+	simple_lock(&src_pg->mdpage.pvh_slock);
+	(void) pmap_clean_page(src_pg->mdpage.pvh_list, TRUE);
+
 	/*
 	 * Map the pages into the page hook points, copy them, and purge
 	 * the cache for the appropriate page. Invalidate the TLB
 	 * as required.
 	 */
 	*csrc_pte = L2_PTE(src & PG_FRAME, AP_KR);
-	*cdst_pte = L2_PTE(dest & PG_FRAME, AP_KRW);
+	*cdst_pte = L2_PTE(dst & PG_FRAME, AP_KRW);
 	cpu_tlb_flushD_SE(csrcp);
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
 	bcopy_page(csrcp, cdstp);
 	cpu_dcache_inv_range(csrcp, NBPG);
+	simple_unlock(&src_pg->mdpage.pvh_slock); /* cache is safe again */
 	cpu_dcache_wbinv_range(cdstp, NBPG);
 }
 
