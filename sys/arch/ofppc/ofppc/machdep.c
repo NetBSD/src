@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2001/10/22 16:44:03 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 2001/10/22 23:01:17 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -63,6 +63,8 @@
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 
+#include <machine/platform.h>
+
 #include <dev/cons.h>
 
 /*
@@ -113,7 +115,7 @@ struct machvec machine_interface = {
 	fake_irq_establish,
 };
 
-char	platform_name[64];
+void	ofppc_bootstrap_console(void);
 
 void
 initppc(startkernel, endkernel, args)
@@ -135,7 +137,7 @@ initppc(startkernel, endkernel, args)
 #ifdef IPKDB
 	extern int ipkdblow, ipkdbsize;
 #endif
-	int exc, scratch, node;
+	int exc, scratch;
 
 	proc0.p_addr = proc0paddr;
 	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
@@ -144,22 +146,22 @@ initppc(startkernel, endkernel, args)
 
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
 
-	/*
-	 * Fetch the platform name from the root of the OFW tree.
-	 */
-	node = OF_peer(0);
-	OF_getprop(node, "name", platform_name, sizeof(platform_name));
+	/* Initialize the bootstrap console. */
+	ofppc_bootstrap_console();
+
+	/* Initialize the platform structure. */
+	platform_init();
 
 	/*
-	 * i386 port says, that this shouldn't be here,
-	 * but I really think the console should be initialized
-	 * as early as possible.
+	 * Now that we know what platform we're running on, initialize
+	 * the console.
 	 */
-	consinit();
+	(*platform.cons_init)();
 
-#ifdef	__notyet__		/* Needs some rethinking regarding real/virtual OFW */
+#ifdef __notyet__	/* Needs some rethinking regarding real/virtual OFW */
 	OF_set_callback(callback);
 #endif
+
 	/*
 	 * Initialize BAT registers to unmapped to not generate
 	 * overlapping mappings below.
@@ -427,15 +429,6 @@ cpu_startup()
 	bufinit();
 
 	/*
-	 * For now, use soft spl handling.
-	 */
-	{
-		extern struct machvec soft_machvec;
-
-		machine_interface = soft_machvec;
-	}
-
-	/*
 	 * Now allow hardware interrupts.
 	 */
 	{
@@ -447,19 +440,67 @@ cpu_startup()
 	}
 }
 
-/*
- * consinit
- * Initialize system console.
- */
 void
 consinit()
 {
-	static int initted;
 
-	if (initted)
-		return;
-	initted = 1;
-	cninit();
+	/* Nothing to do; console is already initialized. */
+}
+
+int	ofppc_cngetc(dev_t);
+void	ofppc_cnputc(dev_t, int);
+
+struct consdev ofppc_bootcons = {
+	NULL, NULL, ofppc_cngetc, ofppc_cnputc, nullcnpollc, NULL,
+	    makedev(0,0), 1,
+};
+
+int	ofppc_stdin_ihandle, ofppc_stdout_ihandle;
+int	ofppc_stdin_phandle, ofppc_stdout_phandle;
+
+void
+ofppc_bootstrap_console(void)
+{
+	int chosen;
+	char data[4];
+
+	chosen = OF_finddevice("/chosen");
+
+	if (OF_getprop(chosen, "stdin", data, sizeof(data)) != sizeof(int))
+		goto nocons;
+	ofppc_stdin_ihandle = of_decode_int(data);
+	ofppc_stdin_phandle = OF_instance_to_package(ofppc_stdin_ihandle);
+
+	if (OF_getprop(chosen, "stdout", data, sizeof(data)) != sizeof(int))
+		goto nocons;
+	ofppc_stdout_ihandle = of_decode_int(data);
+	ofppc_stdout_phandle = OF_instance_to_package(ofppc_stdout_ihandle);
+
+	cn_tab = &ofppc_bootcons;
+
+ nocons:
+	return;
+}
+
+int
+ofppc_cngetc(dev_t dev)
+{
+	u_char ch = '\0';
+	int l;
+
+	while ((l = OF_read(ofppc_stdin_ihandle, &ch, 1)) != 1)
+		if (l != -2 && l != 0)
+			return (-1);
+
+	return (ch);
+}
+
+void
+ofppc_cnputc(dev_t dev, int c)
+{
+	char ch = c;
+
+	OF_write(ofppc_stdout_ihandle, &ch, 1);
 }
 
 /*
