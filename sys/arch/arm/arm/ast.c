@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.1 2001/12/21 22:56:16 bjh21 Exp $	*/
+/*	$NetBSD: ast.c,v 1.2 2002/01/05 22:41:46 chris Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -62,6 +62,11 @@
 #include <machine/machdep.h>
 #endif
 
+/*
+ * Prototypes
+ */
+void ast __P((struct trapframe *));
+ 
 int want_resched = 0;
 int astpending;
 

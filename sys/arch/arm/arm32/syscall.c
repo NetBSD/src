@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.2 2001/11/22 18:34:34 thorpej Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3 2002/01/05 22:41:47 chris Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@
 #include <machine/pcb.h>
 
 u_int arm700bugcount = 0;
+void syscall __P((trapframe_t *, int));
 
 /*
  * syscall(frame):
