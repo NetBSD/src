@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.2 2003/03/29 17:00:39 cjep Exp $
+#	$NetBSD: RESPONSIBLE,v 1.3 2003/03/29 17:09:44 perry Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -24,6 +24,7 @@ make		christos, sjg
 named(bind)	itojun
 ntp		simonb, jonathan
 openssh		itojun, lukem
+pax/tar		christos
 ping		christos
 ping6		itojun
 postfix		perry
