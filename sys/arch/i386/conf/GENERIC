@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.67 1997/01/15 01:28:45 perry Exp $
+#	$NetBSD: GENERIC,v 1.68 1997/01/16 23:25:03 christos Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -206,6 +206,11 @@ gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is recor
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
+
+# PnP bus and devices should be declared last 
+isapnp0	at isa? 
+sb*	at isapnp?
+joy*	at isapnp?
 
 include	"arch/i386/conf/GENERIC.local"
 
