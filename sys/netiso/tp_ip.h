@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_ip.h,v 1.6 1995/06/13 07:58:19 mycroft Exp $	*/
+/*	$NetBSD: tp_ip.h,v 1.7 1996/02/13 22:11:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,13 +40,13 @@
 
                       All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of IBM not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 IBM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -61,7 +61,7 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* 
+/*
  * internet IP-dependent structures and include files
  */
 
@@ -81,6 +81,6 @@ SOFTWARE.
 
 
 struct inpcbtable tp_inpcb;
-	/* queue of active inpcbs for tp ; for tp with dod ip */
+/* queue of active inpcbs for tp ; for tp with dod ip */
 
-#endif /* _NETISO_TP_IP_H_ */
+#endif				/* _NETISO_TP_IP_H_ */
