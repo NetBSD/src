@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.45 2002/03/04 01:19:24 dbj Exp $	*/
+/*	$NetBSD: wi.c,v 1.46 2002/03/04 01:21:07 dbj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.45 2002/03/04 01:19:24 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.46 2002/03/04 01:21:07 dbj Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -620,7 +620,7 @@ void wi_update_stats(sc)
 		case DISASSOC:
 		case ASSOCFAIL:
 		case AUTHFAIL:
-			printf("%s: %s, AP = %x:%x:%x:%x:%x:%x\n",
+			printf("%s: %s, AP = %02x:%02x:%02x:%02x:%02x:%02x\n",
 				sc->sc_dev.dv_xname,
 				msg[assoc.wi_assoc_stat - 1],
 				assoc.wi_assoc_sta[0]&0xff, assoc.wi_assoc_sta[1]&0xff,
@@ -628,7 +628,8 @@ void wi_update_stats(sc)
 				assoc.wi_assoc_sta[4]&0xff, assoc.wi_assoc_sta[5]&0xff);
 			break;
 		case REASSOC:
-			printf("%s: %s, AP = %x:%x:%x:%x:%x:%x, OldAP = %x:%x:%x:%x:%x:%x\n",
+			printf("%s: %s, AP = %02x:%02x:%02x:%02x:%02x:%02x, "
+				"OldAP = %02x:%02x:%02x:%02x:%02x:%02x\n",
 				sc->sc_dev.dv_xname, msg[assoc.wi_assoc_stat - 1],
 				assoc.wi_assoc_sta[0]&0xff, assoc.wi_assoc_sta[1]&0xff,
 				assoc.wi_assoc_sta[2]&0xff, assoc.wi_assoc_sta[3]&0xff,
