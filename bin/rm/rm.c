@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.41 2004/01/11 02:17:12 tls Exp $ */
+/* $NetBSD: rm.c,v 1.42 2004/01/11 09:41:55 wiz Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.41 2004/01/11 02:17:12 tls Exp $");
+__RCSID("$NetBSD: rm.c,v 1.42 2004/01/11 09:41:55 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -346,7 +346,7 @@ rm_file(char **argv)
  *
  * Furthermore, the presence of track caches, disk and controller write
  * caches, and so forth make it extremely difficult to ensure that data
- * have actuolly been written to the disk, particularly when one tries
+ * have actually been written to the disk, particularly when one tries
  * to repeatedly overwrite the same sectors in quick succession.  We call
  * fsync(), but controllers with nonvolatile cache, as well as IDE disks
  * that just plain lie about the stable storage of data, will defeat this.
