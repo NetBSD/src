@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 1996/04/26 19:40:53 chuck Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 1996/09/11 00:23:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,12 @@
 /*
  * Exported definitions unique to mvme68k/68k cpu support.
  */
+
+/*
+ * Get common m68k CPU definitions.
+ */
+#include <m68k/cpu.h>
+#define	M68K_MMU_MOTOROLA
 
 /*
  * definitions of cpu-dependent requirements
@@ -127,21 +133,9 @@ extern unsigned long allocate_sir();
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
 
-/* values for mmutype (assigned for quick testing) */
-#define	MMU_68040	-2	/* 68040 on-chip MMU */
-#define	MMU_68030	-1	/* 68030 on-chip subset of 68851 */
-#define	MMU_68851	1	/* Motorola 68851 */
-
-/* values for ectype */
-#define	EC_PHYS		-1	/* external physical address cache */
-#define	EC_NONE		0	/* no external cache */
-#define	EC_VIRT		1	/* external virtual address cache */
-
-#define	MHZ_16		2	/* XXX kill */
-
+#define	MHZ_16			2	/* XXX kill */
 
 #ifdef _KERNEL
-extern	int mmutype, ectype;
 extern	int cpuspeed;			/* XXX kill */
 extern	char *intiobase, *intiolimit;
 
@@ -175,64 +169,3 @@ void	iounmap __P((void *, size_t));
 #define	IIOP(va)	((int)(va)-(int)intiobase+INTIOBASE)
 #define	IIOPOFF(pa)	((int)(pa)-INTIOBASE)
 #define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 1mb */
-
-/*
- * 68851 and 68030 MMU
- */
-#define	PMMU_LVLMASK	0x0007
-#define	PMMU_INV	0x0400
-#define	PMMU_WP		0x0800
-#define	PMMU_ALV	0x1000
-#define	PMMU_SO		0x2000
-#define	PMMU_LV		0x4000
-#define	PMMU_BE		0x8000
-#define	PMMU_FAULT	(PMMU_WP|PMMU_INV)
-
-/*
- * 68040 MMU
- */
-#define	MMU4_RES	0x001
-#define	MMU4_TTR	0x002
-#define	MMU4_WP		0x004
-#define	MMU4_MOD	0x010
-#define	MMU4_CMMASK	0x060
-#define	MMU4_SUP	0x080
-#define	MMU4_U0		0x100
-#define	MMU4_U1		0x200
-#define	MMU4_GLB	0x400
-#define	MMU4_BE		0x800
-
-/* 680X0 function codes */
-#define	FC_USERD	1	/* user data space */
-#define	FC_USERP	2	/* user program space */
-#define	FC_SUPERD	5	/* supervisor data space */
-#define	FC_SUPERP	6	/* supervisor program space */
-#define	FC_CPU		7	/* CPU space */
-
-/* fields in the 68020 cache control register */
-#define	IC_ENABLE	0x0001	/* enable instruction cache */
-#define	IC_FREEZE	0x0002	/* freeze instruction cache */
-#define	IC_CE		0x0004	/* clear instruction cache entry */
-#define	IC_CLR		0x0008	/* clear entire instruction cache */
-
-/* additional fields in the 68030 cache control register */
-#define	IC_BE		0x0010	/* instruction burst enable */
-#define	DC_ENABLE	0x0100	/* data cache enable */
-#define	DC_FREEZE	0x0200	/* data cache freeze */
-#define	DC_CE		0x0400	/* clear data cache entry */
-#define	DC_CLR		0x0800	/* clear entire data cache */
-#define	DC_BE		0x1000	/* data burst enable */
-#define	DC_WA		0x2000	/* write allocate */
-
-#define	CACHE_ON	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	CACHE_OFF	(DC_CLR|IC_CLR)
-#define	CACHE_CLR	(CACHE_ON)
-#define	IC_CLEAR	(DC_WA|DC_BE|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_ENABLE)
-
-/* 68040 cache control register */
-#define	IC4_ENABLE	0x8000		/* instruction cache enable bit */
-#define	DC4_ENABLE	0x80000000	/* data cache enable bit */
-
-#define	CACHE4_ON	(IC4_ENABLE|DC4_ENABLE)
-#define	CACHE4_OFF	(0)
