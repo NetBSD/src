@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.1.2.2 1998/12/27 14:13:04 minoura Exp $	*/
+/*	$NetBSD: neptune.c,v 1.1.2.3 1998/12/28 14:30:21 minoura Exp $	*/
 
 /*
  *
@@ -209,6 +209,7 @@ neptune_attach(parent, self, aux)
 		config_attach(self, cf, &na, neptune_print);
 	} else {
 		printf (": no device found.\n");
+		intio_map_free_region(parent, ia);
 	}
 }
 
