@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.13.4.2 1999/07/11 05:51:40 chs Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.13.4.3 1999/07/31 18:52:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -163,57 +163,67 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	struct ucred *cred;
 	int flags;
 {
-	off_t pagestart, pageend;
-	struct uvm_object *uobj = &vp->v_uvm.u_obj;
+	off_t eof, pagestart, pageend;
+	struct uvm_object *uobj;
 	struct inode *ip = VTOI(vp);
-	int bshift, bsize, delta, error;
-	struct vm_page *pg1, *pg2;
-	int npages;
+	int i, delta, error, npages1, npages2;
+	int bshift = vp->v_mount->mnt_fs_bshift;
+	int bsize = 1 << bshift;
+	int ppb = max(bsize >> PAGE_SHIFT, PAGE_SIZE >> bshift);
+	struct vm_page *pgs1[ppb], *pgs2[ppb];
 	UVMHIST_FUNC("ufs_balloc_range"); UVMHIST_CALLED(ubchist);
-
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
 		    vp, (int)off, (int)len, (int)vp->v_uvm.u_size);
 
-	bshift = vp->v_mount->mnt_fs_bshift;
-	bsize = 1 << bshift;
-
 	/*
-	 * if the range does not start on a page boundary,
-	 * cache the first page if the file so the page will contain
-	 * the correct data.  hold the page busy while we allocate
+	 * if the range does not start on a page and block boundary,
+	 * cache the first block if the file so the page(s) will contain
+	 * the correct data.  hold the page(s) busy while we allocate
 	 * the backing store for the range.
 	 */
 
+	uobj = &vp->v_uvm.u_obj;
+	eof = max(vp->v_uvm.u_size, off + len);
+	vp->v_uvm.u_size = eof;
+	UVMHIST_LOG(ubchist, "new eof 0x%x", (int)eof,0,0,0);
 	error = 0;
-	pg1 = pg2 = NULL;
-	pagestart = trunc_page(off);
-	if (off != pagestart && pagestart < ip->i_ffs_size) {
-		npages = 1;
+	pgs1[0] = pgs2[0] = NULL;
+	pagestart = trunc_page(off) & ~(bsize - 1);
+	if (off != pagestart) {
+		npages1 = min(ppb, (round_page(eof) - pagestart) >>
+			      PAGE_SHIFT);
+		memset(pgs1, 0, npages1);
 		simple_lock(&uobj->vmobjlock);
-		error = VOP_GETPAGES(vp, pagestart, &pg1, &npages, 0,
+		error = VOP_GETPAGES(vp, pagestart, pgs1, &npages1, 0,
 				     VM_PROT_READ, 0, PGO_SYNCIO);
 		if (error) {
 			goto errout;
 		}
-		UVMHIST_LOG(ubchist, "got first pg %p", pg1,0,0,0);
+		for (i = 0; i < npages1; i++) {
+			UVMHIST_LOG(ubchist, "got pgs1[%d] %p", i, pgs1[i],0,0);
+		}
 	}
 
 	/*
-	 * similarly if the range does not end on a page boundary.
+	 * similarly if the range does not end on a page and block boundary.
 	 */
 
-	pageend = trunc_page(off + len);
-	if (off + len != pageend && pagestart != pageend &&
-	    pageend < ip->i_ffs_size) {
-		npages = 1;
+	pageend = trunc_page(off + len) & ~(bsize - 1);
+	if (off + len < ip->i_ffs_size &&
+	    off + len != pageend &&
+	    pagestart != pageend) {
+		npages2 = min(ppb, (round_page(eof) - pageend) >>
+			      PAGE_SHIFT);
+		memset(pgs2, 0, npages2);
 		simple_lock(&uobj->vmobjlock);
-		error = VOP_GETPAGES(vp, pageend, &pg2, &npages, 0,
+		error = VOP_GETPAGES(vp, pageend, pgs2, &npages2, 0,
 				     VM_PROT_READ, 0, PGO_SYNCIO);
 		if (error) {
 			goto errout;
 		}
-		UVMHIST_LOG(ubchist, "got second pg %p",
-			    pg2, (int)(off + len), (int)ip->i_ffs_size,0);
+		for (i = 0; i < npages2; i++) {
+			UVMHIST_LOG(ubchist, "got pgs2[%d] %p", i, pgs2[i],0,0);
+		}
 	}
 
 	/*
@@ -225,28 +235,11 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	len += delta;
 
 	/*
-	 * now allocate the range a block at a time.
+	 * now allocate the range.
 	 */
 
-	while (len > 0) {
-		bsize = min(bsize, len);
-
-		if ((error = VOP_BALLOC(vp, off, bsize, cred, flags, NULL))) {
-			goto errout;
-		}
-
-		/*
-		 * increase file size now, VOP_BALLOC() requires that
-		 * EOF be up-to-date before each call.
-		 */
-
-		if (ip->i_ffs_size < off + bsize) {
-			ip->i_ffs_size = off + bsize;
-			uvm_vnp_setsize(ITOV(ip), ip->i_ffs_size);
-		}
-
-		len -= bsize;
-		off += bsize;
+	if ((error = VOP_BALLOC(vp, off, len, cred, flags))) {
+		goto errout;
 	}
 
 	/*
@@ -255,31 +248,11 @@ ufs_balloc_range(vp, off, len, cred, flags)
 
 errout:
 	simple_lock(&uobj->vmobjlock);
-	if (pg1 != NULL) {
-		if (pg1->flags & PG_WANTED) {
-			wakeup(pg1);
-		}
-		if (pg1->flags & PG_RELEASED) {
-			UVMHIST_LOG(ubchist, "releasing pg %p", pg1,0,0,0);
-			uobj->pgops->pgo_releasepg(pg1, NULL);
-		} else {
-			UVMHIST_LOG(ubchist, "unbusing pg %p", pg1,0,0,0);
-			pg1->flags &= ~(PG_WANTED|PG_BUSY);
-			UVM_PAGE_OWN(pg1, NULL);
-		}
+	if (pgs1[0] != NULL) {
+		uvm_page_unbusy(pgs1, npages1);
 	}
-	if (pg2 != NULL) {
-		if (pg2->flags & PG_WANTED) {
-			wakeup(pg2);
-		}
-		if (pg2->flags & PG_RELEASED) {
-			UVMHIST_LOG(ubchist, "releasing pg %p", pg2,0,0,0);
-			uobj->pgops->pgo_releasepg(pg2, NULL);
-		} else {
-			UVMHIST_LOG(ubchist, "unbusing pg %p", pg2,0,0,0);
-			pg2->flags &= ~(PG_WANTED|PG_BUSY);
-			UVM_PAGE_OWN(pg2, NULL);
-		}
+	if (pgs2[0] != NULL) {
+		uvm_page_unbusy(pgs2, npages2);
 	}
 	simple_unlock(&uobj->vmobjlock);
 	return error;
