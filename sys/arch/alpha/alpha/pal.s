@@ -1,4 +1,4 @@
-/* $NetBSD: pal.s,v 1.6 1997/04/07 00:18:52 cgd Exp $ */
+/* $NetBSD: pal.s,v 1.7 1997/04/08 00:19:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,6 +34,8 @@
  * (III) 2-1 - (III) 2-25 of "Alpha Architecture Reference Manual" by
  * Richard L. Sites.
  */
+
+__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.7 1997/04/08 00:19:02 cgd Exp $");
 
 /*
  * alpha_rpcc: read process cycle counter (XXX INSTRUCTION, NOT PALcode OP)

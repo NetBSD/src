@@ -1,4 +1,4 @@
-/* $NetBSD: prom_disp.s,v 1.6 1997/04/07 00:18:53 cgd Exp $ */
+/* $NetBSD: prom_disp.s,v 1.7 1997/04/08 00:19:03 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,6 +29,8 @@
 
 #ifndef _LOCORE
 #include <machine/asm.h>
+#else
+__KERNEL_RCSID(2, "$NetBSD: prom_disp.s,v 1.7 1997/04/08 00:19:03 cgd Exp $");
 #endif
 
 	.globl	prom_dispatch_v

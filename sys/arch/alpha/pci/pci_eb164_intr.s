@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164_intr.s,v 1.3 1997/04/07 23:56:41 cgd Exp $ */
+/* $NetBSD: pci_eb164_intr.s,v 1.4 1997/04/08 00:19:05 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -44,8 +44,9 @@
  */
 
 #include <machine/options.h>		/* Config options headers */
-
 #include <machine/asm.h>
+
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164_intr.s,v 1.4 1997/04/08 00:19:05 cgd Exp $");
 
 	.text
 LEAF(eb164_intr_enable,1)
