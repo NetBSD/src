@@ -1,5 +1,5 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.31 2000/06/28 03:04:04 mrg Exp $	*/
-/*	$KAME: udp6_usrreq.c,v 1.52 2000/06/05 00:41:58 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.32 2000/07/07 15:54:19 itojun Exp $	*/
+/*	$KAME: udp6_usrreq.c,v 1.55 2000/06/13 11:40:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -255,17 +255,13 @@ udp6_input(mp, offp, proto)
 		udp_in6.sin6_len = sizeof(struct sockaddr_in6);
 		udp_in6.sin6_family = AF_INET6;
 		udp_in6.sin6_port = uh->uh_sport;
-		udp_in6.sin6_addr = ip6->ip6_src;
-		if (IN6_IS_SCOPE_LINKLOCAL(&udp_in6.sin6_addr))
-			udp_in6.sin6_addr.s6_addr16[1] = 0;
-		if (m->m_pkthdr.rcvif) {
-			if (IN6_IS_SCOPE_LINKLOCAL(&udp_in6.sin6_addr)) {
-				udp_in6.sin6_scope_id =
-					m->m_pkthdr.rcvif->if_index;
-			} else
-				udp_in6.sin6_scope_id = 0;
-		} else
-			udp_in6.sin6_scope_id = 0;
+#if 0 /*XXX inbound flowinfo */
+		udp_in6.sin6_flowinfo = ip6->ip6_flow & IPV6_FLOWINFO_MASK;
+#endif
+		/* KAME hack: recover scopeid */
+		(void)in6_recoverscope(&udp_in6, &ip6->ip6_src,
+		    m->m_pkthdr.rcvif);
+
 		/*
 		 * KAME note: usually we drop udphdr from mbuf here.
 		 * We need udphdr for IPsec processing so we do that later.
@@ -426,16 +422,8 @@ udp6_input(mp, offp, proto)
 	udp_in6.sin6_len = sizeof(struct sockaddr_in6);
 	udp_in6.sin6_family = AF_INET6;
 	udp_in6.sin6_port = uh->uh_sport;
-	udp_in6.sin6_addr = ip6->ip6_src;
-	if (IN6_IS_SCOPE_LINKLOCAL(&udp_in6.sin6_addr))
-		udp_in6.sin6_addr.s6_addr16[1] = 0;
-	if (m->m_pkthdr.rcvif) {
-		if (IN6_IS_SCOPE_LINKLOCAL(&udp_in6.sin6_addr))
-			udp_in6.sin6_scope_id = m->m_pkthdr.rcvif->if_index;
-		else
-			udp_in6.sin6_scope_id = 0;
-	} else
-		udp_in6.sin6_scope_id = 0;
+	/* KAME hack: recover scopeid */
+	(void)in6_recoverscope(&udp_in6, &ip6->ip6_src, m->m_pkthdr.rcvif);
 	if (in6p->in6p_flags & IN6P_CONTROLOPTS
 	 || in6p->in6p_socket->so_options & SO_TIMESTAMP) {
 		ip6_savecontrol(in6p, &opts, ip6, m);
@@ -612,43 +600,11 @@ udp6_output(in6p, m, addr6, control, p)
 
 		faddr = &sin6->sin6_addr;
 		fport = sin6->sin6_port; /* allow 0 port */
-		/*
-		 * If the scope of the destination is link-local,
-		 * embed the interface index in the address.
-		 *
-		 * XXX advanced-api value overrides sin6_scope_id
-		 */
-		if (IN6_IS_ADDR_LINKLOCAL(faddr) ||
-		    IN6_IS_ADDR_MC_LINKLOCAL(faddr)) {
-			struct ip6_pktopts *optp = in6p->in6p_outputopts;
-			struct in6_pktinfo *pi = NULL;
-			struct ifnet *oifp = NULL;
-			struct ip6_moptions *mopt = NULL;
 
-			/*
-			 * XXX Boundary check is assumed to be already done in
-			 * ip6_setpktoptions().
-			 */
-			if (optp && (pi = optp->ip6po_pktinfo) &&
-			    pi->ipi6_ifindex) {
-				faddr->s6_addr16[1] = htons(pi->ipi6_ifindex);
-				oifp = ifindex2ifnet[pi->ipi6_ifindex];
-			} else if (IN6_IS_ADDR_MULTICAST(faddr) &&
-				 (mopt = in6p->in6p_moptions) &&
-				 mopt->im6o_multicast_ifp) {
-				oifp = mopt->im6o_multicast_ifp;
-				faddr->s6_addr16[1] = htons(oifp->if_index);
-			} else if (sin6->sin6_scope_id) {
-				/* boundary check */
-				if (sin6->sin6_scope_id < 0
-				    || if_index < sin6->sin6_scope_id) {
-					error = ENXIO;  /* XXX EINVAL? */
-					goto release;
-				}
-				/* XXX */
-				faddr->s6_addr16[1] =
-					htons(sin6->sin6_scope_id & 0xffff);
-			}
+		/* KAME hack: embed scopeid */
+		if (in6_embedscope(&sin6->sin6_addr, sin6, in6p, NULL) != 0) {
+			error = EINVAL;
+			goto release;
 		}
 
 		if (!IN6_IS_ADDR_V4MAPPED(faddr)) {
