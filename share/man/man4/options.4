@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.64 1998/10/29 21:22:34 jonathan Exp $
+.\"	$NetBSD: options.4,v 1.65 1998/11/01 09:59:33 lukem Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1154,9 +1154,12 @@ Increase this value if you get
 .Dq out of space in kmem_map
 panics.
 .\" , which mean you have run out of mallocable kernel memory.
+.It Cd options BUFCACHE=value
+Size of the buffer cache as a percentage of total available
+.Tn RAM .
 .It Cd options NBUF=value
 .It Cd options BUFPAGES=value
-These option set the number of pages available for the buffer cache.
+These options set the number of pages available for the buffer cache.
 Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available
 .Tn RAM .
