@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.33 2003/07/24 10:12:29 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.34 2005/01/05 09:18:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@
 #define _RF_P		0x20000000		/* Location relative */
 #define _RF_G		0x10000000		/* GOT offset */
 #define _RF_B		0x08000000		/* Load address relative */
+#define _RF_U		0x04000000		/* Unaligned */
 #define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
 #define _RF_RS(s)	( (s) & 0xff)		/* right shift */
 static const int reloc_target_flags[] = {
@@ -92,7 +93,7 @@ static const int reloc_target_flags[] = {
 	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),		/* GLOB_DAT */
 				_RF_SZ(32) | _RF_RS(0),		/* JMP_SLOT */
 	      _RF_A|	_RF_B|	_RF_SZ(32) | _RF_RS(0),		/* RELATIVE */
-	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),		/* UA_32 */
+	_RF_S|_RF_A|	_RF_U|	_RF_SZ(32) | _RF_RS(0),		/* UA_32 */
 
 	/*unknown*/		_RF_SZ(32) | _RF_RS(0),		/* PLT32 */
 	/*unknown*/		_RF_SZ(32) | _RF_RS(0),		/* HIPLT22 */
@@ -107,6 +108,9 @@ static const int reloc_target_flags[] = {
 	_RF_S|_RF_A|/*unknown*/	_RF_SZ(32) | _RF_RS(0),		/* HH22 */
 	_RF_S|_RF_A|/*unknown*/	_RF_SZ(32) | _RF_RS(0),		/* HM10 */
 	_RF_S|_RF_A|/*unknown*/	_RF_SZ(32) | _RF_RS(0),		/* LM22 */
+	_RF_S|_RF_A|_RF_P|/*unknown*/	_RF_SZ(32) | _RF_RS(0),	/* PC_HH22 */
+	_RF_S|_RF_A|_RF_P|/*unknown*/	_RF_SZ(32) | _RF_RS(0),	/* PC_HM10 */
+	_RF_S|_RF_A|_RF_P|/*unknown*/	_RF_SZ(32) | _RF_RS(0),	/* PC_LM22 */
 	_RF_S|_RF_A|_RF_P|/*unknown*/	_RF_SZ(32) | _RF_RS(0),	/* WDISP16 */
 	_RF_S|_RF_A|_RF_P|/*unknown*/	_RF_SZ(32) | _RF_RS(0),	/* WDISP19 */
 	/*unknown*/		_RF_SZ(32) | _RF_RS(0),		/* GLOB_JMP */
@@ -124,14 +128,16 @@ static const char *reloc_names[] = {
 	"GLOB_DAT", "JMP_SLOT", "RELATIVE", "UA_32", "PLT32",
 	"HIPLT22", "LOPLT10", "LOPLT10", "PCPLT22", "PCPLT32",
 	"10", "11", "64", "OLO10", "HH22",
-	"HM10", "LM22", "WDISP16", "WDISP19", "GLOB_JMP",
-	"7", "5", "6"
+	"HM10", "LM22", "PC_HH22", "PC_HM10", "PC_LM22", 
+	"WDISP16", "WDISP19", "GLOB_JMP", "7", "5", "6"
 };
 #endif
 
 #define RELOC_RESOLVE_SYMBOL(t)		((reloc_target_flags[t] & _RF_S) != 0)
 #define RELOC_PC_RELATIVE(t)		((reloc_target_flags[t] & _RF_P) != 0)
 #define RELOC_BASE_RELATIVE(t)		((reloc_target_flags[t] & _RF_B) != 0)
+#define RELOC_UNALIGNED(t)		((reloc_target_flags[t] & _RF_U) != 0)
+#define RELOC_USE_ADDEND(t)		((reloc_target_flags[t] & _RF_A) != 0)
 #define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
 
@@ -153,6 +159,7 @@ static const int reloc_target_bitmask[] = {
 	_BM(10), _BM(11), -1,		/* _10, _11, _64 */
 	_BM(10), _BM(22),		/* _OLO10, _HH22 */
 	_BM(10), _BM(22),		/* _HM10, _LM22 */
+	_BM(22), _BM(10), _BM(22),	/* _PC_HH22, _PC_HM10, _PC_LM22 */
 	_BM(16), _BM(19),		/* _WDISP16, _WDISP19 */
 	-1,				/* GLOB_JMP */
 	_BM(7), _BM(5), _BM(6)		/* _7, _5, _6 */
@@ -299,17 +306,41 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 		value >>= RELOC_VALUE_RIGHTSHIFT(type);
 		value &= mask;
 
-		/* We ignore alignment restrictions here */
-		*where &= ~mask;
-		*where |= value;
+		if (RELOC_UNALIGNED(type)) {
+			/* Handle unaligned relocations. */
+			Elf_Addr tmp = 0;
+			char *ptr = (char *)where;
+			int i, size = RELOC_TARGET_SIZE(type)/8;
+
+			/* Read it in one byte at a time. */
+			for (i=0; i<size; i++)
+				tmp = (tmp << 8) | ptr[i];
+
+			tmp &= ~mask;
+			tmp |= value;
+
+			/* Write it back out. */
+			for (i=0; i<size; i++)
+				ptr[i] = ((tmp >> (8*i)) & 0xff);
+#ifdef RTLD_DEBUG_RELOC
+			value = (Elf_Word)tmp;
+#endif
+
+		} else {
+			*where &= ~mask;
+			*where |= value;
+#ifdef RTLD_DEBUG_RELOC
+			value = (Elf_Word)*where;
+#endif
+		}
 #ifdef RTLD_DEBUG_RELOC
 		if (RELOC_RESOLVE_SYMBOL(type)) {
 			rdbg(("%s %s in %s --> %p in %s", reloc_names[type],
 			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)*where, defobj->path));
+			    obj->path, (void *)value, defobj->path));
 		} else {
 			rdbg(("%s in %s --> %p", reloc_names[type],
-			    obj->path, (void *)*where));
+			    obj->path, (void *)value));
 		}
 #endif
 	}
