@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.1.1.16 2002/06/24 05:25:57 itojun Exp $	*/
+/*	$NetBSD: session.c,v 1.1.1.17 2002/06/26 14:03:06 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -34,7 +34,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.140 2002/06/23 21:06:41 deraadt Exp $");
+RCSID("$OpenBSD: session.c,v 1.142 2002/06/26 13:49:26 deraadt Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -754,6 +754,9 @@ child_set_env(char ***envp, u_int *envsizep, const char *name,
 	} else {
 		/* New variable.  Expand if necessary. */
 		if (i >= (*envsizep) - 1) {
+			if (*envsizep >= 1000)
+				fatal("child_set_env: too many env vars,"
+				    " skipping: %.100s", name);
 			(*envsizep) += 50;
 			env = (*envp) = xrealloc(env, (*envsizep) * sizeof(char *));
 		}
@@ -779,12 +782,15 @@ read_environment_file(char ***env, u_int *envsize,
 	FILE *f;
 	char buf[4096];
 	char *cp, *value;
+	u_int lineno = 0;
 
 	f = fopen(filename, "r");
 	if (!f)
 		return;
 
 	while (fgets(buf, sizeof(buf), f)) {
+		if (++lineno > 1000)
+			fatal("Too many lines in environment file %s", filename);
 		for (cp = buf; *cp == ' ' || *cp == '\t'; cp++)
 			;
 		if (!*cp || *cp == '#' || *cp == '\n')
@@ -793,7 +799,8 @@ read_environment_file(char ***env, u_int *envsize,
 			*strchr(cp, '\n') = '\0';
 		value = strchr(cp, '=');
 		if (value == NULL) {
-			fprintf(stderr, "Bad line in %.100s: %.200s\n", filename, buf);
+			fprintf(stderr, "Bad line %u in %.100s\n", lineno,
+			    filename);
 			continue;
 		}
 		/*
