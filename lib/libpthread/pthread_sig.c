@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.16 2002/10/14 23:46:22 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.17 2002/10/16 17:43:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -351,9 +351,10 @@ pthread__signal(pthread_t t, int sig, int code)
 	extern struct pthread_queue_t allqueue;
 
 	self = pthread__self();
-	if (t)
+	if (t) {
 		target = t;
-	else {
+		pthread_spinlock(self, &target->pt_siglock);
+	} else {
 		/*
 		 * Pick a thread that doesn't have the signal blocked
 		 * and can be reasonably forced to run. 
