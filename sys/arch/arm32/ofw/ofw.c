@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.18 1999/01/03 02:23:28 mark Exp $	*/
+/*	$NetBSD: ofw.c,v 1.19 1999/01/09 22:56:06 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -1527,7 +1527,7 @@ ofw_getphysmeminfo()
 				if (s < mp1->start)
 					break;
 			if (mp1 < mp) {
-				bcopy(mp1, mp1 + 1, (void *)mp - (void *)mp1);
+				bcopy(mp1, mp1 + 1, (char *)mp - (char *)mp1);
 				mp1->start = s;
 				mp1->size = sz;
 			}
