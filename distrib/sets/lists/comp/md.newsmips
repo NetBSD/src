@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.13 2001/04/15 15:33:09 kleink Exp $
+# $NetBSD: md.newsmips,v 1.14 2001/04/15 17:14:28 kleink Exp $
 ./usr/include/newsmips	comp-c-include
 ./usr/include/newsmips/_G_config.h	comp-c-include
 ./usr/include/newsmips/adrsmap.h	comp-c-include
@@ -22,6 +22,7 @@
 ./usr/include/newsmips/ieee.h	comp-c-include
 ./usr/include/newsmips/ieeefp.h	comp-c-include
 ./usr/include/newsmips/int_const.h	comp-c-include
+./usr/include/newsmips/int_fmtio.h	comp-c-include
 ./usr/include/newsmips/int_limits.h	comp-c-include
 ./usr/include/newsmips/int_mwgwtypes.h	comp-c-include
 ./usr/include/newsmips/int_types.h	comp-c-include
