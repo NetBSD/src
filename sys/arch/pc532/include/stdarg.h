@@ -1,6 +1,6 @@
-/* 
- * Copyright (c) 1993 Philip A. Nelson.
- * All rights reserved.
+/*-
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,56 +12,48 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Philip A. Nelson.
- * 4. The name of Philip A. Nelson may not be used to endorse or promote
- *    products derived from this software without specific prior written
- *    permission.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY PHILIP NELSON ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL PHILIP NELSON BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  *
- *
- *   Note that the type used in va_arg is supposed to match the
- *   actual type **after default promotions**.
- *   Thus, va_arg (..., short) is not valid.
- *
- *	machine/stdarg.h:
- *
- *	stdarg.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
+ *	from: @(#)stdarg.h	8.1 (Berkeley) 6/10/93
+ *	$Id: stdarg.h,v 1.4 1994/05/17 02:12:20 cgd Exp $
  */
 
+#ifndef _STDARG_H_
+#define	_STDARG_H_
 
-#ifndef _MACHINE_STDARG_H_
-#define _MACHINE_STDARG_H_
+typedef char *va_list;
 
-#include <machine/ansi.h> 	/* to make sure _VA_LIST_ is defined. */
+#define	__va_promote(type) \
+	(((sizeof(type) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
 
-/* See comment in machine/ansi.h as to why it is this way. */
-typedef _VA_LIST_ va_list;
+#define	va_start(ap, last) \
+	(ap = ((char *)&(last) + __va_promote(last)))
 
-/* Amount of space required in an argument list for an arg of type TYPE.
-   TYPE may alternatively be an expression whose type is used.  */
-
-#define __va_rounded_size(TYPE)  \
-  (((sizeof (TYPE) + sizeof (int) - 1) / sizeof (int)) * sizeof (int))
-
-#define va_start(AP, LASTARG) 						\
- (AP = ((char *) __builtin_next_arg ()))
-
-void va_end (va_list);
-#define va_end(AP)
-
-#define va_arg(AP, TYPE)						\
- (*((TYPE *) (AP += __va_rounded_size (TYPE),				\
-	      AP - (sizeof (TYPE) < 4 ? sizeof (TYPE)			\
-		    : __va_rounded_size (TYPE)))))
-
+#ifdef KERNEL
+#define	va_arg(ap, type) \
+	((type *)(ap += sizeof(type)))[-1]
+#else
+#define	va_arg(ap, type) \
+	((type *)(ap += sizeof(type) < sizeof(int) ? \
+		(abort(), 0) : sizeof(type)))[-1]
 #endif
+
+#define	va_end(ap)
+
+#endif /* !_STDARG_H_ */
