@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.14 2000/12/31 18:01:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.15 2001/01/01 19:24:27 sommerfeld Exp $	*/
 
 /*
  *
@@ -1152,7 +1152,6 @@ pmap_init()
 		struct pmap_physseg *pmsegp;
 		
 		npages = vm_physmem[lcv].end - vm_physmem[lcv].start;
-		printf("bank %d has %d pages\n", lcv, npages);
 		pmsegp = &vm_physmem[lcv].pmseg;
 		
 		for (off = 0; off <npages; off++)
@@ -1862,6 +1861,9 @@ pmap_steal_ptp(obj, offset)
 					 pmaps_hand->pm_pdirpa) {
 					pmap_update_pg(((vaddr_t)APTE_BASE) +
 						       ptp->offset);
+#if defined(MULTIPROCESSOR)
+					/* XXX MP -- SHOOTDOWN */
+#endif
 				}
 
 				/* put it in our pmap! */
@@ -2608,7 +2610,7 @@ pmap_remove(pmap, sva, eva)
 	struct pmap *pmap;
 	vaddr_t sva, eva;
 {
-	pt_entry_t *ptes;
+	pt_entry_t *ptes, opte;
 	boolean_t result;
 	paddr_t ptppa;
 	vaddr_t blkendva;
@@ -2664,14 +2666,28 @@ pmap_remove(pmap, sva, eva)
 			 */
 
 			if (result && ptp && ptp->wire_count <= 1) {
-				pmap->pm_pdir[pdei(sva)] = 0;	/* zap! */
+				/* zap! */
+				opte = i386_atomic_testset_ul(
+				    &pmap->pm_pdir[pdei(sva)], 0);
 #if defined(I386_CPU)
 				/* already dumped whole TLB on i386 */
 				if (cpu_class != CPUCLASS_386)
 #endif
 				{
+#if defined(MULTIPROCESSOR)
+					vaddr_t ptpva;
+#endif
 					pmap_update_pg(((vaddr_t) ptes) +
 						       ptp->offset);
+#if defined(MULTIPROCESSOR)
+					ptpva = ((vaddr_t)PTE_BASE) +
+					    ptp->offset;
+					/*
+					 * Always shoot down the pmap's
+					 * self-mapping of the PTP.
+					 */
+					pmap_tlb_shootdown(pmap, ptpva, opte);
+#endif
 				}
 				pmap->pm_stats.resident_count--;
 				if (pmap->pm_ptphint == ptp)
@@ -2754,11 +2770,23 @@ pmap_remove(pmap, sva, eva)
 		}
 		pmap_remove_ptes(pmap, 0, ptp,
 		    (vaddr_t)&ptes[i386_btop(sva)], sva, blkendva);
-
 		/* if PTP is no longer being used, free it! */
 		if (ptp && ptp->wire_count <= 1) {
-			pmap->pm_pdir[pdei(sva)] = 0;	/* zap! */
-			pmap_update_pg( ((vaddr_t) ptes) + ptp->offset);
+#if defined(MULTIPROCESSOR)
+			vaddr_t ptpva;
+#endif
+			/* zap! */
+			opte = i386_atomic_testset_ul(
+			    &pmap->pm_pdir[pdei(sva)], 0);
+			pmap_update_pg(((vaddr_t) ptes) + ptp->offset);
+#if defined(MULTIPROCESSOR)
+			ptpva = ((vaddr_t)PTE_BASE) + ptp->offset;
+			/*
+			 * Always shoot down the pmap's self-mapping
+			 * of the PTP.
+			 */
+			pmap_tlb_shootdown(pmap, ptpva, opte);
+#endif
 #if 0 /* XXX optimization? */
 #if defined(I386_CPU)
 			/* cancel possible pending pmap update on i386 */
@@ -2864,10 +2892,24 @@ pmap_page_remove(pg)
 		if (pve->pv_ptp) {
 			pve->pv_ptp->wire_count--;
 			if (pve->pv_ptp->wire_count <= 1) {
+#if defined(MULTIPROCESSOR)
+				vaddr_t ptpva;
+#endif
 				/* zap! */
-				pve->pv_pmap->pm_pdir[pdei(pve->pv_va)] = 0;
+				opte = i386_atomic_testset_ul(
+				    &pve->pv_pmap->pm_pdir[pdei(pve->pv_va)],
+				    0);
 				pmap_update_pg(((vaddr_t)ptes) +
 					       pve->pv_ptp->offset);
+#if defined(MULTIPROCESSOR)
+				ptpva = ((vaddr_t)PTE_BASE) +
+				    pve->pv_ptp->offset;
+				/*
+				 * Always shoot down the other pmap's
+				 * self-mapping of the PTP.
+				 */
+				pmap_tlb_shootdown(pve->pv_pmap, ptpva, opte);
+#endif
 #if defined(I386_CPU)
 				needs_update = FALSE;
 #endif
@@ -4151,12 +4193,13 @@ pmap_tlb_dshootdown(pmap, va, pte)
 					pq->pq_flushg++;
 				else
 					pq->pq_flushu++;
+				/*
+				 * Since we've nailed the whole thing,
+				 * drain the job entries pending for that
+				 * processor.
+				 */
+				pmap_tlb_shootdown_q_drain(pq);
 			}
-			/*
-			 * Since we've nailed the whole thing, drain the
-			 * job entries pending for that processor.
-			 */
-			pmap_tlb_shootdown_q_drain(pq);
 		} else {
 			pj->pj_pmap = pmap;
 			pj->pj_va = va;
