@@ -29,7 +29,7 @@ struct ufs_info {
 	union {
 #ifdef USE_FFS
 		struct {
-			ufs_daddr_t iblkno;	/* inode-block offset */
+			int32_t iblkno;	/* inode-block offset */
 			int32_t cgoffset;	/* cylinder group offset */
 			int32_t cgmask;		/* cylinder group mask */
 			int32_t fragshift;	/* block to fragmentation */
@@ -41,7 +41,7 @@ struct ufs_info {
 #ifdef USE_LFS
 		struct {
 			u_int32_t version;	/* LFS version # */
-			ufs_daddr_t idaddr;	/* ifile inode disk address */
+			int32_t idaddr;		/* ifile inode disk address */
 			u_int32_t inopb;	/* inodes per block (v1) */
 						/* inodes per frag (v2) */
 			u_int32_t ifpb;		/* inode addrs / ifile block */
@@ -56,7 +56,7 @@ struct ufs_info {
 extern struct ufs_info	ufs_info;
 #define ufs_get_inode(ino, di)	((*ufs_info.get_inode)((ino), (di)))
 
-void RAW_READ __P((void *buf, ufs_daddr_t blkpos, size_t bytelen));
+void RAW_READ __P((void *buf, daddr_t blkpos, size_t bytelen));
 
 size_t ufs_read __P((struct dinode *di, void *buf, unsigned off, size_t count));
 ino_t ufs_lookup __P((ino_t dirino, const char *fn));

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.34 2002/12/28 14:39:09 yamt Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.35 2003/01/24 21:55:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -123,16 +123,16 @@ int lfs_bwrite_ext(struct buf *, int);
 int lfs_fits(struct lfs *, int);
 void lfs_flush_fs(struct lfs *, int);
 void lfs_flush(struct lfs *, int);
-int lfs_check(struct vnode *, ufs_daddr_t, int);
+int lfs_check(struct vnode *, daddr_t, int);
 #ifdef MALLOCLOG
 void lfs_freebuf_malloclog(struct buf *, char *, int);
 struct buf *lfs_newbuf_malloclog(struct lfs *, struct vnode *,
-				 ufs_daddr_t, size_t, char *, int);
+				 daddr_t, size_t, char *, int);
 #define lfs_freebuf(BP) lfs_freebuf_malloclog((BP), __FILE__, __LINE__)
 #define lfs_newbuf(F, V, A, S) lfs_newbuf_malloclog((F),(V),(A),(S),__FILE__,__LINE__)
 #else
 void lfs_freebuf(struct buf *);
-struct buf *lfs_newbuf(struct lfs *, struct vnode *, ufs_daddr_t, size_t);
+struct buf *lfs_newbuf(struct lfs *, struct vnode *, daddr_t, size_t);
 #endif
 void lfs_countlocked(int *, long *, char *);
 int lfs_reserve(struct lfs *, struct vnode *, struct vnode *, int);
@@ -174,7 +174,8 @@ int lfs_match_dindir(struct lfs *, struct buf *);
 int lfs_match_tindir(struct lfs *, struct buf *);
 void lfs_callback(struct buf *);
 void lfs_supercallback(struct buf *);
-void lfs_shellsort(struct buf **, ufs_daddr_t *, int);
+/* XXX ondisk32 */
+void lfs_shellsort(struct buf **, int32_t *, int);
 int lfs_vref(struct vnode *);
 void lfs_vunref(struct vnode *);
 void lfs_vunref_head(struct vnode *);
@@ -184,7 +185,7 @@ void lfs_seglock(struct lfs *, unsigned long);
 void lfs_segunlock(struct lfs *);
 
 /* lfs_syscalls.c */
-int lfs_fastvget(struct mount *, ino_t, ufs_daddr_t, struct vnode **, struct dinode *);
+int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct dinode *);
 struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
 
 /* lfs_vfsops.c */

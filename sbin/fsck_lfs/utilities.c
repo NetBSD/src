@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.9 2002/05/23 04:05:11 perseant Exp $	 */
+/* $NetBSD: utilities.c,v 1.10 2003/01/24 21:55:10 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -214,9 +214,9 @@ flush(int fd, struct bufarea * bp)
 	if (!bp->b_dirty)
 		return;
 	if (bp->b_errs != 0)
-		pfatal("WRITING %sZERO'ED BLOCK %d TO DISK\n",
+		pfatal("WRITING %sZERO'ED BLOCK %lld TO DISK\n",
 		 (bp->b_errs == bp->b_size / dev_bsize) ? "" : "PARTIALLY ",
-		       bp->b_bno);
+		       (long long)bp->b_bno);
 	bp->b_dirty = 0;
 	bp->b_errs = 0;
 	bwrite(fd, bp->b_un.b_buf, bp->b_bno, (long)bp->b_size);
@@ -238,7 +238,7 @@ rwerror(char *mesg, daddr_t blk)
 
 	if (preen == 0)
 		printf("\n");
-	pfatal("CANNOT %s: BLK %d", mesg, blk);
+	pfatal("CANNOT %s: BLK %lld", mesg, (long long)blk);
 	if (reply("CONTINUE") == 0)
 		errexit("Program terminated\n");
 }
@@ -342,11 +342,12 @@ bread(int fd, char *buf, daddr_t blk, long size)
 		if (read(fd, cp, (int)secsize) != secsize) {
 			(void)lseek(fd, offset + i + secsize, 0);
 			if (secsize != dev_bsize && dev_bsize != 1)
-				printf(" %ld (%ld),",
-				       (blk * dev_bsize + i) / secsize,
-				       blk + i / dev_bsize);
+				printf(" %lld (%lld),",
+				    (long long)((blk*dev_bsize + i) / secsize),
+				    (long long)(blk + i / dev_bsize));
 			else
-				printf(" %ld,", blk + i / dev_bsize);
+				printf(" %lld,",
+				    (long long)(blk + i / dev_bsize));
 			errs++;
 		}
 	}
@@ -378,7 +379,7 @@ bwrite(int fd, char *buf, daddr_t blk, long size)
 	for (cp = buf, i = 0; i < size; i += dev_bsize, cp += dev_bsize)
 		if (write(fd, cp, (int)dev_bsize) != dev_bsize) {
 			(void)lseek(fd, offset + i + dev_bsize, 0);
-			printf(" %ld,", blk + i / dev_bsize);
+			printf(" %lld,", (long long)(blk + i / dev_bsize));
 		}
 	printf("\n");
 	return;

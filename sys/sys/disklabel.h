@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.77 2002/10/04 18:26:31 elric Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.78 2003/01/24 21:55:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -470,7 +470,7 @@ static const char *const mountnames[] = {
 /*
  * Structure used to perform a format or other raw operation,
  * returning data and/or register values.  Register identification
- * and format are device- and driver-dependent.
+ * and format are device- and driver-dependent. Currently unused.
  */
 struct format_op {
 	char	*df_buf;

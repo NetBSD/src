@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.27 2002/11/04 16:59:37 wiz Exp $	*/
+/*	$NetBSD: fs.h,v 1.28 2003/01/24 21:55:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -66,8 +66,8 @@
 #define	SBSIZE		8192
 #define	BBOFF		((off_t)(0))
 #define	SBOFF		((off_t)(BBOFF + BBSIZE))
-#define	BBLOCK		((ufs_daddr_t)(0))
-#define	SBLOCK		((ufs_daddr_t)(BBLOCK + BBSIZE / DEV_BSIZE))
+#define	BBLOCK		((daddr_t)(0))
+#define	SBLOCK		((daddr_t)(BBLOCK + BBSIZE / DEV_BSIZE))
 
 /*
  * Addresses stored in inodes are capable of addressing fragments
@@ -174,10 +174,10 @@ struct csum {
 struct fs {
 	int32_t	 fs_firstfield;		/* historic file system linked list, */
 	int32_t	 fs_unused_1;		/*     used for incore super blocks */
-	ufs_daddr_t fs_sblkno;		/* addr of super-block in filesys */
-	ufs_daddr_t fs_cblkno;		/* offset of cyl-block in filesys */
-	ufs_daddr_t fs_iblkno;		/* offset of inode-blocks in filesys */
-	ufs_daddr_t fs_dblkno;		/* offset of first data after cg */
+	int32_t  fs_sblkno;		/* addr of super-block in filesys */
+	int32_t  fs_cblkno;		/* offset of cyl-block in filesys */
+	int32_t  fs_iblkno;		/* offset of inode-blocks in filesys */
+	int32_t  fs_dblkno;		/* offset of first data after cg */
 	int32_t	 fs_cgoffset;		/* cylinder group offset in cylinder */
 	int32_t	 fs_cgmask;		/* used to calc mod fs_ntrak */
 	int32_t	 fs_time;		/* last time written */
@@ -217,7 +217,7 @@ struct fs {
 /* fs_id takes the space of the unused fs_headswitch and fs_trkseek fields */
 	int32_t	 fs_id[2];		/* unique file system id */
 /* sizes determined by number of cylinder groups and their sizes */
-	ufs_daddr_t  fs_csaddr;		/* blk addr of cyl grp summary area */
+	int32_t  fs_csaddr;		/* blk addr of cyl grp summary area */
 	int32_t	 fs_cssize;		/* size of cyl grp summary area */
 	int32_t	 fs_cgsize;		/* cylinder group size */
 /* these fields are derived from the hardware */
@@ -441,7 +441,7 @@ struct ocg {
  * Cylinder group macros to locate things in cylinder groups.
  * They calc file system addresses of cylinder group data structures.
  */
-#define	cgbase(fs, c)	((ufs_daddr_t)((fs)->fs_fpg * (c)))
+#define	cgbase(fs, c)	((daddr_t)((fs)->fs_fpg * (c)))
 #define	cgdmin(fs, c)	(cgstart(fs, c) + (fs)->fs_dblkno)	/* 1st data */
 #define	cgimin(fs, c)	(cgstart(fs, c) + (fs)->fs_iblkno)	/* inode blk */
 #define	cgsblock(fs, c)	(cgstart(fs, c) + (fs)->fs_sblkno)	/* super blk */
@@ -457,7 +457,7 @@ struct ocg {
  */
 #define	ino_to_cg(fs, x)	((x) / (fs)->fs_ipg)
 #define	ino_to_fsba(fs, x)						\
-	((ufs_daddr_t)(cgimin(fs, ino_to_cg(fs, x)) +			\
+	((daddr_t)(cgimin(fs, ino_to_cg(fs, x)) +			\
 	    (blkstofrags((fs), (((x) % (fs)->fs_ipg) / INOPB(fs))))))
 #define	ino_to_fsbo(fs, x)	((x) % INOPB(fs))
 

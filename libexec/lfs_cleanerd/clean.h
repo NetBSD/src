@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.14 2002/06/14 00:58:39 perseant Exp $	*/
+/*	$NetBSD: clean.h,v 1.15 2003/01/24 21:55:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -152,11 +152,12 @@ int		 lfs_segclean(fsid_t *, u_long);
 int		 lfs_bmapv(fsid_t *, BLOCK_INFO_15 *, int); 
 int		 lfs_markv(fsid_t *, BLOCK_INFO_15 *, int);
 
-int		 dump_summary(struct lfs *, SEGSUM *, u_long, daddr_t **, daddr_t);
+/* XXX ondisk32 */
+int		 dump_summary(struct lfs *, SEGSUM *, u_long, int32_t **, daddr_t);
 int		 fs_getmntinfo(struct statfs **, char *, const char *);
 void		 get(int, off_t, void *, size_t);
 struct dinode	*get_dinode (FS_INFO *, ino_t);
-int		 get_rawblock(FS_INFO *, char *, size_t, ufs_daddr_t);
+int		 get_rawblock(FS_INFO *, char *, size_t, daddr_t);
 FS_INFO		*get_fs_info(struct statfs *, int);
 int 		 lfs_segmapv(FS_INFO *, int, caddr_t, BLOCK_INFO_15 **, int *);
 int		 mmap_segment(FS_INFO *, int, caddr_t *, int);

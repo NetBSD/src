@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.16 2003/01/18 08:28:26 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.17 2003/01/24 21:55:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.16 2003/01/18 08:28:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.17 2003/01/24 21:55:16 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,8 +75,10 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.16 2003/01/18 08:28:26 thorpej 
 /* prototypes for the converters */
 static __inline void
 netbsd32_to_partinfo(struct netbsd32_partinfo *, struct partinfo *, u_long);
+#if 0
 static __inline void
 netbsd32_to_format_op(struct netbsd32_format_op *, struct format_op *, u_long);
+#endif
 static __inline void
 netbsd32_to_ifconf(struct netbsd32_ifconf *, struct ifconf *, u_long);
 static __inline void
@@ -89,8 +91,10 @@ static __inline void
 netbsd32_to_sioc_sg_req(struct netbsd32_sioc_sg_req *, struct sioc_sg_req *, u_long);
 static __inline void
 netbsd32_from_partinfo(struct partinfo *, struct netbsd32_partinfo *);
+#if 0
 static __inline void
 netbsd32_from_format_op(struct format_op *, struct netbsd32_format_op *);
+#endif
 static __inline void
 netbsd32_from_ifconf(struct ifconf *, struct netbsd32_ifconf *);
 static __inline void
@@ -115,6 +119,7 @@ netbsd32_to_partinfo(s32p, p, cmd)
 	p->part = (struct partition *)NETBSD32PTR64(s32p->part);
 }
 
+#if 0
 static __inline void
 netbsd32_to_format_op(s32p, p, cmd)
 	struct netbsd32_format_op *s32p;
@@ -127,6 +132,7 @@ netbsd32_to_format_op(s32p, p, cmd)
 	p->df_startblk = s32p->df_startblk;
 	memcpy(p->df_reg, s32p->df_reg, sizeof(s32p->df_reg));
 }
+#endif
 
 #if 0 /* XXX see below */
 static __inline void
@@ -222,6 +228,7 @@ netbsd32_from_partinfo(p, s32p)
 	s32p->part = s32p->part;
 }
 
+#if 0
 static __inline void
 netbsd32_from_format_op(p, s32p)
 	struct format_op *p;
@@ -236,6 +243,7 @@ netbsd32_from_format_op(p, s32p)
 	s32p->df_startblk = p->df_startblk;
 	memcpy(s32p->df_reg, p->df_reg, sizeof(p->df_reg));
 }
+#endif
 
 #if 0 /* XXX see below */
 static __inline void
@@ -477,11 +485,12 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 
 	case DIOCGPART32:
 		IOCTL_STRUCT_CONV_TO(DIOCGPART, partinfo);
-
+#if 0	/* not implemented by anything */
 	case DIOCRFORMAT32:
 		IOCTL_STRUCT_CONV_TO(DIOCRFORMAT, format_op);
 	case DIOCWFORMAT32:
 		IOCTL_STRUCT_CONV_TO(DIOCWFORMAT, format_op);
+#endif
 
 /*
  * only a few ifreq syscalls need conversion and those are

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.26 2002/10/23 09:15:04 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.27 2003/01/24 21:55:20 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.26 2002/10/23 09:15:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.27 2003/01/24 21:55:20 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ ext2fs_read(v)
 	struct buf *bp;
 	void *win;
 	vsize_t bytelen;
-	ufs_daddr_t lbn, nextlbn;
+	daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	int error;
@@ -205,7 +205,7 @@ ext2fs_write(v)
 	struct m_ext2fs *fs;
 	struct buf *bp;
 	struct proc *p;
-	ufs_daddr_t lbn;
+	daddr_t lbn;
 	off_t osize;
 	int blkoffset, error, flags, ioflag, resid, xfersize;
 	vsize_t bytelen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 2002/05/06 03:17:43 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.15 2003/01/24 21:55:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -25,18 +25,18 @@
  */
 
 void		adjust __P((struct inodesc *, int));
-ufs_daddr_t	allocblk __P((long));
+daddr_t		allocblk __P((long));
 ino_t		allocdir __P((ino_t, ino_t, int));
 ino_t		allocino __P((ino_t request, int type));
-void		blkerror __P((ino_t, char *, ufs_daddr_t));
-int		bread __P((int, char *, ufs_daddr_t, long));
+void		blkerror __P((ino_t, char *, daddr_t));
+int		bread __P((int, char *, daddr_t, long));
 void		bufinit __P((void));
-void		bwrite __P((int, char *, ufs_daddr_t, long));
+void		bwrite __P((int, char *, daddr_t, long));
 void		cacheino __P((struct dinode *, ino_t));
 void		catch __P((int));
 void		catchquit __P((int));
 int		changeino __P((ino_t, char *, ino_t));
-int		chkrange __P((ufs_daddr_t, int));
+int		chkrange __P((daddr_t, int));
 void		ckfini __P((void));
 int		ckinode __P((struct dinode *, struct inodesc *));
 void		clri __P((struct inodesc *, char *, int));
@@ -49,12 +49,12 @@ void		fileerror __P((ino_t, ino_t, char *));
 int		findino __P((struct inodesc *));
 int		findname __P((struct inodesc *));
 void		flush __P((int, struct bufarea *));
-void		freeblk __P((ufs_daddr_t, long));
+void		freeblk __P((daddr_t, long));
 void		freeino __P((ino_t));
 void		freeinodebuf __P((void));
 int		ftypeok __P((struct dinode *));
-void		getblk __P((struct bufarea *, ufs_daddr_t, long));
-struct bufarea *getdatablk __P((ufs_daddr_t, long));
+void		getblk __P((struct bufarea *, daddr_t, long));
+struct bufarea *getdatablk __P((daddr_t, long));
 struct inoinfo *getinoinfo __P((ino_t));
 struct dinode  *ginode __P((ino_t));
 void		getpathname __P((char *, ino_t, ino_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.19 2001/07/13 20:30:21 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.20 2003/01/24 21:55:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.19 2001/07/13 20:30:21 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.20 2003/01/24 21:55:31 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: dumplfs.c,v 1.19 2001/07/13 20:30:21 perseant Exp $");
 static void	addseg(char *);
 static void	dump_cleaner_info(struct lfs *, void *);
 static void	dump_dinode(struct dinode *);
-static void	dump_ifile(int, struct lfs *, int, int, int);
+static void	dump_ifile(int, struct lfs *, int, int, daddr_t);
 static int	dump_ipage_ifile(struct lfs *, int, char *, int);
 static int	dump_ipage_segusage(struct lfs *, int, char *, int);
 static void	dump_segment(int, int, daddr_t, struct lfs *, int);
@@ -207,7 +207,7 @@ main(int argc, char **argv)
 		lfs_master->lfs_fsbtodb = 0;
 	}
 
-	(void)printf("Master Superblock at 0x%x:\n", sbdaddr);
+	(void)printf("Master Superblock at 0x%llx:\n", (long long)sbdaddr);
 	dump_super(lfs_master);
 
 	dump_ifile(fd, lfs_master, do_ientries, do_segentries, idaddr);
@@ -239,7 +239,8 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 {
 	char *ipage;
 	struct dinode *dip, *dpage;
-	daddr_t *addrp, *dindir, *iaddrp, *indir;
+	/* XXX ondisk32 */
+	int32_t *addrp, *dindir, *iaddrp, *indir;
 	int block_limit, i, inum, j, nblocks, psize;
 
 	psize = lfsp->lfs_bsize;
@@ -255,8 +256,8 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 			break;
 
 	if (dip < dpage)
-		errx(1, "unable to locate ifile inode at disk address 0x%x",
-		     addr);
+		errx(1, "unable to locate ifile inode at disk address 0x%llx",
+		     (long long)addr);
 
 	(void)printf("\nIFILE inode\n");
 	dump_dinode(dip);
@@ -455,7 +456,7 @@ static int
 dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 {
 	FINFO *fp;
-	daddr_t *dp;
+	int32_t *dp;
 	int i, j;
 	int ck;
 	int numbytes;
@@ -467,19 +468,19 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 		/* Don't print "corrupt" if we're just too close to the edge */
 		if (dtosn(lfsp, addr + fsbtodb(lfsp, 1)) ==
 		    dtosn(lfsp, addr))
-			(void)printf("dumplfs: %s %d address 0x%x\n",
+			(void)printf("dumplfs: %s %d address 0x%llx\n",
 		                     "corrupt summary block; segment", segnum,
-				     addr);
+				     (long long)addr);
 		return (0);
 	}
 	if (lfsp->lfs_version > 1 && sp->ss_ident != lfsp->lfs_ident) {
-		(void)printf("dumplfs: %s %d address 0x%x\n",
+		(void)printf("dumplfs: %s %d address 0x%llx\n",
 	                     "summary from a former life; segment", segnum,
 			     addr);
 		return (0);
 	}
 
-	(void)printf("Segment Summary Info at 0x%x\n", addr);
+	(void)printf("Segment Summary Info at 0x%llx\n", (long long)addr);
 	(void)printf("    %s0x%x\t%s%d\t%s%d\t%s%c%c\n    %s0x%x\t%s0x%x",
 		"next     ", sp->ss_next,
 		"nfinfo   ", sp->ss_nfinfo,
@@ -497,8 +498,8 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	}
 
 	/* Dump out inode disk addresses */
-	dp = (daddr_t *)sp;
-	dp += lfsp->lfs_sumsize / sizeof(daddr_t);
+	dp = (int32_t *)sp;
+	dp += lfsp->lfs_sumsize / sizeof(int32_t);
 	inop = malloc(lfsp->lfs_bsize);
 	printf("    Inode addresses:");
 	numbytes = 0;
@@ -553,8 +554,8 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 	off_t sum_offset;
 	daddr_t new_addr;
 
-	(void)printf("\nSEGMENT %d (Disk Address 0x%x)\n", dtosn(lfsp, addr),
-		     addr);
+	(void)printf("\nSEGMENT %lld (Disk Address 0x%llx)\n",
+		     (long long)dtosn(lfsp, addr), (long long)addr);
 	sum_offset = fsbtobyte(lfsp, addr);
 	sumblock = malloc(lfsp->lfs_sumsize);
 
@@ -590,8 +591,8 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 			} else if (did_one)
 				break;
 			else {
-				printf("Segment at 0x%x empty or corrupt\n",
-                                       addr);
+				printf("Segment at 0x%llx empty or corrupt\n",
+                                       (long long)addr);
 				break;
 			}
 		} else {

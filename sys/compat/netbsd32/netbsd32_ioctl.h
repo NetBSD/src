@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.10 2002/10/23 13:16:43 scw Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.11 2003/01/24 21:55:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -58,13 +58,13 @@ struct netbsd32_partinfo {
 #define DIOCGPART32	_IOW('d', 104, struct netbsd32_partinfo)	/* get partition */
 #endif
 
+#if 0	/* not implemented by anything */
 struct netbsd32_format_op {
 	netbsd32_charp df_buf;
 	int	 df_count;		/* value-result */
 	daddr_t	 df_startblk;
 	int	 df_reg[8];		/* result */
 };
-#if 1
 #define DIOCRFORMAT32	_IOWR('d', 105, struct netbsd32_format_op)
 #define DIOCWFORMAT32	_IOWR('d', 106, struct netbsd32_format_op)
 #endif

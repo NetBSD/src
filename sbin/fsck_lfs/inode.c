@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.13 2002/05/23 04:05:11 perseant Exp $	 */
+/* $NetBSD: inode.c,v 1.14 2003/01/24 21:55:10 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1997, 1998
@@ -113,12 +113,12 @@ blksreqd(struct lfs * fs, int blkno)
 #define D_UNITS (NINDIR(fs))
 #define T_UNITS (NINDIR(fs)*NINDIR(fs))
 
-ufs_daddr_t     lfs_bmap(struct lfs *, struct dinode *, ufs_daddr_t);
+daddr_t     lfs_bmap(struct lfs *, struct dinode *, daddr_t);
 
-ufs_daddr_t
-lfs_bmap(struct lfs * fs, struct dinode * idinode, ufs_daddr_t lbn)
+daddr_t
+lfs_bmap(struct lfs * fs, struct dinode * idinode, daddr_t lbn)
 {
-	ufs_daddr_t     residue, up, off = 0;
+	daddr_t     residue, up, off = 0;
 	struct bufarea *bp;
 
 	if (lbn > 0 && lbn > (idinode->di_size - 1) / dev_bsize) {
@@ -156,7 +156,7 @@ lfs_bmap(struct lfs * fs, struct dinode * idinode, ufs_daddr_t lbn)
 			/* printf("lbn %d: parent is the triple\n", -lbn); */
 			bp = getddblk(up, sblock.lfs_bsize);
 			bp->b_flags &= ~B_INUSE;
-			return ((daddr_t *)(bp->b_un.b_buf))[off];
+			return (daddr_t)(((int32_t *)(bp->b_un.b_buf))[off]);
 		} else {	/* residue == 0 */
 			/* Single indirect.  Two cases. */
 			if (lbn < BASE_TINDIR) {
@@ -195,7 +195,8 @@ lfs_bmap(struct lfs * fs, struct dinode * idinode, ufs_daddr_t lbn)
 		return UNASSIGNED;
 	bp = getddblk(up, sblock.lfs_bsize);
 	bp->b_flags &= ~B_INUSE;
-	return ((daddr_t *)(bp->b_un.b_buf))[off];
+	/* XXX ondisk32 */
+	return (daddr_t)(((int32_t *)(bp->b_un.b_buf))[off]);
 }
 
 /*
@@ -209,7 +210,7 @@ struct bufarea *
 getfileblk(struct lfs * fs, struct dinode * idinode, ino_t lbn)
 {
 	struct bufarea *bp;
-	ufs_daddr_t     blkno;
+	daddr_t     blkno;
 	static char     empty_buf[65536];
 
 	empty.b_un.b_buf = &(empty_buf[0]);
@@ -386,7 +387,8 @@ ino_to_fsba(struct lfs * fs, ino_t ino)
 int
 ckinode(struct dinode *dp, struct inodesc *idesc)
 {
-	register ufs_daddr_t *ap;
+	/* XXX ondisk32 */
+	register int32_t *ap;
 	long            ret, n, ndb, offset;
 	struct dinode   dino;
 	u_int64_t       remsize, sizepb;
@@ -478,7 +480,8 @@ ckinode(struct dinode *dp, struct inodesc *idesc)
 static int
 iblock(struct inodesc * idesc, long ilevel, u_int64_t isize)
 {
-	daddr_t	       *ap, *aplim;
+	/* XXX ondisk32 */
+	int32_t	       *ap, *aplim;
 	struct bufarea *bp;
 	int             i, n, (*func)(struct inodesc *), nif;
 	u_int64_t       sizepb;
@@ -602,8 +605,9 @@ cacheino(struct dinode *dp, ino_t inumber)
 	blks = howmany(dp->di_size, sblock.lfs_bsize);
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
+	/* XXX ondisk32 */
 	inp = (struct inoinfo *)
-		malloc(sizeof(*inp) + (blks - 1) * sizeof(daddr_t));
+		malloc(sizeof(*inp) + (blks - 1) * sizeof(int32_t));
 	if (inp == NULL)
 		return;
 	inpp = &inphead[inumber % numdirs];
@@ -617,7 +621,8 @@ cacheino(struct dinode *dp, ino_t inumber)
 	inp->i_dotdot = (ino_t)0;
 	inp->i_number = inumber;
 	inp->i_isize = dp->di_size;
-	inp->i_numblks = blks * sizeof(daddr_t);
+	/* XXX ondisk32 */
+	inp->i_numblks = blks * sizeof(int32_t);
 	memcpy(&inp->i_blks[0], &dp->di_db[0], (size_t)inp->i_numblks);
 	if (inplast == listmax) {
 		listmax += 100;
@@ -763,7 +768,7 @@ void
 blkerror(ino_t ino, char *type, daddr_t blk)
 {
 
-	pfatal("%d %s I=%u", blk, type, ino);
+	pfatal("%lld %s I=%u", (long long)blk, type, ino);
 	printf("\n");
 	if (exitonfail)
 		exit(1);

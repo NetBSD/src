@@ -1,4 +1,4 @@
-/* $NetBSD: vars.c,v 1.5 2001/02/04 21:52:04 christos Exp $	 */
+/* $NetBSD: vars.c,v 1.6 2003/01/24 21:55:10 fvdl Exp $	 */
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -63,6 +63,6 @@ char           *lfname;		/* lost & found directory name */
 int             lfmode;		/* lost & found directory creation mode */
 
 daddr_t         n_blks;		/* number of blocks in use */
-daddr_t         n_files;	/* number of files in use */
+ino_t         n_files;	/* number of files in use */
 
 struct dinode   zino;

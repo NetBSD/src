@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1b.c,v 1.14 2002/05/06 03:17:43 lukem Exp $	*/
+/*	$NetBSD: pass1b.c,v 1.15 2003/01/24 21:55:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1b.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1b.c,v 1.14 2002/05/06 03:17:43 lukem Exp $");
+__RCSID("$NetBSD: pass1b.c,v 1.15 2003/01/24 21:55:08 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ pass1bcheck(idesc)
 {
 	struct dups *dlp;
 	int nfrags, res = KEEPON;
-	ufs_daddr_t blkno = idesc->id_blkno;
+	daddr_t blkno = idesc->id_blkno;
 
 	for (nfrags = idesc->id_numfrags; nfrags > 0; blkno++, nfrags--) {
 		if (chkrange(blkno, 1))

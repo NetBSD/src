@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.30 2002/06/05 05:23:51 chs Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.31 2003/01/24 21:55:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.30 2002/06/05 05:23:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.31 2003/01/24 21:55:21 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -78,19 +78,21 @@ ffs_balloc(v)
 		int a_flags;
 		struct buf **a_bpp;
 	} */ *ap = v;
-	ufs_daddr_t lbn;
+	daddr_t lbn;
 	int size;
 	struct ucred *cred;
 	int flags;
-	ufs_daddr_t nb;
+	daddr_t nb;
 	struct buf *bp, *nbp;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 	struct indir indirs[NIADDR + 2];
-	ufs_daddr_t newb, *bap, pref;
+	daddr_t newb, pref;
+	int32_t *bap;	/* XXX ondisk32 */
 	int deallocated, osize, nsize, num, i, error;
-	ufs_daddr_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
+	daddr_t *blkp, *allocblk, allociblk[NIADDR + 1];
+	int32_t *allocib;	/* XXX ondisk32 */
 	int unwindidx = -1;
 	struct buf **bpp = ap->a_bpp;
 #ifdef FFS_EI
@@ -134,7 +136,8 @@ ffs_balloc(v)
 				    fs->fs_bsize, osize, bpp ? *bpp : NULL);
 			ip->i_ffs_size = lblktosize(fs, nb + 1);
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
-			ip->i_ffs_db[nb] = ufs_rw32(newb, needswap);
+			/* XXX ondisk32 */
+			ip->i_ffs_db[nb] = ufs_rw32((int32_t)newb, needswap);
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (bpp) {
 				if (flags & B_SYNC)
@@ -150,6 +153,7 @@ ffs_balloc(v)
 	 */
 
 	if (lbn < NDADDR) {
+		/* XXX ondisk32 */
 		nb = ufs_rw32(ip->i_ffs_db[lbn], needswap);
 		if (nb != 0 && ip->i_ffs_size >= lblktosize(fs, lbn + 1)) {
 
@@ -241,7 +245,8 @@ ffs_balloc(v)
 				    nsize, 0, bpp ? *bpp : NULL);
 			}
 		}
-		ip->i_ffs_db[lbn] = ufs_rw32(newb, needswap);
+		/* XXX ondisk32 */
+		ip->i_ffs_db[lbn] = ufs_rw32((int32_t)newb, needswap);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (0);
 	}
@@ -263,7 +268,7 @@ ffs_balloc(v)
 	allocib = NULL;
 	allocblk = allociblk;
 	if (nb == 0) {
-		pref = ffs_blkpref(ip, lbn, 0, (ufs_daddr_t *)0);
+		pref = ffs_blkpref(ip, lbn, 0, (int32_t *)0);
 		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
 		    &newb);
 		if (error)
@@ -289,7 +294,8 @@ ffs_balloc(v)
 		}
 		unwindidx = 0;
 		allocib = &ip->i_ffs_ib[indirs[0].in_off];
-		*allocib = ufs_rw32(nb, needswap);
+		/* XXX ondisk32 */
+		*allocib = ufs_rw32((int32_t)nb, needswap);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 
@@ -304,7 +310,7 @@ ffs_balloc(v)
 			brelse(bp);
 			goto fail;
 		}
-		bap = (ufs_daddr_t *)bp->b_data;
+		bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
 		nb = ufs_rw32(bap[indirs[i].in_off], needswap);
 		if (i == num)
 			break;
@@ -314,7 +320,7 @@ ffs_balloc(v)
 			continue;
 		}
 		if (pref == 0)
-			pref = ffs_blkpref(ip, lbn, 0, (ufs_daddr_t *)0);
+			pref = ffs_blkpref(ip, lbn, 0, (int32_t *)0);
 		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
 		    &newb);
 		if (error) {
@@ -344,7 +350,8 @@ ffs_balloc(v)
 		}
 		if (unwindidx < 0)
 			unwindidx = i - 1;
-		bap[indirs[i - 1].in_off] = ufs_rw32(nb, needswap);
+		/* XXX ondisk32 */
+		bap[indirs[i - 1].in_off] = ufs_rw32((int32_t)nb, needswap);
 
 		/*
 		 * If required, write synchronously, otherwise use
@@ -382,7 +389,8 @@ ffs_balloc(v)
 		if (DOINGSOFTDEP(vp))
 			softdep_setup_allocindir_page(ip, lbn, bp,
 			    indirs[num].in_off, nb, 0, bpp ? *bpp : NULL);
-		bap[indirs[num].in_off] = ufs_rw32(nb, needswap);
+		/* XXX ondisk32 */
+		bap[indirs[num].in_off] = ufs_rw32((int32_t)nb, needswap);
 		if (allocib == NULL && unwindidx < 0) {
 			unwindidx = i - 1;
 		}
@@ -477,7 +485,7 @@ fail:
 				panic("Could not unwind indirect block, error %d", r);
 				brelse(bp);
 			} else {
-				bap = (ufs_daddr_t *)bp->b_data;
+				bap = (int32_t *)bp->b_data; /* XXX ondisk32 */
 				bap[indirs[unwindidx].in_off] = 0;
 				bwrite(bp);
 			}

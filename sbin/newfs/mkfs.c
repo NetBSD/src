@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.65 2002/09/28 20:11:07 dbj Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.66 2003/01/24 21:55:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.65 2002/09/28 20:11:07 dbj Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.66 2003/01/24 21:55:11 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -244,7 +244,8 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		exit(21);
 	}
 	sblock.fs_nrpos = nrpos;
-	sblock.fs_nindir = sblock.fs_bsize / sizeof(daddr_t);
+	/* XXX ondisk32 */
+	sblock.fs_nindir = sblock.fs_bsize / sizeof(int32_t);
 	sblock.fs_inopb = sblock.fs_bsize / DINODE_SIZE;
 	sblock.fs_nspf = sblock.fs_fsize / sectorsize;
 	for (sblock.fs_fsbtodb = 0, i = NSPF(&sblock); i > 1; i >>= 1)
@@ -510,10 +511,10 @@ next:
 	sblock.fs_dblkno = sblock.fs_iblkno + sblock.fs_ipg / INOPF(&sblock);
 	i = MIN(~sblock.fs_cgmask, sblock.fs_ncg - 1);
 	if (cgdmin(&sblock, i) - cgbase(&sblock, i) >= sblock.fs_fpg) {
-		printf("inode blocks/cyl group (%d) >= data blocks (%d)\n",
-		    cgdmin(&sblock, i) -
-		    (cgbase(&sblock, i) >> sblock.fs_fragshift),
-		    sblock.fs_fpg >> sblock.fs_fragshift);
+		printf("inode blocks/cyl group (%lld) >= data blocks (%lld)\n",
+		    (long long)cgdmin(&sblock, i) -
+		    (long long)(cgbase(&sblock, i) >> sblock.fs_fragshift),
+		    (long long)(sblock.fs_fpg >> sblock.fs_fragshift));
 		printf("number of cylinders per cylinder group (%d) %s.\n",
 		    sblock.fs_cpg, "must be increased");
 		exit(29);
@@ -522,14 +523,14 @@ next:
 	if ((i = fssize - j * sblock.fs_fpg) < sblock.fs_fpg &&
 	    cgdmin(&sblock, j) - cgbase(&sblock, j) > i) {
 		if (j == 0) {
-			printf("File system must have at least %d sectors\n",
-			    NSPF(&sblock) *
-			    (cgdmin(&sblock, 0) + (3 << sblock.fs_fragshift)));
+			printf("File system must have at least %lld sectors\n",
+			    (long long)(NSPF(&sblock) *
+			    (cgdmin(&sblock, 0) + (3 << sblock.fs_fragshift))));
 			exit(30);
 		}
-		printf("Warning: inode blocks/cyl group (%d) >= "
+		printf("Warning: inode blocks/cyl group (%lld) >= "
 			"data blocks (%d) in last\n",
-		    (cgdmin(&sblock, j) -
+		    (long long)(cgdmin(&sblock, j) -
 		     cgbase(&sblock, j)) >> sblock.fs_fragshift,
 		    i >> sblock.fs_fragshift);
 		printf("    cylinder group. This implies %d sector(s) "
@@ -615,8 +616,8 @@ next:
 			continue;
 		if (cylno % nprintcols == 0)
 			printf("\n");
-		printf(" %*d,", printcolwidth,
-				fsbtodb(&sblock, cgsblock(&sblock, cylno)));
+		printf(" %*lld,", printcolwidth,
+			(long long)fsbtodb(&sblock, cgsblock(&sblock, cylno)));
 		fflush(stdout);
 	}
 	if (!mfs)
@@ -1130,14 +1131,14 @@ rdfs(daddr_t bno, int size, void *bf)
 	offset = bno;
 	offset *= sectorsize;
 	if (lseek(fsi, offset, SEEK_SET) < 0) {
-		printf("rdfs: seek error for sector %d: %s\n",
-		    bno, strerror(errno));
+		printf("rdfs: seek error for sector %lld: %s\n",
+		    (long long)bno, strerror(errno));
 		exit(33);
 	}
 	n = read(fsi, bf, size);
 	if (n != size) {
-		printf("rdfs: read error for sector %d: %s\n",
-		    bno, strerror(errno));
+		printf("rdfs: read error for sector %lld: %s\n",
+		    (long long)bno, strerror(errno));
 		exit(34);
 	}
 }
@@ -1162,14 +1163,14 @@ wtfs(daddr_t bno, int size, void *bf)
 	offset = bno;
 	offset *= sectorsize;
 	if (lseek(fso, offset, SEEK_SET) < 0) {
-		printf("wtfs: seek error for sector %d: %s\n",
-		    bno, strerror(errno));
+		printf("wtfs: seek error for sector %lld: %s\n",
+		    (long long)bno, strerror(errno));
 		exit(35);
 	}
 	n = write(fso, bf, size);
 	if (n != size) {
-		printf("wtfs: write error for sector %d: %s\n",
-		    bno, strerror(errno));
+		printf("wtfs: write error for sector %lld: %s\n",
+		    (long long)bno, strerror(errno));
 		exit(36);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.52 2002/09/21 18:14:49 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.53 2003/01/24 21:55:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.52 2002/09/21 18:14:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.53 2003/01/24 21:55:20 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -410,7 +410,7 @@ ext2fs_reload(mountp, cred, p)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
-	error = bread(devvp, (ufs_daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp);
+	error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
 		return (error);

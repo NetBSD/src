@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.2 2002/01/07 16:56:27 lukem Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.3 2003/01/24 21:55:32 fvdl Exp $	*/
 /* From: NetBSD: ffs_extern.h,v 1.19 2001/08/17 02:18:48 lukem Exp */
 
 /*-
@@ -43,7 +43,7 @@
  * ufs_getlbns and used by truncate and bmap code.
  */
 struct indir {
-	ufs_daddr_t in_lbn;		/* Logical block number. */
+	daddr_t in_lbn;		/* Logical block number. */
 	int	in_off;			/* Offset in buffer. */
 	int	in_exists;		/* Flag if the block exists. */
 };
@@ -53,10 +53,11 @@ void panic(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__,1,2)));  
 
 	/* ffs_alloc.c */
-int ffs_alloc(struct inode *, ufs_daddr_t, ufs_daddr_t, int, ufs_daddr_t *);
-ufs_daddr_t ffs_blkpref(struct inode *, ufs_daddr_t, int, ufs_daddr_t *);
-void ffs_blkfree(struct inode *, ufs_daddr_t, long);
-void ffs_clusteracct(struct fs *, struct cg *, ufs_daddr_t, int);
+int ffs_alloc(struct inode *, daddr_t, daddr_t, int, daddr_t *);
+/* XXX ondisk32 */
+daddr_t ffs_blkpref(struct inode *, daddr_t, int, int32_t *);
+void ffs_blkfree(struct inode *, daddr_t, long);
+void ffs_clusteracct(struct fs *, struct cg *, daddr_t, int);
 
 	/* ffs_balloc.c */
 int ffs_balloc(struct inode *, off_t, int, struct buf **);
@@ -68,10 +69,10 @@ void ffs_csum_swap(struct csum *, struct csum *, int);
 
 	/* ffs_subr.c */
 void ffs_fragacct(struct fs *, int, int32_t[], int, int);
-int ffs_isblock(struct fs *, u_char *, ufs_daddr_t);
-int ffs_isfreeblock(struct fs *, u_char *, ufs_daddr_t);
-void ffs_clrblock(struct fs *, u_char *, ufs_daddr_t);
-void ffs_setblock(struct fs *, u_char *, ufs_daddr_t);
+int ffs_isblock(struct fs *, u_char *, daddr_t);
+int ffs_isfreeblock(struct fs *, u_char *, daddr_t);
+void ffs_clrblock(struct fs *, u_char *, daddr_t);
+void ffs_setblock(struct fs *, u_char *, daddr_t);
 
 	/* ufs_bmap.c */
-int ufs_getlbns(struct inode *, ufs_daddr_t, struct indir *, int *);
+int ufs_getlbns(struct inode *, daddr_t, struct indir *, int *);

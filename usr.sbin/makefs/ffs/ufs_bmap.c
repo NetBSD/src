@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.11 2002/01/31 19:37:15 tv Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.12 2003/01/24 21:55:33 fvdl Exp $	*/
 /* From: NetBSD: ufs_bmap.c,v 1.14 2001/11/08 05:00:51 chs Exp */
 
 /*
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ufs_bmap.c,v 1.11 2002/01/31 19:37:15 tv Exp $");
+__RCSID("$NetBSD: ufs_bmap.c,v 1.12 2003/01/24 21:55:33 fvdl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -72,9 +72,9 @@ __RCSID("$NetBSD: ufs_bmap.c,v 1.11 2002/01/31 19:37:15 tv Exp $");
  * once with the offset into the page itself.
  */
 int
-ufs_getlbns(struct inode *ip, ufs_daddr_t bn, struct indir *ap, int *nump)
+ufs_getlbns(struct inode *ip, daddr_t bn, struct indir *ap, int *nump)
 {
-	long metalbn, realbn;
+	daddr_t metalbn, realbn;
 	int64_t blockcnt;
 	int lbc;
 	int i, numlevels, off;

@@ -1,4 +1,4 @@
-/*	$NetBSD: saio.c,v 1.4 2002/11/16 08:51:28 wdk Exp $	*/
+/*	$NetBSD: saio.c,v 1.5 2003/01/24 21:55:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,7 +90,8 @@ struct sa_iob {
 	char	*i_ma;		/* memory address of i/o buffer */
 	int	i_cc;		/* character count of transfer */
 	int32_t	i_offset;	/* seek offset in file */
-	daddr_t	i_bn;		/* 1st block # of next read */
+	/* XXX ondisk32 */
+	int32_t	i_bn;		/* 1st block # of next read */
 	int	i_fstype;	/* file system type */
 	int	i_errno;	/* error # return */
 	unsigned int	i_devaddr;	/* csr address */

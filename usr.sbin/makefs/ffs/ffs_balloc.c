@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.9 2002/01/31 22:44:04 tv Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.10 2003/01/24 21:55:32 fvdl Exp $	*/
 /* From NetBSD: ffs_balloc.c,v 1.25 2001/08/08 08:36:36 lukem Exp */
 
 /*
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_balloc.c,v 1.9 2002/01/31 22:44:04 tv Exp $");
+__RCSID("$NetBSD: ffs_balloc.c,v 1.10 2003/01/24 21:55:32 fvdl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -70,15 +70,17 @@ __RCSID("$NetBSD: ffs_balloc.c,v 1.9 2002/01/31 22:44:04 tv Exp $");
 int
 ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 {
-	ufs_daddr_t lbn;
+	daddr_t lbn;
 	int size;
-	ufs_daddr_t nb;
+	daddr_t nb;
 	struct buf *bp, *nbp;
 	struct fs *fs = ip->i_fs;
 	struct indir indirs[NIADDR + 2];
-	ufs_daddr_t newb, *bap, pref;
+	daddr_t newb, pref;
+	int32_t *bap;		/* XXX ondisk32 */
 	int osize, nsize, num, i, error;
-	ufs_daddr_t *allocib, *allocblk, allociblk[NIADDR + 1];
+	daddr_t *allocblk, allociblk[NIADDR + 1];
+	int32_t *allocib;	/* XXX ondisk32 */
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
 	lbn = lblkno(fs, offset);
@@ -111,6 +113,7 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	 */
 
 	if (lbn < NDADDR) {
+		/* XXX ondisk32 */
 		nb = ufs_rw32(ip->i_ffs_db[lbn], needswap);
 		if (nb != 0 && ip->i_ffs_size >= lblktosize(fs, lbn + 1)) {
 
@@ -183,7 +186,8 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 				*bpp = bp;
 			}
 		}
-		ip->i_ffs_db[lbn] = ufs_rw32(newb, needswap);
+		/* XXX ondisk32 */
+		ip->i_ffs_db[lbn] = ufs_rw32((int32_t)newb, needswap);
 		return (0);
 	}
 	/*
@@ -205,7 +209,7 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 	allocib = NULL;
 	allocblk = allociblk;
 	if (nb == 0) {
-		pref = ffs_blkpref(ip, lbn, 0, (ufs_daddr_t *)0);
+		pref = ffs_blkpref(ip, lbn, 0, (int32_t *)0);
 		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, &newb);
 		if (error)
 			return (error);
@@ -221,7 +225,8 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 		if ((error = bwrite(bp)) != 0)
 			goto fail;
 		allocib = &ip->i_ffs_ib[indirs[0].in_off];
-		*allocib = ufs_rw32(nb, needswap);
+		/* XXX ondisk32 */
+		*allocib = ufs_rw32((int32_t)nb, needswap);
 	}
 	/*
 	 * Fetch through the indirect blocks, allocating as necessary.
@@ -233,7 +238,8 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			brelse(bp);
 			goto fail;
 		}
-		bap = (ufs_daddr_t *)bp->b_data;
+		/* XXX ondisk32 */
+		bap = (int32_t *)bp->b_data;
 		nb = ufs_rw32(bap[indirs[i].in_off], needswap);
 		if (i == num)
 			break;
@@ -243,7 +249,7 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			continue;
 		}
 		if (pref == 0)
-			pref = ffs_blkpref(ip, lbn, 0, (ufs_daddr_t *)0);
+			pref = ffs_blkpref(ip, lbn, 0, (int32_t *)0);
 		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, &newb);
 		if (error) {
 			brelse(bp);
@@ -288,7 +294,8 @@ ffs_balloc(struct inode *ip, off_t offset, int bufsize, struct buf **bpp)
 			clrbuf(nbp);
 			*bpp = nbp;
 		}
-		bap[indirs[num].in_off] = ufs_rw32(nb, needswap);
+		/* XXX ondisk32 */
+		bap[indirs[num].in_off] = ufs_rw32((int32_t)nb, needswap);
 		/*
 		 * If required, write synchronously, otherwise use
 		 * delayed write.

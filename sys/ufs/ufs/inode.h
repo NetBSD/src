@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.31 2002/12/01 00:12:12 matt Exp $	*/
+/*	$NetBSD: inode.h,v 1.32 2003/01/24 21:55:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -54,8 +54,8 @@
  * Per-filesystem inode extensions.
  */
 struct ext2fs_inode_ext {
-	ufs_daddr_t ext2fs_last_lblk;	/* last logical block allocated */
-	ufs_daddr_t ext2fs_last_blk;	/* last block allocated on disk */
+	daddr_t ext2fs_last_lblk;	/* last logical block allocated */
+	daddr_t ext2fs_last_blk;	/* last block allocated on disk */
 };
 
 struct lfs_inode_ext {
@@ -186,7 +186,7 @@ struct inode {
  * ufs_getlbns and used by truncate and bmap code.
  */
 struct indir {
-	ufs_daddr_t in_lbn;		/* Logical block number. */
+	daddr_t in_lbn;		/* Logical block number. */
 	int	in_off;			/* Offset in buffer. */
 	int	in_exists;		/* Flag if the block exists. */
 };

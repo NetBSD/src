@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.11 2002/02/04 23:43:43 perseant Exp $ */
+/* $NetBSD: setup.c,v 1.12 2003/01/24 21:55:10 fvdl Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -356,12 +356,13 @@ setup(const char *dev)
 	iblk.b_un.b_buf = malloc(sblock.lfs_ibsize);
 	if (bread(fsreadfd, (char *)iblk.b_un.b_buf, fsbtodb(&sblock, idaddr),
 		  (long)sblock.lfs_ibsize) != 0) {
-		printf("Couldn't read disk block %d\n", idaddr);
+		printf("Couldn't read disk block %lld\n", (long long)idaddr);
 		exit(1);
 	}
 	idinode = lfs_difind(&sblock, sblock.lfs_ifile, &ifblock);
 	if (idinode == NULL) {
-		printf("Ifile inode not found at daddr 0x%x\n", idaddr);
+		printf("Ifile inode not found at daddr 0x%llx\n",
+		    (unsigned long long)idaddr);
 		exit(1);
 		/* XXX find it in the segment summaries */
 	}

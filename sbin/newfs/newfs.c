@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.62 2002/12/12 11:40:17 scw Exp $	*/
+/*	$NetBSD: newfs.c,v 1.63 2003/01/24 21:55:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.62 2002/12/12 11:40:17 scw Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.63 2003/01/24 21:55:12 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,8 @@ int main(int, char *[]);
  * placed in a single cylinder group. The default is one indirect
  * block worth of data blocks.
  */
-#define	MAXBLKPG(bsize)	((bsize) / sizeof(daddr_t))
+/* XXX ondisk32 */
+#define	MAXBLKPG(bsize)	((bsize) / sizeof(int32_t))
 
 /*
  * Each file system has a number of inodes statically allocated.

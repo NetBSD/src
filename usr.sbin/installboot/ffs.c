@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.6 2002/05/15 09:44:55 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.7 2003/01/24 21:55:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.6 2002/05/15 09:44:55 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.7 2003/01/24 21:55:31 fvdl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -113,11 +113,12 @@ ffs_find_disk_blocks(ib_params *params, uint32_t ino,
 	char		inodebuf[MAXBSIZE];
 	struct dinode	*inode;
 	int		level_i;
-	ufs_daddr_t	blk, lblk, nblk;
+	daddr_t	blk, lblk, nblk;
 	int		rv;
 #define LEVELS 4
 	struct {
-		ufs_daddr_t	*blknums;
+		/* XXX ondisk32 */
+		int32_t		*blknums;
 		unsigned long	blkcount;
 		char		diskbuf[MAXBSIZE];
 	} level[LEVELS];
@@ -205,8 +206,9 @@ ffs_find_disk_blocks(ib_params *params, uint32_t ino,
 				fsbtodb(fs, blk),
 				fs->fs_bsize, level[level_i].diskbuf))
 				return (0);
+			/* XXX ondisk32 */
 			level[level_i].blknums = 
-				(ufs_daddr_t *)level[level_i].diskbuf;
+				(int32_t *)level[level_i].diskbuf;
 			level[level_i].blkcount = NINDIR(fs);
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.52 2002/09/26 21:35:27 simonb Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.53 2003/01/24 21:55:22 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.52 2002/09/26 21:35:27 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.53 2003/01/24 21:55:22 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.52 2002/09/26 21:35:27 simonb Exp $"
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
-static int ffs_indirtrunc __P((struct inode *, ufs_daddr_t, ufs_daddr_t,
-			       ufs_daddr_t, int, long *));
+static int ffs_indirtrunc __P((struct inode *, daddr_t, daddr_t,
+			       daddr_t, int, long *));
 
 /*
  * Update the access, modified, and inode change times as specified
@@ -172,10 +172,10 @@ ffs_truncate(v)
 	} */ *ap = v;
 	struct vnode *ovp = ap->a_vp;
 	struct genfs_node *gp = VTOG(ovp);
-	ufs_daddr_t lastblock;
+	daddr_t lastblock;
 	struct inode *oip;
-	ufs_daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
-	ufs_daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
+	daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
+	daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
 	struct fs *fs;
 	int offset, size, level;
@@ -467,17 +467,18 @@ done:
 static int
 ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	struct inode *ip;
-	ufs_daddr_t lbn, lastbn;
-	ufs_daddr_t dbn;
+	daddr_t lbn, lastbn;
+	daddr_t dbn;
 	int level;
 	long *countp;
 {
 	int i;
 	struct buf *bp;
 	struct fs *fs = ip->i_fs;
-	ufs_daddr_t *bap;
+	int32_t *bap;	/* XXX ondisk32 */
 	struct vnode *vp;
-	ufs_daddr_t *copy = NULL, nb, nlbn, last;
+	daddr_t nb, nlbn, last;
+	int32_t *copy = NULL;	/* XXX ondisk32 */
 	long blkcount, factor;
 	int nblocks, blocksreleased = 0;
 	int error = 0, allerror = 0;
@@ -523,12 +524,13 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 		return (error);
 	}
 
-	bap = (ufs_daddr_t *)bp->b_data;
+	bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
 	if (lastbn >= 0) {
-		copy = (ufs_daddr_t *) malloc(fs->fs_bsize, M_TEMP, M_WAITOK);
+		copy = (int32_t *) malloc(fs->fs_bsize, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)copy, (caddr_t)bap, (u_int)fs->fs_bsize);
+		/* XXX ondisk32 */
 		memset((caddr_t)&bap[last + 1], 0,
-		  (u_int)(NINDIR(fs) - (last + 1)) * sizeof (ufs_daddr_t));
+		  (u_int)(NINDIR(fs) - (last + 1)) * sizeof (int32_t));
 		error = bwrite(bp);
 		if (error)
 			allerror = error;
@@ -545,7 +547,7 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 			continue;
 		if (level > SINGLE) {
 			error = ffs_indirtrunc(ip, nlbn, fsbtodb(fs, nb),
-					       (ufs_daddr_t)-1, level - 1,
+					       (daddr_t)-1, level - 1,
 					       &blkcount);
 			if (error)
 				allerror = error;

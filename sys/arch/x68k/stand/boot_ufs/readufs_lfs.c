@@ -35,7 +35,7 @@ try_lfs()
 	struct ufs_info	*ufsinfo = &ufs_info;
 	struct dlfs	sblk, sblk2;
 	struct dlfs	*s = &sblk;
-	ufs_daddr_t	sbpos;
+	daddr_t	sbpos;
 	int		fsbshift;
 
 #ifdef DEBUG_WITH_STDIO
@@ -68,7 +68,7 @@ try_lfs()
 			fsbshift = 0;
 			break;
 		} else {
-			ufs_daddr_t	sbpos1;
+			daddr_t	sbpos1;
 #if 0
 			fsbshift = sblk.dlfs_bshift - sblk.dlfs_blktodb + sblk.dlfs_fsbtodb - DEV_BSHIFT;
 #endif
@@ -157,7 +157,7 @@ get_lfs_inode(ino, dibuf)
 	struct dinode *dibuf;
 {
 	struct ufs_info *ufsinfo = &ufs_info;
-	ufs_daddr_t daddr;
+	daddr_t daddr;
 	char *buf = alloca(fsi.bsize);
 	struct dinode *di, *diend;
 	int i;
@@ -179,7 +179,7 @@ get_lfs_inode(ino, dibuf)
 		    : ((IFILE *) buf + i)->if_daddr;
 	}
 #ifdef DEBUG_WITH_STDIO
-	printf("LFS(%d): daddr: %d\n", ino, daddr);
+	printf("LFS(%d): daddr: %lld\n", ino, (long long)daddr);
 #endif
 
 	if (daddr == LFS_UNUSED_DADDR)

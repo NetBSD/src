@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.31 2002/09/28 20:11:06 dbj Exp $	*/
+/*	$NetBSD: pass5.c,v 1.32 2003/01/24 21:55:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.31 2002/09/28 20:11:06 dbj Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.32 2003/01/24 21:55:09 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,8 +67,8 @@ pass5()
 	int32_t savednpsect, savedinterleave;
 	int inomapsize, blkmapsize;
 	struct fs *fs = sblock;
-	ufs_daddr_t dbase, dmax;
-	ufs_daddr_t d;
+	daddr_t dbase, dmax;
+	daddr_t d;
 	long i, j, k;
 	struct csum *cs;
 	struct csum cstotal;

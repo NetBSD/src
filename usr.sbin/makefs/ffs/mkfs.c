@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.11 2002/08/08 13:24:15 soren Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.12 2003/01/24 21:55:33 fvdl Exp $	*/
 /* From NetBSD: mkfs.c,v 1.59 2001/12/31 07:07:58 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.11 2002/08/08 13:24:15 soren Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.12 2003/01/24 21:55:33 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -256,13 +256,15 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 		exit(21);
 	}
 	sblock.fs_nrpos = nrpos;
-	sblock.fs_nindir = sblock.fs_bsize / sizeof(daddr_t);
+	/* XXX ondisk32 */
+	sblock.fs_nindir = sblock.fs_bsize / sizeof(int32_t);
 	sblock.fs_inopb = sblock.fs_bsize / DINODE_SIZE;
 	sblock.fs_nspf = sblock.fs_fsize / sectorsize;
 	for (sblock.fs_fsbtodb = 0, i = NSPF(&sblock); i > 1; i >>= 1)
 		sblock.fs_fsbtodb++;
 	sblock.fs_sblkno =
 	    roundup(howmany(bbsize + sbsize, sblock.fs_fsize), sblock.fs_frag);
+	/* XXX ondisk32 */
 	sblock.fs_cblkno = (daddr_t)(sblock.fs_sblkno +
 	    roundup(howmany(sbsize, sblock.fs_fsize), sblock.fs_frag));
 	sblock.fs_iblkno = sblock.fs_cblkno + sblock.fs_frag;
@@ -522,8 +524,9 @@ next:
 	sblock.fs_dblkno = sblock.fs_iblkno + sblock.fs_ipg / INOPF(&sblock);
 	i = MIN(~sblock.fs_cgmask, sblock.fs_ncg - 1);
 	if (cgdmin(&sblock, i) - cgbase(&sblock, i) >= sblock.fs_fpg) {
-		printf("inode blocks/cyl group (%d) >= data blocks (%d)\n",
-		    cgdmin(&sblock, i) - cgbase(&sblock, i) / sblock.fs_frag,
+		printf("inode blocks/cyl group (%lld) >= data blocks (%d)\n",
+		    (long long)cgdmin(&sblock, i) -
+			cgbase(&sblock, i) / sblock.fs_frag,
 		    sblock.fs_fpg / sblock.fs_frag);
 		printf("number of cylinders per cylinder group (%d) %s.\n",
 		    sblock.fs_cpg, "must be increased");
@@ -533,14 +536,15 @@ next:
 	if ((i = fssize - j * sblock.fs_fpg) < sblock.fs_fpg &&
 	    cgdmin(&sblock, j) - cgbase(&sblock, j) > i) {
 		if (j == 0) {
-			printf("File system must have at least %d sectors\n",
-			    NSPF(&sblock) *
+			printf("File system must have at least %lld sectors\n",
+			    (long long)NSPF(&sblock) *
 			    (cgdmin(&sblock, 0) + 3 * sblock.fs_frag));
 			exit(30);
 		}
-		printf("Warning: inode blocks/cyl group (%d) >= "
+		printf("Warning: inode blocks/cyl group (%lld) >= "
 			"data blocks (%d) in last\n",
-		    (cgdmin(&sblock, j) - cgbase(&sblock, j)) / sblock.fs_frag,
+		    (long long)(cgdmin(&sblock, j) - cgbase(&sblock, j))
+			/ sblock.fs_frag,
 		    i / sblock.fs_frag);
 		printf("    cylinder group. This implies %d sector(s) "
 			"cannot be allocated.\n",
@@ -639,8 +643,8 @@ next:
 		initcg(cylno, start_time.tv_sec, fsopts);
 		if (cylno % nprintcols == 0)
 			printf("\n");
-		printf(" %*d,", printcolwidth,
-				fsbtodb(&sblock, cgsblock(&sblock, cylno)));
+		printf(" %*lld,", printcolwidth,
+			(long long)fsbtodb(&sblock, cgsblock(&sblock, cylno)));
 		fflush(stdout);
 	}
 	printf("\n");
@@ -908,14 +912,15 @@ ffs_rdfs(daddr_t bno, int size, void *bf, const fsinfo_t *fsopts)
 	offset = bno;
 	offset *= fsopts->sectorsize;
 	if (lseek(fsopts->fd, offset, SEEK_SET) < 0)
-		err(1, "ffs_rdfs: seek error: %d", bno);
+		err(1, "ffs_rdfs: seek error: %lld", (long long)bno);
 	n = read(fsopts->fd, bf, size);
 	if (n == -1)
-		err(1, "ffs_rdfs: read error bno %d size %d", bno, size);
+		err(1, "ffs_rdfs: read error bno %lld size %d", (long long)bno,
+		    size);
 	else if (n != size)
 		errx(1,
-		    "ffs_rdfs: read error bno %d size %d: short read of %d",
-		    bno, size, n);
+		    "ffs_rdfs: read error bno %lld size %d: short read of %d",
+		    (long long)bno, size, n);
 }
 
 /*
@@ -930,14 +935,14 @@ ffs_wtfs(daddr_t bno, int size, void *bf, const fsinfo_t *fsopts)
 	offset = bno;
 	offset *= fsopts->sectorsize;
 	if (lseek(fsopts->fd, offset, SEEK_SET) < 0)
-		err(1, "ffs_wtfs: seek error: %d", bno);
+		err(1, "ffs_wtfs: seek error: %lld", (long long)bno);
 	n = write(fsopts->fd, bf, size);
 	if (n == -1)
-		err(1, "ffs_wtfs: write error bno %d size %d", bno, size);
+		err(1, "ffs_wtfs: write error bno %lld size %d", (long long)bno,		   size);
 	else if (n != size)
 		errx(1,
-		    "ffs_wtfs: write error bno %d size %d: short write of %d",
-		    bno, size, n);
+		    "ffs_wtfs: write error bno %lld size %d: short write of %d",
+		    (long long)bno, size, n);
 }
 
 /* swap byte order of cylinder group */

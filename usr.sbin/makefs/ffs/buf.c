@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.9 2002/01/31 22:44:03 tv Exp $	*/
+/*	$NetBSD: buf.c,v 1.10 2003/01/24 21:55:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: buf.c,v 1.9 2002/01/31 22:44:03 tv Exp $");
+__RCSID("$NetBSD: buf.c,v 1.10 2003/01/24 21:55:32 fvdl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -71,13 +71,13 @@ bread(int fd, struct fs *fs, daddr_t blkno, int size, struct buf **bpp)
 	assert (bpp != NULL);
 
 	if (debug & DEBUG_BUF_BREAD)
-		printf("bread: fs %p blkno %d size %d\n",
-		    fs, blkno, size);
+		printf("bread: fs %p blkno %lld size %d\n",
+		    fs, (long long)blkno, size);
 	*bpp = getblk(fd, fs, blkno, size);
 	offset = (*bpp)->b_blkno * sectorsize;	/* XXX */
 	if (debug & DEBUG_BUF_BREAD)
-		printf("bread: bp %p blkno %d offset %lld bcount %ld\n",
-		    (*bpp), (*bpp)->b_blkno, (long long) offset,
+		printf("bread: bp %p blkno %lld offset %lld bcount %ld\n",
+		    (*bpp), (long long)(*bpp)->b_blkno, (long long) offset,
 		    (*bpp)->b_bcount);
 	if (lseek((*bpp)->b_fd, offset, SEEK_SET) == -1)
 		err(1, "bread: lseek %lld (%lld)",
@@ -135,8 +135,9 @@ bwrite(struct buf *bp)
 	assert (bp != NULL);
 	offset = bp->b_blkno * sectorsize;	/* XXX */
 	if (debug & DEBUG_BUF_BWRITE)
-		printf("bwrite: bp %p blkno %d offset %lld bcount %ld\n",
-		    bp, bp->b_blkno, (long long) offset, bp->b_bcount);
+		printf("bwrite: bp %p blkno %lld offset %lld bcount %ld\n",
+		    bp, (long long)bp->b_blkno, (long long) offset,
+		    bp->b_bcount);
 	if (lseek(bp->b_fd, offset, SEEK_SET) == -1)
 		return (errno);
 	rv = write(bp->b_fd, bp->b_data, bp->b_bcount);
@@ -167,8 +168,9 @@ bcleanup(void)
 
 	printf("bcleanup: unflushed buffers:\n");
 	TAILQ_FOREACH(bp, &buftail, b_tailq) {
-		printf("\tlblkno %10d  blkno %10d  count %6ld  bufsize %6ld\n",
-		    bp->b_lblkno, bp->b_blkno, bp->b_bcount, bp->b_bufsize);
+		printf("\tlblkno %10lld  blkno %10lld  count %6ld  bufsize %6ld\n",
+		    (long long)bp->b_lblkno, (long long)bp->b_blkno,
+		    bp->b_bcount, bp->b_bufsize);
 	}
 	printf("bcleanup: done\n");
 }
@@ -181,7 +183,8 @@ getblk(int fd, struct fs *fs, daddr_t blkno, int size)
 
 	assert (fs != NULL);
 	if (debug & DEBUG_BUF_GETBLK)
-		printf("getblk: fs %p blkno %d size %d\n", fs, blkno, size);
+		printf("getblk: fs %p blkno %lld size %d\n", fs,
+		    (long long)blkno, size);
 
 	bp = NULL;
 	if (!buftailinitted) {

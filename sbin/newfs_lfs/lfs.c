@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.23 2001/07/13 21:09:55 thorpej Exp $	*/
+/*	$NetBSD: lfs.c,v 1.24 2003/01/24 21:55:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.23 2001/07/13 21:09:55 thorpej Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.24 2003/01/24 21:55:12 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,8 @@ __RCSID("$NetBSD: lfs.c,v 1.23 2001/07/13 21:09:55 thorpej Exp $");
 #include "extern.h"
 
 extern int Nflag; /* Don't write anything */
-daddr_t **ifibp = NULL; /* Ifile single indirect blocks */
+/* XXX ondisk32 */
+int32_t **ifibp = NULL; /* Ifile single indirect blocks */
 int ifibc;        /* Number of indirect blocks */
 
 /*
@@ -130,7 +131,8 @@ static struct lfs lfs_default =  {
 		/* dlfs_inopb */	DFL_LFSBLOCK/sizeof(struct dinode),
 		/* dlfs_ifpb */		DFL_LFSBLOCK/sizeof(IFILE),
 		/* dlfs_sepb */		DFL_LFSBLOCK/sizeof(SEGUSE),
-		/* dlfs_nindir */	DFL_LFSBLOCK/sizeof(daddr_t),
+		/* XXX ondisk32 */
+		/* dlfs_nindir */	DFL_LFSBLOCK/sizeof(int32_t),
 		/* dlfs_nseg */		0,
 		/* dlfs_nspf */		0,
 		/* dlfs_cleansz */	0,
@@ -220,7 +222,8 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	daddr_t	seg_addr;	/* Address of current segment */
 	char *ipagep;		/* Pointer to the page we use to write stuff */
 	char *sump;		/* Used to copy stuff into segment buffer */
-	ufs_daddr_t *block_array; /* Array of logical block nos to put in sum */
+	/* XXX ondisk32 */
+	int32_t *block_array; /* Array of logical block nos to put in sum */
 	u_long blocks_used;	/* Number of blocks in first segment */
 	u_long *dp;		/* Used to computed checksum on data */
 	u_long *datasump;	/* Used to computed checksum on data */
@@ -312,7 +315,8 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 		lfsp->lfs_fbmask = lfsp->lfs_frag - 1;
 		lfsp->lfs_fbshift = log2(lfsp->lfs_frag);
 		lfsp->lfs_ifpb = bsize / sizeof(IFILE);
-		lfsp->lfs_nindir = bsize / sizeof(daddr_t);
+		/* XXX ondisk32 */
+		lfsp->lfs_nindir = bsize / sizeof(int32_t);
 	}
 
 	if (lfsp->lfs_version == 1) {
@@ -657,8 +661,8 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 			fprintf(stderr, "trying size %d.\n", ssize);
 			goto tryagain;
 		}
-		fatal("Can't fit %d bytes into one segment sized %d",
-		      fsbtob(lfsp, sb_addr), ssize);
+		fatal("Can't fit %lld bytes into one segment sized %d",
+		      (long long)fsbtob(lfsp, sb_addr), ssize);
 	}
 
 	/* Now, write the segment */
@@ -790,8 +794,9 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	 * address.
 	 */
 	sum_size = (version == 1 ? sizeof(SEGSUM_V1) : sizeof(SEGSUM));
-	sum_size += 3 * sizeof(FINFO) + 2 * sizeof(daddr_t) +
-	    (lfsp->lfs_cleansz + lfsp->lfs_segtabsz) * sizeof(ufs_daddr_t);
+	/* XXX ondisk32 */
+	sum_size += 3 * sizeof(FINFO) + 2 * sizeof(int32_t) +
+	    (lfsp->lfs_cleansz + lfsp->lfs_segtabsz) * sizeof(int32_t);
 
 	if (sum_size > lfsp->lfs_sumsize)
 		fatal("Multiple summary blocks in segment 0 "
@@ -825,10 +830,11 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	file_info.fi_lastlength = lfsp->lfs_bsize;
 	file_info.fi_ino = LFS_IFILE_INUM;
 
-	memmove(sump, &file_info, sizeof(FINFO) - sizeof(ufs_daddr_t));
-	sump += sizeof(FINFO) - sizeof(ufs_daddr_t);
-	memmove(sump, block_array, sizeof(ufs_daddr_t) * file_info.fi_nblocks);
-	sump += sizeof(ufs_daddr_t) * file_info.fi_nblocks;
+	/* XXX ondisk32 */
+	memmove(sump, &file_info, sizeof(FINFO) - sizeof(int32_t));
+	sump += sizeof(FINFO) - sizeof(int32_t);
+	memmove(sump, block_array, sizeof(int32_t) * file_info.fi_nblocks);
+	sump += sizeof(int32_t) * file_info.fi_nblocks;
 
 	/* Now, add the root directory */
 	dip = ((struct dinode *)dpagep) + 1;
@@ -846,7 +852,8 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	file_info.fi_lastlength = dblksize(lfsp, dip, 0);
 	memmove(sump, &file_info, sizeof(FINFO));
 
-	((daddr_t *)ipagep)[lfsp->lfs_sumsize / sizeof(daddr_t) - 1] = 
+	/* XXX ondisk32 */
+	((int32_t *)ipagep)[lfsp->lfs_sumsize / sizeof(int32_t) - 1] = 
 	    lfsp->lfs_idaddr;
 	((SEGSUM *)ipagep)->ss_sumsum = cksum(ipagep+sizeof(summary.ss_sumsum), 
 	    lfsp->lfs_sumsize - sizeof(summary.ss_sumsum));
@@ -875,7 +882,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	for (i = 0; i < LFS_MAXNUMSB; i++) {
 		seg_addr = lfsp->lfs_sboffs[i];
 
-		sprintf(tbuf, "%d%s ", fsbtodb(lfsp, seg_addr),
+		sprintf(tbuf, "%lld%s ", (long long)fsbtodb(lfsp, seg_addr),
 			(i == LFS_MAXNUMSB - 1 ? "" : ","));
 		ww = strlen(tbuf);
 		curw += ww;
@@ -954,9 +961,9 @@ make_dinode(ino_t ino, struct dinode *dip, int nfrags, daddr_t saddr, struct lfs
 			--bb;
 		}
 		/* printf("using %d indirect blocks for inode %d\n", ifibc, ino); */
-		ifibp = (daddr_t **)malloc(ifibc * sizeof(daddr_t *));
+		ifibp = (int32_t **)malloc(ifibc * sizeof(int32_t *));
 		for (i = 0; i < ifibc ; i++) {
-			ifibp[i] = (daddr_t *)malloc(lfsp->lfs_bsize);
+			ifibp[i] = (int32_t *)malloc(lfsp->lfs_bsize);
 			memset(ifibp[i], 0, lfsp->lfs_bsize);
 		}
 		dip->di_blocks += fragstofsb(lfsp, blkstofrags(lfsp, ifibc));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.11 2002/12/01 00:12:06 matt Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.12 2003/01/24 21:55:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -61,8 +61,8 @@
 #define SBSIZE		1024
 #define	BBOFF		((off_t)(0))
 #define	SBOFF		((off_t)(BBOFF + BBSIZE))
-#define	BBLOCK		((ufs_daddr_t)(0))
-#define	SBLOCK		((ufs_daddr_t)(BBLOCK + BBSIZE / DEV_BSIZE))
+#define	BBLOCK		((daddr_t)(0))
+#define	SBLOCK		((daddr_t)(BBLOCK + BBSIZE / DEV_BSIZE))
 
 /*
  * Addresses stored in inodes are capable of addressing blocks
@@ -247,8 +247,10 @@ cg_has_sb(i)
 #if BYTE_ORDER == LITTLE_ENDIAN
 #	define h2fs16(x) (x)
 #	define h2fs32(x) (x)
+#	define h2fs64(x) (x)
 #	define fs2h16(x) (x)
 #	define fs2h32(x) (x)
+#	define fs2h64(x) (x)
 #	define e2fs_sbload(old, new) memcpy((new), (old), SBSIZE);
 #	define e2fs_cgload(old, new, size) memcpy((new), (old), (size));
 #	define e2fs_sbsave(old, new) memcpy((new), (old), SBSIZE);
@@ -258,8 +260,10 @@ void e2fs_sb_bswap __P((struct ext2fs *, struct ext2fs *));
 void e2fs_cg_bswap __P((struct ext2_gd *, struct ext2_gd *, int));
 #	define h2fs16(x) bswap16(x)
 #	define h2fs32(x) bswap32(x)
+#	define h2fs64(x) bswap64(x)
 #	define fs2h16(x) bswap16(x)
 #	define fs2h32(x) bswap32(x)
+#	define fs2h64(x) bswap64(x)
 #	define e2fs_sbload(old, new) e2fs_sb_bswap((old), (new))
 #	define e2fs_cgload(old, new, size) e2fs_cg_bswap((old), (new), (size));
 #	define e2fs_sbsave(old, new) e2fs_sb_bswap((old), (new))

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.34 2002/09/28 20:11:05 dbj Exp $	*/
+/*	$NetBSD: dir.c,v 1.35 2003/01/24 21:55:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.34 2002/09/28 20:11:05 dbj Exp $");
+__RCSID("$NetBSD: dir.c,v 1.35 2003/01/24 21:55:07 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -654,7 +654,7 @@ expanddir(dp, name)
 	struct dinode *dp;
 	char *name;
 {
-	ufs_daddr_t lastbn, newblk;
+	daddr_t lastbn, newblk;
 	struct bufarea *bp;
 	char *cp;
 #if DIRBLKSIZ > APPLEUFS_DIRBLKSIZ
@@ -822,7 +822,7 @@ lftempname(bufp, ino)
  */
 static struct bufarea *
 getdirblk(blkno, size)
-	ufs_daddr_t blkno;
+	daddr_t blkno;
 	long size;
 {
 

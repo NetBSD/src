@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.28 2002/07/11 21:09:00 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.29 2003/01/24 21:55:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.28 2002/07/11 21:09:00 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.29 2003/01/24 21:55:28 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ lfs_blkatoff(void *v)
 	struct lfs *fs;
 	struct inode *ip;
 	struct buf *bp;
-	ufs_daddr_t lbn;
+	daddr_t lbn;
 	int bsize, error;
 	
 	ip = VTOI(ap->a_vp);
@@ -150,7 +150,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 
 	sp = fs->lfs_sp = malloc(sizeof(struct segment), M_SEGMENT, M_WAITOK);
 	sp->bpp = malloc(((fs->lfs_sumsize - SEGSUM_SIZE(fs)) /
-			  sizeof(ufs_daddr_t) + 1) * sizeof(struct buf *),
+			  sizeof(daddr_t) + 1) * sizeof(struct buf *),
 			 M_SEGMENT, M_WAITOK);
 	sp->seg_flags = flags;
 	sp->vp = NULL;

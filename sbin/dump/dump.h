@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.33 2001/12/30 04:03:16 lukem Exp $	*/
+/*	$NetBSD: dump.h,v 1.34 2003/01/24 21:55:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,8 @@
 #include <machine/bswap.h>
 
 #define MAXINOPB	(MAXBSIZE / sizeof(struct dinode))
-#define MAXNINDIR	(MAXBSIZE / sizeof(daddr_t))
+/* XXX ondisk32 */
+#define MAXNINDIR	(MAXBSIZE / sizeof(int32_t))
 
 /*
  * Filestore-independent UFS data, so code can be more easily shared
@@ -179,7 +180,8 @@ int	mapfiles(ino_t, long *, char *, char * const *);
 int	mapdirs(ino_t, long *);
 
 /* file dumping routines */
-void	blksout(daddr_t *, int, ino_t);
+/* XXX ondisk32 */
+void	blksout(int32_t *, int, ino_t);
 void	dumpino(struct dinode *, ino_t);
 void	dumpmap(char *, int, ino_t);
 void	writeheader(ino_t);

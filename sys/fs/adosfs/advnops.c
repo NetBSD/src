@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.2 2003/01/09 18:34:41 lonewolf Exp $	*/
+/*	$NetBSD: advnops.c,v 1.3 2003/01/24 21:55:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.2 2003/01/09 18:34:41 lonewolf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.3 2003/01/24 21:55:17 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -580,7 +580,7 @@ adosfs_bmap(v)
 reterr:
 #ifdef ADOSFS_DIAGNOSTIC
 	if (error == 0 && bnp)
-		printf(" %d => %d", bn, *bnp);
+		printf(" %lld => %lld", (long long)bn, (long long)*bnp);
 	printf(" %d)\n", error);
 #endif
 	return(error);

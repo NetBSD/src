@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.24 2002/12/01 00:12:09 matt Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.25 2003/01/24 21:55:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__KERNEL_RCSID)
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.24 2002/12/01 00:12:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.25 2003/01/24 21:55:23 fvdl Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -88,7 +88,7 @@ ffs_blkatoff(v)
 	struct inode *ip;
 	struct fs *fs;
 	struct buf *bp;
-	ufs_daddr_t lbn;
+	daddr_t lbn;
 	int bsize, error;
 
 	ip = VTOI(ap->a_vp);
@@ -153,7 +153,7 @@ ffs_checkoverlap(bp, ip)
 	struct inode *ip;
 {
 	struct buf *ebp, *ep;
-	ufs_daddr_t start, last;
+	daddr_t start, last;
 	struct vnode *vp;
 
 	ebp = &buf[nbuf];
@@ -189,7 +189,7 @@ int
 ffs_isblock(fs, cp, h)
 	struct fs *fs;
 	u_char *cp;
-	ufs_daddr_t h;
+	daddr_t h;
 {
 	u_char mask;
 
@@ -218,7 +218,7 @@ int
 ffs_isfreeblock(fs, cp, h)
 	struct fs *fs;
 	u_char *cp;
-	ufs_daddr_t h;
+	daddr_t h;
 {
 
 	switch ((int)fs->fs_fragshift) {
@@ -243,7 +243,7 @@ void
 ffs_clrblock(fs, cp, h)
 	struct fs *fs;
 	u_char *cp;
-	ufs_daddr_t h;
+	daddr_t h;
 {
 
 	switch ((int)fs->fs_fragshift) {
@@ -272,7 +272,7 @@ void
 ffs_setblock(fs, cp, h)
 	struct fs *fs;
 	u_char *cp;
-	ufs_daddr_t h;
+	daddr_t h;
 {
 
 	switch ((int)fs->fs_fragshift) {

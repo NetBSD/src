@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos.h,v 1.13 2002/07/04 23:32:12 thorpej Exp $	*/
+/*	$NetBSD: sunos.h,v 1.14 2003/01/24 21:55:17 fvdl Exp $	*/
 
 #ifndef _COMPAT_SUNOS_SUNOS_H_
 #define _COMPAT_SUNOS_SUNOS_H_
@@ -54,7 +54,7 @@ struct sunos_nfs_args {
 
 
 struct sunos_ustat {
-	daddr_t	f_tfree;	/* total free */
+	int32_t	f_tfree;	/* total free */
 	ino_t	f_tinode;	/* total inodes free */
 	char	f_path[6];	/* filsys name */
 	char	f_fpack[6];	/* filsys pack name */

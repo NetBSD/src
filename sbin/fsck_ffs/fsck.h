@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.29 2002/09/28 20:11:06 dbj Exp $	*/
+/*	$NetBSD: fsck.h,v 1.30 2003/01/24 21:55:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -61,13 +61,14 @@
 struct bufarea {
 	struct bufarea *b_next;		/* free list queue */
 	struct bufarea *b_prev;		/* free list queue */
-	ufs_daddr_t b_bno;
+	daddr_t b_bno;
 	int b_size;
 	int b_errs;
 	int b_flags;
 	union {
 		char *b_buf;			/* buffer space */
-		ufs_daddr_t *b_indir;		/* indirect block */
+		/* XXX ondisk32 */
+		int32_t *b_indir;		/* indirect block */
 		struct fs *b_fs;		/* super block */
 		struct cg *b_cg;		/* cylinder group */
 		struct appleufslabel *b_appleufs;		/* Apple UFS volume label */
@@ -89,7 +90,7 @@ struct bufarea *pbp;		/* current inode block */
 #define	dirty(bp)	(bp)->b_dirty = 1
 #define	initbarea(bp) \
 	(bp)->b_dirty = 0; \
-	(bp)->b_bno = (ufs_daddr_t)-1; \
+	(bp)->b_bno = (daddr_t)-1; \
 	(bp)->b_flags = 0;
 
 struct fs *sblock;
@@ -120,7 +121,7 @@ struct inodesc {
 	    __P((struct inodesc *));
 	ino_t id_number;	/* inode number described */
 	ino_t id_parent;	/* for DATA nodes, their parent */
-	ufs_daddr_t id_blkno;	/* current block number being examined */
+	daddr_t id_blkno;	/* current block number being examined */
 	int id_numfrags;	/* number of frags contained in block */
 	int64_t id_filesize;	/* for DATA nodes, the size of the directory */
 	int id_loc;		/* for DATA nodes, current location in dir */
@@ -156,7 +157,7 @@ struct inodesc {
  */
 struct dups {
 	struct dups *next;
-	ufs_daddr_t dup;
+	daddr_t dup;
 };
 struct dups *duplist;		/* head of dup list */
 struct dups *muldup;		/* end of unique duplicate dup block numbers */
@@ -181,7 +182,8 @@ struct inoinfo {
 	ino_t	i_dotdot;		/* inode number of `..' */
 	size_t	i_isize;		/* size of inode */
 	u_int	i_numblks;		/* size of block array in bytes */
-	ufs_daddr_t i_blks[1];		/* actually longer */
+	/* XXX ondisk32 */
+	int32_t i_blks[1];		/* actually longer */
 } **inphead, **inpsort;
 long numdirs, listmax, inplast;
 
@@ -213,7 +215,7 @@ int	rerun;			/* rerun fsck.  Only used in non-preen mode */
 char	resolved;		/* cleared if unresolved changes => not clean */
 int isappleufs;		/* filesystem is Apple UFS */
 
-ufs_daddr_t maxfsblock;		/* number of blocks in the file system */
+daddr_t maxfsblock;		/* number of blocks in the file system */
 char	*blockmap;		/* ptr to primary blk allocation map */
 ino_t	maxino;			/* number of inodes in file system */
 ino_t	lastino;		/* last inode in use */
@@ -227,8 +229,8 @@ extern ino_t	lfdir;		/* lost & found directory inode number */
 extern char	*lfname;	/* lost & found directory name */
 extern int	lfmode;		/* lost & found directory creation mode */
 
-ufs_daddr_t n_blks;		/* number of blocks in use */
-ufs_daddr_t n_files;		/* number of files in use */
+daddr_t n_blks;		/* number of blocks in use */
+ino_t n_files;		/* number of files in use */
 
 int	got_siginfo;		/* received a SIGINFO */
 

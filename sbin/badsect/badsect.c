@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.20 2001/08/17 02:18:46 lukem Exp $	*/
+/*	$NetBSD: badsect.c,v 1.21 2003/01/24 21:55:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.20 2001/08/17 02:18:46 lukem Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.21 2003/01/24 21:55:05 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,21 +185,22 @@ chkuse(blkno, cnt)
 
 	fsbn = dbtofsb(fs, blkno);
 	if ((unsigned)(fsbn+cnt) > fs->fs_size) {
-		warnx("block %d out of range of file system", blkno);
+		warnx("block %lld out of range of file system",
+		    (long long)blkno);
 		return (1);
 	}
 
 	cg = dtog(fs, fsbn);
 	if (fsbn < cgdmin(fs, cg)) {
 		if (cg == 0 || (fsbn+cnt) > cgsblock(fs, cg)) {
-			warnx("block %d in non-data area: cannot attach",
-			    blkno);
+			warnx("block %lld in non-data area: cannot attach",
+			    (long long)blkno);
 			return (1);
 		}
 	} else {
 		if ((fsbn+cnt) > cgbase(fs, cg+1)) {
-			warnx("block %d in non-data area: cannot attach",
-			    blkno);
+			warnx("block %lld in non-data area: cannot attach",
+			    (long long)blkno);
 			return (1);
 		}
 	}
@@ -215,7 +216,7 @@ chkuse(blkno, cnt)
 
 	bn = dtogd(fs, fsbn);
 	if (isclr(cg_blksfree(&acg, needswap), bn))
-		warnx("Warning: sector %d is in use", blkno);
+		warnx("Warning: sector %lld is in use", (long long)blkno);
 
 	return (0);
 }
@@ -232,16 +233,16 @@ rdfs(bno, size, bf)
 	int n;
 
 	if (lseek(fsi, (off_t)bno * dev_bsize, SEEK_SET) == -1)
-		err(1, "seek error at block %d", bno);
+		err(1, "seek error at block %lld", (long long)bno);
 
 	switch (n = read(fsi, bf, size)) {
 	case -1:
-		err(1, "read error at block %d", bno);
+		err(1, "read error at block %lld", (long long)bno);
 		break;
 
 	default:
 		if (n == size)
 			return;
-		errx(1, "incomplete read at block %d", bno);
+		errx(1, "incomplete read at block %lld", (long long)bno);
 	}
 }

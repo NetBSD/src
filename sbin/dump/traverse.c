@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.35 2002/09/30 10:48:49 lukem Exp $	*/
+/*	$NetBSD: traverse.c,v 1.36 2003/01/24 21:55:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.35 2002/09/30 10:48:49 lukem Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.36 2003/01/24 21:55:06 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -353,15 +353,16 @@ dirindir(ino_t ino, daddr_t blkno, int ind_level, long *filesize,
 {
 	int ret = 0;
 	int i;
-	daddr_t	idblk[MAXNINDIR];
+	/* XXX ondisk32 */
+	int32_t	idblk[MAXNINDIR];
 
-	bread(fsatoda(ufsib, iswap32(blkno)), (char *)idblk,
+	bread(fsatoda(ufsib, iswap64(blkno)), (char *)idblk,
 		(int)ufsib->ufs_bsize);
 	if (ind_level <= 0) {
 		for (i = 0; *filesize > 0 && i < ufsib->ufs_nindir; i++) {
 			blkno = idblk[i];
 			if (blkno != 0)
-				ret |= searchdir(ino, iswap32(blkno),
+				ret |= searchdir(ino, iswap64(blkno),
 				    ufsib->ufs_bsize, *filesize,
 				    tape_size, nodump);
 			if (ret & HASDUMPEDFILE)
@@ -537,7 +538,8 @@ static void
 dmpindir(ino_t ino, daddr_t blk, int ind_level, fsizeT *size)
 {
 	int i, cnt;
-	daddr_t idblk[MAXNINDIR];
+	/* XXX ondisk32 */
+	int32_t idblk[MAXNINDIR];
 
 	if (blk != 0)
 		bread(fsatoda(ufsib, iswap32(blk)), (char *)idblk,
@@ -564,10 +566,11 @@ dmpindir(ino_t ino, daddr_t blk, int ind_level, fsizeT *size)
 /*
  * Collect up the data into tape record sized buffers and output them.
  */
+/* XXX ondisk32 */
 void
-blksout(daddr_t *blkp, int frags, ino_t ino)
+blksout(int32_t *blkp, int frags, ino_t ino)
 {
-	daddr_t *bp;
+	int32_t *bp;
 	int i, j, count, blks, tbperdb;
 
 	blks = howmany(frags * ufsib->ufs_fsize, TP_BSIZE);

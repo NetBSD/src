@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.84 2003/01/12 13:04:52 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.85 2003/01/24 21:55:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.84 2003/01/12 13:04:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.85 2003/01/24 21:55:29 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -354,7 +354,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
  * Mark the block dirty.  Do segment and avail accounting.
  */
 static int
-update_meta(struct lfs *fs, ino_t ino, int version, ufs_daddr_t lbn,
+update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 	    daddr_t ndaddr, size_t size, struct proc *p)
 {
 	int error;
@@ -427,12 +427,15 @@ update_meta(struct lfs *fs, ino_t ino, int version, ufs_daddr_t lbn,
 	    default:
 		ap = &a[num - 1];
 		if (bread(vp, ap->in_lbn, fs->lfs_bsize, NOCRED, &bp))
-			panic("update_meta: bread bno %d", ap->in_lbn);
-		
-		ooff = ((ufs_daddr_t *)bp->b_data)[ap->in_off];
+			panic("update_meta: bread bno %lld",
+			    (long long)ap->in_lbn);
+
+		/* XXX ondisk32 */
+		ooff = ((int32_t *)bp->b_data)[ap->in_off];
 		if (ooff == UNWRITTEN)
 			ip->i_ffs_blocks += btofsb(fs, size);
-		((ufs_daddr_t *)bp->b_data)[ap->in_off] = ndaddr;
+		/* XXX ondisk32 */
+		((int32_t *)bp->b_data)[ap->in_off] = ndaddr;
 		(void) VOP_BWRITE(bp);
 	}
 	LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED | IN_UPDATE);
@@ -568,7 +571,8 @@ check_segsum(struct lfs *fs, daddr_t offset,
 	int error, nblocks, ninos, i, j;
 	SEGSUM *ssp;
 	u_long *dp, *datap; /* XXX u_int32_t */
-	daddr_t *iaddr, oldoffset;
+	daddr_t oldoffset;
+	int32_t *iaddr;	/* XXX ondisk32 */
 	FINFO *fip;
 	SEGUSE *sup;
 	size_t size;
@@ -642,7 +646,8 @@ check_segsum(struct lfs *fs, daddr_t offset,
 	offset += btofsb(fs, fs->lfs_sumsize);
 
 	ninos = howmany(ssp->ss_ninos, INOPB(fs));
-	iaddr = (daddr_t *)(bp->b_data + fs->lfs_sumsize - sizeof(daddr_t));
+	/* XXX ondisk32 */
+	iaddr = (int32_t *)(bp->b_data + fs->lfs_sumsize - sizeof(int32_t));
 	if (flags & CHECK_CKSUM) {
 		/* Count blocks */
 		nblocks = 0;
@@ -651,9 +656,10 @@ check_segsum(struct lfs *fs, daddr_t offset,
 			nblocks += fip->fi_nblocks;
 			if (fip->fi_nblocks <= 0)
 				break;
+			/* XXX ondisk32 */
 			fip = (FINFO *)(((char *)fip) + sizeof(FINFO) +
 					(fip->fi_nblocks - 1) *
-					sizeof(ufs_daddr_t));
+					sizeof(int32_t));
 		}
 		nblocks += ninos;
 		/* Create the sum array */
@@ -716,8 +722,9 @@ check_segsum(struct lfs *fs, daddr_t offset,
 			}
 			offset += btofsb(fs, size);
 		}
+		/* XXX ondisk32 */
 		fip = (FINFO *)(((char *)fip) + sizeof(FINFO)
-				+ (fip->fi_nblocks - 1) * sizeof(ufs_daddr_t));
+				+ (fip->fi_nblocks - 1) * sizeof(int32_t));
 	}
 	/* Checksum the array, compare */
 	if ((flags & CHECK_CKSUM) &&
@@ -857,9 +864,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 			if (sb_addr != dfs->dlfs_sboffs[0] <<
                                        dfs->dlfs_fsbtodb) {
 /* #ifdef DEBUG_LFS */
-				printf("lfs_mountfs: sb daddr 0x%x is not right, trying 0x%x\n",
-					sb_addr, dfs->dlfs_sboffs[0] <<
-						 dfs->dlfs_fsbtodb);
+				printf("lfs_mountfs: sb daddr 0x%llx is not right, trying 0x%llx\n",
+					(long long)sb_addr, (long long)(dfs->dlfs_sboffs[0] <<
+						 dfs->dlfs_fsbtodb));
 /* #endif */
 				sb_addr = dfs->dlfs_sboffs[0] << 
 					  dfs->dlfs_fsbtodb;
@@ -1108,8 +1115,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 			 * Finish: flush our changes to disk.
 			 */
 			lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
-			printf("lfs_mountfs: roll forward recovered %d blocks\n",
-			       lastgoodpseg - oldoffset);
+			printf("lfs_mountfs: roll forward recovered %lld blocks\n",
+			       (long long)(lastgoodpseg - oldoffset));
 		}
 #ifdef DEBUG_LFS_RFW
 		printf("LFS roll forward complete\n");
@@ -1342,7 +1349,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	struct ifile *ifp;
 	struct vnode *vp;
 	struct ufsmount *ump;
-	ufs_daddr_t daddr;
+	daddr_t daddr;
 	dev_t dev;
 	int i, error, retries;
 	struct timespec ts;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.5 2001/02/04 21:19:34 christos Exp $	*/
+/*	$NetBSD: fsck.h,v 1.6 2003/01/24 21:55:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -64,7 +64,8 @@ struct bufarea {
 	int	b_flags;
 	union {
 		char	*b_buf;			/* buffer space */
-		daddr_t	*b_indir;		/* indirect block */
+		/* XXX ondisk32 */
+		int32_t	*b_indir;		/* indirect block */
 		struct	ext2fs *b_fs;		/* super block */
 		struct	ext2_gd *b_cgd;		/* cylinder group descriptor */
 		struct	ext2fs_dinode *b_dinode;	/* inode block */
@@ -160,7 +161,8 @@ struct inoinfo {
 	ino_t	i_dotdot;		/* inode number of `..' */
 	size_t	i_isize;		/* size of inode */
 	u_int	i_numblks;		/* size of block array in bytes */
-	daddr_t	i_blks[1];		/* actually longer */
+	/* XXX ondisk32 */
+	int32_t	i_blks[1];		/* actually longer */
 } **inphead, **inpsort;
 long numdirs, listmax, inplast;
 
