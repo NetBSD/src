@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.152 2003/10/29 23:39:45 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.153 2003/11/01 14:48:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.152 2003/10/29 23:39:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.153 2003/11/01 14:48:16 tsutsui Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1595,7 +1595,7 @@ pmap_zero_page(phys)
 	 */
 	if (MIPS_HAS_R4K_MMU && mips_sdcache_line_size == 0)
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(phys), NBPG);
-#endif	/* MIPS3_PLUS && !MIPS3_L2CACHE_ABSENT */
+#endif	/* MIPS3_PLUS && MIPS3_L2CACHE_ABSENT */
 }
 
 /*
@@ -1635,7 +1635,7 @@ pmap_copy_page(src, dst)
 		mips_flushcache_allpvh(src);
 /*		mips_flushcache_allpvh(dst); */
 	}
-#endif	/* MIPS3_PLUS && !MIPS3_L2CACHE_ABSENT */
+#endif	/* MIPS3_PLUS && MIPS3_L2CACHE_ABSENT */
 
 	mips_pagecopy((caddr_t)MIPS_PHYS_TO_KSEG0(dst),
 		      (caddr_t)MIPS_PHYS_TO_KSEG0(src));
@@ -1652,11 +1652,11 @@ pmap_copy_page(src, dst)
 	 *
 	 * XXXJRT -- This is totally disgusting.
 	 */
-	if (MIPS_HAS_R4K_MMU) {
+	if (MIPS_HAS_R4K_MMU && mips_sdcache_line_size == 0) {
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(src), NBPG);
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(dst), NBPG);
 	}
-#endif	/* MIPS3_PLUS && !MIPS3_L2CACHE_ABSENT */
+#endif	/* MIPS3_PLUS && MIPS3_L2CACHE_ABSENT */
 }
 
 /*
