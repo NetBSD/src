@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_ofisa.c,v 1.8 2002/09/27 20:39:35 thorpej Exp $	*/
+/*	$NetBSD: sb_ofisa.c,v 1.9 2002/09/30 22:08:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.8 2002/09/27 20:39:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.9 2002/09/30 22:08:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.8 2002/09/27 20:39:35 thorpej Exp $")
 int	sb_ofisa_match __P((struct device *, struct cfdata *, void *));
 void	sb_ofisa_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach sb_ofisa_ca = {
-	sizeof(struct sbdsp_softc), sb_ofisa_match, sb_ofisa_attach
-};
+CFATTACH_DECL(sb_ofisa, sizeof(struct sbdsp_softc),
+    sb_ofisa_match, sb_ofisa_attach, NULL, NULL)
 
 int
 sb_ofisa_match(parent, cf, aux)
