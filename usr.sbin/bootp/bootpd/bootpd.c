@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.12 1999/01/31 19:12:27 briggs Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.12.2.1 2000/10/19 17:04:54 he Exp $");
 #endif
 
 /*
@@ -1242,7 +1242,7 @@ dovend_rfc1048(bp, hp, bootsize)
 	int bytesleft, len;
 	byte *vp;
 
-	static char noroom[] = "%s: No room for \"%s\" option";
+	static const char noroom[] = "%s: No room for \"%s\" option";
 
 	vp = bp->bp_vend;
 
