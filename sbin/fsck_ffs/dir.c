@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.17 1995/03/18 14:55:40 cgd Exp $	*/
+/*	$NetBSD: dir.c,v 1.18 1996/06/11 07:07:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static char rcsid[] = "$NetBSD: dir.c,v 1.17 1995/03/18 14:55:40 cgd Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.18 1996/06/11 07:07:52 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,24 +78,34 @@ int lftempname __P((char *, ino_t));
 void
 propagate()
 {
-	register struct inoinfo **inpp, *inp;
+	register struct inoinfo **inpp, *inp, *pinp;
 	struct inoinfo **inpend;
-	long change;
 
+	/*
+	 * Create a list of children for each directory.
+	 */
 	inpend = &inpsort[inplast];
-	do {
-		change = 0;
-		for (inpp = inpsort; inpp < inpend; inpp++) {
-			inp = *inpp;
-			if (inp->i_parent == 0)
-				continue;
-			if (statemap[inp->i_parent] == DFOUND &&
-			    statemap[inp->i_number] == DSTATE) {
-				statemap[inp->i_number] = DFOUND;
-				change++;
-			}
-		}
-	} while (change > 0);
+	for (inpp = inpsort; inpp < inpend; inpp++) {
+		inp = *inpp;
+		if (inp->i_parent == 0 ||
+		    inp->i_number == ROOTINO)
+			continue;
+		pinp = getinoinfo(inp->i_parent);
+		inp->i_parentp = pinp;
+		inp->i_sibling = pinp->i_child;
+		pinp->i_child = inp;
+	}
+	inp = getinoinfo(ROOTINO);
+	while (inp) {
+		statemap[inp->i_number] = DFOUND;
+		if (inp->i_child &&
+		    statemap[inp->i_child->i_number] == DSTATE)
+			inp = inp->i_child;
+		else if (inp->i_sibling)
+			inp = inp->i_sibling;
+		else
+			inp = inp->i_parentp;
+	}
 }
 
 /*
