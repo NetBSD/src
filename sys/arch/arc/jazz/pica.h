@@ -1,4 +1,4 @@
-/*	$NetBSD: pica.h,v 1.4 2000/01/23 21:02:00 soda Exp $	*/
+/*	$NetBSD: pica.h,v 1.1 2000/12/24 09:25:29 ur Exp $	*/
 /*	$OpenBSD: pica.h,v 1.4 1996/09/14 15:58:28 pefo Exp $ */
 
 /*

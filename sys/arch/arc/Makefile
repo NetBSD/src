@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/01/23 21:01:48 soda Exp $
+#	$NetBSD: Makefile,v 1.7 2000/12/24 09:25:24 ur Exp $
 #	$OpenBSD: Makefile,v 1.5 1997/05/19 10:34:53 pefo Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/16/93
 
@@ -10,11 +10,11 @@
 TARC=	../arc/tags
 SARC=	../arc/algor/*.[ch] ../arc/arc/*.[ch] ../arc/dev/*.[ch] \
 	../arc/dti/*.[ch] ../arc/include/*.h ../arc/isa/*.[ch] \
-	../arc/pci/*.[ch] ../arc/pica/*.[ch]
+	../arc/pci/*.[ch] ../arc/jazz/*.[ch]
 AARC=	../arc/arc/*.S
 
 # Directories in which to place tags links
-DARC=	algor arc dev dti include isa pci pica
+DARC=	algor arc dev dti include isa pci jazz
 
 .include "../../kern/Make.tags.inc"
 
