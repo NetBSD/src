@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.18 1996/04/23 05:18:30 veego Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.19 1996/04/28 06:18:12 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -432,6 +432,7 @@ adosfs_vget(mp, an, vpp)
 			namlen++;
 		}
 		ap->slinkto[namlen] = 0;
+		ap->fsize = namlen;
 		break;
 	default:
 		brelse(bp);
