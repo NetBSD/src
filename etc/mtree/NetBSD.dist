@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.25 1996/06/21 22:13:54 is Exp $
+#	$NetBSD: NetBSD.dist,v 1.26 1996/06/22 20:31:24 leo Exp $
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -851,6 +851,11 @@ keymap		gname=bin uname=bin
 # ./usr/share/keymaps/amiga
 amiga		gname=bin uname=bin
 # ./usr/share/keymaps/amiga
+..
+
+# ./usr/share/keymaps/atari
+atari		gname=bin uname=bin
+# ./usr/share/keymaps/atari
 ..
 
 # ./usr/share/keymaps
