@@ -38,7 +38,7 @@
  * from: $Hdr: dcm.c 1.26 91/01/21$
  *
  *	from: @(#)dcm.c	7.14 (Berkeley) 6/27/91
- *	$Id: dcm.c,v 1.4 1993/05/27 09:35:15 deraadt Exp $
+ *	$Id: dcm.c,v 1.5 1993/05/29 19:41:43 cgd Exp $
  */
 
 /*
@@ -392,7 +392,7 @@ dcmopen(dev, flag, mode, p)
 	while ((flag&O_NONBLOCK) == 0 && (tp->t_cflag&CLOCAL) == 0 &&
 	    (tp->t_state & TS_CARR_ON) == 0) {
 		tp->t_state |= TS_WOPEN;
-		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
+		if (error = ttysleep(tp, (caddr_t)&tp->t_raw, TTIPRI | PCATCH,
 		    ttopen, 0))
 			break;
 	}
