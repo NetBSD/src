@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990var.h,v 1.14 1997/10/05 18:35:08 thorpej Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.15 1997/10/10 01:13:02 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,6 +73,8 @@
 #define	integrate	static __inline
 #define hide		static
 #endif
+
+#include <sys/rnd.h>
 
 /*
  * Ethernet software status per device.
@@ -169,6 +171,7 @@ struct am7990_softc {
 #endif
 	u_int8_t sc_enaddr[6];
 	u_int8_t sc_pad[2];
+	rndsource_element_t	rnd_source;
 };
 
 /* Export this to machine-dependent drivers. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.4 1997/10/01 01:18:48 enami Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.5 1997/10/10 01:09:09 explorer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -55,6 +55,7 @@
 #include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
+#include <sys/rnd.h>
 
 #include <sys/cdio.h>
 

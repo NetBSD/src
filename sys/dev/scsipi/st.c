@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.79 1997/10/09 00:53:28 enami Exp $	*/
+/*	$NetBSD: st.c,v 1.80 1997/10/10 01:09:12 explorer Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -68,6 +68,7 @@
 #include <sys/mtio.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/rnd.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -272,6 +273,7 @@ struct st_softc {
 						 */
 	struct buf buf_queue;		/* the queue of pending IO */
 					/* operations */
+	rndsource_element_t	rnd_source;
 };
 
 
@@ -288,6 +290,7 @@ int	st_mount_tape __P((dev_t, int));
 void	st_unmount __P((struct st_softc *, boolean));
 int	st_decide_mode __P((struct st_softc *, boolean));
 void	ststart __P((void *));
+void	stdone __P((struct scsipi_xfer *));
 int	st_read __P((struct st_softc *, char *, int, int));
 int	st_read_block_limits __P((struct st_softc *, int));
 int	st_mode_sense __P((struct st_softc *, int));
@@ -316,7 +319,7 @@ struct scsipi_device st_switch = {
 	st_interpret_sense,
 	ststart,
 	NULL,
-	NULL,
+	stdone,  /* only needed to gather timing data for randomness */
 };
 
 #define	ST_INFO_VALID	0x0001
@@ -423,6 +426,8 @@ stattach(parent, self, aux)
 	st->buf_queue.b_active = 0;
 	st->buf_queue.b_actf = 0;
 	st->buf_queue.b_actb = &st->buf_queue.b_actf;
+
+	rnd_attach_source(&st->rnd_source, st->sc_dev.dv_xname, RND_TYPE_TAPE);
 }
 
 /*
@@ -1054,6 +1059,16 @@ ststart(v)
 		    0, 100000, bp, flags | SCSI_NOSLEEP))
 			printf("%s: not queued\n", st->sc_dev.dv_xname);
 	} /* go back and see if we can cram more work in.. */
+}
+
+void
+stdone(xs)
+	struct scsipi_xfer *xs;
+{
+	struct st_softc *st = xs->sc_link->device_softc;
+
+	if (xs->bp != NULL)
+		rnd_add_uint32(&st->rnd_source, xs->bp->b_blkno);
 }
 
 int
