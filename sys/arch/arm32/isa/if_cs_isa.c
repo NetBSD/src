@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.7 1998/07/15 00:01:17 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.8 1998/07/15 03:29:47 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -470,7 +470,7 @@ csAttach(parent, self, aux)
 		panic("csAttach: impossible");
 	}
 
-	printf(": %s, rev. %d\n", chipname, (reg & PROD_REV_MASK) >> 8);
+	printf(": %s, rev. %c\n", chipname, ((reg & PROD_REV_MASK) >> 8) + 'A');
 
 	/*
 	 * XXX We only support the memory-mapped mode of operation right
