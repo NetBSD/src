@@ -1,8 +1,8 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.11 1993/10/05 18:30:18 jtc Exp $
+#	$Id: Makefile.inc,v 1.12 1993/10/07 00:24:09 cgd Exp $
 
 # string sources
-.PATH: ${.CURDIR}/${MACHINE}/string ${.CURDIR}/string
+.PATH: ${.CURDIR}/arch/${MACHINE}/string ${.CURDIR}/string
 
 SRCS+=	memccpy.c strcasecmp.c strcoll.c strdup.c \
 	strftime.c strmode.c strtok.c strxfrm.c 

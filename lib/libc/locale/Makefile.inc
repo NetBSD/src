@@ -1,7 +1,7 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$Id: Makefile.inc,v 1.2 1993/08/01 05:40:56 mycroft Exp $
+#	$Id: Makefile.inc,v 1.3 1993/10/07 00:23:13 cgd Exp $
 
 # locale sources
-.PATH: ${.CURDIR}/${MACHINE}/locale ${.CURDIR}/locale
+.PATH: ${.CURDIR}/arch/${MACHINE}/locale ${.CURDIR}/locale
 
 SRCS+=	lconv.c localeconv.c setlocale.c
