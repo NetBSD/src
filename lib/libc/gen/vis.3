@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.3,v 1.11 1999/03/24 06:21:30 mycroft Exp $
+.\"	$NetBSD: vis.3,v 1.12 1999/11/25 16:52:29 wennmach Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,18 +39,27 @@
 .Sh NAME
 .Nm vis ,
 .Nm strvis ,
-.Nm strvisx
+.Nm strvisx ,
+.Nm svis ,
+.Nm strsvis ,
+.Nm strsvisx
 .Nd visually encode characters
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
 .Fd #include <vis.h>
 .Ft char *
-.Fn vis "char *dst" "char c" "int flag" "char nextc"
+.Fn vis "char *dst" "int c" "int flag" "int nextc"
 .Ft int 
-.Fn strvis "char *dst" "char *src" "int flag"
+.Fn strvis "char *dst" "const char *src" "int flag"
 .Ft int 
-.Fn strvisx "char *dst" "char *src" "int len" "int flag"
+.Fn strvisx "char *dst" "const char *src" "size_t len" "int flag"
+.Ft char *
+.Fn svis "char *dst" "int c" "int flag" "int nextc" "const char *extra"
+.Ft int 
+.Fn strsvis "char *dst" "const char *src" "int flag" "const char *extra"
+.Ft int 
+.Fn strsvisx "char *dst" "const char *src" "size_t len" "int flag" "const char *extra"
 .Sh DESCRIPTION
 The
 .Fn vis
@@ -120,6 +129,26 @@ forms return the number of characters in dst (not including
 the trailing
 .Dv NUL ) . 
 .Pp
+The functions
+.Fn svis ,
+.Fn strsvis ,
+and
+.Fn strsvisx 
+correspond to
+.Fn vis ,
+.Fn strvis ,
+and
+.Fn strvisx 
+but have an additional argument
+.Fa extra ,
+pointing to a
+.Dv NUL
+terminated list of characters. These characters will be copied encoded or
+backslash-escaped into
+.Fa dst .
+These functions are useful e. g. to remove the special meaning
+of certain characters to shells.
+.Pp
 The encoding is a unique, invertible representation composed entirely of
 graphic characters; it can be decoded back into the original form using 
 the
@@ -129,9 +158,13 @@ or
 functions.
 .Pp
 There are two parameters that can be controlled: the range of
-characters that are encoded, and the type
-of representation used.  
-By default, all non-graphic characters.
+characters that are encoded (applies only to
+.Fn vis ,
+.Fn strvis ,
+and
+.Fn strvisx ) ,
+and the type of representation used.  
+By default, all non-graphic characters,
 except space, tab, and newline are encoded.
 (See
 .Xr isgraph 3 . )
@@ -158,6 +191,19 @@ unexpected functions.  Currently this form allows space,
 tab, newline, backspace, bell, and return - in addition
 to all graphic characters - unencoded. 
 .El
+.Pp
+(The above flags have no effect for
+.Fn svis ,
+.Fn strsvis ,
+and
+.Fn strsvisx .
+When using these functions, place all graphic characters to be
+encoded in an array pointed to by
+.Fa extra .
+In general, the backslash character should be included in this array, see the
+warning on the use of the
+.Dv VIS_NOSLASH
+flag below).
 .Pp
 There are three forms of encoding.
 All forms use the backslash character
@@ -265,5 +311,17 @@ ambiguous and non-invertible.
 .Xr unvis 1 ,
 .Xr unvis 3
 .Sh HISTORY
-These functions first appeared in
+The
+.Fa vis ,
+.Fa strvis ,
+and
+.Fa strvisx
+functions first appeared in
 .Bx 4.4 .
+The
+.Fa svis ,
+.Fa strsvis ,
+and
+.Fa strsvisx
+functions appeared in NetBSD 1.5.
+
