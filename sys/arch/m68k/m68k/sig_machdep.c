@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.10 1998/09/30 21:55:02 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.11 1998/10/03 21:58:52 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -161,7 +161,7 @@ sendsig(catcher, sig, mask, code)
 		m68881_save(&kf.sf_state.ss_fpstate);
 	}
 #ifdef DEBUG
-	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
+	if ((sigdebug & SDB_FPSTATE) && *(char *)&kf.sf_state.ss_fpstate)
 		printf("sendsig(%d): copy out FP state (%x) to %p\n",
 		       p->p_pid, *(u_int *)&kf.sf_state.ss_fpstate,
 		       &kf.sf_state.ss_fpstate);
