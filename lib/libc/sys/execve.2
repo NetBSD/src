@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)execve.2	6.9 (Berkeley) 3/10/91
-.\"	$Id: execve.2,v 1.2 1993/08/01 07:43:13 mycroft Exp $
+.\"	$Id: execve.2,v 1.3 1993/10/26 01:49:04 cgd Exp $
 .\"
 .Dd March 10, 1991
 .Dt EXECVE 2
@@ -206,6 +206,12 @@ Search permission is denied for a component of the path prefix.
 The new process file is not an ordinary file.
 .It Bq Er EACCES
 The new process file mode denies execute permission.
+.It Bq Er EACCES
+The new process file is on a filesystem mounted with execution
+disabled
+.Pf ( Dv MNT_NOEXEC
+in
+.Ao Pa sys/mount.h Ac ) .
 .It Bq Er ENOEXEC
 The new process file has the appropriate access
 permission, but has an invalid magic number in its header.
@@ -222,7 +228,7 @@ is larger than the system-imposed limit.
 The limit in the system as released is 20480 bytes
 .Pf ( Dv NCARGS
 in
-.Ao Pa sys/param.h Ac .
+.Ao Pa sys/param.h Ac ) .
 .It Bq Er EFAULT
 The new process file is not as long as indicated by
 the size values in its header.
