@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.60 2001/06/01 20:33:38 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.61 2001/06/05 06:00:39 explorer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.60 2001/06/01 20:33:38 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.61 2001/06/05 06:00:39 explorer Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.60 2001/06/01 20:33:38 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.61 2001/06/05 06:00:39 explorer Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -193,26 +193,31 @@ typedef struct {
 
 static Var *VarFind __P((char *, GNode *, int));
 static void VarAdd __P((char *, char *, GNode *));
-static Boolean VarHead __P((char *, Boolean, Buffer, ClientData));
-static Boolean VarTail __P((char *, Boolean, Buffer, ClientData));
-static Boolean VarSuffix __P((char *, Boolean, Buffer, ClientData));
-static Boolean VarRoot __P((char *, Boolean, Buffer, ClientData));
-static Boolean VarMatch __P((char *, Boolean, Buffer, ClientData));
+static Boolean VarHead __P((GNode *, char *, Boolean, Buffer, ClientData));
+static Boolean VarTail __P((GNode *, char *, Boolean, Buffer, ClientData));
+static Boolean VarSuffix __P((GNode *, char *, Boolean, Buffer, ClientData));
+static Boolean VarRoot __P((GNode *, char *, Boolean, Buffer, ClientData));
+static Boolean VarMatch __P((GNode *, char *, Boolean, Buffer, ClientData));
 #ifdef SYSVVARSUB
-static Boolean VarSYSVMatch __P((char *, Boolean, Buffer, ClientData));
+static Boolean VarSYSVMatch __P((GNode *, char *, Boolean, Buffer,
+				 ClientData));
 #endif
-static Boolean VarNoMatch __P((char *, Boolean, Buffer, ClientData));
+static Boolean VarNoMatch __P((GNode *, char *, Boolean, Buffer, ClientData));
 #ifndef NO_REGEX
 static void VarREError __P((int, regex_t *, const char *));
-static Boolean VarRESubstitute __P((char *, Boolean, Buffer, ClientData));
+static Boolean VarRESubstitute __P((GNode *, char *, Boolean, Buffer,
+				    ClientData));
 #endif
-static Boolean VarSubstitute __P((char *, Boolean, Buffer, ClientData));
-static Boolean VarLoopExpand __P((char *, Boolean, Buffer, ClientData));
+static Boolean VarSubstitute __P((GNode *, char *, Boolean, Buffer,
+				  ClientData));
+static Boolean VarLoopExpand __P((GNode *, char *, Boolean, Buffer,
+				  ClientData));
 static char *VarGetPattern __P((GNode *, int, char **, int, int *, int *,
 				VarPattern *));
 static char *VarQuote __P((char *));
-static char *VarModify __P((char *, Boolean (*)(char *, Boolean, Buffer,
-						ClientData),
+static char *VarModify __P((GNode *, char *, Boolean (*)(GNode *, char *,
+							 Boolean, Buffer,
+							 ClientData),
 			    ClientData));
 static char *VarSort __P((char *));
 static char *VarUniq __P((char *));
@@ -619,7 +624,8 @@ Var_Value (name, ctxt, frp)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarHead (word, addSpace, buf, dummy)
+VarHead (ctx, word, addSpace, buf, dummy)
+    GNode	  *ctx;
     char    	  *word;    	/* Word to trim */
     Boolean 	  addSpace; 	/* True if need to add a space to the buffer
 				 * before sticking in the head */
@@ -666,7 +672,8 @@ VarHead (word, addSpace, buf, dummy)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarTail (word, addSpace, buf, dummy)
+VarTail (ctx, word, addSpace, buf, dummy)
+    GNode	  *ctx;
     char    	  *word;    	/* Word to trim */
     Boolean 	  addSpace; 	/* TRUE if need to stick a space in the
 				 * buffer before adding the tail */
@@ -705,7 +712,8 @@ VarTail (word, addSpace, buf, dummy)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarSuffix (word, addSpace, buf, dummy)
+VarSuffix (ctx, word, addSpace, buf, dummy)
+    GNode	  *ctx;
     char    	  *word;    	/* Word to trim */
     Boolean 	  addSpace; 	/* TRUE if need to add a space before placing
 				 * the suffix in the buffer */
@@ -743,7 +751,8 @@ VarSuffix (word, addSpace, buf, dummy)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarRoot (word, addSpace, buf, dummy)
+VarRoot (ctx, word, addSpace, buf, dummy)
+    GNode	  *ctx;
     char    	  *word;    	/* Word to trim */
     Boolean 	  addSpace; 	/* TRUE if need to add a space to the buffer
 				 * before placing the root in it */
@@ -783,7 +792,8 @@ VarRoot (word, addSpace, buf, dummy)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarMatch (word, addSpace, buf, pattern)
+VarMatch (ctx, word, addSpace, buf, pattern)
+    GNode	  *ctx;
     char    	  *word;    	/* Word to examine */
     Boolean 	  addSpace; 	/* TRUE if need to add a space to the
 				 * buffer before adding the word, if it
@@ -819,7 +829,8 @@ VarMatch (word, addSpace, buf, pattern)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarSYSVMatch (word, addSpace, buf, patp)
+VarSYSVMatch (ctx, word, addSpace, buf, patp)
+    GNode	  *ctx;
     char    	  *word;    	/* Word to examine */
     Boolean 	  addSpace; 	/* TRUE if need to add a space to the
 				 * buffer before adding the word, if it
@@ -830,16 +841,20 @@ VarSYSVMatch (word, addSpace, buf, patp)
     int len;
     char *ptr;
     VarPattern 	  *pat = (VarPattern *) patp;
+    char *varexp;
 
     if (addSpace)
 	Buf_AddByte(buf, (Byte)' ');
 
     addSpace = TRUE;
 
-    if ((ptr = Str_SYSVMatch(word, pat->lhs, &len)) != NULL)
-	Str_SYSVSubst(buf, pat->rhs, ptr, len);
-    else
+    if ((ptr = Str_SYSVMatch(word, pat->lhs, &len)) != NULL) {
+        varexp = Var_Subst(NULL, pat->rhs, ctx, 0);
+	Str_SYSVSubst(buf, varexp, ptr, len);
+	free(varexp);
+    } else {
 	Buf_AddBytes(buf, strlen(word), (Byte *) word);
+    }
 
     return(addSpace);
 }
@@ -862,7 +877,8 @@ VarSYSVMatch (word, addSpace, buf, patp)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarNoMatch (word, addSpace, buf, pattern)
+VarNoMatch (ctx, word, addSpace, buf, pattern)
+    GNode	  *ctx;
     char    	  *word;    	/* Word to examine */
     Boolean 	  addSpace; 	/* TRUE if need to add a space to the
 				 * buffer before adding the word, if it
@@ -896,7 +912,8 @@ VarNoMatch (word, addSpace, buf, pattern)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarSubstitute (word, addSpace, buf, patternp)
+VarSubstitute (ctx, word, addSpace, buf, patternp)
+    GNode		*ctx;
     char    	  	*word;	    /* Word to modify */
     Boolean 	  	addSpace;   /* True if space should be added before
 				     * other characters */
@@ -1099,7 +1116,8 @@ VarREError(err, pat, str)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarRESubstitute(word, addSpace, buf, patternp)
+VarRESubstitute(ctx, word, addSpace, buf, patternp)
+    GNode *ctx;
     char *word;
     Boolean addSpace;
     Buffer buf;
@@ -1234,7 +1252,8 @@ VarRESubstitute(word, addSpace, buf, patternp)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarLoopExpand (word, addSpace, buf, loopp)
+VarLoopExpand (ctx, word, addSpace, buf, loopp)
+    GNode		*ctx;
     char    	  	*word;	    /* Word to modify */
     Boolean 	  	addSpace;   /* True if space should be added before
 				     * other characters */
@@ -1272,10 +1291,12 @@ VarLoopExpand (word, addSpace, buf, loopp)
  *-----------------------------------------------------------------------
  */
 static char *
-VarModify (str, modProc, datum)
+VarModify (ctx, str, modProc, datum)
+    GNode	  *ctx;
     char    	  *str;	    	    /* String whose words should be trimmed */
 				    /* Function to use to modify them */
-    Boolean    	  (*modProc) __P((char *, Boolean, Buffer, ClientData));
+    Boolean    	  (*modProc) __P((GNode *, char *, Boolean, Buffer,
+				  ClientData));
     ClientData	  datum;    	    /* Datum to pass it */
 {
     Buffer  	  buf;	    	    /* Buffer for the new string */
@@ -1292,7 +1313,7 @@ VarModify (str, modProc, datum)
     av = brk_string(str, &ac, FALSE, &as);
 
     for (i = 0; i < ac; i++)
-	addSpace = (*modProc)(av[i], addSpace, buf, datum);
+	addSpace = (*modProc)(ctx, av[i], addSpace, buf, datum);
 
     free(as);
     free(av);
@@ -1751,9 +1772,9 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			val = (char *)Buf_GetAll(v->val, (int *)NULL);
 
 			if (str[1] == 'D') {
-			    val = VarModify(val, VarHead, (ClientData)0);
+			    val = VarModify(ctxt, val, VarHead, (ClientData)0);
 			} else {
-			    val = VarModify(val, VarTail, (ClientData)0);
+			    val = VarModify(ctxt, val, VarTail, (ClientData)0);
 			}
 			/*
 			 * Resulting string is dynamically allocated, so
@@ -2043,7 +2064,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 
 		    loop.err = err;
 		    loop.ctxt = ctxt;
-		    newStr = VarModify(str, VarLoopExpand,
+		    newStr = VarModify(ctxt, str, VarLoopExpand,
 				       (ClientData)&loop);
 		    free(loop.tvar);
 		    free(loop.str);
@@ -2220,9 +2241,9 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			copy = TRUE;
 		    }
 		    if (*tstr == 'M' || *tstr == 'm') {
-			newStr = VarModify(str, VarMatch, (ClientData)pattern);
+			newStr = VarModify(ctxt, str, VarMatch, (ClientData)pattern);
 		    } else {
-			newStr = VarModify(str, VarNoMatch,
+			newStr = VarModify(ctxt, str, VarNoMatch,
 					   (ClientData)pattern);
 		    }
 		    if (copy) {
@@ -2274,7 +2295,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    }
 
 		    termc = *cp;
-		    newStr = VarModify(str, VarSubstitute,
+		    newStr = VarModify(ctxt, str, VarSubstitute,
 				       (ClientData)&pattern);
 
 		    /*
@@ -2374,7 +2395,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			pattern.nsub = 10;
 		    pattern.matches = emalloc(pattern.nsub *
 					      sizeof(regmatch_t));
-		    newStr = VarModify(str, VarRESubstitute,
+		    newStr = VarModify(ctxt, str, VarRESubstitute,
 				       (ClientData) &pattern);
 		    regfree(&pattern.re);
 		    free(pattern.replace);
@@ -2392,7 +2413,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    /*FALLTHRU*/
 		case 'T':
 		    if (tstr[1] == endc || tstr[1] == ':') {
-			newStr = VarModify (str, VarTail, (ClientData)0);
+			newStr = VarModify(ctxt, str, VarTail, (ClientData)0);
 			cp = tstr + 1;
 			termc = *cp;
 			break;
@@ -2400,7 +2421,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    /*FALLTHRU*/
 		case 'H':
 		    if (tstr[1] == endc || tstr[1] == ':') {
-			newStr = VarModify (str, VarHead, (ClientData)0);
+			newStr = VarModify(ctxt, str, VarHead, (ClientData)0);
 			cp = tstr + 1;
 			termc = *cp;
 			break;
@@ -2408,7 +2429,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    /*FALLTHRU*/
 		case 'E':
 		    if (tstr[1] == endc || tstr[1] == ':') {
-			newStr = VarModify (str, VarSuffix, (ClientData)0);
+			newStr = VarModify(ctxt, str, VarSuffix, (ClientData)0);
 			cp = tstr + 1;
 			termc = *cp;
 			break;
@@ -2416,7 +2437,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    /*FALLTHRU*/
 		case 'R':
 		    if (tstr[1] == endc || tstr[1] == ':') {
-			newStr = VarModify (str, VarRoot, (ClientData)0);
+			newStr = VarModify(ctxt, str, VarRoot, (ClientData)0);
 			cp = tstr + 1;
 			termc = *cp;
 			break;
@@ -2512,7 +2533,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			 * SYSV modifications happen through the whole
 			 * string. Note the pattern is anchored at the end.
 			 */
-			newStr = VarModify(str, VarSYSVMatch,
+			newStr = VarModify(ctxt, str, VarSYSVMatch,
 					   (ClientData)&pattern);
 
 			/*
@@ -2797,6 +2818,7 @@ Var_Subst (var, str, ctxt, undefErr)
  *
  *-----------------------------------------------------------------------
  */
+#if 0
 char *
 Var_GetTail(file)
     char    	*file;	    /* Filename to modify */
@@ -2825,6 +2847,7 @@ Var_GetHead(file)
 {
     return(VarModify(file, VarHead, (ClientData)0));
 }
+#endif
 
 /*-
  *-----------------------------------------------------------------------
