@@ -19,14 +19,17 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.3 1993/12/21 03:18:04 briggs Exp $
+ * $Id: if_ae.c,v 1.4 1994/01/24 22:29:40 briggs Exp $
  */
 
 /*
  * Modification history
  *
  * $Log: if_ae.c,v $
- * Revision 1.3  1993/12/21 03:18:04  briggs
+ * Revision 1.4  1994/01/24 22:29:40  briggs
+ * Apply patch as suggested by Theo.
+ *
+ * Revision 1.3  1993/12/21  03:18:04  briggs
  * Update ethernet driver to use config.new.  At least, it's a first stab
  * working from mycroft's magnum changes to if_ed.c.
  *
@@ -1265,11 +1268,6 @@ ae_get_packet(sc, buf, len)
 	 * Fix up data start offset in mbuf to point past ether header
 	 */
 	m_adj(head, sizeof(struct ether_header));
-
-	/*
-	 * silly ether_input routine needs 'type' in host byte order
-	 */
-	eh->ether_type = ntohs(eh->ether_type);
 
 	ether_input(&sc->arpcom.ac_if, eh, head);
 	return;
