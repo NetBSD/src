@@ -1,4 +1,4 @@
-/*	$NetBSD: routed.h,v 1.3 1996/09/24 16:24:22 christos Exp $	*/
+/*	$NetBSD: routed.h,v 1.4 1996/09/24 17:00:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1993
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)routed.h	8.1 (Berkeley) 6/2/93
- *
  */
 
 #ifndef _ROUTED_H_
@@ -63,13 +62,10 @@ extern "C" {
 #define RIP_PORT	520
 
 #if RIPVERSION == 1
-/* Note that this so called sockaddr has a 2-byte sa_family and no sa_len.
- * It is not a UNIX sockaddr, but the shape of an address as defined
- * in RIPv1.  It is still defined to allow old versions of programs
- * such as `gated` to use this file to define RIPv1.
- */
 struct netinfo {
-	struct	sockaddr rip_dst;	/* destination net/host */
+	u_int16_t   rip_family;
+	u_int16_t   rip_tag;
+	u_int32_t   rip_dst;		/* destination net/host */
 	u_int32_t   rip_metric;		/* cost of route */
 };
 #else
