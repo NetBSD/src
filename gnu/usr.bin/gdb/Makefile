@@ -1,12 +1,14 @@
-# $NetBSD: Makefile,v 1.12 1998/02/14 20:58:23 mycroft Exp $
-
-PROG=	gdb
+# $NetBSD: Makefile,v 1.13 1998/03/16 18:30:45 cgd Exp $
 
 TOP=	$(.CURDIR)/../..
 dist=	$(TOP)/dist
 srcdir= $(dist)/gdb
 
 .PATH:	$(srcdir)
+
+.if	(${MACHINE_ARCH} != "arm32")	# XXX arm32 doesn't use in-tree gdb yet
+
+PROG=	gdb
 
 # Override this to build a cross-debugger.
 TARGET_ARCH?=$(MACHINE_ARCH)
@@ -82,6 +84,10 @@ LDADD+= -ltermcap
 DPADD+= $(LIBTERMCAP)
 
 DPSRCS+= nm.h tm.h
+
+.endif					# XXX arm32 doesn't use in-tree gdb yet
+
+MAN=	gdb.1
 
 .include <bsd.prog.mk>
 
