@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.8 2000/03/19 14:41:48 pk Exp $	*/
+/*	$NetBSD: kd.c,v 1.9 2000/03/20 11:27:16 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -132,6 +132,7 @@ kd_init(kd)
 #ifdef RASTERCONSOLE
 		kd->rows = fbrcons_rows();
 		kd->cols = fbrcons_cols();
+		rcons_ttyinit(tp);
 #endif
 	}
 
