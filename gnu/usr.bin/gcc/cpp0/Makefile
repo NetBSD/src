@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:02 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2001/12/12 12:24:20 lukem Exp $
+
+NOMAN=		# defined
 
 .include <bsd.own.mk>
 
 PROG=           cpp0
 SRCS=		${G_CCCP_OBJS:.o=.c}
-NOMAN=		# defined
 
 CPPFLAGS+=	-I${GCCARCH} \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \

@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2001/12/12 01:49:50 tv Exp $
+#	$NetBSD: Makefile,v 1.8 2001/12/12 12:24:25 lukem Exp $
+
+NOMAN= # defined
 
 .include <bsd.own.mk>
 
@@ -33,7 +35,6 @@ CPPFLAGS+= -DCONS_SERIAL -DCOMSPEED=9600 -DCOMPORT=0x3f8
 .endif
 
 OBJDUMP?= objdump
-NOMAN= # defined
 STRIPFLAG=
 BINMODE= 444
 

@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.11 2001/12/12 01:48:52 tv Exp $
+# $NetBSD: Makefile,v 1.12 2001/12/12 12:24:31 lukem Exp $
+
+NOLINT= # defined
 
 .include <bsd.own.mk>
 
@@ -6,7 +8,6 @@ DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/admin
 
 WARNS?=  1
-NOLINT= # defined
 
 PROG= ktutil
 

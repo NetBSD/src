@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.18 2001/12/12 01:48:49 tv Exp $
+#	$NetBSD: Makefile,v 1.19 2001/12/12 12:24:30 lukem Exp $
+
+NOPIC=		# defined
+NOPROFILE=	# defined
+NOLINT=		# defined
 
 .include <bsd.own.mk>
 
 LIB=bind
-
-NOPIC=# defined
-NOPROFILE=# defined
-NOLINT=# defined
 
 CPPFLAGS+=	${INCLUDE} -I${BIND_DIST_DIR}/lib/dst \
 		-DHMAC_MD5 -DUSE_MD5

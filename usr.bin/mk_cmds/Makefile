@@ -1,6 +1,7 @@
-# $NetBSD: Makefile,v 1.8 2001/12/12 01:48:46 tv Exp $
+# $NetBSD: Makefile,v 1.9 2001/12/12 12:24:28 lukem Exp $
 
 NOMAN=	# defined
+NOLINT= # defined
 
 .include <bsd.own.mk>
 
@@ -8,7 +9,6 @@ DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/sl
 
 WARNS?=  1
-NOLINT= # defined
 
 PROG= mk_cmds
 

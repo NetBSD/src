@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2001/12/12 01:49:41 tv Exp $
+#	$NetBSD: Makefile,v 1.5 2001/12/12 12:24:24 lukem Exp $
+
+NOMAN=	# defined
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -8,7 +10,6 @@ PROG=	boot.atari
 # Warning: bootxxx.c should be the first source!
 #
 SRCS=	bootxxx.c aout.c bsdstart.s elf.c filesystem.c sysinfo.c
-NOMAN=	# defined
 
 STRIPFLAG=
 BINDIR=	/usr/mdec

@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.5 2001/12/12 01:49:17 tv Exp $
+# $NetBSD: Makefile,v 1.6 2001/12/12 12:24:22 lukem Exp $
+
+NOMAN=	# defined
 
 # pull LOCALEDIR and other declarations
 .include <bsd.own.mk>
@@ -6,8 +8,6 @@
 FILESOWN=	${LOCALEOWN}
 FILESGRP=	${LOCALEGRP}
 FILESMODE=	${LOCALEMODE}
-
-NOMAN=# defined
 
 LOCALES += da_DK.ISO8859-1
  LOCALESRC_da_DK.ISO8859-1 = en_US.ISO_8859-1

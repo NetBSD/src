@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.21 2001/12/12 01:49:44 tv Exp $
+#	$NetBSD: Makefile,v 1.22 2001/12/12 12:24:24 lukem Exp $
+
+NOMAN=	# defined
 
 # XXX: bsd.own.mk included so LDSTATIC can be overwridden
 .include <bsd.own.mk>
@@ -11,8 +13,6 @@ LIBSA=${.CURDIR}/../../../../lib/libsa
 
 SRCS=	installboot.c bootblks.c getmount.c byteorder.c loadfile.c \
 	loadfile_aout.c loadfile_elf32.c
-
-NOMAN=	# defined
 
 CPPFLAGS+= -I${.CURDIR}/../lib/crt/bootsect
 CPPFLAGS+= -I${LIBSA} -I.

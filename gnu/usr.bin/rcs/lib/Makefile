@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile,v 1.18 2001/12/12 01:49:06 tv Exp $
+#	$NetBSD: Makefile,v 1.19 2001/12/12 12:24:20 lukem Exp $
 
 # Define FSYNC_ALL to get slower but safer writes in case of crashes in
 # the middle of CVS/RCS changes
 CPPFLAGS+=-DFSYNC_ALL
+
+NOLINT=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
 
 .include <bsd.own.mk>		# for RCS_LOCALID
 
@@ -16,10 +20,6 @@ LIB=	rcs
 SRCS=	maketime.c merger.c partime.c rcsedit.c rcsfcmp.c rcsfnms.c rcsgen.c \
 	rcskeep.c rcskeys.c rcslex.c rcsmap.c rcsrev.c rcssyn.c rcstime.c \
 	rcsutil.c version.c
-
-NOLINT=	# defined
-NOPIC=	# defined
-NOPROFILE=# defined
 
 # only needed during build
 libinstall::

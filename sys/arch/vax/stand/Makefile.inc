@@ -1,11 +1,11 @@
-# $NetBSD: Makefile.inc,v 1.2 2001/12/12 01:49:55 tv Exp $
+# $NetBSD: Makefile.inc,v 1.3 2001/12/12 12:24:26 lukem Exp $
+
+NOMAN=			# defined
 
 .include <bsd.own.mk>
 
 BINDIR?=		/usr/mdec
 WARNS?=			1
-
-NOMAN=			# defined
 
 CPPFLAGS+=		-I${.CURDIR}/../..
 LDSTATIC?=		-static
