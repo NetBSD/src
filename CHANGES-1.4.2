@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.34 1999/09/22 06:11:43 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.35 1999/09/22 06:26:13 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -163,9 +163,9 @@ doc/tmac/doc-common				1.32
 
   Mark Ap as callable, fixes formatting of a few man pages.
 
-sys/dev/ata/ata_wdc.c                           1.20
-sys/dev/ic/wdc.c                                1.69-1.70
-sys/dev/scsipi/atapi_wdc.c                      1.22+patch
+sys/dev/ata/ata_wdc.c				1.20
+sys/dev/ic/wdc.c				1.69-1.70
+sys/dev/scsipi/atapi_wdc.c			patch
 
   Add some debug printfs, change timeout handling to be more efficient
   and less error-prone, and fix the "lockup after lost interrupt"
@@ -268,12 +268,12 @@ sbin/mount_union/mount_union.c			1.6
   (as opposed to the old "mount_xxx: : reason for failure").
   This is related to PR#7592, but not a complete fix for that PR.
 
-distrib/sets/lists/xbase/mi                     1.14-1.16
-distrib/sets/lists/xcomp/mi                     1.7-1.8
-distrib/sets/lists/xserver/md.arm32             1.5-1.7
-distrib/sets/lists/xserver/md.atari             1.4-1.5
-distrib/sets/lists/xserver/md.i386              1.10-1.11
-distrib/sets/lists/xserver/md.vax               1.3 (new)
+distrib/sets/lists/xbase/mi			1.14-1.16
+distrib/sets/lists/xcomp/mi			1.7-1.8
+distrib/sets/lists/xserver/md.arm32		1.5-1.7
+distrib/sets/lists/xserver/md.atari		1.4-1.5
+distrib/sets/lists/xserver/md.i386		1.10-1.11
+distrib/sets/lists/xserver/md.vax		1.3 (new)
 
   Various changes to sync these files with xsrc.  Specifically:
    o Update for XFree86 3.3.4
@@ -342,7 +342,7 @@ distrib/utils/sysinst/arch/mac68k/md.c		1.12
   Insert a leading slash in device name used in md_pre_disklabel(),
   fixing PR#8384.
 
-sys/arch/arm32/podulebus/if_ie.c		(patch)
+sys/arch/arm32/podulebus/if_ie.c		patch
 
   Fix Berkeley Packet Filter support, fixing PR#8343.
 
@@ -375,7 +375,7 @@ sys/dev/pci/ncr.c				1.83
   memory (and resulting "COMMAND FAILED" errors) on systems
   which don't clear memory on boot.
 
-sys/dev/wscons/wsemul_vt100_keys.c              1.3
+sys/dev/wscons/wsemul_vt100_keys.c		1.3
 
   Map the Home and End keys as xterm does.
 
