@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.26 1999/07/30 10:35:39 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.27 1999/08/21 03:46:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -477,9 +477,6 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 			rt_maskedcopy(dst, ndst, netmask);
 		} else
 			Bcopy(dst, ndst, dst->sa_len);
-if (!rt->rt_rmx.rmx_mtu && !(rt->rt_rmx.rmx_locks & RTV_MTU)) { /* XXX */
-  rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;
-}
 		rn = rnh->rnh_addaddr((caddr_t)ndst, (caddr_t)netmask,
 					rnh, rt->rt_nodes);
 		if (rn == 0) {
@@ -492,8 +489,16 @@ if (!rt->rt_rmx.rmx_mtu && !(rt->rt_rmx.rmx_locks & RTV_MTU)) { /* XXX */
 		ifa->ifa_refcnt++;
 		rt->rt_ifa = ifa;
 		rt->rt_ifp = ifa->ifa_ifp;
-		if (req == RTM_RESOLVE)
+		if (req == RTM_RESOLVE) {
 			rt->rt_rmx = (*ret_nrt)->rt_rmx; /* copy metrics */
+		} else if (rt->rt_rmx.rmx_mtu == 0
+			    && !(rt->rt_rmx.rmx_locks & RTV_MTU)) { /* XXX */
+			if (rt->rt_gwroute != NULL) {
+				rt->rt_rmx.rmx_mtu = rt->rt_gwroute->rt_rmx.rmx_mtu;
+			} else {
+				rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;
+			}
+		}
 		if (ifa->ifa_rtrequest)
 			ifa->ifa_rtrequest(req, rt, SA(ret_nrt ? *ret_nrt : 0));
 		if (ret_nrt) {
@@ -537,6 +542,17 @@ rt_setgate(rt0, dst, gate)
 	}
 	if (rt->rt_flags & RTF_GATEWAY) {
 		rt->rt_gwroute = rtalloc1(gate, 1);
+		/*
+		 * If we switched gateways, grab the MTU from the new
+		 * gateway route if the current MTU is 0 or greater
+		 * than the MTU of gateway.
+		 */
+		if (rt->rt_gwroute
+		    && !(rt->rt_rmx.rmx_locks & RTV_MTU)
+		    && (rt->rt_rmx.rmx_mtu == 0
+		    || rt->rt_rmx.rmx_mtu > rt->rt_gwroute->rt_rmx.rmx_mtu)) { /* XXX */
+			rt->rt_rmx.rmx_mtu = rt->rt_gwroute->rt_rmx.rmx_mtu;
+		}
 	}
 	return 0;
 }
