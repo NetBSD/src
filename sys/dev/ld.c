@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.11 2001/09/06 00:47:56 thorpej Exp $	*/
+/*	$NetBSD: ld.c,v 1.12 2001/11/13 05:32:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Disk driver for use by RAID controllers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.12 2001/11/13 05:32:50 lukem Exp $");
 
 #include "rnd.h"
 

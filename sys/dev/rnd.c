@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.24 2001/09/09 00:48:55 enami Exp $	*/
+/*	$NetBSD: rnd.c,v 1.25 2001/11/13 05:32:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.25 2001/11/13 05:32:50 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
