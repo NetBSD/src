@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kdump.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: kdump.c,v 1.4 1995/01/15 07:50:44 mycroft Exp $";
+static char *rcsid = "$Id: kdump.c,v 1.5 1995/03/21 14:20:18 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -207,12 +207,11 @@ dumpheader(kth)
 	(void)printf("%6d %-8s ", kth->ktr_pid, kth->ktr_comm);
 	if (timestamp) {
 		if (timestamp == 2) {
+			timersub(&kth->ktr_time, &prevtime, &temp);
+			prevtime = kth->ktr_time;
+		} else
 			temp = kth->ktr_time;
-			timevalsub(&kth->ktr_time, &prevtime);
-			prevtime = temp;
-		}
-		(void)printf("%ld.%06ld ",
-		    kth->ktr_time.tv_sec, kth->ktr_time.tv_usec);
+		(void)printf("%ld.%06ld ", temp.tv_sec, temp.tv_usec);
 	}
 	(void)printf("%s  ", type);
 }

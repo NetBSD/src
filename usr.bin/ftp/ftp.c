@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ftp.c	8.4 (Berkeley) 4/6/94";*/
-static char *rcsid = "$Id: ftp.c,v 1.9 1994/08/29 03:09:15 mycroft Exp $";
+static char *rcsid = "$Id: ftp.c,v 1.10 1995/03/21 14:16:23 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1157,37 +1157,13 @@ ptransfer(direction, bytes, t0, t1)
 	long bs;
 
 	if (verbose) {
-		tvsub(&td, t1, t0);
+		timersub(t1, t0, &td);
 		s = td.tv_sec + (td.tv_usec / 1000000.);
 #define	nz(x)	((x) == 0 ? 1 : (x))
 		bs = bytes / nz(s);
 		printf("%ld bytes %s in %.3g seconds (%ld bytes/s)\n",
 		    bytes, direction, s, bs);
 	}
-}
-
-/*
-void
-tvadd(tsum, t0)
-	struct timeval *tsum, *t0;
-{
-
-	tsum->tv_sec += t0->tv_sec;
-	tsum->tv_usec += t0->tv_usec;
-	if (tsum->tv_usec > 1000000)
-		tsum->tv_sec++, tsum->tv_usec -= 1000000;
-}
-*/
-
-void
-tvsub(tdiff, t1, t0)
-	struct timeval *tdiff, *t1, *t0;
-{
-
-	tdiff->tv_sec = t1->tv_sec - t0->tv_sec;
-	tdiff->tv_usec = t1->tv_usec - t0->tv_usec;
-	if (tdiff->tv_usec < 0)
-		tdiff->tv_sec--, tdiff->tv_usec += 1000000;
 }
 
 void
