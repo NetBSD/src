@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.11 2000/12/12 18:00:25 thorpej Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.12 2001/01/21 02:22:27 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -313,12 +313,15 @@ USB_ATTACH(upl)
 	ifp->if_output = upl_output;
 	ifp->if_input = upl_input;
 	ifp->if_baudrate = 12000000;
+	ifp->if_dlt = DLT_RAW;
+	IFQ_SET_READY(ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_alloc_sadl(ifp);
 
 #if NBPFILTER > 0
-	bpfattach(ifp, DLT_EN10MB, 0);
+	bpfattach(ifp, DLT_RAW, 0);
 #endif
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, USBDEVNAME(sc->sc_dev),
