@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1999/07/11 19:30:39 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.11 1999/07/28 06:35:16 abs Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.10 1999/07/11 19:30:39 thorpej Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 1999/07/28 06:35:16 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,10 +95,10 @@ usage()
 	fprintf(stderr, "Usage: %s %s%s%s%s\n",
 	    prompt,
 #ifdef	AUTHENTICATION
-	    "[-8] [-E] [-K] [-L] [-S tos] [-X atype] [-a] [-c] [-d] [-e char]",
-	    "\n\t[-k realm] [-l user] [-f/-F] [-n tracefile] ",
+	    "[-8] [-E] [-K] [-L] [-N] [-S tos] [-X atype] [-a] [-c] [-d]",
+	    "\n\t[-e char] [-k realm] [-l user] [-f/-F] [-n tracefile] ",
 #else
-	    "[-8] [-E] [-L] [-S tos] [-a] [-c] [-d] [-e char] [-l user]",
+	    "[-8] [-E] [-L] [-N] [-S tos] [-a] [-c] [-d] [-e char] [-l user]",
 	    "\n\t[-n tracefile]",
 #endif
 #if defined(TN3270) && defined(unix)
@@ -158,7 +158,7 @@ main(argc, argv)
 #else
 #define IPSECOPT
 #endif
-	while ((ch = getopt(argc, argv, "8EKLS:X:acde:fFk:l:n:rt:x"
+	while ((ch = getopt(argc, argv, "8EKLNS:X:acde:fFk:l:n:rt:x"
 			IPSECOPT)) != -1) {
 #undef IPSECOPT
 		switch(ch) {
@@ -175,6 +175,9 @@ main(argc, argv)
 			break;
 		case 'L':
 			eight |= 2;	/* binary output only */
+			break;
+		case 'N':
+			doaddrlookup = 0;
 			break;
 		case 'S':
 		    {

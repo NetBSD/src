@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.14 1999/07/02 15:09:10 itojun Exp $	*/
+/*	$NetBSD: externs.h,v 1.15 1999/07/28 06:35:15 abs Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -155,6 +155,7 @@ extern int
     termdata,		/* Print out terminal data flow */
 #endif	/* defined(unix) */
     debug,		/* Debug level */
+    doaddrlookup,	/* do a reverse address lookup? */
     clienteof;		/* Client received EOF */
 
 extern cc_t escape;	/* Escape to command mode */
