@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.12 1998/11/06 03:53:40 mhitch Exp $	*/
+/*	$NetBSD: bt459.c,v 1.13 1999/02/17 01:04:10 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.12 1998/11/06 03:53:40 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.13 1999/02/17 01:04:10 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,8 +388,8 @@ bt459PosCursor(fi, x, y)
 
 	/* XXX is this a linear function of x-dimension screen size? */
 	if (fi->fi_type.fb_boardtype == PMAX_FBTYPE_SFB) {
-		x += fi->fi_type.fb_width == 1280 ? 369 : 232;
-		y += fi->fi_type.fb_height == 1024 ? 34 : 28;
+		x += fi->fi_type.fb_width == 1280 ? 368 : 221;
+		y += fi->fi_type.fb_height == 1024 ? 38 : 35;
 	} else {
 		x += 219;	/* correct for a cfb */
 		y += 34;
