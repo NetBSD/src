@@ -69,7 +69,7 @@ static void	lsugetdisklabel(struct lsu_softc *);
 static int	lsulock(struct lsu_softc *);
 static void	lsuminphys(struct buf *bp);
 static void	lsushutdown(void *);
-static void	lsustart(struct lsu_softc *, struct buf *);
+static int	lsustart(struct lsu_softc *, struct buf *);
 static void	lsuunlock(struct lsu_softc *);
 
 extern struct	cfdriver lsu_cd;
@@ -295,7 +295,7 @@ lsustrategy(struct buf *bp)
 	lsustart(sc, bp);
 }
 
-static void
+static int
 lsustart(struct lsu_softc *sc, struct buf *bp)
 {
 	struct disklabel *lp;
@@ -311,6 +311,7 @@ lsustart(struct lsu_softc *sc, struct buf *bp)
 	if ((bp->b_bcount % lp->d_secsize) != 0 || bp->b_blkno < 0) {
 		bp->b_flags |= B_ERROR;
 		biodone(bp);
+		return (-1);
 	}
 
 	/*
@@ -319,7 +320,7 @@ lsustart(struct lsu_softc *sc, struct buf *bp)
 	if (bp->b_bcount == 0) {
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
-		return;
+		return (-1);
 	}
 
 	/*
@@ -331,7 +332,7 @@ lsustart(struct lsu_softc *sc, struct buf *bp)
 	    (sc->sc_flags & (LSUF_WLABEL | LSUF_LABELLING)) != 0) <= 0) {
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
-		return;
+		return (-1);
 	}
 
 	/*
@@ -359,6 +360,8 @@ lsustart(struct lsu_softc *sc, struct buf *bp)
 		lsudone(sc, bp);
 		splx(s);
 	}
+
+	return (0);
 }
 
 void
@@ -377,9 +380,10 @@ lsudone(struct lsu_softc *sc, struct buf *bp)
 	biodone(bp);
 	sc->sc_queuecnt--;
 
-	if ((bp = BUFQ_FIRST(&sc->sc_bufq)) != NULL) {
+	while ((bp = BUFQ_FIRST(&sc->sc_bufq)) != NULL) {
 		BUFQ_REMOVE(&sc->sc_bufq, bp);
-		lsustart(sc, bp);
+		if (!lsustart(sc, bp))
+			break;
 	}
 }
 
