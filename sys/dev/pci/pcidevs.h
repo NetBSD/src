@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.68 1998/05/25 22:32:24 mark Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.69 1998/06/15 19:35:31 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.62 1998/05/25 22:31:11 mark Exp 
+ *	NetBSD: pcidevs,v 1.63 1998/06/15 19:31:46 bouyer Exp 
  */
 
 /*
@@ -1009,17 +1009,25 @@
 #define	PCI_PRODUCT_V3_V960PBC	0x0960		/* V960PBC i960 Host-PCI Bridge */
 #define	PCI_PRODUCT_V3_V96DPC	0xC960		/* V96DPC i960 (Dual) Host-PCI Bridge */
 
-/* VIA Technologies products */
+/* VIA Technologies products, from http://www.via.com.tw/ */
 #define	PCI_PRODUCT_VIATECH_VT82C505	0x0505		/* VT82C505 (Pluto) */
 #define	PCI_PRODUCT_VIATECH_VT82C561	0x0561		/* VT82C561 */
+#define	PCI_PRODUCT_VIATECH_VT82C586_IDE	0x0571		/* VT82C586 (Apollo VP) IDE Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C576	0x0576		/* VT82C576 3V */
-#define	PCI_PRODUCT_VIATECH_VT82C586	0x0586		/* VT82C586 (Apollo VP) PCI-ISA Bridge */
+#define	PCI_PRODUCT_VIATECH_VT82C580VP	0x0585		/* VT82C580 (Apollo VP) Host-PCI Bridge */
+#define	PCI_PRODUCT_VIATECH_VT82C586_ISA	0x0586		/* VT82C586 (Apollo VP) PCI-ISA Bridge */
+#define	PCI_PRODUCT_VIATECH_VT82C595	0x0595		/* VT82C595 (Apollo VP2) Host-PCI Bridge */
+#define	PCI_PRODUCT_VIATECH_VT82C597	0x0595		/* VT82C597 (Apollo VP3) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT86C926	0x0926		/* VT86C926 Amazon PCI-Ethernet Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C570M	0x1000		/* VT82C570M (Apollo) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C570MV	0x1006		/* VT82C570M (Apollo) PCI-ISA Bridge */
+# XXX actually 0x1571 is defined as the IDE controller of the VT82C580VP
+# This may be a typo, the author meaning 0x0571, as the PCI-ISA brige is
+# an 0x0586.
 #define	PCI_PRODUCT_VIATECH_VT82C416MV	0x1571		/* VT82C416MV */
 #define	PCI_PRODUCT_VIATECH_VT82C595	0x1595		/* VT82C595 (Apollo VP2) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT83C572	0x3038		/* VT83C572 USB Controller */
+#define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 (Apollo VP) Power Management Controller */
 
 /* Vortex Computer Systems products */
 #define	PCI_PRODUCT_VORTEX_GDT_6000B	0x0001		/* GDT 6000b */

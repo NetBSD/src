@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.67 1998/05/25 22:32:24 mark Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.68 1998/06/15 19:35:32 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.62 1998/05/25 22:31:11 mark Exp 
+ *	NetBSD: pcidevs,v 1.63 1998/06/15 19:31:46 bouyer Exp 
  */
 
 /*
@@ -1948,16 +1948,40 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C561",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE,
+	    0,
+	    "VIA Technologies",
+	    "VT82C586 (Apollo VP) IDE Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C576,
 	    0,
 	    "VIA Technologies",
 	    "VT82C576 3V",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C580VP,
+	    0,
+	    "VIA Technologies",
+	    "VT82C580 (Apollo VP) Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_ISA,
 	    0,
 	    "VIA Technologies",
 	    "VT82C586 (Apollo VP) PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595,
+	    0,
+	    "VIA Technologies",
+	    "VT82C595 (Apollo VP2) Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597,
+	    0,
+	    "VIA Technologies",
+	    "VT82C597 (Apollo VP3) Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926,
@@ -1994,6 +2018,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT83C572 USB Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_PWR,
+	    0,
+	    "VIA Technologies",
+	    "VT82C586 (Apollo VP) Power Management Controller",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6000B,
