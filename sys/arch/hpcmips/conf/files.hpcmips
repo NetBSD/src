@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.25 2000/03/12 05:04:44 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.26 2000/03/12 12:08:16 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -82,6 +82,10 @@ device	bivideo: hpcfbif
 file	arch/hpcmips/dev/bivideo.c	bivideo needs-flag
 attach	bivideo at mainbus
 
+device btnmgr: wskbddev
+attach btnmgr at mainbus
+file	arch/hpcmips/dev/btnmgr.c	btnmgr
+
 #
 # ISA bus support
 #
@@ -92,8 +96,6 @@ include "dev/isa/files.isa"
 #
 defpseudo	biconsdev
 file	arch/hpcmips/dev/biconsdev.c	biconsdev	needs-count
-defpseudo	btnmgr
-file	arch/hpcmips/dev/btnmgr.c	btnmgr
 
 #
 #  Vr41x1 integrated peripherals
@@ -141,6 +143,7 @@ file arch/hpcmips/vr/bcu_vrip.c			vrbcu needs-flag
 device vrkiu: wskbddev
 attach vrkiu at vrip
 file arch/hpcmips/vr/vrkiu.c			vrkiu needs-flag
+
 #
 #	XXX files.pckbc XXX
 #
