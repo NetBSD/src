@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.62 2004/09/22 12:20:24 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.63 2004/10/17 09:10:28 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.62 2004/09/22 12:20:24 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.63 2004/10/17 09:10:28 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,6 @@ struct auich_softc {
 	/* Power Management */
 	void *sc_powerhook;
 	int sc_suspend;
-	u_int16_t ext_status;
 };
 
 #define IS_FIXED_RATE(codec)	!((codec)->vtbl->get_extcaps(codec) \
@@ -1426,7 +1425,6 @@ auich_powerhook(int why, void *addr)
 		/* Power down */
 		DPRINTF(1, ("%s: power down\n", sc->sc_dev.dv_xname));
 		sc->sc_suspend = why;
-		auich_read_codec(sc, AC97_REG_EXT_AUDIO_CTRL, &sc->ext_status);
 		break;
 
 	case PWR_RESUME:
@@ -1442,7 +1440,6 @@ auich_powerhook(int why, void *addr)
 		auich_reset_codec(sc);
 		DELAY(1000);
 		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
-		auich_write_codec(sc, AC97_REG_EXT_AUDIO_CTRL, sc->ext_status);
 		break;
 
 	case PWR_SOFTSUSPEND:
