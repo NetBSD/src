@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.128 2004/05/12 16:56:41 cl Exp $
+#	$NetBSD: build.sh,v 1.129 2004/06/25 15:03:39 wiz Exp $
 #
 # Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -385,6 +385,7 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-D dest] [-j njob]
     -D dest     Set DESTDIR to dest.  [Default: destdir.MACHINE]
     -E          Set "expert" mode; disables various safety checks.
                 Should not be used without expert knowledge of the build system.
+    -h          Print this help message.
     -j njob     Run up to njob jobs in parallel; see make(1) -j.
     -M obj      Set obj root directory to obj; sets MAKEOBJDIRPREFIX.
                 Unsets MAKEOBJDIR.
@@ -855,7 +856,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.128 2004/05/12 16:56:41 cl Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.129 2004/06/25 15:03:39 wiz Exp $
 #
 
 EOF
