@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.14 2000/03/06 20:54:41 thorpej Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.15 2000/03/29 03:36:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -132,9 +132,9 @@ struct	ethercom {
 };
 
 #ifdef	_KERNEL
-u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
-u_int8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
-u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
+extern u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
+extern u_int8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
+extern u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 
 int	ether_addmulti __P((struct ifreq *, struct ethercom *));
 int	ether_delmulti __P((struct ifreq *, struct ethercom *));
