@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.58 2000/02/29 19:07:41 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.59 2000/04/28 13:55:04 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -55,6 +55,7 @@
 #	st*	SCSI tape
 #
 # Disks:
+#	ca*	Compaq array
 #	ccd*	concatenated disk driver
 #	cd*	SCSI CD-ROM
 #	md*	memory pseudo-disk devices
@@ -115,7 +116,7 @@ all)
 	sh $0 std fd sd0 sd1 sd2 sd3 sd4 pty0 pty1
 	sh $0 st0 st1 ch0 cd0 cd1 vnd0 vnd1 vnd2 vnd3
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 md1 ss0 ss1 uk0 uk1
-	sh $0 raid0 raid1 raid2 raid3
+	sh $0 raid0 raid1 raid2 raid3 ca0 ca1 ca2 ca3
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 tun0 tun1 tun2 tun3
 	sh $0 ttyB0 ttyB1 ttyC0 ttyC1 lkm
@@ -259,8 +260,9 @@ md*)
 	chmod 640 md${unit}? #rmd${unit}?
 	;;      
 
-ccd*|cd*|fd*|raid*|sd*|vnd*|wd*)
+ca*|ccd*|cd*|fd*|raid*|sd*|vnd*|wd*)
 	case $i in
+	ca*)	name=ca;	unit=${i#ca};	blk=17; chr=59;;
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=7; chr=27;;
 	cd*)	name=cd;	unit=${i#cd};	blk=3; chr=13;;
 	fd*)	name=fd;	unit=${i#fd};	blk=0; chr=34;;
