@@ -16,6 +16,8 @@ Bugs to fix:
 - pthread_sig.c: pthread__signal_tramp() should be changed so that it is
   easy to add support for SA_SIGINFO later.  (Mostly a function signature
   issue.)
+- pthread_sig.c: Come up with a signal trampoline naming convention like
+  libc's, so that GDB will have an easier time with things.
 - Consider moving pthread__signal_tramp() to its own file, and building
   it with -fasync-unwind-tables, so that DWARF2 EH unwinding works through
   it.  (This is required for e.g. GCC's libjava.)
