@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.75 1997/09/23 08:19:56 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.75.2.1 1997/11/20 03:19:56 mellon Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2414,6 +2414,14 @@ _sparc_interrupt_common:
 3:	tst	%l4
 	bnz	1b			! while (ih)
 	 nop
+
+	/* Unhandled interrupts while cold cause IPL to be raised to `high' */
+	sethi	%hi(_cold), %o0
+	ld	[%o0 + %lo(_cold)], %o0
+	tst	%o0			! if (cold) {
+	bnz,a	4f			!	splhigh();
+	 or	%l0, 0xf00, %l0		! } else
+	
 	call	_strayintr		!	strayintr(&intrframe)
 	 add	%sp, CCFSZ, %o0
 	/* all done: restore registers and go return */
@@ -4417,6 +4425,10 @@ ENTRY(cpu_switch)
 	 * before checking for other processes.  Note that we still have
 	 * curproc set---we have to fix this or we can get in trouble with
 	 * the run queues below.
+	 * Also note that we can remove a process from the run queues
+	 * below at splclock(), because there are currently no drivers
+	 * that can run above splclock and call wakeup(). Otherwise, we
+	 * should run at splstatclock() until we have the new process.
 	 */
 	st	%g0, [%g7 + %lo(_curproc)]	! curproc = NULL;
 	wr	%g1, 0, %psr			! (void) spl0();
@@ -4562,9 +4574,10 @@ Lsw_load:
 	mov	1, %o1
 	sll	%o1, %o0, %o0
 	wr	%o0, 0, %wim		! %wim = 1 << newpcb->pcb_wim;
+	/* Clear FP & CP enable bits, as well as the PIL field */
 	/* now must not change %psr for 3 more instrs */
-/*1*/	set	PSR_EF|PSR_EC, %o0
-/*2*/	andn	%g2, %o0, %g2		! newpsr &= ~(PSR_EF|PSR_EC);
+/*1*/	set	PSR_EF|PSR_EC|PSR_PIL, %o0
+/*2*/	andn	%g2, %o0, %g2		! newpsr &= ~(PSR_EF|PSR_EC|PSR_PIL);
 /*3*/	nop
 	/* set new psr, but with traps disabled */
 	wr	%g2, PSR_ET, %psr	! %psr = newpsr ^ PSR_ET;
@@ -4588,8 +4601,8 @@ Lsw_load:
 	SET_SP_REDZONE(%o0, %o1)
 	CHECK_SP_REDZONE(%o0, %o1)
 #endif
-	/* finally, enable traps */
-	wr	%g2, 0, %psr		! psr = newpsr;
+	/* finally, enable traps and continue at splclock() */
+	wr	%g2, PIL_CLOCK << 8 , %psr	! psr = newpsr;
 
 	/*
 	 * Now running p.  Make sure it has a context so that it
