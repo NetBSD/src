@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.5 2002/02/11 11:42:16 augustss Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.6 2002/02/12 10:51:49 tron Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.5 2002/02/11 11:42:16 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.6 2002/02/12 10:51:49 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,6 @@ int	udsbrdebug = 0;
 
 Static	int     udsbr_get_info(void *, struct radio_info *);
 Static	int     udsbr_set_info(void *, struct radio_info *);
-Static	int     udsbr_search(void *, int);
 
 struct radio_hw_if udsbr_hw_if = {
 	NULL, /* open */
