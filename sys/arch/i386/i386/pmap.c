@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 1998/01/13 12:52:21 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52 1998/01/15 19:47:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -77,6 +77,8 @@
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
  */
+
+#include "opt_cputype.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
