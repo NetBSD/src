@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.52.4.1 1999/06/21 00:48:35 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.52.4.2 1999/08/02 19:42:55 thorpej Exp $
 #
 # Generic atari
 #
@@ -49,11 +49,11 @@ options 	MROUTING        # IP multicast routing
 #options 	EON             # OSI tunneling over IP
 #options 	CCITT,LLC,HDLC  # X.25
 options 	NETATALK        # AppleTalk networking protocols
-#options 	PPP_BSDCOMP     # BSD-Compress compression support for PPP
-#options 	PPP_DEFLATE     # Deflate compression support for PPP
-#options 	PPP_FILTER      # Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS      # pfil(9) packet filter hooks
-#options 	IPFILTER_LOG    # ipmon(8) log support
+options 	PPP_BSDCOMP     # BSD-Compress compression support for PPP
+options 	PPP_DEFLATE     # Deflate compression support for PPP
+options 	PPP_FILTER      # Active filter support for PPP (requires bpf)
+options 	PFIL_HOOKS      # pfil(9) packet filter hooks
+options 	IPFILTER_LOG    # ipmon(8) log support
 #options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 # File systems
@@ -95,6 +95,7 @@ options 	COMPAT_10	# Compatibility to NetBSD1.0
 options 	COMPAT_11	# Compatibility to NetBSD1.1
 options 	COMPAT_12	# Compatibility to NetBSD1.2
 options 	COMPAT_13	# Compatibility to NetBSD1.3
+options 	COMPAT_14	# Compatibility to NetBSD1.4
 #options 	COMPAT_09	# has no meaning on the atari
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables
 #options 	COMPAT_SVR4	# Support to run SVR4 executables

@@ -1,12 +1,11 @@
-/* $NetBSD: lock.h,v 1.2.8.1 1999/08/02 19:35:06 thorpej Exp $ */
+/*	$NetBSD: loadfile_machdep.h,v 1.1.2.2 1999/08/02 19:44:01 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -18,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -37,13 +36,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Machine-dependent spin lock operations.
- */
+#define BOOT_ELF
+#define ELFSIZE 32
 
-#if defined(_KERNEL)
-void	cpu_simple_lock_init __P((__volatile struct simplelock *));
-void	cpu_simple_lock __P((__volatile struct simplelock *));
-int	cpu_simple_lock_try __P((__volatile struct simplelock *));
-void	cpu_simple_unlock __P((__volatile struct simplelock *));
-#endif /* _KERNEL */
+#define LOAD_KERNEL	(LOAD_ALL & ~LOAD_TEXTA)
+#define COUNT_KERNEL	(COUNT_ALL & ~COUNT_TEXTA)
+
+#define LOADADDR(a)		(((u_long)(a)) + offset)
+#define ALIGNENTRY(a)		((u_long)(a))
+#define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
+#define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
+#define BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
+#define	WARN(a)			(void)(printf a, \
+				    printf((errno ? ": %s\n" : "\n"), \
+				    strerror(errno)))
+#define PROGRESS(a)		(void) printf a
+#define ALLOC(a)		alloc(a)
+#define FREE(a, b)		free(a, b)
