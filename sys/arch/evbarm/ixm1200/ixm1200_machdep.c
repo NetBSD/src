@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.29 2004/08/06 15:13:45 rearnsha Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.30 2004/12/12 20:42:53 abs Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.29 2004/08/06 15:13:45 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.30 2004/12/12 20:42:53 abs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -684,7 +684,7 @@ initarm(void *arg)
 	 * handler. Until then we will use a handler that just panics but
 	 * tells us why.
 	 * Initialisation of the vetcors will just panic on a data abort.
-	 * This just fills in a slighly better one.
+	 * This just fills in a slightly better one.
 	 */
 #ifdef VERBOSE_INIT_ARM
 	printf("vectors ");
