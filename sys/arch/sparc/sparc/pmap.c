@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.133 1998/10/16 22:39:18 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.134 1999/01/11 20:58:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -392,6 +392,11 @@ int mmu_has_hole;
 
 vaddr_t prom_vstart;	/* For /dev/kmem */
 vaddr_t prom_vend;
+
+/*
+ * Memory pool for pmap structures.
+ */
+static struct pool pmap_pmap_pool;
 
 #if defined(SUN4)
 /*
@@ -3712,6 +3717,10 @@ pmap_init()
 	pool_init(&pv_pool, sizeof(struct pvlist), 0, 0, 0, "pvtable", 0,
 		  NULL, NULL, 0);
 
+	/* Setup a pool for pmap structures. */
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
 		/*
@@ -3765,12 +3774,12 @@ pmap_create(size)
 
 	if (size)
 		return (NULL);
-	pm = (struct pmap *)malloc(sizeof *pm, M_VMPMAP, M_WAITOK);
+	pm = pool_get(&pmap_pmap_pool, PR_WAITOK);
 #ifdef DEBUG
 	if (pmapdebug & PDB_CREATE)
 		printf("pmap_create: created %p\n", pm);
 #endif
-	bzero((caddr_t)pm, sizeof *pm);
+	bzero(pm, sizeof *pm);
 	pmap_pinit(pm);
 	return (pm);
 }
@@ -3866,7 +3875,7 @@ pmap_destroy(pm)
 	simple_unlock(&pm->pm_lock);
 	if (count == 0) {
 		pmap_release(pm);
-		free(pm, M_VMPMAP);
+		pool_put(&pmap_pmap_pool, pm);
 	}
 }
 
