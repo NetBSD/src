@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.40 2002/02/26 22:12:51 he Exp $
+# $NetBSD: mi,v 1.253.2.41 2002/06/26 17:23:01 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -997,6 +997,7 @@
 ./usr/share/man/cat5/ttys.0
 ./usr/share/man/cat5/types.0
 ./usr/share/man/cat5/tzfile.0
+./usr/share/man/cat5/usermgmt.conf.0
 ./usr/share/man/cat5/utmp.0
 ./usr/share/man/cat5/uuencode.0
 ./usr/share/man/cat5/vgrindefs.0
@@ -2431,6 +2432,7 @@
 ./usr/share/man/man5/ttys.5
 ./usr/share/man/man5/types.5
 ./usr/share/man/man5/tzfile.5
+./usr/share/man/man5/usermgmt.conf.5
 ./usr/share/man/man5/utmp.5
 ./usr/share/man/man5/uuencode.5
 ./usr/share/man/man5/vgrindefs.5
