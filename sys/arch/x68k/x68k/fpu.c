@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.4 1996/12/09 17:55:07 thorpej Exp $	*/
+/*	$NetBSD: fpu.c,v 1.5 1997/01/08 04:03:50 oki Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,51 +51,9 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 
-extern int fpu_type;
 extern int *nofault;
 
-extern int  matchbyname __P((struct device *, void *, void *));
-static void fpu_attach __P((struct device *, struct device *, void *));
-static int  fpu_probe __P((void));
-
-struct cfattach fpu_ca = {
-	sizeof(struct device), matchbyname, fpu_attach
-};
-
-struct cfdriver fpu_cd = {
-	NULL, "fpu", DV_DULL, 0
-};
-
-static char *fpu_descr[] = {
-#ifdef	FPU_EMULATE
-	"emulator", 		/* 0 */
-#else
-	"no math support",	/* 0 */
-#endif
-	"mc68881",			/* 1 */
-	"mc68882",			/* 2 */
-	"mc68040",			/* 3 */
-	"?" };
-
-static void
-fpu_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
-{
-	char *descr;
-	int enab_reg;
-
-	fpu_type = fpu_probe();
-	if ((0 <= fpu_type) && (fpu_type <= 2))
-		descr = fpu_descr[fpu_type];
-	else
-		descr = "unknown type";
-
-	printf(" (%s)\n", descr);
-}
-
-static int
+int
 fpu_probe()
 {
 	/*
@@ -109,7 +67,7 @@ fpu_probe()
 	nofault = (int *) &faultbuf;
 	if (setjmp(&faultbuf)) {
 		nofault = (int *) 0;
-		return(0);
+		return FPU_NONE;
 	}
 
 	/*
@@ -123,11 +81,13 @@ fpu_probe()
 	nofault = (int *) 0;
 
 	/*
-	 * Presumably, if we're an 040 and did not take exception
+	 * Presumably, if we're an 040/060 and did not take exception
 	 * above, we have an FPU.  Don't bother probing.
 	 */
-	if (mmutype == MMU_68040) {
-		return 3;
+	if (cputype == CPU_68060) {
+		return FPU_68060;
+	} else if (cputype == CPU_68040) {
+		return FPU_68040;
 	}
 
 	/*
@@ -149,11 +109,11 @@ fpu_probe()
 	 * The size of a 68881 IDLE frame is 0x18
 	 *         and a 68882 frame is 0x38
 	 */
-	if (b == 0x18) return 1;
-	if (b == 0x38) return 2;
+	if (b == 0x18) return FPU_68881;
+	if (b == 0x38) return FPU_68882;
 
 	/*
 	 * If it's not one of the above, we have no clue what it is.
 	 */
-	return 4;
+	return FPU_UNKNOWN;
 }
