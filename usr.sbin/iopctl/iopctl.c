@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.9 2001/03/21 14:27:29 ad Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.10 2001/06/19 10:46:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.9 2001/03/21 14:27:29 ad Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.10 2001/06/19 10:46:16 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -236,11 +236,11 @@ getparam(int tid, int group, void *pbuf, int pbufsize)
 		err(EXIT_FAILURE, "IOPIOCPT");
 
 	rf = (struct i2o_reply *)buf;
+	if ((rf->msgflags & I2O_MSGFLAGS_FAIL) != 0)
+		errx(EXIT_FAILURE, "I2O_UTIL_PARAMS_GET failed (FAIL)");
 	if (rf->reqstatus != 0)
 		errx(EXIT_FAILURE, "I2O_UTIL_PARAMS_GET failed (%d)",
 		    ((struct i2o_reply *)buf)->reqstatus);
-	if ((rf->msgflags & I2O_MSGFLAGS_FAIL) != 0)
-		errx(EXIT_FAILURE, "I2O_UTIL_PARAMS_GET failed (FAIL)");
 }	
 
 void
