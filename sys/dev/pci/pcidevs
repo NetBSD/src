@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.152 1999/09/08 21:39:24 thorpej Exp $
+$NetBSD: pcidevs,v 1.153 1999/09/08 22:25:19 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -510,6 +510,7 @@ vendor ALTEON		0x12ae	Alteon
 vendor RISCOM		0x12aa	RISCom
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
+vendor ADMTEK		0x1317	ADMtek
 vendor LMC		0x1376	LAN Media Corporation
 vendor NETGEAR		0x1385	Netgear
 vendor DELTA		0x1500	Delta Electronics
@@ -635,6 +636,9 @@ product ADP2 AIC7896	0x005f	AIC-7896/7
 
 /* Addtron Products */
 product ADDTRON 8139	0x1360	8139 Ethernet
+
+/* ADMtek products */
+product ADMTEK AL981	0x0981	ADMtek AL981 10/100 Ethernet
 
 /* Advanced System Products */
 product ADVSYS 1200A	0x1100
@@ -797,6 +801,7 @@ product COMPAQ NF3P		0xf130	NetFlex 3/P
 /* Compex products - XXX better descriptions */
 product COMPEX NE2KETHER	0x1401	Ethernet
 product COMPEX RL100ATX		0x2011	RL100-ATX 10/100 Ethernet
+product COMPEX RL100TX		0x9881	RL100-TX 10/100 Ethernet
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
@@ -992,6 +997,7 @@ product LEADTEK S3_805	0x0000	S3 805
 
 /* Lite-On products */
 product LITEON 82C168	0x0002	82C168/82C169 (PNIC) 10/100 Ethernet
+product LITEON 82C115	0xc115	82C115 (PNIC II) 10/100 Ethernet
 
 /* Macronix */
 product MACRONIX MX98713	0x0512	MX98713 (PMAC) 10/100 Ethernet
