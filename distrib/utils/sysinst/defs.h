@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.40 1999/04/13 20:17:47 bouyer Exp $	*/
+/*	$NetBSD: defs.h,v 1.41 1999/06/18 23:26:40 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -173,7 +173,7 @@ EXTERN int  clean_dist_dir INIT(0);
 
 EXTERN char ext_dir[STRSIZE] INIT("");
 EXTERN char ftp_host[STRSIZE] INIT("ftp.netbsd.org");
-EXTERN char ftp_dir[STRSIZE]  INIT("/pub/NetBSD/NetBSD-");
+EXTERN char ftp_dir[STRSIZE]  INIT("pub/NetBSD/NetBSD-");
 EXTERN char ftp_prefix[STRSIZE] INIT("/binary/sets");
 EXTERN char ftp_user[STRSIZE] INIT("ftp");
 EXTERN char ftp_pass[STRSIZE] INIT("");
