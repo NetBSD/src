@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.31 2002/09/13 14:59:24 christos Exp $ */
+/* $NetBSD: decl.c,v 1.32 2002/11/02 20:10:16 perry Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.31 2002/09/13 14:59:24 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.32 2002/11/02 20:10:16 perry Exp $");
 #endif
 
 #include <sys/param.h>
@@ -294,7 +294,7 @@ addtype(type_t *tp)
 		dcs->d_lmod = NOTSPEC;
 		if (!quadflg)
 			/* %s C does not support 'long long' */
-			(void)gnuism(265, tflag ? "traditional" : "ANSI");
+			(void)c99ism(265, tflag ? "traditional" : "c89");
 	}
 
 	if (dcs->d_type != NULL && dcs->d_type->t_typedef) {
