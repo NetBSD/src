@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.10 1996/11/15 03:32:46 thorpej Exp $ */
+/*	$NetBSD: ts.c,v 1.11 1997/01/11 11:34:43 ragge Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -249,14 +249,14 @@ tsinit (sc)
 	struct uba_unit *uu;
 	
 	uu = &sc->sc_unit;
-	uu->uu_tab.b_active++;			/* ??? */
 	tsregs = (struct tsdevice *)ts[unit].reg;
 	if (sc->sc_mapped == 0) {
 		/*
 		 * Map the communications area and command and message
 		 * buffer into Unibus address space.
 		 */
-		sc->sc_ubainfo = uballoc (sc->sc_dev.dv_parent->dv_unit,
+		sc->sc_ubainfo = uballoc((struct uba_softc *)
+		    sc->sc_dev.dv_parent,
 		    (caddr_t)&ts[unit], sizeof (struct ts), TS_UBAFLAGS);
 		sc->sc_ts = (struct ts *)(UBAI_ADDR(sc->sc_ubainfo));
 		sc->sc_mapped = 1;
@@ -918,12 +918,14 @@ tsintr(ctlr)
 			ts_wtab[ctlr] = NULL;	/* pseudo-unlink */
 
 			if (bp != &ts_cbuf[ctlr]) {	/* no ioctl */
-				ubarelse (sc->sc_dev.dv_parent->dv_unit,
+				ubarelse((struct uba_softc *)
+				    sc->sc_dev.dv_parent,
 				    (int *)&bp->b_ubinfo);
 #if defined(VAX750)
 				if (vax_cputype == VAX_750 &&
 				    sc->sc_unit.uu_ubinfo != 0)
-					ubarelse(sc->sc_dev.dv_parent->dv_unit,
+					ubarelse((struct uba_softc *)
+					    sc->sc_dev.dv_parent,
 					    &sc->sc_unit.uu_ubinfo);
 					/* XXX */
 #endif
@@ -1069,13 +1071,13 @@ tsintr(ctlr)
 	if ((bp = ts_wtab[ctlr]) != NULL) {
 		ts_wtab[ctlr] = NULL;		/* pseudo unlink */
 
-		if (bp != &ts_cbuf[ctlr]) {	/* no ioctl */
-			ubarelse(sc->sc_dev.dv_parent->dv_unit,
+		if (bp != &ts_cbuf[ctlr]) 	/* no ioctl */
+			ubarelse((struct uba_softc *)sc->sc_dev.dv_parent,
 			    (int *)&bp->b_ubinfo);
-		}
-		if ((sr & TS_TC) != TS_TC_NORM) {
+
+		if ((sr & TS_TC) != TS_TC_NORM)
 			bp->b_flags |= B_ERROR;
-		}
+
 		debug (("resid:%d, count:%d, rbpcr:%d\n",
 			bp->b_resid, bp->b_bcount, tsmsgp->rbpcr));
 		bp->b_resid = tsmsgp->rbpcr; /* XXX */

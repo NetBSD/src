@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.8 1996/10/13 03:35:12 christos Exp $	*/
+/*	$NetBSD: dhu.c,v 1.9 1997/01/11 11:34:41 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -376,9 +376,9 @@ dhuopen(dev, flag, mode, p)
 
 		sc->sc_dhu[line].dhu_state = STATE_IDLE;
 
-		sc->sc_dhu[line].dhu_txaddr = uballoc(
-					sc->sc_dev.dv_parent->dv_unit,
-					tp->t_outq.c_cs, tp->t_outq.c_cn, 0);
+		sc->sc_dhu[line].dhu_txaddr =
+		    uballoc((struct uba_softc *)sc->sc_dev.dv_parent,
+		    tp->t_outq.c_cs, tp->t_outq.c_cn, 0);
 
 		dhuaddr = sc->sc_addr;
 
