@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.41 2001/05/06 21:03:25 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.42 2001/06/10 12:06:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.41 2001/05/06 21:03:25 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.42 2001/06/10 12:06:35 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -343,7 +343,8 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 	}
 	
 	/* flags */
-	log->flags = 0;
+	log->flags = (nosignal ? CE_NOSIGNAL : 0);
+
 	for (q = *ap++; q != NULL && *q != '\0'; q++) {
 		switch (tolower(*q)) {
 		case 'b':
@@ -578,7 +579,7 @@ log_trim(struct conf_entry *log)
 			err(EXIT_FAILURE, "%s", log->logfile);
 
 	/* Do we need to signal a daemon? */
-	if (!nosignal && (log->flags & CE_NOSIGNAL) == 0) {
+	if ((log->flags & CE_NOSIGNAL) == 0) {
 		if (log->pidfile[0] != '\0')
 			pid = readpidfile(log->pidfile);
 		else
@@ -596,8 +597,10 @@ log_trim(struct conf_entry *log)
 	/* If the newest historical log is to be compressed, do it here. */
 	if ((log->flags & (CE_PLAIN0 | CE_COMPRESS)) == CE_COMPRESS) {
 		snprintf(file1, sizeof (file1), "%s.0", log->logfile);
-		PRINFO(("sleep for 10 seconds before compressing...\n"));
-		sleep(10);
+		if ((log->flags & CE_NOSIGNAL) == 0) {
+			PRINFO(("sleep for 10 seconds before compressing...\n"));
+			sleep(10);
+		}
 		log_compress(log, file1);
 	}
 }
