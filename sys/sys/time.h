@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.40 2003/08/07 16:34:18 agc Exp $	*/
+/*	$NetBSD: time.h,v 1.41 2003/09/06 22:01:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -184,8 +184,7 @@ struct 	ptimer {
 	} pt_data;
 	struct	sigevent pt_ev;
 	struct	itimerval pt_time;
-	/* XXX Use ksiginfo_t when it is available. */
-	siginfo_t	pt_info;
+	struct	ksiginfo pt_info;
 	int	pt_overruns;	/* Overruns currently accumulating */
 	int	pt_poverruns;	/* Overruns associated w/ a delivery */
 	int	pt_type;

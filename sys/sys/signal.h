@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.53 2003/08/07 16:34:13 agc Exp $	*/
+/*	$NetBSD: signal.h,v 1.54 2003/09/06 22:01:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -142,15 +142,17 @@ struct	sigaction {
 #define sa_handler _sa_u._sa_handler
 #define sa_sigaction _sa_u._sa_sigaction
 
+#include <machine/signal.h>	/* sigcontext; codes for SIGILL, SIGFPE */
+
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 #define SA_ONSTACK	0x0001	/* take signal on signal stack */
 #define SA_RESTART	0x0002	/* restart system on signal return */
 #define SA_RESETHAND	0x0004	/* reset to SIG_DFL when taking signal */
 #define SA_NODEFER	0x0010	/* don't mask the signal we're delivering */
-#if defined(_KERNEL)
+#if defined(_KERNEL) || defined(__HAVE_SIGINFO)
 #define SA_SIGINFO	0x0040
-#endif /* _KERNEL */
+#endif /* _KERNEL || __HAVE_SIGINFO */
 #endif /* _XOPEN_SOURCE_EXTENDED || XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
 /* Only valid for SIGCHLD. */
 #define SA_NOCLDSTOP	0x0008	/* do not generate SIGCHLD on child stop */
@@ -211,8 +213,6 @@ struct	sigstack {
 	int	ss_onstack;		/* current status */
 };
 #endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
-
-#include <machine/signal.h>	/* sigcontext; codes for SIGILL, SIGFPE */
 
 #if defined(_NETBSD_SOURCE) && !defined(_KERNEL)
 /*
