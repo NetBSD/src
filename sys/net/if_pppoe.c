@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.24.4.5 2003/02/07 19:59:19 tron Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.24.4.6 2003/02/07 20:04:22 tron Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24.4.5 2003/02/07 19:59:19 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24.4.6 2003/02/07 20:04:22 tron Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -528,7 +528,7 @@ breakbreak:;
 		sc->sc_state = PPPOE_STATE_PADR_SENT;
 		if (pppoe_send_padr(sc) == 0) 
 			callout_reset(&sc->sc_timeout,
-			    PPPOE_DISC_TIMEOUT*(1+sc->sc_padr_retried),
+			    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried),
 			    pppoe_timeout, sc);
 		else
 			pppoe_abort_connect(sc);
@@ -604,10 +604,12 @@ pppoe_data_input(struct mbuf *m)
 		goto drop;
 	}
 
-	m = m_pullup(m, sizeof(*ph));
-	if (!m) {
-		printf("pppoe: could not get PPPoE header\n");
-		return;
+	if (m->m_len < sizeof(*ph)) {
+		m = m_pullup(m, sizeof(*ph));
+		if (!m) {
+			printf("pppoe: could not get PPPoE header\n");
+			return;
+		}
 	}
 	ph = mtod(m, struct pppoehdr *);
 
@@ -892,7 +894,7 @@ pppoe_timeout(void *arg)
 		 */
 
 		/* initialize for quick retry mode */
-		retry_wait = PPPOE_DISC_TIMEOUT*(1+sc->sc_padi_retried);
+		retry_wait = PPPOE_DISC_TIMEOUT * (1 + sc->sc_padi_retried);
 
 		x = splnet();
 		sc->sc_padi_retried++;
