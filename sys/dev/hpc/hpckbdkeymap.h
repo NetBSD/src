@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.30 2005/01/11 01:54:20 uwe Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.31 2005/01/18 03:59:11 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -801,22 +801,22 @@ const int hp620lx_special_keymap[] = {
 /* Japanese */
 const u_int8_t persona_hpw50pad_jp_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */       
-/* 0 */ SPL, UNK, 61 , 59 , UNK, 60 , 62 , UNK,
-/* 1 */ UNK, UNK, UNK, 29 , UNK, UNK, 123, UNK,
-/* 2 */ UNK, UNK, UNK, 1  , UNK, 56 , 46 , UNK,
-/* 3 */ UNK, UNK, 221, 41 , UNK, 15 , 33 , UNK,
-/* 4 */ 42 , UNK, 58 , 45 , UNK, 44 , 20 , UNK,
-/* 5 */ 54 , UNK, 16 , 30 , UNK, 2  , 6  , UNK,
-/* 6 */ 205, UNK, 4  , 17 , UNK, 3  , 5  , UNK,
-/* 7 */ 14 , UNK, 18 , 31 , UNK, 32 , 19 , UNK,
-/* 8 */ UNK, UNK, 68 , 67 , 66 , 65 , 64 , 63 ,
-/* 9 */ UNK, UNK, 203, 121, 53 , 48 , 49 , 47 ,
-/*10 */ UNK, UNK, 208, 112, 57 , 51 , 50 , 34 ,
-/*11 */ UNK, UNK, 43 , 52 , 39 , 37 , 36 , 35 ,
-/*12 */ UNK, UNK, 27 , 40 , 26 , 38 , 23 , 22 ,
-/*13 */ UNK, UNK, 200, 28 , 115, 24 , 9  , 21 ,
-/*14 */ UNK, UNK, 125, 12 , UNK, 10 , UNK, UNK,
-/*15 */ UNK, UNK, 14 , 13 , 11 , 25 , 8  , 7  ,
+/* 0 */ 59 , 61 , 63 , 65 , 67 , SPL, UNK, UNK, /* ON button */
+/* 1 */ 29 , UNK, 47 , 48 , 121, UNK, UNK, UNK,
+/* 2 */  1 , UNK, 34 , 51 , 112, UNK, UNK, UNK,
+/* 3 */ 41 , 221, 35 , 37 , 52 , UNK, UNK, UNK,
+/* 4 */ 45 , 58 , 22 , 38 , 40 , 42 , UNK, UNK,
+/* 5 */ 30 , 16 , 21 , 24 , 28 , 54 , UNK, UNK,
+/* 6 */ 17 ,  4 , UNK, 10 , 12 , 205, UNK, UNK,
+/* 7 */ 31 , 18 ,  7 , 25 , 13 , 83 , UNK, UNK,
+/* 8 */ 60 , 62 , 64 , 66 , 68 , IGN, UNK, UNK, /* REC button */
+/* 9 */ UNK, 123, 49 , 53 , 203, UNK, UNK, UNK,
+/*10 */ 56 , 46 , 50 , 57 , 208, UNK, UNK, UNK,
+/*11 */ 15 , 33 , 36 , 39 , 43 , UNK, UNK, UNK,
+/*12 */ 44 , 20 , 23 , 26 , 27 , UNK, UNK, UNK,
+/*13 */  2 ,  6 ,  9 , 115, 200, UNK, UNK, UNK,
+/*14 */  3 ,  5 , UNK, UNK, 125, UNK, UNK, UNK,
+/*15 */ 32 , 19 ,  8 , 11 , 14 , UNK, UNK, UNK,
 };
 
 const int persona_hpw50pad_special_keymap[] = {
