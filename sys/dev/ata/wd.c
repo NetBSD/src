@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.175.2.10 1998/09/20 13:16:16 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.175.2.11 1998/09/20 17:08:01 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -331,7 +331,8 @@ wdstrategy(bp)
 {
 	struct wd_softc *wd = wd_cd.cd_devs[WDUNIT(bp->b_dev)];
 	int s;
-	WDCDEBUG_PRINT(("wdstrategy\n"), DEBUG_FUNCS | DEBUG_XFERS);
+	WDCDEBUG_PRINT(("wdstrategy (%s)\n", wd->sc_dev.dv_xname),
+	    DEBUG_FUNCS | DEBUG_XFERS);
 	
 	/* Valid request?  */
 	if (bp->b_blkno < 0 ||
@@ -383,7 +384,8 @@ wdstart(arg)
 	struct wd_softc *wd = arg;
 	struct buf *dp, *bp=0;
 
-	WDCDEBUG_PRINT(("wdstart\n"), DEBUG_FUNCS | DEBUG_XFERS);
+	WDCDEBUG_PRINT(("wdstart %s\n", wd->sc_dev.dv_xname),
+	    DEBUG_FUNCS | DEBUG_XFERS);
 	while (wd->openings > 0) {
 
 		/* Is there a buf for us ? */
@@ -455,7 +457,8 @@ wddone(v)
 	struct wd_softc *wd = v;
 	struct buf *bp = wd->sc_bp;
 	char buf[256], *errbuf = buf;
-	WDCDEBUG_PRINT(("wddone\n"), DEBUG_FUNCS | DEBUG_XFERS);
+	WDCDEBUG_PRINT(("wddone %s\n", wd->sc_dev.dv_xname),
+	    DEBUG_FUNCS | DEBUG_XFERS);
 
 	bp->b_resid = wd->sc_wdc_bio.bcount;
 	errbuf[0] = '\0';
@@ -509,7 +512,8 @@ wdrestart(v)
 	struct wd_softc *wd = v;
 	struct buf *bp = wd->sc_bp;
 	int s;
-	WDCDEBUG_PRINT(("wdrestart\n"), DEBUG_FUNCS | DEBUG_XFERS);
+	WDCDEBUG_PRINT(("wdrestart %s\n", wd->sc_dev.dv_xname),
+	    DEBUG_FUNCS | DEBUG_XFERS);
 
 	s = splbio();
 	__wdstart(v, bp);

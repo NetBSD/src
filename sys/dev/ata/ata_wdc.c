@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.1.2.10 1998/09/20 13:16:15 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.1.2.11 1998/09/20 17:08:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -140,6 +140,7 @@ wdc_ata_bio(drvp, ata_bio)
 		return WDC_TRY_AGAIN;
 	if (ata_bio->flags & ATA_POLL)
 		xfer->c_flags |= C_POLL;
+	xfer->drive = drvp->drive;
 	xfer->cmd = ata_bio;
 	xfer->databuf = ata_bio->databuf;
 	xfer->c_bcount = ata_bio->bcount;
@@ -161,7 +162,8 @@ wdc_ata_bio_start(chp, xfer)
 	int nblks;
 	int dma_flags = 0;
 
-	WDCDEBUG_PRINT(("wdc_ata_bio_start\n"),
+	WDCDEBUG_PRINT(("wdc_ata_bio_start %s:%d:%d\n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive),
 	    DEBUG_FUNCS | DEBUG_XFERS);
 
 	/* Do control operations specially. */
@@ -385,7 +387,10 @@ wdc_ata_bio_intr(chp, xfer)
 	int drv_err;
 	int dma_flags = 0;
 
-	WDCDEBUG_PRINT(("wdc_ata_bio_intr\n"), DEBUG_INTR);
+	WDCDEBUG_PRINT(("wdc_ata_bio_intr %s:%d:%d\n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive),
+	    DEBUG_INTR | DEBUG_XFERS);
+
 
 	/* Is it not a transfer, but a control operation? */
 	if (drvp->state < READY) {
