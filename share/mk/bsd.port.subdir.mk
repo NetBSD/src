@@ -1,6 +1,6 @@
 #	from: @(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 #	Id: bsd.port.subdir.mk,v 1.19 1997/03/09 23:10:56 wosch Exp 
-#	$NetBSD: bsd.port.subdir.mk,v 1.4 1997/11/21 16:01:54 agc Exp $
+#	$NetBSD: bsd.port.subdir.mk,v 1.5 1998/01/08 10:59:47 agc Exp $
 #
 # The include file <bsd.port.subdir.mk> contains the default targets
 # for building ports subdirectories. 
@@ -151,3 +151,6 @@ README.html:
 			-e '/%%SUBDIR%%/d' \
 		> $@
 	@rm -f $@.tmp $@.tmp2 $@.tmp3
+.for subdir in ${SUBDIR}
+	@cd ${subdir} && make readme
+.endfor
