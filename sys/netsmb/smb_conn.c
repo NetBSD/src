@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.12 2003/04/02 15:03:37 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.13 2003/04/08 14:56:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.12 2003/04/02 15:03:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.13 2003/04/08 14:56:49 jdolecek Exp $");
 
 /*
  * Connection engine.
@@ -279,7 +279,7 @@ void
 smb_co_rele(struct smb_connobj *cp, struct smb_cred *scred)
 {
 	SMB_CO_LOCK(cp);
-	lockmgr(&cp->co_lock, LK_RELEASE | LK_INTERLOCK, &cp->co_interlock);
+	lockmgr(&cp->co_lock, LK_RELEASE, NULL);
 	if (cp->co_usecount > 1) {
 		cp->co_usecount--;
 		SMB_CO_UNLOCK(cp);
@@ -291,6 +291,7 @@ smb_co_rele(struct smb_connobj *cp, struct smb_cred *scred)
 #endif
 	cp->co_usecount--;
 	cp->co_flags |= SMBO_GONE;
+	SMB_CO_UNLOCK(cp);
 
 	smb_co_gone(cp, scred);
 }
