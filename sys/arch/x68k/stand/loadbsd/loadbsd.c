@@ -19,13 +19,13 @@
  *		-q	quiet boot
  *		-v	verbose boot (also turn on verbosity of loadbsd)
  *
- *	$NetBSD: loadbsd.c,v 1.6 2000/09/24 12:32:39 jdolecek Exp $
+ *	$NetBSD: loadbsd.c,v 1.7 2001/06/12 16:57:28 minoura Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.6 2000/09/24 12:32:39 jdolecek Exp $");
-#define VERSION	"$Revision: 1.6 $ $Date: 2000/09/24 12:32:39 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.7 2001/06/12 16:57:28 minoura Exp $");
+#define VERSION	"$Revision: 1.7 $ $Date: 2001/06/12 16:57:28 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>
@@ -413,16 +413,16 @@ read_kernel(fn)
 static int
 chkmpu()
 {
-	register int ret asm("d0");
+	register int ret asm("%d0");
 
-	asm("| %0 <- this must be d0\n\
-	moveq	#1,d0\n\
-	.long	0x103B02FF	| foo: moveb pc@((foo+1)-foo-2:B,d0:W:2),d0\n\
+	asm("| %0 <- this must be %%d0\n\
+	moveq	#1,%%d0\n\
+	.long	0x103B02FF	| foo: moveb %%pc@((foo+1)-foo-2:B,d0:W:2),%%d0\n\
 	|	      ^ ^\n\
-	| d0.b	= 0x02	(68000/010)\n\
+	| %%d0.b	= 0x02	(68000/010)\n\
 	|	= 0xff	(68020 and later)\n\
 	bmis	1f\n\
-	moveq	#0,d0		| 68000/010\n\
+	moveq	#0,%%d0		| 68000/010\n\
 1:"	: "=d" (ret));
 
 	return ret;
