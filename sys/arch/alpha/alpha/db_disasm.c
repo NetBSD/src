@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.3 1997/09/16 19:02:13 thorpej Exp $ */
+/* $NetBSD: db_disasm.c,v 1.4 1997/09/16 22:52:40 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.3 1997/09/16 19:02:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.4 1997/09/16 22:52:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ static char *op_name[64] = {
 /* 0 */	"call_pal", "op1", "op2", "op3", "op4",	"op5",	"op6",	"op7",
 /* 8 */	"lda",	"ldah",	"ldbu",	"ldq_u","ldwu",	"stw",	"stb",	"stq_u",
 /*16 */	"arit",	"logical","bit","mul",	"op20",	"vaxf",	"ieeef","anyf",
-/*24 */	"spec",	"hw_mfpr","jump","hw_ld","op28","hw_mtpr","hw_rei","hw_st",
+/*24 */	"spec",	"hw_mfpr","jump","hw_ld","intmisc","hw_mtpr","hw_rei","hw_st",
 /*32 */	"ldf",	"ldg",	"lds",	"ldt",	"stf",	"stg",	"sts",	"stt",
 /*40 */	"ldl",	"ldq",	"ldl_l","ldq_l","stl",	"stq",	"stl_c","stq_c",
 /*48 */	"br",	"fbeq",	"fblt",	"fble",	"bsr",	"fbne",	"fbge",	"fbgt",
@@ -412,6 +412,37 @@ static const char *jump_opname[4] = {
 	"jmp", "jsr", "ret", "jcr"
 };
 #define jump_name(ix)	jump_opname[ix]
+
+/*
+ * For all but 4 of these, we can dispatch on the lower nibble of
+ * the "function".
+ */
+static const char *intmisc_opname_3x[16] = {
+	"ctpop", "perr", "ctlz", "cttz", "unpkbw", "unpkbl", "pkwb",
+	"pklb", "minsb8", "minsw4", "minub8", "minuw4", "maxub8",
+	"maxuw4", "maxsb8", "maxsw4",
+};
+
+static __inline const char *intmisc_name __P((int));
+static __inline const char *
+intmisc_name(op)
+	int op;
+{
+	static char unk[32];
+
+	if ((op & 0xf0) == 0x30)
+		return (intmisc_opname_3x[op & 0x0f]);
+
+	switch (op) {
+	case op_sextb: return ("sextb");
+	case op_sextw: return ("sextw");
+	case op_ftoit: return ("ftoit");
+	case op_ftois: return ("ftois");
+	}
+
+	sprintf(unk, "?intmisc 0x%x?", op);
+	return (unk);
+}
 
 static const char *float_name __P((const struct tbl[], int, const char *type));
 
@@ -940,6 +971,13 @@ foperate:
 				register_name(i.jump_format.rs));
 			break;
 		}
+		break;
+	case op_intmisc:
+		/*
+		 * These are just in "operate" format.
+		 */
+		opcode = intmisc_name(i.operate_lit_format.function);
+		goto operate;
 		break;
 			/* HW instructions, possibly chip-specific XXXX */
 	case op_pal19:	/* "hw_mfpr" */
