@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.29 1995/04/25 20:08:13 pk Exp $ */
+/*	$NetBSD: conf.c,v 1.30 1995/06/26 23:00:32 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,6 +65,8 @@ int	lkmenodev();
 
 #include "sd.h"
 bdev_decl(sd);
+#include "xd.h"
+bdev_decl(xd);
 #include "st.h"
 bdev_decl(st);
 #include "cd.h"
@@ -88,7 +90,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
 	bdev_notdef(),			/* 9 */
-	bdev_notdef(),			/* 10 */
+	bdev_disk_init(NXD,xd),		/* 10: SMD disk */
 	bdev_tape_init(NST,st),		/* 11: SCSI tape */
 	bdev_notdef(),			/* 12 */
 	bdev_notdef(),			/* 13 */
@@ -213,7 +215,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 39 */
 	cdev_notdef(),			/* 40 */
 	cdev_notdef(),			/* 41 */
-	cdev_notdef(),			/* 42 */
+	cdev_disk_init(NXD,xd),		/* 42: SMD disk */
 	cdev_notdef(),			/* 43 */
 	cdev_notdef(),			/* 44 */
 	cdev_notdef(),			/* 45 */
