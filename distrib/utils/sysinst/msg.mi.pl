@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.29 2003/08/05 13:35:29 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.30 2003/08/09 21:36:28 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -153,6 +153,9 @@ message heads
 message sectors
 {sektory}
 
+message fs_isize		/* XXX translate */
+{average file size (bytes)}
+
 message mountpoint
 {mount point (or 'none')}
 
@@ -291,6 +294,11 @@ message bsize_fmt		/* XXX translate */
 
 message fsize_fmt		/* XXX translate */
 { fragment size: %9d bytes}
+
+message isize_fmt		/* XXX translate */
+{ Avg file size: %9d bytes}
+message isize_fmt_dflt		/* XXX translate */
+{ Avg file size:         4 fragments}
 
 message newfs_fmt		/* XXX translate */
 {         newfs: %9s}
