@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.45 2004/01/07 12:17:10 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.46 2004/01/30 12:01:27 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.45 2004/01/07 12:17:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.46 2004/01/30 12:01:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,9 +463,9 @@ uvm_loanpage(pgpp, npages)
 #define	UVM_LOAN_GET_CHUNK	16
 
 /*
- * uvm_loanpage: loan pages from a uobj out (O->K)
+ * uvm_loanuobjpages: loan pages from a uobj out (O->K)
  *
- * => uobj shouldn't be locked.
+ * => uobj shouldn't be locked.  (we'll lock it)
  */
 int
 uvm_loanuobjpages(uobj, pgoff, orignpages, origpgpp)
