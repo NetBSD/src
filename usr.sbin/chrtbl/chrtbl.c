@@ -1,4 +1,4 @@
-/*	$NetBSD: chrtbl.c,v 1.3 1997/10/19 09:23:29 mrg Exp $	*/
+/*	$NetBSD: chrtbl.c,v 1.4 1998/02/03 04:39:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -29,11 +29,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
 #include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
 #include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "ctypeio.h"
 
