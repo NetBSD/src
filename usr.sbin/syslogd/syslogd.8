@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.17 2000/06/30 18:03:50 jwise Exp $
+.\"	$NetBSD: syslogd.8,v 1.18 2000/06/30 18:52:24 jwise Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,9 +82,6 @@ This is valuable when the machine on
 which syslogd runs is subject to attack over the network and it is desired
 that the machine be protected from attempts to remotely fill logs
 and similar attacks.
-Note that if any forwarding actions are specified in
-.Pa /etc/syslog.conf
-the socket will still be opened, but will not be listened to.
 .It Fl p
 Specify the pathname of an log socket.  Multiple
 .Fl p
