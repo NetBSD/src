@@ -292,13 +292,13 @@ init_x_policy()
 {
 	struct sadb_x_policy *p;
 
-	tlen = sizeof(struct sadb_x_policy);
-
 	pbuf = malloc(tlen);
 	if (pbuf == NULL) {
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
 	}
+	tlen = sizeof(struct sadb_x_policy);
+
 	p = (struct sadb_x_policy *)pbuf;
 	p->sadb_x_policy_len = 0;	/* must update later */
 	p->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
@@ -321,13 +321,13 @@ set_x_request(src, dst)
 	reqlen = sizeof(*p)
 		+ (src ? src->sa_len : 0)
 		+ (dst ? dst->sa_len : 0);
-	tlen += reqlen;		/* increment to total length */
 
-	pbuf = realloc(pbuf, tlen);
-	if (pbuf == NULL) {
+	pbuf = realloc(pbuf, tlen + reqlen);
+	if (n == NULL) {
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
 	}
+	tlen += reqlen;		/* increment to total length */
 	p = (struct sadb_x_ipsecrequest *)&pbuf[offset];
 	p->sadb_x_ipsecrequest_len = reqlen;
 	p->sadb_x_ipsecrequest_proto = p_protocol;
