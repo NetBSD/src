@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.46 2003/09/09 06:43:10 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.47 2003/09/14 04:58:30 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.46 2003/09/09 06:43:10 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.47 2003/09/14 04:58:30 jlam Exp $");
 #endif
 #endif
 
@@ -311,7 +311,8 @@ require_delete(char *home, int tryall)
 		if (Fake)
 			rv = 0;
 		else
-			rv = vsystem("%s %s %s %s %s %s %s %s %s", ProgramPath,
+			rv = vsystem("%s -K %s %s %s %s %s %s %s %s %s", ProgramPath,
+			    _pkgdb_getPKGDB_DIR(),
 			    Prefix ? "-p" : "",
 			    Prefix ? Prefix : "",
 			    Verbose ? "-v" : "",
