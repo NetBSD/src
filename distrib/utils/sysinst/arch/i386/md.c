@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.46 2000/10/26 23:29:25 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.47 2000/11/07 01:14:22 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -625,11 +625,13 @@ char *
 get_bootmodel()
 {
 	struct utsname ut;
+#ifdef DEBUG
 	char *envstr;
 
 	envstr = getenv("BOOTMODEL");
 	if (envstr != NULL)
 		return envstr;
+#endif
 
 	if (uname(&ut) < 0)
 		return "";
