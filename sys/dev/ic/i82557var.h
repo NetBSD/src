@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.18 2001/05/21 21:47:53 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.19 2001/05/21 22:20:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -76,16 +76,16 @@
 /*
  * Transmit descriptor list size.
  */
-#define	FXP_NTXCB		128
+#define	FXP_NTXCB		256
 #define	FXP_NTXCB_MASK		(FXP_NTXCB - 1)
 #define	FXP_NEXTTX(x)		((x + 1) & FXP_NTXCB_MASK)
-#define	FXP_NTXSEG		16
+#define	FXP_NTXSEG		8
 
 /*
  * Number of receive frame area buffers.  These are large, so
  * choose wisely.
  */
-#define	FXP_NRFABUFS		64
+#define	FXP_NRFABUFS		128
 
 /*
  * Maximum number of seconds that the reciever can be idle before we
