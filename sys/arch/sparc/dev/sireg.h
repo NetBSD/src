@@ -1,4 +1,40 @@
-/*	$NetBSD: sireg.h,v 1.4 2000/06/18 19:19:53 pk Exp $	*/
+/*	$NetBSD: sireg.h,v 1.5 2000/06/26 19:54:09 pk Exp $	*/
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Paul Kranenburg.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Register map for the Sun3 SCSI Interface (si)
@@ -30,18 +66,18 @@ struct si_regs {
 	struct ncr5380regs sci;
 
 	/* DMA controller registers */
-	u_short	_Dma_addrh;	/* dma address (VME only) */
-	u_short	_Dma_addrl;	/* (high word, low word)  */
-	u_short	_Dma_counth;	/* dma count   (VME only) */
-	u_short	_Dma_countl;	/* (high word, low word)  */
+	u_short	dma_addrh;	/* dma address (VME only) */
+	u_short	dma_addrl;	/* (high word, low word)  */
+	u_short	dma_counth;	/* dma count   (VME only) */
+	u_short	dma_countl;	/* (high word, low word)  */
 
-	u_int		si_pad0;		/* no-existent register */
+	u_int	pad0;		/* no-existent register */
 
-	u_short	_Fifo_data;	/* fifo data register */
-	u_short	_Fifo_count;	/* fifo count register */
-	u_short	_Si_csr;	/* si control/status */
-	u_short	_Bprh;		/* VME byte pack high */
-	u_short	_Bprl;		/* VME byte pack low */
+	u_short	fifo_data;	/* fifo data register */
+	u_short	fifo_count;	/* fifo count register */
+	u_short	si_csr;		/* si control/status */
+	u_short	bprh;		/* VME byte pack high */
+	u_short	bprl;		/* VME byte pack low */
 	u_short	iv_am;		/* bits 0-7: intr vector */
 				/* bits 8-13: addr modifier (VME only) */
 				/* bits 14-15: unused */
@@ -49,17 +85,6 @@ struct si_regs {
 
 	/* Whole thing repeats after 32 bytes. */
 	u_short	_space[3];
-};
-
-struct sw_regs {
-	struct ncr5380regs sci;
-
-	/* DMA controller registers on OBIO */
-	u_int	_Dma_addr;	/* dma address */
-	u_int	_Dma_count;	/* dma count */
-	u_int	si_pad0;	/* no-existent register */
-	u_int	_Sw_csr;	/* sw control/status */
-	u_int	_Bpr;		/* sw byte pack */
 };
 #endif
 
@@ -86,15 +111,6 @@ struct sw_regs {
 #define SIREG_BANK_SZ	(NCR5380REGS_SZ + 26)
 
 /*
- * Register definition for the `sw' OBIO controller
- */
-#define SWREG_DMA_ADDR	(NCR5380REGS_SZ + 0)
-#define SWREG_DMA_CNT	(NCR5380REGS_SZ + 4)
-#define SWREG_CSR	(NCR5380REGS_SZ + 12)
-#define SWREG_BPR	(NCR5380REGS_SZ + 16)
-#define SWREG_BANK_SZ	(NCR5380REGS_SZ + 20)
-
-/*
  * Status Register.
  * Note:
  *	(r)	indicates bit is read only.
@@ -113,9 +129,9 @@ struct sw_regs {
 #define SI_CSR_SBC_IP		0x0200	/* (r,b) sbc interrupt pending */
 #define SI_CSR_DMA_IP		0x0100	/* (r,b) dma interrupt pending */
 #define SI_CSR_LOB		0x00c0	/* (r,v) number of leftover bytes */
-#define SI_CSR_LOB_THREE	0x00c0	/* (r,v) three leftover bytes */
-#define SI_CSR_LOB_TWO		0x0080	/* (r,v) two leftover bytes */
-#define SI_CSR_LOB_ONE		0x0040	/* (r,v) one leftover byte */
+#define   SI_CSR_LOB_THREE	0x00c0	/* (r,v) three leftover bytes */
+#define   SI_CSR_LOB_TWO	0x0080	/* (r,v) two leftover bytes */
+#define   SI_CSR_LOB_ONE	0x0040	/* (r,v) one leftover byte */
 #define SI_CSR_BPCON		0x0020	/* (rw,v) byte packing control */
 					/* dma is in 0=longwords, 1=words */
 #define SI_CSR_DMA_EN		0x0010	/* (rw,v) dma/interrupt enable */
