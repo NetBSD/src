@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.8 1996/03/31 23:45:00 pk Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.9 1996/12/08 23:41:39 pk Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -33,13 +33,46 @@
 
 #ifndef FDC_C_HANDLER
 #include "assym.h"
+#include <machine/param.h>
+#include <machine/psl.h>
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/auxreg.h>
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/dev/fdreg.h>
 #include <sparc/dev/fdvar.h>
+
 /* XXX this goes in a header file -- currently, it's hidden in locore.s */
 #define INTREG_ADDR 0xf8002000
+
+#define FD_SET_SWINTR_4C				\
+	sethi	%hi(INTREG_ADDR), %l5;			\
+	ldub	[%l5 + %lo(INTREG_ADDR)], %l6;		\
+	or	%l6, IE_L4, %l6;			\
+	stb	%l6, [%l5 + %lo(INTREG_ADDR)]
+
+! raise(0,PIL_AUSOFT)	! NOTE: CPU#0 and PIL_AUSOFT=4
+#define FD_SET_SWINTR_4M				\
+	sethi	%hi(1 << (16 + 4)), %l5;		\
+	set	ICR_PI_SET, %l6;			\
+	st	%l5, [%l6]
+
+/* set software interrupt */
+#if defined(SUN4C) && !defined(SUN4M)
+#define FD_SET_SWINTR	FD_SET_SWINTR_4C
+#elif !defined(SUN4C) && defined(SUN4M)
+#define FD_SET_SWINTR	FD_SET_SWINTR_4M
+#else
+#define FD_SET_SWINTR					\
+	sethi	%hi(_cputyp), %l5;			\
+	ld	[%l5 + %lo(_cputyp)], %l5;		\
+	cmp	%l5, CPU_SUN4M;				\
+	be	8f;					\
+	FD_SET_SWINTR_4C;				\
+	ba,a	9f;					\
+8:							\
+	FD_SET_SWINTR_4M;				\
+9:
+#endif
 
 /* Timeout waiting for chip ready */
 #define POLL_TIMO	100000
@@ -140,7 +173,7 @@ nextc:
 	bne,a	nextc				! if (--fdc->sc_tc) goto ...
 	 ldub	[R_msr], %l7			! get MSR value
 
-	! xfer done: update fdc->sc_buf & fdc->sc_tc, mark istate IDLE
+	! xfer done: update fdc->sc_buf & fdc->sc_tc, mark istate DONE
 	st	R_tc, [R_fdc + FDC_TC]
 	st	R_buf, [R_fdc + FDC_DATA]
 
@@ -210,17 +243,14 @@ resultphase1:
 	 ldub	[R_msr], %l7
 
 3:
-	! got status, update sc_nstat and mark istate IDLE
+	! got status, update sc_nstat and mark istate DONE
 	st	R_stcnt, [R_fdc + FDC_NSTAT]
-	mov	ISTATE_IDLE, %l7
+	mov	ISTATE_DONE, %l7
 	st	%l7, [R_fdc + FDC_ISTATE]
 
 ssi:
 	! set software interrupt
-	sethi	%hi(INTREG_ADDR), %l7
-	ldsb	[%l7 + %lo(INTREG_ADDR)], %l6
-	or	%l6, IE_L4, %l6
-	stb	%l6, [%l7 + %lo(INTREG_ADDR)]
+	FD_SET_SWINTR
 
 x:
 	/*
