@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.33 2001/11/13 07:41:37 lukem Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.34 2002/03/25 20:51:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.33 2001/11/13 07:41:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.34 2002/03/25 20:51:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ nsphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &nsphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);
