@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf_common.c,v 1.3 1996/10/07 21:43:05 cgd Exp $	*/
+/*	$NetBSD: exec_elf_common.c,v 1.4 1998/06/25 23:19:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -27,6 +27,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include "opt_compat_linux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
