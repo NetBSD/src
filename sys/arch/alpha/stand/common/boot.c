@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.4 1997/07/25 07:00:42 cgd Exp $ */
+/* $NetBSD: boot.c,v 1.5 1997/08/13 20:49:56 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,6 +123,7 @@ main()
 		bcopy(boot_flags, bootinfo.un.v1.boot_flags,
 		    sizeof(bootinfo.un.v1.boot_flags));
 		bootinfo.un.v1.hwrpb = NULL;
+		bootinfo.un.v1.hwrpbsize = 0;
 		bootinfo.un.v1.cngetc = NULL;
 		bootinfo.un.v1.cnputc = NULL;
 		bootinfo.un.v1.cnpollc = NULL;
