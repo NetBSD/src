@@ -1,10 +1,10 @@
 #
-# GENERICISA -- Generic ISA machine with aha1742 -- distribution floppy
+# GENERICAHB -- Generic ISA machine with aha1742 -- distribution floppy
 #
 
 machine		"i386"
 cpu		"i386"
-ident		GENERICISA
+ident		GENERICAHB
 timezone	8 dst
 maxusers	10
 options		INET,ISOFS,NFSCLIENT
