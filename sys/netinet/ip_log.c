@@ -1,13 +1,13 @@
-/*	$NetBSD: ip_log.c,v 1.1.1.5 1998/07/12 14:48:21 veego Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.1.1.6 1998/11/22 14:22:06 mrg Exp $	*/
 
 /*
- * Copyright (C) 1997 by Darren Reed.
+ * Copyright (C) 1997-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: ip_log.c,v 2.0.2.13.2.4 1998/06/07 16:27:09 darrenr Exp 
+ * Id: ip_log.c,v 2.0.2.13.2.7 1998/11/22 01:50:26 darrenr Exp 
  */
 #ifdef	IPFILTER_LOG
 # ifndef SOLARIS
@@ -181,29 +181,36 @@ mb_t *m;
 	 * calculate header size.
 	 */
 	hlen = fin->fin_hlen;
-	if (ip->ip_p == IPPROTO_TCP)
-		hlen += MIN(sizeof(tcphdr_t), fin->fin_dlen);
-	else if (ip->ip_p == IPPROTO_UDP)
-		hlen += MIN(sizeof(udphdr_t), fin->fin_dlen);
-	else if (ip->ip_p == IPPROTO_ICMP) {
-		struct	icmp	*icmp = (struct icmp *)((char *)ip + hlen);
- 
-		/*
-		 * For ICMP, if the packet is an error packet, also include
-		 * the information about the packet which caused the error.
-		 */
-		switch (icmp->icmp_type)
-		{
-		case ICMP_UNREACH :
-		case ICMP_SOURCEQUENCH :
-		case ICMP_REDIRECT :
-		case ICMP_TIMXCEED :
-		case ICMP_PARAMPROB :
-			hlen += MIN(sizeof(struct icmp) + 8, fin->fin_dlen);
-			break;
-		default :
-			hlen += MIN(sizeof(struct icmp), fin->fin_dlen);
-			break;
+	if ((ip->ip_off & IP_OFFMASK) == 0) {
+		if (ip->ip_p == IPPROTO_TCP)
+			hlen += MIN(sizeof(tcphdr_t), fin->fin_dlen);
+		else if (ip->ip_p == IPPROTO_UDP)
+			hlen += MIN(sizeof(udphdr_t), fin->fin_dlen);
+		else if (ip->ip_p == IPPROTO_ICMP) {
+			struct	icmp	*icmp;
+
+			icmp = (struct icmp *)((char *)ip + hlen);
+	 
+			/*
+			 * For ICMP, if the packet is an error packet, also
+			 * include the information about the packet which
+			 * caused the error.
+			 */
+			switch (icmp->icmp_type)
+			{
+			case ICMP_UNREACH :
+			case ICMP_SOURCEQUENCH :
+			case ICMP_REDIRECT :
+			case ICMP_TIMXCEED :
+			case ICMP_PARAMPROB :
+				hlen += MIN(sizeof(struct icmp) + 8,
+					    fin->fin_dlen);
+				break;
+			default :
+				hlen += MIN(sizeof(struct icmp),
+					    fin->fin_dlen);
+				break;
+			}
 		}
 	}
 	/*

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.8,v 1.1.1.5 1998/07/12 14:48:10 veego Exp $
+.\"	$NetBSD: ipnat.8,v 1.1.1.6 1998/11/22 14:21:54 mrg Exp $
 .\"
 .TH IPNAT 1
 .SH NAME
@@ -21,11 +21,11 @@ which they appear when given to \fBipnat\fP.
 .SH OPTIONS
 .TP
 .B \-C
-delete all entries in the current NAT listing (NAT rules)
+delete all entries in the current NAT rule listing (NAT rules)
 .TP
 .B \-F
-delete all active entries in the current NAT table (currently active
-NAT mappings)
+delete all active entries in the current NAT translation table (currently
+active NAT mappings)
 .TP
 .B \-l
 Show the list of current NAT table entry mappings.
@@ -41,7 +41,8 @@ Retrieve and display NAT statistics
 Remove matching NAT rules rather than add them to the internal lists
 .TP
 .B \-v
-Turn verbose mode on.  Displays information relating to rule processing.
+Turn verbose mode on.  Displays information relating to rule processing
+and active rules/table entries.
 .DT
 .SH FILES
 /dev/ipnat

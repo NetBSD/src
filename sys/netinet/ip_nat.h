@@ -1,14 +1,14 @@
-/*	$NetBSD: ip_nat.h,v 1.1.1.11 1998/07/12 14:48:20 veego Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.1.1.12 1998/11/22 14:22:05 mrg Exp $	*/
 
 /*
- * Copyright (C) 1995-1997 by Darren Reed.
+ * Copyright (C) 1995-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.0.2.23.2.3 1998/05/23 18:52:44 darrenr Exp 
+ * Id: ip_nat.h,v 2.0.2.23.2.6 1998/11/22 01:50:29 darrenr Exp 
  */
 
 #ifndef	__IP_NAT_H__
@@ -49,17 +49,18 @@ typedef	struct	nat	{
 	u_32_t	nat_sumd;
 	u_32_t	nat_ipsumd;
 	void	*nat_data;
+	void	*nat_aps;		/* proxy session */
 	struct	in_addr	nat_inip;
 	struct	in_addr	nat_outip;
 	struct	in_addr	nat_oip;	/* other ip */
 	U_QUAD_T	nat_pkts;
 	U_QUAD_T	nat_bytes;
-	u_short	nat_oport;	/* other port */
+	u_short	nat_oport;		/* other port */
 	u_short	nat_inport;
 	u_short	nat_outport;
 	u_short	nat_use;
 	u_char	nat_state[2];
-	struct	ipnat	*nat_ptr;
+	struct	ipnat	*nat_ptr;	/* pointer back to the rule */
 	struct	nat	*nat_next;
 	struct	nat	*nat_hnext[2];
 	struct	nat	**nat_hstart[2];
@@ -69,8 +70,8 @@ typedef	struct	nat	{
 
 typedef	struct	ipnat	{
 	struct	ipnat	*in_next;
-	void	*in_ifp;
-	void	*in_apr;
+	void	*in_ifp;			/* interface pointer */
+	void	*in_apr;			/* proxy structure ptr */
 	u_int	in_space;
 	u_int	in_use;
 	struct	in_addr	in_nextip;
@@ -101,8 +102,7 @@ typedef	struct	ipnat	{
 #define	NAT_REDIRECT	0x02
 #define	NAT_BIMAP	(NAT_MAP|NAT_REDIRECT)
 
-#define	IPN_CMPSIZ	(sizeof(struct in_addr) * 4 + sizeof(u_short) * 3 + \
-			 sizeof(int) + IFNAMSIZ + APR_LABELLEN + sizeof(char))
+#define	IPN_CMPSIZ	(sizeof(ipnat_t) - offsetof(ipnat_t, in_flags))
 
 typedef	struct	natlookup {
 	struct	in_addr	nl_inip;
@@ -124,6 +124,7 @@ typedef	struct	natstat	{
 	u_long	ns_logfail;
 	nat_t	**ns_table[2];
 	ipnat_t	*ns_list;
+	void	*ns_apslist;
 } natstat_t;
 
 #define	IPN_ANY		0x00

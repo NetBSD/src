@@ -1,7 +1,7 @@
-/*	$NetBSD: sock.c,v 1.1.1.7 1998/07/12 14:48:15 veego Exp $	*/
+/*	$NetBSD: sock.c,v 1.1.1.8 1998/11/22 14:21:59 mrg Exp $	*/
 
 /*
- * sock.c (C) 1995-1997 Darren Reed
+ * sock.c (C) 1995-1998 Darren Reed
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sock.c,v 2.0.2.9.2.1 1997/11/28 03:36:01 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: sock.c,v 2.0.2.9.2.2 1998/11/22 01:51:21 darrenr Exp ";
 #endif
 #include <stdio.h>
 #include <unistd.h>

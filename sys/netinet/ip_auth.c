@@ -1,25 +1,26 @@
-/*	$NetBSD: ip_auth.c,v 1.1.1.6 1998/07/12 14:48:18 veego Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.1.1.7 1998/11/22 14:22:02 mrg Exp $	*/
 
 /*
- * Copyright (C) 1997 by Darren Reed & Guido van Rooij.
+ * Copyright (C) 1998 by Darren Reed & Guido van Rooij.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.0.2.21.2.5 1998/06/13 13:40:49 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.0.2.21.2.7 1998/11/22 01:50:19 darrenr Exp ";
 #endif
 
-#if !defined(_KERNEL) && !defined(KERNEL)
-# include <stdlib.h>
-# include <string.h>
-#endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/file.h>
+#if !defined(_KERNEL) && !defined(KERNEL)
+# include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
+#endif
 #if defined(KERNEL) && (__FreeBSD_version >= 220000)
 # include <sys/filio.h>
 # include <sys/fcntl.h>
@@ -95,7 +96,7 @@ extern struct ifqueue   ipintrq;                /* ip packet input queue */
 
 
 #if (SOLARIS || defined(__sgi)) && defined(_KERNEL)
-extern krwlock_t ipf_auth;
+extern KRWLOCK_T ipf_auth;
 extern kmutex_t ipf_authmx;
 # if SOLARIS
 extern kcondvar_t ipfauthwait;
