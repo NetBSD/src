@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdict.c,v 1.6 1999/09/19 18:10:48 jsm Exp $	*/
+/* $NetBSD: mkdict.c,v 1.7 2000/07/31 11:28:48 simonb Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -36,17 +36,15 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
-#endif /* not lint */
-
-#ifndef lint
+static const char copyright[] =
+    "@(#) Copyright (c) 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #if 0
 static char sccsid[] = "@(#)mkdict.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mkdict.c,v 1.6 1999/09/19 18:10:48 jsm Exp $");
+static const char rcsid[] = 
+    "$NetBSD: mkdict.c,v 1.7 2000/07/31 11:28:48 simonb Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,11 +60,10 @@ __RCSID("$NetBSD: mkdict.c,v 1.6 1999/09/19 18:10:48 jsm Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
 
 #include "bog.h"
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 int
 main(argc, argv)
@@ -85,7 +82,7 @@ main(argc, argv)
 	for (nwords = 1;
 	    fgets(buf[current], MAXWORDLEN + 1, stdin) != NULL; ++nwords) {
 		if ((p = strchr(buf[current], '\n')) == NULL) {
-			warnx("word too long: %s", buf[current]);
+			fprintf(stderr, "word too long: %s", buf[current]);
 			while ((ch = getc(stdin)) != EOF && ch != '\n')
 				;
 			if (ch == EOF)
@@ -125,9 +122,11 @@ main(argc, argv)
 		prev = !prev;
 		current = !current;
 	}
-	warnx("%d words", nwords);
+	fprintf(stderr, "%d words\n", nwords);
 	fflush(stdout);
-	if (ferror(stdout))
-		err(1, "writing standard output");
+	if (ferror(stdout)) {
+		perror("error writing standard output");
+		exit(1);
+	}
 	exit(0);
 }
