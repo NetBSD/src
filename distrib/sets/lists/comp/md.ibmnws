@@ -1,4 +1,4 @@
-# $NetBSD: md.ibmnws,v 1.5 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.ibmnws,v 1.6 2005/02/17 02:24:00 briggs Exp $
 ./usr/include/ibmnws				comp-c-include
 ./usr/include/ibmnws/_G_config.h		comp-obsolete		obsolete
 ./usr/include/ibmnws/ansi.h			comp-c-include
@@ -49,6 +49,7 @@
 ./usr/include/ibmnws/reloc.h			comp-c-include
 ./usr/include/ibmnws/setjmp.h			comp-c-include
 ./usr/include/ibmnws/signal.h			comp-c-include
+./usr/include/ibmnws/spr.h			comp-c-include
 ./usr/include/ibmnws/stdarg.h			comp-c-include
 ./usr/include/ibmnws/trap.h			comp-c-include
 ./usr/include/ibmnws/types.h			comp-c-include
