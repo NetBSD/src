@@ -1,7 +1,7 @@
-/*	$NetBSD: ixm1200_intr.h,v 1.1 2002/08/17 16:42:23 briggs Exp $	*/
+/*	$NetBSD: ixp12x0_intr.h,v 1.1 2003/01/03 01:07:57 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Allen Briggs for Wasabi Systems, Inc.
@@ -35,12 +35,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _IXM1200_INTR_H_
-#define _IXM1200_INTR_H_
+#ifndef _IXP12X0_INTR_H_
+#define _IXP12X0_INTR_H_
+
+#define	ARM_IRQ_HANDLER	_C_LABEL(ixp12x0_intr_dispatch)
+
+#ifndef _LOCORE
 
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
 void	_setsoftintr(int);
 
-#endif /* _IXM1200_INTR_H_ */
+#endif /* ! _LOCORE */
+
+#endif /* _IXP12X0_INTR_H_ */

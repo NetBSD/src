@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.3 2002/11/11 20:44:41 chris Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.4 2003/01/03 00:56:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -68,6 +68,8 @@
 #define	IST_LEVEL	3	/* level-triggered */
 
 #define	__NEWINTR	/* enables new hooks in cpu_fork()/cpu_switch() */
+
+#define	ARM_IRQ_HANDLER	_C_LABEL(footbridge_intr_dispatch)
 
 #ifndef _LOCORE
 #include <arm/cpufunc.h>
