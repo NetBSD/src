@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
- *	$Id: vnode.h,v 1.19 1994/05/11 18:50:41 chopps Exp $
+ *	$Id: vnode.h,v 1.20 1994/05/18 05:12:55 cgd Exp $
  */
 
 #ifndef _SYS_VNODE_H_
@@ -299,7 +299,7 @@ struct vnodeops {
 /*
  * Global vnode data.
  */
-extern	struct vnode *rootdir;		/* root (i.e. "/") vnode */
+extern	struct vnode *rootvnode;	/* root (i.e. "/") vnode */
 extern	long desiredvnodes;		/* number of vnodes desired */
 extern	struct vattr va_null;		/* predefined null vattr structure */
 

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_resource.c	7.13 (Berkeley) 5/9/91
- *	$Id: kern_resource.c,v 1.17 1994/05/17 04:21:59 cgd Exp $
+ *	$Id: kern_resource.c,v 1.18 1994/05/18 05:12:39 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -432,8 +432,6 @@ getrusage(p, uap, retval)
 	switch (uap->who) {
 
 	case RUSAGE_SELF: {
-		int s;
-
 		rup = &p->p_stats->p_ru;
 		calcru(p, &rup->ru_utime, &rup->ru_stime, NULL);
 		break;
