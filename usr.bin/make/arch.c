@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.28 1998/11/06 23:31:09 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.29 1998/11/11 19:37:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: arch.c,v 1.28 1998/11/06 23:31:09 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.29 1998/11/11 19:37:06 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.28 1998/11/06 23:31:09 christos Exp $");
+__RCSID("$NetBSD: arch.c,v 1.29 1998/11/11 19:37:06 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1077,11 +1077,11 @@ Arch_MemMTime (gn)
 	    nameStart = strchr (pgn->name, '(') + 1;
 	    nameEnd = strchr (nameStart, ')');
 
-	    if (pgn->make &&
+	    if ((pgn->flags & REMAKE) &&
 		strncmp(nameStart, gn->name, nameEnd - nameStart) == 0) {
 				     gn->mtime = Arch_MTime(pgn);
 	    }
-	} else if (pgn->make) {
+	} else if (pgn->flags & REMAKE) {
 	    /*
 	     * Something which isn't a library depends on the existence of
 	     * this target, so it needs to exist.
