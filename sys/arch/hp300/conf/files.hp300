@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.65 2003/05/24 06:21:21 gmcgarry Exp $
+#	$NetBSD: files.hp300,v 1.66 2003/06/28 08:22:02 he Exp $
 #
 # hp300-specific configuration info
 
@@ -13,6 +13,8 @@ defflag	opt_spuconf.h	HP320 HP330 HP340 HP345 HP350 HP360 HP370
 
 # Misc. options.
 defflag			USELEDS		# make the lights twinkle
+defflag			PANICBUTTON	# enable panic on ctl+shift+reset ...
+					# ... unless we're doing DDB
 
 # NOTE!  The order of these lines is significant!  Don't change them
 # unless you absolutely know what you're doing!
