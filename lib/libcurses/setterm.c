@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.21 2000/04/29 00:42:26 mycroft Exp $	*/
+/*	$NetBSD: setterm.c,v 1.22 2000/04/29 00:50:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.21 2000/04/29 00:42:26 mycroft Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.22 2000/04/29 00:50:05 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -224,11 +224,11 @@ setterm(char *type)
 	__mask_SE = __ATTRIBUTES & ~__STANDOUT;
 	if (SE != NULL) {
 		if (UE != NULL && !strcmp(SE, UE))
-			curscr->wattr &= ~__UNDERSCORE;
+			__mask_SE &= ~__UNDERSCORE;
 		if (ME != NULL && !strcmp(SE, ME))
-			curscr->wattr &= ~__TERMATTR;
+			__mask_SE &= ~__TERMATTR;
 		if (OP != NULL && !strcmp(SE, OP))
-			curscr->wattr &= ~__COLOR;
+			__mask_SE &= ~__COLOR;
 	}
 
 	return (unknown ? ERR : OK);
