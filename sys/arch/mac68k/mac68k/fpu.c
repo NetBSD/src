@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.17 1996/09/16 18:00:26 scottr Exp $	*/
+/*	$NetBSD: fpu.c,v 1.18 1996/10/11 00:25:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -98,7 +98,7 @@ fpu_attach(parent, self, args)
 	else
 		descr = "unknown type";
 
-	printf(" (%s)\n", descr);
+	kprintf(" (%s)\n", descr);
 }
 
 static int

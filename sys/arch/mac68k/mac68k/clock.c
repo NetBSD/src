@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29 1996/05/05 06:18:17 briggs Exp $	*/
+/*	$NetBSD: clock.c,v 1.30 1996/10/11 00:25:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -340,9 +340,9 @@ inittodr(base)
 	timbuf = pramt_2_ugmt(pram_readtime());
 	if ((timbuf - (macos_boottime + 60 * tz.tz_minuteswest)) > 10 * 60) {
 #if DIAGNOSTIC
-		printf(
+		kprintf(
 		    "PRAM time does not appear to have been read correctly.\n");
-		printf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
+		kprintf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
 		    timbuf, macos_boottime + 60 * tz.tz_minuteswest);
 #endif
 		timbuf = macos_boottime;
@@ -350,7 +350,7 @@ inittodr(base)
 	}
 #ifdef DIAGNOSTIC
 	else
-		printf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
+		kprintf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
 		    timbuf, macos_boottime);
 #endif
 
@@ -362,8 +362,8 @@ inittodr(base)
 	timbuf -= macos_gmtbias * 60;
 
 	if (base < 5 * SECYR) {
-		printf("WARNING: file system time earlier than 1975\n");
-		printf(" -- CHECK AND RESET THE DATE!\n");
+		kprintf("WARNING: file system time earlier than 1975\n");
+		kprintf(" -- CHECK AND RESET THE DATE!\n");
 		base = 21 * SECYR;	/* 1991 is our sane date */
 	}
 	/*
@@ -371,12 +371,12 @@ inittodr(base)
 	 * doesn't run that long!
 	 */
 	if (base > 40 * SECYR) {
-		printf("WARNING: file system time later than 2010\n");
-		printf(" -- CHECK AND RESET THE DATE!\n");
+		kprintf("WARNING: file system time later than 2010\n");
+		kprintf(" -- CHECK AND RESET THE DATE!\n");
 		base = 21 * SECYR;	/* 1991 is our sane date */
 	}
 	if (timbuf < base) {
-		printf(
+		kprintf(
 		    "WARNING: Battery clock has earlier time than UNIX fs.\n");
 		if (((u_long) base) < (40 * SECYR))
 			timbuf = base;
@@ -401,7 +401,7 @@ resettodr()
 		pram_settime(ugmt_2_pramt(time.tv_sec + macos_gmtbias * 60));
 #if DIAGNOSTIC
 	else
-		printf("NetBSD/mac68k does not trust itself to try and write "
+		kprintf("NetBSD/mac68k does not trust itself to try and write "
 		    "to the pram on this system.\n");
 #endif
 }
@@ -521,6 +521,6 @@ mac68k_calibrate_delay()
 	delay_flag = 1;
 
 #ifdef DEBUG
-	printf("delay calibrated, factor = %d\n", delay_factor);
+	kprintf("delay calibrated, factor = %d\n", delay_factor);
 #endif
 }

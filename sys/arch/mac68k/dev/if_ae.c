@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.46 1996/05/15 03:20:22 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.47 1996/10/11 00:24:49 christos Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -243,7 +243,7 @@ ae_id_card(slot, sc)
 		}
 		break;
 	default:
-		printf("Unknown ethernet drsw: %x\n", slottype.drsw);
+		kprintf("Unknown ethernet drsw: %x\n", slottype.drsw);
 		sc->vendor = AE_VENDOR_UNKNOWN;
 		return 0;
 	}
@@ -317,7 +317,7 @@ aeprobe(parent, match, aux)
 		sc->rom_addr = addr + GC_ROM_OFFSET;
 		sc->mem_start = addr + GC_DATA_OFFSET;
 		if ((memsize = ae_size_card_memory(sc)) == 0) {
-			printf("Failed to determine size of RAM.\n");
+			kprintf("Failed to determine size of RAM.\n");
 			return 0;
 		}
 
@@ -337,7 +337,7 @@ aeprobe(parent, match, aux)
 		sc->rom_addr = addr + AE_ROM_OFFSET;
 		sc->mem_start = addr + AE_DATA_OFFSET;
 		if ((memsize = ae_size_card_memory(sc)) == 0) {
-			printf("Failed to determine size of RAM.\n");
+			kprintf("Failed to determine size of RAM.\n");
 			return (0);
 		}
 
@@ -347,7 +347,7 @@ aeprobe(parent, match, aux)
 		break;
 
 	case AE_VENDOR_DAYNA:
-		printf("We think we are a Dayna card, but ");
+		kprintf("We think we are a Dayna card, but ");
 		sc->nic_addr = addr + DP_NIC_OFFSET;
 		sc->rom_addr = addr + DP_ROM_OFFSET;
 		sc->mem_start = addr + DP_DATA_OFFSET;
@@ -356,7 +356,7 @@ aeprobe(parent, match, aux)
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
 			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i * 2);
-		printf("it is dangerous to continue.\n");
+		kprintf("it is dangerous to continue.\n");
 		return (0);	/* Since we don't work yet... */
 		break;
 
@@ -366,7 +366,7 @@ aeprobe(parent, match, aux)
 		sc->nic_addr = addr + AE_NIC_OFFSET;
 		sc->mem_start = addr + AE_DATA_OFFSET;
 		if ((memsize = ae_size_card_memory(sc)) == 0) {
-			printf("Failed to determine size of RAM.\n");
+			kprintf("Failed to determine size of RAM.\n");
 			return (0);
 		}
 
@@ -376,7 +376,7 @@ aeprobe(parent, match, aux)
 		break;
 
 	case AE_VENDOR_FOCUS:
-		printf("Focus EtherLAN card detected, but not supported.\n");
+		kprintf("Focus EtherLAN card detected, but not supported.\n");
 	default:
 		return (0);
 		break;
@@ -402,7 +402,7 @@ aeprobe(parent, match, aux)
 
 	for (i = 0; i < memsize; ++i)
 		if (sc->mem_start[i]) {
-printf("%s: failed to clear shared memory at %p - check configuration\n",
+kprintf("%s: failed to clear shared memory at %p - check configuration\n",
 			    sc->sc_dev.dv_xname,
 			    sc->mem_start + i);
 			return (0);
@@ -441,9 +441,9 @@ aeattach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	/* Print additional info when attached. */
-	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	kprintf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
-	printf("type %s, %ldk mem.\n", sc->type_str, sc->mem_size / 1024);
+	kprintf("type %s, %ldk mem.\n", sc->type_str, sc->mem_size / 1024);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -729,7 +729,7 @@ outloop:
 	len = ae_put(sc, m0, buffer);
 #if DIAGNOSTIC
 	if (len != m0->m_pkthdr.len)
-		printf("aestart: len %d != m0->m_pkthdr.len %d.\n",
+		kprintf("aestart: len %d != m0->m_pkthdr.len %d.\n",
 			len, m0->m_pkthdr.len);
 #endif
 	len = m0->m_pkthdr.len;
@@ -816,9 +816,9 @@ loop:
 		len = (len & ED_PAGE_MASK) | (nlen << ED_PAGE_SHIFT);
 #ifdef DIAGNOSTIC
 		if (len != packet_hdr.count) {
-			printf("%s: length does not match next packet pointer\n",
+			kprintf("%s: length does not match next packet pointer\n",
 			    sc->sc_dev.dv_xname);
-			printf("%s: len %04x nlen %04x start %02x first %02x curr %02x next %02x stop %02x\n",
+			kprintf("%s: len %04x nlen %04x start %02x first %02x curr %02x next %02x stop %02x\n",
 			    sc->sc_dev.dv_xname, packet_hdr.count, len,
 			    sc->rec_page_start, sc->next_packet, current,
 			    packet_hdr.next_packet, sc->rec_page_stop);
@@ -986,7 +986,7 @@ aeintr(arg, slot)
 				if (isr & ED_ISR_RXE) {
 					++ifp->if_ierrors;
 #ifdef AE_DEBUG
-					printf("%s: receive error %x\n",
+					kprintf("%s: receive error %x\n",
 					    sc->sc_dev.dv_xname,
 					    NIC_GET(sc, ED_P0_RSR));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.25 1996/06/07 01:45:43 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.26 1996/10/11 00:24:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -72,12 +72,12 @@
 #	define	static
 #endif
 #ifdef DBG_SEL
-#	define	DBG_SELPRINT(a,b)	printf(a,b)
+#	define	DBG_SELPRINT(a,b)	kprintf(a,b)
 #else
 #	define DBG_SELPRINT(a,b)
 #endif
 #ifdef DBG_PIO
-#	define DBG_PIOPRINT(a,b,c) 	printf(a,b,c)
+#	define DBG_PIOPRINT(a,b,c) 	kprintf(a,b,c)
 #else
 #	define DBG_PIOPRINT(a,b,c)
 #endif
@@ -202,11 +202,11 @@ int		pdma_5380_bytes = 0;
 void
 pdma_stat()
 {
-	printf("PDMA SCSI: %d xfers completed for %d bytes.\n",
+	kprintf("PDMA SCSI: %d xfers completed for %d bytes.\n",
 		pdma_5380_sends, pdma_5380_bytes);
-	printf("pdma_5380_dir = %d\t",
+	kprintf("pdma_5380_dir = %d\t",
 		pdma_5380_dir);
-	printf("datap = %p, remainder = %ld.\n",
+	kprintf("datap = %p, remainder = %ld.\n",
 		pending_5380_data, pending_5380_count);
 	scsi_show();
 }
@@ -302,7 +302,7 @@ extern	u_char	ncr5380_no_parchk;
 #ifdef DIAGNOSTIC
 			/* XXX: is this the right reaction? Can this happen? */
 			scsi_show();
-			printf("Unexpected phase change.\n");
+			kprintf("Unexpected phase change.\n");
 #endif
 			reqp->xs->error = XS_DRIVER_STUFFUP;
 			pdma_cleanup();
@@ -381,7 +381,7 @@ extern	int			*nofault, mac68k_buserr_addr;
 		count = (  (u_long) mac68k_buserr_addr
 			 - (u_long) ncr_5380_with_drq);
 		if ((count < 0) || (count > pending_5380_count)) {
-			printf("pdma %s: cnt = %d (0x%x) (pending cnt %ld)\n",
+			kprintf("pdma %s: cnt = %d (0x%x) (pending cnt %ld)\n",
 				(pdma_5380_dir == 2) ? "in" : "out",
 				count, count, pending_5380_count);
 			panic("something is wrong");
@@ -583,7 +583,7 @@ transfer_pdma(phasep, data, count)
 		&& (--scsi_timeout) );
 	if (!scsi_timeout) {
 #if DIAGNOSTIC
-		printf("scsi timeout: waiting for BSY in %s.\n",
+		kprintf("scsi timeout: waiting for BSY in %s.\n",
 			(*phasep == PH_DATAOUT) ? "pdma_out" : "pdma_in");
 #endif
 		goto scsi_timeout_error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.3 1996/08/27 21:56:01 cgd Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.4 1996/10/11 00:24:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,11 +56,11 @@ grf_establish(sc, sp, g_mode, g_phys)
 	struct grfbus_attach_args ga;
 
 	/* Print hardware characteristics. */
-	printf("%s: %d x %d, ", sc->sc_dev.dv_xname, gm->width, gm->height);
+	kprintf("%s: %d x %d, ", sc->sc_dev.dv_xname, gm->width, gm->height);
 	if (gm->psize == 1)
-		printf("monochrome\n");
+		kprintf("monochrome\n");
 	else
-		printf("%d color\n", 1 << gm->psize);
+		kprintf("%d color\n", 1 << gm->psize);
 
 	/* Attach grf semantics to the hardware. */
 	ga.ga_name = "grf";
@@ -79,7 +79,7 @@ grfbusprint(aux, name)
 	struct grfbus_attach_args *ga = aux;
 
 	if (name)
-		printf("%s at %s", ga->ga_name, name);
+		kprintf("%s at %s", ga->ga_name, name);
 
 	return (UNCONF);
 }

@@ -179,62 +179,62 @@ pcattach(struct isa_device *dev)
 #if PCVT_NETBSD || PCVT_FREEBSD
 
 #if PCVT_NETBSD > 9
-	printf(": ");
+	kprintf(": ");
 #else
-	printf("vt%d: ", dev->id_unit);
+	kprintf("vt%d: ", dev->id_unit);
 #endif /* PCVT_NETBSD > 9 */
 
 	switch(adaptor_type)
 	{
 		case MDA_ADAPTOR:
-			printf("mda");
+			kprintf("mda");
 			break;
 
 		case CGA_ADAPTOR:
-			printf("cga");
+			kprintf("cga");
 			break;
 
 		case EGA_ADAPTOR:
-			printf("ega");
+			kprintf("ega");
 			break;
 
 		case VGA_ADAPTOR:
-			printf("%s, ", (char *)vga_string(vga_type));
+			kprintf("%s, ", (char *)vga_string(vga_type));
 			if(can_do_132col)
-				printf("80/132 col");
+				kprintf("80/132 col");
 			else
-				printf("80 col");
+				kprintf("80 col");
 			vgapelinit();
 			break;
 
 		default:
-			printf("unknown");
+			kprintf("unknown");
 			break;
 	}
 
 	if(color == 0)
-		printf(", mono");
+		kprintf(", mono");
 	else
-		printf(", color");
+		kprintf(", color");
 
-	printf(", %d scr, ", totalscreens);
+	kprintf(", %d scr, ", totalscreens);
 
 	switch(keyboard_type)
 	{
 		case KB_AT:
-			printf("at-");
+			kprintf("at-");
 			break;
 
 		case KB_MFII:
-			printf("mf2-");
+			kprintf("mf2-");
 			break;
 
 		default:
-			printf("unknown ");
+			kprintf("unknown ");
 			break;
 	}
 
-	printf("kbd, [R%s]\n", PCVT_REL);
+	kprintf("kbd, [R%s]\n", PCVT_REL);
 
 #if PCVT_NETBSD || (PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200)
 
@@ -282,54 +282,54 @@ pcattach(struct isa_device *dev)
 	switch(adaptor_type)
 	{
 		case MDA_ADAPTOR:
-			printf(" <mda");
+			kprintf(" <mda");
 			break;
 
 		case CGA_ADAPTOR:
-			printf(" <cga");
+			kprintf(" <cga");
 			break;
 
 		case EGA_ADAPTOR:
-			printf(" <ega");
+			kprintf(" <ega");
 			break;
 
 		case VGA_ADAPTOR:
-			printf(" <%s,", (char *)vga_string(vga_type));
+			kprintf(" <%s,", (char *)vga_string(vga_type));
 			if(can_do_132col)
-				printf("80/132 col");
+				kprintf("80/132 col");
 			else
-				printf("80 col");
+				kprintf("80 col");
 			vgapelinit();
 			break;
 
 		default:
-			printf(" <unknown");
+			kprintf(" <unknown");
 			break;
 	}
 
 	if(color == 0)
-		printf(",mono");
+		kprintf(",mono");
 	else
-		printf(",color");
+		kprintf(",color");
 
-	printf(",%d scr,", totalscreens);
+	kprintf(",%d scr,", totalscreens);
 
 	switch(keyboard_type)
 	{
 		case KB_AT:
-			printf("at-");
+			kprintf("at-");
 			break;
 
 		case KB_MFII:
-			printf("mf2-");
+			kprintf("mf2-");
 			break;
 
 		default:
-			printf("unknown ");
+			kprintf("unknown ");
 			break;
 	}
 
-	printf("kbd,[R%s]>", PCVT_REL);
+	kprintf("kbd,[R%s]>", PCVT_REL);
 
 #endif  /* PCVT_NETBSD || PCVT_FREEBSD */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.24 1996/08/27 21:56:06 cgd Exp $	*/
+/*	$NetBSD: nubus.c,v 1.25 1996/10/11 00:24:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -88,7 +88,7 @@ nubusattach(parent, self, aux)
 	nubus_slot		fmtblock;
 	int			i;
 
-	printf("\n");
+	kprintf("\n");
 
 	for (i = NUBUS_MIN_SLOT; i <= NUBUS_MAX_SLOT; i++) {
 		if (probe_slot(i, &fmtblock)) {
@@ -107,11 +107,11 @@ nubusprint(aux, name)
 
 	fmt = (nubus_slot *) aux;
 	if (name) {
-		printf("%s: slot %x: %s ", name, fmt->slot,
+		kprintf("%s: slot %x: %s ", name, fmt->slot,
 				nubus_get_card_name(fmt));
-		printf("(Vendor: %s, ",
+		kprintf("(Vendor: %s, ",
 				nubus_get_vendor(fmt, NUBUS_RSRC_VEND_ID));
-		printf("Part: %s) ",
+		kprintf("Part: %s) ",
 				nubus_get_vendor(fmt, NUBUS_RSRC_VEND_PART));
 	}
 	return (UNCONF);
@@ -166,7 +166,7 @@ probe_slot(slot, fmt)
 #ifdef DEBUG
 	if (nubus_debug & NDB_PROBE) {
 		pa = pmap_extract(pmap_kernel(), (vm_offset_t) rom_probe - 1);
-		printf("probing slot %d, first probe at 0x%x (PA 0x%p).\n",
+		kprintf("probing slot %d, first probe at 0x%x (PA 0x%p).\n",
 		    slot, rom_probe - 1, pa);
 	}
 #endif
@@ -191,7 +191,7 @@ probe_slot(slot, fmt)
 #ifdef DEBUG
 	if (nubus_debug & NDB_PROBE)
 		if (fmt->bytelanes == 0)
-			printf("bytelanes not found for slot 0x%x.\n", slot);
+			kprintf("bytelanes not found for slot 0x%x.\n", slot);
 #endif
 
 	if (fmt->bytelanes == 0)
@@ -199,7 +199,7 @@ probe_slot(slot, fmt)
 
 #ifdef DEBUG
 	if (nubus_debug & NDB_PROBE)
-		printf("bytelanes of 0x%x found for slot 0x%x.\n",
+		kprintf("bytelanes of 0x%x found for slot 0x%x.\n",
 			fmt->bytelanes, slot);
 #endif
 
@@ -214,9 +214,9 @@ probe_slot(slot, fmt)
 	hdr = (vm_offset_t)
 		bus_mapin(BUS_NUBUS,NUBUS_SLOT_TO_PADDR(fmt->slot),NBMEMSIZE);
 	if (hdr == NULL) {
-		printf("Failed to map %d bytes for NuBUS slot %d probe.  ",
+		kprintf("Failed to map %d bytes for NuBUS slot %d probe.  ",
 			NBMEMSIZE, fmt->slot);
-		printf("Physical slot address %x\n",
+		kprintf("Physical slot address %x\n",
 			(unsigned int) NUBUS_SLOT_TO_PADDR(fmt->slot));
 	}
 	fmt->virtual_base = hdr;
@@ -231,11 +231,11 @@ probe_slot(slot, fmt)
 	hdr = IncPtr(fmt, hdr, -hdr_size);
 #ifdef DEBUG
 	if (nubus_debug & NDB_PROBE)
-		printf("fmt->top is 0x%p, that minus 0x%x puts us at 0x%p.\n",
+		kprintf("fmt->top is 0x%p, that minus 0x%x puts us at 0x%p.\n",
 			fmt->top, hdr_size, hdr);
 #if 0
 	for (i=1 ; i < 8 ; i++) {
-		printf("0x%x - 0x%x = 0x%x, + 0x%x = 0x%x.\n",
+		kprintf("0x%x - 0x%x = 0x%x, + 0x%x = 0x%x.\n",
 			hdr, i, IncPtr(fmt, hdr, -i),
 			     i, IncPtr(fmt, hdr,  i));
 	}
@@ -256,32 +256,32 @@ probe_slot(slot, fmt)
 
 #ifdef DEBUG
 	if (nubus_debug & NDB_PROBE) {
-		printf("Directory offset 0x%x\t", fmt->directory_offset);
-		printf("Length 0x%x\t", fmt->length);
-		printf("CRC 0x%x\n", fmt->crc);
-		printf("Revision level 0x%x\t", fmt->revision_level);
-		printf("Format 0x%x\t", fmt->format);
-		printf("Test Pattern 0x%x\n", fmt->test_pattern);
+		kprintf("Directory offset 0x%x\t", fmt->directory_offset);
+		kprintf("Length 0x%x\t", fmt->length);
+		kprintf("CRC 0x%x\n", fmt->crc);
+		kprintf("Revision level 0x%x\t", fmt->revision_level);
+		kprintf("Format 0x%x\t", fmt->format);
+		kprintf("Test Pattern 0x%x\n", fmt->test_pattern);
 	}
 #endif
 
 	if ((fmt->directory_offset & 0x00ff0000) == 0) {
-		printf("Invalid looking directory offset (0x%x)!\n",
+		kprintf("Invalid looking directory offset (0x%x)!\n",
 			fmt->directory_offset);
 		return 0;
 	}
 	if (fmt->test_pattern != NUBUS_ROM_TEST_PATTERN) {
-		printf("Nubus--test pattern invalid:\n");
-		printf("       slot 0x%x, bytelanes 0x%x?\n",
+		kprintf("Nubus--test pattern invalid:\n");
+		kprintf("       slot 0x%x, bytelanes 0x%x?\n",
 			fmt->slot, fmt->bytelanes);
-		printf("       read test 0x%x, compare with 0x%x.\n",
+		kprintf("       read test 0x%x, compare with 0x%x.\n",
 			fmt->test_pattern, NUBUS_ROM_TEST_PATTERN);
 		return 0;
 	}
 
 	/* Perform CRC */
 	if (fmt->crc != nubus_calc_CRC(fmt)) {
-		printf("Nubus--crc check failed, slot 0x%x.\n",
+		kprintf("Nubus--crc check failed, slot 0x%x.\n",
 			fmt->slot);
 		return 0;
 	}
@@ -413,7 +413,7 @@ nubus_get_main_dir(slot, dir_return)
 {
 #ifdef DEBUG
 	if (nubus_debug & NDB_FOLLOW)
-		printf("nubus_get_main_dir(0x%x, 0x%x)\n",
+		kprintf("nubus_get_main_dir(0x%x, 0x%x)\n",
 			(u_int) slot, (u_int) dir_return);
 #endif
 	dir_return->dirbase = IncPtr(slot, slot->top,
@@ -433,7 +433,7 @@ nubus_find_rsrc(slot, dir, rsrcid, dirent_return)
 
 #ifdef DEBUG
 	if (nubus_debug & NDB_FOLLOW)
-		printf("nubus_find_rsrc(0x%x, 0x%x, 0x%x, 0x%x)\n",
+		kprintf("nubus_find_rsrc(0x%x, 0x%x, 0x%x, 0x%x)\n",
 			(u_int) slot, (u_int) dir, (u_int) rsrcid,
 			(u_int) dirent_return);
 #endif
@@ -445,7 +445,7 @@ nubus_find_rsrc(slot, dir, rsrcid, dirent_return)
 		byte = GetByte(slot, entry);
 #ifdef DEBUG
 		if (nubus_debug & NDB_FOLLOW)
-			printf("\tFound rsrc 0x%x.\n", byte);
+			kprintf("\tFound rsrc 0x%x.\n", byte);
 #endif
 		if (byte == rsrcid) {
 			dirent_return->myloc = entry;
@@ -473,7 +473,7 @@ nubus_get_dir_from_rsrc(slot, dirent, dir_return)
 
 #ifdef DEBUG
 	if (nubus_debug & NDB_FOLLOW)
-		printf("nubus_get_dir_from_rsrc(0x%x, 0x%x, 0x%x).\n",
+		kprintf("nubus_get_dir_from_rsrc(0x%x, 0x%x, 0x%x).\n",
 			(u_int) slot, (u_int) dirent, (u_int) dir_return);
 #endif
 	if ((loc = dirent->offset) & 0x800000) {
@@ -494,7 +494,7 @@ nubus_get_ind_data(slot, dirent, data_return, nbytes)
 
 #ifdef DEBUG
 	if (nubus_debug & NDB_FOLLOW)
-		printf("nubus_get_ind_data(0x%x, 0x%x, 0x%x, %d).\n",
+		kprintf("nubus_get_ind_data(0x%x, 0x%x, 0x%x, %d).\n",
 			(u_int) slot, (u_int) dirent, (u_int) data_return,
 			nbytes);
 #endif
@@ -521,7 +521,7 @@ nubus_get_c_string(slot, dirent, data_return, max_bytes)
 
 #ifdef DEBUG
 	if (nubus_debug & NDB_FOLLOW)
-		printf("nubus_get_c_string(0x%x, 0x%x, 0x%x, %d).\n",
+		kprintf("nubus_get_c_string(0x%x, 0x%x, 0x%x, %d).\n",
 			(u_int) slot, (u_int) dirent, (u_int) data_return,
 			max_bytes);
 #endif
@@ -552,7 +552,7 @@ static	char		str_ret[64];
 
 #ifdef DEBUG
 	if (nubus_debug & NDB_FOLLOW)
-		printf("nubus_get_vendor(0x%x, 0x%x).\n", (u_int) slot, rsrc);
+		kprintf("nubus_get_vendor(0x%x, 0x%x).\n", (u_int) slot, rsrc);
 #endif
 	nubus_get_main_dir(slot, &dir);
 	if (nubus_find_rsrc(slot, &dir, 1, &ent) <= 0)
@@ -581,7 +581,7 @@ static	char		name_ret[64];
 
 #ifdef DEBUG
 	if (nubus_debug & NDB_FOLLOW)
-		printf("nubus_get_card_name(0x%lx).\n", (u_long) slot);
+		kprintf("nubus_get_card_name(0x%lx).\n", (u_long) slot);
 #endif
 	nubus_get_main_dir(slot, &dir);
 

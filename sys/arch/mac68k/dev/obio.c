@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.1 1996/05/05 06:17:07 briggs Exp $	*/
+/*	$NetBSD: obio.c,v 1.2 1996/10/11 00:24:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -67,7 +67,7 @@ obio_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	printf("\n");
+	kprintf("\n");
 
 	(void) config_search(bus_scan, self, aux);
 }

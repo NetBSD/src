@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
+/*	$NetBSD: clock.c,v 1.40 1996/10/11 00:27:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -164,7 +164,7 @@ startrtclock()
 
 	/* Check diagnostic status */
 	if ((s = mc146818_read(NULL, NVRAM_DIAG)) != 0)	/* XXX softc */
-		printf("RTC BIOS diagnostic error %b\n", (unsigned int) s, 
+		kprintf("RTC BIOS diagnostic error %b\n", (unsigned int) s, 
 		    NVRAM_DIAG_BITS);
 }
 
@@ -419,7 +419,7 @@ inittodr(base)
 	 */
 
 	if (base < 15*SECYR) {	/* if before 1985, something's odd... */
-		printf("WARNING: preposterous time in file system\n");
+		kprintf("WARNING: preposterous time in file system\n");
 		/* read the system clock anyway */
 		base = 17*SECYR + 186*SECDAY + SECDAY/2;
 	}
@@ -427,7 +427,7 @@ inittodr(base)
 	s = splclock();
 	if (rtcget(&rtclk)) {
 		splx(s);
-		printf("WARNING: invalid time in clock chip\n");
+		kprintf("WARNING: invalid time in clock chip\n");
 		goto fstime;
 	}
 	splx(s);
@@ -457,10 +457,10 @@ inittodr(base)
 		n -= 3600;
 
 	if (base < n - 5*SECYR)
-		printf("WARNING: file system time much less than clock time\n");
+		kprintf("WARNING: file system time much less than clock time\n");
 	else if (base > n + 5*SECYR) {
-		printf("WARNING: clock time much less than file system time\n");
-		printf("WARNING: using file system time\n");
+		kprintf("WARNING: clock time much less than file system time\n");
+		kprintf("WARNING: using file system time\n");
 		goto fstime;
 	}
 
@@ -473,7 +473,7 @@ fstime:
 	timeset = 1;
 	time.tv_sec = base;
 	time.tv_usec = 0;
-	printf("WARNING: CHECK AND RESET THE DATE!\n");
+	kprintf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_iv.c,v 1.13 1996/08/04 06:03:52 scottr Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.14 1996/10/11 00:24:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -94,7 +94,7 @@ grfiv_attach(parent, self, aux)
 
 	sc->card_id = 0;
 
-	printf(": Internal Video\n");
+	kprintf(": Internal Video\n");
 
 	gm = &(sc->curr_mode);
 	gm->mode_id = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 1996/08/27 21:56:15 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 1996/10/11 00:25:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -146,7 +146,7 @@ bus_print(args, name)
 /*	struct confargs *ca = args; */
 
 	if (name)
-		printf("%s:", name);
+		kprintf("%s:", name);
 
 	return(UNCONF);
 }
@@ -203,7 +203,7 @@ bus_peek(bustype, paddr, sz)
 			rv = *((u_int32_t *) va);
 		break;
 	default:
-		printf("bus_peek: invalid size=%d\n", sz);
+		kprintf("bus_peek: invalid size=%d\n", sz);
 		rv = -1;
 	}
 
@@ -275,7 +275,7 @@ mainbus_attach(parent, self, aux)
 	struct confargs	ca;
 	int	i;
 
-	printf("\n");
+	kprintf("\n");
 
 	for (i = 0; i < BUS_ORDER_SZ; i++) {
 		ca.ca_bustype = bus_order[i];
