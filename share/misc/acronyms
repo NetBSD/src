@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.82 2001/03/13 05:51:46 mason Exp $
+$NetBSD: acronyms,v 1.83 2001/03/30 22:38:33 christos Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -35,6 +35,7 @@ EMSG	email message
 ETLA	extended three letter acronym
 FAQ	frequently asked question
 FIIK	fuck[ed] if I know
+FIIR	fuck[ed] if I remember
 FOAD	fall over and die
 FSDO	for some definition of
 FSVO	for some value of
