@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 2001/09/16 15:45:43 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63 2001/09/17 17:03:45 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -67,14 +67,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * from: Utah Hdr: machdep.c 1.63 91/04/24
+ *
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2001/09/17 17:03:45 uch Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2001/09/16 15:45:43 uch Exp $");
-
-/* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
 #include "opt_boot_standalone.h"
@@ -94,7 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2001/09/16 15:45:43 uch Exp $");
 #include <sys/reboot.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
-#include <sys/kcore.h>
 #include <sys/boot_flag.h>
 
 #include <ufs/mfs/mfs_extern.h>	/* mfs_initminiroot() */

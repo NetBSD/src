@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.60 2001/09/05 15:46:10 sato Exp $
+#	$NetBSD: files.hpcmips,v 1.61 2001/09/17 17:03:44 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -30,7 +30,7 @@ major	{wd = 1}
 #
 # Bus-independent devices
 #
-device mainbus { }			# no locators
+device mainbus { [id = -1] }
 attach mainbus at root
 
 device cpu				# not optional
