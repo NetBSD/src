@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.124 2004/09/28 04:24:54 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.125 2004/12/06 08:05:26 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.124 2004/09/28 04:24:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.125 2004/12/06 08:05:26 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -325,7 +325,7 @@ static struct secpolicy *key_getsp __P((struct secpolicyindex *, int));
 #ifdef SADB_X_EXT_TAG
 static struct secpolicy *key_getspbytag __P((u_int16_t, int));
 #endif
-static u_int32_t key_newreqid __P((void));
+static u_int16_t key_newreqid __P((void));
 static struct mbuf *key_gather_mbuf __P((struct mbuf *,
 	const struct sadb_msghdr *, int, int, ...));
 static int key_spdadd __P((struct socket *, struct mbuf *,
@@ -365,7 +365,7 @@ static struct mbuf *key_setsadbaddr __P((u_int16_t,
 static struct mbuf *key_setsadbident __P((u_int16_t, u_int16_t, caddr_t,
 	int, u_int64_t));
 #endif
-static struct mbuf *key_setsadbxsa2 __P((u_int8_t, u_int32_t, u_int32_t));
+static struct mbuf *key_setsadbxsa2 __P((u_int8_t, u_int32_t, u_int16_t));
 #ifdef SADB_X_EXT_TAG
 static struct mbuf *key_setsadbxtag __P((u_int16_t));
 #endif
@@ -1273,7 +1273,7 @@ key_msg2sp(xpl0, len, error)
 
 				/* allocate new reqid id if reqid is zero. */
 				if (xisr->sadb_x_ipsecrequest_reqid == 0) {
-					u_int32_t reqid;
+					u_int16_t reqid;
 					if ((reqid = key_newreqid()) == 0) {
 						key_freesp(newsp);
 						*error = ENOBUFS;
@@ -1362,13 +1362,13 @@ key_msg2sp(xpl0, len, error)
 	return newsp;
 }
 
-static u_int32_t
+static u_int16_t
 key_newreqid()
 {
-	static u_int32_t auto_reqid = IPSEC_MANUAL_REQID_MAX + 1;
+	static u_int16_t auto_reqid = IPSEC_MANUAL_REQID_MAX + 1;
 
-	auto_reqid = (auto_reqid == ~0
-			? IPSEC_MANUAL_REQID_MAX + 1 : auto_reqid + 1);
+	auto_reqid = (auto_reqid == 0xffff
+	    ? IPSEC_MANUAL_REQID_MAX + 1 : auto_reqid + 1);
 
 	/* XXX should be unique check */
 
@@ -3751,7 +3751,8 @@ key_setsadbident(exttype, idtype, string, stringlen, id)
 static struct mbuf *
 key_setsadbxsa2(mode, seq, reqid)
 	u_int8_t mode;
-	u_int32_t seq, reqid;
+	u_int32_t seq;
+	u_int16_t reqid;
 {
 	struct mbuf *m;
 	struct sadb_x_sa2 *p;
@@ -4695,7 +4696,7 @@ key_getspi(so, m, mhp)
 	u_int8_t proto;
 	u_int32_t spi;
 	u_int8_t mode;
-	u_int32_t reqid;
+	u_int16_t reqid;
 	int error;
 
 	/* sanity check */
@@ -4970,7 +4971,7 @@ key_update(so, m, mhp)
 	struct secasvar *sav;
 	u_int16_t proto;
 	u_int8_t mode;
-	u_int32_t reqid;
+	u_int16_t reqid;
 	int error;
 
 	/* sanity check */
@@ -5158,7 +5159,7 @@ key_add(so, m, mhp)
 	struct secasvar *newsav;
 	u_int16_t proto;
 	u_int8_t mode;
-	u_int32_t reqid;
+	u_int16_t reqid;
 	int error;
 
 	/* sanity check */

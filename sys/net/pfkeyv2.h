@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.16 2004/04/25 22:25:03 jonathan Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.17 2004/12/06 08:05:26 itojun Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -214,7 +214,7 @@ struct sadb_x_sa2 {
   u_int8_t sadb_x_sa2_reserved1;
   u_int16_t sadb_x_sa2_reserved2;
   u_int32_t sadb_x_sa2_sequence;
-  u_int32_t sadb_x_sa2_reqid;
+  u_int32_t sadb_x_sa2_reqid;		/* topmost 16bits are always 0 */
 };
 
 /* XXX Policy Extension */
