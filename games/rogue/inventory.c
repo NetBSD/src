@@ -1,4 +1,4 @@
-/*	$NetBSD: inventory.c,v 1.3 1995/04/22 10:27:35 cgd Exp $	*/
+/*	$NetBSD: inventory.c,v 1.4 1997/05/17 19:26:24 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)inventory.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: inventory.c,v 1.3 1995/04/22 10:27:35 cgd Exp $";
+static char rcsid[] = "$NetBSD: inventory.c,v 1.4 1997/05/17 19:26:24 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -182,9 +182,9 @@ struct id_com_s com_id_tab[COMS] = {
 	'b',	"b       down & left",
 	'c',	"c       call object",
 	'n',	"n       down & right",
-	NULL,	"<SHIFT><dir>: run that way",
+	'\0',	"<SHIFT><dir>: run that way",
 	')',	")       print current weapon",
-	NULL,	"<CTRL><dir>: run till adjacent",
+	'\0',	"<CTRL><dir>: run till adjacent",
 	']',	"]       print current armor",
 	'f',	"f<dir>  fight till death or near death",
 	'=',	"=       print current rings",

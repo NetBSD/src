@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: io.c,v 1.5 1996/08/15 03:53:24 mrg Exp $";
+static char rcsid[] = "$NetBSD: io.c,v 1.6 1997/05/17 19:26:22 pk Exp $";
 #endif /* not lint */
 
 /* io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -416,11 +416,11 @@ char *lgetw()
 	register char *lgp,cc;
 	register int n=LINBUFSIZE,quote=0;
 	lgp = lgetwbuf;
-	do cc=lgetc();  while ((cc <= 32) && (cc > NULL));  /* eat whitespace */
+	do cc=lgetc();  while ((cc <= 32) && (cc > '\0'));  /* eat whitespace */
 	for ( ; ; --n,cc=lgetc())
 		{
-		if ((cc==NULL) && (lgp==lgetwbuf))  return(NULL);	/* EOF */
-		if ((n<=1) || ((cc<=32) && (quote==0))) { *lgp=NULL; return(lgetwbuf); }
+		if ((cc=='\0') && (lgp==lgetwbuf))  return(NULL);	/* EOF */
+		if ((n<=1) || ((cc<=32) && (quote==0))) { *lgp='\0'; return(lgetwbuf); }
 		if (cc != '"') *lgp++ = cc;   else quote ^= 1;
 		}
 	}
@@ -436,10 +436,10 @@ char *lgetl()
 	register char *str=lgetwbuf;
 	for ( ; ; --i)
 		{
-		if ((*str++ = ch = lgetc()) == NULL)
+		if ((*str++ = ch = lgetc()) == '\0')
 			{
 			if (str == lgetwbuf+1)  return(NULL); /* EOF */
-		ot:	*str = NULL;	return(lgetwbuf);	/* line ended by EOF */
+		ot:	*str = '\0';	return(lgetwbuf);	/* line ended by EOF */
 			}
 		if ((ch=='\n') || (i<=1))  goto ot; /* line ended by \n */
 		}
