@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.35 1995/01/25 20:55:19 cgd Exp $
+#	$NetBSD: files.i386.newconf,v 1.36 1995/01/25 23:41:04 cgd Exp $
 #
 # new style config file for i386 architecture
 #
@@ -27,7 +27,7 @@ file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
 file	dev/cons.c
-#major	{vnd = 14}
+major	{vnd = 14}
 
 #
 # Generic SCSI drivers
