@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.8 1998/07/27 01:07:01 mycroft Exp $	*/
+/*	$NetBSD: supextern.h,v 1.8.2.1 2000/10/19 17:03:14 he Exp $	*/
 
 struct stat;
 
@@ -32,9 +32,12 @@ int filecopy __P((int, int ));
 
 /* log.c */
 void logopen __P((char *));
-void logquit __P((int, char *, ...));
-void logerr __P((char *, ...));
-void loginfo __P((char *, ...));
+void logquit __P((int, char *, ...))
+	__attribute__((__format__(__printf__, 2, 3)));
+void logerr __P((char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
+void loginfo __P((char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 
 /* netcryptvoid.c */
 int netcrypt __P((char *));
@@ -84,7 +87,8 @@ char *remotehost __P((void));
 int thishost __P((char *));
 int samehost __P((void));
 int matchhost __P((char *));
-int scmerr __P((int, char *, ...));
+int scmerr __P((int, char *, ...))
+	__attribute__((__format__(__printf__, 2, 3)));
 int byteswap __P((int));
 
 /* scmio.c */
@@ -137,8 +141,10 @@ int recvsym __P((TREE *, int, struct stat *));
 int recvreg __P((TREE *, int, struct stat *));
 int copyfile __P((char *, char *));
 void finishup __P((int));
-void done __P((int, char *, ...));
-void goaway __P((char *, ...));
+void done __P((int, char *, ...))
+	__attribute__((__format__(__printf__, 2, 3)));
+void goaway __P((char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 
 /* supcmisc.c */
 void prtime __P((void));
@@ -146,7 +152,8 @@ int establishdir __P((char *));
 int makedir __P((char *, int, struct stat *));
 int estabd __P((char *, char *));
 void ugconvert __P((char *, char *, int *, int *, int *));
-void notify __P((char *, ...));
+void notify __P((char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 void lockout __P((int));
 char *fmttime __P((time_t));
 
