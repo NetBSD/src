@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.21 1996/09/16 06:14:24 leo Exp $
+#	$NetBSD: files.atari,v 1.22 1996/09/25 15:15:29 leo Exp $
 #
 
 maxpartitions 16
@@ -58,7 +58,7 @@ define	grfb {}
 
 device	grfbus: grfb
 attach	grfbus at mainbus
-file	arch/atari/dev/grf.c
+file	arch/atari/dev/grf.c		grfcc | grfet
 
 device	grfcc {}
 attach	grfcc at grfb
@@ -66,6 +66,10 @@ file	arch/atari/dev/ite_cc.c		grfcc needs-count
 file	arch/atari/dev/grfabs.c		grfcc
 file	arch/atari/dev/grfabs_tt.c	grfcc
 file	arch/atari/dev/grfabs_fal.c	grfcc
+
+device	grfet {}
+attach	grfet at grfb
+file	arch/atari/dev/ite_et.c		grfet needs-count
 
 device	ite
 attach	ite at grfcc
