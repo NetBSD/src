@@ -59,6 +59,7 @@ extern initialize_file_ftype _initialize_elfread;
 extern initialize_file_ftype _initialize_mipsread;
 extern initialize_file_ftype _initialize_stabsread;
 extern initialize_file_ftype _initialize_core;
+extern initialize_file_ftype _initialize_kcore_nbsd;
 extern initialize_file_ftype _initialize_c_language;
 extern initialize_file_ftype _initialize_f_language;
 extern initialize_file_ftype _initialize_ui_out;
@@ -146,6 +147,7 @@ initialize_all_files (void)
   _initialize_mipsread ();
   _initialize_stabsread ();
   _initialize_core ();
+  _initialize_kcore_nbsd ();
   _initialize_c_language ();
   _initialize_f_language ();
   _initialize_ui_out ();
