@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59 2000/01/26 18:48:00 drochner Exp $	*/
+/*	$NetBSD: cpu.h,v 1.60 2000/03/28 19:16:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -124,6 +124,8 @@ struct cpu_cpuid_nameclass {
 extern int cpu;
 extern int cpu_class;
 extern int cpu_feature;
+extern int cpu_id;
+extern char cpu_vendor[];
 extern int cpuid_level;
 extern struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
 extern struct cpu_cpuid_nameclass i386_cpuid_cpus[];
