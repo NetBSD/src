@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.127 2002/07/24 02:55:22 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.128 2002/08/04 03:27:04 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.127 2002/07/24 02:55:22 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.128 2002/08/04 03:27:04 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -145,15 +145,12 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.127 2002/07/24 02:55:22 oster E
 #include "rf_dagflags.h"
 #include "rf_desc.h"
 #include "rf_diskqueue.h"
-#include "rf_acctrace.h"
 #include "rf_etimer.h"
 #include "rf_general.h"
-#include "rf_debugMem.h"
 #include "rf_kintf.h"
 #include "rf_options.h"
 #include "rf_driver.h"
 #include "rf_parityscan.h"
-#include "rf_debugprint.h"
 #include "rf_threadstuff.h"
 
 int     rf_kdebug_level = 0;
