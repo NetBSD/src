@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.8 1995/07/24 21:19:50 cgd Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.9 1996/02/04 02:18:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,8 +42,10 @@
 #include <sys/mount.h>
 #include <sys/trace.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
 #include <sys/resourcevar.h>
-#include <lib/libkern/libkern.h>
+
+#include <kern/kern_extern.h>
 
 #ifdef DEBUG
 #include <vm/vm.h>
@@ -108,6 +110,7 @@ int	doclusterraz = 0;
  *	rbp is the read-ahead block.
  *	If either is NULL, then you don't have to do the I/O.
  */
+int
 cluster_read(vp, filesize, lblkno, size, cred, bpp)
 	struct vnode *vp;
 	u_quad_t filesize;
@@ -683,7 +686,7 @@ redo:
 		 * case we don't want to write it twice).
 		 */
 		if (!incore(vp, start_lbn) ||
-		    last_bp == NULL && start_lbn == lbn)
+		    (last_bp == NULL && start_lbn == lbn))
 			break;
 
 		/*

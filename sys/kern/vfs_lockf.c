@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.6 1995/03/19 23:45:03 mycroft Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -179,7 +179,7 @@ lf_setlock(lock)
 	/*
 	 * Scan lock list for this file looking for locks that would block us.
 	 */
-	while (block = lf_getblock(lock)) {
+	while ((block = lf_getblock(lock)) != NULL) {
 		/*
 		 * Free the structure and return if nonblocking.
 		 */
@@ -243,7 +243,8 @@ lf_setlock(lock)
 			lf_printlist("lf_setlock", block);
 		}
 #endif /* LOCKF_DEBUG */
-		if (error = tsleep((caddr_t)lock, priority, lockstr, 0)) {
+		error = tsleep((caddr_t)lock, priority, lockstr, 0);
+		if (error) {
 			/*
 			 * Delete ourselves from the waiting to lock list.
 			 */
@@ -278,7 +279,8 @@ lf_setlock(lock)
 	block = *head;
 	needtolink = 1;
 	for (;;) {
-		if (ovcase = lf_findoverlap(block, lock, SELF, &prev, &overlap))
+		ovcase = lf_findoverlap(block, lock, SELF, &prev, &overlap);
+		if (ovcase)
 			block = overlap->lf_next;
 		/*
 		 * Six cases:
@@ -413,7 +415,8 @@ lf_clearlock(unlock)
 		lf_print("lf_clearlock", unlock);
 #endif /* LOCKF_DEBUG */
 	prev = head;
-	while (ovcase = lf_findoverlap(lf, unlock, SELF, &prev, &overlap)) {
+	while ((ovcase = lf_findoverlap(lf, unlock, SELF,
+					&prev, &overlap)) != 0) {
 		/*
 		 * Wakeup the list of locks to be retried.
 		 */
@@ -476,7 +479,7 @@ lf_getlock(lock, fl)
 		lf_print("lf_getlock", lock);
 #endif /* LOCKF_DEBUG */
 
-	if (block = lf_getblock(lock)) {
+	if ((block = lf_getblock(lock)) != NULL) {
 		fl->l_type = block->lf_type;
 		fl->l_whence = SEEK_SET;
 		fl->l_start = block->lf_start;
@@ -506,7 +509,8 @@ lf_getblock(lock)
 	int ovcase;
 
 	prev = lock->lf_head;
-	while (ovcase = lf_findoverlap(lf, lock, OTHERS, &prev, &overlap)) {
+	while ((ovcase = lf_findoverlap(lf, lock, OTHERS,
+					&prev, &overlap)) != 0) {
 		/*
 		 * We've found an overlap, see if it blocks us
 		 */
