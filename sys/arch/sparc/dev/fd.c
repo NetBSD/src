@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.109 2003/06/29 22:28:55 fvdl Exp $	*/
+/*	$NetBSD: fd.c,v 1.110 2003/07/11 12:09:12 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -139,6 +139,9 @@ enum fdc_state {
 	RECALWAIT,	/* 15 */
 	RECALTIMEDOUT,	/* 16 */
 	RECALCOMPLETE,	/* 17 */
+	DODSKCHG,	/* 18 */
+	DSKCHGWAIT,	/* 19 */
+	DSKCHGTIMEDOUT,	/* 20 */
 };
 
 /* software state, per controller */
@@ -165,6 +168,7 @@ struct fdc_softc {
 #define sc_reg_msr	sc_io.fdcio_reg_msr
 #define sc_reg_fifo	sc_io.fdcio_reg_fifo
 #define sc_reg_dor	sc_io.fdcio_reg_dor
+#define sc_reg_dir	sc_io.fdcio_reg_dir
 #define sc_reg_drs	sc_io.fdcio_reg_msr
 #define sc_itask	sc_io.fdcio_itask
 #define sc_istatus	sc_io.fdcio_istatus
@@ -299,6 +303,7 @@ int	fdc_wrfifo __P((struct fdc_softc *fdc, u_char x));
 void	fdcstart __P((struct fdc_softc *fdc));
 void	fdcstatus __P((struct fdc_softc *fdc, char *s));
 void	fdc_reset __P((struct fdc_softc *fdc));
+int	fdc_diskchange __P((struct fdc_softc *fdc));
 void	fdctimeout __P((void *arg));
 void	fdcpseudointr __P((void *arg));
 int	fdc_c_hwintr __P((void *));
@@ -599,6 +604,7 @@ fdcattach(fdc, pri)
 		fdc->sc_reg_msr = FDREG77_MSR;
 		fdc->sc_reg_fifo = FDREG77_FIFO;
 		fdc->sc_reg_dor = FDREG77_DOR;
+		fdc->sc_reg_dir = FDREG77_DIR;
 		code = '7';
 		fdc->sc_flags |= FDC_NEEDMOTORWAIT;
 	} else {
@@ -1063,6 +1069,21 @@ fdc_wrfifo(fdc, x)
 }
 
 int
+fdc_diskchange(fdc)
+	struct fdc_softc *fdc;
+{
+	if (CPU_ISSUN4M && (fdc->sc_flags & FDC_82077) != 0) {
+		bus_space_tag_t t = fdc->sc_bustag;
+		bus_space_handle_t h = fdc->sc_handle;
+		u_int8_t v = bus_space_read_1(t, h, fdc->sc_reg_dir);
+		return ((v & FDI_DCHG) != 0);
+	} else if (CPU_ISSUN4C) {
+		return ((*AUXIO4C_REG & AUXIO4C_FDC) != 0);
+	}
+	return (0);
+}
+
+int
 fdopen(dev, flags, fmt, p)
 	dev_t dev;
 	int flags, fmt;
@@ -1466,6 +1487,9 @@ loop:
 		/* Make sure the right drive is selected. */
 		fd_set_motor(fdc);
 
+		if (fdc_diskchange(fdc))
+			goto dodskchg;
+
 		/*FALLTHROUGH*/
 	case DOSEEK:
 	doseek:
@@ -1500,6 +1524,42 @@ loop:
 		FDC_WRFIFO(fdc, fd->sc_drive); /* drive number */
 		FDC_WRFIFO(fdc, bp->b_cylinder * fd->sc_type->step);
 		return (1);
+
+	case DODSKCHG:
+	dodskchg:
+		/*
+		 * Disk change: force a seek operation by going to cyl 1
+		 * followed by a recalibrate.
+		 */
+		disk_busy(&fd->sc_dk);
+		callout_reset(&fdc->sc_timo_ch, 4 * hz, fdctimeout, fdc);
+		fd->sc_cylin = -1;
+		fdc->sc_nstat = 0;
+		fdc->sc_state = DSKCHGWAIT;
+
+		fdc->sc_itask = FDC_ITASK_SENSEI;
+		/* seek function */
+		FDC_WRFIFO(fdc, NE7CMD_SEEK);
+		FDC_WRFIFO(fdc, fd->sc_drive); /* drive number */
+		FDC_WRFIFO(fdc, 1 * fd->sc_type->step);
+		return (1);
+
+	case DSKCHGWAIT:
+		callout_stop(&fdc->sc_timo_ch);
+		disk_unbusy(&fd->sc_dk, 0, 0);
+		if (fdc->sc_nstat != 2 || (st0 & 0xf8) != 0x20 ||
+		    cyl != 1 * fd->sc_type->step) {
+			fdcstatus(fdc, "dskchg seek failed");
+			fdc->sc_state = DORESET;
+		} else
+			fdc->sc_state = DORECAL;
+
+		if (fdc_diskchange(fdc)) {
+			printf("%s: cannot clear disk change status\n",
+				fdc->sc_dev.dv_xname);
+			fdc->sc_state = DORESET;
+		}
+		goto loop;
 
 	case DOIO:
 	doio:
@@ -1620,6 +1680,7 @@ loop:
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
+	case DSKCHGTIMEDOUT:
 		fdcstatus(fdc, "timeout");
 
 		/* All other timeouts always roll through to a chip reset */
