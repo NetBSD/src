@@ -33,12 +33,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strtol.c	5.4 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: strtol.c,v 1.4 1993/08/26 00:48:14 jtc Exp $";
+static char *rcsid = "$Id: strtol.c,v 1.5 1995/12/20 23:14:48 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <limits.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 
@@ -54,25 +54,29 @@ strtol(nptr, endptr, base)
 	char **endptr;
 	register int base;
 {
-	register const char *s = nptr;
+	register const char *s;
 	register unsigned long acc;
 	register int c;
 	register unsigned long cutoff;
-	register int neg = 0, any, cutlim;
+	register int neg, any, cutlim;
 
 	/*
 	 * Skip white space and pick up leading +/- sign if any.
 	 * If base is 0, allow 0x for hex and 0 for octal, else
 	 * assume decimal; if base is already 16, allow 0x.
 	 */
+	s = nptr;
 	do {
 		c = *s++;
 	} while (isspace(c));
 	if (c == '-') {
 		neg = 1;
 		c = *s++;
-	} else if (c == '+')
-		c = *s++;
+	} else {
+		neg = 0;
+		if (c == '+')
+			c = *s++;
+	}
 	if ((base == 0 || base == 16) &&
 	    c == '0' && (*s == 'x' || *s == 'X')) {
 		c = s[1];
@@ -115,7 +119,7 @@ strtol(nptr, endptr, base)
 			any = -1;
 		else {
 			any = 1;
-			acc *= base;
+			acc *= (unsigned long)base;
 			acc += c;
 		}
 	}
