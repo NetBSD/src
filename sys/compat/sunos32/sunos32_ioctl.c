@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.4 2001/05/30 11:37:31 mrg Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.5 2001/06/04 20:56:52 mrg Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -1082,8 +1082,6 @@ sunos32_sys_fcntl(p, v, retval)
 	case SUN_F_CNVT:
 	case SUN_F_RSETLKW:
 		return (EOPNOTSUPP);
-
-	default:
 	}
 
 	ret = netbsd32_fcntl(p, uap, retval);
@@ -1098,7 +1096,6 @@ sunos32_sys_fcntl(p, v, retval)
 			}
 		}
 		break;
-	default:
 	}
 
 	return (ret);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.21 2001/05/18 22:01:57 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.22 2001/06/04 20:56:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -354,7 +354,7 @@ ebus_find_ino(sc, ea)
 				}
 			}
 		}
-next_intr:
+next_intr:;
 	}
 }
 
