@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.22 2003/10/11 07:54:26 jdolecek Exp $
+#	$NetBSD: majors.i386,v 1.23 2003/12/10 02:04:01 jmc Exp $
 #
 # Device majors for i386
 #
@@ -110,4 +110,4 @@ device-major	mt		char 107 block 24	mt
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
-# sys/dev/majors.
+# sys/conf/majors.

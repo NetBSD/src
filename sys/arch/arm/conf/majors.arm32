@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.14 2003/10/24 08:18:36 jdolecek Exp $
+#	$NetBSD: majors.arm32,v 1.15 2003/12/10 02:04:00 jmc Exp $
 #
 # Device majors for arm32
 #
@@ -104,4 +104,4 @@ device-major	isdnbchan	char 106		isdnbchan
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
-# sys/dev/majors.
+# sys/conf/majors.

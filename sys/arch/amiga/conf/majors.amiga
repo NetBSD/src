@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amiga,v 1.12 2003/10/24 08:18:36 jdolecek Exp $
+#	$NetBSD: majors.amiga,v 1.13 2003/12/10 02:04:00 jmc Exp $
 #
 # Device majors for amiga
 #
@@ -63,4 +63,4 @@ device-major	wsmux		char 63			wsmux
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
-# sys/dev/majors.
+# sys/conf/majors.

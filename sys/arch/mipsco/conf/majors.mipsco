@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mipsco,v 1.10 2003/10/25 17:50:30 jdolecek Exp $
+#	$NetBSD: majors.mipsco,v 1.11 2003/12/10 02:04:01 jmc Exp $
 #
 # Device majors for mipsco
 #
@@ -45,4 +45,4 @@ device-major	ksyms		char 77			ksyms
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
-# sys/dev/majors.
+# sys/conf/majors.

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.next68k,v 1.12 2003/10/24 08:09:54 jdolecek Exp $
+#	$NetBSD: majors.next68k,v 1.13 2003/12/10 02:04:01 jmc Exp $
 #
 # Device majors for next68k
 #
@@ -48,4 +48,4 @@ device-major	wsfont		char 50			wsfont
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
-# sys/dev/majors.
+# sys/conf/majors.

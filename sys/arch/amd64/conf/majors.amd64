@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.10 2003/10/22 17:12:54 jdolecek Exp $
+#	$NetBSD: majors.amd64,v 1.11 2003/12/10 02:04:00 jmc Exp $
 #
 # Device majors for amd64
 #
@@ -94,4 +94,4 @@ device-major	nsmb		char 98			nsmb
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
-# sys/dev/majors.
+# sys/conf/majors.

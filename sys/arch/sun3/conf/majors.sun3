@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sun3,v 1.10 2003/10/10 22:42:40 jdolecek Exp $
+#	$NetBSD: majors.sun3,v 1.11 2003/12/10 02:04:02 jmc Exp $
 #
 # Device majors for sun3/sun3x
 #
@@ -65,4 +65,4 @@ device-major	ksyms		char 87			ksyms
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
-# sys/dev/majors.
+# sys/conf/majors.

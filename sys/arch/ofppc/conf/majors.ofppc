@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ofppc,v 1.13 2003/10/24 08:18:37 jdolecek Exp $
+#	$NetBSD: majors.ofppc,v 1.14 2003/12/10 02:04:01 jmc Exp $
 #
 # Device majors for ofppc
 #
@@ -40,4 +40,4 @@ device-major	ses		char 33			ses
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
-# sys/dev/majors.
+# sys/conf/majors.
