@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.28 2003/10/24 16:11:21 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.29 2003/10/25 12:08:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.28 2003/10/24 16:11:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.29 2003/10/25 12:08:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,9 +228,18 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 	 * XXX assumes initial load includes all stacks ever used
 	 */
 	if (sa->sa_vp_stacks_low == 0) {
-		sa->sa_vp_stacks_low = (uintptr_t)sa->sa_stacks[0].ss_sp;
-		sa->sa_vp_stacks_high = (uintptr_t)sa->sa_stacks[count - 1].ss_sp +
-			sa->sa_stacks[count - 1].ss_size;
+		vaddr_t low = VM_MAXUSER_ADDRESS;
+		vaddr_t high = 0;
+
+		for (i = 0; i < count; i++) {
+			stack_t *stackp = &sa->sa_stacks[sa->sa_nstacks + i];
+
+			low = min(low, (vaddr_t)stackp->ss_sp);
+			high = max(high,
+			    (vaddr_t)stackp->ss_sp + stackp->ss_size);
+		}
+		sa->sa_vp_stacks_low = low;
+		sa->sa_vp_stacks_high = high;
 		DPRINTFN(11,("sys_sa_stacks(%d.%d): low 0x%llx high 0x%llx\n",
 			     l->l_proc->p_pid, l->l_lid,
 			     (unsigned long long)sa->sa_vp_stacks_low,
