@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.1.2.1 2001/11/15 23:12:57 thorpej Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.1.2.2 2001/11/18 02:51:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,12 +39,12 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-        RCSID("$NetBSD: swapcontext.S,v 1.1.2.1 2001/11/15 23:12:57 thorpej Exp $")
+        RCSID("$NetBSD: swapcontext.S,v 1.1.2.2 2001/11/18 02:51:00 thorpej Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
 	stmfd	sp!, {r0-r1, lr}	/* Must save oucp, ucp, lr. */
-	bl	_C_LABEL(_getcontext)	/* getcontext(oucp) */
+	bl	PIC_SYM(_C_LABEL(_getcontext), PLT)  /* getcontext(oucp) */
 	cmp	r0, #0
 	ldmfd	sp!, {r0-r1, lr}
 #ifdef __APCS_26__
@@ -57,7 +57,7 @@ ENTRY(swapcontext)
 	/* Ahem. */
 #endif
 	mov	r0, r1
-	bl	_C_LABEL(_setcontext)
+	bl	PIC_SYM(_C_LABEL(setcontext), PLT)
 #ifdef __APCS_26__
 	movs	pc, lr
 #else
