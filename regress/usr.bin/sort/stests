@@ -1,6 +1,6 @@
 #! /bin/sh
 #	@(#)stests	8.1 (Berkeley) 6/6/93
-#	$NetBSD: stests,v 1.7 2001/01/12 22:35:07 jdolecek Exp $
+#	$NetBSD: stests,v 1.8 2001/01/14 14:47:56 simonb Exp $
 
 # This code is derived from software contributed to Berkeley by
 # Peter McIlroy.
@@ -24,6 +24,7 @@
 
 # Other tests should be made for files too big to fit in memory.
 
+dict=/usr/share/dict/words
 
 # Initialize switches for nonstandard features.
 # Use parenthesized settings for supported features.
@@ -935,3 +936,6 @@ $s awk '
 				 count = 0 }
 			{ count++; last1 = $1; last2 = $2 }
 	' out
+#---------------------------------------------------------------
+TEST=39; echo $TEST	# sort already sorted dictionary
+$s sort -f $dict | $s cmp - $dict >/dev/null || echo $TEST failed - sort -f $dict
