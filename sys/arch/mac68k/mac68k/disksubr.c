@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.2 1993/11/29 00:40:45 briggs Exp $
+ *	$Id: disksubr.c,v 1.3 1993/12/15 03:27:53 briggs Exp $
  */
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -139,6 +139,9 @@ netbsd puts the whole disk in d, go figure
 		/* lp->d_partitions[0].p_size = 0x1fffffff; */
 	/* lp->d_partitions[0].p_offset = 0; */
 	/* get buffer */
+	if (lp->d_secpercyl == 0) {
+		return msg = "Zero secpercyl";
+	}
 	bp = geteblk((int)lp->d_secsize * MAXPARTITIONS);
 
 	bp->b_dev = dev;

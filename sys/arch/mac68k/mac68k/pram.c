@@ -34,7 +34,7 @@
 
 
 /* #include "stand.h"  */
-#include "../dev/via.h"
+#include "via.h"
 
 #define PRAM_SIZE	256 
 #define PRAM_GET	256 
