@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.33 1999/08/28 10:04:01 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.34 1999/09/05 19:32:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1001,7 +1001,7 @@ usbd_device_set_desc(device_t device, char *devinfo)
 }
 
 char *
-usbd_devname(bdevice *bdev)
+usbd_devname(device_t bdev)
 {
 	static char buf[20];
 	/* 
@@ -1009,7 +1009,7 @@ usbd_devname(bdevice *bdev)
 	 * but it's not fatal.
 	 */
 
-	sprintf(buf, "%s%d", device_get_name(*bdev), device_get_unit(*bdev));
+	sprintf(buf, "%s%d", device_get_name(bdev), device_get_unit(bdev));
 	return (buf);
 }
 

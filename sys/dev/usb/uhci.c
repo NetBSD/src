@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.45 1999/09/04 22:26:12 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.46 1999/09/05 19:32:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -778,12 +778,12 @@ uhci_intr(arg)
 		ack |= UHCI_STS_USBEI;
 	if (status & UHCI_STS_RD) {
 		ack |= UHCI_STS_RD;
-		printf("%s: resume detect\n",
-			USBDEVNAME(sc->sc_bus.bdev));
+		printf("%s: resume detect\n", USBDEVNAME(sc->sc_bus.bdev));
 	}
 	if (status & UHCI_STS_HSE) {
 		ack |= UHCI_STS_HSE;
-		printf("%s: host controller process error\n", USBDEVNAME(sc->sc_bus.bdev));
+		printf("%s: host controller process error\n", 
+		       USBDEVNAME(sc->sc_bus.bdev));
 	}
 	if (status & UHCI_STS_HCPE) {
 		ack |= UHCI_STS_HCPE;
@@ -791,7 +791,8 @@ uhci_intr(arg)
 	}
 	if (status & UHCI_STS_HCH) {
 		/* no acknowledge needed */
-		printf("%s: host controller halted\n", USBDEVNAME(sc->sc_bus.bdev));
+		printf("%s: host controller halted\n", 
+		       USBDEVNAME(sc->sc_bus.bdev));
 	}
 
 	if (ack)	/* acknowledge the ints */
