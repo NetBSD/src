@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.99 2001/06/21 01:17:18 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.100 2001/07/03 07:34:27 chs Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -2507,9 +2507,6 @@ pmap_protect(pm, sva, eva, prot)
 /*
  * Extract the physical page address associated
  * with the given map/virtual_address pair.
- * GRR, the vm code knows; we should not have to do this!
- *
- * XXX XXX XXX Need to deal with the case that the address is NOT MAPPED!
  */
 boolean_t
 pmap_extract(pm, va, pap)
@@ -2562,6 +2559,8 @@ pmap_extract(pm, va, pap)
 		simple_unlock(&pm->pm_lock);
 		splx(s);
 	}
+	if (pa == 0)
+		return (FALSE);
 	if (pap != NULL)
 		*pap = pa;
 	return (TRUE);
@@ -2792,17 +2791,6 @@ pmap_clear_modify(pg)
 		printf("pmap_clear_modify(%llx)\n", (unsigned long long)pa);
 #endif
 
-	if (!IS_VM_PHYSADDR(pa)) {
-		pv_check();
-#ifdef DEBUG
-		printf("pmap_clear_modify(%llx): page not managed\n",
-			(unsigned long long)pa);
-		Debugger();
-#endif
-		/* We always return 0 for I/O mappings */
-		return (changed);
-	}
-
 #if defined(DEBUG)
 	modified = pmap_is_modified(pg);
 #endif
@@ -2891,17 +2879,6 @@ pmap_clear_reference(pg)
 #ifdef DEBUG
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF))
 		printf("pmap_clear_reference(%llx)\n", (unsigned long long)pa);
-#endif
-	if (!IS_VM_PHYSADDR(pa)) {
-		pv_check();
-#ifdef DEBUG
-		printf("pmap_clear_reference(%llx): page not managed\n",
-			(unsigned long long)pa);
-		Debugger();
-#endif
-		return (changed);
-	}
-#if defined(DEBUG)
 	referenced = pmap_is_referenced(pg);
 #endif
 	/* Clear all references */
@@ -2993,15 +2970,6 @@ pmap_is_modified(pg)
 	int i=0, s;
 	register pv_entry_t pv, npv;
 
-	if (!IS_VM_PHYSADDR(pa)) {
-		pv_check();
-#ifdef DEBUG
-		printf("pmap_is_modified(%llx): page not managed\n",
-			(unsigned long long)pa);
-		Debugger();
-#endif
-		return 0;
-	}
 	/* Check if any mapping has been modified */
 	s = splvm();
 	pv = pa_to_pvh(pa);
@@ -3048,15 +3016,6 @@ pmap_is_referenced(pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int i=0, s;
 	register pv_entry_t pv, npv;
-
-	if (!IS_VM_PHYSADDR(pa)) {
-#ifdef DEBUG
-		printf("pmap_is_referenced(%llx): page not managed\n",
-			(unsigned long long)pa);
-		Debugger();
-#endif
-		return 0;
-	}
 
 	/* Check if any mapping has been referenced */
 	s = splvm();
@@ -3168,15 +3127,6 @@ pmap_page_protect(pg, prot)
 			(unsigned long long)pa, prot);
 #endif
 
-	if (!IS_VM_PHYSADDR(pa)) {
-#ifdef DEBUG
-		printf("pmap_page_protect(%llx): page unmanaged\n",
-			(unsigned long long)pa);
-		Debugger();
-#endif
-		pv_check();
-		return;
-	}
 	if (prot & VM_PROT_WRITE) {
 		pv_check();
 		return;
@@ -3627,12 +3577,6 @@ pmap_remove_pv(pmap, va, pa)
 	 * Remove page from the PV table (raise IPL since we
 	 * may be called at interrupt time).
 	 */
-	if (!IS_VM_PHYSADDR(pa)) {
-		printf("pmap_remove_pv(): %llx not managed\n",
-		    (unsigned long long)pa);
-		pv_check();
-		return;
-	}
 	pv_check();
 	opv = pv = pa_to_pvh(pa);
 	s = splvm();
