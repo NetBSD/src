@@ -3,7 +3,7 @@
    Handling for client classes. */
 
 /*
- * Copyright (c) 1998-2000 Internet Software Consortium.
+ * Copyright (c) 1998-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: class.c,v 1.2 2002/06/11 14:00:04 drochner Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: class.c,v 1.3 2003/02/18 17:08:44 drochner Exp $ Copyright (c) 1998-2002 The Internet Software Consortium.  All rights reserved.\n";
 
 #endif /* not lint */
 

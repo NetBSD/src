@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2001 by Internet Software Consortium, Inc.
+ * Copyright (c) 1999-2003 by Internet Software Consortium, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: ns_sign.c,v 1.2 2001/08/03 13:07:05 drochner Exp $";
+static const char rcsid[] = "$Id: ns_sign.c,v 1.3 2003/02/18 17:08:43 drochner Exp $";
 #endif
 
 #if defined (TRACING)
