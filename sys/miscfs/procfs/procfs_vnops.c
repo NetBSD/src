@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.45 1996/10/25 21:58:03 cgd Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.46 1997/04/28 03:49:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -256,16 +256,8 @@ procfs_close(v)
 		if ((ap->a_fflag & FWRITE) && (pfs->pfs_flags & O_EXCL))
 			pfs->pfs_flags &= ~(FWRITE|O_EXCL);
 		break;
-	case Pctl:
-	case Pstatus:
-	case Pnotepg:
-	case Pnote:
-	case Proot:
-	case Pcurproc:
-	case Pproc:
-	case Pfile:
-	case Pregs:
-	case Pfpregs:
+
+	default:
 		break;
 	}
 
@@ -474,6 +466,7 @@ procfs_getattr(v)
 		procp = PFIND(pfs->pfs_pid);
 		if (procp == 0)
 			return (ENOENT);
+		break;
 	}
 
 	error = 0;
@@ -487,7 +480,6 @@ procfs_getattr(v)
 	vap->va_fileid = pfs->pfs_fileno;
 	vap->va_flags = 0;
 	vap->va_blocksize = PAGE_SIZE;
-	vap->va_bytes = vap->va_size = 0;
 
 	/*
 	 * Make all times be current TOD.
@@ -514,6 +506,7 @@ procfs_getattr(v)
 			vap->va_mode &= ~((VREAD|VWRITE)|
 					  ((VREAD|VWRITE)>>3)|
 					  ((VREAD|VWRITE)>>6));
+		/* FALLTHROUGH */
 	case Pctl:
 	case Pstatus:
 	case Pnote:
@@ -522,10 +515,8 @@ procfs_getattr(v)
 		vap->va_uid = procp->p_ucred->cr_uid;
 		vap->va_gid = procp->p_ucred->cr_gid;
 		break;
-	case Pproc:
-	case Pfile:
-	case Proot:
-	case Pcurproc:
+
+	default:
 		break;
 	}
 
@@ -547,7 +538,7 @@ procfs_getattr(v)
 		vap->va_nlink = 1;
 		vap->va_uid = 0;
 		vap->va_gid = 0;
-		vap->va_size = vap->va_bytes = DEV_BSIZE;
+		vap->va_bytes = vap->va_size = DEV_BSIZE;
 		break;
 
 	case Pcurproc: {
@@ -555,7 +546,7 @@ procfs_getattr(v)
 		vap->va_nlink = 1;
 		vap->va_uid = 0;
 		vap->va_gid = 0;
-		vap->va_size = vap->va_bytes =
+		vap->va_bytes = vap->va_size =
 		    sprintf(buf, "%ld", (long)curproc->p_pid);
 		break;
 	}
@@ -564,7 +555,7 @@ procfs_getattr(v)
 		vap->va_nlink = 2;
 		vap->va_uid = procp->p_ucred->cr_uid;
 		vap->va_gid = procp->p_ucred->cr_gid;
-		vap->va_size = vap->va_bytes = DEV_BSIZE;
+		vap->va_bytes = vap->va_size = DEV_BSIZE;
 		break;
 
 	case Pfile:
@@ -594,6 +585,7 @@ procfs_getattr(v)
 	case Pstatus:
 	case Pnote:
 	case Pnotepg:
+		vap->va_bytes = vap->va_size = 0;
 		break;
 
 	default:
