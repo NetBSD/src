@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.46 2004/08/09 18:30:51 mycroft Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.47 2004/08/09 20:30:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.46 2004/08/09 18:30:51 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.47 2004/08/09 20:30:19 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,19 +333,14 @@ ep_pcmcia_attach(parent, self, aux)
 	sc->enable = ep_pcmcia_enable;
 	sc->disable = ep_pcmcia_disable;
 
-	if (epconfig(sc, epp->epp_chipset, enaddr)) {
+	if (epconfig(sc, epp->epp_chipset, enaddr))
 		aprint_error("%s: couldn't configure controller\n",
 		    self->dv_xname);
-		goto config_failed;
-	}
 
 	sc->enabled = 0;
 	ep_pcmcia_disable(sc);
 	return;
 
-config_failed:
-	sc->enabled = 0;
-	ep_pcmcia_disable(sc);
 enable_failed:
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 iomap_failed:
