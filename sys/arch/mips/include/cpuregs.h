@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.51 2002/06/01 12:27:03 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.52 2002/06/05 05:56:48 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,8 +125,8 @@
  * The bits in the status register.  All bits are active when set to 1.
  *
  *	R3000 status register fields:
- *	MIPS_SR_CO_USABILITY	Control the usability of the four coprocessors.
- *	MIPS_SR_TLB_SHUTDOWN	TLB disabled.
+ *	MIPS_SR_COP_USABILITY	Control the usability of the four coprocessors.
+ *	MIPS_SR_TS		TLB shutdown.
  *
  *	MIPS_SR_INT_IE		Master (current) interrupt enable bit.
  *
@@ -142,8 +142,10 @@
 
 	/* r4k and r3k differences, see below */
 
+#define	MIPS_SR_MX		0x01000000	/* MIPS64 */
+#define	MIPS_SR_PX		0x00800000	/* MIPS64 */
 #define	MIPS_SR_BEV		0x00400000	/* Use boot exception vector */
-#define	MIPS_SR_TLB_SHUTDOWN	0x00200000
+#define	MIPS_SR_TS		0x00200000
 
 	/* r4k and r3k differences, see below */
 
@@ -205,8 +207,9 @@
 
 #define	MIPS3_SR_DIAG_DL	0x01000000		/* QED 52xx */
 #define	MIPS3_SR_DIAG_IL	0x00800000		/* QED 52xx */
-#define	MIPS3_SR_SOFT_RESET	0x00100000
+#define	MIPS3_SR_SR		0x00100000
 #define	MIPS3_SR_EIE		0x00100000		/* TX79/R5900 */
+#define	MIPS3_SR_NMI		0x00080000		/* MIPS32/64 */
 #define	MIPS3_SR_DIAG_CH	0x00040000
 #define	MIPS3_SR_DIAG_CE	0x00020000
 #define	MIPS3_SR_DIAG_PE	0x00010000
