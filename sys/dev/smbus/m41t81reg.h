@@ -1,4 +1,4 @@
-/* $NetBSD: m41t81reg.h,v 1.1 2002/11/12 01:01:37 simonb Exp $ */
+/* $NetBSD: m41t81reg.h,v 1.2 2003/07/10 05:34:30 simonb Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -56,8 +56,8 @@
 #define	M41T81_CTL		0x08	/* Control */
 #define	 M41T81_CTL_CAL		  0x1f	  /* Calibration mask */
 #define	 M41T81_CTL_S		  0x20	  /* Sign Bit */
-#define	 M41T81_CTL_FT		  0x20	  /* Frequency Test Bit */
-#define	 M41T81_CTL_OUT		  0x20	  /* Output Level */
+#define	 M41T81_CTL_FT		  0x40	  /* Frequency Test Bit */
+#define	 M41T81_CTL_OUT		  0x80	  /* Output Level */
 #define	M41T81_WDOG		0x09	/* Watchdog */
 #define	 M41T81_WDOG_RB		  0x03	  /* Watchdog Resolution */
 #define	 M41T81_WDOG_RB_1_16	  0x00	  /* 1/16th second */
@@ -69,7 +69,7 @@
 #define	M41T81_ALM_MON		0x0a	/* Alarm Month - BCD */
 #define	 M41T81_ALM_MON_ABE	  0x20	  /* Alarm in Battery Back-up Mode Enable Bit */
 #define	 M41T81_ALM_MON_SQWE	  0x40	  /* Square Wave Enable */
-#define	 M41T81_ALM_MON_AFE	  0x40	  /* Alarm Flag Enable Flag */
+#define	 M41T81_ALM_MON_AFE	  0x80	  /* Alarm Flag Enable Flag */
 #define	M41T81_ALM_DATE		0x0b	/* Alarm Date - BCD */
 #define	 M41T81_ALM_DATE_RPT5	  0x40	  /* Alarm Repeat Mode Bit 5 */
 #define	 M41T81_ALM_DATE_RPT4	  0x80	  /* Alarm Repeat Mode Bit 4 */
