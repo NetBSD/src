@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.55 2001/04/06 05:10:28 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.56 2001/05/28 04:22:56 assar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.55 2001/04/06 05:10:28 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.56 2001/05/28 04:22:56 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,12 +230,12 @@ pr_family(af)
 /* width of destination/gateway column */
 #ifdef KAME_SCOPEID
 /* strlen("fe80::aaaa:bbbb:cccc:dddd@gif0") == 30, strlen("/128") == 4 */
-#define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 34 : 18) : 18)
-#define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 30 : 18) : 18)
+#define	WID_DST(af)	((af) == AF_INET6 ? (numeric_addr ? 34 : 18) : 18)
+#define	WID_GW(af)	((af) == AF_INET6 ? (numeric_addr ? 30 : 18) : 18)
 #else
 /* strlen("fe80::aaaa:bbbb:cccc:dddd") == 25, strlen("/128") == 4 */
-#define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 29 : 18) : 18)
-#define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 25 : 18) : 18)
+#define	WID_DST(af)	((af) == AF_INET6 ? (numeric_addr ? 29 : 18) : 18)
+#define	WID_GW(af)	((af) == AF_INET6 ? (numeric_addr ? 25 : 18) : 18)
 #endif
 #endif /* INET6 */
 
@@ -543,7 +543,7 @@ p_sockaddr(sa, mask, flags, width)
 	if (width < 0 )
 		printf("%s ", cp);
 	else {
-		if (nflag)
+		if (numeric_addr)
 			printf("%-*s ", width, cp);
 		else
 			printf("%-*.*s ", width, width, cp);
@@ -670,7 +670,7 @@ routename(in)
 			domain[0] = 0;
 	}
 	cp = 0;
-	if (!nflag) {
+	if (!numeric_addr) {
 		hp = gethostbyaddr((char *)&in, sizeof (struct in_addr),
 			AF_INET);
 		if (hp) {
@@ -755,7 +755,7 @@ netname(in, mask)
 
 	i = ntohl(in);
 	omask = mask = ntohl(mask);
-	if (!nflag && i != INADDR_ANY) {
+	if (!numeric_addr && i != INADDR_ANY) {
 		if (mask == INADDR_ANY) {
 			switch (mask = forgemask(i)) {
 			case IN_CLASSA_NET:
@@ -891,14 +891,14 @@ netname6(sa6, mask)
 	if (masklen == 0 && IN6_IS_ADDR_UNSPECIFIED(&sa6->sin6_addr))
 		return("default");
 
-	if (nflag)
+	if (numeric_addr)
 		flag |= NI_NUMERICHOST;
 	error = getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
 			line, sizeof(line), NULL, 0, flag);
 	if (error)
 		strlcpy(line, "invalid", sizeof(line));
 
-	if (nflag)
+	if (numeric_addr)
 		snprintf(&line[strlen(line)], sizeof(line) - strlen(line),
 		    "/%d", masklen);
 
@@ -925,7 +925,7 @@ routename6(sa6)
 	sa6_local.sin6_addr = sa6->sin6_addr;
 	sa6_local.sin6_scope_id = sa6->sin6_scope_id;
 
-	if (nflag)
+	if (numeric_addr)
 		flag |= NI_NUMERICHOST;
 
 	error = getnameinfo((struct sockaddr *)&sa6_local, sa6_local.sin6_len,

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.21 2001/03/31 20:11:18 christos Exp $	*/
+/*	$NetBSD: iso.c,v 1.22 2001/05/28 04:22:55 assar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: iso.c,v 1.21 2001/03/31 20:11:18 christos Exp $");
+__RCSID("$NetBSD: iso.c,v 1.22 2001/05/28 04:22:55 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -391,7 +391,8 @@ tp_inproto(pcb)
 
 /*
  * Pretty print an iso address (net address + port).
- * If the nflag was specified, use numbers instead of names.
+ * If the numeric_addr or numeric_port were specified,
+ * use numbers instead of names.
  */
 
 #ifdef notdef
@@ -412,7 +413,7 @@ isonetname(iso)
 		sa.siso_addr = *iso;
 		sa.siso_tsuffix = 0;
 
-		if (!nflag)
+		if (!numeric_addr)
 			ihe = iso_gethostentrybyaddr(&sa, 0, 0);
 		if (ihe) {
 			Ihe = *ihe;
@@ -451,7 +452,7 @@ isonetprint(iso, sufx, sufxlen, islocal)
 	if (Aflag)
 		islocal += 10 ;
 
-	if (!nflag) {
+	if (!numeric_addr) {
 		if ((cp - line) > 10) {
 			cp = line + 10;
 			memset(cp, 0, sizeof(line)-10);
@@ -460,7 +461,7 @@ isonetprint(iso, sufx, sufxlen, islocal)
 
 	*cp++ = '.';
 	if (sufxlen) {
-		if (!Aflag && !nflag &&
+		if (!Aflag && !numeric_port &&
 		    (ihe = iso_getserventrybytsel(sufx, sufxlen))) {
 			Ihe = *ihe;
 			ihe = &Ihe;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.21 2001/02/19 23:03:50 cgd Exp $	*/
+/*	$NetBSD: netstat.h,v 1.22 2001/05/28 04:22:56 assar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,8 @@ int	iflag;		/* show interfaces */
 int	Lflag;		/* don't show LLINFO entries */
 int	lflag;		/* show routing table with use and ref */
 int	mflag;		/* show memory stats */
-int	nflag;		/* show addresses numerically */
+int	numeric_addr;	/* show addresses numerically */
+int	numeric_port;	/* show ports numerically */
 int	Pflag;		/* dump a PCB */
 int	pflag;		/* show given protocol */
 int	rflag;		/* show routing tables (or routing stats) */
