@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.5 1998/10/21 14:32:36 minoura Exp $	
+	$NetBSD: install,v 1.6 1998/11/04 14:21:30 minoura Exp $	
 
 Installing NetBSD is a relatively complex process, but if you have
 this document in hand and are careful to read and remember the
@@ -57,14 +57,8 @@ process again from scratch.
 	asking if you wish to proceed with the installation process.
 	If you wish to proceed, enter "y" and hit return.
 
-	You will be asked what type of disk driver you have.  The
-	valid options are listed by the install program, to make sure
-	you get it right.  If you are SURE that it does, reply
-	affirmatively.  Otherwise, the install program will
-	automatically reserve space for bad144 tables.
-
-	The install program will then tell you which disks of that
-	type it can install on, and ask you which it should use.
+	The install program will then tell you which disks it can
+	install on, and ask you which it should use.
 	Reply with the name of your disk.
 
 	You will then be asked to name your disk's disklabel.  The
@@ -170,6 +164,20 @@ process again from scratch.
 
 		if your removable drive's name is sd2.
 
+		Run the "Extract" command once for each distribution
+		set you wish to install.  For instance, if you wish to
+		install the "base" distribution set, followed by the
+		"kern" distribution set, and finally the "etc"
+		distribution set, use the commands:
+			Extract base
+			Extract kern
+			Extract etc
+
+		For each extraction, it will ask you if the extraction
+		should be verbose.  If you reply affirmatively, it
+		will print out the name of each file that's being
+		extracted.
+
 	To install from floppy:
 		The first thing you should do is pick a temporary
 		directory where the distribution files can be stored.
@@ -198,10 +206,10 @@ process again from scratch.
 		Run the "Extract" command once for each distribution
 		set you wish to install.  For instance, if you wish to
 		install the "base" distribution set, followed by the
-		"man" distribution set, and finally the "etc"
+		"kern" distribution set, and finally the "etc"
 		distribution set, use the commands:
 			Extract base
-			Extract man
+			Extract kern
 			Extract etc
 
 		For each extraction, it will ask you if the extraction
@@ -352,13 +360,6 @@ process again from scratch.
 	host name, domain name, and other network configuration
 	information.  It will set up your configuration files and make
 	the device nodes for the newly-installed system.
-
-Kernel Installation:
-	The kernel must be installed by hand.  Type
-		# cd /mnt
-		# gzip -dc $tmp_dir/netbsd-ALL.gz > netbsd
-	where $tmp_dir will be extracted to the distribution sets
-	directory.
 
 
 Congratulations, you have successfully installed NetBSD _VER.  When you
