@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.80 1998/07/18 23:02:33 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.81 1998/10/01 02:53:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -45,6 +45,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
+#include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_ddb.h"
 
@@ -334,11 +335,10 @@ trap(type, code, v, tf)
 		printf("pid %d: kernel %s exception\n", p->p_pid,
 		       type==T_COPERR ? "coprocessor" : "format");
 		type |= T_USER;
-		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
-		tmp = sigmask(SIGILL);
-		p->p_sigignore &= ~tmp;
-		p->p_sigcatch  &= ~tmp;
-		p->p_sigmask   &= ~tmp;
+		p->p_sigacts->ps_sigact[SIGILL].sa_handler = SIG_DFL;
+		sigdelset(&p->p_sigignore, SIGILL);
+		sigdelset(&p->p_sigcatch, SIGILL);
+		sigdelset(&p->p_sigmask, SIGILL);
 		sig = SIGILL;
 		ucode = tf.tf_format;
 		break;
@@ -661,8 +661,14 @@ syscall(code, tf)
 		 * that is only done if entered via the sigreturn
 		 * trap.  Cannot allow it here so make sure we fail.
 		 */
-		if (code == SYS_sigreturn)
+		switch (code) {
+#ifdef COMPAT_13
+		case SYS_compat_13_sigreturn13:
+#endif
+		case SYS___sigreturn14:
 			code = nsys;
+			break;
+		}
 		break;
 	case SYS___syscall:
 		/*
