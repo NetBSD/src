@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.48 1994/07/04 23:19:17 mycroft Exp $
+ *	$Id: trap.c,v 1.48.2.1 1994/08/15 14:47:26 mycroft Exp $
  */
 
 /*
@@ -332,7 +332,7 @@ trap(frame)
 		}
 
 		/* check if page table is mapped, if not, fault it first */
-		if (!PTD[pdei(va)].pd_v) {
+		if ((PTD[pdei(va)] & PG_V) == 0) {
 			v = trunc_page(vtopte(va));
 			rv = vm_fault(map, v, ftype, FALSE);
 			if (rv != KERN_SUCCESS)

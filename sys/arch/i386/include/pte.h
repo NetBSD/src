@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pte.h	5.5 (Berkeley) 5/9/91
- *	$Id: pte.h,v 1.4 1993/12/14 05:31:40 mycroft Exp $
+ *	$Id: pte.h,v 1.4.4.1 1994/08/15 14:49:59 mycroft Exp $
  */
 
 /*
@@ -57,35 +57,8 @@
 #define	NPTEPD		(NBPD / NBPG)
 
 #ifndef LOCORE
-
-struct pde {
-	unsigned int	
-		pd_v:1,			/* valid bit */
-		pd_prot:2,		/* access control */
-		pg_nc:2,		/* cache disable and write-through */
-		pd_u:1,			/* hardware maintained 'used' bit */
-		pd_mbz:3,		/* reserved, must be zero */
-		pg_w:1,			/* is wired */
-		:2,			/* reserved for software */
-		pd_pfnum:20;		/* physical page frame number of pte's*/
-};
-
-struct pte {
-	unsigned int	
-		pg_v:1,			/* valid bit */
-		pg_prot:2,		/* access control */
-		pg_nc:2,		/* cache disable and write-through */
-		pg_u:1,			/* hardware maintained 'used' bit */
-		pg_m:1,			/* hardware maintained modified bit */
-		pg_mbz:2,		/* reserved, must be zero */
-		pg_w:1,			/* is wired */
-		:2,			/* must write back to swap (unused) */
-		pg_pfnum:20;		/* physical page frame number */
-};
-
-typedef struct pde	pd_entry_t;	/* page directory entry */
-typedef struct pte	pt_entry_t;	/* Mach page table entry */
-
+typedef int	pd_entry_t;		/* page directory entry */
+typedef int	pt_entry_t;		/* Mach page table entry */
 #endif
 
 #define	PD_MASK		0xffc00000	/* page directory address bits */
@@ -123,12 +96,12 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 /*
  * Pte related macros
  */
-#define	dirty(pte)	((pte)->pg_m)
+#define	dirty(pte)	(*(pte) & PG_M)
 
 #ifndef LOCORE
 #ifdef KERNEL
 /* utilities defined in pmap.c */
-extern	struct pte *Sysmap;
+extern	pt_entry_t *Sysmap;
 #endif
 #endif
 
