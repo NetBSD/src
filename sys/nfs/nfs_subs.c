@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.48 1997/10/11 02:09:48 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.49 1997/10/19 01:46:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1120,6 +1120,41 @@ nfsm_strtmbuf(mb, bpos, cp, siz)
 	return (0);
 }
 
+/*
+ * Directory caching routines. They work as follows:
+ * - a cache is maintained per VDIR nfsnode.
+ * - for each offset cookie that is exported to userspace, and can
+ *   thus be thrown back at us as an offset to VOP_READDIR, store
+ *   information in the cache.
+ * - cached are:
+ *   - cookie itself
+ *   - blocknumber (essentially just a search key in the buffer cache)
+ *   - entry number in block.
+ *   - offset cookie of block in which this entry is stored
+ *   - 32 bit cookie if NFSMNT_XLATECOOKIE is used.
+ * - entries are looked up in a hash table
+ * - also maintained is an LRU list of entries, used to determine
+ *   which ones to delete if the cache grows too large.
+ * - if 32 <-> 64 translation mode is requested for a filesystem,
+ *   the cache also functions as a translation table
+ * - in the translation case, invalidating the cache does not mean
+ *   flushing it, but just marking entries as invalid, except for
+ *   the <64bit cookie, 32bitcookie> pair which is still valid, to
+ *   still be able to use the cache as a translation table.
+ * - 32 bit cookies are uniquely created by combining the hash table
+ *   entry value, and one generation count per hash table entry,
+ *   incremented each time an entry is appended to the chain.
+ * - the cache is invalidated each time a direcory is modified
+ * - sanity checks are also done; if an entry in a block turns
+ *   out not to have a matching cookie, the cache is invalidated
+ *   and a new block starting from the wanted offset is fetched from
+ *   the server.
+ * - directory entries as read from the server are extended to contain
+ *   the 64bit and, optionally, the 32bit cookies, for sanity checking
+ *   the cache and exporting them to userspace through the cookie
+ *   argument to VOP_READDIR.
+ */
+
 u_long
 nfs_dirhash(off)
 	off_t off;
@@ -1134,34 +1169,142 @@ nfs_dirhash(off)
 	return sum;
 }
 
+void
+nfs_initdircache(vp)
+	struct vnode *vp;
+{
+	struct nfsnode *np = VTONFS(vp);
+	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+
+	np->n_dircachesize = 0;
+	np->n_dblkno = 1;
+	np->n_dircache =
+	    hashinit(NFS_DIRHASHSIZ, M_NFSDIROFF, &nfsdirhashmask);
+	TAILQ_INIT(&np->n_dirchain);
+	if (nmp->nm_flag & NFSMNT_XLATECOOKIE) {
+		MALLOC(np->n_dirgens, unsigned *,
+		    NFS_DIRHASHSIZ * sizeof (unsigned), M_NFSDIROFF,
+		    M_WAITOK);
+		bzero((caddr_t)np->n_dirgens,
+		    NFS_DIRHASHSIZ * sizeof (unsigned));
+	}
+}
+
+static struct nfsdircache dzero = {0, 0, {0, 0}, {0, 0}, 0, 0, 0};
 
 struct nfsdircache *
-nfs_lookdircache(vp, off, en, blkno, alloc)
+nfs_searchdircache(vp, off, do32, hashent)
 	struct vnode *vp;
 	off_t off;
+	int do32;
+	int *hashent;
+{
+	struct nfsdirhashhead *ndhp;
+	struct nfsdircache *ndp = NULL;
+	struct nfsnode *np = VTONFS(vp);
+	unsigned ent;
+
+	/*
+	 * Zero is always a valid cookie.
+	 */
+	if (off == 0)
+		return &dzero;
+
+	/*
+	 * We use a 32bit cookie as search key, directly reconstruct
+	 * the hashentry. Else use the hashfunction.
+	 */
+	if (do32) {
+		ent = (u_int32_t)off >> 24;
+		if (ent >= NFS_DIRHASHSIZ)
+			return NULL;
+		ndhp = &np->n_dircache[ent];
+	} else {
+		ndhp = NFSDIRHASH(np, off);
+	}
+
+	if (hashent)
+		*hashent = (int)(ndhp - np->n_dircache);
+	if (do32) {
+		for (ndp = ndhp->lh_first; ndp; ndp = ndp->dc_hash.le_next) {
+			if (ndp->dc_cookie32 == (u_int32_t)off) {
+				/*
+				 * An invalidated entry will become the
+				 * start of a new block fetched from
+				 * the server.
+				 */
+				if (ndp->dc_blkno == -1) {
+					ndp->dc_blkcookie = ndp->dc_cookie;
+					ndp->dc_blkno = np->n_dblkno++;
+					ndp->dc_entry = 0;
+				}
+				break;
+			}
+		}
+	} else {
+		for (ndp = ndhp->lh_first; ndp; ndp = ndp->dc_hash.le_next)
+			if (ndp->dc_cookie == off)
+				break;
+	}
+	return ndp;
+}
+
+
+struct nfsdircache *
+nfs_enterdircache(vp, off, blkoff, en, blkno)
+	struct vnode *vp;
+	off_t off, blkoff;
 	daddr_t blkno;
-	int en, alloc;
+	int en;
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdirhashhead *ndhp;
-	struct nfsdircache *ndp, *first;
+	struct nfsdircache *ndp = NULL, *first;
+	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+	int hashent, gen, overwrite;
 
-	if (!np->n_dircache) {
-		np->n_dircachesize = 0;
-		np->n_dircache =
-			hashinit(NFS_DIRHASHSIZ, M_NFSDIROFF, &nfsdirhashmask);
-		TAILQ_INIT(&np->n_dirchain);
+	if (!np->n_dircache)
+		/*
+		 * XXX would like to do this in nfs_nget but vtype
+		 * isn't known at that time.
+		 */
+		nfs_initdircache(vp);
+
+	ndp = nfs_searchdircache(vp, off, 0, &hashent);
+
+	if (ndp && ndp->dc_blkno != -1) {
+		/*
+		 * Overwriting an old entry. Check if it's the same.
+		 * If so, just return. If not, remove the old entry.
+		 */
+		if (ndp->dc_blkcookie == blkoff && ndp->dc_entry == en)
+			return ndp;
+		TAILQ_REMOVE(&np->n_dirchain, ndp, dc_chain);
+		LIST_REMOVE(ndp, dc_hash);
+		FREE(ndp, M_NFSDIROFF);
+		ndp = 0;
 	}
 
-	ndhp = NFSDIRHASH(np, off);
-	for (ndp = ndhp->lh_first; ndp; ndp = ndp->dc_hash.le_next)
-		if (ndp->dc_cookie == off)
-			break;
+	ndhp = &np->n_dircache[hashent];
 
-	if (!alloc || ndp)
-		return ndp;
-	MALLOC(ndp, struct nfsdircache *, sizeof (*ndp), M_NFSDIROFF, M_WAITOK);
-	ndp->dc_cookie = off;
+	if (!ndp) {
+		MALLOC(ndp, struct nfsdircache *, sizeof (*ndp), M_NFSDIROFF,
+		    M_WAITOK);
+		overwrite = 0;
+		if (nmp->nm_flag & NFSMNT_XLATECOOKIE) {
+			/*
+			 * We're allocating a new entry, so bump the
+			 * generation number.
+			 */
+			gen = ++np->n_dirgens[hashent];
+			if (gen == 0) {
+				np->n_dirgens[hashent]++;
+				gen++;
+			}
+			ndp->dc_cookie32 = (hashent << 24) | (gen & 0xffffff);
+		}
+	} else
+		overwrite = 1;
 
 	/*
 	 * If the entry number is 0, we are at the start of a new block, so
@@ -1171,7 +1314,13 @@ nfs_lookdircache(vp, off, en, blkno, alloc)
 		ndp->dc_blkno = np->n_dblkno++;
 	else
 		ndp->dc_blkno = blkno;
+
+	ndp->dc_cookie = off;
+	ndp->dc_blkcookie = blkoff;
 	ndp->dc_entry = en;
+
+	if (overwrite)
+		return ndp;
 
 	/*
 	 * If the maximum directory cookie cache size has been reached
@@ -1194,11 +1343,13 @@ nfs_lookdircache(vp, off, en, blkno, alloc)
 }
 
 void
-nfs_invaldircache(vp)
+nfs_invaldircache(vp, forcefree)
 	struct vnode *vp;
+	int forcefree;
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdircache *ndp = NULL;
+	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 
 #ifdef DIAGNOSTIC
 	if (vp->v_type != VDIR)
@@ -1208,14 +1359,23 @@ nfs_invaldircache(vp)
 	if (!np->n_dircache)
 		return;
 
-	while ((ndp = np->n_dirchain.tqh_first)) {
-		TAILQ_REMOVE(&np->n_dirchain, ndp, dc_chain);
-		LIST_REMOVE(ndp, dc_hash);
-		FREE(ndp, M_NFSDIROFF);
+	if (!(nmp->nm_flag & NFSMNT_XLATECOOKIE) || forcefree) {
+		while ((ndp = np->n_dirchain.tqh_first)) {
+			TAILQ_REMOVE(&np->n_dirchain, ndp, dc_chain);
+			LIST_REMOVE(ndp, dc_hash);
+			FREE(ndp, M_NFSDIROFF);
+		}
+		np->n_dircachesize = 0;
+		if (forcefree && np->n_dirgens) {
+			FREE(np->n_dirgens, M_NFSDIROFF);
+		}
+	} else {
+		for (ndp = np->n_dirchain.tqh_first; ndp;
+		    ndp = ndp->dc_chain.tqe_next)
+			ndp->dc_blkno = -1;
 	}
 
-	np->n_dblkno = 0;
-	np->n_dircachesize = 0;
+	np->n_dblkno = 1;
 }
 
 /*
@@ -1420,7 +1580,7 @@ nfs_loadattrcache(vpp, fp, vaper)
 		}
 		np->n_mtime = mtime.tv_sec;
 	}
-	vap = &np->n_vattr;
+	vap = np->n_vattr;
 	vap->va_type = vtyp;
 	vap->va_mode = vmode & ALLPERMS;
 	vap->va_rdev = (dev_t)rdev;
@@ -1507,7 +1667,7 @@ nfs_getattrcache(vp, vaper)
 		return (ENOENT);
 	}
 	nfsstats.attrcache_hits++;
-	vap = &np->n_vattr;
+	vap = np->n_vattr;
 	if (vap->va_size != np->n_size) {
 		if (vap->va_type == VREG) {
 			if (np->n_flag & NMODIFIED) {
@@ -1588,7 +1748,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 		if (dp->d_fileno != 0 && len >= dp->d_reclen) {
 			if ((*cop >> 32) != 0 && (*cop & 0xffffffffLL) == 0) {
 				*flagp |= NFSMNT_SWAPCOOKIE;
-				nfs_invaldircache(vp);
+				nfs_invaldircache(vp, 0);
 				nfs_vinvalbuf(vp, 0, cred, p, 1);
 			}
 			break;

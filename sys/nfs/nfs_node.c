@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.23 1997/10/10 01:53:19 fvdl Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.24 1997/10/19 01:46:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -155,6 +155,9 @@ loop:
 		np->n_fhp = &np->n_fh;
 	bcopy((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize);
 	np->n_fhsize = fhsize;
+	MALLOC(np->n_vattr, struct vattr *, sizeof (struct vattr),
+	    M_NFSNODE, M_WAITOK);
+	bzero(np->n_vattr, sizeof (struct vattr));
 	lockmgr(&nfs_hashlock, LK_RELEASE, 0, p);
 	*npp = np;
 	return (0);
@@ -257,13 +260,14 @@ nfs_reclaim(v)
 	 * this nfs node.
 	 */
 	if (vp->v_type == VDIR && np->n_dircache) {
-		nfs_invaldircache(vp);
+		nfs_invaldircache(vp, 1);
 		FREE(np->n_dircache, M_NFSDIROFF);
 	}
 	if (np->n_fhsize > NFS_SMALLFH) {
 		FREE((caddr_t)np->n_fhp, M_NFSBIGFH);
 	}
 
+	FREE(np->n_vattr, M_NFSNODE);
 	cache_purge(vp);
 	FREE(vp->v_data, M_NFSNODE);
 	vp->v_data = (void *)0;
