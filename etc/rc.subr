@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.15 2000/04/28 01:40:09 lukem Exp $
+# $NetBSD: rc.subr,v 1.16 2000/04/30 12:19:07 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -158,12 +158,12 @@ check_process()
 }
 
 #
-# run_rc_command arg [supported_args]
-#	Scan supported_args (which has "start stop restart rcvar status"
-#	prepended) for arg.
+# run_rc_command arg
+#	Search for arg in the list of supported commands, which is:
+#		"start stop restart rcvar status ${extra_commands}"
 #	If there's a match, run ${arg}_cmd or the default command (see below).
 #
-#	If arg has a given prefix, then:
+#	If arg has a given prefix, then change the operation as follows:
 #		prefix	operation
 #		------	---------
 #		fast	Skip the pid check.
@@ -177,9 +177,10 @@ check_process()
 #				Not needed if ${arg}_cmd is set for
 #				each keyword.
 #	command_args	n	Optional args/shell directives for command.
+#	extra_commands	n	List of extra commands supported.
 #	pidfile		n	If set, use check_pidfile $pidfile, else if
 #				$command is set, use check_process $command.
-#	${rcvar}	n	If the default command is being run, this is
+#	rcvar		n	If the default command is being run, this is
 #				checked with checkyesno to determine if
 #				the action should be run.
 #				If this variable isn't set, ${name} is checked 
@@ -227,7 +228,6 @@ check_process()
 run_rc_command()
 {
 	_arg=$1
-	shift
 	_ckvar=${rcvar:-$name}
 	if [ -z "$_ckvar" ]; then
 		err 3 'neither $rcvar or $name is set.'
@@ -244,7 +244,7 @@ run_rc_command()
 		;;
 	esac
 
-	_keywords="start stop restart rcvar $*"
+	_keywords="start stop restart rcvar $extra_commands"
 	_pidcmd=
 	if [ -z "$_rc_fast_run" ]; then
 		if [ -n "$pidfile" ]; then
