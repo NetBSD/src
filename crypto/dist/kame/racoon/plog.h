@@ -1,4 +1,4 @@
-/*	$KAME: plog.h,v 1.6 2000/12/15 15:42:13 sakane Exp $	*/
+/*	$KAME: plog.h,v 1.7 2001/01/10 02:58:58 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -53,6 +53,8 @@
 #define LLV_DEBUG	5
 #define LLV_DEBUG2	6
  
+#define LLV_BASE	4	/* always logging less than this value. */
+
 extern char *pname;
 extern u_int32_t loglevel;
 extern int f_foreground;

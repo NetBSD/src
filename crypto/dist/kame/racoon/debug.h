@@ -1,4 +1,4 @@
-/*	$KAME: debug.h,v 1.16 2000/12/15 13:43:54 sakane Exp $	*/
+/*	$KAME: debug.h,v 1.17 2001/01/10 02:58:58 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,6 +30,5 @@
  */
 
 /* define by main.c */
-extern int f_debugcmd;
 extern int f_local;
 extern int vflag;

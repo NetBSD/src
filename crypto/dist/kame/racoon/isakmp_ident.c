@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_ident.c,v 1.51 2000/12/15 13:43:55 sakane Exp $	*/
+/*	$KAME: isakmp_ident.c,v 1.52 2001/01/24 02:36:53 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -284,8 +284,9 @@ ident_i2send(iph1, msg)
 		goto end;
 
 #ifdef HAVE_GSSAPI
-	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB)
-		gssapi_get_itoken(iph1, NULL);
+	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB &&
+	    gssapi_get_itoken(iph1, NULL) < 0)
+		goto end;
 #endif
 
 	/* create buffer to send isakmp payload */
@@ -458,7 +459,8 @@ ident_i3send(iph1, msg)
 	if (iph1->approval->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB &&
 	    gssapi_more_tokens(iph1)) {
 		plog(LLV_DEBUG, LOCATION, NULL, "calling get_itoken\n");
-		gssapi_get_itoken(iph1, &len);
+		if (gssapi_get_itoken(iph1, &len) < 0)
+			goto end;
 		if (len != 0)
 			dohash = 0;
 	}

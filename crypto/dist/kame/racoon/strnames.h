@@ -1,4 +1,4 @@
-/*	$KAME: strnames.h,v 1.9 2000/10/04 17:41:04 itojun Exp $	*/
+/*	$KAME: strnames.h,v 1.10 2001/01/24 06:22:51 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -59,3 +59,5 @@ extern char *s_algclass __P((int));
 extern char *s_algtype __P((int, int));
 extern char *s_pfkey_type __P((int));
 extern char *s_pfkey_satype __P((int));
+extern char *s_direction __P((int));
+extern char *s_proto __P((int));

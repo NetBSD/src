@@ -1,4 +1,4 @@
-/*	$KAME: isakmp.c,v 1.118 2000/12/18 04:15:12 itojun Exp $	*/
+/*	$KAME: isakmp.c,v 1.123 2001/01/24 02:35:23 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -748,6 +748,8 @@ isakmp_ph1begin_i(rmconf, remote)
 	iph1->msgid = 0;
 	iph1->flags = 0;
 	iph1->ph2cnt = 0;
+	iph1->gssapi_state = NULL;
+	iph1->approval = NULL;
 
 	/* XXX copy remote address */
 	if (copy_ph1addresses(iph1, rmconf, remote, NULL) < 0)
@@ -764,7 +766,7 @@ isakmp_ph1begin_i(rmconf, remote)
 
 	a = strdup(saddr2str(iph1->local));
 	plog(LLV_INFO, LOCATION, NULL,
-		"initiate new phase 1 nagotiation: %s<=>%s\n",
+		"initiate new phase 1 negotiation: %s<=>%s\n",
 		a, saddr2str(iph1->remote));
 	free(a);
     }
@@ -830,6 +832,8 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 	iph1->etype = etypeok->type;
 	iph1->version = isakmp->v;
 	iph1->msgid = 0;
+	iph1->gssapi_state = NULL;
+	iph1->approval = NULL;
 
 	/* copy remote address */
 	if (copy_ph1addresses(iph1, rmconf, remote, local) < 0)
@@ -843,7 +847,7 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 
 	a = strdup(saddr2str(iph1->local));
 	plog(LLV_INFO, LOCATION, NULL,
-		"responde new phase 1 nagotiation: %s<=>%s\n",
+		"responde new phase 1 negotiation: %s<=>%s\n",
 		a, saddr2str(iph1->remote));
 	free(a);
     }
@@ -951,7 +955,7 @@ isakmp_ph2begin_r(iph1, msg)
 
 	a = strdup(saddr2str(iph2->src));
 	plog(LLV_INFO, LOCATION, NULL,
-		"responde new phase 2 nagotiation: %s<=>%s\n",
+		"responde new phase 2 negotiation: %s<=>%s\n",
 		a, saddr2str(iph2->dst));
 	free(a);
     }
@@ -1194,13 +1198,6 @@ isakmp_open()
 			goto err_and_next;
 		}
 
-		if (setsockopt(p->sock, SOL_SOCKET, SO_REUSEPORT,
-		               (void *)&yes, sizeof(yes)) < 0) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"setsockopt (%s)\n", strerror(errno));
-			goto err_and_next;
-		}
-
 		/* receive my interface address on inbound packets. */
 		switch (p->addr->sa_family) {
 		case AF_INET:
@@ -1299,7 +1296,7 @@ isakmp_send(iph1, buf)
 	struct myaddrs *p, *lastresort = NULL;
 	int i;
 
-	sa = iph1->remote;
+	sa = iph1->local;
 
 	/* send to responder */
 	for (p = lcconf->myaddrs; p; p = p->next) {
@@ -1574,16 +1571,20 @@ isakmp_post_acquire(iph2)
 
 	/* no ISAKMP-SA found. */
 	if (iph1 == NULL) {
+		struct sched *sc;
+
 		iph2->retry_checkph1 = lcconf->retry_checkph1;
-		sched_new(1, isakmp_chkph1there_stub, iph2);
+		sc = sched_new(1, isakmp_chkph1there_stub, iph2);
 		plog(LLV_INFO, LOCATION, NULL,
 			"IPsec-SA request for %s queued "
 			"due to no phase1 found.\n",
 			saddrwop2str(iph2->dst));
 
 		/* begin ident mode */
-		if (isakmp_ph1begin_i(rmconf, iph2->dst) < 0)
+		if (isakmp_ph1begin_i(rmconf, iph2->dst) < 0) {
+			SCHED_KILL(sc);
 			return -1;
+		}
 
 		return 0;
 		/*NOTREACHED*/

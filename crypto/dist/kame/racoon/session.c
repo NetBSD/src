@@ -1,4 +1,4 @@
-/*	$KAME: session.c,v 1.22 2000/12/15 16:46:16 itojun Exp $	*/
+/*	$KAME: session.c,v 1.23 2001/01/05 01:14:57 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -374,7 +374,8 @@ set_signal(sig, func)
 	if (sigemptyset(&sa.sa_mask) < 0)
 		return -1;
 
-	sigaction(sig, &sa, (struct sigaction *)0);
+	if (sigaction(sig, &sa, (struct sigaction *)0) < 0)
+		return(-1);
 
 	return 0;
 }

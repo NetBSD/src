@@ -1,4 +1,4 @@
-/*	$KAME: crypto_openssl.c,v 1.46 2000/12/15 13:43:54 sakane Exp $	*/
+/*	$KAME: crypto_openssl.c,v 1.47 2001/01/16 21:53:19 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -290,7 +290,8 @@ cb_check_cert(ok, ctx)
 	int ok;
 	X509_STORE_CTX *ctx;
 {
-	char buf[256], *alarm;
+	char buf[256];
+	int log_tag;
 
 	if (!ok) {
 		X509_NAME_oneline(
@@ -311,22 +312,21 @@ cb_check_cert(ok, ctx)
 		case X509_V_ERR_INVALID_PURPOSE:
 #endif
 			ok = 1;
-			alarm = "WARNING";
+			log_tag = LLV_WARNING;
 			break;
 		default:
-			alarm = "ERROR";
+			log_tag = LLV_ERROR;
 		}
 #ifndef EAYDEBUG
-		plog(LLV_ERROR, LOCATION, NULL,
-			"%s: %s(%d) at depth:%d SubjectName:%s\n",
-			alarm,
+		plog(log_tag, LOCATION, NULL,
+			"%s(%d) at depth:%d SubjectName:%s\n",
 			X509_verify_cert_error_string(ctx->error),
 			ctx->error,
 			ctx->error_depth,
 			buf);
 #else
-		printf("%s: %s(%d) at depth:%d SubjectName:%s\n",
-			alarm,
+		printf("%d: %s(%d) at depth:%d SubjectName:%s\n",
+			log_tag,
 			X509_verify_cert_error_string(ctx->error),
 			ctx->error,
 			ctx->error_depth,

@@ -1,4 +1,4 @@
-/*	$KAME: plog.c,v 1.13 2000/12/19 05:06:54 sakane Exp $	*/
+/*	$KAME: plog.c,v 1.14 2001/01/10 02:58:58 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
 #include "debug.h"
 
 char *pname = NULL;
-u_int32_t loglevel = 4;
+u_int32_t loglevel = LLV_BASE;
 
 static struct log *logp = NULL;
 static char *logfile = NULL;

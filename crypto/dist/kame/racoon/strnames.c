@@ -1,4 +1,4 @@
-/*	$KAME: strnames.c,v 1.16 2000/12/12 16:59:43 thorpej Exp $	*/
+/*	$KAME: strnames.c,v 1.17 2001/01/24 06:22:51 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <netinet6/ipsec.h>
+#include <netinet/in.h>
 
 #include "var.h"
 #include "misc.h"
@@ -697,3 +698,38 @@ s_pfkey_satype(k)
 	return num2str(k);
 }
 
+static struct ksmap name_direction[] = {
+{ IPSEC_DIR_INBOUND,	"in",	NULL },
+{ IPSEC_DIR_OUTBOUND,	"out",	NULL },
+};
+
+char *
+s_direction(k)
+	int k;
+{
+	int i;
+	for (i = 0; i < ARRAYLEN(name_direction); i++)
+		if (name_direction[i].key == k)
+			return name_direction[i].str;
+	return num2str(k);
+}
+
+char *
+s_proto(k)
+	int k;
+{
+	switch (k) {
+	case IPPROTO_ICMP:
+		return "icmp";
+	case IPPROTO_TCP:
+		return "tcp";
+	case IPPROTO_UDP:
+		return "udp";
+	case IPPROTO_ICMPV6:
+		return "icmpv6";
+	case IPSEC_ULPROTO_ANY:
+		return "any";
+	}
+
+	return num2str(k);
+}
