@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.102 2001/01/21 22:23:07 is Exp $
+#	$NetBSD: files.amiga,v 1.103 2001/01/26 10:31:29 aymeric Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -413,7 +413,7 @@ file	arch/amiga/amiga/dkbad.c
 file	arch/amiga/amiga/machdep.c
 file	arch/amiga/amiga/mem.c
 file	arch/amiga/amiga/pmap.c
-file	arch/amiga/amiga/process_machdep.c	procfs
+file	arch/amiga/amiga/procfs_machdep.c	procfs
 file	arch/amiga/amiga/sys_machdep.c
 file	arch/amiga/amiga/trap.c
 file	arch/amiga/amiga/vm_machdep.c
