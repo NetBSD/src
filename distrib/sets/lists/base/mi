@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.463 2004/01/13 06:39:26 lukem Exp $
+# $NetBSD: mi,v 1.464 2004/01/13 09:19:42 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -662,37 +662,96 @@
 ./usr/games					base-games-usr
 ./usr/games/hide				base-games-usr
 ./usr/include					base-c-usr
+./usr/include/adosfs				base-c-usr
+./usr/include/altq				base-c-usr
 ./usr/include/arpa				base-c-usr
 ./usr/include/cdk				base-c-usr
 ./usr/include/compat				base-obsolete		obsolete
+./usr/include/crypto				base-c-usr
 ./usr/include/dev				base-c-usr
+./usr/include/dev/apm				base-c-usr
+./usr/include/dev/ata				base-c-usr
+./usr/include/dev/dec				base-c-usr
+./usr/include/dev/dmover			base-c-usr
+./usr/include/dev/eisa				base-obsolete		obsolete
+./usr/include/dev/hpc				base-c-usr
+./usr/include/dev/i2c				base-obsolete		obsolete
+./usr/include/dev/i2o				base-c-usr
+./usr/include/dev/ic				base-c-usr
+./usr/include/dev/ieee1394			base-c-usr
+./usr/include/dev/ir				base-c-usr
+./usr/include/dev/isa				base-c-usr
+./usr/include/dev/isapnp			base-obsolete		obsolete
+./usr/include/dev/microcode			base-obsolete		obsolete
+./usr/include/dev/microcode/aic7xxx		base-obsolete		obsolete
+./usr/include/dev/microcode/isp			base-obsolete		obsolete
+./usr/include/dev/mii				base-obsolete		obsolete
+./usr/include/dev/ofisa				base-obsolete		obsolete
+./usr/include/dev/ofw				base-c-usr
+./usr/include/dev/pci				base-c-usr
+./usr/include/dev/pckbc				base-c-usr
+./usr/include/dev/pcmcia			base-c-usr
+./usr/include/dev/raidframe			base-c-usr
+./usr/include/dev/rcons				base-obsolete		obsolete
+./usr/include/dev/sbus				base-c-usr
+./usr/include/dev/scsipi			base-c-usr
+./usr/include/dev/sun				base-c-usr
+./usr/include/dev/tc				base-c-usr
+./usr/include/dev/usb				base-c-usr
+./usr/include/dev/vinum				base-c-usr
+./usr/include/dev/vme				base-c-usr
+./usr/include/dev/wscons			base-c-usr
+./usr/include/filecorefs			base-c-usr
 ./usr/include/fs				base-c-usr
 ./usr/include/fs/smbfs				base-c-usr
 ./usr/include/g++				base-cxx-usr
 ./usr/include/g++/backward			base-cxx-usr
 ./usr/include/g++/bits				base-cxx-usr
 ./usr/include/g++/ext				base-cxx-usr
+./usr/include/g++/gen				base-obsolete		obsolete
 ./usr/include/g++/std				base-cxx-usr
 ./usr/include/gssapi				base-c-usr
 ./usr/include/gssapi/rpc			base-obsolete		obsolete
+./usr/include/isofs				base-c-usr
+./usr/include/isofs/cd9660			base-c-usr
 ./usr/include/kadm5				base-c-usr
 ./usr/include/kerberosIV			base-c-usr
 ./usr/include/krb5				base-c-usr
+./usr/include/libmilter				base-sendmail-usr
 ./usr/include/machine				base-c-usr
+./usr/include/milter				base-obsolete		obsolete
+./usr/include/miscfs				base-c-usr
+./usr/include/miscfs/fdesc			base-c-usr
+./usr/include/miscfs/fifofs			base-c-usr
+./usr/include/miscfs/genfs			base-c-usr
+./usr/include/miscfs/kernfs			base-c-usr
+./usr/include/miscfs/nullfs			base-c-usr
+./usr/include/miscfs/overlay			base-c-usr
+./usr/include/miscfs/portal			base-c-usr
+./usr/include/miscfs/procfs			base-c-usr
+./usr/include/miscfs/specfs			base-c-usr
+./usr/include/miscfs/syncfs			base-c-usr
+./usr/include/miscfs/umapfs			base-c-usr
+./usr/include/miscfs/union			base-c-usr
+./usr/include/msdosfs				base-c-usr
 ./usr/include/net				base-c-usr
 ./usr/include/net80211				base-c-usr
 ./usr/include/netatalk				base-c-usr
 ./usr/include/netccitt				base-c-usr
 ./usr/include/netinet				base-c-usr
+./usr/include/netinet6				base-c-usr
 ./usr/include/netisdn				base-c-usr
 ./usr/include/netiso				base-c-usr
+./usr/include/netkey				base-c-usr
 ./usr/include/netnatm				base-c-usr
 ./usr/include/netns				base-c-usr
+./usr/include/netsmb				base-c-usr
 ./usr/include/nfs				base-c-usr
 ./usr/include/ntfs				base-c-usr
 ./usr/include/objc				base-objc-usr
 ./usr/include/openssl				base-c-usr
 ./usr/include/protocols				base-c-usr
+./usr/include/readline				base-c-usr
 ./usr/include/rpc				base-c-usr
 ./usr/include/rpcsvc				base-c-usr
 ./usr/include/ss				base-obsolete		obsolete
@@ -704,6 +763,7 @@
 ./usr/include/ufs/mfs				base-c-usr
 ./usr/include/ufs/ufs				base-c-usr
 ./usr/include/uvm				base-c-usr
+./usr/include/vm				base-obsolete		obsolete
 ./usr/lib					base-sys-usr
 ./usr/lib/i18n					base-i18n-root
 ./usr/lib/i18n/libBIG5.so.4.0			base-obsolete		obsolete
