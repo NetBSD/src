@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.25 1995/08/14 05:00:05 cgd Exp $	*/
+/*	$NetBSD: print.c,v 1.26 1995/08/15 14:01:01 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.25 1995/08/14 05:00:05 cgd Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.26 1995/08/15 14:01:01 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -696,36 +696,36 @@ printval(bp, v)
 	while (*cp++ = *fcp++);
 
 	/*
-	 * Note that the "TWODGT" check is nonsensical for types
+	 * Note that the "INF127" check is nonsensical for types
 	 * that are or can be signed.
 	 */
 #define	GET(type)		(*(type *)bp)
-#define	CHK_TWODGT(n)		(((n) > 99) && (v->flag & TWODGT) ? 99 : (n))
+#define	CHK_INF127(n)		(((n) > 127) && (v->flag & INF127) ? 127 : (n))
 
 	switch (v->type) {
 	case CHAR:
 		(void)printf(ofmt, v->width, GET(char));
 		break;
 	case UCHAR:
-		(void)printf(ofmt, v->width, CHK_TWODGT(GET(u_char)));
+		(void)printf(ofmt, v->width, CHK_INF127(GET(u_char)));
 		break;
 	case SHORT:
 		(void)printf(ofmt, v->width, GET(short));
 		break;
 	case USHORT:
-		(void)printf(ofmt, v->width, CHK_TWODGT(GET(u_short)));
+		(void)printf(ofmt, v->width, CHK_INF127(GET(u_short)));
 		break;
 	case INT:
 		(void)printf(ofmt, v->width, GET(int));
 		break;
 	case UINT:
-		(void)printf(ofmt, v->width, CHK_TWODGT(GET(u_int)));
+		(void)printf(ofmt, v->width, CHK_INF127(GET(u_int)));
 		break;
 	case LONG:
 		(void)printf(ofmt, v->width, GET(long));
 		break;
 	case ULONG:
-		(void)printf(ofmt, v->width, CHK_TWODGT(GET(u_long)));
+		(void)printf(ofmt, v->width, CHK_INF127(GET(u_long)));
 		break;
 	case KPTR:
 		(void)printf(ofmt, v->width, GET(u_long) &~ KERNBASE);
@@ -734,7 +734,7 @@ printval(bp, v)
 		errx(1, "unknown type %d", v->type);
 	}
 #undef GET
-#undef CHK_TWODGT
+#undef CHK_INF127
 }
 
 void
