@@ -1,7 +1,7 @@
-/*	$NetBSD: i82557reg.h,v 1.1 1999/06/20 16:33:28 thorpej Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.2 1999/08/03 22:43:28 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -134,33 +134,32 @@
 #define FXP_SCB_COMMAND_RU_RBDRESUME	7
 
 /*
- * Software-use only part of the command block.
- */
-struct fxp_cb_soft {
-	void *next;			/* pointer to next command block */
-	struct mbuf *mb_head;		/* pointer to data for this command */
-	bus_dmamap_t dmamap;		/* our DMA map */
-};
-
-/*
  * Command block definitions
  */
+
+/*
+ * NOP command.
+ */
 struct fxp_cb_nop {
-	struct fxp_cb_soft cb_soft;
 	volatile u_int16_t cb_status;
 	volatile u_int16_t cb_command;
 	volatile u_int32_t link_addr;
 };
+
+/*
+ * Individual Address command.
+ */
 struct fxp_cb_ias {
-	struct fxp_cb_soft cb_soft;
 	volatile u_int16_t cb_status;
 	volatile u_int16_t cb_command;
 	volatile u_int32_t link_addr;
 	volatile u_int8_t macaddr[6];
 };
-/* I hate bit-fields :-( */
+
+/*
+ * Configure command.
+ */
 struct fxp_cb_config {
-	struct fxp_cb_soft cb_soft;
 	volatile u_int16_t	cb_status;
 	volatile u_int16_t	cb_command;
 	volatile u_int32_t	link_addr;
@@ -220,15 +219,10 @@ struct fxp_cb_config {
 };
 
 /*
- * Size of the hardware portion of a given transmit descriptor, including
- * the DMA segment array. 
+ * Multicast setup command.
  */
-#define	FXP_MCSDESCSIZE							\
-	(sizeof(struct fxp_cb_mcs) - offsetof(struct fxp_cb_mcs, cb_status))
-
 #define MAXMCADDR 80
 struct fxp_cb_mcs {
-	struct fxp_cb_soft cb_soft;
 	volatile u_int16_t cb_status;
 	volatile u_int16_t cb_command;
 	volatile u_int32_t link_addr;
@@ -237,19 +231,9 @@ struct fxp_cb_mcs {
 };
 
 /*
- * Number of DMA segments in a TxCB.  The TxCB must map to a
- * contiguous region from the DMA engine's perspective.  Since
- * we allocate memory conforming to those contraints, we can
- * arbitrarily choose the number of segments.
+ * Transmit command.
  */
-#define	FXP_NTXSEG	32
-
-struct fxp_tbd {
-	volatile u_int32_t tb_addr;
-	volatile u_int32_t tb_size;
-};
 struct fxp_cb_tx {
-	struct fxp_cb_soft cb_soft;
 	volatile u_int16_t cb_status;
 	volatile u_int16_t cb_command;
 	volatile u_int32_t link_addr;
@@ -257,28 +241,15 @@ struct fxp_cb_tx {
 	volatile u_int16_t byte_count;
 	volatile u_int8_t tx_threshold;
 	volatile u_int8_t tbd_number;
-	/*
-	 * The following isn't actually part of the TxCB, but we
-	 * allocate it here for convenience.
-	 */
-	volatile struct fxp_tbd tbd[FXP_NTXSEG];
 };
 
 /*
- * Offset of the hardware portion of a given transmit descriptor from the 
- * base of the control data DMA mapping.
+ * Transmit buffer descriptors.
  */
-#define	FXP_TXDESCOFF(sc, txd)						\
-	(FXP_CDOFF(fcd_txcbs[0]) +					\
-	 (((u_long)(txd)) - ((u_long)&(sc)->control_data->fcd_txcbs[0])) + \
-	 offsetof(struct fxp_cb_tx, cb_status))
-
-/*
- * Size of the hardware portion of a given transmit descriptor, including
- * the DMA segment array. 
- */
-#define	FXP_TXDESCSIZE							\
-	(sizeof(struct fxp_cb_tx) - offsetof(struct fxp_cb_tx, cb_status))
+struct fxp_tbd {
+	volatile u_int32_t tb_addr;
+	volatile u_int32_t tb_size;
+};
 
 /*
  * Control Block (CB) definitions
@@ -287,6 +258,7 @@ struct fxp_cb_tx {
 /* status */
 #define FXP_CB_STATUS_OK	0x2000
 #define FXP_CB_STATUS_C		0x8000
+
 /* commands */
 #define FXP_CB_COMMAND_NOP	0x0
 #define FXP_CB_COMMAND_IAS	0x1
@@ -296,6 +268,7 @@ struct fxp_cb_tx {
 #define FXP_CB_COMMAND_RESRV	0x5
 #define FXP_CB_COMMAND_DUMP	0x6
 #define FXP_CB_COMMAND_DIAG	0x7
+
 /* command flags */
 #define FXP_CB_COMMAND_SF	0x0008	/* simple/flexible mode */
 #define FXP_CB_COMMAND_I	0x2000	/* generate interrupt on completion */
@@ -303,13 +276,13 @@ struct fxp_cb_tx {
 #define FXP_CB_COMMAND_EL	0x8000	/* end of list */
 
 /*
- * RFA definitions
+ * Receive Frame Area.
+ *
  * NOTE!  The RFA will NOT be aligned on a 4-byte boundary in the DMA
  * area!  To prevent EGCS from optimizing the copy of link_addr and
  * rbd_addr (which would cause an unaligned access fault on RISC systems),
  * we must make them an array of bytes!
  */
-
 struct fxp_rfa {
 	volatile u_int16_t rfa_status;
 	volatile u_int16_t rfa_control;
@@ -318,6 +291,7 @@ struct fxp_rfa {
 	volatile u_int16_t actual_size;
 	volatile u_int16_t size;
 };
+
 #define FXP_RFA_STATUS_RCOL	0x0001	/* receive collision */
 #define FXP_RFA_STATUS_IAMATCH	0x0002	/* 0 = matches station address */
 #define FXP_RFA_STATUS_S4	0x0010	/* receive error from PHY */
@@ -329,8 +303,9 @@ struct fxp_rfa {
 #define FXP_RFA_STATUS_CRC	0x0800	/* CRC error */
 #define FXP_RFA_STATUS_OK	0x2000	/* packet received okay */
 #define FXP_RFA_STATUS_C	0x8000	/* packet reception complete */
-#define FXP_RFA_CONTROL_SF	0x08	/* simple/flexible memory mode */
-#define FXP_RFA_CONTROL_H	0x10	/* header RFD */
+
+#define FXP_RFA_CONTROL_SF	0x0008	/* simple/flexible memory mode */
+#define FXP_RFA_CONTROL_H	0x0010	/* header RFD */
 #define FXP_RFA_CONTROL_S	0x4000	/* suspend after reception */
 #define FXP_RFA_CONTROL_EL	0x8000	/* end of list */
 
@@ -362,14 +337,10 @@ struct fxp_stats {
 /*
  * Serial EEPROM control register bits
  */
-/* shift clock */
-#define FXP_EEPROM_EESK		0x01
-/* chip select */
-#define FXP_EEPROM_EECS		0x02
-/* data in */
-#define FXP_EEPROM_EEDI		0x04
-/* data out */
-#define FXP_EEPROM_EEDO		0x08
+#define FXP_EEPROM_EESK		0x01		/* shift clock */
+#define FXP_EEPROM_EECS		0x02		/* chip select */
+#define FXP_EEPROM_EEDI		0x04		/* data in */
+#define FXP_EEPROM_EEDO		0x08		/* data out */
 
 /*
  * Serial EEPROM opcodes, including start bit
@@ -385,7 +356,7 @@ struct fxp_stats {
 #define FXP_MDI_READ		0x2
 
 /*
- * PHY device types
+ * PHY device types (from EEPROM)
  */
 #define FXP_PHY_NONE		0
 #define FXP_PHY_82553A		1
