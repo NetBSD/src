@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 1995/09/29 13:51:41 chopps Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 1995/10/09 04:34:02 chopps Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -415,7 +415,7 @@ pmap_bootstrap_alloc(size)
 		avail_start + size, VM_PROT_READ|VM_PROT_WRITE);
 	avail_start += size;
 
-	blkclr((caddr_t) val, size);
+	bzero((caddr_t) val, size);
 	return((void *) val);
 }
 
