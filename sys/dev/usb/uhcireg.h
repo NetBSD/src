@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcireg.h,v 1.11 2000/04/27 15:26:48 augustss Exp $	*/
+/*	$NetBSD: uhcireg.h,v 1.12 2000/07/23 19:43:38 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcireg.h,v 1.12 1999/11/17 22:33:42 n_hibma Exp $ */
 
 /*
@@ -114,7 +114,8 @@
 
 typedef u_int32_t uhci_physaddr_t;
 #define UHCI_PTR_T		0x00000001
-#define UHCI_PTR_Q		0x00000002
+#define UHCI_PTR_TD		0x00000000
+#define UHCI_PTR_QH		0x00000002
 #define UHCI_PTR_VF		0x00000004
 
 /*
