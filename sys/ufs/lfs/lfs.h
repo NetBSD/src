@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.35 2000/11/17 19:14:41 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.36 2000/12/20 00:24:23 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@
 	(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);		\
 }
 #else
-# define LFS_ITIMES(ip, acc, mod, cre) {                                \ 
+# define LFS_ITIMES(ip, acc, mod, cre) {                                \
 	struct buf *ibp;						\
 	IFILE *ifp;							\
 									\
@@ -185,7 +185,7 @@
                         (ip)->i_modrev++;                               \
                 }                                                       \
                 if ((ip)->i_flag & IN_CHANGE) {                         \
-                        (ip)->i_ffs_ctime = (cre)->tv_sec;		\  
+                        (ip)->i_ffs_ctime = (cre)->tv_sec;		\
                         (ip)->i_ffs_ctimensec = (cre)->tv_nsec;         \
                 }                                                       \
                 (ip)->i_flag &= ~(IN_CHANGE | IN_UPDATE);   		\
