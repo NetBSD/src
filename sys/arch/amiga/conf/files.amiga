@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.59 1997/07/17 23:29:31 is Exp $
+#	$NetBSD: files.amiga,v 1.60 1997/07/19 00:01:47 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -23,6 +23,16 @@ device	clock
 attach	clock at mainbus
 file	arch/amiga/dev/clock.c
 file	dev/clock_subr.c
+
+# A2000 internal hwc
+device	a2kbbc
+attach	a2kbbc at mainbus
+file	arch/amiga/dev/a2kbbc.c		a2kbbc
+
+# A3000/4000 internal hwc
+device	a34kbbc
+attach	a34kbbc at mainbus
+file	arch/amiga/dev/a34kbbc.c	a34kbbc
 
 # keyboard
 device	kbd: event
