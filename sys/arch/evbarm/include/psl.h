@@ -1,3 +1,5 @@
-/* $NetBSD: psl.h,v 1.2 2001/09/05 17:00:21 matt Exp $ */
+/* $NetBSD: psl.h,v 1.3 2001/10/27 16:08:16 rearnsha Exp $ */
 
-/*#include <arm/arm32/psl.h>*/
+#ifndef NEWINTR
+#include <arm/arm32/psl.h>
+#endif
