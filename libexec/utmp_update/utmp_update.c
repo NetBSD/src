@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp_update.c,v 1.1 2002/07/28 22:38:51 christos Exp $	 */
+/*	$NetBSD: utmp_update.c,v 1.2 2002/08/05 15:36:51 jmcneill Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <pwd.h>
 #include <utmpx.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 int main(int, char *[]);
