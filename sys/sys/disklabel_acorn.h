@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_acorn.h,v 1.2 2001/11/25 19:04:48 thorpej Exp $	*/
+/*	$NetBSD: disklabel_acorn.h,v 1.3 2003/01/11 18:54:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -34,6 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifndef _SYS_DISKLABEL_ACORN_H_
+#define _SYS_DISKLABEL_ACORN_H_
 
 #define PARTITION_TYPE_UNUSED  0
 #define PARTITION_TYPE_ADFS    1
@@ -103,3 +106,4 @@ int	filecore_label_read __P((dev_t, void (*)(struct buf *),
 int	filecore_label_locate __P((dev_t, void (*)(struct buf *),
 	    struct disklabel *, struct cpu_disklabel *, int *, int *));
 #endif
+#endif /* _SYS_DISKLABEL_ACORN_H_ */
