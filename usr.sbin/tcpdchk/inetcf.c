@@ -1,4 +1,4 @@
-/*	$NetBSD: inetcf.c,v 1.5 1999/08/27 16:07:23 itojun Exp $	*/
+/*	$NetBSD: inetcf.c,v 1.6 2001/06/30 00:56:28 itojun Exp $	*/
 
  /*
   * Routines to parse an inetd.conf or tlid.conf file. This would be a great
@@ -12,7 +12,7 @@
 #if 0
 static char sccsid[] = "@(#) inetcf.c 1.7 97/02/12 02:13:23";
 #else
-__RCSID("$NetBSD: inetcf.c,v 1.5 1999/08/27 16:07:23 itojun Exp $");
+__RCSID("$NetBSD: inetcf.c,v 1.6 2001/06/30 00:56:28 itojun Exp $");
 #endif
 #endif
 
@@ -40,7 +40,8 @@ static char *base_name __P((char *));
   * The last entry should be a NULL.
   */
 char   *uses_libwrap[] = {
-    "tcp", "/usr/sbin/sendmail", "sendmail",
+    "tcp", "/usr/sbin/sendmail",	"sendmail",
+    "tcp", "/usr/sbin/sshd",		"sshd",
     (char *) NULL
 };
 
