@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.h,v 1.4 1998/07/14 19:33:58 drochner Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.h,v 1.5 1998/07/15 14:06:34 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -213,7 +213,7 @@ static const keysym_t pckbd_keydesc_dk_nodead[] = {
     KC(27),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
 };
 
-static const keysym_t pckbd_keydesc_lk[] = {
+static const keysym_t pckbd_keydesc_declk[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(1),	KS_grave,	KS_asciitilde, /* replace escape */
     KC(143),	KS_Multi_key, /* left compose */
@@ -260,7 +260,7 @@ static const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	pckbd_keydesc_de_nodead),
 	KBD_MAP(KB_DK,			KB_US,	pckbd_keydesc_dk),
 	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	pckbd_keydesc_dk_nodead),
-	KBD_MAP(KB_US | KB_LK,		KB_US,	pckbd_keydesc_lk),
+	KBD_MAP(KB_US | KB_DECLK,	KB_US,	pckbd_keydesc_declk),
 };
 
 #undef KBD_MAP
