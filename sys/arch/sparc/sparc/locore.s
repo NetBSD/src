@@ -182,7 +182,7 @@ _cputypval:
 	.asciz	"sun4c"
 	.ascii	"     "
 _cputypvar:
-	.asciz	"compatibility"
+	.asciz	"compatible"
 _cputypvallen = _cputypvar - _cputypval
 	ALIGN
 #endif
@@ -586,10 +586,6 @@ _trapbase:
  * need to .skip 4096 to pad to page size
  */
 	.skip	4096
-
-	/* the message buffer is always mapped */
-_msgbufmapped:
-	.word	1
 
 #ifdef DEBUG
 /*
@@ -2490,14 +2486,15 @@ dostart:
 	ld	[%o4 + NO_NEXTNODE], %o4
 	call	%o4
 	 mov	0, %o0			! node
-	set	_cputypvar, %o1		! name = "compatibility"
-	set	_cputypval, %o2		! buffer ptr (assume buffer long enough)
+
+	mov	%o0, %l0
+	set	_cputypvar-KERNBASE, %o1	! name = "compatible"
+	set	_cputypval-KERNBASE, %o2	! buffer ptr (assume buffer long enough)
 	ld	[%g7 + PV_NODEOPS], %o4	! (void)pv->pv_nodeops->no_getprop(...)
 	ld	[%o4 + NO_GETPROP], %o4
 	call	 %o4
 	 nop
-
-	set	_cputypval, %o2		! buffer ptr
+	set	_cputypval-KERNBASE, %o2	! buffer ptr
 	ldub	[%o2 + 4], %o0		! which is it... "sun4c", "sun4m", "sun4d"?
 	cmp	%o0, 'c'
 	beq	is_sun4c
@@ -2691,21 +2688,43 @@ remap_done:
 	mov	IE_ALLIE, %l1
 	nop; nop			! paranoia
 	stb	%l1, [%l0]
-	b	startmap_done
-	 nop
+	b,a	startmap_done
 #endif /* SUN4 */
 2:
 #if defined(SUN4M)
 	cmp	%g4, CPU_SUN4M		! skip for sun4m!
 	bne	3f
-	 set	_mapme-KERNBASE, %o0
 
-	! rominterpret("0 0 f8000000 15c6a0 map-pages");
-	ld	[%g7 + PV_EVAL], %o1
-	call	%o1			! forth eval
-	 nop
-	b	startmap_done
-	 nop
+	/*
+	 * On entry:
+	 *	%l0: first VA in current map
+	 *	%l1: first VA to be mapped
+	 *	%l2: last VA to be mapped
+	 */
+	set	1 << 24, %l3		! region size in bytes
+	set	SRMMU_CXTPTR, %o0	!
+	lda	[%o0] ASI_SRMMU, %o0	! read CTPR
+	sll	%o0, (8-4), %o0
+					! assume ctx==0
+	lda	[%o0] ASI_BYPASS, %o0	! load root-level PTP using MMU by-pass
+	srl	%o0, 4, %o0		! to get at 1st level PTP
+	sll	%o0, 8, %o0	! shift bits into position
+
+	srl	%l0, 24-2, %l0		! RGSHIFT-2: word entry in PTP
+	add	%l0, %o0, %o1
+	srl	%l1, 24-2, %l0
+	add	%l0, %o0, %o2
+0:
+	lda	[%o1] ASI_BYPASS, %l4	! regmap[highva] = regmap[lowva];
+	sta	%l4, [%o2] ASI_BYPASS
+	add	%o1, 4, %o1
+	add	%o2, 4, %o2
+	add	%l3, %l1, %l1		! highva += regsiz;
+	cmp	%l1, %l2		! done?
+	blu	0b			! no, loop
+	 add	%l3, %l0, %l0		! (and lowva += regsz)
+	
+	b,a	startmap_done
 #endif /* SUN4M */
 3:
 	! botch! We should blow up.
@@ -2814,6 +2833,7 @@ noplab:	 nop
 	set	_trapbase, %l0
 	wr	%l0, 0, %tbr
 	nop; nop; nop			! paranoia
+
 
 	/*
 	 * Ready to run C code; finish bootstrap.
