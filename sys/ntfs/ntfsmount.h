@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfsmount.h,v 1.2.2.1 1999/07/01 23:49:44 thorpej Exp $	*/
+/*	$NetBSD: ntfsmount.h,v 1.2.2.2 1999/08/02 22:40:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Id: ntfsmount.h,v 1.3 1999/04/20 21:06:44 semenu Exp 
+ *	Id: ntfsmount.h,v 1.4 1999/05/12 09:43:09 semenu Exp
  */
 
 #define	NTFS_MFLAG_CASEINS	0x00000001

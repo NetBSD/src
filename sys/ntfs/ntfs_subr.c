@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.3.2.1 1999/07/01 23:49:43 thorpej Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.3.2.2 1999/08/02 22:40:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Id: ntfs_subr.c,v 1.3 1999/04/20 21:06:43 semenu Exp 
+ *	Id: ntfs_subr.c,v 1.4 1999/05/12 09:43:01 semenu Exp
  */
 
 #include <sys/param.h>
@@ -39,7 +39,7 @@
 #include <sys/buf.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__)
 #include <machine/clock.h>
 #endif
 
@@ -55,7 +55,7 @@
 #include <ntfs/ntfs_compr.h>
 #include <ntfs/ntfs_ihash.h>
 
-#if __FreeBSD_version >= 300000
+#if defined(__FreeBSD__)
 MALLOC_DEFINE(M_NTFSNTVATTR, "NTFS vattr", "NTFS file attribute information");
 MALLOC_DEFINE(M_NTFSRDATA, "NTFS res data", "NTFS resident data");
 MALLOC_DEFINE(M_NTFSRUN, "NTFS vrun", "NTFS vrun storage");
@@ -1460,9 +1460,16 @@ ntfs_writentvattr_plain(
 				off = ntfs_btocnoff(off);
 
 				while (left && ccl) {
+#if defined(__FreeBSD__)
 					tocopy = min(left,
 						  min(ntfs_cntob(ccl) - off,
 						      MAXBSIZE - off));
+#else
+					/* under NetBSD, bread() can read
+					 * maximum one block worth of data */
+					tocopy = min(left,
+						ntmp->ntm_bps - off);
+#endif
 					cl = ntfs_btocl(tocopy + off);
 					ddprintf(("ntfs_writentvattr_plain: " \
 						"write: cn: 0x%x cl: %d, " \
@@ -1567,9 +1574,16 @@ ntfs_readntvattr_plain(
 				off = ntfs_btocnoff(off);
 
 				while (left && ccl) {
+#if defined(__FreeBSD__)
 					tocopy = min(left,
 						  min(ntfs_cntob(ccl) - off,
 						      MAXBSIZE - off));
+#else
+					/* under NetBSD, bread() can read
+					 * maximum one block worth of data */
+					tocopy = min(left,
+						ntmp->ntm_bps - off);
+#endif
 					cl = ntfs_btocl(tocopy + off);
 					ddprintf(("ntfs_readntvattr_plain: " \
 						"read: cn: 0x%x cl: %d, " \
