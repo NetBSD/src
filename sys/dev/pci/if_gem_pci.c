@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.2 2001/09/24 04:39:40 eeh Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.3 2001/10/18 03:48:48 thorpej Exp $ */
 
 /*
  * 
@@ -117,50 +117,40 @@ gem_attach_pci(parent, self, aux)
 	struct gem_pci_softc *gsc = (void *)self;
 	struct gem_softc *sc = &gsc->gsc_gem;
 	pci_intr_handle_t intrhandle;
-#ifdef __sparc__
-	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
-#endif
 	const char *intrstr;
-	int type;
 	char devinfo[256];
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
-	if (pa->pa_memt) {
-		type = PCI_MAPREG_TYPE_MEM;
-		sc->sc_bustag = pa->pa_memt;
-	} else {
-		type = PCI_MAPREG_TYPE_IO;
-		sc->sc_bustag = pa->pa_iot;
-	}
-
 	sc->sc_dmatag = pa->pa_dmat;
 
 	sc->sc_pci = 1; /* XXXXX should all be done in bus_dma. */
 
-#define PCI_GEM_BASEADDR	0x10
-	if (pci_mapreg_map(pa, PCI_GEM_BASEADDR, type, 0,
+#define PCI_GEM_BASEADDR	(PCI_MAPREG_START + 0x00)
+
+	/* XXX Need to check for a 64-bit mem BAR? */
+	if (pci_mapreg_map(pa, PCI_GEM_BASEADDR,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &gsc->gsc_memt, &gsc->gsc_memh, NULL, NULL) != 0)
 	{
-		printf(": could not map gem registers\n");
+		printf("%s: could not map gem registers\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	sc->sc_bustag = gsc->gsc_memt;
 	sc->sc_h = gsc->gsc_memh;
 
-#if 0
-/* SBUS compatible stuff? */
-	sc->sc_seb = gsc->gsc_memh;
-	sc->sc_etx = gsc->gsc_memh + 0x2000;
-	sc->sc_erx = gsc->gsc_memh + 0x4000;
-	sc->sc_mac = gsc->gsc_memh + 0x6000;
-	sc->sc_mif = gsc->gsc_memh + 0x7000;
-#endif
+	/*
+	 * XXX This should be done with properties, when those are
+	 * XXX fleshed out.
+	 */
 #ifdef __sparc__
-	myetheraddr(sc->sc_enaddr);
+	{
+		extern void myetheraddr __P((u_char *));
+		myetheraddr(sc->sc_enaddr);
+	}
 #endif
 
 	sc->sc_burst = 16;	/* XXX */
@@ -188,6 +178,6 @@ gem_attach_pci(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		return;	/* bus_unmap ? */
+		return;
 	}
 }
