@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * from: @(#)ansi.h	7.3 (Berkeley) 6/22/92
- * $Id: ansi.h,v 1.1.1.1 1993/10/12 03:22:39 deraadt Exp $
+ * $Id: ansi.h,v 1.2 1993/10/15 02:57:08 deraadt Exp $
  */
 
 #ifndef	_ANSI_H_
@@ -41,19 +41,19 @@
  * Types which are fundamental to the implementation and may appear in
  * more than one standard header are defined here.  Standard headers
  * then use:
- *	#ifdef	_BSD_SIZE_T_
- *	typedef	_BSD_SIZE_T_ size_t;
- *	#undef	_BSD_SIZE_T_
+ *	#ifdef	_SIZE_T_
+ *	typedef	_SIZE_T_ size_t;
+ *	#undef	_SIZE_T_
  *	#endif
  *
  * Thanks, ANSI!
  */
-#define	_BSD_CLOCK_T_	unsigned long		/* clock() */
-#define	_BSD_PTRDIFF_T_	int			/* ptr1 - ptr2 */
-#define	_BSD_SIZE_T_	unsigned int		/* sizeof() */
-#define	_BSD_SSIZE_T_	int			/* byte count or error */
-#define	_BSD_TIME_T_	long			/* time() */
-#define	_BSD_VA_LIST_	char *			/* va_list */
-#define	_BSD_WCHAR_T_	unsigned short		/* wchar_t */
+#define	_CLOCK_T_	unsigned long		/* clock() */
+#define	_PTRDIFF_T_	int			/* ptr1 - ptr2 */
+#define	_SIZE_T_	unsigned int		/* sizeof() */
+#define	_SSIZE_T_	int			/* byte count or error */
+#define	_TIME_T_	long			/* time() */
+#define	_VA_LIST_	char *			/* va_list */
+#define	_WCHAR_T_	unsigned short		/* wchar_t */
 
 #endif	/* _ANSI_H_ */
