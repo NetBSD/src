@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36.4.10 2002/08/13 02:18:46 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36.4.11 2003/01/05 18:55:13 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -247,8 +247,8 @@ pagemove(from, to, size)
 void
 cpu_exit(struct lwp *l, int proc)
 {
-	void switch_exit(struct lwp *);		/* Defined in locore.S */
-	void switch_lwp_exit(struct lwp *);	/* Defined in locore_subr.S */
+	/* This is in locore_subr.S */
+	void switch_exit(struct lwp *, void (*)(struct lwp *));
 #if defined(PPC_HAVE_FPU) || defined(ALTIVEC)
 	struct pcb *pcb = &l->l_addr->u_pcb;
 #endif
@@ -268,10 +268,7 @@ cpu_exit(struct lwp *l, int proc)
 #endif
 
 	splsched();
-	if (proc)
-		switch_exit(l);
-	else
-		switch_lwp_exit(l);
+	switch_exit(l, proc ? exit2 : lwp_exit2);
 }
 
 /*
