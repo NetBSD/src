@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.377 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.378 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -142,3 +142,5 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		devices.  [augustss 20041022]
 	cdce(4): Driver for CDC USB Ethernet devices.  Written by
 		Daniel Hartmeier for OpenBSD.  [augustss 20041022]
+	axe(4): The uax(4) driver has been replaced by the axe driver.
+		[augustss 20041023]

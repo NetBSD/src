@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.70 2004/10/22 13:44:49 augustss Exp $
+.\" $NetBSD: usb.4,v 1.71 2004/10/23 13:46:45 augustss Exp $
 .\"
 .\" Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Octover 22, 2004
+.Dd Octover 23, 2004
 .Dt USB 4
 .Os
 .Sh NAME
@@ -122,6 +122,8 @@ drivers, sorted by driver name:
 .Bl -tag -width usscanner -offset indent
 .It aue
 driver for ADMtek AN986 Pegasus USB Ethernet.
+.It axe
+driver for ASIX AX88172 USB Ethernet.
 .It cdce
 driver Communication Data Class, Ethernet Networking Control Model devices
 .It cue
@@ -130,8 +132,6 @@ driver for CATC USB-EL1201A USB Ethernet.
 driver for Kawasaki LSI KL5KUSB101B USB Ethernet.
 .It uaudio
 driver for audio devices.
-.It uax
-driver for ASIX AX88172 USB Ethernet.
 .It ubsa
 driver for Belkin serial adapters.
 .It udsbr
@@ -502,6 +502,7 @@ specifications can be found at:
 .D1 http://www.usb.org/developers/docs/
 .Pp
 .Xr aue 4 ,
+.Xr axe 4 ,
 .Xr cardbus 4 ,
 .Xr cdce 4 ,
 .Xr cue 4 ,
@@ -512,7 +513,6 @@ specifications can be found at:
 .Xr pci 4 ,
 .Xr slhci 4 ,
 .Xr uaudio 4 ,
-.Xr uax 4 ,
 .Xr ubsa 4 ,
 .Xr ucom 4 ,
 .Xr udsbr 4 ,
