@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.18 1999/09/15 08:43:22 mycroft Exp $	*/
+/*	$NetBSD: targ.c,v 1.19 1999/09/15 10:47:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: targ.c,v 1.18 1999/09/15 08:43:22 mycroft Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.19 1999/09/15 10:47:45 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.18 1999/09/15 08:43:22 mycroft Exp $");
+__RCSID("$NetBSD: targ.c,v 1.19 1999/09/15 10:47:45 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -114,6 +114,8 @@ static int TargPrintNode __P((ClientData, ClientData));
 #ifdef CLEANUP
 static void TargFreeGN __P((ClientData));
 #endif
+static int TargPropagateCohort __P((ClientData, ClientData));
+static int TargPropagateNode __P((ClientData, ClientData));
 
 /*-
  *-----------------------------------------------------------------------
@@ -351,9 +353,6 @@ Targ_FindList (names, flags)
 	     * encountered in the makefile.
 	     */
 	    (void) Lst_AtEnd (nodes, (ClientData)gn);
-	    if (gn->type & OP_DOUBLEDEP) {
-		(void)Lst_Concat (nodes, gn->cohorts, LST_CONCNEW);
-	    }
 	} else if (flags == TARG_NOCREATE) {
 	    Error ("\"%s\" -- target unknown.", name);
 	}
@@ -629,7 +628,7 @@ TargPrintNode (gnp, passp)
 	fputc ('\n', stdout);
 	Lst_ForEach (gn->commands, Targ_PrintCmd, (ClientData)0);
 	printf("\n\n");
-	if (gn->type & OP_DOUBLEDEP) {
+	if ((gn->type & OP_OPMASK) == OP_DOUBLEDEP) {
 	    Lst_ForEach (gn->cohorts, TargPrintNode, (ClientData)&pass);
 	}
     }
@@ -691,4 +690,33 @@ Targ_PrintGraph (pass)
     Dir_PrintDirectories();
     printf("\n");
     Suff_PrintAll();
+}
+
+static int
+TargPropagateCohort (cgnp, pgnp)
+    ClientData   cgnp;
+    ClientData   pgnp;
+{
+    GNode	  *cgn = (GNode *) cgnp;
+    GNode	  *pgn = (GNode *) pgnp;
+
+    cgn->type |= pgn->type & ~OP_OPMASK;
+    return (0);
+}
+
+static int
+TargPropagateNode (gnp, junk)
+    ClientData   gnp;
+    ClientData   junk;
+{
+    GNode	  *gn = (GNode *) gnp;
+    if ((gn->type & OP_OPMASK) == OP_DOUBLEDEP)
+	Lst_ForEach (gn->cohorts, TargPropagateCohort, gnp);
+    return (0);
+}
+
+void
+Targ_Propagate ()
+{
+    Lst_ForEach (allTargets, TargPropagateNode, (ClientData)0);
 }

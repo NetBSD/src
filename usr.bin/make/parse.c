@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.45 1999/09/15 08:43:22 mycroft Exp $	*/
+/*	$NetBSD: parse.c,v 1.46 1999/09/15 10:47:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.45 1999/09/15 08:43:22 mycroft Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.46 1999/09/15 10:47:44 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.45 1999/09/15 08:43:22 mycroft Exp $");
+__RCSID("$NetBSD: parse.c,v 1.46 1999/09/15 10:47:44 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -437,6 +437,8 @@ ParseLinkSrc (pgnp, cgnp)
 {
     GNode          *pgn = (GNode *) pgnp;
     GNode          *cgn = (GNode *) cgnp;
+    if ((pgn->type & OP_OPMASK) == OP_DOUBLEDEP && !Lst_IsEmpty (pgn->cohorts))
+	pgn = (GNode *) Lst_Datum (Lst_Last (pgn->cohorts));
     if (Lst_Member (pgn->children, (ClientData)cgn) == NILLNODE) {
 	(void)Lst_AtEnd (pgn->children, (ClientData)cgn);
 	if (specType == Not) {
@@ -493,44 +495,30 @@ ParseDoOp (gnp, opp)
 	 * instance.
 	 */
 	register GNode	*cohort;
-	LstNode	    	ln;
 
 	/*
-	 * Make sure the copied bits apply to all previous cohorts.
+	 * Propagate copied bits to the initial node.  They'll be propagated
+	 * back to the rest of the cohorts later.
 	 */
-	for (ln = Lst_First(gn->cohorts); ln != NILLNODE; ln = Lst_Succ(ln)) {
-	    cohort = (GNode *)Lst_Datum(ln);
-
-	    cohort->type |= op & OP_PHONY;
-	}
+	gn->type |= op & ~OP_OPMASK;
 
 	cohort = Targ_NewGN(gn->name);
 	/*
-	 * Duplicate links to parents so graph traversal is simple. Perhaps
-	 * some type bits should be duplicated?
-	 *
 	 * Make the cohort invisible as well to avoid duplicating it into
 	 * other variables. True, parents of this target won't tend to do
 	 * anything with their local variables, but better safe than
-	 * sorry.
+	 * sorry. (I think this is pointless now, since the relevant list
+	 * traversals will no longer see this node anyway. -mycroft)
 	 */
-	Lst_ForEach(gn->parents, ParseLinkSrc, (ClientData)cohort);
-	cohort->type = OP_DOUBLEDEP|OP_INVISIBLE|(gn->type & OP_PHONY);
+	cohort->type = op | OP_INVISIBLE;
 	(void)Lst_AtEnd(gn->cohorts, (ClientData)cohort);
-
+    } else {
 	/*
-	 * Replace the node in the targets list with the new copy
+	 * We don't want to nuke any previous flags (whatever they were) so we
+	 * just OR the new operator into the old
 	 */
-	ln = Lst_Member(targets, (ClientData)gn);
-	Lst_Replace(ln, (ClientData)cohort);
-	gn = cohort;
+	gn->type |= op;
     }
-
-    /*
-     * We don't want to nuke any previous flags (whatever they were) so we
-     * just OR the new operator into the old
-     */
-    gn->type |= op;
 
     return (0);
 }
@@ -666,19 +654,6 @@ ParseDoSrc (tOp, src, allsrc)
 	    gn->type |= tOp;
 	} else {
 	    Lst_ForEach (targets, ParseLinkSrc, (ClientData)gn);
-	}
-	if ((gn->type & OP_OPMASK) == OP_DOUBLEDEP) {
-	    register GNode  	*cohort;
-	    register LstNode	ln;
-
-	    for (ln=Lst_First(gn->cohorts); ln != NILLNODE; ln = Lst_Succ(ln)){
-		cohort = (GNode *)Lst_Datum(ln);
-		if (tOp) {
-		    cohort->type |= tOp;
-		} else {
-		    Lst_ForEach(targets, ParseLinkSrc, (ClientData)cohort);
-		}
-	    }
 	}
 	break;
     }
@@ -1586,6 +1561,8 @@ ParseAddCmd(gnp, cmd)
 {
     GNode *gn = (GNode *) gnp;
     /* if target already supplied, ignore commands */
+    if ((gn->type & OP_OPMASK) == OP_DOUBLEDEP && !Lst_IsEmpty (gn->cohorts))
+	gn = (GNode *) Lst_Datum (Lst_Last (gn->cohorts));
     if (!(gn->type & OP_HAS_COMMANDS))
 	(void)Lst_AtEnd(gn->commands, cmd);
     return(0);

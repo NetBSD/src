@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.25 1999/09/15 08:43:22 mycroft Exp $	*/
+/*	$NetBSD: suff.c,v 1.26 1999/09/15 10:47:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.25 1999/09/15 08:43:22 mycroft Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.26 1999/09/15 10:47:44 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.25 1999/09/15 08:43:22 mycroft Exp $");
+__RCSID("$NetBSD: suff.c,v 1.26 1999/09/15 10:47:44 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -706,6 +706,8 @@ Suff_EndTransform(gnp, dummy)
 {
     GNode *gn = (GNode *) gnp;
 
+    if ((gn->type & OP_OPMASK) == OP_DOUBLEDEP && !Lst_IsEmpty (gn->cohorts))
+	gn = (GNode *) Lst_Datum (Lst_Last (gn->cohorts));
     if ((gn->type & OP_TRANSFORM) && Lst_IsEmpty(gn->commands) &&
 	Lst_IsEmpty(gn->children))
     {
@@ -1688,27 +1690,6 @@ SuffApplyTransform(tGn, sGn, t, s)
 	tGn->unmade += 1;
     }
 
-    if ((sGn->type & OP_OPMASK) == OP_DOUBLEDEP) {
-	/*
-	 * When a :: node is used as the implied source of a node, we have
-	 * to link all its cohorts in as sources as well. Only the initial
-	 * sGn gets the target in its iParents list, however, as that
-	 * will be sufficient to get the .IMPSRC variable set for tGn
-	 */
-	for (ln=Lst_First(sGn->cohorts); ln != NILLNODE; ln=Lst_Succ(ln)) {
-	    gn = (GNode *)Lst_Datum(ln);
-
-	    if (Lst_Member(tGn->children, (ClientData)gn) == NILLNODE) {
-		/*
-		 * Not already linked, so form the proper links between the
-		 * target and source.
-		 */
-		(void)Lst_AtEnd(tGn->children, (ClientData)gn);
-		(void)Lst_AtEnd(gn->parents, (ClientData)tGn);
-		tGn->unmade += 1;
-	    }
-	}
-    }
     /*
      * Locate the transformation rule itself
      */

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.22 1998/11/11 19:37:06 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.23 1999/09/15 10:47:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.22 1998/11/11 19:37:06 christos Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.23 1999/09/15 10:47:38 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.22 1998/11/11 19:37:06 christos Exp $");
+__RCSID("$NetBSD: make.c,v 1.23 1999/09/15 10:47:38 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -934,6 +934,13 @@ Make_ExpandUse (targs)
     while (!Lst_IsEmpty (examine)) {
 	gn = (GNode *) Lst_DeQueue (examine);
 
+	if ((gn->type & OP_OPMASK) == OP_DOUBLEDEP) {
+	    Lst new;
+	    new = Lst_Duplicate (gn->cohorts, NOCOPY);
+	    Lst_Concat (new, examine, LST_CONCLINK);
+	    examine = new;
+	}
+	    
 	if ((gn->flags & REMAKE) == 0) {
 	    gn->flags |= REMAKE;
 	    numNodes++;
