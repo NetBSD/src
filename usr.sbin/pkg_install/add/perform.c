@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.52.2.5 2001/03/20 17:56:19 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.52.2.6 2001/03/30 22:42:33 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.52.2.5 2001/03/20 17:56:19 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.52.2.6 2001/03/30 22:42:33 he Exp $");
 #endif
 #endif
 
@@ -316,7 +316,6 @@ pkg_do(char *pkg)
 	(void) snprintf(LogDir, sizeof(LogDir), "%s/%s", dbdir, PkgName);
 	if ((isdir(LogDir) || islinktodir(LogDir)) && !Force) {
 		warnx("package `%s' already recorded as installed", PkgName);
-		code = 1;
 		goto success;	/* close enough for government work */
 	}
 
