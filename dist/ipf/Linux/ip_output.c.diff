@@ -1,0 +1,64 @@
+*** ip_output.c.dist	Mon Sep 15 12:53:36 1997
+--- ip_output.c	Wed May 20 13:57:00 1998
+***************
+*** 76,81 ****
+--- 76,88 ----
+   */
+  int sysctl_ip_dynaddr = 0;
+  
++ #if !defined(CONFIG_FIREWALL_IPFILTER) && defined(CONFIG_FIREWALL_IPFILTER_MODULE)
++ # define CONFIG_FIREWALL_IPFILTER
++ #endif
++ #ifdef CONFIG_FIREWALL_IPFILTER
++ extern int (*fr_checkp)(struct iphdr *, struct device *, int, struct sk_buff **);
++ #endif
++ 
+  /*
+   *	Very Promisc source address re-assignation.
+   *	ONLY acceptable if socket is NOT connected yet.
+***************
+*** 522,527 ****
+--- 529,538 ----
+  	 */
+  	 
+  	ip_statistics.IpOutRequests++;
++ #ifdef CONFIG_FIREWALL_IPFILTER
++ 	if (fr_checkp && (*fr_checkp)(iph, skb->dev, 1, &skb))
++ 		goto out;
++ #endif	
+  #ifdef CONFIG_IP_ACCT
+  	ip_fw_chk(iph,dev,NULL,ip_acct_chain,0,IP_FW_MODE_ACCT_OUT);
+  #endif	
+***************
+*** 765,770 ****
+--- 776,788 ----
+  		else
+  			getfrag(frag,saddr,(void *)iph,0,length);
+  		dev_unlock_list();
++ #ifdef CONFIG_FIREWALL_IPFILTER
++ 		if (fr_checkp && (*fr_checkp)(iph, skb->dev, 1, &skb))
++ 		{
++ 			kfree_skb(skb, FREE_WRITE);
++ 			return -EPERM;
++ 		}
++ #endif	
+  #ifdef CONFIG_FIREWALL
+  		if(call_out_firewall(PF_INET, skb->dev, iph, NULL)< FW_ACCEPT)
+  		{
+***************
+*** 974,979 ****
+--- 992,1005 ----
+  		 *	Account for the fragment.
+  		 */
+  		 
++ #ifdef CONFIG_FIREWALL_IPFILTER
++ 		if (!offset && fr_checkp && (*fr_checkp)(iph, skb->dev,1,&skb))
++ 		{
++ 			if (skb)
++ 				kfree_skb(skb, FREE_WRITE);
++ 			return -EPERM;
++ 		}
++ #endif
+  #ifdef CONFIG_FIREWALL
+  		if(!offset && call_out_firewall(PF_INET, skb->dev, iph, NULL) < FW_ACCEPT)
+  		{
