@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.272 1999/11/10 22:39:45 hubertf Exp $
+#	$NetBSD: GENERIC,v 1.273 1999/11/13 17:54:17 perry Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -112,9 +112,25 @@ options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
+# Pull in config fragments for kernel crypto -- this is required for
+# options IPSEC etc. to work.  Use only one of these, based on whether
+# you use crypto-us or crypto-intl, and adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
+
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
@@ -690,6 +706,8 @@ pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals
