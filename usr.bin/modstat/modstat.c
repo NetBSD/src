@@ -1,4 +1,4 @@
-/*	$NetBSD: modstat.c,v 1.18 2002/09/18 22:59:36 lha Exp $	*/
+/*	$NetBSD: modstat.c,v 1.19 2004/10/22 09:50:54 peter Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modstat.c,v 1.18 2002/09/18 22:59:36 lha Exp $");
+__RCSID("$NetBSD: modstat.c,v 1.19 2004/10/22 09:50:54 peter Exp $");
 #endif
 
 #include <sys/param.h>
@@ -130,7 +130,7 @@ dostat(devfd, modnum, modname)
 	    offset_string,	/* offset into modtype struct */
 	    POINTERSIZE,
 	    (long)sbuf.area,	/* address module loaded at */
-	    (long)sbuf.size,	/* size in pages(K) */
+	    (long)sbuf.size,	/* size in KB */
 	    POINTERSIZE,
 	    (long)sbuf.private,	/* kernel address of private area */
 	    (long)sbuf.ver,	/* Version; always 1 for now */
