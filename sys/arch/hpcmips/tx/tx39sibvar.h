@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sibvar.h,v 1.1 2000/01/08 21:07:02 uch Exp $ */
+/*	$NetBSD: tx39sibvar.h,v 1.2 2000/01/12 14:56:19 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -28,10 +28,18 @@
 
 struct txsib_attach_args {
 	tx_chipset_tag_t sa_tc;
+	int sa_snd_rate;
+	int sa_tel_rate;
 	int sa_slot; /* subframe 0 or subframe 1 */
 };
+
+void	tx39sib_enable1 __P((struct device*));
+void	tx39sib_enable2 __P((struct device*));
+void	tx39sib_disable __P((struct device*));
+int	tx39sib_clock __P((struct device*));
 
 /* subframe0 access sync method */
 void		txsibsf0_reg_write __P((tx_chipset_tag_t, int, u_int16_t));
 u_int16_t	txsibsf0_reg_read __P((tx_chipset_tag_t, int));
 u_int32_t	txsibsf0_read __P((tx_chipset_tag_t, int));
+

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.16 2000/01/10 14:08:05 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.17 2000/01/12 14:56:23 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -173,9 +173,11 @@ device txsim { }
 device txcsbusif {[platform = -1]}
 device txcomif {[slot = -1]}
 device txsibif {[slot = -1]}
+device ucbif { }
 
 attach txsim at mainbus
 file arch/hpcmips/tx/txsim.c		txsim
+file arch/hpcmips/tx/txsnd.c		txsim
 
 device tx39biu: txcsbusif
 attach tx39biu at txsim
@@ -209,11 +211,18 @@ device tx39sib: txsibif
 attach tx39sib at txsim
 file arch/hpcmips/tx/tx39sib.c		tx39sib
 
-#	PHILIPS UCB1200 modem/audio analog front-end
-device ucb: wsmousedev
-attach ucb at txsibif: tpcalib
+#	PHILIPS UCB1200 / TOSHIBA TC35413F (modem/audio analog front-end)
+device ucb: ucbif
+attach ucb at txsibif
 file arch/hpcmips/dev/ucb1200.c		ucb
 
+device ucbtp: wsmousedev
+attach ucbtp at ucbif: tpcalib
+file arch/hpcmips/dev/ucbtp.c		ucbtp
+
+device ucbsnd
+attach ucbsnd at ucbif
+file arch/hpcmips/dev/ucbsnd.c		ucbsnd
 
 device tx39uart: txcomif
 attach tx39uart at txsim
@@ -223,7 +232,7 @@ device txcom
 attach txcom at txcomif
 file arch/hpcmips/tx/txcom.c		txcom
 
-#	ITE 8368E PCMCIA controller
+#	ITE IT8368E PCMCIA / TOSHIBA TC6345AF buffer chip (PCMCIA)
 device it8368e: pcmciabus
 attach it8368e at txcsbus
 file arch/hpcmips/dev/it8368.c	it8368e
