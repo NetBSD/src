@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.10 1998/05/02 16:45:31 scottr Exp $	*/
+/*	$NetBSD: obio.c,v 1.11 2002/04/10 05:13:09 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
+#include <machine/autoconf.h>
 
 #include <mac68k/obio/obiovar.h>
 
@@ -100,12 +100,14 @@ obio_search(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+	struct mainbus_attach_args *mba = (struct mainbus_attach_args *) aux;
 	struct obio_attach_args oa;
 
 	oa.oa_addr = cf->cf_loc[0];
 	oa.oa_drq = cf->cf_loc[1];
 	oa.oa_hsk = cf->cf_loc[2];
-	oa.oa_tag = MAC68K_BUS_SPACE_MEM;
+	oa.oa_tag = mba->mba_bst;
+	oa.oa_dmat = mba->mba_dmat;
 
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oa) > 0)
 		config_attach(parent, cf, &oa, obio_print);
