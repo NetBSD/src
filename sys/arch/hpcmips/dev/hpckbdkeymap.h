@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.4 2000/10/02 03:45:10 sato Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.5 2000/10/04 03:31:14 sato Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -379,7 +379,7 @@ static u_int8_t sigmarion_jp_keytrans[] = {
 /*28	xfer	;	9	n	5	f	2	k	*/
 /*30	up	[	8	j	4	d	6	-	*/
 /*38	-	@	7	h	3	]	s	-	*/
-/*40	caps	-	-	-	bs	-	f8	f3	*/
+/*40	caps	-	-	-	bs	fnc	f8	f3	*/
 /*48	-	alt	-	-	^	k/h	f7	f4	*/
 /*50	-	-	ctrl	-	f10	pgup	f6	f2	*/
 /*58	-	-	-	shift	del	f9	f5	esc	*/
@@ -392,7 +392,7 @@ static u_int8_t sigmarion_jp_keytrans[] = {
 /*28*/	121,	 39,	 10,	 49,	  6,	 33,	  3,	 37,
 /*30*/	 72,	 27,	  9,	 36,	  5,	 32,	  7,	IGN,
 /*38*/	 12,	 26,	  8,	 35,	  4,	 43,	 31,	IGN,
-/*40*/	 58,	IGN,	IGN,	IGN,	 14,	IGN,	 66,	IGN,
+/*40*/	 58,	IGN,	IGN,	IGN,	 14,	184,	 66,	IGN,
 /*48*/	IGN,	 56,	IGN,	IGN,	 13,	112,	 65,	IGN,
 /*50*/	IGN,	IGN,	 29,	IGN,	 68,	 73,	 64,	IGN,
 /*58*/	IGN,	IGN,	IGN,	 42,	 14,	 67,	IGN,	  1,
@@ -406,8 +406,8 @@ static const keysym_t sigmarion_cmdmap[] = {
 	KC(66),  KS_Cmd_Screen3,	KS_f8,		KS_f3,
 	KC(67),  KS_Cmd_Screen4,	KS_f9,		KS_f4,
 	KC(68),  KS_Cmd_Screen5,	KS_f10,		KS_f5,
-	KC(26),  KS_Cmd_BrightnessUp,	KS_bracketleft,	KS_braceleft,
-	KC(27),  KS_Cmd_BrightnessDown,	KS_bracketright,KS_braceright,
+	KC(27),  KS_Cmd_BrightnessUp,	KS_bracketleft,	KS_braceleft,
+	KC(43),  KS_Cmd_BrightnessDown,	KS_bracketright,KS_braceright,
 	KC(51),  KS_Cmd_ContrastDown,	KS_comma,	KS_less,
 	KC(52),  KS_Cmd_ContrastUp,	KS_period,	KS_greater,
 	KC(57),  KS_Cmd_BacklightToggle,KS_space,
