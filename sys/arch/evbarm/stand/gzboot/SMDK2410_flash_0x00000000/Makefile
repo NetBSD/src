@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/10/05 06:58:26 bsh Exp $
+#	$NetBSD: Makefile,v 1.3 2004/04/22 22:41:42 thorpej Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -14,7 +14,7 @@ CPPFLAGS+= -DCONADDR=0x50000000UL
 # CPPFLAGS+= -DCONADDR=0x50008000UL
 CPPFLAGS+= -DIO_INIT_HOOK=smdk2410_io_init -DRAM_INIT_HOOK=smdk2410_ram_init
 CPPFLAGS+= -DXTAL_CLK=12000000 -DFCLK=180000000 -DSDRAM_SIZE=32*1024*1024
-COPTS+= -march=armv4
+CPUFLAGS= -march=armv4
 
 LDSCRIPT= ${.CURDIR}/ldscript
 
