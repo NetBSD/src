@@ -1,3 +1,4 @@
+/*	$NetBSD: cd9660_mount.h,v 1.2 1998/03/01 02:27:49 fvdl Exp $	*/
 /*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
