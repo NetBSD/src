@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.39 1998/07/29 18:44:22 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.40 1998/09/07 07:15:51 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -284,7 +284,7 @@ bwtwoattach_sbus(parent, self, args)
 	sc->sc_set_video = bwtwo_set_video_sun4c;
 
 	if (sa->sa_npromvaddrs != 0)
-		sc->sc_fb.fb_pixels = sa->sa_promvaddrs[0];
+		sc->sc_fb.fb_pixels = (caddr_t)sa->sa_promvaddrs[0];
 	if (isconsole && sc->sc_fb.fb_pixels == NULL) {
 		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
