@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.153 2001/01/11 18:30:17 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.154 2001/01/11 18:44:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.153 2001/01/11 18:30:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154 2001/01/11 18:44:29 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.153 2001/01/11 18:30:17 thorpej Exp $");
 #include <mips/regnum.h>			/* symbolic register indices */
 #include <mips/pte.h>
 #include <mips/psl.h>
+#include <mips/userret.h>
 
 #include <net/netisr.h>
 
@@ -135,18 +136,6 @@ void ast __P((unsigned));
 vaddr_t MachEmulateBranch __P((struct frame *, vaddr_t, unsigned, int));
 extern void MachEmulateFP __P((unsigned));
 extern void MachFPInterrupt __P((unsigned, unsigned, unsigned, struct frame *));
-
-static __inline void
-userret(struct proc *p, unsigned pc, u_quad_t sticks)
-{
-	int sig;
-
-	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
-}
 
 #define DELAYBRANCH(x) ((int)(x)<0)
 /*
@@ -259,7 +248,7 @@ syscall(status, cause, opc)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif
-	userret(p, opc, sticks);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
@@ -280,7 +269,7 @@ child_return(arg)
 	frame->f_regs[V0] = 0;
 	frame->f_regs[V1] = 1;
 	frame->f_regs[A3] = 0;
-	userret(p, frame->f_regs[PC] - sizeof(int), 0); /* XXX */
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);
@@ -432,7 +421,7 @@ trap(status, cause, vaddr, opc, frame)
 		}
 		pmap_set_modified(pa);
 		if (type & T_USER)
-			userret(p, opc, sticks);
+			userret(p);
 		return; /* GEN */
 	    }
 	case T_TLB_LD_MISS:
@@ -503,7 +492,7 @@ trap(status, cause, vaddr, opc, frame)
 		}
 		if (rv == KERN_SUCCESS) {
 			if (type & T_USER) {
-				userret(p, opc, sticks);
+				userret(p);
 			}
 			return; /* GEN */
 		}
@@ -646,13 +635,13 @@ trap(status, cause, vaddr, opc, frame)
 #else
 		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
 #endif
-		userret(p, opc, sticks);
+		userret(p);
 		return; /* GEN */
 	case T_FPE+T_USER:
 #if !defined(NOFPU) || defined(SOFTFLOAT)
 		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
 #endif
-		userret(p, opc, sticks);
+		userret(p);
 		return; /* GEN */
 	case T_OVFLOW+T_USER:
 	case T_TRAP+T_USER:
@@ -664,7 +653,7 @@ trap(status, cause, vaddr, opc, frame)
 	trapsignal(p, sig, ucode);
 	if ((type & T_USER) == 0)
 		panic("trapsignal");
-	userret(p, opc, sticks);
+	userret(p);
 	return;
 }
 
@@ -718,7 +707,7 @@ ast(pc)
 		preempt(NULL);
 	}
 
-	userret(p, pc, p->p_sticks);
+	userret(p);
 }
 
 /*
