@@ -1,43 +1,42 @@
-$NetBSD: To.Do,v 1.2 1994/10/26 08:23:51 cgd Exp $
+$NetBSD: To.Do,v 1.3 1995/02/03 18:34:11 phil Exp $
 
 This is the "To Do" list for NetBSD/pc532
   (Order is not in order of importance.)
 
-1) improve scn driver (integrate mods from Phil Bunde)
+- improve scn driver (integrate mods from Phil Bunde)
 
-2) get shared libs working
+- get shared libs working (mostly done)
 
-3) find and fix tcp/ip problems
+- get kernel debugger working
 
-4) convert to using config.new and standard scsi code
+- get the dp scsi driver working
 
-5) get kernel debugger working
+- write an aic scsi driver
 
-6) get the dp scsi driver working
+- improve copyin/out and friends
 
-7) write an aic scsi driver
+- get gdb working (partially done)
 
-8) improve copyin/out and friends
+- ptrace syscall (?)
 
-9) get gdb working
+- improve bim (detect a non-writeable disklabel, ...)
 
-10) improve bim (detect a non-writeable disklabel, ...)
+- man4 man pages
 
-11) ptrace syscall (?)
+- man8 man pages
 
-12) man4 man pages
+- mods to better support ufs boot loader
 
-13) man8 man pages
+- integrate printer driver from matthias  (partially done)
 
-14) write resettodr to update hardware clock
+- verify all devices including vn, tun, ...
 
-15) mods to better support ufs boot loader
+- integrate other machine independent "devices"
 
-16) integrate printer driver from matthias
+- write a bim.8
 
-17) verify all devices including vn, tun (?), ...
-
-18) write a bim.8
-
-19) find or write a "usable" comm package to replace kermit for
+- find or write a "usable" comm package to replace kermit for
 	initial downloading.
+
+- find out why profiling does not accumulate any time
+
