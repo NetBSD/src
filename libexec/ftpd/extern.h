@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.44 2002/05/30 00:24:47 enami Exp $	*/
+/*	$NetBSD: extern.h,v 1.45 2002/11/29 14:39:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -108,6 +108,8 @@
 # define ULLFP(x)	"%" x "lu"
 # define ULLT		unsigned long
 # define STRTOLL(x,y,z)	strtol(x,y,z)
+# define LLTMIN		LONG_MIN
+# define LLTMAX		LONG_MAX
 #else
 # define LLF		"%lld"
 # define LLFP(x)	"%" x "lld"
@@ -116,6 +118,8 @@
 # define ULLFP(x)	"%" x "llu"
 # define ULLT		unsigned long long
 # define STRTOLL(x,y,z)	strtoll(x,y,z)
+# define LLTMIN		LLONG_MIN
+# define LLTMAX		LLONG_MAX
 #endif
 
 #define FTP_BUFLEN	512
@@ -176,7 +180,6 @@ void	statcmd(void);
 void	statfilecmd(const char *);
 void	statxfer(void);
 void	store(const char *, const char *, int);
-LLT	strsuftoll(const char *);
 void	user(const char *);
 char   *xstrdup(const char *);
 void	yyerror(char *);
@@ -261,19 +264,19 @@ struct ftpclass {
 	char		*display;	/* File to display upon chdir */
 	char		*homedir;	/* Directory to chdir(2) to at login */
 	classflag_t	 flags;		/* Flags; see classflag_t above */
-	int	 	 limit;		/* Max connections (-1 = unlimited) */
+	LLT		 limit;		/* Max connections (-1 = unlimited) */
 	char		*limitfile;	/* File to display if limit reached */
 	LLT		 maxfilesize;	/* Maximum file size of uploads */
 	LLT		 maxrateget;	/* Maximum get transfer rate throttle */
 	LLT		 maxrateput;	/* Maximum put transfer rate throttle */
-	unsigned int	 maxtimeout;	/* Maximum permitted timeout */
+	LLT		 maxtimeout;	/* Maximum permitted timeout */
 	char		*motd;		/* MotD file to display after login */
 	char		*notify;	/* Files to notify about upon chdir */
-	int		 portmin;	/* Minumum port for passive mode */
-	int		 portmax;	/* Maximum port for passive mode */
+	LLT		 portmin;	/* Minumum port for passive mode */
+	LLT		 portmax;	/* Maximum port for passive mode */
 	LLT		 rateget;	/* Get (RETR) transfer rate throttle */
 	LLT		 rateput;	/* Put (STOR) transfer rate throttle */
-	unsigned int	 timeout;	/* Default timeout */
+	LLT		 timeout;	/* Default timeout */
 	class_ft	 type;		/* Class type */
 	mode_t		 umask;		/* Umask to use */
 	LLT		 mmapsize;	/* mmap window size */
@@ -350,8 +353,8 @@ extern	struct tab	cmdtab[];
 			} while (0);
 
 #define CURCLASSTYPE	curclass.type == CLASS_GUEST  ? "GUEST"  : \
-		    	curclass.type == CLASS_CHROOT ? "CHROOT" : \
-		    	curclass.type == CLASS_REAL   ? "REAL"   : \
+			curclass.type == CLASS_CHROOT ? "CHROOT" : \
+			curclass.type == CLASS_REAL   ? "REAL"   : \
 			"<unknown>"
 
 #define ISDOTDIR(x)	(x[0] == '.' && x[1] == '\0')
