@@ -1683,7 +1683,9 @@ fe_tint(sc, tstat)
 		 */
 		ifp->if_opackets += sc->txb_sched;
 		sc->txb_sched = 0;
+	}
 
+	if (sc->txb_sched == 0) {
 		/*
 		 * The transmitter is no more active.
 		 * Reset output active flag and watchdog timer. 
