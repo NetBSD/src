@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.104 2004/04/19 03:50:50 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.105 2004/04/20 20:29:22 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1040,3 +1040,18 @@ distrib/utils/sysinst/msg.mi.pl			1.37
 
 	Polish translations. PR#25224
 	[dsl, ticket #159]
+
+sys/netinet/tcp_subr.c				patch
+sys/netinet/tcp_input.c				patch
+sys/netinet/tcp_var.h				patch
+
+	If a segment is received with RST set and the segment is completely to 
+	the left of the receive window, ignore it.  Add some additional 
+	comments to the code that deals with received segemnts that are 
+	completely to the right of the receive window.  If an invalid SYN is 
+	received, force an ACK and drop it; if the other side really sent the 
+	SYN; it'll respond with a reset.
+	Respond to RST by ACK, as suggested in NISCC recommendation.
+	Rate-limit ACKs against RSTs and SYNs.
+	If SYN is coming and RCV.NXT == SEG.SEQ, then ACK with value - 1.
+	[itojun, ticket #169]
