@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.4 1995/06/04 08:32:24 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.5 1995/06/07 07:06:16 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -56,6 +56,35 @@
 /* default interrupt vector table entries */
 extern IDTVEC(wild), IDTVEC(intr)[], IDTVEC(fast)[];
 extern struct gate_descriptor idt[];
+
+int isamatch __P((struct device *, void *, void *));
+void isaattach __P((struct device *, struct device *, void *));
+
+struct cfdriver isacd = {
+	NULL, "isa", isamatch, isaattach, DV_DULL, sizeof(struct isa_softc), 1
+};
+
+int
+isamatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+
+	return (1);
+}
+
+void
+isaattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct isa_softc *sc = (struct isa_softc *)self;
+
+	printf("\n");
+
+	TAILQ_INIT(&sc->sc_subdevs);
+	config_scan(isascan, self);
+}
 
 /*
  * Fill in default interrupt table (in case of spuruious interrupt
