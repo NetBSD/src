@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.6 2001/05/29 04:18:24 itojun Exp $
+#	$NetBSD: Makefile,v 1.7 2001/10/19 02:53:02 tv Exp $
 #	install these sources in /usr/share/sendmail/ostype
 
 DIST=		${.CURDIR}/../../../../dist
 .PATH: ${DIST}/sendmail/cf/ostype
 
 FILESDIR=	/usr/share/sendmail/ostype
-FILES=		aix2.m4 aix3.m4 aix4.m4 aix5.m4 altos.m4 amdahl-uts.m4 aux.m4 \
+FILES=		aix2.m4 aix3.m4 aix4.m4 aix5.m4 altos.m4 amdahl-uts.m4 \
 		bsd4.3.m4 bsd4.4.m4 bsdi.m4 bsdi1.0.m4 bsdi2.0.m4 \
 		darwin.m4 dgux.m4 domainos.m4 dynix3.2.m4 freebsd4.m4 \
 		gnu.m4 hpux10.m4 \
