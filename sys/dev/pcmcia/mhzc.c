@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.15 2004/08/06 19:07:13 mycroft Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.16 2004/08/07 05:27:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.15 2004/08/06 19:07:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.16 2004/08/07 05:27:39 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -204,7 +204,7 @@ mhzc_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_pf = pa->pf;
 
@@ -242,21 +242,21 @@ mhzc_attach(parent, self, aux)
 		}
 	}
 	if (cfe == NULL) {
-		printf("%s: unable to find suitable config table entry\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error("%s: unable to find suitable config table entry\n",
+		    self->dv_xname);
 		return;
 	}
 
 	if (mhzc_alloc_ethernet(sc, cfe) == 0) {
-		printf("%s: unable to allocate space for Ethernet portion\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error("%s: unable to allocate space for Ethernet portion\n",
+		    self->dv_xname);
 		goto alloc_ethernet_failed;
 	}
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
-		printf(": function enable failed\n");
+		aprint_error("%s: function enable failed\n", self->dv_xname);
 		goto enable_failed;
 	}
 	sc->sc_flags |= MHZC_IOSPACE_ALLOCED;
@@ -264,8 +264,8 @@ mhzc_attach(parent, self, aux)
 	if (sc->sc_product->mp_enable != NULL)
 		(*sc->sc_product->mp_enable)(sc);
 
-	sc->sc_modem = config_found(&sc->sc_dev, "com", mhzc_print);
-	sc->sc_ethernet = config_found(&sc->sc_dev, "sm", mhzc_print);
+	sc->sc_modem = config_found(self, "com", mhzc_print);
+	sc->sc_ethernet = config_found(self, "sm", mhzc_print);
 
 	pcmcia_function_disable(pa->pf);
 	return;
@@ -691,16 +691,15 @@ com_mhzc_attach(parent, self, aux)
 	struct com_softc *sc = (void *)self;
 	struct mhzc_softc *msc = (void *)parent;
 
-	printf(":");
+	aprint_normal("\n");
+
 	if (pcmcia_io_map(msc->sc_pf, PCMCIA_WIDTH_IO8, 0,
 	    msc->sc_modem_pcioh.size, &msc->sc_modem_pcioh,
 	    &msc->sc_modem_io_window)) {
-		printf("unable to map I/O space\n");
+		aprint_error("%s: unable to map I/O space\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
-	printf(" io 0x%x-0x%x",
-	    (int)msc->sc_modem_pcioh.addr,
-	    (int)(msc->sc_modem_pcioh.addr + msc->sc_modem_pcioh.size - 1));
 
 	msc->sc_flags |= MHZC_MODEM_MAPPED;
 
@@ -714,6 +713,8 @@ com_mhzc_attach(parent, self, aux)
 
 	sc->enable = com_mhzc_enable;
 	sc->disable = com_mhzc_disable;
+
+	aprint_normal("%s", sc->sc_dev.dv_xname);
 
 	com_attach_subr(sc);
 
@@ -778,16 +779,15 @@ sm_mhzc_attach(parent, self, aux)
 	struct mhzc_softc *msc = (void *)parent;
 	u_int8_t myla[ETHER_ADDR_LEN];
 
-	printf(":");
+	aprint_normal("\n ");
+
 	if (pcmcia_io_map(msc->sc_pf, PCMCIA_WIDTH_IO16, 0,
 	    msc->sc_ethernet_pcioh.size, &msc->sc_ethernet_pcioh,
 	    &msc->sc_ethernet_io_window)) {
-		printf("unable to map I/O space\n");
+		aprint_error("%s: unable to map I/O space\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
-	printf(" io 0x%x-0x%x\n",
-	   (int)msc->sc_ethernet_pcioh.addr,
-	   (int)(msc->sc_ethernet_pcioh.addr + msc->sc_ethernet_pcioh.size - 1));
 
 	msc->sc_flags |= MHZC_ETHERNET_MAPPED;
 
@@ -799,6 +799,8 @@ sm_mhzc_attach(parent, self, aux)
 
 	if ((*msc->sc_product->mp_enaddr)(msc, myla) != 1)
 		return;
+
+	aprint_normal("%s", sc->sc_dev.dv_xname);
 
 	/* Perform generic initialization. */
 	smc91cxx_attach(sc, myla);

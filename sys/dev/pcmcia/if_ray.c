@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.45 2004/07/07 06:43:22 mycroft Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.46 2004/08/07 05:35:50 mycroft Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.45 2004/07/07 06:43:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.46 2004/08/07 05:35:50 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -515,7 +515,7 @@ ray_attach(parent, self, aux)
 	/* enable the card */
 	pcmcia_function_init(sc->sc_pf, SIMPLEQ_FIRST(&sc->sc_pf->cfe_head));
 	if (pcmcia_function_enable(sc->sc_pf)) {
-		printf(": failed to enable the card");
+		aprint_error("%s: failed to enable the card\n", self->dv_xname);
 		return;
 	}
 
@@ -523,14 +523,14 @@ ray_attach(parent, self, aux)
 	 * map in the memory
 	 */
 	if (pcmcia_mem_alloc(sc->sc_pf, RAY_SRAM_MEM_SIZE, &sc->sc_mem)) {
-		printf(": can\'t alloc shared memory\n");
+		aprint_error("%s: can't alloc shared memory\n", self->dv_xname);
 		goto fail;
 	}
 
 	if (pcmcia_mem_map(sc->sc_pf, PCMCIA_WIDTH_MEM8|PCMCIA_MEM_COMMON,
 	    RAY_SRAM_MEM_BASE, RAY_SRAM_MEM_SIZE, &sc->sc_mem, &memoff,
 	    &sc->sc_window)) {
-		printf(": can\'t map shared memory\n");
+		aprint_error("%s: can't map shared memory\n", self->dv_xname);
 		pcmcia_mem_free(sc->sc_pf, &sc->sc_mem);
 		goto fail;
 	}
@@ -542,15 +542,15 @@ ray_attach(parent, self, aux)
 
 	/* check to see that card initialized properly */
 	if (ep->e_status != RAY_ECFS_CARD_OK) {
-		printf(": card failed self test: status %d\n",
-		    sc->sc_ecf_startup.e_status);
+		aprint_error("%s: card failed self test: status %d\n",
+		    self->dv_xname, sc->sc_ecf_startup.e_status);
 		goto fail;
 	}
 
 	/* check firmware version */
 	if (sc->sc_version != SC_BUILD_4 && sc->sc_version != SC_BUILD_5) {
-		printf(": unsupported firmware version %d\n",
-		    ep->e_fw_build_string);
+		aprint_error("%s: unsupported firmware version %d\n",
+		    self->dv_xname, ep->e_fw_build_string);
 		goto fail;
 	}
 
@@ -582,17 +582,17 @@ ray_attach(parent, self, aux)
 	 * attach the interface
 	 */
 	/* The version isn't the most accurate way, but it's easy. */
-	printf("%s: firmware version %d\n", sc->sc_dev.dv_xname,
+	aprint_normal("%s: firmware version %d\n", self->dv_xname,
 	    sc->sc_version);
 	if (sc->sc_version != SC_BUILD_4)
-		printf("%s: supported rates %0x:%0x:%0x:%0x:%0x:%0x:%0x:%0x\n",
-		    sc->sc_xname, ep->e_rates[0], ep->e_rates[1],
+		aprint_normal("%s: supported rates %0x:%0x:%0x:%0x:%0x:%0x:%0x:%0x\n",
+		    self->dv_xname, ep->e_rates[0], ep->e_rates[1],
 		    ep->e_rates[2], ep->e_rates[3], ep->e_rates[4],
 		    ep->e_rates[5], ep->e_rates[6], ep->e_rates[7]);
-	printf("%s: 802.11 address %s\n", sc->sc_xname,
+	aprint_normal("%s: 802.11 address %s\n", self->dv_xname,
 	    ether_sprintf(ep->e_station_addr));
 
-	memcpy(ifp->if_xname, sc->sc_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, self->dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = ray_if_start;
 	ifp->if_ioctl = ray_ioctl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.32 2004/08/07 01:07:31 mycroft Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.33 2004/08/07 05:27:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.32 2004/08/07 01:07:31 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.33 2004/08/07 05:27:39 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,13 +142,15 @@ sm_pcmcia_attach(parent, self, aux)
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	const struct pcmcia_product *pp;
 
+	aprint_normal("\n");
+
 	psc->sc_pf = pa->pf;
 	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
-		printf(": function enable failed\n");
+		aprint_error("%s: function enable failed\n", self->dv_xname);
 		goto enable_failed;
 	}
 
@@ -157,7 +159,7 @@ sm_pcmcia_attach(parent, self, aux)
 	/* Allocate and map i/o space for the card. */
 	if (pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
 	    cfe->iospace[0].length, &psc->sc_pcioh)) {
-		printf(": can't allocate i/o space\n");
+		aprint_error("%s: can't allocate i/o space\n", self->dv_xname);
 		goto ioalloc_failed;
 	}
 
@@ -170,11 +172,9 @@ sm_pcmcia_attach(parent, self, aux)
 	if (pcmcia_io_map(pa->pf, (cfe->flags & PCMCIA_CFE_IO16) ?
 	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8, 0, cfe->iospace[0].length,
 	    &psc->sc_pcioh, &psc->sc_io_window)) {
-		printf(": can't map i/o space\n");
+		aprint_error("%s: can't map i/o space\n", self->dv_xname);
 		goto iomap_failed;
 	}
-
-	printf("\n");
 
 	pp = pcmcia_product_lookup(pa, sm_pcmcia_products,
 	    sizeof sm_pcmcia_products[0], NULL);
@@ -190,8 +190,8 @@ sm_pcmcia_attach(parent, self, aux)
 	} else {
 		if (!sm_pcmcia_ascii_enaddr(pa->pf->sc->card.cis1_info[3], enaddr) &&
 		    !sm_pcmcia_ascii_enaddr(pa->pf->sc->card.cis1_info[2], enaddr))
-			printf("%s: unable to get Ethernet address\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error("%s: unable to get Ethernet address\n",
+			    self->dv_xname);
 	}
 
 	/* Perform generic intialization. */

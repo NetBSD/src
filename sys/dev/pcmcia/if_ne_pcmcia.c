@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.124 2004/08/06 19:07:12 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.125 2004/08/07 05:27:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.124 2004/08/06 19:07:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.125 2004/08/07 05:27:39 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -542,6 +542,8 @@ ne_pcmcia_attach(parent, self, aux)
 	u_int8_t myea[6], *enaddr;
 	const char *typestr = "";
 
+	aprint_normal("\n");
+
 	psc->sc_pf = pa->pf;
 
 	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
@@ -552,16 +554,18 @@ ne_pcmcia_attach(parent, self, aux)
 		 */
 
 		if (cfe->num_memspace != 1) {
-			printf(": unexpected number of memory spaces "
-			    " %d should be 1\n", cfe->num_memspace);
+			aprint_error("%s: unexpected number of memory spaces "
+			    " %d should be 1\n", self->dv_xname,
+			    cfe->num_memspace);
 			continue;
 		}
 #endif
 
 		if (cfe->num_iospace == 1) {
 			if (cfe->iospace[0].length != NE2000_NPORTS) {
-				printf(": unexpected I/O space configuration"
-				    " (continued)\n%s", dsc->sc_dev.dv_xname);
+				aprint_error("%s: unexpected I/O space"
+				    " configuration (continued)\n",
+				    self->dv_xname);
 				/* XXX really safe for all other cards? */
 			}
 		} else if (cfe->num_iospace == 2) {
@@ -574,17 +578,17 @@ ne_pcmcia_attach(parent, self, aux)
 			if (cfe->iospace[0].length + cfe->iospace[1].length !=
 			    NE2000_NPORTS) {
 #ifdef DIAGNOSTIC
-				printf(": unexpected I/O "
-				    "space configuration; ignored\n%s",
-				    dsc->sc_dev.dv_xname);
+				aprint_error("%s: unexpected I/O space"
+				    " configuration (ignored)\n",
+				    self->dv_xname);
 #endif
 				continue;
 			}
 		} else {
 #ifdef DIAGNOSTIC
-			printf(": unexpected number of i/o spaces %d"
-			    " should be 1 or 2; ignored\n%s",
-			    cfe->num_iospace, dsc->sc_dev.dv_xname);
+			aprint_error("%s: unexpected number of i/o spaces %d"
+			    " should be 1 or 2 (ignored)\n",
+			    self->dv_xname, cfe->num_iospace);
 #endif
 			continue;
 		}
@@ -592,8 +596,8 @@ ne_pcmcia_attach(parent, self, aux)
 		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
 		    NE2000_NPORTS, NE2000_NPORTS, &psc->sc_pcioh)) {
 #ifdef DIAGNOSTIC
-			printf(": can't allocate i/o space %lx; ignored\n%s",
-			    cfe->iospace[0].start, dsc->sc_dev.dv_xname);
+			aprint_error("%s: can't allocate i/o space %lx (ignored\n)",
+			    self->dv_xname, cfe->iospace[0].start);
 #endif
 			continue;
 		}
@@ -603,7 +607,7 @@ ne_pcmcia_attach(parent, self, aux)
 	}
 
 	if (cfe == NULL) {
-		printf(": no suitable config entry\n");
+		aprint_error("%s: no suitable config entry\n", self->dv_xname);
 		goto fail_1;
 	}
 
@@ -614,7 +618,8 @@ ne_pcmcia_attach(parent, self, aux)
 	if (bus_space_subregion(dsc->sc_regt, dsc->sc_regh,
 	    NE2000_ASIC_OFFSET, NE2000_ASIC_NPORTS,
 	    &nsc->sc_asich)) {
-		printf(": can't get subregion for asic\n");
+		aprint_error("%s: can't get subregion for asic\n",
+		    self->dv_xname);
 		goto fail_2;
 	}
 
@@ -625,7 +630,7 @@ ne_pcmcia_attach(parent, self, aux)
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
-		printf(": function enable failed\n");
+		aprint_error("%s: function enable failed\n", self->dv_xname);
 		goto fail_2;
 	}
 
@@ -633,18 +638,16 @@ ne_pcmcia_attach(parent, self, aux)
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO8,
 	    NE2000_NIC_OFFSET, NE2000_NIC_NPORTS,
 	    &psc->sc_pcioh, &psc->sc_nic_io_window)) {
-		printf(": can't map NIC i/o space\n");
+		aprint_error("%s: can't map NIC i/o space\n", self->dv_xname);
 		goto fail_3;
 	}
 
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16,
 	    NE2000_ASIC_OFFSET, NE2000_ASIC_NPORTS,
 	    &psc->sc_pcioh, &psc->sc_asic_io_window)) {
-		printf(": can't map ASIC i/o space\n");
+		aprint_error("%s: can't map ASIC i/o space\n", self->dv_xname);
 		goto fail_4;
 	}
-
-	aprint_normal("\n");
 
 	/*
 	 * Read the station address from the board.
