@@ -16,9 +16,9 @@
 
 #ifndef lint
 # ifdef DAEMON
-static char id[] = "@(#)Id: daemon.c,v 8.401.4.51 2001/02/23 18:57:27 geir Exp (with daemon mode)";
+static char id[] = "@(#)Id: daemon.c,v 8.401.4.68 2001/07/20 18:45:58 gshapiro Exp (with daemon mode)";
 # else /* DAEMON */
-static char id[] = "@(#)Id: daemon.c,v 8.401.4.51 2001/02/23 18:57:27 geir Exp (without daemon mode)";
+static char id[] = "@(#)Id: daemon.c,v 8.401.4.68 2001/07/20 18:45:58 gshapiro Exp (without daemon mode)";
 # endif /* DAEMON */
 #endif /* ! lint */
 
@@ -87,6 +87,8 @@ typedef struct daemon DAEMON_T;
 static void	connecttimeout __P((void));
 static int	opendaemonsocket __P((struct daemon *, bool));
 static u_short	setupdaemon __P((SOCKADDR *));
+static SIGFUNC_DECL	sighup __P((int));
+static void	restart_daemon __P((void));
 
 /*
 **  DAEMON.C -- routines to use when running as a daemon.
@@ -194,6 +196,10 @@ getrequests(e)
 			  ControlSocketName, errstring(errno));
 
 	(void) setsignal(SIGCHLD, reapchild);
+	(void) setsignal(SIGHUP, sighup);
+
+	/* workaround: can't seem to release the signal in the parent */
+	(void) releasesignal(SIGHUP);
 
 	/* write the pid to file */
 	log_sendmail_pid(e);
@@ -234,6 +240,11 @@ getrequests(e)
 
 		/* see if we are rejecting connections */
 		(void) blocksignal(SIGALRM);
+
+		if (ShutdownRequest != NULL)
+			shutdown_daemon();
+		else if (RestartRequest != NULL)
+			restart_daemon();
 
 		timenow = curtime();
 
@@ -297,6 +308,12 @@ getrequests(e)
 				Daemons[idx].d_firsttime = FALSE;
 			}
 		}
+
+		/* May have been sleeping above, check again */
+		if (ShutdownRequest != NULL)
+			shutdown_daemon();
+		else if (RestartRequest != NULL)
+			restart_daemon();
 
 		if (timenow >= last_disk_space_check)
 		{
@@ -391,6 +408,11 @@ getrequests(e)
 			fd_set readfds;
 			struct timeval timeout;
 
+			if (ShutdownRequest != NULL)
+				shutdown_daemon();
+			else if (RestartRequest != NULL)
+				restart_daemon();
+
 			FD_ZERO(&readfds);
 
 			for (idx = 0; idx < ndaemons; idx++)
@@ -421,23 +443,17 @@ getrequests(e)
 			}
 # endif /* NETUNIX */
 
-			/*
-			**  if one socket is closed, set the timeout
-			**  to 5 seconds (so it might get reopened soon),
-			**  otherwise (all sockets open) 60.
-			*/
-
-			idx = 0;
-			while (idx < ndaemons && Daemons[idx].d_socket >= 0)
-				idx++;
-			if (idx < ndaemons)
-				timeout.tv_sec = 5;
-			else
-				timeout.tv_sec = 60;
+			timeout.tv_sec = 5;
 			timeout.tv_usec = 0;
 
 			t = select(highest + 1, FDSET_CAST &readfds,
 				   NULL, NULL, &timeout);
+
+			/* Did someone signal while waiting? */
+			if (ShutdownRequest != NULL)
+				shutdown_daemon();
+			else if (RestartRequest != NULL)
+				restart_daemon();
 
 
 
@@ -677,6 +693,17 @@ getrequests(e)
 			**	Verify calling user id if possible here.
 			*/
 
+			/* Reset global flags */
+			RestartRequest = NULL;
+			ShutdownRequest = NULL;
+			PendingSignal = 0;
+
+			(void) releasesignal(SIGALRM);
+			(void) releasesignal(SIGCHLD);
+			(void) setsignal(SIGCHLD, SIG_DFL);
+			(void) setsignal(SIGHUP, SIG_DFL);
+			(void) setsignal(SIGTERM, intsig);
+
 			if (!control)
 			{
 				define(macid("{daemon_addr}", NULL),
@@ -688,14 +715,11 @@ getrequests(e)
 				       newstr(status), &BlankEnvelope);
 			}
 
-			(void) releasesignal(SIGALRM);
-			(void) releasesignal(SIGCHLD);
-			(void) setsignal(SIGCHLD, SIG_DFL);
-			(void) setsignal(SIGHUP, intsig);
 			for (idx = 0; idx < ndaemons; idx++)
 			{
 				if (Daemons[idx].d_socket >= 0)
 					(void) close(Daemons[idx].d_socket);
+				Daemons[idx].d_socket = -1;
 			}
 			clrcontrol();
 
@@ -1719,7 +1743,7 @@ makeconnection(host, port, mci, e)
 	{
 		STRUCTCOPY(ClientAddr, clt_addr);
 		if (clt_addr.sa.sa_family == AF_UNSPEC)
-			clt_addr.sa.sa_family = InetMode;
+			clt_addr.sa.sa_family = family;
 		switch (clt_addr.sa.sa_family)
 		{
 # if NETINET
@@ -2008,8 +2032,9 @@ gothostent:
 	for (;;)
 	{
 		if (tTd(16, 1))
-			dprintf("makeconnection (%s [%s])\n",
-				host, anynet_ntoa(&addr));
+			dprintf("makeconnection (%s [%s].%d (%d))\n",
+				host, anynet_ntoa(&addr), ntohs(port),
+				addr.sa.sa_family);
 
 		/* save for logging */
 		CurHostAddr = addr;
@@ -2022,7 +2047,7 @@ gothostent:
 		}
 		else
 		{
-			s = socket(addr.sa.sa_family, SOCK_STREAM, 0);
+			s = socket(clt_addr.sa.sa_family, SOCK_STREAM, 0);
 		}
 		if (s < 0)
 		{
@@ -2128,9 +2153,11 @@ gothostent:
 			int i;
 
 			if (e->e_ntries <= 0 && TimeOuts.to_iconnect != 0)
-				ev = setevent(TimeOuts.to_iconnect, connecttimeout, 0);
+				ev = setevent(TimeOuts.to_iconnect,
+					      connecttimeout, 0);
 			else if (TimeOuts.to_connect != 0)
-				ev = setevent(TimeOuts.to_connect, connecttimeout, 0);
+				ev = setevent(TimeOuts.to_connect,
+					      connecttimeout, 0);
 			else
 				ev = NULL;
 
@@ -2316,6 +2343,12 @@ gothostent:
 static void
 connecttimeout()
 {
+	/*
+	**  NOTE: THIS CAN BE CALLED FROM A SIGNAL HANDLER.  DO NOT ADD
+	**	ANYTHING TO THIS ROUTINE UNLESS YOU KNOW WHAT YOU ARE
+	**	DOING.
+	*/
+
 	errno = ETIMEDOUT;
 	longjmp(CtxConnectTimeout, 1);
 }
@@ -2416,6 +2449,144 @@ int makeconnection_ds(mux_path, mci)
 }
 # endif /* NETUNIX */
 /*
+**  SIGHUP -- handle a SIGHUP signal
+**
+**	Parameters:
+**		sig -- incoming signal.
+**
+**	Returns:
+**		none.
+**
+**	Side Effects:
+**		Sets RestartRequest which should cause the daemon
+**		to restart.
+**
+**	NOTE:	THIS CAN BE CALLED FROM A SIGNAL HANDLER.  DO NOT ADD
+**		ANYTHING TO THIS ROUTINE UNLESS YOU KNOW WHAT YOU ARE
+**		DOING.
+*/
+
+/* ARGSUSED */
+static SIGFUNC_DECL
+sighup(sig)
+	int sig;
+{
+	int save_errno = errno;
+
+	FIX_SYSV_SIGNAL(sig, sighup);
+	RestartRequest = "signal";
+	errno = save_errno;
+	return SIGFUNC_RETURN;
+}
+/*
+**  RESTART_DAEMON -- Performs a clean restart of the daemon
+**
+**	Parameters:
+**		none.
+**
+**	Returns:
+**		none.
+**
+**	Side Effects:
+**		restarts the daemon or exits if restart fails.
+*/
+
+/* Make a non-DFL/IGN signal a noop */
+#define SM_NOOP_SIGNAL(sig, old)				\
+do								\
+{								\
+	(old) = setsignal((sig), sm_signal_noop);		\
+	if ((old) == SIG_IGN || (old) == SIG_DFL)		\
+		(void) setsignal((sig), (old));			\
+} while (0)
+
+static void
+restart_daemon()
+{
+	int i;
+	int save_errno;
+	char *reason;
+	sigfunc_t ignore, oalrm, ousr1;
+	extern int DtableSize;
+
+	/* clear the events to turn off SIGALRMs */
+	clear_events();
+	allsignals(TRUE);
+
+	reason = RestartRequest;
+	RestartRequest = NULL;
+	PendingSignal = 0;
+
+	if (SaveArgv[0][0] != '/')
+	{
+		if (LogLevel > 3)
+			sm_syslog(LOG_INFO, NOQID,
+				  "could not restart: need full path");
+		finis(FALSE, EX_OSFILE);
+	}
+	if (LogLevel > 3)
+		sm_syslog(LOG_INFO, NOQID, "restarting %s due to %s",
+			  SaveArgv[0],
+			  reason == NULL ? "implicit call" : reason);
+
+	closecontrolsocket(TRUE);
+	if (drop_privileges(TRUE) != EX_OK)
+	{
+		if (LogLevel > 0)
+			sm_syslog(LOG_ALERT, NOQID,
+				  "could not set[ug]id(%d, %d): %m",
+				  RunAsUid, RunAsGid);
+		finis(FALSE, EX_OSERR);
+	}
+
+	/* arrange for all the files to be closed */
+	for (i = 3; i < DtableSize; i++)
+	{
+		register int j;
+
+		if ((j = fcntl(i, F_GETFD, 0)) != -1)
+			(void) fcntl(i, F_SETFD, j | FD_CLOEXEC);
+	}
+
+	/*
+	**  Need to allow signals before execve() to make them "harmless".
+	**  However, the default action can be "terminate", so it isn't
+	**  really harmless.  Setting signals to IGN will cause them to be
+	**  ignored in the new process to, so that isn't a good alternative.
+	*/
+
+	SM_NOOP_SIGNAL(SIGALRM, oalrm);
+	SM_NOOP_SIGNAL(SIGCHLD, ignore);
+	SM_NOOP_SIGNAL(SIGHUP, ignore);
+	SM_NOOP_SIGNAL(SIGINT, ignore);
+	SM_NOOP_SIGNAL(SIGPIPE, ignore);
+	SM_NOOP_SIGNAL(SIGTERM, ignore);
+#ifdef SIGUSR1
+	SM_NOOP_SIGNAL(SIGUSR1, ousr1);
+#endif /* SIGUSR1 */
+	allsignals(FALSE);
+
+	(void) execve(SaveArgv[0], (ARGV_T) SaveArgv, (ARGV_T) ExternalEnviron);
+	save_errno = errno;
+
+	/* block signals again and restore needed signals */
+	allsignals(TRUE);
+
+	/* For finis() events */
+	(void) setsignal(SIGALRM, oalrm);
+
+#ifdef SIGUSR1
+	/* For debugging finis() */
+	(void) setsignal(SIGUSR1, ousr1);
+#endif /* SIGUSR1 */
+
+	errno = save_errno;
+	if (LogLevel > 0)
+		sm_syslog(LOG_ALERT, NOQID, "could not exec %s: %m",
+			  SaveArgv[0]);
+	finis(FALSE, EX_OSFILE);
+}
+/*
 **  MYHOSTNAME -- return the name of this host.
 **
 **	Parameters:
@@ -2439,6 +2610,19 @@ myhostname(hostbuf, size)
 	if (gethostname(hostbuf, size) < 0 || hostbuf[0] == '\0')
 		(void) strlcpy(hostbuf, "localhost", size);
 	hp = sm_gethostbyname(hostbuf, InetMode);
+# if NETINET && NETINET6
+	if (hp == NULL && InetMode == AF_INET6)
+	{
+		/*
+		**  It's possible that this IPv6 enabled machine doesn't
+		**  actually have any IPv6 interfaces and, therefore, no
+		**  IPv6 addresses.  Fall back to AF_INET.
+		*/
+
+		hp = sm_gethostbyname(hostbuf, AF_INET);
+	}
+# endif /* NETINET && NETINET6 */
+
 	if (hp == NULL)
 		return NULL;
 	if (strchr(hp->h_name, '.') != NULL || strchr(hostbuf, '.') == NULL)
@@ -2578,6 +2762,13 @@ static jmp_buf	CtxAuthTimeout;
 static void
 authtimeout()
 {
+	/*
+	**  NOTE: THIS CAN BE CALLED FROM A SIGNAL HANDLER.  DO NOT ADD
+	**	ANYTHING TO THIS ROUTINE UNLESS YOU KNOW WHAT YOU ARE
+	**	DOING.
+	*/
+
+	errno = ETIMEDOUT;
 	longjmp(CtxAuthTimeout, 1);
 }
 
@@ -2645,10 +2836,30 @@ getauthinfo(fd, may_be_forged)
 	}
 	else
 	{
-		/* try to match the reverse against the forward lookup */
-		hp = sm_gethostbyname(RealHostName,
-				      RealHostAddr.sa.sa_family);
+		int family;
 
+		family = RealHostAddr.sa.sa_family;
+# if NETINET6 && NEEDSGETIPNODE
+		/*
+		**  If RealHostAddr is an IPv6 connection with an
+		**  IPv4-mapped address, we need RealHostName's IPv4
+		**  address(es) for addrcmp() to compare against
+		**  RealHostAddr.
+		**
+		**  Actually, we only need to do this for systems
+		**  which NEEDSGETIPNODE since the real getipnodebyname()
+		**  already does V4MAPPED address via the AI_V4MAPPEDCFG
+		**  flag.  A better fix to this problem is to add this
+		**  functionality to our stub getipnodebyname().
+		*/
+
+		if (family == AF_INET6 &&
+		    IN6_IS_ADDR_V4MAPPED(&RealHostAddr.sin6.sin6_addr))
+			family = AF_INET;
+# endif /* NETINET6 && NEEDSGETIPNODE */
+
+		/* try to match the reverse against the forward lookup */
+		hp = sm_gethostbyname(RealHostName, family);
 		if (hp == NULL)
 			*may_be_forged = TRUE;
 		else
