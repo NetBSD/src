@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.30.2.5 1997/06/01 04:11:50 cgd Exp $
+# $NetBSD: ALPHA,v 1.30.2.6 1997/06/06 00:14:00 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -161,6 +161,7 @@ de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
+fxp*	at	pci? dev ? function ?		# Intel EEPRO 10/100B (unt.)
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
