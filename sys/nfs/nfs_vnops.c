@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.138 2001/09/15 20:36:40 chs Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.139 2001/09/20 08:22:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2795,11 +2795,12 @@ nfs_bmap(v)
 		int *a_runp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	int bshift = vp->v_mount->mnt_fs_bshift - vp->v_mount->mnt_dev_bshift;
 
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = vp;
 	if (ap->a_bnp != NULL)
-		*ap->a_bnp = ap->a_bn;
+		*ap->a_bnp = ap->a_bn << bshift;
 	if (ap->a_runp != NULL)
 		*ap->a_runp = 1024 * 1024; /* XXX */
 	return (0);
