@@ -27,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.1 1994/08/02 20:20:20 ragge Exp $
+ *	$Id: exec.h,v 1.2 1994/08/16 23:41:53 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */
 		
 
-#define __LDPGSZ        8192    /* XXX This is not important now... */
+#define __LDPGSZ        1024
 

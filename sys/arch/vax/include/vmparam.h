@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vmparam.h	5.9 (Berkeley) 5/12/91
- *	$Id: vmparam.h,v 1.1 1994/08/02 20:21:05 ragge Exp $
+ *	$Id: vmparam.h,v 1.2 1994/08/16 23:41:57 ragge Exp $
  */
 #ifndef ASSEMBLER
 #include <vm/vm_param.h>
@@ -58,9 +58,6 @@
 
 #define	USRTEXT		0
 #define	USRSTACK	0x80000000
-/*#define BTOPUSRSTACK	(0xFDC00-(UPAGES))	/* btop(USRSTACK) */
-/*#define LOWPAGES	0 */
-/*#define HIGHPAGES	UPAGES */
 
 /*
  * Virtual memory related constants, all in bytes
@@ -83,7 +80,9 @@
 #endif
 
 /* (We think) the page table will only need to grow this much */
-#define VAX_MAX_PT_SIZE ((MAXTSIZ+MAXDSIZ+MAXSSIZ)/0x80)
+#define VAX_MAX_PT_SIZE ((MAXTSIZ+MAXDSIZ+MAXSSIZ)>>7)
+/* XXX Text size is already set to a predefined size, why alloc 
+       more page tables for it than needed??? */
 
 /*
  * Default sizes of swap allocation chunks (see dmap.h).
@@ -235,8 +234,8 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0x40000000)
-#define VM_MAX_ADDRESS		((vm_offset_t)0x80000000)
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)0x80000000)
+#define VM_MAX_ADDRESS		((vm_offset_t)0xC0000000)
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0x80000000)
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)(VM_MIN_KERNEL_ADDRESS+\
 				 (VM_KERNEL_PT_PAGES*0x10000)))
