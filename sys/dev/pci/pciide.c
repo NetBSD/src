@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.25 1998/12/03 15:38:59 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.26 1998/12/03 17:27:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -42,12 +42,14 @@
  *
  */
 
+#define WDCDEBUG
+
 #define DEBUG_DMA   0x01
 #define DEBUG_XFERS  0x02
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
 #ifdef WDCDEBUG
-int wdcdebug_pciide_mask = DEBUG_PROBE;
+int wdcdebug_pciide_mask = 0;
 #define WDCDEBUG_PRINT(args, level) \
 	if (wdcdebug_pciide_mask & (level)) printf args
 #else
