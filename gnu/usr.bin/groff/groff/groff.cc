@@ -50,7 +50,10 @@ extern "C" {
 }
 #endif /* not STDLIB_H_DECLARES_PUTENV */
 
+#ifndef __NetBSD__
+/* defined in <string.h> in NetBSD */
 const char *strsignal(int);
+#endif
 
 const int SOELIM_INDEX = 0;
 const int REFER_INDEX = SOELIM_INDEX + 1;
