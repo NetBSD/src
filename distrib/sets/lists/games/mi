@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.32 2004/01/12 03:08:06 lukem Exp $
+# $NetBSD: mi,v 1.33 2004/01/13 06:17:56 lukem Exp $
 ./usr/games/adventure				games-games-bin
 ./usr/games/arithmetic				games-games-bin
 ./usr/games/atc					games-games-bin
@@ -279,4 +279,3 @@
 ./var/games/phantasia/monsters			games-games-root
 ./var/games/phantasia/motd			games-games-root
 ./var/games/phantasia/void			games-games-root
-./var/games/sail				games-games-root
