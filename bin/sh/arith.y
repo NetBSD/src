@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: arith.y,v 1.14 2001/02/04 19:51:43 christos Exp $	*/
+/*	$NetBSD: arith.y,v 1.15 2002/11/24 22:35:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)arith.y	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: arith.y,v 1.14 2001/02/04 19:51:43 christos Exp $");
+__RCSID("$NetBSD: arith.y,v 1.15 2002/11/24 22:35:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,10 +55,10 @@ __RCSID("$NetBSD: arith.y,v 1.14 2001/02/04 19:51:43 christos Exp $");
 
 const char *arith_buf, *arith_startbuf;
 
-void yyerror __P((const char *));
+void yyerror(const char *);
 #ifdef TESTARITH
-int main __P((int , char *[]));
-int error __P((char *));
+int main(int , char *[]);
+int error(char *);
 #endif
 
 %}

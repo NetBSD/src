@@ -1,4 +1,4 @@
-/*	$NetBSD: mksyntax.c,v 1.25 2002/05/31 16:18:48 christos Exp $	*/
+/*	$NetBSD: mksyntax.c,v 1.26 2002/11/24 22:35:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
 static const char rcsid[] =
-    "$NetBSD: mksyntax.c,v 1.25 2002/05/31 16:18:48 christos Exp $";
+    "$NetBSD: mksyntax.c,v 1.26 2002/11/24 22:35:41 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,9 +122,7 @@ static void digit_convert(void);
 int main(int, char **);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 #ifdef	TARGET_CHAR
 	TARGET_CHAR c;
@@ -279,8 +277,7 @@ main(argc, argv)
  */
 
 static void
-filltable(dftval)
-	char *dftval;
+filltable(char *dftval)
 {
 	int i;
 
@@ -294,28 +291,17 @@ filltable(dftval)
  */
 
 static void
-init()
+init(void)
 {
+	int ctl;
+
 	filltable("CWORD");
 	syntax[0] = "CEOF";
+	for (ctl = CTL_FIRST; ctl <= CTL_LAST; ctl++ )
 #ifdef TARGET_CHAR
-	syntax[base + (TARGET_CHAR)CTLESC] = "CCTL";
-	syntax[base + (TARGET_CHAR)CTLVAR] = "CCTL";
-	syntax[base + (TARGET_CHAR)CTLENDVAR] = "CCTL";
-	syntax[base + (TARGET_CHAR)CTLBACKQ] = "CCTL";
-	syntax[base + (TARGET_CHAR)CTLBACKQ + (TARGET_CHAR)CTLQUOTE] = "CCTL";
-	syntax[base + (TARGET_CHAR)CTLARI] = "CCTL";
-	syntax[base + (TARGET_CHAR)CTLENDARI] = "CCTL";
-	syntax[base + (TARGET_CHAR)CTLQUOTEMARK] = "CCTL";
+		syntax[base + (TARGET_CHAR)ctl ] = "CCTL";
 #else
-	syntax[base + CTLESC] = "CCTL";
-	syntax[base + CTLVAR] = "CCTL";
-	syntax[base + CTLENDVAR] = "CCTL";
-	syntax[base + CTLBACKQ] = "CCTL";
-	syntax[base + CTLBACKQ + CTLQUOTE] = "CCTL";
-	syntax[base + CTLARI] = "CCTL";
-	syntax[base + CTLENDARI] = "CCTL";
-	syntax[base + CTLQUOTEMARK] = "CCTL";
+		syntax[base + ctl] = "CCTL";
 #endif /* TARGET_CHAR */
 }
 
@@ -325,8 +311,7 @@ init()
  */
 
 static void
-add(p, type)
-	char *p, *type;
+add(char *p, char *type)
 {
 	while (*p)
 		syntax[*p++ + base] = type;
@@ -339,8 +324,7 @@ add(p, type)
  */
 
 static void
-print(name)
-	char *name;
+print(char *name)
 {
 	int i;
 	int col;
@@ -374,15 +358,15 @@ print(name)
 
 static char *macro[] = {
 	"#define is_digit(c)\t((is_type+SYNBASE)[c] & ISDIGIT)",
-	"#define is_alpha(c)\t((c) != UPEOF && ((c) < CTLESC || (c) > CTLENDARI) && isalpha((unsigned char) (c)))",
-	"#define is_name(c)\t((c) != UPEOF && ((c) < CTLESC || (c) > CTLENDARI) && ((c) == '_' || isalpha((unsigned char) (c))))",
-	"#define is_in_name(c)\t((c) != UPEOF && ((c) < CTLESC || (c) > CTLENDARI) && ((c) == '_' || isalnum((unsigned char) (c))))",
+	"#define is_alpha(c)\t((c) != UPEOF && ((c) < CTL_FIRST || (c) > CTL_LAST) && isalpha((unsigned char) (c)))",
+	"#define is_name(c)\t((c) != UPEOF && ((c) < CTL_FIRST || (c) > CTL_LAST) && ((c) == '_' || isalpha((unsigned char) (c))))",
+	"#define is_in_name(c)\t((c) != UPEOF && ((c) < CTL_FIRST || (c) > CTL_LAST) && ((c) == '_' || isalnum((unsigned char) (c))))",
 	"#define is_special(c)\t((is_type+SYNBASE)[c] & (ISSPECL|ISDIGIT))",
 	NULL
 };
 
 static void
-output_type_macros()
+output_type_macros(void)
 {
 	char **pp;
 
@@ -403,7 +387,7 @@ output_type_macros()
  */
 
 static void
-digit_convert()
+digit_convert(void)
 {
 	int maxdigit;
 	static char digit[] = "0123456789";

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.44 2002/09/28 01:25:02 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.45 2002/11/24 22:35:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.44 2002/09/28 01:25:02 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.45 2002/11/24 22:35:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,11 +90,10 @@ short profile_buf[16384];
 extern int etext();
 #endif
 
-STATIC void read_profile __P((const char *));
-STATIC char *find_dot_file __P((char *));
-int main __P((int, char **));
+STATIC void read_profile(const char *);
+STATIC char *find_dot_file(char *);
+int main(int, char **);
 
-extern int oexitstatus;
 /*
  * Main routine.  We initialize things, parse the arguments, execute
  * profiles if we're a login shell, and then call cmdloop to execute
@@ -104,9 +103,7 @@ extern int oexitstatus;
  */
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct jmploc jmploc;
 	struct stackmark smark;
@@ -144,8 +141,8 @@ main(argc, argv)
 		}
 
 		if (exception != EXSHELLPROC) {
-		    if (state == 0 || iflag == 0 || ! rootshell)
-			    exitshell(exitstatus);
+			if (state == 0 || iflag == 0 || ! rootshell)
+				exitshell(exitstatus);
 		}
 		reset();
 		if (exception == EXINT
@@ -230,8 +227,7 @@ state4:	/* XXX ??? - why isn't this before the "if" statement */
  */
 
 void
-cmdloop(top)
-	int top;
+cmdloop(int top)
 {
 	union node *n;
 	struct stackmark smark;
@@ -245,10 +241,10 @@ cmdloop(top)
 			dotrap();
 		inter = 0;
 		if (iflag && top) {
-			inter++;
-			showjobs(1);
+			inter = 1;
+			showjobs(out2, SHOW_CHANGED);
 			chkmail(0);
-			flushout(&output);
+			flushout(&errout);
 		}
 		n = parsecmd(inter);
 		/* showtree(n); DEBUG */
@@ -283,8 +279,7 @@ cmdloop(top)
  */
 
 STATIC void
-read_profile(name)
-	const char *name;
+read_profile(const char *name)
 {
 	int fd;
 	int xflag_set = 0;
@@ -320,8 +315,7 @@ read_profile(name)
  */
 
 void
-readcmdfile(name)
-	char *name;
+readcmdfile(char *name)
 {
 	int fd;
 
@@ -344,8 +338,7 @@ readcmdfile(name)
 
 
 STATIC char *
-find_dot_file(basename)
-	char *basename;
+find_dot_file(char *basename)
 {
 	char *fullname;
 	const char *path = pathval();
@@ -372,15 +365,9 @@ find_dot_file(basename)
 }
 
 int
-dotcmd(argc, argv)
-	int argc;
-	char **argv;
+dotcmd(int argc, char **argv)
 {
-	struct strlist *sp;
 	exitstatus = 0;
-
-	for (sp = cmdenviron; sp ; sp = sp->next)
-		setvareq(savestr(sp->text), VSTRFIXED|VTEXTFIXED);
 
 	if (argc >= 2) {		/* That's what SVR2 does */
 		char *fullname;
@@ -399,16 +386,12 @@ dotcmd(argc, argv)
 
 
 int
-exitcmd(argc, argv)
-	int argc;
-	char **argv;
+exitcmd(int argc, char **argv)
 {
 	if (stoppedjobs())
 		return 0;
 	if (argc > 1)
 		exitstatus = number(argv[1]);
-	else
-		exitstatus = oexitstatus;
 	exitshell(exitstatus);
 	/* NOTREACHED */
 }

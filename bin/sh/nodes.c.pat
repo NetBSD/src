@@ -1,4 +1,4 @@
-/*	$NetBSD: nodes.c.pat,v 1.9 2002/10/04 13:15:51 christos Exp $	*/
+/*	$NetBSD: nodes.c.pat,v 1.10 2002/11/24 22:35:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -58,11 +58,11 @@ char   *funcstring;		/* block to allocate strings from */
 %SIZES
 
 
-STATIC void calcsize __P((union node *));
-STATIC void sizenodelist __P((struct nodelist *));
-STATIC union node *copynode __P((union node *));
-STATIC struct nodelist *copynodelist __P((struct nodelist *));
-STATIC char *nodesavestr __P((char *));
+STATIC void calcsize(union node *);
+STATIC void sizenodelist(struct nodelist *);
+STATIC union node *copynode(union node *);
+STATIC struct nodelist *copynodelist(struct nodelist *);
+STATIC char *nodesavestr(char *);
 
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mystring.h,v 1.9 1995/05/11 21:29:42 christos Exp $	*/
+/*	$NetBSD: mystring.h,v 1.10 2002/11/24 22:35:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,10 +40,10 @@
 
 #include <string.h>
 
-void scopyn __P((const char *, char *, int));
-int prefix __P((const char *, const char *));
-int number __P((const char *));
-int is_number __P((const char *));
+void scopyn(const char *, char *, int);
+int prefix(const char *, const char *);
+int number(const char *);
+int is_number(const char *);
 
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)
 #define scopy(s1, s2)	((void)strcpy(s2, s1))
