@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.92 2001/10/28 22:38:01 cgd Exp $
+$NetBSD: acronyms,v 1.93 2001/10/28 22:39:30 cgd Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -142,6 +142,7 @@ WAG	wild-ass guess
 WIBNI	wouldn't it be nice if
 WOFTAM	waste of fucking time and money
 WOMBAT	waste of money, brain, and time
+WRT	with respect to
 WTF	{what,where,who,why} the fuck
 WTH	{what,where,who,why} the hell
 WYSIWYG	what you see is what you get
