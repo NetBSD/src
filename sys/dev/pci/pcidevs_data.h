@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.360 2001/09/15 13:13:53 chris Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.361 2001/09/27 07:10:38 itojun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.357 2001/09/15 13:11:42 chris Exp 
+ *	NetBSD: pcidevs,v 1.358 2001/09/27 07:09:27 itojun Exp 
  */
 
 /*
@@ -4930,6 +4930,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SiS 7016 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7018,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 7018 Sound",
+	},
+	{
 	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_LYNX_EMP,
 	    0,
 	    "Silicon Motion",
@@ -5438,6 +5444,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Transmeta Corp",
 	    "BIOS Scratchpad",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_DX,
+	    0,
+	    "Trident Microsystems",
+	    "4DWAVE DX",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_NX,
+	    0,
+	    "Trident Microsystems",
+	    "4DWAVE NX",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE_I7,
