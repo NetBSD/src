@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 1998/01/08 11:36:19 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19 1998/01/08 23:13:05 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -138,7 +138,6 @@ void		 pmap_zero_page __P((vm_offset_t));
 #ifdef MACHINE_NONCONTIG
 u_int		 pmap_free_pages __P((void));
 boolean_t	 pmap_next_page __P((vm_offset_t *));
-void		 pmap_startup __P((vm_offset_t *, vm_offset_t *));
 #endif
 #if defined(MACHINE_NONCONTIG) || defined(MACHINE_NEW_NONCONTIG)
 vm_offset_t	 pmap_steal_memory __P((vm_size_t));
