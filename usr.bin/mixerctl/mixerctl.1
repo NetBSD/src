@@ -1,4 +1,4 @@
-.\" $NetBSD: mixerctl.1,v 1.16 2003/02/25 10:35:48 wiz Exp $
+.\" $NetBSD: mixerctl.1,v 1.17 2003/10/23 22:17:58 cube Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 27, 2002
+.Dd October 23, 2003
 .Dt MIXERCTL 1
 .Os
 .Sh NAME
@@ -65,6 +65,16 @@
 .Op Fl n
 .Fl w
 .Ar name-- ...
+.Nm
+.Op Fl d Ar file
+.Op Fl n
+.Fl w
+.Ar name+=value ...
+.Nm
+.Op Fl d Ar file
+.Op Fl n
+.Fl w
+.Ar name-=value ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -125,6 +135,9 @@ mixer control.
 For numeric controls these operators may increase (resp. decrease)
 the value by an amount (the delta) suitable to make
 the control assume the next possible value.
+.Pp
+The operators += and -= change the value of a mixer control by the
+indicated number of steps.
 .Sh ENVIRONMENT
 .Bl -tag -width MIXERDEVICE
 .It Pa MIXERDEVICE
