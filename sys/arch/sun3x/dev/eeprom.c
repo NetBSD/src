@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.1.1.1 1997/01/14 20:57:02 gwr Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.2 1997/03/18 23:49:07 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,9 +42,6 @@
  * handle the painful task of updating the EEPROM contents.
  * After a write, it must not be touched for 10 milliseconds.
  * (See the Sun-3 Architecture Manual sec. 5.9)
- *
- * XXX: Should just keep a copy of the EEPROM contents in RAM
- * (read it once at init time) to avoid the eeprom_uio hair.
  */
 
 #include <sys/param.h>
@@ -58,15 +55,18 @@
 #include <machine/autoconf.h>
 #include <machine/obio.h>
 #include <machine/eeprom.h>
+#include <machine/machdep.h>
 
 #define HZ 100	/* XXX */
+
+#ifndef OBIO_EEPROM_SIZE
 #define OBIO_EEPROM_SIZE sizeof(struct eeprom)
+#endif
 
-int ee_console;		/* for convenience of drivers */
-
-static int ee_update(caddr_t buf, int off, int cnt);
+static int ee_update(int off, int cnt);
 
 static char *eeprom_va;
+static char *ee_rambuf;
 static int ee_busy, ee_want;
 
 static int  eeprom_match __P((struct device *, struct cfdata *, void *));
@@ -84,7 +84,6 @@ struct cfdriver eeprom_cd = {
 void eeprom_init()
 {
 	eeprom_va = obio_find_mapping(OBIO_EEPROM, OBIO_EEPROM_SIZE);
-	ee_console = ((struct eeprom *)eeprom_va)->eeConsole;
 }
 
 static int
@@ -115,8 +114,21 @@ eeprom_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
+	char *src, *dst, *lim;
 
 	printf("\n");
+
+	/* Keep a "soft" copy of the EEPROM to make access simpler. */
+	ee_rambuf = malloc(sizeof(struct eeprom), M_DEVBUF, M_NOWAIT);
+	if (ee_rambuf == 0)
+		panic("eeprom_attach: malloc ee_rambuf");
+
+	/* Do only byte access in the EEPROM. */
+	src = eeprom_va;
+	dst = ee_rambuf;
+	lim = ee_rambuf + sizeof(struct eeprom);
+	do *dst++ = *src++;
+	while (dst < lim);
 }
 
 
@@ -130,10 +142,9 @@ ee_take __P((void))
 		error = tsleep(&ee_busy, PZERO | PCATCH, "eeprom", 0);
 		ee_want = 0;
 		if (error)	/* interrupted */
-			goto out;
+			return error;
 	}
 	ee_busy = 1;
- out:
 	return error;
 }
 
@@ -149,71 +160,58 @@ ee_give __P((void))
 }
 
 /*
- * XXX - Just keep a soft copy of the eeprom?
+ * This is called by mem.c to handle /dev/eeprom
  */
 int
 eeprom_uio(struct uio *uio)
 {
-	int error;
+	int cnt, error;
 	int off;	/* NOT off_t */
-	u_int cnt;
 	caddr_t va;
-	caddr_t buf = (caddr_t)0;
+
+	if (ee_rambuf == NULL)
+		return (ENXIO);
 
 	off = uio->uio_offset;
-	if (off >= OBIO_EEPROM_SIZE)
+	if ((off < 0) || (off > OBIO_EEPROM_SIZE))
 		return (EFAULT);
 
-	cnt = uio->uio_resid;
-	if (cnt > (OBIO_EEPROM_SIZE - off))
-		cnt = (OBIO_EEPROM_SIZE - off);
+	cnt = min(uio->uio_resid, (OBIO_EEPROM_SIZE - off));
+	if (cnt == 0)
+		return (0);	/* EOF */
 
-	if ((error = ee_take()) != 0)
-		return (error);
+	va = ee_rambuf + off;
+	error = uiomove(va, (int)cnt, uio);
 
-	if (eeprom_va == NULL) {
-		error = ENXIO;
-		goto out;
+	/* If we wrote the rambuf, update the H/W. */
+	if (!error && (uio->uio_rw != UIO_READ)) {
+		error = ee_take();
+		if (!error)
+			error = ee_update(off, cnt);
+		ee_give();
 	}
 
-	va = eeprom_va;
-	if (uio->uio_rw != UIO_READ) {
-		/* Write requires a temporary buffer. */
-		buf = malloc(OBIO_EEPROM_SIZE, M_DEVBUF, M_WAITOK);
-		if (!buf) {
-			error = EAGAIN;
-			goto out;
-		}
-		va = buf;
-	}
-
-	if ((error = uiomove(va + off, (int)cnt, uio)) != 0)
-		goto out;
-
-	if (uio->uio_rw != UIO_READ)
-		error = ee_update(buf, off, cnt);
-
- out:
-	if (buf)
-		free(buf, M_DEVBUF);
-	ee_give();
 	return (error);
 }
 
 /*
- * Update the EEPROM from the passed buf.
+ * Update the EEPROM from the soft copy.
+ * Other than the attach function, this is
+ * the ONLY place we touch the EEPROM H/W.
  */
 static int
-ee_update(char *buf, int off, int cnt)
+ee_update(int off, int cnt)
 {
 	volatile char *ep;
 	char *bp;
+	int errcnt;
 
 	if (eeprom_va == NULL)
 		return (ENXIO);
 
+	bp = ee_rambuf + off;
 	ep = eeprom_va + off;
-	bp = buf + off;
+	errcnt = 0;
 
 	while (cnt > 0) {
 		/*
@@ -233,39 +231,10 @@ ee_update(char *buf, int off, int cnt)
 		}
 		/* Make sure the write worked. */
 		if (*ep != *bp)
-			return (EIO);
+			errcnt++;
 		ep++;
 		bp++;
 		cnt--;
 	}
-	return(0);
-}
-
-/*
- * Read a byte out of the EEPROM.  This is called from
- * things like the zs driver very early to find out
- * which device should be used as the console.
- */
-int ee_get_byte(int off, int canwait)
-{
-	int c = -1;
-	if ((off < 0) || (off >= OBIO_EEPROM_SIZE))
-		goto out;
-	if (eeprom_va == NULL)
-		goto out;
-
-	if (canwait) {
-		if (ee_take())
-			goto out;
-	} else {
-		if (ee_busy)
-			goto out;
-	}
-
-	c = eeprom_va[off] & 0xFF;
-
-	if (canwait)
-		ee_give();
- out:
-	return c;
+	return (errcnt ? EIO : 0);
 }
