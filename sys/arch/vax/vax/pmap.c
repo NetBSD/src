@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.128 2003/07/15 02:15:05 lukem Exp $	   */
+/*	$NetBSD: pmap.c,v 1.129 2003/10/19 14:58:22 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128 2003/07/15 02:15:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.129 2003/10/19 14:58:22 ragge Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -234,6 +234,9 @@ calc_kvmsize(vsize_t usrptsize)
 #if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	/* Physmap */
 	kvmsize += VM_PHYS_SIZE;
+#endif
+#if VAX46 || VAX49
+	kvmsize += 0x800000; /* 8 MB framebuffer */
 #endif
 #ifdef LKM
 	/* LKMs are allocated out of kernel_map */
@@ -515,6 +518,9 @@ rmpage(pmap_t pm, int *br)
 		vaddr = (br - (int *)pm->pm_p0br) * VAX_NBPG;
 	else
 		vaddr = (br - (int *)pm->pm_p1br) * VAX_NBPG + 0x40000000;
+
+	if (IOSPACE((br[0] & PG_FRAME) << VAX_PGSHIFT))
+		return; /* Forget mappings of IO space */
 
 	pv = pv_table + ((br[0] & PG_FRAME) >> LTOHPS);
 	if (((br[0] & PG_PROT) == PG_RW) && 
