@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.112.4.2 1999/10/21 19:21:29 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.112.4.3 1999/10/23 14:54:04 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -549,7 +549,8 @@ insmntque(vp, mp)
 #ifdef DIAGNOSTIC
 	if ((mp != NULL) &&
 	    (mp->mnt_flag & MNT_UNMOUNT) &&
-	    !(mp->mnt_flag & MNT_SOFTDEP)) {
+	    !(mp->mnt_flag & MNT_SOFTDEP) &&
+	    vp->v_tag != VT_VFS) {
 		panic("insmntque into dying filesystem");
 	}
 #endif
