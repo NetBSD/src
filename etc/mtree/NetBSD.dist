@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.123 2000/11/18 06:05:10 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.124 2000/12/11 13:44:01 jdolecek Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1090,27 +1090,6 @@ x68k
 # ./usr/share/ldscripts
 ldscripts
 # ./usr/share/ldscripts
-..
-
-# ./usr/share/lkm
-lkm
-
-# ./usr/share/lkm/misc
-misc
-# ./usr/share/lkm/misc
-..
-
-# ./usr/share/lkm/syscall
-syscall
-# ./usr/share/lkm/syscall
-..
-
-# ./usr/share/lkm/vfs
-vfs
-# ./usr/share/lkm/vfs
-..
-
-# ./usr/share/lkm
 ..
 
 # ./usr/share/locale
