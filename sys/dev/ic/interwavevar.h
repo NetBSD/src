@@ -1,10 +1,7 @@
-#ifndef INTERWAVEVAR_H
-#define INTERWAVEVAR_H
-
-/*	$NetBSD: interwavevar.h,v 1.5 1999/02/17 02:37:39 mycroft Exp $	*/
+/*	$NetBSD: interwavevar.h,v 1.6 1999/02/17 21:44:55 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Author: Kari Mettinen
@@ -37,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef INTERWAVEVAR_H
+#define INTERWAVEVAR_H
 
 typedef struct iw_voice_info {
 	u_char	bank; /* lower 2 bits select one of 4 4M bank for voice data */
