@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.42 2001/02/16 23:53:59 thorpej Exp $	*/
+/*	$NetBSD: key.c,v 1.43 2001/02/21 21:39:56 jdolecek Exp $	*/
 /*	$KAME: key.c,v 1.182 2001/02/16 23:43:01 thorpej Exp $	*/
 
 /*
@@ -145,18 +145,18 @@ static LIST_HEAD(_spacqtree, secspacq) spacqtree;	/* SP acquiring list */
 struct key_cb key_cb;
 
 /* search order for SAs */
-static u_int saorder_state_valid[] = {
+static const u_int saorder_state_valid[] = {
 	SADB_SASTATE_DYING, SADB_SASTATE_MATURE,
 	/*
 	 * This order is important because we must select a oldest SA
 	 * for outbound processing.  For inbound, This is not important.
 	 */
 };
-static u_int saorder_state_alive[] = {
+static const u_int saorder_state_alive[] = {
 	/* except DEAD */
 	SADB_SASTATE_MATURE, SADB_SASTATE_DYING, SADB_SASTATE_LARVAL
 };
-static u_int saorder_state_any[] = {
+static const u_int saorder_state_any[] = {
 	SADB_SASTATE_MATURE, SADB_SASTATE_DYING,
 	SADB_SASTATE_LARVAL, SADB_SASTATE_DEAD
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.5 2001/01/18 17:48:00 tv Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.6 2001/02/21 21:39:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -51,7 +51,7 @@ extern char cpu_model[];
 extern char cpu_vendor[];
 extern int cpu_id, cpu_class;
 
-static const char *i386_features[] = {
+static const char * const i386_features[] = {
 	"fpu", "vme", "de", "pse", "tsc", "msr", "pae", "mce",
 	"cx8", "apic", "10", "sep", "mtrr", "pge", "mca", "cmov",
 	"fgpat", "pse36", "psn", "19", "20", "21", "22", "mmx",

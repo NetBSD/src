@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.61 2000/07/09 01:55:18 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.62 2001/02/21 21:39:55 jdolecek Exp $	*/
 
 #define	PCICDEBUG
 
@@ -887,7 +887,7 @@ pcic_chip_mem_free(pch, pcmhp)
 	sc->subregionmask |= pcmhp->mhandle;
 }
 
-static struct mem_map_index_st {
+static const struct mem_map_index_st {
 	int	sysmem_start_lsb;
 	int	sysmem_start_msb;
 	int	sysmem_stop_lsb;
@@ -1154,7 +1154,7 @@ pcic_chip_io_free(pch, pcihp)
 }
 
 
-static struct io_map_index_st {
+static const struct io_map_index_st {
 	int	start_lsb;
 	int	start_msb;
 	int	stop_lsb;
