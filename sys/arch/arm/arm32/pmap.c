@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 2001/10/18 16:50:30 rearnsha Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 2001/10/18 17:06:14 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <machine/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2001/10/18 16:50:30 rearnsha Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2001/10/18 17:06:14 rearnsha Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -316,6 +316,13 @@ static void pmap_vac_me_kpmap __P((struct pmap *, struct pv_head *,
     pt_entry_t *, boolean_t));
 static void pmap_vac_me_user __P((struct pmap *, struct pv_head *,
     pt_entry_t *, boolean_t));
+
+/*
+ * Cache enable bits in PTE to use on pages that are cacheable.
+ * On most machines this is cacheable/bufferable, but on some, eg arm10, we
+ * can chose between write-through and write-back cacheing.
+ */
+pt_entry_t pte_cache_mode = (PT_C | PT_B);
 
 /*
  * real definition of pv_entry.
@@ -2257,7 +2264,7 @@ pmap_vac_me_user(struct pmap *pmap, struct pv_head *pvh, pt_entry_t *ptes,
 			    (kpmap == npv->pv_pmap && other_writable == 0)) && 
 			    (npv->pv_flags & PT_NC)) {
 				ptes[arm_byte_to_page(npv->pv_va)] |=
-				    (PT_C | PT_B);
+				    pte_cache_mode;
 				npv->pv_flags &= ~PT_NC;
 			}
 		}
@@ -2808,7 +2815,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		if ((flags & VM_PROT_ALL) & ~prot)
 			panic("pmap_enter: access_type exceeds prot");
 #endif
-		npte |= PT_C | PT_B;
+		npte |= pte_cache_mode;
 		if (flags & VM_PROT_WRITE) {
 			npte |= L2_SPAGE | PT_AP(AP_W);
 			vm_physmem[bank].pmseg.attrs[off] |= PT_H | PT_M;
@@ -3334,7 +3341,7 @@ pmap_clearbit(pa, maskbits)
 			 * entry is not cacheable, so reenable the cache,
 			 * nothing to flush
 			 */
-			*pte |= (PT_C | PT_B);
+			*pte |= pte_cache_mode;
 			pv->pv_flags &= ~PT_NC;
 		    } else {
 			/*
