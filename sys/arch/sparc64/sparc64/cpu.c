@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.30 2003/07/15 03:36:08 lukem Exp $ */
+/*	$NetBSD: cpu.c,v 1.31 2003/10/26 19:17:10 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 2003/07/15 03:36:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 2003/10/26 19:17:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,6 +151,25 @@ cpu_init(pa, cpu_num)
 	if (va == 0)
 		panic("cpu_start: no memory");
 
+	switch (size) {
+#define K	*1024
+	case 8 K:
+		pagesize = TLB_8K;
+		break;
+	case 64 K:
+		pagesize = TLB_64K;
+		break;
+	case 512 K:
+		pagesize = TLB_512K;
+		break;
+	case 4 K K:
+		pagesize = TLB_4M;
+		break;
+	default:
+		pagesize = 0; /* XXX: gcc */
+		panic("cpu_start: stack size %x not a machine page size",
+			(unsigned)size);
+	}
 	pg = TAILQ_FIRST(&pglist);
 	pa = VM_PAGE_TO_PHYS(pg);
 	pte = TSB_DATA(0 /* global */,
@@ -180,24 +199,6 @@ cpu_init(pa, cpu_num)
 		ci->ci_next = (struct cpu_info *)va;
 	}
 
-	switch (size) {
-#define K	*1024
-	case 8 K:
-		pagesize = TLB_8K;
-		break;
-	case 64 K:
-		pagesize = TLB_64K;
-		break;
-	case 512 K:
-		pagesize = TLB_512K;
-		break;
-	case 4 K K:
-		pagesize = TLB_4M;
-		break;
-	default:
-		panic("cpu_start: stack size %x not a machine page size",
-			(unsigned)size);
-	}
 	return (pte | TLB_L);
 }
 
