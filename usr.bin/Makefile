@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.111 2000/07/01 20:27:11 he Exp $
+#	$NetBSD: Makefile,v 1.112 2000/07/25 16:32:24 thorpej Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -28,8 +28,8 @@ SUBDIR=	apply apropos asa at audio banner basename biff \
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+= openssl
-
 SUBDIR+= bdes compile_et kdestroy kf kinit klist kpasswd mk_cmds string2key
+SUBDIR+= ssh
 .endif
 
 .include <bsd.subdir.mk>
