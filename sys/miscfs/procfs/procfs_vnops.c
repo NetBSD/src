@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.99 2003/04/17 20:19:18 jdolecek Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.100 2003/04/17 20:33:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.99 2003/04/17 20:19:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.100 2003/04/17 20:33:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1050,6 +1050,7 @@ procfs_readdir(v)
 	case Pfd: {
 		struct proc *p;
 		struct filedesc	*fdp;
+		struct file *fp;
 		int lim, last, nc = 0;
 
 		p = PFIND(pfs->pfs_pid);
@@ -1089,8 +1090,26 @@ procfs_readdir(v)
 			break;
 		}
 		for (; uio->uio_resid >= UIO_MX && i < fdp->fd_nfiles; i++) {
-			if (fdp->fd_ofiles[i - 2] == NULL)
+			if ((fp = fd_getfile(fdp, i - 2)) == NULL)
 				continue;
+			FILE_USE(fp); 
+
+			/*
+			 * Only show supported file descriptors - must
+			 * match procfs_allocvp() set.
+			 */
+			switch(fp->f_type) {
+			case DTYPE_VNODE:
+			case DTYPE_PIPE:
+			case DTYPE_SOCKET:
+				FILE_UNUSE(fp, p);
+				break;
+			default:
+				/* unsupported, skip */
+				FILE_UNUSE(fp, p);
+				continue;
+			}
+			
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, Pfd, i - 2);
 			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
 			    "%lld", (long long)(i - 2));
