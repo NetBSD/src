@@ -1,9 +1,9 @@
-#       $NetBSD: Makefile,v 1.22 1997/05/22 03:46:33 jeremy Exp $
+#       $NetBSD: Makefile,v 1.23 1997/05/25 15:54:22 is Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	access.9 arp.9 copy.9 cpu_reboot.9 ctxsw.9 \
-	disk.9 disklabel.9 doshutdownhooks.9 \
+	disk.9 disklabel.9 doshutdownhooks.9 ethersubr.9\
 	extent.9 fetch.9 inittodr.9 intro.9 log.9 malloc.9 panic.9 pfil.9 \
 	physio.9 psignal.9 resettodr.9 shutdownhook_establish.9 sleep.9 spl.9 \
 	store.9 time.9 timeout.9 vslock.9
@@ -17,6 +17,11 @@ MLINKS+=disk.9 disk_init.9 disk.9 disk_attach.9 disk.9 disk_detatch.9 \
 	disk.9 disk_resetstat.9
 MLINKS+=disklabel.9 readdisklabel.9 disklabel.9 writedisklabel.9 \
 	disklabel.9 setdisklabel.9 disklabel.9 bounds_check_with_label.9
+MLINKS+=ethersubr.9 ether_ifattach.9 ethersubr.9 ether_addmulti.9 \
+	ethersubr.9 ether_delmulti.9 ethersubr.9 ETHER_IS_MULTICAST.9 \
+	ethersubr.9 ETHER_FIRST_MULTI.9 ethersubr.9 ETHER_NEXT_MULTI.9 \
+	ethersubr.9 fddi_ifattach.9 \
+	ethersubr.9 fddi_addmulti.9 ethersubr.9 fddi_delmulti.9
 MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_alloc.9 extent.9 extent_alloc_subregion.9 \
 	extent.9 extent_alloc_region.9 extent.9 extent_free.9 \
