@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.22.2.4 2002/06/23 17:48:31 jdolecek Exp $	*/
+/*	$NetBSD: qd.c,v 1.22.2.5 2002/10/02 21:51:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.22.2.4 2002/06/23 17:48:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.22.2.5 2002/10/02 21:51:40 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -1553,7 +1553,7 @@ qdpoll(dev, events, p)
 static void
 filt_qdrdetach(struct knote *kn)
 {
-	dev_t dev = (u_long) kn->kn_hook;
+	dev_t dev = (intptr_t) kn->kn_hook;
 	u_int minor_dev = minor(dev);
 	int unit = minor_dev >> 2;
 	int s;
@@ -1566,7 +1566,7 @@ filt_qdrdetach(struct knote *kn)
 static int
 filt_qdread(struct knote *kn, long hint)
 {
-	dev_t dev = (u_long) kn->kn_hook;
+	dev_t dev = (intptr_t) kn->kn_hook;
 	u_int minor_dev = minor(dev);
 	int unit = minor_dev >> 2;
 
@@ -1580,7 +1580,7 @@ filt_qdread(struct knote *kn, long hint)
 static int
 filt_qdwrite(struct knote *kn, long hint)
 {
-	dev_t dev = (u_long) kn->kn_hook;
+	dev_t dev = (intptr_t) kn->kn_hook;
 	u_int minor_dev = minor(dev);
 	int unit = minor_dev >> 2;
 
@@ -1624,7 +1624,7 @@ qdkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (caddr_t)(u_long) dev;
+	kn->kn_hook = (void *)(intptr_t) dev;
 
 	s = spl5();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
