@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.h,v 1.6 1998/01/30 23:37:45 perry Exp $	*/
+/*	$NetBSD: atexit.h,v 1.7 1998/10/18 14:36:30 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -45,3 +45,7 @@ struct atexit {
 };
 
 extern struct atexit *__atexit;		/* points to head of LIFO stack */
+
+#ifdef _REENT
+extern mutex_t __atexit_mutex;		/* protects __atexit pointer */
+#endif
