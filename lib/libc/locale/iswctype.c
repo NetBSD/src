@@ -1,4 +1,4 @@
-/*	$NetBSD: iswctype.c,v 1.4 2000/12/21 08:30:53 itojun Exp $	*/
+/*	$NetBSD: iswctype.c,v 1.5 2000/12/21 12:13:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,19 +40,55 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype.c,v 1.4 2000/12/21 08:30:53 itojun Exp $");
+__RCSID("$NetBSD: iswctype.c,v 1.5 2000/12/21 12:13:28 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 #include <wctype.h>
 #include <ctype.h>
+#include "runetype.h"
+
+#ifdef lint
+#define __inline
+#endif
+
+static __inline int __maskrune_w __P((wint_t, unsigned long));
+static __inline wint_t __toupper_w __P((wint_t));
+static __inline wint_t __tolower_w __P((wint_t));
+
+#define	__isctype_w(c,f)	(!!__maskrune_w((c),(f)))
+
+static __inline int
+__maskrune_w(c, f)
+	wint_t c;
+	unsigned long f;
+{
+	return ((c < 0 || c >= _CACHED_RUNES) ? ___runetype_mb(c) :
+		_CurrentRuneLocale->__runetype[c]) & f;
+}
+
+static __inline wint_t
+__toupper_w(c)
+	wint_t c;
+{
+	return (c < 0 || c >= _CACHED_RUNES) ? ___toupper_mb(c) :
+	       _CurrentRuneLocale->__mapupper[c];
+}
+
+static __inline wint_t
+__tolower_w(c)
+	wint_t c;
+{
+	return (c < 0 || c >= _CACHED_RUNES) ? ___tolower_mb(c) :
+	       _CurrentRuneLocale->__maplower[c];
+}
 
 #undef iswalnum
 int
 iswalnum(c)
 	wint_t c;
 {
-	return isalnum((int)c);
+	return (__isctype_w((c), _CTYPE_A)|__isctype_w((c), _CTYPE_D));
 }
 
 #undef iswalpha
@@ -60,7 +96,7 @@ int
 iswalpha(c)
 	wint_t c;
 {
-	return isalpha((int)c);
+	return (__isctype_w((c), _CTYPE_A));
 }
 
 #undef iswblank
@@ -68,7 +104,7 @@ int
 iswblank(c)
 	wint_t c;
 {
-	return isblank((int)c);
+	return (__isctype_w((c), _CTYPE_B));
 }
 
 #undef iswcntrl
@@ -76,7 +112,7 @@ int
 iswcntrl(c)
 	wint_t c;
 {
-	return iscntrl((int)c);
+	return (__isctype_w((c), _CTYPE_C));
 }
 
 #undef iswdigit
@@ -84,7 +120,7 @@ int
 iswdigit(c)
 	wint_t c;
 {
-	return isdigit((int)c);
+	return (__isctype_w((c), _CTYPE_D));
 }
 
 #undef iswgraph
@@ -92,7 +128,7 @@ int
 iswgraph(c)
 	wint_t c;
 {
-	return isgraph((int)c);
+	return (__isctype_w((c), _CTYPE_G));
 }
 
 #undef iswlower
@@ -100,7 +136,7 @@ int
 iswlower(c)
 	wint_t c;
 {
-	return islower((int)c);
+	return (__isctype_w((c), _CTYPE_L));
 }
 
 #undef iswprint
@@ -108,7 +144,7 @@ int
 iswprint(c)
 	wint_t c;
 {
-	return isprint((int)c);
+	return (__isctype_w((c), _CTYPE_R));
 }
 
 #undef iswpunct
@@ -116,7 +152,7 @@ int
 iswpunct(c)
 	wint_t c;
 {
-	return ispunct((int)c);
+	return (__isctype_w((c), _CTYPE_P));
 }
 
 #undef iswspace
@@ -124,7 +160,7 @@ int
 iswspace(c)
 	wint_t c;
 {
-	return isspace((int)c);
+	return (__isctype_w((c), _CTYPE_S));
 }
 
 #undef iswupper
@@ -132,7 +168,7 @@ int
 iswupper(c)
 	wint_t c;
 {
-	return isupper((int)c);
+	return (__isctype_w((c), _CTYPE_U));
 }
 
 #undef iswxdigit
@@ -140,7 +176,7 @@ int
 iswxdigit(c)
 	wint_t c;
 {
-	return isxdigit((int)c);
+	return (__isctype_w((c), _CTYPE_X));
 }
 
 #undef towupper
@@ -148,7 +184,7 @@ wint_t
 towupper(c)
 	wint_t c;
 {
-	return toupper((int)c);
+	return (__toupper_w(c));
 }
 
 #undef towlower
@@ -156,14 +192,14 @@ wint_t
 towlower(c)
 	wint_t c;
 {
-	return tolower((int)c);
+	return (__tolower_w(c));
 }
 
 #undef wcwidth
-/*ARGSUSED*/
 int
 wcwidth(c)
 	wint_t c;
 {
-	return 1;
+        return ((unsigned)__maskrune_w((c), _CTYPE_SWM) >> _CTYPE_SWS);
 }
+
