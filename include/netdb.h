@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.14 1999/12/12 10:49:37 itojun Exp $	*/
+/*	$NetBSD: netdb.h,v 1.15 1999/12/20 06:48:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -257,8 +257,10 @@ struct hostent	*gethostbyname2 __P((const char *, int));
 #endif
 struct hostent	*gethostent __P((void));
 #if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
+#if 0 /* we do not ship these */
 struct hostent	*getipnodebyaddr __P((const void *, size_t, int, int *));
 struct hostent	*getipnodebyname __P((const char *, int, int, int *));
+#endif
 #endif
 struct netent	*getnetbyaddr __P((unsigned long, int));
 struct netent	*getnetbyname __P((const char *));
