@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsdispatch.3,v 1.21 2004/09/29 02:47:32 lukem Exp $
+.\"	$NetBSD: nsdispatch.3,v 1.22 2004/09/29 09:20:19 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,7 @@ in the order given in
 .Pa /etc/nsswitch.conf
 for the database
 .Va database
-until the action criteria for a source of that database is fulfulled.
+until the action criteria for a source of that database is fulfilled.
 .Pp
 .Va retval
 is passed to each callback function to modify as necessary
@@ -168,7 +168,7 @@ set to 0.
 Some invokers of
 .Fn nsdispatch
 (such as
-.Xr setgrent(3) )
+.Xr setgrent 3 )
 need to force all methods to be invoked,
 irrespective of the action criteria listed in
 .Xr nsswitch.conf 5 .
@@ -323,7 +323,7 @@ for a complete description of what each status code is.
 .Pp
 .Nm
 returns the value of the callback that caused the dispatcher to finish,
-or 
+or
 .Dv NS_NOTFOUND
 otherwise.
 .Sh SEE ALSO
