@@ -1,3 +1,4 @@
+/* NetBSD $Id: vm_pageout.c,v 1.15 1994/06/27 04:55:46 cgd Exp $ */
 /* 
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_pageout.c	8.5 (Berkeley) 2/14/94
- *	$Id: vm_pageout.c,v 1.14 1994/05/23 03:11:58 cgd Exp $
+ *	@(#)vm_pageout.c	8.5 (Berkeley) 2/14/94
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
