@@ -1,9 +1,11 @@
-#	$NetBSD: GENERIC,v 1.13 1995/03/05 22:32:54 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.14 1995/04/17 07:23:34 cgd Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 machine		i386		# architecture, used by config; REQUIRED
+
+makeoptions	CC="cc -Werror"
 
 options		I386_CPU	# CPU classes; at least one is REQUIRED
 options		I486_CPU
