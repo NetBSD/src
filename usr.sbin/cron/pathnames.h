@@ -1,3 +1,5 @@
+/*	$NetBSD: pathnames.h,v 1.3 1997/03/13 06:19:20 mikel Exp $	*/
+
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
  *
@@ -16,7 +18,7 @@
  */
 
 /*
- * $Id: pathnames.h,v 1.2 1994/01/13 21:59:27 jtc Exp $
+ * Id: pathnames.h,v 1.3 1994/01/15 20:43:43 vixie Exp
  */
 
 #if (defined(BSD)) && (BSD >= 199103) || defined(__linux) || defined(AIX)

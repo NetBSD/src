@@ -1,3 +1,5 @@
+/*	$NetBSD: job.c,v 1.2 1997/03/13 06:19:19 mikel Exp $	*/
+
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  *
@@ -16,7 +18,8 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: job.c,v 1.1.1.3 1994/01/20 02:47:28 jtc Exp $";
+/*static char rcsid[] = "Id: job.c,v 1.6 1994/01/15 20:43:43 vixie Exp";*/
+static char rcsid[] = "$NetBSD: job.c,v 1.2 1997/03/13 06:19:19 mikel Exp $";
 #endif
 
 
