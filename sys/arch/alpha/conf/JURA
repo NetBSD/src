@@ -1,6 +1,8 @@
-#	$NetBSD: JURA,v 1.6 1996/04/17 22:01:42 cgd Exp $
+#	$NetBSD: JURA,v 1.7 1996/06/13 19:18:33 cgd Exp $
 #
 # Kernel for jura.pdl.cs.cmu.edu.
+#
+# THIS KERNEL DOES NOT CURRENTLY WORK, OR EVEN CONFIGURE!
 
 include	"std.alpha"
 
@@ -33,7 +35,9 @@ options		INET		# Internet protocol suite
 options		COMPAT_43
 
 # Binary compatibility with previous versions of NetBSD.
+#options	COMPAT_09
 options		COMPAT_10
+options		COMPAT_11
 
 # Loadable Kernel Modules
 options		LKM
