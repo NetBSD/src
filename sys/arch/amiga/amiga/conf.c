@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.44 1997/08/27 20:18:20 is Exp $	*/
+/*	$NetBSD: conf.c,v 1.45 1997/09/27 10:38:10 is Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -91,7 +91,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "view.h"
 #include "mfcs.h"
 #include "com.h"
-cdev_decl(com);
 #include "audio.h"
 cdev_decl(audio);
 dev_decl(filedesc,open);
