@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.32 1996/12/20 19:33:56 cgd Exp $	*/
+/*	$NetBSD: unistd.h,v 1.33 1996/12/21 01:30:48 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -166,7 +166,7 @@ int	 swapon __P((const char *));
 int	 symlink __P((const char *, const char *));
 void	 sync __P((void));
 int	 syscall __P((int, ...));
-int	 __syscall __P((quad_t, ...));
+quad_t	 __syscall __P((quad_t, ...));
 int	 truncate __P((const char *, off_t));
 int	 ttyslot __P((void));
 u_int	 ualarm __P((u_int, u_int));
