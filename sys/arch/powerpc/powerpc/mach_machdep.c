@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.1 2002/10/30 06:41:45 manu Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.2 2002/11/14 19:44:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.1 2002/10/30 06:41:45 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.2 2002/11/14 19:44:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.1 2002/10/30 06:41:45 manu Exp $"
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
+#include <sys/exec_macho.h>
 
 #include <compat/mach/mach_types.h>
+#include <compat/mach/mach_host.h>
 
 #include <machine/cpu.h>
 #include <machine/psl.h>
@@ -91,4 +93,16 @@ mach_trap(frame)
 		uprintf("unknown mach trap %d\n", frame->exc);
 		break;
 	}
+}
+
+void
+mach_host_basic_info(info)
+    struct mach_host_basic_info *info;
+{
+	/* XXX fill this  accurately */
+	info->max_cpus = 1;
+	info->avail_cpus = 1;
+	info->memory_size = uvmexp.active + uvmexp.inactive;
+	info->cpu_type = MACHO_CPU_TYPE_POWERPC;
+	info->cpu_subtype = MACHO_CPU_SUBTYPE_POWERPC_ALL;
 }
