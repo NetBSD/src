@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.20 2005/01/10 19:01:09 ginsbach Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.21 2005/02/23 01:25:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.20 2005/01/10 19:01:09 ginsbach Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.21 2005/02/23 01:25:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,20 +61,39 @@ __RCSID("$NetBSD: rexecd.c,v 1.20 2005/01/10 19:01:09 ginsbach Exp $");
 #include <unistd.h>
 #include <poll.h>
 
-void error(const char *, ...)
-     __attribute__((__format__(__printf__, 1, 2)));
-int main(int, char *[]);
-void doit(int, struct sockaddr *);
-void getstr(char *, int, char *);
+#ifdef USE_PAM
+#include <security/pam_appl.h>
+#include <security/openpam.h>
+#endif
 
-char	username[32 + 1] = "USER=";
-char	logname[32 + 3 + 1] = "LOGNAME=";
-char	homedir[PATH_MAX + 1] = "HOME=";
-char	shell[PATH_MAX + 1] = "SHELL=";
-char	path[sizeof(_PATH_DEFPATH) + sizeof("PATH=")] = "PATH=";
-char	*envinit[] = { homedir, shell, path, username, logname, 0 };
+int main(int, char *[]);
+static void rexecd_errx(int, const char *, ...)
+     __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
+static void doit(struct sockaddr *);
+static void getstr(char *, int, const char *);
+static void usage(void) __attribute__((__noreturn__));
+
+#ifdef USE_PAM
+static pam_handle_t *pamh;
+static struct pam_conv pamc = {
+	openpam_nullconv,
+	NULL
+};
+static int pam_flags = PAM_SILENT|PAM_DISALLOW_NULL_AUTHTOK;
+static int pam_err;
+#define pam_ok(err) ((pam_err = (err)) == PAM_SUCCESS)
+#endif
+
 char	**environ;
 int	dolog;
+#ifndef USE_PAM
+static char	username[32 + 1] = "USER=";
+static char	logname[32 + 3 + 1] = "LOGNAME=";
+static char	homedir[PATH_MAX + 1] = "HOME=";
+static char	shell[PATH_MAX + 1] = "SHELL=";
+static char	path[sizeof(_PATH_DEFPATH) + sizeof("PATH=")] = "PATH=";
+static char	*envinit[] = { homedir, shell, path, username, logname, 0 };
+#endif
 
 /*
  * remote execute server:
@@ -87,7 +106,8 @@ int
 main(int argc, char *argv[])
 {
 	struct sockaddr_storage from;
-	int fromlen, ch;
+	socklen_t fromlen;
+	int ch;
 
 	while ((ch = getopt(argc, argv, "l")) != -1)
 		switch (ch) {
@@ -96,22 +116,37 @@ main(int argc, char *argv[])
 			openlog("rexecd", LOG_PID, LOG_DAEMON);
 			break;
 		default:
-			exit(1);
+			usage();
 		}
 
 	fromlen = sizeof (from);
-	if (getpeername(0, (struct sockaddr *)&from, &fromlen) < 0)
+	if (getpeername(STDIN_FILENO, (struct sockaddr *)&from, &fromlen) < 0)
 		err(1, "getpeername");
 
-	doit(STDIN_FILENO, (struct sockaddr *)&from);
-	exit(0);
+	if (((struct sockaddr *)&from)->sa_family == AF_INET6 &&
+	    IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)&from)->sin6_addr)) {
+		char hbuf[NI_MAXHOST];
+		if (getnameinfo((struct sockaddr *)&from, fromlen, hbuf,
+		    sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0) {
+			(void)strlcpy(hbuf, "invalid", sizeof(hbuf));
+		}
+		if (dolog)
+			syslog(LOG_ERR,
+			    "malformed \"from\" address (v4 mapped, %s)",
+			    hbuf);
+		return 1;
+	}
+
+	doit((struct sockaddr *)&from);
+	/* NOTREACHED */
+	return 1;
 }
 
 void
-doit(int f, struct sockaddr *fromp)
+doit(struct sockaddr *fromp)
 {
 	struct pollfd fds[2];
-	char cmdbuf[NCARGS+1], *namep;
+	char cmdbuf[NCARGS + 1];
 	const char *cp;
 	char user[16], pass[16];
 	char buf[BUFSIZ], sig;
@@ -120,28 +155,40 @@ doit(int f, struct sockaddr *fromp)
 	int pv[2], pid, cc;
 	int one = 1;
 	in_port_t port;
+	char hostname[2 * MAXHOSTNAMELEN + 1];
+	char pbuf[NI_MAXSERV];
+	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV;
+#ifndef USE_PAM
+	char *namep;
+#endif
 
 	(void)signal(SIGINT, SIG_DFL);
 	(void)signal(SIGQUIT, SIG_DFL);
 	(void)signal(SIGTERM, SIG_DFL);
-	dup2(f, STDIN_FILENO);
-	dup2(f, STDOUT_FILENO);
-	dup2(f, STDERR_FILENO);
+	(void)dup2(STDIN_FILENO, STDOUT_FILENO);
+	(void)dup2(STDIN_FILENO, STDERR_FILENO);
+
+	if (getnameinfo(fromp, fromp->sa_len, hostname, sizeof(hostname),
+	    pbuf, sizeof(pbuf), niflags) != 0) {
+		if (dolog)
+			syslog(LOG_ERR, "malformed \"from\" address (af %d)",
+			       fromp->sa_family);
+		exit(1);
+	}
+
 	(void)alarm(60);
 	port = 0;
 	for (;;) {
 		char c;
-		if (read(f, &c, 1) != 1) {
+		if (read(STDIN_FILENO, &c, 1) != 1) {
 			if (dolog)
-				syslog(LOG_ERR,
-				    "initial read failed");
+				syslog(LOG_ERR, "initial read failed");
 			exit(1);
 		}
 		if (c == 0)
 			break;
 		port = port * 10 + c - '0';
 	}
-	(void)alarm(0);
 	if (port != 0) {
 		s = socket(fromp->sa_family, SOCK_STREAM, 0);
 		if (s < 0) {
@@ -168,50 +215,72 @@ doit(int f, struct sockaddr *fromp)
 		}
 		(void)alarm(0);
 	}
+	(void)alarm(60);
 	getstr(user, sizeof(user), "username");
 	getstr(pass, sizeof(pass), "password");
 	getstr(cmdbuf, sizeof(cmdbuf), "command");
+	(void)alarm(0);
 	setpwent();
 	pwd = getpwnam(user);
 	if (pwd == NULL) {
-		error("Login incorrect.\n");
 		if (dolog)
 			syslog(LOG_ERR, "no such user %s", user);
-		exit(1);
+		rexecd_errx(1, "Login incorrect.");
 	}
 	endpwent();
+#ifdef USE_PAM
+	if (!pam_ok(pam_start("rexecd", user, &pamc, &pamh)) ||
+	    !pam_ok(pam_set_item(pamh, PAM_RHOST, hostname)) ||
+	    !pam_ok(pam_set_item(pamh, PAM_AUTHTOK, pass))) {
+		if (dolog)
+			syslog(LOG_ERR, "PAM ERROR %s@%s (%s)", user,
+			   hostname, pam_strerror(pamh, pam_err));
+		rexecd_errx(1, "Try again.");
+	}
+	if (!pam_ok(pam_authenticate(pamh, pam_flags)) ||
+	    !pam_ok(pam_acct_mgmt(pamh, pam_flags))) {
+		if (dolog)
+			syslog(LOG_ERR, "LOGIN REFUSED for %s@%s (%s)", user,
+			   hostname, pam_strerror(pamh, pam_err));
+		rexecd_errx(1, "Password incorrect.");
+	}
+#else
 	if (*pwd->pw_passwd != '\0') {
 		namep = crypt(pass, pwd->pw_passwd);
-		if (strcmp(namep, pwd->pw_passwd)) {
-			error("Password incorrect.\n");	/* XXX: wrong! */
+		if (strcmp(namep, pwd->pw_passwd) != 0) {
 			if (dolog)
 				syslog(LOG_ERR, "incorrect password for %s",
 				    user);
-			exit(1);
+			rexecd_errx(1, "Password incorrect.");/* XXX: wrong! */
 		}
 	} else
-		(void)crypt("dummy password", "PA");	/* must always crypt */
+		(void)crypt("dummy password", "PA");    /* must always crypt */
+#endif
 	if (chdir(pwd->pw_dir) < 0) {
-		error("No remote directory.\n");
 		if (dolog)
 			syslog(LOG_ERR, "%s does not exist for %s", pwd->pw_dir,
-			    user);
-		exit(1);
+			       user);
+		rexecd_errx(1, "No remote directory.");
 	}
+
+	if (dolog)
+		syslog(LOG_INFO, "login from %s as %s", hostname, user);
 	(void)write(STDERR_FILENO, "\0", 1);
 	if (port) {
 		if (pipe(pv) < 0 || (pid = fork()) == -1) {
-			error("Try again.\n");
 			if (dolog)
 				syslog(LOG_ERR,"pipe or fork failed for %s: %m",
 				    user);
-			exit(1);
+			rexecd_errx(1, "Try again.");
 		}
 		if (pid) {
+			/* parent */
+#ifdef USE_PAM
+			(void)pam_end(pamh, pam_err);
+#endif
 			(void)close(STDIN_FILENO);
 			(void)close(STDOUT_FILENO);
 			(void)close(STDERR_FILENO);
-			(void)close(f);
 			(void)close(pv[1]);
 			fds[0].fd = s;
 			fds[1].fd = pv[0];
@@ -242,36 +311,58 @@ doit(int f, struct sockaddr *fromp)
 			} while ((fds[0].events | fds[1].events) & POLLIN);
 			_exit(0);
 		}
+		/* child */
 		(void)close(s);
 		(void)close(pv[0]);
-		if (dup2(pv[1], 2) < 0) {
-			error("Try again.\n");
+		if (dup2(pv[1], STDERR_FILENO) < 0) {
 			if (dolog)
 				syslog(LOG_ERR, "dup2 failed for %s", user);
-			exit(1);
+			rexecd_errx(1, "Try again.");
 		}
 	}
 	if (*pwd->pw_shell == '\0')
-		pwd->pw_shell = _PATH_BSHELL;
-	if (f > 2)
-		(void)close(f);
+		pwd->pw_shell = __UNCONST(_PATH_BSHELL);
 	if (setsid() < 0 ||
 	    setlogin(pwd->pw_name) < 0 ||
 	    initgroups(pwd->pw_name, pwd->pw_gid) < 0 ||
+#ifdef USE_PAM
+	    setgid((gid_t)pwd->pw_gid) < 0) {
+#else
 	    setgid((gid_t)pwd->pw_gid) < 0 ||
 	    setuid((uid_t)pwd->pw_uid) < 0) {
-		error("Try again.\n");
+#endif
+		rexecd_errx(1, "Try again.");
 		if (dolog)
 			syslog(LOG_ERR, "could not set permissions for %s: %m",
 			    user);
 		exit(1);
 	}
+#ifdef USE_PAM
+	if (!pam_ok(pam_setcred(pamh, PAM_ESTABLISH_CRED)))
+		syslog(LOG_ERR, "pam_setcred() failed: %s",
+		       pam_strerror(pamh, pam_err));
+	(void)pam_setenv(pamh, "HOME", pwd->pw_dir, 1);
+	(void)pam_setenv(pamh, "SHELL", pwd->pw_shell, 1);
+	(void)pam_setenv(pamh, "USER", pwd->pw_name, 1);
+	(void)pam_setenv(pamh, "LOGNAME", pwd->pw_name, 1);
+	(void)pam_setenv(pamh, "PATH", _PATH_DEFPATH, 1);
+	environ = pam_getenvlist(pamh);
+	(void)pam_end(pamh, pam_err);
+	if (setuid((uid_t)pwd->pw_uid) < 0) {
+                if (dolog)
+                        syslog(LOG_ERR, "could not set uid for %s: %m",
+                            user);
+                rexecd_errx(1, "Try again.");
+        }
+#else
 	(void)strlcat(path, _PATH_DEFPATH, sizeof(path));
 	environ = envinit;
-	strlcat(homedir, pwd->pw_dir, sizeof(homedir));
-	strlcat(shell, pwd->pw_shell, sizeof(shell));
-	strlcat(username, pwd->pw_name, sizeof(username));
-	strlcat(logname, pwd->pw_name, sizeof(logname));
+	(void)strlcat(homedir, pwd->pw_dir, sizeof(homedir));
+	(void)strlcat(shell, pwd->pw_shell, sizeof(shell));
+	(void)strlcat(username, pwd->pw_name, sizeof(username));
+	(void)strlcat(logname, pwd->pw_name, sizeof(logname));
+#endif
+
 	cp = strrchr(pwd->pw_shell, '/');
 	if (cp)
 		cp++;
@@ -279,28 +370,30 @@ doit(int f, struct sockaddr *fromp)
 		cp = pwd->pw_shell;
 	if (dolog)
 		syslog(LOG_INFO, "running command for %s: %s", user, cmdbuf);
-	execl(pwd->pw_shell, cp, "-c", cmdbuf, 0);
-	perror(pwd->pw_shell);
+	(void)execl(pwd->pw_shell, cp, "-c", cmdbuf, 0);
 	if (dolog)
 		syslog(LOG_ERR, "execl failed for %s: %m", user);
-	exit(1);
+	err(1, "%s", pwd->pw_shell);
 }
 
 void
-error(const char *fmt, ...)
+rexecd_errx(int ex, const char *fmt, ...)
 {
 	char buf[BUFSIZ];
 	va_list ap;
+	ssize_t len;
 
 	va_start(ap, fmt);
 	buf[0] = 1;
-	(void)vsnprintf(buf+1, sizeof(buf) - 1, fmt, ap);
-	(void)write(STDERR_FILENO, buf, strlen(buf));
+	len = vsnprintf(buf + 1, sizeof(buf) - 1, fmt, ap) + 1;
+	buf[len++] = '\n';
+	(void)write(STDERR_FILENO, buf, len);
 	va_end(ap);
+	exit(ex);
 }
 
 void
-getstr(char *buf, int cnt, char *err)
+getstr(char *buf, int cnt, const char *emsg)
 {
 	char c;
 
@@ -308,9 +401,14 @@ getstr(char *buf, int cnt, char *err)
 		if (read(STDIN_FILENO, &c, 1) != 1)
 			exit(1);
 		*buf++ = c;
-		if (--cnt == 0) {
-			error("%s too long\n", err);
-			exit(1);
-		}
+		if (--cnt == 0)
+			rexecd_errx(1, "%s too long", emsg);
 	} while (c != 0);
+}
+
+static void
+usage(void)
+{
+	(void)fprintf(stderr, "Usage: %s [-l]\n", getprogname());
+	exit(1);
 }
