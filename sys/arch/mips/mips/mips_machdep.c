@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.54 1999/08/16 02:59:23 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.55 1999/09/24 00:37:52 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.54 1999/08/16 02:59:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.55 1999/09/24 00:37:52 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -528,13 +528,13 @@ cpu_identify()
 	printf("cpu0: ");
 #ifdef MIPS1
 	if (cpu_arch == 1) {
-		printf("%dkb Instruction, %dkb Data, direct mapped cache",
+		printf("%dKB Instruction, %dKB Data, direct mapped cache",
 		    mips_L1ICacheSize / 1024, mips_L1DCacheSize / 1024);
 	}
 #endif
 #ifdef MIPS3
 	if (cpu_arch >= 3) {
-		printf("L1 cache: %dkb/%db Instruction, %dkb/%db Data",
+		printf("L1 cache: %dKB/%dB Instruction, %dKB/%dB Data",
 		    mips_L1ICacheSize / 1024, mips_L1ICacheLSize,
 		    mips_L1DCacheSize / 1024, mips_L1DCacheLSize);
 		if (mips3_L1TwoWayCache)
@@ -549,7 +549,7 @@ cpu_identify()
 		else {
 			printf("L2 cache: ");
 			if (mips_L2CacheSize)
-				printf("%dkb", mips_L2CacheSize / 1024);
+				printf("%dKB", mips_L2CacheSize / 1024);
 			else
 				printf("unknown size");
 			printf("/%db %s, %s",

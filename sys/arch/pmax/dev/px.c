@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.16 1999/09/18 01:50:24 ad Exp $ */
+/* 	$NetBSD: px.c,v 1.17 1999/09/24 00:37:52 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.16 1999/09/18 01:50:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.17 1999/09/24 00:37:52 nisimura Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -224,7 +224,7 @@ static const u_char px_shuffle[256] = {
 #define PXMAP_INFO_SIZE	(NBPG)
 #define PXMAP_RBUF_SIZE	(4096 * 16 + 8192 * 2)
 
-/* Need alignment to 8kB here... */
+/* Need alignment to 8KB here... */
 static u_char	px_cons_rbuf[PXMAP_INFO_SIZE + PXMAP_RBUF_SIZE + 8192];
 static u_int	px_cons_rbuf_use;
 struct px_info *px_cons_info;
@@ -324,7 +324,7 @@ px_attach(parent, self, aux)
 	printf(": %cD, %dx%d stamp, %d plane", (pxi->pxi_option ? '3' : '2'),
 	    pxi->pxi_stampw, pxi->pxi_stamph, pxi->pxi_nplanes);
 	if (pxi->pxi_option)
-		printf(", %dkB SRAM", px_probe_sram(pxi) >> 10);
+		printf(", %dKB SRAM", px_probe_sram(pxi) >> 10);
 	printf("\n");
 }
 
@@ -355,7 +355,7 @@ px_init(fi, slotbase, unit, console)
 		px_cons_rbuf_use = 1;
 	}
 
-	/* Align to 8kB. px_info struct gets the first 4kB */
+	/* Align to 8KB. px_info struct gets the first 4KB */
 	bufpa = (bufpa + 8191) & ~8191;
 	pxi = (struct px_info *)MIPS_PHYS_TO_KSEG0(bufpa);
 	px_unit[unit] = pxi;
@@ -388,7 +388,7 @@ px_init(fi, slotbase, unit, console)
 		bufpa = MIPS_KSEG0_TO_PHYS(slotbase + PXG_SRAM_OFFSET);
 		pxi->pxi_rbuf = (int *)MIPS_PHYS_TO_KSEG0(bufpa);
 		pxi->pxi_rbuf_phys = bufpa;
-		pxi->pxi_rbuf_size = 128*1024; /* XXX might have 256kB */
+		pxi->pxi_rbuf_size = 128*1024; /* XXX might have 256KB */
 	}
 
 	/* Get a font and lock. If we're not the console, we don't care */
