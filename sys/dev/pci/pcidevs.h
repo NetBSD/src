@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.111 1999/02/19 05:53:36 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.112 1999/02/19 06:56:53 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.105 1999/02/19 05:53:00 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.106 1999/02/19 06:55:15 thorpej Exp 
  */
 
 /*
@@ -533,18 +533,20 @@
  */
 
 /* 3COM Products */
-#define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 10Mbps */
-#define	PCI_PRODUCT_3COM_3C595TX	0x5950		/* 3c595 100Base-TX */
-#define	PCI_PRODUCT_3COM_3C595T4	0x5951		/* 3c595 100Base-T4 */
-#define	PCI_PRODUCT_3COM_3C595MII	0x5952		/* 3c595 10Mbps-MII */
-#define	PCI_PRODUCT_3COM_3C900TPO	0x9000		/* 3c900 10Base-T */
-#define	PCI_PRODUCT_3COM_3C900COMBO	0x9001		/* 3c900 10Mbps-Combo */
-#define	PCI_PRODUCT_3COM_3C905TX	0x9050		/* 3c905 100Base-TX */
-#define	PCI_PRODUCT_3COM_3C905T4	0x9051		/* 3c905 100Base-T4 */
-#define	PCI_PRODUCT_3COM_3C900BTPO	0x9004		/* 3c900B 10Base-T */
-#define	PCI_PRODUCT_3COM_3C900BCOMBO	0x9005		/* 3c900B 10Mbps-Combo */
-#define	PCI_PRODUCT_3COM_3C905BTX	0x9055		/* 3c905B 100Base-TX */
-#define	PCI_PRODUCT_3COM_3C905BT4	0x9056		/* 3c905B 100Base-T4 */
+#define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 Ethernet */
+#define	PCI_PRODUCT_3COM_3C595TX	0x5950		/* 3c595-TX 10/100 Ethernet */
+#define	PCI_PRODUCT_3COM_3C595T4	0x5951		/* 3c595-T4 10/100 Ethernet */
+#define	PCI_PRODUCT_3COM_3C595MII	0x5952		/* 3c595-MII 10/100 Ethernet */
+#define	PCI_PRODUCT_3COM_3C900TPO	0x9000		/* 3c900-TPO Ethernet */
+#define	PCI_PRODUCT_3COM_3C900COMBO	0x9001		/* 3c900-COMBO Ethernet */
+#define	PCI_PRODUCT_3COM_3C905TX	0x9050		/* 3c905-TX 10/100 Ethernet */
+#define	PCI_PRODUCT_3COM_3C905T4	0x9051		/* 3c905-T4 10/100 Ethernet */
+#define	PCI_PRODUCT_3COM_3C900BTPO	0x9004		/* 3c900B-TPO Ethernet */
+#define	PCI_PRODUCT_3COM_3C900BCOMBO	0x9005		/* 3c900B-COMBO Ethernet */
+#define	PCI_PRODUCT_3COM_3C905BTX	0x9055		/* 3c905B-TX 10/100 Ethernet */
+#define	PCI_PRODUCT_3COM_3C905BT4	0x9056		/* 3c905B-T4 10/100 Ethernet */
+#define	PCI_PRODUCT_3COM_3C905BFX	0x905a		/* 3c905B-FX 10/100 Ethernet */
+#define	PCI_PRODUCT_3COM_3C980SRV	0x9800		/* 3c980 Server Adapter 10/100 Ethernet */
 
 /* 3Dfx Interactive producs */
 #define	PCI_PRODUCT_3DFX_VOODOO	0x0001		/* Voodoo */
