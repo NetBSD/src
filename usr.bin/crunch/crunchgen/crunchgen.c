@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.28 2001/11/07 18:22:39 drochner Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.29 2001/11/08 07:35:00 jmc Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.28 2001/11/07 18:22:39 drochner Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.29 2001/11/08 07:35:00 jmc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -881,7 +881,7 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
     fprintf(outmk, "\t${LD} -dc -r -o %s.cro %s_stub.o $(%s_OBJPATHS)\n", 
 	    p->name, p->name, p->ident);
 #ifdef NEW_TOOLCHAIN
-    fprintf(outmk, "\t${OBJCOPY} -S -K _crunched_%s_stub %s.cro\n",
+    fprintf(outmk, "\t${OBJCOPY} --keep-global-symbol _crunched_%s_stub %s.cro\n",
   	    p->ident, p->name);
 #else
     fprintf(outmk, "\t${CRUNCHIDE} -k _crunched_%s_stub %s.cro\n", 
