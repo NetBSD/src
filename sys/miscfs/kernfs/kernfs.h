@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.21 2004/05/07 15:06:15 cl Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.22 2004/05/07 15:33:17 cl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,10 +57,13 @@ typedef enum {
 	KFSipsecspdir,	/* ipsec security policy (top dir) */
 	KFSipsecsa,		/* ipsec security association entry */
 	KFSipsecsp,		/* ipsec security policy entry */
+	KFSsubdir,		/* directory */
+	KFSlasttype,		/* last used type */
+	KFSmaxtype = (1<<6) - 1	/* last possible type */
 } kfstype;
 
 /*
- * control data for the kern file system.
+ * Control data for the kern file system.
  */
 struct kern_target {
 	u_char		kt_type;
@@ -70,6 +73,18 @@ struct kern_target {
 	kfstype		kt_tag;
 	u_char		kt_vtype;
 	mode_t		kt_mode;
+};
+
+struct dyn_kern_target {
+	struct kern_target		dkt_kt;
+	SIMPLEQ_ENTRY(dyn_kern_target)	dkt_queue;
+};
+
+struct kernfs_subdir {
+	SIMPLEQ_HEAD(,dyn_kern_target)	ks_entries;
+	unsigned int			ks_nentries;
+	unsigned int			ks_dirs;
+	const struct kern_target	*ks_parent;
 };
 
 struct kernfs_node {
@@ -93,9 +108,11 @@ struct kernfs_mount {
 #define UIO_MX	32
 
 #define KERNFS_FILENO(kt, typ, cookie) \
-	((kt >= &kern_targets[0] && kt < &kern_targets[nkern_targets]) ? \
-	    2 + ((kt) - &kern_targets[0]) \
+	((kt >= &kern_targets[0] && kt < &kern_targets[static_nkern_targets]) \
+	    ? 2 + ((kt) - &kern_targets[0]) \
 	      : (((cookie + 1) << 6) | (typ)))
+#define KERNFS_TYPE_FILENO(typ, cookie) \
+	(((cookie + 1) << 6) | (typ))
 
 #define VFSTOKERNFS(mp)	((struct kernfs_mount *)((mp)->mnt_data))
 #define	VTOKERN(vp)	((struct kernfs_node *)(vp)->v_data)
@@ -103,6 +120,7 @@ struct kernfs_mount {
 
 extern const struct kern_target kern_targets[];
 extern int nkern_targets;
+extern const int static_nkern_targets;
 extern int (**kernfs_vnodeop_p) __P((void *));
 extern struct vfsops kernfs_vfsops;
 extern dev_t rrootdev;
@@ -121,4 +139,57 @@ int kernfs_allocvp __P((struct mount *, struct vnode **, kfstype,
 
 void kernfs_revoke_sa __P((struct secasvar *));
 void kernfs_revoke_sp __P((struct secpolicy *));
+
+/*
+ * Data types for the kernfs file operations.
+ */
+typedef enum {
+	KERNFS_XWRITE,
+	KERNFS_FILEOP_CLOSE,
+	KERNFS_FILEOP_GETATTR,
+	KERNFS_FILEOP_IOCTL,
+	KERNFS_FILEOP_MMAP,
+	KERNFS_FILEOP_OPEN,
+	KERNFS_FILEOP_WRITE,
+} kfsfileop;
+
+struct kernfs_fileop {
+	kfstype				kf_type;
+	kfsfileop			kf_fileop;
+	union {
+		void			*_kf_genop;
+		int			(*_kf_vop)(void *);
+		int			(*_kf_xwrite)
+			(const struct kernfs_node *, char *, size_t);
+	} _kf_opfn;
+	SPLAY_ENTRY(kernfs_fileop)	kf_node;
+};
+#define	kf_genop	_kf_opfn
+#define	kf_vop		_kf_opfn._kf_vop
+#define	kf_xwrite	_kf_opfn._kf_xwrite
+
+typedef struct kern_target kernfs_parentdir_t;
+typedef struct dyn_kern_target kernfs_entry_t;
+
+/*
+ * Functions for adding kernfs datatypes and nodes.
+ */
+kfstype kernfs_alloctype(int, const struct kernfs_fileop *);
+#define	KERNFS_ALLOCTYPE(kf) kernfs_alloctype(sizeof((kf)) / \
+	sizeof((kf)[0]), (kf))
+#define	KERNFS_ALLOCENTRY(dkt, m_type, m_flags)				\
+	dkt = (struct dyn_kern_target *)malloc(				\
+		sizeof(struct dyn_kern_target), (m_type), (m_flags))
+#define	KERNFS_INITENTRY(dkt, type, name, data, tag, vtype, mode) do {	\
+	(dkt)->dkt_kt.kt_type = (type);					\
+	(dkt)->dkt_kt.kt_namlen = strlen((name));			\
+	(dkt)->dkt_kt.kt_name = (name);					\
+	(dkt)->dkt_kt.kt_data = (data);					\
+	(dkt)->dkt_kt.kt_tag = (tag);					\
+	(dkt)->dkt_kt.kt_vtype = (vtype);				\
+	(dkt)->dkt_kt.kt_mode = (mode);					\
+} while (/*CONSTCOND*/0)
+#define	KERNFS_ENTOPARENTDIR(dkt) &(dkt)->dkt_kt
+int kernfs_addentry __P((kernfs_parentdir_t *, kernfs_entry_t *));
+
 #endif /* _KERNEL */
