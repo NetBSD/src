@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 1996/10/14 04:31:57 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67 1996/10/23 20:04:40 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -293,7 +293,7 @@ mach_init(argc, argv, code, cv)
 	mips_vector_init();
 #else
 	mips1_vector_init();
-#endeif
+#endif
 
 	/* look at argv[0] and compute bootdev */
 	makebootdev(argv[0]);
