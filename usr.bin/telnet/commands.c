@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.32 1999/09/30 12:35:52 soren Exp $	*/
+/*	$NetBSD: commands.c,v 1.33 1999/12/03 06:34:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.32 1999/09/30 12:35:52 soren Exp $");
+__RCSID("$NetBSD: commands.c,v 1.33 1999/12/03 06:34:24 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2284,10 +2284,8 @@ tn(argc, argv)
 	/*numeric*/
 	freeaddrinfo(res0);
 	memset(&hints, 0, sizeof(hints));
-	if (doaddrlookup)
-		hints.ai_flags = AI_CANONNAME;
-	else
-		hints.ai_flags |= AI_NUMERICHOST;
+	hints.ai_flags = doaddrlookup ? AI_CANONNAME : 0; /*reverse lookup*/
+	hints.ai_flags |= AI_NUMERICHOST;
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = 0;
@@ -2324,8 +2322,11 @@ tn(argc, argv)
 	    perror("setsockopt (SO_DEBUG)");
 	}
 	if (hostp[0] == '@' || hostp[0] == '!') {
-	    if ((srlen = sourceroute(res, hostp, &srp, &proto, &opt)) < 0)
+	    if ((srlen = sourceroute(res, hostp, &srp, &proto, &opt)) < 0) {
+		(void) NetClose(net);
+		net = -1;
 		continue;
+	    }
 	    if (srp && setsockopt(net, proto, opt, srp, srlen) < 0)
 		perror("setsockopt (source route)");
 	}
