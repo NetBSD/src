@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal,v 1.4 1999/01/13 07:30:02 ross Exp $	
+.\"	$NetBSD: legal,v 1.5 2000/10/05 08:37:55 lukem Exp $	
 .Pp
 This product includes software developed by Charles Hannum.
 .Pp
@@ -18,5 +18,8 @@ This product includes software developed by Herb Peyerl.
 In the following statement, "This software" refers to the parallel
 port driver:
 .Pp
+.Bl -item -offset indent
+.It
 This software is a component of "386BSD" developed by 
 William F. Jolitz, TeleMuse.
+.El
