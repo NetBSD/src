@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr_si.c,v 1.1.2.2 1995/11/18 07:08:48 gwr Exp $	*/
+/*	$NetBSD: ncr_si.c,v 1.1.2.3 1996/02/12 04:56:59 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -158,7 +158,7 @@ struct si_softc {
 };
 
 /* Options.  Interesting values are: 1,3,7 */
-int si_options = 0;
+int si_options = 3;
 #define SI_ENABLE_DMA	1	/* Use DMA (maybe polled) */
 #define SI_DMA_INTR 	2	/* DMA completion interrupts */
 #define	SI_DO_RESELECT	4	/* Allow disconnect/reselect */
@@ -302,7 +302,7 @@ si_attach(parent, self, args)
 		printf("unknown\n");
 		return;
 	}
-	printf("\n");
+	printf(": options=%d\n", si_options);
 
 	/*
 	 * Fill in the prototype scsi_link.
@@ -988,10 +988,10 @@ si_obio_udc_write(si, regnum, value)
 	volatile struct si_regs *si;
 	int regnum, value;
 {
-	delay(UDC_WAIT_USEC);
 	si->udc_addr = regnum;
 	delay(UDC_WAIT_USEC);
 	si->udc_data = value;
+	delay(UDC_WAIT_USEC);
 }
 
 static __inline__ int
@@ -999,10 +999,14 @@ si_obio_udc_read(si, regnum)
 	volatile struct si_regs *si;
 	int regnum;
 {
-	delay(UDC_WAIT_USEC);
+	int value;
+
 	si->udc_addr = regnum;
 	delay(UDC_WAIT_USEC);
-	return (si->udc_data);
+	value = si->udc_data;
+	delay(UDC_WAIT_USEC);
+
+	return (value);
 }
 
 
@@ -1041,6 +1045,9 @@ si_obio_dma_setup(ncr_sc)
 	}
 #endif
 
+	/* Reset the UDC. (In case not already reset?) */
+	si_obio_udc_write(si, UDC_ADR_COMMAND, UDC_CMD_RESET);
+
 	/* Reset the FIFO */
 	si->si_csr &= ~SI_CSR_FIFO_RES; 	/* active low */
 	si->si_csr |= SI_CSR_FIFO_RES;
@@ -1054,6 +1061,19 @@ si_obio_dma_setup(ncr_sc)
 
 	/* Set the FIFO counter. */
 	si->fifo_count = xlen;
+
+	/*
+	 * XXX: Reset DMA engine again!  Comment from Sprite:
+	 * Go through reset again becuase of the bug on the 3/50
+	 * where bytes occasionally linger in the DMA fifo.
+	 */
+
+	/* Reset the UDC. */
+	si_obio_udc_write(si, UDC_ADR_COMMAND, UDC_CMD_RESET);
+
+	/* Reset the FIFO */
+	si->si_csr &= ~SI_CSR_FIFO_RES; 	/* active low */
+	si->si_csr |= SI_CSR_FIFO_RES;
 
 #ifdef	DEBUG
 	if ((si->fifo_count > xlen) || (si->fifo_count < (xlen - 1))) {
@@ -1139,6 +1159,8 @@ si_obio_dma_start(ncr_sc)
 
 	/* Tell the chip to interrupt on error. */
 	si_obio_udc_write(si, UDC_ADR_COMMAND, UDC_CMD_CIE);
+
+	/* XXX: Move all of the above to _setup? */
 
 	/* Finally, give the UDC a "start chain" command. */
 	si_obio_udc_write(si, UDC_ADR_COMMAND, UDC_CMD_STRT_CHN);
@@ -1246,6 +1268,7 @@ si_obio_dma_stop(ncr_sc)
 	}
 #endif
 
+	/* XXX: Treat (ntrans==0) as a special, non-error case? */
 	if (ntrans < MIN_DMA_LEN) {
 		printf("si: fifo count: 0x%x\n", resid);
 		ncr_sc->sc_state |= NCR_ABORTING;
@@ -1265,6 +1288,8 @@ si_obio_dma_stop(ncr_sc)
 	if ((dh->dh_flags & SIDH_OUT) == 0) {
 		/* If odd transfer count, grab last byte by hand. */
 		if (ntrans & 1) {
+			NCR_TRACE("si_dma_stop: leftover 1 at 0x%x\n",
+				(int) ncr_sc->sc_dataptr - 1);
 			ncr_sc->sc_dataptr[-1] =
 				(si->fifo_data & 0xff00) >> 8;
 			goto out;
@@ -1272,6 +1297,8 @@ si_obio_dma_stop(ncr_sc)
 		/* UDC might not have transfered the last word. */
 		udc_cnt = si_obio_udc_read(si, UDC_ADR_COUNT);
 		if (((udc_cnt * 2) - resid) == 2) {
+			NCR_TRACE("si_dma_stop: leftover 2 at 0x%x\n",
+				(int) ncr_sc->sc_dataptr - 2);
 			ncr_sc->sc_dataptr[-2] =
 				(si->fifo_data & 0xff00) >> 8;
 			ncr_sc->sc_dataptr[-1] =
@@ -1283,6 +1310,11 @@ out:
 	/* Reset the UDC. */
 	si_obio_udc_write(si, UDC_ADR_COMMAND, UDC_CMD_RESET);
 	si->fifo_count = 0;
+	si->si_csr &= ~SI_CSR_SEND;
+
+    /* Reset the FIFO */
+    si->si_csr &= ~SI_CSR_FIFO_RES;     /* active low */
+    si->si_csr |= SI_CSR_FIFO_RES;
 
 	/* Put SBIC back in PIO mode. */
 	*ncr_sc->sci_mode &= ~(SCI_MODE_DMA | SCI_MODE_DMA_IE);
