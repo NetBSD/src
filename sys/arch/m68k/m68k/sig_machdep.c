@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.8 1998/05/08 16:55:16 kleink Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.9 1998/09/30 21:04:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,7 @@
 #include <sys/exec.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
+#define __M68K_SIGNAL_PRIVATE
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
@@ -71,29 +72,6 @@ extern int fputype;
 extern short exframesize[];
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
-
-#define SS_RTEFRAME	1
-#define SS_FPSTATE	2
-#define SS_USERREGS	4
-
-struct sigstate {
-	int	ss_flags;		/* which of the following are valid */
-	struct	frame ss_frame;		/* original exception frame */
-	struct	fpframe ss_fpstate;	/* 68881/68882 state info */
-};
-
-/*
- * WARNING: code in locore.s assumes the layout shown for sf_signum
- * thru sf_handler so... don't screw with them!
- */
-struct sigframe {
-	int	sf_signum;		/* signo for handler */
-	int	sf_code;		/* additional info for handler */
-	struct	sigcontext *sf_scp;	/* context ptr for handler */
-	sig_t	sf_handler;		/* handler addr for u_sigc */
-	struct	sigstate sf_state;	/* state of the hardware */
-	struct	sigcontext sf_sc;	/* actual context */
-};
 
 #ifdef DEBUG
 int sigdebug = 0;
