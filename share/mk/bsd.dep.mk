@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.53 2003/07/31 13:47:32 lukem Exp $
+#	$NetBSD: bsd.dep.mk,v 1.54 2003/08/01 00:55:43 lukem Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -27,7 +27,7 @@ DEPENDSRCS.src=	${SRCS:M*.c}	${DPSRCS:M*.c}		\
 DEPENDSRCS.d=	${DEPENDSRCS.src:R:S/$/.d/g}
 DEPENDSRCS=	.depend ${DEPENDSRCS.d}
 
-${DEPENDSRCS.d}: ${SRCS} ${DPSRCS}
+${DEPENDSRCS.d}: ${DPSRCS}
 
 .depend: ${DEPENDSRCS.d}
 	@rm -f .depend
