@@ -1,9 +1,11 @@
+/*	$NetBSD: msg.c,v 1.1.1.2 2003/10/06 15:46:22 wiz Exp $	*/
+
 /*
  * msg.c - routines for error messages
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991-1997 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991-2001, 2003 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Programming Language.
@@ -28,36 +30,30 @@
 int sourceline = 0;
 char *source = NULL;
 
-static char *srcfile = NULL;
+static const char *srcfile = NULL;
 static int srcline;
-
-/* prototype needed for ansi / gcc */
-void err P((const char *s, const char *emsg, va_list argp));
 
 /* err --- print an error message with source line and file and record */
 
 /* VARARGS2 */
 void
-err(s, emsg, argp)
-const char *s;
-const char *emsg;
-va_list argp;
+err(const char *s, const char *emsg, va_list argp)
 {
 	char *file;
 
 	(void) fflush(stdout);
 	(void) fprintf(stderr, "%s: ", myname);
-#ifdef DEBUG
+#ifdef GAWKDEBUG
 	if (srcfile != NULL) {
 		fprintf(stderr, "%s:%d:", srcfile, srcline);
 		srcfile = NULL;
 	}
-#endif /* DEBUG */
+#endif /* GAWKDEBUG */
 	if (sourceline != 0) {
 		if (source != NULL)
 			(void) fprintf(stderr, "%s:", source);
 		else
-			(void) fprintf(stderr, "cmd. line:");
+			(void) fprintf(stderr, _("cmd. line:"));
 
 		(void) fprintf(stderr, "%d: ", sourceline);
 	}
@@ -68,7 +64,7 @@ va_list argp;
 			(void) fprintf(stderr, "FILENAME=%s ", file);
 		(void) fprintf(stderr, "FNR=%ld) ", FNR);
 	}
-	(void) fprintf(stderr, s);
+	(void) fprintf(stderr, "%s", s);
 	vfprintf(stderr, emsg, argp);
 	(void) fprintf(stderr, "\n");
 	(void) fflush(stderr);
@@ -76,14 +72,18 @@ va_list argp;
 
 /* msg --- take a varargs error message and print it */
 
-#if defined(HAVE_STDARG_H) && defined(__STDC__) && __STDC__
+/*
+ * Function identifier purposely indented to avoid mangling
+ * by ansi2knr.  Sigh.
+ */
+
 void
-msg(char *mesg, ...)
+#if defined(HAVE_STDARG_H) && defined(__STDC__) && __STDC__
+  msg(const char *mesg, ...)
 #else
 /*VARARGS0*/
-void
-msg(va_alist)
-va_dcl
+  msg(va_alist)
+  va_dcl
 #endif
 {
 	va_list args;
@@ -101,14 +101,13 @@ va_dcl
 
 /* warning --- print a warning message */
 
-#if defined(HAVE_STDARG_H) && defined(__STDC__) && __STDC__
 void
-warning(char *mesg, ...)
+#if defined(HAVE_STDARG_H) && defined(__STDC__) && __STDC__
+  warning(const char *mesg, ...)
 #else
 /*VARARGS0*/
-void
-warning(va_alist)
-va_dcl
+  warning(va_alist)
+  va_dcl
 #endif
 {
 	va_list args;
@@ -120,18 +119,17 @@ va_dcl
 	va_start(args);
 	mesg = va_arg(args, char *);
 #endif
-	err("warning: ", mesg, args);
+	err(_("warning: "), mesg, args);
 	va_end(args);
 }
 
-#if defined(HAVE_STDARG_H) && defined(__STDC__) && __STDC__
 void
-error(char *mesg, ...)
+#if defined(HAVE_STDARG_H) && defined(__STDC__) && __STDC__
+  error(const char *mesg, ...)
 #else
 /*VARARGS0*/
-void
-error(va_alist)
-va_dcl
+  error(va_alist)
+  va_dcl
 #endif
 {
 	va_list args;
@@ -143,31 +141,31 @@ va_dcl
 	va_start(args);
 	mesg = va_arg(args, char *);
 #endif
-	err("error: ", mesg, args);
+	err(_("error: "), mesg, args);
 	va_end(args);
 }
 
 /* set_loc --- set location where a fatal error happened */
 
 void
-set_loc(file, line)
-char *file;
-int line;
+set_loc(const char *file, int line)
 {
 	srcfile = file;
 	srcline = line;
+
+	/* This stupid line keeps some compilers happy: */
+	file = srcfile; line = srcline;
 }
 
 /* fatal --- print an error message and die */
 
-#if defined(HAVE_STDARG_H) && defined(__STDC__) && __STDC__
 void
-r_fatal(char *mesg, ...)
+#if defined(HAVE_STDARG_H) && defined(__STDC__) && __STDC__
+  r_fatal(const char *mesg, ...)
 #else
 /*VARARGS0*/
-void
-r_fatal(va_alist)
-va_dcl
+  r_fatal(va_alist)
+  va_dcl
 #endif
 {
 	va_list args;
@@ -179,11 +177,10 @@ va_dcl
 	va_start(args);
 	mesg = va_arg(args, char *);
 #endif
-	err("fatal: ", mesg, args);
+	err(_("fatal: "), mesg, args);
 	va_end(args);
-#ifdef DEBUG
+#ifdef GAWKDEBUG
 	abort();
 #endif
 	exit(2);
 }
-

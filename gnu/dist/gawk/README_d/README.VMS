@@ -19,9 +19,8 @@ GNU C  -- use `@vmsbuild GNUC' or `MMS/MACRO=("GNUC")'.  On a system
         `@vmsbuild GNUC DO_GNUC_SETUP' or
         `MMS/MACRO=("GNUC","DO_GNUC_SETUP")'.
 
-     Tested under Alpha/VMS V6.2 using DEC C V5.2 and under VAX/VMS V6.2
-using DEC C V5.2, VAX C 3.2, and GNU C 2.7.1.  GAWK should work without
-modifications for VMS V4.6 and up.
+     Tested under Alpha/VMS V7.1 using DEC C V6.4.  GAWK should work
+without modifications for VMS V4.6 and up.
 
 
 Installing GAWK on VMS:
@@ -79,25 +78,4 @@ files specified by the '-f' option.  The format of AWKPATH is a comma-
 separated list of directory specifications.  When defining it, the
 value should be quoted so that it retains a single translation, not a
 multi-translation RMS searchlist.
-
-
-Building and using GAWK under VMS POSIX:
-
-     Ignore the instructions above, although vms/gawk.hlp should still
-be made available in a help library.  The source tree should be unpacked
-into a container file subsystem rather than into the ordinary VMS file
-system.  Make sure that the two scripts, 'configure' and 'vms/posix-cc.sh',
-are executable; use `chmod +x' on them if necessary.  Then execute the
-following two commands:
- |psx> CC=vms/posix-cc.sh configure
- |psx> make CC=c89 gawk
-The first command will construct files "config.h" and "Makefile" out
-of templates, using a script to make the C compiler fit 'configure's
-expectations.  The second command will compile and link 'gawk' using
-the C compiler directly; ignore any warnings from `make' about being
-unable to redefine "CC".  The configure script will take a very long
-time to execute, but at least it provides incremental feedback as it
-runs.
-
-     Tested with VAX/VMS V6.2 + VMS POSIX V2.0 + DEC C V5.2.
 
