@@ -1,7 +1,7 @@
-/*	$NetBSD: mach_vm.h,v 1.11 2002/12/17 18:42:57 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.12 2003/01/04 15:15:01 manu Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -180,11 +180,32 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_vm_inherit_reply_t;
 
+/* vm_make_memory_entry */
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_body;
+	mach_msg_port_descriptor_t req_parent_entry;
+	mach_ndr_record_t req_ndr;
+	mach_vm_size_t req_size;
+	mach_vm_offset_t req_offset;
+	mach_vm_prot_t req_perm;
+} mach_vm_make_memory_entry_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_obj_handle;
+	mach_ndr_record_t rep_ndr;
+	mach_vm_size_t rep_size;
+	mach_msg_trailer_t rep_trailer;
+} mach_vm_make_memory_entry_reply_t;
+
 int mach_vm_map(struct mach_trap_args *);
 int mach_vm_allocate(struct mach_trap_args *);
 int mach_vm_deallocate(struct mach_trap_args *);
 int mach_vm_wire(struct mach_trap_args *);
 int mach_vm_protect(struct mach_trap_args *);
 int mach_vm_inherit(struct mach_trap_args *);
+int mach_vm_make_memory_entry(struct mach_trap_args *);
 
 #endif /* _MACH_VM_H_ */
