@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.c,v 1.4 2003/07/26 18:33:06 mrg Exp $	*/
+/*	$NetBSD: pthread_md.c,v 1.5 2003/09/22 14:45:48 cl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,16 +37,18 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_md.c,v 1.4 2003/07/26 18:33:06 mrg Exp $");
+__RCSID("$NetBSD: pthread_md.c,v 1.5 2003/09/22 14:45:48 cl Exp $");
 
 #define	__PTHREAD_SIGNAL_PRIVATE
 
+#include <signal.h>
 #include <string.h>
 #include <assert.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
 
+#ifndef __HAVE_SIGINFO
 /*
  * We only need this to know how much data to copy.
  */
@@ -93,3 +95,4 @@ pthread__sigcontext_to_ucontext(const struct pthread__sigcontext *psc,
 
 	uc->uc_flags &= ~_UC_SIGMASK;
 }
+#endif
