@@ -238,15 +238,12 @@ mail_owner = postfix
 # 
 #local_recipient_maps = $alias_maps unix:passwd.byname
 
-# If you use both the Postfix local and virtual delivery agents, specify:
-#
-#local_recipient_maps = $alias_maps unix:passwd.byname $virtual_mailbox_maps
-
 # INPUT RATE CONTROL
 #
 # The in_flow_delay configuration parameter implements mail input
-# flow control. This feature is turned off by default because it
-# needs further development.
+# flow control. This feature is turned on by default, although it
+# still needs further development (it's disabled on SCO UNIX due
+# to an SCO bug).
 # 
 # A Postfix process will pause for $in_flow_delay seconds before
 # accepting a new message, when the message arrival rate exceeds the
@@ -256,7 +253,7 @@ mail_owner = postfix
 # 
 # Specify 0 to disable the feature. Valid delays are 0..10.
 # 
-#in_flow_delay = 1
+#in_flow_delay = 1s
 
 # ADDRESS REWRITING
 #
