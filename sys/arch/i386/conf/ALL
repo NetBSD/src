@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.27 1993/09/14 20:01:19 brezak Exp $
+#	$Id: ALL,v 1.28 1993/09/19 19:11:24 brezak Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -83,6 +83,9 @@ options		GATEWAY
 
 # kernel debugger
 options		DDB
+
+# Allows user to create an i386 LDT (Used by Wine to run Windows programs)
+options		"USER_LDT"
 
 options		"COMPAT_NOMID"
 options		"COMPAT_43"
