@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.65 2004/10/16 13:20:11 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.66 2004/10/20 19:36:23 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1689,10 +1689,10 @@ guess_biosgeom_from_mbr(mbr_info_t *mbri, int *cyl, int *head, int *sec)
 	for (i = 0; i < MBR_PART_COUNT * 2 - 1; i++) {
 		if (get_mapping(parts, i, &c1, &h1, &s1, &a1) < 0)
 			continue;
+		a1 -= s1;
 		for (j = i + 1; j < MBR_PART_COUNT * 2; j++) {
 			if (get_mapping(parts, j, &c2, &h2, &s2, &a2) < 0)
 				continue;
-			a1 -= s1;
 			a2 -= s2;
 			num = (uint64_t)h1 * a2 - (quad_t)h2 * a1;
 			denom = (uint64_t)c2 * a1 - (quad_t)c1 * a2;
