@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.41 1999/04/23 18:45:50 ross Exp $
+#	$NetBSD: MAKEDEV,v 1.42 1999/05/13 22:08:48 ross Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -112,7 +112,7 @@ all)
 
 minimal)
 	sh $0 std
-	sh $0 sd0 sd1 sd2 sd3 pty0 st0 ch0 cd0 ccd0 ccd1 md0
+	sh $0 sd0 sd1 sd2 sd3 pty0 st0 st1 ch0 cd0 cd1 ccd0 ccd1 md0
 	sh $0 wd0 wd1 fd0 fd1
 	sh $0 ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 wsmouse0 wskbd0 ttyEcfg
 	;;
