@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.15 1997/03/13 02:19:51 mycroft Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.16 1997/03/13 08:34:50 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -123,7 +123,7 @@ static int ad1848_init_values[] = {
     SINGLE_DMA|AUTO_CAL_ENABLE,
     INTERRUPT_ENABLE,	/* Pin control */
     0x00,		/* Test and Init */
-    0xca,		/* Misc control */
+    MODE2,		/* Misc control */
     ATTEN_0<<2,		/* Digital Mix Control */
     0,			/* Upper base Count */
     0,			/* Lower base Count */
@@ -488,12 +488,8 @@ ad1848_attach(sc)
 	ad_write(sc, i, ad1848_init_values[i]);
     /* ...and additional CS4231 stuff too */
     if (sc->mode == 2) {
-#if 0
-	    ad_write(sc, SP_INTERFACE_CONFIG, 0); /* disable SINGLE_DMA feature */
-#else
-	    /* XXX SINGLE_DMA is cleared in ad1848_reset(), due to #if 0 */
-#endif
-	    for (i = 0x10; i <= 0x1F; i++)
+	    ad_write(sc, SP_INTERFACE_CONFIG, 0); /* disable SINGLE_DMA */
+	    for (i = 0x10; i <= 0x1f; i++)
 		    if (ad1848_init_values[i] != 0)
 			    ad_write(sc, i, ad1848_init_values[i]);
     }
@@ -1274,20 +1270,15 @@ void
 ad1848_reset(sc)
     register struct ad1848_softc *sc;
 {
-#if 0
     u_char r;
-#endif
     
     DPRINTF(("ad1848_reset\n"));
     
     /* Clear the PEN and CEN bits */
-#if 0
     r = ad_read(sc, SP_INTERFACE_CONFIG);
     r &= ~(CAPTURE_ENABLE|PLAYBACK_ENABLE);
     ad_write(sc, SP_INTERFACE_CONFIG, r);
-#else
-    ad_write(sc, SP_INTERFACE_CONFIG, 0);
-#endif
+
     if (sc->mode == 2) {
 	    outb(sc->sc_iobase+AD1848_IADDR, CS_IRQ_STATUS);
 	    outb(sc->sc_iobase+AD1848_IDATA, 0);
