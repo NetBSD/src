@@ -10,7 +10,7 @@ RM=	rm -f
 
 .mc.cf:
 	$(RM) $@
-	(cd ${.CURDIR} && $(M4) ${@:R}.mc > obj/$@)
+	(cd ${.CURDIR} && $(M4) ${@:R}.mc > ${.OBJDIR}/$@)
 	$(CHMOD) $(ROMODE) $@
 
 ALL=	cs-hidden.cf cs-exposed.cf \
