@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.9 1998/11/17 14:38:42 bouyer Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.10 1999/02/24 18:54:03 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -216,7 +216,7 @@ static const struct {
 { 0x3B, 0x0C, "Position Past Beginning Of Medium" },
 { 0x3B, 0x0D, "Medium Destination Element Full" },
 { 0x3B, 0x0E, "Medium Source Element Empty" },
-{ 0x3D, 0x00, "Invalid Bits In IDENTFY Message" },
+{ 0x3D, 0x00, "Invalid Bits In IDENTIFY Message" },
 { 0x3E, 0x00, "Logical Unit Has Not Self-Configured Yet" },
 { 0x3F, 0x00, "Target Operating Conditions Have Changed" },
 { 0x3F, 0x01, "Microcode Has Changed" },
