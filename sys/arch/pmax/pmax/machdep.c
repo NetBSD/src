@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.168 2000/03/25 10:14:14 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.169 2000/04/11 02:43:56 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 2000/03/25 10:14:14 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.169 2000/04/11 02:43:56 nisimura Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 2000/03/25 10:14:14 nisimura Exp $
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[40];
+unsigned ssir;				/* simulated interrupt register */
 
 /* maps for VM objects */
 vm_map_t exec_map = NULL;
@@ -112,7 +113,8 @@ int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
 struct splvec	splvec;			/* XXX will go XXX */
 
-void	mach_init __P((int, char *[], int, int, u_int, char *));	/* XXX */
+void	mach_init __P((int, char *[], int, int, u_int, char *)); /* XXX */
+void	cpu_intr  __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 
 /* Motherboard or system-specific initialization vector */
 static void	unimpl_bus_reset __P((void));
@@ -621,49 +623,6 @@ haltsys:
 }
 
 /*
- * Return the best possible estimate of the time in the timeval to
- * which tvp points.  We guarantee that the time will be greater than
- * the value obtained by a previous call.  Some models of DECstations
- * provide a high resolution timer circuit.
- */
-void
-microtime(tvp)
-	struct timeval *tvp;
-{
-	int s = splclock();
-	static struct timeval lasttime;
-
-	*tvp = time;
-#if (DEC_3MIN + DEC_MAXINE + DEC_3MAXPLUS) > 0
-	tvp->tv_usec += (*platform.clkread)();
-#endif
-	if (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
-}
-
-/*
- * Wait "n" microseconds. (scsi code needs this).
- */
-void
-delay(n)
-        int n;
-{
-
-        DELAY(n);
-}
-
-/*
  * Find out how much memory is available by testing memory.
  * Be careful to save and restore the original contents for msgbuf.
  */
@@ -765,4 +724,110 @@ nullwork()
 {
 
 	return (0);
+}
+
+/*
+ * pmax uses standard mips1 convention, wiring FPU to hard interupt 5.
+ */
+#define INT_MASK_FPU	MIPS_INT_MASK_5
+#define	INT_MASK_DEV	(MIPS_HARD_INT_MASK &~ MIPS_INT_MASK_5)
+
+void
+cpu_intr(status, cause, pc, ipending)
+	u_int32_t status;
+	u_int32_t cause;
+	u_int32_t pc;
+	u_int32_t ipending;
+{
+	extern void MachFPInterrupt __P((unsigned, unsigned, unsigned, struct frame *));
+
+	uvmexp.intrs++;
+
+	/* device interrupts */
+	if (ipending & INT_MASK_DEV) {
+		(*platform.iointr)(status, cause, pc, ipending);
+	}
+	/* FPU nofiticaition */
+	if (ipending & INT_MASK_FPU) {
+		if (!USERMODE(status))
+			goto kerneltouchedFPU;
+		intrcnt[FPU_INTR]++;
+		/* dealfpu(status, cause, pc); */
+		MachFPInterrupt(status, cause, pc, curproc->p_md.md_regs);
+	}
+
+	/* software simulated interrupt */
+	if ((ipending & MIPS_SOFT_INT_MASK_1)
+		    || (ssir && (status & MIPS_SOFT_INT_MASK_1))) {
+
+#define DO_SIR(bit, fn)						\
+	do {							\
+		if (n & (bit)) {				\
+			uvmexp.softs++;				\
+			fn;					\
+		}						\
+	} while (0)
+
+		unsigned n;
+		n = ssir; ssir = 0;
+		_clrsoftintr(MIPS_SOFT_INT_MASK_1);
+
+		DO_SIR(SIR_NET, netintr());
+#undef DO_SIR
+	}
+
+	/* 'softclock' interrupt */
+	if (ipending & MIPS_SOFT_INT_MASK_0) {
+		_clrsoftintr(MIPS_SOFT_INT_MASK_0);
+		uvmexp.softs++;
+		intrcnt[SOFTCLOCK_INTR]++;
+		softclock();
+	}
+	return;
+
+kerneltouchedFPU:
+	panic("kernel used FPU: PC %x, CR %x, SR %x", pc, cause, status);
+}
+
+/*
+ * Return the best possible estimate of the time in the timeval to
+ * which tvp points.  We guarantee that the time will be greater than
+ * the value obtained by a previous call.  Some models of DECstations
+ * provide a high resolution timer circuit.
+ */
+void
+microtime(tvp)
+	struct timeval *tvp;
+{
+	int s = splclock();
+	static struct timeval lasttime;
+
+	*tvp = time;
+#if (DEC_3MIN + DEC_MAXINE + DEC_3MAXPLUS) > 0
+	tvp->tv_usec += (*platform.clkread)();
+#endif
+	if (tvp->tv_usec >= 1000000) {
+		tvp->tv_usec -= 1000000;
+		tvp->tv_sec++;
+	}
+
+	if (tvp->tv_sec == lasttime.tv_sec &&
+	    tvp->tv_usec <= lasttime.tv_usec &&
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
+		tvp->tv_sec++;
+		tvp->tv_usec -= 1000000;
+	}
+	lasttime = *tvp;
+	splx(s);
+}
+
+/*
+ * Wait "n" microseconds. (scsi code needs this).
+ */
+void
+delay(n)
+        int n;
+{
+
+        DELAY(n);
 }

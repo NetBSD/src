@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.23 2000/03/06 03:13:35 mhitch Exp $ */
+/* $NetBSD: dec_5100.c,v 1.24 2000/04/11 02:43:56 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.23 2000/03/06 03:13:35 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.24 2000/04/11 02:43:56 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,15 +142,15 @@ dec_5100_intr_establish(dev, cookie, level, handler, arg)
     } while (0)
 
 static int
-dec_5100_intr(cpumask, pc, status, cause)
-	unsigned cpumask;
-	unsigned pc;
+dec_5100_intr(status, cause, pc, ipending)
 	unsigned status;
 	unsigned cause;
+	unsigned pc;
+	unsigned ipending;
 {
 	u_int32_t icsr;
 
-	if (cpumask & MIPS_INT_MASK_4) {
+	if (ipending & MIPS_INT_MASK_4) {
 #ifdef DDB
 		Debugger();
 #else
@@ -161,7 +161,7 @@ dec_5100_intr(cpumask, pc, status, cause)
 	icsr = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 
 	/* handle clock interrupts ASAP */
-	if (cpumask & MIPS_INT_MASK_2) {
+	if (ipending & MIPS_INT_MASK_2) {
 		struct clockframe cf;
 
 		__asm __volatile("lbu $0,48(%0)" ::
@@ -178,18 +178,18 @@ dec_5100_intr(cpumask, pc, status, cause)
 	/* If clock interrupts were enabled, re-enable them ASAP. */
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
 
-	if (cpumask & MIPS_INT_MASK_0) {
+	if (ipending & MIPS_INT_MASK_0) {
 		CALLINTR(SYS_DEV_SCC0, KN230_CSR_INTR_DZ0);
 		CALLINTR(SYS_DEV_OPT0, KN230_CSR_INTR_OPT0);
 		CALLINTR(SYS_DEV_OPT1, KN230_CSR_INTR_OPT1);
 	}
 
-	if (cpumask & MIPS_INT_MASK_1) {
+	if (ipending & MIPS_INT_MASK_1) {
 		CALLINTR(SYS_DEV_LANCE, KN230_CSR_INTR_LANCE);
 		CALLINTR(SYS_DEV_SCSI, KN230_CSR_INTR_SII);
 	}
 
-	if (cpumask & MIPS_INT_MASK_3) {
+	if (ipending & MIPS_INT_MASK_3) {
 		dec_5100_memintr();
 		intrcnt[ERROR_INTR]++;
 	}
