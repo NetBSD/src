@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.8 1998/09/11 16:46:34 jonathan Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.8.2.1 1998/10/15 02:16:31 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,13 +59,83 @@
  */
 
 #include <mips/asm.h>
-#include <mips/cpuregs.h>	/* XXX - misnomer? */
+#include <mips/cpuarch.h>
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
 #include "opt_dec_5400.h"
 
 	.set	noreorder
+LEAF(_splraise)
+	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
+	and	a0, a0, MIPS_INT_MASK		# extract INT bits
+	nor	a0, zero, a0			# bitwise inverse of A0
+	and	a0, a0, v0			# disable retaining other bits
+	mtc0	a0, MIPS_COP_0_STATUS		# store back
+	nop
+	j	ra
+	and	v0, v0, (MIPS_INT_MASK|MIPS_SR_INT_IE)
+END(_splraise)
+
+LEAF(_spllower)
+	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
+	li	v1, ~MIPS_INT_MASK
+	and	v1, v0, v1			# turn off INT bit
+	nor	a0, zero, a0			# bitwise inverse of A0
+	and	a0, a0, MIPS_INT_MASK		# extract INT bits
+	or	a0, a0, v1			# disable making other bits on
+	mtc0	a0, MIPS_COP_0_STATUS		# store back
+	nop
+	j	ra
+	and	v0, v0, (MIPS_INT_MASK|MIPS_SR_INT_IE)
+END(_spllower)
+
+LEAF(_splset)
+	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
+	and	a0, a0, MIPS_INT_MASK		# extract INT bits
+	li	v1, ~MIPS_INT_MASK
+	and	v1, v1, v0			# turn off every INT bit
+	or	v1, v1, a0			# set old INT bits
+	mtc0	v1, MIPS_COP_0_STATUS		# store back
+	nop
+	j	ra
+	and	v0, v0, (MIPS_INT_MASK|MIPS_SR_INT_IE)
+END(_splset)
+
+LEAF(_splget)
+	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
+	nop
+	j	ra
+	and	v0, v0, (MIPS_INT_MASK|MIPS_SR_INT_IE)
+END(_splget)
+
+LEAF(_setsoftintr)
+	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
+	nop; nop
+	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
+	nop
+	or	v0, v0, a0			# set soft intr. bits
+	mtc0	v0, MIPS_COP_0_CAUSE		# store back
+	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
+	j	ra
+	nop
+END(_setsoftintr)
+
+LEAF(_clrsoftintr)
+	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
+	nop; nop
+	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
+	nor	a0, zero, a0			# bitwise inverse of A0
+	and	v0, v0, a0			# clear soft intr. bits
+	mtc0	v0, MIPS_COP_0_CAUSE		# store back
+	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
+	j	ra
+	nop
+END(_clrsoftintr)
+
+
 #if defined(DEC_3100) || defined(DEC_5100)
 
 /*
@@ -148,291 +218,26 @@ END(CopyFromBuffer)
  */
 #if defined(DEC_5100) || defined(DEC_5400)
 LEAF(dec_mips1_wbflush)
-        mfc0	v0, MIPS_COP_0_STATUS_REG	# save original SR in v0
-	li	t0, 0x80000000			# set CU3 bit
-	or	v1, v0 ,t0			# v1 = v0 | 0x80000000
+        mfc0	v0, MIPS_COP_0_STATUS	# save original SR in v0
+	li	t0, 0x80000000		# set CU3 bit
+	or	v1, v0 ,t0		# v1 = v0 | 0x80000000
 	nop
-	mtc0	v1, MIPS_COP_0_STATUS_REG
+	mtc0	v1, MIPS_COP_0_STATUS	
 	nop				/* two  more cycles to complete */
  	nop
 
-1:						# spin 
-	bc3f    1b				# until write buffer drained
-        nop                     		# (branch delay slot)
+1:					# spin 
+	bc3f    1b			# until write buffer drained
+        nop                     	# (branch delay slot)
 
-        mtc0    v0, MIPS_COP_0_STATUS_REG	# restore SR on exit
+        mtc0    v0, MIPS_COP_0_STATUS	# restore SR on exit
         nop
         j       ra
         nop
 END(dec_mips1_wbflush)
 #endif	/* defined(DEC_5100) || defined(DEC_5400) */
 
-/*
- * Set/clear software interrupt routines.
- */
 
-LEAF(setsoftclock)
-	mfc0	v1, MIPS_COP_0_STATUS_REG	# save status register
-	mtc0	zero, MIPS_COP_0_STATUS_REG	# disable interrupts (2 cycles)
-	nop
-	mfc0	v0, MIPS_COP_0_CAUSE_REG	# read cause register
-	nop
-	or	v0, v0, MIPS_SOFT_INT_MASK_0	# set soft clock interrupt
-	mtc0	v0, MIPS_COP_0_CAUSE_REG	# save it
-	mtc0	v1, MIPS_COP_0_STATUS_REG
-	j	ra
-	nop
-END(setsoftclock)
-
-LEAF(clearsoftclock)
-	mfc0	v1, MIPS_COP_0_STATUS_REG	# save status register
-	mtc0	zero, MIPS_COP_0_STATUS_REG	# disable interrupts (2 cycles)
-	nop
-	nop
-	mfc0	v0, MIPS_COP_0_CAUSE_REG	# read cause register
-	nop
-	and	v0, v0, ~MIPS_SOFT_INT_MASK_0	# clear soft clock interrupt
-	mtc0	v0, MIPS_COP_0_CAUSE_REG	# save it
-	mtc0	v1, MIPS_COP_0_STATUS_REG
-	j	ra
-	nop
-END(clearsoftclock)
-
-LEAF(setsoftnet)
-	mfc0	v1, MIPS_COP_0_STATUS_REG	# save status register
-	mtc0	zero, MIPS_COP_0_STATUS_REG	# disable interrupts (2 cycles)
-	nop
-	nop
-	mfc0	v0, MIPS_COP_0_CAUSE_REG	# read cause register
-	nop
-	or	v0, v0, MIPS_SOFT_INT_MASK_1	# set soft net interrupt
-	mtc0	v0, MIPS_COP_0_CAUSE_REG	# save it
-	mtc0	v1, MIPS_COP_0_STATUS_REG
-	j	ra
-	nop
-END(setsoftnet)
-
-LEAF(clearsoftnet)
-	mfc0	v1, MIPS_COP_0_STATUS_REG	# save status register
-	mtc0	zero, MIPS_COP_0_STATUS_REG	# disable interrupts (2 cycles)
-	nop
-	nop
-	mfc0	v0, MIPS_COP_0_CAUSE_REG	# read cause register
-	nop
-	and	v0, v0, ~MIPS_SOFT_INT_MASK_1	# clear soft net interrupt
-	mtc0	v0, MIPS_COP_0_CAUSE_REG	# save it
-	mtc0	v1, MIPS_COP_0_STATUS_REG
-	j	ra
-	nop
-END(clearsoftnet)
-
-/*
- * Set/change interrupt priority routines.
- */
-
-LEAF(spl0)
-ALEAF(spllow)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	nop
-	or	t0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# enable all interrupts
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(spl0)
-
-LEAF(splsoftclock)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~MIPS_SOFT_INT_MASK_0	# disable soft clock
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(splsoftclock)
-
-LEAF(splsoftnet)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(splsoftnet)
-
-/*
- * hardware-level spls for hardware where the device interrupt priorites
- * are ordered, and map onto mips interrupt pins in increasing priority.
- * This maps directly onto BSD spl levels.
- */
-
-/*
- * Block out int2 (hardware interrupt 0) and lower mips levels.
- */
-LEAF(cpu_spl0)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_SPL0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(cpu_spl0)
-
-/*
- * Block out Int3 (hardware interrupt 1) and lower mips levels.
- */
-LEAF(cpu_spl1)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_SPL1)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(cpu_spl1)
-
-LEAF(cpu_spl2)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_SPL2)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(cpu_spl2)
-
-LEAF(cpu_spl3)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_SPL3)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(cpu_spl3)
-
-LEAF(cpu_spl4)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_SPL4)
-
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(cpu_spl4)
-
-LEAF(cpu_spl5)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_SPL5)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(cpu_spl5)
-
-/*
- * hardware-level spls for hardware where the interrupt priorites
- * DO NOT  map onto levels.  
- *
- * For now, that means DECstations that use only two distinct CPU
- * levels, one for TOD clock interrupts, and a second for all other
- * external devices (via an external controller.
- * XXX  the spl handling really needs re-writing from scratch.
- */
-LEAF(Mach_spl0)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl0)
-
-LEAF(Mach_spl1)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_1|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl1)
-
-LEAF(Mach_spl2)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_2|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl2)
-
-LEAF(Mach_spl3)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_3|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl3)
-
-LEAF(Mach_spl4)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_4|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl4)
-
-LEAF(Mach_spl5)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_5|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl5)
-
-
-/*
- * We define an alternate entry point after mcount is called so it
- * can be used in mcount without causeing a recursive loop.
- */
-LEAF(splhigh)
-ALEAF(_splhigh)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~MIPS_SR_INT_IE	# disable all interrupts
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(splhigh)
-
-/*
- * Restore saved interrupt mask.
- */
-LEAF(splx)
-ALEAF(_splx)
-	mfc0	v0, MIPS_COP_0_STATUS_REG
-	li	t0, ~(MIPS_INT_MASK | MIPS_SR_INT_IE)
-	and	t0, t0, v0
-	or	t0, t0, a0
-	mtc0	t0, MIPS_COP_0_STATUS_REG
-	nop					# 3 ins to disable
-	j	ra
-	nop
-	.globl	_C_LABEL(splx_end)
-_C_LABEL(splx_end):
-END(splx)
 /*
  * Interrupt counters for vmstat.
  */

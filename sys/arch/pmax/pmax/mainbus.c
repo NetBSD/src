@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26 1998/09/05 04:11:04 nisimura Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26.2.1 1998/10/15 02:16:31 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,11 +37,7 @@
 #include <machine/autoconf.h>
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
-
-#include <pmax/ibus/ibusvar.h>
-
-#include "pmaxtype.h"
-#include "nameglue.h"
+#include <pmax/pmax/pmaxtype.h>
 
 #include "tc.h"			/* Is TURBOchannel configured? */
 
