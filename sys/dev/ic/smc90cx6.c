@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.19 1996/10/13 01:37:28 christos Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.20 1997/04/24 02:24:08 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -840,9 +840,14 @@ bah_srint(vsc, dummy)
 				goto cleanup;
 			}
 		
-			if (len1 >= MINCLSIZE)
+			if (len1 >= MINCLSIZE) {
 				MCLGET(m, M_DONTWAIT);
-	
+				if ((m->m_flags & M_EXT) == 0)
+					ifp->if_ierrors++;
+					goto cleanup;
+				}
+			}
+
 			m->m_len = 0;
 			dst->m_next = m;
 			amount = M_TRAILINGSPACE(m);
