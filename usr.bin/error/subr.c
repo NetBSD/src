@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.6 1998/11/06 23:10:08 christos Exp $	*/
+/*	$NetBSD: subr.c,v 1.7 1999/05/15 18:46:27 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.6 1998/11/06 23:10:08 christos Exp $");
+__RCSID("$NetBSD: subr.c,v 1.7 1999/05/15 18:46:27 sommerfeld Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -347,7 +347,7 @@ wordvbuild(string, r_wordc, r_wordv)
 			cp++;
 		if (*cp == 0)
 			break;
-		while (!isspace((unsigned char)*cp))
+		while (*cp && !isspace((unsigned char)*cp))
 			cp++;
 	}
 	wordv = (char **)Calloc(wordcount + 1, sizeof (char *));
@@ -357,7 +357,7 @@ wordvbuild(string, r_wordc, r_wordv)
 		if (*cp == 0)
 			break;
 		wordv[wordindex] = cp;
-		while(!isspace((unsigned char)*cp))
+		while(*cp && !isspace((unsigned char)*cp))
 			cp++;
 		*cp++ = '\0';
 	}
