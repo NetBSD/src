@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.23 2000/09/08 02:50:44 hubertf Exp $	*/
+/*	$NetBSD: target.c,v 1.24 2000/09/20 19:53:35 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.23 2000/09/08 02:50:44 hubertf Exp $");
+__RCSID("$NetBSD: target.c,v 1.24 2000/09/20 19:53:35 hubertf Exp $");
 #endif
 
 /*
@@ -148,7 +148,10 @@ target_on_current_disk()
 {
 	int same;
 
-	same = (strcmp(diskdev, get_rootdev()) == 0);
+	if (strcmp(diskdev, "") == 0)	/* nothing selected yet */
+		same = 1;	/* bad assumption: this is a live system */
+	else
+		same = (strcmp(diskdev, get_rootdev()) == 0);
 	return (same);
 }
 
@@ -221,9 +224,15 @@ target_already_root()
 	 * so we can find out via statfs().  Abort if not.
 	 */
 
-	/* append 'a' to the partitionless target disk device name. */
-	snprintf(diskdevroot, STRSIZE, "%s%c", diskdev, 'a');
-	result = is_active_rootpart(diskdevroot);
+	if (strcmp(diskdev, "") == 0) {
+		/* no root partition was ever selected. Assume that
+		 * the currently mounted one should be used */
+		result = 1;
+	} else {
+		/* append 'a' to the partitionless target disk device name. */
+		snprintf(diskdevroot, STRSIZE, "%s%c", diskdev, 'a');
+		result = is_active_rootpart(diskdevroot);
+	}
 	return (result);
 }
 
