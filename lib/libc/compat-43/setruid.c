@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)setruid.c	5.5 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: setruid.c,v 1.4 1994/04/24 01:00:42 mycroft Exp $";
+static char *rcsid = "$Id: setruid.c,v 1.5 1994/04/24 01:06:46 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -59,7 +59,7 @@ setruid(ruid)
 		iov[0].iov_base = __progname;
 		iov[0].iov_len = strlen(__progname);
 		iov[1].iov_base = w;
-		iov[1].iov_len = strlen(w);
+		iov[1].iov_len = sizeof(w) - 1;
 		(void) writev(STDERR_FILENO, iov, 2);
 		warned = 1;
 	}

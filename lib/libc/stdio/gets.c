@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)gets.c	5.3 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: gets.c,v 1.4 1994/04/24 01:01:29 mycroft Exp $";
+static char *rcsid = "$Id: gets.c,v 1.5 1994/04/24 01:05:13 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
@@ -60,7 +60,7 @@ gets(buf)
 		iov[0].iov_base = __progname;
 		iov[0].iov_len = strlen(__progname);
 		iov[1].iov_base = w;
-		iov[1].iov_len = strlen(w);
+		iov[1].iov_len = sizeof(w) - 1;
 		(void) writev(STDERR_FILENO, iov, 2);
 		warned = 1;
 	}

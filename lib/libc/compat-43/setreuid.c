@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_prot.c	7.21 (Berkeley) 5/3/91
- *	$Id: setreuid.c,v 1.3 1994/04/24 01:00:40 mycroft Exp $
+ *	$Id: setreuid.c,v 1.4 1994/04/24 01:06:44 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -56,7 +56,7 @@ setreuid(ruid, euid)
 		iov[0].iov_base = __progname;
 		iov[0].iov_len = strlen(__progname);
 		iov[1].iov_base = w;
-		iov[1].iov_len = strlen(w);
+		iov[1].iov_len = sizeof(w) - 1;
 		(void) writev(STDERR_FILENO, iov, 2);
 		warned = 1;
 	}
