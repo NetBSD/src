@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2001/12/12 12:24:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.28 2002/01/05 07:35:20 mrg Exp $
 
 NOOBJ=	# defined
 
@@ -50,7 +50,7 @@ TDATA=		$(YDATA) $(NDATA) $(SDATA)
 DATA=		$(YDATA) $(NDATA) $(SDATA) leapseconds # yearistype.sh
 USNO=		usno1988 usno1989
 
-ZIC=zic
+ZIC?=zic
 
 .PHONY:	posix_only
 posix_only: ${TDATA}
