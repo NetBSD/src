@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.64 1999/10/13 18:37:13 thorpej Exp $
+#	$NetBSD: files.pci,v 1.65 1999/10/15 06:07:28 haya Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -232,3 +232,9 @@ file	dev/pci/if_ti.c			ti
 # Adaptec AIC-6915 Ethernet interface
 attach	sf at pci with sf_pci
 file	dev/pci/if_sf_pci.c		sf_pci
+
+# YENTA PCI-Cardbus bridge 
+#device  cbb: cbbus, pcmciabus
+device  cbb: pcmciaslot
+attach	cbb at pci with cbb_pci
+file	dev/pci/pccbb.c			cbb
