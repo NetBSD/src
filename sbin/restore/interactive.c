@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)interactive.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: interactive.c,v 1.5 1994/09/23 14:27:54 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)interactive.c	8.3 (Berkeley) 9/13/94";*/
+static char *rcsid = "$Id: interactive.c,v 1.6 1994/12/28 02:21:45 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -86,7 +86,7 @@ static void	 formatf __P((struct afile *, int));
 static void	 getcmd __P((char *, char *, char *, struct arglist *));
 struct dirent	*glob_readdir __P((RST_DIR *dirp));
 static int	 glob_stat __P((const char *, struct stat *));
-static void	 mkentry __P((struct direct *, struct afile *));
+static void	 mkentry __P((char *, struct direct *, struct afile *));
 static void	 printlist __P((char *, char *));
 
 /*
@@ -497,15 +497,17 @@ printlist(name, basename)
 	register struct direct *dp;
 	struct afile single;
 	RST_DIR *dirp;
-	int entries, len;
+	int entries, len, namelen;
+	char locname[MAXPATHLEN + 1];
 
 	dp = pathsearch(name);
-	if (dp == NULL || (!dflag && TSTINO(dp->d_ino, dumpmap) == 0))
+	if (dp == NULL || (!dflag && TSTINO(dp->d_ino, dumpmap) == 0) ||
+	    (!vflag && dp->d_ino == WINO))
 		return;
 	if ((dirp = rst_opendir(name)) == NULL) {
 		entries = 1;
 		list = &single;
-		mkentry(dp, list);
+		mkentry(name, dp, list);
 		len = strlen(basename) + 1;
 		if (strlen(name) - len > single.len) {
 			freename(single.fname);
@@ -527,17 +529,28 @@ printlist(name, basename)
 		fprintf(stderr, "%s:\n", name);
 		entries = 0;
 		listp = list;
+		(void) strncpy(locname, name, MAXPATHLEN);
+		(void) strncat(locname, "/", MAXPATHLEN);
+		namelen = strlen(locname);
 		while (dp = rst_readdir(dirp)) {
-			if (dp == NULL || dp->d_ino == 0)
+			if (dp == NULL)
 				break;
 			if (!dflag && TSTINO(dp->d_ino, dumpmap) == 0)
 				continue;
-			if (vflag == 0 &&
-			    (strcmp(dp->d_name, ".") == 0 ||
+			if (!vflag && (dp->d_ino == WINO ||
+			     strcmp(dp->d_name, ".") == 0 ||
 			     strcmp(dp->d_name, "..") == 0))
 				continue;
-			mkentry(dp, listp++);
-			entries++;
+			locname[namelen] = '\0';
+			if (namelen + dp->d_namlen >= MAXPATHLEN) {
+				fprintf(stderr, "%s%s: name exceeds %d char\n",
+					locname, dp->d_name, MAXPATHLEN);
+			} else {
+				(void) strncat(locname, dp->d_name,
+				    (int)dp->d_namlen);
+				mkentry(locname, dp, listp++);
+				entries++;
+			}
 		}
 		rst_closedir(dirp);
 		if (entries == 0) {
@@ -560,7 +573,8 @@ printlist(name, basename)
  * Read the contents of a directory.
  */
 static void
-mkentry(dp, fp)
+mkentry(name, dp, fp)
+	char *name;
 	struct direct *dp;
 	register struct afile *fp;
 {
@@ -575,7 +589,7 @@ mkentry(dp, fp)
 	fp->len = cp - fp->fname;
 	if (dflag && TSTINO(fp->fnum, dumpmap) == 0)
 		fp->prefix = '^';
-	else if ((np = lookupino(fp->fnum)) != NULL && (np->e_flags & NEW))
+	else if ((np = lookupname(name)) != NULL && (np->e_flags & NEW))
 		fp->prefix = '*';
 	else
 		fp->prefix = ' ';
@@ -601,6 +615,10 @@ mkentry(dp, fp)
 	case DT_CHR:
 	case DT_BLK:
 		fp->postfix = '#';
+		break;
+
+	case DT_WHT:
+		fp->postfix = '%';
 		break;
 
 	case DT_UNKNOWN:
@@ -698,7 +716,7 @@ glob_readdir(dirp)
 	static struct dirent adirent;
 
 	while ((dp = rst_readdir(dirp)) != NULL) {
-		if (dp->d_ino == 0)
+		if (!vflag && dp->d_ino == WINO)
 			continue;
 		if (dflag || TSTINO(dp->d_ino, dumpmap))
 			break;
@@ -722,7 +740,8 @@ glob_stat(name, stp)
 	register struct direct *dp;
 
 	dp = pathsearch(name);
-	if (dp == NULL || (!dflag && TSTINO(dp->d_ino, dumpmap) == 0))
+	if (dp == NULL || (!dflag && TSTINO(dp->d_ino, dumpmap) == 0) ||
+	    (!vflag && dp->d_ino == WINO))
 		return (-1);
 	if (inodetype(dp->d_ino) == NODE)
 		stp->st_mode = IFDIR;
