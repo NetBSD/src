@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.353 2003/11/23 12:21:54 augustss Exp $
+$NetBSD: usbdevs,v 1.354 2003/11/23 18:16:03 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -346,6 +346,7 @@ vendor EASYDISK		0x0c76	EasyDisk
 vendor TANGTOP		0x0d3d	Tangtop
 vendor PEN		0x0d7d	Pen Drive
 vendor ACDC		0x0d7e  American Computer & Digital Components
+vendor MSI		0x0db0	Micro Star International
 vendor OTI		0x0ea0	Ours Technology Inc.
 vendor PILOTECH		0x0eaf  Pilotech
 vendor MOTOROLA		0x1063	Motorola
@@ -723,6 +724,7 @@ product FREECOM DVD		0xfc01	Connector for DVD drive
 /* Future Technology Devices products */
 product FTDI SERIAL_8U100AX	0x8372	8U100AX Serial converter
 product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
+product FTDI LCD_LK202_24_USB	0xfa03	Matrix Orbital LK202-24 USB LCD
 
 /* Fuji photo products */
 product FUJIPHOTO MASS0100	0x0100	Mass Storage
@@ -1025,6 +1027,9 @@ product MELCO KS11G		0x0027	WLI-USB-KS11G USB-wlan
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
 
+/* Micro Star International products */
+product MSI BLUETOOTH		0x1967	Bluetooth USB Adapter
+
 /* Microsoft products */
 product MICROSOFT SIDEPREC	0x0008	SideWinder Precision Pro
 product MICROSOFT INTELLIMOUSE	0x0009	IntelliMouse
@@ -1086,6 +1091,7 @@ product MUSTEK 1200CUPLUS	0x0008	1200 CU Plus scanner
 product MUSTEK BEARPAW1200F	0x0010	BearPaw 1200F scanner
 product MUSTEK 600USB		0x0873	600 USB scanner
 product MUSTEK MDC800		0xa800	MDC-800 digital camera
+product MUSTEK DV2000		0xc441	DV2000 digital camera
 
 /* M-Systems products */
 product MSYSTEMS DISKONKEY	0x0010	DiskOnKey
@@ -1122,6 +1128,7 @@ product NETGEAR EA101		0x1001	Ethernet adapter
 product NETGEAR EA101X		0x1002	Ethernet adapter
 product NETGEAR FA101		0x1020	10/100 Ethernet
 product NETGEAR FA120		0x1040	USB 2.0 Fast Ethernet Adapter
+product NETGEAR MA111NA		0x4110	802.11b Adapter
 
 /* Nikon products */
 product NIKON E990		0x0102	Digital Camera E990
