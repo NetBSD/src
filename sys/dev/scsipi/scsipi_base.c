@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.4 1999/10/20 22:50:47 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.5 1999/10/26 23:08:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1757,15 +1757,96 @@ scsipi_async_event_xfer_mode(chan, xm)
 	struct scsipi_xfer_mode *xm;
 {
 	struct scsipi_periph *periph;
-	int lun;
+	int lun, announce, mode, period, offset;
 
 	for (lun = 0; lun < chan->chan_nluns; lun++) {
 		periph = scsipi_lookup_periph(chan, xm->xm_target, lun);
 		if (periph == NULL)
 			continue;
-		scsipi_adapter_request(chan, ADAPTER_REQ_GET_XFER_MODE, periph);
-		periph->periph_mode &= periph->periph_cap;
-		scsipi_print_xfer_mode(periph);
+		announce = 0;
+
+		/*
+		 * Clamp the xfer mode down to this periph's capabilities.
+		 */
+		mode = xm->xm_mode & periph->periph_cap;
+		if (mode & PERIPH_CAP_SYNC) {
+			period = xm->xm_period;
+			offset = xm->xm_offset;
+		} else {
+			period = 0;
+			offset = 0;
+		}
+
+		/*
+		 * If we do not have a valid xfer mode yet, or the parameters
+		 * are different, announce them.
+		 */
+		if ((periph->periph_flags & PERIPH_MODE_VALID) == 0 ||
+		    periph->periph_mode != mode ||
+		    periph->periph_period != period ||
+		    periph->periph_offset != offset)
+			announce = 1;
+
+		periph->periph_mode = mode;
+		periph->periph_period = period;
+		periph->periph_offset = offset;
+		periph->periph_flags |= PERIPH_MODE_VALID;
+
+		if (announce)
+			scsipi_print_xfer_mode(periph);
+	}
+}
+
+/*
+ * scsipi_set_xfer_mode:
+ *
+ *	Set the xfer mode for the specified I_T Nexus.
+ */
+void
+scsipi_set_xfer_mode(chan, target, immed)
+	struct scsipi_channel *chan;
+	int target, immed;
+{
+	struct scsipi_xfer_mode xm;
+	struct scsipi_periph *itperiph;
+	int lun, s;
+
+	/*
+	 * Go to the minimal xfer mode.
+	 */
+	xm.xm_target = target;
+	xm.xm_mode = 0;
+	xm.xm_period = 0;			/* ignored */
+	xm.xm_offset = 0;			/* ignored */
+
+	/*
+	 * Find the first LUN we know about on this I_T Nexus.
+	 */
+	for (lun = 0; lun < chan->chan_nluns; lun++) {
+		itperiph = scsipi_lookup_periph(chan, target, lun);
+		if (itperiph != NULL)
+			break;
+	}
+	if (itperiph != NULL)
+		xm.xm_mode = itperiph->periph_cap;
+
+	/*
+	 * Now issue the request to the adapter.
+	 */
+	s = splbio();
+	scsipi_adapter_request(chan, ADAPTER_REQ_SET_XFER_MODE, &xm);
+	splx(s);
+
+	/*
+	 * If we want this to happen immediately, issue a dummy command,
+	 * since most adapters can't really negotiate unless they're
+	 * executing a job.
+	 */
+	if (immed != 0 && itperiph != NULL) {
+		(void) scsipi_test_unit_ready(itperiph,
+		    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
+		    XS_CTL_IGNORE_NOT_READY |
+		    XS_CTL_IGNORE_MEDIA_CHANGE);
 	}
 }
 

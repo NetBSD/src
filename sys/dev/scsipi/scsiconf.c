@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.130.2.2 1999/10/20 22:54:09 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.130.2.3 1999/10/26 23:08:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -314,6 +314,13 @@ scsi_probe_bus(sc, target, lun)
 				break;
 			/* otherwise something says we should look further */
 		}
+		
+		/*
+		 * Now that we've discovered all of the LUNs on this
+		 * I_T Nexus, update the xfer mode for all of them
+		 * that we know about.
+		 */
+		scsipi_set_xfer_mode(chan, target, 1);
 	}
 	scsipi_adapter_delref(chan->chan_adapter);
 	return (0);
@@ -612,7 +619,7 @@ scsi_probe_device(sc, target, lun)
 	struct scsipi_periph *periph;
 	struct scsipi_inquiry_data inqbuf;
 	struct scsi_quirk_inquiry_pattern *finger;
-	int i, checkdtype, priority, docontinue, quirks, s;
+	int i, checkdtype, priority, docontinue, quirks;
 	struct scsipibus_attach_args sa;
 	struct cfdata *cf;
 
@@ -789,51 +796,6 @@ scsi_probe_device(sc, target, lun)
 		 * XXX assign it in periph driver.
 		 */
 		(void) config_attach(&sc->sc_dev, cf, &sa, scsibusprint);
-
-		if (lun == 0) {
-			/*
-			 * Issue a request to the adapter to negotiate the best
-			 * possible xfer mode given our capabilities.
-			 */
-			s = splbio();
-			scsipi_adapter_request(chan, ADAPTER_REQ_SET_XFER_MODE,
-			    periph);
-			splx(s);
-
-			/*
-			 * Issue a dummy command; some adapters can only really
-			 * do xfer mode negotiation when performing a command.
-			 */
-			(void) scsipi_test_unit_ready(periph,
-			    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
-			    XS_CTL_IGNORE_NOT_READY |
-			    XS_CTL_IGNORE_MEDIA_CHANGE);
-		
-			/*
-			 * Now get the xfer mode settings.
-			 */
-			s = splbio();
-			scsipi_adapter_request(chan, ADAPTER_REQ_GET_XFER_MODE,
-			    periph);
-			splx(s);
-		} else {
-			/*
-			 * Not the first LUN; devices of this sort inherit
-			 * the xfer mode paramters of the I_T Nexus, masked
-			 * by their own capabilities.
-			 */
-			struct scsipi_periph *itperiph =
-			    scsipi_lookup_periph(chan, target, 0);
-			if (itperiph != NULL) {
-				periph->periph_mode =
-				    itperiph->periph_mode & periph->periph_cap;
-				periph->periph_period = itperiph->periph_period;
-				periph->periph_offset = itperiph->periph_offset;
-				periph->periph_flags |=
-				  itperiph->periph_flags & PERIPH_MODE_VALID;
-			}
-		}
-		scsipi_print_xfer_mode(periph);
 	} else {
 		scsibusprint(&sa, sc->sc_dev.dv_xname);
 		printf(" not configured\n");
