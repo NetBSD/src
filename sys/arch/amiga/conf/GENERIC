@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.117 1999/03/09 12:15:30 is Exp $
+#	$NetBSD: GENERIC,v 1.118 1999/03/09 12:20:41 is Exp $
 
 #
 #if 0
@@ -178,7 +178,7 @@ options 	GRF_SUPER72	# AGA Super-72
 # a littel bit.  If you raise this value too much some trash may appear.
 # the commented version is the default.
 #options 	RH_MEMCLK=61000000
-# this option enables the 64 bit sprite which does not seems to be work
+# this option enables the 64 bit sprite which does not work
 # for quite a few people.  E.g. The cursor sprite will turn to a block
 # when moved to the top of the screen in X.
 #options 	RH_64BIT_SPRITE
