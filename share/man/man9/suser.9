@@ -1,4 +1,4 @@
-.\"     $NetBSD: suser.9,v 1.1 2002/06/24 22:45:41 gmcgarry Exp $
+.\"     $NetBSD: suser.9,v 1.2 2002/06/25 20:28:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,10 +57,11 @@ in the accounting structure.  If super-user privilege is implied by
 the credentials, and
 .Fa acflag
 is not NULL,
-the ASU flags is set in 
+the ASU flags is set in
 .Fa acflag
 to indicate the use of super-powers.
 .Pp
 .Fn suser
-returns zero on success, or EPERM if super-user privilege is
-not implied by the credentials.
+returns zero on success, or
+.Er EPERM
+if super-user privilege is not implied by the credentials.
