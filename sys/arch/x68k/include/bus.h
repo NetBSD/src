@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1.2.2 1999/01/30 15:07:41 minoura Exp $	*/
+/*	$NetBSD: bus.h,v 1.1.2.3 1999/02/13 17:51:43 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -302,6 +302,11 @@ void x68k_bus_space_copy_region_4 __P((bus_space_tag_t, bus_space_handle_t, bus_
 		((*((t)->x68k_bus_space_subregion)) ((t),(h),(o),(s),(p)))
 #define BUS_SPACE_MAP_CACHEABLE	0x0001
 #define BUS_SPACE_MAP_LINEAR	0x0002
+/*
+ * For simpler hadware, many x68k devices are mapped with shifted address
+ * i.e. only on even or odd addresses.
+ */
+#define BUS_SPACE_MAP_SHIFTED	0x1001
 
 #define bus_space_alloc(t,rs,re,s,a,b,f,r,h) \
 		((*((t)->x68k_bus_space_alloc)) ((t),(rs),(re),(s),(a),(b),(f),(r),(h)))
