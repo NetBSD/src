@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.19 1997/05/19 16:38:38 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.20 1997/05/19 20:58:18 leo Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -736,27 +736,27 @@ swstrategy(bp)
 		bp->b_blkno = bn;
 		vp = sdp->swd_vp;
 		bp->b_dev = sdp->swd_dev;
-		break;
+		VHOLD(vp);
+		if ((bp->b_flags & B_READ) == 0) {
+			int s = splbio();
+			vwakeup(bp);
+			vp->v_numoutput++;
+			splx(s);
+		}
+
+		if (bp->b_vp != NULL)
+			brelvp(bp);
+
+		bp->b_vp = vp;
+		VOP_STRATEGY(bp);
+		return;
 #ifdef SWAP_TO_FILES
 	case VREG:
 		sw_reg_strategy(sdp, bp, bn);
 		return;
 #endif
 	}
-
-	VHOLD(vp);
-	if ((bp->b_flags & B_READ) == 0) {
-		int s = splbio();
-		vwakeup(bp);
-		vp->v_numoutput++;
-		splx(s);
-	}
-
-	if (bp->b_vp != NULL)
-		brelvp(bp);
-
-	bp->b_vp = vp;
-	VOP_STRATEGY(bp);
+	/* NOTREACHED */
 }
 
 #ifdef SWAP_TO_FILES
@@ -814,26 +814,26 @@ sw_reg_strategy(sdp, bp, bn)
 		sbp->sb_buf.b_blkno    = nbn + btodb(off);
 		sbp->sb_buf.b_proc     = bp->b_proc;
 		sbp->sb_buf.b_iodone   = sw_reg_iodone;
-		sbp->sb_buf.b_vp       = vp;
+		sbp->sb_buf.b_vp       = NULLVP;
 		sbp->sb_buf.b_rcred    = sdp->swd_cred;
 		sbp->sb_buf.b_wcred    = sdp->swd_cred;
 		if (bp->b_dirtyend == 0) {
-			nbp->vb_buf.b_dirtyoff = 0;
-			nbp->vb_buf.b_dirtyend = sz;
+			sbp->sb_buf.b_dirtyoff = 0;
+			sbp->sb_buf.b_dirtyend = sz;
 		} else {
-			nbp->vb_buf.b_dirtyoff =
+			sbp->sb_buf.b_dirtyoff =
 			    max(0, bp->b_dirtyoff - (bp->b_bcount-resid));
-			nbp->vb_buf.b_dirtyend =
+			sbp->sb_buf.b_dirtyend =
 			    min(sz,
 				max(0, bp->b_dirtyend - (bp->b_bcount-resid)));
 		}
 		if (bp->b_validend == 0) {
-			nbp->vb_buf.b_validoff = 0;
-			nbp->vb_buf.b_validend = sz;
+			sbp->sb_buf.b_validoff = 0;
+			sbp->sb_buf.b_validend = sz;
 		} else {
-			nbp->vb_buf.b_validoff =
+			sbp->sb_buf.b_validoff =
 			    max(0, bp->b_validoff - (bp->b_bcount-resid));
-			nbp->vb_buf.b_validend =
+			sbp->sb_buf.b_validend =
 			    min(sz,
 				max(0, bp->b_validend - (bp->b_bcount-resid)));
 		}
@@ -869,6 +869,8 @@ sw_reg_strategy(sdp, bp, bn)
 		 */
 		sbp->sb_buf.b_cylinder = sbp->sb_buf.b_blkno;
 		s = splbio();
+
+		bgetvp(vp, &sbp->sb_buf);
 		disksort(&sdp->swd_tab, &sbp->sb_buf);
 		if (sdp->swd_tab.b_active < sdp->swd_maxactive) {
 			sdp->swd_tab.b_active++;
@@ -924,7 +926,6 @@ sw_reg_iodone(bp)
 				sbp->sb_buf.b_resid);
 #endif /* SWAPDEBUG */
 
-	s = splbio();
 	if (sbp->sb_buf.b_error) {
 #ifdef SWAPDEBUG
 		if (vmswapdebug & VMSDB_SWFLOW)
@@ -938,9 +939,14 @@ sw_reg_iodone(bp)
 	sdp = sbp->sb_sdp;
 
 	pbp->b_resid -= sbp->sb_buf.b_bcount;
-	puttmpbuf(sbp);
 	if (pbp->b_resid == 0)
 		biodone(pbp);
+
+	s = splbio();
+	if (sbp->sb_buf.b_vp != NULLVP)
+		brelvp(&sbp->sb_buf);
+	puttmpbuf(sbp);
+
 	if (sdp->swd_tab.b_actf)
 		sw_reg_start(sdp);
 	else
