@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.296 2004/06/23 17:40:45 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.297 2004/06/24 08:42:15 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4411,6 +4411,16 @@ lib/libc/stdio/fparseln.c			patch
 
 tools/compat/compat_defs.h			1.43
 
-	Define "_ISOC99_SOURCE" when building under NetBSD to get the prototypes
-	for strtoll() and strtoull()
+	Define "_ISOC99_SOURCE" when building under NetBSD to get the
+	prototypes for strtoll() and strtoull()
 	[tron, ticket #539]
+
+share/man/man4/ehci.4				1.10-1.11
+sys/dev/usb/ehci.c				1.55-1.64
+sys/dev/usb/ehcireg.h				1.15-1.17
+sys/dev/usb/ohci.c				1.147-1.148
+
+	Fix several reliability and performances problems with ehci and ohci.
+	ehci/USB2 now works fairly reliably.
+	[mycroft, ticket #535]
+
