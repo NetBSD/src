@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.89 2003/05/16 14:19:49 christos Exp $
+$NetBSD: UPDATING,v 1.90 2003/06/30 20:13:26 wiz Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,12 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20030630:
+	Groff was update to 1.19; it's probably necessary to do
+		cd src/gnu/usr.bin/groff
+		make MKMAN=no dependall install
+	(untested).
 
 20030516:
 	Due to bugs in the export handling code, invalid export lines
