@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 1999/01/03 14:54:28 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 1999/01/12 00:18:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -69,6 +69,7 @@ PLAN	*c_path __P((char ***, int));
 PLAN	*c_perm __P((char ***, int));
 PLAN	*c_print __P((char ***, int));
 PLAN	*c_print0 __P((char ***, int));
+PLAN	*c_printx __P((char ***, int));
 PLAN	*c_prune __P((char ***, int));
 PLAN	*c_size __P((char ***, int));
 PLAN	*c_type __P((char ***, int));
