@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.1 2005/03/20 01:09:16 thorpej Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.2 2005/03/20 02:44:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,11 +29,9 @@
  * SUCH DAMAGE.
  */
 
-#ifdef INET6
-
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.1 2005/03/20 01:09:16 thorpej Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.2 2005/03/20 02:44:50 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -456,5 +454,3 @@ in6_init(void)
 	in6_addreq.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
 	in6_addreq.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
 }
-
-#endif /* INET6 */
