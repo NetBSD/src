@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.7 1994/12/14 13:03:11 mycroft Exp $
+#	$NetBSD: vnode_if.src,v 1.8 1994/12/14 18:58:43 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,6 @@ vop_open {
 	IN int mode;
 	IN struct ucred *cred;
 	IN struct proc *p;
-	INOUT struct file *fp;
 };
 
 vop_close {
