@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.190.2.5 2004/09/18 19:35:05 he Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.190.2.6 2004/09/19 15:38:01 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.190.2.5 2004/09/18 19:35:05 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.190.2.6 2004/09/19 15:38:01 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -343,7 +343,7 @@ static void tcp6_log_refused
     __P((const struct ip6_hdr *, const struct tcphdr *));
 #endif
 
-POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl", NULL);
+struct pool tcpipqent_pool;
 
 int
 tcp_reass(tp, th, m, tlen)
