@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.24 2001/10/09 18:46:18 christos Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.25 2003/06/11 01:43:52 briggs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.24 2001/10/09 18:46:18 christos Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.25 2003/06/11 01:43:52 briggs Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,12 +86,16 @@ int	peer;
 int	rexmtval = TIMEOUT;
 int	maxtimeout = 5*TIMEOUT;
 
-#define	PKTSIZE	SEGSIZE+4
-char	buf[PKTSIZE];
+char	buf[MAXPKTSIZE];
 char	ackbuf[PKTSIZE];
+char	oackbuf[PKTSIZE];
 struct	sockaddr_storage from;
 int	fromlen;
 int	debug;
+
+int	tftp_opt_tsize = 0;
+int	tftp_blksize = SEGSIZE;
+int	tftp_tsize = 0;
 
 /*
  * Null-terminated directory prefix list for absolute pathname requests and
@@ -119,8 +123,8 @@ static void	 usage(void);
 static char	*verifyhost(struct sockaddr *);
 void	justquit(int);
 int	main(int, char **);
-void	recvfile(struct formats *);
-void	sendfile(struct formats *);
+void	recvfile(struct formats *, int, int);
+void	sendfile(struct formats *, int, int);
 void	timer(int);
 static const char *opcode(int);
 int	validate_access(char **, int);
@@ -128,8 +132,8 @@ int	validate_access(char **, int);
 struct formats {
 	const char	*f_mode;
 	int		(*f_validate)(char **, int);
-	void		(*f_send)(struct formats *);
-	void		(*f_recv)(struct formats *);
+	void		(*f_send)(struct formats *, int, int);
+	void		(*f_recv)(struct formats *, int, int);
 	int		f_convert;
 } formats[] = {
 	{ "netascii",	validate_access,	sendfile,	recvfile, 1 },
@@ -156,7 +160,7 @@ main(int argc, char *argv[])
 	struct tftphdr	*tp;
 	char		*tgtuser, *tgtgroup, *ep;
 	int	n, ch, on, fd;
-	int	len;
+	int	len, soopt;
 	uid_t	curuid, tgtuid;
 	gid_t	curgid, tgtgid;
 	long	nid;
@@ -387,11 +391,215 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "connect: %m");
 		exit(1);
 	}
+	soopt = 65536;	/* larger than we'll ever need */
+	if (setsockopt(peer, SOL_SOCKET, SO_SNDBUF, (void *) &soopt, sizeof(soopt)) < 0) {
+		syslog(LOG_ERR, "set SNDBUF: %m");
+		exit(1);
+	}
+	if (setsockopt(peer, SOL_SOCKET, SO_RCVBUF, (void *) &soopt, sizeof(soopt)) < 0) {
+		syslog(LOG_ERR, "set RCVBUF: %m");
+		exit(1);
+	}
+
 	tp = (struct tftphdr *)buf;
 	tp->th_opcode = ntohs(tp->th_opcode);
 	if (tp->th_opcode == RRQ || tp->th_opcode == WRQ)
 		tftp(tp, n);
 	exit(1);
+}
+
+static int
+blk_handler(struct tftphdr *tp, char *opt, char *val, char *ack,
+	    int *ackl, int *ec)
+{
+	unsigned long bsize;
+	char *endp;
+	int l;
+
+	/*
+	 * On these failures, we could just ignore the blocksize option.
+	 * Perhaps that should be a command-line option.
+	 */
+	errno = 0;
+	bsize = strtoul(val, &endp, 10);
+	if ((bsize == ULONG_MAX && errno == ERANGE) || *endp) {
+		syslog(LOG_NOTICE, "%s: %s request for %s: "
+			"illegal value %s for blksize option",
+			verifyhost((struct sockaddr *)&from),
+			tp->th_opcode == WRQ ? "write" : "read",
+			tp->th_stuff, val);
+		return 0;
+	}
+	if (bsize < 8 || bsize > 65464) {
+		syslog(LOG_NOTICE, "%s: %s request for %s: "
+			"out of range value %s for blksize option",
+			verifyhost((struct sockaddr *)&from),
+			tp->th_opcode == WRQ ? "write" : "read",
+			tp->th_stuff, val);
+		return 0;
+	}
+
+	tftp_blksize = bsize;
+	strcpy(ack + *ackl, "blksize");
+	*ackl += 8;
+	l = sprintf(ack + *ackl, "%lu", bsize);
+	*ackl += l + 1;
+
+	return 0;
+}
+
+static int
+timeout_handler(struct tftphdr *tp, char *opt, char *val, char *ack,
+		int *ackl, int *ec)
+{
+	unsigned long tout;
+	char *endp;
+	int l;
+
+	errno = 0;
+	tout = strtoul(val, &endp, 10);
+	if ((tout == ULONG_MAX && errno == ERANGE) || *endp) {
+		syslog(LOG_NOTICE, "%s: %s request for %s: "
+			"illegal value %s for timeout option",
+			verifyhost((struct sockaddr *)&from),
+			tp->th_opcode == WRQ ? "write" : "read",
+			tp->th_stuff, val);
+		return 0;
+	}
+	if (tout < 1 || tout > 255) {
+		syslog(LOG_NOTICE, "%s: %s request for %s: "
+			"out of range value %s for timeout option",
+			verifyhost((struct sockaddr *)&from),
+			tp->th_opcode == WRQ ? "write" : "read",
+			tp->th_stuff, val);
+		return 0;
+	}
+
+	rexmtval = tout;
+	strcpy(ack + *ackl, "timeout");
+	*ackl += 8;
+	l = sprintf(ack + *ackl, "%lu", tout);
+	*ackl += l + 1;
+
+	/*
+	 * Arbitrarily pick a maximum timeout on a request to 3
+	 * retransmissions if the interval timeout is more than
+	 * one minute.  Longest possible timeout is therefore
+	 * 3 * 255 - 1, or 764 seconds.
+	 */
+	if (rexmtval > 60) {
+		maxtimeout = rexmtval * 3;
+	} else {
+		maxtimeout = rexmtval * 5;
+	}
+
+	return 0;
+}
+
+static int
+tsize_handler(struct tftphdr *tp, char *opt, char *val, char *ack,
+	      int *ackl, int *ec)
+{
+	unsigned long fsize;
+	char *endp;
+
+	/*
+	 * Maximum file even with extended tftp is 65535 blocks of
+	 * length 65464, or 4290183240 octets (4784056 less than 2^32).
+	 * unsigned long is at least 32 bits on all NetBSD archs.
+	 */
+
+	errno = 0;
+	fsize = strtoul(val, &endp, 10);
+	if ((fsize == ULONG_MAX && errno == ERANGE) || *endp) {
+		syslog(LOG_NOTICE, "%s: %s request for %s: "
+			"illegal value %s for tsize option",
+			verifyhost((struct sockaddr *)&from),
+			tp->th_opcode == WRQ ? "write" : "read",
+			tp->th_stuff, val);
+		return 0;
+	}
+	if (fsize > (unsigned long) 65535 * 65464) {
+		syslog(LOG_NOTICE, "%s: %s request for %s: "
+			"out of range value %s for tsize option",
+			verifyhost((struct sockaddr *)&from),
+			tp->th_opcode == WRQ ? "write" : "read",
+			tp->th_stuff, val);
+		return 0;
+	}
+
+	tftp_opt_tsize = 1;
+	tftp_tsize = fsize;
+	/*
+	 * We will report this later -- either replying with the fsize (WRQ)
+	 * or replying with the actual filesize (RRQ).
+	 */
+
+	return 0;
+}
+
+struct tftp_options {
+	char *o_name;
+	int (*o_handler)(struct tftphdr *, char *, char *, char *,
+			 int *, int *);
+} options[] = {
+	{ "blksize", blk_handler },
+	{ "timeout", timeout_handler },
+	{ "tsize", tsize_handler },
+	{ NULL, NULL }
+};
+
+/*
+ * Get options for an extended tftp session.  Stuff the ones we
+ * recognize in oackbuf.
+ */
+static int
+get_options(struct tftphdr *tp, char *cp, int size, char *ackb,
+    int *alen, int *err)
+{
+	struct tftp_options *op;
+	char *option, *value, *endp;
+	int r, rv=0, ec=0;
+
+	endp = cp + size;
+	while (cp < endp) {
+		option = cp;
+		while (*cp && cp < endp) {
+			*cp = tolower(*cp);
+			cp++;
+		}
+		if (*cp) {
+			/* if we have garbage at the end, just ignore it */
+			break;
+		}
+		cp++;	/* skip over NUL */
+		value = cp;
+		while (*cp && cp < endp) {
+			cp++;
+		}
+		if (*cp) {
+			/* if we have garbage at the end, just ignore it */
+			break;
+		}
+		cp++;
+		for (op = options; op->o_name; op++) {
+			if (strcmp(op->o_name, option) == 0)
+				break;
+		}
+		if (op->o_name) {
+			r = op->o_handler(tp, option, value, ackb, alen, &ec);
+			if (r < 0) {
+				rv = -1;
+				break;
+			}
+			rv++;
+		} /* else ignore unknown options */
+	}
+	
+	if (rv < 0)
+		*err = ec;
+
+	return rv;
 }
 
 /*
@@ -403,7 +611,7 @@ tftp(struct tftphdr *tp, int size)
 	struct formats *pf;
 	char	*cp;
 	char	*filename, *mode;
-	int	 first, ecode;
+	int	 first, ecode, alen, etftp=0, r;
 
 	first = 1;
 	mode = NULL;
@@ -434,6 +642,28 @@ again:
 		nak(EBADOP);
 		exit(1);
 	}
+	/*
+	 * cp currently points to the NUL byte following the mode.
+	 *
+	 * If we have some valid options, then let's assume that we're
+	 * now dealing with an extended tftp session.  Note that if we
+	 * don't get any options, then we *must* assume that we do not
+	 * have an extended tftp session.  If we get options, we fill
+	 * in the ack buf to acknowledge them.  If we skip that, then
+	 * the client *must* assume that we are not using an extended
+	 * session.
+	 */
+	size -= (++cp - (char *) tp);
+	if (size > 0 && *cp) {
+		alen = 2; /* Skip over opcode */
+		r = get_options(tp, cp, size, oackbuf, &alen, &ecode);
+		if (r > 0) {
+			etftp = 1;
+		} else if (r < 0) {
+			nak(ecode);
+			exit(1);
+		}
+	}
 	ecode = (*pf->f_validate)(&filename, tp->th_opcode);
 	if (logging) {
 		syslog(LOG_INFO, "%s: %s request for %s: %s",
@@ -451,10 +681,26 @@ again:
 		nak(ecode);
 		exit(1);
 	}
+
+	if (etftp) {
+		struct tftphdr *oack_h;
+
+		if (tftp_opt_tsize) {
+			int l;
+
+			strcpy(oackbuf + alen, "tsize");
+			alen += 6;
+			l = sprintf(oackbuf + alen, "%u", tftp_tsize);
+			alen += l + 1;
+		}
+		oack_h = (struct tftphdr *) oackbuf;
+		oack_h->th_opcode = htons(OACK);
+	}
+
 	if (tp->th_opcode == WRQ)
-		(*pf->f_recv)(pf);
+		(*pf->f_recv)(pf, etftp, alen);
 	else
-		(*pf->f_send)(pf);
+		(*pf->f_send)(pf, etftp, alen);
 	exit(0);
 }
 
@@ -562,6 +808,10 @@ validate_access(char **filep, int mode)
 			*filep = filename;
 		}
 	}
+
+	if (tftp_opt_tsize && mode == RRQ)
+		tftp_tsize = (unsigned long) stbuf.st_size;
+
 	fd = open(filename, mode == RRQ ? O_RDONLY : O_WRONLY | O_TRUNC);
 	if (fd < 0)
 		return (errno + 100);
@@ -602,6 +852,8 @@ opcode(int code)
 		return "ACK";
 	case ERROR:
 		return "ERROR";
+	case OACK:
+		return "OACK";
 	default:
 		(void)snprintf(buf, sizeof(buf), "*code %d*", code);
 		return buf;
@@ -612,7 +864,7 @@ opcode(int code)
  * Send the requested file.
  */
 void
-sendfile(struct formats *pf)
+sendfile(struct formats *pf, int etftp, int acklength)
 {
 	volatile unsigned int block;
 	struct tftphdr	*dp;
@@ -620,31 +872,42 @@ sendfile(struct formats *pf)
 	int		 size, n;
 
 	signal(SIGALRM, timer);
-	dp = r_init();
 	ap = (struct tftphdr *)ackbuf;
-	block = 1;
+	if (etftp) {
+		dp = (struct tftphdr *)oackbuf;
+		size = acklength - 4;
+		block = 0;
+	} else {
+		dp = r_init();
+		size = 0;
+		block = 1;
+	}
+
 	do {
-		size = readit(file, &dp, pf->f_convert);
-		if (size < 0) {
-			nak(errno + 100);
-			goto abort;
+		if (block > 0) {
+			size = readit(file, &dp, tftp_blksize, pf->f_convert);
+			if (size < 0) {
+				nak(errno + 100);
+				goto abort;
+			}
+			dp->th_opcode = htons((u_short)DATA);
+			dp->th_block = htons((u_short)block);
 		}
-		dp->th_opcode = htons((u_short)DATA);
-		dp->th_block = htons((u_short)block);
 		timeout = 0;
 		(void)setjmp(timeoutbuf);
 
 send_data:
-		if (debug)
+		if (!etftp && debug)
 			syslog(LOG_DEBUG, "Send DATA %u", block);
-		if (send(peer, dp, size + 4, 0) != size + 4) {
+		if ((n = send(peer, dp, size + 4, 0)) != size + 4) {
 			syslog(LOG_ERR, "tftpd: write: %m");
 			goto abort;
 		}
-		read_ahead(file, pf->f_convert);
+		if (block)
+			read_ahead(file, tftp_blksize, pf->f_convert);
 		for ( ; ; ) {
 			alarm(rexmtval);        /* read the ack */
-			n = recv(peer, ackbuf, sizeof (ackbuf), 0);
+			n = recv(peer, ackbuf, tftp_blksize, 0);
 			alarm(0);
 			if (n < 0) {
 				syslog(LOG_ERR, "tftpd: read: %m");
@@ -657,13 +920,19 @@ send_data:
 				goto abort;
 
 			case ACK:
+				if (ap->th_block == 0) {
+					etftp = 0;
+					acklength = 0;
+					dp = r_init();
+					goto done;
+				}
 				if (ap->th_block == block)
 					goto done;
 				if (debug)
 					syslog(LOG_DEBUG, "Resync ACK %u != %u",
 					    (unsigned int)ap->th_block, block);
 				/* Re-synchronize with the other side */
-				(void) synchnet(peer);
+				(void) synchnet(peer, tftp_blksize);
 				if (ap->th_block == (block -1))
 					goto send_data;
 			default:
@@ -676,7 +945,7 @@ done:
 		if (debug)
 			syslog(LOG_DEBUG, "Received ACK for block %u", block);
 		block++;
-	} while (size == SEGSIZE);
+	} while (size == tftp_blksize || block == 1);
 abort:
 	(void) fclose(file);
 }
@@ -692,7 +961,7 @@ justquit(int dummy)
  * Receive a file.
  */
 void
-recvfile(struct formats *pf)
+recvfile(struct formats *pf, int etftp, int acklength)
 {
 	volatile unsigned int block;
 	struct tftphdr	*dp;
@@ -701,30 +970,35 @@ recvfile(struct formats *pf)
 
 	signal(SIGALRM, timer);
 	dp = w_init();
-	ap = (struct tftphdr *)ackbuf;
+	ap = (struct tftphdr *)oackbuf;
 	block = 0;
 	do {
 		timeout = 0;
-		ap->th_opcode = htons((u_short)ACK);
-		ap->th_block = htons((u_short)block);
+		if (etftp == 0) {
+			ap = (struct tftphdr *)ackbuf;
+			ap->th_opcode = htons((u_short)ACK);
+			ap->th_block = htons((u_short)block);
+			acklength = 4;
+		}
 		if (debug)
 			syslog(LOG_DEBUG, "Sending ACK for block %u\n", block);
 		block++;
 		(void) setjmp(timeoutbuf);
 send_ack:
-		if (send(peer, ackbuf, 4, 0) != 4) {
+		if (send(peer, ap, acklength, 0) != acklength) {
 			syslog(LOG_ERR, "tftpd: write: %m");
 			goto abort;
 		}
 		write_behind(file, pf->f_convert);
 		for ( ; ; ) {
 			alarm(rexmtval);
-			n = recv(peer, dp, PKTSIZE, 0);
+			n = recv(peer, dp, tftp_blksize + 4, 0);
 			alarm(0);
 			if (n < 0) {            /* really? */
 				syslog(LOG_ERR, "tftpd: read: %m");
 				goto abort;
 			}
+			etftp = 0;
 			dp->th_opcode = ntohs((u_short)dp->th_opcode);
 			dp->th_block = ntohs((u_short)dp->th_block);
 			if (debug)
@@ -742,7 +1016,7 @@ send_ack:
 					syslog(LOG_DEBUG, "Resync %u != %u",
 					    (unsigned int)dp->th_block, block);
 				/* Re-synchronize with the other side */
-				(void) synchnet(peer);
+				(void) synchnet(peer, tftp_blksize);
 				if (dp->th_block == (block-1))
 					goto send_ack;          /* rexmit */
 				break;
@@ -762,7 +1036,7 @@ done:
 			else nak(ENOSPACE);
 			goto abort;
 		}
-	} while (size == SEGSIZE);
+	} while (size == tftp_blksize);
 	write_behind(file, pf->f_convert);
 	(void) fclose(file);            /* close data file */
 
@@ -797,6 +1071,7 @@ const struct errmsg {
 	{ EBADID,	"Unknown transfer ID" },
 	{ EEXISTS,	"File already exists" },
 	{ ENOUSER,	"No such user" },
+	{ EOPTNEG,	"Option negotiation failed" },
 	{ -1,		0 }
 };
 
