@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1999/03/05 07:23:51 mycroft Exp $
+#	$NetBSD: Makefile,v 1.10 1999/07/30 04:07:25 mycroft Exp $
 #
 
 .include <bsd.own.mk>
@@ -23,8 +23,8 @@ CPPFLAGS+=	-I${.CURDIR}/arch/${TARGET_ARCH} \
 		-I${DIST}/gas -I${DIST}/gas/config -I${BFDOBJ} \
 		-I${DIST}/bfd -I${DIST}/include -I${DIST} \
 		-D_GNU_SOURCE
-LDADD+=		-L${BFDOBJ} -lbfd -lgnumalloc
-DPADD+=		${BFDOBJ}/libbfd_pic.a ${LIBGNUMALLOC}
+LDADD+=		-L${BFDOBJ} -lbfd
+DPADD+=		${BFDOBJ}/libbfd_pic.a
 
 DIST=		${.CURDIR}/../../dist
 BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd && ${MAKE} print-objdir
