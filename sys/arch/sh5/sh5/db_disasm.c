@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.14 2003/08/10 22:22:31 scw Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.15 2003/11/09 21:37:08 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.14 2003/08/10 22:22:31 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.15 2003/11/09 21:37:08 scw Exp $");
 
 #include "opt_ddb.h"
 
@@ -1500,12 +1500,12 @@ sh5_fmt_xsd16_decode_op(int fmt, int op, int d, db_addr_t loc, char *ops)
 
 	case FMT_XSD16_OP_LABEL:
 		op = sh5_sign_extend(op, 16) * 4;
-		loc = (long)loc + (long)op;
+		loc = loc + (db_addr_t)op;
 		symname = NULL;
 		sym = db_search_symbol(loc, DB_STGY_PROC, &diff);
 		db_symbol_values(sym, &symname, NULL);
 		if (symname == NULL)
-			sprintf(ops, "0x%lx", loc);
+			sprintf(ops, "0x%llx", loc);
 		else {
 			if (diff)
 				sprintf(ops, "%s+0x%x", symname, (int) diff);
