@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.21 2002/08/06 22:54:00 itojun Exp $	*/
+/*	$NetBSD: mq200.c,v 1.22 2003/07/15 02:29:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -28,6 +28,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.22 2003/07/15 02:29:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.7 2002/03/28 15:24:24 uch Exp $	*/
+/*	$NetBSD: debug.c,v 1.8 2003/07/15 02:29:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: debug.c,v 1.8 2003/07/15 02:29:38 lukem Exp $");
 
 #include "debug_hpc.h"
 

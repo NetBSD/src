@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.13 2003/01/01 01:40:27 thorpej Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.14 2003/07/15 02:29:33 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 /*
  * TX39 SIB (Serial Interface Bus) module.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.14 2003/07/15 02:29:33 lukem Exp $");
+
 #undef TX39SIBDEBUG
 
 #include <sys/param.h>

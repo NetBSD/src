@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_notimpl.c,v 1.4 2002/09/27 15:36:05 provos Exp $	*/
+/*	$NetBSD: bus_space_notimpl.c,v 1.5 2003/07/15 02:29:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin. All rights reserved.
@@ -28,6 +28,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space_notimpl.c,v 1.5 2003/07/15 02:29:31 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

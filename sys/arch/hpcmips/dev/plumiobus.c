@@ -1,4 +1,4 @@
-/*	$NetBSD: plumiobus.c,v 1.8 2002/10/02 05:26:46 thorpej Exp $ */
+/*	$NetBSD: plumiobus.c,v 1.9 2003/07/15 02:29:30 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: plumiobus.c,v 1.9 2003/07/15 02:29:30 lukem Exp $");
 
 #define PLUMIOBUSDEBUG
 

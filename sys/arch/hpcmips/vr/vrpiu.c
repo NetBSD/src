@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.28 2003/01/05 08:41:54 takemura Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.29 2003/07/15 02:29:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -31,6 +31,9 @@
 /*
  * A/D polling part written by SATO Kazumi.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.29 2003/07/15 02:29:36 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

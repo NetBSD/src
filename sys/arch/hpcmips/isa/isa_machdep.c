@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.27 2002/10/02 05:26:49 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.28 2003/07/15 02:29:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.28 2003/07/15 02:29:32 lukem Exp $");
 
 #include "opt_vr41xx.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vr4102ip.c,v 1.5 2002/10/02 05:26:53 thorpej Exp $	*/
+/*	$NetBSD: vr4102ip.c,v 1.6 2003/07/15 02:29:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -29,6 +29,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vr4102ip.c,v 1.6 2003/07/15 02:29:34 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

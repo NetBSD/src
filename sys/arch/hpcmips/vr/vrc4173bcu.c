@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.13 2003/03/24 03:32:08 imp Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.14 2003/07/15 02:29:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -25,6 +25,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.14 2003/07/15 02:29:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

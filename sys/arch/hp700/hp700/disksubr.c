@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.4 2003/05/10 23:12:33 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5 2003/07/15 02:29:26 lukem Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -52,6 +52,9 @@
  *
  * XXX HPUX disklabel is not understood yet.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.5 2003/07/15 02:29:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
