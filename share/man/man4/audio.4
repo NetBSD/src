@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.46 2002/02/02 11:11:20 wiz Exp $
+.\"	$NetBSD: audio.4,v 1.47 2002/02/13 08:17:31 ross Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,8 +41,8 @@
 .Nm audio
 .Nd device-independent audio driver layer
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/audioio.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/audioio.h\*[Gt]
 .Sh DESCRIPTION
 The
 .Nm
@@ -281,7 +281,7 @@ typedef struct audio_info {
 When setting the current state with
 .Dv AUDIO_SETINFO ,
 the audio_info structure should first be initialized with
-.Li Dv AUDIO_INITINFO Po &info Pc
+.Li Dv AUDIO_INITINFO Po \*[Am]info Pc
 and then the particular values to be changed should be set.
 This allows the audio driver to only set those things that you wish
 to change and eliminates the need to query the device with

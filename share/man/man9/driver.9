@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.3 2001/12/26 00:21:57 wiz Exp $
+.\"     $NetBSD: driver.9,v 1.4 2002/02/13 08:18:40 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,9 +41,9 @@
 .Nm driver
 .Nd description of a device driver
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/device.h>
-.Fd #include <sys/error.h>
+.Fd #include \*[Lt]sys/param.h\*[Gt]
+.Fd #include \*[Lt]sys/device.h\*[Gt]
+.Fd #include \*[Lt]sys/error.h\*[Gt]
 .Ft static int
 .Fn foo_match "struct device *parent" "struct cfdata *match" "void *aux"
 .Ft static void
@@ -274,7 +274,7 @@ I guess it was mine, but I wasn't expecting it
 For a driver to be compiled into the kernel,
 .Xr config 8
 must be aware of its existence.  This is done by including an entry in
-files.<bus> in the directory containing the driver.  For example, the
+files.\*[Lt]bus\*[Gt] in the directory containing the driver.  For example, the
 driver
 .Do
 foo

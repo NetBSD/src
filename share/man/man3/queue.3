@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.21 2002/02/07 17:15:23 wiz Exp $
+.\"	$NetBSD: queue.3,v 1.22 2002/02/13 08:17:29 ross Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -136,7 +136,7 @@
 .Nm CIRCLEQ_PREV
 .Nd "implementations of singly-linked lists, lists, simple queues, tail queues, and circular queues"
 .Sh SYNOPSIS
-.Fd #include <sys/queue.h>
+.Fd #include \*[Lt]sys/queue.h\*[Gt]
 .sp
 .Fn LIST_ENTRY "TYPE"
 .Fn LIST_FOREACH "TYPE *var" "LIST_HEAD *head" "LIST_ENTRY NAME"
@@ -455,27 +455,27 @@ struct entry {
         ...
 } *n1, *n2, *n3, *np;
 
-SLIST_INIT(&head);                      /* Initialize the list. */
+SLIST_INIT(\*[Am]head);                      /* Initialize the list. */
 
 n1 = malloc(sizeof(struct entry));      /* Insert at the head. */
-SLIST_INSERT_HEAD(&head, n1, entries);
+SLIST_INSERT_HEAD(\*[Am]head, n1, entries);
 
 n2 = malloc(sizeof(struct entry));      /* Insert after. */
 SLIST_INSERT_AFTER(n1, n2, entries);
 
-SLIST_REMOVE(&head, n2, entry, entries);/* Deletion. */
+SLIST_REMOVE(\*[Am]head, n2, entry, entries);/* Deletion. */
 free(n2);
 
-n3 = SLIST_FIRST(&head);
-SLIST_REMOVE_HEAD(&head, entries);      /* Deletion from the head. */
+n3 = SLIST_FIRST(\*[Am]head);
+SLIST_REMOVE_HEAD(\*[Am]head, entries);      /* Deletion from the head. */
 free(n3);
                                         /* Forward traversal. */
-SLIST_FOREACH(np, &head, entries)
-        np-> ...
+SLIST_FOREACH(np, \*[Am]head, entries)
+        np-\*[Gt] ...
 
-while (!SLIST_EMPTY(&head)) {           /* List Deletion. */
-        n1 = SLIST_FIRST(&head);
-        SLIST_REMOVE_HEAD(&head, entries);
+while (!SLIST_EMPTY(\*[Am]head)) {           /* List Deletion. */
+        n1 = SLIST_FIRST(\*[Am]head);
+        SLIST_REMOVE_HEAD(\*[Am]head, entries);
         free(n1);
 }
 .Ed
@@ -589,10 +589,10 @@ struct entry {
 	...
 } *n1, *n2, *np;
 
-LIST_INIT(&head);			/* Initialize the list. */
+LIST_INIT(\*[Am]head);			/* Initialize the list. */
 
 n1 = malloc(sizeof(struct entry));	/* Insert at the head. */
-LIST_INSERT_HEAD(&head, n1, entries);
+LIST_INSERT_HEAD(\*[Am]head, n1, entries);
 
 n2 = malloc(sizeof(struct entry));	/* Insert after. */
 LIST_INSERT_AFTER(n1, n2, entries);
@@ -600,12 +600,12 @@ LIST_INSERT_AFTER(n1, n2, entries);
 n2 = malloc(sizeof(struct entry));	/* Insert before. */
 LIST_INSERT_BEFORE(n1, n2, entries);
 					/* Forward traversal. */
-LIST_FOREACH(np, &head, entries)
-	np-> ...
+LIST_FOREACH(np, \*[Am]head, entries)
+	np-\*[Gt] ...
 					/* Delete. */
-while (LIST_FIRST(&head) != NULL)
-	LIST_REMOVE(LIST_FIRST(&head), entries);
-if (LIST_EMPTY(&head))			/* Test for emptiness. */
+while (LIST_FIRST(\*[Am]head) != NULL)
+	LIST_REMOVE(LIST_FIRST(\*[Am]head), entries);
+if (LIST_EMPTY(\*[Am]head))			/* Test for emptiness. */
 	printf("nothing to do\\n");
 .Ed
 .Sh SIMPLE QUEUES
@@ -715,23 +715,23 @@ struct entry {
 	...
 } *n1, *n2, *np;
 
-SIMPLEQ_INIT(&head);			/* Initialize the queue. */
+SIMPLEQ_INIT(\*[Am]head);			/* Initialize the queue. */
 
 n1 = malloc(sizeof(struct entry));	/* Insert at the head. */
-SIMPLEQ_INSERT_HEAD(&head, n1, entries);
+SIMPLEQ_INSERT_HEAD(\*[Am]head, n1, entries);
 
 n1 = malloc(sizeof(struct entry));	/* Insert at the tail. */
-SIMPLEQ_INSERT_TAIL(&head, n1, entries);
+SIMPLEQ_INSERT_TAIL(\*[Am]head, n1, entries);
 
 n2 = malloc(sizeof(struct entry));	/* Insert after. */
-SIMPLEQ_INSERT_AFTER(&head, n1, n2, entries);
+SIMPLEQ_INSERT_AFTER(\*[Am]head, n1, n2, entries);
 					/* Forward traversal. */
-SIMPLEQ_FOREACH(np, &head, entries)
-	np-> ...
+SIMPLEQ_FOREACH(np, \*[Am]head, entries)
+	np-\*[Gt] ...
 					/* Delete. */
-while (SIMPLEQ_FIRST(&head) != NULL)
-	SIMPLEQ_REMOVE_HEAD(&head, SIMPLEQ_FIRST(&head), entries);
-if (SIMPLEQ_EMPTY(&head))		/* Test for emptiness. */
+while (SIMPLEQ_FIRST(\*[Am]head) != NULL)
+	SIMPLEQ_REMOVE_HEAD(\*[Am]head, SIMPLEQ_FIRST(\*[Am]head), entries);
+if (SIMPLEQ_EMPTY(\*[Am]head))		/* Test for emptiness. */
 	printf("nothing to do\\n");
 .Ed
 .Sh TAIL QUEUES
@@ -859,29 +859,29 @@ struct entry {
 	...
 } *n1, *n2, *np;
 
-TAILQ_INIT(&head);			/* Initialize the queue. */
+TAILQ_INIT(\*[Am]head);			/* Initialize the queue. */
 
 n1 = malloc(sizeof(struct entry));	/* Insert at the head. */
-TAILQ_INSERT_HEAD(&head, n1, entries);
+TAILQ_INSERT_HEAD(\*[Am]head, n1, entries);
 
 n1 = malloc(sizeof(struct entry));	/* Insert at the tail. */
-TAILQ_INSERT_TAIL(&head, n1, entries);
+TAILQ_INSERT_TAIL(\*[Am]head, n1, entries);
 
 n2 = malloc(sizeof(struct entry));	/* Insert after. */
-TAILQ_INSERT_AFTER(&head, n1, n2, entries);
+TAILQ_INSERT_AFTER(\*[Am]head, n1, n2, entries);
 
 n2 = malloc(sizeof(struct entry));	/* Insert before. */
 TAILQ_INSERT_BEFORE(n1, n2, entries);
 					/* Forward traversal. */
-TAILQ_FOREACH(np, &head, entries)
-	np-> ...
+TAILQ_FOREACH(np, \*[Am]head, entries)
+	np-\*[Gt] ...
 					/* Reverse traversal. */
-TAILQ_FOREACH_REVERSE(np, &head, tailhead, entries)
-	np-> ...
+TAILQ_FOREACH_REVERSE(np, \*[Am]head, tailhead, entries)
+	np-\*[Gt] ...
 					/* Delete. */
-while (TAILQ_FIRST(&head) != NULL)
-	TAILQ_REMOVE(&head, TAILQ_FIRST(&head), entries);
-if (TAILQ_EMPTY(&head))			/* Test for emptiness. */
+while (TAILQ_FIRST(\*[Am]head) != NULL)
+	TAILQ_REMOVE(\*[Am]head, TAILQ_FIRST(\*[Am]head), entries);
+if (TAILQ_EMPTY(\*[Am]head))			/* Test for emptiness. */
 	printf("nothing to do\\n");
 .Ed
 .Sh CIRCULAR QUEUES
@@ -1019,29 +1019,29 @@ struct entry {
 	...
 } *n1, *n2, *np;
 
-CIRCLEQ_INIT(&head);			/* Initialize the circular queue. */
+CIRCLEQ_INIT(\*[Am]head);			/* Initialize the circular queue. */
 
 n1 = malloc(sizeof(struct entry));	/* Insert at the head. */
-CIRCLEQ_INSERT_HEAD(&head, n1, entries);
+CIRCLEQ_INSERT_HEAD(\*[Am]head, n1, entries);
 
 n1 = malloc(sizeof(struct entry));	/* Insert at the tail. */
-CIRCLEQ_INSERT_TAIL(&head, n1, entries);
+CIRCLEQ_INSERT_TAIL(\*[Am]head, n1, entries);
 
 n2 = malloc(sizeof(struct entry));	/* Insert after. */
-CIRCLEQ_INSERT_AFTER(&head, n1, n2, entries);
+CIRCLEQ_INSERT_AFTER(\*[Am]head, n1, n2, entries);
 
 n2 = malloc(sizeof(struct entry));	/* Insert before. */
-CIRCLEQ_INSERT_BEFORE(&head, n1, n2, entries);
+CIRCLEQ_INSERT_BEFORE(\*[Am]head, n1, n2, entries);
 					/* Forward traversal. */
-CIRCLEQ_FOREACH(np, &head, entries)
-	np-> ...
+CIRCLEQ_FOREACH(np, \*[Am]head, entries)
+	np-\*[Gt] ...
 					/* Reverse traversal. */
-CIRCLEQ_FOREACH_REVERSE(np, &head, entries)
-	np-> ...
+CIRCLEQ_FOREACH_REVERSE(np, \*[Am]head, entries)
+	np-\*[Gt] ...
 					/* Delete. */
-while (CIRCLEQ_FIRST(&head) != (void *)&head)
-	CIRCLEQ_REMOVE(&head, CIRCLEQ_FIRST(&head), entries);
-if (CIRCLEQ_EMPTY(&head))		/* Test for emptiness. */
+while (CIRCLEQ_FIRST(\*[Am]head) != (void *)\*[Am]head)
+	CIRCLEQ_REMOVE(\*[Am]head, CIRCLEQ_FIRST(\*[Am]head), entries);
+if (CIRCLEQ_EMPTY(\*[Am]head))		/* Test for emptiness. */
 	printf("nothing to do\\n");
 .Ed
 .Sh HISTORY

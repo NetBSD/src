@@ -1,4 +1,4 @@
-.\"	$NetBSD: crash.8,v 1.7 2001/09/05 23:53:23 wiz Exp $
+.\"	$NetBSD: crash.8,v 1.8 2002/02/13 08:18:27 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -139,7 +139,7 @@ indicating a wild reference.
 ``code'' (hex) is the concatenation of the
 MMU
 status register
-(see <hp300/cpu.h>)
+(see \*[Lt]hp300/cpu.h\*[Gt])
 in the high 16 bits and the 68020 special status word
 (see the 68020 manual, page 6-17)
 in the low 16.
@@ -164,7 +164,7 @@ region registers.
 They are of the form:
 .Pp
 .Bd -ragged -offset indent
-<length> '@' <kernel VA>
+\*[Lt]length\*[Gt] '@' \*[Lt]kernel VA\*[Gt]
 .Ed
 .Pp
 where both are in hex.

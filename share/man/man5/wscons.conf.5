@@ -1,4 +1,4 @@
-.\"	$NetBSD: wscons.conf.5,v 1.7 2001/09/11 01:01:59 wiz Exp $
+.\"	$NetBSD: wscons.conf.5,v 1.8 2002/02/13 08:18:17 ross Exp $
 .\"
 .\" Copyright 2000, 2001 Hubert Feyrer <hubertf@netbsd.org>
 .\" All rights reserved.
@@ -79,14 +79,14 @@ See
 .Xr wsfontload 8
 for more information.
 .Pp
-.It Sy keyboard    <wsconscfg -k args>
+.It Sy keyboard    \*[Lt]wsconscfg -k args\*[Gt]
 The given argument(s) are handed off to
 .Dq Li "wsconscfg -k"
 for attaching and configuration of keyboards. See
 .Xr wsconscfg 8
 for more information.
 .Pp
-.It Sy encoding    <wsconsctl -w encoding=arg>
+.It Sy encoding    \*[Lt]wsconsctl -w encoding=arg\*[Gt]
 Set the keyboard map to the given language code. The map
 must be supported by the keyboard driver in use and must be
 compiled into the kernel. See the keyboard driver's manpage (eg.
@@ -101,7 +101,7 @@ See
 .Xr wsconsctl 8
 for details.
 .Pp
-.It Sy mux         <wsconscfg -m args>
+.It Sy mux         \*[Lt]wsconscfg -m args\*[Gt]
 Used to attach and configure keyboard/mouse multiplexors. See
 .Xr wsconscfg 8
 for more information.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.30 2002/01/05 20:35:49 deberg Exp $
+.\"	$NetBSD: uvm.9,v 1.31 2002/02/13 08:18:53 ross Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -36,8 +36,8 @@
 .Nm uvm
 .Nd virtual memory system external interface
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <uvm/uvm.h>
+.Fd #include \*[Lt]sys/param.h\*[Gt]
+.Fd #include \*[Lt]uvm/uvm.h\*[Gt]
 .Sh DESCRIPTION
 The UVM virtual memory system manages access to the computer's memory
 resources.  User processes and the kernel access these resources through
@@ -209,7 +209,7 @@ can take are:
 #define UVM_INH_SHARE   0x00    /* "share" */
 #define UVM_INH_COPY    0x10    /* "copy" */
 #define UVM_INH_NONE    0x20    /* "none" */
-#define UVM_INH_DONATE  0x30    /* "donate" << not used */
+#define UVM_INH_DONATE  0x30    /* "donate" \*[Lt]\*[Lt] not used */
 .Ed
 .Pp
 The values that
@@ -1010,14 +1010,14 @@ further documented in a August 1998 dissertation by Charles D. Cranor.
 UVM appeared in
 .Nx 1.4 .
 .Sh AUTHORS
-Charles D. Cranor <chuck@ccrc.wustl.edu> designed and implemented UVM.
+Charles D. Cranor \*[Lt]chuck@ccrc.wustl.edu\*[Gt] designed and implemented UVM.
 .Pp
-Matthew Green <mrg@eterna.com.au> wrote the swap-space management code
+Matthew Green \*[Lt]mrg@eterna.com.au\*[Gt] wrote the swap-space management code
 and handled the logistical issues involved with merging UVM into the
 .Nx
 source tree.
 .Pp
-Chuck Silvers <chuq@chuq.com> implemented the aobj pager, thus allowing
+Chuck Silvers \*[Lt]chuq@chuq.com\*[Gt] implemented the aobj pager, thus allowing
 UVM to support System V shared memory and process swapping.  He also
 designed and implemented the UBC part of UVM, which uses UVM pages to
 cache vnode data rather than the traditional buffer cache buffers.

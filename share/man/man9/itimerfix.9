@@ -1,4 +1,4 @@
-.\"	$NetBSD: itimerfix.9,v 1.2 2001/12/02 08:40:27 wiz Exp $
+.\"	$NetBSD: itimerfix.9,v 1.3 2002/02/13 08:18:43 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm itimerfix
 .Nd check that a timeval value is valid, and correct
 .Sh SYNOPSIS
-.Fd #include <sys/time.h>
+.Fd #include \*[Lt]sys/time.h\*[Gt]
 .Ft int
 .Fn itimerfix "struct timeval *tv"
 .Sh DESCRIPTION
@@ -49,7 +49,7 @@ The
 .Nm
 function checks that the value in
 .Fa tv
-is valid (0 <= tv->tv_sec &&  0 <= tv->tv_usec < 1000000), and that the
+is valid (0 \*[Le] tv-\*[Gt]tv_sec \*[Am]\*[Am]  0 \*[Le] tv-\*[Gt]tv_usec \*[Lt] 1000000), and that the
 total time represented is at least
 .Em tick .
 .Pp

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci_configure_bus.9,v 1.4 2002/02/11 18:43:39 kleink Exp $
+.\"	$NetBSD: pci_configure_bus.9,v 1.5 2002/02/13 08:18:47 ross Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Nm pci_conf_interrupt
 .Nd perform PCI bus configuration
 .Sh SYNOPSIS
-.Fd #include <dev/pci/pciconf.h>
+.Fd #include \*[Lt]dev/pci/pciconf.h\*[Gt]
 .Ft int
 .Fo pci_configure_bus
 .Fa "pci_chipset_tag_t pc"
@@ -217,7 +217,7 @@ pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int func,
 	if (bus == 0) {
 		*iline = dev;
 	} else {
-		*iline = 13 + ((swiz + dev + 3) & 3);
+		*iline = 13 + ((swiz + dev + 3) \*[Am] 3);
 	}
 }
 .Ed

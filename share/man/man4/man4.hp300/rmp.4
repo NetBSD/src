@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rmp.4	5.2 (Berkeley) 3/27/91
-.\"	$NetBSD: rmp.4,v 1.6 2002/01/15 01:38:16 wiz Exp $
+.\"	$NetBSD: rmp.4,v 1.7 2002/02/13 08:17:57 ross Exp $
 .\"
 .Dd March 27, 1991
 .Dt RMP 4 hp300
@@ -45,10 +45,10 @@
 Remote Maintenance Protocol Family
 .Sh SYNOPSIS
 .Cd "options RMP"
-.Fd #include <sys/types.h>
-.Fd #include <sys/socket.h>
-.Fd #include <netrmp/rmp.h>
-.Fd #include <netrmp/rmp_var.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/socket.h\*[Gt]
+.Fd #include \*[Lt]netrmp/rmp.h\*[Gt]
+.Fd #include \*[Lt]netrmp/rmp_var.h\*[Gt]
 .Ft int
 .Fn socket AF_RMP SOCK_RAW proto
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\" $NetBSD: podulebus.4,v 1.6 2001/09/11 22:52:55 wiz Exp $
+.\" $NetBSD: podulebus.4,v 1.7 2002/02/13 08:17:54 ross Exp $
 .\"
 .\" Copyright (c) 2000 Ben Harris
 .\" All rights reserved.
@@ -46,7 +46,7 @@ device.
 Expansion cards are identified by a manufacturer and product identifier.
 These are listed against each card in the table in the form
 .Sm off
-.No < Ar manu : prod No > .
+.No \*[Lt] Ar manu : prod No \*[Gt] .
 .Sm on
 .Bl -tag -width Nm
 .It Nm ei
@@ -54,7 +54,7 @@ Acorn
 .Tn AKA25
 Ethernet card (Ether1)
 .Sm off
-.No < Li 0000 : 0003 No >
+.No \*[Lt] Li 0000 : 0003 No \*[Gt]
 .Sm on
 .It Nm ea
 Atomwide
@@ -62,27 +62,27 @@ Atomwide
 Ethernet cards (also Acorn
 .Tn AEH54 )
 .Sm off
-.No < Li 0011 : 00A4 No >
+.No \*[Lt] Li 0011 : 00A4 No \*[Gt]
 .Sm on
 .It Nm eh
 i-cubed EtherLan 100-, 200- and 500-series Ethernet cards
 .Sm off
-.No < Li 0046 : 00BD No >
+.No \*[Lt] Li 0046 : 00BD No \*[Gt]
 .Sm on
 .Sm off
-.No < Li 0046 : 00CF No >
+.No \*[Lt] Li 0046 : 00CF No \*[Gt]
 .Sm on
 .Sm off
-.No < Li 0046 : 00D4 No >
+.No \*[Lt] Li 0046 : 00D4 No \*[Gt]
 .Sm on
 .Sm off
-.No < Li 0046 : 011C No >
+.No \*[Lt] Li 0046 : 011C No \*[Gt]
 .Sm on
 .Sm off
-.No < Li 0046 : 011D No >
+.No \*[Lt] Li 0046 : 011D No \*[Gt]
 .Sm on
 .Sm off
-.No < Li 0046 : 011F No >
+.No \*[Lt] Li 0046 : 011F No \*[Gt]
 .Sm on
 .\" .It Nm dtide
 .\" D.T. Software IDE interface

@@ -1,4 +1,4 @@
-.\"	$NetBSD: uiomove.9,v 1.6 2001/12/26 00:16:30 wiz Exp $
+.\"	$NetBSD: uiomove.9,v 1.7 2002/02/13 08:18:53 ross Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Nm uiomove
 .Nd move data described by a struct uio
 .Sh SYNOPSIS
-.Fd #include <sys/systm.h>
+.Fd #include \*[Lt]sys/systm.h\*[Gt]
 .Ft int
 .Fn uiomove "void *buf" "int n" "struct uio *uio"
 .Sh DESCRIPTION
@@ -105,7 +105,7 @@ structure, or NULL if the area is in kernel-space.
 .El
 .Pp
 The value of
-.Fa uio->uio_rw
+.Fa uio-\*[Gt]uio_rw
 controls whether
 .Nm
 copies data from
@@ -117,16 +117,16 @@ or vice versa.
 The lesser of
 .Fa n
 or
-.Fa uio->resid
+.Fa uio-\*[Gt]resid
 bytes are copied.
 .Pp
 .Nm
 changes fields of the structure pointed to by
 .Fa uio ,
 such that
-.Fa uio->uio_resid
+.Fa uio-\*[Gt]uio_resid
 is decremented by the amount of data moved,
-.Fa uio->uio_offset
+.Fa uio-\*[Gt]uio_offset
 is incremented by the same amount, and the array of iovecs is adjusted
 to point that much farther into the region described.
 This allows multiple calls to
