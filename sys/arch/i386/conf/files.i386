@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.97 1998/01/14 23:36:30 cgd Exp $
+#	$NetBSD: files.i386,v 1.98 1998/01/15 06:15:08 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -7,6 +7,9 @@
 maxpartitions 8
 
 maxusers 2 16 64
+
+# Processor type options.
+defopt	opt_cputype.h I386_CPU I486_CPU I586_CPU I686_CPU
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/conf.c
@@ -36,7 +39,7 @@ major	{vnd = 14}
 # Machine-independent SCSI drivers
 #
 
-include "../../../dev/scsipi/files.scsipi"
+include "dev/scsipi/files.scsipi"
 major	{sd = 4}
 major	{st = 5}
 major	{cd = 6}
@@ -45,7 +48,7 @@ major	{cd = 6}
 # Machine-independent ATA drivers
 #
 
-include "../../../dev/ata/files.ata"
+include "dev/ata/files.ata"
 major	{wd = 0}
 
 # Memory Disk for install floppy
@@ -74,7 +77,7 @@ file	arch/i386/i386/bioscall.s	bioscall needs-flag
 # XXX devices to 'pci'.
 #
 
-include "../../../dev/pci/files.pci"
+include "dev/pci/files.pci"
 file	arch/i386/pci/pci_machdep.c	pci
 
 # PCI-Host bridge chipsets
@@ -91,7 +94,7 @@ file	arch/i386/pci/pcib.c		pcib
 # ISA and mixed ISA+EISA or ISA+PCI drivers
 #
 
-include "../../../dev/isa/files.isa"
+include "dev/isa/files.isa"
 major	{mcd = 7}
 #major	{scd = 15}
 major	{wt = 3}
@@ -165,7 +168,7 @@ file	arch/i386/isa/ahc_isa.c		ahc_isa
 # EISA-only drivers
 #
 
-include "../../../dev/eisa/files.eisa"
+include "dev/eisa/files.eisa"
 file	arch/i386/eisa/eisa_machdep.c	eisa
 
 # ISA Plug 'n Play devices
@@ -195,26 +198,26 @@ file	arch/i386/i386/apmcall.s	apm
 file	arch/i386/i386/vm86.c			vm86
 
 # SVR4 binary compatibility (COMPAT_SVR4)
-include "../../../compat/svr4/files.svr4"
+include "compat/svr4/files.svr4"
 file	arch/i386/i386/svr4_machdep.c		compat_svr4
 
 # iBCS-2 binary compatibility (COMPAT_IBCS2)
-include "../../../compat/ibcs2/files.ibcs2"
+include "compat/ibcs2/files.ibcs2"
 file	arch/i386/i386/ibcs2_machdep.c		compat_ibcs2
 
 # Linux binary compatibility (COMPAT_LINUX)
-include "../../../compat/linux/files.linux"
+include "compat/linux/files.linux"
 file	arch/i386/i386/linux_machdep.c		compat_linux
 
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
-include "../../../compat/freebsd/files.freebsd"
+include "compat/freebsd/files.freebsd"
 file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 
 # OSS audio driver compatibility
-include "../../../compat/ossaudio/files.ossaudio"
+include "compat/ossaudio/files.ossaudio"
 
 # network devices MII bus
-include "../../../dev/mii/files.mii"
+include "dev/mii/files.mii"
 
 # XXXX pcic here because it needs to be late.  The catch: pcic needs
 # to be late, so devices which attach to it are attached late.  But it
