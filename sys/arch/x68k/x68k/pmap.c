@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22.6.1 1999/01/31 05:40:38 minoura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22.6.2 1999/03/14 16:51:03 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -2843,6 +2843,21 @@ pmap_enter_ptpage(pmap, va)
 #endif
 	pmap->pm_ptpages++;
 	splx(s);
+}
+
+/*
+ *	Routine:        pmap_procwr
+ * 
+ *	Function:
+ *		Synchronize caches corresponding to [addr, addr+len) in p.
+ */   
+void
+pmap_procwr(p, va, len)
+	struct proc	*p;
+	vaddr_t		va;
+	size_t		len;
+{
+	(void)cachectl1(0x80000004, va, len, p);
 }
 
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.37.4.7 1999/03/14 08:12:20 minoura Exp $	*/
+/*	$NetBSD: locore.s,v 1.37.4.8 1999/03/14 16:51:02 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -376,13 +376,14 @@ Ltrap1:
  *	cachectl(command, addr, length)
  * command in d0, addr in a1, length in d1
  */
-	.globl	_cachectl
+	.globl	_cachectl1
 ENTRY_NOPROFILE(trap12)
+	movl	_C_LABEL(curproc),sp@-	| push curproc pointer
 	movl	d1,sp@-			| push length
 	movl	a1,sp@-			| push addr
 	movl	d0,sp@-			| push command
-	jbsr	_C_LABEL(cachectl)	| do it
-	lea	sp@(12),sp		| pop args
+	jbsr	_C_LABEL(cachectl1)	| do it
+	lea	sp@(16),sp		| pop args
 	jra	_ASM_LABEL(rei)		| all done
 
 /*
@@ -1120,7 +1121,7 @@ ENTRY(switch_exit)
 	/* Schedule the vmspace and stack to be freed. */
 	movl	a0,sp@-			| exit2(p)
 	jbsr	_C_LABEL(exit2)
-	lea	sp@(4),sp		| pop args
+	addql	#4,sp			| pop args
 
 	jra	_C_LABEL(cpu_switch)
 
@@ -1750,12 +1751,11 @@ Lm68060fprdone:
 _doboot:
 	movw	#PSL_HIGHIPL,sr		| cut off any interrupts
 	subal	a1,a1			| a1 = 0
-	moveq	#0,d1			| d1 = 0
-	movl	_mmutype,d2		| d2 = 0
 
 	movl	#CACHE_OFF,d0
 #if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,d2		| 68040?
+	movl	_mmutype,d2		| d2 = mmutype
+	addl	#-MMU_68040,d2		| 68040?
 	jne	Ldoboot0		| no, skip
 	.word	0xf4f8			| cpusha bc - push and invalidate caches
 	nop
@@ -1767,14 +1767,14 @@ Ldoboot0:
 	| ok, turn off MMU..
 Ldoreboot:
 #if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,d2		| 68040?
+	tstl	d2			| 68040?
 	jne	LmotommuF		| no, skip
-	movc	d1,cacr			| caches off
-	.long	0x4e7b1003		| movc d1(=0),tc ; disable MMU
+	movc	a1,cacr			| caches off
+	.long	0x4e7b9003		| movc a1(=0),tc ; disable MMU
 	jra	Ldoreboot1
 LmotommuF:
 #endif
-	movl	d1,sp@
+	clrl	sp@
 	pmove	sp@,tc			| disable MMU
 Ldoreboot1:
 	moveml	0x00ff0000,#0x0101	| get RESET vectors in ROM
