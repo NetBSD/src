@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.9 2003/08/09 01:35:16 keihan Exp $
+$NetBSD: acronyms.comp,v 1.10 2003/08/10 00:44:46 keihan Exp $
 
 ABI	application binary interface
 API	application programming interface
@@ -12,12 +12,14 @@ CHS	cylinder/head/sector
 CLI	command line interface
 CRLF	carriage return line feed
 CSS	cascading style sheets
+CVS	concurrent versions system
 DMA	direct memory access
 DNS	domain name system
 DSL	digital subscriber line
 DTD	document type definition
 DVD	digital versatile disc
 EISA	extended industry standard architecture
+FFS	fast file system
 FLOPS	floating [point] operations per second
 FTP	file transfer protocol
 FQDN	fully qualified domain name
@@ -30,10 +32,13 @@ HTTP	hyper-text transfer protocol
 I2O	intelligent input/output
 IANA	internet assigned number authority
 ICB	internet citizen's band
+ICMP	internet control message protocol
 IDE	integrated drive electronics
 IEEE	institute [of] electrical [and] electronics engineers
 IETF	internet engineering task force
 IESG	internet engineering steering group
+IKE	internet key exchange
+IMAP	internet mail access protocol
 IO	input/output
 IOCTL	input/output control
 IP	internet protocol
@@ -49,18 +54,26 @@ ISP	internet service provider
 JPEG	joint photographic experts group
 LAN	local area network
 LBA	logical block addressing
+LDAP	lightweight directory access protocol
 LUN	logical unit number
 MBR	master boot record
 MIPS	million instructions per second
 NAT	network address translation
+NIS	network information service
 NUMA	non uniform memory access
+PAX	portable archive exchange
 PCI	peripheral component interconnect
 PERL	practical extraction [and] report language
+PGP	pretty good privacy
+PID	process id
 PNG	portable network graphics
+POP	post office protocol
+POSIX	portable operating system interface [for] unix
 PPP	point-to-point protocol
 PPPOE	point-to-point protocol over ethernet
 RAID	redundant array of inexpensive disks
 RAM	random access memory
+RCS	revision control system
 RFC	request for comments
 RISC	reduced instruction set computing
 ROM	read only memory
@@ -73,11 +86,16 @@ SMTP	simple mail transfer protocol
 SSH	secure shell
 SSL	secure sockets layer
 TCL	tool command language
+TLD	top level domain
 TTY	teletype
 TZ	time zone
 TCP	transmission control protocol
 UDP	user datagram protocol
+UPS	uninterruptible power supply
+URI	uniform resource identifier
+URL	uniform resource locator
 USB	universal serial bus
+UUCP	unix-to-unix copy protocol
 VPN	virtual private network
 XML	extensible markup language
 XSL	extensible stylesheet language
