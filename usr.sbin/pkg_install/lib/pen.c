@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.20 2002/07/19 19:04:42 yamt Exp $	*/
+/*	$NetBSD: pen.c,v 1.21 2002/07/20 05:40:55 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.20 2002/07/19 19:04:42 yamt Exp $");
+__RCSID("$NetBSD: pen.c,v 1.21 2002/07/20 05:40:55 yamt Exp $");
 #endif
 #endif
 
@@ -43,6 +43,7 @@ static int CurrentSet;		/* rm -rf Current only if it's really set! */
 				 * to prevent rm'ing of a partial string
 				 * when interrupted by ^C */
 
+#if 0
 /*
  * Backup Current and Previous into temp. strings that are later
  * restored & freed by restore_dirs
@@ -71,6 +72,7 @@ restore_dirs(char *c, char *p)
 	strcpy(Previous, p);
 	free(p);
 }
+#endif
 
 char   *
 where_playpen(void)
