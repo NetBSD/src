@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.7 2003/10/25 21:32:44 christos Exp $	*/
+/*	$NetBSD: atw.c,v 1.8 2003/11/02 01:55:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.7 2003/10/25 21:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.8 2003/11/02 01:55:40 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3065,12 +3065,7 @@ atw_rxintr(sc)
 #endif /* NPBFILTER > 0 */
 
 		wh = mtod(m, struct ieee80211_frame *);
-		if (ic->ic_opmode != IEEE80211_M_STA) {
-			ni = ieee80211_find_node(ic, wh->i_addr2);
-			if (ni == NULL)
-				ni = ieee80211_ref_node(ic->ic_bss);
-		} else
-			ni = ieee80211_ref_node(ic->ic_bss);
+		ni = ieee80211_find_rxnode(ic, wh);
 		ieee80211_input(ifp, m, ni, rssi, 0);
 		/*
 		 * The frame may have caused the node to be marked for

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.142 2003/11/02 01:39:22 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.143 2003/11/02 01:55:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.142 2003/11/02 01:39:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.143 2003/11/02 01:55:40 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1307,12 +1307,7 @@ wi_rx_intr(struct wi_softc *sc)
 	if (ic->ic_opmode == IEEE80211_M_IBSS && dir == IEEE80211_FC1_DIR_NODS)
 		wi_sync_bssid(sc, wh->i_addr3);
 
-	if (ic->ic_opmode != IEEE80211_M_STA) {
-	        ni = ieee80211_find_node(ic, wh->i_addr2);
-	        if (ni == NULL)
-	                ni = ieee80211_ref_node(ic->ic_bss);
-	} else
-	        ni = ieee80211_ref_node(ic->ic_bss);
+	ni = ieee80211_find_rxnode(ic, wh);
 
 	ieee80211_input(ifp, m, ni, rssi, rstamp);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.13 2003/10/21 01:00:57 yamt Exp $	*/
+/*	$NetBSD: ath.c,v 1.14 2003/11/02 01:55:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.13 2003/10/21 01:00:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.14 2003/11/02 01:55:40 dyoung Exp $");
 #endif
 
 /*
@@ -2114,12 +2114,7 @@ ath_rx_proc(void *arg, int npending)
 		 * something so we fall back to ic_bss when this frame
 		 * is from an unknown sender.
 		 */
-		if (ic->ic_opmode != IEEE80211_M_STA) {
-			ni = ieee80211_find_node(ic, wh->i_addr2);
-			if (ni == NULL)
-				ni = ieee80211_ref_node(ic->ic_bss);
-		} else
-			ni = ieee80211_ref_node(ic->ic_bss);
+		ni = ieee80211_find_rxnode(ic, wh);
 		ATH_NODE(ni)->an_rx_antenna = ds->ds_rxstat.rs_antenna;
 		/*
 		 * Send frame up for processing.
