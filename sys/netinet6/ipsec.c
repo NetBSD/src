@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.91 2004/01/13 23:02:00 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.92 2004/02/11 10:42:24 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.91 2004/01/13 23:02:00 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.92 2004/02/11 10:42:24 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2551,6 +2551,7 @@ ipsec4_checksa(isr, state)
 	saidx.reqid = isr->saidx.reqid;
 	sin = (struct sockaddr_in *)&saidx.src;
 	if (sin->sin_len == 0) {
+		bzero(sin, sizeof(*sin));
 		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
 		sin->sin_port = IPSEC_PORT_ANY;
@@ -2558,6 +2559,7 @@ ipsec4_checksa(isr, state)
 	}
 	sin = (struct sockaddr_in *)&saidx.dst;
 	if (sin->sin_len == 0) {
+		bzero(sin, sizeof(*sin));
 		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
 		sin->sin_port = IPSEC_PORT_ANY;
@@ -2798,6 +2800,7 @@ ipsec6_checksa(isr, state, tunnel)
 	saidx.reqid = isr->saidx.reqid;
 	sin6 = (struct sockaddr_in6 *)&saidx.src;
 	if (sin6->sin6_len == 0 || tunnel) {
+		bzero(sin6, sizeof(*sin6));
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = IPSEC_PORT_ANY;
@@ -2805,6 +2808,7 @@ ipsec6_checksa(isr, state, tunnel)
 	}
 	sin6 = (struct sockaddr_in6 *)&saidx.dst;
 	if (sin6->sin6_len == 0 || tunnel) {
+		bzero(sin6, sizeof(*sin6));
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = IPSEC_PORT_ANY;
