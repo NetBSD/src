@@ -1,4 +1,4 @@
-/* $NetBSD: profile.h,v 1.4 2001/04/30 19:57:11 bjh21 Exp $ */
+/* $NetBSD: profile.h,v 1.5 2001/04/30 23:41:11 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe
@@ -60,11 +60,11 @@
 	 *								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	__asm__("mov	r0, ip");					\
+	__asm__("bic	r0, ip, #0xfc000003");	       			\
 	/*								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	__asm__("mov	r1, lr");					\
+	__asm__("bic	r1, lr, #0xfc000003");				\
 	/*								\
 	 * Call the real mcount code					\
 	 */								\
