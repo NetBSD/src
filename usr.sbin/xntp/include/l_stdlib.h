@@ -1,4 +1,4 @@
-/*	$NetBSD: l_stdlib.h,v 1.2 1998/01/09 06:06:04 perry Exp $	*/
+/*	$NetBSD: l_stdlib.h,v 1.3 1998/03/06 18:17:17 christos Exp $	*/
 
 /*
  * Proto types for machines that are not ANSI and POSIX	 compliant.
@@ -16,22 +16,19 @@
 # include <stdlib.h>
 #endif
 
-#ifndef	P
-# if defined(__STDC__) || defined(USE_PROTOTYPES)
-#  define P(x)	x
-# else
-#  define P(x)	()
-#  if	!defined(const)
-#   define	const
-#  endif
-# endif
-#endif
+#include "ntp_proto.h"
 
 /* Let's try to keep this more or less alphabetized... */
 
 #ifdef DECL_ADJTIME_0
 struct timeval;
 extern	int	adjtime		P((struct timeval *, struct timeval *));
+#endif
+
+#ifdef DECL_BCOPY_0
+# ifndef bcopy
+extern	void	bcopy		P((char *, char *, int));
+# endif
 #endif
 
 #ifdef DECL_BZERO_0
@@ -62,8 +59,20 @@ extern	int	socket		P((int, int, int));
 extern	void *	memmove		P((void *, const void *, size_t));
 #endif
 
+#ifdef DECL_MEMSET_0
+extern	char *	memset		P((char *, int, int));
+#endif
+
+#ifdef DECL_MKSTEMP_0
+extern	int	mkstemp		P((char *));
+#endif
+
 #ifdef DECL_MKTEMP_0
 extern	char   *mktemp		P((char *));	
+#endif
+
+#ifdef DECL_PLOCK_0
+extern	int	plock		P((int));
 #endif
 
 #ifdef DECL_RENAME_0
@@ -90,8 +99,13 @@ extern	int	setpriority	P((int, id_t, int));
 # endif
 #endif
 
+#ifdef DECL_SIGVEC_0
+struct sigvec;
+extern	int	sigvec		P((int, struct sigvec *, struct sigvec*));
+#endif
+
 #ifdef DECL_STDIO_0
-# ifdef FILE
+# if defined(FILE) || defined(BUFSIZ)
 extern	int	_flsbuf		P((int, FILE *));
 extern	int	_filbuf		P((FILE *));
 extern	int	fclose		P((FILE *));

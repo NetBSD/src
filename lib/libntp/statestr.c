@@ -1,4 +1,4 @@
-/*	$NetBSD: statestr.c,v 1.2 1998/01/09 03:16:31 perry Exp $	*/
+/*	$NetBSD: statestr.c,v 1.3 1998/03/06 18:17:15 christos Exp $	*/
 
 /*
  * pretty printing of status information
@@ -17,7 +17,7 @@
  */
 struct codestring {
 	int code;
-	char *string;
+	const char *string;
 };
 
 /*
@@ -117,13 +117,13 @@ struct codestring peer_codes[] = {
 };
 
 /* Forwards */
-static char *getcode P((int, struct codestring *));
+static const char *getcode P((int, struct codestring *));
 static char *getevents P((int));
 
 /*
  * getcode - return string corresponding to code
  */
-static char *
+static const char *
 getcode(code, codetab)
 	int code;
 	struct codestring *codetab;

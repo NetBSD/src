@@ -1,8 +1,10 @@
-/*	$NetBSD: ntp_calendar.h,v 1.2 1998/01/09 06:06:06 perry Exp $	*/
+/*	$NetBSD: ntp_calendar.h,v 1.3 1998/03/06 18:17:17 christos Exp $	*/
 
 /*
  * ntp_calendar.h - definitions for the calendar time-of-day routine
  */
+#ifndef NTP_CALENDAR_H
+#define NTP_CALENDAR_H
 
 #include "ntp_types.h"
 
@@ -77,6 +79,36 @@ struct calendar {
 #define	JANFEBNOLEAP	((JAN+FEB) * SECSPERDAY)
 #define	JANFEBLEAP	((JAN+FEBLEAP) * SECSPERDAY)
 
+
 extern	void	caljulian	P((u_long, struct calendar *));
 extern	u_long	caltontp	P((const struct calendar *));
 
+/*
+ * Additional support stuff for Ed Rheingold's calendrical calculations
+ */
+
+/*
+ * Start day of NTP time as days past the imaginary date 12/1/1 BC.
+ * (This is the beginning of the Christian Era, or BCE.)
+ */
+#define DAY_NTP_STARTS 693596
+/*
+ * The Gregorian calendar is based on a 400 year cycle.  This is the number
+ * of days in each cycle.
+ */
+#define GREGORIAN_CYCLE_DAYS 146097
+
+/*
+ * Days in a normal 100 year leap year calendar.  We lose a leap year day
+ * in years evenly divisible by 100 but not by 400.
+ */
+#define GREGORIAN_NORMAL_CENTURY_DAYS 36524
+
+/*
+ * Days in a normal 4 year leap year calendar cycle.
+ */
+#define GREGORIAN_NORMAL_LEAP_CYCLE_DAYS 1461
+
+#define is_leapyear(y) (y%4 == 0 && !(y%100 == 0 && !(y%400 == 0)))
+
+#endif

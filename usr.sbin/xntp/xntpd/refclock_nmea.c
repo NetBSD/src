@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_nmea.c,v 1.2 1998/01/09 06:07:05 perry Exp $	*/
+/*	$NetBSD: refclock_nmea.c,v 1.3 1998/03/06 18:17:24 christos Exp $	*/
 
 /*
  * refclock_nmea.c - clock driver for an NMEA GPS CLOCK
@@ -195,7 +195,7 @@ nmea_receive(rbufp)
 	peer = (struct peer *)rbufp->recv_srcclock;
 	pp = peer->procptr;
 	up = (struct nmeaunit *)pp->unitptr;
-	pp->lencode = refclock_gtlin(rbufp, pp->lastcode, BMAX, &trtmp);
+	pp->lencode = refclock_gtlin(rbufp, pp->a_lastcode, BMAX, &trtmp);
 
 	/*
 	 * There is a case that a <CR><LF> gives back a "blank" line
@@ -211,7 +211,7 @@ nmea_receive(rbufp)
 #ifdef DEBUG
 	if (debug)
         	printf("nmea: timecode %d %s\n", pp->lencode,
-		    pp->lastcode);
+		    pp->a_lastcode);
 #endif
 
 	/*
@@ -222,7 +222,7 @@ nmea_receive(rbufp)
 	 */
 #define GPRMC	0
 #define GPXXX	1
-	cp = pp->lastcode;
+	cp = pp->a_lastcode;
 	pp->leap = 0;
 	cmdtype=0;
 	if(strncmp(cp,"$GPRMC",6)==0) {
@@ -271,7 +271,7 @@ nmea_receive(rbufp)
 		return;
 	up->polled = 0;
 
-	record_clock_stats(&peer->srcadr, pp->lastcode);
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 
 	dp = field_parse(cp,9);
 	/*
@@ -396,7 +396,7 @@ gps_send(fd, cmd, peer)
 	}
 }
 
-char *
+static char *
 field_parse(cp, fn)
 	char *cp;
 	int fn;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msyslog.c,v 1.2 1998/01/09 03:16:24 perry Exp $	*/
+/*	$NetBSD: msyslog.c,v 1.3 1998/03/06 18:17:15 christos Exp $	*/
 
 /*
  * msyslog - either send a message to the terminal or print it on
@@ -41,6 +41,7 @@
 #endif
 
 int syslogit = 1;
+
 FILE *syslog_file = NULL;
 
 u_long ntp_syslogmask =  ~ (u_long) 0;
@@ -61,7 +62,7 @@ static WORD event_type[] = {
 extern	char *progname;
 
 #if defined(__STDC__)
-void msyslog(int level, char *fmt, ...)
+void msyslog(int level, const char *fmt, ...)
 #else
 /*VARARGS*/
 void msyslog(va_alist)
@@ -70,15 +71,16 @@ void msyslog(va_alist)
 {
 #ifndef __STDC__
 	int level;
-	char *fmt;
+	const char *fmt;
 #endif
 	va_list ap;
 	char buf[1025], nfmt[256];
-#if !defined(VMS) && !defined(SYS_WINNT)
+#if !defined(VMS)
 	char xerr[50];
 #endif
 	register int c;
-	register char *n, *f, *prog;
+	register char *n, *prog;
+	register const char *f;
 #ifdef CHAR_SYS_ERRLIST
 	extern int sys_nerr;
 	extern char *sys_errlist[];
@@ -110,22 +112,23 @@ void msyslog(va_alist)
 			*n++ = c;
 			continue;
 		}
-
-#if !defined(VMS) && !defined(SYS_WINNT)
+		err = 0;
+#if !defined(VMS) && !defined(SYS_WINNT) && !defined (SYS_VXWORKS)
 		if ((unsigned)olderrno > sys_nerr)
 			sprintf((char *)(err = xerr), "error %d", olderrno);
 		else
 			err = sys_errlist[olderrno];
-#elif defined(VMS)
+#elif defined(VMS) || defined (SYS_VXWORKS)
 		err = strerror(olderrno);
 #else  /* SYS_WINNT */
+		err = xerr;
  		FormatMessage( 
-			FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+			FORMAT_MESSAGE_FROM_SYSTEM,
 			NULL,
 			GetLastError(),
 			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), /* Default language */
 			(LPTSTR) err,
-			0, /* Indicates that func. allocates buffer */
+			sizeof(xerr),
 			NULL);
 
 #endif /* VMS && SYS_WINNT */
@@ -141,7 +144,7 @@ void msyslog(va_alist)
 	*n = '\0';
 
 	vsprintf(buf, nfmt, ap);
-#if !defined(VMS)
+#if !defined(VMS) && !defined (SYS_VXWORKS)
 	if (syslogit)
 #ifndef SYS_WINNT
 		syslog(level, "%s", buf);
@@ -173,7 +176,7 @@ void msyslog(va_alist)
 	else {
 #else
 	{
-#endif /* VMS */
+#endif /* VMS  && SYS_VXWORKS*/
 		extern char * humanlogtime P((void));
 
 	        FILE *out_file = syslog_file ? syslog_file

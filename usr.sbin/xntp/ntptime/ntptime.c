@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptime.c,v 1.5 1998/01/09 06:06:25 perry Exp $	*/
+/*	$NetBSD: ntptime.c,v 1.6 1998/03/06 18:17:20 christos Exp $	*/
 
 /*
  * NTP test program
@@ -45,6 +45,10 @@
 #  endif
 # endif /* NOT NTP_SYSCALLS_STD */
 #endif /* KERNEL_PLL */
+
+#ifndef SHIFT_USEC
+# define SHIFT_USEC 16		/* frequency offset scale (shift) */
+#endif
 
 #ifdef NTP_SYSCALLS_STD
 # ifdef DECL_SYSCALL
@@ -200,8 +204,8 @@ main(argc, argv)
 
   if (cost) {
 #ifdef SIGSYS
-	if (sigsetjmp(env, 1) == 0)
-	  {
+    if (sigsetjmp(env, 1) == 0)
+      {
 #endif
         for (c = 0; c < sizeof times / sizeof times[0]; c++)
           {
@@ -210,10 +214,10 @@ main(argc, argv)
 	      {
 		--pll_control;
 	      }
-	if (pll_control < 0)
-	  break;
-	times[c] = ntv.time.tv_usec;
-      }
+	    if (pll_control < 0)
+	      break;
+	    times[c] = ntv.time.tv_usec;
+	  }
 #ifdef SIGSYS
       }
 #endif
@@ -298,7 +302,7 @@ main(argc, argv)
     printf("  time constant %ld, precision %ld us, tolerance %.0f ppm,\n",
 	   ntx.constant, ntx.precision, ftemp);
     if (ntx.shift == 0)
-	exit(0);
+      exit(0);
     ftemp = ntx.ppsfreq;
     ftemp /= (1 << SHIFT_USEC);
     gtemp = ntx.stabil;

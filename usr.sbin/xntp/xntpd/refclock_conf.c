@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_conf.c,v 1.2 1998/01/09 06:06:55 perry Exp $	*/
+/*	$NetBSD: refclock_conf.c,v 1.3 1998/03/06 18:17:23 christos Exp $	*/
 
 /*
  * refclock_conf.c - reference clock configuration
@@ -164,6 +164,18 @@ extern	struct refclock refclock_gpsvme;
 #define refclock_gpsvme refclock_none
 #endif
 
+#ifdef ARCRON_MSF
+extern	struct refclock refclock_arc;
+#else
+#define refclock_arc refclock_none
+#endif
+
+#ifdef SHM
+extern	struct refclock refclock_shm;
+#else
+#define refclock_shm refclock_none
+#endif
+
 /*
  * Order is clock_start(), clock_shutdown(), clock_poll(),
  * clock_control(), clock_init(), clock_buginfo, clock_flags;
@@ -198,8 +210,8 @@ struct refclock *refclock_conf[] = {
 	&refclock_usno,		/* 24 REFCLK_USNO */
 	&refclock_true,		/* 25 alias for REFCLK_TRUETIME */
 	&refclock_hpgps,	/* 26 REFCLK_GPS_HP */
-	&refclock_none,		/* 27 reserved */
-	&refclock_none,		/* 28 reserved */
+	&refclock_arc, 		/* 27 REFCLK_ARCRON_MSF */
+	&refclock_shm,		/* 28 REFCLK_SHM */
 	&refclock_none,		/* 29 reserved */
 	&refclock_none,		/* 30 reserved */
 };

@@ -1,5 +1,6 @@
-/*	$NetBSD: ntpd.c,v 1.2 1998/01/09 06:06:47 perry Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.3 1998/03/06 18:17:22 christos Exp $	*/
 
+#define	HAVE_POSIX_MMAN
 /*
  * ntpd.c - main program for the fixed point NTP daemon
  */
@@ -42,6 +43,18 @@
 #  include <sys/lock.h>
 # endif
 # include <sys/rtprio.h>
+#else
+# ifdef HAVE_PLOCK
+#  ifdef HAVE_SYS_LOCK_H
+#   include <sys/lock.h>
+#  endif
+# endif
+#endif
+#if defined(HAVE_SCHED_SETSCHEDULER)
+# include <sched.h>
+#endif
+#if defined(HAVE_SYS_MMAN_H)
+# include <sys/mman.h>
 #endif
 
 #ifdef HAVE_TERMIOS_H
@@ -77,12 +90,10 @@
  * Signals which terminate us gracefully.
  */
 #ifndef SYS_WINNT
-#define	SIGDIE1		SIGHUP
+# define	SIGDIE1		SIGHUP
+# define	SIGDIE3		SIGQUIT
 #endif /* SYS_WINNT */
 #define	SIGDIE2		SIGINT
-#ifndef SYS_WINNT
-#define	SIGDIE3		SIGQUIT
-#endif /* SYS_WINNT */
 #define	SIGDIE4		SIGTERM
 
 #ifdef SYS_WINNT
@@ -147,7 +158,6 @@ extern int syscall	P((int, struct timeval *, struct timeval *));
 extern void worker_thread(void *);
 #endif /* SYS_WINNT */
 	
-
 #ifdef	SIGDIE2
 static	RETSIGTYPE	finish		P((int));
 #endif	/* SIGDIE2 */
@@ -159,6 +169,10 @@ static	RETSIGTYPE	lessdebug	P((int));
 static	RETSIGTYPE	no_debug	P((int));
 #endif	/* not DEBUG */
 
+#ifdef NO_MAIN_ALLOWED
+CALL(xntpd,"xntpd",xntpdmain);
+#endif
+
 /*
  * Main program.  Initialize us, disconnect us from the tty if necessary,
  * and loop waiting for I/O and/or timer expiries.
@@ -166,7 +180,12 @@ static	RETSIGTYPE	no_debug	P((int));
 #if !defined(VMS)
 void
 #endif /* VMS */
-main(argc, argv)
+#ifndef NO_MAIN_ALLOWED
+main
+#else
+xntpdmain
+#endif
+(argc, argv)
      int argc;
      char *argv[];
 {
@@ -179,6 +198,8 @@ main(argc, argv)
   initializing = 1;		/* mark that we are initializing */
   debug = 0;			/* no debugging by default */
 
+#ifdef HAVE_UMASK     
+  /* vxWorks does not have umask */
   {
     int uv;
 
@@ -188,6 +209,7 @@ main(argc, argv)
     else
       (void) umask(022);
   }
+#endif
 
 #ifdef HAVE_GETUID
   {
@@ -204,8 +226,8 @@ main(argc, argv)
 
 #ifdef SYS_WINNT
   /* Set the Event-ID message-file name. */
-  if (!ExpandEnvironmentStrings("%windir%\\system32\\xntpd.exe", szMsgPath, sizeof(szMsgPath))) {
-    msyslog(LOG_ERR, "ExpandEnvironmentStrings(PGM_EXE_FILE) failed: %m\n");
+  if (!GetModuleFileName(NULL, szMsgPath, sizeof(szMsgPath))) {
+    msyslog(LOG_ERR, "GetModuleFileName(PGM_EXE_FILE) failed: %m\n");
     exit(1);
   }
   addSourceToRegistry("NTP", szMsgPath);
@@ -424,59 +446,37 @@ service_main(argc, argv)
 	*/
 #endif /* SYS_WINNT */
 
-#if defined(HAVE_RTPRIO)
-# ifdef TXTLOCK
-  /*
-   * Lock text into ram, set real time priority
-   */
-  if (plock(TXTLOCK) < 0)
-    msyslog(LOG_ERR, "plock() error: %m");
-# endif
-# ifdef RTP_SET
-  {
-    struct rtprio srtp;
-
-    srtp.type = RTP_PRIO_REALTIME;	/* was: RTP_PRIO_NORMAL */
-    srtp.prio = 0;		/* 0 (hi) -> RTP_PRIO_MAX (31,lo) */
-
-    if (rtprio(RTP_SET, getpid(), &srtp) < 0)
-      msyslog(LOG_ERR, "rtprio() error: %m");
-  }
-# else /* not RTP_SET */
-  if (rtprio(0, 120) < 0)
-    msyslog(LOG_ERR, "rtprio() error: %m");
-# endif /* not RTP_SET */
-#else  /* not HAVE_RTPRIO */
-# if defined(LOCK_PROCESS)
-#  if defined(MCL_CURRENT) && defined(MCL_FUTURE)
+#if defined(HAVE_MLOCKALL) && defined(MCL_CURRENT) && defined(MCL_FUTURE)
   /*
    * lock the process into memory
    */
   if (mlockall(MCL_CURRENT|MCL_FUTURE) < 0)
     msyslog(LOG_ERR, "mlockall(): %m");
-#  else /* not (MCL_CURRENT && MCL_FUTURE) */
-#   if defined(PROCLOCK)
+#else /* not (HAVE_MLOCKALL && MCL_CURRENT && MCL_FUTURE) */
+# ifdef HAVE_PLOCK
+#  ifdef PROCLOCK
   /*
    * lock the process into memory
    */
   if (plock(PROCLOCK) < 0)
-    msyslog(LOG_ERR, "plock(): %m");
-#   endif /* PROCLOCK */
-#  endif /* not (MCL_CURRENT && MCL_FUTURE) */
-# endif /* LOCK_PROCESS */
-# if defined(NTPD_PRIO) && NTPD_PRIO != 0
+    msyslog(LOG_ERR, "plock(PROCLOCK): %m");
+#  else /* not PROCLOCK */
+#   ifdef TXTLOCK
+  /*
+   * Lock text into ram
+   */
+  if (plock(TXTLOCK) < 0)
+    msyslog(LOG_ERR, "plock(TXTLOCK) error: %m");
+#   else /* not TXTLOCK */
+  msyslog(LOG_ERR, "plock() - don't know what to lock!");
+#   endif /* not TXTLOCK */
+#  endif /* not PROCLOCK */
+# endif /* HAVE_PLOCK */
+#endif /* not (HAVE_MLOCKALL && MCL_CURRENT && MCL_FUTURE) */
+
   /*
    * Set the priority.
    */
-#  ifdef HAVE_ATT_NICE
-  nice (NTPD_PRIO);
-#  endif /* HAVE_ATT_NICE */
-#  ifdef HAVE_BSD_NICE
-  (void) setpriority(PRIO_PROCESS, 0, NTPD_PRIO);
-#  endif /* HAVE_BSD_NICE */
-# endif /* NTPD_PRIO && NTPD_PRIO != 0 */
-#endif /* not HAVE RTP_PRIO */
-
 #ifdef SYS_WINNT
   process_handle = GetCurrentProcess();
   if (!SetPriorityClass(process_handle, (DWORD) REALTIME_PRIORITY_CLASS))
@@ -487,8 +487,44 @@ service_main(argc, argv)
   /* Added mutex to prevent race condition among threads under Windows NT */
   if ((m_hListMutex = CreateMutex(NULL,FALSE,NULL)) == NULL)
     msyslog(LOG_ERR, "CreateMutex: %m");
-
 #else  /* not SYS_WINNT */
+# if defined(HAVE_SCHED_SETSCHEDULER)
+  {
+    struct sched_param sched;
+    sched.sched_priority = sched_get_priority_min(SCHED_FIFO);
+    if ( sched_setscheduler(0, SCHED_FIFO, &sched) == -1 )
+    {
+      msyslog(LOG_ERR, "sched_setscheduler(): %m");
+    }
+  }
+# else /* not HAVE_SCHED_SETSCHEDULER */
+#  if defined(HAVE_RTPRIO)
+#   ifdef RTP_SET
+  {
+    struct rtprio srtp;
+
+    srtp.type = RTP_PRIO_REALTIME;	/* was: RTP_PRIO_NORMAL */
+    srtp.prio = 0;		/* 0 (hi) -> RTP_PRIO_MAX (31,lo) */
+
+    if (rtprio(RTP_SET, getpid(), &srtp) < 0)
+      msyslog(LOG_ERR, "rtprio() error: %m");
+  }
+#   else /* not RTP_SET */
+  if (rtprio(0, 120) < 0)
+    msyslog(LOG_ERR, "rtprio() error: %m");
+#   endif /* not RTP_SET */
+#  else  /* not HAVE_RTPRIO */
+#   if defined(NTPD_PRIO) && NTPD_PRIO != 0
+#    ifdef HAVE_ATT_NICE
+  nice (NTPD_PRIO);
+#    endif /* HAVE_ATT_NICE */
+#    ifdef HAVE_BSD_NICE
+  (void) setpriority(PRIO_PROCESS, 0, NTPD_PRIO);
+#    endif /* HAVE_BSD_NICE */
+#   endif /* NTPD_PRIO && NTPD_PRIO != 0 */
+#  endif /* not HAVE_RTPRIO */
+# endif /* not HAVE_SCHED_SETSCHEDULER */
+#endif /* not SYS_WINNT */
 
   /*
    * Set up signals we pay attention to locally.
@@ -505,7 +541,6 @@ service_main(argc, argv)
 # ifdef SIGDIE4
   (void) signal_no_reset(SIGDIE4, finish);
 # endif	/* SIGDIE4 */
-#endif /* not SYS_WINNT */
 
 #ifdef SIGBUS
   (void) signal_no_reset(SIGBUS, finish);
@@ -567,7 +602,6 @@ service_main(argc, argv)
    */
   getconfig(argc, argv);
   initializing = 0;
-
 
 #if defined(SYS_WINNT) && !defined(NODETACH)
 # if defined(DEBUG)
@@ -709,7 +743,7 @@ worker_thread(notUsed)
 	   */
 #ifndef HAVE_SIGNALED_IO
 	  rdfdes = activefds;
-#if defined(VMS)
+#if defined(VMS) || defined(SYS_VXWORKS) 
 	  /* make select() wake up after one second */
 	  {
 	    struct timeval t1;
@@ -727,6 +761,7 @@ worker_thread(notUsed)
 	      l_fp ts;
 
 	      get_systime(&ts);
+          
 	      (void)input_handler(&ts);
 	    }
 	  else if (
@@ -738,7 +773,9 @@ worker_thread(notUsed)
 		   )
 	    msyslog(LOG_ERR, "select() error: %m");
 	  else if (debug)
+#ifndef SYS_VXWORKS
 	    msyslog(LOG_DEBUG, "select(): nfound=%d, error: %m", nfound);
+#endif
 #else
 	  wait_for_signal();
 #endif
@@ -812,6 +849,7 @@ finish(sig)
     {
 #ifdef SIGBUS
     case SIGBUS:
+        printf("\nfinish(SIGBUS)\n");
 #endif
     case 0:			/* Should never happen... */
       return;

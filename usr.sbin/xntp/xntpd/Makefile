@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 1997/06/23 17:31:38 christos Exp $
+#	$NetBSD: Makefile,v 1.3 1998/03/06 18:17:20 christos Exp $
 
 PROG= xntpd
 SRCS=	clk_trimtsip.c clk_trimtaip.c clk_schmid.c clk_rcc8000.c clk_rawdcf.c clk_meinberg.c \
-clk_hopf6021.c clk_dcf7000.c clk_computime.c parse_conf.c parse.c refclock_wwvb.c \
+clk_hopf6021.c clk_dcf7000.c clk_computime.c parse_conf.c parse.c refclock_arc.c refclock_wwvb.c \
 refclock_usno.c refclock_true.c refclock_trak.c refclock_tpro.c refclock_ptbacts.c refclock_pst.c \
 refclock_parse.c refclock_nmea.c refclock_mx4200.c refclock_msfees.c refclock_local.c refclock_leitch.c \
 refclock_irig.c refclock_hpgps.c refclock_heath.c refclock_gpsvme.c refclock_datum.c refclock_conf.c \

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_bancomm.c,v 1.2 1998/01/09 06:06:53 perry Exp $	*/
+/*	$NetBSD: refclock_bancomm.c,v 1.3 1998/03/06 18:17:23 christos Exp $	*/
 
 /*
  * refclock_bancomm.c - clock driver for the  Datum/Bancomm
@@ -406,13 +406,13 @@ vme_poll(unit, peer)
         tptr->year = (unsigned short)(tadr->tm_year + 1900);
 */
 
-        sprintf(vme->lastcode, 
+        sprintf(vme->a_lastcode, 
             "%3.3d %2.2d:%2.2d:%2.2d.%.6d %1d\0",
             tptr->doy, tptr->hr, tptr->mn,
             tptr->sec, tptr->frac, tptr->status);
 
-        record_clock_stats(&(vme->peer->srcadr), vme->lastcode);
-        vme->lencode = (u_short) strlen(vme->lastcode);
+        record_clock_stats(&(vme->peer->srcadr), vme->a_lastcode);
+        vme->lencode = (u_short) strlen(vme->a_lastcode);
 
         vme->day =  tptr->doy;
         vme->hour =   tptr->hr;
@@ -516,7 +516,7 @@ vme_control(unit, in, out)
                 if (unitinuse[unit]) {
                         vme = vmeunits[unit];
                         out->lencode = vme->lencode;
-                        out->lastcode = vme->lastcode;
+                        strcpy(out->a_lastcode, vme->a_lastcode);
                         out->timereset = current_time - vme->timestarted;
                         out->polls = vme->polls;
                         out->noresponse = vme->noreply;
@@ -526,7 +526,7 @@ vme_control(unit, in, out)
                         out->currentstatus = vme->status;
                 } else {
                         out->lencode = 0;
-                        out->lastcode = "";
+                        out->a_lastcode[0] = '\0';
                         out->polls = out->noresponse = 0;
                         out->badformat = out->baddata = 0;
                         out->timereset = 0;

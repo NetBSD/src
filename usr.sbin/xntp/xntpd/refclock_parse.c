@@ -1,9 +1,9 @@
-/*	$NetBSD: refclock_parse.c,v 1.2 1998/01/09 06:07:07 perry Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.3 1998/03/06 18:17:24 christos Exp $	*/
 
 /*
- * /src/NTP/REPOSITORY/v4/xntpd/refclock_parse.c,v 3.98 1997/01/19 14:11:59 kardel Exp
+ * /src/NTP/REPOSITORY/v4/xntpd/refclock_parse.c,v 3.103 1997/07/12 15:35:16 kardel Exp
  *
- * refclock_parse.c,v 3.98 1997/01/19 14:11:59 kardel Exp
+ * refclock_parse.c,v 3.103 1997/07/12 15:35:16 kardel Exp
  *
  * generic reference clock driver for receivers
  *
@@ -11,7 +11,7 @@
  * available and configured. Currently the STREAMS module
  * is only available for Suns running SunOS 4.x and SunOS5.x
  *
- * Copyright (c) 1989,1990,1991,1992,1993,1994,1995,1996, 1997 by Frank Kardel
+ * Copyright (c) 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997 by Frank Kardel
  * Friedrich-Alexander Universität Erlangen-Nürnberg, Germany
  *
  * This program is distributed in the hope that it will be useful,
@@ -150,7 +150,7 @@ extern int errno;
 #include "parse.h"
 
 #if !defined(NO_SCCSID) && !defined(lint) && !defined(__GNUC__)
-static char rcsid[]="refclock_parse.c,v 3.98 1997/01/19 14:11:59 kardel Exp";
+static char rcsid[]="refclock_parse.c,v 3.103 1997/07/12 15:35:16 kardel Exp";
 #endif
 
 /**===========================================================================
@@ -364,7 +364,6 @@ struct parseunit
    * clock state handling/reporting
    */
   u_char	      flags;	        /* flags (leap_control) */
-  u_char              lastevent; 	/* last not NORMAL status */
   u_long	      lastchange;       /* time (xntp) when last state change accured */
   u_long	      statetime[CEVNT_MAX+1]; /* accumulated time of clock states */
   struct event        stattimer;        /* statistics timer */
@@ -399,7 +398,7 @@ typedef struct poll_info
   u_long count;			/* number of charcters in string */
 } poll_info_t;
 
-#define NO_FLAGS	0
+#define NO_CL_FLAGS	0
 #define NO_POLL		(void (*)())0
 #define NO_INIT		(int  (*)())0
 #define NO_END		(void (*)())0
@@ -493,8 +492,8 @@ typedef struct poll_info
 #define DCFPZF535OCXO_IFLAG         MBG_IFLAG
 #define DCFPZF535OCXO_OFLAG         MBG_OFLAG
 #define DCFPZF535OCXO_LFLAG         MBG_LFLAG
-#define DCFPZF535OCXO_SAMPLES		    5
-#define DCFPZF535OCXO_KEEP	            3
+#define DCFPZF535OCXO_SAMPLES		   32
+#define DCFPZF535OCXO_KEEP	           20
 
 /*
  * Meinberg GPS166 receiver
@@ -517,8 +516,8 @@ typedef struct poll_info
 #define GPS166_DATA		NO_DATA
 #define GPS166_ID		GPS_ID
 #define GPS166_FORMAT		NO_FORMAT
-#define GPS166_SAMPLES		5
-#define GPS166_KEEP		3
+#define GPS166_SAMPLES		32
+#define GPS166_KEEP		20
 
 /*
  * ELV DCF7000 Wallclock-Receiver/Switching Clock (Kit)
@@ -734,9 +733,9 @@ static poll_info_t rcc8000_pollinfo = { RCC_POLLRATE, RCC_POLLCMD, RCC_CMDSIZE }
 #define HOPF6021_ROOTDELAY	0x00000000 /* 0 */
 #define HOPF6021_BASEDELAY	0x00000000 /* 0 */
 #define HOPF6021_DESCRIPTION	"HOPF 6021"
-#define HOPF6021_FORMAT          NO_FORMAT
+#define HOPF6021_FORMAT         "hopf Funkuhr 6021"
 #define HOPF6021_MAXUNSYNC	(60*60)  /* should be ok for an hour */
-#define HOPF6021_SPEED         (B9600)
+#define HOPF6021_SPEED          (B9600)
 #define HOPF6021_CFLAG          (CS8|CREAD|CLOCAL)
 #define HOPF6021_IFLAG		(IGNBRK|ISTRIP)
 #define HOPF6021_OFLAG		0
@@ -883,7 +882,7 @@ static struct parse_clockinfo
     DCF7000_KEEP
   },
   {				/* mode 4 */
-    NO_FLAGS,
+    NO_CL_FLAGS,
     WSDCF_POLL,
     WSDCF_INIT,
     NO_EVENT,
@@ -1052,7 +1051,7 @@ static struct parse_clockinfo
     TRIMBLETSIP_KEEP
   },
   {                             /* mode 11 */
-    NO_FLAGS,
+    NO_CL_FLAGS,
     RCC8000_POLL,
     RCC8000_INIT,
     NO_EVENT,
@@ -1607,7 +1606,7 @@ static void
 stream_poll(parse)
      struct parseunit *parse;
 {
-  register int fd, i, rtc;
+  int fd, i, rtc;
   fd_set fdmask;
   struct timeval timeout, starttime, curtime, selecttime;
 #ifdef HAVE_GETCLOCK
@@ -1996,8 +1995,8 @@ local_receive(rbufp)
      struct recvbuf *rbufp;
 {
   struct parseunit *parse = (struct parseunit *)rbufp->recv_srcclock;
-  register int count;
-  register unsigned char *s;
+  int count;
+  unsigned char *s;
   timestamp_t ts;
 
   if (!parse->peer)
@@ -2060,7 +2059,7 @@ static void
 local_poll(parse)
      struct parseunit *parse;
 {
-  register int fd, i, rtc;
+  int fd, i, rtc;
   fd_set fdmask;
   struct timeval timeout, starttime, curtime, selecttime;
 #ifdef HAVE_GETCLOCK
@@ -2182,7 +2181,7 @@ local_poll(parse)
 	{
 	  char inbuf[256];
 
-	  register char *s = inbuf;
+	  char *s = inbuf;
 
 	  rtc = i = read(fd, inbuf, sizeof(inbuf));
 
@@ -2219,7 +2218,7 @@ static bind_t *
 init_iobinding(parse)
      struct parseunit *parse;
 {
-  register bind_t *b = io_bindings;
+  bind_t *b = io_bindings;
 
   while (b->bd_description != (char *)0)
     {
@@ -2295,7 +2294,7 @@ parsestate(state, buffer)
 
   if (state & (PARSEB_S_LEAP|PARSEB_S_ANTENNA|PARSEB_S_PPS|PARSEB_S_POSITION))
     {
-      register char *s, *t;
+      char *s, *t;
 
       if (buffer[0])
 	strcat(buffer, "; ");
@@ -2387,7 +2386,7 @@ clockstatus(state)
       { CEVNT_PROP,    "PROPAGATION DELAY" },
       { CEVNT_BADDATE, "ILLEGAL DATE" },
       { CEVNT_BADTIME, "ILLEGAL TIME" },
-      { ~0 }
+      { ~0UL }
     };
   int i;
 
@@ -2416,13 +2415,13 @@ clockstatus(state)
 
 static char *
 mkascii(buffer, blen, src, srclen)
-  register char  *buffer;
-  register long  blen;
-  register char  *src;
-  register long  srclen;
+  char  *buffer;
+  long  blen;
+  char  *src;
+  long  srclen;
 {
-  register char *b    = buffer;
-  register char *endb = (char *)0;
+  char *b    = buffer;
+  char *endb = (char *)0;
 
   if (blen < 4)
     return (char *)0;		/* don't bother with mini buffers */
@@ -2509,9 +2508,9 @@ l_mktime(delta)
  */
 static void
 parse_statistics(parse)
-  register struct parseunit *parse;
+  struct parseunit *parse;
 {
-  register int i;
+  int i;
 
   NLOG(NLOG_CLOCKSTATIST) /* conditional if clause for conditional syslog */
     {
@@ -2525,8 +2524,8 @@ parse_statistics(parse)
 
       for (i = 0; i <= CEVNT_MAX; i++)
 	{
-	  register u_long stime;
-	  register u_long percent, div = current_time - parse->generic->timestarted;
+	  u_long stime;
+	  u_long percent, div = current_time - parse->generic->timestarted;
 
 	  percent = stime = PARSE_STATETIME(parse, i);
 
@@ -2556,9 +2555,9 @@ parse_statistics(parse)
  */
 static void
 cparse_statistics(peer)
-  register struct peer *peer;
+  struct peer *peer;
 {
-  register struct parseunit *parse = (struct parseunit *)peer;
+  struct parseunit *parse = (struct parseunit *)peer;
 
   parse_statistics(parse);
   parse->stattimer.event_time    = current_time + PARSESTATISTICS;
@@ -2587,7 +2586,7 @@ parse_shutdown(unit, peer)
      int unit;
      struct peer *peer;
 {
-  register struct parseunit *parse;
+  struct parseunit *parse;
 
   unit = CLK_UNIT(peer);
 	
@@ -3057,7 +3056,7 @@ parse_poll(unit, peer)
 	int unit;
 	struct peer *peer;
 {
-  register struct parseunit *parse;
+  struct parseunit *parse;
 
   unit = CLK_UNIT(peer);
 
@@ -3123,6 +3122,8 @@ parse_poll(unit, peer)
   PARSE_POLL(parse);
 }
 
+#define LEN_STATES 300		/* length of state string */
+
 /*--------------------------------------------------
  * parse_control - set fudge factors, return statistics
  */
@@ -3132,15 +3133,16 @@ parse_control(unit, in, out)
   struct refclockstat *in;
   struct refclockstat *out;
 {
-  register struct parseunit *parse;
+  struct parseunit *parse;
   parsectl_t tmpctl;
   u_long type;
   static char outstatus[400];	/* status output buffer */
+  char *start;
 
   if (out)
     {
       out->lencode       = 0;
-      out->lastcode      = 0;
+      out->p_lastcode    = 0;
       out->kv_list       = (struct ctl_var *)0;
     }
 
@@ -3178,12 +3180,12 @@ parse_control(unit, in, out)
 
   if (out)
     {
-      register u_long sum = 0;
-      register char *t, *tt;
-      register struct tm *tm;
-      register short utcoff;
-      register char sign;
-      register int i;
+      u_long sum = 0;
+      char *t, *tt;
+      struct tm *tm;
+      short utcoff;
+      char sign;
+      int i;
       time_t tim;
 
       outstatus[0] = '\0';
@@ -3306,16 +3308,16 @@ parse_control(unit, in, out)
        * gather state statistics
        */
 
-      tt = add_var(&out->kv_list, 200, RO|DEF);
+      start = tt = add_var(&out->kv_list, LEN_STATES, RO|DEF);
       strcpy(tt, "refclock_states=\"");
       tt += strlen(tt);
 
       for (i = 0; i <= CEVNT_MAX; i++)
 	{
-	  register u_long stime;
-	  register u_long div = current_time - parse->generic->timestarted;
-	  register u_long percent;
-	
+	  u_long stime;
+	  u_long div = current_time - parse->generic->timestarted;
+	  u_long percent;
+
 	  percent = stime = PARSE_STATETIME(parse, i);
 
 	  while (((u_long)(~0) / 10000) < percent)
@@ -3331,14 +3333,21 @@ parse_control(unit, in, out)
 
 	  if (stime)
 	    {
-	      sprintf(tt, "%s%s%s: %s (%d.%02d%%)",
+	      char item[80];
+	      int count;
+	      
+	      sprintf(item, "%s%s%s: %s (%d.%02d%%)",
 		      sum ? "; " : "",
                       (parse->generic->currentstatus == i) ? "*" : "",
 		      clockstatus(i),
 		      l_mktime(stime),
 		      (int)(percent / 100), (int)(percent % 100));
+	      if ((count = strlen(item)) < (LEN_STATES - 40 - (tt - start)))
+		{
+		  strcpy(tt, item);
+		  tt  += count;
+		}
 	      sum += stime;
-	      tt  += strlen(tt);
 	    }
 	}
 
@@ -3351,10 +3360,10 @@ parse_control(unit, in, out)
       sprintf(tt, "refclock_iomode=\"%s\"", parse->binding->bd_description);
 
       tt = add_var(&out->kv_list, 128, RO);
-      sprintf(tt, "refclock_driver_version=\"refclock_parse.c,v 3.98 1997/01/19 14:11:59 kardel Exp\"");
+      sprintf(tt, "refclock_driver_version=\"refclock_parse.c,v 3.103 1997/07/12 15:35:16 kardel Exp\"");
 
       out->lencode       = strlen(outstatus);
-      out->lastcode      = outstatus;
+      out->p_lastcode    = outstatus;
     }
 }
 
@@ -3382,7 +3391,7 @@ parse_event(parse, event)
       
       if (event != CEVNT_NOMINAL)
 	{
-	  parse->lastevent = parse->generic->currentstatus;
+	  parse->generic->lastevent = parse->generic->currentstatus;
 	}
       else
 	{
@@ -3430,7 +3439,7 @@ parse_process(parse, parsetime)
    */
   if (parse->laststatus != parsetime->parse_status)
     {
-      char buffer[200];
+      char buffer[400];
 
       NLOG(NLOG_CLOCKINFO) /* conditional if clause for conditional syslog */
 	msyslog(LOG_WARNING, "PARSE receiver #%d: conversion status \"%s\"",
@@ -3821,9 +3830,9 @@ static void
 poll_dpoll(parse)
   struct parseunit *parse;
 {
-  register int rtc;
-  register char *ps = ((poll_info_t *)parse->parse_type->cl_data)->string;
-  register int   ct = ((poll_info_t *)parse->parse_type->cl_data)->count;
+  int rtc;
+  char *ps = ((poll_info_t *)parse->parse_type->cl_data)->string;
+  int   ct = ((poll_info_t *)parse->parse_type->cl_data)->count;
 
   rtc = write(parse->generic->io.fd, ps, ct);
   if (rtc < 0)
@@ -3847,7 +3856,7 @@ static void
 poll_poll(parse)
   struct parseunit *parse;
 {
-  register poll_timer_t *pt = (poll_timer_t *)parse->localdata;
+  poll_timer_t *pt = (poll_timer_t *)parse->localdata;
 
   poll_dpoll(parse);
 
@@ -3865,7 +3874,7 @@ static int
 poll_init(parse)
   struct parseunit *parse;
 {
-  register poll_timer_t *pt;
+  poll_timer_t *pt;
 
   if (((poll_info_t *)parse->parse_type->cl_data)->rate)
     {
@@ -3960,12 +3969,12 @@ trimbletaip_event(parse, event)
     case CEVNT_BADREPLY:	/* reset on garbled input */
     case CEVNT_TIMEOUT:		/* reset on no input */
       {
-	register char **iv;
+	char **iv;
 
 	iv = taipinit;
 	while (*iv)
 	  {
-	    register int rtc = write(parse->generic->io.fd, *iv, strlen(*iv));
+	    int rtc = write(parse->generic->io.fd, *iv, strlen(*iv));
 	    if (rtc < 0)
 	      {
 		msyslog(LOG_ERR, "PARSE receiver #%d: trimbletaip_event: failed to send cmd to clock: %m", CLK_UNIT(parse->peer));
@@ -4250,6 +4259,23 @@ int refclock_parse_bs;
  * History:
  *
  * refclock_parse.c,v
+ * Revision 3.103  1997/07/12 15:35:16  kardel
+ * fixed allocation failure for refclock_states string
+ *
+ * Revision 3.102  1997/07/06 14:11:55  kardel
+ * incread internal buffers
+ * changed filter paramters for PZF535 and GPS166 for more filtering
+ * removed old useless code fragments
+ *
+ * Revision 3.101  1997/04/13 10:05:37  kardel
+ * 3.5.90 reconcilation
+ *
+ * Revision 3.100  1997/04/06 17:37:29  kardel
+ * Make Hopf clock a fixed format to cope with Meinberg clocks
+ *
+ * Revision 3.99  1997/02/08 00:14:11  kardel
+ * 3.5.89.3 reconcilation
+ *
  * Revision 3.98  1997/01/19 14:11:59  kardel
  * removed superfluous functions
  *

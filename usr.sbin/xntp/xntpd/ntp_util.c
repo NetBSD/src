@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_util.c,v 1.2 1998/01/09 06:06:46 perry Exp $	*/
+/*	$NetBSD: ntp_util.c,v 1.3 1998/03/06 18:17:22 christos Exp $	*/
 
 /*
  * ntp_util.c - stuff I didn't have any other place for
@@ -232,8 +232,18 @@ hourly_stats()
 #ifdef SYS_WINNT
 		(void) unlink(stats_drift_file); /* rename semantics differ under NT */
 #endif /* SYS_WINNT */
-		(void) rename(stats_temp_file, stats_drift_file);
 
+#ifndef NO_RENAME
+		(void) rename(stats_temp_file, stats_drift_file);
+#else
+        /* we have no rename NFS of ftp in use*/
+		if ((fp = fopen(stats_drift_file, "w")) == NULL) {
+			msyslog(LOG_ERR, "can't open %s: %m",
+			    stats_drift_file);
+			return;
+		}
+
+#endif
 
 #if defined(VMS)
 		/* PURGE */
@@ -475,7 +485,7 @@ void
 record_loop_stats(offset, freq, poll)
      l_fp *offset;
      s_fp freq;
-     u_char poll;
+     unsigned poll;
 {
 	struct timeval tv;
 #ifdef HAVE_GETCLOCK

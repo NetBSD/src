@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.4 1998/01/09 03:16:12 perry Exp $	*/
+/*	$NetBSD: getopt.c,v 1.5 1998/03/06 18:17:15 christos Exp $	*/
 
 /*
  * getopt - get option letter from argv
@@ -30,9 +30,7 @@ int	ntp_opterr = 1;	/* for compatibility, should error be printed? */
 int	ntp_optopt;	/* for compatibility, option character checked */
 
 static char	*scan = NULL;	/* Private scan pointer. */
-static char	*prog = "amnesia";
-
-static int badopt __P((char *, int));
+static const char	*prog = "amnesia";
 
 /*
  * Print message about a bad option.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.h,v 1.2 1998/01/09 06:06:23 perry Exp $	*/
+/*	$NetBSD: ntpq.h,v 1.3 1998/03/06 18:17:19 christos Exp $	*/
 
 /*
  * ntpq.h - definitions of interest to ntpq
@@ -39,7 +39,7 @@ typedef union {
  * Structure for passing parsed command line
  */
 struct parse {
-	char *keyword;
+	const char *keyword;
 	arg_v argval[MAXARGS];
 	int nargs;
 };
@@ -50,11 +50,11 @@ struct parse {
  * syntax.
  */
 struct xcmd {
-	char *keyword;		/* command key word */
-	void (*handler)	P((struct parse *, FILE *));	/* command handler */
-	u_char arg[MAXARGS];	/* descriptors for arguments */
-	char *desc[MAXARGS];	/* descriptions for arguments */
-	char *comment;
+  const char *keyword;		/* command key word */
+  void (*handler)	P((struct parse *, FILE *));	/* command handler */
+  u_char arg[MAXARGS];		/* descriptors for arguments */
+  const char *desc[MAXARGS];	/* descriptions for arguments */
+  const char *comment;
 };
 
 /*
@@ -74,7 +74,7 @@ struct association {
 struct ctl_var {
 	u_short code;
 	u_short fmt;
-	char *text;
+	const char *text;
 };
 
 extern	void	asciize		P((int, char *, FILE *));

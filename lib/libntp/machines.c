@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.2 1998/01/09 03:16:18 perry Exp $	*/
+/*	$NetBSD: machines.c,v 1.3 1998/03/06 18:17:15 christos Exp $	*/
 
 /* machines.c - provide special support for peculiar architectures
  *
@@ -10,6 +10,92 @@
 
 
 #ifndef SYS_WINNT
+
+#ifdef SYS_VXWORKS
+#include "taskLib.h"
+#include "sysLib.h"
+#include "time.h"
+#include "ntp_syslog.h"
+
+/*  some translations to the world of vxWorkings -casey */
+/* first some netdb type things */
+#include "ioLib.h"
+#include <socket.h>
+int h_errno;
+
+struct hostent *gethostbyname(char *name)
+	{
+	struct hostent *host1;
+	h_errno = 0;                    /* we are always successful!!! */
+	host1 = (struct hostent *) malloc (sizeof(struct hostent));
+	host1->h_name = name;
+	host1->h_addrtype = AF_INET;
+	host1->h_aliases = name;
+	host1->h_length = 4;
+	host1->h_addr_list[0] = (char *)hostGetByName (name);
+    host1->h_addr_list[1] = NULL;
+	return host1;
+	}
+
+struct hostent *gethostbyaddr(char *name, int size, int addr_type)
+	{
+	struct hostent *host1;
+    h_errno = 0;  /* we are always successful!!! */
+	host1 = (struct hostent *) malloc (sizeof(struct hostent));
+	host1->h_name = name;
+	host1->h_addrtype = AF_INET;
+	host1->h_aliases = name;
+	host1->h_length = 4;
+	host1->h_addr_list = NULL;
+	return host1;
+	}
+
+struct servent *getservbyname (char *name, char *type)
+	{
+	struct servent *serv1;
+	serv1 = (struct servent *) malloc (sizeof(struct servent));
+	serv1->s_name = "ntp";		/* official service name */
+	serv1->s_aliases = NULL;	/* alias list */
+	serv1->s_port = 123;		/* port # */
+	serv1->s_proto = "udp";		/* protocol to use */
+	return serv1;
+	}
+
+/* second 
+ * vxworks thinks it has insomnia
+ * we have to sleep for number of seconds 
+ */
+
+#define CLKRATE     sysClkRateGet()
+
+/* I am not sure how valid the granularity is - it is from G. Eger's port */
+#define CLK_GRANULARITY  1      /* Granularity of system clock in usec  */
+                                /* Used to round down # usecs/tick      */
+                                /* On a VCOM-100, PIT gets 8 MHz clk,   */
+                                /*  & it prescales by 32, thus 4 usec   */
+                                /* on mv167, granularity is 1usec anyway*/
+                                /* To defeat rounding, set to 1         */
+#define USECS_PER_SEC       1000000L        /* Microseconds per second	*/
+#define TICK (((USECS_PER_SEC / CLKRATE) / CLK_GRANULARITY) * CLK_GRANULARITY)
+
+/* emulate unix sleep 
+ * casey
+ */
+void sleep(int seconds)
+	{
+	taskDelay(seconds*TICK);
+	}
+/* emulate unix alarm 
+ * that pauses and calls SIGALRM after the seconds are up...
+ * so ... taskDelay() fudged for seconds should amount to the same thing.
+ * casey
+ */
+void alarm (int seconds)
+	{
+	sleep(seconds);
+	}
+
+#endif /* SYS_VXWORKS */
 
 #ifdef SYS_PTX			/* Does PTX still need this? */
 /*#include <sys/types.h>	*/
@@ -29,10 +115,10 @@ gettimeofday(tvp)
 #endif /* SYS_PTX */
 
 #ifdef HAVE_SETTIMEOFDAY
-char *set_tod_using = "settimeofday";
+const char *set_tod_using = "settimeofday";
 #else /* not HAVE_SETTIMEOFDAY */
 # ifdef HAVE_CLOCK_SETTIME
-char *set_tod_using = "clock_settime";
+const char *set_tod_using = "clock_settime";
 
 /*#include <time.h>	*/
 
@@ -77,18 +163,32 @@ settimeofday(tvp, tzp)
 
 char *	set_tod_using = "SetSystemTime";
 
-/* Windows NT versions of gettimeofday and settimeofday */
+/* Windows NT versions of gettimeofday and settimeofday 
+ *
+ * ftime() has internal DayLightSavings related BUGS
+ * therefore switched to GetSystemTimeAsFileTime()
+ */
+
+/* 100ns intervals between 1/1/1601 and 1/1/1970 as reported by
+ * SystemTimeToFileTime()
+ */
+
+#define FILETIME_1970 0x019db1ded53e8000
+const BYTE DWLEN = sizeof(DWORD) * 8; /* number of bits in DWORD */
 
 int
 gettimeofday(tv)
-     struct timeval *tv;
+	struct timeval *tv;
 {
-  struct _timeb timebuffer;
+	FILETIME ft;
+	__int64 msec;
 
-  _ftime(&timebuffer);
-  tv->tv_sec = (long) timebuffer.time;
-  tv->tv_usec = (long) (1000 * (timebuffer.millitm));
-  return 0;
+	GetSystemTimeAsFileTime(&ft); /* 100ns intervals since 1/1/1601 */
+	msec = (__int64) ft.dwHighDateTime << DWLEN | ft.dwLowDateTime;
+	msec = (msec - FILETIME_1970) / 10;
+	tv->tv_sec  = (long) (msec / 1000000);
+	tv->tv_usec = (long) (msec % 1000000);
+	return 0;
 }
 
 
@@ -119,6 +219,9 @@ settimeofday(tv)
 }
 
 
+#endif /* SYS_WINNT */
+
+#if defined (SYS_WINNT) || defined (SYS_VXWORKS)
 /* getpass is used in ntpq.c and ntpdc.c */
 
 char *

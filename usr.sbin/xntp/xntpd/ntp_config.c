@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.5 1998/01/09 06:06:34 perry Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.6 1998/03/06 18:17:20 christos Exp $	*/
 
 /*
  * ntp_config.c - read and apply configuration information
@@ -159,7 +159,7 @@
  * Translation table - keywords to function index
  */
 struct keyword {
-	char *text;
+	const char *text;
 	int keytype;
 };
 
@@ -301,7 +301,7 @@ static struct keyword flags_keywords[] = {
  * "logconfig" building blocks
  */
 struct masks {
-  char         *name;
+  const char   *name;
   unsigned long mask;
 };
 
@@ -367,7 +367,7 @@ extern int debug;
 #endif
 	char	*progname;
 	char	sys_phone[MAXPHONE][MAXDIAL]; /* ACTS phone numbers */
-static	char	*xntp_options = "aAbc:dD:f:gk:l:mp:r:s:t:v:V:x";
+static	const char	*xntp_options = "aAbc:dD:f:gk:l:mp:r:s:t:v:V:x";
 
 #ifdef SYS_WINNT
 extern HANDLE ResolverThreadHandle;
@@ -382,7 +382,7 @@ static  unsigned long get_logmask P((char *));
 static	int	gettokens	P((FILE *, char *, char **, int *));
 static	int	matchkey	P((char *, struct keyword *));
 static	int	getnetnum	P((char *, struct sockaddr_in *, int));
-static	void	save_resolve	P((char *, int, int, int, int, int, int, u_long));
+static	void	save_resolve	P((char *, int, int, int, int, int, int, u_int32));
 static	void	do_resolve_internal P((void));
 static	void	abort_resolve	P((void));
 #if !defined(VMS)
@@ -486,7 +486,7 @@ getstartup(argc, argv)
 	/*
 	 * Decode argument list
 	 */
-	while ((c = ntp_getopt(argc, argv, xntp_options)) != -1)
+	while ((c = ntp_getopt(argc, argv, (char *) xntp_options)) != -1)
 		switch (c) {
 #ifdef DEBUG
 		case 'd':
@@ -572,7 +572,8 @@ getconfig(argc, argv)
 	int minpoll;
 	int maxpoll;
 	int ttl;
-	u_long peerkey;
+	u_int32 peerkey;
+	u_long lpeerkey;
 	int peerflags;
 	int hmode;
 	struct sockaddr_in peeraddr;
@@ -595,7 +596,7 @@ getconfig(argc, argv)
 	extern char *ntp_optarg;
 	extern char *Version;
 	extern char *set_tod_using;
-	extern u_long info_auth_keyid;
+	extern u_int32 info_auth_keyid;
 	extern int allow_set_backward;
 	extern int correct_any;
 	FILEGEN *filegen;
@@ -647,7 +648,7 @@ getconfig(argc, argv)
 	/*
 	 * Decode argument list
 	 */
-	while ((c = ntp_getopt(argc, argv, xntp_options)) != EOF) {
+	while ((c = ntp_getopt(argc, argv, (char *) xntp_options)) != -1) {
 		switch (c) {
 		case 'a':
 			proto_config(PROTO_AUTHENTICATE, 1);
@@ -728,7 +729,7 @@ getconfig(argc, argv)
 			
 		case 't':
 			do {
-				u_long tkey;
+				u_int32 tkey;
 				
 				tkey = atol(ntp_optarg);
 				if (tkey <= 0 || tkey > NTP_MAXKEY) {
@@ -772,7 +773,6 @@ getconfig(argc, argv)
 #ifdef SYS_WINNT
 	    /* Under WinNT try alternate_config_file name, first NTP.CONF, then NTP.INI */
 
-	    fclose(fp);
 	    if ((fp = fopen(FindConfig(alt_config_file), "r")) == NULL) {
         
 	      /*
@@ -1069,7 +1069,7 @@ getconfig(argc, argv)
 			peerversion = 0;
 			peerkey = 0;
 			errflg = 0;
-			maskaddr.sin_addr.s_addr = (u_int32_t) ~ (u_long) 0;
+			maskaddr.sin_addr.s_addr = ~ (u_int32) 0;
 			for (i = 2; i < ntokens; i++) {
 				switch (matchkey(tokens[i], res_keywords)) {
 				case CONF_RES_MASK:
@@ -1156,7 +1156,7 @@ getconfig(argc, argv)
 			
 		case CONFIG_TRUSTEDKEY:
 			for (i = 1; i < ntokens; i++) {
-				u_long tkey;
+				u_int32 tkey;
 				
 				tkey = atol(tokens[i]);
 				if (tkey == 0) {
@@ -1194,8 +1194,8 @@ getconfig(argc, argv)
 			
 		case CONFIG_CONTROLKEY:
 			if (ntokens >= 2) {
-				u_long ckey;
-				extern u_long ctl_auth_keyid;
+				u_int32 ckey;
+				extern u_int32 ctl_auth_keyid;
 				
 				ckey = atol(tokens[1]);
 				if (ckey == 0) {
@@ -1354,14 +1354,16 @@ getconfig(argc, argv)
 				case CONF_FDG_FLAG2:
 				case CONF_FDG_FLAG3:
 				case CONF_FDG_FLAG4:
-					if (!atouint(tokens[++i], &peerkey)
-					    || peerkey > 1) {
+					if (!atouint(tokens[++i], &lpeerkey)
+					    || lpeerkey > 1) {
 						msyslog(LOG_ERR,
 						    "fudge %s flag value in error",
 						    ntoa(&peeraddr));
+						peerkey = lpeerkey;
 						errflg = i;
 						break;
 					}
+					peerkey = lpeerkey;
 					switch(c) {
 					case CONF_FDG_FLAG1:
 						c = CLK_FLAG1;
@@ -1524,6 +1526,7 @@ getconfig(argc, argv)
 				    "no value for clientlimit command - line ignored");
 			} else {
 				u_long i;
+
 				if (!atouint(tokens[1], &i) || !i) {
 					msyslog(LOG_ERR,
 				           "illegal value for clientlimit command - line ignored");
@@ -1845,9 +1848,9 @@ int sig;
 	 * it should have already exited.  Hence the following
 	 * shouldn't hang.  If it does, please tell me.
 	 */
-#ifndef SYS_WINNT
+#if !defined (SYS_WINNT) && !defined(SYS_VXWORKS)
 	(void) wait(0);
-#endif /* SYS_WINNT */
+#endif /* SYS_WINNT  && VXWORKS*/
 }
 #endif /* VMS */
 
@@ -1864,8 +1867,9 @@ save_resolve(name, mode, version, minpoll, maxpoll, flags, ttl, keyid)
 	int maxpoll;
 	int flags;
 	int ttl;
-	u_long keyid;
+	u_int32 keyid;
 {
+#ifndef SYS_VXWORKS
 	if (res_fp == NULL) {
 #ifndef SYS_WINNT
 		(void) strcpy(res_file, RES_TEMPFILE);
@@ -1880,7 +1884,7 @@ save_resolve(name, mode, version, minpoll, maxpoll, flags, ttl, keyid)
 			(void) strcat(res_file, "xntpdXXXXXX");
 		}
 #endif /* SYS_WINNT */
-#ifdef BSD4_4
+#ifdef HAVE_MKSTEMP
 		{
 			int fd;
 
@@ -1897,7 +1901,6 @@ save_resolve(name, mode, version, minpoll, maxpoll, flags, ttl, keyid)
 			return;
 		}
 	}
-
 #ifdef DEBUG
 	if (debug) {
 	       printf("resolving %s\n", name);
@@ -1905,7 +1908,11 @@ save_resolve(name, mode, version, minpoll, maxpoll, flags, ttl, keyid)
 #endif
 
 	(void) fprintf(res_fp, "%s %d %d %d %d %d %d %lu\n", name, mode,
-	    version, minpoll, maxpoll, flags, ttl, keyid);
+	    version, minpoll, maxpoll, flags, ttl, (u_long)keyid);
+	/* we don't open resolve file Casey */
+#else  /* SYS_VXWORKS */
+	/* save resolve info to a struct */
+#endif /* SYS_VXWORKS */
 }
 
 
@@ -1925,11 +1932,13 @@ abort_resolve()
 		(void) fclose(res_fp);
 	res_fp = NULL;
 
+#ifndef SYS_VXWORKS         /* we don't open the file to begin with */
 #if !defined(VMS)
 	(void) unlink(res_file);
 #else
 	(void) delete(res_file);
 #endif /* VMS */
+#endif /* SYS_VXWORKS */
 }
 
 
@@ -1951,10 +1960,10 @@ do_resolve_internal()
 	int i;
 
 #if !defined(VMS)
-	extern u_long req_keyid;	/* request keyid */
+	extern u_int32 req_keyid;	/* request keyid */
 	extern char *req_file;		/* name of the file with config info */
 #endif
-	extern u_long info_auth_keyid;
+	extern u_int32 info_auth_keyid;
 
 	if (res_fp == NULL) {
 		/* belch */
@@ -1967,7 +1976,7 @@ do_resolve_internal()
 	(void) fclose(res_fp);
 	res_fp = NULL;
 
-#if !defined(VMS)
+#if !defined(VMS) && !defined (SYS_VXWORKS)
 	/* find a keyid */
 	if (info_auth_keyid == 0)
 		req_keyid = 65535;
@@ -2003,6 +2012,7 @@ do_resolve_internal()
 #ifndef SYS_WINNT
 	(void) signal_no_reset(SIGCHLD, catchchild);
 
+#ifndef SYS_VXWORKS
 	i = fork();
 	if (i == 0) {
 		/*
@@ -2052,6 +2062,11 @@ do_resolve_internal()
 		abort_resolve();
 		exit(1);
 	}
+#else
+     /* vxWorks spawns a thread... -casey */
+     i = sp (ntp_intres);
+     /*i = taskSpawn("ntp_intres",100,VX_FP_TASK,20000,ntp_intres);*/
+#endif
 	if (i == -1) {
 		msyslog(LOG_ERR, "fork() failed, can't start ntp_intres");
 		(void) signal_no_reset(SIGCHLD, SIG_DFL);
@@ -2077,9 +2092,9 @@ do_resolve_internal()
 		}
 	}
 #endif /* SYS_WINNT */
-#else /* VMS */
+#else /* VMS  VXWORKS*/
 	msyslog(LOG_ERR, 
 	    "Name resolution not implemented for VMS - use numeric addresses");
 	abort_resolve();
-#endif /* VMS */
+#endif /* VMS  VXWORKS*/
 }

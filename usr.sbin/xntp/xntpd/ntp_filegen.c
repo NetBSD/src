@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_filegen.c,v 1.2 1998/01/09 06:06:36 perry Exp $	*/
+/*	$NetBSD: ntp_filegen.c,v 1.3 1998/03/06 18:17:21 christos Exp $	*/
 
 /*
  * ntp_filegen.c,v 3.12 1994/01/25 19:06:11 kardel Exp
@@ -259,7 +259,7 @@ filegen_open(gen, newid)
 
 			/* Windows NT does not support file links -Greg Schueman 1/18/97 */
 			
-#if !defined(VMS) && !defined(SYS_WINNT)
+#if !defined(VMS) && !defined(SYS_WINNT) && !defined (SYS_VXWORKS)
 			if (link(filename, basename) != 0) {
 				if (errno != EEXIST)
 #else

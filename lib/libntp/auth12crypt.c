@@ -1,4 +1,4 @@
-/*	$NetBSD: auth12crypt.c,v 1.2 1998/01/09 03:15:53 perry Exp $	*/
+/*	$NetBSD: auth12crypt.c,v 1.3 1998/03/06 18:17:13 christos Exp $	*/
 
 /*
  * auth12crypt.c - routines to support two stage NTP encryption
@@ -23,9 +23,9 @@
 /*
  * Imported from the key data base module
  */
-extern u_long cache_keyid;	/* cached key ID */
-extern u_long DEScache_ekeys[];	/* cached decryption keys */
-extern u_long DESzeroekeys[];	/* zero key decryption keys */
+extern u_int32 cache_keyid;	/* cached key ID */
+extern u_int32 DEScache_ekeys[]; /* cached decryption keys */
+extern u_int32 DESzeroekeys[];	/* zero key decryption keys */
 
 /*
  * Stat counters, from the database module
@@ -40,7 +40,7 @@ extern u_int32 authnokey;
  */
 void
 DESauth1crypt(keyno, pkt, length)
-	u_long keyno;
+	u_int32 keyno;
 	u_int32 *pkt;
 	int length;	/* length of all encrypted data */
 {
@@ -93,7 +93,7 @@ DESauth1crypt(keyno, pkt, length)
  */
 int
 DESauth2crypt(keyno, pkt, length)
-	u_long keyno;
+	u_int32 keyno;
 	u_int32 *pkt;
 	int length;	/* total length of encrypted area */
 {

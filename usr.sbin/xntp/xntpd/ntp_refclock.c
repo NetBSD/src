@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.c,v 1.2 1998/01/09 06:06:42 perry Exp $	*/
+/*	$NetBSD: ntp_refclock.c,v 1.3 1998/03/06 18:17:22 christos Exp $	*/
 
 /*
  * ntp_refclock - processing support for reference clocks
@@ -397,9 +397,9 @@ refclock_cmpl_fp(p1, p2)
 	register const void *p1, *p2;	/* l_fp to compare */
 {
 
-	if (!L_ISGEQ((l_fp *)p1, (l_fp *)p2))
+	if (!L_ISGEQ((const l_fp *)p1, (const l_fp *)p2))
 		return (-1);
-	if (L_ISEQU((l_fp *)p1, (l_fp *)p2))
+	if (L_ISEQU((const l_fp *)p1, (const l_fp *)p2))
 		return (0);
 	return (1);
 }
@@ -537,7 +537,7 @@ refclock_sample(sample_offset, pp, nstart, nskeep)
 	if (disp > REFCLOCKMAXDISPERSE)
 		return (0);
 
-	pp->offset = offset;
+	pp->offset = off[(n + i) / 2];
 	pp->dispersion = disp;
 
 	return (1);
@@ -776,6 +776,7 @@ refclock_gtlin(rbufp, lineptr, bmax, tsptr)
 /*
  * The following code does not apply to WINNT & VMS ...
  */
+#ifndef SYS_VXWORKS
 #if defined(HAVE_TERMIOS) || defined(HAVE_SYSV_TTYS) || defined(HAVE_BSD_TTYS)
 
 /*
@@ -952,7 +953,7 @@ refclock_open(dev, speed, flags)
 	return (fd);
 }
 #endif /* HAVE_TERMIOS || HAVE_SYSV_TTYS || HAVE_BSD_TTYS */
-
+#endif /* SYS_VXWORKS */
 
 /*
  * refclock_ioctl - set serial port control functions
@@ -970,6 +971,7 @@ refclock_ioctl(fd, flags)
 	int flags;		/* line discipline flags */
 {
 	/* simply return 1 if no UNIX line discipline is supported */
+#ifndef SYS_VXWORKS
 #if defined(HAVE_TERMIOS) || defined(HAVE_SYSV_TTYS) || defined(HAVE_BSD_TTYS)
 
 #ifdef HAVE_TERMIOS
@@ -1250,7 +1252,7 @@ refclock_ioctl(fd, flags)
 #endif /* STREAM */
 
 #endif /* HAVE_TERMIOS || HAVE_SYSV_TTYS || HAVE_BSD_TTYS */
-
+#endif /* SYS_VXWORKS */
 	return (1);
 }
 
@@ -1346,7 +1348,7 @@ refclock_control(srcadr, in, out)
 		out->type = pp->type;
 		out->clockdesc = pp->clockdesc;
 		out->lencode = pp->lencode;
-		out->lastcode = pp->lastcode;
+		out->p_lastcode = pp->a_lastcode;
 	}
 
 	/*

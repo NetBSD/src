@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.3 1998/01/09 06:07:16 perry Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.4 1998/03/06 18:17:25 christos Exp $	*/
 
 /*
  * xntpdc - control and monitor your xntpd daemon
@@ -23,6 +23,12 @@
 #include "ntp_io.h"
 #include "ntp_stdlib.h"
 
+#ifdef SYS_VXWORKS
+/* vxWorks needs mode flag -casey*/
+#define open(name, flags)   open(name, flags, 0777)
+#define SERVER_PORT_NUM     123
+#endif
+
 #if defined(VMS)
 extern char *getpass(const char *);
 #endif
@@ -33,13 +39,13 @@ extern char *getpass(const char *);
  * interactive if connected to a terminal.
  */
 static	int	interactive = 0;	/* set to 1 when we should prompt */
-static	char *	prompt = "xntpdc> ";	/* prompt to ask him about */
+static	const char *	prompt = "xntpdc> ";	/* prompt to ask him about */
 
 
 /*
  * Keyid used for authenticated requests.  Obtained on the fly.
  */
-static	u_long	info_auth_keyid;
+static	u_int32	info_auth_keyid;
 
 /*
  * Type of key md5 or des
@@ -84,7 +90,7 @@ static	void	quit		P((struct parse *, FILE *));
 static	void	version		P((struct parse *, FILE *));
 static	void	warning		P((char *, char *, char *));
 static	void	error		P((char *, char *, char *));
-static	u_long	getkeyid	P((char *));
+static	u_int32	getkeyid	P((char *));
 
 
 
@@ -163,8 +169,11 @@ static	int sockfd;					/* fd socket is openned on */
 static	int havehost = 0;				/* set to 1 when host open */
 	struct servent *server_entry = NULL;		/* server entry for ntp */
 
-#ifdef SYS_WINNT
+#if defined (SYS_WINNT) || defined (SYS_VXWORKS)
 char password[9];
+#endif /* SYS_WINNT || SYS_VXWORKS */
+
+#ifdef SYS_WINNT
 WORD wVersionRequested;
 WSADATA wsaData;
 DWORD NumberOfBytesWritten;
@@ -231,13 +240,37 @@ extern struct xcmd opcmds[];
 char *progname;
 int debug;
 
+#ifdef NO_MAIN_ALLOWED
+CALL(xntpdc,"xntpdc",xntpdcmain);
+#endif
+
+#ifdef SYS_VXWORKS
+void clear_globals()
+    {
+    extern int ntp_optind;
+    extern char *ntp_optarg;
+    showhostnames = 0;              /* show host names by default */
+    ntp_optind = 0;
+    ntp_optarg = 0;
+    server_entry = NULL;            /* server entry for ntp */
+    havehost = 0;                   /* set to 1 when host open */
+    numcmds = 0;
+    numhosts = 0;
+    }
+#endif
+
 /*
  * main - parse arguments and handle options
  */
 #if !defined(VMS)
 void
 #endif /* VMS */
-main(argc, argv)
+#ifndef NO_MAIN_ALLOWED
+main
+#else
+xntpdcmain
+#endif
+(argc, argv)
 int argc;
 char *argv[];
 {
@@ -248,6 +281,11 @@ char *argv[];
 
 	delay_time.l_ui = 0;
 	delay_time.l_uf = DEFDELAY;
+
+#ifdef SYS_VXWORKS
+    clear_globals();
+    taskPrioritySet(taskIdSelf(), 100 );
+#endif
 
 	progname = argv[0];
 	while ((c = ntp_getopt(argc, argv, "c:dilnps")) != -1)
@@ -337,7 +375,9 @@ char *argv[];
 #ifdef SYS_WINNT
 	WSACleanup();
 #endif
+#ifndef SYS_VXWORKS
 	exit(0);
+#endif
 } /* main end */
 
 
@@ -383,7 +423,11 @@ openhost(hname)
 	(void) strcpy(currenthost, temphost);
 
 	hostaddr.sin_family = AF_INET;
+#ifndef SYS_VXWORKS
 	hostaddr.sin_port = server_entry->s_port;
+#else
+	hostaddr.sin_port = htons(SERVER_PORT_NUM);
+#endif
 	hostaddr.sin_addr.s_addr = netnum;
 
 #ifdef SYS_WINNT
@@ -1101,7 +1145,7 @@ getarg(str, code, argp)
 {
 	int isneg;
 	char *cp, *np;
-	static char *digits = "0123456789";
+	static const char *digits = "0123456789";
 
 	switch (code & ~OPT) {
 	case NTP_STR:
@@ -1169,7 +1213,7 @@ getnetnum(host, num, fullhost)
 		}
 		return 1;
 	} else if ((hp = gethostbyname(host)) != 0) {
-		memmove((char *)num, hp->h_addr, sizeof(u_long));
+		memmove((char *)num, hp->h_addr, sizeof(u_int32));
 		if (fullhost != 0)
 			(void) strcpy(fullhost, hp->h_name);
 		return 1;
@@ -1212,11 +1256,11 @@ help(pcmd, fp)
 	int n;
 	struct xcmd *xcp;
 	char *cmd;
-	char *cmdsort[100];
+	const char *cmdsort[100];
 	int length[100];
 	int maxlength;
 	int numperline;
-	static char *spaces = "                    ";	/* 20 spaces */
+	static const char *spaces = "                    ";	/* 20 spaces */
 
 	if (pcmd->nargs == 0) {
 		n = 0;
@@ -1402,7 +1446,7 @@ keyid(pcmd, fp)
 		if (info_auth_keyid == 0)
 			(void) fprintf(fp, "no keyid defined\n");
 		else
-			(void) fprintf(fp, "keyid is %lu\n", info_auth_keyid);
+			(void) fprintf(fp, "keyid is %lu\n", (u_long)info_auth_keyid);
 	} else {
 		info_auth_keyid = pcmd->argval[0].uval;
 	}
@@ -1584,7 +1628,7 @@ error(fmt, st1, st2)
 /*
  * getkeyid - prompt the user for a keyid to use
  */
-static u_long
+static u_int32
 getkeyid(prompt)
      char *prompt;
 {
@@ -1609,6 +1653,6 @@ getkeyid(prompt)
 	*p = '\0';
 	if (fi != stdin)
 		fclose(fi);
-	return (u_long)atoi(pbuf);
+	return (u_int32)atoi(pbuf);
 }
 

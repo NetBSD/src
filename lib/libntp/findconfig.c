@@ -1,4 +1,4 @@
-/*	$NetBSD: findconfig.c,v 1.2 1998/01/09 03:16:09 perry Exp $	*/
+/*	$NetBSD: findconfig.c,v 1.3 1998/03/06 18:17:14 christos Exp $	*/
 
 
 #ifdef HAVE_CONFIG_H
@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/utsname.h>
+#include <unistd.h>
 
 char *
 FindConfig(base)

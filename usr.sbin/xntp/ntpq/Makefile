@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1997/06/23 17:34:35 christos Exp $
+#	$NetBSD: Makefile,v 1.3 1998/03/06 18:17:19 christos Exp $
 
 PROG= ntpq
 SRCS=	ntpq_ops.c ntpq.h ntpq.c 

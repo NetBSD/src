@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_timer.c,v 1.2 1998/01/09 06:06:45 perry Exp $	*/
+/*	$NetBSD: ntp_timer.c,v 1.3 1998/03/06 18:17:22 christos Exp $	*/
 
 /*
  * ntp_event.c - event timer support routines
@@ -17,7 +17,6 @@
 #include "ntpd.h"
 #include "ntp_stdlib.h"
 
-
 /*
  * These routines provide support for the event timer.  The timer is
  * implemented by an interrupt routine which sets a flag once every
@@ -28,7 +27,6 @@
  * dispatched to the transmit procedure.  Finally, we call the hourly
  * procedure to do cleanup and print a message.
  */
-
 
 /*
  * Alarm flag.  The mainline code imports this.
@@ -88,7 +86,14 @@ init_timer()
   register int i;
 #if !defined(VMS)
 # ifndef SYS_WINNT
+#ifndef HAVE_TIMER_SETTIME
   struct itimerval itimer;
+#else
+static timer_t xntpd_timerid;   /* should be global if we ever want to kill
+                                   timer without rebooting ... */
+       struct itimerspec itimer;
+#endif
+
 # else /* SYS_WINNT */
   TIMECAPS tc;
   HANDLE hToken;
@@ -128,10 +133,29 @@ init_timer()
    * seconds.
    */
 # if !defined(VMS)
+#if defined(HAVE_TIMER_CREATE) && defined(HAVE_TIMER_SETTIME)
+  if (timer_create (CLOCK_REALTIME, NULL, &xntpd_timerid) ==
+#ifdef SYS_VXWORKS
+      ERROR
+#else
+      -1
+#endif
+      )
+    {
+      fprintf (stderr, "timer create FAILED\n");
+      exit (0);
+    } 
+  (void) signal_no_reset(SIGALRM, alarming);
+  itimer.it_interval.tv_sec = itimer.it_value.tv_sec = (1<<EVENT_TIMEOUT);
+  itimer.it_interval.tv_nsec = itimer.it_value.tv_nsec = 0;
+  timer_settime(xntpd_timerid, 0 /*!TIMER_ABSTIME*/, &itimer, NULL);
+#else
   (void) signal_no_reset(SIGALRM, alarming);
   itimer.it_interval.tv_sec = itimer.it_value.tv_sec = (1<<EVENT_TIMEOUT);
   itimer.it_interval.tv_usec = itimer.it_value.tv_usec = 0;
   setitimer(ITIMER_REAL, &itimer, (struct itimerval *)0);
+#endif 
+
 # else /* VMS */
   vmsinc[0] = 10000000;		/* 1 sec */
   vmsinc[1] = 0;
@@ -166,7 +190,7 @@ init_timer()
 
   /*
    * Set up timer interrupts for every 2**EVENT_TIMEOUT seconds
-   * Under Win/NT, expiry of timer interval leads to invocation
+   * Under Windows/NT, expiry of timer interval leads to invocation
    * of a callback function (on a different thread) rather than
    * generating an alarm signal
    */

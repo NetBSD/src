@@ -1,4 +1,4 @@
-/*	$NetBSD: hextolfp.c,v 1.2 1998/01/09 03:16:14 perry Exp $	*/
+/*	$NetBSD: hextolfp.c,v 1.3 1998/03/06 18:17:15 christos Exp $	*/
 
 /*
  * hextolfp - convert an ascii hex string to an l_fp number
@@ -20,7 +20,7 @@ hextolfp(str, lfp)
 	register u_long dec_i;
 	register u_long dec_f;
 	char *ind = NULL;
-	static char *digits = "0123456789abcdefABCDEF";
+	static const char *digits = "0123456789abcdefABCDEF";
 
 	dec_i = dec_f = 0;
 	cp = str;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.2 1998/01/09 06:06:43 perry Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.3 1998/03/06 18:17:22 christos Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -139,14 +139,14 @@ static	struct req_proc xntp_codes[] = {
 	{ REQ_RESET_STATS, AUTH, sizeof(struct reset_flags), reset_stats },
 	{ REQ_RESET_PEER,  AUTH, sizeof(struct conf_unpeer), reset_peer },
 	{ REQ_REREAD_KEYS,	AUTH,	0,	do_key_reread },
-	{ REQ_TRUSTKEY,    AUTH, sizeof(u_long),	trust_key },
-	{ REQ_UNTRUSTKEY,  AUTH, sizeof(u_long),	untrust_key },
+	{ REQ_TRUSTKEY,    AUTH, sizeof(u_int32),	trust_key },
+	{ REQ_UNTRUSTKEY,  AUTH, sizeof(u_int32),	untrust_key },
 	{ REQ_AUTHINFO,		NOAUTH,	0,	get_auth_info },
 	{ REQ_TRAPS,		NOAUTH, 0,	req_get_traps },
 	{ REQ_ADD_TRAP,	   AUTH, sizeof(struct conf_trap), req_set_trap },
 	{ REQ_CLR_TRAP,	   AUTH, sizeof(struct conf_trap), req_clr_trap },
-	{ REQ_REQUEST_KEY, AUTH, sizeof(u_long),	set_request_keyid },
-	{ REQ_CONTROL_KEY, AUTH, sizeof(u_long),	set_control_keyid },
+	{ REQ_REQUEST_KEY, AUTH, sizeof(u_int32),	set_request_keyid },
+	{ REQ_CONTROL_KEY, AUTH, sizeof(u_int32),	set_control_keyid },
 	{ REQ_GET_CTLSTATS,	NOAUTH,	0,	get_ctl_stats },
 	{ REQ_GET_LEAPINFO,	NOAUTH,	0,	get_leap_info },
 #ifdef KERNEL_PLL
@@ -165,7 +165,7 @@ static	struct req_proc xntp_codes[] = {
  * Authentication keyid used to authenticate requests.  Zero means we
  * don't allow writing anything.
  */
-u_long info_auth_keyid;
+u_int32 info_auth_keyid;
 
 
 /*
@@ -515,11 +515,11 @@ process_private(rbufp, mod_okay)
 		if (!INFO_IS_AUTH(inpkt->auth_seq) || info_auth_keyid == 0
 		    || ntohl(inpkt->keyid) != info_auth_keyid) {
 #ifdef DEBUG
-			if (debug > 4)
-				printf(
-			"failed auth %d info_auth_keyid %lu pkt keyid %lu\n",
-				    INFO_IS_AUTH(inpkt->auth_seq),
-				    info_auth_keyid, (u_long)ntohl(inpkt->keyid));
+		  if (debug > 4)
+		    printf("failed auth %d info_auth_keyid %lu pkt keyid %lu\n",
+			   INFO_IS_AUTH(inpkt->auth_seq),
+			   (u_long)info_auth_keyid,
+			   (u_long)ntohl(inpkt->keyid));
 #endif
 			req_ack(srcadr, inter, inpkt, INFO_ERR_AUTH);
 			return;
@@ -776,7 +776,7 @@ peer_info (srcadr, inter, inpkt)
 		ip->rootdelay = HTONS_FP(pp->rootdelay);
 		ip->rootdispersion = HTONS_FP(pp->rootdispersion);
 		ip->refid = pp->refid;
-		ip->timer = htonl(pp->event_timer.event_time - current_time);
+		ip->timer = htonl((u_int32)(pp->event_timer.event_time - current_time));
 		HTONL_FP(&pp->reftime, &ip->reftime);
 		HTONL_FP(&pp->org, &ip->org);
 		HTONL_FP(&pp->rec, &ip->rec);
@@ -855,17 +855,17 @@ peer_stats (srcadr, inter, inpkt)
 			ip->flags |= INFO_FLAG_SEL_CANDIDATE;
 		if (pp->select != 0)
 			ip->flags |= INFO_FLAG_SHORTLIST;
-		ip->timereceived = htonl(current_time - pp->timereceived);
+		ip->timereceived = htonl((u_int32)(current_time - pp->timereceived));
 		ip->timetosend
-		    = htonl(pp->event_timer.event_time - current_time);
-		ip->timereachable = htonl(current_time - pp->timereachable);
-		ip->sent = htonl(pp->sent);
-		ip->processed = htonl(pp->processed);
-		ip->badauth = htonl(pp->badauth);
-		ip->bogusorg = htonl(pp->bogusorg);
-		ip->oldpkt = htonl(pp->oldpkt);
-		ip->seldisp = htonl(pp->seldisptoolarge);
-		ip->selbroken = htonl(pp->selbroken);
+		    = htonl((u_int32)(pp->event_timer.event_time - current_time));
+		ip->timereachable = htonl((u_int32)(current_time - pp->timereachable));
+		ip->sent = htonl((u_int32)pp->sent);
+		ip->processed = htonl((u_int32)pp->processed);
+		ip->badauth = htonl((u_int32)pp->badauth);
+		ip->bogusorg = htonl((u_int32)pp->bogusorg);
+		ip->oldpkt = htonl((u_int32)pp->oldpkt);
+		ip->seldisp = htonl((u_int32)pp->seldisptoolarge);
+		ip->selbroken = htonl((u_int32)pp->selbroken);
 		ip->candidate = pp->candidate;
 		ip = (struct info_peer_stats *)more_pkt();
 	}
@@ -892,7 +892,7 @@ sys_info(srcadr, inter, inpkt)
 	extern s_char sys_precision;
 	extern s_fp sys_rootdelay;
 	extern u_fp sys_rootdispersion;
-	extern u_long sys_refid;
+	extern u_int32 sys_refid;
 	extern l_fp sys_reftime;
 	extern u_char sys_poll;
 	extern struct peer *sys_peer;
@@ -977,16 +977,16 @@ sys_stats(srcadr, inter, inpkt)
 	ss = (struct info_sys_stats *)prepare_pkt(srcadr, inter, inpkt,
 	    sizeof(struct info_sys_stats));
 
-	ss->timeup = htonl(current_time);
-	ss->timereset = htonl(current_time - sys_stattime);
-	ss->badstratum = htonl(sys_badstratum);
-	ss->oldversionpkt = htonl(sys_oldversionpkt);
-	ss->newversionpkt = htonl(sys_newversionpkt);
-	ss->unknownversion = htonl(sys_unknownversion);
-	ss->badlength = htonl(sys_badlength);
-	ss->processed = htonl(sys_processed);
-	ss->badauth = htonl(sys_badauth);
-	ss->limitrejected = htonl(sys_limitrejected);
+	ss->timeup = htonl((u_int32)current_time);
+	ss->timereset = htonl((u_int32)(current_time - sys_stattime));
+	ss->badstratum = htonl((u_int32)sys_badstratum);
+	ss->oldversionpkt = htonl((u_int32)sys_oldversionpkt);
+	ss->newversionpkt = htonl((u_int32)sys_newversionpkt);
+	ss->unknownversion = htonl((u_int32)sys_unknownversion);
+	ss->badlength = htonl((u_int32)sys_badlength);
+	ss->processed = htonl((u_int32)sys_processed);
+	ss->badauth = htonl((u_int32)sys_badauth);
+	ss->limitrejected = htonl((u_int32)sys_limitrejected);
 	(void) more_pkt();
 	flush_pkt();
 }
@@ -1018,12 +1018,12 @@ mem_stats(srcadr, inter, inpkt)
 	ms = (struct info_mem_stats *)prepare_pkt(srcadr, inter, inpkt,
 	    sizeof(struct info_mem_stats));
 
-	ms->timereset = htonl(current_time - peer_timereset);
+	ms->timereset = htonl((u_int32)(current_time - peer_timereset));
 	ms->totalpeermem = htons((u_short)total_peer_structs);
 	ms->freepeermem = htons((u_short)peer_free_count);
-	ms->findpeer_calls = htonl(findpeer_calls);
-	ms->allocations = htonl(peer_allocations);
-	ms->demobilizations = htonl(peer_demobilizations);
+	ms->findpeer_calls = htonl((u_int32)findpeer_calls);
+	ms->allocations = htonl((u_int32)peer_allocations);
+	ms->demobilizations = htonl((u_int32)peer_demobilizations);
 
 	for (i = 0; i < HASH_SIZE; i++) {
 		if (peer_hash_count[i] > 255)
@@ -1067,18 +1067,18 @@ io_stats(srcadr, inter, inpkt)
 	io = (struct info_io_stats *)prepare_pkt(srcadr, inter, inpkt,
 	    sizeof(struct info_io_stats));
 
-	io->timereset = htonl(current_time - io_timereset);
+	io->timereset = htonl((u_int32)(current_time - io_timereset));
 	io->totalrecvbufs = htons((u_short) total_recvbufs);
 	io->freerecvbufs = htons((u_short) free_recvbufs);
 	io->fullrecvbufs = htons((u_short) full_recvbufs);
 	io->lowwater = htons((u_short) lowater_additions);
-	io->dropped = htonl(packets_dropped);
-	io->ignored = htonl(packets_ignored);
-	io->received = htonl(packets_received);
-	io->sent = htonl(packets_sent);
-	io->notsent = htonl(packets_notsent);
-	io->interrupts = htonl(handler_calls);
-	io->int_received = htonl(handler_pkts);
+	io->dropped = htonl((u_int32)packets_dropped);
+	io->ignored = htonl((u_int32)packets_ignored);
+	io->received = htonl((u_int32)packets_received);
+	io->sent = htonl((u_int32)packets_sent);
+	io->notsent = htonl((u_int32)packets_notsent);
+	io->interrupts = htonl((u_int32)handler_calls);
+	io->int_received = htonl((u_int32)handler_pkts);
 
 	(void) more_pkt();
 	flush_pkt();
@@ -1107,10 +1107,10 @@ timer_stats(srcadr, inter, inpkt)
 	ts = (struct info_timer_stats *)prepare_pkt(srcadr, inter, inpkt,
 	    sizeof(struct info_timer_stats));
 
-	ts->timereset = htonl(current_time - timer_timereset);
-	ts->alarms = htonl(alarm_overflow);
-	ts->overflows = htonl(timer_overflows);
-	ts->xmtcalls = htonl(timer_xmtcalls);
+	ts->timereset = htonl((u_int32)(current_time - timer_timereset));
+	ts->alarms = htonl((u_int32)alarm_overflow);
+	ts->overflows = htonl((u_int32)timer_overflows);
+	ts->xmtcalls = htonl((u_int32)timer_xmtcalls);
 
 	(void) more_pkt();
 	flush_pkt();
@@ -1143,8 +1143,8 @@ loop_info(srcadr, inter, inpkt)
 	HTONL_FP(&last_offset, &li->last_offset);
 	FPTOLFP(drift_comp, &tmp);
 	HTONL_FP(&tmp, &li->drift_comp);
-	li->compliance = htonl(tc_counter);
-	li->watchdog_timer = htonl(current_time - last_time);
+	li->compliance = htonl((u_int32)tc_counter);
+	li->watchdog_timer = htonl((u_int32)(current_time - last_time));
 
 	(void) more_pkt();
 	flush_pkt();
@@ -1390,7 +1390,7 @@ list_restrict(srcadr, inter, inpkt)
 	for (rl = restrictlist; rl != 0 && ir != 0; rl = rl->next) {
 		ir->addr = htonl(rl->addr);
 		ir->mask = htonl(rl->mask);
-		ir->count = htonl(rl->count);
+		ir->count = htonl((u_int32)rl->count);
 		ir->flags = htons(rl->flags);
 		ir->mflags = htons(rl->mflags);
 		ir = (struct info_restrict *)more_pkt();
@@ -1532,13 +1532,13 @@ mon_getlist_0(srcadr, inter, inpkt)
 	    sizeof(struct info_monitor));
 	for (md = mon_mru_list.mru_next; md != &mon_mru_list && im != 0;
 	    md = md->mru_next) {
-		im->lasttime = htonl(current_time - md->lasttime);
-		im->firsttime = htonl(current_time - md->firsttime);
+		im->lasttime = htonl((u_int32)(current_time - md->lasttime));
+		im->firsttime = htonl((u_int32)(current_time - md->firsttime));
 		if (md->lastdrop)
-			im->lastdrop = htonl(current_time - md->lastdrop);
+			im->lastdrop = htonl((u_int32)(current_time - md->lastdrop));
 		else
 			im->lastdrop = 0;
-		im->count = htonl(md->count);
+		im->count = htonl((u_int32)md->count);
 		im->addr = md->rmtadr;
 		im->port = md->rmtport;
 		im->mode = md->mode;
@@ -1575,21 +1575,23 @@ mon_getlist_1(srcadr, inter, inpkt)
 	    sizeof(struct info_monitor_1));
 	for (md = mon_mru_list.mru_next; md != &mon_mru_list && im != 0;
 	    md = md->mru_next) {
-		im->lasttime = htonl(current_time - md->lasttime);
-		im->firsttime = htonl(current_time - md->firsttime);
+		im->lasttime = htonl((u_int32)(current_time - md->lasttime));
+		im->firsttime = htonl((u_int32)(current_time - md->firsttime));
 		if (md->lastdrop)
-			im->lastdrop = htonl(current_time - md->lastdrop);
+			im->lastdrop = htonl((u_int32)(current_time - md->lastdrop));
 		else
 			im->lastdrop = 0;
-		im->count = htonl(md->count);
+		im->count = htonl((u_int32)md->count);
 		im->addr = md->rmtadr;
-		im->daddr =	md->cast_flags == MDF_BCAST ?
-					md->interface->bcast.sin_addr.s_addr :
-				md->cast_flags ?
-				md->interface->sin.sin_addr.s_addr ?
-					md->interface->sin.sin_addr.s_addr :
-					md->interface->bcast.sin_addr.s_addr :
-					4;
+		im->daddr =
+		  (md->cast_flags == MDF_BCAST)
+		  ? md->interface->bcast.sin_addr.s_addr
+		  : (md->cast_flags
+		     ? (md->interface->sin.sin_addr.s_addr
+			? md->interface->sin.sin_addr.s_addr
+			: md->interface->bcast.sin_addr.s_addr
+			)
+		     : 4);
 		im->flags = md->cast_flags;
 		im->port = md->rmtport;
 		im->mode = md->mode;
@@ -1756,11 +1758,11 @@ do_trustkey(srcadr, inter, inpkt, trust)
 	struct req_pkt *inpkt;
 	int trust;
 {
-	register u_long *kp;
+	register u_int32 *kp;
 	register int items;
 
 	items = INFO_NITEMS(inpkt->err_nitems);
-	kp = (u_long *)inpkt->data;
+	kp = (u_int32 *)inpkt->data;
 	while (items-- > 0) {
 		authtrust(*kp, trust);
 		kp++;
@@ -1795,15 +1797,15 @@ get_auth_info(srcadr, inter, inpkt)
 	ia = (struct info_auth *)prepare_pkt(srcadr, inter, inpkt,
 	    sizeof(struct info_auth));
 
-	ia->numkeys = htonl(authnumkeys);
-	ia->numfreekeys = htonl(authnumfreekeys);
-	ia->keylookups = htonl(authkeylookups);
-	ia->keynotfound = htonl(authkeynotfound);
-	ia->encryptions = htonl(authencryptions);
-	ia->decryptions = htonl(authdecryptions);
-	ia->keyuncached = htonl(authkeyuncached);
-	ia->timereset = htonl(current_time - auth_timereset);
-	
+	ia->numkeys = htonl((u_int32)authnumkeys);
+	ia->numfreekeys = htonl((u_int32)authnumfreekeys);
+	ia->keylookups = htonl((u_int32)authkeylookups);
+	ia->keynotfound = htonl((u_int32)authkeynotfound);
+	ia->encryptions = htonl((u_int32)authencryptions);
+	ia->decryptions = htonl((u_int32)authdecryptions);
+	ia->keyuncached = htonl((u_int32)authkeyuncached);
+	ia->timereset = htonl((u_int32)(current_time - auth_timereset));
+
 	(void) more_pkt();
 	flush_pkt();
 }
@@ -1872,10 +1874,10 @@ req_get_traps(srcadr, inter, inpkt)
 			it->trap_address = NSRCADR(&tr->tr_addr);
 			it->trap_port = NSRCPORT(&tr->tr_addr);
 			it->sequence = htons(tr->tr_sequence);
-			it->settime = htonl(current_time - tr->tr_settime);
-			it->origtime = htonl(current_time - tr->tr_origtime);
-			it->resets = htonl(tr->tr_resets);
-			it->flags = htonl((u_long)tr->tr_flags);
+			it->settime = htonl((u_int32)(current_time - tr->tr_settime));
+			it->origtime = htonl((u_int32)(current_time - tr->tr_origtime));
+			it->resets = htonl((u_int32)tr->tr_resets);
+			it->flags = htonl((u_int32)tr->tr_flags);
 			it = (struct info_trap *)more_pkt();
 		}
 	}
@@ -1989,7 +1991,7 @@ set_request_keyid(srcadr, inter, inpkt)
 	struct interface *inter;
 	struct req_pkt *inpkt;
 {
-	u_long keyid;
+	u_int32 keyid;
 
 	/*
 	 * Restrict ourselves to one item only.
@@ -1999,7 +2001,7 @@ set_request_keyid(srcadr, inter, inpkt)
 		return;
 	}
 
-	keyid = ntohl(*((u_long *)(inpkt->data)));
+	keyid = ntohl(*((u_int32 *)(inpkt->data)));
 	info_auth_keyid = keyid;
 	req_ack(srcadr, inter, inpkt, INFO_OKAY);
 }
@@ -2015,8 +2017,8 @@ set_control_keyid(srcadr, inter, inpkt)
 	struct interface *inter;
 	struct req_pkt *inpkt;
 {
-	u_long keyid;
-	extern u_long ctl_auth_keyid;
+	u_int32 keyid;
+	extern u_int32 ctl_auth_keyid;
 
 	/*
 	 * Restrict ourselves to one item only.
@@ -2026,7 +2028,7 @@ set_control_keyid(srcadr, inter, inpkt)
 		return;
 	}
 
-	keyid = ntohl(*((u_long *)(inpkt->data)));
+	keyid = ntohl(*((u_int32 *)(inpkt->data)));
 	ctl_auth_keyid = keyid;
 	req_ack(srcadr, inter, inpkt, INFO_OKAY);
 }
@@ -2066,21 +2068,21 @@ get_ctl_stats(srcadr, inter, inpkt)
 	ic = (struct info_control *)prepare_pkt(srcadr, inter, inpkt,
 	    sizeof(struct info_control));
 
-	ic->ctltimereset = htonl(current_time - ctltimereset);
-	ic->numctlreq = htonl(numctlreq);
-	ic->numctlbadpkts = htonl(numctlbadpkts);
-	ic->numctlresponses = htonl(numctlresponses);
-	ic->numctlfrags = htonl(numctlfrags);
-	ic->numctlerrors = htonl(numctlerrors);
-	ic->numctltooshort = htonl(numctltooshort);
-	ic->numctlinputresp = htonl(numctlinputresp);
-	ic->numctlinputfrag = htonl(numctlinputfrag);
-	ic->numctlinputerr = htonl(numctlinputerr);
-	ic->numctlbadoffset = htonl(numctlbadoffset);
-	ic->numctlbadversion = htonl(numctlbadversion);
-	ic->numctldatatooshort = htonl(numctldatatooshort);
-	ic->numctlbadop = htonl(numctlbadop);
-	ic->numasyncmsgs = htonl(numasyncmsgs);
+	ic->ctltimereset = htonl((u_int32)(current_time - ctltimereset));
+	ic->numctlreq = htonl((u_int32)numctlreq);
+	ic->numctlbadpkts = htonl((u_int32)numctlbadpkts);
+	ic->numctlresponses = htonl((u_int32)numctlresponses);
+	ic->numctlfrags = htonl((u_int32)numctlfrags);
+	ic->numctlerrors = htonl((u_int32)numctlerrors);
+	ic->numctltooshort = htonl((u_int32)numctltooshort);
+	ic->numctlinputresp = htonl((u_int32)numctlinputresp);
+	ic->numctlinputfrag = htonl((u_int32)numctlinputfrag);
+	ic->numctlinputerr = htonl((u_int32)numctlinputerr);
+	ic->numctlbadoffset = htonl((u_int32)numctlbadoffset);
+	ic->numctlbadversion = htonl((u_int32)numctlbadversion);
+	ic->numctldatatooshort = htonl((u_int32)numctldatatooshort);
+	ic->numctlbadop = htonl((u_int32)numctlbadop);
+	ic->numasyncmsgs = htonl((u_int32)numasyncmsgs);
 
 	(void) more_pkt();
 	flush_pkt();
@@ -2126,13 +2128,13 @@ get_leap_info(srcadr, inter, inpkt)
 	il->leap_warning = leap_warning;
 	il->leap_bits = (leapbits & INFO_LEAP_MASK)
 	    | ((leap_indicator != LEAP_NOWARNING) ? INFO_LEAP_OVERRIDE : 0);
-	il->leap_timer = htonl(leap_timer - current_time);
-	il->leap_processcalls = htonl(leap_processcalls);
-	il->leap_notclose = htonl(leap_notclose);
-	il->leap_monthofleap = htonl(leap_monthofleap);
-	il->leap_dayofleap = htonl(leap_dayofleap);
-	il->leap_hoursfromleap = htonl(leap_hoursfromleap);
-	il->leap_happened = htonl(leap_happened);
+	il->leap_timer = htonl((u_int32)(leap_timer - current_time));
+	il->leap_processcalls = htonl((u_int32)leap_processcalls);
+	il->leap_notclose = htonl((u_int32)leap_notclose);
+	il->leap_monthofleap = htonl((u_int32)leap_monthofleap);
+	il->leap_dayofleap = htonl((u_int32)leap_dayofleap);
+	il->leap_hoursfromleap = htonl((u_int32)leap_hoursfromleap);
+	il->leap_happened = htonl((u_int32)leap_happened);
 
 	(void) more_pkt();
 	flush_pkt();
@@ -2168,27 +2170,27 @@ get_kernel_info(srcadr, inter, inpkt)
 	/*
 	 * pll variables
 	 */
-	ik->offset = htonl(ntx.offset);
-	ik->freq = htonl(ntx.freq);
-	ik->maxerror = htonl(ntx.maxerror);
-	ik->esterror = htonl(ntx.esterror);
+	ik->offset = htonl((u_int32)ntx.offset);
+	ik->freq = htonl((u_int32)ntx.freq);
+	ik->maxerror = htonl((u_int32)ntx.maxerror);
+	ik->esterror = htonl((u_int32)ntx.esterror);
 	ik->status = htons(ntx.status);
-	ik->constant = htonl(ntx.constant);
-	ik->precision = htonl(ntx.precision);
-	ik->tolerance = htonl(ntx.tolerance);
+	ik->constant = htonl((u_int32)ntx.constant);
+	ik->precision = htonl((u_int32)ntx.precision);
+	ik->tolerance = htonl((u_int32)ntx.tolerance);
 
 	/*
 	 * pps variables
 	 */
-	ik->ppsfreq = htonl(ntx.ppsfreq);
-	ik->jitter = htonl(ntx.jitter);
+	ik->ppsfreq = htonl((u_int32)ntx.ppsfreq);
+	ik->jitter = htonl((u_int32)ntx.jitter);
 	ik->shift = htons(ntx.shift);
-	ik->stabil = htonl(ntx.stabil);
-	ik->jitcnt = htonl(ntx.jitcnt);
-	ik->calcnt = htonl(ntx.calcnt);
-	ik->errcnt = htonl(ntx.errcnt);
-	ik->stbcnt = htonl(ntx.stbcnt);
-	
+	ik->stabil = htonl((u_int32)ntx.stabil);
+	ik->jitcnt = htonl((u_int32)ntx.jitcnt);
+	ik->calcnt = htonl((u_int32)ntx.calcnt);
+	ik->errcnt = htonl((u_int32)ntx.errcnt);
+	ik->stbcnt = htonl((u_int32)ntx.stbcnt);
+
 	(void) more_pkt();
 	flush_pkt();
 }
@@ -2237,15 +2239,15 @@ get_clock_info(srcadr, inter, inpkt)
 		ic->flags = clock.flags;
 		ic->lastevent = clock.lastevent;
 		ic->currentstatus = clock.currentstatus;
-		ic->polls = htonl(clock.polls);
-		ic->noresponse = htonl(clock.noresponse);
-		ic->badformat = htonl(clock.badformat);
-		ic->baddata = htonl(clock.baddata);
-		ic->timestarted = htonl(clock.timereset);
+		ic->polls = htonl((u_int32)clock.polls);
+		ic->noresponse = htonl((u_int32)clock.noresponse);
+		ic->badformat = htonl((u_int32)clock.badformat);
+		ic->baddata = htonl((u_int32)clock.baddata);
+		ic->timestarted = htonl((u_int32)clock.timereset);
 		HTONL_FP(&clock.fudgetime1, &ic->fudgetime1);
 		HTONL_FP(&clock.fudgetime2, &ic->fudgetime2);
-		ic->fudgeval1 = htonl(clock.fudgeval1);
-		ic->fudgeval2 = htonl(clock.fudgeval2);
+		ic->fudgeval1 = htonl((u_int32)clock.fudgeval1);
+		ic->fudgeval2 = htonl((u_int32)clock.fudgeval2);
 
 		free_varlist(clock.kv_list);
 

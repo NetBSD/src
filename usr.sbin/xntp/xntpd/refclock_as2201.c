@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_as2201.c,v 1.2 1998/01/09 06:06:52 perry Exp $	*/
+/*	$NetBSD: refclock_as2201.c,v 1.3 1998/03/06 18:17:23 christos Exp $	*/
 
 /*
  * refclock_as2201 - clock driver for the Austron 2201A GPS
@@ -279,11 +279,11 @@ as2201_receive(rbufp)
 	peer = (struct peer *)rbufp->recv_srcclock;
 	pp = peer->procptr;
 	up = (struct as2201unit *)pp->unitptr;
-	pp->lencode = refclock_gtlin(rbufp, pp->lastcode, BMAX, &trtmp);
+	pp->lencode = refclock_gtlin(rbufp, pp->a_lastcode, BMAX, &trtmp);
 #ifdef DEBUG
 	if (debug)
         	printf("gps: timecode %d %d %s\n",
-		    up->linect, pp->lencode, pp->lastcode);
+		    up->linect, pp->lencode, pp->a_lastcode);
 #endif
 	if (pp->lencode == 0)
 		return;
@@ -304,12 +304,12 @@ as2201_receive(rbufp)
 		if ((int)(up->lastptr - up->stats + pp->lencode) > SMAX - 2)
 			return;
 		*up->lastptr++ = ' ';
-		(void)strcpy(up->lastptr, pp->lastcode);
+		(void)strcpy(up->lastptr, pp->a_lastcode);
 		up->lastptr += pp->lencode;
 		return;
 	} else {
 		if (pp->lencode == 1) {
-			up->linect = atoi(pp->lastcode);
+			up->linect = atoi(pp->a_lastcode);
 			return;
 		} else {
 			up->pollcnt = 2;
@@ -336,7 +336,7 @@ as2201_receive(rbufp)
 	/*
 	 * Timecode format: "yy:ddd:hh:mm:ss.mmm"
 	 */
-	if (sscanf(pp->lastcode, "%2d:%3d:%2d:%2d:%2d.%3d", &pp->year,
+	if (sscanf(pp->a_lastcode, "%2d:%3d:%2d:%2d:%2d.%3d", &pp->year,
 	    &pp->day, &pp->hour, &pp->minute, &pp->second, &pp->msec)
 	    != 6) {
 		refclock_report(peer, CEVNT_BADREPLY);
@@ -346,7 +346,7 @@ as2201_receive(rbufp)
 	/*
 	 * Test for synchronization (this is a temporary crock).
 	 */
-	if (pp->lastcode[2] != ':') {
+	if (pp->a_lastcode[2] != ':') {
 		pp->leap = LEAP_NOTINSYNC;
 	} else {
 		pp->leap = 0;
@@ -417,7 +417,7 @@ as2201_receive(rbufp)
 	 * send the next command. If not, simply write the timecode to
 	 * the clockstats file.
 	 */
-	(void)strcpy(up->lastptr, pp->lastcode);
+	(void)strcpy(up->lastptr, pp->a_lastcode);
 	up->lastptr += pp->lencode;
 	if (pp->sloppyclockflag & CLK_FLAG4) {
 		*up->lastptr++ = ' ';

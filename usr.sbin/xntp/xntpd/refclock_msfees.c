@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_msfees.c,v 1.2 1998/01/09 06:07:02 perry Exp $	*/
+/*	$NetBSD: refclock_msfees.c,v 1.3 1998/03/06 18:17:24 christos Exp $	*/
 
 /* refclock_ees - clock driver for the EES M201 receiver */
 
@@ -157,7 +157,7 @@
 
 /* Offsets of the bytes of the serial line code.  The clock gives
  * local time with a GMT/BST indication. The EESM_ definitions
- * give offsets into ees->lastcode.
+ * give offsets into ees->a_lastcode.
  */
 #define EESM_CSEC	 0	/* centiseconds - always zero in our clock  */
 #define EESM_SEC	 1	/* seconds in BCD			    */
@@ -653,7 +653,7 @@ static void ees_receive(rbufp)
 		/*FALLSTHROUGH*/
 
 	case EESCS_GOTSOME:
-		cp = &(ees->lastcode[ees->lencode]);
+		cp = &(ees->a_lastcode[ees->lencode]);
 
 		/* Gobble the bytes until the final (possibly stripped) 0xff */
 		while (dpt < dpend && (*dpt & 0x7f) != 0x7f) {
@@ -665,7 +665,7 @@ static void ees_receive(rbufp)
 				    msyslog(LOG_INFO,
 "I: ees clock: %d + %d > %d [%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x]",
 				    ees->lencode, dpend - dpt, LENEESPRT,
-#define D(x) (ees->lastcode[x])
+#define D(x) (ees->a_lastcode[x])
 				    D(0), D(1), D(2), D(3), D(4), D(5), D(6),
 				    D(7), D(8), D(9), D(10), D(11), D(12));
 #undef	D
@@ -701,7 +701,7 @@ static void ees_receive(rbufp)
 
 		/* Finally, got a complete buffer.  Mainline code will
 		 * continue on. */
-		cp = ees->lastcode;
+		cp = ees->a_lastcode;
 		break;
 
 	default:
@@ -727,7 +727,7 @@ static void ees_receive(rbufp)
 		return;
 	}
 
-	cp = ees->lastcode;
+	cp = ees->a_lastcode;
 
 	/* Check that centisecond is zero */
 	if (cp[EESM_CSEC] != 0) {
@@ -1497,7 +1497,7 @@ static void msfees_control(unit, in, out)
 		if (unitinuse[unit]) {
 			out->flags     |= ees->dump_vals | ees->usealldata;
 			out->lencode	= ees->lencode;
-			out->lastcode	= ees->lastcode;
+			strcpy(out->a_lastcode, ees->a_lastcode);
 			out->timereset	= current_time - ees->timestarted;
 			out->polls	= 0; /* we don't poll */
 			out->noresponse	= 0; /* ditto */
@@ -1507,7 +1507,7 @@ static void msfees_control(unit, in, out)
 			out->currentstatus = ees->status;
 		} else {
 			out->lencode	= 0;
-			out->lastcode	= "";
+			out->a_lastcode[0] = '\0';
 			out->polls	= out->noresponse = 0;
 			out->badformat	= out->baddata = 0;
 			out->timereset	= 0;

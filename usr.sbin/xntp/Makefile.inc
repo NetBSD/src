@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1997/10/25 06:58:54 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1998/03/06 18:17:16 christos Exp $
 
 WARNS?=	0
 CPPFLAGS += -I${.CURDIR}/../include -DHAVE_CONFIG_H

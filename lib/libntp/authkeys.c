@@ -1,4 +1,4 @@
-/*	$NetBSD: authkeys.c,v 1.2 1998/01/09 03:15:56 perry Exp $	*/
+/*	$NetBSD: authkeys.c,v 1.3 1998/03/06 18:17:14 christos Exp $	*/
 
 /*
  * authkeys.c - routines to manage the storage of authentication keys
@@ -24,7 +24,7 @@ struct savekey {
 	    char MD5_key[32];
 #endif
 	} k;
-	u_long keyid;
+	u_int32 keyid;
 	u_short flags;
 #ifdef	MD5
 	int keylen;
@@ -73,9 +73,9 @@ int authnumfreekeys;
 
 #ifdef	DES
 /*
- * Size of the key schedule (in u_longs for fast DES)
+ * Size of the key schedule (in u_int32s for fast DES)
  */
-#define	KEY_SCHED_SIZE	((128+sizeof(u_long)-1)/sizeof(u_long))	
+#define	KEY_SCHED_SIZE	((128+sizeof(u_int32)-1)/sizeof(u_int32))	
 
 /*
  * The zero key, which we always have.  Store the permutted key
@@ -86,16 +86,16 @@ int authnumfreekeys;
 /*
  * fast DES code expects base address aligned to u_long
  */
-u_long DESzeroekeys[KEY_SCHED_SIZE];
-u_long DESzerodkeys[KEY_SCHED_SIZE];
-u_long DEScache_ekeys[KEY_SCHED_SIZE];
-u_long DEScache_dkeys[KEY_SCHED_SIZE];
+u_int32 DESzeroekeys[KEY_SCHED_SIZE];
+u_int32 DESzerodkeys[KEY_SCHED_SIZE];
+u_int32 DEScache_ekeys[KEY_SCHED_SIZE];
+u_int32 DEScache_dkeys[KEY_SCHED_SIZE];
 #endif
 
 /*
  * The key cache.  We cache the last key we looked at here.
  */
-u_long cache_keyid;
+u_int32 cache_keyid;
 u_short cache_flags;
 
 #ifdef	MD5
@@ -141,7 +141,7 @@ init_auth()
  */
 struct savekey *
 auth_findkey(keyno)
-	u_long keyno;
+	u_int32 keyno;
 {
 	register struct savekey *sk;
 
@@ -160,7 +160,7 @@ auth_findkey(keyno)
  */
 int
 auth_havekey(keyno)
-	u_long keyno;
+	u_int32 keyno;
 {
 	register struct savekey *sk;
 
@@ -190,7 +190,7 @@ auth_havekey(keyno)
  */
 int
 authhavekey(keyno)
-	u_long keyno;
+	u_int32 keyno;
 {
 	register struct savekey *sk;
 
@@ -257,7 +257,7 @@ auth_moremem()
  */
 void
 authtrust(keyno, trust)
-	u_long keyno;
+	u_int32 keyno;
 	int trust;
 {
 	register struct savekey *sk;
@@ -326,7 +326,7 @@ authtrust(keyno, trust)
  */
 int
 authistrusted(keyno)
-	u_long keyno;
+	u_int32 keyno;
 {
 	register struct savekey *sk;
 
@@ -355,7 +355,7 @@ authistrusted(keyno)
  */
 void
 DESauth_setkey(keyno, key)
-	u_long keyno;
+	u_int32 keyno;
 	const u_int32 *key;
 {
 	register struct savekey *sk;
@@ -404,7 +404,7 @@ DESauth_setkey(keyno, key)
 #ifdef	MD5
 void
 MD5auth_setkey(keyno, key)
-    u_long keyno;
+    u_int32 keyno;
     const u_int32 *key;
 {
 	register struct savekey *sk;
@@ -416,8 +416,8 @@ MD5auth_setkey(keyno, key)
 	sk = key_hash[KEYHASH(keyno)];
 	while (sk != 0) {
 		if (keyno == sk->keyid) {
-			strncpy(sk->k.MD5_key, (char *)key, sizeof(sk->k.MD5_key));
-			if ((sk->keylen = strlen((char *)key)) > 
+			strncpy(sk->k.MD5_key, (const char *)key, sizeof(sk->k.MD5_key));
+			if ((sk->keylen = strlen((const char *)key)) > 
 			                          sizeof(sk->k.MD5_key))
 			    sk->keylen = sizeof(sk->k.MD5_key);
 
@@ -443,8 +443,8 @@ MD5auth_setkey(keyno, key)
 	authfreekeys = sk->next;
 	authnumfreekeys--;
 
-	strncpy(sk->k.MD5_key, (char *)key, sizeof(sk->k.MD5_key));
-	if ((sk->keylen = strlen((char *)key)) > sizeof(sk->k.MD5_key))
+	strncpy(sk->k.MD5_key, (const char *)key, sizeof(sk->k.MD5_key));
+	if ((sk->keylen = strlen((const char *)key)) > sizeof(sk->k.MD5_key))
 	    sk->keylen = sizeof(sk->k.MD5_key);
 
 	sk->keyid = keyno;
@@ -500,7 +500,7 @@ auth_delkeys()
  */
 void
 auth1crypt(keyno, pkt, length)
-	u_long keyno;
+	u_int32 keyno;
 	u_int32 *pkt;
 	int length;	/* length of all encrypted data */
 {
@@ -529,11 +529,11 @@ auth1crypt(keyno, pkt, length)
 
 
 /*
- *  auth1crypt - support for two stage encryption, part 1.
+ *  auth2crypt - support for two stage encryption, part 2.
  */
 int
 auth2crypt(keyno, pkt, length)
-	u_long keyno;
+	u_int32 keyno;
 	u_int32 *pkt;
 	int length;	/* total length of encrypted area */
 {
@@ -560,7 +560,7 @@ auth2crypt(keyno, pkt, length)
 
 int
 authencrypt(keyno, pkt, length)
-	u_long keyno;
+	u_int32 keyno;
 	u_int32 *pkt;
 	int length;	/* length of encrypted portion of packet */
 {
@@ -589,7 +589,7 @@ authencrypt(keyno, pkt, length)
 
 int
 authdecrypt(keyno, pkt, length)
-    u_long keyno;
+    u_int32 keyno;
     u_int32 *pkt;
     int length;	/* length of variable data in octets */
 {

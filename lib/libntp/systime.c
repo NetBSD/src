@@ -1,4 +1,4 @@
-/*	$NetBSD: systime.c,v 1.2 1998/01/09 03:16:32 perry Exp $	*/
+/*	$NetBSD: systime.c,v 1.3 1998/03/06 18:17:16 christos Exp $	*/
 
 /*
  * systime -- routines to fiddle a UNIX clock.
@@ -321,6 +321,7 @@ adj_systime(now)
 	 */
 	if (
 #ifndef SYS_WINNT
+        /* casey - we need a posix type thang here */
 	    (adjtime(&adjtv, &oadjtv) < 0)
 #else
 	    (!SetSystemTimeAdjustment(dwTimeAdjustment, FALSE))
@@ -438,7 +439,13 @@ step_systime_real(now)
 	}
 #if DEBUG
 	if (debug) {
-		GETTIMEOFDAY(&timetv, (struct timezone *) 0);
+#ifdef HAVE_GETCLOCK
+        (void) getclock(TIMEOFDAY, &ts);
+        timetv.tv_sec = ts.tv_sec;
+        timetv.tv_usec = ts.tv_nsec / 1000;
+#else /*  not HAVE_GETCLOCK */
+	(void) GETTIMEOFDAY(&timetv, (struct timezone *)0);
+#endif /* not HAVE_GETCLOCK */
 		printf("step: new timetv = %s sec\n", utvtoa(&timetv));
 	}
 #endif

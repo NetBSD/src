@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_syslog.h,v 1.2 1998/01/09 06:06:15 perry Exp $	*/
+/*	$NetBSD: ntp_syslog.h,v 1.3 1998/03/06 18:17:18 christos Exp $	*/
 
 /*
  * A hack for platforms which require specially built syslog facilities
@@ -14,7 +14,9 @@
 # ifdef VMS
 extern void msyslog();
 # else
+#   ifndef SYS_VXWORKS
 #   include <syslog.h>
+#   endif
 # endif /* VMS */
 
 # include <stdio.h>
@@ -24,7 +26,7 @@ extern void msyslog();
 extern int syslogit;
 extern FILE *syslog_file;
 
-#if defined(VMS)
+#if defined(VMS) || defined (SYS_VXWORKS)
 #define	LOG_EMERG	0	/* system is unusable */
 #define	LOG_ALERT	1	/* action must be taken immediately */
 #define	LOG_CRIT	2	/* critical conditions */
@@ -33,7 +35,7 @@ extern FILE *syslog_file;
 #define	LOG_NOTICE	5	/* normal but signification condition */
 #define	LOG_INFO	6	/* informational */
 #define	LOG_DEBUG	7	/* debug-level messages */
-#endif /* VMS */
+#endif /* VMS || VXWORKS */
 
 /*
  * syslog output control

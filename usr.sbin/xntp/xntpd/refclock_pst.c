@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_pst.c,v 1.2 1998/01/09 06:07:09 perry Exp $	*/
+/*	$NetBSD: refclock_pst.c,v 1.3 1998/03/06 18:17:24 christos Exp $	*/
 
 /*
  * refclock_pst - clock driver for PSTI/Traconex WWV/WWVH receivers
@@ -219,7 +219,7 @@ pst_receive(rbufp)
 	peer = (struct peer *)rbufp->recv_srcclock;
 	pp = peer->procptr;
 	up = (struct pstunit *)pp->unitptr;
-	up->lastptr += refclock_gtlin(rbufp, up->lastptr, pp->lastcode
+	up->lastptr += refclock_gtlin(rbufp, up->lastptr, pp->a_lastcode
 	    + BMAX - 2 - up->lastptr, &trtmp);
 	*up->lastptr++ = ' ';
 	*up->lastptr = '\0';
@@ -231,15 +231,15 @@ pst_receive(rbufp)
 	if (!up->tcswitch)
 		pp->lastrec = trtmp;
 	up->tcswitch++;
-	pp->lencode = up->lastptr - pp->lastcode;
+	pp->lencode = up->lastptr - pp->a_lastcode;
 	if (up->tcswitch < 3)
 		return;
 	up->pollcnt = 2;
-	record_clock_stats(&peer->srcadr, pp->lastcode);
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 #ifdef DEBUG
 	if (debug)
         	printf("pst: timecode %d %s\n", pp->lencode,
-		    pp->lastcode);
+		    pp->a_lastcode);
 #endif
 
 	/*
@@ -256,7 +256,7 @@ pst_receive(rbufp)
 	 * Timecode format:
 	 * "ahh:mm:ss.fffs yy/dd/mm/ddd frdzycchhSSFTttttuuxx"
 	 */
-	if (sscanf(pp->lastcode, "%c%2d:%2d:%2d.%3d%c %9s%3d%13s%4ld",
+	if (sscanf(pp->a_lastcode, "%c%2d:%2d:%2d.%3d%c %9s%3d%13s%4ld",
 	    &ampmchar, &pp->hour, &pp->minute, &pp->second,
 	    &pp->msec, &daychar, junque, &pp->day,
 	    info, &ltemp) != 10) {
@@ -327,7 +327,7 @@ pst_poll(unit, peer)
 	else
 		up->pollcnt--;
 	up->tcswitch = 0;
-	up->lastptr = pp->lastcode;
+	up->lastptr = pp->a_lastcode;
 	if (write(pp->io.fd, "QTQDQMT", 6) != 6) {
 		refclock_report(peer, CEVNT_FAULT);
 	} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.3 1998/01/09 06:06:19 perry Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.4 1998/03/06 18:17:18 christos Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -33,6 +33,15 @@
 #endif
 #endif /* SYS_WINNT */
 
+#ifdef SYS_VXWORKS
+#include "ioLib.h"
+#include "sockLib.h"
+#include "timers.h"
+/* select wants a zero structure ... */
+struct timeval tv0 = {0,0};
+#endif
+
+
 #if defined(SYS_HPUX)
 #include <utmp.h>
 #endif
@@ -55,7 +64,16 @@
 /*
  * Scheduling priority we run at
  */
+#ifndef SYS_VXWORKS
 #define	NTPDATE_PRIO	(-12)
+#else
+#define	NTPDATE_PRIO	(100)
+#endif
+
+#if defined(HAVE_TIMER_SETTIME) || defined (HAVE_TIMER_CREATE)
+/* POSIX TIMERS - vxWorks doesn't have itimer - casey */
+static timer_t ntpdate_timerid;
+#endif
 
 /*
  * Compatibility stuff for Version 2
@@ -119,7 +137,7 @@ struct server **sys_servers;	/* the server list */
 int sys_numservers = 0;		/* number of servers to poll */
 int sys_maxservers = 0;		/* max number of servers to deal with */
 int sys_authenticate = 0;	/* true when authenticating */
-u_long sys_authkey = 0;		/* set to authentication key in use */
+u_int32 sys_authkey = 0;	/* set to authentication key in use */
 u_long sys_authdelay = 0;	/* authentication delay */
 int sys_version = NTP_VERSION;	/* version to poll with */
 
@@ -146,7 +164,7 @@ int complete_servers = 0;
 #endif /* KEYFILE */
 
 #ifndef SYS_WINNT
-char *key_file = KEYFILE;
+const char *key_file = KEYFILE;
 #else
 char key_file_storage[MAX_PATH+1], *key_file ;
 #endif	 /* SYS_WINNT */
@@ -196,13 +214,80 @@ WORD wVersionRequested;
 WSADATA wsaData;
 #endif /* SYS_WINNT */
 
+#ifdef NO_MAIN_ALLOWED
+CALL(ntpdate,"ntpdate",ntpdatemain);
+
+void clear_globals()
+{
+  extern int ntp_optind;
+
+  /*
+   * Debugging flag
+   */
+  debug = 0;
+
+  ntp_optind = 0;
+  /*
+   * Initializing flag.  All async routines watch this and only do their
+   * thing when it is clear.
+   */
+  initializing = 1;
+
+  /*
+   * Alarm flag.  Set when an alarm occurs
+   */
+  alarm_flag = 0;
+
+  /*
+   * Simple query flag.
+   */
+  simple_query = 0;
+
+  /*
+   * Unpriviledged port flag.
+   */
+  unpriv_port = 0;
+
+  /*
+   * Time to spend measuring drift rate
+   */
+  rate = 0;
+  /*
+   * Systemwide parameters and flags
+   */
+  sys_numservers = 0;     /* number of servers to poll */
+  sys_maxservers = 0;     /* max number of servers to deal with */
+  sys_authenticate = 0;   /* true when authenticating */
+  sys_authkey = 0;     /* set to authentication key in use */
+  sys_authdelay = 0;   /* authentication delay */
+  sys_version = NTP_VERSION;  /* version to poll with */
+
+  /*
+   * The current internal time
+   */
+  current_time = 0;
+
+  /*
+   * Counter for keeping track of completed servers
+   */
+  complete_servers = 0;
+  verbose = 0;
+  always_step = 0;
+  never_step = 0;
+}
+#endif
 
 /*
  * Main program.  Initialize us and loop waiting for I/O and/or
  * timer expiries.
  */
 void
-main(argc, argv)
+#ifndef NO_MAIN_ALLOWED
+main
+#else
+ntpdatemain
+#endif /* NO_MAIN_ALLOWED */
+(argc, argv)
      int argc;
      char *argv[];
 {
@@ -230,9 +315,11 @@ main(argc, argv)
     {
       msyslog(LOG_ERR, "ExpandEnvironmentStrings(KEYFILE) failed: %m\n");
     }
-
 #endif /* SYS_WINNT */
 
+#ifdef NO_MAIN_ALLOWED
+  clear_globals();
+#endif
   errflg = 0;
   progname = argv[0];
   syslogit = 0;
@@ -354,7 +441,7 @@ main(argc, argv)
    * Logging.  Open the syslog if we have to
    */
   if (syslogit) {
-#ifndef SYS_WINNT
+#if !defined (SYS_WINNT) && !defined (SYS_VXWORKS)
 #ifndef	LOG_DAEMON
     openlog("ntpdate", LOG_PID);
 #else
@@ -408,6 +495,9 @@ main(argc, argv)
   /*
    * Set the priority.
    */
+#ifdef SYS_VXWORKS
+  taskPrioritySet( taskIdSelf(), NTPDATE_PRIO);
+#endif
 #if defined(HAVE_ATT_NICE)
   nice (NTPDATE_PRIO);
 #endif
@@ -439,9 +529,18 @@ main(argc, argv)
       /*
        * Nothing to do.	 Wait for something.
        */
+      struct timeval timeout;
+
+      timeout.tv_sec = 60;	/* Give up after 60 seconds */
+      timeout.tv_usec = 0;
       rdfdes = fdmask;
+#ifndef SYS_VXWORKS
       nfound = select(fd+1, &rdfdes, (fd_set *)0,
-		      (fd_set *)0, (struct timeval *)0);
+		      (fd_set *)0, &timeout);
+#else
+      nfound = select(fd+1, &rdfdes, (fd_set *)0,
+		      (fd_set *)0, &tv0);
+#endif
       if (nfound > 0)
 	input_handler();
       else if (
@@ -456,7 +555,9 @@ main(argc, argv)
 #endif
 	  msyslog(LOG_ERR, "select() error: %m");
       } else {
+#ifndef SYS_VXWORKS
 	msyslog(LOG_DEBUG, "select(): nfound = %d, error: %m", nfound);
+#endif
       }
       if (alarm_flag) {		/* alarmed? */
 	was_alarmed = 1;
@@ -496,7 +597,14 @@ main(argc, argv)
 #ifdef SYS_WINNT
   WSACleanup();
 #endif
+
+#ifdef SYS_VXWORKS    
+  close (fd);
+  timer_delete(ntpdate_timerid);
+  clock_adjust();
+#else
   exit(clock_adjust());
+#endif /* SYS_VXWORKS */
 }
 
 
@@ -1210,7 +1318,11 @@ static void
 init_alarm()
 {
 #ifndef SYS_WINNT
+#ifndef HAVE_TIMER_SETTIME
   struct itimerval itimer;
+#else
+  struct itimerspec ntpdate_itimer;
+#endif
 #else
   TIMECAPS tc;
   HANDLE hToken;
@@ -1222,6 +1334,34 @@ init_alarm()
   alarm_flag = 0;
 
 #ifndef SYS_WINNT
+#if defined(HAVE_TIMER_CREATE) && defined(HAVE_TIMER_SETTIME)
+  alarm_flag = 0;
+  /* this code was put in as setitimer() is non existant this us the 
+   * POSIX "equivalents" setup - casey
+   */
+  /* ntpdate_timerid is global - so we can kill timer later */
+  if (timer_create (CLOCK_REALTIME, NULL, &ntpdate_timerid) ==
+#ifdef SYS_VXWORKS
+      ERROR
+#else
+      -1
+#endif
+      )
+    {
+      fprintf (stderr, "init_alarm(): timer_create (...) FAILED\n");
+      return;
+    }
+
+  /*  TIMER_HZ = (5)
+   * Set up the alarm interrupt.  The first comes 1/(2*TIMER_HZ)
+   * seconds from now and they continue on every 1/TIMER_HZ seconds.
+   */
+  (void) signal_no_reset(SIGALRM, alarming);
+  ntpdate_itimer.it_interval.tv_sec = ntpdate_itimer.it_value.tv_sec = 0;
+  ntpdate_itimer.it_interval.tv_nsec = 1000000000/TIMER_HZ;
+  ntpdate_itimer.it_value.tv_nsec = 1000000000/(TIMER_HZ<<1);
+  timer_settime(ntpdate_timerid, 0 /* !TIMER_ABSTIME */, &ntpdate_itimer, NULL);
+#else
   /*
    * Set up the alarm interrupt.  The first comes 1/(2*TIMER_HZ)
    * seconds from now and they continue on every 1/TIMER_HZ seconds.
@@ -1231,6 +1371,7 @@ init_alarm()
   itimer.it_interval.tv_usec = 1000000/TIMER_HZ;
   itimer.it_value.tv_usec = 1000000/(TIMER_HZ<<1);
   setitimer(ITIMER_REAL, &itimer, (struct itimerval *)0);
+#endif
 #else	/* SYS_WINNT */
   _tzset();
 
@@ -1428,6 +1569,16 @@ init_io()
    * set non-blocking,
    */
 #ifndef SYS_WINNT
+#ifdef SYS_VXWORKS
+  {
+    int on = TRUE;
+
+    if (ioctl(fd,FIONBIO, &on) == ERROR) {
+      msyslog(LOG_ERR, "ioctl(FIONBIO) fails: %m");
+      exit(1);
+    }
+  }
+#else
 #if defined(O_NONBLOCK)
   if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0) {
     msyslog(LOG_ERR, "fcntl(FNDELAY|FASYNC) fails: %m");
@@ -1444,6 +1595,7 @@ init_io()
 #else /* FNDELAY */
 # include "Bletch: Need non blocking I/O"
 #endif /* FNDELAY */
+#endif /* SYS_VXWORKS */
 #endif /* O_NONBLOCK */
 #else /* SYS_WINNT */
   if (ioctlsocket(fd, FIONBIO, (u_long *) &on) == SOCKET_ERROR) {
@@ -1685,14 +1837,14 @@ l_step_systime(ts)
   /*
    * Take the absolute value of the offset
    */
-  ftmp = ts;
+  ftmp = *ts;
   if (L_ISNEG(&ftmp)) {
-    L_NEG(&tmp);
+    L_NEG(&ftmp);
     isneg = 1;
   } else
     isneg = 0;
 
-  if (tmp_ui >= 3) {		/* Step it and slew - we might win */
+  if (ftmp.l_ui >= 3) {		/* Step it and slew - we might win */
     n = step_systime_real(ts);
     if (!n)
       return n;
@@ -1838,7 +1990,7 @@ vsprintf(str, fmt, ap)
   len = _doprnt(fmt, ap, &f);
   *f._ptr = 0;
   return (len);
-  }
+}
 #endif
 
 #if 0
