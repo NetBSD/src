@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.29 2004/08/23 18:21:51 drochner Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.30 2004/12/14 02:34:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -151,12 +151,6 @@ struct cbslot_attach_args {
 	int cba_cacheline;		/* cache line size */
 	int cba_lattimer;		/* latency timer */
 };
-
-
-#define cbslotcf_dev  cf_loc[0]
-#define cbslotcf_func cf_loc[1]
-#define CBSLOT_UNK_DEV -1
-#define CBSLOT_UNK_FUNC -1
 
 
 struct cardbus_devfunc;
