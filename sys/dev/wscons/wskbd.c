@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.24 1999/06/30 06:21:21 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.25 1999/07/01 11:18:20 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.24 1999/06/30 06:21:21 augustss Exp $";
+    "$NetBSD: wskbd.c,v 1.25 1999/07/01 11:18:20 drochner Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -871,10 +871,12 @@ getkeyrepeat:
 					 | MOD_META_L | MOD_META_R
 					 | MOD_COMMAND
 					 | MOD_COMMAND1 | MOD_COMMAND2);
+#if NWSDISPLAY > 0
 		if (sc->sc_repeating) {
 			sc->sc_repeating = 0;
 			untimeout(wskbd_repeat, sc);
 		}
+#endif
 		splx(s);
 	}
 #endif
