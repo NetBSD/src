@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.10 1997/09/20 05:50:45 mikel Exp $	*/
+/*	$NetBSD: vacation.c,v 1.11 1997/10/20 02:53:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.10 1997/09/20 05:50:45 mikel Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.11 1997/10/20 02:53:03 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -331,7 +331,7 @@ junkmail()
 /*
  * recent --
  *	find out if user has gotten a vacation message recently.
- *	use bcopy for machines with alignment restrictions
+ *	use memmove for machines with alignment restrictions
  */
 int
 recent()
@@ -345,13 +345,13 @@ recent()
 	if ((db->get)(db, &key, &data, 0))
 		next = SECSPERDAY * DAYSPERWEEK;
 	else
-		bcopy(data.data, &next, sizeof(next));
+		memmove(&next, data.data, sizeof(next));
 
 	/* get record for this address */
 	key.data = from;
 	key.size = strlen(from);
 	if (!(db->get)(db, &key, &data, 0)) {
-		bcopy(data.data, &then, sizeof(then));
+		memmove(&then, data.data, sizeof(then));
 		if (next == (time_t)LONG_MAX ||			/* XXX */
 		    then + next > time(NULL))
 			return(1);
