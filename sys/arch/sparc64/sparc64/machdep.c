@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.133 2002/10/16 16:11:41 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.134 2002/11/27 18:00:27 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -395,6 +395,62 @@ struct sigframe {
 	struct	sigcontext sf_sc;	/* actual sigcontext */
 };
 
+
+static char *parse_bootfile(char *);
+static char *parse_bootargs(char *);
+
+static char *
+parse_bootfile(args)
+	char *args;
+{
+	char *cp;
+
+	/*
+	 * bootargs is of the form: [kernelname] [args...]
+	 * It can be the empty string if we booted from the default
+	 * kernel name.
+	 */
+	cp = args;
+	for (cp = args; *cp != 0 && *cp != ' ' && *cp != '\t'; cp++) {
+		if (*cp == '-') {
+			int c;
+			/*
+			 * If this `-' is most likely the start of boot
+			 * options, we're done.
+			 */
+			if (cp == args)
+				break;
+			if ((c = *(cp-1)) == ' ' || c == '\t')
+				break;
+		}
+	}
+	/* Now we've separated out the kernel name from the args */
+	*cp = '\0';
+	return (args);
+}
+
+static char *
+parse_bootargs(args)
+	char *args;
+{
+	char *cp;
+
+	for (cp = args; *cp != '\0'; cp++) {
+		if (*cp == '-') {
+			int c;
+			/*
+			 * Looks like options start here, but check this
+			 * `-' is not part of the kernel name.
+			 */
+			if (cp == args)
+				break;
+			if ((c = *(cp-1)) == ' ' || c == '\t')
+				break;
+		}
+	}
+	return (cp);
+}
+
 /*
  * machine dependent system variables.
  */
@@ -418,31 +474,42 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	switch (name[0]) {
 	case CPU_BOOTED_KERNEL:
-		if (((chosen = OF_finddevice("/chosen")) != -1) &&
+		if (((chosen = OF_finddevice("/chosen")) == -1) ||
 		    ((OF_getprop(chosen, "bootargs", bootargs, sizeof bootargs))
-		      >= 0)) {
-			/*
-			 * bootargs is of the form: [kernelname] [args...]
-			 * It can be the empty string if we booted from the default
-			 * kernel name.
-			 */
-			for (cp = bootargs; 
-			     *cp && *cp != ' ' && *cp != '\t' && *cp != '\n';
-			     cp++);
-			*cp = 0;
-			/* Now we've separated out the kernel name from the args */
-			cp = bootargs;
-			if (*cp == 0 || *cp == '-') 
-				/*
-				 * We can leave it NULL && let userland handle
-				 * the failure or set it to the default name,
-				 * `netbsd' 
-				 */
-				cp = "netbsd";
-		}
+		      < 0))
+			return (ENOENT);
+
+		cp = parse_bootfile(bootargs);
+		if (cp == NULL)
+			return (ENOENT);
+		if (*cp == '\0')
+			/* Unknown to firmware, return default name */
+			cp = "netbsd";
+		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
+
+	case CPU_BOOT_ARGS:
+		if (((chosen = OF_finddevice("/chosen")) == -1) ||
+		    ((OF_getprop(chosen, "bootargs", bootargs, sizeof bootargs))
+		      < 0))
+			return (ENOENT);
+
+		cp = parse_bootargs(bootargs);
 		if (cp == NULL || cp[0] == '\0')
 			return (ENOENT);
 		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
+
+	case CPU_BOOTED_DEVICE:
+		if (((chosen = OF_finddevice("/chosen")) == -1) ||
+		    ((OF_getprop(chosen, "bootpath", bootargs, sizeof bootargs))
+		      < 0))
+			return (ENOENT);
+
+		return (sysctl_rdstring(oldp, oldlenp, newp, bootargs));
+
+	case CPU_ARCH:
+		/* CPU architecture version */
+		return (sysctl_rdint(oldp, oldlenp, newp, 9));
+
 	default:
 		return (EOPNOTSUPP);
 	}
