@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.46 1999/01/05 00:31:20 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.47 1999/01/23 15:46:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.46 1999/01/05 00:31:20 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.47 1999/01/23 15:46:24 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -566,6 +566,8 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 			fprintf(ttyout, "Requesting %s\n  (via %s)\n",
 			    url, proxyenv);
 			fprintf(fin, "GET %s HTTP/1.0\r\n", path);
+			if (flushcache)
+				fprintf(fin, "Pragma: no-cache\r\n");
 		} else {
 			struct utsname unam;
 
@@ -578,6 +580,8 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 				    unam.sysname, unam.release);
 			}
 			fprintf(fin, "Connection: close\r\n");
+			if (flushcache)
+				fprintf(fin, "Cache-Control: no-cache\r\n");
 		}
 		if (wwwauth) {
 			fprintf(ttyout, "  (with authorization)\n");

@@ -1,9 +1,9 @@
-.\" 	$NetBSD: ftp.1,v 1.30 1998/10/08 14:45:26 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.31 1999/01/23 15:46:24 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
-.\" Portions Copyright (c) 1997, 1998
-.\"	The NetBSD Foundation, Inc.
+.\" Portions Copyright (c) 1997, 1998, 1999
+.\"	The NetBSD Foundation, Inc.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd August 2, 1998
+.Dd January 24, 1999
 .Dt FTP 1
 .Os BSD 4.2
 .Sh NAME
@@ -60,15 +60,19 @@ file transfer program
 .Op Fl V
 .Op Ar host Op Ar port
 .Nm ftp
-.Op Fl o Ar output
-ftp://[\fIuser\fR:\fIpassword\fR@]\fIhost\fR[:\fIport\fR]/\fIfile\fR[/]
-.Nm ftp
-.Op Fl o Ar output
-http://\fIhost\fR[:\fIport\fR]/\fIfile\fR
-.Nm ftp
+.Op Fl f
 .Op Fl o Ar output
 file:///\fIfile\fR
 .Nm ftp
+.Op Fl f
+.Op Fl o Ar output
+ftp://[\fIuser\fR:\fIpassword\fR@]\fIhost\fR[:\fIport\fR]/\fIfile\fR[/]
+.Nm ftp
+.Op Fl f
+.Op Fl o Ar output
+http://\fIhost\fR[:\fIport\fR]/\fIfile\fR
+.Nm ftp
+.Op Fl f
 .Op Fl o Ar output
 \fIhost\fR:[/\fIpath\fR/]\fIfile\fR[/]
 .Sh DESCRIPTION
@@ -109,6 +113,11 @@ Enables debugging.
 .It Fl e
 Disables command line editing.
 This is useful for Emacs ange-ftp mode.
+.It Fl f
+Forces a cache reload for transfers that go through the
+.Ev ftp_proxy
+or 
+.Ev http_proxy .
 .It Fl g
 Disables file name globbing.
 .It Fl i
