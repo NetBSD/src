@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.12 1997/04/06 08:47:17 cgd Exp $ */
+/* $NetBSD: asm.h,v 1.13 1997/04/08 00:19:04 cgd Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -628,3 +628,31 @@ label:	ASCIZ msg;						\
 	.weak alias;						\
 	alias = sym
 #endif
+
+/*
+ * Kernel RCS ID tag and copyright macros
+ */
+
+#ifdef _KERNEL
+
+#define	__KERNEL_SECTIONSTRING(_sec, _str)				\
+	.section _sec ; .asciz _str ; .text
+
+#ifdef __ELF__
+
+#define	__KERNEL_RCSID(_n, _s)		__KERNEL_SECTIONSTRING(.ident, _s)
+#define	__KERNEL_COPYRIGHT(_n, _s)	__KERNEL_SECTIONSTRING(.copyright, _s)
+
+#else /* __ELF__ */
+
+#define	__KERNEL_RCSID(_n, _s)		__KERNEL_SECTIONSTRING(.text, _s)
+#define	__KERNEL_COPYRIGHT(_n, _s)	__KERNEL_SECTIONSTRING(.text, _s)
+
+#endif /* __ELF__ */
+
+#ifdef NO_KERNEL_RCSIDS
+#undef __KERNEL_RCSID
+#define	__KERNEL_RCSID(_n, _s)		/* nothing */
+#endif
+
+#endif /* _KERNEL */
