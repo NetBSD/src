@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.42 2004/02/10 00:47:41 dyoung Exp $	*/
+/*	$NetBSD: wivar.h,v 1.43 2004/02/10 00:59:38 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -185,7 +185,7 @@ struct wi_node {
 #define	WI_FLAGS_ATTACHED		0x0001
 #define	WI_FLAGS_INITIALIZED		0x0002
 #define	WI_FLAGS_OUTRANGE		0x0004
-#define	WI_FLAGS_RSSADAPT		0x0008
+#define	WI_FLAGS_RSSADAPTSTA		0x0008
 #define	WI_FLAGS_HAS_MOR		0x0010
 #define	WI_FLAGS_HAS_ROAMING		0x0020
 #define	WI_FLAGS_HAS_DIVERSITY		0x0040
