@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.13 1999/01/07 02:22:51 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.14 1999/01/08 11:58:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,15 +43,15 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #if defined(__NetBSD__)
+#include <sys/device.h>
 #include <sys/ioctl.h>
 #elif defined(__FreeBSD__)
 #include <sys/ioccom.h>
 #include <sys/filio.h>
 #include <sys/module.h>
 #include <sys/bus.h>
+#include <sys/ioccom.h>
 #endif
-#include <sys/device.h>
-#include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/select.h>
@@ -542,5 +542,5 @@ uhidpoll(dev, events, p)
 }
 
 #if defined(__FreeBSD__)
-DRIVER_MODULE(uhid, usb, uhid_driver, uhid_devclass, usb_driver_load, 0);
+DRIVER_MODULE(uhid, usb, uhid_driver, uhid_devclass, usbd_driver_load, 0);
 #endif

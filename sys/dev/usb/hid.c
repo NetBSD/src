@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.6 1999/01/07 02:22:50 augustss Exp $	*/
+/*	$NetBSD: hid.c,v 1.7 1999/01/08 11:58:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,10 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-
+#if defined(__FreeBSD__)
+#include <sys/bus.h>
+#endif
+ 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 
