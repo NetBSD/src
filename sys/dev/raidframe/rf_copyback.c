@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.4 1999/02/23 23:53:37 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.5 1999/02/27 01:48:13 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -128,7 +128,7 @@ rf_CopybackReconstructedData(raidPtr)
 	if (raidPtr->raid_cinfo[frow][fcol].ci_vp != NULL) {
 		printf("Closed the open device: %s\n",
 		    raidPtr->Disks[frow][fcol].devname);
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(raidPtr->raid_cinfo[frow][fcol].ci_vp, 0);
 		(void) vn_close(raidPtr->raid_cinfo[frow][fcol].ci_vp,
 				FREAD | FWRITE, proc->p_ucred, proc);
 	}
