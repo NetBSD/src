@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.56 2003/06/19 14:14:27 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.57 2003/06/20 07:14:34 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -717,3 +717,30 @@ sys/dev/pci/ydsreg.h				1.3-1.4
 	according to Jaroslav Kysela <perex [at] suse [dot] cz> of ALSA,
 	there's no error reported so far.
 	[hubertf, ticket #1322]
+
+sys/arch/newsmips/conf/GENERIC			1.57
+
+	Enable options NTP, DDB and SCSIVERBOSE.
+	[tsutsui, ticket #1285]
+
+sys/arch/newsmips/conf/GENERIC			1.59
+sys/arch/newsmips/conf/INSTALL			1.17
+
+	Use wildcard for scsibus at sc0.
+	[tsutsui, ticket #1287]
+
+sys/dev/sbus/stp4020.c				patch
+
+	Make it compilable.
+	[martin, ticket #1319]
+
+etc/rc.d/ipnat					1.9
+
+	Change behaviour of 'reload' to only reload the NAT rules and NOT flush
+	the state table, making it much more useful.
+	[grant, ticket #1321]
+
+sys/dev/pci/if_wmreg.h				1.5
+
+	Fix to recognize the PHY on i83543 correctly.
+	[thorpej, ticket #1299]
