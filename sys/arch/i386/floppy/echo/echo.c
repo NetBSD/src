@@ -32,7 +32,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define	writestr(x)	write(STDOUT_FILENO, x, sizeof(x))
+#define	writestr(x)	write(STDOUT_FILENO, x, strlen(x))
 
 /* ARGSUSED */
 main(argc, argv)
