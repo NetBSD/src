@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.98 1999/12/03 06:10:01 itojun Exp $	*/
+/*	$NetBSD: fetch.c,v 1.99 1999/12/05 22:49:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.98 1999/12/03 06:10:01 itojun Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.99 1999/12/05 22:49:27 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -453,7 +453,6 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 #ifdef NI_NUMERICHOST
 	struct addrinfo		hints, *res, *res0 = NULL;
 	int			error;
-	const char		*reason;
 	char			hbuf[NI_MAXHOST];
 #else
 	struct sockaddr_in	sin;
@@ -738,7 +737,6 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 		if (res0->ai_canonname)
 			host = res0->ai_canonname;
 
-		reason = NULL;
 		s = -1;
 		for (res = res0; res; res = res->ai_next) {
 			if (getnameinfo(res->ai_addr, res->ai_addrlen,
@@ -752,13 +750,11 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			s = socket(res->ai_family, res->ai_socktype,
 				res->ai_protocol);
 			if (s < 0) {
-				reason = "socket";
 				warn("Can't create socket");
 				continue;
 			}
 
 			if (xconnect(s, res->ai_addr, res->ai_addrlen) < 0) {
-				reason = "connect";
 				warn("Connect to address `%s'", hbuf);
 				close(s);
 				s = -1;
@@ -1303,10 +1299,6 @@ cleanup_fetch_url:
 		close(s);
 	if (closefunc != NULL && fout != NULL)
 		(*closefunc)(fout);
-#ifdef NI_NUMERICHOST
-	if (res != NULL)
-		freeaddrinfo(res);
-#endif
 	FREEPTR(savefile);
 	FREEPTR(user);
 	FREEPTR(pass);
