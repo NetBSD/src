@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.24 2002/10/02 16:33:45 thorpej Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.25 2003/04/19 19:35:34 fvdl Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.24 2002/10/02 16:33:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.25 2003/04/19 19:35:34 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.24 2002/10/02 16:33:45 thorpej Exp $"
 #include <dev/eisa/eisavar.h>
 #include <dev/eisa/eisadevs.h>
 
-#include <dev/microcode/aic7xxx/aic7xxx_reg.h>
-#include <dev/ic/aic7xxxvar.h>
+#include <dev/ic/aic7xxx_osm.h>
+#include <dev/ic/aic7xxx_inline.h>
 #include <dev/ic/aic77xxreg.h>
 #include <dev/ic/aic77xxvar.h>
 
@@ -111,53 +111,57 @@ ahc_eisa_attach(parent, self, aux)
 	u_int biosctrl;
 	u_int scsiconf;
 	u_int scsiconf1;
-#if DEBUG
+	u_char intdef;
+#ifdef DEBUG
 	int i;
 #endif
 
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
-	    AHC_EISA_SLOT_OFFSET, AHC_EISA_IOSIZE, 0, &ioh))
-		panic("%s: could not map I/O addresses", ahc->sc_dev.dv_xname);
-	if ((irq = ahc_aic77xx_irq(iot, ioh)) < 0)
-		panic("%s: ahc_aic77xx_irq failed!", ahc->sc_dev.dv_xname);
+	    AHC_EISA_SLOT_OFFSET, AHC_EISA_IOSIZE, 0, &ioh)) {
+		printf("%s: could not map I/O addresses", ahc->sc_dev.dv_xname);
+		return;
+	}
+	if ((irq = ahc_aic77xx_irq(iot, ioh)) < 0) {
+		printf("%s: ahc_aic77xx_irq failed!", ahc->sc_dev.dv_xname);
+		goto free_io;
+	}
 
 	if (strcmp(ea->ea_idstring, "ADP7770") == 0) {
 		printf(": %s\n", EISA_PRODUCT_ADP7770);
 	} else if (strcmp(ea->ea_idstring, "ADP7771") == 0) {
 		printf(": %s\n", EISA_PRODUCT_ADP7771);
 	} else {
-		panic(": Unknown device type %s", ea->ea_idstring);
+		printf(": Unknown device type %s", ea->ea_idstring);
+		goto free_io;
 	}
 
-	if (ahc_alloc(ahc, ioh, iot, ea->ea_dmat,
-	    AHC_AIC7770|AHC_EISA, AHC_AIC7770_FE, AHC_FNONE) < 0)
-		goto free_io;
-
+	ahc->chip = AHC_AIC7770|AHC_EISA;
+	ahc->features = AHC_AIC7770_FE;
+	ahc->flags = AHC_PAGESCBS;
+	ahc->bugs = AHC_TMODE_WIDEODD_BUG;
+	ahc->tag = iot;
+	ahc->bsh = ioh;
 	ahc->channel = 'A';
-	ahc->channel_b = 'B';
+
+	ahc_intr_enable(ahc, FALSE);
+
 	if (ahc_reset(ahc) != 0)
-		goto free_ahc;
+		goto free_io;
 
 	if (eisa_intr_map(ec, irq, &ih)) {
 		printf("%s: couldn't map interrupt (%d)\n",
 		    ahc->sc_dev.dv_xname, irq);
-		goto free_ahc;
+		goto free_io;
 	}
 
-	/*
-	 * The IRQMS bit enables level sensitive interrupts. Only allow
-	 * IRQ sharing if it's set.
-	 * NOTE: ahc->pause is initialized in ahc_alloc().
-	 *
-	 * Tell the user what type of interrupts we're using.
-	 * usefull for debugging irq problems
-	 */
-	if (ahc->pause & IRQMS) {
-		intrtype = IST_LEVEL;
-		intrtypestr = "level sensitive";
-	} else {
+	intdef = bus_space_read_1(iot, ioh, INTDEF);
+
+	if (intdef & EDGE_TRIG) {
 		intrtype = IST_EDGE;
 		intrtypestr = "edge triggered";
+	} else {
+		intrtype = IST_LEVEL;
+		intrtypestr = "level sensitive";
 	}
 	intrstr = eisa_intr_string(ec, ih);
 	ahc->ih = eisa_intr_establish(ec, ih,
@@ -168,7 +172,7 @@ ahc_eisa_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto free_ahc;
+		goto free_io;
 	}
 	if (intrstr != NULL)
 		printf("%s: %s interrupting at %s\n", ahc->sc_dev.dv_xname,
@@ -201,7 +205,7 @@ ahc_eisa_attach(parent, self, aux)
 
 	/* Get the primary channel information */
 	if ((biosctrl & CHANNEL_B_PRIMARY) != 0)
-		ahc->flags |= AHC_CHANNEL_B_PRIMARY;
+		ahc->flags |= AHC_PRIMARY_CHANNEL;
 
 	if ((biosctrl & BIOSMODE) == BIOSDISABLED) {
 		ahc->flags |= AHC_USEDEFAULTS;
@@ -217,11 +221,8 @@ ahc_eisa_attach(parent, self, aux)
 		if (scsiconf1 & TERM_ENB)
 			ahc->flags |= AHC_TERM_ENB_B;
 	}
-	/*
-	 * We have no way to tell, so assume extended
-	 * translation is enabled.
-	 */
-	ahc->flags |= AHC_EXTENDED_TRANS_A|AHC_EXTENDED_TRANS_B;
+	if ((ahc_inb(ahc, HA_274_BIOSGLOBAL) & HA_274_EXTENDED_TRANS))
+		ahc->flags |= AHC_EXTENDED_TRANS_A|AHC_EXTENDED_TRANS_B;
 
 	/* Attach sub-devices */
 	if (ahc_aic77xx_attach(ahc) == 0)
@@ -229,8 +230,6 @@ ahc_eisa_attach(parent, self, aux)
 
 	/* failed */
 	eisa_intr_disestablish(ec, ahc->ih);
-free_ahc:
-	ahc_free(ahc);
 free_io:
 	bus_space_unmap(iot, ioh, AHC_EISA_IOSIZE);
 }
