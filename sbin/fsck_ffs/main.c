@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.27 (Berkeley) 8/7/90";*/
-static char rcsid[] = "$Id: main.c,v 1.7 1993/10/01 02:25:19 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.8 1993/10/03 03:54:38 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -185,7 +185,11 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	/*
 	 * 0: check whether file system is already clean
 	 */
+#ifdef notyet
 	clean = preen && (sblock.fs_state == FSOKAY) && sblock.fs_clean;
+#else
+	clean = 0;
+#endif
 
 	if (clean) {
 		printf("** filesystem clean -- skipping checks\n");
