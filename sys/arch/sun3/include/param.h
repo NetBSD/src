@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.31 1996/02/01 22:33:08 mycroft Exp $	*/
+/*	$NetBSD: param.h,v 1.32 1996/02/16 18:08:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -149,17 +149,10 @@
 /* XXX - Does this really belong here? -gwr */
 #include <machine/psl.h>
 
-#ifdef _KERNEL
-#ifndef _LOCORE
+#if defined(_KERNEL) && !defined(_LOCORE)
+extern void _delay __P((unsigned));
+#define delay(us)	_delay((us)<<8)
 #define	DELAY(n)	delay(n)
-extern int cpuspeed;
-static inline void delay2us()
-{
-	register int n = cpuspeed;
-
-	__asm __volatile ("0: subql #4,%0; jgt 0b" : "=d" (n) : "0" (n));
-}
-#endif	/* !_LOCORE */
-#endif	/* _KERNEL */
+#endif	/* _KERNEL && !_LOCORE */
 
 #endif	/* MACHINE */

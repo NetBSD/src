@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.48 1995/10/17 23:16:40 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.49 1996/02/16 18:06:19 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -591,8 +591,13 @@ void sun3_vm_init(kehp)
 }
 
 
-/* XXX - Should just estimate this instead... */
-int cpuspeed = 25;	/* initial guess */
+/*
+ * XXX - Should empirically estimate the divisor...
+ * Note that the value of delay_divisor is roughly
+ * 2048 / cpuclock	(where cpuclock is in MHz).
+ */
+int delay_divisor = 82;		/* assume the fastest (3/260) */
+
 void sun3_verify_hardware()
 {
 	unsigned char machtype;
@@ -613,33 +618,33 @@ void sun3_verify_hardware()
 		hole_start = OBMEM_BW50_ADDR;
 		hole_size  = OBMEM_BW2_SIZE;
 		cpu_string = "50";
-		cpuspeed = 16; /* MHz */
+		delay_divisor = 128;	/* 16 MHz */
 		break;
 
 	case SUN3_MACH_60 :
 		cpu_match++;
 		cpu_string = "60";
-		cpuspeed = 20; /* MHz */
+		delay_divisor = 102;	/* 20 MHz */
 		break;
 
 	case SUN3_MACH_110:
 		cpu_match++;
 		cpu_string = "110";
-		cpuspeed = 17; /* MHz */
+		delay_divisor = 120;	/* 17 MHz */
 		cpu_has_vme = TRUE;
 		break;
 
 	case SUN3_MACH_160:
 		cpu_match++;
 		cpu_string = "160";
-		cpuspeed = 17; /* MHz */
+		delay_divisor = 120;	/* 17 MHz */
 		cpu_has_vme = TRUE;
 		break;
 
 	case SUN3_MACH_260:
 		cpu_match++;
 		cpu_string = "260";
-		cpuspeed = 25; /* MHz */
+		delay_divisor = 82; 	/* 25 MHz */
 		cpu_has_vme = TRUE;
 #ifdef	HAVECACHE
 		cache_size = 0x10000;	/* 64K */
@@ -649,7 +654,7 @@ void sun3_verify_hardware()
 	case SUN3_MACH_E  :
 		cpu_match++;
 		cpu_string = "E";
-		cpuspeed = 20; /* MHz */	/* XXX - Correct? */
+		delay_divisor = 102;	/* 20 MHz  XXX: Correct? */
 		cpu_has_vme = TRUE;
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.35 1996/02/02 02:37:42 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.36 1996/02/16 18:06:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1182,26 +1182,23 @@ Lm68881rdone:
 	frestore a0@			| restore state
 	rts
 
-| delay(int usecs)
-| Delay for "usec" microseconds.  Minimum delay is about 5 uS.
-|
-| This routine depends on the variable "cpuspeed"
-| which should be set based on the CPU clock rate.
-| XXX - Currently this is set in sun3_startup.c based on the
-| CPU model but this should be determined at run time...
-|
-	.globl	_delay
-_delay:
-	| d0 = (cpuspeed * usecs)
-	movel	_cpuspeed,d0
-	mulsl	sp@(4),d0
-	| subtract some overhead
-	moveq	#80,d1
+/*
+ * _delay(unsigned N)
+ * Delay for at least (N/256) microseconds.
+ * This routine depends on the variable:  delay_divisor
+ * which should be set based on the CPU clock rate.
+ * XXX: Currently this is set in sun3_startup.c based on the
+ * XXX: CPU model but this should be determined at run time...
+ */
+	.globl	__delay
+__delay:
+	| d0 = arg = (usecs << 8)
+	movl	sp@(4),d0
+	| d1 = delay_divisor;
+	movl	_delay_divisor,d1
+L_delay:
 	subl	d1,d0
-| This loop takes 8 clocks per cycle.
-Ldelay:
-	subql	#8,d0
-	jgt	Ldelay
+	jgt	L_delay
 	rts
 
 
