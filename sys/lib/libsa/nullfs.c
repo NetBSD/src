@@ -1,8 +1,11 @@
-/*	$NetBSD: stat.c,v 1.4 1996/01/13 22:25:43 leo Exp $	*/
+/*	$NetBSD: nullfs.c,v 1.1 1996/01/13 22:25:39 leo Exp $	*/
 
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * The Mach Operating System project at Carnegie-Mellon University.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,22 +35,71 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stat.c	8.1 (Berkeley) 6/11/93
+ *	@(#)open.c	8.1 (Berkeley) 6/11/93
+ *  
+ *
+ * Copyright (c) 1989, 1990, 1991 Carnegie Mellon University
+ * All Rights Reserved.
+ *
+ * Author: Alessandro Forin
+ * 
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ * 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ * 
+ * Carnegie Mellon requests users of this software to return to
+ * 
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ * 
+ * any improvements or extensions that they make and grant Carnegie the
+ * rights to redistribute these changes.
  */
 
 #include "stand.h"
 
-int
-stat(str, sb)
-	const char *str;
-	struct stat *sb;
+/*
+ * Null filesystem
+ */
+int	null_open (char *path, struct open_file *f)
 {
-	int fd, rv;
+	errno  = EIO;
+	return -1;
+}
 
-	fd = open(str, 0);
-	if (fd < 0)
-		return (-1);
-	rv = fstat(fd, sb);
-	(void)close(fd);
-	return (rv);
+int	null_close(struct open_file *f)
+{
+	return 0;
+}
+
+ssize_t	null_read (struct open_file *f, void *buf, size_t size, size_t *resid)
+{
+	errno = EIO;
+	return -1;
+}
+
+ssize_t	null_write (struct open_file *f, void *buf, size_t size, size_t *resid)
+{
+	errno = EIO;
+	return -1;
+}
+
+off_t	null_seek (struct open_file *f, off_t offset, int where)
+{
+	errno = EIO;
+	return -1;
+}
+
+int	null_stat (struct open_file *f, struct stat *sb)
+{
+	errno = EIO;
+	return -1;
 }

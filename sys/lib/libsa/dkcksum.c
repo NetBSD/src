@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.4 1996/01/13 22:25:43 leo Exp $	*/
+/*	$NetBSD: dkcksum.c,v 1.1 1996/01/13 22:25:37 leo Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,22 +32,26 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stat.c	8.1 (Berkeley) 6/11/93
+ *	@(#)disklabel.c	8.1 (Berkeley) 6/11/93
  */
 
+#include <sys/param.h>
+#include <sys/disklabel.h>
 #include "stand.h"
 
+/*
+ * Compute checksum for disk label.
+ */
 int
-stat(str, sb)
-	const char *str;
-	struct stat *sb;
+dkcksum(lp)
+	register struct disklabel *lp;
 {
-	int fd, rv;
+	register u_short *start, *end;
+	register u_short sum = 0;
 
-	fd = open(str, 0);
-	if (fd < 0)
-		return (-1);
-	rv = fstat(fd, sb);
-	(void)close(fd);
-	return (rv);
+	start = (u_short *)lp;
+	end = (u_short *)&lp->d_partitions[lp->d_npartitions];
+	while (start < end)
+		sum ^= *start++;
+	return (sum);
 }
