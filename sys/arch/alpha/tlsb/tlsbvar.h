@@ -1,4 +1,4 @@
-/* $NetBSD: tlsbvar.h,v 1.5 1998/05/13 23:23:23 thorpej Exp $ */
+/* $NetBSD: tlsbvar.h,v 1.6 1998/07/08 00:47:53 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -57,3 +57,7 @@ struct tlsb_cpu_busdep {
 	u_int8_t	tcpu_vid;	/* virtual ID of CPU */
 	int		tcpu_node;	/* TurboLaser node */
 };
+
+#ifdef	_KERNEL
+extern int tlsb_found;
+#endif
