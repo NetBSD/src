@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 1998/02/21 23:00:57 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 1998/03/28 00:06:03 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -167,7 +167,6 @@ void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void zero_page_readonly		__P((void));
 void zero_page_readwrite	__P((void));
-extern void set_boot_devs	__P((void));
 extern void configure		__P((void));
 extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
 extern void pmap_postinit	__P((void));
