@@ -1,7 +1,7 @@
-/*	$NetBSD: fwnode.c,v 1.11 2002/03/01 01:01:18 enami Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.12 2002/03/29 05:05:40 jmc Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.11 2002/03/01 01:01:18 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.12 2002/03/29 05:05:40 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
