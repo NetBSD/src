@@ -62,7 +62,7 @@
 
 	/* mumbo-jumbo to pacify DOS, in the hope of getting diskcopy to work */
 	jmp 1f
-	.asciz "386BSD "
+	.asciz "NetBSD "
 	.byte 1			# sectors per allocation
 	.word 15		# additional sectors for bootstrap
 	.word 0			# number of DOS fat sectors
