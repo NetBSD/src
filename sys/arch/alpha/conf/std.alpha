@@ -1,0 +1,10 @@
+#	$NetBSD: std.alpha,v 1.3 1995/11/23 02:35:30 cgd Exp $
+#
+# Standard/required configuration info for NetBSD/alpha.
+
+machine		alpha
+
+makeoptions	DEBUG="-g"
+
+options		ECOFF
+options		SHELLSCRIPT
