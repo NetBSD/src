@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.91 2000/03/28 00:24:04 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.92 2000/03/28 02:58:48 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,8 +100,8 @@ _C_LABEL(kernel_text):
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)
 #endif
-	
-#ifdef R3900_CACHE_DISABLE	
+
+#ifdef R3900_CACHE_DISABLE
 	li	t0, ~(R3900_CONFIG_ICE|R3900_CONFIG_DCE)
 	mfc0	t1, R3900_COP_0_CONFIG
 	and	t1, t0, t1
@@ -109,7 +109,7 @@ _C_LABEL(kernel_text):
 	mtc0	t1, R3900_COP_0_CONFIG
 	nop
 #endif /* R3900_CACHE_DISABLE */
-	
+
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
 	li	t0, 0				# Disable interrupts and
 	mtc0	t0, MIPS_COP_0_STATUS		# the fp coprocessor
@@ -117,10 +117,10 @@ _C_LABEL(kernel_text):
 	li	t0, 0x00018c2			# XXX, KSEG0 is uncached
 	mtc0	t0, MIPS_COP_0_CONFIG
 #endif /*  HPCMIPS_L1CACHE_DISABLE */
-#else	
+#else
 	li	t0, MIPS_SR_COP_1_BIT		# Disable interrupts, and
 	mtc0	t0, MIPS_COP_0_STATUS		# enable the fp coprocessor
-#endif	
+#endif
 	nop
 	nop
 	mfc0	t0, MIPS_COP_0_PRID		# read product revision ID
@@ -130,9 +130,9 @@ _C_LABEL(kernel_text):
 	nop
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
 	add	t1, zero, zero
-#else	
+#else
 	cfc1	t1, MIPS_FPU_ID			# read FPU ID register
-#endif	
+#endif
 	sw	t0, _C_LABEL(cpu_id)		# save PRID register
 	sw	t1, _C_LABEL(fpu_id)		# save FPU ID register
 	jal	_C_LABEL(mach_init)		# mach_init(a0, a1, a2, a3)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 1998/03/26 12:46:33 jonathan Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2000/03/28 02:58:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -39,8 +39,7 @@
  */
 
 /* handle i/o device interrupts */
-extern	int (*mips_hardware_intr) __P((u_int mask, u_int pc,
-		   		       u_int statusReg, u_int causeReg));
+int (*mips_hardware_intr) __P((u_int mask, u_int pc,
+			       u_int statusReg, u_int causeReg));
 
 #endif /* __MIPS_INTR_H */
-
