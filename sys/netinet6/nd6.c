@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.22 2000/04/13 14:11:06 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.23 2000/04/13 14:32:53 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.41 2000/02/24 16:34:50 itojun Exp $	*/
 
 /*
@@ -1866,8 +1866,11 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 		return(0);
 	}
 	sdl = SDL(rt->rt_gateway);
-	if (sdl->sdl_alen != 0)
-		bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
+	if (sdl->sdl_alen == 0) {
+		printf("nd6_storelladdr: sdl_alen == 0\n");
+		return(0);
+	}
 
+	bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
 	return(1);
 }
