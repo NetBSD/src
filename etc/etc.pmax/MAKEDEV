@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.36 2000/02/26 04:43:27 nisimura Exp $
+#	$NetBSD: MAKEDEV,v 1.37 2000/05/02 08:17:51 augustss Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -34,6 +34,7 @@
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Special purpose devices:
+#	audio*	phone-quality audio on Personal DECstations
 #	bpf*	packet filter
 #	ch*	SCSI media changer
 #	fd	file descriptors (/dev/fd/*)
@@ -49,7 +50,6 @@
 #	fb*	generic framebuffer pseudo-device
 #	px*	PixelStamp Xserver access 
 # The following names are reserved for future use:
-#	audio*	phone-quality audio on Personal DECstations
 #	fdc*	Baseboard 2.88 floppy disk on Personal DECstations
 #	ttyE?	Workstation console ("wscons") glass-tty emulators
 #
@@ -72,7 +72,7 @@ all)
 	sh $0 mouse
 	sh $0 ipl random lkm
 	sh $0 local
-#	sh $0 audio0 audio1 audio2 audio3
+	sh $0 audio
 #	sh $0 cd0
 #	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
 #	sh $0 st0 st1
@@ -115,6 +115,14 @@ fd)
 	chmod 666 fd/*
 	;;
 
+audio)
+	sh $0 audio0
+	ln -fs sound0 sound
+	ln -fs audio0 audio
+	ln -fs mixer0 mixer
+	ln -fs audioctl0 audioctl
+	;;
+
 tz*)
 	case $i in
 	tz*) unit=${i#tz}; chr=10;;
@@ -151,6 +159,23 @@ lkm)
 	mknod lkm c 94 0
 	chown root.kmem lkm
 	chmod 640 lkm
+	;;
+
+audio*)
+	unit=${i#audio}
+	audio=audio$unit
+	sound=sound$unit
+	mixer=mixer$unit
+	major=99
+	audioctl=audioctl$unit
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $audio $sound $mixer $audioctl
+	mknod $sound    c $major $(($unit + 0))
+	mknod $audio    c $major $(($unit + 128))
+	mknod $mixer    c $major $(($unit + 16))
+	mknod $audioctl c $major $(($unit + 192))
+	chown root.wheel $audio $sound $mixer $audioctl
+	chmod 666 $audio $sound $mixer $audioctl
 	;;
 
 md*)
