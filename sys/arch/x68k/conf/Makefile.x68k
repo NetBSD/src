@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.38 1999/09/24 15:31:52 minoura Exp $
+#	$NetBSD: Makefile.x68k,v 1.39 2000/01/19 14:45:14 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -60,7 +60,7 @@ CWARNFLAGS+=	-Wno-main
 CFLAGS=		${DEBUG} ${COPTS} ${CMACHFLAGS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g
 
 %INCLUDES
 

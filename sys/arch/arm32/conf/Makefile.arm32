@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.47 1999/07/26 05:20:45 cgd Exp $
+#	$NetBSD: Makefile.arm32,v 1.48 2000/01/19 14:45:00 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -52,7 +52,7 @@ CWARNFLAGS+=	-Wno-main
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -D_LOCORE
 LINKFLAGS=	-Ttext F0000000 -e start
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g
 
 %INCLUDES
 

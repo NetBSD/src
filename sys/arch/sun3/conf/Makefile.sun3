@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.76 1999/07/26 05:20:48 cgd Exp $
+# $NetBSD: Makefile.sun3,v 1.77 2000/01/19 14:45:13 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -70,7 +70,7 @@ CFLAGS= 	${DEBUG} ${COPTS} -msoft-float ${CWARNFLAGS}
 APPFLAGS=	-P -traditional ${CPPFLAGS} -D_LOCORE
 AFLAGS=
 LINKFLAGS=	-N -Ttext ${TEXTADDR} -e start
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g
 
 %INCLUDES
 
