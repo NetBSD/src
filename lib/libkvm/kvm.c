@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1993 Christopher G. Demetriou
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -34,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.23 1994/01/07 19:10:06 cgd Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.24 1994/02/01 02:17:21 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -688,40 +689,47 @@ kvm_procread(p, addr, buf, len)
 	struct swapblk swb;
 	vm_offset_t swaddr = 0, memaddr = 0;
 	unsigned real_len;
+	static int last_pid = -1;
+	static vm_offset_t last_addr;
+	static char bouncebuf[CLBYTES];
 
 	real_len = len < (CLBYTES - (addr & CLOFSET)) ? len : (CLBYTES - (addr & CLOFSET));
 
-        if (vatosw(&kp->kp_eproc.e_vm.vm_map, addr & ~CLOFSET, &memaddr,
-		   &swb) == 0)
-		return 0;
+	if (p->p_pid != last_pid || last_addr != (addr & ~CLOFSET)) {
+        	if (vatosw(&kp->kp_eproc.e_vm.vm_map, addr & ~CLOFSET, &memaddr,
+		    &swb) == 0)
+			return 0;
 
-	if (memaddr) {
-		memaddr += addr & CLOFSET;
-		if (lseek(mem, memaddr, 0) == -1)
-			seterr("kvm_procread: lseek mem");
-		len = read(mem, buf, real_len);
-		if (len == -1) {
-			seterr("kvm_procread: read mem");
-			return 0;
+		if (memaddr) {
+			if (lseek(mem, memaddr, 0) == -1) {
+				seterr("kvm_procread: lseek mem");
+				return 0;
+			}
+			len = read(mem, bouncebuf, CLBYTES);
+			if (len == -1 || len < CLBYTES) {
+				last_pid = -1;
+				seterr("kvm_procread: read mem");
+				return 0;
+			}
+		} else {
+			swaddr = swb.offset;
+			if (lseek(swap, swaddr, 0) == -1) {
+				seterr("kvm_procread: lseek swap");
+				return 0;
+			}
+			len = read(swap, bouncebuf, CLBYTES);
+			if (len == -1 || len < CLBYTES) {
+				last_pid = -1;
+				seterr("kvm_procread: read swap");
+				return 0;
+			}
 		}
-	} else {
-		char bouncebuf[CLBYTES];
-		swaddr = swb.offset + (addr & CLOFSET);
-		swb.size -= addr & CLOFSET;
-		if (lseek(swap, swaddr & ~CLOFSET, 0) == -1) {
-			seterr("kvm_procread: lseek swap");
-			return 0;
-		}
-		len = read(swap, bouncebuf, CLBYTES);
-		if (len == -1 || len <= (swaddr & CLOFSET)) {
-			seterr("kvm_procread: read swap");
-			return 0;
-		}
-		len = MIN(len - (swaddr & CLOFSET), real_len);
-		memcpy(buf, &bouncebuf[swaddr & CLOFSET], len);
 	}
 
-	return len;
+	memcpy(buf, &bouncebuf[addr & CLOFSET], real_len);
+	last_pid = p->p_pid;
+	last_addr = addr & ~CLOFSET;
+	return real_len;
 }
 
 int
@@ -757,12 +765,18 @@ kvm_getargs(p, up)
 	const struct proc *p;
 	const struct user *up;
 {
-	static char cmdbuf[ARG_MAX + sizeof(p->p_comm) + 5];
+	static char *cmdbuf = NULL, ucomm[sizeof(p->p_comm) + 4];
 	register char *cp, *acp;
 	int left, rv;
 	struct ps_strings arginfo;
 
-	if (up == NULL || p->p_pid == 0 || p->p_pid == 2)
+	if (cmdbuf == NULL) {
+		cmdbuf = (char *)malloc(ARG_MAX + sizeof(p->p_comm) + 5);
+		if (cmdbuf == NULL)
+			cmdbuf = ucomm;
+	}
+
+	if (cmdbuf == ucomm || up == NULL || p->p_pid == 0 || p->p_pid == 2)
 		goto retucomm;
 
 	if (kvm_procread(p, PS_STRINGS, (char *)&arginfo, sizeof(arginfo)) !=
@@ -806,12 +820,18 @@ kvm_getenv(p, up)
 	const struct proc *p;
 	const struct user *up;
 {
-	static char envbuf[ARG_MAX + 1];
+	static char *envbuf = NULL, emptyenv[1];
 	register char *cp, *acp;
 	int left, rv;
 	struct ps_strings arginfo;
 
-	if (up == NULL || p->p_pid == 0 || p->p_pid == 2)
+	if (envbuf == NULL) {
+		envbuf = (char *)malloc(ARG_MAX + 1);
+		if (envbuf == NULL)
+			envbuf = emptyenv;
+	}
+
+	if (envbuf == emptyenv || up == NULL || p->p_pid == 0 || p->p_pid == 2)
 		goto retemptyenv;
 
 	if (kvm_procread(p, PS_STRINGS, (char *)&arginfo, sizeof(arginfo)) !=
