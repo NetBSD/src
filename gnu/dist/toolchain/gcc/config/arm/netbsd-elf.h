@@ -162,7 +162,7 @@ const_section ()                                                        \
 #undef CPP_SPEC
 #define CPP_SPEC "\
 %(cpp_cpu_arch) %(cpp_apcs_pc) %(cpp_float) %(cpp_endian) \
-%{posix:-D_POSIX_SOURCE} %{pthread:-D_PTHREADS} \
+%{posix:-D_POSIX_SOURCE} %{pthread:-D_REENTRANT -D_PTHREADS} \
 "
 
 /* Because TARGET_DEFAULT sets ARM_FLAG_SOFT_FLOAT */
