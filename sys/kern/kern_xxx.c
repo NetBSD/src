@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.23 1995/04/13 20:49:11 mycroft Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.24 1995/04/22 14:17:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -340,18 +340,19 @@ scdebug_call(p, code, args)
 	     sy->sy_call == nosys))
 		return;
 		
-	printf("proc %d (%s): %s syscall ", p->p_pid, p->p_comm, os->name);
-	if (code < 0 || code >= *os->nsysent) {
+	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, os->name);
+	if (code < 0 || code >= *os->nsysent)
 		printf("OUT OF RANGE (%d)", code);
-		code = 0;
-	} else
-		printf("%d", code);
-	printf(" called: %s", os->syscallnames[code]);
-	if (scdebug & SCDEBUG_SHOWARGS) {
-		printf("(");
-		for (i = 0; i < sy->sy_argsize / sizeof(register_t); i++)
-			printf("%s0x%lx", i == 0 ? "" : ", ", (long)args[i]);
-		printf(")");
+	else {
+		printf("%d call: %s", code, os->syscallnames[code]);
+		if (scdebug & SCDEBUG_SHOWARGS) {
+			printf("(");
+			for (i = 0; i < sy->sy_argsize / sizeof(register_t);
+			    i++)
+				printf("%s0x%lx", i == 0 ? "" : ", ",
+				    (long)args[i]);
+			printf(")");
+		}
 	}
 	printf("\n");
 }
@@ -381,13 +382,12 @@ scdebug_ret(p, code, error, retval)
 	    sy->sy_call == nosys))
 		return;
 		
-	printf("proc %d (%s): %s syscall ", p->p_pid, p->p_comm, os->name);
-	if (code < 0 || code >= *os->nsysent) {
+	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, os->name);
+	if (code < 0 || code >= *os->nsysent)
 		printf("OUT OF RANGE (%d)", code);
-		code = 0;
-	} else
-		printf("%d", code);
-	printf(" return: error = %d, retval = 0x%lx,0x%lx\n", error,
-	    (long)retval[0], (long)retval[1]);
+	else
+		printf("%d ret: err = %d, rv = 0x%lx,0x%lx", code,
+		    error, (long)retval[0], (long)retval[1]);
+	printf("\n");
 }
 #endif /* SYSCALL_DEBUG */
