@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2001/01/05 07:32:32 garbled Exp $
+#	$NetBSD: Makefile,v 1.2 2001/03/07 07:05:08 garbled Exp $
 
-SUBDIR= info install scripton scriptoff system users
+SUBDIR= info install system users util
 
 FILES=	help index
 FILESDIR=${BINDIR}/sushi
