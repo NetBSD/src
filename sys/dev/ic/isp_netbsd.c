@@ -1,5 +1,5 @@
-/* $NetBSD: isp_netbsd.c,v 1.2 1998/07/18 21:05:04 mjacob Exp $ */
-/* $Id: isp_netbsd.c,v 1.2 1998/07/18 21:05:04 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.3 1998/09/08 07:19:58 mjacob Exp $ */
+/* $Id: isp_netbsd.c,v 1.3 1998/09/08 07:19:58 mjacob Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -116,15 +116,38 @@ ispcmd(xs)
 	ISP_SCSI_XFER_T *xs;
 {
 	struct ispsoftc *isp;
-	int r;
+	int result;
 	ISP_LOCKVAL_DECL;
 
 	isp = XS_ISP(xs);
 	ISP_LOCK(isp);
-	r = ispscsicmd(xs);
-	if (r != CMD_QUEUED || (xs->flags & SCSI_POLL) == 0) {
+	/*
+	 * This is less efficient than I would like in that the
+	 * majority of cases will have to do some pointer deferences
+	 * to find out that things don't need to be updated.
+	 */
+	if ((xs->flags & SCSI_AUTOCONF) == 0 && (isp->isp_type & ISP_HA_SCSI)) {
+		sdparam *sdp = isp->isp_param;
+		if (sdp->isp_devparam[XS_TGT(xs)].dev_flags !=
+		    sdp->isp_devparam[XS_TGT(xs)].cur_dflags) {
+			u_int16_t f = DPARM_WIDE|DPARM_SYNC|DPARM_TQING;
+			if (xs->sc_link->quirks & SDEV_NOSYNC)
+				f &= ~DPARM_SYNC;
+			if (xs->sc_link->quirks & SDEV_NOWIDE)
+				f &= ~DPARM_WIDE;
+			if (xs->sc_link->quirks & SDEV_NOTAG)
+				f &= ~DPARM_TQING;
+			sdp->isp_devparam[XS_TGT(xs)].dev_flags &=
+				~(DPARM_WIDE|DPARM_SYNC|DPARM_TQING);
+			sdp->isp_devparam[XS_TGT(xs)].dev_flags |= f;
+			sdp->isp_devparam[XS_TGT(xs)].dev_update = 1;
+			isp->isp_update = 1;
+		}
+	}
+	result = ispscsicmd(xs);
+	if (result != CMD_QUEUED || (xs->flags & SCSI_POLL) == 0) {
 		ISP_UNLOCK(isp);
-		return (r);
+		return (result);
 	}
 
 	/*
