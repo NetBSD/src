@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.315 2004/07/05 22:52:08 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.316 2004/07/06 05:50:57 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5091,10 +5091,11 @@ distrib/sets/lists/comp/md.amd64		1.15
 	of the i386 one.
 	[drochner, ticket #605]
 
-sys/arch/i386/pci/pchb.c			1.51
+sys/arch/i386/pci/pchb.c			1.51-1.52
 
 	Be more careful about what ServerWorks devices we attempt
-	to map PCI buses behind.  Fixes PR#21458 and PR#25670.
+	to map PCI buses behind.  Fixes PR#21458.
+	Update ServerWorks chip names, and add a few more.
 	[mycroft, ticket #606]
 
 sys/dev/pci/pcidevs				1.629
