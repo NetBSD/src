@@ -1,4 +1,4 @@
-/* $NetBSD: smdk2410.c,v 1.1 2003/09/03 03:18:30 mycroft Exp $ */
+/* $NetBSD: smdk2410.c,v 1.2 2003/10/05 06:57:20 bsh Exp $ */
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -62,30 +62,4 @@ mem_init(void)
 	printf(">> RAM 0x%x - 0x%x, heap at 0x%x\n",
 	    start, (start + size) - 1, heap);
 	setheap((void *)heap, (void *)(heap + HEAP_SIZE - 1));
-}
-
-long get_com_freq(void);
-long
-get_com_freq(void)
-{
-	long clk;
-	uint32_t pllcon = *(volatile uint32_t *)(S3C2410_CLKMAN_BASE+CLKMAN_MPLLCON);
-	uint32_t clkdivn = *(volatile uint32_t *)(S3C2410_CLKMAN_BASE+CLKMAN_CLKDIVN);
-
-	int mdiv = (pllcon & PLLCON_MDIV_MASK) >> PLLCON_MDIV_SHIFT;
-	int pdiv = (pllcon & PLLCON_PDIV_MASK) >> PLLCON_PDIV_SHIFT;
-	int sdiv = (pllcon & PLLCON_SDIV_MASK) >> PLLCON_SDIV_SHIFT;
-
-#if XTAL_CLK < 1000   /* in MHz */
-	clk = (XTAL_CLK * 1000000 * (8 + mdiv)) / ((pdiv + 2) << sdiv);
-#else /* in Hz */
-	clk = (XTAL_CLK * (8 + mdiv)) / ((pdiv + 2) << sdiv);
-#endif
-
-	if (clkdivn & CLKDIVN_HDIVN)
-		clk /= 2;
-	if (clkdivn & CLKDIVN_PDIVN)
-		clk /= 2;
-
-	return clk;
 }
