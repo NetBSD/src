@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.31 1995/06/29 11:43:17 cgd Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.32 1995/09/19 21:45:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -159,13 +159,14 @@ shm_delete_mapping(p, shmmap_s)
 }
 
 int
-shmdt(p, uap, retval)
+shmdt(p, v, retval)
 	struct proc *p;
-	struct shmdt_args /* {
-		syscallarg(void *) shmaddr;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct shmdt_args /* {
+		syscallarg(void *) shmaddr;
+	} */ *uap = v;
 	struct shmmap_state *shmmap_s;
 	int i;
 
@@ -180,15 +181,16 @@ shmdt(p, uap, retval)
 }
 
 int
-shmat(p, uap, retval)
+shmat(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct shmat_args /* {
 		syscallarg(int) shmid;
 		syscallarg(void *) shmaddr;
 		syscallarg(int) shmflag;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int error, i, flags;
 	struct ucred *cred = p->p_ucred;
 	struct shmid_ds *shmseg;
@@ -251,15 +253,16 @@ shmat(p, uap, retval)
 }
 
 int
-shmctl(p, uap, retval)
+shmctl(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct shmctl_args /* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
 		syscallarg(struct shmid_ds *) buf;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int error, segnum;
 	struct ucred *cred = p->p_ucred;
 	struct shmid_ds inbuf;
@@ -428,15 +431,16 @@ shmget_allocate_segment(p, uap, mode, retval)
 }
 
 int
-shmget(p, uap, retval)
+shmget(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct shmget_args /* {
 		syscallarg(key_t) key;
 		syscallarg(int) size;
 		syscallarg(int) shmflag;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int segnum, mode, error;
 	struct shmid_ds *shmseg;
 

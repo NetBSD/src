@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.47 1995/08/14 06:07:55 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.48 1995/09/19 21:45:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -82,15 +82,16 @@ void stop __P((struct proc *p));
 	    ((signum) == SIGCONT && (q)->p_session == (p)->p_session))
 
 /* ARGSUSED */
-sigaction(p, uap, retval)
+sigaction(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct sigaction_args /* {
 		syscallarg(int) signum;
 		syscallarg(struct sigaction *) nsa;
 		syscallarg(struct sigaction *) osa;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct sigaction vec;
 	register struct sigaction *sa;
 	register struct sigacts *ps = p->p_sigacts;
@@ -256,14 +257,15 @@ execsigs(p)
  * and return old mask as return value;
  * the library stub does the rest.
  */
-sigprocmask(p, uap, retval)
+sigprocmask(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct sigprocmask_args /* {
 		syscallarg(int) how;
 		syscallarg(sigset_t) mask;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int error = 0;
 
 	*retval = p->p_sigmask;
@@ -308,13 +310,14 @@ sigpending(p, uap, retval)
  */
 /* ARGSUSED */
 int
-sigsuspend(p, uap, retval)
+sigsuspend(p, v, retval)
 	register struct proc *p;
-	struct sigsuspend_args /* {
-		syscallarg(int) mask;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sigsuspend_args /* {
+		syscallarg(int) mask;
+	} */ *uap = v;
 	register struct sigacts *ps = p->p_sigacts;
 
 	/*
@@ -334,14 +337,15 @@ sigsuspend(p, uap, retval)
 }
 
 /* ARGSUSED */
-sigaltstack(p, uap, retval)
+sigaltstack(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct sigaltstack_args /* {
 		syscallarg(struct sigaltstack *) nss;
 		syscallarg(struct sigaltstack *) oss;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct sigacts *psp;
 	struct sigaltstack ss;
 	int error;
@@ -373,14 +377,15 @@ sigaltstack(p, uap, retval)
 
 /* ARGSUSED */
 int
-kill(cp, uap, retval)
+kill(cp, v, retval)
 	register struct proc *cp;
+	void *v;
+	register_t *retval;
+{
 	register struct kill_args /* {
 		syscallarg(int) pid;
 		syscallarg(int) signum;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct proc *p;
 	register struct pcred *pc = cp->p_cred;
 

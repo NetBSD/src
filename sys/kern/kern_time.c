@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.14 1995/03/21 13:33:41 mycroft Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.15 1995/09/19 21:45:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -59,14 +59,15 @@
 
 /* ARGSUSED */
 int
-gettimeofday(p, uap, retval)
+gettimeofday(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct gettimeofday_args /* {
 		syscallarg(struct timeval *) tp;
 		syscallarg(struct timezone *) tzp;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct timeval atv;
 	int error = 0;
 
@@ -84,14 +85,15 @@ gettimeofday(p, uap, retval)
 
 /* ARGSUSED */
 int
-settimeofday(p, uap, retval)
+settimeofday(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct settimeofday_args /* {
 		syscallarg(struct timeval *) tv;
 		syscallarg(struct timezone *) tzp;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct timeval atv, delta;
 	struct timezone atz;
 	int error, s;
@@ -130,14 +132,15 @@ long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
 
 /* ARGSUSED */
 int
-adjtime(p, uap, retval)
+adjtime(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct adjtime_args /* {
 		syscallarg(struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct timeval atv;
 	register long ndelta, ntickdelta, odelta;
 	int s, error;
@@ -208,14 +211,15 @@ adjtime(p, uap, retval)
  */
 /* ARGSUSED */
 int
-getitimer(p, uap, retval)
+getitimer(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct getitimer_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct itimerval *) itv;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct itimerval aitv;
 	int s;
 
@@ -244,15 +248,16 @@ getitimer(p, uap, retval)
 
 /* ARGSUSED */
 int
-setitimer(p, uap, retval)
+setitimer(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct setitimer_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct itimerval *) itv;
 		syscallarg(struct itimerval *) oitv;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct itimerval aitv;
 	register struct itimerval *itvp;
 	int s, error;

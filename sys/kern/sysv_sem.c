@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.22 1995/06/24 20:34:16 christos Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.23 1995/09/19 21:45:19 thorpej Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -68,13 +68,14 @@ semlock(p)
  */
 
 int
-semconfig(p, uap, retval)
+semconfig(p, v, retval)
 	struct proc *p;
-	struct semconfig_args /* {
-		syscallarg(int) flag;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct semconfig_args /* {
+		syscallarg(int) flag;
+	} */ *uap = v;
 	int eval = 0;
 
 	semlock(p);
@@ -271,16 +272,17 @@ semundo_clear(semid, semnum)
 }
 
 int
-__semctl(p, uap, retval)
+__semctl(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct __semctl_args /* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
 		syscallarg(union semun *) arg;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int semid = SCARG(uap, semid);
 	int semnum = SCARG(uap, semnum);
 	int cmd = SCARG(uap, cmd);
@@ -435,15 +437,16 @@ __semctl(p, uap, retval)
 }
 
 int
-semget(p, uap, retval)
+semget(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct semget_args /* {
 		syscallarg(key_t) key;
 		syscallarg(int) nsems;
 		syscallarg(int) semflg;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int semid, eval;
 	int key = SCARG(uap, key);
 	int nsems = SCARG(uap, nsems);
@@ -548,15 +551,16 @@ found:
 }
 
 int
-semop(p, uap, retval)
+semop(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct semop_args /* {
 		syscallarg(int) semid;
 		syscallarg(struct sembuf *) sops;
 		syscallarg(u_int) nsops;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int semid = SCARG(uap, semid);
 	int nsops = SCARG(uap, nsops);
 	struct sembuf sops[MAX_SOPS];

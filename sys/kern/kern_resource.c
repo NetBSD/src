@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.29 1995/06/24 20:34:03 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.30 1995/09/19 21:45:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -61,14 +61,15 @@ int	dosetrlimit __P((struct proc *p, u_int which, struct rlimit *limp));
  */
 
 int
-getpriority(curp, uap, retval)
+getpriority(curp, v, retval)
 	struct proc *curp;
+	void *v;
+	register_t *retval;
+{
 	register struct getpriority_args /* {
 		syscallarg(int) which;
 		syscallarg(int) who;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct proc *p;
 	register int low = PRIO_MAX + 1;
 
@@ -118,15 +119,16 @@ getpriority(curp, uap, retval)
 
 /* ARGSUSED */
 int
-setpriority(curp, uap, retval)
+setpriority(curp, v, retval)
 	struct proc *curp;
+	void *v;
+	register_t *retval;
+{
 	register struct setpriority_args /* {
 		syscallarg(int) which;
 		syscallarg(int) who;
 		syscallarg(int) prio;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct proc *p;
 	int found = 0, error = 0;
 
@@ -200,14 +202,15 @@ donice(curp, chgp, n)
 
 /* ARGSUSED */
 int
-setrlimit(p, uap, retval)
+setrlimit(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct setrlimit_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct rlimit *) rlp;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct rlimit alim;
 	int error;
 
@@ -303,14 +306,15 @@ dosetrlimit(p, which, limp)
 
 /* ARGSUSED */
 int
-getrlimit(p, uap, retval)
+getrlimit(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct getrlimit_args /* {
 		syscallarg(u_int) which;
 		syscallarg(struct rlimit *) rlp;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 
 	if (SCARG(uap, which) >= RLIM_NLIMITS)
 		return (EINVAL);
@@ -377,14 +381,15 @@ calcru(p, up, sp, ip)
 
 /* ARGSUSED */
 int
-getrusage(p, uap, retval)
+getrusage(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct getrusage_args /* {
 		syscallarg(int) who;
 		syscallarg(struct rusage *) rusage;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct rusage *rup;
 
 	switch (SCARG(uap, who)) {
