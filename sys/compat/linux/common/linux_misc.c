@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.51 1998/10/04 10:17:54 fvdl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.52 1998/12/16 10:21:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -114,16 +114,21 @@ static void bsd_to_linux_statfs __P((struct statfs *, struct linux_statfs *));
  * number out of it.
  */
 void
-bsd_to_linux_wstat(status)
-	int *status;
+bsd_to_linux_wstat(st)
+	int *st;
 {
 
-	if (WIFSIGNALED(*status))
-		*status = (*status & ~0177) |
-		    native_to_linux_sig[WTERMSIG(*status)];
-	else if (WIFSTOPPED(*status))
-		*status = (*status & ~0xff00) |
-		    (native_to_linux_sig[WSTOPSIG(*status)] << 8);
+	int sig;
+
+	if (WIFSIGNALED(*st)) {
+		sig = WTERMSIG(*st);
+		if (sig >= 0 && sig < NSIG)
+			*st= (*st& ~0177) | native_to_linux_sig[sig];
+	} else if (WIFSTOPPED(*st)) {
+		sig = WSTOPSIG(*st);
+		if (sig >= 0 && sig < NSIG)
+			*st = (*st & ~0xff00) | (native_to_linux_sig[sig] << 8);
+	}
 }
 
 /*
@@ -147,7 +152,7 @@ linux_sys_wait4(p, v, retval)
 
 	if (SCARG(uap, status) != NULL) {
 		sg = stackgap_init(p->p_emul);
-		status = (int *) stackgap_alloc(&sg, sizeof status);
+		status = (int *) stackgap_alloc(&sg, sizeof *status);
 	} else
 		status = NULL;
 
