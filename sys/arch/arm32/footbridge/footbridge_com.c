@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.3 2000/02/13 04:59:57 mark Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.4 2000/03/06 21:36:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -656,8 +656,8 @@ fcomcnattach(iobase, rate, cflag)
 	tcflag_t cflag;
 {
 	static struct consdev fcomcons = {
-		NULL, NULL, fcomcngetc, fcomcnputc, fcomcnpollc, NODEV,
-		CN_NORMAL
+		NULL, NULL, fcomcngetc, fcomcnputc, fcomcnpollc, NULL,
+		    NODEV, CN_NORMAL
 	};
 
 	fcomconstag = &fcomcons_bs_tag;

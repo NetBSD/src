@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.33 1999/08/04 14:40:54 leo Exp $	*/
+/*	$NetBSD: cons.c,v 1.34 2000/03/06 21:36:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -274,4 +274,14 @@ nullcnpollc(dev, on)
 	int on;
 {
 
+}
+
+void
+cnbell(pitch, period, volume)
+	u_int pitch, period, volume;
+{
+
+	if (cn_tab == NULL || cn_tab->cn_bell == NULL)
+		return;
+	(*cn_tab->cn_bell)(cn_tab->cn_dev, pitch, period, volume);
 }
