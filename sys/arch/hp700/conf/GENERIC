@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.23 2004/06/18 15:04:04 christos Exp $
+# $NetBSD: GENERIC,v 1.24 2004/06/22 14:09:50 itojun Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp700/conf/std.hp700"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.23 $"
+#ident 		"GENERIC-$Revision: 1.24 $"
 
 maxusers	32		# estimated number of users
 
@@ -570,3 +570,5 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
