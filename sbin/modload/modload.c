@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.20 1998/07/26 18:04:45 mycroft Exp $	*/
+/*	$NetBSD: modload.c,v 1.21 1998/07/28 19:22:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.20 1998/07/26 18:04:45 mycroft Exp $");
+__RCSID("$NetBSD: modload.c,v 1.21 1998/07/28 19:22:55 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -93,7 +93,9 @@ linkcmd(kernel, entry, outfile, address, object)
 	char cmdbuf[1024];
 	int error = 0;
 
-	sprintf(cmdbuf, LINKCMD, kernel, entry, outfile, address, object);
+	if (snprintf(cmdbuf, sizeof(cmdbuf), LINKCMD, kernel, entry, outfile,
+	    address, object) >= sizeof(cmdbuf))
+		errx(1, "link command too long");
 
 	if (debug)
 		printf("%s\n", cmdbuf);
@@ -407,9 +409,10 @@ main(argc, argv)
 		sbuf.id = resrv.slot;
 		if (ioctl(devfd, LMSTAT, &sbuf) == -1)
 			err(15, "error fetching module stats for post-install");
-		sprintf(id, "%d", sbuf.id);
-		sprintf(type, "0x%x", sbuf.type);
-		sprintf(offset, "%ld", (long)sbuf.offset);
+		(void)snprintf(id, sizeof(id), "%d", sbuf.id);
+		(void)snprintf(type, sizeof(type), "0x%x", sbuf.type);
+		(void)snprintf(offset, sizeof(offset), "%ld",
+		    (long)sbuf.offset);
 		/*
 		 * XXX
 		 * The modload docs say that drivers can install bdevsw &

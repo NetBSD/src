@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.28 1998/04/01 15:38:58 kleink Exp $	*/
+/*	$NetBSD: inode.c,v 1.29 1998/07/28 19:22:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.28 1998/04/01 15:38:58 kleink Exp $");
+__RCSID("$NetBSD: inode.c,v 1.29 1998/07/28 19:22:55 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,8 +204,8 @@ iblock(idesc, ilevel, isize)
 		for (ap = &bp->b_un.b_indir[nif]; ap < aplim; ap++) {
 			if (*ap == 0)
 				continue;
-			(void)sprintf(buf, "PARTIALLY TRUNCATED INODE I=%u",
-				idesc->id_number);
+			(void)snprintf(buf, sizeof(buf),
+			    "PARTIALLY TRUNCATED INODE I=%u", idesc->id_number);
 			if (dofix(idesc, buf)) {
 				*ap = 0;
 				dirty(bp);
