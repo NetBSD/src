@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.4 2003/09/11 20:23:46 christos Exp $	*/
+/*	$NetBSD: __sigaction14_sigtramp.c,v 1.5 2003/09/11 20:24:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 __weak_alias(__sigaction14, __libc_sigaction14)
 
-static int __have_sigreturn = -1;
+static int have_sigreturn = -1;
 
 static void get_have_sigreturn(void);
 
@@ -57,11 +57,11 @@ static void
 get_have_sigreturn(void)
 {
 #if defined(SYS___sigreturn14)
-        __have_sigreturn = syscall(SYS___sigreturn14, NULL) == EFAULT;
+        have_sigreturn = syscall(SYS___sigreturn14, NULL) == EFAULT;
 #elif defined(SYS_compat_16___sigreturn14)
-	__have_sigreturn = syscall(SYS_compat_16___sigreturn14, NULL) == EFAULT;
+	have_sigreturn = syscall(SYS_compat_16___sigreturn14, NULL) == EFAULT;
 #else
-	__have_sigreturn = 0;
+	have_sigreturn = 0;
 #endif
 }
 
@@ -72,10 +72,10 @@ __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 	extern int __sigtramp_siginfo_2[];
 	extern int __sigtramp_sigcontext_1[];
 
-	if (__have_sigreturn == -1)
+	if (have_sigreturn == -1)
 		get_have_sigreturn();
 
-	if (__have_sigreturn && act && (act->sa_flags & SA_SIGINFO) == 0)
+	if (have_sigreturn && act && (act->sa_flags & SA_SIGINFO) == 0)
 		return (__sigaction_sigtramp(sig, act, oact,
 		    __sigtramp_sigcontext_1, 1));
 
