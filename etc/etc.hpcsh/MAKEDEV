@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.17 2002/05/25 16:31:10 uch Exp $
+#	$NetBSD: MAKEDEV,v 1.18 2002/06/17 16:21:08 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -76,6 +76,7 @@
 #	ss*	SCSI scanner
 #	uk*	unknown SCSI device
 #	ch*	SCSI media changer
+#	systrace syscall tracer
 #
 
 dialin=0
@@ -111,6 +112,7 @@ all)
 	makedev scsibus0
 #	makedev local
 	makedev clockctl
+	makedev systrace
 	;;
 
 ramdisk)
@@ -432,6 +434,12 @@ clockctl)
 	mknod clockctl c 34 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 35 0
+	chmod 644 systrace
 	;;
 
 local)
