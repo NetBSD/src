@@ -1,15 +1,15 @@
-#	$NetBSD: INDY,v 1.7 2001/05/14 17:59:22 matt Exp $
+#	$NetBSD: INDY,v 1.8 2001/11/20 12:56:38 lukem Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
 
 # XXX _LOW _HOW og/eller TEXTADDR
 
-makeoptions 	TEXTADDR=0x80002000	# O2
-#makeoptions 	TEXTADDR=0x80069000	# O2 Symmon
-#makeoptions 	TEXTADDR=0x88002000	# Indy
-#makeoptions 	TEXTADDR=0x88069000	# Indy Symmon
-#makeoptions 	TEXTADDR=0x8001c000	# IP27
-#makeoptions 	TEXTADDR=0x80300000	# IP27 Symmon
+makeoptions	TEXTADDR=0x80002000	# O2
+#makeoptions	TEXTADDR=0x80069000	# O2 Symmon
+#makeoptions	TEXTADDR=0x88002000	# Indy
+#makeoptions	TEXTADDR=0x88069000	# Indy Symmon
+#makeoptions	TEXTADDR=0x8001c000	# IP27
+#makeoptions	TEXTADDR=0x80300000	# IP27 Symmon
 
 maxusers	32
 
@@ -20,7 +20,7 @@ maxusers	32
 
 options 	SCSI_DELAY=0
 
-options		IP32			# this is required for an O2
+options 	IP32			# this is required for an O2
 
 #options 	MIPS1
 options 	MIPS3
@@ -28,7 +28,7 @@ options 	MIPS3_L2CACHE_ABSENT
 #options 	MIPS3_L2CACHE_PRESENT
 options 	MIPS3_5200		# XXX
 
-#options 	MEMORY_DISK_HOOKS 
+#options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT
 #options 	MEMORY_DISK_SERVER=0
 #options 	MINIROOTSIZE=8192
@@ -39,7 +39,7 @@ options 	DDB
 options 	DDB_HISTORY_SIZE=100
 options 	DEBUG
 options 	DIAGNOSTIC
-#makeoptions 	DEBUG="-g"
+#makeoptions	DEBUG="-g"
 
 #options 	EXEC_ECOFF
 

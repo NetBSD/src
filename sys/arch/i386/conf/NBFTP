@@ -1,4 +1,4 @@
-#	$NetBSD: NBFTP,v 1.32 2001/11/20 08:43:26 lukem Exp $
+#	$NetBSD: NBFTP,v 1.33 2001/11/20 12:56:30 lukem Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	NBFTP -- ftp/sup.netbsd.org server machine
@@ -30,7 +30,7 @@ options 	DUMMY_NOPS
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
-options 	"CONSDEVNAME=\"com\"",CONADDR=0x3f8,CONSPEED=57600
+options 	CONSDEVNAME="\"com\"",CONADDR=0x3f8,CONSPEED=57600
 #	you don't want the option below ON iff you are using the
 #	serial console option of the new boot strap code.
 options 	CONS_OVERRIDE	# Always use above! independent of boot info
@@ -364,7 +364,7 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 pciide* at pci ? dev ? function ? flags 0x0000
 
 # ISA Plug-and-Play IDE controllers
-#wdc*	at isapnp? 
+#wdc*	at isapnp?
 
 # PCMCIA IDE controllers
 #wdc*	at pcmcia? function ?
@@ -535,7 +535,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #aria0	at isa? port 0x290 irq 10 		# Aria
 #gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 #pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-#pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
+#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
 #sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 #sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System

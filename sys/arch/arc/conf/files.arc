@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.33 2001/07/23 16:36:37 tsutsui Exp $
+#	$NetBSD: files.arc,v 1.34 2001/11/20 12:56:21 lukem Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -78,7 +78,7 @@ file	arch/arc/arc/wired_map.c
 file	arch/arc/arc/arcbios.c
 
 ##
-##	Machine-independent ATAPI drivers 
+##	Machine-independent ATAPI drivers
 ##
 include "dev/ata/files.ata"
 major	{ wd = 4 }
@@ -197,8 +197,8 @@ attach	vga at jazzio with vga_jazzio
 file	arch/arc/jazz/vga_jazzio.c	vga_jazzio needs-flag
 
 #	PC keyboard controller on Jazz-Internal bus
-attach  pckbc at jazzio with pckbc_jazzio
-file    arch/arc/jazz/pckbc_jazzio.c	pckbc_jazzio needs-flag
+attach	pckbc at jazzio with pckbc_jazzio
+file	arch/arc/jazz/pckbc_jazzio.c	pckbc_jazzio needs-flag
 
 #
 #	Stock ISA bus support

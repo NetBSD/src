@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.1 2001/10/05 22:27:46 reinoud Exp $
+#	$NetBSD: GENERIC,v 1.2 2001/11/20 12:56:17 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include	"arch/acorn32/conf/std.acorn32"
 
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 # estimated number of users
 maxusers	32
@@ -53,7 +53,7 @@ file-system	UNION		# union file system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER
 
 # Networking options
@@ -89,16 +89,16 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 
 # Bootloader options
-options		COMPAT_OLD_BOOTLOADER
+options 	COMPAT_OLD_BOOTLOADER
 
 # Shared memory options
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -121,7 +121,7 @@ options 	KMEMSTATS	# kernel memory statistics
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internal consistency checks
-#options  	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
@@ -131,7 +131,7 @@ config		netbsd	root on ? type ?
 
 # serial console ... the conaddr is hardcoded as the pioc address + 4*com offset
 # this really be fixed some day
-#options         COMCONSOLE,CONADDR="0x210000+4*0x3f8",CONUNIT=0,CONSPEED=9600    
+#options 	COMCONSOLE,CONADDR="0x210000+4*0x3f8",CONUNIT=0,CONSPEED=9600
 
 # The main bus device
 mainbus0 at root
@@ -170,12 +170,12 @@ vidc0		at mainbus?
 vidcconsole0	at vidc?
 
 # generic VT console device
-vt0     at vidc?
-vt1     at vidc?
-vt2     at vidc?
-vt3     at vidc?
-vt4     at vidc?
-vt5     at vidc?
+vt0	at vidc?
+vt1	at vidc?
+vt2	at vidc?
+vt3	at vidc?
+vt4	at vidc?
+vt5	at vidc?
 
 # Peripheral IO Controller
 pioc0	at mainbus? base 0x00210000
@@ -189,20 +189,20 @@ cd*	at atapibus? drive ?
 sd*	at atapibus? drive ?
 
 # Floppy disk controller
-fdc*    at pioc? offset 0x03f0 irq 12 dack 0x2000
-fdc*    at pioc? offset 0x0370 irq -1 dack 0x2000
-fd0     at fdc? drive ?
+fdc*	at pioc? offset 0x03f0 irq 12 dack 0x2000
+fdc*	at pioc? offset 0x0370 irq -1 dack 0x2000
+fd0	at fdc? drive ?
 
 # Serial ports
-com*    at pioc? offset 0x03f8 irq 10
-#com*    at pioc? offset 0x02f8 irq -1
-#com*    at pioc? offset 0x0338 irq -1
-#com*    at pioc? offset 0x0238 irq -1
+com*	at pioc? offset 0x03f8 irq 10
+#com*	at pioc? offset 0x02f8 irq -1
+#com*	at pioc? offset 0x0338 irq -1
+#com*	at pioc? offset 0x0238 irq -1
 
 # Parallel ports
-lpt*    at pioc? offset 0x0278 irq 0
-#lpt*    at pioc? offset 0x0378 irq -1
-#lpt*    at pioc? offset 0x03bc irq -1
+lpt*	at pioc? offset 0x0278 irq 0
+#lpt*	at pioc? offset 0x0378 irq -1
+#lpt*	at pioc? offset 0x03bc irq -1
 
 # Crude sound device
 beep0	at vidc?
@@ -273,9 +273,9 @@ ea*	at podulebus?			# Ether3 podules
 eb0	at podulebus?			# EtherB network slot cards
 ne*	at podulebus?			# NE2000 clone cards
 
-pseudo-device	loop	1               # network loopback
-pseudo-device	bpfilter 8              # packet filter
-pseudo-device	sl	2               # CSLIP
+pseudo-device	loop	1		# network loopback
+pseudo-device	bpfilter 8		# packet filter
+pseudo-device	sl	2		# CSLIP
 pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
@@ -288,13 +288,13 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd     4               # disk-like interface to files
+pseudo-device	vnd	4		# disk-like interface to files
 pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	raid	4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator
 
-makeoptions MONITOR="Taxan875+LR"
-#makeoptions MONITOR="AKF60"
-makeoptions MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"
+makeoptions	MONITOR="Taxan875+LR"
+#makeoptions	MONITOR="AKF60"
+makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"

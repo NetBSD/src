@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.110 2001/11/05 21:29:43 aymeric Exp $
+#	$NetBSD: files.amiga,v 1.111 2001/11/20 12:56:20 lukem Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -27,8 +27,8 @@ defopt				LEV6_DEFER
 
 defopt				IOBZCLOCK
 
-device  mainbus {}
-attach  mainbus at root
+device	mainbus {}
+attach	mainbus at root
 
 device	cpu
 attach	cpu at mainbus
@@ -92,7 +92,7 @@ file	arch/amiga/dev/par.c		par needs-count
 # audio
 device	aucc: audio
 attach	aucc at mainbus
-file	arch/amiga/dev/aucc.c		aucc needs-flag 
+file	arch/amiga/dev/aucc.c		aucc needs-flag
 
 device	melody: audio, tms320av110
 attach	melody at zbus
@@ -140,7 +140,7 @@ file	arch/amiga/dev/ite_cc.c		grfcc & ite
 # wscons interface to custom chips
 device	amidisplaycc: wsemuldisplaydev
 attach	amidisplaycc at mainbus
-file	arch/amiga/dev/amidisplaycc.c   amidisplaycc needs-flag
+file	arch/amiga/dev/amidisplaycc.c	amidisplaycc needs-flag
 
 include "dev/wscons/files.wscons"
 
@@ -284,7 +284,7 @@ major	{sd = 4}
 major	{cd = 7}
 
 # wd 33c93 contrllers
-define	sbic 
+define	sbic
 file	arch/amiga/dev/sbic.c		sbic
 
 # GVP series II
@@ -311,7 +311,7 @@ device	wstsc: scsi, sci
 attach	wstsc at zbus
 file	arch/amiga/dev/wstsc.c		wstsc needs-flag
 
-# IVS 
+# IVS
 device	ivsc: scsi, sci
 attach	ivsc at zbus
 file	arch/amiga/dev/ivsc.c		ivsc needs-flag
@@ -406,7 +406,7 @@ file	arch/amiga/dev/idesc.c		idesc needs-flag
 # MacroSystem DraCo internal
 device	drsc: scsi, asiop
 attach	drsc at mainbus
-file  arch/amiga/dev/drsc.c           drsc needs-flag
+file	arch/amiga/dev/drsc.c		drsc needs-flag
 
 # MacroSystem DraCo internal DS2404 hwc
 device	drbbc

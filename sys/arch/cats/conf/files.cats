@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.10 2001/09/04 02:59:32 nisimura Exp $
+#	$NetBSD: files.cats,v 1.11 2001/11/20 12:56:23 lukem Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -57,7 +57,7 @@ file	arch/arm32/isa/joy_isapnp.c		joy_isapnp
 
 # Memory disk driver
 file	arch/arm32/dev/md_hooks.c				md & memory_disk_hooks
-major   {md = 18}
+major	{md = 18}
 
 # RAIDframe
 major	{raid = 71}
@@ -67,8 +67,8 @@ major	{raid = 71}
 #
 
 include "dev/scsipi/files.scsipi"
-major   {sd = 24}
-major   {cd = 26}
+major	{sd = 24}
+major	{cd = 26}
 
 file	arch/arm/arm32/conf.c
 

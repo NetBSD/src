@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.39 2001/09/20 21:54:11 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.40 2001/11/20 12:56:22 lukem Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -13,7 +13,7 @@
 #    documentation and/or other materials provided with the distribution.
 # 3. The name of the author may not be used to endorse or promote products
 #    derived from this software without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 # IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 # OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -35,10 +35,10 @@ include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
 
 include "dev/ata/files.ata"
-major { wd = 4 }
+major	{ wd = 4 }
 include "dev/scsipi/files.scsipi"
-major   {sd = 5}
-major   {cd = 6}
+major	{ sd = 5 }
+major	{ cd = 6 }
 
 define fiq
 

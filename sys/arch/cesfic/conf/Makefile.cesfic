@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cesfic,v 1.5 2001/10/26 06:45:36 jmc Exp $
+#	$NetBSD: Makefile.cesfic,v 1.6 2001/11/20 12:56:24 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -37,7 +37,7 @@ S!=	cd ../../../..; pwd
 .endif
 CESFIC=	$S/arch/cesfic
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes -Wno-format
@@ -165,14 +165,14 @@ depend: .depend
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
- 
-# depend on network or filesystem configuration 
-uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on network or filesystem configuration
+uipc_proto.o vfs_conf.o: Makefile
 
 # depend on maxusers
 machdep.o: Makefile
 
-# depend on CPU configuration 
+# depend on CPU configuration
 dma.o hpux_machdep.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o trap.o: Makefile
 
 

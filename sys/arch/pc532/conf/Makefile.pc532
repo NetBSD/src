@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.67 2001/10/26 06:45:38 jmc Exp $
+#	$NetBSD: Makefile.pc532,v 1.68 2001/11/20 12:56:36 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -41,13 +41,13 @@ S!=	cd ../../../..; pwd
 .endif
 PC532=	$S/arch/pc532
 
-HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
 CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith -Wno-format
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
-# XXX always get it right.  --thorpej 
+# XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
 .if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
@@ -188,14 +188,14 @@ dependall: depend all
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
- 
-# depend on network or filesystem configuration 
-uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on network or filesystem configuration
+uipc_proto.o vfs_conf.o: Makefile
 
 # depend on maxusers
 machdep.o: Makefile
 
-# depend on CPU configuration 
+# depend on CPU configuration
 #: Makefile
 
 

@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.79 2001/11/20 08:43:23 lukem Exp $
+#	$NetBSD: DISKLESS,v 1.80 2001/11/20 12:56:29 lukem Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -94,7 +94,7 @@ options 	CCITT,LLC,HDLC	# X.25
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 config		netbsd	root on ? type nfs
-#options 	"CONSDEVNAME=\"com\"",CONADDR=0x3f8,CONSPEED=9600
+#options 	CONSDEVNAME="\"com\"",CONADDR=0x3f8,CONSPEED=9600
 
 options 	EISAVERBOSE	# verbose EISA device messages
 options 	PCIVERBOSE	# verbose PCI device messages
@@ -232,8 +232,8 @@ fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
 ne*	at pci? dev ? function ?		# NE2000-compatible eth cards
 
-#pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
-#sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
+#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
+#sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 #audio*	at sp0
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster

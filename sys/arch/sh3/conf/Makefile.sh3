@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.14 2001/10/26 06:45:39 jmc Exp $
+#	$NetBSD: Makefile.sh3,v 1.15 2001/11/20 12:56:38 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -50,7 +50,7 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -D${MACHINE}
 CWARNFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes
 CWARNFLAGS+=	-Wpointer-arith -Wno-parentheses
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
-# XXX always get it right.  --thorpej 
+# XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
 .if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main

@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.14 2001/07/08 16:32:15 abs Exp $
+#	$NetBSD: OFWGENCFG,v 1.15 2001/11/20 12:56:22 lukem Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -14,8 +14,8 @@ maxusers	32
 
 # Standard system options
 
-options		RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options	NTP		# NTP phase/frequency locked loop
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
 
@@ -53,57 +53,57 @@ file-system	KERNFS		# /kern
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	NFSSERVER
-options		NFS_BOOT_DHCP	# NFS booting via DHCP
-options		NFS_BOOT_RWSIZE=1024	# OFW driver can't cope with more
+options 	NFS_BOOT_DHCP	# NFS booting via DHCP
+options 	NFS_BOOT_RWSIZE=1024	# OFW driver can't cope with more
 
 # Networking options
 
 #options 	GATEWAY		# packet forwarding
-options		INET		# IP + ICMP + TCP + UDP
-#options	MROUTING	# IP multicast routing
+options 	INET		# IP + ICMP + TCP + UDP
+#options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
-#options	NSIP		# XNS tunneling over IP
+#options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
-#options	PFIL_HOOKS	# pfil(9) packet filter hooks (Required
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks (Required
 				# if you enable the pseudo-device ipl).
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Compatibility options
 
-options		COMPAT_43	# 4.3BSD compatibility.
-options		COMPAT_12	# NetBSD 1.2 compatibility.
-#options	COMPAT_11	# NetBSD 1.1 compatibility.
-#options	COMPAT_10	# NetBSD 1.0 compatibility.
-#options	COMPAT_09	# NetBSD 0.9 compatibility.
+options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_12	# NetBSD 1.2 compatibility.
+#options 	COMPAT_11	# NetBSD 1.1 compatibility.
+#options 	COMPAT_10	# NetBSD 1.0 compatibility.
+#options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Shared memory options
 
-options		SYSVMSG		# System V-like message queues
-options		SYSVSEM		# System V-like semaphores
-options		SYSVSHM		# System V-like memory sharing
-options		SHMMAXPGS=1024	# 1024 pages is the default
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 
-#options	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options	MEMORY_DISK_SIZE=0	# Size in KBytes
+#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+#options 	MEMORY_DISK_SIZE=0	# Size in KBytes
 
 # Miscellaneous kernel options
-options		KTRACE		# system call tracing, a la ktrace(1)
-options		IRQSTATS	# manage IRQ statistics
+options 	KTRACE		# system call tracing, a la ktrace(1)
+options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
-options		KMEMSTATS	# kernel memory statistics
+options 	KMEMSTATS	# kernel memory statistics
 
 # Development and Debugging options
 
-#options	ARM700BUGTRACK	# track the ARM700 swi bug
-#options	PORTMASTER	# Enable PortMaster only options
-options		DIAGNOSTIC	# internally consistency checks
-#options	IPKDB		# remote kernel debugging
-options		DDB		# in-kernel debugger
+#options 	ARM700BUGTRACK	# track the ARM700 swi bug
+#options 	PORTMASTER	# Enable PortMaster only options
+options 	DIAGNOSTIC	# internally consistency checks
+#options 	IPKDB		# remote kernel debugging
+options 	DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 config		netbsd	root on ofnet0 type nfs
@@ -124,16 +124,16 @@ ofcons*		at ofbus?
 ofrtc*		at ofbus?
 ofrom*		at ofbus?
 
-pseudo-device	loop	1               # network loopback
-pseudo-device	bpfilter 8              # packet filter
-#pseudo-device	sl	2               # CSLIP
+pseudo-device	loop	1		# network loopback
+pseudo-device	bpfilter 8		# packet filter
+#pseudo-device	sl	2		# CSLIP
 #pseudo-device	ppp	2		# PPP
 #pseudo-device	tun	2		# network tunneling over tty
 #pseudo-device	ipfilter 1		# ip filter
 
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd     4               # disk-like interface to files
+pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	rnd			# /dev/random and /dev/urandom
 

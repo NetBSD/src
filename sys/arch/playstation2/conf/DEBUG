@@ -1,7 +1,7 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.1 2001/10/16 15:38:31 uch Exp $
+# 	$NetBSD: DEBUG,v 1.2 2001/11/20 12:56:36 lukem Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -11,7 +11,7 @@ config		netbsd		root on ? type ?
 
 makeoptions	DEFGP="-G 0"
 
-options		BUILTIN_KERNEL_LOADER, KERNEL_PATH="\"/netbsd\""
+options 	BUILTIN_KERNEL_LOADER, KERNEL_PATH="\"/netbsd\""
 options 	NMBCLUSTERS=4096 # Max. number of mbuf clusters
 
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -28,15 +28,16 @@ options 	DDB			# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=8192		# dmesg buffer size
-#options		SYSCALL_DEBUG
-#options		LOCKDEBUG
-options		GPROF		# kernel profiling
+#options 	SYSCALL_DEBUG
+#options 	LOCKDEBUG
+options 	GPROF		# kernel profiling
 makeoptions	PROF="-pg"
 
-#options		USBVERBOSE	# verbose USB device autoconfig messages
-#options		MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
 
-options	GSFB_DEBUG_MONITOR, INTR_DEBUG, SIF_DEBUG, SMAP_DEBUG, EMAC3_DEBUG
+options 	GSFB_DEBUG_MONITOR, INTR_DEBUG, SIF_DEBUG, SMAP_DEBUG
+options 	EMAC3_DEBUG
 
 # USB Generic HID devices
 uhid*	at uhub? port ? configuration ? interface ?
@@ -73,7 +74,7 @@ uftdi*	at uhub? port ?
 ucom*	at uftdi? portno ?
 
 uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ? 
+ucom*	at uplcom? portno ?
 
 umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
 ucom*	at umct? portno ?

@@ -1,4 +1,4 @@
-#	$NetBSD: RPCINST,v 1.1 2001/10/05 22:27:47 reinoud Exp $
+#	$NetBSD: RPCINST,v 1.2 2001/11/20 12:56:17 lukem Exp $
 #
 #	RPCINST -- RiscPC install configuration
 #
@@ -81,7 +81,7 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Bootloader options
-options		COMPAT_OLD_BOOTLOADER
+options 	COMPAT_OLD_BOOTLOADER
 
 # Shared memory options
 
@@ -118,7 +118,7 @@ config		netbsd	root on ? type ffs
 
 # serial console ... the conaddr is hardcoded as the pioc address + 4*com offset
 # this really be fixed some day
-#options         COMCONSOLE,CONADDR="0x210000+4*0x3f8",CONUNIT=0,CONSPEED=9600    
+#options 	COMCONSOLE,CONADDR="0x210000+4*0x3f8",CONUNIT=0,CONSPEED=9600
 
 # The main bus device
 mainbus0 at root
@@ -157,12 +157,12 @@ vidc0		at mainbus?
 vidcconsole0	at vidc?
 
 # generic VT console device
-vt0     at vidc?
-vt1     at vidc?
-vt2     at vidc?
-vt3     at vidc?
-vt4     at vidc?
-vt5     at vidc?
+vt0	at vidc?
+vt1	at vidc?
+vt2	at vidc?
+vt3	at vidc?
+vt4	at vidc?
+vt5	at vidc?
 
 # Peripheral IO Controller
 pioc0	at mainbus? base 0x00210000
@@ -176,20 +176,20 @@ cd*	at atapibus? drive ?
 sd*	at atapibus? drive ?
 
 # Floppy disk controller
-fdc*    at pioc? offset 0x03f0 irq 12 dack 0x2000
-fdc*    at pioc? offset 0x0370 irq -1 dack 0x2000
-fd0     at fdc? drive ?
+fdc*	at pioc? offset 0x03f0 irq 12 dack 0x2000
+fdc*	at pioc? offset 0x0370 irq -1 dack 0x2000
+fd0	at fdc? drive ?
 
 # Serial ports
-com*    at pioc? offset 0x03f8 irq 10
-#com*    at pioc? offset 0x02f8 irq -1
-#com*    at pioc? offset 0x0338 irq -1
-#com*    at pioc? offset 0x0238 irq -1
+com*	at pioc? offset 0x03f8 irq 10
+#com*	at pioc? offset 0x02f8 irq -1
+#com*	at pioc? offset 0x0338 irq -1
+#com*	at pioc? offset 0x0238 irq -1
 
 # Parallel ports
-lpt*    at pioc? offset 0x0278 irq 0
-#lpt*    at pioc? offset 0x0378 irq -1
-#lpt*    at pioc? offset 0x03bc irq -1
+lpt*	at pioc? offset 0x0278 irq 0
+#lpt*	at pioc? offset 0x0378 irq -1
+#lpt*	at pioc? offset 0x03bc irq -1
 
 # Crude sound device
 beep0	at vidc?
@@ -249,20 +249,20 @@ ea*	at podulebus?			# Ether3 podules
 eb0	at podulebus?			# EtherB network slot cards
 ne*	at podulebus?			# NE2000 clone cards
 
-pseudo-device	loop	1               # network loopback
-#pseudo-device	bpfilter 8              # packet filter
-#pseudo-device	sl	2               # CSLIP
+pseudo-device	loop	1		# network loopback
+#pseudo-device	bpfilter 8		# packet filter
+#pseudo-device	sl	2		# CSLIP
 #pseudo-device	ppp	2		# PPP
 #pseudo-device	tun	2		# network tunneling over tty
 #pseudo-device	ipfilter 1		# ip filter
-#pseudo-device	strip	4		# STRIP 
+#pseudo-device	strip	4		# STRIP
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd     4               # disk-like interface to files
+pseudo-device	vnd	4		# disk-like interface to files
 pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	md	1		# Ramdisk driver
 #pseudo-device	rnd			# /dev/random and /dev/urandom
 
-makeoptions MONITOR="Taxan875+LR"
-#makeoptions MONITOR="AKF60"
-makeoptions MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"
+makeoptions	MONITOR="Taxan875+LR"
+#makeoptions	MONITOR="AKF60"
+makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47 2001/11/20 08:43:31 lukem Exp $
+# $NetBSD: GENERIC,v 1.48 2001/11/20 12:56:35 lukem Exp $
 #
 # GENERIC next68k
 #
@@ -6,7 +6,7 @@
 
 include "arch/next68k/conf/std.next68k"
 
-#ident 		"GENERIC-$Revision: 1.47 $"
+#ident 		"GENERIC-$Revision: 1.48 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -15,10 +15,10 @@ maxusers	16
 options 	KTRACE		# system call tracing
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -34,7 +34,7 @@ options 	DDB
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 
 # ... or these for KGDB (gdb remote target)
-#makeoptions DEBUG="-g"			# debugging symbols for gdb
+#makeoptions	DEBUG="-g"		# debugging symbols for gdb
 #options 	KGDB			# support for kernel gdb
 #options 	KGDB_DEV=0xc01		# kgdb device number (dev_t)
 #options 	KGDB_DEVRATE=9600	# baud rate
@@ -44,7 +44,7 @@ options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	PMAP_DEBUG
 options 	SCSIDEBUG
 options 	SCSIVERBOSE		# Verbose SCSI errors
-options         SWAPDEBUG
+options 	SWAPDEBUG
 
 # Compatibility options
 options 	COMPAT_43	# and 4.3BSD and ...
@@ -85,7 +85,7 @@ file-system 	UNION		# union file system
 
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -122,8 +122,8 @@ options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
 
 # wscons options
-options         RCONS_2BPP              # necessary for nextdisplay
-options         RCONS_16BPP		# necessary for color nextdisplay
+options 	RCONS_2BPP		# necessary for nextdisplay
+options 	RCONS_16BPP		# necessary for color nextdisplay
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
@@ -144,21 +144,21 @@ mainbus0 at root
 #fpu0 at mainbus?
 
 # device space
-intio0  at mainbus?
+intio0	at mainbus?
 
-nextkbd0    at intio? ipl 3
-nextdisplay0    at mainbus?
+nextkbd0	at intio? ipl 3
+nextdisplay0	at mainbus?
 
-wsdisplay*      at nextdisplay? console ?
-wskbd*          at nextkbd? console ?
+wsdisplay*	at nextdisplay? console ?
+wskbd*		at nextkbd? console ?
 
 # INTIO
-zsc0    at intio? ipl 5
-#zsc1    at intio? ipl 5
+zsc0	at intio? ipl 5
+#zsc1	at intio? ipl 5
 
-xe*     at intio? ipl 3         # ethernet
+xe*	at intio? ipl 3			# ethernet
 
-#esp0    at intio? ipl 3         flags 0xff00 # Turn off sync negotiation
+#esp0	at intio? ipl 3	flags 0xff00	# Turn off sync negotiation
 
 #
 # Serial ports

@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.55 2001/08/25 21:19:21 is Exp $
+# $NetBSD: DRACO,v 1.56 2001/11/20 12:56:20 lukem Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -7,7 +7,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.55 $"
+#ident		"GENERIC-$Revision: 1.56 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -72,7 +72,7 @@ file-system 	UNION		# union filesystem
 #options 	FFS_EI		# FFS Endian Independant support
 
 options 	QUOTA		# User and group quotas in FFS
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -98,10 +98,10 @@ options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 options 	SYSVSHM		# System V-like shared memory
 options 	SYSVMSG		# System V-like messages
 options 	SYSVSEM		# System V-like semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 
 #Support for various kernel options
 
@@ -109,7 +109,7 @@ options 	KTRACE		# system call tracing support
 options 	LKM		# Loadable kernel modules
 options 	UCONSOLE	# anyone can redirect a virtual console
 
-#options 	INSECURE	# allow, among other insecure stuff, LKM 
+#options 	INSECURE	# allow, among other insecure stuff, LKM
 				# loading in multi-user mode.
 options 	SCSIVERBOSE	# Verbose SCSI errors
 
@@ -129,12 +129,12 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 
 #options 	LIMITMEM=24	# Do not use more than LIMITMEM MB of the
 				# first bank of RAM. (default: unlimited)
-#options	NKPTADD=4	# set this for 4 additional KPT pages
-#options	NKPTADDSHIFT=24	# set this for 1 additional KPT page
+#options 	NKPTADD=4	# set this for 4 additional KPT pages
+#options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
 				# per 16 MB (1<<24 bytes) of RAM
-                                # define and decrease this, or define and
-                                # increase NKPTADD if you get "out of PT pages"
-                                # panics.
+				# define and decrease this, or define and
+				# increase NKPTADD if you get "out of PT pages"
+				# panics.
 
 #ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
 #before the 10 secondinterval ends, or that KBDRESET does work at all.
@@ -189,8 +189,8 @@ hyper*		at zbus?		# zbus HyperCom3/3+/4/4+
 com*		at hyper? port ?	# Hypercom3/4 serial ports
 lpt*		at hyper? port ?	# Hypercom3+/4+ parallel port
 
-#options IOBZCLOCK=22118400 		# default, uncomment the next line
-#options IOBZCLOCK=24000000		# if needed.
+#options 	IOBZCLOCK=22118400 	# default, uncomment the next line
+#options 	IOBZCLOCK=24000000	# if needed.
 
 iobl*		at zbus?		# zbus IOBlix
 com*		at iobl? port ?		# IOBlix serial ports
@@ -258,7 +258,7 @@ pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
-pseudo-device  rnd                     # /dev/random and in-kernel generator
-#options        RND_COM                 # use "com" randomness as well (BROKEN)
+pseudo-device	rnd			# /dev/random and in-kernel generator
+#options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 config	netbsd root on ? type ?

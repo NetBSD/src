@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.69 2001/11/17 23:56:21 gmcgarry Exp $
+#	$NetBSD: GENERIC,v 1.70 2001/11/20 12:56:26 lukem Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -6,7 +6,7 @@
 # Include attributes common to all hp300s
 include "arch/hp300/conf/std.hp300"
 
-#ident 		"GENERIC-$Revision: 1.69 $"
+#ident 		"GENERIC-$Revision: 1.70 $"
 
 # Support for various CPU types
 options 	HP320
@@ -38,10 +38,10 @@ options 	COMPAT_14	# compatibility with NetBSD 1.4
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	SYSVSHM		# System V-style shared memory
 options 	SYSVSEM		# System V-style semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVMSG		# System V-style message queues
 options 	KTRACE		# system call tracing support
 options 	LKM		# Loadable kernel modules
@@ -60,7 +60,7 @@ file-system	MFS		# Memory-based filesystem
 # Filesystem options
 options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network filesystem server
 options 	NFS_BOOT_BOOTPARAM # use Sun bootparams for NFS boot
 

@@ -2,7 +2,7 @@
 # R4000 (any model) kernel config file
 
 #
-# 	$NetBSD: R4000,v 1.24 2001/11/20 08:43:33 lukem Exp $
+# 	$NetBSD: R4000,v 1.25 2001/11/20 12:56:37 lukem Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -24,7 +24,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	DDB_ONPANIC=0		# don't enter debugger on panic
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
-options 	"COMPAT_43"		# compatibility with 4.3BSD binaries
+options 	COMPAT_43		# compatibility with 4.3BSD binaries
 options 	KTRACE			# system call tracing support
 options 	LKM			# loadable kernel modules
 
@@ -73,15 +73,15 @@ options 	COMPAT_14	# Netbsd 1.4
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Raster console options
-options		FONT_BOLD8x16		# Font for fb devices
-options		FONT_LUCIDA16x29	# Font for px devices
-#options	FONT_GALLANT12x22
-#options	FONT_QVSS8x15
+options 	FONT_BOLD8x16		# Font for fb devices
+options 	FONT_LUCIDA16x29	# Font for px devices
+#options 	FONT_GALLANT12x22
+#options 	FONT_QVSS8x15
 
 # pmax specific
 options 	COMPAT_ULTRIX	# ultrix compatibility
 options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
-options 	"HZ=256"	# RTC rate required
+options 	HZ=256		# RTC rate required
 
 config		netbsd		root on ? type ?
 

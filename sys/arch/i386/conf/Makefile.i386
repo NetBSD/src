@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.119 2001/11/16 00:23:03 atatat Exp $
+#	$NetBSD: Makefile.i386,v 1.120 2001/11/20 12:56:30 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -12,7 +12,7 @@
 #	/sys/arch/i386/conf/Makefile.i386
 # after which config should be rerun for all machines of that type.
 #
-# To specify debugging, add the config line: makeoptions DEBUG="-g" 
+# To specify debugging, add the config line: makeoptions DEBUG="-g"
 # A better way is to specify -g only for a few files.
 #
 #	makeoptions DEBUGLIST="uvm* trap if_*"
@@ -39,7 +39,7 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 
 ##
-## (3) libkern and compat 
+## (3) libkern and compat
 ##
 KERN_AS=	obj
 

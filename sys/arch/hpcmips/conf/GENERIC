@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.96 2001/11/13 17:54:49 augustss Exp $
+# 	$NetBSD: GENERIC,v 1.97 2001/11/20 12:56:28 lukem Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.96 $"
+#ident 		"GENERIC-$Revision: 1.97 $"
 
 maxusers	10
 
@@ -121,7 +121,7 @@ vrbcu*	at vrip? addr 0x0b000000 size 0x20
 vrcmu*	at vrip? addr 0x0b000060 size 0x20
 vrrtc*	at vrip? addr 0x0b0000c0 size 0x20 intr 2
 
-vrkiu*  at vrip? addr 0x0b000180 size 0x20 intr 7
+vrkiu*	at vrip? addr 0x0b000180 size 0x20 intr 7
 hpckbd*	at vrkiu?
 options 	__NO_SOFT_SERIAL_INTERRUPT
 com*	at vrip? addr 0x0c000000 size 0x20 intr 9 pwctl PWCTL_COM0
@@ -129,7 +129,7 @@ vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
 vrpmu*	at vrip? addr 0x0b0000a0 size 0x20 intr 1 # power switch
 vrdsu*	at vrip? addr 0x0b0000e0 size 0x08
 vrpiu*	at vrip? addr 0x0b000120 size 0x1a0 intr 5
-vrled*  at vrip? addr 0x0b000240 size 0x10 intr 17
+vrled*	at vrip? addr 0x0b000240 size 0x10 intr 17
 
 options 	MQ200_DEBUG
 #options 	MQ200_USECRT
@@ -139,14 +139,14 @@ hpcfb*		at	mqvideo?
 ite8181video0 at vrip? addr 0x0a000000 size 0x800000 # ITE8181 video controller
 hpcfb*		at	ite8181video?
 
-vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_430
-vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_510
-vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_520
-vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_520A
-vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530
-vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_SIGMARION
-vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530A
-vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_700
+vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_430
+vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_510
+vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_520
+vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_520A
+vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530
+vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_SIGMARION
+vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530A
+vrc4172pwm*	at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_700
 
 # Workstation Console attachments
 bivideo0	at	mainbus0
@@ -206,7 +206,7 @@ wskbd*		at	btnmgr0 mux 1
 #
 button0 at vrgiu? platform NEC_MCR_3XX id BTN_REC port 4
 button0 at vrgiu? platform NEC_MCR_500 id BTN_REC port 4
-button0 at vrgiu? platform IBM_WORKPAD id BTN_REC port 1 active 0 
+button0 at vrgiu? platform IBM_WORKPAD id BTN_REC port 1 active 0
 button1 at vrgiu? platform NEC_MCR_430 id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_510 id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_520 id BTN_COVER port 3
@@ -289,18 +289,18 @@ options 	PCIC_ISA_INTR_ALLOC_MASK=0x0008 # IRQ 3 only (MCR/Freestyle)
 #
 # Fujitsu INTERTOP CX300
 #
-pwctl0 at vrgiu? platform FUJITSU_INTERTOP id PWCTL_COM0 port 15
-vrisab2 at vrgiu? platform FUJITSU_INTERTOP isaportoffset 0x1000000
-isa2    at vrisab2
-pcic0   at isa2 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00060003
+pwctl0	at vrgiu? platform FUJITSU_INTERTOP id PWCTL_COM0 port 15
+vrisab2	at vrgiu? platform FUJITSU_INTERTOP isaportoffset 0x1000000
+isa2	at vrisab2
+pcic0	at isa2 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00060003
 
 #
 # Vadem Clio and Sharp Tripad
 #
-vrisab3 at vrgiu? platform SHARP_TRIPAD isaportoffset 0x1000000
-vrisab3 at vrgiu? platform VADEM_CLIO_C isaportoffset 0x1000000
-isa3    at vrisab3
-pcic0   at isa3 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x000d0003
+vrisab3	at vrgiu? platform SHARP_TRIPAD isaportoffset 0x1000000
+vrisab3	at vrgiu? platform VADEM_CLIO_C isaportoffset 0x1000000
+isa3	at vrisab3
+pcic0	at isa3 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x000d0003
 
 #
 # CASIO CASSIOPEIA E55 and for DoCoMo
@@ -313,22 +313,22 @@ button4 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_APP2 active 0 port 10
 button5 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_APP3 active 0 port 11
 button6 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_DOWN active 0 port 12
 button7 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_UP active 0 port 13
-pwctl0 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id PWCTL_COM0 port 38
-pwctl1 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id PWCTL_LCDLIGHT port 26
+pwctl0	at vrgiu? platform CASIO_CASSIOPEIAE_E55 id PWCTL_COM0 port 38
+pwctl1	at vrgiu? platform CASIO_CASSIOPEIAE_E55 id PWCTL_LCDLIGHT port 26
 
 # 'CF hack' for all CASSIOPEIA E series
-vrisab4 at vrgiu? platform CASIO_CASSIOPEIAE_EXX isaportoffset 0xc000
-vrisab4 at vrgiu? platform CASIO_CASSIOPEIAE_EXXX isaportoffset 0xc000
-isa4    at vrisab4
-wdc0    at isa4 port 0x170 irq 0x02000003 flags 0x0002  # single drive
+vrisab4	at vrgiu? platform CASIO_CASSIOPEIAE_EXX isaportoffset 0xc000
+vrisab4	at vrgiu? platform CASIO_CASSIOPEIAE_EXXX isaportoffset 0xc000
+isa4	at vrisab4
+wdc0	at isa4 port 0x170 irq 0x02000003 flags 0x0002  # single drive
 
 #
 # Fujitsu PenCentra 130
 #
 vrc4172gpio0 at vrgiu? platform FUJITSU_PENCENTRA_130 addr 0x15001080 size 0x4a port 10
-vrisab5 at vrc4172gpio0 isaportoffset 0x1000000
+vrisab5	at vrc4172gpio0 isaportoffset 0x1000000
 isa5	at vrisab5
-pcic0   at isa5 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00010003
+pcic0	at isa5 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00010003
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller 0 socket ?
@@ -373,7 +373,7 @@ pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd		4	# virtual disk ick
 #pseudo-device	ccd		4	# concatenated disks
-pseudo-device   rnd                     # /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	biconsdev	1	# build-in console device
 pseudo-device	wsmux			# mouse & keyboard multiplexor

@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.30 2001/06/10 15:41:13 tsubai Exp $
+#	$NetBSD: POWERMAC,v 1.31 2001/11/20 12:56:32 lukem Exp $
 #
 # POWERMAC config file
 #
@@ -98,4 +98,4 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	rnd			# /dev/random and in-kernel generator
-pseudo-device	openfirm		# /dev/openfirm 
+pseudo-device	openfirm		# /dev/openfirm

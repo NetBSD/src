@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEXEVB,v 1.11 2001/11/20 08:43:22 lukem Exp $
+#	$NetBSD: COMPUTEXEVB,v 1.12 2001/11/20 12:56:26 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -17,34 +17,34 @@ options 	MINIROOTSIZE=3074	# size of memory disk, in blocks
 maxusers	32		# estimated number of users
 
 # CPU support.  At least one is REQUIRED.
-options		SH7709A,SH7709A_BROKEN_IPR	# 100MHz
-options		PCLOCK=25000000		# 25.000MHz
-options		IOM_ROM_BEGIN=0x00000000
-options		IOM_ROM_SIZE=0x00100000	# 1MB
-options		IOM_RAM_BEGIN=0x8c000000
-options		IOM_RAM_SIZE=0x01000000	# 16MB
-options		LED_ADDR=0xb8000000
+options 	SH7709A,SH7709A_BROKEN_IPR	# 100MHz
+options 	PCLOCK=25000000		# 25.000MHz
+options 	IOM_ROM_BEGIN=0x00000000
+options 	IOM_ROM_SIZE=0x00100000	# 1MB
+options 	IOM_RAM_BEGIN=0x8c000000
+options 	IOM_RAM_SIZE=0x01000000	# 16MB
+options 	LED_ADDR=0xb8000000
 
-options		COMPUTEXEVB	# don't forget.
+options 	COMPUTEXEVB	# don't forget.
 
-options		BSC_BCR1_VAL	=0x0008
-options		BSC_BCR2_VAL	=0x3fd0
-options		BSC_WCR1_VAL	=0x3ff3
-options		BSC_WCR2_VAL	=0xffdf
-options		BSC_MCR_VAL	=0x0004
-options		BSC_SDMR3_VAL	=0xffffe088
-options		BSC_RTCSR_VAL	=0xa508
-options		BSC_RTCNT_VAL	=0xa500
-options		BSC_RTCOR_VAL	=0xa582
-options		FRQCR_VAL	=0x0122
-options		PFC_SCPCR_VAL	=0x00aa
+options 	BSC_BCR1_VAL	=0x0008
+options 	BSC_BCR2_VAL	=0x3fd0
+options 	BSC_WCR1_VAL	=0x3ff3
+options 	BSC_WCR2_VAL	=0xffdf
+options 	BSC_MCR_VAL	=0x0004
+options 	BSC_SDMR3_VAL	=0xffffe088
+options 	BSC_RTCSR_VAL	=0xa508
+options 	BSC_RTCNT_VAL	=0xa500
+options 	BSC_RTCOR_VAL	=0xa582
+options 	FRQCR_VAL	=0x0122
+options 	PFC_SCPCR_VAL	=0x00aa
 
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
-#options 	"CONSDEVNAME=\"com\""
+#options 	CONSDEVNAME="\"com\""
 
 # Standard system options
 
@@ -52,7 +52,7 @@ options		PFC_SCPCR_VAL	=0x00aa
 #options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
-options 	HZ=50		# clock interrupt generates every 1/HZ sec 
+options 	HZ=50		# clock interrupt generates every 1/HZ sec
 #options 	NTP		# NTP phase/frequency locked loop
 
 #options 	KTRACE		# system call tracing via ktrace(1)
@@ -72,7 +72,7 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table
-options		SYSCALL_DEBUG
+options 	SYSCALL_DEBUG
 
 # Compatibility options
 options 	COMPAT_13	# NetBSD 1.3,
@@ -152,10 +152,10 @@ wdog0 at shb? port 0xffffff84
 #  19200bps (0.8%)
 #   9600bps (0.6%)
 
-#options	SCICONSOLE,SCICN_SPEED=115200
+#options 	SCICONSOLE,SCICN_SPEED=115200
 #sci0 at shb? port 0xa4000008 irq 12
 
-options	SCIFCONSOLE,SCIFCN_SPEED=115200
+options 	SCIFCONSOLE,SCIFCN_SPEED=115200
 scif0 at shb? port 0xa4000008 irq 12
 
 # Miscellaneous mass storage devices

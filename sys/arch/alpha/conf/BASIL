@@ -1,10 +1,10 @@
-# $NetBSD: BASIL,v 1.4 2001/08/22 15:39:04 hubertf Exp $
+# $NetBSD: BASIL,v 1.5 2001/11/20 12:56:18 lukem Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"BASIL-$Revision: 1.4 $"
+#ident 		"BASIL-$Revision: 1.5 $"
 
 maxusers 64
 
@@ -294,8 +294,8 @@ lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 #vga*	at	isa?				# ISA (EISA: XXX) VGA
 #wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 #wdc1	at	isa? port 0x170 irq 15
-#we0     at 	isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC Ethernet
-#we1     at 	isa? port 0x300 iomem 0xcc000 irq 10
+#we0	at	isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
+#we1	at	isa? port 0x300 iomem 0xcc000 irq 10
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 #audio*	at	wss?
 #midi*	at	wss?
@@ -427,8 +427,8 @@ wsmouse*	at	pms?
 
 pseudo-device	bpfilter	16
 #pseudo-device	ccd		4
-#pseudo-device	raid		4		# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG      # auto-configuration of RAID components
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	ipfilter	1
 pseudo-device	loop		1
 #pseudo-device	md		1

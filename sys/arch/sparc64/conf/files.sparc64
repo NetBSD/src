@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.54 2001/11/20 06:05:32 lukem Exp $
+#	$NetBSD: files.sparc64,v 1.55 2001/11/20 12:56:39 lukem Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -17,7 +17,7 @@ maxusers 2 8 1024
 file net/if_ppp.c		compile-with "${NOOPT_C}"
 file net/if_loop.c		compile-with "${NOOPT_C}"
 file net/if_sl.c		compile-with "${NOOPT_C}"
-file ufs/lfs/lfs_debug.c        compile-with "${NOOPT_C}"
+file ufs/lfs/lfs_debug.c	compile-with "${NOOPT_C}"
 
 #
 # XXXXXXXXXXX
@@ -38,8 +38,8 @@ include "dev/sbus/files.sbus"
 attach sbus at mainbus
 file	arch/sparc64/dev/sbus.c			sbus
 
-device  psycho: pcibus
-attach  psycho at mainbus
+device	psycho: pcibus
+attach	psycho at mainbus
 include "dev/pci/files.pci"
 file	arch/sparc64/dev/psycho.c		psycho
 file	arch/sparc64/dev/pci_machdep.c		psycho

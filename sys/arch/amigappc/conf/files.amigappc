@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.3 2001/06/18 02:00:48 christos Exp $
+#	$NetBSD: files.amigappc,v 1.4 2001/11/20 12:56:21 lukem Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -23,8 +23,8 @@ defopt	opt_retina.h		RETINA_SPEED_HACK
 defopt				BB060STUPIDROM
 defopt				P5PPC68KBOARD
 
-device  mainbus {}
-attach  mainbus at root
+device	mainbus {}
+attach	mainbus at root
 
 device	cpu
 attach	cpu at mainbus
@@ -70,7 +70,7 @@ file	arch/amiga/dev/par.c		par needs-count
 # audio
 device	aucc: audio
 attach	aucc at mainbus
-file	arch/amiga/dev/aucc.c		aucc needs-flag 
+file	arch/amiga/dev/aucc.c		aucc needs-flag
 
 device	melody: audio, tms320av110
 attach	melody at zbus
@@ -242,7 +242,7 @@ major	{sd = 4}
 major	{cd = 7}
 
 # wd 33c93 contrllers
-define	sbic 
+define	sbic
 file	arch/amiga/dev/sbic.c		sbic
 
 # GVP series II
@@ -269,7 +269,7 @@ device	wstsc: scsi, sci
 attach	wstsc at zbus
 file	arch/amiga/dev/wstsc.c		wstsc needs-flag
 
-# IVS 
+# IVS
 device	ivsc: scsi, sci
 attach	ivsc at zbus
 file	arch/amiga/dev/ivsc.c		ivsc needs-flag
@@ -364,7 +364,7 @@ file	arch/amiga/dev/idesc.c		idesc needs-flag
 # MacroSystem DraCo internal
 device	drsc: scsi, asiop
 attach	drsc at mainbus
-file  arch/amiga/dev/drsc.c           drsc needs-flag
+file	arch/amiga/dev/drsc.c		drsc needs-flag
 
 # MacroSystem DraCo internal DS2404 hwc
 device	drbbc
@@ -393,7 +393,7 @@ file	arch/amiga/amiga/gayle.c		gayle
 include "dev/ata/files.ata"
 major	{wd = 17}
 
-# Amiga 4000/1200 IDE using MI wdc      
+# Amiga 4000/1200 IDE using MI wdc
 attach	wdc at mainbus with wdc_amiga: gayle
 file	arch/amiga/dev/wdc_amiga.c	wdc_amiga
 

@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.7 2001/11/13 17:54:52 augustss Exp $
+#	$NetBSD: NATSUMI,v 1.8 2001/11/20 12:56:37 lukem Exp $
 #
 #	for development
 #
@@ -30,7 +30,7 @@ options 	SHMMAXPGS=8192
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
-options 	DDB_HISTORY_SIZE=100    # Enable history editing in DDB
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"
 
 # Compatibility options
@@ -160,10 +160,10 @@ options 	PCIC_ISA_ALLOC_IOSIZE=0x0100
 #pc0	at isa? port 0x60 irq 1		# generic PC console device
 
 # Keyboard layout configuration for pccons
-#options	FRENCH_KBD
-#options	FINNISH_KBD
-#options	GERMAN_KBD
-#options	NORWEGIAN_KBD
+#options 	FRENCH_KBD
+#options 	FINNISH_KBD
+#options 	GERMAN_KBD
+#options 	NORWEGIAN_KBD
 
 # wscons
 pckbc0		at isa?			# pc keyboard controller
@@ -395,7 +395,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
-#options	RND_COM			# use "com" randomness as well
+#options 	RND_COM			# use "com" randomness as well
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

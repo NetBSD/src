@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.7 2001/09/05 11:54:43 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.8 2001/11/20 12:56:37 lukem Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -84,10 +84,10 @@ isapnp0 at isa?
 pc0	at isa? port 0x60 irq 1		# generic PC console device
 
 # Keyboard layout configuration for pccons
-#options	FRENCH_KBD
-#options	FINNISH_KBD
-#options	GERMAN_KBD
-#options	NORWEGIAN_KBD
+#options 	FRENCH_KBD
+#options 	FINNISH_KBD
+#options 	GERMAN_KBD
+#options 	NORWEGIAN_KBD
 
 mcclock0 at isa? port 0x70		# mc146818 and compatible
 
@@ -159,7 +159,7 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 # Miscellaneous mass storage devices
 
 # ISA floppy
-fdc0	at isa? port 0x3f0 irq 6 drq 2  # standard PC floppy controllers
+fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*	at fdc? drive ?
 
 # Network Interfaces
@@ -209,4 +209,4 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
-#options	RND_COM			# use "com" randomness as well
+#options 	RND_COM			# use "com" randomness as well

@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.43 2001/10/19 00:12:24 phil Exp $
+#	$NetBSD: SHARK,v 1.44 2001/11/20 12:56:22 lukem Exp $
 # From: NetBSD: GENERIC,v 1.72 2000/08/04 02:17:46 hubertf Exp
 #
 #	SHARK
@@ -6,7 +6,7 @@
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident		"GENERIC-$Revision: 1.43 $"
+#ident		"GENERIC-$Revision: 1.44 $"
 
 # estimated number of users
 maxusers	32
@@ -134,7 +134,7 @@ options 	KMEMSTATS	# kernel memory statistics, XXX temp required
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internal consistency checks
-#options  	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=0	# don't run DDB at panictime
@@ -164,7 +164,7 @@ ofbus*		at ofisa?
 
 # IDE/ATA disk
 wdc*		at ofisa?
-wd*             at wdc? drive ?
+wd*		at wdc? drive ?
 
 atapibus*	at wdc?
 cd*		at atapibus? drive?

@@ -1,7 +1,7 @@
 #
 # kernel config file for memory(RAM) disk
 #
-# 	$NetBSD: RAMDISK,v 1.1 2001/10/16 15:38:31 uch Exp $
+# 	$NetBSD: RAMDISK,v 1.2 2001/11/20 12:56:36 lukem Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -21,4 +21,4 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MINIROOTSIZE=10240	# size of memory disk, in blocks
 
 # Reboot from HDD
-options		BUILTIN_KERNEL_LOADER, KERNEL_PATH="\"/mnt/netbsd\""
+options 	BUILTIN_KERNEL_LOADER, KERNEL_PATH="\"/mnt/netbsd\""

@@ -1,6 +1,6 @@
-# $NetBSD: ISDN,v 1.2 2001/01/23 11:25:59 is Exp $
+# $NetBSD: ISDN,v 1.3 2001/11/20 12:56:20 lukem Exp $
 
-# GENERIC kernel with ISDN. 
+# GENERIC kernel with ISDN.
 # use other configuration files instead by adjusting the following line:
 include "arch/amiga/conf/GENERIC"
 
@@ -16,23 +16,23 @@ isic* at aster? port ?
 # All these are needed, but you may adjust the count of the
 # pseudo-devices.
 
-pseudo-device   "i4b"
+pseudo-device	"i4b"
 
 # userland driver to do ISDN tracing
-pseudo-device   "i4btrc"        2
+pseudo-device	"i4btrc"	2
 
 # userland driver to control the whole thing
-pseudo-device   "i4bctl"
+pseudo-device	"i4bctl"
 
 # userland driver for access to raw B channel
-pseudo-device   "i4brbch"       4
+pseudo-device	"i4brbch"	4
 
 # userland driver for telephony
-pseudo-device   "i4btel"        2
+pseudo-device	"i4btel"	2
 
 # network driver for IP over raw HDLC ISDN
-options IPR_VJ                  # compile support for VJ compression
-pseudo-device   "i4bipr"        2
+options 	IPR_VJ			# compile support for VJ compression
+pseudo-device	"i4bipr"	2
 
 # synchronous PPP over ISDN
-pseudo-device   i4bisppp        2
+pseudo-device	i4bisppp	2

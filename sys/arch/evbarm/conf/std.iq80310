@@ -1,4 +1,4 @@
-#	$NetBSD: std.iq80310,v 1.7 2001/11/09 20:59:39 thorpej Exp $
+#	$NetBSD: std.iq80310,v 1.8 2001/11/20 12:56:25 lukem Exp $
 #
 # standard NetBSD/evbarm for IQ80310 options
 
@@ -7,13 +7,13 @@ machine	evbarm arm
 # Pull in IQ80310 config definitions.
 include "arch/evbarm/conf/files.iq80310"
 
-options		EXEC_ELF32
+options 	EXEC_ELF32
 options 	EXEC_AOUT
 options 	EXEC_SCRIPT
 
 # To support easy transit to ../arch/arm/arm32
-options		PROG32
-options		ARM32
+options 	PROG32
+options 	ARM32
 
 makeoptions	LOADADDRESS="0xa0200000"
 makeoptions	BOARDTYPE="iq80310"

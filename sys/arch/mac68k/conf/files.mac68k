@@ -1,10 +1,10 @@
-#	$NetBSD: files.mac68k,v 1.99 2001/11/20 07:48:31 chs Exp $
+#	$NetBSD: files.mac68k,v 1.100 2001/11/20 12:56:32 lukem Exp $
 
 # mac68k-specific configuration info
 
 # options understood by the mac68k-specific part of the kernel
 # (note, these are case-sensitive)
-defopt	opt_adb.h	ADB_DEBUG MRG_ADB ALTXBUTTONS 
+defopt	opt_adb.h	ADB_DEBUG MRG_ADB ALTXBUTTONS
 defopt	opt_mac68k.h	DISABLE_EXT_CACHE ZS_CONSOLE_ABORT
 
 defopt	opt_wsdisplay_compat.h	WSDISPLAY_COMPAT_ITEFONT
@@ -177,7 +177,7 @@ file	dev/cons.c
 file	dev/cninit.c
 
 # Memory Disk for installs
-#     These files are out of order
+#	These files are out of order
 file	arch/mac68k/dev/md_root.c	memory_disk_hooks
 
 major	{sd = 4}

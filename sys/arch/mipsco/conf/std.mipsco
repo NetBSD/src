@@ -1,9 +1,9 @@
-#	$NetBSD: std.mipsco,v 1.5 2001/10/23 20:40:02 thorpej Exp $
+#	$NetBSD: std.mipsco,v 1.6 2001/11/20 12:56:32 lukem Exp $
 
 machine mipsco mips
 
-options	EXEC_ELF32	# exec ELF32 binaries
-options	EXEC_SCRIPT	# exec #! scripts
+options 	EXEC_ELF32	# exec ELF32 binaries
+options 	EXEC_SCRIPT	# exec #! scripts
 
 makeoptions	DEFTEXTADDR="0x80021000"
 makeoptions	LINKFLAGS="-N"

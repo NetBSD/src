@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.124 2001/11/20 08:43:34 lukem Exp $
+# 	$NetBSD: GENERIC,v 1.125 2001/11/20 12:56:39 lukem Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.124 $"
+#ident 		"GENERIC-$Revision: 1.125 $"
 
 maxusers	32
 
@@ -52,10 +52,10 @@ options 	KTRACE
 ## System V compatible IPC subsystem.  (msgctl(2), semctl(2), and shmctl(2))
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -91,7 +91,7 @@ options 	NFS_BOOT_BOOTPARAM
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-#makeoptions 	DEBUG="-g"
+#makeoptions	DEBUG="-g"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -161,7 +161,7 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -274,7 +274,7 @@ zs2	at obio0 addr 0xe0000000 level 12		# sun4/300
 zstty2	at zs2 channel 0				# ttyc
 zstty3	at zs2 channel 1				# ttyd
 
-## NS16x50 serial chips and clones.  Present on the 
+## NS16x50 serial chips and clones.  Present on the
 ## Sun JavaStation-1 and Tadpole SPARCbook 3
 com*	at obio0					# sun4m
 

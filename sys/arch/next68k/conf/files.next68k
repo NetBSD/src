@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.21 2001/11/20 06:03:17 lukem Exp $
+# $NetBSD: files.next68k,v 1.22 2001/11/20 12:56:35 lukem Exp $
 
 # next68k-specific configuration info
 
@@ -48,40 +48,40 @@ file	arch/next68k/next68k/clock.c
 file	arch/next68k/next68k/conf.c
 file 	arch/next68k/next68k/sys_machdep.c
 file	arch/next68k/next68k/isr.c
-file    arch/next68k/next68k/autoconf.c
-file    arch/next68k/next68k/nextrom.c
-file    arch/next68k/next68k/rtc.c
+file	arch/next68k/next68k/autoconf.c
+file	arch/next68k/next68k/nextrom.c
+file	arch/next68k/next68k/rtc.c
 file	arch/next68k/next68k/disksubr.c
-file	arch/next68k/next68k/kgdb_machdep.c   kgdb
-file	arch/next68k/next68k/stub.c	      kgdb
+file	arch/next68k/next68k/kgdb_machdep.c	kgdb
+file	arch/next68k/next68k/stub.c		kgdb
 
-#file    arch/next68k/dev/dbj_debug.c
+#file	arch/next68k/dev/dbj_debug.c
 file 	arch/next68k/dev/bus_dma.c
-file    arch/next68k/dev/nextdma.c
+file	arch/next68k/dev/nextdma.c
 
 file	dev/cons.c
 file	dev/cninit.c
 
-file    dev/clock_subr.c
+file	dev/clock_subr.c
 
 include "dev/scsipi/files.scsipi"
 
 include "dev/wscons/files.wscons"
 
-device  xe: arp, ether, ifnet
-attach  xe at intio
-file    arch/next68k/dev/mb8795.c
-file    arch/next68k/dev/if_xe.c
+device	xe: arp, ether, ifnet
+attach	xe at intio
+file	arch/next68k/dev/mb8795.c
+file	arch/next68k/dev/if_xe.c
 
-device  nextdisplay: wsemuldisplaydev, wsrasteremulops
-attach  nextdisplay at mainbus
-file    arch/next68k/dev/nextdisplay.c  nextdisplay needs-flag
+device	nextdisplay: wsemuldisplaydev, wsrasteremulops
+attach	nextdisplay at mainbus
+file	arch/next68k/dev/nextdisplay.c	nextdisplay needs-flag
 
-device  nextkbd: wskbddev
-attach  nextkbd at intio
-file    arch/next68k/dev/nextkbd.c      nextkbd needs-flag
-file	arch/next68k/dev/wskbdmap_next.c		nextkbd
-file    arch/next68k/dev/nextcons.c                     nextkbd
+device	nextkbd: wskbddev
+attach	nextkbd at intio
+file	arch/next68k/dev/nextkbd.c		nextkbd needs-flag
+file	arch/next68k/dev/wskbdmap_next.c	nextkbd
+file	arch/next68k/dev/nextcons.c		nextkbd
 
 attach	esp at intio
 file	arch/next68k/dev/esp.c		esp needs-flag

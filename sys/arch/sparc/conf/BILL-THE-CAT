@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.14 2001/11/20 08:43:34 lukem Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.15 2001/11/20 12:56:38 lukem Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -26,8 +26,8 @@ options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 options 	RASTERCONSOLE		# fast rasterop console
 options 	FONT_GALLANT12x22	# the console font
 options 	FONT_BOLD8x16		# a somewhat smaller font
-#options	RASTERCONSOLE_FGCOL=WSCOL_BLACK
-#options	RASTERCONSOLE_BGCOL=WSCOL_WHITE
+#options 	RASTERCONSOLE_FGCOL=WSCOL_BLACK
+#options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 
 #### System options that are the same for all ports
 
@@ -81,7 +81,7 @@ options 	LKM
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-#makeoptions 	DEBUG="-g"
+#makeoptions	DEBUG="-g"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will

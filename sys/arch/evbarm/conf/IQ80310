@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.4 2001/11/10 00:18:17 thorpej Exp $
+#	$NetBSD: IQ80310,v 1.5 2001/11/20 12:56:25 lukem Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -88,10 +88,10 @@ options 	COMPAT_14	# NetBSD 1.4 compatibility.
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -116,7 +116,7 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 # Development and Debugging options
 
 options 	DIAGNOSTIC	# internally consistency checks
-#options  	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger

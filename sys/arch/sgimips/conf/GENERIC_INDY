@@ -1,5 +1,5 @@
-#	$NetBSD: GENERIC_INDY,v 1.1 2001/11/19 17:39:31 soren Exp $
+#	$NetBSD: GENERIC_INDY,v 1.2 2001/11/20 12:56:38 lukem Exp $
 
 include		"arch/sgimips/conf/GENERIC"
 
-makeoptions 	TEXTADDR="0x88002000"
+makeoptions	TEXTADDR="0x88002000"

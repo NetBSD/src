@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.38 2001/09/01 23:08:44 atatat Exp $
+# 	$NetBSD: GENERIC,v 1.39 2001/11/20 12:56:35 lukem Exp $
 #
 #	GENERIC kernel for RISC-NEWS
 
 include		"arch/newsmips/conf/std.newsmips"
 
-#ident 		"GENERIC-$Revision: 1.38 $"
+#ident 		"GENERIC-$Revision: 1.39 $"
 
 maxusers	16
 
@@ -18,10 +18,10 @@ options 	CPU_SINGLE		# no I/O processor
 options 	KTRACE			# system call tracing support
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10		# number of semaphore identifiers
+#options 	SEMMNS=60		# number of semaphores in system
+#options 	SEMUME=10		# max number of undo entries per process
+#options 	SEMMNU=30		# number of undo structures in system
 options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 options 	LKM			# loadable kernel modules
@@ -65,7 +65,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 
 # Networking options
 options 	INET		# Internet protocols

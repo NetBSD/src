@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.31 2001/11/13 17:54:49 augustss Exp $
+#	$NetBSD: TX3912,v 1.32 2001/11/20 12:56:28 lukem Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -12,7 +12,7 @@ options 	MIPS1			# R2000/R3000 CPUs
 options 	ENABLE_MIPS_TX3900	# R3900 CPU core
 options 	NOFPU			# No FPU
 options 	SOFTFLOAT		# emulate FPU insn
-#options	R3900_CACHE_DISABLE	# Disable I/D-cache
+#options 	R3900_CACHE_DISABLE	# Disable I/D-cache
 
 options 	TX39XX			# Toshiba TX39 series
 options 	TX391X			# Product TMPR3912
@@ -35,8 +35,8 @@ options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 #options 	SYSCALL_DEBUG		# for debug
-#options	 MINIROOTSIZE=10000
-options		MSGBUFSIZE=65534	# for dmesg
+#options 	 MINIROOTSIZE=10000
+options 	MSGBUFSIZE=65534	# for dmesg
 
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
@@ -87,7 +87,7 @@ options 	INET6		# IPV6
 #options 	CCITT,LLC,HDLC	# X.25
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 #options 	QUOTA		# UFS quotas
 options 	VNODE_OP_NOINLINE # don't inline vnode op calls
 
@@ -118,7 +118,7 @@ tx39ir*		at txcom1
 #
 # TX39 external modules. (Platform dependent)
 #
-options USE_POLL	# keyboard / touchpanel device  requires this
+options 	USE_POLL	# keyboard / touchpanel device requires this
 
 # IO module manager (virtual bridge) DO NOT DELETE
 txioman* at txsim?
@@ -176,7 +176,7 @@ hpckbd*		at tc5165buf?
 # ITE IT8368E PCMCIA / TOSHIBA TC6345AF buffer chip (PCMCIA)
 # card/insert	... 3:2 (98)
 # remove	... 5:8 (168)
-options	IT8368E_LEGACY_MODE	# Mobilon HC-4100 requires this
+options 	IT8368E_LEGACY_MODE	# Mobilon HC-4100 requires this
 it8368e*	at txcsbus? regcs 2 regcsbase 0 regcssize 0x20 regcswidth 16 iocs 8 iocsbase 0 iocssize 0x4000000 iocswidth 16 irq1 98 irq2 168 irq3 98
 
 # PHILIPS UCB1200 / TOSHIBA TC35413F (modem/audio analog front-end)
@@ -276,7 +276,7 @@ pseudo-device	wsmux
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # miscellaneous pseudo-devices
-pseudo-device   rnd                     # /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	pty			# pseudo-terminals
 
 # for IPv6

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.53 2001/10/26 06:45:41 jmc Exp $
+#	$NetBSD: Makefile.x68k,v 1.54 2001/11/20 12:56:42 lukem Exp $
 #
 # Makefile for NetBSD
 #
@@ -49,7 +49,7 @@ CMACHFLAGS?=	-m68020-60 -Wa,-m68030 -Wa,-m68851
 CWARNFLAGS?=	-Werror -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
-# XXX always get it right.  --thorpej 
+# XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
 .if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
@@ -195,14 +195,14 @@ dependall: depend all
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
- 
-# depend on network or filesystem configuration 
-uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on network or filesystem configuration
+uipc_proto.o vfs_conf.o: Makefile
 
 # depend on maxusers
 machdep.o: Makefile
 
-# depend on CPU configuration 
+# depend on CPU configuration
 locore.o: Makefile
 
 # depend on DEBUG and/or DIAGNOSTIC options

@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.12 2001/07/08 16:32:21 abs Exp $
+# 	$NetBSD: NEWS1200,v 1.13 2001/11/20 12:56:34 lukem Exp $
 
 #	news1200 config file
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 maxusers	8
 
-options 	news1200		# news1200 support 
+options 	news1200		# news1200 support
 options 	CPU_SINGLE		# Will IOP be supported eventually?
 #options 	FPU_EMULATE
 
@@ -58,7 +58,7 @@ file-system	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
 #file-system	PORTAL		# portal filesystem (still experimental)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
-#file-system	UNION		# union file system 
+#file-system	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcode (below)
 
 #options 	NFSSERVER	# nfs server support
@@ -121,7 +121,7 @@ wsmouse* at ms?
 # onboard z8530 SCC
 zsc0	at hb0 addr 0xe1780000 ipl 5 vect 64 flags 0x1
 zstty0	at zsc0 channel 0
-zstty1	at zsc0 channel 1 
+zstty1	at zsc0 channel 1
 
 # Misc.
 pseudo-device	loop			# loopback interface; required

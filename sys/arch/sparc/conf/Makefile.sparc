@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.76 2001/11/16 00:23:03 atatat Exp $
+# 	$NetBSD: Makefile.sparc,v 1.77 2001/11/20 12:56:39 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -12,7 +12,7 @@
 #	/sys/arch/sparc/conf/Makefile.sparc
 # after which config should be rerun for all machines of that type.
 #
-# To specify debugging, add the config line: makeoptions DEBUG="-g" 
+# To specify debugging, add the config line: makeoptions DEBUG="-g"
 # A better way is to specify -g only for a few files.
 #
 #	makeoptions DEBUGLIST="uvm* trap if_*"
@@ -42,7 +42,7 @@ CFLAGS+=	-mno-fpu
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 
 ##
-## (3) libkern and compat 
+## (3) libkern and compat
 ##
 KERN_AS=	obj
 
@@ -72,7 +72,7 @@ LINKFORMAT=	-N -p
 ## (6) port specific target dependencies
 ##
 
-# depend on CPU configuration 
+# depend on CPU configuration
 bwtwo.o cgsix.o cgthree.o cgtwo.o cons.o dma.o esp.o fb.o if_ie.o: Makefile
 ms.c obio.o zs.c autoconf.o clock.o cpu.o disksubr.o: Makefile
 mem.o openprom.o pmap.o vm_machdep.o: Makefile

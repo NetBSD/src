@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.7 2000/09/24 15:59:35 jdolecek Exp $
+#	$NetBSD: MMEYE,v 1.8 2001/11/20 12:56:33 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -12,8 +12,8 @@ options 	SH7708R		# 100MHz
 options 	MMEYE
 options 	MMEYE_NEW_INT
 #options 	MMEYE_NO_CACHE
-options		PCLOCK=33330000		# 33.33MHz
-options		INITTODR_ALWAYS_USE_RTC
+options 	PCLOCK=33330000		# 33.33MHz
+options 	INITTODR_ALWAYS_USE_RTC
 
 # Standard system options
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)

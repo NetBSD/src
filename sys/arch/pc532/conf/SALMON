@@ -1,6 +1,6 @@
-#	$NetBSD: SALMON,v 1.13 2001/07/08 16:32:22 abs Exp $
+#	$NetBSD: SALMON,v 1.14 2001/11/20 12:56:36 lukem Exp $
 #
-# SALMON: Phil Nelson's 2nd (test) pc532 
+# SALMON: Phil Nelson's 2nd (test) pc532
 #
 
 include	"arch/pc532/conf/std.pc532"
@@ -13,13 +13,13 @@ maxusers	10			# estimated number of users
 #options 	ACCOUNTING		# process accounting
 options 	KTRACE			# system call tracing, a la ktrace(1)
 #options 	SYSVSHM			# System V shared memory; broken
-#options 	"SHMMAXPGS=1024"
+#options 	SHMMAXPGS=1024
 #options 	LKM			# loadable kernel modules
 
 # compatibility options
-options 	"COMPAT_43"	# 4.3 system calls
-options 	"COMPAT_09"	# NetBSD-0.9
-options 	"COMPAT_10"	# NetBSD-1.0
+options 	COMPAT_43	# 4.3 system calls
+options 	COMPAT_09	# NetBSD-0.9
+options 	COMPAT_10	# NetBSD-1.0
 options 	COMPAT_11
 options 	COMPAT_12
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -48,11 +48,11 @@ options 	INET			# IP
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # pc532 specific options
-#options 	"CONSOLE_SPEED=B9600"	# default baud on the console (tty00)
-#options 	"RAMD_SIZE=1536000"	# Size of the "boot strap ram disk"
-#options 	"RAMD_ADR=0x400000"	# Adr of the "boot strap ram disk"
+#options 	CONSOLE_SPEED="B9600"	# default baud on the console (tty00)
+#options 	RAMD_SIZE=1536000	# Size of the "boot strap ram disk"
+#options 	RAMD_ADR=0x400000	# Adr of the "boot strap ram disk"
 
-config		netbsd	root on sd0 type ffs 
+config		netbsd	root on sd0 type ffs
 
 #rd0 at mainbus?
 
@@ -61,9 +61,9 @@ st* at scsibus? target ? lun ?			# SCSI tapes
 #cd* at scsibus? target ? lun ?			# SCSI ???
 
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	loop 1			# loopback network
-pseudo-device	bpfilter 4		# packet filter
-pseudo-device	sl 2			# compressed SLIP
-pseudo-device	ppp 2			# Point-to-Point Protocol
-pseudo-device   vnd 4			# Vnode devices
-#pseudo-device	ether			# 
+pseudo-device	loop 		1	# loopback network
+pseudo-device	bpfilter	4	# packet filter
+pseudo-device	sl		2	# compressed SLIP
+pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	vnd		4	# Vnode devices
+#pseudo-device	ether			#

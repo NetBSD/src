@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcarm,v 1.8 2001/11/15 19:35:31 thorpej Exp $
+#	$NetBSD: Makefile.hpcarm,v 1.9 2001/11/20 12:56:27 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -41,12 +41,12 @@ S!=	cd ../../../..; pwd
 .endif
 HPCARM=	$S/arch/hpcarm
 
-HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Dhpcarm -Darm32
 CWARNFLAGS?=	-Werror -Wall -Wcomment -Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
-# XXX always get it right.  --thorpej 
+# XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
 .if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
@@ -185,14 +185,14 @@ dependall: depend all
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
- 
+
 # depend on network
-uipc_proto.o: Makefile 
+uipc_proto.o: Makefile
 
 # depend on maxusers
 assym.h: Makefile
 
-# depend on CPU configuration 
+# depend on CPU configuration
 cpufunc.o cpufunc_asm.o: Makefile
 
 # depend on DIAGNOSTIC etc.

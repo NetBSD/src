@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.26 2001/09/09 09:59:24 toshii Exp $
+#	$NetBSD: files.hpcarm,v 1.27 2001/11/20 12:56:27 lukem Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -16,7 +16,7 @@ define todservice {}
 
 # Memory disk driver
 file	dev/md_root.c				memory_disk_hooks
-major   {md = 18}
+major	{md = 18}
 
 file	arch/arm/arm32/conf.c
 
@@ -143,12 +143,12 @@ include "dev/isa/files.isa"
 
 # Include ATA stuff
 include "dev/ata/files.ata"
-major   {wd = 16}
+major	{wd = 16}
 
 # Include SCSI/ATAPI stuff
 include "dev/scsipi/files.scsipi"
-major   {sd = 24}
-major   {cd = 26}
+major	{sd = 24}
+major	{cd = 26}
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"

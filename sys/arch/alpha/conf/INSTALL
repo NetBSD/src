@@ -1,15 +1,15 @@
-# $NetBSD: INSTALL,v 1.56 2001/08/22 15:39:04 hubertf Exp $
+# $NetBSD: INSTALL,v 1.57 2001/11/20 12:56:19 lukem Exp $
 #
 # Alpha INSTALL kernel.
 
 include	"arch/alpha/conf/std.alpha"
 
-makeoptions 	COPTS="-Os"		# Optimise for space. Implies -O2
+makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
 maxusers 8
 
 options 	DDB
-#makeoptions 	DEBUG="-g"
+#makeoptions	DEBUG="-g"
 
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
@@ -138,11 +138,11 @@ tsp*	at	tsc?
 ttwoga*	at	mainbus?
 
 # Sable PCI and STDIO bus and devices
-ttwopci* at	ttwoga? hose ?  
-sableio* at	ttwopci? bus ?  
-com*	at	sableio? port ? 
-lpt*	at	sableio? port ? 
-pckbc*	at	sableio? port ? 
+ttwopci* at	ttwoga? hose ?
+sableio* at	ttwopci? bus ?
+com*	at	sableio? port ?
+lpt*	at	sableio? port ?
+pckbc*	at	sableio? port ?
 fdc*	at	sableio? port ?
 
 # PCI bus support
@@ -229,8 +229,8 @@ ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
 fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 lc*	at	isa? port ? iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #le*	at	isa? port 0x320 irq 10 drq 7	# IsoLan, NE2100, DEPCA (unt.)
-we0     at 	isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC Ethernet
-we1     at 	isa? port 0x300 iomem 0xcc000 irq 10
+we0	at	isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
+we1	at	isa? port 0x300 iomem 0xcc000 irq 10
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
 wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers

@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.28 2001/09/01 21:52:29 atatat Exp $
+#	$NetBSD: GENERIC,v 1.29 2001/11/20 12:56:33 lukem Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.28 $"
+#ident 		"GENERIC-$Revision: 1.29 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -27,7 +27,7 @@ options 	KTRACE
 options 	COMPAT_43
 
 file-system 	FFS
-file-system 	NFS	
+file-system 	NFS
 file-system 	KERNFS
 file-system 	MFS
 file-system 	CD9660
@@ -36,7 +36,7 @@ file-system 	CD9660
 
 options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 
 # Networking options
 options 	INET
@@ -44,10 +44,10 @@ options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
-#options        GATEWAY         # IP packet forwarding
-#options        ISO             # OSI networking
-#options        TPIP
-#options        EON
+#options 	GATEWAY		# IP packet forwarding
+#options 	ISO		# OSI networking
+#options 	TPIP
+#options 	EON
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out

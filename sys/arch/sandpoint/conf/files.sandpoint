@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.9 2001/10/11 03:52:13 briggs Exp $
+#	$NetBSD: files.sandpoint,v 1.10 2001/11/20 12:56:37 lukem Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -36,8 +36,8 @@ major	{wd = 0}
 #
 # Memory Disk for install floppy
 #
-file dev/md_root.c   memory_disk_hooks 
-major   {md = 17}
+file dev/md_root.c	memory_disk_hooks
+major	{md = 17}
 
 #
 # Compatibility modules

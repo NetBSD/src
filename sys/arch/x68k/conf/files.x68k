@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.40 2001/11/11 01:39:02 isaki Exp $
+#	$NetBSD: files.x68k,v 1.41 2001/11/20 12:56:43 lukem Exp $
 #
 # new style config file for x68k architecture
 #
@@ -10,7 +10,7 @@ defopt	opt_m680x0.h		M68020 M68030 M68040 M68060
 
 defopt	opt_jupiter.h		JUPITER
 defopt	opt_panicbutton.h	PANICBUTTON
-defopt  opt_extmem.h		EXTENDED_MEMORY
+defopt	opt_extmem.h		EXTENDED_MEMORY
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8

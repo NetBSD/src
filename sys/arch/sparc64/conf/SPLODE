@@ -1,10 +1,10 @@
-# 	$NetBSD: SPLODE,v 1.4 2001/11/20 08:43:36 lukem Exp $
+# 	$NetBSD: SPLODE,v 1.5 2001/11/20 12:56:39 lukem Exp $
 #
 # Configuration for Ultra1, 32 bit mode.
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 maxusers	64
 
@@ -86,7 +86,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
 
-#makeoptions 	DEBUG="-g"
+#makeoptions	DEBUG="-g"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -164,7 +164,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -291,7 +291,7 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 # PCI IDE.
 #pciide* at pci ? dev ? function ? flags 0x0000
-#wd*     at pciide? channel ? drive ? flags 0x0000
+#wd*	at pciide? channel ? drive ? flags 0x0000
 #atapibus* at pciide? channel ?
 
 #cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
