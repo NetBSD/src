@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.10 2003/07/15 02:43:40 lukem Exp $ */
+/* $NetBSD: sbmac.c,v 1.11 2003/09/26 13:34:56 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.10 2003/07/15 02:43:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.11 2003/09/26 13:34:56 simonb Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1075,6 +1075,12 @@ sbmac_initctx(struct sbmac_softc *s)
 			    SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1125H ||
 			    (SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1250 &&
 			     0));
+	if (s->sbm_pass3_dma) {
+		printf("\n");
+		printf("%s: disabling unaligned tx DMA\n", s->sc_dev.dv_xname);
+		printf("%s", s->sc_dev.dv_xname);
+		s->sbm_pass3_dma = 0;
+	}
 }
 
 /*
