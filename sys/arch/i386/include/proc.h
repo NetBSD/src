@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.15 2002/10/11 17:49:11 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.16 2002/10/12 14:30:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -56,7 +56,7 @@ struct mdproc {
 #ifndef NOREDZONE
 /* override default for redzone */
 #define	KSTACK_LOWEST_ADDR(p)	\
-	((caddr_t)ALIGN((p)->p_addr + 1) + NBPG)
+	((caddr_t)(p)->p_addr + NBPG*2)
 #define	KSTACK_SIZE	\
 	(USPACE - NBPG*2)
 #endif
