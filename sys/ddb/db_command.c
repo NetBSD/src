@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.68 2003/02/13 23:50:33 jmc Exp $	*/
+/*	$NetBSD: db_command.c,v 1.69 2003/04/28 02:49:54 briggs Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,9 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.68 2003/02/13 23:50:33 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.69 2003/04/28 02:49:54 briggs Exp $");
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_inet.h"
 
 #include <sys/param.h>
@@ -162,6 +163,9 @@ static const struct db_command db_command_table[] = {
 	{ "dwatch",	db_deletewatch_cmd,	0,		NULL },
 	{ "examine",	db_examine_cmd,		CS_SET_DOT, 	NULL },
 	{ "kill",	db_kill_proc,		CS_OWN,		NULL },
+#ifdef KGDB
+	{ "kgdb",	db_kgdb_cmd,		0,		NULL },
+#endif
 #ifdef DB_MACHINE_COMMANDS
 	{ "machine",	NULL,			0, db_machine_command_table },
 #endif
