@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.8 2001/11/17 00:40:29 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.9 2002/02/06 19:47:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.8 2001/11/17 00:40:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.9 2002/02/06 19:47:52 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_sysv.h"
@@ -217,23 +217,16 @@ exit1(struct lwp *l, int rv)
 	if (p->p_sa && p->p_sa->sa_ncached > 0) {
 		DPRINTF(("exit1: Making cached LWPs of %d runnable: ",
 		    p->p_pid));
-		while (!LIST_EMPTY(&p->p_sa->sa_lwpcache)) {
-			l2 = LIST_FIRST(&p->p_sa->sa_lwpcache);
-			LIST_REMOVE(l2, l_sibling);
-			p->p_sa->sa_ncached--;
+		SCHED_LOCK(s);
+		while ((l2 = sa_getcachelwp(p)) != 0) {
 			l2->l_priority = l2->l_usrpri;
-			SCHED_LOCK(s);
 			setrunnable(l2);
-			SCHED_UNLOCK(s);
-			LIST_INSERT_HEAD(&p->p_lwps, l2, l_sibling);
-			p->p_nlwps++;
 			p->p_nrlwps++;
 			DPRINTF(("%d ", l2->l_lid));
-
 		}
 		DPRINTF(("\n"));
+		SCHED_UNLOCK(s);
 	}
-
 	
 	/* Interrupt LWPs in interruptable sleep, unsuspend suspended
 	 * LWPs, make detached LWPs undeached (so we can wait for
