@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.15 2003/11/24 21:44:37 christos Exp $	*/
+/*	$NetBSD: pack.c,v 1.16 2004/06/20 22:20:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,10 @@
  *
  *	from: @(#)pack.c	8.1 (Berkeley) 6/6/93
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/param.h>
 #include <stdlib.h>

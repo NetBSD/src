@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.72 2003/08/07 11:25:16 agc Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.73 2004/06/20 22:20:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,10 @@
  *
  *	from: @(#)mkioconf.c	8.1 (Berkeley) 6/6/93
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/param.h>
 #include <errno.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.19 2003/12/20 23:41:38 kleink Exp $	*/
+/*	$NetBSD: cksum.c,v 1.20 2004/06/20 22:20:15 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,6 +67,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
@@ -77,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.19 2003/12/20 23:41:38 kleink Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.20 2004/06/20 22:20:15 jmc Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>

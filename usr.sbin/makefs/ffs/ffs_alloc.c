@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.13 2003/08/07 11:25:33 agc Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.14 2004/06/20 22:20:18 jmc Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
 /*
@@ -41,9 +41,13 @@
  *	@(#)ffs_alloc.c	8.19 (Berkeley) 7/13/95
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_alloc.c,v 1.13 2003/08/07 11:25:33 agc Exp $");
+__RCSID("$NetBSD: ffs_alloc.c,v 1.14 2004/06/20 22:20:18 jmc Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
