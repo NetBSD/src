@@ -1,6 +1,5 @@
-/* $NetBSD: vmparam.h,v 1.9 1998/02/27 19:39:03 thorpej Exp $ */
-#ifndef	_ALPHA_VMPARAM_H
-#define	_ALPHA_VMPARAM_H
+/* $NetBSD: vmparam.h,v 1.10 1998/03/12 01:25:52 thorpej Exp $ */
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -43,6 +42,9 @@
  *	@(#)vmparam.h	8.2 (Berkeley) 4/22/94
  */
 
+#ifndef	_ALPHA_VMPARAM_H_
+#define	_ALPHA_VMPARAM_H_
+
 /*
  * Machine dependent constants for Alpha.
  */
@@ -52,9 +54,14 @@
  * is the top (end) of the user stack.  Immediately above the user stack
  * resides the user structure, which is UPAGES long and contains the
  * kernel stack.
+ *
+ * Digital UNIX (formerly DEC OSF/1) places the stack below the
+ * text segment (i.e. growing downward from 4G).  We may want to
+ * consider doing that at some point, but it might require changes
+ * to the exec code.
  */
 #define	USRTEXT		CLBYTES
-#define	USRSTACK	VM_MAXUSER_ADDRESS
+#define	USRSTACK	((vm_offset_t)0x0000000200000000)	/* 8G */
 
 /*
  * Virtual memory related constants, all in bytes
@@ -130,8 +137,8 @@
  */
 
 /* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vm_offset_t)ALPHA_USEG_BASE) /* 0 */
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0x0000000200000000) /* 8G XXX */
+#define VM_MIN_ADDRESS		((vm_offset_t)ALPHA_USEG_BASE)	     /* 0 */
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)(ALPHA_USEG_END + 1L)) /* 4T */
 #define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)ALPHA_K1SEG_BASE)
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)ALPHA_K1SEG_END)
@@ -169,4 +176,4 @@ struct pmap_physseg {
 	struct pv_head *pvhead;		/* pv list of this seg */
 };
 
-#endif	/* !_ALPHA_VMPARAM_H */
+#endif	/* ! _ALPHA_VMPARAM_H_ */
