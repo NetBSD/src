@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.39 1994/02/25 16:54:41 mycroft Exp $
+ *	$Id: wd.c,v 1.40 1994/02/25 17:45:28 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -166,6 +166,10 @@ static int wdgetctlr(int, struct disk *);
 static void bad144intern(struct disk *);
 static int wdreset(int, int, int);
 static int wdtimeout(caddr_t);
+int wdc_wait(int, int, int, int);
+#define	wait_for_drq(p, u)	wdc_wait((p)+wd_altsts, u, 0, WDCS_DRQ)
+#define	wait_for_ready(p, u)	wdc_wait((p)+wd_status, u, 0, WDCS_READY)
+#define	wait_for_unbusy(p, u)	wdc_wait((p)+wd_status, u, WDCS_BUSY, 0)
 
 /*
  * Probe for controller.
@@ -395,7 +399,7 @@ wdstart(int ctrlr)
 	struct disklabel *lp;
 	struct buf *dp;
 	long	blknum, cylin, head, sector;
-	long	secpertrk, secpercyl, addr, timeout;
+	long	secpertrk, secpercyl, addr;
 	int	lunit, wdc;
 	int xfrblknum;
 	unsigned char status;
@@ -532,18 +536,8 @@ retry:
 		}
 
 		/* controller idle? */
-		for (timeout=0; inb(wdc+wd_status) & WDCS_BUSY;) {
-			DELAY(WDCDELAY);
-			if (++timeout < WDCNDELAY)
-				continue;
+		if (wait_for_unbusy(wdc, ctrlr) == -1)
 			wdreset(ctrlr, wdc, 1);
-			break;
-		}
-#ifdef WDCNDELAY_DEBUG
-		if (timeout > WDCNDELAY_DEBUG)
-			printf("wdc%d: timeout took %dus\n", ctrlr,
-			    WDCDELAY * timeout);
-#endif
 	
 		/* stuff the task file */
 		outb(wdc+wd_precomp, lp->d_precompcyl / 4);
@@ -573,17 +567,10 @@ retry:
 		outb(wdc+wd_sdh, WDSD_IBM | (du->dk_unit<<4) | (head & 0xf));
 	
 		/* wait for drive to become ready */
-		for (timeout = 0; (inb(wdc+wd_status) & WDCS_READY) == 0;) {
-			DELAY(WDCDELAY);
-			if (++timeout < WDCNDELAY)
-				continue;
+		if (wait_for_ready(wdc, ctrlr) == -1) {
 			wdreset(ctrlr, wdc, 1);
 			goto retry;
 		}
-#ifdef WDCNDELAY_DEBUG
-		if (timeout > WDCNDELAY_DEBUG)
-			printf("wdc%d: timeout took %dus\n", ctrlr, WDCDELAY * timeout);
-#endif
 	
 		/* initiate command! */
 #ifdef	B_FORMAT
@@ -609,17 +596,10 @@ retry:
 	}
     
 	/* ready to send data?	*/
-	for (timeout = 0; (inb(wdc+wd_altsts) & WDCS_DRQ) == 0;) {
-		DELAY(WDCDELAY);
-		if (++timeout < WDCNDELAY)
-			continue;
+	if (wait_for_drq(wdc, ctrlr) == -1) {
 		wdreset(ctrlr, wdc, 1);
 		goto retry;
 	}
-#ifdef WDCNDELAY_DEBUG
-	if (timeout > WDCNDELAY_DEBUG)
-		printf("wdc%d: timeout took %dus\n", ctrlr, WDCDELAY * timeout);
-#endif
     
 	/* then send it! */
 outagain:
@@ -640,7 +620,7 @@ wdintr(struct intrframe wdif)
 {
 	register struct	disk *du;
 	register struct buf *bp, *dp;
-	int status, wdc, ctrlr, timeout;
+	int stat, wdc, ctrlr;
     
 	ctrlr = wdif.if_vec;
 
@@ -659,14 +639,11 @@ wdintr(struct intrframe wdif)
 	printf("I%d ", ctrlr);
 #endif
 
-	for (timeout = 0; ((status = inb(wdc+wd_status)) & WDCS_BUSY);) {
-		DELAY(WDCDELAY);
-		if (++timeout < WDCNDELAY/20)
-			continue;
+	stat = wait_for_unbusy(wdc, ctrlr);
+	if (stat == -1) {
+		/* XXXX looks bogus */
 		wdstart(ctrlr);
-/* #ifdef WDDEBUG */
 		printf("wdc%d: timeout in wdintr WDCS_BUSY\n", ctrlr);
-/* #endif */
 	}
     
 	/* is it not a transfer, but a control operation? */
@@ -677,11 +654,11 @@ wdintr(struct intrframe wdif)
 	}
     
 	/* have we an error? */
-	if (status & (WDCS_ERR | WDCS_ECCCOR)) {
-		du->dk_status = status;
+	if (stat & (WDCS_ERR | WDCS_ECCCOR)) {
+		du->dk_status = stat;
 		du->dk_error = inb(wdc + wd_error);
 #ifdef	WDDEBUG
-		printf("status %x error %x\n", status, du->dk_error);
+		printf("stat %x error %x\n", stat, du->dk_error);
 #endif
 		if ((du->dk_flags & DKFL_SINGLE) == 0) {
 			du->dk_flags |= DKFL_ERROR;
@@ -695,7 +672,7 @@ wdintr(struct intrframe wdif)
 #endif
 	
 		/* error or error correction? */
-		if (status & WDCS_ERR) {
+		if (stat & WDCS_ERR) {
 			if (++wdtab[ctrlr].b_errcnt < WDIORETRIES)
 				wdtab[ctrlr].b_active = 0;
 			else {
@@ -704,7 +681,7 @@ wdintr(struct intrframe wdif)
 					    LOG_PRINTF, du->dk_skip,
 					    &du->dk_dd);
 #ifdef WDDEBUG
-					printf("status %b error %b\n", status,
+					printf("stat %b error %b\n", stat,
 					    WDCS_BITS, inb(wdc+wd_error),
 					    WDERR_BITS);
 #endif
@@ -727,20 +704,14 @@ outt:
 		chk = min(DEV_BSIZE / sizeof(short), du->dk_bc / sizeof(short));
 	
 		/* ready to receive data? */
-		for (timeout = 0; (inb(wdc+wd_status) & WDCS_DRQ) == 0;) {
-			DELAY(WDCDELAY);
-			if (++timeout < WDCNDELAY/20)
-				continue;
+		if (wait_for_drq(wdc, ctrlr) == -1) {
 			wdstart(ctrlr);
-/* #ifdef WDDEBUG */
 			printf("wdc%d: timeout in wdintr WDCS_DRQ\n", ctrlr);
-/* #endif */
-			break;
 		}
 
 		/* suck in data */
 		insw(wdc+wd_data,
-			(int)bp->b_un.b_addr + du->dk_skip * DEV_BSIZE, chk);
+		    (int)bp->b_un.b_addr + du->dk_skip * DEV_BSIZE, chk);
 		du->dk_bc -= chk * sizeof(short);
 		du->dk_bct -= chk * sizeof(short);
 	
@@ -972,7 +943,7 @@ wdcontrol(register struct buf *bp)
 	register struct disk *du;
 	register unit, lunit;
 	unsigned char  stat;
-	int s, ctrlr, timeout;
+	int s, ctrlr;
 	int wdc;
     
 	du = wddrives[wdunit(bp->b_dev)];
@@ -990,33 +961,17 @@ tryagainrecal:
 		s = splbio();		/* not called from intr level ... */
 		wdgetctlr(unit, du);
 
-		for (timeout = 0; (inb(wdc+wd_status) & WDCS_READY) == 0;) {
-			DELAY(WDCDELAY);
-			if (++timeout < WDCNDELAY)
-				continue;
+		if (wait_for_ready(wdc, ctrlr) == -1) {
 			wdreset(ctrlr, wdc, 1);
 			goto tryagainrecal;
 		}
-#ifdef WDCNDELAY_DEBUG
-		if (timeout > WDCNDELAY_DEBUG)
-			printf("wdc%d: timeout took %dus\n", ctrlr,
-			    WDCDELAY * timeout);
-#endif
 		outb(wdc+wd_sdh, WDSD_IBM | (unit << 4));
 		wdtab[ctrlr].b_active = 1;
 		outb(wdc+wd_command, WDCC_RESTORE | WD_STEP);
-		for (timeout = 0; (inb(wdc+wd_status) & WDCS_READY) == 0;) {
-			DELAY(WDCDELAY);
-			if (++timeout < WDCNDELAY)
-				continue;
+		if (wait_for_ready(wdc, ctrlr) == -1) {
 			wdreset(ctrlr, wdc, 1);
 			goto tryagainrecal;
 		}
-#ifdef WDCNDELAY_DEBUG
-		if (timeout > WDCNDELAY_DEBUG)
-			printf("wdc%d: timeout took %dus\n", ctrlr,
-			    WDCDELAY * timeout);
-#endif
 		du->dk_state = RECAL;
 		splx(s);
 		return 0;
@@ -1071,41 +1026,20 @@ wdcommand(struct disk *du, int cmd)
 	wdc = du->dk_port;
 
 	/* controller ready for command? */
-	for (timeout = 0; (stat = inb(wdc+wd_status)) & WDCS_BUSY;) {
-		DELAY(WDCDELAY);
-		if (++timeout > WDCNDELAY)
-			return -1;
-	}
-#ifdef WDCNDELAY_DEBUG
-	if (timeout > WDCNDELAY_DEBUG)
-		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr, WDCDELAY * timeout);
-#endif
+	if (wait_for_unbusy(wdc, du->dk_ctrlr) == -1)
+		return -1;
     
 	/* send command, await results */
 	outb(wdc+wd_command, cmd);
-	for (timeout = 0; (stat = inb(wdc+wd_status)) & WDCS_BUSY;) {
-		DELAY(WDCDELAY);
-		if (++timeout > WDCNDELAY)
-			return -1;
-	}
-#ifdef WDCNDELAY_DEBUG
-	if (timeout > WDCNDELAY_DEBUG)
-		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr, WDCDELAY * timeout);
-#endif
+	stat = wait_for_unbusy(wdc, du->dk_ctrlr);
+	if (stat == -1)
+		return -1;
+
 	if (cmd != WDCC_READP)
 		return stat;
     
 	/* is controller ready to return data? */
-	for (timeout = 0; ((stat = inb(wdc+wd_status)) & (WDCS_ERR | WDCS_DRQ)) == 0;) {
-		DELAY(WDCDELAY);
-		if (++timeout > WDCNDELAY)
-			return -1;
-	}
-#ifdef WDCNDELAY_DEBUG
-	if (timeout > WDCNDELAY_DEBUG)
-		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr, WDCDELAY * timeout);
-#endif
-	return stat;
+	return wdc_wait(wdc+wd_status, du->dk_ctrlr, 0, WDCS_ERR | WDCS_DRQ);
 }
 
 /*
@@ -1148,45 +1082,25 @@ wdgetctlr(int u, struct disk *du)
 	int stat, x, i, wdc;
 	char tb[DEV_BSIZE];
 	struct wdparams *wp;
-	int timeout;
     
 	x = splbio();		/* not called from intr level ... */
 	wdc = du->dk_port;
-	for (timeout = 0; (inb(wdc+wd_status) & WDCS_BUSY);) {
-		DELAY(WDCDELAY);
-		if (++timeout > WDCNDELAY) {
-			splx(x);
-			return -1;
-		}
+	if (wait_for_unbusy(wdc, du->dk_ctrlr) == -1) {
+		splx(x);
+		return -1;
 	}
-#ifdef WDCNDELAY_DEBUG
-	if (timeout > WDCNDELAY_DEBUG)
-		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr, WDCDELAY * timeout);
-#endif
+
 	outb(wdc+wd_sdh, WDSD_IBM | (u << 4));
-	for (timeout = 0; (inb(wdc+wd_status) & WDCS_READY) == 0;) {
-		DELAY(WDCDELAY);
-		if (++timeout > WDCNDELAY) {
-			splx(x);
-			return -1;
-		}
+	if (wait_for_ready(wdc, du->dk_ctrlr) == -1) {
+		splx(x);
+		return -1;
 	}
-#ifdef WDCNDELAY_DEBUG
-	if (timeout > WDCNDELAY_DEBUG)
-		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr, WDCDELAY * timeout);
-#endif
+
 	stat = wdcommand(du, WDCC_READP);
-	for (timeout = 0; (inb(wdc+wd_status) & WDCS_READY) == 0;) {
-		DELAY(WDCDELAY);
-		if (++timeout > WDCNDELAY) {
-			splx(x);
-			return -1;
-		}
+	if (wait_for_ready(wdc, du->dk_ctrlr) == -1) {
+		splx(x);
+		return -1;
 	}
-#ifdef WDCNDELAY_DEBUG
-	if (timeout > WDCNDELAY_DEBUG)
-		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr, WDCDELAY * timeout);
-#endif
     
 	if (stat < 0) {
 		splx(x);
@@ -1617,7 +1531,7 @@ bad144intern(struct disk *du)
 static int
 wdreset(int ctrlr, int wdc, int err)
 {
-	int stat, timeout;
+	int stat;
 
 	if (err)
 		printf("wdc%d: busy too long, resetting\n", ctrlr);
@@ -1627,19 +1541,32 @@ wdreset(int ctrlr, int wdc, int err)
 	DELAY(1000);
 	outb(wdc+wd_ctlr, WDCTL_4BIT);
 
-	for (timeout = 0; (stat = inb(wdc+wd_status)) & WDCS_BUSY;) {
-		DELAY(WDCDELAY);
-		if (++timeout > WDCNDELAY) {
-			printf("wdc%d: failed to reset controller\n", ctrlr);
+	if (wait_for_unbusy(wdc, ctrlr) == -1)
+		printf("wdc%d: failed to reset controller\n", ctrlr);
+}
+
+int
+wdc_wait(port, ctrlr, on, off)
+	int port, ctrlr;
+	int on, off;
+{
+	int timeout = 0;
+	int stat;
+
+	for (;;) {
+		stat = inb(port);
+		if ((stat & on) != on || (stat & off) != 0)
 			break;
-		}
+		DELAY(WDCDELAY);
+		if (++timeout > WDCNDELAY)
+			return -1;
 	}
 #ifdef WDCNDELAY_DEBUG
 	if (timeout > WDCNDELAY_DEBUG)
 		printf("wdc%d: timeout took %dus\n", ctrlr, WDCDELAY * timeout);
 #endif
+	return stat;
 }
-
 
 static int
 wdtimeout(caddr_t arg)
