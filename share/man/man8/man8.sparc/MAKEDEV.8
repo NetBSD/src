@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)MAKEDEV.8	5.2 (Berkeley) 3/22/91
-.\"	$Id: MAKEDEV.8,v 1.1 1994/06/16 18:50:15 deraadt Exp $
+.\"	$Id: MAKEDEV.8,v 1.2 1994/12/28 23:35:34 cgd Exp $
 .\"
 .Dd Feburary 21, 1994
 .Dt MAKEDEV 8 sparc
@@ -100,6 +100,8 @@ Configuration specific devices
 Berkeley packet filters
 .It Ar bwtwo#
 Black and white frame buffers
+.It Ar cd#
+SCSI CD-ROM drives
 .It Ar cgthree#
 Colour frame buffers
 .It Ar cgsix#
@@ -113,7 +115,9 @@ Mouse ports
 .It Ar pty#
 Set of 16 master and slave pseudo terminals
 .It Ar sd#
-SCSI disks drives
+SCSI disk drives
+.It Ar st#
+SCSI tape drives
 .It Ar tty#
 Onboard Serial ports
 .It Ar vnd#
