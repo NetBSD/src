@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.12 1998/04/14 04:51:19 fair Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.13 1998/04/14 20:20:16 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -487,8 +487,6 @@ rm(victim)
 void
 cleanup()
 {
-	char buf[MAXPATHLEN];
-
 	switch(clean) {
 	case FILE_ORIG:
 		rm(oldpwdfile);
