@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.26 1998/02/18 02:05:35 cgd Exp $     */
+/*      $NetBSD: pmap.h,v 1.27 1998/05/03 13:02:22 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -96,14 +96,18 @@ extern	struct pmap kernel_pmap_store;
 #endif	/* _KERNEL */
 
 /* Routines that are best to define as macros */
+#define	pmap_phys_address(phys) 	((u_int)(phys)<<PAGE_SHIFT)
+#define	pmap_pageable(a,b,c,d)		/* Dont do anything */
+#define pmap_change_wiring(pmap, v, w)  /* no need */
 #define	pmap_copy(a,b,c,d,e) 		/* Dont do anything */
 #define	pmap_update()	mtpr(0,PR_TBIA)	/* Update buffes */
-#define	pmap_pageable(a,b,c,d)		/* Dont do anything */
 #define	pmap_collect(pmap)		/* No need so far */
-#define	pmap_reference(pmap)	if(pmap) (pmap)->ref_count++
-#define	pmap_phys_address(phys) ((u_int)(phys)<<PAGE_SHIFT)
-#define pmap_change_wiring(pmap, v, w)  /* no need */
 #define	pmap_remove(pmap, start, slut)  pmap_protect(pmap, start, slut, 0)
+#ifdef UVM
+#define	pmap_reference(pmap)		(pmap)->ref_count++
+#else
+#define	pmap_reference(pmap)		((pmap) ? (pmap)->ref_count++ : 0)
+#endif
 
 /* These can be done as efficient inline macros */
 #define pmap_copy_page(src, dst)				\
