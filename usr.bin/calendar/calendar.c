@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.17 1998/10/12 20:51:06 wsanchez Exp $	*/
+/*	$NetBSD: calendar.c,v 1.18 1998/11/06 22:56:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.17 1998/10/12 20:51:06 wsanchez Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.18 1998/11/06 22:56:38 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -283,22 +283,24 @@ getfield(p, endp, flags)
 	int val;
 	char *start, savech;
 
-	for (; *p != '\0' && !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p)
+#define FLDCHAR(a) (*p != '\0' && !isdigit((unsigned char)*p) && \
+    !isalpha((unsigned char)*p) && *p != '*')
+
+	for (; FLDCHAR(*p); ++p)
 		;
 	if (*p == '*') {			/* `*' is current month */
 		*flags |= F_ISMONTH;
 		*endp = p+1;
 		return (tp->tm_mon + 1);
 	}
-	if (isdigit(*p)) {
+	if (isdigit((unsigned char)*p)) {
 		val = strtol(p, &p, 10);	/* if 0, it's failure */
-		for (; *p != '\0' && !isdigit(*p) && !isalpha(*p) && *p != '*';
-		    ++p)
+		for (; FLDCHAR(*p); ++p)
 			;
 		*endp = p;
 		return (val);
 	}
-	for (start = p; *p != '\0' && isalpha(*++p);)
+	for (start = p; *p != '\0' && isalpha((unsigned char)*++p);)
 		;
 	savech = *p;
 	*p = '\0';
@@ -310,9 +312,7 @@ getfield(p, endp, flags)
 		*p = savech;
 		return (0);
 	}
-	for (*p = savech;
-	    *p != '\0' && !isdigit(*p) && !isalpha(*p) && *p != '*';
-	    ++p)
+	for (*p = savech; FLDCHAR(*p); ++p)
 		;
 	*endp = p;
 	return (val);
@@ -462,7 +462,7 @@ atodays(char ch, char *optarg, unsigned short *days)
 
 #define todigit(x) ((x) - '0')
 #define ATOI2(x) (todigit((x)[0]) * 10 + todigit((x)[1]))
-#define ISDIG2(x) (isdigit((x)[0]) && isdigit((x)[1]))
+#define ISDIG2(x) (isdigit((unsigned char)(x)[0]) && isdigit((unsigned char)(x)[1]))
 
 void
 getmmdd(struct tm *tp, char *ds)
