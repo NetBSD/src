@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.18 2004/01/04 02:13:11 dsainty Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.19 2004/01/04 08:35:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.18 2004/01/04 02:13:11 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.19 2004/01/04 08:35:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,8 @@ USB_ATTACH(uhidev)
 	struct uhidev *dev;
 	int size, nrepid, repid, repsz;
 	int repsizes[256];
-	void *desc, *descptr = NULL;
+	void *desc;
+	const void *descptr = NULL;
 	usbd_status err;
 	char devinfo[1024];
 
