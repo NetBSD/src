@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.65.4.1 1996/12/10 08:48:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -178,17 +178,45 @@ sunos_sys_execv(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos_sys_execv_args *uap = v;
-	struct sys_execve_args ouap;
+	struct sunos_sys_execv_args /* {
+		syscallarg(char *) path;
+		syscallarg(char **) argv;
+	} */ *uap = v;
+	struct sys_execve_args ap;
+	caddr_t sg;
 
-	caddr_t sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p->p_emul);
 	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	SCARG(&ouap, path) = SCARG(uap, path);
-	SCARG(&ouap, argp) = SCARG(uap, argp);
-	SCARG(&ouap, envp) = NULL;
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = NULL;
 
-	return (sys_execve(p, &ouap, retval));
+	return (sys_execve(p, &ap, retval));
+}
+
+int
+sunos_sys_execve(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sunos_sys_execve_args /* {
+		syscallarg(char *) path;
+		syscallarg(char **) argv;
+		syscallarg(char **) envp;
+	} */ *uap = v;
+	struct sys_execve_args ap;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = SCARG(uap, envp);
+
+	return (sys_execve(p, &ap, retval));
 }
 
 int
