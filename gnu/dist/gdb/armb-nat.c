@@ -136,7 +136,7 @@ int one_stepped;
 
 void
 single_step (ignore)
-     int ignore; /* signal, but we don't need it */
+     enum target_signal ignore; /* signal, but we don't need it */
 {
   CORE_ADDR arm_pc;
 
@@ -176,6 +176,4 @@ extern char *target_name;
 void
 _initialize_arm_bnat ()
 {
-  printf_unfiltered("%s target configuration is high experimental\n", target_name);
-  printf_unfiltered("Report any problems to amb@physig.ph.kcl.ac.uk\n\n");
 }
