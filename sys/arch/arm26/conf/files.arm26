@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.37 2001/08/20 23:08:10 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.38 2001/09/10 23:41:49 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -111,8 +111,10 @@ attach	wf at wfdc
 #major	{...}
 
 # Econet module (Motorola 6854) (usually at bank 2 fiq 2)
-device	ec: ifnet, arp
-attach	ec at ioc
+device	eca: fiq, eco, ifnet
+attach	eca at ioc
+file	arch/arm26/ioc/if_eca.c			eca
+file	arch/arm26/ioc/if_eca_fiq.S		eca
 
 # On-board Rockwell 6551 serial (usually at bank 3 irq 10/1)
 device	rs: tty
