@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.101 2000/11/21 00:25:43 soren Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.102 2000/12/08 18:38:15 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.102 2000/11/21 00:25:35 soren Exp 
+ *	NetBSD: pcmciadevs,v 1.103 2000/12/08 18:37:24 drochner Exp 
  */
 
 /*-
@@ -189,6 +189,9 @@
 #define	PCMCIA_STR_FUJITSU_LA10S	"Fujitsu Compact Flash Ethernet"
 
 /* IBM Products */
+#define	PCMCIA_CIS_IBM_MICRODRIVE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_IBM_MICRODRIVE	0x0000
+#define	PCMCIA_STR_IBM_MICRODRIVE	"IBM Microdrive"
 #define	PCMCIA_CIS_IBM_3270	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IBM_3270	0x0001
 #define	PCMCIA_STR_IBM_3270	"IBM 3270 Emulation"
