@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.87 2004/04/21 20:03:18 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.88 2004/04/24 22:14:39 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -630,3 +630,9 @@ sys/netinet/tcp_var.h				patch
 	If SYN is coming and RCV.NXT == SEG.SEQ, then ACK with value - 1.
 	SA#2004-006.
 	[itojun, ticket #1680]
+
+sys/arch/macppc/conf/INSTALL			1.74 via patch
+
+	Add "wdc* at pci? dev ? function ?".
+	[kristerw, ticket #1675]
+
