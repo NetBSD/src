@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.11 1999/09/04 22:12:15 augustss Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.12 1999/09/05 12:30:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -2012,3 +2012,17 @@ ntfs_toupper_unuse()
 	/* release the lock */
 	lockmgr(&ntfs_toupper_lock, LK_RELEASE, NULL);
 } 
+
+/*
+ * maps the Unicode char to 8bit equivalent
+ * XXX currently only gets lower 8bit from the Unicode char
+ * and substitutes a '_' for it if the result would be '\0';
+ * something better has to be definitely though out
+ */
+char
+ntfs_u28(unichar)
+  wchar unichar;
+{
+	return (char) NTFS_U28(unichar);
+}
+
