@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.66 2004/09/05 21:32:30 dsl Exp $	*/
+/*	$NetBSD: gzip.c,v 1.67 2004/09/11 11:07:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.66 2004/09/05 21:32:30 dsl Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.67 2004/09/11 11:07:44 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -655,7 +655,8 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 {
 	z_stream z;
 	char *outbufp, *inbufp;
-	off_t out_tot, out_sub_tot, in_tot;
+	off_t out_tot, in_tot;
+	uint32_t out_sub_tot;
 	enum {
 		GZSTATE_MAGIC0,
 		GZSTATE_MAGIC1,
@@ -1415,6 +1416,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	if (tflag)
 		return size;
 #endif
+	/* if we are uncompressing to stdin, don't remove the file. */
 	if (cflag)
 		return size;
 
@@ -1422,8 +1424,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	 * if we create a file...
 	 */
 	/*
-	 * if we can't stat the file, or we are uncompressing to
-	 * stdin, don't remove the file.
+	 * if we can't stat the file don't remove the file.
 	 */
 	if (stat(outfile, &osb) < 0) {
 		maybe_warn("couldn't stat (leaving original): %s",
