@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2001/12/11 21:17:56 tv Exp $
+#	$NetBSD: Makefile,v 1.23 2001/12/29 15:45:52 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -28,7 +28,7 @@ _warn:
 	@echo '*** WARNING: "MKTOOLS" is set to "no"; this will prevent building and'
 	@echo '*** updating your host toolchain.  This should be used only as a'
 	@echo '*** temporary workaround for toolchain problems, as it will result'
-	@echo '*** in version skew and build errors onver time!'
+	@echo '*** in version skew and build errors over time!'
 .else
 _warn:
 .endif
