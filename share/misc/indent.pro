@@ -11,7 +11,7 @@
 -nbc
 -ncdb
 -ndj
--nei
+-ei
 -nfc1
 -nlp
 -npcs
