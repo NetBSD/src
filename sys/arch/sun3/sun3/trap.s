@@ -1,6 +1,7 @@
-/*	$NetBSD: trap.s,v 1.8 1994/10/26 09:13:17 cgd Exp $	*/
+/*	$NetBSD: trap.s,v 1.9 1994/11/21 21:39:17 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -38,9 +39,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: locore.s 1.58 91/04/22$
- *
- *	@(#)locore.s	7.11 (Berkeley) 5/9/91
+ *	from: Utah $Hdr: locore.s 1.58 91/04/22$
+ *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
+ *	locore.s,v 1.2 1993/05/22 07:57:30 cgd Exp
  */
 
 /*

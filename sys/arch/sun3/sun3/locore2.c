@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.26 1994/10/26 19:04:39 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.27 1994/11/21 21:39:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Adam Glass.
+ *	This product includes software developed by Adam Glass and Gordon Ross
  * 4. The name of the authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -48,13 +48,23 @@
 #include <machine/pmap.h>
 #include <machine/idprom.h>
 #include <machine/obio.h>
+#include <machine/obmem.h>
 
 #include "vector.h"
 #include "interreg.h"
 
-/* XXX - This is weird... */
-#define sun3_round_up_seg(x)	(sun3_trunc_seg(x) + NBSG)
+/*
+ * Globals shared with the pmap code.
+ * XXX - should reexamine this...
+ */ 
+vm_offset_t virtual_avail, virtual_end;
+vm_offset_t avail_start, avail_end;
+/* used to skip the Sun3/50 video RAM */
+vm_offset_t hole_start, hole_size;
 
+/*
+ * Now our own stuff.
+ */
 unsigned int *old_vector_table;
 
 static struct idprom identity_prom;
@@ -66,14 +76,13 @@ vm_offset_t high_segment_free_end = 0;
 
 int msgbufmapped = 0;
 struct msgbuf *msgbufp = NULL;
-caddr_t vmmap;
+caddr_t vmempage;
 extern vm_offset_t tmp_vpages[];
 extern int physmem;
 unsigned char *interrupt_reg;
 unsigned int orig_nmi_vector;
-vm_offset_t u_area_va;
 vm_offset_t proc0_user_pa;
-struct user *proc0paddr;
+struct user *proc0paddr;	/* proc[0] pcb address (u-area VA) */
 extern struct pcb *curpcb;
 
 static void initialize_vector_table()
@@ -137,24 +146,25 @@ static void sun3_mode_normal()
  * also put our hardware state back into place after
  * the PROM "c" (continue) command is given.
  */
-
 void sun3_rom_abort()
 {
 	int s = splhigh();
+
 	sun3_mode_monitor();
+	mon_printf("kernel stop: enter c to continue or g0 to panic\n");
+	delay(100000);
 
 	/*
 	 * Drop into the PROM in a way that allows a continue.
 	 * That's what the PROM function (romp->abortEntry) is for,
-	 * but that wants to be entered as a trap hander, so I just
-	 * plug that into the vector table for trap zero and do it.
+	 * but that wants to be entered as a trap hander, so just
+	 * stuff it into the PROM interrupt vector for trap zero
+	 * and then do a trap.  Needs PROM vector table in RAM.
 	 */
-	mon_printf("kernel stop: enter c to continue or g0 to panic\n");
-	delay(100000);
 	old_vector_table[32] = (int)romp->abortEntry;
-	__asm __volatile (" trap #0");
-	__asm __volatile("_sun3_rom_continued: nop");
-	/* We have continued from a PROM abort. */
+	asm(" trap #0 ; _sun3_rom_continued: nop");
+
+	/* We have continued from a PROM abort! */
 
 	sun3_mode_normal();
 	splx(s);
@@ -200,24 +210,20 @@ void sun3_context_equiv()
 	unsigned int i, sme;
 	int x;
 	vm_offset_t va;
-	
+
+#ifdef	DIAGNOSTIC
+	/* Near the beginning of locore.s we set context zero. */
+	if (get_context() != 0) {
+		mon_panic("sun3_context_equiv: not in context zero?");
+	}
+#endif
+
 	for (x = 1; x < NCONTEXT; x++) {
 		for (va = 0; va < (vm_offset_t) (NBSG * NSEGMAP); va += NBSG) {
 			sme = get_segmap(va);
 			mon_setcxsegmap(x, va, sme);
 		}
 	}
-}
-
-void u_area_bootstrap(u_va, u_pa)
-	vm_offset_t u_va, u_pa;
-{
-	vm_offset_t pte_proto, pa, va;
-	
-	pte_proto = PG_VALID|PG_WRITE|PG_SYSTEM|PG_NC;
-	
-	for (va = u_va, pa = u_pa; va < u_va+NBPG*UPAGES; va+=NBPG, pa+=NBPG)
-		set_pte(va, pte_proto|PA_PGNUM(pa));
 }
 
 static void
@@ -248,38 +254,50 @@ int keep;	/* true: steal, false: clear */
 #endif
 				}
 			}
-			if (keep && valid) pmeg_steal(sme);
+			if (keep && valid)
+				sun3_reserve_pmeg(sme);
 			else set_segmap(sva, SEGINV);
 		}
 		sva += NBSG;
 	}
 }
 
-/* This is called just before pmap_bootstrap() */
+
+/*
+ * This is called just before pmap_bootstrap()
+ * (from sun3_bootstrap(), below) to initialize enough
+ * to allow the VM system to run normally.  This involves
+ * allocating some physical pages and virtual space for
+ * special purposes, etc. by advancing avail_start and
+ * virtual_avail past the "stolen" pages.  Note that
+ * the kernel should never take a fault on any page
+ * between [ KERNBASE .. virtual_avail ] and this is
+ * checked in trap.c for kernel-mode MMU faults.
+ */
 void sun3_vm_init()
 {
 	vm_offset_t va, eva, sva, pte, temp_seg;
+	vm_offset_t u_area_va;
 	extern char start[], etext[], end[];
-	unsigned char sme;
-	
-	pmeg_init();
-	
-	/* Reserve kernel text/data/bss */
-	va = (vm_offset_t) VM_MIN_KERNEL_ADDRESS;
-	while (va < (vm_offset_t) end) {
-		sme = get_segmap(va);
-		if (sme == SEGINV)
-			mon_panic("kernel text/data/bss not mapped\n");
-		pmeg_steal(sme);
-		va += NBSG;
-	}
-	virtual_avail = va; /* start a new segment */
-	virtual_end = VM_MAX_KERNEL_ADDRESS;
-	
-	/* Physical memory was remapped to KERNBASE. */
-	avail_start = sun3_round_page(end) - KERNBASE;
+	unsigned int sme;
 
-	/* How much of the end of RAM did the PROM steal? */
+	/*
+	 * XXX - Reserve DDB symbols and strings?
+	 */
+
+	/*
+	 * Determine the range of kernel virtual space available.
+	 * This is just page-aligned for now, so we can allocate
+	 * some special-purpose pages before rounding to a segment.
+	 */
+	virtual_avail = sun3_round_page(end);
+	virtual_end = VM_MAX_KERNEL_ADDRESS;
+
+	/*
+	 * Determine the range of physical memory available.
+	 * Physical memory at zero was remapped to KERNBASE.
+	 */
+	avail_start = virtual_avail - KERNBASE;
 	if (romp->romvecVersion < 1) {
 		mon_printf("Warning: ancient PROM version=%d\n",
 				   romp->romvecVersion);
@@ -292,146 +310,221 @@ void sun3_vm_init()
 	avail_end = sun3_trunc_page(avail_end);
 
 	/*
-	 * preserve/protect monitor: 
+	 * Steal some special-purpose, already mapped pages.
+	 * First take pages that are already mapped as
+	 * VA -> PA+KERNBASE since that's convenient.
+	 */
+
+	/*
+	 * Message buffer page (msgbuf).
+	 */
+	msgbufp = (struct msgbuf *) virtual_avail;
+	virtual_avail += NBPG;
+	avail_start += NBPG;
+	msgbufmapped = 1;
+	/* Make it non-cached. */
+	va = (vm_offset_t) msgbufp;
+	pte = get_pte(va);
+	pte |= PG_NC;
+	set_pte(va, pte);
+
+	/*
+	 * Virtual and physical pages for proc[0] u-area (already mapped)
+	 * Make these non-cached at their not-in-use mapping address.
+	 */
+	proc0paddr = (struct user *) virtual_avail;
+	proc0_user_pa = avail_start;
+	virtual_avail += UPAGES*NBPG;
+	avail_start += UPAGES*NBPG;
+	/* Make them non-cached. */
+	va = (vm_offset_t) proc0paddr;
+	while (va < virtual_avail) {
+		pte = get_pte(va);
+		pte |= PG_NC;
+		set_pte(va, pte);
+		va += NBPG;
+	}
+
+	/*
+	 * XXX - Make sure avail_start is within the low 1M range
+	 * that the Sun PROM guarantees will be mapped in?
+	 * Make sure it is below avail_end as well?
+	 */
+
+	/*
+	 * Now steal some virtual addresses, but
+	 * not the physical pages behind them.
+	 */
+	
+	/* vmempage (used by /dev/mem) */
+	vmempage = (caddr_t) virtual_avail;
+	virtual_avail += NBPG;
+
+	/*
+	 * vpages array:  just some virtual addresses for
+	 * temporary mappings in the pmap module (two pages)
+	 */
+	tmp_vpages[0] = virtual_avail;
+	virtual_avail += NBPG;
+	tmp_vpages[1] = virtual_avail;
+	virtual_avail += NBPG;
+
+	/*
+	 * Done allocating PAGES of virtual space, so
+	 * clean out the rest of the last used segment.
+	 * After this point, virtual_avail is seg-aligned.
+	 */
+	va = virtual_avail;
+	virtual_avail = sun3_round_seg(va);
+	while (va < virtual_avail) {
+		set_pte(va, PG_INVAL);
+		va += NBPG;
+	}
+
+	/*
+	 * Now that we are done stealing physical pages, etc.
+	 * figure out which PMEGs are used by those mappings
+	 * and reserve them -- but first, init PMEG management.
+	 */
+	sun3_pmeg_init();
+
+	/*
+	 * Reserve PMEGS for kernel text/data/bss
+	 * and the misc pages taken above.
+	 */
+	va = VM_MIN_KERNEL_ADDRESS;
+	while (va < virtual_avail) {
+		sme = get_segmap(va);
+		if (sme == SEGINV)
+			mon_panic("kernel text/data/bss not mapped\n");
+		sun3_reserve_pmeg(sme);
+		va += NBSG;
+	}
+
+	/*
+	 * Unmap kernel virtual space (only segments.  if it squished ptes,
+	 * bad things might happen).  Also, make sure to leave no valid
+	 * segmap entries in the MMU unless pmeg_array records them.
+	 */
+	va = virtual_avail;
+	while (va < virtual_end) {	
+		set_segmap(va, SEGINV);
+		va += NBSG;
+	}
+
+	/*
+	 * XXX - Record pmegs in use by DVMA segment.
+	 * I would have preferred to just nuke these, but that
+	 * made the kernel die before we even get to consinit.
+	 * Instead, there is a hack in pmap_enter_kernel (sigh)
+	 * XXX - Should figure out how to kill these...
+	 */
+	va = sun3_trunc_seg(DVMA_SPACE_START);
+	while (va < DVMA_SPACE_END) {
+		sme = get_segmap(va);
+		if (sme != SEGINV)
+			sun3_reserve_pmeg(sme);
+		va += NBSG;
+	}
+
+	/*
+	 * Reserve PMEGs used by the PROM monitor:
 	 *   need to preserve/protect mappings between
 	 *		MONSTART, MONEND.
 	 *   free up any pmegs in this range which have no mappings
 	 *   deal with the awful MONSHORTSEG/MONSHORTPAGE
 	 */
 	sun3_mon_init(MONSTART, MONEND, TRUE);
-	
+
 	/*
 	 * Make sure the hole between MONEND, MONSHORTSEG is clear.
 	 */
 	sun3_mon_init(MONEND, MONSHORTSEG, FALSE);
-	
+
 	/*
 	 * MONSHORTSEG contains MONSHORTPAGE which is some stupid page
-	 * allocated by the monitor.  One page, in an otherwise empty segment.
-	 * 
-	 * basically we are stealing the rest of the segment in hopes of using
-	 * it to map devices or something.  Really isn't much else you can do with
-	 * it.  Could put msgbuf's va up there, but i'd prefer if it was in
-	 * the range of acceptable kernel vm, and not in space.
-	 *
+	 * allocated by the PROM monitor.  (PROM data)
+	 * We use some of the segment for our u-area mapping.
 	 */
 	sme = get_segmap(MONSHORTSEG);
-	pmeg_steal(sme);
+	sun3_reserve_pmeg(sme);
 	high_segment_free_start = MONSHORTSEG;
 	high_segment_free_end = MONSHORTPAGE;
-	
-	for (va = high_segment_free_start; va < high_segment_free_end;
-		 va+= NBPG) 
+
+	for (va = high_segment_free_start;
+		 va < high_segment_free_end;
+		 va += NBPG)
 		set_pte(va, PG_INVAL);
+
+	/*
+	 * Reserve VA space for the u-area of the current process,
+	 * and map proc[0]'s u-pages at the standard address.
+	 */
+	u_area_va = high_segment_alloc(UPAGES);
+	if (u_area_va != UADDR)
+		mon_panic("sun3_vm_init: u-area vaddr taken?\n");
+
+	/* Initialize cached PTEs for u-area mapping. */
+	save_u_area(&proc0, proc0paddr);
+
+	/* map proc0's u-area at the standard address */
+#ifdef	DIAGNOSTIC
+	if (curproc != &proc0)
+		panic("sun3_vm_init: bad curproc");
+#endif
+	load_u_area();
+
+	bzero((caddr_t)UADDR, UPAGES*NBPG);
+
+	curpcb = &proc0paddr->u_pcb;
 	
 	/*
 	 * unmap user virtual segments
 	 */
-	
 	va = 0;
 	while (va < KERNBASE) {	/* starts and ends on segment boundries */
 		set_segmap(va, SEGINV);
 		va += NBSG;
 	}
-	
-	/*
-	 * Reserve a segment for the kernel to use to access a pmeg
-	 * that is not currently mapped into any context/segmap.
-	 * The kernel temporarily maps such a pmeg into this segment.
-	 */
-	temp_seg = sun3_round_seg(virtual_avail);
-	set_temp_seg_addr(temp_seg);
-	set_segmap(temp_seg, SEGINV);
-	virtual_avail = temp_seg + NBSG;
-	
-	/* allocating page for msgbuf */
-	sme = get_segmap(virtual_avail); 
-	if (sme == SEGINV)
-		mon_printf("bad pmeg encountered while looking for msgbuf page\n");
-	pmeg_steal(sme);
-	eva = sun3_round_up_seg(virtual_avail);
-	
-	/* msgbuf, pg 0 XXX - Put at KERNBASE? */
-	avail_end -= NBPG;
-	msgbufp = (struct msgbuf *) virtual_avail;
-	pte = PG_VALID | PG_WRITE |PG_SYSTEM | PG_NC | (avail_end >>PGSHIFT);
-	set_pte((vm_offset_t) msgbufp, pte);
-	msgbufmapped = 1;
-	
-	/* cleaning rest of segment */
-	virtual_avail +=NBPG;
-	for (va = virtual_avail; va < eva; va += NBPG)
-		set_pte(va, PG_INVAL);
-	
-	/* vmmap (used by /dev/mem), pg 1*/
-	vmmap = (caddr_t) virtual_avail;
-	virtual_avail += NBPG;
-	
-	/*
-	 * vpages array:
-	 *   just some virtual addresses for temporary mappings
-	 *   in the pmap module (pg 2-3)
-	 */
-	
-	tmp_vpages[0] = virtual_avail;
-	virtual_avail += NBPG;
-	tmp_vpages[1] = virtual_avail;
-	virtual_avail += NBPG;
-	
-	
-	virtual_avail = eva;
-	
-	/*
-	 * Unmap kernel virtual space (only segments.  if it squished ptes,
-	 * bad things might happen.  Also, make sure to leave no valid
-	 * segmap entries in the MMU unless pmeg_array records them.
-	 */
-	
-	/* this only works because both are seg bounds*/
-	va = virtual_avail;
-	while (va < virtual_end) {	
-		set_segmap(va, SEGINV);
-		va = sun3_round_up_seg(va);
-	}
-	
-	/*
-	 * Record pmegs in use by DVMA segment.
-	 * I would have preferred to just nuke these, but that
-	 * made the kernel die before we even get to consinit.
-	 * Instead, there is a hack in pmap_enter_kernel (sigh)
-	 */
-	va = DVMA_SPACE_START;
-	while (va < DVMA_SPACE_END) {
-		sme = get_segmap(va);
-		if (sme != SEGINV)
-			pmeg_steal(sme);
-		va = sun3_round_up_seg(va);
-	}
-	
-	
-	/* My sincere apologies for this crud -- glass*/
-	u_area_va = high_segment_alloc(UPAGES*2);
-	if (u_area_va != MONSHORTSEG) /* pg 3,4,5 */
-		mon_printf("sun3_vm_init: not at right location for upage\n");
-	avail_end -= UPAGES*NBPG;	/* steal the UPAGES for proc0 u-area */
-	proc0_user_pa = avail_end;	/* UPAGES physical for proc0 u-area */
-	
-	/*
-	 * first UPAGES are used for u-area standard mapping
-	 * second UPAGES are used for proc0's personal u-area, and will be mapped
-	 * to real pages
-	 *
-	 * then the standard u-area will be loaded with proc0's u-area
-	 */
-	
-	proc0paddr = (struct user *) (u_area_va+UPAGES*NBPG);/* proc0's u-are va */
-	/* need to load proc0paddr area with the physical pages stolen before */
-	u_area_bootstrap((vm_offset_t) proc0paddr, proc0_user_pa);
-	bzero(proc0paddr, UPAGES*NBPG);
-	save_u_area(&proc0paddr->u_pcb, proc0paddr);
-	load_u_area(&proc0paddr->u_pcb);
-	curpcb = &proc0paddr->u_pcb;
 
+	/*
+	 * Verify protection bits on kernel text/data/bss
+	 * All of kernel text, data, and bss are cached.
+	 * Text is read-only (except in db_write_ktext).
+	 *
+	 * Note that the Sun PROM initialized the memory
+	 * mapping with everything non-cached...
+	 */
+
+	/* text */
+	va = (vm_offset_t) start;
+	eva = sun3_trunc_page(etext);
+	while (va < eva) {
+		pte = get_pte(va);
+		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {
+			mon_printf("invalid page at 0x%x\n", va);
+		}
+		pte &= ~(PG_WRITE|PG_NC);
+		/* Kernel text is read-only */
+		pte |= (PG_SYSTEM);
+		set_pte(va, pte);
+		va += NBPG;
+	}
+
+	/* data and bss */
+	eva = sun3_round_page(end);
+	while (va < eva) {
+		pte = get_pte(va);
+		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {
+			mon_printf("invalid page at 0x%x\n", va);
+		}
+		pte &= ~(PG_NC);
+		pte |= (PG_SYSTEM | PG_WRITE);
+		set_pte(va, pte);
+		va += NBPG;
+	}
+
+	/* Finally, duplicate the mappings into all contexts. */
 	sun3_context_equiv();
 }
 
@@ -455,6 +548,8 @@ void sun3_verify_hardware()
 {
 	unsigned char arch;
 	int cpu_match = 0;
+
+	/* XXX - Should just measure this instead... */
 	extern int cpuspeed;
 	
 	if (idprom_fetch(&identity_prom, IDPROM_VERSION))
@@ -464,34 +559,17 @@ void sun3_verify_hardware()
 		mon_panic("not a sun3?\n");
 	cpu_machine_id = identity_prom.idp_machtype & SUN3_IMPL_MASK;
 	switch (cpu_machine_id) {
-	case SUN3_MACH_160:
-#ifdef SUN3_160
-		cpu_match++;
-#endif
-		cpu_string = "160";
-		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
-		break;
+
 	case SUN3_MACH_50 :
 #ifdef SUN3_50
 		cpu_match++;
+		hole_start = OBMEM_BW50_ADDR;
+		hole_size  = OBMEM_BW2_SIZE;
 #endif
 		cpu_string = "50";
 		cpuspeed = 16; /* MHz */
 		break;
-	case SUN3_MACH_260:
-#ifdef SUN3_260
-		cpu_match++;
-#endif
-		cpu_string = "260";
-		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
-		break;
-	case SUN3_MACH_110:
-#ifdef SUN3_110
-		cpu_match++;
-#endif
-		cpu_string = "110";
-		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
-		break;
+
 	case SUN3_MACH_60 :
 #ifdef SUN3_60
 		cpu_match++;
@@ -499,6 +577,31 @@ void sun3_verify_hardware()
 		cpu_string = "60";
 		cpuspeed = 20; /* MHz */
 		break;
+
+	case SUN3_MACH_110:
+#ifdef SUN3_110
+		cpu_match++;
+#endif
+		cpu_string = "110";
+		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
+		break;
+
+	case SUN3_MACH_160:
+#ifdef SUN3_160
+		cpu_match++;
+#endif
+		cpu_string = "160";
+		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
+		break;
+
+	case SUN3_MACH_260:
+#ifdef SUN3_260
+		cpu_match++;
+#endif
+		cpu_string = "260";
+		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
+		break;
+
 	case SUN3_MACH_E  :
 #ifdef SUN3_E
 		cpu_match++;
@@ -506,6 +609,7 @@ void sun3_verify_hardware()
 		cpu_string = "E";
 		cpuspeed = 30; /* MHz */	/* XXX - Correct? */
 		break;
+
 	default:
 		mon_panic("unknown sun3 model\n");
 	}
@@ -519,6 +623,11 @@ void sun3_verify_hardware()
  * compatibility) or "w trace".  This causes the monitor to call
  * the v_handler() routine which will call tracedump() for these cases.
  */
+struct funcall_frame {
+	struct funcall_frame *fr_savfp;
+	int fr_savpc;
+	int fr_arg[1];
+};
 /*VARARGS0*/
 tracedump(x1)
 	caddr_t x1;
@@ -659,22 +768,21 @@ void pte_print(pte)
 			mon_printf("System ");
 		if (pte & PG_NC)
 			mon_printf("Nocache ");
-		if (pte & PG_ACCESS)
+		if (pte & PG_REF)
 			mon_printf("Accessed ");
-		
 		if (pte & PG_MOD)
 			mon_printf("Modified ");
 		if (pte & PG_TYPE) {
 			vm_offset_t tmp;
-			tmp = pte >> PG_TYPE_SHIFT;
-			if (tmp & PG_OBIO)
+			tmp = pte & PG_TYPE;
+			if (tmp == PGT_OBIO)
 				mon_printf("OBIO ");
-			else if (tmp & PG_VME16D)
+			if (tmp == PGT_VME_D16)
 				mon_printf("VME16D ");
-			else if (tmp & PG_VME32D)
+			if (tmp == PGT_VME_D32)
 				mon_printf("VME32D ");
 		}
-		mon_printf(" PA: %x\n", PG_PA(pte));
+		mon_printf(" PA=0x%x\n", PG_PA(pte));
 	}
 	else mon_printf("INVALID\n");
 }
@@ -701,7 +809,12 @@ void internal_configure()
 	isr_init();
 }
 
-void sun3_bootstrap()
+/*
+ * This is called from locore.s just after the kernel is remapped
+ * to its proper address, but before the call to main().
+ */
+void
+sun3_bootstrap()
 {
 	int i;
 	extern int cold;
@@ -720,8 +833,8 @@ void sun3_bootstrap()
 	initialize_vector_table();	/* point interrupts/exceptions to our table */
 	
 	sun3_vm_init();		/* handle kernel mapping problems, etc */
-	
+
 	pmap_bootstrap();		/* bootstrap pmap module */
-	
+
 	internal_configure();	/* stuff that can't wait for configure() */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: stub.c,v 1.8 1994/10/26 09:13:05 cgd Exp $	*/
+/*	$NetBSD: stub.c,v 1.9 1994/11/21 21:39:06 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass

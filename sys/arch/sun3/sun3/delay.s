@@ -1,4 +1,4 @@
-/*	$NetBSD: delay.s,v 1.3 1994/10/26 09:12:24 cgd Exp $	*/
+/*	$NetBSD: delay.s,v 1.4 1994/11/21 21:38:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
