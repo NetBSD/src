@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.64 2002/09/27 02:24:06 thorpej Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.65 2002/09/27 20:42:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -233,7 +233,7 @@ emitexterns(FILE *fp)
 	TAILQ_FOREACH(da, &alldevas, d_next) {
 		if (!deva_has_instances(da, WILD))
 			continue;
-		if (fprintf(fp, "extern struct cfattach %s_ca;\n",
+		if (fprintf(fp, "extern const struct cfattach %s_ca;\n",
 			    da->d_name) < 0)
 			return (1);
 	}
