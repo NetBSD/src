@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpnam.c,v 1.6 1995/02/02 02:10:45 jtc Exp $	*/
+/*	$NetBSD: tmpnam.c,v 1.7 1997/03/16 05:00:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,13 +40,18 @@
 #if 0
 static char sccsid[] = "@(#)tmpnam.c	8.3 (Berkeley) 3/28/94";
 #endif
-static char rcsid[] = "$NetBSD: tmpnam.c,v 1.6 1995/02/02 02:10:45 jtc Exp $";
+static char rcsid[] = "$NetBSD: tmpnam.c,v 1.7 1997/03/16 05:00:40 lukem Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
 #include <stdio.h>
 #include <unistd.h>
+
+extern char *_mktemp __P((char *));
+
+__warn_references(tmpnam,
+    "warning: tmpnam() possibly used unsafely, consider using mkstemp()");
 
 char *
 tmpnam(s)
@@ -59,5 +64,5 @@ tmpnam(s)
 		s = buf;
 	(void)snprintf(s, L_tmpnam, "%stmp.%lu.XXXXXX", P_tmpdir, tmpcount);
 	++tmpcount;
-	return (mktemp(s));
+	return (_mktemp(s));
 }
