@@ -43,12 +43,13 @@
  * are token separators.
  *
  *-M*************************************************************************/
-static char id[] = "$Id: aic7xxx_asm.c,v 1.2 1996/04/29 19:30:50 christos Exp $";
+static char id[] = "$Id: aic7xxx_asm.c,v 1.3 1996/05/16 03:51:48 mycroft Exp $";
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #define MEMORY		448
 #define MAXLINE		1024
@@ -67,45 +68,17 @@ static char id[] = "$Id: aic7xxx_asm.c,v 1.2 1996/04/29 19:30:50 christos Exp $"
 int debug;
 int lineno, LC;
 char *filename;
-FILE *ifp, *ofp;
 unsigned char M[MEMORY][4];
 
-typedef struct sym_t {
-	struct sym_t	*next;		/* MUST BE FIRST */
-	char		*name;
-	int		value;
-	int		npatch; 
-	int		*patch;
-} sym_t;
-
-void error __P((char *));
-void *Malloc __P((size_t));
-void *Realloc __P((void *, size_t));
-char *Strdup __P((const char *));
-
-void define __P((char *, int));
-sym_t *lookup __P((char *));
-void patch __P((sym_t *, int));
-void backpatch __P((void));
-void output __P((FILE *));
-char **getl __P((int *));
-int eval_operand __P((char **, int));
-int eval_sdi __P((char **, int));
-int eval_addr __P((char **, int));
-int crack __P((char **, int));
-void assemble __P((void));
-
-void 
-error(s)
-	char *s;
+void
+error(char *s)
 {
 	fprintf(stderr, "%s: %s at line %d\n", filename, s, lineno);
 	exit(EXIT_FAILURE);
 }
 
 void *
-Malloc(size)
-	size_t size;
+Malloc(size_t size)
 {
 	void *p = malloc(size);
 	if (!p)
@@ -114,9 +87,7 @@ Malloc(size)
 }
 
 void *
-Realloc(ptr, size)
-	void *ptr;
-	size_t size;
+Realloc(void *ptr, size_t size)
 {
 	void *p = realloc(ptr, size);
 	if (!p)
@@ -125,21 +96,25 @@ Realloc(ptr, size)
 }
 
 char *
-Strdup(s)
-	const char *s;
+Strdup(char *s)
 {
-	size_t l = strlen(s) + 1;
-	char *p = Malloc(l);
-	memcpy(p, s, l);
+	char *p = (char *)Malloc(strlen(s) + 1);
+	strcpy(p, s);
 	return(p);
 }
+
+typedef struct sym_t {
+	struct sym_t	*next;		/* MUST BE FIRST */
+	char		*name;
+	int		value;
+	int		npatch;
+	int		*patch;
+} sym_t;
 
 sym_t *head;
 
 void
-define(name, value)
-	char *name;
-	int value;
+define(char *name, int value)
 {
 	sym_t *p, *q;
 
@@ -166,8 +141,7 @@ define(name, value)
 }
 
 sym_t *
-lookup(name)
-	char *name;
+lookup(char *name)
 {
 	sym_t *p;
 
@@ -177,10 +151,8 @@ lookup(name)
 	return(NULL);
 }
 
-void 
-patch(p, location)
-	sym_t *p;
-	int location;
+void
+patch(sym_t *p, int location)
 {
 	p->npatch += 1;
 	p->patch = (int *)Realloc(p->patch, p->npatch * sizeof(int *));
@@ -188,7 +160,7 @@ patch(p, location)
 	p->patch[p->npatch - 1] = location;
 }
 
-void backpatch()
+void backpatch(void)
 {
 	int i;
 	sym_t *p;
@@ -228,8 +200,7 @@ void backpatch()
  *  since the sequencer RAM is loaded that way.
  */
 void
-output(fp)
-	FILE *fp;
+output(FILE *fp)
 {
 	int i;
 
@@ -243,8 +214,7 @@ output(fp)
 }
 
 char **
-getl(n)
-	int *n;
+getl(int *n)
 {
 	int i;
 	char *p, *quote;
@@ -253,7 +223,7 @@ getl(n)
 
 	i = 0;
 
-	while (fgets(buf, sizeof(buf), ifp)) {
+	while (fgets(buf, sizeof(buf), stdin)) {
 
 		lineno += 1;
 
@@ -274,7 +244,7 @@ rescan:
 			else
 				error("too many tokens");
 		if (quote) {
-			quote++; 
+			quote++;
 			p = strchr(quote, '\"');
 			if (!p)
 				error("unterminated string constant");
@@ -286,7 +256,7 @@ rescan:
 			else
 				error("too many tokens");
 			goto rescan;
-		}		
+		}
 		if (i) {
 			*n = i;
 			return(a);
@@ -366,10 +336,8 @@ struct {
 	{ 0,      0, 0,  0, 	0,			0,	0,	0 }
 };
 
-int 
-eval_operand(a, spec)
-	char **a;
-	int spec;
+int
+eval_operand(char **a, int spec)
 {
 	int i;
 	unsigned int want = spec & (LO|LA|LX);
@@ -405,9 +373,7 @@ eval_operand(a, spec)
 }
 
 int
-eval_sdi(a, spec)
-	char **a;
-	int spec;
+eval_sdi(char **a, int spec)
 {
 	sym_t *p;
 	unsigned val;
@@ -477,9 +443,7 @@ eval_sdi(a, spec)
 }
 
 int
-eval_addr(a, spec)
-	char **a;
-	int spec;
+eval_addr(char **a, int spec)
 {
 	sym_t *p;
 
@@ -504,9 +468,7 @@ eval_addr(a, spec)
 }
 
 int
-crack(a, n)
-	char **a;
-	int n;
+crack(char **a, int n)
 {
 	int i;
 	int I_imm, I_addr;
@@ -574,7 +536,7 @@ crack(a, n)
 #undef A
 
 void
-assemble()
+assemble(FILE *ofile)
 {
 	int n;
 	char **a;
@@ -597,7 +559,7 @@ assemble()
 			continue;
 
 		if (n == 3 && !strcmp("VERSION", *a))
-			fprintf(ofp, "#define %s \"%s\"\n", a[1], a[2]);
+			fprintf(ofile, "#define %s \"%s\"\n", a[1], a[2]);
 		else {
 			if (n == 3 && !strcmp("=", a[1]))
 				define(*a, strtol(a[2], NULL, 0));
@@ -607,7 +569,7 @@ assemble()
 	}
 
 	backpatch();
-	output(ofp);
+	output(ofile);
 
 	if (debug)
 		output(stderr);
@@ -615,12 +577,15 @@ assemble()
 
 int
 main(int argc, char **argv)
-{ int my_version_print_flag;
+{
 	int c;
+	int pid;
+	int ifile;
+	FILE *ofile;
+	int fd[2];
 
-  my_version_print_flag=0;
-
-	while ((c = getopt(argc, argv, "dho:vD")) != EOF) {
+	ofile = NULL;
+	while ((c = getopt(argc, argv, "dho:vD:")) != EOF) {
 		switch (c) {
 		    case 'd':
 			debug = !0;
@@ -637,23 +602,20 @@ main(int argc, char **argv)
 			break;
 		    }
 		    case 'o':
-		        ofp = fopen(optarg, "w");
-			if (!ofp) {
+		        
+			if ((ofile = fopen(optarg, "w")) == NULL) {
 				perror(optarg);
 				exit(EXIT_FAILURE);
 			}
 			break;
 		    case 'h':
-			printf("usage: %s [-d] [-Dname] [-ooutput] input\n", 
+			printf("usage: %s [-d] [-Dname] [-ooutput] input\n",
 				*argv);
 			exit(EXIT_SUCCESS);
 			break;
 		    case 'v':
-                        if (!my_version_print_flag)
-                          { printf("%s\n",id);
-
-			    my_version_print_flag=1;
-                          }
+			printf("%s\n", id);
+			exit(EXIT_SUCCESS);
 			break;
 		    default:
 			exit(EXIT_FAILURE);
@@ -662,28 +624,62 @@ main(int argc, char **argv)
 	}
 
 	if (argc - optind != 1) {
-          if (my_version_print_flag)
-            { exit(EXIT_SUCCESS);
-            }
 		fprintf(stderr, "%s: must have one input file\n", *argv);
 		exit(EXIT_FAILURE);
 	}
 	filename = argv[optind];
 
-	ifp = fopen(filename, "r");
-	if (!ifp) {
+	
+	if ((ifile = open(filename, O_RDONLY)) < 0) {
 		perror(filename);
 		exit(EXIT_FAILURE);
 	}
 
-	if (!ofp) {
-		ofp = fopen(ADOTOUT, "w");
-		if (!ofp) {
+	if (!ofile) {
+		if ((ofile = fopen(ADOTOUT, "w")) == NULL) {
 			perror(ADOTOUT);
 			exit(EXIT_FAILURE);
 		}
 	}
 
-	assemble();
-	exit(EXIT_SUCCESS);
+	if (pipe(fd) < 0) {
+		perror("pipe failed");
+		exit(1);
+	}
+
+	if ((pid = fork()) < 0 ) {
+		perror("fork failed");
+		exit(1);
+	}
+	else if (pid > 0) {		/* Parent */
+		close(fd[1]);		/* Close write end */
+		if (fd[0] != STDIN_FILENO) {
+			if (dup2(fd[0], STDIN_FILENO) != STDIN_FILENO) {
+				perror("dup2 error on stdin");
+				exit(EXIT_FAILURE);
+			}
+			close(fd[0]);
+		}
+		assemble(ofile);
+		exit(EXIT_SUCCESS);
+	}
+	else {				/* Child */
+		close(fd[0]);		/* Close Read end */
+		if (fd[1] != STDOUT_FILENO) {
+			if (dup2(fd[1], STDOUT_FILENO) != STDOUT_FILENO) {
+				perror("dup2 error on stdout");
+				exit(EXIT_FAILURE);
+			}
+			close(fd[1]);
+		}
+		if (ifile != STDIN_FILENO) {
+			if (dup2(ifile, STDIN_FILENO) != STDIN_FILENO) {
+				perror("dup2 error on stdin");
+				exit(EXIT_FAILURE);
+			}
+			close(ifile);
+		}
+		execl("/usr/bin/cpp", "/usr/bin/cpp", "-P", "-", "-", NULL);
+	}
+	return(EXIT_SUCCESS);
 }
