@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.53 2000/08/18 16:19:23 itojun Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.54 2000/11/14 20:05:28 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -395,10 +395,18 @@ do {									\
  * MFREE(struct mbuf *m, struct mbuf *n)
  * Free a single mbuf and associated external storage.
  * Place the successor, if any, in n.
+ *
+ * we do need to check non-first mbuf for m_aux, since some of existing
+ * code does not call M_PREPEND properly.
+ * (example: call to bpf_mtap from drivers)
  */
 #define	MFREE(m, n) \
 	MBUFLOCK( \
 		mbstat.m_mtypes[(m)->m_type]--; \
+		if (((m)->m_flags & M_PKTHDR) != 0 && (m)->m_pkthdr.aux) { \
+			m_freem((m)->m_pkthdr.aux); \
+			(m)->m_pkthdr.aux = NULL; \
+		} \
 		if ((m)->m_flags & M_EXT) { \
 			_MEXTREMOVE((m)); \
 		} \
