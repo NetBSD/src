@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.10 1997/06/14 22:24:04 is Exp $	*/
+/*	$NetBSD: cc.c,v 1.11 1997/06/23 23:46:23 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -372,7 +372,7 @@ audio_handler()
 	/*
 	 * disable all audio interupts with DMA set
 	 */
-	custom.intena = (audio_dma << 7);
+	custom.intena = (audio_dma << INTB_AUD0) & AUCC_ALLINTF;
 
 	/*
 	 * if no audio dma enabled then exit quick.
@@ -381,20 +381,19 @@ audio_handler()
 		/*
 		 * clear all interrupts.
 		 */
-		custom.intreq = INTF_AUD0|INTF_AUD1|INTF_AUD2|INTF_AUD3; 
+		custom.intreq = AUCC_ALLINTF;
 		goto out;
 	}
-
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < AUCC_MAXINT; i++) {
 		flag = (1 << i);
 		ir = custom.intreqr;
 		/*
 		 * is this channel's interrupt is set?
 		 */
-		if ((ir & (flag << 7)) == 0)
+		if ((ir & (flag << INTB_AUD0)) == 0)
 			continue;
 #if NAUDIO>0
-		custom.intreq=(flag<<7);
+		custom.intreq=(flag<<INTB_AUD0);
 		/* call audio handler with channel number */
 		if (channel[i].isaudio==1)
 			if (channel[i].handler)
@@ -409,14 +408,14 @@ audio_handler()
 			 * disable interrupts to this channel
 			 */
 			custom.dmacon = flag;
-			custom.intena = (flag << 7);
+			custom.intena = (flag << INTB_AUD0);
 			if (channel[i].isaudio==-1)
 				channel[i].isaudio=0;
 		}
 		/*
 		 * clear this channels interrupt.
 		 */
-		custom.intreq = (flag << 7);
+		custom.intreq = (flag << INTB_AUD0);
 	}
 
 out:
@@ -425,7 +424,7 @@ out:
 	 */
 	audio_dma = custom.dmaconr;
 	audio_dma &= (DMAF_AUD0|DMAF_AUD1|DMAF_AUD2|DMAF_AUD3);
-	custom.intena = INTF_SETCLR | (audio_dma << 7);
+	custom.intena = INTF_SETCLR | (audio_dma << INTB_AUD0);
 }
 
 void
@@ -462,7 +461,7 @@ play_sample(len, data, period, volume, channels, count)
 	/*
 	 * turn on interrupts and enable dma for channels and
 	 */
-	custom.intena = INTF_SETCLR | (dmabits << 7);
+	custom.intena = INTF_SETCLR | (dmabits << INTB_AUD0);
 	custom.dmacon = DMAF_SETCLR | DMAF_MASTER |dmabits;
 }
 
