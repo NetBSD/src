@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.17 2000/11/24 22:05:13 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.18 2000/11/26 06:21:16 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.17 2000/11/24 22:05:13 sato Exp $";
+    "$Id: hpcfb.c,v 1.18 2000/11/26 06:21:16 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -928,10 +928,10 @@ hpcfb_cursor(cookie, on, row, col)
 
 	dc->dc_state |= HPCFB_DC_DRAWING;
 	if (sc && sc->sc_accessops->cursor) {
-		xoff = col * ri->ri_xscale;
-		yoff = row * ri->ri_yscale;
+		xoff = col * ri->ri_font->fontwidth;
+		yoff = row * ri->ri_font->fontheight;
 		curheight = ri->ri_font->fontheight;
-		curwidth = ri->ri_xscale;
+		curwidth = ri->ri_font->fontwidth;
 		(*sc->sc_accessops->cursor)(sc->sc_accessctx,
 				on, xoff, yoff, curwidth, curheight);
 	} else 
@@ -1023,8 +1023,8 @@ hpcfb_putchar(cookie, row, col, uc, attr)
 	dc->dc_state |= HPCFB_DC_DRAWING;
 	if (sc && sc->sc_accessops->putchar 
 	       && (dc->dc_state&HPCFB_DC_CURRENT)) {
-		yoff = row * ri->ri_yscale;
-		xoff =  col * ri->ri_xscale;
+		yoff = row * ri->ri_font->fontheight;
+		xoff =  col * ri->ri_font->fontwidth;
 		fclr = ri->ri_devcmap[((u_int)attr >> 24) & 15];
 		uclr = ri->ri_devcmap[((u_int)attr >> 16) & 15];
 
@@ -1097,12 +1097,12 @@ hpcfb_copycols(cookie, row, srccol, dstcol, ncols)
 	dc->dc_state |= HPCFB_DC_DRAWING;
 	if (sc && sc->sc_accessops->bitblit
 	       && (dc->dc_state&HPCFB_DC_CURRENT)) {
-		srcxoff = srccol * ri->ri_xscale;
-		srcyoff = row * ri->ri_yscale;
-		dstxoff = dstcol * ri->ri_xscale;
-		dstyoff = row * ri->ri_yscale;
-		width = ncols * ri->ri_xscale;
-		height = ri->ri_yscale;
+		srcxoff = srccol * ri->ri_font->fontwidth;
+		srcyoff = row * ri->ri_font->fontheight;
+		dstxoff = dstcol * ri->ri_font->fontwidth;
+		dstyoff = row * ri->ri_font->fontheight;
+		width = ncols * ri->ri_font->fontwidth;
+		height = ri->ri_font->fontheight;
 		(*sc->sc_accessops->bitblit)(sc->sc_accessctx,
 			srcxoff, srcyoff, dstxoff, dstyoff, height, width);
 	} else
@@ -1170,10 +1170,10 @@ hpcfb_erasecols(cookie, row, startcol, ncols, attr)
 	dc->dc_state |= HPCFB_DC_DRAWING;
 	if (sc && sc->sc_accessops->erase
 	       && (dc->dc_state&HPCFB_DC_CURRENT)) {
-		xoff = startcol * ri->ri_xscale;
-		yoff = row * ri->ri_yscale;
-		width = ncols * ri->ri_xscale;
-		height = ri->ri_yscale;
+		xoff = startcol * ri->ri_font->fontwidth;
+		yoff = row * ri->ri_font->fontheight;
+		width = ncols * ri->ri_font->fontwidth;
+		height = ri->ri_font->fontheight;
 		(*sc->sc_accessops->erase)(sc->sc_accessctx,
 			xoff, yoff, height, width, attr);
 	} else 
@@ -1358,10 +1358,10 @@ hpcfb_copyrows(cookie, src, dst, num)
 	if (sc && sc->sc_accessops->bitblit
 	       && (dc->dc_state&HPCFB_DC_CURRENT)) {
 		dc->dc_state |= HPCFB_DC_DRAWING;
-		srcyoff = src * ri->ri_yscale;
-		dstyoff = dst * ri->ri_yscale;
-		width = ri->ri_stride;
-		height = num * ri->ri_yscale;
+		srcyoff = src * ri->ri_font->fontheight;
+		dstyoff = dst * ri->ri_font->fontheight;
+		width = dc->dc_cols * ri->ri_font->fontwidth;
+		height = num * ri->ri_font->fontheight;
 		(*sc->sc_accessops->bitblit)(sc->sc_accessctx,
 			0, srcyoff, 0, dstyoff, height, width);
 		dc->dc_state &= ~HPCFB_DC_DRAWING;
@@ -1465,9 +1465,9 @@ hpcfb_eraserows(cookie, row, nrow, attr)
 	dc->dc_state |= HPCFB_DC_DRAWING;
 	if (sc && sc->sc_accessops->erase
 	       && (dc->dc_state&HPCFB_DC_CURRENT)) {
-		yoff = row * ri->ri_yscale;
-		width = ri->ri_stride;
-		height = nrow * ri->ri_yscale;
+		yoff = row * ri->ri_font->fontheight;
+		width = dc->dc_cols * ri->ri_font->fontwidth;
+		height = nrow * ri->ri_font->fontheight;
 		(*sc->sc_accessops->erase)(sc->sc_accessctx,
 			0, yoff, height, width, attr);
 	} else 
