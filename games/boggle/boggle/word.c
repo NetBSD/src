@@ -1,3 +1,5 @@
+/*	$NetBSD: word.c,v 1.2 1995/03/21 12:14:45 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)word.c	8.1 (Berkeley) 6/11/93";
+#else
+static char rcsid[] = "$NetBSD: word.c,v 1.2 1995/03/21 12:14:45 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
