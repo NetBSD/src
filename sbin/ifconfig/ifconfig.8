@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.21 1997/10/11 02:44:36 enami Exp $
+.\"	$NetBSD: ifconfig.8,v 1.22 1998/08/08 22:50:13 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -188,10 +188,14 @@ different physical media connectors.  For example, a 10Mb/s Ethernet
 interface might support the use of either
 .Tn AUI
 or twisted pair connectors.  Setting the media type to
-.Dq 10base5/AUI
+.Dq 10base5
+or
+.Dq AUI
 would change the currently active connector to the AUI port.
 Setting it to
-.Dq 10baseT/UTP
+.Dq 10baseT
+or
+.Dq UTP
 would activate twisted pair.  Refer to the interfaces' driver
 specific man page for a complete list of the available types.
 .It Cm mediaopt Ar opts
@@ -202,6 +206,13 @@ Refer to the interfaces' driver specific man page for a complete
 list of available options.
 .It Fl mediaopt Ar opts
 Disable the specified media options on the interface.
+.It Cm instance Ar minst
+Set the media instance to
+.Ar minst .
+This is useful for devices which have multiple physical layer interfaces
+(PHYs).  Setting the instance on such devices may not be strictly required
+by the network interface driver as the driver may take care of this
+automatically; see the driver's manual page for more information.
 .It Cm metric Ar n
 Set the routing metric of the interface to
 .Ar n ,
