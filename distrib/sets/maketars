@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.23 2002/04/13 12:47:10 lukem Exp $
+# $NetBSD: maketars,v 1.24 2002/05/19 13:24:22 lukem Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-a arch] [-m machine] [-s setsdir]
@@ -129,10 +129,10 @@ for setname in $lists; do
 	    > $SDIR/flist.$setname
 	if [ -n "$metalog" ]; then
 		awk -f getdirs.awk $SDIR/flist.$setname | sort -u \
-		    > $SDIR/flist.full
+		    > $SDIR/flist.$setname.full
 		(
 			echo "/set uname=root gname=wheel"
-			awk -f join.awk $SDIR/flist.full $SDIR/metalog
+			awk -f join.awk $SDIR/flist.$setname.full $SDIR/metalog
 		) > $SDIR/plist.$setname
 	else
 		mv $SDIR/flist.$setname $SDIR/plist.$setname
