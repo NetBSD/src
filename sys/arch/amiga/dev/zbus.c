@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.9 1995/09/30 08:39:38 chopps Exp $	*/
+/*	$NetBSD: zbus.c,v 1.10 1995/10/07 17:33:05 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -112,9 +112,9 @@ static struct aconfdata aconftab[] = {
 	{ "grfcl",	2195,	6},	/* Piccolo regs */
 	/* MacroSystemsUS */
 	{ "wesc",	2203,	19},	/* Warp engine */
-	/* phase 5 digital products? */
-	{ "flz3sc",	8512,	11},	/* FastlaneZ3 */
-	{ "flz3mem",	8512,	12},	/* FastlaneZ3 memory */
+	/* phase 5 digital products */
+	{ "flmem",	8512,	10},	/* FastlaneZ3 memory */
+	{ "flsc",	8512,	11},	/* FastlaneZ3 */
 	/* Commodore Amiga */
 	{ "afsc",	514,	84},	/* A4091 SCSI HD Controller */
 	/* Hacker Inc. */
