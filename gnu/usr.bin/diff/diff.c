@@ -18,7 +18,7 @@ along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char *rcsid = "$Id: diff.c,v 1.4 1993/09/16 17:39:07 jtc Exp $";
+static char *rcsid = "$Id: diff.c,v 1.5 1993/09/29 21:37:04 jtc Exp $";
 #endif
 
 /* GNU DIFF was written by Mike Haertel, David Hayes,
@@ -28,7 +28,6 @@ static char *rcsid = "$Id: diff.c,v 1.4 1993/09/16 17:39:07 jtc Exp $";
 #include "diff.h"
 #include "getopt.h"
 #include "fnmatch.h"
-#include "system.h"
 
 #ifndef DEFAULT_WIDTH
 #define DEFAULT_WIDTH 130
@@ -154,7 +153,7 @@ add_exclude_file (name)
 
   for (p = f.buffer, lim = p + f.buffered_chars;  p < lim;  p = q)
     {
-      q = memchr (p, '\n', lim - p);
+      q = (char *) memchr (p, '\n', lim - p);
       if (!q)
 	q = lim;
       *q++ = 0;
