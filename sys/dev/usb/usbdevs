@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.155 2001/04/01 14:50:22 augustss Exp $
+$NetBSD: usbdevs,v 1.156 2001/04/01 18:24:49 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -206,6 +206,7 @@ vendor ALCATELT		0x06b9	Alcatel Telecom
 vendor AGFA		0x06bd	AGFA-Gevaert NV
 vendor ASIAMD		0x06be	Asia Microelectronic Development, Inc.
 vendor BIZLINK		0x06c4	Bizlink International Corp.
+vendor KEYSPAN		0x06cd	Keyspan
 vendor AASHIMA		0x06d6	Aashima Technology B.V.
 vendor MULTITECH	0x06e0	MultiTech
 vendor ADS		0x06e1	ADS Technologies, Inc.
@@ -578,6 +579,9 @@ product KLSI DUH3E10BT		0x0008	10BT Ethernet adapter, in the DU-H3E
 product KENSINGTON ORBIT	0x1003	Orbit USB/PS2 trackball
 product KENSINGTON TURBOBALL	0x1005	TurboBall
 
+/* Keyspan products */
+product KEYSPAN PDA		0x0103	PDA serial adapter
+
 /* Kingston products */
 product KINGSTON KNU101TX	0x000a	KNU101TX USB Ethernet
 
@@ -626,6 +630,8 @@ product LOGITECH BD58		0xc00c	BD58 mouse
 product LOGITECH BB13		0xc401	USB-PS/2 Trackball
 product LOGITECH WMPAD		0xc208	WingMan GamePad Extreme
 product LOGITECH WMJOY		0xc281	WingMan Force joystick 
+product LOGITECH RK53		0xc501	Cordless mouse
+product LOGITECH RB6		0xc503	Cordless keyboard
 product LOGITECH QUICKCAMPRO2	0xd001	QuickCam Pro
 
 /* Lucent products */
@@ -782,6 +788,7 @@ product SCANLOGIC 336CX		0x0300	Phantom 336CX - C3 scanner
 
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge
+product SHUTTLE ZIOMMC		0x0006	eUSB MultiMediaCard Adapter
 
 /* SIIG products */
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
