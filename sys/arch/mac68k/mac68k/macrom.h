@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.h,v 1.1 1994/12/03 23:35:02 briggs Exp $	*/
+/*	$NetBSD: macrom.h,v 1.2 1995/09/02 19:27:42 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -65,7 +65,11 @@ extern caddr_t		SCCRd;		/* SCC read base address */
 extern u_char		FinderName[20]; /* FinderName - Pascal string */
 extern void		(*jSwapMMU)();	/* Pointer to MMU Swap routine */
 extern void		(*jEgret)();	/* Pointer to MMU Swap routine */
-
+/* WRU950824 begin */
+extern u_int16_t	HwCfgFlags;	/* Hardware config flags */
+extern u_int32_t	HwCfgFlags2;	/* more hardware config flags */
+extern u_int32_t	HwCfgFlags3;	/* more hardware config flags */
+/* WRU950824 end */
 
 	/* Types */
 
@@ -112,6 +116,8 @@ int ADBOp(
 	Ptr	compRout,
 	Ptr	data,
 	short	commandNum);
+void ADBAlternateInit(
+	void);
 
 /* Memory Manager */
 Ptr NewPtr(
@@ -167,6 +173,8 @@ typedef struct romvec_s {
 	caddr_t ADBOp;
 	caddr_t PMgrOp;		/* On machines that have it */
 	caddr_t ReadXPRam;
+	caddr_t ADBAlternateInit;	/* more fundamental than ABDReInit */
+	caddr_t InitEgret;	/* Set up Buffer for Egret routines */
 } romvec_t;
 void mrg_setvectors(romvec_t *rom_vectors);
 int mrg_romready(void);

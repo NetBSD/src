@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 1995/09/01 20:06:25 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67 1995/09/02 19:27:34 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -131,7 +131,7 @@ char    machine[] = "mac68k";	/* cpu "architecture" */
 
 struct mac68k_machine_S mac68k_machine;
 
-volatile u_char *Via1Base;
+volatile u_char *Via1Base, *Via2Base;
 u_long  NuBusBase = NBBASE;
 u_long  IOBase;
 
@@ -1457,6 +1457,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x408072fa,	/* ADBOp */
 		0,		/* PMgrOp */
 		(caddr_t) 0x4080dd78,	/* ReadXPRam */
+		0,			/* ADBAlternateInit */
+		0,			/* InitEgret */
 	},
 	/*
 	 * Vectors verified for PB 140, PB 170
@@ -1475,6 +1477,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		(caddr_t) 0x408888ec,	/* PMgrOp */
 		0,		/* ReadXParam */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
 	/*
 	 * Vectors verified for IIsi, IIvx, IIvi
@@ -1492,6 +1496,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		(caddr_t) 0,	/* PMgrOp */
 		0,		/* ReadXParam */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
 	/*
 	 * Vectors verified for Mac Classic II and LC II
@@ -1510,6 +1516,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40a0a3dc,	/* ADBOp */
 		(caddr_t) 0,	/* PMgrOp */
 		0,		/* ReadXParam */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
 	/*
 	 * Vectors verified for IIci
@@ -1527,6 +1535,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		(caddr_t) 0,	/* PMgrOp */
 		0,		/* ReadXParam */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
 	/*
 	 * Vectors verified for Duo 230, PB 180, PB 165
@@ -1545,6 +1555,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		(caddr_t) 0x408888ec,	/* PMgrOp */
 		(caddr_t) 0x4080B186,	/* ReadXPRam */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
 	/*
 	 * Quadra, Centris merged table (650, 610, Q800)
@@ -1553,9 +1565,9 @@ static romvec_t romvecs[] =
 	 */
 	{			/* 6 */
 		"Quadra/Centris ROMs",
-		(caddr_t) 0x408b2dea,	/* ADB int */
+		(caddr_t) 0x4080a700,	/* ADB int */		/* WRU 950831 */
 		0,		/* PM intr */
-		(caddr_t) 0x408b2c72,	/* ADBBase + 130 */
+		(caddr_t) 0x4080a5aa,	/* ADBBase + 130 */	/* WRU 950831 */
 		(caddr_t) 0x4080a360,	/* CountADBs */
 		(caddr_t) 0x4080a37a,	/* GetIndADB */
 		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
@@ -1564,6 +1576,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		(caddr_t) 0x40809ae6,	/* PMgrOp */
 		(caddr_t) 0x4080b186,	/* ReadXParam */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
 	/*
 	 * Quadra 840AV (but ADBBase + 130 intr is unknown)
@@ -1582,6 +1596,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4083967c,	/* ADBOp */
 		0,		/* PMgrOp */
 		0,		/* ReadXParam */
+		0,			/* ADBAlternateInit */
+		0,			/* InitEgret */
 	},
 	/*
 	 * PB 540 (but ADBBase + 130 intr and PMgrOp is unknown)
@@ -1600,6 +1616,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4000a3dc,	/* ADBOp */
 		 /* !?! */ 0,	/* PmgrOp */
 		0,		/* ReadXParam */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
 	/*
 	 * Q 605 (but guessing at ADBBase + 130, based on Q 650)
@@ -1617,6 +1635,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		0,		/* PmgrOp */
 		0,		/* ReadXParam */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
 	/*
 	 * Vectors verified for Duo 270c
@@ -1634,6 +1654,8 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		(caddr_t) 0x408888ec,	/* PMgrOp */
 		0,		/* ReadXParam */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
 	/* Please fill these in! -BG */
 };
@@ -1856,6 +1878,9 @@ getenvvars()
 	MacOSROMBase = (unsigned long) ROMBase;
 	TimeDBRA = getenv("TIMEDBRA");
 	ADBDelay = (u_short) getenv("ADBDELAY");
+	HwCfgFlags  = getenv("HWCFGFLAGS");
+	HwCfgFlags2 = getenv("HWCFGFLAG2");
+	HwCfgFlags3 = getenv("HWCFGFLAG3");
 }
 
 struct cpu_model_info *current_mac_model;
@@ -2012,6 +2037,7 @@ mac68k_set_io_offsets(base)
 	case MACH_CLASSIIfx:
 		break;
 	}
+	Via2Base = Via1Base + 0x2000 * VIA2;
 }
 
 #if GRAYBARS

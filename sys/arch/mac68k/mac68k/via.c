@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.29 1995/09/01 04:10:11 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.30 1995/09/02 19:27:48 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -48,16 +48,14 @@
 #include "ncrscsi.h"
 #include "ncr96scsi.h"
 
-static int	scsi_drq_intr(void), scsi_irq_intr(void);
-
-long	via1_noint(), via2_noint();
-long	mrg_adbintr(), mrg_pmintr(), rtclock_intr(), profclock();
-long	via2_nubus_intr();
-long	rbv_nubus_intr();
+static void	via1_noint(), via2_noint();
+void	mrg_adbintr(), mrg_pmintr(), rtclock_intr(), profclock();
+void	via2_nubus_intr();
+void	rbv_nubus_intr();
 void	slot_noint(void *, int);
 int	VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
 
-long (*via1itab[7])()={
+void (*via1itab[7])()={
 	via1_noint,
 	via1_noint,
 	mrg_adbintr,
@@ -67,11 +65,11 @@ long (*via1itab[7])()={
 	rtclock_intr,
 };	/* VIA1 interrupt handler table */
 
-long (*via2itab[7])()={
-	(long (*)()) scsi_drq_intr,
+void (*via2itab[7])()={
+	via2_noint,
 	via2_nubus_intr,
 	via2_noint,
-	(long (*)()) scsi_irq_intr,
+	via2_noint,
 	via2_noint,	/* snd_intr */
 	via2_noint,	/* via2t2_intr */
 	via2_noint,
@@ -96,7 +94,8 @@ void (*slotitab[6])(void *, int) = {
 
 void	*slotptab[6];
 
-void VIA_initialize()
+void
+VIA_initialize()
 {
 	/* Sanity. */
 	if(via_inited){printf("WARNING: Initializing VIA's again.\n");return;}
@@ -113,17 +112,18 @@ void VIA_initialize()
 	/* turn off timer latch */
 	via_reg(VIA1, vACR) &= 0x3f;
 
-	if(VIA2 == VIA2OFF){
+	Via2Base = Via1Base + VIA2 * 0x2000;
+	if (VIA2 == VIA2OFF) {
 		/* Initialize VIA2 */
-		via_reg(VIA2, vT1L) = 0;
-		via_reg(VIA2, vT1LH) = 0;
-		via_reg(VIA2, vT1C) = 0;
-		via_reg(VIA2, vT1CH) = 0;
-		via_reg(VIA2, vT2C) = 0;
-		via_reg(VIA2, vT2CH) = 0;
+		via2_reg(vT1L) = 0;
+		via2_reg(vT1LH) = 0;
+		via2_reg(vT1C) = 0;
+		via2_reg(vT1CH) = 0;
+		via2_reg(vT2C) = 0;
+		via2_reg(vT2CH) = 0;
 
 		/* turn off timer latch */
-		via_reg(VIA2, vACR) &= 0x3f;
+		via2_reg(vACR) &= 0x3f;
 
 		/*
 		 * Turn off SE/30 video interrupts.
@@ -136,28 +136,29 @@ void VIA_initialize()
 		/*
 		 * unlock nubus
 		 */
-		via_reg(VIA2, vPCR)   = 0x66;
-		via_reg(VIA2, vBufB) |= 0x02;
-		via_reg(VIA2, vDirB) |= 0x02;
+		via2_reg(vPCR)   = 0x66;
+		via2_reg(vBufB) |= 0x02;
+		via2_reg(vDirB) |= 0x02;
 
 		real_via2_intr = via2_intr;
 		via2itab[1] = via2_nubus_intr;
 
-	}else{	/* RBV */
+	} else {	/* RBV */
 		if (current_mac_model->class == MACH_CLASSIIci) {
 			/*
 			 * Disable cache card. (p. 174--GtMFH)
 			 */
-			via_reg(VIA2, rBufB) |= DB2O_CEnable;
+			via2_reg(rBufB) |= DB2O_CEnable;
 		}
 		real_via2_intr = rbv_intr;
 		via2itab[1] = rbv_nubus_intr;
 	}
-	via_inited=1;
+	via_inited = 1;
 }
 
 
-void via1_intr(struct frame *fp)
+void
+via1_intr(struct frame *fp)
 {
 	static intpend = 0;
 	register unsigned char intbits, enbbits;
@@ -179,7 +180,7 @@ void via1_intr(struct frame *fp)
 	while(bitnum < 7){
 		if(intbits & bitmsk){
 			intpend |= bitmsk;	/* don't process this twice */
-			via1itab[bitnum](bitnum);	/* run interrupt handler */
+			via1itab[bitnum](bitnum); /* run interrupt handler */
 			intpend &= ~bitmsk;	/* fix previous pending */
 		}
 		bitnum++;
@@ -196,12 +197,12 @@ via2_intr(struct frame *fp)
 	register unsigned char	intbits;
 	register char		bitnum, bitmsk;
 
-	intbits = via_reg(VIA2, vIFR);	/* get interrupts pending */
-	intbits &= via_reg(VIA2, vIER);	/* only care about enabled */
+	intbits = via2_reg(vIFR);	/* get interrupts pending */
+	intbits &= via2_reg(vIER);	/* only care about enabled */
 	/*
 	 * Unflag interrupts we're about to process.
 	 */
-	via_reg(VIA2, vIFR) = intbits;
+	via2_reg(vIFR) = intbits;
 
 	bitmsk = 0x01;
 	bitnum = 7;
@@ -219,13 +220,13 @@ rbv_intr(struct frame *fp)
 	register unsigned char	intbits;
 	register char		bitnum, bitmsk;
 
-	intbits = (via_reg(VIA2, vIFR + rIFR) &= via_reg(VIA2, vIER + rIER));
+	intbits = (via2_reg(vIFR + rIFR) &= via2_reg(vIER + rIER));
 	/*
 	 * Unflag interrupts we're about to process.
 	 */
 	if (intbits == 0) return;
 
-	via_reg(VIA2, rIFR) = intbits;
+	via2_reg(rIFR) = intbits;
 
 	bitmsk = 0x01;
 	bitnum = 7;
@@ -237,18 +238,16 @@ rbv_intr(struct frame *fp)
 	}
 }
 
-long
+static void
 via1_noint(int bitnum)
 {
   printf("via1_noint(%d)\n", bitnum);
-  return 1;
 }
 
-long
+static void
 via2_noint(int bitnum)
 {
   printf("via2_noint(%d)\n", bitnum);
-  return 1;
 }
 
 static int	nubus_intr_mask = 0;
@@ -283,20 +282,20 @@ void
 enable_nubus_intr(void)
 {
 	if (VIA2 == VIA2OFF) {
-		via_reg(VIA2, vIER) = V2IF_SLOTINT | 0x80;
+		via2_reg(vIER) = V2IF_SLOTINT | 0x80;
 	} else {
-		via_reg(VIA2, rIER) = V2IF_SLOTINT | 0x80;
+		via2_reg(rIER) = V2IF_SLOTINT | 0x80;
 	}
 }
 
-long
+void
 via2_nubus_intr(int bit)
 {
 	register int	i, mask, ints, cnt=0;
 
 try_again:
-	via_reg(VIA2, vIFR) = V2IF_SLOTINT;
-	if (ints = ((~via_reg(VIA2, vBufA)) & nubus_intr_mask)) {
+	via2_reg(vIFR) = V2IF_SLOTINT;
+	if (ints = ((~via2_reg(vBufA)) & nubus_intr_mask)) {
 		cnt = 0;
 		mask = (1 << 5);
 		i = 6;
@@ -309,20 +308,20 @@ try_again:
 	} else {
 		delay(7);
 		if (cnt++ >= 2) {
-			return 1;
+			return;
 		}
 	}
 	goto try_again;
 }
 
-long
+void
 rbv_nubus_intr(int bit)
 {
 	register int	i, mask, ints, cnt=0;;
 
 try_again:
-	via_reg(VIA2, rIFR) = V2IF_SLOTINT;
-	if (ints = ((~via_reg(VIA2, rBufA)) & via_reg(VIA2, rSlotInt))) {
+	via2_reg(rIFR) = V2IF_SLOTINT;
+	if (ints = ((~via2_reg(rBufA)) & via2_reg(rSlotInt))) {
 		cnt = 0;
 		mask = (1 << 5);
 		i = 6;
@@ -335,7 +334,7 @@ try_again:
 	} else {
 		delay(7);
 		if (cnt++ >= 2)
-			return 1;
+			return;
 	}
 	goto try_again;
 }
@@ -351,10 +350,10 @@ void
 via_shutdown()
 {
 	if(VIA2 == VIA2OFF){
-		via_reg(VIA2, vDirB) |= 0x04;  /* Set write for bit 2 */
-		via_reg(VIA2, vBufB) &= ~0x04; /* Shut down */
+		via2_reg(vDirB) |= 0x04;  /* Set write for bit 2 */
+		via2_reg(vBufB) &= ~0x04; /* Shut down */
 	}else if(VIA2 == RBVOFF){
-		via_reg(VIA2, rBufB) &= ~0x04;
+		via2_reg(rBufB) &= ~0x04;
 	}
 }
 
@@ -364,41 +363,29 @@ rbv_vidstatus()
 /*
 	int montype;
 
-	montype = via_reg(VIA2, rMonitor) & RBVMonitorMask;
+	montype = via2_reg(rMonitor) & RBVMonitorMask;
 	if(montype == RBVMonIDNone)
 		montype = RBVMonIDOff;
 */
 	return(0);
 }
 
-static int
-scsi_irq_intr()
+extern void
+mac68k_register_scsi_drq(drq_func)
+	void	(*drq_func)(void);
 {
-#if NNCR96SCSI
-	if (mac68k_machine.scsi96) {
-		ncr53c96_irq_intr();
-	}
-#endif
-#if NNCRSCSI
-	if (mac68k_machine.scsi80) {
-		ncr5380_irq_intr();
-	}
-#endif
-	return 0;
+	if (drq_func)
+		via2itab[0] = drq_func;
+	else
+ 		via2itab[0] = via2_noint;
 }
 
-static int
-scsi_drq_intr()
+extern void
+mac68k_register_scsi_irq(irq_func)
+	void	(*irq_func)(void);
 {
-#if NNCR96SCSI
-	if (mac68k_machine.scsi96) {
-		ncr53c96_drq_intr();
-	}
-#endif
-#if NNCRSCSI
-	if (mac68k_machine.scsi80) {
-		ncr5380_drq_intr();
-	}
-#endif
-	return 0;
+	if (irq_func)
+ 		via2itab[3] = irq_func;
+	else
+ 		via2itab[3] = via2_noint;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: via.h,v 1.12 1995/07/17 01:25:12 briggs Exp $	*/
+/*	$NetBSD: via.h,v 1.13 1995/09/02 19:27:51 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -118,6 +118,7 @@
 #define ACR_T1LATCH	0x40
 
 extern volatile unsigned char *Via1Base;
+extern volatile unsigned char *Via2Base;	/* init in VIA_Initialize */
 #define VIA1_addr	Via1Base	/* at PA 0x50f00000 */
 #define VIA2OFF		1		/* VIA2 addr = VIA1_addr * 0x2000 */
 #define RBVOFF		0x13		/* RBV addr = VIA1_addr * 0x13000 */
@@ -162,6 +163,7 @@ extern int VIA2;
 #define RBVMonIDBW	0x30	/* No internal video */
 
 #define via_reg(v, r) (*(Via1Base+(v)*0x2000+(r)))
+#define via2_reg(r) (*(Via2Base+(r)))
 #define via_SR_input(v)	(via_reg((v), vACR) &= 0xef)
 #define via_SR_output(v)	(via_reg((v), vACR) = ((via_reg((v), vACR) & \
 								0xe3) | 0x1c))
@@ -173,6 +175,8 @@ unsigned char	VIA_get_SR       (long vianum);
 long		VIA_set_SR       (long vianum, unsigned char data);
 int		rbv_vidstatus    (void);
 int		add_nubus_intr   (int addr, void (*func)(), void *client_data);
+void		mac68k_register_scsi_irq	(void (*irq_func)(void));
+void		mac68k_register_scsi_drq	(void (*drq_func)(void));
 
-extern long	(*via1itab[7])();
-extern long	(*via2itab[7])();
+extern void	(*via1itab[7])();
+extern void	(*via2itab[7])();
