@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmat.2,v 1.5 1998/05/07 18:42:01 kleink Exp $	
+.\"	$NetBSD: shmat.2,v 1.6 1998/07/27 15:02:08 drochner Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -87,8 +87,7 @@ command.
 .Sh RETURN VALUES
 .Fn shmat
 returns the address at which the shared memory segment has been mapped into
-the calling process' address space when successful, otherwise it returns
-.Dv NULL .
+the calling process' address space when successful, 
 .Fn shmdt
 returns 0 on successful completion. Otherwise, a value of -1 is returned,
 and the global variable
