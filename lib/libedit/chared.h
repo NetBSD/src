@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.h,v 1.10 2002/11/15 14:32:33 christos Exp $	*/
+/*	$NetBSD: chared.h,v 1.11 2002/11/20 16:50:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -159,7 +159,7 @@ protected char	*c__prev_word(char *, char *, int, int (*)(int));
 protected void	 c_insert(EditLine *, int);
 protected void	 c_delbefore(EditLine *, int);
 protected void	 c_delafter(EditLine *, int);
-protected int	 c_gets(EditLine *, char *);
+protected int	 c_gets(EditLine *, char *, const char *);
 protected int	 c_hpos(EditLine *);
 
 protected int	 ch_init(EditLine *);
