@@ -1,11 +1,9 @@
-/* $NetBSD: adler32.c,v 1.1.1.2 1998/11/01 19:48:15 tron Exp $ */
-
 /* adler32.c -- compute the Adler-32 checksum of a data stream
- * Copyright (C) 1995-1998 Mark Adler
+ * Copyright (C) 1995-2002 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* @(#) Id */
+/* @(#) $Id: adler32.c,v 1.1.1.3 2002/03/11 23:23:36 fvdl Exp $ */
 
 #include "zlib.h"
 

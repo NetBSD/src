@@ -1,9 +1,7 @@
-/* $NetBSD: zlib.h,v 1.1.1.2 1998/11/01 19:48:20 tron Exp $ */
-
 /* zlib.h -- interface of the 'zlib' general purpose compression library
-  version 1.1.3, July 9th, 1998
+  version 1.1.4, March 11th, 2002
 
-  Copyright (C) 1995-1998 Jean-loup Gailly and Mark Adler
+  Copyright (C) 1995-2002 Jean-loup Gailly and Mark Adler
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -39,7 +37,7 @@
 extern "C" {
 #endif
 
-#define ZLIB_VERSION "1.1.3"
+#define ZLIB_VERSION "1.1.4"
 
 /* 
      The 'zlib' compression library provides in-memory compression and
