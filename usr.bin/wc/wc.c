@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.14 1998/10/13 17:03:39 wsanchez Exp $	*/
+/*	$NetBSD: wc.c,v 1.15 1999/02/13 15:53:17 explorer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.14 1998/10/13 17:03:39 wsanchez Exp $");
+__RCSID("$NetBSD: wc.c,v 1.15 1999/02/13 15:53:17 explorer Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: wc.c,v 1.14 1998/10/13 17:03:39 wsanchez Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -68,12 +69,12 @@ __RCSID("$NetBSD: wc.c,v 1.14 1998/10/13 17:03:39 wsanchez Exp $");
 #include <unistd.h>
 #include <err.h>
 
-static unsigned long	tlinect, twordct, tcharct;
+static u_int64_t	tlinect, twordct, tcharct;
 static int		doline, doword, dochar;
 static int 		rval = 0;
 
 static void	cnt __P((char *));
-static void	print_counts __P((long, long, long, char *));
+static void	print_counts __P((u_int64_t, u_int64_t, u_int64_t, char *));
 static void	usage __P((void));
 int	main __P((int, char *[]));
 
@@ -133,7 +134,7 @@ cnt(file)
 	u_char *C;
 	short gotsp;
 	int len;
-	u_long linect, wordct, charct;
+	u_int64_t linect, wordct, charct;
 	struct stat sb;
 	int fd;
 	u_char buf[MAXBSIZE];
@@ -245,18 +246,18 @@ cnt(file)
 
 static void
 print_counts(lines, words, chars, name)
-	long lines;
-	long words;
-	long chars;
+	u_int64_t lines;
+	u_int64_t words;
+	u_int64_t chars;
 	char *name;
 {
 
 	if (doline)
-		printf(" %7ld", lines);
+		printf(" %7qu", lines);
 	if (doword)
-		printf(" %7ld", words);
+		printf(" %7qu", words);
 	if (dochar)
-		printf(" %7ld", chars);
+		printf(" %7qu", chars);
 
 	printf(" %s\n", name);
 }
