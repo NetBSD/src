@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.20 1999/07/02 18:53:26 itojun Exp $
+.\" $NetBSD: main,v 1.21 1999/08/09 17:57:18 chopps Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -817,6 +817,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Charles M. Hannum Ta Mt mycroft@NetBSD.ORG
 .It Ta Eric Haszlakiewicz Ta Mt erh@NetBSD.ORG
 .It Ta Michael L. Hitch Ta Mt osymh@NetBSD.ORG
+.It Ta Christian E. Hopps Ta Mt chopps@NetBSD.ORG
 .It Ta Ken Hornstein Ta Mt kenh@NetBSD.ORG
 .It Ta Marc Horowitz Ta Mt marc@NetBSD.ORG
 .It Ta ITOH Yasufumi Ta Mt itohy@NetBSD.ORG
