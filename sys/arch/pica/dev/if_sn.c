@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.13 1998/07/05 06:49:08 jonathan Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.13.6.1 1998/12/11 04:52:57 kenh Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -286,7 +286,7 @@ snattach(parent, self, aux)
 {
 	struct sn_softc *sc = (void *)self;
 	struct confargs *ca = aux;
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp;
 	/*struct cfdata *cf = sc->sc_dev.dv_cfdata;*/
 	int p, pp;
 	uchar myaddr[ETHER_ADDR_LEN];
@@ -351,6 +351,9 @@ printf("mapped to offset 0x%x size 0x%x\n", SONICBUF - pp, p - SONICBUF);
 
 	BUS_INTR_ESTABLISH(ca, (intr_handler_t)snintr, (void *)sc);
 
+	ifp = if_alloc();
+	sc->sc_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = snioctl;
@@ -1277,7 +1280,8 @@ sonic_get(sc, eh, datalen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m->m_pkthdr.rcvif = sc->sc_if;
+	if_addref(sc->sc_if);
 	m->m_pkthdr.len = datalen;
 	m->m_len = MHLEN;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.7 1998/11/13 09:37:46 mycroft Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.7.2.1 1998/12/11 04:53:01 kenh Exp $	*/
 
 /*
  * Copyright 1997
@@ -311,7 +311,7 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	u_int8_t *enaddr;
 	int *media, nmedia, defmedia;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	const char *chipname, *medname;
 	u_int16_t reg;
 	int i;
@@ -966,11 +966,11 @@ cs_init(sc)
 	intState = splnet();
 
 	/* Mark the interface as down */
-	sc->sc_ethercom.ec_if.if_flags &= ~(IFF_UP | IFF_RUNNING);
+	sc->sc_ethercom.ec_if->if_flags &= ~(IFF_UP | IFF_RUNNING);
 
 #ifdef CS_DEBUG
 	/* Enable debugging */
-	sc->sc_ethercom.ec_if.if_flags |= IFF_DEBUG;
+	sc->sc_ethercom.ec_if->if_flags |= IFF_DEBUG;
 #endif
 
 	/* Reset the chip */
@@ -979,9 +979,9 @@ cs_init(sc)
 		cs_initChip(sc);
 
 		/* Mark the interface as up and running */
-		sc->sc_ethercom.ec_if.if_flags |= (IFF_UP | IFF_RUNNING);
-		sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
-		sc->sc_ethercom.ec_if.if_timer = 0;
+		sc->sc_ethercom.ec_if->if_flags |= (IFF_UP | IFF_RUNNING);
+		sc->sc_ethercom.ec_if->if_flags &= ~IFF_OACTIVE;
+		sc->sc_ethercom.ec_if->if_timer = 0;
 
 		/* Assume we have carrier until we are told otherwise. */
 		sc->sc_carrier = 1;
@@ -998,7 +998,7 @@ cs_set_ladr_filt(sc, ec)
 	struct cs_softc *sc;
 	struct ethercom *ec;
 {
-	struct ifnet *ifp = &ec->ec_if;
+	struct ifnet *ifp = ec->ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	u_int16_t af[4];
@@ -1126,7 +1126,7 @@ cs_reset(arg)
 	struct cs_softc *sc = arg;
 
 	/* Mark the interface as down */
-	sc->sc_ethercom.ec_if.if_flags &= ~IFF_RUNNING;
+	sc->sc_ethercom.ec_if->if_flags &= ~IFF_RUNNING;
 
 	/* Reset the chip */
 	cs_reset_chip(sc);
@@ -1313,7 +1313,7 @@ cs_counter_event(sc, cntEvent)
 	struct ifnet *ifp;
 	u_int16_t errorCount;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 
 	switch (cntEvent & REG_NUM_MASK) {
 	case REG_NUM_TX_COL:
@@ -1352,7 +1352,7 @@ cs_buffer_event(sc, bufEvent)
 {
 	struct ifnet *ifp;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 
 	/*
 	 * multiple events can be in the buffer event register at one time so
@@ -1402,7 +1402,7 @@ cs_transmit_event(sc, txEvent)
 	struct cs_softc *sc;
 	u_int16_t txEvent;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 
 	/* If there were any errors transmitting this frame */
 	if (txEvent & (TX_EVENT_LOSS_CRS | TX_EVENT_SQE_ERR | TX_EVENT_OUT_WIN |
@@ -1492,7 +1492,7 @@ cs_receive_event(sc, rxEvent)
 	struct cs_softc *sc;
 	u_int16_t rxEvent;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 
 	/* If the frame was not received OK */
 	if (!(rxEvent & RX_EVENT_RX_OK)) {
@@ -1535,7 +1535,7 @@ cs_ether_input(sc, m)
 	struct cs_softc *sc;
 	struct mbuf *m;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	struct ether_header *eh;
 
 	ifp->if_ipackets++;
@@ -1595,7 +1595,7 @@ cs_process_receive(sc)
 	ledNetActive();
 #endif
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 
 	/* Received a packet; carrier is up. */
 	sc->sc_carrier = 1;
@@ -1624,6 +1624,7 @@ cs_process_receive(sc)
 		return;
 	}
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = totlen;
 
 	/*
@@ -1678,7 +1679,7 @@ cs_process_rx_dma(sc)
 	int pad;
 
 	/* initialise the pointers */
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 
 	/* Read the number of frames DMAed. */
 	num_dma_frames = CS_READ_PACKET_PAGE(sc, PKTPG_DMA_FRAME_COUNT);
@@ -1895,7 +1896,7 @@ cs_process_rx_early(sc)
 	unsigned int frameOffset;
 
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 
 	/* Initialize the frame offset */
 	frameOffset = PKTPG_RX_FRAME;
@@ -2003,7 +2004,7 @@ cs_start_output(ifp)
 	int dropout = 0;
 
 	sc = ifp->if_softc;
-	pTxQueue = &sc->sc_ethercom.ec_if.if_snd;
+	pTxQueue = &sc->sc_ethercom.ec_if->if_snd;
 
 	/* check that the interface is up and running */
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING) {
@@ -2082,7 +2083,7 @@ cs_start_output(ifp)
 
 				/* Discard the bad mbuf chain */
 				m_freem(pMbufChain);
-				sc->sc_ethercom.ec_if.if_oerrors++;
+				sc->sc_ethercom.ec_if->if_oerrors++;
 
 				/* Loop up to transmit the next chain */
 				txLoop = 0;

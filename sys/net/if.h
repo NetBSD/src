@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.32 1998/05/22 17:47:22 matt Exp $	*/
+/*	$NetBSD: if.h,v 1.32.6.1 1998/12/11 04:53:04 kenh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -114,6 +114,10 @@ TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
 #define	IFNAMSIZ	16
 
 struct ifnet {				/* and the entries */
+	int	if_refcount;		/* count of active references */
+	void	(*if_iffree)		/* free this ifnet */
+		__P((struct ifnet *));
+	void	*if_ifcom;		/* hardware-common private storage */
 	void	*if_softc;		/* lower-level data for this if */
 	TAILQ_ENTRY(ifnet) if_list;	/* all struct ifnets are chained */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* linked list of addresses per if */
@@ -122,7 +126,7 @@ struct ifnet {				/* and the entries */
 	caddr_t	if_bpf;			/* packet filter structure */
 	u_short	if_index;		/* numeric abbreviation for this if */
 	short	if_timer;		/* time 'til if_watchdog called */
-	short	if_flags;		/* up/down, broadcast, etc. */
+	int	if_flags;		/* up/down, broadcast, etc. */
 	short	if__pad1;		/* be nice to m68k ports */
 	struct	if_data if_data;	/* statistics and other data about if */
 /* procedure handles */
@@ -184,6 +188,7 @@ struct ifnet {				/* and the entries */
 #define	IFF_LINK1	0x2000		/* per link layer defined bit */
 #define	IFF_LINK2	0x4000		/* per link layer defined bit */
 #define	IFF_MULTICAST	0x8000		/* supports multicast */
+#define	IFF_DEAD	0x10000		/* ifnet is dying */
 
 /* flags set internally only: */
 #define	IFF_CANTCHANGE \
@@ -243,7 +248,7 @@ struct ifaddr {
 	void	(*ifa_rtrequest)	/* check or clean routes (+ or -)'d */
 		    __P((int, struct rtentry *, struct sockaddr *));
 	u_short	ifa_flags;		/* mostly rt_flags for cloning */
-	short	ifa_refcnt;		/* count of references */
+	short	ifa_refcnt;		/* count of references, base 0 */
 	int	ifa_metric;		/* cost of going out this interface */
 };
 #define	IFA_ROUTE	RTF_UP		/* route installed */
@@ -288,7 +293,7 @@ struct	ifreq {
 		struct	sockaddr ifru_addr;
 		struct	sockaddr ifru_dstaddr;
 		struct	sockaddr ifru_broadaddr;
-		short	ifru_flags;
+		int	ifru_flags;
 		int	ifru_metric;
 		int	ifru_mtu;
 		caddr_t	ifru_data;
@@ -363,7 +368,11 @@ int	ether_output __P((struct ifnet *,
 	   struct mbuf *, struct sockaddr *, struct rtentry *));
 char	*ether_sprintf __P((u_char *));
 
+#include <net/if_alloc.h>
+
 void	if_attach __P((struct ifnet *));
+void	if_detach __P((struct ifnet *));
+void	if_deactivate __P((struct ifnet *));
 void	if_down __P((struct ifnet *));
 void	if_qflush __P((struct ifqueue *));
 void	if_slowtimo __P((void *));
@@ -374,6 +383,23 @@ int	ifioctl __P((struct socket *, u_long, caddr_t, struct proc *));
 int	ifpromisc __P((struct ifnet *, int));
 struct	ifnet *ifunit __P((char *));
 
+#ifdef _DEBUG_IFA_REF
+struct	ifaddr *ifa_ifwithaddr1 __P((struct sockaddr *, char *));
+#define ifa_ifwithaddr(x) ifa_ifwithaddr1((x), __FUNCTION__)
+struct	ifaddr *ifa_ifwithaf1 __P((int, char *));
+#define ifa_ifwithaf(x) ifa_ifwithaf1((x), __FUNCTION__)
+struct	ifaddr *ifa_ifwithdstaddr1 __P((struct sockaddr *, char *));
+#define ifa_ifwithdstaddr(x) ifa_ifwithdstaddr1((x), __FUNCTION__)
+struct	ifaddr *ifa_ifwithnet1 __P((struct sockaddr *, char *));
+#define ifa_ifwithnet(x) ifa_ifwithnet1((x), __FUNCTION__)
+struct	ifaddr *ifa_ifwithladdr1 __P((struct sockaddr *, char *));
+#define ifa_ifwithladdr(x) ifa_ifwithladdr1((x), __FUNCTION__)
+struct	ifaddr *ifa_ifwithroute1 __P((int, struct sockaddr *,
+					struct sockaddr *, char *));
+#define ifa_ifwithroute(x, y, z) ifa_ifwithroute1((x), (y), (z), __FUNCTION__)
+struct	ifaddr *ifaof_ifpforaddr1 __P((struct sockaddr *, struct ifnet *, char *));
+#define ifaof_ifpforaddr(x, y) ifaof_ifpforaddr1((x), (y), __FUNCTION__)
+#else
 struct	ifaddr *ifa_ifwithaddr __P((struct sockaddr *));
 struct	ifaddr *ifa_ifwithaf __P((int));
 struct	ifaddr *ifa_ifwithdstaddr __P((struct sockaddr *));
@@ -382,6 +408,7 @@ struct	ifaddr *ifa_ifwithladdr __P((struct sockaddr *));
 struct	ifaddr *ifa_ifwithroute __P((int, struct sockaddr *,
 					struct sockaddr *));
 struct	ifaddr *ifaof_ifpforaddr __P((struct sockaddr *, struct ifnet *));
+#endif  /* _DEBUG_IFA_REF */
 void	ifafree __P((struct ifaddr *));
 void	link_rtrequest __P((int, struct rtentry *, struct sockaddr *));
 

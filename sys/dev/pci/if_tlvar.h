@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.2 1998/08/15 16:49:33 bouyer Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.2.4.1 1998/12/11 04:53:03 kenh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -81,7 +81,7 @@ struct tl_softc {
 #endif
 };
 #define tl_if            tl_ec.ec_if
-#define tl_bpf   tl_if.if_bpf
+#define tl_bpf   tl_if->if_bpf
 
 typedef struct tl_softc tl_softc_t;
 typedef u_long ioctl_cmd_t;

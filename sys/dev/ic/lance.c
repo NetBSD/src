@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.4 1998/12/09 07:36:51 leo Exp $	*/
+/*	$NetBSD: lance.c,v 1.4.2.1 1998/12/11 04:52:59 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ ether_cmp(one, two)
 static u_int16_t bcast_enaddr[3] = { ~0, ~0, ~0 };
 #endif
 
-#define	ifp	(&sc->sc_ethercom.ec_if)
+#define	ifp	(sc->sc_ethercom.ec_if)
 
 void
 lance_config(sc)
@@ -216,6 +216,8 @@ lance_config(sc)
 	lance_stop(sc);
 
 	/* Initialize ifnet structure. */
+	ifp = if_alloc();
+	ifp->if_ifcom = &sc->sc_ethercom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = sc->sc_start;
@@ -410,12 +412,15 @@ lance_get(sc, boff, totlen)
 {
 	register struct mbuf *m;
 	struct mbuf *top, **mp;
-	int len;
+	int len, s;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
+	s = splimp();
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
+	splx(s);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
@@ -717,7 +722,7 @@ lance_setladrf(ac, af)
 	struct ethercom *ac;
 	u_int16_t *af;
 {
-	struct ifnet *ifp = &ac->ec_if;
+	struct ifnet *ifp = ac->ec_if;
 	struct ether_multi *enm;
 	register u_char *cp;
 	register u_int32_t crc;

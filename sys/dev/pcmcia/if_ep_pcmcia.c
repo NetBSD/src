@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.20 1998/11/18 18:34:53 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.20.2.1 1998/12/11 04:53:03 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -375,16 +375,10 @@ ep_pcmcia_detach(self, flags)
 	/* Free our i/o space. */
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 
-#ifdef notyet
-	/*
-	 * Our softc is about to go away, so drop our reference
-	 * to the ifnet.
-	 */
-	if_delref(psc->sc_ep.sc_ethercom.ec_if);
+	/* Call the chipset detach */
+	ep_detach(&psc->sc_ep);
+
 	return (0);
-#else
-	return (EBUSY);
-#endif
 }
 
 int

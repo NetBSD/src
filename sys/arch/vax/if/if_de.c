@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.35 1998/11/29 14:48:52 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.35.2.1 1998/12/11 04:52:57 kenh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -174,7 +174,7 @@ deattach(parent, self, aux)
 {
 	struct uba_attach_args *ua = aux;
 	struct de_softc *ds = (struct de_softc *)self;
-	struct ifnet *ifp = &ds->ds_if;
+	struct ifnet *ifp;
 	struct dedevice *addr;
 	char *c;
 	int csr1;
@@ -182,6 +182,9 @@ deattach(parent, self, aux)
 
 	addr = (struct dedevice *)ua->ua_addr;
 	ds->ds_vaddr = addr;
+	ifp = if_alloc();
+	ds->ds_if = ifp;
+	ifp->if_ifcom = &ds->ds_ec;
 	bcopy(ds->ds_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = ds;
 	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS;
@@ -246,7 +249,7 @@ dereset(unit)
 	volatile struct dedevice *addr = sc->ds_vaddr;
 
 	printf(" de%d", unit);
-	sc->ds_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->ds_if->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	sc->ds_flags &= ~DSF_RUNNING;
 	addr->pcsr0 = PCSR0_RSET;
 	(void)dewait(sc, "reset");
@@ -262,7 +265,7 @@ deinit(ds)
 	struct de_softc *ds;
 {
 	volatile struct dedevice *addr;
-	struct ifnet *ifp = &ds->ds_if;
+	struct ifnet *ifp = ds->ds_if;
 	struct ifrw *ifrw;
 	struct ifxmt *ifxp;
 	struct de_ring *rp;
@@ -279,7 +282,7 @@ deinit(ds)
 		    sizeof (struct ether_header), (int)vax_btoc(ETHERMTU),
 		    ds->ds_ifr, NRCV, ds->ds_ifw, NXMT) == 0) { 
 			printf("%s: can't initialize\n", ds->ds_dev.dv_xname);
-			ds->ds_if.if_flags &= ~IFF_UP;
+			ifp->if_flags &= ~IFF_UP;
 			return;
 		}
 		ds->ds_ubaddr = uballoc((void *)ds->ds_dev.dv_parent,
@@ -343,12 +346,12 @@ deinit(ds)
 	/* start up the board (rah rah) */
 	s = splnet();
 	ds->ds_rindex = ds->ds_xindex = ds->ds_xfree = ds->ds_nxmit = 0;
-	ds->ds_if.if_flags |= IFF_RUNNING;
+	ifp->if_flags |= IFF_RUNNING;
 	addr->pclow = PCSR0_INTE;		/* avoid interlock */
-	destart(&ds->ds_if);		/* queue output packets */
+	destart(ifp);			/* queue output packets */
 	ds->ds_flags |= DSF_RUNNING;		/* need before de_setaddr */
 	if (ds->ds_flags & DSF_SETADDR)
-		de_setaddr(LLADDR(ds->ds_if.if_sadl), ds);
+		de_setaddr(LLADDR(ifp->if_sadl), ds);
 	addr->pclow = CMD_START | PCSR0_INTE;
 	splx(s);
 }
@@ -375,10 +378,10 @@ destart(ifp)
 	 * the code is not reentrant and we have
 	 * multiple transmission buffers.
 	 */
-	if (ds->ds_if.if_flags & IFF_OACTIVE)
+	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 	for (nxmit = ds->ds_nxmit; nxmit < NXMT; nxmit++) {
-		IF_DEQUEUE(&ds->ds_if.if_snd, m);
+		IF_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
 		rp = &ds->ds_xrent[ds->ds_xfree];
@@ -418,18 +421,19 @@ deintr(unit)
 	register struct de_softc *ds;
 	register struct de_ring *rp;
 	register struct ifxmt *ifxp;
+	register struct ifnet *ifp;
 	short csr0;
 
 	ds = de_cd.cd_devs[unit];
 	addr = ds->ds_vaddr;
-
+	ifp = ds->ds_if;
 
 	/* save flags right away - clear out interrupt bits */
 	csr0 = addr->pcsr0;
 	addr->pchigh = csr0 >> 8;
 
 
-	ds->ds_if.if_flags |= IFF_OACTIVE;	/* prevent entering destart */
+	ifp->if_flags |= IFF_OACTIVE;	/* prevent entering destart */
 	/*
 	 * if receive, put receive buffer on mbuf
 	 * and hang the request again
@@ -446,13 +450,13 @@ deintr(unit)
 		rp = &ds->ds_xrent[ds->ds_xindex];
 		if (rp->r_flags & XFLG_OWN)
 			break;
-		ds->ds_if.if_opackets++;
+		ifp->if_opackets++;
 		ifxp = &ds->ds_ifw[ds->ds_xindex];
 		/* check for unusual conditions */
 		if (rp->r_flags & (XFLG_ERRS|XFLG_MTCH|XFLG_ONE|XFLG_MORE)) {
 			if (rp->r_flags & XFLG_ERRS) {
 				/* output error */
-				ds->ds_if.if_oerrors++;
+				ifp->if_oerrors++;
 				if (dedebug) {
 					char bits[64];
 					printf("de%d: oerror, flags=%s ",
@@ -465,13 +469,13 @@ deintr(unit)
 				}
 			} else if (rp->r_flags & XFLG_ONE) {
 				/* one collision */
-				ds->ds_if.if_collisions++;
+				ifp->if_collisions++;
 			} else if (rp->r_flags & XFLG_MORE) {
 				/* more than one collision */
-				ds->ds_if.if_collisions += 2;	/* guess */
+				ifp->if_collisions += 2;	/* guess */
 			} else if (rp->r_flags & XFLG_MTCH) {
 				/* received our own packet */
-				ds->ds_if.if_ipackets++;
+				ifp->if_ipackets++;
 				deread(ds, &ifxp->ifrw,
 				    rp->r_slen - sizeof (struct ether_header));
 			}
@@ -485,8 +489,8 @@ deintr(unit)
 		if (ds->ds_xindex == NXMT)
 			ds->ds_xindex = 0;
 	}
-	ds->ds_if.if_flags &= ~IFF_OACTIVE;
-	destart(&ds->ds_if);
+	ifp->if_flags &= ~IFF_OACTIVE;
+	destart(ifp);
 
 	if (csr0 & PCSR0_RCBI) {
 		if (dedebug)
@@ -514,7 +518,7 @@ derecv(unit)
 
 	rp = &ds->ds_rrent[ds->ds_rindex];
 	while ((rp->r_flags & RFLG_OWN) == 0) {
-		ds->ds_if.if_ipackets++;
+		ds->ds_if->if_ipackets++;
 		if (ds->ds_deuba.iff_flags & UBA_NEEDBDP) {
 			struct uba_softc *uh = (void *)ds->ds_dev.dv_parent;
 
@@ -529,7 +533,7 @@ derecv(unit)
 		    (rp->r_flags&(RFLG_STP|RFLG_ENP)) != (RFLG_STP|RFLG_ENP) ||
 		    (rp->r_lenerr & (RERR_BUFL|RERR_UBTO|RERR_NCHN)) ||
 		    len < ETHERMIN || len > ETHERMTU) {
-			ds->ds_if.if_ierrors++;
+			ds->ds_if->if_ierrors++;
 			if (dedebug) {
 				char bits[64];
 				printf("de%d: ierror, flags=%s ",
@@ -582,9 +586,9 @@ deread(ds, ifrw, len)
 	 * has trailing header; if_ubaget will then force this header
 	 * information to be at the front.
 	 */
-	m = if_ubaget(&ds->ds_deuba, ifrw, len, &ds->ds_if);
+	m = if_ubaget(&ds->ds_deuba, ifrw, len, ds->ds_if);
 	if (m)
-		ether_input(&ds->ds_if, eh, m);
+		ether_input(ds->ds_if, eh, m);
 }
 /*
  * Process an ioctl request.
@@ -634,7 +638,7 @@ deioctl(ifp, cmd, data)
 			DELAY(5000);
 			ds->ds_vaddr->pclow = PCSR0_RSET;
 			ds->ds_flags &= ~DSF_RUNNING;
-			ds->ds_if.if_flags &= ~IFF_OACTIVE;
+			ifp->if_flags &= ~IFF_OACTIVE;
 		} else if (ifp->if_flags & IFF_UP &&
 		    (ds->ds_flags & DSF_RUNNING) == 0)
 			deinit(ds);
@@ -665,7 +669,7 @@ de_setaddr(physaddr, ds)
 	addr->pclow = PCSR0_INTE|CMD_GETCMD;
 	if (dewait(ds, "address change") == 0) {
 		ds->ds_flags |= DSF_SETADDR;
-		bcopy((caddr_t) physaddr, LLADDR(ds->ds_if.if_sadl), 6);
+		bcopy((caddr_t) physaddr, LLADDR(ds->ds_if->if_sadl), 6);
 	}
 }
 

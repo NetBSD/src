@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_llcsubr.c,v 1.8 1998/09/13 16:21:19 christos Exp $	*/
+/*	$NetBSD: pk_llcsubr.c,v 1.8.4.1 1998/12/11 04:53:07 kenh Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -397,6 +397,8 @@ x25_llcglue(prc, addr)
 	ctlinfo.dlcti_cfg =
 		(struct dllconfig *) (((struct sockaddr_x25 *) (&x25ifa->ia_xc)) + 1);
 	ctlinfo.dlcti_lsap = LLC_X25_LSAP;
+
+	ifa_delref(&x25ifa->ia_ifa);
 
 	return ((long) llc_ctlinput(prc, addr, &ctlinfo));
 }

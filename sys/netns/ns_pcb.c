@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.12 1997/07/18 19:30:41 thorpej Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.12.12.1 1998/12/11 04:53:11 kenh Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -133,6 +133,7 @@ ns_pcbconnect(nsp, nam)
 	register struct ns_addr *dst;
 	register struct route *ro;
 	struct ifnet *ifp;
+	int s;
 
 	if (nam->m_len != sizeof (*sns))
 		return (EINVAL);
@@ -192,11 +193,14 @@ ns_pcbconnect(nsp, nam)
 		 * If we found a route, use the address
 		 * corresponding to the outgoing interface
 		 */
+		s = splimp();
 		if (ro->ro_rt && (ifp = ro->ro_rt->rt_ifp))
 			for (ia = ns_ifaddr.tqh_first; ia != 0;
 			    ia = ia->ia_list.tqe_next)
 				if (ia->ia_ifp == ifp)
 					break;
+		if (ia) ifa_addref(&ia->ia_ifa);
+		splx(s);
 		if (ia == 0) {
 			u_int16_t fport = sns->sns_addr.x_port;
 			sns->sns_addr.x_port = 0;
@@ -205,12 +209,16 @@ ns_pcbconnect(nsp, nam)
 			sns->sns_addr.x_port = fport;
 			if (ia == 0)
 				ia = ns_iaonnetof(&sns->sns_addr);
+			s=splimp();
 			if (ia == 0)
-				ia = ns_ifaddr.tqh_first;
+				if ((ia = ns_ifaddr.tqh_first))
+					ifa_addref(&ia->ia_ifa);
+			splx(s);
 			if (ia == 0)
 				return (EADDRNOTAVAIL);
 		}
 		nsp->nsp_laddr.x_net = satons_addr(ia->ia_addr).x_net;
+		ifa_delref(&ia->ia_ifa);
 	}
 	if (ns_pcblookup(&sns->sns_addr, nsp->nsp_lport, 0))
 		return (EADDRINUSE);

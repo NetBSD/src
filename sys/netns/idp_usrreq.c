@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.15 1998/07/05 06:49:17 jonathan Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.15.6.1 1998/12/11 04:53:10 kenh Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -80,6 +80,7 @@ idp_input(m, va_alist)
 	register struct nspcb *nsp;
 	register struct idp *idp = mtod(m, struct idp *);
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	int	s;
 	va_list ap;
 
 	va_start(ap, m);
@@ -96,6 +97,7 @@ idp_input(m, va_alist)
 	if (ns_neteqnn(idp->idp_sna.x_net, ns_zeronet) && ifp) {
 		register struct ifaddr *ifa;
 
+		s = splimp();
 		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 		    ifa = ifa->ifa_list.tqe_next) {
 			if (ifa->ifa_addr->sa_family == AF_NS) {
@@ -104,6 +106,7 @@ idp_input(m, va_alist)
 				break;
 			}
 		}
+		splx(s);
 	}
 	nsp->nsp_rpt = idp->idp_pt;
 	if ( ! (nsp->nsp_flags & NSP_RAWIN) ) {

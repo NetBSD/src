@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.24 1998/10/13 02:34:32 kim Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.24.4.1 1998/12/11 04:53:05 kenh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -306,6 +306,7 @@ fddi_output(ifp, m0, dst, rt0)
 		} else {
 			etype = htons(ETHERTYPE_ATALK);
 		}
+		ifa_delref(&aa->aa_ifa);
 		break;
 	}
 #endif /* NETATALK */

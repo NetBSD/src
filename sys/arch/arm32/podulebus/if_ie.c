@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.19 1998/08/08 23:58:40 mycroft Exp $ */
+/* $NetBSD: if_ie.c,v 1.19.4.1 1998/12/11 04:52:56 kenh Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -315,7 +315,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 {
 	struct ie_softc *sc = (void *)self;
 	struct podule_attach_args *pa = (void *)aux;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp;
 	int i;
 	char idrom[32];
 	u_int8_t hwaddr[ETHER_ADDR_LEN];
@@ -453,6 +453,9 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 
 	/* Fill in my application form to attach to the inet system */
 
+	ifp = if_alloc();
+ 	sc->sc_ethercom.ec_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = iestart;
@@ -876,7 +879,7 @@ ieinit(sc)
     u_long ptr = IE_IBASE + IE_SCB_OFF + sizeof scb;
     int n;
 
-    ifp = &sc->sc_ethercom.ec_if;
+    ifp = sc->sc_ethercom.ec_if;
 
     bzero ( &scb, sizeof(scb) );
 
@@ -1148,7 +1151,8 @@ ieget(struct ie_softc *sc, struct ether_header *ehp, int *to_bpf )
     if ( m==0 )
 	return 0;
 
-    m->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
+    m->m_pkthdr.rcvif = sc->sc_ethercom.ec_if;
+    if_addref(sc->sc_ethercom.ec_if);
     m->m_pkthdr.len = totlen;
     len = MHLEN;
     top = 0;
@@ -1275,7 +1279,7 @@ ie_read_frame(sc, num)
     struct ether_header eh;
     int last;
 
-    ifp = &sc->sc_ethercom.ec_if;
+    ifp = sc->sc_ethercom.ec_if;
 
     ie2host(sc, sc->rframes[num], &rfd, sizeof rfd );
     status = rfd.ie_fd_status;
@@ -1352,7 +1356,7 @@ ierint(sc)
 	    if ( !--times_thru ) {
 		printf ( "IERINT: Uh oh. Nuts, look at this bit!!!\n" );
     		ie2host ( sc, IE_IBASE + IE_SCB_OFF, &scb, sizeof scb );
-		sc->sc_ethercom.ec_if.if_ierrors += scb.ie_err_crc +
+		sc->sc_ethercom.ec_if->if_ierrors += scb.ie_err_crc +
 						  scb.ie_err_align +
 						  scb.ie_err_resource +
 						  scb.ie_err_overrun;
@@ -1419,7 +1423,7 @@ loop:
 
     if (status & IE_ST_RNR) {
 	printf ( "ie: receiver not ready\n" );
-	sc->sc_ethercom.ec_if.if_ierrors++;
+	sc->sc_ethercom.ec_if->if_ierrors++;
 	iereset(sc);
     }
 
@@ -1483,7 +1487,7 @@ iexmit(sc)
     command_and_wait(sc, IE_CU_START, &scb, &xc, sc->xmit_cmds[sc->xctail]
 			, sizeof xc, IE_STAT_COMPL);
 
-    sc->sc_ethercom.ec_if.if_timer = 5;
+    sc->sc_ethercom.ec_if->if_timer = 5;
 }
 /*
  * Start sending all the queued buffers.
@@ -1563,7 +1567,7 @@ void
 ietint(sc)
 	struct ie_softc *sc;
 {
-    struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+    struct ifnet *ifp = sc->sc_ethercom.ec_if;
 
     int status;
 

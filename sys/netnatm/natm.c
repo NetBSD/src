@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.5 1996/11/09 03:26:26 chuck Exp $	*/
+/*	$NetBSD: natm.c,v 1.5.20.1 1998/12/11 04:53:10 kenh Exp $	*/
 
 /*
  *
@@ -371,6 +371,14 @@ next:
   npcb->npcb_inq--;
   splx(s);
 
+#if defined( NEED_TO_RESTORE_IFP ) || defined( _HAS_IF_ALLOC )
+  m->m_pkthdr.rcvif = npcb->npcb_ifp;
+#else
+#ifdef DIAGNOSTIC
+m->m_pkthdr.rcvif = NULL;	/* null it out to be safe */
+#endif
+#endif
+
   if (npcb->npcb_flags & NPCB_DRAIN) {
     m_freem(m);
     if (npcb->npcb_inq == 0)
@@ -382,14 +390,6 @@ next:
     m_freem(m);					/* drop */
     goto next;
   }
-
-#ifdef NEED_TO_RESTORE_IFP
-  m->m_pkthdr.rcvif = npcb->npcb_ifp;
-#else
-#ifdef DIAGNOSTIC
-m->m_pkthdr.rcvif = NULL;	/* null it out to be safe */
-#endif
-#endif
 
   if (sbspace(&so->so_rcv) > m->m_pkthdr.len ||
      ((npcb->npcb_flags & NPCB_RAW) != 0 && so->so_rcv.sb_cc < NPCB_RAWCC) ) {

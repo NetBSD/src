@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we.c,v 1.12 1998/10/27 22:45:13 thorpej Exp $	*/
+/*	$NetBSD: if_we.c,v 1.12.4.1 1998/12/11 04:53:01 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -522,9 +522,9 @@ we_attach(parent, self, aux)
 			else
 				defmedia |= IFM_10_5;
 		}
-		i = dp8390_config(sc, we_media, NWE_MEDIA, defmedia);
+		i = dp8390_config(sc, we_media, NWE_MEDIA, defmedia, NULL);
 	} else
-		i = dp8390_config(sc, NULL, 0, 0);
+		i = dp8390_config(sc, NULL, 0, 0, NULL);
 	if (i) {
 		printf("%s: configuration failed\n", sc->sc_dev.dv_xname);
 		return;

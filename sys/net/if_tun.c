@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.36 1998/11/30 21:43:11 sommerfe Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.36.2.1 1998/12/11 04:53:06 kenh Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -88,7 +88,12 @@ tunattach(unused)
 	for (i = 0; i < NTUN; i++) {
 		tunctl[i].tun_flags = TUN_INITED;
 
+#ifdef _HAS_IF_ALLOC
+		ifp = if_alloc();
+		tunctl[i].tun_if = ifp;
+#else
 		ifp = &tunctl[i].tun_if;
+#endif
 		sprintf(ifp->if_xname, "tun%d", i);
 		ifp->if_softc = &tunctl[i];
 		ifp->if_mtu = TUNMTU;
@@ -130,7 +135,11 @@ tunopen(dev, flag, mode, p)
 	tp = &tunctl[unit];
 	if (tp->tun_flags & TUN_OPEN)
 		return ENXIO;
+#ifdef _HAS_IF_ALLOC
+	ifp = tp->tun_if;
+#else
 	ifp = &tp->tun_if;
+#endif
 	tp->tun_flags |= TUN_OPEN;
 	TUNDEBUG("%s: open\n", ifp->if_xname);
 	return (0);
@@ -149,7 +158,11 @@ tunclose(dev, flag, mode, p)
 {
 	register int	unit = minor(dev), s;
 	struct tun_softc *tp = &tunctl[unit];
+#ifdef _HAS_IF_ALLOC
+	struct ifnet	*ifp = tp->tun_if;
+#else
 	struct ifnet	*ifp = &tp->tun_if;
+#endif
 	struct mbuf	*m;
 
 	tp->tun_flags &= ~TUN_OPEN;
@@ -194,7 +207,11 @@ static void
 tuninit(tp)
 	struct tun_softc *tp;
 {
+#ifdef _HAS_IF_ALLOC
+	struct ifnet	*ifp = tp->tun_if;
+#else
 	struct ifnet	*ifp = &tp->tun_if;
+#endif
 	register struct ifaddr *ifa;
 
 	TUNDEBUG("%s: tuninit\n", ifp->if_xname);
@@ -385,6 +402,11 @@ tunioctl(dev, cmd, data, flag, p)
 {
 	int		unit = minor(dev), s;
 	struct tun_softc *tp = &tunctl[unit];
+#ifdef _HAS_IF_ALLOC
+	struct ifnet *ifp = tp->tun_if;
+#else
+	struct ifnet *ifp = &tp->tun_if;
+#endif
 
 	switch (cmd) {
 	case TUNSDEBUG:
@@ -400,13 +422,13 @@ tunioctl(dev, cmd, data, flag, p)
 		case IFF_POINTOPOINT:
 		case IFF_BROADCAST:
 			s = splimp();
-			if (tp->tun_if.if_flags & IFF_UP) {
+			if (ifp->if_flags & IFF_UP) {
 				splx(s);
 				return (EBUSY);
 			}
-			tp->tun_if.if_flags &=
+			ifp->if_flags &=
 				~(IFF_BROADCAST|IFF_POINTOPOINT|IFF_MULTICAST);
-			tp->tun_if.if_flags |= *(int *)data;
+			ifp->if_flags |= *(int *)data;
 			splx(s);
 			break;
 		default:
@@ -438,8 +460,8 @@ tunioctl(dev, cmd, data, flag, p)
 
 	case FIONREAD:
 		s = splimp();
-		if (tp->tun_if.if_snd.ifq_head)
-			*(int *)data = tp->tun_if.if_snd.ifq_head->m_pkthdr.len;
+		if (ifp->if_snd.ifq_head)
+			*(int *)data = ifp->if_snd.ifq_head->m_pkthdr.len;
 		else	
 			*(int *)data = 0;
 		splx(s);
@@ -471,7 +493,11 @@ tunread(dev, uio, ioflag)
 {
 	int		unit = minor(dev);
 	struct tun_softc *tp = &tunctl[unit];
+#ifdef _HAS_IF_ALLOC
+	struct ifnet	*ifp = tp->tun_if;
+#else
 	struct ifnet	*ifp = &tp->tun_if;
+#endif
 	struct mbuf	*m, *m0;
 	int		error=0, len, s;
 
@@ -529,7 +555,11 @@ tunwrite(dev, uio, ioflag)
 {
 	int		unit = minor (dev);
 	struct tun_softc *tp = &tunctl[unit];
+#ifdef _HAS_IF_ALLOC
+	struct ifnet	*ifp = tp->tun_if;
+#else
 	struct ifnet	*ifp = &tp->tun_if;
+#endif
 	struct mbuf	*top, **mp, *m;
 	struct ifqueue	*ifq;
 	struct sockaddr	dst;
@@ -604,6 +634,7 @@ tunwrite(dev, uio, ioflag)
 
 	top->m_pkthdr.len = tlen;
 	top->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 
 #if NBPFILTER > 0
 	if (tp->tun_bpf) {
@@ -653,7 +684,11 @@ tunpoll(dev, events, p)
 {
 	int		unit = minor(dev), s;
 	struct tun_softc *tp = &tunctl[unit];
+#ifdef _HAS_IF_ALLOC
+	struct ifnet	*ifp = tp->tun_if;
+#else
 	struct ifnet	*ifp = &tp->tun_if;
+#endif
 	int		revents = 0;
 
 	s = splimp();

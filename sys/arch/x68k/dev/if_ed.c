@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.9 1998/08/04 16:51:52 minoura Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.9.4.1 1998/12/11 04:52:58 kenh Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -472,7 +472,7 @@ edattach(parent, self, aux)
 	void *aux;
 {
 	struct ed_softc *sc = (void *)self;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp;
 
 	sc->nic_base = NEPTUNE_NIC;
 	sc->asic_base = NEPTUNE_ASIC;
@@ -483,6 +483,9 @@ edattach(parent, self, aux)
 	edstop(sc);
 
 	/* Initialize ifnet structure. */
+	ifp = if_alloc();
+	sc->sc_arpcom.ac_if = ifp;
+	ifp->if_ifcom = &sc->sc_arpcom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = edstart;
@@ -564,7 +567,7 @@ edwatchdog(ifp)
 	struct ed_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_ethercom.ec_if.if_oerrors;
+	++ifp->if_oerrors;
 
 	edreset(sc);
 }
@@ -576,7 +579,7 @@ void
 edinit(sc)
 	struct ed_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	caddr_t nicbase = sc->nic_base;
 	int i;
 	u_long mcaf[2];
@@ -693,7 +696,7 @@ static inline void
 ed_xmit(sc)
 	struct ed_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	caddr_t nicbase = sc->nic_base;
 	u_short len;
 
@@ -886,7 +889,7 @@ loop:
 			log(LOG_ERR,
 			    "%s: NIC memory corrupt - invalid packet length %d\n",
 			    sc->sc_dev.dv_xname, len);
-			++sc->sc_ethercom.ec_if.if_ierrors;
+			++sc->sc_ethercom.ec_if->if_ierrors;
 			edreset(sc);
 			return;
 		}
@@ -913,7 +916,7 @@ edintr(unit)
 	int unit;
 {
 	struct ed_softc *sc = ed_cd.cd_devs[unit];
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	caddr_t nicbase = sc->nic_base;
 	u_char isr;
 
@@ -1196,7 +1199,7 @@ edread(sc, buf, len)
 	caddr_t buf;
 	int len;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 
@@ -1477,7 +1480,7 @@ edget(sc, src, total_len)
 	caddr_t src;
 	u_short total_len;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	struct mbuf *top, **mp, *m;
 	int len;
 
@@ -1485,6 +1488,7 @@ edget(sc, src, total_len)
 	if (m == 0)
 		return 0;
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = total_len;
 	len = MHLEN;
 	top = 0;

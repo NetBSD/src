@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.3 1998/10/13 02:34:32 kim Exp $	*/
+/*	$NetBSD: aarp.c,v 1.3.4.1 1998/12/11 04:53:06 kenh Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -123,14 +123,21 @@ aarptimer(ignored)
  * network.. remember to take netranges into consideration.
  */
 struct ifaddr *
+#ifdef _DEBUG_IFA_REF
+at_ifawithnet1(sat, ifp, f)
+	char *f;
+#else
 at_ifawithnet(sat, ifp)
+#endif
 	struct sockaddr_at *sat;
 	struct ifnet *ifp;
 {
 	struct ifaddr  *ifa;
 	struct sockaddr_at *sat2;
 	struct netrange *nr;
+	int s;
 
+	s = splimp();
 	for (ifa = ifp->if_addrlist.tqh_first; ifa;
 	    ifa = ifa->ifa_list.tqe_next) {
 		if (ifa->ifa_addr->sa_family != AF_APPLETALK)
@@ -146,6 +153,13 @@ at_ifawithnet(sat, ifp)
 		    && (nr->nr_lastnet >= sat->sat_addr.s_net))
 			break;
 	}
+	if (ifa)
+#ifdef _DEBUG_IFA_REF
+		ifa_addref1(ifa, f);
+#else
+		ifa_addref(ifa);
+#endif
+	splx(s);
 	return ifa;
 }
 
@@ -228,6 +242,7 @@ aarpwhohas(ifp, sat)
 	sa.sa_family = AF_UNSPEC;
 	(*ifp->if_output) (ifp, m, &sa, NULL);	/* XXX NULL should be routing */
 						/* information */
+	ifa_delref(&aa->aa_ifa);
 }
 
 int
@@ -253,6 +268,7 @@ aarpresolve(ifp, m, destsat, desten)
 		else
 			bcopy(etherbroadcastaddr, desten,
 			    sizeof(etherbroadcastaddr));
+		ifa_delref(&aa->aa_ifa);
 		return 1;
 	}
 	s = splimp();
@@ -332,7 +348,7 @@ at_aarpinput(ifp, m)
 	struct sockaddr_at sat;
 	struct sockaddr sa;
 	struct at_addr  spa, tpa, ma;
-	int             op;
+	int             op, s;
 	u_int16_t       net;
 
 	ea = mtod(m, struct ether_aarp *);
@@ -340,6 +356,13 @@ at_aarpinput(ifp, m)
 	/* Check to see if from my hardware address */
 	if (!bcmp(ea->aarp_sha, LLADDR(ifp->if_sadl), sizeof(ea->aarp_sha))) {
 		m_freem(m);
+		return;
+	}
+	/* Check to see if from a broadcast address. */
+	if (!bcmp(ea->aarp_sha, (caddr_t)etherbroadcastaddr,
+		    sizeof( etherbroadcastaddr ))) {
+		log( LOG_ERR, "aarp: source is broadcast!\n");
+		m_free(m);
 		return;
 	}
 	op = ntohs(ea->aarp_op);
@@ -361,6 +384,7 @@ at_aarpinput(ifp, m)
 		 * Since we don't know the net, we just look for the first
 		 * phase 1 address on the interface.
 		 */
+		s = splimp();
 		for (aa = (struct at_ifaddr *) ifp->if_addrlist.tqh_first; aa;
 		    aa = (struct at_ifaddr *) aa->aa_ifa.ifa_list.tqe_next) {
 			if (AA_SAT(aa)->sat_family == AF_APPLETALK &&
@@ -368,10 +392,13 @@ at_aarpinput(ifp, m)
 				break;
 		}
 		if (aa == NULL) {
+			splx(s);
 			m_freem(m);
 			return;
 		}
+		ifa_addref(&aa->aa_ifa);
 		tpa.s_net = spa.s_net = AA_SAT(aa)->sat_addr.s_net;
+		splx(s);
 	}
 
 	spa.s_node = ea->aarp_spnode;
@@ -392,6 +419,7 @@ at_aarpinput(ifp, m)
 			untimeout(aarpprobe, ifp);
 			wakeup(aa);
 			m_freem(m);
+			ifa_delref(&aa->aa_ifa);
 			return;
 		} else if (op != AARPOP_PROBE) {
 			/*
@@ -402,6 +430,7 @@ at_aarpinput(ifp, m)
 			log(LOG_ERR, "aarp: duplicate AT address!! %s\n",
 			    ether_sprintf(ea->aarp_sha));
 			m_freem(m);
+			ifa_delref(&aa->aa_ifa);
 			return;
 		}
 	}
@@ -415,6 +444,7 @@ at_aarpinput(ifp, m)
 		         */
 			aarptfree(aat);
 			m_freem(m);
+			ifa_delref(&aa->aa_ifa);
 			return;
 		}
 		bcopy(ea->aarp_sha, aat->aat_enaddr, sizeof(ea->aarp_sha));
@@ -443,6 +473,7 @@ at_aarpinput(ifp, m)
 	if (tpa.s_net != ma.s_net || tpa.s_node != ma.s_node ||
 	    op == AARPOP_RESPONSE || (aa->aa_flags & AFA_PROBING)) {
 		m_freem(m);
+		ifa_delref(&aa->aa_ifa);
 		return;
 	}
 	bcopy(ea->aarp_sha, ea->aarp_tha, sizeof(ea->aarp_sha));
@@ -456,8 +487,10 @@ at_aarpinput(ifp, m)
 		eh->ether_type = htons(sizeof(struct llc) +
 		    sizeof(struct ether_aarp));
 		M_PREPEND(m, sizeof(struct llc), M_DONTWAIT);
-		if (m == NULL)
+		if (m == NULL) {
+			ifa_delref(&aa->aa_ifa);
 			return;
+		}
 
 		llc = mtod(m, struct llc *);
 		llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
@@ -478,6 +511,7 @@ at_aarpinput(ifp, m)
 	sa.sa_len = sizeof(struct sockaddr);
 	sa.sa_family = AF_UNSPEC;
 	(*ifp->if_output) (ifp, m, &sa, NULL);	/* XXX */
+	ifa_delref(&aa->aa_ifa);
 	return;
 }
 
@@ -540,6 +574,7 @@ aarpprobe(arp)
 	struct llc     *llc;
 	struct sockaddr sa;
 	struct ifnet   *ifp = arp;
+	int s;
 
 	/*
          * We need to check whether the output ethernet type should
@@ -548,6 +583,7 @@ aarpprobe(arp)
          * interface with the same address as we're looking for. If the
          * net is phase 2, generate an 802.2 and SNAP header.
          */
+	s = splimp();
 	for (aa = (struct at_ifaddr *) ifp->if_addrlist.tqh_first; aa;
 	     aa = (struct at_ifaddr *) aa->aa_ifa.ifa_list.tqe_next) {
 		if (AA_SAT(aa)->sat_family == AF_APPLETALK &&
@@ -555,18 +591,23 @@ aarpprobe(arp)
 			break;
 	}
 	if (aa == NULL) {	/* serious error XXX */
+		splx(s);
 		printf("aarpprobe why did this happen?!\n");
 		return;
 	}
+	ifa_addref(&aa->aa_ifa);
+	splx(s);
 	if (aa->aa_probcnt <= 0) {
 		aa->aa_flags &= ~AFA_PROBING;
 		wakeup(aa);
+		ifa_delref(&aa->aa_ifa);
 		return;
 	} else {
 		timeout(aarpprobe, arp, hz / 5);
 	}
 
 	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL) {
+		ifa_delref(&aa->aa_ifa);
 		return;
 	}
 	m->m_len = sizeof(*ea);
@@ -620,6 +661,7 @@ aarpprobe(arp)
 	sa.sa_family = AF_UNSPEC;
 	(*ifp->if_output) (ifp, m, &sa, NULL);	/* XXX */
 	aa->aa_probcnt--;
+	ifa_delref(&aa->aa_ifa);
 }
 
 void

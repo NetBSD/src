@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.25 1998/10/02 20:00:28 matt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.25.4.1 1998/12/11 04:53:00 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -235,10 +235,13 @@ extern void pdq_os_databuf_free(struct _pdq_os_ctx_t *osctx, struct mbuf *m);
 #define	PDQ_CSR_READ(csr, name)			PDQ_OS_IORD_32((csr)->csr_bus, (csr)->csr_base, (csr)->name)
 
 #define	PDQ_OS_IFP_TO_SOFTC(ifp)		((pdq_softc_t *) (ifp)->if_softc)
-#define	PDQ_ARP_IFINIT(sc, ifa)			arp_ifinit(&(sc)->sc_if, (ifa))
+#define	PDQ_ARP_IFINIT(sc, ifa)			arp_ifinit((sc)->sc_ec.ec_if, (ifa))
 #define	PDQ_FDDICOM(sc)				(&(sc)->sc_ec)
-#define	PDQ_LANADDR(sc)				LLADDR((sc)->sc_if.if_sadl)
-#define	PDQ_LANADDR_SIZE(sc)			((sc)->sc_if.if_sadl->sdl_alen)
+#define PDQ_IFP(sc)				((sc)->sc_ec.ec_if)
+#define	PDQ_LANADDR(sc)				LLADDR((sc)->sc_ec.ec_if->if_sadl)
+#define	PDQ_LANADDR_SIZE(sc)			((sc)->sc_ec.ec_if->if_sadl->sdl_alen)
+#define	sc_bpf	sc_ec.ec_if->if_bpf
+#define	PDQ_BPFATTACH(sc, t, s)	bpfattach(&(sc)->sc_ec.ec_if->if_bpf, (sc)->sc_ec.ec_if, t, s)
 #endif
 
 #if !defined(PDQ_BPF_MTAP)
@@ -259,6 +262,10 @@ extern void pdq_os_databuf_free(struct _pdq_os_ctx_t *osctx, struct mbuf *m);
 
 #if !defined(PDQ_FDDICOM)
 #define	PDQ_FDDICOM(sc)		(&(sc)->sc_ac)
+#endif
+
+#if !defined(PDQ_IFP)
+#define PDQ_IFP(sc)				(&((sc)->sc_ac.ac_if))
 #endif
 
 #if !defined(PDQ_ARP_IFINIT)
@@ -309,18 +316,15 @@ typedef struct _pdq_os_ctx_t {
     struct intrhand sc_ih;		/* interrupt vectoring */
     struct atshutdown sc_ats;		/* shutdown routine */
     struct arpcom sc_ac;
-#define	sc_if		sc_ac.ac_if
 #elif defined(__NetBSD__)
     struct device sc_dev;		/* base device */
     void *sc_ih;			/* interrupt vectoring */
     void *sc_ats;			/* shutdown hook */
     struct ethercom sc_ec;
     bus_dma_tag_t sc_dmatag;
-#define	sc_if		sc_ec.ec_if
 #elif defined(__FreeBSD__)
     struct kern_devconf *sc_kdc;	/* freebsd cruft */
     struct arpcom sc_ac;
-#define	sc_if		sc_ac.ac_if
 #endif
 #if defined(IFM_FDDI)
     struct ifmedia sc_ifmedia;
@@ -337,7 +341,9 @@ typedef struct _pdq_os_ctx_t {
     pdq_bus_t sc_iotag;
     pdq_bus_t sc_csrtag;
 #if !defined(__bsdi__) || _BSDI_VERSION >= 199401
+#if !defined(sc_bpf)
 #define	sc_bpf		sc_if.if_bpf
+#endif
 #else
     caddr_t sc_bpf;
 #endif

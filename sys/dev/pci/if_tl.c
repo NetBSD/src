@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.21 1998/10/30 23:30:16 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.21.4.1 1998/12/11 04:53:03 kenh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -291,7 +291,7 @@ tl_pci_attach(parent, self, aux)
 	tl_softc_t *sc = (tl_softc_t *)self;
 	struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
 	const struct tl_product_desc *tp;
-	struct ifnet * const ifp = &sc->tl_if;
+	struct ifnet * ifp;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	pci_intr_handle_t intrhandle;
@@ -385,6 +385,9 @@ tl_pci_attach(parent, self, aux)
 	 */
 	(void) shutdownhook_establish(tl_shutdown, sc);
 
+	ifp = if_alloc();
+	sc->tl_if = ifp;
+
 	/*
 	 * Initialize our media structures and probe the MII.
 	 *
@@ -407,17 +410,17 @@ tl_pci_attach(parent, self, aux)
 	} else
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
-	bcopy(sc->sc_dev.dv_xname, sc->tl_if.if_xname, IFNAMSIZ);
-	sc->tl_if.if_softc = sc;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_ioctl = tl_ifioctl;
 	ifp->if_start = tl_ifstart;
 	ifp->if_watchdog = tl_ifwatchdog;
 	ifp->if_timer = 0;
 	if_attach(ifp);
-	ether_ifattach(&(sc)->tl_if, (sc)->tl_enaddr);
+	ether_ifattach(ifp, (sc)->tl_enaddr);
 #if NBPFILTER > 0
-	bpfattach(&sc->tl_bpf, &sc->tl_if, DLT_EN10MB,
+	bpfattach(&sc->tl_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
 }
@@ -429,7 +432,7 @@ tl_reset(sc)
 	int i;
 
 	/* read stats */
-	if (sc->tl_if.if_flags & IFF_RUNNING) {
+	if (sc->tl_if->if_flags & IFF_RUNNING) {
 		untimeout(tl_ticks, sc);
 		tl_read_stats(sc);
 	}
@@ -473,7 +476,7 @@ static void tl_shutdown(v)
 	struct Tx_list *Tx;
 	int i;
 	
-	if ((sc->tl_if.if_flags & IFF_RUNNING) == 0)
+	if ((sc->tl_if->if_flags & IFF_RUNNING) == 0)
 		return;
 	/* disable interrupts */
 	TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_IntOff);
@@ -505,7 +508,7 @@ static void tl_shutdown(v)
 	sc->last_Tx = NULL;
 	free(sc->Tx_list, M_DEVBUF);
 	sc->Tx_list = NULL;
-	sc->tl_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->tl_if->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	sc->tl_mii.mii_media_status &= ~IFM_ACTIVE;
 	sc->tl_flags = 0;
 }
@@ -519,14 +522,14 @@ static void tl_restart(v)
 static int tl_init(sc)
 	tl_softc_t *sc;
 {
-	struct ifnet *ifp = &sc->tl_if;
+	struct ifnet *ifp = sc->tl_if;
 	int i, s;
 
 	s = splnet();
 	/* cancel any pending IO */
 	tl_shutdown(sc);
 	tl_reset(sc);
-	if ((sc->tl_if.if_flags & IFF_UP) == 0) {
+	if ((ifp->if_flags & IFF_UP) == 0) {
 		splx(s);
 		return 0;
 	}
@@ -558,7 +561,7 @@ static int tl_init(sc)
 	    M_NOWAIT);
 	if (sc->Rx_list == NULL || sc->Tx_list == NULL) {
 		printf("%s: out of memory for lists\n", sc->sc_dev.dv_xname);
-		sc->tl_if.if_flags &= ~IFF_UP;
+		ifp->if_flags &= ~IFF_UP;
 		splx(s);
 		return ENOMEM;
 	}
@@ -566,7 +569,7 @@ static int tl_init(sc)
 		if (tl_add_RxBuff(&sc->Rx_list[i], NULL) == 0) {
 			printf("%s: out of mbuf for receive list\n",
 			    sc->sc_dev.dv_xname);
-			sc->tl_if.if_flags &= ~IFF_UP;
+			ifp->if_flags &= ~IFF_UP;
 			splx(s);
 			return ENOMEM;
 		}
@@ -598,7 +601,7 @@ static int tl_init(sc)
 	if (nullbuf == NULL) {
 		printf("%s: can't allocate space for pad buffer\n",
 		    sc->sc_dev.dv_xname);
-		sc->tl_if.if_flags &= ~IFF_UP;
+		ifp->if_flags &= ~IFF_UP;
 		splx(s);
 		return ENOMEM;
 	}
@@ -613,8 +616,8 @@ static int tl_init(sc)
 	TL_HR_WRITE(sc, TL_HOST_CH_PARM, vtophys(&sc->Rx_list[0].hw_list));
 	TL_HR_WRITE(sc, TL_HOST_CMD,
 	    HOST_CMD_GO | HOST_CMD_RT | HOST_CMD_Nes | HOST_CMD_IntOn);
-	sc->tl_if.if_flags |= IFF_RUNNING;
-	sc->tl_if.if_flags &= ~IFF_OACTIVE;
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
 	return 0;
 }
 
@@ -852,7 +855,7 @@ tl_intr(v)
 	void *v;
 {
 	tl_softc_t *sc = v;
-	struct ifnet *ifp = &sc->tl_if;
+	struct ifnet *ifp = sc->tl_if;
 	struct Rx_list *Rx;
 	struct Tx_list *Tx;
 	struct mbuf *m;
@@ -919,6 +922,7 @@ tl_intr(v)
 					continue;
 				}
 				m->m_pkthdr.rcvif = ifp;
+				if_addref(ifp);
 				m->m_pkthdr.len = m->m_len =
 					size - sizeof(struct ether_header);
 				eh = mtod(m, struct ether_header *);
@@ -1019,9 +1023,9 @@ tl_intr(v)
 				    vtophys(&sc->active_Tx->hw_list));
 				TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_GO);
 			}
-			sc->tl_if.if_timer = 0;
-			if (sc->tl_if.if_snd.ifq_head != NULL)
-				tl_ifstart(&sc->tl_if);
+			ifp->if_timer = 0;
+			if (ifp->if_snd.ifq_head != NULL)
+				tl_ifstart(ifp);
 			return 1;
 		}
 #ifdef TLDEBUG
@@ -1029,9 +1033,9 @@ tl_intr(v)
 			printf("TL_INTR_TxEOF: ack %d\n", ack);
 		}
 #endif
-		sc->tl_if.if_timer = 0;
-		if (sc->tl_if.if_snd.ifq_head != NULL)
-			tl_ifstart(&sc->tl_if);
+		ifp->if_timer = 0;
+		if (ifp->if_snd.ifq_head != NULL)
+			tl_ifstart(ifp);
 		break;
 	case TL_INTR_Stat:
 		ack++;
@@ -1095,9 +1099,9 @@ tl_ifioctl(ifp, cmd, data)
 	switch(cmd) {
 	case SIOCSIFADDR: {
 		struct ifaddr *ifa = (struct ifaddr *)data;
-		sc->tl_if.if_flags |= IFF_UP;
+		ifp->if_flags |= IFF_UP;
 		if ((error = tl_init(sc)) != NULL) {
-			sc->tl_if.if_flags &= ~IFF_UP;
+			ifp->if_flags &= ~IFF_UP;
 			break;
 		}
 		switch (ifa->ifa_addr->sa_family) {
@@ -1488,8 +1492,8 @@ static void tl_ticks(v)
 				m->m_len = m->m_pkthdr.len =
 				    sizeof(struct ether_header) + 3;
 				s = splnet();
-				IF_PREPEND(&sc->tl_if.if_snd, m);
-				tl_ifstart(&sc->tl_if);
+				IF_PREPEND(&sc->tl_if->if_snd, m);
+				tl_ifstart(sc->tl_if);
 				splx(s);
 			}
 		}
@@ -1514,7 +1518,7 @@ tl_read_stats(sc)
 	int oerr_exesscoll;
 	int oerr_latecoll;
 	int oerr_carrloss;
-	struct ifnet *ifp = &sc->tl_if;
+	struct ifnet *ifp = sc->tl_if;
 
 	reg =  tl_intreg_read(sc, TL_INT_STATS_TX);
 	ifp->if_opackets += reg & 0x00ffffff;
@@ -1573,7 +1577,7 @@ static void tl_addr_filter(sc)
 	u_int32_t hash[2] = {0, 0};
 	int i;
 
-	sc->tl_if.if_flags &= ~IFF_ALLMULTI;
+	sc->tl_if->if_flags &= ~IFF_ALLMULTI;
 	ETHER_FIRST_MULTI(step, &sc->tl_ec, enm);
 	while (enm != NULL) {
 #ifdef TLDEBUG
@@ -1586,7 +1590,7 @@ static void tl_addr_filter(sc)
 			hash[i/32] |= 1 << (i%32);
 		} else {
 			hash[0] = hash[1] = 0xffffffff;
-			sc->tl_if.if_flags |= IFF_ALLMULTI;
+			sc->tl_if->if_flags |= IFF_ALLMULTI;
 			break;
 		}
 		ETHER_NEXT_MULTI(step, enm);

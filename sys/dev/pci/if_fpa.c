@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.28 1998/08/13 02:10:53 eeh Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.28.4.1 1998/12/11 04:53:03 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -143,7 +143,7 @@ static ifnet_ret_t
 pdq_pci_ifwatchdog(
     int unit)
 {
-    pdq_ifwatchdog(&PDQ_PCI_UNIT_TO_SOFTC(unit)->sc_if);
+    pdq_ifwatchdog(PDQ_IFP(PDQ_PCI_UNIT_TO_SOFTC(unit)));
 }
 #endif
 
@@ -219,11 +219,11 @@ pdq_pci_attach(
 	return;
     }
 
-    sc->sc_if.if_name = "fpa";
-    sc->sc_if.if_unit = unit;
+    ifp->if_name = "fpa";
+    ifp->if_unit = unit;
     sc->sc_membase = (pdq_bus_memaddr_t) va_csrs;
     sc->sc_pdq = pdq_initialize(PDQ_BUS_PCI, sc->sc_membase,
-				sc->sc_if.if_name, sc->sc_if.if_unit,
+				ifp->if_name, ifp->if_unit,
 				(void *) sc, PDQ_DEFPA);
     if (sc->sc_pdq == NULL) {
 	free((void *) sc, M_DEVBUF);
@@ -426,6 +426,7 @@ pdq_pci_attach(
     bus_space_tag_t iot, memt;
     bus_space_handle_t ioh, memh;
     int ioh_valid, memh_valid;
+    struct ifnet *ifp;
 
     data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CFLT);
     if ((data & 0xFF00) < (DEFPA_LATENCY << 8)) {
@@ -434,9 +435,12 @@ pdq_pci_attach(
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_CFLT, data);
     }
 
-    bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
-    sc->sc_if.if_flags = 0;
-    sc->sc_if.if_softc = sc;
+    ifp = if_alloc();
+    sc->sc_ec.ec_if = ifp;
+    ifp->if_ifcom = &sc->sc_ec;
+    bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+    ifp->if_flags = 0;
+    ifp->if_softc = sc;
 
     ioh_valid = (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 		 &iot, &ioh, NULL, NULL) == 0);
@@ -468,7 +472,7 @@ pdq_pci_attach(
 
     sc->sc_dmatag = pa->pa_dmat;
     sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_membase,
-				sc->sc_if.if_xname, 0,
+				ifp->if_xname, 0,
 				(void *) sc, PDQ_DEFPA);
     if (sc->sc_pdq == NULL) {
 	printf("%s: initialization failed\n", sc->sc_dev.dv_xname);

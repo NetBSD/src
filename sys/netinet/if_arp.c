@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.53 1998/10/01 11:04:24 drochner Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.53.4.1 1998/12/11 04:53:07 kenh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -507,11 +507,11 @@ in_arpinput(m)
 	register struct ifnet *ifp = m->m_pkthdr.rcvif;
 	register struct llinfo_arp *la = 0;
 	register struct rtentry *rt;
-	struct in_ifaddr *ia;
+	struct in_ifaddr *ia = NULL;
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
-	int op;
+	int op, s;
 
 	ah = mtod(m, struct arphdr *);
 	op = ntohs(ah->ar_op);
@@ -538,7 +538,10 @@ in_arpinput(m)
 	 * Search for a matching interface address
 	 * or any address on the interface to use
 	 * as a dummy address in the rest of this function
+	 *
+	 * Remember: all macros below will call ifa_addref()
 	 */
+	s = splimp();
 	INADDR_TO_IA(itaddr, ia);
 	while ((ia != NULL) && ia->ia_ifp != m->m_pkthdr.rcvif)
 		NEXT_IA_WITH_SAME_ADDR(ia);
@@ -550,11 +553,13 @@ in_arpinput(m)
 
 		if (ia == NULL) {
 			IFP_TO_IA(ifp, ia);
-			if (ia == NULL)
-				goto out;
+			if (ia == NULL) {
+				splx(s);
+ 				goto out;
+			}
 		}
 	}
-
+	splx(s);
 	myaddr = ia->ia_addr.sin_addr;
 
 	if (!bcmp((caddr_t)ar_sha(ah), LLADDR(ifp->if_sadl),
@@ -616,6 +621,8 @@ in_arpinput(m)
 reply:
 	if (op != ARPOP_REQUEST) {
 	out:
+		if (ia)
+			ifa_delref(&ia->ia_ifa);
 		m_freem(m);
 		return;
 	}
@@ -641,6 +648,8 @@ reply:
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
 	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
+	if (ia)
+		ifa_delref(&ia->ia_ifa);
 	return;
 }
 
@@ -868,6 +877,7 @@ revarpwhoarewe(ifp, serv_in, clnt_in)
 	
 	if (!myip_initialized) {
 		myip_ifp = ifp;
+		if_addref(ifp);		/* How do we delete this one? */
 		revarp_in_progress = 1;
 		while (count--) {
 			revarprequest(ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_input.c,v 1.13 1998/09/13 16:21:19 christos Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.13.4.1 1998/12/11 04:53:07 kenh Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -129,6 +129,7 @@ pk_newlink(ia, llnext)
 	pkp->pk_llctlinput = pp->pr_ctlinput;
 	pkp->pk_xcp = xcp;
 	pkp->pk_ia = ia;
+	ifa_addref(&ia->ia_ifa);
 	pkp->pk_state = DTE_WAITING;
 	pkp->pk_llnext = llnext;
 	insque(pkp, &pkcb_q);
@@ -204,6 +205,7 @@ pk_dellink(pkp)
 					    (struct sockaddr *)pkp->pk_xcp,
 					    &ctlinfo);
 		}
+		ifa_delref(&pkp->pk_ia->ia_ifa);
 		free((caddr_t) pkp->pk_chan, M_IFADDR);
 		free((caddr_t) pkp, M_PCB);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.3 1998/06/10 00:43:58 wrstuden Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.3.6.1 1998/12/11 04:53:06 kenh Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -75,10 +75,12 @@ atintr()
 			break;
 		}
 		ifp = m->m_pkthdr.rcvif;
+		s = splimp();
 		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
 			if (aa->aa_ifp == ifp && (aa->aa_flags & AFA_PHASE2))
 				break;
 		}
+		splx(s);
 		if (aa == NULL) {	/* ifp not an appletalk interface */
 			m_freem(m);
 			continue;
@@ -97,11 +99,13 @@ atintr()
 
 			break;
 		ifp = m->m_pkthdr.rcvif;
+		s = splimp();
 		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
 			if (aa->aa_ifp == ifp &&
 			    (aa->aa_flags & AFA_PHASE2) == 0)
 				break;
 		}
+		splx(s);
 		if (aa == NULL) {	/* ifp not an appletalk interface */
 			m_freem(m);
 			continue;
@@ -134,10 +138,10 @@ ddp_input(m, ifp, elh, phase)
 {
 	struct sockaddr_at from, to;
 	struct ddpshdr *dsh, ddps;
-	struct at_ifaddr *aa;
+	struct at_ifaddr *aa = NULL;
 	struct ddpehdr *deh = NULL, ddpe;
 	struct ddpcb   *ddp;
-	int             dlen, mlen;
+	int             dlen, mlen, s;
 	u_short         cksum = 0;
 
 	bzero((caddr_t) & from, sizeof(struct sockaddr_at));
@@ -161,6 +165,7 @@ ddp_input(m, ifp, elh, phase)
 		from.sat_addr.s_node = elh->el_snode;
 		from.sat_port = ddps.dsh_sport;
 
+		s = splimp();
 		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
 			if (aa->aa_ifp == ifp &&
 			    (aa->aa_flags & AFA_PHASE2) == 0 &&
@@ -171,8 +176,11 @@ ddp_input(m, ifp, elh, phase)
 		}
 		if (aa == NULL) {
 			m_freem(m);
+			splx(s);
 			return;
 		}
+		ifa_addref(&aa->aa_ifa);
+		splx(s);
 	} else {
 		ddpstat.ddps_long++;
 
@@ -196,6 +204,7 @@ ddp_input(m, ifp, elh, phase)
 		to.sat_addr.s_node = ddpe.deh_dnode;
 		to.sat_port = ddpe.deh_dport;
 
+		s = splimp();
 		if (to.sat_addr.s_net == ATADDR_ANYNET) {
 			for (aa = at_ifaddr.tqh_first; aa;
 			    aa = aa->aa_list.tqe_next) {
@@ -236,6 +245,9 @@ ddp_input(m, ifp, elh, phase)
 				break;
 			}
 		}
+		if (aa)
+			ifa_addref(&aa->aa_ifa);
+		splx(s);
 	}
 
 	/*
@@ -246,6 +258,7 @@ ddp_input(m, ifp, elh, phase)
 	mlen = m->m_pkthdr.len;
 	if (mlen < dlen) {
 		ddpstat.ddps_toosmall++;
+		ifa_delref(&aa->aa_ifa);
 		m_freem(m);
 		return;
 	}
@@ -259,6 +272,8 @@ ddp_input(m, ifp, elh, phase)
 	if (aa == NULL || (to.sat_addr.s_node == ATADDR_BCAST &&
 		aa->aa_ifp != ifp && (ifp->if_flags & IFF_LOOPBACK) == 0)) {
 		if (ddp_forward == 0) {
+			if (aa)
+				ifa_delref(&aa->aa_ifa);
 			m_freem(m);
 			return;
 		}
@@ -284,11 +299,15 @@ ddp_input(m, ifp, elh, phase)
 		if (to.sat_addr.s_net !=
 		    satosat(&forwro.ro_dst)->sat_addr.s_net &&
 		    ddpe.deh_hops == DDP_MAXHOPS) {
+			if (aa)
+				ifa_delref(&aa->aa_ifa);
 			m_freem(m);
 			return;
 		}
 		if (ddp_firewall &&
 		    (forwro.ro_rt == NULL || forwro.ro_rt->rt_ifp != ifp)) {
+			if (aa)
+				ifa_delref(&aa->aa_ifa);
 			m_freem(m);
 			return;
 		}
@@ -300,6 +319,8 @@ ddp_input(m, ifp, elh, phase)
 		} else {
 			ddpstat.ddps_forward++;
 		}
+		if (aa)
+			ifa_delref(&aa->aa_ifa);
 		return;
 	}
 	from.sat_len = sizeof(struct sockaddr_at);
@@ -310,6 +331,8 @@ ddp_input(m, ifp, elh, phase)
 	} else {
 		if (ddp_cksum && cksum && cksum != at_cksum(m, sizeof(int))) {
 			ddpstat.ddps_badsum++;
+			if (aa)
+				ifa_delref(&aa->aa_ifa);
 			m_freem(m);
 			return;
 		}
@@ -317,9 +340,13 @@ ddp_input(m, ifp, elh, phase)
 	}
 
 	if ((ddp = ddp_search(&from, &to, aa)) == NULL) {
+		if (aa)
+			ifa_delref(&aa->aa_ifa);
 		m_freem(m);
 		return;
 	}
+	if (aa)
+		ifa_delref(&aa->aa_ifa);
 	if (sbappendaddr(&ddp->ddp_socket->so_rcv, (struct sockaddr *) & from,
 			 m, (struct mbuf *) 0) == 0) {
 		ddpstat.ddps_nosockspace++;

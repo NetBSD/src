@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.7 1998/02/09 17:43:45 perry Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.7.6.1 1998/12/11 04:53:04 kenh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -99,7 +99,7 @@ struct	arc_header {
 #define	ARCMIN			0
 
 struct	arccom {
-	struct 	  ifnet ac_if;		/* network-visible interface */
+	struct 	  ifnet *ac_if;		/* network-visible interface */
 
 	u_int16_t ac_seqid;		/* seq. id used by PHDS encap. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.15 1998/07/05 00:51:22 jonathan Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.15.6.1 1998/12/11 04:53:02 kenh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -127,7 +127,7 @@ ofnet_attach(parent, self, aux)
 	void *aux;
 {
 	struct ofnet_softc *of = (void *)self;
-	struct ifnet *ifp = &of->sc_ethercom.ec_if;
+	struct ifnet *ifp;
 	struct ofbus_attach_args *oba = aux;
 	char path[256];
 	int l;
@@ -151,7 +151,10 @@ ofnet_attach(parent, self, aux)
 	    sizeof myaddr) < 0)
 		panic("ofnet_attach: no mac-address");
 	printf(": address %s\n", ether_sprintf(myaddr));
-	
+
+	ifp = if_alloc();
+	of->sc_ethercom.ec_if = ifp;
+	ifp->if_ifcom = &of->sc_ethercom;
 	bcopy(of->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = of;
 	ifp->if_start = ofnet_start;
@@ -175,7 +178,7 @@ static void
 ofnet_read(of)
 	struct ofnet_softc *of;
 {
-	struct ifnet *ifp = &of->sc_ethercom.ec_if;
+	struct ifnet *ifp = of->sc_ethercom.ec_if;
 	struct ether_header *eh;
 	struct mbuf *m, **mp, *head;
 	int l, len;
@@ -204,6 +207,7 @@ ofnet_read(of)
 			continue;
 		}
 		m->m_pkthdr.rcvif = ifp;
+		if_addref(ifp);
 		m->m_pkthdr.len = len;
 		l = MHLEN;
 		head = 0;
@@ -280,7 +284,7 @@ static void
 ofnet_init(of)
 	struct ofnet_softc *of;
 {
-	struct ifnet *ifp = &of->sc_ethercom.ec_if;
+	struct ifnet *ifp = of->sc_ethercom.ec_if;
 
 	if (ifp->if_flags & IFF_RUNNING)
 		return;
@@ -297,7 +301,7 @@ ofnet_stop(of)
 	struct ofnet_softc *of;
 {
 	untimeout(ofnet_timer, of);
-	of->sc_ethercom.ec_if.if_flags &= ~IFF_RUNNING;
+	of->sc_ethercom.ec_if->if_flags &= ~IFF_RUNNING;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.16 1998/11/18 18:34:52 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.16.2.1 1998/12/11 04:52:58 kenh Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -83,11 +83,12 @@ int	dp8390_debug = 0;
  * Do bus-independent setup.
  */
 int
-dp8390_config(sc, media, nmedia, defmedia)
+dp8390_config(sc, media, nmedia, defmedia, the_watch)
 	struct dp8390_softc *sc;
 	int *media, nmedia, defmedia;
+	void (*the_watch) __P((struct ifnet *));
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp;
 	int i, rv;
 
 	rv = 1;
@@ -116,11 +117,16 @@ dp8390_config(sc, media, nmedia, defmedia)
 	dp8390_stop(sc);
 
 	/* Initialize ifnet structure. */
+	ifp = if_alloc();
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
+	sc->sc_ec.ec_if = ifp;
+	ifp->if_ifcom = &sc->sc_ec;
 	ifp->if_start = dp8390_start;
 	ifp->if_ioctl = dp8390_ioctl;
-	if (!ifp->if_watchdog)
+	if (the_watch)
+		ifp->if_watchdog = the_watch;
+	else
 		ifp->if_watchdog = dp8390_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
@@ -238,7 +244,7 @@ dp8390_watchdog(ifp)
 	struct dp8390_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_ec.ec_if.if_oerrors;
+	++sc->sc_ec.ec_if->if_oerrors;
 
 	dp8390_reset(sc);
 }
@@ -252,7 +258,7 @@ dp8390_init(sc)
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = sc->sc_ec.ec_if;
 	u_int8_t mcaf[8];
 	int i;
 
@@ -382,7 +388,7 @@ dp8390_xmit(sc)
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = sc->sc_ec.ec_if;
 	u_short len;
 
 #ifdef DIAGNOSTIC
@@ -577,13 +583,13 @@ loop:
 			dp8390_read(sc,
 			    packet_ptr + sizeof(struct dp8390_ring),
 			    len - sizeof(struct dp8390_ring));
-			++sc->sc_ec.ec_if.if_ipackets;
+			++sc->sc_ec.ec_if->if_ipackets;
 		} else {
 			/* Really BAD.  The ring pointers are corrupted. */
 			log(LOG_ERR, "%s: NIC memory corrupt - "
 			    "invalid packet length %d\n",
 			    sc->sc_dev.dv_xname, len);
-			++sc->sc_ec.ec_if.if_ierrors;
+			++sc->sc_ec.ec_if->if_ierrors;
 			dp8390_reset(sc);
 			return;
 		}
@@ -612,7 +618,7 @@ dp8390_intr(arg)
 	struct dp8390_softc *sc = (struct dp8390_softc *)arg;
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = sc->sc_ec.ec_if;
 	u_char isr;
 
 	if (sc->sc_enabled == 0)
@@ -925,7 +931,7 @@ dp8390_read(sc, buf, len)
 	int buf;
 	u_short len;
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = sc->sc_ec.ec_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 
@@ -983,7 +989,7 @@ dp8390_getmcaf(ec, af)
 	struct ethercom *ec;
 	u_int8_t *af;
 {
-	struct ifnet *ifp = &ec->ec_if;
+	struct ifnet *ifp = ec->ec_if;
 	struct ether_multi *enm;
 	u_int8_t *cp, c;
 	u_int32_t crc;
@@ -1061,7 +1067,7 @@ dp8390_get(sc, src, total_len)
 	int src;
 	u_short total_len;
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = sc->sc_ec.ec_if;
 	struct mbuf *top, **mp, *m;
 	u_short len;
 
@@ -1069,6 +1075,7 @@ dp8390_get(sc, src, total_len)
 	if (m == 0)
 		return 0;
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = total_len;
 	len = MHLEN;
 	top = 0;

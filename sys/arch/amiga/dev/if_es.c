@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.22 1998/07/05 06:49:03 jonathan Exp $	*/
+/*	$NetBSD: if_es.c,v 1.22.6.1 1998/12/11 04:52:55 kenh Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -159,7 +159,7 @@ esattach(parent, self, aux)
 {
 	struct es_softc *sc = (void *)self;
 	struct zbus_args *zap = aux;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp;
 	unsigned long ser;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
@@ -183,6 +183,9 @@ esattach(parent, self, aux)
 	myaddr[5] = (ser      ) & 0xff;
 
 	/* Initialize ifnet structure. */
+	ifp = if_alloc();
+	sc->sc_ethercom.ec_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_output = ether_output;
@@ -250,7 +253,7 @@ void
 esinit(sc)
 	struct es_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	union smcregs *smc = sc->sc_base;
 	int s;
 
@@ -300,7 +303,7 @@ esintr(arg)
 	void *arg;
 {
 	struct es_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	u_short intsts, intact;
 	union smcregs *smc;
 	int s = splnet();
@@ -546,7 +549,7 @@ esrint(sc)
 	int i;
 #endif
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 #ifdef ESDEBUG
 	if (esdebug)
 		printf ("%s: esrint fifo %04x", sc->sc_dev.dv_xname,
@@ -657,6 +660,7 @@ esrint(sc)
 	if (m == NULL)
 		return;
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = pktlen;
 	len = MHLEN;
 	top = NULL;
@@ -723,7 +727,7 @@ esrint(sc)
 		 * there are no BPF listeners.  And if we are in promiscuous
 		 * mode, we have to check if this packet is really ours.
 		 */
-		if ((sc->sc_ethercom.ec_if.if_flags & IFF_PROMISC) &&
+		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
 		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			    sizeof(eh->ether_dhost)) != 0) {
@@ -750,7 +754,7 @@ estint(sc)
 	struct es_softc *sc;
 {
 
-	esstart(&sc->sc_ethercom.ec_if);
+	esstart(sc->sc_ethercom.ec_if);
 }
 
 void
@@ -776,7 +780,7 @@ esstart(ifp)
 	int i;
 	u_char active_pnr;
 
-	if ((sc->sc_ethercom.ec_if.if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
 	    IFF_RUNNING)
 		return;
 
@@ -799,7 +803,7 @@ esstart(ifp)
 		 * Sneak a peek at the next packet to get the length
 		 * and see if the SMC 91C90 can accept it.
 		 */
-		m = sc->sc_ethercom.ec_if.if_snd.ifq_head;
+		m = ifp->if_snd.ifq_head;
 		if (!m)
 			break;
 #ifdef ESDEBUG
@@ -820,7 +824,7 @@ esstart(ifp)
 			if ((smc->b2.arr & ARR_FAILED) == 0)
 				break;
 		if (smc->b2.arr & ARR_FAILED) {
-			sc->sc_ethercom.ec_if.if_flags |= IFF_OACTIVE;
+			ifp->if_flags |= IFF_OACTIVE;
 			sc->sc_intctl |= MSK_ALLOC;
 			break;
 		}
@@ -833,7 +837,7 @@ esstart(ifp)
 		smc->b2.bsr = BSR_BANK2;
 		}
 #endif
-		IF_DEQUEUE(&sc->sc_ethercom.ec_if.if_snd, m);
+		IF_DEQUEUE(&ifp->if_snd, m);
 		smc->b2.ptr = PTR_AUTOINCR;
 		(void) smc->b2.mmucr;
 		data = (u_short *)&smc->b2.data;
@@ -930,7 +934,7 @@ esstart(ifp)
 			    start_ptr, end_ptr, SWAP(smc->b2.ptr));
 			--sc->sc_smcbusy;
 #endif
-			IF_PREPEND(&sc->sc_ethercom.ec_if.if_snd, m0);
+			IF_PREPEND(&ifp->if_snd, m0);
 			esinit(sc);	/* It's really hosed - reset */
 			return;
 		}
@@ -939,11 +943,11 @@ esstart(ifp)
 			printf("%s: esstart - PNR changed %x->%x\n",
 			    sc->sc_dev.dv_xname, active_pnr, smc->b2.pnr);
 #if NBPFILTER > 0
-		if (sc->sc_ethercom.ec_if.if_bpf)
-			bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, m0);
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m0);
 #endif
 		m_freem(m0);
-		sc->sc_ethercom.ec_if.if_opackets++;	/* move to interrupt? */
+		ifp->if_opackets++;	/* move to interrupt? */
 		sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;
 	}
 	smc->b2.msk = sc->sc_intctl;

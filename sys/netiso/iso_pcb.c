@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.17 1998/07/05 04:37:43 jonathan Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.17.6.1 1998/12/11 04:53:10 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -165,7 +165,7 @@ iso_pcbbind(v, nam, p)
 		char            data[2];
 		u_short         s;
 	} suf;
-	int error;
+	int error, s;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
@@ -213,9 +213,11 @@ iso_pcbbind(v, nam, p)
 			printf("iso_pcbbind: bind to NOT zeroisoaddr\n");
 		}
 #endif
+		s = splimp();
 		for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
 			if (SAME_ISOIFADDR(siso, &ia->ia_addr))
 				break;
+		splx(s);
 		if (ia == 0)
 			return EADDRNOTAVAIL;
 	}
@@ -293,7 +295,7 @@ iso_pcbconnect(v, nam)
 {
 	register struct isopcb *isop = v;
 	register struct sockaddr_iso *siso = mtod(nam, struct sockaddr_iso *);
-	int             local_zero, error = 0;
+	int             local_zero, error = 0, s;
 	struct iso_ifaddr *ia;
 
 #ifdef ARGO_DEBUG
@@ -309,6 +311,7 @@ iso_pcbconnect(v, nam)
 	if (siso->siso_family != AF_ISO)
 		return EAFNOSUPPORT;
 	if (siso->siso_nlen == 0) {
+		s = splimp();
 		if ((ia = iso_ifaddr.tqh_first) != NULL) {
 			int             nlen = ia->ia_addr.siso_nlen;
 			ovbcopy(TSEL(siso), nlen + TSEL(siso),
@@ -316,7 +319,11 @@ iso_pcbconnect(v, nam)
 			bcopy((caddr_t) & ia->ia_addr.siso_addr,
 			      (caddr_t) & siso->siso_addr, nlen + 1);
 			/* includes siso->siso_nlen = nlen; */
-		} else
+		}
+		if (ia)
+			ifa_addref(&ia->ia_ifa);
+		splx(s);
+		if (ia == 0)
 			return EADDRNOTAVAIL;
 	}
 	/*
@@ -341,8 +348,10 @@ iso_pcbconnect(v, nam)
 		flags = isop->isop_socket->so_options & SO_DONTROUTE;
 		error = clnp_route(&siso->siso_addr, &isop->isop_route, flags,
 				   NULL, &ia);
-		if (error)
+		if (error) {
+			ifa_delref(&ia->ia_ifa);
 			return error;
+		}
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ISO]) {
 			printf("iso_pcbconnect localzero 2, ro->ro_rt %p",
@@ -411,8 +420,10 @@ iso_pcbconnect(v, nam)
 			isop->isop_faddr = &isop->isop_sfaddr;
 		else {
 			struct mbuf    *m = m_get(M_DONTWAIT, MT_SONAME);
-			if (m == 0)
+			if (m == 0)	{
+				ifa_delref(&ia->ia_ifa);
 				return ENOBUFS;
+			}
 			isop->isop_mfaddr = m;
 			isop->isop_faddr = mtod(m, struct sockaddr_iso *);
 		}
@@ -428,6 +439,7 @@ iso_pcbconnect(v, nam)
 		dump_isoaddr(isop->isop_laddr);
 	}
 #endif
+	ifa_delref(&ia->ia_ifa);
 	return 0;
 }
 

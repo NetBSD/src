@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.32 1998/08/28 20:05:48 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.32.4.1 1998/12/11 04:53:03 kenh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -707,6 +707,7 @@ m_devget(buf, totlen, off0, ifp, copy)
 	if (m == 0)
 		return (0);
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = totlen;
 	m->m_len = MHLEN;
 

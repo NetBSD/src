@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.17 1998/09/13 16:21:19 christos Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.17.4.1 1998/12/11 04:53:07 kenh Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -313,17 +313,23 @@ pk_ifwithaddr(sx)
 	struct ifaddr  *ifa;
 	register struct x25_ifaddr *ia;
 	char           *addr = sx->x25_addr;
+	int		s;
 
+	s = splimp();
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
 		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 		     ifa = ifa->ifa_list.tqe_next)
 			if (ifa->ifa_addr->sa_family == AF_CCITT) {
 				ia = (struct x25_ifaddr *) ifa;
 				if (bcmp(addr, ia->ia_xc.xc_addr.x25_addr,
-					 16) == 0)
+					 16) == 0) {
+					ifa_addref(ifa);
+					splx(s);
 					return (ia);
+				}
 
 			}
+	splx(s);
 	return ((struct x25_ifaddr *) 0);
 }
 

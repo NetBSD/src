@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.31 1998/09/29 22:40:52 matt Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.31.4.1 1998/12/11 04:53:02 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -988,12 +988,12 @@ extern struct cfdriver de_cd;
 #define	TULIP_RAISESPL()		splnet()
 #define	TULIP_RAISESOFTSPL()		splsoftnet()
 #define	TULIP_RESTORESPL(s)		splx(s)
-#define	tulip_if			tulip_ec.ec_if
+#define	tulip_if			tulip_ec.ec_if[0]
 #define	tulip_enaddr			tulip_enaddr
 #define	tulip_multicnt			tulip_ec.ec_multicnt
 #define	TULIP_ETHERCOM(sc)		(&(sc)->tulip_ec)
-#define	TULIP_ARP_IFINIT(sc, ifa)	arp_ifinit(&(sc)->tulip_if, (ifa))
-#define	TULIP_ETHER_IFATTACH(sc)	ether_ifattach(&(sc)->tulip_if, (sc)->tulip_enaddr)
+#define	TULIP_ARP_IFINIT(sc, ifa)	arp_ifinit((sc)->tulip_ec.ec_if, (ifa))
+#define	TULIP_ETHER_IFATTACH(sc)	ether_ifattach((sc)->tulip_ec.ec_if, (sc)->tulip_enaddr)
 #define	loudprintf			printf
 #define	TULIP_PRINTF_FMT		"%s"
 #define	TULIP_PRINTF_ARGS		sc->tulip_xname

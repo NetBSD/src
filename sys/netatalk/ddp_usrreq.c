@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.2 1997/04/29 13:44:47 christos Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.2.14.1 1998/12/11 04:53:06 kenh Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -226,6 +226,7 @@ at_pcbsetaddr(ddp, addr, p)
 	struct sockaddr_at lsat, *sat;
 	struct at_ifaddr *aa;
 	struct ddpcb   *ddpp;
+	int s;
 
 	if (ddp->ddp_lsat.sat_port != ATADDR_ANYPORT) {	/* shouldn't be bound */
 		return (EINVAL);
@@ -240,6 +241,7 @@ at_pcbsetaddr(ddp, addr, p)
 
 		if (sat->sat_addr.s_node != ATADDR_ANYNODE ||
 		    sat->sat_addr.s_net != ATADDR_ANYNET) {
+			s = splimp();
 			for (aa = at_ifaddr.tqh_first; aa;
 			    aa = aa->aa_list.tqe_next) {
 				if ((sat->sat_addr.s_net ==
@@ -248,6 +250,7 @@ at_pcbsetaddr(ddp, addr, p)
 				    AA_SAT(aa)->sat_addr.s_node))
 					break;
 			}
+			splx(s);
 			if (!aa)
 				return (EADDRNOTAVAIL);
 		}
@@ -271,9 +274,13 @@ at_pcbsetaddr(ddp, addr, p)
 
 	if (sat->sat_addr.s_node == ATADDR_ANYNODE &&
 	    sat->sat_addr.s_net == ATADDR_ANYNET) {
-		if (at_ifaddr.tqh_first == NULL)
+		s = splimp();
+		if (at_ifaddr.tqh_first == NULL) {
+			splx(s);
 			return (EADDRNOTAVAIL);
+		}
 		sat->sat_addr = AA_SAT(at_ifaddr.tqh_first)->sat_addr;
+		splx(s);
 	}
 	ddp->ddp_lsat = *sat;
 
@@ -323,6 +330,7 @@ at_pcbconnect(ddp, addr, p)
 	struct at_ifaddr *aa = 0;
 	struct ifnet   *ifp;
 	u_short         hintnet = 0, net;
+	int s;
 
 	if (addr->m_len != sizeof(*sat))
 		return (EINVAL);
@@ -355,6 +363,7 @@ at_pcbconnect(ddp, addr, p)
 		}
 		aa = 0;
 		if ((ifp = ro->ro_rt->rt_ifp) != NULL) {
+			s = splimp();
 			for (aa = at_ifaddr.tqh_first; aa;
 			    aa = aa->aa_list.tqe_next) {
 				if (aa->aa_ifp == ifp &&
@@ -363,6 +372,7 @@ at_pcbconnect(ddp, addr, p)
 					break;
 				}
 			}
+			splx(s);
 		}
 		if (aa == NULL || (satosat(&ro->ro_dst)->sat_addr.s_net !=
 		    (hintnet ? hintnet : sat->sat_addr.s_net) ||
@@ -394,11 +404,13 @@ at_pcbconnect(ddp, addr, p)
          */
 	aa = 0;
 	if (ro->ro_rt && (ifp = ro->ro_rt->rt_ifp)) {
+		s = splimp();
 		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
 			if (aa->aa_ifp == ifp) {
 				break;
 			}
 		}
+		splx(s);
 	}
 	if (aa == 0) {
 		return (ENETUNREACH);
@@ -512,6 +524,9 @@ ddp_search(from, to, aa)
 		    to->sat_addr.s_node == ddp->ddp_lsat.sat_addr.s_node) {
 			break;
 		}
+		/* All the following tests require aa != NULL, so.... */
+		if (aa == NULL)
+			continue;
 		/* 0.255 to socket on receiving interface */
 		if (to->sat_addr.s_node == ATADDR_BCAST &&
 		    (to->sat_addr.s_net == 0 ||

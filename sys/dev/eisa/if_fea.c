@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.19 1998/07/05 00:51:18 jonathan Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.19.6.1 1998/12/11 04:52:58 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -472,9 +472,9 @@ pdq_eisa_attach(
 
     sc->sc_iotag = ea->ea_iot;
     sc->sc_dmatag = ea->ea_dmat;
-    bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
-    sc->sc_if.if_flags = 0;
-    sc->sc_if.if_softc = sc;
+    bcopy(sc->sc_dev.dv_xname, PDQ_IFP(sc)->if_xname, IFNAMSIZ);
+    PDQ_IFP(sc)->if_flags = 0;
+    PDQ_IFP(sc)->if_softc = sc;
 
     if (bus_space_map(sc->sc_iotag, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, 0, &sc->sc_iobase)) {
 	printf("\n%s: failed to map I/O!\n", sc->sc_dev.dv_xname);
@@ -498,7 +498,7 @@ pdq_eisa_attach(
 
     pdq_eisa_devinit(sc);
     sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_membase,
-				sc->sc_if.if_xname, 0,
+				PDQ_IFP(sc)->if_xname, 0,
 				(void *) sc, PDQ_DEFEA);
     if (sc->sc_pdq == NULL) {
 	printf("%s: initialization failed\n", sc->sc_dev.dv_xname);

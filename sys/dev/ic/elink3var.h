@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.21 1998/11/18 18:34:52 thorpej Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.21.2.1 1998/12/11 04:52:59 kenh Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -100,6 +100,8 @@ struct ep_softc {
 	rndsource_element_t rnd_source;
 #endif
 
+	void *ep_shutdownhook;		/* Pointer for shutdown hook */
+
 	/* power management hooks */
 	int (*enable) __P((struct ep_softc *));
 	void (*disable) __P((struct ep_softc *));
@@ -116,3 +118,4 @@ int	epenable __P((struct ep_softc *));
 void	epdisable __P((struct ep_softc *));
 
 int	ep_activate __P((struct device *, enum devact));
+void	ep_detach __P((struct ep_softc *));

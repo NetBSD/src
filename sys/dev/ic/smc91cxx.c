@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.13 1998/11/18 18:34:52 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.13.2.1 1998/12/11 04:53:00 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -199,7 +199,7 @@ smc91cxx_attach(sc, myea)
 	struct smc91cxx_softc *sc;
 	u_int8_t *myea;
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	const char *idstr;
@@ -239,6 +239,9 @@ smc91cxx_attach(sc, myea)
 	    "AUI" : "UTP");
 
 	/* Initialize the ifnet structure. */
+	ifp = if_alloc();
+	sc->sc_ec.ec_if = ifp;
+	ifp->if_ifcom = &sc->sc_ec;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = smc91cxx_start;
@@ -351,7 +354,7 @@ void
 smc91cxx_init(sc)
 	struct smc91cxx_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = sc->sc_ec.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	u_int16_t tmp;
@@ -654,7 +657,7 @@ smc91cxx_intr(arg)
 	void *arg;
 {
 	struct smc91cxx_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = sc->sc_ec.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	u_int8_t mask, interrupts, status;
@@ -847,7 +850,7 @@ void
 smc91cxx_read(sc)
 	struct smc91cxx_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = sc->sc_ec.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	struct ether_header *eh;
@@ -898,6 +901,7 @@ smc91cxx_read(sc)
 		goto out;
 
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = m->m_len = packetlen;
 
 	/*
@@ -1154,7 +1158,7 @@ smc91cxx_stop(sc)
 	/*
 	 * Cancel watchdog timer.
 	 */
-	sc->sc_ec.ec_if.if_timer = 0;
+	sc->sc_ec.ec_if->if_timer = 0;
 }
 
 /*

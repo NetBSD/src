@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.16 1998/07/07 03:22:03 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.16.6.1 1998/12/11 04:53:05 kenh Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -342,29 +342,37 @@ void
 stripattach(n)
 	int n;
 {
+	register struct ifnet *ifp;
 	register struct strip_softc *sc;
 	register int i = 0;
 
 	for (sc = strip_softc; i < NSTRIP; sc++) {
 		sc->sc_unit = i;		/* XXX */
-		sprintf(sc->sc_if.if_xname, "strip%d", i++);
-		sc->sc_if.if_softc = sc;
-		sc->sc_if.if_mtu = SLMTU;
-		sc->sc_if.if_flags = 0;
-		sc->sc_if.if_type = IFT_OTHER;
-#if 0
-		sc->sc_if.if_flags |= SC_AUTOCOMP /* | IFF_POINTOPOINT | IFF_MULTICAST*/;
+#ifdef	_HAS_IF_ALLOC
+		ifp = if_alloc();
+		sc->sc_if = ifp;
+#else
+		ifp = &sc->sc_if;
 #endif
-		sc->sc_if.if_type = IFT_SLIP;
-		sc->sc_if.if_ioctl = stripioctl;
-		sc->sc_if.if_output = stripoutput;
-		sc->sc_if.if_snd.ifq_maxlen = 50;
+		sprintf(sc->sc_if->if_xname, "strip%d", i++);
+		ifp->if_softc = sc;
+		ifp->if_mtu = SLMTU;
+		ifp->if_flags = 0;
+		ifp->if_type = IFT_OTHER;
+#if 0
+		ifp->if_flags |= SC_AUTOCOMP /* | IFF_POINTOPOINT | IFF_MULTICAST*/;
+#endif
+		ifp->if_type = IFT_SLIP;
+		ifp->if_ioctl = stripioctl;
+		ifp->if_output = stripoutput;
+		ifp->if_snd.ifq_maxlen = 50;
 		sc->sc_fastq.ifq_maxlen = 32;
 
-		sc->sc_if.if_watchdog = strip_watchdog;
-		if_attach(&sc->sc_if);
+		ifp->if_watchdog = strip_watchdog;
+		ifp->if_timer = STRIP_WATCHDOG_INTERVAL;
+		if_attach(ifp);
 #if NBPFILTER > 0
-		bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
+		bpfattach(&sc->sc_bpf, ifp, DLT_SLIP, SLIP_HDRLEN);
 #endif
 	}
 }
@@ -374,6 +382,11 @@ stripinit(sc)
 	register struct strip_softc *sc;
 {
 	register u_char *p;
+#ifdef _HAS_IF_ALLOC
+	register struct ifnet *ifp = sc->sc_if;
+#else
+	register struct ifnet *ifp = &sc->sc_if;
+#endif
 
 	if (sc->sc_ep == NULL) {
 		/*
@@ -384,8 +397,8 @@ stripinit(sc)
 			sc->sc_ep = sc->sc_xxx + SLBUFSIZE;
 		else {
 			printf("%s: can't allocate buffer\n",
-			    sc->sc_if.if_xname);
-			sc->sc_if.if_flags &= ~IFF_UP;
+			    ifp->if_xname);
+			ifp->if_flags &= ~IFF_UP;
 			return (0);
 		}
 	}
@@ -397,8 +410,8 @@ stripinit(sc)
 			sc->sc_rxbuf = p + SLBUFSIZE - SLMAX;
 		else {
 			printf("%s: can't allocate input buffer\n",
-			    sc->sc_if.if_xname);
-			sc->sc_if.if_flags &= ~IFF_UP;
+			    ifp->if_xname);
+			ifp->if_flags &= ~IFF_UP;
 			return (0);
 		}
 	}
@@ -410,9 +423,9 @@ stripinit(sc)
 			sc->sc_txbuf = (u_char *)p + SLBUFSIZE - SLMAX;
 		else {
 			printf("%s: can't allocate buffer\n",
-			    sc->sc_if.if_xname);
+			    ifp->if_xname);
 			
-			sc->sc_if.if_flags &= ~IFF_UP;
+			ifp->if_flags &= ~IFF_UP;
 			return (0);
 		}
 	}
@@ -458,7 +471,7 @@ stripopen(dev, tp)
 				return (ENOBUFS);
 			tp->t_sc = (caddr_t)sc;
 			sc->sc_ttyp = tp;
-			sc->sc_if.if_baudrate = tp->t_ospeed;
+			sc->sc_if->if_baudrate = tp->t_ospeed;
 			ttyflush(tp, FREAD | FWRITE);
 #ifdef __NetBSD__
 			/*
@@ -492,7 +505,7 @@ stripopen(dev, tp)
 			 * Start the watchdog timer to get the radio
 			 * "probe-for-death"/reset machine going.
 			 */
-			sc->sc_if.if_timer = STRIP_WATCHDOG_INTERVAL;
+			sc->sc_if->if_timer = STRIP_WATCHDOG_INTERVAL;
 
 			return (0);
 		}
@@ -521,9 +534,9 @@ stripclose(tp)
 		 * Cancel watchdog timer, which stops the "probe-for-death"/
 		 * reset machine.
 		 */
-		sc->sc_if.if_timer = 0;
+		sc->sc_if->if_timer = 0;
 
-		if_down(&sc->sc_if);
+		if_down(sc->sc_if);
 		sc->sc_ttyp = NULL;
 		tp->t_sc = NULL;
 		free((caddr_t)(sc->sc_ep - SLBUFSIZE), M_MBUF);
@@ -586,6 +599,11 @@ strip_sendbody(sc, m)
 	struct strip_softc  *sc;
 	struct mbuf *m;
 {
+#ifdef _HAS_IF_ALLOC
+	register struct ifnet *ifp = sc->sc_if;
+#else
+	register struct ifnet *ifp = &sc->sc_if;
+#endif
 	register struct tty *tp = sc->sc_ttyp;
 	register u_char *dp = sc->sc_txbuf;
 	struct mbuf *m2;
@@ -613,12 +631,12 @@ strip_sendbody(sc, m)
 	len = dp - sc->sc_txbuf;
 	if (b_to_q((ttychar_t *)sc->sc_txbuf,
 			   len, &tp->t_outq)) {
-			if (sc->sc_if.if_flags & IFF_DEBUG)
+			if (ifp->if_flags & IFF_DEBUG)
 				addlog("%s: tty output overflow\n",
-					 sc->sc_if.if_xname);
+					 ifp->if_xname);
 			goto bad;
 		}
-		sc->sc_if.if_obytes += len;
+		ifp->if_obytes += len;
 
 	return;
 
@@ -648,9 +666,9 @@ strip_send(sc, m0)
 	 */
 	hdr = mtod(m0, struct st_header *);
 	if (b_to_q((ttychar_t *)hdr, STRIP_HDRLEN, &tp->t_outq)) {
-		if (sc->sc_if.if_flags & IFF_DEBUG)
+		if (sc->sc_if->if_flags & IFF_DEBUG)
 		  	addlog("%s: outq overflow writing header\n",
-				 sc->sc_if.if_xname);
+				 sc->sc_if->if_xname);
 		m_freem(m0);
 		return 0;
 	}
@@ -664,7 +682,7 @@ strip_send(sc, m0)
 #ifdef DIAGNOSTIC
 	 else
 		addlog("%s: strip_send: missing pkthdr, %d remains\n",
-		sc->sc_if.if_xname,  m0->m_len); /*XXX*/
+		sc->sc_if->if_xname,  m0->m_len); /*XXX*/
 #endif
 
 	/*
@@ -690,10 +708,10 @@ strip_send(sc, m0)
 		 */
 		(void) unputc(&tp->t_outq);
 		(void) putc(STRIP_FRAME_END, &tp->t_outq);
-		sc->sc_if.if_collisions++;
+		sc->sc_if->if_collisions++;
 	} else {
-		++sc->sc_if.if_obytes;
-		sc->sc_if.if_opackets++;
+		++sc->sc_if->if_obytes;
+		sc->sc_if->if_opackets++;
 	}
 
 	/*
@@ -784,16 +802,16 @@ stripoutput(ifp, m, dst, rt)
 		 * `Cannot happen' (see stripioctl).  Someday we will extend
 		 * the line protocol to support other address families.
 		 */
-		printf("%s: af %d not supported\n", sc->sc_if.if_xname,
+		printf("%s: af %d not supported\n", ifp->if_xname,
 		    dst->sa_family);
 		m_freem(m);
-		sc->sc_if.if_noproto++;
+		ifp->if_noproto++;
 		return (EAFNOSUPPORT);
 	}
 	
-	ifq = &sc->sc_if.if_snd;
+	ifq = &ifp->if_snd;
 	ip = mtod(m, struct ip *);
-	if (sc->sc_if.if_flags & SC_NOICMP && ip->ip_p == IPPROTO_ICMP) {
+	if (ifp->if_flags & SC_NOICMP && ip->ip_p == IPPROTO_ICMP) {
 		m_freem(m);
 		return (ENETRESET);		/* XXX ? */
 	}
@@ -848,7 +866,7 @@ stripoutput(ifp, m, dst, rt)
 		struct timeval tv;
 
 		/* if output's been stalled for too long, and restart */
-		timersub(&time, &sc->sc_if.if_lastchange, &tv);
+		timersub(&time, &ifp->if_lastchange, &tv);
 		if (tv.tv_sec > 0) {
 			DPRINTF(("stripoutput: stalled, resetting\n"));
 			sc->sc_otimeout++;
@@ -859,11 +877,11 @@ stripoutput(ifp, m, dst, rt)
 		IF_DROP(ifq);
 		m_freem(m);
 		splx(s);
-		sc->sc_if.if_oerrors++;
+		ifp->if_oerrors++;
 		return (ENOBUFS);
 	}
 	IF_ENQUEUE(ifq, m);
-	sc->sc_if.if_lastchange = time;
+	ifp->if_lastchange = time;
 	if ((sc->sc_oqlen = sc->sc_ttyp->t_outq.c_cc) == 0) {
 		stripstart(sc->sc_ttyp);
 	}
@@ -890,6 +908,7 @@ stripstart(tp)
 	register struct tty *tp;
 {
 	register struct strip_softc *sc = (struct strip_softc *)tp->t_sc;
+	register struct ifnet   *ifp = sc->sc_if;
 	register struct mbuf *m;
 	register struct ip *ip;
 	int s;
@@ -912,9 +931,9 @@ stripstart(tp)
 	    || sc == NULL || tp != (struct tty *) sc->sc_ttyp) {
 		if (tp->t_oproc != NULL)
 			(*tp->t_oproc)(tp);
-		if (sc && (sc->sc_if.if_flags & IFF_DEBUG))
+		if (sc && (ifp->if_flags & IFF_DEBUG))
 			addlog("%s: late call to stripstart\n ",
-			       sc->sc_if.if_xname);
+			       ifp->if_xname);
 	}
 
 	/* Start any pending output asap */
@@ -950,9 +969,9 @@ stripstart(tp)
 		s = splimp();
 		IF_DEQUEUE(&sc->sc_fastq, m);
 		if (m)
-			sc->sc_if.if_omcasts++;		/* XXX */
+			ifp->if_omcasts++;		/* XXX */
 		else
-			IF_DEQUEUE(&sc->sc_if.if_snd, m);
+			IF_DEQUEUE(&ifp->if_snd, m);
 		splx(s);
 		if (m == NULL) {
 			return;
@@ -987,7 +1006,7 @@ stripstart(tp)
 		}
 #endif
 		if ((ip = mtod(m, struct ip *))->ip_p == IPPROTO_TCP) {
-			if (sc->sc_if.if_flags & SC_COMPRESS)
+			if (ifp->if_flags & SC_COMPRESS)
 				*mtod(m, u_char *) |= sl_compress_tcp(m, ip,
 				    &sc->sc_comp, 1);
 		}
@@ -1005,7 +1024,7 @@ stripstart(tp)
 			bpf_tap(sc->sc_bpf, cp, len + SLIP_HDRLEN);
 		}
 #endif
-		sc->sc_if.if_lastchange = time;
+		ifp->if_lastchange = time;
 
 #ifndef __NetBSD__					/* XXX - cgd */
 		/*
@@ -1015,7 +1034,7 @@ stripstart(tp)
 		 */
 		if (cfreecount < CLISTRESERVE + SLMTU) {
 			m_freem(m);
-			sc->sc_if.if_collisions++;
+			ifp->if_collisions++;
 			continue;
 		}
 #endif /* !__NetBSD__ */
@@ -1106,7 +1125,12 @@ strip_btom(sc, len)
 
 	m->m_len = len;
 	m->m_pkthdr.len = len;
+#ifdef _HAS_IF_ALLOC
+	m->m_pkthdr.rcvif = sc->sc_if;
+	if_addref(sc->sc_if);
+#else
 	m->m_pkthdr.rcvif = &sc->sc_if;
+#endif
 	return (m);
 }
 
@@ -1124,17 +1148,22 @@ stripinput(c, tp)
 	register struct tty *tp;
 {
 	register struct strip_softc *sc;
+	register struct ifnet *ifp;
 	register struct mbuf *m;
 	register int len;
 	int s;
 #if NBPFILTER > 0
 	u_char chdr[CHDR_LEN];
 #endif
-
 	tk_nin++;
 	sc = (struct strip_softc *)tp->t_sc;
 	if (sc == NULL)
 		return;
+#ifdef _HAS_IF_ALLOC
+	ifp = sc->sc_if;
+#else
+	ifp = &sc->sc_if;
+#endif
 	if (c & TTY_ERRORMASK || ((tp->t_state & TS_CARR_ON) == 0 &&
 	    (tp->t_cflag & CLOCAL) == 0)) {
 		sc->sc_flags |= SC_ERROR;
@@ -1143,7 +1172,7 @@ stripinput(c, tp)
 	}
 	c &= TTY_CHARMASK;
 
-	++sc->sc_if.if_ibytes;
+	++ifp->if_ibytes;
 
 	/*
 	 * Accumulate characters until we see a frame terminator (\r).
@@ -1191,7 +1220,7 @@ stripinput(c, tp)
 	if(sc->sc_flags & SC_ERROR) {
 		sc->sc_flags &= ~SC_ERROR;
 		addlog("%s: sc error flag set. terminating packet\n",
-			sc->sc_if.if_xname);
+			sc->sc_if->if_xname);
 		goto newpack;
 	}
 
@@ -1232,18 +1261,18 @@ stripinput(c, tp)
 		 * it's a reasonable packet, decompress it and then
 		 * enable compression.  Otherwise, drop it.
 		 */
-		if (sc->sc_if.if_flags & SC_COMPRESS) {
+		if (ifp->if_flags & SC_COMPRESS) {
 			len = sl_uncompress_tcp(&sc->sc_buf, len,
 						(u_int)c, &sc->sc_comp);
 			if (len <= 0)
 				goto error;
-		} else if ((sc->sc_if.if_flags & SC_AUTOCOMP) &&
+		} else if ((ifp->if_flags & SC_AUTOCOMP) &&
 		    c == TYPE_UNCOMPRESSED_TCP && len >= 40) {
 			len = sl_uncompress_tcp(&sc->sc_buf, len,
 						(u_int)c, &sc->sc_comp);
 			if (len <= 0)
 				goto error;
-			sc->sc_if.if_flags |= SC_COMPRESS;
+			ifp->if_flags |= SC_COMPRESS;
 		} else
 			goto error;
 	}
@@ -1268,13 +1297,13 @@ stripinput(c, tp)
 		goto error;
 	}
 
-	sc->sc_if.if_ipackets++;
-	sc->sc_if.if_lastchange = time;
+	ifp->if_ipackets++;
+	ifp->if_lastchange = time;
 	s = splimp();
 	if (IF_QFULL(&ipintrq)) {
 		IF_DROP(&ipintrq);
-		sc->sc_if.if_ierrors++;
-		sc->sc_if.if_iqdrops++;
+		ifp->if_ierrors++;
+		ifp->if_iqdrops++;
 		m_freem(m);
 	} else {
 		IF_ENQUEUE(&ipintrq, m);
@@ -1284,7 +1313,7 @@ stripinput(c, tp)
 	goto newpack;
 
 error:
-	sc->sc_if.if_ierrors++;
+	ifp->if_ierrors++;
 
 newpack:
 
@@ -1378,7 +1407,11 @@ strip_resetradio(sc, tp)
 		printf("resetradio: %d chars didn't fit in tty queue\n", i);
 		return;
 	}
+#ifdef _HAS_IF_ALLOC
+	sc->sc_if->if_obytes += sizeof(InitString) - 1;
+#else
 	sc->sc_if.if_obytes += sizeof(InitString) - 1;
+#endif
 
 	/*
 	 * Assume the radio is still dead, so we can detect repeated
@@ -1386,8 +1419,12 @@ strip_resetradio(sc, tp)
 	 * is so badlyhung it needs  powercycling.
 	 */
 	sc->sc_state = ST_DEAD;
-	sc->sc_if.if_lastchange = time;
 	sc->sc_statetimo = time.tv_sec + STRIP_RESET_INTERVAL;
+#ifdef _HAS_IF_ALLOC
+	sc->sc_if->if_lastchange = time;
+#else
+	sc->sc_if.if_lastchange = time;
+#endif
 
 	/*
 	 * XXX Does calling the tty output routine now help resets?
@@ -1414,21 +1451,26 @@ strip_proberadio(sc, tp)
 
 	int overflow;
 	const char *strip_probestr = "**";
+#ifdef _HAS_IF_ALLOC
+	struct ifnet *ifp = sc->sc_if;
+#else
+	struct ifnet *ifp = &sc->sc_if;
+#endif
 
-	if (sc->sc_if.if_flags & IFF_DEBUG)
-		addlog("%s: attempting to probe radio\n", sc->sc_if.if_xname);
+	if (ifp->if_flags & IFF_DEBUG)
+		addlog("%s: attempting to probe radio\n", ifp->if_xname);
 
 	overflow = b_to_q((const ttychar_t *)strip_probestr, 2, &tp->t_outq);
 	if (overflow == 0) {
-		if (sc->sc_if.if_flags & IFF_DEBUG)
+		if (ifp->if_flags & IFF_DEBUG)
 			addlog("%s:: sent probe  to radio\n",
-			       sc->sc_if.if_xname);
+			       ifp->if_xname);
 		/* Go to probe-sent state, set timeout accordingly. */
 		sc->sc_state = ST_PROBE_SENT;
 		sc->sc_statetimo = time.tv_sec + ST_PROBERESPONSE_INTERVAL;
 	} else {
 		addlog("%s: incomplete probe, tty queue %d bytes overfull\n",
-			sc->sc_if.if_xname, overflow);
+			ifp->if_xname, overflow);
 	}
 }
 
@@ -1550,7 +1592,7 @@ strip_watchdog(ifp)
 	      default:
 		/* Cannot happen. To be safe, do  a reset. */
 		addlog("%s: %s %d, resetting\n",
-		       sc->sc_if.if_xname,
+		       ifp->if_xname,
 		       "radio-reset finite-state machine in invalid state",
 		       sc->sc_state);
 		strip_resetradio(sc, sc->sc_ttyp);
@@ -1591,7 +1633,11 @@ strip_newpacket(sc, ptr, end)
 	/* Catch 'OK' responses which show radio has fallen out of starmode */
 	if (len >= 2 && ptr[0] == 'O' && ptr[1] == 'K') {
 		printf("%s: Radio is back in AT command mode: will reset\n",
+#ifdef _HAS_IF_ALLOC
+		    sc->sc_if->if_xname);
+#else
 		    sc->sc_if.if_xname);
+#endif
 		FORCE_RESET(sc);		/* Do reset ASAP */
 	return 0;
 	}
@@ -1948,9 +1994,13 @@ RecvErr(msg, sc)
 
 	if (ptr == end) *p++ = '\"';
 	*p++ = 0;
+#ifdef _HAS_IF_ALLOC
+	addlog("%s: %13s : %s\n", sc->sc_if->if_xname, msg, pkt_text);
+#else
 	addlog("%s: %13s : %s\n", sc->sc_if.if_xname, msg, pkt_text);
+#endif
 
-	sc->sc_if.if_ierrors++;
+	sc->sc_if->if_ierrors++;
 }
 
 
@@ -1975,7 +2025,7 @@ RecvErr_Message(strip_info, sendername, msg)
 
 	char * if_name;
 
-	if_name = strip_info->sc_if.if_xname;
+	if_name = strip_info->sc_if->if_xname;
 
 	if (!strncmp(msg, ERR_001, sizeof(ERR_001)-1))
 	{
@@ -2004,7 +2054,7 @@ RecvErr_Message(strip_info, sendername, msg)
 		 * The radio reports it got a badly-framed starmode packet
 		 * from us; so it must me in starmode.
 		 */
-		if (strip_info->sc_if.if_flags & IFF_DEBUG)
+		if (strip_info->sc_if->if_flags & IFF_DEBUG)
 			addlog("%s: radio responded to probe\n", if_name);
 		if (strip_info->sc_state == ST_DEAD) {
 			/* A successful reset... */

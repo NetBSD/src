@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.29 1998/12/03 23:33:45 pk Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.29.2.1 1998/12/11 04:52:59 kenh Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -191,13 +191,16 @@ mb86960_config(sc, media, nmedia, defmedia)
 	int *media, nmedia, defmedia;
 {
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp;
 	int i;
 
 	/* Stop the 86960. */
 	mb86960_stop(sc);
 
 	/* Initialize ifnet structure. */
+	ifp = if_alloc();
+	ifp->if_ifcom = &sc->sc_ec;
+	sc->sc_ec.ec_if = ifp;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = mb86960_start;
@@ -448,7 +451,7 @@ mb86960_watchdog(ifp)
 #endif
 
 	/* Record how many packets are lost by this accident. */
-	sc->sc_ec.ec_if.if_oerrors += sc->txb_sched + sc->txb_count;
+	sc->sc_ec.ec_if->if_oerrors += sc->txb_sched + sc->txb_count;
 
 	mb86960_reset(sc);
 }
@@ -475,7 +478,7 @@ mb86960_init(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = sc->sc_ec.ec_if;
 	int i;
 
 #if FE_DEBUG >= 3
@@ -640,7 +643,7 @@ mb86960_xmit(sc)
 	 * We use longer timeout for multiple packet transmission.
 	 * I'm not sure this timer value is appropriate.  FIXME.
 	 */
-	sc->sc_ec.ec_if.if_timer = 1 + sc->txb_count;
+	sc->sc_ec.ec_if->if_timer = 1 + sc->txb_count;
 
 	/* Update txb variables. */
 	sc->txb_sched = sc->txb_count;
@@ -820,7 +823,7 @@ mb86960_tint(sc, tstat)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = sc->sc_ec.ec_if;
 	int left;
 	int col;
 
@@ -961,7 +964,7 @@ mb86960_rint(sc, rstat)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = sc->sc_ec.ec_if;
 	int len;
 	u_char status;
 	int i;
@@ -1096,7 +1099,7 @@ mb86960_intr(arg)
 	struct mb86960_softc *sc = arg;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = sc->sc_ec.ec_if;
 	u_char tstat, rstat;
 
 	if (sc->sc_enabled == 0)
@@ -1316,7 +1319,7 @@ mb86960_get_packet(sc, len)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet *ifp = sc->sc_ec.ec_if;
 	struct ether_header *eh;
 	struct mbuf *m;
 
@@ -1465,7 +1468,7 @@ mb86960_write_mbufs(sc, m)
 		log(LOG_ERR, "%s: got a %s packet (%u bytes) to send\n",
 		    sc->sc_dev.dv_xname,
 		    totlen < ETHER_HDR_SIZE ? "partial" : "big", totlen);
-		sc->sc_ec.ec_if.if_oerrors++;
+		sc->sc_ec.ec_if->if_oerrors++;
 		return;
 	}
 #endif
@@ -1555,7 +1558,7 @@ mb86960_getmcaf(ec, af)
 	struct ethercom *ec;
 	u_char *af;
 {
-	struct ifnet *ifp = &ec->ec_if;
+	struct ifnet *ifp = ec->ec_if;
 	struct ether_multi *enm;
 	register u_char *cp;
 	register u_int32_t crc;
@@ -1628,7 +1631,7 @@ mb86960_setmode(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	int flags = sc->sc_ec.ec_if.if_flags;
+	int flags = sc->sc_ec.ec_if->if_flags;
 
 	/*
 	 * If the interface is not running, we postpone the update

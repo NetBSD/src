@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.21 1998/07/05 04:37:42 jonathan Exp $	*/
+/*	$NetBSD: iso.c,v 1.21.6.1 1998/12/11 04:53:10 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -451,28 +451,42 @@ iso_control(so, cmd, data, ifp, p)
 	struct proc *p;
 {
 	register struct ifreq *ifr = (struct ifreq *) data;
-	register struct iso_ifaddr *ia = 0;
+	register struct iso_ifaddr *ia = 0, *ia1;
 	struct iso_aliasreq *ifra = (struct iso_aliasreq *) data;
-	int             error, hostIsNew, maskIsNew;
+	int             error = 0, hostIsNew, maskIsNew, s;
 
 	/*
 	 * Find address for this interface, if it exists.
 	 */
-	if (ifp)
+	if (ifp) {
+		s = splimp();
 		for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
 			if (ia->ia_ifp == ifp)
 				break;
+		if (ia)
+			ifa_addref(&ia->ia_ifa);
+		splx(s);
+	}
 
 	switch (cmd) {
 
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
-		if (ifra->ifra_addr.siso_family == AF_ISO)
-			for (; ia != 0; ia = ia->ia_list.tqe_next) {
+		if (ifra->ifra_addr.siso_family == AF_ISO) {
+			s = splimp();
+			ia1 = ia;
+			for (; ia != 0; ia = ia1->ia_list.tqe_next) {
 				if (ia->ia_ifp == ifp &&
 				    SAME_ISOADDR(&ia->ia_addr, &ifra->ifra_addr))
 					break;
 			}
+			if (ia != ia1) {
+				ifa_delref(&ia1->ia_ifa);
+				if (ia != 0)
+					ifa_addref(&ia->ia_ifa);
+			}
+			splx(s);
+		}
 		if (cmd == SIOCDIFADDR && ia == 0)
 			return (EADDRNOTAVAIL);
 		/* FALLTHROUGH */
@@ -481,8 +495,11 @@ iso_control(so, cmd, data, ifp, p)
 	case SIOCSIFNETMASK:
 	case SIOCSIFDSTADDR:
 #endif
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
+			if (ia)
+				ifa_delref(&ia->ia_ifa);
 			return (EPERM);
+		}
 
 		if (ifp == 0)
 			panic("iso_control");
@@ -492,6 +509,7 @@ iso_control(so, cmd, data, ifp, p)
 			if (ia == 0)
 				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof(*ia));
+			s = splimp();
 			TAILQ_INSERT_TAIL(&iso_ifaddr, ia, ia_list);
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
 			    ifa_list);
@@ -501,6 +519,10 @@ iso_control(so, cmd, data, ifp, p)
 			ia->ia_ifp = ifp;
 			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
 				iso_interfaces++;
+			if_addref(ifp);
+			ifa_addref(&ia->ia_ifa); /* this routine's copy */
+                        /* ifa_addref(&ia->ia_ifa); implied in malloc */
+			splx(s);
 		}
 		break;
 
@@ -519,8 +541,10 @@ iso_control(so, cmd, data, ifp, p)
 		break;
 
 	case SIOCGIFDSTADDR:
-		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
-			return (EINVAL);
+		if ((ifp->if_flags & IFF_POINTOPOINT) == 0) {
+			error = EINVAL;
+			break;
+		}
 		*satosiso(&ifr->ifr_dstaddr) = ia->ia_dstaddr;
 		break;
 
@@ -531,7 +555,6 @@ iso_control(so, cmd, data, ifp, p)
 	case SIOCAIFADDR:
 		maskIsNew = 0;
 		hostIsNew = 1;
-		error = 0;
 		if (ia->ia_addr.siso_family == AF_ISO) {
 			if (ifra->ifra_addr.siso_len == 0) {
 				ifra->ifra_addr = ia->ia_addr;
@@ -555,24 +578,36 @@ iso_control(so, cmd, data, ifp, p)
 			error = iso_ifinit(ifp, ia, &ifra->ifra_addr, 0);
 		if (ifra->ifra_snpaoffset)
 			ia->ia_snpaoffset = ifra->ifra_snpaoffset;
-		return (error);
+		break;
 
 	case SIOCDIFADDR:
 		iso_ifscrub(ifp, ia);
+		s = splimp();
 		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
 		TAILQ_REMOVE(&iso_ifaddr, ia, ia_list);
-		IFAFREE((&ia->ia_ifa));
+		ifa_delref((&ia->ia_ifa));
+		/*
+		 * actual deletion postponed until end of this routine at the
+		 * exiting ifa_delref.
+		 */
+		splx(s);
 		break;
 
 #define cmdbyte(x)	(((x) >> 8) & 0xff)
 	default:
-		if (cmdbyte(cmd) == 'a')
-			return (snpac_ioctl(so, cmd, data, p));
-		if (ifp == 0 || ifp->if_ioctl == 0)
-			return (EOPNOTSUPP);
-		return ((*ifp->if_ioctl)(ifp, cmd, data));
+		if (cmdbyte(cmd) == 'a') {
+			error = snpac_ioctl(so, cmd, data, p);
+			break;
+		}
+		if (ifp == 0 || ifp->if_ioctl == 0) {
+			error = EOPNOTSUPP;
+			break;
+		}
+		error = (*ifp->if_ioctl)(ifp, cmd, data);
 	}
-	return (0);
+	if (ia)
+		ifa_delref(&ia->ia_ifa);
+	return error;
 }
 
 /*
@@ -669,7 +704,7 @@ iso_ifwithidi(addr)
 {
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
-	register u_int  af = addr->sa_family;
+	register u_int  af = addr->sa_family, s;
 
 	if (af != AF_ISO)
 		return (0);
@@ -680,6 +715,7 @@ iso_ifwithidi(addr)
 		printf("\n");
 	}
 #endif
+	s=splimp();
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ROUTE]) {
@@ -713,6 +749,8 @@ iso_ifwithidi(addr)
 					printf("ifa_ifwithidi: ifa found\n");
 				}
 #endif
+				ifa_addref(ifa);
+				splx(s);
 				return (ifa);
 			}
 #ifdef ARGO_DEBUG
@@ -722,6 +760,7 @@ iso_ifwithidi(addr)
 #endif
 		}
 	}
+	splx(s);
 	return ((struct ifaddr *) 0);
 }
 
@@ -786,6 +825,7 @@ iso_eqtype(isoaa, isoab)
  * RETURNS:		ptr to an interface address
  *
  * SIDE EFFECTS:
+ *			Incriments the reference count on the returned address.
  *
  * NOTES:
  */
@@ -797,18 +837,22 @@ iso_localifa(siso)
 	register char  *cp1, *cp2, *cp3;
 	register struct ifnet *ifp;
 	struct iso_ifaddr *ia_maybe = 0;
+	int	s;
 	/*
 	 * We make one pass looking for both net matches and an exact
 	 * dst addr.
 	 */
+	s = splimp();
 	for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
 		if ((ifp = ia->ia_ifp) == 0 || ((ifp->if_flags & IFF_UP) == 0))
 			continue;
 		if (ifp->if_flags & IFF_POINTOPOINT) {
 			if ((ia->ia_dstaddr.siso_family == AF_ISO) &&
-			    SAME_ISOADDR(&ia->ia_dstaddr, siso))
+			    SAME_ISOADDR(&ia->ia_dstaddr, siso)) {
+				ifa_addref(&ia->ia_ifa);
+				splx(s);
 				return (ia);
-			else if (SAME_ISOADDR(&ia->ia_addr, siso))
+			} else if (SAME_ISOADDR(&ia->ia_addr, siso))
 				ia_maybe = ia;
 			continue;
 		}
@@ -823,10 +867,16 @@ iso_localifa(siso)
 					goto next;
 			ia_maybe = ia;
 		}
-		if (SAME_ISOADDR(&ia->ia_addr, siso))
+		if (SAME_ISOADDR(&ia->ia_addr, siso)) {
+			ifa_addref(&ia->ia_ifa);
+			splx(s);
 			return ia;
+		}
 next:		;
 	}
+	if (ia_maybe)
+		ifa_addref(&ia_maybe->ia_ifa);
+	splx(s);
 	return ia_maybe;
 }
 

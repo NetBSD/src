@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.11 1998/07/05 04:37:42 jonathan Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.11.6.1 1998/12/11 04:53:09 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -209,7 +209,9 @@ clnp_ours(dst)
 	register struct iso_addr *dst;	/* ptr to destination address */
 {
 	register struct iso_ifaddr *ia;	/* scan through interface addresses */
+	int	s;
 
+	s = splimp();
 	for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ROUTE]) {
@@ -224,9 +226,12 @@ clnp_ours(dst)
 		if (dst->isoa_len == ia->ia_addr.siso_nlen &&
 		    bcmp((caddr_t) ia->ia_addr.siso_addr.isoa_genaddr,
 			 (caddr_t) dst->isoa_genaddr,
-			 ia->ia_addr.siso_nlen - ia->ia_addr.siso_tlen) == 0)
+			 ia->ia_addr.siso_nlen - ia->ia_addr.siso_tlen) == 0) {
+			splx(s);
 			return 1;
+		}
 	}
+	splx(s);
 	return 0;
 }
 
@@ -406,6 +411,8 @@ done:
 	if (route.ro_rt != NULL) {
 		RTFREE(route.ro_rt);
 	}
+	if (ia != 0)
+		ifa_delref(&ia->ia_ifa);
 }
 
 #ifdef	notdef
@@ -455,6 +462,8 @@ clnp_insert_addr(bufp, srcp, dstp)
  *
  * SIDE EFFECTS:
  *
+ *			Incriments the refcount on the ifa in ifa
+ *
  * NOTES:		It is up to the caller to free the routing entry
  *			allocated in route.
  */
@@ -466,6 +475,7 @@ clnp_route(dst, ro, flags, first_hop, ifa)
 	struct sockaddr **first_hop;	/* result: fill in with ptr to
 					 * firsthop */
 	struct iso_ifaddr **ifa;/* result: fill in with ptr to interface */
+				/* ifa_addref it if != 0 */
 {
 	if (flags & SO_DONTROUTE) {
 		struct iso_ifaddr *ia;
@@ -482,8 +492,12 @@ clnp_route(dst, ro, flags, first_hop, ifa)
 		ia = iso_localifa(&ro->ro_dst);
 		if (ia == 0)
 			return EADDRNOTAVAIL;
-		if (ifa)
+		if (ifa) {
+			if (*ifa)
+				ifa_delref(&(*ifa)->ia_ifa);
 			*ifa = ia;
+		} else
+			ifa_delref(&ia->ia_ifa);	/* we're exiting w/o copying */
 		if (first_hop)
 			*first_hop = sisotosa(&ro->ro_dst);
 		return 0;
@@ -532,9 +546,12 @@ clnp_route(dst, ro, flags, first_hop, ifa)
 	if (ro->ro_rt == 0)
 		return (ENETUNREACH);	/* rtalloc failed */
 	ro->ro_rt->rt_use++;
-	if (ifa)
+	if (ifa) {
+		if ((*ifa) && ((struct iso_ifaddr *)ro->ro_rt->rt_ifa != *ifa))
+			ifa_delref(&(*ifa)->ia_ifa);
 		if ((*ifa = (struct iso_ifaddr *) ro->ro_rt->rt_ifa) == 0)
 			panic("clnp_route");
+	}
 	if (first_hop) {
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			*first_hop = ro->ro_rt->rt_gateway;
@@ -557,6 +574,8 @@ clnp_route(dst, ro, flags, first_hop, ifa)
  * RETURNS:		0 or unix error code
  *
  * SIDE EFFECTS:
+ *
+ *			Incriments the refcount on the ifa in ifa
  *
  * NOTES:		Remember that option index pointers are really
  *			offsets from the beginning of the mbuf.

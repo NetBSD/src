@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.10 1996/10/13 02:04:14 christos Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.10.20.1 1998/12/11 04:53:09 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -366,6 +366,7 @@ clnp_emit_er(m, reason)
 	/* send packet */
 	INCSTAT(cns_er_outhist[clnp_er_index(reason)]);
 	(void) (*ifp->if_output) (ifp, m0, first_hop, route.ro_rt);
+	ifa_delref(&ia->ia_ifa);
 	goto done;
 
 bad:

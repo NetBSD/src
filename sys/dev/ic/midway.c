@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.37 1998/10/20 17:53:54 chuck Exp $	*/
+/*	$NetBSD: midway.c,v 1.37.4.1 1998/12/11 04:52:59 kenh Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -616,7 +616,10 @@ u_int totlen, *drqneed;
   MGETHDR(m, M_DONTWAIT, MT_DATA);
   if (m == NULL)
     return(NULL);
-  m->m_pkthdr.rcvif = &sc->enif;
+  m->m_pkthdr.rcvif = EN_IFP(sc);
+#ifdef _HAS_IF_ADDREF
+  if_addref(EN_IFP(sc));
+#endif
   m->m_pkthdr.len = totlen;
   m->m_len = MHLEN;
   top = NULL;
@@ -663,9 +666,16 @@ void en_attach(sc)
 struct en_softc *sc;
 
 {
-  struct ifnet *ifp = &sc->enif;
+  struct ifnet *ifp;
   int sz;
   u_int32_t reg, lcv, check, ptr, sav, midvloc;
+
+#ifdef _HAS_IF_ALLOC
+  ifp = if_alloc();
+  sc->enif = ifp;
+#else
+  ifp = EN_IFP(sc);
+#endif
 
   /*
    * probe card to determine memory size.   the stupid ENI card always
@@ -738,10 +748,10 @@ done_probe:
    */
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-  bcopy(sc->sc_dev.dv_xname, sc->enif.if_xname, IFNAMSIZ);
+  bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 #endif
 #if !defined(MISSING_IF_SOFTC)
-  sc->enif.if_softc = sc;
+  ifp->if_softc = sc;
 #endif
   ifp->if_flags = IFF_SIMPLEX|IFF_NOTRAILERS;
   ifp->if_ioctl = en_ioctl;
@@ -1357,20 +1367,21 @@ struct en_softc *sc;
 {
   int vc, slot;
   u_int32_t loc;
+  struct ifnet *ifp = EN_IFP(sc);
 
-  if ((sc->enif.if_flags & IFF_UP) == 0) {
+  if ((ifp->if_flags & IFF_UP) == 0) {
 #ifdef EN_DEBUG
     printf("%s: going down\n", sc->sc_dev.dv_xname);
 #endif
     en_reset(sc);			/* to be safe */
-    sc->enif.if_flags &= ~IFF_RUNNING;	/* disable */
+    ifp->if_flags &= ~IFF_RUNNING;	/* disable */
     return;
   }
 
 #ifdef EN_DEBUG
   printf("%s: going up\n", sc->sc_dev.dv_xname);
 #endif
-  sc->enif.if_flags |= IFF_RUNNING;	/* enable */
+  ifp->if_flags |= IFF_RUNNING;	/* enable */
 
   if (sc->en_busreset)
     sc->en_busreset(sc);
@@ -1910,7 +1921,7 @@ again:
    */
 
   EN_COUNT(sc->launch);
-  sc->enif.if_opackets++;
+  EN_IFP(sc)->if_opackets++;
   if ((launch.atm_flags & EN_OBHDR) == 0) {
     EN_COUNT(sc->lheader);
     /* store tbd1/tbd2 in host byte order */
@@ -2319,6 +2330,7 @@ void *arg;
   struct en_softc *sc = (struct en_softc *) arg;
   struct mbuf *m;
   struct atm_pseudohdr ah;
+  struct ifnet *ifp = EN_IFP(sc);
   u_int32_t reg, kick, val, mask, chip, vci, slot, dtq, drq;
   int lcv, idx, need_softserv = 0;
 
@@ -2342,7 +2354,7 @@ void *arg;
 #ifdef DDB
     Debugger();
 #endif	/* DDB */
-    sc->enif.if_flags &= ~IFF_RUNNING; /* FREEZE! */
+    ifp->if_flags &= ~IFF_RUNNING; /* FREEZE! */
 #else
     en_reset(sc);
     en_init(sc);
@@ -2484,9 +2496,9 @@ void *arg;
 		sc->sc_dev.dv_xname, slot, sc->rxslot[slot].atm_vci, m,
 		EN_DQ_LEN(drq), sc->rxslot[slot].rxhand);
 #endif
-	  sc->enif.if_ipackets++;
+	  ifp->if_ipackets++;
 
-	  atm_input(&sc->enif, &ah, m, sc->rxslot[slot].rxhand);
+	  atm_input(ifp, &ah, m, sc->rxslot[slot].rxhand);
 	}
 
       }

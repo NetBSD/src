@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.50 1998/11/18 18:34:52 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.50.2.1 1998/12/11 04:52:59 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -291,7 +291,7 @@ epconfig(sc, chipset, enaddr)
 	u_short chipset;
 	u_int8_t *enaddr;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp ;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int16_t i;
@@ -367,6 +367,9 @@ epconfig(sc, chipset, enaddr)
 	bus_space_write_2(iot, ioh, ELINK_COMMAND,
 	    SET_TX_AVAIL_THRESH | (1600 >> sc->ep_pktlenshift));
 
+	ifp = if_alloc();
+	sc->sc_ethercom.ec_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = epstart;
@@ -448,7 +451,7 @@ epconfig(sc, chipset, enaddr)
 	GO_WINDOW(1);		/* Window 1 is operating window */
 
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
 		  sizeof(struct ether_header));
 #endif
 
@@ -459,7 +462,7 @@ epconfig(sc, chipset, enaddr)
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
 
 	/*  Establish callback to reset card when we reboot. */
-	shutdownhook_establish(epshutdown, sc);
+	sc->ep_shutdownhook = shutdownhook_establish(epshutdown, sc);
 
 	ep_complete_cmd(sc, ELINK_COMMAND, RX_RESET);
 	ep_complete_cmd(sc, ELINK_COMMAND, TX_RESET);
@@ -502,7 +505,7 @@ ep_internalconfig(sc)
 
 	printf("%s: address %s, %dKB %s-wide FIFO, %s Rx:Tx split\n",
 	       sc->sc_dev.dv_xname,
-	       ether_sprintf(LLADDR(sc->sc_ethercom.ec_if.if_sadl)),
+	       ether_sprintf(LLADDR(sc->sc_ethercom.ec_if->if_sadl)),
 	       8 << ram_size,
 	       (ram_width) ? "word" : "byte",
 	       onboard_ram_config[ram_split]);
@@ -688,7 +691,7 @@ void
 epinit(sc)
 	register struct ep_softc *sc;
 {
-	register struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	register struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
@@ -796,7 +799,7 @@ void
 epsetfilter(sc)
 	register struct ep_softc *sc;
 {
-	register struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	register struct ifnet *ifp = sc->sc_ethercom.ec_if;
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_COMMAND, SET_RX_FILTER |
@@ -1204,6 +1207,7 @@ epstatus(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	u_int16_t fifost;
 
 	/*
@@ -1214,26 +1218,26 @@ epstatus(sc)
 	GO_WINDOW(1);
 
 	if (fifost & FIFOS_RX_UNDERRUN) {
-		if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
+		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: RX underrun\n", sc->sc_dev.dv_xname);
 		epreset(sc);
 		return 0;
 	}
 
 	if (fifost & FIFOS_RX_STATUS_OVERRUN) {
-		if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
+		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: RX Status overrun\n", sc->sc_dev.dv_xname);
 		return 1;
 	}
 
 	if (fifost & FIFOS_RX_OVERRUN) {
-		if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
+		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: RX overrun\n", sc->sc_dev.dv_xname);
 		return 1;
 	}
 
 	if (fifost & FIFOS_TX_OVERRUN) {
-		if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
+		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: TX overrun\n", sc->sc_dev.dv_xname);
 		epreset(sc);
 		return 0;
@@ -1249,6 +1253,7 @@ eptxstat(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	int i;
 
 	/*
@@ -1261,14 +1266,14 @@ eptxstat(sc)
 		    0x0);
 
 		if (i & TXS_JABBER) {
-			++sc->sc_ethercom.ec_if.if_oerrors;
-			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
+			++ifp->if_oerrors;
+			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: jabber (%x)\n",
 				       sc->sc_dev.dv_xname, i);
 			epreset(sc);
 		} else if (i & TXS_UNDERRUN) {
-			++sc->sc_ethercom.ec_if.if_oerrors;
-			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
+			++ifp->if_oerrors;
+			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: fifo underrun (%x) @%d\n",
 				       sc->sc_dev.dv_xname, i,
 				       sc->tx_start_thresh);
@@ -1278,9 +1283,9 @@ eptxstat(sc)
 			sc->tx_succ_ok = 0;
 			epreset(sc);
 		} else if (i & TXS_MAX_COLLISION) {
-			++sc->sc_ethercom.ec_if.if_collisions;
+			++ifp->if_collisions;
 			bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
-			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
+			ifp->if_flags &= ~IFF_OACTIVE;
 		} else
 			sc->tx_succ_ok = (sc->tx_succ_ok+1) & 127;
 	}
@@ -1293,7 +1298,7 @@ epintr(arg)
 	register struct ep_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	u_int16_t status;
 	int ret = 0;
 	int addrandom = 0;
@@ -1350,8 +1355,8 @@ epintr(arg)
 			addrandom = 1;
 		}
 		if (status & S_TX_AVAIL) {
-			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
-			epstart(&sc->sc_ethercom.ec_if);
+			ifp->if_flags &= ~IFF_OACTIVE;
+			epstart(ifp);
 			addrandom = 1;
 		}
 		if (status & S_CARD_FAILURE) {
@@ -1382,7 +1387,7 @@ epread(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 	int len;
@@ -1450,7 +1455,7 @@ again:
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, LLADDR(sc->sc_ethercom.ec_if.if_sadl),
+		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return;
@@ -1507,7 +1512,7 @@ epget(sc, totlen)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	struct mbuf *top, **mp, *m, *rv = NULL;
 	bus_addr_t rxreg;
 	int len, remaining;
@@ -1529,6 +1534,7 @@ epget(sc, totlen)
 		m->m_flags = M_PKTHDR;
 	}
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
@@ -1675,7 +1681,7 @@ epioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			epinit(sc);
-			arp_ifinit(&sc->sc_ethercom.ec_if, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -1783,7 +1789,7 @@ epwatchdog(ifp)
 	struct ep_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_ethercom.ec_if.if_oerrors;
+	++ifp->if_oerrors;
 
 	epreset(sc);
 }
@@ -1994,17 +2000,25 @@ ep_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-#ifdef notyet
 		/* First, kill off the interface. */
-		if_detach(sc->sc_ethercom.ec_if);
-#endif
-
+		if_deactivate(sc->sc_ethercom.ec_if);
 		/* Now disable the interface. */
 		epdisable(sc);
 		break;
 	}
 	splx(s);
 	return (rv);
+}
+
+/*
+ * Detach this device and free up memory
+ */
+
+void
+ep_detach(sc)
+	struct ep_softc *sc;
+{
+	if_detach(sc->sc_ethercom.ec_if);
 }
 
 void

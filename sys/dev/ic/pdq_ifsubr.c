@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.24 1998/09/28 18:01:44 matt Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.24.4.1 1998/12/11 04:53:00 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -126,16 +126,17 @@ void
 pdq_ifinit(
     pdq_softc_t *sc)
 {
-    if (sc->sc_if.if_flags & IFF_UP) {
-	sc->sc_if.if_flags |= IFF_RUNNING;
+    struct ifnet *ifp = PDQ_IFP(sc);
+    if (ifp->if_flags & IFF_UP) {
+	ifp->if_flags |= IFF_RUNNING;
 #if NBPFILTER > 0
-	if (sc->sc_if.if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC) {
 	    sc->sc_pdq->pdq_flags |= PDQ_PROMISC;
 	} else {
 	    sc->sc_pdq->pdq_flags &= ~PDQ_PROMISC;
 	}
 #endif
-	if (sc->sc_if.if_flags & IFF_LINK1) {
+	if (ifp->if_flags & IFF_LINK1) {
 	    sc->sc_pdq->pdq_flags |= PDQ_PASS_SMT;
 	} else {
 	    sc->sc_pdq->pdq_flags &= ~PDQ_PASS_SMT;
@@ -143,7 +144,7 @@ pdq_ifinit(
 	sc->sc_pdq->pdq_flags |= PDQ_RUNNING;
 	pdq_run(sc->sc_pdq);
     } else {
-	sc->sc_if.if_flags &= ~IFF_RUNNING;
+	ifp->if_flags &= ~IFF_RUNNING;
 	sc->sc_pdq->pdq_flags &= ~PDQ_RUNNING;
 	pdq_stop(sc->sc_pdq);
     }
@@ -181,11 +182,11 @@ pdq_ifstart(
     if ((ifp->if_flags & IFF_RUNNING) == 0)
 	return;
 
-    if (sc->sc_if.if_timer == 0)
-	sc->sc_if.if_timer = PDQ_OS_TX_TIMEOUT;
+    if (ifp->if_timer == 0)
+	ifp->if_timer = PDQ_OS_TX_TIMEOUT;
 
     if ((sc->sc_pdq->pdq_flags & PDQ_TXOK) == 0) {
-	sc->sc_if.if_flags |= IFF_OACTIVE;
+	ifp->if_flags |= IFF_OACTIVE;
 	return;
     }
     for (;; tx = 1) {
@@ -239,9 +240,10 @@ pdq_os_receive_pdu(
     int drop)
 {
     pdq_softc_t *sc = pdq->pdq_os_ctx;
+    struct ifnet *ifp = PDQ_IFP(sc);
     struct fddi_header *fh = mtod(m, struct fddi_header *);
 
-    sc->sc_if.if_ipackets++;
+    ifp->if_ipackets++;
 #if defined(PDQ_BUS_DMA)
     {
 	/*
@@ -273,8 +275,11 @@ pdq_os_receive_pdu(
     m->m_data += sizeof(struct fddi_header);
     m->m_len  -= sizeof(struct fddi_header);
     m->m_pkthdr.len -= sizeof(struct fddi_header);
-    m->m_pkthdr.rcvif = &sc->sc_if;
-    fddi_input(&sc->sc_if, fh, m);
+    m->m_pkthdr.rcvif = ifp;
+#if defined(_HAS_IF_ADDREF)
+    if_addref(ifp);
+#endif
+    fddi_input(ifp, fh, m);
 }
 
 void
@@ -282,12 +287,13 @@ pdq_os_restart_transmitter(
     pdq_t *pdq)
 {
     pdq_softc_t *sc = pdq->pdq_os_ctx;
-    sc->sc_if.if_flags &= ~IFF_OACTIVE;
-    if (sc->sc_if.if_snd.ifq_head != NULL) {
-	sc->sc_if.if_timer = PDQ_OS_TX_TIMEOUT;
-	pdq_ifstart(&sc->sc_if);
+    struct ifnet *ifp = PDQ_IFP(sc);
+    ifp->if_flags &= ~IFF_OACTIVE;
+    if (ifp->if_snd.ifq_head != NULL) {
+	ifp->if_timer = PDQ_OS_TX_TIMEOUT;
+	pdq_ifstart(ifp);
     } else {
-	sc->sc_if.if_timer = 0;
+	ifp->if_timer = 0;
     }
 }
 
@@ -302,7 +308,7 @@ pdq_os_transmit_done(
 	PDQ_BPF_MTAP(sc, m);
 #endif
     PDQ_OS_DATABUF_FREE(pdq, m);
-    sc->sc_if.if_opackets++;
+    PDQ_IFP(sc)->if_opackets++;
 }
 
 void
@@ -312,6 +318,7 @@ pdq_os_addr_fill(
     size_t num_addrs)
 {
     pdq_softc_t *sc = pdq->pdq_os_ctx;
+    struct ifnet *ifp = PDQ_IFP(sc);
     struct ether_multistep step;
     struct ether_multi *enm;
 
@@ -323,7 +330,7 @@ pdq_os_addr_fill(
 
     pdq->pdq_flags &= ~PDQ_ALLMULTI;
 #if defined(IFF_ALLMULTI)
-    sc->sc_if.if_flags &= ~IFF_ALLMULTI;
+    ifp->if_flags &= ~IFF_ALLMULTI;
 #endif
 
     ETHER_FIRST_MULTI(step, PDQ_FDDICOM(sc), enm);
@@ -337,7 +344,7 @@ pdq_os_addr_fill(
 	} else {
 	    pdq->pdq_flags |= PDQ_ALLMULTI;
 #if defined(IFF_ALLMULTI)
-	    sc->sc_if.if_flags |= IFF_ALLMULTI;
+	    ifp->if_flags |= IFF_ALLMULTI;
 #endif
 	}
 	ETHER_NEXT_MULTI(step, enm);
@@ -348,7 +355,7 @@ pdq_os_addr_fill(
     if (enm != NULL) {
 	pdq->pdq_flags |= PDQ_ALLMULTI;
 #if defined(IFF_ALLMULTI)
-	sc->sc_if.if_flags |= IFF_ALLMULTI;
+	ifp->if_flags |= IFF_ALLMULTI;
 #endif
     }
 }
@@ -492,7 +499,7 @@ pdq_ifioctl(
 		error = ether_delmulti((struct ifreq *)data, PDQ_FDDICOM(sc));
 
 	    if (error == ENETRESET) {
-		if (sc->sc_if.if_flags & IFF_RUNNING)
+		if (ifp->if_flags & IFF_RUNNING)
 		    pdq_run(sc->sc_pdq);
 		error = 0;
 	    }
@@ -545,7 +552,10 @@ pdq_ifattach(
     pdq_softc_t *sc,
     ifnet_ret_t (*ifwatchdog)(int unit))
 {
-    struct ifnet *ifp = &sc->sc_if;
+    struct ifnet *ifp = PDQ_IFP(sc);
+#ifdef _HAS_IF_ALLOC
+/* the calling attach routine allcoated the ifnet! */
+#endif
 
     ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 
@@ -554,6 +564,7 @@ pdq_ifattach(
 #else
     ifp->if_watchdog = ifwatchdog;
 #endif
+    ifp->if_softc = sc;		/* XXX added by wrs - ok? */
 
     ifp->if_ioctl = pdq_ifioctl;
     ifp->if_output = fddi_output;

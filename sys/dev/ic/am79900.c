@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.3 1998/08/08 23:51:39 mycroft Exp $	*/
+/*	$NetBSD: am79900.c,v 1.3.4.1 1998/12/11 04:52:58 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1998
@@ -96,7 +96,7 @@ void am79900_recv_print __P((struct lance_softc *, int));
 void am79900_xmit_print __P((struct lance_softc *, int));
 #endif
 
-#define	ifp	(&sc->sc_ethercom.ec_if)
+#define	ifp	(sc->sc_ethercom.ec_if)
 
 void
 am79900_config(sc)

@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_input.c,v 1.7 1998/09/13 16:21:18 christos Exp $	*/
+/*	$NetBSD: llc_input.c,v 1.7.4.1 1998/12/11 04:53:07 kenh Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -391,11 +391,16 @@ llc_ctlinput(prc, addr, info)
 
 	if (prc == PRC_IFUP || prc == PRC_IFDOWN) {
 		/* we use either this set ... */
-		ifa = ifa_ifwithaddr(addr);
-		ifp = ifa ? ifa->ifa_ifp : 0;
-		if (ifp == 0)
+		if ((ifa = ifa_ifwithaddr(addr)) == 0)
 			return 0;
+		ifp = ifa ? ifa->ifa_ifp : 0;
+		if (ifp == 0) {
+			ifa_delref(ifa);
+			return 0;
+		}
 
+		if_addref(ifp);
+		ifa_delref(ifa);
 		sap = ctlinfo->dlcti_lsap;
 		config = ctlinfo->dlcti_cfg;
 		pcb = (caddr_t) 0;
@@ -417,6 +422,7 @@ llc_ctlinput(prc, addr, info)
 	switch (prc) {
 	case PRC_IFUP:
 		(void) llc_setsapinfo(ifp, addr->sa_family, sap, config);
+		if_delref(ifp);
 		return 0;
 
 	case PRC_IFDOWN: {
@@ -451,14 +457,17 @@ llc_ctlinput(prc, addr, info)
 		if (linkp == 0) {
 			if ((linkp = llc_newlink((struct sockaddr_dl *) nlrt->rt_gateway, 
 						 nlrt->rt_ifp, nlrt, 
-						 pcb, llrt)) == 0)
+						 pcb, llrt)) == 0) {
+				if_delref(ifp);
 				return (0);
+			}
 			((struct npaidbentry *)llrt->rt_llinfo)->np_link = linkp;
 			i = splimp();
 			(void)llc_statehandler(linkp, (struct llc *) 0,
 						NL_CONNECT_REQUEST, 0, 1);
 			splx(i);
 		}
+		if_delref(ifp);
 		return ((caddr_t)linkp);
 	
 	case PRC_DISCONNECT_REQUEST:
@@ -489,5 +498,6 @@ llc_ctlinput(prc, addr, info)
 
 	}
 	
+	if_delref(ifp);
 	return 0;
 }

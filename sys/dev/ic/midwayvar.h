@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayvar.h,v 1.10 1997/03/20 21:34:46 chuck Exp $	*/
+/*	$NetBSD: midwayvar.h,v 1.10.14.1 1998/12/11 04:53:00 kenh Exp $	*/
 
 /*
  *
@@ -98,7 +98,13 @@ struct cfdriver {
 struct en_softc {
   /* bsd glue */
   struct device sc_dev;		/* system device */
+#ifdef _HAS_IF_ALLOC
+  struct ifnet *enif;		/* network ifnet handle */
+#define	EN_IFP(sc)	((sc)->enif)
+#else
   struct ifnet enif;		/* network ifnet handle */
+#define	EN_IFP(sc)	(&(sc)->enif)
+#endif
 
   /* bus glue */
   bus_space_tag_t en_memt;	/* for EN_READ/EN_WRITE */

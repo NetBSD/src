@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.27 1998/10/20 22:18:13 is Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.27.4.1 1998/12/11 04:53:00 kenh Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1998 Ignatios Souvatzis
@@ -192,6 +192,9 @@ bah_attach_subr(sc)
 	 */
 	bah_stop(sc); 
 
+	ifp = if_alloc();
+	sc->sc_arccom.ac_if = ifp;
+	ifp->if_ifcom = &sc->sc_arccom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_output = arc_output;
@@ -229,7 +232,7 @@ bah_init(sc)
 	struct ifnet *ifp;
 	int s;
 
-	ifp = &sc->sc_arccom.ac_if;
+	ifp = sc->sc_arccom.ac_if;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		s = splnet();
@@ -258,7 +261,7 @@ bah_reset(sc)
 	bus_space_handle_t regs = sc->sc_regs;
 	bus_space_handle_t mem = sc->sc_mem;
 
-	ifp = &sc->sc_arccom.ac_if;
+	ifp = sc->sc_arccom.ac_if;
 
 #ifdef BAH_DEBUG
 	printf("%s: reset\n", sc->sc_dev.dv_xname);
@@ -539,6 +542,7 @@ bah_srint(vsc)
 	}
 			
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 
 	/*
 	 * Align so that IP packet will be longword aligned. Here we
@@ -606,7 +610,7 @@ bah_srint(vsc)
 		bpf_mtap(ifp->if_bpf, head);
 #endif
 
-	arc_input(&sc->sc_arccom.ac_if, head);
+	arc_input(sc->sc_arccom.ac_if, head);
 
 	/* arc_input has freed it, we dont need to... */
 
@@ -656,7 +660,7 @@ bah_tint(sc, isr)
 	int clknow;
 #endif
 
-	ifp = &(sc->sc_arccom.ac_if);
+	ifp = sc->sc_arccom.ac_if;
 	buffer = sc->sc_tx_act;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.47 1998/06/26 00:08:01 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.47.6.1 1998/12/11 04:53:04 kenh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -52,6 +52,7 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/radix.h>
+#include <net/route.h>
 
 int	ifqmaxlen = IFQ_MAXLEN;
 void	if_slowtimo __P((void *arg));
@@ -65,8 +66,195 @@ void	if_slowtimo __P((void *arg));
 void
 ifinit()
 {
-
 	if_slowtimo(NULL);
+}
+
+#define	M_IFNET	M_TEMP
+/*
+ * Allocate an interface. Used so that interfaces can be
+ * added & deleted on the fly.
+ *
+ * Note: calling routines should delete an ifnet by calling
+ * if_delref when the refcount is one. It will automatically
+ * call if_free on the ifnet.
+ */
+struct ifnet *
+if_alloc(void)
+{
+	struct ifnet *ifp;
+
+	ifp = (struct ifnet *)malloc( sizeof(struct ifnet),
+					M_IFNET, M_WAITOK);
+	if (ifp != NULL) {
+		ifp->if_refcount = 1;
+		ifp->if_iffree = if_free;
+		memset(ifp, 0, sizeof(struct ifnet));
+	}
+	return ifp;
+}
+#if 0
+/*
+ * Set up refcount for an ifnet which isn't removable (fixed in place)
+ */
+void
+if_fixedinit(ifp)
+	struct ifnet *ifp;
+{
+	ifp->if_refcount = 1;
+	ifp->if_iffree = if_nullfree;
+}
+#endif
+/*
+ * Free an interface. It must have no references at this point!
+ */
+void
+if_free(ifp)
+	struct ifnet *ifp;
+{
+	if (ifp->if_refcount != 0)
+		panic("Trying to free an ifnet with refcount != 0");
+
+	free(ifp, M_IFNET);
+}
+#if 0
+/*
+ * Null free routine for ifnets which aren't de-allocatable.
+ */
+void
+if_nullfree(ifp)
+	struct ifnet *ifp;
+{
+}
+#endif
+/*
+ * Incriment the reference count on an ifnet
+ */
+void
+if_addref(ifp)
+	struct ifnet *ifp;
+{
+	ifp->if_refcount++;
+}
+/*
+ * Decrement the reference count on an ifnet. Delete it if the
+ * count goes to 0.
+ */
+void
+if_delref(ifp)
+	struct ifnet *ifp;
+{
+	if (ifp == 0)
+		panic("Null ifp for delref!\n");
+	if ((--ifp->if_refcount) <= 0)
+		if (ifp->if_iffree)
+			(*ifp->if_iffree)(ifp);
+}
+#ifdef _DEBUG_IFA_REF
+static int lastadd = 0;
+static char lastfile[64];
+#include "opt_ddb.h"
+#ifdef DDB
+static int ifa_refcnt_debug = 0;
+#endif
+#endif
+
+void
+#ifdef _DEBUG_IFA_REF
+ifa_addref1(ifa, f)
+	char *f;
+#else
+ifa_addref(ifa)
+#endif
+	struct ifaddr *ifa;
+{
+	if (ifa == 0)
+		panic("Null ifa for addref!\n");
+#ifdef _DEBUG_IFA_REF
+	if (lastadd == 1) {
+		printf("Unbalanced add in %s\n     and in %s\n", lastfile, f);
+#ifdef DDB
+		if (ifa_refcnt_debug)
+			Debugger();
+#endif
+	}
+	lastadd = 1;
+	strncpy(lastfile, f, 63);
+#endif
+	ifa->ifa_refcnt++;
+}
+void
+#ifdef _DEBUG_IFA_REF
+ifa_delref1(ifa, f)
+	char *f;
+#else
+ifa_delref(ifa)
+#endif
+	struct ifaddr *ifa;
+{
+	if (ifa == 0)
+		panic("Null ifa for delref!\n");
+#ifdef _DEBUG_IFA_REF
+	if ((lastadd != 1) || strcmp(lastfile, f)) {
+		printf("Unbalancing del in %s\n     and %s\n", lastfile, f);
+#ifdef DDB
+		if (ifa_refcnt_debug)
+			Debugger();
+#endif
+	}
+	lastadd = 2;
+	strncpy(lastfile, f, 63);
+#endif
+	if ((ifa->ifa_refcnt) <= 0)
+		ifafree(ifa);
+	else
+		ifa->ifa_refcnt--;
+}
+
+/*
+ * Null routines used while an interface is going away. These routines
+ * just return an error.
+ */
+int  if_nulloutput	__P((struct ifnet *, struct mbuf *, \
+				struct sockaddr *, struct rtentry *));
+void if_nullstart	__P((struct ifnet *));
+int  if_nullioctl	__P((struct ifnet *, u_long, caddr_t));
+int  if_nullreset	__P((struct ifnet *));
+void if_nullwatchdog	__P((struct ifnet *));
+
+int
+if_nulloutput(ifp, m, so, rt)
+	struct ifnet *ifp;
+	struct mbuf *m;
+	struct sockaddr *so;
+	struct rtentry *rt;
+{
+	return (ENXIO);
+}
+void
+if_nullstart(ifp)
+	struct ifnet *ifp;
+{
+	return;
+}
+int
+if_nullioctl(ifp, cmd, data)
+	struct ifnet *ifp;
+	u_long cmd;
+	caddr_t	data;
+{
+	return (ENXIO);
+}
+int
+if_nullreset(ifp)
+	struct ifnet *ifp;
+{
+	return (ENXIO);
+}
+void
+if_nullwatchdog(ifp)
+	struct ifnet *ifp;
+{
+	return;
 }
 
 int if_index = 0;
@@ -84,8 +272,9 @@ if_attach(ifp)
 	int namelen, masklen;
 	register struct sockaddr_dl *sdl;
 	register struct ifaddr *ifa;
-	static int if_indexlim = 8;
+	static int if_indexlim = 8, s;
 
+	s = splimp();
 	if (if_index == 0)
 		TAILQ_INIT(&ifnet);
 	TAILQ_INIT(&ifp->if_addrlist);
@@ -123,8 +312,13 @@ if_attach(ifp)
 	sdl->sdl_type = ifp->if_type;
 	ifnet_addrs[if_index - 1] = ifa;
 	ifa->ifa_ifp = ifp;
+	if_addref(ifp);
 	ifa->ifa_rtrequest = link_rtrequest;
 	TAILQ_INSERT_HEAD(&ifp->if_addrlist, ifa, ifa_list);
+	ifa_addref(ifa); /* we add a ref for the copy in the linked list.
+			  * We will ifa_delref twice in if_detach (once for
+			  * a link level address, once for ifnet_addrs),
+			  * which will free the ifa */
 	ifa->ifa_addr = (struct sockaddr *)sdl;
 	ifp->if_sadl = sdl;
 	sdl = (struct sockaddr_dl *)(socksize + (caddr_t)sdl);
@@ -135,30 +329,185 @@ if_attach(ifp)
 	if (ifp->if_snd.ifq_maxlen == 0)
 	    ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	ifp->if_broadcastaddr = 0; /* reliably crash if used uninitialized */
+	splx(s);
+}
+/*
+ * if_rt_walktree is the callback for a radix tree walk
+ * to delete all references to an ifnet
+ */
+int	if_rt_walktree __P((struct radix_node *, void *));
+int
+if_rt_walktree(rn, v)
+	struct radix_node *rn;
+	void	*v;
+{
+	struct ifnet *ifp = v;
+	struct rtentry *rt = (struct rtentry *)rn;
+	if (rt->rt_ifp == ifp) {
+		/* actually delete rt */
+		rtrequest(RTM_DELETE, (struct sockaddr *) rt_key(rt),
+			  0, rt_mask(rt), 0, 0);
+	}
+	return 0;
+}
+
+/*
+ * Deactivate an interface.  Right now, just point all of the network
+ * functions to null.  Can be called in interrupt context.
+ */
+
+void
+if_deactivate(ifp)
+	struct ifnet *ifp;
+{
+	int s;
+
+	s = splimp();
+
+	ifp->if_output   = if_nulloutput;
+	ifp->if_start    = if_nullstart;
+	ifp->if_ioctl    = if_nullioctl;
+	ifp->if_reset    = if_nullreset;
+	ifp->if_watchdog = if_nullwatchdog;
+	ifp->if_flags   |= IFF_DEAD;
+	ifp->if_snd.ifq_maxlen = 0;	/* now the queue's always full */
+
+	splx(s);
+}
+
+/*
+ * Detach an interface from the
+ * list of "active" interfaces. Free any space 
+ * malloc'd above.
+ */
+void
+if_detach(ifp)
+	struct ifnet *ifp;
+{
+	/*
+	 * Here's the idea. We tear as many things down as
+	 * can. We start with the most dangling-of things.
+	 *
+	 * We do an if_down to try to get all the protocols
+	 * to do something, but many protocols ignore the
+	 * if_down. Oh well.
+	 * Then we rip all of the addresses off. Hopefully that
+	 * will kill all the routes. :-)
+	 *
+	 * The only last thing to do is kill any incoming packets pointing
+	 * to this interface.
+	 */
+	int s, i;
+	register struct ifaddr *ifa;
+	struct protosw *pr;
+	struct socket so;
+	struct radix_node_head *rnh;
+
+	so.so_type = SOCK_DGRAM;
+	so.so_options = 0;		/* is all this needed? */
+	so.so_linger = 0;
+	so.so_state = SS_NOFDREF | SS_CANTSENDMORE | SS_CANTRCVMORE;
+	so.so_pcb = 0;
+	so.so_head = 0;
+	TAILQ_INIT(&so.so_q0);
+	TAILQ_INIT(&so.so_q);
+
+	so.so_q0len = so.so_qlen = so.so_qlimit = 0;
+	so.so_timeo = so.so_oobmark = 0;
+
+	s = splimp();
+
+	if_down(ifp);
+
+	for( ; ifp->if_addrlist.tqh_first; ) {
+		ifa = ifp->if_addrlist.tqh_first;
+		if (ifa->ifa_addr->sa_family == AF_LINK) {
+			rtinit(ifa, RTM_DELETE, 0);
+			TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+			ifa_delref(ifa);
+		} else {
+			pr = pffindtype(ifa->ifa_addr->sa_family, SOCK_DGRAM);
+			so.so_proto = pr;
+			if (pr->pr_usrreq) {
+				(*pr->pr_usrreq)(&so, PRU_CONTROL,
+					(struct mbuf *) SIOCDIFADDR,
+					(struct mbuf *) ifa,
+					(struct mbuf *) ifp, &proc0);
+			} else {
+				rtinit(ifa, RTM_DELETE, 0);
+				TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+				ifa_delref(ifa);
+			}
+		}
+	}
+
+	/* walk the routing table to look for straglers */
+	for (i = 1; i <= AF_MAX; i++)
+		if ((rnh = rt_tables[i]) && 
+		    ((*rnh->rnh_walktree)(rnh, if_rt_walktree,
+		    (void *)ifp)))
+			break;
+
+	ifa_delref(ifnet_addrs[ifp->if_index - 1]);
+	ifnet_addrs[ifp->if_index - 1] = 0;
+	if_delref(ifp);
+	TAILQ_REMOVE(&ifnet, ifp, if_list);
+	if_delref(ifp);
+
+	splx(s);
+
+	/*
+	 * At this point, the only possable references are mbufs of
+	 * packets that have recently come in. They will automatically
+	 * drain out as the packets are processed, and the interface
+	 * will finally be deleted when the last one's gone.
+	 */
 }
 /*
  * Locate an interface based on a complete address.
  */
 /*ARGSUSED*/
 struct ifaddr *
+#ifdef _DEBUG_IFA_REF
+ifa_ifwithaddr1(addr, f)
+	char *f;
+#else
 ifa_ifwithaddr(addr)
+#endif
 	register struct sockaddr *addr;
 {
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
+	register int s;
 
+	s = splimp();
 #define	equal(a1, a2) \
   (bcmp((caddr_t)(a1), (caddr_t)(a2), ((struct sockaddr *)(a1))->sa_len) == 0)
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
 	    for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
 		if (ifa->ifa_addr->sa_family != addr->sa_family)
 			continue;
-		if (equal(addr, ifa->ifa_addr))
+		if (equal(addr, ifa->ifa_addr)) {
+#ifdef _DEBUG_IFA_REF
+			ifa_addref1(ifa, f);
+#else
+			ifa_addref(ifa);
+#endif
+			splx(s);
 			return (ifa);
+		}
 		if ((ifp->if_flags & IFF_BROADCAST) && ifa->ifa_broadaddr &&
-		    equal(ifa->ifa_broadaddr, addr))
+		    equal(ifa->ifa_broadaddr, addr)) {
+#ifdef _DEBUG_IFA_REF
+			ifa_addref1(ifa, f);
+#else
+			ifa_addref(ifa);
+#endif
+			splx(s);
 			return (ifa);
+		}
 	}
+	splx(s);
 	return ((struct ifaddr *)0);
 }
 /*
@@ -166,21 +515,36 @@ ifa_ifwithaddr(addr)
  */
 /*ARGSUSED*/
 struct ifaddr *
+#ifdef _DEBUG_IFA_REF
+ifa_ifwithdstaddr1(addr, f)
+	char *f;
+#else
 ifa_ifwithdstaddr(addr)
+#endif
 	register struct sockaddr *addr;
 {
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
+	register int s;
 
+	s = splimp();
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
 	    if (ifp->if_flags & IFF_POINTOPOINT)
 		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
 			if (ifa->ifa_addr->sa_family != addr->sa_family ||
 			    ifa->ifa_dstaddr == NULL)
 				continue;
-			if (equal(addr, ifa->ifa_dstaddr))
+			if (equal(addr, ifa->ifa_dstaddr)) {
+#ifdef _DEBUG_IFA_REF
+				ifa_addref1(ifa, f);
+#else
+				ifa_addref(ifa);
+#endif
+				splx(s);
 				return (ifa);
+			}
 	}
+	splx(s);
 	return ((struct ifaddr *)0);
 }
 
@@ -189,7 +553,12 @@ ifa_ifwithdstaddr(addr)
  * is most specific found.
  */
 struct ifaddr *
+#ifdef _DEBUG_IFA_REF
+ifa_ifwithnet1(addr, f)
+	char *f;
+#else
 ifa_ifwithnet(addr)
+#endif
 	struct sockaddr *addr;
 {
 	register struct ifnet *ifp;
@@ -197,11 +566,21 @@ ifa_ifwithnet(addr)
 	struct ifaddr *ifa_maybe = 0;
 	u_int af = addr->sa_family;
 	char *addr_data = addr->sa_data, *cplim;
+	register int s;
 
+	s = splimp();
 	if (af == AF_LINK) {
 	    register struct sockaddr_dl *sdl = (struct sockaddr_dl *)addr;
-	    if (sdl->sdl_index && sdl->sdl_index <= if_index)
-		return (ifnet_addrs[sdl->sdl_index - 1]);
+	    if (sdl->sdl_index && sdl->sdl_index <= if_index) {
+		ifa = ifnet_addrs[sdl->sdl_index - 1];
+#ifdef _DEBUG_IFA_REF
+		ifa_addref1(ifa, f);
+#else
+		ifa_addref(ifa);
+#endif
+		splx(s);
+		return (ifa);
+	    }
 	}
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
 		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
@@ -224,20 +603,38 @@ ifa_ifwithnet(addr)
 			    (caddr_t)ifa_maybe->ifa_netmask))
 				ifa_maybe = ifa;
 		}
+	if (ifa_maybe)
+#ifdef _DEBUG_IFA_REF
+		ifa_addref1(ifa_maybe, f);
+#else
+		ifa_addref(ifa_maybe);
+#endif
+	splx(s);
 	return (ifa_maybe);
 }
 /*
  * Find the interface of the addresss.
  */
 struct ifaddr *
+#ifdef _DEBUG_IFA_REF
+ifa_ifwithladdr1(addr, f)
+	char *f;
+#else
 ifa_ifwithladdr(addr)
+#endif
 	struct sockaddr *addr;
 {
 	struct ifaddr *ia;
 
+#ifdef _DEBUG_IFA_REF
+	if ((ia = ifa_ifwithaddr1(addr, f)) || (ia = ifa_ifwithdstaddr1(addr, f))
+	    || (ia = ifa_ifwithnet1(addr, f))) {
+#else
 	if ((ia = ifa_ifwithaddr(addr)) || (ia = ifa_ifwithdstaddr(addr))
-	    || (ia = ifa_ifwithnet(addr)))
+	    || (ia = ifa_ifwithnet(addr))) {
+#endif
 		return (ia);
+	}
 	return (NULL);
 }
 
@@ -245,16 +642,31 @@ ifa_ifwithladdr(addr)
  * Find an interface using a specific address family
  */
 struct ifaddr *
+#ifdef _DEBUG_IFA_REF
+ifa_ifwithaf1(af, f)
+	char *f;
+#else
 ifa_ifwithaf(af)
+#endif
 	register int af;
 {
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
+	register int s;
 
+	s = splimp();
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
 		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next)
-			if (ifa->ifa_addr->sa_family == af)
+			if (ifa->ifa_addr->sa_family == af) {
+#ifdef _DEBUG_IFA_REF
+				ifa_addref1(ifa, f);
+#else
+				ifa_addref(ifa);
+#endif
+				splx(s);
 				return (ifa);
+			}
+	splx(s);
 	return ((struct ifaddr *)0);
 }
 
@@ -263,7 +675,12 @@ ifa_ifwithaf(af)
  * a given address.
  */
 struct ifaddr *
+#ifdef _DEBUG_IFA_REF
+ifaof_ifpforaddr1(addr, ifp, f)
+	char *f;
+#else
 ifaof_ifpforaddr(addr, ifp)
+#endif
 	struct sockaddr *addr;
 	register struct ifnet *ifp;
 {
@@ -272,17 +689,27 @@ ifaof_ifpforaddr(addr, ifp)
 	register char *cplim;
 	struct ifaddr *ifa_maybe = 0;
 	u_int af = addr->sa_family;
+	int s;
 
 	if (af >= AF_MAX)
 		return (0);
+	s = splimp();
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
 		if (ifa->ifa_addr->sa_family != af)
 			continue;
 		ifa_maybe = ifa;
 		if (ifa->ifa_netmask == 0) {
 			if (equal(addr, ifa->ifa_addr) ||
-			    (ifa->ifa_dstaddr && equal(addr, ifa->ifa_dstaddr)))
+			    (ifa->ifa_dstaddr &&
+			    equal(addr, ifa->ifa_dstaddr))) {
+#ifdef _DEBUG_IFA_REF
+				ifa_addref1(ifa, f);
+#else
+				ifa_addref(ifa);
+#endif
+				splx(s);
 				return (ifa);
+			}
 			continue;
 		}
 		cp = addr->sa_data;
@@ -292,13 +719,25 @@ ifaof_ifpforaddr(addr, ifp)
 		for (; cp3 < cplim; cp3++)
 			if ((*cp++ ^ *cp2++) & *cp3)
 				break;
-		if (cp3 == cplim)
+		if (cp3 == cplim) {
+#ifdef _DEBUG_IFA_REF
+			ifa_addref1(ifa, f);
+#else
+			ifa_addref(ifa);
+#endif
+			splx(s);
 			return (ifa);
+		}
 	}
+	if (ifa_maybe)
+#ifdef _DEBUG_IFA_REF
+		ifa_addref1(ifa_maybe, f);
+#else
+		ifa_addref(ifa_maybe);
+#endif
+	splx(s);
 	return (ifa_maybe);
 }
-
-#include <net/route.h>
 
 /*
  * Default action when installing a route with a Link Level gateway.
@@ -314,23 +753,30 @@ link_rtrequest(cmd, rt, sa)
 	register struct ifaddr *ifa;
 	struct sockaddr *dst;
 	struct ifnet *ifp;
+	int s;
+
+	s = splimp();
 
 	if (cmd != RTM_ADD || ((ifa = rt->rt_ifa) == 0) ||
-	    ((ifp = ifa->ifa_ifp) == 0) || ((dst = rt_key(rt)) == 0))
+	    ((ifp = ifa->ifa_ifp) == 0) || ((dst = rt_key(rt)) == 0)) {
+		splx(s);
 		return;
+	}
 	if ((ifa = ifaof_ifpforaddr(dst, ifp)) != NULL) {
 		IFAFREE(rt->rt_ifa);
 		rt->rt_ifa = ifa;
-		ifa->ifa_refcnt++;
+		/* ifa->ifa_refcnt++; We implicitly do this by not
+		 * ifa_delref'ing ifa */
 		if (ifa->ifa_rtrequest && ifa->ifa_rtrequest != link_rtrequest)
 			ifa->ifa_rtrequest(cmd, rt, sa);
 	}
+	splx(s);
 }
 
 /*
  * Mark an interface down and notify protocols of
  * the transition.
- * NOTE: must be called at splsoftnet or equivalent.
+ * NOTE: must be called at splimp!
  */
 void
 if_down(ifp)
@@ -348,7 +794,7 @@ if_down(ifp)
 /*
  * Mark an interface up and notify protocols of
  * the transition.
- * NOTE: must be called at splsoftnet or equivalent.
+ * NOTE: must be called at splimp!
  */
 void
 if_up(ifp)
@@ -370,6 +816,7 @@ if_up(ifp)
 
 /*
  * Flush an interface queue.
+ * Needs to be called at splimp
  */
 void
 if_qflush(ifq)
@@ -418,11 +865,17 @@ ifunit(name)
 	register char *name;
 {
 	register struct ifnet *ifp;
+	int s;
 
+	s = splimp();
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
-		if (strcmp(ifp->if_xname, name) == 0)
+		if (strcmp(ifp->if_xname, name) == 0) {
+			if_addref(ifp);
+			splx(s);
 			return (ifp);
+		    }
 
+	splx(s);
 	return (NULL);
 }
 
@@ -438,7 +891,7 @@ ifioctl(so, cmd, data, p)
 {
 	register struct ifnet *ifp;
 	register struct ifreq *ifr;
-	int error;
+	int error = 0;
 
 	switch (cmd) {
 
@@ -466,7 +919,7 @@ ifioctl(so, cmd, data, p)
 
 	case SIOCSIFFLAGS:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (error);
+			break;
 		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
 			int s = splimp();
 			if_down(ifp);
@@ -481,11 +934,12 @@ ifioctl(so, cmd, data, p)
 			(ifr->ifr_flags &~ IFF_CANTCHANGE);
 		if (ifp->if_ioctl)
 			(void) (*ifp->if_ioctl)(ifp, cmd, data);
+		/* XXX wrs shouldn't we return what the if_ioctl says? */
 		break;
 
 	case SIOCSIFMETRIC:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (error);
+			break;
 		ifp->if_metric = ifr->ifr_metric;
 		break;
 
@@ -494,12 +948,14 @@ ifioctl(so, cmd, data, p)
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (error);
+			break;
 		/* FALLTHROUGH */
 	case SIOCGIFMEDIA:
-		if (ifp->if_ioctl == 0)
-			return (EOPNOTSUPP);
-		return ((*ifp->if_ioctl)(ifp, cmd, data));
+		if (ifp->if_ioctl == 0) {
+			error =  EOPNOTSUPP;
+			break;
+		}
+		error = (*ifp->if_ioctl)(ifp, cmd, data);
 
 	case SIOCSDRVSPEC:  
 		/* XXX:  need to pass proc pointer through to driver... */
@@ -507,10 +963,12 @@ ifioctl(so, cmd, data, p)
 			return (error);
 	/* FALLTHROUGH */
 	default:
-		if (so->so_proto == 0)
-			return (EOPNOTSUPP);
+		if (so->so_proto == 0) {
+			error = (EOPNOTSUPP);
+			break;
+		}
 #if !defined(COMPAT_43) && !defined(COMPAT_LINUX) && !defined(COMPAT_SVR4)
-		return ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
+		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
 		    (struct mbuf *)ifp, p));
 #else
@@ -561,12 +1019,10 @@ ifioctl(so, cmd, data, p)
 		case OSIOCGIFNETMASK:
 			*(u_int16_t *)&ifr->ifr_addr = ifr->ifr_addr.sa_family;
 		}
-		return (error);
-
 	    }
 #endif
 	}
-	return (0);
+	return (error);
 }
 
 /*
@@ -585,7 +1041,7 @@ ifconf(cmd, data)
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
 	struct ifreq ifr, *ifrp;
-	int space = ifc->ifc_len, error = 0;
+	int space = ifc->ifc_len, error = 0, s = splimp();
 
 	ifrp = ifc->ifc_req;
 	for (ifp = ifnet.tqh_first;
@@ -635,5 +1091,6 @@ ifconf(cmd, data)
 		}
 	}
 	ifc->ifc_len -= space;
+	splx(s);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.29 1998/07/05 06:49:03 jonathan Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.29.6.1 1998/12/11 04:52:55 kenh Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -205,7 +205,7 @@ ed_zbus_attach(parent, self, aux)
 	struct ed_softc *sc = (void *)self;
 	struct zbus_args *zap = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp;
 	u_char *prom;
 	int i;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
@@ -260,6 +260,9 @@ ed_zbus_attach(parent, self, aux)
 	ed_stop(sc);
 
 	/* Initialize ifnet structure. */
+	ifp = if_alloc();
+	sc->sc_ethercom.ec_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = ed_start;
@@ -344,7 +347,7 @@ void
 ed_init(sc)
 	struct ed_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	int i, s;
 	u_long mcaf[2];
 
@@ -413,7 +416,7 @@ ed_init(sc)
 		NIC_PUT(sc, ED_P1_PAR0 + i, LLADDR(ifp->if_sadl)[i]);
 
 	/* Set multicast filter on chip. */
-	ed_getmcaf(&sc->sc_ethercom, mcaf);
+	ed_getmcaf(sc->sc_ethercom, mcaf);
 	for (i = 0; i < 8; i++)
 		NIC_PUT(sc, ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
 
@@ -460,7 +463,7 @@ static inline void
 ed_xmit(sc)
 	struct ed_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	u_short len;
 
 	len = sc->txb_len[sc->txb_next_tx];
@@ -582,7 +585,7 @@ ed_rint(sc)
 	u_char boundary, current;
 	struct ed_ring packet_hdr;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 loop:
 	/* Set NIC to page 1 registers to get 'current' pointer. */
 	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_1 | ED_CR_STA);
@@ -693,7 +696,7 @@ edintr(arg)
 	void *arg;
 {
 	struct ed_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	u_char isr;
 
 	/* Set NIC to page 0 registers. */
@@ -973,7 +976,7 @@ ed_get_packet(sc, buf, len)
 	struct mbuf *m;
 	struct ifnet *ifp;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 
 	/* round length to word boundry */
 	len = (len + 1) & ~1;
@@ -983,6 +986,7 @@ ed_get_packet(sc, buf, len)
 	if (m == 0)
 		return;
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = len;
 	m->m_len = 0;
 

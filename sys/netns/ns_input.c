@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.14 1998/03/01 02:24:38 fvdl Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.14.6.1 1998/12/11 04:53:10 kenh Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -366,6 +366,7 @@ idp_forward(m)
 			/* I'm gonna hafta eat this packet */
 			agedelta += NS_MAXHOPS - idp->idp_tc;
 			idp->idp_tc = NS_MAXHOPS;
+			ifa_delref(&ia->ia_ifa);
 		}
 		if ((ok_back = idp_do_route(&idp->idp_sna,&idp_sroute))==0) {
 			/* error = ENETUNREACH; He'll never get it! */

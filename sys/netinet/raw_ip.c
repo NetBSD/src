@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.41 1998/04/03 07:49:16 thorpej Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.41.6.1 1998/12/11 04:53:09 kenh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -308,6 +308,7 @@ rip_bind(inp, nam)
 	struct mbuf *nam;
 {
 	struct sockaddr_in *addr = mtod(nam, struct sockaddr_in *);
+	struct ifaddr *ifa = NULL;
 
 	if (nam->m_len != sizeof(*addr))
 		return (EINVAL);
@@ -317,9 +318,11 @@ rip_bind(inp, nam)
 	    addr->sin_family != AF_IMPLINK)
 		return (EAFNOSUPPORT);
 	if (!in_nullhost(addr->sin_addr) &&
-	    ifa_ifwithaddr(sintosa(addr)) == 0)
+	    (ifa = ifa_ifwithaddr(sintosa(addr))) == 0)
 		return (EADDRNOTAVAIL);
 	inp->inp_laddr = addr->sin_addr;
+	if (ifa != NULL)
+		ifa_delref(ifa);
 	return (0);
 }
 

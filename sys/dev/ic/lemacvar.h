@@ -1,4 +1,4 @@
-/*      $NetBSD: lemacvar.h,v 1.3 1998/05/14 18:24:00 matt Exp $ */
+/*      $NetBSD: lemacvar.h,v 1.3.6.1 1998/12/11 04:52:59 kenh Exp $ */
 
 /*
  * Copyright (c) 1997 Matt Thomas <matt@3am-software.com>
@@ -87,7 +87,7 @@ typedef struct {
 #define	sc_if	sc_ec.ec_if
 
 #define	LEMAC_IFP_TO_SOFTC(ifp)	((lemac_softc_t *)((ifp)->if_softc))
-#define	LEMAC_USE_PIO_MODE(sc)	(((sc->sc_flags & LEMAC_MODE_MASK) == LEMAC_PIO_MODE) || (sc->sc_if.if_flags & IFF_LINK0))
+#define	LEMAC_USE_PIO_MODE(sc)	(((sc->sc_flags & LEMAC_MODE_MASK) == LEMAC_PIO_MODE) || (sc->sc_if->if_flags & IFF_LINK0))
 
 #define	LEMAC_OUTB(sc, o, v)	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, o, v)
 #define	LEMAC_OUTSB(sc, o, l, p)	bus_space_write_multi_1((sc)->sc_iot, (sc)->sc_ioh, o, p, l)

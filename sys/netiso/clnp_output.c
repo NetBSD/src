@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_output.c,v 1.11 1996/10/13 02:04:18 christos Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.11.20.1 1998/12/11 04:53:09 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -200,6 +200,7 @@ clnp_output(m0, va_alist)
 	struct iso_addr *dst;	/* ptr to destination address */
 	struct clnp_cache clc;	/* storage for cache information */
 	struct clnp_cache *clcp = NULL;	/* ptr to clc */
+	struct iso_ifaddr *ia = 0;
 	int             hdrlen = 0;
 	va_list ap;
 
@@ -211,10 +212,13 @@ clnp_output(m0, va_alist)
 
 	dst = &isop->isop_faddr->siso_addr;
 	if (isop->isop_laddr == 0) {
-		struct iso_ifaddr *ia = 0;
 		clnp_route(dst, &isop->isop_route, flags, 0, &ia);
-		if (ia == 0 || ia->ia_ifa.ifa_addr->sa_family != AF_ISO)
+		if (ia == 0 )
 			return (ENETUNREACH);
+		if (ia->ia_ifa.ifa_addr->sa_family != AF_ISO) {
+			ifa_delref(&ia->ia_ifa);
+			return (ENETUNREACH);
+		}
 		src = &ia->ia_addr.siso_addr;
 	} else
 		src = &isop->isop_laddr->siso_addr;
@@ -371,6 +375,8 @@ clnp_output(m0, va_alist)
 				}
 #endif
 				m_freem(m0);
+				if (ia)
+					ifa_delref(&ia->ia_ifa);
 				return (EINVAL);
 			}
 		}
@@ -385,6 +391,8 @@ clnp_output(m0, va_alist)
 #endif
 			INCSTAT(cns_odropped);
 			m_freem(m0);
+			if (ia)
+				ifa_delref(&ia->ia_ifa);
 			return (EINVAL);
 		}
 		/*
@@ -396,6 +404,8 @@ clnp_output(m0, va_alist)
 		    (dst->isoa_len > sizeof(struct iso_addr))) {
 			m_freem(m0);
 			INCSTAT(cns_odropped);
+			if (ia)
+				ifa_delref(&ia->ia_ifa);
 			return (ENAMETOOLONG);
 		}
 		/*
@@ -405,6 +415,8 @@ clnp_output(m0, va_alist)
 		if (m == 0) {
 			m_freem(m0);
 			INCSTAT(cns_odropped);
+			if (ia)
+				ifa_delref(&ia->ia_ifa);
 			return (ENOBUFS);
 		}
 		INCSTAT(cns_sent);
@@ -601,6 +613,8 @@ done:
 		clnp_stat.cns_sent--;
 		clnp_stat.cns_odropped++;
 	}
+	if (ia)
+		ifa_delref(&ia->ia_ifa);
 	return (error);
 }
 

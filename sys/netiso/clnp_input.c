@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.17 1998/07/05 04:37:42 jonathan Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.17.6.1 1998/12/11 04:53:09 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -122,6 +122,9 @@ clnp_init()
 {
 	register struct protosw *pr;
 
+	/* XXX WRS does this need to be at splimp? Or should we only be
+	 * called w/ interupts already off? */
+
 	/*
 	 * CLNP protox initialization
 	 */
@@ -183,10 +186,12 @@ next:
 		goto next;
 	} else {
 		register struct ifaddr *ifa;
+		s = splimp();
 		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first; ifa != 0;
 		     ifa = ifa->ifa_list.tqe_next)
 			if (ifa->ifa_addr->sa_family == AF_ISO)
 				break;
+		splx(s);
 		if (ifa == 0) {
 			m_freem(m);
 			goto next;
@@ -194,6 +199,8 @@ next:
 	}
 	bzero((caddr_t) & sh, sizeof(sh));
 	sh.snh_flags = m->m_flags & (M_MCAST | M_BCAST);
+	sh.snh_ifp = m->m_pkthdr.rcvif;
+	/* no addref as we always have m while we have sh */
 	switch ((sh.snh_ifp = m->m_pkthdr.rcvif)->if_type) {
 	case IFT_EON:
 		bcopy(mtod(m, caddr_t), (caddr_t) sh.snh_dhost, sizeof(u_long));

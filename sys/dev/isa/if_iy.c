@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.29 1998/08/08 23:51:41 mycroft Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.29.4.1 1998/12/11 04:53:01 kenh Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -279,7 +279,7 @@ iyattach(parent, self, aux)
 {
 	struct iy_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	unsigned temp;
@@ -306,6 +306,9 @@ iyattach(parent, self, aux)
 	
 	iyprobemem(sc);
 
+	ifp = if_alloc();
+	sc->sc_ethercom.ec_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = iystart;
@@ -412,7 +415,7 @@ struct iy_softc *sc;
 #endif
 	sc->tx_start = sc->tx_end = sc->rx_size;
 	sc->tx_last = 0;
-	sc->sc_ethercom.ec_if.if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	sc->sc_ethercom.ec_if->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
 }
 
 void
@@ -439,7 +442,7 @@ struct iy_softc *sc;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 #ifdef IYDEBUG
 	printf("ifp is %p\n", ifp);
 #endif
@@ -844,7 +847,7 @@ iywatchdog(ifp)
 	struct iy_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_ethercom.ec_if.if_oerrors;
+	++ifp->if_oerrors;
 	iyreset(sc);
 }
 
@@ -907,12 +910,13 @@ iyget(sc, iot, ioh, rxlen)
 	struct ifnet *ifp;
 	int len;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		goto dropped;
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = rxlen;
 	len = MHLEN;
 	top = 0;
@@ -965,7 +969,7 @@ iyget(sc, iot, ioh, rxlen)
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 &&
 		    bcmp(eh->ether_dhost,
-		    	LLADDR(sc->sc_ethercom.ec_if.if_sadl), 
+		    	LLADDR(ifp->if_sadl), 
 			sizeof(eh->ether_dhost)) != 0) {
 
 			m_freem(top);
@@ -994,7 +998,7 @@ struct iy_softc *sc;
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 
 	rxadrs = sc->rx_start;
 	bus_space_write_2(iot, ioh, HOST_ADDR_REG, rxadrs);
@@ -1034,7 +1038,7 @@ struct iy_softc *sc;
 	struct ifnet *ifp;
 	u_int txstatus, txstat2, txlen, txnext;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = sc->sc_ethercom.ec_if;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
@@ -1109,10 +1113,10 @@ iyioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host = *(union ns_host *)
-				    LLADDR(sc->sc_ethercom.ec_if.if_sadl);
+				    LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host,
-				    LLADDR(sc->sc_ethercom.ec_if.if_sadl),
+				    LLADDR(ifp->if_sadl),
 				    ETHER_ADDR_LEN);
 			/* Set new address. */
 			iyinit(sc);
@@ -1161,8 +1165,8 @@ iyioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom):
-		    ether_delmulti(ifr, &sc->sc_ethercom);
+		    ether_addmulti(ifr, ifp->if_ifcom):
+		    ether_delmulti(ifr, ifp->if_ifcom);
 
 		if (error == ENETRESET) {
 			/*
@@ -1225,8 +1229,8 @@ iy_mc_setup(sc)
 {
 	struct ether_multi *enm;
 	struct ether_multistep step;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	struct ethercom *ecp;
-	struct ifnet *ifp;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int avail, last /*, end*/ , len;
@@ -1235,7 +1239,7 @@ iy_mc_setup(sc)
 	
 
 	ecp = &sc->sc_ethercom;
-	ifp = &ecp->ec_if;
+	ifp = ecp->ec_if;
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
@@ -1299,7 +1303,7 @@ iy_mc_setup(sc)
 		break;
 	}
 	sc->tx_start = sc->tx_end;
-	sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
+	sc->sc_ethercom.ec_if->if_flags &= ~IFF_OACTIVE;
 	
 }
 
@@ -1316,7 +1320,7 @@ iy_mc_reset(sc)
 	u_int16_t temp;
 
 	ecp = &sc->sc_ethercom;
-	ifp = &ecp->ec_if;
+	ifp = ecp->ec_if;
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
