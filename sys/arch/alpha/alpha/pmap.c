@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.146 2000/09/14 17:06:52 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.147 2000/09/19 01:02:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.146 2000/09/14 17:06:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.147 2000/09/19 01:02:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3632,7 +3632,8 @@ pmap_ptpage_steal(pmap_t pmap, int usage, paddr_t *pap)
 		 * Have a candidate pmap.  Loop through the PT pages looking
 		 * for one we can steal.
 		 */
-		for (l1idx = 0; l1idx < NPTEPG; l1idx++) {
+		for (l1idx = 0;
+		     l1idx < l1pte_index(VM_MAXUSER_ADDRESS); l1idx++) {
 			if (pmap_pte_v(&spmap->pm_lev1map[l1idx]) == 0)
 				continue;
 
