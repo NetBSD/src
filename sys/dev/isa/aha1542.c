@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.19 1994/03/08 12:21:10 mycroft Exp $
+ *	$Id: aha1542.c,v 1.20 1994/03/10 20:52:09 mycroft Exp $
  */
 
 /*
@@ -446,9 +446,12 @@ aha_cmd(int unit, int icnt, int ocnt, int wait, u_char *retval, ...)
 int
 ahaprobe(struct isa_device *dev)
 {
- 	int	unit = ahaunit;
+ 	int	unit;
 
-	dev->id_unit = unit;
+	if (dev->id_masunit != -1)
+		return 1;
+
+	dev->id_unit = unit = ahaunit;
 	aha_base[unit] = dev->id_iobase;
 	if(unit >= NAHA) {
 		printf("aha: unit number (%d) too high\n",unit);
@@ -482,6 +485,9 @@ ahaattach(struct isa_device *dev)
 	static u_long speedprint;	/* max 32 aha controllers */
 	int masunit = dev->id_masunit;
 	int r;
+
+	if (masunit == -1)
+		return 1;
 
 	if (!firstswitch[masunit]) {
 		firstswitch[masunit] = 1;
