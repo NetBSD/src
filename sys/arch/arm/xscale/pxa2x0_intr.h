@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.2 2003/01/03 01:13:59 thorpej Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.3 2003/06/05 13:48:28 scw Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -69,7 +69,6 @@ void pxa2x0_do_pending(void);
  * we map software interrupts to bit 0..3
  */
 #define SI_TO_IRQBIT(si)  (1U<<(si))
-
 
 static __inline void
 pxa2x0_setipl(int new)
@@ -161,6 +160,21 @@ void	_setsoftintr(int);
 #define	_setsoftintr(si)	pxa2x0_setsoftintr(si)
 
 #endif	/* !EVBARM_SPL_NOINTR */
+
+/*
+ * This function *MUST* be called very early on in a port's
+ * initarm() function, before ANY spl*() functions are called.
+ *
+ * The parameter is the virtual address of the PXA2x0's Interrupt
+ * Controller registers.
+ */
+void pxa2x0_intr_bootstrap(vaddr_t);
+
+void pxa2x0_irq_handler(void *);
+void *pxa2x0_intr_establish(int irqno, int level,
+			    int (*func)(void *), void *cookie);
+void pxa2x0_update_intr_masks(int irqno, int level);
+extern int current_spl_level;
 
 #endif /* ! _LOCORE */
 

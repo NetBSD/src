@@ -1,4 +1,4 @@
-#	$NetBSD: files.pxa2x0,v 1.3 2003/01/03 01:13:58 thorpej Exp $
+#	$NetBSD: files.pxa2x0,v 1.4 2003/06/05 13:48:26 scw Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
 #
@@ -6,15 +6,34 @@
 file	arch/arm/arm/softintr.c  # Use the generic ARM soft interrupt code.
 
 # PXA2[51]0's integrated peripherals bus.
-device pxaip { [addr=-1], [size=0], [intr=-1], [gpio=-1], [index=-1]} : bus_space_generic
+device pxaip { [addr=-1], [size=0], [intr=-1], [index=-1]} : bus_space_generic
 attach pxaip at mainbus
 file	arch/arm/xscale/pxa2x0.c
-file	arch/arm/xscale/pxa2x0_intr.c
 file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/xscale/pxa2x0_space.c
 #file	arch/arm/xscale/pxa2x0_freqchg.S
 file	arch/arm/xscale/pxa2x0_dma.c
 #file	arch/arm/xscale/pxa2x0_i2c.c
+
+# Cotulla integrated peripherals.
+
+# INTC controller
+device	pxaintc
+attach	pxaintc at pxaip
+file arch/arm/xscale/pxa2x0_intr.c		pxaintc needs-flag
+defopt  opt_pxa2x0_gpio.h		PXAGPIO_HAS_GPION_INTRS
+
+# GPIO controller
+device	pxagpio
+attach	pxagpio at pxaip
+file arch/arm/xscale/pxa2x0_gpio.c		pxagpio needs-flag
+
+# NS16550 compatible serial ports
+attach com at pxaip with pxauart
+file arch/arm/xscale/pxa2x0_com.c		pxauart
+file arch/arm/xscale/pxa2x0_a4x_space.c		pxauart | obio
+file arch/arm/xscale/pxa2x0_a4x_io.S		pxauart | obio
+defflag	opt_com.h	FFUARTCONSOLE STUARTCONSOLE BTUARTCONSOLE COM_PXA2X0
 
 # clock device
 # PXA2x0's built-in timer is compatible to SA-1110.
@@ -22,18 +41,10 @@ device	saost
 attach	saost at pxaip
 file	arch/arm/sa11x0/sa11x0_ost.c		saost needs-flag
 
-# Cotulla integrated peripherals.
-attach com at pxaip with com_pxaip
-file arch/arm/xscale/pxa2x0_com.c			com_pxaip
-file arch/arm/xscale/pxa2x0_a4x_space.c			com_pxaip|obio
-file arch/arm/xscale/pxa2x0_a4x_io.S			com_pxaip|obio
-defflag	opt_com.h	FFUARTCONSOLE BTUARTCONSOLE COM_PXA2X0
-
+# LCD controller
+device lcd: wsemuldisplaydev, rasops16, rasops8, rasops4
+file arch/arm/xscale/pxa2x0_lcd.c		lcd needs-flag
 
 # XXX this is a hack to use dev/pcmcia without fdc.c
 device	fdc
 
-
-# LCD controller
-device lcd: wsemuldisplaydev, rasops16, rasops8, rasops4
-file arch/arm/xscale/pxa2x0_lcd.c		lcd	needs-flag

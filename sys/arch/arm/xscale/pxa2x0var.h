@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0var.h,v 1.1 2002/10/19 19:31:41 bsh Exp $ */
+/* $NetBSD: pxa2x0var.h,v 1.2 2003/06/05 13:48:28 scw Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,36 +39,19 @@
 
 #include <arm/sa11x0/sa11x0_var.h>
 
-/* PXA2X0's integrated peripheral bus. 
- *
- * pxaip_softc `inherits' sa11x0_softc.  This is a hack to make OS
- * timer driver for SA11x0 (arm/sa11x0/sa11x0_ost.c) work on PXA2X0.
- * PXA2X0 has a same OS timer unit as SA11X0 has.
- */
+/* PXA2X0's integrated peripheral bus. */
 
 typedef int (* pxa2x0_irq_handler_t)(void *);
 
-struct pxa2x0_softc {
-	struct sa11x0_softc	saip;
-
-	bus_space_handle_t	sc_memctl_ioh; /* Memory controller */
-	bus_space_handle_t	sc_clkman_ioh; /* Clock manager */
-	bus_space_handle_t	sc_rtc_ioh; /* real time clock */
-};
-
-extern struct pxa2x0_softc *pxa2x0_softc;
-
-struct pxa2x0_attach_args {
+struct pxaip_attach_args {
 	struct sa11x0_attach_args  pxa_sa;
-
+	bus_dma_tag_t pxa_dmat;
 	int pxa_index;			/* to specify device by index number */
 
-#define pxa_sc   	pxa_sa.sa_sc
 #define pxa_iot 	pxa_sa.sa_iot
 #define pxa_addr	pxa_sa.sa_addr
 #define pxa_size	pxa_sa.sa_size
 #define pxa_intr	pxa_sa.sa_intr
-#define pxa_gpio	pxa_sa.sa_gpio
 };
 
 
@@ -76,26 +59,26 @@ extern struct bus_space pxa2x0_bs_tag;
 extern struct arm32_bus_dma_tag pxa2x0_bus_dma_tag;
 extern struct bus_space pxa2x0_a4x_bs_tag;
 
-void pxa2x0_set_intcbase(vaddr_t);
-void pxa2x0_intr_init(void);
-void *pxa2x0_intr_establish(int irqno, int level,
-			    int (*func)(void *), void *cookie);
-void pxa2x0_update_intr_masks( int irqno, int level );
-extern int current_spl_level;
-
-/* Integrated UART */
-enum pxa2x0_uart_id { UART_FFUART, UART_BTUART, UART_STUART };
-extern void com_pxaip_setup( struct pxa2x0_softc *, enum pxa2x0_uart_id );
-
-
 /* misc. */
-extern int pxa2x0_measure_cpuclock( struct pxa2x0_softc * );
 extern void pxa2x0_fcs_init(void);
 extern void pxa2x0_freq_change(int);
 extern void pxa2x0_turbo_mode(int);
 extern int pxa2x0_i2c_master_tx( int, uint8_t *, int );
 
-void pxa2x0_irq_handler(struct clockframe *);
+/*
+ * Probe the memory controller to deterimine which SDRAM are
+ * populated, and what size of SDRAM is present in each bank.
+ *
+ * This routine should be called from a port's initarm()
+ * function, with the first parameter set to the address
+ * of the memory controller's registers.
+ */
+extern void pxa2x0_probe_sdram(vaddr_t, paddr_t *, psize_t *);
 
+/*
+ * Configure one or more clock enables in the Clock Manager's
+ * CKEN register.
+ */
+extern void pxa2x0_clkman_config(u_int, boolean_t);
 
 #endif /* _ARM_XSCALE_PXA2X0VAR_H_ */

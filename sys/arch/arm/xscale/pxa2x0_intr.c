@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_intr.c,v 1.2 2003/01/03 01:13:58 thorpej Exp $ */
+/*	$NetBSD: pxa2x0_intr.c,v 1.3 2003/06/05 13:48:28 scw Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -40,15 +40,29 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <uvm/uvm_extern.h>
+
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <arm/cpufunc.h>
+#include <machine/lock.h>
 
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
-#include <arm/sa11x0/sa11x0_var.h>
 #include <arm/xscale/pxa2x0_intr.h>
+#include <arm/sa11x0/sa11x0_var.h>
+
+/*
+ * INTC autoconf glue
+ */
+static int	pxaintc_match(struct device *, struct cfdata *, void *);
+static void	pxaintc_attach(struct device *, struct device *, void *);
+
+CFATTACH_DECL(pxaintc, sizeof(struct device),
+    pxaintc_match, pxaintc_attach, NULL, NULL);
+
+static int pxaintc_attached;
+
+static int stray_interrupt(void *);
+static void init_interrupt_masks(void);
 
 /*
  * interrupt dispatch table. 
@@ -72,19 +86,67 @@ static struct {
 } handler[ICU_LEN];
 
 __volatile int softint_pending;
-
 __volatile int current_spl_level;
 __volatile int intr_mask;
 /* interrupt masks for each level */
 int pxa2x0_imask[NIPL];
 static int extirq_level[ICU_LEN];
 
+
+static int
+pxaintc_match(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct pxaip_attach_args *pxa = aux;
+
+	if (pxaintc_attached || pxa->pxa_addr != PXA2X0_INTCTL_BASE)
+		return (0);
+
+	return (1);
+}
+
+void
+pxaintc_attach(struct device *parent, struct device *self, void *args)
+{
+	int i;
+
+	pxaintc_attached = 1;
+
+	aprint_normal(": Interrupt Controller\n");
+
+#define	SAIPIC_ICCR	0x14
+
+	write_icu(SAIPIC_ICCR, 1);
+	write_icu(SAIPIC_MR, 0);
+
+	for(i = 0; i < sizeof handler / sizeof handler[0]; ++i){
+		handler[i].func = stray_interrupt;
+		handler[i].cookie = (void *)(intptr_t) i;
+		extirq_level[i] = IPL_SERIAL;
+	}
+
+	init_interrupt_masks();
+
+	_splraise(IPL_SERIAL);
+	enable_interrupts(I32_bit);
+}
+
+/*
+ * Invoked very early on from the board-specific initarm(), in order to
+ * inform us the virtual address of the interrupt controller's registers.
+ */
+void
+pxa2x0_intr_bootstrap(vaddr_t addr)
+{
+
+	pxaic_base = addr;
+}
+
 static __inline void
 __raise(int ipl)
 {
-	if( current_spl_level < ipl ){
+
+	if (current_spl_level < ipl)
 		pxa2x0_setipl(ipl);
-	}
 }
 
 
@@ -102,8 +164,9 @@ static const int si_to_ipl[SI_NQUEUES] = {
  * called from irq_entry.
  */
 void
-pxa2x0_irq_handler(struct clockframe *frame)
+pxa2x0_irq_handler(void *arg)
 {
+	struct clockframe *frame = arg;
 	uint32_t irqbits;
 	int irqno;
 	int saved_spl_level;
@@ -113,11 +176,11 @@ pxa2x0_irq_handler(struct clockframe *frame)
 	/* get pending IRQs */
 	irqbits = read_icu(SAIPIC_IP);
 
-	while( (irqno = find_first_bit(irqbits)) >= 0 ){
+	while ((irqno = find_first_bit(irqbits)) >= 0) {
 		/* XXX: Shuould we handle IRQs in priority order? */
 
 		/* raise spl to stop interrupts of lower priorities */
-		if( saved_spl_level < extirq_level[irqno] )
+		if (saved_spl_level < extirq_level[irqno])
 			pxa2x0_setipl(extirq_level[irqno]);
 
 #ifdef notyet
@@ -142,20 +205,20 @@ pxa2x0_irq_handler(struct clockframe *frame)
 	/* restore spl to that was when this interrupt happen */
 	pxa2x0_setipl(saved_spl_level);
 			
-	if( softint_pending & intr_mask )
+	if(softint_pending & intr_mask)
 		pxa2x0_do_pending();
 }
 
 static int
-stray_interrupt( void *cookie )
+stray_interrupt(void *cookie)
 {
 	int irqno = (int)cookie;
-	printf( "stray interrupt %d\n", irqno );
+	printf("stray interrupt %d\n", irqno);
 
-	if( PXA2X0_IRQ_MIN <= irqno && irqno < ICU_LEN ){
+	if (PXA2X0_IRQ_MIN <= irqno && irqno < ICU_LEN){
 		int save = disable_interrupts(I32_bit);
-		write_icu( SAIPIC_MR,
-			   read_icu(SAIPIC_MR) & ~(1U<<irqno) );
+		write_icu(SAIPIC_MR,
+		    read_icu(SAIPIC_MR) & ~(1U<<irqno));
 		restore_interrupts(save);
 	}
 
@@ -169,16 +232,16 @@ stray_interrupt( void *cookie )
  */
 
 void
-pxa2x0_update_intr_masks( int irqno, int level )
+pxa2x0_update_intr_masks(int irqno, int level)
 {
 	int mask = 1U<<irqno;
 	int psw = disable_interrupts(I32_bit);
 	int i;
 
-
-	for( i=IPL_BIO; i < level; ++i )
+	for(i = 0; i < level; ++i)
 		pxa2x0_imask[i] |= mask; /* Enable interrupt at lower level */
-	for( ; i < NIPL-1; ++i )
+
+	for( ; i < NIPL-1; ++i)
 		pxa2x0_imask[i] &= ~mask; /* Disable itnerrupt at upper level */
 
 	/*
@@ -220,7 +283,7 @@ pxa2x0_update_intr_masks( int irqno, int level )
 	 */
 	pxa2x0_imask[IPL_SERIAL] &= pxa2x0_imask[IPL_HIGH];
 
-	write_icu( SAIPIC_MR, pxa2x0_imask[current_spl_level] );
+	write_icu(SAIPIC_MR, pxa2x0_imask[current_spl_level]);
 
 	restore_interrupts(psw);
 }
@@ -229,11 +292,18 @@ pxa2x0_update_intr_masks( int irqno, int level )
 static void
 init_interrupt_masks(void)
 {
-	int i;
-	pxa2x0_imask[IPL_NONE] = 0xffffffff;
 
-	for( i = IPL_BIO; i < NIPL; ++i )
-		pxa2x0_imask[i] = 0;
+	memset(pxa2x0_imask, 0, sizeof(pxa2x0_imask));
+
+	/*
+	 * IPL_NONE has soft interrupts enabled only, at least until
+	 * hardware handlers are installed.
+	 */
+	pxa2x0_imask[IPL_NONE] =
+	    SI_TO_IRQBIT(SI_SOFT) |
+	    SI_TO_IRQBIT(SI_SOFTCLOCK) |
+	    SI_TO_IRQBIT(SI_SOFTNET) |
+	    SI_TO_IRQBIT(SI_SOFTSERIAL);
 
 	/*
 	 * Initialize the soft interrupt masks to block themselves.
@@ -242,6 +312,8 @@ init_interrupt_masks(void)
 	pxa2x0_imask[IPL_SOFTCLOCK] = ~SI_TO_IRQBIT(SI_SOFTCLOCK);
 	pxa2x0_imask[IPL_SOFTNET] = ~SI_TO_IRQBIT(SI_SOFTNET);
 	pxa2x0_imask[IPL_SOFTSERIAL] = ~SI_TO_IRQBIT(SI_SOFTSERIAL);
+
+	pxa2x0_imask[IPL_SOFT] &= pxa2x0_imask[IPL_NONE];
 
 	/*
 	 * splsoftclock() is the only interface that users of the
@@ -256,7 +328,6 @@ init_interrupt_masks(void)
 	 * processing incoming packets.
 	 */
 	pxa2x0_imask[IPL_SOFTNET] &= pxa2x0_imask[IPL_SOFTCLOCK];
-	
 }
 
 void
@@ -310,6 +381,7 @@ pxa2x0_do_pending(void)
 void
 splx(int ipl)
 {
+
 	pxa2x0_splx(ipl);
 }
 
@@ -317,6 +389,7 @@ splx(int ipl)
 int
 _splraise(int ipl)
 {
+
 	return pxa2x0_splraise(ipl);
 }
 
@@ -324,6 +397,7 @@ _splraise(int ipl)
 int
 _spllower(int ipl)
 {
+
 	return pxa2x0_spllower(ipl);
 }
 
@@ -331,44 +405,17 @@ _spllower(int ipl)
 void
 _setsoftintr(int si)
 {
+
 	return pxa2x0_setsoftintr(si);
-}
-
-
-
-/*
- * Initialize interrupt dispatcher.
- */
-void
-pxa2x0_intr_init(void)
-{
-	int i;
-
-	for( i=0; i < sizeof handler / sizeof handler[0]; ++i ){
-		handler[i].func = stray_interrupt;
-		handler[i].cookie = (void *)(i);
-		extirq_level[i] = IPL_SERIAL;
-	}
-
-	init_interrupt_masks();
-
-	_splraise(IPL_SERIAL);
-	enable_interrupts(I32_bit);
-}
-
-void
-pxa2x0_set_intcbase( vaddr_t addr )
-{
-	pxaic_base = addr;
 }
 
 void *
 pxa2x0_intr_establish(int irqno, int level,
-		      int (*func)(void *), void *cookie)
+    int (*func)(void *), void *cookie)
 {
 	int psw;
 
-	if (irqno < PXA2X0_IRQ_MIN || irqno >= ICU_LEN )
+	if (irqno < PXA2X0_IRQ_MIN || irqno >= ICU_LEN)
 		panic("intr_establish: bogus irq number %d", irqno);
 
 	psw = disable_interrupts(I32_bit);
@@ -376,24 +423,22 @@ pxa2x0_intr_establish(int irqno, int level,
 	handler[irqno].cookie = cookie;
 	handler[irqno].func = func;
 	extirq_level[irqno] = level;
-	pxa2x0_update_intr_masks( irqno, level );
+	pxa2x0_update_intr_masks(irqno, level);
 
 	intr_mask = pxa2x0_imask[current_spl_level];
 	
 	restore_interrupts(psw);
 
-	return ( &handler[irqno] );
+	return (&handler[irqno]);
 }
-
-
 
 /*
  * Glue for drivers of sa11x0 compatible integrated logics.
  */
 void *
 sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
-		      int (*ih_fun)(void *), void *ih_arg)
+    int (*ih_fun)(void *), void *ih_arg)
 {
-	return pxa2x0_intr_establish(irq,level,ih_fun,ih_arg);
-}
 
+	return pxa2x0_intr_establish(irq, level, ih_fun, ih_arg);
+}
