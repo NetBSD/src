@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.54 2000/01/21 23:43:10 thorpej Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.55 2000/02/11 02:04:42 oster Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -240,6 +240,7 @@ static const char *const dktypenames[] = {
 #define	FS_FILECORE	16		/* Acorn Filecore Filing System */
 #define	FS_EX2FS	17		/* Linux Extended 2 file system */
 #define	FS_NTFS		18		/* Windows/NT file system */
+#define	FS_RAID		19		/* RAIDframe component */
 
 #ifdef	FSTYPENAMES
 static const char *const fstypenames[] = {
@@ -262,6 +263,7 @@ static const char *const fstypenames[] = {
 	"FILECORE",
 	"Linux Ext2",
 	"NTFS",
+	"RAID",
 	NULL
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
@@ -289,6 +291,7 @@ static const char *const fscknames[] = {
 	NULL,		/* FILECORE */
 	"ext2fs",	/* Linux Ext2 */
 	"ntfs",		/* Windows/NT */
+	NULL,		/* RAID Component */
 	NULL		/* NULL */
 };
 #define FSMAXNAMES	(sizeof(fscknames) / sizeof(fscknames[0]) - 1)
