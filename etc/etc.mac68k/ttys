@@ -1,15 +1,15 @@
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
-#	$Id: ttys,v 1.9 1994/08/03 04:10:11 briggs Exp $
+#	$Id: ttys,v 1.10 1995/10/03 11:49:36 briggs Exp $
 #
 # name	getty				type	status		comments
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-console	"/usr/libexec/getty Pc"		vt100	off secure
+console	"/usr/libexec/getty Pc"		vt220	off secure
 
 # Define the console that we actually run getty on.
-ttye0	"/usr/libexec/getty Pc"		vt100	on secure
+ttye0	"/usr/libexec/getty Pc"		vt220	on secure
 
 # Hardwired lines are marked off, by default, so getty(8)
 # is quiet when they don't exist.
