@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.21 1996/03/16 05:35:45 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.22 1996/03/16 18:14:23 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -53,7 +53,7 @@
 
 #ifndef _LOCORE
 #include <sys/types.h>
-#eandif
+#endif
 
 /*
  * Machine-independent constants (some used in following include files).
