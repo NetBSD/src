@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.510 2003/02/26 11:51:05 salo Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.511 2003/02/28 22:05:59 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.507 2003/02/26 11:48:58 salo Exp 
+ *	NetBSD: pcidevs,v 1.508 2003/02/28 22:05:00 enami Exp 
  */
 
 /*
@@ -1964,6 +1964,7 @@
 #define	PCI_PRODUCT_SERVERWORKS_CMIC_SL	0x0017		/* CMIC_SL Host */
 #define	PCI_PRODUCT_SERVERWORKS_OSB4_IDE	0x0211		/* OSB4 IDE */
 #define	PCI_PRODUCT_SERVERWORKS_CSB5_IDE	0x0212		/* CSB5 IDE */
+#define	PCI_PRODUCT_SERVERWORKS_CSB6_IDE	0x0213		/* CSB6 RAID/IDE */
 #define	PCI_PRODUCT_SERVERWORKS_USB	0x0220		/* OSB4/CSB5 USB */
 
 /* SGI products */
