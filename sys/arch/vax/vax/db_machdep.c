@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.4 1996/03/03 11:19:01 ragge Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.5 1996/03/17 22:44:48 ragge Exp $	*/
 
 /* 
  * Mach Operating System
@@ -46,9 +46,7 @@
 
 #include <ddb/db_variables.h>
 
-#include <setjmp.h>
-
-extern jmp_buf	*db_recover;
+extern	label_t	*db_recover;
 
 int	db_active = 0;
 
@@ -167,7 +165,7 @@ db_write_bytes(addr, size, data)
 		*dst++ = *data++;
 }
 
-int
+void
 Debugger()
 {
 	int s = splx(0xe); /* Is this good? We must lower anyway... */
