@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.26 2001/11/13 07:41:36 lukem Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.27 2002/03/14 04:40:26 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.26 2001/11/13 07:41:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.27 2002/03/14 04:40:26 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,9 +110,16 @@ const struct mii_phy_funcs lxtphy_funcs = {
 	lxtphy_service, lxtphy_status, lxtphy_reset,
 };
 
+const struct mii_phy_funcs lxtphy971_funcs = {
+	lxtphy_service, ukphy_status, lxtphy_reset,
+};
+
 const struct mii_phydesc lxtphys[] = {
 	{ MII_OUI_xxLEVEL1,		MII_MODEL_xxLEVEL1_LXT970,
 	  MII_STR_xxLEVEL1_LXT970 },
+
+	{ MII_OUI_LEVEL1,		MII_MODEL_LEVEL1_LXT971,
+	  MII_STR_LEVEL1_LXT971 },
 
 	{ 0,				0,
 	  NULL },
@@ -142,7 +149,10 @@ lxtphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_funcs = &lxtphy_funcs;
+	if (mpd->mpd_model == MII_MODEL_LEVEL1_LXT971)
+		sc->mii_funcs = &lxtphy971_funcs;
+	else
+		sc->mii_funcs = &lxtphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags | ma->mii_flags;
 	sc->mii_anegticks = 5;
