@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_ktrace.c	7.15 (Berkeley) 6/21/91
- *	$Id: kern_ktrace.c,v 1.5 1993/07/13 22:13:22 cgd Exp $
+ *	$Id: kern_ktrace.c,v 1.5.4.1 1993/09/24 08:51:06 mycroft Exp $
  */
 
 #include "param.h"
@@ -225,7 +225,7 @@ ktrace(curp, uap, retval)
 	 * Clear all uses of the tracefile
 	 */
 	if (ops == KTROP_CLEARFILE) {
-		for (p = allproc; p != NULL; p = p->p_nxt) {
+		for (p = (struct proc *)allproc; p != NULL; p = p->p_nxt) {
 			if (p->p_tracep == vp) {
 				if (ktrcanset(curp, p)) {
 					p->p_tracep = NULL;
@@ -395,7 +395,7 @@ ktrwrite(vp, kth)
 	 */
 	log(LOG_NOTICE, "ktrace write failed, errno %d, tracing stopped\n",
 	    error);
-	for (p = allproc; p != NULL; p = p->p_nxt) {
+	for (p = (struct proc *)allproc; p != NULL; p = p->p_nxt) {
 		if (p->p_tracep == vp) {
 			p->p_tracep = NULL;
 			p->p_traceflag = 0;

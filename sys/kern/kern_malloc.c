@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_malloc.c	7.25 (Berkeley) 5/8/91
- *	$Id: kern_malloc.c,v 1.6 1993/07/15 13:33:23 cgd Exp $
+ *	$Id: kern_malloc.c,v 1.6.4.1 1993/09/24 08:51:08 mycroft Exp $
  */
 
 #include "param.h"
@@ -39,6 +39,9 @@
 #include "proc.h"
 #include "kernel.h"
 #include "malloc.h"
+
+#include "machine/cpu.h"
+
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
 

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)subr_log.c	7.11 (Berkeley) 3/17/91
- *	$Id: subr_log.c,v 1.3 1993/06/27 06:01:52 andrew Exp $
+ *	$Id: subr_log.c,v 1.3.4.1 1993/09/24 08:51:24 mycroft Exp $
  */
 
 /*
@@ -46,6 +46,8 @@
 #include "msgbuf.h"
 #include "file.h"
 #include "select.h"
+
+#include "machine/cpu.h"
 
 #define LOG_RDPRI	(PZERO + 1)
 

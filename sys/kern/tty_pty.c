@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.12 1993/08/29 13:47:47 deraadt Exp $
+ *	$Id: tty_pty.c,v 1.12.2.1 1993/09/24 08:51:47 mycroft Exp $
  */
 
 /*
@@ -52,6 +52,8 @@
 #include "uio.h"
 #include "kernel.h"
 #include "vnode.h"
+
+#include "machine/cpu.h"
 
 #if NPTY == 1
 #undef NPTY

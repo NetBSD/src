@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_socket.c	7.28 (Berkeley) 5/4/91
- *	$Id: uipc_socket.c,v 1.6 1993/09/08 21:12:49 mycroft Exp $
+ *	$Id: uipc_socket.c,v 1.6.2.1 1993/09/24 08:51:53 mycroft Exp $
  */
 
 #include "param.h"
@@ -47,6 +47,8 @@
 #include "socket.h"
 #include "socketvar.h"
 #include "resourcevar.h"
+
+#include "machine/cpu.h"
 
 /*
  * Socket operation routines.
