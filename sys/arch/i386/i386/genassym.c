@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.42 1995/05/01 14:19:14 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.43 1995/05/07 02:59:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -138,11 +138,11 @@ main()
 #endif
 
 #ifdef COMPAT_LINUX
-	def("LINUX_SIGF_HANDLER", &linux_sigf->ls_handler);
-	def("LINUX_SIGF_SC", &linux_sigf->ls_sc);
-	def("LINUX_SC_FS", &linux_sc->lsc_fs);
-	def("LINUX_SC_GS", &linux_sc->lsc_gs);
-	def("LINUX_SC_EFLAGS", &linux_sc->lsc_eflags);
+	def("LINUX_SIGF_HANDLER", &linux_sigf->sf_handler);
+	def("LINUX_SIGF_SC", &linux_sigf->sf_sc);
+	def("LINUX_SC_FS", &linux_sc->sc_fs);
+	def("LINUX_SC_GS", &linux_sc->sc_gs);
+	def("LINUX_SC_EFLAGS", &linux_sc->sc_eflags);
 #endif
 
 #if NISA > 0
