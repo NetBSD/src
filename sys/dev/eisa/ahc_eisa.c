@@ -1,3 +1,5 @@
+/*	$NetBSD: ahc_eisa.c,v 1.4 1996/05/20 00:55:44 thorpej Exp $	*/
+
 /*
  * Product specific probe and attach routines for:
  * 	27/284X and aic7770 motherboard SCSI controllers
@@ -28,8 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: ahc_eisa.c,v 1.3 1996/05/16 06:39:34 mycroft Exp $
  */
 
 #if defined(__FreeBSD__)
