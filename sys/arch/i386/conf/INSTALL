@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.42 1997/07/31 22:03:31 matt Exp $
+#	$NetBSD: INSTALL,v 1.43 1997/08/03 05:30:14 mikel Exp $
 #
 #	INSTALL -- an installation kernel config.
 #	This kernel should be derived from GENERIC with ramdisk
@@ -19,7 +19,7 @@ options 	MATH_EMULATE	# floating point emulation
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value
 # properly for your system.
-#options 	BIOSEXTMEM=... # size of extended memory
+#options 	BIOSEXTMEM=...	# size of extended memory
 
 #options 	DUMMY_NOPS	# speed hack; recommended
 #options 	XSERVER,UCONSOLE
@@ -34,7 +34,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT     # Force root on memory-disk
 options 	MEMORY_DISK_SERVER=0	# No user space hooks
 options 	MINIROOTSIZE=3074
-#options 		MINIROOTSIZE=2880	# 1.44M, same as a floppy
+#options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
 
 #options 	DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
@@ -66,18 +66,18 @@ options 	LKM		# loadable kernel modules
 
 file-system 	FFS		# UFS
 #file-system 	EXT2FS		# second extended file system (linux)
-#file-system	LFS		# log-structured file system
+#file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
-#file-system	NULLFS		# loopback file system
-#file-system	PORTAL		# portal filesystem (still experimental)
-#file-system	PROCFS		# /proc
-#file-system	UMAPFS		# NULLFS + uid and gid remapping
-#file-system	UNION		# union file system
+#file-system 	NULLFS		# loopback file system
+#file-system 	PORTAL		# portal filesystem (still experimental)
+#file-system 	PROCFS		# /proc
+#file-system 	UMAPFS		# NULLFS + uid and gid remapping
+#file-system 	UNION		# union file system
 
 #options 	QUOTA		# UFS quotas
 #options 	NFSSERVER	# Network File System server
@@ -93,9 +93,13 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 
 config		netbsd	root on ? type ?
 #options 	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
+
+#options 	EISAVERBOSE	# verbose EISA device messages
+#options 	PCIVERBOSE	# verbose PCI device messages
 
 mainbus0 at root
 
@@ -110,6 +114,7 @@ pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 
 isa*	at pcib?			# ISA on PCI-ISA bridge
 isa*	at mainbus0			# all other ISA
+#isapnp0	at isa?				# ISA Plug-and-Play
 
 #apm0	at mainbus0			# Advanced power management
 
@@ -128,8 +133,8 @@ com2	at isa? port 0x3e8 irq 5
 #com*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
-
-#cy0	at isa? ...
+#cy0	at isa? iomem 0xd4000 irq 12	# Cyclades serial cards
+#cy*	at pci? dev ? function ?	# Cyclades serial cards
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
@@ -140,11 +145,6 @@ lpt2	at isa? port 0x3bc
 #mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #mms1	at isa? port 0x238 irq 5
 #pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
-
-#
-# HACK: Buslogics must, repeat MUST, be proved before Adaptec 1542
-# or similar devices, or we may autoconfigure an BHA as an AHA.
-#
 
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
@@ -157,7 +157,6 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI controllers
 scsibus* at ahc?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
-
 bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 bha1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 bha*	at eisa? slot ?
@@ -206,6 +205,7 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? ...				# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
+#ep*	at isapnp?
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
@@ -214,7 +214,7 @@ ep*	at eisa? slot ?				# 3C579 ethernet cards
 fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
-ep*	at pci? dev ? function ?		# 3C59x/3C90X ethernet cards
+ep*	at pci? dev ? function ?		# 3C59x/3C90x ethernet cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
 
@@ -222,6 +222,7 @@ fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
 #sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
+#sb*	at isapnp?
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 #pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 #gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
@@ -229,6 +230,10 @@ fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
+#joy*	at isapnp?
+
+# Planetconnect Satellite receiver driver.
+#satlink0 at isa? port 0x300 drq 1
 
 include	"arch/i386/conf/GENERIC.local"
 
@@ -240,6 +245,7 @@ pseudo-device	loop	1		# network loopback
 pseudo-device	sl	2		# CSLIP
 #pseudo-device	ppp	2		# PPP
 #pseudo-device	tun	2		# network tunneling over tty
+#pseudo-device	ipfilter		# IP filter
 
 pseudo-device	pty	64		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
