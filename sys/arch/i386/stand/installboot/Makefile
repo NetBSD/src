@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $
+#	$NetBSD: Makefile,v 1.2 1997/03/22 00:16:56 thorpej Exp $
 
 BINDIR=	/usr/mdec
 PROG=	installboot
@@ -8,6 +8,6 @@ MANSUBDIR=/i386
 
 CPPFLAGS= -I${.CURDIR}/../lib/crt/bootsect
 CFLAGS+= -Wall
-#LDSTATIC=-static
+LDSTATIC=-static
 
 .include <bsd.prog.mk>
