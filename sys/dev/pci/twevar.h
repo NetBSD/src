@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.20 2003/09/23 23:50:05 thorpej Exp $	*/
+/*	$NetBSD: twevar.h,v 1.21 2004/05/27 23:47:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -131,6 +131,8 @@ int	twe_ccb_map(struct twe_softc *, struct twe_ccb *);
 int	twe_ccb_poll(struct twe_softc *, struct twe_ccb *, int);
 int	twe_ccb_submit(struct twe_softc *, struct twe_ccb *);
 void	twe_ccb_unmap(struct twe_softc *, struct twe_ccb *);
+
+void	twe_ccb_wait_handler(struct twe_ccb *, int);
 
 int	twe_param_get(struct twe_softc *, int, int, size_t,
 	    void (*)(struct twe_ccb *, int), struct twe_param **);
