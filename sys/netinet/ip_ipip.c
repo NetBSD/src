@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.1 1999/01/11 21:26:53 thorpej Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.2 1999/01/13 23:01:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,8 @@
 #endif
 
 #if NIPIP > 0
-struct ipip_softc ipip_softc[NIPIP];
+struct ipip_softc *ipip_softc;
+int ipip_nsoftc;
 
 struct ipip_softc *ipip_lookup __P((struct mbuf *));
 void	ipipattach __P((int));
@@ -176,7 +177,7 @@ ipip_lookup(m)
 	struct ipip_softc *sc;
 	int i;
 
-	for (i = 0; i < NIPIP; i++) {
+	for (i = 0; i < ipip_nsoftc; i++) {
 		sc = &ipip_softc[i];
 		if ((sc->sc_if.if_flags & IFF_UP) != 0 &&
 		    in_hosteq(sc->sc_dst, ip->ip_src) &&
@@ -196,9 +197,15 @@ ipipattach(count)
 	int count;
 {
 	struct ipip_softc *sc;
+	size_t size;
 	int i;
 
-	for (i = 0; i < NIPIP; i++) {
+	ipip_nsoftc = count;
+	size = sizeof(struct ipip_softc) * count;
+	ipip_softc = malloc(size, M_DEVBUF, M_WAITOK);
+	memset(ipip_softc, 0, size);
+
+	for (i = 0; i < ipip_nsoftc; i++) {
 		sc = &ipip_softc[i];
 
 		sprintf(sc->sc_if.if_xname, "ipip%d", i);
