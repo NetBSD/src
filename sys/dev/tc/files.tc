@@ -1,4 +1,4 @@
-#	$NetBSD: files.tc,v 1.17 1999/09/09 06:33:38 nisimura Exp $
+#	$NetBSD: files.tc,v 1.18 2000/05/02 06:43:05 augustss Exp $
 #
 # Config file and device description for machine-independent
 # TurboChannel code.  Included by ports that need it.
@@ -24,10 +24,10 @@ attach le at tc with le_tc:		le24, le_dec_subr
 file	dev/tc/if_le_ioasic.c		le_ioasic
 file	dev/tc/if_le_tc.c		le_tc
 
-# ioasic audio
-attach audioamd at ioasic with am7930_ioasic
-file	dev/tc/am7930_ioasic.c		am7930_ioasic
-
+# baseboard audio
+device  bba: audio,am7930
+attach  bba at ioasic
+file    dev/tc/bba.c                    bba
 
 # DEC DEFTA TC FDDI Controller
 device	fta: pdq, fddi, ifnet, arp

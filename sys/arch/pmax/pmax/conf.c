@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.38 2000/02/19 09:43:40 nisimura Exp $	*/
+/*	$NetBSD: conf.c,v 1.39 2000/05/02 06:43:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,8 @@ bdev_decl(sd);
 bdev_decl(st);
 bdev_decl(sw);
 bdev_decl(vnd);
-
+#include "audio.h"
+cdev_decl(audio);
 #include "rz.h"
 #include "tz.h"
 bdev_decl(rz);
@@ -285,6 +286,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRAID,raid),	/* 96: RAIDframe disk driver */
 	cdev_disk_init(NMD,md),	/* 97: memory disk  driver */
 	cdev_fbm_init(NPX,px),	/* 98: PixelStamp board driver */
+	cdev_audio_init(NAUDIO,audio),  /* 99 generic audio I/O */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -422,6 +424,7 @@ static int chrtoblktbl[] =  {
 	/* 96 */	32,		/* RAIDframe */
 	/* 97 */	17,		/* memory disk */
 	/* 98 */	NODEV,
+	/* 99 */	NODEV,
 };
 
 /*
