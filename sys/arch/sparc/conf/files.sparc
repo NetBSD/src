@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.109 2002/03/28 11:54:16 pk Exp $
+#	$NetBSD: files.sparc,v 1.110 2002/03/28 19:50:20 uwe Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -18,12 +18,15 @@ maxusers 2 8 1024
 device mainbus {}
 attach mainbus at root
 
+device msiiep {}
+attach msiiep at mainbus
+
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
-device msiiep {}: pcibus
-attach msiiep at mainbus
-file	arch/sparc/sparc/msiiep.c		msiiep
-file	arch/sparc/sparc/pci_machdep.c		msiiep
+device mspcic {}: pcibus
+attach mspcic at msiiep
+file	arch/sparc/sparc/msiiep.c		msiiep | mspcic
+file	arch/sparc/sparc/pci_machdep.c		msiiep | mspcic
 
 device ebus {[addr = -1]}: pcibus
 attach ebus at pci
