@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.inc.mk,v 1.8 1997/05/26 03:58:00 cjs Exp $
+#	$NetBSD: bsd.inc.mk,v 1.8.2.1 1997/08/01 21:08:00 cjs Exp $
 #
 # If an include file is already installed, this always compares the
 # installed file to the one we are about to install. If they are the
@@ -14,6 +14,7 @@
 # install:
 #	Installs the include files in DESTDIR.
 #
+#	$NetBSD: bsd.inc.mk,v 1.8.2.1 1997/08/01 21:08:00 cjs Exp $
 
 .PHONY:		incbuild incinstall
 
@@ -36,6 +37,9 @@ incbuild:: ${DESTDIR}${INCSDIR}/$I
 .endif	# defined(OBJDIR)
 
 .PRECIOUS: ${DESTDIR}${INCSDIR}/$I
+.if !defined(UPDATE)
+.PHONY: ${DESTDIR}${INCSDIR}/$I
+.endif
 ${DESTDIR}${INCSDIR}/$I: $I
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
 	    (echo "${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
