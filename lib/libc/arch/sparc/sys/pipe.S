@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.2 1997/07/16 14:37:58 christos Exp $	*/
+/*	$NetBSD: pipe.S,v 1.2.12.1 2000/09/29 09:06:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,13 +44,17 @@
 #if 0
 	.asciz "@(#)pipe.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: pipe.S,v 1.2 1997/07/16 14:37:58 christos Exp $")
+	RCSID("$NetBSD: pipe.S,v 1.2.12.1 2000/09/29 09:06:46 kleink Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-ENTRY(pipe)
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(pipe, _pipe)
+#endif
+
+ENTRY(_pipe)
 	mov	%o0, %o2	! save pointer
 	mov	SYS_pipe, %g1
 	t	ST_SYSCALL	! pipe()
