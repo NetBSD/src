@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.9 1997/10/18 11:23:20 lukem Exp $	*/
+/*	$NetBSD: utils.c,v 1.10 1998/12/09 03:41:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utils.c,v 1.9 1997/10/18 11:23:20 lukem Exp $");
+__RCSID("$NetBSD: utils.c,v 1.10 1998/12/09 03:41:42 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -295,7 +295,7 @@ NewClient(addr)
 }
 
 /*
-**  FreeClient -- free linked list of Clients.
+**  FreeClients -- free linked list of Clients.
 **
 **	Parameters:
 **		None.
@@ -424,7 +424,7 @@ FreeConn(rtmp)
 	}
 
 	if (LastFree == NULL)		/* cache for next time */
-		rtmp = LastFree;
+		LastFree = rtmp;
 	else				/* already one cached; free this one */
 		free((char *)rtmp);
 }
