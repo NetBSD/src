@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.h,v 1.8 1999/09/15 23:53:26 lukem Exp $	*/
+/*	$NetBSD: assert.h,v 1.9 2000/08/07 16:21:32 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -58,11 +58,11 @@
 # endif /* lint */
 #else /* !NDEBUG */
 # define _assert(e)	assert(e)
-# ifdef __STDC__
+# if __STDC__
 #  define assert(e) 	((e) ? (void)0 : __assert(__FILE__, __LINE__, #e))
 # else	/* PCC */
 #  define assert(e)	((e) ? (void)0 : __assert(__FILE__, __LINE__, "e"))
-# endif
+# endif /* !__STDC__ */
 #endif /* NDEBUG */
 
 #undef _DIAGASSERT
@@ -73,7 +73,7 @@
 #  define _DIAGASSERT(e)
 # endif /* lint */
 #else /* _DIAGNOSTIC */
-# if defined (__STDC__)
+# if __STDC__
 #  define _DIAGASSERT(e) ((e) ? (void)0 : __diagassert(__FILE__, __LINE__, #e))
 # else	/* !__STDC__ */
 #  define _DIAGASSERT(e) ((e) ? (void)0 : __diagassert(__FILE__, __LINE__, "e"))
