@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: fd_kern.c,v 1.3 1994/02/07 22:04:16 proven Exp $ $provenid: fd_kern.c,v 1.7 1994/02/07 02:18:49 proven Exp $";
+static const char rcsid[] = "$Id: fd_kern.c,v 1.4 1997/10/08 00:52:47 christos Exp $ $provenid: fd_kern.c,v 1.7 1994/02/07 02:18:49 proven Exp $";
 #endif
 
 #include <pthread.h>
@@ -221,12 +221,12 @@ void fd_kern_wait()
 /* ==========================================================================
  * read()
  */
-ssize_t __fd_kern_read(int fd, int flags, void *buf, size_t nbytes)
+ssize_t __fd_kern_read(union fd_data f, int flags, void *buf, size_t nbytes)
 {
 	semaphore *lock, *plock;
 	int ret;
 
-	while ((ret = machdep_sys_read(fd, buf, nbytes)) < OK) { 
+	while ((ret = machdep_sys_read(f.i, buf, nbytes)) < OK) { 
 		if (ret == -EWOULDBLOCK) {
 			/* Lock queue */
 			lock = &fd_wait_lock;
@@ -243,7 +243,7 @@ ssize_t __fd_kern_read(int fd, int flags, void *buf, size_t nbytes)
 			/* queue pthread for a FDR_WAIT */
 			pthread_run->next = fd_wait_read;
 			fd_wait_read = pthread_run;
-			pthread_run->fd = fd;
+			pthread_run->fd = f.i;
 			SEMAPHORE_RESET(lock);
 			reschedule(PS_FDR_WAIT);
 		} else {
@@ -258,12 +258,12 @@ ssize_t __fd_kern_read(int fd, int flags, void *buf, size_t nbytes)
 /* ==========================================================================
  * readv()
  */
-int __fd_kern_readv(int fd, int flags, struct iovec *iov, int iovcnt)
+int __fd_kern_readv(union fd_data f, int flags, const struct iovec *iov, int iovcnt)
 {
 	semaphore *lock, *plock;
 	int ret;
 
-	while ((ret = machdep_sys_readv(fd, iov, iovcnt)) < OK) { 
+	while ((ret = machdep_sys_readv(f.i, iov, iovcnt)) < OK) { 
 		if (ret == -EWOULDBLOCK) {
 			/* Lock queue */
 			lock = &fd_wait_lock;
@@ -280,7 +280,7 @@ int __fd_kern_readv(int fd, int flags, struct iovec *iov, int iovcnt)
 			/* queue pthread for a FDR_WAIT */
 			pthread_run->next = fd_wait_read;
 			fd_wait_read = pthread_run;
-			pthread_run->fd = fd;
+			pthread_run->fd = f.i;
 			SEMAPHORE_RESET(lock);
 			reschedule(PS_FDR_WAIT);
 		} else {
@@ -295,12 +295,12 @@ int __fd_kern_readv(int fd, int flags, struct iovec *iov, int iovcnt)
 /* ==========================================================================
  * write()
  */
-ssize_t __fd_kern_write(int fd, int flags, const void *buf, size_t nbytes)
+ssize_t __fd_kern_write(union fd_data f, int flags, const void *buf, size_t nbytes)
 {
 	semaphore *lock, *plock;
 	int ret;
 
-    while ((ret = machdep_sys_write(fd, buf, nbytes)) < OK) { 
+    while ((ret = machdep_sys_write(f.i, buf, nbytes)) < OK) { 
         if (pthread_run->error == -EWOULDBLOCK) {
 			/* Lock queue */
 			lock = &fd_wait_lock;
@@ -317,7 +317,7 @@ ssize_t __fd_kern_write(int fd, int flags, const void *buf, size_t nbytes)
 			/* queue pthread for a FDW_WAIT */
 			pthread_run->next = fd_wait_write;
 			fd_wait_write = pthread_run;
-			pthread_run->fd = fd;
+			pthread_run->fd = f.i;
 			SEMAPHORE_RESET(lock);
 			reschedule(PS_FDW_WAIT);
         } else {
@@ -331,12 +331,12 @@ ssize_t __fd_kern_write(int fd, int flags, const void *buf, size_t nbytes)
 /* ==========================================================================
  * writev()
  */
-int __fd_kern_writev(int fd, int flags, struct iovec *iov, int iovcnt)
+int __fd_kern_writev(union fd_data f, int flags, const struct iovec *iov, int iovcnt)
 {
 	semaphore *lock, *plock;
 	int ret;
 
-    while ((ret = machdep_sys_writev(fd, iov, iovcnt)) < OK) { 
+    while ((ret = machdep_sys_writev(f.i, iov, iovcnt)) < OK) { 
         if (pthread_run->error == -EWOULDBLOCK) {
 			/* Lock queue */
 			lock = &fd_wait_lock;
@@ -353,7 +353,7 @@ int __fd_kern_writev(int fd, int flags, struct iovec *iov, int iovcnt)
 			/* queue pthread for a FDW_WAIT */
 			pthread_run->next = fd_wait_write;
 			fd_wait_write = pthread_run;
-			pthread_run->fd = fd;
+			pthread_run->fd = f.i;
 			SEMAPHORE_RESET(lock);
 			reschedule(PS_FDW_WAIT);
         } else {
@@ -368,25 +368,27 @@ int __fd_kern_writev(int fd, int flags, struct iovec *iov, int iovcnt)
  * For blocking version we really should set an interrupt
  * fcntl()
  */
-int __fd_kern_fcntl(int fd, int flags, int cmd, int arg)
+int __fd_kern_fcntl(union fd_data f, int flags, int cmd, ...)
 {
-	return(machdep_sys_fcntl(fd, cmd, arg));
+	va_list ap;
+	va_start(ap, cmd);
+	return(machdep_sys_fcntl(f.i, cmd, &ap));
 }
 
 /* ==========================================================================
  * close()
  */
-int __fd_kern_close(int fd, int flags)
+int __fd_kern_close(union fd_data f, int flags)
 {
-	return(machdep_sys_close(fd));
+	return(machdep_sys_close(f.i));
 }
 
 /* ==========================================================================
  * lseek()
  */
-int __fd_kern_lseek(int fd, int flags, off_t offset, int whence)
+off_t __fd_kern_lseek(union fd_data f, int flags, off_t offset, int whence)
 {
-	return(machdep_sys_lseek(fd, offset, whence));
+	return(machdep_sys_lseek(f.i, offset, whence));
 }
 
 /*
@@ -396,8 +398,13 @@ extern machdep_sys_close();
 
 /* Normal file operations */
 static struct fd_ops __fd_kern_ops = {
-	__fd_kern_write, __fd_kern_read, __fd_kern_close, __fd_kern_fcntl,
-	__fd_kern_readv, __fd_kern_writev, __fd_kern_lseek
+	__fd_kern_write,
+	__fd_kern_read,
+	__fd_kern_close,
+	__fd_kern_fcntl,
+	__fd_kern_readv,
+	__fd_kern_writev,
+	__fd_kern_lseek
 };
 
 /* NFS file opperations */
