@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.18 2002/11/22 23:09:46 manu Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.19 2002/11/24 21:59:44 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.18 2002/11/22 23:09:46 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.19 2002/11/24 21:59:44 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -63,14 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.18 2002/11/22 23:09:46 manu Exp $")
 static int exec_macho_load_segment(struct exec_package *, struct vnode *,
     u_long, struct exec_macho_segment_command *, int);
 static int exec_macho_load_dylinker(struct proc *, struct exec_package *,
-    struct exec_macho_dylinker_command *, u_long *);
+    struct exec_macho_dylinker_command *, u_long *, int);
 static int exec_macho_load_dylib(struct proc *, struct exec_package *,
-    struct exec_macho_dylib_command *);
+    struct exec_macho_dylib_command *, int);
 static u_long exec_macho_load_thread(struct exec_macho_thread_command *);
 static int exec_macho_load_file(struct proc *, struct exec_package *,
-    const char *, u_long *, int);
+    const char *, u_long *, int, int);
 static int exec_macho_load_vnode(struct proc *, struct exec_package *,
-    struct vnode *, struct exec_macho_fat_header *, u_long *, int);
+    struct vnode *, struct exec_macho_fat_header *, u_long *, int, int);
 
 #ifdef DEBUG_MACHO
 static void exec_macho_print_segment_command 
@@ -246,11 +246,12 @@ exec_macho_load_segment(epp, vp, foff, ls, type)
 
 
 static int
-exec_macho_load_dylinker(p, epp, dy, entry)
+exec_macho_load_dylinker(p, epp, dy, entry, depth)
 	struct proc *p;
 	struct exec_package *epp;
 	struct exec_macho_dylinker_command *dy;
 	u_long *entry;
+	int depth;
 {
 	struct exec_macho_emul_arg *emea;
 	const char *name = ((const char *)dy) + dy->name.offset;
@@ -264,16 +265,17 @@ exec_macho_load_dylinker(p, epp, dy, entry)
 	(void)snprintf(path, sizeof(path), "%s%s", emea->path, name);
 	DPRINTF(("loading linker %s\n", path));
 	if ((error = exec_macho_load_file(p, epp, path, entry,
-	    MACHO_MOH_DYLINKER)) != 0)
+	    MACHO_MOH_DYLINKER, depth)) != 0)
 		return error;
 	return 0;
 }
 
 static int
-exec_macho_load_dylib(p, epp, dy)
+exec_macho_load_dylib(p, epp, dy, depth)
 	struct proc *p;
 	struct exec_package *epp;
 	struct exec_macho_dylib_command *dy;
+	int depth;
 {
 	struct exec_macho_emul_arg *emea;
 	const char *name = ((const char *)dy) + dy->dylib.name.offset;
@@ -287,7 +289,7 @@ exec_macho_load_dylib(p, epp, dy)
 	(void)snprintf(path, sizeof(path), "%s%s", emea->path, name);
 	DPRINTF(("loading library %s\n", path));
 	if ((error = exec_macho_load_file(p, epp, path, &entry,
-	    MACHO_MOH_DYLIB)) != 0)
+	    MACHO_MOH_DYLIB, depth)) != 0)
 		return error;
 	return 0;
 }
@@ -307,25 +309,24 @@ exec_macho_load_thread(th)
  * for the dynamic linker and library recursive loading.
  */
 static int
-exec_macho_load_file(p, epp, path, entry, type)
+exec_macho_load_file(p, epp, path, entry, type, depth)
 	struct proc *p;
 	struct exec_package *epp;
 	const char *path;
 	u_long *entry;
 	int type;
+	int depth;
 {
 	int error;
 	struct nameidata nd;
 	struct vnode *vp;
 	struct vattr attr;
 	struct exec_macho_fat_header fat;
-	struct exec_macho_emul_arg *emea;
 
 	/*
-	 * Check for excessive recursive Mach-O loading
+	 * Check for excessive rercursive loading
 	 */
-	emea = (struct exec_macho_emul_arg *)epp->ep_emul_arg;
-	if (emea->loadcount++ > EXEC_MACHO_MAXLOADCOUNT)
+	if (depth++ > 6)
 		return E2BIG;
 
 	/*
@@ -366,7 +367,8 @@ exec_macho_load_file(p, epp, path, entry, type)
 	if ((error = exec_read_from(p, vp, 0, &fat, sizeof(fat))) != 0)
 		goto bad;
 
-	if ((error = exec_macho_load_vnode(p, epp, vp, &fat, entry, type)) != 0)
+	if ((error = exec_macho_load_vnode(p, epp, vp, &fat, 
+	    entry, type, depth)) != 0)
 		goto bad;
 
 	vrele(vp);
@@ -392,7 +394,7 @@ bad:
  * the entry point.
  */
 static int
-exec_macho_load_vnode(p, epp, vp, fat, entry, type)
+exec_macho_load_vnode(p, epp, vp, fat, entry, type, depth)
 	struct proc *p;
 	struct exec_package *epp;
 	struct vnode *vp;
@@ -507,14 +509,15 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type)
 		case MACHO_LC_LOAD_DYLINKER:
 			if ((error = exec_macho_load_dylinker(p, epp,
 			    (struct exec_macho_dylinker_command *)buf,
-			    entry)) != 0) {
+			    entry, depth)) != 0) {
 				DPRINTF(("load linker failed\n"));
 				goto bad;
 			}
 			break;
 		case MACHO_LC_LOAD_DYLIB:
 			if ((error = exec_macho_load_dylib(p, epp,
-			    (struct exec_macho_dylib_command *)buf)) != 0) {
+			    (struct exec_macho_dylib_command *)buf, 
+			    depth)) != 0) {
 				DPRINTF(("load dylib failed\n"));
 				goto bad;
 			}
@@ -587,7 +590,6 @@ exec_macho_makecmds(p, epp)
 		return (error);
 
 	emea = malloc(sizeof(struct exec_macho_emul_arg), M_EXEC, M_WAITOK);
-	emea->loadcount = 0;
 	epp->ep_emul_arg = (void *)emea;
 
 	if (!epp->ep_esch->u.mach_probe_func)
@@ -599,7 +601,7 @@ exec_macho_makecmds(p, epp)
 	}
 		
 	if ((error = exec_macho_load_vnode(p, epp, epp->ep_vp, fat,
-	    &epp->ep_entry, MACHO_MOH_EXECUTE)) != 0)
+	    &epp->ep_entry, MACHO_MOH_EXECUTE, 0)) != 0)
 		goto bad;
 
 	/*
