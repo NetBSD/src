@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/09/21 15:38:15 tv Exp $
+#	$NetBSD: Makefile,v 1.12 2001/10/19 03:33:35 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -28,7 +28,7 @@ Version${c}.c: ${DIST}/libf2c/lib${c}77/Version.c
 	cp $> $@
 .endfor
 
-.for f in ${G_F2CEXT}
+.for f in ${G_F2CEXT:N*y2kbug*}
 OBJS+=		L${f}.o
 
 L${f}.o: f2cext.c
