@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.31 2002/12/31 15:51:18 pk Exp $ */
+/*	$NetBSD: psl.h,v 1.32 2003/01/14 22:58:00 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -362,6 +362,7 @@ _SPLRAISE(splvm, IPL_IMP)
 _SPLRAISE(splclock, IPL_CLOCK)
 
 _SPLRAISE(splsched, IPL_SCHED)
+_SPLSET(spllowerschedclock, IPL_SCHED)
 
 /* fd hardware, ts102, and tadpole microcontoller interrupts are at level 11 */
 _SPLRAISE(splfd, 11)
