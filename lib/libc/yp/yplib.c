@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.15 1995/06/03 22:43:09 mycroft Exp $	*/
+/*	$NetBSD: yplib.c,v 1.16 1995/07/14 21:04:24 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$NetBSD: yplib.c,v 1.15 1995/06/03 22:43:09 mycroft Exp $";
+static char rcsid[] = "$NetBSD: yplib.c,v 1.16 1995/07/14 21:04:24 christos Exp $";
 #endif
 
 #include <sys/param.h>
@@ -54,113 +54,117 @@ static char *rcsid = "$NetBSD: yplib.c,v 1.15 1995/06/03 22:43:09 mycroft Exp $"
 #define YPBINDLOCK	"/var/run/ypbind.lock"
 #define YPMATCHCACHE
 
-extern bool_t xdr_domainname(), xdr_ypbind_resp();
-extern bool_t xdr_ypreq_key(), xdr_ypresp_val();
-extern bool_t xdr_ypreq_nokey(), xdr_ypresp_key_val();
-extern bool_t xdr_ypresp_all(), xdr_ypresp_all_seq();
-extern bool_t xdr_ypresp_master();
-
-int (*ypresp_allfn)();
+int (*ypresp_allfn) __P((u_long, char *, int, char *, int, void *));
 void *ypresp_data;
 
 struct dom_binding *_ypbindlist;
 static char _yp_domain[MAXHOSTNAMELEN];
 int _yplib_timeout = 10;
 
+static bool_t ypmatch_add __P((const char *, const char *, int, char *, int));
+static bool_t ypmatch_find __P((const char *, const char *, int, const char **,
+				int *));
+static void _yp_unbind __P((struct dom_binding *));
+
 #ifdef YPMATCHCACHE
 int _yplib_cache = 5;
 
 static struct ypmatch_ent {
-	struct ypmatch_ent *next;
-	char *map, *key, *val;
-	int keylen, vallen;
-	time_t expire_t;
+	struct ypmatch_ent 	*next;
+	char     		*map, *key;
+	char           		*val;
+	int             	 keylen, vallen;
+	time_t          	 expire_t;
 } *ypmc;
 
-static void
+static bool_t
 ypmatch_add(map, key, keylen, val, vallen)
-char *map;
-char *key;
-int keylen;
-char *val;
-int vallen;
+	const char     *map;
+	const char     *key;
+	int             keylen;
+	char           *val;
+	int             vallen;
 {
 	struct ypmatch_ent *ep;
 	time_t t;
 
-	time(&t);
+	(void)time(&t);
 
-	for(ep=ypmc; ep; ep=ep->next)
-		if(ep->expire_t < t)
+	for (ep = ypmc; ep; ep = ep->next)
+		if (ep->expire_t < t)
 			break;
-	if(ep==NULL) {
-		ep = (struct ypmatch_ent *)malloc(sizeof *ep);
-		memset(ep, 0, sizeof *ep);
-		if(ypmc)
+	if (ep == NULL) {
+		if ((ep = malloc(sizeof *ep)) == NULL)
+			return 0;
+		(void)memset(ep, 0, sizeof *ep);
+		if (ypmc)
 			ep->next = ypmc;
 		ypmc = ep;
 	}
 
-	if(ep->key)
-		free(ep->key);
-	if(ep->val)
-		free(ep->val);
-
-	ep->key = NULL;
-	ep->val = NULL;
-
-	ep->key = (char *)malloc(keylen);
-	if(ep->key==NULL)
-		return;
-
-	ep->val = (char *)malloc(vallen);
-	if(ep->key==NULL) {
+	if (ep->key) {
 		free(ep->key);
 		ep->key = NULL;
-		return;
 	}
+	if (ep->val) {
+		free(ep->val);
+		ep->val = NULL;
+	}
+
+	if ((ep->key = malloc(keylen)) == NULL)
+		return 0;
+
+	if ((ep->val = malloc(vallen)) == NULL) {
+		free(ep->key);
+		ep->key = NULL;
+		return 0;
+	}
+
 	ep->keylen = keylen;
 	ep->vallen = vallen;
 
-	memcpy(ep->key, key, ep->keylen);
-	memcpy(ep->val, val, ep->vallen);
+	(void)memcpy(ep->key, key, ep->keylen);
+	(void)memcpy(ep->val, val, ep->vallen);
 
-	if(ep->map) {
-		if( strcmp(ep->map, map) ) {
+	if (ep->map) {
+		if (strcmp(ep->map, map)) {
 			free(ep->map);
-			ep->map = strdup(map);
+			if ((ep->map = strdup(map)) == NULL)
+				return 0;
 		}
 	} else {
-		ep->map = strdup(map);
+		if ((ep->map = strdup(map)) == NULL)
+			return 0;
 	}
 
 	ep->expire_t = t + _yplib_cache;
+	return 1;
 }
 
 static bool_t
 ypmatch_find(map, key, keylen, val, vallen)
-char *map;
-char *key;
-int keylen;
-char **val;
-int *vallen;
+	const char     *map;
+	const char     *key;
+	int             keylen;
+	const char    **val;
+	int            *vallen;
 {
 	struct ypmatch_ent *ep;
-	time_t t;
+	time_t          t;
 
-	if(ypmc==NULL)
+	if (ypmc == NULL)
 		return 0;
 
-	time(&t);
+	(void) time(&t);
 
-	for(ep=ypmc; ep; ep=ep->next) {
-		if(ep->keylen != keylen)
+	for (ep = ypmc; ep; ep = ep->next) {
+		if (ep->keylen != keylen)
 			continue;
-		if(strcmp(ep->map, map))
+		if (strcmp(ep->map, map))
 			continue;
-		if(memcmp(ep->key, key, keylen))
+		if (memcmp(ep->key, key, keylen))
 			continue;
-		if(t > ep->expire_t)
+		if (t > ep->expire_t)
 			continue;
 
 		*val = ep->val;
@@ -173,36 +177,36 @@ int *vallen;
 
 int
 _yp_dobind(dom, ypdb)
-char *dom;
-struct dom_binding **ypdb;
+	const char     *dom;
+	struct dom_binding **ypdb;
 {
-	static int pid = -1;
-	char path[MAXPATHLEN];
+	static int      pid = -1;
+	char            path[MAXPATHLEN];
 	struct dom_binding *ysd, *ysd2;
 	struct ypbind_resp ypbr;
-	struct timeval tv;
+	struct timeval  tv;
 	struct sockaddr_in clnt_sin;
-	int clnt_sock, fd, gpid;
-	CLIENT *client;
-	int new=0, r;
-	int count = 0;
+	int             clnt_sock, fd, gpid;
+	CLIENT         *client;
+	int             new = 0, r;
+	int             count = 0;
 
 	/*
 	 * test if YP is running or not
 	 */
-	if ((fd=open(YPBINDLOCK, O_RDONLY)) == -1)
+	if ((fd = open(YPBINDLOCK, O_RDONLY)) == -1)
 		return YPERR_YPBIND;
-	if( !(flock(fd, LOCK_EX|LOCK_NB) == -1 && errno==EWOULDBLOCK)) {
-		close(fd);
+	if (!(flock(fd, LOCK_EX | LOCK_NB) == -1 && errno == EWOULDBLOCK)) {
+		(void)close(fd);
 		return YPERR_YPBIND;
 	}
-	close(fd);
+	(void)close(fd);
 
 	gpid = getpid();
-	if( !(pid==-1 || pid==gpid) ) {
+	if (!(pid == -1 || pid == gpid)) {
 		ysd = _ypbindlist;
-		while(ysd) {
-			if(ysd->dom_client)
+		while (ysd) {
+			if (ysd->dom_client)
 				clnt_destroy(ysd->dom_client);
 			ysd2 = ysd->dom_pnext;
 			free(ysd);
@@ -212,91 +216,101 @@ struct dom_binding **ypdb;
 	}
 	pid = gpid;
 
-	if(ypdb!=NULL)
+	if (ypdb != NULL)
 		*ypdb = NULL;
 
-	if(dom==NULL || strlen(dom)==0)
+	if (dom == NULL || strlen(dom) == 0)
 		return YPERR_BADARGS;
 
-	for(ysd = _ypbindlist; ysd; ysd = ysd->dom_pnext)
-		if( strcmp(dom, ysd->dom_domain) == 0)
+	for (ysd = _ypbindlist; ysd; ysd = ysd->dom_pnext)
+		if (strcmp(dom, ysd->dom_domain) == 0)
 			break;
-	if(ysd==NULL) {
-		ysd = (struct dom_binding *)malloc(sizeof *ysd);
-		memset(ysd, 0, sizeof *ysd);
+	if (ysd == NULL) {
+		if ((ysd = malloc(sizeof *ysd)) == NULL)
+			return YPERR_YPERR;
+		(void)memset(ysd, 0, sizeof *ysd);
 		ysd->dom_socket = -1;
 		ysd->dom_vers = 0;
 		new = 1;
 	}
 again:
-	if(ysd->dom_vers==0) {
-		sprintf(path, "%s/%s.%d", BINDINGDIR, dom, 2);
-		if( (fd=open(path, O_RDONLY)) == -1) {
-			/* no binding file, YP is dead, or not yet fully alive. */
+	if (ysd->dom_vers == 0) {
+		(void) snprintf(path, sizeof(path), "%s/%s.%d",
+				BINDINGDIR, dom, 2);
+		if ((fd = open(path, O_RDONLY)) == -1) {
+			/*
+			 * no binding file, YP is dead, or not yet fully
+			 * alive.
+			 */
 			goto trynet;
 		}
-		if( flock(fd, LOCK_EX|LOCK_NB) == -1 && errno==EWOULDBLOCK) {
-			struct iovec iov[2];
+		if (flock(fd, LOCK_EX | LOCK_NB) == -1 &&
+		    errno == EWOULDBLOCK) {
+			struct iovec    iov[2];
 			struct ypbind_resp ybr;
-			u_short	ypb_port;
+			u_short         ypb_port;
+			struct ypbind_binding *bn;
 
-			iov[0].iov_base = (caddr_t)&ypb_port;
+			iov[0].iov_base = (caddr_t) & ypb_port;
 			iov[0].iov_len = sizeof ypb_port;
-			iov[1].iov_base = (caddr_t)&ybr;
+			iov[1].iov_base = (caddr_t) & ybr;
 			iov[1].iov_len = sizeof ybr;
 
 			r = readv(fd, iov, 2);
-			if(r != iov[0].iov_len + iov[1].iov_len) {
-				close(fd);
+			if (r != iov[0].iov_len + iov[1].iov_len) {
+				(void)close(fd);
 				ysd->dom_vers = -1;
 				goto again;
 			}
-
-			memset(&ysd->dom_server_addr, 0, sizeof ysd->dom_server_addr);
-			ysd->dom_server_addr.sin_len = sizeof(struct sockaddr_in);
+			(void)memset(&ysd->dom_server_addr, 0,
+				     sizeof ysd->dom_server_addr);
+			ysd->dom_server_addr.sin_len =
+				sizeof(struct sockaddr_in);
 			ysd->dom_server_addr.sin_family = AF_INET;
+			bn = &ybr.ypbind_respbody.ypbind_bindinfo;
 			ysd->dom_server_addr.sin_port =
-			    ybr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_port;
+				bn->ypbind_binding_port;
+				
 			ysd->dom_server_addr.sin_addr =
-			    ybr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_addr;
+				bn->ypbind_binding_addr;
 
 			ysd->dom_server_port = ysd->dom_server_addr.sin_port;
-			close(fd);
+			(void)close(fd);
 			goto gotit;
 		} else {
 			/* no lock on binding file, YP is dead. */
-			close(fd);
-			if(new)
+			(void)close(fd);
+			if (new)
 				free(ysd);
 			return YPERR_YPBIND;
 		}
 	}
 trynet:
-	if(ysd->dom_vers==-1 || ysd->dom_vers==0) {
-		memset(&clnt_sin, 0, sizeof clnt_sin);
+	if (ysd->dom_vers == -1 || ysd->dom_vers == 0) {
+		struct ypbind_binding *bn;
+		(void)memset(&clnt_sin, 0, sizeof clnt_sin);
 		clnt_sin.sin_len = sizeof(struct sockaddr_in);
 		clnt_sin.sin_family = AF_INET;
 		clnt_sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
 		clnt_sock = RPC_ANYSOCK;
-		client = clnttcp_create(&clnt_sin, YPBINDPROG, YPBINDVERS, &clnt_sock,
-			0, 0);
-		if(client==NULL) {
+		client = clnttcp_create(&clnt_sin, YPBINDPROG, YPBINDVERS,
+					&clnt_sock, 0, 0);
+		if (client == NULL) {
 			clnt_pcreateerror("clnttcp_create");
-			if(new)
+			if (new)
 				free(ysd);
 			return YPERR_YPBIND;
 		}
-
 		tv.tv_sec = _yplib_timeout;
 		tv.tv_usec = 0;
-		r = clnt_call(client, YPBINDPROC_DOMAIN,
-			xdr_domainname, dom, xdr_ypbind_resp, &ypbr, tv);
-		if(r != RPC_SUCCESS) {
-			if (new==0 || count)
+		r = clnt_call(client, YPBINDPROC_DOMAIN, xdr_domainname,
+			      dom, xdr_ypbind_resp, &ypbr, tv);
+		if (r != RPC_SUCCESS) {
+			if (new == 0 || count)
 				fprintf(stderr,
-				    "YP server for domain %s not responding, still trying\n",
-				    dom);
+		    "YP server for domain %s not responding, still trying\n",
+					dom);
 			count++;
 			clnt_destroy(client);
 			ysd->dom_vers = -1;
@@ -304,48 +318,48 @@ trynet:
 		}
 		clnt_destroy(client);
 
-		memset(&ysd->dom_server_addr, 0, sizeof ysd->dom_server_addr);
+		(void)memset(&ysd->dom_server_addr, 0, 
+			     sizeof ysd->dom_server_addr);
 		ysd->dom_server_addr.sin_len = sizeof(struct sockaddr_in);
 		ysd->dom_server_addr.sin_family = AF_INET;
+		bn = &ypbr.ypbind_respbody.ypbind_bindinfo;
 		ysd->dom_server_addr.sin_port =
-			ypbr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_port;
+			bn->ypbind_binding_port;
 		ysd->dom_server_addr.sin_addr.s_addr =
-			ypbr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_addr.s_addr;
+			bn->ypbind_binding_addr.s_addr;
 		ysd->dom_server_port =
-			ypbr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_port;
+			bn->ypbind_binding_port;
 gotit:
 		ysd->dom_vers = YPVERS;
-		strcpy(ysd->dom_domain, dom);
+		(void)strcpy(ysd->dom_domain, dom);
 	}
-
-	tv.tv_sec = _yplib_timeout/2;
+	tv.tv_sec = _yplib_timeout / 2;
 	tv.tv_usec = 0;
-	if(ysd->dom_client)
+	if (ysd->dom_client)
 		clnt_destroy(ysd->dom_client);
 	ysd->dom_socket = RPC_ANYSOCK;
 	ysd->dom_client = clntudp_create(&ysd->dom_server_addr,
-		YPPROG, YPVERS, tv, &ysd->dom_socket);
-	if(ysd->dom_client==NULL) {
+				      YPPROG, YPVERS, tv, &ysd->dom_socket);
+	if (ysd->dom_client == NULL) {
 		clnt_pcreateerror("clntudp_create");
 		ysd->dom_vers = -1;
 		goto again;
 	}
-	if( fcntl(ysd->dom_socket, F_SETFD, 1) == -1)
+	if (fcntl(ysd->dom_socket, F_SETFD, 1) == -1)
 		perror("fcntl: F_SETFD");
 
-	if(new) {
+	if (new) {
 		ysd->dom_pnext = _ypbindlist;
 		_ypbindlist = ysd;
 	}
-
-	if(ypdb!=NULL)
+	if (ypdb != NULL)
 		*ypdb = ysd;
 	return 0;
 }
 
 static void
 _yp_unbind(ypb)
-struct dom_binding *ypb;
+	struct dom_binding *ypb;
 {
 	clnt_destroy(ypb->dom_client);
 	ypb->dom_client = NULL;
@@ -354,22 +368,22 @@ struct dom_binding *ypb;
 
 int
 yp_bind(dom)
-char *dom;
+	const char     *dom;
 {
 	return _yp_dobind(dom, NULL);
 }
 
 void
 yp_unbind(dom)
-char *dom;
+	const char     *dom;
 {
 	struct dom_binding *ypb, *ypbp;
 
 	ypbp = NULL;
-	for(ypb=_ypbindlist; ypb; ypb=ypb->dom_pnext) {
-		if( strcmp(dom, ypb->dom_domain) == 0) {
+	for (ypb = _ypbindlist; ypb; ypb = ypb->dom_pnext) {
+		if (strcmp(dom, ypb->dom_domain) == 0) {
 			clnt_destroy(ypb->dom_client);
-			if(ypbp)
+			if (ypbp)
 				ypbp->dom_pnext = ypb->dom_pnext;
 			else
 				_ypbindlist = ypb->dom_pnext;
@@ -383,32 +397,33 @@ char *dom;
 
 int
 yp_match(indomain, inmap, inkey, inkeylen, outval, outvallen)
-char *indomain;
-char *inmap;
-const char *inkey;
-int inkeylen;
-char **outval;
-int *outvallen;
+	const char     *indomain;
+	const char     *inmap;
+	const char     *inkey;
+	int             inkeylen;
+	char          **outval;
+	int            *outvallen;
 {
 	struct dom_binding *ysd;
 	struct ypresp_val yprv;
-	struct timeval tv;
+	struct timeval  tv;
 	struct ypreq_key yprk;
-	int r;
+	int             r;
 
 	*outval = NULL;
 	*outvallen = 0;
 
 again:
-	if( _yp_dobind(indomain, &ysd) != 0)
+	if (_yp_dobind(indomain, &ysd) != 0)
 		return YPERR_DOMAIN;
 
 #ifdef YPMATCHCACHE
-	if( !strcmp(_yp_domain, indomain) && ypmatch_find(inmap, inkey,
-	    inkeylen, &yprv.valdat.dptr, &yprv.valdat.dsize)) {
+	if (!strcmp(_yp_domain, indomain) && ypmatch_find(inmap, inkey,
+			 inkeylen, &yprv.valdat.dptr, &yprv.valdat.dsize)) {
 		*outvallen = yprv.valdat.dsize;
-		*outval = (char *)malloc(*outvallen+1);
-		memcpy(*outval, yprv.valdat.dptr, *outvallen);
+		if ((*outval = malloc(*outvallen + 1)) == NULL)
+			return YPERR_YPERR;
+		(void)memcpy(*outval, yprv.valdat.dptr, *outvallen);
 		(*outval)[*outvallen] = '\0';
 		return 0;
 	}
@@ -419,40 +434,43 @@ again:
 
 	yprk.domain = indomain;
 	yprk.map = inmap;
-	yprk.keydat.dptr = (char *)inkey;
+	yprk.keydat.dptr = (char *) inkey;
 	yprk.keydat.dsize = inkeylen;
 
 	memset(&yprv, 0, sizeof yprv);
 
 	r = clnt_call(ysd->dom_client, YPPROC_MATCH,
-		xdr_ypreq_key, &yprk, xdr_ypresp_val, &yprv, tv);
-	if(r != RPC_SUCCESS) {
+		      xdr_ypreq_key, &yprk, xdr_ypresp_val, &yprv, tv);
+	if (r != RPC_SUCCESS) {
 		clnt_perror(ysd->dom_client, "yp_match: clnt_call");
 		ysd->dom_vers = -1;
 		goto again;
 	}
-	if( !(r=ypprot_err(yprv.status)) ) {
+	if (!(r = ypprot_err(yprv.status))) {
 		*outvallen = yprv.valdat.dsize;
-		*outval = (char *)malloc(*outvallen+1);
-		memcpy(*outval, yprv.valdat.dptr, *outvallen);
+		if ((*outval = malloc(*outvallen + 1)) == NULL)
+			return YPERR_YPERR;
+		(void)memcpy(*outval, yprv.valdat.dptr, *outvallen);
 		(*outval)[*outvallen] = '\0';
 #ifdef YPMATCHCACHE
-		if( strcmp(_yp_domain, indomain)==0 )
-			 ypmatch_add(inmap, inkey, inkeylen, *outval, *outvallen);
+		if (strcmp(_yp_domain, indomain) == 0)
+			if (!ypmatch_add(inmap, inkey, inkeylen,
+					 *outval, *outvallen))
+				r = RPC_SYSTEMERROR;
 #endif
 	}
-	xdr_free(xdr_ypresp_val, (char *)&yprv);
+	xdr_free(xdr_ypresp_val, (char *) &yprv);
 	_yp_unbind(ysd);
 	return r;
 }
 
 int
 yp_get_default_domain(domp)
-char **domp;
+	char          **domp;
 {
 	*domp = NULL;
-	if(_yp_domain[0] == '\0')
-		if( getdomainname(_yp_domain, sizeof _yp_domain))
+	if (_yp_domain[0] == '\0')
+		if (getdomainname(_yp_domain, sizeof _yp_domain))
 			return YPERR_NODOM;
 	*domp = _yp_domain;
 	return 0;
@@ -460,24 +478,24 @@ char **domp;
 
 int
 yp_first(indomain, inmap, outkey, outkeylen, outval, outvallen)
-char *indomain;
-char *inmap;
-char **outkey;
-int *outkeylen;
-char **outval;
-int *outvallen;
+	const char     *indomain;
+	const char     *inmap;
+	char          **outkey;
+	int            *outkeylen;
+	char          **outval;
+	int            *outvallen;
 {
 	struct ypresp_key_val yprkv;
 	struct ypreq_nokey yprnk;
 	struct dom_binding *ysd;
-	struct timeval tv;
-	int r;
+	struct timeval  tv;
+	int             r;
 
 	*outkey = *outval = NULL;
 	*outkeylen = *outvallen = 0;
 
 again:
-	if( _yp_dobind(indomain, &ysd) != 0)
+	if (_yp_dobind(indomain, &ysd) != 0)
 		return YPERR_DOMAIN;
 
 	tv.tv_sec = _yplib_timeout;
@@ -485,52 +503,58 @@ again:
 
 	yprnk.domain = indomain;
 	yprnk.map = inmap;
-	memset(&yprkv, 0, sizeof yprkv);
+	(void)memset(&yprkv, 0, sizeof yprkv);
 
 	r = clnt_call(ysd->dom_client, YPPROC_FIRST,
-		xdr_ypreq_nokey, &yprnk, xdr_ypresp_key_val, &yprkv, tv);
-	if(r != RPC_SUCCESS) {
+		   xdr_ypreq_nokey, &yprnk, xdr_ypresp_key_val, &yprkv, tv);
+	if (r != RPC_SUCCESS) {
 		clnt_perror(ysd->dom_client, "yp_first: clnt_call");
 		ysd->dom_vers = -1;
 		goto again;
 	}
-	if( !(r=ypprot_err(yprkv.status)) ) {
+	if (!(r = ypprot_err(yprkv.status))) {
 		*outkeylen = yprkv.keydat.dsize;
-		*outkey = (char *)malloc(*outkeylen+1);
-		memcpy(*outkey, yprkv.keydat.dptr, *outkeylen);
-		(*outkey)[*outkeylen] = '\0';
+		if ((*outkey = malloc(*outkeylen + 1)) == NULL)
+			r = RPC_SYSTEMERROR;
+		else {
+			(void)memcpy(*outkey, yprkv.keydat.dptr, *outkeylen);
+			(*outkey)[*outkeylen] = '\0';
+		}
 		*outvallen = yprkv.valdat.dsize;
-		*outval = (char *)malloc(*outvallen+1);
-		memcpy(*outval, yprkv.valdat.dptr, *outvallen);
-		(*outval)[*outvallen] = '\0';
+		if ((*outval = malloc(*outvallen + 1)) == NULL)
+			r = RPC_SYSTEMERROR;
+		else {
+			(void)memcpy(*outval, yprkv.valdat.dptr, *outvallen);
+			(*outval)[*outvallen] = '\0';
+		}
 	}
-	xdr_free(xdr_ypresp_key_val, (char *)&yprkv);
+	xdr_free(xdr_ypresp_key_val, (char *) &yprkv);
 	_yp_unbind(ysd);
 	return r;
 }
 
 int
 yp_next(indomain, inmap, inkey, inkeylen, outkey, outkeylen, outval, outvallen)
-char *indomain;
-char *inmap;
-char *inkey;
-int inkeylen;
-char **outkey;
-int *outkeylen;
-char **outval;
-int *outvallen;
+	const char     *indomain;
+	const char     *inmap;
+	const char     *inkey;
+	int             inkeylen;
+	char          **outkey;
+	int            *outkeylen;
+	char          **outval;
+	int            *outvallen;
 {
 	struct ypresp_key_val yprkv;
 	struct ypreq_key yprk;
 	struct dom_binding *ysd;
-	struct timeval tv;
-	int r;
+	struct timeval  tv;
+	int             r;
 
 	*outkey = *outval = NULL;
 	*outkeylen = *outvallen = 0;
 
 again:
-	if( _yp_dobind(indomain, &ysd) != 0)
+	if (_yp_dobind(indomain, &ysd) != 0)
 		return YPERR_DOMAIN;
 
 	tv.tv_sec = _yplib_timeout;
@@ -540,45 +564,51 @@ again:
 	yprk.map = inmap;
 	yprk.keydat.dptr = inkey;
 	yprk.keydat.dsize = inkeylen;
-	memset(&yprkv, 0, sizeof yprkv);
+	(void)memset(&yprkv, 0, sizeof yprkv);
 
 	r = clnt_call(ysd->dom_client, YPPROC_NEXT,
-		xdr_ypreq_key, &yprk, xdr_ypresp_key_val, &yprkv, tv);
-	if(r != RPC_SUCCESS) {
+		      xdr_ypreq_key, &yprk, xdr_ypresp_key_val, &yprkv, tv);
+	if (r != RPC_SUCCESS) {
 		clnt_perror(ysd->dom_client, "yp_next: clnt_call");
 		ysd->dom_vers = -1;
 		goto again;
 	}
-	if( !(r=ypprot_err(yprkv.status)) ) {
+	if (!(r = ypprot_err(yprkv.status))) {
 		*outkeylen = yprkv.keydat.dsize;
-		*outkey = (char *)malloc(*outkeylen+1);
-		memcpy(*outkey, yprkv.keydat.dptr, *outkeylen);
-		(*outkey)[*outkeylen] = '\0';
+		if ((*outkey = malloc(*outkeylen + 1)) == NULL)
+			r = RPC_SYSTEMERROR;
+		else {
+			(void)memcpy(*outkey, yprkv.keydat.dptr, *outkeylen);
+			(*outkey)[*outkeylen] = '\0';
+		}
 		*outvallen = yprkv.valdat.dsize;
-		*outval = (char *)malloc(*outvallen+1);
-		memcpy(*outval, yprkv.valdat.dptr, *outvallen);
-		(*outval)[*outvallen] = '\0';
+		if ((*outval = malloc(*outvallen + 1)) == NULL)
+			r = RPC_SYSTEMERROR;
+		else {
+			(void)memcpy(*outval, yprkv.valdat.dptr, *outvallen);
+			(*outval)[*outvallen] = '\0';
+		}
 	}
-	xdr_free(xdr_ypresp_key_val, (char *)&yprkv);
+	xdr_free(xdr_ypresp_key_val, (char *) &yprkv);
 	_yp_unbind(ysd);
 	return r;
 }
 
 int
 yp_all(indomain, inmap, incallback)
-char *indomain;
-char *inmap;
-struct ypall_callback *incallback;
+	const char     *indomain;
+	const char     *inmap;
+	struct ypall_callback *incallback;
 {
 	struct ypreq_nokey yprnk;
 	struct dom_binding *ysd;
-	struct timeval tv;
+	struct timeval  tv;
 	struct sockaddr_in clnt_sin;
-	CLIENT *clnt;
-	u_long status;
-	int clnt_sock;
+	CLIENT         *clnt;
+	u_long          status;
+	int             clnt_sock;
 
-	if( _yp_dobind(indomain, &ysd) != 0)
+	if (_yp_dobind(indomain, &ysd) != 0)
 		return YPERR_DOMAIN;
 
 	tv.tv_sec = _yplib_timeout;
@@ -587,41 +617,41 @@ struct ypall_callback *incallback;
 	clnt_sin = ysd->dom_server_addr;
 	clnt_sin.sin_port = 0;
 	clnt = clnttcp_create(&clnt_sin, YPPROG, YPVERS, &clnt_sock, 0, 0);
-	if(clnt==NULL) {
+	if (clnt == NULL) {
 		printf("clnttcp_create failed\n");
 		return YPERR_PMAP;
 	}
-
 	yprnk.domain = indomain;
 	yprnk.map = inmap;
 	ypresp_allfn = incallback->foreach;
-	ypresp_data = (void *)incallback->data;
+	ypresp_data = (void *) incallback->data;
 
 	(void) clnt_call(clnt, YPPROC_ALL,
-		xdr_ypreq_nokey, &yprnk, xdr_ypresp_all_seq, &status, tv);
+		  xdr_ypreq_nokey, &yprnk, xdr_ypresp_all_seq, &status, tv);
 	clnt_destroy(clnt);
-	xdr_free(xdr_ypresp_all_seq, (char *)&status);	/* not really needed... */
+	/* not really needed... */
+	xdr_free(xdr_ypresp_all_seq, (char *) &status);
 	_yp_unbind(ysd);
 
-	if(status != YP_FALSE)
+	if (status != YP_FALSE)
 		return ypprot_err(status);
 	return 0;
 }
 
 int
 yp_order(indomain, inmap, outorder)
-char *indomain;
-char *inmap;
-int *outorder;
+	const char     *indomain;
+	const char     *inmap;
+	int            *outorder;
 {
- 	struct dom_binding *ysd;
+	struct dom_binding *ysd;
 	struct ypresp_order ypro;
 	struct ypreq_nokey yprnk;
-	struct timeval tv;
-	int r;
+	struct timeval  tv;
+	int             r;
 
 again:
-	if( _yp_dobind(indomain, &ysd) != 0)
+	if (_yp_dobind(indomain, &ysd) != 0)
 		return YPERR_DOMAIN;
 
 	tv.tv_sec = _yplib_timeout;
@@ -630,36 +660,35 @@ again:
 	yprnk.domain = indomain;
 	yprnk.map = inmap;
 
-	memset(&ypro, 0, sizeof ypro);
+	(void)memset(&ypro, 0, sizeof ypro);
 
 	r = clnt_call(ysd->dom_client, YPPROC_ORDER,
-		xdr_ypreq_nokey, &yprnk, xdr_ypresp_order, &ypro, tv);
-	if(r != RPC_SUCCESS) {
+		      xdr_ypreq_nokey, &yprnk, xdr_ypresp_order, &ypro, tv);
+	if (r != RPC_SUCCESS) {
 		clnt_perror(ysd->dom_client, "yp_order: clnt_call");
 		ysd->dom_vers = -1;
 		goto again;
 	}
-
 	*outorder = ypro.ordernum;
-	xdr_free(xdr_ypresp_order, (char *)&ypro);
+	xdr_free(xdr_ypresp_order, (char *) &ypro);
 	_yp_unbind(ysd);
 	return ypprot_err(ypro.status);
 }
 
 int
 yp_master(indomain, inmap, outname)
-char *indomain;
-char *inmap;
-char **outname;
+	const char     *indomain;
+	const char     *inmap;
+	char          **outname;
 {
 	struct dom_binding *ysd;
 	struct ypresp_master yprm;
 	struct ypreq_nokey yprnk;
-	struct timeval tv;
-	int r;
+	struct timeval  tv;
+	int             r;
 
 again:
-	if( _yp_dobind(indomain, &ysd) != 0)
+	if (_yp_dobind(indomain, &ysd) != 0)
 		return YPERR_DOMAIN;
 
 	tv.tv_sec = _yplib_timeout;
@@ -668,34 +697,36 @@ again:
 	yprnk.domain = indomain;
 	yprnk.map = inmap;
 
-	memset(&yprm, 0, sizeof yprm);
+	(void)memset(&yprm, 0, sizeof yprm);
 
 	r = clnt_call(ysd->dom_client, YPPROC_MASTER,
-		xdr_ypreq_nokey, &yprnk, xdr_ypresp_master, &yprm, tv);
-	if(r != RPC_SUCCESS) {
+		      xdr_ypreq_nokey, &yprnk, xdr_ypresp_master, &yprm, tv);
+	if (r != RPC_SUCCESS) {
 		clnt_perror(ysd->dom_client, "yp_master: clnt_call");
 		ysd->dom_vers = -1;
 		goto again;
 	}
-	if( !(r=ypprot_err(yprm.status)) ) {
-		*outname = (char *)strdup(yprm.master);
+	if (!(r = ypprot_err(yprm.status))) {
+		if ((*outname = strdup(yprm.master)) == NULL)
+			r = RPC_SYSTEMERROR;
 	}
-	xdr_free(xdr_ypresp_master, (char *)&yprm);
+	xdr_free(xdr_ypresp_master, (char *) &yprm);
 	_yp_unbind(ysd);
 	return r;
 }
 
+int
 yp_maplist(indomain, outmaplist)
-char *indomain;
-struct ypmaplist **outmaplist;
+	const char     *indomain;
+	struct ypmaplist **outmaplist;
 {
 	struct dom_binding *ysd;
 	struct ypresp_maplist ypml;
-	struct timeval tv;
-	int r;
+	struct timeval  tv;
+	int             r;
 
 again:
-	if( _yp_dobind(indomain, &ysd) != 0)
+	if (_yp_dobind(indomain, &ysd) != 0)
 		return YPERR_DOMAIN;
 
 	tv.tv_sec = _yplib_timeout;
@@ -704,25 +735,25 @@ again:
 	memset(&ypml, 0, sizeof ypml);
 
 	r = clnt_call(ysd->dom_client, YPPROC_MAPLIST,
-		xdr_domainname, indomain, xdr_ypresp_maplist, &ypml, tv);
+		   xdr_domainname, indomain, xdr_ypresp_maplist, &ypml, tv);
 	if (r != RPC_SUCCESS) {
 		clnt_perror(ysd->dom_client, "yp_maplist: clnt_call");
 		ysd->dom_vers = -1;
 		goto again;
 	}
 	*outmaplist = ypml.list;
-	/* NO: xdr_free(xdr_ypresp_maplist, &ypml);*/
+	/* NO: xdr_free(xdr_ypresp_maplist, &ypml); */
 	_yp_unbind(ysd);
 	return ypprot_err(ypml.status);
 }
 
 char *
 yperr_string(incode)
-int incode;
+	int             incode;
 {
-	static char err[80];
+	static char     err[80];
 
-	switch(incode) {
+	switch (incode) {
 	case 0:
 		return "Success";
 	case YPERR_BADARGS:
@@ -758,15 +789,15 @@ int incode;
 	case YPERR_BUSY:
 		return "Database is busy";
 	}
-	sprintf(err, "YP unknown error %d\n", incode);
+	(void) snprintf(err, sizeof(err), "YP unknown error %d\n", incode);
 	return err;
 }
 
 int
 ypprot_err(incode)
-unsigned int incode;
+	unsigned int    incode;
 {
-	switch(incode) {
+	switch (incode) {
 	case YP_TRUE:
 		return 0;
 	case YP_FALSE:
@@ -795,19 +826,18 @@ unsigned int incode;
 
 int
 _yp_check(dom)
-char **dom;
+	char          **dom;
 {
-	int use_yp = 0;
-	char *unused;
+	char           *unused;
 
-	if( _yp_domain[0]=='\0' )
-		if( yp_get_default_domain(&unused) )
+	if (_yp_domain[0] == '\0')
+		if (yp_get_default_domain(&unused))
 			return 0;
 
-	if(dom)
+	if (dom)
 		*dom = _yp_domain;
 
-	if( yp_bind(_yp_domain)==0 )
+	if (yp_bind(_yp_domain) == 0)
 		return 1;
 	return 0;
 }
