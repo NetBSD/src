@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.120 2000/10/31 10:49:02 itojun Exp $
+#	$NetBSD: bsd.prog.mk,v 1.121 2001/01/04 23:52:00 garbled Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -32,6 +32,7 @@ LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
 LIBBZ2?=	${DESTDIR}/usr/lib/libbz2.a
 LIBC?=		${DESTDIR}/usr/lib/libc.a
 LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
+LIBCDK?=	${DESTDIR}/usr/lib/libcdk.a
 LIBCOM_ERR?=	${DESTDIR}/usr/lib/libcom_err.a
 LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
 LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
@@ -40,6 +41,7 @@ LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
 LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
 LIBDES?=	${DESTDIR}/usr/lib/libdes.a
 LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
+LIBFORM?=	${DESTDIR}/usr/lib/libform.a
 LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
 LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
 LIBGSSAPI?=	${DESTDIR}/usr/lib/libgssapi.a
