@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160hl.c,v 1.6 2002/03/31 12:58:55 bjh21 Exp $	*/
+/*	$NetBSD: rmd160hl.c,v 1.7 2002/03/31 13:55:14 bjh21 Exp $	*/
 
 /* rmd160hl.c
  * ----------------------------------------------------------------------------
@@ -11,10 +11,14 @@
  * from OpenBSD: rmd160hl.c,v 1.2 1999/08/17 09:13:12 millert Exp $
  */  
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rmd160hl.c,v 1.6 2002/03/31 12:58:55 bjh21 Exp $");
+__RCSID("$NetBSD: rmd160hl.c,v 1.7 2002/03/31 13:55:14 bjh21 Exp $");
 #endif	/* not lint */
+#endif
 
 #include <sys/types.h>
 
@@ -27,10 +31,6 @@ __RCSID("$NetBSD: rmd160hl.c,v 1.6 2002/03/31 12:58:55 bjh21 Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #if !HAVE_RMD160_H
 
