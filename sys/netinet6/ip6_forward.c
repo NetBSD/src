@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.27 2001/12/18 03:04:03 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.27.10.1 2003/10/02 20:37:32 tron Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.74 2001/06/12 23:54:55 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.27 2001/12/18 03:04:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.27.10.1 2003/10/02 20:37:32 tron Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -102,6 +102,7 @@ ip6_forward(m, srcrt)
 	struct ifnet *origifp;	/* maybe unnecessary */
 #ifdef IPSEC
 	struct secpolicy *sp = NULL;
+	int ipsecrt = 0;
 #endif
 	long time_second = time.tv_sec;
 
@@ -255,10 +256,6 @@ ip6_forward(m, srcrt)
 	error = ipsec6_output_tunnel(&state, sp, 0);
 
 	m = state.m;
-#if 0	/* XXX allocate a route (ro, dst) again later */
-	ro = (struct route_in6 *)state.ro;
-	dst = (struct sockaddr_in6 *)state.dst;
-#endif
 	key_freesp(sp);
 
 	if (error) {
@@ -288,8 +285,18 @@ ip6_forward(m, srcrt)
 		m_freem(m);
 		return;
 	}
+
+	/* adjust pointer */
+	ip6 = mtod(m, struct ip6_hdr *);
+	rt = state.ro->ro_rt;
+	dst = (struct sockaddr_in6 *)state.dst;
+	if (dst != NULL && rt != NULL)
+		ipsecrt = 1;
     }
     skip_ipsec:
+
+	if (ipsecrt)
+		goto skip_routing;
 #endif /* IPSEC */
 
 	dst = &ip6_forward_rt.ro_dst;
@@ -341,6 +348,9 @@ ip6_forward(m, srcrt)
 		}
 	}
 	rt = ip6_forward_rt.ro_rt;
+#ifdef IPSEC
+    skip_routing:;
+#endif /* IPSEC */
 
 	/*
 	 * Scope check: if a packet can't be delivered to its destination
@@ -426,6 +436,9 @@ ip6_forward(m, srcrt)
 	 * modified by a redirect.
 	 */
 	if (rt->rt_ifp == m->m_pkthdr.rcvif && !srcrt &&
+#ifdef IPSEC
+	    !ipsecrt &&
+#endif
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
 		if ((rt->rt_ifp->if_flags & IFF_POINTOPOINT) &&
 		    nd6_is_addr_neighbor((struct sockaddr_in6 *)&ip6_forward_rt.ro_dst, rt->rt_ifp)) {
