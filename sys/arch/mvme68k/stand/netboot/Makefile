@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1996/10/18 06:05:55 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1998/06/12 23:11:46 cgd Exp $
 
 RELOC=0x3F0000
 
@@ -9,9 +9,9 @@ INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 CFLAGS=	-O2 ${INCPATH} ${DEFS} ${COPTS}
 CLEANFILES+=netboot netboot.bin
 
-.include "${S}/arch/${MACHINE}/stand/bugcrt/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/libbug/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/libsa/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/bugcrt/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/libbug/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/libsa/Makefile.inc"
 
 SRCS=   boot.c conf.c version.c devopen.c dev_net.c
 SRCS+=	if_ie.c if_le.c
