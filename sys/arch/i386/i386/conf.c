@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.150 2001/12/05 16:10:09 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.151 2002/01/01 21:54:21 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.150 2001/12/05 16:10:09 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.151 2002/01/01 21:54:21 augustss Exp $");
 
 #include "opt_compat_svr4.h"
 
@@ -169,6 +169,8 @@ cdev_decl(audio);
 cdev_decl(midi);
 #include "sequencer.h"
 cdev_decl(music);
+#include "radio.h"
+cdev_decl(radio);
 cdev_decl(svr4_net);
 cdev_decl(ccd);
 cdev_decl(raid);
@@ -350,6 +352,7 @@ struct cdevsw	cdevsw[] =
 	cdev__oci_init(NDPTI,dpti),	/* 84: DPT/Adaptec RAID management */
 	cdev_ir_init(NIRFRAMEDRV,irframe),/* 85: IrDA frame driver */
 	cdev_ir_init(NCIR,cir),		/* 86: Consumer Ir */
+	cdev_radio_init(NRADIO,radio),	/* 87: generic radio I/O */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -478,6 +481,7 @@ static int chrtoblktbl[] = {
 	/* 84 */	NODEV,
 	/* 85 */	NODEV,
 	/* 86 */	NODEV,
+	/* 87 */	NODEV,
 };
 
 /*

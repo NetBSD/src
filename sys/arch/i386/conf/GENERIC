@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.453 2002/01/01 16:52:23 hpeyerl Exp $
+# $NetBSD: GENERIC,v 1.454 2002/01/01 21:54:21 augustss Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.453 $"
+#ident 		"GENERIC-$Revision: 1.454 $"
 
 maxusers	32		# estimated number of users
 
@@ -928,6 +928,24 @@ midi*	at umidi?		# USB MIDI
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
+
+
+# FM-Radio devices
+# ISA radio devices
+#az0	at isa? port 0x350      # Aztech/PackardBell FM Radio Card
+#rt0	at isa? port 0x350      # AIMS Lab Radiotrack & compatible
+#rtii0	at isa? port 0x384      # AIMS Lab Radiotrack II FM Radio Card
+#sf2r0	at isa? port 0x384      # SoundForte RadioLink SF16-FMR2 FM Radio Card
+
+# PCI radio devices
+#mr*	at pci?			# Guillemot Maxi Radio FM 2000 Radio Card
+
+# Radio support
+#radio*	at az?
+#radio*	at mr?
+#radio*	at rt?
+#radio*	at rtii?
+#radio*	at sf2r?
 
 
 # TV cards
