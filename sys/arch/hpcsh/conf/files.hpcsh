@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.10 2001/03/20 16:05:42 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.11 2001/04/23 11:22:19 uch Exp $
 #
 maxpartitions 8
 
@@ -6,6 +6,7 @@ maxusers 2 16 64
 
 file	arch/hpcsh/hpcsh/conf.c
 file	arch/hpcsh/hpcsh/machdep.c
+file	arch/hpcsh/hpcsh/clock.c
 file	arch/hpcsh/hpcsh/console.c
 file	arch/hpcsh/hpcsh/autoconf.c
 file	arch/hpcsh/hpcsh/bus_space.c
