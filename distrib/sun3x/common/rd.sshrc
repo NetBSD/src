@@ -1,0 +1,4 @@
+# .sshrc
+# $NetBSD: rd.sshrc,v 1.1.1.1.2.2 1997/12/25 20:32:31 perry Exp $
+path /sbin:/bin
+run cat /.welcome
