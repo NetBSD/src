@@ -1,4 +1,4 @@
-.\"	$NetBSD: lastlogin.8,v 1.4 1999/03/22 18:43:58 garbled Exp $
+.\"	$NetBSD: lastlogin.8,v 1.5 2002/01/19 03:20:56 wiz Exp $
 .\"
 .\" Copyright (c) 1996 John M. Vinopal
 .\" All rights reserved.
@@ -45,16 +45,16 @@ will list the last login session of specified
 .Ar users ,
 or for all users by default.  Each line of output contains
 the user name, the tty from which the session was conducted, any
-hostname, and the start time for the session. 
+hostname, and the start time for the session.
 .Pp
 If multiple
-.Ar users 
+.Ar users
 are given, the session information for each user is printed in
-the order given on the command line.  Otherwise, information 
+the order given on the command line.  Otherwise, information
 for all users is printed, sorted by uid.
 .Pp
 .Nm
-differs from 
+differs from
 .Xr last 1
 in that it only prints information regarding the very last login session.
 The last login database is never turned over or deleted in standard usage.
@@ -67,7 +67,7 @@ last login database
 .Xr last 1 ,
 .Xr lastlog 5 ,
 .Xr ac 8
-.Sh AUTHOR
+.Sh AUTHORS
 John M. Vinopal wrote this program in January 1996 and contributed it
 to the
 .Nx
