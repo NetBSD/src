@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.6 2002/05/09 12:30:11 uch Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.7 2002/11/08 14:58:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ cache_sh4_op_line_32(vaddr_t va, vaddr_t base, u_int32_t mask, u_int32_t bits)
 	vaddr_t cca;
 
 	cca = base | (va & mask);
-	_reg_write_4(cca, _reg_read_4(cca) & ~bits);
+	_reg_bclr_4(cca, bits);
 }
 
 /*

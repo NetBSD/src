@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.20 2002/11/04 08:12:30 itohy Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.21 2002/11/08 14:58:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -433,7 +433,7 @@ __db_cachedump_sh3(vaddr_t va_start)
 	}
 
 	/* enable cache */
-	_reg_write_4(SH3_CCR, _reg_read_4(SH3_CCR) | SH3_CCR_CE);
+	_reg_bset_4(SH3_CCR, SH3_CCR_CE);
 	sh_icache_sync_all();
 
 	RUN_P1;
