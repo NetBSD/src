@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.7 2000/12/22 22:58:53 jdolecek Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.8 2000/12/30 13:33:15 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.7 2000/12/22 22:58:53 jdolecek Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.8 2000/12/30 13:33:15 bjh21 Exp $");
 
 #include <sys/buf.h>
 #include <sys/exec.h>
@@ -350,10 +350,6 @@ cpu_swapout(struct proc *p)
  * do not need to pass an access_type to pmap_enter().
  */
 /* This code was originally stolen from the alpha port. */
-/*
- * This needs some care, since the user mapping of the buffer is (sometimes?)
- * wired, so we have to unwire it, and put it all back when we've finished.
- */
 void
 vmapbuf(bp, len)
 	struct buf *bp;
@@ -362,6 +358,7 @@ vmapbuf(bp, len)
 	vaddr_t faddr, taddr, off;
 	paddr_t pa;
 	struct proc *p;
+	vm_prot_t prot;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -372,50 +369,35 @@ vmapbuf(bp, len)
 	taddr = uvm_km_valloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
 	len = atop(len);
+	prot = bp->b_flags & B_READ ? VM_PROT_READ :
+				      VM_PROT_READ | VM_PROT_WRITE;
 	while (len--) {
 		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr,
 		    &pa) == FALSE)
 			panic("vmapbuf: null page frame");
-		/* XXX is this allowed? */
-		pmap_unwire(vm_map_pmap(&p->p_vmspace->vm_map), faddr);
 		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
-		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		    prot, prot | PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}
 }
 
 /*
- * Unmap a previously-mapped user I/O request.  Put it back in user memory.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-	vaddr_t faddr, taddr, off;
-	paddr_t pa;
-	struct proc *p;
+	vaddr_t addr, off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	p = bp->b_proc;
-	faddr = trunc_page((vaddr_t)bp->b_data);
-	taddr = trunc_page((vaddr_t)bp->b_saveaddr);
-	off = (vaddr_t)bp->b_data - faddr;
+	addr = trunc_page((vaddr_t)bp->b_data);
+	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
-	/* XXX Re-map buffer into user space? */
-	len = atop(len);
-	while (len--) {
-		if (pmap_extract(vm_map_pmap(phys_map), faddr, &pa) == FALSE)
-			panic("vmapbuf: null page frame");
-		pmap_unwire(vm_map_pmap(phys_map), faddr);
-		pmap_enter(vm_map_pmap(&p->p_vmspace->vm_map), taddr,
-		    trunc_page(pa), VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
-		faddr += PAGE_SIZE;
-		taddr += PAGE_SIZE;
-	}
-	uvm_km_free_wakeup(phys_map, faddr, ptoa(len));
+	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
