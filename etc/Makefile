@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.155 2000/07/25 19:07:39 thorpej Exp $
+#	$NetBSD: Makefile,v 1.156 2000/08/02 14:40:45 hubertf Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -43,7 +43,7 @@
 .include <bsd.own.mk>
 
 TZDIR=		/usr/share/zoneinfo
-LOCALTIME?=	US/Pacific
+LOCALTIME?=	Factory
 
 # setting NOOBJ prevents "make obj" from doing anything;
 # an objdir would break the installation stuff below
