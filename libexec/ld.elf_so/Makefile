@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2002/07/10 15:12:33 fredette Exp $
+#	$NetBSD: Makefile,v 1.50 2002/08/10 01:59:33 thorpej Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -6,7 +6,7 @@ ARCHSUBDIR= ${MACHINE_CPU}
 M= ${.CURDIR}/arch/${ARCHSUBDIR}
 
 .if ((${MACHINE_ARCH} == "alpha") ||					\
-     (${MACHINE_ARCH} == "arm") ||					\
+     (${MACHINE_ARCH} == "arm") || (${MACHINE_ARCH} == "armeb") ||	\
      (${MACHINE_ARCH} == "hppa") ||					\
      (${MACHINE_ARCH} == "i386") ||					\
      (${MACHINE_ARCH} == "m68k") ||					\
