@@ -1,4 +1,4 @@
-/*	$Id: sysdep.h,v 1.1 1994/01/28 12:38:31 pk Exp $ */
+/*	$Id: sysdep.h,v 1.2 1994/05/19 15:56:29 pk Exp $ */
 
 #ifndef hosts_sparc_H
 #define hosts_sparc_H
@@ -30,10 +30,13 @@
 #define	HOST_TEXT_START_ADDR		USRTEXT
 
 #define	HOST_STACK_END_ADDR		USRSTACK
+/*
 #define HOST_DATA_START_ADDR ((bfd_vma)u.u_kproc.kp_eproc.e_vm.vm_daddr)
+*/
 
 #define TRAD_UNIX_CORE_FILE_FAILING_SIGNAL(core_bfd) \
   ((core_bfd)->tdata.trad_core_data->u.u_sig)
 #define u_comm u_kproc.kp_proc.p_comm
+#define TRAD_CORE_REGPOS(core_bfd) ((bfd_vma)(core_bfd)->tdata.trad_core_data->u.u_kproc.kp_proc.p_md.md_tf)
 
 #endif
