@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.344 2001/07/25 01:45:55 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.345 2001/07/28 00:33:43 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -580,6 +580,7 @@
 
 /* 3COM Products */
 #define	PCI_PRODUCT_3COM_3C985	0x0001		/* 3c985 Gigabit Ethernet */
+#define	PCI_PRODUCT_3COM_3C556MODEM	0x1007		/* 3c556 V.90 MiniPCI Modem */
 #define	PCI_PRODUCT_3COM_3C450TX	0x4500		/* 3c450-TX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 Ethernet */
 #define	PCI_PRODUCT_3COM_3C595TX	0x5950		/* 3c595-TX 10/100 Ethernet */
