@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.19 2000/05/27 04:52:35 thorpej Exp $	*/
+/*	$NetBSD: qd.c,v 1.20 2000/06/28 17:09:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -74,7 +74,7 @@
 #include <sys/poll.h>
 #include <sys/buf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
