@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc64,v 1.16 2003/10/10 22:42:40 jdolecek Exp $
+#	$NetBSD: majors.sparc64,v 1.17 2003/12/07 19:12:56 christos Exp $
 #
 # Device majors for sparc64
 #
@@ -55,6 +55,7 @@ device-major	md		char 61  block 5	md
 # sparc: device-major	cgeight	char 64			cgeight
 
 device-major	cgsix		char 67			cgsix
+device-major	altq		char 68			altq
 
 device-major	audio		char 69			audio
 device-major	openprom	char 70
