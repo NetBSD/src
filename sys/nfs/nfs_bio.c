@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.20 1995/03/18 05:49:51 gwr Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.21 1995/07/24 21:20:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -332,10 +332,6 @@ again:
 		error = uiomove(baddr + on, (int)n, uio);
 	    }
 	    switch (vp->v_type) {
-	    case VREG:
-		if (n + on == biosize || uio->uio_offset == np->n_size)
-			bp->b_flags |= B_AGE;
-		break;
 	    case VLNK:
 		n = 0;
 		break;
