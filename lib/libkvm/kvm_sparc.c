@@ -72,7 +72,7 @@ static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #define HWTOSW(pmap_stod, pg) (pmap_stod[(pg) >> BSHIFT] | ((pg) & BOFFSET))
 
 struct vmstate {
-	pmeg_t segmap[NKSEG];
+	struct regmap regmap[NKREG];
 	int *pmeg;
 	int pmap_stod[BTSIZE];              /* dense to sparse */
 };
@@ -127,6 +127,7 @@ _kvm_initvtop(kd)
 
 	_kvm_mustinit(kd);
 
+#if XXX
 	if (kd->vmst == 0) {
 		kd->vmst = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
 		if (kd->vmst == 0)
@@ -145,10 +146,10 @@ _kvm_initvtop(kd)
 	/*
 	 * Read segment table.
 	 */
-	off = st.st_size - roundup(sizeof(vm->segmap), kd->nbpg);
+	off = st.st_size - roundup(sizeof(vm->regmap), kd->nbpg);
 	errno = 0;
 	if (lseek(kd->pmfd, (off_t)off, 0) == -1 && errno != 0 || 
-	    read(kd->pmfd, (char *)vm->segmap, sizeof(vm->segmap)) < 0) {
+	    read(kd->pmfd, (char *)vm->regmap, sizeof(vm->regmap)) < 0) {
 		_kvm_err(kd, kd->program, "cannot read segment map");
 		return (-1);
 	}
@@ -156,7 +157,7 @@ _kvm_initvtop(kd)
 	 * Read PMEGs.
 	 */
 	off = st.st_size - roundup(NPMEG * nptesg * sizeof(int), kd->nbpg) +
-	    ((sizeof(vm->segmap) + kd->nbpg - 1) >> pgshift);
+	    ((sizeof(vm->regmap) + kd->nbpg - 1) >> pgshift);
 	errno = 0;
 	if (lseek(kd->pmfd, (off_t)off, 0) == -1 && errno != 0 || 
 	    read(kd->pmfd, (char *)vm->pmeg, NPMEG * nptesg * sizeof(int)) < 0) {
@@ -199,6 +200,7 @@ _kvm_initvtop(kd)
 			return (-1);
 		}
 	}
+#endif
 
 	return (0);
 }
@@ -217,6 +219,7 @@ _kvm_kvatop(kd, va, pa)
 	u_long va;
 	u_long *pa;
 {
+#if XXX
 	register struct vmstate *vm;
 	register int s;
 	register int pte;
@@ -226,7 +229,7 @@ _kvm_kvatop(kd, va, pa)
 
 	if (va >= KERNBASE) {
 		vm = kd->vmst;
-		s = vm->segmap[VA_VSEG(va) - NUSEG];
+		s = vm->regmap[VA_VREG(va) - NUREG];
 		pte = vm->pmeg[VA_VPG(va) + nptesg * s];
 		if ((pte & PG_V) != 0) {
 			off = VA_OFF(va);
@@ -236,6 +239,7 @@ _kvm_kvatop(kd, va, pa)
 			return (kd->nbpg - off);
 		}
 	}
+#endif
 	_kvm_err(kd, 0, "invalid address (%x)", va);
 	return (0);
 }
