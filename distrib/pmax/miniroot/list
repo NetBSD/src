@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.14 2002/05/27 11:02:21 lukem Exp $
+#	$NetBSD: list,v 1.15 2003/02/18 08:18:31 shin Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -39,7 +39,7 @@ COPY	${DESTDIR}/boot.pmax	boot.pmax
 COPY	${ARCHDIR}/termcap.rcons usr/share/misc/termcap
 
 # copy the kernel(s)
-COPY	${KERNOBJDIR}/GENERIC/netbsd.aout	netbsd
+COPY	${KERNOBJDIR}/GENERIC/netbsd		netbsd
 COPY	${KERNOBJDIR}/GENERIC/netbsd.ecoff	netbsd.ecoff
 COPY	${KERNOBJDIR}/INSTALL/nfsnetbsd.ecoff	nfsnetbsd.ecoff
 
