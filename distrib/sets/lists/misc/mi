@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.29 2000/02/20 03:26:16 mycroft Exp $
+# $NetBSD: mi,v 1.30 2000/04/28 06:21:22 itojun Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -132,6 +132,25 @@
 ./usr/share/doc/smm/08.sendmailop/op.me
 ./usr/share/doc/smm/09.sendmail/Makefile
 ./usr/share/doc/smm/09.sendmail/intro.me
+./usr/share/doc/smm/10.named/00macs.me
+./usr/share/doc/smm/10.named/00title.me
+./usr/share/doc/smm/10.named/Makefile
+./usr/share/doc/smm/10.named/ack.me
+./usr/share/doc/smm/10.named/build.me
+./usr/share/doc/smm/10.named/files.me
+./usr/share/doc/smm/10.named/intro.me
+./usr/share/doc/smm/10.named/manage.me
+./usr/share/doc/smm/10.named/named.boot.cache
+./usr/share/doc/smm/10.named/named.boot.primary
+./usr/share/doc/smm/10.named/named.boot.secondary
+./usr/share/doc/smm/10.named/named.local
+./usr/share/doc/smm/10.named/ns.me
+./usr/share/doc/smm/10.named/resolv.conf
+./usr/share/doc/smm/10.named/root.cache
+./usr/share/doc/smm/10.named/setup.me
+./usr/share/doc/smm/10.named/types.me
+./usr/share/doc/smm/10.named/ucbhosts
+./usr/share/doc/smm/10.named/ucbhosts.rev
 ./usr/share/doc/smm/11.timedop/Makefile
 ./usr/share/doc/smm/11.timedop/timed.ms
 ./usr/share/doc/smm/12.timed/Makefile
