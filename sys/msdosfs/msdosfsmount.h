@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.8 1994/09/22 02:34:51 mycroft Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.9 1994/12/14 16:33:19 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -53,7 +53,6 @@
 struct msdosfsmount {
 	struct mount *pm_mountp;/* vfs mount struct for this fs */
 	dev_t pm_dev;		/* block special device mounted */
-	uid_t pm_mounter;	/* uid of the user who mounted the FS */
 	uid_t pm_uid;		/* uid to set as owner of the files */
 	gid_t pm_gid;		/* gid to set as owner of the files */
 	mode_t pm_mask;		/* mask to and with file protection bits */
