@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot_console.8,v 1.10 2003/05/14 12:19:15 wiz Exp $
+.\"	$NetBSD: boot_console.8,v 1.11 2003/06/26 12:00:15 wiz Exp $
 .\"
 .\" Copyright (c) 1997
 .\" 	Matthias Drochner.  All rights reserved.
@@ -47,7 +47,7 @@ The compile-time options (to be set in the booter's
 .Dq Makefile )
 are:
 .Bl -ohang
-.It Dv Sy SUPPORT_SERIAL= Ns Fa policy
+.It Sy SUPPORT_SERIAL= Ns Fa policy
 enables support for serial input/output.
 By default this option is
 not set and the standard PC keyboard and display are always used as the
@@ -56,14 +56,14 @@ See
 .Sx Console Selection Policy
 below for valid values of
 .Fa policy .
-.It Dv Sy DIRECT_SERIAL
+.It Sy DIRECT_SERIAL
 causes direct hardware access to be used for serial input / output.
 With this option, software handshake (XON/XOFF) is used for flow
 control.
 Without this option, BIOS functions are employed for serial
 port handling, which require hardware handshake lines to be completely
 wired.
-.It Dv Sy CONSPEED= Ns Fa integer
+.It Sy CONSPEED= Ns Fa integer
 sets the baud-rate for the serial console.
 This option has only an effect when used in combination with the
 .Dq Dv DIRECT_SERIAL
@@ -71,7 +71,7 @@ option above, otherwise, the default setting of 9600 baud is used.
 The value of
 .Fa integer
 must be something that makes sense as a serial port baud rate.
-.It Dv Sy COMCONS_KEYPRESS
+.It Sy COMCONS_KEYPRESS
 Require a character input within seven (7) seconds from serial console
 device to be selected.
 .El
@@ -79,19 +79,19 @@ device to be selected.
 .Ss Console Selection Policy
 The actual policy for the console selection is determined by the value
 of
-.Dv Dq SUPPORT_SERIAL
+.Dq Dv SUPPORT_SERIAL
 The following options are available:
 .Bl -ohang
-.It Dv Em CONSDEV_PC
+.It Em CONSDEV_PC
 Force use of the standard PC keyboard and display as the console.
-.It Dv Em CONSDEV_COM0 Li ... Dv Em CONSDEV_COM3
+.It Em CONSDEV_COM0 Li ... Em CONSDEV_COM3
 Use the serial port with the corresponding BIOS number as the console.
 No output is attempted to the selected serial port.
 If the port is not known to the BIOS, it falls back to
 .Dq Dv CONSDEV_PC .
 (Note: This feature can be deliberately used for console selection if
 the serial ports have been disabled in the BIOS.)
-.It Dv Em CONSDEV_COM0KBD Li ... Dv Em CONSDEV_COM3KBD
+.It Em CONSDEV_COM0KBD Li ... Em CONSDEV_COM3KBD
 If the port is known to the BIOS, and output of a character to the port
 succeeds (and if
 .Dq Dv DIRECT_SERIAL
@@ -101,7 +101,7 @@ status is on after the character is output), the port is used as
 console.
 If the port is not known to the BIOS, it falls back to
 .Dq Dv CONSDEV_PC .
-.It Dv Em CONSDEV_AUTO
+.It Em CONSDEV_AUTO
 Auto-select the console.
 All serial ports known to the BIOS are probed in sequence.
 If output of a character to the port succeeds (and if
@@ -148,7 +148,7 @@ The default parameters are
 .Pp
 The baud rate is not settable when using BIOS I/O.
 It should be settable at compile time with
-.Dv Dq CONSPEED
+.Dq Dv CONSPEED
 just as it is when using
-.Dv Dq DIRECT_SERIAL .
+.Dq Dv DIRECT_SERIAL .
 The default speed is 9600 baud (the maximum for BIOS I/O).
