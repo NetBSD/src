@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.41 2003/09/23 09:36:07 wiz Exp $	*/
+/*	$NetBSD: plist.c,v 1.42 2004/01/15 09:33:39 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.41 2003/09/23 09:36:07 wiz Exp $");
+__RCSID("$NetBSD: plist.c,v 1.42 2004/01/15 09:33:39 agc Exp $");
 #endif
 #endif
 
@@ -369,16 +369,36 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 				warnx("attempting to delete directory `%s' as a file\n"
 				    "this packing list is incorrect - ignoring delete request", tmp);
 			} else {
-				if (p->next &&
-				    p->next->type == PLIST_COMMENT && /* || PLIST_MD5 - HF */
-				    strncmp(p->next->name, CHECKSUM_HEADER, ChecksumHeaderLen) == 0) {
-					char   *cp, buf[LegibleChecksumLen];
+				if (p->next && p->next->type == PLIST_COMMENT) {
+					if (strncmp(p->next->name, CHECKSUM_HEADER, ChecksumHeaderLen) == 0) {
+						char   *cp, buf[LegibleChecksumLen];
 
-					if ((cp = MD5File(tmp, buf)) != NULL) {
-						/* Mismatch? */
-						if (strcmp(cp, p->next->name + ChecksumHeaderLen) != 0) {
-							printf("original MD5 checksum failed, %s: %s\n",
-							    Force ? "deleting anyway" : "not deleting", tmp);
+						if ((cp = MD5File(tmp, buf)) != NULL) {
+							/* Mismatch? */
+							if (strcmp(cp, p->next->name + ChecksumHeaderLen) != 0) {
+								printf("original MD5 checksum failed, %s: %s\n",
+								    Force ? "deleting anyway" : "not deleting", tmp);
+								if (!Force) {
+									fail = FAIL;
+									continue;
+								}
+							}
+						}
+					} else if (strncmp(p->next->name, SYMLINK_HEADER, SymlinkHeaderLen) == 0) {
+						char	buf[FILENAME_MAX + SymlinkHeaderLen];
+						int	cc;
+
+						(void) strlcpy(buf, SYMLINK_HEADER,
+						    sizeof(buf));
+						if ((cc = readlink(tmp, &buf[SymlinkHeaderLen],
+							  sizeof(buf) - SymlinkHeaderLen)) < 0) {
+							warnx("can't readlink `%s'", tmp);
+							continue;
+						}
+						buf[SymlinkHeaderLen + cc] = 0x0;
+						if (strcmp(buf, p->next->name) != 0) {
+							printf("symlink %s is not same as recorded value, %s: %s\n",
+							    buf, Force ? "deleting anyway" : "not deleting", tmp);
 							if (!Force) {
 								fail = FAIL;
 								continue;

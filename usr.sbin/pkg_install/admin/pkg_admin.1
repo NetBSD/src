@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.26 2003/09/18 09:56:22 agc Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.27 2004/01/15 09:33:38 agc Exp $
 .\"
 .\" Copyright (c) 1999-2002 Hubert Feyrer.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 8, 2003
+.Dd January 15, 2004
 .Dt PKG_ADMIN 1
 .Os
 .Sh NAME
@@ -101,17 +101,21 @@ This should be used only by
 .Xr pkg_view 1 .
 .It Cm check Op Ar pkg ...
 Use this command to check the files belonging to some or all of the
-packages installed on the local machine against their MD5 checksum
-noted in their +CONTENTS files.
+packages installed on the local machine against the checksum
+which was recorded in the +CONTENTS files at package installation time.
+Symbolic links also have their integrity checked against the recorded
+value at package installation time.
 If no additional argument is given, the files of all installed packages
 are checked, else only the named packages will be checked (wildcards can
 be used here, see
 .Xr pkg_info 1 ) .
 .Pp
-The packages' +CONTENTS files will be parsed and the MD5
+The packages' +CONTENTS files will be parsed and the
 checksum will be checked for every file found.
 A warning message is printed if the expected checksum differs from the
 checksum of the file on disk.
+Symbolic links are also checked, ensuring that the targets on disk are
+the same as the contents recorded at package installation time.
 .It Cm delete Ar pkg ...
 For each listed package, remove all file entries in the package database that
 belong to the package.
