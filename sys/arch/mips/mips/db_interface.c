@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.26 2000/03/28 02:58:48 simonb Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.27 2000/05/21 05:41:25 soren Exp $	*/
 
 /*
  * Mach Operating System
@@ -53,7 +53,6 @@
 int	db_active = 0;
 mips_reg_t kdbaux[11]; /* XXX struct switchframe: better inside curpcb? XXX */
 
-void db_halt_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_tlbdump_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_kvtophys_cmd __P((db_expr_t, int, db_expr_t, char *));
 
@@ -289,21 +288,6 @@ db_write_bytes(addr, size, data)
 	}
 }
 
-
-void
-db_halt_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
-{
-	/*
-	 * Force a halt.  Don't sync disks in case we panicked
-	 * trying to do just that.
-	 */
-	cpu_reboot(RB_HALT|RB_NOSYNC, 0);
-}
-
 void
 db_tlbdump_cmd(addr, have_addr, count, modif)
 	db_expr_t addr;
@@ -375,7 +359,6 @@ db_kvtophys_cmd(addr, have_addr, count, modif)
 }
 
 struct db_command mips_db_command_table[] = {
-	{ "halt",	db_halt_cmd,		0,	0 },
 	{ "kvtop",	db_kvtophys_cmd,	0,	0 },
 	{ "tlb",	db_tlbdump_cmd,		0,	0 },
 	{ (char *)0, }
