@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.53 2000/04/16 01:27:44 mycroft Exp $
+#	$NetBSD: termcap.src,v 1.54 2000/04/27 05:28:51 mycroft Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -1765,9 +1765,7 @@ xterm-xf86-v33|xterm terminal emulator (X Window System):\
 # This is one of the variants from XFree86 3.3 (T.Dickey)
 xterm-16color|xterm with 16 colors like aixterm:\
 	:Co#16:NC#32:pa#256:\
-	:AB@:AF@:\
-	:..Sb=%p1%{8}%/%{6}%*%{4}%+\E[%d%p1%{8}%m%Pa%?%ga%{1}%=%t4%e%ga%{3}%=%t6%e%ga%{4}%=%t1%e%ga%{6}%=%t3%e%ga%d%;m:\
-	:..Sf=%p1%{8}%/%{6}%*%{3}%+\E[%d%p1%{8}%m%Pa%?%ga%{1}%=%t4%e%ga%{3}%=%t6%e%ga%{4}%=%t1%e%ga%{6}%=%t3%e%ga%d%;m:\
+	:AB=\E[4%dm:AF=\E[3%dm:op=\E[37;40m:\
 	:tc=xterm-xf86-v33:
 
 # This is xterm for ncurses. It mainly adds mappings for more high-half
