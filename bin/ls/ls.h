@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.h,v 1.8 1998/01/17 12:00:44 mycroft Exp $	*/
+/*	$NetBSD: ls.h,v 1.9 1998/05/16 15:12:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -53,7 +53,7 @@ extern int f_type;		/* add type character for non-regular files */
 
 typedef struct {
 	FTSENT *list;
-	u_long btotal;
+	u_int64_t btotal;
 	int entries;
 	int maxlen;
 	int s_block;
