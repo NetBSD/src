@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.40 1999/07/09 06:44:58 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.41 1999/07/29 20:08:59 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -327,7 +327,10 @@ mksymlinks()
 
 	sprintf(buf, "arch/%s/include", machine);
 	p = sourcepath(buf);
-	(void)unlink("machine");
+	ret = unlink("machine");
+	if (ret)
+		(void)fprintf(stderr, "config: unlink(machine): %s\n",
+		    strerror(errno));
 	ret = symlink(p, "machine");
 	if (ret)
 		(void)fprintf(stderr, "config: symlink(machine -> %s): %s\n",
@@ -342,7 +345,10 @@ mksymlinks()
 		p = estrdup("machine");
 		q = machine;
 	}
-	(void)unlink(q);
+	ret = unlink(q);
+	if (ret)
+		(void)fprintf(stderr, "config: unlink(%s): %s\n",
+		    q, strerror(errno));
 	ret = symlink(p, q);
 	if (ret)
 		(void)fprintf(stderr, "config: symlink(%s -> %s): %s\n",
