@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.8 2000/09/03 19:15:45 augustss Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.9 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -253,6 +253,9 @@ USB_ATTACH(uvisor)
 		goto bad;
 	}
 
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
+
 	DPRINTF(("uvisor: in=0x%x out=0x%x\n", uca.bulkin, uca.bulkout));
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
 
@@ -296,6 +299,11 @@ uvisor_detach(device_ptr_t self, int flags)
 		rv = config_detach(sc->sc_subdev, flags);
 		sc->sc_subdev = NULL;
 	}
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
+
+
 	return (0);
 }
 
