@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.17 2004/01/29 08:48:24 lukem Exp $	*/
+/*	$NetBSD: md.h,v 1.18 2004/06/06 06:07:01 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -85,5 +85,5 @@
  * On sgimips, we don't support a dedicated floppy-disk driver, only
  * SCSI floppy drives, so we can't recognize floppies by name.
  */
-EXTERN const char *fdtype INIT("");
+const char *fdtype;
 

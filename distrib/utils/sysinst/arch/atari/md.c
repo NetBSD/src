@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.16 2003/11/30 14:36:44 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.17 2004/06/06 06:06:59 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,6 +51,7 @@
 
 
 /* prototypes */
+const char *fdtype = "msdos";
 
 /*
  * any additional partition validation
