@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.6 2003/10/25 19:41:44 christos Exp $	*/
+/*	$NetBSD: atw.c,v 1.7 2003/10/25 21:32:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.6 2003/10/25 19:41:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.7 2003/10/25 21:32:44 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -3644,7 +3644,7 @@ atw_start(ifp)
 			lasttx = nexttx;
 		}
 
-		KASSERT(lasttx != -1, "bad lastx");
+		KASSERT(lasttx != -1, ("bad lastx"));
 		/* Set `first segment' and `last segment' appropriately. */
 		sc->sc_txdescs[sc->sc_txnext].at_flags |=
 		    htole32(ATW_TXFLAG_FS);
