@@ -1,4 +1,4 @@
-# $NetBSD: md.arm26,v 1.21 2001/07/28 19:21:59 bjh21 Exp $
+# $NetBSD: md.arm26,v 1.22 2001/10/06 20:31:50 bjh21 Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -73,6 +73,7 @@
 ./usr/include/arm26/pmap.h		comp-c-include
 ./usr/include/arm26/proc.h		comp-c-include
 ./usr/include/arm26/profile.h		comp-c-include
+./usr/include/arm26/pte.h		comp-c-include
 ./usr/include/arm26/ptrace.h		comp-c-include
 ./usr/include/arm26/reg.h		comp-c-include
 ./usr/include/arm26/setjmp.h		comp-c-include
