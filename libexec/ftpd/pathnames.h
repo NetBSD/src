@@ -31,9 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	5.2 (Berkeley) 6/1/90
- *	$Id: pathnames.h,v 1.2 1993/08/01 18:30:51 mycroft Exp $
+ *	$Id: pathnames.h,v 1.3 1994/04/06 20:50:15 cgd Exp $
  */
 
 #include <paths.h>
 
 #define	_PATH_FTPUSERS	"/etc/ftpusers"
+#define	_PATH_FTPCHROOT "/etc/ftpchroot"
