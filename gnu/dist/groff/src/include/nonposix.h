@@ -1,6 +1,6 @@
-/*	$NetBSD: nonposix.h,v 1.1.1.1 2001/04/19 12:50:45 wiz Exp $	*/
+/*	$NetBSD: nonposix.h,v 1.1.1.2 2003/06/30 17:52:05 wiz Exp $	*/
 
-/* Copyright (C) 2000 Free Software Foundation, Inc.
+/* Copyright (C) 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
      Written by Eli Zaretskii (eliz@is.elta.co.il)
 
 This file is part of groff.
@@ -26,11 +26,10 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 # ifndef _WIN32
 #  define _WIN32
 # endif
-# define setmode(f,m) _setmode(f,m)
-# define fileno(f)    _fileno(f)
 #endif
 
-#if defined(__MSDOS__) || (defined(_WIN32) && !defined(__CYGWIN32__))
+#if defined(__MSDOS__) || defined(__EMX__) \
+    || (defined(_WIN32) && !defined(_UWIN) && !defined(__CYGWIN__))
 
 /* Binary I/O nuisances.  Note: "setmode" is right for DJGPP and
    Borland; Windows compilers might need _setmode or some such.  */
@@ -39,17 +38,21 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 # ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 # endif
-# define SET_BINARY(f) do {if (!isatty(f)) setmode(f,O_BINARY);} while(0)
-# define FOPEN_RB      "rb"
-# define FOPEN_WB      "wb"
-# define FOPEN_RWB     "wb+"
 # ifdef _MSC_VER
 #  define POPEN_RT     "rt"
 #  define POPEN_WT     "wt"
 #  define popen(c,m)   _popen(c,m)
 #  define pclose(p)    _pclose(p)
 #  define getpid()     (1)
+#  define mkdir(p,m)   _mkdir(p)
+#  define setmode(f,m) _setmode(f,m)
+#  define WAIT(s,p,m)  _cwait(s,p,m)
+#  define creat(p,m)   _creat(p,m)
 # endif
+# define SET_BINARY(f) do {if (!isatty(f)) setmode(f,O_BINARY);} while(0)
+# define FOPEN_RB      "rb"
+# define FOPEN_WB      "wb"
+# define FOPEN_RWB     "wb+"
 # ifndef O_BINARY
 #  ifdef _O_BINARY
 #   define O_BINARY    (_O_BINARY)
@@ -59,9 +62,13 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 /* The system shell.  Groff assumes a Unixy shell, but non-Posix
    systems don't have standard places where it lives, and might not
    have it installed to begin with.  We want to give them some leeway.  */
-# define BSHELL        (system_shell_name())
-# define BSHELL_DASH_C (system_shell_dash_c())
-# define IS_BSHELL(s)  (is_system_shell(s))
+# ifdef __EMX__
+#  define getcwd(b,s)  _getcwd2(b,s)
+# else
+#  define BSHELL        (system_shell_name())
+#  define BSHELL_DASH_C (system_shell_dash_c())
+#  define IS_BSHELL(s)  (is_system_shell(s))
+# endif
 
 /* The separator for directories in PATH and other environment
    variables.  */
@@ -95,6 +102,9 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 /* Defaults, for Posix systems.  */
 
+#ifndef SET_BINARY
+# define SET_BINARY(f) do {} while(0)
+#endif
 #ifndef FOPEN_RB
 # define FOPEN_RB      "r"
 #endif
@@ -136,4 +146,13 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #endif
 #ifndef NULL_DEV
 # define NULL_DEV      "/dev/null"
+#endif
+#ifndef GS_NAME
+# define GS_NAME       "gs"
+#endif
+#ifndef WAIT
+# define WAIT(s,p,m)   wait(s)
+#endif
+#ifndef _WAIT_CHILD
+# define _WAIT_CHILD   0
 #endif

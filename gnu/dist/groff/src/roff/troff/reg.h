@@ -1,7 +1,8 @@
-/*	$NetBSD: reg.h,v 1.1.1.1 2001/04/19 12:51:19 wiz Exp $	*/
+/*	$NetBSD: reg.h,v 1.1.1.2 2003/06/30 17:52:10 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2003
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -68,6 +69,8 @@ public:
 
 extern object_dictionary number_reg_dictionary;
 extern void set_number_reg(symbol nm, units n);
+extern void check_output_limits(int x, int y);
+extern void reset_output_registers();
 
 reg *lookup_number_reg(symbol);
 #if 0

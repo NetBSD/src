@@ -1,4 +1,4 @@
-# Copyright (C) 1989-2000 Free Software Foundation, Inc.
+# Copyright (C) 1989-2000, 2002 Free Software Foundation, Inc.
 #      Written by James Clark (jjc@jclark.com)
 #
 # This file is part of groff.
@@ -21,6 +21,10 @@
 #   make -f generate/Makefile
 # in the parent directory of this directory.
 
+# The following line is required for DOS/Windows systems, since
+# this Makefile needs a Unixy shell to run.
+SHELL = /bin/sh
+
 # Directory containing AFM files.  Must not be current directory.
 # Either long names (eg Times-Roman.afm) or short names (eg timesr.afm)
 # may be used. See the afmname script.
@@ -33,11 +37,12 @@ GREEKFONTS=SS
 TEXTFONTS=AB ABI AI AR BMB BMBI BMI BMR CB CBI CI CR HB HBI HI HR HNB HNBI \
   HNI HNR NB NBI NI NR PB PBI PI PR TB TBI TI TR ZCMI
 
-FONTS=$(TEXTFONTS) $(SPECIALFONTS) $(GREEKFONTS) $(DINGBATSFONTS)
+FONTS=$(TEXTFONTS) $(SPECIALFONTS) $(GREEKFONTS) $(DINGBATSFONTS) EURO
 
 DESC=$(srcdir)/../DESC
 AFMTODIT=afmtodit -d$(DESC)
 IFLAG=-i 50
+RFLAG=-i 0 -m
 NOLIGFLAG=-n
 TEXTENC=$(srcdir)/../text.enc
 EFLAG=-e $(TEXTENC)
@@ -47,11 +52,11 @@ AFMNAME=$(srcdir)/afmname
 all: $(FONTS)
 
 TR:
-	$(AFMTODIT) $(EFLAG) \
+	$(AFMTODIT) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/Times-Roman.afm` $(TEXTMAP) $@
 
 TB:
-	$(AFMTODIT) $(EFLAG) \
+	$(AFMTODIT) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/Times-Bold.afm` $(TEXTMAP) $@
 
 TI:
@@ -63,11 +68,11 @@ TBI:
 	`$(AFMNAME) $(afmdir)/Times-BoldItalic.afm` $(TEXTMAP) $@
 
 HR:
-	$(AFMTODIT) $(EFLAG) \
+	$(AFMTODIT) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/Helvetica.afm` $(TEXTMAP) $@
 
 HB:
-	$(AFMTODIT) $(EFLAG) \
+	$(AFMTODIT) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/Helvetica-Bold.afm` $(TEXTMAP) $@
 
 HI:
@@ -79,11 +84,11 @@ HBI:
 	`$(AFMNAME) $(afmdir)/Helvetica-BoldOblique.afm` $(TEXTMAP) $@
 
 CR:
-	$(AFMTODIT) $(NOLIGFLAG) $(EFLAG) \
+	$(AFMTODIT) $(NOLIGFLAG) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/Courier.afm` $(TEXTMAP) $@
 
 CB:
-	$(AFMTODIT) $(NOLIGFLAG) $(EFLAG) \
+	$(AFMTODIT) $(NOLIGFLAG) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/Courier-Bold.afm` $(TEXTMAP) $@
 
 CI:
@@ -95,11 +100,11 @@ CBI:
 	`$(AFMNAME) $(afmdir)/Courier-BoldOblique.afm` $(TEXTMAP) $@
 
 PR:
-	$(AFMTODIT) $(EFLAG) \
+	$(AFMTODIT) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/Palatino-Roman.afm` $(TEXTMAP) $@
 
 PB:
-	$(AFMTODIT) $(EFLAG) \
+	$(AFMTODIT) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/Palatino-Bold.afm` $(TEXTMAP) $@
 
 PI:
@@ -111,11 +116,11 @@ PBI:
 	`$(AFMNAME) $(afmdir)/Palatino-BoldItalic.afm` $(TEXTMAP) $@
 
 NR:
-	$(AFMTODIT) $(EFLAG) \
+	$(AFMTODIT) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/NewCenturySchlbk-Roman.afm` $(TEXTMAP) $@
 
 NB:
-	$(AFMTODIT) $(EFLAG) \
+	$(AFMTODIT) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/NewCenturySchlbk-Bold.afm` $(TEXTMAP) $@
 
 NI:
@@ -127,11 +132,11 @@ NBI:
 	`$(AFMNAME) $(afmdir)/NewCenturySchlbk-BoldItalic.afm` $(TEXTMAP) $@
 
 BMR:
-	$(AFMTODIT) $(EFLAG) \
+	$(AFMTODIT) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/Bookman-Light.afm` $(TEXTMAP) $@
 
 BMB:
-	$(AFMTODIT) $(EFLAG) \
+	$(AFMTODIT) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/Bookman-Demi.afm` $(TEXTMAP) $@
 
 BMI:
@@ -143,11 +148,11 @@ BMBI:
 	`$(AFMNAME) $(afmdir)/Bookman-DemiItalic.afm` $(TEXTMAP) $@
 
 AR:
-	$(AFMTODIT) $(EFLAG) \
+	$(AFMTODIT) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/AvantGarde-Book.afm` $(TEXTMAP) $@
 
 AB:
-	$(AFMTODIT) $(EFLAG) \
+	$(AFMTODIT) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/AvantGarde-Demi.afm` $(TEXTMAP) $@
 
 AI:
@@ -159,11 +164,11 @@ ABI:
 	`$(AFMNAME) $(afmdir)/AvantGarde-DemiOblique.afm` $(TEXTMAP) $@
 
 HNR:
-	$(AFMTODIT) $(EFLAG) \
+	$(AFMTODIT) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/Helvetica-Narrow.afm` $(TEXTMAP) $@
 
 HNB:
-	$(AFMTODIT) $(EFLAG) \
+	$(AFMTODIT) $(EFLAG) $(RFLAG) \
 	`$(AFMNAME) $(afmdir)/Helvetica-Narrow-Bold.afm` $(TEXTMAP) $@
 
 HNI:
@@ -179,17 +184,24 @@ ZCMI:
 	`$(AFMNAME) $(afmdir)/ZapfChancery-MediumItalic.afm` $(TEXTMAP) $@
 
 ZD:
-	$(AFMTODIT) -s \
-	`$(AFMNAME) $(afmdir)/ZapfDingbats.afm` $(srcdir)/dingbatsmap $@
+	$(AFMTODIT) -s $(RFLAG) \
+	`$(AFMNAME) $(afmdir)/ZapfDingbats.afm` $(srcdir)/dingbats.map $@
 
 SS: $(srcdir)/symbolsl.afm
 	$(AFMTODIT) -s $(IFLAG) $(srcdir)/symbolsl.afm $(srcdir)/lgreekmap $@
 
 S: symbol.afm
-	$(AFMTODIT) -s symbol.afm symbolmap $@
+	$(AFMTODIT) -s $(RFLAG) symbol.afm symbolmap $@
 
 ZDR: zapfdr.afm
-	$(AFMTODIT) -s zapfdr.afm $(srcdir)/dingbatsrmap $@
+	$(AFMTODIT) -s $(RFLAG) zapfdr.afm $(srcdir)/dingbats.rmap $@
+
+# the map is just a dummy
+EURO: freeeuro.afm
+	$(AFMTODIT) $(RFLAG) freeeuro.afm symbolmap $@
+
+freeeuro.afm freeeuro.pfa: generate/freeeuro.sfd
+	pfaedit -script generate/sfdtopfa.pe generate/freeeuro.sfd
 
 symbol.afm: $(srcdir)/symbol.sed
 	-rm -f $@
@@ -200,15 +212,18 @@ zapfdr.afm:
 	sed -e '/^FontName /s/ZapfDingbats/ZapfDingbats-Reverse/' \
 	  `$(AFMNAME) $(afmdir)/ZapfDingbats.afm` >$@
 
-ZD: $(srcdir)/dingbatsmap
-ZDR: $(srcdir)/dingbatsrmap
+ZD: $(srcdir)/dingbats.map
+ZDR: $(srcdir)/dingbats.rmap
 $(TEXTFONTS): $(TEXTMAP) $(TEXTENC)
 $(SPECIALFONTS): symbolmap
 $(GREEKFONTS): $(srcdir)/lgreekmap
 $(FONTS): $(DESC)
 
 symbolmap: $(TEXTMAP) $(srcdir)/symbolchars
-	cat $(TEXTMAP) $(srcdir)/symbolchars >$@
+	echo '#' >$@
+	echo '# This is a list of all predefined groff symbols.' >>$@
+	echo '#' >>$@
+	cat $(TEXTMAP) $(srcdir)/symbolchars >>$@
 
 clean:
 	-rm -f symbolmap symbol.afm zapfdr.afm
@@ -217,7 +232,7 @@ realclean: clean
 	-rm -f $(FONTS)
 
 extraclean: realclean
-	-rm -f core *~ \#*
+	-rm -f core *~ "#*"
 
 .PHONY: all clean realclean extraclean
 

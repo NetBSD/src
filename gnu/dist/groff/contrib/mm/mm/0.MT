@@ -1,5 +1,5 @@
 .\"------------
-.\" Id: 0.MT,v 1.2 2000/02/21 20:32:58 jhaegg Exp
+.\" Id: 0.MT,v 2.0 2000/09/14 03:40:25 jhaegg Exp
 .\" Cover sheet. Memorandum type 0-3 and "string".
 .\"------------
 .if !r Au .nr Au 1

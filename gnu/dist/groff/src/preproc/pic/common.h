@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1.1.1 2001/04/19 12:51:26 wiz Exp $	*/
+/*	$NetBSD: common.h,v 1.1.1.2 2003/06/30 17:52:11 wiz Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -65,6 +65,10 @@ public:
 	       const line_type &, double) = 0;
   void rounded_box(const position &, const distance &, double,
 		   const line_type &, double);
+  void set_color(char *, char *) = 0;
+  void reset_color() = 0;
+  char *get_last_filled() = 0;
+  char *get_outline_color() = 0;
 };
 
 int compute_arc_center(const position &start, const position &cent,
