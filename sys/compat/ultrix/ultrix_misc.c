@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.58 2000/06/28 15:39:36 mrg Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.59 2000/07/20 08:29:41 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -443,24 +443,25 @@ ultrix_sys_uname(p, v, retval)
 {
 	struct ultrix_sys_uname_args *uap = v;
 	struct ultrix_utsname sut;
-        char *cp, *dp, *ep;
+	const char *cp;
+	char *dp, *ep;
 
 	memset(&sut, 0, sizeof(sut));
 
 	strncpy(sut.sysname, ostype, sizeof(sut.sysname) - 1);
 	strncpy(sut.nodename, hostname, sizeof(sut.nodename) - 1);
 	strncpy(sut.release, osrelease, sizeof(sut.release) - 1);
-        dp = sut.version;
-        ep = &sut.version[sizeof(sut.version) - 1];
-        for (cp = version; *cp && *cp != '('; cp++)
-                ;
-        for (cp++; *cp && *cp != ')' && dp < ep; cp++)
-                *dp++ = *cp;
-        for (; *cp && *cp != '#'; cp++)
-                ;
-        for (; *cp && *cp != ':' && dp < ep; cp++)
-                *dp++ = *cp;
-        *dp = '\0';
+	dp = sut.version;
+	ep = &sut.version[sizeof(sut.version) - 1];
+	for (cp = version; *cp && *cp != '('; cp++)
+		;
+	for (cp++; *cp && *cp != ')' && dp < ep; cp++)
+		*dp++ = *cp;
+	for (; *cp && *cp != '#'; cp++)
+		;
+	for (; *cp && *cp != ':' && dp < ep; cp++)
+		*dp++ = *cp;
+	*dp = '\0';
 	strncpy(sut.machine, machine, sizeof(sut.machine) - 1);
 
 	return copyout((caddr_t)&sut, (caddr_t)SCARG(uap, name),
