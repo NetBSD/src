@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.271 2002/11/04 06:24:39 itohy Exp $	*/
+/*	$NetBSD: locore.s,v 1.272 2002/11/07 06:58:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -127,7 +127,11 @@
 #include <machine/asm.h>
 
 #define CPL _C_LABEL(lapic_tpr)
+#if __STDC__
+#define	_CONCAT(a,b) a ## b
+#else
 #define _CONCAT(a,b) a/**/b
+#endif
 
 #if defined(MULTIPROCESSOR)
 #define CPUVAR(off) %fs:_CONCAT(CPU_INFO_,off)
@@ -148,7 +152,7 @@
 
 #endif
 
-#define GET_CURPCB(reg)			movl	CPUVAR(CURPCB),reg	
+#define GET_CURPCB(reg)			movl	CPUVAR(CURPCB),reg
 #define SET_CURPCB(reg)			movl	reg,CPUVAR(CURPCB)
 
 #define CHECK_ASTPENDING()		cmpl $0,CPUVAR(ASTPENDING)
