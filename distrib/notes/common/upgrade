@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.8 2000/11/02 16:40:45 mbw Exp $
+.\"	$NetBSD: upgrade,v 1.9 2000/12/23 00:09:05 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -108,11 +108,17 @@ another operating system's partition, before beginning the upgrade
 process.
 .Pp
 The upgrade procedure using the
-.Ic sysinst No tool is similar to
-an installation, but without the hard disk partitioning.
-Another difference is that existing configuration files in
+.Ic sysinst
+tool is similar to an installation, but without the hard disk partitioning.
+The original
 .Pa /etc
-are backed up and merged with the new files. Getting the binary
+directory is renamed to
+.Pa /etc.old ,
+and no attempt is made to merge any of the previous configuration into
+the new system except that the previous
+.Pa /etc/fstab
+file is copied into the new configuration.
+Getting the binary
 sets is done in the same manner as the installation procedure;
 refer to the installation part of the document
 for how to do this. Also, some sanity checks are done, i.e.
