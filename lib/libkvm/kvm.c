@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.32 1994/04/23 02:42:01 briggs Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.33 1994/05/05 02:04:10 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -537,7 +537,7 @@ again:
 			seterr("can't read session at %x", pgrp.pg_session);
 			return (-1);
 		}
-		if ((proc.p_flag&SCTTY) && sess.s_ttyp != NULL) {
+		if ((proc.p_flag&P_CONTROLT) && sess.s_ttyp != NULL) {
 			if (kvm_read(sess.s_ttyp, &tty, sizeof (struct tty))
 			    == -1) {
 				seterr("can't read tty at %x", sess.s_ttyp);
@@ -572,7 +572,7 @@ again:
 			break;
 
 		case KINFO_PROC_TTY:
-			if ((proc.p_flag&SCTTY) == 0 || 
+			if ((proc.p_flag&P_CONTROLT) == 0 || 
 			     eproc.e_tdev != (dev_t)arg)
 				continue;
 			break;
@@ -649,7 +649,7 @@ kvm_getu(p)
 		return (NULL);
 	}
 
-	if ((p->p_flag & SLOAD) == 0) {
+	if ((p->p_flag & P_INMEM) == 0) {
 		vm_offset_t	maddr;
 
 		if (swap < 0) {
