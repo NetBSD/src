@@ -1,5 +1,5 @@
-/*	$NetBSD: libaltq2.c,v 1.3 2001/08/16 07:48:09 itojun Exp $	*/
-/*	$KAME: libaltq2.c,v 1.2 2001/08/15 03:38:04 kjc Exp $	*/
+/*	$NetBSD: libaltq2.c,v 1.4 2001/08/22 08:52:35 itojun Exp $	*/
+/*	$KAME: libaltq2.c,v 1.4 2001/08/22 08:47:54 itojun Exp $	*/
 /*
  * Copyright (C) 1997-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -43,6 +43,7 @@
 #else
 #include <varargs.h>
 #endif
+#include <string.h>
 
 #include "altq_qop.h"
 
@@ -69,29 +70,27 @@ log_write(int severity, int syserr, const char *format, ...)
 #endif
 
 	if (severity <= l_debug) {
-		if (!daemonize)
+		if (!daemonize) {
 			vfprintf(stderr, format, ap);
-		else
-			vsyslog(severity, format, ap);
+			if (syserr != 0) {
+				if (syserr < sys_nerr)
+					fprintf(stderr, ": %s", sys_errlist[syserr]);
+				else
+					fprintf(stderr, ": errno %d", syserr);
+			}
+			fprintf(stderr, "\n");
+		} else {
+			if (syserr == 0)
+				vsyslog(severity, format, ap);
+			else {
+				char buf[512];
+
+				strlcpy(buf, format, sizeof(buf));
+				strlcat(buf, ": %m", sizeof(buf));
+				vsyslog(severity, buf, ap);
+			}
+		}
 	}
 
 	va_end(ap);
-
-	if (syserr == 0) {
-		/* Do nothing for now */
-	} else if (syserr < sys_nerr) {
-		if (severity <= l_debug) {
-			if (!daemonize)
-				fprintf(stderr, ": %s\n", sys_errlist[syserr]);
-			else
-				syslog(severity, ": %s", sys_errlist[syserr]);
-		}
-	} else {
-		if (severity <= l_debug) {
-			if (!daemonize)
-				fprintf(stderr, ": errno %d\n", syserr);
-			else
-				syslog(severity, ": errno %d", syserr);
-		}
-	}
 }
