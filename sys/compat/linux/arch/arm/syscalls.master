@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.16 2004/08/01 10:32:40 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.17 2004/08/01 14:16:32 jdolecek Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -376,52 +376,179 @@
 219	NOARGS		{ int sys_mincore(void *addr, size_t len, char *vec); }
 220	NOARGS		{ int sys_madvise(void *addr, size_t len, int behav); }
 221	STD		{ int linux_sys_fcntl64(int fd, int cmd, void *arg); }
-; Fill until 256
-222	UNIMPL
-223	UNIMPL
-224	UNIMPL
-225	UNIMPL
-226	UNIMPL
-227	UNIMPL
-228	UNIMPL
-229	UNIMPL
-230	UNIMPL
-231	UNIMPL
-232	UNIMPL
-233	UNIMPL
-234	UNIMPL
-235	UNIMPL
-236	UNIMPL
-237	UNIMPL
-238	UNIMPL
-239	UNIMPL
-240	UNIMPL
-241	UNIMPL
-242	UNIMPL
-243	UNIMPL
-244	UNIMPL
-245	UNIMPL
-246	UNIMPL
-247	UNIMPL
-248	UNIMPL
-249	UNIMPL
-250	UNIMPL
-251	UNIMPL
-252	UNIMPL
-253	UNIMPL
-254	UNIMPL
-255	UNIMPL
+222	UNIMPL		/* for tux */
+223	UNIMPL		/* unused */
+224	UNIMPL		gettid
+225	UNIMPL		readahead
+226	UNIMPL		setxattr
+227	UNIMPL		lsetxattr
+228	UNIMPL		fsetxattr
+229	UNIMPL		getxattr
+230	UNIMPL		lgetxattr
+231	UNIMPL		fgetxattr
+232	UNIMPL		listxattr
+233	UNIMPL		llistxattr
+234	UNIMPL		flistxattr
+235	UNIMPL		removexattr
+236	UNIMPL		lremovexattr
+237	UNIMPL		fremovexattr
+238	UNIMPL		tkill
+239	UNIMPL		sendfile64
+240	UNIMPL		futex
+241	UNIMPL		sched_setaffinity
+242	UNIMPL		sched_getaffinity
+243	UNIMPL		io_setup
+244	UNIMPL		io_destroy
+245	UNIMPL		io_getevents
+246	UNIMPL		io_submit
+247	UNIMPL		io_cancel
+248	UNIMPL		exit_group
+249	UNIMPL		lookup_dcookie
+250	UNIMPL		epoll_create
+251	UNIMPL		epoll_ctl
+252	UNIMPL		epoll_wait
+253	UNIMPL		remap_file_pages
+254	UNIMPL		/* for set_thread_area */
+255	UNIMPL		/* for get_thread_area */
+256	UNIMPL		/* for set_tid_address */
+257	UNIMPL		timer_create
+258	UNIMPL		timer_settime
+259	UNIMPL		timer_gettime
+260	UNIMPL		timer_getoverrun
+261	UNIMPL		timer_delete
+262	UNIMPL		clock_settime
+263	UNIMPL		clock_gettime
+264	UNIMPL		clock_getres
+265	UNIMPL		clock_nanosleep
+266	UNIMPL		statfs64
+267	UNIMPL		fstatfs64
+268	UNIMPL		tgkill
+269	UNIMPL		utimes
+270	UNIMPL		fadvise64_64
+271	UNIMPL		pciconfig_iobase
+272	UNIMPL		pciconfig_read
+273	UNIMPL		pciconfig_write
+274	UNIMPL
+275	UNIMPL
+276	UNIMPL
+277	UNIMPL
+278	UNIMPL
+279	UNIMPL
+280	UNIMPL
+281	UNIMPL
+282	UNIMPL
+283	UNIMPL
+284	UNIMPL
+285	UNIMPL
+286	UNIMPL
+287	UNIMPL
+288	UNIMPL
+289	UNIMPL
+290	UNIMPL
+291	UNIMPL
+292	UNIMPL
+293	UNIMPL
+294	UNIMPL
+295	UNIMPL
+296	UNIMPL
+297	UNIMPL
+298	UNIMPL
+299	UNIMPL
+300	UNIMPL
+301	UNIMPL
+302	UNIMPL
+303	UNIMPL
+304	UNIMPL
+305	UNIMPL
+306	UNIMPL
+307	UNIMPL
+308	UNIMPL
+309	UNIMPL
+310	UNIMPL
+311	UNIMPL
+312	UNIMPL
+313	UNIMPL
+314	UNIMPL
+315	UNIMPL
+316	UNIMPL
+317	UNIMPL
+318	UNIMPL
+319	UNIMPL
+320	UNIMPL
+321	UNIMPL
+322	UNIMPL
+323	UNIMPL
+324	UNIMPL
+325	UNIMPL
+326	UNIMPL
+327	UNIMPL
+328	UNIMPL
+329	UNIMPL
+330	UNIMPL
+331	UNIMPL
+332	UNIMPL
+333	UNIMPL
+334	UNIMPL
+335	UNIMPL
+336	UNIMPL
+337	UNIMPL
+338	UNIMPL
+339	UNIMPL
+340	UNIMPL
+341	UNIMPL
+342	UNIMPL
+343	UNIMPL
+344	UNIMPL
+345	UNIMPL
+346	UNIMPL
+347	UNIMPL
+348	UNIMPL
+349	UNIMPL
+350	UNIMPL
+351	UNIMPL
+352	UNIMPL
+353	UNIMPL
+354	UNIMPL
+355	UNIMPL
+356	UNIMPL
+357	UNIMPL
+358	UNIMPL
+359	UNIMPL
+360	UNIMPL
+361	UNIMPL
+362	UNIMPL
+363	UNIMPL
+364	UNIMPL
+365	UNIMPL
+366	UNIMPL
+367	UNIMPL
+368	UNIMPL
+369	UNIMPL
+370	UNIMPL
+371	UNIMPL
+372	UNIMPL
+373	UNIMPL
+374	UNIMPL
+375	UNIMPL
+376	UNIMPL
+377	UNIMPL
+378	UNIMPL
+379	UNIMPL
+380	UNIMPL
+381	UNIMPL
+382	UNIMPL
+383	UNIMPL
 
 ; ARMLinux actually has two ranges of syscalls.  Normal syscalls use
 ; SWI numbers starting at 0x900000 (__NR_SYSCALL_BASE).  Special
-; ARM-specific syscalls use SWI numbers starting at 0x9f00000
+; ARM-specific syscalls use SWI numbers starting at 0x9f0000
 ; (__ARM_NR_BASE).  linux_syscall() (in arch/arm/arm/linux_syscall.c)
-; remaps these down to 0x900100 so that we can use one linux_sysent
+; remaps these down to 0x900180 so that we can use one linux_sysent
 ; array for the whole lot.
 
-256	UNIMPL
-257	STD		{ int linux_sys_breakpoint(void); }
-258	STD		{ int linux_sys_cacheflush(uintptr_t from, \
+384	UNIMPL		/* base */
+385	STD		{ int linux_sys_breakpoint(void); }
+386	STD		{ int linux_sys_cacheflush(uintptr_t from, \
 				intptr_t to); }
-259	UNIMPL		usr26
-260	UNIMPL		usr32
+387	UNIMPL		usr26
+388	UNIMPL		usr32
