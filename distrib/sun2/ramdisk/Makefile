@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2001/12/17 20:27:40 fredette Exp $
+#	$NetBSD: Makefile,v 1.5 2002/03/06 12:14:26 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
-# This include just sets REV=XX
+# This include just sets DISTRIBREV=XX
 .include "${TOP}/Makefile.inc"
 .include <bsd.own.mk>
 

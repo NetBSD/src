@@ -1,11 +1,11 @@
 #
-#	$NetBSD: Make.fsimage,v 1.5 2000/01/21 12:32:57 tsutsui Exp $
+#	$NetBSD: Make.fsimage,v 1.6 2002/03/06 12:15:19 lukem Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
 # These will be defined by it too:
 
-IMAGE?=		xxx-${REV}
+IMAGE?=		xxx-${DISTRIBREV}
 CBIN?=		xxx-crunched
 
 TREE?=		${.CURDIR}/${CBIN}.tree
