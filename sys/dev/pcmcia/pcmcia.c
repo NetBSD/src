@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.36 2003/10/22 07:46:48 briggs Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.37 2004/07/07 06:08:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.36 2003/10/22 07:46:48 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.37 2004/07/07 06:08:25 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -307,15 +307,26 @@ pcmcia_devinfo(card, showhex, cp, cplen)
 {
 	int i, n;
 
-	for (i = 0; i < 4 && card->cis1_info[i] != NULL && cplen > 0; i++) {
+	if (cplen > 1) {
+		*cp++ = '<';
+		cplen--;
+	}
+
+	for (i = 0; i < 4 && card->cis1_info[i] != NULL && cplen > 1; i++) {
 		n = snprintf(cp, cplen, "%s%s", (i && i != 3) ? ", " : "",
 		        card->cis1_info[i]);
 		cp += n;
 		cplen -= n;
 	}
-	if (showhex && cplen > 0)
-		snprintf(cp, cplen, "%s(manufacturer 0x%04x, product 0x%04x)",
-		    i ? " " : "", card->manufacturer, card->product);
+
+	if (cplen > 1) {
+		*cp++ = '>';
+		cplen--;
+	}
+
+	if (showhex && cplen > 1)
+		snprintf(cp, cplen, " (manufacturer 0x%04x, product 0x%04x)",
+		    card->manufacturer, card->product);
 }
 
 const struct pcmcia_product *
