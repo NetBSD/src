@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.52 2001/12/19 10:05:20 fvdl Exp $	*/
+/*	$NetBSD: setup.c,v 1.52.2.1 2003/02/23 08:00:10 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.52 2001/12/19 10:05:20 fvdl Exp $");
+__RCSID("$NetBSD: setup.c,v 1.52.2.1 2003/02/23 08:00:10 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -507,9 +507,6 @@ readsb(listerr)
 		{ badsb(listerr, "NCG OUT OF RANGE"); return (0); }
 	if (sblock->fs_cpg < 1)
 		{ badsb(listerr, "CPG OUT OF RANGE"); return (0); }
-	if (sblock->fs_ncg * sblock->fs_cpg < sblock->fs_ncyl ||
-	    (sblock->fs_ncg - 1) * sblock->fs_cpg >= sblock->fs_ncyl)
-		{ badsb(listerr, "NCYL LESS THAN NCG*CPG"); return (0); }
 	if (sblock->fs_sbsize > SBSIZE)
 		{ badsb(listerr, "SIZE PREPOSTEROUSLY LARGE"); return (0); }
 	/*
@@ -526,8 +523,8 @@ readsb(listerr)
 		return (1);
 	}
 	/*
-	 * Set all possible fields that could differ, then do check
-	 * of whole super block against an alternate super block.
+	 * Compare all fields that should not differ in the alternat super-
+	 * block.
 	 * When an alternate super-block is specified this check is skipped.
 	 */
 	getblk(&asblk, cgsblock(sblock, sblock->fs_ncg - 1), sblock->fs_sbsize);
@@ -573,56 +570,39 @@ cmpsblks(const struct fs *sb, struct fs *asb)
 {
 
 	/*
-	 * Copy fields which we don't care if they're different in the
-	 * alternate superblocks, as they're either likely to be
+	 * Don't compare fields of which we don't care if they're different
+	 * in the alternate superblocks, as they're either likely to be
 	 * different because they're per-cylinder-group specific, or
 	 * because they're transient details which are only maintained
 	 * in the primary superblock.
 	 */
-	asb->fs_firstfield = sb->fs_firstfield;
-	asb->fs_unused_1 = sb->fs_unused_1;
-	asb->fs_time = sb->fs_time;
-	asb->fs_cstotal = sb->fs_cstotal;
-	asb->fs_cgrotor = sb->fs_cgrotor;
-	asb->fs_fmod = sb->fs_fmod;
-	asb->fs_clean = sb->fs_clean;
-	asb->fs_ronly = sb->fs_ronly;
-	asb->fs_flags = sb->fs_flags;
-	asb->fs_maxcontig = sb->fs_maxcontig;
-	asb->fs_minfree = sb->fs_minfree;
-	asb->fs_optim = sb->fs_optim;
-	asb->fs_rotdelay = sb->fs_rotdelay;
-	asb->fs_maxbpg = sb->fs_maxbpg;
-	memmove(asb->fs_ocsp, sb->fs_ocsp, sizeof sb->fs_ocsp);
-	asb->fs_contigdirs = sb->fs_contigdirs;
-	asb->fs_csp = sb->fs_csp;
-	asb->fs_maxcluster = sb->fs_maxcluster;
-	memmove(asb->fs_fsmnt, sb->fs_fsmnt, sizeof sb->fs_fsmnt);
-	memmove(asb->fs_snapinum,
-		sb->fs_snapinum, sizeof sb->fs_snapinum);
-	asb->fs_avgfilesize = sb->fs_avgfilesize;
-	asb->fs_avgfpdir = sb->fs_avgfpdir;
-	asb->fs_pendingblocks = sb->fs_pendingblocks;
-	asb->fs_pendinginodes = sb->fs_pendinginodes;
-	memmove(asb->fs_sparecon,
-		sb->fs_sparecon, sizeof sb->fs_sparecon);
-	/*
-	 * The following should not have to be copied, but need to be.
-	 */
-	asb->fs_fsbtodb = sb->fs_fsbtodb;
-	asb->fs_interleave = sb->fs_interleave;
-	asb->fs_npsect = sb->fs_npsect;
-	asb->fs_nrpos = sb->fs_nrpos;
-	asb->fs_qbmask = sb->fs_qbmask;
-	asb->fs_qfmask = sb->fs_qfmask;
-	asb->fs_state = sb->fs_state;
-	asb->fs_maxfilesize = sb->fs_maxfilesize;
+	if (asb->fs_sblkno != sb->fs_sblkno ||
+	    asb->fs_cblkno != sb->fs_cblkno ||
+	    asb->fs_iblkno != sb->fs_iblkno ||
+	    asb->fs_dblkno != sb->fs_dblkno ||
+	    asb->fs_cgoffset != sb->fs_cgoffset ||
+	    asb->fs_cgmask != sb->fs_cgmask ||
+	    asb->fs_ncg != sb->fs_ncg ||
+	    asb->fs_bsize != sb->fs_bsize ||
+	    asb->fs_fsize != sb->fs_fsize ||
+	    asb->fs_frag != sb->fs_frag ||
+	    asb->fs_bmask != sb->fs_bmask ||
+	    asb->fs_fmask != sb->fs_fmask ||
+	    asb->fs_bshift != sb->fs_bshift ||
+	    asb->fs_fshift != sb->fs_fshift ||
+	    asb->fs_fragshift != sb->fs_fragshift ||
+	    asb->fs_fsbtodb != sb->fs_fsbtodb ||
+	    asb->fs_sbsize != sb->fs_sbsize ||
+	    asb->fs_nindir != sb->fs_nindir ||
+	    asb->fs_inopb != sb->fs_inopb ||
+	    asb->fs_cssize != sb->fs_cssize ||
+	    asb->fs_cpg != sb->fs_cpg ||
+	    asb->fs_ipg != sb->fs_ipg ||
+	    asb->fs_fpg != sb->fs_fpg ||
+	    asb->fs_magic != sb->fs_magic)
+		return (1);
 
-	/*
-	 * Compare the superblocks, effectively checking every other
-	 * field to see if they differ.
-	 */
-	return (memcmp(sb, asb, (int)sb->fs_sbsize));
+	return (0);
 }
 
 static void
