@@ -1,4 +1,4 @@
-/*	$NetBSD: sqvar.h,v 1.6 2004/12/29 02:11:31 rumble Exp $	*/
+/*	$NetBSD: sqvar.h,v 1.7 2004/12/29 06:28:14 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -43,8 +43,8 @@
 #include <sgimips/hpc/hpcreg.h>
 
 /* Note, these must be powers of two for the magic NEXT/PREV macros to work */
-#define SQ_NRXDESC		32
-#define SQ_NTXDESC		16
+#define SQ_NRXDESC		64
+#define SQ_NTXDESC		64
 
 #define	SQ_NRXDESC_MASK		(SQ_NRXDESC - 1)
 #define	SQ_NEXTRX(x)		((x + 1) & SQ_NRXDESC_MASK)
