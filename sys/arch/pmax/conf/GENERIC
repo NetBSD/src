@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.59 1999/12/08 04:16:16 simonb Exp $
+# 	$NetBSD: GENERIC,v 1.60 1999/12/09 02:31:37 simonb Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
@@ -19,9 +19,9 @@ options 	DEC_3MIN	# DECstation 5000/1xx (kn02ba), 5000/150 (kn04)
 options 	DEC_MAXINE	# Personal DECstation 5000/xx (kn02ca)
 options 	DEC_3MAXPLUS	# DECstation 5000/240 (kn03), 5000/260 (kn05)
 
-#options 	DEC_5400
-#options 	DEC_5800
-#options 	DEC_5500
+#options 	DEC_5400	# DECsystem 5400 (kn210)
+#options 	DEC_5500	# DECsystem 5500 (kn220)
+#options 	DEC_5800	# DECsystem 58x0 (kn5800)
 
 # Standard system options
 options 	DDB			# in-kernel debugger
