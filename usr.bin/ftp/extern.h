@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.33 1999/07/11 20:37:39 itojun Exp $	*/
+/*	$NetBSD: extern.h,v 1.34 1999/07/12 13:20:34 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -111,7 +111,7 @@ char   *hookup __P((char *, char *));
 void	idle __P((int, char **));
 int     initconn __P((void));
 void	intr __P((void));
-int	isurl __P((const char *));
+int	isipv6addr __P((const char *));
 void	list_vertical __P((StringList *));
 void	lcd __P((int, char **));
 void	lostpeer __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.62 1999/07/06 22:11:37 tron Exp $	*/
+/*	$NetBSD: fetch.c,v 1.63 1999/07/12 13:20:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.62 1999/07/06 22:11:37 tron Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.63 1999/07/12 13:20:34 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -252,16 +252,19 @@ url_decode(url)
 
 /*
  * Parse URL of form:
- *	<type>://[<user>[:<password>@]]<host>[:<port>]/<url-path>
+ *	<type>://[<user>[:<password>@]]<host>[:<port>][/<path>]
  * Returns -1 if a parse error occurred, otherwise 0.
- * Only permit [<user>[:<password>@]] for ftp:// URLs
  * It's the caller's responsibility to url_decode() the returned
  * user, pass and path.
+ *
  * Sets type to url_t, each of the given char ** pointers to a
  * malloc(3)ed strings of the relevant section, and port to
  * the number given, or ftpport if ftp://, or httpport if http://.
  *
- * XXX: this is not totally RFC 1738 compliant; path will have the
+ * If <host> is surrounded by `[' and ']', it's parsed as an
+ * IPv6 address (as per draft-ietf-ipngwg-url-literal-01.txt).
+ *
+ * XXX: this is not totally RFC 1738 compliant; <path> will have the
  * leading `/' unless it's an ftp:// URL, as this makes things easier
  * for file:// and http:// URLs. ftp:// URLs have the `/' between the
  * host and the url-path removed, but any additional leading slashes
@@ -271,10 +274,11 @@ url_decode(url)
  * Examples:
  *	 input url			 output path
  *	 ---------			 -----------
- *	"http://host"			NULL
- *	"http://host/"			"/"
- *	"http://host/dir/file"		"/dir/file"
- *	"ftp://host/dir/file"		"dir/file"
+ *	"ftp://host"			NULL
+ *	"http://host/"			NULL
+ *	"file://host/dir/file"		"dir/file"
+ *	"ftp://host/"			""
+ *	"ftp://host//"			NULL
  *	"ftp://host//dir/file"		"/dir/file"
  */
 static int
@@ -288,7 +292,7 @@ parse_url(url, desc, type, user, pass, host, port, path)
 	char		**port;
 	char		**path;
 {
-	char *cp, *ep, *thost;
+	char *cp, *ep, *thost, *tport;
 	size_t len;
 
 	if (url == NULL || desc == NULL || type == NULL || user == NULL
@@ -296,17 +300,17 @@ parse_url(url, desc, type, user, pass, host, port, path)
 		errx(1, "parse_url: invoked with NULL argument!");
 
 	*type = UNKNOWN_URL_T;
-	*user = *pass = *host = *path = NULL;
-	*port = NULL;
+	*user = *pass = *host = *port = *path = NULL;
+	tport = NULL;
 
 	if (strncasecmp(url, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
 		url += sizeof(HTTP_URL) - 1;
 		*type = HTTP_URL_T;
-		*port = strdup(httpport);
+		tport = httpport;
 	} else if (strncasecmp(url, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
 		url += sizeof(FTP_URL) - 1;
 		*type = FTP_URL_T;
-		*port = strdup(ftpport);
+		tport = ftpport;
 	} else if (strncasecmp(url, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
 		url += sizeof(FILE_URL) - 1;
 		*type = FILE_URL_T;
@@ -338,52 +342,66 @@ cleanup_parse_url:
 		*path = xstrdup(ep);
 	}
 
-	cp = strchr(thost, '@');
-					/* look for user[:pass]@ in URLs */
+	cp = strchr(thost, '@');	/* look for user[:pass]@ in URLs */
 	if (cp != NULL) {
 		if (*type == FTP_URL_T)
 			anonftp = 0;	/* disable anonftp */
 		*user = thost;
 		*cp = '\0';
-		*host = xstrdup(cp + 1);
+		thost = xstrdup(cp + 1);
 		cp = strchr(*user, ':');
 		if (cp != NULL) {
 			*cp = '\0';
 			*pass = xstrdup(cp + 1);
 		}
-	} else
-		*host = thost;
-
-	/* look for IPv6 address URL */
-	if (*thost == '[' && (cp = strrchr(thost, ']'))) {
-		size_t len = cp - thost - 1 ;
-		*host = (char *)xmalloc(len + 1);
-		strncpy(*host, thost + 1, len);
-		(*host)[len] = '\0';
-		cp = strrchr(++cp, ':');
-	} else if ((cp = strrchr(thost, ':')) != NULL) {
-		size_t len = cp - thost;
-		*host = (char *)xmalloc(len + 1);
-		strncpy(*host, thost, len);
-		(*host)[len] = '\0';
-	} else {
-		*host = xstrdup(thost);
-		cp = NULL;
 	}
+
+#ifdef INET6
+			/*
+			 * Check if thost is an encoded IPv6 address, as per
+			 * draft-ietf-ipngwg-url-literal-01.txt:
+			 *	`[' ipv6-address ']'
+			 */
+	if (*thost == '[') {
+		cp = thost + 1;
+		if ((ep = strchr(cp, ']')) == NULL ||
+		    (ep[1] != '\0' && ep[1] != '\0')) {
+			warnx("Invalid address `%s' in %s `%s'",
+			    thost, desc, url);
+			goto cleanup_parse_url;
+		}
+		len = ep - cp;		/* change `[xxx]' -> `xxx' */
+		memmove(thost, thost + 1, len);
+		thost[len] = '\0';
+		if (! isipv6addr(thost)) {
+			warnx("Invalid IPv6 address `%s' in %s `%s'",
+			    thost, desc, url);
+			goto cleanup_parse_url;
+		}
+		cp = ep + 1;
+		if (*cp == ':')
+			cp++;
+		else
+			cp = NULL;
+	} else
+#endif /* INET6 */
+	    if ((cp = strchr(thost, ':')) != NULL)
+		*cp++ =  '\0';
+	*host = thost;
 
 			/* look for [:port] */
 	if (cp != NULL) {
 		long nport;
 
-		*cp = '\0';
-		nport = strtol(cp + 1, &ep, 10);
+		nport = strtol(cp, &ep, 10);
 		if (nport < 1 || nport > MAX_IN_PORT_T || *ep != '\0') {
 			warnx("Invalid port `%s' in %s `%s'", cp, desc, url);
 			goto cleanup_parse_url;
 		}
-		*port = (char *)xmalloc(6);	/* large enough for "65535\0" */
-		snprintf(*port, 6, "%ld", nport);
+		tport = cp;
 	}
+	if (tport != NULL);
+		*port = xstrdup(tport);
 
 	if (debug)
 		fprintf(ttyout,
@@ -420,7 +438,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	size_t			len;
 	char			*cp, *ep, *buf, *savefile;
 	char			*auth, *location, *message;
-	char			*user, *pass, *host, *path, *decodedpath;
+	char			*user, *pass, *host, *port, *path, *decodedpath;
 	char			*puser, *ppass;
 	off_t			hashbytes;
 	int			 (*closefunc) __P((FILE *));
@@ -428,7 +446,6 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	time_t			mtime;
 	url_t			urltype;
 	in_port_t		portnum;
-	char			*port;
 	int			error;
 
 	closefunc = NULL;
@@ -620,7 +637,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			warnx("Unknown port for URL `%s'", url);
 			goto cleanup_fetch_url;
 		}
-		sin.sin_port = port;
+		sin.sin_port = portnum;
 
 		s = socket(AF_INET, SOCK_STREAM, 0);
 		if (s == -1) {
@@ -687,11 +704,12 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 				close(s);
 				res = res->ai_next;
 				if (res) {
-					getnameinfo(res->ai_addr, res->ai_addrlen,
-						hbuf, sizeof(hbuf), NULL, 0,
-						NI_NUMERICHOST);
+					getnameinfo(res->ai_addr,
+					    res->ai_addrlen, hbuf, sizeof(hbuf),
+					    NULL, 0, NI_NUMERICHOST);
 					if (verbose)
-						fprintf(ttyout, "Trying %s...\n", hbuf);
+						fprintf(ttyout,
+						    "Trying %s...\n", hbuf);
 					continue;
 				}
 				warn("Can't connect to %s", host);
@@ -1159,7 +1177,7 @@ aborthttp(notused)
 
 /*
  * Retrieve ftp URL or classic ftp argument using FTP.
- * Returns -1 on failure, 0 on completed xfer, 1 if ftp connection
+ * Returns 1 on failure, 0 on completed xfer, -1 if ftp connection
  * is still open (e.g, ftp xfer with trailing /)
  */
 static int
@@ -1194,7 +1212,7 @@ fetch_ftp(url)
 		 */
 
 					/* check for trailing ';type=[aid]' */
-		if (path != NULL && (cp = strrchr(path, ';')) != NULL) {
+		if (! EMPTYSTRING(path) && (cp = strrchr(path, ';')) != NULL) {
 			if (strcasecmp(cp, ";type=a") == 0)
 				type = TYPE_A;
 			else if (strcasecmp(cp, ";type=i") == 0)
@@ -1229,7 +1247,7 @@ fetch_ftp(url)
 		 * If we are dealing with classic `host:path' syntax,
 		 * then a path of the form `/file' (resulting from
 		 * input of the form `host:/file') means that we should
-		 * do "CWD /" before retreiving the file.  So we set
+		 * do "CWD /" before retrieving the file.  So we set
 		 * dir="/" and file="file".
 		 *
 		 * But if we are dealing with URLs like
@@ -1262,7 +1280,8 @@ fetch_ftp(url)
 			file = dir;
 			dir = NULL;
 		}
-	}
+	} else
+		dir = NULL;
 	if (urltype == FTP_URL_T && file != NULL) {
 		url_decode(file);	
 		/* but still don't url_decode(dir) */
@@ -1317,12 +1336,12 @@ fetch_ftp(url)
 		errx(1, "fetch_ftp: unknown transfer type %d\n", type);
 	}
 
-			/*
-			 * Change directories, if necessary.
-			 *
-			 * Note: don't use EMPTYSTRING(dir) below, because
-			 * dir="" means something different from dir=NULL.
-			 */
+		/*
+		 * Change directories, if necessary.
+		 *
+		 * Note: don't use EMPTYSTRING(dir) below, because
+		 * dir=="" means something different from dir==NULL.
+		 */
 	if (dir != NULL && !dirhasglob) {
 		char *nextpart;
 
@@ -1341,21 +1360,30 @@ fetch_ftp(url)
 		 * slashes in the path) and RFC 1738 says that we should
 		 * still do `CWD ' (with a null argument) in such cases.
 		 *
-		 * XXX: many ftp servers don't support `CWD ', so we
-		 * just skip the empty components.
+		 * Many ftp servers don't support `CWD ', so if there's an
+		 * error performing that command, bail out with a descriptive
+		 * message.
 		 *
 		 * Examples:
 		 *
+		 * host:			dir="", urltype=CLASSIC_URL_T
+		 *		logged in (to default directory)
 		 * host:file			dir=NULL, urltype=CLASSIC_URL_T
 		 *		"RETR file"
+		 * host:dir/			dir="dir", urltype=CLASSIC_URL_T
+		 *		"CWD dir", logged in
+		 * ftp://host/			dir="", urltype=FTP_URL_T
+		 *		logged in (to default directory)
+		 * ftp://host/dir/		dir="dir", urltype=FTP_URL_T
+		 *		"CWD dir", logged in
 		 * ftp://host/file		dir=NULL, urltype=FTP_URL_T
 		 *		"RETR file"
 		 * ftp://host//file		dir="", urltype=FTP_URL_T
-		 *		(no-op), "RETR file"
+		 *		"CWD ", "RETR file"
 		 * host:/file			dir="/", urltype=CLASSIC_URL_T
 		 *		"CWD /", "RETR file"
 		 * ftp://host///file		dir="/", urltype=FTP_URL_T
-		 *		(no-op), (no-op), "RETR file"
+		 *		"CWD ", "CWD ", "RETR file"
 		 * ftp://host/%2F/file		dir="%2F", urltype=FTP_URL_T
 		 *		"CWD /", "RETR file"
 		 * ftp://host/foo/file		dir="foo", urltype=FTP_URL_T
@@ -1363,9 +1391,9 @@ fetch_ftp(url)
 		 * ftp://host/foo/bar/file	dir="foo/bar"
 		 *		"CWD foo", "CWD bar", "RETR file"
 		 * ftp://host//foo/bar/file	dir="/foo/bar"
-		 *		(no-op), "CWD foo", "CWD bar", "RETR file"
+		 *		"CWD ", "CWD foo", "CWD bar", "RETR file"
 		 * ftp://host/foo//bar/file	dir="foo//bar"
-		 *		"CWD foo", (no-op), "CWD bar", "RETR file"
+		 *		"CWD foo", "CWD ", "CWD bar", "RETR file"
 		 * ftp://host/%2F/foo/bar/file	dir="%2F/foo/bar"
 		 *		"CWD /", "CWD foo", "CWD bar", "RETR file"
 		 * ftp://host/%2Ffoo/bar/file	dir="%2Ffoo/bar"
@@ -1391,14 +1419,23 @@ fetch_ftp(url)
 				fprintf(ttyout, "dir `%s', nextpart `%s'\n",
 				    dir ? dir : "<null>",
 				    nextpart ? nextpart : "<null>");
-			if (*dir != '\0') {
+			if (urltype == FTP_URL_T || *dir != '\0') {
 				xargv[0] = "cd";
 				xargv[1] = dir;
 				xargv[2] = NULL;
 				dirchange = 0;
 				cd(2, xargv);
-				if (! dirchange)
+				if (! dirchange) {
+					if (*dir == '\0' && code == 500)
+						fprintf(stderr,
+"\n"
+"ftp: The `CWD ' command (without a directory), which is required by\n"
+"     RFC 1738 to support the empty directory in the URL pathname (`//'),\n"
+"     conflicts with the server's conformance to RFC 959.\n"
+"     Try the same URL without the `//' in the URL pathname.\n"
+"\n");
 					goto cleanup_fetch_ftp;
+				}
 			}
 			dir = nextpart;
 		} while (dir != NULL);
@@ -1453,17 +1490,6 @@ cleanup_fetch_ftp:
 	FREEPTR(user);
 	FREEPTR(pass);
 	return (rval);
-}
-
-int
-isurl(p)
-	const char *p;
-{
-	if (strncasecmp(p, FTP_URL, sizeof(FTP_URL) - 1) == 0
-	 || strncasecmp(p, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
-		return 1;
-	}
-	return 0;
 }
 
 /*
