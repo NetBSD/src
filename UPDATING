@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.133 2005/01/06 23:28:56 christos Exp $
+$NetBSD: UPDATING,v 1.134 2005/01/09 07:31:31 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+20050109:
+	Since su is using pam by default now, make sure that you have
+	/etc/pam.d populated (postinstall will do that automatically
+	for you). Otherwise su will fail open (i.e. will not require
+	a password).
+
 20041229:
 	Make had a path resolution bug that manifested itself as not
 	being able to install openpam.3. This bug has been fixed, but
