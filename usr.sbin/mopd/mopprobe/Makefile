@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1997/03/24 22:02:46 christos Exp $
+#	$NetBSD: Makefile,v 1.3 1997/03/25 03:07:55 thorpej Exp $
 
 PROG=	mopprobe
 SRCS=	mopprobe.c device.c get.c cmp.c mopdef.c version.c pf.c loop-bsd.c

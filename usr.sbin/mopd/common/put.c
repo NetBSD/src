@@ -1,3 +1,5 @@
+/*	$NetBSD: put.c,v 1.2 1997/03/25 03:07:33 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
  *
@@ -28,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: put.c,v 1.1.1.1 1997/03/16 22:23:37 cjs Exp $";
+static char rcsid[] = "$NetBSD: put.c,v 1.2 1997/03/25 03:07:33 thorpej Exp $";
 #endif
 
 #include <stddef.h>
