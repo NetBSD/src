@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.8 1995/06/13 05:38:55 mycroft Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.9 1995/08/04 01:09:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -920,8 +920,7 @@ unsigned pr;
 	if (lcp -> lcd_window_condition == TRUE)
 		lcp -> lcd_window_condition = FALSE;
 
-	if (so && ((so -> so_snd.sb_flags & SB_WAIT) || 
-		   (so -> so_snd.sb_flags & SB_NOTIFY)))
+	if (so && sb_notify (&(so -> so_snd)))
 		sowwakeup (so);
 
 	return (PACKET_OK);

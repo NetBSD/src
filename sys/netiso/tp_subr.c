@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr.c,v 1.5 1994/06/29 06:40:34 cgd Exp $	*/
+/*	$NetBSD: tp_subr.c,v 1.6 1995/08/04 01:13:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -428,7 +428,7 @@ tp_sbdrop(tpcb, seq)
 		printf("tp_sbdroping %d pkts %d bytes on %x at 0x%x\n",
 			oldi, oldcc - sb->sb_cc, tpcb, seq);
 	ENDDEBUG
-	if (sb->sb_flags & SB_NOTIFY)
+	if (sb_notify(sb))
 		sowwakeup(tpcb->tp_sock);
 	return (oldcc - sb->sb_cc);
 }
