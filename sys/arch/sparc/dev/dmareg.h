@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.6 1995/12/11 12:43:21 pk Exp $ */
+/*	$NetBSD: dmareg.h,v 1.7 1996/03/31 22:32:46 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -69,5 +69,8 @@ struct dma_regs {
 #define  D_BCNT_MASK		0x00ffffff	/* only 24 bits */
 
 	volatile u_long		test;		/* DMA TEST (in u_longs) */
+#define en_testcsr	addr			/* enet registers overlap */
+#define en_cachev	bcnt
+#define en_bar		test
 
 };
