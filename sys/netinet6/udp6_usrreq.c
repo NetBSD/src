@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.46 2001/10/15 09:51:17 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.47 2001/10/18 07:44:36 itojun Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -493,8 +493,10 @@ udp6_ctlinput(cmd, sa, d)
 		notify = in6_rtchange, d = NULL;
 	else if (cmd == PRC_HOSTDEAD)
 		d = NULL;
-	else if (cmd == PRC_MSGSIZE)
-		; /* special code is present, see below */
+	else if (cmd == PRC_MSGSIZE) {
+		/* special code is present, see below */
+		notify = in6_rtchange;
+	}
 	else if (inet6ctlerrmap[cmd] == 0)
 		return;
 

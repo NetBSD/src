@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.22 2001/10/17 10:55:09 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.23 2001/10/18 07:44:35 itojun Exp $	*/
 /*	$KAME: nd6.h,v 1.52 2001/02/19 04:40:37 itojun Exp $	*/
 
 /*
@@ -308,11 +308,11 @@ int nd6_need_cache __P((struct ifnet *));
 
 /* nd6_nbr.c */
 void nd6_na_input __P((struct mbuf *, int, int));
-void nd6_na_output __P((struct ifnet *, struct in6_addr *,
- 			struct in6_addr *, u_long, int, struct sockaddr *));
+void nd6_na_output __P((struct ifnet *, const struct in6_addr *,
+ 			const struct in6_addr *, u_long, int, struct sockaddr *));
 void nd6_ns_input __P((struct mbuf *, int, int));
-void nd6_ns_output __P((struct ifnet *, struct in6_addr *,
-			struct in6_addr *, struct llinfo_nd6 *, int));
+void nd6_ns_output __P((struct ifnet *, const struct in6_addr *,
+			const struct in6_addr *, struct llinfo_nd6 *, int));
 caddr_t nd6_ifptomac __P((struct ifnet *));
 void nd6_dad_start __P((struct ifaddr *, int *));
 void nd6_dad_stop __P((struct ifaddr *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.38 2001/10/17 08:23:06 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.39 2001/10/18 07:44:34 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1244,7 +1244,6 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_PKTINFO:
 			case IPV6_HOPLIMIT:
 			case IPV6_RTHDR:
-			case IPV6_CHECKSUM:
 			case IPV6_FAITH:
 			case IPV6_V6ONLY:
 				if (!m || m->m_len != sizeof(int)) {
@@ -1298,10 +1297,6 @@ else \
 
 				case IPV6_RTHDR:
 					OPTSET(IN6P_RTHDR);
-					break;
-
-				case IPV6_CHECKSUM:
-					in6p->in6p_cksum = optval;
 					break;
 
 				case IPV6_FAITH:
@@ -1438,7 +1433,6 @@ else \
 			case IPV6_PKTINFO:
 			case IPV6_HOPLIMIT:
 			case IPV6_RTHDR:
-			case IPV6_CHECKSUM:
 			case IPV6_FAITH:
 			case IPV6_V6ONLY:
 				*mp = m = m_get(M_WAIT, MT_SOOPTS);
@@ -1494,10 +1488,6 @@ else \
 
 				case IPV6_RTHDR:
 					optval = OPTBIT(IN6P_RTHDR);
-					break;
-
-				case IPV6_CHECKSUM:
-					optval = in6p->in6p_cksum;
 					break;
 
 				case IPV6_FAITH:
