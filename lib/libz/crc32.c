@@ -1,9 +1,9 @@
+/*	$NetBSD: crc32.c,v 1.2 1996/09/13 00:29:57 cgd Exp $	*/
+
 /* crc32.c -- compute the CRC-32 of a data stream
  * Copyright (C) 1995-1996 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
-
-/* $Id: crc32.c,v 1.1.1.1 1996/09/12 15:33:09 gwr Exp $ */
 
 #include "zlib.h"
 

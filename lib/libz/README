@@ -1,3 +1,5 @@
+$NetBSD: README,v 1.2 1996/09/13 00:29:52 cgd Exp $
+
 zlib 1.0.4 is a general purpose data compression library.  All the code
 is reentrant (thread safe).  The data format used by the zlib library
 is described by RFCs (Request for Comments) 1950 to 1952 in the files 

@@ -1,9 +1,9 @@
+/*	$NetBSD: example.c,v 1.2 1996/09/13 00:30:04 cgd Exp $	*/
+
 /* example.c -- usage example of the zlib compression library
  * Copyright (C) 1995-1996 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
-
-/* $Id: example.c,v 1.1.1.1 1996/09/12 15:33:09 gwr Exp $ */
 
 #include <stdio.h>
 #include "zlib.h"
