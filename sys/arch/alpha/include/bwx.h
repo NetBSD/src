@@ -1,4 +1,4 @@
-/* $NetBSD: bwx.h,v 1.2 2000/03/05 18:46:15 thorpej Exp $ */
+/* $NetBSD: bwx.h,v 1.3 2000/06/08 02:55:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,19 +47,6 @@
  *
  * See "Alpha Architecture Handbook, Version 3", DEC order number EC-QD2KB-TE.
  */
-
-static __inline u_int8_t alpha_ldbu __P((__volatile u_int8_t *))
-	__attribute__((__unused__));
-static __inline u_int16_t alpha_ldwu __P((__volatile u_int16_t *))
-	__attribute__((__unused__));
-static __inline void alpha_stb __P((__volatile u_int8_t *, u_int8_t))
-	__attribute__((__unused__));
-static __inline void alpha_stw __P((__volatile u_int16_t *, u_int16_t))
-	__attribute__((__unused__));
-static __inline u_int8_t alpha_sextb __P((u_int8_t))
-	__attribute__((__unused__));
-static __inline u_int16_t alpha_sextw __P((u_int16_t))
-	__attribute__((__unused__));
 
 static __inline u_int8_t
 alpha_ldbu(__volatile u_int8_t *a0)

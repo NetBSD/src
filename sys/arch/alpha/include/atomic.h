@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.4 2000/05/23 05:12:55 thorpej Exp $ */
+/* $NetBSD: atomic.h,v 1.5 2000/06/08 02:54:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,24 +43,6 @@
 
 #ifndef _ALPHA_ATOMIC_H_
 #define	_ALPHA_ATOMIC_H_
-
-static __inline void atomic_setbits_ulong
-	__P((__volatile unsigned long *, unsigned long))
-	__attribute__((__unused__));
-static __inline void atomic_clearbits_ulong
-	__P((__volatile unsigned long *, unsigned long))
-	__attribute__((__unused__));
-
-static __inline void atomic_add_ulong
-	__P((__volatile unsigned long *, unsigned long))
-	__attribute__((__unused__));
-static __inline void atomic_sub_ulong
-	__P((__volatile unsigned long *, unsigned long))
-	__attribute__((__unused__));
-
-static __inline unsigned long atomic_loadlatch_ulong
-	__P((__volatile unsigned long *, unsigned long))
-	__attribute__((__unused__));
 
 /*
  * atomic_setbits_ulong:
