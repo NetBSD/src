@@ -1,4 +1,4 @@
-#	$NetBSD: files.scsi,v 1.6 1997/03/18 01:31:17 thorpej Exp $
+#	$NetBSD: files.scsi,v 1.7 1997/03/21 08:55:09 matthias Exp $
 #
 # Config.new file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that use it must provide
@@ -19,7 +19,7 @@ device	ch: disk
 attach	ch at scsibus
 file	scsi/ch.c			ch needs-flag
 
-device	se: ifnet, ether
+device	se: ifnet, ether, arp
 attach	se at scsibus
 file	scsi/if_se.c			se  needs-flag
 
