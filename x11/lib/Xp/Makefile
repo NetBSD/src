@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/08/04 08:37:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/08/05 01:28:48 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -13,9 +13,9 @@ SRCS=	XpAttr.c XpContext.c XpDoc.c XpExtUtil.c XpExtVer.c \
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 
 LIBDPLIBS=\
-	Xau ../Xau \
-	Xext ../Xext \
-	X11 ../X11/dynamic
+	Xau	${.CURDIR}/../Xau \
+	Xext	${.CURDIR}/../Xext \
+	X11	${.CURDIR}/../X11/dynamic
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

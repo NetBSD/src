@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/08/04 08:37:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2004/08/05 01:28:48 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -20,11 +20,11 @@ MLINKS=	Xss.3 XScreenSaverAllocInfo.3 \
 	Xss.3 XScreenSaverUnsetAttributes.3
 
 LIBDPLIBS=\
-	Xt ../Xt \
-	SM ../SM \
-	ICE ../ICE \
-	Xext ../Xext \
-	X11 ../X11/dynamic
+	Xt	${.CURDIR}/../Xt \
+	SM	${.CURDIR}/../SM \
+	ICE	${.CURDIR}/../ICE \
+	Xext	${.CURDIR}/../Xext \
+	X11	${.CURDIR}/../X11/dynamic
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
