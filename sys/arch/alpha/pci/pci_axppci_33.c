@@ -1,4 +1,4 @@
-/* $NetBSD: pci_axppci_33.c,v 1.13 1997/05/31 05:46:07 cgd Exp $ */
+/* $NetBSD: pci_axppci_33.c,v 1.14 1997/07/19 09:49:53 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.13 1997/05/31 05:46:07 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.14 1997/07/19 09:49:53 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -122,7 +122,7 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
                 return 1;
         }
 
-	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
+	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 
 	switch (device) {
 	case 6:					/* NCR SCSI */

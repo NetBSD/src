@@ -1,4 +1,4 @@
-/* $NetBSD: lca_pci.c,v 1.11 1997/05/31 05:46:05 cgd Exp $ */
+/* $NetBSD: lca_pci.c,v 1.12 1997/07/19 09:49:51 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.11 1997/05/31 05:46:05 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.12 1997/07/19 09:49:51 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ lca_conf_read(cpv, tag, offset)
 	s = 0;					/* XXX gcc -Wuninitialized */
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
+	alpha_pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
 	if (secondary) {
 		s = splhigh();
 		alpha_mb();
@@ -177,7 +177,7 @@ lca_conf_write(cpv, tag, offset, data)
 	s = 0;					/* XXX gcc -Wuninitialized */
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
+	alpha_pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
 	if (secondary) {
 		s = splhigh();
 		alpha_mb();

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.7 1997/04/07 02:00:06 cgd Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.8 1997/07/19 09:50:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -48,8 +48,6 @@ struct alpha_pci_chipset {
 			    struct device *, struct pcibus_attach_args *));
 	int		(*pc_bus_maxdevs) __P((void *, int));
 	pcitag_t	(*pc_make_tag) __P((void *, int, int, int));
-	void		(*pc_decompose_tag) __P((void *, pcitag_t, int *,
-			    int *, int *));
 	pcireg_t	(*pc_conf_read) __P((void *, pcitag_t, int));
 	void		(*pc_conf_write) __P((void *, pcitag_t, int, pcireg_t));
 
@@ -60,6 +58,10 @@ struct alpha_pci_chipset {
 	void		*(*pc_intr_establish) __P((void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *));
 	void		(*pc_intr_disestablish) __P((void *, void *));
+
+	/* alpha-specific */
+	void		(*pc_decompose_tag) __P((void *, pcitag_t, int *,
+			    int *, int *));
 };
 
 /*
@@ -71,8 +73,6 @@ struct alpha_pci_chipset {
     (*(c)->pc_bus_maxdevs)((c)->pc_conf_v, (b))
 #define	pci_make_tag(c, b, d, f)					\
     (*(c)->pc_make_tag)((c)->pc_conf_v, (b), (d), (f))
-#define	pci_decompose_tag(c, t, bp, dp, fp)				\
-    (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
 #define	pci_conf_read(c, t, r)						\
     (*(c)->pc_conf_read)((c)->pc_conf_v, (t), (r))
 #define	pci_conf_write(c, t, r, v)					\
@@ -92,3 +92,5 @@ struct alpha_pci_chipset {
  */
 void	pci_display_console __P((bus_space_tag_t, bus_space_tag_t,
 	    pci_chipset_tag_t, int, int, int));
+#define	alpha_pci_decompose_tag(c, t, bp, dp, fp)			\
+    (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
