@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.2 2003/03/09 00:44:43 lukem Exp $	*/
+/*	$NetBSD: sem.c,v 1.3 2003/12/07 12:53:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.2 2003/03/09 00:44:43 lukem Exp $");
+__RCSID("$NetBSD: sem.c,v 1.3 2003/12/07 12:53:19 simonb Exp $");
 
 /*
  * If an application is linked against both librt and libpthread, the
@@ -108,6 +108,7 @@ static void sem_free(sem_t sem);
 
 static LIST_HEAD(, _sem_st) named_sems = LIST_HEAD_INITIALIZER(&named_sems);
 
+#ifdef __weak_alias
 __weak_alias(sem_init,_librt_sem_init)
 __weak_alias(sem_destroy,_librt_sem_destroy)
 __weak_alias(sem_open,_librt_sem_open)
@@ -117,6 +118,7 @@ __weak_alias(sem_wait,_librt_sem_wait)
 __weak_alias(sem_trywait,_librt_sem_trywait)
 __weak_alias(sem_post,_librt_sem_post)
 __weak_alias(sem_getvalue,_librt_sem_getvalue)
+#endif
 
 static void
 sem_free(sem_t sem)
