@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.75 2002/12/09 01:23:53 gson Exp $	*/
+/*	$NetBSD: job.c,v 1.76 2003/04/08 17:46:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.75 2002/12/09 01:23:53 gson Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.76 2003/04/08 17:46:59 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.75 2002/12/09 01:23:53 gson Exp $");
+__RCSID("$NetBSD: job.c,v 1.76 2003/04/08 17:46:59 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1227,7 +1227,7 @@ Boolean
 Job_CheckCommands(GNode *gn, void (*abortProc)(char *, ...))
 {
     if (OP_NOP(gn->type) && Lst_IsEmpty(gn->commands) &&
-	(gn->type & OP_LIB) == 0) {
+	((gn->type & OP_LIB) == 0 || Lst_IsEmpty(gn->children))) {
 	/*
 	 * No commands. Look for .DEFAULT rule from which we might infer
 	 * commands
