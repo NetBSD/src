@@ -33,15 +33,16 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)getbsize.c	5.3 (Berkeley) 3/9/92";*/
-static char rcsid[] = "$Id: getbsize.c,v 1.1 1993/08/06 17:03:55 mycroft Exp $";
+static char rcsid[] = "$Id: getbsize.c,v 1.2 1994/01/25 20:06:03 cgd Exp $";
 #endif /* not lint */
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 char *
-getbsize(prog, headerlenp, blocksizep, force)
-	char *prog;
+getbsize(headerlenp, blocksizep, force)
 	int *headerlenp;
 	long *blocksizep;
 	int force;
@@ -97,20 +98,17 @@ getbsize(prog, headerlenp, blocksizep, force)
 			mul = 1;
 			break;
 		default:
-fmterr:			(void)fprintf(stderr,
-			    "%s: %s: unknown blocksize\n", prog, p);
+fmterr:			warnx("%s: unknown blocksize", p);
 			n = 512;
 			mul = 1;
 			break;
 		}
 		if (n > max) {
-			(void)fprintf(stderr,
-			    "%s: maximum blocksize is %dG\n", prog, MAXB / GB);
+			warnx("maximum blocksize is %dG", MAXB / GB);
 			n = max;
 		}
 		if ((blocksize = n * mul) < 512) {
-underflow:		(void)fprintf(stderr,
-			    "%s: minimum blocksize is 512\n", prog);
+underflow:		warnx("%s: minimum blocksize is 512");
 			form = "";
 			blocksize = n = 512;
 		}
