@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.1 1998/12/15 19:25:41 itohy Exp $	*/
+/*	$NetBSD: linux_siginfo.h,v 1.2 2002/04/04 22:17:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,8 +95,8 @@ typedef struct linux_siginfo {
 	} _sidata;
 } linux_siginfo_t;
 
-#define si_pid		_sidata._kill._pid
-#define si_uid		_sidata._kill._uid
+#define lsi_pid		_sidata._kill._pid
+#define lsi_uid		_sidata._kill._uid
 
 #define LINUX_SI_USER		0
 #define	LINUX_SI_KERNEL		0x80
