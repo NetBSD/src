@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.174 2003/11/01 17:59:57 jdolecek Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.175 2003/11/02 16:26:10 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.174 2003/11/01 17:59:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.175 2003/11/02 16:26:10 cl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1096,9 +1096,44 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 	if (dolock)
 		SCHED_LOCK(s);
 
-	/* XXXUPSXXX LWPs might go to sleep without passing signal handling */ 
-	if (p->p_nrlwps > 0 && (p->p_stat != SSTOP) 
-	    && !((p->p_flag & P_SA) && (p->p_sa->sa_idle != NULL))) {
+	if (p->p_flag & P_SA) {
+		l = p->p_sa->sa_vp;
+		allsusp = 0;
+		if (p->p_stat == SACTIVE) {
+			KDASSERT(l != NULL);
+			if (l->l_flag & L_SA_IDLE) {
+				/* wakeup idle LWP */
+			} else if (l->l_flag & L_SA_YIELD) {
+				/* idle LWP is already waking up */
+				goto out;
+				/*NOTREACHED*/
+			} else {
+				if (l->l_stat == LSRUN ||
+				    l->l_stat == LSONPROC) {
+					signotify(p);
+					goto out;
+					/*NOTREACHED*/
+				}
+				if (l->l_stat == LSSLEEP && 
+				    l->l_flag & L_SINTR) {
+					/* ok to signal vp lwp */
+				} else if (signum == SIGKILL) {
+					/*
+					 * get a suspended lwp from
+					 * the cache to send KILL
+					 * signal
+					 * XXXcl add signal checks at resume points
+					 */
+					suspended = sa_getcachelwp(p);
+					allsusp = 1;
+				} else
+					l = NULL;
+			}
+		} else if (p->p_stat == SSTOP) {
+			if (l->l_stat != LSSLEEP || (l->l_flag & L_SINTR) == 0)
+				l = NULL;
+		}
+	} else if (p->p_nrlwps > 0 && (p->p_stat != SSTOP)) {
 		/*
 		 * At least one LWP is running or on a run queue. 
 		 * The signal will be noticed when one of them returns 
@@ -1109,39 +1144,27 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 		 * The signal will be noticed very soon.
 		 */
 		goto out;
+		/*NOTREACHED*/
 	} else {
-		/* Process is sleeping or stopped */
-		if (p->p_flag & P_SA) {
-			struct lwp *l2 = p->p_sa->sa_vp;
-			l = NULL;		
-			allsusp = 1;
-
-			if ((l2->l_stat == LSSLEEP) && (l2->l_flag & L_SINTR))
-				l = l2; 
-			else if (l2->l_stat == LSSUSPENDED)
-				suspended = l2;
-			else if ((l2->l_stat != LSZOMB) && 
-				 (l2->l_stat != LSDEAD))
+		/*
+		 * Find out if any of the sleeps are interruptable,
+		 * and if all the live LWPs remaining are suspended.
+		 */
+		allsusp = 1;
+		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			if (l->l_stat == LSSLEEP && 
+			    l->l_flag & L_SINTR)
+				break;
+			if (l->l_stat == LSSUSPENDED)
+				suspended = l;
+			else if ((l->l_stat != LSZOMB) && 
+			    (l->l_stat != LSDEAD))
 				allsusp = 0;
-		} else {
-			/*
-			 * Find out if any of the sleeps are interruptable,
-			 * and if all the live LWPs remaining are suspended.
-			 */
-			allsusp = 1;
-			LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-				if (l->l_stat == LSSLEEP && 
-				    l->l_flag & L_SINTR)
-					break;
-				if (l->l_stat == LSSUSPENDED)
-					suspended = l;
-				else if ((l->l_stat != LSZOMB) && 
-				         (l->l_stat != LSDEAD))
-					allsusp = 0;
-			}
 		}
+	}
+
+	{ /* XXXcl wrong indent to keep diff small */
 		if (p->p_stat == SACTIVE) {
-		
 
 			if (l != NULL && (p->p_flag & P_TRACED))
 				goto run;
@@ -1236,7 +1259,7 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 				 */
 				if (action == SIG_DFL)
 					sigdelset(&p->p_sigctx.ps_siglist, 
-					signum);
+					    signum);
 				l = proc_unstop(p);
 				if (l && (action == SIG_CATCH))
 					goto runfast;
@@ -1268,7 +1291,7 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 			panic("psignal: Invalid process state %d.",
 				p->p_stat);
 		}
-	}
+	} /* XXXcl change indent after commit */
 	/*NOTREACHED*/
 
  runfast:
@@ -1574,14 +1597,38 @@ proc_stop(struct proc *p)
 	p->p_stat = SSTOP;
 	p->p_flag &= ~P_WAITED;
 
+	if (p->p_flag & P_SA) {
+		/*
+		 * Only (try to) put the LWP on the VP in stopped
+		 * state. 
+		 * All other LWPs will suspend in sa_vp_repossess()
+		 * until the VP-LWP donates the VP.
+		 */
+		l = p->p_sa->sa_vp;
+		if (l->l_stat == LSONPROC && l->l_cpu == curcpu()) {
+			l->l_stat = LSSTOP;
+			p->p_nrlwps--;
+		} else if (l->l_stat == LSRUN) {
+			/* Remove LWP from the run queue */
+			remrunqueue(l);
+			l->l_stat = LSSTOP;
+			p->p_nrlwps--;
+		} else if (l->l_stat == LSSLEEP &&
+		    l->l_flag & L_SA_IDLE) {
+			l->l_flag &= ~L_SA_IDLE;
+			l->l_stat = LSSTOP;
+		}
+		goto out;
+	}
+
 	/* 
 	 * Put as many LWP's as possible in stopped state. 
 	 * Sleeping ones will notice the stopped state as they try to
 	 * return to userspace.
 	 */
-	   
+
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-		if ((l->l_stat == LSONPROC) && (l == curlwp)) {
+		if (l->l_stat == LSONPROC) {
 			/* XXX SMP this assumes that a LWP that is LSONPROC
 			 * is curlwp and hence is about to be mi_switched 
 			 * away; the only callers of proc_stop() are:
@@ -1594,14 +1641,7 @@ proc_stop(struct proc *p)
 			 */
 			l->l_stat = LSSTOP;
 			p->p_nrlwps--;
-		}
-		 else if ( (l->l_stat == LSSLEEP) && (l->l_flag & L_SINTR)) {
-			setrunnable(l);
-		}
-
-/* !!!UPS!!! FIX ME */
-#if 0
-else if (l->l_stat == LSRUN) {
+		} else if (l->l_stat == LSRUN) {
 			/* Remove LWP from the run queue */
 			remrunqueue(l);
 			l->l_stat = LSSTOP;
@@ -1629,8 +1669,9 @@ else if (l->l_stat == LSRUN) {
 			    p->p_pid, l->l_lid, l->l_stat);
 		}
 #endif
-#endif
 	}
+
+ out:
 	/* XXX unlock process LWP state */
 
 	sched_wakeup((caddr_t)p->p_pptr);
@@ -1660,15 +1701,6 @@ proc_unstop(struct proc *p)
 	 */
 
 	p->p_stat = SACTIVE;
-	if (p->p_flag & P_SA) {
-		/*
-		 * Preferentially select the idle LWP as the interruptable
-		 * LWP to return if it exists.
-		 */
-		lr = p->p_sa->sa_idle;
-		if (lr != NULL)
-			cantake = 1;
-	}
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		if (l->l_stat == LSRUN) {
 			lr = NULL;
@@ -1689,7 +1721,17 @@ proc_unstop(struct proc *p)
 			cantake = 1;
 		}
 	}
-
+	if (p->p_flag & P_SA) {
+		/* Only consider returning the LWP on the VP. */
+		lr = p->p_sa->sa_vp;
+		if (lr->l_stat == LSSLEEP) {
+			if (lr->l_flag & L_SA_YIELD)
+				setrunnable(lr);
+			else if (lr->l_flag & L_SINTR)
+				return lr;
+		}
+		return NULL;
+	}
 	return lr;
 }
 

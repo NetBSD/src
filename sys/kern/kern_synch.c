@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.138 2003/10/26 20:55:57 fvdl Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.139 2003/11/02 16:26:10 cl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.138 2003/10/26 20:55:57 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.139 2003/11/02 16:26:10 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -122,6 +122,7 @@ void schedcpu(void *);
 void updatepri(struct lwp *);
 void endtsleep(void *);
 
+__inline void sa_awaken(struct lwp *);
 __inline void awaken(struct lwp *);
 
 struct callout schedcpu_ch = CALLOUT_INITIALIZER;
@@ -607,6 +608,17 @@ unsleep(struct lwp *l)
 	}
 }
 
+__inline void
+sa_awaken(struct lwp *l)
+{
+	struct sadata *sa = l->l_proc->p_sa;
+
+	SCHED_ASSERT_LOCKED();
+
+	if (l == sa->sa_vp && l->l_flag & L_SA_YIELD)
+		l->l_flag &= ~L_SA_IDLE;
+}
+
 /*
  * Optimized-for-wakeup() version of setrunnable().
  */
@@ -615,6 +627,9 @@ awaken(struct lwp *l)
 {
 
 	SCHED_ASSERT_LOCKED();
+
+	if (l->l_proc->p_sa)
+		sa_awaken(l);
 
 	if (l->l_slptime > 1)
 		updatepri(l);
@@ -630,8 +645,6 @@ awaken(struct lwp *l)
 	 */
 	if (l->l_flag & L_INMEM) {
 		setrunqueue(l);
-		if (l->l_flag & L_SA)
-			l->l_proc->p_sa->sa_woken = l;
 		KASSERT(l->l_cpu != NULL);
 		need_resched(l->l_cpu);
 	} else
@@ -799,14 +812,6 @@ preempt(int more)
 {
 	struct lwp *l = curlwp;
 	int r, s;
-/* XXXUPSXXX Not needed for SMP patch */
-#if 0   
-	/* XXX Until the preempt() bug is fixed. */
-	if (more && (l->l_proc->p_flag & P_SA)) {
-		l->l_cpu->ci_schedstate.spc_flags &= ~SPCF_SWITCHCLEAR;
-		return;
-	}
-#endif
 
 	SCHED_LOCK(s);
 	l->l_priority = l->l_usrpri;
@@ -1060,6 +1065,10 @@ setrunnable(struct lwp *l)
 	case LSSUSPENDED:
 		break;
 	}
+
+	if (l->l_proc->p_sa)
+		sa_awaken(l);
+
 	l->l_stat = LSRUN;
 	p->p_nrlwps++;
 

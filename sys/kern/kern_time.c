@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.77 2003/10/08 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.78 2003/11/02 16:26:10 cl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.77 2003/10/08 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.78 2003/11/02 16:26:10 cl Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1206,9 +1206,8 @@ void
 itimerfire(struct ptimer *pt)
 {
 	struct proc *p = pt->pt_proc;
-#if 0
 	int s;
-#endif
+
 	if (pt->pt_ev.sigev_notify == SIGEV_SIGNAL) {
 		/*
 		 * No RT signal infrastructure exists at this time;
@@ -1239,14 +1238,6 @@ itimerfire(struct ptimer *pt)
 			 * makes testing for sa_idle alone insuffucent to
 			 * determine if we really should call setrunnable.
 			 */
-#if 0
-
-		        if ((sa->sa_idle) && (p->p_stat != SSTOP)) {
-				SCHED_LOCK(s);
-				setrunnable(sa->sa_idle);
-				SCHED_UNLOCK(s);
-			}
-#endif
 			pt->pt_poverruns = pt->pt_overruns;
 			pt->pt_overruns = 0;
 			i = 1 << pt->pt_entry;
@@ -1254,9 +1245,12 @@ itimerfire(struct ptimer *pt)
 			p->p_userret = timerupcall;
 			p->p_userret_arg = p->p_timers;
 			
-			if (sa->sa_idle)
-				wakeup(sa->sa_idle);
-
+			SCHED_LOCK(s);
+			if (sa->sa_vp->l_flag & L_SA_IDLE) {
+				sa->sa_vp->l_flag &= ~L_SA_IDLE;
+				sched_wakeup(sa->sa_vp);
+			}
+			SCHED_UNLOCK(s);
 		} else if (p->p_userret == timerupcall) {
 			i = 1 << pt->pt_entry;
 			if ((p->p_timers->pts_fired & i) == 0) {
@@ -1267,10 +1261,11 @@ itimerfire(struct ptimer *pt)
 				pt->pt_overruns++;
 		} else {
 			pt->pt_overruns++;
-			printf("itimerfire(%d): overrun %d on timer %x (userret is %p)\n",
-			    p->p_pid, pt->pt_overruns,
-			    pt->pt_ev.sigev_value.sival_int,
-			    p->p_userret);
+			if ((p->p_flag & P_WEXIT) == 0)
+				printf("itimerfire(%d): overrun %d on timer %x (userret is %p)\n",
+				    p->p_pid, pt->pt_overruns,
+				    pt->pt_ev.sigev_value.sival_int,
+				    p->p_userret);
 		}
 	}
 

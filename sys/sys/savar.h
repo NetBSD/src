@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.9 2003/11/01 01:38:47 cl Exp $	*/
+/*	$NetBSD: savar.h,v 1.10 2003/11/02 16:26:10 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,8 +85,6 @@ struct sadata {
 	struct lwp	*sa_old_lwp;	/*  XXXUPSXXX hack: lwp that used to be on  sa_vp */
 	int    sa_vp_wait_count;        /*  XXXUPSXXX hack: number of LWPs waiting on VP */
 
-	struct lwp	*sa_woken;	/* list of woken lwps */
-	struct lwp	*sa_idle;      	/* lwp in sawait */
 	vaddr_t	sa_vp_stacks_low;	/* SA upcall stack lowest address */
 	vaddr_t	sa_vp_stacks_high;	/* SA upcall stack highest address */
 	vaddr_t	sa_vp_faultaddr;	/* page fault address */
