@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.14.4.3 1999/07/06 14:52:08 chs Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.14.4.4 1999/07/11 06:03:41 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -213,11 +213,6 @@ ffs_balloc(v)
 					bpp, &newb);
 				if (error)
 					return (error);
-				if (vp->v_type == VREG) {
-					uvm_vnp_zerorange(vp,
-							  lblktosize(fs, lbn) +
-							  osize, nsize - osize);
-				}
 			}
 		} else {
 
@@ -241,10 +236,6 @@ ffs_balloc(v)
 				if (flags & B_CLRBUF)
 					clrbuf(bp);
 				*bpp = bp;
-			}
-			if (vp->v_type == VREG) {
-				uvm_vnp_zerorange(vp, lblktosize(fs, lbn),
-						  nsize);
 			}
 		}
 		ip->i_ffs_db[lbn] = ufs_rw32(newb, UFS_MPNEEDSWAP(vp->v_mount));
@@ -375,9 +366,6 @@ ffs_balloc(v)
 			if (flags & B_CLRBUF)
 				clrbuf(nbp);
 			*bpp = nbp;
-		}
-		if (vp->v_type == VREG) {
-			uvm_vnp_zerorange(vp, lblktosize(fs, lbn), ap->a_size);
 		}
 		return (0);
 	}
