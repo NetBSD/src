@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.1 2004/12/23 04:31:47 joff Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.2 2005/01/09 21:32:08 joff Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,10 +38,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.1 2004/12/23 04:31:47 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.2 2005/01/09 21:32:08 joff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/extent.h>
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/isa_machdep.h>
@@ -50,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.1 2004/12/23 04:31:47 joff Exp $");
 
 bs_protos(isa);
 bs_protos(bs_notimpl);
+void isa_bs_mallocok(void);
 
 /*
  * Declare the isa bus space tags
@@ -219,6 +222,18 @@ struct bus_space isa_mem_bs_tag = {
 	bs_notimpl_bs_c_8,
 };
 
+static long isaio_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+static long isamem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+static int malloc_safe = 0;	
+struct extent	*isaio_ex;
+struct extent	*isamem_ex;
+
+void
+isa_bs_mallocok(void)
+{
+	malloc_safe = 1;
+}
+
 /* bus space functions */
 
 void
@@ -228,6 +243,15 @@ isa_io_init(isa_io_addr, isa_mem_addr)
 {
 	isa_io_bs_tag.bs_cookie = (void *)isa_io_addr;
 	isa_mem_bs_tag.bs_cookie = (void *)isa_mem_addr;
+
+	isaio_ex = extent_create("isaio", 0x0, 0xffff, M_DEVBUF, 
+		(caddr_t)isaio_ex_storage, sizeof(isaio_ex_storage),
+		EX_NOWAIT|EX_NOCOALESCE);
+	isamem_ex = extent_create("isamem", 0x0, 0xfffff, M_DEVBUF, 
+		(caddr_t)isamem_ex_storage, sizeof(isamem_ex_storage),
+		EX_NOWAIT|EX_NOCOALESCE);
+	if (isaio_ex == NULL || isamem_ex == NULL)
+		panic("isa_io_init(): can't alloc extent maps");
 }
 
 /*
@@ -255,6 +279,19 @@ isa_bs_map(t, bpa, size, cacheable, bshp)
 	int cacheable;
 	bus_space_handle_t *bshp;
 {
+	struct extent *ex;
+	int err;
+
+	if (t == &isa_io_bs_tag) 
+		ex = isaio_ex;
+	else
+		ex = isamem_ex;
+	
+	err = extent_alloc_region(ex, bpa, size,
+		EX_NOWAIT|(malloc_safe ? EX_MALLOCOK : 0));
+	if (err)
+		return err;
+
 	*bshp = bpa + (bus_addr_t)t;
 	return(0);
 }
@@ -265,7 +302,7 @@ isa_bs_unmap(t, bsh, size)
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
-	/* Nothing to do. */
+	isa_bs_free(t, bsh, size);
 }
 
 int
@@ -291,7 +328,24 @@ isa_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("isa_alloc(): Help!");
+	struct extent *ex;
+	u_long bpa;
+	int err;
+
+	if (t == &isa_io_bs_tag) 
+		ex = isaio_ex;
+	else
+		ex = isamem_ex;
+	
+	err = extent_alloc_subregion(ex, rstart, rend, size, alignment,
+		boundary, (EX_FAST|EX_NOWAIT|(malloc_safe ? EX_MALLOCOK : 0)), 
+		&bpa);
+
+	if (err)
+		return err;
+
+	*bshp = *bpap = bpa;
+	return 0;
 }
 
 void    
@@ -300,7 +354,15 @@ isa_bs_free(t, bsh, size)
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
-	panic("isa_free(): Help!");
+	struct extent *ex;
+
+	if (t == &isa_io_bs_tag) 
+		ex = isaio_ex;
+	else
+		ex = isamem_ex;
+
+	extent_free(ex, bsh - (bus_addr_t)t, size,
+		EX_NOWAIT|(malloc_safe ? EX_MALLOCOK : 0));
 }
 
 void *
