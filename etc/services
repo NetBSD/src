@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.21 1997/02/25 07:37:20 mikel Exp $
+#	$NetBSD: services,v 1.22 1997/09/17 11:20:26 is Exp $
 #
 # Network services, Internet style
 #
@@ -116,6 +116,9 @@ imap3		220/tcp				# Interactive Mail Access
 imap3		220/udp				# Protocol v3
 ulistserv	372/tcp				# UNIX Listserv
 ulistserv	372/udp
+nip		376/tcp				# Amiga Envoy Net Inquiry Prot.
+nip		376/udp				# Amiga Envoy Net Inquiry Prot.
+
 #
 # UNIX specific services
 #
