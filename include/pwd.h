@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.22 2000/09/18 16:27:24 ad Exp $	*/
+/*	$NetBSD: pwd.h,v 1.23 2001/10/23 00:25:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -50,9 +50,12 @@
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	_PATH_PASSWD		"/etc/passwd"
-#define	_PATH_PASSWDCONF	"/etc/passwd.conf"
 #define	_PATH_MASTERPASSWD	"/etc/master.passwd"
 #define	_PATH_MASTERPASSWD_LOCK	"/etc/ptmp"
+
+#define	_PATH_PASSWD_CONF	"/etc/passwd.conf"
+#define	_PATH_PASSWDCONF	_PATH_PASSWD_CONF	/* XXX: compat */
+#define	_PATH_USERMGMT_CONF	"/etc/usermgmt.conf"
 
 #define	_PATH_MP_DB		"/etc/pwd.db"
 #define	_PATH_SMP_DB		"/etc/spwd.db"
