@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <errno.h>
@@ -380,7 +381,7 @@ set_proc_cmd(arg)
   addr = (CORE_ADDR)parse_and_eval_address(arg);
 
   /* Read the PCB address in proc structure. */
-  addr += (int) &((struct proc *)0)->p_addr;
+  addr += (int) &((struct lwp *)0)->l_addr;
   if (kvread(addr, &val))
     error("cannot read u area ptr");
 

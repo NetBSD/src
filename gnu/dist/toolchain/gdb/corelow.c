@@ -333,9 +333,10 @@ core_open (filename, from_tty)
   /* Build up thread list from BFD sections. */
 
   init_thread_list ();
+#if 0 /* XXX nathanw */
   bfd_map_over_sections (core_bfd, add_to_thread_list,
 			 bfd_get_section_by_name (core_bfd, ".reg"));
-
+#endif
   if (ontop)
     {
       /* Fetch all registers from core file.  */
