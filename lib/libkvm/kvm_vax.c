@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_vax.c,v 1.5 1997/08/12 16:34:13 gwr Exp $ */
+/*	$NetBSD: kvm_vax.c,v 1.6 1997/10/20 12:49:50 ragge Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,6 +50,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <nlist.h>
+#include <stdlib.h>
 #include <kvm.h>
 
 #include <vm/vm.h>
@@ -76,8 +77,6 @@ int
 _kvm_initvtop(kd)
 	kvm_t *kd;
 {
-	register int i;
-	register int off;
 	register struct vmstate *vm;
 	struct stat st;
 	struct nlist nlist[2];
