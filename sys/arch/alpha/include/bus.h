@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 1996/04/18 05:47:29 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.2.4.1 1996/06/03 20:27:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -136,6 +136,9 @@ struct alpha_bus_chipset {
 			    bus_mem_size_t off, u_int32_t val));
 	void		(*bc_mw8) __P((void *v, bus_mem_handle_t memh,
 			    bus_mem_size_t off, u_int64_t val));
+
+	/* XXX THIS DOES NOT YET BELONG HERE */
+	vm_offset_t	(*bc_XXX_dmamap) __P((void *addr));
 };
 
 #define __bc_CONCAT(A,B)	__CONCAT(A,B)
@@ -198,5 +201,8 @@ struct alpha_bus_chipset {
 #define	bus_mem_write_2(t, h, o, v)	__bc_wr((t),(h),(o),(v),2,m)
 #define	bus_mem_write_4(t, h, o, v)	__bc_wr((t),(h),(o),(v),4,m)
 #define	bus_mem_write_8(t, h, o, v)	__bc_wr((t),(h),(o),(v),8,m)
+
+/* XXX THIS DOES NOT BELONG HERE YET. */
+#define	__alpha_bus_XXX_dmamap(t, va) (*(t)->bc_XXX_dmamap)((va))
 
 #endif /* _ALPHA_BUS_H_ */
