@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.420 2004/08/30 08:57:12 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.421 2004/08/30 09:58:49 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6932,4 +6932,30 @@ sys/miscfs/procfs/procfs_linux.c		1.17,1.18 via patch
 	Fix process used for /proc/<pid>/stat contents - it should be process
 	<pid>, not the current process looking at the information
 	[jdolecek, ticket #799]
+
+distrib/sets/lists/man/mi			1.722
+share/man/man4/Makefile				1.329
+share/man/man4/njs.4				1.1-1.3
+sys/arch/i386/conf/CARDBUS			1.73
+sys/arch/i386/conf/GENERIC			1.629
+sys/arch/i386/conf/GENERIC_LAPTOP		1.114
+sys/arch/sparc64/conf/GENERIC32			1.87
+sys/conf/files					1.682
+sys/dev/DEVNAMES				1.162
+sys/dev/cardbus/cardbusdevs			patch
+sys/dev/cardbus/cardbusdevs.h			regen
+sys/dev/cardbus/cardbusdevs_data.h		regen
+sys/dev/cardbus/files.cardbus			1.23
+sys/dev/cardbus/njs_cardbus.c			1.1-1.2
+sys/dev/ic/ninjascsi32.c			1.1-1.2
+sys/dev/ic/ninjascsi32reg.h			1.1
+sys/dev/ic/ninjascsi32var.h			1.1-1.2
+sys/dev/pci/files.pci				1.217 via patch
+sys/dev/pci/njs_pci.c				1.1-1.2
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add Workbit NinjaSCSI-32 PCI/CardBus SCSI driver njs(4).
+	[itohy, ticket #800]
 
