@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.16 1996/03/02 01:09:13 cgd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.17 1996/03/02 02:28:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -209,31 +209,31 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 	}
 
 	if (vendor_namep == NULL)
-		cp += sprintf(cp, "%svendor/product: 0x%04x/0x%04x",
+		cp += sprintf(cp, "%svendor 0x%04x product 0x%04x",
 		    unmatched, vendor, product);
 	else if (product_namep != NULL)
 		cp += sprintf(cp, "%s %s", vendor_namep, product_namep);
 	else
-		cp += sprintf(cp, "vendor: %s, unknown product: 0x%x",
+		cp += sprintf(cp, "vendor %s, unknown product 0x%x",
 		    vendor_namep, product);
 	if (showclass) {
 		cp += sprintf(cp, " (");
 		if (classp->name == NULL)
 			cp += sprintf(cp,
-			    "unknown class/subclass: 0x%02x/0x%02x",
+			    "unknown class 0x%2x, subclass 0x%02x",
 			    class, subclass);
 		else {
-			cp += sprintf(cp, "class: %s, ", classp->name);
+			cp += sprintf(cp, "class %s, ", classp->name);
 			if (subclassp == NULL || subclassp->name == NULL)
-				cp += sprintf(cp, "unknown subclass: 0x%02x",
+				cp += sprintf(cp, "unknown subclass 0x%02x",
 				    subclass);
 			else
-				cp += sprintf(cp, "subclass: %s",
+				cp += sprintf(cp, "subclass %s",
 				    subclassp->name);
 		}
 #if 0 /* not very useful */
-		cp += sprintf(cp, ", interface: 0x%02x", interface);
+		cp += sprintf(cp, ", interface 0x%02x", interface);
 #endif
-		cp += sprintf(cp, ", revision: 0x%02x)", revision);
+		cp += sprintf(cp, ", revision 0x%02x)", revision);
 	}
 }
