@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.5 2003/08/07 16:42:04 agc Exp $	*/
+/*	$NetBSD: cerror.S,v 1.6 2004/08/21 11:30:17 rearnsha Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,7 @@ ASENTRY(CERROR)
 	str	r0, [r1]
 	mvn	r0, #0x00000000
 	mvn	r1, #0x00000000
-	mov	pc, lr
+	RET
 
 #ifdef PIC
 	.align	0
