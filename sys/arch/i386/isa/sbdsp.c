@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.3 1995/03/13 14:37:12 brezak Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.4 1995/03/14 18:43:22 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sbdsp.c,v 1.3 1995/03/13 14:37:12 brezak Exp $
+ *	$Id: sbdsp.c,v 1.4 1995/03/14 18:43:22 brezak Exp $
  */
 /*
  * SoundBlaster Pro code provided by John Kohl, based on lots of
@@ -86,8 +86,6 @@ struct {
 	int rdsp;
 	int wmidi;
 } sberr;
-
-extern struct audio_device sb_device;
 
 #ifdef DEBUG
 void
@@ -192,8 +190,6 @@ sbdsp_attach(sc)
 	}
 	printf(": dsp v%d.%d\n",
 	       SBVER_MAJOR(sc->sc_model), SBVER_MINOR(sc->sc_model));
-	sprintf(sb_device.version, "%d.%d", 
-		SBVER_MAJOR(sc->sc_model), SBVER_MINOR(sc->sc_model));
 }
 
 /*
