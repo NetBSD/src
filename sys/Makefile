@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile,v 1.9 1996/10/18 06:01:04 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 1996/10/20 23:03:07 mrg Exp $
 
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
 
 SUBDIR+= arch/${MACHINE}
+
+.if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips")
+SUBDIR+= lkm
+.endif
 
 LFILES=	errno.h fcntl.h poll.h syslog.h termios.h
 MFILES=	float.h frame.h stdarg.h varargs.h
