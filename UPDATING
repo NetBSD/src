@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.88 2003/04/30 07:23:49 itojun Exp $
+$NetBSD: UPDATING,v 1.89 2003/05/16 14:19:49 christos Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,16 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20030516:
+	Due to bugs in the export handling code, invalid export lines
+	were accepted before and caused the kernel to panic when
+	mountd got restarted because it freed memory that had already
+	been freed. This has been fixed and the kernel checks
+	export addresses very strictly. If you upgrade your kernel,
+	make sure you also upgrade mountd, because if your export
+	file contains lines with an old inet4 address syntax (i.e.
+	a.b.c or a.b or a), they will get rejected by the new kernel.
 
 20030402:
 	The superblock layout for FFS was changed.  If you have 1.6
