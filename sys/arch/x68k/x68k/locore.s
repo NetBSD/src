@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.37.4.5 1999/02/13 18:01:42 minoura Exp $	*/
+/*	$NetBSD: locore.s,v 1.37.4.6 1999/03/12 15:13:38 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -509,55 +509,11 @@ Lbrkpt3:
 	.globl	_intrhand, _hardclock
 
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
+	addql	#1,_C_LABEL(intrcnt)+0
 	rte				| XXX mfpcure (x680x0 hardware bug)
 
 _kbdtimer:
 	rte
-
-_fdctrap:
-#if NFD > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(fdcintr)
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+20
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	jra	rei
-
-#if 0
-_fdcdmatrap:
-#if NFD > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(fdcdmaintr)
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+20
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	jra	rei
-
-
-_fdcdmaerrtrap:
-#if NFD > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(fdcdmaerrintr)
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+20
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	jra	rei
-#endif
 
 _audiotrap:
 #if 0
@@ -567,7 +523,7 @@ _audiotrap:
 	INTERRUPT_RESTOREREG
 #endif
 #endif
-	addql	#1,_C_LABEL(intrcnt)+52
+	addql	#1,_C_LABEL(intrcnt)+44
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else
@@ -583,7 +539,7 @@ _partrap:
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+56
+	addql	#1,_C_LABEL(intrcnt)+48
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else
@@ -597,7 +553,7 @@ _audioerrtrap:
 	jbsr	_audioerrintr
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+20
+	addql	#1,_C_LABEL(intrcnt)+32
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else
@@ -618,7 +574,7 @@ _exspctrap:
 	addql	#4,sp
 #endif
 	INTERRUPT_RESTOREREG
-	addql	#1,_C_LABEL(intrcnt)+44
+	addql	#1,_C_LABEL(intrcnt)+40
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else
@@ -633,7 +589,7 @@ _powtrap:
 	jbsr	_C_LABEL(powintr)
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+60
+	addql	#1,_C_LABEL(intrcnt)+52
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else
@@ -650,7 +606,7 @@ _com0trap:
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+68
+	addql	#1,_C_LABEL(intrcnt)+56
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else
@@ -666,7 +622,7 @@ _com1trap:
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+68
+	addql	#1,_C_LABEL(intrcnt)+56
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else
@@ -717,7 +673,7 @@ Lnotdma:
 _timertrap:
 	movw	#SPL4,sr		| XXX?
 	moveml	#0xC0C0,sp@-		| save scratch registers
-	addql	#1,_C_LABEL(intrcnt)+28	| count hardclock interrupts
+	addql	#1,_C_LABEL(intrcnt)+36	| count hardclock interrupts
 	lea	sp@(16),a1		| a1 = &clockframe
 	movl	a1,sp@-
 	jbsr	_hardclock		| hardclock(&frame)
@@ -735,7 +691,7 @@ _timertrap:
 	jra	rei			| all done
 
 _lev7intr:
-	addql	#1,_C_LABEL(intrcnt)+36
+	addql	#1,_C_LABEL(intrcnt)+28
 	clrl	sp@-
 	moveml	#0xFFFF,sp@-		| save registers
 	movl	usp,a0			| and save
@@ -1899,19 +1855,18 @@ _intrnames:
 	.asciz	"lev4"
 	.asciz	"lev5"
 	.asciz	"lev6"
-	.asciz	"clock"
-	.asciz	"statclock"
 	.asciz	"nmi"
-	.asciz	"kbd"
+	.asciz	"audioerr"
+	.asciz	"clock"
 	.asciz	"scsi"
-	.asciz	"zs"
 	.asciz	"audio"
 	.asciz	"ppi"
 	.asciz	"pow"
-	.asciz	"ed"
 	.asciz	"com"
+	.space	200
 _eintrnames:
 	.even
 _intrcnt:
-	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	.space	50
 _eintrcnt:

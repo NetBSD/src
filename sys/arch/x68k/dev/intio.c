@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.1.2.6 1999/02/13 17:51:42 minoura Exp $	*/
+/*	$NetBSD: intio.c,v 1.1.2.7 1999/03/12 15:13:37 minoura Exp $	*/
 
 /*
  *
@@ -147,6 +147,7 @@ struct cfattach intio_ca = {
 static struct intio_interrupt_vector {
 	intio_intr_handler_t	iiv_handler;
 	void			*iiv_arg;
+	int			iiv_intrcntoff;
 } iiv[256] = {0,};
 
 extern struct cfdriver intio_cd;
@@ -156,6 +157,9 @@ extern int x68k_realconfig;
 int x68k_config_found __P((struct cfdata *, struct device *,
 			   void *, cfprint_t));
 static struct cfdata *cfdata_intiobus = NULL;
+
+/* other static functions */
+static int scan_intrnames __P((const char *));
 
 static int
 intio_match(parent, cf, aux)
@@ -379,8 +383,34 @@ intio_intr_establish (vector, name, handler, arg)
 		return EBUSY;
 	iiv[vector].iiv_handler = handler;
 	iiv[vector].iiv_arg = arg;
+	iiv[vector].iiv_intrcntoff = scan_intrnames(name);
 
 	return 0;
+}
+
+static int
+scan_intrnames (name)
+	const char *name;
+{
+	extern char intrnames[];
+	extern char eintrnames[];
+	int r = 0;
+	char *p = &intrnames[0];
+
+	for (;;) {
+		if (*p == 0) {	/* new intr */
+			if (p + strlen(name) >= eintrnames)
+				panic ("Interrupt statics buffer overrun.");
+			strcpy (p, name);
+			break;
+		}
+		if (strcmp(p, name) == 0)
+			break;
+		r++;
+		while (*p++ != 0);
+	}
+
+	return r;
 }
 
 int
@@ -401,16 +431,18 @@ intio_intr (frame)
 	struct frame *frame;
 {
 	int vector = frame->f_vector / 4;
+	extern int intrcnt[];
 
+#if 0				/* this is not correct now */
 	/* CAUTION: HERE WE ARE IN SPLHIGH() */
 	/* LOWER TO APPROPRIATE IPL AT VERY FIRST IN THE HANDLER!! */
-
+#endif
 	if (iiv[vector].iiv_handler == 0) {
 		printf ("Stray interrupt: %d type %x\n", vector, frame->f_format);
 		return 0;
 	}
 
-	/* TODO: update the interrupt statics. */
+	intrcnt[iiv[vector].iiv_intrcntoff]++;
 
 	return (*(iiv[vector].iiv_handler)) (iiv[vector].iiv_arg);
 }
