@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.16 1998/09/13 16:02:49 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.17 1998/09/22 02:48:45 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -141,7 +141,7 @@ extern int cold;
 #define RW_64		0x1
 #define RW_ERR		0x2
 #define RW_FOLLOW	0x4
-int	rwindow_debug = RW_64|RW_ERR;
+int	rwindow_debug = RW_ERR;
 #define TDB_ADDFLT	0x1
 #define TDB_TXTFLT	0x2
 #define TDB_TRAP	0x4
@@ -499,6 +499,10 @@ trap(type, tstate, pc, tf)
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
 
 #ifdef DEBUG
+	if (tf->tf_pc == tf->tf_npc) {
+		printf("trap: tpc %p == tnpc %p\n", tf->tf_pc, tf->tf_npc);
+		Debugger();
+	}
 	{
 		/* Check to make sure we're on the normal stack */
 		int* sp;
@@ -560,6 +564,12 @@ trap(type, tstate, pc, tf)
 			write_all_windows();
 			if (kdb_trap(type, tf)) {
 				ADVANCE;
+				return;
+			}
+		}
+		if (type == T_PA_WATCHPT || type == T_VA_WATCHPT) {
+			if (kdb_trap(type, tf)) {
+				/* DDB must turn off watchpoints or something */
 				return;
 			}
 		}
@@ -690,37 +700,6 @@ badtrap:
 		break;
 	}
 
-#if 0
-#define read_rw(src, dst) \
-	((src&1)?copyin((caddr_t)(src), (caddr_t)(dst), sizeof(struct rwindow32))\
-	 :copyin((caddr_t)(src+BIAS), (caddr_t)(dst), sizeof(struct rwindow64)))
-
-	case T_RWRET:
-		/*
-		 * T_RWRET is a window load needed in order to rett.
-		 * It simply needs the window to which tf->tf_out[6]
-		 * (%sp) points.  There are no user or saved windows now.
-		 * Copy the one from %sp into pcb->pcb_rw[0] and set
-		 * nsaved to -1.  If we decide to deliver a signal on
-		 * our way out, we will clear nsaved.
-		 */
-		if (pcb->pcb_nsaved)
-			panic("trap T_RWRET 1");
-#ifdef DEBUG
-		if (rwindow_debug&RW_FOLLOW)
-			printf("%s[%d]: rwindow: pcb<-stack: %lx\n",
-				p->p_comm, p->p_pid, tf->tf_out[6]);
-		printf("trap: T_RWRET sent!?!\n");
-/* I don't think this is ever used */
-		Debugger();
-#endif
-		if (read_rw(tf->tf_out[6], &pcb->pcb_rw[0])) 
-			sigexit(p, SIGILL);
-		if (pcb->pcb_nsaved)
-			panic("trap T_RWRET 2");
-		pcb->pcb_nsaved = -1;		/* mark success */
-		break;
-#endif
 	case T_ALIGN:
 	case T_LDDF_ALIGN:
 	case T_STDF_ALIGN:
@@ -986,6 +965,10 @@ data_access_fault(type, addr, pc, tf)
 #endif
 
 #ifdef DEBUG
+	if (tf->tf_pc == tf->tf_npc) {
+		printf("data_access_fault: tpc %p == tnpc %p\n", tf->tf_pc, tf->tf_npc);
+		Debugger();
+	}
 	if (protmmu || missmmu) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1;
@@ -1206,6 +1189,10 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 #endif
 
 #if DEBUG
+	if (tf->tf_pc == tf->tf_npc) {
+		printf("data_access_error: tpc %p == tnpc %p\n", tf->tf_pc, tf->tf_npc);
+		Debugger();
+	}
 	if (protmmu || missmmu) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1;
@@ -1452,6 +1439,10 @@ text_access_fault(type, pc, tf)
 	u_quad_t sticks;
 
 #if DEBUG
+	if (tf->tf_pc == tf->tf_npc) {
+		printf("text_access_fault: tpc %p == tnpc %p\n", tf->tf_pc, tf->tf_npc);
+		Debugger();
+	}
 	if (protmmu || missmmu) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1;
@@ -1586,6 +1577,10 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 #endif
 	
 #if DEBUG
+	if (tf->tf_pc == tf->tf_npc) {
+		printf("text_access_error: tpc %p == tnpc %p\n", tf->tf_pc, tf->tf_npc);
+		Debugger();
+	}
 	if (protmmu || missmmu) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1;
@@ -1772,7 +1767,7 @@ syscall(code, tf, pc)
 	union args {
 		register32_t i[8];
 		register64_t l[8];
-	} args, *argsp = &args;
+	} args;
 	register_t rval[2];
 	u_quad_t sticks;
 #ifdef DIAGNOSTIC
@@ -1781,6 +1776,10 @@ syscall(code, tf, pc)
 
 #ifdef DEBUG
 	write_user_windows();
+	if (tf->tf_pc == tf->tf_npc) {
+		printf("syscall: tpc %p == tnpc %p\n", tf->tf_pc, tf->tf_npc);
+		Debugger();
+	}
 	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
 		printf("%d syscall(%x, %x, %x)\n",
 		       curproc?curproc->p_pid:-1, code, tf, pc); 
@@ -1865,7 +1864,6 @@ syscall(code, tf, pc)
 		callp += p->p_emul->e_nosys;
 	else if (tf->tf_out[6] & 1L) {
 		register64_t *argp;
-		argsp = p->p_vmspace->vm_map.pmap->syscallargs;
 #ifndef _LP64
 #ifdef DEBUG
 		printf("syscall(): 64-bit stack on a 32-bit kernel????\n");
@@ -1874,44 +1872,55 @@ syscall(code, tf, pc)
 #endif
 		/* 64-bit stack -- not really supported on 32-bit kernels */
 		callp += code;
-#if 1
-		i = (long)callp->sy_argsize / sizeof(register64_t);
-#else
 		i = callp->sy_narg; /* Why divide? */
+#ifdef DEBUG
+		if (i != (long)callp->sy_argsize / sizeof(register64_t))
+			printf("syscall %s: narg=%hd, argsize=%hd, call=%p, argsz/reg64=%ld\n",
+			       (code < 0 || code >= nsys)? "illegal syscall" : p->p_emul->e_syscallnames[code], 
+			       callp->sy_narg, callp->sy_argsize, callp->sy_call, (long)callp->sy_argsize / sizeof(register64_t));
 #endif
 		if (i > nap) {	/* usually false */
 			register64_t temp[6];
 			int j = 0;
 #ifdef DEBUG
-			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW) || i>8)
+			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW) || i>8) {
 				printf("Args64 %d>%d -- need to copyin\n", i , nap);
+			}
 #endif
 			if (i > 8)
 				panic("syscall nargs");
+#if 0
 			/* Read the whole block in */
 			error = copyin((caddr_t)tf->tf_out[6] + BIAS +
-				       offsetof(struct frame64, fr_argd),
+				       offsetof(struct frame64, fr_argx),
 				       (caddr_t)&temp, (i - nap) * sizeof(register64_t));
 			/* Copy each to the argument array */
 			for (j=0; nap+j < i; j++)
-				argsp->l[nap+j] = temp[j];
+				args.l[nap+j] = temp[j];
+#else
+			/* Read the whole block in */
+			error = copyin((caddr_t)tf->tf_out[6] + BIAS +
+				       offsetof(struct frame64, fr_argx),
+				       (caddr_t)&args.l[nap], (i - nap) * sizeof(register64_t));
+#endif
 			if (error) {
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_SYSCALL))
 					ktrsyscall(p->p_tracep, code,
-					    callp->sy_argsize, (register_t*)argsp->i);
+						   callp->sy_argsize, (register_t*)args.l);
 #endif
 				goto bad;
 			}
 			i = nap;
 		}
-		/* Need to convert from int64 to int32 or we lose */
-		for (argp = &argsp->l[0]; i--;) 
-				*argp++ = *ap++;
+		/* It should be faster to do <=6 longword copies than call bcopy */
+		for (argp = &args.l[0]; i--;) 
+			*argp++ = *ap++;
+		
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
-			for (i=0; i < (long)callp->sy_argsize / sizeof(register64_t); i++) 
-				printf("arg[%d]=%x ", i, (long)(argsp->l[i]));
+			for (i=0; i < callp->sy_narg; i++) 
+				printf("arg[%d]=%lx ", i, (long)(args.l[i]));
 			printf("\n");
 		}
 		if (trapdebug&(TDB_STOPCALL|TDB_SYSTOP)) { 
@@ -1923,6 +1932,13 @@ syscall(code, tf, pc)
 		register32_t *argp;
 		/* 32-bit stack */
 		callp += code;
+#ifdef _LP64
+#ifdef DEBUG
+		printf("syscall(): 32-bit stack on a 64-bit kernel????\n");
+		Debugger();
+#endif
+#endif
+
 #if 1
 		i = (long)callp->sy_argsize / sizeof(register32_t);
 #else
@@ -1943,33 +1959,33 @@ syscall(code, tf, pc)
 				       (caddr_t)&temp, (i - nap) * sizeof(register32_t));
 			/* Copy each to the argument array */
 			for (j=0; nap+j < i; j++)
-				argsp->i[nap+j] = temp[j];
+				args.i[nap+j] = temp[j];
 #ifdef DEBUG
 			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))	{ 
 				int k;
 				printf("Copyin args of %d from %p:\n", j, 
 				       (caddr_t)(tf->tf_out[6] + offsetof(struct frame32, fr_argx)));
 				for (k=0; k<j; k++)
-					printf("arg %d = %p at %d val %p\n", k, (long)temp[k], nap+k, (long)argsp->i[nap+k]);
+					printf("arg %d = %p at %d val %p\n", k, (long)temp[k], nap+k, (long)args.i[nap+k]);
 			}
 #endif
 			if (error) {
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_SYSCALL))
 					ktrsyscall(p->p_tracep, code,
-					    callp->sy_argsize, (register_t *)argsp->i);
+					    callp->sy_argsize, (register_t *)args.i);
 #endif
 				goto bad;
 			}
 			i = nap;
 		}
 		/* Need to convert from int64 to int32 or we lose */
-		for (argp = &argsp->i[0]; i--;) 
+		for (argp = &args.i[0]; i--;) 
 				*argp++ = *ap++;
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
 			for (i=0; i < (long)callp->sy_argsize / sizeof(register32_t); i++) 
-				printf("arg[%d]=%x ", i, (int)(argsp->i[i]));
+				printf("arg[%d]=%x ", i, (int)(args.i[i]));
 			printf("\n");
 		}
 		if (trapdebug&(TDB_STOPCALL|TDB_SYSTOP)) { 
@@ -1980,43 +1996,44 @@ syscall(code, tf, pc)
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_argsize, (register_t *)argsp->i);
+		ktrsyscall(p->p_tracep, code, callp->sy_argsize, (register_t *)args.i);
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
-	error = (*callp->sy_call)(p, argsp, rval);
+	error = (*callp->sy_call)(p, &args, rval);
 
 	switch (error) {
+		vaddr_t dest;
 	case 0:
 		/* Note: fork() does not return here in the child */
 		tf->tf_out[0] = rval[0];
 		tf->tf_out[1] = rval[1];
 		if (new) {
 			/* jmp %g2 (or %g7, deprecated) on success */
-			i = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
+			dest = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
 #ifdef DEBUG
 			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
-				printf("syscall: return tstate=%x:%x new success to %p retval %x:%x\n", 
-				       (int)(tf->tf_tstate>>32), (int)(tf->tf_tstate),
-				       i, rval[0], rval[1]);
+				printf("syscall: return tstate=%llx new success to %p retval %x:%x\n", 
+				       tf->tf_tstate, dest, rval[0], rval[1]);
 #endif
-			if (i & 3) {
+			if (dest & 3) {
 				error = EINVAL;
 				goto bad;
 			}
 		} else {
 			/* old system call convention: clear C on success */
 			tf->tf_tstate &= ~(((int64_t)(ICC_C|XCC_C))<<TSTATE_CCR_SHIFT);	/* success */
-			i = tf->tf_npc;
+			dest = tf->tf_npc;
 #ifdef DEBUG
 			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
-				printf("syscall: return tstate=%x:%x old success to %p retval %x:%x\n", 
-				       (int)(tf->tf_tstate>>32), (int)(tf->tf_tstate),
-				       i, rval[0], rval[1]);
+				printf("syscall: return tstate=%llx old success to %p retval %x:%x\n", 
+				       tf->tf_tstate, dest, rval[0], rval[1]);
+			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
+				printf("old pc=%p npc=%p dest=%p\n", tf->tf_pc, tf->tf_npc, dest);
 #endif
 		}
-		tf->tf_pc = i;
-		tf->tf_npc = i + 4;
+		tf->tf_pc = dest;
+		tf->tf_npc = dest + 4;
 		break;
 
 	case ERESTART:
@@ -2030,14 +2047,13 @@ syscall(code, tf, pc)
 			error = p->p_emul->e_errno[error];
 		tf->tf_out[0] = error;
 		tf->tf_tstate |= (((int64_t)(ICC_C|XCC_C))<<TSTATE_CCR_SHIFT);	/* fail */
-		i = tf->tf_npc;
-		tf->tf_pc = i;
-		tf->tf_npc = i + 4;
+		dest = tf->tf_npc;
+		tf->tf_pc = dest;
+		tf->tf_npc = dest + 4;
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) 
-			printf("syscall: return tstate=%x:%x fail %d to %p\n", 
-			       (int)(tf->tf_tstate>>32), (int)(tf->tf_tstate),
-			       error, i);
+			printf("syscall: return tstate=%llx fail %d to %p\n", 
+			       tf->tf_tstate, error, dest);
 #endif
 		break;
 	}
@@ -2088,269 +2104,3 @@ child_return(p)
 #endif
 }
 
-
-/*
- * Code to handle alignment faults on the sparc. This is enabled by sending
- * a fixalign trap.
- *
- * Such code is generated by compiling with cc -misalign
- * on SunOS, but we don't have such a feature yet on our gcc.
- *
- * We don't do any funny ASIs, so don't expect endianess-inversion to work.
- */
-#ifdef DEBUG_ALIGN
-# define DPRINTF(a) uprintf a
-#else
-# define DPRINTF(a)
-#endif
-
-#define GPR(tf, i)	((int64_t *) &tf->tf_global)[i]
-#define IPR(tf, i)	((int64_t *) tf->tf_out[6])[i - 16]
-#define FPR(p, i)	((int32_t) p->p_md.md_fpstate->fs_regs[i])
-
-static __inline int readgpreg __P((struct trapframe *, int, void *));
-static __inline int readfpreg __P((struct proc *, int, void *));
-static __inline int writegpreg __P((struct trapframe *, int, const void *));
-static __inline int writefpreg __P((struct proc *, int, const void *));
-
-
-static __inline int
-readgpreg(tf, i, val)
-	struct trapframe *tf;
-	int i;
-	void *val;
-{
-	int error = 0;
-	if (i == 0)
-		*(int64_t *) val = 0;
-	else if (i < 16)
-		*(int64_t *) val = GPR(tf, i);
-	else
-		error = copyin(&IPR(tf, i), val, sizeof(int64_t));
-
-	return error;
-}
-
-		
-static __inline int
-writegpreg(tf, i, val)
-	struct trapframe *tf;
-	int i;
-	const void *val;
-{
-	int error = 0;
-
-	if (i == 0)
-		return error;
-	else if (i < 16)
-		GPR(tf, i) = *(int64_t *) val;
-	else
-		/* XXX: Fix copyout prototype */
-		error = copyout((caddr_t) val, &IPR(tf, i), sizeof(int64_t));
-
-	return error;
-}
-	
-
-static __inline int
-readfpreg(p, i, val)
-	struct proc *p;
-	int i;
-	void *val;
-{
-	*(int32_t *) val = FPR(p, i);
-	return 0;
-}
-
-		
-static __inline int
-writefpreg(p, i, val)
-	struct proc *p;
-	int i;
-	const void *val;
-{
-	FPR(p, i) = *(const int32_t *) val;
-	return 0;
-}
-
-
-static int
-fixalign(p, tf)
-	struct proc *p;
-	struct trapframe *tf;
-{
-	static u_char sizedef[] = { 0x4, 0xff, 0x2, 0x8 };
-
-	/*
-	 * The following is not really a general instruction format;
-	 * it is tailored to our needs
-	 */
-	union {
-		struct {
-			unsigned fmt:2;	/* 31..30 - 2 bit format */
-			unsigned rd:5;	/* 29..25 - 5 bit destination reg */
-			unsigned fl:1;	/* 24..24 - 1 bit float flag */
-			unsigned op:1;	/* 23..23 - 1 bit opcode */
-			unsigned sgn:1;	/* 22..22 - 1 bit sign */
-			unsigned st:1;	/* 21..21 - 1 bit load/store */
-			unsigned sz:2;	/* 20..19 - 2 bit size register */
-			unsigned rs1:5;	/* 18..14 - 5 bit source reg 1 */
-			unsigned imm:1;	/* 13..13 - 1 bit immediate flag */
-			unsigned asi:8;	/* 12.. 5 - 8 bit asi bits */
-			unsigned rs2:5;	/*  4.. 0 - 5 bit source reg 2 */
-		} bits;
-		int32_t word;
-	} code;
-
-	union {
-		double	d;
-		int64_t l;
-		int32_t i[2];
-		int16_t s[4];
-		int8_t  c[8];
-	} data;
-
-	size_t size;
-	int64_t offs, addr;
-	int error;
-
-	/* fetch and check the instruction that caused the fault */
-	error = copyin((caddr_t) tf->tf_pc, &code.word, sizeof(code.word));
-	if (error != 0) {
-		DPRINTF(("fixalign: Bad instruction fetch\n"));
-		return EINVAL;
-	}
-
-	/* Only support format 3 */
-	if (code.bits.fmt != 3) {
-		DPRINTF(("fixalign: Not a load or store\n"));
-		return EINVAL;
-	}
-
-	/* Check operand size */
-	if ((size = sizedef[code.bits.sz]) == 0xff) {
-		DPRINTF(("fixalign: Bad operand size\n"));
-		return EINVAL;
-	}
-
-	write_user_windows();
-
-	if ((error = readgpreg(tf, code.bits.rs1, &addr)) != 0) {
-		DPRINTF(("fixalign: read rs1 %d\n", error));
-		return error;
-	}
-
-	/* Handle immediate operands */
-	if (code.bits.imm) {
-		offs = code.word & 0x1fff;
-		if (offs & 0x1000)	/* Sign extend */
-			offs |= 0xffffe;
-	}
-	else {
-		if (code.bits.asi) {
-			DPRINTF(("fixalign: Illegal instruction\n"));
-			return EINVAL;
-		}
-		if ((error = readgpreg(tf, code.bits.rs2, &offs)) != 0) {
-			DPRINTF(("fixalign: read rs2 %d\n", error));
-			return error;
-		}
-	}
-	addr += offs;
-
-#ifdef DEBUG_ALIGN
-	uprintf("memalign %x: %s%c%c %c%d, r%d, ", code.word,
-	    code.bits.st ? "st" : "ld", "us"[code.bits.sgn],
-	    "w*hd"[code.bits.sz], "rf"[code.bits.fl], code.bits.rd,
-	    code.bits.rs1);
-	if (code.bits.imm)
-		uprintf("0x%x\n", offs);
-	else
-		uprintf("r%d\n", code.bits.rs2);
-#endif
-#ifdef DIAGNOSTIC
-	if (code.bits.fl && p != fpproc)
-		panic("fp align without being the FP owning process");
-#endif
-
-	if (code.bits.st) {
-		if (code.bits.fl) {
-			savefpstate(p->p_md.md_fpstate);
-
-			error = readfpreg(p, code.bits.rd, &data.i[0]);
-			if (error)
-				return error;
-			if (size == 8) {
-				error = readfpreg(p, code.bits.rd + 1,
-				    &data.i[1]);
-				if (error)
-					return error;
-			}
-		}
-		else {
-			error = readgpreg(tf, code.bits.rd, &data.l);
-			if (error)
-				return error;
-			if (size == 8 && !code.bits.sgn) {
-				int64_t temp;
-				/* std or stda -- get things in the right regs. */
-
-				temp = data.l;
-				data.i[0] = temp;
-				error = readgpreg(tf, code.bits.rd + 1, &temp);
-				data.i[1] = temp;
-				if (error)
-					return error;
-			}
-		}
-
-		if (size == 2)
-			return copyout(&data.s[1], (caddr_t) addr, size);
-		else
-			return copyout(&data.d, (caddr_t) addr, size);
-	}
-	else { /* load */
-		if (size == 2) {
-			error = copyin((caddr_t) addr, &data.s[1], size);
-			if (error)
-				return error;
-
-			/* Sign extend if necessary */
-			if (code.bits.sgn && (data.s[1] & 0x8000) != 0)
-				data.s[0] = ~0;
-			else
-				data.s[0] = 0;
-		}
-		else
-			error = copyin((caddr_t) addr, &data.d, size);
-
-		if (error)
-			return error;
-
-		if (code.bits.fl) {
-			error = writefpreg(p, code.bits.rd, &data.i[0]);
-			if (error)
-				return error;
-			if (size == 8) {
-				error = writefpreg(p, code.bits.rd + 1,
-				    &data.i[1]);
-				if (error)
-					return error;
-			}
-			loadfpstate(p->p_md.md_fpstate);
-		}
-		else {
-			if (size == 8 && !code.bits.sgn) {
-				u_int64_t temp;
-				/* ldd or ldda -- get things in the right regs. */
-
-				temp = (unsigned int)data.i[0]; /* Do not sign extend */
-				error = writegpreg(tf, code.bits.rd, &temp);
-				temp = (unsigned int)data.i[1]; /* Do not sign extend */
-				if (!error)
-					error = writegpreg(tf, code.bits.rd + 1, &temp);
-			} else error = writegpreg(tf, code.bits.rd, &data.i[0]);
-		}
-	}
-	return error;
-}

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.2 1998/09/22 02:48:43 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,6 +99,31 @@ fpu_itof(fp, i)
 	fp->fp_exp = FP_LG;
 	fp->fp_mant[0] = (int)i < 0 ? -i : i;
 	fp->fp_mant[1] = 0;
+	fp->fp_mant[2] = 0;
+	fp->fp_mant[3] = 0;
+	fpu_norm(fp);
+	return (FPC_NUM);
+}
+
+/*
+ * 64-bit int -> fpn.
+ */
+int
+fpu_xitof(fp, i)
+	register struct fpn *fp;
+	register u_int64_t i;
+{
+
+	if (i == 0)
+		return (FPC_ZERO);
+	/*
+	 * The value FP_1 represents 2^FP_LG, so set the exponent
+	 * there and let normalization fix it up.  Convert negative
+	 * numbers to sign-and-magnitude.  Note that this relies on
+	 * fpu_norm()'s handling of `supernormals'; see fpu_subr.c.
+	 */
+	fp->fp_exp = FP_LG2;
+	*((int64_t*)fp->fp_mant) = (int64_t)i < 0 ? -i : i;
 	fp->fp_mant[2] = 0;
 	fp->fp_mant[3] = 0;
 	fpu_norm(fp);
@@ -220,12 +245,19 @@ fpu_explode(fe, fp, type, reg)
 	int type, reg;
 {
 	register u_int s, *space;
+	u_int64_t l, *xspace;
 
 	space = &fe->fe_fpstate->fs_regs[reg];
+	xspace = &fe->fe_fpstate->fs_regs[reg & ~1];
 	s = space[0];
+	l = xspace[0];
 	fp->fp_sign = s >> 31;
 	fp->fp_sticky = 0;
 	switch (type) {
+
+	case FTYPE_LNG:
+		s = fpu_xitof(fp, l);
+		break;
 
 	case FTYPE_INT:
 		s = fpu_itof(fp, s);
