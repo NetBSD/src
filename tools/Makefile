@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.66 2003/07/16 12:57:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.67 2003/07/16 13:13:42 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -54,7 +54,7 @@ check_MKTOOLS: .PHONY .NOTMAIN
 .endif
 
 .if ${MKTOOLS:Uyes} == "no" || ${USETOOLS} != "yes"	# {
-realall install: check_MKTOOLS
+realall realdepend install: check_MKTOOLS
 
 .for dir in ${SUBDIR:N.WAIT}
 all-${dir} depend-${dir} dependall-${dir} install-${dir}:
@@ -73,7 +73,7 @@ PREVIOUSTOOLDIR=
 
 CLEANFILES+=	PREVIOUSTOOLDIR
 
-realall:
+realall realdepend:
 .if (${PREVIOUSTOOLDIR} != ${TOOLDIR})
 	@echo "*** WARNING: TOOLDIR has moved?"
 	@echo "*** PREVIOUSTOOLDIR '${PREVIOUSTOOLDIR}'"
