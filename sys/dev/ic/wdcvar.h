@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.70 2004/08/12 22:33:45 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.71 2004/08/12 22:39:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -220,9 +220,6 @@ void	wdc_reset_drive(struct ata_drive_datas *, int);
 void	wdc_reset_channel(struct wdc_channel *, int);
 
 int	wdc_exec_command(struct ata_drive_datas *, struct ata_command*);
-
-int	wdc_addref(struct wdc_channel *);
-void	wdc_delref(struct wdc_channel *);
 
 /*	
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write

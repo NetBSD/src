@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.199 2004/08/12 22:33:45 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.200 2004/08/12 22:39:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.199 2004/08/12 22:33:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.200 2004/08/12 22:39:41 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -469,7 +469,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
         free(atabus_initq, M_DEVBUF);
         wakeup(&atabus_initq_head);
 
-	wdc_delref(chp);
+	ata_delref(chp);
 
 	config_pending_decr();
 }
@@ -1850,38 +1850,6 @@ wdcbit_bucket(struct wdc_channel *chp, int size)
 		(void)bus_space_read_2(chp->cmd_iot, chp->cmd_iohs[wd_data], 0);
 	if (size)
 		(void)bus_space_read_1(chp->cmd_iot, chp->cmd_iohs[wd_data], 0);
-}
-
-int
-wdc_addref(struct wdc_channel *chp)
-{
-	struct wdc_softc *wdc = chp->ch_wdc; 
-	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
-	int s, error = 0;
-
-	s = splbio();
-	if (adapt->adapt_refcnt++ == 0 &&
-	    adapt->adapt_enable != NULL) {
-		error = (*adapt->adapt_enable)(&wdc->sc_dev, 1);
-		if (error)
-			adapt->adapt_refcnt--;
-	}
-	splx(s);
-	return (error);
-}
-
-void
-wdc_delref(struct wdc_channel *chp)
-{
-	struct wdc_softc *wdc = chp->ch_wdc;
-	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
-	int s;
-
-	s = splbio();
-	if (adapt->adapt_refcnt-- == 1 &&
-	    adapt->adapt_enable != NULL)
-		(void) (*adapt->adapt_enable)(&wdc->sc_dev, 0);
-	splx(s);
 }
 
 void
