@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
- *	$Id: vnode.h,v 1.11 1993/09/07 15:41:57 ws Exp $
+ *	$Id: vnode.h,v 1.12 1993/12/21 05:41:52 cgd Exp $
  */
 
 #ifndef _SYS_VNODE_H_
@@ -50,15 +50,15 @@
 /*
  * vnode types. VNON means no type.
  */
-enum vtype 	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VPROC, VBAD };
+enum vtype 	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
 
 /*
  * Vnode tag types.
  * These are for the benefit of external programs only (e.g., pstat)
  * and should NEVER be inspected inside the kernel.
  */
-enum vtagtype	{ VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_MSDOSFS, VT_ISOFS,
-		  VT_KERNFS, VT_FDESC, VT_PROCFS };
+enum vtagtype	{ VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_LFS VT_MSDOSFS, VT_ISOFS,
+		  VT_KERNFS, VT_FDESC, VT_PROCFS, VT_LOFS, VT_PORTAL };
 
 /*
  * This defines the maximum size of the private data area
@@ -135,6 +135,7 @@ struct vattr {
 	/* XXX should be a dev_t */
 	u_long		va_rdev;	/* device the special file represents */
 	u_quad		va_qbytes;	/* bytes of disk space held by file */
+	u_int		va_vaflags;	/* operations flags, see below */
 };
 #if BYTE_ORDER == LITTLE_ENDIAN
 #define	va_size		va_qsize.val[0]
@@ -147,6 +148,11 @@ struct vattr {
 #define	va_bytes	va_qbytes.val[1]
 #define	va_bytes_rsv	va_qbytes.val[0]
 #endif
+
+/*
+ * Flags for va_vaflags.
+ */
+#define	VA_UTIMES_NULL	0x01		/* utimes argument was NULL */
 
 /*
  * Operations on vnodes.
@@ -231,7 +237,7 @@ struct vnodeops {
 #define	VOP_WRITE(v,u,i,c)	(*((v)->v_op->vop_write))(v,u,i,c)
 #define	VOP_IOCTL(v,o,d,f,c,p)	(*((v)->v_op->vop_ioctl))(v,o,d,f,c,p)
 #define	VOP_SELECT(v,w,f,c,p)	(*((v)->v_op->vop_select))(v,w,f,c,p)
-#define	VOP_MMAP(v,c,p)		(*((v)->v_op->vop_mmap))(v,c,p)
+#define	VOP_MMAP(v,f,c,p)	(*((v)->v_op->vop_mmap))(v,f,c,p)
 #define	VOP_FSYNC(v,f,c,w,p)	(*((v)->v_op->vop_fsync))(v,f,c,w,p)
 #define	VOP_SEEK(v,p,o,w)	(*((v)->v_op->vop_seek))(v,p,o,w)
 #define	VOP_REMOVE(n,p)		(*((n)->ni_dvp->v_op->vop_remove))(n,p)
@@ -240,7 +246,7 @@ struct vnodeops {
 #define	VOP_MKDIR(n,a,p)	(*((n)->ni_dvp->v_op->vop_mkdir))(n,a,p)
 #define	VOP_RMDIR(n,p)		(*((n)->ni_dvp->v_op->vop_rmdir))(n,p)
 #define	VOP_SYMLINK(n,a,m,p)	(*((n)->ni_dvp->v_op->vop_symlink))(n,a,m,p)
-#define	VOP_READDIR(v,u,c,e,k,n)	(*((v)->v_op->vop_readdir))(v,u,c,e,k,n)
+#define	VOP_READDIR(v,u,c,e,k,n) (*((v)->v_op->vop_readdir))(v,u,c,e,k,n)
 #define	VOP_READLINK(v,u,c)	(*((v)->v_op->vop_readlink))(v,u,c)
 #define	VOP_ABORTOP(n)		(*((n)->ni_dvp->v_op->vop_abortop))(n)
 #define	VOP_INACTIVE(v,p)	(*((v)->v_op->vop_inactive))(v,p)
