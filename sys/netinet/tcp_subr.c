@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.67 1999/07/01 08:12:51 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.68 1999/07/02 12:45:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -256,6 +256,7 @@ tcp_template(tp)
 		return NULL;	/*EINVAL*/
 #endif
 	default:
+		hlen = 0;	/*pacify gcc*/
 		return NULL;	/*EAFNOSUPPORT*/
 	}
 	if ((m = tp->t_template) == 0) {
@@ -444,6 +445,11 @@ tcp_respond(tp, template, m, ack, seq, flags)
 			th = (struct tcphdr *)(ip6 + 1);
 			break;
 #endif
+		default:	/*pacify gcc*/
+			ip = NULL;
+			ip6 = NULL;
+			th = NULL;
+			break;
 		}
 		flags = TH_ACK;
 	} else {
@@ -653,6 +659,9 @@ tcp_respond(tp, template, m, ack, seq, flags)
 		error = ip6_output(m, NULL, (struct route_in6 *)ro, 0, NULL);
 		break;
 #endif
+	default:
+		error = EAFNOSUPPORT;
+		break;
 	}
 
 	if (ro == (struct route *)&iproute) {
