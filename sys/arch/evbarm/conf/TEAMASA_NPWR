@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.7 2002/04/12 08:10:56 gmcgarry Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.8 2002/04/12 21:45:13 thorpej Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -137,6 +137,7 @@ options 	SYMTAB_SPACE=200000
 
 config		netbsd		root on ? type ?
 config		netbsd-wm0	root on wm0 type nfs
+config		netbsd-sd0	root on sd0 type ?
 
 # The main bus device
 mainbus0	at root
