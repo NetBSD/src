@@ -88,6 +88,13 @@ struct aout_link_hash_table
     (boolean (*) PARAMS ((struct bfd_link_hash_entry *, PTR))) (func),	\
     (info)))
 
+typedef struct aout_symbol {
+  asymbol symbol;
+  short desc;
+  char other;
+  unsigned char type;
+} aout_symbol_type;
+
 /* Get the a.out link hash table from the info structure.  This is
    just a cast.  */
 
@@ -168,6 +175,15 @@ struct aout_backend_data
   /* Called at the end of a link to finish up any dynamic linking
      information.  */
   boolean (*finish_dynamic_link) PARAMS ((bfd *, struct bfd_link_info *));
+
+  /* Translate an a.out symbol into a BFD symbol.  */
+  boolean (*translate_from_native_sym_flags) PARAMS ((bfd *, 
+                                                      aout_symbol_type *));
+
+  /* Set the fields of the external_nlist according to the asybol.  */
+  boolean (*translate_to_native_sym_flags) PARAMS ((bfd *, 
+                                                    asymbol *,
+                                                    struct external_nlist *));
 };
 #define aout_backend_info(abfd) \
 	((CONST struct aout_backend_data *)((abfd)->xvec->backend_data))
@@ -289,13 +305,6 @@ enum machine_type {
 ((exec).a_info = \
  ((exec).a_info&0x00ffffff) | (((flags) & 0xff) << 24))
 #endif
-
-typedef struct aout_symbol {
-  asymbol symbol;
-  short desc;
-  char other;
-  unsigned char type;
-} aout_symbol_type;
 
 /* The `tdata' struct for all a.out-like object file formats.
    Various things depend on this struct being around any time an a.out

@@ -246,6 +246,9 @@ typedef enum bfd_format {
 /* This flag indicates that the BFD contents are actually cached in
    memory.  If this is set, iostream points to a bfd_in_memory struct.  */
 #define BFD_IN_MEMORY 0x800
+
+/* BFD is a position independent object. */
+#define BFD_PIC 0x1000
 
 /* symbols and relocation */
 
