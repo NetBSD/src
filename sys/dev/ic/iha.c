@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.19 2002/11/14 17:07:42 tsutsui Exp $ */
+/*	$NetBSD: iha.c,v 1.20 2002/12/08 01:09:34 jmc Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.19 2002/11/14 17:07:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.20 2002/12/08 01:09:34 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2210,7 +2210,7 @@ iha_resel(sc)
 	}
 
 	target = bus_space_read_1(iot, ioh, TUL_SBID);
-	lun = bus_space_read_1(iot, ioh, TUL_SALVC) & MSG_IDENTIFY_LUNMASK;
+	lun = bus_space_read_1(iot, ioh, TUL_SALVC) & IHA_MSG_IDENTIFY_LUNMASK;
 
 	tcs = &sc->sc_tcs[target];
 
