@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.50 1997/07/08 19:58:14 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.51 1997/07/08 22:14:42 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -903,7 +903,7 @@ cpumatch_turbosparc(sc, mp, node)
 {
 	int i;
 
-	if (node == 0)
+	if (node == 0 || sc->master == 0)
 		return;
 
 	i = getpsr();
