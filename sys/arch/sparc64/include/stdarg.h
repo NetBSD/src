@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.10 2000/06/29 20:15:24 eeh Exp $ */
+/*	$NetBSD: stdarg.h,v 1.11 2000/07/23 21:36:56 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,25 +74,25 @@ typedef _BSD_VA_LIST_	va_list;
 /*
  * For sparcv9 code.
  */
-#define	__va_arg(ap, type) \
-	(*(type *)(void *)((ap) += 8, (ap) - (sizeof (type))))
-
-/* Like __va_arg(), except when the type must be 16-byte aligned. */
+#define	__va_arg8(ap, type) \
+	(*(type *)(void *)((ap) += 8, (ap) - 8))
 #define	__va_arg16(ap, type) \
-	(*(type *)((__alignof__(type) == 16 ?				\
-		    (ap) = (va_list)(((unsigned long)(ap) + 31) & -16) :\
-			((ap) += 16)), (ap) - (sizeof (type))))
+	(*(type *)(void *)((ap) = (va_list)(((unsigned long)(ap) + 31) & -16),\
+			   (ap) - 16))
+#define	__va_int(ap, type) \
+	(*(type *)(void *)((ap) += 8, (ap) - sizeof(type)))
 
 #define	__REAL_TYPE_CLASS	8
 #define	__RECORD_TYPE_CLASS	12
 #define va_arg(ap, type) \
 	(__builtin_classify_type(*(type *)0) == __REAL_TYPE_CLASS ?	\
-	 __va_arg16(ap, type) :						\
+	 (__alignof__(type) == 16 ? __va_arg16(ap, type) :		\
+	  __va_arg8(ap, type)) :					\
 	 (__builtin_classify_type(*(type *)0) < __RECORD_TYPE_CLASS ?	\
-	  __va_arg(ap, type) :						\
-	  (sizeof(type) <= 8 ? __va_arg(ap, type) :			\
+	  __va_int(ap, type) :						\
+	  (sizeof(type) <= 8 ? __va_arg8(ap, type) :			\
 	   (sizeof(type) <= 16 ? __va_arg16(ap, type) :			\
-	    *__va_arg(ap, type *)))))
+	    *__va_arg8(ap, type *)))))
 #else
 /* 
  * For sparcv8 code.
