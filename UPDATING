@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.132 2005/01/04 19:14:00 jmmv Exp $
+$NetBSD: UPDATING,v 1.133 2005/01/06 23:28:56 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+20041229:
+	Make had a path resolution bug that manifested itself as not
+	being able to install openpam.3. This bug has been fixed, but
+	you might need to rebuild make manually first to get through
+	the build.
+
 20041201:
 	Userland programs have been changed to use /dev/bpf instead of
 	/dev/bpfX. You need to create that device by installing a new
