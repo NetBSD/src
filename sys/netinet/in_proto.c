@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.39 2000/04/19 06:30:54 itojun Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.40 2000/07/10 09:31:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -303,4 +303,5 @@ int	tcp_syn_cache_interval = 1;	/* runs timer twice a second */
 
 struct timeval tcp_rst_ratelim = { 0, 10000 };	/* 10000usec = 10msec */
 
-struct timeval icmperrratelim = { 0, 1000 };	/* 1000usec = 1msec */
+struct timeval icmperrratelim = { 0, 0 };	/* no ratelimit */
+int icmperrppslim = 100;			/* 100pps */
