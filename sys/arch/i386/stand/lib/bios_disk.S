@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.2 1998/10/15 15:28:22 ws Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.3 1998/10/27 14:08:55 ws Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -192,7 +192,7 @@ ENTRY(int13_extension)
 
 	movb	$0x41, %ah		# ask for disk info
 	int	$0x13
-	setc	%dl
+	setnc	%dl
 
 	data32
 	CALL	_C_LABEL(real_to_prot)	# switch back
