@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.76 2004/03/26 19:55:13 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.76.2.1 2004/04/28 05:39:15 jmc Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -84,6 +84,7 @@ struct disk_desc {
 static int foundffs(struct data *, size_t);
 static int mount_root(void);
 static int fsck_preen(const char *, int, const char *);
+static void fixsb(const char *, const char *, char);
 
 #ifndef DISK_NAMES
 #define DISK_NAMES "wd", "sd", "ld"
@@ -504,7 +505,7 @@ foundffs(struct data *list, size_t num)
 }
 
 /*
- * Do an fsck. On failure,  inform the user by showing a warning
+ * Do an fsck. On failure, inform the user by showing a warning
  * message and doing menu_ok() before proceeding.
  * Returns 0 on success, or nonzero return code from fsck() on failure.
  */
@@ -523,13 +524,69 @@ fsck_preen(const char *disk, int ptn, const char *fsname)
 		return 0;
 	if (access(prog, X_OK) != 0)
 		return 0;
+	if (!strcmp(fsname,"ffs"))
+		fixsb(prog, disk, ptn);
 	error = run_program(0, "%s -p -q /dev/r%s%c", prog, disk, ptn);
 	free(prog);
 	if (error != 0) {
 		msg_display(MSG_badfs, disk, ptn, error);
 		process_menu(MENU_ok, NULL);
+		/* XXX at this point maybe we should run a full fsck? */
 	}
 	return error;
+}
+
+/* This performs the same function as the etc/rc.d/fixsb script
+ * which attempts to correct problems with ffs1 filesystems
+ * which may have been introduced by booting a netbsd-current kernel
+ * from between April of 2003 and January 2004. For more information
+ * This script was developed as a response to NetBSD pr install/25138
+ * Additional prs regarding the original issue include:
+ *  bin/17910 kern/21283 kern/21404 port-macppc/23925 port-macppc/23926
+ */
+static void
+fixsb(const char *prog, const char *disk, char ptn)
+{
+	int fd;
+	int rval;
+	union {
+		struct fs fs;
+		char buf[SBLOCKSIZE];
+	} sblk;
+	struct fs *fs = &sblk.fs;
+
+	snprintf(sblk.buf, sizeof(sblk.buf), "/dev/r%s%c", disk, ptn);
+	fd = open(sblk.buf, O_RDONLY);
+	if (fd == -1)
+		return;
+
+	/* Read ffsv1 main superblock */
+	rval = pread(fd, sblk.buf, sizeof sblk.buf, SBLOCK_UFS1);
+	close(fd);
+	if (rval != sizeof sblk.buf)
+		return;
+
+	if (fs->fs_magic != FS_UFS1_MAGIC &&
+	    fs->fs_magic != FS_UFS1_MAGIC_SWAPPED)
+		/* Not FFSv1 */
+		return;
+	if (fs->fs_old_flags & FS_FLAGS_UPDATED)
+		/* properly updated fslevel 4 */
+		return;
+	if (fs->fs_bsize != fs->fs_maxbsize)
+		/* not messed up */
+		return;
+
+	/*
+	 * OK we have a munged fs, first 'upgrade' to fslevel 4,
+	 * We specify -b16 in order to stop fsck bleating that the
+	 * sb doesn't match the first alternate.
+	 */
+	run_program(RUN_DISPLAY | RUN_PROGRESS,
+	    "%s -p -b 16 -c 4 /dev/r%s%c", prog, disk, ptn);
+	/* Then downgrade to fslevel 3 */
+	run_program(RUN_DISPLAY | RUN_PROGRESS,
+	    "%s -p -c 3 /dev/r%s%c", prog, disk, ptn);
 }
 
 /*
