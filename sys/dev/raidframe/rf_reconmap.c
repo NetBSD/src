@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.6 1999/08/14 21:44:24 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.7 2001/07/18 06:45:34 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,7 +42,7 @@
  * has been either totally reconstructed or not at all.  Both
  * are illegal pointer values, so you have to be careful not to
  * dereference through them.  RU_NOTHING must be zero, since
- * MakeReconMap uses bzero to initialize the structure.  These are used
+ * MakeReconMap uses memset to initialize the structure.  These are used
  * only at the head of the list.
  */
 #define RU_ALL      ((RF_ReconMapListElem_t *) -1)
@@ -96,7 +96,8 @@ rf_MakeReconMap(raidPtr, ru_sectors, disk_sectors, spareUnitsPerDisk)
 	RF_Malloc(p->status, num_rus * sizeof(RF_ReconMapListElem_t *), (RF_ReconMapListElem_t **));
 	RF_ASSERT(p->status != (RF_ReconMapListElem_t **) NULL);
 
-	(void) bzero((char *) p->status, num_rus * sizeof(RF_ReconMapListElem_t *));
+	(void) memset((char *) p->status, 0,
+	    num_rus * sizeof(RF_ReconMapListElem_t *));
 
 	p->size = sizeof(RF_ReconMap_t) + num_rus * sizeof(RF_ReconMapListElem_t *);
 	p->maxSize = p->size;

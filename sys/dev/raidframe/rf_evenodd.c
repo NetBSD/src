@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.4 2000/01/07 03:40:59 oster Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.5 2001/07/18 06:45:33 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -427,7 +427,7 @@ rf_VerifyParityEvenOdd(raidPtr, raidAddr, parityPDA, correct_it, flags)
 	blockNode->succedents[layoutPtr->numDataCol + 1]->params[0].p = asmap->qInfo;
 
 	/* fire off the DAG */
-	bzero((char *) &tracerec, sizeof(tracerec));
+	memset((char *) &tracerec, 0, sizeof(tracerec));
 	rd_dag_h->tracerec = &tracerec;
 
 	if (rf_verifyParityDebug) {
@@ -488,7 +488,7 @@ rf_VerifyParityEvenOdd(raidPtr, raidAddr, parityPDA, correct_it, flags)
 		wrBlock->succedents[0]->params[0].p = asmap->parityInfo;
 		wrBlock->succedents[0]->params[2].v = psID;
 		wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
-		bzero((char *) &tracerec, sizeof(tracerec));
+		memset((char *) &tracerec, 0, sizeof(tracerec));
 		wr_dag_h->tracerec = &tracerec;
 		if (rf_verifyParityDebug) {
 			printf("Parity verify write dag:\n");
@@ -517,7 +517,7 @@ rf_VerifyParityEvenOdd(raidPtr, raidAddr, parityPDA, correct_it, flags)
 		wrBlock->succedents[0]->params[0].p = asmap->qInfo;
 		wrBlock->succedents[0]->params[2].v = psID;
 		wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
-		bzero((char *) &tracerec, sizeof(tracerec));
+		memset((char *) &tracerec, 0, sizeof(tracerec));
 		wr_dag_h->tracerec = &tracerec;
 		if (rf_verifyParityDebug) {
 			printf("Dag of write new second redundant information in parity verify :\n");

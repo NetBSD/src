@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.7 2001/01/26 03:50:53 oster Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.8 2001/07/18 06:45:33 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -410,7 +410,8 @@ rf_RecoveryEFunc(node)
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
 	RF_Etimer_t timer;
 
-	bzero((char *) node->results[0], rf_RaidAddressToByte(raidPtr, failedPDA->numSector));
+	memset((char *) node->results[0], 0,
+	    rf_RaidAddressToByte(raidPtr, failedPDA->numSector));
 	if (node->dagHdr->status == rf_enable) {
 		RF_ETIMER_START(timer);
 		for (i = 0; i < node->numParams - 2; i += 2)
@@ -495,8 +496,8 @@ rf_doubleEOdecode(
 #endif
 	RF_ASSERT(*((long *) dest[0]) == 0);
 	RF_ASSERT(*((long *) dest[1]) == 0);
-	bzero((char *) P, bytesPerEU);
-	bzero((char *) temp, bytesPerEU);
+	memset((char *) P, 0, bytesPerEU);
+	memset((char *) temp, 0, bytesPerEU);
 	RF_ASSERT(*P == 0);
 	/* calculate the 'P' parameter, which, not parity, is the Xor of all
 	 * elements in the last two column, ie. 'E' and 'parity' colume, see
@@ -710,7 +711,7 @@ rf_EvenOddDoubleRecoveryFunc(node)
 	if (nresults == 1) {
 		/* find the startSector to begin decoding */
 		pda = node->results[0];
-		bzero(pda->bufPtr, bytesPerSector * pda->numSector);
+		memset(pda->bufPtr, 0, bytesPerSector * pda->numSector);
 		fsuoff[0] = rf_StripeUnitOffset(layoutPtr, pda->startSector);
 		fsuend[0] = fsuoff[0] + pda->numSector;
 		startSector = fsuoff[0];
@@ -734,9 +735,9 @@ rf_EvenOddDoubleRecoveryFunc(node)
 	} else {
 		RF_ASSERT(nresults == 2);
 		pda0 = node->results[0];
-		bzero(pda0->bufPtr, bytesPerSector * pda0->numSector);
+		memset(pda0->bufPtr, 0, bytesPerSector * pda0->numSector);
 		pda1 = node->results[1];
-		bzero(pda1->bufPtr, bytesPerSector * pda1->numSector);
+		memset(pda1->bufPtr, 0, bytesPerSector * pda1->numSector);
 		/* determine the failed colume numbers of the two failed
 		 * disks. */
 		fcol[0] = rf_EUCol(layoutPtr, pda0->raidAddress);
@@ -786,21 +787,21 @@ rf_EvenOddDoubleRecoveryFunc(node)
 			dest[0] = ((RF_PhysDiskAddr_t *) node->results[0])->bufPtr + rf_RaidAddressToByte(raidPtr, sector - fsuoff[0]);
 			/* Always malloc temp buffer to dest[1]  */
 			RF_Malloc(dest[1], bytesPerSector, (char *));
-			bzero(dest[1], bytesPerSector);
+			memset(dest[1], 0, bytesPerSector);
 			mallc_two = 1;
 		} else {
 			if (fsuoff[0] <= sector && sector < fsuend[0])
 				dest[0] = ((RF_PhysDiskAddr_t *) node->results[0])->bufPtr + rf_RaidAddressToByte(raidPtr, sector - fsuoff[0]);
 			else {
 				RF_Malloc(dest[0], bytesPerSector, (char *));
-				bzero(dest[0], bytesPerSector);
+				memset(dest[0], 0, bytesPerSector);
 				mallc_one = 1;
 			}
 			if (fsuoff[1] <= sector && sector < fsuend[1])
 				dest[1] = ((RF_PhysDiskAddr_t *) node->results[1])->bufPtr + rf_RaidAddressToByte(raidPtr, sector - fsuoff[1]);
 			else {
 				RF_Malloc(dest[1], bytesPerSector, (char *));
-				bzero(dest[1], bytesPerSector);
+				memset(dest[1], 0, bytesPerSector);
 				mallc_two = 1;
 			}
 			RF_ASSERT(mallc_one == 0 || mallc_two == 0);
@@ -917,8 +918,8 @@ rf_EOWriteDoubleRecoveryFunc(node)
 	RF_Malloc(olddata[1], numbytes, (char *));
 	dest[0] = olddata[0];
 	dest[1] = olddata[1];
-	bzero(olddata[0], numbytes);
-	bzero(olddata[1], numbytes);
+	memset(olddata[0], 0, numbytes);
+	memset(olddata[1], 0, numbytes);
 	/* Begin the recovery decoding, initially buf[j],  ebuf, pbuf, dest[j]
 	 * have already pointed at the beginning of each source buffers and
 	 * destination buffers */

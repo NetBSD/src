@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdegdags.c,v 1.5 1999/08/15 02:36:40 oster Exp $	*/
+/*	$NetBSD: rf_pqdegdags.c,v 1.6 2001/07/18 06:45:34 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -345,7 +345,7 @@ rf_PQWriteDoubleRecoveryFunc(node)
 		rf_PQ_recover((unsigned long *) ppda->bufPtr, (unsigned long *) qpda->bufPtr, (unsigned long *) qpda->bufPtr, (unsigned long *) ppda->bufPtr, rf_RaidAddressToByte(raidPtr, pda->numSector), i, coeff);
 
 	/* OK. The valid data is in P. Zero fill Q, then inc it into it. */
-	bzero(qpda->bufPtr, rf_RaidAddressToByte(raidPtr, qpda->numSector));
+	memset(qpda->bufPtr, 0, rf_RaidAddressToByte(raidPtr, qpda->numSector));
 	rf_IncQ((unsigned long *) qpda->bufPtr, (unsigned long *) ppda->bufPtr, rf_RaidAddressToByte(raidPtr, qpda->numSector), i);
 
 	/* now apply all the write data to the buffer */
