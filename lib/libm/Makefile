@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.44 1999/02/15 09:33:41 he Exp $
+#  $NetBSD: Makefile,v 1.45 1999/07/01 20:46:35 is Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -60,7 +60,7 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 	    s_scalbn.S s_scalbnf.S s_significand.S s_significandf.S s_sin.S \
 	    s_sinf.S s_tan.S s_tanf.S
 .endif
-.elif (${MACHINE_ARCH} == "m68k")
+.elif (${MACHINE_ARCH} == "m68k") && !defined(M68060) && !defined(M68040)
 .PATH:	${.CURDIR}/arch/mc68881
 ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 	    e_log10.S e_remainder.S e_scalb.S e_sinh.S e_sqrt.S s_atan.S \
