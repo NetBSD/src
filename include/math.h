@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.38 2004/07/10 13:49:09 junyoung Exp $	*/
+/*	$NetBSD: math.h,v 1.39 2004/07/12 23:44:52 kleink Exp $	*/
 
 /*
  * ====================================================
@@ -203,7 +203,6 @@ double	ceil __P((double));
 double	fabs __P((double));
 double	floor __P((double));
 double	fmod __P((double, double));
-double	round __P((double));
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 double	erf __P((double));
@@ -308,6 +307,7 @@ float	lgammaf __P((float));
 float	ceilf __P((float));
 float	floorf __P((float));
 float	rintf __P((float));
+double	round __P((double));
 float	roundf __P((float));
 long int	lrint __P((double));
 long int	lrintf __P((float));
