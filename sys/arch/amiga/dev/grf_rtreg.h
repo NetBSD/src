@@ -1,5 +1,5 @@
 /*
- *	$Id: grf_rtreg.h,v 1.3 1994/02/11 07:01:42 chopps Exp $
+ *	$Id: grf_rtreg.h,v 1.4 1994/05/08 05:53:08 chopps Exp $
  */
 
 #ifndef _GRF_RTREG_H
@@ -489,13 +489,6 @@ static inline unsigned char RGfx(volatile void * ba, short idx) {
 	return vgar (ba, GCT_ADDRESS_R);
 }
 
-/* yes I know they don't belong here... */
-struct ite_softc;
-extern void retina_init (struct ite_softc *ip);
-extern void retina_cursor (struct ite_softc *ip, int flag);
-extern void retina_deinit (struct ite_softc *ip);
-extern void retina_putc (struct ite_softc *ip, int c, int dy, int dx, int mode);
-extern void retina_clear (struct ite_softc *ip, int sy, int sx, int h, int w);
-extern void retina_scroll (struct ite_softc *ip, int sy, int sx, int count, int dir);
-
+int grfrt_cnprobe __P((void));
+void grfrt_iteinit __P((struct grf_softc *));
 #endif /* _GRF_RTREG_H */

@@ -1,5 +1,5 @@
 /*
- *	$Id: grf_rt.c,v 1.10 1994/04/26 03:48:08 chopps Exp $
+ *	$Id: grf_rt.c,v 1.11 1994/05/08 05:53:07 chopps Exp $
  */
 
 #include "grf.h"
@@ -11,16 +11,18 @@
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/device.h>
+#include <machine/cpu.h>
+#include <amiga/amiga/device.h>
+#include <amiga/dev/ztwobusvar.h>
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_rtreg.h>
-#include <machine/cpu.h>
-#include <amiga/dev/device.h>
 
-extern caddr_t ZORRO2ADDR;
-
-/* marked true early so that retina_cnprobe() can tell if we are alive. */
-int	retina_inited;
+/*
+ * marked true early so that retina_cnprobe() can tell if we are alive. 
+ */
+int retina_inited;
 
 
 /* NOTE: this driver for the MacroSystem Retina board was only possible,
@@ -232,8 +234,32 @@ static const long FQTab[16] =
 static struct MonDef *default_monitor = &DEFAULT_MONDEF;
 #endif
 
+/*
+ * used to query the retina to see if its alive (?)
+ */
+int
+retina_alive(mdp)
+	struct MonDef *mdp;
+{
+	short clksel;
 
-static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
+	for (clksel = 15; clksel; clksel--) {
+		if (FQTab[clksel] == mdp->FQ)
+			break;
+	}
+	if (clksel < 0) 
+		return(0);
+	if (mdp->DEP != 4)
+		return(1);
+	if (mdp->FX == 4 || (mdp->FX >= 7 && mdp->FX <= 16))
+		return(1);
+	return(0);
+}
+
+static int
+rt_load_mon(gp, md)
+	struct grf_softc *gp;
+	struct MonDef *md;
 {
 	struct grfinfo *gi = &gp->g_display;
 	volatile unsigned char *ba;
@@ -243,7 +269,8 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 	for (clksel = 15; clksel; clksel--) {
 		if (FQTab[clksel] == md->FQ) break;
 	}
-	if (clksel < 0) return 0;
+	if (clksel < 0)
+		return(0);
 	
 	ba = gp->g_regkva;;
 	fb = gp->g_fbkva;
@@ -285,7 +312,7 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 			FW = 11;
 			break;
 		default:
-			return 0;
+			return(0);
 			break;
 		};
 	}
@@ -662,8 +689,7 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 		short x = md->XY;
 		do {
 			*c = fill_val;
-			c += 2;
-		} while (x--);
+			c += 2; } while (x--);
 		
 		/* I won't comment this :-)) */
 		c = (unsigned short *) fb;
@@ -684,10 +710,10 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 	}
 
 	gp->g_data	= (caddr_t) md;
-	gi->gd_regaddr  = (caddr_t) ((long)ba - (long)ZORRO2ADDR + (long)ZORRO2BASE);
+	gi->gd_regaddr  = ztwomap(ba);
 	gi->gd_regsize  = 64*1024;
 
-	gi->gd_fbaddr   = (caddr_t) ((long)fb - (long)ZORRO2ADDR + (long)ZORRO2BASE);
+	gi->gd_fbaddr   = ztwomap(fb);
 #ifdef BANKEDDEVPAGER
 	gi->gd_fbsize	= 4*1024*1024;  /* XXX */
 	gi->gd_bank_size = 64*1024;
@@ -708,28 +734,120 @@ static int rt_load_mon (struct grf_softc *gp, struct MonDef *md)
 	gi->gd_dy	= 0;
   
 	/* initialized, works, return 1 */
-	return 1;
+	return(1);
 }
 
-int rt_init (struct grf_softc *gp, struct amiga_device *ad, struct amiga_hw *ahw)
+int rt_mode __P((struct grf_softc *, int, void *, int , int));
+
+void grfrtattach __P((struct device *, struct device *, void *));
+int grfrtprint __P((void *, char *));
+int grfrtmatch __P((struct device *, struct cfdata *, void *));
+ 
+struct cfdriver grfrtcd = {
+	NULL, "grfrt", grfrtmatch, grfrtattach, 
+	DV_DULL, sizeof(struct grf_softc), NULL, 0 };
+
+/*
+ * only used in console init
+ */
+static struct cfdata *cfdata;
+
+
+/*
+ * we make sure to only init things once.  this is somewhat
+ * tricky regarding the console.
+ */
+int 
+grfrtmatch(pdp, cfp, auxp)
+	struct device *pdp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-  /* if already initialized, fail */
-  if (gp->g_regkva)
-    return 0;
+	static int rtconunit = -1;
+	struct ztwobus_args *zap;
 
-  gp->g_regkva = ahw->hw_kva;
-  gp->g_fbkva  = ahw->hw_kva + 64*1024;
-  
-  /* don't let them patch it out of bounds */
-  if ((unsigned)retina_default_mon >= retina_mon_max
-      || monitor_defs[retina_default_mon].DEP == 8)
-    retina_default_mon = 0;
+	zap = auxp;
 
-  current_mon = monitor_defs + retina_default_mon;
+	/*
+	 * allow only one retina console
+	 */
+	if (amiga_realconfig == 0 && rtconunit != -1)
+		return(0);
+	/*
+	 * check that this is a retina board.
+	 */
+	if (zap->manid != 18260 || zap->prodid != 6)
+		return(0);
 
-  retina_inited = rt_load_mon(gp, current_mon);
-  return(retina_inited);		/* XXX Markus maybe you */
-					/* XXX can make this cleaner. */
+	if (amiga_realconfig == 0 || rtconunit != cfp->cf_unit) {
+		if ((unsigned)retina_default_mon >= retina_mon_max ||
+		    monitor_defs[retina_default_mon].DEP == 8)
+			retina_default_mon = 0;
+
+		current_mon = monitor_defs + retina_default_mon;
+		if (retina_alive(current_mon) == 0)
+			return(0);
+		if (amiga_realconfig == 0) {
+			rtconunit = cfp->cf_unit;
+			cfdata = cfp;
+		}
+	}
+	return(1);
+}
+
+/* 
+ * attach to the grfbus (ztwobus)
+ */
+void
+grfrtattach(pdp, dp, auxp)
+	struct device *pdp, *dp;
+	void *auxp;
+{
+	static struct grf_softc congrf;
+	static int coninited;
+	struct ztwobus_args *zap;
+	struct grf_softc *gp;
+
+	zap = auxp;
+	
+	if (dp == NULL) 
+		gp = &congrf;
+	else
+		gp = (struct grf_softc *)dp;
+
+	if (dp != NULL && congrf.g_regkva != 0) {
+		/*
+		 * we inited earlier just copy the info
+		 * take care not to copy the device struct though.
+		 */
+		bcopy(&congrf.g_display, &gp->g_display, 
+		    (char *)&gp[1] - (char *)&gp->g_display);
+	} else {
+		gp->g_regkva = (volatile caddr_t)zap->va;
+		gp->g_fbkva = (volatile caddr_t)zap->va + 64 * 1024;
+		gp->g_unit = GRF_RETINAII_UNIT;
+		gp->g_mode = rt_mode;
+		gp->g_conpri = grfrt_cnprobe();
+		grfrt_iteinit(gp);
+		(void)rt_load_mon(gp, current_mon);
+	}
+	if (dp != NULL)
+		printf("\n");
+	/*
+	 * attach grf
+	 */
+	amiga_config_found(cfdata, &gp->g_device, gp, grfrtprint);
+}
+
+int
+grfrtprint(auxp, pnp)
+	void *auxp;
+	char *pnp;
+{
+	if (pnp)
+		printf("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
+			pnp);
+	return(UNCONF);
 }
 
 static int 
@@ -794,8 +912,9 @@ rt_setvmode (gp, mode, txtonly)
  * Change the mode of the display.
  * Return a UNIX error number or 0 for success.
  */
+int
 rt_mode(gp, cmd, arg, a2, a3)
-	register struct grf_softc *gp;
+	struct grf_softc *gp;
 	int cmd;
 	void *arg;
 	int a2, a3;

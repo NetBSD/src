@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)sci.c	7.5 (Berkeley) 5/4/91
- *	$Id: sci.c,v 1.3 1994/04/18 04:09:15 chopps Exp $
+ *	$Id: sci.c,v 1.4 1994/05/08 05:53:40 chopps Exp $
  *
  */
 
@@ -59,10 +59,6 @@
 #if NSCI < NIVSSCSI
 #undef NSCI
 #define NSCI	NIVSSCI
-#endif
-
-#ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/sci.c,v 1.3 1994/04/18 04:09:15 chopps Exp $";
 #endif
 
 /* need to know if any tapes have been configured */
@@ -143,7 +139,7 @@ int sci_tt_oddio __P((int ctlr, int slave, int unit, u_char *buf, u_int len, int
 int mlhscsiinit ();
 
 struct driver mlhscsidriver = {
-	(int (*)(void *)) mlhscsiinit, "Mlhscsi", (int (*)(int)) scistart,
+	(int (*)(void *)) mlhscsiinit, "mlhscsi", (int (*)(int)) scistart,
 	(int (*)(int,...)) scigo, (int (*)(int,int)) sciintr,
 	(int (*)())scidone, sciustart, scireq, scifree, scireset,
 	sci_delay, sci_test_unit_rdy, sci_start_stop_unit,
@@ -161,7 +157,7 @@ struct driver mlhscsidriver = {
 int csa12gscsiinit ();
 
 struct driver csa12gscsidriver = {
-	(int (*)(void *)) csa12gscsiinit, "Csa12gscsi", (int (*)(int)) scistart,
+	(int (*)(void *)) csa12gscsiinit, "csa12gscsi", (int (*)(int)) scistart,
 	(int (*)(int,...)) scigo, (int (*)(int,int)) sciintr,
 	(int (*)())scidone, sciustart, scireq, scifree, scireset,
 	sci_delay, sci_test_unit_rdy, sci_start_stop_unit,
@@ -179,7 +175,7 @@ struct driver csa12gscsidriver = {
 int suprascsiinit ();
 
 struct driver suprascsidriver = {
-	(int (*)(void *)) suprascsiinit, "Suprascsi", (int (*)(int)) scistart,
+	(int (*)(void *)) suprascsiinit, "suprascsi", (int (*)(int)) scistart,
 	(int (*)(int,...)) scigo, (int (*)(int,int)) sciintr,
 	(int (*)())scidone, sciustart, scireq, scifree, scireset,
 	sci_delay, sci_test_unit_rdy, sci_start_stop_unit,
@@ -197,7 +193,7 @@ struct driver suprascsidriver = {
 int ivsscsiinit ();
 
 struct driver ivsscsidriver = {
-	(int (*)(void *)) ivsscsiinit, "IVSscsi", (int (*)(int)) scistart,
+	(int (*)(void *)) ivsscsiinit, "ivsscsi", (int (*)(int)) scistart,
 	(int (*)(int,...)) scigo, (int (*)(int,int)) sciintr,
 	(int (*)())scidone, sciustart, scireq, scifree, scireset,
 	sci_delay, sci_test_unit_rdy, sci_start_stop_unit,

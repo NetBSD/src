@@ -38,54 +38,38 @@
  * from: Utah $Hdr: grf.c 1.31 91/01/21$
  *
  *	@(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.10 1994/04/01 20:48:25 chopps Exp $
+ *	$Id: grf.c,v 1.11 1994/05/08 05:53:03 chopps Exp $
  */
 
 /*
- * Graphics display driver for the AMIGA
+ * Graphics display driver for the Amiga
  * This is the hardware-independent portion of the driver.
- * Hardware access is through the grfdev routines below.
+ * Hardware access is through the grf_softc->g_mode routine.
  */
-
-#include "grf.h"
-#if NGRF > 0
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
+#include <sys/device.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/systm.h>
-
-#include <amiga/dev/device.h>
-#include <amiga/dev/grfioctl.h>
-#include <amiga/dev/grfvar.h>
-
-#include <machine/cpu.h>
-
+#include <sys/vnode.h>
+#include <sys/mman.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 #include <vm/vm_pager.h>
+#include <machine/cpu.h>
+#include <amiga/amiga/color.h>	/* DEBUG */
+#include <amiga/amiga/device.h>
+#include <amiga/dev/grfioctl.h>
+#include <amiga/dev/grfvar.h>
+#include <amiga/dev/itevar.h>
 
-#include <miscfs/specfs/specdev.h>
-#include <sys/vnode.h>
-#include <sys/mman.h>
-
-#if defined (__STDC__)
-#define GET_CHRDEV_MAJOR(dev, maj) { \
-	for(maj = 0; maj < nchrdev; maj++) \
-		if (cdevsw[maj].d_open == dev ## open) \
-			break; \
-}
-#else
-#define GET_CHRDEV_MAJOR(dev, maj) { \
-	for(maj = 0; maj < nchrdev; maj++) \
-		if (cdevsw[maj].d_open == dev/**/open) \
-			break; \
-}
-#endif
+#include "grf.h"
+#if NGRF > 0
 
 #include "ite.h"
 #if NITE == 0
@@ -94,217 +78,186 @@
 #define ite_reinit(d)
 #endif
 
-int	grfprobe();
-int	cc_init(), cc_mode();
-int	tg_init(), tg_mode();
-int	rt_init(), rt_mode();
+int grfopen __P((dev_t, int, int, struct proc *));
+int grfclose __P((dev_t, int));
+int grfioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int grfselect __P((dev_t, int));
+int grfmap __P((dev_t, int, int));
 
-struct grfdev grfdev[] = {
-	MANUF_BUILTIN,		PROD_BUILTIN_DISPLAY,
-		cc_init,  cc_mode,  "custom chips",
-	MANUF_UNILOWELL,	PROD_UNILOWELL_A2410,
-		tg_init,  tg_mode,    "A2410 TIGA",
-	MANUF_MACROSYSTEM,	PROD_MACROSYSTEM_RETINA,
-		rt_init,  rt_mode,    "Retina",
-};
-int	ngrfdev = sizeof(grfdev) / sizeof(grfdev[0]);
-
-struct	driver grfdriver = { grfprobe, "grf" };
-struct	grf_softc grf_softc[NGRF];
-
-#ifdef DEBUG
-int grfdebug = 0;
-#define GDB_DEVNO	0x01
-#define GDB_MMAP	0x02
-#define GDB_IOMAP	0x04
-#define GDB_LOCK	0x08
+int grfon __P((dev_t));
+int grfoff __P((dev_t));
+int grfsinfo __P((dev_t, struct grfdyninfo *));
+#ifdef BANKEDDEVPAGER
+int grfbanked_get __P((dev_t, off_t, int));
+int grfbanked_cur __P((dev_t));
+int grfbanked_set __P((dev_t, int));
 #endif
 
+void grfattach __P((struct device *, struct device *, void *));
+int grfmatch __P((struct device *, struct cfdata *, void *));
+int grfprint __P((void *, char *));
 /*
- * XXX: called from ite console init routine.
- * Does just what configure will do later but without printing anything.
+ * pointers to grf drivers device structs 
  */
-grfconfig()
-{
-	register caddr_t addr;
-	register struct amiga_hw *hw;
-	register struct amiga_device *ad, *nad;
+struct grf_softc *grfsp[NGRF];
 
-	for (hw = sc_table; hw->hw_type; hw++) {
-	        if (!HW_ISDEV(hw, D_BITMAP))
-			continue;
-		/*
-		 * Found one, now match up with a logical unit number
-		 */
-		nad = NULL;		
-		addr = hw->hw_kva;
-		for (ad = amiga_dinit; ad->amiga_driver; ad++) {
-			if (ad->amiga_driver != &grfdriver || ad->amiga_alive)
-				continue;
-			/*
-			 * Wildcarded.  If first, remember as possible match.
-			 */
-			if (ad->amiga_addr == NULL) {
-				if (nad == NULL)
-					nad = ad;
-				continue;
-			}
-			/*
-			 * Not wildcarded.
-			 * If exact match done searching, else keep looking.
-			 */
-			if (((hw->hw_manufacturer << 16) | hw->hw_product) 
-			    == (u_int) ad->amiga_addr) {
-				nad = ad;
-				break;
-			}
-		}
-		/*
-		 * Found a match, initialize
-		 */
-		if (nad && grfinit (nad, hw))
-		  nad->amiga_addr = addr;
-	}
-}
+
+struct cfdriver grfcd = {
+	NULL, "grf", grfmatch, grfattach, DV_DULL,
+	sizeof(struct device), NULL, 0 };
 
 /*
- * Normal init routine called by configure() code
+ * only used in console init.
  */
-grfprobe(ad)
-	struct amiga_device *ad;
-{
-	struct grf_softc *gp = &grf_softc[ad->amiga_unit];
+static struct cfdata *cfdata;
 
-	/* can't reinit, as ad->amiga_addr no longer contains
-	   manuf/prod information */
-	if ((gp->g_flags & GF_ALIVE) == 0 /* &&
-	    !grfinit (ad) */)
+/*
+ * match if the unit of grf matches its perspective 
+ * low level board driver.
+ */
+int
+grfmatch(pdp, cfp, auxp)
+	struct device *pdp;
+	struct cfdata *cfp;
+	void *auxp;
+{
+	if (cfp->cf_unit != ((struct grf_softc *)pdp)->g_unit)
 		return(0);
-	printf("grf%d: %d x %d ", ad->amiga_unit,
-	       gp->g_display.gd_dwidth, gp->g_display.gd_dheight);
-	if (gp->g_display.gd_colors == 2)
-		printf("monochrome");
-	else
-		printf("%d color", gp->g_display.gd_colors);
-	printf(" %s display\n", grfdev[gp->g_type].gd_desc);
+	cfdata = cfp;
 	return(1);
 }
 
-grfinit(ad, ahw)
-	struct amiga_device *ad;
-	struct amiga_hw *ahw;
+/*
+ * attach.. plug pointer in and print some info.
+ * then try and attach an ite to us. note: dp is NULL
+ * durring console init.
+ */
+void
+grfattach(pdp, dp, auxp)
+	struct device *pdp, *dp;
+	void *auxp;
 {
-	struct grf_softc *gp = &grf_softc[ad->amiga_unit];
-	register struct grfdev *gd;
+	struct grf_softc *gp;
+	int maj;
 
-	for (gd = grfdev; gd < &grfdev[ngrfdev]; gd++)
-	  if (((gd->gd_manuf << 16) | gd->gd_prod) == (u_int)ad->amiga_addr)
-	    break;
+	gp = (struct grf_softc *)pdp;
+	grfsp[gp->g_unit] = (struct grf_softc *)pdp;
 
-	if (gd < &grfdev[ngrfdev] && (*gd->gd_init)(gp, ad, ahw)) {
-		gp->g_type = gd - grfdev;
-		gp->g_flags = GF_ALIVE;
-		return(1);
+	/*
+	 * find our major device number 
+	 */
+	for(maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == grfopen)
+			break;
+
+	gp->g_grfdev = makedev(maj, gp->g_unit);
+	if (dp != NULL) {
+		printf(" %d x %d", gp->g_display.gd_dwidth,
+		    gp->g_display.gd_dheight);
+		if (gp->g_display.gd_colors == 2)
+			printf(", monochrome\n");
+		else
+			printf(", %d colors\n", gp->g_display.gd_colors);
 	}
+	
+	/*
+	 * try and attach an ite
+	 */
+	amiga_config_found(cfdata, dp, gp, grfprint);
+}
+
+int
+grfprint(auxp, pnp)
+	void *auxp;
+	char *pnp;
+{
+	if (pnp)
+		printf("ite%d at %s", ((struct grf_softc *)auxp)->g_unit,
+		    pnp);
+	return(UNCONF);
+}
+
+/*ARGSUSED*/
+int
+grfopen(dev, flags, devtype, p)
+	dev_t dev;
+	int flags, devtype;
+	struct proc *p;
+{
+	struct grf_softc *gp;
+
+	if (GRFUNIT(dev) >= NGRF)
+		return(ENXIO);
+
+	gp = grfsp[GRFUNIT(dev)];
+
+	if ((gp->g_flags & GF_ALIVE) == 0)
+		return(ENXIO);
+
+	if ((gp->g_flags & (GF_OPEN|GF_EXCLUDE)) == (GF_OPEN|GF_EXCLUDE))
+		return(EBUSY);
+
 	return(0);
 }
 
 /*ARGSUSED*/
-grfopen(dev, flags)
-	dev_t dev;
-{
-	int unit = GRFUNIT(dev);
-	register struct grf_softc *gp = &grf_softc[unit];
-	int error = 0;
-
-	if (unit >= NGRF || (gp->g_flags & GF_ALIVE) == 0)
-		return(ENXIO);
-	if ((gp->g_flags & (GF_OPEN|GF_EXCLUDE)) == (GF_OPEN|GF_EXCLUDE))
-		return(EBUSY);
-#if 0
-	/*
-	 * First open.
-	 * XXX: always put in graphics mode.
-	 */
-	error = 0;
-	if ((gp->g_flags & GF_OPEN) == 0) {
-		gp->g_flags |= GF_OPEN;
-		error = grfon(dev);
-	}
-#endif
-	return(error);
-}
-
-/*ARGSUSED*/
+int
 grfclose(dev, flags)
 	dev_t dev;
+	int flags;
 {
-	register struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
+	struct grf_softc *gp;
 
-	(void) grfoff(dev);
-	(void) grfunlock(gp);
+	gp = grfsp[GRFUNIT(dev)];
+	(void)grfoff(dev);
 	gp->g_flags &= GF_ALIVE;
 	return(0);
 }
 
 /*ARGSUSED*/
+int
 grfioctl(dev, cmd, data, flag, p)
 	dev_t dev;
+	int cmd, flag;
 	caddr_t data;
 	struct proc *p;
 {
-	register struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
+	struct grf_softc *gp;
 	int error;
 
+	gp = grfsp[GRFUNIT(dev)];
 	error = 0;
-	switch (cmd) {
 
+	switch (cmd) {
 	case OGRFIOCGINFO:
 	        /* argl.. no bank-member.. */
 	  	bcopy((caddr_t)&gp->g_display, data, sizeof(struct grfinfo)-4);
 		break;
-
 	case GRFIOCGINFO:
 		bcopy((caddr_t)&gp->g_display, data, sizeof(struct grfinfo));
 		break;
-
 	case GRFIOCON:
 		error = grfon(dev);
 		break;
-
 	case GRFIOCOFF:
 		error = grfoff(dev);
 		break;
-
-	case GRFIOCMAP:
-		error = grfmmap(dev, (caddr_t *)data, p);
-		break;
-
-	case GRFIOCUNMAP:
-		error = grfunmmap(dev, *(caddr_t *)data, p);
-		break;
-		
 	case GRFIOCSINFO:
-		error = grfsinfo (dev, (struct grfdyninfo *) data);
+		error = grfsinfo(dev, (struct grfdyninfo *) data);
 		break;
-
 	case GRFGETVMODE:
-		return grfdev[gp->g_type].gd_mode (gp, GM_GRFGETVMODE, data);
-
+		return(gp->g_mode(gp, GM_GRFGETVMODE, data));
 	case GRFSETVMODE:
-		error = grfdev[gp->g_type].gd_mode (gp, GM_GRFSETVMODE, data);
-		if (! error)
-		  {
-		    /* XXX */
-		    ite_reinit (GRFUNIT (dev));
-		  }
+		error = gp->g_mode(gp, GM_GRFSETVMODE, data);
+		if (error == 0 && gp->g_itedev)
+			ite_reinit(gp->g_itedev);
 		break;
-
 	case GRFGETNUMVM:
-		return grfdev[gp->g_type].gd_mode (gp, GM_GRFGETNUMVM, data);
-
-		/* these are all hardware dependant, and have to be resolved
-		   in the respective driver. */
+		return(gp->g_mode(gp, GM_GRFGETNUMVM, data));
+	/*
+	 * these are all hardware dependant, and have to be resolved
+	 * in the respective driver.
+	 */
 	case GRFIOCPUTCMAP:
 	case GRFIOCGETCMAP:
 	case GRFIOCSSPRITEPOS:
@@ -312,13 +265,15 @@ grfioctl(dev, cmd, data, flag, p)
 	case GRFIOCSSPRITEINF:
 	case GRFIOCGSPRITEINF:
 	case GRFIOCGSPRITEMAX:
-		return grfdev[gp->g_type].gd_mode (gp, GM_GRFIOCTL, cmd, data);
-
+		return(gp->g_mode(gp, GM_GRFIOCTL, cmd, data));
 	default:
-		/* check to see whether it's a command recognized by the
-		   view code if the unit is 0 XXX */
+		/*
+		 * check to see whether it's a command recognized by the
+		 * view code if the unit is 0
+		 * XXX 
+		 */
 		if (GRFUNIT(dev) == 0)
-		  return viewioctl (dev, cmd, data, flag, p);
+			return(viewioctl(dev, cmd, data, flag, p));
 		error = EINVAL;
 		break;
 
@@ -327,141 +282,45 @@ grfioctl(dev, cmd, data, flag, p)
 }
 
 /*ARGSUSED*/
+int
 grfselect(dev, rw)
 	dev_t dev;
+	int rw;
 {
 	if (rw == FREAD)
 		return(0);
 	return(1);
 }
 
-grflock(gp, block)
-	register struct grf_softc *gp;
-	int block;
-{
-	struct proc *p = curproc;		/* XXX */
-	int error;
-	extern char devioc[];
-
-#ifdef DEBUG
-	if (grfdebug & GDB_LOCK)
-		printf("grflock(%d): dev %x flags %x lockpid %x\n",
-		       p->p_pid, gp-grf_softc, gp->g_flags,
-		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
-#endif
-	if (gp->g_lockp) {
-		if (gp->g_lockp == p)
-			return(EBUSY);
-		if (!block)
-			return(EAGAIN);
-		do {
-			gp->g_flags |= GF_WANTED;
-			if (error = tsleep((caddr_t)&gp->g_flags,
-					   (PZERO+1) | PCATCH, devioc, 0))
-				return (error);
-		} while (gp->g_lockp);
-	}
-	gp->g_lockp = p;
-	return(0);
-}
-
-grfunlock(gp)
-	register struct grf_softc *gp;
-{
-#ifdef DEBUG
-	if (grfdebug & GDB_LOCK)
-		printf("grfunlock(%d): dev %x flags %x lockpid %d\n",
-		       curproc->p_pid, gp-grf_softc, gp->g_flags,
-		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
-#endif
-	if (gp->g_lockp != curproc)
-		return(EBUSY);
-	if (gp->g_flags & GF_WANTED) {
-		wakeup((caddr_t)&gp->g_flags); 
-		gp->g_flags &= ~GF_WANTED;
-	}
-	gp->g_lockp = NULL;
-	return(0);
-}
-
-/*ARGSUSED*/
+/*
+ * map the contents of a graphics display card into process' 
+ * memory space.
+ */
+int
 grfmap(dev, off, prot)
 	dev_t dev;
+	int off, prot;
 {
-	return(grfaddr(&grf_softc[GRFUNIT(dev)], off));
-}
-
-grfon(dev)
-	dev_t dev;
-{
-	extern int iteopen __P((dev_t, int, int, struct proc *));
-	int maj;
-	int unit = GRFUNIT(dev);
-	struct grf_softc *gp = &grf_softc[unit];
-
-	if (gp->g_flags & GF_GRFON)
-	  return 0;
-	gp->g_flags |= GF_GRFON;
-
-	/* XXX relies on the unit matching */
-	GET_CHRDEV_MAJOR(ite, maj);
-	ite_off(makedev(maj,unit), 3);
-	return((*grfdev[gp->g_type].gd_mode)
-			(gp, (dev&GRFOVDEV) ? GM_GRFOVON : GM_GRFON));
-}
-
-grfoff(dev)
-	dev_t dev;
-{
-	extern int iteopen __P((dev_t, int, int, struct proc *));
-	int maj;
-	int unit = GRFUNIT(dev);
-	struct grf_softc *gp = &grf_softc[unit];
-	int error;
-
-	if (!(gp->g_flags & GF_GRFON))
-	  return 0;
-	gp->g_flags &= ~GF_GRFON;
-
-	(void) grfunmmap(dev, (caddr_t)0, curproc);
-	error = (*grfdev[gp->g_type].gd_mode)
-			(gp, (dev&GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF);
-	/* XXX relies on the unit matching */
-	GET_CHRDEV_MAJOR(ite, maj);
-	ite_on(makedev(maj,unit), 2);
-	return(error);
-}
-
-grfsinfo(dev, dyninfo)
-	dev_t dev;
-	struct grfdyninfo *dyninfo;
-{
-	int unit = GRFUNIT(dev);
-	struct grf_softc *gp = &grf_softc[unit];
-	int error;
-
-	error = grfdev[gp->g_type].gd_mode (gp, GM_GRFCONFIG, dyninfo);
-	/* XXX: see comment for iteoff above */
-	ite_reinit (unit);
-	return(error);
-}
-
-grfaddr(gp, off)
 	struct grf_softc *gp;
-	register int off;
-{
-	register struct grfinfo *gi = &gp->g_display;
+	struct grfinfo *gi;
+	
+	gp = grfsp[GRFUNIT(dev)];
+	gi = &gp->g_display;
 
-	/* control registers */
+	/* 
+	 * control registers
+	 */
 	if (off >= 0 && off < gi->gd_regsize)
 		return(((u_int)gi->gd_regaddr + off) >> PGSHIFT);
 
-	/* frame buffer */
+	/*
+	 * frame buffer
+	 */
 	if (off >= gi->gd_regsize && off < gi->gd_regsize+gi->gd_fbsize) {
 		off -= gi->gd_regsize;
 #ifdef BANKEDDEVPAGER
 		if (gi->gd_bank_size)
-		  off %= gi->gd_bank_size;
+			off %= gi->gd_bank_size;
 #endif
 		return(((u_int)gi->gd_fbaddr + off) >> PGSHIFT);
 	}
@@ -469,64 +328,65 @@ grfaddr(gp, off)
 	return(-1);
 }
 
-grfmmap(dev, addrp, p)
+int
+grfon(dev)
 	dev_t dev;
-	caddr_t *addrp;
-	struct proc *p;
 {
-	struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
-	int len, error;
-	struct vnode vn;
-	struct specinfo si;
-	int flags;
+	struct grf_softc *gp;
 
-#ifdef DEBUG
-	if (grfdebug & GDB_MMAP)
-		printf("grfmmap(%d): addr %x\n", p->p_pid, *addrp);
-#endif
-	len = gp->g_display.gd_regsize + gp->g_display.gd_fbsize;
-	flags = MAP_SHARED;
-	if (*addrp)
-		flags |= MAP_FIXED;
-	else {
-		/*
-		 * XXX if no hint provided for a non-fixed mapping place it after
-		 * the end of the largest possible heap.
-		 *
-		 * There should really be a pmap call to determine a reasonable
-		 * location.
-		 */
-		*addrp = (caddr_t) round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
-	}
-	bzero (&vn, sizeof (vn));
-	bzero (&si, sizeof (si));
-	vn.v_type = VCHR;			/* XXX */
-	vn.v_specinfo = &si;			/* XXX */
-	vn.v_rdev = dev;			/* XXX */
-  	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
-			(vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags,
-			(caddr_t)&vn, 0);
+	gp = grfsp[GRFUNIT(dev)];
+
+	if (gp->g_flags & GF_GRFON)
+		return(0);
+
+	gp->g_flags |= GF_GRFON;
+	if (gp->g_itedev != NODEV)
+		ite_off(gp->g_itedev, 3);
+
+	return(gp->g_mode(gp, (dev & GRFOVDEV) ? GM_GRFOVON : GM_GRFON));
+}
+
+int
+grfoff(dev)
+	dev_t dev;
+{
+	struct grf_softc *gp;
+	int error;
+
+	gp = grfsp[GRFUNIT(dev)];
+
+	if ((gp->g_flags & GF_GRFON) == 0)
+		return(0);
+
+	gp->g_flags &= ~GF_GRFON;
+	error = gp->g_mode(gp, (dev & GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF);
+
+	/*
+	 * Closely tied together no X's
+	 */
+	if (gp->g_itedev != NODEV)
+		ite_on(gp->g_itedev, 2);
+
 	return(error);
 }
 
-grfunmmap(dev, addr, p)
+int
+grfsinfo(dev, dyninfo)
 	dev_t dev;
-	caddr_t addr;
-	struct proc *p;
+	struct grfdyninfo *dyninfo;
 {
-	struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
-	vm_size_t size;
-	int rv;
+	struct grf_softc *gp;
+	int error;
 
-#ifdef DEBUG
-	if (grfdebug & GDB_MMAP)
-		printf("grfunmmap(%d): dev %x addr %x\n", p->p_pid, dev, addr);
-#endif
-	if (addr == 0)
-		return(EINVAL);		/* XXX: how do we deal with this? */
-	size = round_page(gp->g_display.gd_regsize + gp->g_display.gd_fbsize);
-	rv = vm_deallocate(p->p_vmspace->vm_map, (vm_offset_t)addr, size);
-	return(rv == KERN_SUCCESS ? 0 : EINVAL);
+	gp = grfsp[GRFUNIT(dev)];
+	error = gp->g_mode(gp, GM_GRFCONFIG, dyninfo);
+
+	/*
+	 * Closely tied together no X's
+	 */
+	if (gp->g_itedev != NODEV)
+		ite_reinit(gp->g_itedev);
+	return(error);
 }
 
 #ifdef BANKEDDEVPAGER
@@ -537,42 +397,44 @@ grfbanked_get (dev, off, prot)
      off_t off;
      int   prot;
 {
-  int unit = GRFUNIT(dev);
-  struct grf_softc *gp = &grf_softc[unit];
-  int error, bank;
-  struct grfinfo *gi = &gp->g_display;
+	struct grf_softc *gp;
+	struct grfinfo *gi;
+	int error, bank;
 
-  off -= gi->gd_regsize;
-  if (off < 0 || off >= gi->gd_fbsize)
-    return -1;
+	gp = grfsp[GRFUNIT(dev)];
+	gi = &gp->g_display;
 
-  error = grfdev[gp->g_type].gd_mode (gp, GM_GRFGETBANK, &bank, off, prot);
-  return error ? -1 : bank;
+	off -= gi->gd_regsize;
+	if (off < 0 || off >= gi->gd_fbsize)
+		return -1;
+
+	error = gp->g_mode(gp, GM_GRFGETBANK, &bank, off, prot);
+	return error ? -1 : bank;
 }
 
 int
 grfbanked_cur (dev)
-     dev_t dev;
+	dev_t dev;
 {
-  int unit = GRFUNIT(dev);
-  struct grf_softc *gp = &grf_softc[unit];
-  int error, bank;
+	struct grf_softc *gp;
+	int error, bank;
 
-  error = grfdev[gp->g_type].gd_mode (gp, GM_GRFGETCURBANK, &bank);
-  return error ? -1 : bank;
+	gp = grfsp[GRFUNIT(dev)];
+
+	error = gp->g_mode(gp, GM_GRFGETCURBANK, &bank);
+	return(error ? -1 : bank);
 }
 
 int
 grfbanked_set (dev, bank)
-     dev_t dev;
-     int bank;
+	dev_t dev;
+	int bank;
 {
-  int unit = GRFUNIT(dev);
-  struct grf_softc *gp = &grf_softc[unit];
+	struct grf_softc *gp;
 
-  return grfdev[gp->g_type].gd_mode (gp, GM_GRFSETBANK, bank) ? -1 : 0;
+	gp = grfsp[GRFUNIT(dev)];
+	return(gp->g_mode(gp, GM_GRFSETBANK, bank) ? -1 : 0);
 }
 
 #endif /* BANKEDDEVPAGER */
-
 #endif	/* NGRF > 0 */

@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: view.c,v 1.7 1994/04/10 00:43:38 chopps Exp $
+ *	$Id: view.c,v 1.8 1994/05/08 05:53:49 chopps Exp $
  */
 
 /* The view major device is a placeholder device.  It serves
@@ -41,10 +41,9 @@
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
-
-#include <amiga/dev/device.h>
 
 #include <machine/cpu.h>
 
@@ -76,9 +75,6 @@ int view_set_colormap __P((struct view_softc *, colormap_t *));
 
 int viewprobe ();
 
-/* not currently used as independant device */
-struct driver view_driver = { viewprobe, "view" };
-
 struct view_softc views[NVIEW];
 int view_inited;			/* also checked in ite_cc.c */
 
@@ -92,13 +88,15 @@ int view_default_depth = 2;
  *  functions for probeing.
  */
 
-/* this function is called early to set up a display. */
-viewconfig ()
+viewattach(cnt)
+	int cnt;
 {
-	viewprobe ();
+	viewprobe();
+	printf("%d view%s configured\n", NVIEW, NVIEW > 1 ? "s" : "");
 }
 
-viewprobe ()
+/* this function is called early to set up a display. */
+viewprobe()
 {
     	int i;
 	
@@ -428,6 +426,3 @@ viewselect(dev, rw)
 		return(0);
 	return(1);
 }
-
-void
-viewattach() {}

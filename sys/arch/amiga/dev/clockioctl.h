@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1988 University of Utah.
+ * Copyright (c) 1989 University of Utah.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -35,71 +35,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: grfvar.h 1.9 91/01/21$
+ * from: Utah $Hdr: clockioctl.h 1.1 90/07/09$
  *
- *	@(#)grfvar.h	7.3 (Berkeley) 5/7/91
- *	$Id: grfvar.h,v 1.7 1994/05/08 05:53:10 chopps Exp $
+ *	@(#)clockioctl.h	7.2 (Berkeley) 11/2/90
+ *	$Id: clockioctl.h,v 1.1 1994/05/08 05:53:00 chopps Exp $
  */
 
-struct ite_softc;
-
-/* 
- * this struct is owned by the driver (grfcc, grfrt)
- * and is passed to grf when grf is configed. The ite also 
- * uses it... 
- */
-struct	grf_softc {
-	struct device  g_device;	/* config sets this up. */
-	struct grfinfo g_display;	/* hardware description (for ioctl) */
-	volatile caddr_t g_regkva;	/* KVA of registers */
-	volatile caddr_t g_fbkva;	/* KVA of framebuffer */
-	int     g_flags;		/* software flags */
-	int	g_unit;			/* grf unit we want/have */
-	dev_t	g_itedev;		/* ite device number */
-	dev_t	g_grfdev;		/* grf device number */
-	caddr_t g_data;			/* device dependent data */
-	int  (*g_mode)();
-	int    g_conpri;		/* priority of ite as console */
-	void (*g_iteinit)	__P((struct ite_softc *));
-	void (*g_itedeinit)	__P((struct ite_softc *));
-	void (*g_iteclear)	__P((struct ite_softc *,int,int,int,int));
-	void (*g_iteputc)	__P((struct ite_softc *,int,int,int,int));
-	void (*g_itecursor)	__P((struct ite_softc *,int));
-	void (*g_itescroll)	__P((struct ite_softc *,int,int,int,int));
-};
-
-/* flags */
-#define	GF_ALIVE	0x01
-#define GF_OPEN		0x02
-#define GF_EXCLUDE	0x04
-#define GF_WANTED	0x08
-#define GF_GRFON	0x10
-
-/* software ids defined in grfioctl.h */
-
-/* requests to mode routine (g_mode())*/
-#define GM_GRFON	1
-#define GM_GRFOFF	2
-#define GM_GRFOVON	3
-#define GM_GRFOVOFF	4
-#define GM_GRFCONFIG	5
-#define GM_GRFGETVMODE	6
-#define GM_GRFSETVMODE	7
-#define GM_GRFGETNUMVM	8
-#define GM_GRFGETBANK	9
-#define GM_GRFSETBANK	10
-#define GM_GRFGETCURBANK 11
-#define GM_GRFIOCTL	12
-
-/* minor device interpretation */
-#define GRFOVDEV	0x10	/* XXX no driver uses yet, overlay planes */
-#define GRFIMDEV	0x20	/* XXX no driver uses yet, images planes */
-#define GRFUNIT(d)	((d) & 0x7)
-
-/*
- * unit numbers for devices
- */
-enum grfunits {
-	GRF_CC_UNIT,
-	GRF_RETINAII_UNIT
-};
+#define	CLOCKMAP	_IOWR('C', 1, int)
+#define	CLOCKUNMAP	_IOW('C', 2, int)
+#define	CLOCKGETRES	_IOR('C', 3, int)

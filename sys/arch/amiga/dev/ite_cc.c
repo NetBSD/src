@@ -1,52 +1,48 @@
 /*
- *	$Id: ite_cc.c,v 1.15 1994/04/22 02:53:54 chopps Exp $
+ *	$Id: ite_cc.c,v 1.16 1994/05/08 05:53:19 chopps Exp $
  */
-
-#include "ite.h"
-#if ! defined (NITE)
-#define NITE 1
-#endif
-#if NITE > 0
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
+#include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
 #include <sys/queue.h>
+#include <sys/termios.h>
 #include <dev/cons.h>
-
-#include "ite.h"
+#include <machine/cpu.h>
 #include <amiga/dev/itevar.h>
 #include <amiga/dev/iteioctl.h>
-#include <machine/cpu.h>
-
 #include <amiga/amiga/cc.h>
+#include <amiga/amiga/device.h>
 #include <amiga/dev/grfabs_reg.h>
+#include <amiga/dev/grfioctl.h>
+#include <amiga/dev/grfvar.h>
+#include <amiga/dev/grf_ccreg.h>
 #include <amiga/dev/viewioctl.h>
 #include <amiga/dev/viewvar.h>
 
-#include <sys/termios.h>
 #ifndef KFONT_CUSTOM
 #ifdef KFONT_8X11
-#define kernel_font_width	kernel_font_width_8x11
-#define kernel_font_height	kernel_font_height_8x11
-#define kernel_font_baseline	kernel_font_baseline_8x11
-#define kernel_font_boldsmear	kernel_font_boldsmear_8x11
-#define kernel_font_lo	kernel_font_lo_8x11
-#define kernel_font_hi	kernel_font_hi_8x11
-#define kernel_font	kernel_font_8x11
-#define kernel_cursor	kernel_cursor_8x11
+#define kernel_font_width       kernel_font_width_8x11
+#define kernel_font_height      kernel_font_height_8x11
+#define kernel_font_baseline    kernel_font_baseline_8x11
+#define kernel_font_boldsmear   kernel_font_boldsmear_8x11
+#define kernel_font_lo  kernel_font_lo_8x11
+#define kernel_font_hi  kernel_font_hi_8x11
+#define kernel_font     kernel_font_8x11
+#define kernel_cursor   kernel_cursor_8x11
 #else
-#define kernel_font_width	kernel_font_width_8x8
-#define kernel_font_height	kernel_font_height_8x8
-#define kernel_font_baseline	kernel_font_baseline_8x8
-#define kernel_font_boldsmear	kernel_font_boldsmear_8x8
-#define kernel_font_lo	kernel_font_lo_8x8
-#define kernel_font_hi	kernel_font_hi_8x8
-#define kernel_font	kernel_font_8x8
-#define kernel_cursor	kernel_cursor_8x8
+#define kernel_font_width       kernel_font_width_8x8
+#define kernel_font_height      kernel_font_height_8x8
+#define kernel_font_baseline    kernel_font_baseline_8x8
+#define kernel_font_boldsmear   kernel_font_boldsmear_8x8
+#define kernel_font_lo  kernel_font_lo_8x8
+#define kernel_font_hi  kernel_font_hi_8x8
+#define kernel_font     kernel_font_8x8
+#define kernel_cursor   kernel_cursor_8x8
 #endif
 #endif
 
@@ -74,9 +70,8 @@ struct ite_priv {
 };
 typedef struct ite_priv ipriv_t;
 
-extern struct itesw itesw[];
-extern struct ite_softc ite_softc[];
-#define IPUNIT(ip) (((u_long)ip-(u_long)ite_softc)/sizeof(struct ite_softc))
+void view_deinit __P((struct ite_softc *));
+void view_init __P((struct ite_softc *));
 
 static void putc8 __P((struct ite_softc *, int, int, int, int));
 static void clear8 __P((struct ite_softc *, int, int, int, int));
@@ -109,8 +104,29 @@ static char sample[20] = {
 	-39,-75,-103,-121,-127,-121,-103,-75,-39
 };
 
-cc_unblank ()
+/*
+ * called from grf_cc to return console priority
+ */
+int
+grfcc_cnprobe()
 {
+	return(CN_INTERNAL);
+}
+
+/*
+ * called form grf_cc to init ite portion of 
+ * grf_softc struct
+ */
+void
+grfcc_iteinit(gp)
+	struct grf_softc *gp;
+{
+	gp->g_itecursor = cursor32;
+	gp->g_iteputc = putc8;
+	gp->g_iteclear = clear8;
+	gp->g_itescroll = scroll8;
+	gp->g_iteinit = view_init;
+	gp->g_itedeinit = view_deinit;
 }
 
 void
@@ -164,12 +180,12 @@ ite_newsize(ip, winsz)
 	vs.width = winsz->width;
 	vs.height = winsz->height;
 	vs.depth = winsz->depth;
-	error = viewioctl(IPUNIT(ip), VIOCSSIZE, &vs, 0, -1);
+	error = viewioctl(0, VIOCSSIZE, &vs, 0, -1);
 
 	/*
 	 * Reinitialize our structs
 	 */
-	cci->view = views[IPUNIT(ip)].view; 
+	cci->view = views[0].view; 
 
 	/* -1 for bold. */
 	ip->cols = (cci->view->display.width - 1) / ip->ftwidth; 
@@ -223,30 +239,13 @@ ite_newsize(ip, winsz)
 	return (error);
 }
 
-/*
- * view_cnprobe is called when the console is being initialized
- * i.e. very early.  grfconfig() has been called, so this implies
- * that grfcc_probe() was called as well as view_config() (in view.c)
- * if we are functioning view_inited will be true.
- */
-
-int
-view_cnprobe(min)
-	int min;
-{
-	extern int view_inited;		/* in view.c */
-	return (view_inited ? CN_INTERNAL : CN_DEAD);
-}
-
 void
 view_init(ip)
 	register struct ite_softc *ip;
 {
 	struct itewinsize wsz;
-	struct itesw *sp;
 	ipriv_t *cci;
 
-	sp = itesw;
 	cci = ip->priv;
 
 	if (cci)
@@ -265,13 +264,6 @@ view_init(ip)
 	/* Find the correct set of rendering routines for this font.  */
 	if (ip->ftwidth > 8)
 		panic("kernel font size not supported");
-	else {
-		sp->ite_cursor = (void *)cursor32;
-		sp->ite_putc = (void *)putc8;
-		sp->ite_clear = (void *)clear8;
-		sp->ite_scroll = (void *)scroll8;
-	}
-
 	cci = alloc_chipmem(sizeof (*cci));
 	if (cci == NULL)
 		panic("no memory for console device.");
@@ -282,11 +274,6 @@ view_init(ip)
 	cci->row_ptr = NULL;
 	cci->column_offset = NULL;
 
-#if 0
-	/* currently the view is permanently open due to grf driver */
-	if (viewopen(IPUNIT(ip), 0))
-		panic("cannot get ahold of our view");
-#endif
 	wsz.x = ite_default_x;
 	wsz.y = ite_default_y;
 	wsz.width = ite_default_width;
@@ -294,8 +281,7 @@ view_init(ip)
 	wsz.depth = ite_default_depth;
 
 	ite_newsize (ip, &wsz);
-	XXX_grf_cc_on(IPUNIT(ip));
-	/* viewioctl(IPUNIT(ip), VIOCDISPLAY, NULL, 0, -1); */
+	cc_mode(ip->grf, GM_GRFON, NULL, 0, 0);
 }
 
 int
@@ -341,10 +327,10 @@ ite_grf_ioctl (ip, cmd, addr, flag, p)
 		}
 		break;
 	case ITEIOCDSPWIN:
-		XXX_grf_cc_on(IPUNIT(ip));
+		cc_mode(ip->grf, GM_GRFON, NULL, 0, 0);
 		break;
 	case ITEIOCREMWIN:
-		XXX_grf_cc_off(IPUNIT(ip));
+		cc_mode(ip->grf, GM_GRFOFF, NULL, 0, 0);
 		break;
 	case ITEIOCGBELL:
 		ib = (struct itebell *)addr;
@@ -996,4 +982,3 @@ scrollbmap (bmap_t *bm, u_short x, u_short y, u_short width, u_short height, sho
 	}
     }
 }
-#endif

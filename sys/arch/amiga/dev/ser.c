@@ -31,15 +31,17 @@
  * SUCH DAMAGE.
  *
  *	@(#)ser.c	7.12 (Berkeley) 6/27/91
- *	$Id: ser.c,v 1.14 1994/04/22 10:44:30 chopps Exp $
+ *	$Id: ser.c,v 1.15 1994/05/08 05:53:45 chopps Exp $
+ */
+/*
+ * XXX This file needs major cleanup it will never ervice more than one
+ * XXX unit.
  */
 
-#include "ser.h"
-
-#if NSER > 0
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
+#include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
@@ -49,22 +51,27 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
-
-#include <amiga/dev/device.h>
-#include <amiga/dev/serreg.h>
 #include <machine/cpu.h>
-
+#include <amiga/amiga/device.h>
+#include <amiga/dev/serreg.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
 
 #include <dev/cons.h>
 
-int	serprobe();
+#include "ser.h"
+#if NSER > 0
 
-struct driver serdriver = {
-	serprobe, "ser",
-};
+void serattach __P((struct device *, struct device *, void *));
+int sermatch __P((struct device *, struct cfdata *, void *));
+
+struct cfdriver sercd = {
+	NULL, "ser", sermatch, serattach, DV_TTY,
+	sizeof(struct device), NULL, 0 };
+
+#define SEROBUF_SIZE 32
+#define SERIBUF_SIZE 512
 
 int	serstart(), serparam(), serintr();
 int	ser_active;
@@ -81,7 +88,6 @@ int	sermajor;
 int	serswflags;
 #define SWFLAGS(dev) (serswflags | (DIALOUT(dev) ? TIOCFLAG_SOFTCAR : 0))
 
-struct	serdevice *ser_addr[NSER];
 struct	vbl_node ser_vbl_node[NSER];
 struct	tty ser_cons;
 struct	tty *ser_tty[NSER];
@@ -127,7 +133,6 @@ u_char	even_parity[] = {
 	1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1,
 };
 
-
 /* 
  * Since we don't get interrupts for changes on the modem control line,
  * we'll have to fake them by comparing current settings to the settings
@@ -156,39 +161,48 @@ long	sermintcount[16];
 void	sermint __P((register int unit));
 
 int
-serprobe(ad)
-	register struct amiga_device *ad;
+sermatch(pdp, cfp, auxp)
+	struct device *pdp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-	register struct serdevice *ser;
-	register int unit;
-	unsigned short ir;
+	if (matchname("ser", (char *)auxp) == 0 || cfp->cf_unit != 0)
+		return(0);
+	if (serconsole != 0 && amiga_realconfig == 0)
+		return(0);
+	return(1);
+}
+
+
+void
+serattach(pdp, dp, auxp)
+	struct device *pdp, *dp;
+	void *auxp;
+{
+	u_short ir;
 
 	ir = custom.intenar;
-	ser = (struct serdevice *) ad->amiga_addr;
-	unit = ad->amiga_unit;
-	if (unit == serconsole)
+	if (serconsole == 0)
 		DELAY(100000);
 
-	ad->amiga_ipl = 2;
-	ser_addr[unit] = ser;
-	ser_active |= 1 << unit;
-	ser_vbl_node[unit].function = (void (*) (void *)) sermint;
-	add_vbl_function(&ser_vbl_node[unit], SER_VBL_PRIORITY, (void *) unit);
+	ser_active |= 1;
+	ser_vbl_node[0].function = (void (*) (void *)) sermint;
+	add_vbl_function(&ser_vbl_node[0], SER_VBL_PRIORITY, (void *) 0);
 #ifdef KGDB
-	if (kgdb_dev == makedev(sermajor, unit)) {
-		if (serconsole == unit)
+	if (kgdb_dev == makedev(sermajor, 0)) {
+		if (serconsole == 0)
 			kgdb_dev = NODEV; /* can't debug over console port */
 		else {
-			(void) serinit(unit, kgdb_rate);
+			(void) serinit(0, kgdb_rate);
 			serconsinit = 1;       /* don't re-init in serputc */
 			if (kgdb_debug_init == 0)
-				printf("ser%d: kgdb enabled\n", unit);
+				printf(" kgdb enabled\n");
 			else {
 				/*
 				 * Print prefix of device name,
 				 * let kgdb_connect print the rest.
 				 */
-				printf("ser%d: ", unit);
+				printf("ser0: ");
 				kgdb_connect(1);
 			}
 		}
@@ -197,10 +211,11 @@ serprobe(ad)
 	/*
 	 * Need to reset baud rate, etc. of next print so reset serconsinit.
 	 */
-	if (unit == serconsole)
+	if (0 == serconsole)
 		serconsinit = 0;
-
-	return (1);
+	if (dp)
+		printf(" input fifo: %d output fifo: %d\n", SERIBUF_SIZE,
+		    SEROBUF_SIZE);
 }
 
 
@@ -303,12 +318,10 @@ serclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	struct tty *tp;
-	struct serdevice *ser;
 	int unit;
 
 	unit = SERUNIT(dev);
 
-	ser = ser_addr[unit];
 	tp = ser_tty[unit];
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	custom.adkcon = ADKCONF_UARTBRK;	/* clear break */
@@ -375,7 +388,6 @@ serwrite(dev, uio, flag)
  * wrong..
  */
 
-#define SERIBUF_SIZE 256
 static u_short serbuf[SERIBUF_SIZE];
 static u_short *sbrpt = serbuf;
 static u_short *sbwpt = serbuf;
@@ -430,10 +442,7 @@ int
 serintr(unit)
 	int unit;
 {
-	struct serdevice *ser;
 	int s1, s2;
-
-	ser = ser_addr[unit];
 
 	/*
 	 * Make sure we're not interrupted by another
@@ -448,7 +457,7 @@ serintr(unit)
 		/* 
 		 * no collision with ser_fastint()
 		 */
-		sereint(unit, *sbrpt, ser);
+		sereint(unit, *sbrpt);
 
 		/* lock against ser_fastint() */
 		s2 = spl5();
@@ -461,9 +470,8 @@ serintr(unit)
 }
 
 int
-sereint(unit, stat, ser)
+sereint(unit, stat)
 	int unit, stat;
-	struct serdevice *ser;
 {
 	struct tty *tp;
 	u_char ch;
@@ -493,7 +501,7 @@ sereint(unit, stat, ser)
 			c |= TTY_PE;
 
 	if (stat & SERDATRF_OVRUN)
-		log(LOG_WARNING, "ser%d: silo overflow\n", unit);
+		log(LOG_WARNING, "ser0: silo overflow\n");
 
 	(*linesw[tp->t_line].l_rint)(c, tp);
 }
@@ -510,7 +518,6 @@ sermint(unit)
 {
 	struct tty *tp;
 	u_char stat, last, istat;
-	struct serdevice *ser;
 
 	tp = ser_tty[unit];
 	if (!tp)
@@ -575,7 +582,6 @@ serioctl(dev, cmd, data, flag, p)
 {
 	register struct tty *tp;
 	register int unit = SERUNIT(dev);
-	register struct serdevice *ser;
 	register int error;
 
 	tp = ser_tty[unit];
@@ -590,7 +596,6 @@ serioctl(dev, cmd, data, flag, p)
 	if (error >= 0)
 		return(error);
 
-	ser = ser_addr[unit];
 	switch (cmd) {
 	case TIOCSBRK:
 		custom.adkcon = ADKCONF_SETCLR | ADKCONF_UARTBRK;
@@ -647,7 +652,6 @@ serparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct serdevice *ser;
 	int cfcr, cflag, unit, ospeed;
 	
 	cflag = t->c_cflag;
@@ -713,7 +717,6 @@ ser_putchar(tp, c)
 }
 
 
-#define SEROBUF_SIZE	32
 static u_char ser_outbuf[SEROBUF_SIZE];
 static u_char *sob_ptr = ser_outbuf, *sob_end = ser_outbuf;
 
@@ -762,7 +765,6 @@ int
 serstart(tp)
 	struct tty *tp;
 {
-	struct serdevice *ser;
 	int cc, s, unit, hiwat;
 	
 	hiwat = 0;
@@ -771,7 +773,6 @@ serstart(tp)
 		return;
 
 	unit = SERUNIT(tp->t_dev);
-	ser = ser_addr[unit];
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT | TS_TTSTOP))
@@ -844,12 +845,10 @@ sermctl(dev, bits, how)
 	dev_t dev;
 	int bits, how;
 {
-	struct serdevice *ser;
 	int unit, s;
 	u_char ub;
 
 	unit = SERUNIT(dev);
-	ser = ser_addr[unit];
 
 	/*
 	 * convert TIOCM* mask into CIA mask
