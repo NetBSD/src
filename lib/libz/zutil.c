@@ -1,7 +1,7 @@
-/* $NetBSD: zutil.c,v 1.6 1999/07/03 12:30:58 simonb Exp $ */
+/* $NetBSD: zutil.c,v 1.6.8.1 2002/03/20 23:18:11 he Exp $ */
 
 /* zutil.c -- target dependent utility functions for the compression library
- * Copyright (C) 1995-1998 Jean-loup Gailly.
+ * Copyright (C) 1995-2002 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
