@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.27 1997/06/11 10:04:09 kleink Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.28 1997/06/24 20:04:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -887,30 +887,53 @@ sosetopt(so, level, optname, m0)
 		case SO_RCVBUF:
 		case SO_SNDLOWAT:
 		case SO_RCVLOWAT:
+		    {
+			int optval;
+
 			if (m == NULL || m->m_len < sizeof (int)) {
 				error = EINVAL;
 				goto bad;
 			}
+
+			/*
+			 * Values < 1 make no sense for any of these
+			 * options, so disallow them.
+			 */
+			optval = *mtod(m, int *);
+			if (optval < 1) {
+				error = EINVAL;
+				goto bad;
+			}
+
 			switch (optname) {
 
 			case SO_SNDBUF:
 			case SO_RCVBUF:
 				if (sbreserve(optname == SO_SNDBUF ?
 				    &so->so_snd : &so->so_rcv,
-				    (u_long) *mtod(m, int *)) == 0) {
+				    (u_long) optval) == 0) {
 					error = ENOBUFS;
 					goto bad;
 				}
 				break;
 
+			/*
+			 * Make sure the low-water is never greater than
+			 * the high-water.
+			 */
 			case SO_SNDLOWAT:
-				so->so_snd.sb_lowat = *mtod(m, int *);
+				so->so_snd.sb_lowat =
+				    (optval > so->so_snd.sb_hiwat) ?
+				    so->so_snd.sb_hiwat : optval;
 				break;
 			case SO_RCVLOWAT:
-				so->so_rcv.sb_lowat = *mtod(m, int *);
+				so->so_rcv.sb_lowat =
+				    (optval > so->so_rcv.sb_hiwat) ?
+				    so->so_rcv.sb_hiwat : optval;
 				break;
 			}
 			break;
+		    }
 
 		case SO_SNDTIMEO:
 		case SO_RCVTIMEO:
