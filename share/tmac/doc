@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc,v 1.12 1999/03/06 15:59:22 mycroft Exp $
+.\"	$NetBSD: doc,v 1.13 1999/03/06 16:21:53 mycroft Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -451,9 +451,9 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(aD
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -480,9 +480,9 @@
 .	\}
 .\}
 .br
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(nM
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .	ie \\n(nS \{\
@@ -521,9 +521,9 @@
 .		fV
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(cM
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -538,9 +538,9 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(eR
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -567,9 +567,9 @@
 .		fV
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(eM
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -584,9 +584,9 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(eR
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -601,9 +601,9 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(eV
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -657,9 +657,9 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(aR
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -674,9 +674,9 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(iC
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -701,9 +701,9 @@
 .               fV
 .       \}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(lI
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -718,9 +718,9 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(iC
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -735,9 +735,9 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(sY
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -769,13 +769,9 @@
 .	\}
 .\}
 .if \\n(aC>0 \{\
-.	ie \\n(aC==\\n(aP \{\
-.		as b1 \&\\*(nM\\*(n1\fP\s0
-.		aZ
-.	\}
-.	el \{\
+.	nr aP \\n(aP+1
+.	ie \\n(aC>=\\n(aP \{\
 .		as b1 \\*(nM
-.		nr aP \\n(aP+1
 .		ie \\n(C\\n(aP==1 \{\
 .			as b1 \&\\*(n1\fP\s0
 .			\\*(A\\n(aP
@@ -802,6 +798,10 @@
 .			if "\\*(n1"" .ds n1 \\*(A\\n(aP
 .			nR
 .		\}
+.	el \{\
+.	\}
+.		as b1 \&\\*(nM\\*(n1\fP\s0
+.		aZ
 .	\}
 .\}
 ..
@@ -814,9 +814,9 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(pA
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -841,9 +841,9 @@
 . 		fV
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(sY
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -868,9 +868,9 @@
 . 		fV
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(sY
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -885,9 +885,9 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(tN\\*(tF
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -902,9 +902,9 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(tN
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       rR
@@ -919,9 +919,9 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(vA
-.	nr aP \\n(aP+1
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
@@ -938,8 +938,8 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
-.	nr aP \\n(aP+1
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .       ie \\n(C\\n(aP==1 \{\
 .		\\*(A\\n(aP
 .       \}
@@ -2310,8 +2310,8 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
-.	nr aP \\n(aP+1
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	as b1 \\*(sX
 .	nr cF \\n(.f
 .	nr cZ \\n(.s
@@ -2583,9 +2583,9 @@
 .	fC
 .\}
 .el \{\
-.	if \\n(aC>\\n(aP \{\
+.	nr aP \\n(aP+1
+.	if \\n(aC>=\\n(aP \{\
 .		as b1 \\*(fA
-.		nr aP \\n(aP+1
 .		nr cF \\n(.f
 .		nr cZ \\n(.s
 .		nR
@@ -2809,10 +2809,10 @@
 .	ti -\\n(iSu
 .	nr nS \\n(nS+1
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .	nr oM \\n(oM+1
 .	nr fC 1
-.	nr aP \\n(aP+1
 .	nr cF \\n(.f
 .	nr cZ \\n(.s
 .	as b1 \\*(fN\\*(A\\n(aP\fP\s0\\*(lp
@@ -3013,8 +3013,8 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
-.	nr aP \\n(aP+1
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       rR
@@ -3046,8 +3046,8 @@
 .		fV
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
-.	nr aP \\n(aP+1
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .	ie \\n(rS==0 \{\
@@ -3081,8 +3081,8 @@
 .		fV
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
-.	nr aP \\n(aP+1
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       rR
@@ -3112,8 +3112,8 @@
 .		fV
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
-.	nr aP \\n(aP+1
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       rR
@@ -3143,8 +3143,8 @@
 .		fV
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
-.	nr aP \\n(aP+1
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       rR
@@ -3164,8 +3164,8 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
-.	nr aP \\n(aP+1
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       rR
@@ -3195,8 +3195,8 @@
 .		fV
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
-.	nr aP \\n(aP+1
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       rR
@@ -3226,8 +3226,8 @@
 .		fV
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
-.	nr aP \\n(aP+1
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       rR
@@ -3257,8 +3257,8 @@
 .		fV
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
-.	nr aP \\n(aP+1
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       rR
@@ -3288,8 +3288,8 @@
 .		fV
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
-.	nr aP \\n(aP+1
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       rR
@@ -3321,7 +3321,8 @@
 .		fV
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .\" .	ie \\n(jS==1 \{\
 .\" .		nr cF \\n(.f
 .\" .		nr cZ \\n(.s
@@ -3330,7 +3331,6 @@
 .\" .		En \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .\" .	\}
 .\" .	el \{\
-.		nr aP \\n(aP+1
 .		nr cF \\n(.f
 .		nr cZ \\n(.s
 .		ie \\n(rS==0 \{\
@@ -3355,8 +3355,8 @@
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
-.	nr aP \\n(aP+1
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       rR
@@ -3445,8 +3445,8 @@ File:
 .		aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .	\}
 .\}
-.if \\n(aC>\\n(aP \{\
-.	nr aP \\n(aP+1
+.nr aP \\n(aP+1
+.if \\n(aC>=\\n(aP \{\
 .       nr cF \\n(.f
 .	nr cZ \\n(.s
 .       nR
