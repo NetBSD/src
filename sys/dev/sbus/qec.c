@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.28 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: qec.c,v 1.29 2004/06/27 18:28:26 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.28 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.29 2004/06/27 18:28:26 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,13 +59,6 @@ static int	qecmatch	__P((struct device *, struct cfdata *, void *));
 static void	qecattach	__P((struct device *, struct device *, void *));
 void		qec_init	__P((struct qec_softc *));
 
-static int qec_bus_map __P((
-		bus_space_tag_t,
-		bus_addr_t,		/*coded slot+offset*/
-		bus_size_t,		/*size*/
-		int,			/*flags*/
-		vaddr_t,		/*preferred virtual address */
-		bus_space_handle_t *));
 static void *qec_intr_establish __P((
 		bus_space_tag_t,
 		int,			/*bus interrupt priority*/
@@ -178,11 +171,25 @@ qecattach(parent, self, aux)
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
+	/* Allocate a bus tag */
+	sbt = (bus_space_tag_t) malloc(sizeof(*sbt), M_DEVBUF, M_NOWAIT);
+	if (sbt == NULL) {
+		printf("%s: attach: out of memory\n", self->dv_xname);
+		return;
+	}
+
+	memcpy(sbt, sc->sc_bustag, sizeof(*sbt));
+	sbt->cookie = sc;
+	sbt->parent = sc->sc_bustag;
+	sbt->sparc_intr_establish = qec_intr_establish;
+	sbt->ranges = NULL;
+	sbt->nranges = 0;
+
 	/*
 	 * Collect address translations from the OBP.
 	 */
 	error = prom_getprop(node, "ranges", sizeof(struct openprom_range),
-			 &sc->sc_nrange, &sc->sc_range);
+			 &sbt->nranges, &sbt->ranges);
 	switch (error) {
 	case 0:
 		break;
@@ -190,19 +197,6 @@ qecattach(parent, self, aux)
 	default:
 		panic("%s: error getting ranges property", self->dv_xname);
 	}
-
-	/* Allocate a bus tag */
-	sbt = (bus_space_tag_t) malloc(sizeof(struct sparc_bus_space_tag), 
-	    M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (sbt == NULL) {
-		printf("%s: attach: out of memory\n", self->dv_xname);
-		return;
-	}
-
-	sbt->cookie = sc;
-	sbt->parent = sc->sc_bustag;
-	sbt->sparc_bus_map = qec_bus_map;
-	sbt->sparc_intr_establish = qec_intr_establish;
 
 	/*
 	 * Save interrupt information for use in our qec_intr_establish()
@@ -227,35 +221,6 @@ qecattach(parent, self, aux)
 		(void)config_found(&sc->sc_dev, (void *)&sa, qecprint);
 		sbus_destroy_attach_args(&sa);
 	}
-}
-
-int
-qec_bus_map(t, baddr, size, flags, va, hp)
-	bus_space_tag_t t;
-	bus_addr_t baddr;
-	bus_size_t size;
-	int	flags;
-	vaddr_t va;	/* Ignored */
-	bus_space_handle_t *hp;
-{
-	struct qec_softc *sc = t->cookie;
-	int slot = BUS_ADDR_IOSPACE(baddr);
-	int i;
-
-	for (i = 0; i < sc->sc_nrange; i++) {
-		struct openprom_range *rp = &sc->sc_range[i];
-
-		if (sc->sc_range[i].or_child_space != slot)
-			continue;
-
-		/* We've found the connection to the parent bus */
-		return (bus_space_map(sc->sc_bustag,
-		    BUS_ADDR(rp->or_parent_space,
-			     rp->or_parent_base + BUS_ADDR_PADDR(baddr)),
-		    size, flags, hp));
-	}
-
-	return (EINVAL);
 }
 
 void *
