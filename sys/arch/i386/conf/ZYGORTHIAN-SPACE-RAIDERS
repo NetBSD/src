@@ -1,4 +1,4 @@
-#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.23 2000/03/04 21:37:23 mycroft Exp $
+#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.24 2000/03/06 18:45:42 itojun Exp $
 #	From: GENERIC,v 1.299 2000/02/03 20:31:42 dante Exp
 #
 #	GENERIC -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.23 $"
+#ident 		"GENERIC-$Revision: 1.24 $"
 
 maxusers	32		# estimated number of users
 
@@ -203,7 +203,7 @@ mainbus0 at root
 #options 	APM_V10_ONLY		# Use only the APM 1.0 calls
 #options 	APM_NO_POWEROFF		# Don't power off on halt(8)
 #options 	APM_POWER_PRINT		# Don't print stats on the console
-#options	APM_DISABLE_INTERRUPTS=0 # Don't disable interrupts
+#options 	APM_DISABLE_INTERRUPTS=0 # Don't disable interrupts
 
 
 # Basic Bus Support
