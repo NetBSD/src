@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)quota.h	7.9 (Berkeley) 2/22/91
- *	$Id: quota.h,v 1.3 1993/05/20 03:53:30 cgd Exp $
+ *	$Id: quota.h,v 1.4 1994/04/26 20:19:52 pk Exp $
  */
 
 #ifndef _UFS_QUOTA_H_
@@ -177,6 +177,15 @@ struct	dquot {
 
 __BEGIN_DECLS
 int	quotactl __P((const char *, int, int, void *));
+int	getinoquota __P((struct inode *));
+int	chkdq __P((struct inode *, long, struct ucred *, int));
+int	chkiq __P((struct inode *, long, struct ucred *, int));
+int	quotaon __P((struct proc *, struct mount *, int, caddr_t));
+int	quotaoff __P((struct proc *, struct mount *, int));
+int	getquota __P((struct mount *, u_long, int, caddr_t));
+int	setquota __P((struct mount *, u_long, int, caddr_t));
+int	setuse __P((struct mount *, u_long, int, caddr_t));
+int	qsync __P((struct mount *));
 __END_DECLS
 
 #endif /* KERNEL */
