@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.358 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.359 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -109,3 +109,5 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 		[rearnsha 20040821]
 	ipw(4): Driver for Intel PRO/Wireless 2100 driver written by
 		Damien Bergamini.  [lukem 20040823]
+	crtstuff: Switch to GCC-supplied crtbegin.o / crtend.o on GCC 3.3
+		platforms.  [thorpej 20040827]
