@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.h,v 1.3 1999/12/15 12:28:55 kleink Exp $	*/
+/*	$NetBSD: rbus.h,v 1.4 2000/05/26 06:32:56 haya Exp $	*/
 /*
  * Copyright (c) 1999
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -148,7 +148,7 @@ rbus_tag_t rbus_new __P((rbus_tag_t parent, bus_addr_t start, bus_size_t size,
 rbus_tag_t rbus_new_root_delegate __P((bus_space_tag_t, bus_addr_t, bus_size_t,
 				       bus_addr_t offset));
 rbus_tag_t rbus_new_root_share __P((bus_space_tag_t, struct extent *,
-				    bus_addr_t, bus_size_t,bus_addr_t offset));
+    bus_addr_t /* start */, bus_size_t /* size */, bus_addr_t /* offset */));
 
 /*
  * This function release bus-space used by the argument.  This
