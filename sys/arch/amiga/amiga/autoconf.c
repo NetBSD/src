@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.74 2000/06/01 00:49:51 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.75 2000/06/01 15:38:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -358,14 +358,6 @@ findroot(devpp, partp)
 	struct partition *pp;
 	struct device **devs;
 	int i, maj, unit;
-
-	/*
-	 * Default to "not found".
-	 */
-	*devpp = NULL;
-
-	/* always partition 'a' */
-	*partp = 0;
 
 #if NSD > 0
 	/*
