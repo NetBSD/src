@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_ieee.h,v 1.5 2000/07/18 15:01:55 onoe Exp $	*/
+/*	$NetBSD: if_wi_ieee.h,v 1.6 2000/08/10 11:48:46 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -53,14 +53,6 @@
  * ifconfig(8). No, sysctl(2) is not the answer. I said a _simple_
  * interface, didn't I.
  */
-
-#ifndef SIOCSIFGENERIC
-#define	SIOCSIFGENERIC	 _IOW('i', 57, struct ifreq)	/* generic IF set op */
-#endif
-
-#ifndef SIOCGIFGENERIC
-#define	SIOCGIFGENERIC	_IOWR('i', 58, struct ifreq)	/* generic IF get op */
-#endif
 
 #ifndef SIOCSWAVELAN
 #define SIOCSWAVELAN	SIOCSIFGENERIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rayreg.h,v 1.2 2000/02/27 20:40:43 augustss Exp $	*/
+/*	$NetBSD: if_rayreg.h,v 1.3 2000/08/10 11:48:46 ad Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -558,14 +558,6 @@ struct ray_param_req {
 
 #ifdef _KERNEL
 #define	RAY_FAILCAUSE_WAITING	257
-#endif
-
-#ifndef SIOCGIFGENERIC
-#define SIOCGIFGENERIC  _IOWR('i', 57, struct ifreq)    /* generic IF get op */
-#endif
-
-#ifndef SIOCSIFGENERIC
-#define SIOCSIFGENERIC  _IOWR('i', 58, struct ifreq)    /* generic IF get op */
 #endif
 
 /* get a param the data is a ray_param_request structure */

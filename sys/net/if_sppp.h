@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.6 2000/05/02 12:43:16 itojun Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.7 2000/08/10 11:48:46 ad Exp $	*/
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
@@ -177,8 +177,7 @@ struct spppreq {
 };
 
 #if (defined(__FreeBSD_version) && __FreeBSD_version < 300000)  ||	\
-    (defined(__FreeBSD__) && __FreeBSD__ < 3)			||	\
-    defined(__NetBSD__) || defined (__OpenBSD__)
+    (defined(__FreeBSD__) && __FreeBSD__ < 3)
 #define	SIOCSIFGENERIC	 _IOW('i', 57, struct ifreq)	/* generic IF set op */
 #define	SIOCGIFGENERIC	_IOWR('i', 58, struct ifreq)	/* generic IF get op */
 #endif
