@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.62 2000/06/19 23:30:35 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.63 2000/06/23 19:50:54 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -2149,7 +2149,7 @@ data_miss:
 	/* This should not be necessary */
 	brnz,pt	%g6, Ludata_miss			! If user context continue miss
 	sethi	%hi(KERNBASE), %g5			! Don't need %lo
-	set	0x0400000, %g6				! 4MB
+	set	0x0800000, %g6				! 8MB
 	sub	%g3, %g5, %g5
 	cmp	%g5, %g6
 	sethi	%hi(DATA_START), %g7
@@ -2271,7 +2271,7 @@ winfix:
 	rdpr	%tstate, %g4				! Try to restore prev %cwp if we were executing a restore
 	andn	%g7, 0x3f, %g5				!   window fill traps are all 0b 0000 11xx xxxx
 
-#if 0
+#if 1
 	cmp	%g7, 0x68				! If we took a datafault just before this trap
 	bne,pt	%icc, winfixfill			! our stack's probably bad so we need to switch somewhere else
 	 nop
@@ -3082,7 +3082,7 @@ instr_miss:
 	brnz,pt	%g6, Lutext_miss			! If user context continue miss
 	sethi	%hi(KERNBASE), %g5			! Don't need %lo
 	sethi	%hi(DATA_START), %g7
-	set	0x0400000, %g6				! 4MB
+	set	0x0800000, %g6				! 8MB
 	add	%g7, 16, %g7
 	sub	%g3, %g5, %g5
 	cmp	%g5, %g6
@@ -7954,37 +7954,38 @@ ENTRY(probeget)
 	mov	%o2, %o1
 	mov	%o3, %o2
 #endif
+	mov	%o2, %o4
 	! %o0 = asi, %o1 = addr, %o2 = (1,2,4)
-	sethi	%hi(CPCB), %o3
-	LDPTR	[%o3 + %lo(CPCB)], %o3	! cpcb->pcb_onfault = Lfserr;
+	sethi	%hi(CPCB), %o2
+	LDPTR	[%o2 + %lo(CPCB)], %o2	! cpcb->pcb_onfault = Lfserr;
 	set	_C_LABEL(Lfsbail), %o5
-	STPTR	%o5, [%o3 + PCB_ONFAULT]
-	btst	1, %o2
-	wr	%o0, 0, %asi
+	STPTR	%o5, [%o2 + PCB_ONFAULT]
+	btst	1, %o4
+	wr	%o1, 0, %asi
 	membar	#Sync
 	bz	0f			! if (len & 1)
-	 btst	2, %o2
+	 btst	2, %o4
 	ba,pt	%icc, 1f
-	 lduba	[%o1] %asi, %o0		!	value = *(char *)addr;
+	 lduba	[%o0] %asi, %o0		!	value = *(char *)addr;
 0:	
 	bz	0f			! if (len & 2)
-	 btst	4, %o2
+	 btst	4, %o4
 	ba,pt	%icc, 1f
-	 lduha	[%o1] %asi, %o0		!	value = *(short *)addr;
+	 lduha	[%o0] %asi, %o0		!	value = *(short *)addr;
 0:	
 	bz	0f			! if (len & 4)
-	 btst	8, %o2
+	 btst	8, %o4
 	ba,pt	%icc, 1f
-	 lda	[%o1] %asi, %o0		!	value = *(int *)addr;
+	 lda	[%o0] %asi, %o0		!	value = *(int *)addr;
 0:
-	ldxa	[%o1] %asi, %o0		!	value = *(long *)addr;
+	ldxa	[%o0] %asi, %o0		!	value = *(long *)addr;
 #ifndef _LP64
 	srl	%o0, 0, %o1		! Split the result again
 	srlx	%o0, 32, %o0
 #endif
 1:	membar	#Sync
 	retl				! made it, clear onfault and return
-	 STPTR	%g0, [%o3 + PCB_ONFAULT]
+	 STPTR	%g0, [%o2 + PCB_ONFAULT]
 
 /*
  * probeset(addr, asi, size, val)
@@ -8005,36 +8006,37 @@ ENTRY(probeset)
 	sllx	%o4, 32, %o3
 	or	%o3, %o5, %o3
 #endif
-	! %o0 = asi, %o1 = addr, %o2 = (1,2,4), %o3 = val
-	sethi	%hi(CPCB), %o4
-	LDPTR	[%o4 + %lo(CPCB)], %o4	! cpcb->pcb_onfault = Lfserr;
+	mov	%o2, %o4
+	! %o0 = addr, %o1 = asi, %o4 = (1,2,4), %o3 = val
+	sethi	%hi(CPCB), %o2		! Lfserr requires CPCB in %o2
+	LDPTR	[%o2 + %lo(CPCB)], %o2	! cpcb->pcb_onfault = Lfserr;
 	set	_C_LABEL(Lfsbail), %o5
-	STPTR	%o5, [%o4 + PCB_ONFAULT]
-	btst	1, %o2
-	wr	%o0, 0, %asi
+	STPTR	%o5, [%o2 + PCB_ONFAULT]
+	btst	1, %o4
+	wr	%o1, 0, %asi
 	membar	#Sync
 	bz	0f			! if (len & 1)
-	 btst	2, %o2
+	 btst	2, %o4
 	ba,pt	%icc, 1f
-	 stba	%o3, [%o1] %asi		!	*(char *)addr = value;
+	 stba	%o3, [%o0] %asi		!	*(char *)addr = value;
 0:	
 	bz	0f			! if (len & 2)
-	 btst	4, %o2
+	 btst	4, %o4
 	ba,pt	%icc, 1f
-	 stha	%o3, [%o1] %asi		!	*(short *)addr = value;
+	 stha	%o3, [%o0] %asi		!	*(short *)addr = value;
 0:	
 	bz	0f			! if (len & 4)
-	 btst	8, %o2
+	 btst	8, %o4
 	ba,pt	%icc, 1f
-	 sta	%o3, [%o1] %asi		!	*(int *)addr = value;
+	 sta	%o3, [%o0] %asi		!	*(int *)addr = value;
 0:
 	bz	Lfserr			! if (len & 8)
 	ba,pt	%icc, 1f
-	 sta	%o3, [%o1] %asi		!	*(int *)addr = value;
+	 sta	%o3, [%o0] %asi		!	*(int *)addr = value;
 1:	membar	#Sync
 	clr	%o0			! made it, clear onfault and return 0
 	retl
-	 STPTR	%g0, [%o4 + PCB_ONFAULT]
+	 STPTR	%g0, [%o2 + PCB_ONFAULT]
 
 /*
  * Insert entry into doubly-linked queue.
