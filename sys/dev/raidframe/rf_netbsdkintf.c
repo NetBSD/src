@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.114 2001/11/28 05:39:13 lukem Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.115 2001/12/16 22:57:32 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.114 2001/11/28 05:39:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.115 2001/12/16 22:57:32 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -3293,7 +3293,7 @@ rf_auto_config_set(cset,unit)
 		   not taken. 
 		*/
 
-		for(raidID = numraid; raidID >= 0; raidID--) {
+		for(raidID = numraid - 1; raidID >= 0; raidID--) {
 			if (raidPtrs[raidID]->valid == 0) {
 				/* can use this one! */
 				break;
