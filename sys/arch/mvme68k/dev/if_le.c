@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.20.16.1 2000/03/11 20:51:49 scw Exp $	*/
+/*	$NetBSD: if_le.c,v 1.20.16.2 2000/03/13 12:15:27 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -185,7 +185,8 @@ le_pcc_attach(parent, self, aux)
 
 	/* Get contiguous DMA-able memory for the lance */
 	if ( bus_dmamem_alloc(pa->pa_dmat, ether_data_buff_size, NBPG, 0,
-	    &seg, 1, &rseg, BUS_DMA_NOWAIT ) != 0 ) {
+	    &seg, 1, &rseg,
+	    BUS_DMA_NOWAIT | BUS_DMA_ONBOARD_RAM | BUS_DMA_24BIT) != 0 ) {
 		printf("%s: Failed to allocate ether buffer\n", self->dv_xname);
 		return;
 	}
@@ -197,14 +198,7 @@ le_pcc_attach(parent, self, aux)
 		return;
 	}
 
-	if ( seg.ds_addr & 0xff000000 ) {
-		printf("%s: Ether buffer out of range!\n", self->dv_xname);
-		bus_dmamem_unmap(pa->pa_dmat, sc->sc_mem, ether_data_buff_size);
-		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
-		return;
-	}
-
-	sc->sc_addr = seg.ds_addr & 0x00ffffff;
+	sc->sc_addr = seg.ds_addr;
 	sc->sc_memsize = ether_data_buff_size;
 	sc->sc_conf3 = LE_C3_BSWP;
 

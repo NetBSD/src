@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 1999/02/26 22:16:36 is Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14.16.1 2000/03/13 12:15:29 scw Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -138,6 +138,26 @@ extern struct pmap	kernel_pmap_store;
 #define	active_user_pmap(pm) \
 	(curproc && \
 	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
+
+#define _pmap_set_page_cacheable(pm,va)		\
+	do {					\
+		pt_entry_t *_pte_;		\
+		_pte_ = &((pm)->pm_stab[(vaddr_t)(v) >> PG_SHIFT]);	\
+		if ( (*_pte_ & PG_CI) != 0 ) {	\
+			*_pte_ &= ~PG_CI;	\
+			TBIS(va);		\
+		}				\
+	} while (0)
+
+#define _pmap_set_page_cacheinhibit(pm,va)	\
+	do {					\
+		pt_entry_t *_pte_;		\
+		_pte_ = &((pm)->pm_stab[(vaddr_t)(v) >> PG_SHIFT]);	\
+		if ( (*_pte_ & PG_CI) == 0 ) {	\
+			*_pte_ |= ~PG_CI;	\
+			TBIS(va);		\
+		}				\
+	} while (0)
 
 extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
