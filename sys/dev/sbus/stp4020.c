@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.4 1999/03/29 21:30:48 pk Exp $ */
+/*	$NetBSD: stp4020.c,v 1.5 1999/07/06 21:44:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -395,7 +395,7 @@ stp4020attach(parent, self, aux)
 	 * insert/removal events.
 	 */
 	SIMPLEQ_INIT(&sc->events);
-	kthread_create_deferred(stp4020_create_event_thread, sc);
+	kthread_create(stp4020_create_event_thread, sc);
 
 	for (i = 0; i < STP4020_NSOCK; i++) {
 		struct stp4020_socket *h = &sc->sc_socks[i];
@@ -458,7 +458,7 @@ stp4020_create_event_thread(arg)
 	struct stp4020_softc *sc = arg;
 	const char *name = sc->sc_dev.dv_xname;
 
-	if (kthread_create(stp4020_event_thread, sc, &sc->event_thread,
+	if (kthread_create1(stp4020_event_thread, sc, &sc->event_thread,
 			   "%s", name)) {
 		panic("%s: unable to create event thread", name);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.36 1999/06/29 06:49:36 ross Exp $ */
+/* $NetBSD: cpu.c,v 1.37 1999/07/06 21:44:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.36 1999/06/29 06:49:36 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 1999/07/06 21:44:11 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -303,7 +303,7 @@ recognized:
 		return;
 	}
 
-	kthread_create_deferred(cpu_create_idle_thread, ci);
+	kthread_create(cpu_create_idle_thread, ci);
 #endif /* MULTIPROCESSOR */
 }
 
@@ -334,7 +334,7 @@ cpu_create_idle_thread(arg)
 	 * and argument is effectively ignored in this case; we set up
 	 * the entry point below, when we set up the CPU's HWPCB.
 	 */
-	if (kthread_create(NULL, NULL, &ci->ci_idle_thread, "%s idle",
+	if (kthread_create1(NULL, NULL, &ci->ci_idle_thread, "%s idle",
 	    ci->ci_dev->dv_xname)) {
 		printf("%s: unable to create idle thread\n",
 		    ci->ci_dev->dv_xname);
