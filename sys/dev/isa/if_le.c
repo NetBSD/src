@@ -10,7 +10,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_le.c,v 1.4 1994/07/01 21:34:40 mycroft Exp $
+ *	$Id: if_le.c,v 1.5 1994/07/01 21:38:19 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -707,7 +707,7 @@ leintr(sc)
 			if (isr & MERR) {
 				printf("%s: MERR\n", sc->sc_dev.dv_xname);
 				le_reset(sc);
-				return 1;
+				goto out;
 			}
 		}
 
@@ -715,13 +715,13 @@ leintr(sc)
 			printf("%s: receiver disabled\n", sc->sc_dev.dv_xname);
 			sc->sc_arpcom.ac_if.if_ierrors++;
 			le_reset(sc);
-			return 1;
+			goto out;
 		}
 		if ((isr & TXON) == 0) {
 			printf("%s: transmitter disabled\n", sc->sc_dev.dv_xname);
 			sc->sc_arpcom.ac_if.if_oerrors++;
 			le_reset(sc);
-			return 1;
+			goto out;
 		}
 
 		if (isr & RINT) {
@@ -743,6 +743,8 @@ leintr(sc)
 		printf("%s: leintr returning with isr=%04x\n",
 		    sc->sc_dev.dv_xname, isr);
 #endif
+
+out:
 	if (sc->sc_card == DEPCA)
 		outb(sc->sc_iobase + DEPCA_CSR, DEPCA_CSR_NORMAL);
 	return 1;
