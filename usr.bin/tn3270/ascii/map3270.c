@@ -1,4 +1,4 @@
-/*	$NetBSD: map3270.c,v 1.11 2003/09/29 09:50:22 wiz Exp $	*/
+/*	$NetBSD: map3270.c,v 1.12 2003/11/17 11:16:10 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)map3270.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: map3270.c,v 1.11 2003/09/29 09:50:22 wiz Exp $");
+__RCSID("$NetBSD: map3270.c,v 1.12 2003/11/17 11:16:10 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ __RCSID("$NetBSD: map3270.c,v 1.11 2003/09/29 09:50:22 wiz Exp $");
 #define	LEX_END_OF_FILE LEX_CARETED+1		/* end of file encountered */
 #define	LEX_ILLEGAL	LEX_END_OF_FILE+1	/* trailing escape character */
 
-/* the following is part of our character set dependancy... */
+/* the following is part of our character set dependency... */
 #define	ESCAPE		0x1b
 #define	TAB		0x09
 #define	NEWLINE 	0x0a

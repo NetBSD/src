@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.14 2003/08/07 09:46:51 agc Exp $	*/
+/*	$NetBSD: defs.h,v 1.15 2003/11/17 11:16:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -153,7 +153,7 @@ typedef struct {
 /*
  * Tricky code here.  What we want to know is if the MY_STATE_WILL
  * and MY_WANT_STATE_WILL bits have the same value.  Since the two
- * bits are adjacent, a little arithmatic will show that by adding
+ * bits are adjacent, a little arithmetic will show that by adding
  * in the lower bit, the upper bit will be set if the two bits were
  * different, and clear if they were the same.
  */

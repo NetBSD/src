@@ -1,4 +1,4 @@
-/*	$NetBSD: tags.c,v 1.4 2003/07/26 16:02:25 mrg Exp $	*/
+/*	$NetBSD: tags.c,v 1.5 2003/11/17 11:16:10 wiz Exp $	*/
 
 /*
  * Copyright (C) 1984-2002  Mark Nudelman
@@ -659,7 +659,7 @@ prevgtag()
 /*
  * Position the current file at at what is hopefully the tag that was chosen
  * using either findtag() or one of nextgtag() and prevgtag().  Returns -1
- * if it was unable to position at the tag, 0 if succesful.
+ * if it was unable to position at the tag, 0 if successful.
  */
 	static POSITION
 gtagsearch()
