@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.4 2001/07/12 07:02:00 matt Exp $
+#	$NetBSD: Makefile.arm,v 1.5 2001/07/28 13:24:24 chris Exp $
 
 # Makefile for NetBSD
 #
@@ -116,7 +116,7 @@ SYSTEM_LD_TAIL+=; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 #LINKFLAGS+=	-S
-LINKFLAGS+=	-x
+LINKFLAGS+=	-X
 .endif
 
 %LOAD
