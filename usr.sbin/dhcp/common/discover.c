@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.2 2000/04/24 05:38:51 thorpej Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.3 2000/05/28 01:27:52 matt Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -217,7 +217,15 @@ void discover_interfaces (state)
 #else
 			tmp -> hw_address.hlen = 6; /* XXX!!! */
 #endif
-			tmp -> hw_address.hbuf [0] = HTYPE_ETHER; /* XXX */
+			if (foo -> sdl_type == IFT_ETHER) {
+				tmp -> hw_address.hbuf [0] = HTYPE_ETHER;
+#if defined (DEC_FDDI) || defined(NETBSD_FDDI)
+			} else if (foo -> sdl_type == IFT_FDDI) {
+				tmp -> hw_address.hbuf [0] = HTYPE_FDDI;
+#endif
+			} else {
+				continue;
+			}
 			memcpy (&tmp -> hw_address.hbuf [1],
 				LLADDR (foo), tmp -> hw_address.hlen);
 			tmp -> hw_address.hlen++;	/* for type. */
