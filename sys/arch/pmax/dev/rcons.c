@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.43 2000/06/28 11:03:26 ad Exp $	*/
+/*	$NetBSD: rcons.c,v 1.44 2000/11/02 00:42:39 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -300,7 +300,7 @@ rconsopen(dev, flag, mode, p)
 	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
-	status = (*linesw[tp->t_line].l_open)(dev, tp);
+	status = (*tp->t_linesw->l_open)(dev, tp);
 	return status;
 }
 
@@ -313,7 +313,7 @@ rconsclose(dev, flag, mode, p)
 {
 	struct tty *tp = &rcons_tty [0];
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
 	return (0);
@@ -328,7 +328,7 @@ rconsread(dev, uio, flag)
 {
 	struct tty *tp = &rcons_tty [0];
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 /* ARGSUSED */
@@ -341,7 +341,7 @@ rconswrite(dev, uio, flag)
 	struct tty *tp;
 
 	tp = &rcons_tty [0];
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -365,7 +365,7 @@ rconsioctl(dev, cmd, data, flag, p)
 	int error;
 
 	tp = &rcons_tty [0];
-	if ((error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag, p)) >= 0)
+	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p)) >= 0)
 		return (error);
 	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
 		return (error);
@@ -459,7 +459,7 @@ rcons_later(tpaddr)
 	(*(fbconstty->t_oproc)) (tp);	/* XXX */
 
 	tp->t_state &= ~TS_BUSY;
-	(*linesw[tp->t_line].l_start)(tp);
+	(*tp->t_linesw->l_start)(tp);
 	splx(s);
 }
 #endif	/* notyet */

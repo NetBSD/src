@@ -1,4 +1,4 @@
-/*	$NetBSD: bmcons.c,v 1.7 2000/06/29 07:59:30 mrg Exp $	*/
+/*	$NetBSD: bmcons.c,v 1.8 2000/11/02 00:37:57 eeh Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -242,7 +242,7 @@ bmcnopen(dev, flag, mode, p)
 	 */
 	(void) cnmctl(CN_ON, DMSET);
 	tp->t_state |= TS_CARR_ON;
-	return ((*linesw[tp->t_line].l_open)(dev, tp));
+	return ((*tp->t_linesw->l_open)(dev, tp));
 }
 
 /*
@@ -257,7 +257,7 @@ bmcnclose(dev, flag, mode, p)
 {
 	register struct tty *tp = &bmcn_tty[0];
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	(void) cnmctl(CN_BRK, DMBIC);
 	ttyclose(tp);
 	return (0);
@@ -272,7 +272,7 @@ bmcnread(dev, uio, flag)
 {
 	register struct tty *tp = &bmcn_tty[0];
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 /*ARGSUSED*/
@@ -284,7 +284,7 @@ bmcnwrite(dev, uio, flag)
 {
 	register struct tty *tp = &bmcn_tty[0];
 
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -315,7 +315,7 @@ _bmcnrint(buf, n)
 	 * Loop fetching characters from the silo for console
 	 * until there are no more in the silo.
 	 */
-	rint = linesw[tp->t_line].l_rint;
+	rint = tp->t_linesw->l_rint;
 	while (--n >= 0)
 		(*rint)(*buf++, tp);
 	bmcn_enable();
@@ -336,7 +336,7 @@ bmcnioctl(dev, cmd, data, flag, p)
 	register struct tty *tp = &bmcn_tty[0];
 	int error;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag, p);
@@ -500,7 +500,7 @@ _bmcnxint(count)
 		ndflush(&tp->t_outq, count);
 	(void) splx(s);
 	if (tp->t_line)
-		(*linesw[tp->t_line].l_start)(tp);
+		(*tp->t_linesw->l_start)(tp);
 	else
 		bmcnstart(tp);
 }
@@ -653,7 +653,7 @@ _bmcnsint(stat)
 	if (stat & OVERRUN_ERROR)
 		printf("console: fifo overflow\n");
 	if (stat & RBREAK)
-		(*linesw[tp->t_line].l_rint)
+		(*tp->t_linesw->l_rint)
 		    (tp->t_flags & RAW ? '\0' : tp->t_cc[VINTR], tp);
 }
 

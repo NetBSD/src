@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.44 2000/07/14 08:18:49 matthias Exp $ */
+/*	$NetBSD: scn.c,v 1.45 2000/11/02 00:42:38 eeh Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -1166,7 +1166,7 @@ scnopen(dev, flag, mode, p)
 	}
 	splx(s);
 
-	error = (*linesw[tp->t_line].l_open) (dev, tp);
+	error = (*tp->t_linesw->l_open) (dev, tp);
 	if (error && hwset) {
 		scn_rxdisable(sc);
 		SCN_OP_BIC(sc, sc->sc_op_rts | sc->sc_op_dtr);
@@ -1190,7 +1190,7 @@ scnclose(dev, flag, mode, p)
 	if ((tp->t_state & TS_ISOPEN) == 0)
 		return 0;
 
-	(*linesw[tp->t_line].l_close) (tp, flag);
+	(*tp->t_linesw->l_close) (tp, flag);
 
 #ifdef KGDB
 	/* do not disable interrupts if debugging */
@@ -1226,7 +1226,7 @@ scnread(dev, uio, flag)
 	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
 	register struct tty *tp = sc->sc_tty;
 
-	return ((*linesw[tp->t_line].l_read) (tp, uio, flag));
+	return ((*tp->t_linesw->l_read) (tp, uio, flag));
 }
 
 int
@@ -1238,7 +1238,7 @@ scnwrite(dev, uio, flag)
 	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
 	register struct tty *tp = sc->sc_tty;
 
-	return ((*linesw[tp->t_line].l_write) (tp, uio, flag));
+	return ((*tp->t_linesw->l_write) (tp, uio, flag));
 }
 
 struct tty *
@@ -1595,7 +1595,7 @@ scnsoft(arg)
 					c = TTY_FE | 0;
 					sc->sc_breaks++;
 				}
-				(*linesw[tp->t_line].l_rint) (c, tp);
+				(*tp->t_linesw->l_rint) (c, tp);
 
 				if (sc->sc_rx_blocked && n < SCN_RING_THRESH) {
 					int s = splrtty();
@@ -1634,7 +1634,7 @@ scnioctl(dev, cmd, data, flag, p)
 	register struct tty *tp = sc->sc_tty;
 	register int error;
 
-	error = (*linesw[tp->t_line].l_ioctl) (tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl) (tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag, p);

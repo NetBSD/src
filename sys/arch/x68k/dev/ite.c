@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.22 2000/05/25 03:30:19 itohy Exp $	*/
+/*	$NetBSD: ite.c,v 1.23 2000/11/02 00:42:41 eeh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -405,7 +405,7 @@ iteopen(dev, mode, devtype, p)
 		tp->t_state = TS_ISOPEN|TS_CARR_ON;
 		ttsetwater(tp);
 	}
-	error = (*linesw[tp->t_line].l_open)(dev, tp);
+	error = (*tp->t_linesw->l_open)(dev, tp);
 	if (error == 0) {
 		tp->t_winsize.ws_row = ip->rows;
 		tp->t_winsize.ws_col = ip->cols;
@@ -423,7 +423,7 @@ iteclose(dev, flag, mode, p)
 {
 	register struct tty *tp = ite_tty[UNIT(dev)];
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 	iteoff(dev, 0);
 #if 0
@@ -441,7 +441,7 @@ iteread(dev, uio, flag)
 {
 	register struct tty *tp = ite_tty[UNIT(dev)];
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
@@ -452,7 +452,7 @@ itewrite(dev, uio, flag)
 {
 	register struct tty *tp = ite_tty[UNIT(dev)];
 
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 struct tty *
@@ -475,7 +475,7 @@ iteioctl(dev, cmd, addr, flag, p)
 	register struct tty *tp = ite_tty[UNIT(dev)];
 	int error;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, addr, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, addr, flag, p);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, addr, flag, p);

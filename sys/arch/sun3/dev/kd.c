@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.33 2000/05/21 14:36:16 eeh Exp $	*/
+/*	$NetBSD: kd.c,v 1.34 2000/11/02 00:42:40 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ static	int firstopen = 1;
 
 	splx(s);
 
-	return ((*linesw[tp->t_line].l_open)(dev, tp));
+	return ((*tp->t_linesw->l_open)(dev, tp));
 }
 
 int
@@ -200,7 +200,7 @@ kdclose(dev, flag, mode, p)
 	if ((tp->t_state & TS_ISOPEN) == 0)
 		return 0;
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 	if ((cc = kd->kd_in) != NULL)
 		(void)(*cc->cc_iclose)(cc->cc_dev);
@@ -219,7 +219,7 @@ kdread(dev, uio, flag)
 	kd = &kd_softc; 	/* XXX */
 	tp = kd->kd_tty;
 
-	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
@@ -234,7 +234,7 @@ kdwrite(dev, uio, flag)
 	kd = &kd_softc; 	/* XXX */
 	tp = kd->kd_tty;
 
-	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
@@ -252,7 +252,7 @@ kdioctl(dev, cmd, data, flag, p)
 	kd = &kd_softc; 	/* XXX */
 	tp = kd->kd_tty;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
 	error = ttioctl(tp, cmd, data, flag, p);
@@ -353,7 +353,7 @@ kd_later(tpaddr)
 
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
-	(*linesw[tp->t_line].l_start)(tp);
+	(*tp->t_linesw->l_start)(tp);
 	splx(s);
 }
 
@@ -434,7 +434,7 @@ kd_cons_input(c)
 	if ((tp->t_state & TS_ISOPEN) == 0)
 		return;
 
-	(*linesw[tp->t_line].l_rint)(c, tp);
+	(*tp->t_linesw->l_rint)(c, tp);
 }
 
 
