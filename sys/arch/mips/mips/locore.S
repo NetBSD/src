@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.27 1996/12/23 15:27:47 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.28 1997/05/19 23:25:09 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1322,7 +1322,89 @@ LEAF(splsoftnet)
 	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(splsoftnet)
 
-LEAF(Mach_spl0)
+/*
+ * hardware-level spls for hardware where the device interrupt priorites
+ * are ordered, and map onto mips interrupt pins in increasing priority.
+ * This maps directly onto BSD spl levels.
+ */
+
+/*
+ * Block out int2 (hardware interrupt 0) and lower mips levels.
+ */
+LEAF(cpu_spl0)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_SPL0)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable on r4x00
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(cpu_spl0)
+
+/*
+ * Block out Int3 (hardware interrupt 1) and lower mips levels.
+ */
+LEAF(cpu_spl1)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_SPL1)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable on r4x00
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(cpu_spl1)
+
+LEAF(cpu_spl2)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_SPL2)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable on r4x00
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(cpu_spl2)
+
+LEAF(cpu_spl3)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_SPL3)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable on r4x00
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(cpu_spl3)
+
+LEAF(cpu_spl4)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_SPL4)
+
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(cpu_spl4)
+
+LEAF(cpu_spl5)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_SPL5)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(cpu_spl5)
+
+/*
+ * hardware-level spls for hardware where teh interrupt priorites
+ * DO NOT  map onto levels.  
+ *
+ * For now, that means DEcstations that use only two distinct CPU
+ * levels, one for TOD clock interrupts, and a second for all other
+ * external devices (via an external controller.
+ * XXX  the spl handling really needs re-writing from scratch.
+ */
+ LEAF(Mach_spl0)
 	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
 	li	t0, ~(MACH_INT_MASK_0|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
 	and	t0, t0, v0
