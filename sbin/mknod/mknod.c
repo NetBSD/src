@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.23 2001/10/08 04:25:00 lukem Exp $	*/
+/*	$NetBSD: mknod.c,v 1.24 2001/10/08 04:45:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.23 2001/10/08 04:25:00 lukem Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.24 2001/10/08 04:45:29 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: mknod.c,v 1.23 2001/10/08 04:25:00 lukem Exp $");
 #include <unistd.h>
 #include <string.h>
 
-#include "mknod.h"
+#include "pack_dev.h"
 
 	int	main(int, char *[]);
 static	void	usage(void);
@@ -78,7 +78,7 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "F:")) != -1) {
 		switch (ch) {
 		case 'F':
-			pack = find_format(optarg);
+			pack = pack_find(optarg);
 			if (pack == NULL)
 				errx(1, "invalid format: %s", optarg);
 			hasformat++;
