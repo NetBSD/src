@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.110 2003/08/15 19:30:12 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.111 2003/08/15 19:34:06 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1238,4 +1238,10 @@ sys/dev/pci/if_fxp_pci.c			1.34 via patch
 	Add support for another Intel Pro/100 variant. From Quentin Garnier in
 	private mail.
 	[bouyer, ticket #1368]
+
+sys/dev/ata/wd.c				1.256
+
+	Don't use LBA48 if we don't have to (that is, if the request is inside
+	the first 128GB). Tested by Andreas Johansson.
+	[bouyer, ticket #1370]
 
