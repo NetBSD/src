@@ -1,4 +1,4 @@
-/* $NetBSD: milieu.h,v 1.1 2001/04/26 03:10:47 ross Exp $ */
+/* $NetBSD: milieu.h,v 1.2 2003/04/22 15:10:04 christos Exp $ */
 
 /* This is a derivative work. */
 
@@ -72,12 +72,6 @@ this code that are retained.
 #endif
 
 #include <sys/endian.h>
-
-enum {
-    FALSE = 0,
-    TRUE  = 1
-};
-
 
 /*
 -------------------------------------------------------------------------------
