@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1996/07/13 06:19:34 explorer Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1996/07/13 06:20:11 explorer Exp $
 
 .if target(aic7xxx.o)
 PATH: $S/dev/microcode/aic7xxx
@@ -13,6 +13,6 @@ aic7xxx_asm: $S/dev/microcode/aic7xxx/aic7xxx_asm.c
 .depend: aic7xxx_seq.h
 
 clean::
-	rm -f aic7xxx_asm aix7xxx_seq.h
+	rm -f aic7xxx_asm aic7xxx_seq.h
 
 .endif
