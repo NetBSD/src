@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.19 1999/01/16 14:08:05 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.20 1999/02/25 11:20:34 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -297,7 +297,7 @@ arc_output(ifp, m0, dst, rt0)
 		    (m->m_pkthdr.len <=
 		    ARC_MAX_FORBID_LEN - ARC_HDRNEWLEN + 2)) {
 
-			M_PREPEND(m, ARC_HDRNEWLEN_EXC_1201, M_DONTWAIT);
+			M_PREPEND(m, ARC_HDRNEWLEN_EXC, M_DONTWAIT);
 			if (m == 0)
 				senderr(ENOBUFS);
 			ah = mtod(m, struct arc_header *);
