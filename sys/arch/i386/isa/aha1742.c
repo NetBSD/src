@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: aha1742.c,v 1.28 1994/04/08 18:22:18 mycroft Exp $
+ *      $Id: aha1742.c,v 1.29 1994/04/20 22:39:33 mycroft Exp $
  */
 
 /*
@@ -260,7 +260,9 @@ struct ecb {
 	short   cksum;
 	u_char  cdb[12];
 	/*-----------------end of hardware supported fields----------------*/
-	struct ecb *next;	/* in free list */
+	struct ecb *hash_list;
+	physaddr hash_key;	/* physaddr of this struct */
+	struct ecb *free_list;
 	struct scsi_xfer *xs;	/* the scsi_xfer for this cmd */
 	int     flags;
 #define ECB_FREE	0
@@ -271,8 +273,6 @@ struct ecb {
 	struct ahb_dma_seg ahb_dma[AHB_NSEG];
 	struct ahb_ecb_status ecb_status;
 	struct scsi_sense_data ecb_sense;
-	struct ecb *nexthash;
-	physaddr hashkey;	/* physaddr of this struct */
 };
 
 struct ahb_softc {
@@ -280,14 +280,14 @@ struct ahb_softc {
 	struct isadev sc_id;
 	struct intrhand sc_ih;
 
-	u_short baseport;
-	struct ecb *ecbhash[ECB_HASH_SIZE];
-	struct ecb *free_ecb;
-	int our_id;		/* our scsi id */
-	int vect;
+	struct scsi_link sc_link;
+	struct ecb *ecb_hash_list[ECB_HASH_SIZE];
+	struct ecb *ecb_free_list;
 	struct ecb *immed_ecb;	/* an outstanding immediete command */
 	int numecbs;
-	struct scsi_link sc_link;
+	u_short iobase;
+	int irq;
+	int our_id;		/* our scsi id */
 };
 
 void ahb_send_mbox __P((struct ahb_softc *, int, int, struct ecb *));
@@ -353,7 +353,7 @@ ahb_send_mbox(ahb, opcode, target, ecb)
 	int opcode, target;
 	struct ecb *ecb;
 {
-	u_short port = ahb->baseport;
+	u_short port = ahb->iobase;
 	u_short stport = port + G2STAT;
 	int wait = 300;	/* 1ms should be enough */
 	int s = splbio();
@@ -383,7 +383,7 @@ ahb_poll(ahb, wait)
 	struct ahb_softc *ahb;
 	int wait;
 {				/* in msec  */
-	u_short port = ahb->baseport;
+	u_short port = ahb->iobase;
 	u_short stport = port + G2STAT;
 
     retry:
@@ -418,7 +418,7 @@ ahb_send_immed(ahb, target, cmd)
 	int target;
 	u_long cmd;
 {
-	u_short port = ahb->baseport;
+	u_short port = ahb->iobase;
 	u_short stport = port + G2STAT;
 	int wait = 100;	/* 1 ms enough? */
 	int s = splbio();
@@ -494,23 +494,23 @@ ahbprobe1(ahb, ia)
 	struct isa_attach_args *ia;
 {
 
-	ahb->baseport = ia->ia_iobase;
+	ahb->iobase = ia->ia_iobase;
 
 	/*
 	 * Try initialise a unit at this location
-	 * sets up dma and bus speed, loads ahb->vect
+	 * sets up dma and bus speed, loads ahb->irq
 	 */
 	if (ahb_find(ahb) != 0)
 		return 0;
 
 #ifdef NEWCONFIG
 	if (ia->ia_irq == IRQUNK) {
-		ia->ia_irq = (1 << ahb->vect);
+		ia->ia_irq = (1 << ahb->irq);
 	} else {
-		if (ia->ia_irq != (1 << ahb->vect)) {
+		if (ia->ia_irq != (1 << ahb->irq)) {
 			printf("ahb%d: irq mismatch, %x != %x\n",
 				ahb->sc_dev.dv_unit, ia->ia_irq,
-				1 << ahb->vect);
+				1 << ahb->irq);
 			return 0;
 		}
 	}
@@ -550,7 +550,7 @@ ahbattach(parent, self, aux)
 	ahb->sc_link.device = &ahb_dev;
 
 	printf(": ");
-	x = inb(ahb->baseport + HID2);
+	x = inb(ahb->iobase + HID2);
 	switch (x) {
 	case PRODUCT_1742:
 		printf("model 1740 or 1742");
@@ -561,7 +561,7 @@ ahbattach(parent, self, aux)
 	default:
 		printf("unknown model 0x%02x", x);
 	}
-	x = inb(ahb->baseport + HID3);
+	x = inb(ahb->iobase + HID3);
 	printf(", revision %d\n", x);
 
 #ifdef NEWCONFIG
@@ -600,7 +600,7 @@ ahbintr(ahb)
 	struct ecb *ecb;
 	u_char stat, ahbstat;
 	u_long mboxval;
-	u_short port = ahb->baseport;
+	u_short port = ahb->iobase;
 
 #ifdef	AHBDEBUG
 	printf("ahbintr ");
@@ -772,15 +772,15 @@ ahb_free_ecb(ahb, ecb, flags)
 	if (!(flags & SCSI_NOMASK))
 		opri = splbio();
 
-	ecb->next = ahb->free_ecb;
-	ahb->free_ecb = ecb;
+	ecb->free_list = ahb->ecb_free_list;
+	ahb->ecb_free_list = ecb;
 	ecb->flags = ECB_FREE;
 	/*
 	 * If there were none, wake abybody waiting for
 	 * one to come free, starting with queued entries
 	 */
-	if (!ecb->next)
-		wakeup((caddr_t)&ahb->free_ecb);
+	if (!ecb->free_list)
+		wakeup((caddr_t)&ahb->ecb_free_list);
 
 	if (!(flags & SCSI_NOMASK))
 		splx(opri);
@@ -808,7 +808,7 @@ ahb_get_ecb(ahb, flags)
 	 * If we can and have to, sleep waiting for one to come free
 	 * but only if we can't allocate a new one.
 	 */
-	while (!(ecbp = ahb->free_ecb)) {
+	while (!(ecbp = ahb->ecb_free_list)) {
 		if (ahb->numecbs < AHB_ECB_MAX) {
 			if (ecbp = (struct ecb *) malloc(sizeof(struct ecb),
 			    M_TEMP,
@@ -820,10 +820,10 @@ ahb_get_ecb(ahb, flags)
 				 * put in the phystokv hash table
 				 * Never gets taken out.
 				 */
-				ecbp->hashkey = KVTOPHYS(ecbp);
-				hashnum = ECB_HASH(ecbp->hashkey);
-				ecbp->nexthash = ahb->ecbhash[hashnum];
-				ahb->ecbhash[hashnum] = ecbp;
+				ecbp->hash_key = KVTOPHYS(ecbp);
+				hashnum = ECB_HASH(ecbp->hash_key);
+				ecbp->hash_list = ahb->ecb_hash_list[hashnum];
+				ahb->ecb_hash_list[hashnum] = ecbp;
 			} else {
 				printf("%s: Can't malloc ECB\n",
 					ahb->sc_dev.dv_xname);
@@ -831,13 +831,13 @@ ahb_get_ecb(ahb, flags)
 			goto gottit;
 		} else {
 			if (!(flags & SCSI_NOSLEEP))
-				tsleep((caddr_t)&ahb->free_ecb, PRIBIO,
+				tsleep((caddr_t)&ahb->ecb_free_list, PRIBIO,
 				    "ahbecb", 0);
 		}
 	}
 	if (ecbp) {
 		/* Get ECB from from free list */
-		ahb->free_ecb = ecbp->next;
+		ahb->ecb_free_list = ecbp->free_list;
 		ecbp->flags = ECB_ACTIVE;
 	}
     gottit:
@@ -856,12 +856,12 @@ ahb_ecb_phys_kv(ahb, ecb_phys)
 	physaddr ecb_phys;
 {
 	int hashnum = ECB_HASH(ecb_phys);
-	struct ecb *ecbp = ahb->ecbhash[hashnum];
+	struct ecb *ecbp = ahb->ecb_hash_list[hashnum];
 
 	while (ecbp) {
-		if (ecbp->hashkey == ecb_phys)
+		if (ecbp->hash_key == ecb_phys)
 			break;
-		ecbp = ecbp->nexthash;
+		ecbp = ecbp->hash_list;
 	}
 	return ecbp;
 }
@@ -873,7 +873,7 @@ int
 ahb_find(ahb)
 	struct ahb_softc *ahb;
 {
-	u_short port = ahb->baseport;
+	u_short port = ahb->iobase;
 	u_short stport = port + G2STAT;
 	u_char intdef;
 	int i;
@@ -922,22 +922,22 @@ ahb_find(ahb)
 	intdef = inb(port + INTDEF);
 	switch (intdef & 0x07) {
 	case INT9:
-		ahb->vect = 9;
+		ahb->irq = 9;
 		break;
 	case INT10:
-		ahb->vect = 10;
+		ahb->irq = 10;
 		break;
 	case INT11:
-		ahb->vect = 11;
+		ahb->irq = 11;
 		break;
 	case INT12:
-		ahb->vect = 12;
+		ahb->irq = 12;
 		break;
 	case INT14:
-		ahb->vect = 14;
+		ahb->irq = 14;
 		break;
 	case INT15:
-		ahb->vect = 15;
+		ahb->irq = 15;
 		break;
 	default:
 		printf("illegal int setting %x\n", intdef);
@@ -1261,11 +1261,11 @@ ahb_print_active_ecb(ahb)
 	int i = 0;
 
 	while (i++ < ECB_HASH_SIZE) {
-		ecb = ahb->ecbhash[i];
+		ecb = ahb->ecb_hash_list[i];
 		while (ecb) {
 			if (ecb->flags != ECB_FREE)
 				ahb_print_ecb(ecb);
-			ecb = ecb->nexthash;
+			ecb = ecb->hash_list;
 		}
 	}
 }
