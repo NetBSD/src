@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.31 2000/01/25 19:38:18 chopps Exp $	*/
+/*	$NetBSD: i82365.c,v 1.32 2000/01/27 01:05:17 enami Exp $	*/
 
 #define	PCICDEBUG
 
@@ -98,6 +98,15 @@ static void	pcic_delay __P((struct pcic_handle *, int, const char *));
 
 static u_int8_t st_pcic_read __P((struct pcic_handle *, int));
 static void st_pcic_write __P((struct pcic_handle *, int, u_int8_t));
+
+#if !defined(PCIC_DELAY_SLEEP)
+#if defined(__hpcmips__)
+#define PCIC_DELAY_SLEEP 0
+#else
+#define PCIC_DELAY_SLEEP 1
+#endif
+#endif
+int pcic_delay_sleep = PCIC_DELAY_SLEEP;
 
 int
 pcic_ident_ok(ident)
@@ -1343,7 +1352,12 @@ pcic_delay(h, timo, ident)
 	}
 #endif
 	DPRINTF(("pcic_delay: %p, sleep %d ms\n", h->event_thread, timo));
-	tsleep(pcic_delay, PWAIT, ident, roundup(timo * hz, 1000) / 1000);
+
+	if (pcic_delay_sleep)
+		tsleep(pcic_delay, PWAIT, ident,
+		    roundup(timo * hz, 1000) / 1000);
+	else
+		delay(timo * 1000);
 }
 
 void
