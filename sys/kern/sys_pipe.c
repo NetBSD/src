@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.36 2003/02/14 13:16:44 pk Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.37 2003/03/12 23:00:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.36 2003/02/14 13:16:44 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.37 2003/03/12 23:00:03 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,7 +327,6 @@ pipe_create(pipep, allockva)
 	PIPE_TIMESTAMP(&pipe->pipe_ctime);
 	pipe->pipe_atime = pipe->pipe_ctime;
 	pipe->pipe_mtime = pipe->pipe_ctime;
-	pipe->pipe_pgid = NO_PID;
 	simple_lock_init(&pipe->pipe_slock);
 	lockinit(&pipe->pipe_lock, PRIBIO | PCATCH, "pipelk", 0, 0);
 
@@ -390,12 +389,12 @@ pipeselwakeup(selp, sigp)
 		return;
 
 	pid = sigp->pipe_pgid;
-	if (pid == NO_PID || pid == 0)
+	if (pid == 0)
 		return;
 
-	if (pid < 0)
-		gsignal(-pid, SIGIO);
-	else if ((p = pfind(pid)) != NULL)
+	if (pid > 0)
+		gsignal(pid, SIGIO);
+	else if ((p = pfind(-pid)) != NULL)
 		psignal(p, SIGIO);
 }
 
@@ -1075,6 +1074,8 @@ pipe_ioctl(fp, cmd, data, p)
 	struct proc *p;
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
+	pid_t pgid;
+	int error;
 
 	switch (cmd) {
 
@@ -1103,7 +1104,13 @@ pipe_ioctl(fp, cmd, data, p)
 		return (0);
 
 	case TIOCSPGRP:
-		pipe->pipe_pgid = *(int *)data;
+		pgid = *(int *)data;
+		if (pgid != 0) {
+			error = pgid_in_session(p, pgid);
+			if (error)
+				return error;
+		}
+		pipe->pipe_pgid = pgid;
 		return (0);
 
 	case TIOCGPGRP:
