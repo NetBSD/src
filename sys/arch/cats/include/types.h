@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.2 2001/11/22 18:00:01 thorpej Exp $ */
+/*	$NetBSD: types.h,v 1.3 2001/11/25 15:55:58 thorpej Exp $	*/
 
 #ifndef _ARM32_TYPES_H_
 #define _ARM32_TYPES_H_

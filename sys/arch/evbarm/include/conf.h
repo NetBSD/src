@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.2 2001/10/27 16:15:50 rearnsha Exp $ */
+/*	$NetBSD: conf.h,v 1.3 2001/11/25 15:56:03 thorpej Exp $	*/
 
 #ifndef _EVBARM_CONF_H
 #define	_EVBARM_CONF_H
