@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 1997/05/01 15:00:11 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 1997/05/20 06:01:19 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -331,9 +331,13 @@ u_int total_phys_mem;
  * currently _runnable_ processes.  (Sleeping ones don't count.)
  * The amount of physical memory should be irrelevant. -gwr
  */
+#ifdef	FIXED_NTABLES
 #define NUM_A_TABLES	16
 #define NUM_B_TABLES	32
 #define NUM_C_TABLES	64
+#else
+unsigned int	NUM_A_TABLES, NUM_B_TABLES, NUM_C_TABLES;
+#endif	/* FIXED_NTABLES */
 
 /*
  * This determines our total virtual mapping capacity.
@@ -728,6 +732,20 @@ pmap_bootstrap(nextva)
 	 * Allocate user MMU tables. 
 	 * These must be contiguous with the preceeding.
 	 */
+
+#ifndef	FIXED_NTABLES
+	/*
+	 * The number of user-level C tables that should be allocated is
+	 * related to the size of physical memory.  In general, there should
+	 * be enough tables to map four times the amount of available RAM.
+	 * The extra amount is needed because some table space is wasted by
+	 * fragmentation.
+	 */
+	NUM_C_TABLES = (total_phys_mem * 4) / (MMU_C_TBL_SIZE * MMU_PAGE_SIZE);
+	NUM_B_TABLES = NUM_C_TABLES / 2;
+	NUM_A_TABLES = NUM_B_TABLES / 2;
+#endif	/* !FIXED_NTABLES */
+
 	size = sizeof(mmu_short_pte_t) * MMU_C_TBL_SIZE	* NUM_C_TABLES;
 	mmuCbase = pmap_bootstrap_alloc(size);
 
@@ -1368,7 +1386,7 @@ free_a_table(a_tbl, relink)
 	/*
 	 * Flush the ATC cache of all cached descriptors derived
 	 * from this table.
-	 * XXX - Sun3x does not use 68851's cached table feature
+	 * Sun3x does not use 68851's cached table feature
 	 * flush_atc_crp(mmu_vtop(a_tbl->dte));
 	 */
 
@@ -1376,7 +1394,7 @@ free_a_table(a_tbl, relink)
 	 * Remove any pending cache flushes that were designated
 	 * for the pmap this A table belongs to.
 	 * a_tbl->parent->atc_flushq[0] = 0;
-	 * XXX - Not implemented in sun3x.
+	 * Not implemented in sun3x.
 	 */
 
 	/*
@@ -1600,53 +1618,6 @@ pmap_remove_pte(pte)
 	pte->attr.raw = MMU_DT_INVALID;
 }
 
-#if	0	/* XXX - I am eliminating this function. -j */
-/* pmap_dereference_pte			INTERNAL
- **
- * Update the necessary reference counts in any tables and pmaps to
- * reflect the removal of the given pte.  Only called when no knowledge of
- * the pte's associated pmap is unknown.  This only occurs in the PV call
- * 'pmap_page_protect()' with a protection of VM_PROT_NONE, which means
- * that all references to a given physical page must be removed.
- */
-void
-pmap_dereference_pte(pte)
-	mmu_short_pte_t *pte;
-{
-	vm_offset_t va;
-	c_tmgr_t *c_tbl;
-	pmap_t pmap;
-
-	va = pmap_get_pteinfo(pte, &pmap, &c_tbl);
-	/*
-	 * Flush the translation cache of the page mapped by the PTE, should
-	 * it prove to be in the current pmap.  Kernel mappings appear in
-	 * all address spaces, so they always should be flushed 
-	 */
-	if (pmap == pmap_kernel() || pmap == current_pmap())
-		TBIS(va);
-	
-	/*
-	 * If the mapping belongs to a user map, update the necessary
-	 * reference counts in the table manager.  XXX - It would be
-	 * much easier to keep the resident count in the c_tmgr_t -gwr
-	 */
-	if (pmap != pmap_kernel()) {
-		/*
-		 * Most of the situations in which pmap_dereference_pte() is
-		 * called are usually temporary removals of a mapping.  Often
-		 * the mapping is reinserted shortly afterwards. If the parent
-		 * C table's valid entry count reaches zero as a result of
-		 * removing this mapping, we could return it to the free pool,
-		 * but we leave it alone because it is likely to be used as
-		 * stated above.
-		 */
-		c_tbl->ct_ecnt--;
-		pmap->pm_stats.resident_count--;
-	}
-}
-#endif	0	/* function elimination */
-
 /* pmap_stroll			INTERNAL
  **
  * Retrieve the addresses of all table managers involved in the mapping of
@@ -1744,9 +1715,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 	pa    &= MMU_PAGE_MASK;
 
 	/*
-	 * Determine if the physical address being mapped is managed.
-	 * If it isn't, the mapping should be cache inhibited.  (This is
-	 * applied later in the function.)   XXX - Why non-cached? -gwr
+	 * Determine if the physical address being mapped is on-board RAM.
+	 * Any other area of the address space is likely to belong to a
+	 * device and hence it would be disasterous to cache its contents.
 	 */
 	if ((managed = is_managed(pa)) == FALSE)
 		flags |= PMAP_NC;
@@ -2102,7 +2073,7 @@ pmap_enter_kernel(va, pa, prot)
 	 */
 	pte_idx = (u_long) _btop(va - KERNBASE);
 
-	/* XXX - This array is traditionally named "Sysmap" */
+	/* This array is traditionally named "Sysmap" */
 	pte = &kernCbase[pte_idx];
 
 	s = splimp();
@@ -2594,14 +2565,6 @@ pmap_release(pmap)
 	 * which always should be the case whenever
 	 * this function is called, there really should
 	 * be nothing to do.
-	 *
-	 * XXX - This function is being called while there are
-	 * still valid mappings, so I guess the above must not
-	 * be true.
-	 * XXX - Unless the mappings persist due to a bug here...
-	 *     + That's what was happening.  The map had no mappings,
-	 *       but it still had an A table.  pmap_remove() was not
-	 *       releasing tables when they were empty.
 	 */
 #ifdef	PMAP_DEBUG
 	if (pmap == NULL)
@@ -2916,21 +2879,6 @@ pmap_get_pteinfo(idx, pmap, tbl)
 		
 	return va;
 }
-
-#if	0	/* XXX - I am eliminating this function. */
-/* pmap_find_tic			INTERNAL
- **
- * Given the address of a pte, find the TIC (level 'C' table index) for
- * the pte within its C table.
- */
-char
-pmap_find_tic(pte)
-	mmu_short_pte_t *pte;
-{
-	return ((pte - mmuCbase) % MMU_C_TBL_SIZE);
-}
-#endif	/* 0 */
-
 
 /* pmap_clear_modify			INTERFACE
  **
