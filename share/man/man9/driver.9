@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.5 2002/04/02 14:16:34 heinz Exp $
+.\"     $NetBSD: driver.9,v 1.6 2002/09/06 14:16:54 gehenna Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -124,6 +124,73 @@ structure must be the driver-independent
 Probably its most useful aspect to the driver is that it contains the
 device-instance name
 .Em dv_xname .
+.Pp
+If a driver has character device interfaces accessed from userland, the driver
+must define the
+.Em cdevsw
+structure. The structure is constant and is defined inside the driver. For
+example, the
+.Em cdevsw
+structure for driver
+.Do
+foo
+.Dc
+is defined with:
+.Pp
+.Bd -literal
+const struct cdevsw foo_cdevsw {
+	int (*d_open)(dev_t, int, int, struct proc *);
+	int (*d_close)(dev_t, int, int, struct proc *);
+	int (*d_read)(dev_t, struct uio *, int);
+	int (*d_write)(dev_t, struct uio *, int);
+	int (*d_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
+	struct tty *(*d_tty)(dev_t);
+	int (*d_poll)(dev_t, int, struct proc *);
+	paddr_t (*d_mmap)(dev_t, off_t, int);
+	int d_type;
+};
+.Ed
+.Pp
+The structure variable must be named foo_cdevsw by appending the letters
+.Do
+_cdevsw
+.Dc
+to the driver's base name. This convention is mandated by the
+autoconfiguration framework.
+.Pp
+If the driver
+.Do
+foo
+.Dc
+has also block device interfaces, the driver must define the
+.Em bdevsw
+structure. The structure is constant and is defined inside the driver. For
+example, the
+.Em bdevsw
+structure for driver
+.Do
+foo
+.Dc
+is defined with:
+.Pp
+.Bd -literal
+const struct bdevsw foo_bdevsw {
+	int (*d_open)(dev_t, int, int, struct proc *);
+	int (*d_close)(dev_t, int, int, struct proc *);
+	void (*d_strategy)(struct buf *);
+	int (*d_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
+	int (*d_dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*d_psize)(dev_t);
+	int d_type;
+};
+.Ed
+.Pp
+The structure variable must be named foo_bdevsw by appending the letters
+.Do
+_bdevsw
+.Dc
+to the driver's base name. This convention is mandated by the
+autoconfiguration framework.
 .Pp
 During system bootstrap, the autoconfiguration framework searches the
 system for devices.  For each device driver, its match function
@@ -297,6 +364,30 @@ file	dev/bar/foo.c		foo
 An entry can now be added to the machine description file:
 .Bd -literal
 foo*	at bar?
+.Ed
+.Pp
+For device interfaces of a driver to be compiled into the kernel,
+.Xr config 8
+must be aware of its existence. This is done by including an entry in
+majors.<arch>. For example, the driver
+.Do
+foo
+.Dc
+with character device interfaces, a character major device number
+.Do
+cmaj
+.Dc
+, block device interfaces, a block device major number
+.Do
+bmaj
+.Dc
+and dependency on kernel module
+.Do
+baz
+.Dc
+has the entry:
+.Bd -literal
+device-major	foo	char cmaj block bmaj	baz
 .Ed
 .Pp
 For a detailed description of the machine description file and the
