@@ -2,7 +2,7 @@
 /*
  * Parser for verified exec fingerprint file.
  *
- * $NetBSD: veriexecctl_parse.y,v 1.1 2002/11/23 10:52:49 blymn Exp $
+ * $NetBSD: veriexecctl_parse.y,v 1.2 2002/12/21 23:41:44 wiz Exp $
  *
  */
 
@@ -57,7 +57,7 @@ type: STRING
 		params.fp_type = FINGERPRINT_TYPE_SHA1;
 	} else {
 		fprintf(stderr, "%s %s at %d, %s\n",
-			"verifiedexec_load: bad fingerprint type", $1, lineno,
+			"veriexecctl: bad fingerprint type", $1, lineno,
 			"assuming MD5");
 		params.fp_type = FINGERPRINT_TYPE_MD5;
 	}
@@ -75,7 +75,7 @@ fingerprint: STRING
 	
 	if (convert($1, count, params.fingerprint) < 0) {
 		fprintf(stderr,
-			"verifiedexec_load: bad fingerprint at line %d\n",
+			"veriexecctl: bad fingerprint at line %d\n",
 			lineno);
 	}
 };
