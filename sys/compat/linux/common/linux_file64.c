@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.2.4.7 2002/04/01 07:44:25 nathanw Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.2.4.8 2002/04/01 22:17:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.2.4.7 2002/04/01 07:44:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.2.4.8 2002/04/01 22:17:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ linux_sys_fcntl64(l, v, retval)
 		SCARG(&fca, fd) = fd;
 		SCARG(&fca, cmd) = F_GETLK;
 		SCARG(&fca, arg) = bfp;
-		if ((error = sys_fcntl(p, &fca, retval)) != 0)
+		if ((error = sys_fcntl(l, &fca, retval)) != 0)
 			return error;
 		if ((error = copyin(bfp, &bfl, sizeof bfl)) != 0)
 			return error;
@@ -331,7 +331,7 @@ linux_sys_fcntl64(l, v, retval)
 		SCARG(&fca, fd) = fd;
 		SCARG(&fca, cmd) = cmd;
 		SCARG(&fca, arg) = bfp;
-		return sys_fcntl(p, &fca, retval);
+		return sys_fcntl(l, &fca, retval);
 	default:
 		return linux_sys_fcntl(l, v, retval);
 	}
