@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1996/03/15 22:39:32 scottr Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1997/02/27 06:17:23 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 4/15/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.8 1996/03/15 22:39:32 scottr Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.9 1997/02/27 06:17:23 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -143,6 +143,7 @@ main(argc, argv)
 
 		case 'b':		/* blocks per tape write */
 			ntrec = numarg("blocks per write", 1L, 1000L);
+			bflag = 1;
 			break;
 
 		case 'c':		/* Tape is cart. not 9-track */
