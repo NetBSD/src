@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tm.h,v 1.2 1994/02/23 04:35:39 chopps Exp $
+	$Id: tm.h,v 1.3 1995/01/18 00:22:03 mycroft Exp $
 */
 #include <machine/vmparam.h>
 
@@ -54,4 +54,8 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #define STACK_END_ADDR USRSTACK
 
+/* Include most of the common m68k definitions. */
 #include "tm-m68k.h"
+
+/* Include shared library handling. */
+#include "solib.h"
