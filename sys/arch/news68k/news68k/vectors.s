@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.1 1999/12/09 14:53:18 tsutsui Exp $
+|	$NetBSD: vectors.s,v 1.2 2000/03/10 19:06:43 tsutsui Exp $
 
 | Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 | Copyright (c) 1988 University of Utah
@@ -78,7 +78,7 @@ GLOBAL(vectab)
 	VECTOR(badtrap)		/* 22: unassigned, reserved */
 	VECTOR(badtrap)		/* 23: unassigned, reserved */
 	VECTOR(spurintr)	/* 24: spurious interrupt */
-	VECTOR(intrhand_autovec)/* 25: level 1 interrupt autovector */
+	VECTOR(lev1intr)	/* 25: level 1 interrupt autovector */
 	VECTOR(lev2intr)	/* 26: level 2 interrupt autovector */
 	VECTOR(lev3intr)	/* 27: level 3 interrupt autovector */
 	VECTOR(lev4intr)	/* 28: level 4 interrupt autovector */
