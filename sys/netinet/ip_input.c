@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_input.c	7.19 (Berkeley) 5/25/91
- *	$Id: ip_input.c,v 1.6 1994/01/08 21:21:47 mycroft Exp $
+ *	$Id: ip_input.c,v 1.7 1994/01/08 23:50:45 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -805,7 +805,10 @@ ip_dooptions(m)
 	} else
 		return (0);
 bad:
-	icmp_error(m, type, code);
+    {
+	register struct in_addr foo = {};
+	icmp_error(m, type, code, foo);
+    }
 	return (1);
 }
 
