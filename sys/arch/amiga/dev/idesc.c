@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.11 1995/02/12 19:19:10 chopps Exp $	*/
+/*	$NetBSD: idesc.c,v 1.12 1995/07/24 07:28:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -234,7 +234,6 @@ struct idec_softc
 	struct ide_softc	sc_ide[2];
 };
 
-void ide_minphys __P((struct buf *bp));
 int ide_scsicmd __P((struct scsi_xfer *));
 
 int idescprint __P((void *auxp, char *));
@@ -255,7 +254,7 @@ int  idesc_intr __P((struct idec_softc *));
 
 struct scsi_adapter idesc_scsiswitch = {
 	ide_scsicmd,
-	ide_minphys,
+	minphys,		/* no max transfer len, at this level */
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
@@ -425,18 +424,6 @@ idescprint(auxp, pnp)
 	if (pnp == NULL)
 		return(UNCONF);
 	return(QUIET);
-}
-
-/*
- * default minphys routine for ide controller
- */
-void
-ide_minphys(bp)
-	struct buf *bp;
-{
-	/*
-	 * no max transfer at this level
-	 */
 }
 
 /*

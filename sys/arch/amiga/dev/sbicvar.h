@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.5 1995/02/12 19:19:21 chopps Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.6 1995/07/24 07:28:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -159,7 +159,7 @@ struct scsi_fmt_cdb {
 struct buf;
 struct scsi_xfer;
 
-void sbic_minphys __P((struct buf *bp));
+u_int sbic_minphys __P((struct buf *bp));
 int sbic_scsicmd __P((struct scsi_xfer *));
 
 #endif /* _SBICVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.11 1995/02/12 19:19:23 chopps Exp $	*/
+/*	$NetBSD: sci.c,v 1.12 1995/07/24 07:28:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -99,13 +99,15 @@ int	sci_debug = 0;
 /*
  * default minphys routine for sci based controllers
  */
-void
+u_int
 sci_minphys(bp)
 	struct buf *bp;
 {
 	/*
 	 * no max transfer at this level
 	 */
+
+	return (minphys(bp));
 }
 
 /*

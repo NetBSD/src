@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.11 1995/03/02 02:24:06 chopps Exp $	*/
+/*	$NetBSD: sbic.c,v 1.12 1995/07/24 07:28:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -135,13 +135,15 @@ int	sbic_dma_debug = 0;
 /*
  * default minphys routine for sbic based controllers
  */
-void
+u_int
 sbic_minphys(bp)
 	struct buf *bp;
 {
 	/*
 	 * no max transfer at this level
 	 */
+
+	return (minphys(bp));
 }
 
 /*
