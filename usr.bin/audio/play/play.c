@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.19 2000/12/22 11:38:43 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.20 2001/01/19 14:11:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -47,7 +47,8 @@
 
 int main (int, char *[]);
 void usage (void);
-void play_fd (int, char *);
+void play (char *);
+void play_fd (char *, int);
 ssize_t audioctl_write_fromhdr (void *, size_t, int);
 
 audio_info_t	info;
@@ -65,6 +66,7 @@ int	channels;
 char	const *play_errstring = NULL;
 size_t	bufsize;
 int	audiofd, ctlfd;
+int	exitstatus = EXIT_SUCCESS;
 
 int
 main(argc, argv)
@@ -72,9 +74,7 @@ main(argc, argv)
 	char *argv[];
 {
 	size_t	len;
-	off_t	filesize;
 	int	ch;
-	int	exitstatus = EXIT_SUCCESS;
 	int	iflag = 0;
 	int	verbose = 0;
 	char	*device = 0;
@@ -184,92 +184,98 @@ main(argc, argv)
 	if (bufsize < 32 * 1024)
 		bufsize = 32 * 1024;
 
-	if (*argv) {
-		int fd;
-		struct stat sb;
-		void *addr, *oaddr;
-
-		do {
-			ssize_t	hdrlen;
-
-			fd = open(*argv, O_RDONLY);
-			if (fd < 0) {
-				warn("could not open %s", *argv);
-				exitstatus = EXIT_FAILURE;
-				continue;
-			}
-
-			if (fstat(fd, &sb) < 0)
-				err(1, "could not fstat %s", *argv);
-			filesize = sb.st_size;
-
-			oaddr = addr = mmap(0, (size_t)filesize, PROT_READ,
-			    MAP_SHARED, fd, 0);
-
-			/*
-			 * if we failed to mmap the file, try to read it
-			 * instead, so that filesystems, etc, that do not
-			 * support mmap() work
-			 */
-			if (addr == MAP_FAILED) {
-				play_fd(fd, *argv);
-				close(fd);
-				continue;
-			}
-
-			/*
-			 * give the VM system a bit of a hint about the type
-			 * of accesses we will make.
-			 */
-			if (madvise(addr, filesize, MADV_SEQUENTIAL) < 0 &&
-			    !qflag)
-				warn("madvise failed, ignoring");
-
-			/*
-			 * get the header length and set up the audio device
-			 */
-			if ((hdrlen = audioctl_write_fromhdr(addr,
-			    (size_t)filesize, ctlfd)) < 0) {
-				if (play_errstring)
-					errx(1, "%s: %s", play_errstring, *argv);
-				else
-					errx(1, "unknown audio file: %s", *argv);
-			}
-
-			filesize -= hdrlen;
-			addr = (char *)addr + hdrlen;
-
-			while (filesize > bufsize) {
-				if (write(audiofd, addr, bufsize) != bufsize)
-					err(1, "write failed");
-				addr = (char *)addr + bufsize;
-				filesize -= bufsize;
-			}
-			if (write(audiofd, addr, (size_t)filesize) != (ssize_t)filesize)
-				err(1, "final write failed");
-
-			if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
-				warn("audio drain ioctl failed");
-			if (munmap(oaddr, (size_t)filesize) < 0 && !qflag)
-				err(1, "munmap failed");
-
-			close(fd);
-			
-		} while (*++argv);
-	} else {
-		play_fd(STDIN_FILENO, "standard input");
-	}
+	if (*argv)
+		do
+			play(*argv++);
+		while (*argv);
+	else
+		play_fd("standard input", STDIN_FILENO);
 
 	exit(exitstatus);
 }
 
+void
+play(file)
+	char *file;
+{
+	struct stat sb;
+	void *addr, *oaddr;
+	off_t	filesize;
+	ssize_t	hdrlen;
+	int fd;
+
+	fd = open(file, O_RDONLY);
+	if (fd < 0) {
+		if (!qflag)
+			warn("could not open %s", file);
+		exitstatus = EXIT_FAILURE;
+		return;
+	}
+
+	if (fstat(fd, &sb) < 0)
+		err(1, "could not fstat %s", file);
+	filesize = sb.st_size;
+
+	oaddr = addr = mmap(0, (size_t)filesize, PROT_READ,
+	    MAP_SHARED, fd, 0);
+
+	/*
+	 * if we failed to mmap the file, try to read it
+	 * instead, so that filesystems, etc, that do not
+	 * support mmap() work
+	 */
+	if (addr == MAP_FAILED) {
+		play_fd(file, fd);
+		close(fd);
+		return;
+	}
+
+	/*
+	 * give the VM system a bit of a hint about the type
+	 * of accesses we will make.
+	 */
+	if (madvise(addr, filesize, MADV_SEQUENTIAL) < 0 &&
+	    !qflag)
+		warn("madvise failed, ignoring");
+
+	/*
+	 * get the header length and set up the audio device
+	 */
+	if ((hdrlen = audioctl_write_fromhdr(addr,
+	    (size_t)filesize, ctlfd)) < 0) {
+		if (play_errstring)
+			errx(1, "%s: %s", play_errstring, file);
+		else
+			errx(1, "unknown audio file: %s", file);
+	}
+
+	filesize -= hdrlen;
+	addr = (char *)addr + hdrlen;
+
+	while (filesize > bufsize) {
+		if (write(audiofd, addr, bufsize) != bufsize)
+			err(1, "write failed");
+		addr = (char *)addr + bufsize;
+		filesize -= bufsize;
+	}
+	if (write(audiofd, addr, (size_t)filesize) != (ssize_t)filesize)
+		err(1, "final write failed");
+
+	if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
+		warn("audio drain ioctl failed");
+	if (munmap(oaddr, (size_t)filesize) < 0)
+		err(1, "munmap failed");
+
+	close(fd);
+	
+}
 /*
  * play the file on on the file descriptor fd
  */
 void
-play_fd(fd, file)
-	int     fd;
+play_fd(file, fd)
 	char    *file;
+	int     fd;
 {
 	char    *buffer = malloc(bufsize);
 	ssize_t hdrlen;
@@ -336,8 +342,9 @@ audioctl_write_fromhdr(hdr, fsz, fd)
 	if (ntohl(sunhdr->magic) == AUDIO_FILE_MAGIC) {
 		if (audio_sun_to_encoding(ntohl(sunhdr->encoding), 
 		    &info.play.encoding, &info.play.precision)) {
-			warnx("unknown unsupported Sun audio encoding format %d",
-			    ntohl(sunhdr->encoding));
+			if (!qflag)
+				warnx("unknown unsupported Sun audio encoding"
+				      " format %d", ntohl(sunhdr->encoding));
 			if (fflag)
 				goto set_audio_mode;
 			return (-1);
