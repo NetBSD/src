@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.51 1999/12/05 22:54:36 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.52 2000/01/31 22:01:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -122,6 +122,8 @@
 #ifndef NO_EDITCOMPLETE
 #include <histedit.h>
 #endif /* !NO_EDITCOMPLETE */
+
+typedef void (*sigfunc) __P((int));
 
 #include "extern.h"
 

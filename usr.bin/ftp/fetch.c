@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.103 2000/01/25 07:13:45 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.104 2000/01/31 22:01:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.103 2000/01/25 07:13:45 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.104 2000/01/31 22:01:04 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -459,7 +459,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	struct sockaddr_in	sin;
 	struct hostent		*hp = NULL;
 #endif
-	volatile sig_t		oldintr, oldintp;
+	volatile sigfunc	oldintr, oldintp;
 	volatile int		s;
 	struct stat		sb;
 	int			ischunked, isproxy, rval, hcode;
