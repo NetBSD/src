@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.22 2002/10/04 18:50:43 mycroft Exp $	 */
+/*	$NetBSD: map_object.c,v 1.23 2002/10/05 00:13:27 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -190,7 +190,9 @@ _rtld_map_object(path, fd, sb)
 	data_vaddr = round_down(segs[1]->p_vaddr);
 	data_vlimit = round_up(segs[1]->p_vaddr + segs[1]->p_filesz);
 	data_flags = protflags(segs[1]->p_flags);
+#ifdef RTLD_LOADER
 	clear_vaddr = segs[1]->p_vaddr + segs[1]->p_filesz;
+#endif
 
 	obj->textsize = text_vlimit - base_vaddr;
 	obj->vaddrbase = base_vaddr;
