@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.2 1998/06/20 12:05:32 mrg Exp $
+#	$NetBSD: dot.profile,v 1.3 1999/01/10 13:39:45 mrg Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -49,34 +49,32 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# mount root read-write
 	mount -u /dev/md0a /
 
+	# mount a /tmp on mfs, to avoid filling the md
+	mount -t mfs swap /tmp
+
 	# run update, so that installed software is written as it goes.
 	update
-
-	# get the terminal type
-	_forceloop=""
-	while [ "X${_forceloop}" = X"" ]; do
-		eval `tset -s -m ":?$TERM"`
-		if [ "X${TERM}" != X"unknown" ]; then
-			_forceloop="done"
-		fi
-	done
 
 	# Installing or upgrading?
 	_forceloop=""
 	while [ "X${_forceloop}" = X"" ]; do
-		echo -n '(I)nstall, (S)hell or (H)alt ? '
+		echo -n '(I)nstall, (U)pgrade, (H)alt or (S)hell ? '
 		read _forceloop
 		case "$_forceloop" in
 			i*|I*)
-				/sysinst
+				/install
 				;;
 
-			s*|S*)
-				/bin/sh
+			u*|U*)
+				/upgrade
 				;;
 
 			h*|H*)
 				/sbin/halt
+				;;
+
+			s*|S*)
+				/bin/sh
 				;;
 
 			*)
