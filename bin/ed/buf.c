@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.20 2000/04/04 17:07:29 thorpej Exp $	*/
+/*	$NetBSD: buf.c,v 1.21 2000/04/17 23:37:50 christos Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer rountines for the
    ed line editor. */
@@ -33,13 +33,15 @@
 #if 0
 static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
 #else
-__RCSID("$NetBSD: buf.c,v 1.20 2000/04/04 17:07:29 thorpej Exp $");
+__RCSID("$NetBSD: buf.c,v 1.21 2000/04/17 23:37:50 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/file.h>
 #include <sys/stat.h>
 
+#include <paths.h>
+#include <stdio.h>
 #include <err.h>
 
 #include "ed.h"
@@ -199,18 +201,28 @@ get_addressed_line_node(n)
 }
 
 
-char sfn[15] = "";				/* scratch file name */
+char *sfn = NULL;				/* scratch file name */
 
 /* open_sbuf: open scratch file */
 int
 open_sbuf()
 {
 	int u, fd;
+	char *tmp;
+	size_t s;
 
 	isbinary = newline_added = 0;
 	fd = -1;
 	u = umask(077);
-	strcpy(sfn, "/tmp/ed.XXXXXX");
+
+	if ((tmp = getenv("TMPDIR")) == NULL)
+		tmp = _PATH_TMP;
+	
+	if ((s = strlen(tmp)) == 0 || tmp[s - 1] == '/')
+		(void)asprintf(&sfn, "%sed.XXXXXX", tmp);
+	else
+		(void)asprintf(&sfn, "%s/ed.XXXXXX", tmp);
+
 	if ((fd = mkstemp(sfn)) == -1 || (sfp = fdopen(fd, "w+")) == NULL) {
 		if (fd != -1)
 			close(fd);
@@ -235,7 +247,11 @@ close_sbuf()
 			return ERR;
 		}
 		sfp = NULL;
-		unlink(sfn);
+		if (sfn) {
+			unlink(sfn);
+			free(sfn);
+			sfn = NULL;
+		}
 	}
 	sfseek = seek_write = 0;
 	return 0;
@@ -249,7 +265,11 @@ quit(n)
 {
 	if (sfp) {
 		fclose(sfp);
-		unlink(sfn);
+		if (sfn) {
+			unlink(sfn);
+			free(sfn);
+			sfn = NULL;
+		}
 	}
 	exit(n);
 	/* NOTREACHED */
