@@ -1,12 +1,9 @@
-/*	$NetBSD: sbus.c,v 1.49 2002/03/21 00:48:43 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.49.6.1 2002/06/21 06:26:42 lukem Exp $ */
 
-/*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 1999-2002 Eduardo Horvath
  * All rights reserved.
  *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg.
- *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,92 +12,20 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
- *
- * All advertising materials mentioning features or use of this software
- * must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Lawrence Berkeley Laboratory.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)sbus.c	8.1 (Berkeley) 6/11/93
- */
-
-/*
- * Copyright (c) 1999 Eduardo Horvath
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *  
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR  ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR  BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
  */
 
 
@@ -117,6 +42,8 @@
 #include <sys/reboot.h>
 
 #include <machine/bus.h>
+#include <machine/openfirm.h>
+
 #include <sparc64/sparc64/cache.h>
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
@@ -266,7 +193,6 @@ sbus_attach(parent, self, aux)
 	int ipl;
 	char *name;
 	int node = ma->ma_node;
-
 	int node0, error;
 	bus_space_tag_t sbt;
 	struct sbus_attach_args sa;
@@ -326,11 +252,15 @@ sbus_attach(parent, self, aux)
 	bus_space_subregion(sc->sc_bustag, sc->sc_bh, 
 		(vaddr_t)&((struct sysioreg *)NULL)->sys_iommu, 
 		sizeof (struct iommureg), &sc->sc_is.is_iommu);
+ 
+	/* initialize our strbuf_ctl */
+	sc->sc_is.is_sb[0] = &sc->sc_sb;
+	sc->sc_sb.sb_is = &sc->sc_is;
 	bus_space_subregion(sc->sc_bustag, sc->sc_bh, 
 		(vaddr_t)&((struct sysioreg *)NULL)->sys_strbuf, 
-		sizeof (struct iommu_strbuf), &sc->sc_is.is_sb[0]);
-	sc->sc_is.is_sbvalid[0] = 1;
-	sc->sc_is.is_sbvalid[1] = 0;
+		sizeof (struct iommu_strbuf), &sc->sc_sb.sb_sb);
+	/* Point sb_flush to our flush buffer. */
+	sc->sc_sb.sb_flush = &sc->sc_flush;
 
 	/* give us a nice name.. */
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
@@ -372,8 +302,8 @@ sbus_attach(parent, self, aux)
 	 * `specials' is an array of device names that are treated
 	 * specially:
 	 */
-	node0 = firstchild(node);
-	for (node = node0; node; node = nextsibling(node)) {
+	node0 = OF_child(node);
+	for (node = node0; node; node = OF_peer(node)) {
 		char *name = PROM_getpropstring(node, "name");
 
 		if (sbus_setup_attach_args(sc, sbt, sc->sc_dmatag,
@@ -830,7 +760,7 @@ sbus_dmamap_load(tag, map, buf, buflen, p, flags)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-	return (iommu_dvmamap_load(tag, &sc->sc_is, map, buf, buflen, p, flags));
+	return (iommu_dvmamap_load(tag, &sc->sc_sb, map, buf, buflen, p, flags));
 }
 
 int
@@ -844,7 +774,7 @@ sbus_dmamap_load_raw(tag, map, segs, nsegs, size, flags)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-	return (iommu_dvmamap_load_raw(tag, &sc->sc_is, map, segs, nsegs, flags, size));
+	return (iommu_dvmamap_load_raw(tag, &sc->sc_sb, map, segs, nsegs, flags, size));
 }
 
 void
@@ -854,7 +784,7 @@ sbus_dmamap_unload(tag, map)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-	iommu_dvmamap_unload(tag, &sc->sc_is, map);
+	iommu_dvmamap_unload(tag, &sc->sc_sb, map);
 }
 
 void
@@ -870,11 +800,11 @@ sbus_dmamap_sync(tag, map, offset, len, ops)
 	if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) {
 		/* Flush the CPU then the IOMMU */
 		bus_dmamap_sync(tag->_parent, map, offset, len, ops);
-		iommu_dvmamap_sync(tag, &sc->sc_is, map, offset, len, ops);
+		iommu_dvmamap_sync(tag, &sc->sc_sb, map, offset, len, ops);
 	}
 	if (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) {
 		/* Flush the IOMMU then the CPU */
-		iommu_dvmamap_sync(tag, &sc->sc_is, map, offset, len, ops);
+		iommu_dvmamap_sync(tag, &sc->sc_sb, map, offset, len, ops);
 		bus_dmamap_sync(tag->_parent, map, offset, len, ops);
 	}
 }
@@ -892,7 +822,7 @@ sbus_dmamem_alloc(tag, size, alignment, boundary, segs, nsegs, rsegs, flags)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-	return (iommu_dvmamem_alloc(tag, &sc->sc_is, size, alignment, boundary,
+	return (iommu_dvmamem_alloc(tag, &sc->sc_sb, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags));
 }
 
@@ -904,7 +834,7 @@ sbus_dmamem_free(tag, segs, nsegs)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-	iommu_dvmamem_free(tag, &sc->sc_is, segs, nsegs);
+	iommu_dvmamem_free(tag, &sc->sc_sb, segs, nsegs);
 }
 
 int
@@ -918,7 +848,7 @@ sbus_dmamem_map(tag, segs, nsegs, size, kvap, flags)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-	return (iommu_dvmamem_map(tag, &sc->sc_is, segs, nsegs, size, kvap, flags));
+	return (iommu_dvmamem_map(tag, &sc->sc_sb, segs, nsegs, size, kvap, flags));
 }
 
 void
@@ -929,5 +859,5 @@ sbus_dmamem_unmap(tag, kva, size)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-	iommu_dvmamem_unmap(tag, &sc->sc_is, kva, size);
+	iommu_dvmamem_unmap(tag, &sc->sc_sb, kva, size);
 }
