@@ -1,6 +1,6 @@
 .\" Copyright (c) 1988, 1989, 1991 Carnegie Mellon University
 .\"
-.\"	$Header: /cvsroot/src/usr.sbin/bootp/bootpd/bootpd.8,v 1.2 1994/08/22 22:14:41 gwr Exp $
+.\"	$Header: /cvsroot/src/usr.sbin/bootp/bootpd/bootpd.8,v 1.3 1996/09/27 01:38:55 thorpej Exp $
 .\"
 .TH BOOTPD 8 "November 06, 1993" "Carnegie Mellon University"
 .SH NAME
@@ -58,9 +58,9 @@ from
 by including one of the following lines in the file
 .IR /etc/inetd.conf :
 .IP
-bootps dgram udp wait root /etc/bootpd bootpd bootptab
+bootps dgram udp wait root /usr/sbin/bootpd bootpd bootptab
 .br
-bootps dgram udp wait root /etc/bootpgw bootpgw server
+bootps dgram udp wait root /usr/sbin/bootpgw bootpgw server
 .PP
 This mode of operation is referred to as "inetd mode" and causes
 .I bootpd
