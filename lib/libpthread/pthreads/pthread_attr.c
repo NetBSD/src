@@ -1,5 +1,5 @@
 /* ==== pthread_attr.c =======================================================
- * Copyright (c) 1993 by Chris Provenzano, proven@mit.edu
+ * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,11 @@
  *      -Started coding this file.
  */
 
-#include "pthread.h"
+#ifndef lint
+static const char rcsid[] = "$Id: pthread_attr.c,v 1.3 1994/02/07 22:04:23 proven Exp $ $provenid: pthread_attr.c,v 1.16 1994/02/07 02:19:14 proven Exp $";
+#endif
+
+#include <pthread.h>
 #include <errno.h>
 
 /* Currently we do no locking, should we just to be safe? CAP */

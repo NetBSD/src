@@ -1,4 +1,4 @@
-/* ==== globals.c ============================================================
+/* ==== pthread_once.c =======================================================
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
  * All rights reserved.
  *
@@ -29,39 +29,33 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * Description : Global variables.
+ * Description : pthread_once function.
  *
- *  1.00 93/07/26 proven
+ *  1.00 93/12/12 proven
  *      -Started coding this file.
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: globals.c,v 1.3 1994/02/07 22:04:19 proven Exp $ $provenid: globals.c,v 1.16 1994/02/07 02:18:57 proven Exp $";
+static const char rcsid[] = "$Id: pthread_once.c,v 1.1 1994/02/07 22:04:27 proven Exp $ $provenid: pthread_once.c,v 1.4 1994/02/07 02:19:22 proven Exp $";
 #endif
 
 #include <pthread.h>
 
-/*
- * Initial thread, running thread, and top of link list
- * of all threads.
+/* ==========================================================================
+ * pthread_once()
  */
-struct pthread *pthread_run;
-struct pthread *pthread_initial;
-struct pthread *pthread_link_list;
+static pthread_mutex_t __pthread_once_mutex =  PTHREAD_MUTEX_INITIALIZER;
 
-/*
- * default thread attributes
- */
-pthread_attr_t pthread_default_attr = { SCHED_RR, NULL, PTHREAD_STACK_DEFAULT };
-
-/*
- * Queue for all threads elidgeable to run this scheduling round.
- */
-struct pthread_queue pthread_current_queue = PTHREAD_QUEUE_INITIALIZER;
-
-/*
- * File table information
- */
-struct fd_table_entry *fd_table[64];
-
-
+int pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
+{
+	/* Check first for speed */
+	if (*once_control == PTHREAD_ONCE_INIT) {
+		pthread_mutex_lock(&__pthread_once_mutex);
+		if (*once_control == PTHREAD_ONCE_INIT) {
+			init_routine();
+			(*once_control)++;
+		}
+		pthread_mutex_unlock(&__pthread_once_mutex);
+	}
+	return(OK);
+}
