@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.3 1995/09/02 06:15:54 jtc Exp $	*/
+/*	$NetBSD: touch.c,v 1.4 1997/03/22 03:42:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: touch.c,v 1.3 1995/09/02 06:15:54 jtc Exp $";
+static char rcsid[] = "$NetBSD: touch.c,v 1.4 1997/03/22 03:42:57 lukem Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -531,6 +531,8 @@ boolean	tempfileopen = FALSE;
 boolean edit(name)
 	char	*name;
 {
+	int fd;
+
 	o_name = name;
 	if ( (o_touchedfile = fopen(name, "r")) == NULL){
 		fprintf(stderr, "%s: Can't open file \"%s\" to touch (read).\n",
@@ -538,8 +540,11 @@ boolean edit(name)
 		return(TRUE);
 	}
 	(void)strcpy(n_name, canon_name);
-	(void)mktemp(n_name);
-	if ( (n_touchedfile = fopen(n_name, "w")) == NULL){
+	fd = -1;
+	if ((fd = mkstemp(n_name)) == -1 ||
+	    (n_touchedfile = fdopen(fd, "w")) == NULL) {
+		if (fd != -1)
+			close(fd);
 		fprintf(stderr,"%s: Can't open file \"%s\" to touch (write).\n",
 			processname, name);
 		return(TRUE);
