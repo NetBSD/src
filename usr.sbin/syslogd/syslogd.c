@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.24 1999/02/28 11:16:18 tron Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.25 1999/02/28 11:30:18 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -364,7 +364,7 @@ main(argc, argv)
 
 	/* setup pollfd set. */
 	readfds = (struct pollfd *)malloc(sizeof(struct pollfd) *
-	    funixsize + 2);
+					  (funixsize + 2));
 	if (readfds == NULL) {
 		logerror("couldn't allocate pollfds");
 		die(0);
