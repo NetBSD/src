@@ -36,7 +36,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rnusers.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rnusers.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: rnusers.x,v 1.9 1999/07/02 15:44:13 simonb Exp $");
+%__RCSID("$NetBSD: rnusers.x,v 1.10 2002/02/05 22:01:09 christos Exp $");
 %#endif /* not lint */
 #endif
 
@@ -114,7 +114,7 @@
 %	struct ru_utmp *objp;
 %{
 %	char *ptr;
-%	int size;
+%	u_int size;
 %
 %	/*
 %	 * We are using a non-malloc allocated array,
