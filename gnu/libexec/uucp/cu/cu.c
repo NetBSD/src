@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char cu_rcsid[] = "$Id: cu.c,v 1.6 2000/03/23 19:05:40 mycroft Exp $";
+const char cu_rcsid[] = "$Id: cu.c,v 1.7 2001/10/26 14:44:13 briggs Exp $";
 #endif
 
 #include "cu.h"
@@ -258,6 +258,8 @@ main (argc, argv)
   enum txonxoffsetting txonxoff = XONXOFF_ON;
   /* -I: configuration file name.  */
   const char *zconfig = NULL;
+  /* -F/-f: Hard/Soft flow control.  */
+  boolean hflow = TRUE;
   int iopt;
   pointer puuconf;
   int iuuconf;
@@ -295,7 +297,7 @@ main (argc, argv)
 	}
     }
 
-  while ((iopt = getopt_long (argc, argv, "a:c:deE:hnI:l:op:s:tvx:z:",
+  while ((iopt = getopt_long (argc, argv, "a:c:deE:fFhnI:l:op:qs:tvx:z:",
 			      asCulongopts, (int *) NULL)) != EOF)
     {
       switch (iopt)
@@ -322,6 +324,16 @@ main (argc, argv)
 	  zCuvar_escape = optarg;
 	  break;
 
+	case 'f':
+	  /* No h/w flow control.  */
+	  hflow = FALSE;
+	  break;
+
+	case 'F':
+	  /* Use h/w flow control.  */
+	  hflow = TRUE;
+	  break;
+
 	case 'h':
 	  /* Local echo.  */
 	  fCulocalecho = TRUE;
@@ -346,6 +358,11 @@ main (argc, argv)
 	case 'a':
 	  /* Port name (-a is for compatibility).  */
 	  zport = optarg;
+	  break;
+
+	case 'q':
+	  /* Verbose file transfers */
+	  fCuvar_verbose = FALSE;
 	  break;
 
 	case 's':
@@ -599,7 +616,7 @@ main (argc, argv)
 	      sport.uuconf_u.uuconf_sdirect.uuconf_zdevice = NULL;
 	      sport.uuconf_u.uuconf_sdirect.uuconf_ibaud = ibaud;
 	      sport.uuconf_u.uuconf_sdirect.uuconf_fcarrier = FALSE;
-	      sport.uuconf_u.uuconf_sdirect.uuconf_fhardflow = TRUE;
+	      sport.uuconf_u.uuconf_sdirect.uuconf_fhardflow = hflow;
 
 	      if (! fconn_init (&sport, &sconn, UUCONF_PORTTYPE_UNKNOWN))
 		ucuabort ();
