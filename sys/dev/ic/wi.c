@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.173 2004/07/22 20:12:20 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.174 2004/07/22 20:13:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.173 2004/07/22 20:12:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.174 2004/07/22 20:13:20 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1054,7 +1054,7 @@ wi_start(struct ifnet *ifp)
 
 			struct wi_tx_radiotap_header *tap = &sc->sc_txtap;
 
-			tap->wt_rate = rs->rs_rates[ni->ni_txrate];
+			tap->wt_rate = rs->rs_rates[rateidx];
 			tap->wt_chan_freq =
 			    htole16(ic->ic_bss->ni_chan->ic_freq);
 			tap->wt_chan_flags =
