@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.1.1.1 1999/09/16 12:23:24 takemura Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.2 1999/11/21 06:59:41 uch Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -72,6 +72,8 @@ extern struct platform {
 	 *	device_register	-	boot configuration aid
 	 *	iointr		-	I/O interrupt handler
 	 *	clockintr	-	Clock Interrupt Handler
+	 *	fb_init         -       frame buffer initialization
+	 *      mem_init        -       Count available memory
 	 *	mcheck_handler	-	Platform Specific Machine Check Handler
 	 */
 	void	(*os_init) __P((void));
@@ -80,6 +82,8 @@ extern struct platform {
 	void	(*device_register) __P((struct device *, void *));
 	void	(*iointr) __P((void *, unsigned long));
 	void	(*clockintr) __P((void *));
+	void	(*fb_init) __P((caddr_t*));
+	int	(*mem_init) __P((caddr_t));
 #ifdef notyet
 	void	(*mcheck_handler) __P((unsigned long, struct trapframe *,
 		unsigned long, unsigned long));
