@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 2000/11/08 02:30:22 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.13 2001/02/10 19:15:24 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -84,7 +84,7 @@
 #elif defined(__vax__)
 #define PTRDIFF_IS_LONG         0
 #define SIZEOF_IS_ULONG         0
-#elif defined(__arm26__) || defined(__arm32__)
+#elif defined(__arm__)
 #define PTRDIFF_IS_LONG		0
 #define SIZEOF_IS_ULONG		0
 #elif defined(__powerpc__) || defined(__ppc__)
