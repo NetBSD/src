@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.79 2002/06/19 16:30:52 itojun Exp $	*/
+/*	$NetBSD: net.c,v 1.80 2002/12/05 01:17:17 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -217,7 +217,8 @@ get_ifconfig_info()
 	textsize = collect(T_OUTPUT, &textbuf, "/sbin/ifconfig -l 2>/dev/null");
 	if (textsize < 0) {
 		if (logging)
-			(void)fprintf(log, "Aborting: Could not run ifconfig.\n");
+			(void)fprintf(logfp,
+			    "Aborting: Could not run ifconfig.\n");
 		(void)fprintf(stderr, "Could not run ifconfig.");
 		exit(1);
 	}
@@ -551,7 +552,8 @@ again:
 #endif
 		if (f == NULL) {
 			if (logging)
-				(void)fprintf(log, "%s", msg_string(MSG_resolv));
+				(void)fprintf(logfp,
+				    "%s", msg_string(MSG_resolv));
 			(void)fprintf(stderr, "%s", msg_string(MSG_resolv));
 			exit(1);
 		}
@@ -998,7 +1000,8 @@ char *search;
 	textsize = collect(T_OUTPUT, &textbuf, command);
 	if (textsize < 0) {
 		if (logging)
-			(void)fprintf(log, "Aborting: Could not run %s.\n", command);
+			(void)fprintf(logfp,
+			    "Aborting: Could not run %s.\n", command);
 		(void)fprintf(stderr, "Could not run ifconfig.");
 		exit(1);
 	}
@@ -1030,7 +1033,8 @@ char *line;
 	textsize = collect(T_FILE, &textbuf, "/tmp/dhclient.leases");
 	if (textsize < 0) {
 		if (logging)
-			(void)fprintf(log, "Could not open file /tmp/dhclient.leases.\n");
+			(void)fprintf(logfp,
+			    "Could not open file /tmp/dhclient.leases.\n");
 		(void)fprintf(stderr, "Could not open /tmp/dhclient.leases\n");
 		/* not fatal, just assume value not found */
 	}
