@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2002/02/11 18:04:24 uch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2002/02/12 15:26:47 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@ int	want_resched;		/* resched() was called */
  * We need a machine-independent name for this.
  */
 #define	DELAY(x)		delay(x)
-void	delay __P((int));
+void	delay(int);
 
 /*
  * Logical address space of SH3 CPU.
@@ -181,46 +181,42 @@ extern struct cpu_nocpuid_nameclass sh3_nocpuid_cpus[];
 extern struct cpu_cpuid_nameclass sh3_cpuid_cpus[];
 
 /* autoconf.c */
-void	configure __P((void));
+void	configure(void);
 
 /* sh3_machdep.c */
-void sh3_startup __P((void));
+void sh3_startup(void);
 
 /* machdep.c */
-void	delay __P((int));
-void	dumpconf __P((void));
-void	cpu_reset __P((void));
+void	delay(int);
+void	dumpconf(void);
+void	cpu_reset(void);
 
 /* locore.s */
 struct region_descriptor;
-void	lgdt __P((struct region_descriptor *));
-void	fillw __P((short, void *, size_t));
-void
-bcopyb  __P((caddr_t from, caddr_t to, size_t len));
-void
-bcopyw __P((caddr_t from, caddr_t to, size_t len));
-void
-setPageDirReg __P((int pgdir));
-
+void	lgdt(struct region_descriptor *);
+void	fillw(short, void *, size_t);
+void	bcopyb (caddr_t, caddr_t, size_t);
+void	bcopyw(caddr_t, caddr_t, size_t);
+void	setPageDirReg(int);
 
 struct pcb;
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
-void	proc_trampoline __P((void));
+void	savectx(struct pcb *);
+void	switch_exit(struct proc *);
+void	proc_trampoline(void);
 
 /* clock.c */
-void	startrtclock __P((void));
+void	startrtclock(void);
 
 /* npx.c */
-void	npxdrop __P((void));
-void	npxsave __P((void));
+void	npxdrop(void);
+void	npxsave(void);
 
 /* vm_machdep.c */
-int kvtop __P((caddr_t));
+int kvtop(caddr_t);
 
 #ifdef MATH_EMULATE
 /* math_emulate.c */
-int	math_emulate __P((struct trapframe *));
+int	math_emulate(struct trapframe *);
 #endif
 
 #endif /* _KERNEL */
