@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/09/27 16:04:16 fvdl Exp $
+#	$NetBSD: Makefile,v 1.2 2000/09/27 18:53:35 fvdl Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -6,8 +6,7 @@ WARNS=1
 .include "${TOP}/Makefile.inc"
 IMAGE=		ramdisk-small.fs
 
-AUXDEPENDS= 	dot.profile dot.hdprofile disktab.preinstall \
-		termcap.mini
+AUXDEPENDS= 	dot.profile disktab.preinstall  termcap.mini
 
 CBIN=		ramdiskbin
 
