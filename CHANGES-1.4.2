@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.95 2000/01/08 20:28:09 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.96 2000/01/08 22:50:39 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -2462,3 +2462,23 @@ etc/etc.mac68k/Makefile.inc			1.1-1.2 plus patch
 
   Build the mac68k instkernel (bootable sysinstall), and include
   it in the standard release.
+
+sys/conf/files				1.297,1.335
+sys/dev/microcode/isp/asm_pci.h		1.18-1.27
+sys/dev/microcode/isp/asm_sbus.h	1.13-1.15
+sys/dev/ic/isp_inline.h			1.1-1.4
+sys/dev/ic/ispmbox.h			1.16-1.20
+sys/dev/ic/ispreg.h			1.15-1.18
+sys/dev/ic/ispvar.h			1.21-1.28
+sys/dev/ic/isp.c			1.35-1.47
+sys/dev/ic/isp_netbsd.c			1.13-1.15,1.17-1.22 via patch
+sys/dev/ic/isp_netbsd.h			1.13-1.16,1.18-1.21 via patch
+sys/dev/pci/isp_pci.c			1.39-1.41,1.43-1.49 via patch
+sys/dev/sbus/isp_sbus.c			1.12,1.14-1.18 via patch
+
+  Untangle Qlogic firmware copyright problems and update firmware.
+  Untangle some MD support issues for said firmware. Add 1280 (Dual
+  LVD), 1240 (Dual Ultra), 2200 (2nd Generation Qlogic FC chipset).
+  Fix some synchronous negotiation problems for parallel SCSI.
+  Firm up some Fabric Support issues.
+
