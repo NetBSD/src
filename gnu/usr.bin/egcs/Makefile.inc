@@ -1,44 +1,39 @@
-#	$NetBSD: Makefile.inc,v 1.7 1998/05/07 04:17:59 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.8 1998/08/17 02:25:44 tv Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
 
-DIST=	${.CURDIR}/../../../dist/gcc
-COMMON=	${.CURDIR}/../common
-COMMONOBJ!=cd ${.CURDIR}/../common; \
-	 printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+.include <bsd.own.mk>
 
-CPPFLAGS+=-I${.CURDIR} \
-	-I${COMMON} \
-	-I${COMMONOBJ} \
-	-I${.CURDIR}/../arch \
-	-I${.CURDIR}/../arch/${MACHINE_ARCH} \
-	-I${DIST} \
-	-I${DIST}/config \
-	-I${DIST}/config/${MACHINE_ARCH} \
-	-DIN_GCC -DNETBSD_NATIVE
+DIST=		${.CURDIR}/../../../dist/gcc
+COMMON=		${.CURDIR}/../common
+COMMONOBJ!=	cd ${.CURDIR}/../common; \
+	 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+
+CPPFLAGS+=	-I${.CURDIR}/../arch \
+		-I${.CURDIR}/../arch/${MACHINE_ARCH} \
+		-I${COMMONOBJ} \
+		-I${DIST} \
+		-I${DIST}/config \
+		-DIN_GCC -DNETBSD_NATIVE
 
 LDADD+=		-lgnumalloc
 DPADD+=		${LIBGNUMALLOC}
 
-# Some GNU architecture names don't match NetBSD architecture names.  Most do.
-.if ${MACHINE_ARCH} == "arm32"
-TARGET_GNU_ARCH=arm
-.elif ${MACHINE_ARCH} == "powerpc"
-TARGET_GNU_ARCH=rs6000
-.else
-TARGET_GNU_ARCH=${MACHINE_ARCH}	
+.PATH:		${.CURDIR}/../arch \
+		${DIST} \
+		${DIST}/config
+
+EGCS_VERSION!=	sed -e 's/.*\(egcs-[0-9\.]*\).*/\1/' ${DIST}/version.c
+
+CPPFLAGS+=	-DHAVE_CONFIG_H -DPREFIX=\"/usr\" \
+		-DDEFAULT_TARGET_VERSION=\"${EGCS_VERSION}\" \
+		-DDEFAULT_TARGET_MACHINE=\"${MACHINE_GNU_ARCH}-netbsd\" \
+		-DSTANDARD_STARTFILE_PREFIX=\"/usr/lib/\" \
+		-DSTANDARD_EXEC_PREFIX=\"/usr/libexec/\" \
+		-DTOOLDIR_BASE_PREFIX=\"/usr/libexec/\"
+
+.if defined(USE_EGCS_HAIFA)
+CPPFLAGS+=	-DHAIFA
 .endif
-
-.PATH: ${DIST} ${DIST}/config ${DIST}/config/${TARGET_GNU_ARCH} \
-	${COMMON} ${COMMONOBJ}
-
-# XXX
-version=egcs-2.90.27
-target_alias=${TARGET_GNU_ARCH}-netbsd
-CPPFLAGS+= \
-	-DDEFAULT_TARGET_VERSION=\"${version}\" \
-	-DDEFAULT_TARGET_MACHINE=\"${target_alias}\" \
-# XXX
-
 .endif
