@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.63 1998/07/14 22:18:36 tv Exp $	*/
+/*	$NetBSD: rtld.c,v 1.64 1998/08/06 00:03:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -943,8 +943,15 @@ call_map(smp, sym)
 	struct nzlist		*np;
 
 	np = lookup(sym, smp, &src_map, 1);
-	if (np)
+	if (np) {
+#if DEBUG
+xprintf("call_map: %s in %#x enter\n", sym, smp);
+#endif
 		(*(void (*) __P((void)))(src_map->som_addr + np->nz_value))();
+#if DEBUG
+xprintf("call_map: %s in %#x exit\n", sym, smp);
+#endif
+	}
 }
 
 /*
