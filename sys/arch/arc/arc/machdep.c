@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 2002/03/05 16:12:35 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 2002/03/17 04:34:41 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
+#include "opt_md.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
