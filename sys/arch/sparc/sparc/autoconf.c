@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.136 2000/03/21 21:29:16 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.137 2000/03/21 21:30:33 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -100,7 +100,6 @@
  * the machine.
  */
 int	optionsnode;	/* node ID of ROM's options */
-int	mmu_3l;		/* SUN4_400 models have a 3-level MMU */
 
 #ifdef KGDB
 extern	int kgdb_debug_panic;
