@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.7 2003/10/08 19:46:12 scw Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.8 2003/12/03 13:20:34 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.7 2003/10/08 19:46:12 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.8 2003/12/03 13:20:34 scw Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -530,6 +530,12 @@ ixp425_intr_dispatch(struct clockframe *frame)
 		/* Re-enable this interrupt now that's it's cleared. */
 		intr_enabled |= ibit;
 		ixp425_set_intrmask();
+
+		/*
+		 * Don't forget to include interrupts which may have
+		 * arrived in the meantime.
+		 */
+		hwpend |= ((ixp425_ipending & IXP425_INT_HWMASK) & ~pcpl);
 	}
 
 	/* Check for pendings soft intrs. */
