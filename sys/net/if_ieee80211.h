@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.30 2003/05/13 09:31:56 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.31 2003/05/13 10:05:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -497,7 +497,13 @@ struct ieee80211_wepkey {
 };
 
 struct ieee80211com {
+#ifdef __NetBSD__
 	struct ethercom		ic_ec;
+#endif
+#ifdef __FreeBSD__
+	struct arpcom		ic_ac;
+	struct mtx		ic_mtx;
+#endif
 	void			(*ic_recv_mgmt[16])(struct ieee80211com *,
 				    struct mbuf *, int, u_int32_t);
 	int			(*ic_send_mgmt[16])(struct ieee80211com *,
