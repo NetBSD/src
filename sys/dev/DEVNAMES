@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.108 2002/04/18 15:44:20 wiz Exp $
+#	$NetBSD: DEVNAMES,v 1.109 2002/04/22 12:43:50 augustss Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -1011,6 +1011,7 @@ spc			luna68k
 spc			x68k
 spckbd			arm32		Attribute
 spd			playstation2
+spic			MI
 spifi			newsmips
 spkr			MI		
 sppp			MI		Attribute
