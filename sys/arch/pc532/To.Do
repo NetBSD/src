@@ -1,4 +1,4 @@
-$NetBSD: To.Do,v 1.5 1995/12/07 07:55:11 phil Exp $
+$NetBSD: To.Do,v 1.6 1996/03/11 23:14:43 phil Exp $
 
 This is the "To Do" list for NetBSD/pc532
   (Order is not in order of importance.)
@@ -8,13 +8,7 @@ This is the "To Do" list for NetBSD/pc532
 
 - get kernel debugger working
 
-- get the ncr interrupt driven scsi driver working debugged
-
 - write an aic scsi driver
-
-- improve copyin/out and friends  (kernel work)
-
-- remove double mapping of the user area (kernel work)
 
 - get gdb working (partially done) including kernel debugging
 
