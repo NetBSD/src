@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: dcm.c 1.26 91/01/21
  *	from: @(#)dcm.c	7.14 (Berkeley) 6/27/91
- *	$Id: dcm.c,v 1.9 1993/08/29 13:46:32 deraadt Exp $
+ *	$Id: dcm.c,v 1.10 1994/01/30 18:31:04 mycroft Exp $
  */
 
 /*
@@ -72,7 +72,6 @@
 #define DEFAULT_BAUD_RATE 9600
 #endif
 
-int	ttrstrt();
 int	dcmprobe(), dcmintr(), dcmparam();
 void	dcmstart();
 
