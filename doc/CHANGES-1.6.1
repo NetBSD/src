@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.85 2003/01/11 23:08:16 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.86 2003/01/12 00:25:33 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2984,3 +2984,55 @@ sys/adosfs/advnops.c				via hand patch of diffs
 	Don't scale file block numbers. Fixes mmap() and UBCified read() 
 	problems.
 	[lonewolf, ticket #1063]
+
+libexec/ftpd/cmds.c				1.19-1.20
+
+	ftpd was unable to service the pwd request once you entered a directory
+	without search permission. This confused some ftp clients.
+
+	We fix this problem by maitaining a cached path when getcwd() does not
+	work. The symbolic links and ../ are resolved in the cached path, and it
+	is finnally checked for accuracy by comparing ./ and the cached path
+	with stat (device and inode comparison). If the comparison fails, pwd
+	fails as it did before, and if the comparison succeeds, the cached path
+	is displayed.
+
+	If paths are too long, we should just compare ./ with a truncated path
+	and fail, thus making pwd displaying an error as it did before.
+	[manu, ticket #1064]
+
+sbin/fdisk/fdisk.c				1.58-1.59
+
+	Print missing newline in two bootselector-related messages.
+	[jmmv, ticket #1065]
+
+sys/arch/amiga/amiga/locore.s			1.132-1.133
+sys/arch/amiga/amiga/amiga_init.c		1.82-1.83 (hand patched)
+
+	Change the bootstrap procedure to avoid temporarily mapping physical 
+	memory.
+	
+	Now, on the Amiga, we copy a small piece of code to chip memory and 
+	enable the MMU from here.
+	On the DraCo, we setup %itt0 so that we shadow physical memory without
+	touching the page tables and very temporarily. The DraCo's memory layout
+	guarantees that there is no overlap in this case between physical and
+	virtual addresses.
+	
+	This fixes a bug where Amiga's with physical memory at 0x200000 
+	wouldn't boot kernels >2M in size, and possibly other corner cases.
+	[aymeric, ticket #1066]
+
+sys/arch/i386/stand/biosboot/version		1.13-1.14
+sys/arch/i386/stand/lib/biosdisk_ll.c		1.12-1.13
+
+	If booting from floppy in 2.88MB drive, actually test if it's possible
+	to read sector 18, and fallback to 1.44MB drive geometry if that fails.
+	This allows to boot from 1.44MB floppy disk in 2.88MB drive.
+	Tested with 2.88MB drive in IBM PS/2 model 95 donated
+	by 'Yokotashi' <lhc at kanal ucw cz> and Pavel Cahyna
+	<pavel.cahyna at st ms mff cuni cz>
+	Bump biosboot version.
+
+	Fixes PR kern/3418 by Keith Moore.
+	[jdolecek, ticket #1067]
