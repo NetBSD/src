@@ -1,13 +1,11 @@
-/*	$NetBSD: clockvar.h,v 1.3 2000/02/22 11:25:57 soda Exp $	*/
-/*	$OpenBSD: clockvar.h,v 1.1 1998/01/29 15:06:19 pefo Exp $	*/
-/*	NetBSD: clockvar.h,v 1.1 1995/06/28 02:44:59 cgd Exp 	*/
+/* $NetBSD: todclockvar.h,v 1.1 2001/06/13 15:00:27 soda Exp $ */
+/* NetBSD: clockvar.h,v 1.4 1997/06/22 08:02:18 jonathan Exp  */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * Adopted for r4400: Per Fogelstrom
  * 
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
@@ -31,16 +29,16 @@
  */
 
 /*
- * Definitions for "cpu-independent" clock handling for the mips arc arch.
+ * Definitions for cpu-independent todclock handling for the arc.
  */
 
 /*
- * clocktime structure:
+ * todclocktime structure:
  *
  * structure passed to TOY clocks when setting them.  broken out this
  * way, so that the time_t -> field conversion can be shared.
  */
-struct tod_time {
+struct todclocktime {
 	int	year;			/* year - 1900 */
 	int	mon;			/* month (1 - 12) */
 	int	day;			/* day (1 - 31) */
@@ -51,30 +49,14 @@ struct tod_time {
 };
 
 /*
- * clockdesc structure:
+ * todclockfns structure:
  *
- * provides clock-specific functions to do necessary operations.
+ * function switch used by chip-independent todclock code, to access
+ * chip-dependent routines.
  */
-struct clock_softc {
-	struct	device sc_dev;
-
-	/*
-	 * The functions that all types of clock provide.
-	 */
-	void	(*sc_attach) __P((struct device *parent, struct device *self,
-		    void *aux));
-	void	(*sc_init) __P((struct clock_softc *csc));
-	void	(*sc_get) __P((struct clock_softc *csc, time_t base,
-		    struct tod_time *ct));
-	void	(*sc_set) __P((struct clock_softc *csc, struct tod_time *ct));
-
-	/*
-	 * Private storage for particular clock types.
-	 */
-	void	*sc_data;
-
-	/*
-	 * Has the time been initialized?
-	 */
-	int	sc_initted;
+struct todclockfns {
+	void (*tcf_get) __P((struct device *, time_t, struct todclocktime *));
+	void (*tcf_set) __P((struct device *, struct todclocktime *));
 };
+
+void todclockattach __P((struct device *, const struct todclockfns *, int));
