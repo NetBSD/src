@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_net.c,v 1.5 2002/03/16 20:43:58 christos Exp $	 */
+/*	$NetBSD: svr4_32_net.c,v 1.6 2003/01/19 16:47:14 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.5 2002/03/16 20:43:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.6 2003/01/19 16:47:14 thorpej Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.5 2002/03/16 20:43:58 christos Exp
 #include <sys/conf.h>
 #include <sys/mount.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4_32/svr4_32_types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.c,v 1.6 2002/12/22 02:54:35 mrg Exp $	 */
+/*	$NetBSD: svr4_32_stat.c,v 1.7 2003/01/19 16:47:16 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.6 2002/12/22 02:54:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.7 2003/01/19 16:47:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.6 2002/12/22 02:54:35 mrg Exp $")
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4_32/svr4_32_types.h>
@@ -83,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.6 2002/12/22 02:54:35 mrg Exp $")
 
 static void bsd_to_svr4_32_xstat __P((struct stat *, struct svr4_32_xstat *));
 static void bsd_to_svr4_32_stat64 __P((struct stat *, struct svr4_32_stat64 *));
-int svr4_32_ustat __P((struct proc *, void *, register_t *));
+int svr4_32_ustat __P((struct lwp *, void *, register_t *));
 static int svr4_32_to_bsd_pathconf __P((int));
 
 /*
@@ -169,8 +170,8 @@ bsd_to_svr4_32_stat64(st, st4)
 
 
 int
-svr4_32_sys_stat(p, v, retval)
-	struct proc *p;
+svr4_32_sys_stat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -185,8 +186,9 @@ svr4_32_sys_stat(p, v, retval)
 	SCARG(&cup, two) = 2;
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = SCARG(uap, ub);
-	return svr4_32_sys_xstat(p, &cup, retval);
+	return svr4_32_sys_xstat(l, &cup, retval);
 #else
+	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_32_stat	svr4_st;
 	struct sys___stat13_args	cup;
@@ -219,8 +221,8 @@ svr4_32_sys_stat(p, v, retval)
 
 
 int
-svr4_32_sys_lstat(p, v, retval)
-	struct proc *p;
+svr4_32_sys_lstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -235,7 +237,7 @@ svr4_32_sys_lstat(p, v, retval)
 	SCARG(&cup, two) = 2;
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = SCARG(uap, ub);
-	return svr4_32_sys_lxstat(p, &cup, retval);
+	return svr4_32_sys_lxstat(l, &cup, retval);
 #else
 	struct stat		st;
 	struct svr4_32_stat	svr4_st;
@@ -268,8 +270,8 @@ svr4_32_sys_lstat(p, v, retval)
 
 
 int
-svr4_32_sys_fstat(p, v, retval)
-	struct proc *p;
+svr4_32_sys_fstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -280,7 +282,7 @@ svr4_32_sys_fstat(p, v, retval)
 	SCARG(&cup, two) = 2;
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = SCARG(uap, sb);
-	return svr4_32_sys_fxstat(p, &cup, retval);
+	return svr4_32_sys_fxstat(l, &cup, retval);
 #else
 	struct stat		st;
 	struct svr4_32_stat	svr4_st;
@@ -310,12 +312,13 @@ svr4_32_sys_fstat(p, v, retval)
 
 
 int
-svr4_32_sys_xstat(p, v, retval)
-	struct proc *p;
+svr4_32_sys_xstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_xstat_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_32_xstat	svr4_st;
 	struct sys___stat13_args	cup;
@@ -327,7 +330,7 @@ svr4_32_sys_xstat(p, v, retval)
 	SCARG(&cup, path) = (const char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&cup, path));
 
-	if ((error = sys___stat13(p, &cup, retval)) != 0)
+	if ((error = sys___stat13(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -348,12 +351,13 @@ svr4_32_sys_xstat(p, v, retval)
 
 
 int
-svr4_32_sys_lxstat(p, v, retval)
-	struct proc *p;
+svr4_32_sys_lxstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_lxstat_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_32_xstat	svr4_st;
 	struct sys___lstat13_args	cup;
@@ -365,7 +369,7 @@ svr4_32_sys_lxstat(p, v, retval)
 	SCARG(&cup, path) = (const char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&cup, path));
 
-	if ((error = sys___lstat13(p, &cup, retval)) != 0)
+	if ((error = sys___lstat13(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -386,12 +390,13 @@ svr4_32_sys_lxstat(p, v, retval)
 
 
 int
-svr4_32_sys_fxstat(p, v, retval)
-	struct proc *p;
+svr4_32_sys_fxstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_fxstat_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_32_xstat	svr4_st;
 	struct sys___fstat13_args	cup;
@@ -402,7 +407,7 @@ svr4_32_sys_fxstat(p, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(struct stat));
 
-	if ((error = sys___fstat13(p, &cup, retval)) != 0)
+	if ((error = sys___fstat13(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof st)) != 0)
@@ -419,12 +424,13 @@ svr4_32_sys_fxstat(p, v, retval)
 
 
 int
-svr4_32_sys_stat64(p, v, retval)
-	struct proc *p;
+svr4_32_sys_stat64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_stat64_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_32_stat64	svr4_st;
 	struct sys___stat13_args	cup;
@@ -436,7 +442,7 @@ svr4_32_sys_stat64(p, v, retval)
 	SCARG(&cup, path) = (const char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&cup, path));
 
-	if ((error = sys___stat13(p, &cup, retval)) != 0)
+	if ((error = sys___stat13(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -457,12 +463,13 @@ svr4_32_sys_stat64(p, v, retval)
 
 
 int
-svr4_32_sys_lstat64(p, v, retval)
-	struct proc *p;
+svr4_32_sys_lstat64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_lstat64_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_32_stat64	svr4_st;
 	struct sys___lstat13_args	cup;
@@ -474,7 +481,7 @@ svr4_32_sys_lstat64(p, v, retval)
 	SCARG(&cup, path) = (const char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&cup, path));
 
-	if ((error = sys___lstat13(p, &cup, retval)) != 0)
+	if ((error = sys___lstat13(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof st)) != 0)
@@ -495,12 +502,13 @@ svr4_32_sys_lstat64(p, v, retval)
 
 
 int
-svr4_32_sys_fstat64(p, v, retval)
-	struct proc *p;
+svr4_32_sys_fstat64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_fstat64_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_32_stat64	svr4_st;
 	struct sys___fstat13_args	cup;
@@ -511,7 +519,7 @@ svr4_32_sys_fstat64(p, v, retval)
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(struct stat));
 
-	if ((error = sys___fstat13(p, &cup, retval)) != 0)
+	if ((error = sys___fstat13(l, &cup, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof st)) != 0)
@@ -533,8 +541,8 @@ struct svr4_32_ustat_args {
 };
 
 int
-svr4_32_ustat(p, v, retval)
-	struct proc *p;
+svr4_32_ustat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -561,8 +569,8 @@ svr4_32_ustat(p, v, retval)
 
 
 int
-svr4_32_sys_uname(p, v, retval)
-	struct proc *p;
+svr4_32_sys_uname(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -592,12 +600,13 @@ svr4_32_sys_uname(p, v, retval)
 
 
 int
-svr4_32_sys_systeminfo(p, v, retval)
-	struct proc *p;
+svr4_32_sys_systeminfo(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_systeminfo_args *uap = v;
+	struct proc *p = l->l_proc;
 	const char *str = NULL;
 	int name;
 	int error;
@@ -712,8 +721,8 @@ svr4_32_sys_systeminfo(p, v, retval)
 
 
 int
-svr4_32_sys_utssys(p, v, retval)
-	struct proc *p;
+svr4_32_sys_utssys(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -724,7 +733,7 @@ svr4_32_sys_utssys(p, v, retval)
 		{
 			struct svr4_32_sys_uname_args ua;
 			SCARG(&ua, name) = SCARG(uap, a1);
-			return svr4_32_sys_uname(p, &ua, retval);
+			return svr4_32_sys_uname(l, &ua, retval);
 		}
 
 	case 2:		/* ustat(2)  */
@@ -732,7 +741,7 @@ svr4_32_sys_utssys(p, v, retval)
 			struct svr4_32_ustat_args ua;
 			SCARG(&ua, dev) = (svr4_32_dev_t) SCARG(uap, a2);
 			SCARG(&ua, name) = SCARG(uap, a1);
-			return svr4_32_ustat(p, &ua, retval);
+			return svr4_32_ustat(l, &ua, retval);
 		}
 
 	case 3:		/* fusers(2) */
@@ -746,12 +755,13 @@ svr4_32_sys_utssys(p, v, retval)
 
 
 int
-svr4_32_sys_utime(p, v, retval)
-	struct proc *p;
+svr4_32_sys_utime(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_utime_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct svr4_32_utimbuf ub;
 	struct timeval tbuf[2];
 	struct sys_utimes_args ap;
@@ -777,24 +787,25 @@ svr4_32_sys_utime(p, v, retval)
 	}
 	else
 		SCARG(&ap, tptr) = NULL;
-	return sys_utimes(p, &ap, retval);
+	return sys_utimes(l, &ap, retval);
 }
 
 
 int
-svr4_32_sys_utimes(p, v, retval)
-	struct proc *p;
+svr4_32_sys_utimes(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_utimes_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_utimes_args ua;
 	caddr_t sg = stackgap_init(p, 0);
 	SCARG(&ua, path) = (const char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 	SCARG(&ua, tptr) = (const struct timeval *)(u_long)SCARG(uap, tptr);
 
-	return sys_utimes(p, &ua, retval);
+	return sys_utimes(l, &ua, retval);
 }
 
 
@@ -849,12 +860,13 @@ svr4_32_to_bsd_pathconf(name)
 
 
 int
-svr4_32_sys_pathconf(p, v, retval)
-	struct proc *p;
+svr4_32_sys_pathconf(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys_pathconf_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_pathconf_args /* { 
 		syscallarg(char *) path;
 		syscallarg(int) name;
@@ -875,14 +887,14 @@ svr4_32_sys_pathconf(p, v, retval)
 		*retval = 0;
 		return 0;
 	default:
-		return sys_pathconf(p, uap, retval);
+		return sys_pathconf(l, uap, retval);
 	}
 }
 
 
 int
-svr4_32_sys_fpathconf(p, v, retval)
-	struct proc *p;
+svr4_32_sys_fpathconf(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -898,6 +910,6 @@ svr4_32_sys_fpathconf(p, v, retval)
 		*retval = 0;
 		return 0;
 	default:
-		return sys_fpathconf(p, uap, retval);
+		return sys_fpathconf(l, uap, retval);
 	}
 }

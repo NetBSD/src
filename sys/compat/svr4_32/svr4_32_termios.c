@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_termios.c,v 1.2 2001/11/13 02:09:32 lukem Exp $	 */
+/*	$NetBSD: svr4_32_termios.c,v 1.3 2003/01/19 16:47:16 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.2 2001/11/13 02:09:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.3 2003/01/19 16:47:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.2 2001/11/13 02:09:32 lukem Ex
 #include <net/if.h>
 #include <sys/malloc.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4_32/svr4_32_types.h>
@@ -502,14 +503,15 @@ svr4_32_termios_to_termio(ts, t)
 }
 
 int
-svr4_32_term_ioctl(fp, p, retval, fd, cmd, data)
+svr4_32_term_ioctl(fp, l, retval, fd, cmd, data)
 	struct file *fp;
-	struct proc *p;
+	struct lwp *l;
 	register_t *retval;
 	int fd;
 	u_long cmd;
 	caddr_t data;
 {
+	struct proc *p = l->l_proc;
 	struct termios 		bt;
 	struct svr4_32_termios	st;
 	struct svr4_termio	t;
@@ -622,6 +624,6 @@ svr4_32_term_ioctl(fp, p, retval, fd, cmd, data)
 		}
 
 	default:
-		return svr4_32_stream_ti_ioctl(fp, p, retval, fd, cmd, data);
+		return svr4_32_stream_ti_ioctl(fp, l, retval, fd, cmd, data);
 	}
 }

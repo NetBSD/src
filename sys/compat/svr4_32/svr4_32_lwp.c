@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_lwp.c,v 1.3 2001/11/13 02:09:29 lukem Exp $	*/
+/*	$NetBSD: svr4_32_lwp.c,v 1.4 2003/01/19 16:47:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_lwp.c,v 1.3 2001/11/13 02:09:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_lwp.c,v 1.4 2003/01/19 16:47:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_lwp.c,v 1.3 2001/11/13 02:09:29 lukem Exp $"
 #include <sys/user.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/un.h>
 #include <sys/stat.h>
@@ -77,69 +78,42 @@ svr4_32_sys__lwp_self(p, v, retval)
 }
 #endif
 
+
 int
-svr4_32_sys__lwp_create(p, v, retval)
-	struct proc *p;
+svr4_32_sys__lwp_create(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys__lwp_create_args *uap = v;
-	int error;
-	struct proc *pt;
-	svr4_32_ucontext_t uc;
-#define SVR4_FORK_FLAGS \
-    (FORK_SHAREVM|FORK_SHARECWD|FORK_SHAREFILES|FORK_SHARESIGS)
-
-
-	if ((error = fork1(p, SVR4_FORK_FLAGS, SIGCHLD, NULL, 0,
-	     NULL, NULL, retval, &pt)) == -1)
-		return error;
-
+	struct sys__lwp_create_args lc;
+	int flags;
+	
+	flags = 0;
+	
 	if (SCARG(uap, flags) & SVR4_LWP_DETACHED)
-	    pt->p_flag &= ~P_CONTROLT;
-
+	    flags  &= LWP_DETACHED;
+       
 	if (SCARG(uap, flags) & SVR4_LWP_SUSPENDED)
-	    pt->p_stat = SSTOP;
+	    flags  &= LWP_SUSPENDED;
 
 	if (SCARG(uap, flags) & SVR4___LWP_ASLWP) {
-		/*
-		 * XXX: This does not really work, we don't have
-		 *	the facility to deliver all async signals
-		 *	to a single lwp, and also we don't keep
-		 *	track of having only one ASLWP. For now
-		 *	we just block all signals as we are supposed
-		 *	to.
-		 */
-		sigset_t ss;
-		sigfillset(&ss);
-		(void)sigprocmask1(pt, SIG_BLOCK, &ss, 0);
-	} else {
-		/*
-		 * XXX: We block all signals to the rest of the of
-		 * 	the lwp's, so that they don't get confused
-		 *	as of the above. Will that work? What does
-		 *	sharing s
-		 */
-		sigset_t ss;
-		sigfillset(&ss);
-		(void)sigprocmask1(pt, SIG_BLOCK, &ss, 0);
+		/* XXX Punt! */
 	}
 
-	if ((error = copyin((caddr_t)(u_long)SCARG(uap, uc), &uc, sizeof(uc))) != 0)
-		return error;
-
-	if ((error = svr4_32_setcontext(pt, &uc)) != 0)
-		return error;
-
-	if ((error = copyout(&pt->p_pid, (caddr_t)(u_long)SCARG(uap, lwpid),
-	    sizeof(svr4_lwpid_t))) == -1)
-		return error;
-	return 0;
+#if 0
+	/* XXX this is probably incorrect */
+	SCARG(&lc, ucp) = (ucontext_t *)SCARG(uap, uc);
+	SCARG(&lc, new_lwp) = SCARG(uap, lwpid);
+#endif
+	SCARG(&lc, flags) = flags;
+	
+	return sys__lwp_create(l, &lc, retval);
 }
 
 int
-svr4_32_sys__lwp_kill(p, v, retval)
-	struct proc *p;
+svr4_32_sys__lwp_kill(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -148,16 +122,17 @@ svr4_32_sys__lwp_kill(p, v, retval)
 	SCARG(&ap, pid) = SCARG(uap, lwpid);
 	SCARG(&ap, signum) = SCARG(uap, signum);
 
-	return sys_kill(p, &ap, retval);
+	return sys_kill(l, &ap, retval);
 }
 
 int
-svr4_32_sys__lwp_info(p, v, retval)
-	struct proc *p;
+svr4_32_sys__lwp_info(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys__lwp_info_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct svr4_32_lwpinfo lwpinfo;
 	int error;
 
@@ -171,129 +146,84 @@ svr4_32_sys__lwp_info(p, v, retval)
 }
 
 int
-svr4_32_sys__lwp_exit(p, v, retval)
-	struct proc *p;
+svr4_32_sys__lwp_exit(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct sys_exit_args ap;
-	int error;
 
-	/* XXX: We don't handle the suspended case correctly here */
-	SCARG(&ap, rval) = 0;
-
-	if ((error = sys_exit(p, &ap, retval)) == -1)
-		return error;
-
-	*retval = 0;
-	return 0;
+	return sys__lwp_exit(l, NULL, retval);
 }
 
 int
-svr4_32_sys__lwp_wait(p, v, retval)
-	struct proc *p;
+svr4_32_sys__lwp_wait(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys__lwp_wait_args *uap = v;
-	struct sys_wait4_args ap;
-	int error;
+	struct sys__lwp_wait_args ap;
 
-	SCARG(&ap, pid) = SCARG(uap, wait_for);
-	SCARG(&ap, status) = NULL;
-	SCARG(&ap, options) = 0;
+	SCARG(&ap, wait_for) = SCARG(uap, wait_for);
+	SCARG(&ap, departed) = SCARG(uap, departed_lwp);
 
-	if ((error = sys_wait4(p, &ap, retval)) == -1)
-		return error;
-
-	if (SCARG(uap, departed_lwp) != NULL)
-	    if ((error = copyout(retval, (caddr_t)(u_long)SCARG(uap, departed_lwp),
-		sizeof(svr4_lwpid_t))) == -1)
-		    return error;
-
-	*retval = 0;
-	return 0;
+	return sys__lwp_wait(l, &ap, retval);
 }
 
-/* XXX Stolen from kern_sig.c */
-#define CANSIGNAL(p, pc, q, signum) \
-	((pc)->pc_ucred->cr_uid == 0 || \
-	    (pc)->p_ruid == (q)->p_cred->p_ruid || \
-	    (pc)->pc_ucred->cr_uid == (q)->p_cred->p_ruid || \
-	    (pc)->p_ruid == (q)->p_ucred->cr_uid || \
-	    (pc)->pc_ucred->cr_uid == (q)->p_ucred->cr_uid || \
-	    ((signum) == SIGCONT && (q)->p_session == (p)->p_session))
 int
-svr4_32_sys__lwp_suspend(p, v, retval)
-	struct proc *p;
+svr4_32_sys__lwp_suspend(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys__lwp_suspend_args *uap = v;
-	struct proc *pt;
+	struct sys__lwp_suspend_args ap;
 
-	/* Security implications here! */
-	if ((pt = pfind(SCARG(uap, lwpid))) == NULL)
-		return ESRCH;
+	SCARG(&ap, target) = SCARG(uap, lwpid);
 
-	if (!CANSIGNAL(p, p->p_cred, pt, 0))
-		return EPERM;
-
-	pt->p_stat = SSTOP;
-	return 0;
+	return sys__lwp_suspend(l, &ap, retval);
 }
 
 int
-svr4_32_sys__lwp_continue(p, v, retval)
-	struct proc *p;
+svr4_32_sys__lwp_continue(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct svr4_32_sys__lwp_continue_args *uap = v;
-	struct proc *pt;
+	struct sys__lwp_continue_args ap;
 
-	if ((pt = pfind(SCARG(uap, lwpid))) == NULL)
-		return ESRCH;
+	SCARG(&ap, target) = SCARG(uap, lwpid);
 
-	if (!CANSIGNAL(p, p->p_cred, pt, 0))
-		return EPERM;
+	return sys__lwp_continue(l, &ap, retval);
+}
 
-	pt->p_stat = SRUN;
+int
+svr4_32_sys__lwp_getprivate(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	/* XXX NJWLWP: Replace with call to native version if we ever
+	 * implement that. */
+
+	*retval = (register_t)l->l_private;
 	return 0;
 }
 
 int
-svr4_32_sys__lwp_getprivate(p, v, retval)
-	struct proc *p;
+svr4_32_sys__lwp_setprivate(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	/* XXX: Use mach field! */
-	*retval = (register_t)p->p_thread;
-	return 0;
-}
-
-int
-svr4_32_sys__lwp_setprivate(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
+#if 0
 	struct svr4_32_sys__lwp_setprivate_args *uap = v;
 
-	/* 
-	 * XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-	 *
-	 * This has many problems:
-	 *
-	 * 1) we are using an old, left over field from Mach
-	 *  
-	 * 2) the lwpid_t is an unsigned int but the p_thread
-	 *	field is a (64-bit) pointer.
-	 *
-	 * 3) we're copying in 64-bits from a 32-bit field.
-	 */
-	return copyin((caddr_t)(u_long)SCARG(uap, buffer), 
-		      &p->p_thread, sizeof(void *));
+	/* XXX NJWLWP: Replace with call to native version if we ever
+	 * implement that. */
+
+	return copyin(SCARG(uap, buffer), &l->l_private, sizeof(void *));
+#endif
 	return 0;
 }
