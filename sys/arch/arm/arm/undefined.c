@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.20 2003/10/31 16:44:35 cl Exp $	*/
+/*	$NetBSD: undefined.c,v 1.21 2003/11/14 19:03:17 scw Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.20 2003/10/31 16:44:35 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.21 2003/11/14 19:03:17 scw Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -171,7 +171,6 @@ undefined_init()
 void
 undefinedinstruction(trapframe_t *frame)
 {
-	struct proc *p;
 	struct lwp *l;
 	u_int fault_pc;
 	int fault_instruction;
@@ -201,6 +200,27 @@ undefinedinstruction(trapframe_t *frame)
 	fault_pc = frame->tf_pc;
 #endif
 
+	/* Get the current lwp/proc structure or lwp0/proc0 if there is none. */
+	l = curlwp == NULL ? &lwp0 : curlwp;
+
+	/*
+	 * Make sure the program counter is correctly aligned so we
+	 * don't take an alignment fault trying to read the opcode.
+	 */
+	if (__predict_false((fault_pc & 3) != 0)) {
+		ksiginfo_t ksi;
+		/* Give the user an illegal instruction signal. */
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLOPC;
+		ksi.ksi_addr = (u_int32_t *)(intptr_t) fault_pc;
+		KERNEL_PROC_LOCK(l);
+		trapsignal(l, &ksi);
+		KERNEL_PROC_UNLOCK(l);
+		userret(l);
+		return;
+	}
+
 	/*
 	 * Should use fuword() here .. but in the interests of squeezing every
 	 * bit of speed we will just use ReadWord(). We know the instruction
@@ -227,10 +247,6 @@ undefinedinstruction(trapframe_t *frame)
 		coprocessor = (fault_instruction >> 8) & 0x0f;
 	else
 		coprocessor = 0;
-
-	/* Get the current lwp/proc structure or lwp0/proc0 if there is none. */
-	l = curlwp == NULL ? &lwp0 : curlwp;
-	p = l->l_proc;
 
 #ifdef __PROG26
 	if ((frame->tf_r15 & R15_MODE) == R15_MODE_USR) {
@@ -321,6 +337,6 @@ undefinedinstruction(trapframe_t *frame)
 	}
 
 #else
-	userret(p);
+	userret(l);
 #endif
 }
