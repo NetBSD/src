@@ -1,4 +1,4 @@
-/*	$NetBSD: rwalld.c,v 1.10 1996/08/30 20:22:15 thorpej Exp $	*/
+/*	$NetBSD: rwalld.c,v 1.11 1997/09/17 20:19:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -29,11 +29,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: rwalld.c,v 1.10 1996/08/30 20:22:15 thorpej Exp $";
+__RCSID("$NetBSD: rwalld.c,v 1.11 1997/09/17 20:19:45 christos Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -52,17 +54,22 @@ static char rcsid[] = "$NetBSD: rwalld.c,v 1.10 1996/08/30 20:22:15 thorpej Exp 
 #define WALL_CMD "/usr/bin/wall -n"
 #endif
 
-void wallprog_1();
+static int from_inetd = 1;
 
-int from_inetd = 1;
+static void cleanup __P((int));
+static void wallprog_1 __P((struct svc_req *, SVCXPRT *));
 
-void
-cleanup()
+int main __P((int, char *[]));
+
+static void
+cleanup(n)
+	int n;
 {
 	(void) pmap_unset(WALLPROG, WALLVERS);
 	exit(0);
 }
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -135,7 +142,7 @@ wallproc_wall_1_svc(s, rqstp )
 	return (*s);
 }
 
-void
+static void
 wallprog_1(rqstp, transp)
 	struct svc_req *rqstp;
 	SVCXPRT *transp;
