@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2002/09/01 20:32:44 atatat Exp $
+#	$NetBSD: Makefile,v 1.2 2003/01/08 20:25:12 atatat Exp $
 
 PROG=		pmap
+SRCS=		main.c pmap.c pmap_ld.c
 BINGRP=		kmem
 BINMODE=	2555
 LDADD=		-lkvm

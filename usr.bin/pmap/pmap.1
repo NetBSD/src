@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.1,v 1.4 2002/09/30 11:09:08 grant Exp $
+.\"	$NetBSD: pmap.1,v 1.5 2003/01/08 20:25:12 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -167,6 +167,9 @@ or
 .Fl m ,
 more information is printed, possibly including device and inode
 numbers, file path names, or other identifying information.
+If specified more than once, a * will be printed in between two
+entries that are not adjacent, making the visual identification of
+spaces in the process's map easier to see.
 .El
 .Pp
 The
