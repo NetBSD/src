@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.30 2000/07/15 18:47:54 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.31 2000/08/08 02:11:05 jeffs Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -542,7 +542,7 @@ vga_extended_attach(self, iot, memt, type, map)
 	struct device *self;
 	bus_space_tag_t iot, memt;
 	int type;
-	int (*map) __P((void *, vaddr_t, int));
+	paddr_t (*map) __P((void *, off_t, int));
 {
 #endif /* arc */
 	int console;
