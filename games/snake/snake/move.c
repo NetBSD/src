@@ -386,29 +386,24 @@ pch(c)
 	}
 }
 
-apr(ps, fmt)
+apr(ps, fmt, ap)
 	struct point *ps;
 	char *fmt;
+	_VA_LIST_ ap;
 {
 	struct point p;
-	va_list ap;
 
 	p.line = ps->line+1; p.col = ps->col+1;
 	move(&p);
-	va_start(ap, fmt);
 	(void)vsprintf(str, fmt, ap);
-	va_end(ap);
 	pstring(str);
 }
 
-pr(fmt)
+pr(fmt, ap)
 	char *fmt;
+	_VA_LIST_ ap;
 {
-	va_list ap;
-
-	va_start(ap, fmt);
 	(void)vsprintf(str, fmt, ap);
-	va_end(ap);
 	pstring(str);
 }
 
