@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.13 1995/06/24 20:46:09 christos Exp $
+#	$NetBSD: Makefile.pc532,v 1.14 1995/09/19 23:51:40 thorpej Exp $
 
 # Copyright 1990 W. Jolitz
 # 	@(#)Makefile.i386	7.1 5/10/91
@@ -39,7 +39,7 @@ PC532=	../..
 INCLUDES= -I. -I$S -I$S/sys -I${PC532}
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL
 ASFLAGS=
-CFLAGS=	-O -msb ${COPTS}
+CFLAGS=	-O -Werror -fno-builtin -msb ${COPTS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
