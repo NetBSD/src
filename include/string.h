@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.9 1998/01/12 16:05:40 kleink Exp $	*/
+/*	$NetBSD: string.h,v 1.10 1998/02/02 16:15:07 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -49,6 +49,7 @@ typedef	_BSD_SIZE_T_	size_t;
 #endif
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
 __BEGIN_DECLS
 void	*memchr __P((const void *, int, size_t));
@@ -72,23 +73,22 @@ char	*strrchr __P((const char *, int));
 size_t	 strspn __P((const char *, const char *));
 char	*strstr __P((const char *, const char *));
 char	*strtok __P((char *, const char *));
+#if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE)) || \
+    defined(_REENTRANT) || (_POSIX_C_SOURCE - 0 >= 199506L)
 char	*strtok_r __P((char *, const char *, char **));
+#endif /* !defined(_ANSI_SOURCE) || defined(_REENTRANT) || ... */
 size_t	 strxfrm __P((char *, const char *, size_t));
 
-/* Nonstandard routines */
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-int	 bcmp __P((const void *, const void *, size_t));
-void	 bcopy __P((const void *, void *, size_t));
-void	 bzero __P((void *, size_t));
-int	 ffs __P((int));
-char	*index __P((const char *, int));
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE)
+#include <strings.h>		/* for backwards-compatibilty */
 void	*memccpy __P((void *, const void *, int, size_t));
-char	*rindex __P((const char *, int));
-int	 strcasecmp __P((const char *, const char *));
 char	*strdup __P((const char *));
-int	 strncasecmp __P((const char *, const char *, size_t));
+#endif /* !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) */
+
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
 char	*strsep __P((char **, const char *));
-#endif 
+#endif /* !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && ... */
 __END_DECLS
 
-#endif /* _STRING_H_ */
+#endif /* !defined(_STRING_H_) */
