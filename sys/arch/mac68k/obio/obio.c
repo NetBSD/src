@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.3 1996/10/13 03:21:26 christos Exp $	*/
+/*	$NetBSD: obio.c,v 1.4 1996/12/16 16:17:11 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -38,7 +38,7 @@
 #include <machine/autoconf.h>
 #include <machine/pte.h>
 
-static int  obio_match __P((struct device *, void *, void *));
+static int  obio_match __P((struct device *, struct cfdata *, void *));
 static void obio_attach __P((struct device *, struct device *, void *));
 
 struct cfattach obio_ca = {
@@ -50,9 +50,10 @@ struct cfdriver obio_cd = {
 };
 
 static int
-obio_match(parent, vcf, aux)
+obio_match(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct confargs *ca = aux;
 
