@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.9 1995/01/03 01:23:50 cgd Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.10 1995/06/15 23:22:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -264,9 +264,12 @@ ufs_getattr(ap)
 	vap->va_gid = ip->i_gid;
 	vap->va_rdev = (dev_t)ip->i_rdev;
 	vap->va_size = ip->i_din.di_size;
-	vap->va_atime = ip->i_atime;
-	vap->va_mtime = ip->i_mtime;
-	vap->va_ctime = ip->i_ctime;
+	vap->va_atime.ts_sec = ip->i_atime;
+	vap->va_atime.ts_nsec = ip->i_atimensec;
+	vap->va_mtime.ts_sec = ip->i_mtime;
+	vap->va_mtime.ts_nsec = ip->i_mtimensec;
+	vap->va_ctime.ts_sec = ip->i_ctime;
+	vap->va_ctime.ts_nsec = ip->i_ctimensec;
 	vap->va_flags = ip->i_flags;
 	vap->va_gen = ip->i_gen;
 	/* this doesn't belong here */
