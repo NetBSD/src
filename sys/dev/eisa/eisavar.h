@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.7 1996/03/22 03:31:33 cgd Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.8 1996/04/09 22:46:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -38,11 +38,27 @@
  * Definitions for EISA autoconfiguration.
  *
  * This file describes types and functions which are used for EISA
- * configuration.
+ * configuration.  Some of this information is machine-specific, and is
+ * separated into eisa_machdep.h.
  */
 
 #include <machine/bus.h>
 #include <dev/eisa/eisareg.h>		/* For ID register & string info. */
+
+/* 
+ * Structures and definitions needed by the machine-dependent header.
+ */
+struct eisabus_attach_args;
+
+/*
+ * Machine-dependent definitions.
+ */
+#if (i386 != 1)
+ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
+#endif
+#if i386
+#include <i386/eisa/eisa_machdep.h>
+#endif
 
 typedef int	eisa_slot_t;		/* really only needs to be 4 bits */
 
@@ -52,6 +68,7 @@ typedef int	eisa_slot_t;		/* really only needs to be 4 bits */
 struct eisabus_attach_args {
 	char		*eba_busname;		/* XXX should be common */
 	bus_chipset_tag_t eba_bc;		/* XXX should be common */
+	eisa_chipset_tag_t eba_ec;
 };
 
 /*
@@ -59,6 +76,7 @@ struct eisabus_attach_args {
  */
 struct eisa_attach_args {
 	bus_chipset_tag_t ea_bc;
+	eisa_chipset_tag_t ea_ec;
 
 	eisa_slot_t	ea_slot;
 	u_int8_t	ea_vid[EISA_NVIDREGS];
@@ -71,15 +89,5 @@ struct eisa_attach_args {
  */
 #define	eisacf_slot		cf_loc[0]
 #define	EISA_UNKNOWN_SLOT	-1		/* wildcarded 'slot' */
-
-/*
- * XXX interrupt attachment, etc., is done by using the ISA interfaces.
- * XXX THIS SHOULD CHANGE.
- */
-
-#include <dev/isa/isavar.h>
-
-#define	eisa_intr_establish	isa_intr_establish		/* XXX */
-#define	eisa_intr_disestablish	isa_intr_disestablish		/* XXX */
 
 #endif /* _DEV_EISA_EISAVAR_H_ */

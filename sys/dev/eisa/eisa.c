@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.10 1996/04/06 02:04:00 cgd Exp $	*/
+/*	$NetBSD: eisa.c,v 1.11 1996/04/09 22:46:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -116,11 +116,14 @@ eisaattach(parent, self, aux)
 {
 	struct eisabus_attach_args *eba = aux;
 	bus_chipset_tag_t bc;
-	int slot;
+	eisa_chipset_tag_t ec;
+	int slot, maxnslots;
 
+	eisa_attach_hook(parent, self, eba);
 	printf("\n");
 
 	bc = eba->eba_bc;
+	ec = eba->eba_ec;
 
 	/*
 	 * Search for and attach subdevices.
@@ -128,13 +131,15 @@ eisaattach(parent, self, aux)
 	 * Slot 0 is the "motherboard" slot, and the code attaching
 	 * the EISA bus should have already attached an ISA bus there.
 	 */
-	for (slot = 1; slot < EISA_MAX_SLOT; slot++) {
+	maxnslots = eisa_maxslots(ec);
+	for (slot = 1; slot < maxnslots; slot++) {
 		struct eisa_attach_args ea;
 		u_int slotaddr;
 		bus_io_handle_t slotioh;
 		int i;
 
 		ea.ea_bc = bc;
+		ea.ea_ec = ec;
 		ea.ea_slot = slot;
 		slotaddr = EISA_SLOT_ADDR(slot);
 
