@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.14 2002/11/16 15:59:27 itojun Exp $	*/
+/*	$NetBSD: edit.c,v 1.15 2003/02/03 17:45:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: edit.c,v 1.14 2002/11/16 15:59:27 itojun Exp $");
+__RCSID("$NetBSD: edit.c,v 1.15 2003/02/03 17:45:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: edit.c,v 1.14 2002/11/16 15:59:27 itojun Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <util.h>
 
 #include "chpass.h"
@@ -158,14 +159,15 @@ verify(tempname, pw)
 	char *p;
 	struct stat sb;
 	FILE *fp;
-	int len;
+	int len, fd;
 	static char buf[LINE_MAX];
 
-	if (!(fp = fopen(tempname, "r")))
+	if ((fd = open(tempname, O_RDONLY|O_NOFOLLOW)) == -1 ||
+	    (fp = fdopen(fd, "r")) == NULL)
 		(*Pw_error)(tempname, 1, 1);
-	if (fstat(fileno(fp), &sb))
+	if (fstat(fd, &sb))
 		(*Pw_error)(tempname, 1, 1);
-	if (sb.st_size == 0) {
+	if (sb.st_size == 0 || sb.st_nlink != 1) {
 		warnx("corrupted temporary file");
 		goto bad;
 	}
