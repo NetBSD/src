@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.9 2000/11/02 01:37:46 lukem Exp $
+.\"	$NetBSD: xfer,v 1.10 2000/11/13 01:22:40 hubertf Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@ for details.
 If you are not booting off a CD-ROM, you will need to have some floppy
 disks to boot off;
 either two 1.44 MB floppies or one 1.2 MB floppy.
-You must the boot floppy images
+You must write the boot floppy images
 .Pa ( boot1.fs
 and
 .Pa boot2.fs
@@ -89,6 +89,10 @@ directory of the
 .Nx
 distribution.
 It will write a file system image (.fs file) to a floppy disk.
+A
+.Ic rawrite32
+is also available that runs under
+.Tn MS Window .
 .Pp
 .\} \" r_i386
 .
@@ -132,7 +136,11 @@ utility, provided in the
 directory of the
 .Nx
 distribution.
-It will write a file system image (.fs file) to a floppy disk.
+It will write a file system image (.fs file) to a floppy disk. 
+A
+.Ic rawrite32
+is also available that runs under
+.Tn MS Window .
 .Pp
 Though
 .Nx*M
@@ -565,7 +573,7 @@ If you aren't, this documentation should help, but is not intended to
 be all-encompassing.
 .Note)
 .
-.if !\n[macppc]:\n[news68k] \{\
+.if !\n[macppc]:\n[news68k]:\n[i386]:\n[i386] \{\
 .It Em Tape
 To install
 .Nx

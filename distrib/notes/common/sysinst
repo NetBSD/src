@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.15 2000/11/03 20:30:57 tv Exp $
+.\"	$NetBSD: sysinst,v 1.16 2000/11/13 01:22:40 hubertf Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -144,10 +144,10 @@ IRQ  Val     IRQ  Val     IRQ  Val      IRQ  Val
 For example, 0x0a00 allows both IRQ 9 and IRQ 11. By default,
 the
 .Tn Li INSTALL
-kernel permits all IRQs other than IRQ 5, so the corresponding
+kernel permits all IRQs other than IRQs 5 and 7, so the corresponding
 mask is 0xff5f. The
 .Tn Li GENERIC
-kernel, however, all IRQs. (The presumption here
+kernel, however, allows all IRQs. (The presumption here
 is that IRQ 10 may be assigned to a device that the
 .Tn Li GENERIC
 kernel
@@ -406,7 +406,7 @@ Once the system reaches the PROM prompt, you will need to type the correct
 command to boot from your hard drive.
 .\}
 .Nx
-will now boot. You should log in as
+will now boot. If you haven't already done so in sysinst, you should log in as
 .Li root ,
 and set a password for that account. You are also
 advised to edit the file
@@ -1011,12 +1011,18 @@ device node files will be created. If you have already
 configured networking, you will be asked if you want to
 use this configuration for normal operation. If so, these
 values will be installed in the network configuration files.
+The next menu will allow you to select the time zone that you're in,
+to make sure your clock has the right offset from GMT. 
+Finally you can set a password for the "root" account, to prevent 
+the machine coming up without access restrictions.  
 .It
 .Em Finalizing your installation
 .Pp
 Congratulations, you have successfully installed
 .Nx \*V .
 .if !r_macppc \{\
-You can now reboot the machine, and boot from harddisk.
+You can now reboot the machine, and boot 
+.Nx
+from harddisk.
 .\} \" !r_macppc
 .enum)
