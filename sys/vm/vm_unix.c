@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_unix.c 1.1 89/11/07
  *	from: @(#)vm_unix.c	7.2 (Berkeley) 4/20/91
- *	$Id: vm_unix.c,v 1.8 1994/01/07 22:34:41 mycroft Exp $
+ *	$Id: vm_unix.c,v 1.9 1994/01/08 04:17:33 mycroft Exp $
  */
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/resourcevar.h>
 
 #include <vm/vm.h>
+#include <vm/vm_user.h>
 
 struct obreak_args {
 	char	*nsiz;
