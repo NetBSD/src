@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.85 1999/03/02 13:11:43 matthias Exp $
+#	$NetBSD: Makefile,v 1.86 1999/03/24 18:26:14 tv Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -6,9 +6,8 @@
 SUBDIR+=	bc binutils cpio dc diff diff3 egcs gawk grep gprof groff
 SUBDIR+=	gzip ld.new rcs sdiff send-pr sort tar texinfo
 
-.if (${MACHINE_ARCH} == "i386") || \
-    (${MACHINE_ARCH} == "ns32k") || \
-    (${MACHINE_ARCH} == "sparc")
+.if (${MACHINE_ARCH} != "powerpc") && \
+    (${MACHINE_ARCH} != "sparc64")
 SUBDIR+=	gdb
 .endif
 
