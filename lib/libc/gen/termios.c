@@ -1,3 +1,5 @@
+/*	$NetBSD: termios.c,v 1.9 1995/02/27 05:53:41 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)termios.c	8.2 (Berkeley) 2/21/94";*/
-static char *rcsid = "$Id: termios.c,v 1.8 1994/09/19 07:38:27 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
+#else
+static char rcsid[] = "$NetBSD: termios.c,v 1.9 1995/02/27 05:53:41 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

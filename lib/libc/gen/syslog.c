@@ -1,6 +1,8 @@
+/*	$NetBSD: syslog.c,v 1.6 1995/02/27 05:52:56 cgd Exp $	*/
+
 /*
- * Copyright (c) 1983, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)syslog.c	5.36 (Berkeley) 10/4/92";*/
-static char *rcsid = "$Id: syslog.c,v 1.5 1993/11/24 19:43:57 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)syslog.c	8.4 (Berkeley) 3/18/94";
+#else
+static char rcsid[] = "$NetBSD";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -59,9 +64,10 @@ static char *rcsid = "$Id: syslog.c,v 1.5 1993/11/24 19:43:57 jtc Exp $";
 static int	LogFile = -1;		/* fd for log */
 static int	connected;		/* have done connect */
 static int	LogStat = 0;		/* status bits, set by openlog() */
-static const char *LogTag = "syslog";	/* string to tag the entry with */
+static const char *LogTag = NULL;	/* string to tag the entry with */
 static int	LogFacility = LOG_USER;	/* default facility code */
 static int	LogMask = 0xff;		/* mask of priorities to be logged */
+extern char	*__progname;		/* Program name, from crt0. */
 
 /*
  * syslog, vsyslog --
@@ -95,7 +101,7 @@ vsyslog(pri, fmt, ap)
 	va_list ap;
 {
 	register int cnt;
-	register char *p;
+	register char ch, *p, *t;
 	time_t now;
 	int fd, saved_errno;
 	char *stdp, tbuf[2048], fmt_cpy[1024];
@@ -114,50 +120,41 @@ vsyslog(pri, fmt, ap)
 
 	saved_errno = errno;
 
-	/* set default facility if none specified */
+	/* Set default facility if none specified. */
 	if ((pri & LOG_FACMASK) == 0)
 		pri |= LogFacility;
 
-	/* build the message */
+	/* Build the message. */
 	(void)time(&now);
-	(void)sprintf(tbuf, "<%d>%.15s ", pri, ctime(&now) + 4);
-	for (p = tbuf; *p; ++p);
+	p = tbuf + sprintf(tbuf, "<%d>", pri);
+	p += strftime(p, sizeof (tbuf) - (p - tbuf), "%h %e %T ",
+	    localtime(&now));
 	if (LogStat & LOG_PERROR)
 		stdp = p;
-	if (LogTag) {
-		(void)strcpy(p, LogTag);
-		for (; *p; ++p);
-	}
-	if (LogStat & LOG_PID) {
-		(void)sprintf(p, "[%d]", getpid());
-		for (; *p; ++p);
-	}
-	if (LogTag) {
+	if (LogTag == NULL)
+		LogTag = __progname;
+	if (LogTag != NULL)
+		p += sprintf(p, "%s", LogTag);
+	if (LogStat & LOG_PID)
+		p += sprintf(p, "[%d]", getpid());
+	if (LogTag != NULL) {
 		*p++ = ':';
 		*p++ = ' ';
 	}
 
-	/* substitute error message for %m */
-	{
-		register char ch, *t1, *t2;
-		char *strerror();
+	/* Substitute error message for %m. */
+	for (t = fmt_cpy; ch = *fmt; ++fmt)
+		if (ch == '%' && fmt[1] == 'm') {
+			++fmt;
+			t += sprintf(t, "%s", strerror(saved_errno));
+		} else
+			*t++ = ch;
+	*t = '\0';
 
-		for (t1 = fmt_cpy; ch = *fmt; ++fmt)
-			if (ch == '%' && fmt[1] == 'm') {
-				++fmt;
-				for (t2 = strerror(saved_errno);
-				    *t1 = *t2++; ++t1);
-			}
-			else
-				*t1++ = ch;
-		*t1 = '\0';
-	}
+	p += vsprintf(p, fmt_cpy, ap);
+	cnt = p - tbuf;
 
-	(void)vsprintf(p, fmt_cpy, ap);
-
-	cnt = strlen(tbuf);
-
-	/* output to stderr if requested */
+	/* Output to stderr if requested. */
 	if (LogStat & LOG_PERROR) {
 		struct iovec iov[2];
 		register struct iovec *v = iov;
@@ -170,14 +167,10 @@ vsyslog(pri, fmt, ap)
 		(void)writev(STDERR_FILENO, iov, 2);
 	}
 
-	/* get connected, output the message to the local logger */
+	/* Get connected, output the message to the local logger. */
 	if (!connected)
 		openlog(LogTag, LogStat | LOG_NDELAY, 0);
 	if (send(LogFile, tbuf, cnt, 0) >= 0)
-		return;
-
-	/* see if should attempt the console */
-	if (!(LogStat&LOG_CONS))
 		return;
 
 	/*
@@ -185,7 +178,8 @@ vsyslog(pri, fmt, ap)
 	 * if console blocks everything will.  Make sure the error reported
 	 * is the one from the syslogd failure.
 	 */
-	if ((fd = open(_PATH_CONSOLE, O_WRONLY, 0)) >= 0) {
+	if (LogStat & LOG_CONS &&
+	    (fd = open(_PATH_CONSOLE, O_WRONLY, 0)) >= 0) {
 		(void)strcat(tbuf, "\r\n");
 		cnt += 2;
 		p = strchr(tbuf, '>') + 1;

@@ -1,5 +1,7 @@
+/*	$NetBSD: setproctitle.c,v 1.3 1995/02/27 05:50:53 cgd Exp $	*/
+
 /*
- * Copyright (c) 1994 Christopher G. Demetriou
+ * Copyright (c) 1994, 1995 Christopher G. Demetriou
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou.
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -29,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: setproctitle.c,v 1.2 1994/05/24 08:17:37 deraadt Exp $";
+static char rcsid[] = "$NetBSD: setproctitle.c,v 1.3 1995/02/27 05:50:53 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

@@ -1,6 +1,8 @@
+/*	$NetBSD: siginterrupt.c,v 1.5 1995/02/27 05:51:03 cgd Exp $	*/
+
 /*
- * Copyright (c) 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)siginterrupt.c	5.5 (Berkeley) 6/1/90";*/
-static char *rcsid = "$Id: siginterrupt.c,v 1.4 1993/11/30 21:21:42 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)siginterrupt.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <signal.h>

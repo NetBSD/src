@@ -1,6 +1,8 @@
+/*	$NetBSD: ttyname.c,v 1.8 1995/02/27 05:54:57 cgd Exp $	*/
+
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)ttyname.c	5.10 (Berkeley) 5/6/91";*/
-static char *rcsid = "$Id: ttyname.c,v 1.7 1994/01/28 01:19:11 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
+#else
+static char rcsid[] = "$NetBSD: ttyname.c,v 1.8 1995/02/27 05:54:57 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,6 +52,7 @@ static char *rcsid = "$Id: ttyname.c,v 1.7 1994/01/28 01:19:11 cgd Exp $";
 #include <paths.h>
 
 static char buf[sizeof(_PATH_DEV) + MAXNAMLEN] = _PATH_DEV;
+static char *oldttyname __P((int, struct stat *));
 
 char *
 ttyname(fd)
@@ -60,16 +66,16 @@ ttyname(fd)
 		mode_t type;
 		dev_t dev;
 	} bkey;
-	static char *__oldttyname();
 
 	/* Must be a terminal. */
 	if (ioctl(fd, TIOCGETP, &ttyb) < 0)
-		return(NULL);
+		return (NULL);
 	/* Must be a character device. */
 	if (fstat(fd, &sb) || !S_ISCHR(sb.st_mode))
-		return(NULL);
+		return (NULL);
 
 	if (db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL)) {
+		memset(&bkey, 0, sizeof(bkey));
 		bkey.type = S_IFCHR;
 		bkey.dev = sb.st_rdev;
 		key.data = &bkey;
@@ -78,27 +84,26 @@ ttyname(fd)
 			bcopy(data.data,
 			    buf + sizeof(_PATH_DEV) - 1, data.size);
 			(void)(db->close)(db);
-			return(buf);
+			return (buf);
 		}
 		(void)(db->close)(db);
 	}
-	return(__oldttyname(fd, &sb));
+	return (oldttyname(fd, &sb));
 }
 
 static char *
-__oldttyname(fd, sb)
+oldttyname(fd, sb)
 	int fd;
 	struct stat *sb;
 {
 	register struct dirent *dirp;
 	register DIR *dp;
 	struct stat dsb;
-	char *rval, *strcpy();
 
 	if ((dp = opendir(_PATH_DEV)) == NULL)
-		return(NULL);
+		return (NULL);
 
-	for (rval = NULL; dirp = readdir(dp);) {
+	while (dirp = readdir(dp)) {
 		if (dirp->d_fileno != sb->st_ino)
 			continue;
 		bcopy(dirp->d_name, buf + sizeof(_PATH_DEV) - 1,
@@ -106,9 +111,9 @@ __oldttyname(fd, sb)
 		if (stat(buf, &dsb) || sb->st_dev != dsb.st_dev ||
 		    sb->st_ino != dsb.st_ino)
 			continue;
-		rval = buf;
-		break;
+		(void)closedir(dp);
+		return (buf);
 	}
 	(void)closedir(dp);
-	return(rval);
+	return (NULL);
 }

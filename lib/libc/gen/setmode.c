@@ -1,3 +1,5 @@
+/*	$NetBSD: setmode.c,v 1.10 1995/02/27 05:50:40 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94"; */
-static char *rcsid = "$Id: setmode.c,v 1.9 1994/03/29 10:50:38 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
+#else
+static char rcsid[] = "$NetBSD";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

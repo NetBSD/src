@@ -1,5 +1,7 @@
-.\" Copyright (c) 1989, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: tzset.3,v 1.3 1995/02/27 05:55:10 cgd Exp $
+.\"
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Arthur Olson.
@@ -32,10 +34,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)tzset.3	5.3 (Berkeley) 7/23/91
-.\"	$Id: tzset.3,v 1.2 1993/07/30 08:40:13 mycroft Exp $
+.\"	@(#)tzset.3	8.2 (Berkeley) 11/17/93
 .\"
-.Dd July 23, 1991
+.Dd November 17, 1993
 .Dt TZSET 3
 .Os
 .Sh NAME
@@ -77,7 +78,7 @@ is used (without leap second correction).
 If
 .Ev TZ
 appears in the environment and its value begins with a colon
-.Pq Ql : ,
+.Pq Ql \: ,
 the rest of its value is used as a pathname of a
 .Xr tzfile 5 Ns -format
 file from which to read the time conversion information.
@@ -322,5 +323,4 @@ The
 .Nm tzset
 and
 .Nm tzsetwall
-functions are
-.Ud .
+functions first appeared in 4.4BSD.
