@@ -1,4 +1,4 @@
-/*	$NetBSD: esm.c,v 1.6 2001/01/26 10:04:43 rh Exp $	*/
+/*	$NetBSD: esm.c,v 1.7 2001/02/12 23:56:40 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -38,7 +38,6 @@
  *	- recording
  *	- MIDI support
  *	- joystick support
- *	- power management hooks
  *
  *
  * Credits:
@@ -136,6 +135,9 @@ static void		set_timer(struct esm_softc *);
 
 static void		esmch_set_format(struct esm_chinfo *,
 			    struct audio_params *p);
+
+/* Power Management */
+void esm_powerhook(int, void *);
 
 struct cfattach esm_ca = {
 	sizeof(struct esm_softc), esm_match, esm_attach
@@ -1402,6 +1404,28 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	audio_attach_mi(&esm_hw_if, self, &ess->sc_dev);
+
+	ess->esm_suspend = PWR_RESUME;
+	ess->esm_powerhook = powerhook_establish(esm_powerhook, ess);
+}
+
+/* Power Hook */
+void
+esm_powerhook(why, v)
+	int why;
+	void *v;
+{
+	struct esm_softc *ess = (struct esm_softc *)v;
+
+	DPRINTF(ESM_DEBUG_PARAM,
+	("%s: ESS maestro 2E why=%d\n", ess->sc_dev.dv_xname, why));
+	switch (why) {
+		case PWR_RESUME:
+			/* esm_resume() */
+			/* printf ("esm resumed\n"); */
+			ess->esm_suspend = why;
+			break;
+	}
 }
 
 #if 0
