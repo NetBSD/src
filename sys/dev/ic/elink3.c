@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.7 1996/05/14 22:22:05 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.8 1996/09/29 11:19:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -199,6 +199,11 @@ epinit(sc)
 	for (i = 0; i < 6; i++)	/* Reload the ether_addr. */
 		bus_io_write_1(bc, ioh, EP_W2_ADDR_0 + i,
 		    sc->sc_arpcom.ac_enaddr[i]);
+
+	if (sc->bustype == EP_BUS_PCI || sc->bustype == EP_BUS_EISA)
+		/* Reset the station-address receive filter */
+		for (i = 0; i < 6; i++)
+			bus_io_write_1(bc, ioh,EP_W2_RECVMASK_0 + i, 0);
 
 	bus_io_write_2(bc, ioh, EP_COMMAND, RX_RESET);
 	bus_io_write_2(bc, ioh, EP_COMMAND, TX_RESET);
