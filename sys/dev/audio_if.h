@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.42 2002/03/16 08:58:50 isaki Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.43 2002/03/17 11:36:37 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -170,6 +170,12 @@ int	audioprint(void *, const char *);
 #define splaudio splbio		/* XXX */
 #define IPL_AUDIO IPL_BIO	/* XXX */
 #endif
+
+/*
+ * USB Audio specification defines 12 channels:
+ *	L R C LFE Ls Rs Lc Rc S Sl Sr T
+ */
+#define AUDIO_MAX_CHANNELS	12
 
 #endif /* _SYS_DEV_AUDIO_IF_H_ */
 
