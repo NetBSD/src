@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.69 1997/09/23 13:48:15 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69.2.1 1997/10/22 23:13:21 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -66,6 +66,7 @@
 #include <sys/mount.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #ifdef SYSVMSG
