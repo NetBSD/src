@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.14 2001/03/15 16:06:59 tsubai Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15 2001/04/29 22:44:35 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -95,6 +95,10 @@
 #endif
 
 #define	VM_PHYS_SIZE		(USRIOSIZE * NBPG)
+
+#define	VM_MDPAGE_MEMBERS	/* XXX nothing yet */
+#define	VM_MDPAGE_INIT(pg)	/* XXX nothing yet */
+#define	PMAP_PHYSSEG		/* XXX for now */
 
 struct pmap_physseg {
 	struct pv_entry *pvent;

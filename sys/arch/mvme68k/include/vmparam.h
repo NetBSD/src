@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.19 2001/04/29 07:53:57 scw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.20 2001/04/29 22:44:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -168,6 +168,10 @@ extern int mvme68k_pager_map_size;
 #define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_VMEMEM	1
+
+#define	VM_MDPAGE_MEMBERS	/* XXX nothing yet */
+#define	VM_MDPAGE_INIT(pg)	/* XXX nothing yet */
+#define	PMAP_PHYSSEG		/* XXX for now */
 
 /*
  * pmap-specific data stored in the vm_physmem[] array.
