@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.28 2001/11/13 02:08:14 lukem Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.29 2002/03/16 20:43:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.28 2001/11/13 02:08:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.29 2002/03/16 20:43:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ hpux_sys_execv(p, v, retval)
 	struct sys_execve_args ap;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
@@ -166,7 +166,7 @@ hpux_sys_execve(p, v, retval)
 	struct sys_execve_args ap;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);

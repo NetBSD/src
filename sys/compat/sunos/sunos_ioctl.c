@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.39 2002/03/02 12:30:44 mrg Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.40 2002/03/16 20:43:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.39 2002/03/02 12:30:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.40 2002/03/16 20:43:56 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -1025,13 +1025,13 @@ sunos_sys_fcntl(p, v, retval)
 			int error;
 			struct sunos_flock	 ifl;
 			struct flock		*flp, fl;
-			caddr_t sg = stackgap_init(p->p_emul);
+			caddr_t sg = stackgap_init(p, 0);
 			struct sys_fcntl_args		fa;
 
 			SCARG(&fa, fd) = SCARG(uap, fd);
 			SCARG(&fa, cmd) = SCARG(uap, cmd);
 
-			flp = stackgap_alloc(&sg, sizeof(struct flock));
+			flp = stackgap_alloc(p, &sg, sizeof(struct flock));
 			SCARG(&fa, arg) = (void *) flp;
 
 			error = copyin(SCARG(uap, arg), &ifl, sizeof ifl);

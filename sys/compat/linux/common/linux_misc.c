@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.101 2002/02/20 17:03:03 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.102 2002/03/16 20:43:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.101 2002/02/20 17:03:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.102 2002/03/16 20:43:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,8 +207,8 @@ linux_sys_wait4(p, v, retval)
 	caddr_t sg;
 
 	if (SCARG(uap, status) != NULL) {
-		sg = stackgap_init(p->p_emul);
-		status = (int *) stackgap_alloc(&sg, sizeof *status);
+		sg = stackgap_init(p, 0);
+		status = (int *) stackgap_alloc(p, &sg, sizeof *status);
 	} else
 		status = NULL;
 
@@ -338,8 +338,8 @@ linux_sys_statfs(p, v, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init(p->p_emul);
-	bsp = (struct statfs *) stackgap_alloc(&sg, sizeof (struct statfs));
+	sg = stackgap_init(p, 0);
+	bsp = (struct statfs *) stackgap_alloc(p, &sg, sizeof (struct statfs));
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -373,8 +373,8 @@ linux_sys_fstatfs(p, v, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init(p->p_emul);
-	bsp = (struct statfs *) stackgap_alloc(&sg, sizeof (struct statfs));
+	sg = stackgap_init(p, 0);
+	bsp = (struct statfs *) stackgap_alloc(p, &sg, sizeof (struct statfs));
 
 	SCARG(&bsa, fd) = SCARG(uap, fd);
 	SCARG(&bsa, buf) = bsp;
@@ -843,8 +843,8 @@ linux_select1(p, retval, nfds, readfds, writefds, exceptfds, timeout)
 			 * The timeval was invalid.  Convert it to something
 			 * valid that will act as it does under Linux.
 			 */
-			sg = stackgap_init(p->p_emul);
-			tvp = stackgap_alloc(&sg, sizeof(utv));
+			sg = stackgap_init(p, 0);
+			tvp = stackgap_alloc(p, &sg, sizeof(utv));
 			utv.tv_sec += utv.tv_usec / 1000000;
 			utv.tv_usec %= 1000000;
 			if (utv.tv_usec < 0) {
@@ -1056,8 +1056,8 @@ linux_sys_getgroups16(p, v, retval)
 	lset = NULL;
 	if (n > 0) {
 		n = min(pc->pc_ucred->cr_ngroups, n);
-		sg = stackgap_init(p->p_emul);
-		bset = stackgap_alloc(&sg, n * sizeof (gid_t));
+		sg = stackgap_init(p, 0);
+		bset = stackgap_alloc(p, &sg, n * sizeof (gid_t));
 		kbset = malloc(n * sizeof (gid_t), M_TEMP, M_WAITOK);
 		lset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
 		if (bset == NULL || kbset == NULL || lset == NULL)
@@ -1104,8 +1104,8 @@ linux_sys_setgroups16(p, v, retval)
 	n = SCARG(uap, gidsetsize);
 	if (n < 0 || n > NGROUPS)
 		return EINVAL;
-	sg = stackgap_init(p->p_emul);
-	bset = stackgap_alloc(&sg, n * sizeof (gid_t));
+	sg = stackgap_init(p, 0);
+	bset = stackgap_alloc(p, &sg, n * sizeof (gid_t));
 	lset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
 	kbset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
 	if (lset == NULL || bset == NULL)
@@ -1534,7 +1534,7 @@ linux_sys_getrlimit(p, v, retval)
 		syscallarg(int) which;
 		syscallarg(struct orlimit *) rlp;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	struct sys_getrlimit_args ap;
 	struct rlimit rl;
 	struct orlimit orl;
@@ -1543,7 +1543,7 @@ linux_sys_getrlimit(p, v, retval)
 	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
 	if ((error = SCARG(&ap, which)) < 0)
 		return -error;
-	SCARG(&ap, rlp) = stackgap_alloc(&sg, sizeof rl);
+	SCARG(&ap, rlp) = stackgap_alloc(p, &sg, sizeof rl);
 	if ((error = sys_getrlimit(p, &ap, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&ap, rlp), &rl, sizeof(rl))) != 0)
@@ -1562,14 +1562,14 @@ linux_sys_setrlimit(p, v, retval)
 		syscallarg(int) which;
 		syscallarg(struct orlimit *) rlp;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	struct sys_setrlimit_args ap;
 	struct rlimit rl;
 	struct orlimit orl;
 	int error;
 
 	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
-	SCARG(&ap, rlp) = stackgap_alloc(&sg, sizeof rl);
+	SCARG(&ap, rlp) = stackgap_alloc(p, &sg, sizeof rl);
 	if ((error = SCARG(&ap, which)) < 0)
 		return -error;
 	if ((error = copyin(SCARG(uap, rlp), &orl, sizeof(orl))) != 0)
