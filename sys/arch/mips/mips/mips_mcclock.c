@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_mcclock.c,v 1.3 1999/02/16 10:10:51 jonathan Exp $	*/
+/*	$NetBSD: mips_mcclock.c,v 1.4 1999/03/01 08:37:05 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.3 1999/02/16 10:10:51 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.4 1999/03/01 08:37:05 jonathan Exp $");
 
 
 #include <sys/types.h>
@@ -220,19 +220,19 @@ mips_mcclock_to_mhz(unsigned iters)
 			printf("mcclock loop count %d too low for r4000\n",
 			       iters);
 			mhz = 45;
-			cpuspeed = 90;	/* XXX */
+			cpuspeed = 20;	/* XXX */
 		} else if (iters < 21000) {
 			mhz = 50;
-			cpuspeed = 100;	/* XXX */
+			cpuspeed = 25;	/* XXX */
 		} else if (iters < 25315) {
 			mhz = 60;
-			cpuspeed = 110;	/* XXX */
+			cpuspeed = 27;	/* XXX */
 		} else if (iters < 28497) {
 			mhz = 67;
-			cpuspeed = 130;	/* XXX */
+			cpuspeed = 33;	/* XXX */
 		} else if (iters < 31500) {
 			mhz = 75;
-			cpuspeed = 150;	/* XXX */
+			cpuspeed = 38;	/* XXX */
 		}
 	}
 #endif /* MIPS3 */
