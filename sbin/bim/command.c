@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.5 2005/01/12 09:04:53 simonb Exp $	*/
+/*	$NetBSD: command.c,v 1.6 2005/02/05 14:23:24 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: command.c,v 1.5 2005/01/12 09:04:53 simonb Exp $");
+__RCSID("$NetBSD: command.c,v 1.6 2005/02/05 14:23:24 xtraeme Exp $");
 #endif /* not lint */
 
 /*
@@ -58,20 +58,20 @@ __RCSID("$NetBSD: command.c,v 1.5 2005/01/12 09:04:53 simonb Exp $");
 
 
 /* Other procedure prototypes. */
-const struct command *find_entry __P((char *));
-void	help_cmds __P((void));
-int	parse __P((char *, char **));
-int	StrCmp __P((char *, char *));
+const struct command *find_entry(char *);
+void	help_cmds(void);
+int	parse(char *, char **);
+int	StrCmp(char *, char *);
 
 /* A pointer to a function to be called after every command.
    A NULL pointer says no function is to be executed.
    The int parameter is the "done" flag.. TRUE => last command */
 
-void (*after_cmd) __P((int)) = NULL;
+void (*after_cmd)(int) = NULL;
 
 /* This is the command processor loop. */
 void
-command_loop()
+command_loop(void)
 {
 	char    cmdline[LINELEN];
 	char   *args[MAXARGS];
@@ -96,8 +96,7 @@ command_loop()
 
 /* This is the command processor for a single command. */
 int
-one_command(cmdline)
-	char   *cmdline;
+one_command(char *cmdline)
 {
 	char   *args[MAXARGS];
 	int     numargs;
@@ -119,10 +118,7 @@ one_command(cmdline)
 
 /* prompt procedure....  Write out the prompt and then read a response. */
 void 
-prompt(cmdline, linelen, promptstr)
-	char   *cmdline;
-	int     linelen;
-	const char   *promptstr;
+prompt(char *cmdline, int linelen, const char *promptstr)
 {
 	int     incount = 0;
 	int     inchar;
@@ -149,9 +145,7 @@ prompt(cmdline, linelen, promptstr)
  * terminator in the original line.
  */
 int 
-parse(cmdline, args)
-	char   *cmdline;
-	char  **args;
+parse(char *cmdline, char **args)
 {
 	int     idx;
 	int     argcnt = BLANK_LINE;
@@ -183,8 +177,7 @@ parse(cmdline, args)
  * a unique command which is a superstring of what the user typed.
  */
 const struct command *
-find_entry(name)
-	char   *name;
+find_entry(char *name)
 {
 	const struct command *item, *save;
 	int     subcount = 0;
@@ -209,8 +202,7 @@ find_entry(name)
  * proper substring of p2, and CMP_NOMATCH if neither.
  */
 int
-StrCmp(p1, p2)
-	char   *p1, *p2;
+StrCmp(char *p1, char *p2)
 {
 	while (*p1 == *p2 && *p1 != '\0') {
 		++p1;
@@ -224,9 +216,7 @@ StrCmp(p1, p2)
 
 /* Other routines that may be helpful in evaluating arguments....  */
 int
-Str2Int(str, num)
-	char   *str;
-	int    *num;
+Str2Int(char *str, int *num)
 {
 	if (!isdigit((unsigned char)*str) && *str != '-')
 		return FALSE;
@@ -239,7 +229,7 @@ Str2Int(str, num)
 /* "?" command handler.  Print help and list of commands. */
 
 void
-help_cmds()
+help_cmds(void)
 {
 	const struct command *q;
 
@@ -256,10 +246,7 @@ help_cmds()
 
 /* The default help routine.  This may be redefined by the user. */
 int 
-help(num, args, syntax)
-	int     num;
-	char  **args;
-	char   *syntax;
+help(int num, char **args, char *syntax)
 {
 	const struct command *item;
 	int     idx;
