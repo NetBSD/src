@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.12 1999/05/29 20:44:21 christos Exp $	*/
+/*	$NetBSD: pl.c,v 1.13 1999/05/30 16:08:25 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.12 1999/05/29 20:44:21 christos Exp $");
+__RCSID("$NetBSD: pl.c,v 1.13 1999/05/30 16:08:25 tron Exp $");
 #endif
 #endif
 
@@ -139,16 +139,11 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 			 * starts, it's ok to do this somewhere here 
 			 */
 			{
-			    char *s, t[FILENAME_MAX], *u;
+			    char *s, t[FILENAME_MAX];
 			    
-			    if (p->name[0] == '/')
-				u=p->name;
-			    else {
-				snprintf(t, FILENAME_MAX, "%s/%s", cwd, p->name);
-				u=t;
-			    }
+			    snprintf(t, FILENAME_MAX, "%s/%s", cwd, p->name);
 			    
-			    s=pkgdb_retrieve(u);
+			    s=pkgdb_retrieve(t);
 #ifdef PKGDB_DEBUG
  fprintf(stderr, "pkgdb_retrieve(\"%s\")=\"%s\"\n", t, s); /* pkgdb-debug - HF */
 #endif
@@ -163,12 +158,7 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 			    }
 			}
 
-			if (p->name[0] == '/')
-				(void) snprintf(name, sizeof(name), "%s",
-				    p->name);
-			else
-				(void) snprintf(name, sizeof(name), "%s/%s",
-				    srcdir ? srcdir : cwd, p->name);
+			(void) snprintf(name, sizeof(name), "%s/%s", srcdir ? srcdir : cwd, p->name);
 			if (lstat(name, &st) < 0) {
 				warnx("can't stat `%s'", name);
 				continue;
