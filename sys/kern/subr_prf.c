@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.62 1999/02/12 00:46:11 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.63 1999/07/27 21:50:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -67,17 +67,22 @@
 #endif
 
 #if defined(MULTIPROCESSOR)
-struct simplelock kprintf_slock;
+struct simplelock kprintf_slock = SIMPLELOCK_INITIALIZER;
 
+/*
+ * Use cpu_simple_lock() and cpu_simple_unlock().  These are the actual
+ * atomic locking operations, and never attempt to print debugging
+ * information.
+ */
 #define	KPRINTF_MUTEX_ENTER(s)						\
 do {									\
 	(s) = splhigh();						\
-	simple_lock(&kprintf_slock);					\
+	cpu_simple_lock(&kprintf_slock);				\
 } while (0)
 
 #define	KPRINTF_MUTEX_EXIT(s)						\
 do {									\
-	simple_unlock(&kprintf_slock);					\
+	cpu_simple_unlock(&kprintf_slock);				\
 	splx((s));							\
 } while (0)
 #else /* ! MULTIPROCESSOR */
