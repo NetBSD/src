@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.7 1998/07/24 23:28:02 hubertf Exp $	*/
+/*	$NetBSD: move.c,v 1.8 1999/05/15 23:56:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.7 1998/07/24 23:28:02 hubertf Exp $");
+__RCSID("$NetBSD: move.c,v 1.8 1999/05/15 23:56:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,10 @@ get_move()
 #endif
 		else {
 over:
-			c = getchar();
+			if (Auto_bot)
+				c = automove();
+			else
+				c = getchar();
 			if (isdigit(c)) {
 				Count = (c - '0');
 				while (isdigit(c = getchar()))
