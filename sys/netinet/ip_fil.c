@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.28 1998/07/17 00:35:23 sommerfe Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.29 1998/11/14 07:42:37 tls Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -397,7 +397,11 @@ int mode;
 	{
 		u_int	enable;
 
+# if defined(__NetBSD__)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else {
 			IRCOPY(data, (caddr_t)&enable, sizeof(enable));
@@ -417,7 +421,11 @@ int mode;
 	}
 #endif
 	case SIOCSETFF :
+#if defined(__NetBSD__)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else
 			IRCOPY(data, (caddr_t)&fr_flags, sizeof(fr_flags));
@@ -429,7 +437,11 @@ int mode;
 	case SIOCRMAFR :
 	case SIOCADAFR :
 	case SIOCZRLST :
+#if defined(__NetBSD__)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else
 			error = frrequest(unit, cmd, data, fr_active);
@@ -437,13 +449,21 @@ int mode;
 	case SIOCINIFR :
 	case SIOCRMIFR :
 	case SIOCADIFR :
+#if defined(__NetBSD__)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else
 			error = frrequest(unit, cmd, data, 1 - fr_active);
 		break;
 	case SIOCSWAPA :
+#if defined(__NetBSD__)
+		if((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else {
 			bzero((char *)frcache, sizeof(frcache[0]) * 2);
@@ -473,13 +493,21 @@ int mode;
 		break;
 	}
 	case	SIOCFRZST :
+#if defined(__NetBSD__)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else
 			frzerostats(data);
 		break;
 	case	SIOCIPFFL :
+#if defined(__NetBSD__)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else {
 			IRCOPY(data, (caddr_t)&tmp, sizeof(tmp));
@@ -489,7 +517,11 @@ int mode;
 		break;
 #ifdef	IPFILTER_LOG
 	case	SIOCIPFFB :
+#if defined(__NetBSD__)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else
 			*(int *)data = ipflog_clear(unit);
@@ -500,7 +532,11 @@ int mode;
 		break;
 	case SIOCAUTHW :
 	case SIOCAUTHR :
+#if defined(__NetBSD__)
+		if ((securelevel >= 2) || !(mode & FWRITE)) {
+#else
 		if (!(mode & FWRITE)) {
+#endif
 			error = EPERM;
 			break;
 		}
@@ -508,7 +544,11 @@ int mode;
 		error = fr_auth_ioctl(data, cmd, NULL, NULL);
 		break;
 	case SIOCFRSYN :
+#if defined(__NetBSD__)
+		if ((securelevel >= 2) || !(mode & FWRITE))
+#else
 		if (!(mode & FWRITE))
+#endif
 			error = EPERM;
 		else {
 #if defined(_KERNEL) && defined(__sgi)
