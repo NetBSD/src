@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.22 2003/08/07 16:43:43 agc Exp $	*/
+/*	$NetBSD: random.c,v 1.23 2003/11/26 20:44:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.22 2003/08/07 16:43:43 agc Exp $");
+__RCSID("$NetBSD: random.c,v 1.23 2003/11/26 20:44:40 jdolecek Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,6 +58,8 @@ static long random_unlocked __P((void));
 #ifdef _REENTRANT
 static mutex_t random_mutex = MUTEX_INITIALIZER;
 #endif
+
+#define USE_BETTER_RANDOM
 
 /*
  * random.c:
@@ -181,6 +183,19 @@ static const int seps[MAX_TYPES] =	{ SEP_0, SEP_1, SEP_2, SEP_3, SEP_4 };
 /* LINTED */
 static int randtbl[DEG_3 + 1] = {
 	TYPE_3,
+#ifdef USE_BETTER_RANDOM
+	0x991539b1, 0x16a5bce3, 0x6774a4cd,
+	0x3e01511e, 0x4e508aaa, 0x61048c05,
+	0xf5500617, 0x846b7115, 0x6a19892c,
+	0x896a97af, 0xdb48f936, 0x14898454,
+	0x37ffd106, 0xb58bff9c, 0x59e17104,
+	0xcf918a49, 0x09378c83, 0x52c7a471,
+	0x8d293ea9, 0x1f4fc301, 0xc3db71be,
+	0x39b44e1c, 0xf8a44ef9, 0x4c8b80b1,
+	0x19edc328, 0x87bf4bdd, 0xc9b240e5,
+	0xe9ee4b1b, 0x4382aee7, 0x535b6b41,
+	0xf3bec5da,
+#else
 	0x9a319039, 0x32d9c024, 0x9b663182,
 	0x5da1f342, 0xde3b81e0, 0xdf0a6fb5,
 	0xf103bc02, 0x48f340fb, 0x7449e56b,
@@ -192,6 +207,7 @@ static int randtbl[DEG_3 + 1] = {
 	0x36413f93, 0xc622c298, 0xf5a42ab8,
 	0x8a88d77b, 0xf5ad9d0e, 0x8999220b,
 	0x27fb47b9,
+#endif /* USE_BETTER_RANDOM */
 };
 
 /*
@@ -249,8 +265,28 @@ srandom_unlocked(x)
 		state[0] = x;
 	else {
 		state[0] = x;
-		for (i = 1; i < rand_deg; i++)
+		for (i = 1; i < rand_deg; i++) {
+#ifdef USE_BETTER_RANDOM
+			int x1, hi, lo, t;
+
+			/*
+			 * Compute x[n + 1] = (7^5 * x[n]) mod (2^31 - 1).
+			 * From "Random number generators: good ones are hard
+			 * to find", Park and Miller, Communications of the ACM,
+			 * vol. 31, no. 10,
+			 * October 1988, p. 1195.
+			 */
+			x1 = state[i - 1];
+			hi = x1 / 127773;
+			lo = x1 % 127773;
+			t = 16807 * lo - 2836 * hi;
+			if (t <= 0)
+				t += 0x7fffffff;
+			state[i] = t;
+#else
 			state[i] = 1103515245 * state[i - 1] + 12345;
+#endif /* USE_BETTER_RANDOM */
+		}
 		fptr = &state[rand_sep];
 		rptr = &state[0];
 		for (i = 0; i < 10 * rand_deg; i++)
