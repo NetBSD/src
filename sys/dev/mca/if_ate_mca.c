@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.9 2002/11/30 14:15:12 tsutsui Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.10 2003/02/23 04:11:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.9 2002/11/30 14:15:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.10 2003/02/23 04:11:51 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ ate_mca_attach(parent, self, aux)
 	bus_space_tag_t iot = ma->ma_iot;
 	bus_space_handle_t ioh;
 	u_int8_t myea[ETHER_ADDR_LEN];
-	int type, pos3, pos4;
+	int pos3, pos4;
 	int iobase, irq;
 	const struct ate_mca_product *atp;
 
@@ -193,9 +193,8 @@ ate_mca_attach(parent, self, aux)
 	sc->sc_bst = iot;
 	sc->sc_bsh = ioh;
 
-	/* Determine the card type and get ethernet address. */
+	/* Get ethernet address. */
 	ate_mca_detect(iot, ioh, myea);
-	type = atp->at_type;
 
 	/* This interface is always enabled. */
 	sc->sc_stat |= FE_STAT_ENABLED;

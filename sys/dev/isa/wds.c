@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.52 2002/10/02 03:10:50 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.53 2003/02/23 04:10:11 simonb Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.52 2002/10/02 03:10:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.53 2003/02/23 04:10:11 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -1127,7 +1127,6 @@ wds_scsipi_request(chan, req, arg)
 	struct wds_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct wds_scb *scb;
-	struct wds_scat_gath *sg;
 	int error, seg, flags, s;
 
 	switch (req) {
@@ -1193,7 +1192,6 @@ wds_scsipi_request(chan, req, arg)
 		    0x80 : 0x00;
 
 		if (xs->datalen) {
-			sg = scb->scat_gath;
 			seg = 0;
 #ifdef TFS
 			if (flags & XS_CTL_DATA_UIO) {
