@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.4 2002/12/30 02:19:20 reinoud Exp $	*/
+/*	$NetBSD: boot32.c,v 1.5 2002/12/30 03:30:16 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -267,7 +267,7 @@ void prepare_and_check_relocation_system(void) {
 
 void get_memory_configuration(void) {
 	int loop, current_page_type, page_count, phys_page;
-	int page, count;
+	int page, count, bank;
 	int mapped_screen_memory;
 
 	printf("Getting memory configuration ");
@@ -353,12 +353,21 @@ void get_memory_configuration(void) {
 
 	if (VRAM_pages[0] == 0) {
 		/* map bottom DRAM as video memory */
-		mapped_screen_memory = 1024 * 1024;	/* max allowed on RiscPC */
+		display_size	 = vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) & ~(nbpp-1);
+#if 0
+		mapped_screen_memory = 1024 * 1024;		/* max allowed on RiscPC	*/
 		videomem_start   = DRAM_addr[0];
 		videomem_pages   = (mapped_screen_memory / nbpp);
-		display_size	 = vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) & ~(nbpp-1);
 		DRAM_addr[0]	+= videomem_pages * nbpp;
 		DRAM_pages[0]	-= videomem_pages;
+#else
+		mapped_screen_memory = display_size;
+		bank = dram_blocks-1;				/* pick last SIMM		*/
+		videomem_start   = DRAM_addr[bank];
+		videomem_pages   = (mapped_screen_memory / nbpp);
+		DRAM_addr[bank] += videomem_pages * nbpp;	/* at the front of the SIMM	*/
+		DRAM_pages[bank]-= videomem_pages;
+#endif
 	} else {
 		/* use VRAM */
 		mapped_screen_memory = 0;
