@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.13 1997/06/07 05:35:06 thorpej Exp $ */
+/* $NetBSD: bus.h,v 1.14 1997/07/23 07:47:51 cgd Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -66,6 +66,8 @@
 
 #ifndef _ALPHA_BUS_H_
 #define	_ALPHA_BUS_H_
+
+#define	__BUS_SPACE_COMPAT_OLDDEFS
 
 /*
  * Addresses (in bus space).
@@ -225,20 +227,22 @@ struct alpha_bus_space {
 /*
  * Mapping and unmapping operations.
  */
-#define	bus_space_map(t, a, s, c, hp)					\
-	(*(t)->abs_map)((t)->abs_cookie, (a), (s), (c), (hp))
+#define	bus_space_map(t, a, s, f, hp)					\
+	(*(t)->abs_map)((t)->abs_cookie, (a), (s), (f), (hp))
 #define	bus_space_unmap(t, h, s)					\
 	(*(t)->abs_unmap)((t)->abs_cookie, (h), (s))
 #define	bus_space_subregion(t, h, o, s, hp)				\
 	(*(t)->abs_subregion)((t)->abs_cookie, (h), (o), (s), (hp))
 
+#define	BUS_SPACE_MAP_CACHEABLE		0x01
+#define	BUS_SPACE_MAP_LINEAR		0x02
 
 /*
  * Allocation and deallocation operations.
  */
-#define	bus_space_alloc(t, rs, re, s, a, b, c, ap, hp)			\
+#define	bus_space_alloc(t, rs, re, s, a, b, f, ap, hp)			\
 	(*(t)->abs_alloc)((t)->abs_cookie, (rs), (re), (s), (a), (b),	\
-	    (c), (ap), (hp))
+	    (f), (ap), (hp))
 #define	bus_space_free(t, h, s)						\
 	(*(t)->abs_free)((t)->abs_cookie, (h), (s))
 
@@ -249,8 +253,14 @@ struct alpha_bus_space {
 #define	bus_space_barrier(t, h, o, l, f)				\
 	(*(t)->abs_barrier)((t)->abs_cookie, (h), (o), (l), (f))
 
-#define	BUS_BARRIER_READ	0x01
-#define	BUS_BARRIER_WRITE	0x02
+#define	BUS_SPACE_BARRIER_READ	0x01
+#define	BUS_SPACE_BARRIER_WRITE	0x02
+
+#ifdef __BUS_SPACE_COMPAT_OLDDEFS
+/* compatibility definitions; deprecated */
+#define	BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
+#define	BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
+#endif
 
 
 /*
@@ -350,16 +360,29 @@ struct alpha_bus_space {
 
 
 /*
- * Copy operations.
+ * Copy region operations.
  */
+#define	bus_space_copy_region_1(t, h1, o1, h2, o2, c)			\
+	__abs_copy(1, (t), (h1), (o1), (h2), (o2), (c))
+#define	bus_space_copy_region_2(t, h1, o1, h2, o2, c)			\
+	__abs_copy(2, (t), (h1), (o1), (h2), (o2), (c))
+#define	bus_space_copy_region_4(t, h1, o1, h2, o2, c)			\
+	__abs_copy(4, (t), (h1), (o1), (h2), (o2), (c))
+#define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)			\
+	__abs_copy(8, (t), (h1), (o1), (h2), (o2), (c))
+
+#ifdef __BUS_SPACE_COMPAT_OLDDEFS
+/* compatibility definitions; deprecated */
 #define	bus_space_copy_1(t, h1, o1, h2, o2, c)				\
-	__abs_copy(1, t, h1, o1, h2, o2, c)
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_2(t, h1, o1, h2, o2, c)				\
-	__abs_copy(2, t, h1, o1, h2, o2, c)
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_4(t, h1, o1, h2, o2, c)				\
-	__abs_copy(4, t, h1, o1, h2, o2, c)
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_8(t, h1, o1, h2, o2, c)				\
-	__abs_copy(8, t, h1, o1, h2, o2, c)
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
+#endif
+
 
 /*
  * Bus DMA methods.
