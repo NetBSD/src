@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.33 1995/04/03 21:17:13 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.34 1995/04/03 21:22:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -273,6 +273,7 @@ static int command_and_wait __P((struct ie_softc *, int,
     void volatile *, int));
 void ierint __P((struct ie_softc *));
 void ietint __P((struct ie_softc *));
+void iexmit __P((struct ie_softc *));
 struct mbuf *ieget __P((struct ie_softc *,
     struct ether_header *, int *));
 void iememinit __P((void *, struct ie_softc *));
@@ -917,7 +918,7 @@ ie_packet_len(sc)
  * command to the chip to be executed.  On the way, if we have a BPF listener
  * also give him a copy.
  */
-inline static void
+void
 iexmit(sc)
 	struct ie_softc *sc;
 {
