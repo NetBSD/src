@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.64 2001/01/14 05:33:53 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.65 2001/01/16 02:37:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.64 2001/01/14 05:33:53 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.65 2001/01/16 02:37:03 cgd Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.64 2001/01/14 05:33:53 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.65 2001/01/16 02:37:03 cgd Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -197,8 +197,9 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			break;
 		case 'J':
 			if (sscanf(optarg, "%d,%d", &job_pipe[0], &job_pipe[1]) != 2) {
+			    /* backslash to avoid trigraph ??) */
 			    (void)fprintf(stderr,
-				"%s: internal error -- J option malformed (%s??)\n",
+				"%s: internal error -- J option malformed (%s?\?)\n",
 				progname, optarg);
 				usage();
 			}
