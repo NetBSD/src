@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.2 2001/03/31 12:22:38 toshii Exp $	*/
+/*	$NetBSD: stubs.c,v 1.3 2001/05/22 17:01:16 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -253,12 +253,12 @@ set_spl_masks()
 {
 	int loop;
 
-	for (loop = 0; loop < _SPL_LEVELS; ++loop) {
-		spl_masks[loop] = 0xffffffff;
+	for (loop = 0; loop < _SPL_LEVELS; ++loop)
 		spl_smasks[loop] = 0;
-	}
 
-	spl_masks[_SPL_BIO]	   = imask[IPL_BIO];
+	for (loop = 0; loop <= _SPL_BIO; loop++)
+		spl_masks[loop]	   = imask[IPL_BIO];
+
 	spl_masks[_SPL_NET]	   = imask[IPL_NET];
 	spl_masks[_SPL_SOFTSERIAL] = imask[IPL_TTY];
 	spl_masks[_SPL_TTY]	   = imask[IPL_TTY];
