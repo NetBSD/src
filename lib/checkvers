@@ -55,45 +55,118 @@
 # followed by a list of problematic libraries.
 #
 
-TMP=/tmp/check.$$
-error=0
+# checkvers:
+#	if "-s", build list, pass with -f to checkver.
+#	if "-d", build list, pass with -f to checkver.
+#	if "-f", pass with -f to checkver.
+
 
 # Cleanup on exit.
-trap "exit 1" 1 2 3 4 5 6 7 8 10 11 12 13 14 15
+TMP=/tmp/checkvers.$$
+trap "exit 2" 1 2 3 4 5 6 7 8 10 11 12 13 14 15
 trap "rm -rf $TMP" 0
 
 Usage ( ) {
-    echo "$1 [-q] [installedlibdir [library name]]"
+    echo "Usage: $1 [-q] -d [installedlibdir [library name]]"
+    echo "       $1 [-q] -s [setlistdir [library name]]"
+    echo "       $1 [-q] -f liblistfile [library name]"
 }
 
-if echo "$*" |
-   egrep -q '([[:space:]]|^)-h([[:space:]]|$)|([[:space:]]|^)--help*' ; then
+basedir=/usr/src
+setsdir=$basedir/distrib/sets/lists
+libdir=/usr/lib
+
+error=0
+quiet=0
+usedir=0
+usefile=0
+usesets=0
+CWD=`pwd`
+args=`getopt "df:shq" "$@"`
+if [ $? -ne 0 ] ; then
     Usage $0
     exit 0
 fi
 
-if [ "X$1" = "X-q" ] ; then
-    # Supress header.
-    QUIET="-q"
-    shift
-else
-    QUIET=
+set -- $args
+
+while . ; do
+    case "$1" in
+	-d) usedir=1 ; shift
+	    if [ $usefile -eq 1 -o $usesets -eq 1 ]; then
+		Usage $0 ; exit 2
+	    fi;;
+	-f) usefile=1 ; arg1=$2 ; shift ; shift
+	    if [ $usedir -eq 1 -o $usesets -eq 1 ]; then
+		Usage $0 ; exit 2
+	    fi;;
+	-s) usesets=1 ; shift
+	    if [ $usedir -eq 1 -o $usefile -eq 1 ]; then
+		Usage $0 ; exit 2
+	    fi;;
+	-h) Usage $0 ; exit 0;;
+	-q) quiet=1 ; shift;;
+	--) shift ; break;;
+    esac
+done
+
+if [ $usedir -eq 0 -a $usefile -eq 0 -a $usesets -eq 0 ] ; then
+    Usage $0 ; exit 2
+fi
+if [ $usefile -eq 0 -a $# -gt 2 ] ; then
+    Usage $0 ; exit 2
+fi
+if [ $usefile -eq 1 -a $# -gt 1 ] ; then
+    Usage $0 ; exit 2
 fi
 
-if [ "X$1" != "X" ] ; then
-    LIBDIR="$1"
-else
-    LIBDIR="/usr/lib"
-fi
-if [ "X$2" != "X" ] ; then
-    LIBNAME="$2"
-else
-    LIBNAME=
+#-------------------------#
+
+QUIET=
+LIBNAME=
+
+# Supress header.
+if [ quiet -eq 1 ] ; then
+    QUIET="-q"
 fi
 
 if ! mkdir -m 700 $TMP ; then
-    echo "Unable to create temp directory."
-    exit 1
+    echo "$0: Unable to create temp directory."
+    exit 2
+fi
+
+if [ $usefile -eq 1 ] ; then
+    # Just pass the file name to checkver.
+    LIBLIST="$arg1"
+else
+    LIBLIST=$TMP/libs.lst
+fi
+
+# Build list from the installed libraries.
+if [ $usedir -eq 1 ] ; then
+    if [ "X$1" != "X" ] ; then
+	libdir="$1"
+    fi
+    find $libdir -name 'lib*.so.*.*' > $LIBLIST
+fi
+
+# Build list from set lists.  Parameter may be either
+# the "lists" directory or the top of the source tree.
+if [ $usesets -eq 1 ] ; then
+    if [ "X$1" != "X" ] ; then
+	setsdir="$1"
+	if [ -d "$setsdir/distrib/sets/lists" ] ; then
+	    setsdir="$setsdir/distrib/sets/lists"
+	fi
+    fi
+    (cd $setsdir ;
+     cat */[a-z]* | grep '^./usr/lib/lib.*\.so\.[0-9][0-9]*\.[0-9][0-9]*' \
+		  | sort -u > $LIBLIST
+    )
+fi
+
+if [ "X$2" != "X" ] ; then
+    LIBNAME="$2"
 fi
 
 EXECDIR=`eval "(cd \`dirname $0\` ; pwd)"`
@@ -102,11 +175,18 @@ CWD=`pwd`
 VERFILES=`find $CWD -name shlib_version -print`
 
 for f in $VERFILES ; do
-
+    # Call checkver.  We always have a list of libraries
+    # here, whether given to us or built, so always
+    # pass the -f flag.
     (cd `dirname $f` ;
-    "$EXECDIR"/checkver $QUIET "$LIBDIR" "$LIBNAME" ;
+    "$EXECDIR"/checkver $QUIET -f "$LIBLIST" "$LIBNAME" ;
     exit $?)
-    if [ $? -ne 0 ] ; then
+    ERR=$?
+    if [ $ERR -eq 2 ] ; then
+	echo "$0: checkver failed. LIBLIST=$LIBLIST $LIBNAME=$LIBNAME"
+	exit 2
+    fi
+    if [ $ERR -ne 0 ] ; then
 	QUIET="-q"
 	error=1
     fi
@@ -131,4 +211,4 @@ for f in $VERFILES ; do
 
 done
 
-exit 0
+exit $error

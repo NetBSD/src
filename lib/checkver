@@ -36,21 +36,29 @@
 #
 
 #--------------------------------------------------------------------#
-# checkver [-q] [installedlibdir [library name]]
+# checkver [-q] -d [installedlibdir [library name]]"
+# checkver [-q] -s [setlistdir [library name]]"
+# checkver [-q] -f liblistfile [library name]"
 #
 # This script must be run from a directory in which
 # a shlib_version file resides.
 #
-# If no arguments are passed the name of the current directory
-# is assumed to be the name of the library.  The directory
-# "/usr/lib" will be searched for problematic libraries.
+# One of -d, -s or -f must be specified.
 #
-# A list of directories of installed libraries may be specified.
-# This will replace the default of "/usr/lib" and search there
-# instead.
+# all: If library name is not specified it is assumed to
+#	be the name of the current directory.
 #
-# An explicit library name may be passed.  If present, checkver
-# will use this name when searching the installed libraries.
+# -d: Checks the version against the installed libraries.
+#	If no further arguments are given "/usr/lib" is
+#	used as the location of installed libraries.
+#
+# -s: Checks the version against the sets.  If no argument
+#	follows the sets directory defaults to "/usr/src/distrib/sets/lists".
+#	The directory may be specified as either the top of the
+#	source tree or as the lists directory.
+#
+# -f: Checks the version against the provided list.  A filename
+#	must be supplied.
 #
 # This script produces no output if all library version are not 
 # large than the source version.  If an installed library with a
@@ -60,70 +68,134 @@
 # The header may be supressed by passing "-q" as the first argument.
 #
 
-trap "exit 1" 1 2 3 4 5 6 7 8 10 11 12 13 14 15
-
-error=0
+TMP=/tmp/checkver.$$
+trap "exit 2" 1 2 3 4 5 6 7 8 10 11 12 13 14 15
+trap "[ -d $TMP ] && rm -rf $TMP" 0
 
 Usage ( ) {
-    echo "$1 [-q] [installedlibdir [library name]]"
+    echo "Usage: $1 [-q] -d [installedlibdir [library name]]"
+    echo "       $1 [-q] -s [setlistdir [library name]]"
+    echo "       $1 [-q] -f liblistfile [library name]"
 }
 
+basedir=/usr/src
+setsdir=$basedir/distrib/sets/lists
+libdir=/usr/lib
 
-if echo "$*" | egrep -q "[[:space:]]-h[[:space:]]|[[:space:]]--help*" ; then
+error=0
+quiet=0
+usedir=0
+usefile=0
+usesets=0
+CWD=`pwd`
+args=`getopt "df:shq" "$@"`
+if [ $? -ne 0 ] ; then
     Usage $0
     exit 0
 fi
 
-if [ "X$1" = "X-q" ] ; then
-    # Supress header.
-    quiet="1"
-    shift
-else
-    quiet="0"
+set -- $args
+
+while . ; do
+    case "$1" in
+	-d) usedir=1 ; shift
+	    if [ $usefile -eq 1 -o $usesets -eq 1 ]; then
+		Usage $0 ; exit 2
+	    fi;;
+	-f) usefile=1 ; arg1=$2 ; shift ; shift
+	    if [ $usedir -eq 1 -o $usesets -eq 1 ]; then
+		Usage $0 ; exit 2
+	    fi;;
+	-s) usesets=1 ; shift
+	    if [ $usedir -eq 1 -o $usefile -eq 1 ]; then
+		Usage $0 ; exit 2
+	    fi;;
+	-h) Usage $0 ; exit 0;;
+	-q) quiet=1 ; shift;;
+	--) shift ; break;;
+    esac
+done
+
+if [ $usedir -eq 0 -a $usefile -eq 0 -a $usesets -eq 0 ] ; then
+    Usage $0 ; exit 2
 fi
 
-if [ "X$1" != "X" ] ; then
-    LIBDIR="$1"
+if [ $usefile -eq 1 ] ; then
+   LIBLIST="$arg1"
 else
-    LIBDIR="/usr/lib"
+   if ! mkdir -m 0700 $TMP ; then
+	echo "$0: Unable to create temp directory."
+	exit 2
+   fi
+   LIBLIST=$TMP/libs.lst
 fi
+
+# Build list from the installed libraries.
+if [ $usedir -eq 1 ] ; then
+    if [ "X$1" != "X" ] ; then
+	libdir="$1"
+    fi
+    find $libdir -name 'lib*.so.*.*' > $LIBLIST
+fi
+
+# Build list from set lists.  Parameter may be either
+# the "lists" directory or the top of the source tree.
+if [ $usesets -eq 1 ] ; then
+    if [ "X$1" != "X" ] ; then
+	setsdir="$1"
+	if [ -d "$setsdir/distrib/sets/lists" ] ; then
+	    setsdir="$setsdir/distrib/sets/lists"
+	fi
+    fi
+    (cd $setsdir ;
+     cat */[a-z]* | grep '^./usr/lib/lib.*\.so\.[0-9][0-9]*\.[0-9][0-9]*' \
+		  | sort -u > $LIBLIST
+    )
+fi
+
+#
+# The file $LIBLIST now contains a list of libraries.
+#
 
 if [ "X$2" = "X" ] ; then
-    # Assume the library name is the
-    # name of the current directory.
-    libname=`pwd`
-    libname=`basename $libname`
- else
+    makefile=$CWD/Makefile
+    libname=`grep '^LIB=' $makefile | sed -e 's/^LIB=[[:space:]]*//'`
+
+    # Assume the library name is the name of the current directory.
+    if [ -z $libname ]; then
+	libname=`basename $CWD`
+    fi
+else
     libname="$2"
- fi
- if ! echo $libname | grep -q "^lib" ; then
-   libname="lib$libname"
- fi
+fi
+if ! echo $libname | grep -q "^lib" ; then
+    libname="lib$libname"
+fi
 
 
 if [ ! -f ./shlib_version ] ; then
     echo "$0: unable to find ./shlib_version"
-    exit 1
+    exit 2
 fi
 
 # Grab major and minor numbers from the source.
- . ./shlib_version
+. ./shlib_version
 
 if [ "X$minor" = "X" -o "X$major" = "X" ] ; then
     echo "$0: shlib_version doesn't contain the version."
-    exit 1
+    exit 2
 fi
 
 # Find every shared object library with the same base name.
- for instlib in `find $LIBDIR -name "$libname.so.*"` ; do
+ for instlib in `grep $libname.so "$LIBLIST" ` ; do
     # Grab the major and minor from the installed library.
-    instmajor=`echo $instlib | awk 'BEGIN { FS="." } { print $3 } '`
-    instminor=`echo $instlib | awk 'BEGIN { FS="." } { print $4 } '`
+    instmajor=`basename $instlib | awk 'BEGIN { FS="." } { print $3 } '`
+    instminor=`basename $instlib | awk 'BEGIN { FS="." } { print $4 } '`
 
     # If they're greater than the source, complain.
     if [ "0$major" -eq "0$instmajor" ] ; then
 	if [ "0$minor" -lt "0$instminor" ] ; then
-	    if [ $error -eq 0 -a $quiet = "0"]; then
+	    if [ $error -eq 0 -a $quiet -eq 0 ]; then
 		echo -n "The following libraries have versions greater"
 		echo " than the source:"
 	    fi
@@ -131,7 +203,7 @@ fi
 	    error=1
 	fi
     elif [ "0$major" -lt "0$instmajor" ] ; then
-	if [ $error -eq 0 -a $quiet = "0" ] ; then
+	if [ $error -eq 0 -a $quiet -eq 0 ] ; then
 	    echo -n "The following libraries have versions greater"
 	    echo " than the source:"
 	fi
