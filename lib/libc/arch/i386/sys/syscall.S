@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)syscall.s	5.1 (Berkeley) 4/23/90
- *	$Id: syscall.S,v 1.3 1993/12/06 23:28:12 pk Exp $
+ *	$Id: syscall.S,v 1.4 1994/01/27 06:35:12 mycroft Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: syscall.S,v 1.3 1993/12/06 23:28:12 pk Exp $"
+	.asciz "$Id: syscall.S,v 1.4 1994/01/27 06:35:12 mycroft Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -50,7 +50,11 @@ ENTRY(syscall)
 	push	%ecx
 	LCALL(7,0)
 	push	%ecx	/* Keep stack frame consistant */
-	jb	1f
+	jc	err
 	ret
-1:
+err:
+#ifdef PIC
 	jmp	PIC_PLT(cerror)
+#else
+	jmp	cerror
+#endif

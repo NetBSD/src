@@ -34,57 +34,59 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)brk.s	5.2 (Berkeley) 12/17/90
- *	$Id: brk.S,v 1.6 1994/01/27 04:30:34 mycroft Exp $
+ *	$Id: brk.S,v 1.7 1994/01/27 06:35:00 mycroft Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: brk.S,v 1.6 1994/01/27 04:30:34 mycroft Exp $"
+	.asciz "$Id: brk.S,v 1.7 1994/01/27 06:35:00 mycroft Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 	.globl	curbrk
 	.globl	minbrk
+#if 0
 ENTRY(_brk)
 	jmp	ok
+#endif
 
 ENTRY(brk)
 #ifdef PIC
-	movl	4(%esp),%eax
+	movl	4(%esp),%ecx
 	PIC_PROLOGUE
-	movl	PIC_GOT(curbrk),%edx	# set up GOT addressing
-	movl	PIC_GOT(minbrk),%ecx	#
-	cmpl	%eax,(%ecx)
+	movl	PIC_GOT(minbrk),%edx
 	PIC_EPILOGUE
-	jl	ok
-	movl	(%ecx),%eax
-	movl	%eax,4(%esp)
-ok:
+	cmpl	%ecx,(%edx)
+	jl	1f
+	movl	(%edx),%ecx
+	movl	%ecx,4(%esp)
+1:
 	movl	$(SYS_break),%eax
 	LCALL(7,0)
-	jb	err
-	movl	4(%esp),%eax
-	movl	%eax,(%edx)
+	jc	err
+	PIC_PROLOGUE
+	movl	PIC_GOT(curbrk),%edx	# set up GOT addressing
+	PIC_EPILOGUE
 	xorl	%eax,%eax
+	movl	%ecx,(%edx)
 	ret
 err:
 	jmp	PIC_PLT(cerror)
 
 #else
 
-	movl	4(%esp),%eax
-	cmpl	%eax,minbrk
-	jl	ok
-	movl	minbrk,%eax
-	movl	%eax,4(%esp)
-ok:
+	movl	4(%esp),%ecx
+	cmpl	%ecx,minbrk
+	jl	1f
+	movl	minbrk,%ecx
+	movl	%ecx,4(%esp)
+1:
 	movl	$(SYS_break),%eax
 	LCALL(7,0)
-	jb	err
-	movl	4(%esp),%eax
-	movl	%eax,curbrk
+	jc	err
 	xorl	%eax,%eax
+	movl	%ecx,curbrk
 	ret
 err:
 	jmp	cerror

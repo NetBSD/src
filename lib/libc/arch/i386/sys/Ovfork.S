@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)Ovfork.s	5.1 (Berkeley) 4/23/90
- *	$Id: Ovfork.S,v 1.5 1994/01/27 04:10:20 mycroft Exp $
+ *	$Id: Ovfork.S,v 1.6 1994/01/27 06:34:59 mycroft Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: Ovfork.S,v 1.5 1994/01/27 04:10:20 mycroft Exp $"
+	.asciz "$Id: Ovfork.S,v 1.6 1994/01/27 06:34:59 mycroft Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -51,29 +51,24 @@
  * %eax == pid of child in parent, %eax == pid of parent in child.
  *
  */
-	.set	vfork,66
 ENTRY(vfork)
 	popl	%ecx		/* my rta into ecx */
-	movl	$vfork, %eax
+	movl	$(SYS_vfork),%eax
 	LCALL(7,0)
-	jb	verror
-vforkok:
-	testl	%edx,%edx	/* child process? */
-	jnz	child		/* yes */
-	jmp 	parent
-.globl	_errno
-verror:
+	jc	err
+	testl	%edx,%edx	/* %edx == 0 in parent, 1 in child */
+	jz	1f
+	xorl	%eax,%eax
+1:
+	jmp	%ecx
+err:
 #ifdef PIC
 	PIC_PROLOGUE
-	movl	PIC_GOT(_errno), %edx
-	movl	%eax,(%edx)
+	movl	PIC_GOT(_errno),%edx
 	PIC_EPILOGUE
+	movl	%eax,(%edx)
 #else
 	movl	%eax,_errno
 #endif
 	movl	$-1,%eax
-	jmp	%ecx
-child:
-	xorl	%eax,%eax
-parent:
 	jmp	%ecx

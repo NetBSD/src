@@ -34,29 +34,33 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ptrace.s	5.1 (Berkeley) 4/23/90
- *	$Id: ptrace.S,v 1.4 1994/01/27 04:14:56 mycroft Exp $
+ *	$Id: ptrace.S,v 1.5 1994/01/27 06:35:05 mycroft Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: ptrace.S,v 1.4 1994/01/27 04:14:56 mycroft Exp $"
+	.asciz "$Id: ptrace.S,v 1.5 1994/01/27 06:35:05 mycroft Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 ENTRY(ptrace)
-	xorl	%eax,%eax
 #ifdef PIC
+	xorl	%eax,%eax
 	PIC_PROLOGUE
 	movl	PIC_GOT(_errno),%edx
-	movl	%eax,(%edx)
 	PIC_EPILOGUE
+	movl	%eax,(%edx)
 #else
-	movl	%eax,_errno
+	movl	$0,_errno
 #endif
 	movl	$(SYS_ptrace),%eax
 	LCALL(7,0)
-	jb	err
+	jc	err
 	ret
 err:
+#ifdef PIC
 	jmp	PIC_PLT(cerror)
+#else
+	jmp	cerror
+#endif
