@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn32,v 1.8 2003/09/30 00:35:31 thorpej Exp $
+#	$NetBSD: majors.acorn32,v 1.9 2003/10/05 08:04:24 jdolecek Exp $
 #
 # Device majors for acorn32
 #
@@ -71,3 +71,7 @@ device-major	nsmb		char 88			nsmb
 
 device-major	pf		char 89			pf
 device-major	crypto		char 90			opencrypto
+
+# Majors up to 191 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/dev/majors.
