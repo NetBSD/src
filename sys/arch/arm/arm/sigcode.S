@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.1.10.1 2001/11/15 06:39:21 thorpej Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.1.10.2 2002/07/05 02:36:35 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: sigcode.S,v 1.1.10.1 2001/11/15 06:39:21 thorpej Exp $")
+RCSID("$NetBSD: sigcode.S,v 1.1.10.2 2002/07/05 02:36:35 thorpej Exp $")
 
 #include "assym.h"
 #include <sys/syscall.h>
@@ -64,17 +64,11 @@ ENTRY_NP(sigcode)
 	b	. - 8
 
 /*
- * Scheduler activations upcall trampoline.
- *
- * r0-r3 are the first 4 upcall arguments.  The rest of the arguments
- * are on the stack in the right places.  Pointer to the upcall routine
- * follows args.
+ * Scheduler activations upcall trampoline.  The kernel directly
+ * invokes the upcall.  The trampoline only exits if the upcall
+ * returns (which is an error).
  */
 ENTRY_NP(upcallcode)
-	add	lr, pc, #0			/* Set return address */
-	ldr	pc, [sp, #(SAF_UPCALL)]		/* Call the upcall */
-
-	/* Returned?!  Die! */
 	mov	r0, #101
 	swi	SYS_exit
 	b	. - 8

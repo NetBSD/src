@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.3.6.3 2001/11/17 09:00:33 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.3.6.4 2002/07/05 02:36:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -95,14 +95,13 @@ struct sigframe {
  */
 
 struct saframe {
-#if 0 /* in registers on entry to upcallcode */
+#if 0 /* in registers on entry to upcall */
 	int		sa_type;
 	struct sa_t **	sa_sas;
 	int		sa_events;
 	int		sa_interrupted;
 #endif
 	void *		sa_arg;
-	sa_upcall_t	sa_upcall;
 };
 
 #endif /* _LOCORE */
