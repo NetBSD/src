@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.3 1998/09/05 15:45:34 augustss Exp $
+$NetBSD: usbdevs,v 1.4 1998/09/07 08:18:40 veego Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ vendor INTEL		0x8086	Intel
 product NEC HUB			0x55aa	hub
 
 /* Kodak products */
-product Kodak DC260		0x0110	Digital Science DC260
+product KODAK DC260		0x0110	Digital Science DC260
 
 /* Nanao products */
 product NANAO HUB		0x0000	hub
