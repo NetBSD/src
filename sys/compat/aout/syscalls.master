@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.12 2000/12/09 05:27:28 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.13 2001/01/27 07:50:11 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -90,7 +90,7 @@
 			    int flags); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); } olseek
-20	NOARGS		{ pid_t sys_getpid(void); }
+20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
 21	STD		{ int aout_sys_mount(const char *type, \
 			    const char *path, int flags, void *data); }
 22	STD		{ int aout_sys_unmount(const char *path, int flags); }
