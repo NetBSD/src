@@ -1,4 +1,4 @@
-.\"	$NetBSD: reboot.8,v 1.10 1998/07/03 13:59:56 is Exp $
+.\"	$NetBSD: reboot.8,v 1.11 1999/08/19 13:43:27 simonb Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,8 @@ utilities flush the file system cache to disk, send all running processes
 a SIGTERM, wait up to 30 seconds for them to die, send a SIGKILL to the
 survivors and, respectively, halt or restart the system.
 The action is logged, including entering a shutdown record into the login
-accounting file.
+accounting file and sending a message via
+.Xr syslog 3 .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -64,7 +65,7 @@ Create a dump before halting or restarting.
 This option is useful for debugging system dump procedures or
 capturing the state of a corrupted or misbehaving system.
 .It Fl l
-Send a message via
+Suppress sending a message via
 .Xr syslog 3
 before halting or restarting.
 .It Fl n
