@@ -3,15 +3,15 @@
 # gen sources
 .PATH: ${.CURDIR}/${MACHINE}/gen ${.CURDIR}/gen ${.CURDIR}/gen/regexp
 
-SRCS+=	alarm.c clock.c closedir.c crypt.c ctermid.c ctime.c ctype_.c \
-	difftime.c disklabel.c err.c errlst.c exec.c fnmatch.c frexp.c \
+SRCS+=	alarm.c clock.c crypt.c ctermid.c ctime.c ctype_.c difftime.c \
+	directory.c disklabel.c err.c errlst.c exec.c fnmatch.c frexp.c \
 	fstab.c fts.c getcap.c getcwd.c getgrent.c getlogin.c getmntinfo.c \
 	getpass.c getpwent.c getsubopt.c getttyent.c getusershell.c glob.c \
 	initgroups.c isatty.c isctype.c isinf.c mktemp.c nice.c nlist.c \
-	opendir.c pause.c popen.c psignal.c raise.c readdir.c \
-	rewinddir.c scandir.c seekdir.c setjmperr.c \
+	pause.c popen.c psignal.c raise.c \
+	scandir.c setjmperr.c \
 	setmode.c setrgid.c setruid.c siginterrupt.c \
-	siglist.c signal.c sigsetops.c sleep.c syslog.c telldir.c \
+	siglist.c signal.c sigsetops.c sleep.c syslog.c \
 	termios.c time.c times.c timezone.c ttyname.c ttyslot.c \
 	ualarm.c unvis.c usleep.c utime.c valloc.c vis.c wait.c wait3.c \
 	waitpid.c
