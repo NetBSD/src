@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.58 2001/02/11 02:44:27 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.59 2001/02/11 03:01:05 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.58 2001/02/11 02:44:27 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.59 2001/02/11 03:01:05 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,12 +168,10 @@ void	filemode __P((void));
 int	getfiles __P((char **, int *));
 struct mount *
 	getmnt __P((struct mount *));
-struct e_vnode *
-	kinfo_vnodes __P((int *));
+char *	kinfo_vnodes __P((int *));
 void	layer_header __P((void));
 int	layer_print __P((struct vnode *));
-struct e_vnode *
-	loadvnodes __P((int *));
+char *	loadvnodes __P((int *));
 int	main __P((int, char **));
 void	mount_print __P((struct mount *));
 void	nfs_header __P((void));
@@ -280,15 +278,13 @@ main(argc, argv)
 	exit (0);
 }
 
-struct e_vnode {
-	struct vnode *avnode;
-	struct vnode vnode;
-};
+#define	VPTRSZ  sizeof(struct vnode *)
+#define	VNODESZ sizeof(struct vnode)
 
 void
 vnodemode()
 {
-	struct e_vnode *e_vnodebase, *endvnode, *evp;
+	char *e_vnodebase, *endvnode, *evp;
 	struct vnode *vp;
 	struct mount *maddr, *mp;
 	int numvnodes;
@@ -300,7 +296,7 @@ vnodemode()
 		(void)printf("%7d vnodes\n", numvnodes);
 		return;
 	}
-	endvnode = e_vnodebase + numvnodes;
+	endvnode = e_vnodebase + numvnodes * (VPTRSZ + VNODESZ);
 	(void)printf("%d active vnodes\n", numvnodes);
 
 #define	ST	mp->mnt_stat
@@ -308,8 +304,8 @@ vnodemode()
 	(strncmp((mp)->mnt_stat.f_fstypename, (name), MFSNAMELEN) == 0)
 	maddr = NULL;
 	vnode_fsprint = NULL;
-	for (evp = e_vnodebase; evp < endvnode; evp++) {
-		vp = &evp->vnode;
+	for (evp = e_vnodebase; evp < endvnode; evp += VPTRSZ + VNODESZ) {
+		vp = (struct vnode *)(evp + VPTRSZ);
 		if (vp->v_mount != maddr) {
 			/*
 			 * New filesystem
@@ -341,7 +337,7 @@ vnodemode()
 				vnode_fsprint = NULL;
 			(void)printf("\n");
 		}
-		vnode_print(evp->avnode, vp);
+		vnode_print(*(struct vnode **)evp, vp);
 		if (VTOI(vp) != NULL && vnode_fsprint != NULL)
 			(*vnode_fsprint)(vp);
 		(void)printf("\n");
@@ -678,13 +674,13 @@ mount_print(mp)
 	(void)printf("\n");
 }
 
-struct e_vnode *
+char *
 loadvnodes(avnodes)
 	int *avnodes;
 {
 	int mib[2];
 	size_t copysize;
-	struct e_vnode *vnodebase;
+	char *vnodebase;
 
 	if (memf != NULL) {
 		/*
@@ -700,9 +696,9 @@ loadvnodes(avnodes)
 		err(1, "malloc");
 	if (sysctl(mib, 2, vnodebase, &copysize, NULL, 0) == -1)
 		err(1, "sysctl: KERN_VNODE");
-	if (copysize % sizeof(struct e_vnode))
+	if (copysize % (VPTRSZ + VNODESZ))
 		errx(1, "vnode size mismatch");
-	*avnodes = copysize / sizeof(struct e_vnode);
+	*avnodes = copysize / (VPTRSZ + VNODESZ);
 
 	return (vnodebase);
 }
@@ -710,45 +706,41 @@ loadvnodes(avnodes)
 /*
  * simulate what a running kernel does in in kinfo_vnode
  */
-struct e_vnode *
+char *
 kinfo_vnodes(avnodes)
 	int *avnodes;
 {
 	struct mntlist mountlist;
 	struct mount *mp, mount;
 	struct vnode *vp, vnode;
-	char *vbuf, *evbuf, *bp;
-	int num, numvnodes;
-
-#define VPTRSZ  sizeof(struct vnode *)
-#define VNODESZ sizeof(struct vnode)
+	char *beg, *bp, *ep;
+	int numvnodes;
 
 	KGET(V_NUMV, numvnodes);
-	if ((vbuf = malloc((numvnodes + 20) * (VPTRSZ + VNODESZ))) == NULL)
+	if ((bp = malloc((numvnodes + 20) * (VPTRSZ + VNODESZ))) == NULL)
 		err(1, "malloc");
-	bp = vbuf;
-	evbuf = vbuf + (numvnodes + 20) * (VPTRSZ + VNODESZ);
+	beg = bp;
+	ep = bp + (numvnodes + 20) * (VPTRSZ + VNODESZ);
 	KGET(V_MOUNTLIST, mountlist);
-	for (num = 0, mp = mountlist.cqh_first;;
+	for (mp = mountlist.cqh_first;;
 	    mp = mount.mnt_list.cqe_next) {
 		KGET2(mp, &mount, sizeof(mount), "mount entry");
 		for (vp = mount.mnt_vnodelist.lh_first;
 		    vp != NULL; vp = vnode.v_mntvnodes.le_next) {
 			KGET2(vp, &vnode, sizeof(vnode), "vnode");
-			if ((bp + VPTRSZ + VNODESZ) > evbuf)
+			if (bp + VPTRSZ + VNODESZ > ep)
 				/* XXX - should realloc */
 				errx(1, "no more room for vnodes");
 			memmove(bp, &vp, VPTRSZ);
 			bp += VPTRSZ;
 			memmove(bp, &vnode, VNODESZ);
 			bp += VNODESZ;
-			num++;
 		}
 		if (mp == mountlist.cqh_last)
 			break;
 	}
-	*avnodes = num;
-	return ((struct e_vnode *)vbuf);
+	*avnodes = (bp - beg) / (VPTRSZ + VNODESZ);
+	return (beg);
 }
 
 const char hdr[]="  LINE RAW CAN OUT  HWT LWT     COL STATE  SESS      PGID DISC\n";
