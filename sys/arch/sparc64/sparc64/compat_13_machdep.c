@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.8 2000/04/10 13:34:19 pk Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.9 2000/08/01 00:28:55 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,10 +76,6 @@ compat_13_sys_sigreturn(p, v, retval)
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-#if 0
-	/* Make sure our D$ is not polluted w/bad data */
-	blast_vcache();
-#endif
 	if (rwindow_save(p)) {
 #ifdef DEBUG
 		printf("compat_13_sys_sigreturn: rwindow_save(%p) failed, sending SIGILL\n", p);
