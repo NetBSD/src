@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.11 2002/11/27 07:33:03 shin Exp $
+# $NetBSD: VR41XX,v 1.12 2003/02/16 17:35:15 augustss Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.11 $"
+#ident 		"GENERIC-$Revision: 1.12 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -446,6 +446,8 @@ umidi* at uhub? port ? configuration ?
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+uax*	at uhub? port ?		# ASIX AX88172 based adapters
+url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Prolofic PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?

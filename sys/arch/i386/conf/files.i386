@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.227 2003/02/05 12:18:01 nakayama Exp $
+#	$NetBSD: files.i386,v 1.228 2003/02/16 17:35:16 augustss Exp $
 #
 # new style config file for i386 architecture
 #
@@ -494,6 +494,7 @@ file	arch/i386/acpi/npx_acpi.c		npx_acpi
 device	vesabios {}
 attach vesabios at mainbus
 file	arch/i386/bios/vesabios.c		vesabios needs-flag
+
 defflag	opt_vesabios.h	VESABIOSVERBOSE
 
 include	"dev/rasops/files.rasops"
@@ -507,3 +508,9 @@ attach vesatext at vesabios
 file	arch/i386/bios/vesa_text.c	vesatext
 
 include "arch/i386/conf/majors.i386"
+device-major  bthci           char 98                 bthci
+
+#
+include "dev/sb/netbsd/files.sand"
+device-major  sbthin          char 99                 sbthin
+
