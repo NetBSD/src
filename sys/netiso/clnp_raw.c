@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.15 2001/11/13 01:10:47 lukem Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.16 2003/02/08 11:11:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,7 +63,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.15 2001/11/13 01:10:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.16 2003/02/08 11:11:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -370,11 +370,19 @@ clnp_usrreq(so, req, m, nam, control, p)
 				return (EINVAL);
 			if (ifnet.tqh_first == 0)
 				return (EADDRNOTAVAIL);
+
+			/* copy the address */
 			if (addr->siso_family != AF_ISO)
 				rp->risop_isop.isop_sfaddr = *addr;
+
+			/* initialize address pointers */
+			rp->risop_isop.isop_faddr = &rp->risop_isop.isop_sfaddr;
 			rp->risop_rcb.rcb_faddr = sisotosa(
-							   (rp->risop_isop.isop_faddr = &rp->risop_isop.isop_sfaddr));
+				rp->risop_isop.isop_faddr);
+
+			/* address setup, mark socket connected */
 			soisconnected(so);
+
 			return (0);
 		}
 	}
