@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.10 2004/02/27 02:55:17 oster Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.11 2004/03/13 02:20:40 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -81,11 +81,6 @@ struct RF_RaidAccessDesc_s {
 	RF_AccessStripeMapHeader_t *asmap;	/* the asm for this I/O */
 	void   *bp;		/* buf pointer for this RAID acc.  ignored
 				 * outside the kernel */
-	RF_DagHeader_t **paramDAG;	/* allows the DAG to be returned to
-					 * the caller after I/O completion */
-	RF_AccessStripeMapHeader_t **paramASM;	/* allows the ASM to be
-						 * returned to the caller
-						 * after I/O completion */
 	RF_AccTraceEntry_t tracerec;	/* perf monitoring information for a
 					 * user access (not for dag stats) */
 	void    (*callbackFunc) (RF_CBParam_t);	/* callback function for this
