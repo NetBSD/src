@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 1999/01/09 22:10:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 1999/01/12 10:51:41 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -114,12 +114,8 @@ extern struct user *proc0paddr;
 struct bat battable[16];
 int astpending;
 char *bootpath;
+paddr_t msgbuf_paddr;
 
-/*
- * We use the page just above the interrupt vector as message buffer
- */
-#define MSGBUFADDR 0x3000
-#define MSGBUFSIZE 4096
 int msgbufmapped = 0;
 
 #ifdef	NBUF
@@ -437,7 +433,7 @@ cpu_startup()
 	vaddr_t minaddr, maxaddr;
 	int base, residual;
 
-	initmsgbuf((caddr_t)MSGBUFADDR, round_page(MSGBUFSIZE));
+	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
 
 	proc0.p_addr = proc0paddr;
 	v = (caddr_t)proc0paddr + USPACE;
