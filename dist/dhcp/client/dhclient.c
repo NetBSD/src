@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.12 2004/04/04 02:35:21 mrg Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.13 2004/05/06 09:07:54 itojun Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -2135,7 +2135,7 @@ void rewrite_client_leases ()
 
 	if (leaseFile)
 		fclose (leaseFile);
-	fd = open (path_dhclient_db, O_WRONLY|O_CREAT, 0600);
+	fd = open (path_dhclient_db, O_WRONLY|O_CREAT|O_TRUNC, 0600);
 	if (fd != -1)
 		leaseFile = fdopen (fd, "w");
 	if (fd == -1 || !leaseFile) {
@@ -2230,7 +2230,7 @@ int write_client_lease (client, lease, rewrite, makesure)
 	if (!leaseFile) {	/* XXX */
 		int fd;
 
-		fd = open (path_dhclient_db, O_WRONLY|O_CREAT, 0600);
+		fd = open (path_dhclient_db, O_WRONLY|O_CREAT|O_TRUNC, 0600);
 		if (fd != -1)
 			leaseFile = fdopen (fd, "w");
 		if (fd == -1 || !leaseFile) {
