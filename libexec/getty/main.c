@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.8 1994/08/17 20:10:37 pk Exp $";
+static char rcsid[] = "$Id: main.c,v 1.9 1994/08/24 07:54:50 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -243,13 +243,13 @@ main(argc, argv)
 		ioctl(0, FIOASYNC, &off);	/* ditto for async mode */
 
 		if (IS)
-			tmode.c_ispeed = speed(IS);
+			cfsetispeed(&tmode, IS);
 		else if (SP)
-			tmode.c_ispeed = speed(SP);
+			cfsetispeed(&tmode, SP);
 		if (OS)
-			tmode.c_ospeed = speed(OS);
+			cfsetospeed(&tmode, OS);
 		else if (SP)
-			tmode.c_ospeed = speed(SP);
+			cfsetospeed(&tmode, SP);
 		setflags(0);
 		setchars();
 		if (tcsetattr(0, TCSANOW, &tmode) < 0) {
