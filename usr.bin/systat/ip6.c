@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.c,v 1.6 2000/07/13 11:07:34 itojun Exp $	*/
+/*	$NetBSD: ip6.c,v 1.7 2000/07/16 03:07:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip6.c,v 1.6 2000/07/13 11:07:34 itojun Exp $");
+__RCSID("$NetBSD: ip6.c,v 1.7 2000/07/16 03:07:20 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -210,6 +210,8 @@ initip6(void)
 void
 fetchip6(void)
 {
+
+	KREAD((void *)namelist[0].n_value, &newstat, sizeof(newstat));
 
 	ADJINETCTR(curstat, oldstat, newstat, ip6s_total);
 	ADJINETCTR(curstat, oldstat, newstat, ip6s_toosmall);
