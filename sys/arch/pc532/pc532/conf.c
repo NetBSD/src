@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.30 1996/12/28 23:24:23 pk Exp $	*/
+/*	$NetBSD: conf.c,v 1.31 1997/01/11 11:00:41 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -118,6 +118,8 @@ cdev_decl(bpf);
 cdev_decl(tun);
 #include "lpt.h"
 cdev_decl(lpt);
+#include "ipfilter.h"
+cdev_decl(ipl);
 
 struct cdevsw	cdevsw[] =
 {
@@ -149,6 +151,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 25 */
 	cdev_lkm_dummy(),		/* 26 */
 	cdev_lkm_dummy(),		/* 27 */
+	cdev_ipf_init(NIPFILTER,ipl),	/* 28: ip-filter device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
