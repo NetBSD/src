@@ -1,0 +1,35 @@
+#	$NetBSD: Makefile.siliconmotion,v 1.1.2.1 2004/11/15 09:12:40 rtr Exp $
+
+MAN+=	siliconmotion.4
+
+.PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/siliconmotion
+SRCS.siliconmotion=	smi_driver.c smi_accel.c smi_dac.c smi_hwcurs.c \
+			smi_dga.c smi_i2c.c smi_shadow.c smi_video.c
+
+CPPFLAGS.siliconmotion= \
+	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/siliconmotion \
+	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
+	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support \
+	-I${X11SRCDIR.xc}/programs/Xserver/mfb \
+	-I${X11SRCDIR.xc}/programs/Xserver/mi \
+	-I${X11SRCDIR.xc}/programs/Xserver/cfb \
+	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xaa \
+	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/rac \
+	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/vgahw \
+	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/fbdevhw \
+	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/ramdac \
+	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/ddc \
+	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/i2c \
+	-I${X11SRCDIR.xc}/programs/Xserver/Xext \
+	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/int10 \
+	-I${X11SRCDIR.xc}/include/fonts \
+	-I${X11SRCDIR.xc}/programs/Xserver/include \
+	-I${DESTDIR}${X11INCDIR}/X11 \
+	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/shadowfb \
+	-I${DESTDIR}${X11INCDIR}/X11/extensions \
+	-I${X11SRCDIR.xc}/programs/Xserver/fb \
+	-I${X11SRCDIR.xc}/programs/Xserver/render \
+	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/vbe \
+	-I${XSERVERINCDIR}
+
+CPPFLAGS.siliconmotion+=	-DPSZ=8

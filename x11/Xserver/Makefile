@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.13 2004/10/07 13:47:13 rtr Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2004/11/15 09:12:38 rtr Exp $
 
 .include <bsd.own.mk>
 
 .include "Makefile.common"
 
-.if ${XSERVER_NEEDS_XFONT} != "no"
+.if ${XSERVER_NEEDS_XFONT} != "no" && ${X11LOADABLE} != "no"
 SUBDIR.xfont=fontbase Xfont
 .else
 SUBDIR.xfont=
@@ -42,7 +42,7 @@ SUBDIR.iplan=
 
 SUBDIR=		include
 SUBDIR+=	.WAIT dix os mi printer Xext xkb xinput GL lbx dbe record
-SUBDIR+=	mfb randr render xtrap
+SUBDIR+=	mfb randr render xtrap composite damage xfixes
 SUBDIR+=	${SUBDIR.cfb} ${SUBDIR.fb} ${SUBDIR.iplan} hw
 SUBDIR+=	${SUBDIR.xfont} ${SUBDIR.afb} ${SUBDIR.miext}
 SUBDIR+=	.WAIT Xserver

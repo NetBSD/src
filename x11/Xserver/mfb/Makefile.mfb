@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.mfb,v 1.2 2004/02/07 06:52:07 lukem Exp $
+#	$NetBSD: Makefile.mfb,v 1.2.4.1 2004/11/15 09:12:43 rtr Exp $
 
 LIB=		mfb
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/mfb
 
-SRCS=		maskbits.c mfbbitblt.c mfbbltC.c mfbbltCI.c mfbbltG.c \
+SRCS+=		maskbits.c mfbbitblt.c mfbbltC.c mfbbltCI.c mfbbltG.c \
 		mfbbltO.c mfbbltX.c mfbbres.c mfbbresd.c mfbbstore.c \
 		mfbclip.c mfbcmap.c mfbfillarc.c mfbfillrct.c \
 		mfbfillsp.c mfbfont.c mfbgc.c mfbgetsp.c mfbhrzvert.c \
@@ -44,6 +44,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/mfb \
 		-I${XSERVERINCDIR} \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/include/fonts
+
+CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
 CPPFLAGS.mfbseg.c=	-DPOLYSEGMENT 
 CPPFLAGS.mfbpgbwht.c=	-DMFBPOLYGLYPHBLT=mfbPolyGlyphBltWhite -DOPEQ=MFB_OPEQ_WHITE 

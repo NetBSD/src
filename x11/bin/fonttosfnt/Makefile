@@ -1,12 +1,17 @@
-#	$NetBSD: Makefile,v 1.1 2004/04/28 14:17:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2004/11/15 09:12:45 rtr Exp $
 
 .include <bsd.own.mk>
 
 PROG=	fonttosfnt
 SRCS=	fonttosfnt.c read.c write.c struct.c util.c
 
-CPPFLAGS+=	-DXFREE86_FT2 -I${DESTDIR}${X11INCDIR}/freetype2
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts
+# XXX XVENDORNAME and XVENDORNAMESHORT should live in a common location
+CPPFLAGS+=	-DXFREE86_FT2 -I${DESTDIR}${X11INCDIR}/freetype2 \
+		-DXVENDORNAMESHORT=${XVENDORNAMESHORT} \
+		-DXVENDORNAME=${XVENDORNAME}
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts \
+		-I${X11SRCDIR.xc}/extras/freetype2/include
+
 
 LDADD+=	-lfreetype -lfontenc -lz -lm
 DPADD+=	 ${LIBFREETYPE} ${LIBFONTENC} ${LIBZ} ${LIBM}

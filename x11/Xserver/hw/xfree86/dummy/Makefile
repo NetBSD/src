@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2004/07/23 16:28:18 sketch Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2004/11/15 09:12:41 rtr Exp $
+
+X11LOADABLE=no
 
 .include "../../../Makefile.serverlib"
 
@@ -19,6 +21,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/dummylib \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${XSERVERINCDIR}
+
+COPTS.fatalerror.c+=	-Wno-error
 
 BUILDSYMLINKS=	../os-support/shared/sigiostubs.c sigiostubs.c
 

@@ -1,22 +1,62 @@
-# $NetBSD: Makefile.drivermod,v 1.4 2004/07/13 09:29:45 sekiya Exp $
+# $NetBSD: Makefile.drivermod,v 1.4.2.1 2004/11/15 09:12:39 rtr Exp $
+.include <bsd.init.mk>
 
-LIB=${MODULE}
+# most of this file was cribbed from existing bsd.*.mk files most
+# notably bsd.kmod.mk and bsd.lib.mk
 
-# XXX this is a really bad hack to install an archive as a .o
-# This hack is not required for targets that use the dlopen() module scheme.
+XMODULE_SUFFIX?=_drv.o
 
-.if ${MACHINE} != "sgimips"
+clean:		moduleclean
+realinstall:	moduleinstall
+realall:	${XMODULE}${XMODULE_SUFFIX}
 
-__archivebuild: .USE
+MKDEP_SUFFIXES?=.o
+CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
+CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++}
+
+DPSRCS+=        ${SRCS:M*.l:.l=.c}
+OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
+
+${OBJS}: ${DPSRCS}
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
+
+${XMODULE}${XMODULE_SUFFIX}: ${OBJS}
 	${_MKTARGET_BUILD}
 	rm -rf ${.TARGET}
 	${LD} -X -r ${OBJS} -o ${.TARGET}
 
-__archiveinstall: .USE
-	${_MKTARGET_INSTALL}
-	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    ${SYSPKGTAG} ${.ALLSRC} ${DESTDIR}${LIBDIR}/${MODULE}.o
+.if !target(moduleinstall)
+_MODULE:=	${DESTDIR}${LIBDIR}/${XMODULE}${XMODULE_SUFFIX}
 
+.if ${MKUPDATE} == "no"
+${_MODULE}!	${XMODULE}${XMODULE_SUFFIX}				# install rule
+.if !defined(BUILD) && !make(all) && !make(${XMODULE}${XMODULE_SUFFIX})
+${_MODULE}!	.MADE					# no build at install
 .endif
+.else
+${_MODULE}:	${XMODULE}${XMODULE_SUFFIX}		# install rule
+.if !defined(BUILD) && !make(all) && !make(${XMODULE}${XMODULE_SUFFIX})
+${_MODULE}:	.MADE					# no build at install
+.endif
+.endif
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+	    ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
-.include <bsd.lib.mk>
+moduleinstall::	${_MODULE}
+.PHONY:		moduleinstall
+.PRECIOUS:	${_MODULE}				# keep if install fails
+
+.endif	# !target(moduleinstall)
+
+moduleclean: .PHONY
+	rm -f a.out [Ee]rrs mklog core *.core \
+	    ${XMODULE}${XMODULE_SUFFIX} ${OBJS} ${CLEANFILES}
+
+.include <bsd.links.mk>
+.include <bsd.sys.mk>
+.include <bsd.dep.mk>
+.include <bsd.files.mk>
+.include <bsd.obj.mk>
+.include <bsd.inc.mk>
+.include <bsd.man.mk>

@@ -1,9 +1,0 @@
-# $NetBSD: GENERIC.PROF,v 1.16 1997/08/24 06:37:16 cgd Exp $
-#
-# Generic Alpha kernel hard-wired with profiling support.
-
-include	"arch/alpha/conf/GENERIC"
-
-# Always include profiling support; does not need 'config -p'.
-makeoptions	PROF="-pg"
-options 	GPROF

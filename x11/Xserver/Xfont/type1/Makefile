@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/03/16 17:40:54 matt Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2004/11/15 09:12:38 rtr Exp $
 
 XMODULEDIR=     ${X11USRLIBDIR}/modules/fonts
 
@@ -19,15 +19,11 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/include/fonts \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${XSERVERINCDIR}
 
-CPPFLAGS+=	-DBUILDCID -DHAVE_CFM -DUSE_MMAP
+CPPFLAGS+=	-DBUILDCID -DHAVE_CFM -DUSE_MMAP \
+		-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+
+CPPFLAGS+=	-DFONTMODULE
 
 .include <bsd.x11.mk>
-
-.if !empty(X11FLAGS.LOADABLE)
-CPPFLAGS+=	-DFONTMODULE
 LIBDIR=	${XMODULEDIR}
-.else
-libinstall::
-.endif
-
 .include <bsd.lib.mk>

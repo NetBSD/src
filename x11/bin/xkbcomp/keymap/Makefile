@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2004/01/14 12:49:09 minoura Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2004/11/15 09:12:45 rtr Exp $
 
 .include <bsd.own.mk>
 
 XKBNAME=	keymap
-FILES=		README amiga ataritt macintosh sony x68k xfree86 xfree98
+FILES=		README amiga ataritt macintosh sony xfree86 xfree98
 
 SUBDIR=		digital sgi sun
 

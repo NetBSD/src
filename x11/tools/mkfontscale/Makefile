@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/04/12 15:41:27 dbj Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2004/11/15 09:12:47 rtr Exp $
 
 NOMAN=		1
 
@@ -6,62 +6,88 @@ NOMAN=		1
 
 HOSTPROG=	mkfontscale
 
+FREETYPE=       ${X11SRCDIR.xc}/extras/freetype2
+
+
 .PATH:	${X11SRCDIR.xc}/programs/mkfontscale
 SRCS.mkfontscale=	mkfontscale.c list.c hash.c ident.c
 
-FREETYPETOP=	${X11SRCDIR.xc}/extras/freetype2
-FREETYPESRC=	${FREETYPETOP}/src
 
-#.PATH:	${FREETYPESRC}
-.PATH:	${FREETYPESRC}/autohint
-.PATH:	${FREETYPESRC}/base
-.PATH:	${FREETYPESRC}/bdf
-.PATH:	${FREETYPESRC}/cff
-.PATH:	${FREETYPESRC}/cid
-.PATH:	${FREETYPESRC}/gzip
-.PATH:	${FREETYPESRC}/pcf
-.PATH:	${FREETYPESRC}/pfr
-.PATH:	${FREETYPESRC}/psaux
-.PATH:	${FREETYPESRC}/pshinter
-.PATH:	${FREETYPESRC}/psnames
-.PATH:	${FREETYPESRC}/raster
-.PATH:	${FREETYPESRC}/sfnt
-.PATH:	${FREETYPESRC}/smooth
-.PATH:	${FREETYPESRC}/truetype
-.PATH:	${FREETYPESRC}/type1
-.PATH:	${FREETYPESRC}/type42
-.PATH:	${FREETYPESRC}/winfonts
-SRCS.freetype=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftglyph.c \
-		ftinit.c ftmm.c ftpfr.c ftstroker.c ftsynth.c ftsystem.c \
-		fttype1.c ftwinfnt.c ftxf86.c autohint.c bdf.c cff.c \
-		type1cid.c ftgzip.c pcf.c pfr.c psaux.c pshinter.c psnames.c \
-		raster.c sfnt.c smooth.c truetype.c type1.c type42.c winfnt.c
+.PATH:	${FREETYPE}/src/base
+SRCS.freetype+=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftglyph.c \
+		ftinit.c ftmm.c ftpfr.c ftstroke.c ftsynth.c ftsystem.c \
+		fttype1.c ftwinfnt.c ftxf86.c
+
+.PATH: ${FREETYPE}/src/autofit
+SRCS.freetype+=	autofit.c
+
+.PATH:	${FREETYPE}/src/autohint
+SRCS.freetype+=	autohint.c
+
+.PATH:	${FREETYPE}/src/bdf
+SRCS.freetype+=	bdf.c
+
+.PATH:	${FREETYPE}/src/cff
+SRCS.freetype+=	cff.c
+
+.PATH:	${FREETYPE}/src/cid
+SRCS.freetype+=	type1cid.c
+
+.PATH:	${FREETYPE}/src/gzip
+SRCS.freetype+=	ftgzip.c
+
+.PATH:	${FREETYPE}/src/lzw
+SRCS.freetype+=	ftlzw.c
+
+.PATH:	${FREETYPE}/src/pcf
+SRCS.freetype+=	pcf.c
+
+.PATH:	${FREETYPE}/src/pfr
+SRCS.freetype+=	pfr.c
+
+.PATH:	${FREETYPE}/src/psaux
+SRCS.freetype+=	psaux.c
+
+.PATH:	${FREETYPE}/src/pshinter
+SRCS.freetype+=	pshinter.c
+
+.PATH:	${FREETYPE}/src/psnames
+SRCS.freetype+=	psnames.c
+
+.PATH:	${FREETYPE}/src/raster
+SRCS.freetype+=	raster.c
+
+.PATH:	${FREETYPE}/src/sfnt
+SRCS.freetype+=	sfnt.c
+
+.PATH:	${FREETYPE}/src/smooth
+SRCS.freetype+=	smooth.c
+
+.PATH:	${FREETYPE}/src/truetype
+SRCS.freetype+=	truetype.c
+
+.PATH:	${FREETYPE}/src/type1
+SRCS.freetype+=	type1.c
+
+.PATH:	${FREETYPE}/src/type42
+SRCS.freetype+=	type42.c
+
+.PATH:	${FREETYPE}/src/winfonts
+SRCS.freetype+=	winfnt.c
 
 .PATH:	${X11SRCDIR.xc}/lib/font/fontfile
-.PATH:	${X11SRCDIR.xc}/xc/lib/font/include
-SRCS.fontenc=	encparse.c fontenc.c
+SRCS.fontenc=	fontenc.c encparse.c
 
-# XXX we should be declaring some of these on a per <fn> basis but
-# XXX HOST_CPPFLAGS doesn't support it we could CPPFLAGS= and then
-# XXX use CPPFLAGS but thats lame
-HOST_CPPFLAGS+=	-DFONTENC_NO_LIBFONT \
-		${X11FLAGS.THREADLIB} \
-		-DFREETYPE2 -DXFREE86_FT2 \
-		-DFT_CONFIG_OPTION_SYSTEM_ZLIB \
+SRCS+=	${SRCS.mkfontscale} ${SRCS.freetype} ${SRCS.fontenc}
+
+LDADD=	-lz
+
+HOST_CPPFLAGS=	-DFONTENC_NO_LIBFONT -DXFREE86_FT2 -DFONTENC_NO_LIBFONT \
 		-DFONT_ENCODINGS_DIRECTORY=\"${X11FONTDIR}/encodings/encodings.dir\"
-HOST_CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} \
-		-I${DESTDIR}${X11INCDIR}/freetype2 \
-		-I${DESTDIR}${X11INCDIR}/X11/fonts \
+HOST_CPPFLAGS+=	-I${FREETYPE}/include -I${DESTDIR}${X11INCDIR} \
 		-I${X11SRCDIR.xc}/lib/font/include \
 		-I${X11SRCDIR.xc}/include/fonts
 
-# This tells a cross build on darwin not to bother with
-# resource fork font support which needs the carbon libraries.
-HOST_CPPFLAGS+=	-DDARWIN_NO_CARBON
-
-SRCS=	${SRCS.mkfontscale} ${SRCS.freetype} ${SRCS.fontenc}
-
-LDADD=	-lz
 
 .include <bsd.x11.mk>
 .include <bsd.hostprog.mk>

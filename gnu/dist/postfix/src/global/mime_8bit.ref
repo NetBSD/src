@@ -1,9 +1,0 @@
-mime_state: warning: improper use of 8-bit data in message header: Header: f??bar
-MAIN 0	|Header: f€€bar
-HEADER END
-BODY N 0	|
-mime_state: warning: improper use of 8-bit data in message body: b?dy
-BODY N 1	|b€dy
-BODY END
-mime_state: warning: improper use of 8-bit data in message header
-mime_state: warning: improper use of 8-bit data in message body

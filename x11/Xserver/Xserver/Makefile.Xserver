@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.Xserver,v 1.17 2004/08/01 18:52:03 uch Exp $
+#	$NetBSD: Makefile.Xserver,v 1.17.2.1 2004/11/15 09:12:38 rtr Exp $
 
-.for _SL in	dix os mi printer printer/pcl printer/ps printer/raster \
+.for _SL in	dix os mi printer printer/pcl printer/pcl-mono \
+		printer/ps printer/raster composite damage miext/damage \
 		Xext/ext Xext/exts GL/glx GL/GLcore xkb xinput lbx dbe \
 		record randr render xtrap mfb iplan2p4 iplan2p8 \
-		cfb cfb16 cfb24 cfb32 fb \
+		cfb cfb16 cfb24 cfb32 fb xfixes miext/cw \
 		hw/xnest hw/vfb fontbase afb \
 		\
 		dix/xpstubs hw/sun hw/xfree86/xf86 hw/xfree86/xf86_os \

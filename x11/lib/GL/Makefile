@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/08/05 01:28:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2004/11/15 09:12:45 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -6,17 +6,22 @@ LIB=		GL
 
 # glx
 .PATH:		${X11SRCDIR.xc}/lib/GL/glx
-SRCS.glx=	clientattrib.c compsize.c dispatch.c eval.c g_render.c \
-		g_single.c g_vendpriv.c glthread.c glxcmds.c glxext.c \
-		glxextensions.c glcontextmodes.c indirect_init.c \
-		pixel.c pixelstore.c render2.c renderpix.c single2.c \
-		singlepix.c vertarr.c xfont.c
+SRCS.glx=	clientattrib.c compsize.c dispatch.c eval.c \
+		g_render.c g_single.c g_vendpriv.c glapi.c \
+		glthread.c glxcmds.c glxext.c glxextensions.c \
+		indirect_init.c pixel.c pixelstore.c render2.c \
+		renderpix.c single2.c singlepix.c vertarr.c \
+		xfont.c glx_pbuffer.c glx_query.c \
+		glx_texture_compression.c
 
-.PATH:	${X11SRCDIR.xc}/extras/Mesa/src
+.PATH:		${X11SRCDIR.xc}/extras/Mesa/src/mesa/drivers/dri/common
+SRCS.glx+=	glcontextmodes.c
+
+.PATH:	${X11SRCDIR.xc}/extras/Mesa/src/mesa/glapi
 SRCS.glx+=	glapi.c
 
 .if ${MACHINE} == "i386"
-.PATH:		${X11SRCDIR.xc}/extras/Mesa/src/X86
+.PATH:		${X11SRCDIR.xc}/extras/Mesa/src/mesa/x86
 SRCS.glx+=	glapi_x86.S
 CPPFLAGS+=	-DUSE_X86_ASM -I${X11SRCDIR.xc}/extras/Mesa/src/X86
 # -DUSE_X86_ASM $(MMX_DEFS) $(3DNOW_DEFS) $(SSE_DEFS)
@@ -119,6 +124,10 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${X11SRCDIR.xc}/lib/GL/include \
 		-I${X11SRCDIR.xc}/extras/Mesa/src \
+		-I${X11SRCDIR.xc}/extras/Mesa/include \
+		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa/glapi \
+		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa/main \
+		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa/drivers/dri/common \
 		${X11FLAGS.THREADLIB} -DGLXEXT -DGLX_USE_MESA
 
 LIBDPLIBS=	Xext	${.CURDIR}/../Xext \

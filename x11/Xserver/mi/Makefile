@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/01/25 05:22:27 mhitch Exp $
+#	$NetBSD: Makefile,v 1.8.4.1 2004/11/15 09:12:43 rtr Exp $
 
 .include "../Makefile.serverlib"
 
@@ -17,12 +17,15 @@ SRCS=		miarc.c mibank.c mibitblt.c mibstore.c miclipn.c \
 		mivaltree.c miwideline.c miwindow.c mizerarc.c \
 		mizerclip.c mizerline.c
 
+# XXX the order is important since there are headers with the same
+#     name but differ depending on location
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${X11SRCDIR.xc}/include/fonts \
 		-I${X11SRCDIR.xc}/programs/Xserver/render \
 		-I${DESTDIR}${X11INCDIR}/X11 \
-		-I${DESTDIR}${X11INCDIR}/X11/extensions \
-		-I${X11SRCDIR.xc}/programs/Xserver/Xext
+		-I${X11SRCDIR.xc}/programs/Xserver/Xext \
+		-I${X11SRCDIR.xc}/programs/Xserver/miext/damage \
+		-I${X11SRCDIR.xc}/include/extensions
 
 CPPFLAGS.miinitext.c=	${X11FLAGS.EXTENSION}
 CPPFLAGS.miscrinit.c=	${X11FLAGS.EXTENSION}

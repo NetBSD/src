@@ -1,0 +1,23 @@
+#	$NetBSD: Makefile.damage,v 1.1.2.1 2004/11/15 09:12:43 rtr Exp $
+
+LIB=	damage
+.PATH:	${X11SRCDIR.xc}/programs/Xserver/miext/${LIB}
+
+SRCS+=	damage.c
+
+CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/miext/${LIB} \
+		-I${X11SRCDIR.xc}/programs/Xserver/miext/shadow \
+		-I${X11SRCDIR.xc}/programs/Xserver/mi \
+		-I${X11SRCDIR.xc}/programs/Xserver/fb \
+		-I${X11SRCDIR.xc}/programs/Xserver/include \
+		-I${DESTDIR}${X11INCDIR}/X11 \
+		-I${X11SRCDIR.xc}/include/fonts \
+		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
+		-I${X11SRCDIR.xc}/programs/Xserver/render \
+		-I${X11SRCDIR.xc}/programs/Xserver/miext/cw \
+		-I${DESTDIR}${X11INCDIR}/X11/extensions \
+		-I${XSERVERINCDIR}
+
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>

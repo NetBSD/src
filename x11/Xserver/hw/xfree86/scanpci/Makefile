@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/02/08 23:27:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2004/11/15 09:12:43 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -25,6 +25,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
 		-I${X11SRCDIR.xc}/programs/Xserver/rac \
 		-I. \
 		-I${XSERVERINCDIR}
+
+CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
 BUILDSYMLINKS=	xf86PciStdIds.h xf86PciIds.h
 

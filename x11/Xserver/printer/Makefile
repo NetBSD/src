@@ -1,53 +1,51 @@
-#	$NetBSD: Makefile,v 1.6 2004/05/16 10:25:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2004/11/15 09:12:44 rtr Exp $
 
 .include "../Makefile.serverlib"
 
 .include <bsd.own.mk>
 
-SUBDIR=		raster pcl ps
+SUBDIR=		raster pcl ps pcl-mono
 
 LIB=		printer
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/Xprint
-.PATH:		${X11SRCDIR.xc}/lib/X11
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/Xext
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/mi
+#.PATH:		${X11SRCDIR.xc}/lib/X11
 
-SRCS=		Init.c Quarks.c attributes.c Util.c mediaSizes.c Oid.c \
-		AttrValid.c
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/Xprint
+SRCS=		Init.c spooler.c attributes.c Util.c mediaSizes.c \
+		Oid.c AttrValid.c ddxInit.c
+
+.PATH:		${X11SRCDIR.xc}/lib/X11
+SRCS+=		Quarks.c
+
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/mi
+SRCS+=		miinitext.c
+
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/Xext
+SRCS+=		dpmsstubs.c
+
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
-		-I${X11SRCDIR.xc}/programs/Xserver/Xprint \
+		-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${X11SRCDIR.xc}/programs/Xserver/mfb \
 		-I${X11SRCDIR.xc}/programs/Xserver/mi \
 		-I${X11SRCDIR.xc}/programs/Xserver/cfb \
-		-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${X11SRCDIR.xc}/include \
-		-I${X11SRCDIR.xc}/include/fonts  \
-		-I${DESTDIR}${X11INCDIR}/X11/extensions \
-		-I${X11SRCDIR.xc}/lib/X11
+		-I${X11SRCDIR.xc}/programs/Xserver/Xprint \
+		-I${X11SRCDIR.xc}/include/fonts \
+		-I${X11SRCDIR.xc}/lib/X11 \
+		-I${DESTDIR}${X11INCDIR}/X11/extensions
 
 CPPFLAGS+=	-DXPRINTDIR=\"${X11ETCDIR}/xserver\" \
 		-DXPRASTERDDX -DXPPCLDDX -DXPPSDDX -DHAS_MKSTEMP \
-		-UXFree86LOADER -D_XP_PRINT_SERVER_
+		-UXFree86LOADER -D_XP_PRINT_SERVER_ -DXPMONOPCLDDX
 
+CPPFLAGS.ddxInit.c=	${X11FLAGS.OS_DEFINES}
 
-BUILDOBJS=		ddxInit.o dpmsstubs.o miinitext.o
-BUILDCPPFLAGS=		-DPRINT_ONLY_SERVER \
-			${X11FLAGS.OS_DEFINES} \
-			${X11FLAGS.EXTENSION}
 
 .include "../Makefile.common"
 
 .if ${XSERVER_XFREE86} == "no"
 BUILDCPPFLAGS+=		-UDDXTIME
 .endif
-
-CPPFLAGS.ddxInit.c=	${BUILDCPPFLAGS}
-CPPFLAGS.dpmsstubs.c=	${BUILDCPPFLAGS} -DXPRINT
-CPPFLAGS.miinitext.c=	${BUILDCPPFLAGS} -DXPRINT -UGLXEXT
-CLEANFILES+=		${BUILDOBJS}
-realall: ${BUILDOBJS}
-
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

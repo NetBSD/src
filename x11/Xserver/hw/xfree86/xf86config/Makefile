@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/05/17 23:50:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2004/11/15 09:12:43 rtr Exp $
 
 XTODO= cpconfig
 
@@ -14,8 +14,9 @@ INCSDIR=${X11INCDIR}
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/parser
 
-SRCS=	DRI.c Device.c Files.c Flags.c Input.c Keyboard.c Layout.c Module.c \
-	Video.c Monitor.c Pointer.c Screen.c Vendor.c read.c scan.c write.c
+SRCS=	Device.c Files.c Flags.c Input.c Keyboard.c Layout.c Module.c \
+        Video.c Monitor.c Pointer.c Screen.c Vendor.c read.c scan.c \
+	write.c DRI.c Extensions.c
 
 XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 

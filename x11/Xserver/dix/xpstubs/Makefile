@@ -1,20 +1,21 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/30 06:41:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2004/11/15 09:12:39 rtr Exp $
 
 .include "../../Makefile.serverlib"
 
 .include <bsd.own.mk>
 
 LIB=		xpstubs
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/dix
 
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/dix
 SRCS=		xpstubs.c
 
-CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
+CPPFLAGS+= 	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/include/fonts \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${X11SRCDIR.xc}/programs/Xserver/Xext \
-		-I${X11SRCDIR.xc}/programs/Xserver/lbx
+		-I${X11SRCDIR.xc}/programs/Xserver/lbx \
+		-I${XSERVERINCDIR}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

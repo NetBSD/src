@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.15 2004/08/01 18:52:03 uch Exp $
+#	$NetBSD: Makefile,v 1.15.2.1 2004/11/15 09:12:38 rtr Exp $
 
 .include <bsd.own.mk>
 
 .include "../Makefile.common"
 
-SUBDIR=		Xnest Xprt
+SUBDIR=		Xnest # Xprt XXX x.org doesn't build it?
 
 .if ${XSERVER_X68K} != "no" 
 SUBDIR+=	X68k

@@ -1,10 +1,4 @@
-#	$NetBSD: Makefile.cfb,v 1.11 2004/03/03 16:11:45 rtr Exp $
-
-.include <bsd.own.mk>
-
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/cfb
-
-PIXELSIZE?=	8
+#	$NetBSD: Makefile.cfb,v 1.11.4.1 2004/11/15 09:12:39 rtr Exp $
 
 .if ${PIXELSIZE} == 8
 LIB=		cfb
@@ -12,6 +6,7 @@ LIB=		cfb
 LIB=		cfb${PIXELSIZE}
 .endif
 
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/cfb
 SRCS+=		cfb8lineCO.c cfb8lineCP.c cfb8lineG.c cfb8lineX.c \
 		cfb8segC.c cfb8segCS.c cfb8segG.c cfb8segX.c \
 		cfballpriv.c cfbbitblt.c cfbbltC.c cfbbltG.c \
@@ -82,7 +77,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/cfb \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${X11SRCDIR.xc}/programs/Xserver/Xext
 
-CPPFLAGS+=	-DPSZ=${PIXELSIZE} -DXFREE86
+CPPFLAGS+=	-DPSZ=${PIXELSIZE} -DXFREE86 \
+		-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
 
 .if ${MACHINE} == "sparc64"

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.xtrap,v 1.3 2004/02/07 06:52:08 lukem Exp $
+#	$NetBSD: Makefile.xtrap,v 1.3.4.1 2004/11/15 09:12:45 rtr Exp $
 
 LIB=		xtrap
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/XTrap
 
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/XTrap
 SRCS+=		xtrapddmi.c xtrapdi.c xtrapdiswp.c xtrapditbl.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
@@ -10,6 +10,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/programs/Xserver/Xext
+
+CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}

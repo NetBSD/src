@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/03/16 17:40:54 matt Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2004/11/15 09:12:38 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/fonts
 
@@ -11,8 +11,8 @@ LIB=	xtt
 .PATH:	${X11SRCDIR.xc}/lib/font/X-TrueType/module
 
 # XXX we are building module only version
-SRCS=	xttprop.c xttfuncs.c xttcconv.c xttcap.c xttmisc.c xttblit.c \
-	freetype.c ftxcmap.c ftxsbit.c xttmodule.c
+SRCS=	xttprop.c xttfuncs.c xttcconv.c xttcap.c xttmisc.c \
+	xttmodule.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts/codeconv \
 		-I${X11SRCDIR.xc}/lib/font/X-TrueType \
@@ -29,19 +29,15 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts/codeconv \
 
 CPPFLAGS+=	-DTT_MAKE_OPTION_SINGLE_OBJECT=1 \
 		-DTT_CONFIG_OPTION_EXTEND_ENGINE \
-		-DOPT_ENCODINGS
+		-DOPT_ENCODINGS \
+		-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
-.include <bsd.x11.mk>
-
-.if !empty(X11FLAGS.LOADABLE)
 CPPFLAGS+=	-DFONTMODULE \
 		-DCCONV_MODULE \
 		-DCCONV_MODULE_DIR=\"/usr/X11R6/lib/modules/codeconv\"
-LIBDIR=	${XMODULEDIR}
-.else
-libinstall::
-.endif
 
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
 .include <bsd.lib.mk>
 
 SUBDIR=	ARABIC BIG5HKSCS GBK ISO8859_10 ISO8859_15 ISO8859_4 ISO8859_7 \

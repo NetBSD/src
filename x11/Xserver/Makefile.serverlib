@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.serverlib,v 1.8 2004/07/14 13:34:13 sekiya Exp $
+#	$NetBSD: Makefile.serverlib,v 1.8.2.1 2004/11/15 09:12:38 rtr Exp $
 
 NOLINT=         1
 NOPROFILE=      1
@@ -10,8 +10,9 @@ NOPIC=		1
 .include <bsd.own.mk>		# for NETBSDSRCDIR
 .include <bsd.endian.mk>
 
-.if ${XMODULEDIR:U} == ""
+.if !defined(XMODULEDIR) && !defined(XMODULE)
 libinstall::
+moduleinstall::
 .endif
 
 .if ${TARGET_ENDIANNESS} == "1234"
@@ -22,7 +23,7 @@ X_BYTE_ORDER=X_BIG_ENDIAN
 X_BYTE_ORDER=0
 .endif
 
-CPPFLAGS+=	${X11FLAGS.SERVER} -DX_BYTE_ORDER=${X_BYTE_ORDER}
+CPPFLAGS+=	${X11FLAGS.SERVER} -DX_BYTE_ORDER=${X_BYTE_ORDER} -DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
 .if !defined(XSERVERINCDIR)
 XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
@@ -41,5 +42,5 @@ MKPICLIB=	yes
 MKSTATICLIB=	no
 .endif
 .else
-NOPIC=		1
+NOPIC=	1
 .endif

@@ -1,14 +1,16 @@
-#	$NetBSD: Makefile.dbe,v 1.3 2004/02/07 06:52:05 lukem Exp $
+#	$NetBSD: Makefile.dbe,v 1.3.4.1 2004/11/15 09:12:39 rtr Exp $
 
 LIB=		dbe
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/${LIB}
 
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/${LIB}
 SRCS+=		dbe.c midbe.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${XSERVERINCDIR} \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions
+
+CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}

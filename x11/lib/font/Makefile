@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/04/05 12:03:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2004/11/15 09:12:46 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -85,38 +85,7 @@ CPPFLAGS.${fn}+=-DBUILDCID -DHAVE_CFM -DUSE_MMAP
 # FreeType
 .PATH:		${X11SRCDIR.xc}/lib/font/FreeType
 SRCS.FreeType=	xttcap.c ftfuncs.c ftenc.c fttools.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/base
-#SRCS.FreeType+=	ftbase.c ftinit.c ftglyph.c ftbbox.c ftsystem.c fttype1.c ftxf86.c ftbdf.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/bdf
-#SRCS.FreeType+=	bdfdrivr.c bdflib.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/raster
-#SRCS.FreeType+=	ftrend1.c ftraster.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/smooth
-#SRCS.FreeType+=	ftsmooth.c ftgrays.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/truetype
-#SRCS.FreeType+=	ttdriver.c ttobjs.c ttpload.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/psaux
-#SRCS.FreeType+=	psauxmod.c psobjs.c t1cmap.c t1decode.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/type1
-#SRCS.FreeType+=	t1driver.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/cid
-#SRCS.FreeType+=	cidriver.c cidgload.c cidobjs.c cidload.c cidparse.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/type42
-#SRCS.FreeType+=	t42drivr.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/psnames
-#SRCS.FreeType+=	psmodule.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/sfnt
-#SRCS.FreeType+=	sfdriver.c ttload.c ttpost.c ttsbit.c ttcmap.c sfobjs.c ttcmap0.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/winfonts
-#SRCS.FreeType+=	winfnt.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/autohint
-#SRCS.FreeType+=	ahmodule.c ahhint.c ahglyph.c ahangles.c ahglobal.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/cff
-#SRCS.FreeType+=	cffdrivr.c cffobjs.c cffload.c cffparse.c cffcmap.c cffgload.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/pfr
-#SRCS.FreeType+=	pfrdrivr.c pfrobjs.c pfrload.c pfrgload.c pfrcmap.c
-#.PATH:		${X11SRCDIR.xc}/extras/freetype2/src/pcf
-#SRCS.FreeType+=	pcfdriver.c pcfutil.c
+
 .for fn in ${SRCS.FreeType}
 CPPFLAGS.${fn}=	-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-I${X11SRCDIR.xc}/include/fonts \
@@ -124,34 +93,11 @@ CPPFLAGS.${fn}=	-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${X11SRCDIR.xc}/extras/freetype2/src/truetype \
+		-I${X11SRCDIR.xc}/extras/freetype2/include \
 		-I${X11SRCDIR.xc}/extras/freetype2/src/pcf 
 CPPFLAGS.${fn}+=${X11FLAGS.SERVER} -DXFreeXDGA -DXFree86LOADER \
 		-DXF86VIDMODE -DXFREE86_FT2
 .endfor
-
-
-# X-TrueType
-# .PATH:		${X11SRCDIR.xc}/lib/font/X-TrueType
-# .PATH:		${X11SRCDIR.xc}/extras/FreeType/lib/arch/unix
-# SRCS.X-TrueType=xttprop.c xttfuncs.c xttcconv.c xttcap.c xttmisc.c \
-#		xttblit.c freetype.c ftxcmap.c ftxsbit.c
-#.for fn in ${SRCS.X-TrueType}
-#CPPFLAGS.${fn}=	-DTT_MAKE_OPTION_SINGLE_OBJECT=1 \
-#		-DTT_CONFIG_OPTION_EXTEND_ENGINE \
-#		-DCCONV_MODULE -DCCONV_MODULE_DIR=\"${X11USRLIBDIR}/modules\" \
-#		-DCCONV_MODULE_SUBDIR=\"${X11USRLIBDIR}/modules/codeconv\" \
-#		-DOPT_ENCODINGS -DFREETYPE1_BUILD_DEFINES
-# .endfor
-
-
-# builtins
-#.PATH:		${X11SRCDIR.xc}/lib/font/builtins
-#SRCS.builtins= 	dir.c file.c fonts.c fpe.c render.c
-#.for fn in ${SRCS.builtins}
-#CPPFLAGS.${fn}=	-I${X11SRCDIR.xc}/lib/font/include \
-#		-I${X11SRCDIR.xc}/include/fonts
-#.endfor
-
 
 # util
 .PATH:		${X11SRCDIR.xc}/lib/font/util
@@ -168,7 +114,7 @@ SRCS=		${SRCS.bitmap} ${SRCS.fontfile} ${SRCS.fc} \
 		${SRCS.FreeType} ${SRCS.X-TrueType} ${SRCS.builtins} \
 		${SRCS.util}
 
-SUBDIR=	stubs xtt
+SUBDIR=	stubs
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

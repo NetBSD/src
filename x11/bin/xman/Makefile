@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2004/11/15 09:12:45 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,8 @@ CPPFLAGS+=-DHAS_SNPRINTF -DHELPFILE=\"${X11LIBDIR}/xman.help\" -DHAS_MKSTEMP
 CPPFLAGS+=-DHAS_GROFF -DMANCONFIGSTYLE_OpenBSD -DMANCONF=\"/etc/man.conf\"
 
 APPDEFS=Xman.ad
+
+BUILDSYMLINKS=	Xman-xprint.ad Xman.ad
 
 FILES=	xman.help
 FILESDIR=${X11LIBDIR}

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2004/03/28 15:19:30 chris Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2004/11/15 09:12:39 rtr Exp $
 
 .include <bsd.own.mk>
 
-PROG=	xf86cfg
+PROG=	xorgcfg
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xf86cfg
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xf86config	# for Cards
@@ -35,7 +35,10 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
 # XXX only if loadable -DUSE_MODULES
 CPPFLAGS+=	-DXF86CONFIG=\"XF86Config\" -DUSE_MODULES \
 		-DPROJECT_ROOT=\"/usr/X11R6\" \
-		-DXF86CONFIGDIR=\"/etc/X11\" -DWSCONS_SUPPORT
+		-DXF86CONFIGDIR=\"/etc/X11\" -DWSCONS_SUPPORT \
+		-D__XCONFIGFILE__='"xorg.conf"' \
+		-D__XSERVERNAME__='"Xorg"' \
+		-D__XKBDEFRULES__='"xorg"'
 
 .if ${MACHINE} == "i386"
 CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
@@ -56,7 +59,8 @@ BUILDSYMLINKS=	../os-support/shared/libc_wrapper.c libc_wrapper.c \
 
 CPPFLAGS.libc_wrapper.c=	-DSELF_CONTAINED_WRAPPER
 
-APPDEFS=XF86Cfg.ad
+#APPDEFS=XF86Cfg.ad
+XTODO=	XF86Cfg.ad
 
 FILES.bitmap=	card.xbm keyboard.xbm monitor.xbm mouse.xbm left.xbm \
 		right.xbm up.xbm down.xbm wider.xbm narrower.xbm \
@@ -83,7 +87,7 @@ FILESDIR_Options=	${X11USRLIBDIR}/X11
 
 # need to do this here, so that X11FLAGS.LOADABLE is available
 .if (${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "armeb") \
-        && defined(X11FLAGS.LOADABLE)
+        && ${X11LOADABLE} != "no"
 LDADD+= -larm
 DPADD+= ${LIBARM}
 .endif

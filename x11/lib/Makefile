@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2004/08/05 01:28:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2004/11/15 09:12:45 rtr Exp $
 
 SUBDIR=	X11 ICE Xau .WAIT \
 	SM Xext .WAIT \
-	Xt Xpm Xrender GL .WAIT \
-	Xmu dps .WAIT \
-	FS GLU GLw OSmesa XRes XTrap Xaw Xaw6 Xcursor Xdmcp Xext Xft Xft1 \
-	Xfontcache Xi Xinerama Xmuu Xp Xrandr Xrender Xss Xtst Xv XvMC \
+	Xt Xpm XprintUtil XprintAppUtil Xrender GL .WAIT \
+	Xmu dps Xp .WAIT \
+	FS GLU GLw OSmesa XRes XTrap Xaw Xaw6 Xcursor Xcomposite Xdmcp Xdamage Xevie Xext Xfixes Xft Xft1 \
+	Xfontcache Xi Xinerama Xmuu Xrandr Xrender Xss Xtst Xv XvMC \
 	Xxf86dga Xxf86misc Xxf86vm dpstk expat font fontconfig fontenc \
 	freetype2 lbxutil psres oldX xkbfile xkbui xtrans
 

@@ -1,4 +1,0 @@
-# $NetBSD: mapper.dir.GB.src,v 1.1 2003/06/27 08:40:31 tshiozak Exp $
-
-GB2312/UCS			mapper_std	GB/GB2312%UCS.mps
-UCS/GB2312			mapper_std	GB/UCS%GB2312.mps

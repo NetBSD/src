@@ -1,3 +1,0 @@
-# $NetBSD: form,v 1.1 2001/03/06 21:28:53 garbled Exp $
-script:script1,clean_uucp	Run the weekly uucp cleanup script?
-script:script1,rebuild_locatedb	Rebuild the locate database?

@@ -1,0 +1,16 @@
+#	$NetBSD: Makefile.wacom,v 1.1.2.1 2004/11/15 09:12:42 rtr Exp $
+
+MAN+=	wacom.4
+
+.PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/input/wacom
+SRCS.wacom=	xf86Wacom.c
+
+CPPFLAGS.wacom=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/input/wacom \
+		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
+		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/loader \
+		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support \
+		-I${X11SRCDIR.xc}/programs/Xserver/include \
+		-I${X11SRCDIR.xc}/programs/Xserver/mi \
+                -I${DESTDIR}${X11INCDIR}/X11 \
+                -I${DESTDIR}${X11INCDIR}/X11/extensions \
+                -I${XSERVERINCDIR}
