@@ -1,5 +1,5 @@
 /*
- * $Id: warnings.c,v 1.6 1993/12/08 10:14:09 pk Exp $
+ * $Id: warnings.c,v 1.7 1993/12/20 22:44:44 pk Exp $
  */
 
 #include <sys/param.h>
@@ -47,6 +47,10 @@ print_file_name (entry, outfile)
      struct file_entry *entry;
      FILE *outfile;
 {
+	if (entry == NULL) {
+		fprintf (outfile, "NULL");
+	}
+
 	if (entry->superfile) {
 		print_file_name (entry->superfile, outfile);
 		fprintf (outfile, "(%s)", entry->filename);
@@ -63,6 +67,10 @@ get_file_name (entry)
      struct file_entry *entry;
 {
 	char *result, *supfile;
+
+	if (entry == NULL) {
+		return (char *)strdup("NULL");
+	}
 
 	if (entry->superfile) {
 		supfile = get_file_name (entry->superfile);
@@ -675,13 +683,14 @@ do_file_warnings (entry, outfile)
 				break;
 
 			default:
+printf("multiply defined: %s, type %#x\n", g->name, s->n_type);
 				/* Don't print out multiple defs at references.*/
 				continue;
 			}
 
-		} else if (BIT_SET_P (nlist_bitvector, i))
+		} else if (BIT_SET_P (nlist_bitvector, i)) {
 			continue;
-		else if (list_unresolved_refs && !g->defined && !g->so_defined) {
+		} else if (list_unresolved_refs && !g->defined && !g->so_defined) {
 			if (g->undef_refs >= MAX_UREFS_PRINTED)
 				continue;
 
