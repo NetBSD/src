@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.20 1999/11/29 19:48:45 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.21 1999/11/29 20:09:55 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.20 1999/11/29 19:48:45 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.21 1999/11/29 20:09:55 hubertf Exp $");
 #endif
 #endif
 
@@ -137,7 +137,7 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
 	for (p = plist->head; p; p = p->next) {
 		if (p->type == PLIST_FILE)
 			fprintf(totar, "%s\n", p->name);
-		else if (p->type == PLIST_CWD)
+		else if (p->type == PLIST_CWD || p->type == PLIST_SRC)
 			fprintf(totar, "-C\n%s\n", p->name);
 		else if (p->type == PLIST_IGNORE)
 			p = p->next;
