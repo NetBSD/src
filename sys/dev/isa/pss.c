@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.40 1998/03/22 12:50:20 drochner Exp $	*/
+/*	$NetBSD: pss.c,v 1.41 1998/03/23 01:00:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -167,6 +167,8 @@ int	pssprobe __P((struct device *, void *, void *));
 int	pssprobe __P((struct device *, struct cfdata *, void *));
 #endif
 void	pssattach __P((struct device *, struct device *, void *));
+static	int pssfind __P((struct device *, struct pss_softc *, 
+			 struct isa_attach_args *));
 
 #ifdef __BROKEN_INDIRECT_CONFIG
 int	spprobe __P((struct device *, void *, void *));
@@ -174,6 +176,8 @@ int	spprobe __P((struct device *, void *, void *));
 int	spprobe __P((struct device *, struct cfdata *, void *));
 #endif
 void	spattach __P((struct device *, struct device *, void *));
+static	int spfind __P((struct device *, struct ad1848_softc *, 
+			struct isa_attach_args *));
 
 #ifdef notyet
 #ifdef __BROKEN_INDIRECT_CONFIG
@@ -266,7 +270,6 @@ struct audio_hw_if pss_audio_if = {
 	ad1848_get_props,
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
 /* Interrupt translation for WSS config */
 static u_char wss_interrupt_bits[16] = {
     0xff, 0xff, 0xff, 0xff,
@@ -276,7 +279,6 @@ static u_char wss_interrupt_bits[16] = {
 };
 /* ditto for WSS DMA channel */
 static u_char wss_dma_bits[4] = {1, 2, 0, 3};
-#endif
 
 struct cfattach pss_ca = {
 	sizeof(struct pss_softc), pssprobe, pssattach
@@ -719,20 +721,33 @@ pss_dump_regs(sc)
  * Probe for the PSS hardware.
  */
 int
-pssprobe(parent, self, aux)
+pssprobe(parent, match, aux)
     struct device *parent;
 #ifdef __BROKEN_INDIRECT_CONFIG
-    void *self;
+    void *match;
 #else
-    struct cfdata *self;
+    struct cfdata *match;
 #endif
     void *aux;
 {
-#ifndef __BROKEN_INDIRECT_CONFIG
-    return(0);
+    struct pss_softc probesc, *sc = &probesc;
+
+    bzero(sc, sizeof *sc);
+#ifdef __BROKEN_INDIRECT_CONFIG
+    sc->sc_dev.dv_cfdata = ((struct device *)match)->dv_cfdata;
 #else
-    struct pss_softc *sc = self;
-    struct isa_attach_args *ia = aux;
+    sc->sc_dev.dv_cfdata = match;
+#endif
+    strcpy(sc->sc_dev.dv_xname, "pas");
+    return pssfind(parent, sc, aux);
+}
+
+static int
+pssfind(parent, sc, ia)
+    struct device *parent;
+    struct pss_softc *sc;
+    struct isa_attach_args *ia;
+{
     int iobase = ia->ia_iobase;
     
     if (!PSS_BASE_VALID(iobase)) {
@@ -821,7 +836,6 @@ pss_found:
 #endif /* notyet */
 
     return 1;
-#endif
 }
 
 /*
@@ -837,24 +851,35 @@ spprobe(parent, match, aux)
 #endif
     void *aux;
 {
-#ifndef __BROKEN_INDIRECT_CONFIG
-    return(0);
+    struct ad1848_softc probesc, *sc = &probesc;
+
+    bzero(sc, sizeof *sc);
+#ifdef __BROKEN_INDIRECT_CONFIG
+    sc->sc_dev.dv_cfdata = ((struct device *)match)->dv_cfdata;
 #else
-    struct ad1848_softc *sc = match;
+    sc->sc_dev.dv_cfdata = match;
+#endif
+    return spfind(parent, sc, aux);
+}
+
+static int
+spfind(parent, sc, ia)
+    struct device *parent;
+    struct ad1848_softc *sc;
+    struct isa_attach_args *ia;
+{
     struct pss_softc *pc = (void *) parent;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
-    struct isa_attach_args *ia = aux;
     u_char bits;
     int i;
 
     sc->sc_iot = ia->ia_iot;
-    sc->sc_iobase = cf->cf_iobase + WSS_CODEC;
     
     /* Set WSS io address */
     pss_setaddr(cf->cf_iobase, pc->sc_iobase+PSS_WSS_CONFIG);
 
     /* Is there an ad1848 chip at the WSS iobase ? */
-    if (ad1848_probe(sc) == 0) {
+    if (ad1848_mapprobe(sc, cf->cf_iobase + WSS_CODEC) == 0) {
 	DPRINTF(("sp: no ad1848 ? iobase=%x\n", sc->sc_iobase));
 	return 0;
     }
@@ -929,7 +954,6 @@ spprobe(parent, match, aux)
     sc->parent = pc;
     
     return 1;
-#endif
 }
 
 #ifdef notyet
@@ -1063,6 +1087,11 @@ pssattach(parent, self, aux)
     u_char vers;
     struct ad1848_volume vol = {150, 150};
     
+    if (!pssfind(parent, sc, ia)) {
+	printf("%s: pssfind failed\n", sc->sc_dev.dv_xname);
+	return;
+    }
+
     sc->sc_iobase = iobase;
     sc->sc_drq = ia->ia_drq;
 
@@ -1077,7 +1106,7 @@ pssattach(parent, self, aux)
     vers = (inw(sc->sc_iobase+PSS_ID_VERS)&0xff) - 1;
     printf(": ESC614%c\n", (vers > 0)?'A'+vers:' ');
     
-    (void)config_found(self, ia->ia_ic, NULL);		/* XXX */
+    (void)config_found(self, ia, NULL);		/* XXX */
 
     sc->out_port = PSS_MASTER_VOL;
 
@@ -1096,8 +1125,14 @@ spattach(parent, self, aux)
 {
     struct ad1848_softc *sc = (struct ad1848_softc *)self;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
-    isa_chipset_tag_t ic = aux;				/* XXX */
+    struct isa_attach_args *ia = (struct isa_attach_args *)aux;
+    isa_chipset_tag_t ic = ia->ia_ic;
     int iobase = cf->cf_iobase;
+
+    if (!spfind(parent, sc, ia)) {
+	printf("%s: spfind failed\n", sc->sc_dev.dv_xname);
+	return;
+    }
 
     sc->sc_iobase = iobase;
     sc->sc_drq = cf->cf_drq;
