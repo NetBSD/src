@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.31 2003/12/04 19:38:22 atatat Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.32 2004/03/09 03:14:09 atatat Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.31 2003/12/04 19:38:22 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.32 2004/03/09 03:14:09 atatat Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -578,8 +578,9 @@ SYSCTL_SETUP(sysctl_vfs_coda_setup, "sysctl vfs.coda subtree setup")
 /*
  * To allow for greater ease of use, some vnodes may be orphaned when
  * Venus dies.  Certain operations should still be allowed to go
- * through, but without propagating ophan-ness.  So this function will
- * get a new vnode for the file from the current run of Venus.  */
+ * through, but without propagating orphan-ness.  So this function will
+ * get a new vnode for the file from the current run of Venus.
+ */
  
 int
 getNewVnode(vpp)
