@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.2 2003/02/25 10:29:12 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.3 2003/06/26 05:26:46 itojun Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.2 2003/02/25 10:29:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.3 2003/06/26 05:26:46 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1496,11 +1496,13 @@ msdosfs_readdir(v)
 				switch (n) {
 				case 0:
 					dirbuf.d_namlen = 1;
-					strcpy(dirbuf.d_name, ".");
+					strlcpy(dirbuf.d_name, ".",
+					    sizeof(dirbuf.d_name));
 					break;
 				case 1:
 					dirbuf.d_namlen = 2;
-					strcpy(dirbuf.d_name, "..");
+					strlcpy(dirbuf.d_name, "..",
+					    sizeof(dirbuf.d_name));
 					break;
 				}
 				dirbuf.d_reclen = DIRENT_SIZE(&dirbuf);
