@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.75 1998/08/10 08:11:13 matthias Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.76 1998/09/21 15:17:42 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -1152,8 +1152,9 @@ abortit:
 				VOP_UNLOCK(fvp, 0);
 				goto bad;
 			}
+			ip->de_diroffset = to_diroffset;
 			if (ip->de_dirclust != MSDOSFSROOT)
-				ip->de_diroffset = to_diroffset & pmp->pm_crbomask;
+				ip->de_diroffset &= pmp->pm_crbomask;
 		}
 		reinsert(ip);
 		if (newparent)
