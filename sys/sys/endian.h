@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.13 2004/09/13 10:33:43 tron Exp $	*/
+/*	$NetBSD: endian.h,v 1.14 2004/09/13 10:52:34 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -197,7 +197,7 @@ le16enc(void *buf, uint16_t u)
 static __inline uint16_t __unused
 be16dec(const void *buf)
 {
-	const uint8_t *p = (uint8_t *)buf;
+	const uint8_t *p = (const uint8_t *)buf;
 
 	return ((p[0] << 8) | p[1]);
 }
@@ -205,7 +205,7 @@ be16dec(const void *buf)
 static __inline uint16_t __unused
 le16dec(const void *buf)
 {
-	const uint8_t *p = (uint8_t *)buf;
+	const uint8_t *p = (const uint8_t *)buf;
 
 	return ((p[1] << 8) | p[0]);
 }
@@ -235,7 +235,7 @@ le32enc(void *buf, uint32_t u)
 static __inline uint32_t __unused
 be32dec(const void *buf)
 {
-	const uint8_t *p = (uint8_t *)buf;
+	const uint8_t *p = (const uint8_t *)buf;
 
 	return ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
 }
@@ -243,7 +243,7 @@ be32dec(const void *buf)
 static __inline uint32_t __unused
 le32dec(const void *buf)
 {
-	const uint8_t *p = (uint8_t *)buf;
+	const uint8_t *p = (const uint8_t *)buf;
 
 	return ((p[3] << 24) | (p[2] << 16) | (p[1] << 8) | p[0]);
 }
@@ -269,7 +269,7 @@ le64enc(void *buf, uint64_t u)
 static __inline uint64_t __unused
 be64dec(const void *buf)
 {
-	const uint8_t *p = (uint8_t *)buf;
+	const uint8_t *p = (const uint8_t *)buf;
 
 	return (((uint64_t)be32dec(p) << 32) | be32dec(p + 4));
 }
@@ -277,7 +277,7 @@ be64dec(const void *buf)
 static __inline uint64_t __unused
 le64dec(const void *buf)
 {
-	const uint8_t *p = (uint8_t *)buf;
+	const uint8_t *p = (const uint8_t *)buf;
 
 	return (le32dec(p) | ((uint64_t)le32dec(p + 4) << 32));
 }
