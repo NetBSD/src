@@ -1,4 +1,4 @@
-/*      $NetBSD: grf_cl.c,v 1.7 1996/03/17 01:17:11 thorpej Exp $        */
+/*      $NetBSD: grf_cl.c,v 1.8 1996/03/17 05:58:35 mhitch Exp $        */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -162,7 +162,7 @@ static unsigned char cl_imageptr[8 * 64], cl_maskptr[8 * 64];
 static unsigned char cl_sprred[2], cl_sprgreen[2], cl_sprblue[2];
 
 /* standard driver stuff */
-struct cfattac grfcl_ca = {
+struct cfattach grfcl_ca = {
 	sizeof(struct grf_softc), grfclmatch, grfclattach
 };
 
