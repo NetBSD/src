@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.66 1995/04/01 10:29:48 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.67 1995/04/10 16:53:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -927,7 +927,7 @@ sddump(dev_t dev)
 
 	blknum = dumplo + blkoff;
 	while (num > 0) {
-		pmap_enter(kernel_pmap,
+		pmap_enter(pmap_kernel(),
 		    MAPTO,
 		    trunc_page(addr),
 		    VM_PROT_READ,

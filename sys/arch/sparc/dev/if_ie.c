@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.12 1995/02/16 21:50:43 pk Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.13 1995/04/10 16:48:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -516,7 +516,7 @@ ieattach(parent, self, aux)
 		 * XXX
 		 */
 
-		ie_map = vm_map_create(kernel_pmap, (vm_offset_t)IEOB_ADBASE, 
+		ie_map = vm_map_create(pmap_kernel(), (vm_offset_t)IEOB_ADBASE, 
 			(vm_offset_t)IEOB_ADBASE + sc->sc_msize, 1);
 		if (ie_map == NULL) panic("ie_map");
 		sc->sc_maddr = (caddr_t) kmem_alloc(ie_map, sc->sc_msize);
@@ -541,9 +541,9 @@ ieattach(parent, self, aux)
 		 * to IEOB_ADBASE to be safe.
 		 */
 
-		pa = pmap_extract(kernel_pmap, (vm_offset_t)sc->sc_maddr);
+		pa = pmap_extract(pmap_kernel(), (vm_offset_t)sc->sc_maddr);
 		if (pa == 0) panic("ie pmap_extract");
-		pmap_enter(kernel_pmap, trunc_page(IEOB_ADBASE+IE_SCP_ADDR),
+		pmap_enter(pmap_kernel(), trunc_page(IEOB_ADBASE+IE_SCP_ADDR),
                     (vm_offset_t)pa | PMAP_NC,
                     VM_PROT_READ | VM_PROT_WRITE, 1);
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: machdep.c,v 1.8 1995/03/30 21:25:23 ragge Exp $  */
+/*      $NetBSD: machdep.c,v 1.9 1995/04/10 16:49:22 mycroft Exp $  */
 
 /* Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1993 Adam Glass
@@ -132,7 +132,7 @@ cpu_startup() {
          */
 #if 0
         for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-                pmap_enter(kernel_pmap, (vm_offset_t)msgbufp,
+                pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
                     avail_end + i * NBPG, VM_PROT_ALL, TRUE);
         msgbufmapped = 1;
 #endif
