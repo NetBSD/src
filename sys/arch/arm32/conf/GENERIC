@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.62 2000/01/23 23:46:07 hubertf Exp $
+#	$NetBSD: GENERIC,v 1.63 2000/02/26 17:35:36 oster Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident 		"GENERIC-$Revision: 1.62 $"
+#ident 		"GENERIC-$Revision: 1.63 $"
 
 # estimated number of users
 maxusers	32
@@ -287,6 +287,7 @@ pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd     4               # disk-like interface to files
 pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	raid	4		# RAIDframe disk driver
+#options	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.352 2000/02/25 10:02:13 drochner Exp $
+#	$NetBSD: files,v 1.353 2000/02/26 17:35:33 oster Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -100,6 +100,9 @@ defopt	SOFTDEP
 defopt	QUOTA
 defopt	opt_ffs.h	FFS_EI
 defopt	opt_ntfs.h	NTFS_DEBUG
+
+# RAIDframe options
+defopt	RAID_AUTOCONFIG
 
 # buffer cache size options
 defopt	opt_bufcache.h	BUFCACHE BUFPAGES
