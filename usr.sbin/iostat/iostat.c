@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)iostat.c	8.2 (Berkeley) 1/26/94"; */
-static char *rcsid = "$Id: iostat.c,v 1.6 1994/05/14 21:52:22 cgd Exp $";
+static char *rcsid = "$Id: iostat.c,v 1.7 1995/01/18 07:46:31 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -336,7 +336,7 @@ phdr(signo)
 	for (i = 0; i < dk_ndrive; i++)
 		if (dr_select[i])
 			(void)printf(" sps tps msps ");
-	(void)printf(" us ni sy id\n");
+	(void)printf(" us ni sy in id\n");
 }
 
 void
