@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.64 2000/06/09 00:03:32 fvdl Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.65 2000/06/10 04:40:17 itojun Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.64 2000/06/09 00:03:32 fvdl Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.65 2000/06/10 04:40:17 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1453,6 +1453,9 @@ allones(struct sockaddr_storage *ssp, int bitlen)
 	bytelen = bitlen / 8;
 	bitsleft = bitlen % 8;
 
+	if (bytelen > zerolen)
+		return -1;
+
 	for (i = 0; i < bytelen; i++)
 		*p++ = 0xff;
 
@@ -1966,7 +1969,14 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 			memset(&ss, 0, sizeof ss);
 			ss.ss_family = args.ua.export.ex_addr->sa_family;
 			ss.ss_len = args.ua.export.ex_addr->sa_len;
-			allones(&ss, grp->gr_ptr.gt_net.nt_len);
+			if (allones(&ss, grp->gr_ptr.gt_net.nt_len) != 0) {
+				syslog(LOG_ERR,
+				    "\"%s\", line %ld: Bad network flag",
+				    line, (unsigned long)lineno);
+				if (cp)
+					*cp = savedc;
+				return (1);
+			}
 			args.ua.export.ex_mask = (struct sockaddr *)&ss;
 			args.ua.export.ex_masklen = ss.ss_len;
 			break;
