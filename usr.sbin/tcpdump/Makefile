@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/03 19:54:09 christos Exp $	
+#	$NetBSD: Makefile,v 1.9 1997/10/18 06:43:03 lukem Exp $	
 
-WARNS?=	1
 PROG=	tcpdump
 MAN=	tcpdump.8 
 
