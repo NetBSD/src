@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: sparc-nat.c,v 1.1 1994/01/28 12:42:05 pk Exp $
+	$Id: sparc-nat.c,v 1.2 1994/02/04 16:48:20 pk Exp $
 */
 
 #include "defs.h"
@@ -28,10 +28,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <machine/reg.h>
-
-#define PT_FIRSTMACH	12/*XXX*/
-#include <machine/ptrace.h>
-
 
 /* We don't store all registers immediately when requested, since they
    get sent over in large chunks anyway.  Instead, we accumulate most
