@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)route.c	7.22 (Berkeley) 6/27/91
- *	$Id: route.c,v 1.7 1994/02/10 17:25:05 mycroft Exp $
+ *	$Id: route.c,v 1.8 1994/03/23 05:05:03 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -107,11 +107,17 @@ rtalloc1(dst, report)
 	    ((rn->rn_flags & RNF_ROOT) == 0)) {
 		newrt = rt = (struct rtentry *)rn;
 		if (report && (rt->rt_flags & RTF_CLONING)) {
-			if ((err = rtrequest(RTM_RESOLVE, dst, SA(0),
-					      SA(0), 0, &newrt)) ||
-			    ((rt->rt_flags & RTF_XRESOLVE)
-			      && (msgtype = RTM_RESOLVE))) /* intended! */
-			    goto miss;
+			err = rtrequest(RTM_RESOLVE, dst, SA(0),
+			    SA(0), 0, &newrt);
+			if (err) {
+				newrt = rt;
+				rt->rt_refcnt++;
+				goto miss;
+			}
+			if ((rt = newrt) && (rt->rt_flags & RTF_XRESOLVE)) {
+				msgtype = RTM_RESOLVE;
+				goto miss;
+			}
 		} else
 			rt->rt_refcnt++;
 	} else {
@@ -159,7 +165,7 @@ rtredirect(dst, gateway, netmask, flags, src, rtp)
 	/* verify the gateway is directly reachable */
 	if (ifa_ifwithnet(gateway) == 0) {
 		error = ENETUNREACH;
-		goto done;
+		goto out;
 	}
 	rt = rtalloc1(dst, 0);
 	/*
@@ -221,10 +227,11 @@ done:
 		else
 			rtfree(rt);
 	}
+out:
 	if (error)
 		rtstat.rts_badredirect++;
-	else
-		(stat && (*stat)++);
+	else if (stat != NULL)
+		(*stat)++;
 	rt_missmsg(RTM_REDIRECT, dst, gateway, netmask, src, flags, error);
 }
 
