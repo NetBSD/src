@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 2001/09/04 06:57:27 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.12.4.1 2001/10/24 17:36:18 thorpej Exp $	*/
 /*	NetBSD: bus.h,v 1.27 2000/03/15 16:44:50 drochner Exp 	*/
 /*	$OpenBSD: bus.h,v 1.15 1999/08/11 23:15:21 niklas Exp $	*/
 
@@ -813,6 +813,7 @@ struct arc_bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
+	struct proc	*_dm_proc;	/* proc that owns the mapping */
 
 	/*
 	 * Private cookie to be used by the DMA back-end.
@@ -840,9 +841,7 @@ int	_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
 int	_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int));
 void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	_mips1_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int));
-void	_mips3_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int));
 
 int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.5 2001/07/05 16:02:21 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.5.6.1 2001/10/24 17:36:18 thorpej Exp $	*/
 /*	$OpenBSD: asc.c,v 1.9 1998/03/16 09:38:39 pefo Exp $	*/
 /*	NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp 	*/
 
@@ -135,7 +135,8 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <mips/locore.h> /* for mips3_HitFlushDCache() */
+#include <mips/cache.h>
+
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -674,7 +675,7 @@ asc_scsipi_request(chan, req, arg)
 		 *  Flush caches for any data buffer
 		 */
 		if(xs->datalen != 0) {
-			mips3_HitFlushDCache((vaddr_t)xs->data, xs->datalen);
+			mips_dcache_wbinv_range((vaddr_t)xs->data, xs->datalen);
 		}
 		/*
 		 *  The hack on the next few lines are to avoid buffers

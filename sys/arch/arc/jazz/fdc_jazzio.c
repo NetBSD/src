@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_jazzio.c,v 1.1 2001/05/22 03:22:50 soda Exp $	*/
+/*	$NetBSD: fdc_jazzio.c,v 1.1.8.1 2001/10/24 17:36:19 thorpej Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -83,7 +83,7 @@
 #include <sys/buf.h>
 #include <sys/queue.h>
 
-#include <mips/locore.h>	/* for mips3_HitFlushDCache() */
+#include <mips/cache.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -214,7 +214,7 @@ fdc_jazzio_dma_start(fdc, addr, size, datain)
 {
 	struct fdc_jazzio_softc *jsc = (void *)fdc;
 
-	mips3_FlushDCache((vaddr_t)addr, (vsize_t)size);
+	mips_dcache_wbinv_range((vaddr_t)addr, (vsize_t)size);
 	DMA_START(jsc->dma, addr, size, datain ? DMA_FROM_DEV : DMA_TO_DEV);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlb.c,v 1.5 2001/09/28 11:59:52 chs Exp $	*/
+/*	$NetBSD: jazzdmatlb.c,v 1.5.2.1 2001/10/24 17:36:19 thorpej Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*-
@@ -47,6 +47,8 @@
 #include <arc/jazz/jazzdmatlbreg.h>
 #include <arc/jazz/jazzdmatlbvar.h>
 
+#include <mips/cache.h>
+
 extern paddr_t	kvtophys __P((vaddr_t));	/* XXX */
 
 /*
@@ -79,7 +81,7 @@ jazz_dmatlb_init(iot, ioaddr)
 
 	dma_tlb = (jazz_dma_pte_t *)PICA_TL_BASE;
 
-	mips3_FlushCache();	/* Make sure no map entries are cached */
+	mips_dcache_wbinv_all();/* Make sure no map entries are cached */
 	bzero((char *)dma_tlb, JAZZ_DMATLB_SIZE);
 
 	dmatlbmap = extent_create("dmatlb", 0, NDMATLB, M_DEVBUF, NULL, NULL,
