@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
+/*	$NetBSD: eso.c,v 1.4 1999/08/14 15:05:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -1484,7 +1484,7 @@ eso_freem(hdl, addr, type)
 	void *addr;
 	int type;
 {
-	struct eso_softc *sc;
+	struct eso_softc *sc = hdl;
 	struct eso_dma *p, **pp;
 
 	for (pp = &sc->sc_dmas; (p = *pp) != NULL; pp = &p->ed_next) {
