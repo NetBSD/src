@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsiod.c,v 1.9 1995/05/28 05:32:13 jtc Exp $	*/
+/*	$NetBSD: nfsiod.c,v 1.10 1995/09/30 11:39:53 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nfsiod.c	8.3 (Berkeley) 2/22/94";
 #else
-static char rcsid[] = "$NetBSD: nfsiod.c,v 1.9 1995/05/28 05:32:13 jtc Exp $";
+static char rcsid[] = "$NetBSD: nfsiod.c,v 1.10 1995/09/30 11:39:53 pk Exp $";
 #endif
 #endif not lint
 
@@ -139,15 +139,15 @@ main(argc, argv)
 		switch (fork()) {
 		case -1:
 			syslog(LOG_ERR, "fork: %m");
-			exit (1);
+			exit(1);
 		case 0:
 			if (nfssvc(NFSSVC_BIOD, NULL) < 0) {
 				syslog(LOG_ERR, "nfssvc: %m");
-				exit (1);
+				exit(1);
 			}
 			exit(0);
 		}
-	exit (0);
+	exit(0);
 }
 
 void
@@ -162,7 +162,7 @@ reapchild(signo)
 	int signo;
 {
 
-	while (wait3(NULL, WNOHANG, NULL));
+	while (wait3(NULL, WNOHANG, NULL) > 0);
 }
 
 void
