@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.42 2000/03/14 15:56:54 oster Exp $
+#	$NetBSD: files.hp300,v 1.43 2001/01/02 04:28:38 simonb Exp $
 #
 # hp300-specific configuration info
 
@@ -211,6 +211,9 @@ file	dev/cninit.c
 #
 include "compat/hpux/files.hpux"
 file	arch/hp300/hp300/hpux_machdep.c		compat_hpux
+
+# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
+include	"compat/aoutm68k/files.aoutm68k"
 
 # SVR4 Binary Compatibility (COMPAT_SVR4)
 include	"compat/svr4/files.svr4"
