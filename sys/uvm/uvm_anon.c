@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.20 2001/11/06 08:07:49 chs Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.21 2001/11/10 07:36:59 lukem Exp $	*/
 
 /*
  *
@@ -35,6 +35,9 @@
 /*
  * uvm_anon.c: uvm anon ops
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.21 2001/11/10 07:36:59 lukem Exp $");
 
 #include "opt_uvmhist.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.54 2001/11/06 05:34:42 chs Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.55 2001/11/10 07:36:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -65,6 +65,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.55 2001/11/10 07:36:59 lukem Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sysv.h"

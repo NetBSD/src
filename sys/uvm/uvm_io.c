@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.16 2001/09/15 20:36:46 chs Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.17 2001/11/10 07:37:00 lukem Exp $	*/
 
 /*
  *
@@ -37,6 +37,9 @@
 /*
  * uvm_io.c: uvm i/o ops
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.17 2001/11/10 07:37:00 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.113 2001/11/06 05:27:17 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.114 2001/11/10 07:37:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,13 +66,16 @@
  * rights to redistribute these changes.
  */
 
-#include "opt_ddb.h"
-#include "opt_uvmhist.h"
-#include "opt_sysv.h"
-
 /*
  * uvm_map.c: uvm map operations
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.114 2001/11/10 07:37:00 lukem Exp $");
+
+#include "opt_ddb.h"
+#include "opt_uvmhist.h"
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
