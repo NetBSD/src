@@ -1,4 +1,4 @@
-/*	$NetBSD: execl.c,v 1.9 2003/01/18 11:23:53 thorpej Exp $	*/
+/*	$NetBSD: execl.c,v 1.10 2003/03/04 19:44:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execl.c,v 1.9 2003/01/18 11:23:53 thorpej Exp $");
+__RCSID("$NetBSD: execl.c,v 1.10 2003/03/04 19:44:09 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,18 +54,13 @@ __weak_alias(execl,_execl)
 
 
 extern char **environ;
-#ifdef _REENTRANT
-extern rwlock_t __environ_lock;
-#endif
 
 int
 execl(const char *name, const char *arg, ...)
 {
 	int r;
 #if defined(__i386__) || defined(__m68k__) || defined(__ns32k__)
-	rwlock_rdlock(&__environ_lock);
 	r = execve(name, (char **) &arg, environ);
-	rwlock_unlock(&__environ_lock);
 	return (r);
 #else
 	va_list ap;
@@ -85,9 +80,7 @@ execl(const char *name, const char *arg, ...)
 		;
 	va_end(ap);
 	
-	rwlock_rdlock(&__environ_lock);
 	r = execve(name, argv, environ);
-	rwlock_unlock(&__environ_lock);
 	return (r);
 #endif
 }
