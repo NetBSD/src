@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.15 2003/07/16 06:57:39 itojun Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.16 2004/09/07 13:20:40 jrf Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.15 2003/07/16 06:57:39 itojun Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.16 2004/09/07 13:20:40 jrf Exp $");
 #endif
 
 /*
@@ -513,8 +513,7 @@ lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
 	if (host == NULL)
 		return (YP_NOKEY);
 
-	strncpy((char *) hostname, host->h_name, sizeof(hostname) - 1);
-	hostname[sizeof(hostname) - 1] = '\0';
+	(void)strlcpy(hostname, host->h_name, sizeof(hostname));
 	host = gethostbyname(hostname);
 	if (host == NULL)
 		return (YP_NOKEY);
