@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute6.c,v 1.5 1999/12/13 15:22:55 itojun Exp $	*/
+/*	$NetBSD: mroute6.c,v 1.6 1999/12/16 00:58:17 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -163,7 +163,8 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 		printf("   %5s", (mifp->m6_flags & MIFF_REGISTER) ?
 		       "reg0" : if_indextoname(ifnet.if_index, ifname));
 
-		printf(" %9llu  %9llu\n", mifp->m6_pkt_in, mifp->m6_pkt_out);
+		printf(" %9llu  %9llu\n", (unsigned long long)mifp->m6_pkt_in,
+		    (unsigned long long)mifp->m6_pkt_out);
 	}
 	if (!banner_printed)
 		printf("\nIPv6 Multicast Interface Table is empty\n");
@@ -187,7 +188,7 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 			       routename6(&mfc.mf6c_origin));
 			printf(" %-*.*s", WID_GRP, WID_GRP,
 			       routename6(&mfc.mf6c_mcastgrp));
-			printf(" %9llu", mfc.mf6c_pkt_cnt);
+			printf(" %9llu", (unsigned long long)mfc.mf6c_pkt_cnt);
 
 			for (waitings = 0, rtep = mfc.mf6c_stall; rtep; ) {
 				waitings++;
