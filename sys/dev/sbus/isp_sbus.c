@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.21 2000/01/14 08:43:17 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.22 2000/02/19 01:55:42 mjacob Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -342,12 +342,24 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dmamap_t dmamap;
+	ispcontreq_t *crq;
 	int cansleep = (xs->xs_control & XS_CTL_NOSLEEP) == 0;
 	int in = (xs->xs_control & XS_CTL_DATA_IN) != 0;
 
 	if (xs->datalen == 0) {
 		rq->req_seg_count = 1;
 		goto mbxsync;
+	}
+	if (XS_CDBLEN(xs) > 12) {
+		crq = (ispcontreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, *iptrp);
+		*iptrp = (*iptrp + 1) & (RQUEST_QUEUE_LEN - 1);
+		if (*iptrp == optr) {
+			printf("%s: Request Queue Overflow++\n", isp->isp_name);
+			XS_SETERR(xs, HBA_BOTCH);
+			return (CMD_COMPLETE);
+		}
+	} else {
+		crq = NULL;
 	}
 	assert(rq->req_handle != 0 && rq->req_handle <= isp->isp_maxcmds);
 	dmamap = sbc->sbus_dmamap[rq->req_handle - 1];
@@ -367,9 +379,21 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	} else {
 		rq->req_flags |= REQFLAG_DATA_OUT;
 	}
-	rq->req_dataseg[0].ds_count = xs->datalen;
-	rq->req_dataseg[0].ds_base =  dmamap->dm_segs[0].ds_addr;
-	rq->req_seg_count = 1;
+
+	if (crq) {
+		rq->req_seg_count = 2;
+		bzero((void *)crq, sizeof (*crq));
+		crq->req_header.rqs_entry_count = 1;
+		crq->req_header.rqs_entry_type = RQSTYPE_DATASEG;  
+		crq->req_dataseg[0].ds_count = xs->datalen;
+		crq->req_dataseg[0].ds_base =  (u_int32_t) kdvma;
+		ISP_SWIZZLE_CONTINUATION(isp, crq);
+	} else {
+		rq->req_dataseg[0].ds_count = xs->datalen;
+		rq->req_dataseg[0].ds_base =  (u_int32_t) kdvma;
+		rq->req_seg_count = 1;
+	}
+
 mbxsync:
         ISP_SWIZZLE_REQUEST(isp, rq);
 #if	0
