@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.18 1998/04/08 22:38:18 fair Exp $
+#	$NetBSD: Makefile,v 1.19 1998/04/13 14:08:27 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
 # Bill Joy UC Berkeley; Jim Kulp IIASA, Austria
 #
-# To profile, put -DPROF in DFLAGS and -pg in CFLAGS, and recompile.
+# To profile, put -DPROF in DFLAGS and -pg in COPTS, and recompile.
 
 PROG=	csh
 DFLAGS=-DBUILTIN -DFILEC -DNLS -DSHORT_STRINGS
