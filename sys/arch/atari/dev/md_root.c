@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.15.8.2 2002/06/20 03:38:18 nathanw Exp $	*/
+/*	$NetBSD: md_root.c,v 1.15.8.3 2002/06/24 22:04:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -140,7 +140,7 @@ struct md_conf	*md;
 	if(md->md_addr == NULL)
 		return;
 	if(ri->ramd_flag & RAMD_LOAD) {
-		if (loaddisk(md, ri->ramd_dev, curproc->l_proc)) {
+		if (loaddisk(md, ri->ramd_dev, curproc)) {
 			free(md->md_addr, M_DEVBUF);
 			md->md_addr = NULL;
 			return;

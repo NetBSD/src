@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.13.4.6 2002/04/17 00:03:21 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.13.4.7 2002/06/24 22:04:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.13.4.6 2002/04/17 00:03:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.13.4.7 2002/06/24 22:04:50 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -105,7 +105,7 @@ ibcs2_sendsig(catcher, sig, mask, code)
 	u_long code;
 {
 	/* XXX Need SCO sigframe format. */
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;

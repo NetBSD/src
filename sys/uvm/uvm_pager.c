@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.41.2.8 2002/06/20 03:50:44 nathanw Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.41.2.9 2002/06/24 22:12:57 nathanw Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.41.2.8 2002/06/20 03:50:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.41.2.9 2002/06/24 22:12:57 nathanw Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -151,7 +151,7 @@ ReStart:
 
 	if (uvm_map(pager_map, &kva, size, NULL,
 	      UVM_UNKNOWN_OFFSET, 0, UVM_FLAG_NOMERGE) != 0) {
-		if (curproc == uvm.pagedaemon_proc) {
+		if (curlwp == uvm.pagedaemon_proc) {
 			simple_lock(&pager_map_wanted_lock);
 			if (emerginuse) {
 				UVM_UNLOCK_AND_WAIT(&emergva,

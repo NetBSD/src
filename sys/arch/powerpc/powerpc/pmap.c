@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47.4.3 2002/01/08 00:27:12 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47.4.4 2002/06/24 22:07:11 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1506,7 +1506,7 @@ pmap_activate(l)
 		    (paddr_t *)&pcb->pcb_pmreal);
 	}
 
-	if (l == curproc) {
+	if (l == curlwp) {
 		/* Disable interrupts while switching. */
 		__asm __volatile("mfmsr %0" : "=r"(psl) :);
 		psl &= ~PSL_EE;

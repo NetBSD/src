@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.11.6.2 2002/06/21 21:26:32 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.11.6.3 2002/06/24 22:07:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 paddr_t
 mmmmap(dev_t dev, off_t off, int prot)
 {
-	struct proc *p = curproc->l_proc;
+	struct proc *p = curproc;
 
 	if (minor(dev) != DEV_MEM)
 		return (-1);

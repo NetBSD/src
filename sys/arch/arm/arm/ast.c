@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.2.2.6 2002/04/11 06:52:39 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.2.2.7 2002/06/24 22:03:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -102,7 +102,7 @@ userret(struct lwp *l)
 void
 ast(struct trapframe *tf)
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p;
 
 #ifdef acorn26
@@ -118,7 +118,7 @@ ast(struct trapframe *tf)
 
 #ifdef DEBUG
 	if (l == NULL)
-		panic("ast: no curproc!");
+		panic("ast: no curlwp!");
 	if (&l->l_addr->u_pcb == 0)
 		panic("ast: no pcb!");
 #endif	

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.4.6.7 2002/06/20 03:41:39 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.4.6.8 2002/06/24 22:08:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -234,7 +234,7 @@ trap(type, code, v, tf)
 	u_quad_t sticks;
 
 	uvmexp.traps++;
-	l = curproc;
+	l = curlwp;
 	ucode = 0;
 	sig = 0;
 

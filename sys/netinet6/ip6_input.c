@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.37.2.9 2002/06/20 03:49:19 nathanw Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.37.2.10 2002/06/24 22:11:50 nathanw Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.37.2.9 2002/06/20 03:49:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.37.2.10 2002/06/24 22:11:50 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1002,7 +1002,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 	struct ip6_hdr *ip6;
 	struct mbuf *m;
 {
-	struct proc *p = (curproc ? curproc->l_proc : 0);	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	int privileged;
 
 	privileged = 0;

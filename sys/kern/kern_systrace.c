@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.2.2.3 2002/06/21 07:11:32 gmcgarry Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.2.2.4 2002/06/24 22:10:55 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2.2.3 2002/06/21 07:11:32 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2.2.4 2002/06/24 22:10:55 nathanw Exp $");
 
 #include "opt_systrace.h"
 
@@ -194,7 +194,7 @@ systracef_read(struct file *fp, off_t *poff, struct uio *uio,
 
  again:
 	systrace_lock();
-	SYSTRACE_LOCK(fst, curproc);
+	SYSTRACE_LOCK(fst, curlwp);
 	systrace_unlock();
 	if ((process = TAILQ_FIRST(&fst->messages)) != NULL) {
 		error = uiomove((caddr_t)&process->msg,
@@ -214,7 +214,7 @@ systracef_read(struct file *fp, off_t *poff, struct uio *uio,
 		if (fp->f_flag & FNONBLOCK)
 			error = EAGAIN;
 		else {
-			SYSTRACE_UNLOCK(fst, curproc);
+			SYSTRACE_UNLOCK(fst, curlwp);
 			error = tsleep(fst, PWAIT|PCATCH, "systrrd", 0);
 			if (error)
 				goto out;
@@ -223,7 +223,7 @@ systracef_read(struct file *fp, off_t *poff, struct uio *uio,
 
 	}
 
-	SYSTRACE_UNLOCK(fst, curproc);
+	SYSTRACE_UNLOCK(fst, curlwp);
  out:
 	return (error);
 }
@@ -333,7 +333,7 @@ systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	if (ret)
 		return (ret);
 	
-	SYSTRACE_LOCK(fst, curproc);
+	SYSTRACE_LOCK(fst, curlwp);
 	if (pid) {
 		strp = systrace_findpid(fst, pid);
 		if (strp == NULL) {
@@ -367,7 +367,7 @@ systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	}
 
  unlock:
-	SYSTRACE_UNLOCK(fst, curproc);
+	SYSTRACE_UNLOCK(fst, curlwp);
 
 	return (ret);
 }
@@ -434,7 +434,7 @@ systracef_close(struct file *fp, struct proc *p)
 	struct str_process *strp;
 	struct str_policy *strpol;
 
-	SYSTRACE_LOCK(fst, curproc);
+	SYSTRACE_LOCK(fst, curlwp);
 
 	/* Untrace all processes */
 	for (strp = TAILQ_FIRST(&fst->processes); strp;
@@ -462,7 +462,7 @@ systracef_close(struct file *fp, struct proc *p)
 		vrele(fst->fd_cdir);
 	if (fst->fd_rdir)
 		vrele(fst->fd_rdir);
-	SYSTRACE_UNLOCK(fst, curproc);
+	SYSTRACE_UNLOCK(fst, curlwp);
 
 	FREE(fp->f_data, M_XDATA);
 	fp->f_data = NULL;
@@ -476,7 +476,7 @@ systrace_lock(void)
 #ifdef __NetBSD__
 	lockmgr(&systrace_lck, LK_EXCLUSIVE, NULL);
 #else
-	lockmgr(&systrace_lck, LK_EXCLUSIVE, NULL, curproc);
+	lockmgr(&systrace_lck, LK_EXCLUSIVE, NULL, curlwp);
 #endif
 }
 
@@ -486,7 +486,7 @@ systrace_unlock(void)
 #ifdef __NetBSD__
 	lockmgr(&systrace_lck, LK_RELEASE, NULL);
 #else
-	lockmgr(&systrace_lck, LK_RELEASE, NULL, curproc);
+	lockmgr(&systrace_lck, LK_RELEASE, NULL, curlwp);
 #endif
 }
 
@@ -572,14 +572,14 @@ systrace_sys_exit(struct proc *proc)
 	strp = proc->p_systrace;
 	if (strp != NULL) {
 		fst = strp->parent;
-		SYSTRACE_LOCK(fst, curproc);
+		SYSTRACE_LOCK(fst, curlwp);
 		systrace_unlock();
 
 		/* Insert Exit message */
 		systrace_msg_child(fst, strp, -1);
 
 		systrace_detach(strp);
-		SYSTRACE_UNLOCK(fst, curproc);
+		SYSTRACE_UNLOCK(fst, curlwp);
 	} else
 		systrace_unlock();
 	CLR(proc->p_flag, P_SYSTRACE);
@@ -599,7 +599,7 @@ systrace_sys_fork(struct proc *oldproc, struct proc *p)
 	}
 
 	fst = oldstrp->parent;
-	SYSTRACE_LOCK(fst, curproc);
+	SYSTRACE_LOCK(fst, curlwp);
 	systrace_unlock();
 
 	if (systrace_insert_process(fst, p))
@@ -614,7 +614,7 @@ systrace_sys_fork(struct proc *oldproc, struct proc *p)
 	/* Insert fork message */
 	systrace_msg_child(fst, oldstrp, p->p_pid);
  out:
-	SYSTRACE_UNLOCK(fst, curproc);
+	SYSTRACE_UNLOCK(fst, curlwp);
 }
 
 int
@@ -899,7 +899,7 @@ systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
 		return (error);
 
 #ifdef __NetBSD__
-	mycwdp = curproc->l_proc->p_cwdi;
+	mycwdp = curproc->p_cwdi;
 	cwdp = strp->proc->p_cwdi;
 	if (mycwdp == NULL || cwdp == NULL)
 		return (EINVAL);
@@ -914,7 +914,7 @@ systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
 	if ((mycwdp->cwdi_rdir = cwdp->cwdi_rdir) != NULL)
 		VREF(mycwdp->cwdi_rdir);
 #else
-	myfdp = curproc->p_fd;
+	myfdp = curlwp->p_fd;
 	fdp = strp->proc->p_fd;
 	if (myfdp == NULL || fdp == NULL)
 		return (EINVAL);
@@ -936,7 +936,7 @@ systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
 int
 systrace_io(struct str_process *strp, struct systrace_io *io)
 {
-	struct proc *p = curproc->l_proc, *t = strp->proc;
+	struct proc *p = curproc, *t = strp->proc;
 	struct uio uio;
 	struct iovec iov;
 	int error = 0;
@@ -979,7 +979,7 @@ int
 systrace_attach(struct fsystrace *fst, pid_t pid)
 {
 	int error = 0;
-	struct proc *proc, *p = curproc->l_proc;
+	struct proc *proc, *p = curproc;
 
 	if ((proc = pfind(pid)) == NULL) {
 		error = ESRCH;
@@ -1265,7 +1265,7 @@ systrace_make_msg(struct str_process *strp, int type)
 		if (st != 0)
 			return (EINTR);
 		/* If we detach, then everything is permitted */
-		if ((strp = curproc->l_proc->p_systrace) == NULL)
+		if ((strp = curproc->p_systrace) == NULL)
 			return (0);
 		if (!ISSET(strp->flags, STR_PROC_WAITANSWER))
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.44.4.4 2002/06/20 03:41:27 nathanw Exp $ */
+/*	$NetBSD: clock.c,v 1.44.4.5 2002/06/24 22:07:51 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -873,8 +873,8 @@ int
 schedintr(arg)
 	void *arg;
 {
-	if (curproc)
-		schedclock(curproc);
+	if (curlwp)
+		schedclock(curlwp);
 	return (1);
 }
 

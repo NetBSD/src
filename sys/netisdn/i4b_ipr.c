@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.4.2.5 2002/06/20 03:49:34 nathanw Exp $
+ *	$Id: i4b_ipr.c,v 1.4.2.6 2002/06/24 22:11:55 nathanw Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.4.2.5 2002/06/20 03:49:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.4.2.6 2002/06/24 22:11:55 nathanw Exp $");
 
 #include "irip.h"
 
@@ -634,7 +634,7 @@ iripioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #ifdef IPR_VJ
 		case IPRIOCSMAXCID:
 			{
-			struct proc *p = curproc;	/* XXX */
+			struct proc *p = curlwp;	/* XXX */
 
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 400005
 			if((error = suser(p)) != 0)

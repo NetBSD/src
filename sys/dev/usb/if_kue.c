@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.39.2.7 2002/04/01 07:47:30 nathanw Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.39.2.8 2002/06/24 22:10:23 nathanw Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.39.2.7 2002/04/01 07:47:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.39.2.8 2002/06/24 22:10:23 nathanw Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1071,7 +1071,7 @@ kue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		return (EIO);
 
 #ifdef DIAGNOSTIC
-	if (!curproc) {
+	if (!curlwp) {
 		printf("%s: no proc!!\n", USBDEVNAME(sc->kue_dev));
 		return EIO;
 	}

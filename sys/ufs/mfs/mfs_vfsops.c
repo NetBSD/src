@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.32.2.7 2002/04/17 00:06:31 nathanw Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.32.2.8 2002/06/24 22:12:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.32.2.7 2002/04/17 00:06:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.32.2.8 2002/06/24 22:12:41 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -144,7 +144,7 @@ mfs_mountroot()
 {
 	struct fs *fs;
 	struct mount *mp;
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	struct ufsmount *ump;
 	struct mfsnode *mfsp;
 	int error = 0;
@@ -326,8 +326,8 @@ mfs_start(mp, flags, p)
 	/* XXX NJWLWP the vnode interface again gives us a proc in a
 	 * place where we want a execution context. Cheat.
 	 */
-	KASSERT(curproc->l_proc == p);
-	l = curproc; 
+	KASSERT(curproc == p);
+	l = curlwp; 
 	base = mfsp->mfs_baseoff;
 	while (BUFQ_FIRST(&mfsp->mfs_buflist) != (struct buf *) -1) {
 		while ((bp = BUFQ_FIRST(&mfsp->mfs_buflist)) != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.30.2.8 2002/04/01 07:49:19 nathanw Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.30.2.9 2002/06/24 22:12:45 nathanw Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.30.2.8 2002/04/01 07:49:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.30.2.9 2002/06/24 22:12:45 nathanw Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -539,7 +539,7 @@ amap_wipeout(amap)
 		 * of swap space management is improved.
 		 */
 
-		if (curproc->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		if (curlwp->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
 			preempt(NULL);
 	}
 

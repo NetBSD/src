@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.11 2002/06/20 03:41:32 nathanw Exp $ */
+/*	$NetBSD: machdep.c,v 1.112.4.12 2002/06/24 22:08:05 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -466,7 +466,7 @@ sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigframe *fp;
 	struct trapframe64 *tf;
@@ -793,9 +793,9 @@ cpu_reboot(howto, user_boot_string)
 		extern struct lwp lwp0;
 		extern int sparc_clock_time_is_ok;
 
-		/* XXX protect against curproc->p_stats.foo refs in sync() */
-		if (curproc == NULL)
-			curproc = &lwp0;
+		/* XXX protect against curlwp->p_stats.foo refs in sync() */
+		if (curlwp == NULL)
+			curlwp = &lwp0;
 		waittime = 0;
 		vfs_shutdown();
 

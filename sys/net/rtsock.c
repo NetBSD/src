@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.45.2.7 2002/02/28 04:15:03 nathanw Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.45.2.8 2002/06/24 22:11:43 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.45.2.7 2002/02/28 04:15:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.45.2.8 2002/06/24 22:11:43 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -246,7 +246,7 @@ route_output(m, va_alist)
 		dst = 0;
 		senderr(EPROTONOSUPPORT);
 	}
-	rtm->rtm_pid = curproc->l_proc->p_pid;
+	rtm->rtm_pid = curproc->p_pid;
 	memset(&info, 0, sizeof(info));
 	info.rti_addrs = rtm->rtm_addrs;
 	if (rt_xaddrs((caddr_t)(rtm + 1), len + (caddr_t)rtm, &info))
@@ -272,7 +272,7 @@ route_output(m, va_alist)
 	 * is the only operation the non-superuser is allowed.
 	 */
 	if (rtm->rtm_type != RTM_GET &&
-	    suser(curproc->l_proc->p_ucred, &curproc->l_proc->p_acflag) != 0)
+	    suser(curproc->p_ucred, &curproc->p_acflag) != 0)
 		senderr(EACCES);
 
 	switch (rtm->rtm_type) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.73.4.3 2002/04/01 07:43:26 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.73.4.4 2002/06/24 22:08:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -527,7 +527,7 @@ pteidx(pte)
 
 /*
  * This just offers a place to put some debugging checks,
- * and reduces the number of places "curproc" appears...
+ * and reduces the number of places "curlwp" appears...
  */
 static INLINE pmap_t
 current_pmap()
@@ -536,10 +536,10 @@ current_pmap()
 	struct vm_map *map;
 	pmap_t	pmap;
 
-	if (curproc == NULL)
+	if (curlwp == NULL)
 		pmap = &kernel_pmap;
 	else {
-		vm = curproc->l_proc->p_vmspace;
+		vm = curproc->p_vmspace;
 		map = &vm->vm_map;
 		pmap = vm_map_pmap(map);
 	}
@@ -3463,14 +3463,14 @@ _pmap_switch(pmap)
 /*
  * Exported version of pmap_activate().  This is called from the
  * machine-independent VM code when a process is given a new pmap.
- * If (p == curproc) do like cpu_switch would do; otherwise just
+ * If (p == curlwp) do like cpu_switch would do; otherwise just
  * take this as notification that the process has a new pmap.
  */
 void
 pmap_activate(l)
 	struct lwp *l;
 {
-	if (l->l_proc == curproc->l_proc) {
+	if (l->l_proc == curproc) {
 		_pmap_switch(l->l_proc->p_vmspace->vm_map.pmap);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.52.2.8 2002/06/20 03:47:06 nathanw Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.52.2.9 2002/06/24 22:10:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.52.2.8 2002/06/20 03:47:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.52.2.9 2002/06/24 22:10:36 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -124,7 +124,7 @@ int
 cd9660_mountroot()
 {
 	struct mount *mp;
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	int error;
 	struct iso_args args;
 

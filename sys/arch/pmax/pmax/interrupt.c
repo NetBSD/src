@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.3.4.2 2001/12/15 07:11:01 gmcgarry Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.3.4.3 2002/06/24 22:06:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ struct evcnt pmax_memerr_evcnt =
 /* XXX XXX XXX */
 extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);
 #define	dealfpu(sr,cr,pc) \
-		MachFPInterrupt((sr), (cr), (pc), curproc->l_md.md_regs)
+		MachFPInterrupt((sr), (cr), (pc), curlwp->l_md.md_regs)
 /* XXX XXX XXX */
 
 /*

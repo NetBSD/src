@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.80.2.9 2002/06/20 03:50:24 nathanw Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.80.2.10 2002/06/24 22:12:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.80.2.9 2002/06/20 03:50:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.80.2.10 2002/06/24 22:12:29 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -132,7 +132,7 @@ ffs_mountroot()
 {
 	struct fs *fs;
 	struct mount *mp;
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	struct ufsmount *ump;
 	int error;
 

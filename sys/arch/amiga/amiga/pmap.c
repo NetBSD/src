@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92.4.6 2002/06/20 03:37:50 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.92.4.7 2002/06/24 22:03:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92.4.6 2002/06/20 03:37:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92.4.7 2002/06/24 22:03:30 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ static void	pmap_pvdump(paddr_t);
 #define pmap_pte_prot_chg(pte, np)	((np) ^ pmap_pte_prot(pte))
 
 #define active_pmap(pm)	\
-    ((pm) == pmap_kernel() || (pm) == curproc->l_proc->p_vmspace->vm_map.pmap)
+    ((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
 
 /*
  * Given a map and a machine independent protection code,
@@ -1300,7 +1300,7 @@ validate:
 	if (pmapdebug & 0x10000 && mmutype == MMU_68040 &&
 	    pmap == pmap_kernel()) {
 		char *s;
-		struct proc *cp = curproc ? curproc->l_proc : NULL;
+		struct proc *cp = curproc;
 		if (va >= amiga_uptbase &&
 		    va < (amiga_uptbase + AMIGA_UPTMAXSIZE))
 			s = "UPT";
@@ -1777,7 +1777,7 @@ pmap_activate(l)
 		printf("pmap_activate(%p)\n", l);
 #endif
 
-	PMAP_ACTIVATE(pmap, curproc == NULL || l->l_proc == curproc->l_proc);
+	PMAP_ACTIVATE(pmap, curlwp == NULL || l->l_proc == curproc);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.248.2.13 2002/05/29 21:31:34 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.248.2.14 2002/06/24 22:03:11 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.13 2002/05/29 21:31:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.14 2002/06/24 22:03:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1507,7 +1507,7 @@ sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigcontext *scp, ksc;
 	struct trapframe *frame;
@@ -1844,7 +1844,7 @@ fpusave_cpu(struct cpu_info *ci, int save)
 	atomic_setbits_ulong(&ci->ci_flags, CPUF_FPUSAVE);
 #endif
 
-	l = ci->ci_fpcurproc;
+	l = ci->ci_fpcurlwp;
 	if (l == NULL)
 		goto out;
 
@@ -1858,7 +1858,7 @@ fpusave_cpu(struct cpu_info *ci, int save)
 	FPCPU_LOCK(&l->l_addr->u_pcb, s);
 
 	l->l_addr->u_pcb.pcb_fpcpu = NULL;
-	ci->ci_fpcurproc = NULL;
+	ci->ci_fpcurlwp = NULL;
 
 	FPCPU_UNLOCK(&l->l_addr->u_pcb, s);
 
@@ -1895,13 +1895,13 @@ fpusave_proc(struct lwp *l, int save)
 
 #if defined(MULTIPROCESSOR)
 	if (oci == ci) {
-		KASSERT(ci->ci_fpcurproc == p);
+		KASSERT(ci->ci_fpcurlwp == p);
 		FPCPU_UNLOCK(&l->l_addr->u_pcb, s);
 		fpusave_cpu(ci, save);
 		return;
 	}
 
-	KASSERT(oci->ci_fpcurproc == p);
+	KASSERT(oci->ci_fpcurlwp == p);
 	alpha_send_ipi(oci->ci_cpuid, ipi);
 	FPCPU_UNLOCK(&l->l_addr->u_pcb, s);
 
@@ -1913,7 +1913,7 @@ fpusave_proc(struct lwp *l, int save)
 			panic("fpsave ipi didn't");
 	}
 #else
-	KASSERT(ci->ci_fpcurproc == l);
+	KASSERT(ci->ci_fpcurlwp == l);
 	FPCPU_UNLOCK(&l->l_addr->u_pcb, s);
 	fpusave_cpu(ci, save);
 #endif /* MULTIPROCESSOR */
@@ -2124,10 +2124,10 @@ cpu_getmcontext(l, mcp, flags)
 	/* Save register context. */
 	frametoreg(frame, (struct reg *)gr);
 	/* XXX if there's a better, general way to get the USP of
-	 * an LWP that might or might not be curproc, I'd like to know
+	 * an LWP that might or might not be curlwp, I'd like to know
 	 * about it.
 	 */
-	if (l == curproc)
+	if (l == curlwp)
 		gr[_REG_SP] = alpha_pal_rdusp();
 	else
 		gr[_REG_SP] = l->l_addr->u_pcb.pcb_hw.apcb_usp;
@@ -2163,7 +2163,7 @@ cpu_setmcontext(l, mcp, flags)
 			return (EINVAL);
 
 		regtoframe((struct reg *)gr, l->l_md.md_tf);
-		if (l == curproc)
+		if (l == curlwp)
 			alpha_pal_wrusp(gr[_REG_SP]);
 		else
 			l->l_addr->u_pcb.pcb_hw.apcb_usp = gr[_REG_SP];

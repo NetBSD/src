@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5.4.5 2002/04/17 00:04:11 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5.4.6 2002/06/24 22:07:02 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -1142,7 +1142,7 @@ pmap_activate(struct lwp *l)
 		    (paddr_t *)&pcb->pcb_pmreal);
 	}
 
-	if (l == curproc) {
+	if (l == curlwp) {
 		/* Store pointer to new current pmap. */
 		curpm = pcb->pcb_pmreal;
 	}

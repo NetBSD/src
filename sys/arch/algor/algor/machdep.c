@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13.4.2 2002/01/08 00:22:49 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13.4.3 2002/06/24 22:03:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -745,7 +745,7 @@ cpu_reboot(int howto, char *bootstr)
 	int tmp;
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curproc)
+	if (curlwp)
 		savectx((struct user *) curpcb);
 
 	/* If "always halt" was specified as a boot flag, obey. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.11.2.5 2002/05/29 21:32:46 nathanw Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.11.2.6 2002/06/24 22:09:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.11.2.5 2002/05/29 21:32:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.11.2.6 2002/06/24 22:09:36 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -718,5 +718,5 @@ linux_ioctl_termios(p, uap, retval)
 	SCARG(&ia, fd) = SCARG(uap, fd);
 	SCARG(&ia, data) = SCARG(uap, data);
 	/* XXX NJWLWP */
-	return sys_ioctl(curproc, &ia, retval);
+	return sys_ioctl(curlwp, &ia, retval);
 }

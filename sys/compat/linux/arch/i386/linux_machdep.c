@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.62.2.10 2002/06/20 03:42:59 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.62.2.11 2002/06/24 22:09:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.10 2002/06/20 03:42:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.11 2002/06/24 22:09:27 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -193,7 +193,7 @@ linux_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
@@ -773,7 +773,7 @@ linux_machdepioctl(p, v, retval)
 	case LINUX_VT_GETMODE:
 		SCARG(&bia, com) = VT_GETMODE;
 		/* XXX NJWLWP */
-		if ((error = sys_ioctl(curproc, &bia, retval)))
+		if ((error = sys_ioctl(curlwp, &bia, retval)))
 			return error;
 		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
 		    sizeof (struct vt_mode))))
@@ -907,7 +907,7 @@ linux_machdepioctl(p, v, retval)
 	}
 	SCARG(&bia, com) = com;
 	/* XXX NJWLWP */
-	return sys_ioctl(curproc, &bia, retval);
+	return sys_ioctl(curlwp, &bia, retval);
 }
 
 /*

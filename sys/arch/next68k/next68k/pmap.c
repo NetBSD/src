@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37.4.4 2002/06/20 03:40:24 nathanw Exp $        */
+/*	$NetBSD: pmap.c,v 1.37.4.5 2002/06/24 22:06:43 nathanw Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -900,7 +900,7 @@ pmap_activate(l)
 		printf("pmap_activate(%p)\n", l);
 #endif
 
-	PMAP_ACTIVATE(pmap, curproc == NULL || l->l_proc == curproc->l_proc);
+	PMAP_ACTIVATE(pmap, curlwp == NULL || l->l_proc == curproc);
 }
 
 /*

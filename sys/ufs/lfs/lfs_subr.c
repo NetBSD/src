@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.17.2.5 2002/06/20 03:50:32 nathanw Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.17.2.6 2002/06/24 22:12:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.17.2.5 2002/06/20 03:50:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.17.2.6 2002/06/24 22:12:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	struct segment *sp;
 	
 	if (fs->lfs_seglock) {
-		if (fs->lfs_lockpid == curproc->l_proc->p_pid) {
+		if (fs->lfs_lockpid == curproc->p_pid) {
 			++fs->lfs_seglock;
 			fs->lfs_sp->seg_flags |= flags;
 			return;			
@@ -143,7 +143,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	}
 	
 	fs->lfs_seglock = 1;
-	fs->lfs_lockpid = curproc->l_proc->p_pid;
+	fs->lfs_lockpid = curproc->p_pid;
 	
 	sp = fs->lfs_sp = malloc(sizeof(struct segment), M_SEGMENT, M_WAITOK);
 	sp->bpp = malloc(((fs->lfs_sumsize - SEGSUM_SIZE(fs)) /
@@ -220,7 +220,7 @@ lfs_segunlock(struct lfs *fs)
 			if (lfs_vref(vp))
 				continue;
 			if (VOP_ISLOCKED(vp) &&
-                            vp->v_lock.lk_lockholder != curproc->l_proc->p_pid) {
+                            vp->v_lock.lk_lockholder != curproc->p_pid) {
 				lfs_vunref(vp);
 				continue;
 			}

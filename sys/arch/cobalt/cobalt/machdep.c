@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.4.4 2002/05/29 21:31:41 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.4.5 2002/06/24 22:04:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -344,7 +344,7 @@ cpu_reboot(howto, bootstr)
 	char *bootstr;
 {
 	/* Take a snapshot before clobbering any registers. */
-	if (curproc)
+	if (curlwp)
 		savectx((struct user *)curpcb);
 
 	if (cold) {

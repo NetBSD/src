@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.5.4.5 2002/05/29 21:32:00 nathanw Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.5.4.6 2002/06/24 22:08:15 nathanw Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -156,7 +156,7 @@ sunos32_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curlwp;	/* XXX */
 	struct sunos32_sigframe *fp;
 	struct trapframe64 *tf;
 	struct rwindow32 *oldsp, *newsp;

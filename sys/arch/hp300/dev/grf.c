@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.39.8.6 2002/06/21 06:01:45 gmcgarry Exp $	*/
+/*	$NetBSD: grf.c,v 1.39.8.7 2002/06/24 22:04:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.8.6 2002/06/21 06:01:45 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.8.7 2002/06/24 22:04:30 nathanw Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -347,7 +347,7 @@ grfoff(dev)
 	sc = grf_cd.cd_devs[unit];
 	gp = sc->sc_data;
 
-	(void) grfunmap(dev, (caddr_t)0, curproc->l_proc);
+	(void) grfunmap(dev, (caddr_t)0, curproc);
 	error = (*gp->g_sw->gd_mode)(gp,
 				     (dev&GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF,
 				     (caddr_t)0);
@@ -493,7 +493,7 @@ grflock(gp, block)
 	struct grf_data *gp;
 	int block;
 {
-	struct proc *p = curproc->l_proc;		/* XXX */
+	struct proc *p = curproc;		/* XXX */
 	int error;
 
 #ifdef DEBUG
@@ -548,10 +548,10 @@ grfunlock(gp)
 #ifdef DEBUG
 	if (grfdebug & GDB_LOCK)
 		printf("grfunlock(%d): flags %x lockpid %d\n",
-		       curproc->l_proc->p_pid, gp->g_flags,
+		       curproc->p_pid, gp->g_flags,
 		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
 #endif
-	if (gp->g_lockp != curproc->l_proc)
+	if (gp->g_lockp != curproc)
 		return(EBUSY);
 	if (gp->g_pid) {
 #ifdef DEBUG
@@ -680,7 +680,7 @@ iommap(dev, addrp)
 
 #ifdef DEBUG
 	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
-		printf("iommap(%d): addr %p\n", curproc->l_proc->p_pid, *addrp);
+		printf("iommap(%d): addr %p\n", curproc->p_pid, *addrp);
 #endif
 	return(EINVAL);
 }
@@ -695,7 +695,7 @@ iounmmap(dev, addr)
 
 	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
 		printf("iounmmap(%d): id %d addr %p\n",
-		       curproc->l_proc->p_pid, unit, addr);
+		       curproc->p_pid, unit, addr);
 #endif
 	return(0);
 }
@@ -718,7 +718,7 @@ grffindpid(gp)
 	if (gp->g_pid == NULL)
 		MALLOC(gp->g_pid, short *, GRFMAXLCK*sizeof(short),
 		    M_DEVBUF, M_WAITOK | M_ZERO);
-	pid = curproc->l_proc->p_pid;
+	pid = curproc->p_pid;
 	ni = limit = gp->g_pid[0];
 	for (i = 1, sp = &gp->g_pid[1]; i <= limit; i++, sp++) {
 		if (*sp == pid)
@@ -754,7 +754,7 @@ grfrmpid(gp)
 
 	if (gp->g_pid == NULL || (limit = gp->g_pid[0]) == 0)
 		return;
-	pid = curproc->l_proc->p_pid;
+	pid = curproc->p_pid;
 	limit = gp->g_pid[0];
 	mi = 0;
 	for (i = 1, sp = &gp->g_pid[1]; i <= limit; i++, sp++) {
@@ -779,7 +779,7 @@ grflckmmap(dev, addrp)
 	caddr_t *addrp;
 {
 #ifdef DEBUG
-	struct proc *p = curproc->l_proc;		/* XXX */
+	struct proc *p = curproc;		/* XXX */
 
 	if (grfdebug & (GDB_MMAP|GDB_LOCK))
 		printf("grflckmmap(%d): addr %p\n",
@@ -798,7 +798,7 @@ grflckunmmap(dev, addr)
 
 	if (grfdebug & (GDB_MMAP|GDB_LOCK))
 		printf("grflckunmmap(%d): id %d addr %p\n",
-		       curproc->l_proc->p_pid, unit, addr);
+		       curproc->p_pid, unit, addr);
 #endif
 	return(EINVAL);
 }

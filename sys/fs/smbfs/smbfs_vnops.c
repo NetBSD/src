@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.2.4.2 2002/02/28 04:14:42 nathanw Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.2.4.3 2002/06/24 22:10:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -1010,7 +1010,7 @@ smbfs_advlock(v)
 	struct flock *fl = ap->a_fl;
 	caddr_t id = (caddr_t)1 /* ap->a_id */;
 /*	int flags = ap->a_flags;*/
-	struct proc *p = curproc;
+	struct proc *p = curlwp;
 	struct smb_cred scred;
 	u_quad_t size;
 	off_t start, end, oadd;

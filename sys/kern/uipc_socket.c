@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.54.2.11 2002/06/20 03:47:25 nathanw Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.54.2.12 2002/06/24 22:11:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.54.2.11 2002/06/20 03:47:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.54.2.12 2002/06/24 22:11:03 nathanw Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -324,7 +324,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	struct socket	*so;
 	int		error, s;
 
-	p = curproc->l_proc;	/* XXX */
+	p = curproc;	/* XXX */
 	if (proto)
 		prp = pffindproto(dom, proto, type);
 	else
@@ -515,7 +515,7 @@ soconnect(struct socket *so, struct mbuf *nam)
 	struct proc	*p;
 	int		s, error;
 
-	p = curproc->l_proc;		/* XXX */
+	p = curproc;		/* XXX */
 	if (so->so_options & SO_ACCEPTCONN)
 		return (EOPNOTSUPP);
 	s = splsoftnet();
@@ -601,7 +601,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 
 	sodopendfree(so);
 
-	p = curproc->l_proc;		/* XXX */
+	p = curproc;		/* XXX */
 	clen = 0;
 	atomic = sosendallatonce(so) || top;
 	if (uio)

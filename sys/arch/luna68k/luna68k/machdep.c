@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.19.4.5 2002/05/29 21:31:44 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.19.4.6 2002/06/24 22:05:18 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.4.5 2002/05/29 21:31:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.4.6 2002/06/24 22:05:18 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -402,7 +402,7 @@ setregs(l, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)p->p_psstr;
+	frame->f_regs[A2] = (int)l->l_proc->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;
@@ -486,8 +486,8 @@ cpu_reboot(howto, bootstr)
 	extern void doboot __P((void));
 
 	/* take a snap shot before clobbering any registers */
-	if (curproc && curproc->l_addr)
-		savectx(&curproc->l_addr->u_pcb);
+	if (curlwp && curlwp->l_addr)
+		savectx(&curlwp->l_addr->u_pcb);
 
 	/* If system is hold, just halt. */
 	if (cold) {

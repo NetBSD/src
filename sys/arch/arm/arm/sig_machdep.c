@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.7.6.7 2002/04/01 07:39:06 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.7.6.8 2002/06/24 22:03:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7.6.7 2002/04/01 07:39:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7.6.8 2002/06/24 22:03:46 nathanw Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -84,7 +84,7 @@ process_frame(struct lwp *l)
 void
 sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;

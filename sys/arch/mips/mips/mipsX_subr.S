@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.2.6.4 2002/06/21 06:27:19 gmcgarry Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.2.6.5 2002/06/24 22:05:57 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -671,7 +671,7 @@ END(MIPSX(KernGenException))
  * Handle an exception from user mode.
  * Save user context atop the kernel stack, then call trap() to process
  * the condition.  The context can be manipulated alternatively via
- * curproc->p_md.md_regs.
+ * curlwp->p_md.md_regs.
  */
 NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 	.set	noat
@@ -747,9 +747,9 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchronous traps.
  */
-	lw	t0, _C_LABEL(curproc)		# t0 = curproc
+	lw	t0, _C_LABEL(curlwp)		# t0 = curlwp
 	nop
-	lw	t0, L_PROC(t0)			# t0 = curproc->l_proc
+	lw	t0, L_PROC(t0)			# t0 = curlwp->l_proc
 	nop
 	lw	t0, P_MD_ASTPENDING(t0)
 	beq	t0, zero, 1f
@@ -838,7 +838,7 @@ END(MIPSX(UserGenException))
  * mipsN_SystemCall
  *
  * Save user context in u_pcb, then call syscall() to process a system call.
- * The context can be manipulated alternatively via curproc->p_md.md_regs;
+ * The context can be manipulated alternatively via curlwp->p_md.md_regs;
  */
 NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	.set	noat
@@ -854,7 +854,7 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_S	a1, FRAME_A1(k1)
 	REG_S	a2, FRAME_A2(k1)
 	REG_S	a3, FRAME_A3(k1)
-	lw	a0, _C_LABEL(curproc)		# 1st arg is curproc
+	lw	a0, _C_LABEL(curlwp)		# 1st arg is curlwp
 	mfhi	v1
 	#REG_S	t0, FRAME_T0(k1)		# no need to save temp regs
 	#REG_S	t1, FRAME_T1(k1)
@@ -916,7 +916,7 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchronous traps.
  */
-	lw	t0, _C_LABEL(curproc)
+	lw	t0, _C_LABEL(curlwp)
 	lw	t0, P_MD_ASTPENDING(t0)
 	beq	t0, zero, 1f
 	nop
@@ -1253,7 +1253,7 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	nop					# 3 nop hazard
 	nop
 	nop
-	lw	v0, _C_LABEL(curproc)
+	lw	v0, _C_LABEL(curlwp)
 	addu	a1, sp, CALLFRAME_SIZ
  #	REG_L	a0, FRAME_SR(a1)
 	lw	v0, P_MD_ASTPENDING(v0)		# any pending ast?

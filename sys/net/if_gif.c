@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.26.2.8 2002/06/20 03:48:13 nathanw Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.26.2.9 2002/06/24 22:11:29 nathanw Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.26.2.8 2002/06/20 03:48:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.26.2.9 2002/06/24 22:11:29 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -537,7 +537,7 @@ gif_ioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	struct gif_softc *sc  = (struct gif_softc*)ifp;
 	struct ifreq     *ifr = (struct ifreq*)data;
 	int error = 0, size;

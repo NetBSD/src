@@ -159,7 +159,7 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
+	register struct proc *p = curlwp;
 	register struct sparc32_sigframe *fp;
 	register struct trapframe64 *tf;
 	register int addr, onstack; 

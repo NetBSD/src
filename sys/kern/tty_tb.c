@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.25.2.4 2002/04/01 07:48:01 nathanw Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.25.2.5 2002/06/24 22:11:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.25.2.4 2002/04/01 07:48:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.25.2.5 2002/06/24 22:11:02 nathanw Exp $");
 
 #include "tb.h"
 
@@ -157,7 +157,7 @@ tbclose(tp)
 {
 	int modebits = TBPOINT|TBSTOP;
 
-	tbtioctl(tp, BIOSMODE, (caddr_t) &modebits, 0, curproc->l_proc);
+	tbtioctl(tp, BIOSMODE, (caddr_t) &modebits, 0, curproc);
 }
 
 /*

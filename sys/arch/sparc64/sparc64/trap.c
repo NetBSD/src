@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74.4.9 2002/06/20 03:41:35 nathanw Exp $ */
+/*	$NetBSD: trap.c,v 1.74.4.10 2002/06/24 22:08:19 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -624,10 +624,10 @@ extern void db_printf(const char * , ...);
 			struct lwp *newfplwp;
 
 			/* New scheme */
-			if (CLKF_INTR((struct clockframe *)tf) || !curproc) {
+			if (CLKF_INTR((struct clockframe *)tf) || !curlwp) {
 				newfplwp = &lwp0;
 			} else {
-				newfplwp = curproc;
+				newfplwp = curlwp;
 			}
 			if (fplwp != newfplwp) {
 				if (fplwp != NULL) {
@@ -649,7 +649,7 @@ extern void db_printf(const char * , ...);
 		}
 		goto dopanic;
 	}
-	if ((l = curproc) == NULL)
+	if ((l = curlwp) == NULL)
 		l = &lwp0;
 	p = l->l_proc;
 	sticks = p->p_sticks;
@@ -1060,7 +1060,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	    (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))) {
 		printf("%ld: data_access_fault(%p, %x, %p, %p, %lx, %lx) "
 			"nsaved=%d\n",
-			(long)(curproc ? curproc->l_proc->p_pid : -1), tf, type,
+			(long)(curproc ? curproc->p_pid : -1), tf, type,
 			(void*)addr, (void*)pc,
 			sfva, sfsr, (int)cpcb->pcb_nsaved);
 		if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved)) Debugger();
@@ -1071,7 +1071,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	if ((trapdebug & TDB_TL) && tl()) {
 		printf("%ld: data_access_fault(%p, %x, %p, %p, %lx, %lx) "
 			"nsaved=%d\n",
-			(long)(curproc?curproc->l_proc->p_pid:-1), tf, type,
+			(long)(curproc?curproc->p_pid:-1), tf, type,
 			(void*)addr, (void*)pc,
 			sfva, sfsr, (int)cpcb->pcb_nsaved);
 		Debugger();
@@ -1082,14 +1082,14 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 #endif
 
 	uvmexp.traps++;
-	if ((l = curproc) == NULL)	/* safety check */
+	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	p = l->l_proc;
 	sticks = p->p_sticks;
 
 #if 0
 	/* 
-	 * This can happen when we're in DDB w/curproc == NULL and try
+	 * This can happen when we're in DDB w/curlwp == NULL and try
 	 * to access user space.
 	 */
 #ifdef DIAGNOSTIC
@@ -1114,10 +1114,10 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 			printf("NULL proc\n");
 		else
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
-			       curproc->l_proc->p_pid, curproc->l_proc->p_comm,
+			       curproc->p_pid, curproc->p_comm,
 				/* XXX */
-			       curproc->l_proc->p_sigctx.ps_sigmask.__bits[0], 
-			       curproc->l_proc->p_sigctx.ps_sigcatch.__bits[0]);
+			       curproc->p_sigctx.ps_sigmask.__bits[0], 
+			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif
 	/* 
@@ -1235,7 +1235,7 @@ kfault:
 			printf("data_access_fault at addr %p: sending SIGSEGV\n", (void *)addr);
 			printf("%ld: data_access_fault(%p, %x, %p, %p, %lx, %lx) "
 				"nsaved=%d\n",
-				(long)(curproc?curproc->l_proc->p_pid:-1), tf, type,
+				(long)(curproc?curproc->p_pid:-1), tf, type,
 				(void*)addr, (void*)pc,
 				sfva, sfsr, (int)cpcb->pcb_nsaved);
 			Debugger();
@@ -1308,7 +1308,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
 
 		printf("%d data_access_error(%lx, %lx, %lx, %p)=%lx @ %p %s\n",
-		       curproc?curproc->l_proc->p_pid:-1, 
+		       curproc?curproc->p_pid:-1, 
 		       (long)type, (long)sfva, (long)afva, tf, (long)tf->tf_tstate, 
 		       (void *)(u_long)tf->tf_pc, buf);
 	}
@@ -1320,7 +1320,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
 
 		printf("%d tl %ld data_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %s\n",
-		       curproc?curproc->l_proc->p_pid:-1, (long)tl(),
+		       curproc?curproc->p_pid:-1, (long)tl(),
 		       (long)type, (long)sfva, (long)afva, tf, (long)tf->tf_tstate, 
 		       (long)tf->tf_pc, buf);
 		Debugger();
@@ -1331,7 +1331,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 #endif
 
 	uvmexp.traps++;
-	if ((l = curproc) == NULL)	/* safety check */
+	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	sticks = l->l_proc->p_sticks;
 
@@ -1355,10 +1355,10 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 			printf("NULL proc\n");
 		else
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
-			       curproc->l_proc->p_pid, curproc->l_proc->p_comm,
+			       curproc->p_pid, curproc->p_comm,
 				/* XXX */
-			       curproc->l_proc->p_sigctx.ps_sigmask.__bits[0], 
-			       curproc->l_proc->p_sigctx.ps_sigcatch.__bits[0]);
+			       curproc->p_sigctx.ps_sigmask.__bits[0], 
+			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif
 
@@ -1453,13 +1453,13 @@ text_access_fault(tf, type, pc, sfsr)
 	if (((trapdebug&TDB_NSAVED) && cpcb->pcb_nsaved) || 
 	    (trapdebug&(TDB_TXTFLT|TDB_FOLLOW)))
 		printf("%d text_access_fault(%x, %lx, %p)\n",
-		       curproc?curproc->l_proc->p_pid:-1, type, pc, tf); 
+		       curproc?curproc->p_pid:-1, type, pc, tf); 
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
 	}
 	if ((trapdebug & TDB_TL) && tl()) {
 		printf("%d tl %d text_access_fault(%x, %lx, %p)\n",
-		       curproc?curproc->l_proc->p_pid:-1, tl(), type, pc, tf); 
+		       curproc?curproc->p_pid:-1, tl(), type, pc, tf); 
 		Debugger();
 	}
 	if (trapdebug&TDB_STOPCALL) { 
@@ -1468,7 +1468,7 @@ text_access_fault(tf, type, pc, sfsr)
 #endif
 
 	uvmexp.traps++;
-	if ((l = curproc) == NULL)	/* safety check */
+	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	p = l->l_proc;
 	sticks = p->p_sticks;
@@ -1594,7 +1594,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_TXTFLT|TDB_FOLLOW)) {
 		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
 		printf("%ld text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %s\n",
-		       (long)(curproc?curproc->l_proc->p_pid:-1), 
+		       (long)(curproc?curproc->p_pid:-1), 
 		       (long)type, pc, (long)afva, tf, (long)tf->tf_tstate, 
 		       (long)tf->tf_pc, buf); 
 	}
@@ -1604,7 +1604,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 	if ((trapdebug & TDB_TL) && tl()) {
 		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
 		printf("%ld tl %ld text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %s\n",
-		       (long)(curproc?curproc->l_proc->p_pid:-1), (long)tl(),
+		       (long)(curproc?curproc->p_pid:-1), (long)tl(),
 		       (long)type, (long)pc, (long)afva, tf, 
 		       (long)tf->tf_tstate, (long)tf->tf_pc, buf); 
 		Debugger();
@@ -1614,7 +1614,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 	}
 #endif
 	uvmexp.traps++;
-	if ((l = curproc) == NULL)	/* safety check */
+	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	p = l->l_proc;
 	sticks = p->p_sticks;
@@ -1650,9 +1650,9 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 			printf("NULL proc\n");
 		else
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
-			       curproc->l_proc->p_pid, curproc->l_proc->p_comm,
-			       curproc->l_proc->p_sigctx.ps_sigmask.__bits[0], 
-			       curproc->l_proc->p_sigctx.ps_sigcatch.__bits[0]);
+			       curproc->p_pid, curproc->p_comm,
+			       curproc->p_sigctx.ps_sigmask.__bits[0], 
+			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif
 	/* Now munch on protections... */
@@ -1768,7 +1768,7 @@ syscall(tf, code, pc)
 	int i, nsys, nap;
 	int64_t *ap;
 	const struct sysent *callp;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p;
 	int error = 0, new;
 	union args {
@@ -1781,7 +1781,7 @@ syscall(tf, code, pc)
 	extern struct pcb *cpcb;
 #endif
 
-	/* Don't dereference a non-existent curproc XXX how can this happen? */
+	/* Don't dereference a non-existent curlwp XXX how can this happen? */
 	if (l) p = l->l_proc;
 
 #ifdef DEBUG
@@ -2148,7 +2148,7 @@ startlwp(arg)
 {
 	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 
 	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 #if DIAGNOSTIC

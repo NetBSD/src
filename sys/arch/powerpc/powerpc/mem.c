@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.12.4.4 2002/02/28 04:11:27 nathanw Exp $ */
+/*	$NetBSD: mem.c,v 1.12.4.5 2002/06/24 22:07:09 nathanw Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -145,7 +145,7 @@ mmmmap(dev, off, prot)
 	off_t off;
 	int prot;
 {
-	struct proc *p = curproc->l_proc;
+	struct proc *p = curproc;
 
 	if (minor(dev) != DEV_MEM)
 		return (-1);

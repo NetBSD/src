@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.15.2.5 2002/01/08 00:28:59 nathanw Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.15.2.6 2002/06/24 22:09:16 nathanw Exp $	*/
 
 /*
  * 
@@ -52,7 +52,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.15.2.5 2002/01/08 00:28:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.15.2.6 2002/06/24 22:09:16 nathanw Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -503,7 +503,7 @@ coda_call(mntinfo, inSize, outSize, buffer)
 	struct vmsg *vmp;
 	int error;
 #ifdef	CTL_C
-	struct proc *p = curproc->l_proc;
+	struct proc *p = curproc;
 	sigset_t psig_omask;
 	int i;
 	psig_omask = p->p_sigctx.ps_siglist;	/* array assignment */

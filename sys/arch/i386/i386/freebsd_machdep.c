@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.26.4.6 2002/04/17 00:03:20 nathanw Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.26.4.7 2002/06/24 22:04:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.26.4.6 2002/04/17 00:03:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.26.4.7 2002/06/24 22:04:48 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -99,7 +99,7 @@ freebsd_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	register struct proc *p = l->l_proc;
 	register struct trapframe *tf;
 	struct freebsd_sigframe *fp, frame;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64.2.3 2002/05/29 21:31:37 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64.2.4 2002/06/24 22:03:41 nathanw Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -640,7 +640,7 @@ cpu_reboot(howto, bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
-	if (curproc)
+	if (curlwp)
 		savectx((struct user *)curpcb);
 
 #ifdef DEBUG
@@ -650,9 +650,9 @@ cpu_reboot(howto, bootstr)
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		/* fill curproc with live object */
-		if (curproc == NULL)
-			curproc = &proc0;
+		/* fill curlwp with live object */
+		if (curlwp == NULL)
+			curlwp = &proc0;
 		/*
 		 * Synchronize the disks....
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.41.6.3 2002/06/21 21:26:34 thorpej Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.41.6.4 2002/06/24 22:07:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -421,7 +421,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
 void
 sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;

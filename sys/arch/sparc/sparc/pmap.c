@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.199.4.7 2002/06/20 03:41:09 nathanw Exp $ */
+/*	$NetBSD: pmap.c,v 1.199.4.8 2002/06/24 22:07:42 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -7161,10 +7161,10 @@ pmap_redzone()
  * process is the current process, load the new MMU context.
  */
 void
-pmap_activate(p)
-	struct lwp *p;
+pmap_activate(l)
+	struct lwp *l;
 {
-	pmap_t pmap = p->l_proc->p_vmspace->vm_map.pmap;
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	int s;
 
 	/*
@@ -7175,7 +7175,7 @@ pmap_activate(p)
 	 */
 
 	s = splvm();
-	if (p == curproc) {
+	if (l->l_proc == curproc) {
 		write_user_windows();
 		if (pmap->pm_ctx == NULL) {
 			ctx_alloc(pmap);	/* performs setcontext() */
@@ -7192,8 +7192,8 @@ pmap_activate(p)
  * Deactivate the address space of the specified process.
  */
 void
-pmap_deactivate(p)
-	struct lwp *p;
+pmap_deactivate(l)
+	struct lwp *l;
 {
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.5.2.4 2002/01/08 00:31:59 nathanw Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.5.2.5 2002/06/24 22:10:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.5.2.4 2002/01/08 00:31:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.5.2.5 2002/06/24 22:10:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ sunkbdiopen(dev, flags)
 {
 	struct kbd_softc *k = (void *) dev;
 	struct tty *tp = (struct tty *)k->k_priv;
-	struct proc *p = curproc ? curproc->l_proc : &proc0;
+	struct proc *p = curproc ? curproc : &proc0;
 	struct termios t;
 	int maj;
 	int error;

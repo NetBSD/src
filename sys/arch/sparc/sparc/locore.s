@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.9 2002/06/20 03:41:06 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.10 2002/06/24 22:07:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -204,8 +204,8 @@ _C_LABEL(kgdb_stack):
  */
 cpcb = CPUINFO_VA + CPUINFO_CURPCB
 
-/* curproc points to the current process that has the CPU */
-curproc = CPUINFO_VA + CPUINFO_CURPROC
+/* curlwp points to the current LWP that has the CPU */
+curlwp = CPUINFO_VA + CPUINFO_CURLWP
 
 /*
  * cputyp is the current cpu type, used to distinguish between
@@ -4020,8 +4020,8 @@ _C_LABEL(cpu_hatch):
 	set	_C_LABEL(proc0), %g3		! p = proc0
 	sethi	%hi(_C_LABEL(sched_whichqs)), %g2
 	sethi	%hi(cpcb), %g6
-	sethi	%hi(curproc), %g7
-	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
+	sethi	%hi(curlwp), %g7
+	st	%g0, [%g7 + %lo(curlwp)]	! curlwp = NULL;
 
 	mov	PSR_S|PSR_ET, %g1		! oldpsr = PSR_S | PSR_ET;
 	sethi	%hi(IDLE_UP), %g5
@@ -4330,7 +4330,7 @@ ENTRY(write_user_windows)
  *	%g4 = lastproc
  *	%g5 = <free>; newpcb
  *	%g6 = %hi(cpcb)
- *	%g7 = %hi(curproc)
+ *	%g7 = %hi(curlwp)
  *	%o0 = tmp 1
  *	%o1 = tmp 2
  *	%o2 = tmp 3
@@ -4366,7 +4366,7 @@ ENTRY(write_user_windows)
 /*
  * switchexit is called only from cpu_exit() before the current process
  * has freed its vmspace and kernel stack; we must schedule them to be
- * freed.  (curproc is already NULL.)
+ * freed.  (curlwp is already NULL.)
  *
  * We lay the process to rest by changing to the `idle' kernel stack,
  * and note that the `last loaded process' is nonexistent.
@@ -4425,7 +4425,7 @@ switchexit0:
 	 *	%g2 = %hi(whichqs)
 	 *	%g4 = lastproc
 	 *	%g6 = %hi(cpcb)
-	 *	%g7 = %hi(curproc)
+	 *	%g7 = %hi(curlwp)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o3 = whichqs
@@ -4438,8 +4438,8 @@ switchexit0:
 	sethi	%hi(_C_LABEL(sched_whichqs)), %g2
 	clr	%g4			! lastproc = NULL;
 	sethi	%hi(cpcb), %g6
-	sethi	%hi(curproc), %g7
-	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
+	sethi	%hi(curlwp), %g7
+	st	%g0, [%g7 + %lo(curlwp)]	! curlwp = NULL;
 	b,a	idle_enter_no_schedlock
 	/* FALLTHROUGH */
 
@@ -4556,7 +4556,7 @@ ENTRY(cpu_switch)
 	 *	%g4 = lastproc
 	 *	%g5 = tmp 0
 	 *	%g6 = %hi(cpcb)
-	 *	%g7 = %hi(curproc)
+	 *	%g7 = %hi(curlwp)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -4572,8 +4572,8 @@ ENTRY(cpu_switch)
 	rd	%psr, %g1			! oldpsr = %psr;
 	st	%g1, [%o0 + PCB_PSR]		! cpcb->pcb_psr = oldpsr;
 	andn	%g1, PSR_PIL, %g1		! oldpsr &= ~PSR_PIL;
-	sethi	%hi(curproc), %g7
-	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
+	sethi	%hi(curlwp), %g7
+	st	%g0, [%g7 + %lo(curlwp)]	! curlwp = NULL;
 
 Lsw_scan:
 	nop; nop; nop				! paranoia
@@ -4644,7 +4644,7 @@ cpu_switch0:
 	 *	%g4 = lastproc
 	 *	%g5 = newpcb
 	 *	%g6 = %hi(cpcb)
-	 *	%g7 = %hi(curproc)
+	 *	%g7 = %hi(curlwp)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -4684,7 +4684,7 @@ cpu_switch0:
 	ld	[%g3 + L_ADDR], %g5		! newpcb = p->p_addr;
 	st	%g0, [%g3 + 4]			! p->p_back = NULL;
 	ld	[%g5 + PCB_PSR], %g2		! newpsr = newpcb->pcb_psr;
-	st	%g3, [%g7 + %lo(curproc)]	! curproc = p;
+	st	%g3, [%g7 + %lo(curlwp)]	! curlwp = p;
 
 	cmp	%g3, %g4		! p == lastproc?
 	be,a	Lsw_sameproc		! yes, go return 0
@@ -4829,8 +4829,8 @@ ENTRY(cpu_preempt)
 	rd	%psr, %g1			! oldpsr = %psr;
 	st	%g1, [%o0 + PCB_PSR]		! cpcb->pcb_psr = oldpsr;
 	andn	%g1, PSR_PIL, %g1		! oldpsr &= ~PSR_PIL;
-	sethi	%hi(curproc), %g7
-	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
+	sethi	%hi(curlwp), %g7
+	st	%g0, [%g7 + %lo(curlwp)]	! curlwp = NULL;
 
 	/*
 	 * now set up %o4 (which) and %o5 (p->p_back), and continue with

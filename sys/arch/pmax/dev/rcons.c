@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.51.4.2 2002/04/01 07:41:56 nathanw Exp $	*/
+/*	$NetBSD: rcons.c,v 1.51.4.3 2002/06/24 22:06:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -284,7 +284,7 @@ rasterconsoleattach (n)
 		/* try to get a reference on its vnode, but fail silently */
 		cdevvp(cn_in_dev, &cn_in_devvp);
 		status = ((*cdevsw[major(cn_in_dev)].d_open)
-			  (cn_in_dev, O_NONBLOCK, S_IFCHR, curproc)); /* XXX */
+			  (cn_in_dev, O_NONBLOCK, S_IFCHR, curlwp)); /* XXX */
 		if (status)
 			printf ("rconsattach: input device open failed: %d\n",
 			        status);

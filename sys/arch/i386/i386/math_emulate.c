@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.21.16.5 2002/01/08 00:25:25 nathanw Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.21.16.6 2002/06/24 22:05:00 nathanw Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.21.16.5 2002/01/08 00:25:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.21.16.6 2002/06/24 22:05:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ int
 math_emulate(info)
 	struct trapframe *info;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	u_short cw, code;
 	temp_real tmp;
 	char * address;
@@ -580,7 +580,7 @@ static int __regoffset[] = {
 	tEAX, tECX, tEDX, tEBX, tESP, tEBP, tESI, tEDI
 };
 
-#define REG(x) (((int *)curproc->l_md.md_regs)[__regoffset[(x)]])
+#define REG(x) (((int *)curlwp->l_md.md_regs)[__regoffset[(x)]])
 
 static char * sib(struct trapframe * info, int mod)
 {

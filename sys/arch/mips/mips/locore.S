@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.126.2.11 2002/06/22 23:59:47 gmcgarry Exp $	*/
+/*	$NetBSD: locore.S,v 1.126.2.12 2002/06/24 22:05:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -319,7 +319,7 @@ LEAF(mips_idle)
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
 	COP0_SYNC
 	nop
-	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
+	sw	zero, _C_LABEL(curlwp)		# set curlwp NULL for stats
 #if defined(LOCKDEBUG)
 	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
 	nop
@@ -464,21 +464,21 @@ cpu_switch_queuescan:
 
 	/*
 	 * regardless of whether a context switch is requites, we need
-	 * to update curproc and other globals.  We must do this even
+	 * to update curlwp and other globals.  We must do this even
 	 * if switching to ourselves because we might have re-entered
-	 * cpu_switch() from idle() - in which case curproc would be NULL
+	 * cpu_switch() from idle() - in which case curlwp would be NULL
 	 * This needs to be set before conext switch on MIPS
 	 */
 	li	v1, LSONPROC
 	sw	v1, L_STAT(s7)			# l->l_stat = SONPROC
-	sw	s7, _C_LABEL(curproc)		# curproc = l
+	sw	s7, _C_LABEL(curlwp)		# curlwp = l
 
 	/*
 	 * Check to see if we're switching to ourself.  If we are,
 	 * don't bother loading the new context.
 	 *
 	 * Note that even if we re-enter cpu_switch() from idle(),
-	 * s0 will still contain the old curproc value because any
+	 * s0 will still contain the old curlwp value because any
 	 * users of that register between then and now must have
 	 * saved it.  Also note that switch_exit() ensures that
 	 * s0 is clear before jumping here to find a new process.
@@ -599,21 +599,21 @@ NESTED(cpu_preempt, CALLFRAME_SIZ, ra)
 #endif
 	/*
 	 * regardless of whether a context switch is requites, we need
-	 * to update curproc and other globals.  We must do this even
+	 * to update curlwp and other globals.  We must do this even
 	 * if switching to ourselves because we might have re-entered
-	 * cpu_switch() from idle() - in which case curproc would be NULL
+	 * cpu_switch() from idle() - in which case curlwp would be NULL
 	 * This needs to be set before conext switch on MIPS
 	 */	
 	li	v1, LSONPROC
 	sw	v1, L_STAT(s7)			# l->l_stat = SONPROC
-	sw	s7, _C_LABEL(curproc)		# curproc = l
+	sw	s7, _C_LABEL(curlwp)		# curlwp = l
 
 	/*
 	 * Check to see if we're switching to ourself.  If we are,
 	 * don't bother loading the new context.
 	 *
 	 * Note that even if we re-enter cpu_switch() from idle(),
-	 * s0 will still contain the old curproc value because any
+	 * s0 will still contain the old curlwp value because any
 	 * users of that register between then and now must have
 	 * saved it.  Also note that switch_exit() ensures that
 	 * s0 is clear before jumping here to find a new process.
@@ -1526,7 +1526,7 @@ XNESTED(MachFPTrap)
 	REG_EPILOGUE
 
 	move	a2, a0				# code = instruction
-	lw	a0, _C_LABEL(curproc)		# get current process
+	lw	a0, _C_LABEL(curlwp)		# get current process
 	jal	_C_LABEL(trapsignal)
 	li	a1, SIGILL
 
@@ -1543,7 +1543,7 @@ XNESTED(MachFPTrap)
 	REG_EPILOGUE
 
 	move	a2, a0				# code = instruction
-	lw	a0, _C_LABEL(curproc)		# get current process
+	lw	a0, _C_LABEL(curlwp)		# get current process
 	jal	_C_LABEL(trapsignal)
 	li	a1, SIGFPE			# BDSLOT
 

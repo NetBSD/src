@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.11.2.3 2002/06/20 03:47:13 nathanw Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.11.2.4 2002/06/24 22:10:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.11.2.3 2002/06/20 03:47:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.11.2.4 2002/06/24 22:10:44 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,9 +112,9 @@ kthread_exit(int ecode)
 	 */
 	if (ecode != 0)
 		printf("WARNING: thread `%s' (%d) exits with status %d\n",
-		    curproc->l_proc->p_comm, curproc->l_proc->p_pid, ecode);
+		    curproc->p_comm, curproc->p_pid, ecode);
 
-	exit1(curproc, W_EXITCODE(ecode, 0));
+	exit1(curlwp, W_EXITCODE(ecode, 0));
 
 	/*
 	 * XXX Fool the compiler.  Making exit1() __noreturn__ is a can

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66.8.5 2002/06/20 03:42:23 nathanw Exp $     */
+/*	$NetBSD: trap.c,v 1.66.8.6 2002/06/24 22:08:59 nathanw Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -156,7 +156,7 @@ trap(struct trapframe *frame)
 {
 	u_int	sig = 0, type = frame->trap, trapsig = 1;
 	u_int	rv, addr, umode;
-	struct	lwp *l = curproc;
+	struct	lwp *l = curlwp;
 	struct	proc *p = l->l_proc;
 	u_quad_t oticks = 0;
 	struct vm_map *map;
@@ -351,7 +351,7 @@ syscall(struct trapframe *frame)
 	int nsys;
 	int err, rval[2], args[8];
 	struct trapframe *exptr;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 
 
@@ -392,7 +392,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 	if ((error = trace_enter(l, code, args, rval)) != 0)
 		goto bad;
 
-	err = (*callp->sy_call)(curproc, args, rval);
+	err = (*callp->sy_call)(curlwp, args, rval);
 	KERNEL_PROC_UNLOCK(p);
 	exptr = l->l_addr->u_pcb.framep;
 
@@ -457,7 +457,7 @@ startlwp(arg)
 {
 	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 
 	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 #if DIAGNOSTIC

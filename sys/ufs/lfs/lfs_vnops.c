@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.50.2.8 2002/06/20 03:50:35 nathanw Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.50.2.9 2002/06/24 22:12:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.50.2.8 2002/06/20 03:50:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.50.2.9 2002/06/24 22:12:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -528,7 +528,7 @@ lfs_mknod(void *v)
 	 * Can this ever happen (barring hardware failure)?
 	 */
 	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, 0, 0, 
-	    curproc->l_proc)) != 0) {
+	    curproc)) != 0) {
 		printf("Couldn't fsync in mknod (ino %d)---what do I do?\n",
 		       VTOI(*vpp)->i_number);
 		return (error);

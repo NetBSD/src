@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.13.2.4 2001/11/14 19:16:29 nathanw Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.13.2.5 2002/06/24 22:10:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.13.2.4 2001/11/14 19:16:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.13.2.5 2002/06/24 22:10:33 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -109,7 +109,7 @@ filecore_mountroot()
 {
 	struct mount *mp;
 	extern struct vnode *rootvp;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curlwp;	/* XXX */
 	int error;
 	struct filecore_args args;
 

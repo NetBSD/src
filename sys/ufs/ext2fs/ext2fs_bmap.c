@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.5.6.2 2001/11/14 19:18:53 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.5.6.3 2002/06/24 22:12:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.5.6.2 2001/11/14 19:18:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.5.6.3 2002/06/24 22:12:21 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 			bp->b_blkno = blkptrtodb(ump, daddr);
 			bp->b_flags |= B_READ;
 			VOP_STRATEGY(bp);
-			curproc->l_proc->p_stats->p_ru.ru_inblock++;	/* XXX */
+			curproc->p_stats->p_ru.ru_inblock++;	/* XXX */
 			if ((error = biowait(bp)) != 0) {
 				brelse(bp);
 				return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.20.8.1 2001/11/17 23:43:44 wdk Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.20.8.2 2002/06/24 22:06:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20.8.1 2001/11/17 23:43:44 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20.8.2 2002/06/24 22:06:03 nathanw Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -104,7 +104,7 @@ process_read_fpregs(l, regs)
 	struct lwp *l;
 	struct fpreg *regs;
 {
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurproc)
+	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
 		savefpregs(l);
 	memcpy(regs, &l->l_addr->u_pcb.pcb_fpregs, sizeof(struct fpreg));
 	return 0;
@@ -116,8 +116,8 @@ process_write_fpregs(l, regs)
 	struct fpreg *regs;
 {
 	/* to load FPA contents next time when FP insn is executed */
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurproc)
-		fpcurproc = (struct lwp *)0;
+	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
+		fpcurlwp = (struct lwp *)0;
 	memcpy(&l->l_addr->u_pcb.pcb_fpregs, regs, sizeof(struct fpreg));
 	return 0;
 }

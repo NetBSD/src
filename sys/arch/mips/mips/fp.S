@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.21.8.1 2002/04/01 07:41:02 nathanw Exp $	*/
+/*	$NetBSD: fp.S,v 1.21.8.2 2002/06/24 22:05:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2565,7 +2565,7 @@ fpe_trap:
 	 * ctc1 with fpe bits set causes FPE in kernel mode panic on 5231.
 	 */
 	sw	a2, CALLFRAME_SIZ + 12(sp)
-	lw	a0, _C_LABEL(fpcurproc)
+	lw	a0, _C_LABEL(fpcurlwp)
 	jal	_C_LABEL(savefpregs)		# on RM5231
 
 	lw	a2, CALLFRAME_SIZ + 12(sp)
@@ -4969,7 +4969,7 @@ XLEAF(bcemul_sigill)
 	REG_EPILOGUE
 
 	move	a2, a0				# code = instruction
-	lw	a0, _C_LABEL(curproc)		# get current process
+	lw	a0, _C_LABEL(curlwp)		# get current process
 	li	a1, SIGILL
 	j	_C_LABEL(trapsignal)
 END(fpemul_sigill)
@@ -4983,7 +4983,7 @@ LEAF(fpemul_sigfpe)
 	REG_EPILOGUE
 
 	move	a2, a0				# code = instruction
-	lw	a0, _C_LABEL(curproc)		# get current process
+	lw	a0, _C_LABEL(curlwp)		# get current process
 	li	a1, SIGFPE
 	j	_C_LABEL(trapsignal)
 END(fpemul_sigfpe)
@@ -4998,7 +4998,7 @@ LEAF(bcemul_sigfpe)
 	REG_EPILOGUE
 
 	move	a2, a0				# code = instruction
-	lw	a0, _C_LABEL(curproc)		# get current process
+	lw	a0, _C_LABEL(curlwp)		# get current process
 	li	a1, SIGFPE
 	j	_C_LABEL(trapsignal)
 END(bcemul_sigfpe)

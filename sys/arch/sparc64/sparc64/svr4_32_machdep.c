@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.4.8.5 2002/05/29 21:32:01 nathanw Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.4.8.6 2002/06/24 22:08:17 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -470,7 +470,7 @@ svr4_32_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
+	register struct proc *p = curlwp;
 	register struct trapframe64 *tf;
 	struct svr4_32_sigframe *fp, frame;
 	int onstack;

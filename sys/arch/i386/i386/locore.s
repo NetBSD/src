@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.11 2002/06/20 03:39:10 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.12 2002/06/24 22:04:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1362,7 +1362,7 @@ ENTRY(fuswintr)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
-	movl	_C_LABEL(curproc),%ecx
+	movl	_C_LABEL(curlwp),%ecx
 	movl	L_ADDR(%ecx),%ecx
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
 	movzwl	(%edx),%eax
@@ -1518,7 +1518,7 @@ ENTRY(suswintr)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
-	movl	_C_LABEL(curproc),%ecx
+	movl	_C_LABEL(curlwp),%ecx
 	movl	L_ADDR(%ecx),%ecx
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
 
@@ -1810,16 +1810,16 @@ ENTRY(cpu_switch)
 	pushl	%edi
 	pushl	_C_LABEL(cpl)
 
-	movl	_C_LABEL(curproc),%esi
+	movl	_C_LABEL(curlwp),%esi
 
 	/*
-	 * Clear curproc so that we don't accumulate system time while idle.
+	 * Clear curlwp so that we don't accumulate system time while idle.
 	 * This also insures that schedcpu() will move the old process to
 	 * the correct queue if it happens to get called from the spllower()
 	 * below and changes the priority.  (See corresponding comment in
 	 * userret()).
 	 */
-	movl	$0,_C_LABEL(curproc)
+	movl	$0,_C_LABEL(curlwp)
 
 #if defined(LOCKDEBUG)
 	/* Release the sched_lock before processing interrupts. */
@@ -1901,7 +1901,7 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	/* Record new process. */
 	movb	$LSONPROC,L_STAT(%edi)	# l->l_stat = LSONPROC
-	movl	%edi,_C_LABEL(curproc)
+	movl	%edi,_C_LABEL(curlwp)
 
 	/* It's okay to take interrupts here. */
 	sti
@@ -1955,7 +1955,7 @@ switch_exited:
 #endif
 
 	/*
-	 * Activate the address space.  We're curproc, so %cr3 will
+	 * Activate the address space.  We're curlwp, so %cr3 will
 	 * be reloaded, but we're not yet curpcb, so the LDT won't
 	 * be reloaded, although the PCB copy of the selector will
 	 * be refreshed from the pmap.
@@ -2028,17 +2028,17 @@ ENTRY(cpu_preempt)
 	pushl	%edi
 	pushl	_C_LABEL(cpl)
 
-	movl	_C_LABEL(curproc),%esi	# why don't we look on the stack here?
+	movl	_C_LABEL(curlwp),%esi	# why don't we look on the stack here?
 	movl	24(%esp),%edi		# next
 
 	/*
-	 * Clear curproc so that we don't accumulate system time while idle.
+	 * Clear curlwp so that we don't accumulate system time while idle.
 	 * This also insures that schedcpu() will move the old process to
 	 * the correct queue if it happens to get called from the spllower()
 	 * below and changes the priority.  (See corresponding comment in
 	 * userret()).
 	 */
-	movl	$0,_C_LABEL(curproc)
+	movl	$0,_C_LABEL(curlwp)
 
 #if defined(LOCKDEBUG)
 	/* Release the sched_lock before processing interrupts. */
@@ -2106,7 +2106,7 @@ preempt_search:
 
 	/* Record new process. */
 	movb	$LSONPROC,L_STAT(%edi)	# l->l_stat = LSONPROC
-	movl	%edi,_C_LABEL(curproc)
+	movl	%edi,_C_LABEL(curlwp)
 
 	/* It's okay to take interrupts here. */
 	sti
@@ -2159,7 +2159,7 @@ preempt_exited:
 #endif
 
 	/*
-	 * Activate the address space.  We're curproc, so %cr3 will
+	 * Activate the address space.  We're curlwp, so %cr3 will
 	 * be reloaded, but we're not yet curpcb, so the LDT won't
 	 * be reloaded, although the PCB copy of the selector will
 	 * be refreshed from the pmap.
@@ -2226,7 +2226,7 @@ ENTRY(switch_exit)
 	movl	$_C_LABEL(lwp0),%ebx
 
 	/* In case we fault... */
-	movl	$0,_C_LABEL(curproc)
+	movl	$0,_C_LABEL(curlwp)
 
 	/* Restore lwp0's context. */
 	cli
@@ -2274,7 +2274,7 @@ ENTRY(switch_exit)
 
 	/* Jump into cpu_switch() with the right state. */
 	movl	%ebx,%esi
-	movl	$0,_C_LABEL(curproc)
+	movl	$0,_C_LABEL(curlwp)
 	jmp	switch_search
 
 
@@ -2290,7 +2290,7 @@ ENTRY(switch_lwp_exit)
 	movl	$_C_LABEL(lwp0),%ebx
 
 	/* In case we fault... */
-	movl	$0,_C_LABEL(curproc)
+	movl	$0,_C_LABEL(curlwp)
 
 	/* Restore lwp0's context. */
 	cli
@@ -2338,7 +2338,7 @@ ENTRY(switch_lwp_exit)
 
 	/* Jump into cpu_switch() with the right state. */
 	movl	%ebx,%esi
-	movl	$0,_C_LABEL(curproc)
+	movl	$0,_C_LABEL(curlwp)
 	jmp	switch_search
 
 /*
@@ -2397,7 +2397,7 @@ IDTVEC(trap07)
 	pushl	$0			# dummy error code
 	pushl	$T_DNA
 	INTRENTRY
-	pushl	_C_LABEL(curproc)
+	pushl	_C_LABEL(curlwp)
 	call	*_C_LABEL(npxdna_func)
 	addl	$4,%esp
 	testl	%eax,%eax
@@ -2668,7 +2668,7 @@ IDTVEC(syscall)
 syscall1:
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
-	movl	_C_LABEL(curproc),%edx	# get pointer to curproc
+	movl	_C_LABEL(curlwp),%edx	# get pointer to curlwp
 #ifdef DIAGNOSTIC
 	movl	_C_LABEL(cpl),%ebx
 #endif /* DIAGNOSTIC */

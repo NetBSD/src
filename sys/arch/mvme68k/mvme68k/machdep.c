@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86.4.6 2002/05/29 21:31:50 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86.4.7 2002/06/24 22:06:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -610,7 +610,7 @@ setregs(l, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)p->p_psstr;
+	frame->f_regs[A2] = (int)l->l_proc->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;
@@ -792,8 +792,8 @@ cpu_reboot(howto, bootstr)
 	extern void savectx __P((struct user *));
 
 	/* take a snap shot before clobbering any registers */
-	if (curproc && curproc->l_addr)
-		savectx(curproc->l_addr);
+	if (curlwp && curlwp->l_addr)
+		savectx(curlwp->l_addr);
 
 	/* Save the RB_SBOOT flag. */
 	howto |= (boothowto & RB_SBOOT);

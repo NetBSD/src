@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.7.2.5 2002/06/20 03:40:58 nathanw Exp $	*/
+/*	$NetBSD: ofw.c,v 1.7.2.6 2002/06/24 22:07:24 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -316,7 +316,7 @@ ofw_boot(howto, bootstr)
 {
 
 #ifdef DIAGNOSTIC
-	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
+	printf("boot: howto=%08x curlwp=%p\n", howto, curlwp);
 	printf("current_mask=%08x spl_mask=%08x\n", current_mask, spl_mask);
 
 	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_imp=%08x\n",

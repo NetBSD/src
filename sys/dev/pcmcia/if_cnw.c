@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.17.2.5 2002/06/20 03:46:05 nathanw Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.17.2.6 2002/06/24 22:10:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.17.2.5 2002/06/20 03:46:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.17.2.6 2002/06/24 22:10:10 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1048,7 +1048,7 @@ cnw_ioctl(ifp, cmd, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
-	struct proc *p = curproc->l_proc;	/*XXX*/
+	struct proc *p = curproc;	/*XXX*/
 
 	s = splnet();
 

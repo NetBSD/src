@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41.4.8 2002/06/20 03:41:35 nathanw Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.41.4.9 2002/06/24 22:08:21 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -251,7 +251,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 #ifdef NOTDEF_DEBUG
 	printf("cpu_lwp_fork()\n");
 #endif
-	if (l1 == curproc) {
+	if (l1 == curlwp) {
 		write_user_windows();
 
 		/*
@@ -263,7 +263,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	}
 #ifdef DIAGNOSTIC
 	else if (l1 != &lwp0)
-		panic("cpu_lwp_fork: curproc");
+		panic("cpu_lwp_fork: curlwp");
 #endif
 #ifdef DEBUG
 	/* prevent us from having NULL lastcall */

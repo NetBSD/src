@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.58.4.3 2001/12/08 08:22:39 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.58.4.4 2002/06/24 22:03:20 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ struct cpu_info {
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
-	struct lwp *ci_curproc;		/* current owner of the processor */
+	struct lwp *ci_curlwp;		/* current owner of the processor */
 	struct cpu_info *ci_next;	/* next cpu_info structure */
 
 	/*
@@ -122,7 +122,7 @@ struct cpu_info {
 	 */
 	struct mchkinfo ci_mcinfo;	/* machine check info */
 	cpuid_t ci_cpuid;		/* our CPU ID */
-	struct lwp *ci_fpcurproc;	/* current owner of the FPU */
+	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	paddr_t ci_curpcb;		/* PA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* our idle PCB */
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
@@ -174,8 +174,8 @@ void	cpu_pause_resume_all(int);
 #define	curcpu()	(&cpu_info_primary)
 #endif /* MULTIPROCESSOR */
 
-#define	curproc		curcpu()->ci_curproc
-#define	fpcurproc	curcpu()->ci_fpcurproc
+#define	curlwp		curcpu()->ci_curlwp
+#define	fpcurlwp	curcpu()->ci_fpcurlwp
 #define	curpcb		curcpu()->ci_curpcb
 
 /*
@@ -220,8 +220,8 @@ struct clockframe {
 #define	need_resched(ci)						\
 do {									\
 	(ci)->ci_want_resched = 1;					\
-	if ((ci)->ci_curproc != NULL)					\
-		aston((ci)->ci_curproc->l_proc);       			\
+	if ((ci)->ci_curlwp != NULL)					\
+		aston((ci)->ci_curlwp->l_proc);       			\
 } while (/*CONSTCOND*/0)
 
 /*

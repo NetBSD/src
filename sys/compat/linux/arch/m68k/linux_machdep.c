@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.8.2.5 2002/06/21 05:50:59 gmcgarry Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.8.2.6 2002/06/24 22:09:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.8.2.5 2002/06/21 05:50:59 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.8.2.6 2002/06/24 22:09:29 nathanw Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -115,7 +115,7 @@ setup_linux_sigframe(frame, sig, mask, usp)
 	sigset_t *mask;
 	caddr_t usp;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct linux_sigframe *fp, kf;
 	short ft;
@@ -458,7 +458,7 @@ linux_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct frame *frame;
 	caddr_t usp;		/* user stack for signal context */
@@ -922,5 +922,5 @@ linux_machdepioctl(p, v, retval)
 		return EINVAL;
 	}
 	SCARG(&bia, com) = com;
-	return sys_ioctl(curproc, &bia, retval);
+	return sys_ioctl(curlwp, &bia, retval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35.4.6 2002/06/20 03:40:24 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.35.4.7 2002/06/24 22:06:45 nathanw Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -298,7 +298,7 @@ trap(type, code, v, frame)
 	int bit;
 
 	uvmexp.traps++;
-	l = curproc;
+	l = curlwp;
 	ucode = 0;
 
 	/* I have verified that this DOES happen! -gwr */
@@ -720,7 +720,7 @@ writeback(fp, docachepush)
 	int docachepush;
 {
 	struct fmt7 *f = &fp->f_fmt7;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	int err = 0;
 	u_int fa;
@@ -985,7 +985,7 @@ dumpwb(num, s, a, d)
 	u_short s;
 	u_int a, d;
 {
-	struct proc *p = curproc->l_proc;
+	struct proc *p = curproc;
 	paddr_t pa;
 
 	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",

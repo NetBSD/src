@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.64.2.8 2002/06/20 03:50:34 nathanw Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.64.2.9 2002/06/24 22:12:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.64.2.8 2002/06/20 03:50:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.64.2.9 2002/06/24 22:12:37 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -191,7 +191,7 @@ lfs_mountroot()
 {
 	extern struct vnode *rootvp;
 	struct mount *mp;
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	int error;
 	
 	if (root_device->dv_class != DV_DISK)
@@ -1346,7 +1346,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 * any access requests (wait for roll-forward to complete).
 	 */
 	while((fs->lfs_flags & LFS_NOTYET) && 
-	    curproc->l_proc->p_pid != fs->lfs_rfpid)
+	    curproc->p_pid != fs->lfs_rfpid)
 		tsleep(&fs->lfs_flags, PRIBIO+1, "lfs_notyet", 0);
 
 	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.61.4.5 2002/04/01 07:38:53 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.61.4.6 2002/06/24 22:03:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61.4.5 2002/04/01 07:38:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61.4.6 2002/06/24 22:03:34 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,13 +99,13 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	l2->l_md.md_flags = l1->l_md.md_flags;
 
 	/* Copy pcb from proc l1 to l2. */
-	if (l1 == curproc) {
+	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
 		savectx(curpcb);
 	}
 #ifdef DIAGNOSTIC
 	else if (l1 != &lwp0)
-		panic("cpu_lwp_fork: curproc");
+		panic("cpu_lwp_fork: curlwp");
 #endif
 	*pcb = l1->l_addr->u_pcb;
 

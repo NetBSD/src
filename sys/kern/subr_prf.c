@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.76.2.7 2002/06/20 03:47:21 nathanw Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.76.2.8 2002/06/24 22:10:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.76.2.7 2002/06/20 03:47:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.76.2.8 2002/06/24 22:10:58 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -459,7 +459,7 @@ uprintf(fmt, va_alist)
 	va_dcl
 #endif
 {
-	struct proc *p = curproc->l_proc;
+	struct proc *p = curproc;
 	va_list ap;
 
 	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {

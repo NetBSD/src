@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.43.2.10 2002/06/20 03:49:51 nathanw Exp $	*/
+/*	$NetBSD: key.c,v 1.43.2.11 2002/06/24 22:11:58 nathanw Exp $	*/
 /*	$KAME: key.c,v 1.234 2002/05/13 03:21:17 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.43.2.10 2002/06/20 03:49:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.43.2.11 2002/06/24 22:11:58 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -5654,8 +5654,8 @@ key_acquire(saidx, sp)
 		id->sadb_ident_exttype = idexttype;
 		id->sadb_ident_type = SADB_IDENTTYPE_USERFQDN;
 		/* XXX is it correct? */
-		if (curproc && curproc->p_cred)
-			id->sadb_ident_id = curproc->p_cred->p_ruid;
+		if (curlwp && curlwp->p_cred)
+			id->sadb_ident_id = curlwp->p_cred->p_ruid;
 		if (userfqdn && userfqdnlen)
 			bcopy(userfqdn, id + 1, userfqdnlen);
 		p += sizeof(struct sadb_ident) + PFKEY_ALIGN8(userfqdnlen);
@@ -7082,7 +7082,7 @@ key_getuserfqdn()
 {
 	const char *host;
 	static char userfqdn[MAXHOSTNAMELEN + MAXLOGNAME + 2];
-	struct proc *p = curproc;
+	struct proc *p = curlwp;
 	char *q;
 
 	if (!p || !p->p_pgrp || !p->p_pgrp->pg_session)

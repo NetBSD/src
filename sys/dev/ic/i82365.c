@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.62.2.3 2002/06/20 03:44:37 nathanw Exp $	*/
+/*	$NetBSD: i82365.c,v 1.62.2.4 2002/06/24 22:09:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.62.2.3 2002/06/20 03:44:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.62.2.4 2002/06/24 22:09:57 nathanw Exp $");
 
 #define	PCICDEBUG
 
@@ -1343,7 +1343,7 @@ pcic_delay(h, timo, wmesg)
 		printf("called with timeout %d\n", timo);
 		panic("pcic_delay");
 	}
-	if (curproc == NULL) {
+	if (curlwp == NULL) {
 		printf("called in interrupt context\n");
 		panic("pcic_delay");
 	}

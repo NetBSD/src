@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.85.2.6 2002/06/21 06:24:37 gmcgarry Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.85.2.7 2002/06/24 22:06:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85.2.6 2002/06/21 06:24:37 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.85.2.7 2002/06/24 22:06:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,12 +115,12 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 
 #ifdef DIAGNOSTIC
 	/*
-	 * If l1 != curproc && l1 == &lwp0, we're creating a kernel thread.
+	 * If l1 != curlwp && l1 == &lwp0, we're creating a kernel thread.
 	 */
-	if (l1 != curproc && l1 != &lwp0)
-		panic("cpu_lwp_fork: curproc");
+	if (l1 != curlwp && l1 != &lwp0)
+		panic("cpu_lwp_fork: curlwp");
 #endif
-	if ((l1->l_md.md_flags & MDP_FPUSED) && l1 == fpcurproc)
+	if ((l1->l_md.md_flags & MDP_FPUSED) && l1 == fpcurlwp)
 		savefpregs(l1);
 
 	/*
@@ -223,8 +223,8 @@ cpu_exit(l, proc)
 	void switch_exit(struct lwp *);
 	void switch_lwp_exit (struct lwp *);
 
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurproc)
-		fpcurproc = (struct lwp *)0;
+	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
+		fpcurlwp = (struct lwp *)0;
 
 	uvmexp.swtch++;
 	(void)splhigh();
@@ -258,7 +258,7 @@ cpu_coredump(l, vp, cred, chdr)
 	chdr->c_seghdrsize = ALIGN(sizeof(struct coreseg));
 	chdr->c_cpusize = sizeof(struct cpustate);
 
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurproc)
+	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
 		savefpregs(l);
 	cpustate.frame = *(struct frame *)l->l_md.md_regs;
 	cpustate.fpregs = l->l_addr->u_pcb.pcb_fpregs;

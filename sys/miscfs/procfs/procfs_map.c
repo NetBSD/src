@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.10.2.4 2001/11/14 19:17:11 nathanw Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.10.2.5 2002/06/24 22:11:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.10.2.4 2001/11/14 19:17:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.10.2.5 2002/06/24 22:11:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ procfs_domap(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 		return (0);
 	
 	error = 0;
-	if (map != &curproc->l_proc->p_vmspace->vm_map)
+	if (map != &curproc->p_vmspace->vm_map)
 		vm_map_lock_read(map);
 	for (entry = map->header.next;
 		((uio->uio_resid > 0) && (entry != &map->header));
@@ -167,7 +167,7 @@ procfs_domap(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 		if (error)
 			break;
 	}
-	if (map != &curproc->l_proc->p_vmspace->vm_map)
+	if (map != &curproc->p_vmspace->vm_map)
 		vm_map_unlock_read(map);
 	return error;
 }

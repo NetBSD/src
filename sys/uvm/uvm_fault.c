@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.56.2.9 2002/04/01 07:49:21 nathanw Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.56.2.10 2002/06/24 22:12:49 nathanw Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.56.2.9 2002/04/01 07:49:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.56.2.10 2002/06/24 22:12:49 nathanw Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -305,9 +305,9 @@ uvmfault_anonget(ufi, amap, anon)
 	uvmexp.fltanget++;
         /* bump rusage counters */
 	if (anon->u.an_page)
-		curproc->l_proc->p_stats->p_ru.ru_minflt++;
+		curproc->p_stats->p_ru.ru_minflt++;
 	else
-		curproc->l_proc->p_stats->p_ru.ru_majflt++;
+		curproc->p_stats->p_ru.ru_majflt++;
 
 	/*
 	 * loop until we get it, or fail.
@@ -1293,10 +1293,10 @@ Case2:
 
 	if (uobjpage) {
 		/* update rusage counters */
-		curproc->l_proc->p_stats->p_ru.ru_minflt++;
+		curproc->p_stats->p_ru.ru_minflt++;
 	} else {
 		/* update rusage counters */
-		curproc->l_proc->p_stats->p_ru.ru_majflt++;
+		curproc->p_stats->p_ru.ru_majflt++;
 
 		/* locked: maps(read), amap(if there), uobj */
 		uvmfault_unlockall(&ufi, amap, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.17.2.4 2002/04/01 07:45:58 nathanw Exp $	*/
+/*	$NetBSD: ym.c,v 1.17.2.5 2002/06/24 22:10:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.17.2.4 2002/04/01 07:45:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.17.2.5 2002/06/24 22:10:07 nathanw Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -1377,8 +1377,8 @@ ym_power_ctl(sc, parts, onoff)
 		DVNAME(sc), parts, onoff ? "on" : "off"));
 
 #ifdef DIAGNOSTIC
-	if (curproc == NULL)
-		panic("ym_power_ctl: no curproc");
+	if (curlwp == NULL)
+		panic("ym_power_ctl: no curlwp");
 #endif
 	/* This function may sleep --- needs locking. */
 	while (sc->sc_in_power_ctl & YM_POWER_CTL_INUSE) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.56.2.2 2001/11/14 19:18:42 nathanw Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.56.2.3 2002/06/24 22:12:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.56.2.2 2001/11/14 19:18:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.56.2.3 2002/06/24 22:12:05 nathanw Exp $");
 
 #include "opt_nfs.h"
 #include "opt_nfs_boot.h"
@@ -366,7 +366,7 @@ nfs_boot_sobind_ipport(so, port)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = INADDR_ANY;
 	sin->sin_port = htons(port);
-	error = sobind(so, m, curproc->l_proc);
+	error = sobind(so, m, curproc);
 	m_freem(m);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.1.4.4 2002/04/01 07:39:14 nathanw Exp $	*/
+/*	$NetBSD: console.c,v 1.1.4.5 2002/06/24 22:03:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -220,7 +220,7 @@ vconsole_spawn_re(dev, vc)
 	new->data = 0;
 	/*new->charmap = 0;*/
 	new->flags=LOSSY;
-	new->proc = curproc->l_proc;
+	new->proc = curproc;
 	new->vtty = 0;
 	return new;
 }
@@ -270,7 +270,7 @@ vconsole_spawn(dev, vc)
 		    (new->charmap)[counter]=' ';
 	}
 	new->TERM_INIT ( new );
-	new->proc = curproc->l_proc;
+	new->proc = curproc;
 	return new;
 }
 

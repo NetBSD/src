@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.85.8.5 2002/02/28 04:06:26 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.85.8.6 2002/06/24 22:03:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
 #include "opt_compat_sunos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85.8.5 2002/02/28 04:06:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85.8.6 2002/06/24 22:03:32 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -553,7 +553,7 @@ trap(type, code, v, frame)
 	u_quad_t sticks = 0;
 	int i;
 
-	l = curproc;
+	l = curlwp;
 	ucode = 0;
 	uvmexp.traps++;
 

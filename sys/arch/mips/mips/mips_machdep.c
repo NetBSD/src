@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.13 2002/06/21 06:26:35 gmcgarry Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.14 2002/06/24 22:05:58 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.13 2002/06/21 06:26:35 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.14 2002/06/24 22:05:58 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -208,7 +208,7 @@ int mips_has_r4k_mmu;
 int mips3_pg_cached;
 
 struct	user *proc0paddr;
-struct	lwp  *fpcurproc;
+struct	lwp  *fpcurlwp;
 struct	pcb  *curpcb;
 struct	segtab *segbase;
 
@@ -1068,8 +1068,8 @@ setregs(l, pack, stack)
 	f->f_regs[A2] = 0;
 	f->f_regs[A3] = (int)l->l_proc->p_psstr;
 
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurproc)
-		fpcurproc = (struct lwp *)0;
+	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
+		fpcurlwp = (struct lwp *)0;
 	memset(&l->l_addr->u_pcb.pcb_fpregs, 0, sizeof(struct fpreg));
 	l->l_md.md_flags &= ~MDP_FPUSED;
 	l->l_md.md_ss_addr = 0;
@@ -1093,7 +1093,7 @@ sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigframe *fp;
 	struct frame *f;
@@ -1138,7 +1138,7 @@ sendsig(catcher, sig, mask, code)
 	ksc.sc_fpused = l->l_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
 		/* if FPU has current state, save it first */
-		if (l == fpcurproc)
+		if (l == fpcurlwp)
 			savefpregs(l);
 		*(struct fpreg *)ksc.sc_fpregs = l->l_addr->u_pcb.pcb_fpregs;
 	}
@@ -1254,8 +1254,8 @@ sys___sigreturn14(l, v, retval)
 	if (scp->sc_fpused) {
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
-		if (l == fpcurproc) {
-			fpcurproc = (struct lwp *)0;
+		if (l == fpcurlwp) {
+			fpcurlwp = (struct lwp *)0;
 		}
 		l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 	}
@@ -1728,7 +1728,7 @@ startlwp(arg)
 {
 	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 
 	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 #if DIAGNOSTIC
@@ -1818,7 +1818,7 @@ cpu_getmcontext(l, mcp, flags)
 		 * context to the PCB first.
 		 * XXX:  FP regs may be written to wrong location XXX
 		 */
-		if (l == fpcurproc)
+		if (l == fpcurlwp)
 			savefpregs(l);
 		memcpy(&mcp->__fpregs, &l->l_addr->u_pcb.pcb_fpregs.r_regs,
 		    sizeof (mcp->__fpregs));

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.53.2.6 2002/04/01 07:41:05 nathanw Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.53.2.7 2002/06/24 22:05:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -296,7 +296,7 @@ END(mips1_KernGenException)
  * Handle an exception during user mode.
  * Save user context atop of kernel stack, then call trap() to process
  * the condition.  The context can be manipulated alternatively via
- * curproc->l_md.md_regs.
+ * curlwp->l_md.md_regs.
  */
 NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
 	.set	noat
@@ -365,9 +365,9 @@ NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchronous traps.
  */
-	lw	t0, _C_LABEL(curproc)		# t0 = curproc
+	lw	t0, _C_LABEL(curlwp)		# t0 = curlwp
 	nop
-	lw	t0, L_PROC(t0)			# t0 = curproc->l_proc
+	lw	t0, L_PROC(t0)			# t0 = curlwp->l_proc
 	nop
 	lw	t0, P_MD_ASTPENDING(t0)		# any pending ast?
 	nop
@@ -390,7 +390,7 @@ END(mips1_UserGenException)
  *
  * Save user context atop of kernel stack, then call syscall() to process
  * the condition.  The context can be manipulated alternatively via
- * curproc->l_md.md_regs.
+ * curlwp->l_md.md_regs.
  */
 NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	.set	noat
@@ -410,7 +410,7 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	sw	a1, FRAME_A1(k1)
 	sw	a2, FRAME_A2(k1)
 	sw	a3, FRAME_A3(k1)
-	lw	a0, _C_LABEL(curproc)		# 1st arg is curproc
+	lw	a0, _C_LABEL(curlwp)		# 1st arg is curlwp
 	mfhi	v1
 	#sw	t0, FRAME_T0(k1)		# no need to save temp regs
 	#sw	t1, FRAME_T1(k1)
@@ -449,7 +449,7 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	move	ra, a3
 	sw	ra, CALLFRAME_RA(sp)
 #endif
-	lw	t0, L_PROC(a0)			# t0 = curproc->l_proc
+	lw	t0, L_PROC(a0)			# t0 = curlwp->l_proc
 	nop
 	lw	t1, P_MD_SYSCALL(t0)		# t1 = syscall
 	ori	t0, a1, MIPS_SR_INT_IE		# turn on IEc, enable intr.
@@ -462,9 +462,9 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchronous traps.
  */
-	lw	t0, _C_LABEL(curproc)		# t0 = curproc
+	lw	t0, _C_LABEL(curlwp)		# t0 = curlwp
 	nop
-	lw	t0, L_PROC(t0)			# t0 = curproc->l_proc
+	lw	t0, L_PROC(t0)			# t0 = curlwp->l_proc
 	nop
 	lw	t0, P_MD_ASTPENDING(t0)		# any pending ast?
 	nop
@@ -647,9 +647,9 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchoronous traps.
  */
-	lw	v0, _C_LABEL(curproc)		# v0 = curproc
+	lw	v0, _C_LABEL(curlwp)		# v0 = curlwp
 	addu	a1, sp, CALLFRAME_SIZ
-	lw	v0, L_PROC(v0)			# v0 = curproc->l_proc
+	lw	v0, L_PROC(v0)			# v0 = curlwp->l_proc
 	lw	a0, FRAME_SR(a1)
 	lw	v0, P_MD_ASTPENDING(v0)		# any pending ast?
 	mtc0	a0, MIPS_COP_0_STATUS		# restore SR, disable intrs

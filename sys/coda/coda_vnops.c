@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.23.2.6 2002/01/08 00:28:59 nathanw Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.23.2.7 2002/06/24 22:09:17 nathanw Exp $	*/
 
 /*
  * 
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.23.2.6 2002/01/08 00:28:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.23.2.7 2002/06/24 22:09:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -842,7 +842,7 @@ coda_inactive(v)
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     struct ucred *cred __attribute__((unused)) = NULL;
-    struct proc *p __attribute__((unused)) = curproc->l_proc;
+    struct proc *p __attribute__((unused)) = curproc;
 /* upcall decl */
 /* locals */
 
@@ -1748,7 +1748,7 @@ coda_bmap(v)
     daddr_t bn __attribute__((unused)) = ap->a_bn;	/* fs block number */
     struct vnode **vpp = ap->a_vpp;			/* RETURN vp of device */
     daddr_t *bnp __attribute__((unused)) = ap->a_bnp;	/* RETURN device block number */
-    struct proc *p __attribute__((unused)) = curproc->l_proc;
+    struct proc *p __attribute__((unused)) = curproc;
 /* upcall decl */
 /* locals */
 
@@ -1771,7 +1771,7 @@ coda_strategy(v)
 /* true args */
     struct vop_strategy_args *ap = v;
     struct buf *bp __attribute__((unused)) = ap->a_bp;
-    struct proc *p __attribute__((unused)) = curproc->l_proc;
+    struct proc *p __attribute__((unused)) = curproc;
 /* upcall decl */
 /* locals */
 
@@ -2019,7 +2019,7 @@ coda_getpages(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct cnode *cp = VTOC(vp);
-	struct proc *p = curproc->l_proc;
+	struct proc *p = curproc;
 	struct ucred *cred = p->p_ucred;
 	int error;
 

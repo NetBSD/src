@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.16 2002/05/23 19:09:27 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.17 2002/06/24 22:10:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.16 2002/05/23 19:09:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.17 2002/06/24 22:10:50 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1040,7 +1040,7 @@ firstsig(const sigset_t *ss)
  * by checking the pending signal masks in the CURSIG macro.) The normal call
  * sequence is
  *
- *	while (signum = CURSIG(curproc))
+ *	while (signum = CURSIG(curlwp))
  *		postsig(signum);
  */
 int
@@ -1232,7 +1232,7 @@ proc_stop(struct proc *p)
 	     l = LIST_NEXT(l, l_sibling)) {
 		if (l->l_stat == LSONPROC) {
 			/* XXX SMP this assumes that a LWP that is LSONPROC
-			 * is curproc and hence is about to be mi_switched 
+			 * is curlwp and hence is about to be mi_switched 
 			 * away; the only callers of proc_stop() are:
 			 * - psignal
 			 * - issignal()
@@ -1319,7 +1319,7 @@ postsig(int signum)
 	u_long		code;
 	sigset_t	*returnmask;
 
-	l = curproc;
+	l = curlwp;
 	p = l->l_proc;
 	ps = p->p_sigacts;
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.186.2.7 2002/04/01 07:38:50 nathanw Exp $ */
+/* $NetBSD: pmap.c,v 1.186.2.8 2002/06/24 22:03:14 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.186.2.7 2002/04/01 07:38:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.186.2.8 2002/06/24 22:03:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -548,8 +548,8 @@ int	pmap_physpage_delref(void *);
 	 */								\
 	int isactive_ = PMAP_ISACTIVE_TEST(pm, cpu_id);			\
 									\
-	if (curproc != NULL && curproc->l_proc->p_vmspace != NULL &&	\
-	   (isactive_ ^ ((pm) == curproc->l_proc->p_vmspace->vm_map.pmap)))	\
+	if (curlwp != NULL && curproc->p_vmspace != NULL &&	\
+	   (isactive_ ^ ((pm) == curproc->p_vmspace->vm_map.pmap)))	\
 		panic("PMAP_ISACTIVE");					\
 	(isactive_);							\
 })
@@ -626,7 +626,7 @@ do {									\
 	(l)->l_addr->u_pcb.pcb_hw.apcb_asn = 				\
 	    (pmap)->pm_asni[(cpu_id)].pma_asn;				\
 									\
-	if ((l) == curproc) {						\
+	if ((l) == curlwp) {						\
 		/*							\
 		 * Page table base register has changed; switch to	\
 		 * our own context again so that it will take effect.	\
@@ -2300,14 +2300,14 @@ pmap_do_reactivate(struct cpu_info *ci, struct trapframe *framep)
 {
 	struct pmap *pmap;
 
-	if (ci->ci_curproc == NULL)
+	if (ci->ci_curlwp == NULL)
 		return;
 
-	pmap = ci->ci_curproc->l_proc->p_vmspace->vm_map.pmap;
+	pmap = ci->ci_curlwp->l_proc->p_vmspace->vm_map.pmap;
 
 	pmap_asn_alloc(pmap, ci->ci_cpuid);
 	if (PMAP_ISACTIVE(pmap, ci->ci_cpuid))
-		PMAP_ACTIVATE(pmap, ci->ci_curproc, ci->ci_cpuid);
+		PMAP_ACTIVATE(pmap, ci->ci_curlwp, ci->ci_cpuid);
 }
 #endif /* MULTIPROCESSOR */
 
@@ -3280,7 +3280,7 @@ pmap_lev1map_create(pmap_t pmap, long cpu_id)
 	 */
 	if (PMAP_ISACTIVE(pmap, cpu_id)) {
 		pmap_asn_alloc(pmap, cpu_id);
-		PMAP_ACTIVATE(pmap, curproc, cpu_id);
+		PMAP_ACTIVATE(pmap, curlwp, cpu_id);
 	}
 	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id);
 	return (0);
@@ -3328,7 +3328,7 @@ pmap_lev1map_destroy(pmap_t pmap, long cpu_id)
 	 */
 	PMAP_INVALIDATE_ASN(pmap, cpu_id);
 	if (PMAP_ISACTIVE(pmap, cpu_id))
-		PMAP_ACTIVATE(pmap, curproc, cpu_id);
+		PMAP_ACTIVATE(pmap, curlwp, cpu_id);
 	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id);
 
 	/*

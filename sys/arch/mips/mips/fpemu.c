@@ -1,4 +1,4 @@
-/*	$NetBSD: fpemu.c,v 1.7.4.3 2002/04/01 07:41:03 nathanw Exp $ */
+/*	$NetBSD: fpemu.c,v 1.7.4.4 2002/06/24 22:05:47 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -72,7 +72,7 @@ send_sigsegv(u_int32_t vaddr, u_int32_t exccode, struct frame *frame,
 
 	frame->f_regs[CAUSE] = cause;
 	frame->f_regs[BADVADDR] = vaddr;
-	trapsignal(curproc, SIGSEGV, vaddr);
+	trapsignal(curlwp, SIGSEGV, vaddr);
 }
 
 static __inline void

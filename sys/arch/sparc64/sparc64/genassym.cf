@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25.4.4 2002/06/20 03:41:29 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.25.4.5 2002/06/24 22:07:58 nathanw Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ define	V_INTR		offsetof(struct uvmexp, intrs)
 define	V_FAULTS	offsetof(struct uvmexp, faults)
 
 # CPU info structure
-define	CI_CURPROC	offsetof(struct cpu_info, ci_curproc)
+define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
 define	CI_CPCB		offsetof(struct cpu_info, ci_cpcb)
 define	CI_NEXT		offsetof(struct cpu_info, ci_next)
 define	CI_FPLWP	offsetof(struct cpu_info, ci_fplwp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.78.2.8 2002/06/20 03:48:02 nathanw Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.78.2.9 2002/06/24 22:11:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.78.2.8 2002/06/20 03:48:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.78.2.9 2002/06/24 22:11:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -575,7 +575,7 @@ procfs_getattr(v)
 		vap->va_uid = 0;
 		vap->va_gid = 0;
 		vap->va_bytes = vap->va_size =
-		    sprintf(buf, "%ld", (long)curproc->l_proc->p_pid);
+		    sprintf(buf, "%ld", (long)curproc->p_pid);
 		break;
 	}
 
@@ -583,7 +583,7 @@ procfs_getattr(v)
 		vap->va_nlink = 1;
 		vap->va_uid = 0;
 		vap->va_gid = 0;
-		vap->va_bytes = vap->va_size = sizeof("curproc");
+		vap->va_bytes = vap->va_size = sizeof("curlwp");
 		break;
 
 	case Pproc:
@@ -732,7 +732,7 @@ procfs_lookup(v)
 	pid_t pid;
 	struct pfsnode *pfs;
 	struct proc *p = NULL;
-	int i, error, wantpunlock, iscurproc = 0, isself = 0;
+	int i, error, wantpunlock, iscurlwp = 0, isself = 0;
 
 	*vpp = NULL;
 	cnp->cn_flags &= ~PDIRUNLOCK;
@@ -756,12 +756,12 @@ procfs_lookup(v)
 		if (cnp->cn_flags & ISDOTDOT) 
 			return (EIO);
 
-		iscurproc = CNEQ(cnp, "curproc", 7);
+		iscurlwp = CNEQ(cnp, "curlwp", 7);
 		isself = CNEQ(cnp, "self", 4);
 
-		if (iscurproc || isself) {
+		if (iscurlwp || isself) {
 			error = procfs_allocvp(dvp->v_mount, vpp, 0,
-			    iscurproc ? Pcurproc : Pself);
+			    iscurlwp ? Pcurproc : Pself);
 			if ((error == 0) && (wantpunlock)) {
 				VOP_UNLOCK(dvp, 0);
 				cnp->cn_flags |= PDIRUNLOCK;
@@ -978,7 +978,7 @@ procfs_readdir(v)
 
 	/*
 	 * this is for the root of the procfs filesystem
-	 * what is needed are special entries for "curproc"
+	 * what is needed are special entries for "curlwp"
 	 * and "self" followed by an entry for each process
 	 * on allproc
 #ifdef PROCFS_ZOMBIE
@@ -1025,8 +1025,8 @@ procfs_readdir(v)
 
 			case 2:
 				d.d_fileno = PROCFS_FILENO(0, Pcurproc);
-				d.d_namlen = sizeof("curproc") - 1;
-				memcpy(d.d_name, "curproc", sizeof("curproc"));
+				d.d_namlen = sizeof("curlwp") - 1;
+				memcpy(d.d_name, "curlwp", sizeof("curlwp"));
 				d.d_type = DT_LNK;
 				break;
 
@@ -1112,7 +1112,7 @@ procfs_readdir(v)
 }
 
 /*
- * readlink reads the link of `curproc'
+ * readlink reads the link of `curlwp'
  */
 int
 procfs_readlink(v)
@@ -1123,9 +1123,9 @@ procfs_readlink(v)
 	int len;
 
 	if (VTOPFS(ap->a_vp)->pfs_fileno == PROCFS_FILENO(0, Pcurproc))
-		len = sprintf(buf, "%ld", (long)curproc->l_proc->p_pid);
+		len = sprintf(buf, "%ld", (long)curproc->p_pid);
 	else if (VTOPFS(ap->a_vp)->pfs_fileno == PROCFS_FILENO(0, Pself))
-		len = sprintf(buf, "%s", "curproc");
+		len = sprintf(buf, "%s", "curlwp");
 	else
 		return (EINVAL);
 

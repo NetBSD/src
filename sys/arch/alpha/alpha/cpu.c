@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.64.2.2 2002/06/20 03:37:29 nathanw Exp $ */
+/* $NetBSD: cpu.c,v 1.64.2.3 2002/06/24 22:03:06 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64.2.2 2002/06/20 03:37:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64.2.3 2002/06/24 22:03:06 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -702,8 +702,8 @@ cpu_debug_dump(void)
 		    ci->ci_cpuid,
 		    ci->ci_flags,
 		    ci->ci_ipis,
-		    ci->ci_curproc,
-		    ci->ci_fpcurproc);
+		    ci->ci_curlwp,
+		    ci->ci_fpcurlwp);
 	}
 }
 

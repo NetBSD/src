@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154.2.8 2002/02/28 04:10:18 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.154.2.9 2002/06/24 22:05:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.8 2002/02/28 04:10:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154.2.9 2002/06/24 22:05:07 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -173,7 +173,7 @@ void
 trap(frame)
 	struct trapframe frame;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l ? l->l_proc : 0;
 	int type = frame.tf_trapno;
 	struct pcb *pcb;
@@ -194,8 +194,8 @@ trap(frame)
 		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		    frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
 		    frame.tf_eflags, rcr2(), cpl);
-		printf("curproc %p%s", curproc, curproc ? " " : "\n");
-		if (curproc)
+		printf("curlwp %p%s", curlwp, curlwp ? " " : "\n");
+		if (curlwp)
 			printf("pid %d lid %d\n", l->l_proc->p_pid, l->l_lid);
 	}
 #endif
@@ -337,8 +337,8 @@ copyfault:
 		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		    frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
 		    frame.tf_eflags, rcr2(), cpl);
-		printf("curproc %p%s", curproc, curproc ? " " : "\n");
-		if (curproc)
+		printf("curlwp %p%s", curlwp, curlwp ? " " : "\n");
+		if (curlwp)
 			printf("process %d.%d\n", l->l_proc->p_pid, l->l_lid);
 
 		(*p->p_emul->e_trapsignal)(l, SIGBUS, type & ~T_USER);
@@ -569,7 +569,7 @@ trapwrite(addr)
 		return 1;
 
 	nss = 0;
-	p = curproc->l_proc;
+	p = curproc;
 	vm = p->p_vmspace;
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
 		nss = btoc(USRSTACK-(unsigned)va);
@@ -596,7 +596,7 @@ startlwp(arg)
 {
 	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 
 	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 #if DIAGNOSTIC

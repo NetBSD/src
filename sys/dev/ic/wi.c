@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.17.2.13 2002/06/20 03:45:07 nathanw Exp $	*/
+/*	$NetBSD: wi.c,v 1.17.2.14 2002/06/24 22:10:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.13 2002/06/20 03:45:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.14 2002/06/24 22:10:04 nathanw Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1455,7 +1455,7 @@ wi_ioctl(ifp, command, data)
 	struct wi_softc		*sc = ifp->if_softc;
 	struct wi_req		wreq;
 	struct ifreq		*ifr;
-	struct proc *p = curproc->l_proc;
+	struct proc *p = curproc;
 	struct ieee80211_nwid nwid;
 
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
@@ -2401,7 +2401,7 @@ wi_get_nwkey(sc, nwkey)
 	nwkey->i_defkid = sc->wi_tx_key + 1;
 
 	/* do not show any keys to non-root user */
-	error = suser(curproc->l_proc->p_ucred, &curproc->l_proc->p_acflag);
+	error = suser(curproc->p_ucred, &curproc->p_acflag);
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 		if (nwkey->i_key[i].i_keydat == NULL)
 			continue;

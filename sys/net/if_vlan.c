@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.30.2.5 2002/06/20 03:48:19 nathanw Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.30.2.6 2002/06/24 22:11:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.30.2.5 2002/06/20 03:48:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.30.2.6 2002/06/24 22:11:41 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -458,7 +458,7 @@ vlan_set_promisc(struct ifnet *ifp)
 static int
 vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	struct ifvlan *ifv = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;

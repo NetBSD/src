@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.84.2.10 2002/06/20 22:57:44 nathanw Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.84.2.11 2002/06/24 22:10:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.10 2002/06/20 22:57:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.11 2002/06/24 22:10:42 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -527,7 +527,7 @@ proc_trampoline_mp(void)
 {
 	struct lwp *l;
 
-	l = curproc;
+	l = curlwp;
 
 	SCHED_ASSERT_UNLOCKED();
 	KERNEL_PROC_LOCK(l);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.38.2.7 2002/06/20 03:39:47 nathanw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.38.2.8 2002/06/24 22:05:43 nathanw Exp $	*/
 
 /*
  * Mach Operating System
@@ -172,7 +172,7 @@ kdb_trap(int type, mips_reg_t /* struct trapframe */ *tfp)
 	db_active--;
 
 	if (type & T_USER)
-		*(struct frame *)curproc->l_md.md_regs = *f;
+		*(struct frame *)curlwp->l_md.md_regs = *f;
 	else {
 		/* Synthetic full scale register context when trap happens */
 		tfp[0] = f->f_regs[AST];
@@ -229,7 +229,7 @@ db_set_ddb_regs(int type, mips_reg_t *tfp)
 	/* Should switch to kdb`s own stack here. */
 
 	if (type & T_USER)
-		*f = *(struct frame *)curproc->l_md.md_regs;
+		*f = *(struct frame *)curlwp->l_md.md_regs;
 	else {
 		/* Synthetic full scale register context when trap happens */
 		f->f_regs[AST] = tfp[0];
@@ -699,7 +699,7 @@ branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 	vaddr_t ra;
 	unsigned fpucsr;
 
-	fpucsr = curproc ? PCB_FSR(&curproc->l_addr->u_pcb) : 0;
+	fpucsr = curlwp ? PCB_FSR(&curlwp->l_addr->u_pcb) : 0;
 	ra = MachEmulateBranch((struct frame *)regs, pc, fpucsr, 0);
 	return ra;
 }

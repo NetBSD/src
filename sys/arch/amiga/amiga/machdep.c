@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165.2.8 2002/06/20 03:37:49 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165.2.9 2002/06/24 22:03:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.8 2002/06/20 03:37:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.9 2002/06/24 22:03:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -562,8 +562,8 @@ cpu_reboot(howto, bootstr)
 	char *bootstr;
 {
 	/* take a snap shot before clobbering any registers */
-	if (curproc)
-		savectx(&curproc->l_addr->u_pcb);
+	if (curlwp)
+		savectx(&curlwp->l_addr->u_pcb);
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0)

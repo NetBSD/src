@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.8.2.7 2002/06/20 03:38:04 nathanw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.8.2.8 2002/06/24 22:03:51 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -161,7 +161,7 @@ kdb_trap(int type, db_regs_t *regs)
 static int
 db_validate_address(vaddr_t addr)
 {
-	struct proc *p = curproc == NULL ? NULL : curproc->l_proc;
+	struct proc *p = curproc;
 	struct pmap *pmap;
 
 	if (!p || !p->p_vmspace || !p->p_vmspace->vm_map.pmap)

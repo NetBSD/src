@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.8 2002/06/21 23:43:50 nathanw Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.9 2002/06/24 22:03:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -207,8 +207,8 @@ ENTRY(remrunqueue)
  * This function has several entry points
  */
 
-Lcurproc:
-	.word	_C_LABEL(curproc)
+Lcurlwp:
+	.word	_C_LABEL(curlwp)
 
 Lcurpcb:
 	.word	_C_LABEL(curpcb)
@@ -284,9 +284,9 @@ ENTRY(cpu_switch)
 
 	/*
 	 * Get the current lwp and indicate that there is no longer
-	 * a valid process (curproc = 0)
+	 * a valid process (curlwp = 0)
 	 */
-	ldr	r7, Lcurproc
+	ldr	r7, Lcurlwp
 	ldr	r1, [r7]
 	mov	r0, #0x00000000
 	str	r0, [r7]
@@ -445,8 +445,8 @@ switch_resume:
 	mov	r0, #LSONPROC			/* l->l_stat = LSONPROC */
 	str	r0, [r6, #(L_STAT)]
 
-	/* We have a new curproc now so make a note it */
-	ldr	r7, Lcurproc
+	/* We have a new curlwp now so make a note it */
+	ldr	r7, Lcurlwp
 	str	r6, [r7]
 
 	/* Hook in a new pcb */
@@ -466,7 +466,7 @@ switch_resume:
 	 * If the new process is the same as the process that called
 	 * cpu_switch() then we do not need to save and restore any
 	 * contexts. This means we can make a quick exit.
-	 * The test is simple if curproc on entry (now in r1) is the
+	 * The test is simple if curlwp on entry (now in r1) is the
 	 * same as the proc removed from the queue we can jump to the exit.
 	 */
 	teq	r1, r6
@@ -480,7 +480,7 @@ switch_resume:
 	mov	r4, #0x00000001
 
 	/*
-	 * If the curproc on entry to cpu_switch was zero then the
+	 * If the curlwp on entry to cpu_switch was zero then the
 	 * process that called it was exiting. This means that we do
 	 * not need to save the current context. Instead we can jump
 	 * straight to restoring the context for the new process.
@@ -735,7 +735,7 @@ ENTRY(switch_exit)
  	ldr	r1, Llwp0
 
 	/* In case we fault */
-	ldr	r0, Lcurproc
+	ldr	r0, Lcurlwp
 	mov	r2, #0x00000000
 	str	r2, [r0]
 
@@ -785,7 +785,7 @@ Lse_context_switched:
 
 	/* Paranoia */
 	mov	r0, #0x00000000
-	ldr	r1, Lcurproc
+	ldr	r1, Lcurlwp
 	str	r0, [r1]
 
         ldr     r1, Llwp0
@@ -802,7 +802,7 @@ ENTRY(switch_lwp_exit)
 
 	/* In case we fault */
 	mov	r2, #0x00000000
-	ldr	r0, Lcurproc
+	ldr	r0, Lcurlwp
 	str	r2, [r0]
 
 /*	ldr	r0, Lcurpcb
@@ -850,7 +850,7 @@ Lsle_context_switched:
 	bl	_C_LABEL(lwp_exit2)
 
 	/* Paranoia */
-	ldr	r1, Lcurproc
+	ldr	r1, Lcurlwp
 	mov	r0, #0x00000000
 	str	r0, [r1]
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.23 2002/06/20 23:56:01 thorpej Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.24 2002/06/24 22:10:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -475,7 +475,7 @@ sa_switchcall(void *arg)
 	struct proc *p;
 	struct sadata *sa;
 
-	l = curproc;
+	l = curlwp;
 	p = l->l_proc;
 	sa = p->p_sa;
 	DPRINTFN(6,("sa_switchcall(pid: %d.%d)\n", p->p_pid, l->l_lid));

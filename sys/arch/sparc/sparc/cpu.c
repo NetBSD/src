@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.124.4.4 2002/06/20 03:41:05 nathanw Exp $ */
+/*	$NetBSD: cpu.c,v 1.124.4.5 2002/06/24 22:07:31 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1799,7 +1799,7 @@ cpu_debug_dump(void)
 		    ci,
 		    ci->ci_cpuid,
 		    ci->flags,
-		    ci->ci_curproc,
+		    ci->ci_curlwp,
 		    ci->fpproc);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.1.2.5 2001/12/02 12:40:47 scw Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.1.2.6 2002/06/24 22:05:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -165,8 +165,8 @@ Lcpu_switch_badsw:
 ENTRY(cpu_switch)
 	movl	_C_LABEL(curpcb),%a0	| current pcb
 	movw	%sr,%a0@(PCB_PS)	| save sr before changing ipl
-	movl	_C_LABEL(curproc),%sp@-	| remember last proc running
-	clrl	_C_LABEL(curproc)
+	movl	_C_LABEL(curlwp),%sp@-	| remember last LWP running
+	clrl	_C_LABEL(curlwp)
 
 	/*
 	 * Find the highest-priority queue that isn't empty,
@@ -223,13 +223,13 @@ Lcpu_switch1:
 	bclr    %d0,%d1			| no, clear bit
 	movl    %d1,_C_LABEL(sched_whichqs)
 Lcpu_switch_sw2:
-	movl	%sp@+,%a1		| Restore saved `curproc'
+	movl	%sp@+,%a1		| Restore saved `curlwp'
 
 Lcpu_switch_common:
 	/* l->l_cpu initialized in fork1() for single-processor */
 	movl	#LSONPROC,%a0@(L_STAT)	| l->l_stat = LSONPROC
 	clrl	%a0@(L_BACK)
-	movl	%a0,_C_LABEL(curproc)
+	movl	%a0,_C_LABEL(curlwp)
 	clrl	_C_LABEL(want_resched)
 
 #if 0
@@ -427,7 +427,7 @@ ENTRY(cpu_preempt)
 	movl	%sp@(4),%a0		| fetch `current' lwp
 	movl	%a0@(L_ADDR),%a1
 	movw	%sr,%a1@(PCB_PS)	| save sr before changing ipl
-	clrl	_C_LABEL(curproc)
+	clrl	_C_LABEL(curlwp)
 	movl	%sp@(8),%a0		| fetch `next' lwp
 	movb	%a0@(L_PRIORITY),%d0
 

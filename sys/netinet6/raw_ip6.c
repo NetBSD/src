@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.31.2.9 2002/06/20 03:49:31 nathanw Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.31.2.10 2002/06/24 22:11:54 nathanw Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.31.2.9 2002/06/20 03:49:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.31.2.10 2002/06/24 22:11:54 nathanw Exp $");
 
 #include "opt_ipsec.h"
 
@@ -406,7 +406,7 @@ rip6_output(m, va_alist)
 
 	priv = 0;
     {
-	struct proc *p = (curproc ? curproc->l_proc : 0);	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 
 	if (p && !suser(p->p_ucred, &p->p_acflag))
 		priv = 1;

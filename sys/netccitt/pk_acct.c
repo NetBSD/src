@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_acct.c,v 1.13.6.3 2001/11/14 19:17:38 nathanw Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.13.6.4 2002/06/24 22:11:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.13.6.3 2001/11/14 19:17:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.13.6.4 2002/06/24 22:11:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ pk_accton(path)
 	struct vnode *vp = NULL;
 	struct nameidata nd;
 	struct vnode *oacctp = pkacctp;
-	struct proc *p = (curproc ? curproc->l_proc : 0);	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	int error;
 
 	if (path == 0)
@@ -124,7 +124,7 @@ pk_acct(lcp)
 		acbuf.x25acct_revcharge = 1;
 	acbuf.x25acct_stime = lcp -> lcd_stime;
 	acbuf.x25acct_etime = time.tv_sec - acbuf.x25acct_stime;
-	acbuf.x25acct_uid = curproc -> l_proc -> p_cred -> p_ruid;
+	acbuf.x25acct_uid = curproc -> p_cred -> p_ruid;
 	acbuf.x25acct_psize = sa -> x25_opts.op_psize;
 	acbuf.x25acct_net = sa -> x25_net;
 	/*
@@ -146,6 +146,6 @@ pk_acct(lcp)
 
 	(void) vn_rdwr(UIO_WRITE, vp, (caddr_t)&acbuf, sizeof (acbuf),
 		(off_t)0, UIO_SYSSPACE, IO_UNIT|IO_APPEND,
-		curproc -> l_proc -> p_ucred, (size_t *)0,
+		curproc -> p_ucred, (size_t *)0,
 		(struct proc *)0);
 }

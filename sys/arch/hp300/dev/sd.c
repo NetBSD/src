@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.46.8.5 2002/04/01 07:39:54 nathanw Exp $	*/
+/*	$NetBSD: sd.c,v 1.46.8.6 2002/06/24 22:04:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.8.5 2002/04/01 07:39:54 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.8.6 2002/06/24 22:04:31 nathanw Exp $");                                                  
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -363,7 +363,7 @@ sdgetcapacity(sc, dev)
 		if (sc->sc_format_pid >= 0)
 			panic("sdgetcapacity");
 		bp = malloc(sizeof *bp, M_DEVBUF, M_WAITOK);
-		sc->sc_format_pid = curproc->l_proc->p_pid;
+		sc->sc_format_pid = curproc->p_pid;
 		memcpy(&sc->sc_cmdstore, &cap, sizeof cap);
 		bp->b_dev = dev;
 		bp->b_flags = B_READ | B_BUSY;
@@ -644,7 +644,7 @@ sdlblkstrat(bp, bsize)
 	    M_WAITOK | M_ZERO);
 	cbuf = (caddr_t)malloc(bsize, M_DEVBUF, M_WAITOK);
 
-	cbp->b_proc = curproc->l_proc;		/* XXX */
+	cbp->b_proc = curproc;		/* XXX */
 	cbp->b_dev = bp->b_dev;
 	bn = bp->b_blkno;
 	resid = bp->b_bcount;
@@ -735,7 +735,7 @@ sdstrategy(bp)
 	int offset;
 
 	if (sc->sc_format_pid >= 0) {
-		if (sc->sc_format_pid != curproc->l_proc->p_pid) {    /* XXX */
+		if (sc->sc_format_pid != curproc->p_pid) {    /* XXX */
 			bp->b_error = EPERM;
 			goto bad;
 		}

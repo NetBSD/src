@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.1.4.3 2001/11/14 19:13:19 nathanw Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.1.4.4 2002/06/24 22:09:37 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.1.4.3 2001/11/14 19:13:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.1.4.4 2002/06/24 22:09:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ osf1_copyargs(pack, arginfo, stackp, argp)
 	char **stackp;
 	void *argp;
 {
-	struct proc *p = curproc->l_proc;			/* XXX !!! */
+	struct proc *p = curproc;			/* XXX !!! */
 	struct osf1_exec_emul_arg *emul_arg = pack->ep_emul_arg;
 	struct osf1_auxv ai[OSF1_MAX_AUX_ENTRIES], *a;
 	char *prognameloc, *loadernameloc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.188.2.14 2002/06/20 03:47:08 nathanw Exp $	*/
+/*	$NetBSD: init_main.c,v 1.188.2.15 2002/06/24 22:10:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.14 2002/06/20 03:47:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.15 2002/06/24 22:10:38 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -140,8 +140,8 @@ struct	plimit limit0;
 struct	pstats pstat0;
 struct	vmspace vmspace0;
 struct	sigacts sigacts0;
-#ifndef curproc
-struct	lwp *curproc = &lwp0;
+#ifndef curlwp
+struct	lwp *curlwp = &lwp0;
 #endif
 struct	proc *initproc;
 
@@ -185,11 +185,11 @@ main(void)
 #endif
 
 	/*
-	 * Initialize the current process pointer (curproc) before
+	 * Initialize the current LWP pointer (curlwp) before
 	 * any possible traps/probes to simplify trap processing.
 	 */
 	l = &lwp0;
-	curproc = l;
+	curlwp = l;
 	l->l_cpu = curcpu();
 	l->l_proc = &proc0;
 	l->l_lid = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.17.2.6 2002/06/20 03:48:14 nathanw Exp $ */
+/*	$NetBSD: if_gre.c,v 1.17.2.7 2002/06/24 22:11:30 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.17.2.6 2002/06/20 03:48:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.17.2.7 2002/06/24 22:11:30 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -350,7 +350,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 int
 gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
 	struct gre_softc *sc = ifp->if_softc;

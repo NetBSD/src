@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113.4.7 2002/06/20 03:41:33 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113.4.8 2002/06/24 22:08:10 nathanw Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1434,7 +1434,7 @@ remap_data:
 		/* Initialize our cpu_info structure */
 		bzero((void *)intstk, 8*NBPG);
 		cpus->ci_next = NULL; /* Redundant, I know. */
-		cpus->ci_curproc = &proc0;
+		cpus->ci_curlwp = &proc0;
 		cpus->ci_cpcb = (struct pcb *)u0[0]; /* Need better source */
 		cpus->ci_upaid = CPU_UPAID;
 		cpus->ci_number = cpus->ci_upaid; /* How do we figure this out? */
@@ -1893,7 +1893,7 @@ pmap_activate(l)
 	 */
 
 	s = splvm();
-	if (l == curproc) {
+	if (l == curlwp) {
 		write_user_windows();
 		if (pmap->pm_ctx == NULL)
 			ctx_alloc(pmap);

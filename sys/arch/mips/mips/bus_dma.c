@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.1.4.3 2002/06/20 03:39:46 nathanw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.1.4.4 2002/06/24 22:05:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.4.3 2002/06/20 03:39:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.4.4 2002/06/24 22:05:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -465,7 +465,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 *
 	 * This should be true the vast majority of the time.
 	 */
-	if (__predict_true(map->_dm_proc == NULL || map->_dm_proc == curproc))
+	if (__predict_true(map->_dm_proc == NULL || map->_dm_proc == curlwp))
 		useindex = 0;
 	else
 		useindex = 1;

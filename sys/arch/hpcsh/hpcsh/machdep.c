@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38.6.2 2002/06/21 16:59:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.6.3 2002/06/24 22:04:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -330,7 +330,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
-	if (curproc)
+	if (curlwp)
 		savectx(curpcb);
 
 	/* If system is cold, just halt. */

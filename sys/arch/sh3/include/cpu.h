@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29.6.2 2002/06/21 21:26:27 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.29.6.3 2002/06/24 22:07:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -112,7 +112,7 @@ struct clockframe {
 do {									\
 	want_resched = 1;						\
 	if (curproc != NULL)						\
-		aston(curproc->l_proc);					\
+		aston(curproc);					\
 } while (/*CONSTCOND*/0)
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.6.4.5 2002/06/20 03:38:00 nathanw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.6.4.6 2002/06/24 22:03:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6.4.5 2002/06/20 03:38:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6.4.6 2002/06/24 22:03:47 nathanw Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -113,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6.4.5 2002/06/20 03:38:00 nathanw Exp 
 void
 swi_handler(trapframe_t *frame)
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	u_int32_t insn;
 

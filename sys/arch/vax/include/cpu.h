@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.61.8.3 2002/04/01 07:43:28 nathanw Exp $      */
+/*      $NetBSD: cpu.h,v 1.61.8.4 2002/06/24 22:08:50 nathanw Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -120,7 +120,7 @@ struct cpu_info {
 	u_long ci_simple_locks;         /* # of simple locks held */
 #endif
 
-	struct lwp *ci_curproc;        /* current owner of the processor */
+	struct lwp *ci_curlwp;          /* current owner of the processor */
 
 	/*
 	 * Private members.
@@ -152,7 +152,7 @@ struct cpu_mp_softc {
 #endif /* defined(MULTIPROCESSOR) */
 
 #define	curcpu() ((struct cpu_info *)mfpr(PR_SSP))
-#define	curproc	(curcpu()->ci_curproc)
+#define	curlwp	(curcpu()->ci_curlwp)
 #define	cpu_number() (curcpu()->ci_dev->dv_unit)
 #define	ci_cpuid ci_dev->dv_unit
 #define	need_resched(ci) {(ci)->ci_want_resched++; mtpr(AST_OK,PR_ASTLVL); }

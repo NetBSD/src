@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.7 2002/01/08 00:34:38 nathanw Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.8 2002/06/24 22:12:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.33.2.7 2002/01/08 00:34:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.33.2.8 2002/06/24 22:12:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ static int
 ntfs_mountroot()
 {
 	struct mount *mp;
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	int error;
 	struct ntfs_args args;
 
@@ -863,7 +863,7 @@ ntfs_fhtovp(
 		ntfhp->ntfid_ino));
 
 	error = ntfs_vgetex(mp, ntfhp->ntfid_ino, ntfhp->ntfid_attr, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, curproc->l_proc, 
+			LK_EXCLUSIVE | LK_RETRY, 0, curproc, 
 			vpp); /* XXX */
 	if (error != 0) {
 		*vpp = NULLVP;
@@ -1026,7 +1026,7 @@ ntfs_vget(
 	struct vnode **vpp) 
 {
 	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, curproc->l_proc, 
+			LK_EXCLUSIVE | LK_RETRY, 0, curproc, 
 			vpp); /* XXX */
 }
 

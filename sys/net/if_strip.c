@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.35.2.6 2002/04/01 07:48:24 nathanw Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.35.2.7 2002/06/24 22:11:39 nathanw Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.35.2.6 2002/04/01 07:48:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.35.2.7 2002/06/24 22:11:39 nathanw Exp $");
 
 #include "strip.h"
 
@@ -435,7 +435,7 @@ stripopen(dev, tp)
 	dev_t dev;
 	struct tty *tp;
 {
-	struct proc *p = curproc->l_proc;		/* XXX */
+	struct proc *p = curproc;		/* XXX */
 	struct strip_softc *sc;
 	int nstrip;
 	int error;

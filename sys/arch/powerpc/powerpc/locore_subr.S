@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.2.10.4 2001/11/15 19:30:04 briggs Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.2.10.5 2002/06/24 22:07:08 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -174,15 +174,15 @@ ENTRY(cpu_switch)
 
 1:
 	xor	31,31,31
-	stw	31,CI_CURPROC(7)	/* Zero to not accumulate cpu time */
+	stw	31,CI_CURLWP(7)		/* Zero to not accumulate cpu time */
 	lwz	31,CI_CURPCB(7)
 
 	lwz	3,CI_CPL(7)
 	stw	3,PCB_SPL(31)		/* save spl */
 #else
-	lis	3,_C_LABEL(curproc)@ha
+	lis	3,_C_LABEL(curlwp)@ha
 	xor	31,31,31
-	stw	31,_C_LABEL(curproc)@l(3) /* Zero to not accumulate cpu time */
+	stw	31,_C_LABEL(curlwp)@l(3) /* Zero to not accumulate cpu time */
 	lis	3,_C_LABEL(curpcb)@ha
 	lwz	31,_C_LABEL(curpcb)@l(3)
 #endif
@@ -268,10 +268,10 @@ switch_preempt_common:
 
 	/* record new process */
 #if defined(MULTIPROCESSOR)
-	stw	31,CI_CURPROC(4)
+	stw	31,CI_CURLWP(4)
 #else
-	lis	4,_C_LABEL(curproc)@ha
-	stw	31,_C_LABEL(curproc)@l(4)
+	lis	4,_C_LABEL(curlwp)@ha
+	stw	31,_C_LABEL(curlwp)@l(4)
 #endif
 	lwz	4,L_ADDR(31)
 
@@ -402,15 +402,15 @@ ENTRY(cpu_preempt)
 
 1:
 	xor	31,31,31
-	stw	31,CI_CURPROC(7)	/* Zero to not accumulate cpu time */
+	stw	31,CI_CURLWP(7)	/* Zero to not accumulate cpu time */
 	lwz	31,CI_CURPCB(7)
 
 	lwz	3,CI_CPL(7)
 	stw	3,PCB_SPL(31)		/* save spl */
 #else
-	lis	3,_C_LABEL(curproc)@ha
+	lis	3,_C_LABEL(curlwp)@ha
 	xor	31,31,31
-	stw	31,_C_LABEL(curproc)@l(3) /* Zero to not accumulate cpu time */
+	stw	31,_C_LABEL(curlwp)@l(3) /* Zero to not accumulate cpu time */
 	lis	3,_C_LABEL(curpcb)@ha
 	lwz	31,_C_LABEL(curpcb)@l(3)
 #endif

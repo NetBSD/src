@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.2.4.2 2002/02/28 04:14:41 nathanw Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.2.4.3 2002/06/24 22:10:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -434,7 +434,7 @@ smbfs_getpages(ap)
 	vm_page_t *pages;
 
 	vp = ap->a_vp;
-	p = curproc;
+	p = curlwp;
 	cred = td->td_proc->p_ucred;		/* XXX */
 	np = VTOSMB(vp);
 	smp = VFSTOSMBFS(vp->v_mount);

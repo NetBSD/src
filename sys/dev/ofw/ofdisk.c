@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.15.2.2 2001/11/14 19:15:05 nathanw Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.15.2.3 2002/06/24 22:10:09 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.15.2.2 2001/11/14 19:15:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.15.2.3 2002/06/24 22:10:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -395,7 +395,7 @@ ofdisk_size(dev_t dev)
 	omask = of->sc_dk.dk_openmask & (1 << part);
 	lp = of->sc_dk.dk_label;
 
-	if (omask == 0 && ofdisk_open(dev, 0, S_IFBLK, curproc) != 0)
+	if (omask == 0 && ofdisk_open(dev, 0, S_IFBLK, curlwp) != 0)
 		return -1;
 
 	if (lp->d_partitions[part].p_fstype != FS_SWAP)
@@ -404,7 +404,7 @@ ofdisk_size(dev_t dev)
 		size = lp->d_partitions[part].p_size *
 		    (lp->d_secsize / DEV_BSIZE);
 
-	if (omask == 0 && ofdisk_close(dev, 0, S_IFBLK, curproc) != 0)
+	if (omask == 0 && ofdisk_close(dev, 0, S_IFBLK, curlwp) != 0)
 		return -1;
 
 	return size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3.2.5 2002/06/20 03:42:27 nathanw Exp $	*/
+/*	$NetBSD: locore.S,v 1.3.2.6 2002/06/24 22:09:03 nathanw Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -360,9 +360,9 @@ ENTRY(cpu_switch)
 	stw	30,8(1)
 
 	mr	30,3
-	lis	3,_C_LABEL(curproc)@ha
+	lis	3,_C_LABEL(curlwp)@ha
 	xor	31,31,31
-	stw	31,_C_LABEL(curproc)@l(3) /* Zero to not accumulate cpu time */
+	stw	31,_C_LABEL(curlwp)@l(3) /* Zero to not accumulate cpu time */
 	lis	3,_C_LABEL(curpcb)@ha
 	lwz	31,_C_LABEL(curpcb)@l(3)
 
@@ -411,8 +411,8 @@ ENTRY(cpu_switch)
 	stw	3,L_STAT(31)
 
 	/* record new process */
-	lis	4,_C_LABEL(curproc)@ha
-	stw	31,_C_LABEL(curproc)@l(4)
+	lis	4,_C_LABEL(curlwp)@ha
+	stw	31,_C_LABEL(curlwp)@l(4)
 
 	wrteei	1			/* Now we can interrupt again */
 
@@ -501,9 +501,9 @@ ENTRY(cpu_preempt)
 
 	mr	30,3
 	mr	29,4
-	lis	3,_C_LABEL(curproc)@ha
+	lis	3,_C_LABEL(curlwp)@ha
 	xor	31,31,31
-	stw	31,_C_LABEL(curproc)@l(3) /* Zero to not accumulate cpu time */
+	stw	31,_C_LABEL(curlwp)@l(3) /* Zero to not accumulate cpu time */
 	lis	3,_C_LABEL(curpcb)@ha
 	lwz	31,_C_LABEL(curpcb)@l(3)
 
@@ -552,8 +552,8 @@ ENTRY(cpu_preempt)
 	stw	3,L_STAT(31)
 
 	/* record new process */
-	lis	4,_C_LABEL(curproc)@ha
-	stw	31,_C_LABEL(curproc)@l(4)
+	lis	4,_C_LABEL(curlwp)@ha
+	stw	31,_C_LABEL(curlwp)@l(4)
 
 	wrteei	1			/* Now we can interrupt again */
 

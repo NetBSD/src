@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.13.2.6 2002/04/01 07:49:15 nathanw Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.13.2.7 2002/06/24 22:12:26 nathanw Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.13.2.6 2002/04/01 07:49:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.13.2.7 2002/06/24 22:12:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -117,8 +117,8 @@ const char *softdep_typenames[] = {
 /*
  * Finding the current process.
  */
-#define CURPROC (curproc ? curproc->l_proc : 0)
-#define CURPROC_PID (curproc ? curproc->l_proc->p_pid : 0)
+#define CURPROC curproc
+#define CURPROC_PID (curproc ? curproc->p_pid : 0)
 /*
  * End system adaptation definitions.
  */
@@ -5375,8 +5375,8 @@ softdep_flush_indir(vp)
 				continue;
 			}
 
-			VOP_FSYNC(bp->b_vp, curproc->l_proc->p_ucred, 
-			    FSYNC_WAIT, 0, 0, curproc->l_proc);
+			VOP_FSYNC(bp->b_vp, curproc->p_ucred, 
+			    FSYNC_WAIT, 0, 0, curproc);
 			return;
 		}
 	}

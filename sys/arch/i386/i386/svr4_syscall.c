@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.13.6.5 2002/06/20 03:39:13 nathanw Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.13.6.6 2002/06/24 22:05:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.13.6.5 2002/06/20 03:39:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.13.6.6 2002/06/24 22:05:06 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -110,7 +110,7 @@ svr4_syscall_plain(frame)
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
-	l = curproc;
+	l = curlwp;
 
 	code = frame.tf_eax;
 	callp = svr4_sysent;
@@ -193,7 +193,7 @@ svr4_syscall_fancy(frame)
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
-	l = curproc;
+	l = curlwp;
 	p = l->l_proc;
 
 	code = frame.tf_eax;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.1.4.3 2002/01/08 00:22:45 nathanw Exp $	*/
+/*	$NetBSD: fd.c,v 1.1.4.4 2002/06/24 22:03:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -263,9 +263,6 @@ void fdattach __P((struct device *, struct device *, void *));
 
 extern char floppy_read_fiq[], floppy_read_fiq_end[];
 extern char floppy_write_fiq[], floppy_write_fiq_end[];
-
-void floppy_read_fiq __P((void));
-void floppy_write_fiq __P((void));
 
 struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fdprobe, fdattach
@@ -1618,7 +1615,7 @@ load_memory_disc_from_floppy(md, dev)
 
 	s = spl0();
 
-	if (fdopen(bp->b_dev, 0, 0, curproc->l_proc) != 0) {
+	if (fdopen(bp->b_dev, 0, 0, curproc) != 0) {
 		brelse(bp);		
 		printf("Cannot open floppy device\n");
 			return(EINVAL);
@@ -1646,7 +1643,7 @@ load_memory_disc_from_floppy(md, dev)
 	printf("\x08\x08\x08\x08\x08\x08%4dK done\n",
 	    loop * fd_types[type].sectrac * DEV_BSIZE / 1024);
         
-	fdclose(bp->b_dev, 0, 0, curproc->l_proc);
+	fdclose(bp->b_dev, 0, 0, curproc);
 
 	brelse(bp);
 

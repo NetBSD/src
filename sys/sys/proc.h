@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.16 2002/06/20 23:01:37 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.17 2002/06/24 22:12:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -354,13 +354,15 @@ extern u_long		pgrphash;
  * Allow machine-dependent code to override curproc in <machine/cpu.h> for
  * its own convenience.  Otherwise, we declare it as appropriate.
  */
-#if !defined(curproc)
+#if !defined(curlwp)
 #if defined(MULTIPROCESSOR)
-#define	curproc		curcpu()->ci_curproc	/* Current running proc */
+#define	curlwp		curcpu()->ci_curlwp	/* Current running LWP */
 #else
-extern struct lwp	*curproc;		/* Current running proc. */
+extern struct lwp	*curlwp;		/* Current running LWP */
 #endif /* MULTIPROCESSOR */
 #endif /* ! curproc */
+
+#define curproc ((curlwp) ? (curlwp)->l_proc : NULL)
 
 extern struct proc	proc0;		/* Process slot for swapper */
 extern int		nprocs, maxproc; /* Current and max number of procs */

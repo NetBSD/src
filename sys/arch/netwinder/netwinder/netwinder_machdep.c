@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.12.2.5 2002/04/17 00:03:57 nathanw Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.12.2.6 2002/06/24 22:06:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -224,7 +224,7 @@ cpu_reboot(howto, bootstr)
 {
 #ifdef DIAGNOSTIC
 	/* info */
-	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
+	printf("boot: howto=%08x curlwp=%p\n", howto, curlwp);
 #endif
 
 	/*

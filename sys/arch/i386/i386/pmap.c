@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118.2.7 2002/04/01 07:40:40 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118.2.8 2002/06/24 22:05:02 nathanw Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.2.7 2002/04/01 07:40:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118.2.8 2002/06/24 22:05:02 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1659,7 +1659,7 @@ pmap_ldt_cleanup(l)
  * pmap_activate: activate a process' pmap (fill in %cr3 and LDT info)
  *
  * => called from cpu_switch()
- * => if proc is the curproc, then load it into the MMU
+ * => if proc is the curlwp, then load it into the MMU
  */
 
 void
@@ -1672,7 +1672,7 @@ pmap_activate(l)
 	pcb->pcb_pmap = pmap;
 	pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 	pcb->pcb_cr3 = pmap->pm_pdirpa;
-	if (l == curproc)
+	if (l == curlwp)
 		lcr3(pcb->pcb_cr3);
 	if (pcb == curpcb)
 		lldt(pcb->pcb_ldt_sel);

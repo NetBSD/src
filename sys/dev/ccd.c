@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.71.2.6 2002/06/20 03:43:23 nathanw Exp $	*/
+/*	$NetBSD: ccd.c,v 1.71.2.7 2002/06/24 22:09:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.71.2.6 2002/06/20 03:43:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.71.2.7 2002/06/24 22:09:44 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1254,7 +1254,7 @@ ccdsize(dev)
 	omask = cs->sc_dkdev.dk_openmask & (1 << part);
 	lp = cs->sc_dkdev.dk_label;
 
-	if (omask == 0 && ccdopen(dev, 0, S_IFBLK, curproc->l_proc))
+	if (omask == 0 && ccdopen(dev, 0, S_IFBLK, curproc))
 		return (-1);
 
 	if (lp->d_partitions[part].p_fstype != FS_SWAP)
@@ -1263,7 +1263,7 @@ ccdsize(dev)
 		size = lp->d_partitions[part].p_size *
 		    (lp->d_secsize / DEV_BSIZE);
 
-	if (omask == 0 && ccdclose(dev, 0, S_IFBLK, curproc->l_proc))
+	if (omask == 0 && ccdclose(dev, 0, S_IFBLK, curproc))
 		return (-1);
 
 	return (size);

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3.4.3 2002/06/20 22:57:13 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.3.4.4 2002/06/24 22:07:05 nathanw Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -115,7 +115,7 @@ define	L_PRIORITY	offsetof(struct lwp, l_priority)
 define	LSONPROC		LSONPROC
 
 define	CI_SIZE		sizeof(struct cpu_info)
-define	CI_CURPROC	offsetof(struct cpu_info, ci_curproc)
+define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
 define	CI_CURPCB	offsetof(struct cpu_info, ci_curpcb)
 define	CI_CURPM	offsetof(struct cpu_info, ci_curpm)
 define	CI_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
