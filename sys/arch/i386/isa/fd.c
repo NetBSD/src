@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.120 1998/05/03 10:14:19 drochner Exp $	*/
+/*	$NetBSD: fd.c,v 1.121 1998/06/09 00:11:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -134,6 +134,7 @@ struct fdc_softc {
 
 	bus_space_tag_t sc_iot;		/* ISA i/o space identifier */
 	bus_space_handle_t sc_ioh;	/* ISA io handle */
+	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
 
 	/*
 	 * XXX We have port overlap with the first IDE controller.
@@ -417,12 +418,13 @@ fdcattach(parent, self, aux)
 
 	fdc->sc_iot = iot;
 	fdc->sc_ioh = ioh;
+	fdc->sc_ic = ia->ia_ic;
 
 	fdc->sc_drq = ia->ia_drq;
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
 
-	if (isa_dmamap_create(parent, fdc->sc_drq, FDC_MAXIOSIZE,
+	if (isa_dmamap_create(fdc->sc_ic, fdc->sc_drq, FDC_MAXIOSIZE,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't set up ISA DMA map\n",
 		    fdc->sc_dev.dv_xname);
@@ -1088,7 +1090,7 @@ loop:
 		 }}
 #endif
 		read = bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE;
-		isa_dmastart(fdc->sc_dev.dv_parent, fdc->sc_drq,
+		isa_dmastart(fdc->sc_ic, fdc->sc_drq,
 		    bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    NULL, read, BUS_DMA_NOWAIT);
 #if 0 /* XXX i/o port kludge */
@@ -1159,7 +1161,7 @@ loop:
 		goto doio;
 
 	case IOTIMEDOUT:
-		isa_dmaabort(fdc->sc_dev.dv_parent, fdc->sc_drq);
+		isa_dmaabort(fdc->sc_ic, fdc->sc_drq);
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
@@ -1172,7 +1174,7 @@ loop:
 		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
 
 		if (fdcresult(fdc) != 7 || (st0 & 0xf8) != 0) {
-			isa_dmaabort(fdc->sc_dev.dv_parent, fdc->sc_drq);
+			isa_dmaabort(fdc->sc_ic, fdc->sc_drq);
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
@@ -1182,7 +1184,7 @@ loop:
 			fdcretry(fdc);
 			goto loop;
 		}
-		isa_dmadone(fdc->sc_dev.dv_parent, fdc->sc_drq);
+		isa_dmadone(fdc->sc_ic, fdc->sc_drq);
 		if (fdc->sc_errors) {
 			diskerr(bp, "fd", "soft error (corrected)", LOG_PRINTF,
 			    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
