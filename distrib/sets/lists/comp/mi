@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.722 2004/08/19 09:54:06 drochner Exp $
+#	$NetBSD: mi,v 1.723 2004/08/24 11:38:41 he Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3073,7 +3073,7 @@
 ./usr/share/man/cat3/gethostbyaddr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/gethostbyname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/gethostbyname2.0		comp-c-catman		.cat
-./usr/share/man/cat3/gethostent.0		comp-obsolete		obsolete
+./usr/share/man/cat3/gethostent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/gethostid.0		comp-c-catman		.cat
 ./usr/share/man/cat3/gethostname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getifaddrs.0		comp-c-catman		.cat
@@ -6808,7 +6808,7 @@
 ./usr/share/man/man3/gethostbyaddr.3		comp-c-man		.man
 ./usr/share/man/man3/gethostbyname.3		comp-c-man		.man
 ./usr/share/man/man3/gethostbyname2.3		comp-c-man		.man
-./usr/share/man/man3/gethostent.3		comp-obsolete		obsolete
+./usr/share/man/man3/gethostent.3		comp-c-man		.man
 ./usr/share/man/man3/gethostid.3		comp-c-man		.man
 ./usr/share/man/man3/gethostname.3		comp-c-man		.man
 ./usr/share/man/man3/getifaddrs.3		comp-c-man		.man
