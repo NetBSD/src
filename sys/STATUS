@@ -10,14 +10,14 @@ aic			compiles
 asc			OK (pmax, as MI SCSI xasc)
 bha			compiles
 dpt			OK (i386)
-esp			compiles
+esp			OK (sparc)
 iopsp			OK (i386)
 isp			compiles
 mb89352			compiles
 nca			compiles
 ncr			broken (garbage-collect ?)
 ncr5380sbc		compiles
-ncr53c9x		compiles
+ncr53c9x		OK (pmax, sparc)
 pcscp
 sea			compiles
 si			compiles
