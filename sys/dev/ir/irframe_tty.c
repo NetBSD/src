@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.7 2001/12/05 04:07:06 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.8 2001/12/05 04:31:02 augustss Exp $	*/
 
 /*
  * TODO
@@ -74,7 +74,7 @@
 #ifdef IRFRAMET_DEBUG
 #define DPRINTF(x)	if (irframetdebug) printf x
 #define Static
-int irframetdebug = 1;
+int irframetdebug = 0;
 #else
 #define DPRINTF(x)
 #define Static static
@@ -440,8 +440,11 @@ irframetinput(int c, struct tty *tp)
 			sc->sc_framestate = FRAME_ESCAPE;
 		break;
 	default:
+#if IRFRAMET_DEBUG
+	if (irframetdebug > 1)
 		DPRINTF(("%s: c=0x%02x, inchar=%d state=%d\n", __FUNCTION__, c,
 			 sc->sc_inchars, sc->sc_state));
+#endif
 		if (sc->sc_framestate != FRAME_OUTSIDE) {
 			if (sc->sc_framestate == FRAME_ESCAPE) {
 				sc->sc_framestate = FRAME_INSIDE;
@@ -594,7 +597,7 @@ irt_putc(int c, struct tty *tp)
 			return (error);
 	}
  go:
-	if (putc(c, &tp->t_rawq) < 0) {
+	if (putc(c, &tp->t_outq) < 0) {
 		printf("irframe: putc failed\n");
 		return (EIO);
 	}
