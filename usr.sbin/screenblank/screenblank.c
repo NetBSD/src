@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.18 2002/01/24 01:34:13 lukem Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.19 2002/09/19 02:59:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996-2002 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.18 2002/01/24 01:34:13 lukem Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.19 2002/09/19 02:59:20 mycroft Exp $");
 #endif
 
 #include <sys/types.h>
@@ -92,7 +92,7 @@ LIST_HEAD(ds_list, dev_stat) ds_list;
 int	main(int, char *[]);
 static	void add_dev(const char *, int);
 static	void change_state(int);
-static	void cvt_arg(char *, struct timeval *);
+static	void cvt_arg(char *, struct timespec *);
 static	void sighandler(int);
 static	void usage(void);
 
@@ -100,7 +100,7 @@ int
 main(int argc, char *argv[])
 {
 	struct dev_stat *dsp;
-	struct timeval timo_on, timo_off, *tvp, tv;
+	struct timespec timo_on, timo_off, *tvp, tv;
 	struct sigaction sa;
 	struct stat st;
 	int ch, change, fflag = 0, kflag = 0, mflag = 0, state;
@@ -112,9 +112,9 @@ main(int argc, char *argv[])
 	 * Set the default timeouts: 10 minutes on, .25 seconds off.
 	 */
 	timo_on.tv_sec = 600;
-	timo_on.tv_usec = 0;
+	timo_on.tv_nsec = 0;
 	timo_off.tv_sec = 0;
-	timo_off.tv_usec = 250000;
+	timo_off.tv_nsec = 250000000;
 
 	while ((ch = getopt(argc, argv, "d:e:f:i:km")) != -1) {
 		switch (ch) {
@@ -261,8 +261,8 @@ main(int argc, char *argv[])
 		}
 
 		tv = *tvp;
-		if (select(0, NULL, NULL, NULL, &tv) == -1)
-			err(1, "select");
+		if (nanosleep(&tv, NULL) == -1)
+			err(1, "nanosleep");
 	}
 	/* NOTREACHED */
 }
@@ -350,13 +350,13 @@ change_state(int state)
 }
 
 static void
-cvt_arg(char *arg, struct timeval *tvp)
+cvt_arg(char *arg, struct timespec *tvp)
 {
 	char *cp;
-	int seconds, microseconds, factor;
+	int seconds, nanoseconds, factor;
 	int period = 0;
-	factor = 1000000;
-	microseconds = 0;
+	factor = 1000000000;
+	nanoseconds = 0;
 	seconds = 0;
 
 	for (cp = arg; *cp != '\0'; ++cp) {
@@ -372,7 +372,7 @@ cvt_arg(char *arg, struct timeval *tvp)
 
 		if (period) {
 			if (factor > 1) {
-				microseconds = microseconds * 10 + (*cp - '0');
+				nanoseconds = nanoseconds * 10 + (*cp - '0');
 				factor /= 10;
 			}
 		} else
@@ -381,9 +381,9 @@ cvt_arg(char *arg, struct timeval *tvp)
 
 	tvp->tv_sec = seconds;
 	if (factor > 1)
-		microseconds *= factor;
+		nanoseconds *= factor;
 		
-	tvp->tv_usec = microseconds;
+	tvp->tv_nsec = nanoseconds;
 }
 
 static void
