@@ -1,9 +1,8 @@
-#	$NetBSD: bsd.kmod.mk,v 1.73 2004/01/27 03:31:48 lukem Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.74 2004/01/29 01:48:45 lukem Exp $
 
 .include <bsd.init.mk>
 
 ##### Basic targets
-.PHONY:		cleankmod kmodinstall load unload
 clean:		cleankmod
 realinstall:	kmodinstall
 
@@ -127,13 +126,14 @@ ${_PROG}:	.MADE					# no build at install
 		${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
 kmodinstall::	${_PROG}
+.PHONY:		kmodinstall
 .PRECIOUS:	${_PROG}				# keep if install fails
 
 .undef _PROG
 .endif # !target(kmodinstall)
 
 ##### Clean rules
-cleankmod:
+cleankmod: .PHONY
 	rm -f a.out [Ee]rrs mklog core *.core \
 		${PROG} ${OBJS} ${LOBJS} ${CLEANFILES}
 
@@ -147,11 +147,13 @@ lint: ${LOBJS}
 load: ${PROG}
 	/sbin/modload ${KMOD_LOADFLAGS} -o ${KMOD} ${PROG}
 .endif
+.PHONY: load
 
 .if !target(unload)
 unload:
 	/sbin/modunload -n ${KMOD}
 .endif
+.PHONY: unload
 
 ##### Pull in related .mk logic
 .include <bsd.man.mk>

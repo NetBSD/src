@@ -1,10 +1,9 @@
-#	$NetBSD: bsd.doc.mk,v 1.62 2003/10/21 10:01:21 lukem Exp $
+#	$NetBSD: bsd.doc.mk,v 1.63 2004/01/29 01:48:45 lukem Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.init.mk>
 
 ##### Basic targets
-.PHONY:		cleandoc docinstall print spell
 clean:		cleandoc
 realinstall:	docinstall
 
@@ -21,6 +20,8 @@ realall:	paper.ps
 
 ##### Install rules
 docinstall::	# ensure existence
+.PHONY:		docinstall
+
 .if ${MKDOC} != "no"
 
 __docinstall: .USE
@@ -53,16 +54,16 @@ docinstall::	${_F}
 .endif # ${MKDOC} != "no"
 
 ##### Clean rules
-cleandoc:
+cleandoc: .PHONY
 	rm -f paper.* [eE]rrs mklog ${CLEANFILES}
 
 ##### Custom rules
 .if !target(print)
-print: paper.ps
+print: .PHONY paper.ps
 	lpr -P${PRINTER} ${.ALLSRC}
 .endif
 
-spell: ${SRCS}
+spell: .PHONY ${SRCS}
 	spell ${.ALLSRC} | sort | comm -23 - spell.ok > paper.spell
 
 ##### Pull in related .mk logic
