@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.47 2000/01/17 17:54:56 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.48 2000/01/17 18:03:51 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.47 2000/01/17 17:54:56 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.48 2000/01/17 18:03:51 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -878,7 +878,7 @@ netname6(sa6, mask)
 	else
 		masklen = 128;
 
-	if (masklen == 0 && IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr))
+	if (masklen == 0 && IN6_IS_ADDR_UNSPECIFIED(&sa6->sin6_addr))
 		return("default");
 
 	if (illegal)
