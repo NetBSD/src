@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.4 2002/01/13 18:40:52 martin Exp $
+.\"	$NetBSD: pppoe.4,v 1.5 2002/01/14 13:46:53 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Martin Husemann. All rights reserved.
 .\"
@@ -88,7 +88,7 @@ file.
 If you are using a
 .Nm
 interface, you will have an unusual low MTU for todays internet.
-Combined with a lot of misconfigured sites (host using path MTU discovery 
+Combined with a lot of misconfigured sites (host using path MTU discovery
 behind a router blocking all ICMP traffic) this will often cause problems.
 Connections to this servers will only work, if your system advertizes the
 right MSS in the tcp three way handshake. To get the right MSS, you need
@@ -97,7 +97,7 @@ to set
 # Obey interface MTUs when calculationg MSS
 net.inet.tcp.mss_ifmtu=1
 .Ed
-
+.Pp
 in your
 .Pa /etc/sysctl.conf
 file.
