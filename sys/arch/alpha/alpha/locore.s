@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.97.2.4 2001/11/17 00:53:13 nathanw Exp $ */
+/* $NetBSD: locore.s,v 1.97.2.5 2001/11/29 16:22:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97.2.4 2001/11/17 00:53:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97.2.5 2001/11/29 16:22:44 thorpej Exp $");
 
 #include "assym.h"
 
@@ -915,18 +915,8 @@ cpu_switch_queuescan:
 	 *
 	 * Note: GET_CPUINFO clobbers v0, t0, t8...t11.
 	 */
-#ifdef __alpha_bwx__
 	ldiq	t0, LSONPROC			/* l->l_stat = LSONPROC */
-	stb	t0, L_STAT(s2)
-#else
-	addq	s2, L_STAT, t3			/* l->l_stat = LSONPROC */
-	ldq_u	t1, 0(t3)
-	ldiq	t0, LSONPROC
-	insbl	t0, t3, t0
-	mskbl	t1, t3, t1
-	or	t0, t1, t0
-	stq_u	t0, 0(t3)
-#endif /* __alpha_bwx__ */
+	stl	t0, L_STAT(s2)
 
 	GET_CPUINFO
 	/* p->p_cpu initialized in fork1() for single-processor */
@@ -1081,18 +1071,8 @@ cpu_preempt_queuescan:
 	 *
 	 * Note: GET_CPUINFO clobbers v0, t0, t8...t11.
 	 */
-#ifdef __alpha_bwx__
 	ldiq	t0, LSONPROC			/* l->l_stat = LSONPROC */
-	stb	t0, L_STAT(s2)
-#else
-	addq	s2, L_STAT, t3			/* l->l_stat = LSONPROC */
-	ldq_u	t1, 0(t3)
-	ldiq	t0, LSONPROC
-	insbl	t0, t3, t0
-	mskbl	t1, t3, t1
-	or	t0, t1, t0
-	stq_u	t0, 0(t3)
-#endif /* __alpha_bwx__ */
+	stl	t0, L_STAT(s2)
 
 	GET_CPUINFO
 	/* p->p_cpu initialized in fork1() for single-processor */
