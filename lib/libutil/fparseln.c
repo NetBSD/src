@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.3 1997/11/18 06:44:51 enami Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.4 1997/11/24 13:05:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fparseln.c,v 1.3 1997/11/18 06:44:51 enami Exp $");
+__RCSID("$NetBSD: fparseln.c,v 1.4 1997/11/24 13:05:38 lukem Exp $");
 #endif
 
 #include <stdio.h>
@@ -117,10 +117,8 @@ fparseln(fp, size, lineno, str)
 		if (s && nl) { 		/* Check and eliminate newlines */
 			cp = &ptr[s - 1]; 
 
-			if (*cp == nl) {
+			if (*cp == nl)
 				s--;	/* forget newline */
-				cnt = s == 0 && buf == NULL;
-			}
 		}
 
 		if (s && con) {		/* Check and eliminate continuations */
@@ -132,7 +130,7 @@ fparseln(fp, size, lineno, str)
 			}
 		}
 
-		if (s == 0)
+		if (s == 0 && buf != NULL)
 			continue;
 
 		if ((cp = realloc(buf, len + s + 1)) == NULL) {
@@ -161,8 +159,11 @@ main(argc, argv)
 	char **argv;
 {
 	char *ptr;
-	while ((ptr = fparseln(stdin, NULL, NULL, NULL)) != NULL)
-		printf("%s\n", ptr);
+	size_t size, line;
+
+	line = 0;
+	while ((ptr = fparseln(stdin, &size, &line, NULL)) != NULL)
+		printf("line %d (%d) %s\n", line, size, ptr);
 	return 0;
 }
 
