@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.36 2003/08/17 18:12:34 chs Exp $	*/
+/*	$NetBSD: cpu.c,v 1.37 2003/10/20 00:12:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.36 2003/08/17 18:12:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2003/10/20 00:12:10 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.36 2003/08/17 18:12:34 chs Exp $");
 #include <uvm/uvm_extern.h>
 #include <dev/ofw/openfirm.h>
 #include <powerpc/oea/hid.h>
+#include <powerpc/oea/bat.h>
 #include <powerpc/openpic.h>
 #include <powerpc/atomic.h>
 #include <powerpc/spr.h>
@@ -54,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.36 2003/08/17 18:12:34 chs Exp $");
 #endif
 
 #include <machine/autoconf.h>
-#include <machine/bat.h>
 #include <machine/fpu.h>
 #include <machine/pcb.h>
 #include <machine/pio.h>
