@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.75 1998/03/18 16:34:43 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.76 1998/03/27 06:12:32 scottr Exp $
 #
 # GENERIC
 
@@ -105,6 +105,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	ZS_CONSOLE_ABORT
 options 	DISABLE_EXT_CACHE # Don't use IIci external cache
 options 	MRG_ADB		# Use ROM-based ADB driver
+#options 	ALTXBUTTONS	# Map Opt-{1,2,3} to mouse buttons
 
 options 	NFS_BOOT_BOOTP
 
