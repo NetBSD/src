@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.103 2003/02/09 09:22:54 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.104 2003/02/09 22:22:50 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3489,66 +3489,20 @@ sys/sys/param.h					patched by hand
 	(Moved tags for RC1 on these 2 files)
 
 sys/net/if_spppsubr.c				1.47,1.49-1.51,1.56-1.62
-
-	Don't panic on invalid CONF_ACK from remote (in general, issueing panic
-	on remote input is bad practice)
-	Don't access freed memory.
-	Use "mono_time" instead of "time" for timeout calculations.
-	Fix async map handling.
-	If the peer did not answer LCP echo requests in-time, but we got user
-	data through within the last LCP keepalive interval, do not count this
-	as a keepalive failure.
-	KNF
-	license clarification from the author, via openbsd
-	BSD-style license from Serge Vakulenko <vak@cronyx.ru>
-	Restore the system priority level in case of errors.
-	Remove a break after a goto.
-	[martin, ticket #1152]
-
 sys/net/if_pppoe.c				1.25-1.37,1.39
-
-	Code cleanup.
-	Do not require PPPoE control packet to be put into a single mbuf.
-	Fix loop condition. (don't skip last tag)
-	Free buf when unneeded.
-	Pass a consistent type to free(9).
-	Fix typo in a comment.
-	Add an option PPPOE_TERM_UNKNOWN_SESSIONS to forcefully disconnect
-	sessions we don't know anything about with a PADT packet.
-	Use with care, this is pretty dangerous and will kill all userland
-	PPPoE implementations. Therefore it is not enabled by default nor
-	added as a commented out option to GENERIC kernels.
-	But it is highly usefull if you have a fixed IP, an ISP that does not
-	use LCP echo requests for link monitoring and you want to recover
-	quickly after a crash or otherwise ungracefull disconnect.
-	Remove a test that has been obsoleted by the authentication failure
-	counter - enter slow retry mode always, not only if we already
-	transfered data successfully (the test was designed to disable
-	retries when the initial authentication setting was not correct, the
-	auth failure counter does this job better).
-	In do not call pppoe_abort_connect if we fail to send the initial PADI
-	packet - there is nothing to abort.
-	In pppoe_abort_connect rearange state handling slightly to avoid calls
-	to the PPP LCP state machine get into an infinite recursion.
-	This should fix the symptoms of PR kern/19500, but does not touch the
-	real cause for the lossage described there.
-	Fix broken error handling in case M_PREPEND fails.
-	PADT is always send with ethertype PPPOE_DISCOVERY, no matter if we
-	have reached session state or not.
-	Fixes PR kern/20203 by Shoichi Miyake.
-	[martin, ticket #1152]
-
 share/man/man4/pppoe.4				1.10-1.15
 
-	Add a paragraph about MSS clamping (refer
-		http://www.netbsd.org/Documentation/network/pppoe/ ).
-	Punctuation/casing fixes, and don't repeat too verbosely how to set
-	sysctl()s.
-	Document "options PPPOE_TERM_UNKNOWN_SESSIONS".
-	Fix a couple spell-o's.
-	No trailing space. Also, new sentences need two spaces after the dot.
-	Bump date for last changes.
-	Fix two grammar errors reported by Damon Brodie in PR 20192.
+	- several, partly critical, bug fixes (not detailed for brevity)
+	- If the peer did not answer LCP echo requests in-time, but we got
+	  user data through within the last LCP keepalive interval, do not
+	  count this as a keepalive failure.
+	- PADT is always send with ethertype PPPOE_DISCOVERY, no matter if we
+	  have reached session state or not. [PR kern/20203]
+	- Better retry handling on first connect [PR kern/17665]
+	- Add an option PPPOE_TERM_UNKNOWN_SESSIONS to forcefully disconnect
+	  sessions we don't know anything about with a PADT packet.
+	  Use with care, this is pretty dangerous and will kill all userland
+	  PPPoE implementations.
 	[martin, ticket #1152]
 
 lib/libc/arch/sparc64/gen/fabs.S                1.3
