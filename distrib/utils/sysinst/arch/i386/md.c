@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.15 1998/05/15 15:12:31 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.16 1998/10/12 17:00:43 erh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,11 +79,13 @@ int md_get_info()
 	} else {
 		disktype = "SCSI";
 		if (disk->geom[0]*disk->geom[1]*disk->geom[2] != disk->geom[4])
+		{
 			if (disk->geom[0] != dlcyl || disk->geom[1] != dlhead
 			    || disk->geom[2] != dlsec)
 				process_menu (MENU_scsigeom1);
 			else
 				process_menu (MENU_scsigeom2);
+		}
 	}
 
 	/* Compute the full sizes ... */
