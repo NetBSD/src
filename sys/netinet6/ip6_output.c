@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.47 2002/06/07 04:07:55 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.48 2002/06/07 04:18:12 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.47 2002/06/07 04:07:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.48 2002/06/07 04:18:12 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -385,7 +385,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 				break;
 			default:
 				printf("ip6_output (ipsec): error code %d\n", error);
-				/* FALLTHORUGH */
+				/* FALLTHROUGH */
 			case ENOENT:
 				/* don't show these error codes to the user */
 				error = 0;
@@ -510,7 +510,7 @@ skip_ipsec2:;
 				break;
 			default:
 				printf("ip6_output (ipsec): error code %d\n", error);
-				/* FALLTHORUGH */
+				/* FALLTHROUGH */
 			case ENOENT:
 				/* don't show these error codes to the user */
 				error = 0;
@@ -1005,7 +1005,7 @@ freehdrs:
 	m_freem(exthdrs.ip6e_dest1);
 	m_freem(exthdrs.ip6e_rthdr);
 	m_freem(exthdrs.ip6e_dest2);
-	/* FALLTHORUGH */
+	/* FALLTHROUGH */
 bad:
 	m_freem(m);
 	goto done;
@@ -1278,7 +1278,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 					error = EPERM;
 					break;
 				}
-				/* FALLTHORUGH */
+				/* FALLTHROUGH */
 			case IPV6_UNICAST_HOPS:
 			case IPV6_RECVOPTS:
 			case IPV6_RECVRETOPTS:
@@ -1466,7 +1466,7 @@ else \
 					error = EPERM;
 					break;
 				}
-				/* FALLTHORUGH */
+				/* FALLTHROUGH */
 			case IPV6_UNICAST_HOPS:
 			case IPV6_RECVOPTS:
 			case IPV6_RECVRETOPTS:
