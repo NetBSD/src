@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: toolchain2netbsd,v 1.4 2001/08/06 15:31:23 tv Exp $
+#	$NetBSD: toolchain2netbsd,v 1.5 2001/08/06 19:33:11 tv Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -98,7 +98,7 @@ mkdir -p lib/libbfd/arch/$MACHINE_ARCH
 	getvars bfd/Makefile \
 		libbfd_la_DEPENDENCIES libbfd_la_OBJECTS DEFS INCLUDES TDEFAULTS
 	getvars opcodes/Makefile \
-		archdefs BFD_MACHINES
+		archdefs BFD_MACHINES libopcodes_la_SOURCES
 } | write_mk lib/libbfd/arch/$MACHINE_ARCH/defs.mk
 
 (cd $_TMPDIR/bfd && $MAKE bfd.h)
@@ -185,6 +185,47 @@ if [ "$have_new_gcc" = "yes" ]; then
 		(cd dist/toolchain/libstdc++/stl && echo 'STL_HEADERS=' *.h)
 	} | write_mk lib/libstdc++/arch/$MACHINE_ARCH/defs.mk
 fi
+
+##### gnu/usr.bin/binutils/common #####
+
+mkdir -p usr.bin/binutils/common/arch/$MACHINE_ARCH
+
+{
+	getvars binutils/Makefile \
+		DEFS INCLUDES man_MANS PROGRAMS TEXINFOS
+
+	for f in `getvars binutils/Makefile PROGRAMS | sed 'y,-,_,;s,^[^=]*=,,'`; do
+		getvars binutils/Makefile ${f}_OBJECTS ${f}_DEPENDENCIES
+	done
+} | write_mk usr.bin/binutils/common/arch/$MACHINE_ARCH/defs.mk
+
+write_c usr.bin/binutils/common/arch/$MACHINE_ARCH/config.h <$_TMPDIR/binutils/config.h
+
+##### gnu/usr.bin/binutils/gas #####
+
+mkdir -p usr.bin/binutils/gas/arch/$MACHINE_ARCH
+
+getvars gas/Makefile \
+	DEFS INCLUDES OBJS \
+	| write_mk usr.bin/binutils/gas/arch/$MACHINE_ARCH/defs.mk
+
+for f in config itbl-cpu obj-format targ-cpu targ-env; do
+	write_c usr.bin/binutils/gas/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gas/$f.h
+done
+
+##### gnu/usr.bin/binutils/ld #####
+
+mkdir -p usr.bin/binutils/ld/arch/$MACHINE_ARCH
+
+getvars ld/Makefile \
+	DEFS EMUL EMULATION_OFILES INCLUDES OFILES STRINGIFY target_alias \
+	| write_mk usr.bin/binutils/ld/arch/$MACHINE_ARCH/defs.mk
+
+(cd $_TMPDIR/ld && $MAKE ldemul-list.h)
+
+for f in config ldemul-list; do
+	write_c usr.bin/binutils/ld/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/ld/$f.h
+done
 
 ##### gnu/usr.bin/gcc #####
 
