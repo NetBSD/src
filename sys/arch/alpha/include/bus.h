@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.19 1998/02/04 05:12:47 thorpej Exp $ */
+/* $NetBSD: bus.h,v 1.20 1998/02/04 07:36:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -514,9 +514,7 @@ struct alpha_bus_dma_tag {
 #define	bus_dmamap_unload(t, p)					\
 	(*(t)->_dmamap_unload)((t), (p))
 #define	bus_dmamap_sync(t, p, o, l, ops)			\
-	(void)((t)->_dmamap_sync ?				\
-	    (*(t)->_dmamap_sync)((t), (p), (o), (l), (ops)) : (void)0)
-
+	(*(t)->_dmamap_sync)((t), (p), (o), (l), (ops))
 #define	bus_dmamem_alloc(t, s, a, b, sg, n, r, f)		\
 	(*(t)->_dmamem_alloc)((t), (s), (a), (b), (sg), (n), (r), (f))
 #define	bus_dmamem_free(t, sg, n)				\
