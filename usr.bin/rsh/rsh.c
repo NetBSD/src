@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.4.2.4 1997/02/17 15:10:54 mrg Exp $	*/
+/*	$NetBSD: rsh.c,v 1.4.2.5 1997/05/21 06:40:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	8.4 (Berkeley) 4/29/95";*/
-static char rcsid[] = "$NetBSD: rsh.c,v 1.4.2.4 1997/02/17 15:10:54 mrg Exp $";
+static char rcsid[] = "$NetBSD: rsh.c,v 1.4.2.5 1997/05/21 06:40:43 mrg Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -392,13 +392,13 @@ reread:		errno = 0;
 		bp = buf;
 
 rewrite:	fdp->events = POLLOUT;
-		fds->fd = rem;
+		fdp->fd = rem;
 		if (poll(fdp, 1, 0) < 0) {
 			if (errno != EINTR)
 				err(1, "poll");
 			goto rewrite;
 		}
-		if (fdp->revents & POLLOUT)
+		if ((fdp->revents & POLLOUT) == 0)
 			goto rewrite;
 #ifdef KERBEROS
 #ifdef CRYPT
@@ -435,7 +435,7 @@ done:
 				err(1, "poll");
 			continue;
 		}
-		if (fds[0].revents & POLLIN) {
+		if (fds[0].events == POLLIN && (fds[0].revents & POLLIN)) {
 			errno = 0;
 #ifdef KERBEROS
 #ifdef CRYPT
@@ -448,12 +448,13 @@ done:
 			if (cc <= 0) {
 				if (errno != EWOULDBLOCK) {
 					nfds--;
+					fds[0].events = 0;
 					fdp = &fds[1];
 				}
 			} else
 				(void)write(2, buf, cc);
 		}
-		if (fds[1].revents & POLLIN) {
+		if (fds[1].events == POLLIN && (fds[1].revents & POLLIN)) {
 			errno = 0;
 #ifdef KERBEROS
 #ifdef CRYPT
@@ -464,8 +465,10 @@ done:
 #endif
 				cc = read(rem, buf, sizeof buf);
 			if (cc <= 0) {
-				if (errno != EWOULDBLOCK)
+				if (errno != EWOULDBLOCK) {
 					nfds--;
+					fds[1].events = 0;
+				}
 			} else
 				(void)write(1, buf, cc);
 		}
