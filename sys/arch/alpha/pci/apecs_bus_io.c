@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_bus_io.c,v 1.7 1997/09/02 11:09:51 thorpej Exp $ */
+/* $NetBSD: apecs_bus_io.c,v 1.8 1997/09/02 13:19:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -27,10 +27,9 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: apecs_bus_io.c,v 1.7 1997/09/02 11:09:51 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: apecs_bus_io.c,v 1.8 1997/09/02 13:19:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

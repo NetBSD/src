@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.17 1997/07/22 18:50:52 jonathan Exp $ */
+/* $NetBSD: clock.c,v 1.18 1997/09/02 13:17:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,10 +42,9 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 1997/07/22 18:50:52 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 1997/09/02 13:17:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

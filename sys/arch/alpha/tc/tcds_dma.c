@@ -1,4 +1,4 @@
-/* $NetBSD: tcds_dma.c,v 1.20 1997/08/27 11:23:01 bouyer Exp $ */
+/* $NetBSD: tcds_dma.c,v 1.21 1997/09/02 13:20:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -29,10 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.20 1997/08/27 11:23:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.21 1997/09/02 13:20:41 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

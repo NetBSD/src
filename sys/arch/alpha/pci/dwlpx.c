@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.11 1997/09/02 12:54:28 thorpej Exp $ */
+/* $NetBSD: dwlpx.c,v 1.12 1997/09/02 13:19:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -30,10 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.11 1997/09/02 12:54:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.12 1997/09/02 13:19:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

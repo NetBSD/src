@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.19 1997/04/07 23:39:59 cgd Exp $ */
+/* $NetBSD: pmap.c,v 1.20 1997/09/02 13:18:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1996 Carnegie Mellon University
@@ -68,10 +68,9 @@
  *	and to when physical maps must be made correct.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 1997/04/07 23:39:59 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 1997/09/02 13:18:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

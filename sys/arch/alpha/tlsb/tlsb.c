@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.5 1997/07/17 01:27:22 jtk Exp $ */
+/* $NetBSD: tlsb.c,v 1.6 1997/09/02 13:20:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -38,10 +38,9 @@
  * found on AlphaServer 8200 and 8400 systems.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.5 1997/07/17 01:27:22 jtk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.6 1997/09/02 13:20:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

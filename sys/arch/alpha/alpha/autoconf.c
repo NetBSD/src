@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.25 1997/06/06 19:52:42 cgd Exp $ */
+/* $NetBSD: autoconf.c,v 1.26 1997/09/02 13:17:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,10 +44,9 @@
  *	@(#)autoconf.c	8.4 (Berkeley) 10/1/93
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 1997/06/06 19:52:42 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 1997/09/02 13:17:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

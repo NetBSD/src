@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.19 1997/06/06 23:54:33 thorpej Exp $ */
+/* $NetBSD: sio.c,v 1.20 1997/09/02 13:19:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,10 +27,9 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.19 1997/06/06 23:54:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.20 1997/09/02 13:19:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

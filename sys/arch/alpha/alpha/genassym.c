@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.13 1997/07/23 06:23:14 cgd Exp $ */
+/* $NetBSD: genassym.c,v 1.14 1997/09/02 13:18:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -60,10 +60,9 @@
  * the gcc asm() statement (inline assembly).
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__RCSID("$NetBSD: genassym.c,v 1.13 1997/07/23 06:23:14 cgd Exp $");
+__RCSID("$NetBSD: genassym.c,v 1.14 1997/09/02 13:18:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

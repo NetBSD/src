@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.15 1997/04/07 23:40:04 cgd Exp $ */
+/* $NetBSD: prom.c,v 1.16 1997/09/02 13:18:34 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -25,10 +25,9 @@
  * the rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.15 1997/04/07 23:40:04 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.16 1997/09/02 13:18:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

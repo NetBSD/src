@@ -1,4 +1,4 @@
-$NetBSD: STYLE,v 1.2 1997/04/08 00:18:25 cgd Exp $
+$NetBSD: STYLE,v 1.3 1997/09/02 13:17:47 thorpej Exp $
 
 Style guide for NetBSD/alpha kernel files.
 
@@ -17,19 +17,12 @@ SECTIONS
 
 INCLUDE FILES
 
-(1) All C and assembly sources (which are not included by other C or
-assembly sources) sources should include <machine/options.h> as the
-first header to be included, with a line like:
-
-#include <machine/options.h>		/* Pull in config options headers */
-
-(2) All C sources should include <sys/cdefs.h> (after <machine/options.h>,
-when it is included, otherwise as the first header to be included), with
-a line like:
+(1) All C sources should include <sys/cdefs.h> as the first header to
+be included, with a line like:
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-(3) Nothing should include <sys/conf.h> directly.  Instead, <machine/conf.h>
+(2) Nothing should include <sys/conf.h> directly.  Instead, <machine/conf.h>
 should be included.  It includes <sys/conf.h> and provides appropriate
 definitions for the machine-dependent devices and macros used by the Alpha
 port.
@@ -37,10 +30,10 @@ port.
 
 RCS IDS
 
-(1) NetBSD RCS ID tags ($NetBSD: STYLE,v 1.2 1997/04/08 00:18:25 cgd Exp $ tags) in C sources and headers should
+(1) NetBSD RCS ID tags ($NetBSD: STYLE,v 1.3 1997/09/02 13:17:47 thorpej Exp $ tags) in C sources and headers should
 appear at the top of the file in a single-line comment of the form
 
-/*<space>$NetBSD: STYLE,v 1.2 1997/04/08 00:18:25 cgd Exp $<space>*/
+/*<space>$NetBSD: STYLE,v 1.3 1997/09/02 13:17:47 thorpej Exp $<space>*/
 
 which differs from the normal NetBSD style, in that it uses spaces
 rather than tabs to seperate the tag from the comment start and end
@@ -49,7 +42,7 @@ delimiters.
 (2) All C and assembler sources should include an RCS ID tag which can
 be compiled into the binary, with a line like:
 
-__KERNEL_RCSID(0, "$NetBSD: STYLE,v 1.2 1997/04/08 00:18:25 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: STYLE,v 1.3 1997/09/02 13:17:47 thorpej Exp $");
 
 after the inclusion of cdefs.h.  Source files which include other source
 files should change the number '0' to a different number, so that it
