@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.8 1998/02/19 14:12:48 drochner Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.9 1998/05/15 16:38:53 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -77,7 +77,9 @@
 #include "libi386.h"
 #include "biosdisk_ll.h"
 #include "biosdisk.h"
+#ifdef _STANDALONE
 #include "bootinfo.h"
+#endif
 
 #define BUFSIZE (1 * BIOSDISK_SECSIZE)
 
@@ -90,7 +92,9 @@ struct biosdisk {
 	char            buf[BUFSIZE];
 };
 
+#ifdef _STANDALONE
 static struct btinfo_bootdisk bi_disk;
+#endif
 
 int 
 biosdiskstrategy(devdata, flag, dblk, size, buf, rsize)
@@ -164,7 +168,7 @@ biosdiskopen(struct open_file *f, ...)
 		return (ENOMEM);
 	}
 	va_start(ap, f);
-	bi_disk.biosdev = d->ll.dev = va_arg(ap, int);
+	d->ll.dev = va_arg(ap, int);
 	if (set_geometry(&d->ll)) {
 #ifdef DISK_DEBUG
 		printf("no geometry information\n");
@@ -174,8 +178,12 @@ biosdiskopen(struct open_file *f, ...)
 	}
 
 	d->boff = 0;
+	partition = va_arg(ap, int);
+#ifdef _STANDALONE
+	bi_disk.biosdev = d->ll.dev;
+	bi_disk.partition = partition;
 	bi_disk.labelsector = -1;
-	bi_disk.partition = partition = va_arg(ap, int);
+#endif
 
 #ifndef NO_DISKLABEL
 	if (!(d->ll.dev & 0x80) /* floppy */
@@ -248,13 +256,15 @@ biosdiskopen(struct open_file *f, ...)
 		goto out;
 	} else {
 		d->boff = lp->d_partitions[partition].p_offset;
-		bi_disk.labelsector = sector + LABELSECTOR;
 #ifdef COMPAT_OLDBOOT
-		d->disktype =
+		d->disktype = lp->d_type;
 #endif
-		  bi_disk.label.type = lp->d_type;
+#ifdef _STANDALONE
+		bi_disk.labelsector = sector + LABELSECTOR;
+		bi_disk.label.type = lp->d_type;
 		bcopy(lp->d_packname, bi_disk.label.packname, 16);
 		bi_disk.label.checksum = lp->d_checksum;
+#endif
 	}
 nolabel:
 #endif /* NO_DISKLABEL */
@@ -263,7 +273,9 @@ nolabel:
 	printf("partition @%d\n", d->boff);
 #endif
 
+#ifdef _STANDALONE
 	BI_ADD(&bi_disk, BTINFO_BOOTDISK, sizeof(bi_disk));
+#endif
 
 	f->f_devdata = d;
 out:
