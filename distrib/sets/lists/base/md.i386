@@ -1,13 +1,9 @@
-# $NetBSD: md.i386,v 1.84 2001/12/04 17:36:58 wiz Exp $
+# $NetBSD: md.i386,v 1.85 2002/01/24 03:35:13 jwise Exp $
 ./sbin/fdisk				base-sysutil-root
 ./sbin/ldconfig				base-sysutil-root
 ./usr/bin/fdformat			base-util-bin
 ./usr/bin/pmc				base-util-bin
-./usr/lib/libi386.so			base-sys-shlib
-./usr/lib/libi386.so.0			base-sys-shlib
 ./usr/lib/libi386.so.0.4		base-sys-shlib
-./usr/lib/libm387.so			base-sys-shlib
-./usr/lib/libm387.so.0			base-sys-shlib
 ./usr/lib/libm387.so.0.0		base-sys-shlib
 ./usr/libexec/ld.so			base-sys-shlib
 ./usr/lkm/compat_freebsd.o		base-sys-lkm
