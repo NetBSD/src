@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.101 1999/12/11 00:56:13 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.102 1999/12/21 13:00:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.101 1999/12/11 00:56:13 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.102 1999/12/21 13:00:18 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -262,7 +262,7 @@ url_decode(url)
  * the number given, or ftpport if ftp://, or httpport if http://.
  *
  * If <host> is surrounded by `[' and ']', it's parsed as an
- * IPv6 address (as per draft-ietf-ipngwg-url-literal-01.txt).
+ * IPv6 address (as per RFC 2732).
  *
  * XXX: this is not totally RFC 1738 compliant; <path> will have the
  * leading `/' unless it's an ftp:// URL, as this makes things easier
@@ -365,7 +365,7 @@ cleanup_parse_url:
 #ifdef INET6
 			/*
 			 * Check if thost is an encoded IPv6 address, as per
-			 * draft-ietf-ipngwg-url-literal-01.txt:
+			 * RFC 2732:
 			 *	`[' ipv6-address ']'
 			 */
 	if (*thost == '[') {
