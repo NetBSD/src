@@ -1,4 +1,4 @@
-/*	$NetBSD: featuretest.h,v 1.4 2003/04/28 23:16:28 bjh21 Exp $	*/
+/*	$NetBSD: featuretest.h,v 1.5 2003/04/29 12:50:16 bjh21 Exp $	*/
 
 /*
  * Written by Klaus Klein <kleink@NetBSD.ORG>, February 2, 1998.
@@ -33,6 +33,7 @@
  * _XOPEN_SOURCE		System Interfaces and Headers, Issue 4, Ver 2
  * _XOPEN_SOURCE_EXTENDED == 1	XSH4.2 UNIX extensions
  * _XOPEN_SOURCE == 500		System Interfaces and Headers, Issue 5
+ * _XOPEN_SOURCE == 520		Networking Services (XNS), Issue 5.2
  * _XOPEN_SOURCE == 600		IEEE Std 1003.1-2001, XSI option
  *
  * NetBSD macros:
