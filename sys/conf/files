@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.486 2001/12/17 15:40:43 atatat Exp $
+#	$NetBSD: files,v 1.487 2002/01/01 21:51:39 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -201,6 +201,7 @@ define	ata		{[channel = -1], [drive = -1]}
 define	atapi		{[channel = -1]}
 define	mii		{[phy = -1]}
 define	irbus		{ }
+define	radio		{ }
 
 # audio device attributes
 #
@@ -738,7 +739,14 @@ file	dev/ic/ate_subr.c		ate
 # Crystal Semiconductor CS8900, CS8920, and CS8920M Ethernet
 #
 device	cs: arp, ether, ifnet
-file	dev/ic/cs89x0.c		cs
+file	dev/ic/cs89x0.c			cs
+
+# Radio device attributes
+#
+define	tea5757
+file dev/ic/tea5757.c			tea5757
+define	lm700x
+file dev/ic/lm700x.c			lm700x
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
@@ -800,6 +808,10 @@ file	dev/usb/ohci.c			ohci			needs-flag
 #
 device	ehci: usbus
 file	dev/usb/ehci.c			ehci			needs-flag
+
+# radio devices, attaches to radio hardware driver
+device	radio
+attach	radio at radio
 
 # IEEE 1394 controllers
 # (These need to be here since it will have both PCI and CardBus attachments)
@@ -946,6 +958,7 @@ file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
 file	dev/midisyn.c			midisyn
 file	dev/mulaw.c			mulaw
+file	dev/radio.c			radio			needs-flag
 file	dev/raidframe/rf_acctrace.c		raid		needs-flag
 file	dev/raidframe/rf_alloclist.c		raid		needs-flag
 file	dev/raidframe/rf_aselect.c		raid		needs-flag
