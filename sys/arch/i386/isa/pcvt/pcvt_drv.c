@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_drv.c,v 1.17 1995/06/02 02:48:41 brezak Exp $	*/
+/*	$NetBSD: pcvt_drv.c,v 1.18 1995/08/30 00:29:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -798,7 +798,7 @@ pccngetc(Dev_t dev)
 	if (pcvt_xmode)
 		return 0;
 #else /* !PCVT_USL_VT_COMPAT */
-	if (pcvt_kbd_raw)
+	if (vs[minor(dev)].kbd_state == K_RAW)
 		return 0;
 #endif /* !PCVT_USL_VT_COMPAT */
 #endif /* XSERVER */

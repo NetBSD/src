@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_vtf.c,v 1.6 1995/04/19 19:12:26 mycroft Exp $	*/
+/*	$NetBSD: pcvt_vtf.c,v 1.7 1995/08/30 00:29:56 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -1867,7 +1867,13 @@ roll_up(struct video_state *svsp, int n)
 	if ((svsp->scrr_beg == 0) && (svsp->scrr_len == svsp->screen_rows) &&
 	    ((svsp->screen_rows == svsp->screen_rowsize) || (svsp != vsp)))
 	{
-		u_short *Memory = (svsp == vsp) ? Crtat : svsp->Memory;
+		u_short *Memory =
+#if PCVT_USL_VT_COMPAT
+		    (svsp != vsp || (vsp->vt_status & VT_GRAFX)) ?
+#else
+		    (svsp != vsp) ?
+#endif
+		    svsp->Memory : Crtat;
 
 		if (svsp->Crtat > (Memory + (svsp->screen_rows - n) *
 		     			    svsp->maxcol))
@@ -1880,7 +1886,11 @@ roll_up(struct video_state *svsp, int n)
 		else
 			svsp->Crtat += n * svsp->maxcol;
 
+#if PCVT_USL_VT_COMPAT
+		if (svsp == vsp && !(vsp->vt_status & VT_GRAFX))
+#else
 		if (svsp == vsp)
+#endif
 		{
 			outb(addr_6845, CRTC_STARTADRH);
 			outb(addr_6845+1, (svsp->Crtat - Crtat) >> 8);
