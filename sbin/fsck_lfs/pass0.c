@@ -1,4 +1,4 @@
-/* $Id: pass0.c,v 1.1 1999/03/18 02:02:19 perseant Exp $ */
+/* $Id: pass0.c,v 1.2 1999/03/24 05:32:23 nathanw Exp $ */
 /*
  * Copyright (c) 1998 Konrad E. Schroder.
  * Copyright (c) 1980, 1986, 1993
@@ -139,7 +139,8 @@ void check_segment(int fd, int segnum, daddr_t addr, struct lfs *fs, int flags, 
     /* printf("Seg at 0x%x\n",addr); */
     if((flags & CKSEG_VERBOSE) && segnum*db_ssize + fs->lfs_sboffs[0] != addr)
         pwarn("WARNING: segment begins at 0x%qx, should be 0x%qx\n",
-              (long long unsigned)addr, segnum*db_ssize + fs->lfs_sboffs[0]);
+              (long long unsigned)addr, 
+			  (long long unsigned)(segnum*db_ssize + fs->lfs_sboffs[0]));
     sum_offset = ((off_t)addr << dbshift);
 
     /* If this segment should have a superblock, look for one */
@@ -183,15 +184,18 @@ void check_segment(int fd, int segnum, daddr_t addr, struct lfs *fs, int flags, 
 		if(flags & CKSEG_VERBOSE) {
 			/* Corrupt partial segment */
 			pwarn("CORRUPT PARTIAL SEGMENT %d/%d OF SEGMENT %d AT BLK 0x%qx",
-			      psegnum, su.su_nsums, segnum, sum_offset>>dbshift);
+			      psegnum, su.su_nsums, segnum, 
+				  (unsigned long long)sum_offset>>dbshift);
 			if(db_ssize < (sum_offset>>dbshift) - addr)
 				pwarn(" (+0x%qx/0x%qx)",
-				      ((sum_offset>>dbshift) - addr) - db_ssize,
-				      db_ssize);
+				      (unsigned long long)(((sum_offset>>dbshift) - addr) - 
+										   db_ssize),
+				      (unsigned long long)db_ssize);
 			else
 				pwarn(" (-0x%qx/0x%qx)",
-				      db_ssize - ((sum_offset>>dbshift) - addr),
-				      db_ssize);
+				      (unsigned long long)(db_ssize - 
+										   ((sum_offset>>dbshift) - addr)),
+				      (unsigned long long)db_ssize);
 			pwarn("\n");
 			dump_segsum(sump,sum_offset>>dbshift);
 		}
