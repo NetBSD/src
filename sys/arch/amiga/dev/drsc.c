@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.6 1996/10/13 03:06:52 christos Exp $	*/
+/*	$NetBSD: drsc.c,v 1.7 1996/11/30 01:27:04 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -97,7 +97,7 @@ drscmatch(pdp, match, auxp)
 	void *match, *auxp;
 {
 	struct cfdata *cdp = (struct cfdata *)match;
-	if (is_draco() && (cdp->cf_unit == 0))
+	if (is_draco() && matchname(auxp, "drsc") && (cdp->cf_unit == 0))
 		return(1);
 	return(0);
 }
