@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.14 2002/01/19 03:02:34 eeh Exp $ */
+/*	$NetBSD: fpu.c,v 1.15 2002/01/19 03:30:54 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -290,12 +290,6 @@ fpu_execute(fe, instr)
 	register struct fpstate64 *fs;
 #endif /* SUN4U */
 	u_int space[4];
-
-#if defined(DEBUG) && defined(DDB)
-	if (fpe_debug & FPE_INSN) {
-		disasem_instr(0, instr.i_int, 0);
-	}
-#endif
 
 	/*
 	 * `Decode' and execute instruction.  Start with no exceptions.
