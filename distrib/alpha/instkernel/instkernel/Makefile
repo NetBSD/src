@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/09/10 21:59:00 jhawk Exp $
+#	$NetBSD: Makefile,v 1.14 2001/10/21 23:23:19 jmc Exp $
 
 .include "../../../../Makefile.inc"
 
@@ -6,12 +6,13 @@ RAMDISK!=cd ${.CURDIR}/../ramdisk; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
 	${MAKE} -s -f-
 
+MDSETIMAGE?=	mdsetimage
 KERNEL?=${KERNOBJDIR}/INSTALL/netbsd
 STRIP?=		strip		# make STRIP=echo can be useful
 
 all:
 	cp ${KERNEL} netbsd
-	mdsetimage -v netbsd ${RAMDISK}
+	${MDSETIMAGE} -v netbsd ${RAMDISK}
 	nm netbsd > netbsd.symbols
 	${STRIP} netbsd
 	gzip -9f netbsd
