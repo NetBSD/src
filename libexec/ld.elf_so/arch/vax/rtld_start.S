@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.9 2002/09/26 22:26:27 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.10 2002/09/26 23:28:52 mycroft Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -31,7 +31,7 @@
 #include <machine/asm.h>
 
 	.data
-.L1:	.long	_GLOBAL_OFFSET_TABLE_
+.L1:	.long	_DYNAMIC
 
 /* R9 contains the address of PS_STRINGS and since its caller saved,
  * we can just use it.  R6 has a backup copy of the stack pointer which
@@ -46,14 +46,13 @@ ENTRY(_rtld_start, 0)
 	subl2	$8,%sp
 
 	movab	_DYNAMIC,%r0
-	movab	_GLOBAL_OFFSET_TABLE_,%r1
-	subl2	.L1,%r1
-	pushl	%r1		/* relocbase */
+	subl3	.L1,%r0,%r10
+	pushl	%r10		/* relocbase */
 	pushl	%r0		/* &_DYNAMIC */
 	calls	$2,_rtld_relocate_nonplt_self
 
 	movl	%sp,%r0
-	pushl	%r1		/* relocbase */
+	pushl	%r10		/* relocbase */
 	pushl	%r0		/* sp */
 	calls	$2,_rtld	/* entry = _rtld(sp, relocbase) */
 
