@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.38 1999/11/28 06:32:21 simonb Exp $	*/
+/*	$NetBSD: md.c,v 1.38.4.1 2000/10/18 17:51:24 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -153,7 +153,7 @@ md_post_newfs(void)
 
 	printf(msg_string(MSG_dobootblks), diskdev);
 	cp_to_target("/usr/mdec/boot.pmax", "/boot.pmax");
-	run_prog(0, 1, "Warning: disk is probably not bootable",
+	run_prog(RUN_DISPLAY, "Warning: disk is probably not bootable",
 	    "/usr/mdec/installboot /dev/r%sc /usr/mdec/bootxx_ffs", diskdev);
 	return 0;
 }
@@ -216,9 +216,20 @@ md_cleanup_install(void)
 		(void)fprintf(script, "%s\n", sedcmd);
 	do_system(sedcmd);
 
-	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
 
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
+}
+
+int
+md_pre_update()
+{
+	return 1;
+}
+
+void
+md_init()
+{
 }

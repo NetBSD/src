@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.53.2.4 2000/09/20 21:43:53 hubertf Exp $	*/
+/*	$NetBSD: defs.h,v 1.53.2.5 2000/10/18 17:51:13 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,6 +65,13 @@
 /* For run.c: collect() */
 #define T_FILE 0
 #define T_OUTPUT 1
+
+/* run_prog flags */
+#define RUN_DISPLAY	0x0001		/* run in subwindow */
+#define RUN_FATAL	0x0002		/* errors are fatal */
+#define RUN_CHROOT	0x0004		/* chroot to target disk */
+#define RUN_FULLSCREEN	0x0008		/* fullscreen (use with RUN_DISPLAY) */
+#define RUN_SYSTEM	0x0010		/* just use system(3) */
 
 /* Macros */
 
@@ -144,6 +151,7 @@ EXTERN char diskdev[SSTRSIZE] INIT("");
 EXTERN char disknames[STRSIZE];
 EXTERN int  numdisks;
 EXTERN char *disktype;		/* ST506, SCSI, ... */
+EXTERN char swapdev[SSTRSIZE] INIT("");
 
 /* Used in editing partitions ... BSD disklabel and others */
 EXTERN int editpart;
@@ -256,7 +264,9 @@ int	md_make_bsd_partitions __P((void));
 int	md_post_disklabel __P((void));
 int	md_post_newfs __P((void));
 int	md_pre_disklabel __P((void));
+int	md_pre_update __P((void));
 int	md_update __P((void));
+void	md_init __P((void));
 
 /* from main.c */
 void toplevel __P((void));
@@ -268,6 +278,7 @@ int	write_disklabel __P((void));
 int	make_filesystems __P((void));
 int	make_fstab __P((void));
 int	fsck_disks __P((void));
+int	set_swap __P((const char *, partinfo *, int));
 
 /* from label.c */
 
@@ -300,7 +311,7 @@ void	mnt_net_config __P((void));
 
 /* From run.c */
 int	collect __P((int kind, char **buffer, const char *name, ...));
-int	run_prog __P((int, int, msg, const char *, ...));
+int	run_prog __P((int, msg, const char *, ...));
 void	do_logging __P((void));
 int	do_system __P((const char *));
 
@@ -312,6 +323,7 @@ void	do_reinstall_sets __P((void));
 int	askyesno __P((int reverse));
 int	dir_exists_p(const char *path);
 int	file_exists_p(const char *path);
+int	file_mode_match(const char *path, unsigned int mode);
 int	distribution_sets_exist_p __P((const char *path));
 void	get_ramsize __P((void));
 void	ask_sizemult __P((int));
@@ -329,9 +341,12 @@ void	ask_verbose_dist __P((void));
 int 	get_and_unpack_sets(msg success_msg, msg failure_msg);
 int	sanity_check __P((void));
 int	set_timezone __P((void));
+int	set_root_password __P((void));
 
 /* from target.c */
 int	must_mount_root __P((void));
+const	char* concat_paths __P((const char *prefix, const char *suffix));
+char	*target_realpath __P((const char *path, char *resolved));
 const	char * target_expand __P((const char *pathname));
 void	make_target_dir __P((const char *path));
 void	append_to_target_file __P((const char *path, const char *string));
@@ -350,7 +365,7 @@ void	dup_file_into_target __P((const char *filename));
 void	mv_within_target_or_die __P((const char *from, const char *to));
 int	cp_within_target __P((const char *frompath, const char *topath));
 int	target_mount __P((const char *fstype, const char *from, const char* on));
-int	target_test __P((const char*, const char*));
+int	target_test __P((unsigned int, const char*));
 int	target_dir_exists_p __P((const char *path));
 int	target_file_exists_p __P((const char *path));
 int	target_symlink_exists_p __P((const char *path));

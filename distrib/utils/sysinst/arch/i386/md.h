@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.17.4.1 2000/08/31 15:16:45 minoura Exp $	*/
+/*	$NetBSD: md.h,v 1.17.4.2 2000/10/18 17:51:21 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -85,6 +85,7 @@ EXTERN distinfo dist_list[]
     {"xserver",	1, "cr", "X11 servers  : "},
     {"xcontrib",1, "aa", "X11 contrib  : "},
     {"xcomp",	1, "ah", "X programming: "},
+    {"xmisc",   1, NULL, "X11 Misc.    : "},
     {NULL, 0, NULL, NULL }
 }
 #endif
@@ -153,6 +154,9 @@ extern struct mbr_bootsel *mbs;
  
 #define SCAN_ENTER      0x1c
 #define SCAN_F1         0x3b
+
+#define LIB_COUNT	0
+#define LIB_MOVE	1
  
 #define MBR_BOOTSELOFF  (MBR_PARTOFF - sizeof (struct mbr_bootsel))
 
