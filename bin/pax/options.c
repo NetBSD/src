@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.20 1999/08/24 07:57:06 tron Exp $	*/
+/*	$NetBSD: options.c,v 1.21 1999/08/24 08:00:03 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.20 1999/08/24 07:57:06 tron Exp $");
+__RCSID("$NetBSD: options.c,v 1.21 1999/08/24 08:00:03 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -662,6 +662,12 @@ tar_options(argc, argv)
 			fstdin = 0;
 			arcname = optarg;
 			break;
+		case 'h':
+			/*
+			 * follow command line symlinks only
+			 */
+			Hflag = 1;
+			break;
 		case 'l':
 			/*
 			 * do not pass over mount points in the file system
@@ -746,12 +752,6 @@ tar_options(argc, argv)
 			 * Nothing to do here, this is pax default
 			 */
 			break;
-		case 'H':
-			/*
-			 * follow command line symlinks only
-			 */
-			Hflag = 1;
-			break;
 		case 'L':
 			/*
 			 * follow symlinks
@@ -759,10 +759,7 @@ tar_options(argc, argv)
 			Lflag = 1;
 			break;
 		case 'P':
-			/*
-			 * do not follow symlinks
-			 */
-			Lflag = 0;
+			Aflag = 1;
 			break;
 		case 'X':
 			/*
