@@ -1,9 +1,13 @@
+/*	$NetBSD: tar.h,v 1.1.1.2 1998/09/19 18:07:39 christos Exp $	*/
+
 /*
  * Header file for public domain tar (tape archive) program.
  *
  * @(#)tar.h 1.20 86/10/29	Public Domain.
  *
  * Created 25 August 1985 by John Gilmore, ihnp4!hoptoad!gnu.
+ *
+ * Id: tar.h,v 1.4 1998/06/27 13:57:23 christos Exp  # checkin only
  */
 
 /*
@@ -165,6 +169,7 @@ TAR_EXTERN struct link	*linklist;	/* Points to first link in list */
 TAR_EXTERN char		read_error_flag;
 
 
+#if 0
 /*
  * Declarations of functions available to the world.
  */
@@ -175,3 +180,4 @@ union record *endofrecs();
 void anno();
 #define	 annorec(stream, msg)	anno(stream, msg, 0)	/* Cur rec */
 #define	annofile(stream, msg)	anno(stream, msg, 1)	/* Saved rec */
+#endif

@@ -1,3 +1,5 @@
+/*	$NetBSD: is_tar.c,v 1.1.1.2 1998/09/19 18:07:35 christos Exp $	*/
+
 /*
  * is_tar() -- figure out whether file is a tar archive.
  *
@@ -5,18 +7,34 @@
  * Pubic Domain version written 26 Aug 1985 John Gilmore (ihnp4!hoptoad!gnu).
  *
  * @(#)list.c 1.18 9/23/86 Public Domain - gnu
+ * Id: is_tar.c,v 1.10 1998/06/27 13:23:39 christos Exp 
  *
  * Comments changed and some code/comments reformatted
  * for file command by Ian Darwin.
  */
 
+#include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include "tar.h"
+#include "file.h"
+
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+FILE_RCSID("@(#)Id: is_tar.c,v 1.10 1998/06/27 13:23:39 christos Exp ")
+#else
+__RCSID("$NetBSD: is_tar.c,v 1.1.1.2 1998/09/19 18:07:35 christos Exp $");
+#endif
+#endif
 
 #define	isodigit(c)	( ((c) >= '0') && ((c) <= '7') )
 
-long from_oct();			/* Decode octal number */
+#if	defined(__STDC__) || defined(__cplusplus)
+static int from_oct(int, char*);	/* Decode octal number */
+#else
+static int from_oct();
+#endif
 
 /*
  * Return 
@@ -25,18 +43,23 @@ long from_oct();			/* Decode octal number */
  *	2 for Unix Std (POSIX) tar file.
  */
 int
-is_tar(header)
-	register union record *header;
+is_tar(buf, nbytes)
+unsigned char *buf;
+int nbytes;
 {
+	register union record *header = (union record *)buf;
 	register int	i;
-	register long	sum, recsum;
+	register int	sum, recsum;
 	register char	*p;
+
+	if (nbytes < sizeof(union record))
+		return 0;
 
 	recsum = from_oct(8,  header->header.chksum);
 
 	sum = 0;
 	p = header->charptr;
-	for (i = sizeof(*header); --i >= 0;) {
+	for (i = sizeof(union record); --i >= 0;) {
 		/*
 		 * We can't use unsigned char here because of old compilers,
 		 * e.g. V7.
@@ -64,12 +87,12 @@ is_tar(header)
  *
  * Result is -1 if the field is invalid (all blank, or nonoctal).
  */
-long
+static int
 from_oct(digs, where)
 	register int	digs;
 	register char	*where;
 {
-	register long	value;
+	register int	value;
 
 	while (isspace(*where)) {		/* Skip spaces */
 		where++;

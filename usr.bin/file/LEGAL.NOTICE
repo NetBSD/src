@@ -1,8 +1,14 @@
-Copyright (c) Ian F. Darwin 1986, 1987.
-Written by Ian F. Darwin.
+$NetBSD: LEGAL.NOTICE,v 1.1.1.2 1998/09/19 18:07:30 christos Exp $
+Copyright (c) Ian F. Darwin 1986, 1987, 1989, 1990, 1991, 1992, 1994, 1995.
+Software written by Ian F. Darwin and others; maintained by Christos Zoulas.
+Id: LEGAL.NOTICE,v 1.9 1995/10/27 23:14:20 christos Exp 
 
-This software is not subject to any license of the American Telephone
-and Telegraph Company or of the Regents of the University of California.
+This software (or derivative software) may not be made subject to any 
+license which denies anyone permission to alter it and redistribute it 
+freely.  Derivative software must also still fall under this license.
+
+This software is not subject to any export provision of the United States
+Department of Commerce, and may be exported to any country or planet.
 
 Permission is granted to anyone to use this software for any purpose on
 any computer system, and to alter it and redistribute it freely, subject
@@ -18,5 +24,9 @@ to the following restrictions:
 3. Altered versions must be plainly marked as such, and must not be
    misrepresented as being the original software.  Since few users
    ever read sources, credits must appear in the documentation.
+   Derivative works must also be marked as such, and credits must appear
+   in the documentation.
 
 4. This notice may not be removed or altered.
+
+
