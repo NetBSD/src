@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.8 1997/07/20 03:57:19 jonathan Exp $	*/
+/*	$NetBSD: bt459.c,v 1.9 1997/11/16 10:17:53 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,6 +80,9 @@
  * rights to redistribute these changes.
  */
 
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.9 1997/11/16 10:17:53 jonathan Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -97,7 +100,6 @@
 #include <pmax/dev/bt459.h>			/* chipset definitions */
 
 
-
 /*
  * Forward references.
  */
@@ -106,6 +108,8 @@ static void bt459_set_cursor_ram (struct fbinfo *, int, u_char);
 static void bt459_select_reg (bt459_regmap_t *, int);
 static void bt459_write_reg (bt459_regmap_t *, int, int);
 static u_char bt459_read_reg (bt459_regmap_t *, int);
+static __inline void bt459_cursor_on(bt459_regmap_t *);
+static __inline void bt459_cursor_off(bt459_regmap_t *);
 
 /*
  * Initialization
@@ -171,7 +175,7 @@ bt459init(fi)
 	 * no crosshair on either plane 0 or 1,
 	 * regular cursor on both planes.
 	 */
-	bt459_write_reg(regs, BT459_REG_CCR, 0xc0);
+	bt459_cursor_on(regs);
 
 	/* home cursor */
 	bt459_write_reg(regs, BT459_REG_CXLO, 0x00);
@@ -203,6 +207,33 @@ bt459init(fi)
 }
 
 static u_char	cursor_RGB[6];	/* cursor color 2 & 3 */
+
+/*
+ * Enable the hardware cursor sprite.
+ */
+static __inline void
+bt459_cursor_on(btregs)
+	register bt459_regmap_t *btregs;
+{
+	/*
+	 * no blinking, 1bit cross hair, XOR reg&crosshair,
+	 * no crosshair on either plane 0 or 1,
+	 * regular cursor on both planes.
+	 */
+	bt459_write_reg(btregs, BT459_REG_CCR, 0xc0);
+}
+
+
+/*
+ * Disable the hardware cursor sprite.
+ */
+static __inline void
+bt459_cursor_off(btregs)
+	register bt459_regmap_t *btregs;
+{
+	bt459_write_reg(btregs, BT459_REG_CCR, 0x00);
+}
+
 
 /*
  * XXX This assumes 2bits/cursor pixel so that the 1Kbyte cursor RAM
@@ -257,6 +288,9 @@ bt459LoadCursor(fi, cursor)
 		bt459_set_cursor_ram(fi, pos, 0);
 		pos++;
 	}
+
+	/*  The cursor pattern is loaded, so turn on the hardware sprite. */
+	bt459_cursor_on((bt459_regmap_t *) fi->fi_vdac);
 }
 
 /*
@@ -372,7 +406,8 @@ bt459PosCursor(fi, x, y)
 }
 
 /* Initialize the colormap to the default state, which is that entry
-   zero is black and all other entries are full white. */
+   zero is black and all other entries are full white. 
+   The hardware cursor is turned off.  */
 
 void
 bt459InitColorMap(fi)
@@ -407,6 +442,7 @@ bt459InitColorMap(fi)
 		cursor_RGB[i + 3] = 0xff;
 	}
 	bt459RestoreCursorColor(fi);
+	bt459_cursor_off(regs);
 }
 
 /* Load count entries of the colormap starting at index with the values
@@ -494,7 +530,7 @@ bt459_video_on(fi)
 
 	/* enable normal display */
 	bt459_write_reg(regs, BT459_REG_PRM, 0xff);
-	bt459_write_reg(regs, BT459_REG_CCR, 0xc0);
+	bt459_cursor_off(regs);
 
 	fi -> fi_blanked = 0;
 	return 0;
@@ -523,7 +559,7 @@ bt459_video_off(fi)
 
 	/* disable display */
 	bt459_write_reg(regs, BT459_REG_PRM, 0);
-	bt459_write_reg(regs, BT459_REG_CCR, 0);
+	bt459_cursor_off(regs);
 
 	fi -> fi_blanked = 1;
 	return 0;
