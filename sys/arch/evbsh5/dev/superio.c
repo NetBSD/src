@@ -1,4 +1,4 @@
-/*	$NetBSD: superio.c,v 1.1 2002/07/05 13:31:38 scw Exp $	*/
+/*	$NetBSD: superio.c,v 1.2 2002/08/26 11:04:45 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,13 +40,16 @@
  * we're finished with it.
  */
 
+#include "locators.h"
 #include "com.h"
+#include "sm_superio.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/extent.h>
+#include <sys/endian.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -72,6 +75,7 @@ struct superio_softc {
 
 static int superiomatch(struct device *, struct cfdata *, void *);
 static void superioattach(struct device *, struct device *, void *);
+static int superiosubmatch(struct device *, struct cfdata *, void *);
 static int superioprint(void *, const char *);
 
 struct cfattach superio_ca = {
@@ -198,6 +202,21 @@ superiomatch(struct device *parent, struct cfdata *cf, void *args)
 	return (strcmp(sa->sa_name, superio_cd.cd_name) == 0);
 }
 
+static int
+superiosubmatch(struct device *parent, struct cfdata *cf, void *args)
+{
+	struct superio_attach_args *saa = args;
+
+	/*
+	 * This works for the isabus_attach_args, as it also has
+	 * a "char *name" as the first member.
+	 */
+	if (strcmp(cf->cf_driver->cd_name, saa->saa_name) == 0)
+		return ((*cf->cf_attach->ca_match)(parent, cf, args));
+
+	return (0);
+}
+
 /*ARGSUSED*/
 static void
 superioattach(struct device *parent, struct device *self, void *args)
@@ -205,6 +224,9 @@ superioattach(struct device *parent, struct device *self, void *args)
 	struct superio_softc *sc = (struct superio_softc *)self;
 	struct sysfpga_attach_args *sa = args;
 	struct isabus_attach_args iba;
+#if NSM_SUPERIO > 0
+	struct superio_attach_args saa;
+#endif
 	int i;
 
 	superio_bus_space_tag.bs_cookie = sc; 
@@ -213,6 +235,8 @@ superioattach(struct device *parent, struct device *self, void *args)
 
 	bus_space_map(sc->sc_bust, sa->sa_offset,
 	    SUPERIO_REG_SZ, 0, &sc->sc_bush);
+
+printf("\nsuperioattach: superio at 0x%08x\n", sc->sc_bush);
 
 	superio_cfgmode_enable(sc);
 
@@ -266,21 +290,44 @@ superioattach(struct device *parent, struct device *self, void *args)
 		return;
 	}
 
+	/*
+	 * Attach the isa bus
+	 */
 	iba.iba_busname = "isa";
 	iba.iba_iot = &superio_bus_space_tag;
 	iba.iba_memt = NULL;
-	iba.iba_dmat = NULL;	/* XXX: Should be able to do DMA thru dmac */
+	iba.iba_dmat = NULL;/* XXX Should be able to do DMA thru dmac */
 	iba.iba_ic = (void *)sc;
+	config_found_sm(self, &iba, superioprint, superiosubmatch);
 
-	config_found(self, &iba, superioprint);
+#if NSM_SUPERIO > 0
+	/*
+	 * Attach the onboard network interface
+	 */
+	saa.saa_name = "sm";
+	saa.saa_offset = SUPERIOCF_OFFSET_DEFAULT;
+	saa.saa_irq = SUPERIOCF_IRQ_DEFAULT;
+	saa.saa_bust = &superio_bus_space_tag;
+	config_found_sm(self, &saa, superioprint, superiosubmatch);
+#endif
 }
 
 static int
 superioprint(void *arg, const char *cp)
 {
+	struct superio_attach_args *saa = arg;
 
 	if (cp)
-		printf("isa at %s", cp);
+		printf("%s at %s", saa->saa_name, cp);
+
+#if NSM_SUPERIO > 0
+	if (strcmp(saa->saa_name, "isa") != 0) {
+		if (saa->saa_offset != SUPERIOCF_OFFSET_DEFAULT)
+			printf(" offset 0x%x", saa->saa_offset);
+		if (saa->saa_irq != SUPERIOCF_IRQ_DEFAULT)
+			printf(" irq %d", saa->saa_irq);
+	}
+#endif
 
 	return (UNCONF);
 }
@@ -302,7 +349,7 @@ static void
 superio_cfgmode_disable(struct superio_softc *sc)
 {
 
-	superio_reg_write(sc, SUPERIO_REG_INDEX, 0x55);
+	superio_reg_write(sc, SUPERIO_REG_INDEX, 0xaa);
 	bus_space_barrier(sc->sc_bust, sc->sc_bush,
 	    SUPERIO_REG_INDEX, 4, BUS_SPACE_BARRIER_WRITE);
 }
@@ -347,19 +394,19 @@ superio_bs_map(void *arg, bus_addr_t addr, bus_size_t size,
 		addr *= 4;
 		size *= 4;
 
-		if (sc->sc_isaext)
+		if (sc->sc_isaext) {
 			rv = extent_alloc_region(sc->sc_isaext,
 			    addr, size, EX_NOWAIT);
 			if (rv != 0)
 				return (rv);
 		}
-	else
+	} else
 	if (addr > (SYSFPGA_OFFSET_LAN + SMC_IOSIZE))
 		return (EINVAL);
 
 	*hp = (bus_space_handle_t) addr;
 
-	return (rv);
+	return (0);
 }
 
 /*ARGSUSED*/
@@ -370,7 +417,7 @@ superio_bs_unmap(void *arg, bus_space_handle_t bh, bus_size_t size)
 	bus_addr_t addr = (bus_addr_t)bh;
 
 	if (sc->sc_isaext && addr < SYSFPGA_OFFSET_LAN)
-		extent_free(sc->sc_isaext, (u_long)bh / 4, size * 4, EX_NOWAIT);
+		extent_free(sc->sc_isaext, addr, size * 4, EX_NOWAIT);
 }
 
 /*ARGSUSED*/
@@ -400,7 +447,11 @@ superio_bs_read_1(void *arg, bus_space_handle_t bh, bus_size_t off)
 
 		rv = (u_int8_t)bus_space_read_4(sc->sc_bust, sc->sc_bush, off);
 	} else {
+#if BYTE_ORDER == BIG_ENDIAN
 		off = (bus_size_t)bh + (off ^ 0x3);
+#else
+		off += (bus_size_t)bh;
+#endif
 
 		rv = bus_space_read_1(sc->sc_bust, sc->sc_bush, off);
 	}
@@ -423,8 +474,11 @@ superio_bs_read_2(void *arg, bus_space_handle_t bh, bus_size_t off)
 		reg = bus_space_read_4(sc->sc_bust, sc->sc_bush, off + 4);
 		rv |= (reg & 0xff) << 8;
 	} else {
+#if BYTE_ORDER == BIG_ENDIAN
 		off = (bus_size_t)bh + (off ^ 0x2);
-
+#else
+		off += (bus_size_t)bh;
+#endif
 		rv = bus_space_read_2(sc->sc_bust, sc->sc_bush, off);
 	}
 
@@ -443,7 +497,11 @@ superio_bs_write_1(void *arg, bus_space_handle_t bh, bus_size_t off,
 		bus_space_write_4(sc->sc_bust, sc->sc_bush, off,
 		    (u_int32_t)val & 0xff);
 	} else {
+#if BYTE_ORDER == BIG_ENDIAN
 		off = (bus_size_t)bh + (off ^ 0x3);
+#else
+		off += (bus_size_t)bh;
+#endif
 
 		bus_space_write_1(sc->sc_bust, sc->sc_bush, off, val);
 	}
@@ -463,8 +521,11 @@ superio_bs_write_2(void *arg, bus_space_handle_t bh, bus_size_t off,
 		bus_space_write_4(sc->sc_bust, sc->sc_bush, off + 4,
 		    (u_int32_t)(val >> 8) & 0xff);
 	} else {
+#if BYTE_ORDER == BIG_ENDIAN
 		off = (bus_size_t)bh + (off ^ 0x2);
-
+#else
+		off += (bus_size_t)bh;
+#endif
 		bus_space_write_2(sc->sc_bust, sc->sc_bush, off, val);
 	}
 }
@@ -484,7 +545,7 @@ superio_bs_read_stream_2(void *arg, bus_space_handle_t bh, bus_size_t off)
 		reg = bus_space_read_4(sc->sc_bust, sc->sc_bush, off + 4);
 		rv = (rv << 8) | (reg & 0xff);
 	} else {
-		off = (bus_size_t)bh + (off ^ 0x2);
+		off += (bus_size_t)bh;
 
 		rv = bus_space_read_stream_2(sc->sc_bust, sc->sc_bush, off);
 	}
@@ -506,7 +567,7 @@ superio_bs_write_stream_2(void *arg, bus_space_handle_t bh, bus_size_t off,
 		bus_space_write_4(sc->sc_bust, sc->sc_bush, off + 4,
 		    (u_int32_t)val & 0xff);
 	} else {
-		off = (bus_size_t)bh + (off ^ 0x2);
+		off += (bus_size_t)bh;
 
 		bus_space_write_stream_4(sc->sc_bust, sc->sc_bush, off, val);
 	}
