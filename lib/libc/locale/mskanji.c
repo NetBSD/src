@@ -1,4 +1,4 @@
-/*	$NetBSD: mskanji.c,v 1.4 2000/12/30 05:05:57 itojun Exp $	*/
+/*	$NetBSD: mskanji.c,v 1.5 2001/01/03 15:23:26 lukem Exp $	*/
 
 /*
  *    ja_JP.SJIS locale table for BSD4.4/rune
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)mskanji.c	1.0 (Phase One) 5/5/95";
 #else
-__RCSID("$NetBSD: mskanji.c,v 1.4 2000/12/30 05:05:57 itojun Exp $");
+__RCSID("$NetBSD: mskanji.c,v 1.5 2001/01/03 15:23:26 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
+#include <assert.h>
 #include <errno.h>
 #include "rune.h"
 #include <stddef.h>
@@ -101,6 +102,8 @@ _MSKanji_init(rl)
 	_RuneLocale *rl;
 {
 
+	_DIAGASSERT(rl != NULL);
+
 	/* sanity check to avoid overruns */
 	if (sizeof(_MSKanjiState) > sizeof(mbstate_t))
 		return (EINVAL);
@@ -126,6 +129,11 @@ _MSKanji_mbrtowc(rl, pwcs, s, n, state)
 	_MSKanjiState *ps;
 	rune_t rune;
 	int len;
+
+	/* rl appears to be unused */
+	/* pwcs may be NULL */
+	_DIAGASSERT(s != NULL);
+	_DIAGASSERT(state != NULL);
 
 	ps = state;
 
@@ -191,6 +199,10 @@ _MSKanji_wcrtomb(rl, s, n, wc, state)
         void *state;
 {
 
+	/* rl appears to be unused */
+	_DIAGASSERT(s != NULL);
+	_DIAGASSERT(state != NULL);
+
 	/* check invalid sequence */
 	if (wc & ~0xffff) {
 		errno = EILSEQ;
@@ -230,6 +242,8 @@ _MSKanji_initstate(rl, s)
 {
 	_MSKanjiState *state;
 
+	/* rl appears to be unused */
+
 	if (!s)
 		return;
 	state = s;
@@ -243,6 +257,10 @@ _MSKanji_packstate(rl, dst, src)
 	void* src;
 {
 
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
+
 	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_MSKanjiState));
 	return;
 }
@@ -253,6 +271,10 @@ _MSKanji_unpackstate(rl, dst, src)
 	void* dst;
 	const mbstate_t *src;
 {
+
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
 
 	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_MSKanjiState));
 	return;
