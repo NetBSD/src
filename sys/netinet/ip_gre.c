@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.2 1998/09/30 05:59:28 hwr Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.3 1998/10/02 21:21:04 kleink Exp $ */
 
 /*
  * (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #else
-Huh? ip_gre input without IP?
+#error ip_gre input without IP?
 #endif
 
 #ifdef NS
