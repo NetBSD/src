@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.2 2002/04/07 10:40:04 hannken Exp $ */
+/*	$NetBSD: display.c,v 1.3 2004/05/28 21:44:15 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include <sys/ioctl.h>
+#include <stdio.h>
 #include <sys/time.h>
 #include <dev/wscons/wsconsio.h>
 #include <err.h>
@@ -44,10 +45,13 @@
 
 static int dpytype;
 static struct wsdisplay_usefontdata font;
+static struct wsdisplay_scroll_data scroll_l;
 
 struct field display_field_tab[] = {
     { "type",			&dpytype,	FMT_DPYTYPE,	FLG_RDONLY },
     { "font",			&font.name,	FMT_STRING,	FLG_WRONLY },
+    { "scroll.fastlines",	&scroll_l.fastlines, FMT_UINT, FLG_MODIFY },
+    { "scroll.slowlines",	&scroll_l.slowlines, FMT_UINT, FLG_MODIFY },
 };
 
 int display_field_tab_len = sizeof(display_field_tab)/
@@ -60,6 +64,15 @@ display_get_values(fd)
 	if (field_by_value(&dpytype)->flags & FLG_GET)
 		if (ioctl(fd, WSDISPLAYIO_GTYPE, &dpytype) < 0)
 			err(1, "WSDISPLAYIO_GTYPE");
+	
+	scroll_l.which = 0;
+	if (field_by_value(&scroll_l.fastlines)->flags & FLG_GET)
+		scroll_l.which |= WSDISPLAY_SCROLL_DOFASTLINES;
+	if (field_by_value(&scroll_l.slowlines)->flags & FLG_GET)
+		scroll_l.which |= WSDISPLAY_SCROLL_DOSLOWLINES;
+	if (scroll_l.which != 0 && 
+		ioctl(fd, WSDISPLAYIO_DGSCROLL, &scroll_l) < 0)
+			err(1, "WSDISPLAYIO_GSCROLL");
 }
 
 void
@@ -71,4 +84,19 @@ display_put_values(fd)
 			err(1, "WSDISPLAYIO_SFONT");
 		pr_field(field_by_value(&font.name), " -> ");
 	}
+	
+	scroll_l.which = 0;
+	if (field_by_value(&scroll_l.fastlines)->flags & FLG_SET)
+		scroll_l.which |= WSDISPLAY_SCROLL_DOFASTLINES;
+	if (field_by_value(&scroll_l.slowlines)->flags & FLG_SET)
+		scroll_l.which |= WSDISPLAY_SCROLL_DOSLOWLINES;
+
+	if (scroll_l.which & WSDISPLAY_SCROLL_DOFASTLINES)
+		pr_field(field_by_value(&scroll_l.fastlines), " -> ");
+	if (scroll_l.which & WSDISPLAY_SCROLL_DOSLOWLINES)
+		pr_field(field_by_value(&scroll_l.slowlines), " -> ");
+	if (scroll_l.which != 0 &&
+		ioctl(fd, WSDISPLAYIO_DSSCROLL, &scroll_l) < 0)
+		err (1, "WSDISPLAYIO_SSCROLL");
+
 }
