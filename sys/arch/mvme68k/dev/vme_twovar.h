@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_twovar.h,v 1.6 2000/08/20 17:07:42 scw Exp $ */
+/*	$NetBSD: vme_twovar.h,v 1.7 2000/08/21 20:50:13 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,11 +43,12 @@
 #define	VME2_MASTER_FIXED_A24	1
 #define	VME2_MASTER_FIXED_A32	2
 #define VME2_MASTER_PROG_START	3
-#define VME2_SLAVE_A16		0
+#define VME2_SLAVE_OFFBOARD_RAM	0
 #define VME2_SLAVE_PROG_START	1
+#define VME2_SLAVE_A16		(VME2_SLAVE_PROG_START+(VME2_SLAVE_WINDOWS*2))
 
 #define VME2_NMASTERS		(VME2_MASTER_PROG_START + VME2_MASTER_WINDOWS)
-#define VME2_NSLAVES		(VME2_SLAVE_PROG_START+(VME2_SLAVE_WINDOWS * 2))
+#define VME2_NSLAVES		(VME2_SLAVE_A16 + 1)
 
 struct vmetwo_softc {
 	struct mvmebus_softc	sc_mvmebus;
