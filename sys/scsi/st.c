@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: st.c,v 1.22 1994/04/05 21:59:49 mycroft Exp $
+ *	$Id: st.c,v 1.23 1994/04/05 22:08:09 mycroft Exp $
  */
 
 /*
@@ -1159,6 +1159,9 @@ stioctl(dev, cmd, arg, flag)
 			break;
 		case MTNOP:	/* no operation, sets status only */
 			break;
+		case MTRETEN:	/* retension the tape */
+			error = st_load(st, LD_RETEN, flags);
+			break;
 		case MTEOM:	/* forward space to end of media */
 			error = st_chkeod(st, FALSE, &nmarks, flags);
 			if (!error)
@@ -1628,7 +1631,7 @@ st_chkeod(st, position, nmarks, flags)
 }
 
 /*
- * load/unload (with retension if true)
+ * load/unload/retension
  */
 int 
 st_load(st, type, flags)
