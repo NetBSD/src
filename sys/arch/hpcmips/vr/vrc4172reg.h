@@ -1,4 +1,5 @@
-/* $NetBSD: vrc4172reg.h,v 1.2 2000/12/20 08:05:09 sato Exp $ */
+/*	$NetBSD: vrc4172reg.h,v 1.3 2001/04/13 08:11:44 itojun Exp $	*/
+
 /*
  * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
  *
