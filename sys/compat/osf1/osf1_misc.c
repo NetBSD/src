@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.37 1999/04/30 05:25:34 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.38 1999/05/01 02:57:10 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -85,6 +85,7 @@
 #include <compat/osf1/osf1_syscall.h>
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
+#include <compat/osf1/osf1_cvt.h>
 
 #include <vm/vm.h>
 
@@ -96,52 +97,6 @@ extern int scdebug;
 #endif
 
 const char osf1_emul_path[] = "/emul/osf1";
-
-const struct emul_flags_xtab osf1_open_flags_xtab[] = {
-    {	OSF1_O_ACCMODE,		OSF1_O_RDONLY,		O_RDONLY	},
-    {	OSF1_O_ACCMODE,		OSF1_O_WRONLY,		O_WRONLY	},
-    {	OSF1_O_ACCMODE,		OSF1_O_RDWR,		O_RDWR		},
-    {	OSF1_O_NONBLOCK,	OSF1_O_NONBLOCK,	O_NONBLOCK	},
-    {	OSF1_O_APPEND,		OSF1_O_APPEND,		O_APPEND	},
-#if 0 /* no equivalent +++ */
-    {	OSF1_O_DEFER,		OSF1_O_DEFER,		???		},
-#endif
-    {	OSF1_O_CREAT,		OSF1_O_CREAT,		O_CREAT		},
-    {	OSF1_O_TRUNC,		OSF1_O_TRUNC,		O_TRUNC		},
-    {	OSF1_O_EXCL,		OSF1_O_EXCL,		O_EXCL		},
-    {	OSF1_O_NOCTTY,		OSF1_O_NOCTTY,		O_NOCTTY	},
-    {	OSF1_O_SYNC,		OSF1_O_SYNC,		O_SYNC		},
-    {	OSF1_O_NDELAY,		OSF1_O_NDELAY,		O_NDELAY	},
-#if 0 /* no equivalent, also same value as O_NDELAY! */
-    {	OSF1_O_DRD,		OSF1_O_DRD,		???		},
-#endif
-    {	OSF1_O_DSYNC,		OSF1_O_DSYNC,		O_DSYNC		},
-    {	OSF1_O_RSYNC,		OSF1_O_RSYNC,		O_RSYNC		},
-    {	0								}
-};
-
-const struct emul_flags_xtab osf1_open_flags_rxtab[] = {
-    {	O_ACCMODE,		O_RDONLY,		OSF1_O_RDONLY	},
-    {	O_ACCMODE,		O_WRONLY,		OSF1_O_WRONLY	},
-    {	O_ACCMODE,		O_RDWR,			OSF1_O_RDWR	},
-    {	O_NONBLOCK,		O_NONBLOCK,		OSF1_O_NONBLOCK	},
-    {	O_APPEND,		O_APPEND,		OSF1_O_APPEND	},
-#if 0 /* no equivalent +++ */
-    {	???,			???,			O_DEFER		},
-#endif
-    {	O_CREAT,		O_CREAT,		OSF1_O_CREAT	},
-    {	O_TRUNC,		O_TRUNC,		OSF1_O_TRUNC	},
-    {	O_EXCL,			O_EXCL,			OSF1_O_EXCL	},
-    {	O_NOCTTY,		O_NOCTTY,		OSF1_O_NOCTTY	},
-    {	O_SYNC,			O_SYNC,			OSF1_O_SYNC	},
-    {	O_NDELAY,		O_NDELAY,		OSF1_O_NDELAY	},
-#if 0 /* no equivalent, also same value as O_NDELAY! */
-    {	???,			???,			O_DRD		},
-#endif
-    {	O_DSYNC,		O_DSYNC,		OSF1_O_DSYNC	},
-    {	O_RSYNC,		O_RSYNC,		OSF1_O_RSYNC	},
-    {	0								}
-};
 
 int
 osf1_sys_open(p, v, retval)
@@ -278,33 +233,6 @@ osf1_sys_setrlimit(p, v, retval)
 
 	return sys_setrlimit(p, &a, retval);
 }
-
-const struct emul_flags_xtab osf1_mmap_prot_xtab[] = {
-#if 0 /* pseudo-flag */
-    {	OSF1_PROT_NONE,		OSF1_PROT_NONE,		PROT_NONE	},
-#endif
-    {	OSF1_PROT_READ,		OSF1_PROT_READ,		PROT_READ	},
-    {	OSF1_PROT_WRITE,	OSF1_PROT_WRITE,	PROT_READ|PROT_WRITE },
-    {	OSF1_PROT_EXEC,		OSF1_PROT_EXEC,		PROT_READ|PROT_EXEC },
-    {	0								}
-};
-
-const struct emul_flags_xtab osf1_mmap_flags_xtab[] = {
-    {	OSF1_MAP_SHARED,	OSF1_MAP_SHARED,	MAP_SHARED	},
-    {	OSF1_MAP_PRIVATE,	OSF1_MAP_PRIVATE,	MAP_PRIVATE	},
-    {	OSF1_MAP_TYPE,		OSF1_MAP_FILE,		MAP_FILE	},
-    {	OSF1_MAP_TYPE,		OSF1_MAP_ANON,		MAP_ANON	},
-    {	OSF1_MAP_FIXED,		OSF1_MAP_FIXED,		MAP_FIXED	},
-#if 0 /* pseudo-flag, and the default */
-    {	OSF1_MAP_VARIABLE,	OSF1_MAP_VARIABLE,	0		},
-#endif
-    {	OSF1_MAP_HASSEMAPHORE,	OSF1_MAP_HASSEMAPHORE,	MAP_HASSEMAPHORE },
-    {	OSF1_MAP_INHERIT,	OSF1_MAP_INHERIT,	MAP_INHERIT	},
-#if 0 /* no equivalent +++ */
-    {	OSF1_MAP_UNALIGNED,	OSF1_MAP_UNALIGNED,	???		},
-#endif
-    {	0								}
-};
 
 int
 osf1_sys_mmap(p, v, retval)
@@ -620,28 +548,6 @@ osf1_sys_mknod(p, v, retval)
 	return sys_mknod(p, &a, retval);
 }
 
-const struct emul_flags_xtab osf1_fcntl_getsetfd_flags_xtab[] = {
-    {	OSF1_FD_CLOEXEC,	OSF1_FD_CLOEXEC,	FD_CLOEXEC	},
-    {	0								}
-};
-
-const struct emul_flags_xtab osf1_fcntl_getsetfd_flags_rxtab[] = {
-    {	FD_CLOEXEC,		FD_CLOEXEC,		OSF1_FD_CLOEXEC	},
-    {	0								}
-};
-
-/* flags specific to GETFL/SETFL; also uses open xtab */
-const struct emul_flags_xtab osf1_fcntl_getsetfl_flags_xtab[] = {
-    {	OSF1_FASYNC,		OSF1_FASYNC,		FASYNC		},
-    {	0								}
-};
-
-/* flags specific to GETFL/SETFL; also uses open rxtab */
-const struct emul_flags_xtab osf1_fcntl_getsetfl_flags_rxtab[] = {
-    {	FASYNC,			FASYNC,			OSF1_FASYNC	},
-    {	0								}
-};
-
 int
 osf1_sys_fcntl(p, v, retval)
 	struct proc *p;
@@ -753,17 +659,6 @@ osf1_sys_socket(p, v, retval)
 	return sys_socket(p, &a, retval);
 }
 
-const struct emul_flags_xtab osf1_sendrecv_msg_flags_xtab[] = {
-    {	OSF1_MSG_OOB,		OSF1_MSG_OOB,		MSG_OOB		},
-    {	OSF1_MSG_PEEK,		OSF1_MSG_PEEK,		MSG_PEEK	},
-    {	OSF1_MSG_DONTROUTE,	OSF1_MSG_DONTROUTE,	MSG_DONTROUTE	},
-    {	OSF1_MSG_EOR,		OSF1_MSG_EOR,		MSG_EOR		},
-    {	OSF1_MSG_TRUNC,		OSF1_MSG_TRUNC,		MSG_TRUNC	},
-    {	OSF1_MSG_CTRUNC,	OSF1_MSG_CTRUNC,	MSG_CTRUNC	},
-    {	OSF1_MSG_WAITALL,	OSF1_MSG_WAITALL,	MSG_WAITALL	},
-    {	0								}
-};
-
 int
 osf1_sys_sendto(p, v, retval)
 	struct proc *p;
@@ -788,28 +683,6 @@ osf1_sys_sendto(p, v, retval)
 
 	return sys_sendto(p, &a, retval);
 }
-
-const struct emul_flags_xtab osf1_reboot_opt_xtab[] = {
-#if 0 /* pseudo-flag */
-    {	OSF1_RB_AUTOBOOT,	OSF1_RB_AUTOBOOT,	RB_AUTOBOOT	},
-#endif
-    {	OSF1_RB_ASKNAME,	OSF1_RB_ASKNAME,	RB_ASKNAME	},
-    {	OSF1_RB_SINGLE,		OSF1_RB_SINGLE,		RB_SINGLE	},
-    {	OSF1_RB_NOSYNC,		OSF1_RB_NOSYNC,		RB_NOSYNC	},
-#if 0 /* same value as O_NDELAY, only used at boot time? */
-    {	OSF1_RB_KDB,		OSF1_RB_KDB,		RB_KDB		},
-#endif
-    {	OSF1_RB_HALT,		OSF1_RB_HALT,		RB_HALT		},
-    {	OSF1_RB_INITNAME,	OSF1_RB_INITNAME,	RB_INITNAME	},
-    {	OSF1_RB_DFLTROOT,	OSF1_RB_DFLTROOT,	RB_DFLTROOT	},
-#if 0 /* no equivalents +++ */
-    {	OSF1_RB_ALTBOOT,	OSF1_RB_ALTBOOT,	???		},
-    {	OSF1_RB_UNIPROC,	OSF1_RB_UNIPROC,	???		},
-    {	OSF1_RB_PARAM,		OSF1_RB_PARAM,		???		},
-#endif
-    {	OSF1_RB_DUMP,		OSF1_RB_DUMP,		RB_DUMP		},
-    {	0								}
-};
 
 int
 osf1_sys_reboot(p, v, retval)
@@ -1474,16 +1347,6 @@ osf1_sys_set_program_attributes(p, v, retval)
 	return (0);
 }
 
-const struct emul_flags_xtab osf1_access_flags_xtab[] = {
-#if 0 /* pseudo-flag */
-    {	OSF1_F_OK,		OSF1_F_OK,		F_OK		},
-#endif
-    {	OSF1_X_OK,		OSF1_X_OK,		X_OK		},
-    {	OSF1_W_OK,		OSF1_W_OK,		W_OK		},
-    {	OSF1_R_OK,		OSF1_R_OK,		R_OK		},
-    {	0								}
-};
-
 int
 osf1_sys_access(p, v, retval)
 	struct proc *p;
@@ -1659,12 +1522,6 @@ dont_care:
 
 	return (error);
 }
-
-const struct emul_flags_xtab osf1_wait_options_xtab[] = {
-    {	OSF1_WNOHANG,		OSF1_WNOHANG,		WNOHANG		},
-    {	OSF1_WUNTRACED,		OSF1_WUNTRACED,		WUNTRACED	},
-    {	0								}
-};
 
 int
 osf1_sys_wait4(p, v, retval)
