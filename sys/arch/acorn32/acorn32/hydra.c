@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.3 2002/10/01 22:23:52 bjh21 Exp $	*/
+/*	$NetBSD: hydra.c,v 1.4 2002/10/01 22:52:22 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.3 2002/10/01 22:23:52 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.4 2002/10/01 22:52:22 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ hydra_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hydra_softc *sc = (void *)self;
 	struct mainbus_attach_args *mba = aux;
-	int i;
+	int i, vers;
 	struct hydra_attach_args ha;
 	struct pglist bootpglist;
 	bus_space_tag_t iot;
@@ -160,6 +160,9 @@ hydra_attach(struct device *parent, struct device *self, void *aux)
 	    VM_PROT_READ | VM_PROT_WRITE,
 	    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 	pmap_update(pmap_kernel());
+
+	vers = bus_space_read_1(iot, ioh, HYDRA_HARDWAREVER) & 0xf;
+	printf(": hardware version %d", vers);
 
 	hydra_reset(sc);
 
