@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.37 2003/07/27 07:45:08 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.38 2003/08/05 13:35:27 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.37 2003/07/27 07:45:08 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.38 2003/08/05 13:35:27 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -196,22 +196,36 @@ edit_fs_size(menudesc *m, void *arg)
 int
 set_bsize(partinfo *p, int size)
 {
+	int frags, sz;
 
-	if (!PI_ISBSDFS(p))
-		size = 0;
+	sz = p->pi_fsize;
+	if (sz <= 0)
+		sz = 512;
+	frags = size / sz;
+	if (frags > 8)
+		frags = 8;
+	if (frags <= 0)
+		frags = 1;
 
-	p->pi_frag = 8;
-	p->pi_fsize = size / 8;
+	p->pi_frag = frags;
+	p->pi_fsize = size / frags;
 
 	return 0;
 }
 
 int
-set_fsize(partinfo *p, int nfrag)
+set_fsize(partinfo *p, int fsize)
 {
+	int bsz = p->pi_fsize * p->pi_frag;
+	int frags = bsz / fsize;
 
-	p->pi_fsize = p->pi_fsize * p->pi_frag / nfrag;
-	p->pi_frag = nfrag;
+	if (frags > 8)
+		frags = 8;
+	if (frags <= 0)
+		frags = 1;
+
+	p->pi_fsize = fsize;
+	p->pi_frag = frags;
 	return 0;
 }
 
@@ -296,7 +310,10 @@ set_fstype(menudesc *m, void *arg)
 {
 	partinfo *p = arg;
 
-	p->pi_fstype = m->cursel;
+	if (m->cursel == FS_UNUSED)
+		memset(p, 0, sizeof *p);
+	else
+		p->pi_fstype = m->cursel;
 	return 1;
 }
 
@@ -331,7 +348,9 @@ edit_ptn(menudesc *menu, void *arg)
 	    {NULL, OPT_NOMENU, 0, edit_fs_preserve},
 #define PTN_MENU_MOUNT		7
 	    {NULL, OPT_NOMENU, 0, edit_fs_mount},
-#define PTN_MENU_MOUNTPT	8
+#define PTN_MENU_MOUNTOPT	8
+	    {NULL, MENU_mountoptions, OPT_SUB, NULL},
+#define PTN_MENU_MOUNTPT	9
 	    {NULL, OPT_NOMENU, 0, edit_fs_mountpt},
 	    {MSG_askunits, MENU_sizechoice, OPT_SUB, NULL},
 	    {MSG_restore, OPT_NOMENU, 0, edit_restore},
@@ -343,7 +362,7 @@ edit_ptn(menudesc *menu, void *arg)
 
 	if (fspart_menu == -1) {
 		fspart_menu = new_menu(NULL, fs_fields, nelem(fs_fields),
-			0, 7, 0, 70,
+			0, 8, 0, 70,
 			MC_NOBOX | MC_NOCLEAR | MC_SCROLL,
 			set_ptn_header, set_ptn_label, NULL,
 			NULL, MSG_partition_sizes_ok);
@@ -402,14 +421,14 @@ set_ptn_label(menudesc *m, int opt, void *arg)
 		wprintw(m->mw, msg_string(MSG_end_fmt),
 			s / ms, s / dlcylsize, s );
 		break;
-	case PTN_MENU_FSIZE:
+	case PTN_MENU_BSIZE:
 		if (PI_ISBSDFS(p))
 			wprintw(m->mw,
 				msg_string(MSG_bsize_fmt), p->pi_fsize * p->pi_frag);
 		else
 			wprintw(m->mw, "      -");
 		break;
-	case PTN_MENU_BSIZE:
+	case PTN_MENU_FSIZE:
 		if (PI_ISBSDFS(p))
 			wprintw(m->mw,
 				msg_string(MSG_fsize_fmt), p->pi_fsize);
@@ -423,6 +442,17 @@ set_ptn_label(menudesc *m, int opt, void *arg)
 	case PTN_MENU_MOUNT:
 		wprintw(m->mw, msg_string(MSG_mount_fmt),
 			msg_string(p->pi_flags & PIF_MOUNT ? MSG_Yes : MSG_No));
+		break;
+	case PTN_MENU_MOUNTOPT:
+		wprintw(m->mw, msg_string(MSG_mount_options_fmt));
+		if (p->pi_flags & PIF_ASYNC)
+			wprintw(m->mw, "async ");
+		if (p->pi_flags & PIF_NOATIME)
+			wprintw(m->mw, "noatime ");
+		if (p->pi_flags & PIF_NODEVMTIME)
+			wprintw(m->mw, "nodevmtime ");
+		if (p->pi_flags & PIF_SOFTDEP)
+			wprintw(m->mw, "softdep ");
 		break;
 	case PTN_MENU_MOUNTPT:
 		wprintw(m->mw, msg_string(MSG_mountpt_fmt), p->pi_mount);
@@ -444,32 +474,34 @@ set_label_texts(menudesc *menu, void *arg)
 {
 	struct ptn_menu_info *pi = arg;
 	menu_ent *m;
-	int ptn, last_used_ptn;
+	int ptn, show_unused_ptn;
 	int rawptn = getrawpartition();
 	int maxpart = getmaxpartitions();
 
 	msg_display(MSG_fspart, multname);
 	msg_table_add(MSG_fspart_header);
 
-	for (last_used_ptn = 0, ptn = 0; ptn < maxpart; ptn++) {
-		if (bsdlabel[ptn].pi_fstype != FS_UNUSED)
-			last_used_ptn = ptn;
+	for (show_unused_ptn = 0, ptn = 0; ptn < maxpart; ptn++) {
 		m = &menu->opts[ptn];
 		m->opt_menu = OPT_NOMENU;
 		m->opt_name = NULL;
+		m->opt_action = edit_ptn;
 		if (ptn == rawptn
 #ifdef PART_BOOT
 		    || ptn == PART_BOOT
 #endif
 		    || ptn == C) {
 			m->opt_flags = OPT_IGNORE;
-		} else
+		} else {
 			m->opt_flags = 0;
-		m->opt_action = edit_ptn;
+			if (bsdlabel[ptn].pi_fstype == FS_UNUSED)
+				continue;
+		}
+		show_unused_ptn = ptn + 2;
 	}
 
-	if (!(pi->flags & PIF_SHOW_UNUSED) && ptn != ++last_used_ptn) {
-		ptn = last_used_ptn;
+	if (!(pi->flags & PIF_SHOW_UNUSED) && ptn > show_unused_ptn) {
+		ptn = show_unused_ptn;
 		m = &menu->opts[ptn];
 		m->opt_name = MSG_show_all_unused_partitions;
 		m->opt_action = show_all_unused;
