@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.7 1993/10/09 22:23:19 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.8 1993/10/09 22:48:14 mycroft Exp $
  */
 
 
@@ -1392,6 +1392,64 @@ ENTRY(longjmp)
 	.globl	_whichqs,_qs,_cnt,_panic
 
 /*
+ * Setrq(p)
+ *
+ * Call should be made at spl6(), and p->p_stat should be SRUN
+ */
+ENTRY(setrq)
+	movl	4(%esp),%eax
+	cmpl	$0,P_RLINK(%eax)	# should not be on q already
+	je	1f
+	pushl	$2f
+	call	_panic
+	/*NOTREACHED*/
+2:	.asciz	"setrq"
+1:	movzbl	P_PRI(%eax),%edx
+	shrl	$2,%edx
+	btsl	%edx,_whichqs		# set q full bit
+	shll	$3,%edx
+	addl	$_qs,%edx		# locate q hdr
+	movl	%edx,P_LINK(%eax)	# link process on tail of q
+	movl	P_RLINK(%edx),%ecx
+	movl	%ecx,P_RLINK(%eax)
+	movl	%eax,P_RLINK(%edx)
+	movl	%eax,P_LINK(%ecx)
+	ret
+
+/*
+ * Remrq(p)
+ *
+ * Call should be made at spl6().
+ */
+ENTRY(remrq)
+	movl	4(%esp),%eax
+	movzbl	P_PRI(%eax),%edx
+	shrl	$2,%edx
+	btrl	%edx,_whichqs		# clear full bit, panic if clear already
+	jb	1f
+	pushl	$3f
+	call	_panic
+	/*NOTREACHED*/
+3:	.asciz	"remrq"
+1:	pushl	%edx
+	movl	P_LINK(%eax),%ecx	# unlink process
+	movl	P_RLINK(%eax),%edx
+	movl	%edx,P_RLINK(%ecx)
+	movl	P_RLINK(%eax),%ecx
+	movl	P_LINK(%eax),%edx
+	movl	%edx,P_LINK(%ecx)
+	popl	%edx
+	movl	$_qs,%ecx
+	shll	$3,%edx
+	addl	%edx,%ecx
+	cmpl	P_LINK(%ecx),%ecx	# q still has something?
+	je	2f
+	shrl	$3,%edx			# yes, set bit as still full
+	btsl	%edx,_whichqs
+2:	movl	$0,P_RLINK(%eax)	# zap reverse link to indicate off list
+	ret
+
+/*
  * When no processes are on the runq, Swtch branches to idle
  * to wait for something to come ready.
  */
@@ -1411,10 +1469,10 @@ idle:
 
 	SUPERALIGN_TEXT	/* so profiling doesn't lump Idle with swtch().. */
 badsw:
-	pushl	$sw0
+	pushl	$1f
 	call	_panic
-sw0:	.asciz	"swtch"
 	/*NOTREACHED*/
+1:	.asciz	"swtch"
 
 /*
  * Swtch()
