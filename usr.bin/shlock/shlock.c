@@ -1,6 +1,6 @@
 /*
 ** Program to produce reliable locks for shell scripts.
-** Algorithmn suggested by Peter Honeyman, January 1984,
+** Algorithm suggested by Peter Honeyman, January 1984,
 ** in connection with HoneyDanBer UUCP.
 **
 ** I tried extending this to handle shared locks in November 1987,
@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <errno.h>
-#include <strings.h>
+#include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 
@@ -89,8 +89,8 @@ char	*file;
 pid_t	pid;
 int	uucpstyle;
 {
-	register int	fd;
-	register int	len;
+	int	fd;
+	int	len;
 	char	*cp, buf[BUFSIZ];
 	static char	tempname[BUFSIZ];
 
@@ -185,7 +185,7 @@ pid_t	pid;
 **	Send a null signal to determine whether that PID still exists
 **	Existence (or not) determines the validity of the lock.
 **
-**	Two bigs wins to this algorithmn:
+**	Two bigs wins to this algorithm:
 **
 **	o	Locks do not survive crashes of either the system or the
 **			application by any appreciable period of time.
@@ -198,8 +198,8 @@ cklock(file, uucpstyle)
 char	*file;
 int	uucpstyle;
 {
-	register int	fd = open(file, O_RDONLY);
-	register ssize_t len;
+	int	fd = open(file, O_RDONLY);
+	ssize_t len;
 	pid_t	pid;
 	char	buf[BUFSIZ];
 
@@ -229,8 +229,8 @@ char	*file;
 pid_t	pid;
 int	uucpstyle;
 {
-	register char	*tmp;
-	register int	retcode = FALSE;
+	char	*tmp;
+	int	retcode = FALSE;
 
 	dprintf("%s: trying lock <%s> for process %d\n", Pname, file, pid);
 	if ((tmp = xtmpfile(file, pid, uucpstyle)) == (char *)NULL)
@@ -285,7 +285,7 @@ main(ac, av)
 int	ac;
 char	*av[];
 {
-	register int	x;
+	int	x;
 	char	*file = (char *)NULL;
 	pid_t	pid = 0;
 	int	uucpstyle = FALSE;	/* indicating UUCP style locks */

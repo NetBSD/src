@@ -1,3 +1,5 @@
+.\"	$NetBSD: shlock.1,v 1.2 1997/10/19 23:08:43 lukem Exp $
+.\"
 .Dd June 29, 1997
 .Dt SHLOCK 1
 .Os
@@ -5,7 +7,7 @@
 .Nm shlock
 .Nd create or verify a lock file for shell scripts
 .Sh SYNOPSIS
-.Nm shlock
+.Nm
 .Fl f
 .Ar lockfile
 .Op Fl p Ar PID
@@ -13,21 +15,21 @@
 .Op Fl v
 .Sh DESCRIPTION
 The
-.Nm shlock
+.Nm
 command can create or verify a lock file on behalf of a shell or
 other script program.
 When it attempts to create a lock file, if one already exists,
-.Nm shlock
+.Nm
 verifies that it is or is not valid.
 If valid,
-.Nm shlock
+.Nm
 will exit with a non-zero exit code.
 If invalid,
-.Nm shlock
+.Nm
 will remove the lock file, and 
 create a new one.
 .Pp
-.Nm shlock
+.Nm
 uses the
 .Xr rename 2
 system call to make the final target lock file, which is an atomic
@@ -36,7 +38,7 @@ use for locking system mailboxes).
 It puts the process ID ("PID") from the command line into the
 requested lock file.
 .Pp
-.Nm shlock
+.Nm
 verifies that an extant lock file is still valid by
 using
 .Xr kill 2
@@ -54,20 +56,20 @@ The
 option with
 .Ar PID
 is given when the program is to create a lock file; when absent,
-.Nm shlock
+.Nm
 will simply check for the validity of the lock file.
 .Pp
 The
 .Fl u
 option causes
-.Nm shlock
+.Nm
 to read and write the PID as a binary pid_t, instead of as ASCII,
 to be compatible with the locks created by UUCP.
 .Pp
 The
 .Fl v
 option causes
-.Nm shlock
+.Nm
 to be verbose about what it is doing.
 .Sh RETURN VALUES
 A zero exit code indicates a valid lock file.
@@ -101,7 +103,7 @@ endif
 The examples assume that the filesystem where the lock file is to
 be created is writeable by the user, and has space available.
 .Sh HISTORY
-.Nm shlock
+.Nm
 was written for the first Network News Transfer Protocol (NNTP)
 software distribution, released in March 1986.
 The algorithm was suggested by Peter Honeyman,
