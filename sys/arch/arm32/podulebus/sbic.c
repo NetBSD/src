@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.6 1996/10/14 23:31:29 mark Exp $ */
+/* $NetBSD: sbic.c,v 1.7 1997/07/31 00:00:12 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,6 +38,7 @@
  *
  *	from: sbic.c,v 1.21 1996/01/07 22:01:54
  */
+#define UNPROTECTED_CSR
 #define DEBUG
 /*#define SBIC_DEBUG*/
 /*
@@ -182,7 +183,7 @@ struct {
 /*	dma_cachectl(&sbic_trace[sbic_traceptr], sizeof(sbic_trace[0]));*/ \
 	sbic_traceptr = (sbic_traceptr + 1) & (SBIC_TRACE_SIZE - 1); \
 /*	dma_cachectl(&sbic_traceptr, sizeof(sbic_traceptr));*/ \
-	if (dev) dma_cachectl(dev, sizeof(*dev)); \
+/*	if (dev) dma_cachectl(dev, sizeof(*dev));*/ \
 	splx(s); \
 } while (0)
 int sbic_traceptr;
@@ -603,6 +604,7 @@ sbic_scsidone(acb, stat)
 			acb->pa_addr = (char *)kvtop(&xs->sense); /* XXX check */
 #endif
 			acb->flags = ACB_ACTIVE | ACB_CHKSENSE | ACB_DATAIN;
+                        bzero(acb->sc_kv.dc_addr, acb->clen);
 			TAILQ_INSERT_HEAD(&dev->ready_list, acb, chain);
 			dev->sc_tinfo[slp->target].lubusy &=
 			    ~(1 << slp->lun);
@@ -617,10 +619,38 @@ sbic_scsidone(acb, stat)
 		}
 	}
 	if (xs->error == XS_NOERROR && (acb->flags & ACB_CHKSENSE)) {
+		QPRINTF(("status = %0x\n", stat));
+		if (xs->sense.error_code == 0)
+		{
+			struct scsi_sense *ss = (void *)&acb->cmd;
+
+			QPRINTF(("Retrying sense.\n"));
+			bzero(ss, sizeof(*ss));
+			ss->opcode = REQUEST_SENSE;
+			ss->byte2 = slp->lun << 5;
+			ss->length = sizeof(struct scsi_sense_data);
+			acb->clen = sizeof(*ss);
+			acb->sc_kv.dc_addr = (char *)&xs->sense;
+			acb->sc_kv.dc_count = sizeof(struct scsi_sense_data);
+
+			acb->flags = ACB_ACTIVE | ACB_CHKSENSE | ACB_DATAIN;
+			bzero(acb->sc_kv.dc_addr, acb->clen);
+			TAILQ_INSERT_HEAD(&dev->ready_list, acb, chain);
+			dev->sc_tinfo[slp->target].lubusy &=
+			    ~(1 << slp->lun);
+			dev->sc_tinfo[slp->target].senses++;
+			if (dev->sc_nexus == acb) {
+				dev->sc_nexus = NULL;
+				dev->sc_xs = NULL;
+				sbic_sched(dev);
+			}
+			SBIC_TRACE(dev);
+			return;
+		}
 		xs->error = XS_SENSE;
 #ifdef DEBUG
 		if (report_sense)
-			printf(" => %02x %02x\n", xs->sense.flags,
+			printf(" => %02x %02x %02x\n", xs->sense.error_code, xs->sense.flags,
 			    xs->sense.extra_bytes[3]);
 #endif
 	} else {
@@ -1284,8 +1314,10 @@ sbicxfout(regs, len, bp, phase)
 	    "%02x %02x %02x %02x %02x\n", len, buf[0], buf[1], buf[2],
 	    buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9]));
 
+#ifdef UNPROTECTED_CSR
 	GET_SBIC_csr (regs, orig_csr);
 	CSR_TRACE('>',orig_csr,0,0);
+#endif
 
 	/*
 	 * sigh.. WD-PROTO strikes again.. sending the command in one go
@@ -1337,10 +1369,12 @@ sbicxfin(regs, len, bp)
 	obp = bp;
 	buf = bp;
 
+#ifdef UNPROTECTED_CSR
 	GET_SBIC_csr (regs, orig_csr);
 	CSR_TRACE('<',orig_csr,0,0);
 
 	QPRINTF(("sbicxfin %d, csr=%02x\n", len, orig_csr));
+#endif
 
 	WAIT_CIP (regs);
 	SET_SBIC_cmd (regs, SBIC_CMD_XFER_INFO);
@@ -1370,11 +1404,13 @@ sbicxfin(regs, len, bp)
 				return len;
 			}
 
+#ifdef UNPROTECTED_CSR
 			if( ! asr & SBIC_ASR_BSY ) {
 				GET_SBIC_csr(regs, csr);
 				CSR_TRACE('<',csr,asr,len);
 				QPRINTF(("[CSR%02xASR%02x]", csr, asr));
 			}
+#endif
 
 /*			DELAY(1);*/
 			GET_SBIC_asr (regs, asr);
