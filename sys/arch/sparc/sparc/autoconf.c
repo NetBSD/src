@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.58.2.1 1996/06/12 20:42:58 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.58.2.2 1996/07/02 23:49:54 jtc Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1175,8 +1175,10 @@ mainbus_attach(parent, dev, aux)
 #define openboot_special4m	((void *)0)
 #endif
 
+#if defined(SUN4M)
 	if (CPU_ISSUN4M)
 		printf(": %s", getpropstring(ca->ca_ra.ra_node, "name"));
+#endif
 	printf("\n");
 
 	/*
