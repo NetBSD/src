@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/06/23 12:20:28 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.5 2001/07/14 00:23:10 matt Exp $
 
 KDIR=	/sys/arch/cats/include
 INCSDIR= /usr/include/arm/cats
@@ -11,7 +11,6 @@ INCS=	bootconfig.h \
 	katelib.h kerndebug.h \
 	param.h pcb.h pci_machdep.h pmap.h psl.h \
 	rtc.h \
-	sysarch.h \
 	types.h \
 	vmparam.h
 
