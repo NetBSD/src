@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2001/04/13 23:30:01 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.8 2002/12/20 16:39:11 tsutsui Exp $	*/
 
 /*
  *
@@ -84,8 +84,8 @@ extern volatile u_char *ctrl_int2;
 #define	setsoftnet()	setsoftint(1 << SIR_NET)
 #define	setsoftclock()	setsoftint(1 << SIR_CLOCK)
 
-u_char allocate_sir __P((void (*)(void *), void *));
-void init_sir __P((void));
+u_char allocate_sir(void (*)(void *), void *);
+void init_sir(void);
 #endif /* _KERNEL */
 
 #endif /* _NEWS68K_INTR_H_ */
