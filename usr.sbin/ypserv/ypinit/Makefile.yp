@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.yp,v 1.10 2000/07/30 02:33:13 itojun Exp $
+#	$NetBSD: Makefile.yp,v 1.11 2000/09/19 18:23:43 christos Exp $
 #
 # This is the YP Makefile, used to create and push YP maps.
 #
@@ -17,6 +17,8 @@ NOPUSH?=	""
 #
 #INSECURE?=	yes
 
+# In addition, by adding shadow to the list of rules we support
+# linux and solaris type shadow maps.
 
 YPDBDIR=	/var/yp
 DIR=		/etc
@@ -94,6 +96,25 @@ passwd.time: ${DIR}/master.passwd
 		${ECHO} "couldn't find ${.ALLSRC}"; \
 	fi
 
+# XXX: This does not do modify/expire time correctly.
+shadow.time: ${DIR}/master.passwd
+	-@if [ -f ${.ALLSRC} ]; then \
+		umask 077 ; \
+		${CAT} ${.ALLSRC} | ${CUT} -d: -f1-2 | \
+		${AWK} 'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
+		{ print $$1, $$0":10779:0:99999:7:::" }' - | \
+		${SORT} | ${MAKEDBM} - shadow.byname; \
+		${TOUCH} ${.TARGET}; \
+		${ECHO} "updated shadow"; \
+		if [ ! ${NOPUSH} ]; then \
+			${YPPUSH} -d ${DOMAIN} shadow.byname; \
+			${ECHO} "pushed shadow"; \
+		else \
+			: ; \
+		fi \
+	else \
+		${ECHO} "couldn't find ${.ALLSRC}"; \
+	fi
 
 aliases.time: ${DIR}/aliases
 	-@if [ -f ${.ALLSRC} ]; then \
@@ -389,6 +410,7 @@ netgroup: netgroup.time
 networks: networks.time
 rpc: rpc.time
 services: services.time
+shadow: shadow.time
 protocols: protocols.time
 netid: netid.time
 ypservers: ypservers.time
