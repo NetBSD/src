@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/10/31 17:46:08 tv Exp $
+#	$NetBSD: Makefile,v 1.13 2001/10/31 19:38:02 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,5 @@ TARGETS+=	build
 .include <bsd.subdir.mk>
 .include <bsd.obj.mk>
 
-cleandir: cleantools
 cleantools:
 	rm -r -f tools.${HOST_OSTYPE}
