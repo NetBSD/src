@@ -1,4 +1,4 @@
-.\"	$NetBSD: bus_dma.9,v 1.9 1999/02/25 23:29:33 ross Exp $
+.\"	$NetBSD: bus_dma.9,v 1.10 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -154,7 +154,8 @@ member indicates the number of segments in
 .Bl -tag -width compact
 .It Fn bus_dmamap_create "tag" "size" "nsegments" "maxsegsz" "boundary" "flags" "dmamp"
 Allocates a DMA handle and initializes it according to the parameters
-provided. Arguments are as follows:
+provided.
+Arguments are as follows:
 .Bl -tag -width nsegments -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
@@ -230,7 +231,8 @@ If given valid arguments,
 always succeeds.
 .It Fn bus_dmamap_load "tag" "dmam" "buf" "buflen" "p" "flags"
 Loads a DMA handle with mappings for a DMA transfer.  It assumes that
-all pages involved in a DMA transfer are wired. Arguments are as follows:
+all pages involved in a DMA transfer are wired.
+Arguments are as follows:
 .Bl -tag -width buflen -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
@@ -457,7 +459,8 @@ the addresses returned are system physical addresses.
 .Pp
 Allocations will always be rounded to the hardware page size.  Callers
 may wish to take advantage of this, and cluster allocation of small
-data structures. Arguments are as follows:
+data structures.
+Arguments are as follows:
 .Bl -tag -width alignment -compact
 .It Fa tag
 The is the bus_dma_tag_t passed down from the parent driver via

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethersubr.9,v 1.8 1999/02/16 23:34:13 is Exp $
+.\"	$NetBSD: ethersubr.9,v 1.9 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,13 +75,17 @@ The
 .Nm 
 functions provide the interface between the
 .Nm 
-module and the network drivers which need Ethernet support. Such
-drivers must request the "ether" attribute in their "files" declaration
-and call the appropriate functions as specified below.
+module and the network drivers which need Ethernet support.
+Such drivers must request the
+.Ar ether
+attribute in their
+.Ar files
+declaration and call the appropriate functions as specified below.
 .Pp
 FDDI drivers must request the "fddi" attribute in their "files"
 declaration and call the functions tagged with "fddi_" or "FDDI_"
-instead, where different. Some macros are shared.
+instead, where different.
+Some macros are shared.
 .Pp
 Note that you also need the
 .Xr arp 9
@@ -117,7 +121,8 @@ handle
 .Dv SIOCADDMULTI
 and
 .Dv SIOCDELMULTI
-requests. If they return
+requests.
+If they return
 .Er ENETRESET ,
 the hardware multicast filter must be reinitialized.
 .Pp
@@ -125,7 +130,8 @@ These functions accept
 .Dv AF_UNSPEC
 addresses, which are interpreted as Ethernet addresses, or
 .Dv AF_INET
-addresses. In the latter case,
+addresses.
+In the latter case,
 .Dv INADDR_ANY
 is mapped to a range describing all the Ethernet address
 space reserved for IPv4 multicast addresses.

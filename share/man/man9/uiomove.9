@@ -1,4 +1,4 @@
-.\"	$NetBSD: uiomove.9,v 1.1 1999/02/13 08:03:34 nathanw Exp $
+.\"	$NetBSD: uiomove.9,v 1.2 1999/03/06 22:09:30 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,8 +74,8 @@ struct uio {
 
 A 
 .Fa struct uio
-typically describes data in motion. Several of the fields described
-below reflect that expectation.
+typically describes data in motion.
+Several of the fields described below reflect that expectation.
 
 .Bl -tag -width uio_xxxxxx
 .It uio_iov
@@ -129,8 +129,8 @@ such that
 is decremented by the amount of data moved, 
 .Fa uio->uio_offset 
 is incremented by the same amount, and the array of iovecs is adjusted
-to point that much farther into the region described. This allows
-multiple calls to 
+to point that much farther into the region described.
+This allows multiple calls to 
 .Nm
 to easily be used to fill or drain the region of data.
 
