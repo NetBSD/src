@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.3 2005/03/17 09:22:02 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.4 2005/03/19 13:25:49 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -17,4 +17,41 @@ doc/BRANCHES					1.37
 	Close out 1.5 and note differences between netbsd-2 and netbsd-2-0
 	branches.
 	[jmc, ticket #7]
+
+usr.sbin/pkg_install/lib/ftpio.c		1.67
+
+	Address PR pkg/24744 by Jarmo Jaakkola <jarmo.jaakkola@iki.fi>:
+	  * ftp.fi.netbsd.org returns "257" in return to a "cd" command, accept
+	    that (in addition to 250 and 550). Seems to be allowed per RFC 959.
+	  * Make buffer for reply bigger (not too big, as it may hit
+	    performance).
+	[hubertf, ticket #8]
+
+usr.sbin/pkg_install/lib/version.h		1.65
+
+	Bump PKGTOOLS_VERSION to today's date to allow telling in which version
+	PR 24744 was fixed (affects lib/ftpio.c).
+	[hubertf, ticket #9]
+
+sbin/mount/mount.c				1.77
+
+	Fix core dump when doing
+		mount fileserver:/somepath
+	by not passing a NULL pointer to getfsfile(3).
+	(Bug was introduced in rev 1.74 as part of fix for PR 28644.)
+	[lukem, ticket #10]
+
+sbin/sysctl/sysctl.c				1.98
+
+	Use regexes instead of static lists of annoying numbers to recognize
+	sysctl nodes that have "helpers". This is more concise, imho more
+	easy to understand, and has the added bonus of making it *possible* to
+	assign helpers to dynamically numbered nodes.
+	[atatat, ticket #11]
+
+sys/sys/select.h				1.23
+
+	Make sure to declare functions with C linkage; should fix PR bin/29730
+	from Juergen Hannken-Illjes.
+	[kleink, ticket #14]
 
