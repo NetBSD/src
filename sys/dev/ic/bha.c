@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.11 1997/03/28 23:47:10 mycroft Exp $	*/
+/*	$NetBSD: bha.c,v 1.12 1997/04/11 01:34:25 thorpej Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -276,11 +276,6 @@ bha_attach(sc, bpd)
 	struct bha_probe_data *bpd;
 {
 
-	bha_inquire_setup_information(sc);
-	bha_init(sc);
-	TAILQ_INIT(&sc->sc_free_ccb);
-	TAILQ_INIT(&sc->sc_waiting_ccb);
-
 	/*
 	 * fill in the prototype scsi_link.
 	 */
@@ -291,6 +286,11 @@ bha_attach(sc, bpd)
 	sc->sc_link.device = &bha_dev;
 	sc->sc_link.openings = 4;
 	sc->sc_link.max_target = bpd->sc_iswide ? 15 : 7;
+
+	bha_inquire_setup_information(sc);
+	bha_init(sc);
+	TAILQ_INIT(&sc->sc_free_ccb);
+	TAILQ_INIT(&sc->sc_waiting_ccb);
 
 	/*
 	 * ask the adapter what subunits are present
