@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24.2.4 2004/04/01 16:08:47 tron Exp $
+#	$NetBSD: Makefile,v 1.24.2.5 2004/08/13 18:53:17 jmc Exp $
 
 NOGCCERROR=	# defined
 
@@ -7,13 +7,14 @@ NOGCCERROR=	# defined
 PROG=		ipftest
 SRCS=		ipftest.c fil.c ip_frag.c ip_state.c ip_nat.c \
 		ip_proxy.c ip_auth.c ip_htable.c ip_lookup.c \
-		ip_pool.c ip_scan.c ip_sync.c ip_rules.c \
+		ip_pool.c ip_scan.c ip_sync.c \
 		ip_fil.c ip_log.c ippool_y.c ippool_l.c ipf_y.c \
 		ipf_l.c ipnat_y.c ipnat_l.c md5.c radix.c bpf_filter.c
 MAN=		ipftest.1
 
-CPPFLAGS+=	-DIPFILTER_LOG -DIPFILTER_COMPILED -DIPFILTER_LOOKUP \
-		-DIPFILTER_SCAN -DIPFILTER_SYNC -DIPFILTER_CKSUM -I.
+CPPFLAGS+=	-DIPFILTER_LOG -DIPFILTER_LOOKUP \
+		-DIPFILTER_SCAN -DIPFILTER_SYNC -DIPFILTER_CKSUM -D_RADIX_H_ \
+		-I.
 
 .PATH:		${NETBSDSRCDIR}/sys/netinet
 
