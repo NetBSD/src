@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.1 2001/03/30 14:32:09 minoura Exp $	*/
+/*	$NetBSD: yds.c,v 1.2 2001/03/30 15:53:25 minoura Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -33,7 +33,7 @@
  * - ftp://ftp.alsa-project.org/pub/manuals/yamaha/pci/
  *
  * TODO:
- * - Fill in yds_chip_capability_list
+ * - FM synth volume (difficult: mixed before ac97)
  * - Digital in/out (SPDIF) support
  * - Effect??
  */
