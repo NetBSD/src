@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.75 2003/06/30 02:14:17 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.76 2003/06/30 02:18:38 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -885,3 +885,10 @@ usr.bin/mkdep/mkdep.c				1.16
 
 	catch SIGPIPE, too.
 	[msaitoh, ticket #1339]
+
+sys/netinet/igmp.c				1.34
+sys/netinet/igmp_var.h				1.16
+sys/netinet/in.c				1.87
+
+	purge rti structure (in igmp.c) for removed ifp on if_detach().
+	[itojun, ticket #1341]
