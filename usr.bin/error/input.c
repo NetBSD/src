@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.5 1997/10/18 14:44:32 lukem Exp $	*/
+/*	$NetBSD: input.c,v 1.6 1998/10/08 01:29:27 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: input.c,v 1.5 1997/10/18 14:44:32 lukem Exp $");
+__RCSID("$NetBSD: input.c,v 1.6 1998/10/08 01:29:27 wsanchez Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -49,9 +49,6 @@ __RCSID("$NetBSD: input.c,v 1.5 1997/10/18 14:44:32 lukem Exp $");
 
 int	wordc;		/* how long the current error message is */
 char	**wordv;	/* the actual error message */
-
-int	nerrors;
-int	language;
 
 Errorclass	catchall __P((void));
 Errorclass	cpp __P((void));

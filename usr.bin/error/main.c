@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 1997/10/18 14:44:35 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.5 1998/10/08 01:29:28 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.4 1997/10/18 14:44:35 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.5 1998/10/08 01:29:28 wsanchez Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -55,12 +55,19 @@ __RCSID("$NetBSD: main.c,v 1.4 1997/10/18 14:44:35 lukem Exp $");
 #include "error.h"
 #include "pathnames.h"
 
+FILE    *errorfile;     /* where error file comes from */
+FILE    *queryfile;     /* where the query responses from the user come from*/
+
+int     nignored;
+char    **names_ignored;
+
 int	nerrors = 0;
 Eptr	er_head;
 Eptr	*errors;
 
 int	nfiles = 0;
 Eptr	**files;	/* array of pointers into errors*/
+boolean *touchedfiles;  /* which files we touched */
 int	language = INCC;
 
 char	*currentfilename = "????";
