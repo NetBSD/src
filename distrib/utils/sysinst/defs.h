@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.95 2003/07/08 17:38:54 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.96 2003/07/11 15:28:58 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -175,40 +175,16 @@ EXTERN FILE *script;
 EXTERN unsigned long ramsize INIT(0);
 EXTERN unsigned int  rammb   INIT(0);
 
-/* Disk descriptions */
-#define MAX_DISKS 15
-struct disk_desc {
-	char dd_name[SSTRSIZE];
-	struct disk_geom {
-		int  dg_cyl;
-		int  dg_head;
-		int  dg_sec;
-		int  dg_secsize;
-		int  dg_totsec;
-	} dg;
-};
-#define dd_cyl dg.dg_cyl
-#define dd_head dg.dg_head
-#define dd_sec dg.dg_sec
-#define dd_secsize dg.dg_secsize
-#define dd_totsec dg.dg_totsec
-
-EXTERN struct disk_desc disks[MAX_DISKS];
-
-EXTERN struct disk_desc *disk;
-EXTERN int sectorsize;
-
 /* Actual name of the disk. */
 EXTERN char diskdev[SSTRSIZE] INIT("");
 EXTERN int rootpart;				/* partition we install into */
-EXTERN char disknames[STRSIZE];
-EXTERN int  numdisks;
 EXTERN char *disktype INIT("unknown");		/* ST506, SCSI, ... */
 
 /* Area of disk we can allocate, start and size in disk sectors. */
 EXTERN int ptstart, ptsize;	
 
-/* Actual values for current disk - set by md_get_info() */
+/* Actual values for current disk - set by find_disks() or md_get_info() */
+EXTERN int sectorsize;
 EXTERN int dlcyl, dlhead, dlsec, dlsize, dlcylsize;
 EXTERN int current_cylsize;
 EXTERN int root_limit;
