@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/11/13 13:18:56 sekiya Exp $
+#	$NetBSD: Makefile,v 1.6 2003/11/13 14:07:38 sekiya Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -20,8 +20,8 @@ MAKEDEVTARGETS=	minimal pty0
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab.preinstall dot.hdprofile dot.profile \
 		${.CURDIR}/../miniroot/termcap.iris-ansi \
-		${DESTDIR}/usr/mdec/boot ${DESTDIR}/usr/mdec/boot.elf \
-		${DESTDIR}/usr/mdec/boot.ip32 \
+		${DESTDIR}/usr/mdec/aoutboot ${DESTDIR}/usr/mdec/ip2xboot \
+		${DESTDIR}/usr/mdec/ip3xboot \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
 		${NETBSDSRCDIR}/etc/services
