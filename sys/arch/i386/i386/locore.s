@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.14 1993/10/13 02:21:31 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.15 1993/10/13 10:55:24 mycroft Exp $
  */
 
 
@@ -466,11 +466,13 @@ _szicode:
 ENTRY(sigcode)
 	call	SIGF_HANDLER(%esp)
 	lea	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
-					# copy at 8(%esp))
+					# copy at SIGF_SCP(%esp))
 	pushl	%eax
-	pushl	%eax		# junk to fake return address
+	pushl	%eax			# junk to fake return address
 	movl	$(SYS_sigreturn),%eax
-	LCALL(0x7,0)		# enter kernel with args on stack
+	LCALL(0x7,0)			# enter kernel with args on stack
+	movl	$(SYS_exit),%eax
+	LCALL(0x7,0)			# exit if sigreturn fails
 
 	.globl	_esigcode
 _esigcode:
