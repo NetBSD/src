@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.18 2000/05/23 00:46:53 thorpej Exp $   */
+/*      $NetBSD: raidctl.c,v 1.18.2.1 2000/06/22 16:05:42 minoura Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ main(argc,argv)
 			num_options++;
 			break;
 		case 'S':
-			action = RAIDFRAME_CHECK_RECON_STATUS;
+			action = RAIDFRAME_CHECK_RECON_STATUS_EXT;
 			num_options++;
 			break;
 		case 'p':
@@ -276,7 +276,7 @@ main(argc,argv)
 		if (verbose) {
 			sleep(3); /* XXX give the copyback a chance to start */
 			printf("Copyback status:\n");
-			do_meter(fd,RAIDFRAME_CHECK_COPYBACK_STATUS);
+			do_meter(fd,RAIDFRAME_CHECK_COPYBACK_STATUS_EXT);
 		}
 		break;
 	case RAIDFRAME_FAIL_DISK:
@@ -298,10 +298,10 @@ main(argc,argv)
 		if (verbose) {
 			sleep(3); /* XXX give it time to get started */
 			printf("Parity Re-write status:\n");
-			do_meter(fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS);
+			do_meter(fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT);
 		}
 		break;
-	case RAIDFRAME_CHECK_RECON_STATUS:
+	case RAIDFRAME_CHECK_RECON_STATUS_EXT:
 		check_status(fd,1);
 		break;
 	case RAIDFRAME_GET_INFO:
@@ -435,6 +435,23 @@ rf_get_device_status(fd)
 			       device_status(device_config.devs[i].status));
 		}
 	}
+
+	if (device_config.nspares > 0) {
+		for(i=0; i < device_config.nspares; i++) {
+			if ((device_config.spares[i].status == 
+			     rf_ds_optimal) ||
+			    (device_config.spares[i].status == 
+			     rf_ds_used_spare)) {
+				get_component_label(fd, 
+					    device_config.spares[i].devname);
+			} else {
+				printf("%s status is: %s.  Skipping label.\n",
+				       device_config.spares[i].devname,
+				       device_status(device_config.spares[i].status));
+			}		
+		}
+	}
+
 	do_ioctl(fd, RAIDFRAME_CHECK_PARITY, &is_clean,
 		 "RAIDFRAME_CHECK_PARITY");
 	if (is_clean) {
@@ -474,6 +491,21 @@ get_component_number(fd, component_name, component_number, num_columns)
 			*component_number = i;
 		}
 	}
+	if (!found) { /* maybe it's a spare? */
+		for(i=0; i < device_config.nspares; i++) {
+			if (strncmp(component_name, 
+				    device_config.spares[i].devname,
+				    PATH_MAX)==0) {
+				found = 1;
+				*component_number = i + device_config.ndevs;
+				/* the way spares are done should
+				   really change... */
+				*num_columns = device_config.cols + 
+					device_config.nspares;
+			}
+		}
+	}
+
 	if (!found) {
 		fprintf(stderr,"%s: %s is not a component %s", __progname, 
 			component_name, "of this device\n");
@@ -505,7 +537,7 @@ rf_fail_disk(fd, component_to_fail, do_recon)
 	if (do_recon && verbose) {
 		printf("Reconstruction status:\n");
 		sleep(3); /* XXX give reconstruction a chance to start */
-		do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS);
+		do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS_EXT);
 	}
 }
 
@@ -696,7 +728,7 @@ rebuild_in_place( fd, component )
 	if (verbose) {
 		printf("Reconstruction status:\n");
 		sleep(3); /* XXX give reconstruction a chance to start */
-		do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS);
+		do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS_EXT);
 	}
 
 }
@@ -727,8 +759,7 @@ check_parity( fd, do_rewrite, dev_name )
 				     get started. */
 			if (verbose) {
 				printf("Parity Re-write status:\n");
-				do_meter(fd,
-					 RAIDFRAME_CHECK_PARITYREWRITE_STATUS);
+				do_meter(fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT);
 			} else {
 				do_ioctl(fd, 
 					 RAIDFRAME_CHECK_PARITYREWRITE_STATUS, 
@@ -776,13 +807,13 @@ check_status( fd, meter )
 		/* These 3 should be mutually exclusive at this point */
 		if (recon_percent_done < 100) {
 			printf("Reconstruction status:\n");
-			do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS);
+			do_meter(fd,RAIDFRAME_CHECK_RECON_STATUS_EXT);
 		} else if (parity_percent_done < 100) {
 			printf("Parity Re-write status:\n");
-			do_meter(fd,RAIDFRAME_CHECK_PARITYREWRITE_STATUS);
+			do_meter(fd,RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT);
 		} else if (copyback_percent_done < 100) {
 			printf("Copyback status:\n");
-			do_meter(fd,RAIDFRAME_CHECK_COPYBACK_STATUS);
+			do_meter(fd,RAIDFRAME_CHECK_COPYBACK_STATUS_EXT);
 		}
 	}
 }
@@ -795,8 +826,10 @@ do_meter(fd, option)
 	u_long option;
 {
 	int percent_done;
-	int last_percent;
-	int start_percent;
+	int last_value;
+	int start_value;
+	RF_ProgressInfo_t progressInfo;
+	void *pInfoPtr;
 	struct timeval start_time;
 	struct timeval last_time;
 	struct timeval current_time;
@@ -816,50 +849,57 @@ do_meter(fd, option)
 		fprintf(stderr,"%s: gettimeofday failed!?!?\n",__progname);
 		exit(errno);
 	}
+	memset(&progressInfo, 0, sizeof(RF_ProgressInfo_t));
+	pInfoPtr=&progressInfo;
+
 	percent_done = 0;
-	do_ioctl(fd, option, &percent_done, "");
-	last_percent = percent_done;
-	start_percent = percent_done;
+	do_ioctl(fd, option, &pInfoPtr, "");
+	last_value = progressInfo.completed;
+	start_value = last_value;
 	last_time = start_time;
 	current_time = start_time;
 	
 	wait_for_more_data = 0;
 	tbit_value = 0;
+	while(progressInfo.completed < progressInfo.total) {
 
-	while(percent_done < 100) {
+		percent_done = (progressInfo.completed * 100) / 
+			progressInfo.total;
 
 		get_bar(bar_buffer, percent_done, 40);
 		
-		elapsed_sec = current_time.tv_sec - last_time.tv_sec;
-		
-		elapsed_usec = current_time.tv_usec - last_time.tv_usec;
-		
+		elapsed_sec = current_time.tv_sec - start_time.tv_sec;
+		elapsed_usec = current_time.tv_usec - start_time.tv_usec;
 		if (elapsed_usec < 0) {
 			elapsed_usec-=1000000;
 			elapsed_sec++;
 		}
-		
+
 		elapsed = (double) elapsed_sec + 
 			(double) elapsed_usec / 1000000.0;
-		if (elapsed <= 0.0) {
-			elapsed = 0.0001; /* XXX */
-		}
-		
-		amount = percent_done - last_percent;
+
+		amount = progressInfo.completed - start_value;
+
 		if (amount <= 0) { /* we don't do negatives (yet?) */
 			amount = 0;
 			wait_for_more_data = 1;
 		} else {
 			wait_for_more_data = 0;
 		}
-		rate = amount / elapsed;
 
+		if (elapsed == 0)
+			rate = 0.0;
+		else
+			rate = amount / elapsed;
 
 		if (rate > 0.0) {
-			simple_eta = (int) ((100.0 - (double) last_percent ) / rate);
+			simple_eta = (int) (((double)progressInfo.total - 
+					     (double) progressInfo.completed) 
+					    / rate);
 		} else {
 			simple_eta = -1;
 		}
+
 		if (simple_eta <=0) { 
 			simple_eta = last_eta;
 		} else {
@@ -879,7 +919,7 @@ do_meter(fd, option)
 
 		if (!wait_for_more_data) {
 			last_time = current_time;
-			last_percent = percent_done;
+			last_value = progressInfo.completed;
 		}
 
 		if (++tbit_value>3) 
@@ -893,7 +933,7 @@ do_meter(fd, option)
 			exit(errno);
 		}
 
-		do_ioctl( fd, option, &percent_done, "");
+		do_ioctl( fd, option, &pInfoPtr, "");
 		
 
 	}

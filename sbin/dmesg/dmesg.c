@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.16 1998/07/05 08:56:54 mrg Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.16.8.1 2000/06/22 16:05:22 minoura Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,47 +42,50 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.16 1998/07/05 08:56:54 mrg Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.16.8.1 2000/06/22 16:05:22 minoura Exp $");
 #endif
 #endif /* not lint */
 
+#include <sys/param.h>
 #include <sys/msgbuf.h>
+#include <sys/sysctl.h>
 
 #include <err.h>
 #include <fcntl.h>
 #include <kvm.h>
-#include <limits.h>
 #include <nlist.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <stdlib.h>
-#include <time.h>
 #include <unistd.h>
 #include <vis.h>
 
+#ifndef SMALL
 struct nlist nl[] = {
 #define	X_MSGBUF	0
 	{ "_msgbufp" },
 	{ NULL },
 };
+#endif
 
-int	main __P((int, char *[]));
-void	usage __P((void));
+int	main(int, char *[]);
+void	usage(void);
 
 #define	KREAD(addr, var) \
 	kvm_read(kd, addr, &var, sizeof(var)) != sizeof(var)
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
+	struct kern_msgbuf cur;
 	int ch, newl, skip, i;
-	char *p;
-	struct kern_msgbuf *bufp, cur;
-	char *memf, *nlistf, *bufdata;
-	kvm_t *kd;
+	char *p, *bufdata;
+#ifndef SMALL
+	char *memf, *nlistf;
+#endif
 	char buf[5];
 
+#ifndef SMALL
 	memf = nlistf = NULL;
 	while ((ch = getopt(argc, argv, "M:N:")) != -1)
 		switch(ch) {
@@ -99,38 +102,63 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
-	 */
-	if (memf != NULL || nlistf != NULL)
-		setgid(getgid());
+	if (memf == NULL) {
+#endif
+		size_t size;
+		int mib[2];
 
-	/* Read in message buffer header and data, and do sanity checks. */
-	if ((kd = kvm_open(nlistf, memf, NULL, O_RDONLY, "dmesg")) == NULL)
-		exit (1);
-	setgid(getgid());	/* do now anyway */
-	if (kvm_nlist(kd, nl) == -1)
-		errx(1, "kvm_nlist: %s", kvm_geterr(kd));
-	if (nl[X_MSGBUF].n_type == 0)
-		errx(1, "%s: msgbufp not found", nlistf ? nlistf : "namelist");
-	if (KREAD(nl[X_MSGBUF].n_value, bufp))
-		errx(1, "kvm_read: %s (0x%lx)", kvm_geterr(kd),
-		    nl[X_MSGBUF].n_value);
-	if (KREAD((long)bufp, cur))
-		errx(1, "kvm_read: %s (0x%lx)", kvm_geterr(kd),
-		    (unsigned long)bufp);
-	if (cur.msg_magic != MSG_MAGIC)
-		errx(1, "magic number incorrect");
-	bufdata = malloc(cur.msg_bufs);
-	if (bufdata == NULL)
-		errx(1, "couldn't allocate space for buffer data");
-	if (kvm_read(kd, (long)&bufp->msg_bufc, bufdata,
-	    cur.msg_bufs) != cur.msg_bufs)
-		errx(1, "kvm_read: %s", kvm_geterr(kd));
-	kvm_close(kd);
-	if (cur.msg_bufx >= cur.msg_bufs)
-		cur.msg_bufx = 0;
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_MSGBUF;
+
+		if (sysctl(mib, 2, NULL, &size, NULL, 0) == -1)
+			errx(1, "can't get size of msgbuf");
+
+		if ((bufdata = malloc(size)) == NULL)
+			err(1, "couldn't allocate space for buffer data");
+
+		if (sysctl(mib, 2, bufdata, &size, NULL, 0) == -1)
+			err(1, "can't get msgbuf");
+
+		/* make a dummy struct msgbuf for the display logic */
+		cur.msg_bufx =  cur.msg_bufs = size;
+#ifndef SMALL
+	} else {
+		kvm_t *kd;
+		struct kern_msgbuf *bufp;
+
+		/*
+		 * Read in message buffer header and data, and do sanity
+		 * checks.
+		 */
+		kd = kvm_open(nlistf, memf, NULL, O_RDONLY, "dmesg");
+		if (kd == NULL)
+			exit (1);
+		if (kvm_nlist(kd, nl) == -1)
+			errx(1, "kvm_nlist: %s", kvm_geterr(kd));
+		if (nl[X_MSGBUF].n_type == 0)
+			errx(1, "%s: msgbufp not found", nlistf ? nlistf :
+			    "namelist");
+		if (KREAD(nl[X_MSGBUF].n_value, bufp))
+			errx(1, "kvm_read: %s (0x%lx)", kvm_geterr(kd),
+			    nl[X_MSGBUF].n_value);
+		if (kvm_read(kd, (long)bufp, &cur,
+		    offsetof(struct kern_msgbuf, msg_bufc)) !=
+		    offsetof(struct kern_msgbuf, msg_bufc))
+			errx(1, "kvm_read: %s (0x%lx)", kvm_geterr(kd),
+			    (unsigned long)bufp);
+		if (cur.msg_magic != MSG_MAGIC)
+			errx(1, "magic number incorrect");
+		bufdata = malloc(cur.msg_bufs);
+		if (bufdata == NULL)
+			errx(1, "couldn't allocate space for buffer data");
+		if (kvm_read(kd, (long)&bufp->msg_bufc, bufdata,
+		    cur.msg_bufs) != cur.msg_bufs)
+			errx(1, "kvm_read: %s", kvm_geterr(kd));
+		kvm_close(kd);
+		if (cur.msg_bufx >= cur.msg_bufs)
+			cur.msg_bufx = 0;
+	}
+#endif
 
 	/*
 	 * The message buffer is circular; start at the write pointer
@@ -169,9 +197,13 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 
+#ifdef SMALL
+	(void)fprintf(stderr, "usage: dmesg\n");
+#else
 	(void)fprintf(stderr, "usage: dmesg [-M core] [-N system]\n");
+#endif
 	exit(1);
 }

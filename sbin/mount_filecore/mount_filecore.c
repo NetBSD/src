@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_filecore.c,v 1.2 1999/06/25 19:28:36 perseant Exp $	*/
+/* $NetBSD: mount_filecore.c,v 1.2.6.1 2000/06/22 16:05:36 minoura Exp $ */
 
 /*
  * Copyright (c) 1998 Andrew McMurry
