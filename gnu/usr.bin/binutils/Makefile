@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/08/06 19:11:59 tv Exp $
+#	$NetBSD: Makefile,v 1.14 2001/08/06 19:59:39 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@
 
 .include "${.CURDIR}/common/arch/${MACHINE_ARCH}/defs.mk"
 
-SUBDIR=		common gas ld ${G_PROGRAMS:C/-new$//:cxxfilt=c++filt}
+SUBDIR=		common gas gprof ld ${G_PROGRAMS:C/-new$//:cxxfilt=c++filt}
 SUBDIR:=	${SUBDIR:O} # alphabetize
 
 .else
