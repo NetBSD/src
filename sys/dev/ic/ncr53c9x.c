@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.65 2000/12/17 04:38:29 briggs Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.66 2000/12/18 23:39:44 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -664,21 +664,21 @@ ncr53c9x_select(sc, ecb)
 	}
 
 	if (tiflags & T_NEGOTIATE) selandstop = 1;
-	if (ecb->tag[0]) {
+	cmd = (u_char *)&ecb->cmd.cmd;
+	if (ecb->tag[0] && selatn3 && !selandstop) {
 		/* We'll use tags */
-		ecb->cmd.msg[0] = MSG_IDENTIFY(lun, 1);
-		ecb->cmd.msg[1] = ecb->tag[0];
-		ecb->cmd.msg[2] = ecb->tag[1];
-		cmd = (u_char *)&ecb->cmd.msg[0];
 		clen = ecb->clen + 3;
+		cmd -= 3;
+		cmd[0] = MSG_IDENTIFY(lun, 1);	/* msg[0] */
+		cmd[1] = ecb->tag[0];		/* msg[1] */
+		cmd[2] = ecb->tag[1];		/* msg[2] */
 
 		if (!selatn3)
 			selandstop = 1;
 	} else {
-		ecb->cmd.msg[2] = 
-			MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF)?0:1);
-		cmd = (u_char *)&ecb->cmd.msg[2];
 		clen = ecb->clen + 1;
+		cmd -= 1;
+		cmd[0] = MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF)?0:1);
 	}
 
 	if (ncr53c9x_dmaselect && !selandstop) {
@@ -700,9 +700,11 @@ ncr53c9x_select(sc, ecb)
 		NCRCMD(sc, NCRCMD_NOP|NCRCMD_DMA);
 
 		/* And get the targets attention */
-		if (ecb->tag[0])
+		if (ecb->tag[0]) {
+			sc->sc_msgout = SEND_TAG;
+			sc->sc_flags |= NCR_ATN;
 			NCRCMD(sc, NCRCMD_SELATN3 | NCRCMD_DMA);
-		else
+		} else
 			NCRCMD(sc, NCRCMD_SELATN | NCRCMD_DMA);
 		NCRDMA_GO(sc);
 		return;
@@ -734,9 +736,11 @@ ncr53c9x_select(sc, ecb)
 		NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
 
 	/* And get the targets attention */
-	if (ecb->tag[0])
+	if (ecb->tag[0]) {
+		sc->sc_msgout = SEND_TAG;
+		sc->sc_flags |= NCR_ATN;
 		NCRCMD(sc, NCRCMD_SELATN3);
-	else
+	} else
 		NCRCMD(sc, NCRCMD_SELATN);
 }
 
@@ -1461,6 +1465,8 @@ gotit:
 	switch (sc->sc_state) {
 		struct ncr53c9x_ecb *ecb;
 		struct ncr53c9x_tinfo *ti;
+		struct ncr53c9x_linfo *li;
+		int lun;
 
 	case NCR_CONNECTED:
 		ecb = sc->sc_nexus;
@@ -1486,11 +1492,35 @@ gotit:
 		case MSG_MESSAGE_REJECT:
 			NCR_MSGS(("msg reject (msgout=%x) ", sc->sc_msgout));
 			switch (sc->sc_msgout) {
+			case SEND_TAG:
+				/*
+				 * Target does not like tagged queuing.
+				 *  - Flush the command queue
+				 *  - Disable tagged queuing for the target
+				 *  - Dequeue ecb from the queued array.
+				 */
+				NCR_MSGS(("(rejected sent tag)"));
+				NCRCMD(sc, NCRCMD_FLUSH);
+				DELAY(1);
+				ti->flags |= T_TAGOFF;
+				lun = ecb->xs->sc_link->scsipi_scsi.lun;
+				li = TINFO_LUN(ti, lun);
+				if (ecb->tag[0] &&
+				    li->queued[ecb->tag[1]] != NULL) {
+					li->queued[ecb->tag[1]] = NULL;
+					li->used --;
+				}
+				ecb->tag[0] = ecb->tag[1] = 0;
+				li->untagged = ecb;
+				li->busy = 1;
+				break;
+
 			case SEND_SDTR:
 				sc->sc_flags &= ~NCR_SYNCHNEGO;
 				ti->flags &= ~(T_NEGOTIATE | T_SYNCMODE);
 				ncr53c9x_setsync(sc, ti);
 				break;
+
 			case SEND_INIT_DET_ERR:
 				goto abort;
 			}
@@ -2154,10 +2184,10 @@ printf("<<RESELECT CONT'd>>");
 
 	case NCR_IDLE:
 	case NCR_SELECTING:
-		sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
-		sc->sc_flags = 0;
 		ecb = sc->sc_nexus;
 		if (sc->sc_espintr & NCRINTR_RESEL) {
+			sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
+			sc->sc_flags = 0;
 			/*
 			 * If we're trying to select a
 			 * target ourselves, push our command
