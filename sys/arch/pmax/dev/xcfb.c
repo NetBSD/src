@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.4 1994/10/26 21:09:24 cgd Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.5 1995/04/10 07:31:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -319,7 +319,7 @@ xcfbioctl(dev, cmd, data, flag, p)
  * Return the physical page number that corresponds to byte offset 'off'.
  */
 /*ARGSUSED*/
-xcfbmap(dev, off, prot)
+xcfbmmap(dev, off, prot)
 	dev_t dev;
 {
 	int len;
