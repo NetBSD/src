@@ -1,14 +1,14 @@
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
-#	$Id: ttys,v 1.7 1994/06/04 12:12:54 chopps Exp $
+#	$Id: ttys,v 1.8 1994/07/05 04:16:08 chopps Exp $
 #
 # name	getty				type	status		comments
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-console	"/usr/libexec/getty std.9600"	vt200	off secure 
-ttye0	"/usr/libexec/getty std.9600"	vt200	on secure 	# custom chips
-ttye1	"/usr/libexec/getty std.9600"	vt200	off secure 	# retina
+console	"/usr/libexec/getty Pc"		vt200	off secure 
+ttye0	"/usr/libexec/getty Pc"		vt200	on secure 	# custom chips
+ttye1	"/usr/libexec/getty Pc"		vt200	on secure 	# retina
 tty00	"/usr/libexec/getty std.9600"	unknown off secure	# int. serial.
 ttyp0	none			network
 ttyp1	none			network
