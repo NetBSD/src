@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.11 1997/05/06 20:54:34 mycroft Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.12 1997/05/06 21:29:37 mycroft Exp $
 
 S!=		cd ${.CURDIR}/..;pwd
 KERN=		$S/kern
@@ -77,6 +77,7 @@ realinstall: ${DESTDIR}${KMODDIR}/${PROG}
 ${DESTDIR}${KMODDIR}/${PROG}: .MADE
 .endif
 
+.PRECIOUS: ${DESTDIR}${KMODDIR}/${PROG}
 ${DESTDIR}${KMODDIR}/${PROG}: ${PROG}
 	${INSTALL} ${COPY} -o ${KMODOWN} -g ${KMODGRP} -m ${KMODMODE} \
 		${.ALLSRC} ${.TARGET}

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.28 1997/05/06 20:54:37 mycroft Exp $
+#	$NetBSD: bsd.man.mk,v 1.29 1997/05/06 21:29:41 mycroft Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(.MAIN)
@@ -56,6 +56,7 @@ manpages:: ${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}
 .PHONY: ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}
 .	endif
 
+.PRECIOUS: ${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}
 ${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}: ${P} __installpage
 .   endfor
 .else
@@ -74,6 +75,7 @@ catpages:: ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}
 ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}: .MADE
 .	endif
 
+.PRECIOUS: ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}
 ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}: ${P} __installpage
 .   endfor
 .else

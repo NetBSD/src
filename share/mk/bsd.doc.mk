@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.26 1997/05/06 20:54:32 mycroft Exp $
+#	$NetBSD: bsd.doc.mk,v 1.27 1997/05/06 21:29:33 mycroft Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .MAIN:		all
@@ -58,6 +58,7 @@ docinstall:: ${DESTDIR}${BINDIR}/${DIR}/${F}
 ${DESTDIR}${BINDIR}/${DIR}/${F}: .MADE
 .endif
 
+.PRECIOUS: ${DESTDIR}${BINDIR}/${DIR}/${F}
 ${DESTDIR}${BINDIR}/${DIR}/${F}: ${F}
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${.ALLSRC} \
 		${.TARGET}
