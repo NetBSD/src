@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl_compat.h,v 1.10 1995/03/31 03:10:15 christos Exp $	*/
+/*	$NetBSD: ioctl_compat.h,v 1.11 1998/02/13 23:14:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -165,7 +165,5 @@ struct sgttyb {
 #define	OTTYDISC	0
 #define	NETLDISC	1
 #define	NTTYDISC	2
-
-#define TIOCGSID	_IOR('t', 99, int)	/* For svr4 -- get session id */
 
 #endif /* !_SYS_IOCTL_COMPAT_H_ */
