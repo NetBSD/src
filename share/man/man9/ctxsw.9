@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctxsw.9,v 1.15 2003/04/04 20:33:21 wiz Exp $
+.\"	$NetBSD: ctxsw.9,v 1.16 2003/05/13 09:56:27 fvdl Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,16 +40,16 @@
 .Sh NAME
 .Nm mi_switch ,
 .Nm cpu_switch
-.Nd switch to another process context
+.Nd switch to another light weight process
 .Sh SYNOPSIS
-.Ft void
-.Fn mi_switch "struct proc *curp" "struct proc *newp"
-.Ft void
-.Fn cpu_switch "struct proc *curp" "struct proc *newp"
+.Ft int
+.Fn mi_switch "struct lwp *cur" "struct lwp *new"
+.Ft int
+.Fn cpu_switch "struct lwp *cur" "struct lwp *new"
 .Sh DESCRIPTION
 The
 .Fn mi_switch
-function implements the machine-independent prelude to a process
+function implements the machine-independent prelude to an LWP
 context switch.
 It is called from only a few distinguished places in the kernel code
 as a result of the principle of non-preemptable kernel mode execution.
@@ -60,27 +60,27 @@ can be enumerated as follows:
 .It
 From within
 .Xr tsleep 9
-when the current process voluntarily relinquishes the CPU to wait for
+when the current LWP voluntarily relinquishes the CPU to wait for
 some resource to become available.
 .It
 From within
 .Xr preempt 9
-when the current process voluntarily relinquishes the CPU or when the
+when the current LWP voluntarily relinquishes the CPU or when the
 kernel prepares a return to user-mode execution.
 .It
 In the signal handling code
-if a signal is delivered that causes a process to stop
+if a signal is delivered that causes an LWP to stop
 .Pq see Xr issignal 9 .
 .El
 .Pp
 .Fn mi_switch
-records the amount of time the current process has been running in the
-process structure and checks this value against the CPU time limits
-allocated to the process
+records the amount of time the current LWP has been running in the
+LWP structure and checks this value against the CPU time limits
+allocated to the LWP
 .Pq see Xr getrlimit 2 .
 Exceeding the soft limit results in a
 .Dv SIGXCPU
-signal to be posted to the process, while exceeding the hard limit will
+signal to be posted to the LWP, while exceeding the hard limit will
 cause a
 .Dv SIGKILL .
 If
@@ -90,27 +90,27 @@ is
 .Fn mi_switch
 will invoke
 .Xr chooseproc 9
-to select a new process from the system run queue.
-If the new process is the same as the current process, then control is
-returned immediately to the process, avoiding any unnecessary overhead
-associated with switching in a new process.
+to select a new LWP from the system run queue.
+If the new LWP is the same as the current LWP, then control is
+returned immediately to the LWP, avoiding any unnecessary overhead
+associated with switching in a new LWP.
 Otherwise,
 .Fn mi_switch
 hands over control to the machine-dependent function
 .Fn cpu_switch ,
-which will perform the actual process context switch.
+which will perform the actual LWP context switch.
 .Pp
 The
 .Fn cpu_switch
-function switches the new process onto the CPU.
-This procedure is performed by saving the process context of the current
-process in its process control block (PCB) and restoring the process
-context of the new process.
-The address space of the new process is activated using
+function switches the new LWP onto the CPU.
+This procedure is performed by saving the LWP context of the current
+LWP in its process control block (PCB) and restoring the LWP
+context of the new LWP.
+The address space of the new LWP is activated using
 .Fn pmap_activate
 (see
 .Xr pmap 9 ) .
-Finally, the new process is checked to see if it was previously
+Finally, the new LWP is checked to see if it was previously
 preempted while inside a restartable atomic sequence
 .Pq see Xr ras 9 .
 .Pp
@@ -121,6 +121,9 @@ and at the
 .Xr splsched 9
 interrupt protection level.
 Both functions return with the scheduler lock released.
+.Sh RETURN VALUES
+These functions return 1 if a context switch was performed to a different
+LWP, 0 otherwise.
 .Sh SEE ALSO
 .Xr SCHED_LOCK 9 ,
 .Xr chooseproc 9 ,
