@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.43 2003/07/14 15:47:24 lukem Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.44 2003/07/17 11:44:27 hannken Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.43 2003/07/14 15:47:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.44 2003/07/17 11:44:27 hannken Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -206,6 +206,7 @@ int	bgedebug = 0;
 #define	BGE_QUIRK_5700_PCIX_REG_BUG	0x00000010
 #define	BGE_QUIRK_PRODUCER_BUG		0x00000020
 #define	BGE_QUIRK_PCIX_DMA_ALIGN_BUG	0x00000040
+#define	BGE_QUIRK_5705_CORE		0x00000080
 
 /* following bugs are common to bcm5700 rev B, all flavours */
 #define BGE_QUIRK_5700_COMMON \
@@ -1145,8 +1146,10 @@ bge_chipinit(sc)
 	  	DPRINTFN(4, ("(%s: PCI 2.2 DMA setting)\n", sc->bge_dev.dv_xname));
 		dma_rw_ctl = (BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD |
 		   (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
-		   (0x7 << BGE_PCIDMARWCTL_WR_WAT_SHIFT) |
-		   (0x0F));
+		   (0x7 << BGE_PCIDMARWCTL_WR_WAT_SHIFT));
+		if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+			dma_rw_ctl |= 0x0F;
+		}
 	} else {
 	  	DPRINTFN(4, ("(:%s: PCI-X DMA setting)\n", sc->bge_dev.dv_xname));
 		/* PCI-X bus */
@@ -1281,17 +1284,22 @@ bge_blockinit(sc)
 	    BGE_PCI_MEMWIN_BASEADDR, 0);
 
 	/* Configure mbuf memory pool */
-	if (sc->bge_extram) {
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR, BGE_EXT_SSRAM);
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x18000);
-	} else {
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR, BGE_BUFFPOOL_1);
-		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x18000);
-	}
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		if (sc->bge_extram) {
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR,
+			    BGE_EXT_SSRAM);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x18000);
+		} else {
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR,
+			    BGE_BUFFPOOL_1);
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x18000);
+		}
 
-	/* Configure DMA resource pool */
-	CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_BASEADDR, BGE_DMA_DESCRIPTORS);
-	CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_LEN, 0x2000);
+		/* Configure DMA resource pool */
+		CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_BASEADDR,
+		    BGE_DMA_DESCRIPTORS);
+		CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_LEN, 0x2000);
+	}
 
 	/* Configure mbuf pool watermarks */
 #ifdef ORIG_WPAUL_VALUES
@@ -1300,8 +1308,13 @@ bge_blockinit(sc)
 	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 48);
 #else
 	/* new broadcom docs strongly recommend these: */
-	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x50);
-	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x50);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
+	} else {
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x10);
+	}
 	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
 #endif
 
@@ -1310,20 +1323,22 @@ bge_blockinit(sc)
 	CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_HIWAT, 10);
 
 	/* Enable buffer manager */
-	CSR_WRITE_4(sc, BGE_BMAN_MODE,
-	    BGE_BMANMODE_ENABLE|BGE_BMANMODE_LOMBUF_ATTN);
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		CSR_WRITE_4(sc, BGE_BMAN_MODE,
+		    BGE_BMANMODE_ENABLE|BGE_BMANMODE_LOMBUF_ATTN);
 
-	/* Poll for buffer manager start indication */
-	for (i = 0; i < BGE_TIMEOUT; i++) {
-		if (CSR_READ_4(sc, BGE_BMAN_MODE) & BGE_BMANMODE_ENABLE)
-			break;
-		DELAY(10);
-	}
+		/* Poll for buffer manager start indication */
+		for (i = 0; i < BGE_TIMEOUT; i++) {
+			if (CSR_READ_4(sc, BGE_BMAN_MODE) & BGE_BMANMODE_ENABLE)
+				break;
+			DELAY(10);
+		}
 
-	if (i == BGE_TIMEOUT) {
-		printf("%s: buffer manager failed to start\n",
-		    sc->bge_dev.dv_xname);
-		return(ENXIO);
+		if (i == BGE_TIMEOUT) {
+			printf("%s: buffer manager failed to start\n",
+			    sc->bge_dev.dv_xname);
+			return(ENXIO);
+		}
 	}
 
 	/* Enable flow-through queues */
@@ -1347,7 +1362,12 @@ bge_blockinit(sc)
 	rcb = &sc->bge_rdata->bge_info.bge_std_rx_rcb;
 	bge_set_hostaddr(&rcb->bge_hostaddr,
 	    BGE_RING_DMA_ADDR(sc, bge_rx_std_ring));
-	rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(BGE_MAX_FRAMELEN, 0);
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		rcb->bge_maxlen_flags =
+		    BGE_RCB_MAXLEN_FLAGS(BGE_MAX_FRAMELEN, 0);
+	} else {
+		rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(512, 0);
+	}
 	if (sc->bge_extram)
 		rcb->bge_nicaddr = BGE_EXT_STD_RX_RINGS;
 	else
@@ -1357,6 +1377,12 @@ bge_blockinit(sc)
 	CSR_WRITE_4(sc, BGE_RX_STD_RCB_MAXLEN_FLAGS, rcb->bge_maxlen_flags);
 	CSR_WRITE_4(sc, BGE_RX_STD_RCB_NICADDR, rcb->bge_nicaddr);
 
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT;
+	} else {
+		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT_5705;
+	}
+
 	/*
 	 * Initialize the jumbo RX ring control block
 	 * We set the 'ring disabled' bit in the flags
@@ -1364,30 +1390,38 @@ bge_blockinit(sc)
 	 * using this ring (i.e. once we set the MTU
 	 * high enough to require it).
 	 */
-	rcb = &sc->bge_rdata->bge_info.bge_jumbo_rx_rcb;
-	bge_set_hostaddr(&rcb->bge_hostaddr,
-	    BGE_RING_DMA_ADDR(sc, bge_rx_jumbo_ring));
-	rcb->bge_maxlen_flags = 
-	   BGE_RCB_MAXLEN_FLAGS(BGE_MAX_FRAMELEN, BGE_RCB_FLAG_RING_DISABLED);
-	if (sc->bge_extram)
-		rcb->bge_nicaddr = BGE_EXT_JUMBO_RX_RINGS;
-	else
-		rcb->bge_nicaddr = BGE_JUMBO_RX_RINGS;
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		rcb = &sc->bge_rdata->bge_info.bge_jumbo_rx_rcb;
+		bge_set_hostaddr(&rcb->bge_hostaddr,
+		    BGE_RING_DMA_ADDR(sc, bge_rx_jumbo_ring));
+		rcb->bge_maxlen_flags = 
+		    BGE_RCB_MAXLEN_FLAGS(BGE_MAX_FRAMELEN,
+			BGE_RCB_FLAG_RING_DISABLED);
+		if (sc->bge_extram)
+			rcb->bge_nicaddr = BGE_EXT_JUMBO_RX_RINGS;
+		else
+			rcb->bge_nicaddr = BGE_JUMBO_RX_RINGS;
+	
+		CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_HADDR_HI,
+		    rcb->bge_hostaddr.bge_addr_hi);
+		CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_HADDR_LO,
+		    rcb->bge_hostaddr.bge_addr_lo);
+		CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_MAXLEN_FLAGS,
+		    rcb->bge_maxlen_flags);
+		CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_NICADDR, rcb->bge_nicaddr);
 
-	CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_HADDR_HI, rcb->bge_hostaddr.bge_addr_hi);
-	CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_HADDR_LO, rcb->bge_hostaddr.bge_addr_lo);
-	CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_MAXLEN_FLAGS, rcb->bge_maxlen_flags);
-	CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_NICADDR, rcb->bge_nicaddr);
+		/* Set up dummy disabled mini ring RCB */
+		rcb = &sc->bge_rdata->bge_info.bge_mini_rx_rcb;
+		rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(0,
+		    BGE_RCB_FLAG_RING_DISABLED);
+		CSR_WRITE_4(sc, BGE_RX_MINI_RCB_MAXLEN_FLAGS,
+		    rcb->bge_maxlen_flags);
 
-	/* Set up dummy disabled mini ring RCB */
-	rcb = &sc->bge_rdata->bge_info.bge_mini_rx_rcb;
-	rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(0,
-	    BGE_RCB_FLAG_RING_DISABLED);
-	CSR_WRITE_4(sc, BGE_RX_MINI_RCB_MAXLEN_FLAGS, rcb->bge_maxlen_flags);
-
-	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
-	    offsetof(struct bge_ring_data, bge_info), sizeof (struct bge_gib),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
+		    offsetof(struct bge_ring_data, bge_info),
+		    sizeof (struct bge_gib),
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	}
 
 	/*
 	 * Set the BD ring replentish thresholds. The recommended
@@ -1417,8 +1451,10 @@ bge_blockinit(sc)
 	RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_lo, taddr.bge_addr_lo);
 	RCB_WRITE_4(sc, rcb_addr, bge_nicaddr,
 		    BGE_NIC_TXRING_ADDR(0, BGE_TX_RING_CNT));
-	RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags, 
-	    BGE_RCB_MAXLEN_FLAGS(BGE_TX_RING_CNT, 0));
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags, 
+		    BGE_RCB_MAXLEN_FLAGS(BGE_TX_RING_CNT, 0));
+	}
 
 	/* Disable all unused RX return rings */
 	rcb_addr = BGE_MEMWIN_START + BGE_RX_RETURN_RING_RCB;
@@ -1426,7 +1462,7 @@ bge_blockinit(sc)
 		RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_hi, 0);
 		RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_lo, 0);
 		RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags, 
-			    BGE_RCB_MAXLEN_FLAGS(BGE_RETURN_RING_CNT,
+			    BGE_RCB_MAXLEN_FLAGS(sc->bge_return_ring_cnt,
                                      BGE_RCB_FLAG_RING_DISABLED));
 		RCB_WRITE_4(sc, rcb_addr, bge_nicaddr, 0);
 		CSR_WRITE_4(sc, BGE_MBX_RX_CONS0_LO +
@@ -1451,7 +1487,7 @@ bge_blockinit(sc)
 	RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_lo, taddr.bge_addr_lo);
 	RCB_WRITE_4(sc, rcb_addr, bge_nicaddr, 0x00000000);
 	RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
-	    BGE_RCB_MAXLEN_FLAGS(BGE_RETURN_RING_CNT,0));
+	    BGE_RCB_MAXLEN_FLAGS(sc->bge_return_ring_cnt, 0));
 
 	/* Set random backoff seed for TX */
 	CSR_WRITE_4(sc, BGE_TX_RANDOM_BACKOFF,
@@ -1500,17 +1536,22 @@ bge_blockinit(sc)
 	CSR_WRITE_4(sc, BGE_HCC_TX_COAL_TICKS, sc->bge_tx_coal_ticks);
 	CSR_WRITE_4(sc, BGE_HCC_RX_MAX_COAL_BDS, sc->bge_rx_max_coal_bds);
 	CSR_WRITE_4(sc, BGE_HCC_TX_MAX_COAL_BDS, sc->bge_tx_max_coal_bds);
-	CSR_WRITE_4(sc, BGE_HCC_RX_COAL_TICKS_INT, 0);
-	CSR_WRITE_4(sc, BGE_HCC_TX_COAL_TICKS_INT, 0);
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		CSR_WRITE_4(sc, BGE_HCC_RX_COAL_TICKS_INT, 0);
+		CSR_WRITE_4(sc, BGE_HCC_TX_COAL_TICKS_INT, 0);
+	}
 	CSR_WRITE_4(sc, BGE_HCC_RX_MAX_COAL_BDS_INT, 0);
 	CSR_WRITE_4(sc, BGE_HCC_TX_MAX_COAL_BDS_INT, 0);
-	CSR_WRITE_4(sc, BGE_HCC_STATS_TICKS, sc->bge_stat_ticks);
 
 	/* Set up address of statistics block */
-	bge_set_hostaddr(&taddr, BGE_RING_DMA_ADDR(sc, bge_info.bge_stats));
-	CSR_WRITE_4(sc, BGE_HCC_STATS_BASEADDR, BGE_STATS_BLOCK);
-	CSR_WRITE_4(sc, BGE_HCC_STATS_ADDR_HI, taddr.bge_addr_hi);
-	CSR_WRITE_4(sc, BGE_HCC_STATS_ADDR_LO, taddr.bge_addr_lo);
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		bge_set_hostaddr(&taddr,
+		    BGE_RING_DMA_ADDR(sc, bge_info.bge_stats));
+		CSR_WRITE_4(sc, BGE_HCC_STATS_TICKS, sc->bge_stat_ticks);
+		CSR_WRITE_4(sc, BGE_HCC_STATS_BASEADDR, BGE_STATS_BLOCK);
+		CSR_WRITE_4(sc, BGE_HCC_STATS_ADDR_HI, taddr.bge_addr_hi);
+		CSR_WRITE_4(sc, BGE_HCC_STATS_ADDR_LO, taddr.bge_addr_lo);
+	}
 
 	/* Set up address of status block */
 	bge_set_hostaddr(&taddr, BGE_RING_DMA_ADDR(sc, bge_status_block));
@@ -1531,7 +1572,9 @@ bge_blockinit(sc)
 	CSR_WRITE_4(sc, BGE_RXLP_MODE, BGE_RXLPMODE_ENABLE);
 
 	/* Turn on RX list selector state machine. */
-	CSR_WRITE_4(sc, BGE_RXLS_MODE, BGE_RXLSMODE_ENABLE);
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		CSR_WRITE_4(sc, BGE_RXLS_MODE, BGE_RXLSMODE_ENABLE);
+	}
 
 	/* Turn on DMA, clear stats */
 	CSR_WRITE_4(sc, BGE_MAC_MODE, BGE_MACMODE_TXDMA_ENB|
@@ -1561,7 +1604,9 @@ bge_blockinit(sc)
 	CSR_WRITE_4(sc, BGE_MISC_LOCAL_CTL, sc->bge_local_ctrl_reg);
 
 	/* Turn on DMA completion state machine */
-	CSR_WRITE_4(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		CSR_WRITE_4(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
+	}
 
 	/* Turn on write DMA state machine */
 	CSR_WRITE_4(sc, BGE_WDMA_MODE,
@@ -1581,7 +1626,9 @@ bge_blockinit(sc)
 	CSR_WRITE_4(sc, BGE_RDBDI_MODE, BGE_RDBDIMODE_ENABLE);
 
 	/* Turn on Mbuf cluster free state machine */
-	CSR_WRITE_4(sc, BGE_MBCF_MODE, BGE_MBCFMODE_ENABLE);
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		CSR_WRITE_4(sc, BGE_MBCF_MODE, BGE_MBCFMODE_ENABLE);
+	}
 
 	/* Turn on send BD completion state machine */
 	CSR_WRITE_4(sc, BGE_SBDC_MODE, BGE_SBDCMODE_ENABLE);
@@ -1700,6 +1747,10 @@ static const struct bge_revision {
   	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5704 A2" },
 
+	{ BGE_ASICREV_BCM5705_A1,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5705 A1" },
+
 	{ 0, 0, NULL }
 };
 
@@ -1768,7 +1819,9 @@ static const struct bge_product {
    	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5704S,
 	  "Broadcom BCM5704S Dual Gigabit Ethernet" },
-
+   	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5705M,
+	  "Broadcom BCM5705M Gigabit Ethernet" },
 
 	{ PCI_VENDOR_SCHNEIDERKOCH,
 	  PCI_PRODUCT_SCHNEIDERKOCH_SK_9DX1,
@@ -2067,11 +2120,13 @@ bge_attach(parent, self, aux)
 	memset(sc->bge_rdata, 0, sizeof(struct bge_ring_data));
 
 	/* Try to allocate memory for jumbo buffers. */
-	if (bge_alloc_jumbo_mem(sc)) {
-		aprint_error("%s: jumbo buffer allocation failed\n",
-		    sc->bge_dev.dv_xname);
-	} else
-		sc->ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		if (bge_alloc_jumbo_mem(sc)) {
+			aprint_error("%s: jumbo buffer allocation failed\n",
+			    sc->bge_dev.dv_xname);
+		} else
+			sc->ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
+	}
 
 	/* Set default tuneable values. */
 	sc->bge_stat_ticks = BGE_TICKS_PER_SEC;
@@ -2234,7 +2289,9 @@ bge_reset(sc)
 	bge_writereg_ind(sc, BGE_MISC_CFG, (65 << 1));
 
 	/* Enable memory arbiter. */
-	CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
+	}
 
 	/*
 	 * Prevent PXE restart: write a magic number to the
@@ -2277,7 +2334,9 @@ bge_reset(sc)
 	}
 
 	/* Enable memory arbiter. */
-	CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
+	}
 
 	/* Fix up byte swapping */
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS);
@@ -2323,7 +2382,7 @@ bge_rxeof(sc)
 	toff = offset + (sc->bge_rx_saved_considx * sizeof (struct bge_rx_bd));
 
 	if (tosync < 0) {
-		tlen = (BGE_RETURN_RING_CNT - sc->bge_rx_saved_considx) *
+		tlen = (sc->bge_return_ring_cnt - sc->bge_rx_saved_considx) *
 		    sizeof (struct bge_rx_bd);
 		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 		    toff, tlen, BUS_DMASYNC_POSTREAD);
@@ -2344,7 +2403,7 @@ bge_rxeof(sc)
 			bge_rx_return_ring[sc->bge_rx_saved_considx];
 
 		rxidx = cur_rx->bge_idx;
-		BGE_INC(sc->bge_rx_saved_considx, BGE_RETURN_RING_CNT);
+		BGE_INC(sc->bge_rx_saved_considx, sc->bge_return_ring_cnt);
 
 		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG) {
 			have_tag = 1;
@@ -2580,7 +2639,8 @@ bge_intr(xsc)
 			bge_tick(sc);
 			/* Clear the interrupt */
 			CSR_WRITE_4(sc, BGE_MAC_STS, BGE_MACSTAT_SYNC_CHANGED|
-			    BGE_MACSTAT_CFG_CHANGED);
+			    BGE_MACSTAT_CFG_CHANGED|BGE_MACSTAT_MI_COMPLETE|
+			    BGE_MACSTAT_LINK_CHANGED);
 		}
 	}
 
@@ -2653,7 +2713,21 @@ bge_stats_update(sc)
 {
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 	bus_size_t stats = BGE_MEMWIN_START + BGE_STATS_BLOCK;
+	bus_size_t rstats = BGE_RX_STATS;
 
+#define READ_RSTAT(sc, stats, stat) \
+	  CSR_READ_4(sc, stats + offsetof(struct bge_mac_stats_regs, stat))
+
+	if (sc->bge_quirks & BGE_QUIRK_5705_CORE) {
+		ifp->if_collisions +=
+		    READ_RSTAT(sc, rstats, dot3StatsSingleCollisionFrames) +
+		    READ_RSTAT(sc, rstats, dot3StatsMultipleCollisionFrames) +
+		    READ_RSTAT(sc, rstats, dot3StatsExcessiveCollisions) +
+		    READ_RSTAT(sc, rstats, dot3StatsLateCollisions);
+		return;
+	}
+
+#undef READ_RSTAT
 #define READ_STAT(sc, stats, stat) \
 	  CSR_READ_4(sc, stats + offsetof(struct bge_stats, stat))
 
@@ -3178,7 +3252,9 @@ bge_stop(sc)
 	bge_stop_block(sc, BGE_RX_MODE, BGE_RXMODE_ENABLE);
 	bge_stop_block(sc, BGE_RBDI_MODE, BGE_RBDIMODE_ENABLE);
 	bge_stop_block(sc, BGE_RXLP_MODE, BGE_RXLPMODE_ENABLE);
-	bge_stop_block(sc, BGE_RXLS_MODE, BGE_RXLSMODE_ENABLE);
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		bge_stop_block(sc, BGE_RXLS_MODE, BGE_RXLSMODE_ENABLE);
+	}
 	bge_stop_block(sc, BGE_RDBDI_MODE, BGE_RBDIMODE_ENABLE);
 	bge_stop_block(sc, BGE_RDC_MODE, BGE_RDCMODE_ENABLE);
 	bge_stop_block(sc, BGE_RBDC_MODE, BGE_RBDCMODE_ENABLE);
@@ -3191,7 +3267,9 @@ bge_stop(sc)
 	bge_stop_block(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE);
 	bge_stop_block(sc, BGE_RDMA_MODE, BGE_RDMAMODE_ENABLE);
 	bge_stop_block(sc, BGE_SDC_MODE, BGE_SDCMODE_ENABLE);
-	bge_stop_block(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		bge_stop_block(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
+	}
 	bge_stop_block(sc, BGE_SBDC_MODE, BGE_SBDCMODE_ENABLE);
 
 	/*
@@ -3200,13 +3278,17 @@ bge_stop(sc)
 	 */
 	bge_stop_block(sc, BGE_HCC_MODE, BGE_HCCMODE_ENABLE);
 	bge_stop_block(sc, BGE_WDMA_MODE, BGE_WDMAMODE_ENABLE);
-	bge_stop_block(sc, BGE_MBCF_MODE, BGE_MBCFMODE_ENABLE);
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		bge_stop_block(sc, BGE_MBCF_MODE, BGE_MBCFMODE_ENABLE);
+	}
 
 	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0xFFFFFFFF);
 	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0);
 
-	bge_stop_block(sc, BGE_BMAN_MODE, BGE_BMANMODE_ENABLE);
-	bge_stop_block(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
+		bge_stop_block(sc, BGE_BMAN_MODE, BGE_BMANMODE_ENABLE);
+		bge_stop_block(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
+	}
 
 	/* Disable host interrupts. */
 	BGE_SETBIT(sc, BGE_PCI_MISC_CTL, BGE_PCIMISCCTL_MASK_PCI_INTR);
