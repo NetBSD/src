@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yplib.c,v 1.3 1993/05/16 02:47:22 deraadt Exp $";
+static char rcsid[] = "$Id: yplib.c,v 1.4 1993/06/12 19:46:33 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -398,7 +398,7 @@ again:
 			 ypmatch_add(inmap, inkey, inkeylen, *outval, *outvallen);
 #endif
 	}
-	xdr_free(xdr_ypresp_val, &yprv);
+	xdr_free(xdr_ypresp_val, (char *)&yprv);
 	_yp_unbind(ysd);
 	return r;
 }
@@ -461,7 +461,7 @@ again:
 		bcopy(yprkv.valdat.dptr, *outval, *outvallen);
 		(*outval)[*outvallen] = '\0';
 	}
-	xdr_free(xdr_ypresp_key_val, &yprkv);
+	xdr_free(xdr_ypresp_key_val, (char *)&yprkv);
 	_yp_unbind(ysd);
 	return r;
 }
@@ -516,7 +516,7 @@ again:
 		bcopy(yprkv.valdat.dptr, *outval, *outvallen);
 		(*outval)[*outvallen] = '\0';
 	}
-	xdr_free(xdr_ypresp_key_val, &yprkv);
+	xdr_free(xdr_ypresp_key_val, (char *)&yprkv);
 	_yp_unbind(ysd);
 	return r;
 }
@@ -557,7 +557,7 @@ struct ypall_callback *incallback;
 	(void) clnt_call(clnt, YPPROC_ALL,
 		xdr_ypreq_nokey, &yprnk, xdr_ypresp_all_seq, &status, tv);
 	clnt_destroy(clnt);
-	xdr_free(xdr_ypresp_all_seq, &status);	/* NOT NEEDED */
+	xdr_free(xdr_ypresp_all_seq, (char *)&status);	/* not really needed... */
 	_yp_unbind(ysd);
 
 	if(status != YP_FALSE)
@@ -598,7 +598,7 @@ again:
 	}
 
 	*outorder = ypro.ordernum;
-	xdr_free(xdr_ypresp_order, &ypro);
+	xdr_free(xdr_ypresp_order, (char *)&ypro);
 	_yp_unbind(ysd);
 	return ypprot_err(ypro.status);
 }
@@ -636,7 +636,7 @@ again:
 	if( !(r=ypprot_err(yprm.status)) ) {
 		*outname = (char *)strdup(yprm.master);
 	}
-	xdr_free(xdr_ypresp_master, &yprm);
+	xdr_free(xdr_ypresp_master, (char *)&yprm);
 	_yp_unbind(ysd);
 	return r;
 }
