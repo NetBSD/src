@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cfb,v 1.10 2004/02/13 04:49:00 mhitch Exp $
+#	$NetBSD: Makefile.cfb,v 1.11 2004/03/03 16:11:45 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -12,11 +12,11 @@ LIB=		cfb
 LIB=		cfb${PIXELSIZE}
 .endif
 
-SRCS=		cfb8lineCO.c cfb8lineCP.c cfb8lineG.c cfb8lineX.c \
+SRCS+=		cfb8lineCO.c cfb8lineCP.c cfb8lineG.c cfb8lineX.c \
 		cfb8segC.c cfb8segCS.c cfb8segG.c cfb8segX.c \
 		cfballpriv.c cfbbitblt.c cfbbltC.c cfbbltG.c \
 		cfbbltO.c cfbbltX.c cfbbres.c cfbbresd.c cfbbstore.c \
-		cfbcmap.c cfbcppl.c cfbfillarcC.c cfbfillarcG.c \
+		cfbcppl.c cfbfillarcC.c cfbfillarcG.c \
 		cfbfillrct.c cfbfillsp.c cfbgc.c cfbgetsp.c \
 		cfbglblt8.c cfbhrzvert.c cfbigblt8.c cfbimage.c \
 		cfbline.c cfbmskbits.c cfbpixmap.c cfbply1rctC.c \
@@ -24,8 +24,9 @@ SRCS=		cfb8lineCO.c cfb8lineCP.c cfb8lineG.c cfb8lineX.c \
 		cfbscrinit.c cfbseg.c cfbsetsp.c cfbsolidC.c \
 		cfbsolidG.c cfbsolidX.c cfbtegblt.c cfbtile32C.c \
 		cfbtile32G.c cfbtileoddC.c cfbtileoddG.c cfbwindow.c \
-		cfbzerarcC.c cfbzerarcG.c cfbzerarcX.c \
-		cfbmodule.c
+		cfbzerarcC.c cfbzerarcG.c cfbzerarcX.c
+
+X11XSERVERDIR=	${X11SRCDIR.xc}/programs/Xserver
 
 BUILDSYMLINKS=	cfbline.c cfbseg.c \
 		cfbfillarc.c cfbfillarcC.c \
@@ -53,7 +54,11 @@ BUILDSYMLINKS=	cfbline.c cfbseg.c \
 		cfb8line.c cfb8segX.c \
 		cfb8line.c cfb8segG.c \
 		cfbply1rct.c cfbply1rctC.c \
-		cfbply1rct.c cfbply1rctG.c
+		cfbply1rct.c cfbply1rctG.c \
+		${X11XSERVERDIR}/cfb16/cfbmodule.c cfbmodule16.c \
+		${X11XSERVERDIR}/cfb24/cfbmodule.c cfbmodule24.c \
+		${X11XSERVERDIR}/cfb32/cfbmodule.c cfbmodule32.c
+		
 
 .if ${PIXELSIZE} == 8							# {
 SRCS+=		cfb8bit.c cfbteblt8.c cfbglrop8.c cfbpush8.c cfbrctstp8.c
