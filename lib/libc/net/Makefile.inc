@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.64 2004/08/24 01:41:51 ginsbach Exp $
+#	$NetBSD: Makefile.inc,v 1.65 2004/12/20 03:50:05 itojun Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -83,23 +83,9 @@ MLINKS+=resolver.3 dn_comp.3 resolver.3 dn_expand.3 resolver.3 res_init.3 \
 	resolver.3 res_search.3
 
 # IPv6
-MAN+=	getaddrinfo.3 getnameinfo.3 if_indextoname.3 \
-	inet6_option_space.3 inet6_rthdr_space.3
-MLINKS+=getaddrinfo.3 freeaddrinfo.3 getaddrinfo.3 gai_strerror.3 \
-	getifaddrs.3 freeifaddrs.3 \
+MAN+=	if_indextoname.3
+MLINKS+=getifaddrs.3 freeifaddrs.3 \
 	if_indextoname.3 if_nametoindex.3 if_indextoname.3 if_nameindex.3 \
 	if_indextoname.3 if_freenameindex.3 \
-	inet6_option_space.3 inet6_option_init.3 \
-	inet6_option_space.3 inet6_option_append.3 \
-	inet6_option_space.3 inet6_option_alloc.3 \
-	inet6_option_space.3 inet6_option_next.3 \
-	inet6_option_space.3 inet6_option_find.3 \
-	inet6_rthdr_space.3 inet6_rthdr_init.3 \
-	inet6_rthdr_space.3 inet6_rthdr_add.3 \
-	inet6_rthdr_space.3 inet6_rthdr_lasthop.3 \
-	inet6_rthdr_space.3 inet6_rthdr_reverse.3 \
-	inet6_rthdr_space.3 inet6_rthdr_segments.3 \
-	inet6_rthdr_space.3 inet6_rthdr_getaddr.3 \
-	inet6_rthdr_space.3 inet6_rthdr_getflags.3 \
 	rcmd.3 rcmd_af.3 rcmd.3 iruserok_sa.3 rcmd.3 rresvport_af.3 \
 	rcmd.3 orcmd_af.3
