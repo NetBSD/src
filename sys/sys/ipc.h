@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.19 1999/04/17 20:55:45 kleink Exp $	*/
+/*	$NetBSD: ipc.h,v 1.20 1999/04/17 21:00:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,7 +59,7 @@ struct ipc_perm {
 	unsigned short	mode;	/* r/w permission */
 	unsigned short	seq;	/* sequence # (to generate unique msg/sem/shm
 				   id) */
-	key_t	key;	/* user specified msg/sem/shm key */
+	key_t	key;		/* user specified msg/sem/shm key */
 };
 
 /* X/Open required constants (same values as system 5) */
