@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.10 1998/06/22 22:01:08 sommerfe Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.11 1998/06/24 20:58:47 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -43,7 +43,6 @@
  */
 
 #include "opt_uvm.h"
-#include "opt_fifo.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1297,12 +1296,8 @@ ext2fs_vinit(mntp, specops, fifoops, vpp)
 		}
 		break;
 	case VFIFO:
-#ifdef FIFO
 		vp->v_op = fifoops;
 		break;
-#else
-		return (EOPNOTSUPP);
-#endif
 	case VNON:
 	case VBAD:
 	case VSOCK:
@@ -1527,7 +1522,6 @@ struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
 struct vnodeopv_desc ext2fs_specop_opv_desc =
 	{ &ext2fs_specop_p, ext2fs_specop_entries };
 
-#ifdef FIFO
 int (**ext2fs_fifoop_p) __P((void *));
 struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
@@ -1577,4 +1571,3 @@ struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 };
 struct vnodeopv_desc ext2fs_fifoop_opv_desc =
 	{ &ext2fs_fifoop_p, ext2fs_fifoop_entries };
-#endif /* FIFO */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.59 1998/06/22 22:01:05 sommerfe Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.60 1998/06/24 20:58:46 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,6 @@
 
 #include "fs_nfs.h"
 #include "opt_uvm.h"
-#include "opt_fifo.h"
 
 /*
  * These functions support the macros and help fiddle mbuf chains for
@@ -1561,12 +1560,8 @@ nfs_loadattrcache(vpp, fp, vaper)
 	if (vp->v_type != vtyp) {
 		vp->v_type = vtyp;
 		if (vp->v_type == VFIFO) {
-#ifndef FIFO
-			return (EOPNOTSUPP);
-#else
 			extern int (**fifo_nfsv2nodeop_p) __P((void *));
 			vp->v_op = fifo_nfsv2nodeop_p;
-#endif /* FIFO */
 		}
 		if (vp->v_type == VCHR || vp->v_type == VBLK) {
 			vp->v_op = spec_nfsv2nodeop_p;

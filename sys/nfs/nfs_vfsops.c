@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.74 1998/06/22 22:01:06 sommerfe Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.75 1998/06/24 20:58:46 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -37,8 +37,6 @@
  *
  *	@(#)nfs_vfsops.c	8.12 (Berkeley) 5/20/95
  */
-
-#include "opt_fifo.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -83,16 +81,12 @@ int nfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 
 extern struct vnodeopv_desc nfsv2_vnodeop_opv_desc;
 extern struct vnodeopv_desc spec_nfsv2nodeop_opv_desc;
-#ifdef FIFO
 extern struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc;
-#endif
 
 struct vnodeopv_desc *nfs_vnodeopv_descs[] = {
 	&nfsv2_vnodeop_opv_desc,
 	&spec_nfsv2nodeop_opv_desc,
-#ifdef FIFO
 	&fifo_nfsv2nodeop_opv_desc,
-#endif
 	NULL,
 };
 
