@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.14 2000/06/04 05:27:45 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.15 2000/06/05 21:47:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.14 2000/06/04 05:27:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.15 2000/06/05 21:47:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -66,7 +66,7 @@ intr_typename(int type)
 }
 
 struct alpha_shared_intr *
-alpha_shared_intr_alloc(unsigned int n)
+alpha_shared_intr_alloc(unsigned int n, unsigned int namesize)
 {
 	struct alpha_shared_intr *intr;
 	unsigned int i;
@@ -83,6 +83,14 @@ alpha_shared_intr_alloc(unsigned int n)
 		intr[i].intr_nstrays = 0;
 		intr[i].intr_maxstrays = 5;
 		intr[i].intr_private = NULL;
+		if (namesize != 0) {
+			intr[i].intr_string = malloc(namesize, M_DEVBUF,
+			    cold ? M_NOWAIT : M_WAITOK);
+			if (intr[i].intr_string == NULL)
+				panic("alpha_shared_intr_alloc: couldn't "
+				    "malloc intr string");
+		} else
+			intr[i].intr_string = NULL;
 	}
 
 	return (intr);
@@ -93,6 +101,8 @@ alpha_shared_intr_dispatch(struct alpha_shared_intr *intr, unsigned int num)
 {
 	struct alpha_shared_intrhand *ih;
 	int rv, handled;
+
+	atomic_add_ulong(&intr[num].intr_evcnt.ev_count, 1);
 
 	ih = intr[num].intr_q.tqh_first;
 	handled = 0;
@@ -256,4 +266,20 @@ alpha_shared_intr_get_private(struct alpha_shared_intr *intr,
 {
 
 	return (intr[num].intr_private);
+}
+
+struct evcnt *
+alpha_shared_intr_evcnt(struct alpha_shared_intr *intr,
+    unsigned int num)
+{
+
+	return (&intr[num].intr_evcnt);
+}
+
+char *
+alpha_shared_intr_string(struct alpha_shared_intr *intr,
+    unsigned int num)
+{
+
+	return (intr[num].intr_string);
 }

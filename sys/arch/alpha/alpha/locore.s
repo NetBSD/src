@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.76 2000/06/03 20:47:37 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.77 2000/06/05 21:47:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,11 +76,8 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.76 2000/06/03 20:47:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.77 2000/06/05 21:47:13 thorpej Exp $");
 
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
 #include "assym.h"
 
 .stabs	__FILE__,132,0,0,kernel_text
@@ -1826,24 +1823,13 @@ XLEAF(suswintr, 2)				/* XXX what is a 'word'? */
  * Some bogus data, to keep vmstat happy, for now.
  */
 
-	.data
+	.section .rodata
 EXPORT(intrnames)
-	.asciz	"clock"
-intr_n = 0
-.rept INTRCNT_COUNT
-	.ascii "intr "
-	.byte intr_n / 10 + '0, intr_n % 10 + '0
-	.asciz "       "		# space for platform-specific rewrite
-	intr_n = intr_n + 1
-.endr
+	.quad	0
 EXPORT(eintrnames)
-	.align 3
 EXPORT(intrcnt)
-	.fill INTRCNT_COUNT + 1, 8, 0
+	.quad	0
 EXPORT(eintrcnt)
-#ifdef EVCNT_COUNTERS
-	.err
-#endif
 	.text
 
 /**************************************************************************/

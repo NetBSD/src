@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.211 2000/06/03 20:47:37 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.212 2000/06/05 21:47:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211 2000/06/03 20:47:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212 2000/06/05 21:47:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,16 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211 2000/06/03 20:47:37 thorpej Exp $"
 #endif
 
 #include <machine/alpha.h>
-#include <machine/intrcnt.h>
-
-#include "com.h"
-#if NCOM > 0
-extern void comsoft __P((void));
-#endif
-#include "zsc_ioasic.h"
-#if NZSC_IOASIC > 0
-extern void zs_ioasic_softintr __P((void));
-#endif
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;

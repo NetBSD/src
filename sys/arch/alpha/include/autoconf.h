@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.17 2000/06/01 00:49:49 matt Exp $ */
+/* $NetBSD: autoconf.h,v 1.18 2000/06/05 21:47:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -108,10 +108,6 @@ struct alpha_variation_table {
 };
 
 #ifdef _KERNEL
-#ifdef EVCNT_COUNTERS
-extern struct evcnt clock_intr_evcnt;
-#endif
-
 extern int booted_partition;
 extern struct bootdev_data *bootdev_data;
 extern struct bootinfo_kernel bootinfo;

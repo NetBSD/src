@@ -1,28 +1,29 @@
-/* $NetBSD: pci_a12.h,v 1.3 2000/06/05 21:47:23 thorpej Exp $ */
+/* $NetBSD: cpuvar.h,v 1.1 2000/06/05 21:47:18 thorpej Exp $ */
 
-/* [Notice revision 2.0]
- * Copyright (c) 1997 Avalon Computer Systems, Inc.
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Author: Ross Harvey
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 1. Redistributions of source code must retain the above copyright and
- *    author notice, this list of conditions, and the following disclaimer.
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of Avalon Computer Systems, Inc. nor the names of
- *    its contributors may be used to endorse or promote products derived
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- * 4. This copyright will be assigned to The NetBSD Foundation on
- *    1/1/2000 unless these terms (including possibly the assignment
- *    date) are updated in writing by Avalon prior to the latest specified
- *    assignment date.
  *
- * THIS SOFTWARE IS PROVIDED BY AVALON COMPUTER SYSTEMS, INC. AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
@@ -35,10 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ALPHA_PCI_PCI_A12_H_
-
-#define	PCI_A12_H()	/* Generate ctags(1) key */
-
-void	pci_a12_pickintr __P((struct a12c_config *));
-
+struct cpu_softc {
+	struct device sc_dev;		/* base device */
+	struct evcnt sc_evcnt_clock;	/* clock interrupts */
+	struct evcnt sc_evcnt_device;	/* device interrupts */
+#if defined(MULTIPROCESSOR)
+	struct evcnt sc_evcnt_ipi;	/* interprocessor interrupts */
 #endif
+};
