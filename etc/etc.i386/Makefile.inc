@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.38 2003/01/04 15:49:31 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.39 2004/07/23 15:25:04 he Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -21,4 +21,6 @@ snap_md_post:
 
 # For "make iso-image"
 # mkisofs arguments to generate bootable iso image
-MKISOFS_FLAGS+=	-b ${MACHINE}/installation/floppy/boot-big.fs -c boot.catalog
+CDROM_BOOT_IMAGE?=	boot-big.fs
+
+MKISOFS_FLAGS+=	-b ${MACHINE}/installation/floppy/${CDROM_BOOT_IMAGE} -c boot.catalog
