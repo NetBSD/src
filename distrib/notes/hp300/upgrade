@@ -17,7 +17,7 @@ through the procedure.  The upgrade program will:
 
 	* Make new device nodes in your root filesystem.
 
-	* Copy a new kernel onto your root partition.
+	* Don't forget to extract the `kern' set from the distribution.
 	  NOTE: the existing kernel WILL NOT be backed up; doing
 	  so would be pointless, since older kernels may not be
 	  capable of running NetBSD _VER executables.
@@ -63,7 +63,7 @@ manually.  To do this, follow the following procedure:
 	  the `base' binary set:
 
 		cd /
-		tar --unlink -zxvpf /path/to/base11.tar.gz
+		tar --unlink -zxvpf /path/to/base.tgz
 
 	  NOTE: the `--unlink' option is _very_ important!
 
