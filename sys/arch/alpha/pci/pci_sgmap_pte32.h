@@ -1,4 +1,4 @@
-/* $NetBSD: pci_sgmap_pte32.h,v 1.2 1997/06/06 23:59:27 thorpej Exp $ */
+/* $NetBSD: pci_sgmap_pte32.h,v 1.3 1998/03/23 07:09:12 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #define	SGMAP_TYPE		pci_sgmap_pte32
 #define	SGMAP_PTE_TYPE		u_int32_t
-#define	SGMAP_PTE_SPACING	1
+#define	SGMAP_PTE_SPACING	0x20
 
 /*
  * A 32-bit PCI SGMAP page table entry looks like this:
