@@ -1,4 +1,4 @@
-/* $NetBSD: ascvar.h,v 1.5 1998/05/24 23:41:43 thorpej Exp $ */
+/* $NetBSD: ascvar.h,v 1.6 1998/05/26 23:37:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct asc_softc {
+struct asc_tcds_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
 
 	bus_space_tag_t sc_bst;			/* bus space tag */
