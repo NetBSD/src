@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.57 1999/05/14 18:44:50 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.58 1999/05/17 19:26:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -951,6 +951,13 @@ linux_sys_clone(p, v, retval)
 		flags |= FORK_PPWAIT;
 
 	sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
+	if (sig < 0 || sig >= LINUX_NSIG)
+		return (EINVAL);
+	sig = linux_to_native_sig[sig];
+
+	/* XXX Is this the right thing? */
+	if (sig == 0)
+		sig = SIGCHLD;
 
 	/*
 	 * Note that Linux does not provide a portable way of specifying
