@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.7 1997/07/06 18:25:24 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.8 1997/12/20 19:15:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.7 1997/07/06 18:25:24 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.8 1997/12/20 19:15:50 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -100,8 +100,10 @@ el_init(prog, fin, fout)
     /*
      * Initialize all the modules. Order is important!!!
      */
+    el->el_flags = 0;
     (void) term_init(el);
-    (void) tty_init(el);
+    if (tty_init(el) == -1)
+	el->el_flags |= NO_TTY;
     (void) key_init(el);
     (void) map_init(el);
     (void) ch_init(el);
@@ -109,7 +111,6 @@ el_init(prog, fin, fout)
     (void) hist_init(el);
     (void) prompt_init(el);
     (void) sig_init(el);
-    el->el_flags = 0;
 
     return el;
 } /* end el_init */
