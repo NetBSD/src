@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.3 1997/01/09 20:20:17 tls Exp $	*/
+/*	$NetBSD: lexi.c,v 1.4 1997/09/09 09:28:19 agc Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lexi.c	5.16 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$NetBSD: lexi.c,v 1.3 1997/01/09 20:20:17 tls Exp $";
+static char rcsid[] = "$NetBSD: lexi.c,v 1.4 1997/09/09 09:28:19 agc Exp $";
 #endif /* not lint */
 
 /*
@@ -61,7 +61,7 @@ struct templ {
     int         rwcode;
 };
 
-struct templ specials[100] =
+struct templ specials[1000] =
 {
     "switch", 1,
     "case", 2,
