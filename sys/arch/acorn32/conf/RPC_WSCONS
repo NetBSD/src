@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.4 2001/11/20 12:56:18 lukem Exp $
+#	$NetBSD: RPC_WSCONS,v 1.5 2001/12/22 23:17:35 cjep Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -249,8 +249,8 @@ scsibus* at cosc?
 ptsc*	at podulebus?			# Power-Tec SCSI II card
 scsibus* at ptsc?
 
-csc*	at podulebus?			# Cumana SCSI II card
-scsibus* at csc?
+#csc*	at podulebus?			# Cumana SCSI II card
+#scsibus* at csc?			# Not currently working
 
 oak*	at podulebus?			# Oak SCSI I card
 scsibus* at oak?
