@@ -1,4 +1,4 @@
-/*	$NetBSD: text.c,v 1.3 1995/03/21 15:05:13 cgd Exp $	*/
+/*	$NetBSD: text.c,v 1.4 1995/04/29 00:44:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)text.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: text.c,v 1.3 1995/03/21 15:05:13 cgd Exp $";
+static char rcsid[] = "$NetBSD: text.c,v 1.4 1995/04/29 00:44:06 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ char	**t;
 	register int	i;
 	register char	*s, *a;
 
-	fixtty (noech);
+	fixtty (&noech);
 	while (*t != 0)  {
 		s = a = *t;
 		for (i = 0; *a != '\0'; i--)
@@ -127,12 +127,12 @@ char	**t;
 			writec ('\n');
 		} else  {
 			writel ("-->");
-			fixtty (raw);
+			fixtty (&raw);
 			while ((i = readc()) != ' ' && i != '\n');
-			fixtty (noech);
+			fixtty (&noech);
 			clear();
 		}
 		t++;
 	}
-	fixtty (raw);
+	fixtty (&raw);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: back.h,v 1.4 1995/04/24 12:22:06 cgd Exp $	*/
+/*	$NetBSD: back.h,v 1.5 1995/04/29 00:44:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,7 +35,7 @@
  *	@(#)back.h	8.1 (Berkeley) 5/31/93
  */
 
-#include <sgtty.h>
+#include <termios.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -118,10 +118,7 @@ char	**colorptr;		/* color of current player */
 char	**Colorptr;		/* color of current player, capitalized */
 int	colen;			/* length of color of current player */
 
-struct sgttyb	tty;		/* tty information buffer */
-int		old;		/* original tty status */
-int		noech;		/* original tty status without echo */
-int		raw;		/* raw tty status, no echo */
+struct termios	old, noech, raw;/* original tty status */
 
 int	curr;			/* row position of cursor */
 int	curc;			/* column position of cursor */

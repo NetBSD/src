@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.3 1995/03/21 15:05:58 cgd Exp $	*/
+/*	$NetBSD: table.c,v 1.4 1995/04/29 00:44:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: table.c,v 1.3 1995/03/21 15:05:58 cgd Exp $";
+static char rcsid[] = "$NetBSD: table.c,v 1.4 1995/04/29 00:44:16 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,11 +118,11 @@ dochar:
 		}
 	}
 
-	if (c == tty.sg_erase && ncin > 0)  {
+	if (c == old.c_cc[VERASE] && ncin > 0)  {
 		if (tflag)
 			curmove (curr,curc-1);
 		else  {
-			if (tty.sg_erase == '\010')
+			if (old.c_cc[VERASE] == '\010')
 				writel ("\010 \010");
 			else
 				writec (cin[ncin-1]);
@@ -139,13 +139,13 @@ dochar:
 		goto domove;
 	}
 
-	if (c == tty.sg_kill && ncin > 0)  {
+	if (c == old.c_cc[VKILL] && ncin > 0)  {
 		if (tflag)  {
 			refresh();
 			curmove (curr,39);
 			ist = -1;
 			goto domove;
-		} else  if (tty.sg_erase == '\010')  {
+		} else  if (old.c_cc[VERASE] == '\010')  {
 			for (j = 0; j < ncin; j++)
 				writel ("\010 \010");
 			ist = -1;
