@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2000/04/22 17:06:06 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.61 2000/05/24 20:24:58 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -169,7 +169,7 @@ int bus_type_asi[] = {
 int bus_type_asi[] = {
 	ASI_PRIMARY,
 	ASI_PRIMARY,
-	ASI_PRIMARY,
+	ASI_PHYS_NON_CACHED_LITTLE,		/* PCI configuration space */
 	ASI_PRIMARY,
 	ASI_PRIMARY,
 	0
@@ -1234,6 +1234,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		/* Nothing to do */
 		break;
 	default:
+		__asm("membar #Sync" : );
 		printf("_bus_dmamap_sync: unknown sync op\n");
 	}
 }
@@ -1480,6 +1481,7 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 	paddr_t	pm_flags;
 static	vaddr_t iobase = IODEV_BASE;
 
+	t->type = iospace;
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
 
@@ -1487,6 +1489,28 @@ static	vaddr_t iobase = IODEV_BASE;
 	if (size == 0) {
 		printf("sparc_bus_map: zero size\n");
 		return (EINVAL);
+	}
+	switch (iospace) {
+	case PCI_CONFIG_BUS_SPACE:
+		/* 
+		 * PCI config space is special.
+		 *
+		 * It's really big and seldom used.  In order not to run
+		 * out of IO mappings, config space will not be mapped in,
+		 * rather it will be accessed through MMU bypass ASI accesses.
+		 */
+		*hp = (bus_space_handle_t)addr;
+		if (!vaddr) return (0);
+		/* FALLTHROUGH */
+	case PCI_IO_BUS_SPACE:
+		pm_flags = PMAP_NC|PMAP_LITTLE;
+		break;
+	case PCI_MEMORY_BUS_SPACE:
+		pm_flags = PMAP_LITTLE|PMAP_NC;
+		break;
+	default:
+		pm_flags = PMAP_NC;
+		break;
 	}
 
 	if (vaddr)
@@ -1507,18 +1531,6 @@ static	vaddr_t iobase = IODEV_BASE;
 	printf("\nsparc_bus_map: type %x addr %016llx virt %llx paddr %016llx\n",
 		       (int)iospace, (u_int64_t)addr, (u_int64_t)*hp, (u_int64_t)pa);
 #endif
-	switch (iospace) {
-	case PCI_CONFIG_BUS_SPACE:
-	case PCI_IO_BUS_SPACE:
-		pm_flags = PMAP_NC|PMAP_LITTLE;
-		break;
-	case PCI_MEMORY_BUS_SPACE:
-		pm_flags = PMAP_LITTLE|PMAP_NC;
-		break;
-	default:
-		pm_flags = PMAP_NC;
-		break;
-	}
 
 	do {
 #ifdef NOTDEF_DEBUG
@@ -1576,14 +1588,14 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 	void		*arg;
 {
 	bus_space_handle_t bh;
-	caddr_t tmp;
+	paddr_t tmp;
 	int result;
 
 	if (bus_space_map2(tag, btype, paddr, size, flags, TMPMAP_VA, &bh) != 0)
 		return (0);
 
-	tmp = (caddr_t)(u_long)bh;
-	result = (probeget((u_long)tmp + offset, bus_type_asi[tag->type], size) != -1);
+	tmp = (paddr_t)bh;
+	result = (probeget(tmp + offset, bus_type_asi[tag->type], size) != -1);
 	if (result && callback != NULL)
 		result = (*callback)(tmp, arg);
 	bus_space_unmap(tag, bh, size);
