@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.329 2004/07/10 16:39:28 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.330 2004/07/10 20:05:01 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5345,4 +5345,11 @@ sys/arch/sparc/sparc/timer_sun4m.c		1.10
 	Revision 1.27 of clock.c applies to the Intersil interrupt, not
 	sun4m timers.
 	[pk, ticket #637]
+
+sys/nfs/nfs_vnops.c				1.204 via patch
+
+	nfs_create: after an exclusive create rpc, make sure to update
+	timestamps, which were likely used to store the verifier.
+	reported by Mark Davies.  PR/26200
+	[yamt, ticket #636]
 
