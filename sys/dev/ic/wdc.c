@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.91.2.4 2003/01/23 08:23:14 msaitoh Exp $ */
+/*	$NetBSD: wdc.c,v 1.91.2.5 2003/10/06 09:24:57 itojun Exp $ */
 
 
 /*
@@ -367,7 +367,7 @@ wdcattach(chp)
 			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
 			    wd_cyl_lo, 0xa5);
 			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-			        wd_error == 0x58) ||
+			        wd_error) == 0x58 ||
 			    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
 				wd_cyl_lo) != 0xa5) {
 				WDCDEBUG_PRINT(("%s:%d:%d: register "
