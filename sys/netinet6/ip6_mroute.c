@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.46 2003/05/16 03:56:49 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.47 2003/06/06 06:52:29 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.46 2003/05/16 03:56:49 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.47 2003/06/06 06:52:29 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -1413,6 +1413,8 @@ ip6_mdq(m, ifp, rt)
 	 */
 	for (mifp = mif6table, mifi = 0; mifi < nummifs; mifp++, mifi++)
 		if (IF_ISSET(mifi, &rt->mf6c_ifset)) {
+			if (mif6table[mifi].m6_ifp == NULL)
+				continue;
 #ifdef notyet
 			/*
 			 * check if the outgoing packet is going to break
