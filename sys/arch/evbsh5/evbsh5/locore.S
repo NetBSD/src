@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2002/10/04 09:23:27 scw Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2002/10/08 15:52:02 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -140,7 +140,7 @@ Lmapped_start:
 	 * void pmap_bootstrap(vaddr_t avail, paddr_t kseg0base,
 	 *                     struct mem_region *mr);
 	 */
-	LDSC32(0x80000000, r3)
+	LDUC32(0x80000000, r3)
 	LEA(Lmem_regions, r4)
 	LEAF(_C_LABEL(pmap_bootstrap), r0)
 	ptabs/l	r0, tr0
@@ -365,3 +365,31 @@ Lsh5_event_panic:
 GLOBAL(_evbsh5_dtf_buffer)
 	.space	4096,0
 #endif
+
+	.data
+	.balign 4
+
+/*
+ * Interrupt names for Cayman
+ *
+ * These are here because some userland tools insist on grovelling
+ * for intrnames/eintrnames.
+ */
+GLOBAL(intrnames)
+	.asciz	"spurious"
+	.asciz	"softmisc"
+	.asciz	"softclock"
+	.asciz	"softnet"
+	.asciz	"irq4"
+	.asciz	"isa-lan"
+	.asciz	"pci"
+	.asciz	"irq7"
+	.asciz	"irq8"
+	.asciz	"irq9"
+	.asciz	"softserial"
+	.asciz	"irq11"
+	.asciz	"scif"
+	.asciz	"irq13"
+	.asciz	"clock"
+	.asciz	"irq15"
+GLOBAL(eintrnames)
