@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 1998/12/21 21:58:19 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 1998/12/29 06:27:59 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -165,7 +165,7 @@ initppc(startkernel, endkernel, args)
 	int exc, scratch;
 
 	int chosen, mmu, mode, exists;
-	u_int32_t ofw_pa;
+	u_int32_t ofw_pa1, ofw_pa2;
 
 	/*
 	 * Read translations for Openfirmware call.
@@ -173,7 +173,11 @@ initppc(startkernel, endkernel, args)
 	chosen = OF_finddevice("/chosen");
 	OF_getprop(chosen, "mmu", &mmu, 4);
 	OF_call_method("translate", mmu, 1, 3,
-		       0xff800000, &ofw_pa, &mode, &exists);
+		       0xff800000, &ofw_pa1, &mode, &exists);
+	OF_call_method("translate", mmu, 1, 3,
+		       0xff900000, &ofw_pa2, &mode, &exists);
+	if (exists == 0)
+		ofw_pa2 = -1;
 
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
@@ -235,8 +239,13 @@ initppc(startkernel, endkernel, args)
 		      :: "r"(BATL(0x80000000, BAT_I)), "r"(BATU(0x80000000)));
 
 	/* Open Firmware working area */
-	ofbat.batl = ofw_pa | 0x02;
-	ofbat.batu = 0xff80001e;		/* 1MB */
+	/* iMac   ff800000 - (00200000) -> XXe00000 */
+	/* others ff800000 - (00100000) -> XXf00000 */
+	ofbat.batl = ofw_pa1 | 0x02;
+	if (ofw_pa2 == -1)
+		ofbat.batu = 0xff80001e;		/* 1MB */
+	else
+		ofbat.batu = 0xff80003e;		/* 2MB (iMac) */
 
 	/*
 	 * Set up trap vectors
@@ -1095,7 +1104,12 @@ cninit()
 
 #if NOFB > 0
 	if (strcmp(type, "display") == 0) {
+#if NAKBD > 0
 		akbd_cnattach();
+#endif
+#if 0
+		ukbd_cnattach();
+#endif
 		ofb_cnattach();		/* XXX error check? */
 		return;
 	}
