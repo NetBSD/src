@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.28 2001/06/16 08:28:39 jdolecek Exp $	*/
+/*	$NetBSD: file.h,v 1.29 2001/12/06 22:34:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -83,19 +83,15 @@ struct file {
 	} *f_ops;
 	off_t		f_offset;
 	caddr_t		f_data;		/* vnode or socket */
-	int		f_iflags;	/* internal flags */
+	int		_f_spare0;	/* was: internal flags */
 	int		f_usecount;	/* number active users */
 };
 
-#define	FIF_WANTCLOSE		0x01	/* a close is waiting for usecount */
-#define	FIF_LARVAL		0x02	/* not fully constructed; don't use */
-
-#define	FILE_IS_USABLE(fp)	(((fp)->f_iflags &			\
-				  (FIF_WANTCLOSE|FIF_LARVAL)) == 0)
+#define	FILE_IS_USABLE(fp)	(((fp)->f_flag & (FWANTCLOSE|FLARVAL)) == 0)
 
 #define	FILE_SET_MATURE(fp)						\
 do {									\
-	(fp)->f_iflags &= ~FIF_LARVAL;					\
+	(fp)->f_flag &= ~FLARVAL;					\
 } while (/*CONSTCOND*/0)
 
 #ifdef DIAGNOSTIC
@@ -116,7 +112,7 @@ do {									\
 
 #define	FILE_UNUSE(fp, p)						\
 do {									\
-	if ((fp)->f_iflags & FIF_WANTCLOSE) {				\
+	if ((fp)->f_flag & FWANTCLOSE) {				\
 		/* Will drop usecount */				\
 		(void) closef((fp), (p));				\
 	} else {							\
