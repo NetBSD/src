@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.119 1997/11/05 18:13:13 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.120 1997/11/11 05:53:06 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -329,7 +329,7 @@ sm*	at pcmcia? function ?		# Megahertz Ethernet
 
 # ISA network interfaces
 ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
-#eg0	at isa? ...				# 3C505 ethernet cards
+eg0	at isa? port 0x280 irq 9		# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 fe0	at isa? port 0x2a0 irq ?		# AT1700
