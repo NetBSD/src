@@ -1,4 +1,4 @@
-/*	$NetBSD: post.c,v 1.11 2003/03/09 01:08:48 lukem Exp $	*/
+/*	$NetBSD: post.c,v 1.12 2003/04/19 12:52:39 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: post.c,v 1.11 2003/03/09 01:08:48 lukem Exp $");
+__RCSID("$NetBSD: post.c,v 1.12 2003/04/19 12:52:39 blymn Exp $");
 
 #include <menu.h>
 #include <stdlib.h>
@@ -54,13 +54,6 @@ post_menu(MENU *menu)
 		return E_NOT_CONNECTED;
 
 	menu->in_init = 1;
-	menu->cur_item = 0; /* reset current item in case it was set before */
-	menu->top_row = 0; /* and the top row too */
-	if (menu->pattern != NULL) { /* and the pattern buffer....sigh */
-		free(menu->pattern);
-		menu->plen = 0;
-		menu->match_len = 0;
-	}
 	
 	if (menu->menu_init != NULL)
 		menu->menu_init(menu);
