@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.33 2001/11/08 02:10:26 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.34 2002/02/03 14:56:00 lukem Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -38,7 +38,7 @@ realall:	netbsd boot
 		disks=$$(($$size / $$dksize + 1)); \
 		if test $$size -gt $$dksize; then \
                 	bytes=$$(($$size - $$dksize));    \
-			echo "Image is $$bytes ($$(($$bytes / 1024))K) too big \
+			echo "Image is $$bytes ($$(($$bytes / 1024))K) too big\
 				to fit on one disk."; \
 			exit 1; \
 		else \
@@ -48,8 +48,8 @@ realall:	netbsd boot
 		echo; \
                 bytes=$$(($$dksize * $$disks - $$size));    \
 		if test "${PAD}" = "yes"; then \
-			bytes=$$(($$bytes + 8 * 1024)); \
-			echo "Padding image with $$bytes bytes"; \
+			size=$$(($$size + 8 * 1024)); \
+			echo "Padding image with $$bytes bytes from $$size"; \
 			sectors=$$(($$bytes / 512)); \
 			ssize=$$(($$size / 512)); \
 			dd if=/dev/zero bs=512 seek=$${ssize} of=${IMAGE}.tmp \
