@@ -1,4 +1,4 @@
-/*	$NetBSD: userauth.c,v 1.2 2000/05/03 11:40:20 veego Exp $	*/
+/*	$NetBSD: userauth.c,v 1.2.4.1 2002/02/09 16:55:36 he Exp $	*/
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -23,7 +23,7 @@ main()
 	char yn[16];
 	int fd;
 
-	fd = open(IPL_NAME, O_RDWR);
+	fd = open(IPL_AUTH, O_RDWR);
 	while (ioctl(fd, SIOCAUTHW, &frap) == 0) {
 		if (fra.fra_info.fin_out)
 			fra.fra_pass = FR_OUTQUE;

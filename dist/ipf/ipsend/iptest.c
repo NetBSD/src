@@ -1,4 +1,4 @@
-/*	$NetBSD: iptest.c,v 1.2 2000/05/03 11:40:19 veego Exp $	*/
+/*	$NetBSD: iptest.c,v 1.2.4.1 2002/02/09 16:55:35 he Exp $	*/
 
 /*
  * ipsend.c (C) 1995-1998 Darren Reed
@@ -8,14 +8,8 @@
  * conditions, enough of the TCP header is missing for unpredictable
  * results unless the filter is aware that this can happen.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
-#if !defined(lint)
-static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptest.c,v 2.2 1999/12/04 03:37:05 darrenr Exp";
-#endif
 #include <stdio.h>
 #include <netdb.h>
 #include <unistd.h>
@@ -39,6 +33,11 @@ static const char rcsid[] = "@(#)Id: iptest.c,v 2.2 1999/12/04 03:37:05 darrenr 
 #include <linux/sockios.h>
 #endif
 #include "ipsend.h"
+
+#if !defined(lint)
+static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: iptest.c,v 2.2.2.2 2001/07/15 22:00:14 darrenr Exp";
+#endif
 
 
 extern	char	*optarg;
