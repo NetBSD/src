@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.39 2004/01/02 16:12:36 lukem Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.40 2004/01/27 03:31:48 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -100,7 +100,7 @@ CPPFLAGS:=	${HOST_CPPFLAGS}
 
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
-	${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
+	${LINT} ${LINTFLAGS} ${LDFLAGS:C/-L[  ]*/-L/Wg:M-L*} ${LOBJS} ${LDADD}
 .endif
 
 ##### Pull in related .mk logic
