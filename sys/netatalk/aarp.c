@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.14 2003/06/23 11:02:12 martin Exp $	*/
+/*	$NetBSD: aarp.c,v 1.15 2005/01/08 03:11:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.14 2003/06/23 11:02:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.15 2005/01/08 03:11:03 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -82,10 +82,6 @@ struct aarptab  aarptab[AARPTAB_SIZE];
 #define AARPT_AGE	(60 * 1)
 #define AARPT_KILLC	20
 #define AARPT_KILLI	3
-
-#if !defined( __FreeBSD__ )
-extern u_char   etherbroadcastaddr[6];
-#endif	/* __FreeBSD__ */
 
 const u_char atmulticastaddr[6] = {
 	0x09, 0x00, 0x07, 0xff, 0xff, 0xff
