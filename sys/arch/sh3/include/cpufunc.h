@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.8 2002/02/08 06:11:16 uch Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.9 2002/02/11 18:03:05 uch Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -48,6 +48,11 @@
 #include <sh3/mmureg.h>
 
 #ifdef _KERNEL
+
+void enable_ext_intr(void);
+void disable_ext_intr(void);
+static __inline void breakpoint(void);
+
 /*
  * memory-mapped register access method.
  */
@@ -71,17 +76,9 @@
 	_wb_flush();							\
 }
 
-void enable_ext_intr __P((void));
-void disable_ext_intr __P((void));
-static __inline void setPageDir __P((int));
-static __inline void cache_clear __P((int));
-static __inline void breakpoint __P((void));
-
 static __inline void
 tlbflush(void)
 {
-/* #define CACHE_FLUSH 0x80 */
-
 #ifdef SH4
 	SHREG_MMUCR = (SHREG_MMUCR | MMUCR_TF) & MMUCR_VALIDBITS;
 	__asm __volatile("nop");
@@ -95,48 +92,8 @@ tlbflush(void)
 #else
 	SHREG_MMUCR |= MMUCR_TF;
 #endif
-
-/*   SHREG_CCR |= CACHE_FLUSH; */
 }
 
-static __inline void
-cacheflush(void)
-{
-#if 1
-	volatile int *p = (int *)ram_start;
-	int i;
-	int d;
-
-	for(i = 0; i < 512; i++){
-		d = *p;
-		p += 8;
-	}
-#else
-#define CACHE_FLUSH 0x809
-
-	SHREG_CCR |= CACHE_FLUSH; 
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-#endif
-}
-
-static __inline void
-setPageDir(pagedir)
-	int pagedir;
-{
-
-	PageDirReg = pagedir;
-	tlbflush();
-#ifdef SH4
-	SHREG_TTB = pagedir;
-#endif
-}
 
 /* XXXX ought to be in psl.h with spl() functions */
 
@@ -174,20 +131,10 @@ enable_intr(void)
 }
 
 static __inline void
-cache_clear(va)
-	int va;
-{
-#ifdef SH4
-	__asm __volatile("ocbp @%0" :: "r"(va));
-#endif
-}
-
-static __inline void
 breakpoint()
 {
 	__asm __volatile ("trapa #0xc3");
 }
 
-#endif
-
+#endif /* _KERNEL */
 #endif /* !_SH3_CPUFUNC_H_ */
