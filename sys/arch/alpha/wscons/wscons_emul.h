@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons_emul.h,v 1.2 1996/04/12 06:10:32 cgd Exp $	*/
+/* $NetBSD: wscons_emul.h,v 1.3 1997/04/06 20:08:31 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
