@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.15 1999/08/26 21:48:11 thorpej Exp $ */
+/*	 $NetBSD: rasops.c,v 1.16 1999/08/26 22:44:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.15 1999/08/26 21:48:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.16 1999/08/26 22:44:29 thorpej Exp $");
 
 #include "rasops_glue.h"
 
@@ -406,7 +406,7 @@ rasops_alloc_mattr(cookie, fg, bg, flg, attr)
 	if (flg & WSATTR_BLINK)
 		return (EINVAL);
 		
-	if ((flg & WSATTR_REVERSE) != 0) {
+	if (flg & WSATTR_REVERSE) {
 		swap = fg;
 		fg = bg;
 		bg = swap;
