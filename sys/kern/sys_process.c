@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.5 2001/11/14 19:16:43 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.6 2001/11/29 01:27:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.5 2001/11/14 19:16:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.6 2001/11/29 01:27:53 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,16 +218,16 @@ sys_ptrace(l, v, retval)
 	/* Do single-step fixup if needed. */
 	FIX_SSTEP(t);
 
-	/* XXX NJWLWP
-	 * The entire ptrace interface needs work to be useful to
-	 * a process with multiple LWPs. For the moment, we'll 
-	 * just kluge this and fail on others.
+	/*
+	 * XXX NJWLWP
+	 *
+	 * The entire ptrace interface needs work to be useful to a
+	 * process with multiple LWPs. For the moment, we'll kluge
+	 * this; memory access will be fine, but register access will
+	 * be weird.
 	 */
 
-	if (p->p_nlwps > 1)
-		return (ENOSYS);
-
-	lt = LIST_FIRST(&t->p_lwps);
+	lt = proc_representative_lwp(t);
 
 	/* Now do the operation. */
 	write = 0;
