@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90 1997/04/04 20:48:59 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.91 1997/04/09 20:49:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -640,6 +640,7 @@ dumpsys()
 	struct bdevsw *dsw;
 	kcore_seg_t	*kseg_p;
 	cpu_kcore_hdr_t *chdr_p;
+	struct sun3_kcore_hdr *sh;
 	char *vaddr;
 	vm_offset_t paddr;
 	int psize, todo, chunk;
@@ -685,9 +686,17 @@ dumpsys()
 	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
 	kseg_p->c_size = (ctob(DUMP_EXTRA) - sizeof(kcore_seg_t));
 
-	/* MMU state */
+	/* MMU state and dispatch info */
 	chdr_p = (cpu_kcore_hdr_t *) (kseg_p + 1);
-	pmap_get_ksegmap(chdr_p->ksegmap);
+	sh = &chdr_p->un._sun3;
+	strcpy(chdr_p->name, machine);
+	chdr_p->page_size = NBPG;
+	chdr_p->kernbase = KERNBASE;
+	sh->segshift = SEGSHIFT;
+	sh->pg_frame = PG_FRAME;
+	sh->pg_valid = PG_VALID;
+	pmap_get_ksegmap(sh->ksegmap);
+	/* XXX What about the ram_segs? */
 	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 	if (error)
 		goto fail;
