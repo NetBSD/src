@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.2 1997/01/11 06:48:06 lukem Exp $	*/
+/*	$NetBSD: read.c,v 1.3 1997/01/14 04:17:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: read.c,v 1.2 1997/01/11 06:48:06 lukem Exp $";
+static char rcsid[] = "$NetBSD: read.c,v 1.3 1997/01/14 04:17:25 lukem Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -384,6 +384,11 @@ el_gets(el, nread)
 	    el->el_state.doingarg = 0;
 	    re_refresh_cursor(el);
 	    break;
+
+	case CC_REDISPLAY:
+	    re_clear_lines(el);
+	    re_clear_display(el);
+		/* FALLTHROUGH */
 
 	case CC_REFRESH:
 	    el->el_state.argument = 1;
