@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.7 2002/12/06 05:46:47 simonb Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.8 2003/05/25 14:08:21 tsutsui Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -101,7 +101,7 @@ const u_int32_t ipl_sr_bits[_IPL_N] = {
  * given software interrupt priority level.
  * Hardware ipls are port/board specific.
  */
-const u_int32_t ipl_si_to_sr[_IPL_NSOFT] = {
+const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
 	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */

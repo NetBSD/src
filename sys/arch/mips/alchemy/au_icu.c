@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.5 2003/04/01 17:28:24 hpeyerl Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.6 2003/05/25 14:08:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ const u_int32_t ipl_sr_bits[_IPL_N] = {
  * given software interrupt priority level.
  * Hardware ipls are port/board specific.
  */
-const u_int32_t ipl_si_to_sr[_IPL_NSOFT] = {
+const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTNET */
