@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.19 1998/07/28 11:41:49 mycroft Exp $	*/
+/*	$NetBSD: mv.c,v 1.20 1998/11/04 18:56:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.19 1998/07/28 11:41:49 mycroft Exp $");
+__RCSID("$NetBSD: mv.c,v 1.20 1998/11/04 18:56:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -279,7 +279,11 @@ err:		if (unlink(to))
 
 	TIMESPEC_TO_TIMEVAL(&tval[0], &sbp->st_atimespec);
 	TIMESPEC_TO_TIMEVAL(&tval[1], &sbp->st_mtimespec);
+#ifdef __SVR4
+	if (utimes(to, tval))
+#else
 	if (futimes(to_fd, tval))
+#endif
 		warn("%s: set times", to);
 	if (fchown(to_fd, sbp->st_uid, sbp->st_gid)) {
 		if (errno != EPERM)
