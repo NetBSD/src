@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)vmstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: vmstat.c,v 1.19 1995/04/17 00:00:29 ragge Exp $";
+static char *rcsid = "$Id: vmstat.c,v 1.20 1995/04/29 05:59:11 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -732,14 +732,14 @@ dointr()
 	}
 	kread(X_ALLEVENTS, &allevents, sizeof allevents);
 	while (allevents) {
-		if (kvm_read(kd, (int)allevents, (void *)&evcnt,
+		if (kvm_read(kd, (long)allevents, (void *)&evcnt,
 		    sizeof evcnt) != sizeof evcnt) {
 			(void)fprintf(stderr, "vmstat: event chain trashed\n",
 			    kvm_geterr(kd));
 			exit(1);
 		}
 		if (strcmp(evcnt.ev_name, "intr") == 0) {
-			if (kvm_read(kd, (int)evcnt.ev_dev, (void *)&dev,
+			if (kvm_read(kd, (long)evcnt.ev_dev, (void *)&dev,
 			    sizeof dev) != sizeof dev) {
 				(void)fprintf(stderr, "vmstat: event chain trashed\n",
 				    kvm_geterr(kd));
