@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.19 2000/10/18 01:35:46 dogcow Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.20 2000/11/21 13:39:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.19 2000/10/18 01:35:46 dogcow Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.20 2000/11/21 13:39:07 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -800,6 +800,7 @@ verifyhost(fromp)
 {
 	static char hbuf[MAXHOSTNAMELEN];
 
-	getnameinfo(fromp, fromp->sa_len, hbuf, sizeof(hbuf), NULL, 0, 0);
+	if (getnameinfo(fromp, fromp->sa_len, hbuf, sizeof(hbuf), NULL, 0, 0))
+		strlcpy(hbuf, "?", sizeof(hbuf));
 	return hbuf;
 }
