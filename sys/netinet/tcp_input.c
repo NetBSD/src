@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.61 1998/06/02 18:33:02 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.62 1998/07/17 22:58:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -831,11 +831,13 @@ after_listen:
 		/*
 		 * Initialize the initial congestion window.  If we
 		 * had to retransmit the SYN, we must initialize cwnd
-		 * to 1 segment.
+		 * to 1 segment (i.e. the Loss Window).
 		 */
-		tp->snd_cwnd =
-		    TCP_INITIAL_WINDOW((tp->t_flags & TF_SYN_REXMT) ? 1 :
-		    tcp_init_win, tp->t_peermss);
+		if (tp->t_flags & TF_SYN_REXMT)
+			tp->snd_cwnd = tp->t_peermss;
+		else
+			tp->snd_cwnd = TCP_INITIAL_WINDOW(tcp_init_win,
+			    tp->t_peermss);
 
 		tcp_rmx_rtt(tp);
 		if (tiflags & TH_ACK && SEQ_GT(tp->snd_una, tp->iss)) {
@@ -2064,11 +2066,12 @@ syn_cache_get(so, m)
 	/*
 	 * Initialize the initial congestion window.  If we
 	 * had to retransmit the SYN,ACK, we must initialize cwnd
-	 * to 1 segment.
+	 * to 1 segment (i.e. the Loss Window).
 	 */
-	tp->snd_cwnd =
-	    TCP_INITIAL_WINDOW((sc->sc_flags & SCF_SYNACK_REXMT) ? 1 :
-	    tcp_init_win, tp->t_peermss);
+	if (sc->sc_flags & SCF_SYNACK_REXMT)
+		tp->snd_cwnd = tp->t_peermss;
+	else
+		tp->snd_cwnd = TCP_INITIAL_WINDOW(tcp_init_win, tp->t_peermss);
 
 	tcp_rmx_rtt(tp);
 	tp->snd_wl1 = sc->sc_irs;
