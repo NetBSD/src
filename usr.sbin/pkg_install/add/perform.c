@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.100 2004/04/28 15:37:29 tv Exp $	*/
+/*	$NetBSD: perform.c,v 1.101 2004/05/08 16:50:37 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.100 2004/04/28 15:37:29 tv Exp $");
+__RCSID("$NetBSD: perform.c,v 1.101 2004/05/08 16:50:37 grant Exp $");
 #endif
 #endif
 
@@ -323,7 +323,7 @@ pkg_do(const char *pkg)
 		warnx("dependency recommendations ignored.  It may have been");
 		warnx("built against a set of installed packages that is");
 		warnx("different from the recommended set of pre-requisites.");
-		warnx("As a cconsequence, this package may not work on this");
+		warnx("As a consequence, this package may not work on this");
 		warnx("or other systems with a different set of packages.");
 		if (!Force && !getenv("PKG_IGNORE_RECOMMENDED")) {
 			    warnx("aborting.");
