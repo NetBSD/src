@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.26 1995/04/11 09:59:38 mellon Exp $
+#	$NetBSD: files.mac68k,v 1.27 1995/04/20 15:28:54 briggs Exp $
 
 #	@(#)files.sparc	8.1 (Berkeley) 7/19/93
 #
@@ -16,10 +16,8 @@ device	nubus at mainbus { slot = -1, id = -1, claimed = 0 }
 file	arch/mac68k/dev/nubus.c		nubus
 
 device	ser at mainbus: tty
-file	arch/mac68k/dev/ser.c		ser needs-count
+file	arch/mac68k/dev/ser.c		ser needs-flag
 
-# adbsys.c should be in the mac directory, I think, with via.c, someday.
-# But then I'd have to have adbvar.h shared across dirs. -- BG
 device	adb at mainbus
 file	arch/mac68k/dev/adb.c		adb
 file	arch/mac68k/dev/adbsys.c
@@ -35,38 +33,21 @@ device	grf at nubus
 file	arch/mac68k/dev/grf.c		grf needs-count
 file	arch/mac68k/dev/grf_gb.c	grf
 device	ite at mainbus
-file	arch/mac68k/dev/ite.c		ite needs-count
+file	arch/mac68k/dev/ite.c		ite needs-flag
 
 device	ae at nubus: ifnet, ether
-file	arch/mac68k/dev/if_ae.c		ae needs-count
+file	arch/mac68k/dev/if_ae.c		ae needs-flag
 
-# scsi driver and associated stuff
-define	scsi {}
+include "../../../scsi/files.scsi"
+major	{sd = 4}
+major	{st = 5}
+major	{cd = 6}
 
 device	ncrscsi at mainbus: scsi
 file	arch/mac68k/dev/scsi.c		ncrscsi
 
 device	ncr96scsi at mainbus: scsi
 file	arch/mac68k/dev/scsi96.c	ncr96scsi
-
-device	scsibus at scsi { target = -1, lun = -1 }
-file	scsi/scsiconf.c		scsibus needs-flag
-file	scsi/scsi_base.c	scsi
-file	scsi/scsi_ioctl.c	scsi
-
-device	cd at scsibus: disk
-file	scsi/cd.c		cd needs-flag
-major {cd=6}
-device	ch at scsibus: disk
-file	scsi/ch.c		ch needs-flag
-device	sd at scsibus: disk
-file	scsi/sd.c		sd needs-flag
-major {sd=4}
-device	st at scsibus: tape
-file	scsi/st.c		st needs-flag
-major {st=5}
-file	scsi/uk.c		uk needs-flag
-file	scsi/su.c		su needs-flag
 
 file	arch/m68k/m68k/copy.s
 file	arch/m68k/fpe/fpu_emulate.c		fpu_emulate
@@ -94,4 +75,4 @@ file	compat/sunos/sunos_exec.c		compat_sunos
 file	dev/cons.c
 file	dev/cninit.c
 
-major {vnd=8}
+major	{vnd = 8}
