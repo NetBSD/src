@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi_msgs.c,v 1.3 2003/10/03 16:38:44 pooka Exp $	*/
+/*	$NetBSD: i4b_capi_msgs.c,v 1.4 2003/10/03 16:46:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_capi_msgs.c,v 1.3 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_capi_msgs.c,v 1.4 2003/10/03 16:46:32 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -509,6 +509,7 @@ void capi_connect_ind(capi_softc_t *sc, struct mbuf *m_in)
 
     cd->isdnif = sc->capi_isdnif;
     cd->channelexcl = 0;
+    cd->l3drv = isdn_find_l3_by_isdnif(sc->capi_isdnif);
 
     for (bch = 0; bch < sc->sc_nbch; bch++)
 	if (sc->sc_bchan[bch].state == B_FREE)
