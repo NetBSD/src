@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.26 2000/06/19 23:30:32 eeh Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.27 2000/07/24 04:39:01 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -67,8 +67,8 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL ${SVR4}
 CWARNFLAGS=	-Wimplicit -Wunused -Wswitch -Wcomment -Wtrigraphs -Wchar-subscripts -Wparentheses -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 #CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS=		${DEBUG} ${CWARNFLAGS} -Wa,-Av9a -mno-fpu
-AFLAGS=		-x assembler-with-cpp -Wa,-Av9a -traditional-cpp -D_LOCORE
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -Wa,-Av9a -mno-fpu
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -Wa,-Av9a
 LINKFLAGS=	-p -Ttext f1000000 -Tdata f1400000 -e start >lderr
 #LINKFLAGS=	-N -p -Ttext f1000000 -e start >lderr
 STRIPFLAGS=	-g
@@ -95,8 +95,8 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # HOSTED, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
-NORMAL_C=	${CC} ${COPTS} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NOOPT_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NOOPT_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -O0 -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
 %OBJS
@@ -113,7 +113,7 @@ NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 SYSTEM_OBJ=	locore.o \
 		param.o ioconf.o ${OBJS} ${LIBCOMPAT} ${LIBKERN}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
-SYSTEM_LD_HEAD=	@rm -f $@
+SYSTEM_LD_HEAD=	rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
 SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
@@ -133,13 +133,13 @@ LINKFLAGS+=	-S
 
 .if ${USE_GENASSYM} == "no"
 assym.h: $S/kern/genassym.sh ${SPARC64}/sparc64/genassym.cf
-	sh $S/kern/genassym.sh ${CC} ${COPTS} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    < ${SPARC64}/sparc64/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 .else
 HOSTED_CC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
-HOSTED_CFLAGS=	${COPTS} ${CFLAGS}
+HOSTED_CFLAGS=	${CFLAGS}
 
 HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
