@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.160 2003/01/04 23:43:06 wiz Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.161 2003/02/25 22:12:24 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.160 2003/01/04 23:43:06 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.161 2003/02/25 22:12:24 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3587,8 +3587,8 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 	 * Fill in the cache, and put the necessary IP and TCP
 	 * options into the reply.
 	 */
-	callout_init(&sc->sc_timer);
 	bzero(sc, sizeof(struct syn_cache));
+	callout_init(&sc->sc_timer);
 	bcopy(src, &sc->sc_src, src->sa_len);
 	bcopy(dst, &sc->sc_dst, dst->sa_len);
 	sc->sc_flags = 0;
