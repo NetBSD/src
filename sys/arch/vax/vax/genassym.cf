@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.18 2000/05/31 05:10:54 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.19 2000/06/02 21:51:16 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -35,6 +35,7 @@ include	<sys/param.h>
 include	<sys/proc.h>
 include	<sys/errno.h>
 include	<sys/syscall.h>
+include	<sys/sched.h>
 
 include	<net/netisr.h>
 
@@ -47,12 +48,16 @@ include	<machine/pcb.h>
 include	<machine/sid.h>
 include	<machine/trap.h>
 include	<machine/cpu.h>
+include	<machine/uvax.h>
 
 define	P_PRIORITY	offsetof(struct proc, p_priority)
 define	P_ADDR		offsetof(struct proc, p_addr)
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
 define	P_STAT		offsetof(struct proc, p_stat)
+define	P_BACK		offsetof(struct proc, p_back)
 define	P_CPU		offsetof(struct proc, p_cpu)
+
+define	PH_RLINK	offsetof(struct prochd, ph_rlink)
 
 define	SONPROC		SONPROC
 
@@ -61,6 +66,8 @@ define	P0LR		offsetof(struct pcb, P0LR)
 define	P1BR		offsetof(struct pcb, P1BR)
 define	P1LR		offsetof(struct pcb, P1LR)
 define	IFTRAP		offsetof(struct pcb, iftrap)
+define	ESP		offsetof(struct pcb, ESP)
+define	SSP		offsetof(struct pcb, SSP)
 
 define	MCHK		offsetof(struct cpu_dep, cpu_mchk)
 define	MEMERR		offsetof(struct cpu_dep, cpu_memerr)
@@ -130,3 +137,16 @@ define	VAX_TYP_UV2	VAX_TYP_UV2
 define	VAX_TYP_8SS	VAX_TYP_8SS
 define	VAX_BTYP_46	VAX_BTYP_46
 define	VAX_BTYP_48	VAX_BTYP_48
+define	VAX_BTYP_49	VAX_BTYP_49
+
+define	IPL_HIGH	IPL_HIGH
+define	IPL_CLOCK	IPL_CLOCK
+define	IPL_NONE	IPL_NONE
+
+define	SHD_INTRS	offsetof(struct softintr_head, shd_intrs.lh_first)
+define	SH_ARG		offsetof(struct softintr_handler, sh_arg)
+define	SH_FUNC		offsetof(struct softintr_handler, sh_func)
+define	SH_NEXT		offsetof(struct softintr_handler, sh_link.le_next)
+define	SH_PENDING	offsetof(struct softintr_handler, sh_pending)
+
+define	VC_DIAGTIMM	offsetof(struct vs_cpu, vc_diagtimm)
