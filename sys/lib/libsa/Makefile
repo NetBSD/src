@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 1999/11/12 13:13:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.41 1999/11/13 21:06:46 thorpej Exp $
 
 LIB=	sa
 MKPIC=	no
@@ -18,10 +18,9 @@ CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 
 # stand routines
 SRCS+=	alloc.c bcmp.c bcopy.c bzero.c errno.c exit.c exec.c getfile.c gets.c \
-	globals.c htonl.c htons.c inet_addr.c intoa.c memcmp.c memcpy.c \
-	memset.c ntohs.c ntohl.c panic.c printf.c snprintf.c sprintf.c \
-	strlen.c strcmp.c strncmp.c strcpy.c strncpy.c strcat.c strerror.c \
-	subr_prf.c twiddle.c vsprintf.c checkpasswd.c
+	globals.c memcmp.c memcpy.c memset.c panic.c printf.c \
+	snprintf.c sprintf.c strerror.c subr_prf.c twiddle.c vsprintf.c \
+	checkpasswd.c
 
 # io routines
 SRCS+=	closeall.c dev.c disklabel.c dkcksum.c ioctl.c nullfs.c stat.c fstat.c
@@ -45,12 +44,6 @@ SRCS+=	bootp.c rarp.c bootparam.c
 SRCS+=	nfs.c tftp.c
 .endif
 SRCS+=	lfs.c ufs.c ufs_ls.c cd9660.c ustarfs.c
-
-# quad routines
-SRCS+=	ashrdi3.c
-
-# work-around for gcc annoyance
-SRCS+=	__main.c
 
 # only needed during build
 libinstall::
