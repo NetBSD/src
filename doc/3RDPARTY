@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.54 2003/02/13 14:26:08 kanaoka Exp $
+#	$NetBSD: 3RDPARTY,v 1.55 2003/02/17 12:24:13 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -237,7 +237,7 @@ for the next release).
 
 Package:	file
 Version:	3.39
-Current Vers:	3.39
+Current Vers:	3.40
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Mailing List:	file@mx.gw.com
