@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.25 2001/05/02 10:32:21 scw Exp $	*/
+/*	$NetBSD: pccons.c,v 1.26 2001/05/11 21:15:11 tsutsui Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
@@ -166,7 +166,6 @@ void pc_xmode_on __P((void));
 void pc_xmode_off __P((void));
 static u_char kbc_get8042cmd __P((void));
 static int kbc_put8042cmd __P((u_char));
-int kbc_8042sysreset __P((void));
 int kbd_cmd __P((u_char, u_char));
 static __inline int kbd_wait_output __P((void));
 static __inline int kbd_wait_input __P((void));
@@ -176,7 +175,6 @@ void get_cursor_shape __P((void));
 void async_update __P((void));
 void do_async_update __P((u_char));;
 
-void pccnattach __P((void));
 void pccnputc __P((dev_t, int c));
 int pccngetc __P((dev_t));
 void pccnpollc __P((dev_t, int));
@@ -345,26 +343,6 @@ kbd_flush_input()
 			delay(6);
 			(void) inb(kbd_datap);
 		}
-}
-
-
-
-/*
- * Pass system reset command  to keyboard controller (8042).
- */
-int
-kbc_8042sysreset()
-{
-
-	pcinithandle();
-
-	if (!kbd_wait_output())
-		return 0;
-	outb(kbd_cmdp, 0xd1);
-	if (!kbd_wait_output())
-		return 0;
-	outb(kbd_datap, 0);		/* ZAP */
-	return 1;
 }
 
 #if 1
