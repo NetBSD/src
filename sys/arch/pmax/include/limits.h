@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * from: @(#)limits.h	7.6 (Berkeley) 6/25/92
- * $Id: limits.h,v 1.1.1.1 1993/10/12 03:22:40 deraadt Exp $
+ * $Id: limits.h,v 1.2 1994/01/14 04:53:40 deraadt Exp $
  */
 
 #define	CHAR_BIT	8		/* number of bits in a char */
@@ -63,7 +63,12 @@
 #define	INT_MAX		2147483647	/* max value for an int */
 #define	INT_MIN		(-2147483647-1)	/* min value for an int */
 
+#ifdef __GNUC__
+/* gcc won't play with this number without a warning ... */
+#define	ULONG_MAX	4294967295U	/* max value for an unsigned long */
+#else
 #define	ULONG_MAX	4294967295	/* max value for an unsigned long */
+#endif
 #define	LONG_MAX	2147483647	/* max value for a long */
 #define	LONG_MIN	(-2147483647-1)	/* min value for a long */
 
