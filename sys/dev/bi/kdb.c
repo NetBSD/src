@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.18 2000/05/19 18:54:30 thorpej Exp $ */
+/*	$NetBSD: kdb.c,v 1.19 2000/06/04 02:14:42 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -151,7 +151,7 @@ kdbattach(parent, self, aux)
 	bus_dma_segment_t seg;
 
 	printf("\n");
-	bi_intr_establish(ba->ba_icookie, ba->ba_ivec, kdbintr, sc);
+	bi_intr_establish(ba->ba_icookie, ba->ba_ivec, kdbintr, sc, NULL);
 
 	sc->sc_iot = ba->ba_iot;
 	sc->sc_ioh = ba->ba_ioh;
