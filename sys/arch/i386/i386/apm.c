@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.26 1997/10/09 08:53:15 jtc Exp $ */
+/*	$NetBSD: apm.c,v 1.27 1997/10/15 01:20:41 jtk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 #include <i386/isa/nvram.h>
 #include <dev/isa/isavar.h>
 
+#include <machine/bioscall.h>
 #include <machine/apmvar.h>
 
 #if defined(APMDEBUG)
@@ -125,14 +126,14 @@ static int	apmmatch __P((struct device *, void *, void *));
 static void	apm_devpowmgt_enable __P((int, u_int));
 static void	apm_disconnect __P((void *));
 #endif
-static void	apm_event_handle __P((struct apm_softc *, struct apmregs *));
-static int	apm_get_event __P((struct apmregs *));
-static int	apm_get_powstat __P((struct apmregs *));
+static void	apm_event_handle __P((struct apm_softc *, struct bioscallregs *));
+static int	apm_get_event __P((struct bioscallregs *));
+static int	apm_get_powstat __P((struct bioscallregs *));
 static void	apm_get_powstate __P((u_int));
 static void	apm_periodic_check __P((void *));
-static void	apm_perror __P((const char *, struct apmregs *, ...))
+static void	apm_perror __P((const char *, struct bioscallregs *, ...))
 		    __kprintf_attribute__((__format__(__printf__,1,3)));
-static void	apm_power_print __P((struct apm_softc *, struct apmregs *));
+static void	apm_power_print __P((struct apm_softc *, struct bioscallregs *));
 static void	apm_powmgt_enable __P((int));
 static void	apm_powmgt_engage __P((int, u_int));
 static int	apm_record_event __P((struct apm_softc *, u_int));
@@ -188,12 +189,12 @@ int	apm_damn_fool_bios, apm_op_inprog;
 int	apm_evindex;
 
 #ifdef APMDEBUG
-int	apmcall_debug(int, struct apmregs *, int);
+int	apmcall_debug(int, struct bioscallregs *, int);
 
 int
 apmcall_debug(func, regs, line)
 	int func;
-	struct apmregs *regs;
+	struct bioscallregs *regs;
 	int line;
 {
 	int rv;
@@ -246,7 +247,7 @@ apm_strerror(code)
 }
 
 static void
-apm_perror(const char *str, struct apmregs *regs, ...) /* XXX cgd */
+apm_perror(const char *str, struct bioscallregs *regs, ...) /* XXX cgd */
 {
 	va_list ap;
 
@@ -259,7 +260,7 @@ apm_perror(const char *str, struct apmregs *regs, ...) /* XXX cgd */
 static void
 apm_power_print(sc, regs)
 	struct apm_softc *sc;
-	struct apmregs *regs;
+	struct bioscallregs *regs;
 {
 
 	if (APM_BATT_LIFE(regs) != APM_BATT_LIFE_UNKNOWN) {
@@ -332,7 +333,7 @@ static void
 apm_get_powstate(dev)
 	u_int dev;
 {
-	struct apmregs regs;
+	struct bioscallregs regs;
 	int rval;
 
 	regs.bx = dev;
@@ -386,10 +387,10 @@ apm_record_event(sc, event_type)
 static void
 apm_event_handle(sc, regs)
 	struct apm_softc *sc;
-	struct apmregs *regs;
+	struct bioscallregs *regs;
 {
 	int error;
-	struct apmregs nregs;
+	struct bioscallregs nregs;
 
 	switch(regs->bx) {
 	case APM_USER_STANDBY_REQ:
@@ -502,7 +503,7 @@ apm_event_handle(sc, regs)
 
 static int
 apm_get_event(regs)
-	struct apmregs *regs;
+	struct bioscallregs *regs;
 {
 
 	return (apmcall(APM_GET_PM_EVENT, regs));
@@ -512,7 +513,7 @@ static void
 apm_periodic_check(arg)
 	void *arg;
 {
-	struct apmregs regs;
+	struct bioscallregs regs;
 	struct apm_softc *sc = arg;
 
 	/*
@@ -543,7 +544,7 @@ static void
 apm_powmgt_enable(onoff)
 	int onoff;
 {
-	struct apmregs regs;
+	struct bioscallregs regs;
 
 	regs.bx = apm_minver == 0 ? APM_MGT_ALL : APM_DEV_ALLDEVS;
 	regs.cx = onoff ? APM_MGT_ENABLE : APM_MGT_DISABLE;
@@ -557,7 +558,7 @@ apm_powmgt_engage(onoff, dev)
 	int onoff;
 	u_int dev;
 {
-	struct apmregs regs;
+	struct bioscallregs regs;
 
 	if (apm_minver == 0)
 		return;
@@ -573,7 +574,7 @@ apm_devpowmgt_enable(onoff, dev)
 	int onoff;
 	u_int dev;
 {
-	struct apmregs regs;
+	struct bioscallregs regs;
 
 	if (apm_minver == 0)
 	    return;
@@ -595,7 +596,7 @@ int
 apm_set_powstate(dev, state)
 	u_int dev, state;
 {
-	struct apmregs regs;
+	struct bioscallregs regs;
 	if (!apm_inited || (apm_minver == 0 && state > APM_SYS_OFF))
 		return EINVAL;
 	regs.bx = dev;
@@ -610,7 +611,7 @@ apm_set_powstate(dev, state)
 void
 apm_cpu_busy()
 {
-	struct apmregs regs;
+	struct bioscallregs regs;
 
 	if (!apm_inited || !apm_do_idle)
 	    return;
@@ -622,7 +623,7 @@ apm_cpu_busy()
 void
 apm_cpu_idle()
 {
-	struct apmregs regs;
+	struct bioscallregs regs;
 
 	if (!apm_inited || !apm_do_idle)
 	    return;
@@ -634,7 +635,7 @@ static void
 apm_set_ver(self)
 	struct apm_softc *self;
 {
-	struct apmregs regs;
+	struct bioscallregs regs;
 	int error;
 
 	regs.cx = 0x0101;	/* APM Version 1.1 */
@@ -668,7 +669,7 @@ apm_set_ver(self)
 
 static int
 apm_get_powstat(regs)
-	struct apmregs *regs;
+	struct bioscallregs *regs;
 {
 
 	regs->bx = APM_DEV_ALLDEVS;
@@ -680,7 +681,7 @@ static void
 apm_disconnect(xxx)
 	void *xxx;
 {
-	struct apmregs regs;
+	struct bioscallregs regs;
 
 	regs.bx = apm_minver == 1 ? APM_DEV_ALLDEVS : APM_DEFAULTS_ALL;
 	if (apmcall(APM_SYSTEM_DEFAULTS, &regs))
@@ -701,7 +702,7 @@ apm_disconnect(xxx)
 int
 apm_busprobe()
 {
-	struct apmregs regs;
+	struct bioscallregs regs;
 #ifdef APMDEBUG
 	char bits[128];
 #endif
@@ -771,7 +772,7 @@ apmattach(parent, self, aux)
 {
 	extern int biosbasemem;
 	struct apm_softc *apmsc = (void *)self;
-	struct apmregs regs;
+	struct bioscallregs regs;
 	int error, apm_data_seg_ok;
 	u_int okbases[] = { 0, biosbasemem*1024 };
 	u_int oklimits[] = { NBPG, IOM_END-1 };
@@ -1193,7 +1194,7 @@ apmioctl(dev, cmd, data, flag, p)
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
 	struct apm_power_info *powerp;
 	struct apm_event_info *evp;
-	struct apmregs regs;
+	struct bioscallregs regs;
 	struct apm_ctl *actl;
 	int i;
 
