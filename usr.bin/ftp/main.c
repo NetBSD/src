@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 1998/12/27 05:49:53 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.36 1999/01/23 15:46:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.35 1998/12/27 05:49:53 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.36 1999/01/23 15:46:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,7 @@ main(argc, argv)
 		progress = 1;		/* progress bar on if tty is usable */
 #endif
 
-	while ((ch = getopt(argc, argv, "Aadegino:pP:r:tvV")) != -1) {
+	while ((ch = getopt(argc, argv, "Aadefgino:pP:r:tvV")) != -1) {
 		switch (ch) {
 		case 'A':
 			activefallback = 0;
@@ -207,6 +207,10 @@ main(argc, argv)
 #ifndef SMALL
 			editing = 0;
 #endif
+			break;
+
+		case 'f':
+			flushcache = 1;
 			break;
 
 		case 'g':
@@ -742,9 +746,10 @@ usage()
 {
 	(void)fprintf(stderr,
 	    "usage: %s [-AadeginptvV] [-r retry] [-P port] [host [port]]\n"
-	    "       %s [-o outfile] host:path[/]\n"
-	    "       %s [-o outfile] ftp://host[:port]/path[/]\n"
-	    "       %s [-o outfile] http://host[:port]/file\n",
-	    __progname, __progname, __progname, __progname);
+	    "       %s [-f] [-o outfile] file:///file\n"
+	    "       %s [-f] [-o outfile] ftp://host[:port]/path[/]\n"
+	    "       %s [-f] [-o outfile] http://host[:port]/file\n"
+	    "       %s [-f] [-o outfile] host:path[/]\n",
+	    __progname, __progname, __progname, __progname, __progname);
 	exit(1);
 }
