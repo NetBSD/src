@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostbyname.3,v 1.26 2004/08/17 02:29:56 ginsbach Exp $
+.\"	$NetBSD: gethostbyname.3,v 1.27 2004/08/17 13:45:14 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)gethostbyname.3   8.4 (Berkeley) 5/25/95
 .\"
-.Dd April 26, 2001
+.Dd August 17, 2004
 .Dt GETHOSTBYNAME 3
 .Os
 .Sh NAME
@@ -170,7 +170,7 @@ this sets the option to send all queries to the name server using
 .Tn TCP
 and to retain the connection after each call to
 .Fn gethostbyname ,
-.Fn gethostbyname2
+.Fn gethostbyname2 ,
 or
 .Fn gethostbyaddr .
 Otherwise, queries are performed using
@@ -206,7 +206,7 @@ parameter.
 Error return status from
 .Fn gethostbyent ,
 .Fn gethostbyname ,
-.Fn gethostbyname2
+.Fn gethostbyname2 ,
 and
 .Fn gethostbyaddr
 is indicated by return of a null pointer.
@@ -278,8 +278,8 @@ decide to read the
 .Pa /etc/hosts
 file,
 .Fn gethostbyname ,
-.Fn gethostbyname2
-and 
+.Fn gethostbyname2 ,
+and
 .Fn gethostbyaddr
 will
 read the next line of the file,
@@ -295,7 +295,7 @@ If the
 argument is non-zero,
 the file will not be closed after each call to
 .Fn gethostbyname ,
-.Fn gethostbyname2
+.Fn gethostbyname2 ,
 .Fn gethostbyaddr ,
 or
 .Fn gethostent .
@@ -312,7 +312,7 @@ address format is currently understood.
 .Pp
 The
 .Fn gethostent
-does not currently follow the search order specified in 
+does not currently follow the search order specified in
 .Xr nsswitch.conf 5
 and only reads the
 .Pa /etc/hosts
