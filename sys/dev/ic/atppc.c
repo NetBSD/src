@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.16 2004/04/21 17:38:48 drochner Exp $ */
+/* $NetBSD: atppc.c,v 1.17 2004/08/24 00:53:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.16 2004/04/21 17:38:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.17 2004/08/24 00:53:29 thorpej Exp $");
 
 #include "opt_atppc.h"
 
@@ -79,13 +79,6 @@ static int (*chipset_detect[])(struct atppc_softc *) = {
 
 
 /* Prototypes for functions. */
-
-/* Soft configuration attach */
-void atppc_sc_attach(struct atppc_softc *);
-int atppc_sc_detach(struct atppc_softc *, int);
-
-/* Interrupt handler for atppc device */
-int atppcintr(void *);
 
 /* Print function for config_found_sm() */
 static int atppc_print(void *, const char *);
@@ -251,7 +244,8 @@ atppc_sc_attach(struct atppc_softc *lsc)
 }
 
 /* Soft configuration detach */
-int atppc_sc_detach(struct atppc_softc *lsc, int flag)
+int
+atppc_sc_detach(struct atppc_softc *lsc, int flag)
 {
 	struct device *dev = (struct device *)lsc;
 
