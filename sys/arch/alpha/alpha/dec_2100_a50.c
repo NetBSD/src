@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a50.c,v 1.50 2001/06/19 13:42:11 wiz Exp $ */
+/* $NetBSD: dec_2100_a50.c,v 1.50.16.1 2002/05/16 16:06:34 gehenna Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,18 +34,19 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.50 2001/06/19 13:42:11 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.50.16.1 2002/05/16 16:06:34 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/conf.h>
 #include <dev/cons.h>
 
 #include <machine/rpb.h>
 #include <machine/alpha.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
+#include <machine/cpuconf.h>
 #include <machine/bus.h>
 
 #include <dev/ic/comreg.h>
