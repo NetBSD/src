@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.20 2002/02/07 01:32:19 christos Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.21 2002/06/20 20:17:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.20 2002/02/07 01:32:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.21 2002/06/20 20:17:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,12 @@ struct ex_pci_softc {
 	bus_space_tag_t sc_funct;
 	bus_space_handle_t sc_funch;
 
+	pci_chipset_tag_t psc_pc;	/* pci chipset tag */
+	pcireg_t psc_regs[0x20>>2];	/* saved PCI config regs (sparse) */
+	pcitag_t psc_tag;		/* pci device tag */
+
+	int psc_pwrmgmt_csr_reg;	/* ACPI power management register */
+	pcireg_t psc_pwrmgmt_csr;	/* ...and the contents at D0 */
 };
 
 /*
@@ -95,6 +101,11 @@ struct ex_pci_softc {
 int ex_pci_match __P((struct device *, struct cfdata *, void *));
 void ex_pci_attach __P((struct device *, struct device *, void *));
 void ex_pci_intr_ack __P((struct ex_softc *));
+
+int ex_pci_enable __P((struct ex_softc *));
+void ex_pci_disable __P((struct ex_softc *));
+
+void ex_pci_confreg_restore __P((struct ex_pci_softc *));
 
 struct cfattach ex_pci_ca = {
 	sizeof(struct ex_pci_softc), ex_pci_match, ex_pci_attach
@@ -229,10 +240,6 @@ ex_pci_attach(parent, self, aux)
 	rev = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
 	printf(": 3Com %s (rev. 0x%x)\n", epp->epp_name, rev);
 
-	sc->enable = NULL;
-	sc->disable = NULL;
-	sc->enabled = 1;
-
 	sc->sc_dmat = pa->pa_dmat;
 
 	sc->ex_bustype = EX_BUS_PCI;
@@ -243,6 +250,15 @@ ex_pci_attach(parent, self, aux)
 	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
 	    PCI_COMMAND_MASTER_ENABLE);
 
+	psc->psc_pc = pc;
+	psc->psc_tag = pa->pa_tag;
+	psc->psc_regs[PCI_COMMAND_STATUS_REG>>2] = 
+	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	psc->psc_regs[PCI_BHLC_REG>>2] =
+	    pci_conf_read(pc, pa->pa_tag, PCI_BHLC_REG); 
+	psc->psc_regs[PCI_CBIO>>2] =
+	    pci_conf_read(pc, pa->pa_tag, PCI_CBIO);
+
 	if (sc->ex_conf & EX_CONF_PCI_FUNCREG) {
 		/* Map PCI function status window. */
 		if (pci_mapreg_map(pa, PCI_FUNCMEM, PCI_MAPREG_TYPE_MEM, 0,
@@ -252,12 +268,24 @@ ex_pci_attach(parent, self, aux)
 			return;
 		}
 		sc->intr_ack = ex_pci_intr_ack;
+
+		psc->psc_regs[PCI_FUNCMEM>>2] =
+		    pci_conf_read(pc, pa->pa_tag, PCI_FUNCMEM);
 	}
 		
 	/* Get it out of power save mode if needed (BIOS bugs) */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		reg = pci_conf_read(pc, pa->pa_tag, pmreg + 4) & 0x3;
-		if (reg == 3) {
+		sc->enable = ex_pci_enable;
+		sc->disable = ex_pci_disable;
+
+		psc->psc_pwrmgmt_csr_reg = pmreg + 4;
+		reg = pci_conf_read(pc, pa->pa_tag,
+		    psc->psc_pwrmgmt_csr_reg) & 0x3;
+
+		psc->psc_pwrmgmt_csr = (reg & ~PCI_PMCSR_STATE_MASK) |
+		    PCI_PMCSR_STATE_D0;
+
+		if (reg == PCI_PMCSR_STATE_D3) {
 			/*
 			 * The card has lost all configuration data in
 			 * this state, so punt.
@@ -266,12 +294,14 @@ ex_pci_attach(parent, self, aux)
 			    sc->sc_dev.dv_xname);
 			return;
 		}
-		if (reg != 0) {
+		if (reg != PCI_PMCSR_STATE_D0) {
 			printf("%s: waking up from power state D%d\n",
 			    sc->sc_dev.dv_xname, reg);
 			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
 		}
 	}
+
+	sc->enabled = 1;
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
@@ -296,6 +326,9 @@ ex_pci_attach(parent, self, aux)
 	if (sc->ex_conf & EX_CONF_PCI_FUNCREG)
 		bus_space_write_4(psc->sc_funct, psc->sc_funch, PCI_INTR, 
 		    PCI_INTRACK);
+
+	if (sc->disable != NULL)
+		ex_disable(sc);
 }
 
 void            
@@ -306,4 +339,62 @@ ex_pci_intr_ack(sc)
         
 	bus_space_write_4(psc->sc_funct, psc->sc_funch, PCI_INTR,
 	    PCI_INTRACK);
+}
+
+void
+ex_pci_confreg_restore(psc)
+	struct ex_pci_softc *psc;
+{
+	struct ex_softc *sc = (void *) psc;
+	pcireg_t reg;
+
+	reg = pci_conf_read(psc->psc_pc, psc->psc_tag, PCI_COMMAND_STATUS_REG);
+
+	pci_conf_write(psc->psc_pc, psc->psc_tag,
+	    PCI_COMMAND_STATUS_REG,
+	    (reg & 0xffff0000) |
+	    (psc->psc_regs[PCI_COMMAND_STATUS_REG>>2] & 0xffff));
+	pci_conf_write(psc->psc_pc, psc->psc_tag, PCI_BHLC_REG,
+	    psc->psc_regs[PCI_BHLC_REG>>2]);
+	pci_conf_write(psc->psc_pc, psc->psc_tag, PCI_CBIO,
+	    psc->psc_regs[PCI_CBIO>>2]);
+	if (sc->ex_conf & EX_CONF_PCI_FUNCREG)
+		pci_conf_write(psc->psc_pc, psc->psc_tag, PCI_FUNCMEM,
+		    psc->psc_regs[PCI_FUNCMEM>>2]);
+}
+
+int
+ex_pci_enable(sc)
+	struct ex_softc *sc;
+{
+	struct ex_pci_softc *psc = (void *) sc;
+
+#if 0
+	printf("%s: going to power state D0\n", sc->sc_dev.dv_xname);
+#endif
+
+	/* Bring the device into D0 power state. */
+	pci_conf_write(psc->psc_pc, psc->psc_tag,
+	    psc->psc_pwrmgmt_csr_reg, psc->psc_pwrmgmt_csr);
+
+	/* Now restore the configuration registers. */
+	ex_pci_confreg_restore(psc);
+
+	return (0);
+}
+
+void
+ex_pci_disable(sc)
+	struct ex_softc *sc;
+{
+	struct ex_pci_softc *psc = (void *) sc;
+
+#if 0
+	printf("%s: going to power state D3\n", sc->sc_dev.dv_xname);
+#endif
+
+	/* Put the device into D3 state. */
+	pci_conf_write(psc->psc_pc, psc->psc_tag,
+	    psc->psc_pwrmgmt_csr_reg, (psc->psc_pwrmgmt_csr &
+	    ~PCI_PMCSR_STATE_MASK) | PCI_PMCSR_STATE_D3);
 }
