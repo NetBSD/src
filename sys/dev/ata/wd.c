@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.176 1998/06/09 07:35:06 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.177 1998/08/13 18:16:53 rvb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -222,10 +222,14 @@ wdattach(parent, self, aux)
 		d_link->sc_capacity =
 		    (d_link->sc_params.wdp_capacity[1] << 16) |
 		    d_link->sc_params.wdp_capacity[0];
-		printf("%s: %dMB, %d sec, %d bytes/sec\n",
+		printf("%s: %dMB, %d sec, geom chs %d/%d/%d, %d bytes/sec\n",
 		    self->dv_xname,
 		    d_link->sc_capacity / (1048576 / DEV_BSIZE),
-		    d_link->sc_capacity, DEV_BSIZE);
+		    d_link->sc_capacity, 
+		    d_link->sc_params.wdp_cylinders,
+		    d_link->sc_params.wdp_heads,
+		    d_link->sc_params.wdp_sectors,
+		    DEV_BSIZE);
 	} else {
 		printf(" chs mode\n");
 		d_link->sc_capacity =
