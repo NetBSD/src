@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.607 2003/09/25 16:50:11 pooka Exp $
+# $NetBSD: mi,v 1.608 2003/09/26 19:00:24 mycroft Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -803,6 +803,7 @@
 ./usr/share/man/cat4/macppc/gm.0		man-sys-catman
 ./usr/share/man/cat4/macppc/intro.0		man-sys-catman
 ./usr/share/man/cat4/macppc/mc.0		man-sys-catman
+./usr/share/man/cat4/macppc/mesh.0		man-sys-catman
 ./usr/share/man/cat4/mainbus.0			man-sys-catman
 ./usr/share/man/cat4/makphy.0			man-sys-catman
 ./usr/share/man/cat4/mbe.0			man-sys-catman
@@ -2629,6 +2630,7 @@
 ./usr/share/man/man4/macppc/gm.4		man-sys-man
 ./usr/share/man/man4/macppc/intro.4		man-sys-man
 ./usr/share/man/man4/macppc/mc.4		man-sys-man
+./usr/share/man/man4/macppc/mesh.4		man-sys-man
 ./usr/share/man/man4/mainbus.4			man-sys-man
 ./usr/share/man/man4/makphy.4			man-sys-man
 ./usr/share/man/man4/mbe.4			man-sys-man
