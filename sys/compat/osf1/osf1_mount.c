@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.13 1999/05/01 02:57:11 cgd Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.14 1999/05/05 01:51:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -99,37 +99,10 @@
 #define	OSF1_UNMOUNT_FLAGS	(OSF1_MNT_FORCE|OSF1_MNT_NOFORCE)
 
 
-int osf1_mount_mfs __P((struct proc *, struct osf1_sys_mount_args *,
-			struct sys_mount_args *));
-int osf1_mount_nfs __P((struct proc *, struct osf1_sys_mount_args *,
-			struct sys_mount_args *));
-
-int
-osf1_sys_statfs(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_statfs_args *uap = v;
-	struct mount *mp;
-	struct statfs *sp;
-	struct osf1_statfs osfs;
-	int error;
-	struct nameidata nd;
-
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
-	if ((error = namei(&nd)))
-		return (error);
-	mp = nd.ni_vp->v_mount;
-	sp = &mp->mnt_stat;
-	vrele(nd.ni_vp);
-	if ((error = VFS_STATFS(mp, sp, p)))
-		return (error);
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	osf1_cvt_statfs_from_native(sp, &osfs);
-	return copyout(&osfs, SCARG(uap, buf), min(sizeof osfs,
-	    SCARG(uap, len)));
-}
+static int	osf1_mount_mfs __P((struct proc *,
+		    struct osf1_sys_mount_args *, struct sys_mount_args *));
+static int	osf1_mount_nfs __P((struct proc *,
+		    struct osf1_sys_mount_args *, struct sys_mount_args *));
 
 int
 osf1_sys_fstatfs(p, v, retval)
@@ -205,27 +178,6 @@ osf1_sys_getfsstat(p, v, retval)
 }
 
 int
-osf1_sys_unmount(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_unmount_args *uap = v;
-	struct sys_unmount_args a;
-
-	SCARG(&a, path) = SCARG(uap, path);
-
-	if (SCARG(uap, flags) & ~OSF1_UNMOUNT_FLAGS)
-		return (EINVAL);
-	SCARG(&a, flags) = 0;
-	if ((SCARG(uap, flags) & OSF1_MNT_FORCE) &&
-	    (SCARG(uap, flags) & OSF1_MNT_NOFORCE) == 0)
-		SCARG(&a, flags) |= MNT_FORCE;
-
-	return sys_unmount(p, &a, retval);
-}
-
-int
 osf1_sys_mount(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -260,6 +212,54 @@ osf1_sys_mount(p, v, retval)
 }
 
 int
+osf1_sys_statfs(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_statfs_args *uap = v;
+	struct mount *mp;
+	struct statfs *sp;
+	struct osf1_statfs osfs;
+	int error;
+	struct nameidata nd;
+
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)))
+		return (error);
+	mp = nd.ni_vp->v_mount;
+	sp = &mp->mnt_stat;
+	vrele(nd.ni_vp);
+	if ((error = VFS_STATFS(mp, sp, p)))
+		return (error);
+	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	osf1_cvt_statfs_from_native(sp, &osfs);
+	return copyout(&osfs, SCARG(uap, buf), min(sizeof osfs,
+	    SCARG(uap, len)));
+}
+
+int
+osf1_sys_unmount(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_unmount_args *uap = v;
+	struct sys_unmount_args a;
+
+	SCARG(&a, path) = SCARG(uap, path);
+
+	if (SCARG(uap, flags) & ~OSF1_UNMOUNT_FLAGS)
+		return (EINVAL);
+	SCARG(&a, flags) = 0;
+	if ((SCARG(uap, flags) & OSF1_MNT_FORCE) &&
+	    (SCARG(uap, flags) & OSF1_MNT_NOFORCE) == 0)
+		SCARG(&a, flags) |= MNT_FORCE;
+
+	return sys_unmount(p, &a, retval);
+}
+
+static int
 osf1_mount_mfs(p, osf_argp, bsd_argp)
 	struct proc *p;
 	struct osf1_sys_mount_args *osf_argp;
@@ -292,7 +292,7 @@ osf1_mount_mfs(p, osf_argp, bsd_argp)
 	return 0;
 }
 
-int
+static int
 osf1_mount_nfs(p, osf_argp, bsd_argp)
 	struct proc *p;
 	struct osf1_sys_mount_args *osf_argp;

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_mmap.c,v 1.2 1999/05/01 04:38:39 cgd Exp $ */
+/* $NetBSD: osf1_mmap.c,v 1.3 1999/05/05 01:51:34 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -42,6 +42,72 @@
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_cvt.h>
+
+int
+osf1_sys_madvise(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_madvise_args *uap = v;
+	struct sys_madvise_args a;
+	int error;
+
+	SCARG(&a, addr) = SCARG(uap, addr);
+	SCARG(&a, len) = SCARG(uap, len);
+
+	error = 0;
+	switch (SCARG(uap, behav)) {
+	case OSF1_MADV_NORMAL:
+		SCARG(&a, behav) = MADV_NORMAL;
+		break;
+
+	case OSF1_MADV_RANDOM:
+		SCARG(&a, behav) = MADV_RANDOM;
+		break;
+
+	case OSF1_MADV_SEQUENTIAL:
+		SCARG(&a, behav) = MADV_SEQUENTIAL;
+		break;
+
+	case OSF1_MADV_WILLNEED:
+		SCARG(&a, behav) = MADV_WILLNEED;
+		break;
+
+	case OSF1_MADV_DONTNEED_COMPAT:
+		SCARG(&a, behav) = MADV_DONTNEED;
+		break;
+
+	case OSF1_MADV_SPACEAVAIL:
+		SCARG(&a, behav) = MADV_SPACEAVAIL;
+		break;
+
+	case OSF1_MADV_DONTNEED:
+		/*
+		 * XXX not supported.  In Digital UNIX, this flushes all
+		 * XXX data in the region and replaces it with ZFOD pages.
+		 */
+		error = EINVAL;
+		break;
+
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	if (error == 0) {
+		error = sys_madvise(p, &a, retval);
+
+		/*
+		 * NetBSD madvise() currently always returns ENOSYS.
+		 * Digital UNIX says that non-operational requests (i.e.
+		 * valid, but unimplemented 'behav') will return success.
+		 */
+		if (error == ENOSYS)
+			error = 0;
+	}
+	return (error);
+}
 
 int
 osf1_sys_mmap(p, v, retval)
@@ -159,70 +225,4 @@ osf1_sys_mprotect(p, v, retval)
 		return (EINVAL);
 
 	return sys_mprotect(p, &a, retval);
-}
-
-int
-osf1_sys_madvise(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_madvise_args *uap = v;
-	struct sys_madvise_args a;
-	int error;
-
-	SCARG(&a, addr) = SCARG(uap, addr);
-	SCARG(&a, len) = SCARG(uap, len);
-
-	error = 0;
-	switch (SCARG(uap, behav)) {
-	case OSF1_MADV_NORMAL:
-		SCARG(&a, behav) = MADV_NORMAL;
-		break;
-
-	case OSF1_MADV_RANDOM:
-		SCARG(&a, behav) = MADV_RANDOM;
-		break;
-
-	case OSF1_MADV_SEQUENTIAL:
-		SCARG(&a, behav) = MADV_SEQUENTIAL;
-		break;
-
-	case OSF1_MADV_WILLNEED:
-		SCARG(&a, behav) = MADV_WILLNEED;
-		break;
-
-	case OSF1_MADV_DONTNEED_COMPAT:
-		SCARG(&a, behav) = MADV_DONTNEED;
-		break;
-
-	case OSF1_MADV_SPACEAVAIL:
-		SCARG(&a, behav) = MADV_SPACEAVAIL;
-		break;
-
-	case OSF1_MADV_DONTNEED:
-		/*
-		 * XXX not supported.  In Digital UNIX, this flushes all
-		 * XXX data in the region and replaces it with ZFOD pages.
-		 */
-		error = EINVAL;
-		break;
-
-	default:
-		error = EINVAL;
-		break;
-	}
-
-	if (error == 0) {
-		error = sys_madvise(p, &a, retval);
-
-		/*
-		 * NetBSD madvise() currently always returns ENOSYS.
-		 * Digital UNIX says that non-operational requests (i.e.
-		 * valid, but unimplemented 'behav') will return success.
-		 */
-		if (error == ENOSYS)
-			error = 0;
-	}
-	return (error);
 }

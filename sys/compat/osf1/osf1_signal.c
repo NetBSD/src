@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.15 1999/05/05 00:57:43 cgd Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.16 1999/05/05 01:51:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -49,6 +49,22 @@
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
 #include <compat/osf1/osf1_cvt.h>
+
+#if 0
+int
+osf1_sys_kill(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_kill_args *uap = v;
+	struct sys_kill_args ka;
+
+	SCARG(&ka, pid) = SCARG(uap, pid);
+	SCARG(&ka, signum) = osf1_signal_xlist[SCARG(uap, signum)];
+	return sys_kill(p, &ka, retval);
+}
+#endif
 
 int
 osf1_sys_sigaction(p, v, retval)
@@ -271,6 +287,22 @@ osf1_sys_signal(p, v, retval)
 }
 
 int
+osf1_sys_sigpending(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_sigpending_args *uap = v;
+	sigset_t bss;
+	osf1_sigset_t oss;
+
+	bss = p->p_siglist & p->p_sigmask;
+	osf1_cvt_sigset_from_native(&bss, &oss);
+
+	return copyout(&oss, SCARG(uap, mask), sizeof(oss));
+}
+
+int
 osf1_sys_sigprocmask(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -323,22 +355,6 @@ osf1_sys_sigprocmask(p, v, retval)
 }
 
 int
-osf1_sys_sigpending(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_sigpending_args *uap = v;
-	sigset_t bss;
-	osf1_sigset_t oss;
-
-	bss = p->p_siglist & p->p_sigmask;
-	osf1_cvt_sigset_from_native(&bss, &oss);
-
-	return copyout(&oss, SCARG(uap, mask), sizeof(oss));
-}
-
-int
 osf1_sys_sigsuspend(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -357,19 +373,5 @@ osf1_sys_sigsuspend(p, v, retval)
 
 	SCARG(&sa, mask) = bss;
 	return sys_sigsuspend(p, &sa, retval);
-}
-
-int
-osf1_sys_kill(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_kill_args *uap = v;
-	struct sys_kill_args ka;
-
-	SCARG(&ka, pid) = SCARG(uap, pid);
-	SCARG(&ka, signum) = osf1_signal_xlist[SCARG(uap, signum)];
-	return sys_kill(p, &ka, retval);
 }
 #endif

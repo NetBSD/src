@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_resource.c,v 1.1 1999/05/01 05:41:56 cgd Exp $ */
+/* $NetBSD: osf1_resource.c,v 1.2 1999/05/05 01:51:35 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -85,48 +85,6 @@ osf1_sys_getrlimit(p, v, retval)
 }
 
 int
-osf1_sys_setrlimit(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_setrlimit_args *uap = v;
-	struct sys_setrlimit_args a;
-
-	switch (SCARG(uap, which)) {
-	case OSF1_RLIMIT_CPU:
-		SCARG(&a, which) = RLIMIT_CPU;
-		break;
-	case OSF1_RLIMIT_FSIZE:
-		SCARG(&a, which) = RLIMIT_FSIZE;
-		break;
-	case OSF1_RLIMIT_DATA:
-		SCARG(&a, which) = RLIMIT_DATA;
-		break;
-	case OSF1_RLIMIT_STACK:
-		SCARG(&a, which) = RLIMIT_STACK;
-		break;
-	case OSF1_RLIMIT_CORE:
-		SCARG(&a, which) = RLIMIT_CORE;
-		break;
-	case OSF1_RLIMIT_RSS:
-		SCARG(&a, which) = RLIMIT_RSS;
-		break;
-	case OSF1_RLIMIT_NOFILE:
-		SCARG(&a, which) = RLIMIT_NOFILE;
-		break;
-	case OSF1_RLIMIT_AS:		/* unhandled */
-	default:
-		return (EINVAL);
-	}
-
-	/* XXX should translate */
-	SCARG(&a, rlp) = SCARG(uap, rlp);
-
-	return sys_setrlimit(p, &a, retval);
-}
-
-int
 osf1_sys_getrusage(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -167,4 +125,46 @@ osf1_sys_getrusage(p, v, retval)
 	}
 
 	return (error);
+}
+
+int
+osf1_sys_setrlimit(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_setrlimit_args *uap = v;
+	struct sys_setrlimit_args a;
+
+	switch (SCARG(uap, which)) {
+	case OSF1_RLIMIT_CPU:
+		SCARG(&a, which) = RLIMIT_CPU;
+		break;
+	case OSF1_RLIMIT_FSIZE:
+		SCARG(&a, which) = RLIMIT_FSIZE;
+		break;
+	case OSF1_RLIMIT_DATA:
+		SCARG(&a, which) = RLIMIT_DATA;
+		break;
+	case OSF1_RLIMIT_STACK:
+		SCARG(&a, which) = RLIMIT_STACK;
+		break;
+	case OSF1_RLIMIT_CORE:
+		SCARG(&a, which) = RLIMIT_CORE;
+		break;
+	case OSF1_RLIMIT_RSS:
+		SCARG(&a, which) = RLIMIT_RSS;
+		break;
+	case OSF1_RLIMIT_NOFILE:
+		SCARG(&a, which) = RLIMIT_NOFILE;
+		break;
+	case OSF1_RLIMIT_AS:		/* unhandled */
+	default:
+		return (EINVAL);
+	}
+
+	/* XXX should translate */
+	SCARG(&a, rlp) = SCARG(uap, rlp);
+
+	return sys_setrlimit(p, &a, retval);
 }
