@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck_ext2fs.8,v 1.9 2002/02/07 03:15:07 ross Exp $
+.\"	$NetBSD: fsck_ext2fs.8,v 1.10 2002/10/01 13:40:30 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -54,7 +54,8 @@
 .Sh DESCRIPTION
 .Nm
 performs interactive filesystem consistency checks and repair for each of
-the filesystems specified on the command line. It is normally invoked from
+the filesystems specified on the command line.
+It is normally invoked from
 .Xr fsck 8 .
 .Pp
 The kernel takes care that only a restricted class of innocuous filesystem
@@ -83,7 +84,8 @@ option) will correct; if it encounters other inconsistencies, it exits
 with an abnormal return status.
 For each corrected inconsistency one or more lines will be printed
 identifying the filesystem on which the correction will take place,
-and the nature of the correction.  After successfully correcting a filesystem,
+and the nature of the correction.
+After successfully correcting a filesystem,
 .Nm
 will print the number of files on that filesystem
 and the number of used and free blocks.
@@ -123,17 +125,18 @@ The following flags are interpreted by
 .Bl -tag -width indent
 .It Fl b
 Use the block specified immediately after the flag as
-the super block for the filesystem.  Block 8193 is usually
-an alternate super block.
+the super block for the filesystem.
+Block 8193 is usually an alternate super block.
 .It Fl d
 Print debugging output.
 .It Fl f
-Force checking of file systems.  Normally, if a file system is cleanly
-unmounted, the kernel will set a
+Force checking of file systems.
+Normally, if a file system is cleanly unmounted, the kernel will set a
 .Dq clean flag
 in the file system superblock, and
 .Nm
-will not check the file system.  This option forces
+will not check the file system.
+This option forces
 .Nm
 to check the file system, regardless of the state of the clean flag.
 .It Fl m
