@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.35 1996/09/15 18:11:11 mycroft Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.36 1996/09/16 17:45:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -195,8 +195,9 @@ udp_input(m, va_alist)
 		 */
 		udpsrc.sin_family = AF_INET;
 		udpsrc.sin_len = sizeof(struct sockaddr_in);
-		udpsrc.sin_port = uh->uh_sport;
 		udpsrc.sin_addr = ip->ip_src;
+		udpsrc.sin_port = uh->uh_sport;
+		bzero((caddr_t)udpsrc.sin_zero, sizeof(udpsrc.sin_zero));
 
 		m->m_len -= sizeof (struct udpiphdr);
 		m->m_data += sizeof (struct udpiphdr);
@@ -290,8 +291,9 @@ udp_input(m, va_alist)
 	 */
 	udpsrc.sin_family = AF_INET;
 	udpsrc.sin_len = sizeof(struct sockaddr_in);
-	udpsrc.sin_port = uh->uh_sport;
 	udpsrc.sin_addr = ip->ip_src;
+	udpsrc.sin_port = uh->uh_sport;
+	bzero((caddr_t)udpsrc.sin_zero, sizeof(udpsrc.sin_zero));
 
 	if (inp->inp_flags & INP_CONTROLOPTS) {
 		struct mbuf **mp = &opts;
