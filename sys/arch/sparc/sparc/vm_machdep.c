@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.22 1996/03/14 21:09:36 christos Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.23 1996/03/15 00:00:39 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -331,11 +331,8 @@ cpu_fork(p1, p2)
 {
 	register struct pcb *opcb = &p1->p_addr->u_pcb;
 	register struct pcb *npcb = &p2->p_addr->u_pcb;
-	register u_int sp, topframe, off, ssize;
 	register struct trapframe *tf2;
 	register struct rwindow *rp;
-	extern void child_return __P((struct proc *));
-	extern void proc_trampoline __P((void));
 
 	/*
 	 * Save all user registers to p1's stack or, in the case of
@@ -414,11 +411,10 @@ cpu_fork(p1, p2)
 void
 cpu_set_kpc(p, pc)
 	struct proc *p;
-	long pc;
+	void (*pc) __P((struct proc *));
 {
 	struct pcb *pcb;
 	struct rwindow *rp;
-	extern void proc_trampoline __P((void));
 
 	pcb = &p->p_addr->u_pcb;
 
