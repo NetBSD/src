@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.19 1998/08/21 13:42:51 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.20 1998/11/29 15:06:02 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,9 @@
  *
  *	@(#)vmparam.h	5.9 (Berkeley) 5/12/91
  */
+#ifndef _VMPARAM_H_
+#define _VMPARAM_H_
+
 #ifndef _LOCORE
 #include <vm/vm_param.h>
 #endif
@@ -145,6 +148,7 @@
 #define	VM_FREELIST_DEFAULT	0
 
 struct pmap_physseg {
+	int	dummy;
 };
 #endif
 
@@ -167,3 +171,4 @@ struct pmap_physseg {
 /* pcb base */
 #define pcbb(p)		((u_int)(p)->p_addr)
 
+#endif
