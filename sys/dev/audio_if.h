@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.16.2.2 1997/08/27 23:29:47 thorpej Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.16.2.3 1997/09/06 18:49:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -123,7 +123,29 @@ struct audio_hw_if {
 	int 	(*get_props)__P((void *)); /* device properties */
 };
 
-struct midi_hw_if;
+struct midi_info {
+	char	*name;		/* Name of MIDI hardware */
+	int	props;
+};
+#define MIDI_PROP_OUT_INTR 1
+
+struct midi_hw_if {
+	int	(*open)__P((void *, int, 	/* open hardware */
+			    void (*)__P((void *, int)),
+			    void (*)__P((void *)),
+			    void *));
+	void	(*close)__P((void *));		/* close hardware */
+	int	(*output)__P((void *, int));	/* output a byte */
+	void	(*getinfo)__P((void *, struct midi_info *));
+	int	(*ioctl)__P((u_long, caddr_t, int, struct proc *));
+};
+
+struct audio_attach_args {
+	struct audio_hw_if *ahw;
+	struct midi_hw_if *mhw;
+	void *hdl;
+	char audiodone, mididone;
+};
 
 /* Attach the MI driver(s) to the MD driver. */
 extern void	audio_attach_mi __P((struct audio_hw_if *, struct midi_hw_if *, void *, struct device *));

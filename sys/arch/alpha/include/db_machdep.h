@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.5 1997/07/25 00:06:25 thorpej Exp $ */
+/* $NetBSD: db_machdep.h,v 1.5.2.1 1997/09/06 17:59:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -88,6 +88,7 @@ db_addr_t	db_branch_taken __P((int inst, db_addr_t pc, db_regs_t *regs));
 /* No delay slots on Alpha. */
 #define	next_instr_address(v, b) ((db_addr_t) ((b) ? (v) : ((v) + 4)))
 
+u_long	db_register_value __P((db_regs_t *, int));
 int	ddb_trap __P((unsigned long, unsigned long, unsigned long,
 	    unsigned long, struct trapframe *));
 

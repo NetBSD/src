@@ -1,4 +1,4 @@
-/* $NetBSD: lcareg.h,v 1.7 1997/06/06 23:54:31 thorpej Exp $ */
+/* $NetBSD: lcareg.h,v 1.7.4.1 1997/09/06 17:59:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -48,8 +48,19 @@
 #define	IOC_HAE_RSVSD	0xffffffff07ffffffUL
 
 #define LCA_IOC_CONF	(LCA_IOC_BASE + 0x020)	/* Configuration Cycle Type */
+
 #define LCA_IOC_STAT0	(LCA_IOC_BASE + 0x040)	/* Status 0 */
+#define	IOC_STAT0_CMD	0x000000000000000fUL	/* PCI command mask */
+#define	IOC_STAT0_ERR	0x0000000000000010UL	/* IOC error indicator R/W1C */
+#define	IOC_STAT0_LOST	0x0000000000000020UL	/* IOC lose error info R/W1C */
+#define	IOC_STAT0_THIT	0x0000000000000040UL	/* test hit */
+#define	IOC_STAT0_TREF	0x0000000000000080UL	/* test reference */
+#define	IOC_STAT0_CODE	0x0000000000000700UL	/* code mask */
+#define	IOC_STAT0_CODESHIFT 8
+#define	IOC_STAT0_P_NBR	0x00000000ffffe000UL	/* page number mask */
+
 #define LCA_IOC_STAT1	(LCA_IOC_BASE + 0x060)	/* Status 1 */
+#define	IOC_STAT1_ADDR	0x00000000ffffffffUL	/* PCI address mask */
 
 #define	LCA_IOC_TBIA	(LCA_IOC_BASE + 0x080)	/* TLB Invalidate All */
 #define	LCA_IOC_TB_ENA	(LCA_IOC_BASE + 0x0a0)	/* TLB Enable */

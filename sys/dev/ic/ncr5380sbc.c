@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.21.4.1 1997/08/27 23:30:49 thorpej Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.21.4.2 1997/09/06 18:55:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -2431,7 +2431,8 @@ ncr5380_show_scsi_cmd(xs)
 
 	if ( ! ( xs->flags & SCSI_RESET ) ) {
 		printf("si(%d:%d:%d)-",
-		    xs->sc_link->scsibus, xs->sc_link->scsipi_scsi.target,
+		    xs->sc_link->scsipi_scsi.scsibus,
+		    xs->sc_link->scsipi_scsi.target,
 		    xs->sc_link->scsipi_scsi.lun);
 		while (i < xs->cmdlen) {
 			if (i) printf(",");
@@ -2440,7 +2441,8 @@ ncr5380_show_scsi_cmd(xs)
 		printf("-\n");
 	} else {
 		printf("si(%d:%d:%d)-RESET-\n",
-		    xs->sc_link->scsibus, xs->sc_link->scsipi_scsi.target,
+		    xs->sc_link->scsipi_scsi.scsibus,
+		    xs->sc_link->scsipi_scsi.target,
 		    xs->sc_link->scsipi_scsi.lun);
 	}
 }

@@ -1,7 +1,17 @@
-# $NetBSD: Makefile.inc,v 1.8 1997/04/06 08:39:38 cgd Exp $
+# $NetBSD: Makefile.inc,v 1.8.4.1 1997/09/06 17:59:55 thorpej Exp $
 
 .ifndef __INCLUDED_STAND_MAKEFILE_INC
 __INCLUDED_STAND_MAKEFILE_INC=
+
+.BEGIN: ${.OBJDIR}/machine
+beforedepend all: ${.OBJDIR}/machine
+CLEANFILES+= ${.OBJDIR}/machine
+
+${.OBJDIR}/machine::
+	-rm $@
+	ln -s $S/arch/alpha/include $@
+
+CPPFLAGS+= -I${.OBJDIR}
 
 .include <bsd.own.mk>			# for ECOFF_TOOLCHAIN definition
 

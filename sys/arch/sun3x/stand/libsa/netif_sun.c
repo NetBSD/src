@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.5 1997/07/22 17:41:10 drochner Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.5.2.1 1997/09/06 18:44:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -59,8 +59,14 @@
 #include "dvma.h"
 #include "promdev.h"
 
+/*
+ * XXX - Should not be defined here.  There is no guarante
+ * all PROM versions will put this at the same address.
+ */
+#define	IDPROM_BASE	0xFEF047D8 /* XXX */
+
+
 #define	PKT_BUF_SIZE 2048
-#define	IDPROM_BASE	0xFEF047D8	/* XXX - should not be defined here */
 
 int debug;
 int errno;

@@ -1,4 +1,4 @@
-/* $NetBSD: OSFpal.c,v 1.2 1997/04/06 08:40:56 cgd Exp $ */
+/* $NetBSD: OSFpal.c,v 1.2.4.1 1997/09/06 18:00:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1996 Carnegie-Mellon University.
@@ -28,17 +28,18 @@
  */
 
 #include <sys/types.h>
+#include <lib/libsa/stand.h>
 
 #include <machine/prom.h>
 #include <machine/rpb.h>
+
+#include "common.h"
 
 void
 OSFpal()
 {
 	struct rpb *r;
-	struct ctb *t;
 	struct pcs *p;
-	long result;
 	int offset;
 
 	r = (struct rpb *)HWRPB_ADDR;
@@ -48,7 +49,7 @@ OSFpal()
 	printf("VMS PAL revision: 0x%lx\n",
 	    p->pcs_palrevisions[PALvar_OpenVMS]);
 	printf("OSF PAL rev: 0x%lx\n", p->pcs_palrevisions[PALvar_OSF1]);
-	(void)switch_palcode();
+	switch_palcode();
 	printf("Switch to OSF PAL code succeeded.\n");
 }
 
