@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.19.10.1 2000/08/15 02:12:52 hubertf Exp $	*/
+/*	$NetBSD: install.c,v 1.19.10.2 2000/09/20 21:50:47 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -87,7 +87,7 @@ do_install()
 	/* Last chance ... do you really want to do this? */
 	clear();
 	refresh();
-	msg_display(MSG_lastchance);
+	msg_display(MSG_lastchance, diskdev);
 	process_menu(MENU_noyes);
 	if (!yesno)
 		return;
