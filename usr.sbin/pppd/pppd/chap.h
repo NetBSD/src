@@ -1,4 +1,4 @@
-/*	$NetBSD: chap.h,v 1.8 1997/09/26 19:52:35 christos Exp $	*/
+/*	$NetBSD: chap.h,v 1.9 2000/07/16 22:10:12 tron Exp $	*/
 
 /*
  * chap.h - Challenge Handshake Authentication Protocol definitions.
@@ -32,7 +32,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: chap.h,v 1.7 1996/10/08 06:43:27 paulus Exp 
+ * Id: chap.h,v 1.8 1999/11/15 01:44:41 paulus Exp 
  */
 
 #ifndef __CHAP_INCLUDE__
@@ -57,8 +57,8 @@
 /*
  *  Challenge lengths (for challenges we send) and other limits.
  */
-#define MIN_CHALLENGE_LENGTH	32
-#define MAX_CHALLENGE_LENGTH	64
+#define MIN_CHALLENGE_LENGTH	16
+#define MAX_CHALLENGE_LENGTH	24
 #define MAX_RESPONSE_LENGTH	64	/* sufficient for MD5 or MS-CHAP */
 
 /*

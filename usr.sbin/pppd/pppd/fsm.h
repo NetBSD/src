@@ -1,4 +1,4 @@
-/*	$NetBSD: fsm.h,v 1.8 1997/09/26 19:52:44 christos Exp $	*/
+/*	$NetBSD: fsm.h,v 1.9 2000/07/16 22:10:12 tron Exp $	*/
 
 /*
  * fsm.h - {Link, IP} Control Protocol Finite State Machine definitions.
@@ -18,13 +18,13 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: fsm.h,v 1.7 1997/04/30 05:52:37 paulus Exp 
+ * Id: fsm.h,v 1.8 1999/11/15 01:51:50 paulus Exp 
  */
 
 /*
  * Packet header = Code, id, length.
  */
-#define HEADERLEN	(sizeof (u_char) + sizeof (u_char) + sizeof (u_short))
+#define HEADERLEN	4
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: upap.c,v 1.11 1999/08/25 02:07:45 christos Exp $	*/
+/*	$NetBSD: upap.c,v 1.12 2000/07/16 22:10:15 tron Exp $	*/
 
 /*
  * upap.c - User/Password Authentication Protocol.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: upap.c,v 1.20 1999/08/24 05:29:26 paulus Exp "
+#define RCSID	"Id: upap.c,v 1.23 1999/11/20 05:11:47 paulus Exp "
 #else
-__RCSID("$NetBSD: upap.c,v 1.11 1999/08/25 02:07:45 christos Exp $");
+__RCSID("$NetBSD: upap.c,v 1.12 2000/07/16 22:10:15 tron Exp $");
 #endif
 #endif
 
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: upap.c,v 1.11 1999/08/25 02:07:45 christos Exp $");
 static const char rcsid[] = RCSID;
 #endif
 
-static bool hide_password;
+static bool hide_password = 1;
 
 /*
  * Command-line options.
@@ -50,6 +50,8 @@ static bool hide_password;
 static option_t pap_option_list[] = {
     { "hide-password", o_bool, &hide_password,
       "Don't output passwords to log", 1 },
+    { "show-password", o_bool, &hide_password,
+      "Show password string in debug log messages", 0 },
     { "pap-restart", o_int, &upap[0].us_timeouttime,
       "Set retransmit timeout for PAP" },
     { "pap-max-authreq", o_int, &upap[0].us_maxtransmits,
@@ -383,7 +385,7 @@ upap_rauthreq(u, inp, id, len)
     /*
      * Parse user/passwd.
      */
-    if (len < sizeof (u_char)) {
+    if (len < 1) {
 	UPAPDEBUG(("pap_rauth: rcvd short packet."));
 	return;
     }
@@ -406,8 +408,11 @@ upap_rauthreq(u, inp, id, len)
      * Check the username and password given.
      */
     retcode = check_passwd(u->us_unit, ruser, ruserlen, rpasswd,
-			   rpasswdlen, &msg, &msglen);
+			   rpasswdlen, &msg);
     BZERO(rpasswd, rpasswdlen);
+    msglen = strlen(msg);
+    if (msglen > 255)
+	msglen = 255;
 
     upap_sresp(u, retcode, id, msg, msglen);
 
@@ -443,7 +448,7 @@ upap_rauthack(u, inp, id, len)
     /*
      * Parse message.
      */
-    if (len < sizeof (u_char)) {
+    if (len < 1) {
 	UPAPDEBUG(("pap_rauthack: ignoring missing msg-length."));
     } else {
 	GETCHAR(msglen, inp);
@@ -483,7 +488,7 @@ upap_rauthnak(u, inp, id, len)
     /*
      * Parse message.
      */
-    if (len < sizeof (u_char)) {
+    if (len < 1) {
 	UPAPDEBUG(("pap_rauthnak: ignoring missing msg-length."));
     } else {
 	GETCHAR(msglen, inp);

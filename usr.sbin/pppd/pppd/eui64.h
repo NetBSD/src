@@ -1,24 +1,50 @@
-/*	$NetBSD: eui64.h,v 1.2 1999/08/25 02:07:42 christos Exp $	*/
+/*	$NetBSD: eui64.h,v 1.3 2000/07/16 22:10:12 tron Exp $	*/
 
 /*
- * eui64.h - EUI64 routines for IPv6CP.
- *
- * (c) 1999 Tommi Komulainen <Tommi.Komulainen@iki.fi>
- *
- * Redistribution and use in source and binary forms are permitted
- * provided that the above copyright notice and this paragraph are
- * duplicated in all such forms and that any documentation,
- * advertising materials, and other materials related to such
- * distribution and use acknowledge that the software was developed
- * by Carnegie Mellon University.  The name of the
- * University may not be used to endorse or promote products derived
- * from this software without specific prior written permission.
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
- * Id: eui64.h,v 1.1 1999/08/13 01:58:43 paulus Exp 
+    eui64.h - EUI64 routines for IPv6CP.
+    Copyright (C) 1999  Tommi Komulainen <Tommi.Komulainen@iki.fi>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+    
+    Id: eui64.h,v 1.3 1999/09/30 19:56:37 masputra Exp 
+*/
+
+#ifndef __EUI64_H__
+#define __EUI64_H__
+
+#if !defined(INET6)
+#error	"this file should only be included when INET6 is defined"
+#endif /* not defined(INET6) */
+
+#if defined(SOL2)
+#include <netinet/in.h>
+
+typedef union {
+    uint8_t	e8[8];		/* lower 64-bit IPv6 address */
+    uint32_t	e32[2];		/* lower 64-bit IPv6 address */
+} eui64_t;
+
+/*
+ * Declare the two below, since in.h only defines them when _KERNEL
+ * is declared - which shouldn't be true when dealing with user-land programs
  */
+#define	s6_addr8	_S6_un._S6_u8
+#define	s6_addr32	_S6_un._S6_u32
+
+#else /* else if not defined(SOL2) */
 
 /*
  * TODO:
@@ -31,6 +57,8 @@ typedef union
     u_int16_t e16[4];
     u_int32_t e32[2];
 } eui64_t;
+
+#endif /* defined(SOL2) */
 
 #define eui64_iszero(e)		(((e).e32[0] | (e).e32[1]) == 0)
 #define eui64_equals(e, o)	(((e).e32[0] == (o).e32[0]) && \
@@ -68,3 +96,6 @@ typedef union
 #define eui64_setlo32(e, l)	eui64_set32(e, l)
 
 char *eui64_ntoa __P((eui64_t));	/* Returns ascii representation of id */
+
+#endif /* __EUI64_H__ */
+

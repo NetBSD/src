@@ -1,13 +1,13 @@
-.\"	$NetBSD: chat.8,v 1.12 2000/03/29 06:04:49 deberg Exp $
+.\"	$NetBSD: chat.8,v 1.13 2000/07/16 22:10:10 tron Exp $
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
-.\" Id: chat.8,v 1.8 1999/05/12 06:13:22 paulus Exp
+.\" Id: chat.8,v 1.9 1999/09/06 05:10:23 paulus Exp 
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
 .\" IP indented paragraph
 .\" TP hanging label
-.TH CHAT 8 "27 Sep 1997" "Chat Version 1.17"
+.TH CHAT 8 "22 May 1999" "Chat Version 1.22"
 .SH NAME
 chat \- Automated conversational script with a modem
 .SH SYNOPSIS
@@ -49,6 +49,10 @@ Start with the echo option turned on. Echoing may also be turned on
 or off at specific points in the chat script by using the \fIECHO\fR
 keyword. When echoing is enabled, all output from the modem is echoed
 to \fIstderr\fR.
+.TP
+.B -E
+Enables environment variable substituion within chat scripts using the
+standard \fI$xxx\fR syntax.
 .TP
 .B -v
 Request that the \fIchat\fR script be executed in a verbose mode. The
@@ -431,6 +435,14 @@ sequence 'HI\ TIM' and HI\\sTIM are the same.
 .B \\\\t
 Send or expect a tab character.
 .TP
+.B \\\\T
+Send the phone number string as specified with the \fI-T\fR option
+.I (not valid in expect.)
+.TP
+.B \\\\U
+Send the phone number 2 string as specified with the \fI-U\fR option
+.I (not valid in expect.)
+.TP
 .B \\\\\\\\
 Send or expect a backslash character.
 .TP
@@ -443,6 +455,12 @@ character.
 Substitute the sequence with the control character represented by C.
 For example, the character DC1 (17) is shown as \^^Q.
 .I (some characters are not valid in expect.)
+.SH ENVIRONMENT VARIABLES
+Environment variables are available within chat scripts, if  the \fI-E\fR
+option was specified in the command line. The metacharacter \fI$\fR is used
+to introduce the name of the environment variable to substitute. If the
+substition fails, because the requested environment variable is not set,
+\fInothing\fR is replaced for the variable.
 .SH TERMINATION CODES
 The \fIchat\fR program will terminate with the following completion
 codes.
