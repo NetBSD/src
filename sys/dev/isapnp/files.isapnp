@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.28 2001/11/27 12:23:31 yamt Exp $
+#	$NetBSD: files.isapnp,v 1.29 2001/11/28 10:21:22 lukem Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -91,7 +91,7 @@ file	dev/isapnp/aic_isapnp.c			aic_isapnp
 attach isic at isapnp with isic_isapnp
 file dev/isapnp/isic_isapnp.c			isic_isapnp
 
-defopt	opt_isicpnp.h	ISICPNP_TEL_S0_16_3_P ISICPNP_CRTX_S0_P ISICPNP_DRN_NGO
+defflag	opt_isicpnp.h	ISICPNP_TEL_S0_16_3_P ISICPNP_CRTX_S0_P ISICPNP_DRN_NGO
 			ISICPNP_ELSA_QS1ISA ISICPNP_ELSA_PCC16
 			ISICPNP_SEDLBAUER ISICPNP_DYNALINK
 			ISICPNP_SIEMENS_ISURF2

@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.34 2001/11/20 12:56:21 lukem Exp $
+#	$NetBSD: files.arc,v 1.35 2001/11/28 10:21:11 lukem Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -11,7 +11,7 @@ maxusers 2 8 64
 ##	Platform support option header and files
 ##
 
-defopt	opt_platform.h			PLATFORM_ACER_PICA_61
+defflag	opt_platform.h			PLATFORM_ACER_PICA_61
 					PLATFORM_DESKTECH_ARCSTATION_I
 					PLATFORM_DESKTECH_TYNE
 					PLATFORM_MICROSOFT_JAZZ

@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.131 2001/11/26 20:33:44 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.132 2001/11/28 10:21:12 lukem Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -7,19 +7,19 @@ maxpartitions	8
 maxusers 2 8 64
 
 # COMPAT_OLD_OFW for SHARKs
-defopt	COMPAT_OLD_OFW
+defflag	COMPAT_OLD_OFW
 
 # Maintain Interrupt statistics
-defopt	IRQSTATS
+defflag	IRQSTATS
 
 # X server support in console drivers
-defopt	XSERVER
+defflag	XSERVER
 
 # Bootloader options (COMPAT... to be dropped ASAP)
-defopt	COMPAT_OLD_BOOTLOADER
+defflag	COMPAT_OLD_BOOTLOADER
 
 # Architectures and core logic
-defopt	NETWINDER
+defflag	NETWINDER
 
 define todservice {}
 
