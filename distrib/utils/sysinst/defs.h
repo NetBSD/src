@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.18 1997/11/05 07:28:20 jonathan Exp $	*/
+/*	$NetBSD: defs.h,v 1.19 1997/11/05 22:45:53 mhitch Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -131,15 +131,15 @@ EXTERN int swapadj INIT(0);
 /* Information for the NetBSD disklabel */
 EXTERN char *fstype[]
 #ifdef MAIN
-= {"unused", "swap", "4.2BSD", "msdos"}
+= {"unused", "swap", "4.2BSD", "msdos", "ados"}
 #endif
 ;
-enum DTYPE {T_UNUSED, T_SWAP, T_42BSD, T_MSDOS};
+enum DTYPE {T_UNUSED, T_SWAP, T_42BSD, T_MSDOS, T_ADOS};
 enum DINFO {D_SIZE, D_OFFSET, D_FSTYPE, D_BSIZE, D_FSIZE};
 enum DLTR {A,B,C,D,E,F,G,H};
 EXTERN char partname[] INIT("abcdefgh");
-EXTERN int bsdlabel[8][5];
-EXTERN char fsmount[8][20] INIT({""});
+EXTERN int bsdlabel[16][5];
+EXTERN char fsmount[16][20] INIT({""});
 EXTERN char bsddiskname[80];
 EXTERN char *doessf INIT("");
 
@@ -161,6 +161,10 @@ EXTERN char nfs_dir[STRSIZE] INIT("");
 
 EXTERN char cdrom_dev[SSTRSIZE] INIT("cd0");
 EXTERN char cdrom_dir[STRSIZE] INIT("/Release/NetBSD/NetBSD-");
+
+EXTERN char localfs_dev[SSTRSIZE] INIT("sd0");
+EXTERN char localfs_fs[SSTRSIZE] INIT("ffs");
+EXTERN char localfs_dir[STRSIZE] INIT("/Release/NetBSD/NetBSD-" REL "/" MACH);
 
 EXTERN int  mnt2_mounted INIT(0);
 
@@ -237,6 +241,7 @@ int	ask_ynquestion __P((char *quest, char def, ...));
 void	run_makedev __P((void));
 int	get_via_floppy __P((void));
 int	get_via_cdrom __P((void));
+int	get_via_localfs __P((void));
 void	cd_dist_dir __P((char *));
 void	toggle_getit __P((int));
 void	show_cur_distsets __P((void));
