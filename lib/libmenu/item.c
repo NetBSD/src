@@ -1,4 +1,4 @@
-/*	$NetBSD: item.c,v 1.7 2001/06/13 10:45:59 wiz Exp $	*/
+/*	$NetBSD: item.c,v 1.8 2002/07/29 13:03:51 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -140,6 +140,39 @@ item_term(MENU *menu)
 		return _menui_default_menu.item_term;
 	else
 		return menu->item_term;
+}
+
+/*
+ * Returns the number of items that are selected.
+ * The index numbers of the items are placed in the dynamically allocated
+ * int array *sel.
+ */
+int
+item_selected(MENU *menu, int **sel)
+{
+	int i, j;
+
+	if (menu == NULL)
+		return E_BAD_ARGUMENT;
+
+	/* count selected */
+	for (i = 0, j = 0; i < menu->item_count; i++)
+		if (menu->items[i]->selected)
+			j++;
+
+	if (j == 0) {
+		*sel = NULL;
+		return 0;
+	}
+	
+	if ( (*sel = malloc(sizeof(int) * j)) == NULL)
+		return E_SYSTEM_ERROR;
+
+	for (i = 0, j = 0; i < menu->item_count; i++)
+		if (menu->items[i]->selected)
+			(*sel)[j++] = i;
+
+	return j;
 }
 
 /*
