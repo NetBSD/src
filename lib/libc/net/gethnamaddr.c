@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.21 1999/07/06 02:00:41 itojun Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.22 1999/07/19 17:43:59 tron Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.21 1999/07/06 02:00:41 itojun Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.22 1999/07/19 17:43:59 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -818,7 +818,8 @@ _gethtbyname2(name, af)
 			register char *src;
 
 			bufsize = strlen(p->h_name) + 2 +
-				  MAXADDRS * p->h_length;
+				  MAXADDRS * p->h_length +
+				  ALIGNBYTES;
 			for (cp = p->h_aliases; *cp != NULL; cp++)
 				bufsize += strlen(*cp) + 1;
 
@@ -835,6 +836,8 @@ _gethtbyname2(name, af)
 				while ((*ptr++ = *src++) != '\0');
 			}
 			*ptr++ = '\0';
+
+			ptr = (char *)ALIGN(ptr);
 		}
 
 		(void)memcpy(ptr, p->h_addr_list[0], (size_t)p->h_length);
@@ -865,6 +868,7 @@ _gethtbyname2(name, af)
 	ptr++;
 	*cp = NULL;
 
+	ptr = (char *)ALIGN(ptr);
 	cp = h_addr_ptrs;
 	while (num--) {
 		*cp++ = ptr;
