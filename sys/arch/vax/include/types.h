@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.19 2001/01/03 10:09:05 takemura Exp $	*/
+/*	$NetBSD: types.h,v 1.20 2001/01/14 23:50:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,5 +72,6 @@ typedef	__uint64_t	u_int64_t;
 typedef int32_t                 register_t;
 
 #define __HAVE_DEVICE_REGISTER
+#define	__HAVE_GENERIC_SOFT_INTERRUPTS
 
 #endif	/* _MACHTYPES_H_ */
