@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1995/04/22 20:24:40 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 1995/05/31 20:45:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -768,6 +768,9 @@ boot(howto)
 	if ((howto & (RB_DUMP|RB_HALT)) == RB_DUMP)
 		dumpsys();
 #endif
+
+	/* run any shutdown hooks */
+	doshutdownhooks();
 
 haltsys:
 	/* Finally, halt/reboot the system. */
