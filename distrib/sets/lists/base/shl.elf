@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.37 2001/01/24 06:06:18 jwise Exp $
+# $NetBSD: shl.elf,v 1.38 2001/01/25 09:16:38 itojun Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./usr/lib/libamu.so.2		base-amd-shlib
 ./usr/lib/libasn1.so.3		base-krb5-shlib
@@ -47,4 +47,11 @@
 ./usr/lib/libutil.so.5		base-sys-shlib
 ./usr/lib/libwrap.so.0		base-net-shlib
 ./usr/lib/libz.so.0		base-sys-shlib
+./usr/lib/runemodule/libBIG5.so.3	base-runemodule-shlib
+./usr/lib/runemodule/libEUC.so.3	base-runemodule-shlib
+./usr/lib/runemodule/libMSKanji.so.3	base-runemodule-shlib
+./usr/lib/runemodule/libUTF2.so.3	base-runemodule-shlib
+./usr/lib/runemodule/libUTF8.so.3	base-runemodule-shlib
+./usr/lib/runemodule/libEUCTW.so.3	base-runemodule-shlib
+./usr/lib/runemodule/libISO2022.so.3	base-runemodule-shlib
 ./usr/libexec/ld.elf_so		base-sys-shlib

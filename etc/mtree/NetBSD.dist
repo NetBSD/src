@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.136 2001/01/22 17:48:17 itojun Exp $
+#	$NetBSD: NetBSD.dist,v 1.137 2001/01/25 09:16:38 itojun Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -257,6 +257,12 @@ rpcsvc
 
 # ./usr/lib
 lib
+
+# ./usr/lib/runemodule
+runemodule
+# ./usr/lib/runemodule
+..
+
 # ./usr/lib
 ..
 
