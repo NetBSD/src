@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.68 2004/04/25 16:42:43 simonb Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.69 2004/05/02 06:59:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.68 2004/04/25 16:42:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.69 2004/05/02 06:59:20 wiz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1157,7 +1157,7 @@ ext2fs_checksb(fs, ronly)
 		}
 		if (fs2h32(fs->e2fs_features_incompat) &
 		    ~EXT2F_INCOMPAT_SUPP) {
-			printf("Ext2 fs: unsupported optionnal feature\n");
+			printf("Ext2 fs: unsupported optional feature\n");
 			return (EINVAL);      /* XXX needs translation */
 		}
 		if (!ronly && fs2h32(fs->e2fs_features_rocompat) &
