@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.39 1999/04/09 22:22:17 fair Exp $
+#	$NetBSD: MAKEDEV,v 1.40 1999/04/23 18:14:29 ross Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -101,12 +101,12 @@ all)
 	sh $0 raid0 raid1 raid2 raid3
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 tun0 tun1 tun2 tun3
-	sh $0 ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm
+	sh $0 ttyB0 ttyB1 ttyC0 ttyC1 lkm
 	sh $0 wskbd0 wsmouse0 lpa0 lpt0 audio ipl wd0 wd1 fd0 fd1
 	sh $0 audio0 audio1 audio2 audio3
 	sh $0 random satlink0 speaker local
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
-	sh $0 usbs
+	sh $0 usbs wscons
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	;;
 
@@ -114,7 +114,14 @@ minimal)
 	sh $0 std
 	sh $0 sd0 sd1 sd2 sd3 pty0 st0 ch0 cd0 ccd0 ccd1 md0
 	sh $0 wd0 wd1 fd0 fd1
-	sh $0 ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 wskbd0 wsmouse0
+	sh $0 ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 wsmouse0 wskbd0 ttyEcfg
+	;;
+
+wscons)
+	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	sh $0 wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	sh $0 wskbd0 wskbd1 wskbd2 wskbd3
+	sh $0 ttyEcfg
 	;;
 
 usbs)
