@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.12 2002/11/15 13:51:30 ad Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.13 2003/12/09 19:43:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ struct iop_msg {
 	void			*im_dvcontext;	/* Un*x device context */
 	struct i2o_reply	*im_rb;		/* Reply buffer */
 	u_int			im_reqstatus;	/* Status from reply */
+	u_int			im_detstatus;	/* Detailed status code */ 
 	struct iop_xfer		im_xfer[IOP_MAX_MSG_XFERS];
 };
 #define	IM_SYSMASK		0x00ff
