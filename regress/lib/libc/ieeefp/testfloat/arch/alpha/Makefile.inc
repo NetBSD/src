@@ -1,1 +1,1 @@
-COPTS+=	-mieee-with-inexact
+COPTS+=	-mieee-with-inexact -mfp-rounding-mode=d
