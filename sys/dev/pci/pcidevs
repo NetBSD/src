@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.362 2001/10/11 14:30:21 tron Exp $
+$NetBSD: pcidevs,v 1.363 2001/10/13 07:43:42 ichiro Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -501,6 +501,7 @@ vendor LINEARSYS	0x1254	Linear Systems
 vendor ASIX		0x125b	ASIX Electronics
 vendor AURORA		0x125c	Aurora Technologies
 vendor ESSTECH		0x125d	ESS Technology Inc
+vendor INTERSIL		0x1260	Intersil
 vendor SILMOTION	0x126f	Silicon Motion
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
@@ -1304,6 +1305,9 @@ product INTEL 82451NX_PXB	0x84cb	82451NX PCI Expander Bridge (PXB)
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
+
+/* Intersil products */
+product INTERSIL MINI_PCI_WLAN	0x3873	Intersil PRISM2.5 Mini-PCI WLAN
 
 /* Invertex */
 product INVERTEX AEON		0x0005	AEON
