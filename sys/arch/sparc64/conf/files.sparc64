@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.31 2000/06/09 15:28:23 eeh Exp $
+#	$NetBSD: files.sparc64,v 1.32 2000/06/18 06:57:15 mrg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -212,15 +212,15 @@ file	dev/cons.c
 file	arch/sparc64/dev/fb.c
 file	arch/sparc64/dev/consinit.c
 
-file	arch/sparc64/fpu/fpu.c
-file	arch/sparc64/fpu/fpu_add.c
-file	arch/sparc64/fpu/fpu_compare.c
-file	arch/sparc64/fpu/fpu_div.c
-file	arch/sparc64/fpu/fpu_explode.c
-file	arch/sparc64/fpu/fpu_implode.c
-file	arch/sparc64/fpu/fpu_mul.c
-file	arch/sparc64/fpu/fpu_sqrt.c
-file	arch/sparc64/fpu/fpu_subr.c
+file	arch/sparc/fpu/fpu.c
+file	arch/sparc/fpu/fpu_add.c
+file	arch/sparc/fpu/fpu_compare.c
+file	arch/sparc/fpu/fpu_div.c
+file	arch/sparc/fpu/fpu_explode.c
+file	arch/sparc/fpu/fpu_implode.c
+file	arch/sparc/fpu/fpu_mul.c
+file	arch/sparc/fpu/fpu_sqrt.c
+file	arch/sparc/fpu/fpu_subr.c
 
 # N.B.: optimizer breaks pmap.c and/or cache.c somehow -- have not
 # identified the exact problem yet.  NOOPT_C suffices for now.
