@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2004/01/02 11:58:32 skrll Exp $
+#	$NetBSD: Makefile,v 1.20 2004/02/11 16:22:51 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -17,15 +17,18 @@ GNUHOSTDIST=	${DIST}
 GCCARCH=	${NETBSDSRCDIR}/gnu/usr.bin/gcc3/arch/${MACHINE_ARCH}
 GCCARCHXX=	${NETBSDSRCDIR}/gnu/lib/libstdc++-v3/arch/${MACHINE_ARCH}
 
-GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_MAYBE_USE_COLLECT2} ${G_INCLUDES}
+GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_USE_COLLECT2} ${G_INCLUDES}
 CPPFLAGS+=	-I${.CURDIR}
 CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
+#CPPFLAGS+=	-I${G_EXTRA_HEADERS:H:u}
 CPPFLAGS+=	-I${DIST}/gcc/cp -I${GCCARCHXX} -I.
 
 LIB2FUNCS=	${G_LIB2FUNCS_1:=.c} ${G_LIB2FUNCS_2:=.c} ${G_LIB2FUNCS_ST:=.c}
 LIB2DIVMOD=	${G_LIB2_DIVMOD_FUNCS:=.c}
 LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
+.if !empty(G_LIB1ASMFUNCS)
 LIB1ASMFUNCS=	${G_LIB1ASMFUNCS:=.S}
+.endif
 
 SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} \
 		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS} \
@@ -64,7 +67,7 @@ ${LIB1ASMFUNCS}: ${.CURDIR}/Makefile
 	printf '#define L${.PREFIX}\n#include <${G_LIB1ASMSRC}>\n' >${.TARGET}
 .endif
 
-${G_LIB2ADD:T:S/.asm/.S/}: ${.CURDIR}/Makefile ${G_LIB2ADD}
+${G_LIB2ADD:M${GNUHOSTDIST}/*:T:S/.asm/.S/}: ${.CURDIR}/Makefile ${G_LIB2ADD}
 	@echo copying ${G_LIB2ADD}
 	for i in ${G_LIB2ADD}; do \
 		j=$${i##*/}; \
