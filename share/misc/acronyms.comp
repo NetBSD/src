@@ -1,8 +1,9 @@
-$NetBSD: acronyms.comp,v 1.47 2004/11/11 08:42:27 grant Exp $
+$NetBSD: acronyms.comp,v 1.48 2005/01/08 18:48:56 jmmv Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
 ADC	analog [to] digital converter
+ADPCM	adaptive differential pulse amplitude modulation
 AGP	accelerated graphics port
 ANSI	american national standards institute
 API	application programming interface
@@ -17,15 +18,19 @@ BEDO	burst extended data output
 BGP	border gateway protocol
 BIOS	basic input/output system
 BLOB	binary large object
+BPS	bits per second
 BSD	berkeley software distribution
 CAD	computer-aided design
 CAV	constant angular velocity (as opposed to CLV)
+CCD	charge coupled device
 CD	compact disc
+CDDA	compact disc digital audio
 CDRAM	cache dynamic random access memory
 CGA	color graphics array
 CGI	common gateway interface
 CHS	cylinder/head/sector
 CIDR	classless inter-domain routing
+CIS	contact image sensor
 CLI	command line interface
 CLV	constant linear velocity (as opposed to CAV)
 COFF	common object file format
@@ -34,13 +39,18 @@ CRLF	carriage return line feed
 CRT	cathode ray tube
 CSS	cascading style sheets
 CVS	concurrent versions system
+CYMK	cyan yellow magenta black
 DAC	digital [to] analog converter
+DCT	discrete cosine transform
 DDC	display data channel
 DDR	double data rate
 DDWG	digital display working group
+DFT	discrete fourier transform
 DHCP	dynamic host configuration protocol
 DMA	direct memory access
 DNS	domain name system
+DPCM	differential pulse amplitude modulation
+DPI	dots per inch
 DRAM	dynamic random access memory
 DSL	digital subscriber line
 DTD	document type definition
@@ -50,6 +60,7 @@ ECP	enhanced capability port
 EDID	extended display identification data
 EDO	extended data out
 EEPROM	electrically erasable programmable read only memory
+EFM	eight to fourteen modulation
 EGA	enhanced graphics array
 EISA	extended industry standard architecture
 ELF	executable and linking format
@@ -108,8 +119,10 @@ LCD	liquid crystal display
 LDAP	lightweight directory access protocol
 LED	light emitting diode
 LIR	local internet registry
+LRC	longitudinal redundancy check
 LSB	least significant bit [or: byte]
 LUN	logical unit number
+LZW	lempel ziv welch
 MAC	media access control
 MBR	master boot record
 MDRAM	multibank dynamic random access memory
@@ -119,28 +132,37 @@ MIPS	million instructions per second
 MMU	memory management unit
 MPEG	moving picture experts group
 MSB	most significant bit [or: byte]
+MSF	minutes seconds frames
 MTA	mail transfer agent
 MTU	maximum transmission unit
 MUA	mail user agent
+MWE	module width encoding
 NAT	network address translation
 NFS	network file system
 NIC	network interface card
 NIS	network information service
+NRZ	non return to zero
 NUMA	non uniform memory access
+OCR	optical character recognition
 OEM	original equipment manufacturer
 OSF	open software foundation
 OSI	open systems interconnection
 OTP	one time password
 PAM	pluggable authentication modules
+PAM	pulse amplitude modulation
 PAX	portable archive exchange
+PC	personal computer
 PCI	peripheral component interconnect
+PCM	pulse code modulation
 PCMCIA	personal computer memory card international association
 PDP	page descriptor page
 PERL	practical extraction [and] report language
 PGP	pretty good privacy
 PIC	programmable interrupt controller
 PID	process id
+PIN	personal identification number
 PIO	programmed input/output
+PMT	photo-multiplier tube
 PNG	portable network graphics
 POP	post office protocol
 POSIX	portable operating system interface [for] unix
@@ -153,6 +175,7 @@ PROM	programmable read only memory
 PTE	page table entry
 PTLA	pseudo top level aggregator
 PTP	page table page
+PWM	pulse width modulation
 QOS	quality of service
 RAID	redundant array of inexpensive disks
 RAM	random access memory
@@ -160,9 +183,11 @@ RCS	revision control system
 RFC	request for comments
 RGB	red green blue
 RISC	reduced instruction set computing
+RLE	run length encoding
 ROM	read only memory
 RPM	revolutions per minute
 RTF	rich text format
+RTT	round time trip
 S/PDIF	sony/phillips digital interface
 SACD	super audio compact disc
 SAM	serial access memory
@@ -179,6 +204,7 @@ SMTP	simple mail transfer protocol
 SNMP	simple network management protocol
 SPD	serial presence detect
 SRAM	static random access memory
+SSFDC	solid state floppy disc card
 SSH	secure shell
 SSL	secure sockets layer
 STP	shielded twisted pair
@@ -192,10 +218,13 @@ TLA	top level aggregator
 TLB	transition lookaside buffer
 TLD	top level domain
 TMDS	transition minimized differential signaling
+TTL	time to live
 TTY	teletype
 TZ	time zone
 UC	uncacheable
+UDO	ultra density optical (storage)
 UDP	user datagram protocol
+UFS	unix file system
 UPS	uninterruptible power supply
 URI	uniform resource identifier
 URL	uniform resource locator
@@ -207,6 +236,7 @@ VAX	virtual address extension
 VCM	virtual channel memory
 VESA	video electronics standards association
 VGA	video graphics array
+VLSM	variable length subnetting mask
 VM	virtual memory
 VPN	virtual private network
 VRAM	video random access memory
