@@ -1,7 +1,7 @@
-#	$NetBSD: SUN4M,v 1.1 1994/12/07 14:46:01 deraadt Exp $
+#	$NetBSD: SUN4M,v 1.2 1994/12/16 21:53:25 deraadt Exp $
 
 machine		sparc
-options		"SUN4M", "SUN4C"
+options		"SUN4M"
 
 # obsolete timezone spec
 options		TIMEZONE=0, DST=0
