@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.68 1999/11/07 17:01:20 chs Exp $ */
+/* $NetBSD: locore.s,v 1.69 1999/12/02 19:41:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.68 1999/11/07 17:01:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.69 1999/12/02 19:41:39 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -273,15 +273,6 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
 #include <alpha/alpha/atomic.s>
 
 /**************************************************************************/
-
-/**************************************************************************/
-
-/*
- * Pull in the BWX instruction stubs.
- *
- * XXX Eventually, we want to do these with inline __asm() statements.
- */
-#include <alpha/alpha/bwx.s>
 
 /**************************************************************************/
 
