@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.3 2002/06/15 18:01:05 thorpej Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.4 2002/06/18 07:56:14 tshiozak Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,3 +65,10 @@ ACPI_STATUS	acpi_md_OsGetPhysicalAddress(void *LogicalAddress,
 
 BOOLEAN		acpi_md_OsReadable(void *, UINT32);
 BOOLEAN		acpi_md_OsWritable(void *, UINT32);
+
+int		acpi_md_sleep(int);
+
+#ifdef ACPI_MACHDEP_PRIVATE
+u_int32_t	acpi_md_get_npages_of_wakecode(void);
+void		acpi_md_install_wakecode(paddr_t);
+#endif

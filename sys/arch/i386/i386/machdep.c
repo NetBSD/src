@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.472 2002/05/31 17:46:51 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.473 2002/06/18 07:56:13 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.472 2002/05/31 17:46:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.473 2002/06/18 07:56:13 tshiozak Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -152,11 +152,18 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.472 2002/05/31 17:46:51 thorpej Exp $"
 #include <machine/vm86.h>
 #endif
 
+#include "acpi.h"
 #include "apm.h"
 #include "bioscall.h"
 
 #if NBIOSCALL > 0
 #include <machine/bioscall.h>
+#endif
+
+#if NACPI > 0
+#include <dev/acpi/acpivar.h>
+#define ACPI_MACHDEP_PRIVATE
+#include <machine/acpi_machdep.h>
 #endif
 
 #if NAPM > 0
@@ -2186,6 +2193,13 @@ haltsys:
 	doshutdownhooks();
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+#if 0
+#if NACPI > 0
+		delay(500000);
+		acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
+		printf("WARNING: powerdown failed!\n");
+#endif
+#endif
 #if NAPM > 0 && !defined(APM_NO_POWEROFF)
 		/* turn off, if we can.  But try to turn disk off and
 		 * wait a bit first--some disk drives are slow to clean up
@@ -2684,6 +2698,9 @@ init386(first_avail)
 	int x, first16q;
 	u_int64_t seg_start, seg_end;
 	u_int64_t seg_start1, seg_end1;
+	paddr_t realmode_reserved_start;
+	psize_t realmode_reserved_size;
+	int needs_earlier_install_pte0;
 #if NBIOSCALL > 0
 	extern int biostramp_image_size;
 	extern u_char biostramp_image[];
@@ -2721,13 +2738,36 @@ init386(first_avail)
 	 */
 	uvmexp.ncolors = 2;
 
+	/*
+	 * BIOS leaves data in low memory
+	 * and VM system doesn't work with phys 0
+	 */
+	avail_start = PAGE_SIZE;
+
+	/*
+	 * reserve memory for real-mode call
+	 */
+	needs_earlier_install_pte0 = 0;
+	realmode_reserved_start = 0;
+	realmode_reserved_size = 0;
 #if NBIOSCALL > 0
-	avail_start = 3*PAGE_SIZE; /* save us a page for trampoline code and
-				      one additional PT page! */
-#else
-	avail_start = PAGE_SIZE; /* BIOS leaves data in low memory */
-				 /* and VM system doesn't work with phys 0 */
+	/* save us a page for trampoline code */
+	realmode_reserved_size += PAGE_SIZE;
+	needs_earlier_install_pte0 = 1;
 #endif
+#if NACPI > 0
+	/* trampoline code for wake handler */
+	realmode_reserved_size += ptoa(acpi_md_get_npages_of_wakecode()+1);
+	needs_earlier_install_pte0 = 1;
+#endif
+	if (needs_earlier_install_pte0) {
+		/* page table for directory entry 0 */
+		realmode_reserved_size += PAGE_SIZE;
+	}
+	if (realmode_reserved_size>0) {
+		realmode_reserved_start = avail_start;
+		avail_start += realmode_reserved_size;
+	}
 
 	/*
 	 * Call pmap initialization to make new kernel address space.
@@ -3018,18 +3058,37 @@ init386(first_avail)
 			    "in last cluster (%ld used)\n", reqsz, sz);
 	}
 
-#if NBIOSCALL > 0
-	/* install page 2 (reserved above) as PT page for first 4M */
-	pmap_enter(pmap_kernel(), (vaddr_t)vtopte(0), 2*PAGE_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
-	pmap_update(pmap_kernel());
-	memset(vtopte(0), 0, PAGE_SIZE);/* make sure it is clean before using */
+	/*
+	 * install PT page for the first 4M if needed.
+	 */
+	if (needs_earlier_install_pte0) {
+		paddr_t paddr;
+#ifdef DIAGNOSTIC
+		if (realmode_reserved_size < PAGE_SIZE) {
+			panic("cannot steal memory for first 4M PT page.");
+		}
+#endif
+		paddr=realmode_reserved_start+realmode_reserved_size-PAGE_SIZE;
+		pmap_enter(pmap_kernel(), (vaddr_t)vtopte(0), paddr,
+			   VM_PROT_READ|VM_PROT_WRITE,
+			   PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
+		pmap_update(pmap_kernel());
+		/* make sure it is clean before using */
+		memset(vtopte(0), 0, PAGE_SIZE);
+		realmode_reserved_size -= PAGE_SIZE;
+	}
 
+#if NBIOSCALL > 0
 	/*
 	 * this should be caught at kernel build time, but put it here
 	 * in case someone tries to fake it out...
 	 */
 #ifdef DIAGNOSTIC
+	if (realmode_reserved_start > BIOSTRAMP_BASE ||
+	    (realmode_reseved_start+realmode_reserved_size) < (BIOSTRAMP_BASE+
+							       PAGE_SIZE)) {
+	    panic("cannot steal memory for PT page of bioscall.");
+	}
 	if (biostramp_image_size > PAGE_SIZE)
 	    panic("biostramp_image_size too big: %x vs. %x\n",
 		  biostramp_image_size, PAGE_SIZE);
@@ -3042,6 +3101,42 @@ init386(first_avail)
 #ifdef DEBUG_BIOSCALL
 	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
 #endif
+	realmode_reserved_size  -= PAGE_SIZE;
+	realmode_reserved_start += PAGE_SIZE;
+#endif
+
+#if NACPI > 0
+	/*
+	 * Steal memory for the acpi wake code
+	 */
+	{
+		paddr_t paddr, p;
+		psize_t sz;
+		int npg;
+
+		paddr = realmode_reserved_start;
+		npg = acpi_md_get_npages_of_wakecode();
+		sz = ptoa(npg);
+#ifdef DIAGNOSTIC
+		if (realmode_reserved_size < sz) {
+			panic("cannot steal memory for ACPI wake code.");
+		}
+#endif
+
+		/* identical mapping */
+		p = paddr;
+		for (x=0; x<npg; x++) {
+			printf("kenter: 0x%08X\n", (unsigned)p);
+			pmap_kenter_pa((vaddr_t)p, p, VM_PROT_ALL);
+			p += PAGE_SIZE;
+		}
+		pmap_update(pmap_kernel());
+
+		acpi_md_install_wakecode(paddr);
+
+		realmode_reserved_size  -= sz;
+		realmode_reserved_start += sz;
+	}
 #endif
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
