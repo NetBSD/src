@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.5 2003/07/01 13:04:32 wiz Exp $
+.\" $NetBSD: mdoc.local,v 1.6 2003/07/04 12:20:11 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,6 +48,7 @@
 .\".ds str-Lb-libcrypt     Crypt Library (libcrypt, \-lcrypt)
 .\".ds str-Lb-libcurses    Curses Library (libcurses, \-lcurses)
 .\".ds str-Lb-libedit      Command Line Editor Library (libedit, \-ledit)
+.ds str-Lb-libevent     Event Notification Library (libevent, \-levent)
 .ds str-Lb-libform      Curses Form Library (libform, \-lform)
 .\".ds str-Lb-libi386      i386 Architecture Library (libi386, \-li386)
 .ds str-Lb-libintl      Internationalized Message Handling Library (libintl, \-lintl)
