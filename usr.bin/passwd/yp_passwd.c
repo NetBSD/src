@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.13 1997/02/22 01:50:48 thorpej Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.14 1997/05/21 02:09:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: yp_passwd.c,v 1.13 1997/02/22 01:50:48 thorpej Exp $";
+static char rcsid[] = "$NetBSD: yp_passwd.c,v 1.14 1997/05/21 02:09:51 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -246,7 +246,7 @@ getnewpasswd(pw, old_pass)
 }
 
 static char *
-pwskip(register char *p)
+pwskip(char *p)
 {
 	while (*p && *p != ':' && *p != '\n')
 		++p;
@@ -258,8 +258,8 @@ pwskip(register char *p)
 struct passwd *
 interpret(struct passwd *pwent, char *line)
 {
-	register char	*p = line;
-	register int	c;
+	char	*p = line;
+	int	c;
 
 	pwent->pw_passwd = "*";
 	pwent->pw_uid = 0;
@@ -303,14 +303,13 @@ ypgetpwnam(nam)
 	char *val;
 	int reason, vallen;
 	
+	val = NULL;
 	reason = yp_match(domain, "passwd.byname", nam, strlen(nam),
 			  &val, &vallen);
-	switch(reason) {
-	case 0:
-		break;
-	default:
+	if (reason != 0) {
+		if (val != NULL)
+			free(val);
 		return (NULL);
-		break;
 	}
 	val[vallen] = '\0';
 	(void)strncpy(line, val, sizeof(line) - 1);
