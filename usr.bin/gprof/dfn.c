@@ -1,4 +1,4 @@
-/*	$NetBSD: dfn.c,v 1.6 1998/02/22 12:55:44 christos Exp $	*/
+/*	$NetBSD: dfn.c,v 1.7 1998/03/15 17:14:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dfn.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dfn.c,v 1.6 1998/02/22 12:55:44 christos Exp $");
+__RCSID("$NetBSD: dfn.c,v 1.7 1998/03/15 17:14:51 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,6 +173,10 @@ dfn_findcycle( childp )
     nltype	*cycleheadp;
     nltype	*tailp;
     int		index;
+
+#ifdef __GNUC__
+    (void) &cycleheadp;		/* XXX gcc */
+#endif
 
     for ( cycletop = dfn_depth ; cycletop > 0 ; cycletop -= 1 ) {
 	cycleheadp = dfn_stack[ cycletop ].nlentryp;

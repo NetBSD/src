@@ -1,4 +1,4 @@
-/*	$NetBSD: printgprof.c,v 1.7 1998/02/22 12:55:46 christos Exp $	*/
+/*	$NetBSD: printgprof.c,v 1.8 1998/03/15 17:14:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)printgprof.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: printgprof.c,v 1.7 1998/02/22 12:55:46 christos Exp $");
+__RCSID("$NetBSD: printgprof.c,v 1.8 1998/03/15 17:14:51 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -403,6 +403,9 @@ sortchildren( parentp )
     arctype	sorted;
     arctype	*prevp;
 
+#ifdef __GNUC__
+    (void) &detachedp;
+#endif
 	/*
 	 *	unlink children from parent,
 	 *	then insertion sort back on to sorted's children.
@@ -445,6 +448,9 @@ sortparents( childp )
     arctype	sorted;
     arctype	*prevp;
 
+#ifdef __GNUC__
+    (void) &detachedp;
+#endif
 	/*
 	 *	unlink parents from child,
 	 *	then insertion sort back on to sorted's parents.
