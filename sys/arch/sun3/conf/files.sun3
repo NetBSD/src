@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.53 1999/05/14 06:42:02 mrg Exp $
+#	$NetBSD: files.sun3,v 1.54 1999/06/07 20:31:34 thorpej Exp $
 
 #
 # sun3-specific configuration info
@@ -271,7 +271,6 @@ include "compat/ossaudio/files.ossaudio"
 
 # Major numbers for root/swap device configuration
 major	{xy=3}	# Xylogics 450 and 451
-major	{vnd=5}	# vnode pseudo-device
 major	{sd=7}	# SCSI disk
 major	{xd=10}	# Xylogics 7053
 major	{md=13}	# Memory disk (for mini-kernel)
