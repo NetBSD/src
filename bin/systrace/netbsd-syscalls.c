@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.10 2002/11/02 19:57:02 provos Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.11 2002/12/06 09:49:36 scw Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.10 2002/11/02 19:57:02 provos Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.11 2002/12/06 09:49:36 scw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -534,7 +534,7 @@ nbsd_argument(int off, void *pargs, int argsize, void **pres)
 	if (off >= argsize / sizeof(register_t))
 		return (-1);
 
-	*pres = (void *)args[off];
+	*pres = (void *)(intptr_t)args[off];
 
 	return (0);
 }
