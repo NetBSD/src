@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8 1996/04/26 06:59:37 leo Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.9 1996/06/29 20:24:28 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,8 +51,6 @@
 #include <sys/core.h>
 #include <sys/exec_aout.h>
 #include <m68k/reg.h>
-
-#include <kern/kern_extern.h>
 
 #include <vm/vm.h>
 #include <sys/user.h>
