@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86_64,v 1.13 2002/11/29 22:17:13 fvdl Exp $
+#	$NetBSD: files.x86_64,v 1.14 2003/03/05 23:56:00 fvdl Exp $
 #
 # new style config file for x86_64 architecture
 #
@@ -6,13 +6,14 @@
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16
 
-maxusers 2 16 64
+maxusers 2 16 128
 
 # delay before cpu_reset() for reboot.
 defparam		CPURESET_DELAY
 
 # Large page size
 defflag			LARGEPAGES
+
 
 #
 # XXX these are just here at the moment so that we can share files
@@ -21,10 +22,9 @@ defflag			LARGEPAGES
 
 defflag			USER_LDT
 defflag			VM86
+defflag opt_mpacpi.h MPACPI
 
 file	arch/x86_64/x86_64/autoconf.c
-file	arch/x86_64/x86_64/bus_machdep.c
-file	arch/x86_64/x86_64/consinit.c
 file	arch/x86_64/x86_64/db_disasm.c		ddb
 file	arch/x86_64/x86_64/db_interface.c	ddb
 file	arch/x86_64/x86_64/db_memrw.c		ddb | kgdb
@@ -33,19 +33,15 @@ file	arch/x86_64/x86_64/disksubr.c		disk
 file	arch/x86_64/x86_64/gdt.c
 
 #
-# Write the optimized versions for these.
+# XXXfvdl write the optimized versions for these.
 #
 file	netinet/in_cksum.c			inet
 file	netinet/in4_cksum.c			inet
 
-#file	arch/x86_64/x86_64/in_cksum.S		inet
-
-file	arch/x86_64/x86_64/ipkdb_glue.c		ipkdb
-file	arch/x86_64/x86_64/kgdb_machdep.c	kgdb
 file	arch/x86_64/x86_64/machdep.c
+file	arch/x86_64/x86_64/identcpu.c
 file	arch/x86_64/x86_64/math_emulate.c	math_emulate
 file	arch/x86_64/x86_64/mem.c
-file	arch/x86_64/x86_64/mtrr.c
 file	netns/ns_cksum.c			ns
 file	arch/x86_64/x86_64/pmap.c
 file	arch/x86_64/x86_64/process_machdep.c
@@ -56,8 +52,10 @@ file	arch/x86_64/x86_64/trap.c
 file	arch/x86_64/x86_64/vm_machdep.c
 file	arch/x86_64/x86_64/fpu.c
 file	dev/cons.c
+file	kern/kern_microtime.c
 
-file	arch/x86_64/x86_64/pmc.c		perfctrs
+file	arch/x86_64/x86_64/mptramp.S        multiprocessor
+file	arch/x86_64/x86_64/ipifuncs.c       multiprocessor
 
 #
 # Machine-independent SCSI drivers
@@ -72,7 +70,7 @@ include	"dev/scsipi/files.scsipi"
 include	"dev/ata/files.ata"
 
 # Memory Disk for install floppy
-file	arch/x86_64/x86_64/md_root.c		memory_disk_hooks
+file	dev/md_root.c			memory_disk_hooks
 
 #
 # Machine-independent I2O drivers
@@ -88,11 +86,15 @@ file	arch/x86_64/x86_64/bios32.c		bios32 needs-flag
 # System bus types
 #
 
-define	mainbus { }
 # XXX BIOS32 only if something that uses it is configured!
 device	mainbus: isabus, pcibus, mainbus, bios32
 attach	mainbus at root
 file	arch/x86_64/x86_64/mainbus.c		mainbus
+
+define cpu { [apid = -1] }
+device cpu
+attach cpu at mainbus
+file	arch/x86_64/x86_64/cpu.c		cpu
 
 #
 # PCI-only drivers
@@ -101,7 +103,6 @@ file	arch/x86_64/x86_64/mainbus.c		mainbus
 #
 
 include	"dev/pci/files.pci"
-file	arch/x86_64/pci/pci_machdep.c		pci
 defparam			PCI_CONF_MODE
 file	arch/x86_64/pci/pciide_machdep.c	pciide
 
@@ -129,8 +130,6 @@ include	"dev/isa/files.isa"
 attach	lpt at puc with lpt_puc
 file	dev/pci/lpt_puc.c			lpt_puc
 
-file	arch/x86_64/isa/isa_machdep.c		isa
-
 # PC clock
 file	arch/x86_64/isa/clock.c			isa
 file	dev/clock_subr.c			isa
@@ -138,13 +137,6 @@ file	dev/clock_subr.c			isa
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
 define	pckbcport { [irq = -1], [port = -1] }
-
-# PC console support a la "pccons"
-device	pc: tty, pckbcport
-attach	pc at isa
-device	pcconskbd
-attach	pcconskbd at pckbc
-file	arch/x86_64/isa/pccons.c		pc | pcconskbd needs-flag
 
 include	"dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"

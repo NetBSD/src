@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2002/11/25 00:28:46 fvdl Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2003/03/05 23:56:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -85,17 +85,16 @@ NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-/* #define CLOCKDEBUG */
-/* #define CLOCK_PARANOIA */
-
-/*
- * XXXfvdl this file can be shared with the i386 port.
- * but, maybe the actual hardware will not have this chip.
- */
-
 /*
  * Primitive clock interrupt routines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2003/03/05 23:56:03 fvdl Exp $");
+
+/* #define CLOCKDEBUG */
+/* #define CLOCK_PARANOIA */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
@@ -113,6 +112,16 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <dev/ic/i8253reg.h>
 #include <i386/isa/nvram.h>
 #include <dev/clock_subr.h>
+#include <machine/specialreg.h> 
+
+#include "config_time.h"		/* for CONFIG_TIME */
+
+#ifndef __x86_64__
+#include "mca.h"
+#endif
+#if NMCA > 0
+#include <machine/mca_machdep.h>	/* for MCA_system */
+#endif
 
 #include "pcppi.h"
 #if (NPCPPI > 0)
@@ -136,7 +145,7 @@ static pcppi_tag_t ppicookie;
 #endif /* PCPPI */
 
 void	spinwait __P((int));
-int	clockintr __P((void *));
+int	clockintr __P((void *, struct intrframe));
 int	gettick __P((void));
 void	sysbeep __P((int, int));
 void	rtcinit __P((void));
@@ -145,7 +154,6 @@ void	rtcput __P((mc_todregs *));
 int 	bcdtobin __P((int));
 int	bintobcd __P((int));
 
-static void check_clock_bug __P((void));
 static inline int gettick_broken_latch __P((void));
 
 
@@ -172,35 +180,18 @@ mc146818_write(sc, reg, datum)
 	outb(IO_RTC+1, datum);
 }
 
-static u_long rtclock_tval;
-static int clock_broken_latch = 0;
+u_long rtclock_tval;
+int clock_broken_latch = 0;
 
 #ifdef CLOCK_PARANOIA
 static int ticks[6];
 #endif
-
 /*
  * i8254 latch check routine:
  *     National Geode (formerly Cyrix MediaGX) has a serious bug in
  *     its built-in i8254-compatible clock module.
- *     Set the variable 'clock_broken_latch' to indicate it.
- *     XXX check only cpu_id
+ *     machdep sets the variable 'clock_broken_latch' to indicate it.
  */
-static void
-check_clock_bug()
-{
-	extern int cpu_id;
-
-	switch (cpu_id) {
-	case 0x440:     /* Cyrix MediaGX */
-	case 0x540:     /* GXm */
-		clock_broken_latch = 1;
-		break;
-	default:
-		clock_broken_latch = 0;
-		break;
-	}
-}
 
 int
 gettick_broken_latch()
@@ -291,12 +282,10 @@ initrtclock()
 	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
 
 	/* Correct rounding will buy us a better precision in timekeeping */
-	outb(IO_TIMER1, tval % 256);
-	outb(IO_TIMER1, tval / 256);
+	outb(IO_TIMER1+TIMER_CNTR0, tval % 256);
+	outb(IO_TIMER1+TIMER_CNTR0, tval / 256);
 
 	rtclock_tval = tval;
-
-	check_clock_bug();
 }
 
 /*
@@ -310,7 +299,7 @@ initrtclock()
  */
 #define	ISA_TIMER_MSB_TABLE_SIZE	128
 
-u_long isa_timer_tick;	/* the number of microseconds in a tick */
+u_long	isa_timer_tick;		/* the number of microseconds in a tick */
 u_short	isa_timer_count;	/* the countdown count for the timer */
 u_short	isa_timer_msb_table[ISA_TIMER_MSB_TABLE_SIZE];	/* timer->usec MSB */
 u_short	isa_timer_lsb_table[256];	/* timer->usec conversion for LSB */
@@ -356,7 +345,7 @@ startrtclock()
 	 * 75% of the time, 1 too large 12.5% of the time, and 1 too
 	 * small 12.5% of the time).
 	 */
-	for (s = 0; s < 64; s++) {
+	for (s = 0; s < 256; s++) {
 		/* LSB table is easy, just divide and round */
 		t = ((u_long) s * 1000000 * 2) / TIMER_FREQ;
 		isa_timer_lsb_table[s] = (u_short) ((t / 2) + (t & 0x1));
@@ -377,9 +366,6 @@ startrtclock()
 				 * into the second.  The constraint on
 				 * TIMER_FREQ above should prevent overflow
 				 * here.
-				 *
-				 * XXXfvdl fix this if this is the clock.c
-				 * that we'll be using.
 				 */
 				msb = tval - msb;
 				lsb = msb % 256;
@@ -403,13 +389,39 @@ startrtclock()
 }
 
 int
-clockintr(arg)
-	void *arg;
+clockintr(void *arg, struct intrframe frame)
 {
-	struct clockframe *frame = arg;		/* not strictly necessary */
+#if defined(I586_CPU) || defined(I686_CPU)
+	static int microset_iter; /* call cc_microset once/sec */
+	struct cpu_info *ci = curcpu();
+	
+	/*
+	 * If we have a cycle counter, do the microset thing.
+	 */
+	if (ci->ci_feature_flags & CPUID_TSC) {
+		if (
+#if defined(MULTIPROCESSOR)
+		    CPU_IS_PRIMARY(ci) &&
+#endif
+		    (microset_iter--) == 0) {
+			cc_microset_time = time;
+			microset_iter = hz - 1;
+#if defined(MULTIPROCESSOR)
+			x86_broadcast_ipi(X86_IPI_MICROSET);
+#endif
+			cc_microset(ci);
+		}
+	}
+#endif
 
-	hardclock(frame);
+	hardclock((struct clockframe *)&frame);
 
+#if NMCA > 0
+	if (MCA_system) {
+		/* Reset PS/2 clock interrupt by asserting bit 7 of port 0x61 */
+		outb(0x61, inb(0x61) | 0x80);
+	}
+#endif
 	return -1;
 }
 
@@ -442,7 +454,7 @@ gettick()
  * Don't rely on this being particularly accurate.
  */
 void
-delay(n)
+i8254_delay(n)
 	int n;
 {
 	int tick, otick;
@@ -556,14 +568,15 @@ sysbeep(pitch, period)
 }
 
 void
-cpu_initclocks()
+i8254_initclocks()
 {
 
 	/*
 	 * XXX If you're doing strange things with multiple clocks, you might
 	 * want to keep track of clock handlers.
 	 */
-	(void)isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK, clockintr, 0);
+	(void)isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK,
+	    (int (*)(void *))clockintr, 0);
 }
 
 void
@@ -637,6 +650,31 @@ cmoscheck()
 			  + mc146818_read(NULL, 0x2f));
 }
 
+#if NMCA > 0
+/*
+ * Check whether the CMOS layout is PS/2 like, to be called at splclock().
+ */
+static int cmoscheckps2 __P((void));
+static int
+cmoscheckps2()
+{
+#if 0
+	/* Disabled until I find out the CRC checksum algorithm IBM uses */
+	int i;
+	unsigned short cksum = 0;
+
+	for (i = 0x10; i <= 0x31; i++)
+		cksum += mc146818_read(NULL, i); /* XXX softc */
+
+	return (cksum == (mc146818_read(NULL, 0x32) << 8)
+			  + mc146818_read(NULL, 0x33));
+#else
+	/* Check 'incorrect checksum' bit of IBM PS/2 Diagnostic Status Byte */
+	return ((mc146818_read(NULL, NVRAM_DIAG) & (1<<6)) == 0);
+#endif
+}
+#endif /* NMCA > 0 */
+
 /*
  * patchable to control century byte handling:
  * 1: always update
@@ -650,6 +688,7 @@ int rtc_update_century = 0;
  * into full width.
  * Being here, deal with the CMOS century byte.
  */
+static int centb = NVRAM_CENTURY;
 static int clock_expandyear __P((int));
 static int
 clock_expandyear(clockyear)
@@ -666,6 +705,10 @@ clock_expandyear(clockyear)
 	s = splclock();
 	if (cmoscheck())
 		cmoscentury = mc146818_read(NULL, NVRAM_CENTURY);
+#if NMCA > 0
+	else if (MCA_system && cmoscheckps2())
+		cmoscentury = mc146818_read(NULL, (centb = 0x37));
+#endif
 	else
 		cmoscentury = 0;
 	splx(s);
@@ -689,8 +732,7 @@ clock_expandyear(clockyear)
 			printf("WARNING: Setting NVRAM century to %d\n",
 			       clockcentury);
 			s = splclock();
-			mc146818_write(NULL, NVRAM_CENTURY,
-				       bintobcd(clockcentury));
+			mc146818_write(NULL, centb, bintobcd(clockcentury));
 			splx(s);
 		}
 	} else if (cmoscentury == 19 && rtc_update_century == 0)
@@ -710,19 +752,26 @@ inittodr(base)
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
 	int s;
-
+#if defined(I586_CPU) || defined(I686_CPU)
+	struct cpu_info *ci = curcpu();
+#endif
 	/*
-	 * We mostly ignore the suggested time and go for the RTC clock time
-	 * stored in the CMOS RAM.  If the time can't be obtained from the
-	 * CMOS, or if the time obtained from the CMOS is 5 or more years
-	 * less than the suggested time, we used the suggested time.  (In
-	 * the latter case, it's likely that the CMOS battery has died.)
+	 * We mostly ignore the suggested time (which comes from the
+	 * file system) and go for the RTC clock time stored in the
+	 * CMOS RAM.  If the time can't be obtained from the CMOS, or
+	 * if the time obtained from the CMOS is 5 or more years less
+	 * than the suggested time, we used the suggested time.  (In
+	 * the latter case, it's likely that the CMOS battery has
+	 * died.)
 	 */
 
-	if (base < 25*SECYR) {	/* if before 1995, something's odd... */
+	/*
+	 * if the file system time is more than a year older than the
+	 * kernel, warn and then set the base time to the CONFIG_TIME.
+	 */
+	if (base && base < (CONFIG_TIME-SECYR)) {
 		printf("WARNING: preposterous time in file system\n");
-		/* read the system clock anyway */
-		base = 27*SECYR + 186*SECDAY + SECDAY/2;
+		base = CONFIG_TIME;
 	}
 
 	s = splclock();
@@ -768,8 +817,14 @@ inittodr(base)
 #ifdef DEBUG_CLOCK
 	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
 #endif
+#if defined(I586_CPU) || defined(I686_CPU)
+	if (ci->ci_feature_flags & CPUID_TSC) {
+		cc_microset_time = time;
+		cc_microset(ci);
+	}
+#endif
 
-	if (base < time.tv_sec - 5*SECYR)
+	if (base != 0 && base < time.tv_sec - 5*SECYR)
 		printf("WARNING: file system time much less than clock time\n");
 	else if (base > time.tv_sec + 5*SECYR) {
 		printf("WARNING: clock time much less than file system time\n");
@@ -814,7 +869,7 @@ resettodr()
 	rtclk[MC_SEC] = bintobcd(dt.dt_sec);
 	rtclk[MC_MIN] = bintobcd(dt.dt_min);
 	rtclk[MC_HOUR] = bintobcd(dt.dt_hour);
-	rtclk[MC_DOW] = dt.dt_wday;
+	rtclk[MC_DOW] = dt.dt_wday + 1;
 	rtclk[MC_YEAR] = bintobcd(dt.dt_year % 100);
 	rtclk[MC_MONTH] = bintobcd(dt.dt_mon);
 	rtclk[MC_DOM] = bintobcd(dt.dt_day);
@@ -827,7 +882,7 @@ resettodr()
 	rtcput(&rtclk);
 	if (rtc_update_century > 0) {
 		century = bintobcd(dt.dt_year / 100);
-		mc146818_write(NULL, NVRAM_CENTURY, century); /* XXX softc */
+		mc146818_write(NULL, centb, century); /* XXX softc */
 	}
 	splx(s);
 }

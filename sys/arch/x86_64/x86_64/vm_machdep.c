@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.9 2003/01/26 00:05:39 fvdl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.10 2003/03/05 23:56:13 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -68,7 +68,7 @@
 #include <machine/fpu.h>
 #include <machine/mtrr.h>
 
-void	setredzone __P((u_short *, caddr_t));
+static void setredzone __P((struct lwp *));
 
 void
 cpu_proc_fork(struct proc *p1, struct proc *p2)
@@ -116,8 +116,8 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 * If fpuproc == p1, then we have to save the fpu h/w state to
 	 * p1's pcb so that we can copy it.
 	 */
-	if (fpulwp == l1)
-		fpusave(l1);
+	if (l1->l_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_lwp(l1, 1);
 
 	l2->l_md.md_flags = l1->l_md.md_flags;
 
@@ -143,6 +143,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_rsp0 = (u_int64_t)l2->l_addr + USPACE - 16;
+	pcb->pcb_tss.tss_ist[0] = (u_int64_t)l2->l_addr + NBPG - 16;
 
 	l2->l_md.md_tss_sel = tss_alloc(pcb);
 
@@ -151,6 +152,8 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 */
 	l2->l_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
 	*tf = *l1->l_md.md_regs;
+
+	setredzone(l2);
 
 	/*
 	 * If specified, give the child a different stack.
@@ -187,6 +190,13 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 }
 
 void
+cpu_swapin(l)
+	struct lwp *l;
+{
+	setredzone(l);
+}
+
+void
 cpu_swapout(l)
 	struct lwp *l;
 {
@@ -194,8 +204,7 @@ cpu_swapout(l)
 	/*
 	 * Make sure we save the FP state before the user area vanishes.
 	 */
-	if (fpulwp == l)
-		fpusave(l);
+	fpusave_lwp(l, 1);
 }
 
 /*
@@ -210,8 +219,8 @@ cpu_exit(struct lwp *l, int proc)
 {
 
 	/* If we were using the FPU, forget about it. */
-	if (fpulwp == l)
-		fpulwp = 0;
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_lwp(l, 0);
 
 	if (proc && l->l_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(l->l_proc);
@@ -294,25 +303,17 @@ cpu_coredump(l, vp, cred, chdr)
 	return 0;
 }
 
-#if 0
 /*
  * Set a red zone in the kernel stack after the u. area.
  */
-void
-setredzone(pte, vaddr)
-	u_short *pte;
-	caddr_t vaddr;
+static void
+setredzone(struct lwp *l)
 {
-/* eventually do this by setting up an expand-down stack segment
-   for ss0: selector, allowing stack access down to top of u.
-   this means though that protection violations need to be handled
-   thru a double fault exception that must do an integral task
-   switch to a known good context, within which a dump can be
-   taken. a sensible scheme might be to save the initial context
-   used by sched (that has physical memory mapped 1:1 at bottom)
-   and take the dump while still in mapped mode */
+	pmap_remove(pmap_kernel(), (vaddr_t)l->l_addr + PAGE_SIZE,
+	    (vaddr_t)l->l_addr + 2 * PAGE_SIZE);
+	pmap_update(pmap_kernel());
 }
-#endif
+
 
 /*
  * Move pages from one kernel virtual address to another.
@@ -324,6 +325,7 @@ pagemove(from, to, size)
 	size_t size;
 {
 	register pt_entry_t *fpte, *tpte, ofpte, otpte;
+	int32_t cpumask = 0;
 
 	if (size & PAGE_MASK)
 		panic("pagemove");
@@ -342,13 +344,16 @@ pagemove(from, to, size)
 		*tpte++ = *fpte;
 		*fpte++ = 0;
 		if (otpte & PG_V)
-			pmap_update_pg((vaddr_t) to);
+			pmap_tlb_shootdown(pmap_kernel(),
+			    (vaddr_t)to, otpte, &cpumask);
 		if (ofpte & PG_V)
-			pmap_update_pg((vaddr_t) from);
+			pmap_tlb_shootdown(pmap_kernel(),
+			    (vaddr_t)from, ofpte, &cpumask);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
+	pmap_tlb_shootnow(cpumask);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2003/01/01 02:32:25 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2003/03/05 23:56:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,10 +39,20 @@
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 
-#include <dev/isa/isareg.h>		/* for ISA_HOLE_VADDR */
+#include <dev/isa/isareg.h>
 
 #include "pci.h"
 #include "isa.h"
+
+#include "opt_mpbios.h"
+
+#include <machine/cpuvar.h>
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
+
+/*
+ * XXXfvdl ACPI
+ */
 
 int	mainbus_match __P((struct device *, struct cfdata *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
@@ -56,6 +66,8 @@ union mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
 	struct pcibus_attach_args mba_pba;
 	struct isabus_attach_args mba_iba;
+	struct cpu_attach_args mba_caa;
+	struct apic_attach_args aaa_caa;
 };
 
 /*
@@ -63,15 +75,32 @@ union mainbus_attach_args {
  * time it's checked below, then mainbus attempts to attach an ISA.
  */
 int	isa_has_been_seen;
-struct x86_64_isa_chipset x86_64_isa_chipset;
+struct x86_isa_chipset x86_isa_chipset;
 #if NISA > 0
 struct isabus_attach_args mba_iba = {
 	"isa",
-	X86_64_BUS_SPACE_IO, X86_64_BUS_SPACE_MEM,
+	X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
 	&isa_bus_dma_tag,
-	&x86_64_isa_chipset
+	&x86_isa_chipset
 };
 #endif
+
+#if defined(MPBIOS) || defined(MPACPI)
+struct mp_bus *mp_busses;
+int mp_nbus;
+struct mp_intr_map *mp_intrs;
+int mp_nintr;
+ 
+int mp_isa_bus = -1;
+int mp_eisa_bus = -1;
+
+#ifdef MPVERBOSE
+int mp_verbose = 1;
+#else
+int mp_verbose = 0;
+#endif
+#endif
+
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -97,20 +126,42 @@ mainbus_attach(parent, self, aux)
 #if NPCI > 0
 	union mainbus_attach_args mba;
 #endif
+#ifdef MPBIOS
+	int mpbios_present = 0;
+#endif
 
 	printf("\n");
 
-	/*
-	 * XXX Note also that the presence of a PCI bus should
-	 * XXX _always_ be checked, and if present the bus should be
-	 * XXX 'found'.  However, because of the structure of the code,
-	 * XXX that's not currently possible.
-	 */
+#ifdef MPBIOS
+	mpbios_present = mpbios_probe(self);
+#endif
+
 #if NPCI > 0
-	if (pci_mode_detect() != 0) {
+	pci_mode = pci_mode_detect();
+#endif
+
+#ifdef MPBIOS
+	if (mpbios_present)
+		mpbios_scan(self);
+	else
+#endif
+	{
+		struct cpu_attach_args caa;
+                        
+		memset(&caa, 0, sizeof(caa));
+		caa.caa_name = "cpu";
+		caa.cpu_number = 0;
+		caa.cpu_role = CPU_ROLE_SP;
+		caa.cpu_func = 0;
+                        
+		config_found(self, &caa, mainbus_print);
+	}
+
+#if NPCI > 0
+	if (pci_mode != 0) {
 		mba.mba_pba.pba_busname = "pci";
-		mba.mba_pba.pba_iot = X86_64_BUS_SPACE_IO;
-		mba.mba_pba.pba_memt = X86_64_BUS_SPACE_MEM;
+		mba.mba_pba.pba_iot = X86_BUS_SPACE_IO;
+		mba.mba_pba.pba_memt = X86_BUS_SPACE_MEM;
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 		mba.mba_pba.pba_pc = NULL;
 		mba.mba_pba.pba_flags = pci_bus_flags();

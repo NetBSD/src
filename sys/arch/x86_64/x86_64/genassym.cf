@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11 2003/01/30 02:04:59 fvdl Exp $
+#	$NetBSD: genassym.cf,v 1.12 2003/03/05 23:56:08 fvdl Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 
 if defined(_KERNEL_OPT)
 include "opt_compat_netbsd32.h"
+include "opt_multiprocessor.h"
 endif
 
 include <sys/param.h>
@@ -94,7 +95,8 @@ include <uvm/uvm.h>
 include <machine/trap.h>
 include <machine/pmap.h>
 include <machine/vmparam.h>
-include <machine/cpu.h>
+include <machine/intr.h>
+include <machine/types.h>
 
 if defined(COMPAT_NETBSD32)
 include <machine/netbsd32_machdep.h>
@@ -102,10 +104,20 @@ endif
 
 if defined(_KERNEL) && !defined(_LKM)
 include "isa.h"
+include "ioapic.h"
 endif
 if NISA > 0
 include <machine/isa_machdep.h>
 endif
+
+ifdef MULTIPROCESSOR
+include <machine/cpu.h>
+endif
+
+if NIOAPIC > 0
+include <machine/i82093var.h>
+endif
+
 
 define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
@@ -160,6 +172,7 @@ define	PCB_RSP0		offsetof(struct pcb, pcb_tss.tss_rsp0)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+define	PCB_FPCPU		offsetof(struct pcb, pcb_fpcpu)
 
 define	TF_RDI			offsetof(struct trapframe, tf_rdi)
 define	TF_RSI			offsetof(struct trapframe, tf_rsi)
@@ -195,13 +208,38 @@ define	SC_GS			offsetof(struct sigcontext, sc_gs)
 define	SC_RFLAGS		offsetof(struct sigcontext, sc_rflags)
 
 define	CPU_INFO_SCRATCH	offsetof(struct cpu_info, ci_scratch)
+define  CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
+define  CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
+define  CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
+define  CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
+define  CPU_INFO_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
+define  CPU_INFO_IDLE_TSS_SEL	offsetof(struct cpu_info, ci_idle_tss_sel)
+define  CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
+
+define  CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
+define  CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
+define  CPU_INFO_IMASK		offsetof(struct cpu_info, ci_imask)
+define  CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
+define  CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
+define  CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
+define  CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
 
 define	IH_FUN			offsetof(struct intrhand, ih_fun)
 define	IH_ARG			offsetof(struct intrhand, ih_arg)
-define	IH_COUNT		offsetof(struct intrhand, ih_count)
 define	IH_NEXT			offsetof(struct intrhand, ih_next)
+define  IH_LEVEL		offsetof(struct intrhand, ih_level)
 
 ifdef COMPAT_NETBSD32
 define	SC_FS32			offsetof(struct netbsd32_sigcontext, sc_fs)
 define	SC_GS32			offsetof(struct netbsd32_sigcontext, sc_gs)
 endif
+
+define	IS_RECURSE	offsetof(struct intrsource, is_recurse)
+define	IS_RESUME	offsetof(struct intrsource, is_resume)
+define	IS_EVCNT	offsetof(struct intrsource, is_evcnt.ev_count)
+define	IS_HANDLERS	offsetof(struct intrsource, is_handlers)
+define	IS_PIC		offsetof(struct intrsource, is_pic)
+define	IS_FLAGS	offsetof(struct intrsource, is_flags)
+define	IS_PIN		offsetof(struct intrsource, is_pin)
+define	IS_TYPE		offsetof(struct intrsource, is_type)
+define	IS_MAXLEVEL	offsetof(struct intrsource, is_maxlevel)

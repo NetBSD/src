@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 2003/02/25 00:48:00 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 2003/03/05 23:56:12 fvdl Exp $	*/
 
 /*
  *
@@ -353,7 +353,7 @@ struct pmap_tlb_shootdown_q {
 	__cpu_simple_lock_t pq_slock;	/* spin lock on queue */
 	int pq_flushg;		/* pending flush global */
 	int pq_flushu;		/* pending flush user */
-} pmap_tlb_shootdown_q[X86_64_MAXPROCS];
+} pmap_tlb_shootdown_q[X86_MAXPROCS];
 
 #define	PMAP_TLB_MAXJOBS	16
 
@@ -445,7 +445,7 @@ struct pool pmap_pmap_pool;
 
 /*
  * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
- * I386_MAXPROCS*NPTECL array of PTE's, to avoid cache line thrashing
+ * X86_MAXPROCS*NPTECL array of PTE's, to avoid cache line thrashing
  * due to false sharing.
  */
 
@@ -460,8 +460,8 @@ struct pool pmap_pmap_pool;
 /*
  * special VAs and the PTEs that map them
  */
-static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte;
-static caddr_t csrcp, cdstp, zerop, ptpp;
+static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte, *early_zero_pte;
+static caddr_t csrcp, cdstp, zerop, ptpp, early_zerop;
 
 /*
  * pool and cache that PDPs are allocated from
@@ -480,6 +480,11 @@ extern paddr_t msgbuf_paddr;
 
 extern vaddr_t idt_vaddr;			/* we allocate IDT early */
 extern paddr_t idt_paddr;
+
+#ifdef _LP64
+extern vaddr_t lo32_vaddr;
+extern vaddr_t lo32_paddr;
+#endif
 
 extern int end;
 
@@ -691,7 +696,7 @@ pmap_apte_flush(struct pmap *pmap)
 			__cpu_simple_unlock(&pq->pq_slock);
 #endif
 			splx(s);
-			i386_send_ipi(ci, I386_IPI_TLB);
+			x86_send_ipi(ci, X86_IPI_TLB);
 		}
 	}
 #endif
@@ -802,7 +807,7 @@ pmap_kenter_pa(va, pa, prot)
 
 	npte = pa | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
 	     PG_V | pmap_pg_g;
-	opte = x86_64_atomic_testset_u64(pte, npte); /* zap! */
+	opte = pmap_pte_set(pte, npte); /* zap! */
 #ifdef LARGEPAGES
 	/* XXX For now... */
 	if (opte & PG_PS)
@@ -846,7 +851,7 @@ pmap_kremove(va, len)
 			pte = vtopte(va);
 		else
 			pte = kvtopte(va);
-		opte = x86_64_atomic_testset_u64(pte, 0); /* zap! */
+		opte = pmap_pte_set(pte, 0); /* zap! */
 #ifdef LARGEPAGES
 		/* XXX For now... */
 		if (opte & PG_PS)
@@ -1005,6 +1010,7 @@ pmap_bootstrap(kva_start)
 	}
 #endif /* LARGEPAGES */
 
+#if VM_MIN_KERNEL_ADDRESS != KERNBASE
 	/*
 	 * zero_pte is stuck at the end of mapped space for the kernel
 	 * image (disjunct from kva space). This is done so that it
@@ -1013,8 +1019,9 @@ pmap_bootstrap(kva_start)
 	 * XXXfvdl fix this for MULTIPROCESSOR later.
 	 */
 
-	zerop = (caddr_t)(KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
-	zero_pte = PTE_BASE + pl1_i((unsigned long)zerop);
+	early_zerop = (caddr_t)(KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
+	early_zero_pte = PTE_BASE + pl1_i((unsigned long)early_zerop);
+#endif
 
 	/*
 	 * now we allocate the "special" VAs which are used for tmp mappings
@@ -1027,7 +1034,6 @@ pmap_bootstrap(kva_start)
 	pte = PTE_BASE + pl1_i(virtual_avail);
 
 #ifdef MULTIPROCESSOR
-#error "need to fix special PTE allocation"
 	/*
 	 * Waste some VA space to avoid false sharing of cache lines
 	 * for page table pages: Give each possible CPU a cache line
@@ -1044,8 +1050,8 @@ pmap_bootstrap(kva_start)
 
 	ptpp = (caddr_t) virtual_avail+PAGE_SIZE*3;  ptp_pte = pte+3;
 
-	virtual_avail += PAGE_SIZE * I386_MAXPROCS * NPTECL;
-	pte += I386_MAXPROCS * NPTECL;
+	virtual_avail += PAGE_SIZE * X86_MAXPROCS * NPTECL;
+	pte += X86_MAXPROCS * NPTECL;
 #else
 	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;	/* allocate */
 	virtual_avail += PAGE_SIZE; pte++;			/* advance */
@@ -1053,9 +1059,19 @@ pmap_bootstrap(kva_start)
 	cdstp = (caddr_t) virtual_avail;  cdst_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
 
+	zerop = (caddr_t) virtual_avail;  zero_pte = pte;
+	virtual_avail += PAGE_SIZE; pte++;
+
 	ptpp = (caddr_t) virtual_avail;  ptp_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
 #endif
+
+#if VM_MIN_KERNEL_ADDRESS == KERNBASE
+	early_zerop = zerop;
+	early_zero_pte = zero_pte;
+#endif
+
+	pte = (void *)0xdeadbeef;
 
 	/* XXX: vmmap used by mem.c... should be uvm_map_reserve */
 	/* XXXfvdl PTEs not needed here */
@@ -1064,7 +1080,7 @@ pmap_bootstrap(kva_start)
 
 	msgbuf_vaddr = virtual_avail;			/* don't need pte */
 	virtual_avail += round_page(MSGBUFSIZE);
-	pte += x86_64_btop(round_page(MSGBUFSIZE));
+	pte += x86_btop(round_page(MSGBUFSIZE));
 
 	idt_vaddr = virtual_avail;			/* don't need pte */
 	virtual_avail += 2 * PAGE_SIZE; pte += 2;
@@ -1075,6 +1091,17 @@ pmap_bootstrap(kva_start)
 	/* pentium f00f bug stuff */
 	pentium_idt_vaddr = virtual_avail;		/* don't need pte */
 	virtual_avail += PAGE_SIZE; pte++;
+#endif
+
+#ifdef _LP64
+	/*
+	 * Grab a page below 4G for things that need it (i.e.
+	 * having an initial %cr3 for the MP trampoline).
+	 */
+	lo32_vaddr = virtual_avail;
+	virtual_avail += PAGE_SIZE; pte++;
+	lo32_paddr = avail_start;
+	avail_start += PAGE_SIZE;
 #endif
 
 	/*
@@ -1109,7 +1136,7 @@ pmap_bootstrap(kva_start)
 
 	__cpu_simple_lock_init(&pmap_tlb_shootdown_job_lock);
 
-	for (i = 0; i < X86_64_MAXPROCS; i++) {
+	for (i = 0; i < X86_MAXPROCS; i++) {
 		TAILQ_INIT(&pmap_tlb_shootdown_q[i].pq_head);
 		__cpu_simple_lock_init(&pmap_tlb_shootdown_q[i].pq_slock);
 	}
@@ -1128,6 +1155,33 @@ pmap_bootstrap(kva_start)
 	 */
 
 	tlbflush();
+}
+
+/*
+ * Pre-allocate PTPs for low memory, so that 1:1 mappings for various
+ * trampoline code can be entered.
+ */
+void
+pmap_prealloc_lowmem_ptps(void)
+{
+	pd_entry_t *pdes;
+	int level;
+	paddr_t newp;
+
+	pdes = pmap_kernel()->pm_pdir;
+	level = PTP_LEVELS;
+	for (;;) {
+		newp = avail_start;
+		avail_start += PAGE_SIZE;
+		*early_zero_pte = (newp & PG_FRAME) | PG_V | PG_RW;
+		pmap_update_pg((vaddr_t)early_zerop);
+		memset(early_zerop, 0, PAGE_SIZE);
+		pdes[pl_i(0, level)] = (newp & PG_FRAME) | PG_V | PG_RW;
+		level--;
+		if (level <= 1)
+			break;
+		pdes = normal_pdes[level - 2];
+	}
 }
 
 /*
@@ -1671,7 +1725,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 	do {
 		pmap_freepage(pmap, ptp, level);
 		index = pl_i(va, level + 1);
-		opde = x86_64_atomic_testset_u64(&pdes[level - 1][index], 0);
+		opde = pmap_pte_set(&pdes[level - 1][index], 0);
 		invaladdr = level == 1 ? (vaddr_t)ptes :
 		    (vaddr_t)pdes[level - 2];
 		pmap_tlb_shootdown(curpcb->pcb_pmap, invaladdr + index * NBPG,
@@ -2073,7 +2127,7 @@ pmap_activate(l)
 		/*
 		 * mark the pmap in use by this processor.
 		 */
-		x86_64_atomic_setbits_u32(&pmap->pm_cpus, (1U << cpu_number()));
+		x86_atomic_setbits_ul(&pmap->pm_cpus, (1U << cpu_number()));
 	}
 }
 
@@ -2090,7 +2144,7 @@ pmap_deactivate(l)
 	/*
 	 * mark the pmap no longer in use by this processor. 
 	 */
-	x86_64_atomic_clearbits_u32(&pmap->pm_cpus, (1U << cpu_number()));
+	x86_atomic_clearbits_ul(&pmap->pm_cpus, (1U << cpu_number()));
 
 }
 
@@ -2366,7 +2420,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 		}
 
 		/* atomically save the old PTE and zap! it */
-		opte = x86_64_atomic_testset_u64(pte, 0);
+		opte = pmap_pte_set(pte, 0);
 
 		if (opte & PG_W)
 			pmap->pm_stats.wired_count--;
@@ -2448,7 +2502,7 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	}
 
 	/* atomically save the old PTE and zap! it */
-	opte = x86_64_atomic_testset_u64(pte, 0);
+	opte = pmap_pte_set(pte, 0);
 
 	if (opte & PG_W)
 		pmap->pm_stats.wired_count--;
@@ -2581,7 +2635,7 @@ pmap_do_remove(pmap, sva, eva, flags)
 	for (/* null */ ; sva < eva ; sva = blkendva) {
 
 		/* determine range of block */
-		blkendva = round_pdr(sva+1);
+		blkendva = x86_round_pdr(sva+1);
 		if (blkendva > eva)
 			blkendva = eva;
 
@@ -2695,7 +2749,7 @@ pmap_page_remove(pg)
 #endif
 
 		/* atomically save the old PTE and zap! it */
-		opte = x86_64_atomic_testset_u64(&ptes[pl1_i(pve->pv_va)], 0);
+		opte = pmap_pte_set(&ptes[pl1_i(pve->pv_va)], 0);
 
 		if (opte & PG_W)
 			pve->pv_pmap->pm_stats.wired_count--;
@@ -2797,7 +2851,7 @@ pmap_test_attrs(pg, testbits)
 }
 
 /*
- * pmap_change_attrs: change a page's attributes
+ * pmap_clear_attrs: change a page's attributes
  *
  * => we set pv_head => pmap locking
  * => we return TRUE if we cleared one of the bits we were asked to
@@ -2844,7 +2898,7 @@ pmap_clear_attrs(pg, clearbits)
 		opte = ptes[pl1_i(pve->pv_va)];
 		if (opte & clearbits) {
 			result |= (opte & clearbits);
-			x86_64_atomic_clearbits_u64(&ptes[pl1_i(pve->pv_va)],
+			pmap_pte_clearbits(&ptes[pl1_i(pve->pv_va)],
 			    (opte & clearbits));
 			pmap_tlb_shootdown(pve->pv_pmap, pve->pv_va, opte,
 			    &cpumask);
@@ -2936,7 +2990,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 
 		for (/*null */; spte < epte ; spte++) {
 			if ((*spte & (PG_RW|PG_V)) == (PG_RW|PG_V)) {
-				x86_64_atomic_clearbits_u64(spte, PG_RW);
+				pmap_pte_clearbits(spte, PG_RW);
 				pmap_tlb_shootdown(pmap, ptob(spte - ptes),
 				    *spte, &cpumask);
 			}
@@ -3248,7 +3302,7 @@ out:
 	return error;
 }
 
-static __inline boolean_t
+static boolean_t
 pmap_get_physpage(va, level, paddrp)
 	vaddr_t va;
 	int level;
@@ -3266,7 +3320,9 @@ pmap_get_physpage(va, level, paddrp)
 
 		if (uvm_page_physget(paddrp) == FALSE)
 			panic("pmap_get_physpage: out of memory");
-		pmap_zero_page(*paddrp);
+		*early_zero_pte = (*paddrp & PG_FRAME) | PG_V | PG_RW;
+		pmap_update_pg((vaddr_t)early_zerop);
+		memset(early_zerop, 0, PAGE_SIZE);
 	} else {
 		ptp = uvm_pagealloc(&kpm->pm_obj[level - 1],
 				    ptp_va2o(va, level), NULL,
@@ -3494,14 +3550,14 @@ pmap_tlb_shootnow(int32_t cpumask)
 		if (ci == self)
 			continue;
 		if (cpumask & (1U << ci->ci_cpuid))
-			if (i386_send_ipi(ci, I386_IPI_TLB) != 0)
-			     x86_64_atomic_clearbits_u32(&self->ci_tlb_ipi_mask,
+			if (x86_send_ipi(ci, X86_IPI_TLB) != 0)
+			     x86_atomic_clearbits_ul(&self->ci_tlb_ipi_mask,
 				    (1U << ci->ci_cpuid));
 	}
 
 	while (self->ci_tlb_ipi_mask != 0)
 #ifdef DIAGNOSTIC
-		if (count++ > 1000000)
+		if (count++ > 10000000)
 			panic("TLB IPI rendezvous failed (mask %x)",
 			    self->ci_tlb_ipi_mask);
 #else
@@ -3534,7 +3590,7 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 		va &= PG_LGFRAME;
 #endif
 
-	if (pmap_initialized == FALSE) {
+	if (pmap_initialized == FALSE || cpus_attached == 0) {
 		pmap_update_pg(va);
 		return;
 	}
@@ -3680,7 +3736,7 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 
 #ifdef MULTIPROCESSOR
 	for (CPU_INFO_FOREACH(cii, ci))
-		x86_64_atomic_clearbits_u32(&ci->ci_tlb_ipi_mask,
+		x86_atomic_clearbits_ul(&ci->ci_tlb_ipi_mask,
 		    (1U << cpu_id));
 	__cpu_simple_unlock(&pq->pq_slock);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.5 2003/01/26 00:05:39 fvdl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.6 2003/03/05 23:56:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -137,8 +137,7 @@ process_read_fpregs(l, regs)
 	struct fxsave64 *frame = process_fpframe(l);
 
 	if (l->l_md.md_flags & MDP_USEDFPU) {
-		if (fpulwp == l)
-			fpusave(l);
+		fpusave_lwp(l, 1);
 	} else {
 		u_int16_t cw;
 
@@ -265,8 +264,7 @@ process_write_fpregs(l, regs)
 	struct fxsave64 *frame = process_fpframe(l);
 
 	if (l->l_md.md_flags & MDP_USEDFPU) {
-		if (fpulwp == l)
-			fpudrop();
+		fpusave_lwp(l, 0);
 	} else {
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2003/02/26 21:29:35 fvdl Exp $	*/
+/*	$NetBSD: param.h,v 1.6 2003/03/05 23:56:02 fvdl Exp $	*/
 
 #ifdef _KERNEL
 #ifdef _LOCORE
@@ -60,7 +60,7 @@
 
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
-#define	UPAGES		4		/* pages of u-area */
+#define	UPAGES		5		/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 #ifndef MSGBUFSIZE
@@ -145,6 +145,8 @@
 #define	x86_btop(x)		((unsigned long)(x) >> PGSHIFT)
 #define	x86_ptob(x)		((unsigned long)(x) << PGSHIFT)
 
-#define btop(x)				x86_64_btop(x)
-#define ptob(x)				x86_64_ptob(x)
-#define round_pdr(x)			x86_64_round_pdr(x)
+#define btop(x)				x86_btop(x)
+#define ptob(x)				x86_ptob(x)
+#define round_pdr(x)			x86_round_pdr(x)
+
+#define mstohz(ms) ((ms + 0UL) * hz / 1000)
