@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.3 1996/04/13 01:31:08 jtc Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.4 1997/09/15 04:27:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -38,17 +38,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1992, 1993, 1994\n\
-        The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
+        The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.4 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_cd9660.c,v 1.3 1996/04/13 01:31:08 jtc Exp $";
+__RCSID("$NetBSD: mount_cd9660.c,v 1.4 1997/09/15 04:27:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ const struct mntopt mopts[] = {
 	{ NULL }
 };
 
+int	main __P((int, char *[]));
 void	usage __P((void));
 
 int
@@ -82,7 +83,7 @@ main(argc, argv)
 	char *dev, *dir;
 
 	mntflags = opts = 0;
-	while ((ch = getopt(argc, argv, "ego:r")) != EOF)
+	while ((ch = getopt(argc, argv, "ego:r")) != -1)
 		switch (ch) {
 		case 'e':
 			opts |= ISOFSMNT_EXTATT;
@@ -120,7 +121,7 @@ main(argc, argv)
 	args.flags = opts;
 
 	if (mount(MOUNT_CD9660, dir, mntflags, &args) < 0)
-		err(1, NULL);
+		err(1, "%s", "");
 	exit(0);
 }
 
