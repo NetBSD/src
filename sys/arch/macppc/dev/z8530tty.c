@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.3 1999/02/03 20:19:08 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.4 1999/02/06 20:04:31 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -114,6 +114,8 @@
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
 
+#include <dev/cons.h>
+
 #include "locators.h"
 
 /*
@@ -202,9 +204,11 @@ cdev_decl(zs);	/* open, close, read, write, ioctl, stop, ... */
 static void zs_shutdown __P((struct zstty_softc *));
 static void	zsstart __P((struct tty *));
 static int	zsparam __P((struct tty *, struct termios *));
-static void zs_modem __P((struct zstty_softc *zst, int onoff));
-static int	zshwiflow __P((struct tty *, int));
-static void zs_hwiflow __P((struct zstty_softc *));
+static void zs_modem __P((struct zstty_softc *, int));
+static void tiocm_to_zs __P((struct zstty_softc *, int, int));
+static int  zs_to_tiocm __P((struct zstty_softc *));
+static int    zshwiflow __P((struct tty *, int));
+static void  zs_hwiflow __P((struct zstty_softc *));
 
 /* Low-level routines. */
 static void zstty_rxint   __P((struct zs_chanstate *));
@@ -266,7 +270,7 @@ zstty_attach(parent, self, aux)
 	if (zst->zst_swflags)
 		printf(" flags 0x%x", zst->zst_swflags);
 
-	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE))
+	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
 		printf(" (console)\n");
 		DELAY(20000);
 		cn_tab->cn_dev = dev;
@@ -288,6 +292,7 @@ zstty_attach(parent, self, aux)
 		printf("\n");
 
 	tp = ttymalloc();
+	tp->t_dev = dev;
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
 	tp->t_hwiflow = zshwiflow;
@@ -671,7 +676,13 @@ zsioctl(dev, cmd, data, flag, p)
 	case TIOCMSET:
 	case TIOCMBIS:
 	case TIOCMBIC:
+		tiocm_to_zs(zst, cmd, *(int *)data);
+		break;
+
 	case TIOCMGET:
+		*(int *)data = zs_to_tiocm(zst);
+		break;
+
 	default:
 		error = ENOTTY;
 		break;
@@ -727,8 +738,11 @@ zsstart(tp)
 	zst->zst_tx_busy = 1;
 
 #ifdef ZS_TXDMA
-	zs_dma_setup(cs, zst->zst_tba, zst->zst_tbc);
-#else
+	if (zst->zst_tbc > 1) {
+		zs_dma_setup(cs, zst->zst_tba, zst->zst_tbc);
+		goto out;
+	}
+#endif
 	/* Enable transmit completion interrupts if necessary. */
 	if (!ISSET(cs->cs_preg[1], ZSWR1_TIE)) {
 		SET(cs->cs_preg[1], ZSWR1_TIE);
@@ -742,7 +756,6 @@ zsstart(tp)
 		zst->zst_tbc--;
 		zst->zst_tba++;
 	}
-#endif
 out:
 	splx(s);
 	return;
@@ -983,6 +996,68 @@ zs_modem(zst, onoff)
 		} else
 			zs_loadchannelregs(cs);
 	}
+}
+
+static void
+tiocm_to_zs(zst, how, ttybits)
+	struct zstty_softc *zst;
+	int how, ttybits;
+{
+	struct zs_chanstate *cs = zst->zst_cs;
+	u_char zsbits;
+
+	zsbits = 0;
+	if (ISSET(ttybits, TIOCM_DTR))
+		SET(zsbits, ZSWR5_DTR);
+	if (ISSET(ttybits, TIOCM_RTS))
+		SET(zsbits, ZSWR5_RTS);
+
+	switch (how) {
+	case TIOCMBIC:
+		CLR(cs->cs_preg[5], zsbits);
+		break;
+
+	case TIOCMBIS:
+		SET(cs->cs_preg[5], zsbits);
+		break;
+
+	case TIOCMSET:
+		CLR(cs->cs_preg[5], ZSWR5_RTS | ZSWR5_DTR);
+		SET(cs->cs_preg[5], zsbits);
+		break;
+	}
+
+	if (!cs->cs_heldchange) {
+		if (zst->zst_tx_busy) {
+			zst->zst_heldtbc = zst->zst_tbc;
+			zst->zst_tbc = 0;
+			cs->cs_heldchange = 1;
+		} else
+			zs_loadchannelregs(cs);
+	}
+}
+
+static int
+zs_to_tiocm(zst)
+	struct zstty_softc *zst;
+{
+	struct zs_chanstate *cs = zst->zst_cs;
+	u_char zsbits;
+	int ttybits = 0;
+
+	zsbits = cs->cs_preg[5];
+	if (ISSET(zsbits, ZSWR5_DTR))
+		SET(ttybits, TIOCM_DTR);
+	if (ISSET(zsbits, ZSWR5_RTS))
+		SET(ttybits, TIOCM_RTS);
+
+	zsbits = cs->cs_rr0;
+	if (ISSET(zsbits, ZSRR0_DCD))
+		SET(ttybits, TIOCM_CD);
+	if (ISSET(zsbits, ZSRR0_CTS))
+		SET(ttybits, TIOCM_CTS);
+
+	return (ttybits);
 }
 
 /*
