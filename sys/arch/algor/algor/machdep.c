@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2001/05/28 16:22:15 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2001/05/29 18:40:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -479,6 +479,23 @@ mach_init(int argc, char *argv[], char *envp[])
 	v = (caddr_t) uvm_pageboot_alloc(size);
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
+
+	/*
+	 * Initialize debuggers, and break into them, if appropriate.
+	 */
+#if defined(DDB)
+	/*
+	 * XXX Loader doesn't give us symbols the way we like.  Need
+	 * XXX dbsym(1) support for ELF.
+	 */
+	ddb_init(0, 0, 0);
+#endif
+
+	if (boothowto & RB_KDB) {
+#if defined(DDB)
+		Debugger();
+#endif
+	}
 }
 
 void
