@@ -1,12 +1,7 @@
-#	from: @(#)Makefile	5.1.1.1 (Berkeley) 5/7/91
-#	$Id: Makefile,v 1.3 1993/07/31 15:29:22 mycroft Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
-#Missing: index iso papers ps2 ucs
+SUBDIR=	psd smm usd
 
-SUBDIR=	ps1 smm usd
-
-all paper print clean: _SUBDIRUSE
-
-depend lint tags:
+all depend lint tags:
 
 .include <bsd.subdir.mk>
