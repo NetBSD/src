@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 1997/09/14 14:36:32 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.25 1997/09/16 16:45:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -41,19 +41,22 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
+static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.24 1997/09/14 14:36:32 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 1997/09/16 16:45:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/mount.h>
+
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+
+#include <ctype.h>
+#include <err.h>
 #include <fstab.h>
-#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -108,7 +111,7 @@ main(argc, argv)
 		case 'm':
 			lfmode = argtoi('m', "mode", optarg, 8);
 			if (lfmode &~ 07777)
-				errexit("bad mode to -m: %o\n", lfmode);
+				errx(EEXIT, "bad mode to -m: %o", lfmode);
 			printf("** lost+found creation mode %o\n", lfmode);
 			break;
 
@@ -162,7 +165,7 @@ argtoi(flag, req, str, base)
 
 	ret = (int)strtol(str, &cp, base);
 	if (cp == str || *cp)
-		errexit("-%c flag requires a %s\n", flag, req);
+		errx(EEXIT, "-%c flag requires a %s", flag, req);
 	return (ret);
 }
 
@@ -176,10 +179,10 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	long auxdata;
 	int child;
 {
-	daddr_t n_ffree, n_bfree;
+	ufs_daddr_t n_ffree, n_bfree;
 	struct dups *dp;
 	struct zlncnt *zlnp;
-	int cylno;
+	int cylno, flags;
 
 	if (preen && child)
 		(void)signal(SIGQUIT, voidquit);
@@ -190,6 +193,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	case 0:
 		if (preen)
 			pfatal("CAN'T CHECK FILE SYSTEM.");
+		/* fall through */
 	case -1:
 		return (0);
 	}
@@ -291,7 +295,19 @@ checkfilesys(filesys, mntpt, auxdata, child)
 			bwrite(fswritefd, (char *)&sblock,
 			    fsbtodb(&sblock, cgsblock(&sblock, cylno)), SBSIZE);
 	}
-	ckfini(1);
+	if (!hotroot()) {
+		ckfini(1);
+	} else {
+		struct statfs stfs_buf;
+		/*
+		 * Check to see if root is mounted read-write.
+		 */
+		if (statfs("/", &stfs_buf) == 0)
+			flags = stfs_buf.f_flags;
+		else
+			flags = 0;
+		ckfini(flags & MNT_RDONLY);
+	}
 	free(blockmap);
 	free(statemap);
 	free((char *)lncntp);

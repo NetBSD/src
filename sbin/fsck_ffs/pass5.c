@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.17 1997/09/14 14:36:36 lukem Exp $	*/
+/*	$NetBSD: pass5.c,v 1.18 1997/09/16 16:45:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,17 +36,19 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
+static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.17 1997/09/14 14:36:36 lukem Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.18 1997/09/16 16:45:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
-#include <ufs/ffs/ffs_extern.h>
+
+#include <err.h>
 #include <string.h>
 
 #include "fsutil.h"
@@ -59,8 +61,8 @@ pass5()
 	int c, blk, frags, basesize, sumsize, mapsize, savednrpos = 0;
 	struct fs *fs = &sblock;
 	struct cg *cg = &cgrp;
-	daddr_t dbase, dmax;
-	daddr_t d;
+	ufs_daddr_t dbase, dmax;
+	ufs_daddr_t d;
 	long i, j;
 	struct csum *cs;
 	struct csum cstotal;
@@ -155,7 +157,8 @@ pass5()
 		break;
 
 	default:
-		errexit("UNKNOWN ROTATIONAL TABLE FORMAT %d\n",
+		sumsize = 0;	/* keep lint happy */
+		errx(EEXIT, "UNKNOWN ROTATIONAL TABLE FORMAT %d",
 			fs->fs_postblformat);
 	}
 	memset(&idesc[0], 0, sizeof idesc);
@@ -228,8 +231,8 @@ pass5()
 			default:
 				if (j < ROOTINO)
 					break;
-				errexit("BAD STATE %d FOR INODE I=%ld",
-				    statemap[j], j);
+				errx(EEXIT, "BAD STATE %d FOR INODE I=%ld",
+				    statemap[j], (long)j);
 			}
 		}
 		if (c == 0)
@@ -297,27 +300,27 @@ pass5()
 		cs = &fs->fs_cs(fs, c);
 		if (memcmp(&newcg->cg_cs, cs, sizeof *cs) != 0 &&
 		    dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
-			memcpy(cs, &newcg->cg_cs, sizeof *cs);
+			memmove(cs, &newcg->cg_cs, sizeof *cs);
 			sbdirty();
 		}
 		if (doinglevel1) {
-			memcpy(cg, newcg, (size_t)fs->fs_cgsize);
+			memmove(cg, newcg, (size_t)fs->fs_cgsize);
 			cgdirty();
 			continue;
 		}
 		if (memcmp(cg_inosused(newcg),
-			   cg_inosused(cg), mapsize) != 0 &&
+			 cg_inosused(cg), mapsize) != 0 &&
 		    dofix(&idesc[1], "BLK(S) MISSING IN BIT MAPS")) {
-			memcpy(cg_inosused(cg), cg_inosused(newcg),
+			memmove(cg_inosused(cg), cg_inosused(newcg),
 			      (size_t)mapsize);
 			cgdirty();
 		}
 		if ((memcmp(newcg, cg, basesize) != 0 ||
 		     memcmp(&cg_blktot(newcg)[0],
-			    &cg_blktot(cg)[0], sumsize) != 0) &&
+			  &cg_blktot(cg)[0], sumsize) != 0) &&
 		    dofix(&idesc[2], "SUMMARY INFORMATION BAD")) {
-			memcpy(cg, newcg, (size_t)basesize);
-			memcpy(&cg_blktot(cg)[0],
+			memmove(cg, newcg, (size_t)basesize);
+			memmove(&cg_blktot(cg)[0],
 			       &cg_blktot(newcg)[0], (size_t)sumsize);
 			cgdirty();
 		}
@@ -326,7 +329,7 @@ pass5()
 		fs->fs_nrpos = savednrpos;
 	if (memcmp(&cstotal, &fs->fs_cstotal, sizeof *cs) != 0
 	    && dofix(&idesc[0], "FREE BLK COUNT(S) WRONG IN SUPERBLK")) {
-		memcpy(&fs->fs_cstotal, &cstotal, sizeof *cs);
+		memmove(&fs->fs_cstotal, &cstotal, sizeof *cs);
 		fs->fs_ronly = 0;
 		fs->fs_fmod = 0;
 		sbdirty();

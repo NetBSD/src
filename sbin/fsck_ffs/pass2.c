@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.19 1997/09/16 08:37:07 mrg Exp $	*/
+/*	$NetBSD: pass2.c,v 1.20 1997/09/16 16:45:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,20 +36,20 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
+static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.19 1997/09/16 08:37:07 mrg Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.20 1997/09/16 16:45:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <err.h>
 #include <string.h>
 
 #include "fsck.h"
@@ -58,8 +58,8 @@ __RCSID("$NetBSD: pass2.c,v 1.19 1997/09/16 08:37:07 mrg Exp $");
 
 #define MINDIRSIZE	(sizeof (struct dirtemplate))
 
-static int pass2check __P((struct inodesc *));
 static int blksort __P((const void *, const void *));
+static int pass2check __P((struct inodesc *));
 
 void
 pass2()
@@ -76,9 +76,9 @@ pass2()
 	case USTATE:
 		pfatal("ROOT INODE UNALLOCATED");
 		if (reply("ALLOCATE") == 0)
-			errexit("%s", "");
+			exit(EEXIT);
 		if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
-			errexit("CANNOT ALLOCATE ROOT INODE\n");
+			errx(EEXIT, "CANNOT ALLOCATE ROOT INODE");
 		break;
 
 	case DCLEAR:
@@ -86,11 +86,11 @@ pass2()
 		if (reply("REALLOCATE")) {
 			freeino(ROOTINO);
 			if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
-				errexit("CANNOT ALLOCATE ROOT INODE\n");
+				errx(EEXIT, "CANNOT ALLOCATE ROOT INODE");
 			break;
 		}
 		if (reply("CONTINUE") == 0)
-			errexit("%s", "");
+			exit(EEXIT);
 		break;
 
 	case FSTATE:
@@ -99,11 +99,11 @@ pass2()
 		if (reply("REALLOCATE")) {
 			freeino(ROOTINO);
 			if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
-				errexit("CANNOT ALLOCATE ROOT INODE\n");
+				errx(EEXIT, "CANNOT ALLOCATE ROOT INODE");
 			break;
 		}
 		if (reply("FIX") == 0)
-			errexit("%s", "");
+			exit(EEXIT);
 		dp = ginode(ROOTINO);
 		dp->di_mode &= ~IFMT;
 		dp->di_mode |= IFDIR;
@@ -114,8 +114,9 @@ pass2()
 		break;
 
 	default:
-		errexit("BAD STATE %d FOR ROOT INODE", statemap[ROOTINO]);
+		errx(EEXIT, "BAD STATE %d FOR ROOT INODE", statemap[ROOTINO]);
 	}
+	statemap[ROOTINO] = DFOUND;
 	if (newinofmt) {
 		statemap[WINO] = FSTATE;
 		typemap[WINO] = DT_WHT;
@@ -130,6 +131,7 @@ pass2()
 	memset(&curino, 0, sizeof(struct inodesc));
 	curino.id_type = DATA;
 	curino.id_func = pass2check;
+	dp = &dino;
 	inpend = &inpsort[inplast];
 	for (inpp = inpsort; inpp < inpend; inpp++) {
 		inp = *inpp;
@@ -142,6 +144,7 @@ pass2()
 				dp = ginode(inp->i_number);
 				dp->di_size = inp->i_isize;
 				inodirty();
+				dp = &dino;
 			}
 		} else if ((inp->i_isize & (DIRBLKSIZ - 1)) != 0) {
 			getpathname(pathbuf, inp->i_number, inp->i_number);
@@ -152,17 +155,18 @@ pass2()
 			inp->i_isize = roundup(inp->i_isize, DIRBLKSIZ);
 			if (preen || reply("ADJUST") == 1) {
 				dp = ginode(inp->i_number);
-				dp->di_size = inp->i_isize;
+				dp->di_size = roundup(inp->i_isize, DIRBLKSIZ);
 				inodirty();
+				dp = &dino;
 			}
 		}
 		memset(&dino, 0, sizeof(struct dinode));
 		dino.di_mode = IFDIR;
-		dino.di_size = inp->i_isize;
-		memcpy(&dino.di_db[0], &inp->i_blks[0], (size_t)inp->i_numblks);
+		dp->di_size = inp->i_isize;
+		memmove(&dp->di_db[0], &inp->i_blks[0], (size_t)inp->i_numblks);
 		curino.id_number = inp->i_number;
 		curino.id_parent = inp->i_parent;
-		(void)ckinode(&dino, &curino);
+		(void)ckinode(dp, &curino);
 	}
 	/*
 	 * Now that the parents of all directories have been found,
@@ -172,6 +176,9 @@ pass2()
 		inp = *inpp;
 		if (inp->i_parent == 0 || inp->i_isize == 0)
 			continue;
+		if (statemap[inp->i_parent] == DFOUND &&
+		    statemap[inp->i_number] == DSTATE)
+			statemap[inp->i_number] = DFOUND;
 		if (inp->i_dotdot == inp->i_parent ||
 		    inp->i_dotdot == (ino_t)-1)
 			continue;
@@ -264,13 +271,13 @@ pass2check(idesc)
 		pfatal("CANNOT FIX, INSUFFICIENT SPACE TO ADD '.'\n");
 	} else if (dirp->d_reclen < 2 * entrysize) {
 		proto.d_reclen = dirp->d_reclen;
-		memcpy(dirp, &proto, (size_t)entrysize);
+		memmove(dirp, &proto, (size_t)entrysize);
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
 	} else {
 		n = dirp->d_reclen - entrysize;
 		proto.d_reclen = entrysize;
-		memcpy(dirp, &proto, (size_t)entrysize);
+		memmove(dirp, &proto, (size_t)entrysize);
 		idesc->id_entryno++;
 		lncntp[dirp->d_ino]--;
 		dirp = (struct direct *)((char *)(dirp) + entrysize);
@@ -338,7 +345,7 @@ chk1:
 		inp->i_dotdot = inp->i_parent;
 		fileerror(inp->i_parent, idesc->id_number, "MISSING '..'");
 		proto.d_reclen = dirp->d_reclen;
-		memcpy(dirp, &proto, (size_t)entrysize);
+		memmove(dirp, &proto, (size_t)entrysize);
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
 	}
@@ -412,6 +419,10 @@ again:
 			goto again;
 
 		case DSTATE:
+			if (statemap[idesc->id_number] == DFOUND)
+				statemap[dirp->d_ino] = DFOUND;
+			/* fall through */
+
 		case DFOUND:
 			inp = getinoinfo(dirp->d_ino);
 			if (inp->i_parent != 0 && idesc->id_entryno > 2) {
@@ -442,7 +453,7 @@ again:
 			break;
 
 		default:
-			errexit("BAD STATE %d FOR INODE I=%d",
+			errx(EEXIT, "BAD STATE %d FOR INODE I=%d",
 			    statemap[dirp->d_ino], dirp->d_ino);
 		}
 	}
@@ -456,9 +467,10 @@ again:
  * Routine to sort disk blocks.
  */
 static int
-blksort(inpp1, inpp2)
-	const void *inpp1, *inpp2;
+blksort(arg1, arg2)
+	const void *arg1, *arg2;
 {
-	return ((* (struct inoinfo **) inpp1)->i_blks[0] -
-		(* (struct inoinfo **) inpp2)->i_blks[0]);
+
+	return ((*(struct inoinfo **)arg1)->i_blks[0] -
+		(*(struct inoinfo **)arg2)->i_blks[0]);
 }

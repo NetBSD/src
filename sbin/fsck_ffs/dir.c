@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.22 1997/09/14 14:36:29 lukem Exp $	*/
+/*	$NetBSD: dir.c,v 1.23 1997/09/16 16:44:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,20 +36,20 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
+static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.22 1997/09/14 14:36:29 lukem Exp $");
+__RCSID("$NetBSD: dir.c,v 1.23 1997/09/16 16:44:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <err.h>
 #include <string.h>
 
 #include "fsck.h"
@@ -68,13 +68,14 @@ struct	odirtemplate odirhead = {
 	0, DIRBLKSIZ - 12, 2, ".."
 };
 
+static int chgino __P((struct  inodesc *));
+static int dircheck __P((struct inodesc *, struct direct *));
 static int expanddir __P((struct dinode *, char *));
 static void freedir __P((ino_t, ino_t));
 static struct direct *fsck_readdir __P((struct inodesc *));
 static struct bufarea *getdirblk __P((daddr_t, long));
 static int lftempname __P((char *, ino_t));
 static int mkentry __P((struct inodesc *));
-static int chgino __P((struct  inodesc *));
 
 /*
  * Propagate connected state through the tree.
@@ -126,7 +127,7 @@ dirscan(idesc)
 	char dbuf[DIRBLKSIZ];
 
 	if (idesc->id_type != DATA)
-		errexit("wrong type to dirscan %d\n", idesc->id_type);
+		errx(EEXIT, "wrong type to dirscan %d", idesc->id_type);
 	if (idesc->id_entryno == 0 &&
 	    (idesc->id_filesize & (DIRBLKSIZ - 1)) != 0)
 		idesc->id_filesize = roundup(idesc->id_filesize, DIRBLKSIZ);
@@ -138,7 +139,7 @@ dirscan(idesc)
 	idesc->id_loc = 0;
 	for (dp = fsck_readdir(idesc); dp != NULL; dp = fsck_readdir(idesc)) {
 		dsize = dp->d_reclen;
-		memcpy(dbuf, dp, (size_t)dsize);
+		memmove(dbuf, dp, (size_t)dsize);
 #		if (BYTE_ORDER == LITTLE_ENDIAN)
 			if (!newinofmt) {
 				struct direct *tdp = (struct direct *)dbuf;
@@ -163,7 +164,7 @@ dirscan(idesc)
 				}
 #			endif
 			bp = getdirblk(idesc->id_blkno, blksiz);
-			memcpy(bp->b_un.b_buf + idesc->id_loc - dsize, dbuf,
+			memmove(bp->b_un.b_buf + idesc->id_loc - dsize, dbuf,
 			    (size_t)dsize);
 			dirty(bp);
 			sbdirty();
@@ -239,7 +240,7 @@ dpok:
  * Verify that a directory entry is valid.
  * This is a superset of the checks made in the kernel.
  */
-int
+static int
 dircheck(idesc, dp)
 	struct inodesc *idesc;
 	struct direct *dp;
@@ -373,7 +374,7 @@ mkentry(idesc)
 	else
 		dirp->d_type = 0;
 	dirp->d_namlen = newent.d_namlen;
-	memcpy(dirp->d_name, idesc->id_name, (size_t)dirp->d_namlen + 1);
+	memmove(dirp->d_name, idesc->id_name, (size_t)newent.d_namlen + 1);
 #	if (BYTE_ORDER == LITTLE_ENDIAN)
 		/*
 		 * If the entry was split, dirscan() will only reverse the byte
@@ -577,7 +578,7 @@ expanddir(dp, name)
 	struct dinode *dp;
 	char *name;
 {
-	daddr_t lastbn, newblk;
+	ufs_daddr_t lastbn, newblk;
 	struct bufarea *bp;
 	char *cp, firstblk[DIRBLKSIZ];
 
@@ -594,21 +595,21 @@ expanddir(dp, name)
 		(long)dblksize(&sblock, dp, lastbn + 1));
 	if (bp->b_errs)
 		goto bad;
-	memcpy(firstblk, bp->b_un.b_buf, DIRBLKSIZ);
+	memmove(firstblk, bp->b_un.b_buf, DIRBLKSIZ);
 	bp = getdirblk(newblk, sblock.fs_bsize);
 	if (bp->b_errs)
 		goto bad;
-	memcpy(bp->b_un.b_buf, firstblk, DIRBLKSIZ);
+	memmove(bp->b_un.b_buf, firstblk, DIRBLKSIZ);
 	for (cp = &bp->b_un.b_buf[DIRBLKSIZ];
 	     cp < &bp->b_un.b_buf[sblock.fs_bsize];
 	     cp += DIRBLKSIZ)
-		memcpy(cp, &emptydir, sizeof emptydir);
+		memmove(cp, &emptydir, sizeof emptydir);
 	dirty(bp);
 	bp = getdirblk(dp->di_db[lastbn + 1],
 		(long)dblksize(&sblock, dp, lastbn + 1));
 	if (bp->b_errs)
 		goto bad;
-	memcpy(bp->b_un.b_buf, &emptydir, sizeof emptydir);
+	memmove(bp->b_un.b_buf, &emptydir, sizeof emptydir);
 	pwarn("NO SPACE LEFT IN %s", name);
 	if (preen)
 		printf(" (EXPANDED)\n");
@@ -629,7 +630,7 @@ bad:
 /*
  * allocate a new directory
  */
-int
+ino_t
 allocdir(parent, request, mode)
 	ino_t parent, request;
 	int mode;
@@ -653,11 +654,11 @@ allocdir(parent, request, mode)
 		freeino(ino);
 		return (0);
 	}
-	memcpy(bp->b_un.b_buf, dirp, sizeof(struct dirtemplate));
+	memmove(bp->b_un.b_buf, dirp, sizeof(struct dirtemplate));
 	for (cp = &bp->b_un.b_buf[DIRBLKSIZ];
 	     cp < &bp->b_un.b_buf[sblock.fs_fsize];
 	     cp += DIRBLKSIZ)
-		memcpy(cp, &emptydir, sizeof emptydir);
+		memmove(cp, &emptydir, sizeof emptydir);
 	dirty(bp);
 	dp->di_nlink = 2;
 	inodirty();
@@ -731,7 +732,7 @@ lftempname(bufp, ino)
  */
 static struct bufarea *
 getdirblk(blkno, size)
-	daddr_t blkno;
+	ufs_daddr_t blkno;
 	long size;
 {
 

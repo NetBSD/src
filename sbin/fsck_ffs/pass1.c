@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.18 1997/09/16 08:37:06 mrg Exp $	*/
+/*	$NetBSD: pass1.c,v 1.19 1997/09/16 16:45:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,28 +36,28 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.18 1997/09/16 08:37:06 mrg Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.19 1997/09/16 16:45:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <err.h>
 #include <string.h>
 
 #include "fsck.h"
 #include "extern.h"
 #include "fsutil.h"
 
-static daddr_t badblk;
-static daddr_t dupblk;
+static ufs_daddr_t badblk;
+static ufs_daddr_t dupblk;
 static void checkinode __P((ino_t, struct inodesc *));
 
 void
@@ -111,13 +111,15 @@ checkinode(inumber, idesc)
 	struct zlncnt *zlnp;
 	int ndb, j;
 	mode_t mode;
-	char *symbuf;
+	char symbuf[MAXSYMLINKLEN];
 
 	dp = getnextinode(inumber);
 	mode = dp->di_mode & IFMT;
 	if (mode == 0) {
-		if (memcmp(dp->di_db, zino.di_db, NDADDR * sizeof(daddr_t)) ||
-		    memcmp(dp->di_ib, zino.di_ib, NIADDR * sizeof(daddr_t)) ||
+		if (memcmp(dp->di_db, zino.di_db,
+			NDADDR * sizeof(ufs_daddr_t)) ||
+		    memcmp(dp->di_ib, zino.di_ib,
+			NIADDR * sizeof(ufs_daddr_t)) ||
 		    dp->di_mode || dp->di_size) {
 			pfatal("PARTIALLY ALLOCATED INODE I=%u", inumber);
 			if (reply("CLEAR") == 1) {
@@ -131,7 +133,8 @@ checkinode(inumber, idesc)
 	}
 	lastino = inumber;
 	if (/* dp->di_size < 0 || */
-	    dp->di_size + sblock.fs_bsize - 1 < dp->di_size) {
+	    dp->di_size + sblock.fs_bsize - 1 < dp->di_size ||
+	    (mode == IFDIR && dp->di_size > MAXDIRSIZE)) {
 		if (debug)
 			printf("bad size %qu:",(unsigned long long)dp->di_size);
 		goto unknown;
@@ -162,11 +165,10 @@ checkinode(inumber, idesc)
 		if (doinglevel2 &&
 		    dp->di_size > 0 && dp->di_size < MAXSYMLINKLEN &&
 		    dp->di_blocks != 0) {
-			symbuf = alloca(secsize);
 			if (bread(fsreadfd, symbuf,
 			    fsbtodb(&sblock, dp->di_db[0]),
 			    (long)secsize) != 0)
-				errexit("cannot read symlink");
+				errx(EEXIT, "cannot read symlink");
 			if (debug) {
 				symbuf[dp->di_size] = 0;
 				printf("convert symlink %u(%s) of size %qd\n",
@@ -174,7 +176,7 @@ checkinode(inumber, idesc)
 				    (unsigned long long)dp->di_size);
 			}
 			dp = ginode(inumber);
-			memcpy(dp->di_shortlink, symbuf, (long)dp->di_size);
+			memmove(dp->di_shortlink, symbuf, (long)dp->di_size);
 			dp->di_blocks = 0;
 			inodirty();
 		}
@@ -217,7 +219,7 @@ checkinode(inumber, idesc)
 		if (zlnp == NULL) {
 			pfatal("LINK COUNT TABLE OVERFLOW");
 			if (reply("CONTINUE") == 0)
-				errexit("%s", "");
+				exit(EEXIT);
 		} else {
 			zlnp->zlncnt = inumber;
 			zlnp->next = zlnhead;
@@ -275,7 +277,7 @@ pass1check(idesc)
 {
 	int res = KEEPON;
 	int anyout, nfrags;
-	daddr_t blkno = idesc->id_blkno;
+	ufs_daddr_t blkno = idesc->id_blkno;
 	struct dups *dlp;
 	struct dups *new;
 
@@ -287,7 +289,7 @@ pass1check(idesc)
 			if (preen)
 				printf(" (SKIPPING)\n");
 			else if (reply("CONTINUE") == 0)
-				errexit("%s", "");
+				exit(EEXIT);
 			return (STOP);
 		}
 	}
@@ -305,14 +307,14 @@ pass1check(idesc)
 				if (preen)
 					printf(" (SKIPPING)\n");
 				else if (reply("CONTINUE") == 0)
-					errexit("%s", "");
+					exit(EEXIT);
 				return (STOP);
 			}
 			new = (struct dups *)malloc(sizeof(struct dups));
 			if (new == NULL) {
 				pfatal("DUP TABLE OVERFLOW.");
 				if (reply("CONTINUE") == 0)
-					errexit("%s", "");
+					exit(EEXIT);
 				return (STOP);
 			}
 			new->dup = blkno;
