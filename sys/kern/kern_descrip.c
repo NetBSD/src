@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.22 1994/06/29 06:32:23 cgd Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.22.2.1 1994/08/15 22:18:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -351,7 +351,7 @@ close(p, uap, retval)
 	return (closef(fp, p));
 }
 
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2)
 /*
  * Return status information about a file descriptor.
  */
@@ -393,7 +393,7 @@ ofstat(p, uap, retval)
 		error = copyout((caddr_t)&oub, (caddr_t)uap->sb, sizeof (oub));
 	return (error);
 }
-#endif /* COMPAT_43 || COMPAT_SUNOS */
+#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_IBCS2 */
 
 /*
  * Return status information about a file descriptor.
