@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.17 2004/04/23 21:13:08 itojun Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.18 2004/08/02 18:44:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.17 2004/04/23 21:13:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.18 2004/08/02 18:44:56 mycroft Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -121,7 +121,7 @@ ohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	cardbusreg_t csr;
 	char devinfo[256];
 	usbd_status r;
-	char *vendor;
+	const char *vendor;
 	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
 
 	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
