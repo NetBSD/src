@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.29 2002/09/11 07:17:33 mycroft Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.30 2002/09/11 13:15:58 mycroft Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -552,24 +552,24 @@ mb8795_init(sc)
 	if (ifp->if_flags & IFF_UP) {
 		int rxmode;
 
-		s = spldma ();
-		if ((ifp->if_flags & IFF_RUNNING) == 0) {
+		s = spldma();
+		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			mb8795_reset(sc);
-		}
-		if (ifp->if_flags & IFF_PROMISC) {
+
+		if (ifp->if_flags & IFF_PROMISC)
 			rxmode = MB8795_RXMODE_PROMISCUOUS;
-			panic ("promisc");
-		} else {
-			/* XXX add support for multicast */
-			rxmode = turbo ? MB8795_RXMODE_TEST | MB8795_RXMODE_MULTICAST : MB8795_RXMODE_NORMAL;
-		}
+		else
+			rxmode = MB8795_RXMODE_NORMAL;
+		/* XXX add support for multicast */
+		if (turbo)
+			rxmode |= MB8795_RXMODE_TEST;
 		
-		if ((ifp->if_flags & IFF_RUNNING) == 0) {
-			/* switching mode probably borken now with turbo */
+		/* switching mode probably borken now with turbo */
 		MB_WRITE_REG(sc, MB8795_TXMODE,
 			     turbo ? MB8795_TXMODE_TURBO1 : MB8795_TXMODE_LB_DISABLE);
 		MB_WRITE_REG(sc, MB8795_RXMODE, rxmode);
 		
+		if ((ifp->if_flags & IFF_RUNNING) == 0) {
 			MBDMA_RX_SETUP(sc);
 			MBDMA_TX_SETUP(sc);
 
@@ -578,8 +578,6 @@ mb8795_init(sc)
 			ifp->if_timer = 0;
 			
 			MBDMA_RX_GO(sc);
-			if (turbo)
-				MB_WRITE_REG(sc, MB8795_RXMODE, rxmode | MB8795_RXMODE_MULTICAST);
 		}
 		splx(s);
 #if 0

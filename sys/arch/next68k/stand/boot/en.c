@@ -1,4 +1,4 @@
-/*      $NetBSD: en.c,v 1.7 2002/09/11 06:32:07 mycroft Exp $        */
+/*      $NetBSD: en.c,v 1.8 2002/09/11 13:15:59 mycroft Exp $        */
 /*
  * Copyright (c) 1996 Rolf Grossmann
  * All rights reserved.
@@ -154,11 +154,10 @@ en_init(struct iodesc *desc, void *machdep_hint)
 
 	er->rxmask = 0;
 	er->rxstat = 0xff;
-	if (turbo) {
-		er->rxmode = EN_RMD_TEST;
-	} else {
+	if (turbo)
+		er->rxmode = EN_RMD_TEST | EN_RMD_RECV_NORMAL;
+	else
 		er->rxmode = EN_RMD_RECV_NORMAL;
-	}
 	for (i=0; i<6; i++)
 	  er->addr[i] = desc->myea[i] = MON(char *,MG_clientetheraddr)[i];
           
@@ -321,11 +320,10 @@ en_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
 	rxdma->dd_start = 0;
 	rxdma->dd_stop = 0;
 	rxdma->dd_csr = DMACSR_SETENABLE | DMACSR_READ;
-	if (turbo) {
-		er->rxmode = EN_RMD_TEST | EN_RMD_RECV_MULTI;
-	} else {
+	if (turbo)
+		er->rxmode = EN_RMD_TEST | EN_RMD_RECV_NORMAL;
+	else
 		er->rxmode = EN_RMD_RECV_NORMAL;
-	}
 
 #if 01
 	DPRINTF(("en_get: blocking on rcv dma\n"));
