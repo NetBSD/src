@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 2001/11/06 04:49:49 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7 2001/11/26 23:24:20 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -1353,7 +1353,7 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 	th = (va & TLB_EPN_MASK) |
 		(((pte & TTE_SZ_MASK) >> TTE_SZ_SHIFT) << TLB_SIZE_SHFT) |
 		TLB_VALID;
-	tl = pte;
+	tl = pte & ~(TTE_SZ_MASK|TTE_ENDIAN);
 
 	s = splhigh();
 	idx = ppc4xx_tlb_find_victim();
