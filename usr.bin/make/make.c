@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.46 2002/03/12 23:52:35 pk Exp $	*/
+/*	$NetBSD: make.c,v 1.47 2002/03/20 18:10:31 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.46 2002/03/12 23:52:35 pk Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.47 2002/03/20 18:10:31 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.46 2002/03/12 23:52:35 pk Exp $");
+__RCSID("$NetBSD: make.c,v 1.47 2002/03/20 18:10:31 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -615,6 +615,8 @@ Make_Update (cgn)
     LstNode	ln; 	/* Element in parents and iParents lists */
     time_t	mtime = -1;
     char	*p1;
+    Lst		parents;
+    GNode	*centurion;
 
     cname = Var_Value (TARGET, cgn, &p1);
     if (p1)
@@ -629,8 +631,23 @@ Make_Update (cgn)
 	mtime = Make_Recheck(cgn);
     }
 
-    if (Lst_Open (cgn->parents) == SUCCESS) {
-	while ((ln = Lst_Next (cgn->parents)) != NILLNODE) {
+    /*
+     * If this is a `::' node, we must consult its first instance
+     * which is where all parents are linked.
+     */
+    if ((centurion = cgn->centurion) != NULL) {
+	if (!Lst_IsEmpty(cgn->parents))
+		Punt("%s: cohort has parents", cgn->name);
+	centurion->unmade_cohorts -= 1;
+	if (centurion->unmade_cohorts < 0)
+	    Error ("Graph cycles through centurion %s", centurion->name);
+	parents = centurion->parents;
+    } else {
+	centurion = cgn;
+	parents = cgn->parents;
+    }
+    if (Lst_Open (parents) == SUCCESS) {
+	while ((ln = Lst_Next (parents)) != NILLNODE) {
 	    pgn = (GNode *)Lst_Datum (ln);
 	    if (mtime == 0)
 		pgn->flags |= FORCE;
@@ -639,26 +656,35 @@ Make_Update (cgn)
 	     * been queued on the `toBeMade' list in Make_ExpandUse()
 	     * and its unmade children counter is zero.
 	     */
-	    if (pgn->flags & REMAKE && (pgn->type & OP_MADE) == 0) {
-		pgn->unmade -= 1;
+	    if ((pgn->flags & REMAKE) == 0 || (pgn->type & OP_MADE) != 0)
+		continue;
 
-		if ( ! (cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE))) {
-		    if (cgn->made == MADE)
-			pgn->flags |= CHILDMADE;
-		    (void)Make_TimeStamp (pgn, cgn);
-		}
-		if (pgn->unmade == 0) {
-		    /*
-		     * Queue the node up -- any unmade predecessors will
-		     * be dealt with in MakeStartJobs.
-		     */
-		    (void)Lst_EnQueue (toBeMade, (ClientData)pgn);
-		} else if (pgn->unmade < 0) {
-		    Error ("Graph cycles through %s", pgn->name);
-		}
+	    if ( ! (cgn->type & (OP_EXEC|OP_USE|OP_USEBEFORE))) {
+		if (cgn->made == MADE)
+		    pgn->flags |= CHILDMADE;
+		(void)Make_TimeStamp (pgn, cgn);
+	    }
+
+	    /*
+	     * A parent must wait for the completion of all instances
+	     * of a `::' dependency.
+	     */
+	    if (centurion->unmade_cohorts != 0 || centurion->made == UNMADE)
+		continue;
+
+	    /* One more child of this parent is now made */
+	    pgn->unmade -= 1;
+	    if (pgn->unmade == 0) {
+		/*
+		 * Queue the node up -- any unmade predecessors will
+		 * be dealt with in MakeStartJobs.
+		 */
+		(void)Lst_EnQueue (toBeMade, (ClientData)pgn);
+	    } else if (pgn->unmade < 0) {
+		Error ("Graph cycles through %s", pgn->name);
 	    }
 	}
-	Lst_Close (cgn->parents);
+	Lst_Close (parents);
     }
     /*
      * Deal with successor nodes. If any is marked for making and has an unmade
