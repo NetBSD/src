@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.11 1997/02/13 00:08:27 thorpej Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.12 1997/03/05 08:02:03 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -497,6 +497,8 @@ pdq_eisa_attach(
     sc->sc_csrtag = sc->sc_iotag;
     sc->sc_csrhandle = sc->sc_iobase;
 #else
+    sc->sc_csrtag = ea->ea_memt;
+
     if (maddr == 0 || msize == 0) {
 	printf("\n%s: error: memory not enabled! ECU reconfiguration required\n",
 	    sc->sc_dev.dv_xname);
