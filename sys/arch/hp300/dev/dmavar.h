@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.5 1995/03/28 18:16:03 jtc Exp $	*/
+/*	$NetBSD: dmavar.h,v 1.6 1996/12/09 03:09:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -50,4 +50,5 @@
 #ifdef _KERNEL
 extern void	dmago(), dmafree();
 extern int	dmareq();
+extern void	dmacomputeipl __P((void));
 #endif
