@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.23 1997/06/01 08:24:33 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.24 1997/06/05 00:27:13 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -40,6 +40,7 @@
 #include <sys/disklabel.h>
 #include <sys/dmap.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/map.h>
@@ -166,6 +167,136 @@ static void sw_reg_iodone __P((struct buf *));
 static void sw_reg_start __P((struct swapdev *));
 #endif
 
+static void insert_swapdev __P((struct swapdev *, int));
+static struct swapdev *find_swapdev __P((struct vnode *, int));
+static void swaplist_trim __P((void));
+
+/* XXX - Replace with general locking device when available */
+static void _swaplist_lock __P((void));
+static void _swaplist_unlock __P((void));
+int swaplock = 0;
+#define SWP_LOCKED	1
+#define SWP_WANT	2
+
+static __inline void
+_swaplist_lock()
+{
+	if (swaplock & SWP_LOCKED) {
+		swaplock |= SWP_WANT;
+		tsleep((caddr_t)&swaplock, PSWP, "swaplock", 0);
+	}
+	swaplock |= SWP_LOCKED;
+}
+
+static __inline void
+_swaplist_unlock()
+{
+	swaplock &= ~SWP_LOCKED;
+	if (swaplock & SWP_WANT) {
+		swaplock &= ~SWP_WANT;
+		wakeup((caddr_t)&swaplock);
+	}
+}
+
+/*
+ * Insert a swap device on the priority list.
+ */
+void
+insert_swapdev(sdp, priority)
+	struct swapdev *sdp;
+	int priority;
+{
+	struct swappri *spp, *pspp;
+
+again:
+	_swaplist_lock();
+	pspp = swap_priority.lh_first;
+
+	for (spp = pspp; spp != NULL; spp = spp->spi_swappri.le_next) {
+		if (spp->spi_priority <= priority)
+			break;
+		pspp = spp;
+	}
+
+	if (spp == NULL || spp->spi_priority != priority) {
+		spp = (struct swappri *)
+			malloc(sizeof *spp, M_VMSWAP, M_NOWAIT);
+
+		if (spp == NULL) {
+			_swaplist_unlock();
+			tsleep((caddr_t)&lbolt, PSWP, "memory", 0);
+			goto again;
+		}
+#ifdef SWAPDEBUG
+		if (vmswapdebug & VMSDB_SWFLOW)
+			printf("sw: had to create a new swappri = %d\n",
+			   priority);
+#endif /* SWAPDEBUG */
+
+		spp->spi_priority = priority;
+		CIRCLEQ_INIT(&spp->spi_swapdev);
+
+		if (pspp)
+			LIST_INSERT_AFTER(pspp, spp, spi_swappri);
+		else
+			LIST_INSERT_HEAD(&swap_priority, spp,
+					 spi_swappri);
+
+	}
+	/* Onto priority list */
+	CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
+	_swaplist_unlock();
+}
+
+/*
+ * Find and optionally remove a swap device from the priority list.
+ */
+struct swapdev *
+find_swapdev(vp, remove)
+	struct vnode *vp;
+	int remove;
+{
+	struct swapdev *sdp;
+	struct swappri *spp;
+
+	_swaplist_lock();
+	for (spp = swap_priority.lh_first; spp != NULL;
+	     spp = spp->spi_swappri.le_next) {
+		for (sdp = spp->spi_swapdev.cqh_first;
+		     sdp != (void *)&spp->spi_swapdev;
+		     sdp = sdp->swd_next.cqe_next)
+			if (sdp->swd_vp == vp) {
+				if (remove)
+					CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp,
+							swd_next);
+				_swaplist_unlock();
+				return(sdp);
+			}
+	}
+	_swaplist_unlock();
+	return (NULL);
+}
+
+/*
+ * Scan priority list for empty priority entries.
+ */
+void
+swaplist_trim()
+{
+	struct swappri *spp;
+
+	_swaplist_lock();
+restart:
+	for (spp = swap_priority.lh_first; spp != NULL;
+	     spp = spp->spi_swappri.le_next) {
+		if (spp->spi_swapdev.cqh_first != (void *)&spp->spi_swapdev)
+			continue;
+		LIST_REMOVE(spp, spi_swappri);
+		goto restart;
+	}
+	_swaplist_unlock();
+}
+
 int
 sys_swapctl(p, v, retval)
 	struct proc *p;
@@ -180,9 +311,10 @@ sys_swapctl(p, v, retval)
 	struct vnode *vp;
 	struct nameidata nd;
 	struct swappri *spp;
-	struct swapdev *sdp = NULL;
+	struct swapdev *sdp;
 	struct swapent *sep;
 	int	count, error, misc;
+	int	priority;
 
 	misc = SCARG(uap, misc);
 
@@ -245,98 +377,46 @@ sys_swapctl(p, v, retval)
 
 	switch(SCARG(uap, cmd)) {
 	case SWAP_CTL:
-	case SWAP_ON:
-	{
-		int	priority = SCARG(uap, misc);
-		struct	swappri *nspp = NULL;
-		struct	swapdev *nsdp = NULL;
-		struct	swappri *pspp;
-
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("sw: doing SWAP_ON/CTL...\n");
-#endif /* SWAPDEBUG */
-
-		pspp = swap_priority.lh_first;
-
-		/* Check for duplicates */
-		for (spp = pspp; spp != NULL; spp = spp->spi_swappri.le_next) {
-			for (sdp = spp->spi_swapdev.cqh_first;
-			     sdp != (void *)&spp->spi_swapdev;
-			     sdp = sdp->swd_next.cqe_next)
-				if (sdp->swd_vp == vp) {
-					if (SCARG(uap, cmd) == SWAP_ON) {
-						error = EBUSY;
-						goto bad;
-					}
-					CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp,
-					    swd_next);
-					nsdp = sdp;
-				}
-		}
-		if (SCARG(uap, cmd) == SWAP_CTL && nsdp == NULL) {
+		priority = SCARG(uap, misc);
+		if ((sdp = find_swapdev(vp, 1)) == NULL) {
 			error = ENOENT;
 			break;
 		}
-
-		for (spp = pspp; spp != NULL; spp = spp->spi_swappri.le_next) {
-			if (spp->spi_priority <= priority)
-				break;
-			pspp = spp;
-		}
-
-		if (spp == NULL || spp->spi_priority != priority) {
-			nspp = (struct swappri *)
-				malloc(sizeof *nspp, M_VMSWAP, M_WAITOK);
-
-#ifdef SWAPDEBUG
-			if (vmswapdebug & VMSDB_SWFLOW)
-				printf("sw: had to create a new swappri = %d\n",
-				   priority);
-#endif /* SWAPDEBUG */
-
-			nspp->spi_priority = priority;
-			CIRCLEQ_INIT(&nspp->spi_swapdev);
-
-			if (pspp)
-				LIST_INSERT_AFTER(pspp, nspp, spi_swappri);
-			else
-				LIST_INSERT_HEAD(&swap_priority, nspp,
-						 spi_swappri);
-
-			spp = nspp;
-		}
-		if (SCARG(uap, cmd) == SWAP_ON) {
-			nsdp = (struct swapdev *)malloc(sizeof *nsdp, M_VMSWAP,
-							M_WAITOK);
-			nsdp->swd_inuse = nsdp->swd_flags = 0;
-			nsdp->swd_vp = vp;
-			nsdp->swd_dev =
-			    (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
-			if ((error = swap_on(p, nsdp)) != 0) {
-				free((caddr_t)nsdp, M_VMSWAP);
-				if (nspp) {
-					LIST_REMOVE(nspp, spi_swappri);
-					free((caddr_t)nspp, M_VMSWAP);
-				}
-				break;
-			}
-#ifdef SWAP_TO_FILES
-			/*
-			 * XXX Is NFS elaboration necessary?
-			 */
-			if (vp->v_type == VREG)
-				nsdp->swd_cred = crdup(p->p_ucred);
-#endif
-			/* Keep reference to vnode */
-			vref(vp);
-		}
-		nsdp->swd_priority = priority;
-
-		/* Onto priority list */
-		CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, nsdp, swd_next);
+		insert_swapdev(sdp, priority);
+		swaplist_trim();
 		break;
-	}
+
+	case SWAP_ON:
+		priority = SCARG(uap, misc);
+
+		/* Check for duplicates */
+		if ((sdp = find_swapdev(vp, 0)) != NULL) {
+			error = EBUSY;
+			goto bad;
+		}
+
+		sdp = (struct swapdev *)
+			malloc(sizeof *sdp, M_VMSWAP, M_WAITOK);
+		sdp->swd_inuse = sdp->swd_flags = 0;
+		sdp->swd_vp = vp;
+		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
+
+		if ((error = swap_on(p, sdp)) != 0) {
+			free((caddr_t)sdp, M_VMSWAP);
+			break;
+		}
+#ifdef SWAP_TO_FILES
+		/*
+		 * XXX Is NFS elaboration necessary?
+		 */
+		if (vp->v_type == VREG)
+			sdp->swd_cred = crdup(p->p_ucred);
+#endif
+		insert_swapdev(sdp, priority);
+
+		/* Keep reference to vnode */
+		vref(vp);
+		break;
 
 	case SWAP_OFF:
 #ifdef SWAPDEBUG
@@ -344,31 +424,28 @@ sys_swapctl(p, v, retval)
 			printf("doing SWAP_OFF...\n");
 #endif /* SWAPDEBUG */
 #ifdef SWAP_OFF_WORKS
-		for (spp = swap_priority.lh_first; spp != NULL;
-		     spp = spp->spi_swappri.le_next) {
-			for (sdp = spp->spi_swapdev.cqh_first;
-			     sdp != (void *)&spp->spi_swapdev;
-			     sdp = sdp->swd_next.cqe_next) {
-				if (sdp->swd_vp != vp)
-					continue;
-				/*
-				 * if a device isn't in use or enabled, we
-				 * can't stop swapping from it (again).
-				 */
-				if ((sdp->swd_flags &
-				    (SWF_INUSE|SWF_ENABLE)) == 0) {
-					error = EBUSY;
-					goto bad;
-				}
-				if ((error = swap_off(p, sdp)) != 0)
-					goto bad;
-				CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp,
-				    swd_next);
-				free((caddr_t)sdp, M_VMSWAP);
-			}
-		}
-		if (sdp == NULL)
+		if ((sdp = find_swapdev(vp, 0)) == NULL) {
 			error = ENXIO;
+			break;
+		}
+		/*
+		 * If a device isn't in use or enabled, we
+		 * can't stop swapping from it (again).
+		 */
+		if ((sdp->swd_flags &
+		    (SWF_INUSE|SWF_ENABLE)) == 0) {
+			error = EBUSY;
+			goto bad;
+		}
+		if ((error = swap_off(p, sdp)) != 0)
+			goto bad;
+
+		/* Find again and remove this time */
+		if ((sdp = find_swapdev(vp, 1)) == NULL) {
+			error = ENXIO;
+			break;
+		}
+		free((caddr_t)sdp, M_VMSWAP);
 #else
 #ifdef DIAGNOSTIC
 		printf("swap SWAP_OFF attempted\n");
@@ -608,6 +685,7 @@ swap_alloc(size)
 	 * in turn while doing this search ?
 	 */
 
+	_swaplist_lock();
 	for (spp = swap_priority.lh_first; spp != NULL;
 	     spp = spp->spi_swappri.le_next) {
 		for (sdp = spp->spi_swapdev.cqh_first;
@@ -627,9 +705,11 @@ swap_alloc(size)
 			CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
 			CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
 			sdp->swd_inuse += size;
+			_swaplist_unlock();
 			return (daddr_t)(result + sdp->swd_mapoffset);
 		}
 	}
+	_swaplist_unlock();
 	return 0;
 }
 
@@ -671,13 +751,17 @@ swap_getsdpfromaddr(addr)
 	struct swapdev *sdp;
 	struct swappri *spp;
 	
+	_swaplist_lock();
 	for (spp = swap_priority.lh_first; spp != NULL;
 	     spp = spp->spi_swappri.le_next)
 		for (sdp = spp->spi_swapdev.cqh_first;
 		     sdp != (void *)&spp->spi_swapdev;
 		     sdp = sdp->swd_next.cqe_next)
-			if (ADDR_IN_MAP(addr, sdp))
+			if (ADDR_IN_MAP(addr, sdp)) {
+				_swaplist_unlock();
 				return sdp;
+			}
+	_swaplist_unlock();
 	return NULL;
 }
 
