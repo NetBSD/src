@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.9 1998/11/16 22:35:18 thorpej Exp $ */
+/* $NetBSD: pckbc.c,v 1.10 1998/12/14 13:54:25 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -427,7 +427,11 @@ pckbc_attach(parent, self, aux)
 		return;
 	res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
 
-	if (res == 0) {
+	if (res == 0 || res == 0xfa) {
+#ifdef PCKBCDEBUG
+		if (res == 0xfa)
+			printf("kbc: returned 0xfa on kbd slot test\n");
+#endif
 		if (pckbc_attach_slot(sc, PCKBC_KBD_SLOT))
 			cmdbits |= KC8_KENABLE;
 	} else {
@@ -442,7 +446,11 @@ pckbc_attach(parent, self, aux)
 		return;
 	res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
 
-	if (res == 0) {
+	if (res == 0 || res == 0xfa) {
+#ifdef PCKBCDEBUG
+		if (res == 0xfa)
+			printf("kbc: returned 0xfa on aux slot test\n");
+#endif
 		t->t_haveaux = 1;
 		if (pckbc_attach_slot(sc, PCKBC_AUX_SLOT))
 			cmdbits |= KC8_MENABLE;
