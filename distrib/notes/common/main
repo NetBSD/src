@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.256 2004/06/05 03:38:42 rumble Exp $
+.\"	$NetBSD: main,v 1.257 2004/06/10 07:01:00 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,7 +104,7 @@ You are reading the
 .Em \*[format]
 version.
 .
-.if \n[i386]:\n[macppc]:\n[sparc] \{
+.if \n[i386]:\n[macppc]:\n[sparc]:\n[sparc64] \{
 .Ss "Quick install notes for the impatient"
 .Pp
 This section contains some brief notes describing what you need to
@@ -153,7 +153,18 @@ or the floppy disk images,
 .Pa install/floppy/disk1.gz No and Pa install/floppy/disk2 .
 You need either the pair of floppies or the CD to boot your system.
 .\}
-.if \n[macppc]:\n[sparc] \{\
+.if \n[sparc64] \{\
+CD image,
+.Pa sparc64cd.iso
+or the installation kernel and bootloader,
+.Pa binary/kernel/netbsd-INSTALL.gz No and Pa installation/misc/ofwboot
+which can be booted from a
+.Tn Solaris
+or
+.Nx
+partition.
+.\}
+.if \n[macppc]:\n[sparc]:\n[sparc64] \{\
 Alternatively, you may netboot the installation kernel.  This process is
 covered below, in detail.
 .\}
@@ -165,6 +176,7 @@ When you boot the install
 .if \n[i386] floppies,
 .if \n[macppc] kernel from floppies, hard drive, or CD-ROM,
 .if \n[sparc] floppies or CD-ROM,
+.if \n[sparc64] CD-ROM or installation kernel,
 the installation program
 can fetch these files for you (using e.g. ftp),
 if you have a network connection.
@@ -179,7 +191,7 @@ as well as
 .\}
 .el \{\
 the following sets:
-.Pa kern-GENERIC.tgz ,
+.Pa kern-GENERIC.tgz , 
 .\}
 .Pa base.tgz
 and
@@ -222,6 +234,15 @@ Make sure your sparc's CD-ROM drive is bootable.
 Burn the CD.
 Otherwise, write the floppy images directly to a pair of floppies
 (after uncompressing disk1.gz).
+.\}
+.if \n[sparc64] \{
+.It
+Burn the CD or put the installation kernel and bootloader 
+at the root level of a bootable
+.Tn Solaris
+or
+.Nx
+partition.
 .\}
 .Pp
 The disk(s) you just prepared will be used to boot the installation
@@ -303,7 +324,7 @@ kernel is called
 You may want to read the section below on
 .Sx Open Firmware boot syntax
 .\}
-.if \n[sparc] \{\
+.if \n[sparc]:\n[sparc64] \{\
 .It
 You will need to get to the OpenBoot PROM
 .Dq Ic "ok"
@@ -316,6 +337,8 @@ At the
 .Dq Ic "ok"
 prompt, type the command to boot your system into
 .Nx .
+.\}
+.if \n[sparc] \{\
 The command to boot from CD is one of the following commands (depending on
 your model):
 .Dq Ic b sd(,30,) ,
@@ -329,6 +352,21 @@ or
 .Dq Ic boot floppy .
 The installer will prompt you to insert the second floppy when it is ready
 for it.
+.\}
+.if \n[sparc64] \{\
+The command to boot from CD is:
+.Dq Ic boot cdrom .
+The command to boot the
+.Nx
+kernel from a 
+.Tn Solaris
+or
+.Nx
+partition depends on which disk and partition it is on.
+To boot from the first partition of the first (primary) disk:
+.Dq Ic "boot disk:a /ofwboot -a" .
+When it asks you for a kernel, specify
+.Dq Ic "netbsd-INSTALL.gz"
 .\}
 .It
 For third-party programs which are not part of the base
