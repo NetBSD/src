@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.118 2003/03/24 15:24:47 atatat Exp $
+# $NetBSD: mi,v 1.119 2003/04/03 22:52:32 taca Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV				etc-sys-etc
@@ -196,7 +196,6 @@
 ./root/.shrc				etc-root-root
 ./var/at/at.deny			etc-cron-root
 ./var/crash/minfree			etc-sys-root
-./var/cron/log				etc-cron-log
 ./var/cron/tabs/root			etc-cron-root
 ./var/db/locate.database		etc-sys-root
 ./var/games/atc_score			etc-games-scores
@@ -217,6 +216,7 @@
 ./var/games/tetris.scores		etc-games-scores
 ./var/log/aculog			etc-uucp-log
 ./var/log/authlog			etc-sys-log
+./var/log/cron				etc-cron-log
 ./var/log/lastlog			etc-sys-log
 ./var/log/lpd-errs			etc-lpr-log
 ./var/log/maillog			etc-sendmail-log
