@@ -1,4 +1,4 @@
-#   $NetBSD: CHANGES,v 1.1 1999/03/15 00:46:47 perseant Exp $
+#   $NetBSD: CHANGES,v 1.2 1999/04/10 18:31:05 perseant Exp $
 
 kernel:
 
@@ -135,7 +135,7 @@ kernel:
   and then remount, we could conceivably get more than one cleaner
   operating at once).
 
-newlfs:
+newfs_lfs:
 
 - The ifile inode is now created with the schg flag set, since nothing
   ever modifies it.  This could be a pain for the roll-forward agent,
