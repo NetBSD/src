@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.229 2000/05/28 10:25:25 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.230 2000/05/30 00:21:07 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.223 2000/05/28 10:24:57 drochner Exp 
+ *	NetBSD: pcidevs,v 1.224 2000/05/30 00:20:41 matt Exp 
  */
 
 /*
@@ -1156,9 +1156,9 @@
 /* NEC products */
 #define	PCI_PRODUCT_NEC_USB	0x0035		/* USB Host Controller */
 #define	PCI_PRODUCT_NEC_POWERVR2	0x0046		/* PowerVR PCX2 */
-#define	PCI_PRODUCT_NEC_PD72872	0x0063		/* uPD72872 IEEE 1394 OHCI PCI Controller */
-#define	PCI_PRODUCT_NEC_PD72870	0x00cd		/* uPD72870 IEEE 1394 OHCI PCI Controller */
-#define	PCI_PRODUCT_NEC_PD72871	0x00ce		/* uPD72871 IEEE 1394 OHCI PCI Controller */
+#define	PCI_PRODUCT_NEC_PD72872	0x0063		/* uPD72872 IEEE 1394 OHCI Host Controller */
+#define	PCI_PRODUCT_NEC_PD72870	0x00cd		/* uPD72870 IEEE 1394 OHCI Host Controller */
+#define	PCI_PRODUCT_NEC_PD72871	0x00ce		/* uPD72871 IEEE 1394 OHCI Host Controller */
 
 /* Neomagic products */
 #define	PCI_PRODUCT_NEOMAGIC_NMMG128ZV	0x0003		/* MagicGraph 128ZV */
@@ -1341,8 +1341,8 @@
 #define	PCI_PRODUCT_SOLIDUM_CLASS802	0x8023		/* SNP8023: Classifier Engine */
 
 /* Sony products */
-#define	PCI_PRODUCT_SONY_CXD1947A	0x8009		/* CXD1947A FireWire Host Controller */
-#define	PCI_PRODUCT_SONY_CXD32222	0x8039		/* CXD3222 OHCI i.LINK(IEEE 1394) PCI controller */
+#define	PCI_PRODUCT_SONY_CXD1947A	0x8009		/* CXD1947A IEEE 1394 Host Controller */
+#define	PCI_PRODUCT_SONY_CXD32222	0x8039		/* CXD3222 OHCI IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_SONY_MEMSTICK	0x808a		/* Memory Stick I/F Controller */
 
 /* Sun Microsystems products */
@@ -1373,7 +1373,10 @@
 /* Texas Instruments products */
 #define	PCI_PRODUCT_TI_TLAN	0x0500		/* TLAN */
 #define	PCI_PRODUCT_TI_TVP4020	0x3d07		/* TVP4020 Permedia 2 */
-#define	PCI_PRODUCT_TI_PCILYNX	0x8000		/* LYNX FireWire Host Controller */
+#define	PCI_PRODUCT_TI_TSB12LV21	0x8000		/* TSB12LV21 IEEE 1394 Host Controller */
+#define	PCI_PRODUCT_TI_TSB12LV22	0x8009		/* TSB12LV22 OHCI IEEE 1394 Host Controller */
+#define	PCI_PRODUCT_TI_TSB12LV23	0x8019		/* TSB12LV23 OHCI IEEE 1394 Host Controller */
+#define	PCI_PRODUCT_TI_TSB12LV26	0x8020		/* TSB12LV26 OHCI IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_TI_PCI1130	0xac12		/* PCI1130 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1031	0xac13		/* PCI1031 PCI-PCMCIA Bridge */
 #define	PCI_PRODUCT_TI_PCI1131	0xac15		/* PCI1131 PCI-CardBus Bridge */
