@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.1.2.6 2001/04/30 16:23:10 sommerfeld Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.1.2.7 2001/05/27 14:19:11 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -744,7 +744,7 @@ _bus_dmamem_free(t, segs, nsegs)
 	bus_dma_segment_t *segs;
 	int nsegs;
 {
-	vm_page_t m;
+	struct vm_page *m;
 	bus_addr_t addr;
 	struct pglist mlist;
 	int curseg;
@@ -987,7 +987,7 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	paddr_t high;
 {
 	paddr_t curaddr, lastaddr;
-	vm_page_t m;
+	struct vm_page *m;
 	struct pglist mlist;
 	int curseg, error;
 
