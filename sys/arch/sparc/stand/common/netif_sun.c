@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.4 1999/11/08 23:29:05 pk Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.5 2003/02/26 17:39:08 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -50,6 +50,7 @@
 #include <lib/libsa/netif.h>
 #include <lib/libkern/libkern.h>
 
+#include <machine/promlib.h>
 #include <sparc/stand/common/promdev.h>
 
 static struct netif netif_prom;
@@ -92,7 +93,7 @@ netif_open(machdep_hint)
 	io->io_netif = &netif_prom;
 
 	/* Put our ethernet address in io->myea */
-	prom_getether(pd->fd, io->myea);
+	prom_getether(io->myea);
 
 	return(0);
 }
