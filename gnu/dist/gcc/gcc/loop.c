@@ -54,6 +54,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "predict.h"
 #include "insn-flags.h"
 #include "optabs.h"
+#include "ggc.h"
 
 /* Not really meaningful values, but at least something.  */
 #ifndef SIMULTANEOUS_PREFETCHES
@@ -552,7 +553,10 @@ loop_optimize (f, dumpfile, flags)
       struct loop *loop = &loops->array[i];
 
       if (! loop->invalid && loop->end)
-	scan_loop (loop, flags);
+        {
+          scan_loop (loop, flags);
+          ggc_collect ();
+        }
     }
 
   end_alias_analysis ();
@@ -7304,6 +7308,9 @@ express_from (g1, g2)
       && GET_CODE (g2->mult_val) == CONST_INT)
     {
       if (g1->mult_val == const0_rtx
+	  || (g1->mult_val == constm1_rtx
+	      && INTVAL (g2->mult_val)
+		 == (HOST_WIDE_INT) 1 << (HOST_BITS_PER_WIDE_INT - 1))
 	  || INTVAL (g2->mult_val) % INTVAL (g1->mult_val) != 0)
 	return NULL_RTX;
       mult = GEN_INT (INTVAL (g2->mult_val) / INTVAL (g1->mult_val));
@@ -9645,6 +9652,8 @@ insert_loop_mem (mem, data)
   for (i = 0; i < loop_info->mems_idx; ++i)
     if (rtx_equal_p (m, loop_info->mems[i].mem))
       {
+        if (MEM_VOLATILE_P (m) && !MEM_VOLATILE_P (loop_info->mems[i].mem))
+          loop_info->mems[i].mem = m;
 	if (GET_MODE (m) != GET_MODE (loop_info->mems[i].mem))
 	  /* The modes of the two memory accesses are different.  If
 	     this happens, something tricky is going on, and we just
