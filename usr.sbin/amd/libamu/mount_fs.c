@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fs.c,v 1.1.1.6 1999/02/01 18:45:43 christos Exp $	*/
+/*	$NetBSD: mount_fs.c,v 1.1.1.6.2.1 1999/09/21 04:58:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: mount_fs.c,v 1.3 1999/01/13 23:31:21 ezk Exp 
+ * Id: mount_fs.c,v 1.7 1999/08/22 21:12:33 ezk Exp 
  *
  */
 
@@ -545,12 +545,16 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct sockaddr_
      * conf/nfs_prot/nfs_prot_*.h files.
      */
 # ifdef USE_UNCONNECTED_NFS_SOCKETS
-    nap->flags |= MNT2_NFS_OPT_NOCONN;
-    plog(XLOG_WARNING, "noconn option exists, and was turned ON! (May cause NFS hangs on some systems...)");
+    if (!(nap->flags & MNT2_NFS_OPT_NOCONN)) {
+      nap->flags |= MNT2_NFS_OPT_NOCONN;
+      plog(XLOG_WARNING, "noconn option not specified, and was just turned ON (OS override)! (May cause NFS hangs on some systems...)");
+    }
 # endif /* USE_UNCONNECTED_NFS_SOCKETS */
 # ifdef USE_CONNECTED_NFS_SOCKETS
-    nap->flags &= ~MNT2_NFS_OPT_NOCONN;
-    plog(XLOG_WARNING, "noconn option exists, and was turned OFF! (May cause NFS hangs on some systems...)");
+    if (nap->flags & MNT2_NFS_OPT_NOCONN) {
+      nap->flags &= ~MNT2_NFS_OPT_NOCONN;
+      plog(XLOG_WARNING, "noconn option specified, and was just turned OFF (OS override)! (May cause NFS hangs on some systems...)");
+    }
 # endif /* USE_CONNECTED_NFS_SOCKETS */
   }
 #endif /* MNT2_NFS_OPT_NOCONN */
@@ -767,6 +771,13 @@ compute_automounter_nfs_args(nfs_args_t *nap, mntent_t *mntp)
   nap->flags |= MNT2_NFS_OPT_ACDIRMIN | MNT2_NFS_OPT_ACDIRMAX;
 # endif /* defined(MNT2_NFS_OPT_ACDIRMIN) && defined(MNT2_NFS_OPT_ACDIRMAX) */
 #endif /* not MNT2_NFS_OPT_NOAC */
+  /*
+   * Provide a slight bit more security by requiring the kernel to use
+   * reserved ports.
+   */
+#ifdef MNT2_NFS_OPT_RESVPORT
+  nap->flags |= MNT2_NFS_OPT_RESVPORT;
+#endif /* MNT2_NFS_OPT_RESVPORT */
 }
 
 
@@ -839,7 +850,7 @@ print_nfs_args(const nfs_args_t *nap, u_long nfs_version)
   plog(XLOG_DEBUG, "NA->addr {sockaddr_in} (len=%d) = \"%s\"",
        (int) sizeof(struct sockaddr_in),
        get_hex_string(sizeof(struct sockaddr_in), (const char *)sap));
-#ifdef HAVE_FIELD_STRUCT_SOCKADDR_SA_LEN_off
+#ifdef HAVE_FIELD_STRUCT_SOCKADDR_SA_LEN
   plog(XLOG_DEBUG, "NA->addr.sin_len = \"%d\"", sap->sin_len);
 #endif /* HAVE_FIELD_STRUCT_SOCKADDR_SA_LEN */
   plog(XLOG_DEBUG, "NA->addr.sin_family = \"%d\"", sap->sin_family);
@@ -849,6 +860,10 @@ print_nfs_args(const nfs_args_t *nap, u_long nfs_version)
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
 
   plog(XLOG_DEBUG, "NA->hostname = \"%s\"", nap->hostname ? nap->hostname : "null");
+#ifdef HAVE_FIELD_NFS_ARGS_T_NAMLEN
+  plog(XLOG_DEBUG, "NA->namlen = %d", nap->namlen);
+#endif /* HAVE_FIELD_NFS_ARGS_T_NAMLEN */
+
 #ifdef MNT2_NFS_OPT_FSNAME
   plog(XLOG_DEBUG, "NA->fsname = \"%s\"", nap->fsname ? nap->fsname : "null");
 #endif /* MNT2_NFS_OPT_FSNAME */
@@ -885,6 +900,9 @@ print_nfs_args(const nfs_args_t *nap, u_long nfs_version)
 
   plog(XLOG_DEBUG, "NA->rsize = %d", nap->rsize);
   plog(XLOG_DEBUG, "NA->wsize = %d", nap->wsize);
+#ifdef HAVE_FIELD_NFS_ARGS_T_BSIZE
+  plog(XLOG_DEBUG, "NA->bsize = %d", nap->bsize);
+#endif /* HAVE_FIELD_NFS_ARGS_T_BSIZE */
   plog(XLOG_DEBUG, "NA->timeo = %d", nap->timeo);
   plog(XLOG_DEBUG, "NA->retrans = %d", nap->retrans);
 
