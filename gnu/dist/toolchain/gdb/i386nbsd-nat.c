@@ -24,6 +24,7 @@
 #include <sys/ptrace.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
+#include <machine/pcb.h>
 #include "inferior.h"
 #include "gdbcore.h" /* for registers_fetched() */
 
@@ -198,6 +199,51 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
 
   registers_fetched ();
 }
+
+/*
+ * kernel_u_size() is not helpful on NetBSD because
+ * the "u" struct is NOT in the core dump file.
+ */
+
+#ifdef	FETCH_KCORE_REGISTERS
+/*
+ * Get registers from a kernel crash dump or live kernel.
+ * Called by kcore-nbsd.c:get_kcore_registers().
+ */
+void
+fetch_kcore_registers (pcb)
+     struct pcb *pcb;
+{
+  int i, regno, regs[4];
+
+  /*
+   * get the register values out of the sys pcb and
+   * store them where `read_register' will find them.
+   */
+  if (target_read_memory(pcb->pcb_tss.tss_esp+4,
+			 (char *)regs, sizeof(regs)))
+    error("Cannot read ebx, esi, and edi.");
+  for (i = 0, regno = 0; regno < 3; regno++)
+    supply_register(regno, (char *)&i);
+  supply_register(3, (char *)&regs[2]);
+  supply_register(4, (char *)&pcb->pcb_tss.tss_esp);
+  supply_register(5, (char *)&pcb->pcb_tss.tss_ebp);
+  supply_register(6, (char *)&regs[1]);
+  supply_register(7, (char *)&regs[0]);
+  supply_register(8, (char *)&regs[3]);
+  for (i = 0, regno = 9; regno < 10; regno++)
+    supply_register(regno, (char *)&i);
+#if 0
+  i = 0x08;
+  supply_register(10, (char *)&i);
+  i = 0x10;
+  supply_register(11, (char *)&i);
+#endif
+
+  /* The kernel does not use the FPU, so ignore it. */
+  registers_fetched ();
+}
+#endif	/* FETCH_KCORE_REGISTERS */
 
 /* Register that we are able to handle i386nbsd core file formats.
    FIXME: is this really bfd_target_unknown_flavour? */
