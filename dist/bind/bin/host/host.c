@@ -1,4 +1,4 @@
-/*	$NetBSD: host.c,v 1.1.1.1 1999/11/20 18:53:58 veego Exp $	*/
+/*	$NetBSD: host.c,v 1.2 1999/11/20 19:12:58 veego Exp $	*/
 
 #ifndef lint
 static const char rcsid[] = "Id: host.c,v 8.34 1999/11/11 19:39:10 cyarnell Exp";
@@ -327,7 +327,7 @@ main(int argc, char **argv) {
 	while (hp == NULL && res.res_h_errno == TRY_AGAIN) {
 		if (addr.s_addr == INADDR_NONE) {
 			cname = NULL;
-			hp = (struct hostent *)gethostinfo(getdomain);
+			hp = (struct hostent *)(unsigned long)gethostinfo(getdomain);
 			getdomain[0] = 0; /* clear this query */
 			if (sigchase && (chase_step & SD_RR)) {
 				if (nkeychains-- == 0) {
