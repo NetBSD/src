@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.2 1994/10/26 09:09:10 cgd Exp $	*/
+/*	$NetBSD: ms.c,v 1.3 1994/11/21 21:31:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,8 +42,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ms.c	8.1 (Berkeley) 6/11/93
- *
- * Header: ms.c,v 1.5 92/11/26 01:28:47 torek Exp  (LBL)
+ *	from: Header: ms.c,v 1.5 92/11/26 01:28:47 torek Exp  (LBL)
  */
 
 /*

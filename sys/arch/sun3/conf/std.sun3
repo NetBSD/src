@@ -1,5 +1,5 @@
-#	$NetBSD: std.sun3,v 1.8 1994/10/26 09:08:24 cgd Exp $
-#
+#	$NetBSD: std.sun3,v 1.9 1994/11/21 21:26:52 gwr Exp $
+
 # Standard information for sun3's.
 
 machine	sun3 m68k
@@ -18,3 +18,4 @@ clock0 at obio? addr ? level 5
 # Standard options
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
+options		"MACHINE_NONCONTIG"
