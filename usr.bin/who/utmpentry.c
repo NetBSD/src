@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.c,v 1.1 2002/08/01 23:23:08 christos Exp $	*/
+/*	$NetBSD: utmpentry.c,v 1.2 2002/08/01 23:36:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utmpentry.c,v 1.1 2002/08/01 23:23:08 christos Exp $");
+__RCSID("$NetBSD: utmpentry.c,v 1.2 2002/08/01 23:36:30 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -154,7 +154,7 @@ freeutentries(struct utmpentry *ep)
 		numutmp = 0;
 	}
 	while (ep) {
-		struct utmpentry *sep;
+		struct utmpentry *sep = ep;
 		ep = ep->next;
 		free(sep);
 	}
@@ -169,7 +169,7 @@ getutentries(const char *fname, struct utmpentry **epp)
 #ifdef SUPPORT_UTMP
 	struct utmp *ut;
 #endif
-	struct utmpentry *ep, *ehead = NULL;
+	struct utmpentry *ep;
 #if defined(SUPPORT_UTMP) && defined(SUPPORT_UTMPX)
 	int what = setup(fname);
 	struct utmpentry **nextp = &ehead;
