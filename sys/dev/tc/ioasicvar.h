@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.14 2000/10/17 09:45:49 nisimura Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.15 2003/09/26 16:00:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -38,7 +38,7 @@ struct ioasic_dev {
 };
 
 struct ioasicdev_attach_args {
-	char	iada_modname[TC_ROM_LLEN];
+	char	iada_modname[TC_ROM_LLEN+1];
 	tc_offset_t iada_offset;
 	tc_addr_t iada_addr;
 	void	*iada_cookie;
