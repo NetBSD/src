@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.31 2000/10/02 03:55:43 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.32 2000/10/19 20:23:02 itojun Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.64 2000/10/01 12:37:20 itojun Exp $	*/
 
 /*
@@ -649,7 +649,6 @@ in6_pcblookup(head, faddr6, fport_arg, laddr6, lport_arg, flags)
 			else if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, laddr6))
 				continue;
 		}
-#ifndef TCP6
 		else if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)
 			&& in6p->in6p_laddr.s6_addr32[3] == 0) {
 			if (!IN6_IS_ADDR_V4MAPPED(laddr6))
@@ -659,10 +658,9 @@ in6_pcblookup(head, faddr6, fport_arg, laddr6, lport_arg, flags)
 			else
 				wildcard++;
 		}
-#endif
 		else {
 			if (IN6_IS_ADDR_V4MAPPED(laddr6)) {
-#if !defined(TCP6) && !defined(INET6_BINDV6ONLY)
+#ifndef INET6_BINDV6ONLY
 				if (in6p->in6p_flags & IN6P_BINDV6ONLY)
 					continue;
 				else
@@ -680,7 +678,6 @@ in6_pcblookup(head, faddr6, fport_arg, laddr6, lport_arg, flags)
 			      || in6p->in6p_fport != fport)
 				continue;
 		}
-#ifndef TCP6
 		else if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr)
 			&& in6p->in6p_faddr.s6_addr32[3] == 0) {
 			if (!IN6_IS_ADDR_V4MAPPED(faddr6))
@@ -690,10 +687,9 @@ in6_pcblookup(head, faddr6, fport_arg, laddr6, lport_arg, flags)
 			else
 				wildcard++;
 		}
-#endif
 		else {
 			if (IN6_IS_ADDR_V4MAPPED(faddr6)) {
-#if !defined(TCP6) && !defined(INET6_BINDV6ONLY)
+#ifndef INET6_BINDV6ONLY
 				if (in6p->in6p_flags & IN6P_BINDV6ONLY)
 					continue;
 				else
@@ -717,7 +713,6 @@ in6_pcblookup(head, faddr6, fport_arg, laddr6, lport_arg, flags)
 	return(match);
 }
 
-#ifndef TCP6
 struct rtentry *
 in6_pcbrtentry(in6p)
 	struct in6pcb *in6p;
@@ -818,4 +813,3 @@ in6_pcblookup_bind(head, laddr6, lport_arg, faith)
 	}
 	return match;
 }
-#endif

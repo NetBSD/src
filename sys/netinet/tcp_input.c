@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.119 2000/10/17 03:06:42 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.120 2000/10/19 20:22:59 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -509,7 +509,7 @@ present:
 	return (pkt_flags);
 }
 
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 int
 tcp6_input(mp, offp, proto)
 	struct mbuf **mp;
@@ -812,7 +812,7 @@ findpcb:
 			++tcpstat.tcps_pcbhashmiss;
 			inp = in_pcblookup_bind(&tcbtable, ip->ip_dst, th->th_dport);
 		}
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 		if (inp == 0) {
 			struct in6_addr s, d;
 
@@ -883,7 +883,7 @@ findpcb:
 #endif /*IPSEC*/
 		break;
 #endif /*INET*/
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 	case AF_INET6:
 	    {
 		int faith;
