@@ -1126,7 +1126,7 @@ xnormal_mem_fault:
 	 */
 	set	AC_BUS_ERR, %o0		! bus error register
 	cmp	%l3, T_TEXTFAULT	! text fault always on PC
-	beq	normal_mem_fault	! go
+	be	normal_mem_fault	! go
 	 lduba	[%o0] ASI_CONTROL, %o1	! get its value
 
 #define STORE_BIT 21 /* bit that indicates a store instruction for sparc */
@@ -2478,7 +2478,7 @@ dostart:
 	 */
 	set	0x4000, %g7
 	cmp	%o0, %g7
-	beq	is_sun4
+	be	is_sun4
 	 nop
 
 #if defined(SUN4C) || defined(SUN4M)
@@ -2502,10 +2502,10 @@ dostart:
 	set	_cputypval-KERNBASE, %o2	! buffer ptr
 	ldub	[%o2 + 4], %o0		! which is it... "sun4c", "sun4m", "sun4d"?
 	cmp	%o0, 'c'
-	beq	is_sun4c
+	be	is_sun4c
 	 nop
 	cmp	%o0, 'm'
-	beq	is_sun4m
+	be	is_sun4m
 	 nop
 #endif /* SUN4C || SUN4M */
 
@@ -2847,7 +2847,7 @@ startmap_done:
 	 * "restore"
 	 */
 	cmp	%o0, 8
-	beq	1f
+	be	1f
 noplab:	 nop
 	set	noplab, %l0
 	ld	[%l0], %l1
