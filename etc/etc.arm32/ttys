@@ -1,6 +1,6 @@
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
-#	$Id: ttys,v 1.1 1996/02/02 16:10:21 mark Exp $
+#	$NetBSD: ttys,v 1.2 1996/05/07 20:33:55 mark Exp $
 #
 # name	getty				type	status		comments
 #
