@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.31 1998/09/18 04:09:57 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.32 1998/09/21 11:24:11 tv Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -73,12 +73,6 @@
 extern int pmap_debug_level;
 #endif	/* PMAP_DEBUG */
 
-#ifdef DEBUG
-int verbose_faults = 1;
-#else
-int verbose_faults = 0;
-#endif
-
 int pmap_modified_emulation __P((pmap_t, vm_offset_t));
 int pmap_handled_emulation __P((pmap_t, vm_offset_t));
 pt_entry_t *pmap_pte __P((pmap_t pmap, vm_offset_t va));
@@ -116,13 +110,17 @@ report_abort(prefix, fault_status, fault_address, fault_pc)
 	u_int fault_address;
 	u_int fault_pc;
 {
-	if (verbose_faults || prefix == NULL) {
+#ifndef DEBUG
+	if (prefix == NULL) {
+#endif
 		if (prefix)
 			printf("%s ", prefix);
 		printf("Data abort: '%s' status=%03x address=%08x PC=%08x\n",
 		    aborts[fault_status & FAULT_TYPE_MASK],
 		    fault_status & 0xfff, fault_address, fault_pc);
+#ifndef DEBUG
 	}
+#endif
 }
 
 /*
@@ -231,7 +229,7 @@ data_abort_handler(frame)
 		panic("data_abort_handler: no pcb ... we're toast !\n");
 	}
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	/* Is this needed ? */
 	if (pcb != curpcb) {
 		printf("data_abort: Alert ! pcb(%p) != curpcb(%p)\n",
@@ -239,7 +237,7 @@ data_abort_handler(frame)
 		printf("data_abort: Alert ! proc(%p), curproc(%p)\n",
 		    p, curproc);
 	}
-#endif	/* DIAGNOSTIC */
+#endif	/* DEBUG */
 
 	/* fusubail is used by [fs]uswintr to avoid page faulting */
 	if ((pcb->pcb_onfault
@@ -634,8 +632,10 @@ nogo:
 		    && map != kernel_map) {
 			nss = clrnd(btoc(USRSTACK-(u_int)va));
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
+#ifdef DEBUG
 				printf("Stack limit exceeded %x %x\n",
 				    nss, (u_int)btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur));
+#endif
 				rv = KERN_FAILURE;
 				goto nogo1;
 			}
@@ -740,7 +740,9 @@ prefetch_abort_handler(frame)
 	/* Get the current proc structure or proc0 if there is none */
 	if ((p = curproc) == 0) {
 		p = &proc0;
-		printf("Prefetch about with curproc == 0\n");
+#ifdef DEBUG
+		printf("Prefetch abort with curproc == 0\n");
+#endif
 	}
 
 #ifdef PMAP_DEBUG
@@ -755,14 +757,14 @@ prefetch_abort_handler(frame)
 	if (pcb == 0)
 		panic("prefetch_abort_handler: no pcb ... we're toast !\n");
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	if (pcb != curpcb) {
 		printf("data_abort: Alert ! pcb(%p) != curpcb(%p)\n",
 		    pcb, curpcb);
 		printf("data_abort: Alert ! proc(%p), curproc(%p)\n",
 		    p, curproc);
 	}
-#endif	/* DIAGNOSTIC */
+#endif	/* DEBUG */
 
 	/* Was the prefectch abort from USR32 mode ? */
 
@@ -774,8 +776,10 @@ prefetch_abort_handler(frame)
 		 * All the kernel code pages are loaded at boot time
 		 * and do not get paged
 		 */
+#ifdef DEBUG
 		printf("Prefetch address = %08x\n", frame->tf_pc);
 	        panic("Prefetch abort in non-USR mode (frame=%p)\n", frame);
+#endif
 	}
 
 	/* Get fault address */
@@ -787,9 +791,10 @@ prefetch_abort_handler(frame)
 #endif
 	/* Ok validate the address, can only execute in USER space */
 	if (fault_pc < VM_MIN_ADDRESS || fault_pc >= VM_MAXUSER_ADDRESS) {
-		if (verbose_faults)
-			printf("prefetch: pc (%08x) not in user process space\n",
-			    fault_pc);
+#ifdef DEBUG
+		printf("prefetch: pc (%08x) not in user process space\n",
+		    fault_pc);
+#endif
 		trapsignal(p, SIGSEGV, fault_pc);
 		userret(p, frame->tf_pc, sticks);
 		return;
@@ -814,9 +819,10 @@ prefetch_abort_handler(frame)
 	
 	/* Ok read the fault address. This will fault the page in for us */
 	if (fetchuserword(fault_pc, &fault_instruction) != 0) {
-		if (verbose_faults)
-			printf("prefetch: faultin failed for address %08x\n",
-			    fault_pc);
+#ifdef DEBUG
+		printf("prefetch: faultin failed for address %08x\n",
+		    fault_pc);
+#endif
 		trapsignal(p, SIGSEGV, fault_pc);
 	} else {
 
