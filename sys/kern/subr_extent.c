@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.8 1997/05/12 23:36:32 thorpej Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.9 1997/08/29 00:47:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -381,7 +381,7 @@ extent_alloc_region(ex, start, size, flags)
 			 * We lie before this region and don't
 			 * conflict.
 			 */
-			 break;
+			break;
 		}
 
 		/*
@@ -538,7 +538,7 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 	 * For N allocated regions, we must make (N + 1)
 	 * checks for unallocated space.  The first chunk we
 	 * check is the area from the beginning of the subregion
-	 * to the first allocated region.
+	 * to the first allocated region after that point.
 	 */
 	newstart = EXTENT_ALIGN(substart, alignment);
 	if (newstart < ex->ex_start) {
@@ -553,8 +553,19 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 #endif
 	}
 
+	/*
+	 * Find the first allocated region that begins on or after
+	 * the subregion start, advancing the "last" pointer along
+	 * the way.
+	 */
 	for (rp = ex->ex_regions.lh_first; rp != NULL;
 	    rp = rp->er_link.le_next) {
+		if (rp->er_start >= newstart)
+			break;
+		last = rp;
+	}
+
+	for (; rp != NULL; rp = rp->er_link.le_next) {
 		/*
 		 * Check the chunk before "rp".  Note that our
 		 * comparison is safe from overflow conditions.
