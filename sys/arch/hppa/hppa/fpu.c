@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.2 2003/08/31 01:26:34 chs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.3 2003/10/25 16:15:07 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.2 2003/08/31 01:26:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.3 2003/10/25 16:15:07 chs Exp $");
 
 #include <sys/param.h>       
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ hppa_fpu_flush(struct lwp *l)
 	 */
 
 	if (fpu_present &&
-	    fpu_cur_uspace != NULL &&
+	    fpu_cur_uspace != 0 &&
 	    fpu_cur_uspace == tf->tf_cr30)
 		hppa_fpu_swap(l->l_addr, NULL);
 }
