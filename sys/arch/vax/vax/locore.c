@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.37 1999/05/23 22:56:54 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.38 1999/06/06 14:23:46 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -70,6 +70,7 @@ extern struct cpu_dep ka48_calls;
 extern struct cpu_dep ka410_calls;
 extern struct cpu_dep ka630_calls;
 extern struct cpu_dep ka650_calls;
+extern struct cpu_dep ka670_calls;
 
 /*
  * Start is called from boot; the first routine that is called
@@ -182,7 +183,7 @@ start()
 #endif
 #if VAX670
 	case VAX_BTYP_670:
-		dep_call = &ka650_calls;
+		dep_call = &ka670_calls;
 		strcpy(cpu_model,"VAX 4000/300");
 		break;
 #endif
