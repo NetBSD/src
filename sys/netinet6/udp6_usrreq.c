@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.27 2000/04/17 16:26:07 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.28 2000/05/22 15:22:36 itojun Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.46 2000/04/17 16:16:32 itojun Exp $	*/
 
 /*
@@ -976,7 +976,7 @@ udp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 
 	switch (name[0]) {
 
-	case UDP6CTL_SENDMAX:
+	case UDP6CTL_SENDSPACE:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 		    &udp6_sendspace);
 	case UDP6CTL_RECVSPACE:

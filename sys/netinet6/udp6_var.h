@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_var.h,v 1.7 2000/02/28 12:08:25 itojun Exp $	*/
+/*	$NetBSD: udp6_var.h,v 1.8 2000/05/22 15:22:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -88,13 +88,13 @@ struct	udp6stat {
 /*
  * Names for UDP sysctl objects
  */
-#define UDP6CTL_SENDMAX		1	/* default send buffer */
+#define UDP6CTL_SENDSPACE	1	/* default send buffer */
 #define UDP6CTL_RECVSPACE	2	/* default recv buffer */
 #define UDP6CTL_MAXID		3
 
 #define UDP6CTL_NAMES { \
 	{ 0, 0 }, \
-	{ "sendmax", CTLTYPE_INT }, \
+	{ "sendspace", CTLTYPE_INT }, \
 	{ "recvspace", CTLTYPE_INT }, \
 }
 
