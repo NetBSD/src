@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.26 2004/11/24 22:17:19 christos Exp $	*/
+/*	$NetBSD: pty.c,v 1.27 2004/11/25 02:49:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.3 (Berkeley) 5/16/94";
 #else
-__RCSID("$NetBSD: pty.c,v 1.26 2004/11/24 22:17:19 christos Exp $");
+__RCSID("$NetBSD: pty.c,v 1.27 2004/11/25 02:49:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,6 +67,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 	const char *cp1, *cp2, *cp, *linep;
 	int master, slave;
 	gid_t ttygid;
+	mode_t mode;
 	struct group *gr;
 
 	_DIAGASSERT(amaster != NULL);
@@ -86,10 +87,13 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 		}
 	}
 
-	if ((gr = getgrnam("tty")) != NULL)
+	if ((gr = getgrnam("tty")) != NULL) {
 		ttygid = gr->gr_gid;
-	else
+		mode = S_IRUSR|S_IWUSR|S_IWGRP;
+	} else {
 		ttygid = getgid();
+		mode = S_IRUSR|S_IWUSR;
+	}
 
 	for (cp1 = TTY_LETTERS; *cp1; cp1++) {
 		line[8] = *cp1;
@@ -107,7 +111,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *term,
 			line[5] = 't';
 			linep = line;
 			if (chown(line, getuid(), ttygid) == 0 &&
-			    chmod(line, S_IRUSR|S_IWUSR|S_IWGRP) == 0 &&
+			    chmod(line, mode) == 0 &&
 			    revoke(line) == 0 &&
 			    (slave = open(line, O_RDWR, 0)) != -1) {
 gotit:
