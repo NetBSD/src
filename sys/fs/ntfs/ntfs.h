@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.7 2003/06/29 22:31:10 fvdl Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.8 2004/12/27 18:14:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -242,7 +242,7 @@ struct bootfile {
 
 #pragma pack()
 
-typedef wchar (ntfs_wget_func_t) __P((const char **));
+typedef wchar (ntfs_wget_func_t) __P((const char **, size_t *));
 typedef int (ntfs_wput_func_t) __P((char *, size_t, wchar));
 typedef int (ntfs_wcmp_func_t) __P((wchar, wchar));
 
