@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.13 1997/03/16 23:27:07 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.14 1997/03/17 16:56:34 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -63,6 +63,7 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #define ARCNET_ALLOW_BROKEN_ARP
@@ -103,7 +104,8 @@ arc_output(ifp, m0, dst, rt0)
 	struct mbuf		*m, *m1, *mcopy;
 	struct rtentry		*rt;
 	struct arccom		*ac;
-	register struct arc_header *ah;
+	struct arc_header	*ah;
+	struct arphdr		*arph;
 	int			s, error, newencoding;
 	u_int8_t		atype, adst, myself;
 	int			tfrags, sflag, fsflag, rsflag;
@@ -170,13 +172,13 @@ arc_output(ifp, m0, dst, rt0)
 		break;
 
 	case AF_ARP:
-		ah = mtod(m, struct arphdr *);
+		arph = mtod(m, struct arphdr *);
 		if (m->m_flags & M_BCAST)
 			adst = arcbroadcastaddr;
 		else
-			adst = *ar_tha(ah);
+			adst = *ar_tha(arph);
 
-		switch(ntohs(ah->ar_op)) {
+		switch(ntohs(arph->ar_op)) {
 		case ARPOP_REVREQUEST:
 		case ARPOP_REVREPLY:
 			if (!(ifp->if_flags & IFF_LINK0)) {
@@ -208,7 +210,7 @@ arc_output(ifp, m0, dst, rt0)
 		 * switchable for emergency cases. Not perfect, but...
 		 */
 		if (ifp->if_flags & IFF_LINK2) {
-			ah->ar_pro = atype;
+			arph->ar_pro = atype;
 		}
 #endif
 		break;
@@ -615,7 +617,6 @@ arc_ifattach(ifp, lla)
 	register struct ifnet *ifp;
 	u_int8_t lla;
 {
-	register struct ifaddr *ifa;
 	register struct sockaddr_dl *sdl;
 	register struct arccom *ac;
 
