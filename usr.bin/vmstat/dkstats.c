@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.12 2001/06/03 04:02:34 christos Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.13 2001/09/18 18:15:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -274,7 +274,7 @@ dkinit(int select, gid_t egid)
 		p = cur_disk.dk_link.tqe_next;
 	}
 
-	/* Never do this initalization again. */
+	/* Never do this initialization again. */
 	once = 1;
 	return (1);
 }
