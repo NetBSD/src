@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.98 1998/07/25 15:39:28 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.99 1998/07/27 18:50:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -196,8 +196,6 @@ cdev_decl(joy);
 cdev_decl(apm);
 #include "usb.h"
 cdev_decl(usb);
-#include "ums.h"
-cdev_decl(ums);
 #include "uhid.h"
 cdev_decl(uhid);
 #include "ugen.h"
@@ -345,7 +343,7 @@ struct cdevsw	cdevsw[] =
 	cdev_usb_init(NUSB,usb),	/* 55: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 56: USB generic HID */
 	cdev_lpt_init(NULPT,ulpt),	/* 57: USB printer */
-	cdev_mouse_init(NUMS,ums),	/* 58: USB mouse */
+	cdev_notdef(),			/* 58: free */
 	cdev_notdef(),			/* 59: free */
 	cdev_vc_nb_init(NVCFS,vc_nb_),  /* 60: coda file system psdev */
 };
