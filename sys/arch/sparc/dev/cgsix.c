@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.14 1995/08/29 22:26:37 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.15 1995/09/17 20:43:43 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -110,13 +110,20 @@ struct cgsix_softc {
 /* autoconfiguration driver */
 static void	cgsixattach __P((struct device *, struct device *, void *));
 static int	cgsixmatch __P((struct device *, void *, void *));
+int		cgsixopen __P((dev_t, int, int, struct proc *));
+int		cgsixclose __P((dev_t, int, int, struct proc *));
+int		cgsixioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int		cgsixmmap __P((dev_t, int, int));
+static void	cg6_unblank __P((struct device *));
+
 struct cfdriver cgsixcd =
     { NULL, "cgsix", cgsixmatch, cgsixattach,
       DV_DULL, sizeof(struct cgsix_softc) };
 
 /* frame buffer generic driver */
-static void	cg6_unblank __P((struct device *));
-static struct fbdriver cg6_fbdriver = { cg6_unblank };
+static struct fbdriver cg6_fbdriver = {
+	cg6_unblank, cgsixopen, cgsixclose, cgsixioctl, cgsixmmap
+};
 
 /*
  * Unlike the bw2 and cg3 drivers, we do not need to provide an rconsole
@@ -124,8 +131,6 @@ static struct fbdriver cg6_fbdriver = { cg6_unblank };
  */
 
 extern int fbnode;
-
-#define	CGSIX_MAJOR	67		/* XXX */
 
 static void cg6_reset __P((struct cgsix_softc *));
 static void cg6_loadcmap __P((struct cgsix_softc *, int, int));
@@ -174,9 +179,7 @@ cgsixattach(parent, self, args)
 	register volatile struct cg6_layout *p;
 	int sbus = 1;
 	char *nam;
-extern struct tty *fbconstty;
-
-	sc->sc_fb.fb_major = CGSIX_MAJOR;	/* XXX to be removed */
+	extern struct tty *fbconstty;
 
 	sc->sc_fb.fb_driver = &cg6_fbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
