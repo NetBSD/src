@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.36 1997/02/07 06:35:44 mikel Exp $	*/
+/*	$NetBSD: tty.h,v 1.36.8.1 1997/10/14 16:03:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -205,7 +205,7 @@ extern	int tty_count;			/* number of ttys in global ttylist */
 extern	struct ttychars ttydefaults;
 
 /* Symbolic sleep message strings. */
-extern	 char ttyin[], ttyout[], ttopen[], ttclos[], ttybg[], ttybuf[];
+extern	 const char ttyin[], ttyout[], ttopen[], ttclos[], ttybg[], ttybuf[];
 
 int	 b_to_q __P((const u_char *cp, int cc, struct clist *q));
 void	 catq __P((struct clist *from, struct clist *to));
@@ -244,7 +244,7 @@ void	 ttypend __P((struct tty *tp));
 void	 ttyretype __P((struct tty *tp));
 void	 ttyrub __P((int c, struct tty *tp));
 int	 ttysleep __P((struct tty *tp,
-	    void *chan, int pri, char *wmesg, int timeout));
+	    void *chan, int pri, const char *wmesg, int timeout));
 int	 ttywait __P((struct tty *tp));
 int	 ttywflush __P((struct tty *tp));
 

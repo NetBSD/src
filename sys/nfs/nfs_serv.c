@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.37 1997/07/17 23:54:29 fvdl Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.37.2.1 1997/10/14 15:58:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2475,7 +2475,8 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 	int siz, cnt, fullsiz, eofflag, rdonly, cache, ncookies;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	u_quad_t frev, off, toff, verf;
-	u_long *cookies = NULL, *cookiep;
+	off_t *cookies = NULL, *cookiep;
+	nfsuint64 jar;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
@@ -2529,7 +2530,7 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 #endif
 	MALLOC(rbuf, caddr_t, siz, M_TEMP, M_WAITOK);
 	ncookies = siz / (5 * NFSX_UNSIGNED); /*7 for V3, but it's an est. so*/
-	MALLOC(cookies, u_long *, ncookies * sizeof (u_long *), M_TEMP,
+	MALLOC(cookies, off_t *, ncookies * sizeof (off_t), M_TEMP,
 		M_WAITOK);
 again:
 	iv.iov_base = rbuf;
@@ -2684,12 +2685,13 @@ again:
 			nfsm_clget;
 	
 			/* Finish off the record */
+			txdr_hyper(cookiep, &jar);
 			if (v3) {
-				*tl = 0;
+				*tl = jar.nfsuquad[0];
 				bp += NFSX_UNSIGNED;
 				nfsm_clget;
 			}
-			*tl = txdr_unsigned(*cookiep);
+			*tl = jar.nfsuquad[1];
 			bp += NFSX_UNSIGNED;
 		}
 		cpos += dp->d_reclen;
@@ -2748,7 +2750,7 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	int len, nlen, rem, xfer, tsiz, i, error = 0, getret = 1;
 	int siz, cnt, fullsiz, eofflag, rdonly, cache, dirlen, ncookies;
 	u_quad_t frev, off, toff, verf;
-	u_long *cookies = NULL, *cookiep;
+	off_t *cookies = NULL, *cookiep;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
@@ -2798,7 +2800,7 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 
 	MALLOC(rbuf, caddr_t, siz, M_TEMP, M_WAITOK);
 	ncookies = siz / (7 * NFSX_UNSIGNED);
-	MALLOC(cookies, u_long *, ncookies * sizeof (u_long *), M_TEMP,
+	MALLOC(cookies, off_t *, ncookies * sizeof (off_t), M_TEMP,
 		M_WAITOK);
 again:
 	iv.iov_base = rbuf;
@@ -2958,8 +2960,7 @@ again:
 			fl.fl_fhsize = txdr_unsigned(NFSX_V3FH);
 			fl.fl_fhok = nfs_true;
 			fl.fl_postopok = nfs_true;
-			fl.fl_off.nfsuquad[0] = 0;
-			fl.fl_off.nfsuquad[1] = txdr_unsigned(*cookiep);
+			txdr_hyper(cookiep, fl.fl_off.nfsuquad);
 
 			nfsm_clget;
 			*tl = nfs_true;

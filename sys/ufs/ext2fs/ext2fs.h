@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.1 1997/06/11 09:33:37 bouyer Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.1.4.1 1997/10/14 16:06:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -180,6 +180,32 @@ struct ext2_gd {
 	u_int32_t reserved2[3];
 
 };
+
+/* EXT2FS metadatas are stored in little-endian byte order. These macros
+ * helps reading theses metadatas
+ */
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#	define h2fs16(x) (x)
+#	define h2fs32(x) (x)
+#	define fs2h16(x) (x)
+#	define fs2h32(x) (x)
+#	define e2fs_sbload(old, new) bcopy((old), (new), SBSIZE);
+#	define e2fs_cgload(old, new, size) bcopy((old), (new), (size));
+#	define e2fs_sbsave(old, new) bcopy((old), (new), SBSIZE);
+#	define e2fs_cgsave(old, new, size) bcopy((old), (new), (size));
+#else
+void e2fs_sb_bswap __P((struct ext2fs *, struct ext2fs *));
+void e2fs_cg_bswap __P((struct ext2_gd *, struct ext2_gd *, int));
+#	define h2fs16(x) bswap16(x)
+#	define h2fs32(x) bswap32(x)
+#	define fs2h16(x) bswap16(x)
+#	define fs2h32(x) bswap32(x)
+#	define e2fs_sbload(old, new) e2fs_sb_bswap((old), (new))
+#	define e2fs_cgload(old, new, size) e2fs_cg_bswap((old), (new), (size));
+#	define e2fs_sbsave(old, new) e2fs_sb_bswap((old), (new))
+#	define e2fs_cgsave(old, new, size) e2fs_cg_bswap((old), (new), (size));
+#endif
 
 /*
  * Turn file system block numbers into disk block addresses.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.42 1997/06/17 03:37:07 thorpej Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.42.4.1 1997/10/14 16:08:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Matthew R. Green for
- *      The NetBSD Foundation.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -42,6 +38,7 @@
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/lock.h>
 #include <sys/vnode.h>
 #include <sys/map.h>
 #include <sys/file.h>
@@ -135,40 +132,176 @@ struct swappri {
 };
 
 
+
+
+/*
+ * Pool resource management helpers for vndxfer & vndbuf below.
+ */
+struct pool_item {
+	struct pool_item	*pi_next;
+};
+
+struct pool {
+	struct pool_item	*pr_freelist;	/* Free items in pool */
+	int			pr_size;	/* Size of item */
+	int			pr_freecount;	/* # of free items */
+	int			pr_hiwat;	/* max # of pooled items */
+	char			*pr_wchan;	/* tsleep(9) identifier */
+	int			pr_flags;
+#define PR_WANTED	1
+	struct simplelock	pr_lock;
+};
+
+static void	*get_pooled_resource __P((struct pool *));
+static void	put_pooled_resource __P((struct pool *, void *));
+static int	prime_pooled_resource __P((struct pool *, int));
+
+
+/* Grab an item from the pool; must be called at splbio */
+static __inline void *
+get_pooled_resource(pp)
+	struct pool *pp;
+{
+	void *v;
+	struct pool_item *pi;
+
+again:
+	simple_lock(&pp->pr_lock);
+	if (pp->pr_freelist == NULL) {
+		/* if (pp->pr_flags & PR_MALLOC) */
+			v = (void *)malloc(pp->pr_size, M_DEVBUF, M_NOWAIT);
+		if (v == NULL) {
+			pp->pr_flags |= PR_WANTED;
+			simple_unlock(&pp->pr_lock);
+			tsleep((caddr_t)pp, PSWP, pp->pr_wchan, 0);
+			goto again;
+		}
+	} else {
+		v = pi = pp->pr_freelist;
+		pp->pr_freelist = pi->pi_next;
+		pp->pr_freecount--;
+	}
+	simple_unlock(&pp->pr_lock);
+	return (v);
+}
+
+/* Return resource to the pool; must be called at splbio */
+static __inline void
+put_pooled_resource(pp, v)
+	struct pool *pp;
+	void *v;
+{
+	struct pool_item *pi = v;
+
+	simple_lock(&pp->pr_lock);
+	if ((pp->pr_flags & PR_WANTED) || pp->pr_freecount < pp->pr_hiwat) {
+		/* Return to pool */
+		pi->pi_next = pp->pr_freelist;
+		pp->pr_freelist = pi;
+		pp->pr_freecount++;
+		if (pp->pr_flags & PR_WANTED) {
+			pp->pr_flags &= ~PR_WANTED;
+			wakeup((caddr_t)pp);
+		}
+	} else {
+		/* Return to system */
+		free(v, M_DEVBUF);
+
+		/*
+		 * Return any excess items allocated during periods of
+		 * contention.
+		 */
+		while (pp->pr_freecount > pp->pr_hiwat) {
+			pi = pp->pr_freelist;
+			pp->pr_freelist = pi->pi_next;
+			pp->pr_freecount--;
+			free(pi, M_DEVBUF);
+		}
+	}
+	simple_unlock(&pp->pr_lock);
+}
+
+/* Add N items to the pool */
+static int
+prime_pooled_resource(pp, n)
+	struct pool *pp;
+	int n;
+{
+	struct pool_item *pi;
+
+	simple_lock(&pp->pr_lock);
+	pp->pr_hiwat += n;
+	while (n--) {
+		pi = malloc(pp->pr_size, M_DEVBUF, M_NOWAIT);
+		if (pi == NULL) {
+			simple_unlock(&pp->pr_lock);
+			return (ENOMEM);
+		}
+
+		pi->pi_next = pp->pr_freelist;
+		pp->pr_freelist = pi;
+		pp->pr_freecount++;
+	}
+	simple_unlock(&pp->pr_lock);
+	return (0);
+}
+
+
 /*
  * The following two structures are used to keep track of data transfers
  * on swap devices associated with regular files.
  * NOTE: this code is more or less a copy of vnd.c; we use the same
  * structure names here to ease porting..
  */
+
+
 struct vndxfer {
-	struct buf	*vx_bp;		/* Pointer to parent buffer */
+	struct pool_item	vx_pool;	/* MUST be first */
+	struct buf	*vx_bp;			/* Pointer to parent buffer */
 	struct swapdev	*vx_sdp;
 	int		vx_error;
-	int		vx_pending;	/* # of pending aux buffers */
+	int		vx_pending;		/* # of pending aux buffers */
 };
 
+
 struct vndbuf {
+	struct pool_item	vb_pool;	/* MUST be first */
 	struct buf	vb_buf;
 	struct vndxfer	*vb_xfer;
 };
 
+/* To get from a buffer to the encapsulating vndbuf */
+#define BUF_TO_VNDBUF(bp) \
+	((struct vndbuf *)((int)bp - ((int)&((struct vndbuf *)0)->vb_buf)))
+
 /*
- * XXX: Not a very good idea in a swap strategy module!
+ * We keep a pool vndbuf's and vndxfer structures.
  */
-#define	getvndxfer()	\
-	((struct vndxfer *)malloc(sizeof(struct vndxfer), M_DEVBUF, M_WAITOK))
+struct pool vndxfer_head = { NULL, sizeof(struct vndxfer), 0, 0, "sw vnx", 0 };
+struct pool vndbuf_head = { NULL, sizeof(struct vndbuf), 0, 0, "sw vnd", 0 };
 
-#define putvndxfer(vnx)	\
-	free((caddr_t)(vnx), M_DEVBUF)
+#define	getvndxfer(vnx)	do {						\
+	int s = splbio();						\
+	(vnx) = (struct vndxfer *)get_pooled_resource(&vndxfer_head);	\
+	splx(s);							\
+} while (0)
 
-#define getvndbuf()	\
-	((struct vndbuf *)malloc(sizeof(struct vndbuf), M_DEVBUF, M_WAITOK))
+#define putvndxfer(vnx)							\
+	put_pooled_resource(&vndxfer_head, (void *)(vnx));
 
-#define putvndbuf(vbp)	\
-	free((caddr_t)(vbp), M_DEVBUF)
+#define	getvndbuf(vbp)	do {						\
+	int s = splbio();						\
+	(vbp) = (struct vndbuf *)get_pooled_resource(&vndbuf_head);	\
+	splx(s);							\
+} while (0)
 
-int nswapdev, nswap;
+#define putvndbuf(vbp)							\
+	put_pooled_resource(&vndbuf_head, (void *)(vbp));
+
+
+
+
+int nswapdev;
 int swflags;
 struct extent *swapmap;
 LIST_HEAD(swap_priority, swappri) swap_priority;
@@ -594,8 +727,14 @@ swap_on(p, sdp)
 	/* XXX make this based on ram as well. */
 	storagesize = EXTENT_FIXED_STORAGE_SIZE(maxproc * 2);
 	storage = malloc(storagesize, M_VMSWAP, M_WAITOK);
-	sdp->swd_ex = extent_create(name, addr, addr + size, M_VMSWAP,
+	sdp->swd_ex = extent_create(name, 0, nblks, M_VMSWAP,
 				    storage, storagesize, EX_WAITOK);
+	if (addr) {
+		if (extent_alloc_region(sdp->swd_ex, 0, addr, EX_WAITOK))
+			panic("disklabel region");
+		sdp->swd_inuse += addr;
+	}
+
 
 	if (vp == rootvp) {
 		struct mount *mp;
@@ -617,9 +756,27 @@ swap_on(p, sdp)
 		rootblks, dtoc(size - rootblks));
 	}
 
+	if (vp->v_type == VREG) {
+		/* Allocate additional vnx and vnd buffers */
+		int n, s;
+		/*
+		 * Allocation Policy:
+		 *	(8  * swd_maxactive) vnx headers per swap dev
+		 *	(16 * swd_maxactive) vnd buffers per swap dev
+		 */
+
+		s = splbio();
+		n = 8 * sdp->swd_maxactive;
+		(void)prime_pooled_resource(&vndxfer_head, n);
+
+		n = 16 * sdp->swd_maxactive;
+		(void)prime_pooled_resource(&vndbuf_head, n);
+		splx(s);
+
+	}
+
 	swap_addmap(sdp, size);
 	nswapdev++;
-	nswap += nblks;
 	sdp->swd_flags |= SWF_ENABLE;
 
 	return (0);
@@ -666,7 +823,6 @@ swap_off(p, sdp)
 	return ENODEV;
 
 	extent_free(swapmap, sdp->swd_mapoffset, sdp->swd_mapsize, EX_WAITOK);
-	nswap -= sdp->swd_nblks;
 	nswapdev--;
 	name = sdp->swd_ex->ex_name;
 	extent_destroy(sdp->swd_ex);
@@ -880,7 +1036,6 @@ swstrategy(bp)
 }
 
 #ifdef SWAP_TO_FILES
-int doswvnlock = 0;
 
 static void
 sw_reg_strategy(sdp, bp, bn)
@@ -904,18 +1059,16 @@ sw_reg_strategy(sdp, bp, bn)
 	bn   = dbtob(bn);
 
 	/* Allocate a header for this transfer and link it to the buffer */
-	vnx = getvndxfer();
+	getvndxfer(vnx);
 	vnx->vx_error = 0;
 	vnx->vx_pending = 0;
 	vnx->vx_bp = bp;
 	vnx->vx_sdp = sdp;
 
 	for (resid = bp->b_resid; resid; resid -= sz) {
-		if (doswvnlock) VOP_LOCK(sdp->swd_vp);
 		nra = 0;
 		error = VOP_BMAP(sdp->swd_vp, bn / sdp->swd_bsize,
 				 	&vp, &nbn, &nra);
-		if (doswvnlock) VOP_UNLOCK(sdp->swd_vp);
 
 		if (error == 0 && (long)nbn == -1)
 			error = EIO;
@@ -956,7 +1109,7 @@ sw_reg_strategy(sdp, bp, bn)
 				" sz 0x%x\n", sdp->swd_vp, vp, bn, nbn, sz);
 #endif /* SWAPDEBUG */
 
-		nbp = getvndbuf();
+		getvndbuf(nbp);
 		nbp->vb_buf.b_flags    = bp->b_flags | B_CALL;
 		nbp->vb_buf.b_bcount   = sz;
 		nbp->vb_buf.b_bufsize  = bp->b_bufsize;
@@ -1041,7 +1194,7 @@ static void
 sw_reg_iodone(bp)
 	struct buf *bp;
 {
-	register struct vndbuf *vbp = (struct vndbuf *) bp;
+	register struct vndbuf *vbp = BUF_TO_VNDBUF(bp);
 	register struct vndxfer *vnx = (struct vndxfer *)vbp->vb_xfer;
 	register struct buf *pbp = vnx->vx_bp;
 	struct swapdev	*sdp = vnx->vx_sdp;
@@ -1114,7 +1267,6 @@ swapinit()
 	if (vmswapdebug & VMSDB_SWINIT)
 		printf("swapinit\n");
 #endif
-	nswap = 0;
 	nswapdev = 0;
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("swapinit: can setup swapdev_vp");
