@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550.h,v 1.3 1999/02/15 04:38:06 sakamoto Exp $	*/
+/*	$NetBSD: ns16550.h,v 1.4 1999/06/28 01:20:45 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -65,3 +65,9 @@ struct NS16550
 #define	COM2	0x2F8
 #define	COM3	0x380
 #define	COM4	0x388
+
+extern volatile struct NS16550 *NS16550_init __P((int, int));
+extern void NS16550_putc __P((volatile struct NS16550 *, int));
+extern int NS16550_getc __P((volatile struct NS16550 *));
+extern int NS16550_scankbd __P((volatile struct NS16550 *));
+extern int NS16550_test __P((volatile struct NS16550 *));

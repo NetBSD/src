@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
+/*	$NetBSD: monitor.c,v 1.3 1999/06/28 01:20:44 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -42,14 +42,14 @@
 extern int errno;
 extern char *name;
 
-void db_cmd_dump(int, char **);
-void db_cmd_get(int, char **);
-void db_cmd_load(int, char **);
-void db_cmd_mf(int, char **);
-void db_cmd_mt(int, char **);
-void db_cmd_put(int, char **);
-void db_cmd_run(int, char **);
-void db_cmd_help(int, char **);
+void db_cmd_dump __P((int, char **));
+void db_cmd_get __P((int, char **));
+void db_cmd_mf __P((int, char **));
+void db_cmd_mt __P((int, char **));
+void db_cmd_put __P((int, char **));
+void db_cmd_help __P((int, char **));
+
+extern void exec_kernel __P((char *, void *));
 
 struct {
 	char *name;
@@ -57,11 +57,9 @@ struct {
 } db_cmd[] = {
 	{ "dump",	db_cmd_dump },
 	{ "get",	db_cmd_get },
-	{ "load",	db_cmd_load },
 	{ "mf",		db_cmd_mf },
 	{ "mt",		db_cmd_mt },
 	{ "put",	db_cmd_put },
-	{ "run",	db_cmd_run },
 	{ "help",	db_cmd_help },
 	{ NULL,		NULL },
 };
@@ -400,47 +398,6 @@ db_cmd_mt(argc, argv)
 		}
 		i++;
 	}
-}
-
-int load_flag = 0;
-void
-db_cmd_load(argc, argv)
-	int argc;
-	char **argv;
-{
-	int fd;
-	extern int args;
-
-	load_flag++;
-	args = 0;
-	getbootdev(&args);
-	fd = open(name, 0);
-	if (fd >= 0) {
-		exec_kernel(fd, &args);
-		close(fd);
-	} else {
-		printf("open error:%s\n",  strerror(errno));
-	}
-	load_flag--;
-}
-
-void
-db_cmd_run(argc, argv)
-	int argc;
-	char **argv;
-{
-	long entry;
-
-	if (argc != 2) {
-		printf("run address\n");
-		return;
-	}
-
-	entry = (long)db_atob(argv[1]);
-	printf("Booting: 0x%x\n", entry);
-
-	*(volatile long *)0x0080 = entry;
-	run((void *)entry);
 }
 
 void

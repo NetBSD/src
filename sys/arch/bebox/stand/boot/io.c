@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
+/*	$NetBSD: io.c,v 1.3 1999/06/28 01:20:44 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -32,23 +32,30 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-volatile unsigned char *ISA_io  = (unsigned char *)0x80000000;
-volatile unsigned char *ISA_mem = (unsigned char *)0xC0000000;
+#include <stand.h>
+#include "boot.h"
+
+volatile u_char *ISA_io  = (u_char *)0x80000000;
+volatile u_char *ISA_mem = (u_char *)0xC0000000;
 
 void
-outb(int port, char val)
+outb(port, val)
+	int port;
+	char val;
 {
 	ISA_io[port] = val;
 }
 
-unsigned char
-inb(int port)
+u_char
+inb(port)
+	int port;
 {
 	return (ISA_io[port]);
 }
 
-unsigned long
-local_to_PCI(unsigned long addr)
+u_long
+local_to_PCI(addr)
+	u_long addr;
 {
 	return ((addr & 0x7FFFFFFF) | 0x80000000);
 }

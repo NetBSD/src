@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
+/*	$NetBSD: prf.c,v 1.3 1999/06/28 01:20:45 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <stand.h>
+#include "boot.h"
 
 void
 putchar(c)
