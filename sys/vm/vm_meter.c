@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_meter.c	7.11 (Berkeley) 4/20/91
- *	$Id: vm_meter.c,v 1.3 1993/06/27 06:34:40 andrew Exp $
+ *	$Id: vm_meter.c,v 1.4 1993/08/27 23:47:12 brezak Exp $
  */
 
 #include "param.h"
@@ -45,8 +45,10 @@
 fixpt_t	averunnable[3];		/* load average, of runnable procs */
 
 int	maxslp = MAXSLP;
-int	saferss = SAFERSS;
 
+#ifndef MACHINE_NONCONTIG
+int	saferss = SAFERSS;
+#endif /* MACHINE_NONCONTIG */
 
 void
 vmmeter()

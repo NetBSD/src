@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_page.c,v 1.5 1993/06/30 03:48:25 andrew Exp $
+ *	$Id: vm_page.c,v 1.6 1993/08/27 23:46:02 brezak Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -75,9 +75,19 @@
 #include "vm_pageout.h"
 
 /*
- *	Associated with page of user-allocatable memory is a
+ *	Associated with each page of user-allocatable memory is a
  *	page structure.
  */
+
+#ifdef MACHINE_NONCONTIG
+/*
+ *	These variables record the values returned by vm_page_bootstrap,
+ *	for debugging purposes.  The implementation of pmap_steal_memory
+ *	and pmap_startup here also uses them internally.
+ */
+vm_offset_t	virtual_space_start;
+vm_offset_t	virtual_space_end;
+#endif /* MACHINE_NONCONTIG */
 
 queue_head_t	*vm_page_buckets;		/* Array of buckets */
 int		vm_page_bucket_count = 0;	/* How big is array? */
@@ -95,10 +105,16 @@ simple_lock_data_t	vm_page_queue_lock;
 simple_lock_data_t	vm_page_queue_free_lock;
 
 vm_page_t	vm_page_array;
+
+#ifndef MACHINE_NONCONTIG
 long		first_page;
 long		last_page;
 vm_offset_t	first_phys_addr;
 vm_offset_t	last_phys_addr;
+#else
+u_long		first_page;
+int		vm_page_count;
+#endif /* MACHINE_NONCONTIG */
 
 int	vm_page_free_count;
 int	vm_page_active_count;
@@ -132,6 +148,119 @@ void vm_set_page_size()
 			break;
 }
 
+
+#ifdef	MACHINE_NONCONTIG
+/*
+ *	vm_page_bootstrap:
+ *
+ *	Initializes the resident memory module.
+ *
+ *	Allocates memory for the page cells, and
+ *	for the object/offset-to-page hash table headers.
+ *	Each page cell is initialized and placed on the free list.
+ *	Returns the range of available kernel virtual memory.
+ */
+void vm_page_bootstrap(startp, endp)
+	vm_offset_t	*startp;
+	vm_offset_t	*endp;
+{
+	int			i;
+	
+	extern	vm_offset_t	kentry_data;
+	extern	vm_size_t	kentry_data_size;
+
+
+	/*
+	 *	Initialize the locks
+	 */
+
+	simple_lock_init(&vm_page_queue_free_lock);
+	simple_lock_init(&vm_page_queue_lock);
+
+	/*
+	 *	Initialize the queue headers for the free queue,
+	 *	the active queue and the inactive queue.
+	 */
+
+	queue_init(&vm_page_queue_free);
+	queue_init(&vm_page_queue_active);
+	queue_init(&vm_page_queue_inactive);
+
+	/*
+	 *	Pre-allocate maps and map entries that cannot be dynamically
+	 *	allocated via malloc().  The maps include the kernel_map and
+	 *	kmem_map which must be initialized before malloc() will
+	 *	work (obviously).  Also could include pager maps which would
+	 *	be allocated before kmeminit.
+	 *
+	 *	Allow some kernel map entries... this should be plenty
+	 *	since people shouldn't be cluttering up the kernel
+	 *	map (they should use their own maps).
+	 */
+
+	kentry_data_size = MAX_KMAP * sizeof(struct vm_map) +
+			   MAX_KMAPENT * sizeof(struct vm_map_entry);
+	kentry_data_size = round_page(kentry_data_size);
+	kentry_data = (vm_offset_t) pmap_steal_memory(kentry_data_size);
+	
+	/*
+	 *	Validate these zone addresses.
+	 */
+
+	bzero((caddr_t) kentry_data, kentry_data_size);
+
+	/*
+	 *	Allocate (and initialize) the virtual-to-physical
+	 *	table hash buckets.
+	 *
+	 *	The number of buckets MUST BE a power of 2, and
+	 *	the actual value is the next power of 2 greater
+	 *	than the number of physical pages in the system.
+	 *
+	 *	Note:
+	 *		This computation can be tweaked if desired.
+	 */
+
+	if (vm_page_bucket_count == 0) {
+		unsigned int npages = pmap_free_pages();
+	    
+		vm_page_bucket_count = 1;
+		while (vm_page_bucket_count < npages)
+			vm_page_bucket_count <<= 1;
+	}
+
+	vm_page_hash_mask = vm_page_bucket_count - 1;
+
+	vm_page_buckets = (queue_t)
+		pmap_steal_memory(vm_page_bucket_count * sizeof(*vm_page_buckets));
+	
+	for (i = 0; i < vm_page_bucket_count; i++) {
+		register queue_head_t *bucket = &vm_page_buckets[i];
+		
+		queue_init(bucket);
+	}
+		
+	simple_lock_init(&bucket_lock);
+
+	/*
+	 *	Machine-dependent code allocates the resident page table.
+	 *	It uses vm_page_init to initialize the page frames.
+	 *	The code also returns to us the virtual space available
+	 *	to the kernel.  We don't trust the pmap module
+	 *	to get the alignment right.
+	 */
+	
+	pmap_startup(&virtual_space_start, &virtual_space_end);
+	virtual_space_start = round_page(virtual_space_start);
+	virtual_space_end = trunc_page(virtual_space_end);
+	
+	*startp = virtual_space_start;
+	*endp = virtual_space_end;
+	
+	simple_lock_init(&vm_pages_needed_lock);
+}
+
+#else	/* MACHINE_NONCONTIG */
 
 /*
  *	vm_page_startup:
@@ -308,6 +437,111 @@ vm_offset_t vm_page_startup(start, end, vaddr)
 
 	return(mapped);
 }
+#endif /* MACHINE_NONCONTIG */
+
+#if	defined(MACHINE_NONCONTIG) && !defined(MACHINE_PAGES)
+/*
+ *	We implement pmap_steal_memory and pmap_startup with the help
+ *	of two simpler functions, pmap_virtual_space and pmap_next_page.
+ */
+vm_offset_t pmap_steal_memory(size)
+	vm_size_t	size;
+{
+	vm_offset_t	addr, vaddr, paddr;
+	
+	/*
+	 *	We round the size to an integer multiple.
+	 */
+	
+	size = (size + 3) &~ 3;
+	
+	/*
+	 *	If this is the first call to pmap_steal_memory,
+	 *	we have to initialize ourself.
+	 */
+	
+	if (virtual_space_start == virtual_space_end) {
+		pmap_virtual_space(&virtual_space_start, &virtual_space_end);
+		
+		/*
+		 *	The initial values must be aligned properly, and
+		 *	we don't trust the pmap module to do it right.
+		 */
+		
+		virtual_space_start = round_page(virtual_space_start);
+		virtual_space_end = trunc_page(virtual_space_end);
+	}
+	
+	/*
+	 *	Allocate virtual memory for this request.
+	 */
+	
+	addr = virtual_space_start;
+	virtual_space_start += size;
+	
+	/*
+	 *	Allocate and map physical pages to back new virtual pages.
+	 */
+	
+	for (vaddr = round_page(addr);
+	     vaddr < addr + size;
+	     vaddr += PAGE_SIZE) {
+		if (!pmap_next_page(&paddr))
+			panic("pmap_steal_memory");
+		
+		/*
+		 *	XXX Logically, these mappings should be wired,
+		 *	but some pmap modules barf if they are.
+		 */
+		
+		pmap_enter(kernel_pmap, vaddr, paddr,
+			   VM_PROT_READ|VM_PROT_WRITE, FALSE);
+	}
+	
+	return addr;
+}
+
+void pmap_startup(startp, endp)
+	vm_offset_t	*startp;
+	vm_offset_t	*endp;
+{
+	unsigned int	i;
+	vm_offset_t	paddr;
+	
+	/*
+	 *	We calculate how many page frames we will have
+	 *	and then allocate the page structures in one chunk.
+	 */
+	
+	vm_page_count = ((PAGE_SIZE * pmap_free_pages() +
+		   (round_page(virtual_space_start) - virtual_space_start)) /
+		  (PAGE_SIZE + sizeof *vm_page_array));
+	
+	vm_page_array = (vm_page_t) pmap_steal_memory(vm_page_count
+						      * sizeof *vm_page_array);
+	
+	/*
+	 *	Initialize the page frames.
+	 */
+	
+	for (i = 0; i < vm_page_count; i++) {
+		if (!pmap_next_page(&paddr))
+			break;
+		
+		vm_page_init(&vm_page_array[i], NULL, NULL);
+		vm_page_array[i].phys_addr = paddr;
+		vm_page_free(&vm_page_array[i]);
+	}
+	/*
+	 *	Remember the actual page count and the index of the first page
+	 */
+	vm_page_count = i;
+	first_page = pmap_page_index(vm_page_array[0].phys_addr);
+	
+	*startp = virtual_space_start;
+	*endp = virtual_space_end;
+}
+#endif /* MACHINE_NONCONTIG && !MACHINE_PAGES */
 
 /*
  *	vm_page_hash:
@@ -490,6 +724,47 @@ void		vm_page_init(mem, object, offset)
 	vm_object_t	object;
 	vm_offset_t	offset;
 {
+#ifdef MACHINE_NONCONTIG
+#ifdef DEBUG
+#define	vm_page_init(mem, object, offset)  {\
+		(mem)->busy = TRUE; \
+		(mem)->tabled = FALSE; \
+		if (object) vm_page_insert((mem), (object), (offset)); \
+		else (mem)->object = NULL; \
+		(mem)->absent = FALSE; \
+		(mem)->fictitious = FALSE; \
+		(mem)->page_lock = VM_PROT_NONE; \
+		(mem)->unlock_request = VM_PROT_NONE; \
+		(mem)->laundry = FALSE; \
+		(mem)->active = FALSE; \
+		(mem)->inactive = FALSE; \
+		(mem)->wire_count = 0; \
+		(mem)->clean = TRUE; \
+		(mem)->copy_on_write = FALSE; \
+		(mem)->fake = TRUE; \
+		(mem)->pagerowned = FALSE; \
+		(mem)->ptpage = FALSE; \
+	}
+#else	/* DEBUG */
+#define	vm_page_init(mem, object, offset)  {\
+		(mem)->busy = TRUE; \
+		(mem)->tabled = FALSE; \
+		if (object) vm_page_insert((mem), (object), (offset)); \
+		else (mem)->object = NULL; \
+		(mem)->absent = FALSE; \
+		(mem)->fictitious = FALSE; \
+		(mem)->page_lock = VM_PROT_NONE; \
+		(mem)->unlock_request = VM_PROT_NONE; \
+		(mem)->laundry = FALSE; \
+		(mem)->active = FALSE; \
+		(mem)->inactive = FALSE; \
+		(mem)->wire_count = 0; \
+		(mem)->clean = TRUE; \
+		(mem)->copy_on_write = FALSE; \
+		(mem)->fake = TRUE; \
+	}
+#endif	/* DEBUG */
+#else	/* MACHINE_NONCONTIG */
 #ifdef DEBUG
 #define	vm_page_init(mem, object, offset)  {\
 		(mem)->busy = TRUE; \
@@ -509,7 +784,7 @@ void		vm_page_init(mem, object, offset)
 		(mem)->pagerowned = FALSE; \
 		(mem)->ptpage = FALSE; \
 	}
-#else
+#else	/* DEBUG */
 #define	vm_page_init(mem, object, offset)  {\
 		(mem)->busy = TRUE; \
 		(mem)->tabled = FALSE; \
@@ -526,7 +801,8 @@ void		vm_page_init(mem, object, offset)
 		(mem)->copy_on_write = FALSE; \
 		(mem)->fake = TRUE; \
 	}
-#endif
+#endif	/* DEBUG */
+#endif	/* MACHINE_NONCONTIG */
 
 	vm_page_init(mem, object, offset);
 }

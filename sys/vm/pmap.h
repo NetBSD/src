@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	7.4 (Berkeley) 5/7/91
- *	$Id: pmap.h,v 1.3 1993/05/20 03:59:13 cgd Exp $
+ *	$Id: pmap.h,v 1.4 1993/08/27 23:48:09 brezak Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -74,8 +74,73 @@
 #include <machine/pmap.h>
 
 #ifdef KERNEL
-void		pmap_bootstrap();
-void		pmap_init();
+
+/*
+ * Currently this option is used on the i386 to be able to handle the
+ * memory from 0-640k and 1M+.
+ */
+#ifdef MACHINE_NONCONTIG
+/*
+ *	Routines used for initialization.
+ *	There is traditionally also a pmap_bootstrap,
+ *	used very early by machine-dependent code,
+ *	but it is not part of the interface.
+ */
+extern vm_offset_t	pmap_steal_memory();	/* During VM initialization,
+						 * steal a chunk of memory.
+						 */
+extern unsigned int	pmap_free_pages();	/* During VM initialization,
+						 * report remaining unused
+						 * physical pages.
+						 */
+extern void		pmap_startup();		/* During VM initialization,
+						 * use remaining physical pages
+						 * to allocate page frames.
+						 */
+extern void		pmap_init();		/* Initialization,
+						 * after kernel runs
+						 * in virtual memory.
+						 */
+
+/*
+ * Currently the following isn't really an option. So don't define it.
+ */
+#undef	MACHINE_PAGES
+#ifndef	MACHINE_PAGES
+/*
+ *	If machine/pmap.h defines MACHINE_PAGES, it must implement
+ *	the above functions.  The pmap modules has complete control.
+ *	Otherwise, it must implement
+ *		pmap_free_pages
+ *		pmap_virtual_space
+ *		pmap_next_page
+ *		pmap_init
+ *	and vm/vm_page.c implements pmap_steal_memory and pmap_startup
+ *	using pmap_free_pages, pmap_next_page, pmap_virtual_space,
+ *	and pmap_enter.  pmap_free_pages may over-estimate the number
+ *	of unused physical pages, and pmap_next_page may return FALSE
+ *	to indicate that there are no more unused pages to return.
+ *	However, for best performance pmap_free_pages should be accurate.
+ */
+extern boolean_t	pmap_next_page();	/* During VM initialization,
+						 * return the next unused
+						 * physical page.
+						 */
+extern void		pmap_virtual_space();	/* During VM initialization,
+						 * report virtual space
+						 * available for the kernel.
+						 */
+#endif	/* MACHINE_PAGES */
+
+#endif /* MACHINE_NONCONTIG */
+
+#ifdef	MACHINE_NONCONTIG
+void		pmap_bootstrap __P((vm_offset_t s));
+void		pmap_init __P((void));
+#else
+void		pmap_bootstrap __P((vm_offset_t f, vm_offset_t l));
+void		pmap_init __P((vm_offset_t s, vm_offset_t e));
+#endif
 void		pmap_pinit __P((struct pmap *pmap));
 void		pmap_release __P((struct pmap *pmap));
 vm_offset_t	pmap_map();
