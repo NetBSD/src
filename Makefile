@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.93 1999/03/10 19:10:14 scottr Exp $
+#	$NetBSD: Makefile,v 1.94 1999/03/10 19:18:59 scottr Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -35,6 +35,10 @@ includes-gnu: includes-include includes-sys
 #  2) the the target is install or includes AND
 #    NOT compiling only "exportable" code AND
 #    doing it as part of installing a distribution.
+#
+# NOTE:  due to the use of the make(foo) construct here, using the
+# clean, cleandir, and obj targets on the command line in conjunction
+# with any other target may produce unexpected results.
 
 .if exists(domestic) && \
     (make(clean) || make(cleandir) || make(obj) || \
