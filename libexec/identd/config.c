@@ -1,4 +1,6 @@
 /*
+**	$Id: config.c,v 1.2 1994/02/04 23:17:50 cgd Exp $
+**
 ** config.c                         This file handles the config file
 **
 ** This program is in the public domain and may be used freely by anyone
