@@ -1,3 +1,5 @@
+/*	$NetBSD: clk_hopf6021.c,v 1.1.2.1 1998/01/29 10:55:25 mellon Exp $	*/
+
 /*
  *
  * /src/NTP/REPOSITORY/v4/libparse/clk_hopf6021.c,v 3.5 1997/01/19 12:44:37 kardel Exp
@@ -140,7 +142,7 @@ cvt_hopf6021(buffer, size, format, clock)
     register struct format *format;
     register clocktime_t   *clock;
 {
-    char status,weekday;
+    int status,weekday;
 
     if (!Strok(buffer, format->fixed_string))
     {
