@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.10 2004/10/29 12:57:16 yamt Exp $ */
+/*	$NetBSD: repulse.c,v 1.11 2004/11/09 16:18:58 kent Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.10 2004/10/29 12:57:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.11 2004/11/09 16:18:58 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -256,11 +256,8 @@ repulse_attach(struct device *parent, struct device *self, void *aux) {
 	struct repulse_softc *sc;
 	struct zbus_args *zap;
 	struct repulse_hw *bp;
-        struct mixer_ctrl ctl;
 	u_int8_t *fwp;
 	int needs_firmware;
-	int i;
-
 	u_int16_t a;
 
 	sc = (struct repulse_softc *)self;
@@ -342,29 +339,6 @@ repulse_attach(struct device *parent, struct device *self, void *aux) {
 			sc->sc_dev.dv_xname);
 	}
 #endif
-
-	/*
-	 * from auvia.c: disable mutes ...
-	 * XXX maybe this should happen in MI code?
-	 */
-
-	for (i = 0; i < 5; i++) {
-		static struct {
-			char *class, *device;
-		} d[] = {
-			{ AudioCoutputs, AudioNmaster},
-                        { AudioCinputs, AudioNdac},
-                        { AudioCinputs, AudioNcd},
-                        { AudioCinputs, AudioNline},
-                        { AudioCrecord, AudioNvolume},
-		};
-
-		ctl.type = AUDIO_MIXER_ENUM;
-		ctl.un.ord = 0;
-		ctl.dev = sc->sc_codec_if->vtbl->get_portnum_by_name(
-			sc->sc_codec_if, d[i].class, d[i].device, AudioNmute);
-		rep_set_port(sc, &ctl);
-	}
 
 	sc->sc_isr.isr_ipl = 2;
 	sc->sc_isr.isr_arg = sc;
