@@ -2,7 +2,7 @@
 # Distribution kernel (TX3922 based model) kernel config file
 
 #
-#	$NetBSD: TX3922,v 1.7 2000/03/04 11:41:48 uch Exp $
+#	$NetBSD: TX3922,v 1.8 2000/03/11 08:51:55 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -49,6 +49,8 @@ file-system	PROCFS		# /proc
 file-system	UNION
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
+
+options 	NFS_BOOT_DHCP
 
 config		netbsd		root on ? type ?
 
