@@ -1,7 +1,7 @@
-/* $NetBSD: parseaddr.c,v 1.12 2003/06/01 14:07:07 atatat Exp $ */
+/* $NetBSD: parseaddr.c,v 1.13 2003/09/17 14:16:22 itojun Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parseaddr.c,v 1.12 2003/06/01 14:07:07 atatat Exp $");
+__RCSID("$NetBSD: parseaddr.c,v 1.13 2003/09/17 14:16:22 itojun Exp $");
 #endif
 
 /*
@@ -706,7 +706,11 @@ prescan(addr, delim, pvpbuf, pvpbsize, delimptr, toktab)
 						addr[MAXNAME] = '\0';
 	returnnull:
 					if (delimptr != NULL)
+					{
+						if (p > addr)
+							p--;
 						*delimptr = p;
+					}
 					CurEnv->e_to = saveto;
 					return NULL;
 				}
