@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";*/
-static char *rcsid = "$Id: route.c,v 1.11 1995/03/28 17:26:49 jtc Exp $";
+static char *rcsid = "$Id: route.c,v 1.12 1995/07/03 03:25:24 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -362,7 +362,7 @@ p_sockaddr(sa, flags, width)
 		cp = (sin->sin_addr.s_addr == 0) ? "default" :
 		      ((flags & RTF_HOST) ?
 			routename(sin->sin_addr.s_addr) :
-			netname(sin->sin_addr.s_addr, 0L));
+			netname(sin->sin_addr.s_addr, INADDR_ANY));
 		break;
 	    }
 
@@ -464,7 +464,7 @@ p_rtentry(rt)
 
 char *
 routename(in)
-	u_long in;
+	u_int32_t in;
 {
 	register char *cp;
 	static char line[MAXHOSTNAMELEN + 1];
@@ -508,22 +508,22 @@ routename(in)
  */
 char *
 netname(in, mask)
-	u_long in, mask;
+	u_int32_t in, mask;
 {
 	char *cp = 0;
 	static char line[MAXHOSTNAMELEN + 1];
 	struct netent *np = 0;
-	u_long net;
-	register int i;
+	u_int32_t net;
 	int subnetshift;
 
-	i = ntohl(in);
-	if (!nflag && i) {
-		if (mask == 0) {
-			if (IN_CLASSA(i)) {
+	in = ntohl(in);
+	mask = ntohl(mask);
+	if (!nflag && in != INADDR_ANY) {
+		if (mask == INADDR_ANY) {
+			if (IN_CLASSA(in)) {
 				mask = IN_CLASSA_NET;
 				subnetshift = 8;
-			} else if (IN_CLASSB(i)) {
+			} else if (IN_CLASSB(in)) {
 				mask = IN_CLASSB_NET;
 				subnetshift = 8;
 			} else {
@@ -536,10 +536,10 @@ netname(in, mask)
 			 * Guess at the subnet mask, assuming reasonable
 			 * width subnet fields.
 			 */
-			while (i &~ mask)
+			while (in &~ mask)
 				mask = (long)mask >> subnetshift;
 		}
-		net = i & mask;
+		net = in & mask;
 		while ((mask & 1) == 0)
 			mask >>= 1, net >>= 1;
 		np = getnetbyaddr(net, AF_INET);
@@ -548,15 +548,15 @@ netname(in, mask)
 	}
 	if (cp)
 		strncpy(line, cp, sizeof(line) - 1);
-	else if ((i & 0xffffff) == 0)
-		sprintf(line, "%u", C(i >> 24));
-	else if ((i & 0xffff) == 0)
-		sprintf(line, "%u.%u", C(i >> 24) , C(i >> 16));
-	else if ((i & 0xff) == 0)
-		sprintf(line, "%u.%u.%u", C(i >> 24), C(i >> 16), C(i >> 8));
+	else if ((in & 0xffffff) == 0)
+		sprintf(line, "%u", C(in >> 24));
+	else if ((in & 0xffff) == 0)
+		sprintf(line, "%u.%u", C(in >> 24) , C(in >> 16));
+	else if ((in & 0xff) == 0)
+		sprintf(line, "%u.%u.%u", C(in >> 24), C(in >> 16), C(in >> 8));
 	else
-		sprintf(line, "%u.%u.%u.%u", C(i >> 24),
-			C(i >> 16), C(i >> 8), C(i));
+		sprintf(line, "%u.%u.%u.%u", C(in >> 24),
+			C(in >> 16), C(in >> 8), C(in));
 	return (line);
 }
 

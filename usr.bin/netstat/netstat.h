@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)netstat.h	8.2 (Berkeley) 1/4/94
- *	$Id: netstat.h,v 1.3 1995/06/12 03:03:14 mycroft Exp $
+ *	$Id: netstat.h,v 1.4 1995/07/03 03:25:19 mycroft Exp $
  */
 
 #include <sys/cdefs.h>
@@ -83,8 +83,8 @@ void	rt_stats __P((u_long));
 char	*ns_phost __P((struct sockaddr *));
 void	upHex __P((char *));
 
-char	*routename __P((u_long));
-char	*netname __P((u_long, u_long));
+char	*routename __P((u_int32_t));
+char	*netname __P((u_int32_t, u_int32_t));
 char	*ns_print __P((struct sockaddr *));
 void	routepr __P((u_long));
 
