@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.9 1998/12/02 22:57:08 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.10 1998/12/09 00:18:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,6 +115,8 @@ struct usbd_interface {
 	struct usbd_device     *device;
 	usbd_interface_state	state;
 	usb_interface_descriptor_t *idesc;
+	int			index;
+	int			altindex;
 	struct usbd_endpoint   *endpoints;
 	void		       *priv;
 	LIST_HEAD(, usbd_pipe)	pipes;
@@ -180,6 +182,8 @@ usbd_status	usbd_new_device __P((struct device *parent,
 				     int lowspeed, int port, 
 				     struct usbd_port *));
 int		usbd_printBCD __P((char *cp, int bcd));
+usbd_status	usbd_fill_iface_data __P((usbd_device_handle dev, 
+					  int i, int a));
 
 /* Routines from usb.c */
 int		usb_bus_count __P((void));
@@ -198,11 +202,4 @@ extern	int usbd_use_polling;
 #define	UHUB_UNK_PORT		UHUBCF_PORT_DEFAULT /* wildcarded 'port' */
 #define	UHUB_UNK_CONFIGURATION	UHUBCF_CONFIGURATION_DEFAULT /* wildcarded 'configuration' */
 #define	UHUB_UNK_INTERFACE	UHUBCF_INTERFACE_DEFAULT /* wildcarded 'interface' */
-
-/* Junk. */
-
-/* XXX */
-#define splusb splbio
-#define IPL_USB IPL_BIO
-/* XXX */
 

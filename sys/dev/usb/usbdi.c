@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.12 1998/12/08 15:18:45 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.13 1998/12/09 00:18:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -817,31 +817,42 @@ usbd_unlock(tok)
 	splx(tok);
 }
 
-/* XXX need to check that the interface is idle */
+/* XXXX use altno */
 usbd_status
-usbd_set_interface(iface, aiface)
+usbd_set_interface(iface, altidx)
 	usbd_interface_handle iface;
-	int aiface;
+	int altidx;
 {
 	usb_device_request_t req;
+	usbd_status r;
+
+	if (LIST_FIRST(&iface->pipes) != 0)
+		return (USBD_IN_USE);
+
+	free(iface->endpoints, M_USB);
+	iface->endpoints = 0;
+	iface->idesc = 0;
+	iface->state = USBD_INTERFACE_IDLE;
+
+	r = usbd_fill_iface_data(iface->device, iface->index, altidx);
+	if (r != USBD_NORMAL_COMPLETION)
+		return (r);
 
 	req.bmRequestType = UT_WRITE_INTERFACE;
 	req.bRequest = UR_SET_INTERFACE;
-	USETW(req.wValue, aiface);
+	USETW(req.wValue, iface->idesc->bAlternateSetting);
 	USETW(req.wIndex, iface->idesc->iInterface);
 	USETW(req.wLength, 0);
 	return usbd_do_request(iface->device, &req, 0);
-	/* XXX needs to update interface descriptor!!! */
 }
 
 int
-usbd_get_no_alt(iface)
-	usbd_interface_handle iface;
+usbd_get_no_alts(cdesc, ifaceno)
+	usb_config_descriptor_t *cdesc;
+	int ifaceno;
 {
-	int ino = iface->idesc->bInterfaceNumber;
-	usb_config_descriptor_t *cd = iface->device->cdesc;
-	char *p = (char *)cd;
-	char *end = p + UGETW(cd->wTotalLength);
+	char *p = (char *)cdesc;
+	char *end = p + UGETW(cdesc->wTotalLength);
 	usb_interface_descriptor_t *d;
 	int n;
 
@@ -849,10 +860,17 @@ usbd_get_no_alt(iface)
 		d = (usb_interface_descriptor_t *)p;
 		if (p + d->bLength <= end && 
 		    d->bDescriptorType == UDESC_INTERFACE &&
-		    d->bInterfaceNumber == ino)
+		    d->bInterfaceNumber == ifaceno)
 			n++;
 	}
 	return (n);
+}
+
+int
+usbd_get_interface_altindex(iface)
+	usbd_interface_handle iface;
+{
+	return (iface->altindex);
 }
 
 usbd_status

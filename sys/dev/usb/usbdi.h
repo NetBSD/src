@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.9 1998/12/08 15:18:45 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.10 1998/12/09 00:18:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -223,9 +223,12 @@ usb_config_descriptor_t *usbd_get_config_descriptor
 usb_device_descriptor_t *usbd_get_device_descriptor
 	__P((usbd_device_handle dev));
 usbd_status usbd_set_interface __P((usbd_interface_handle, int));
-int usbd_get_no_alt __P((usbd_interface_handle iface));
+int usbd_get_no_alts __P((usb_config_descriptor_t *, int));
 usbd_status	usbd_get_interface
 	__P((usbd_interface_handle iface, u_int8_t *aiface));
+void usbd_fill_deviceinfo 
+	__P((usbd_device_handle dev, struct usb_device_info *di));
+int usbd_get_interface_altindex __P((usbd_interface_handle iface));
 
 usb_interface_descriptor_t *usbd_find_idesc
 	__P((usb_config_descriptor_t *cd, int iindex, int ano));
@@ -273,3 +276,9 @@ struct usbd_quirks *usbd_get_quirks __P((usbd_device_handle));
 void usbd_set_disco __P((usbd_pipe_handle, void (*)(void *), void *));
 usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
 	__P((usbd_interface_handle iface, u_int8_t address));
+
+/* XXX */
+#define splusb splbio
+#define IPL_USB IPL_BIO
+/* XXX */
+
