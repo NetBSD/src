@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.19 2004/07/03 19:00:25 mycroft Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.20 2004/11/04 07:18:47 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.19 2004/07/03 19:00:25 mycroft Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.20 2004/11/04 07:18:47 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -116,9 +116,12 @@ keyboard(void)
 				goto doerase;
 			}
 			if (ch == CTRL('w') && col > 0) {
-				while (--col >= 0 && isspace(line[col]));
+				while (--col >= 0 &&
+				    isspace((unsigned char)line[col]))
+					continue;
 				col++;
-				while (--col >= 0 && !isspace(line[col]))
+				while (--col >= 0 &&
+				    !isspace((unsigned char)line[col]))
 					if (col == 0)
 						break;
 				col++;
@@ -142,7 +145,7 @@ keyboard(void)
 		line[col] = '\0';
 		/* pass commands as lowercase */
 		for (i = 1; i < col ; i++)
-			line[i] = tolower(line[i]);
+			line[i] = tolower((unsigned char)line[i]);
 		command(line + 1);
 	}
 	/* NOTREACHED */
