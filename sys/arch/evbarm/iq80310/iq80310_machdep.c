@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.37 2002/04/05 16:58:08 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.38 2002/04/09 23:44:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -327,7 +327,7 @@ struct l1_sec_map {
 u_int
 initarm(void *arg)
 {
-	extern vaddr_t xscale_cache_clean_addr, xscale_minidata_clean_addr;
+	extern vaddr_t xscale_cache_clean_addr;
 	extern vsize_t xscale_minidata_clean_size;
 	int loop;
 	int loop1;
@@ -514,7 +514,6 @@ initarm(void *arg)
 	/* Allocate enough pages for cleaning the Mini-Data cache. */
 	KASSERT(xscale_minidata_clean_size <= NBPG);
 	valloc_pages(minidataclean, 1);
-	xscale_minidata_clean_addr = minidataclean.pv_va;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa,
@@ -608,8 +607,8 @@ initarm(void *arg)
 	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the Mini-Data cache clean area. */
-	pmap_map_chunk(l1pagetable, minidataclean.pv_va, minidataclean.pv_pa,
-	    NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	xscale_setup_minidata(l1pagetable, minidataclean.pv_va,
+	    minidataclean.pv_pa);
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
