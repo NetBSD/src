@@ -48,3 +48,7 @@ Handle CLEAR_ENDPOINT_STALL centrally.
 Use splsoftusb() or a thread to deliver callbacks.
 
 Add threads to the Ethernet drivers.
+
+Change what's done at watchdog timeout inb if_{a,c,k}ue.c; what we have
+now doesn't work because it's done in an interrupt context.
+
