@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.10 1996/02/18 11:53:38 fvdl Exp $	*/
+/*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -314,7 +314,7 @@ TAILQ_HEAD(, nfsreq) nfs_reqq;
 #define	NFS_WDELAYHASHSIZ 16	/* and with this */
 #endif
 #define	NWDELAYHASH(sock, f) \
-	(&(sock)->ns_wdelayhashtbl[(*((u_long *)(f))) % NFS_WDELAYHASHSIZ])
+	(&(sock)->ns_wdelayhashtbl[(*((u_int32_t *)(f))) % NFS_WDELAYHASHSIZ])
 #ifndef NFS_MUIDHASHSIZ
 #define NFS_MUIDHASHSIZ	67	/* Tune the size of nfsmount with this */
 #endif
