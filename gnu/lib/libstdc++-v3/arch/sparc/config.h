@@ -133,7 +133,7 @@
 /* #undef HAVE___SIGNBIT */
 
 /* Define if you have the __signbitf function.  */
-/* #undef HAVE___SIGNBITF */
+#define HAVE___SIGNBITF 1
 
 /* Define if you have the __signbitl function.  */
 /* #undef HAVE___SIGNBITL */
