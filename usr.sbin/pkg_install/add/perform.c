@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.70.2.8 2003/08/26 22:32:12 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.70.2.9 2003/08/27 00:28:16 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.70.2.8 2003/08/26 22:32:12 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.70.2.9 2003/08/27 00:28:16 jlam Exp $");
 #endif
 #endif
 
@@ -432,9 +432,16 @@ ignore_replace_depends_check:
 						replacing = 1;
 					}
 
-					if (Verbose)
-						printf("pkg_delete '%s'\n", installed);
-					vsystem("%s/pkg_delete '%s'\n", BINDIR, installed);
+					if (Verbose) {
+						printf("%s/pkg_delete -K %s '%s'\n",
+							BINDIR,
+							dbdir,
+							installed);
+					}
+					vsystem("%s/pkg_delete -K %s '%s'\n",
+						BINDIR,
+						dbdir,
+						installed);
 
 				} else {
 					warnx("other version '%s' already installed", installed);
