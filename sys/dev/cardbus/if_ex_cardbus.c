@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.19 2001/01/30 19:27:39 thorpej Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.20 2001/04/26 08:23:22 kanaoka Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -273,7 +273,7 @@ ex_cardbus_attach(parent, self, aux)
 
 	/*
 	 *  Handle power management nonsense and
-	 * Initialize th configuration register.
+	 * initialize the configuration registers.
 	 */
 	ex_cardbus_setup(csc);
 
