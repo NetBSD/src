@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 1996/06/13 23:10:37 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 1996/06/14 20:40:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,6 +55,8 @@
 #include <machine/autoconf.h>
 #include <machine/prom.h>
 
+extern char		root_device[17];		/* XXX */
+
 struct device		*booted_device;
 int			booted_partition;
 struct bootdev_data	*bootdev_data;
@@ -67,6 +69,7 @@ struct device *parsedisk __P((char *str, int len, int defpart, dev_t *devp));
 static struct device *getdisk __P((char *str, int len, int defpart,
 				   dev_t *devp));
 static int findblkmajor __P((struct device *dv));
+static char *findblkname __P((int));
 static int getstr __P((char *cp, int size));
 
 /*
@@ -140,6 +143,18 @@ findblkmajor(dv)
 		    == 0)
 			return (nam2blk[i].maj);
 	return (-1);
+}
+
+static char *
+findblkname(maj)
+	int maj;
+{
+	register int i;
+
+	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); ++i)
+		if (maj == nam2blk[i].maj)
+			return (nam2blk[i].name);
+	return (NULL);
 }
 
 static struct device *
@@ -223,7 +238,7 @@ setroot()
 	struct device *dv;
         register int len;
 	dev_t nrootdev, nswapdev = NODEV;
-	char buf[128];
+	char buf[128], *rootdevname;
 	extern int (*mountroot) __P((void *));
 	dev_t temp;
 	struct device *bootdv, *rootdv, *swapdv;
@@ -351,17 +366,28 @@ gotswap:
 		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
         } else {
-
 		/*
 		 * `root DEV swap DEV': honour rootdev/swdevt.
 		 * rootdev/swdevt/mountroot already properly set.
 		 */
+
+		rootdevname = findblkname(major(rootdev));
+		if (rootdevname == NULL) {
+			/* Root on NFS or unknown device. */
+			strcpy(root_device, "??");
+		} else {
+			/* Root on known block device. */
+			sprintf(root_device, "%s%d%c", rootdevname,
+			    DISKUNIT(rootdev), DISKPART(rootdev) + 'a');
+		}
+			
 		return;
 	}
 
 	switch (rootdv->dv_class) {
 #if defined(NFSCLIENT)
 	case DV_IFNET:
+		strcpy(root_device, "??");
 		mountroot = nfs_mountroot;
 		nfsbootdevname = rootdv->dv_xname;
 		return;
@@ -369,8 +395,9 @@ gotswap:
 #if defined(FFS)
 	case DV_DISK:
 		mountroot = ffs_mountroot;
-		printf("root on %s%c", rootdv->dv_xname,
+		sprintf(root_device, "%s%c", rootdv->dv_xname,
 		    DISKPART(rootdev) + 'a');
+		printf("root on %s", root_device);
 		if (nswapdev != NODEV)
 			printf(" swap on %s%c", swapdv->dv_xname,
 			    DISKPART(nswapdev) + 'a');
