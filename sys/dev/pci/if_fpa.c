@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.13 1996/10/10 19:58:21 christos Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.14 1996/10/13 01:38:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -175,7 +175,7 @@ pdq_pci_attach(
     pdq_uint32_t data;
 
     if (unit > NFPA) {
-	kprintf("fpa%d: not configured; kernel is built for only %d device%s.\n",
+	printf("fpa%d: not configured; kernel is built for only %d device%s.\n",
 	       unit, NFPA, NFPA == 1 ? "" : "s");
 	return;
     }
@@ -274,7 +274,7 @@ pdq_pci_probe(
     irq = (1 << (pci_inl(pa, PCI_I_LINE) & 0xFF));
 
     if (ia->ia_irq != IRQUNK && irq != ia->ia_irq) {
-	kprintf("fpa%d: error: desired IRQ of %d does not match device's actual IRQ of %d\n",
+	printf("fpa%d: error: desired IRQ of %d does not match device's actual IRQ of %d\n",
 	       cf->cf_unit,
 	       ffs(ia->ia_irq) - 1, ffs(irq) - 1);
 	return 0;
@@ -330,7 +330,7 @@ pdq_pci_attach(
 				sc->sc_if.if_nme, sc->sc_if.if_unit,
 				(void *) sc, PDQ_DEFPA);
     if (sc->sc_pdq == NULL) {
-	kprintf("fpa%d: initialization failed\n", sc->sc_if.if_unit);
+	printf("fpa%d: initialization failed\n", sc->sc_if.if_unit);
 	return;
     }
 
@@ -409,13 +409,13 @@ pdq_pci_attach(
 #ifdef PDQ_IOMAPPED
     if (pci_io_find(pa->pa_pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)
 	    || bus_io_map(pa->pa_bc, iobase, iosize, &sc->sc_iobase)){
-        kprintf("\n%s: can't map I/O space!\n", sc->sc_dev.dv_xname);
+        printf("\n%s: can't map I/O space!\n", sc->sc_dev.dv_xname);
 	return;
     }
 #else
     if (pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_CBMA, &membase, &memsize, NULL)
 	    || bus_mem_map(pa->pa_bc, membase, memsize, 0, &sc->sc_membase)) {
-	kprintf("\n%s: can't map memory space!\n", sc->sc_dev.dv_xname);
+	printf("\n%s: can't map memory space!\n", sc->sc_dev.dv_xname);
 	return;
     }
 #endif
@@ -424,7 +424,7 @@ pdq_pci_attach(
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFPA);
     if (sc->sc_pdq == NULL) {
-	kprintf("%s: initialization failed\n", sc->sc_dev.dv_xname);
+	printf("%s: initialization failed\n", sc->sc_dev.dv_xname);
 	return;
     }
 
@@ -433,24 +433,24 @@ pdq_pci_attach(
 
     if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 		     pa->pa_intrline, &intrhandle)) {
-	kprintf("%s: couldn't map interrupt\n", self->dv_xname);
+	printf("%s: couldn't map interrupt\n", self->dv_xname);
 	return;
     }
     intrstr = pci_intr_string(pa->pa_pc, intrhandle);
     sc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET, pdq_pci_ifintr, sc);
     if (sc->sc_ih == NULL) {
-	kprintf("%s: couldn't establish interrupt", self->dv_xname);
+	printf("%s: couldn't establish interrupt", self->dv_xname);
 	if (intrstr != NULL)
-	    kprintf(" at %s", intrstr);
-	kprintf("\n");
+	    printf(" at %s", intrstr);
+	printf("\n");
 	return;
     }
 
     sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset, sc->sc_pdq);
     if (sc->sc_ats == NULL)
-	kprintf("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
+	printf("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
     if (intrstr != NULL)
-	kprintf("%s: interrupting at %s\n", self->dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
 }
 
 struct cfattach fpa_ca = {

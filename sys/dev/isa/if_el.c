@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.41 1996/10/10 21:25:07 christos Exp $	*/
+/*	$NetBSD: if_el.c,v 1.42 1996/10/13 01:37:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -64,7 +64,7 @@
 
 /* for debugging convenience */
 #ifdef EL_DEBUG
-#define DPRINTF(x) kprintf x
+#define DPRINTF(x) printf x
 #else
 #define DPRINTF(x)
 #endif
@@ -193,13 +193,13 @@ elattach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_int8_t i;
 
-	kprintf("\n");
+	printf("\n");
 
 	DPRINTF(("Attaching %s...\n", sc->sc_dev.dv_xname));
 
 	/* Map i/o space. */
 	if (bus_io_map(bc, ia->ia_iobase, ia->ia_iosize, &ioh)) {
-		kprintf("%s: can't map i/o space\n", self->dv_xname);
+		printf("%s: can't map i/o space\n", self->dv_xname);
 		return;
 	}
 
@@ -234,7 +234,7 @@ elattach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	/* Print out some information for the user. */
-	kprintf("%s: address %s\n", self->dv_xname,
+	printf("%s: address %s\n", self->dv_xname,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/* Finally, attach to bpf filter if it is present. */
@@ -391,7 +391,7 @@ elstart(ifp)
 		off = EL_BUFSIZ - max(m0->m_pkthdr.len, ETHER_MIN_LEN);
 #ifdef DIAGNOSTIC
 		if ((off & 0xffff) != off)
-			kprintf("%s: bogus off 0x%x\n",
+			printf("%s: bogus off 0x%x\n",
 			    sc->sc_dev.dv_xname, off);
 #endif
 		bus_io_write_1(bc, ioh, EL_GPBL, off & 0xff);
@@ -565,7 +565,7 @@ elread(sc, len)
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
-		kprintf("%s: invalid packet size %d; dropping\n",
+		printf("%s: invalid packet size %d; dropping\n",
 		    sc->sc_dev.dv_xname, len);
 		ifp->if_ierrors++;
 		return;

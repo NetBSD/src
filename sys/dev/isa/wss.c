@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.14 1996/10/10 22:05:18 christos Exp $	*/
+/*	$NetBSD: wss.c,v 1.15 1996/10/13 01:38:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -78,7 +78,7 @@
 #define WSS_MONITOR_CLASS	11
 
 #ifdef AUDIO_DEBUG
-#define DPRINTF(x)	if (wssdebug) kprintf x
+#define DPRINTF(x)	if (wssdebug) printf x
 int	wssdebug = 0;
 #else
 #define DPRINTF(x)
@@ -192,7 +192,7 @@ wssprobe(parent, match, aux)
     static u_char dma_bits[4] = {1, 2, 0, 3};
     
     if (!WSS_BASE_VALID(ia->ia_iobase)) {
-	kprintf("wss: configured iobase %x invalid\n", ia->ia_iobase);
+	printf("wss: configured iobase %x invalid\n", ia->ia_iobase);
 	return 0;
     }
 
@@ -206,7 +206,7 @@ wssprobe(parent, match, aux)
 
     /* Setup WSS interrupt and DMA */
     if (!WSS_DRQ_VALID(ia->ia_drq)) {
-	kprintf("wss: configured dma chan %d invalid\n", ia->ia_drq);
+	printf("wss: configured dma chan %d invalid\n", ia->ia_drq);
 	return 0;
     }
     sc->wss_drq = ia->ia_drq;
@@ -218,14 +218,14 @@ wssprobe(parent, match, aux)
     if (ia->ia_irq == IRQUNK) {
 	ia->ia_irq = isa_discoverintr(ad1848_forceintr, &sc->sc_ad1848);
 	if (!WSS_IRQ_VALID(ia->ia_irq)) {
-	    kprintf("wss: couldn't auto-detect interrupt\n");
+	    printf("wss: couldn't auto-detect interrupt\n");
 	    return 0;
 	}
     }
     else
 #endif
     if (!WSS_IRQ_VALID(ia->ia_irq)) {
-	kprintf("wss: configured interrupt %d invalid\n", ia->ia_irq);
+	printf("wss: configured interrupt %d invalid\n", ia->ia_irq);
 	return 0;
     }
 
@@ -261,13 +261,13 @@ wssattach(parent, self, aux)
 
     ad1848_attach(&sc->sc_ad1848);
     
-    kprintf(" (vers %d)", inb(iobase+WSS_STATUS) & WSS_VERSMASK);
-    kprintf("\n");
+    printf(" (vers %d)", inb(iobase+WSS_STATUS) & WSS_VERSMASK);
+    printf("\n");
 
     sc->sc_ad1848.parent = sc;
 
     if ((err = audio_hardware_attach(&wss_hw_if, &sc->sc_ad1848)) != 0)
-	kprintf("wss: could not attach to audio pseudo-device driver (%d)\n", err);
+	printf("wss: could not attach to audio pseudo-device driver (%d)\n", err);
 }
 
 static int

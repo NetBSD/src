@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.9 1996/10/10 22:18:36 christos Exp $	*/
+/*	$NetBSD: elink3.c,v 1.10 1996/10/13 01:37:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -108,25 +108,25 @@ epconfig(sc, conn)
 	u_int16_t i;
 
 	sc->ep_connectors = 0;
-	kprintf("%s: ", sc->sc_dev.dv_xname);
+	printf("%s: ", sc->sc_dev.dv_xname);
 	if (conn & IS_AUI) {
-		kprintf("aui");
+		printf("aui");
 		sc->ep_connectors |= AUI;
 	}
 	if (conn & IS_BNC) {
 		if (sc->ep_connectors)
-			kprintf("/");
-		kprintf("bnc");
+			printf("/");
+		printf("bnc");
 		sc->ep_connectors |= BNC;
 	}
 	if (conn & IS_UTP) {
 		if (sc->ep_connectors)
-			kprintf("/");
-		kprintf("utp");
+			printf("/");
+		printf("utp");
 		sc->ep_connectors |= UTP;
 	}
 	if (!sc->ep_connectors)
-		kprintf("no connectors!");
+		printf("no connectors!");
 
 	/*
 	 * Read the station address from the eeprom
@@ -143,7 +143,7 @@ epconfig(sc, conn)
 		sc->sc_arpcom.ac_enaddr[(i << 1) + 1] = x;
 	}
 
-	kprintf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -428,7 +428,7 @@ readcheck:
 		/* Check if we are stuck and reset [see XXX comment] */
 		if (epstatus(sc)) {
 			if (ifp->if_flags & IFF_DEBUG)
-				kprintf("%s: adapter reset\n",
+				printf("%s: adapter reset\n",
 				    sc->sc_dev.dv_xname);
 			epreset(sc);
 		}
@@ -462,26 +462,26 @@ epstatus(sc)
 
 	if (fifost & FIFOS_RX_UNDERRUN) {
 		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
-			kprintf("%s: RX underrun\n", sc->sc_dev.dv_xname);
+			printf("%s: RX underrun\n", sc->sc_dev.dv_xname);
 		epreset(sc);
 		return 0;
 	}
 
 	if (fifost & FIFOS_RX_STATUS_OVERRUN) {
 		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
-			kprintf("%s: RX Status overrun\n", sc->sc_dev.dv_xname);
+			printf("%s: RX Status overrun\n", sc->sc_dev.dv_xname);
 		return 1;
 	}
 
 	if (fifost & FIFOS_RX_OVERRUN) {
 		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
-			kprintf("%s: RX overrun\n", sc->sc_dev.dv_xname);
+			printf("%s: RX overrun\n", sc->sc_dev.dv_xname);
 		return 1;
 	}
 
 	if (fifost & FIFOS_TX_OVERRUN) {
 		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
-			kprintf("%s: TX overrun\n", sc->sc_dev.dv_xname);
+			printf("%s: TX overrun\n", sc->sc_dev.dv_xname);
 		epreset(sc);
 		return 0;
 	}
@@ -508,13 +508,13 @@ eptxstat(sc)
 		if (i & TXS_JABBER) {
 			++sc->sc_arpcom.ac_if.if_oerrors;
 			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
-				kprintf("%s: jabber (%x)\n",
+				printf("%s: jabber (%x)\n",
 				       sc->sc_dev.dv_xname, i);
 			epreset(sc);
 		} else if (i & TXS_UNDERRUN) {
 			++sc->sc_arpcom.ac_if.if_oerrors;
 			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
-				kprintf("%s: fifo underrun (%x) @%d\n",
+				printf("%s: fifo underrun (%x) @%d\n",
 				       sc->sc_dev.dv_xname, i,
 				       sc->tx_start_thresh);
 			if (sc->tx_succ_ok < 100)
@@ -568,7 +568,7 @@ epintr(arg)
 			epstart(&sc->sc_arpcom.ac_if);
 		}
 		if (status & S_CARD_FAILURE) {
-			kprintf("%s: adapter failure (%x)\n",
+			printf("%s: adapter failure (%x)\n",
 			    sc->sc_dev.dv_xname, status);
 			epreset(sc);
 			return (1);
@@ -617,7 +617,7 @@ again:
 			s = "dribble bits";
 
 		if (s)
-			kprintf("%s: %s\n", sc->sc_dev.dv_xname, s);
+			printf("%s: %s\n", sc->sc_dev.dv_xname, s);
 	}
 
 	if (len & ERR_INCOMPLETE)
@@ -690,7 +690,7 @@ again:
 		/* Check if we are stuck and reset [see XXX comment] */
 		if (len & ERR_INCOMPLETE) {
 			if (ifp->if_flags & IFF_DEBUG)
-				kprintf("%s: adapter reset\n",
+				printf("%s: adapter reset\n",
 				    sc->sc_dev.dv_xname);
 			epreset(sc);
 			return;
@@ -1003,12 +1003,12 @@ epbusyeeprom(sc)
 			break;
 	}
 	if (!i) {
-		kprintf("\n%s: eeprom failed to come ready\n",
+		printf("\n%s: eeprom failed to come ready\n",
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
 	if (j & EEPROM_TST_MODE) {
-		kprintf("\n%s: erase pencil mark, or disable plug-n-play mode!\n",
+		printf("\n%s: erase pencil mark, or disable plug-n-play mode!\n",
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.35 1996/10/10 22:05:19 christos Exp $	*/
+/*	$NetBSD: wt.c,v 1.36 1996/10/13 01:38:08 christos Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -74,7 +74,7 @@
 /*
  * Uncomment this to enable internal device tracing.
  */
-#define WTDBPRINT(x)		/* kprintf x */
+#define WTDBPRINT(x)		/* printf x */
 
 #define WTPRI			(PZERO+10)	/* sleep priority */
 
@@ -197,7 +197,7 @@ wtprobe(parent, match, aux)
 	sc->chan = ia->ia_drq;
 	sc->sc_iobase = iobase = ia->ia_iobase;
 	if (sc->chan < 1 || sc->chan > 3) {
-		kprintf("%s: Bad drq=%d, should be 1..3\n", sc->sc_dev.dv_xname,
+		printf("%s: Bad drq=%d, should be 1..3\n", sc->sc_dev.dv_xname,
 		    sc->chan);
 		return 0;
 	}
@@ -252,11 +252,11 @@ wtattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 
 	if (sc->type == ARCHIVE) {
-		kprintf(": type <Archive>\n");
+		printf(": type <Archive>\n");
 		/* Reset DMA. */
 		outb(sc->RDMAPORT, 0);
 	} else
-		kprintf(": type <Wangtek>\n");
+		printf(": type <Wangtek>\n");
 	sc->flags = TPSTART;		/* tape is rewound */
 	sc->dens = -1;			/* unknown density */
 
@@ -354,7 +354,7 @@ wtopen(dev, flag, mode, p)
 
 				/* Check the status of the controller. */
 				if (sc->error & TP_ILL) {
-					kprintf("%s: invalid tape density\n",
+					printf("%s: invalid tape density\n",
 					    sc->sc_dev.dv_xname);
 					return ENODEV;
 				}
@@ -1035,7 +1035,7 @@ wtsense(sc, verbose, ignore)
 	else if (error & TP_ILL)
 		msg = "Illegal command";
 	if (msg)
-		kprintf("%s: %s\n", sc->sc_dev.dv_xname, msg);
+		printf("%s: %s\n", sc->sc_dev.dv_xname, msg);
 	return 0;
 }
 

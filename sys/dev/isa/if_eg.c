@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.29 1996/10/10 22:04:59 christos Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.30 1996/10/13 01:37:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -84,7 +84,7 @@
 
 /* for debugging convenience */
 #ifdef EGDEBUG
-#define DPRINTF(x) kprintf x
+#define DPRINTF(x) printf x
 #else
 #define DPRINTF(x)
 #endif
@@ -391,11 +391,11 @@ egattach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int i;
 
-	kprintf("\n");
+	printf("\n");
 
 	/* Map i/o space. */
 	if (bus_io_map(bc, ia->ia_iobase, ia->ia_iosize, &ioh)) {
-		kprintf("%s: can't map i/o space\n", self->dv_xname);
+		printf("%s: can't map i/o space\n", self->dv_xname);
 		return;
 	}
 
@@ -407,42 +407,42 @@ egattach(parent, self, aux)
 	sc->eg_pcb[0] = EG_CMD_GETEADDR; /* Get Station address */
 	sc->eg_pcb[1] = 0;
 	if (egwritePCB(sc) != 0) {
-		kprintf("%s: can't send Get Station Address\n", self->dv_xname);
+		printf("%s: can't send Get Station Address\n", self->dv_xname);
 		return;
 	}	
 	if (egreadPCB(sc) != 0) {
-		kprintf("%s: can't read station address\n", self->dv_xname);
+		printf("%s: can't read station address\n", self->dv_xname);
 		egprintpcb(sc);
 		return;
 	}
 
 	/* check Get station address response */
 	if (sc->eg_pcb[0] != EG_RSP_GETEADDR || sc->eg_pcb[1] != 0x06) { 
-		kprintf("%s: card responded with garbage (1)\n",
+		printf("%s: card responded with garbage (1)\n",
 		    self->dv_xname);
 		egprintpcb(sc);
 		return;
 	}
 	bcopy(&sc->eg_pcb[2], sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
-	kprintf("%s: ROM v%d.%02d %dk address %s\n", self->dv_xname,
+	printf("%s: ROM v%d.%02d %dk address %s\n", self->dv_xname,
 	    sc->eg_rom_major, sc->eg_rom_minor, sc->eg_ram,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	sc->eg_pcb[0] = EG_CMD_SETEADDR; /* Set station address */
 	if (egwritePCB(sc) != 0) {
-		kprintf("%s: can't send Set Station Address\n", self->dv_xname);
+		printf("%s: can't send Set Station Address\n", self->dv_xname);
 		return;
 	}
 	if (egreadPCB(sc) != 0) {
-		kprintf("%s: can't read Set Station Address status\n",
+		printf("%s: can't read Set Station Address status\n",
 		    self->dv_xname);
 		egprintpcb(sc);
 		return;
 	}
 	if (sc->eg_pcb[0] != EG_RSP_SETEADDR || sc->eg_pcb[1] != 0x02 ||
 	    sc->eg_pcb[2] != 0 || sc->eg_pcb[3] != 0) {
-		kprintf("%s: card responded with garbage (2)\n",
+		printf("%s: card responded with garbage (2)\n",
 		    self->dv_xname);
 		egprintpcb(sc);
 		return;
@@ -489,21 +489,21 @@ eginit(sc)
 	sc->eg_pcb[2] = 3; /* receive broadcast & multicast */
 	sc->eg_pcb[3] = 0;
 	if (egwritePCB(sc) != 0)
-		kprintf("%s: can't send Configure 82586\n",
+		printf("%s: can't send Configure 82586\n",
 		    sc->sc_dev.dv_xname);
 
 	if (egreadPCB(sc) != 0) {
-		kprintf("%s: can't read Configure 82586 status\n",
+		printf("%s: can't read Configure 82586 status\n",
 		    sc->sc_dev.dv_xname);
 		egprintpcb(sc);
 	} else if (sc->eg_pcb[2] != 0 || sc->eg_pcb[3] != 0)
-		kprintf("%s: configure card command failed\n",
+		printf("%s: configure card command failed\n",
 		    sc->sc_dev.dv_xname);
 
 	if (sc->eg_inbuf == NULL) {
 		sc->eg_inbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
 		if (sc->eg_inbuf == NULL) {
-			kprintf("%s: can't allocate inbuf\n",
+			printf("%s: can't allocate inbuf\n",
 			    sc->sc_dev.dv_xname);
 			panic("eginit");
 		}
@@ -513,7 +513,7 @@ eginit(sc)
 	if (sc->eg_outbuf == NULL) {
 		sc->eg_outbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
 		if (sc->eg_outbuf == NULL) {
-			kprintf("%s: can't allocate outbuf\n",
+			printf("%s: can't allocate outbuf\n",
 			    sc->sc_dev.dv_xname);
 			panic("eginit");
 		}
@@ -580,7 +580,7 @@ loop:
 
 	/* We need to use m->m_pkthdr.len, so require the header */
 	if ((m0->m_flags & M_PKTHDR) == 0) {
-		kprintf("%s: no header mbuf\n", sc->sc_dev.dv_xname);
+		printf("%s: no header mbuf\n", sc->sc_dev.dv_xname);
 		panic("egstart");
 	}
 	len = max(m0->m_pkthdr.len, ETHER_MIN_LEN);
@@ -599,7 +599,7 @@ loop:
 	sc->eg_pcb[6] = len; /* length of packet */
 	sc->eg_pcb[7] = len >> 8;
 	if (egwritePCB(sc) != 0) {
-		kprintf("%s: can't send Send Packet command\n",
+		printf("%s: can't send Send Packet command\n",
 		    sc->sc_dev.dv_xname);
 		ifp->if_oerrors++;
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -698,7 +698,7 @@ egintr(arg)
 			break;
 			
 		default:
-			kprintf("%s: egintr: Unknown response %x??\n",
+			printf("%s: egintr: Unknown response %x??\n",
 			    sc->sc_dev.dv_xname, sc->eg_pcb[0]);
 			egprintpcb(sc);
 			break;
@@ -723,7 +723,7 @@ egread(sc, buf, len)
 	
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
-		kprintf("%s: invalid packet size %d; dropping\n",
+		printf("%s: invalid packet size %d; dropping\n",
 		    sc->sc_dev.dv_xname, len);
 		ifp->if_ierrors++;
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.13 1996/10/10 19:54:12 christos Exp $	*/
+/*	$NetBSD: eisa.c,v 1.14 1996/10/13 01:37:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -89,9 +89,9 @@ eisaprint(aux, pnp)
 
 	if (pnp) {
 		eisa_devinfo(ea->ea_idstring, devinfo);
-		kprintf("%s at %s", devinfo, pnp);
+		printf("%s at %s", devinfo, pnp);
 	}
-	kprintf(" slot %d", ea->ea_slot);
+	printf(" slot %d", ea->ea_slot);
 	return (UNCONF);
 }
 
@@ -120,7 +120,7 @@ eisaattach(parent, self, aux)
 	int slot, maxnslots;
 
 	eisa_attach_hook(parent, self, eba);
-	kprintf("\n");
+	printf("\n");
 
 	bc = eba->eba_bc;
 	ec = eba->eba_ec;
@@ -149,7 +149,7 @@ eisaattach(parent, self, aux)
 		 * about it.
 		 */
 		if (bus_io_map(bc, slotaddr, EISA_SLOT_SIZE, &slotioh)) {
-			kprintf("%s: can't map I/O space for slot %d\n",
+			printf("%s: can't map I/O space for slot %d\n",
 			    self->dv_xname, slot);
 			continue;
 		}
@@ -162,9 +162,9 @@ eisaattach(parent, self, aux)
 		/* Check for device existence */
 		if (EISA_VENDID_NODEV(ea.ea_vid)) {
 #if 0
-			kprintf("no device at %s slot %d\n", self->dv_xname,
+			printf("no device at %s slot %d\n", self->dv_xname,
 			    slot);
-			kprintf("\t(0x%x, 0x%x)\n", ea.ea_vid[0],
+			printf("\t(0x%x, 0x%x)\n", ea.ea_vid[0],
 			    ea.ea_vid[1]);
 #endif
 			bus_io_unmap(bc, slotioh, EISA_SLOT_SIZE);
@@ -173,7 +173,7 @@ eisaattach(parent, self, aux)
 
 		/* And check that the firmware didn't biff something badly */
 		if (EISA_VENDID_IDDELAY(ea.ea_vid)) {
-			kprintf("%s slot %d not configured by BIOS?\n",
+			printf("%s slot %d not configured by BIOS?\n",
 			    self->dv_xname, slot);
 			bus_io_unmap(bc, slotioh, EISA_SLOT_SIZE);
 			continue;
@@ -252,9 +252,9 @@ eisa_devinfo(id, cp)
 #endif
 
 	if (name == NULL)
-		cp += ksprintf(cp, "%sdevice %s", unmatched, id);
+		cp += sprintf(cp, "%sdevice %s", unmatched, id);
 	else if (onlyvendor)			/* never if not EISAVERBOSE */
-		cp += ksprintf(cp, "unknown %s device %s", name, id);
+		cp += sprintf(cp, "unknown %s device %s", name, id);
 	else
-		cp += ksprintf(cp, "%s", name);
+		cp += sprintf(cp, "%s", name);
 }
