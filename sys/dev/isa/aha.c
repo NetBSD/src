@@ -1,6 +1,6 @@
-/*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
+/*	$NetBSD: aha.c,v 1.11.4.1 1996/12/10 05:31:43 mycroft Exp $	*/
 
-#define AHADIAG
+#undef AHADIAG
 #define integrate
 
 /*
