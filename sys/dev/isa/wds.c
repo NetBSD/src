@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.42 2001/04/25 17:53:36 bouyer Exp $	*/
+/*	$NetBSD: wds.c,v 1.43 2001/07/18 20:39:53 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -540,7 +540,7 @@ wds_init_scb(sc, scb)
 	 * XXX SCB inits here?
 	 */
 
-	bzero(scb, sizeof(struct wds_scb));
+	memset(scb, 0, sizeof(struct wds_scb));
 
 	/*
 	 * Create DMA maps for this SCB.
@@ -625,7 +625,7 @@ wds_create_scbs(sc, mem, size)
 	}
 
  have_mem:
-	bzero(scb, size);
+	memset(scb, 0, size);
 	while (size > sizeof(struct wds_scb) && sc->sc_numscbs < WDS_SCB_MAX) {
 		error = wds_init_scb(sc, scb);
 		if (error) {
@@ -1042,7 +1042,7 @@ wds_inquire_setup_information(sc)
 	scb->xs = NULL;
 	scb->timeout = 40;
 
-	bzero(&scb->cmd, sizeof scb->cmd);
+	memset(&scb->cmd, 0, sizeof scb->cmd);
 	scb->cmd.write = 0x80;
 	scb->cmd.opcode = WDSX_GETFIRMREV;
 
@@ -1156,7 +1156,7 @@ wds_scsipi_request(chan, req, arg)
 		scb->timeout = xs->timeout;
 
 		/* Zero out the command structure. */
-		bzero(&scb->cmd, sizeof scb->cmd);
+		memset(&scb->cmd, 0, sizeof scb->cmd);
 		bcopy(xs->cmd, &scb->cmd.scb,
 		    xs->cmdlen < 12 ? xs->cmdlen : 12);
 
