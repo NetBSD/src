@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.100 1999/11/30 16:16:41 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.101 1999/11/30 17:48:11 sommerfeld Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -15,16 +15,18 @@
 # (lowest priority).
 #
 # Variables:
-#   NBUILDJOBS is the number of jobs to start in parallel during a
-#	'make build'. It defaults to 1.
-#   MKMAN, if set to `no', will prevent building of manual pages.
-#   MKSHARE, if set to `no', will prevent building and installing
-#	anything in /usr/share.
-#   UPDATE will avoid a `make cleandir' at the start of `make build',
-#	as well as having the effects listed in /usr/share/mk/bsd.README.
 #   DESTDIR is the target directory for installation of the compiled
 #	software. It defaults to /. Note that programs are built against
 #	libraries installed in DESTDIR.
+#   MKMAN, if set to `no', will prevent building of manual pages.
+#   MKOBJDIRS, if not set to `no', will build object directories at 
+#	an appropriate point in a build.
+#   MKSHARE, if set to `no', will prevent building and installing
+#	anything in /usr/share.
+#   NBUILDJOBS is the number of jobs to start in parallel during a
+#	'make build'. It defaults to 1.
+#   UPDATE will avoid a `make cleandir' at the start of `make build',
+#	as well as having the effects listed in /usr/share/mk/bsd.README.
 #
 # Targets:
 #   build: builds a full release of netbsd in DESTDIR.
