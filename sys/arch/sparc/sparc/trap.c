@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 1996/03/18 21:48:19 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.37 1996/03/26 00:35:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -298,11 +298,9 @@ trap(type, psr, pc, tf)
 
 	default:
 		if (type < 0x80) {
-			static const char fmt1[] =
-			    "trap type 0x%x: pc=%x npc=%x psr=%b\n";
 dopanic:
-			printf(fmt1,
-			    type, pc, tf->tf_npc, psr, PSR_BITS);
+			printf("trap type 0x%x: pc=%x npc=%x psr=%b\n",
+			       type, pc, tf->tf_npc, psr, PSR_BITS);
 			panic(type < N_TRAP_TYPES ? trap_type[type] : T);
 			/* NOTREACHED */
 		}
@@ -613,9 +611,8 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
 		if (type == T_TEXTFAULT) {
-			static const char fmt1[] = "text fault: pc=%x ser=%b\n";
 			(void) splhigh();
-			printf(fmt1, pc, ser, SER_BITS);
+			printf("text fault: pc=%x ser=%b\n", pc, ser, SER_BITS);
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
@@ -692,10 +689,9 @@ kfault:
 			onfault = p->p_addr ?
 			    (int)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
-				static const char fmt1[] =
-				    "data fault: pc=%x addr=%x ser=%b\n";
 				(void) splhigh();
-				printf(fmt1, pc, v, ser, SER_BITS);
+				printf("data fault: pc=%x addr=%x ser=%b\n",
+					pc, v, ser, SER_BITS);
 				panic("kernel fault");
 				/* NOTREACHED */
 			}

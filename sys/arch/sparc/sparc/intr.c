@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11 1996/03/16 23:31:40 christos Exp $ */
+/*	$NetBSD: intr.c,v 1.12 1996/03/26 00:35:30 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,9 +92,9 @@ strayintr(fp)
 {
 	static int straytime, nstray;
 	int timesince;
-	static const char fmt1[] = "stray interrupt ipl %x pc=%x npc=%x psr=%b\n";
 
-	printf(fmt1, fp->ipl, fp->pc, fp->npc, fp->psr, PSR_BITS);
+	printf("stray interrupt ipl %x pc=%x npc=%x psr=%b\n",
+		fp->ipl, fp->pc, fp->npc, fp->psr, PSR_BITS);
 	timesince = time.tv_sec - straytime;
 	if (timesince <= 10) {
 		if (++nstray > 9)

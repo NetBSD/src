@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.20 1996/03/17 02:00:56 thorpej Exp $ */
+/*	$NetBSD: dma.c,v 1.21 1996/03/26 00:40:59 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -330,19 +330,18 @@ int
 dmaintr(sc)
 	struct dma_softc *sc;
 {
-	static const char fmt1[] = "%s: intr: addr %p, csr %b\n";
-	static const char fmt2[] = "%s: error: csr=%b\n";
 	int trans = 0, resid = 0;
 	u_long csr;
 	csr = DMACSR(sc);
 
-	ESP_DMA((fmt1, sc->sc_dev.dv_xname,
+	ESP_DMA(("%s: intr: addr %p, csr %b\n", sc->sc_dev.dv_xname,
 		 DMADDR(sc), csr, DMACSRBITS));
 
 	if (csr & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
-		printf(fmt2, sc->sc_dev.dv_xname, csr, DMACSRBITS);
+		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
+			csr, DMACSRBITS);
 		return 0;
 	}
 
