@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.24 2003/01/18 06:55:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25 2003/01/31 19:05:55 martin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -113,6 +113,9 @@ struct pmap {
 #define pm_lock pm_obj.vmobjlock
 #define pm_refs pm_obj.uo_refs
 	LIST_ENTRY(pmap) pm_list;
+
+	struct pmap_statistics pm_stats;
+
 	int pm_ctx;		/* Current context */
 
 	/*
@@ -155,10 +158,17 @@ typedef	struct pmap *pmap_t;
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
 
+#ifdef PMAP_COUNT_DEBUG
+/* diagnostic versions if PMAP_COUNT_DEBUG option is used */
 int pmap_count_res __P((struct pmap *));
 int pmap_count_wired __P((struct pmap *));
 #define	pmap_resident_count(pm)		pmap_count_res((pm))
 #define	pmap_wired_count(pm)		pmap_count_wired((pm))
+#else
+#define	pmap_resident_count(pm)		((pm)->pm_stats.resident_count)
+#define	pmap_wired_count(pm)		((pm)->pm_stats.wired_count)
+#endif
+
 #define	pmap_phys_address(x)		(x)
 
 void pmap_activate_pmap(struct pmap *);

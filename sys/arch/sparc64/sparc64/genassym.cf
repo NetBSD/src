@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.28 2003/01/18 06:55:23 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.29 2003/01/31 19:05:56 martin Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -149,7 +149,11 @@ define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 define	PM_CTX		offsetof(struct pmap, pm_ctx)
 define	PM_SEGS		offsetof(struct pmap, pm_segs)
 define	PM_PHYS		offsetof(struct pmap, pm_physaddr)
+define	PM_RESIDENT	offsetof(struct pmap, pm_stats.resident_count)
+define	PM_WIRED	offsetof(struct pmap, pm_stats.wired_count)
 
+# the assembler doesn't grok C constants with LL suffix
+define	A_TLB_TSB_LOCK	TLB_TSB_LOCK
 
 # interrupt/fault metering
 define	V_SWTCH		offsetof(struct uvmexp, swtch)

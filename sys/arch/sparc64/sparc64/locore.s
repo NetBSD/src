@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.164 2003/01/27 14:51:30 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.165 2003/01/31 19:05:56 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -8771,13 +8771,13 @@ ENTRY(pseg_get)
 /*
  * In 32-bit mode:
  *
- * extern int pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2:%o3,
- *			 paddr_t spare %o4:%o5);
+ * extern int pseg_set(struct pmap* %i0, vaddr_t addr %i1, int64_t tte %i2:%i3,
+ *			 paddr_t spare %i4:%i5);
  *
  * In 64-bit mode:
  *
- * extern int pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2,
- *			paddr_t spare %o3);
+ * extern int pseg_set(struct pmap* %i0, vaddr_t addr %i1, int64_t tte %i2,
+ *			paddr_t spare %i3);
  *
  * Set a pseg entry to a particular TTE value.  Return values are:
  *
@@ -8799,104 +8799,147 @@ ENTRY(pseg_get)
  * new page as the spare.
  * If spare is non-zero it is assumed to be the address of a zeroed physical
  * page that can be used to generate a directory table or page table if needed.
+ *
+ * We keep track of valid (A_TLB_V bit set) and wired (A_TLB_TSB_LOCK bit set)
+ * mappings that are set here. We check both bits on the new data entered
+ * and increment counts, as well as decrementing counts if the bits are set
+ * in the value replaced by this call.
+ * The counters are 32 bit or 64 bit wide, depending on the kernel type we are
+ * running!
  */
 ENTRY(pseg_set)
-#ifndef _LP64
-	btst	1, %sp					! 64-bit mode?
-	bnz,pt	%icc, 0f
-	 sllx	%o4, 32, %o4				! Put args into 64-bit format
-
-	sllx	%o2, 32, %o2				! Shift to high 32-bits
-	sll	%o3, 0, %o3				! Zero extend
-	sll	%o5, 0, %o5
-	sll	%o1, 0, %o1
-	or	%o2, %o3, %o2
-	or	%o4, %o5, %o3
-0:
-#endif
-#ifdef NOT_DEBUG
-	!! Trap any changes to pmap_kernel below 0xf0000000
-	set	_C_LABEL(kernel_pmap_), %o5
-	cmp	%o0, %o5
-	bne	0f
-	 sethi	%hi(0xf0000000), %o5
-	cmp	%o1, %o5
-	tlu	1
-0:
+#ifdef _LP64
+	save	%sp, -CC64FSZ, %sp
+#else
+	save	%sp, -CCFSZ, %sp
+	sllx	%i4, 32, %i4				! Put args into 64-bit format
+	sllx	%i2, 32, %i2				! Shift to high 32-bits
+	clruw	%i3					! Zero extend
+	clruw	%i5
+	clruw	%i1
+	or	%i2, %i3, %i2
+	or	%i4, %i5, %i3
 #endif
 	!!
 	!! However we managed to get here we now have:
 	!!
-	!! %o0 = *pmap
-	!! %o1 = addr
-	!! %o2 = tte
-	!! %o3 = paddr of spare page
+	!! %i0 = *pmap
+	!! %i1 = addr
+	!! %i2 = tte
+	!! %i3 = paddr of spare page
 	!!
-	srax	%o1, HOLESHIFT, %o4			! Check for valid address
-	brz,pt	%o4, 0f					! Should be zero or -1
-	 inc	%o4					! Make -1 -> 0
-	brz,pt	%o4, 0f
+	srax	%i1, HOLESHIFT, %i4			! Check for valid address
+	brz,pt	%i4, 0f					! Should be zero or -1
+	 inc	%i4					! Make -1 -> 0
+	brz,pt	%i4, 0f
 	 nop
 #ifdef DEBUG
 	ta	1					! Break into debugger
 #endif
-	retl
-	 mov	-2, %o0					! Error -- in hole!
-
+	ret
+	 restore %g0, -2, %o0				! Error -- in hole!
 
 0:
-	ldx	[%o0 + PM_PHYS], %o4			! pmap->pm_segs
+	ldx	[%i0 + PM_PHYS], %i4			! pmap->pm_segs
 	clr	%o0
-	srlx	%o1, STSHIFT, %o5
-	and	%o5, STMASK, %o5
-	sll	%o5, 3, %o5
-	add	%o4, %o5, %o4
+	srlx	%i1, STSHIFT, %i5
+	and	%i5, STMASK, %i5
+	sll	%i5, 3, %i5
+	add	%i4, %i5, %i4
 0:
-	DLFLUSH(%o4,%g1)
-	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load page directory pointer
+	DLFLUSH(%i4,%g1)
+	ldxa	[%i4] ASI_PHYS_CACHED, %i5		! Load page directory pointer
 	DLFLUSH2(%g1)
 
-	brnz,a,pt %o5, 0f				! Null pointer?
-	 mov	%o5, %o4
-	brz,pn	%o3, 1f					! Have a spare?
-	 mov	%o3, %o5
-	casxa	[%o4] ASI_PHYS_CACHED, %g0, %o5
-	brnz,pn	%o5, 0b					! Something changed?
-	DLFLUSH(%o4, %o5)
-	mov	%o3, %o4
+	brnz,a,pt %i5, 0f				! Null pointer?
+	 mov	%i5, %i4
+	brz,pn	%i3, 9f					! Have a spare?
+	 mov	%i3, %i5
+	casxa	[%i4] ASI_PHYS_CACHED, %g0, %i5
+	brnz,pn	%i5, 0b					! Something changed?
+	DLFLUSH(%i4, %i5)
+	mov	%i3, %i4
 	mov	2, %o0					! record spare used for L2
-	clr	%o3					! and not available for L3
+	clr	%i3					! and not available for L3
 0:
-	srlx	%o1, PDSHIFT, %o5
-	and	%o5, PDMASK, %o5
-	sll	%o5, 3, %o5
-	add	%o4, %o5, %o4
+	srlx	%i1, PDSHIFT, %i5
+	and	%i5, PDMASK, %i5
+	sll	%i5, 3, %i5
+	add	%i4, %i5, %i4
 0:
-	DLFLUSH(%o4,%g1)
-	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load table directory pointer
+	DLFLUSH(%i4,%g1)
+	ldxa	[%i4] ASI_PHYS_CACHED, %i5		! Load table directory pointer
 	DLFLUSH2(%g1)
 
-	brnz,a,pt %o5, 0f				! Null pointer?
-	 mov	%o5, %o4
-	brz,pn	%o3, 1f					! Have a spare?
-	 mov	%o3, %o5
-	casxa	[%o4] ASI_PHYS_CACHED, %g0, %o5
-	brnz,pn	%o5, 0b					! Something changed?
-	DLFLUSH(%o4, %o4)
-	mov	%o3, %o4
+	brnz,a,pt %i5, 0f				! Null pointer?
+	 mov	%i5, %i4
+	brz,pn	%i3, 9f					! Have a spare?
+	 mov	%i3, %i5
+	casxa	[%i4] ASI_PHYS_CACHED, %g0, %i5
+	brnz,pn	%i5, 0b					! Something changed?
+	DLFLUSH(%i4, %i4)
+	mov	%i3, %i4
 	mov	4, %o0					! record spare used for L3
 0:
-	srlx	%o1, PTSHIFT, %o5			! Convert to ptab offset
-	and	%o5, PTMASK, %o5
-	sll	%o5, 3, %o5
-	add	%o5, %o4, %o4
-	stxa	%o2, [%o4] ASI_PHYS_CACHED		! Easier than shift+or
-	DLFLUSH(%o4, %o4)
-	retl
-	 EMPTY
-1:
-	retl
-	 or	%o0, 1, %o0				! spare needed
+	srlx	%i1, PTSHIFT, %i5			! Convert to ptab offset
+	and	%i5, PTMASK, %i5
+	sll	%i5, 3, %i5
+	add	%i5, %i4, %i4
+
+	DLFLUSH(%i4,%g1)
+	ldxa	[%i4] ASI_PHYS_CACHED, %o2		! save old value in %o2
+	stxa	%i2, [%i4] ASI_PHYS_CACHED		! Easier than shift+or
+	DLFLUSH2(%g1)
+
+	!! at this point we have:
+	!!  %o0 = return value
+	!!  %i0 = struct pmap * (where the counts are)
+	!!  %i2 = new TTE
+	!!  %o2 = old TTE
+
+	!! see if stats needs an update
+	set	A_TLB_TSB_LOCK, %l4
+	xor	%i2, %o2, %l3			! %l3 - what changed
+
+	brgez,pn %l3, 5f			! has resident changed? (we predict it has)
+	 btst	%l4, %l3			! has wired changed?
+
+#ifdef _LP64
+	ldx	[%i0 + PM_RESIDENT], %l6	! gonna update resident count
+#else
+	ld	[%i0 + PM_RESIDENT], %l6
+#endif
+	brlz	%i2, 0f
+	 mov	1, %l7
+	neg	%l7				! new is not resident -> decrement
+0:	add	%l6, %l7, %l6
+#ifdef _LP64
+	stx	%l6, [%i0 + PM_RESIDENT]
+#else
+	st	%l6, [%i0 + PM_RESIDENT]
+#endif
+	btst	%l4, %l3			! has wired changed?
+5:	bz,pt	%xcc, 8f			! we predict it's not
+	 btst	%l4, %i2			! don't waste delay slot, check if new one is wired
+#ifdef _LP64
+	ldx	[%i0 + PM_WIRED], %l6		! gonna update wired count
+#else
+	ld	[%i0 + PM_WIRED], %l6
+#endif
+	bnz,pt	%xcc, 0f			! if wired changes, we predict it increments
+	 mov	1, %l7
+	neg	%l7				! new is not wired -> decrement
+0:	add	%l6, %l7, %l6
+#ifdef _LP64
+	stx	%l6, [%i0 + PM_WIRED]
+#else
+	st	%l6, [%i0 + PM_WIRED]
+#endif
+8:	ret
+	 restore %g0, %o0, %o0			! return %o0
+
+9:	ret
+	 restore %g0, 1, %o0			! spare needed, return 1
 
 
 /*
