@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2002/04/30 01:07:26 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.7 2002/04/30 13:10:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -134,4 +134,14 @@ boot(d4, d5, d6, d7)
 	__asm __volatile ("movl %0,%%d4" : : "m" (d4));
 	__asm __volatile ("movl %0,%%d2" : : "m" (marks[MARK_END]));
 	(*entry)();
+}
+
+void
+_rtt()
+{
+
+	rom_halt();
+	for (;;)
+		;
+	/* NOTREACHED */
 }
