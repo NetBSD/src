@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 2000/08/22 19:46:30 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 2000/08/25 01:04:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -112,7 +112,7 @@ extern void delay __P((unsigned));
 extern __volatile int want_resched;
 extern __volatile int astpending;
 
-#define	need_resched()		(want_resched = 1, astpending = 1)
+#define	need_resched(ci)	(want_resched = 1, astpending = 1)
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
 #define	signotify(p)		(astpending = 1)
 
