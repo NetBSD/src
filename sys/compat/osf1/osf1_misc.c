@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_misc.c,v 1.2 1995/03/21 13:34:26 mycroft Exp $	*/
+/*	$NetBSD: osf1_misc.c,v 1.3 1995/04/22 19:48:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -49,6 +49,26 @@
 #ifdef SYSCALL_DEBUG
 extern int scdebug;
 #endif
+
+extern struct sysent osf1_sysent[];
+extern char *osf1_syscallnames[];
+extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
+					u_long, register_t *));
+
+struct emul emul_osf1 = {
+	"osf1",
+	NULL,
+	sendsig,
+	OSF1_SYS_syscall,
+	OSF1_SYS_MAXSYSCALL,
+	osf1_sysent,
+	osf1_syscallnames,
+	0,
+	copyargs,
+	cpu_exec_ecoff_setregs,
+	sigcode,
+	esigcode,
+};
 
 int
 osf1_open(p, uap, retval)

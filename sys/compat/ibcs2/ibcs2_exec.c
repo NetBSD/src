@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.7 1995/04/18 02:18:08 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.8 1995/04/22 19:48:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -46,6 +46,7 @@
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_exec.h>
 #include <compat/ibcs2/ibcs2_util.h>
+#include <compat/ibcs2/ibcs2_syscall.h>
 
 int exec_ibcs2_coff_prep_omagic __P((struct proc *, struct exec_package *,
 				     struct coff_filehdr *, 
@@ -65,9 +66,27 @@ int exec_ibcs2_xout_prep_nmagic __P((struct proc *, struct exec_package *,
 int exec_ibcs2_xout_prep_zmagic __P((struct proc *, struct exec_package *,
 				     struct xexec *, struct xext *));
 int exec_ibcs2_xout_setup_stack __P((struct proc *, struct exec_package *));
-void cpu_exec_ibcs2_xout_setup __P((int, struct proc *, struct exec_package *,
-				    void *));
 int coff_load_shlib __P((struct proc *, char *, struct exec_package *));
+
+extern int bsd2ibcs_errno[];
+extern struct sysent ibcs2_sysent[];
+extern char *ibcs2_syscallnames[];
+extern void ibcs2_sendsig __P((sig_t, int, int, u_long));
+
+struct emul emul_ibcs2 = {
+	"ibcs2",
+	bsd2ibcs_errno,
+	ibcs2_sendsig,
+	0,
+	IBCS2_SYS_MAXSYSCALL,
+	ibcs2_sysent,
+	ibcs2_syscallnames,
+	0,
+	copyargs,
+	setregs,
+	sigcode,
+	esigcode,
+};
 
 /*
  * exec_ibcs2_coff_makecmds(): Check if it's an coff-format executable.
@@ -113,10 +132,8 @@ exec_ibcs2_coff_makecmds(p, epp)
 		return ENOEXEC;
 	}
 
-	if (error == 0) {
-		epp->ep_emul = EMUL_IBCS2;
-		epp->ep_setup = cpu_exec_ibcs2_coff_setup;
-	}
+	if (error == 0)
+		epp->ep_emul = &emul_ibcs2;
 
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
@@ -533,22 +550,6 @@ coff_load_shlib(p, path, epp)
 	return 0;
 }
 
-void
-cpu_exec_ibcs2_coff_setup(cmd, p, epp, sp)
-	int cmd;
-        struct proc *p;
-        struct exec_package *epp;
-	void *sp;
-{
-
-#if 0
-        struct coff_aouthdr *ap;
-
-        ap = epp->ep_hdr + sizeof(struct coff_filehdr);
-        p->p_md.md_regs[GP] = ap->a_gp_value;
-#endif
-}
-
 int
 exec_ibcs2_xout_makecmds(p, epp)
 	struct proc *p;
@@ -576,25 +577,13 @@ exec_ibcs2_xout_makecmds(p, epp)
 #endif
 		error = exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep);
 
-	if (error == 0) {
-		epp->ep_emul = EMUL_IBCS2;
-		epp->ep_setup = cpu_exec_ibcs2_xout_setup;
-	}
+	if (error == 0)
+		epp->ep_emul = &emul_ibcs2;
 
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
 
 	return error;
-}
-
-void
-cpu_exec_ibcs2_xout_setup(cmd, p, epp, sp)
-	int cmd;
-        struct proc *p;
-        struct exec_package *epp;
-	void *sp;
-{
-
 }
 
 /*
