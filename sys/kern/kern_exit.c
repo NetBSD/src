@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.131 2004/01/02 18:52:17 cl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.132 2004/01/03 19:43:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.131 2004/01/02 18:52:17 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.132 2004/01/03 19:43:55 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -131,7 +131,7 @@ static void lwp_exit_hook(struct lwp *, void *);
 static void exit_psignal(struct proc *, struct proc *);
 
 /*
- * Fill in the appropriate signal information, and kill the parent.
+ * Fill in the appropriate signal information, and signal the parent.
  */
 static void
 exit_psignal(struct proc *p, struct proc *pp)
@@ -339,9 +339,9 @@ exit1(struct lwp *l, int rv)
 	 * Give orphaned children to init(8).
 	 */
 	q = LIST_FIRST(&p->p_children);
-	if (q)		/* only need this if any child is S_ZOMB */
+	if (q)		/* only need this if any child is SZOMB */
 		wakeup(initproc);
-	for (; q != 0; q = nq) {
+	for (; q != NULL; q = nq) {
 		nq = LIST_NEXT(q, p_sibling);
 
 		/*
