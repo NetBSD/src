@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.21 1997/09/20 06:16:31 lukem Exp $	*/
+/*	$NetBSD: pass2.c,v 1.22 1997/09/21 03:06:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.21 1997/09/20 06:16:31 lukem Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.22 1997/09/21 03:06:47 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,6 @@ pass2()
 	default:
 		errx(EEXIT, "BAD STATE %d FOR ROOT INODE", statemap[ROOTINO]);
 	}
-	statemap[ROOTINO] = DFOUND;
 	if (newinofmt) {
 		statemap[WINO] = FSTATE;
 		typemap[WINO] = DT_WHT;
@@ -178,9 +177,6 @@ pass2()
 		inp = *inpp;
 		if (inp->i_parent == 0 || inp->i_isize == 0)
 			continue;
-		if (statemap[inp->i_parent] == DFOUND &&
-		    statemap[inp->i_number] == DSTATE)
-			statemap[inp->i_number] = DFOUND;
 		if (inp->i_dotdot == inp->i_parent ||
 		    inp->i_dotdot == (ino_t)-1)
 			continue;
@@ -421,10 +417,6 @@ again:
 			goto again;
 
 		case DSTATE:
-			if (statemap[idesc->id_number] == DFOUND)
-				statemap[dirp->d_ino] = DFOUND;
-			/* fall through */
-
 		case DFOUND:
 			inp = getinoinfo(dirp->d_ino);
 			if (inp->i_parent != 0 && idesc->id_entryno > 2) {
