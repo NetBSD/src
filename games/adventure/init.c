@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.9 1998/08/24 22:07:37 hubertf Exp $	*/
+/*	$NetBSD: init.c,v 1.10 1998/08/29 20:19:56 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.9 1998/08/24 22:07:37 hubertf Exp $");
+__RCSID("$NetBSD: init.c,v 1.10 1998/08/29 20:19:56 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,7 +219,7 @@ void
 trapdel(n)			/* come here if he hits a del */
 	int     n;
 {
-	delhit++;		/* main checks, treats as QUIT */
+	delhit = 1;		/* main checks, treats as QUIT */
 	signal(SIGINT, trapdel);/* catch subsequent DELs */
 }
 
