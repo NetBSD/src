@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.6 1997/10/18 11:05:45 lukem Exp $	*/
+/*	$NetBSD: perform.c,v 1.6.2.1 1998/08/29 03:34:26 mellon Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.6 1997/10/18 11:05:45 lukem Exp $");
+__RCSID("$NetBSD: perform.c,v 1.6.2.1 1998/08/29 03:34:26 mellon Exp $");
 #endif
 #endif
 
@@ -87,6 +87,22 @@ pkg_perform(char **pkgs)
 		if (Verbose && !PlistOnly)
 		    printf(" %s", cp);
 	    }
+	}
+	if (Verbose && !PlistOnly)
+	    printf(".\n");
+    }
+
+    /* Put the conflicts directly after the dependencies, if any */
+    if (Pkgcfl) {
+	if (Verbose && !PlistOnly)
+	    printf("Registering conflicts:");
+	while (Pkgcfl) {
+	   cp = strsep(&Pkgcfl, " \t\n");
+	   if (*cp) {
+		add_plist(&plist, PLIST_PKGCFL, cp);
+		if (Verbose && !PlistOnly)
+		    printf(" %s", cp);
+	   }
 	}
 	if (Verbose && !PlistOnly)
 	    printf(".\n");
@@ -298,6 +314,20 @@ sanity_check()
 void
 cleanup(int sig)
 {
-    leave_playpen(home);
-    exit(1);
+    static int	alreadyCleaning;
+    void (*oldint)(int);
+    void (*oldhup)(int);
+    oldint = signal(SIGINT, SIG_IGN);
+    oldhup = signal(SIGHUP, SIG_IGN);
+
+    if (!alreadyCleaning) {
+    	alreadyCleaning = 1;
+	if (sig)
+	    printf("Signal %d received, cleaning up.\n", sig);
+	leave_playpen(home);
+	if (sig)
+	    exit(1);
+    }
+    signal(SIGINT, oldint);
+    signal(SIGHUP, oldhup);
 }
