@@ -1,4 +1,4 @@
-/*	$NetBSD: psychoreg.h,v 1.6 2000/07/14 15:09:51 pk Exp $ */
+/*	$NetBSD: psychoreg.h,v 1.7 2001/07/20 00:07:13 eeh Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Eduardo E. Horvath
@@ -228,8 +228,8 @@ struct psychoreg {
 	 * 1ff.0000.0000 - 1ff.7fff.ffff	PCI A memory space
 	 * 1ff.8000.0000 - 1ff.ffff.ffff	PCI B memory space
 	 *
-	 * NB: config and I/O space can use 1-4 byte accesses, not 8 byte accesses.
-	 * Memory space can use any sized accesses.
+	 * NB: config and I/O space can use 1-4 byte accesses, not 8 byte
+	 * accesses.  Memory space can use any sized accesses.
 	 *
 	 * Note that the SUNW,sabre/SUNW,simba combinations found on the
 	 * Ultra5 and Ultra10 machines uses slightly differrent addresses
@@ -255,7 +255,7 @@ struct psychoreg {
 	 * 1fe.0100.0800 - 1fe.0100.08ff	PCI B configuration header
 	 * 1fe.0100.0900 - 1fe.0100.09ff	PCI A configuration header
 	 * 1fe.0200.0000 - 1fe.02ff.ffff	PCI I/O space (divided)
-	 * 1ff.0000.0000 - 1ff.ffff.ffff	PCI memory space (divided)
+	 * 1ff.0000.0000 - 1ff.ffff.ffff	PCI memory space (divided) 
 	 */
 };
 
