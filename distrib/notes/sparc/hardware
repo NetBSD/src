@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.30 2004/05/23 17:23:33 mbw Exp $
+.\"	$NetBSD: hardware,v 1.31 2004/06/10 07:29:42 mbw Exp $
 .
 .Pp
 The minimum configuration requires 4 MB of RAM and 60 MB of disk space.
@@ -266,6 +266,8 @@ Sbus card
 ethernet.
 .br
 On-board (JavaStation-NC) and Sbus card
+.br
+This hardware is not supported on the sun4c platform
 .It
 .Em ie ;
 10 Mbps Intel 82586 ethernet.
