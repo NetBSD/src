@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.96 2003/09/24 10:44:44 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.97 2003/11/08 04:22:35 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -80,7 +80,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.96 2003/09/24 10:44:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.97 2003/11/08 04:22:35 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,10 +382,10 @@ bwrite(bp)
 			mp->mnt_stat.f_asyncwrites++;
 	}
 
-	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
-
 	s = splbio();
 	simple_lock(&bp->b_interlock);
+
+	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
 
 	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
 
@@ -449,8 +449,6 @@ bdwrite(bp)
 	const struct bdevsw *bdev;
 	int s;
 
-	KASSERT(ISSET(bp->b_flags, B_BUSY));
-
 	/* If this is a tape block, write the block now. */
 	bdev = bdevsw_lookup(bp->b_dev);
 	if (bdev != NULL && bdev->d_type == D_TAPE) {
@@ -466,6 +464,8 @@ bdwrite(bp)
 	 */
 	s = splbio();
 	simple_lock(&bp->b_interlock);
+
+	KASSERT(ISSET(bp->b_flags, B_BUSY));
 
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
@@ -490,10 +490,11 @@ bawrite(bp)
 {
 	int s;
 
-	KASSERT(ISSET(bp->b_flags, B_BUSY));
-
 	s = splbio();
 	simple_lock(&bp->b_interlock);
+
+	KASSERT(ISSET(bp->b_flags, B_BUSY));
+
 	SET(bp->b_flags, B_ASYNC);
 	simple_unlock(&bp->b_interlock);
 	splx(s);
@@ -512,8 +513,8 @@ bdirty(bp)
 	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
 	struct proc *p = l->l_proc;
 
-	KASSERT(ISSET(bp->b_flags, B_BUSY));
 	LOCK_ASSERT(simple_lock_held(&bp->b_interlock));
+	KASSERT(ISSET(bp->b_flags, B_BUSY));
 
 	CLR(bp->b_flags, B_AGE);
 
@@ -535,13 +536,13 @@ brelse(bp)
 	struct bqueues *bufq;
 	int s;
 
-	KASSERT(ISSET(bp->b_flags, B_BUSY));
-	KASSERT(!ISSET(bp->b_flags, B_CALL));
-
 	/* Block disk interrupts. */
 	s = splbio();
 	simple_lock(&bqueue_slock);
 	simple_lock(&bp->b_interlock);
+
+	KASSERT(ISSET(bp->b_flags, B_BUSY));
+	KASSERT(!ISSET(bp->b_flags, B_CALL));
 
 	/* Wake up any processes waiting for any buffer to become free. */
 	if (needbuffer) {
