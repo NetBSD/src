@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.59 2002/09/28 20:56:05 martin Exp $	*/
+/*	$NetBSD: iommu.c,v 1.60 2002/10/13 20:17:55 petrov Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -909,41 +909,79 @@ iommu_dvmamap_sync(t, sb, map, offset, len, ops)
 	struct iommu_state *is = sb->sb_is;
 	vaddr_t va = map->dm_segs[0].ds_addr + offset;
 	int64_t tte;
+	vaddr_t vaend;
 
 	/*
 	 * We only support one DMA segment; supporting more makes this code
 	 * too unwieldy.
 	 */
-
-	DPRINTF(IDB_SYNC,
-	    ("iommu_dvmamap_sync: syncing va %p len %lu "
-	     "ops 0x%x\n", (void *)(u_long)va, (u_long)len, ops));
-	if (ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTWRITE)) {
-		/* Nothing to do */
-		return;
-	}
 #ifdef DIAGNOSTIC
-	if (va < is->is_dvmabase || va >= is->is_dvmaend)
-		panic("iommu_dvmamap_sync: invalid dva %lx", va);
+	if (map->dm_nsegs > 1)
+		panic("iommu_dvmamap_sync: %d segments", map->dm_nsegs);
 #endif
-	KASSERT((ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_PREWRITE)) != 0);
-	tte = is->is_tsb[IOTSBSLOT(va, is->is_tsbsize)];
 
-	/* if we have a streaming buffer, flush it here first */
-	if ((tte & IOTTE_STREAM) == 0 || !sb->sb_flush)
-		return;
+	if (ops & BUS_DMASYNC_PREREAD) {
+		DPRINTF(IDB_SYNC,
+		    ("iommu_dvmamap_sync: syncing va %p len %lu "
+		     "BUS_DMASYNC_PREREAD\n", (void *)(u_long)va, (u_long)len));
 
-	while (len > 0) {
-		DPRINTF(IDB_BUSDMA,
-		    ("iommu_dvmamap_sync: flushing va %p, %lu "
-		     "bytes left\n", (void *)(u_long)va, (u_long)len));
-		iommu_strbuf_flush(sb, va);
-		if (len <= NBPG) {
+		/* Nothing to do */;
+	}
+	if (ops & BUS_DMASYNC_POSTREAD) {
+#ifdef DIAGNOSTIC
+		if (va < is->is_dvmabase || va >= is->is_dvmaend)
+			panic("iommu_dvmamap_sync: invalid dva %lx", va);
+#endif
+		tte = is->is_tsb[IOTSBSLOT(va, is->is_tsbsize)];
+
+		DPRINTF(IDB_SYNC,
+		    ("iommu_dvmamap_sync: syncing va %p len %lu "
+		     "BUS_DMASYNC_POSTREAD\n", (void *)(u_long)va, (u_long)len));
+
+		/* if we have a streaming buffer, flush it here first */
+		if ((tte & IOTTE_STREAM) && sb->sb_flush) {
+			vaend = (va + len + PGOFSET) & ~PGOFSET;
+
+			for (va &= ~PGOFSET; va <= vaend; va += NBPG) {
+				DPRINTF(IDB_BUSDMA,
+					("iommu_dvmamap_sync: flushing va %p\n",
+					 (void *)(u_long)va));
+				iommu_strbuf_flush(sb, va);
+			}
+
 			iommu_strbuf_flush_done(sb);
-			len = 0;
-		} else
-			len -= NBPG;
-		va += NBPG;
+		}
+	}
+	if (ops & BUS_DMASYNC_PREWRITE) {
+#ifdef DIAGNOSTIC
+		if (va < is->is_dvmabase || va >= is->is_dvmaend)
+			panic("iommu_dvmamap_sync: invalid dva %lx", va);
+#endif
+		tte = is->is_tsb[IOTSBSLOT(va, is->is_tsbsize)];
+
+		DPRINTF(IDB_SYNC,
+		    ("iommu_dvmamap_sync: syncing va %p len %lu "
+		     "BUS_DMASYNC_PREWRITE\n", (void *)(u_long)va, (u_long)len));
+
+		/* if we have a streaming buffer, flush it here first */
+		if ((tte & IOTTE_STREAM) && sb->sb_flush) {
+			vaend = (va + len + PGOFSET) & ~PGOFSET;
+
+			for (va &= ~PGOFSET; va <= vaend; va += NBPG) {
+				DPRINTF(IDB_BUSDMA,
+					("iommu_dvmamap_sync: flushing va %p\n",
+					 (void *)(u_long)va));
+				iommu_strbuf_flush(sb, va);
+			}
+
+			iommu_strbuf_flush_done(sb);
+		}
+	}
+	if (ops & BUS_DMASYNC_POSTWRITE) {
+		DPRINTF(IDB_SYNC,
+		    ("iommu_dvmamap_sync: syncing va %p len %lu "
+		     "BUS_DMASYNC_POSTWRITE\n", (void *)(u_long)va, (u_long)len));
+		/* Nothing to do */;
 	}
 }
 
