@@ -1,7 +1,14 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.42 1997/08/28 18:18:17 mycroft Exp $
+#	$NetBSD: netstart,v 1.43 1997/08/29 02:24:04 cjs Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
+
+if [ -f /etc/rc.func ]; then
+	. /etc/rc.func
+else
+	echo "Can't read /etc/rc.func; aborting."
+	exit 1;
+fi
 
 if [ -f /etc/rc.conf ]; then
 	. /etc/rc.conf
@@ -31,9 +38,16 @@ if [ "$flushroutes" = YES ]; then
 fi
 
 # Enable, flush and install packet filter rules before configuring interfaces.
-if [ "$ipfilter" != NO ] && [ -f /etc/ipf.conf ]; then
-	echo 'installing packet filter rules ... '
-	ipf -E -Fa -f /etc/ipf.conf
+if checkyesno ipfilter; then
+	if [ -f /etc/ipf.conf ]; then
+		echo 'installing packet filter rules ... '
+		ipf -E -Fa -f /etc/ipf.conf
+	else
+		logger -s "WARNING: /etc/ipf.conf not readable " \
+		    "ipfilter not started."
+		# abort the boot rather than risk a security problem
+		exit 1;
+	fi
 fi
 
 # Set the address for the first loopback interface, so that the auto-route
@@ -57,7 +71,7 @@ ifconfig lo0 inet localhost
 # see the ifconfig manual page for details.
 
 if [ "$net_interfaces" != NO ]; then
-	if [ "$net_interfaces" = DEFAULT ]; then
+	if checkyesno auto_ifconfig; then
 		tmp="`ifconfig -l`"
 	else
 		tmp="$net_interfaces"
@@ -74,11 +88,11 @@ if [ "$net_interfaces" != NO ]; then
 				ifconfig $int $args
 			done) < /etc/ifconfig.$int
 		else
-			if [ "$net_interfaces" != DEFAULT ]; then
+			if [ "$auto_ifconfig" != YES ]; then
 				echo
-				echo -n "/etc/ifconfig.$int missing"
-				echo -n "& ifconfig_$int not set"
-				echo "; interface $int can't be configured"
+				echo "WARNING: /etc/ifconfig.$int missing " \
+				    "and ifconfig_$int not set; " \
+				    "interface $int not configured."
 			fi
 			continue
 		fi
