@@ -1,4 +1,4 @@
-/*	$NetBSD: humanize_number.c,v 1.3 2002/09/27 18:37:45 drochner Exp $	*/
+/*	$NetBSD: humanize_number.c,v 1.4 2002/11/11 18:00:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2002\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: humanize_number.c,v 1.3 2002/09/27 18:37:45 drochner Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.4 2002/11/11 18:00:43 thorpej Exp $");
 #endif /* !__lint */
 
 #include <assert.h>
@@ -62,6 +62,7 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(suffix != NULL);
+	_DIAGASSERT(scale >= 0);
 
 	if (flags & HN_DIVISOR_1000) {
 		/* SI for decimal multiplies */
@@ -76,7 +77,7 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 		prefixes = " KMGTPE";
 	}
 
-	if (scale >= strlen(prefixes) && scale != HN_AUTOSCALE &&
+	if ((size_t) scale >= strlen(prefixes) && scale != HN_AUTOSCALE &&
 	    scale != HN_GETSCALE)
 		return (-1);
 
@@ -107,8 +108,9 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 		divisor = 1024;
 
 	max = 100;
-	for (i = 0; i < len - suffixlen - baselen + ((flags & HN_NOSPACE) ?
-	    1 : 0); i++)
+	for (i = 0;
+	     (size_t) i < len - suffixlen - baselen + ((flags & HN_NOSPACE) ?
+	     1 : 0); i++)
 		max *= 10;
 
 	if ((scale & HN_AUTOSCALE) || (scale & HN_GETSCALE)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: linkaddr.c,v 1.11 1999/09/20 04:39:15 lukem Exp $	*/
+/*	$NetBSD: linkaddr.c,v 1.12 2002/11/11 18:07:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)linkaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: linkaddr.c,v 1.11 1999/09/20 04:39:15 lukem Exp $");
+__RCSID("$NetBSD: linkaddr.c,v 1.12 2002/11/11 18:07:52 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -128,7 +128,7 @@ link_addr(addr, sdl)
 	} while (cp < cplim); 
 	sdl->sdl_alen = cp - LLADDR(sdl);
 	newaddr = cp - (char *)(void *)sdl;
-	if (newaddr > sizeof(*sdl))
+	if ((size_t) newaddr > sizeof(*sdl))
 		sdl->sdl_len = newaddr;
 	return;
 }

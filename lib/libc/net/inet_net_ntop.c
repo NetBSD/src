@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_ntop.c,v 1.17 2002/08/16 12:23:20 itojun Exp $	*/
+/*	$NetBSD: inet_net_ntop.c,v 1.18 2002/11/11 18:02:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_ntop.c,v 1.8 2001/09/27 15:08:36 marka Exp ";
 #else
-__RCSID("$NetBSD: inet_net_ntop.c,v 1.17 2002/08/16 12:23:20 itojun Exp $");
+__RCSID("$NetBSD: inet_net_ntop.c,v 1.18 2002/11/11 18:02:14 thorpej Exp $");
 #endif
 #endif
 
@@ -107,7 +107,7 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 		return (NULL);
 	}
 	if (bits == 0) {
-		if (ep - dst < sizeof "0")
+		if ((size_t) (ep - dst) < sizeof "0")
 			goto emsgsize;
 		*dst++ = '0';
 		*dst = '\0';
@@ -115,7 +115,7 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 
 	/* Format whole octets. */
 	for (b = bits / 8; b > 0; b--) {
-		if (ep - dst <= sizeof "255.")
+		if ((size_t) (ep - dst) <= sizeof "255.")
 			goto emsgsize;
 		advance = snprintf(dst, (size_t)(ep - dst), "%u", *src++);
 		if (advance <= 0 || advance >= ep - dst)
@@ -132,7 +132,7 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 	/* Format partial octet. */
 	b = bits % 8;
 	if (b > 0) {
-		if (ep - dst <= sizeof ".255")
+		if ((size_t) (ep - dst) <= sizeof ".255")
 			goto emsgsize;
 		if (dst != odst) {
 			if (dst + 1 >= ep)
@@ -147,7 +147,7 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 	}
 
 	/* Format CIDR /width. */
-	if (ep - dst <= sizeof "/32")
+	if ((size_t) (ep - dst) <= sizeof "/32")
 		goto emsgsize;
 	advance = snprintf(dst, (size_t)(ep - dst), "/%u", bits);
 	if (advance <= 0 || advance >= ep - dst)

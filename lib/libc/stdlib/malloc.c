@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.38 2001/05/06 04:48:41 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.39 2002/11/11 18:09:29 thorpej Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -134,7 +134,7 @@ struct pgfree {
  * How many bits per u_int in the bitmap.
  * Change only if not 8 bits/byte
  */
-#define	MALLOC_BITS	(8*sizeof(u_int))
+#define	MALLOC_BITS	((int)(8*sizeof(u_int)))
 
 /*
  * Magic values to put in the page_directory

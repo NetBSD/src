@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.16 2000/02/07 18:51:02 itojun Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.17 2002/11/11 18:04:18 thorpej Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_pton.c,v 1.16 2000/02/07 18:51:02 itojun Exp $");
+__RCSID("$NetBSD: inet_pton.c,v 1.17 2002/11/11 18:04:18 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -103,8 +103,8 @@ inet_pton4(src, dst, pton)
 	int pton;
 {
 	u_int32_t val;
-	u_int digit;
-	int base, n;
+	u_int digit, base;
+	int n;
 	unsigned char c;
 	u_int parts[4];
 	register u_int *pp = parts;
