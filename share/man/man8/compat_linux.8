@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.27 2003/01/08 17:34:15 jmmv Exp $
+.\"	$NetBSD: compat_linux.8,v 1.28 2003/01/08 17:36:56 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -346,7 +346,9 @@ Some Linux binaries expect procfs to be mounted and that it would
 contain some Linux specific stuff. If it's not the case, they behave
 unexpectedly or even crash.
 .Pp
-Mount procfs on NetBSD using following command:
+Mount procfs on
+.Nx
+using following command:
 .Bl -tag -width 123 -offset indent
 .It (me@netbsd) mount_procfs -o linux procfs /emul/linux/proc
 .El
