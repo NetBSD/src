@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.149 2004/04/15 08:04:47 msaitoh Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.150 2004/04/20 20:32:01 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2601,3 +2601,18 @@ lib/libc/net/gethnamaddr.c			1.58
 	region' is normal case.  If the parser wants something more, there
 	should be another bounds check for it.
 	[itojun, ticket #141]
+
+sys/netinet/in_proto.c				patch
+sys/netinet/tcp_input.c				patch
+sys/netinet/tcp_var.h				patch
+
+	If a segment is received with RST set and the segment is completely to
+	the left of the receive window, ignore it.  Add some additional
+	comments to the code that deals with received segemnts that are
+	completely to the right of the receive window.  If an invalid SYN is
+	received, force an ACK and drop it; if the other side really sent the
+	SYN; it'll respond with a reset.
+	Respond to RST by ACK, as suggested in NISCC recommendation.
+	Rate-limit ACKs against RSTs and SYNs.
+	If SYN is coming and RCV.NXT == SEG.SEQ, then ACK with value - 1.
+	[itojun, ticket #143]
