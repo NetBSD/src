@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.41 1999/03/28 19:30:07 is Exp $	*/
+/*	$NetBSD: siop.c,v 1.42 1999/09/06 21:50:48 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -56,6 +56,9 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <machine/cpu.h>
+#ifdef __m68k__
+#include <m68k/cacheops.h>
+#endif
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/siopreg.h>
