@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.18 2002/08/13 02:20:06 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.19 2002/08/30 23:58:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.18 2002/08/13 02:20:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.19 2002/08/30 23:58:51 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -609,6 +609,8 @@ awaken(struct lwp *l)
 	 */
 	if (l->l_flag & L_INMEM) {
 		setrunqueue(l);
+		if (l->l_flag & L_SA)
+			l->l_proc->p_sa->sa_woken = l;
 		KASSERT(l->l_cpu != NULL);
 		need_resched(l->l_cpu);
 	} else
