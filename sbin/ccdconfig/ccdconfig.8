@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccdconfig.8,v 1.9 1997/10/11 02:34:02 enami Exp $
+.\"	$NetBSD: ccdconfig.8,v 1.10 1997/11/24 06:27:01 lukem Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -130,13 +130,23 @@ of strings, or the word
 .Dq none .
 The flags are as follows:
 .Bd -unfilled -offset indent
-CCDF_SWAP		0x01		Interleave should be dmmax
-CCDF_UNIFORM	0x02		Use uniform interleave
-CCDF_MIRROR	0x04		Enable data mirroring
+.Bl -column "CCDF_UNIFORM " "0x02 " "Interleave should be dmmax"
+.Em "Symbolic	Numeric	Comment"
+.It CCDF_SWAP	0x01	Interleave should be dmmax
+.It CCDF_UNIFORM	0x02	Use uniform interleave
+.It CCDF_MIRROR	0x04	Enable data mirroring
+.El
 .Ed
-.Pp
-The format in the
-configuration file appears exactly as if it were entered on the command line.
+.Ss /etc/ccd.conf
+The file
+.Pa /etc/ccd.conf
+is used to configure
+.Nm
+if
+.Fl C
+is used.
+The contents of the configuration file appears exactly as if it were
+entered on the command line.
 Note that on the command line and in the configuration file, the
 .Pa flags
 argument is optional.
@@ -167,4 +177,4 @@ interleave factor of 32 blocks.
 The
 .Nm
 command first appeared in
-.Nx 1.0a .
+.Nx 1.1 .
