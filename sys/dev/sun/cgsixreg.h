@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixreg.h,v 1.1 2000/08/20 14:28:50 pk Exp $ */
+/*	$NetBSD: cgsixreg.h,v 1.2 2000/08/26 16:06:22 eeh Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -215,7 +215,7 @@ struct cg6_fbc {
 struct cg6_layout {
 	/* ROM at 0 */
 	union {
-		long un_id;		/* ID = ?? */
+		int un_id;		/* ID = ?? */
 		char un_rom[65536];	/* 64K rom */
 		char un_pad[0x200000];
 	} cg6_rom_un;
