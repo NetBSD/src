@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.133 2004/10/11 06:18:38 martin Exp $
+#	$NetBSD: build.sh,v 1.134 2004/10/13 23:28:34 gavan Exp $
 #
 # Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -147,7 +147,7 @@ getarch()
 	#
 	case "${MACHINE}" in
 
-	acorn26|acorn32|cats|evbarm|hpcarm|netwinder|shark)
+	acorn26|acorn32|cats|evbarm|hpcarm|iyonix|netwinder|shark)
 		MACHINE_ARCH=arm
 		;;
 
@@ -861,7 +861,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.133 2004/10/11 06:18:38 martin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.134 2004/10/13 23:28:34 gavan Exp $
 # with these arguments: ${_args}
 #
 EOF
