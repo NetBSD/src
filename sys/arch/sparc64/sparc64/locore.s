@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.52 2000/04/10 13:34:19 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.53 2000/04/10 16:28:56 mrg Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -3661,7 +3661,7 @@ return_from_syscall:
  * cleaned, trap-level decremented, the handler called, and then
  * the process must be reversed.
  *
- * To simplify life all we do here is issue an appropriate sofint.
+ * To simplify life all we do here is issue an appropriate softint.
  *
  * Note:	It is impossible to identify or change a device's 
  *		interrupt number until it is probed.  That's the
@@ -3720,6 +3720,16 @@ interrupt_vector:
 	ldxa	[%g0] ASI_IRSR, %g1
 	mov	IRDR_0H, %g2
 	ldxa	[%g2] ASI_IRDR, %g2	! Get interrupt number
+#if NOT_DEBUG
+	mov	%g1, %o1
+	mov	%g2, %o2
+	set	7f, %o0
+	GLOBTOLOC
+	clr	%g4
+	call	prom_printf
+	 nop
+	LOCTOGLOB
+#endif
 	btst	IRSR_BUSY, %g1
 	set	_C_LABEL(intrlev), %g3
 	bz,pn	%icc, 3f		! spurious interrupt
@@ -3797,7 +3807,7 @@ setup_sparcintr:
 	sll	%g7, %g6, %g6
 	membar	#Sync			! Should not be needed due to retry
 	wr	%g6, 0, SET_SOFTINT	! Invoke a softint
-2:	
+5:	
 	CLRTT
 	retry
 	NOTREACHED
@@ -3807,48 +3817,32 @@ setup_sparcintr:
 	set	_C_LABEL(intrdebug), %g7
 	ld	[%g7], %g7
 	btst	INTRDEBUG_SPUR, %g7
-	bz,pt	%icc, 2b
+	bz,pt	%icc, 5b
 	 nop
 #ifdef _LP64
 	TO_STACK64(-CC64FSZ)		! Get a clean register window
 #else
 	TO_STACK32(-CC64FSZ)		! Get a clean register window
 #endif
-	set	5f, %o0
-	mov	%g1, %o1
+	set	6f, %o0
+	mov	%g2, %o1
 	GLOBTOLOC
 	clr	%g4
 	call	prom_printf
 	 rdpr	%pil, %o2
 	LOCTOGLOB
-	ba	2b
+	ba	5b
 	 restore
 #endif
-	ba	2b
+	ba	5b
 	 nop
 	
-iv_halt:
-	sir
-	ta	1; nop
-	save	%sp, -CC64FSZ, %sp	! Get a clean register window
-	set	panicstr, %o3
-	sllx	%g2, 32, %o1
-	set	2f, %o0
-	srl	%g2, 0, %o2
-	wrpr	%g0, PSTATE_KERN, %pstate! Switch to normal globals
-	call	prom_printf
-	 st	%o0, [%o3]
-	CHKPT(%o1,%o2,0x33)
-	call	OF_enter
-	 wrpr	%g0, 0, %tl
-	ba	1b
-	 restore
-2:
-	.asciz	"interrupt_vector: received %08x:%08x\r\n"
 4:	.asciz	"interrupt_vector: number %lx softint mask %lx pil %lu\r\n"
-5:	.asciz	"interrupt_vector: spurious vector %lx at pil %d\r\n"
+6:	.asciz	"interrupt_vector: spurious vector %lx at pil %d\r\n"
+#ifdef NOT_DEBUG
+7:	.asciz	"interrupt_vector: ASI_IRSR %lx ASI_IRDR(0x40) %lx\r\n"
+#endif
 	_ALIGN
-3:
 	
 /*
  * Ultra1 and Ultra2 CPUs use soft interrupts for everything.  What we do
