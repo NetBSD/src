@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.75 2001/12/26 17:01:39 abs Exp $	*/
+/*	$NetBSD: inetd.c,v 1.76 2002/01/21 14:42:28 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.75 2001/12/26 17:01:39 abs Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.76 2002/01/21 14:42:28 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1132,7 +1132,7 @@ close_sep(sep)
 	}
 	sep->se_count = 0;
 	/*
-	 * Don't keep the pid of this running deamon: when reapchild()
+	 * Don't keep the pid of this running daemon: when reapchild()
 	 * reaps this pid, it would erroneously increment nsock.
 	 */
 	if (sep->se_wait > 1)
