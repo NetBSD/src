@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.11 2003/04/16 13:35:35 wiz Exp $
+.\"     $NetBSD: vfsops.9,v 1.12 2003/06/30 12:07:19 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -207,7 +207,7 @@ This can be used, for instance, to convert a read-only filesystem to
 read-write.
 If the MNT_UPDATE flag is not specified, then this is a newly
 mounted filesystem.
-.It Fn VFS_START " mp" "flags" "p"
+.It Fn VFS_START "mp" "flags" "p"
 Make the file system specified by the mount structure
 .Fa mp
 operational.
