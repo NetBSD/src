@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.8 2004/10/29 12:57:16 yamt Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.8.2.1 2005/01/03 16:44:18 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.8 2004/10/29 12:57:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vraiu.c,v 1.8.2.1 2005/01/03 16:44:18 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,8 @@ int vraiu_getdev(void *, struct audio_device *);
 int vraiu_set_port(void *, mixer_ctrl_t *);
 int vraiu_get_port(void *, mixer_ctrl_t *);
 int vraiu_query_devinfo(void *, mixer_devinfo_t *);
-int vraiu_set_params(void *, int, int, struct audio_params *,
-		     struct audio_params *);
+int vraiu_set_params(void *, int, int, audio_params_t *, audio_params_t *,
+		     stream_filter_list_t *, stream_filter_list_t *);
 int vraiu_get_props(void *);
 
 const struct audio_hw_if vraiu_hw_if = {
@@ -367,11 +367,12 @@ vraiu_query_encoding(void *self, struct audio_encoding *ae)
 
 int
 vraiu_set_params(void *self, int setmode, int usemode,
-		 struct audio_params *play, struct audio_params *rec)
+		 audio_params_t *play, audio_params_t *rec,
+		 stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	struct vraiu_softc *sc = (void*)self;
 
-	DPRINTFN(1, ("vraiu_set_params: %dbit, %dch, %ldHz, encoding %d\n",
+	DPRINTFN(1, ("vraiu_set_params: %ubit, %uch, %uHz, encoding %u\n",
 		     play->precision, play->channels, play->sample_rate,
 		     play->encoding));
 
