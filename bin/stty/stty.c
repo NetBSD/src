@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)stty.c	5.28 (Berkeley) 6/5/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/stty/stty.c,v 1.3 1993/03/23 00:30:29 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/stty/stty.c,v 1.4 1993/04/19 11:35:37 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,8 +67,9 @@ main(argc, argv)
 	i.fd = STDIN_FILENO;
 
 	opterr = 0;
-	while (strspn(argv[optind], "-aefg") == strlen(argv[optind]) &&
-	    (ch = getopt(argc, argv, "aef:g")) != EOF)
+	while (argv[optind] &&
+	       strspn(argv[optind], "-aefg") == strlen(argv[optind]) &&
+	       (ch = getopt(argc, argv, "aef:g")) != EOF)
 		switch(ch) {
 		case 'a':		/* undocumented: POSIX compatibility */
 			fmt = POSIX;
