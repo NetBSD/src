@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.65 2001/01/15 21:02:58 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.66 2001/07/14 06:53:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.65 2001/01/15 21:02:58 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.66 2001/07/14 06:53:44 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -381,7 +381,7 @@ state(k, ve, mode)
 
 	case SSLEEP:
 		if (flag & P_SINTR)	/* interuptable (long) */
-			*cp = k->p_slptime >= MAXSLP ? 'I' : 'S';
+			*cp = k->p_slptime >= maxslp ? 'I' : 'S';
 		else
 			*cp = 'D';
 		break;
@@ -819,7 +819,7 @@ getpmem(k)
 	if ((k->p_flag & P_INMEM) == 0)
 		return (0.0);
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
-	szptudot = USPACE/getpagesize();
+	szptudot = uspace/getpagesize();
 	/* XXX don't have info about shared */
 	fracmem = ((float)k->p_vm_rssize + szptudot)/mempages;
 	return (100.0 * fracmem);
