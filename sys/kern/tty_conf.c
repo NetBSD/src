@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.21 1998/03/22 00:55:38 mycroft Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.22 1998/06/25 22:50:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)tty_conf.c	8.5 (Berkeley) 1/9/95
  */
+
+#include "opt_compat_freebsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
