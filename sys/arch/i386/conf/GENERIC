@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.270 1999/11/05 21:36:21 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.271 1999/11/06 16:23:49 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -139,7 +139,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 
-options 	NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 #
 # wscons options
