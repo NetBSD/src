@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.38 1997/02/19 16:02:59 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.39 1997/05/13 17:16:28 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -39,12 +39,25 @@
 
 /*
  * This program is designed so that it can be both:
- * (1) Run on the native machine and generated output
- * (2) Converted to assembly and parsed by genassym.awk
- *     to produce the same output as (1) does.
+ * (1) Run on the native machine to generate assym.h
+ * (2) Converted to assembly that genassym.awk will
+ *     translate into the same assym.h as (1) does.
  * The second method is done as follows:
  *   m68k-xxx-gcc [options] -S .../genassym.c
  *   awk -f genassym.awk < genassym.s > assym.h
+ *
+ * Using actual C code here (instead of genassym.cf)
+ * has the advantage that "make depend" automatically
+ * tracks dependencies of this C code on the (many)
+ * header files used here.  Also, the awk script used
+ * to convert the assembly output to assym.h is much
+ * smaller and simpler than sys/kern/genassym.sh.
+ *
+ * Both this method and the genassym.cf method have the
+ * disadvantage that they depend on gcc-specific features.
+ * This method depends on the format of assembly output for
+ * data, and the genassym.cf method depends on features of
+ * the gcc asm() statement (inline assembly).
  */
 
 #include <sys/param.h>
@@ -160,8 +173,8 @@ struct nv assyms[] = {
 
 	/* XXX: HP-UX trace bit? */
 
-	/* VM structure fields */
-	def("VM_PMAP", offsetof(struct vmspace, vm_pmap)),
+	/* VM/pmap structure fields */
+	def("VM_PMAP", offsetof(struct vmspace, vm_map.pmap)),
 	def("PM_CTXNUM", offsetof(struct pmap, pm_ctxnum)),
 
 	/* pcb offsets */
