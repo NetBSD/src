@@ -1,6 +1,14 @@
 ?	abort key for run
 	Make F6 work
 	commmandline switches for log/script
-	Something should indicate when scripting is on. bottom menu.
-	F8 Image -> Screenshot
+	F8 label: Image -> Screenshot
+----
+Menu ideas:
 
+/etc/ttys
+/etc/fstab
+/etc/ntp.conf
+setup amd
+hosts.{deny,allow}
+bulk pkgadd
+/etc/ftpusers
