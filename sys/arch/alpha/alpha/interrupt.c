@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.21 1997/09/23 23:15:50 mjacob Exp $ */
+/* $NetBSD: interrupt.c,v 1.22 1997/11/19 15:35:36 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,12 +27,14 @@
  * rights to redistribute these changes.
  */
 /*
- * Additional Copyright (c) 1997 by Matthew Jacob for NASA/Ames Research Center
+ * Additional Copyright (c) 1997 by Matthew Jacob for NASA/Ames Research Center.
+ * Redistribute and modify at will, leaving only this additional copyright
+ * notice.
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.21 1997/09/23 23:15:50 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.22 1997/11/19 15:35:36 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
