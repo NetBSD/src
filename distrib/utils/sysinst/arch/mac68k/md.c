@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.19 2001/01/14 02:38:19 mrg Exp $ */
+/*	$NetBSD: md.c,v 1.20 2001/07/14 07:57:16 scottr Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -683,7 +683,29 @@ md_pre_disklabel()
     }
     /*
      * Well, if we get here the dirty deed has been done.
+     *
+     * Now we need to force the incore disk table to get updated. This
+     * should be done by disklabel -- which is normally called right after
+     * we return -- but may be commented out for the mac68k port. We'll
+     * instead update the incore table by forcing a dummy write here. This
+     * relies on a change in the mac68k-specific writedisklabel() routine.
+     * If that change doesn't exist nothing bad happens here. If disklabel
+     * properly updates the ondisk and incore labels everything still
+     * works. Only if we fail here and if disklabel fails are we in
+     * in a state where we've updated the disk but not the incore and
+     * a reboot is necessary.
+     *
+     * First, we grab a copy of the incore label as it existed before
+     * we did anything to it. Then we invoke the "write label" ioctl to
+     * rewrite it to disk. As a result, the ondisk partition map is
+     * re-read and the incore label is reconstructed from it. If
+     * disklabel() is then called to update again, either that fails
+     * because the mac68k port doesn't support native disklabels, or it
+     * succeeds and writes out a new ondisk copy.
      */
+    ioctl(fd, DIOCGDINFO, &lp);    /* Get the current disk label */
+    ioctl(fd, DIOCWDINFO, &lp);    /* Write it out again */
+
     close (fd);
     return 0;
 }
