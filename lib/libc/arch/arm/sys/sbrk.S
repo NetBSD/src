@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.2 2001/01/09 19:47:28 bjh21 Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.3 2001/05/05 17:53:59 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include "SYS.h"
 
-	.globl	_C_LABEL(end)
+	.globl	_end
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(sbrk, _sbrk)
@@ -48,7 +48,7 @@ WEAK_ALIAS(sbrk, _sbrk)
 	.globl	curbrk
 	.type	curbrk,#object
 curbrk:
-	.word	_C_LABEL(end)
+	.word	_end
 
 /*
  * Change the data segment size
