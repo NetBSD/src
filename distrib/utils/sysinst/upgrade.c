@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.36 2003/07/07 12:30:22 dsl Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.37 2003/07/08 16:12:18 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -97,7 +97,7 @@ do_upgrade(void)
 	 * Move target /etc -> target /etc.old so existing configuration
 	 * isn't overwritten by upgrade.
 	 */
-	if (save_etc()) {
+	if (sets_selected & SET_ETC && save_etc()) {
 		merge_X();
 		return;
 	}
@@ -119,7 +119,8 @@ do_upgrade(void)
 		return;
 
 	/* Copy back any files we should restore after the upgrade.*/
-	merge_etc();
+	if (sets_selected & SET_ETC)
+		merge_etc();
 	merge_X();
 
 	sanity_check();
