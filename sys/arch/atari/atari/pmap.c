@@ -1733,7 +1733,7 @@ pmap_activate(l)
 		printf("pmap_activate(%p)\n", l);
 #endif
 
-	PMAP_ACTIVATE(pmap, l == curproc);
+	PMAP_ACTIVATE(pmap, curproc == NULL || l->l_proc == curproc->l_proc);
 }
 
 /*
