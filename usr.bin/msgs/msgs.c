@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)msgs.c	5.8 (Berkeley) 2/4/91";*/
-static char rcsid[] = "$Id: msgs.c,v 1.2 1993/08/01 18:10:58 mycroft Exp $";
+static char rcsid[] = "$Id: msgs.c,v 1.3 1993/10/26 18:24:02 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -399,7 +399,7 @@ int argc; char *argv[];
 	}
 	else
 		newrc = YES;
-	msgsrc = fopen(fname, "a");
+	msgsrc = fopen(fname, "w");
 	if (msgsrc == NULL) {
 		perror(fname);
 		exit(errno);
