@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.27 2000/12/22 22:59:01 jdolecek Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.28 2001/01/14 22:32:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -85,6 +85,15 @@ struct	sigctx {
  */
 #define SIGACTION(p, sig)	(p->p_sigacts->sa_sigact[(sig)])
 #define	SIGACTION_PS(ps, sig)	(ps->sa_sigact[(sig)])
+
+/*
+ * Mark that signals for a process need to be checked.
+ */
+#define	CHECKSIGS(p)							\
+do {									\
+	(p)->p_sigctx.ps_sigcheck = 1;					\
+	signotify(p);							\
+} while (0)
 
 /*
  * Determine signal that should be delivered to process p, the current
