@@ -1,7 +1,7 @@
 #
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.5 1995/08/19 17:28:25 chopps Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1995/10/09 02:25:41 chopps Exp $
 
 .ifdef DESTDIR
 snap_md: netbsd-generic

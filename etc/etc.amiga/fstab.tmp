@@ -1,3 +1,6 @@
+#
+#	$NetBSD: fstab.tmp,v 1.8 1995/10/09 02:25:44 chopps Exp $
+#
 #	fast file system on / root partition (NBR\7) lowest scsi disk unit
 /dev/sd0a	/	ffs	rw		1	1
 #	fast file system on /usr (NBU\7) next to lowest scsi disk unit
