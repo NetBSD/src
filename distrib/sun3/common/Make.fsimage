@@ -1,5 +1,5 @@
 #
-#	$NetBSD: Make.fsimage,v 1.3 1997/12/12 22:39:00 gwr Exp $
+#	$NetBSD: Make.fsimage,v 1.4 1999/03/04 20:32:20 wrstuden Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
@@ -25,7 +25,7 @@ NBLKS?=		512
 NEWFSARGS?= -O -m 0 -o space
 
 do_mount:
-	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
+	-newfs -B be ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
 	mount ${BDEV} ${MOUNT_POINT}
 
 do_files:
