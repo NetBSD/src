@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.141 1996/01/07 02:04:31 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.142 1996/01/07 03:59:28 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -1528,7 +1528,7 @@ ENTRY(cpu_switch)
 	movl	$0,_curproc
 
 	movl	$0,_cpl			# spl0()
-	call	_spllower		# process pending interrupts
+	call	_Xspllower		# process pending interrupts
 
 switch_search:
 	/*
