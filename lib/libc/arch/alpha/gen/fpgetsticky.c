@@ -1,4 +1,4 @@
-/* $NetBSD: fpgetsticky.c,v 1.5 2001/04/26 03:21:39 ross Exp $ */
+/* $NetBSD: fpgetsticky.c,v 1.6 2002/01/13 21:45:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -33,8 +33,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
+#include "namespace.h"
+
 #include <ieeefp.h>
 #include <machine/sysarch.h>
+
+#ifdef __weak_alias
+__weak_alias(fpgetsticky,_fpgetsticky)
+#endif
 
 fp_except
 fpgetsticky(void)

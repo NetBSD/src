@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.67 2001/09/19 21:38:21 aymeric Exp $	*/
+/*	$NetBSD: namespace.h,v 1.68 2002/01/13 21:45:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -191,6 +191,12 @@
 #define fdopen			_fdopen
 #define fgetln			_fgetln
 #define fnmatch			_fnmatch
+#define fpgetmask		_fpgetmask
+#define fpgetround		_fpgetround
+#define fpgetsticky		_fpgetsticky
+#define fpsetmask		_fpsetmask
+#define fpsetround		_fpsetround
+#define fpsetsticky		_fpsetsticky
 #define freenetconfigent	_freenetconfigent
 #define freeaddrinfo		_freeaddrinfo
 #define freeifaddrs		_freeifaddrs
@@ -611,6 +617,6 @@
 #define dlerror			__dlerror
 #define dladdr			__dladdr
 #define fmtcheck		__fmtcheck
-#endif
+#endif /* __weak_alias */
 
-#endif
+#endif /* _NAMESPACE_H_ */

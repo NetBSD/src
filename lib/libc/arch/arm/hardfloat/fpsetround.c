@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetround.c,v 1.1 2000/12/29 20:13:53 bjh21 Exp $	*/
+/*	$NetBSD: fpsetround.c,v 1.2 2002/01/13 21:45:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -31,8 +31,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
+#include "namespace.h"
+
 #include <sys/types.h>
 #include <ieeefp.h>
+
+#ifdef __weak_alias
+__weak_alias(fpsetround,_fpsetround)
+#endif
 
 /*
  * Return the current FP rounding mode
