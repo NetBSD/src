@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.2 1997/02/03 21:40:45 oki Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.3 1997/02/03 21:51:15 oki Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -76,7 +76,7 @@ u_char kbdled;
 #define CHADDR(y, x) (tv_row[PHYSLINE(y)] + (x))
 
 #define SETGLYPH(to,from) bcopy(&kern_font[(to)*16], &kern_font[(from)*16],16)
-#define KFONTBASE(left)   ((left) * FONTHEIGHT * 0x5e - 0x21 * FONTHEIGHT)
+#define KFONTBASE(left)   ((left) * 32 * 0x5e - 0x21 * 32)
 
 /* prototype */
 void tv_init	__P((struct ite_softc *));
