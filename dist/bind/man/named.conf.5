@@ -1,4 +1,4 @@
-.\"     $NetBSD: named.conf.5,v 1.4 2001/06/05 11:13:41 wiz Exp $
+.\"     $NetBSD: named.conf.5,v 1.5 2001/12/07 19:18:14 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2000 by Internet Software Consortium
 .\"
@@ -553,7 +553,7 @@ will handle messages sent to this facility is described in the
 .Xr syslog.conf 5
 manual page.  If you have a system which uses a very old version of
 syslog that only uses two arguments to the
-.Fn openlog()
+.Fn openlog
 function, then this clause is silently ignored.
 
 .Pp
@@ -1603,7 +1603,7 @@ The
 .Ic sortlist
 statement takes an address match list and interprets it even more
 specially than the 
-.Ictopology 
+.Ic topology 
 statement does. 
 
 Each top level statement in the sortlist must itself be an explicit address match
