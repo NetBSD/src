@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.29 2002/06/07 14:37:38 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.30 2002/06/07 18:19:30 fvdl Exp $	*/
 /*	$KAME: in6_var.h,v 1.53 2001/02/10 02:44:27 itojun Exp $	*/
 
 /*
@@ -566,7 +566,7 @@ struct in6_multi_mship *in6_joingroup __P((struct ifnet *, struct in6_addr *,
 int	in6_leavegroup __P((struct in6_multi_mship *));
 void	in6_ifscrub __P((struct ifnet *, struct in6_ifaddr *));
 int	in6_ifindex2scopeid __P((int));
-int	in6_mask2len __P((struct in6_addr *, u_char *));
+int	in6_mask2len __P((struct in6_addr *));
 void	in6_len2mask __P((struct in6_addr *, int));
 int	in6_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
 	struct proc *));
@@ -587,6 +587,8 @@ int	in6_addr2scopeid __P((struct ifnet *, struct in6_addr *));
 int	in6_matchlen __P((struct in6_addr *, struct in6_addr *));
 int	in6_are_prefix_equal __P((struct in6_addr *, struct in6_addr *, int));
 void	in6_prefixlen2mask __P((struct in6_addr *, int));
+int	in6_prefix_ioctl __P((struct socket *so, u_long cmd, caddr_t data,
+	struct ifnet *ifp));
 int	in6_prefix_add_ifid __P((int, struct in6_ifaddr *));
 void	in6_prefix_remove_ifid __P((int, struct in6_ifaddr *));
 void	in6_purgeprefix __P((struct ifnet *));
