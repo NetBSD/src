@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_hook.3,v 1.1 2001/07/08 12:10:29 blymn Exp $
+.\"	$NetBSD: form_hook.3,v 1.2 2002/01/15 02:50:18 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -31,7 +31,7 @@
 .\"
 .Dd January, 2001
 .Dt FORMS 3
-.Os 
+.Os
 .Sh NAME
 .Nm field_init ,
 .Nm field_term ,
@@ -63,11 +63,11 @@
 .Ft int
 .Fn set_form_term "FORM *form, void (*function)(FORM *)"
 .Sh DESCRIPTION
-The 
+The
 .Fn field_init
 function returns a pointer to the function that will be called just
 after the current field changes and just before the form is posted,
-this function may be set by using the 
+this function may be set by using the
 .Fn set_field_init
 function.  Similarly, the function
 .Fn field_term
@@ -79,9 +79,9 @@ function.  The
 .Fn form_init
 function will return a pointer to the function that will be called
 just before the form is posted to the screen, this function can be set
-by calling the 
+by calling the
 .Fn set_form_init
-function.  The 
+function.  The
 .Fn form_term
 function will return a pointer to the function that will be called
 just after the form is unposted from the screen, this function may be

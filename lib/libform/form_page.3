@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_page.3,v 1.1 2001/07/08 12:10:29 blymn Exp $
+.\"	$NetBSD: form_page.3,v 1.2 2002/01/15 02:50:18 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -31,7 +31,7 @@
 .\"
 .Dd January, 2001
 .Dt FORM_PAGE 3
-.Os 
+.Os
 .Sh NAME
 .Nm current_field ,
 .Nm field_index ,
@@ -60,9 +60,9 @@
 The
 .Fn current_field
 returns a pointer to the structure for the field that is currently
-active on the page.  If there is an error, 
+active on the page.  If there is an error,
 .Fn current_field
-will return NULL.  Calling 
+will return NULL.  Calling
 .Fn field_index
 will return the index of the given field in the form field array.  The
 current page the form is on can be determined by using
@@ -105,6 +105,6 @@ automatically includes both
 and
 .Pa <eti.h> .
 .Pp
-The 
+The
 .Nm form_max_page
 is a NetBSD extension and should not be used in portable applications.

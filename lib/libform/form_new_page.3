@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_new_page.3,v 1.1 2001/07/08 12:10:29 blymn Exp $
+.\"	$NetBSD: form_new_page.3,v 1.2 2002/01/15 02:50:18 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -31,7 +31,7 @@
 .\"
 .Dd January, 2001
 .Dt FORMS 3
-.Os 
+.Os
 .Sh NAME
 .Nm new_page ,
 .Nm set_new_page
@@ -45,11 +45,11 @@
 .Ft int
 .Fn set_new_page "FIELD *field, int page"
 .Sh DESCRIPTION
-The 
+The
 .Fn new_page
 function returns TRUE if the given field is the start of a new page,
 otherwise it returns FALSE, the new page status of a field can be set
-or unset using the 
+or unset using the
 .Fn set_new_page
 function.
 .Sh RETURN VALUES
