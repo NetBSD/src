@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.3 2003/07/14 15:47:23 lukem Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.4 2003/08/29 00:09:59 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -40,16 +40,16 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * //depot/aic7xxx/aic7xxx/aic79xx_pci.c#67 $
+ * Id $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_pci.c,v 1.9 2003/03/06 23:58:34 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_pci.c,v 1.10 2003/05/04 00:20:07 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.3 2003/07/14 15:47:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.4 2003/08/29 00:09:59 thorpej Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -560,6 +560,7 @@ ahd_pci_attach(parent, self, aux)
 static int
 ahd_check_extport(struct ahd_softc *ahd)
 {
+	struct	vpd_config vpd;
 	struct	seeprom_config *sc;
 	u_int	adapter_control;
 	int	have_seeprom;
@@ -569,6 +570,29 @@ ahd_check_extport(struct ahd_softc *ahd)
 	have_seeprom = ahd_acquire_seeprom(ahd);
 	if (have_seeprom) {
 		u_int start_addr;
+
+		/*
+		 * Fetch VPD for this function and parse it.
+		 */
+#ifdef AHD_DEBUG
+		printf("%s: Reading VPD from SEEPROM...",
+		       ahd_name(ahd));
+#endif
+		/* Address is always in units of 16bit words */
+		start_addr = ((2 * sizeof(*sc))
+			    + (sizeof(vpd) * (ahd->channel - 'A'))) / 2;
+		
+		error = ahd_read_seeprom(ahd, (uint16_t *)&vpd,
+					 start_addr, sizeof(vpd)/2,
+					 /*bytestream*/TRUE);
+		if (error == 0)
+			error = ahd_parse_vpddata(ahd, &vpd);
+#ifdef AHD_DEBUG
+		printf("%s: VPD parsing %s\n",
+		       ahd_name(ahd),
+		       error == 0 ? "successful" : "failed");
+#endif
+
 #ifdef AHD_DEBUG
 		printf("%s: Reading SEEPROM...", ahd_name(ahd));
 #endif
@@ -577,7 +601,8 @@ ahd_check_extport(struct ahd_softc *ahd)
 		start_addr = (sizeof(*sc) / 2) * (ahd->channel - 'A');
 
 		error = ahd_read_seeprom(ahd, (uint16_t *)sc,
-					 start_addr, sizeof(*sc)/2);
+					 start_addr, sizeof(*sc)/2,
+					 /*bytestream*/FALSE);
 
 		if (error != 0) {
 #ifdef AHD_DEBUG
@@ -636,14 +661,13 @@ ahd_check_extport(struct ahd_softc *ahd)
 
 #ifdef AHD_DEBUG
 	if ((have_seeprom != 0)	 && (ahd_debug & AHD_DUMP_SEEPROM) != 0) {
-		uint8_t *sc_data;
-		int	 i;
+		uint16_t *sc_data;
+		int	  i;
 
 		printf("%s: Seeprom Contents:", ahd_name(ahd));
-		sc_data = (uint8_t *)sc;
+		sc_data = (uint16_t *)sc;
 		for (i = 0; i < (sizeof(*sc)); i += 2)
-			printf("\n\t0x%.4x", 
-			       sc_data[i] | (sc_data[i+1] << 8));
+			printf("\n\t0x%.4x", sc_data[i]);
 		printf("\n");
 	}
 #endif
@@ -900,7 +924,7 @@ ahd_pci_split_intr(struct ahd_softc *ahd, u_int intstat)
 		/* Clear latched errors.  So our interrupt deasserts. */
 		ahd_outb(ahd, DCHSPLTSTAT0, split_status[i]);
 		ahd_outb(ahd, DCHSPLTSTAT1, split_status1[i]);
-		if (i != 0)
+		if (i > 1)
 			continue;
 		sg_split_status[i] = ahd_inb(ahd, SGSPLTSTAT0);
 		sg_split_status1[i] = ahd_inb(ahd, SGSPLTSTAT1);
@@ -922,7 +946,7 @@ ahd_pci_split_intr(struct ahd_softc *ahd, u_int intstat)
 				       split_status_source[i]);
 			}
 
-			if (i != 0)
+			if (i > 0)
 				continue;
 
 			if ((sg_split_status[i] & (0x1 << bit)) != 0) {
@@ -986,7 +1010,8 @@ ahd_aic7902_setup(struct ahd_softc *ahd, struct pci_attach_args	*pa)
 			  |  AHD_PKTIZED_STATUS_BUG|AHD_PKT_LUN_BUG
 			  |  AHD_MDFF_WSCBPTR_BUG|AHD_REG_SLOW_SETTLE_BUG
 			  |  AHD_SET_MODE_BUG|AHD_BUSFREEREV_BUG
-			  |  AHD_NONPACKFIFO_BUG|AHD_PACED_NEGTABLE_BUG;
+			  |  AHD_NONPACKFIFO_BUG|AHD_PACED_NEGTABLE_BUG
+			  |  AHD_FAINT_LED_BUG;
 
 
 		/*
