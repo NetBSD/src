@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.7 1998/03/30 22:19:00 mycroft Exp $	*/
+/*	$NetBSD: auth.h,v 1.8 1999/09/12 19:37:48 aidan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -76,6 +76,9 @@ typedef struct XauthP {
 } Authenticator;
 
 #include "auth-proto.h"
+
+#define OPTS_FORWARD_CREDS	0x00000002
+#define OPTS_FORWARDABLE_CREDS	0x00000001
 
 extern int auth_debug_mode;
 #endif
