@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.4 1995/08/03 00:58:33 cgd Exp $	*/
+/*	$NetBSD: prom.c,v 1.5 1996/04/29 16:09:28 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1994, 1995 Carnegie Mellon University
@@ -226,7 +226,8 @@ prom_halt(halt)
 	 * we want to happen when we halt.
 	 */
 	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off);
-	p->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
+	/* XXX BIP should have been cleared long ago. */
+	p->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ | PCS_BIP);
 	if (halt)
 		p->pcs_flags |= PCS_HALT_STAY_HALTED;
 	else
