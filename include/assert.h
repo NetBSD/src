@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.h,v 1.7 1998/11/14 16:30:07 christos Exp $	*/
+/*	$NetBSD: assert.h,v 1.8 1999/09/15 23:53:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -65,8 +65,25 @@
 # endif
 #endif /* NDEBUG */
 
+#undef _DIAGASSERT
+#if !defined(_DIAGNOSTIC)
+# if !defined(lint)
+#  define _DIAGASSERT(e) ((void)0)
+# else /* !lint */
+#  define _DIAGASSERT(e)
+# endif /* lint */
+#else /* _DIAGNOSTIC */
+# if defined (__STDC__)
+#  define _DIAGASSERT(e) ((e) ? (void)0 : __diagassert(__FILE__, __LINE__, #e))
+# else	/* !__STDC__ */
+#  define _DIAGASSERT(e) ((e) ? (void)0 : __diagassert(__FILE__, __LINE__, "e"))
+# endif
+#endif /* _DIAGNOSTIC */
+
+
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 void __assert __P((const char *, int, const char *));
+void __diagassert __P((const char *, int, const char *));
 __END_DECLS
