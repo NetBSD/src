@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-deflate.c,v 1.5 1997/05/17 21:12:06 christos Exp $	*/
+/*	$NetBSD: ppp-deflate.c,v 1.6 1998/05/02 14:34:25 christos Exp $	*/
 /*	Id: ppp-deflate.c,v 1.5 1997/03/04 03:33:28 paulus Exp 	*/
 
 /*
@@ -61,7 +61,7 @@ struct deflate_state {
 #define DEFLATE_OVHD	2		/* Deflate overhead/packet */
 
 static void	*zalloc __P((void *, u_int items, u_int size));
-static void	zfree __P((void *, void *ptr, u_int nb));
+static void	zfree __P((void *, void *ptr));
 static void	*z_comp_alloc __P((u_char *options, int opt_len));
 static void	*z_decomp_alloc __P((u_char *options, int opt_len));
 static void	z_comp_free __P((void *state));
@@ -99,6 +99,22 @@ struct compressor ppp_deflate = {
     z_comp_stats,		/* decomp_stat */
 };
 
+struct compressor ppp_deflate_draft = {
+    CI_DEFLATE_DRAFT,		/* compress_proto */
+    z_comp_alloc,		/* comp_alloc */
+    z_comp_free,		/* comp_free */
+    z_comp_init,		/* comp_init */
+    z_comp_reset,		/* comp_reset */
+    z_compress,			/* compress */
+    z_comp_stats,		/* comp_stat */
+    z_decomp_alloc,		/* decomp_alloc */
+    z_decomp_free,		/* decomp_free */
+    z_decomp_init,		/* decomp_init */
+    z_decomp_reset,		/* decomp_reset */
+    z_decompress,		/* decompress */
+    z_incomp,			/* incomp */
+    z_comp_stats,		/* decomp_stat */
+};
 /*
  * Space allocation and freeing routines for use by zlib routines.
  */
@@ -114,10 +130,9 @@ zalloc(notused, items, size)
 }
 
 void
-zfree(notused, ptr, nbytes)
+zfree(notused, ptr)
     void *notused;
     void *ptr;
-    u_int nbytes;
 {
     FREE(ptr, M_DEVBUF);
 }
@@ -133,7 +148,8 @@ z_comp_alloc(options, opt_len)
     struct deflate_state *state;
     int w_size;
 
-    if (opt_len != CILEN_DEFLATE || options[0] != CI_DEFLATE
+    if (opt_len != CILEN_DEFLATE
+	|| (options[0] != CI_DEFLATE && options[0] != CI_DEFLATE_DRAFT)
 	|| options[1] != CILEN_DEFLATE
 	|| DEFLATE_METHOD(options[2]) != DEFLATE_METHOD_VAL
 	|| options[3] != DEFLATE_CHK_SEQUENCE)
@@ -149,10 +165,9 @@ z_comp_alloc(options, opt_len)
 
     state->strm.next_in = NULL;
     state->strm.zalloc = zalloc;
-    state->strm.zalloc_init = zalloc;
     state->strm.zfree = zfree;
     if (deflateInit2(&state->strm, Z_DEFAULT_COMPRESSION, DEFLATE_METHOD_VAL,
-		     -w_size, 8, Z_DEFAULT_STRATEGY, DEFLATE_OVHD+2) != Z_OK) {
+		     -w_size, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
 	FREE(state, M_DEVBUF);
 	return NULL;
     }
@@ -180,7 +195,8 @@ z_comp_init(arg, options, opt_len, unit, hdrlen, debug)
 {
     struct deflate_state *state = (struct deflate_state *) arg;
 
-    if (opt_len < CILEN_DEFLATE || options[0] != CI_DEFLATE
+    if (opt_len < CILEN_DEFLATE
+	|| (options[0] != CI_DEFLATE && options[0] != CI_DEFLATE_DRAFT)
 	|| options[1] != CILEN_DEFLATE
 	|| DEFLATE_METHOD(options[2]) != DEFLATE_METHOD_VAL
 	|| DEFLATE_SIZE(options[2]) != state->w_size
@@ -313,11 +329,8 @@ z_compress(arg, mret, mp, orig_len, maxolen)
 
     /*
      * See if we managed to reduce the size of the packet.
-     * If the compressor just gave us a single zero byte, it means
-     * the packet was incompressible.
      */
-    if (m != NULL && olen < orig_len
-	&& !(olen == PPP_HDRLEN + 3 && *wptr == 0)) {
+    if (m != NULL && olen < orig_len) {
 	state->stats.comp_bytes += olen;
 	state->stats.comp_packets++;
     } else {
@@ -365,7 +378,8 @@ z_decomp_alloc(options, opt_len)
     struct deflate_state *state;
     int w_size;
 
-    if (opt_len != CILEN_DEFLATE || options[0] != CI_DEFLATE
+    if (opt_len != CILEN_DEFLATE
+	|| (options[0] != CI_DEFLATE && options[0] != CI_DEFLATE_DRAFT)
 	|| options[1] != CILEN_DEFLATE
 	|| DEFLATE_METHOD(options[2]) != DEFLATE_METHOD_VAL
 	|| options[3] != DEFLATE_CHK_SEQUENCE)
@@ -381,7 +395,6 @@ z_decomp_alloc(options, opt_len)
 
     state->strm.next_out = NULL;
     state->strm.zalloc = zalloc;
-    state->strm.zalloc_init = zalloc;
     state->strm.zfree = zfree;
     if (inflateInit2(&state->strm, -w_size) != Z_OK) {
 	FREE(state, M_DEVBUF);
@@ -411,7 +424,8 @@ z_decomp_init(arg, options, opt_len, unit, hdrlen, mru, debug)
 {
     struct deflate_state *state = (struct deflate_state *) arg;
 
-    if (opt_len < CILEN_DEFLATE || options[0] != CI_DEFLATE
+    if (opt_len < CILEN_DEFLATE
+	|| (options[0] != CI_DEFLATE && options[0] != CI_DEFLATE_DRAFT)
 	|| options[1] != CILEN_DEFLATE
 	|| DEFLATE_METHOD(options[2]) != DEFLATE_METHOD_VAL
 	|| DEFLATE_SIZE(options[2]) != state->w_size
