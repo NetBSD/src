@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.41 2003/04/29 07:44:04 yamt Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.42 2003/05/18 12:59:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.41 2003/04/29 07:44:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.42 2003/05/18 12:59:05 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -228,7 +228,7 @@ lfs_balloc(void *v)
 		return 0;
 	}
 
-	error = ufs_bmaparray(vp, lbn, &daddr, &indirs[0], &num, NULL );
+	error = ufs_bmaparray(vp, lbn, &daddr, &indirs[0], &num, NULL, NULL);
 	if (error)
 		return (error);
 	/*
