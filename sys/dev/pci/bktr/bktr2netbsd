@@ -1,8 +1,8 @@
 #! /bin/sh
 #
-#	$NetBSD: bktr2netbsd,v 1.3 2000/10/28 14:51:08 wiz Exp $
+#	$NetBSD: bktr2netbsd,v 1.4 2003/03/12 00:23:39 wiz Exp $
 #
-# Copyright (c) 2000 The NetBSD Foundation, Inc.
+# Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,9 +33,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# bktr2netbsd:  convert a bktr source directory tree into a
+# bktr2netbsd:  convert sourceforge bktr source directory tree into
 # netbsd bktr source tree, under sys/dev/pci/bktr
-# based on bind2netbsd by Bernd Ernesti
+# originally based on bind2netbsd by Bernd Ernesti
 
 if [ $# -ne 2 ]; then echo "bktr2netbsd src dest"; exit 1; fi
 
@@ -71,16 +71,13 @@ echo removing unneeded files
 
 ### Remove unneeded files
 cd $d
-rm -f CHANGELOG.TXT README.* bktr_i2c.[ch] bktr-devfs.patch bktr.4
+rm -f CHANGELOG.TXT README.* bktr_i2c.[ch]
 
 ### Remove the $'s around RCS tags
-find $d -type f -print | xargs egrep -l '\$(Id|Created|Header|FreeBSD)' | while read f; do
-	sed -e 's/\$\(Id.*\) \$/\1/' \
-	    -e 's/\$\(Created.*\) \$/\1/' \
-	    -e 's/\$\(FreeBSD.*\) \$/\1/' \
-	    -e 's/\$\(Header.*\) \$/\1/' \
+find $d -type f -print | xargs egrep -l '\$Id:' | while read f; do
+	sed -e 's/\$Id: bktr2netbsd,v 1.4 2003/03/12 00:23:39 wiz Exp $SourceForge:/' \
 	    < $f > /tmp/bktr1f$$ && mv /tmp/bktr1f$$ $f && \
-	echo removed \$RCS tag from $f
+	echo quoted \$RCS tag from $f
 done
 
 ### create bt8xx.h from ioctl_meteor.h and ioctl_bt848.h
@@ -94,16 +91,6 @@ cat ioctl_meteor.h ioctl_bt848.h | grep -v _MACHINE_IOCTL_METEOR_H_ | \
 	grep -v _MACHINE_IOCTL_BT848_H >> bt8xx.h
 echo "#endif /* _DEV_IC_BT8XX_H_ */" >> bt8xx.h
 rm ioctl_meteor.h ioctl_bt848.h
-
-### Add our NetBSD RCS Id
-find $d -name '*.[chly]' -print | while read c; do
-	sed 1q < $c | grep -q '\$NetBSD' || (
-echo "/*	\$NetBSD\$	*/" >/tmp/bktr3n$$
-echo "" >>/tmp/bktr3n$$
-cat $c  >> /tmp/bktr3n$$
-mv /tmp/bktr3n$$ $c && echo added NetBSD RCS tag to $c
-	)
-done
 
 echo done
 
@@ -129,5 +116,11 @@ echo "Fixing file/directory permissions."
 )
 echo done
 
-echo Do not forget to also import bt8xx.h in dev/ic!
+echo Now do:
+echo cd $d/../..
+echo and import into src/sys/dev with
+echo Vendor: BKTR_SF
+echo Release: BKTR_YYYY_MM_DD
+
+echo Do not forget to tag the imported version in the sourceforge repository!
 exit 0
