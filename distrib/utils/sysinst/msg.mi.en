@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.70 2000/09/27 12:42:04 fvdl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.71 2000/10/11 11:06:47 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -749,6 +749,11 @@ message cmdfail
 {Command
 	%s
 failed. I can't continue.}
+
+message aoutfail
+{The directory where the old a.out shared libraries should be moved to could
+not be created. Please try the upgrade procedure again and make sure you
+have mounted all filesystems.}
 
 message noactivepart
 {You have not marked a partition active. This may cause your system to not
