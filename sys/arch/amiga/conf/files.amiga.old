@@ -1,0 +1,31 @@
+arch/amiga/amiga/amiga_init.c		standard
+arch/amiga/amiga/autoconf.c		standard
+arch/amiga/amiga/clock.c		standard
+arch/amiga/amiga/conf.c			standard
+arch/amiga/amiga/cons.c			standard
+arch/amiga/amiga/disksubr.c		standard
+arch/amiga/amiga/dkbad.c		standard
+arch/amiga/amiga/in_cksum.c		optional inet
+arch/amiga/amiga/machdep.c		standard config-dependent
+arch/amiga/amiga/mem.c			standard
+arch/amiga/amiga/ns_cksum.c		optional ns
+arch/amiga/amiga/oc_cksum.s		optional inet
+arch/amiga/amiga/pmap.c			standard
+arch/amiga/amiga/sys_machdep.c		standard
+arch/amiga/amiga/trap.c			standard
+arch/amiga/amiga/vm_machdep.c		standard
+arch/amiga/dev/dma.c			optional scsi
+arch/amiga/dev/vn.c			optional vn
+arch/amiga/dev/scsi.c			optional scsi device-driver
+arch/amiga/dev/sd.c			optional sd
+arch/amiga/dev/st.c			optional st
+arch/amiga/dev/ser.c			optional ser device-driver
+arch/amiga/dev/kbd.c			optional ite
+arch/amiga/dev/ite.c			optional ite
+arch/amiga/dev/ite_cc.c			optional ite
+arch/amiga/dev/ite_tg.c			optional ite
+arch/amiga/dev/kernel_font.c		optional ite
+arch/amiga/dev/kbdmap.c			optional ite
+arch/amiga/dev/grf.c			optional grf
+arch/amiga/dev/grf_cc.c			optional grf
+arch/amiga/dev/grf_tg.c			optional grf
