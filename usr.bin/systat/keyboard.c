@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.20 2004/11/04 07:18:47 dsl Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.21 2005/02/26 19:01:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.20 2004/11/04 07:18:47 dsl Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.21 2005/02/26 19:01:09 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -109,10 +109,9 @@ keyboard(void)
 				}
 				continue;
 			}
-			if (ch == erasechar() && col > 0) {
-				if (col == 1)
-					continue;
-				col--;
+			if (ch == '\b' || ch == '\?' || ch == erasechar()) {
+				if (col > 0)
+					col--;
 				goto doerase;
 			}
 			if (ch == CTRL('w') && col > 0) {

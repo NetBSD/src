@@ -1,4 +1,4 @@
-/*	$NetBSD: globalcmds.c,v 1.11 2004/07/03 18:54:47 mycroft Exp $ */
+/*	$NetBSD: globalcmds.c,v 1.12 2005/02/26 19:01:09 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: globalcmds.c,v 1.11 2004/07/03 18:54:47 mycroft Exp $");
+__RCSID("$NetBSD: globalcmds.c,v 1.12 2005/02/26 19:01:09 dsl Exp $");
 #endif /* not lint */
 
 #include <curses.h>
@@ -51,7 +51,7 @@ static char *
 shortname(const char *key, const char *s)
 {
 	char *p, *q;
-	size_t l;
+	size_t len;
 
 	if (key == NULL) {
 		if ((p = strdup(s)) == NULL)
@@ -62,13 +62,16 @@ shortname(const char *key, const char *s)
 			q[2] = '\0';
 		}
 		return p;
-	} else if (strncmp(key, s, l = strlen(key)) == 0 && s[l] == '.') {
-		p = strdup(s + l + 1);
+	}
+
+	len = strlen(key);
+	if (strncmp(key, s, len) == 0 && s[len] == '.') {
+		p = strdup(s + len + 1);
 		if (!p)
 			return NULL;
 		return p;
-	} else
-		return NULL;
+	}
+	return NULL;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.20 2005/02/16 03:45:41 hubertf Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.21 2005/02/26 19:01:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.20 2005/02/16 03:45:41 hubertf Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.21 2005/02/26 19:01:09 dsl Exp $");
 #endif /* not lint */
 
 #include "systat.h"
@@ -74,7 +74,7 @@ struct command	iostat_commands[] = {
 	{ "numbers",	iostat_numbers,	"show io stats numerically"},
 	{ "secs",	iostat_secs,	"include time statistics"},
 	{ "rw",		iostat_rw,	"show read/write disk stats"},
-	{ "all",	iostat_all,	"show combiend disk stats"},
+	{ "all",	iostat_all,	"show combined disk stats"},
 	/* from disks.c */
 	{ "display",	disks_add,	"add a disk to displayed disks"},
 	{ "ignore",	disks_remove,	"remove a disk from displayed disks"},
