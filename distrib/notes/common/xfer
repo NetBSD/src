@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.25 2002/05/23 06:05:41 pooka Exp $
+.\"	$NetBSD: xfer,v 1.26 2002/06/15 16:48:38 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -222,6 +222,96 @@ After the boot floppy is prepared, just type
 on the PROM prompt to boot it.
 .Pp
 .\} \" r_news68k
+.
+.if r_newsmips \{\
+.(Note
+.Nx*M
+\*V does not support any framebuffers other than NWB-253 on NWS-3470D and
+XA on NWS-5000 (yet) so
+you have to use serial console on installation procedure.
+.Note)
+.Pp
+You will need to have a 1.44 MB floppy disk to boot off.
+You must put the boot floppy image onto this disk, which contains
+software to install
+.Nx
+system.
+.Pp
+If you are using a
+.Ul
+system (such as
+.Tn NEWS-OS
+or other
+.Nx
+machines) to write the floppy images to disks, you should use the
+.Xr dd 1
+command to copy the file system image(s)
+(.fs file(s)) directly to the raw floppy disk.
+It is suggested that you read the
+.Xr dd 1
+manual page or ask your system administrator to determine the correct
+set of arguments to use; it will be slightly different from system to
+system, and a comprehensive list of the possibilities is beyond the
+scope of this document.
+.Pp
+If you have an i386 machine which runs
+.Tn MS-DOS
+and use them to write the floppy image(s) to floppy disk,
+you can use the
+.Ic rawrite
+utility, provided in the
+.Pa i386/installation/misc
+directory of the
+.Nx
+distribution.
+It will write a file system image (.fs file) to a floppy disk. 
+A
+.Ic rawrite32
+is also available that runs under
+.Tn MS Windows .
+.Pp
+Though
+.Nx*M
+uses the floppy disk to boot for the initial
+installation, the
+.Nx*M
+kernel does not support the
+floppy device.
+Some other machines or systems are still required to write floppy images
+even after
+.Nx*M
+has been installed.
+.Pp
+SCSI devices on NWS-3xxx and NWS-5000 machines are supported. But they
+also can run
+.Nx*M
+diskless.
+No file transfer is needed, and all you have to do is to prepare files on
+the server.
+More information about diskless setting can be found at
+.Lk http://www.netbsd.org/Documentation/network/netboot/
+.Pp
+On NWS-3xxx machines, PROM also supports network boot but it uses
+unusual protocol and it does not supported by
+.Nx*M .
+On NWS-5000 machines, PROM uses ordinary tftp protocol, so
+you can load bootloader via network by
+.Ic "bo tftp()"
+command on the PROM prompt.
+.Pp
+The
+.Tn NEWS
+PROM also supports tape boot, but
+.Nx*M
+does not support them currently.
+.Pp
+After the boot floppy is prepared, just type
+.Ic "bo fd"
+(NWS-5000) or
+.Ic "bo fh"
+(NWS-3xxx) on the PROM prompt to boot it.
+.Pp
+.\} \" r_newsmips
 .
 .if r_pmax \{\
 First-time installation on a bare machine is not supported, because most

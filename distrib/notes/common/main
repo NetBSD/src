@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.184 2002/06/15 14:41:09 itojun Exp $
+.\"	$NetBSD: main,v 1.185 2002/06/15 16:48:37 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -581,6 +581,7 @@ arc,
 cobalt,
 hpcmips,
 news68k,
+newsmips,
 sgimips,
 and
 sparc64.
