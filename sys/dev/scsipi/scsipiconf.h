@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.30 1999/04/08 11:29:01 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.31 1999/09/11 21:39:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -393,6 +393,7 @@ void	scsipi_done __P((struct scsipi_xfer *));
 void	scsipi_user_done __P((struct scsipi_xfer *));
 int	scsipi_interpret_sense __P((struct scsipi_xfer *));
 void	scsipi_wait_drain __P((struct scsipi_link *));
+void	scsipi_kill_pending __P((struct scsipi_link *));
 #ifdef SCSIVERBOSE
 void	scsipi_print_sense __P((struct scsipi_xfer *, int));
 void	scsipi_print_sense_data __P((struct scsipi_sense_data *, int));
