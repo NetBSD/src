@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.10 1993/12/10 11:49:50 cgd Exp $
+ * $Id: if_ed.c,v 1.8.2.11 1994/02/01 06:18:49 mycroft Exp $
  */
 
 /*
@@ -196,6 +196,8 @@ void ed_init __P((struct ed_softc *));
 void ed_stop __P((struct ed_softc *));
 
 #define inline
+
+void ds_getmcaf __P((...));
 
 void ed_get_packet __P((struct ed_softc *, caddr_t, u_short));
 static inline void ed_rint __P((struct ed_softc *));
@@ -1033,6 +1035,9 @@ edattach(parent, self, aux)
 	ifp->if_ioctl = ed_ioctl;
 	ifp->if_watchdog = ed_watchdog;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+#ifdef MULTICAST
+	ifp->if_flags |= IFF_MULTICAST;
+#endif
 
 	/*
 	 * Set default state for ALTPHYS flag (used to disable the tranceiver
@@ -1211,10 +1216,17 @@ ed_init(sc)
 	outb(sc->nic_addr + ED_P0_RBCR0, 0);
 	outb(sc->nic_addr + ED_P0_RBCR1, 0);
 
+#if 0
 	/*
 	 * Enable reception of broadcast packets
 	 */
 	outb(sc->nic_addr + ED_P0_RCR, ED_RCR_AB);
+#else
+	/*
+	 * Tell RCR to do nothing for now.
+	 */
+	outb(sc->nic_addr + ED_P0_RCR, ED_RCR_MON);
+#endif
 
 	/*
 	 * Place NIC in internal loopback mode
@@ -1259,13 +1271,23 @@ ed_init(sc)
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
 		outb(sc->nic_addr + ED_P1_PAR0 + i, sc->arpcom.ac_enaddr[i]);
 
-#if NBPFILTER > 0
-	/*
-	 * Initialize multicast address hashing registers to accept
-	 *	 all multicasts (only used when in promiscuous mode)
-	 */
-	for (i = 0; i < 8; ++i)
-		outb(sc->nic_addr + ED_P1_MAR0 + i, 0xff);
+#ifdef MULTICAST
+	/* set up multicast addresses and filter modes */
+	if (sc != 0 && (ifp->if_flags & IFF_MULTICAST) != 0) {
+		u_long mcaf[2];
+
+		if ((ifp->if_flags & IFF_ALLMULTI) != 0) {
+			mcaf[0] = 0xffffffff;
+			mcaf[1] = 0xffffffff;
+		} else
+			ds_getmcaf(sc, mcaf);
+
+		/*
+		 * Set multicast filter on chip.
+		 */
+		for (i = 0; i < 8; i++)
+		      outb(sc->nic_addr + ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
+	}
 #endif
 
 	/*
@@ -1278,6 +1300,11 @@ ed_init(sc)
 	 * 	and interface Start.
 	 */
 	outb(sc->nic_addr + ED_P1_CR, ED_CR_RD2|ED_CR_STA);
+
+	/*
+	 * Clear all interrupts.
+	 */
+	outb(sc->nic_addr + ED_P0_ISR, 0xff);
 
 	/*
 	 * Take interface out of loopback
@@ -1295,6 +1322,25 @@ ed_init(sc)
 			outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
 		}
 	}
+
+	i = ED_RCR_AB;
+	if (sc != 0) {
+		if ((ifp->if_flags & IFF_PROMISC) != 0) {
+			/*
+			 * Set promiscuous mode.
+			 * Also reconfigure the multicast filter.
+			 */
+			int j;
+
+			i |= ED_RCR_PRO|ED_RCR_AM|ED_RCR_AR|ED_RCR_SEP;
+			for (j = 0; j < 8; j++)
+				outb(sc->nic_addr + ED_P1_MAR0 + j, 0xff);
+		}
+#ifdef MULTICAST
+		i |= ED_RCR_AM;
+#endif
+	}
+	outb(sc->nic_addr + ED_P0_RCR, i);
 
 	/*
 	 * Set 'running' flag, and clear output active flag.
@@ -1943,48 +1989,31 @@ ed_ioctl(ifp, command, data)
 		    	    ((ifp->if_flags & IFF_RUNNING) == 0))
 				ed_init(sc);
 		}
-#if NBPFILTER > 0
-		if (ifp->if_flags & IFF_PROMISC) {
-			/*
-			 * Set promiscuous mode on interface.
-			 *	XXX - for multicasts to work, we would need to
-			 *		write 1's in all bits of multicast
-			 *		hashing array. For now we assume that
-			 *		this was done in ed_init().
-			 */
-			outb(sc->nic_addr + ED_P0_RCR,
-				ED_RCR_PRO|ED_RCR_AM|ED_RCR_AB);
-		} else {
-			/*
-			 * XXX - for multicasts to work, we would need to
-			 *	rewrite the multicast hashing array with the
-			 *	proper hash (would have been destroyed above).
-			 */
-			outb(sc->nic_addr + ED_P0_RCR, ED_RCR_AB);
-		}
-#endif
 		/*
-		 * An unfortunate hack to provide the (required) software control
-		 *	of the tranceiver for 3Com boards. The ALTPHYS flag disables
-		 *	the tranceiver if set.
+		 * NB: There was a bunch of code here that's now in ed_init.
 		 */
-		if (sc->vendor == ED_VENDOR_3COM) {
-			if (ifp->if_flags & IFF_ALTPHYS) {
-				outb(sc->asic_addr + ED_3COM_CR, 0);
-			} else {
-				outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
-			}
-		}
 		break;
 
-#if NBPFILTER > 0
-	case SIOCGIFADDR: {
-		struct sockaddr *sa;
-		sa = (struct sockaddr *)&ifr->ifr_data;
-		bcopy((caddr_t)sc->arpcom.ac_enaddr, (caddr_t)sa->sa_data,
-			ETHER_ADDR_LEN);
+#ifdef MULTICAST
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		/*
+		 * Update our multicast list.
+		 */
+		error = (command == SIOCADDMULTI) ?
+			ether_addmulti((struct ifreq *)data, &sc->arpcom):
+			ether_delmulti((struct ifreq *)data, &sc->arpcom);
+
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
+			ed_stop(ifp->if_unit); /* XXX for ds_setmcaf? */
+			ed_init(ifp->if_unit);
+			error = 0;
+		}
 		break;
-	}
 #endif
 
 	default:
@@ -2116,15 +2145,13 @@ ed_get_packet(sc, buf, len)
 		 * Note that the interface cannot be in promiscuous mode if
 		 * there are no BPF listeners.  And if we are in promiscuous
 		 * mode, we have to check if this packet is really ours.
-		 *
-		 * XXX This test does not support multicasts.
 		 */
 		if ((sc->arpcom.ac_if.if_flags & IFF_PROMISC) &&
-			bcmp(eh->ether_dhost, sc->arpcom.ac_enaddr,
-				sizeof(eh->ether_dhost)) != 0 &&
-			bcmp(eh->ether_dhost, etherbroadcastaddr,
-				sizeof(eh->ether_dhost)) != 0) {
-
+		    (eh->ether_dhost[0] & 1) == 0 &&
+		    bcmp(eh->ether_dhost, sc->arpcom.ac_enaddr,
+			 sizeof(eh->ether_dhost)) != 0 &&
+		    bcmp(eh->ether_dhost, etherbroadcastaddr,
+			 sizeof(eh->ether_dhost)) != 0) {
 			m_freem(head);
 			return;
 		}
@@ -2135,12 +2162,6 @@ ed_get_packet(sc, buf, len)
 	 * Fix up data start offset in mbuf to point past ether header
 	 */
 	m_adj(head, sizeof(struct ether_header));
-
-	/*
-	 * silly ether_input routine needs 'type' in host byte order
-	 */
-	eh->ether_type = ntohs(eh->ether_type);
-
 	ether_input(&sc->arpcom.ac_if, eh, head);
 	return;
 
@@ -2433,3 +2454,62 @@ ed_ring_to_mbuf(sc,src,dst,total_len)
 	}
 	return m;
 }
+
+#ifdef MULTICAST
+/*
+ * Compute crc for ethernet address
+ */
+u_long
+ds_crc(ep)
+	u_char *ep;
+{
+#define POLYNOMIAL 0x04c11db6
+	register u_long crc = 0xffffffffL;
+	register int carry, i, j;
+	register u_char b;
+
+	for (i = 6; --i >= 0; ) {
+		b = *ep++;
+		for (j = 8; --j >= 0; ) {
+			carry = ((crc & 0x80000000L) ? 1 : 0) ^ (b & 0x01);
+			crc <<= 1;
+			b >>= 1;
+			if (carry)
+				crc = ((crc ^ POLYNOMIAL) | carry);
+		}
+	}
+	return crc;
+#undef POLYNOMIAL
+}
+
+/*
+ * Compute the multicast address filter from the
+ * list of multicast addresses we need to listen to.
+ */
+void
+ds_getmcaf(sc, mcaf)
+	struct ed_softc *sc;
+	u_long *mcaf;
+{
+	register u_int index;
+	register u_char *af = (u_char*)mcaf;
+	register struct ether_multi *enm;
+	register struct ether_multistep step;
+
+	mcaf[0] = 0;
+	mcaf[1] = 0;
+
+	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
+	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
+			mcaf[0] = 0xffffffff;
+			mcaf[1] = 0xffffffff;
+			return;
+		}
+		index = ds_crc(enm->enm_addrlo, 6) >> 26;
+		af[index >> 3] |= 1 << (index & 7);
+
+		ETHER_NEXT_MULTI(step, enm);
+	}
+}
+#endif
