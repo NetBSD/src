@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2000/11/30 02:59:11 lukem Exp $
+#	$NetBSD: Makefile,v 1.45 2001/12/01 10:25:29 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 PROG=	ftpd
@@ -15,6 +15,8 @@ SRCS+=	ls.c cmp.c print.c stat_flags.c util.c
 
 CPPFLAGS+=-DINET6
 .include <bsd.own.mk>
+
+WARNS=2
 
 .ifdef SKEY
 CPPFLAGS+=-DSKEY
