@@ -32,17 +32,59 @@ Boston, MA 02111-1307, USA.  */
 #define NETBSD_ELF
 #include <netbsd.h>
 
-/* 68020 with 68881 */
-#define TARGET_DEFAULT (MASK_BITFIELD|MASK_68881|MASK_68020)
+/* Default target comes from config.gcc */
+#undef TARGET_DEFAULT  
+#define TARGET_DEFAULT TARGET_CPU_DEFAULT 
 
 #define bsd4_4
 #undef HAS_INIT_SECTION
 
+
+#define EXTRA_SPECS \
+  { "cpp_cpu_default_spec", CPP_CPU_DEFAULT_SPEC }, \
+  { "cpp_cpu_spec",         CPP_CPU_SPEC }, \
+  { "cpp_fpu_spec",         CPP_FPU_SPEC }, \
+  { "asm_default_spec",     ASM_DEFAULT_SPEC },
+
+
+#define CPP_CPU_SPEC \
+  "%{m68010:-D__mc68010__} \
+   %{m68020:-D__mc68020__} \
+   %{m68030:-D__mc68030__} \
+   %{m68040:-D__mc68040__} \
+   %(cpp_cpu_default_spec)"
+
+
+#undef TARGET_VERSION
+#if TARGET_DEFAULT & MASK_68020
+#define TARGET_VERSION fprintf (stderr, " (NetBSD/m68k ELF)");
+#define CPP_CPU_DEFAULT_SPEC "%{!m680*:-D__mc68020__}"
+#define ASM_DEFAULT_SPEC "%{!m680*:-m68020}"
+#else
+#define TARGET_VERSION fprintf (stderr, " (NetBSD/68010 ELF)");
+#define CPP_CPU_DEFAULT_SPEC "%{!m680*:-D__mc68010__}"
+#define ASM_DEFAULT_SPEC "%{!m680*:-m68010}" 
+#endif
+
+
+#if TARGET_DEFAULT & MASK_68881
+#define CPP_FPU_SPEC "%{!msoft-float:-D__HAVE_68881__ -D__HAVE_FPU__}"
+#else
+#define CPP_FPU_SPEC "%{m68881:-D__HAVE_68881__ -D__HAVE_FPU__}"
+#endif
+
+
 #undef CPP_SPEC
-#define CPP_SPEC "%{!msoft-float:-D__HAVE_68881__ -D__HAVE_FPU__} %{posix:-D_POSIX_SOURCE}"
+#define CPP_SPEC \
+  "%{posix:-D_POSIX_SOURCE} %(cpp_cpu_spec) %(cpp_fpu_spec)"
+
 
 #undef ASM_SPEC
-#define ASM_SPEC " %| %{m68030} %{m68040} %{m68060} %{fpic:-k} %{fPIC:-k -K}"
+#define ASM_SPEC \
+  " %| %(asm_default_spec) \
+    %{m68010} %{m68020} %{m68030} %{m68040} %{m68060} \
+    %{fpic:-k} %{fPIC:-k -K}"
+
 
 /* Provide a set of pre-definitions and pre-assertions appropriate for
    the m68k running svr4.  */
