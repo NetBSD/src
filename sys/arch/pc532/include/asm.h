@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.14 1998/12/02 21:16:46 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.15 2003/12/06 14:06:28 simonb Exp $	*/
 
 /* 
  * Mach Operating System
@@ -39,7 +39,7 @@
 #ifndef _MACHINE_ASM_H_ 
 #define _MACHINE_ASM_H_
 
-#ifdef __STDC__
+#if __STDC__
 #define CAT(a, b)	a ## b
 #else
 #define CAT(a, b)	a/**/b
@@ -214,6 +214,10 @@
 		.long	0
 
 #endif
+
+#define	WEAK_ALIAS(alias,sym)						\
+	.weak _C_LABEL(alias);						\
+	_C_LABEL(alias) = _C_LABEL(sym)
 
 #ifdef __STDC__
 #define	__STRING(x)			#x
