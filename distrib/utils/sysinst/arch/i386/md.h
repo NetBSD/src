@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.20 2000/10/01 22:57:17 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.21 2000/10/11 11:05:03 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,7 +62,7 @@
  *      xbase, xfont, xserver, xcontrib, xcomp.
  *
  * i386 has the  MD set kern first, because generic kernels are  too
- * big to fit on install floppies.
+ * big to fit on install floppies. i386 does not yet include the x sets. 
  *
  * Third entry is the last extension name in the split sets for loading
  * from floppy.
@@ -85,7 +85,7 @@ EXTERN distinfo dist_list[]
     {"xserver",	1, "cr", "X11 servers  : "},
     {"xcontrib",1, "aa", "X11 contrib  : "},
     {"xcomp",	1, "ah", "X programming: "},
-    {"xmisc",	1, NULL, "X11 Misc.    : "},
+    {"xmisc",   1, NULL, "X11 Misc.    : "},
     {NULL, 0, NULL, NULL }
 }
 #endif
@@ -154,6 +154,9 @@ extern struct mbr_bootsel *mbs;
  
 #define SCAN_ENTER      0x1c
 #define SCAN_F1         0x3b
+
+#define LIB_COUNT	0
+#define LIB_MOVE	1
  
 #define MBR_BOOTSELOFF  (MBR_PARTOFF - sizeof (struct mbr_bootsel))
 
