@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.18 1996/11/02 18:26:05 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.19 1996/11/06 01:17:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: options.c,v 1.18 1996/11/02 18:26:05 christos Exp $";
+static char rcsid[] = "$NetBSD: options.c,v 1.19 1996/11/06 01:17:11 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,6 +117,7 @@ procargs(argc, argv)
 	        arg0 = *argptr++;
 
 	shellparam.p = argptr;
+	shellparam.reset = 1;
 	/* assert(shellparam.malloc == 0 && shellparam.nparam == 0); */
 	while (*argptr) {
 		shellparam.nparam++;
@@ -360,8 +361,10 @@ void
 getoptsreset(value)
 	const char *value;
 {
-	if (number(value) == 1)
+	if (number(value) == 1) {
 		shellparam.optnext = NULL;
+		shellparam.reset = 1;
+	}
 }
 
 /*
@@ -385,9 +388,10 @@ getoptscmd(argc, argv)
 	else
 		optbase = &argv[3];
 
-	if (shellparam.optnext == NULL) {
+	if (shellparam.reset == 1) {
 		shellparam.optnext = optbase;
 		shellparam.optptr = NULL;
+		shellparam.reset = 0;
 	}
 
 	return getopts(argv[1], argv[2], optbase, &shellparam.optnext,
@@ -411,6 +415,8 @@ getopts(optstr, optvar, optfirst, optnext, optptr)
 
 	if ((p = *optptr) == NULL || *p == '\0') {
 		/* Current word is done, advance */
+		if (*optnext == NULL)
+			return 1;
 		p = **optnext;
 		if (p == NULL || *p != '-' || *++p == '\0') {
 atend:
@@ -456,18 +462,19 @@ atend:
 				(void) unsetvar("OPTARG");
 				c = '?';
 			}
-			ind = 1;
-			*optnext = NULL;
 			goto bad;
 		}
 
 		if (p == **optnext)
 			(*optnext)++;
-		ind = *optnext - optfirst + 1;
 		setvarsafe("OPTARG", p, 0);
 		p = NULL;
-		goto out;
 	}
+	else
+		setvarsafe("OPTARG", "", 0);
+	ind = *optnext - optfirst + 1;
+	goto out;
+
 bad:
 	ind = 1;
 	*optnext = NULL;
