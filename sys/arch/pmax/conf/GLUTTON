@@ -2,7 +2,7 @@
 # GLUTTON - Adam's test DS3100
 #
 #	from: @(#)GENERIC.pmax	8.1 (Berkeley) 6/29/93
-# 	$Id: GLUTTON,v 1.1 1994/05/27 08:57:44 glass Exp $
+# 	$Id: GLUTTON,v 1.2 1994/06/15 05:18:28 glass Exp $
 #
 machine		pmax
 
@@ -20,11 +20,16 @@ options		DEVPAGER		# device pager (mapped devices)
 options		DIAGNOSTIC		# extra kernel debugging checks
 options		DEBUG			# extra kernel debugging support
 options		"COMPAT_43"		# compatibility with 4.3BSD binaries
+options		COMPAT_ULTRIX		# compatibility with ULTRIX binaries
 options		KTRACE			# system call tracing support
 options		"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
 #options	KGDB			# support for kernel gdb
 #options	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
 #options	"KGDBDEV=15*256+0"	# device for kernel gdb
+
+# special extra nasty debugging stuff
+options		SYSCALL_DEBUG
+#options	VMFAULT_TRACE
 
 # Filesystem options
 options		FIFO		# POSIX fifo support (in all filesystems)
@@ -49,7 +54,6 @@ options		GATEWAY		# IP packet forwarding
 #options	ISO		# OSI networking
 #options	TPIP
 #options	EON
-
 
 config		netbsd swap generic
 #config		netbsd root on rz0a swap on rz0b dumps on rz0b
