@@ -1,4 +1,4 @@
-/*	$NetBSD: otgsc.c,v 1.22 1998/12/05 19:43:38 mjacob Exp $	*/
+/*	$NetBSD: otgsc.c,v 1.23 1999/01/10 13:22:05 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -114,7 +114,7 @@ otgscattach(pdp, dp, auxp)
 	zap = auxp;
 	
 	sc = (struct sci_softc *)dp;
-	rp = zap->va + 0x2000;
+	rp = (u_char *)zap->va + 0x2000;
 	sc->sci_data = rp;
 	sc->sci_odata = rp;
 	sc->sci_icmd = rp + 0x10;
