@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.39 1998/06/12 23:28:53 cgd Exp $
+#	$NetBSD: bsd.README,v 1.40 1998/07/22 18:22:35 perry Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -217,7 +217,7 @@ NOPIC		Do not build PIC versions of system libraries, and
 		do not build shared libraries.  [set if ${MACHINE_ARCH}
 		is "vax" "powerpc", unset otherwise.]
 
-NOLINT		Do not build lint libraries. [set, set unconditionally]
+NOLINT		Do not build lint libraries.
 
 NOSHLIB		Do not build shared libraries [set if ${MACHINE_ARCH}
 		is "powerpc", unset otherwise].
