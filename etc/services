@@ -26,10 +26,8 @@ whois		43/tcp		nicname
 domain		53/tcp		nameserver	# name-domain server
 domain		53/udp		nameserver
 mtp		57/tcp				# deprecated
-# Bootp experimental (sellgren@vangogh)
-bootp		67/udp				# bootp server
-#bootpc		68/udp				# bootp client
-#
+bootps          67/udp                          # bootp server
+bootpc          68/udp                          # bootp client
 tftp		69/udp
 rje		77/tcp		netrjs
 finger		79/tcp
