@@ -1,5 +1,5 @@
-.\"	$NetBSD: if_indextoname.3,v 1.6 2000/09/21 10:43:49 ad Exp $
-.\"	$KAME: if_indextoname.3,v 1.8 2000/04/24 10:12:36 itojun Exp $
+.\"	$NetBSD: if_indextoname.3,v 1.7 2000/11/24 08:21:12 itojun Exp $
+.\"	$KAME: if_indextoname.3,v 1.10 2000/11/24 08:13:51 itojun Exp $
 .\"	BSDI	Id: if_indextoname.3,v 2.2 2000/04/17 22:38:05 dab Exp
 .\"
 .\" Copyright (c) 1997, 2000
@@ -81,7 +81,8 @@ The end of the array of structures is indicated by a structure with an
 .Nm if_index
 of 0 and an
 .Nm if_name
-of NULL.  A NULL pointer is returned upon an error.
+of NULL.
+A NULL pointer is returned upon an error.
 .Pp
 The
 .Fn if_freenameindex
@@ -92,7 +93,11 @@ allocated by
 Upon successful completion,
 .Fn if_nametoindex
 returns the index number of the interface.
-A value of 0 is returned if the interface is not found or an error
+If the interface is not found, a value of 0 is returned and
+.Va errno
+is set to
+.Er ENXIO .
+A value of 0 is also returned if an error
 occurs while retrieving the list of interfaces via
 .Xr getifaddrs 3 .
 .Pp
@@ -100,7 +105,11 @@ Upon successful completion,
 .Fn if_indextoname
 returns
 .Ar ifname .
-A NULL pointer is returned if the interface is not found or an error
+If the interface is not found, a NULL pointer is returned and
+.Va errno
+is set to
+.Er ENXIO .
+A NULL pointer is also returned if an error
 occurs while retrieving the list of interfaces via
 .Xr getifaddrs 3 .
 .Pp

@@ -1,5 +1,5 @@
-/*	$NetBSD: if_nameindex.c,v 1.4 2000/07/24 12:06:55 itojun Exp $	*/
-/*	$KAME: if_nameindex.c,v 1.5 2000/07/24 12:03:31 itojun Exp $	*/
+/*	$NetBSD: if_nameindex.c,v 1.5 2000/11/24 08:21:12 itojun Exp $	*/
+/*	$KAME: if_nameindex.c,v 1.8 2000/11/24 08:20:01 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: if_nameindex.c,v 1.4 2000/07/24 12:06:55 itojun Exp $");
+__RCSID("$NetBSD: if_nameindex.c,v 1.5 2000/11/24 08:21:12 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -45,25 +45,27 @@ __weak_alias(if_nameindex,_if_nameindex)
 __weak_alias(if_freenameindex,_if_freenameindex)
 #endif
 /*
- * From RFC 2133:
+ * From RFC 2553:
  *
- * 4.3.  Return All Interface Names and Indexes
+ * 4.3 Return All Interface Names and Indexes
+ *
+ *    The if_nameindex structure holds the information about a single
+ *    interface and is defined as a result of including the <net/if.h>
+ *    header.
+ *
+ *       struct if_nameindex {
+ *         unsigned int   if_index;
+ *         char          *if_name;
+ *       };
  *
  *    The final function returns an array of if_nameindex structures, one
  *    structure per interface.
  *
- *        #include <net/if.h>
- *
- *        struct if_nameindex {
- *          unsigned int   if_index;  / * 1, 2, ... * /
- *          char          *if_name;   / * null terminated name: "le0", ... * /
- *        };
- *
- *        struct if_nameindex  *if_nameindex(void);
+ *       struct if_nameindex  *if_nameindex(void);
  *
  *    The end of the array of structures is indicated by a structure with
  *    an if_index of 0 and an if_name of NULL.  The function returns a NULL
- *    pointer upon an error.
+ *    pointer upon an error, and would set errno to the appropriate value.
  *
  *    The memory used for this array of structures along with the interface
  *    names pointed to by the if_name members is obtained dynamically.
