@@ -1,4 +1,4 @@
-/*	$NetBSD: maccons.c,v 1.1.2.1 1999/05/22 09:39:26 scottr Exp $	*/
+/*	$NetBSD: maccons.c,v 1.1.2.2 1999/12/29 05:56:36 scottr Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds.  All rights reserved.
@@ -55,10 +55,7 @@ extern u_int32_t	mac68k_vidphys;
 void
 maccnprobe(struct consdev *cp)
 {
-	if (mac68k_machine.machineid == MACH_MACIIFX)
-		cp->cn_pri = CN_DEAD;
-	else
-		cp->cn_pri = CN_INTERNAL;
+	cp->cn_pri = CN_INTERNAL;
 	cp->cn_dev = NODEV;
 }
 
