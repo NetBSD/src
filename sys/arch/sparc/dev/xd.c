@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.35 1997/07/17 02:13:03 jtk Exp $	*/
+/*	$NetBSD: xd.c,v 1.36 1997/07/19 21:43:54 pk Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.35 1997/07/17 02:13:03 jtk Exp $
+ * id: $NetBSD: xd.c,v 1.36 1997/07/19 21:43:54 pk Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -86,6 +86,8 @@
 #include <sparc/dev/xio.h>
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
+
+#include "locators.h"
 
 /*
  * macros
