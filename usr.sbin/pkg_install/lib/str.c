@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.10 1998/10/08 12:58:00 agc Exp $	*/
+/*	$NetBSD: str.c,v 1.11 1998/10/12 12:03:26 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.10 1998/10/08 12:58:00 agc Exp $");
+__RCSID("$NetBSD: str.c,v 1.11 1998/10/12 12:03:26 agc Exp $");
 #endif
 #endif
 
@@ -66,91 +66,32 @@ dirname_of(const char *path)
 	return t;
 }
 
-char *
-strconcat(char *s1, char *s2)
-{
-    static char tmp[FILENAME_MAX];
-
-    tmp[0] = '\0';
-    strncpy(tmp, s1 ? s1 : s2, FILENAME_MAX);
-    if (s1 && s2)
-	strncat(tmp, s2, FILENAME_MAX - strlen(tmp));
-    return tmp;
-}
-
 /* Get a string parameter as a file spec or as a "contents follow -" spec */
 char *
-get_dash_string(char **str)
+get_dash_string(char **s)
 {
-    char *s = *str;
-
-    if (*s == '-')
-	*str = copy_string(s + 1);
-    else
-	*str = fileGetContents(s);
-    return *str;
-}
-
-/* Rather Obvious */
-char *
-copy_string(char *str)
-{
-    char *ret;
-
-    if (!str)
-	ret = NULL;
-    else {
-	ret = (char *)malloc(strlen(str) + 1);
-	strcpy(ret, str);
-    }
-    return ret;
-}
-
-/* Return TRUE if 'str' ends in suffix 'suff' */
-Boolean
-suffix(char *str, char *suff)
-{
-    char *idx;
-    Boolean ret = FALSE;
-
-    idx = strrchr(str, '.');
-    if (idx && !strcmp(idx + 1, suff))
-	ret = TRUE;
-    return ret;
-}
-
-/* Assuming str has a suffix, brutally murder it! */
-void
-nuke_suffix(char *str)
-{
-    char *idx;
-
-    idx = strrchr(str, '.');
-    if (idx)
-	*idx = '\0';  /* Yow!  Don't try this on a const! */
+	return *s = (**s == '-') ? strdup(*s + 1) : fileGetContents(*s);
 }
 
 /* Lowercase a whole string */
 void
-str_lowercase(char *str)
+str_lowercase(char *s)
 {
-    while (*str) {
-	*str = tolower(*str);
-	++str;
-    }
+	for ( ; *s ; s++) {
+		*s = tolower(*s);
+	}
 }
 
-
-enum deweycmp_ops {
+typedef enum deweyop_t {
 	GT,
 	GE,
 	LT,
 	LE
-};
+} deweyop_t;
 
 /* compare two dewey decimal numbers */
 static int
-deweycmp(char *a, enum deweycmp_ops op, char *b)
+deweycmp(char *a, deweyop_t op, char *b)
 {
 	int             ad;
 	int             bd;
@@ -196,7 +137,7 @@ alternate_match(const char *pattern, const char *pkg)
 	int             found;
 
 	if ((sep = strchr(pattern, '{')) == (char *) NULL) {
-		errx(1, "alternate_match(): '{' expected in \"%s\"\n", pattern);
+		errx(1, "alternate_match(): '{' expected in `%s'", pattern);
 	}
 	(void) strncpy(buf, pattern, (size_t)(sep - pattern));
 	alt = &buf[sep - pattern];
@@ -209,8 +150,7 @@ alternate_match(const char *pattern, const char *pkg)
 		}
 	}
 	if (cnt != 0) {
-		warnx("Malformed alternate `%s'", pattern);
-		return 1;
+		errx(1, "Malformed alternate `%s'", pattern);
 	}
 	for (found = 0, cp = sep + 1; *sep != '}'; cp = sep + 1) {
 		for (cnt = 0, sep = cp; cnt > 0 || (cnt == 0 && *sep != '}' && *sep != ','); sep++) {
@@ -233,31 +173,28 @@ alternate_match(const char *pattern, const char *pkg)
 static int
 dewey_match(const char *pattern, const char *pkg)
 {
+	deweyop_t	op;
 	char           *cp;
 	char           *sep;
 	char           *ver;
-	int             found;
-	enum deweycmp_ops op;
-	int             n;
 	char            name[FILENAME_MAX];
+	int             n;
 
-	found = 0;
-	if ((sep = strpbrk(pattern, "<>")) == NULL)
-		errx(1, "dewey_match(): '<' or '>' expexted in \"%s\"\n", pattern);
-
-	/* next three lines are static in loops, too (-> cache!) */
-	snprintf(name, sizeof(name), "%.*s", (int) (sep - pattern), pattern);
+	if ((sep = strpbrk(pattern, "<>")) == NULL) {
+		errx(1, "dewey_match(): '<' or '>' expected in `%s'", pattern);
+	}
+	(void) snprintf(name, sizeof(name), "%.*s", (int) (sep - pattern), pattern);
 	op = (*sep == '>') ? (*(sep + 1) == '=') ? GE : GT : (*(sep + 1) == '=') ? LE : LT;
 	ver = (op == GE || op == LE) ? sep + 2 : sep + 1;
 	n = (int)(sep - pattern);
 	if ((cp = strrchr(pkg, '-')) != (char *) NULL) {
 		if (strncmp(pkg, name, (size_t)(cp - pkg)) == 0 && n == cp - pkg) {
 			if (deweycmp(cp + 1, op, ver)) {
-				found = 1;
+				return 1;
 			}
 		}
 	}
-	return found;
+	return 0;
 }
 
 /* perform glob match on "pkg" against "pattern" */
@@ -273,26 +210,22 @@ glob_match(const char *pattern, const char *pkg)
 static int
 simple_match(const char *pattern, const char *pkg)
 {
-	return !strcmp(pattern, pkg);
+	return strcmp(pattern, pkg) == 0;
 }
 
 /* match pkg against pattern, return 1 if matching, 0 else */
-/*
- * Optimize: this is called many times in readdir()-loops, where the
- * pattern doesn't change, so the {,} alternates may be unrolles/cached.
- */
 int 
 pmatch(const char *pattern, const char *pkg)
 {
-	if (strchr(pattern, '{')) {
+	if (strchr(pattern, '{') != (char *) NULL) {
 		/* emulate csh-type alternates */
 		return alternate_match(pattern, pkg);
 	}
-	if (strpbrk(pattern, "<>")) {
+	if (strpbrk(pattern, "<>") != (char *) NULL) {
 		/* perform relational dewey match on version number */
 		return dewey_match(pattern, pkg);
 	}
-	if (strpbrk(pattern, "*?[]")) {
+	if (strpbrk(pattern, "*?[]") != (char *) NULL) {
 		/* glob match */
 		return glob_match(pattern, pkg);
 	}
@@ -305,31 +238,30 @@ pmatch(const char *pattern, const char *pkg)
 /* let's hope there's only one ... - HF */
 /* returns -1 on error, 1 if found, 0 otherwise. */
 int
-findmatchingname(const char *dir, const char *pattern, matchfn f, char *data)
+findmatchingname(const char *dir, const char *pattern, matchfn match, char *data)
 {
-    struct dirent  *dp;
-    DIR            *dirp;
-    int             found;
-    
-    found = 0;
-    if ((dirp = opendir(dir)) == NULL) {
-	/* warnx("can't opendir dir '%s'", dir); */
-	return -1;
-    }
-    while ((dp = readdir(dirp)) != NULL) {
-	if (strcmp(dp->d_name, ".") == 0 ||
-	    strcmp(dp->d_name, "..") == 0) {
-	    continue;
-	}
-	if (pmatch(pattern, dp->d_name)) {
-	    if(f)
-		f(dp->d_name, data);
-	    found=1;
-	}
-    }
-    closedir(dirp);
+	struct dirent  *dp;
+	DIR            *dirp;
+	int             found;
 
-    return found;    
+	found = 0;
+	if ((dirp = opendir(dir)) == (DIR *) NULL) {
+		/* warnx("can't opendir dir '%s'", dir); */
+		return -1;
+	}
+	while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
+		if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0) {
+			continue;
+		}
+		if (pmatch(pattern, dp->d_name)) {
+			if (match) {
+				match(dp->d_name, data);
+			}
+			found = 1;
+		}
+	}
+	(void) closedir(dirp);
+	return found;    
 }
 
 /* does the pkgname contain any of the special chars ("{[]?*<>")? */
@@ -337,23 +269,23 @@ findmatchingname(const char *dir, const char *pattern, matchfn f, char *data)
 int
 ispkgpattern(const char *pkg)
 {
-    return strpbrk(pkg, "<>[]?*{") != NULL;
+	return strpbrk(pkg, "<>[]?*{") != NULL;
 }
 
 /* auxiliary function called by findbestmatchingname() */
+/* if pkg > data */
 static int
 findbestmatchingname_fn(const char *pkg, char *data)
 {
-    /* if pkg > data */
-    char *s1, *s2;
+	char *s1, *s2;
 
-    s1=strrchr(pkg, '-')+1;
-    s2=strrchr(data, '-')+1;
+	s1 = strrchr(pkg, '-') + 1;
+	s2 = strrchr(data, '-') + 1;
 
-    if(data[0] == '\0' || deweycmp(s1, GT, s2))
-	strcpy(data, pkg);
-
-    return 0;
+	if (data[0] == '\0' || deweycmp(s1, GT, s2)) {
+		strcpy(data, pkg);
+	}
+	return 0;
 }
 
 /* find best matching filename, i.e. the pkg with the highest

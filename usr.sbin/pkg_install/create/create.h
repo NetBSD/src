@@ -1,4 +1,4 @@
-/* $NetBSD: create.h,v 1.7 1998/10/09 18:27:33 agc Exp $ */
+/* $NetBSD: create.h,v 1.8 1998/10/12 12:03:25 agc Exp $ */
 
 /* from FreeBSD Id: create.h,v 1.13 1997/10/08 07:46:19 charnier Exp */
 
@@ -42,6 +42,8 @@ extern char	PlayPen[];
 extern size_t	PlayPenSize;
 extern int	Dereference;
 extern int	PlistOnly;
+extern int	RelativeLinks;
+extern int	ReorderDirs;
 
 void		check_list(char *, package_t *);
 int		pkg_perform(char **);
