@@ -1,4 +1,4 @@
-/*	$NetBSD: v831.c,v 1.9 2003/08/07 11:16:23 agc Exp $	*/
+/*	$NetBSD: v831.c,v 1.10 2004/04/23 22:11:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)v831.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: v831.c,v 1.9 2003/08/07 11:16:23 agc Exp $");
+__RCSID("$NetBSD: v831.c,v 1.10 2004/04/23 22:11:44 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -53,7 +53,7 @@ int
 v831_dialer(num, acu)
         char *num, *acu;
 {
-        int status, pid;
+        int status, mypid;
         int timelim;
 
         if (boolean(value(VERBOSE)))
@@ -104,7 +104,7 @@ v831_dialer(num, acu)
         }
         alarm(0);
         signal(SIGALRM, SIG_DFL);
-        while ((pid = wait(&status)) != child && pid != -1)
+        while ((mypid = wait(&status)) != child && mypid != -1)
                 ;
         if (status) {
                 close(AC);
@@ -168,7 +168,7 @@ v831_abort()
  * Sigh, this probably must be changed at each site.
  */
 struct vaconfig {
-	char	*vc_name;
+	const char	*vc_name;
 	char	vc_rack;
 	char	vc_modem;
 } vaconfig[] = {

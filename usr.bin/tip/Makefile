@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1997/11/22 07:28:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2004/04/23 22:11:44 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 # Files are:
@@ -31,6 +31,7 @@
 #				explicitly to remcap.c if not 1024
 #	CONNECT			enable ~C command (connect pgm to remote)
 
+WARNS=3
 PROG=	tip
 CPPFLAGS+=-I${.CURDIR} \
 	-DDEFBR=1200 -DDEFFS=BUFSIZ -DACULOG -DPRISTINE -DCONNECT \

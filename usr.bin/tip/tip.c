@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.24 2003/08/07 11:16:19 agc Exp $	*/
+/*	$NetBSD: tip.c,v 1.25 2004/04/23 22:11:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.24 2003/08/07 11:16:19 agc Exp $");
+__RCSID("$NetBSD: tip.c,v 1.25 2004/04/23 22:11:44 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -71,9 +71,10 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	char *system = NULL;
+	char *System = NULL;
 	int i;
 	char *p;
+	const char *q;
 	char sbuf[12];
 	int fcarg;
 
@@ -98,7 +99,7 @@ main(argc, argv)
 
 	for (; argc > 1; argv++, argc--) {
 		if (argv[1][0] != '-')
-			system = argv[1];
+			System = argv[1];
 		else switch (argv[1][1]) {
 
 		case 'v':
@@ -116,27 +117,27 @@ main(argc, argv)
 		}
 	}
 
-	if (system == NULL)
+	if (System == NULL)
 		goto notnumber;
-	if (isalpha((unsigned char)*system))
+	if (isalpha((unsigned char)*System))
 		goto notnumber;
 	/*
 	 * System name is really a phone number...
 	 * Copy the number then stomp on the original (in case the number
 	 *	is private, we don't want 'ps' or 'w' to find it).
 	 */
-	if (strlen(system) > sizeof PNbuf - 1) {
+	if (strlen(System) > sizeof PNbuf - 1) {
 		fprintf(stderr, "tip: phone number too long (max = %d bytes)\n",
 			(int)sizeof(PNbuf) - 1);
 		exit(1);
 	}
-	strncpy(PNbuf, system, sizeof PNbuf - 1);
+	strncpy(PNbuf, System, sizeof PNbuf - 1);
 	PNbuf[sizeof PNbuf - 1] = '\0';
-	for (p = system; *p; p++)
+	for (p = System; *p; p++)
 		*p = '\0';
 	PN = PNbuf;
 	(void)snprintf(sbuf, sizeof sbuf, "tip%d", (int)BR);
-	system = sbuf;
+	System = sbuf;
 
 notnumber:
 	(void)signal(SIGINT, cleanup);
@@ -144,7 +145,7 @@ notnumber:
 	(void)signal(SIGHUP, cleanup);
 	(void)signal(SIGTERM, cleanup);
 
-	if ((i = hunt(system)) == 0) {
+	if ((i = hunt(System)) == 0) {
 		printf("all ports busy\n");
 		exit(3);
 	}
@@ -170,7 +171,7 @@ notnumber:
 	 *   in the right order, so force it here
 	 */
 	if ((PH = getenv("PHONES")) == NULL)
-		PH = _PATH_PHONES;
+		PH = strdup(_PATH_PHONES);
 	vinit();				/* init variables */
 	setparity("even");			/* set the parity table */
 	if ((i = speed(number(value(BAUDRATE)))) == 0) {
@@ -187,8 +188,8 @@ notnumber:
 	 */
 	if (HW)
 		ttysetup(i);
-	if ((p = connect()) != NULL) {
-		printf("\07%s\n[EOT]\n", p);
+	if ((q = connect()) != NULL) {
+		printf("\07%s\n[EOT]\n", q);
 		daemon_uid();
 		(void)uu_unlock(uucplock);
 		exit(1);
@@ -333,7 +334,7 @@ static	jmp_buf promptbuf;
  */
 int
 prompt(s, p, l)
-	char *s;
+	const char *s;
 	char *p;
 	size_t l;
 {
@@ -462,7 +463,8 @@ speed(n)
 
 int
 any(c, p)
-	char c, *p;
+	char c;
+	const char *p;
 {
 
 	while (p && *p)
@@ -473,10 +475,11 @@ any(c, p)
 
 char *
 interp(s)
-	char *s;
+	const char *s;
 {
 	static char buf[256];
-	char *p = buf, c, *q;
+	char *p = buf, c;
+	const char *q;
 
 	while ((c = *s++) != 0 && buf + sizeof buf - p > 2) {
 		for (q = "\nn\rr\tt\ff\033E\bb"; *q; q++)
@@ -537,14 +540,14 @@ help(c)
  * Set up the "remote" tty's state
  */
 void
-ttysetup(speed)
-	int speed;
+ttysetup(spd)
+	int spd;
 {
 	struct termios	cntrl;
 
 	tcgetattr(FD, &cntrl);
-	cfsetospeed(&cntrl, speed);
-	cfsetispeed(&cntrl, speed);
+	cfsetospeed(&cntrl, spd);
+	cfsetispeed(&cntrl, spd);
 	cntrl.c_cflag &= ~(CSIZE|PARENB);
 	cntrl.c_cflag |= CS8;
 	if (DC)
@@ -594,13 +597,13 @@ xpwrite(fd, buf, n)
  */
 void
 setparity(defparity)
-	char *defparity;
+	const char *defparity;
 {
 	int i, flip, clr, set;
-	char *parity;
+	const char *parity;
 
 	if (value(PARITY) == NULL || (value(PARITY))[0] == '\0')
-		value(PARITY) = defparity;
+		value(PARITY) = strdup(defparity);
 	parity = value(PARITY);
 	if (equal(parity, "none")) {
 		bits8 = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: t3000.c,v 1.10 2003/08/07 11:16:22 agc Exp $	*/
+/*	$NetBSD: t3000.c,v 1.11 2004/04/23 22:11:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: t3000.c,v 1.10 2003/08/07 11:16:22 agc Exp $");
+__RCSID("$NetBSD: t3000.c,v 1.11 2004/04/23 22:11:44 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -53,9 +53,9 @@ static	void	sigALRM __P((int));
 static	int	t3000_connect __P((void));
 static	void	t3000_nap __P((void));
 static	void	t3000_napx __P((int));
-static	int	t3000_swallow __P((char *));
+static	int	t3000_swallow __P((const char *));
 static	int	t3000_sync __P((void));
-static	void	t3000_write __P((int, char *, int));
+static	void	t3000_write __P((int, const char *, int));
 
 int
 t3000_dialer(num, acu)
@@ -144,7 +144,7 @@ sigALRM(dummy)
 
 static int
 t3000_swallow(match)
-	char *match;
+	const char *match;
 {
 	sig_t f;
 	char c;
@@ -187,7 +187,7 @@ t3000_swallow(match)
 #endif
 
 struct tbaud_msg {
-	char *msg;
+	const char *msg;
 	int baud;
 	int baud2;
 } tbaud_msg[] = {
@@ -332,7 +332,7 @@ if (len == 0) len = 1;
 static void
 t3000_write(fd, cp, n)
 	int fd;
-	char *cp;
+	const char *cp;
 	int n;
 {
 
