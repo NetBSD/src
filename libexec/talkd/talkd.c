@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.c,v 1.7 1997/06/29 19:19:15 christos Exp $	*/
+/*	$NetBSD: talkd.c,v 1.8 1998/07/03 11:54:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)talkd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: talkd.c,v 1.7 1997/06/29 19:19:15 christos Exp $");
+__RCSID("$NetBSD: talkd.c,v 1.8 1998/07/03 11:54:08 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,15 +58,17 @@ __RCSID("$NetBSD: talkd.c,v 1.7 1997/06/29 19:19:15 christos Exp $");
 #include <sys/param.h>
 
 #include <protocols/talkd.h>
-#include <signal.h>
-#include <syslog.h>
-#include <time.h>
+
 #include <errno.h>
-#include <unistd.h>
+#include <paths.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <paths.h>
+#include <syslog.h>
+#include <time.h>
+#include <unistd.h>
+
 #include "extern.h"
 
 CTL_MSG		request;

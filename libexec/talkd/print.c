@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.4 1997/06/29 19:13:03 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.5 1998/07/03 11:54:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.4 1997/06/29 19:13:03 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.5 1998/07/03 11:54:08 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,12 +51,25 @@ __RCSID("$NetBSD: print.c,v 1.4 1997/06/29 19:13:03 christos Exp $");
 #include <stdio.h>
 #include "extern.h"
 
-static	char *types[] =
-    { "leave_invite", "look_up", "delete", "announce" };
+static	char *types[] = {
+	"leave_invite",
+	"look_up",
+	"delete",
+	"announce"
+};
 #define	NTYPES	(sizeof (types) / sizeof (types[0]))
-static	char *answers[] = 
-    { "success", "not_here", "failed", "machine_unknown", "permission_denied",
-      "unknown_request", "badversion", "badaddr", "badctladdr" };
+
+static	char *answers[] = {
+	"success",
+	"not_here",
+	"failed",
+	"machine_unknown",
+	"permission_denied",
+	"unknown_request",
+	"badversion",
+	"badaddr",
+	"badctladdr"
+};
 #define	NANSWERS	(sizeof (answers) / sizeof (answers[0]))
 
 void
@@ -67,7 +80,7 @@ print_request(cp, mp)
 	char tbuf[80], *tp;
 	
 	if (mp->type > NTYPES) {
-		(void)sprintf(tbuf, "type %d", mp->type);
+		(void)snprintf(tbuf, sizeof tbuf, "type %d", mp->type);
 		tp = tbuf;
 	} else
 		tp = types[mp->type];
@@ -83,12 +96,12 @@ print_response(cp, rp)
 	char tbuf[80], *tp, abuf[80], *ap;
 	
 	if (rp->type > NTYPES) {
-		(void)sprintf(tbuf, "type %d", rp->type);
+		(void)snprintf(tbuf, sizeof tbuf, "type %d", rp->type);
 		tp = tbuf;
 	} else
 		tp = types[rp->type];
 	if (rp->answer > NANSWERS) {
-		(void)sprintf(abuf, "answer %d", rp->answer);
+		(void)snprintf(abuf, sizeof abuf, "answer %d", rp->answer);
 		ap = abuf;
 	} else
 		ap = answers[rp->answer];

@@ -1,4 +1,4 @@
-/*	$NetBSD: announce.c,v 1.9 1998/04/01 14:51:54 kleink Exp $	*/
+/*	$NetBSD: announce.c,v 1.10 1998/07/03 11:54:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)announce.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: announce.c,v 1.9 1998/04/01 14:51:54 kleink Exp $");
+__RCSID("$NetBSD: announce.c,v 1.10 1998/07/03 11:54:08 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ announce(request, remote_machine)
 
 	(void)snprintf(full_tty, sizeof(full_tty),
 	    "%s%s", _PATH_DEV, request->r_tty);
-	if (stat(full_tty, &stbuf) < 0 || (stbuf.st_mode&020) == 0)
+	if (stat(full_tty, &stbuf) < 0 || (stbuf.st_mode&S_IWGRP) == 0)
 		return (PERMISSION_DENIED);
 	return (print_mesg(request->r_tty, request, remote_machine));
 }
@@ -115,20 +115,21 @@ print_mesg(tty, request, remote_machine)
 
 	i = 0;
 	max_size = 0;
-	gettimeofday(&clock, &zone);
+	(void)gettimeofday(&clock, &zone);
 	clocktime = clock.tv_sec;
 	localclock = localtime(&clocktime);
 	(void)snprintf(line_buf[i], N_CHARS, " ");
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
+
 	(void)snprintf(line_buf[i], N_CHARS, 
 	    "Message from Talk_Daemon@%s at %d:%02d ...",
-	    hostname, localclock->tm_hour , localclock->tm_min );
+	    hostname, localclock->tm_hour, localclock->tm_min );
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
-	vis_user = (char *) malloc(strlen(request->l_name) * 4 + 1);
+	vis_user = (char *)malloc(strlen(request->l_name) * 4 + 1);
 	strvis(vis_user, request->l_name, VIS_CSTYLE);
 	(void)snprintf(line_buf[i], N_CHARS, 
 	    "talk: connection requested by %s@%s.", vis_user, remote_machine);
@@ -151,7 +152,7 @@ print_mesg(tty, request, remote_machine)
 	for (i = 0; i < N_LINES; i++) {
 		/* copy the line into the big buffer */
 		lptr = line_buf[i];
-		while (*lptr != '\0')
+		while (*lptr != '\0' || lptr < (line_buf[i] + N_CHARS))
 			*(bptr++) = *(lptr++);
 		/* pad out the rest of the lines with blanks */
 		for (j = sizes[i]; j < max_size + 2; j++)
