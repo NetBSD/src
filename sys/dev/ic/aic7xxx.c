@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.36 1999/09/21 01:04:44 danw Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.37 1999/09/30 23:04:40 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -295,7 +295,6 @@ restart_sequencer(ahc)
 /*
  * convert FreeBSD's SCSI symbols to NetBSD's
  */
-#define	SCSI_NOMASK	SCSI_POLL
 #define	opennings	openings
 #endif
 
@@ -874,7 +873,7 @@ ahc_run_waiting_queues(ahc)
 		scb->flags ^= SCB_ASSIGNEDQ|SCB_ACTIVE;
 
 		AHC_OUTB(ahc, QINFIFO, scb->position);
-		if (!(scb->xs->flags & SCSI_NOMASK)) {
+		if (!(scb->xs->xs_control & XS_CTL_POLL)) {
 			timeout(ahc_timeout, (caddr_t)scb,
 				(scb->xs->timeout * hz) / 1000);
 		}
@@ -934,7 +933,7 @@ ahc_run_waiting_queues(ahc)
 
 				/* Queue the command */
 				AHC_OUTB(ahc, QINFIFO, scb->position);
-				if (!(scb->xs->flags & SCSI_NOMASK)) {
+				if (!(scb->xs->xs_control & XS_CTL_POLL)) {
 					timeout(ahc_timeout, (caddr_t)scb,
 						(scb->xs->timeout * hz) / 1000);
 				}
@@ -2020,8 +2019,8 @@ ahc_done(ahc, scb)
 	if (xs->datalen) {
 		bus_dmamap_sync(ahc->sc_dt, scb->dmamap_xfer, 0,
 			scb->dmamap_xfer->dm_mapsize,
-			(xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
-			BUS_DMASYNC_POSTWRITE);
+			(xs->xs_control & XS_CTL_DATA_IN) ?
+			BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(ahc->sc_dt, scb->dmamap_xfer);
 	}
 	/*
@@ -2063,7 +2062,7 @@ ahc_done(ahc, scb)
 	 * (SCSI_ERR_OK in FreeBSD), we don't have to care this case.
 	 */
 #endif
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 #ifdef AHC_TAGENABLE
 	if(xs->cmd->opcode == INQUIRY && xs->error == XS_NOERROR)
 	{
@@ -2100,7 +2099,7 @@ ahc_done(ahc, scb)
 		}
 	}
 #endif
-	ahc_free_scb(ahc, scb, xs->flags);
+	ahc_free_scb(ahc, scb, xs->xs_control);
 	scsipi_done(xs);
 
 #if defined(__NetBSD__)			/* XXX */
@@ -2555,7 +2554,7 @@ ahc_scsi_cmd(xs)
 	}
 
 	/* determine safety of software queueing */
-	dontqueue = xs->flags & SCSI_POLL;
+	dontqueue = xs->xs_control & XS_CTL_POLL;
 
 	/*
 	 * Handle situations where there's already entries in the
@@ -2588,15 +2587,7 @@ ahc_scsi_cmd(xs)
 	 * is from a buf (possibly from interrupt time)
 	 * then we can't allow it to sleep
 	 */
-	flags = xs->flags;
-	if (flags & ITSDONE) {
-		printf("%s: Already done?", ahc_name(ahc));
-		xs->flags &= ~ITSDONE;
-	}
-	if (!(flags & INUSE)) {
-		printf("%s: Not in use?", ahc_name(ahc));
-		xs->flags |= INUSE;
-	}
+	flags = xs->xs_control;
 	if (!(scb = ahc_get_scb(ahc, flags))) {
 #if defined(__NetBSD__)			/* XXX */
 		/*
@@ -2633,7 +2624,7 @@ ahc_scsi_cmd(xs)
 
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("start scb(%p)\n", scb));
 	scb->xs = xs;
-	if (flags & SCSI_RESET) {
+	if (flags & XS_CTL_RESET) {
 		scb->flags |= SCB_DEVICE_RESET|SCB_IMMED;
 		scb->control |= MK_MESSAGE;
 	}
@@ -2686,7 +2677,7 @@ ahc_scsi_cmd(xs)
 #if defined(__NetBSD__)
 		error = bus_dmamap_load(ahc->sc_dt, scb->dmamap_xfer,
 			    xs->data, xs->datalen, NULL,
-			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
 			    BUS_DMA_WAITOK);
 		if (error) {
 			if (error == EFBIG) {
@@ -2702,7 +2693,7 @@ ahc_scsi_cmd(xs)
 			return (COMPLETE);
 		}
 		bus_dmamap_sync(ahc->sc_dt, scb->dmamap_xfer, 0,
-			scb->dmamap_xfer->dm_mapsize, (flags & SCSI_DATA_IN) ?
+			scb->dmamap_xfer->dm_mapsize, (flags & XS_CTL_DATA_IN) ?
 			BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 		/*
 		 * Load the hardware scatter/gather map with the contents
@@ -2831,7 +2822,7 @@ ahc_scsi_cmd(xs)
 		AHC_OUTB(ahc, QINFIFO, scb->position);
 		unpause_sequencer(ahc, /*unpause_always*/FALSE);
 		scb->flags |= SCB_ACTIVE;
-		if (!(flags & SCSI_NOMASK)) {
+		if (!(flags & XS_CTL_POLL)) {
 			timeout(ahc_timeout, (caddr_t)scb,
 				(xs->timeout * hz) / 1000);
 		}
@@ -2842,7 +2833,7 @@ ahc_scsi_cmd(xs)
 		STAILQ_INSERT_TAIL(&ahc->waiting_scbs, scb, links);
 		ahc_run_waiting_queues(ahc);
 	}
-	if (!(flags & SCSI_NOMASK)) {
+	if (!(flags & XS_CTL_POLL)) {
 		splx(s);
 		return (SUCCESSFULLY_QUEUED);
 	}
@@ -2852,12 +2843,12 @@ ahc_scsi_cmd(xs)
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("cmd_poll\n"));
 	do {
 		if (ahc_poll(ahc, xs->timeout)) {
-			if (!(xs->flags & SCSI_SILENT))
+			if (!(xs->xs_control & XS_CTL_SILENT))
 				printf("cmd fail\n");
 			ahc_timeout(scb);
 			break;
 		}
-	} while (!(xs->flags & ITSDONE));  /* a non command complete intr */
+	} while (!(xs->xs_status & XS_STS_DONE));
 	splx(s); 
 	return (COMPLETE);
 }
@@ -3013,7 +3004,7 @@ ahc_get_scb(ahc, flags)
 		}
 #endif
 		else {
-			if (!(flags & SCSI_NOSLEEP)) {
+			if (!(flags & XS_CTL_NOSLEEP)) {
 				tsleep((caddr_t)&ahc->free_scbs, PRIBIO,
 					"ahcscb", 0);
 				continue;

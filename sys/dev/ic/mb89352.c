@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.3 1999/03/14 16:14:54 minoura Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.4 1999/09/30 23:04:41 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 #ifdef DDB
@@ -446,7 +446,7 @@ spc_get_acb(sc, flags)
 	s = splbio();
 
 	while ((acb = sc->free_list.tqh_first) == NULL &&
-	       (flags & SCSI_NOSLEEP) == 0)
+	       (flags & XS_CTL_NOSLEEP) == 0)
 		tsleep(&sc->free_list, PRIBIO, "spcacb", 0);
 	if (acb) {
 		TAILQ_REMOVE(&sc->free_list, acb, chain);
@@ -496,7 +496,7 @@ spc_scsi_cmd(xs)
 	SPC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
 	    sc_link->scsipi_scsi.target));
 
-	flags = xs->flags;
+	flags = xs->xs_control;
 	if ((acb = spc_get_acb(sc, flags)) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
@@ -506,7 +506,7 @@ spc_scsi_cmd(xs)
 	acb->xs = xs;
 	acb->timeout = xs->timeout;
 
-	if (xs->flags & SCSI_RESET) {
+	if (xs->xs_control & XS_CTL_RESET) {
 		acb->flags |= ACB_RESET;
 		acb->scsipi_cmd_length = 0;
 		acb->data_length = 0;
@@ -536,7 +536,7 @@ spc_scsi_cmd(xs)
 
 	splx(s);
 
-	if ((flags & SCSI_POLL) == 0)
+	if ((flags & XS_CTL_POLL) == 0)
 		return SUCCESSFULLY_QUEUED;
 
 	/* Not allowed to use interrupts, use polling instead */
@@ -582,7 +582,7 @@ spc_poll(sc, xs, count)
 		 */
 		if (bus_space_read_1(iot, ioh, INTS) != 0)
 			spcintr(sc);
-		if ((xs->flags & ITSDONE) != 0)
+		if ((xs->xs_status & XS_STS_DONE) != 0)
 			return 0;
 		delay(1000);
 		count--;
@@ -881,7 +881,7 @@ spc_done(sc, acb)
 		}
 	}
 
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 
 #if SPC_DEBUG
 	if ((spc_debug & SPC_SHOWMISC) != 0) {
@@ -906,7 +906,7 @@ spc_done(sc, acb)
 	} else
 		spc_dequeue(sc, acb);
 
-	spc_free_acb(sc, acb, xs->flags);
+	spc_free_acb(sc, acb, xs->xs_control);
 	ti->cmds++;
 	scsipi_done(xs);
 }
@@ -1806,7 +1806,7 @@ loop:
 			sc->sc_cleft = acb->scsipi_cmd_length;
 
 			/* On our first connection, schedule a timeout. */
-			if ((acb->xs->flags & SCSI_POLL) == 0)
+			if ((acb->xs->xs_control & XS_CTL_POLL) == 0)
 				timeout(spc_timeout, acb, (acb->timeout * hz) / 1000);
 
 			sc->sc_state = SPC_CONNECTED;
@@ -2106,7 +2106,7 @@ spc_show_scsi_cmd(acb)
 	int i;
 
 	scsi_print_addr(sc_link);
-	if ((acb->xs->flags & SCSI_RESET) == 0) {
+	if ((acb->xs->xs_control & XS_CTL_RESET) == 0) {
 		for (i = 0; i < acb->scsipi_cmd_length; i++) {
 			if (i)
 				printf(",");

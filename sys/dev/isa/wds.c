@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.38 1998/12/09 08:37:50 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.39 1999/09/30 23:04:41 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -695,7 +695,7 @@ wds_get_scb(sc, flags)
 			}
 			continue;
 		}
-		if ((flags & SCSI_NOSLEEP) != 0)
+		if ((flags & XS_CTL_NOSLEEP) != 0)
 			goto out;
 		tsleep(&sc->sc_free_scb, PRIBIO, "wdsscb", 0);
 	}
@@ -855,8 +855,8 @@ wds_done(sc, scb, stat)
 		if (xs->datalen) {
 			bus_dmamap_sync(dmat, scb->dmamap_xfer, 0,
 			    scb->dmamap_xfer->dm_mapsize,
-			    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
-			    BUS_DMASYNC_POSTWRITE);
+			    (xs->xs_control & XS_CTL_DATA_IN) ?
+			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(dmat, scb->dmamap_xfer);
 		}
 		if (xs->error == XS_NOERROR) {
@@ -946,7 +946,7 @@ wds_done(sc, scb, stat)
 	} /* XS_NOERROR */
 
 	wds_free_scb(sc, scb);
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 	scsipi_done(xs);
 
 	/*
@@ -1102,7 +1102,7 @@ wds_inquire_setup_information(sc)
 
 	sc->sc_maxsegs = 1;
 
-	scb = wds_get_scb(sc, SCSI_NOSLEEP);
+	scb = wds_get_scb(sc, XS_CTL_NOSLEEP);
 	if (scb == 0)
 		panic("wds_inquire_setup_information: no scb available");
 
@@ -1178,7 +1178,7 @@ wds_scsi_cmd(xs)
 	struct iovec *iovp;
 #endif
 
-	if (xs->flags & SCSI_RESET) {
+	if (xs->xs_control & XS_CTL_RESET) {
 		/* XXX Fix me! */
 		printf("%s: reset!\n", sc->sc_dev.dv_xname);
 		wds_init(sc, 1);
@@ -1198,7 +1198,7 @@ wds_scsi_cmd(xs)
 	}
 
 	/* Polled requests can't be queued for later. */
-	dontqueue = xs->flags & SCSI_POLL;
+	dontqueue = xs->xs_control & XS_CTL_POLL;
 
 	/*
 	 * If there are jobs in the queue, run them first.
@@ -1224,7 +1224,7 @@ wds_scsi_cmd(xs)
 	}
 
  get_scb:
-	flags = xs->flags;
+	flags = xs->xs_control;
 	if ((scb = wds_get_scb(sc, flags)) == NULL) {
 		/*
 		 * If we can't queue, we lose.
@@ -1252,7 +1252,7 @@ wds_scsi_cmd(xs)
 	scb->xs = xs;
 	scb->timeout = xs->timeout;
 
-	if (xs->flags & SCSI_DATA_UIO) {
+	if (xs->xs_control & XS_CTL_DATA_UIO) {
 		/* XXX Fix me! */
 		/* Let's not worry about UIO. There isn't any code for the *
 		 * non-SG boards anyway! */
@@ -1272,23 +1272,23 @@ wds_scsi_cmd(xs)
 	/* NOTE: cmd.write may be OK as 0x40 (disable direction checking)
 	 * on boards other than the WD-7000V-ASE. Need this for the ASE:
  	 */
-	scb->cmd.write = (xs->flags & SCSI_DATA_IN) ? 0x80 : 0x00;
+	scb->cmd.write = (xs->xs_control & XS_CTL_DATA_IN) ? 0x80 : 0x00;
 
 	if (xs->datalen) {
 		sg = scb->scat_gath;
 		seg = 0;
 #ifdef TFS
-		if (flags & SCSI_DATA_UIO) {
+		if (flags & XS_CTL_DATA_UIO) {
 			error = bus_Dmamap_load_uio(dmat,
 			    scb->dmamap_xfer, (struct uio *)xs->data,
-			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
 			    BUS_DMA_WAITOK);
 		} else
 #endif /* TFS */
 		{
 			error = bus_dmamap_load(dmat,
 			    scb->dmamap_xfer, xs->data, xs->datalen, NULL,
-			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
 			    BUS_DMA_WAITOK);
 		}
 
@@ -1307,7 +1307,7 @@ wds_scsi_cmd(xs)
 
 		bus_dmamap_sync(dmat, scb->dmamap_xfer, 0,
 		    scb->dmamap_xfer->dm_mapsize,
-		    (flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+		    (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
 		    BUS_DMASYNC_PREWRITE);
 
 		if (sc->sc_maxsegs > 1) {
@@ -1354,7 +1354,7 @@ wds_scsi_cmd(xs)
 	ltophys(0, scb->cmd.link);
 
 	/* XXX Do we really want to do this? */
-	if (flags & SCSI_POLL) {
+	if (flags & XS_CTL_POLL) {
 		/* Will poll card, await result. */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, WDS_HCR, WDSH_DRQEN);
 		scb->flags |= SCB_POLLED;
@@ -1368,7 +1368,7 @@ wds_scsi_cmd(xs)
 	wds_queue_scb(sc, scb);
 	splx(s);
 
-	if ((flags & SCSI_POLL) == 0)
+	if ((flags & XS_CTL_POLL) == 0)
 		return SUCCESSFULLY_QUEUED;
 
 	if (wds_poll(sc, xs, scb->timeout)) {
@@ -1449,7 +1449,7 @@ wds_poll(sc, xs, count)
 		 */
 		if (bus_space_read_1(iot, ioh, WDS_STAT) & WDSS_IRQ)
 			wdsintr(sc);
-		if (xs->flags & ITSDONE)
+		if (xs->xs_status & XS_STS_DONE)
 			return 0;
 		delay(1000);	/* only happens in boot so ok */
 		count--;
