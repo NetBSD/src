@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: NULLCONF,v 1.4 2000/01/09 07:57:43 shin Exp $
+# 	$NetBSD: NULLCONF,v 1.5 2000/02/12 03:21:07 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 maxusers	8
@@ -10,7 +10,6 @@ options 	NOFPU			# No FPU
 options 	SOFTFLOAT		# emulate FPU insn
 options		MIPS3_L2CACHE_ABSENT
 options 	DDB			# in-kernel debugger
-options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
 
 options		WINCE_DEFAULT_SETTING # Debugging use
 options		DUMP_GIU_LEVEL2_INTR  # Debugging use
