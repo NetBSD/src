@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.36 2003/01/09 18:24:08 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.37 2003/03/31 20:06:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.36 2003/01/09 18:24:08 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.37 2003/03/31 20:06:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,8 +175,17 @@ tar_trail(char *buf, int in_resync, int *cnt)
 	 * might as well throw this block out since a valid header can NEVER be
 	 * a block of all 0 (we must have a valid file name).
 	 */
-	if (!in_resync && (++*cnt >= NULLCNT))
-		return(0);
+	if (!in_resync) {
+		++*cnt;
+		/*
+		 * old GNU tar (up through 1.13) only writes one block of
+		 * trailers, so we pretend we got another
+		 */
+		if (is_gnutar)
+			++*cnt;
+		if (*cnt >= NULLCNT)
+			return(0);
+	}
 	return(1);
 }
 
