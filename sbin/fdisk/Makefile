@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.26 2002/11/23 23:45:51 fvdl Exp $
+#	$NetBSD: Makefile,v 1.27 2003/04/26 19:10:09 fvdl Exp $
 
 SUBDIR=	mbr
-.if ${MACHINE} == "i386" || ${MACHINE} == "x86_64"
+.if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
 SUBDIR+= mbr_bootsel
 .endif
 
@@ -18,7 +18,7 @@ SUBDIR+= mbr_bootsel
      ${MACHINE} == "mvmeppc" || \
      ${MACHINE} == "netwinder" || \
      ${MACHINE} == "macppc" || \
-     ${MACHINE} == "x86_64")
+     ${MACHINE} == "amd64")
 PROG=	fdisk 
 SRCS=	fdisk.c
 DPADD+=	${LIBUTIL}
