@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.4 2000/08/30 23:51:53 jhawk Exp $
+# $NetBSD: Makefile,v 1.5 2000/12/30 17:21:44 sommerfeld Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/hdb
 
@@ -7,7 +10,7 @@ MKLINT= no
 
 LIB=	hdb
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${MAKE} print-objdir
+COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
 
 hdb_err.c hdb_err.h: hdb_err.et
 	${COMPILEET}/compile_et ${DIST}/heimdal/lib/hdb/hdb_err.et
@@ -38,13 +41,13 @@ INCSDIR= /usr/include/krb5
 
 $(gen_files) asn1.h: asn1_files
 
-ASN1COMPILE!=	cd ${.CURDIR}/../libasn1/asn1_compile && ${MAKE} print-objdir
+ASN1COMPILE!=	cd ${.CURDIR}/../libasn1/asn1_compile && ${PRINTOBJDIR}
 
 asn1_files: hdb.asn1
 	${ASN1COMPILE}/asn1_compile ${DIST}/heimdal/lib/hdb/hdb.asn1 hdb_asn1
 
-ASN1!=	cd ${.CURDIR}/../libasn1 && ${MAKE} print-objdir
-KRB5!=	cd ${.CURDIR}/../libkrb5 && ${MAKE} print-objdir
+ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
+KRB5!=	cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/hdb		\
