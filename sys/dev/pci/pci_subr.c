@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.13 1996/01/22 21:08:10 cgd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.14 1996/02/28 01:44:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,78 +43,6 @@
 #ifdef PCIVERBOSE
 #include <dev/pci/pcidevs.h>
 #endif
-
-int
-pciprint(aux, pci)
-	void *aux;
-	char *pci;
-{
-	register struct pci_attach_args *pa = aux;
-
-	printf(" bus %d device %d", pa->pa_bus, pa->pa_device);
-	return (UNCONF);
-}
-
-int
-pcisubmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct cfdata *cf = match;
-	struct pci_attach_args *pa = aux;
-
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != pa->pa_bus)
-		return 0;
-	if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != pa->pa_device)
-		return 0;
-	return ((*cf->cf_driver->cd_match)(parent, match, aux));
-}
-
-/*
- * Try to find and attach the PCI device at the give bus and device number.
- * Return 1 if successful, 0 if unsuccessful.
- */
-int
-pci_attach_subdev(pcidev, bus, device)
-	struct device *pcidev;
-	int bus, device;
-{
-	pcitag_t tag;
-	pcireg_t id, class;
-	struct pci_attach_args pa;
-	struct cfdata *cf;
-	int supported;
-	char devinfo[256];
-
-	tag = pci_make_tag(bus, device, 0);
-	id = pci_conf_read(tag, PCI_ID_REG);
-	if (id == 0 || id == 0xffffffff)
-		return (0);
-	class = pci_conf_read(tag, PCI_CLASS_REG);
-
-	pa.pa_bus = bus;
-	pa.pa_device = device;
-	pa.pa_tag = tag;
-	pa.pa_id = id;
-	pa.pa_class = class;
-
-#if defined(PCIVERBOSE) && 0 /* _too_ verbose */
-	pci_devinfo(id, class, devinfo, NULL);
-	printf("%s bus %d device %d: %s\n", pcidev->dv_xname, bus,
-	    device, devinfo);
-#endif /* _too_ verbose */
-
-	if ((cf = config_search(pcisubmatch, pcidev, &pa)) != NULL)
-		config_attach(pcidev, cf, &pa, pciprint);
-	else {
-		pci_devinfo(id, class, 1, devinfo);
-		printf("%s bus %d device %d: %s not configured\n",
-		    pcidev->dv_xname, bus, device, devinfo);
-		return (0);
-	}
-
-	return (1);
-}
 
 /*
  * Descriptions of known PCI classes and subclasses.
