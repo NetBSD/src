@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.5 2001/11/23 06:21:50 tsutsui Exp $	*/
+/*	$NetBSD: cache.c,v 1.6 2001/12/23 13:10:46 takemura Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -284,8 +284,25 @@ mips_config_cache(void)
 #endif /* MIPS1 */
 
 #ifdef MIPS3
-	case MIPS_R4000:
 	case MIPS_R4100:
+		/*
+		 * R4100 (NEC VR series) revision number means:
+		 *
+		 *		MIPS_PRID_REV_MAJ	MIPS_PRID_REV_MIN
+		 * VR4102	4			?
+		 * VR4111	5			?
+		 * VR4181	5			?
+		 * VR4121	6			?
+		 * VR4122	7			0 or 1
+		 * VR4181A	7			3 <
+		 * VR4131	8			?
+		 */
+		/* Vr4131 has R4600 style 2-way set-associative cache */
+		if (MIPS_PRID_REV_MAJ(cpu_id) == 8)
+			goto primary_cache_is_2way;
+		/* FALLTHROUGH */
+
+	case MIPS_R4000:
 	case MIPS_R4300:
 		mips_picache_ways = 1;
 		mips_pdcache_ways = 1;
@@ -360,6 +377,7 @@ mips_config_cache(void)
 	case MIPS_R5000:
 #endif
 	case MIPS_RM5200:
+primary_cache_is_2way:
 		mips_picache_ways = 2;
 		mips_pdcache_ways = 2;
 
@@ -381,6 +399,19 @@ mips_config_cache(void)
 		}
 
 		switch (mips_pdcache_line_size) {
+		case 16:
+			mips_cache_ops.mco_pdcache_wbinv_all =
+			    r5k_pdcache_wbinv_all_16;
+			mips_cache_ops.mco_pdcache_wbinv_range =
+			    r5k_pdcache_wbinv_range_16;
+			mips_cache_ops.mco_pdcache_wbinv_range_index =
+			    r5k_pdcache_wbinv_range_index_16;
+			mips_cache_ops.mco_pdcache_inv_range =
+			    r5k_pdcache_inv_range_16;
+			mips_cache_ops.mco_pdcache_wb_range =
+			    r5k_pdcache_wb_range_16;
+			break;
+
 		case 32:
 			mips_cache_ops.mco_pdcache_wbinv_all =
 			    r5k_pdcache_wbinv_all_32;
