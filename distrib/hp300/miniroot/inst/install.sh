@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.1.2.6 1995/11/14 09:40:58 thorpej Exp $
+#	$NetBSD: install.sh,v 1.1.2.7 1995/11/16 07:30:54 thorpej Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -110,6 +110,8 @@ md_installboot() {
 }
 
 md_checkfordisklabel() {
+	# $1 is the disk to check
+
 	disklabel -r $1 > /dev/null 2> /tmp/checkfordisklabel
 	if grep "no disk label" /tmp/checkfordisklabel; then
 		rval="1"
@@ -197,7 +199,7 @@ __scsi_label_1
 
 	# Calculate some values we need.
 	_sec_per_cyl=`expr $_nsectors / $_cylinders`
-	_sec_per_track=`expr $_sec_per_cyl / _$tracks_per_cyl`
+	_sec_per_track=`expr $_sec_per_cyl / $_tracks_per_cyl`
 	_new_c_size=`expr $_sec_per_track \* $_tracks_per_cyl \* $_cylinders`
 
 	# Emit a disktab entry, suitable for getting started.
@@ -206,11 +208,11 @@ __scsi_label_1
 	# to open.  Don't ask.
 	echo	"" >> /etc/disktab
 	echo	"# Created by install" >> /etc/disktab
-	echo	"${_cur_disk_name}:\\"
-	echo -n	"	:ty=winchester:ns#${_sec_per_track}:"
-	echo	"nt#${_tracks_per_cyl}:nc#${_fudge_cyl}:\\"
-	echo	"	:pa#1:\\"
-	echo	"	:pc#${_nsectors}:"
+	echo	"${_cur_disk_name}:\\" >> /etc/disktab
+	echo -n	"	:ty=winchester:ns#${_sec_per_track}:" >> /etc/disktab
+	echo	"nt#${_tracks_per_cyl}:nc#${_fudge_cyl}:\\" >> /etc/disktab
+	echo	"	:pa#1:\\" >> /etc/disktab
+	echo	"	:pc#${_nsectors}:" >> /etc/disktab
 
 	# Ok, here's what we need to do.  First of all, we install
 	# this initial label by opening the `c' partition of the disk
@@ -231,7 +233,8 @@ __scsi_label_1
 	if ! disklabel -w -r ${1} ${_cur_disk_name}; then
 		echo ""
 		echo "ERROR: can't bootstrap disklabel!"
-		return 1
+		rval="1"
+		return
 	fi
 
 	echo ""
@@ -248,19 +251,27 @@ __scsi_label_1
 	if ! disklabel -e /dev/r${1}a; then
 		echo ""
 		echo "ERROR: can't fixup geometry!"
-		return 1
+		rval="1"
+		return
 	fi
 
-	cat __explain_motives_2
+	cat << \__explain_motives_2
 
 Now that you have corrected the geometry of your disk, you may edit the
-partition map.
+partition map.  Don't forget to fill in the fsize (frag size), bsize
+(filesystem block size), and cpg (cylinders per group) values.  If you
+are unsure what these should be, use:
+
+	fsize: 1024
+	bsize: 4096
+	cpg: 16
 
 __explain_motives_2
 	echo -n	"Press <return> to continue. "
 	getresp ""
 
-	return 0
+	rval="0"
+	return
 }
 
 hp300_init_label_hpib_disk() {
@@ -269,25 +280,28 @@ hp300_init_label_hpib_disk() {
 	# We look though the boot messages attempting to find
 	# the model number for the provided disk.
 	_hpib_disktype=""
-	if dmesg | grep "${1}: "; then
+	if dmesg | grep "${1}: " > /dev/null 2>&1; then
 		_hpib_disktype=HP`dmesg | grep "${1}: " | sort -u | \
 		    awk '{print $2}'`
 	fi
 	if [ "X${_hpib_disktype}" = "X" ]; then
 		echo ""
 		echo "ERROR: $1 doesn't appear to exist?!"
-		return 1;
+		rval="1"
+		return
 	fi
 
 	# Peer through /etc/disktab to see if the disk has a "default"
 	# layout.  If it doesn't, we have to treat it like a SCSI disk;
 	# i.e. prompt for geometry, and create a default to place
 	# on the disk.
-	if ! grep "${_hpib_disktype}[:|]" /etc/disktab; then
+	if ! grep "${_hpib_disktype}[:|]" /etc/disktab > /dev/null \
+	    2>&1; then
 		echo ""
 		echo "WARNING: can't find defaults for $1 ($_hpib_disktype)"
 		echo ""
-		return `hp300_init_label_scsi_disk $1`
+		hp300_init_label_scsi_disk $1
+		return
 	fi
 
 	# We've found the defaults.  Now use them to place an initial
@@ -304,16 +318,19 @@ hp300_init_label_hpib_disk() {
 		getresp "y"
 		case "$resp" in
 			y*|Y*)
-				return `hp300_init_label_scsi_disk $1`
+				hp300_init_label_scsi_disk $1
+				return
 				;;
 
 			*)
-				return 1
+				rval="1"
+				return
 				;;
 		esac
 	fi
 
-	return 0
+	rval="0"
+	return
 }
 
 md_labeldisk() {
@@ -322,7 +339,8 @@ md_labeldisk() {
 	# Check to see if there is a disklabel present on the device.
 	# If so, we can just edit it.  If not, we must first install
 	# a default label.
-	case `md_checkfordisklabel $1` in
+	md_checkfordisklabel $1
+	case "$rval" in
 		0)
 			# Go ahead and just edit the disklabel.
 			disklabel -W $1
@@ -330,17 +348,16 @@ md_labeldisk() {
 			;;
 
 		*)
-			# Install a default.
 		echo -n "No disklabel present, installing a default for type: "
 			case "$1" in
 				rd*)
 					echo "HP-IB"
-					rval=`hp300_init_label_hpib_disk $1`
+					hp300_init_label_hpib_disk $1
 					;;
 
 				sd*)
 					echo "SCSI"
-					rval=`hp300_init_label_scsi_disk $1`
+					hp300_init_label_scsi_disk $1
 					;;
 
 				*)
@@ -479,7 +496,6 @@ labelmoredisks() {
 You may label the following disks:
 
 __labelmoredisks_1
-	_DKDEVS=`rmel ${ROOTDISK} "${_DKDEVS}"`
 	echo "$_DKDEVS"
 	echo	""
 	echo -n	"Label which disk? [done] "
@@ -550,8 +566,8 @@ __configurenetwork_1
 			if isin $resp $_IFS ; then
 				_interface_name=$resp
 
-				# remove from list
-				_IFS=`rmel $resp "$_IFS"`
+				# Keep in the list in case it's misconfigured
+				# and the user want's to re-do it.
 
 				# Get IP address
 				resp=""		# force one iteration
@@ -993,7 +1009,7 @@ done
 # Make sure there's a disklabel there.  If there isn't, puke after
 # disklabel prints the error message.
 md_checkfordisklabel ${ROOTDISK}
-case $rval in
+case "$resp" in
 	1)
 		cat << \__disklabel_not_present_1
 
@@ -1046,6 +1062,7 @@ You will now be given the opportunity to place disklabels on any additional
 disks on your system.
 __disklabel_notice_2
 
+_DKDEVS=`rmel ${ROOTDISK} ${_DKDEVS}`
 resp="X"	# force at least one iteration
 while [ "X$resp" != X"done" ]; do
 	labelmoredisks
