@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.13 2003/04/10 22:06:55 christos Exp $
+#	$NetBSD: MALTA,v 1.14 2003/10/08 11:07:50 bouyer Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.13 $"
+#ident 		"GENERIC-$Revision: 1.14 $"
 
 maxusers	32
 
@@ -187,6 +187,8 @@ pciide* 	at pci? dev ? function ? flags 0x0000
 options 	PCIIDE_RESTRICTED_SUPPORT # don't enable all pciide support
 options 	PCIIDE_PIIX_ENABLE	  # enable PIIX support
 
+atabus* 	at pciide? channel ?
+
 # IDE drives
 # Flags are used only with controllers that support DMA operations
 # and mode settings (e.g. some pciide controllers)
@@ -198,7 +200,7 @@ options 	PCIIDE_PIIX_ENABLE	  # enable PIIX support
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-wd* 		at pciide? channel ? drive ? flags 0x0000
+wd* 		at atabus? drive ? flags 0x0000
 
 # PCI network interfaces
 #en*		at pci? dev ? function ?	# ENI/Adaptec ATM
