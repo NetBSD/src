@@ -32,14 +32,16 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ne.c	7.4 (Berkeley) 5/21/91
- *	$Id: if_ne.c,v 1.7 1993/06/14 16:49:09 mycroft Exp $
+ *	$Id: if_ne.c,v 1.8 1993/07/15 12:57:05 deraadt Exp $
  */
 
 /*
- * NE2000 Ethernet driver
+ * NE2000/NE1000 Ethernet driver
  *
  * Parts inspired from Tim Tucker's if_wd driver for the wd8003,
  * insight on the ne2000 gained from Robert Clements PC/FTP driver.
+ *
+ * Corrected for NE1000 by Andrew A. Chernov
  */
 
 #include "ne.h"
@@ -116,8 +118,7 @@ struct	ne_softc {
 	struct	ether_header ns_eh;	/* header of incoming packet */
 	u_char	ns_pb[2048 /*ETHERMTU+sizeof(long)*/];
 	short	ns_txstart;		/* transmitter buffer start */
-	short	ns_rxend;		/* recevier buffer end */
-	short	ns_rxbndry;		/* recevier buffer boundary */
+	u_short ns_rxend;               /* recevier buffer end */
 	short	ns_port;		/* i/o port base */
 	short	ns_mode;		/* word/byte mode */
 	caddr_t	ns_bpf;			/* BPF frob */
@@ -342,8 +343,9 @@ neattach(dvp)
 	ifp->if_unit = unit;
 	ifp->if_name = nedriver.name ;
 	ifp->if_mtu = ETHERMTU;
-	printf ("ne%d: ethernet address %s\n", unit,
-		ether_sprintf(ns->ns_addrp)) ;
+	printf ("ne%d: ethernet address %s, NE%s\n", unit,
+		ether_sprintf(ns->ns_addrp),
+		(ns->ns_mode & DSDC_WTS) ? "2000" : "1000");
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 	ifp->if_init = neinit;
 	ifp->if_output = ether_output;
@@ -432,9 +434,17 @@ nestart(ifp)
 {
 	register struct ne_softc *ns = &ne_softc[ifp->if_unit];
 	struct mbuf *m0, *m;
-	int buffer;
-	int len = 0, i, total,t;
+	int len, i, total,t;
 	register nec = ns->ns_port;
+	u_char cmd;
+	u_short word;
+	int counter;
+
+	if (ns->ns_flags & DSF_LOCK)
+		return;
+
+	if ((ns->ns_if.if_flags & IFF_RUNNING) == 0)
+		return;
 
 	/*
 	 * The DS8390 has only one transmit buffer, if it is busy we
@@ -442,13 +452,7 @@ nestart(ifp)
 	 */
 	outb(nec+ds_cmd,DSCM_NODMA|DSCM_START);
 
-	if (ns->ns_flags & DSF_LOCK)
-		return;
-
 	if (inb(nec+ds_cmd) & DSCM_TRANS)
-		return;
-
-	if ((ns->ns_if.if_flags & IFF_RUNNING) == 0)
 		return;
 
 	IF_DEQUEUE(&ns->ns_if.if_snd, m);
@@ -456,35 +460,70 @@ nestart(ifp)
 	if (m == 0)
 		return;
 
+	ns->ns_flags |= DSF_LOCK;	/* prevent entering nestart */
+
 	/*
 	 * Copy the mbuf chain into the transmit buffer
 	 */
 
-	ns->ns_flags |= DSF_LOCK;	/* prevent entering nestart */
-	buffer = ns->ns_txstart; len = i = 0;
+	len = i = 0;
 	t = 0;
 	for (m0 = m; m != 0; m = m->m_next)
 		t += m->m_len;
 		
-	m = m0;
-	total = t;
-	for (m0 = m; m != 0; ) {
+	/* next code derived from neput() */
 		
-		if (m->m_len&1 && t > m->m_len) {
-			neput(ns, mtod(m, caddr_t), buffer, m->m_len - 1);
-			t -= m->m_len - 1;
-			buffer += m->m_len - 1;
-			m->m_data += m->m_len - 1;
-			m->m_len = 1;
-			m = m_pullup(m, 2);
-		} else {
-			neput(ns, mtod(m, caddr_t), buffer, m->m_len);
-			buffer += m->m_len;
-			t -= m->m_len;
-			MFREE(m, m0);
+	if ((ns->ns_mode & DSDC_WTS) && t&1)
+		t++;          /* roundup to words */
+		
+	cmd = inb(nec+ds_cmd);
+	outb (nec+ds_cmd, DSCM_NODMA|DSCM_PG0|DSCM_START);
+
+	/* Setup for remote dma */
+	outb (nec+ds0_isr, DSIS_RDC);
+
+	outb (nec+ds0_rbcr0, t);
+	outb (nec+ds0_rbcr1, t>>8);
+	outb (nec+ds0_rsar0, ns->ns_txstart);
+	outb (nec+ds0_rsar1, ns->ns_txstart>>8);
+
+	/* Execute & stuff to card */
+	outb (nec+ds_cmd, DSCM_RWRITE|DSCM_PG0|DSCM_START);
+
 			m = m0;
+	total = t;
+	if (ns->ns_mode & DSDC_WTS) {        /* Word Mode */
+		while (m != 0) {
+			if (m->m_len > 1)
+				outsw(nec+ne_data, m->m_data, m->m_len / 2);
+			if (m->m_len & 1) {
+				word = (u_char) *(mtod(m, caddr_t) + m->m_len - 1);
+				if ((m = m->m_next) != 0) {
+					word |= *mtod(m, caddr_t) << 8;
+					m->m_len--;
+					m->m_data++;
+				}
+				outsw(nec+ne_data, (caddr_t)&word, 1);
+			} else
+				m = m->m_next;
 		}
 	}
+	else {                                /* Byte Mode */
+		while (m != 0) {
+			if (m->m_len > 0)
+				outsb(nec+ne_data, mtod(m, caddr_t), m->m_len);
+			m = m->m_next;
+		}
+	}
+
+	m_freem(m0);
+
+	counter = 100000;
+	/* Wait till done, then shutdown feature */
+	while ((inb (nec+ds0_isr) & DSIS_RDC) == 0 && counter-- > 0)
+		;
+	outb (nec+ds0_isr, DSIS_RDC);
+	outb (nec+ds_cmd, cmd);
 
 	/*
 	 * Init transmit length registers, and set transmit start flag.
@@ -650,13 +689,15 @@ nerecv(ns)
 		int l = len - (DS_PGSIZE-sizeof(ns->ns_ph)), b ;
 		u_char *p = ns->ns_pb + (DS_PGSIZE-sizeof(ns->ns_ph));
 
-		if(++ns->ns_cur > 0x7f) ns->ns_cur = 0x46;
+		if (++ns->ns_cur >= ns->ns_rxend/DS_PGSIZE)
+			ns->ns_cur = (ns->ns_txstart+PKTSZ)/DS_PGSIZE;
 		b = ns->ns_cur*DS_PGSIZE;
 		
 		while (l >= DS_PGSIZE) {
 			nefetch(ns, p, b, DS_PGSIZE);
 			p += DS_PGSIZE; l -= DS_PGSIZE;
-			if(++ns->ns_cur > 0x7f) ns->ns_cur = 0x46;
+			if (++ns->ns_cur >= ns->ns_rxend/DS_PGSIZE)
+				ns->ns_cur = (ns->ns_txstart+PKTSZ)/DS_PGSIZE;
 			b = ns->ns_cur*DS_PGSIZE;
 		}
 		if (l > 0)
