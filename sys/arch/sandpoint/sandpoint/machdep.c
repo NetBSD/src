@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2001/02/26 14:55:05 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2001/03/06 20:10:20 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -369,59 +369,6 @@ mem_regions(mem, avail)
 {
 	*mem = physmemr;
 	*avail = availmemr;
-}
-
-/*
- * This should probably be in autoconf!				XXX
- */
-int cpu;
-char cpu_model[80];
-char cpu_name[] = "PowerPC";	/* cpu architecture */
-
-void
-identifycpu()
-{
-	int pvr;
-
-	/*
-	 * Find cpu type
-	 */
-	asm ("mfpvr %0" : "=r"(pvr));
-	cpu = pvr >> 16;
-	switch (cpu) {
-	case 1:
-		sprintf(cpu_model, "601");
-		break;
-	case 3:
-		sprintf(cpu_model, "603");
-		break;
-	case 4:
-		sprintf(cpu_model, "604");
-		break;
-	case 5:
-		sprintf(cpu_model, "602");
-		break;
-	case 6:
-		sprintf(cpu_model, "603e");
-		break;
-	case 7:
-		sprintf(cpu_model, "603ev");
-		break;
-	case 9:
-		sprintf(cpu_model, "604ev");
-		break;
-	case 20:
-		sprintf(cpu_model, "620");
-		break;
-	case 0x81:
-		sprintf(cpu_model, "8240");
-		break;
-	default:
-		sprintf(cpu_model, "Version %x", cpu);
-		break;
-	}
-	sprintf(cpu_model + strlen(cpu_model), " (Revision %x)", pvr & 0xffff);
-	printf("CPU: %s %s\n", cpu_name, cpu_model);
 }
 
 void
