@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.23 2004/03/23 21:53:36 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.23.2.1 2004/04/11 11:19:58 tron Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.23 2004/03/23 21:53:36 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.23.2.1 2004/04/11 11:19:58 tron Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -368,7 +368,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 	parityPDA->numSector = failedPDA->numSector;
 
 	if (!xorTargetBuf) {
-		xorTargetBuf = rf_AllocBuffer(raidPtr, rf_RaidAddressToByte(raidPtr, failedPDA->numSector), allocList);
+		xorTargetBuf = rf_AllocBuffer(raidPtr, dag_h, rf_RaidAddressToByte(raidPtr, failedPDA->numSector));
 	}
 	/* init the Wnp node */
 	rf_InitNode(wnpNode, rf_wait, RF_FALSE, rf_DiskWriteFunc, rf_DiskWriteUndoFunc,
