@@ -1,3 +1,5 @@
+/*	$NetBSD: str.c,v 1.3 1996/10/04 05:15:30 christos Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -30,7 +32,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: str.c,v 1.2 1995/04/24 13:25:55 cgd Exp $";
+static char *rcsid = "$NetBSD: str.c,v 1.3 1996/10/04 05:15:30 christos Exp $";
 #endif
 
 /*

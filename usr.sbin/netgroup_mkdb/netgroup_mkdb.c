@@ -1,3 +1,5 @@
+/*	$NetBSD: netgroup_mkdb.c,v 1.5 1996/10/04 05:15:29 christos Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -29,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char *rcsid = "$Id: netgroup_mkdb.c,v 1.4 1996/04/27 18:54:31 christos Exp $";
+static char *rcsid = "$NetBSD: netgroup_mkdb.c,v 1.5 1996/10/04 05:15:29 christos Exp $";
 #endif
 
 #include <sys/types.h>
