@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.43 2002/03/08 06:03:50 chs Exp $	*/
+/*	$NetBSD: psycho.c,v 1.44 2002/03/15 07:06:24 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,9 +34,6 @@
  * Support for `psycho' and `psycho+' UPA to PCI bridge and 
  * UltraSPARC IIi and IIe `sabre' PCI controllers.
  */
-
-#undef DEBUG
-#define DEBUG
 
 #ifdef DEBUG
 #define PDB_PROM	0x01
@@ -96,10 +93,10 @@ static void psycho_iommu_init __P((struct psycho_softc *, int));
  * bus space and bus dma support for UltraSPARC `psycho'.  note that most
  * of the bus dma support is provided by the iommu dvma controller.
  */
-static paddr_t psycho_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
-static int _psycho_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-				bus_size_t, int, vaddr_t,
-				bus_space_handle_t *));
+static paddr_t psycho_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, 
+				    int, int));
+static int _psycho_bus_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
+				vaddr_t, bus_space_handle_t *));
 static void *psycho_intr_establish __P((bus_space_tag_t, int, int, int,
 				int (*) __P((void *)), void *));
 
@@ -283,15 +280,15 @@ found:
 			bus_space_handle_t handle;
 
 			/* We need to map this in ourselves. */
-			if (bus_space_map2(sc->sc_bustag, 0,
+			if (bus_space_map(sc->sc_bustag,
 				ma->ma_reg[2].ur_paddr,
-				ma->ma_reg[2].ur_len, 0, NULL, &handle))
+				ma->ma_reg[2].ur_len, 0, &handle))
 				panic("psycho_attach: cannot map regs");
 			sc->sc_regs = (struct psychoreg *)(u_long)handle;
 
-			if (bus_space_map2(sc->sc_bustag, 0,
+			if (bus_space_map(sc->sc_bustag,
 				ma->ma_reg[0].ur_paddr,
-				ma->ma_reg[0].ur_len, 0, NULL, &handle))
+				ma->ma_reg[0].ur_len, 0, &handle))
 				panic("psycho_attach: cannot map ctl");
 /* XXX -- this is lost but never unmapped */
 			pci_ctl = (struct pci_ctl *)(u_long)handle;
@@ -310,9 +307,9 @@ found:
 			bus_space_handle_t handle;
 
 			/* We need to map this in ourselves. */
-			if (bus_space_map2(sc->sc_bustag, 0,
+			if (bus_space_map(sc->sc_bustag,
 				ma->ma_reg[0].ur_paddr,
-				ma->ma_reg[0].ur_len, 0, NULL, &handle))
+				ma->ma_reg[0].ur_len, 0, &handle))
 				panic("psycho_attach: cannot map regs");
 			sc->sc_regs = (struct psychoreg *)(u_long)handle;
 			pci_ctl = (struct pci_ctl *)&sc->sc_regs->psy_pcictl[0];
@@ -492,14 +489,17 @@ found:
 		psycho_iommu_init(sc, 2);
 
 		sc->sc_configtag = psycho_alloc_config_tag(sc->sc_psycho_this);
-		if (bus_space_map2(sc->sc_bustag,
-				  PCI_CONFIG_BUS_SPACE,
-				  sc->sc_basepaddr + 0x01000000,
-				  0x0100000,
-				  0,
-				  0,
-				  &bh))
+
+		/* 
+		 * XXX This is a really ugly hack because PCI config space
+		 * is explicitly handled with unmapped accesses.
+		 */
+		i = sc->sc_bustag->type;
+		sc->sc_bustag->type = PCI_CONFIG_BUS_SPACE;
+		if (bus_space_map(sc->sc_bustag, sc->sc_basepaddr + 0x01000000,
+			0x0100000, 0, &bh))
 			panic("could not map psycho PCI configuration space");
+		sc->sc_bustag->type = i;
 		sc->sc_configaddr = (off_t)bh;
 	} else {
 		/* Just copy IOMMU state, config tag and address */
@@ -874,21 +874,22 @@ get_childspace(type)
 }
 
 static int
-_psycho_bus_map(t, btype, offset, size, flags, vaddr, hp)
+_psycho_bus_map(t, offset, size, flags, unused, hp)
 	bus_space_tag_t t;
-	bus_type_t btype;
 	bus_addr_t offset;
 	bus_size_t size;
 	int	flags;
-	vaddr_t vaddr;
+	vaddr_t unused;
 	bus_space_handle_t *hp;
 {
 	struct psycho_pbm *pp = t->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 	int i, ss;
 
-	DPRINTF(PDB_BUSMAP, ("_psycho_bus_map: type %d off %qx sz %qx flags %d va %p", t->type, (unsigned long long)offset, (unsigned long long)size, flags,
-	    (void *)vaddr));
+	DPRINTF(PDB_BUSMAP, 
+		("_psycho_bus_map: type %d off %qx sz %qx flags %d", 
+			t->type, (unsigned long long)offset, 
+			(unsigned long long)size, flags));
 
 	ss = get_childspace(t->type);
 	DPRINTF(PDB_BUSMAP, (" cspace %d", ss));
@@ -904,8 +905,8 @@ _psycho_bus_map(t, btype, offset, size, flags, vaddr, hp)
 		DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_map: mapping paddr space %lx offset %lx paddr %qx\n",
 			       (long)ss, (long)offset,
 			       (unsigned long long)paddr));
-		return (bus_space_map2(sc->sc_bustag, t->type, paddr,
-					size, flags, vaddr, hp));
+		return ((*sc->sc_bustag->sparc_bus_map)(t, paddr, size, 
+			flags, 0, hp));
 	}
 	DPRINTF(PDB_BUSMAP, (" FAILED\n"));
 	return (EINVAL);
