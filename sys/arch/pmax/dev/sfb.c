@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.6 1996/02/02 18:07:37 mycroft Exp $	*/
+/*	$NetBSD: sfb.c,v 1.7 1996/02/15 19:13:13 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: sfb.c,v 1.6 1996/02/02 18:07:37 mycroft Exp $
+ *      $Id: sfb.c,v 1.7 1996/02/15 19:13:13 jonathan Exp $
  */
 
 /*
@@ -89,6 +89,7 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
+#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <dev/tc/tcvar.h>
@@ -121,7 +122,7 @@ extern int pmax_boardtype;
 int sfbinit (char *, int, int);
 
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
-static u_char cmap_bits [NSFB * CMAP_BITS];	/* One colormap per sfb... */
+static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
 
 int sfbmatch __P((struct device *, void *, void *));
 void sfbattach __P((struct device *, struct device *, void *));
@@ -152,23 +153,25 @@ sfbmatch(parent, match, aux)
 {
 	struct cfdata *cf = match;
 	struct confargs *ca = aux;
-	static int nsfbs = 1;
 
 	/* make sure that we're looking for this type of device. */
 	if (!TC_BUS_MATCHNAME(ca, "PMAGB-BA"))
 		return (0);
 
-#ifdef notyet
-	/* if it can't have the one mentioned, reject it */
-	if (cf->cf_unit >= nsfbs)
+	/*
+	 * if the TC rom ident matches, assume the VRAM is present too.
+	 */
+#if 0
+	if (badaddr( ((caddr_t)ca->ca_addr) + SFB_OFFSET_VRAM, 4))
 		return (0);
 #endif
+
 	return (1);
 }
 
 /*
  * Attach a device.  Hand off all the work to sfbinit(),
- * so console-config cod can attach sfbs early in boot.
+ * so console-config code can attach sfbs early in boot.
  */
 void
 sfbattach(parent, self, aux)
@@ -216,10 +219,21 @@ sfbinit(base, unit, silent)
 	struct fbinfo *fi;
 	u_char foo;
 
-	fi = &sfbfi;	/* XXX use softc */
-
-	if (unit > NSFB)
-		return (0);
+	/*
+	 * If this device is being intialized as the console, malloc()
+	 * is not yet up and we must use statically-allocated space.
+	 */
+	if (fi == NULL) {
+		fi = &sfbfi;	/* XXX */
+  		fi->fi_cmap_bits = (caddr_t)cmap_bits;
+	}
+	else {
+    		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
+		if (fi->fi_cmap_bits == NULL) {
+			printf("cfb%d: no memory for cmap 0x%x\n", unit);
+			return (0);
+		}
+	}
 
 	/* check for no frame buffer */
 	if (badaddr(base + SFB_OFFSET_VRAM, 4))
@@ -235,7 +249,6 @@ sfbinit(base, unit, silent)
 	fi->fi_linebytes = 1280;
 	fi->fi_driver = &sfb_driver;
 	fi->fi_blanked = 0;
-	fi->fi_cmap_bits = (caddr_t)&cmap_bits [CMAP_BITS * unit];
 
 	/* Fill in Frame Buffer Type struct. */
 	fi->fi_type.fb_boardtype = PMAX_FBTYPE_SFB;
