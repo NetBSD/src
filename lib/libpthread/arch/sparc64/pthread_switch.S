@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.2 2003/01/18 10:34:22 thorpej Exp $ */
+/*	$NetBSD: pthread_switch.S,v 1.3 2003/06/15 17:11:36 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,24 +52,6 @@
 
 #define NOTREACHED	illtrap	10
 
-ENTRY(pthread__switch)
-	/*
-	 * XXX Get space on stack for return address and ucontext,
-	 * save return address, put ucontext address into pthread
-	 * then swapcontext
-	 */
-	save	%sp, -STACK_ALIGN(CC64FSZ + CONTEXTSIZE), %sp
-
-	add	%fp, BIAS - CONTEXTSIZE, %l0
-	stx	%l0, [%i0 + PT_UC]
-	ldx	[%i1 + PT_UC], %o1
-	call	_C_LABEL(_swapcontext_u)
-	 mov	%l0, %o0
-
-	ret
-	 restore
-
-
 /* 		*** WARNING ***
  * STACK_SWITCH is more subtle than it looks. Please go read the extended
  * comment in the i386 pthread_switch.S file.
@@ -83,6 +65,36 @@ ENTRY(pthread__switch)
 #define STACK_SWITCH(pt,tmp)		  \
 	ldx	[pt + PT_UC], tmp		; \
 	add	tmp, - STACK_ALIGN(STACKSPACE + CONTEXTSIZE) - BIAS, %sp
+
+
+ENTRY(pthread__switch)
+	save	%sp, -STACK_ALIGN(CC64FSZ + CONTEXTSIZE), %sp
+
+	/* Get the current context */
+	add	%fp, BIAS - CONTEXTSIZE, %l3
+	call	_C_LABEL(_getcontext_u)
+	 mov %l3, %o0
+
+	/* Edit the context to make it continue below, rather than here */
+#ifdef PIC
+	PICCY_SET(pthread__switch_return_point,%l1,%l5)
+#else
+	set pthread__switch_return_point, %l1
+#endif
+	stx %l1, [%l3 + UC_GREGS + _REG_PC * 8]
+
+	STACK_SWITCH(%i1, %l2)
+
+	stx	%l3, [%i0 + PT_UC]
+
+	/* %l2 points to next thread's ucontext */
+	call	_C_LABEL(_setcontext_u)
+	 mov	 %l2, %o0
+	NOTREACHED
+
+ENTRY_NOPROFILE(pthread__switch_return_point)
+	ret
+	 restore
 
 
 /*
@@ -143,14 +155,15 @@ ENTRY(pthread__upcall_switch)
 	/* Yes, it was. Stash the thread we were going to switch to,
 	 * and switch to the next thread in the continuation chain.
 	 */
-	stx	%i1, [%i0 + PT_SWITCHTO]
-	stx	%l2, [%i0 + PT_SWITCHTOUC]
 	or	%g0, PT_STATE_RECYCLABLE, %l1
 	st	%l1, [%i0 + PT_STATE]
+	stx	%l2, [%i0 + PT_SWITCHTOUC]
+	stx	%i1, [%i0 + PT_SWITCHTO]
 	mov	%i1, %i0
 	mov	%l0, %i1
 	ba	pthread__switch_away
 	 mov	1, %i2
+	NOTREACHED
 	
 	/* No old-upcall-preemption */
 1:	mov	%i0, %o0
@@ -170,8 +183,8 @@ ENTRY(pthread__upcall_switch)
 	/* Yes, we were. Stash the to-be-switched-to context in our thread
 	 * structure and go to the next link in the chain.
 	 */
-	stx	%i1, [%i1 + PT_SWITCHTO]
 	stx	%l2, [%i1 + PT_SWITCHTOUC]
+	stx	%i1, [%i1 + PT_SWITCHTO]
 	mov	%i1, %i0
 	mov	%l0, %i1
 	ba	pthread__switch_away
@@ -201,7 +214,6 @@ ENTRY(pthread__locked_switch)
 
 	/* Get the current context */
 	add	%fp, BIAS - CONTEXTSIZE, %l3
-	stx	%l3, [%i0 + PT_UC]
 	call	_C_LABEL(_getcontext_u)
 	 mov %l3, %o0
 
@@ -214,6 +226,8 @@ ENTRY(pthread__locked_switch)
 	stx %l1, [%l3 + UC_GREGS + _REG_PC * 8]
 
 	STACK_SWITCH(%i1, %l2)
+
+	stx	%l3, [%i0 + PT_UC]
 
 	/* Check if the switcher was preempted and continued to here. */
 	ldx	[%i0 + PT_NEXT], %l4
@@ -229,14 +243,14 @@ ENTRY(pthread__locked_switch)
 	 * PT_SWITCHTO will be stomped by another switch_lock and
 	 * preemption.
 	 */
-	stx	%i1, [%i0 + PT_SWITCHTO]
-	stx	%l2, [%i0 + PT_SWITCHTOUC]
 	stx	%i2, [%i0 + PT_HELDLOCK]
+	stx	%l2, [%i0 + PT_SWITCHTOUC]
+	stx	%i1, [%i0 + PT_SWITCHTO]
 	ld	[%i0 + PT_SPINLOCKS], %l0
 	dec	%l0
 	st	%l0, [%i0 + PT_SPINLOCKS]
 
-	/* Save the context we previously stored in PT_UC(a0); 
+	/* Save the context we previously stored in [%i0 + PT_UC];
 	 * that was overwritten when we were preempted and continued,
 	 * so we need to put it somewhere. 
 	 */
@@ -246,6 +260,7 @@ ENTRY(pthread__locked_switch)
 	mov	%l4, %i1
 	ba	pthread__switch_away
 	 mov	1, %i2
+	NOTREACHED
 
 	/* No locked old-preemption */
 1:	/* We've moved to the new stack, and the old context has been 
@@ -271,12 +286,13 @@ ENTRY(pthread__locked_switch)
 	 nop
 
 	/* Yes, we were. Go to the next element in the chain. */
-	stx	%i1, [%i1 + PT_SWITCHTO]
 	stx	%l2, [%i1 + PT_SWITCHTOUC]
+	stx	%i1, [%i1 + PT_SWITCHTO]
 	mov	%i1, %i0
 	mov	%l0, %i1
 	ba	pthread__switch_away
 	 mov	%g0, %i2
+	NOTREACHED
 
 2:	/* %l2 points to next thread's ucontext */
 	call	_C_LABEL(_setcontext_u)
