@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.12 2000/02/16 00:37:02 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.13 2000/02/28 13:50:04 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -80,7 +80,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.12 2000/02/16 00:37:02 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.13 2000/02/28 13:50:04 itojun Exp $");
 #endif
 #endif
 
@@ -305,6 +305,10 @@ main(argc, argv)
 				 switch(*cp) {
 				 case 'a':
 					 naflags |= NI_NODEADDR_FLAG_ALL;
+					 break;
+				 case 'c':
+				 case 'C':
+					 naflags |= NI_NODEADDR_FLAG_COMPAT;
 					 break;
 				 case 'l':
 				 case 'L':
@@ -1811,8 +1815,8 @@ usage()
 		      "AE"
 #endif
 #endif		      
-		      "] [-a [alsg]] [-b sockbufsiz] [-c count] [-I interface]\n\
-             [-i wait] [-l preload] [-p pattern] [-S sourceaddr]\n\
+		      "] [-a [aAclsg]] [-b sockbufsiz] [-c count] \n\
+             [-I interface] [-i wait] [-l preload] [-p pattern] [-S sourceaddr]\n\
              [-s packetsize] [-h hoplimit] [hops...] host\n");
 	exit(1);
 }
