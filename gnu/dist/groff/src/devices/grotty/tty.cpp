@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.cpp,v 1.1.1.1 2003/06/30 17:52:15 wiz Exp $	*/
+/*	$NetBSD: tty.cpp,v 1.2 2003/07/03 06:27:50 wiz Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1989-2000, 2001, 2002, 2003 Free Software Foundation, Inc.
@@ -183,19 +183,19 @@ class tty_printer : public printer {
   int nlines;
   int cached_v;
   int cached_vpos;
-  char curr_fore_idx;
-  char curr_back_idx;
+  signed char curr_fore_idx;
+  signed char curr_back_idx;
   int is_underline;
   int is_bold;
   int cu_flag;
   PTABLE(char) tty_colors;
   void make_underline();
   void make_bold(unsigned int);
-  char color_to_idx(color *col);
+  signed char color_to_idx(color *col);
   void add_char(unsigned int, int, int, color *, color *, unsigned char);
   char *make_rgb_string(unsigned int, unsigned int, unsigned int);
   int tty_color(unsigned int, unsigned int, unsigned int, char *,
-		char = DEFAULT_COLOR_IDX);
+		signed char = DEFAULT_COLOR_IDX);
 public:
   tty_printer(const char *device);
   ~tty_printer();
@@ -205,7 +205,7 @@ public:
   void change_color(const environment * const env);
   void change_fill_color(const environment * const env);
   void put_char(unsigned int);
-  void put_color(char, int);
+  void put_color(signed char, int);
   void begin_page(int) { }
   void end_page(int page_length);
   font *make_font(const char *);
@@ -235,7 +235,7 @@ char *tty_printer::make_rgb_string(unsigned int r,
 
 int tty_printer::tty_color(unsigned int r,
 			   unsigned int g,
-			   unsigned int b, char *idx, char value)
+			   unsigned int b, char *idx, signed char value)
 {
   int unknown_color = 0;
   char *s = make_rgb_string(r, g, b);
@@ -312,7 +312,7 @@ void tty_printer::make_bold(unsigned int c)
   }
 }
 
-char tty_printer::color_to_idx(color *col)
+signed char tty_printer::color_to_idx(color *col)
 {
   if (col->is_default())
     return DEFAULT_COLOR_IDX;
@@ -513,7 +513,7 @@ void tty_printer::put_char(unsigned int wc)
     putchar(wc);
 }
 
-void tty_printer::put_color(char color_index, int back)
+void tty_printer::put_color(signed char color_index, int back)
 {
   if (color_index == DEFAULT_COLOR_IDX) {
     putstring(SGR_DEFAULT);
