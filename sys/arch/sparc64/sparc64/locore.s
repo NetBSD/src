@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.128 2001/07/23 17:19:56 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.129 2001/07/31 06:58:09 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -61,7 +61,7 @@
 #undef	NO_VCACHE		/* Map w/D$ disabled */
 #define	TRAPTRACE		/* Keep history of all traps (unsafe) */
 #undef	FLTRACE			/* Keep history of all page faults */
-#define	TRAPSTATS		/* Count traps */
+#undef	TRAPSTATS		/* Count traps */
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
 #define	HWREF			/* Track ref/mod bits in trap handlers */
 #define	VECTORED_INTERRUPTS	/* Use interrupt vectors */
@@ -886,32 +886,30 @@ _C_LABEL(trapbase):
 	UTRAP(T_ECCERR)			! We'll implement this one later
 ufast_IMMU_miss:			! 064 = fast instr access MMU miss
 	TRACEFLT			! DEBUG
-	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	!				Load IMMU 8K TSB pointer
-	ldxa	[%g0] ASI_IMMU, %g1	! Hard coded for unified 8K TSB		Load IMMU tag target register
-	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
+	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	! Load IMMU 8K TSB pointer
 #ifdef NO_TSB
 	ba,a	%icc, instr_miss;
-	 nop
 #endif
-	brgez,pn %g5, instr_miss	!					Entry invalid?  Punt
-	 xor	%g1, %g4, %g4		!					Compare TLB tags
-	brnz,pn %g4, instr_miss		!					Got right tag?
+	ldxa	[%g0] ASI_IMMU, %g1	!	Load IMMU tag target register
+	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!Load TSB tag:data into %g4:%g5
+	brgez,pn %g5, instr_miss	!	Entry invalid?  Punt
+	 cmp	%g1, %g4		!	Compare TLB tags
+	bne,pn %xcc, instr_miss		!	Got right tag?
 	 nop
 	CLRTT
-	stxa	%g5, [%g0] ASI_IMMU_DATA_IN!					Enter new mapping
-	retry				!					Try new mapping
+	stxa	%g5, [%g0] ASI_IMMU_DATA_IN!	Enter new mapping
+	retry				!	Try new mapping
 1:
 	sir
 	TA32
 ufast_DMMU_miss:			! 068 = fast data access MMU miss
 	TRACEFLT			! DEBUG
 	ldxa	[%g0] ASI_DMMU_8KPTR, %g2!					Load DMMU 8K TSB pointer
-	ldxa	[%g0] ASI_DMMU, %g1	! Hard coded for unified 8K TSB		Load DMMU tag target register
-	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
 #ifdef NO_TSB
 	ba,a	%icc, data_miss;
-	 nop
 #endif
+	ldxa	[%g0] ASI_DMMU, %g1	! Hard coded for unified 8K TSB		Load DMMU tag target register
+	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
 	brgez,pn %g5, data_miss		!					Entry invalid?  Punt
 	 xor	%g1, %g4, %g4		!					Compare TLB tags
 	brnz,pn	%g4, data_miss		!					Got right tag?
@@ -1128,32 +1126,30 @@ kdatafault:
 	UTRAP(T_ECCERR)			! We'll implement this one later
 kfast_IMMU_miss:			! 064 = fast instr access MMU miss
 	TRACEFLT			! DEBUG
-	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	!				Load IMMU 8K TSB pointer
-	ldxa	[%g0] ASI_IMMU, %g1	! Hard coded for unified 8K TSB		Load IMMU tag target register
-	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
+	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	! Load IMMU 8K TSB pointer
 #ifdef NO_TSB
 	ba,a	%icc, instr_miss;
-	 nop
 #endif
-	brgez,pn %g5, instr_miss	!					Entry invalid?  Punt
-	 xor	%g1, %g4, %g4		!					Compare TLB tags
-	brnz,pn %g4, instr_miss		!					Got right tag?
+	ldxa	[%g0] ASI_IMMU, %g1	!	Load IMMU tag target register
+	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!Load TSB tag:data into %g4:%g5
+	brgez,pn %g5, instr_miss	!	Entry invalid?  Punt
+	 cmp	%g1, %g4		!	Compare TLB tags
+	bne,pn %xcc, instr_miss		!	Got right tag?
 	 nop
 	CLRTT
-	stxa	%g5, [%g0] ASI_IMMU_DATA_IN!					Enter new mapping
-	retry				!					Try new mapping
+	stxa	%g5, [%g0] ASI_IMMU_DATA_IN!	Enter new mapping
+	retry				!	Try new mapping
 1:
 	sir
 	TA32
 kfast_DMMU_miss:			! 068 = fast data access MMU miss
 	TRACEFLT			! DEBUG
 	ldxa	[%g0] ASI_DMMU_8KPTR, %g2!					Load DMMU 8K TSB pointer
-	ldxa	[%g0] ASI_DMMU, %g1	! Hard coded for unified 8K TSB		Load DMMU tag target register
-	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
 #ifdef NO_TSB
 	ba,a	%icc, data_miss;
-	 nop
 #endif
+	ldxa	[%g0] ASI_DMMU, %g1	! Hard coded for unified 8K TSB		Load DMMU tag target register
+	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
 	brgez,pn %g5, data_miss		!					Entry invalid?  Punt
 	 xor	%g1, %g4, %g4		!					Compare TLB tags
 	brnz,pn	%g4, data_miss		!					Got right tag?
