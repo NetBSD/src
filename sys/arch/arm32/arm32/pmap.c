@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 1999/03/27 09:41:03 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.53 1999/03/27 11:45:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -470,7 +470,6 @@ pmap_remove_pv(pmap, va, pv)
 		npv = pv->pv_next;
 		if (npv) {
 			*pv = *npv;
-
 			flags = npv->pv_flags;
 			pmap_free_pv(npv);
 		} else
@@ -482,10 +481,10 @@ pmap_remove_pv(pmap, va, pv)
 		}
 		if (npv) {
 			pv->pv_next = npv->pv_next;
-
 			flags = npv->pv_flags;
 			pmap_free_pv(npv);
-		}
+		} else
+			panic("pmap_remove_pv: lost entry");
 	}
 
 	if (flags & PT_W)
@@ -2550,14 +2549,25 @@ pmap_modified_emulation(pmap, va)
 	struct pv_entry *pv;
 	u_int flags;
 
+	PDEBUG(2, printf("pmap_modified_emulation\n"));
+
 	/* Get the pte */
 	pte = pmap_pte(pmap, va);
-	if (!pte)
+	if (!pte) {
+		PDEBUG(2, printf("no pte\n"));
 		return(0);
+	}
+
+	PDEBUG(1, printf("*pte=%08x\n", *pte));
 
 	/* Check for a zero pte */
 	if (*pte == 0)
 		return(0);
+
+#ifdef DIAGNOSTIC
+	if ((*pte & PT_AP(AP_W)) != 0)
+		panic("pmap_modified_emulation: bogus write fault");
+#endif
 
 	/* Extract the physical address of the page */
 	pa = pmap_pte_pa(pte);
@@ -2576,18 +2586,17 @@ pmap_modified_emulation(pmap, va)
 	 * a write has occurred we can correct this and also set the
 	 * modified bit
 	 */
-	if (!(flags & PT_Wr))
+	if (~flags & PT_Wr)
 		return(0);
 
 	PDEBUG(0, printf("pmap_modified_emulation: Got a hit va=%08lx, pte = %p (%08x)\n",
 	    va, pte, *pte));
-	*pte = ((*pte) & ~L2_MASK) | L2_SPAGE | PT_AP(AP_W);
-	PDEBUG(0, printf("->(%08x)\n", *pte));
-	cpu_tlb_flushID_SE(va);
-    
 	vm_physmem[bank].pmseg.attrs[off] |= PT_H | PT_M;
+	*pte = (*pte & ~L2_MASK) | L2_SPAGE | PT_AP(AP_W);
+	PDEBUG(0, printf("->(%08x)\n", *pte));
 
 	/* Return, indicating the problem has been dealt with */
+	cpu_tlb_flushID_SE(va);
 	return(1);
 }
 
@@ -2616,13 +2625,10 @@ pmap_handled_emulation(pmap, va)
 	if (*pte == 0)
 		return(0);
 
-	PDEBUG(1, printf("pmap_handled_emulation: non zero pte %08x\n", *pte));
-
-	/* Have we marked a valid pte as invalid ? */
-	if (((*pte) & L2_MASK) != L2_INVAL)
-		return(0);
-
-	PDEBUG(1, printf("Got an invalid pte\n"));
+#ifdef DIAGNOSTIC
+	if ((*pte & L2_MASK) != L2_INVAL)
+		panic("pmap_handled_emulation: bogus read fault");
+#endif
 
 	/* Extract the physical address of the page */
 	pa = pmap_pte_pa(pte);
@@ -2634,13 +2640,12 @@ pmap_handled_emulation(pmap, va)
 	 */
 	PDEBUG(0, printf("pmap_handled_emulation: Got a hit va=%08lx pte = %p (%08x)\n",
 	    va, pte, *pte));
-	*pte = ((*pte) & ~L2_MASK) | L2_SPAGE;
-	PDEBUG(0, printf("->(%08x)\n", *pte));
-	cpu_tlb_flushID_SE(va);
-
 	vm_physmem[bank].pmseg.attrs[off] |= PT_H;
+	*pte = (*pte & ~L2_MASK) | L2_SPAGE;
+	PDEBUG(0, printf("->(%08x)\n", *pte));
 
 	/* Return, indicating the problem has been dealt with */
+	cpu_tlb_flushID_SE(va);
 	return(1);
 }
 
