@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	5.32 (Berkeley) 6/17/91";*/
-static char rcsid[] = "$Id: fstat.c,v 1.6 1993/10/26 02:04:49 cgd Exp $";
+static char rcsid[] = "$Id: fstat.c,v 1.7 1994/05/05 02:27:31 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -49,7 +49,7 @@ static char rcsid[] = "$Id: fstat.c,v 1.6 1993/10/26 02:04:49 cgd Exp $";
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#ifdef SPPWAIT
+#ifdef P_PPWAIT
 #define NEWVM
 #endif
 #ifndef NEWVM
