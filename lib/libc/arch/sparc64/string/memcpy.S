@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.7 2001/07/05 19:09:24 eeh Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.1 2001/07/07 04:55:21 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001	Eduardo E. Horvath
@@ -46,7 +46,7 @@
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: bcopy.S,v 1.7 2001/07/05 19:09:24 eeh Exp $")
+	RCSID("$NetBSD: memcpy.S,v 1.1 2001/07/07 04:55:21 eeh Exp $")
 #endif  /* LIBC_SCCS and not lint */
 
 #define	EMPTY	nop
@@ -98,6 +98,16 @@ ENTRY(bcopy) /* src, dest, size */
 	.text
 3:
 #endif
+	/*
+	 * Check for overlaps and punt.
+	 *
+	 * If src <= dest <= src+len we have a problem.
+	 */
+
+	sub	%o1, %o0, %o3
+
+	cmp	%o3, %o2
+	bl,pn	%xcc, Lovbcopy
 	 cmp	%o2, BCOPY_SMALL
 Lbcopy_start:
 	bge,pt	%xcc, 2f	! if >= this many, go be fancy.
@@ -121,6 +131,36 @@ Lbcopy_start:
 	retl
 	 mov	%o5, %o0
 	NOTREACHED
+
+	/*
+	 * Overlapping bcopies -- punt.
+	 */
+Lovbcopy:
+
+	/*
+	 * Since src comes before dst, and the regions might overlap,
+	 * we have to do the copy starting at the end and working backwards.
+	 *
+	 * We could optimize this, but it almost never happens.
+	 */
+	mov	%o1, %o5	! Retval
+	add	%o2, %o0, %o0	! src += len
+	add	%o2, %o1, %o1	! dst += len
+	
+	deccc	%o2
+	bl,pn	%xcc, 1f
+	 dec	%o0
+0:
+	dec	%o1
+	ldsb	[%o0], %o4
+	dec	%o0
+	
+	deccc	%o2
+	bge,pt	%xcc, 0b
+	 stb	%o4, [%o1]
+1:
+	retl
+	 mov	%o5, %o0
 
 	/*
 	 * Plenty of data to copy, so try to do it optimally.
@@ -749,8 +789,7 @@ Lbcopy_block:
  *
  * Register ussage, Kernel and user:
  *
- * %g1		data is valid
- * %g5		src (retval for memcpy)
+ * %g1		src (retval for memcpy)
  *
  * %o0		src
  * %o1		dest
@@ -801,25 +840,29 @@ Lbcopy_block:
 	!! First align the output to a 64-bit entity
 	!! 
 
-	mov	%o1, %g5				! memcpy retval
+	mov	%o1, %g1				! memcpy retval
 	add	%o0, %o2, %o5				! End of source block
+
+	andn	%o0, 7, %o3				! Start of block
 	dec	%o5
+	fzero	%f0
 
-	clr	%g1					! No data loaded
 	andn	%o5, BLOCK_ALIGN, %o5			! Last safe addr.
+	ldd	[%o3], %f2				! Load 1st word
 
+	dec	8, %o3					! Move %o3 1 word back
 	btst	1, %o1
 	bz	4f
 	
 	 mov	-7, %o4					! Lowest src addr possible
-	alignaddr %o0, %o4, %o3				! Base addr for load.
-	
-	cmp	%o0, %o3
-	bge,a,pt	%xcc, 2f			! Prevent segv
-	 ldd	[%o3], %f0				! Load word -1
-2:	
-	mov	1, %g1					! Data loaded
-	ldd	[%o3+8], %f2				! Load word 0
+	alignaddr %o0, %o4, %o4				! Base addr for load.
+
+	cmp	%o3, %o4
+	be,pt	%xcc, 1f				! Already loaded?
+	 mov	%o4, %o3
+	fmovd	%f2, %f0				! No. Shift
+	ldd	[%o3+8], %f2				! And load
+1:	
 
 	faligndata	%f0, %f2, %f4			! Isolate 1st byte
 
@@ -834,20 +877,12 @@ Lbcopy_block:
 	 mov	-6, %o4					! Calculate src - 6
 	alignaddr %o0, %o4, %o4				! calculate shift mask and dest.
 
-	brz,pt	%g1, 1f					! Data loaded?
-	 cmp	%o3, %o4				! Addresses same?
-	beq,pt	%xcc, 3f
-	 mov	1, %g1					! Data loaded
-	ba,pt	%xcc, 2f				! Load 1 word and
+	cmp	%o3, %o4				! Addresses same?
+	be,pt	%xcc, 1f
+	 mov	%o4, %o3
 	fmovd	%f2, %f0				! Shuffle data
-1:	
-	cmp	%o0, %o4
-	bge,a,pt	%xcc, 2f			! Prevent segv
-	 ldd	[%o4], %f0				! Load word -1
-2:	
-	mov	%o4, %o3
 	ldd	[%o3+8], %f2				! Load word 0
-3:	
+1:	
 	faligndata %f0, %f2, %f4			! Move 1st short low part of f8
 
 	stda	%f4, [%o1] ASI_FL16_P			! Store 1st short
@@ -863,20 +898,12 @@ Lbcopy_block:
 	mov	-4, %o4
 	alignaddr %o0, %o4, %o4				! calculate shift mask and dest.
 
-	brz,pt	%g1, 1f					! Data loaded?
-	 cmp	%o3, %o4				! Addresses same?
-	beq,pt	%xcc, 3f
-	 mov	1, %g1					! Data loaded
-	ba,pt	%xcc, 2f				! Load 1 word and
+	cmp	%o3, %o4				! Addresses same?
+	beq,pt	%xcc, 1f
+	 mov	%o4, %o3
 	fmovd	%f2, %f0				! Shuffle data
-1:	
-	cmp	%o0, %o4
-	bge,a,pt	%xcc, 2f			! Prevent segv
-	 ldd	[%o4], %f0				! Load word -1
-2:	
-	mov	%o4, %o3
 	ldd	[%o3+8], %f2				! Load word 0
-3:	
+1:	
 	faligndata %f0, %f2, %f4			! Move 1st short low part of f8
 
 	st	%f5, [%o1]				! Store word
@@ -893,20 +920,12 @@ Lbcopy_block_common:
 	 mov	-0, %o4
 	alignaddr %o0, %o4, %o4				! base - shift
 
-	brz,pt	%g1, 1f					! Data loaded?
-	 cmp	%o3, %o4				! Addresses same?
-	beq,pt	%xcc, 3f
-	 mov	1, %g1					! Data loaded
-	ba,pt	%xcc, 2f				! Load 1 word and
+	cmp	%o3, %o4				! Addresses same?
+	beq,pt	%xcc, 1f
+	 mov	%o4, %o3
 	fmovd	%f2, %f0				! Shuffle data
-1:	
-	cmp	%o0, %o4
-	bge,a,pt	%xcc, 2f			! Prevent segv
-	 ldd	[%o4], %f0				! Load word -1
-2:	
-	mov	%o4, %o3
 	ldd	[%o3+8], %f2				! Load word 0
-3:	
+1:	
 	add	%o3, 8, %o0				! now use %o0 for src
 	
 	!!
@@ -1046,9 +1065,9 @@ Lbcopy_block_jmp:
 	!!
 L100:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L100"
 	.align	8
@@ -1130,9 +1149,9 @@ L100:
 	!! 
 L101:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L101"
 	.align	8
@@ -1227,9 +1246,9 @@ L101:
 	!! 
 L102:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L102"
 	.align	8
@@ -1324,9 +1343,9 @@ L102:
 	!! 
 L103:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L103"
 	.align	8
@@ -1419,9 +1438,9 @@ L103:
 	!! 
 L104:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L104"
 	.align	8
@@ -1512,9 +1531,9 @@ L104:
 	!! 
 L105:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L105"
 	.align	8
@@ -1604,9 +1623,9 @@ L105:
 	!! 
 L106:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L106"
 	.align	8
@@ -1694,9 +1713,9 @@ L106:
 	!! 
 L107:
 #ifdef RETURN_NAME
-	sethi	%hi(1f), %g5
+	sethi	%hi(1f), %g1
 	ba,pt	%icc, 2f
-	 or	%g5, %lo(1f), %g5
+	 or	%g1, %lo(1f), %g1
 1:	
 	.asciz	"L107"
 	.align	8
@@ -1881,6 +1900,17 @@ block_disable:	.xword	0
 #endif
 #ifdef _KERNEL		
 
+	set 1f, %o0
+	mov	%i0, %o1
+	mov	%i1, %o2
+	call	printf
+	mov	%i2, %o3
+	
+	.data
+	_ALIGN
+1:	.asciz "block exit (%p, %p, %d)\n"
+	_ALIGN
+	.text
 /*
  * Weve saved our possible fpstate, now disable the fpu
  * and continue with life.
@@ -1905,11 +1935,24 @@ block_disable:	.xword	0
 	 mov	%l3, %o0
 1:
 #endif
+	set 1f, %o0
+	mov	%i0, %o1
+	mov	%i1, %o2
+	call	printf
+	mov	%i2, %o3
+	
+	.data
+	_ALIGN
+1:	.asciz "block done (%p, %p, %d)\n"
+	_ALIGN
+	.text
+
+	
 	ret
-	 restore	%g5, 0, %o0			! Return DEST for memcpy
+	 restore	%g1, 0, %o0			! Return DEST for memcpy
 #endif
 	retl
-	 mov	%g5, %o0
+	 mov	%g1, %o0
 #endif
 
 
