@@ -42,7 +42,7 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.9 1994/05/27 08:49:13 pk Exp $
+ * $Id: zs.c,v 1.10 1994/06/24 08:11:53 deraadt Exp $
  */
 
 /*
@@ -387,7 +387,7 @@ zscnputc(c)
 	 * lowering current ipl.  Need a better way.
 	 */
 	s = splhigh();
-#ifdef sun4c		/* XXX */
+#ifdef SUN4C		/* XXX */
 	if (s <= (12 << 8))
 		(void) splzs();
 #endif
@@ -682,7 +682,7 @@ zshard(void *intrarg)
 	}
 #undef b
 	if (intflags & 1) {
-#if sun4c /* XXX -- but this will go away when zshard moves to locore.s */
+#ifdef SUN4C /* XXX -- but this will go away when zshard moves to locore.s */
 		struct clockframe *p = intrarg;
 
 		if ((p->psr & PSR_PIL) < (PIL_TTY << 8)) {
