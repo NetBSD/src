@@ -163,6 +163,8 @@ $ ENEEDAUTH
 81 Eednay authenticatorway
 $ EIDRM
 82 Identifierway emovedray
+$ ENOMSG
+83 Onay essagemay ofway esiredday ypetay
 $set 2
 $ SIGHUP
 1 Anguphay
