@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.7 1995/02/23 17:54:12 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.8 1995/03/08 00:50:13 cgd Exp $       */
 
 #undef SWDEBUG
 /*
@@ -302,7 +302,18 @@ printf("Warning: reno_omagic\n");
 	return(error);
 }
 
-sysarch(){return(EINVAL);}
+int
+sysarch(p, uap, retval)
+	struct proc *p,
+	struct sysarch_args /* {
+		syscallarg(int) op;
+		syscallarg(char *) parms;
+	} */ *uap;
+	register_t *retval;
+{
+
+	return(EINVAL);
+}
 
 /*
  * 4.3BSD Reno programs have an 1K header first in the executable
