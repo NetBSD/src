@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.h,v 1.3 2003/08/22 14:05:03 kleink Exp $	*/
+/*	$NetBSD: iconv.h,v 1.4 2004/08/01 16:40:58 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -43,9 +43,8 @@ typedef	struct __tag_iconv_t	*iconv_t;
 
 __BEGIN_DECLS
 iconv_t	iconv_open	__P((const char *, const char *));
-size_t	iconv		__P((iconv_t, const char ** __restrict,
-			     size_t * __restrict, char ** __restrict,
-			     size_t * __restrict));
+size_t	iconv		__P((iconv_t, char ** __restrict, size_t * __restrict,
+			     char ** __restrict, size_t * __restrict));
 int	iconv_close	__P((iconv_t));
 /*
  * non-portable interfaces for iconv
