@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.crunch,v 1.8 2002/04/26 15:50:27 lukem Exp $
+#	$NetBSD: Makefile.crunch,v 1.9 2002/05/02 13:16:46 lukem Exp $
 #
 # Makefile snippet to build a crunchgen(1)ed binary from the provided lists
 #
@@ -10,20 +10,24 @@
 #	LISTS		list file(s) to use
 #
 # Optional variables:
+#	CRUNCHENV	environment to pass to crunchgen(1) and when building
+#			the crunched program.  [default: SMALLPROG=1]
 #	CRUNCHGEN_FLAGS	extra options to crunchgen(1)
 #	DESTDIR		destination directory
 #	PARSELISTENV	environment variables to set for parselist.awk
 #
+# Variables modified by this:
+
+CRUNCHENV?=	SMALLPROG=1
 
 .include "${DISTRIBDIR}/common/Makefile.parselist"
 
 ${CRUNCHBIN}: ${CRUNCHBIN}.mk ${CRUNCHBIN}.cache ${CRUNCHBIN}.c
-	env SMALLPROG=1 ${MAKE} -f ${CRUNCHBIN}.mk all
+	${CRUNCHENV} ${MAKE} -f ${CRUNCHBIN}.mk all
 
 ${CRUNCHBIN}.mk ${CRUNCHBIN}.cache ${CRUNCHBIN}.c: ${CRUNCHBIN}.conf
-	env SMALLPROG=1 \
-	    ${CRUNCHGEN} -f -D ${NETBSDSRCDIR} -L ${DESTDIR}/usr/lib \
-			${CRUNCHGEN_FLAGS} ${.ALLSRC}
+	${CRUNCHENV} ${CRUNCHGEN} -f -D ${NETBSDSRCDIR} -L ${DESTDIR}/usr/lib \
+	    ${CRUNCHGEN_FLAGS} ${.ALLSRC}
 
 ${CRUNCHBIN}.conf: ${LISTS} ${PARSELISTDEP}
 	-rm -f ${.TARGET} ${.TARGET}.tmp
