@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.2 2002/08/03 23:43:43 chris Exp $
+# $NetBSD: mi,v 1.3 2003/03/01 00:11:31 tron Exp $
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-1.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__12-ISO8859-1.pcf.gz
@@ -421,6 +421,7 @@
 ./usr/X11R6/lib/X11/fonts/Speedo/encodings.dir
 ./usr/X11R6/lib/X11/fonts/TTF
 ./usr/X11R6/lib/X11/fonts/TTF/encodings.dir
+./usr/X11R6/lib/X11/fonts/TTF/fonts.cache-1
 ./usr/X11R6/lib/X11/fonts/TTF/fonts.dir
 ./usr/X11R6/lib/X11/fonts/TTF/fonts.scale
 ./usr/X11R6/lib/X11/fonts/TTF/luximb.ttf
@@ -453,6 +454,7 @@
 ./usr/X11R6/lib/X11/fonts/Type1/couri.afm
 ./usr/X11R6/lib/X11/fonts/Type1/cursor.pfa
 ./usr/X11R6/lib/X11/fonts/Type1/encodings.dir
+./usr/X11R6/lib/X11/fonts/Type1/fonts.cache-1
 ./usr/X11R6/lib/X11/fonts/Type1/l047013t.afm
 ./usr/X11R6/lib/X11/fonts/Type1/l047013t.pfa
 ./usr/X11R6/lib/X11/fonts/Type1/l047016t.afm
@@ -544,11 +546,25 @@
 ./usr/X11R6/lib/X11/fonts/cyrillic/koi10x16b.pcf.gz
 ./usr/X11R6/lib/X11/fonts/cyrillic/koi10x20.pcf.gz
 ./usr/X11R6/lib/X11/fonts/cyrillic/koi12x24.pcf.gz
+./usr/X11R6/lib/X11/fonts/cyrillic/koi12x24b.pcf.gz
+./usr/X11R6/lib/X11/fonts/cyrillic/koi5x8.pcf.gz
 ./usr/X11R6/lib/X11/fonts/cyrillic/koi6x10.pcf.gz
 ./usr/X11R6/lib/X11/fonts/cyrillic/koi6x13.pcf.gz
+./usr/X11R6/lib/X11/fonts/cyrillic/koi6x13b.pcf.gz
+./usr/X11R6/lib/X11/fonts/cyrillic/koi6x9.pcf.gz
+./usr/X11R6/lib/X11/fonts/cyrillic/koi7x14.pcf.gz
+./usr/X11R6/lib/X11/fonts/cyrillic/koi7x14b.pcf.gz
 ./usr/X11R6/lib/X11/fonts/cyrillic/koi8x13.pcf.gz
+./usr/X11R6/lib/X11/fonts/cyrillic/koi8x16.pcf.gz
+./usr/X11R6/lib/X11/fonts/cyrillic/koi8x16b.pcf.gz
 ./usr/X11R6/lib/X11/fonts/cyrillic/koi9x15.pcf.gz
+./usr/X11R6/lib/X11/fonts/cyrillic/koi9x15b.pcf.gz
+./usr/X11R6/lib/X11/fonts/cyrillic/koi9x18.pcf.gz
+./usr/X11R6/lib/X11/fonts/cyrillic/koi9x18b.pcf.gz
 ./usr/X11R6/lib/X11/fonts/cyrillic/koinil2.pcf.gz
+./usr/X11R6/lib/X11/fonts/cyrillic/proof9x16.pcf.gz
+./usr/X11R6/lib/X11/fonts/cyrillic/screen8x16.pcf.gz
+./usr/X11R6/lib/X11/fonts/cyrillic/screen8x16b.pcf.gz
 ./usr/X11R6/lib/X11/fonts/encodings
 ./usr/X11R6/lib/X11/fonts/encodings/adobe-dingbats.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/adobe-standard.enc.gz
@@ -583,6 +599,7 @@
 ./usr/X11R6/lib/X11/fonts/encodings/microsoft-cp1256.enc
 ./usr/X11R6/lib/X11/fonts/encodings/microsoft-cp1257.enc
 ./usr/X11R6/lib/X11/fonts/encodings/microsoft-cp1258.enc
+./usr/X11R6/lib/X11/fonts/encodings/microsoft-win3.1.enc
 ./usr/X11R6/lib/X11/fonts/encodings/mulearabic-0.enc
 ./usr/X11R6/lib/X11/fonts/encodings/mulearabic-1.enc
 ./usr/X11R6/lib/X11/fonts/encodings/mulearabic-2.enc
@@ -594,6 +611,8 @@
 ./usr/X11R6/lib/X11/fonts/misc/12x13ja.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/18x18ja.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/18x18ko.pcf.gz
+./usr/X11R6/lib/X11/fonts/misc/4x6-ISO8859-1.pcf.gz
+./usr/X11R6/lib/X11/fonts/misc/4x6.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/5x7-ISO8859-1.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/5x8-ISO8859-1.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/6x10-ISO8859-1.pcf.gz
@@ -621,20 +640,25 @@
 ./usr/X11R6/lib/X11/fonts/misc/9x18B-ISO8859-1.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/9x18B.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/arabic24.pcf.gz
+./usr/X11R6/lib/X11/fonts/misc/clR6x12-ISO8859-1.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/cu-alt12.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/cu-arabic12.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/cu-devnag12.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/cu-lig12.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/cu-pua12.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/cu12.pcf.gz
+./usr/X11R6/lib/X11/fonts/misc/cuarabic12.pcf.gz
+./usr/X11R6/lib/X11/fonts/misc/cudevnag12.pcf.gz
 ./usr/X11R6/lib/X11/fonts/misc/encodings.dir
 ./usr/X11R6/lib/X11/fonts/misc/micro.pcf.gz
 ./usr/X11R6/lib/X11/fonts/util
 ./usr/X11R6/lib/X11/fonts/util/map-ISO8859-1
 ./usr/X11R6/lib/X11/fonts/util/map-ISO8859-10
+./usr/X11R6/lib/X11/fonts/util/map-ISO8859-11
 ./usr/X11R6/lib/X11/fonts/util/map-ISO8859-13
 ./usr/X11R6/lib/X11/fonts/util/map-ISO8859-14
 ./usr/X11R6/lib/X11/fonts/util/map-ISO8859-15
+./usr/X11R6/lib/X11/fonts/util/map-ISO8859-16
 ./usr/X11R6/lib/X11/fonts/util/map-ISO8859-2
 ./usr/X11R6/lib/X11/fonts/util/map-ISO8859-3
 ./usr/X11R6/lib/X11/fonts/util/map-ISO8859-4
