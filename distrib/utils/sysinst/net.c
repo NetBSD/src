@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.11 1997/10/30 00:03:34 phil Exp $	*/
+/*	$NetBSD: net.c,v 1.12 1997/11/02 08:20:44 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -89,6 +89,7 @@ int config_network (void)
 	int  pass;
 
 	FILE *f;
+	time_t now;
 
 	if (network_up)
 		return 1;
@@ -158,7 +159,9 @@ int config_network (void)
 		(void)fprintf(stderr, "%s", msg_string(MSG_resolv));
 		exit(1);
 	}
-	(void)fprintf (f, "nameserver %s\nlookup file bind\nsearch %s",
+	time(&now);
+	(void)fprintf (f, ";\n; BIND data file\n; Created by NetBSD sysinst on %s\n;\n", ctime(&now));
+	(void)fprintf (f, "nameserver %s\nlookup file bind\nsearch %s\n",
 		       net_namesvr, net_domain);
 	fclose (f);
 
@@ -227,7 +230,7 @@ get_via_ftp (void)
 	puts (CL); /* Just to make sure. */
 	wrefresh (stdscr);
 #ifndef DEBUG
-	chdir("/");
+	chdir("/");	/* back to current real root */
 #endif
 	return 1;
 }
@@ -264,19 +267,24 @@ void
 mnt_net_config(void)
 {
 	char ans [5] = "y";
+	char ifconfig_fn [STRSIZE];
 
 	if (network_up) {
 		msg_prompt (MSG_mntnetconfig, ans, ans, 5);
 		if (*ans == 'y') {
-			run_prog ("/bin/cp /etc/resolv.conf /mnt/etc");
-			run_prog ("echo %s > /mnt/etc/myname", net_host);
-			run_prog ("echo %s %s >> /mnt/etc/hosts", net_ip,
-				  net_host);
-			run_prog ("echo %s > /mnt/etc/defaultdomain",
-				  net_domain);
-			run_prog ("echo %s netmask %s > /mnt/etc/ifconfig.%s",
-				  net_ip, net_mask, net_dev);
-			run_prog ("echo %s > /mnt/etc/mygate", net_defroute);
+			if (!target_already_root()) {
+				run_prog ("/bin/cp /etc/resolv.conf /mnt/etc");
+			}
+
+			sprintf_to_target_file (
+			    "/etc/hosts", "%s %s", net_ip, net_host);
+
+			snprintf (ifconfig_fn, STRSIZE, 
+			    "/etc/ifconfig.%s", net_dev);
+			sprintf_to_target_file (
+			    ifconfig_fn, "%s netmask %s", net_ip, net_mask);
+
+			echo_to_target_file ("/etc/mygate", net_defroute);
 		}
 	}
 }

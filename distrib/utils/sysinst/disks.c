@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.7 1997/10/31 23:00:37 phil Exp $ */
+/*	$NetBSD: disks.c,v 1.8 1997/11/02 08:20:42 jonathan Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,9 +55,22 @@
 #include "menu_defs.h"
 #include "txtwalk.h"
 
+/*
+ *  Default command to use for disklabel. Some ports may need to override this.
+*/
+#ifndef DISLABEL_CMD
+#if 1
+# define DISKLABEL_CMD "/sbin/disklabel -w -r"	/* Works on i386. */
+#else
+# define DISKLABEL_CMD "/sbin/disklabel -w"	/* On sun proms, -r loses. */
+#endif
+#endif
+
+
 /* Local prototypes */
 static void get_disks (void);
 static void foundffs (struct data *list, int num);
+
 
 static void get_disks(void)
 {
@@ -252,8 +265,11 @@ void write_disklabel (void)
 {
 	/* disklabel the disk */
 	printf ("%s", msg_string (MSG_dodisklabel));
-	run_prog ("/sbin/disklabel -w -r %s %s", diskdev, bsddiskname);
+	run_prog_or_continue ("%s %s %s", DISKLABEL_CMD, diskdev, bsddiskname);
 }
+
+
+
 
 void make_filesystems (void)
 {
@@ -263,17 +279,17 @@ void make_filesystems (void)
 	printf ("%s", msg_string (MSG_donewfs));
 	for (i=0; i<8; i++)
 		if (bsdlabel[i][D_FSTYPE] == T_42BSD) {
-			run_prog ("/sbin/newfs /dev/r%s%c", diskdev, 'a'+i);
+			run_prog_or_continue ("/sbin/newfs /dev/r%s%c", 
+			    diskdev, 'a'+i);
 			if (*fsmount[i]) { 
 				if (i > 0) {
-					run_prog ("/bin/mkdir /mnt%s",
-						  fsmount[i]);
-					run_prog ("/sbin/mount -v /dev/%s%c"
+					make_target_dir(fsmount[i]);
+					run_prog_or_continue ("/sbin/mount -v /dev/%s%c"
 						  " /mnt%s",
 						  diskdev, 'a'+i,
 						  fsmount[i]);
 				} else
-					run_prog ("/sbin/mount -v /dev/%s%c"
+					run_prog_or_continue ("/sbin/mount -v /dev/%s%c"
 						  " /mnt", diskdev, 'a'+i);
 			}
 		}
@@ -286,6 +302,7 @@ void make_fstab (void)
 	int i;
 
 	/* Create the fstab. */
+	make_target_dir("/etc");
 	f = fopen ("/mnt/etc/fstab", "w");
 	if (f == NULL) {
 #ifndef DEBUG
