@@ -1,4 +1,4 @@
-/* $NetBSD: pal.s,v 1.8 1997/09/03 23:09:04 thorpej Exp $ */
+/* $NetBSD: pal.s,v 1.9 1997/09/16 06:54:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,7 +39,7 @@
  * and Richard T. Witek.
  */
 
-__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.8 1997/09/03 23:09:04 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.9 1997/09/16 06:54:01 thorpej Exp $");
 
 /*
  * alpha_rpcc: read process cycle counter (XXX INSTRUCTION, NOT PALcode OP)
@@ -68,6 +68,21 @@ LEAF(alpha_wmb,0)
 	mb /* XXX */
 	RET
 	END(alpha_wmb)
+
+/*
+ * alpha_amask: read architecture features (XXX INSTRUCTION, NOT PALcode OP)
+ *
+ * Arguments:
+ *	a0	bitmask of features to test
+ *
+ * Returns:
+ *	v0	bitmask - bit is _cleared_ if feature is supported
+ */
+	.text
+LEAF(alpha_amask,1)
+	amask	a0, v0
+	RET
+	END(alpha_amask)
 
 /*
  * alpha_pal_imb: I-Stream memory barrier. [UNPRIVILEGED]
