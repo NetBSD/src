@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.92 2004/03/21 14:25:51 pk Exp $
+#	$NetBSD: files.sparc64,v 1.93 2004/03/22 00:43:37 martin Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -246,3 +246,6 @@ file	netns/ns_cksum.c		ns
 file	dev/md_root.c			memory_disk_hooks
 
 include "arch/sparc64/conf/majors.sparc64"
+
+# special compiler settings (no optimization if 32bit kernel)
+file	uvm/uvm_bio.c compile-with "${CC_NOOPT}"
