@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.15 2005/01/27 01:49:53 jmcneill Exp $
+.\"     $NetBSD: pci.9,v 1.16 2005/01/28 13:02:33 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 24, 2004
+.Dd January 28, 2005
 .Dt PCI 9
 .Os
 .Sh NAME
@@ -246,16 +246,16 @@ This function is only useful for driver development and is usually
 wrapped in pre-processor declarations.
 .It Fn pci_conf_capture "pc" "tag" "pcs"
 Capture PCI configuration space into structure
-.Fa pcs
-. The argument
+.Fa pcs .
+The argument
 .Fa tag
 is the PCI tag for the current device attached to the PCI
 chipset
 .Fa pc .
 .It Fn pci_conf_restore "pc" "tag" "pcs"
 Restores PCI configuration space from structure
-.Fa pcs
-. The argument
+.Fa pcs .
+The argument
 .Fa tag
 is the PCI tag for the current device attached to the PCI
 chipset
