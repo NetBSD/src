@@ -1,5 +1,4 @@
-/*	$NetBSD: faithd.h,v 1.7 2001/09/05 01:22:24 itojun Exp $	*/
-/*	$KAME: faithd.h,v 1.7 2001/07/02 14:36:48 itojun Exp $	*/
+/*	$KAME: faithd.h,v 1.8 2001/09/05 03:04:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
